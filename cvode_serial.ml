@@ -1,0 +1,44 @@
+(* Aug 2010, Timothy Bourke (INRIA) *)
+
+let kind = Bigarray.float64
+let layout = Bigarray.c_layout
+type c_array =
+  (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
+
+type val_array = c_array
+type der_array = c_array
+type root_array = c_array
+
+let create = Bigarray.Array1.create kind layout
+let of_array = Bigarray.Array1.of_array kind layout
+
+let length = Bigarray.Array1.dim
+
+let print_results t v =
+  Printf.printf "%.8f" t;
+  for i = 0 to (length v - 1) do
+    Printf.printf "\t%f" v.{i}
+  done;
+  print_newline ()
+
+let no_roots = (0, (fun _ _ _ -> 0))
+
+type session
+
+external init' : val_array -> int -> session
+    = "c_init"
+
+external free : session -> unit
+    = "c_free"
+
+external advance : session -> float -> val_array -> float * bool
+    = "c_advance"
+
+external step : session -> float -> val_array -> float * bool
+    = "c_step"
+
+let init f (num_roots, roots) y0 =
+  Callback.register "cvode_serial_callback_f" f;
+  Callback.register "cvode_serial_callback_roots" roots;
+  init' y0 num_roots
+
