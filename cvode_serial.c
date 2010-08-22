@@ -15,6 +15,8 @@
 
 /* XXX:
  * - realtype must equal double
+ * - we assume (in BIGARRAY_INT) that an int is 32-bits
+ *   (this should be configured per platform.)
  */
 
 /*
@@ -35,7 +37,8 @@
 
 
 #define T0    RCONST(0.0)      /* initial time */
-#define BIGARRAY_FLAGS (CAML_BA_FLOAT64 | CAML_BA_C_LAYOUT)
+#define BIGARRAY_FLOAT (CAML_BA_FLOAT64 | CAML_BA_C_LAYOUT)
+#define BIGARRAY_INT (CAML_BA_INT32 | CAML_BA_C_LAYOUT)
 #define MAX_ERRMSG_LEN 256
 
 static void check_flag(const char *call, int flag, void *to_free);
@@ -94,6 +97,30 @@ static value ml_cvode_data_alloc(mlsize_t approx_size)
 			    approx_size, 10);
 }
 
+static ml_cvode_data_p cvode_data_from_ml(value vdata)
+{
+    ml_cvode_data_p data = (ml_cvode_data_p)Data_custom_val(vdata);
+    if (data->cvode_mem == NULL) {
+	caml_failwith("This session has been freed");
+    }
+
+    return data;
+}
+
+static int check_exception(value r)
+{
+    static value *recoverable_failure = NULL;
+
+    if (!Is_exception_result(r)) return 0;
+
+    if (recoverable_failure == NULL) {
+	recoverable_failure =
+	    caml_named_value("cvode_serial_recoverable_failure");
+    }
+
+    value exn = Extract_exception(r);
+    return (Field(exn, 0) == *recoverable_failure) ? 1 : -1;
+}
 
 static int f(realtype t, N_Vector y, N_Vector ydot, void *user_data)
 {
@@ -102,8 +129,8 @@ static int f(realtype t, N_Vector y, N_Vector ydot, void *user_data)
     intnat y_l = NV_LENGTH_S(y);
     intnat ydot_l = NV_LENGTH_S(ydot);
 
-    value y_ba = caml_ba_alloc(BIGARRAY_FLAGS, 1, NV_DATA_S(y), &y_l);
-    value ydot_ba = caml_ba_alloc(BIGARRAY_FLAGS, 1, NV_DATA_S(ydot), &ydot_l);
+    value y_ba = caml_ba_alloc(BIGARRAY_FLOAT, 1, NV_DATA_S(y), &y_l);
+    value ydot_ba = caml_ba_alloc(BIGARRAY_FLOAT, 1, NV_DATA_S(ydot), &ydot_l);
 
     // XXX: the data payloads inside y_ba and ydot_ba are only valid during
     //      this call, afterward that memory goes back to cvode. These
@@ -112,9 +139,12 @@ static int f(realtype t, N_Vector y, N_Vector ydot, void *user_data)
     //
     //      Eventually y_ba and ydot_ba will be reclaimed by the ocaml gc,
     //      which should not, however, free the attached payload.
-    value r = caml_callback3(*closure_f, caml_copy_double(t), y_ba, ydot_ba);
-    
-    return(Int_val(r));
+    value r = caml_callback3_exn(*closure_f, caml_copy_double(t), y_ba, ydot_ba);
+
+    Caml_ba_array_val(y_ba)->dim[0] = 0;
+    Caml_ba_array_val(ydot_ba)->dim[0] = 0;
+
+    return check_exception(r);
 }
 
 static int roots(realtype t, N_Vector y, realtype *gout, void *user_data)
@@ -122,15 +152,18 @@ static int roots(realtype t, N_Vector y, realtype *gout, void *user_data)
     ml_cvode_data_p data = (ml_cvode_data_p)user_data;
 
     intnat y_l = NV_LENGTH_S(y);
-    value y_ba = caml_ba_alloc(BIGARRAY_FLAGS, 1, NV_DATA_S(y), &y_l);
+    value y_ba = caml_ba_alloc(BIGARRAY_FLOAT, 1, NV_DATA_S(y), &y_l);
 
-    value gout_ba = caml_ba_alloc(BIGARRAY_FLAGS, 1, gout, &(data->num_roots));
+    value gout_ba = caml_ba_alloc(BIGARRAY_FLOAT, 1, gout, &(data->num_roots));
 
     // XXX: see notes for f()
-    value r = caml_callback3(*(data->closure_roots), caml_copy_double(t),
-			     y_ba, gout_ba);
-    
-    return(Int_val(r));
+    value r = caml_callback3_exn(*(data->closure_roots), caml_copy_double(t),
+				 y_ba, gout_ba);
+
+    Caml_ba_array_val(y_ba)->dim[0] = 0;
+    Caml_ba_array_val(gout_ba)->dim[0] = 0;
+
+    return check_exception(r);
 }
 
 static mlsize_t approx_size_cvode_mem(void *cvode_mem)
@@ -160,8 +193,8 @@ CAMLprim value c_init(value initial, value num_roots)
 
     void *cvode_mem = CVodeCreate(CV_ADAMS, CV_FUNCTIONAL);
 
-    value datav = ml_cvode_data_alloc(approx_size_cvode_mem(cvode_mem));
-    ml_cvode_data_p data = (ml_cvode_data_p)Data_custom_val(datav);
+    value vdata = ml_cvode_data_alloc(approx_size_cvode_mem(cvode_mem));
+    ml_cvode_data_p data = (ml_cvode_data_p)Data_custom_val(vdata);
 
     data->cvode_mem = cvode_mem;
     data->closure_f = caml_named_value("cvode_serial_callback_f");
@@ -187,17 +220,53 @@ CAMLprim value c_init(value initial, value num_roots)
 
     CVodeSetUserData(data->cvode_mem, (void *)data);
 
-    // TODO: where does this really belong? How should it work?
-    //	     Is it even necessary?
+    // default tolerances
     N_Vector abstol = N_VNew_Serial(initial_l); 
     int i;
     for (i=0; i < initial_l; ++i) {
 	NV_Ith_S(abstol, i) = RCONST(1.0e-8);
     }
     flag = CVodeSVtolerances(data->cvode_mem, RCONST(1.0e-4), abstol);
+    check_flag("CVodeSVtolerances", flag, data);
     N_VDestroy_Serial(abstol);
 
-    CAMLreturn(datav);
+    CAMLreturn(vdata);
+}
+
+CAMLprim value c_set_tolerances(value vdata, value reltol, value abstol)
+{
+    CAMLparam3(vdata, reltol, abstol);
+
+    ml_cvode_data_p data = cvode_data_from_ml(vdata);
+
+    int atol_l = Caml_ba_array_val(abstol)->dim[0];
+    realtype *atol_d = Caml_ba_data_val(abstol);
+    N_Vector atol_nv = N_VMake_Serial(atol_l, atol_d);
+
+    int flag = CVodeSVtolerances(data->cvode_mem, Double_val(reltol), atol_nv);
+    N_VDestroy(atol_nv);
+    check_flag("CVodeSVtolerances", flag, NULL);
+
+    CAMLreturn0;
+}
+
+CAMLprim value c_get_roots(value vdata, value roots)
+{
+    CAMLparam2(vdata, roots);
+
+    ml_cvode_data_p data = cvode_data_from_ml(vdata);
+
+    int roots_l = Caml_ba_array_val(roots)->dim[0];
+    int *roots_d = Caml_ba_data_val(roots);
+
+    if (roots_l < data->num_roots) {
+	caml_invalid_argument("roots array is too short");
+    }
+
+    int flag = CVodeGetRootInfo(data->cvode_mem, roots_d);
+    check_flag("CVodeGetRootInfo", flag, NULL);
+
+    CAMLreturn0;
 }
 
 CAMLprim value c_free(value vdata)
@@ -228,10 +297,7 @@ static value solver(value vdata, value nextt, value y, int onestep)
     CAMLparam2(vdata, nextt);
 
     realtype t = 0.0;
-    ml_cvode_data_p data = (ml_cvode_data_p)Data_custom_val(vdata);
-    if (data->cvode_mem == NULL) {
-	caml_failwith("This session has been freed");
-    }
+    ml_cvode_data_p data = cvode_data_from_ml(vdata);
 
     int leny = Bigarray_val(y)->dim[0];
 
