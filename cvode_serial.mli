@@ -28,6 +28,8 @@ val init :
     -> (int * (float -> val_array -> root_array -> unit))
     -> val_array
     -> session
+
+val reinit : session -> float -> val_array -> unit
 val set_tolerances : session -> float -> c_array -> unit
 val get_roots : session -> int_array -> unit
 

@@ -250,6 +250,23 @@ CAMLprim value c_set_tolerances(value vdata, value reltol, value abstol)
     CAMLreturn0;
 }
 
+CAMLprim value c_reinit(value vdata, value t0, value y0)
+{
+    CAMLparam3(vdata, t0, y0);
+
+    ml_cvode_data_p data = cvode_data_from_ml(vdata);
+
+    int y0_l = Caml_ba_array_val(y0)->dim[0];
+    realtype *y0_d = Caml_ba_data_val(y0);
+    N_Vector y0_nv = N_VMake_Serial(y0_l, y0_d);
+
+    int flag = CVodeReInit(data->cvode_mem, Double_val(t0), y0_nv);
+    N_VDestroy(y0_nv);
+    check_flag("CVodeReInit", flag, NULL);
+
+    CAMLreturn0;
+}
+
 CAMLprim value c_get_roots(value vdata, value roots)
 {
     CAMLparam2(vdata, roots);

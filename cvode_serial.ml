@@ -41,6 +41,9 @@ let _ = Callback.register_exception
 external init' : val_array -> int -> session
     = "c_init"
 
+external reinit : session -> float -> val_array -> unit
+    = "c_reinit"
+
 external set_tolerances : session -> float -> c_array -> unit
     = "c_set_tolerances"
 
