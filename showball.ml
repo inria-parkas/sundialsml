@@ -1,5 +1,5 @@
 
-let scale = 50.0
+let scale = 90.0
 let ball_radius = 3
 
 let x_off = 50
@@ -10,16 +10,14 @@ let yc y = truncate (y *. scale) + y_off
 
 let show_floors (height, extent) =
   let maxidx = min (Array.length height) (Array.length extent) in
-  let rec f min idx =
-    if (idx < maxidx) then begin
-      let h = yc height.(idx) in
-      let max = xc extent.(idx) in
-      Graphics.moveto min h;
-      Graphics.lineto max h;
-      f max (idx + 1)
-    end
+  let rec f idx =
+    if (idx < maxidx) then
+      (Graphics.lineto (Graphics.current_x ()) (yc height.(idx));
+       Graphics.lineto (xc extent.(idx)) (yc height.(idx));
+       f (idx + 1))
   in
-  f (xc 0.0) 0
+  Graphics.moveto (xc 0.0) (yc height.(0));
+  f 0
 
 let leave_trace = ref false
 
@@ -27,7 +25,7 @@ let start trace floors =
   Graphics.open_graph "";
   Graphics.resize_window 800 600;
   Graphics.clear_graph ();
-  Unix.sleep 2; (* TODO: why is this necessary? *)
+  Unix.sleep 1; (* TODO: why is this necessary? *)
   show_floors floors;
   leave_trace := trace
 

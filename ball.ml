@@ -27,12 +27,17 @@ let ground =
     1.0; (* 6 <= x < 8 *)
     0.0; (* 8 <= x *)
   |]
-let ground_limits = [| 2.0; 4.0; 6.0; 8.0 |]
+let ground_limits = [| 2.0; 6.0; 7.0; 12.0 |]
 let ground_maxidx = Array.length ground - 1
 
+let lookup_limit x =
+  let rec f idx =
+    if idx = ground_maxidx || x < ground_limits.(idx) then idx
+    else f (idx + 1)
+  in f 0
+
 let g t y gout =
-  (* TODO: rewrite to use ground_limits *)
-  let idx = min ground_maxidx (truncate (y.{xpos_i} /. 2.0)) in
+  let idx = lookup_limit y.{xpos_i} in
   gout.{under_i} <- y.{ypos_i} -. ground.(idx)
 
 let y = Cvode_serial.create 4
