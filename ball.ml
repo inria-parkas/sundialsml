@@ -7,7 +7,7 @@ let xpos_i = 3
 let under_i = 0
 
 let gravity = -9.81 (* m/s/s *)
-let t_delta = 0.05  (* s *)
+let t_delta = ref 0.05  (* s *)
 let x_vel   = 0.8   (* m/s *)
 let x_limit = 14.0  (* m *)
 
@@ -54,26 +54,54 @@ let ball_event s t y =
   if (rootdata.{under_i} != 0l && y.{yvel_i} <= 0.0) then
     (print_endline "hit ground!";
      y.{yvel_i} <- (-0.8 *. y.{yvel_i});
-     Cvode_serial.reinit s (t +. t_delta (* XXX NB XXX *)) y)
+     Cvode_serial.reinit s (t +. !t_delta (* XXX NB XXX *)) y)
 
 let s = Cvode_serial.init f (1, g) y
 
+let trace = ref false
+let log = ref false
+let show = ref true
+let delay = ref true
+
+let args = [
+    ("-trace",
+     Arg.Unit (fun () -> trace := true),
+     "Show a trace of ball positions.");
+
+    ("-d",
+     Arg.Float (fun d -> t_delta := d),
+     "Set the default time step.");
+
+    ("-log",
+     Arg.Unit (fun () -> log := true; show := false; delay := false),
+     "Log state variables to stdout (implies -noshow and -nodelay).");
+
+    ("-noshow",
+     Arg.Unit (fun () -> show := false),
+     "Disable the graphical display.");
+
+    ("-nodelay",
+     Arg.Unit (fun () -> delay := false),
+     "No delays between frames.");
+]
+
 let _ =
-  Showball.start false (ground, ground_limits);
-  Cvode_serial.print_results 0.0 y;
-  let t = ref t_delta in
+  Arg.parse args (fun _ -> ()) "ball: simulate a ball bouncing down steps using sundials";
+  if !show then Showball.start !trace (ground, ground_limits);
+  if !log then Cvode_serial.print_results 0.0 y;
+  let t = ref !t_delta in
   while (y.{xpos_i} < x_limit) do
     let (t', roots) = Cvode_serial.advance s !t y in
-        Cvode_serial.print_results t' y;
-        Showball.show (y.{xpos_i}, y.{ypos_i});
-        real_time_delay ();
+        if !log then Cvode_serial.print_results t' y;
+        if !show then Showball.show (y.{xpos_i}, y.{ypos_i});
+        if !delay then real_time_delay ();
         if (roots) then
           (ball_event s t' y;
-           t := t' +. t_delta +. t_delta) (* XXX NB XXX *)
+           t := t' +. !t_delta +. !t_delta) (* XXX NB XXX *)
         else if (t' >= !t) then
-          t := !t +. t_delta
+          t := !t +. !t_delta
   done;
-  Showball.stop ()
+  if !show then Showball.stop ()
 
 let _ = Cvode_serial.free s
 
