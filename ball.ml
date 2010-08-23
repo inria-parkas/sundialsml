@@ -7,8 +7,9 @@ let xpos_i = 3
 let under_i = 0
 
 let gravity = -9.81 (* m/s/s *)
-let t_delta = 0.05 (* s *)
-let x_vel = 0.8 (* m/s *)
+let t_delta = 0.05  (* s *)
+let x_vel   = 0.8   (* m/s *)
+let x_limit = 15.0  (* m *)
 
 let real_time_delay () =
   Unix.sleep 1
@@ -27,7 +28,7 @@ let ground =
     1.0; (* 6 <= x < 8 *)
     0.0; (* 8 <= x *)
   |]
-let ground_limits = [| 2.0; 6.0; 7.0; 12.0 |]
+let ground_limits = [| 2.0; 5.0; 7.0; 11.0 |]
 let ground_maxidx = Array.length ground - 1
 
 let lookup_limit x =
@@ -61,7 +62,7 @@ let _ =
   Showball.start true (ground, ground_limits);
   Cvode_serial.print_results 0.0 y;
   let t = ref t_delta in
-  while (y.{xpos_i} < 10.0) do
+  while (y.{xpos_i} < x_limit) do
     let (t', roots) = Cvode_serial.advance s !t y in
         Cvode_serial.print_results t' y;
         Showball.show (y.{xpos_i}, y.{ypos_i});
