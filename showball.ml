@@ -50,6 +50,6 @@ let show (x, y) =
   last_y := y
 
 let stop () =
-  Graphics.read_key ();
+  ignore (Graphics.read_key ());
   Graphics.close_graph ()
 

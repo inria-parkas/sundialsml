@@ -54,7 +54,7 @@ let ball_event s t y =
   if (rootdata.{under_i} != 0l && y.{yvel_i} <= 0.0) then
     (print_endline "hit ground!";
      y.{yvel_i} <- (-0.8 *. y.{yvel_i});
-     Cvode_serial.reinit s (t +. !t_delta (* XXX NB XXX *)) y)
+     Cvode_serial.reinit s t y)
 
 let s = Cvode_serial.init f (1, g) y
 
@@ -92,14 +92,13 @@ let _ =
   let t = ref !t_delta in
   while (y.{xpos_i} < x_limit) do
     let (t', roots) = Cvode_serial.advance s !t y in
+        if (roots) then ball_event s t' y;
+
         if !log then Cvode_serial.print_results t' y;
         if !show then Showball.show (y.{xpos_i}, y.{ypos_i});
         if !delay then real_time_delay ();
-        if (roots) then
-          (ball_event s t' y;
-           t := t' +. !t_delta +. !t_delta) (* XXX NB XXX *)
-        else if (t' >= !t) then
-          t := !t +. !t_delta
+
+        t := t' +. !t_delta
   done;
   if !show then Showball.stop ()
 
