@@ -9,7 +9,7 @@ let under_i = 0
 let gravity = -9.81 (* m/s/s *)
 let t_delta = 0.05  (* s *)
 let x_vel   = 0.8   (* m/s *)
-let x_limit = 15.0  (* m *)
+let x_limit = 14.0  (* m *)
 
 let real_time_delay () =
   Unix.sleep 1
@@ -59,7 +59,7 @@ let ball_event s t y =
 let s = Cvode_serial.init f (1, g) y
 
 let _ =
-  Showball.start true (ground, ground_limits);
+  Showball.start false (ground, ground_limits);
   Cvode_serial.print_results 0.0 y;
   let t = ref t_delta in
   while (y.{xpos_i} < x_limit) do
@@ -73,7 +73,6 @@ let _ =
         else if (t' >= !t) then
           t := !t +. t_delta
   done;
-  Unix.sleep 30;
   Showball.stop ()
 
 let _ = Cvode_serial.free s
