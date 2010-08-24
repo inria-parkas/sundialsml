@@ -33,12 +33,66 @@ let print_roots v =
 
 let no_roots = (0, (fun _ _ _ -> 0))
 
+(* TODO: get these types working in the initialization function *)
+type lmm =
+| Adams
+| BDF
+
+type bandrange = {mupper : int; mlower : int}
+type sprange = { pretype : int; maxl: int }
+
+type linear_solver =
+| Dense
+| LapackDense
+| Band of bandrange
+| LapackBand of bandrange
+| Diag
+| Spgmr of sprange
+| Spbcg of sprange
+| Sptfqmr of sprange
+
+type iter =
+| Newton of linear_solver
+| Functional
+
+exception IllInput
+exception TooClose
+exception TooMuchWork
+exception TooMuchAccuracy
+exception ErrFailure
+exception ConvergenceFailure
+exception LinearInitFailure
+exception LinearSetupFailure
+exception LinearSolveFailure
+exception RhsFuncErr
+exception FirstRhsFuncFailure
+exception RepeatedRhsFuncErr
+exception UnrecoverableRhsFuncErr
+exception RootFuncFailure
+
 type session
 exception RecoverableFailure
-let _ = Callback.register_exception
-    "cvode_serial_recoverable_failure" RecoverableFailure
+let _ =
+  List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
+  [
+    ("cvode_RecoverableFailure",      RecoverableFailure);
+    ("cvode_IllInput",                IllInput);
+    ("cvode_TooClose",                TooClose);
+    ("cvode_TooMuchWork",             TooMuchWork);
+    ("cvode_TooMuchAccuracy",         TooMuchAccuracy);
+    ("cvode_ErrFailure",              ErrFailure);
+    ("cvode_ConvergenceFailure",      ConvergenceFailure);
+    ("cvode_LinearInitFailure",       LinearInitFailure);
+    ("cvode_LinearSetupFailure",      LinearSetupFailure);
+    ("cvode_LinearSolveFailure",      LinearSolveFailure);
+    ("cvode_RhsFuncErr",              RhsFuncErr);
+    ("cvode_FirstRhsFuncFailure",     FirstRhsFuncFailure);
+    ("cvode_RepeatedRhsFuncErr",      RepeatedRhsFuncErr);
+    ("cvode_UnrecoverableRhsFuncErr", UnrecoverableRhsFuncErr);
+    ("cvode_RootFuncFailure",         RootFuncFailure);
+  ]
 
-external init' : val_array -> int -> session
+external init' : lmm -> iter -> val_array -> int -> session
     = "c_init"
 
 external reinit : session -> float -> val_array -> unit
@@ -59,8 +113,8 @@ external advance : session -> float -> val_array -> float * bool
 external step : session -> float -> val_array -> float * bool
     = "c_step"
 
-let init f (num_roots, roots) y0 =
+let init lmm iter f (num_roots, roots) y0 =
   Callback.register "cvode_serial_callback_f" f;
   Callback.register "cvode_serial_callback_roots" roots;
-  init' y0 num_roots
+  init' lmm iter y0 num_roots
 

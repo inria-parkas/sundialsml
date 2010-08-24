@@ -9,9 +9,42 @@
 
 #include <cvode/cvode.h>             /* prototypes for CVODE fcts., consts. */
 #include <nvector/nvector_serial.h>  /* serial N_Vector types, fcts., macros */
+#include <sundials/sundials_config.h>
 #include <sundials/sundials_types.h> /* definition of type realtype */
 
+/* linear solvers */
+#include <cvode/cvode_dense.h>
+#include <cvode/cvode_band.h>
+#include <cvode/cvode_diag.h>
+#include <cvode/cvode_spgmr.h>
+#include <cvode/cvode_spbcgs.h>
+#include <cvode/cvode_sptfqmr.h>
+
+#if SUNDIALS_BLAS_LAPACK == 1
+#include <cvode/cvode_lapack.h>
+#endif
+
 #include <stdio.h>
+
+#define VARIANT_LMM_ADAMS 0
+#define VARIANT_LMM_BDF   1
+
+#define RECORD_BANDRANGE_MUPPER 0
+#define RECORD_BANDRANGE_MLOWER 1
+
+#define RECORD_SPRANGE_PRETYPE 0
+#define RECORD_SPRANGE_MAXL    1
+
+/* untagged: */
+#define VARIANT_LINEAR_SOLVER_DENSE	    0
+#define VARIANT_LINEAR_SOLVER_LAPACKDENSE   1
+#define VARIANT_LINEAR_SOLVER_DIAG	    2
+/* tagged: */
+#define VARIANT_LINEAR_SOLVER_BAND	    0
+#define VARIANT_LINEAR_SOLVER_LAPACKBAND    1
+#define VARIANT_LINEAR_SOLVER_SPGMR	    2
+#define VARIANT_LINEAR_SOLVER_SPBCG	    3
+#define VARIANT_LINEAR_SOLVER_SPTFQMR	    4
 
 /* XXX:
  * - realtype must equal double
@@ -115,7 +148,7 @@ static int check_exception(value r)
 
     if (recoverable_failure == NULL) {
 	recoverable_failure =
-	    caml_named_value("cvode_serial_recoverable_failure");
+	    caml_named_value("cvode_RecoverableFailure");
     }
 
     value exn = Extract_exception(r);
@@ -180,18 +213,119 @@ static mlsize_t approx_size_cvode_mem(void *cvode_mem)
     return used;
 }
 
- 
-CAMLprim value c_init(value initial, value num_roots)
+static void set_linear_solver(void *cvode_mem, value ls, int n)
 {
-    CAMLparam2(initial, num_roots);
+    printf("set_linear_solver: 0\n"); // XXX
+    int flag;
+
+    if (Is_block(ls)) {
+	printf("Tag_val(ls)=%d\n", Tag_val(ls)); // XXX
+	int field0 = Field(ls, 0); /* mupper, pretype */
+	int field1 = Field(ls, 1); /* mlower, maxl */
+
+	switch (Tag_val(ls)) {
+	case VARIANT_LINEAR_SOLVER_BAND:
+	    flag = CVBand(cvode_mem, n, field0, field1);
+	    check_flag("CVBand", flag, NULL);
+	    break;
+
+#if SUNDIALS_BLAS_LAPACK == 1
+	case VARIANT_LINEAR_SOLVER_LAPACKBAND:
+	    field0 = Field(Field(ls, 1), 0);
+	    field1 = Field(Field(ls, 1), 1);
+	    flag = CVLapackBand(cvode_mem, n, field0, field1);
+	    check_flag("CVLapackBand", flag, NULL);
+	    break;
+#endif
+
+	case VARIANT_LINEAR_SOLVER_SPGMR:
+	    field0 = Field(Field(ls, 1), 0);
+	    field1    = Field(Field(ls, 1), 1);
+	    flag = CVSpgmr(cvode_mem, field0, field1);
+	    check_flag("CVSpgmr", flag, NULL);
+	    break;
+
+	case VARIANT_LINEAR_SOLVER_SPBCG:
+	    field0 = Field(Field(ls, 1), 0);
+	    field1    = Field(Field(ls, 1), 1);
+	    flag = CVSpbcg(cvode_mem, field0, field1);
+	    check_flag("CVSpbcg", flag, NULL);
+	    break;
+
+	case VARIANT_LINEAR_SOLVER_SPTFQMR:
+	    field0 = Field(Field(ls, 1), 0);
+	    field1    = Field(Field(ls, 1), 1);
+	    flag = CVSptfqmr(cvode_mem, field0, field1);
+	    check_flag("CVSPtfqmr", flag, NULL);
+	    break;
+
+	default:
+	    caml_failwith("Illegal linear solver block value.");
+	    break;
+	}
+
+    } else {
+	printf("Int_val(ls)=%d\n", Int_val(ls)); // XXX
+	switch (Int_val(ls)) {
+	case VARIANT_LINEAR_SOLVER_DENSE:
+	    flag = CVDense(cvode_mem, n);
+	    check_flag("CVDense", flag, NULL);
+	    break;
+
+#if SUNDIALS_BLAS_LAPACK == 1
+	case VARIANT_LINEAR_SOLVER_LAPACKDENSE:
+	    flag = CVLapackDense(cvode_mem, n);
+	    check_flag("CVLapackDense", flag, NULL);
+	    break;
+#endif
+
+	case VARIANT_LINEAR_SOLVER_DIAG:
+	    flag = CVDiag(cvode_mem);
+	    check_flag("CVDiag", flag, NULL);
+	    break;
+
+	default:
+	    caml_failwith("Illegal linear solver value.");
+	    break;
+	}
+    }
+
+    printf("set_linear_solver: 0\n"); // XXX
+}
+ 
+CAMLprim value c_init(value lmm, value iter, value initial, value num_roots)
+{
+    CAMLparam4(lmm, iter, initial, num_roots);
 
     int flag;
+
+    int lmm_c;
+    switch (Int_val(lmm)) {
+    case VARIANT_LMM_ADAMS:
+	lmm_c = CV_ADAMS;
+	break;
+
+    case VARIANT_LMM_BDF:
+	lmm_c = CV_BDF;
+	break;
+
+    default:
+	caml_failwith("Illegal lmm value.");
+	break;
+    }
+
+    int iter_c;
+    if (Is_block(iter)) {
+	iter_c = CV_NEWTON;
+    } else {
+	iter_c = CV_FUNCTIONAL;
+    }
 
     int initial_l = Caml_ba_array_val(initial)->dim[0];
     realtype *initial_d = Caml_ba_data_val(initial);
     N_Vector initial_nv = N_VMake_Serial(initial_l, initial_d);
 
-    void *cvode_mem = CVodeCreate(CV_ADAMS, CV_FUNCTIONAL);
+    void *cvode_mem = CVodeCreate(lmm_c, iter_c);
 
     value vdata = ml_cvode_data_alloc(approx_size_cvode_mem(cvode_mem));
     ml_cvode_data_p data = (ml_cvode_data_p)Data_custom_val(vdata);
@@ -219,6 +353,11 @@ CAMLprim value c_init(value initial, value num_roots)
     check_flag("CVodeRootInit", flag, data);
 
     CVodeSetUserData(data->cvode_mem, (void *)data);
+
+    // setup linear solvers (if necessary)
+    if (iter_c == CV_NEWTON) {
+	set_linear_solver(data->cvode_mem, Field(iter, 0), initial_l);
+    }
 
     // default tolerances
     N_Vector abstol = N_VNew_Serial(initial_l); 
@@ -304,9 +443,69 @@ static void check_flag(const char *call, int flag, void *to_free)
 
     if (to_free != NULL) free(to_free);
 
-    snprintf(exmsg, MAX_ERRMSG_LEN, "%s: %s", call,
-	     CVodeGetReturnFlagName(flag));
-    caml_failwith(exmsg);
+    switch (flag) {
+    case CV_ILL_INPUT:
+	caml_raise_constant(*caml_named_value("cvode_IllInput"));
+	break;
+
+    case CV_TOO_CLOSE:
+	caml_raise_constant(*caml_named_value("cvode_TooClose"));
+	break;
+
+    case CV_TOO_MUCH_WORK:
+	caml_raise_constant(*caml_named_value("cvode_TooMuchWork"));
+	break;
+
+    case CV_TOO_MUCH_ACC:
+	caml_raise_constant(*caml_named_value("cvode_TooMuchAccuracy"));
+	break;
+
+    case CV_ERR_FAILURE:
+	caml_raise_constant(*caml_named_value("cvode_ErrFailure"));
+	break;
+
+    case CV_CONV_FAILURE:
+	caml_raise_constant(*caml_named_value("cvode_ConvergenceFailure"));
+	break;
+
+    case CV_LINIT_FAIL:
+	caml_raise_constant(*caml_named_value("cvode_LinearInitFailure"));
+	break;
+
+    case CV_LSETUP_FAIL:
+	caml_raise_constant(*caml_named_value("cvode_LinearSetupFailure"));
+	break;
+
+    case CV_LSOLVE_FAIL:
+	caml_raise_constant(*caml_named_value("cvode_LinearSolveFailure"));
+	break;
+
+    case CV_RHSFUNC_FAIL:
+	caml_raise_constant(*caml_named_value("cvode_RhsFuncFailure"));
+	break;
+
+    case CV_FIRST_RHSFUNC_ERR:
+	caml_raise_constant(*caml_named_value("cvode_FirstRhsFuncError"));
+	break;
+
+    case CV_REPTD_RHSFUNC_ERR:
+	caml_raise_constant(*caml_named_value("cvode_RepeatedRhsFuncError"));
+	break;
+
+    case CV_UNREC_RHSFUNC_ERR:
+	caml_raise_constant(*caml_named_value("cvode_UnrecoverableRhsFuncError"));
+	break;
+
+    case CV_RTFUNC_FAIL:
+	caml_raise_constant(*caml_named_value("cvode_RootFuncFailure"));
+	break;
+
+    default:
+	/* e.g. CVDIAG_MEM_NULL, CVDIAG_ILL_INPUT, CVDIAG_MEM_FAIL */
+	snprintf(exmsg, MAX_ERRMSG_LEN, "%s: %s", call,
+		 CVodeGetReturnFlagName(flag));
+	caml_failwith(exmsg);
+    }
 }
 
 static value solver(value vdata, value nextt, value y, int onestep)

@@ -29,6 +29,7 @@ let leave_trace = ref false
 let start trace floor_details =
   Graphics.open_graph "";
   Graphics.resize_window 800 600;
+  (* Graphics.auto_synchronize false; *)
   Graphics.clear_graph ();
   Unix.sleep 1; (* TODO: why is this necessary? *)
   floors := floor_details;
@@ -46,6 +47,7 @@ let show (x, y) =
   end;
   Graphics.set_color Graphics.red;
   Graphics.fill_circle (xc x) (yc y) ball_radius;
+  (* Graphics.synchronize (); *)
   last_x := x;
   last_y := y
 

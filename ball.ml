@@ -1,4 +1,6 @@
 
+module Cvode = Cvode_serial
+
 let ypos_i = 0
 let yvel_i = 1
 let yacc_i = 2
@@ -41,22 +43,22 @@ let g t y gout =
   let idx = lookup_limit y.{xpos_i} in
   gout.{under_i} <- y.{ypos_i} -. ground.(idx)
 
-let y = Cvode_serial.create 4
+let y = Cvode.create 4
 let _ = y.{xpos_i} <- 0.0;
         y.{ypos_i} <- 10.0;
         y.{yvel_i} <- 0.0;
         y.{yacc_i} <- gravity
 
-let rootdata = Cvode_serial.int_array 1
+let rootdata = Cvode.int_array 1
 let ball_event s t y =
-  Cvode_serial.get_roots s rootdata;
+  Cvode.get_roots s rootdata;
 
   if (rootdata.{under_i} != 0l && y.{yvel_i} <= 0.0) then
     (print_endline "hit ground!";
      y.{yvel_i} <- (-0.8 *. y.{yvel_i});
-     Cvode_serial.reinit s t y)
+     Cvode.reinit s t y)
 
-let s = Cvode_serial.init f (1, g) y
+let s = Cvode.init Cvode.Adams Cvode.Functional f (1, g) y
 
 let trace = ref false
 let log = ref false
@@ -88,13 +90,13 @@ let args = [
 let _ =
   Arg.parse args (fun _ -> ()) "ball: simulate a ball bouncing down steps using sundials";
   if !show then Showball.start !trace (ground, ground_limits);
-  if !log then Cvode_serial.print_results 0.0 y;
+  if !log then Cvode.print_results 0.0 y;
   let t = ref !t_delta in
   while (y.{xpos_i} < x_limit) do
-    let (t', roots) = Cvode_serial.advance s !t y in
+    let (t', roots) = Cvode.advance s !t y in
         if (roots) then ball_event s t' y;
 
-        if !log then Cvode_serial.print_results t' y;
+        if !log then Cvode.print_results t' y;
         if !show then Showball.show (y.{xpos_i}, y.{ypos_i});
         if !delay then real_time_delay ();
 
@@ -102,5 +104,5 @@ let _ =
   done;
   if !show then Showball.stop ()
 
-let _ = Cvode_serial.free s
+let _ = Cvode.free s
 
