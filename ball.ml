@@ -49,16 +49,17 @@ let _ = y.{xpos_i} <- 0.0;
         y.{yvel_i} <- 0.0;
         y.{yacc_i} <- gravity
 
-let rootdata = Cvode.int_array 1
+let n_roots = 1
+let rootdata = Cvode.Roots.create n_roots
 let ball_event s t y =
   Cvode.get_roots s rootdata;
 
-  if (rootdata.{under_i} != 0l && y.{yvel_i} <= 0.0) then
+  if (Cvode.Roots.get rootdata under_i && y.{yvel_i} <= 0.0) then
     (print_endline "hit ground!";
      y.{yvel_i} <- (-0.8 *. y.{yvel_i});
      Cvode.reinit s t y)
 
-let s = Cvode.init Cvode.Adams Cvode.Functional f (1, g) y
+let s = Cvode.init Cvode.Adams Cvode.Functional f (n_roots, g) y
 
 let trace = ref false
 let log = ref false

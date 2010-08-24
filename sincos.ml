@@ -13,7 +13,7 @@ let g t y gout =
 let y = Cvode.of_array [| 0.0; 0.0; 0.0 |]
 
 let s = Cvode.init Cvode.Adams Cvode.Functional f (2, g) y
-let rootdata = Cvode.int_array 2
+let rootdata = Cvode.Roots.create 2
 
 let _ =
   Cvode.print_results 0.0 y;
@@ -22,7 +22,7 @@ let _ =
         Cvode.print_results t' y;
         if (roots) then begin
           Cvode.get_roots s rootdata;
-          Cvode.print_roots rootdata
+          Cvode.Roots.print rootdata
         end
   done
 

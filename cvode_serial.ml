@@ -4,16 +4,16 @@ let kind = Bigarray.float64
 let layout = Bigarray.c_layout
 type c_array =
   (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
-type int_array =
-  (int32, Bigarray.int32_elt, Bigarray.c_layout) Bigarray.Array1.t
+let empty = Bigarray.Array1.create kind layout 0
 
 type val_array = c_array
 type der_array = c_array
-type root_array = c_array
+type rootval_array = c_array
 
 let create = Bigarray.Array1.create kind layout
 let of_array = Bigarray.Array1.of_array kind layout
-let int_array = Bigarray.Array1.create Bigarray.int32 layout
+
+let fill = Bigarray.Array1.fill
 
 let length = Bigarray.Array1.dim
 
@@ -24,12 +24,31 @@ let print_results t v =
   done;
   print_newline ()
 
-let print_roots v =
-  let found = ref false in
-  for i = 0 to (length v - 1) do
-    if (v.{i} <> 0l) then (Printf.printf " root-%03i" i; found := true)
-  done;
-  if (!found) then print_newline ()
+(* root arrays *)
+
+module Roots =
+  struct
+    type t = (int32, Bigarray.int32_elt, Bigarray.c_layout) Bigarray.Array1.t
+
+    let create = Bigarray.Array1.create Bigarray.int32 layout
+    let empty = create 0
+
+    let get roots i = roots.{i} <> 0l
+
+    let set a i v = Bigarray.Array1.set a i (if v then 1l else 0l)
+
+    let print v =
+      let isroot = get v in
+      let found = ref false in
+      for i = 0 to (length v - 1) do
+        if (isroot i) then (Printf.printf " root-%03i" i; found := true)
+      done;
+      if (!found) then print_newline ()
+
+    let length = Bigarray.Array1.dim
+
+    let reset v = Bigarray.Array1.fill v 0l
+  end
 
 let no_roots = (0, (fun _ _ _ -> 0))
 
@@ -101,7 +120,7 @@ external reinit : session -> float -> val_array -> unit
 external set_tolerances : session -> float -> c_array -> unit
     = "c_set_tolerances"
 
-external get_roots : session -> int_array -> unit
+external get_roots : session -> Roots.t -> unit
     = "c_get_roots"
 
 external free : session -> unit

@@ -4,19 +4,29 @@ val kind : (float, Bigarray.float64_elt) Bigarray.kind
 val layout : Bigarray.c_layout Bigarray.layout
 type c_array =
   (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
-type int_array =
-  (int32, Bigarray.int32_elt, Bigarray.c_layout) Bigarray.Array1.t
+val empty : c_array
 
 type val_array = c_array
 type der_array = c_array
-type root_array = c_array
+type rootval_array = c_array
 
 val create : int -> c_array
 val of_array : float array -> c_array 
-val int_array : int -> int_array 
+val fill : c_array -> float -> unit
 
 val print_results : float -> c_array -> unit
-val print_roots : int_array -> unit
+
+module Roots :
+  sig
+    type t
+    val empty : t
+    val create : int -> t
+    val print : t -> unit
+    val get : t -> int -> bool
+    val set : t -> int -> bool -> unit
+    val length : t -> int 
+    val reset : t -> unit
+  end
 
 type lmm =
 | Adams
@@ -60,20 +70,20 @@ exception RootFuncFailure
 
 type session
 
-val no_roots : (int * (float -> val_array -> root_array -> int))
+val no_roots : (int * (float -> val_array -> Roots.t -> int))
 
 exception RecoverableFailure
 val init :
     lmm
     -> iter
     -> (float -> val_array -> der_array -> unit)
-    -> (int * (float -> val_array -> root_array -> unit))
+    -> (int * (float -> val_array -> rootval_array -> unit))
     -> val_array
     -> session
 
 val reinit : session -> float -> val_array -> unit
 val set_tolerances : session -> float -> c_array -> unit
-val get_roots : session -> int_array -> unit
+val get_roots : session -> Roots.t -> unit
 
 val advance : session -> float -> val_array -> float * bool
 val step : session -> float -> val_array -> float * bool
