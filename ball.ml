@@ -43,7 +43,7 @@ let g t y gout =
   let idx = lookup_limit y.{xpos_i} in
   gout.{under_i} <- y.{ypos_i} -. ground.(idx)
 
-let y = Cvode.create 4
+let y = Cvode.Carray.create 4
 let _ = y.{xpos_i} <- 0.0;
         y.{ypos_i} <- 10.0;
         y.{yvel_i} <- 0.0;
@@ -91,13 +91,13 @@ let args = [
 let _ =
   Arg.parse args (fun _ -> ()) "ball: simulate a ball bouncing down steps using sundials";
   if !show then Showball.start !trace (ground, ground_limits);
-  if !log then Cvode.print_results 0.0 y;
+  if !log then Cvode.Carray.print_with_time 0.0 y;
   let t = ref !t_delta in
   while (y.{xpos_i} < x_limit) do
     let (t', roots) = Cvode.advance s !t y in
         if (roots) then ball_event s t' y;
 
-        if !log then Cvode.print_results t' y;
+        if !log then Cvode.Carray.print_with_time t' y;
         if !show then Showball.show (y.{xpos_i}, y.{ypos_i});
         if !delay then real_time_delay ();
 

@@ -1,33 +1,38 @@
 (* Aug 2010, Timothy Bourke (INRIA) *)
 
-let kind = Bigarray.float64
-let layout = Bigarray.c_layout
-type c_array =
-  (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
-let empty = Bigarray.Array1.create kind layout 0
+module Carray =
+  struct
+    type t = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
 
-type val_array = c_array
-type der_array = c_array
-type rootval_array = c_array
+    let kind = Bigarray.float64
+    let layout = Bigarray.c_layout
+    type c_array =
+      (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
+    let empty = Bigarray.Array1.create kind layout 0
 
-let create = Bigarray.Array1.create kind layout
-let of_array = Bigarray.Array1.of_array kind layout
+    let create = Bigarray.Array1.create kind layout
+    let of_array = Bigarray.Array1.of_array kind layout
 
-let fill = Bigarray.Array1.fill
+    let fill = Bigarray.Array1.fill
 
-let length = Bigarray.Array1.dim
+    let length = Bigarray.Array1.dim
 
-let print_results t v =
-  Printf.printf "%.8f" t;
-  for i = 0 to (length v - 1) do
-    Printf.printf "\t%f" v.{i}
-  done;
-  print_newline ()
+    let print_with_time t v =
+      Printf.printf "%.8f" t;
+      for i = 0 to (length v - 1) do
+        Printf.printf "\t%f" v.{i}
+      done;
+      print_newline ()
+  end
+
+type val_array = Carray.t
+type der_array = Carray.t
+type rootval_array = Carray.t
 
 (* root arrays *)
 
 type int_array = (int32, Bigarray.int32_elt, Bigarray.c_layout) Bigarray.Array1.t
-let create_int_array = Bigarray.Array1.create Bigarray.int32 layout
+let create_int_array = Bigarray.Array1.create Bigarray.int32 Carray.layout
 
 module Roots =
   struct
@@ -43,7 +48,7 @@ module Roots =
     let print v =
       let isroot = get v in
       let found = ref false in
-      for i = 0 to (length v - 1) do
+      for i = 0 to (Carray.length v - 1) do
         if (isroot i) then (Printf.printf " root-%03i" i; found := true)
       done;
       if (!found) then print_newline ()
@@ -138,7 +143,7 @@ external neqs : session -> int
 external reinit : session -> float -> val_array -> unit
     = "c_reinit"
 
-external set_tolerances : session -> float -> c_array -> unit
+external set_tolerances : session -> float -> Carray.t -> unit
     = "c_set_tolerances"
 
 external get_roots : session -> Roots.t -> unit

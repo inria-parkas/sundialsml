@@ -1,20 +1,24 @@
 (* Aug 2010, Timothy Bourke (INRIA) *)
 
-val kind : (float, Bigarray.float64_elt) Bigarray.kind
-val layout : Bigarray.c_layout Bigarray.layout
-type c_array =
-  (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
-val empty : c_array
+module Carray :
+  sig
+    type t = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
 
-type val_array = c_array
-type der_array = c_array
-type rootval_array = c_array
+    val kind : (float, Bigarray.float64_elt) Bigarray.kind
+    val layout : Bigarray.c_layout Bigarray.layout
 
-val create : int -> c_array
-val of_array : float array -> c_array 
-val fill : c_array -> float -> unit
+    val empty : t
+    val create : int -> t
+    val of_array : float array -> t
+    val fill : t -> float -> unit
+    val length : t -> int
 
-val print_results : float -> c_array -> unit
+    val print_with_time : float -> t -> unit
+  end
+
+type val_array = Carray.t
+type der_array = Carray.t
+type rootval_array = Carray.t
 
 module Roots :
   sig
@@ -94,7 +98,7 @@ val nroots : session -> int
 val neqs : session -> int
 
 val reinit : session -> float -> val_array -> unit
-val set_tolerances : session -> float -> c_array -> unit
+val set_tolerances : session -> float -> Carray.t -> unit
 val get_roots : session -> Roots.t -> unit
 
 val advance : session -> float -> val_array -> float * bool
