@@ -50,9 +50,9 @@ type iter =
 | Functional
 
 type root_direction =
-| Rising
-| Falling
-| RisingAndFalling
+| Increasing
+| Decreasing
+| IncreasingOrDecreasing
 
 type error_details = {
   error_code : int;

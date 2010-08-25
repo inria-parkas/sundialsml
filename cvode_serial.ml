@@ -78,9 +78,9 @@ type iter =
 | Functional
 
 type root_direction =
-| Rising
-| Falling
-| RisingAndFalling
+| Increasing
+| Decreasing
+| IncreasingOrDecreasing
 
 type error_details = {
   error_code : int;
@@ -236,15 +236,16 @@ external set_root_direction' : session -> int_array -> unit
 
 let int32_of_root_direction x =
   match x with
-  | Rising -> 1l
-  | Falling -> -1l
-  | RisingAndFalling -> 0l
+  | Increasing -> 1l
+  | Decreasing -> -1l
+  | IncreasingOrDecreasing -> 0l
     
 let set_root_direction s rda =
   let n = nroots s in
   let rdirs = create_int_array n in
   if (n > Array.length rda)
-    then Bigarray.Array1.fill rdirs (int32_of_root_direction RisingAndFalling);
+    then Bigarray.Array1.fill rdirs
+            (int32_of_root_direction IncreasingOrDecreasing);
   Array.iteri (fun i v -> rdirs.{i} <- int32_of_root_direction v) rda;
   set_root_direction' s rdirs
 
