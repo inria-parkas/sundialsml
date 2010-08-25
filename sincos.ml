@@ -19,14 +19,18 @@ let _ =
   Cvode.Carray.print_with_time 0.0 y;
   (* for i = 1 to 200 do *)
   let t = ref 0.1 in
-  while true do
-    let (t', roots) = Cvode.advance s !t y in
+  let keep_going = ref true in
+  while !keep_going do
+    let (t', result) = Cvode.advance s !t y in
         Cvode.Carray.print_with_time t' y;
         t := t' +. 0.1;
-        if (roots) then begin
-          Cvode.get_roots s rootdata;
-          Cvode.Roots.print rootdata
-        end
+        match result with
+        | Cvode.RootsFound -> begin
+              Cvode.get_roots s rootdata;
+              Cvode.Roots.print rootdata
+            end
+        | Cvode.StopTimeReached -> keep_going := false
+        | Cvode.Continue -> ();
   done
 
 let _ = Cvode.free s

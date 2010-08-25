@@ -53,6 +53,11 @@ type iter =
 | Newton of linear_solver
 | Functional
 
+type solver_result =
+| Continue
+| RootsFound
+| StopTimeReached
+
 type root_direction =
 | Increasing
 | Decreasing
@@ -85,6 +90,8 @@ type session
 
 val no_roots : (int * (float -> val_array -> Roots.t -> int))
 
+(* Throw inside the f callback if the derivatives cannot be calculated at the
+   given time. *)
 exception RecoverableFailure
 
 val init :
@@ -101,8 +108,8 @@ val reinit : session -> float -> val_array -> unit
 val set_tolerances : session -> float -> Carray.t -> unit
 val get_roots : session -> Roots.t -> unit
 
-val advance : session -> float -> val_array -> float * bool
-val step : session -> float -> val_array -> float * bool
+val advance : session -> float -> val_array -> float * solver_result
+val step : session -> float -> val_array -> float * solver_result
 val free : session -> unit
 
 type integrator_stats = {

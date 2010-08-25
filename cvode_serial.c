@@ -47,6 +47,10 @@
 #define VARIANT_LINEAR_SOLVER_SPBCG	    3
 #define VARIANT_LINEAR_SOLVER_SPTFQMR	    4
 
+#define VARIANT_SOLVER_RESULT_CONTINUE		0
+#define VARIANT_SOLVER_RESULT_ROOTSFOUND	1
+#define VARIANT_SOLVER_RESULT_STOPTIMEREACHED	2
+
 #define RECORD_INTEGRATOR_STATS_STEPS			0
 #define RECORD_INTEGRATOR_STATS_RHS_EVALS		1
 #define RECORD_INTEGRATOR_STATS_LINEAR_SOLVER_SETUPS	2
@@ -582,7 +586,19 @@ static value solver(value vdata, value nextt, value y, int onestep)
 
     value r = caml_alloc_tuple(2);
     Store_field(r, 0, caml_copy_double(t));
-    Store_field(r, 1, flag == CV_ROOT_RETURN ? Val_true : Val_false);
+
+    switch (flag) {
+    case CV_ROOT_RETURN:
+	Store_field(r, 1, Val_int(VARIANT_SOLVER_RESULT_ROOTSFOUND));
+	break;
+
+    case CV_TSTOP_RETURN:
+	Store_field(r, 1, Val_int(VARIANT_SOLVER_RESULT_STOPTIMEREACHED));
+	break;
+
+    default:
+	Store_field(r, 1, Val_int(VARIANT_SOLVER_RESULT_CONTINUE));
+    }
 
     CAMLreturn(r);
 }

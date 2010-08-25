@@ -10,6 +10,7 @@ clean)
     rm -f cvode_serial.cmi cvode_serial.cmo
     rm -f ball.cmi ball.cmo
     rm -f showball.cmi showball.cmo showball.cma
+    rm -f solvelucy.cmi solvelucy.cmo
     rm -f cvode_serial.cma
     rm -f sincos.cmi sincos.cmo
     rm -f sincos ball

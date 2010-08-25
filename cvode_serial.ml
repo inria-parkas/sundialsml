@@ -82,6 +82,11 @@ type iter =
 | Newton of linear_solver
 | Functional
 
+type solver_result =
+| Continue
+| RootsFound
+| StopTimeReached
+
 type root_direction =
 | Increasing
 | Decreasing
@@ -111,10 +116,12 @@ exception RootFuncFailure
 
 type session
 exception RecoverableFailure
+exception StopTimeReached
 let _ =
   List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
   [
     ("cvode_RecoverableFailure",      RecoverableFailure);
+    ("cvode_StopTimeReached",         StopTimeReached);
     ("cvode_IllInput",                IllInput);
     ("cvode_TooClose",                TooClose);
     ("cvode_TooMuchWork",             TooMuchWork);
@@ -152,10 +159,10 @@ external get_roots : session -> Roots.t -> unit
 external free : session -> unit
     = "c_free"
 
-external advance : session -> float -> val_array -> float * bool
+external advance : session -> float -> val_array -> float * solver_result
     = "c_advance"
 
-external step : session -> float -> val_array -> float * bool
+external step : session -> float -> val_array -> float * solver_result
     = "c_step"
 
 let init lmm iter f (num_roots, roots) y0 =
