@@ -26,11 +26,14 @@ let print_results t v =
 
 (* root arrays *)
 
+type int_array = (int32, Bigarray.int32_elt, Bigarray.c_layout) Bigarray.Array1.t
+let create_int_array = Bigarray.Array1.create Bigarray.int32 layout
+
 module Roots =
   struct
-    type t = (int32, Bigarray.int32_elt, Bigarray.c_layout) Bigarray.Array1.t
+    type t = int_array
 
-    let create = Bigarray.Array1.create Bigarray.int32 layout
+    let create = create_int_array
     let empty = create 0
 
     let get roots i = roots.{i} <> 0l
@@ -74,6 +77,18 @@ type iter =
 | Newton of linear_solver
 | Functional
 
+type root_direction =
+| Rising
+| Falling
+| RisingAndFalling
+
+type error_details = {
+  error_code : int;
+  module_name : string;
+  function_name : string;
+  error_message : string;
+}
+
 exception IllInput
 exception TooClose
 exception TooMuchWork
@@ -114,6 +129,12 @@ let _ =
 external init' : lmm -> iter -> val_array -> int -> session
     = "c_init"
 
+external nroots : session -> int
+    = "c_nroots"
+
+external neqs : session -> int
+    = "c_neqs"
+
 external reinit : session -> float -> val_array -> unit
     = "c_reinit"
 
@@ -136,4 +157,102 @@ let init lmm iter f (num_roots, roots) y0 =
   Callback.register "cvode_serial_callback_f" f;
   Callback.register "cvode_serial_callback_roots" roots;
   init' lmm iter y0 num_roots
+
+type integrator_stats = {
+  steps : int;
+  rhs_evals : int;
+  linear_solver_setups : int;
+  error_test_failures : int;
+  last_internal_order : int;
+  next_internal_order : int;
+  initial_step_size : float;
+  last_step_size : float;
+  next_step_size : float;
+  internal_time : float
+}
+
+external integrator_stats : session -> integrator_stats
+    = "c_integrator_stats"
+
+external last_step_size : session -> float
+    = "c_last_step_size"
+
+external next_step_size : session -> float
+    = "c_next_step_size"
+
+let print_integrator_stats s =
+  let stats = integrator_stats s
+  in let _ = print_endline "--"
+  in
+    Printf.printf "steps = %d\n"                stats.steps;
+    Printf.printf "rhs_evals = %d\n"            stats.rhs_evals;
+    Printf.printf "linear_solver_setups = %d\n" stats.linear_solver_setups;
+    Printf.printf "error_test_failures = %d\n"  stats.error_test_failures;
+    Printf.printf "last_internal_order = %d\n"  stats.last_internal_order;
+    Printf.printf "next_internal_order = %d\n"  stats.next_internal_order;
+    Printf.printf "initial_step_size = %e\n"    stats.initial_step_size;
+    Printf.printf "last_step_size = %e\n"       stats.last_step_size;
+    Printf.printf "next_step_size = %e\n"       stats.next_step_size;
+    Printf.printf "internal_time = %e\n"        stats.internal_time;
+
+external set_error_file : session -> string -> bool -> unit 
+    = "c_set_error_file"
+
+external set_error_handler' : session -> unit 
+    = "c_set_error_handler"
+let set_error_handler s errh =
+  Callback.register "cvode_serial_callback_errh" errh;
+  set_error_handler' s
+
+external set_max_ord : session -> int -> unit 
+    = "c_set_max_ord"
+external set_max_num_steps : session -> int -> unit 
+    = "c_set_max_num_steps"
+external set_max_hnil_warns : session -> int -> unit 
+    = "c_set_max_hnil_warns"
+external set_stability_limit_detection : session -> bool -> unit 
+    = "c_set_stability_limit_detection"
+external set_initial_step_size : session -> float -> unit 
+    = "c_set_initial_step_size"
+external set_min_abs_step_size : session -> float -> unit 
+    = "c_set_min_abs_step_size"
+external set_max_abs_step_size : session -> float -> unit 
+    = "c_set_max_abs_step_size"
+external set_stop_time : session -> float -> unit 
+    = "c_set_stop_time"
+external set_max_error_test_failures : session -> int -> unit 
+    = "c_set_max_error_test_failures"
+external set_max_nonlinear_iterations : session -> int -> unit 
+    = "c_set_max_nonlinear_iterations"
+external set_max_convergence_failures : session -> int -> unit 
+    = "c_set_max_convergence_failures"
+external set_nonlinear_convergence_coeffficient : session -> float -> unit 
+    = "c_set_nonlinear_convergence_coeffficient"
+external set_nonlinear_iteration_type : session -> iter -> unit 
+    = "c_set_nonlinear_iteration_type"
+
+external set_root_direction' : session -> int_array -> unit 
+    = "c_set_root_direction"
+
+let int32_of_root_direction x =
+  match x with
+  | Rising -> 1l
+  | Falling -> -1l
+  | RisingAndFalling -> 0l
+    
+let set_root_direction s rda =
+  let n = nroots s in
+  let rdirs = create_int_array n in
+  if (n > Array.length rda)
+    then Bigarray.Array1.fill rdirs (int32_of_root_direction RisingAndFalling);
+  Array.iteri (fun i v -> rdirs.{i} <- int32_of_root_direction v) rda;
+  set_root_direction' s rdirs
+
+let set_all_root_directions s rd =
+  let rdirs = create_int_array (nroots s) in
+  Bigarray.Array1.fill rdirs (int32_of_root_direction rd);
+  set_root_direction' s rdirs
+
+external disable_inactive_root_warnings : session -> unit 
+    = "c_disable_inactive_root_warnings"
 

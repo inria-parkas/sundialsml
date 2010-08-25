@@ -36,7 +36,7 @@ clean)
 
     echo "* sincos.ml -> sincos"
     ocamlc -o sincos -I /usr/local/lib -I . \
-	bigarray.cma cvode_serial.cma sincos.ml || exit 1
+	unix.cma bigarray.cma cvode_serial.cma sincos.ml || exit 1
 
     echo "* showball.mli -> showball.cmi"
     ocamlc showball.mli || exit 1
