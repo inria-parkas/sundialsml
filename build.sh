@@ -13,7 +13,8 @@ clean)
     rm -f solvelucy.cmi solvelucy.cmo
     rm -f cvode_serial.cma
     rm -f sincos.cmi sincos.cmo
-    rm -f sincos ball
+    rm -f sincos_lucyf.cmi sincos_lucyf.cmo
+    rm -f sincos sincos_lucyf ball
     ;;
 
 *)
@@ -35,9 +36,19 @@ clean)
 	-cclib -lsundials_nvecserial \
 	-cclib -lcvode_serial || exit 1
 
+    echo "* solvelucy.mli -> solvelucy.cmi"
+    ocamlc solvelucy.mli || exit 1
+
+    echo "* solvelucy.ml -> solvelucy.cmo"
+    ocamlc -c solvelucy.ml || exit 1
+
     echo "* sincos.ml -> sincos"
     ocamlc -o sincos -I /usr/local/lib -I . \
 	unix.cma bigarray.cma cvode_serial.cma sincos.ml || exit 1
+
+    echo "* sincos_lucyf.ml -> sincos_lucyf"
+    ocamlc -o sincos_lucyf -I /usr/local/lib -I . \
+	unix.cma bigarray.cma cvode_serial.cma solvelucy.cmo sincos_lucyf.ml || exit 1
 
     echo "* showball.mli -> showball.cmi"
     ocamlc showball.mli || exit 1

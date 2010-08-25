@@ -194,7 +194,6 @@ external next_step_size : session -> float
 
 let print_integrator_stats s =
   let stats = integrator_stats s
-  in let _ = print_endline "--"
   in
     Printf.printf "steps = %d\n"                stats.steps;
     Printf.printf "rhs_evals = %d\n"            stats.rhs_evals;
@@ -268,4 +267,26 @@ let set_all_root_directions s rd =
 
 external disable_inactive_root_warnings : session -> unit 
     = "c_disable_inactive_root_warnings"
+
+(*
+let print_stats s =
+  let in_stats = integrator_stats s
+  (* and ls_stats = TODO *)
+  (* and jac_evals = TODO CVDlsGetNumJacEvals *)
+  (* and root_evals = TODO CVodeGetNumGEvals *)
+  and printf = Printf.printf
+  in
+    printf("\nFinal Statistics:\n");
+    printf "nst = %-6ld nfe  = %-6ld nsetups = %-6ld nfeLS = %-6ld nje = %ld\n"
+      in_stats.steps
+      in_stats.rhs_evals
+      in_stats.linear_solver_setups
+      ls_stats.rhs_evals
+      jac_evals;
+    printf "nni = %-6ld ncfn = %-6ld netf = %-6ld nge = %ld\n\n"
+      ls_stats.iterations
+      ls_stats.convergence_failures
+      in_stats.error_test_failures
+      root_evals
+*) 
 

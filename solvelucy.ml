@@ -43,7 +43,7 @@ let calculate_roots ri ro ro' =
   in
   f ((Carray.length ro) - 1)
 
-let sundialify tmax (lf : lucyf) (advtime : float -> float) (n_cstates, n_roots) =
+let sundialify tmax lf advtime n_cstates n_roots =
   let cstates    = Carray.create n_cstates
   and cder       = Carray.create n_cstates
 
@@ -76,19 +76,18 @@ let sundialify tmax (lf : lucyf) (advtime : float -> float) (n_cstates, n_roots)
 
   and continuous s t =
     (* CONTINUOUS CALL(S) *)
-    let (t', roots_found) = Cvode.advance s t cstates
+    let (t', result) = Cvode.advance s t cstates
     in
-      if roots_found
-      then begin
-        Cvode.get_roots s roots_in;
-        calculate_roots_out t';
-        (* NB: we are forced to recalculate the value of the root functions as
-               they cannot be requested from the solver. *)
-        discrete s t' (roots_out, roots_out')
-      end
-      else begin
-        continuous s (advtime t')
-      end
+      match result with
+      | Cvode.RootsFound -> begin
+            Cvode.get_roots s roots_in;
+            calculate_roots_out t';
+            (* NB: we are forced to recalculate the value of the root functions as
+                   they cannot be requested from the solver. *)
+            discrete s t' (roots_out, roots_out')
+          end
+      | Cvode.Continue -> continuous s (advtime t')
+      | Cvode.StopTimeReached -> finish s t'
 
   and discrete s t (roots_out, roots_out') =
     (* DISCRETE CALL *)
