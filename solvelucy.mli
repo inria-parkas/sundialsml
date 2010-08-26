@@ -1,11 +1,6 @@
 
-type solvemode =
-| Init          (* set the initial continuous state values *)
-| Discrete      (* handle zero-crossings *)
-| Continuous    (* solve discrete states *)
-
 type lucyf =
-   solvemode
+   bool                         (* true: init, false: continuous/discrete *)
   -> Cvode_serial.Roots.t       (* solvemode = Discrete
                                      IN: zero crossings
                                 *)
@@ -38,19 +33,24 @@ type lucyf =
                                      false: quit simulation
                                 *)
 
-(* In brief, by mode:
-
-   mode == Init
-        calculate: y
-
-   mode == Discrete
-        using: rin
-        calculate: y, rout
-        return: true (to continue) or false (to terminate)
-
-   mode == Continuous
-        using: y
-        calculate: der, rout
+(* The mode is determined by:
+ *   init = true --> mode == Init
+ *   init = false && forall i. roots[i] == false --> mode == Continuous
+ *   init = false && exists i. roots[i] == true  --> mode == Discrete
+ *
+ * In brief, by mode:
+ *
+ * mode == Init
+ *      calculate: y
+ *
+ * mode == Discrete
+ *      using: rin
+ *      calculate: y, rout
+ *      return: true (to continue) or false (to terminate)
+ *
+ * mode == Continuous
+ *      using: y
+ *      calculate: der, rout
  *)
 
 val sundialify :

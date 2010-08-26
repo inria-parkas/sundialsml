@@ -3,81 +3,59 @@ module Cvode = Cvode_serial
 module Roots = Cvode.Roots
 module Carray = Cvode.Carray
 
-type solvemode =
-| Init          (* set the initial continuous state values *)
-| Discrete      (* handle zero-crossings *)
-| Continuous    (* solve discrete states *)
-
 type lucyf =
-   solvemode
+   bool
   -> Roots.t
   -> Cvode.val_array
   -> Cvode.der_array
   -> Cvode.rootval_array
   -> bool
 
-(* Compare roots_in to roots_in' and return:
-   true -> new zero-crossings have occurred
-   false -> no new zero-crossings have occurred
- *)
-let roots_policy roots_in roots_in' =
-  let rin  = Roots.get roots_in
-  and rin' = Roots.get roots_in'
-  in
-  let rec check i =
-    if i < 0 then false
-    else if rin i <> rin' i then true
-    else check (i - 1)
-  in
-  check ((min (Roots.length roots_in) (Roots.length roots_in')) - 1)
-
-(* calculate ri by comparing ro (before) to ro (after). *)
-let calculate_roots ri ro ro' =
-  let rin = Roots.set ri in
-  let rec f i =
-    if i < 0 then ()
-    else begin
-      rin i (ro.{i} < 0.0 && ro'.{i} >= 0.0); (* TODO: check definition *)
-      f (i - 1)
-    end
-  in
-  f ((Carray.length ro) - 1)
-
-let sundialify tmax lf advtime n_cstates n_roots =
+let sundialify tmax (lf : lucyf) advtime n_cstates n_roots =
   let cstates    = Carray.create n_cstates
   and cder       = Carray.create n_cstates
 
   and roots_in   = Roots.create n_roots
-  and roots_in'  = Roots.create n_roots
 
   and roots_out  = Carray.create n_roots
   and roots_out' = Carray.create n_roots
   in
 
   let f t cs ds =
-    ignore (lf Continuous Roots.empty cs ds Carray.empty);
+    ignore (lf false roots_in cs ds roots_out)
   and g t cs rs =
-    ignore (lf Continuous Roots.empty cs Carray.empty rs);
+    ignore (lf false roots_in cs cder rs)
   in
 
   let calculate_roots_out t = g t cstates roots_out in
 
+  (* calculate ri by comparing ro (before) to ro (after). *)
+  let calculate_roots_in ro ro' =
+    let rin = Roots.set roots_in in
+    for i = 0 to Carray.length ro - 1 do
+      rin i (ro.{i} < 0.0 && ro'.{i} >= 0.0);
+    done
+  in
+
   let rec init () =
     Carray.fill cder 0.0;
-    Roots.reset roots_in;
 
     (* INIT CALL *)
-    ignore (lf Init Roots.empty cstates Carray.empty Carray.empty);
+    ignore (lf true roots_in cstates cder roots_out);
 
     let s = Cvode.init Cvode.Adams Cvode.Functional f (n_roots, g) cstates in
     Cvode.set_all_root_directions s Cvode.Increasing;
     match tmax with None -> () | Some t -> Cvode.set_stop_time s t;
+    Roots.reset roots_in;
     continuous s (advtime 0.0)
 
   and continuous s t =
     (* CONTINUOUS CALL(S) *)
+    (* INV: forall i. roots_in[i] = false *)
     let (t', result) = Cvode.advance s t cstates
     in
+      print_string "C: "; (* XXX *)
+      Carray.print_with_time t' cstates; (* TODO: how to handle display in general *)
       match result with
       | Cvode.RootsFound -> begin
             Cvode.get_roots s roots_in;
@@ -91,13 +69,18 @@ let sundialify tmax lf advtime n_cstates n_roots =
 
   and discrete s t (roots_out, roots_out') =
     (* DISCRETE CALL *)
-    if lf Discrete roots_in cstates Carray.empty roots_out' then begin
-      calculate_roots roots_in' roots_out roots_out';
+    (* INV: exists i. roots_in[i] = true *)
+    print_string "R: "; Roots.print roots_in; (* TODO: how to handle display in general *)
+    if lf false roots_in cstates cder roots_out' then begin
+      print_string "D: "; (* XXX *)
+      Carray.print_with_time t cstates; (* TODO: how to handle display in general *)
+      calculate_roots_in roots_out roots_out';
 
-      if roots_policy roots_in roots_in'
+      if Roots.exists roots_in
       then discrete s t (roots_out', roots_out) (* NB: order swapped *)
       else begin
         Cvode.reinit s t cstates;
+        Roots.reset roots_in;
         continuous s (advtime t)
       end
     end

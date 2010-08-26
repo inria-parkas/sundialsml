@@ -47,15 +47,23 @@ module Roots =
 
     let print v =
       let isroot = get v in
-      let found = ref false in
       for i = 0 to (Carray.length v - 1) do
-        if (isroot i) then (Printf.printf " root-%03i" i; found := true)
+        if i > 0 then print_string " "; 
+        print_string (if (isroot i) then "1" else "0")
       done;
-      if (!found) then print_newline ()
+      print_newline ()
 
     let length = Bigarray.Array1.dim
-
     let reset v = Bigarray.Array1.fill v 0l
+
+    let fold_left f a v =
+      let rec check (i, a) =
+        if i < 0 then a
+        else check (i - 1, f a v.{i})
+      in
+      check (Bigarray.Array1.dim v - 1, a)
+
+    let exists = fold_left (fun a x -> a || x <> 0l) false
   end
 
 let no_roots = (0, (fun _ _ _ -> 0))

@@ -30,6 +30,7 @@ module Roots :
     val set : t -> int -> bool -> unit
     val length : t -> int 
     val reset : t -> unit
+    val exists : t -> bool
   end
 
 type lmm =
