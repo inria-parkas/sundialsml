@@ -122,6 +122,10 @@ exception RepeatedRhsFuncErr
 exception UnrecoverableRhsFuncErr
 exception RootFuncFailure
 
+exception BadK
+exception BadT
+exception BadDky
+
 type session
 exception RecoverableFailure
 exception StopTimeReached
@@ -129,6 +133,7 @@ let _ =
   List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
   [
     ("cvode_RecoverableFailure",      RecoverableFailure);
+
     ("cvode_StopTimeReached",         StopTimeReached);
     ("cvode_IllInput",                IllInput);
     ("cvode_TooClose",                TooClose);
@@ -144,9 +149,45 @@ let _ =
     ("cvode_RepeatedRhsFuncErr",      RepeatedRhsFuncErr);
     ("cvode_UnrecoverableRhsFuncErr", UnrecoverableRhsFuncErr);
     ("cvode_RootFuncFailure",         RootFuncFailure);
+
+    ("cvode_BadK",                    BadK);
+    ("cvode_BadT",                    BadT);
+    ("cvode_BadDky",                  BadDky);
   ]
 
-external init' : lmm -> iter -> val_array -> int -> session
+(* passing callbacks to c *)
+
+type handler =
+| RhsFn
+| RootsFn
+| ErrorHandler
+| JacFn
+| BandJacFn
+| PreSetupFn
+| PreSolveFn
+| JacTimesFn
+
+let handler_name h = match h with
+  | RhsFn        -> "cvode_serial_callback_rhsfn"
+  | RootsFn      -> "cvode_serial_callback_rootsfn"
+  | ErrorHandler -> "cvode_serial_callback_errorhandler"
+  | JacFn        -> "cvode_serial_callback_jacfn"
+  | BandJacFn    -> "cvode_serial_callback_bandjacfn"
+  | PreSetupFn   -> "cvode_serial_callback_presetupfn"
+  | PreSolveFn   -> "cvode_serial_callback_presolvefn"
+  | JacTimesFn   -> "cvode_serial_callback_jactimesfn"
+
+external external_register_handler : session -> handler -> unit
+    = "c_register_handler"
+
+let register_handler s h f =
+  Callback.register (handler_name h) f;
+  external_register_handler s h
+
+(* interface *)
+
+external external_init
+    : lmm -> iter -> val_array -> int -> float -> session
     = "c_init"
 
 external nroots : session -> int
@@ -173,10 +214,16 @@ external advance : session -> float -> val_array -> float * solver_result
 external step : session -> float -> val_array -> float * solver_result
     = "c_step"
 
-let init lmm iter f (num_roots, roots) y0 =
-  Callback.register "cvode_serial_callback_f" f;
-  Callback.register "cvode_serial_callback_roots" roots;
-  init' lmm iter y0 num_roots
+external get_dky : session -> float -> int -> Carray.t -> unit
+    = "c_get_dky"
+
+let init' lmm iter f (num_roots, roots) y0 t0 =
+  let s = external_init lmm iter y0 num_roots t0 in
+  register_handler s RhsFn f;
+  register_handler s RootsFn roots;
+  s
+
+let init lmm iter f roots y0 = init' lmm iter f roots y0 0.0
 
 type integrator_stats = {
   steps : int;
@@ -217,11 +264,12 @@ let print_integrator_stats s =
 external set_error_file : session -> string -> bool -> unit 
     = "c_set_error_file"
 
-external set_error_handler' : session -> unit 
-    = "c_set_error_handler"
+external enable_error_handler : session -> unit 
+    = "c_enable_error_handler"
+
 let set_error_handler s errh =
-  Callback.register "cvode_serial_callback_errh" errh;
-  set_error_handler' s
+  register_handler s ErrorHandler errh;
+  enable_error_handler s
 
 external set_max_ord : session -> int -> unit 
     = "c_set_max_ord"
@@ -297,4 +345,107 @@ let print_stats s =
       in_stats.error_test_failures
       root_evals
 *) 
+
+(* direct linear solvers optional input functions *)
+
+(* note: uses DENSE_ELEM rather than the more efficient DENSE_COL. *)
+module Densematrix =
+  struct
+    type t
+
+    external get : t -> (int * int) -> float
+        = "c_densematrix_get"
+
+    external set : t -> (int * int) -> float -> unit
+        = "c_densematrix_set"
+  end
+
+(* note: uses BAND_ELEM rather than the more efficient BAND_COL/BAND_COL_ELEM *)
+module Bandmatrix =
+  struct
+    type t
+
+    external get : t -> (int * int) -> float
+        = "c_bandmatrix_get"
+
+    external set : t -> (int * int) -> float -> unit
+        = "c_bandmatrix_set"
+  end
+
+type 't jacobian_arg =
+  {
+    jac_t   : float;
+    jac_y   : val_array;
+    jac_fy  : val_array;
+    jac_tmp : 't 
+  }
+
+type triple_tmp = val_array * val_array * val_array
+
+external enable_dense_jacobian_fn : session -> unit
+    = "c_enable_dense_jacobian_fn"
+
+let set_dense_jacobian_fn s f =
+    register_handler s JacFn f;
+    enable_dense_jacobian_fn s
+
+external enable_band_jacobian_fn : session -> unit
+    = "c_enable_band_jacobian_fn"
+
+let set_band_jacobian_fn s f =
+    register_handler s BandJacFn f;
+    enable_band_jacobian_fn s
+
+(* iterative linear solvers optional input functions *)
+module Spils =
+  struct
+    type solve_arg =
+      {
+        rhs   : val_array;
+        gamma : float;
+        delta : float;
+        left  : bool; (* true: left, false: right *)
+      }
+
+    type single_tmp = val_array
+
+    type preconditioning_type =
+    | PrecNone
+    | PrecLeft
+    | PrecRight
+    | PrecBoth
+
+    type gramschmidt_type =
+    | ModifiedGS
+    | ClassicalGS
+
+    external enable_preconditioner_fns : session -> unit
+        = "c_enable_preconditioner_fns"
+
+    let set_preconditioner_fns s fsetup fsolve =
+        register_handler s PreSetupFn fsetup;
+        register_handler s PreSolveFn fsolve;
+        enable_preconditioner_fns s
+
+    external enable_jacobian_times_vector_fn : session -> unit
+        = "c_enable_jacobian_times_vector_fn"
+
+    let set_jacobian_times_vector_fn s f =
+        register_handler s JacTimesFn f;
+        enable_jacobian_times_vector_fn s
+
+    external set_preconditioning_type : session -> preconditioning_type -> unit
+        = "c_set_preconditioning_type"
+
+    external set_gramschmidt_orthogonalization :
+        session -> gramschmidt_type -> unit
+        = "c_set_gramschmidt_orthogonalization"
+
+    external set_eps_linear_convergence_factor : session -> float -> unit
+        = "c_set_eps_linear_convergence_factor"
+
+    external set_max_subspace_dimension : session -> int -> unit
+        = "c_set_max_subspace_dimension"
+
+  end
 

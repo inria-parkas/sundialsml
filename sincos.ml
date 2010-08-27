@@ -12,8 +12,11 @@ let g t y gout =
 
 let y = Cvode.Carray.of_array [| 0.0; 0.0; 0.0 |]
 
+let _ = print_endline "sincos: 00" (* XXX *)
 let s = Cvode.init Cvode.Adams Cvode.Functional f (2, g) y
+let _ = print_endline "sincos: 01" (* XXX *)
 let rootdata = Cvode.Roots.create 2
+let _ = print_endline "sincos: 02" (* XXX *)
 
 let _ =
   Cvode.Carray.print_with_time 0.0 y;
@@ -21,6 +24,7 @@ let _ =
   let t = ref 0.1 in
   let keep_going = ref true in
   while !keep_going do
+    let _ = print_endline "sincos: 03" in (* XXX *)
     let (t', result) = Cvode.advance s !t y in
         Cvode.Carray.print_with_time t' y;
         t := t' +. 0.1;
