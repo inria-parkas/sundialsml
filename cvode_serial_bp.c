@@ -298,3 +298,172 @@ CAMLprim value c_bandmatrix_set(value vmatrix, value vij, value v)
     CAMLreturn(caml_copy_double(v));
 }
 
+
+CAMLprim value c_num_stability_limit_order_reductions(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+    void *cvode_mem = ml_cvode_mem(vcvode_mem);
+
+    long int r;
+    int flag = CVodeGetNumStabLimOrderReds(cvode_mem, &r);
+    ml_cvode_check_flag("CVodeGetNumStabLimOrderReds", flag, NULL);
+
+    CAMLreturn(Val_long(r));
+}
+
+CAMLprim value c_tolerance_scale_factor(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+    void *cvode_mem = ml_cvode_mem(vcvode_mem);
+
+    realtype r;
+    int flag = CVodeGetTolScaleFactor(cvode_mem, &r);
+    ml_cvode_check_flag("CVodeGetTolScaleFactor", flag, NULL);
+
+    CAMLreturn(caml_copy_double(r));
+}
+
+CAMLprim value c_nonlinear_solver_iterations(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+    void *cvode_mem = ml_cvode_mem(vcvode_mem);
+
+    long int r;
+    int flag = CVodeGetNumNonlinSolvIters(cvode_mem, &r);
+    ml_cvode_check_flag("CVodeGetNumNonlinSolvIters", flag, NULL);
+
+    CAMLreturn(Val_long(r));
+}
+
+CAMLprim value c_nonlinear_solver_convergence_failures(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+    void *cvode_mem = ml_cvode_mem(vcvode_mem);
+
+    long int r;
+    int flag = CVodeGetNumNonlinSolvConvFails(cvode_mem, &r);
+    ml_cvode_check_flag("CVodeGetNumNonlinSolvConvFails", flag, NULL);
+
+    CAMLreturn(Val_long(r));
+}
+
+CAMLprim value c_root_evals(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+    void *cvode_mem = ml_cvode_mem(vcvode_mem);
+
+    long int r;
+    int flag = CVodeGetNumGEvals(cvode_mem, &r);
+    ml_cvode_check_flag("CVodeGetNumGEvals", flag, NULL);
+
+    CAMLreturn(Val_long(r));
+}
+
+CAMLprim value c_dls_jacobian_evals(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+    void *cvode_mem = ml_cvode_mem(vcvode_mem);
+
+    long int r;
+    int flag = CVDlsGetNumJacEvals(cvode_mem, &r);
+    ml_cvode_check_flag("CVDlsGetNumJacEvals", flag, NULL);
+
+    CAMLreturn(Val_long(r));
+}
+
+CAMLprim value c_dls_rhs_evals(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+    void *cvode_mem = ml_cvode_mem(vcvode_mem);
+
+    long int r;
+    int flag = CVDlsGetNumRhsEvals(cvode_mem, &r);
+    ml_cvode_check_flag("CVDlsGetNumRhsEvals", flag, NULL);
+
+    CAMLreturn(Val_long(r));
+}
+
+CAMLprim value c_diag_rhs_evals(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+    void *cvode_mem = ml_cvode_mem(vcvode_mem);
+
+    long int r;
+    int flag = CVDiagGetNumRhsEvals(cvode_mem, &r);
+    ml_cvode_check_flag("CVDiagGetNumRhsEvals", flag, NULL);
+
+    CAMLreturn(Val_long(r));
+}
+
+CAMLprim value c_spils_linear_iterations(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+    void *cvode_mem = ml_cvode_mem(vcvode_mem);
+
+    long int r;
+    int flag = CVSpilsGetNumLinIters(cvode_mem, &r);
+    ml_cvode_check_flag("CVSpilsGetNumLinIters", flag, NULL);
+
+    CAMLreturn(Val_long(r));
+}
+
+CAMLprim value c_spils_convergence_failures(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+    void *cvode_mem = ml_cvode_mem(vcvode_mem);
+
+    long int r;
+    int flag = CVSpilsGetNumConvFails(cvode_mem, &r);
+    ml_cvode_check_flag("CVSpilsGetNumConvFails", flag, NULL);
+
+    CAMLreturn(Val_long(r));
+}
+
+CAMLprim value c_spils_preconditioner_evals(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+    void *cvode_mem = ml_cvode_mem(vcvode_mem);
+
+    long int r;
+    int flag = CVSpilsGetNumPrecEvals(cvode_mem, &r);
+    ml_cvode_check_flag("CVSpilsGetNumPrecEvals", flag, NULL);
+
+    CAMLreturn(Val_long(r));
+}
+
+CAMLprim value c_spils_preconditioner_solves(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+    void *cvode_mem = ml_cvode_mem(vcvode_mem);
+
+    long int r;
+    int flag = CVSpilsGetNumPrecSolves(cvode_mem, &r);
+    ml_cvode_check_flag("CVSpilsGetNumPrecSolves", flag, NULL);
+
+    CAMLreturn(Val_long(r));
+}
+
+CAMLprim value c_spils_jacobian_vector_times_evals(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+    void *cvode_mem = ml_cvode_mem(vcvode_mem);
+
+    long int r;
+    int flag = CVSpilsGetNumJtimesEvals(cvode_mem, &r);
+    ml_cvode_check_flag("CVSpilsGetNumJtimesEvals", flag, NULL);
+
+    CAMLreturn(Val_long(r));
+}
+
+CAMLprim value c_spils_rhs_evals (value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+    void *cvode_mem = ml_cvode_mem(vcvode_mem);
+
+    long int r;
+    int flag = CVSpilsGetNumRhsEvals(cvode_mem, &r);
+    ml_cvode_check_flag("CVSpilsGetNumRhsEvals", flag, NULL);
+
+    CAMLreturn(Val_long(r));
+}
+

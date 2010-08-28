@@ -147,8 +147,6 @@ val integrator_stats : session -> integrator_stats
 val last_step_size : session -> float
 val next_step_size : session -> float
 
-val print_integrator_stats : session -> unit
-
 (* optional input functions *)
 
 (* path to an error file, whether to truncate (true) or append (false) *)
@@ -203,7 +201,30 @@ val set_all_root_directions : session -> root_direction -> unit
 (* Disable rootfinding warnings *)
 val disable_inactive_root_warnings : session -> unit 
 
-(* direct linear solvers optional input functions *)
+(* Optional output functions *)
+
+(* No. of order reductions due to stability limit detection *)
+val num_stability_limit_order_reductions : session -> int
+
+(* Suggested factor for tolerance scaling *)
+val tolerance_scale_factor : session -> float
+
+(* Error weight vector for state variables *)
+val error_weights : session -> Carray.t -> unit
+
+(* Estimated local error vector *)
+val local_error_estimates : session -> Carray.t -> unit
+
+(* No. of nonlinear solver iterations  *)
+val nonlinear_solver_iterations : session -> int
+
+(* No. of nonlinear convergence failures  *)
+val nonlinear_solver_convergence_failures : session -> int
+
+(* No. of calls to user root function  *)
+val root_evals : session -> int
+
+(* direct linear solvers functions *)
 
 module Densematrix :
   sig
@@ -229,17 +250,32 @@ type 't jacobian_arg =
 
 type triple_tmp = val_array * val_array * val_array
 
-val set_dense_jacobian_fn :
-     session
-  -> (triple_tmp jacobian_arg -> Densematrix.t -> unit)
-  -> unit
+module Dls :
+  sig
+    val set_dense_jacobian_fn :
+         session
+      -> (triple_tmp jacobian_arg -> Densematrix.t -> unit)
+      -> unit
 
-val set_band_jacobian_fn :
-     session
-  -> (triple_tmp jacobian_arg -> int -> int -> Bandmatrix.t -> unit)
-  -> unit
+    val set_band_jacobian_fn :
+         session
+      -> (triple_tmp jacobian_arg -> int -> int -> Bandmatrix.t -> unit)
+      -> unit
 
-(* iterative linear solvers optional input functions *)
+    (* No. of Jacobian evaluations *)
+    val jacobian_evals : session -> int
+
+    (* No. of r.h.s. calls for finite diff. Jacobian evals. *)
+    val rhs_evals : session -> int
+  end
+
+module Diag :
+  sig
+    (* No. of r.h.s. calls for finite diff. Jacobian evals. *)
+    val rhs_evals : session -> int
+  end
+
+(* iterative linear solvers *)
 module Spils :
   sig
     type solve_arg =
@@ -285,60 +321,13 @@ module Spils :
 
     val set_max_subspace_dimension : session -> int -> unit
 
+    val linear_iterations : session -> int
+    val convergence_failures : session -> int
+    val preconditioner_evals : session -> int
+    val preconditioner_solves : session -> int
+    val jacobian_vector_times_evals : session -> int
+    val rhs_evals : session -> int
   end
-
-(* TODO: *)
-(* Optional output functions *)
-
-(* Size of CVODE real and integer workspaces  *) (* CVodeGetWorkSpace *)
-(* Cumulative number of internal steps  *) (* CVodeGetNumSteps *)
-(* No. of calls to r.h.s. function  *) (* CVodeGetNumRhsEvals *)
-(* No. of calls to linear solver setup function  *) (* CVodeGetNumLinSolvSetups *)
-(* No. of local error test failures that have occurred  *) (* CVodeGetNumErrTestFails *)
-(* Order used during the last step  *) (* CVodeGetLastOrder *)
-(* Order to be attempted on the next step  *) (* CVodeGetCurrentOrder *)
-(* No. of order reductions due to stability limit detection  *) (* CVodeGetNumStabLimOrderReds *)
-(* Actual initial step size used  *) (* CVodeGetActualInitStep *)
-(* Step size used for the last step  *) (* CVodeGetLastStep *)
-(* Step size to be attempted on the next step  *) (* CVodeGetCurrentStep *)
-(* Current internal time reached by the solver  *) (* CVodeGetCurrentTime *)
-(* Suggested factor for tolerance scaling  *) (* CVodeGetTolScaleFactor *)
-(* Error weight vector for state variables  *) (* CVodeGetErrWeights *)
-(* Estimated local error vector  *) (* CVodeGetEstLocalErrors *)
-(* No. of nonlinear solver iterations  *) (* CVodeGetNumNonlinSolvIters *)
-(* No. of nonlinear convergence failures  *) (* CVodeGetNumNonlinSolvConvFails *)
-(* All CVODE integrator statistics  *) (* CVodeGetIntegratorStats *)
-(* CVODE nonlinear solver statistics  *) (* CVodeGetNonlinSolvStats *)
-(* Array showing roots found  *) (* CvodeGetRootInfo *)
-(* No. of calls to user root function  *) (* CVodeGetNumGEvals *)
-(* Name of constant associated with a return flag  *) (* CVodeGetReturnFlagName *)
-
-(* CVDLS linear solvers *)
-
-(* Size of real and integer workspaces  *) (* CVDlsGetWorkSpace *)
-(* No. of Jacobian evaluations  *) (* CVDlsGetNumJacEvals *)
-(* No. of r.h.s. calls for finite diff. Jacobian evals.  *) (* CVDlsGetNumRhsEvals *)
-(* Last return from a linear solver function  *) (* CVDlsGetLastFlag *)
-(* Name of constant associated with a return flag  *) (* CVDlsGetReturnFlagName *)
-
-(* CVDIAG linear solver *)
-
-(* Size of CVDIAG real and integer workspaces  *) (* CVDiagGetWorkSpace *)
-(* No. of r.h.s. calls for finite diff. Jacobian evals.  *) (* CVDiagGetNumRhsEvals *)
-(* Last return from a CVDIAG function  *) (* CVDiagGetLastFlag *)
-(* Name of constant associated with a return flag  *) (* CVDiagGetReturnFlagName *)
-
-(* CVSPILS linear solvers *)
-
-(* Size of real and integer workspaces  *) (* CVSpilsGetWorkSpace *)
-(* No. of linear iterations  *) (* CVSpilsGetNumLinIters *)
-(* No. of linear convergence failures  *) (* CVSpilsGetNumConvFails *)
-(* No. of preconditioner evaluations  *) (* CVSpilsGetNumPrecEvals *)
-(* No. of preconditioner solves  *) (* CVSpilsGetNumPrecSolves *)
-(* No. of Jacobian-vector product evaluations  *) (* CVSpilsGetNumJtimesEvals *)
-(* No. of r.h.s. calls for finite diff. Jacobian-vector evals.  *) (* CVSpilsGetNumRhsEvals *)
-(* Last return from a linear solver function  *) (* CVSpilsGetLastFlag *)
-(* Name of constant associated with a return flag  *) (* CVSpilsGetReturnFlagName *)
 
 (* TODO: Test the new callbacks, especially the Jacobian one. *)
 

@@ -330,29 +330,26 @@ let set_all_root_directions s rd =
 external disable_inactive_root_warnings : session -> unit 
     = "c_disable_inactive_root_warnings"
 
-(*
-let print_stats s =
-  let in_stats = integrator_stats s
-  (* and ls_stats = TODO *)
-  (* and jac_evals = TODO CVDlsGetNumJacEvals *)
-  (* and root_evals = TODO CVodeGetNumGEvals *)
-  and printf = Printf.printf
-  in
-    printf("\nFinal Statistics:\n");
-    printf "nst = %-6ld nfe  = %-6ld nsetups = %-6ld nfeLS = %-6ld nje = %ld\n"
-      in_stats.steps
-      in_stats.rhs_evals
-      in_stats.linear_solver_setups
-      ls_stats.rhs_evals
-      jac_evals;
-    printf "nni = %-6ld ncfn = %-6ld netf = %-6ld nge = %ld\n\n"
-      ls_stats.iterations
-      ls_stats.convergence_failures
-      in_stats.error_test_failures
-      root_evals
-*) 
+external num_stability_limit_order_reductions : session -> int
+    = "c_num_stability_limit_order_reductions"
 
-(* direct linear solvers optional input functions *)
+external tolerance_scale_factor : session -> float
+    = "c_tolerance_scale_factor"
+
+external error_weights : session -> Carray.t -> unit
+    = "c_error_weights"
+
+external local_error_estimates : session -> Carray.t -> unit
+    = "c_local_error_estimates"
+
+external nonlinear_solver_iterations : session -> int
+    = "c_nonlinear_solver_iterations"
+
+external nonlinear_solver_convergence_failures : session -> int
+    = "c_nonlinear_solver_convergence_failures"
+
+external root_evals : session -> int
+    = "c_root_evals"
 
 (* note: uses DENSE_ELEM rather than the more efficient DENSE_COL. *)
 module Densematrix =
@@ -388,21 +385,35 @@ type 't jacobian_arg =
 
 type triple_tmp = val_array * val_array * val_array
 
-external enable_dense_jacobian_fn : session -> unit
-    = "c_enable_dense_jacobian_fn"
+module Dls =
+  struct
+    external enable_dense_jacobian_fn : session -> unit
+        = "c_enable_dense_jacobian_fn"
 
-let set_dense_jacobian_fn s f =
-    register_handler s JacFn f;
-    enable_dense_jacobian_fn s
+    let set_dense_jacobian_fn s f =
+        register_handler s JacFn f;
+        enable_dense_jacobian_fn s
 
-external enable_band_jacobian_fn : session -> unit
-    = "c_enable_band_jacobian_fn"
+    external enable_band_jacobian_fn : session -> unit
+        = "c_enable_band_jacobian_fn"
 
-let set_band_jacobian_fn s f =
-    register_handler s BandJacFn f;
-    enable_band_jacobian_fn s
+    let set_band_jacobian_fn s f =
+        register_handler s BandJacFn f;
+        enable_band_jacobian_fn s
 
-(* iterative linear solvers optional input functions *)
+    external jacobian_evals : session -> int
+        = "c_dls_jacobian_evals"
+
+    external rhs_evals : session -> int
+        = "c_dls_rhs_evals"
+  end
+
+module Diag =
+  struct
+    external rhs_evals : session -> int
+        = "c_diag_rhs_evals"
+  end
+
 module Spils =
   struct
     type solve_arg =
@@ -410,7 +421,7 @@ module Spils =
         rhs   : val_array;
         gamma : float;
         delta : float;
-        left  : bool; (* true: left, false: right *)
+        left  : bool;
       }
 
     type single_tmp = val_array
@@ -452,6 +463,24 @@ module Spils =
 
     external set_max_subspace_dimension : session -> int -> unit
         = "c_set_max_subspace_dimension"
+
+    external linear_iterations : session -> int
+        = "c_spils_linear_iterations"
+
+    external convergence_failures : session -> int
+        = "c_spils_convergence_failures"
+
+    external preconditioner_evals : session -> int
+        = "c_spils_preconditioner_evals"
+
+    external preconditioner_solves : session -> int
+        = "c_spils_preconditioner_solves"
+
+    external jacobian_vector_times_evals : session -> int
+        = "c_spils_jacobian_vector_times_evals"
+
+    external rhs_evals : session -> int
+        = "c_spils_rhs_evals"
 
   end
 

@@ -1097,3 +1097,31 @@ CAMLprim value c_set_root_direction(value vdata, value rootdirs)
     CAMLreturn0;
 }
 
+CAMLprim value c_error_weights(value vcvode_mem, value verrws)
+{
+    CAMLparam2(vcvode_mem, verrws);
+
+    void *cvode_mem = ml_cvode_mem(vcvode_mem);
+    N_Vector errws_nv = nvectorize_ba(verrws);
+
+    int flag = CVodeGetErrWeights(cvode_mem, errws_nv);
+    relinquish_nvectorizedba(errws_nv);
+    ml_cvode_check_flag("CVodeGetErrWeights", flag, NULL);
+
+    CAMLreturn0;
+}
+
+CAMLprim value c_local_error_estimates(value vcvode_mem, value vele)
+{
+    CAMLparam2(vcvode_mem, vele);
+
+    void *cvode_mem = ml_cvode_mem(vcvode_mem);
+    N_Vector ele_nv = nvectorize_ba(vele);
+
+    int flag = CVodeGetErrWeights(cvode_mem, ele_nv);
+    relinquish_nvectorizedba(ele_nv);
+    ml_cvode_check_flag("CVodeGetErrWeights", flag, NULL);
+
+    CAMLreturn0;
+}
+

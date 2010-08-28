@@ -8,13 +8,14 @@ case $1 in
 clean)
     rm -f cvode_serial.o cvode_serial_bp.o libcvode_serial.a
     rm -f cvode_serial.cmi cvode_serial.cmo
-    rm -f ball.cmi ball.cmo
-    rm -f showball.cmi showball.cmo showball.cma
     rm -f solvelucy.cmi solvelucy.cmo
     rm -f cvode_serial.cma
-    rm -f sincos.cmi sincos.cmo
-    rm -f sincos_lucyf.cmi sincos_lucyf.cmo
-    rm -f sincos sincos_lucyf ball
+
+    rm -f examples/ball.cmi examples/ball.cmo
+    rm -f examples/showball.cmi examples/showball.cmo examples/showball.cma
+    rm -f examples/sincos.cmi examples/sincos.cmo
+    rm -f examples/sincos_lucyf.cmi examples/sincos_lucyf.cmo
+    rm -f examples/sincos examples/sincos_lucyf examples/ball
     ;;
 
 *)
@@ -45,12 +46,16 @@ clean)
     echo "* solvelucy.ml -> solvelucy.cmo"
     ocamlc -c solvelucy.ml || exit 1
 
+    # EXAMPLES
+
+    cd examples/
+
     echo "* sincos.ml -> sincos"
-    ocamlc -o sincos -I /usr/local/lib -I . \
+    ocamlc -o sincos -I /usr/local/lib -I .. \
 	unix.cma bigarray.cma cvode_serial.cma sincos.ml || exit 1
 
     echo "* sincos_lucyf.ml -> sincos_lucyf"
-    ocamlc -o sincos_lucyf -I /usr/local/lib -I . \
+    ocamlc -o sincos_lucyf -I /usr/local/lib -I .. \
 	unix.cma bigarray.cma cvode_serial.cma solvelucy.cmo sincos_lucyf.ml || exit 1
 
     echo "* showball.mli -> showball.cmi"
@@ -63,7 +68,7 @@ clean)
     ocamlc -a -o showball.cma unix.cma graphics.cma showball.cmo || exit 1
 
     echo "* ball.ml -> ball"
-    ocamlc -o ball -I /usr/local/lib -I . \
+    ocamlc -o ball -I /usr/local/lib -I .. \
 	bigarray.cma unix.cma \
 	cvode_serial.cma showball.cma ball.ml || exit 1
     ;;
