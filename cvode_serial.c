@@ -32,6 +32,10 @@ static const char *callback_ocaml_names[] = {
     "cvode_serial_callback_jactimesfn",
 };
 
+#define WRAP_NVECTOR(v) caml_ba_alloc(BIGARRAY_FLOAT, 1, NV_DATA_S(v), &(NV_LENGTH_S(v)))
+#define RELINQUISH_WRAPPEDNV(v_ba) Caml_ba_array_val(v_ba)->dim[0] = 0
+#define NVECTORIZE_BA(ba) N_VMake_Serial(Caml_ba_array_val(ba)->dim[0], (realtype *)Caml_ba_data_val(ba))
+#define RELINQUISH_NVECTORIZEDBA(nv) N_VDestroy(nv)
 
 // TODO: Is there any risk that the Ocaml GC will try to free the
 //	 closures? Do we have to somehow record that we're using them,
@@ -242,36 +246,6 @@ static int check_exception(value r)
 
 /* callbacks */
 
-value wrap_nvector(N_Vector v)
-{
-    CAMLparam0();
-    CAMLlocal1(v_ba);
-
-    intnat v_l = NV_LENGTH_S(v);
-    v_ba = caml_ba_alloc(BIGARRAY_FLOAT, 1, NV_DATA_S(v), &v_l);
-
-    CAMLreturn(v_ba);
-}
-
-void relinquish_wrappednv(value v_ba)
-{
-    Caml_ba_array_val(v_ba)->dim[0] = 0;
-}
-
-N_Vector nvectorize_ba(value ba)
-{
-    int l = Caml_ba_array_val(ba)->dim[0];
-    realtype *d = Caml_ba_data_val(ba);
-    N_Vector nv = N_VMake_Serial(l, d);
-
-    return nv;
-}
-
-void relinquish_nvectorizedba(N_Vector nv)
-{
-    N_VDestroy(nv);
-}
-
 static int f(realtype t, N_Vector y, N_Vector ydot, void *user_data)
 {
     CAMLparam0();
@@ -279,8 +253,8 @@ static int f(realtype t, N_Vector y, N_Vector ydot, void *user_data)
 
     value *closure_rhsfn = ((ml_cvode_data_p)user_data)->closure_rhsfn;
 
-    y_ba = wrap_nvector(y);
-    ydot_ba = wrap_nvector(ydot);
+    y_ba = WRAP_NVECTOR(y);
+    ydot_ba = WRAP_NVECTOR(ydot);
 
     // TODO: the data payloads inside y_ba and ydot_ba are only valid
     //	     during this call, afterward that memory goes back to cvode.
@@ -291,8 +265,8 @@ static int f(realtype t, N_Vector y, N_Vector ydot, void *user_data)
     //       which should not, however, free the attached payload.
     r = caml_callback3_exn(*closure_rhsfn, caml_copy_double(t), y_ba, ydot_ba);
 
-    relinquish_wrappednv(y_ba);
-    relinquish_wrappednv(ydot_ba);
+    RELINQUISH_WRAPPEDNV(y_ba);
+    RELINQUISH_WRAPPEDNV(ydot_ba);
 
     CAMLreturn(check_exception(r));
 }
@@ -304,14 +278,14 @@ static int roots(realtype t, N_Vector y, realtype *gout, void *user_data)
 
     ml_cvode_data_p data = (ml_cvode_data_p)user_data;
 
-    y_ba = wrap_nvector(y);
+    y_ba = WRAP_NVECTOR(y);
     gout_ba = caml_ba_alloc(BIGARRAY_FLOAT, 1, gout, &(data->num_roots));
 
     // TODO: see notes for f()
     r = caml_callback3_exn(*(data->closure_rootsfn), caml_copy_double(t),
 				 y_ba, gout_ba);
 
-    relinquish_wrappednv(y_ba);
+    RELINQUISH_WRAPPEDNV(y_ba);
     Caml_ba_array_val(gout_ba)->dim[0] = 0;
 
     CAMLreturn(check_exception(r));
@@ -359,8 +333,8 @@ static value make_jac_arg(realtype t, N_Vector y, N_Vector fy, value tmp)
 
     r = caml_alloc_tuple(4);
     Store_field(r, RECORD_JACOBIAN_ARG_JAC_T, caml_copy_double(t));
-    Store_field(r, RECORD_JACOBIAN_ARG_JAC_Y, wrap_nvector(y));
-    Store_field(r, RECORD_JACOBIAN_ARG_JAC_FY, wrap_nvector(fy));
+    Store_field(r, RECORD_JACOBIAN_ARG_JAC_Y, WRAP_NVECTOR(y));
+    Store_field(r, RECORD_JACOBIAN_ARG_JAC_FY, WRAP_NVECTOR(fy));
     Store_field(r, RECORD_JACOBIAN_ARG_JAC_TMP, tmp);
 
     CAMLreturn(r);
@@ -372,9 +346,9 @@ static value make_triple_tmp(N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
     CAMLlocal1(r);
 
     r = caml_alloc_tuple(3);
-    Store_field(r, 0, wrap_nvector(tmp1));
-    Store_field(r, 1, wrap_nvector(tmp2));
-    Store_field(r, 2, wrap_nvector(tmp3));
+    Store_field(r, 0, WRAP_NVECTOR(tmp1));
+    Store_field(r, 1, WRAP_NVECTOR(tmp2));
+    Store_field(r, 2, WRAP_NVECTOR(tmp3));
     CAMLreturn(r);
 }
 
@@ -383,17 +357,17 @@ static relinquish_jac_arg(value arg, int triple)
     CAMLparam0();
     CAMLlocal1(tmp);
 
-    relinquish_wrappednv(Field(arg, RECORD_JACOBIAN_ARG_JAC_Y));
-    relinquish_wrappednv(Field(arg, RECORD_JACOBIAN_ARG_JAC_FY));
+    RELINQUISH_WRAPPEDNV(Field(arg, RECORD_JACOBIAN_ARG_JAC_Y));
+    RELINQUISH_WRAPPEDNV(Field(arg, RECORD_JACOBIAN_ARG_JAC_FY));
 
     tmp = Field(arg, RECORD_JACOBIAN_ARG_JAC_TMP);
 
     if (triple) {
-	relinquish_wrappednv(Field(tmp, 0));
-	relinquish_wrappednv(Field(tmp, 1));
-	relinquish_wrappednv(Field(tmp, 2));
+	RELINQUISH_WRAPPEDNV(Field(tmp, 0));
+	RELINQUISH_WRAPPEDNV(Field(tmp, 1));
+	RELINQUISH_WRAPPEDNV(Field(tmp, 2));
     } else {
-	relinquish_wrappednv(tmp);
+	RELINQUISH_WRAPPEDNV(tmp);
     }
 
     CAMLreturn0;
@@ -503,7 +477,7 @@ static value make_spils_solve_arg(
     CAMLlocal1(v);
 
     v = caml_alloc_tuple(4);
-    Store_field(v, RECORD_SPILS_SOLVE_ARG_RHS, wrap_nvector(r));
+    Store_field(v, RECORD_SPILS_SOLVE_ARG_RHS, WRAP_NVECTOR(r));
     Store_field(v, RECORD_SPILS_SOLVE_ARG_GAMMA, caml_copy_double(gamma));
     Store_field(v, RECORD_SPILS_SOLVE_ARG_DELTA, caml_copy_double(delta));
     Store_field(v, RECORD_SPILS_SOLVE_ARG_LEFT, lr == 1 ? Val_true : Val_false);
@@ -514,7 +488,7 @@ static value make_spils_solve_arg(
 static relinquish_spils_solve_arg(value arg)
 {
     CAMLparam0();
-    relinquish_wrappednv(Field(arg, RECORD_SPILS_SOLVE_ARG_RHS));
+    RELINQUISH_WRAPPEDNV(Field(arg, RECORD_SPILS_SOLVE_ARG_RHS));
     CAMLreturn0;
 }
 
@@ -535,15 +509,15 @@ static int presolvefn(
 
     ml_cvode_data_p data = (ml_cvode_data_p)user_data;
 
-    arg = make_jac_arg(t, y, fy, wrap_nvector(tmp));
+    arg = make_jac_arg(t, y, fy, WRAP_NVECTOR(tmp));
     solvearg = make_spils_solve_arg(r, gamma, delta, lr);
-    zv = wrap_nvector(z);
+    zv = WRAP_NVECTOR(z);
 
     rv = caml_callback3_exn(*(data->closure_presolvefn), arg, solvearg, zv);
 
     relinquish_jac_arg(arg, 0);
     relinquish_spils_solve_arg(solvearg);
-    relinquish_wrappednv(zv);
+    RELINQUISH_WRAPPEDNV(zv);
 
     CAMLreturn(check_exception(rv));
 }
@@ -562,15 +536,15 @@ static int jactimesfn(
 
     ml_cvode_data_p data = (ml_cvode_data_p)user_data;
 
-    arg = make_jac_arg(t, y, fy, wrap_nvector(tmp));
-    varg = wrap_nvector(v);
-    jvarg = wrap_nvector(Jv);
+    arg = make_jac_arg(t, y, fy, WRAP_NVECTOR(tmp));
+    varg = WRAP_NVECTOR(v);
+    jvarg = WRAP_NVECTOR(Jv);
 
     r = caml_callback3_exn(*(data->closure_jactimesfn), arg, varg, jvarg);
 
     relinquish_jac_arg(arg, 0);
-    relinquish_wrappednv(varg);
-    relinquish_wrappednv(jvarg);
+    RELINQUISH_WRAPPEDNV(varg);
+    RELINQUISH_WRAPPEDNV(jvarg);
 
     CAMLreturn(check_exception(r));
 }
@@ -733,7 +707,7 @@ CAMLprim value c_init(value lmm, value iter, value initial, value num_roots,
 	iter_c = CV_FUNCTIONAL;
     }
 
-    N_Vector initial_nv = nvectorize_ba(initial);
+    N_Vector initial_nv = NVECTORIZE_BA(initial);
 
     void *cvode_mem = CVodeCreate(lmm_c, iter_c);
 
@@ -765,7 +739,7 @@ CAMLprim value c_init(value lmm, value iter, value initial, value num_roots,
     }
 
     flag = CVodeInit(data->cvode_mem, f, Double_val(t0), initial_nv);
-    relinquish_nvectorizedba(initial_nv);
+    RELINQUISH_NVECTORIZEDBA(initial_nv);
     ml_cvode_check_flag("CVodeInit", flag, data);
 
     flag = CVodeRootInit(data->cvode_mem, data->num_roots, roots);
@@ -811,10 +785,10 @@ CAMLprim value c_set_tolerances(value vdata, value reltol, value abstol)
 
     ml_cvode_data_p data = cvode_data_from_ml(vdata);
 
-    N_Vector atol_nv = nvectorize_ba(abstol);
+    N_Vector atol_nv = NVECTORIZE_BA(abstol);
 
     int flag = CVodeSVtolerances(data->cvode_mem, Double_val(reltol), atol_nv);
-    relinquish_nvectorizedba(atol_nv);
+    RELINQUISH_NVECTORIZEDBA(atol_nv);
     ml_cvode_check_flag("CVodeSVtolerances", flag, NULL);
 
     CAMLreturn0;
@@ -826,9 +800,9 @@ CAMLprim value c_reinit(value vdata, value t0, value y0)
 
     ml_cvode_data_p data = cvode_data_from_ml(vdata);
 
-    N_Vector y0_nv = nvectorize_ba(y0);
+    N_Vector y0_nv = NVECTORIZE_BA(y0);
     int flag = CVodeReInit(data->cvode_mem, Double_val(t0), y0_nv);
-    relinquish_nvectorizedba(y0_nv);
+    RELINQUISH_NVECTORIZEDBA(y0_nv);
     ml_cvode_check_flag("CVodeReInit", flag, NULL);
 
     CAMLreturn0;
@@ -918,11 +892,11 @@ CAMLprim value c_get_dky(value vdata, value vt, value vk, value vy)
     CAMLparam4(vdata, vt, vk, vy);
 
     ml_cvode_data_p data = cvode_data_from_ml(vdata);
-    N_Vector y_nv = nvectorize_ba(vy);
+    N_Vector y_nv = NVECTORIZE_BA(vy);
 
     int flag = CVodeGetDky(data->cvode_mem, Double_val(vt), Int_val(vk), y_nv);
     ml_cvode_check_flag("CVodeGetDky", flag, NULL);
-    relinquish_nvectorizedba(y_nv);
+    RELINQUISH_NVECTORIZEDBA(y_nv);
     
     CAMLreturn0;
 }
@@ -1102,10 +1076,10 @@ CAMLprim value c_error_weights(value vcvode_mem, value verrws)
     CAMLparam2(vcvode_mem, verrws);
 
     void *cvode_mem = ml_cvode_mem(vcvode_mem);
-    N_Vector errws_nv = nvectorize_ba(verrws);
+    N_Vector errws_nv = NVECTORIZE_BA(verrws);
 
     int flag = CVodeGetErrWeights(cvode_mem, errws_nv);
-    relinquish_nvectorizedba(errws_nv);
+    RELINQUISH_NVECTORIZEDBA(errws_nv);
     ml_cvode_check_flag("CVodeGetErrWeights", flag, NULL);
 
     CAMLreturn0;
@@ -1116,10 +1090,10 @@ CAMLprim value c_local_error_estimates(value vcvode_mem, value vele)
     CAMLparam2(vcvode_mem, vele);
 
     void *cvode_mem = ml_cvode_mem(vcvode_mem);
-    N_Vector ele_nv = nvectorize_ba(vele);
+    N_Vector ele_nv = NVECTORIZE_BA(vele);
 
     int flag = CVodeGetErrWeights(cvode_mem, ele_nv);
-    relinquish_nvectorizedba(ele_nv);
+    RELINQUISH_NVECTORIZEDBA(ele_nv);
     ml_cvode_check_flag("CVodeGetErrWeights", flag, NULL);
 
     CAMLreturn0;
