@@ -6,7 +6,7 @@
 
 case $1 in
 clean)
-    rm -f cvode_serial.o libcvode_serial.a
+    rm -f cvode_serial.o cvode_serial_bp.o libcvode_serial.a
     rm -f cvode_serial.cmi cvode_serial.cmo
     rm -f ball.cmi ball.cmo
     rm -f showball.cmi showball.cmo showball.cma
@@ -21,8 +21,11 @@ clean)
     echo "* cvode_serial.c -> cvode_serial.o"
     cc -c cvode_serial.c || exit 1
 
+    echo "* cvode_serial_bp.c -> cvode_serial_bp.o"
+    cc -c cvode_serial_bp.c || exit 1
+
     echo "* cvode_serial.o -> libcvode_serial.a"
-    ar rc libcvode_serial.a cvode_serial.o || exit 1
+    ar rc libcvode_serial.a cvode_serial.o cvode_serial_bp.o || exit 1
 
     echo "* cvode_serial.mli -> cvode_serial.cmi"
     ocamlc cvode_serial.mli || exit 1

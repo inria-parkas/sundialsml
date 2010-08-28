@@ -1,16 +1,8 @@
 /* Aug 2010, Timothy Bourke (INRIA)
  *
- * Ocaml interface to the Sundials 2.4.0 CVode solver for serial NVectors.
+ * Trickier definitions for Sundials interface.
  *
  */
-
-#include <caml/mlvalues.h>
-#include <caml/bigarray.h>
-#include <caml/memory.h>
-#include <caml/callback.h>
-#include <caml/custom.h>
-#include <caml/fail.h>
-#include <caml/unixsupport.h>
 
 /* TODO:
  * - realtype must equal double
@@ -24,75 +16,22 @@
  *   any segmentation fault problems.
  */
 
-#include <cvode/cvode.h>
-#include <nvector/nvector_serial.h>
-#include <sundials/sundials_config.h>
-#include <sundials/sundials_types.h>
-
-/* linear solvers */
-#include <cvode/cvode_dense.h>
-#include <cvode/cvode_band.h>
-#include <cvode/cvode_diag.h>
-#include <cvode/cvode_spgmr.h>
-#include <cvode/cvode_spbcgs.h>
-#include <cvode/cvode_sptfqmr.h>
-
-#if SUNDIALS_BLAS_LAPACK == 1
-#include <cvode/cvode_lapack.h>
-#endif
+#include "cvode_serial.h"
 
 #include <stdio.h>
-
-#define VARIANT_LMM_ADAMS 0
-#define VARIANT_LMM_BDF   1
-
-#define RECORD_BANDRANGE_MUPPER 0
-#define RECORD_BANDRANGE_MLOWER 1
-
-#define RECORD_SPRANGE_PRETYPE 0
-#define RECORD_SPRANGE_MAXL    1
-
-/* untagged: */
-#define VARIANT_LINEAR_SOLVER_DENSE	    0
-#define VARIANT_LINEAR_SOLVER_LAPACKDENSE   1
-#define VARIANT_LINEAR_SOLVER_DIAG	    2
-/* tagged: */
-#define VARIANT_LINEAR_SOLVER_BAND	    0
-#define VARIANT_LINEAR_SOLVER_LAPACKBAND    1
-#define VARIANT_LINEAR_SOLVER_SPGMR	    2
-#define VARIANT_LINEAR_SOLVER_SPBCG	    3
-#define VARIANT_LINEAR_SOLVER_SPTFQMR	    4
-
-#define VARIANT_SOLVER_RESULT_CONTINUE		0
-#define VARIANT_SOLVER_RESULT_ROOTSFOUND	1
-#define VARIANT_SOLVER_RESULT_STOPTIMEREACHED	2
-
-#define RECORD_INTEGRATOR_STATS_STEPS			0
-#define RECORD_INTEGRATOR_STATS_RHS_EVALS		1
-#define RECORD_INTEGRATOR_STATS_LINEAR_SOLVER_SETUPS	2
-#define RECORD_INTEGRATOR_STATS_ERROR_TEST_FAILURES	3
-#define RECORD_INTEGRATOR_STATS_LAST_INTERNAL_ORDER	4
-#define RECORD_INTEGRATOR_STATS_NEXT_INTERNAL_ORDER	5
-#define RECORD_INTEGRATOR_STATS_INITIAL_STEP_SIZE	6
-#define RECORD_INTEGRATOR_STATS_LAST_STEP_SIZE		7
-#define RECORD_INTEGRATOR_STATS_NEXT_STEP_SIZE		8
-#define RECORD_INTEGRATOR_STATS_INTERNAL_TIME		9
-
-#define RECORD_ERROR_DETAILS_ERROR_CODE	    0
-#define RECORD_ERROR_DETAILS_MODULE_NAME    1
-#define RECORD_ERROR_DETAILS_FUNCTION_NAME  2
-#define RECORD_ERROR_DETAILS_ERROR_MESSAGE  3
-
-#define RECORD_JACOBIAN_ARG_JAC_T	0
-#define RECORD_JACOBIAN_ARG_JAC_Y	1
-#define RECORD_JACOBIAN_ARG_JAC_FY	2
-#define RECORD_JACOBIAN_ARG_JAC_TMP	3
-
-#define BIGARRAY_FLOAT (CAML_BA_FLOAT64 | CAML_BA_C_LAYOUT)
-#define BIGARRAY_INT (CAML_BA_INT32 | CAML_BA_C_LAYOUT)
 #define MAX_ERRMSG_LEN 256
 
-static void check_flag(const char *call, int flag, void *to_free);
+static const char *callback_ocaml_names[] = {
+    "cvode_serial_callback_rhsfn",
+    "cvode_serial_callback_rootsfn",
+    "cvode_serial_callback_errorhandler",
+    "cvode_serial_callback_jacfn",
+    "cvode_serial_callback_bandjacfn",
+    "cvode_serial_callback_presetupfn",
+    "cvode_serial_callback_presolvefn",
+    "cvode_serial_callback_jactimesfn",
+};
+
 
 // TODO: Is there any risk that the Ocaml GC will try to free the
 //	 closures? Do we have to somehow record that we're using them,
@@ -114,8 +53,6 @@ struct ml_cvode_data {
 
     FILE *err_file;
 };
-
-typedef struct ml_cvode_data* ml_cvode_data_p;
 
 static void finalize_closure(value** closure_field)
 {
@@ -172,7 +109,7 @@ static void finalize(value vdata)
 // But, obviously, we're storing two closure values in the struct. We need
 // to find out if and when this is ok.
 //
-static value ml_cvode_data_alloc(mlsize_t approx_size)
+value ml_cvode_data_alloc(mlsize_t approx_size)
 {
     return caml_alloc_final(sizeof(struct ml_cvode_data), &finalize,
 			    approx_size, 10);
@@ -186,6 +123,103 @@ static ml_cvode_data_p cvode_data_from_ml(value vdata)
     }
 
     return data;
+}
+
+void *ml_cvode_mem(value vdata)
+{
+    ml_cvode_data_p data = (ml_cvode_data_p)Data_custom_val(vdata);
+    if (data->cvode_mem == NULL) {
+	caml_failwith("This session has been freed");
+    }
+
+    return (data->cvode_mem);
+}
+
+void ml_cvode_check_flag(const char *call, int flag, void *to_free)
+{
+    static char exmsg[MAX_ERRMSG_LEN] = "";
+
+    if (flag == CV_SUCCESS
+	|| flag == CV_ROOT_RETURN
+	|| flag == CV_TSTOP_RETURN) return;
+
+    if (to_free != NULL) free(to_free);
+
+    switch (flag) {
+    case CV_ILL_INPUT:
+	caml_raise_constant(*caml_named_value("cvode_IllInput"));
+	break;
+
+    case CV_TOO_CLOSE:
+	caml_raise_constant(*caml_named_value("cvode_TooClose"));
+	break;
+
+    case CV_TOO_MUCH_WORK:
+	caml_raise_constant(*caml_named_value("cvode_TooMuchWork"));
+	break;
+
+    case CV_TOO_MUCH_ACC:
+	caml_raise_constant(*caml_named_value("cvode_TooMuchAccuracy"));
+	break;
+
+    case CV_ERR_FAILURE:
+	caml_raise_constant(*caml_named_value("cvode_ErrFailure"));
+	break;
+
+    case CV_CONV_FAILURE:
+	caml_raise_constant(*caml_named_value("cvode_ConvergenceFailure"));
+	break;
+
+    case CV_LINIT_FAIL:
+	caml_raise_constant(*caml_named_value("cvode_LinearInitFailure"));
+	break;
+
+    case CV_LSETUP_FAIL:
+	caml_raise_constant(*caml_named_value("cvode_LinearSetupFailure"));
+	break;
+
+    case CV_LSOLVE_FAIL:
+	caml_raise_constant(*caml_named_value("cvode_LinearSolveFailure"));
+	break;
+
+    case CV_RHSFUNC_FAIL:
+	caml_raise_constant(*caml_named_value("cvode_RhsFuncFailure"));
+	break;
+
+    case CV_FIRST_RHSFUNC_ERR:
+	caml_raise_constant(*caml_named_value("cvode_FirstRhsFuncError"));
+	break;
+
+    case CV_REPTD_RHSFUNC_ERR:
+	caml_raise_constant(*caml_named_value("cvode_RepeatedRhsFuncError"));
+	break;
+
+    case CV_UNREC_RHSFUNC_ERR:
+	caml_raise_constant(*caml_named_value("cvode_UnrecoverableRhsFuncError"));
+	break;
+
+    case CV_RTFUNC_FAIL:
+	caml_raise_constant(*caml_named_value("cvode_RootFuncFailure"));
+	break;
+
+    case CV_BAD_K:
+	caml_raise_constant(*caml_named_value("cvode_BadK"));
+	break;
+
+    case CV_BAD_T:
+	caml_raise_constant(*caml_named_value("cvode_BadT"));
+	break;
+
+    case CV_BAD_DKY:
+	caml_raise_constant(*caml_named_value("cvode_BadDky"));
+	break;
+
+    default:
+	/* e.g. CVDIAG_MEM_NULL, CVDIAG_ILL_INPUT, CVDIAG_MEM_FAIL */
+	snprintf(exmsg, MAX_ERRMSG_LEN, "%s: %s", call,
+		 CVodeGetReturnFlagName(flag));
+	caml_failwith(exmsg);
+    }
 }
 
 static int check_exception(value r)
@@ -208,7 +242,7 @@ static int check_exception(value r)
 
 /* callbacks */
 
-static value wrap_nvector(N_Vector v)
+value wrap_nvector(N_Vector v)
 {
     CAMLparam0();
     CAMLlocal1(v_ba);
@@ -219,12 +253,12 @@ static value wrap_nvector(N_Vector v)
     CAMLreturn(v_ba);
 }
 
-static void relinquish_nvector_wrapping(value v_ba)
+void relinquish_wrappednv(value v_ba)
 {
     Caml_ba_array_val(v_ba)->dim[0] = 0;
 }
 
-static N_Vector vectorize_bigarray(value ba)
+N_Vector nvectorize_ba(value ba)
 {
     int l = Caml_ba_array_val(ba)->dim[0];
     realtype *d = Caml_ba_data_val(ba);
@@ -233,11 +267,10 @@ static N_Vector vectorize_bigarray(value ba)
     return nv;
 }
 
-static void relinquish_vectorized_bigarray(N_Vector nv)
+void relinquish_nvectorizedba(N_Vector nv)
 {
     N_VDestroy(nv);
 }
-
 
 static int f(realtype t, N_Vector y, N_Vector ydot, void *user_data)
 {
@@ -258,8 +291,8 @@ static int f(realtype t, N_Vector y, N_Vector ydot, void *user_data)
     //       which should not, however, free the attached payload.
     r = caml_callback3_exn(*closure_rhsfn, caml_copy_double(t), y_ba, ydot_ba);
 
-    relinquish_nvector_wrapping(y_ba);
-    relinquish_nvector_wrapping(ydot_ba);
+    relinquish_wrappednv(y_ba);
+    relinquish_wrappednv(ydot_ba);
 
     CAMLreturn(check_exception(r));
 }
@@ -278,7 +311,7 @@ static int roots(realtype t, N_Vector y, realtype *gout, void *user_data)
     r = caml_callback3_exn(*(data->closure_rootsfn), caml_copy_double(t),
 				 y_ba, gout_ba);
 
-    relinquish_nvector_wrapping(y_ba);
+    relinquish_wrappednv(y_ba);
     Caml_ba_array_val(gout_ba)->dim[0] = 0;
 
     CAMLreturn(check_exception(r));
@@ -306,6 +339,18 @@ static void errh(
 
     CAMLreturn0;
 }
+
+CAMLprim value c_enable_error_handler(value vdata)
+{
+    CAMLparam1(vdata);
+    ml_cvode_data_p data = cvode_data_from_ml(vdata);
+ 
+    int flag = CVodeSetErrHandlerFn(data->cvode_mem, errh, (void *)data);
+    ml_cvode_check_flag("CVodeSetErrHandlerFn", flag, NULL);
+
+    CAMLreturn0;
+}
+
 
 static value make_jac_arg(realtype t, N_Vector y, N_Vector fy, value tmp)
 {
@@ -338,17 +383,17 @@ static relinquish_jac_arg(value arg, int triple)
     CAMLparam0();
     CAMLlocal1(tmp);
 
-    relinquish_nvector_wrapping(Field(arg, RECORD_JACOBIAN_ARG_JAC_Y));
-    relinquish_nvector_wrapping(Field(arg, RECORD_JACOBIAN_ARG_JAC_FY));
+    relinquish_wrappednv(Field(arg, RECORD_JACOBIAN_ARG_JAC_Y));
+    relinquish_wrappednv(Field(arg, RECORD_JACOBIAN_ARG_JAC_FY));
 
     tmp = Field(arg, RECORD_JACOBIAN_ARG_JAC_TMP);
 
     if (triple) {
-	relinquish_nvector_wrapping(Field(tmp, 0));
-	relinquish_nvector_wrapping(Field(tmp, 1));
-	relinquish_nvector_wrapping(Field(tmp, 2));
+	relinquish_wrappednv(Field(tmp, 0));
+	relinquish_wrappednv(Field(tmp, 1));
+	relinquish_wrappednv(Field(tmp, 2));
     } else {
-	relinquish_nvector_wrapping(tmp);
+	relinquish_wrappednv(tmp);
     }
 
     CAMLreturn0;
@@ -447,11 +492,6 @@ static int presetupfn(
     CAMLreturn(check_exception(r));
 }
 
-#define RECORD_SPILS_SOLVE_ARG_RHS	0
-#define RECORD_SPILS_SOLVE_ARG_GAMMA	1
-#define RECORD_SPILS_SOLVE_ARG_DELTA	2
-#define RECORD_SPILS_SOLVE_ARG_LEFT	3
-
 static value make_spils_solve_arg(
 	N_Vector r,
 	realtype gamma,
@@ -474,7 +514,7 @@ static value make_spils_solve_arg(
 static relinquish_spils_solve_arg(value arg)
 {
     CAMLparam0();
-    relinquish_nvector_wrapping(Field(arg, RECORD_SPILS_SOLVE_ARG_RHS));
+    relinquish_wrappednv(Field(arg, RECORD_SPILS_SOLVE_ARG_RHS));
     CAMLreturn0;
 }
 
@@ -503,7 +543,7 @@ static int presolvefn(
 
     relinquish_jac_arg(arg, 0);
     relinquish_spils_solve_arg(solvearg);
-    relinquish_nvector_wrapping(zv);
+    relinquish_wrappednv(zv);
 
     CAMLreturn(check_exception(rv));
 }
@@ -529,10 +569,47 @@ static int jactimesfn(
     r = caml_callback3_exn(*(data->closure_jactimesfn), arg, varg, jvarg);
 
     relinquish_jac_arg(arg, 0);
-    relinquish_nvector_wrapping(varg);
-    relinquish_nvector_wrapping(jvarg);
+    relinquish_wrappednv(varg);
+    relinquish_wrappednv(jvarg);
 
     CAMLreturn(check_exception(r));
+}
+
+CAMLprim value c_enable_dense_jacobian_fn(value vdata)
+{
+    CAMLparam1(vdata);
+    ml_cvode_data_p data = cvode_data_from_ml(vdata);
+    int flag = CVDlsSetDenseJacFn(data->cvode_mem, jacfn);
+    ml_cvode_check_flag("CVDlsSetDenseJacFn", flag, NULL);
+    CAMLreturn0;
+}
+
+CAMLprim value c_enable_band_jacobian_fn(value vdata)
+{
+    CAMLparam1(vdata);
+    ml_cvode_data_p data = cvode_data_from_ml(vdata);
+    int flag = CVDlsSetBandJacFn(data->cvode_mem, bandjacfn);
+    ml_cvode_check_flag("CVDlsSetBandJacFn", flag, NULL);
+    CAMLreturn0;
+}
+
+CAMLprim value c_enable_preconditioner_fns(value vdata)
+{
+    CAMLparam1(vdata);
+    ml_cvode_data_p data = cvode_data_from_ml(vdata);
+    int flag = CVSpilsSetPreconditioner(data->cvode_mem,
+	    presetupfn, presolvefn);
+    ml_cvode_check_flag("CVSpilsSetPreconditioner", flag, NULL);
+    CAMLreturn0;
+}
+
+CAMLprim value c_enable_jacobian_times_vector_fn(value vdata)
+{
+    CAMLparam1(vdata);
+    ml_cvode_data_p data = cvode_data_from_ml(vdata);
+    int flag = CVSpilsSetJacTimesVecFn(data->cvode_mem, jactimesfn);
+    ml_cvode_check_flag("CVSpilsSetJacTimesVecFn", flag, NULL);
+    CAMLreturn0;
 }
 
 /* basic interface */
@@ -562,7 +639,7 @@ static void set_linear_solver(void *cvode_mem, value ls, int n)
 	switch (Tag_val(ls)) {
 	case VARIANT_LINEAR_SOLVER_BAND:
 	    flag = CVBand(cvode_mem, n, field0, field1);
-	    check_flag("CVBand", flag, NULL);
+	    ml_cvode_check_flag("CVBand", flag, NULL);
 	    break;
 
 #if SUNDIALS_BLAS_LAPACK == 1
@@ -570,7 +647,7 @@ static void set_linear_solver(void *cvode_mem, value ls, int n)
 	    field0 = Field(Field(ls, 1), 0);
 	    field1 = Field(Field(ls, 1), 1);
 	    flag = CVLapackBand(cvode_mem, n, field0, field1);
-	    check_flag("CVLapackBand", flag, NULL);
+	    ml_cvode_check_flag("CVLapackBand", flag, NULL);
 	    break;
 #endif
 
@@ -578,21 +655,21 @@ static void set_linear_solver(void *cvode_mem, value ls, int n)
 	    field0 = Field(Field(ls, 1), 0);
 	    field1    = Field(Field(ls, 1), 1);
 	    flag = CVSpgmr(cvode_mem, field0, field1);
-	    check_flag("CVSpgmr", flag, NULL);
+	    ml_cvode_check_flag("CVSpgmr", flag, NULL);
 	    break;
 
 	case VARIANT_LINEAR_SOLVER_SPBCG:
 	    field0 = Field(Field(ls, 1), 0);
 	    field1    = Field(Field(ls, 1), 1);
 	    flag = CVSpbcg(cvode_mem, field0, field1);
-	    check_flag("CVSpbcg", flag, NULL);
+	    ml_cvode_check_flag("CVSpbcg", flag, NULL);
 	    break;
 
 	case VARIANT_LINEAR_SOLVER_SPTFQMR:
 	    field0 = Field(Field(ls, 1), 0);
 	    field1    = Field(Field(ls, 1), 1);
 	    flag = CVSptfqmr(cvode_mem, field0, field1);
-	    check_flag("CVSPtfqmr", flag, NULL);
+	    ml_cvode_check_flag("CVSPtfqmr", flag, NULL);
 	    break;
 
 	default:
@@ -604,19 +681,19 @@ static void set_linear_solver(void *cvode_mem, value ls, int n)
 	switch (Int_val(ls)) {
 	case VARIANT_LINEAR_SOLVER_DENSE:
 	    flag = CVDense(cvode_mem, n);
-	    check_flag("CVDense", flag, NULL);
+	    ml_cvode_check_flag("CVDense", flag, NULL);
 	    break;
 
 #if SUNDIALS_BLAS_LAPACK == 1
 	case VARIANT_LINEAR_SOLVER_LAPACKDENSE:
 	    flag = CVLapackDense(cvode_mem, n);
-	    check_flag("CVLapackDense", flag, NULL);
+	    ml_cvode_check_flag("CVLapackDense", flag, NULL);
 	    break;
 #endif
 
 	case VARIANT_LINEAR_SOLVER_DIAG:
 	    flag = CVDiag(cvode_mem);
-	    check_flag("CVDiag", flag, NULL);
+	    ml_cvode_check_flag("CVDiag", flag, NULL);
 	    break;
 
 	default:
@@ -656,7 +733,7 @@ CAMLprim value c_init(value lmm, value iter, value initial, value num_roots,
 	iter_c = CV_FUNCTIONAL;
     }
 
-    N_Vector initial_nv = vectorize_bigarray(initial);
+    N_Vector initial_nv = nvectorize_ba(initial);
 
     void *cvode_mem = CVodeCreate(lmm_c, iter_c);
 
@@ -688,11 +765,11 @@ CAMLprim value c_init(value lmm, value iter, value initial, value num_roots,
     }
 
     flag = CVodeInit(data->cvode_mem, f, Double_val(t0), initial_nv);
-    relinquish_vectorized_bigarray(initial_nv);
-    check_flag("CVodeInit", flag, data);
+    relinquish_nvectorizedba(initial_nv);
+    ml_cvode_check_flag("CVodeInit", flag, data);
 
     flag = CVodeRootInit(data->cvode_mem, data->num_roots, roots);
-    check_flag("CVodeRootInit", flag, data);
+    ml_cvode_check_flag("CVodeRootInit", flag, data);
 
     CVodeSetUserData(data->cvode_mem, (void *)data);
 
@@ -708,7 +785,7 @@ CAMLprim value c_init(value lmm, value iter, value initial, value num_roots,
 	NV_Ith_S(abstol, i) = RCONST(1.0e-8);
     }
     flag = CVodeSVtolerances(data->cvode_mem, RCONST(1.0e-4), abstol);
-    check_flag("CVodeSVtolerances", flag, data);
+    ml_cvode_check_flag("CVodeSVtolerances", flag, data);
     N_VDestroy_Serial(abstol);
 
     CAMLreturn(vdata);
@@ -734,11 +811,11 @@ CAMLprim value c_set_tolerances(value vdata, value reltol, value abstol)
 
     ml_cvode_data_p data = cvode_data_from_ml(vdata);
 
-    N_Vector atol_nv = vectorize_bigarray(abstol);
+    N_Vector atol_nv = nvectorize_ba(abstol);
 
     int flag = CVodeSVtolerances(data->cvode_mem, Double_val(reltol), atol_nv);
-    relinquish_vectorized_bigarray(atol_nv);
-    check_flag("CVodeSVtolerances", flag, NULL);
+    relinquish_nvectorizedba(atol_nv);
+    ml_cvode_check_flag("CVodeSVtolerances", flag, NULL);
 
     CAMLreturn0;
 }
@@ -749,10 +826,10 @@ CAMLprim value c_reinit(value vdata, value t0, value y0)
 
     ml_cvode_data_p data = cvode_data_from_ml(vdata);
 
-    N_Vector y0_nv = vectorize_bigarray(y0);
+    N_Vector y0_nv = nvectorize_ba(y0);
     int flag = CVodeReInit(data->cvode_mem, Double_val(t0), y0_nv);
-    relinquish_vectorized_bigarray(y0_nv);
-    check_flag("CVodeReInit", flag, NULL);
+    relinquish_nvectorizedba(y0_nv);
+    ml_cvode_check_flag("CVodeReInit", flag, NULL);
 
     CAMLreturn0;
 }
@@ -771,7 +848,7 @@ CAMLprim value c_get_roots(value vdata, value roots)
     }
 
     int flag = CVodeGetRootInfo(data->cvode_mem, roots_d);
-    check_flag("CVodeGetRootInfo", flag, NULL);
+    ml_cvode_check_flag("CVodeGetRootInfo", flag, NULL);
 
     CAMLreturn0;
 }
@@ -782,93 +859,6 @@ CAMLprim value c_free(value vdata)
     finalize(vdata);
     Store_field(vdata, 1, (value)NULL);
     CAMLreturn0;
-}
-
-static void check_flag(const char *call, int flag, void *to_free)
-{
-    static char exmsg[MAX_ERRMSG_LEN] = "";
-
-    if (flag == CV_SUCCESS
-	|| flag == CV_ROOT_RETURN
-	|| flag == CV_TSTOP_RETURN) return;
-
-    if (to_free != NULL) free(to_free);
-
-    switch (flag) {
-    case CV_ILL_INPUT:
-	caml_raise_constant(*caml_named_value("cvode_IllInput"));
-	break;
-
-    case CV_TOO_CLOSE:
-	caml_raise_constant(*caml_named_value("cvode_TooClose"));
-	break;
-
-    case CV_TOO_MUCH_WORK:
-	caml_raise_constant(*caml_named_value("cvode_TooMuchWork"));
-	break;
-
-    case CV_TOO_MUCH_ACC:
-	caml_raise_constant(*caml_named_value("cvode_TooMuchAccuracy"));
-	break;
-
-    case CV_ERR_FAILURE:
-	caml_raise_constant(*caml_named_value("cvode_ErrFailure"));
-	break;
-
-    case CV_CONV_FAILURE:
-	caml_raise_constant(*caml_named_value("cvode_ConvergenceFailure"));
-	break;
-
-    case CV_LINIT_FAIL:
-	caml_raise_constant(*caml_named_value("cvode_LinearInitFailure"));
-	break;
-
-    case CV_LSETUP_FAIL:
-	caml_raise_constant(*caml_named_value("cvode_LinearSetupFailure"));
-	break;
-
-    case CV_LSOLVE_FAIL:
-	caml_raise_constant(*caml_named_value("cvode_LinearSolveFailure"));
-	break;
-
-    case CV_RHSFUNC_FAIL:
-	caml_raise_constant(*caml_named_value("cvode_RhsFuncFailure"));
-	break;
-
-    case CV_FIRST_RHSFUNC_ERR:
-	caml_raise_constant(*caml_named_value("cvode_FirstRhsFuncError"));
-	break;
-
-    case CV_REPTD_RHSFUNC_ERR:
-	caml_raise_constant(*caml_named_value("cvode_RepeatedRhsFuncError"));
-	break;
-
-    case CV_UNREC_RHSFUNC_ERR:
-	caml_raise_constant(*caml_named_value("cvode_UnrecoverableRhsFuncError"));
-	break;
-
-    case CV_RTFUNC_FAIL:
-	caml_raise_constant(*caml_named_value("cvode_RootFuncFailure"));
-	break;
-
-    case CV_BAD_K:
-	caml_raise_constant(*caml_named_value("cvode_BadK"));
-	break;
-
-    case CV_BAD_T:
-	caml_raise_constant(*caml_named_value("cvode_BadT"));
-	break;
-
-    case CV_BAD_DKY:
-	caml_raise_constant(*caml_named_value("cvode_BadDky"));
-	break;
-
-    default:
-	/* e.g. CVDIAG_MEM_NULL, CVDIAG_ILL_INPUT, CVDIAG_MEM_FAIL */
-	snprintf(exmsg, MAX_ERRMSG_LEN, "%s: %s", call,
-		 CVodeGetReturnFlagName(flag));
-	caml_failwith(exmsg);
-    }
 }
 
 static value solver(value vdata, value nextt, value y, int onestep)
@@ -890,7 +880,7 @@ static value solver(value vdata, value nextt, value y, int onestep)
     int flag = CVode(data->cvode_mem, Double_val(nextt), y_nv, &t,
 		     onestep ? CV_ONE_STEP : CV_NORMAL);
     N_VDestroy(y_nv);
-    check_flag("CVode", flag, NULL);
+    ml_cvode_check_flag("CVode", flag, NULL);
 
     r = caml_alloc_tuple(2);
     Store_field(r, 0, caml_copy_double(t));
@@ -928,11 +918,11 @@ CAMLprim value c_get_dky(value vdata, value vt, value vk, value vy)
     CAMLparam4(vdata, vt, vk, vy);
 
     ml_cvode_data_p data = cvode_data_from_ml(vdata);
-    N_Vector y_nv = vectorize_bigarray(vy);
+    N_Vector y_nv = nvectorize_ba(vy);
 
     int flag = CVodeGetDky(data->cvode_mem, Double_val(vt), Int_val(vk), y_nv);
-    check_flag("CVodeGetDky", flag, NULL);
-    relinquish_vectorized_bigarray(y_nv);
+    ml_cvode_check_flag("CVodeGetDky", flag, NULL);
+    relinquish_nvectorizedba(y_nv);
     
     CAMLreturn0;
 }
@@ -970,7 +960,7 @@ CAMLprim value c_integrator_stats(value vdata)
 	&hcur,
 	&tcur
     ); 
-    check_flag("CVodeGetIntegratorStats", flag, NULL);
+    ml_cvode_check_flag("CVodeGetIntegratorStats", flag, NULL);
 
     r = caml_alloc_tuple(10);
     Store_field(r, RECORD_INTEGRATOR_STATS_STEPS, Val_long(nsteps));
@@ -989,36 +979,6 @@ CAMLprim value c_integrator_stats(value vdata)
     CAMLreturn(r);
 }
 
-CAMLprim value c_last_step_size(value vdata)
-{
-    CAMLparam1(vdata);
-
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
-    int flag;
-    realtype hlast;
-
-    flag = CVodeGetLastStep(data->cvode_mem, &hlast);
-    check_flag("CVodeGetLastStep", flag, NULL);
-
-    CAMLreturn(caml_copy_double(hlast));
-}
-
-CAMLprim value c_next_step_size(value vdata)
-{
-    CAMLparam1(vdata);
-
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
-    int flag;
-    realtype hcur;
-
-    flag = CVodeGetCurrentStep(data->cvode_mem, &hcur);
-    check_flag("CVodeGetCurrentStep", flag, NULL);
-
-    CAMLreturn(caml_copy_double(hcur));
-}
-
-/* optional input functions */
-
 CAMLprim value c_set_error_file(value vdata, value vpath, value vtrunc)
 {
     CAMLparam3(vdata, vpath, vtrunc);
@@ -1035,30 +995,10 @@ CAMLprim value c_set_error_file(value vdata, value vpath, value vtrunc)
     }
 
     int flag = CVodeSetErrFile(data->cvode_mem, data->err_file);
-    check_flag("CVodeSetErrFile", flag, NULL);
+    ml_cvode_check_flag("CVodeSetErrFile", flag, NULL);
 
     CAMLreturn0;
 }
-
-#define VARIANT_HANDLER_RHSFN		0
-#define VARIANT_HANDLER_ROOTSFN		1
-#define VARIANT_HANDLER_ERRORHANDLER	2
-#define VARIANT_HANDLER_JACFN		3
-#define VARIANT_HANDLER_BANDJACFN	4
-#define VARIANT_HANDLER_PRESETUPFN	5
-#define VARIANT_HANDLER_PRESOLVEFN	6
-#define VARIANT_HANDLER_JACTIMESFN	7
-
-static const char *callback_ocaml_names[] = {
-    "cvode_serial_callback_rhsfn",
-    "cvode_serial_callback_rootsfn",
-    "cvode_serial_callback_errorhandler",
-    "cvode_serial_callback_jacfn",
-    "cvode_serial_callback_bandjacfn",
-    "cvode_serial_callback_presetupfn",
-    "cvode_serial_callback_presolvefn",
-    "cvode_serial_callback_jactimesfn",
-};
 
 CAMLprim value c_register_handler(value vdata, value handler)
 {
@@ -1115,162 +1055,6 @@ CAMLprim value c_register_handler(value vdata, value handler)
     CAMLreturn0;
 }
 
-/* call c_register_handler first */
-CAMLprim value c_enable_error_handler(value vdata)
-{
-    CAMLparam1(vdata);
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
- 
-    int flag = CVodeSetErrHandlerFn(data->cvode_mem, errh, (void *)data);
-    check_flag("CVodeSetErrHandlerFn", flag, NULL);
-
-    CAMLreturn0;
-}
-
-CAMLprim value c_set_max_ord(value vdata, value maxord)
-{
-    CAMLparam2(vdata, maxord);
-
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
-
-    int flag = CVodeSetMaxOrd(data->cvode_mem, Int_val(maxord));
-    check_flag("CVodeSetMaxOrd", flag, NULL);
-
-    CAMLreturn0;
-}
-
-CAMLprim value c_set_max_num_steps(value vdata, value mxsteps)
-{
-    CAMLparam2(vdata, mxsteps);
-
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
-
-    int flag = CVodeSetMaxNumSteps(data->cvode_mem, Long_val(mxsteps));
-    check_flag("CVodeSetMaxNumSteps", flag, NULL);
-
-    CAMLreturn0;
-}
-
-CAMLprim value c_set_max_hnil_warns(value vdata, value mxhnil)
-{
-    CAMLparam2(vdata, mxhnil);
-
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
-
-    int flag = CVodeSetMaxHnilWarns(data->cvode_mem, Int_val(mxhnil));
-    check_flag("CVodeSetMaxHnilWarns", flag, NULL);
-
-    CAMLreturn0;
-}
-
-CAMLprim value c_set_stability_limit_detection(value vdata, value stldet)
-{
-    CAMLparam2(vdata, stldet);
-
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
-
-    int flag = CVodeSetStabLimDet(data->cvode_mem, Bool_val(stldet));
-    check_flag("CVodeSetStabLimDet", flag, NULL);
-
-    CAMLreturn0;
-}
-
-CAMLprim value c_set_initial_step_size(value vdata, value hin)
-{
-    CAMLparam2(vdata, hin);
-
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
-
-    int flag = CVodeSetInitStep(data->cvode_mem, Double_val(hin));
-    check_flag("CVodeSetInitStep", flag, NULL);
-
-    CAMLreturn0;
-}
-
-CAMLprim value c_set_min_abs_step_size(value vdata, value hmin)
-{
-    CAMLparam2(vdata, hmin);
-
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
-
-    int flag = CVodeSetMinStep(data->cvode_mem, Double_val(hmin));
-    check_flag("CVodeSetMinStep", flag, NULL);
-
-    CAMLreturn0;
-}
-
-CAMLprim value c_set_max_abs_step_size(value vdata, value hmax)
-{
-    CAMLparam2(vdata, hmax);
-
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
-
-    int flag = CVodeSetMaxStep(data->cvode_mem, Double_val(hmax));
-    check_flag("CVodeSetMaxStep", flag, NULL);
-
-    CAMLreturn0;
-}
-
-CAMLprim value c_set_stop_time(value vdata, value tstop)
-{
-    CAMLparam2(vdata, tstop);
-
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
-
-    int flag = CVodeSetStopTime(data->cvode_mem, Double_val(tstop));
-    check_flag("CVodeSetStopTime", flag, NULL);
-
-    CAMLreturn0;
-}
-
-CAMLprim value c_set_max_error_test_failures(value vdata, value maxnef)
-{
-    CAMLparam2(vdata, maxnef);
-
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
-
-    int flag = CVodeSetMaxErrTestFails(data->cvode_mem, Int_val(maxnef));
-    check_flag("CVodeSetMaxErrTestFails", flag, NULL);
-
-    CAMLreturn0;
-}
-
-CAMLprim value c_set_max_nonlinear_iterations(value vdata, value maxcor)
-{
-    CAMLparam2(vdata, maxcor);
-
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
-
-    int flag = CVodeSetMaxNonlinIters(data->cvode_mem, Int_val(maxcor));
-    check_flag("CVodeSetMaxNonlinIters", flag, NULL);
-
-    CAMLreturn0;
-}
-
-CAMLprim value c_set_max_convergence_failures(value vdata, value maxncf)
-{
-    CAMLparam2(vdata, maxncf);
-
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
-
-    int flag = CVodeSetMaxConvFails(data->cvode_mem, Int_val(maxncf));
-    check_flag("CVodeSetMaxConvFails", flag, NULL);
-
-    CAMLreturn0;
-}
-
-CAMLprim value c_set_nonlinear_convergence_coeffficient(value vdata, value nlscoef)
-{
-    CAMLparam2(vdata, nlscoef);
-
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
-
-    int flag = CVodeSetNonlinConvCoef(data->cvode_mem, Double_val(nlscoef));
-    check_flag("CVodeSetNonlinConvCoef", flag, NULL);
-
-    CAMLreturn0;
-}
-
 CAMLprim value c_set_nonlinear_iteration_type(value vdata, value iter)
 {
     CAMLparam2(vdata, iter);
@@ -1285,7 +1069,7 @@ CAMLprim value c_set_nonlinear_iteration_type(value vdata, value iter)
     }
 
     int flag = CVodeSetIterType(data->cvode_mem, iter_c);
-    check_flag("CVodeSetIterType", flag, NULL);
+    ml_cvode_check_flag("CVodeSetIterType", flag, NULL);
 
     if (iter_c == CV_NEWTON) {
 	set_linear_solver(data->cvode_mem, Field(iter, 0), data->neq);
@@ -1308,197 +1092,8 @@ CAMLprim value c_set_root_direction(value vdata, value rootdirs)
     }
 
     int flag = CVodeSetRootDirection(data->cvode_mem, rootdirs_d);
-    check_flag("CVodeSetRootDirection", flag, NULL);
+    ml_cvode_check_flag("CVodeSetRootDirection", flag, NULL);
 
     CAMLreturn0;
-}
-
-CAMLprim value c_disable_inactive_root_warnings(value vdata)
-{
-    CAMLparam1(vdata);
-
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
-
-    int flag = CVodeSetNoInactiveRootWarn(data->cvode_mem);
-    check_flag("CVodeSetNoInactiveRootWarn", flag, NULL);
-
-    CAMLreturn0;
-}
-
-/* direct linear solvers optional input functions */
-
-#define VARIANT_HANDLER_JACFN		3
-#define VARIANT_HANDLER_BANDJACFN	4
-#define VARIANT_HANDLER_PRESETUPFN	5
-#define VARIANT_HANDLER_PRESOLVEFN	6
-#define VARIANT_HANDLER_JACTIMESFN	7
-
-/* call c_register_handler first */
-CAMLprim value c_enable_dense_jacobian_fn(value vdata)
-{
-    CAMLparam1(vdata);
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
-    int flag = CVDlsSetDenseJacFn(data->cvode_mem, jacfn);
-    check_flag("CVDlsSetDenseJacFn", flag, NULL);
-    CAMLreturn0;
-}
-
-/* call c_register_handler first */
-CAMLprim value c_enable_band_jacobian_fn(value vdata)
-{
-    CAMLparam1(vdata);
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
-    int flag = CVDlsSetBandJacFn(data->cvode_mem, bandjacfn);
-    check_flag("CVDlsSetBandJacFn", flag, NULL);
-    CAMLreturn0;
-}
-
-/* iterative linear solvers optional input functions */
-
-#define VARIANT_PRECOND_TYPE_PRECNONE	0
-#define VARIANT_PRECOND_TYPE_PRECLEFT	1
-#define VARIANT_PRECOND_TYPE_PRECRIGHT	2
-#define VARIANT_PRECOND_TYPE_PRECBOTH	3
-
-#define VARIANT_GRAMSCHMIDT_TYPE_MODIFIEDGS  0
-#define VARIANT_GRAMSCHMIDT_TYPE_CLASSICALGS 1
-
-/* call c_register_handler for both functions first */
-CAMLprim value c_enable_preconditioner_fns(value vdata)
-{
-    CAMLparam1(vdata);
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
-    int flag = CVSpilsSetPreconditioner(data->cvode_mem,
-	    presetupfn, presolvefn);
-    check_flag("CVSpilsSetPreconditioner", flag, NULL);
-    CAMLreturn0;
-}
-
-/* call c_register_handler first */
-CAMLprim value c_enable_jacobian_times_vector_fn(value vdata)
-{
-    CAMLparam1(vdata);
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
-    int flag = CVSpilsSetJacTimesVecFn(data->cvode_mem, jactimesfn);
-    check_flag("CVSpilsSetJacTimesVecFn", flag, NULL);
-    CAMLreturn0;
-}
-
-#define VARIANT_PRECONDITIONING_TYPE_PRECNONE	0
-#define VARIANT_PRECONDITIONING_TYPE_PRECLEFT	1
-#define VARIANT_PRECONDITIONING_TYPE_PRECRIGHT	2
-#define VARIANT_PRECONDITIONING_TYPE_PRECBOTH	3
-
-CAMLprim value c_set_preconditioning_type(value vdata, value vptype)
-{
-    CAMLparam2(vdata, vptype);
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
-
-    int ptype;
-    switch (Int_val(vptype)) {
-    case VARIANT_PRECONDITIONING_TYPE_PRECNONE:
-	ptype = PREC_NONE;
-	break;
-
-    case VARIANT_PRECONDITIONING_TYPE_PRECLEFT:
-	ptype = PREC_LEFT;
-	break;
-
-    case VARIANT_PRECONDITIONING_TYPE_PRECRIGHT:
-	ptype = PREC_RIGHT;
-	break;
-
-    case VARIANT_PRECONDITIONING_TYPE_PRECBOTH:
-	ptype = PREC_BOTH;
-	break;
-    }
-
-    int flag = CVSpilsSetPrecType(data->cvode_mem, ptype);
-    check_flag("CVSpilsSetPrecType", flag, NULL);
-
-    CAMLreturn0;
-}
-
-#define VARIANT_GRAMSCHMIDT_TYPE_MODIFIEDGS	0
-#define VARIANT_GRAMSCHMIDT_TYPE_CLASSICALGS	1
-
-CAMLprim value c_set_gramschmidt_orthogonalization(value vdata, value vgstype)
-{
-    CAMLparam2(vdata, vgstype);
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
-
-    int gstype;
-    switch (Int_val(vgstype)) {
-    case VARIANT_GRAMSCHMIDT_TYPE_MODIFIEDGS:
-	gstype = MODIFIED_GS;
-	break;
-
-    case VARIANT_GRAMSCHMIDT_TYPE_CLASSICALGS:
-	gstype = CLASSICAL_GS;
-	break;
-    }
-
-    int flag = CVSpilsSetGSType(data->cvode_mem, gstype);
-    check_flag("CVSpilsSetGSType", flag, NULL);
-
-    CAMLreturn0;
-}
-
-CAMLprim value c_set_eps_linear_convergence_factor(value vdata, value eplifac)
-{
-    CAMLparam2(vdata, eplifac);
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
-
-    int flag = CVSpilsSetEpsLin(data->cvode_mem, Double_val(eplifac));
-    check_flag("CVSpilsSetEpsLin", flag, NULL);
-
-    CAMLreturn0;
-}
-
-CAMLprim value c_set_max_subspace_dimension(value vdata, value maxl)
-{
-    CAMLparam2(vdata, maxl);
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
-
-    int flag = CVSpilsSetMaxl(data->cvode_mem, Int_val(maxl));
-    check_flag("CVSpilsSetMaxl", flag, NULL);
-
-    CAMLreturn0;
-}
-
-/* functions for the abstract types Densematrix.t and Bandmatrix.t */
-
-CAMLprim value c_densematrix_get(value vmatrix, value vij)
-{
-    CAMLparam2(vmatrix, vij);
-    DlsMat m = (DlsMat)Field(vmatrix, 0);
-    realtype v = DENSE_ELEM(m, Int_val(Field(vij, 0)), Int_val(Field(vij, 1)));
-    CAMLreturn(caml_copy_double(v));
-}
-
-CAMLprim value c_densematrix_set(value vmatrix, value vij, value v)
-{
-    CAMLparam2(vmatrix, vij);
-    DlsMat m = (DlsMat)Field(vmatrix, 0);
-    DENSE_ELEM(m, Int_val(Field(vij, 0)), Int_val(Field(vij, 1)))
-	= Double_val(v);
-    CAMLreturn(caml_copy_double(v));
-}
-
-CAMLprim value c_bandmatrix_get(value vmatrix, value vij)
-{
-    CAMLparam2(vmatrix, vij);
-    DlsMat m = (DlsMat)Field(vmatrix, 0);
-    realtype v = BAND_ELEM(m, Int_val(Field(vij, 0)), Int_val(Field(vij, 1)));
-    CAMLreturn(caml_copy_double(v));
-}
-
-CAMLprim value c_bandmatrix_set(value vmatrix, value vij, value v)
-{
-    CAMLparam2(vmatrix, vij);
-    DlsMat m = (DlsMat)Field(vmatrix, 0);
-    BAND_ELEM(m, Int_val(Field(vij, 0)), Int_val(Field(vij, 1)))
-	= Double_val(v);
-    CAMLreturn(caml_copy_double(v));
 }
 

@@ -1,5 +1,11 @@
 (* Aug 2010, Timothy Bourke (INRIA) *)
 
+(*
+ * NB: The order of variant constructors and record fields is important!
+ *     If these types are changed or augmented, the corresponding declarations
+ *     in cvode_serial.h (and code in cvode_serial.c) must also be updated.
+ *)
+
 module Carray =
   struct
     type t = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
