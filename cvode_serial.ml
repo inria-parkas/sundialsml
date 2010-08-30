@@ -79,8 +79,14 @@ type lmm =
 | Adams
 | BDF
 
+type preconditioning_type =
+| PrecNone
+| PrecLeft
+| PrecRight
+| PrecBoth
+
 type bandrange = {mupper : int; mlower : int}
-type sprange = { pretype : int; maxl: int }
+type sprange = { pretype : preconditioning_type; maxl: int }
 
 type linear_solver =
 | Dense
@@ -91,6 +97,9 @@ type linear_solver =
 | Spgmr of sprange
 | Spbcg of sprange
 | Sptfqmr of sprange
+| BandedSpgmr of sprange * bandrange
+| BandedSpbcg of sprange * bandrange
+| BandedSptfqmr of sprange * bandrange
 
 type iter =
 | Newton of linear_solver
@@ -167,6 +176,7 @@ type handler =
 | RhsFn
 | RootsFn
 | ErrorHandler
+| ErrorWeight
 | JacFn
 | BandJacFn
 | PreSetupFn
@@ -177,6 +187,7 @@ let handler_name h = match h with
   | RhsFn        -> "cvode_serial_callback_rhsfn"
   | RootsFn      -> "cvode_serial_callback_rootsfn"
   | ErrorHandler -> "cvode_serial_callback_errorhandler"
+  | ErrorWeight  -> "cvode_serial_callback_errorweight"
   | JacFn        -> "cvode_serial_callback_jacfn"
   | BandJacFn    -> "cvode_serial_callback_bandjacfn"
   | PreSetupFn   -> "cvode_serial_callback_presetupfn"
@@ -203,13 +214,22 @@ external neqs : session -> int
     = "c_neqs"
 
 external reinit : session -> float -> val_array -> unit
-    = "c_reinit"
+    = "c_re_init"
 
-external set_tolerances : session -> float -> Carray.t -> unit
-    = "c_set_tolerances"
+external sv_tolerances : session -> float -> Carray.t -> unit
+    = "c_sv_tolerances"
+external ss_tolerances : session -> float -> float -> unit
+    = "c_ss_tolerances"
 
-external get_roots : session -> Roots.t -> unit
-    = "c_get_roots"
+external wf_tolerances : session -> (val_array -> Carray.t -> unit) -> unit
+    = "c_wf_tolerances"
+
+let set_wf_tolerances s efun =
+  register_handler s ErrorWeight efun;
+  wf_tolerances s
+
+external get_root_info : session -> Roots.t -> unit
+    = "c_get_root_info"
 
 external free : session -> unit
     = "c_free"
@@ -244,8 +264,8 @@ type integrator_stats = {
   internal_time : float
 }
 
-external integrator_stats : session -> integrator_stats
-    = "c_integrator_stats"
+external get_integrator_stats : session -> integrator_stats
+    = "c_get_integrator_stats"
 
 external last_step_size : session -> float
     = "c_last_step_size"
@@ -254,7 +274,7 @@ external next_step_size : session -> float
     = "c_next_step_size"
 
 let print_integrator_stats s =
-  let stats = integrator_stats s
+  let stats = get_integrator_stats s
   in
     Printf.printf "steps = %d\n"                stats.steps;
     Printf.printf "rhs_evals = %d\n"            stats.rhs_evals;
@@ -270,12 +290,12 @@ let print_integrator_stats s =
 external set_error_file : session -> string -> bool -> unit 
     = "c_set_error_file"
 
-external enable_error_handler : session -> unit 
-    = "c_enable_error_handler"
+external enable_err_handler_fn : session -> unit 
+    = "c_enable_err_handler_fn"
 
-let set_error_handler s errh =
+let set_err_handler_fn s errh =
   register_handler s ErrorHandler errh;
-  enable_error_handler s
+  enable_err_handler_fn s
 
 external set_max_ord : session -> int -> unit 
     = "c_set_max_ord"
@@ -283,26 +303,26 @@ external set_max_num_steps : session -> int -> unit
     = "c_set_max_num_steps"
 external set_max_hnil_warns : session -> int -> unit 
     = "c_set_max_hnil_warns"
-external set_stability_limit_detection : session -> bool -> unit 
-    = "c_set_stability_limit_detection"
-external set_initial_step_size : session -> float -> unit 
-    = "c_set_initial_step_size"
-external set_min_abs_step_size : session -> float -> unit 
-    = "c_set_min_abs_step_size"
-external set_max_abs_step_size : session -> float -> unit 
-    = "c_set_max_abs_step_size"
+external set_stab_lim_det : session -> bool -> unit 
+    = "c_set_stab_lim_det"
+external set_init_step: session -> float -> unit 
+    = "c_set_init_step"
+external set_min_step : session -> float -> unit 
+    = "c_set_min_step"
+external set_max_step : session -> float -> unit 
+    = "c_set_max_step"
 external set_stop_time : session -> float -> unit 
     = "c_set_stop_time"
-external set_max_error_test_failures : session -> int -> unit 
-    = "c_set_max_error_test_failures"
-external set_max_nonlinear_iterations : session -> int -> unit 
-    = "c_set_max_nonlinear_iterations"
-external set_max_convergence_failures : session -> int -> unit 
-    = "c_set_max_convergence_failures"
-external set_nonlinear_convergence_coeffficient : session -> float -> unit 
-    = "c_set_nonlinear_convergence_coeffficient"
-external set_nonlinear_iteration_type : session -> iter -> unit 
-    = "c_set_nonlinear_iteration_type"
+external set_max_err_test_fails : session -> int -> unit 
+    = "c_set_max_err_test_fails"
+external set_max_nonlin_iters : session -> int -> unit 
+    = "c_set_max_nonlin_iters"
+external set_max_conv_fails : session -> int -> unit 
+    = "c_set_max_conv_fails"
+external set_nonlin_conv_coef : session -> float -> unit 
+    = "c_set_nonlin_conv_coef "
+external set_iter_type : session -> iter -> unit 
+    = "c_set_iter_type"
 
 external set_root_direction' : session -> int_array -> unit 
     = "c_set_root_direction"
@@ -327,29 +347,29 @@ let set_all_root_directions s rd =
   Bigarray.Array1.fill rdirs (int32_of_root_direction rd);
   set_root_direction' s rdirs
 
-external disable_inactive_root_warnings : session -> unit 
-    = "c_disable_inactive_root_warnings"
+external set_no_inactive_root_warn : session -> unit 
+    = "c_set_no_inactive_root_warn"
 
-external num_stability_limit_order_reductions : session -> int
-    = "c_num_stability_limit_order_reductions"
+external get_num_stab_lim_order_reds : session -> int
+    = "c_get_num_stab_lim_order_reds"
 
-external tolerance_scale_factor : session -> float
-    = "c_tolerance_scale_factor"
+external get_tol_scale_factor : session -> float
+    = "c_get_tol_scale_factor"
 
-external error_weights : session -> Carray.t -> unit
-    = "c_error_weights"
+external get_err_weights : session -> Carray.t -> unit
+    = "c_get_err_weights"
 
-external local_error_estimates : session -> Carray.t -> unit
-    = "c_local_error_estimates"
+external get_est_local_errors : session -> Carray.t -> unit
+    = "c_get_est_local_errors"
 
-external nonlinear_solver_iterations : session -> int
-    = "c_nonlinear_solver_iterations"
+external get_num_nonlin_solv_iters : session -> int
+    = "c_get_num_nonlin_solv_iters"
 
-external nonlinear_solver_convergence_failures : session -> int
-    = "c_nonlinear_solver_convergence_failures"
+external get_num_nonlin_solv_conv_fails : session -> int
+    = "c_get_num_nonlin_solv_conv_fails"
 
-external root_evals : session -> int
-    = "c_root_evals"
+external get_num_g_evals : session -> int
+    = "c_get_num_g_evals"
 
 (* note: uses DENSE_ELEM rather than the more efficient DENSE_COL. *)
 module Densematrix =
@@ -387,31 +407,37 @@ type triple_tmp = val_array * val_array * val_array
 
 module Dls =
   struct
-    external enable_dense_jacobian_fn : session -> unit
-        = "c_enable_dense_jacobian_fn"
+    external enable_dense_jac_fn : session -> unit
+        = "c_dls_enable_dense_jac_fn"
 
-    let set_dense_jacobian_fn s f =
+    let set_dense_jac_fn s f =
         register_handler s JacFn f;
-        enable_dense_jacobian_fn s
+        enable_dense_jac_fn s
 
-    external enable_band_jacobian_fn : session -> unit
-        = "c_enable_band_jacobian_fn"
+    external enable_band_jac_fn : session -> unit
+        = "c_dls_enable_band_jac_fn"
 
-    let set_band_jacobian_fn s f =
+    let set_band_jac_fn s f =
         register_handler s BandJacFn f;
-        enable_band_jacobian_fn s
+        enable_band_jac_fn s
 
-    external jacobian_evals : session -> int
-        = "c_dls_jacobian_evals"
+    external get_num_jac_evals : session -> int
+        = "c_dls_get_num_jac_evals"
 
-    external rhs_evals : session -> int
-        = "c_dls_rhs_evals"
+    external get_num_rhs_evals : session -> int
+        = "c_dls_get_num_rhs_evals"
   end
 
 module Diag =
   struct
-    external rhs_evals : session -> int
-        = "c_diag_rhs_evals"
+    external get_num_rhs_evals : session -> int
+        = "c_diag_get_num_rhs_evals"
+  end
+
+module BandPrec =
+  struct
+    external get_num_rhs_evals : session -> int
+        = "c_bandprec_get_num_rhs_evals"
   end
 
 module Spils =
@@ -426,61 +452,55 @@ module Spils =
 
     type single_tmp = val_array
 
-    type preconditioning_type =
-    | PrecNone
-    | PrecLeft
-    | PrecRight
-    | PrecBoth
-
     type gramschmidt_type =
     | ModifiedGS
     | ClassicalGS
 
-    external enable_preconditioner_fns : session -> unit
-        = "c_enable_preconditioner_fns"
+    external enable_preconditioner : session -> unit
+        = "c_enable_preconditioner"
 
-    let set_preconditioner_fns s fsetup fsolve =
+    let set_preconditioner s fsetup fsolve =
         register_handler s PreSetupFn fsetup;
         register_handler s PreSolveFn fsolve;
-        enable_preconditioner_fns s
+        enable_preconditioner s
 
-    external enable_jacobian_times_vector_fn : session -> unit
-        = "c_enable_jacobian_times_vector_fn"
+    external enable_jac_times_vec_fn : session -> unit
+        = "c_enable_jac_times_vec_fn"
 
-    let set_jacobian_times_vector_fn s f =
+    let set_jac_times_vec_fn s f =
         register_handler s JacTimesFn f;
-        enable_jacobian_times_vector_fn s
+        enable_jac_times_vec_fn s
 
-    external set_preconditioning_type : session -> preconditioning_type -> unit
-        = "c_set_preconditioning_type"
+    external set_prec_type : session -> preconditioning_type -> unit
+        = "c_set_prec_type"
 
-    external set_gramschmidt_orthogonalization :
+    external set_gs_type :
         session -> gramschmidt_type -> unit
-        = "c_set_gramschmidt_orthogonalization"
+        = "c_set_gs_type"
 
-    external set_eps_linear_convergence_factor : session -> float -> unit
-        = "c_set_eps_linear_convergence_factor"
+    external set_eps_lin : session -> float -> unit
+        = "c_set_eps_lin"
 
-    external set_max_subspace_dimension : session -> int -> unit
-        = "c_set_max_subspace_dimension"
+    external set_maxl : session -> int -> unit
+        = "c_set_maxl"
 
-    external linear_iterations : session -> int
-        = "c_spils_linear_iterations"
+    external get_num_lin_iters : session -> int
+        = "c_spils_get_num_lin_iters"
 
-    external convergence_failures : session -> int
-        = "c_spils_convergence_failures"
+    external get_num_conv_fails : session -> int
+        = "c_spils_get_num_conv_fails"
 
-    external preconditioner_evals : session -> int
-        = "c_spils_preconditioner_evals"
+    external get_num_prec_evals : session -> int
+        = "c_spils_get_num_prec_evals"
 
-    external preconditioner_solves : session -> int
-        = "c_spils_preconditioner_solves"
+    external get_num_prec_solves : session -> int
+        = "c_spils_get_num_prec_solves"
 
-    external jacobian_vector_times_evals : session -> int
-        = "c_spils_jacobian_vector_times_evals"
+    external get_num_jtimes_evals : session -> int
+        = "c_spils_get_num_jtimes_evals"
 
-    external rhs_evals : session -> int
-        = "c_spils_rhs_evals"
+    external get_num_rhs_evals : session -> int
+        = "c_spils_get_num_rhs_evals"
 
   end
 

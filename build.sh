@@ -46,6 +46,11 @@ clean)
     echo "* solvelucy.ml -> solvelucy.cmo"
     ocamlc -c solvelucy.ml || exit 1
 
+    # XXX TODO
+    echo "* test.ml -> test"
+    ocamlc -o test -I /usr/local/lib -I . \
+	bigarray.cma unix.cma cvode_serial.cma test.ml || exit 1
+
     # EXAMPLES
 
     cd examples/

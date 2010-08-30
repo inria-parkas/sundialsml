@@ -52,7 +52,7 @@ let _ = y.{xpos_i} <- 0.0;
 let n_roots = 1
 let rootdata = Cvode.Roots.create n_roots
 let ball_event s t y =
-  Cvode.get_roots s rootdata;
+  Cvode.get_root_info s rootdata;
 
   if (Cvode.Roots.get rootdata under_i && y.{yvel_i} <= 0.0) then
     (print_endline "hit ground!";

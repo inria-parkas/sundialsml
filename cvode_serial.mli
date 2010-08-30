@@ -37,8 +37,14 @@ type lmm =
 | Adams
 | BDF
 
+type preconditioning_type =
+| PrecNone
+| PrecLeft
+| PrecRight
+| PrecBoth
+
 type bandrange = {mupper : int; mlower : int}
-type sprange = { pretype : int; maxl: int }
+type sprange = { pretype : preconditioning_type; maxl: int }
 
 type linear_solver =
 | Dense
@@ -49,6 +55,9 @@ type linear_solver =
 | Spgmr of sprange
 | Spbcg of sprange
 | Sptfqmr of sprange
+| BandedSpgmr of sprange * bandrange
+| BandedSpbcg of sprange * bandrange
+| BandedSptfqmr of sprange * bandrange
 
 type iter =
 | Newton of linear_solver
@@ -121,8 +130,12 @@ val nroots : session -> int
 val neqs : session -> int
 
 val reinit : session -> float -> val_array -> unit
-val set_tolerances : session -> float -> Carray.t -> unit
-val get_roots : session -> Roots.t -> unit
+
+val sv_tolerances : session -> float -> Carray.t -> unit
+val ss_tolerances : session -> float -> float -> unit
+val wf_tolerances : session -> (val_array -> Carray.t -> unit) -> unit
+
+val get_root_info : session -> Roots.t -> unit
 
 val advance : session -> float -> val_array -> float * solver_result
 val step : session -> float -> val_array -> float * solver_result
@@ -143,7 +156,7 @@ type integrator_stats = {
   internal_time : float
 }
 
-val integrator_stats : session -> integrator_stats
+val get_integrator_stats : session -> integrator_stats
 val last_step_size : session -> float
 val next_step_size : session -> float
 
@@ -153,7 +166,7 @@ val next_step_size : session -> float
 val set_error_file : session -> string -> bool -> unit 
 
 (* Error handler function *)
-val set_error_handler : session -> (error_details -> unit) -> unit 
+val set_err_handler_fn : session -> (error_details -> unit) -> unit 
 
 (* Maximum order for BDF or Adams method *)
 val set_max_ord : session -> int -> unit 
@@ -165,64 +178,64 @@ val set_max_num_steps : session -> int -> unit
 val set_max_hnil_warns : session -> int -> unit 
 
 (* Flag to activate stability limit detection *)
-val set_stability_limit_detection : session -> bool -> unit 
+val set_stab_lim_det : session -> bool -> unit 
 
 (* Initial step size *)
-val set_initial_step_size : session -> float -> unit 
+val set_init_step : session -> float -> unit 
 
 (* Minimum absolute step size *)
-val set_min_abs_step_size : session -> float -> unit 
+val set_min_step : session -> float -> unit 
 
 (* Maximum absolute step size *)
-val set_max_abs_step_size : session -> float -> unit 
+val set_max_step : session -> float -> unit 
 
 (* Value of tstop *)
 val set_stop_time : session -> float -> unit 
 
 (* Maximum no. of error test failures *)
-val set_max_error_test_failures : session -> int -> unit 
+val set_max_err_test_fails : session -> int -> unit 
 
 (* Maximum no. of nonlinear iterations *)
-val set_max_nonlinear_iterations : session -> int -> unit 
+val set_max_nonlin_iters : session -> int -> unit 
 
 (* Maximum no. of convergence failures *)
-val set_max_convergence_failures : session -> int -> unit 
+val set_max_conv_fails : session -> int -> unit 
 
 (* Coefficient in the nonlinear convergence test *)
-val set_nonlinear_convergence_coeffficient : session -> float -> unit 
+val set_nonlin_conv_coef : session -> float -> unit 
 
 (* Nonlinear iteration type *)
-val set_nonlinear_iteration_type : session -> iter -> unit 
+val set_iter_type : session -> iter -> unit 
 
 (* Direction of zero-crossing *)
 val set_root_direction : session -> root_direction array -> unit 
 val set_all_root_directions : session -> root_direction -> unit 
 
 (* Disable rootfinding warnings *)
-val disable_inactive_root_warnings : session -> unit 
+val set_no_inactive_root_warn : session -> unit 
 
 (* Optional output functions *)
 
 (* No. of order reductions due to stability limit detection *)
-val num_stability_limit_order_reductions : session -> int
+val get_num_stab_lim_order_reds : session -> int
 
 (* Suggested factor for tolerance scaling *)
-val tolerance_scale_factor : session -> float
+val get_tol_scale_factor : session -> float
 
 (* Error weight vector for state variables *)
-val error_weights : session -> Carray.t -> unit
+val get_err_weights : session -> Carray.t -> unit
 
 (* Estimated local error vector *)
-val local_error_estimates : session -> Carray.t -> unit
+val get_est_local_errors : session -> Carray.t -> unit
 
 (* No. of nonlinear solver iterations  *)
-val nonlinear_solver_iterations : session -> int
+val get_num_nonlin_solv_iters : session -> int
 
 (* No. of nonlinear convergence failures  *)
-val nonlinear_solver_convergence_failures : session -> int
+val get_num_nonlin_solv_conv_fails : session -> int
 
 (* No. of calls to user root function  *)
-val root_evals : session -> int
+val get_num_g_evals : session -> int
 
 (* direct linear solvers functions *)
 
@@ -252,27 +265,33 @@ type triple_tmp = val_array * val_array * val_array
 
 module Dls :
   sig
-    val set_dense_jacobian_fn :
+    val set_dense_jac_fn :
          session
       -> (triple_tmp jacobian_arg -> Densematrix.t -> unit)
       -> unit
 
-    val set_band_jacobian_fn :
+    val set_band_jac_fn :
          session
       -> (triple_tmp jacobian_arg -> int -> int -> Bandmatrix.t -> unit)
       -> unit
 
     (* No. of Jacobian evaluations *)
-    val jacobian_evals : session -> int
+    val get_num_jac_evals : session -> int
 
     (* No. of r.h.s. calls for finite diff. Jacobian evals. *)
-    val rhs_evals : session -> int
+    val get_num_rhs_evals : session -> int
   end
 
 module Diag :
   sig
     (* No. of r.h.s. calls for finite diff. Jacobian evals. *)
-    val rhs_evals : session -> int
+    val get_num_rhs_evals : session -> int
+  end
+
+module BandPrec :
+  sig
+    (* No. of r.h.s. calls for finite diff. banded Jacobian evals. *)
+    val get_num_rhs_evals : session -> int
   end
 
 (* iterative linear solvers *)
@@ -288,23 +307,17 @@ module Spils :
 
     type single_tmp = val_array
 
-    type preconditioning_type =
-    | PrecNone
-    | PrecLeft
-    | PrecRight
-    | PrecBoth
-
     type gramschmidt_type =
     | ModifiedGS
     | ClassicalGS
 
-    val set_preconditioner_fns :
+    val set_preconditioner :
       session
       -> (triple_tmp jacobian_arg -> bool -> float -> bool)
       -> (single_tmp jacobian_arg -> solve_arg -> val_array -> unit)
       -> unit
 
-    val set_jacobian_times_vector_fn :
+    val set_jac_times_vec_fn :
       session
       -> (single_tmp jacobian_arg
           -> val_array (* v *)
@@ -312,21 +325,21 @@ module Spils :
           -> unit)
       -> unit
 
-    val set_preconditioning_type : session -> preconditioning_type -> unit
+    val set_prec_type : session -> preconditioning_type -> unit
 
-    val set_gramschmidt_orthogonalization :
+    val set_gs_type :
       session -> gramschmidt_type -> unit
 
-    val set_eps_linear_convergence_factor : session -> float -> unit
+    val set_eps_lin : session -> float -> unit
 
-    val set_max_subspace_dimension : session -> int -> unit
+    val set_maxl : session -> int -> unit
 
-    val linear_iterations : session -> int
-    val convergence_failures : session -> int
-    val preconditioner_evals : session -> int
-    val preconditioner_solves : session -> int
-    val jacobian_vector_times_evals : session -> int
-    val rhs_evals : session -> int
+    val get_num_prec_evals : session -> int
+    val get_num_prec_solves : session -> int
+    val get_num_lin_iters : session -> int
+    val get_num_conv_fails : session -> int
+    val get_num_jtimes_evals : session -> int
+    val get_num_rhs_evals : session -> int
   end
 
 (* TODO: Test the new callbacks, especially the Jacobian one. *)

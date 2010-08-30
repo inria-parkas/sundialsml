@@ -58,7 +58,7 @@ let sundialify tmax (lf : lucyf) advtime n_cstates n_roots =
       Carray.print_with_time t' cstates; (* TODO: how to handle display in general *)
       match result with
       | Cvode.RootsFound -> begin
-            Cvode.get_roots s roots_in;
+            Cvode.get_root_info s roots_in;
             calculate_roots_out t';
             (* NB: we are forced to recalculate the value of the root functions as
                    they cannot be requested from the solver. *)

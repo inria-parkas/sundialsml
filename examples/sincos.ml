@@ -30,7 +30,7 @@ let _ =
         t := t' +. 0.1;
         match result with
         | Cvode.RootsFound -> begin
-              Cvode.get_roots s rootdata;
+              Cvode.get_root_info s rootdata;
               Cvode.Roots.print rootdata
             end
         | Cvode.StopTimeReached -> keep_going := false

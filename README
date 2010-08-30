@@ -1,0 +1,191 @@
+Ocaml interface to the Sundials 2.4.0 Serial CVode solver
+
+Overview and limitations
+------------------------
+
+This library provides an Ocaml interface to part of the Sundials library
+from the Lawrence Livermore National Laboratory.
+
+Only the CVODE solver, for initial value problems of Ordinary Differential
+Equations (ODE), is supported and then only with serial NVectors. That is,
+the CVODES, IDA, IDAS, and KINSOL solvers are not supported, nor is the
+parallel interface to CVODE.
+
+The interface uses the Ocaml Bigarray module to avoid copying solver data
+between Ocaml and C.
+
+Approach
+--------
+
+The API aims to provide a comfortable and natural environment for using the
+solver in Ocaml programs, rather than an exact duplicate of the standard
+interface.
+
+This means that:
+
+* Function names have been renamed according to a regular scheme:
+ 	CVodeSetMaxOrd -> Cvode_serial.set_max_ord
+	CVSpilsSetJacTimesVecFn	-> Cvode_serial.Spils.set_jac_times_vec_fn
+
+   The leading 'module identifier' is removed and replaced with a module
+   path. The identifier is renamed by separating words that begin with a
+   capital letter in CVODEs by underscores. Only lower case letters are
+   used.
+
+* Constants have been replaced by variant types in most cases. They have
+  also been renamed:
+	PREC_NONE -> Cvode_serial.PrecNone
+  Change to CamelCase and remove underscores.
+
+* Some routines encapsulate several lower-level calls.
+  The most prominent example is init, which calls several functions,
+  including setting default tolerances and, possibly, setting up a linear
+  solver.
+
+* Routines throw exceptions rather than returning error codes.
+
+* Callbacks (into Ocaml) specify an error by throwing an exception rather
+  than by returning an error code.
+
+Organization
+------------
+build.sh		script to build the library cvode_serial.cma
+
+cvode_serial.mli	Ocaml interface to sundials
+cvode_serial.ml		Ocaml library; declares types, calls into C
+
+cvode_serial.h		internal header file for C implementation
+cvode_serial.c		trickier parts of the interface to C
+cvode_serial_bp.c	boiler plate for the interface to C
+
+Use
+---
+ocamlc -o sincos -I /usr/local/lib -I .. \
+    unix.cma bigarray.cma cvode_serial.cma \
+    program.ml
+
+TODO: revisit integrator stats names
+
+CVODE function		    Cvode_serial equivalent
+--------------		    -----------------------
+CVodeCreate		    called inside init
+CVodeSetErrHandlerFn	    set_err_handler_fn
+CVodeSetErrFile		    set_err_file
+CVodeSetUserData	    Used internally by the library and thus not
+			    available. Not needed in Ocaml anyway, just
+			    use references or partial evaluation in the
+			    callback routines.
+CVodeSetMaxOrd		    set_max_ord
+CVodeSetMaxNumSteps	    set_max_num_steps
+CVodeSetMaxHnilWarns	    set_max_hnil_warns
+CVodeSetStabLimDet	    set_stab_lim_det
+CVodeSetInitStep	    set_init_step
+CVodeSetMinStep		    set_min_step
+CVodeSetMaxStep		    set_max_step
+CVodeSetStopTime	    set_stop_time
+CVodeSetMaxErrTestFails	    set_max_err_test_fails
+CVodeSetMaxNonlinIters	    set_max_nonlin_iters
+CVodeSetMaxConvFails	    set_max_conv_fails
+CVodeSetNonlinConvCoef	    set_nonlin_conv_coef
+CVodeSetIterType	    set_iter_type
+CVodeSetRootDirection	    set_root_direction, set_all_root_directions
+CVodeSetNoInactiveRootWarn  set_no_inactive_root_warn
+CVodeInit		    called inside init
+CVodeReInit		    re_init
+CVodeSStolerances	    ss_tolerances
+CVodeSVtolerances	    sv_tolerances
+CVodeWFtolerances	    wf_tolerances
+CVodeRootInit		    called inside init
+CVode			    advance (CV_NORMAL), step (CV_ONE_STEP)
+CVodeGetDky		    get_dky
+CVodeGetWorkSpace	    Not available.
+CVodeGetNumSteps	    (integrator_states s).steps 
+CVodeGetNumRhsEvals	    (integrator_states s).rhs_evals 
+CVodeGetNumLinSolvSetups    (integrator_states s).linear_solver_setups
+CVodeGetNumErrTestFails	    (integrator_states s).error_test_failures
+CVodeGetLastOrder	    (integrator_states s).last_internal_order
+CVodeGetCurrentOrder	    (integrator_states s).next_internal_order
+CVodeGetNumStabLimOrderReds num_stab_lim_order_reds
+CVodeGetActualInitStep	    (integrator_states s).initial_step_size
+CVodeGetLastStep	    (integrator_states s).last_step_size
+CVodeGetCurrentStep	    (integrator_states s).next_step_size
+CVodeGetCurrentTime	    (integrator_states s).internal_time
+CVodeGetTolScaleFactor	    get_tol_scale_factor
+CVodeGetErrWeights	    err_weight
+CVodeGetEstLocalErrors	    get_est_local_errors
+CVodeGetNumGEvals	    get_num_g_evals
+CVodeGetRootInfo	    get_root_info
+CVodeGetIntegratorStats	    get_integrator_stats
+CVodeGetNumNonlinSolvIters  get_num_nonlin_solv_iters
+CVodeGetNumNonlinSolvConvFails	get_num_nonlin_solv_conv_fails
+CVodeGetNonlinSolvStats	    (get_num_nonlin_solv_iters s,
+			     get_num_nonlin_solv_conv_fails s)
+CVodeGetReturnFlagName	    Not necessary. No flags are returned, rather
+			    exceptions are thrown when necessary.
+CVodeFree		    free (called automatically during garbage
+			    collection if not called manually)
+
+CVDense			    called inside init and
+			    set_nonlinear_iteration_type when necessary
+
+CVLapackDense		    called inside init and
+			    set_nonlinear_iteration_type when necessary
+
+CVBand			    called inside init and
+			    set_nonlinear_iteration_type when necessary
+CVBandPrecInit		    called inside init and
+			    set_nonlinear_iteration_type when necessary
+CVBandPrecGetWorkSpace	    Not available.
+CVBandPrecGetNumRhsEvals    BandPrec.get_num_rhs_evals
+
+CVDiag			    called inside init and
+			    set_nonlinear_iteration_type when necessary
+CVDiagGetWorkSpace	    Not available
+CVDiagGetNumRhsEvals	    Diag.get_num_rhs_evals
+CVDiagGetLastFlag	    Not necessary. No flags are returned, rather
+			    exceptions are thrown when necessary.
+CVDiagGetReturnFlagName	    Not necessary. No flags are returned, rather
+			    exceptions are thrown when necessary.
+
+CVSpgmr			    called inside init and
+			    set_nonlinear_iteration_type when necessary
+
+CVSpbcg			    called inside init and
+			    set_nonlinear_iteration_type when necessary
+
+CVSptfqmr		    called inside init and
+			    set_nonlinear_iteration_type when necessary
+
+CVBBDPrecInit		    Not implemented (requires parallel N_Vectors)
+CVBBDPrecReInit		    Not implemented (requires parallel N_Vectors)
+CVBBDPrecGetWorkSpace	    Not implemented (requires parallel N_Vectors)
+CVBBDPrecGetNumGfnEvals	    Not implemented (requires parallel N_Vectors)
+
+CVDlsSetDenseJacFn	    Dls.set_dense_jac_fn
+CVDlsSetBandJacFn	    Dls.set_band_jac_fn
+CVDlsGetWorkSpace	    Not implemented.
+CVDlsGetNumJacEvals	    Dls.get_num_jac_evals
+CVDlsGetNumRhsEvals	    Dls.get_num_rhs_evals
+CVDlsGetLastFlag	    Not necessary. No flags are returned, rather
+			    exceptions are thrown when necessary.
+CVDlsGetReturnFlagName	    Not necessary. No flags are returned, rather
+			    exceptions are thrown when necessary.
+
+CVSpilsSetPrecType	    Spils.set_prec_type
+CVSpilsSetGSType	    Spils.set_gs_type
+CVSpilsSetMaxl		    Spils.set_maxl
+CVSpilsSetEpsLin	    Spils.set_eps_lin
+CVSpilsSetPreconditioner    Spils.set_preconditioner
+CVSpilsSetJacTimesVecFn	    Spils.set_jac_times_vec_fn
+CVSpilsGetWorkSpace	    Not implemented.
+CVSpilsGetNumPrecEvals	    Spils.get_num_prec_evals
+CVSpilsGetNumPrecSolves	    Spils.get_num_prec_solves
+CVSpilsGetNumLinIters	    Spils.get_num_lin_iters
+CVSpilsGetNumConvFails	    Spils.get_num_conv_fails
+CVSpilsGetNumJtimesEvals    Spils.get_num_jtimes_evals
+CVSpilsGetNumRhsEvals	    Spils.get_num_rhs_evals
+CVSpilsGetLastFlag	    Not necessary. No flags are returned, rather
+			    exceptions are thrown when necessary.
+CVSpilsGetReturnFlagName    Not necessary. No flags are returned, rather
+			    exceptions are thrown when necessary.
+

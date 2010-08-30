@@ -26,6 +26,7 @@
 #include <cvode/cvode_spgmr.h>
 #include <cvode/cvode_spbcgs.h>
 #include <cvode/cvode_sptfqmr.h>
+#include <cvode/cvode_bandpre.h>
 
 /* Interface with Ocaml types */
 
@@ -46,11 +47,14 @@
 #define VARIANT_LINEAR_SOLVER_LAPACKDENSE   1
 #define VARIANT_LINEAR_SOLVER_DIAG	    2
 /* tagged: */
-#define VARIANT_LINEAR_SOLVER_BAND	    0
-#define VARIANT_LINEAR_SOLVER_LAPACKBAND    1
-#define VARIANT_LINEAR_SOLVER_SPGMR	    2
-#define VARIANT_LINEAR_SOLVER_SPBCG	    3
-#define VARIANT_LINEAR_SOLVER_SPTFQMR	    4
+#define VARIANT_LINEAR_SOLVER_BAND		    0
+#define VARIANT_LINEAR_SOLVER_LAPACKBAND	    1
+#define VARIANT_LINEAR_SOLVER_SPGMR		    2
+#define VARIANT_LINEAR_SOLVER_SPBCG		    3
+#define VARIANT_LINEAR_SOLVER_SPTFQMR		    4
+#define VARIANT_LINEAR_SOLVER_BANDED_SPGMR	    5
+#define VARIANT_LINEAR_SOLVER_BANDED_SPBCG	    6
+#define VARIANT_LINEAR_SOLVER_BANDED_SPTFQMR	    7
 
 #define VARIANT_SOLVER_RESULT_CONTINUE		0
 #define VARIANT_SOLVER_RESULT_ROOTSFOUND	1
@@ -85,17 +89,12 @@
 #define VARIANT_HANDLER_RHSFN		0
 #define VARIANT_HANDLER_ROOTSFN		1
 #define VARIANT_HANDLER_ERRORHANDLER	2
-#define VARIANT_HANDLER_JACFN		3
-#define VARIANT_HANDLER_BANDJACFN	4
-#define VARIANT_HANDLER_PRESETUPFN	5
-#define VARIANT_HANDLER_PRESOLVEFN	6
-#define VARIANT_HANDLER_JACTIMESFN	7
-
-#define VARIANT_HANDLER_JACFN		3
-#define VARIANT_HANDLER_BANDJACFN	4
-#define VARIANT_HANDLER_PRESETUPFN	5
-#define VARIANT_HANDLER_PRESOLVEFN	6
-#define VARIANT_HANDLER_JACTIMESFN	7
+#define VARIANT_HANDLER_ERRORWEIGHT	3
+#define VARIANT_HANDLER_JACFN		4
+#define VARIANT_HANDLER_BANDJACFN	5
+#define VARIANT_HANDLER_PRESETUPFN	6
+#define VARIANT_HANDLER_PRESOLVEFN	7
+#define VARIANT_HANDLER_JACTIMESFN	8
 
 #define VARIANT_PRECOND_TYPE_PRECNONE	0
 #define VARIANT_PRECOND_TYPE_PRECLEFT	1
@@ -117,6 +116,9 @@ void ml_cvode_check_flag(const char *call, int flag, void *to_free);
 typedef struct ml_cvode_data* ml_cvode_data_p;
 value ml_cvode_data_alloc(mlsize_t approx_size);
 void *ml_cvode_mem(value vdata);
+
+#define CHECK_FLAG(call, flag) if (flag != CV_SUCCESS) \
+				 ml_cvode_check_flag(call, flag, NULL)
 
 #endif
 
