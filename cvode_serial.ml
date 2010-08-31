@@ -37,8 +37,8 @@ type rootval_array = Carray.t
 
 (* root arrays *)
 
-type int_array = (int32, Bigarray.int32_elt, Bigarray.c_layout) Bigarray.Array1.t
-let create_int_array = Bigarray.Array1.create Bigarray.int32 Carray.layout
+type int_array = (int, Bigarray.int_elt, Bigarray.c_layout) Bigarray.Array1.t
+let create_int_array = Bigarray.Array1.create Bigarray.int Carray.layout
 
 module Roots =
   struct
@@ -47,9 +47,9 @@ module Roots =
     let create = create_int_array
     let empty = create 0
 
-    let get roots i = roots.{i} <> 0l
+    let get roots i = roots.{i} <> 0
 
-    let set a i v = Bigarray.Array1.set a i (if v then 1l else 0l)
+    let set a i v = Bigarray.Array1.set a i (if v then 1 else 0)
 
     let print v =
       let isroot = get v in
@@ -60,7 +60,7 @@ module Roots =
       print_newline ()
 
     let length = Bigarray.Array1.dim
-    let reset v = Bigarray.Array1.fill v 0l
+    let reset v = Bigarray.Array1.fill v 0
 
     let fold_left f a v =
       let rec check (i, a) =
@@ -69,7 +69,7 @@ module Roots =
       in
       check (Bigarray.Array1.dim v - 1, a)
 
-    let exists = fold_left (fun a x -> a || x <> 0l) false
+    let exists = fold_left (fun a x -> a || x <> 0) false
   end
 
 let no_roots = (0, (fun _ _ _ -> 0))
@@ -327,24 +327,24 @@ external set_iter_type : session -> iter -> unit
 external set_root_direction' : session -> int_array -> unit 
     = "c_set_root_direction"
 
-let int32_of_root_direction x =
+let int_of_root_direction x =
   match x with
-  | Increasing -> 1l
-  | Decreasing -> -1l
-  | IncreasingOrDecreasing -> 0l
+  | Increasing -> 1
+  | Decreasing -> -1
+  | IncreasingOrDecreasing -> 0
     
 let set_root_direction s rda =
   let n = nroots s in
   let rdirs = create_int_array n in
   if (n > Array.length rda)
     then Bigarray.Array1.fill rdirs
-            (int32_of_root_direction IncreasingOrDecreasing);
-  Array.iteri (fun i v -> rdirs.{i} <- int32_of_root_direction v) rda;
+            (int_of_root_direction IncreasingOrDecreasing);
+  Array.iteri (fun i v -> rdirs.{i} <- int_of_root_direction v) rda;
   set_root_direction' s rdirs
 
 let set_all_root_directions s rd =
   let rdirs = create_int_array (nroots s) in
-  Bigarray.Array1.fill rdirs (int32_of_root_direction rd);
+  Bigarray.Array1.fill rdirs (int_of_root_direction rd);
   set_root_direction' s rdirs
 
 external set_no_inactive_root_warn : session -> unit 
