@@ -24,9 +24,9 @@ module Carray =
     let length = Bigarray.Array1.dim
 
     let print_with_time t v =
-      Printf.printf "%.8f" t;
+      Printf.printf "%.12f" t;
       for i = 0 to (length v - 1) do
-        Printf.printf "\t%f" v.{i}
+        Printf.printf "\t%.12f" v.{i}
       done;
       print_newline ()
   end
@@ -72,7 +72,7 @@ module Roots =
     let exists = fold_left (fun a x -> a || x <> 0) false
   end
 
-let no_roots = (0, (fun _ _ _ -> 0))
+let no_roots = (0, (fun _ _ _ -> ()))
 
 (* TODO: get these types working in the initialization function *)
 type lmm =

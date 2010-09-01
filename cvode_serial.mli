@@ -103,7 +103,7 @@ exception BadDky
 
 type session
 
-val no_roots : (int * (float -> val_array -> Roots.t -> int))
+val no_roots : (int * (float -> val_array -> rootval_array -> unit))
 
 (* Throw inside the f callback if the derivatives cannot be calculated at the
    given time. *)

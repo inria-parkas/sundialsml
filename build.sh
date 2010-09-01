@@ -21,6 +21,8 @@ clean)
     rm -f examples/sincos.cmi examples/sincos.cmo
     rm -f examples/sincos_lucyf.cmi examples/sincos_lucyf.cmo
     rm -f examples/sincos examples/sincos_lucyf examples/ball
+    rm -f examples/discontinuous examples/discontinuous.cmo
+    rm -f examples/discontinuous.cmi
     ;;
 
 *)
@@ -55,27 +57,31 @@ clean)
 
     cd examples/
 
-    echo "* sincos.ml -> sincos"
+    echo "* examples: sincos.ml -> sincos"
     ${OCAMLC} -o sincos -I /usr/local/lib -I .. \
 	unix.cma bigarray.cma cvode_serial.cma sincos.ml || exit 1
 
-    echo "* sincos_lucyf.ml -> sincos_lucyf"
+    echo "* examples: sincos_lucyf.ml -> sincos_lucyf"
     ${OCAMLC} -o sincos_lucyf -I /usr/local/lib -I .. \
 	unix.cma bigarray.cma cvode_serial.cma solvelucy.cmo sincos_lucyf.ml || exit 1
 
-    echo "* showball.mli -> showball.cmi"
+    echo "* examples: showball.mli -> showball.cmi"
     ${OCAMLC} showball.mli || exit 1
 
-    echo "* showball.ml -> showball.cmo"
+    echo "* examples: showball.ml -> showball.cmo"
     ${OCAMLC} -c showball.ml || exit 1
 
-    echo "* ... -> showball.cma"
+    echo "* examples: ... -> showball.cma"
     ${OCAMLC} -a -o showball.cma unix.cma graphics.cma showball.cmo || exit 1
 
-    echo "* ball.ml -> ball"
+    echo "* examples: ball.ml -> ball"
     ${OCAMLC} -o ball -I /usr/local/lib -I .. \
 	bigarray.cma unix.cma \
 	cvode_serial.cma showball.cma ball.ml || exit 1
+
+    echo "* examples: discontinuous.ml -> discontinuous"
+    ${OCAMLC} -o discontinuous -I /usr/local/lib -I .. \
+	unix.cma bigarray.cma cvode_serial.cma discontinuous.ml || exit 1
     ;;
 
 esac
