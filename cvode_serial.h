@@ -141,7 +141,7 @@ struct ml_cvode_data {
 };
 typedef struct ml_cvode_data* ml_cvode_data_p;
 
-#define CVODE_DATA(v) (*((void**)(Data_custom_val(v))))
+#define CVODE_DATA(v) ((ml_cvode_data_p)(Data_custom_val(v)))
 #define CVODE_DATA_FROM_ML(name, v) \
     ml_cvode_data_p (name) = (ml_cvode_data_p)CVODE_DATA(v); \
     if ((name)->cvode_mem == NULL) caml_failwith("This session has been freed");

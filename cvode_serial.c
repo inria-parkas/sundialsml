@@ -82,15 +82,6 @@ static void finalize(value vdata)
     }
 }
 
-static struct custom_operations ml_cvode_custom_ops = {
-	"fr.inria.flipflop.ml_cvode",
-	&finalize,
-	custom_compare_default,
-	custom_hash_default,
-	custom_serialize_default,
-	custom_deserialize_default
-};
-
 // TODO:
 // The Ocaml Manual (18.9.3) says:
 // ``The contents of custom blocks are not scanned by the garbage collector,
@@ -114,10 +105,10 @@ value ml_cvode_data_alloc(void* cvode_mem)
     	approx_size = lenrw * sizeof(realtype) + leniw * sizeof(long int);
     }
 
-    // r = caml_alloc_final(sizeof(void *), &finalize, approx_size, 10);
-    r = caml_alloc_custom(&ml_cvode_custom_ops, sizeof(void *), approx_size, 10);
+    r = caml_alloc_final(sizeof(struct ml_cvode_data),
+			 &finalize, approx_size, 10);
 
-    ml_cvode_data_p d = (ml_cvode_data_p)malloc(sizeof(struct ml_cvode_data));
+    ml_cvode_data_p d = CVODE_DATA(r);
     d->cvode_mem = cvode_mem;
 
     d->err_file = NULL;
@@ -130,8 +121,6 @@ value ml_cvode_data_alloc(void* cvode_mem)
     d->closure_presetupfn = NULL;
     d->closure_presolvefn = NULL;
     d->closure_jactimesfn = NULL;
-
-    CVODE_DATA(r) = (void *)d;
     
     CAMLreturn(r);
 }
