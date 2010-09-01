@@ -1,5 +1,8 @@
 Ocaml interface to the Sundials 2.4.0 Serial CVode solver
 
+Author: T.Bourke INRIA 2010
+        while visiting with Marc Pouzet at ENS, August 2010
+
 Overview and limitations
 ------------------------
 
@@ -60,11 +63,9 @@ cvode_serial_bp.c	boiler plate for the interface to C
 
 Use
 ---
-ocamlc -o sincos -I /usr/local/lib -I .. \
+ocamlc -o program -I /usr/local/lib -I .. \
     unix.cma bigarray.cma cvode_serial.cma \
     program.ml
-
-TODO: revisit integrator stats names
 
 CVODE function		    Cvode_serial equivalent
 --------------		    -----------------------
@@ -99,17 +100,17 @@ CVodeRootInit		    called inside init
 CVode			    advance (CV_NORMAL), step (CV_ONE_STEP)
 CVodeGetDky		    get_dky
 CVodeGetWorkSpace	    Not available.
-CVodeGetNumSteps	    (integrator_states s).steps 
-CVodeGetNumRhsEvals	    (integrator_states s).rhs_evals 
-CVodeGetNumLinSolvSetups    (integrator_states s).linear_solver_setups
-CVodeGetNumErrTestFails	    (integrator_states s).error_test_failures
-CVodeGetLastOrder	    (integrator_states s).last_internal_order
-CVodeGetCurrentOrder	    (integrator_states s).next_internal_order
+CVodeGetNumSteps	    get_num_steps
+CVodeGetNumRhsEvals	    get_num_rhs_evals
+CVodeGetNumLinSolvSetups    get_num_lin_solv_setups
+CVodeGetNumErrTestFails	    get_num_err_test_fails
+CVodeGetLastOrder	    get_last_order
+CVodeGetCurrentOrder	    get_current_order
 CVodeGetNumStabLimOrderReds num_stab_lim_order_reds
-CVodeGetActualInitStep	    (integrator_states s).initial_step_size
-CVodeGetLastStep	    (integrator_states s).last_step_size
-CVodeGetCurrentStep	    (integrator_states s).next_step_size
-CVodeGetCurrentTime	    (integrator_states s).internal_time
+CVodeGetActualInitStep	    get_actual_init_step
+CVodeGetLastStep	    get_last_step
+CVodeGetCurrentStep	    get_current_step
+CVodeGetCurrentTime	    get_current_time
 CVodeGetTolScaleFactor	    get_tol_scale_factor
 CVodeGetErrWeights	    err_weight
 CVodeGetEstLocalErrors	    get_est_local_errors

@@ -34,6 +34,146 @@ CAMLprim value c_next_step_size(value vcvode_mem)
     CAMLreturn(caml_copy_double(hcur));
 }
 
+CAMLprim value c_get_num_steps(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+
+    CVODE_MEM_FROM_ML(cvode_mem, vcvode_mem);
+    int flag;
+    long int v;
+
+    flag = CVodeGetNumSteps(cvode_mem, &v);
+    CHECK_FLAG("CVodeGetNumSteps", flag);
+
+    CAMLreturn(Val_long(v));
+}
+
+CAMLprim value c_get_num_rhs_evals(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+
+    CVODE_MEM_FROM_ML(cvode_mem, vcvode_mem);
+    int flag;
+    long int v;
+
+    flag = CVodeGetNumRhsEvals(cvode_mem, &v);
+    CHECK_FLAG("CVodeGetNumRhsEvals", flag);
+
+    CAMLreturn(Val_long(v));
+}
+
+CAMLprim value c_get_num_lin_solv_setups(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+
+    CVODE_MEM_FROM_ML(cvode_mem, vcvode_mem);
+    int flag;
+    long int v;
+
+    flag = CVodeGetNumLinSolvSetups(cvode_mem, &v);
+    CHECK_FLAG("CVodeGetNumLinSolvSetups", flag);
+
+    CAMLreturn(Val_long(v));
+}
+
+CAMLprim value c_get_num_err_test_fails(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+
+    CVODE_MEM_FROM_ML(cvode_mem, vcvode_mem);
+    int flag;
+    long int v;
+
+    flag = CVodeGetNumErrTestFails(cvode_mem, &v);
+    CHECK_FLAG("CVodeGetNumErrTestFails", flag);
+
+    CAMLreturn(Val_long(v));
+}
+
+CAMLprim value c_get_last_order(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+
+    CVODE_MEM_FROM_ML(cvode_mem, vcvode_mem);
+    int flag;
+    int v;
+
+    flag = CVodeGetLastOrder(cvode_mem, &v);
+    CHECK_FLAG("CVodeGetLastOrder", flag);
+
+    CAMLreturn(Val_int(v));
+}
+
+CAMLprim value c_get_current_order(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+
+    CVODE_MEM_FROM_ML(cvode_mem, vcvode_mem);
+    int flag;
+    int v;
+
+    flag = CVodeGetCurrentOrder(cvode_mem, &v);
+    CHECK_FLAG("CVodeGetCurrentOrder", flag);
+
+    CAMLreturn(Val_int(v));
+}
+
+CAMLprim value c_get_actual_init_step(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+
+    CVODE_MEM_FROM_ML(cvode_mem, vcvode_mem);
+    int flag;
+    realtype v;
+
+    flag = CVodeGetActualInitStep(cvode_mem, &v);
+    CHECK_FLAG("CVodeGetActualInitStep", flag);
+
+    CAMLreturn(caml_copy_double(v));
+}
+
+CAMLprim value c_get_last_step(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+
+    CVODE_MEM_FROM_ML(cvode_mem, vcvode_mem);
+    int flag;
+    realtype v;
+
+    flag = CVodeGetLastStep(cvode_mem, &v);
+    CHECK_FLAG("CVodeGetLastStep", flag);
+
+    CAMLreturn(caml_copy_double(v));
+}
+
+CAMLprim value c_get_current_step(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+
+    CVODE_MEM_FROM_ML(cvode_mem, vcvode_mem);
+    int flag;
+    realtype v;
+
+    flag = CVodeGetCurrentStep(cvode_mem, &v);
+    CHECK_FLAG("CVodeGetCurrentStep", flag);
+
+    CAMLreturn(caml_copy_double(v));
+}
+
+CAMLprim value c_get_current_time(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+
+    CVODE_MEM_FROM_ML(cvode_mem, vcvode_mem);
+    int flag;
+    realtype v;
+
+    flag = CVodeGetCurrentTime(cvode_mem, &v);
+    CHECK_FLAG("CVodeGetCurrentTime", flag);
+
+    CAMLreturn(caml_copy_double(v));
+}
+
 CAMLprim value c_set_max_ord(value vcvode_mem, value maxord)
 {
     CAMLparam2(vcvode_mem, maxord);

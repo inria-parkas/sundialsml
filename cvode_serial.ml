@@ -252,16 +252,16 @@ let init' lmm iter f (num_roots, roots) y0 t0 =
 let init lmm iter f roots y0 = init' lmm iter f roots y0 0.0
 
 type integrator_stats = {
-  steps : int;
-  rhs_evals : int;
-  linear_solver_setups : int;
-  error_test_failures : int;
-  last_internal_order : int;
-  next_internal_order : int;
-  initial_step_size : float;
-  last_step_size : float;
-  next_step_size : float;
-  internal_time : float
+  num_steps : int;
+  num_rhs_evals : int;
+  num_lin_solv_setups : int;
+  num_err_test_fails : int;
+  last_order : int;
+  current_order : int;
+  actual_init_step : float;
+  last_step : float;
+  current_step : float;
+  current_time : float
 }
 
 external get_integrator_stats : session -> integrator_stats
@@ -273,19 +273,49 @@ external last_step_size : session -> float
 external next_step_size : session -> float
     = "c_next_step_size"
 
+external get_num_steps : session -> int
+    = "c_get_num_steps"
+
+external get_num_rhs_evals : session -> int
+    = "c_get_num_rhs_evals"
+
+external get_num_lin_solv_setups : session -> int
+    = "c_get_num_lin_solv_setups"
+
+external get_num_err_test_fails : session -> int
+    = "c_get_num_err_test_fails"
+
+external get_last_order : session -> int
+    = "c_get_last_order"
+
+external get_current_order : session -> int
+    = "c_get_current_order"
+
+external get_actual_init_step : session -> float
+    = "c_get_actual_init_step"
+
+external get_last_step : session -> float
+    = "c_get_last_step"
+
+external get_current_step : session -> float
+    = "c_get_current_step"
+
+external get_current_time : session -> float
+    = "c_get_current_time"
+
 let print_integrator_stats s =
   let stats = get_integrator_stats s
   in
-    Printf.printf "steps = %d\n"                stats.steps;
-    Printf.printf "rhs_evals = %d\n"            stats.rhs_evals;
-    Printf.printf "linear_solver_setups = %d\n" stats.linear_solver_setups;
-    Printf.printf "error_test_failures = %d\n"  stats.error_test_failures;
-    Printf.printf "last_internal_order = %d\n"  stats.last_internal_order;
-    Printf.printf "next_internal_order = %d\n"  stats.next_internal_order;
-    Printf.printf "initial_step_size = %e\n"    stats.initial_step_size;
-    Printf.printf "last_step_size = %e\n"       stats.last_step_size;
-    Printf.printf "next_step_size = %e\n"       stats.next_step_size;
-    Printf.printf "internal_time = %e\n"        stats.internal_time;
+    Printf.printf "num_steps = %d\n"           stats.num_steps;
+    Printf.printf "num_rhs_evals = %d\n"       stats.num_rhs_evals;
+    Printf.printf "num_lin_solv_setups = %d\n" stats.num_lin_solv_setups;
+    Printf.printf "num_err_test_fails = %d\n"  stats.num_err_test_fails;
+    Printf.printf "last_order = %d\n"          stats.last_order;
+    Printf.printf "current_order = %d\n"       stats.current_order;
+    Printf.printf "actual_init_step = %e\n"    stats.actual_init_step;
+    Printf.printf "last_step = %e\n"           stats.last_step;
+    Printf.printf "current_step = %e\n"        stats.current_step;
+    Printf.printf "current_time = %e\n"        stats.current_time;
 
 external set_error_file : session -> string -> bool -> unit 
     = "c_set_error_file"

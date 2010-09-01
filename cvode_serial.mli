@@ -144,17 +144,29 @@ val free : session -> unit
 val get_dky : session -> float -> int -> Carray.t -> unit
 
 type integrator_stats = {
-  steps : int;
-  rhs_evals : int;
-  linear_solver_setups : int;
-  error_test_failures : int;
-  last_internal_order : int;
-  next_internal_order : int;
-  initial_step_size : float;
-  last_step_size : float;
-  next_step_size : float;
-  internal_time : float
+  num_steps : int;
+  num_rhs_evals : int;
+  num_lin_solv_setups : int;
+  num_err_test_fails : int;
+  last_order : int;
+  current_order : int;
+  actual_init_step : float;
+  last_step : float;
+  current_step : float;
+  current_time : float
 }
+
+val get_num_steps : session -> int
+val get_num_rhs_evals : session -> int
+val get_num_lin_solv_setups : session -> int
+val get_num_err_test_fails : session -> int
+val get_last_order : session -> int
+val get_current_order : session -> int
+
+val get_actual_init_step : session -> float
+val get_last_step : session -> float
+val get_current_step : session -> float
+val get_current_time : session -> float
 
 val get_integrator_stats : session -> integrator_stats
 val last_step_size : session -> float
