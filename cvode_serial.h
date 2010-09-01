@@ -18,6 +18,7 @@
 #include <caml/fail.h>
 #include <caml/unixsupport.h>
 #include <caml/bigarray.h>
+#include <caml/alloc.h>
 
 /* linear solvers */
 #include <cvode/cvode_dense.h>
@@ -113,12 +114,41 @@
 #define VARIANT_GRAMSCHMIDT_TYPE_CLASSICALGS	1
 
 void ml_cvode_check_flag(const char *call, int flag, void *to_free);
-typedef struct ml_cvode_data* ml_cvode_data_p;
-value ml_cvode_data_alloc(mlsize_t approx_size);
-void *ml_cvode_mem(value vdata);
 
 #define CHECK_FLAG(call, flag) if (flag != CV_SUCCESS) \
 				 ml_cvode_check_flag(call, flag, NULL)
+
+// TODO: Is there any risk that the Ocaml GC will try to free the
+//	 closures? Do we have to somehow record that we're using them,
+//	 and then release them again in the free routine?
+//	 SEE: ml_cvode_data_alloc and finalize
+struct ml_cvode_data {
+    void *cvode_mem;
+    long int neq;
+    intnat num_roots;
+    value *closure_rhsfn;
+    value *closure_rootsfn;
+    value *closure_errh;
+    value *closure_errw;
+
+    value *closure_jacfn;
+    value *closure_bandjacfn;
+    value *closure_presetupfn;
+    value *closure_presolvefn;
+    value *closure_jactimesfn;
+
+    FILE *err_file;
+};
+typedef struct ml_cvode_data* ml_cvode_data_p;
+
+#define CVODE_DATA(v) (*((void**)(Data_custom_val(v))))
+#define CVODE_DATA_FROM_ML(name, v) \
+    ml_cvode_data_p (name) = (ml_cvode_data_p)CVODE_DATA(v); \
+    if ((name)->cvode_mem == NULL) caml_failwith("This session has been freed");
+
+#define CVODE_MEM_FROM_ML(name, v) \
+    void *(name) = ((ml_cvode_data_p)CVODE_DATA(v))->cvode_mem; \
+    if ((name) == NULL) caml_failwith("This session has been freed");
 
 #endif
 

@@ -4,6 +4,11 @@
 # * also allow for native code
 # * also allow for generation and dynamic linking of cvode_serial.so
 
+CC=cc
+AR=ar
+OCAMLC=ocamlc
+INCLUDE=`${OCAMLC} -where`
+
 case $1 in
 clean)
     rm -f cvode_serial.o cvode_serial_bp.o libcvode_serial.a
@@ -20,60 +25,55 @@ clean)
 
 *)
     echo "* cvode_serial.c -> cvode_serial.o"
-    cc -c cvode_serial.c || exit 1
+    ${CC} -I $INCLUDE -c cvode_serial.c || exit 1
 
     echo "* cvode_serial_bp.c -> cvode_serial_bp.o"
-    cc -c cvode_serial_bp.c || exit 1
+    ${CC} -I $INCLUDE -c cvode_serial_bp.c || exit 1
 
     echo "* cvode_serial.o -> libcvode_serial.a"
-    ar rc libcvode_serial.a cvode_serial.o cvode_serial_bp.o || exit 1
+    ${AR} rc libcvode_serial.a cvode_serial.o cvode_serial_bp.o || exit 1
 
     echo "* cvode_serial.mli -> cvode_serial.cmi"
-    ocamlc cvode_serial.mli || exit 1
+    ${OCAMLC} cvode_serial.mli || exit 1
 
     echo "* cvode_serial.ml -> cvode_serial.cmo"
-    ocamlc -c cvode_serial.ml || exit 1
+    ${OCAMLC} -c cvode_serial.ml || exit 1
 
     echo "* ... -> cvode_serial.cma"
-    ocamlc -a -o cvode_serial.cma -custom cvode_serial.cmo \
+    ${OCAMLC} -a -o cvode_serial.cma -custom cvode_serial.cmo \
 	-cclib -lsundials_cvode \
 	-cclib -lsundials_nvecserial \
 	-cclib -lcvode_serial || exit 1
 
     echo "* solvelucy.mli -> solvelucy.cmi"
-    ocamlc solvelucy.mli || exit 1
+    ${OCAMLC} solvelucy.mli || exit 1
 
     echo "* solvelucy.ml -> solvelucy.cmo"
-    ocamlc -c solvelucy.ml || exit 1
-
-    # XXX TODO
-    echo "* test.ml -> test"
-    ocamlc -o test -I /usr/local/lib -I . \
-	bigarray.cma unix.cma cvode_serial.cma test.ml || exit 1
+    ${OCAMLC} -c solvelucy.ml || exit 1
 
     # EXAMPLES
 
     cd examples/
 
     echo "* sincos.ml -> sincos"
-    ocamlc -o sincos -I /usr/local/lib -I .. \
+    ${OCAMLC} -o sincos -I /usr/local/lib -I .. \
 	unix.cma bigarray.cma cvode_serial.cma sincos.ml || exit 1
 
     echo "* sincos_lucyf.ml -> sincos_lucyf"
-    ocamlc -o sincos_lucyf -I /usr/local/lib -I .. \
+    ${OCAMLC} -o sincos_lucyf -I /usr/local/lib -I .. \
 	unix.cma bigarray.cma cvode_serial.cma solvelucy.cmo sincos_lucyf.ml || exit 1
 
     echo "* showball.mli -> showball.cmi"
-    ocamlc showball.mli || exit 1
+    ${OCAMLC} showball.mli || exit 1
 
     echo "* showball.ml -> showball.cmo"
-    ocamlc -c showball.ml || exit 1
+    ${OCAMLC} -c showball.ml || exit 1
 
     echo "* ... -> showball.cma"
-    ocamlc -a -o showball.cma unix.cma graphics.cma showball.cmo || exit 1
+    ${OCAMLC} -a -o showball.cma unix.cma graphics.cma showball.cmo || exit 1
 
     echo "* ball.ml -> ball"
-    ocamlc -o ball -I /usr/local/lib -I .. \
+    ${OCAMLC} -o ball -I /usr/local/lib -I .. \
 	bigarray.cma unix.cma \
 	cvode_serial.cma showball.cma ball.ml || exit 1
     ;;

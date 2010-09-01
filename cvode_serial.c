@@ -38,28 +38,6 @@ static const char *callback_ocaml_names[] = {
 #define NVECTORIZE_BA(ba) N_VMake_Serial(Caml_ba_array_val(ba)->dim[0], (realtype *)Caml_ba_data_val(ba))
 #define RELINQUISH_NVECTORIZEDBA(nv) N_VDestroy(nv)
 
-// TODO: Is there any risk that the Ocaml GC will try to free the
-//	 closures? Do we have to somehow record that we're using them,
-//	 and then release them again in the free routine?
-//	 SEE: ml_cvode_data_alloc and finalize
-struct ml_cvode_data {
-    void *cvode_mem;
-    long int neq;
-    intnat num_roots;
-    value *closure_rhsfn;
-    value *closure_rootsfn;
-    value *closure_errh;
-    value *closure_errw;
-
-    value *closure_jacfn;
-    value *closure_bandjacfn;
-    value *closure_presetupfn;
-    value *closure_presolvefn;
-    value *closure_jactimesfn;
-
-    FILE *err_file;
-};
-
 static void finalize_closure(value** closure_field)
 {
     if (*closure_field != NULL) {
@@ -70,7 +48,7 @@ static void finalize_closure(value** closure_field)
 
 static void finalize(value vdata)
 {
-    ml_cvode_data_p data = (ml_cvode_data_p)Data_custom_val(vdata);
+    CVODE_DATA_FROM_ML(data, vdata);
 
     // TODO:
     // The Ocaml Manual (18.9.1) says:
@@ -104,6 +82,15 @@ static void finalize(value vdata)
     }
 }
 
+static struct custom_operations ml_cvode_custom_ops = {
+	"fr.inria.flipflop.ml_cvode",
+	&finalize,
+	custom_compare_default,
+	custom_hash_default,
+	custom_serialize_default,
+	custom_deserialize_default
+};
+
 // TODO:
 // The Ocaml Manual (18.9.3) says:
 // ``The contents of custom blocks are not scanned by the garbage collector,
@@ -116,30 +103,37 @@ static void finalize(value vdata)
 // But, obviously, we're storing two closure values in the struct. We need
 // to find out if and when this is ok.
 //
-value ml_cvode_data_alloc(mlsize_t approx_size)
+value ml_cvode_data_alloc(void* cvode_mem)
 {
-    return caml_alloc_final(sizeof(struct ml_cvode_data), &finalize,
-			    approx_size, 10);
-}
+    CAMLparam0();
+    CAMLlocal1(r);
 
-static ml_cvode_data_p cvode_data_from_ml(value vdata)
-{
-    ml_cvode_data_p data = (ml_cvode_data_p)Data_custom_val(vdata);
-    if (data->cvode_mem == NULL) {
-	caml_failwith("This session has been freed");
+    mlsize_t approx_size = 0;
+    long int lenrw, leniw;
+    if (CVodeGetWorkSpace(cvode_mem, &lenrw, &leniw) == CV_SUCCESS) {
+    	approx_size = lenrw * sizeof(realtype) + leniw * sizeof(long int);
     }
 
-    return data;
-}
+    // r = caml_alloc_final(sizeof(void *), &finalize, approx_size, 10);
+    r = caml_alloc_custom(&ml_cvode_custom_ops, sizeof(void *), approx_size, 10);
 
-void *ml_cvode_mem(value vdata)
-{
-    ml_cvode_data_p data = (ml_cvode_data_p)Data_custom_val(vdata);
-    if (data->cvode_mem == NULL) {
-	caml_failwith("This session has been freed");
-    }
+    ml_cvode_data_p d = (ml_cvode_data_p)malloc(sizeof(struct ml_cvode_data));
+    d->cvode_mem = cvode_mem;
 
-    return (data->cvode_mem);
+    d->err_file = NULL;
+    d->closure_rhsfn = NULL;
+    d->closure_rootsfn = NULL;
+    d->closure_errh = NULL;
+    d->closure_errw = NULL;
+    d->closure_jacfn = NULL;
+    d->closure_bandjacfn = NULL;
+    d->closure_presetupfn = NULL;
+    d->closure_presolvefn = NULL;
+    d->closure_jactimesfn = NULL;
+
+    CVODE_DATA(r) = (void *)d;
+    
+    CAMLreturn(r);
 }
 
 void ml_cvode_check_flag(const char *call, int flag, void *to_free)
@@ -365,7 +359,7 @@ static int errw(N_Vector y, N_Vector ewt, void *user_data)
 CAMLprim value c_enable_err_handler_fn(value vdata)
 {
     CAMLparam1(vdata);
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
+    CVODE_DATA_FROM_ML(data, vdata);
  
     int flag = CVodeSetErrHandlerFn(data->cvode_mem, errh, (void *)data);
     CHECK_FLAG("CVodeSetErrHandlerFn", flag);
@@ -376,7 +370,7 @@ CAMLprim value c_enable_err_handler_fn(value vdata)
 CAMLprim value c_wf_tolerances(value vdata)
 {
     CAMLparam1(vdata);
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
+    CVODE_DATA_FROM_ML(data, vdata);
  
     int flag = CVodeWFtolerances(data->cvode_mem, errw);
     CHECK_FLAG("CVodeWFtolerances", flag);
@@ -610,7 +604,7 @@ static int jactimesfn(
 CAMLprim value c_dls_enable_dense_jac_fn(value vdata)
 {
     CAMLparam1(vdata);
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
+    CVODE_DATA_FROM_ML(data, vdata);
     int flag = CVDlsSetDenseJacFn(data->cvode_mem, jacfn);
     CHECK_FLAG("CVDlsSetDenseJacFn", flag);
     CAMLreturn0;
@@ -619,7 +613,7 @@ CAMLprim value c_dls_enable_dense_jac_fn(value vdata)
 CAMLprim value c_dls_enable_band_jac_fn(value vdata)
 {
     CAMLparam1(vdata);
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
+    CVODE_DATA_FROM_ML(data, vdata);
     int flag = CVDlsSetBandJacFn(data->cvode_mem, bandjacfn);
     CHECK_FLAG("CVDlsSetBandJacFn", flag);
     CAMLreturn0;
@@ -628,7 +622,7 @@ CAMLprim value c_dls_enable_band_jac_fn(value vdata)
 CAMLprim value c_enable_preconditioner(value vdata)
 {
     CAMLparam1(vdata);
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
+    CVODE_DATA_FROM_ML(data, vdata);
     int flag = CVSpilsSetPreconditioner(data->cvode_mem,
 	    presetupfn, presolvefn);
     CHECK_FLAG("CVSpilsSetPreconditioner", flag);
@@ -638,27 +632,13 @@ CAMLprim value c_enable_preconditioner(value vdata)
 CAMLprim value c_enable_jac_times_vec_fn(value vdata)
 {
     CAMLparam1(vdata);
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
+    CVODE_DATA_FROM_ML(data, vdata);
     int flag = CVSpilsSetJacTimesVecFn(data->cvode_mem, jactimesfn);
     CHECK_FLAG("CVSpilsSetJacTimesVecFn", flag);
     CAMLreturn0;
 }
 
 /* basic interface */
-
-static mlsize_t approx_size_cvode_mem(void *cvode_mem)
-{
-    mlsize_t used = 0;
-    long int lenrw = 0;
-    long int leniw = 0;
-    int flag = CVodeGetWorkSpace(cvode_mem, &lenrw, &leniw);
-
-    if (flag == CV_SUCCESS) {
-    	used = lenrw * sizeof(realtype) + leniw * sizeof(long int);
-    }
-
-    return used;
-}
 
 static void set_linear_solver(void *cvode_mem, value ls, int n)
 {
@@ -667,7 +647,7 @@ static void set_linear_solver(void *cvode_mem, value ls, int n)
     if (Is_block(ls)) {
 	int field0 = Field(Field(ls, 0), 0); /* mupper, pretype */
 	int field1 = Field(Field(ls, 0), 1); /* mlower, maxl */
-	int sprange, bandrange;
+	value sprange, bandrange;
 
 	switch (Tag_val(ls)) {
 	case VARIANT_LINEAR_SOLVER_BAND:
@@ -801,26 +781,10 @@ CAMLprim value c_init(value lmm, value iter, value initial, value num_roots,
 
     void *cvode_mem = CVodeCreate(lmm_c, iter_c);
 
-    vdata = ml_cvode_data_alloc(approx_size_cvode_mem(cvode_mem));
-    ml_cvode_data_p data = (ml_cvode_data_p)Data_custom_val(vdata);
+    vdata = ml_cvode_data_alloc(cvode_mem);
+    CVODE_DATA_FROM_ML(data, vdata);
 
-    data->cvode_mem = cvode_mem;
     data->neq = Caml_ba_array_val(initial)->dim[0];
-    data->err_file = NULL;
-
-    /* these two closures must be registered afterward */
-    data->closure_rhsfn = NULL;
-    data->closure_rootsfn = NULL;
-
-    data->closure_errh = NULL;
-    data->closure_errw = NULL;
-
-    data->closure_jacfn = NULL;
-    data->closure_bandjacfn = NULL;
-    data->closure_presetupfn = NULL;
-    data->closure_presolvefn = NULL;
-    data->closure_jactimesfn = NULL;
-
     data->num_roots = Int_val(num_roots);
 
     if (data->cvode_mem == NULL) {
@@ -859,14 +823,14 @@ CAMLprim value c_init(value lmm, value iter, value initial, value num_roots,
 CAMLprim value c_neqs(value vdata)
 {
     CAMLparam1(vdata);
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
+    CVODE_DATA_FROM_ML(data, vdata);
     CAMLreturn(Val_int(data->neq));
 }
 
 CAMLprim value c_nroots(value vdata)
 {
     CAMLparam1(vdata);
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
+    CVODE_DATA_FROM_ML(data, vdata);
     CAMLreturn(Val_int(data->num_roots));
 }
 
@@ -874,7 +838,7 @@ CAMLprim value c_sv_tolerances(value vdata, value reltol, value abstol)
 {
     CAMLparam3(vdata, reltol, abstol);
 
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
+    CVODE_DATA_FROM_ML(data, vdata);
 
     N_Vector atol_nv = NVECTORIZE_BA(abstol);
 
@@ -889,7 +853,7 @@ CAMLprim value c_ss_tolerances(value vdata, value reltol, value abstol)
 {
     CAMLparam3(vdata, reltol, abstol);
 
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
+    CVODE_DATA_FROM_ML(data, vdata);
 
     int flag = CVodeSStolerances(data->cvode_mem,
 		 Double_val(reltol), Double_val(abstol));
@@ -902,7 +866,7 @@ CAMLprim value c_re_init(value vdata, value t0, value y0)
 {
     CAMLparam3(vdata, t0, y0);
 
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
+    CVODE_DATA_FROM_ML(data, vdata);
 
     N_Vector y0_nv = NVECTORIZE_BA(y0);
     int flag = CVodeReInit(data->cvode_mem, Double_val(t0), y0_nv);
@@ -916,7 +880,7 @@ CAMLprim value c_get_root_info(value vdata, value roots)
 {
     CAMLparam2(vdata, roots);
 
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
+    CVODE_DATA_FROM_ML(data, vdata);
 
     int roots_l = Caml_ba_array_val(roots)->dim[0];
     int *roots_d = Caml_ba_data_val(roots);
@@ -945,7 +909,7 @@ static value solver(value vdata, value nextt, value y, int onestep)
     CAMLlocal1(r);
 
     realtype t = 0.0;
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
+    CVODE_DATA_FROM_ML(data, vdata);
 
     int leny = Bigarray_val(y)->dim[0];
 
@@ -995,7 +959,7 @@ CAMLprim value c_get_dky(value vdata, value vt, value vk, value vy)
 {
     CAMLparam4(vdata, vt, vk, vy);
 
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
+    CVODE_DATA_FROM_ML(data, vdata);
     N_Vector y_nv = NVECTORIZE_BA(vy);
 
     int flag = CVodeGetDky(data->cvode_mem, Double_val(vt), Int_val(vk), y_nv);
@@ -1010,7 +974,7 @@ CAMLprim value c_get_integrator_stats(value vdata)
     CAMLparam1(vdata);
     CAMLlocal1(r);
 
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
+    CVODE_DATA_FROM_ML(data, vdata);
     int flag;
 
     long int nsteps;
@@ -1061,7 +1025,7 @@ CAMLprim value c_set_error_file(value vdata, value vpath, value vtrunc)
 {
     CAMLparam3(vdata, vpath, vtrunc);
 
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
+    CVODE_DATA_FROM_ML(data, vdata);
 
     if (data->err_file != NULL) {
 	fclose(data->err_file);
@@ -1082,7 +1046,7 @@ CAMLprim value c_register_handler(value vdata, value handler)
 {
     CAMLparam2(vdata, handler);
 
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
+    CVODE_DATA_FROM_ML(data, vdata);
     const char* ocaml_name = callback_ocaml_names[Int_val(handler)];
     value **handler_field;
 
@@ -1141,7 +1105,7 @@ CAMLprim value c_set_iter_type(value vdata, value iter)
 {
     CAMLparam2(vdata, iter);
 
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
+    CVODE_DATA_FROM_ML(data, vdata);
 
     int iter_c;
     if (Is_block(iter)) {
@@ -1164,7 +1128,7 @@ CAMLprim value c_set_root_direction(value vdata, value rootdirs)
 {
     CAMLparam2(vdata, rootdirs);
 
-    ml_cvode_data_p data = cvode_data_from_ml(vdata);
+    CVODE_DATA_FROM_ML(data, vdata);
 
     int rootdirs_l = Caml_ba_array_val(rootdirs)->dim[0];
     int *rootdirs_d = Caml_ba_data_val(rootdirs);
@@ -1183,7 +1147,7 @@ CAMLprim value c_get_err_weights(value vcvode_mem, value verrws)
 {
     CAMLparam2(vcvode_mem, verrws);
 
-    void *cvode_mem = ml_cvode_mem(vcvode_mem);
+    CVODE_MEM_FROM_ML(cvode_mem, vcvode_mem);
     N_Vector errws_nv = NVECTORIZE_BA(verrws);
 
     int flag = CVodeGetErrWeights(cvode_mem, errws_nv);
@@ -1197,7 +1161,7 @@ CAMLprim value c_get_est_local_errors(value vcvode_mem, value vele)
 {
     CAMLparam2(vcvode_mem, vele);
 
-    void *cvode_mem = ml_cvode_mem(vcvode_mem);
+    CVODE_MEM_FROM_ML(cvode_mem, vcvode_mem);
     N_Vector ele_nv = NVECTORIZE_BA(vele);
 
     int flag = CVodeGetEstLocalErrors(cvode_mem, ele_nv);
@@ -1210,7 +1174,7 @@ CAMLprim value c_get_est_local_errors(value vcvode_mem, value vele)
 CAMLprim value c_set_prec_type(value vcvode_mem, value vptype)
 {
     CAMLparam2(vcvode_mem, vptype);
-    void *cvode_mem = ml_cvode_mem(vcvode_mem);
+    CVODE_MEM_FROM_ML(cvode_mem, vcvode_mem);
 
     int flag = CVSpilsSetPrecType(cvode_mem, precond_type(vptype));
     CHECK_FLAG("CVSpilsSetPrecType", flag);
