@@ -24,9 +24,9 @@ module Carray =
     let length = Bigarray.Array1.dim
 
     let print_with_time t v =
-      Printf.printf "%.12f" t;
+      Printf.printf "% .8f" t;
       for i = 0 to (length v - 1) do
-        Printf.printf "\t%.12f" v.{i}
+        Printf.printf "\t% .8f" v.{i}
       done;
       print_newline ()
   end
@@ -234,11 +234,11 @@ external get_root_info : session -> Roots.t -> unit
 external free : session -> unit
     = "c_free"
 
-external advance : session -> float -> val_array -> float * solver_result
-    = "c_advance"
+external normal : session -> float -> val_array -> float * solver_result
+    = "c_normal"
 
-external step : session -> float -> val_array -> float * solver_result
-    = "c_step"
+external one_step : session -> float -> val_array -> float * solver_result
+    = "c_one_step"
 
 external get_dky : session -> float -> int -> Carray.t -> unit
     = "c_get_dky"

@@ -94,7 +94,7 @@ let _ =
   if !log then Cvode.Carray.print_with_time 0.0 y;
   let t = ref !t_delta in
   while (y.{xpos_i} < x_limit) do
-    let (t', result) = Cvode.advance s !t y in
+    let (t', result) = Cvode.normal s !t y in
         if (result = Cvode.RootsFound) then ball_event s t' y;
 
         if !log then Cvode.Carray.print_with_time t' y;

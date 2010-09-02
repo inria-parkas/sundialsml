@@ -932,13 +932,13 @@ static value solver(value vdata, value nextt, value y, int onestep)
     CAMLreturn(r);
 }
 
-CAMLprim value c_advance(value vdata, value nextt, value y)
+CAMLprim value c_normal(value vdata, value nextt, value y)
 {
     CAMLparam3(vdata, nextt, y);
     CAMLreturn(solver(vdata, nextt, y, 0));
 }
 
-CAMLprim value c_step(value vdata, value nextt, value y)
+CAMLprim value c_one_step(value vdata, value nextt, value y)
 {
     CAMLparam3(vdata, nextt, y);
     CAMLreturn(solver(vdata, nextt, y, 1));

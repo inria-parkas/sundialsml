@@ -137,10 +137,10 @@ val wf_tolerances : session -> (val_array -> Carray.t -> unit) -> unit
 
 val get_root_info : session -> Roots.t -> unit
 
-val advance : session -> float -> val_array -> float * solver_result
-val step : session -> float -> val_array -> float * solver_result
-val free : session -> unit
+val normal : session -> float -> val_array -> float * solver_result
+val one_step : session -> float -> val_array -> float * solver_result
 
+val free : session -> unit
 val get_dky : session -> float -> int -> Carray.t -> unit
 
 type integrator_stats = {

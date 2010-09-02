@@ -16,6 +16,7 @@ let sundialify tmax (lf : lucyf) advtime n_cstates n_roots =
   and cder       = Carray.create n_cstates
 
   and roots_in   = Roots.create n_roots
+  and no_roots_in = Roots.create n_roots
 
   and roots_out  = Carray.create n_roots
   and roots_out' = Carray.create n_roots
@@ -24,7 +25,7 @@ let sundialify tmax (lf : lucyf) advtime n_cstates n_roots =
   let f t cs ds =
     ignore (lf false roots_in cs ds roots_out)
   and g t cs rs =
-    ignore (lf false roots_in cs cder rs)
+    ignore (lf false no_roots_in cs cder rs)
   in
 
   let calculate_roots_out t = g t cstates roots_out in
@@ -52,7 +53,7 @@ let sundialify tmax (lf : lucyf) advtime n_cstates n_roots =
   and continuous s t =
     (* CONTINUOUS CALL(S) *)
     (* INV: forall i. roots_in[i] = false *)
-    let (t', result) = Cvode.advance s t cstates
+    let (t', result) = Cvode.normal s t cstates
     in
       print_string "C: "; (* XXX *)
       Carray.print_with_time t' cstates; (* TODO: how to handle display in general *)
@@ -91,37 +92,4 @@ let sundialify tmax (lf : lucyf) advtime n_cstates n_roots =
 
   in
   init ()
-
-(* TODO:
-   - Think harder about the interface between simulation code and the external
-     world?
-     
-     For instance, if a discrete node calls a function to get the mouse
-     position, and there are multiple Discrete iterations at an instant, is it
-     important to hold this value constant (which may be expensive, in terms of
-     memory, and complicated), or just let it make multiple calls?
-
-     Worse, what about a destructive input, like reading bytes from a file; it
-     should probably only read one value regardless of the number of
-     zero-crossing iterations.
-
-     Even more so for outputs and state changes.
-
-   - Do we need a special zero-crossing to mark when external inputs have
-     occurred?
-     Or are they sampled against an internal clock; i.e. does the discrete
-     program have to specify a sampling rate.
- *)
-
-
-(*
-   XXX Notes to Tim:
-   - There is no difference between continuous outputs and continuous states (Moore = Mealy)
-   - But there is a difference between discrete outputs and discrete states (Moore /= Mealy)
-     and, in fact, last memories conflate the two.
-     whereas flows do not.
-
-   - It should be a piece of cake to reimplement the Argos in Simulink model
-     using hybrid lucid synchrone.
- *)
 

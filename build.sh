@@ -23,6 +23,9 @@ clean)
     rm -f examples/sincos examples/sincos_lucyf examples/ball
     rm -f examples/discontinuous examples/discontinuous.cmo
     rm -f examples/discontinuous.cmi
+
+    rm -f examples/nontordu examples/nontordu.cmo
+    rm -f examples/nontordu.cmi
     ;;
 
 *)
@@ -82,6 +85,10 @@ clean)
     echo "* examples: discontinuous.ml -> discontinuous"
     ${OCAMLC} -o discontinuous -I /usr/local/lib -I .. \
 	unix.cma bigarray.cma cvode_serial.cma discontinuous.ml || exit 1
+
+    echo "* examples: nontordu.ml -> nontordu"
+    ${OCAMLC} -o nontordu -I /usr/local/lib -I .. \
+	unix.cma bigarray.cma cvode_serial.cma solvelucy.cmo nontordu.ml || exit 1
     ;;
 
 esac

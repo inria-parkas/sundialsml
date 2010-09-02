@@ -97,7 +97,7 @@ CVodeSStolerances	    ss_tolerances
 CVodeSVtolerances	    sv_tolerances
 CVodeWFtolerances	    wf_tolerances
 CVodeRootInit		    called inside init
-CVode			    advance (CV_NORMAL), step (CV_ONE_STEP)
+CVode			    normal (CV_NORMAL), one_step (CV_ONE_STEP)
 CVodeGetDky		    get_dky
 CVodeGetWorkSpace	    Not available.
 CVodeGetNumSteps	    get_num_steps
