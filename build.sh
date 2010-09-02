@@ -10,6 +10,10 @@ OCAMLC=ocamlc
 LIB=/usr/local/lib
 OCAML_INCLUDE=`${OCAMLC} -where`
 
+BASIC_EXAMPLES="discontinuous sincos"
+LUCYSOLVE_EXAMPLES="nontordu sincos_lucyf"
+SUNDIALS_EXAMPLES="roberts_dns"
+
 case $1 in
 clean)
     rm -f cvode_serial.o cvode_serial_bp.o libcvode_serial.a
@@ -22,14 +26,21 @@ clean)
     rm -f examples/sincos.cmi examples/sincos.cmo
     rm -f examples/sincos_lucyf.cmi examples/sincos_lucyf.cmo
     rm -f examples/sincos examples/sincos_lucyf examples/ball
-    rm -f examples/discontinuous examples/discontinuous.cmo
-    rm -f examples/discontinuous.cmi
 
     rm -f examples/nontordu examples/nontordu.cmo
     rm -f examples/nontordu.cmi
 
-    rm -f examples/roberts_dns examples/roberts_dns.cmo
-    rm -f examples/roberts_dns.cmi
+    for f in $BASIC_EXAMPLES $LUCYSOLVE_EXAMPLES; do
+	rm -f examples/$f.cmo;
+	rm -f examples/$f.cmi;
+	rm -f examples/$f;
+    done
+
+    for f in $SUNDIALS_EXAMPLES; do
+	rm -f examples/sundials/$f.cmo;
+	rm -f examples/sundials/$f.cmi;
+	rm -f examples/sundials/$f;
+    done
     ;;
 
 *)
@@ -64,14 +75,6 @@ clean)
 
     cd examples/
 
-    echo "* examples: sincos.ml -> sincos"
-    ${OCAMLC} -o sincos -I $LIB -I .. \
-	unix.cma bigarray.cma cvode_serial.cma sincos.ml || exit 1
-
-    echo "* examples: sincos_lucyf.ml -> sincos_lucyf"
-    ${OCAMLC} -o sincos_lucyf -I /usr/local/lib -I .. \
-	unix.cma bigarray.cma cvode_serial.cma solvelucy.cmo sincos_lucyf.ml || exit 1
-
     echo "* examples: showball.mli -> showball.cmi"
     ${OCAMLC} showball.mli || exit 1
 
@@ -86,17 +89,28 @@ clean)
 	bigarray.cma unix.cma \
 	cvode_serial.cma showball.cma ball.ml || exit 1
 
-    echo "* examples: discontinuous.ml -> discontinuous"
-    ${OCAMLC} -o discontinuous -I $LIB -I .. \
-	unix.cma bigarray.cma cvode_serial.cma discontinuous.ml || exit 1
+    for f in $LUCYSOLVE_EXAMPLES; do
+	echo "* examples: $f.ml -> $f"
+	${OCAMLC} -o $f -I $LIB -I .. \
+	    unix.cma bigarray.cma cvode_serial.cma solvelucy.cmo $f.ml || exit 1
+    done
 
-    echo "* examples: roberts_dns.ml -> roberts_dns"
-    ${OCAMLC} -o roberts_dns -I $LIB -I .. \
-	unix.cma bigarray.cma cvode_serial.cma roberts_dns.ml || exit 1
+    for f in $BASIC_EXAMPLES; do
+	echo "* examples: $f.ml -> $f"
+	${OCAMLC} -o $f -I $LIB -I .. \
+	    unix.cma bigarray.cma cvode_serial.cma $f.ml || exit 1
+    done
 
-    echo "* examples: nontordu.ml -> nontordu"
-    ${OCAMLC} -o nontordu -I $LIB -I .. \
-	unix.cma bigarray.cma cvode_serial.cma solvelucy.cmo nontordu.ml || exit 1
+    # SUNDIALS EXAMPLES
+
+    cd sundials/
+
+    for f in $SUNDIALS_EXAMPLES; do
+	echo "* examples/sundials: $f.ml -> $f"
+	${OCAMLC} -o $f -I $LIB -I ../.. \
+	    unix.cma bigarray.cma cvode_serial.cma $f.ml || exit 1
+    done
+
     ;;
 
 esac
