@@ -29,6 +29,9 @@ module Carray =
         Printf.printf "\t% .8f" v.{i}
       done;
       print_newline ()
+
+    external vmax_norm : t -> float
+      = "c_vmax_norm"
   end
 
 type val_array = Carray.t
@@ -437,10 +440,10 @@ module Bandmatrix =
         external get_col : t -> int -> c
             = "c_bandmatrix_col_get_col"
 
-        external get : c -> int -> float
+        external get : c -> int -> int -> float
             = "c_bandmatrix_col_get"
 
-        external set : c -> int -> float -> unit
+        external set : c -> int -> int -> float -> unit
             = "c_bandmatrix_col_set"
       end
   end

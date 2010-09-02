@@ -190,3 +190,13 @@ CVSpilsGetLastFlag	    Not necessary. No flags are returned, rather
 CVSpilsGetReturnFlagName    Not necessary. No flags are returned, rather
 			    exceptions are thrown when necessary.
 
+DENSE_ELEM		    Densematrix.get, Densematrix.set
+DENSE_COL		    Not implemented.
+
+BAND_ELEM		    Bandmatrix.get, Bandmatrix.set
+BAND_COL		    Bandmatrix.Col.get_col
+BAND_COL_ELEM		    Bandmatrix.Col.get, Bandmatrix.Col.set
+
+N_VMaxNorm		    Carray.vmax_norm
+others			    Not implemented
+

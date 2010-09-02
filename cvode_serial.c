@@ -1170,3 +1170,15 @@ CAMLprim value c_set_prec_type(value vcvode_mem, value vptype)
     CAMLreturn0;
 }
 
+CAMLprim value c_vmax_norm(value u)
+{
+    CAMLparam0();
+    CAMLlocal1(r);
+
+    N_Vector u_nv = NVECTORIZE_BA(u);
+    r = caml_copy_double(N_VMaxNorm(u_nv));
+    RELINQUISH_NVECTORIZEDBA(u_nv);
+
+    CAMLreturn(r);
+}
+

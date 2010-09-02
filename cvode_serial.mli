@@ -14,6 +14,8 @@ module Carray :
     val length : t -> int
 
     val print_with_time : float -> t -> unit
+
+    val vmax_norm : t -> float (* N_VMaxNorm *)
   end
 
 type val_array = Carray.t
@@ -272,8 +274,8 @@ module Bandmatrix :
 
         val get_col : t -> int -> c
 
-        val get : c -> int -> float
-        val set : c -> int -> float -> unit
+        val get : c -> int -> int -> float
+        val set : c -> int -> int -> float -> unit
       end
   end
 
