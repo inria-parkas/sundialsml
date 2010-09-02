@@ -436,7 +436,6 @@ static int jacfn(
     Store_field(matrix, 0, (value)Jac);
 
     r = caml_callback2_exn(*(data->closure_jacfn), arg, matrix);
-
     relinquish_jac_arg(arg, 1);
     // note: matrix is also invalid after the callback
 

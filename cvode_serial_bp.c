@@ -378,7 +378,16 @@ CAMLprim value c_densematrix_get(value vmatrix, value vij)
 {
     CAMLparam2(vmatrix, vij);
     DlsMat m = (DlsMat)Field(vmatrix, 0);
-    realtype v = DENSE_ELEM(m, Int_val(Field(vij, 0)), Int_val(Field(vij, 1)));
+
+    int i = Int_val(Field(vij, 0));
+    int j = Int_val(Field(vij, 1));
+
+#if CHECK_MATRIX_ACCESS == 1
+    if (i < 0 || i >= m->M) caml_invalid_argument("Densematrix.get: invalid i");
+    if (j < 0 || j >= m->N) caml_invalid_argument("Densematrix.get: invalid j");
+#endif
+
+    realtype v = DENSE_ELEM(m, i, j);
     CAMLreturn(caml_copy_double(v));
 }
 
@@ -386,8 +395,16 @@ CAMLprim value c_densematrix_set(value vmatrix, value vij, value v)
 {
     CAMLparam2(vmatrix, vij);
     DlsMat m = (DlsMat)Field(vmatrix, 0);
-    DENSE_ELEM(m, Int_val(Field(vij, 0)), Int_val(Field(vij, 1)))
-	= Double_val(v);
+
+    int i = Int_val(Field(vij, 0));
+    int j = Int_val(Field(vij, 1));
+
+#if CHECK_MATRIX_ACCESS == 1
+    if (i < 0 || i >= m->M) caml_invalid_argument("Densematrix.set: invalid i");
+    if (j < 0 || j >= m->N) caml_invalid_argument("Densematrix.set: invalid j");
+#endif
+
+    DENSE_ELEM(m, i, j) = Double_val(v);
     CAMLreturn(caml_copy_double(v));
 }
 
@@ -395,7 +412,16 @@ CAMLprim value c_bandmatrix_get(value vmatrix, value vij)
 {
     CAMLparam2(vmatrix, vij);
     DlsMat m = (DlsMat)Field(vmatrix, 0);
-    realtype v = BAND_ELEM(m, Int_val(Field(vij, 0)), Int_val(Field(vij, 1)));
+
+    int i = Int_val(Field(vij, 0));
+    int j = Int_val(Field(vij, 1));
+
+#if CHECK_MATRIX_ACCESS == 1
+    if (i < 0 || i >= m->M) caml_invalid_argument("Bandmatrix.get: invalid i");
+    if (j < 0 || j >= m->N) caml_invalid_argument("Bandmatrix.get: invalid j");
+#endif
+
+    realtype v = BAND_ELEM(m, i, j);
     CAMLreturn(caml_copy_double(v));
 }
 
@@ -403,8 +429,16 @@ CAMLprim value c_bandmatrix_set(value vmatrix, value vij, value v)
 {
     CAMLparam2(vmatrix, vij);
     DlsMat m = (DlsMat)Field(vmatrix, 0);
-    BAND_ELEM(m, Int_val(Field(vij, 0)), Int_val(Field(vij, 1)))
-	= Double_val(v);
+
+    int i = Int_val(Field(vij, 0));
+    int j = Int_val(Field(vij, 1));
+
+#if CHECK_MATRIX_ACCESS == 1
+    if (i < 0 || i >= m->M) caml_invalid_argument("Bandmatrix.set: invalid i");
+    if (j < 0 || j >= m->N) caml_invalid_argument("Bandmatrix.set: invalid j");
+#endif
+
+    BAND_ELEM(m, i, j) = Double_val(v);
     CAMLreturn(caml_copy_double(v));
 }
 

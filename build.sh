@@ -27,6 +27,9 @@ clean)
 
     rm -f examples/nontordu examples/nontordu.cmo
     rm -f examples/nontordu.cmi
+
+    rm -f examples/roberts_dns examples/roberts_dns.cmo
+    rm -f examples/roberts_dns.cmi
     ;;
 
 *)
@@ -86,6 +89,10 @@ clean)
     echo "* examples: discontinuous.ml -> discontinuous"
     ${OCAMLC} -o discontinuous -I $LIB -I .. \
 	unix.cma bigarray.cma cvode_serial.cma discontinuous.ml || exit 1
+
+    echo "* examples: roberts_dns.ml -> roberts_dns"
+    ${OCAMLC} -o roberts_dns -I $LIB -I .. \
+	unix.cma bigarray.cma cvode_serial.cma roberts_dns.ml || exit 1
 
     echo "* examples: nontordu.ml -> nontordu"
     ${OCAMLC} -o nontordu -I $LIB -I .. \

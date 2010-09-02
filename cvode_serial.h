@@ -29,6 +29,9 @@
 #include <cvode/cvode_sptfqmr.h>
 #include <cvode/cvode_bandpre.h>
 
+/* Configuration options */
+#define CHECK_MATRIX_ACCESS 1
+
 /* Interface with Ocaml types */
 
 #define BIGARRAY_FLOAT (CAML_BA_FLOAT64 | CAML_BA_C_LAYOUT)

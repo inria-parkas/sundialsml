@@ -27,6 +27,7 @@ module Roots :
     val create : int -> t
     val print : t -> unit
     val get : t -> int -> bool
+    val get' : t -> int -> int
     val set : t -> int -> bool -> unit
     val length : t -> int 
     val reset : t -> unit

@@ -48,6 +48,7 @@ module Roots =
     let empty = create 0
 
     let get roots i = roots.{i} <> 0
+    let get' roots i = roots.{i}
 
     let set a i v = Bigarray.Array1.set a i (if v then 1 else 0)
 
