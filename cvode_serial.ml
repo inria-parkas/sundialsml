@@ -44,7 +44,13 @@ module Roots =
   struct
     type t = int_array
 
-    let create = create_int_array
+    let reset v = Bigarray.Array1.fill v 0
+
+    let create n =
+      let a = create_int_array n in
+      reset a;
+      a
+
     let empty = create 0
 
     let get roots i = roots.{i} <> 0
@@ -61,7 +67,6 @@ module Roots =
       print_newline ()
 
     let length = Bigarray.Array1.dim
-    let reset v = Bigarray.Array1.fill v 0
 
     let fold_left f a v =
       let rec check (i, a) =

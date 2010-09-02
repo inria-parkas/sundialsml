@@ -11,7 +11,7 @@ LIB=/usr/local/lib
 OCAML_INCLUDE=`${OCAMLC} -where`
 
 BASIC_EXAMPLES="discontinuous sincos"
-LUCYSOLVE_EXAMPLES="nontordu sincos_lucyf"
+LUCYSOLVE_EXAMPLES="nontordu nontordu2 sincos_lucyf"
 SUNDIALS_EXAMPLES="roberts_dns"
 
 case $1 in
