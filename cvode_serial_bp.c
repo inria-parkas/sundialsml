@@ -425,6 +425,74 @@ CAMLprim value c_bandmatrix_get(value vmatrix, value vij)
     CAMLreturn(caml_copy_double(v));
 }
 
+/* XXX start XXX */
+
+CAMLprim value c_bandmatrix_col_get_col(value vmatrix, value vj)
+{
+    CAMLparam2(vmatrix, vj);
+    CAMLlocal1(r);
+
+    DlsMat m = (DlsMat)Field(vmatrix, 0);
+
+    int j = Int_val(vj);
+
+#if CHECK_MATRIX_ACCESS == 1
+    if (j < 0 || j >= m->N)
+	caml_invalid_argument("Bandmatrix.Col.get_col: invalid j");
+
+    r = caml_alloc(3, Abstract_tag);
+    Store_field(r, 1, Val_int(m->mu));
+    Store_field(r, 2, Val_int(m->ml));
+#else
+    r = caml_alloc(1, Abstract_tag);
+#endif
+
+    Store_field(r, 0, (value)BAND_COL(m, j));
+    CAMLreturn(r);
+}
+
+CAMLprim value c_bandmatrix_col_get(value vbandcol, value vi)
+{
+    CAMLparam2(vbandcol, vi);
+
+    realtype *bandcol = (realtype *)Field(vbandcol, 0);
+
+    int i = Int_val(vi);
+
+#if CHECK_MATRIX_ACCESS == 1
+    int mu = Int_val(Field(vbandcol, 1));
+    int ml = Int_val(Field(vbandcol, 2));
+
+    if (i < -mu || i >= ml)
+	caml_invalid_argument("Bandmatrix.Col.get: invalid i");
+#endif
+
+    CAMLreturn(caml_copy_double(bandcol[i]));
+}
+
+CAMLprim value c_bandmatrix_col_set(value vbandcol, value vi, value ve)
+{
+    CAMLparam3(vbandcol, vi, ve);
+
+    realtype *bandcol = (realtype *)Field(vbandcol, 0);
+
+    int i = Int_val(vi);
+
+#if CHECK_MATRIX_ACCESS == 1
+    int mu = Int_val(Field(vbandcol, 1));
+    int ml = Int_val(Field(vbandcol, 2));
+
+    if (i < -mu || i >= ml)
+	caml_invalid_argument("Bandmatrix.Col.set: invalid i");
+#endif
+
+    bandcol[i] = Double_val(ve);
+
+    CAMLreturn(Val_unit);
+}
+
+/* XXX finish XXX */
+
 CAMLprim value c_bandmatrix_set(value vmatrix, value vij, value v)
 {
     CAMLparam2(vmatrix, vij);

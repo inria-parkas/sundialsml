@@ -429,6 +429,20 @@ module Bandmatrix =
 
     external set : t -> (int * int) -> float -> unit
         = "c_bandmatrix_set"
+
+    module Col =
+      struct
+        type c
+
+        external get_col : t -> int -> c
+            = "c_bandmatrix_col_get_col"
+
+        external get : c -> int -> float
+            = "c_bandmatrix_col_get"
+
+        external set : c -> int -> float -> unit
+            = "c_bandmatrix_col_set"
+      end
   end
 
 type 't jacobian_arg =

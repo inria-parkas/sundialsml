@@ -262,8 +262,19 @@ module Densematrix :
 module Bandmatrix :
   sig
     type t
+
     val get : t -> (int * int) -> float
     val set : t -> (int * int) -> float -> unit
+
+    module Col :
+      sig
+        type c
+
+        val get_col : t -> int -> c
+
+        val get : c -> int -> float
+        val set : c -> int -> float -> unit
+      end
   end
 
 type 't jacobian_arg =
