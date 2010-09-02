@@ -7,7 +7,8 @@
 CC=cc
 AR=ar
 OCAMLC=ocamlc
-INCLUDE=`${OCAMLC} -where`
+LIB=/usr/local/lib
+OCAML_INCLUDE=`${OCAMLC} -where`
 
 case $1 in
 clean)
@@ -30,10 +31,10 @@ clean)
 
 *)
     echo "* cvode_serial.c -> cvode_serial.o"
-    ${CC} -I $INCLUDE -c cvode_serial.c || exit 1
+    ${CC} -I $OCAML_INCLUDE -c cvode_serial.c || exit 1
 
     echo "* cvode_serial_bp.c -> cvode_serial_bp.o"
-    ${CC} -I $INCLUDE -c cvode_serial_bp.c || exit 1
+    ${CC} -I $OCAML_INCLUDE -c cvode_serial_bp.c || exit 1
 
     echo "* cvode_serial.o -> libcvode_serial.a"
     ${AR} rc libcvode_serial.a cvode_serial.o cvode_serial_bp.o || exit 1
@@ -61,7 +62,7 @@ clean)
     cd examples/
 
     echo "* examples: sincos.ml -> sincos"
-    ${OCAMLC} -o sincos -I /usr/local/lib -I .. \
+    ${OCAMLC} -o sincos -I $LIB -I .. \
 	unix.cma bigarray.cma cvode_serial.cma sincos.ml || exit 1
 
     echo "* examples: sincos_lucyf.ml -> sincos_lucyf"
@@ -78,16 +79,16 @@ clean)
     ${OCAMLC} -a -o showball.cma unix.cma graphics.cma showball.cmo || exit 1
 
     echo "* examples: ball.ml -> ball"
-    ${OCAMLC} -o ball -I /usr/local/lib -I .. \
+    ${OCAMLC} -o ball -I $LIB -I .. \
 	bigarray.cma unix.cma \
 	cvode_serial.cma showball.cma ball.ml || exit 1
 
     echo "* examples: discontinuous.ml -> discontinuous"
-    ${OCAMLC} -o discontinuous -I /usr/local/lib -I .. \
+    ${OCAMLC} -o discontinuous -I $LIB -I .. \
 	unix.cma bigarray.cma cvode_serial.cma discontinuous.ml || exit 1
 
     echo "* examples: nontordu.ml -> nontordu"
-    ${OCAMLC} -o nontordu -I /usr/local/lib -I .. \
+    ${OCAMLC} -o nontordu -I $LIB -I .. \
 	unix.cma bigarray.cma cvode_serial.cma solvelucy.cmo nontordu.ml || exit 1
     ;;
 
