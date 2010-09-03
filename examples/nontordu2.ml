@@ -92,11 +92,6 @@ let f init      (* boolean: true => initialization *)
   end;
   true
 
-and zc_y  = 0       (* up(y)  *)
-and zc_my = 1       (* up(-y) *)
-and zc_z  = 2       (* up(z)  *)
-and zc_x  = 3       (* up(x)  *)
-and zc_mx = 4       (* up(-x) *)
 let _ =
   print_endline "";
   print_endline "C: result of continuous solver";

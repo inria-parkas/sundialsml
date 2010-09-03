@@ -14,6 +14,7 @@ module Carray :
     val length : t -> int
 
     val print_with_time : float -> t -> unit
+    val print_with_time' : float -> t -> unit
 
     val vmax_norm : t -> float (* N_VMaxNorm *)
   end

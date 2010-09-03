@@ -23,10 +23,17 @@ module Carray =
 
     let length = Bigarray.Array1.dim
 
-    let print_with_time t v =
+    let print_with_time' t v =
       Printf.printf "% .8f" t;
       for i = 0 to (length v - 1) do
         Printf.printf "\t% .8f" v.{i}
+      done;
+      print_newline ()
+
+    let print_with_time t v =
+      Printf.printf "% e" t;
+      for i = 0 to (length v - 1) do
+        Printf.printf "\t% e" v.{i}
       done;
       print_newline ()
 
