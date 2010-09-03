@@ -92,6 +92,9 @@ let f init      (* boolean: true => initialization *)
   end;
   true
 
+let _ = Arg.parse Solvelucy.args (fun _ -> ())
+        "nontordu2: chattering on velocity"
+
 let _ =
   print_endline "";
   print_endline "C: result of continuous solver";

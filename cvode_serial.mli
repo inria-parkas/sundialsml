@@ -47,7 +47,9 @@ type preconditioning_type =
 | PrecRight
 | PrecBoth
 
-type bandrange = {mupper : int; mlower : int}
+type bandrange = { mupper : int; mlower : int }
+
+val sprange_default_maxl : int
 type sprange = { pretype : preconditioning_type; maxl: int }
 
 type linear_solver =

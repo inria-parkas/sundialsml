@@ -102,6 +102,8 @@ type preconditioning_type =
 | PrecBoth
 
 type bandrange = {mupper : int; mlower : int}
+
+let sprange_default_maxl = 0
 type sprange = { pretype : preconditioning_type; maxl: int }
 
 type linear_solver =

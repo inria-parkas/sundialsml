@@ -61,6 +61,11 @@ type lucyf =
  *      calculate: der, rout
  *)
 
+val lmm : Cvode_serial.lmm ref
+val iter : Cvode_serial.iter ref
+
+val args : (Arg.key * Arg.spec * Arg.doc) list
+
 val run :
   bool ->                   (* allow multiple discrete delta-steps *)
   float option ->           (* stop time *)

@@ -65,6 +65,9 @@ let f init      (* boolean: true => initialization *)
   end;
   true
 
+let _ = Arg.parse Solvelucy.args (fun _ -> ())
+        "nontordu3: non-standard chattering"
+
 let _ =
   print_endline "";
   print_endline "C: result of continuous solver";
@@ -80,6 +83,7 @@ let _ =
   print_endline ""
 
 let _ = print_endline "        time\t      x\t\t      y"
+
 let _ = Solvelucy.run_delta
           (Some max_sim_time) f (fun t -> t +. max_step_size) n_eq n_zc
 

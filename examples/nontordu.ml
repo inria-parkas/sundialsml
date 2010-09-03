@@ -90,6 +90,8 @@ let f init      (* boolean: true => initialization *)
   end;
   true
 
+let _ = Arg.parse Solvelucy.args (fun _ -> ())
+        "nontordu: pathological chattering"
 let _ =
   print_endline "";
   print_endline "C: result of continuous solver";
