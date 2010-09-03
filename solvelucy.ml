@@ -130,25 +130,25 @@ let args n_eq =
 
     ("-spgmr",
      Arg.Unit (set_solver Cvode.BDF
-        (Cvode.Newton (Cvode.Spgmr { Cvode.pretype = Cvode.PrecBoth;
+        (Cvode.Newton (Cvode.Spgmr { Cvode.pretype = Cvode.PrecNone;
                                      Cvode.maxl = 0 }))),
      "(BDF, SPGMR(Both))");
 
     ("-spbcg",
      Arg.Unit (set_solver Cvode.BDF
-        (Cvode.Newton (Cvode.Spbcg { Cvode.pretype = Cvode.PrecBoth;
+        (Cvode.Newton (Cvode.Spbcg { Cvode.pretype = Cvode.PrecNone;
                                      Cvode.maxl = 0 }))),
      "(BDF, SPBCG(Both))");
 
     ("-sptfqmr",
      Arg.Unit (set_solver Cvode.BDF
-        (Cvode.Newton (Cvode.Sptfqmr { Cvode.pretype = Cvode.PrecBoth;
+        (Cvode.Newton (Cvode.Sptfqmr { Cvode.pretype = Cvode.PrecNone;
                                        Cvode.maxl = 0 }))),
      "(BDF, SPTFQMR(Both))");
 
     ("-banded-spgmr",
      Arg.Unit (set_solver Cvode.BDF
-        (Cvode.Newton (Cvode.BandedSpgmr ({ Cvode.pretype = Cvode.PrecBoth;
+        (Cvode.Newton (Cvode.BandedSpgmr ({ Cvode.pretype = Cvode.PrecNone;
                                             Cvode.maxl = 0 },
                                           { Cvode.mupper = neq;
                                             Cvode.mlower = neq})))),
@@ -156,7 +156,7 @@ let args n_eq =
 
     ("-banded-spbcg",
      Arg.Unit (set_solver Cvode.BDF
-         (Cvode.Newton (Cvode.BandedSpbcg ({ Cvode.pretype = Cvode.PrecBoth;
+         (Cvode.Newton (Cvode.BandedSpbcg ({ Cvode.pretype = Cvode.PrecNone;
                                              Cvode.maxl = 0 },
                                            { Cvode.mupper = neq;
                                              Cvode.mlower = neq})))),
@@ -164,7 +164,7 @@ let args n_eq =
 
     ("-banded-sptfqmr",
      Arg.Unit (set_solver Cvode.BDF
-         (Cvode.Newton (Cvode.BandedSptfqmr ({ Cvode.pretype = Cvode.PrecBoth;
+         (Cvode.Newton (Cvode.BandedSptfqmr ({ Cvode.pretype = Cvode.PrecNone;
                                                Cvode.maxl = 0 },
                                              { Cvode.mupper = neq;
                                                Cvode.mlower = neq})))),
