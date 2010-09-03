@@ -64,7 +64,7 @@ type lucyf =
 val lmm : Cvode_serial.lmm ref
 val iter : Cvode_serial.iter ref
 
-val args : (Arg.key * Arg.spec * Arg.doc) list
+val args : int -> (Arg.key * Arg.spec * Arg.doc) list
 
 val run :
   bool ->                   (* allow multiple discrete delta-steps *)

@@ -90,7 +90,7 @@ let f init      (* boolean: true => initialization *)
   end;
   true
 
-let _ = Arg.parse Solvelucy.args (fun _ -> ())
+let _ = Arg.parse (Solvelucy.args n_eq) (fun _ -> ())
         "nontordu: pathological chattering"
 let _ =
   print_endline "";

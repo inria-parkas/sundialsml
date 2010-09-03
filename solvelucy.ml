@@ -106,7 +106,11 @@ let set_solver l i () =
   lmm := l;
   iter := i
 
-let args = [
+let sprintf = Printf.sprintf
+
+let args n_eq =
+  let neq = n_eq - 1 in 
+  [
     ("-functional",
      Arg.Unit (set_solver Cvode.Adams Cvode.Functional),
      "(Adams, Functional)");
@@ -117,8 +121,8 @@ let args = [
 
     ("-band",
      Arg.Unit (set_solver Cvode.BDF (Cvode.Newton
-        (Cvode.Band { Cvode.mupper = 5; Cvode.mlower = 5 }))),
-     "(BDF, Band(5, 5))");
+        (Cvode.Band { Cvode.mupper = neq; Cvode.mlower = neq }))),
+     sprintf "(BDF, Band(%d, %d))" neq neq);
 
     ("-diag",
      Arg.Unit (set_solver Cvode.BDF (Cvode.Newton Cvode.Diag)),
@@ -146,24 +150,24 @@ let args = [
      Arg.Unit (set_solver Cvode.BDF
         (Cvode.Newton (Cvode.BandedSpgmr ({ Cvode.pretype = Cvode.PrecBoth;
                                             Cvode.maxl = 0 },
-                                          { Cvode.mupper = 5;
-                                            Cvode.mlower = 5})))),
-     "(BDF, SPGMR(Both))");
+                                          { Cvode.mupper = neq;
+                                            Cvode.mlower = neq})))),
+     sprintf "(BDF, SPGMR(Both, %d, %d))" neq neq);
 
     ("-banded-spbcg",
      Arg.Unit (set_solver Cvode.BDF
          (Cvode.Newton (Cvode.BandedSpbcg ({ Cvode.pretype = Cvode.PrecBoth;
                                              Cvode.maxl = 0 },
-                                           { Cvode.mupper = 5;
-                                             Cvode.mlower = 5})))),
-     "(BDF, SPBCG(Both))");
+                                           { Cvode.mupper = neq;
+                                             Cvode.mlower = neq})))),
+     sprintf "(BDF, SPBCG(Both, %d, %d))" neq neq);
 
     ("-banded-sptfqmr",
      Arg.Unit (set_solver Cvode.BDF
          (Cvode.Newton (Cvode.BandedSptfqmr ({ Cvode.pretype = Cvode.PrecBoth;
                                                Cvode.maxl = 0 },
-                                             { Cvode.mupper = 5;
-                                               Cvode.mlower = 5})))),
-     "(BDF, SPTFQMR(Both))");
+                                             { Cvode.mupper = neq;
+                                               Cvode.mlower = neq})))),
+     sprintf "(BDF, SPTFQMR(Both, %d, %d))" neq neq);
 ]
 

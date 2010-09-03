@@ -3,6 +3,9 @@ module Cvode = Cvode_serial
 module Roots = Cvode.Roots
 module Carray = Cvode.Carray
 
+let n_eq = 3
+let n_roots = 2
+
 let f init rin y der rout =
   if init then
     begin (* calculate: y *)
@@ -25,8 +28,8 @@ let f init rin y der rout =
       true
     end
 
-let _ = Arg.parse Solvelucy.args (fun _ -> ())
+let _ = Arg.parse (Solvelucy.args n_eq) (fun _ -> ())
         "sincos_lucyf: simple sinusoidal output"
 
-let _ = Solvelucy.run_delta (Some 10.0) f (fun t -> t +. 0.1) 3 2
+let _ = Solvelucy.run_delta (Some 10.0) f (fun t -> t +. 0.1) n_eq n_roots
 
