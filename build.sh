@@ -10,7 +10,7 @@ OCAMLC=ocamlc
 LIB=/usr/local/lib
 OCAML_INCLUDE=`${OCAMLC} -where`
 
-BASIC_EXAMPLES="discontinuous sincos"
+BASIC_EXAMPLES="discontinuous sincos cchatter"
 LUCYSOLVE_EXAMPLES="nontordu nontordu2 nontordu3 sincos_lucyf"
 SUNDIALS_EXAMPLES="cvRoberts_dns cvAdvDiff_bnd"
 
