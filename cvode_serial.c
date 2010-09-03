@@ -4,16 +4,11 @@
  *
  */
 
-/* TODO:
- * - realtype must equal double
- * - we assume (in BIGARRAY_INT) that an int is 32-bits
- *   (this should be configured per platform.)
- */
-
 /*
  * TODO:
  * - call Gc.full_major () from the f and roots routines to see if we get
  *   any segmentation fault problems.
+ * - see notes throughout program related to garbage collection.
  */
 
 #include "cvode_serial.h"
@@ -785,8 +780,10 @@ CAMLprim value c_init(value lmm, value iter, value initial, value num_roots,
     RELINQUISH_NVECTORIZEDBA(initial_nv);
     ml_cvode_check_flag("CVodeInit", flag, data);
 
-    flag = CVodeRootInit(data->cvode_mem, data->num_roots, roots);
-    ml_cvode_check_flag("CVodeRootInit", flag, data);
+    if (data->num_roots > 0) {
+	flag = CVodeRootInit(data->cvode_mem, data->num_roots, roots);
+	ml_cvode_check_flag("CVodeRootInit", flag, data);
+    }
 
     CVodeSetUserData(data->cvode_mem, (void *)data);
 

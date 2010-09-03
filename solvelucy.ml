@@ -1,3 +1,6 @@
+(*
+ * Timothy Bourke (INRIA) & Marc Pouzet (ENS), August 2009
+ *)
 
 module Cvode = Cvode_serial
 module Roots = Cvode.Roots
@@ -11,7 +14,7 @@ type lucyf =
   -> Cvode.rootval_array
   -> bool
 
-let sundialify tmax (lf : lucyf) advtime n_cstates n_roots =
+let run allow_delta tmax (lf : lucyf) advtime n_cstates n_roots =
   let cstates    = Carray.create n_cstates
   and cder       = Carray.create n_cstates
 
@@ -77,7 +80,7 @@ let sundialify tmax (lf : lucyf) advtime n_cstates n_roots =
       Carray.print_with_time t cstates; (* TODO: how to handle display in general *)
       calculate_roots_in roots_out roots_out';
 
-      if Roots.exists roots_in
+      if (allow_delta && Roots.exists roots_in)
       then discrete s t (roots_out', roots_out) (* NB: order swapped *)
       else begin
         Cvode.reinit s t cstates;
@@ -92,4 +95,7 @@ let sundialify tmax (lf : lucyf) advtime n_cstates n_roots =
 
   in
   init ()
+
+let run_delta = run true
+let run_synchronous = run false
 

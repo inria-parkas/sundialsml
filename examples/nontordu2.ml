@@ -3,8 +3,6 @@ module Cvode = Cvode_serial
 module Roots = Cvode.Roots
 module Carray = Cvode.Carray
 
-open Solvelucy
-
 (*
  * Example 'non-tordu' of Albert and Benoît
  *
@@ -114,5 +112,6 @@ let _ =
   print_endline ""
 
 let _ = print_endline "        time\t      x\t\t      y\t\t      z\t\t     xdot\t     ydot"
-let _ = sundialify (Some max_sim_time) f (fun t -> t +. max_step_size) n_eq n_zc
+let _ = Solvelucy.run_delta
+          (Some max_sim_time) f (fun t -> t +. max_step_size) n_eq n_zc
 

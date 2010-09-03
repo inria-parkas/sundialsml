@@ -17,6 +17,13 @@ parallel interface to CVODE.
 The interface uses the Ocaml Bigarray module to avoid copying solver data
 between Ocaml and C.
 
+Compilation
+-----------
+
+The library assumes 64-bit floats. This means that Sundials must be compiled
+so that realtype = double (i.e. ./configure -with-precision=double, which is
+anyway the default).
+
 Approach
 --------
 

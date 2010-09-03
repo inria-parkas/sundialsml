@@ -1,3 +1,11 @@
+(*
+ * Timothy Bourke (INRIA) & Marc Pouzet (ENS), August 2009
+ *
+ * Prototype solver for hybrid-lucy programs compiled to a single function.
+ * Implements both the 'delta-step' semantics (run_delta), i.e. instantaneous
+ * loop on new zero-crossings in the discrete step, and the 'synchronous'
+ * semantics (run_synchronous), i.e. a single execution at each discrete step.
+ *)
 
 type lucyf =
    bool                         (* true: init, false: continuous/discrete *)
@@ -53,7 +61,24 @@ type lucyf =
  *      calculate: der, rout
  *)
 
-val sundialify :
+val run :
+  bool ->                   (* allow multiple discrete delta-steps *)
+  float option ->           (* stop time *)
+  lucyf ->                  (* model function *)
+  (float -> float) ->       (* advance time *)
+  int ->                    (* number of continuous states *)
+  int ->                    (* number of zero-crossing functions *)
+  unit
+
+val run_delta :
+  float option ->           (* stop time *)
+  lucyf ->                  (* model function *)
+  (float -> float) ->       (* advance time *)
+  int ->                    (* number of continuous states *)
+  int ->                    (* number of zero-crossing functions *)
+  unit
+
+val run_synchronous :
   float option ->           (* stop time *)
   lucyf ->                  (* model function *)
   (float -> float) ->       (* advance time *)

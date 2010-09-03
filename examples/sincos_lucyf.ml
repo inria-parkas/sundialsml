@@ -3,8 +3,6 @@ module Cvode = Cvode_serial
 module Roots = Cvode.Roots
 module Carray = Cvode.Carray
 
-open Solvelucy
-
 let f init rin y der rout =
   if init then
     begin (* calculate: y *)
@@ -27,5 +25,5 @@ let f init rin y der rout =
       true
     end
 
-let _ = sundialify (Some 10.0) f (fun t -> t +. 0.1) 3 2
+let _ = Solvelucy.run_delta (Some 10.0) f (fun t -> t +. 0.1) 3 2
 
