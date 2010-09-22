@@ -16,6 +16,7 @@ type lucyf =
 
 let lmm = ref Cvode.Adams
 let iter = ref Cvode.Functional
+let step = ref Cvode.normal
 
 let run allow_delta tmax (lf : lucyf) advtime n_cstates n_roots =
   let cstates    = Carray.create n_cstates
@@ -59,7 +60,7 @@ let run allow_delta tmax (lf : lucyf) advtime n_cstates n_roots =
   and continuous s t =
     (* CONTINUOUS CALL(S) *)
     (* INV: forall i. roots_in[i] = false *)
-    let (t', result) = Cvode.normal s t cstates
+    let (t', result) = !step s t cstates
     in
       print_string "C: "; (* XXX *)
       Carray.print_with_time t' cstates; (* TODO: how to handle display in general *)
@@ -169,5 +170,9 @@ let args n_eq =
                                              { Cvode.mupper = neq;
                                                Cvode.mlower = neq})))),
      sprintf "(BDF, SPTFQMR(Both, %d, %d))" neq neq);
+
+    ("-onestep",
+     Arg.Unit (fun () -> step := Cvode.one_step),
+     "Solve the continuous dynamics with CV_ONE_STEP (default: CV_NORMAL).");
 ]
 

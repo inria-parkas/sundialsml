@@ -13,6 +13,12 @@
 
 #include "cvode_serial.h"
 
+#ifdef RESTRICT_INTERNAL_PRECISION
+#ifdef __GNUC__
+#include <fpu_control.h>
+#endif
+#endif
+
 #include <stdio.h>
 #define MAX_ERRMSG_LEN 256
 
@@ -735,6 +741,15 @@ CAMLprim value c_init(value lmm, value iter, value initial, value num_roots,
 {
     CAMLparam4(lmm, iter, initial, num_roots);
     CAMLlocal1(vdata);
+
+#ifdef RESTRICT_INTERNAL_PRECISION
+#ifdef __GNUC__
+    fpu_control_t fpu_cw;
+    _FPU_GETCW(fpu_cw);
+    fpu_cw = (fpu_cw & ~_FPU_EXTENDED & ~_FPU_SINGLE) | _FPU_DOUBLE;
+    _FPU_SETCW(fpu_cw);
+#endif
+#endif
 
     int flag;
 

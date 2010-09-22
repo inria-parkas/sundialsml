@@ -368,7 +368,7 @@ external set_max_nonlin_iters : session -> int -> unit
 external set_max_conv_fails : session -> int -> unit 
     = "c_set_max_conv_fails"
 external set_nonlin_conv_coef : session -> float -> unit 
-    = "c_set_nonlin_conv_coef "
+    = "c_set_nonlin_conv_coef"
 external set_iter_type : session -> iter -> unit 
     = "c_set_iter_type"
 

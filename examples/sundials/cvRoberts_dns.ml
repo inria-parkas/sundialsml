@@ -110,9 +110,9 @@ let print_final_stats s =
   in
   printf "\nFinal Statistics:\n";
   printf "nst = %-6d nfe  = %-6d nsetups = %-6d nfeLS = %-6d nje = %d\n"
-  nst nfe nsetups nfeLS nje;
+    nst nfe nsetups nfeLS nje;
   printf "nni = %-6d ncfn = %-6d netf = %-6d nge = %d\n \n"
-  nni ncfn netf nge
+    nni ncfn netf nge
 
 let main () =
   (* Create serial vector of length NEQ for I.C. and abstol *)
@@ -132,6 +132,8 @@ let main () =
   set_ith abstol 2 atol2;
   set_ith abstol 3 atol3;
 
+  printf " \n3-species kinetics problem\n\n";
+
   (* Call CVodeCreate to create the solver memory and specify the 
    * Backward Differentiation Formula and the use of a Newton iteration *)
   (* Call CVodeInit to initialize the integrator memory and specify the
@@ -141,46 +143,44 @@ let main () =
   (* Call CVDense to specify the CVDENSE dense linear solver *)
   let cvode_mem =
     Cvode.init' Cvode.BDF (Cvode.Newton (Cvode.Dense)) f (nroots, g) y t0
-in
-
-(* Call CVodeSVtolerances to specify the scalar relative tolerance
- * and vector absolute tolerances *)
-Cvode.sv_tolerances cvode_mem rtol abstol;
-
-(* Set the Jacobian routine to Jac (user-supplied) *)
-Dls.set_dense_jac_fn cvode_mem jac;
-
-(* In loop, call CVode, print results, and test for error.
-Break out of loop when NOUT preset output times have been reached.  *)
-printf " \n3-species kinetics problem\n\n";
-
-let tout = ref t1
-and iout = ref 0
-in
-while (!iout <> nout) do
-
-  let (t, flag) = Cvode.normal cvode_mem !tout y
   in
-  print_output t (ith y 1) (ith y 2) (ith y 3);
+  (* Call CVodeSVtolerances to specify the scalar relative tolerance
+   * and vector absolute tolerances *)
+  Cvode.sv_tolerances cvode_mem rtol abstol;
 
-  match flag with
-  | Cvode.RootsFound ->
-      Cvode.get_root_info cvode_mem roots;
-      print_root_info (r 0) (r 1)
+  (* Set the Jacobian routine to Jac (user-supplied) *)
+  Dls.set_dense_jac_fn cvode_mem jac;
 
-  | Cvode.Continue ->
-      iout := !iout + 1;
-      tout := !tout *. tmult
+  (* In loop, call CVode, print results, and test for error.
+  Break out of loop when NOUT preset output times have been reached.  *)
 
-  | Cvode.StopTimeReached ->
-      iout := nout
-done;
+  let tout = ref t1
+  and iout = ref 0
+  in
+  while (!iout <> nout) do
 
-(* Print some final statistics *)
-print_final_stats cvode_mem;
+    let (t, flag) = Cvode.normal cvode_mem !tout y
+    in
+    print_output t (ith y 1) (ith y 2) (ith y 3);
 
-(* Free integrator memory *)
-Cvode.free cvode_mem
+    match flag with
+    | Cvode.RootsFound ->
+        Cvode.get_root_info cvode_mem roots;
+        print_root_info (r 0) (r 1)
 
-  let _ = main ()
+    | Cvode.Continue ->
+        iout := !iout + 1;
+        tout := !tout *. tmult
+
+    | Cvode.StopTimeReached ->
+        iout := nout
+  done;
+
+  (* Print some final statistics *)
+  print_final_stats cvode_mem;
+
+  (* Free integrator memory *)
+  Cvode.free cvode_mem
+
+let _ = main ()
 
