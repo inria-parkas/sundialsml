@@ -23,8 +23,8 @@ let max_sim_time = 5.0
 let max_step_size = 0.1
 
 (* initial values *)
-let d1, w1 = -5.0, 1.0
-and d2, w2 = -3.0, 2.0
+let d1, w1 = -5.0, 2.0
+and d2, w2 = -3.0, 1.0
 
 (* index elements of v and der *)
 let x1 = 0
@@ -57,10 +57,10 @@ let f init      (* boolean: true => initialization *)
       let up = Roots.get up_arr in
       let last_v1 = v.{v1} in
 
-      v.{v1} <- (if up(zc_x1minx2) then (* last *) v.{v2} else v.{x1});
+      v.{v1} <- (if up(zc_x1minx2) then (* last *) v.{v2} else v.{v1});
       v.{v2} <- (if up(zc_x1minx2) then last_v1
-                 else if up(zc_x2) then -. v.{x2}
-                 else v.{x2})
+                 else if up(zc_x2) then -. v.{v2}
+                 else v.{v2})
     end
     else begin (* continuous mode: using v, calculate der *)
       der.{x1} <- v.{v1};
