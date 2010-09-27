@@ -72,8 +72,6 @@ let f init      (* boolean: true => initialization *)
   begin        (* discrete and continuous: calculate up_e *)
     up_e.{zc_x1minx2} <- v.{x1} -. v.{x2};
     up_e.{zc_x2} <- v.{x2}
-    ;
-    Printf.printf "%e %e\n" up_e.{zc_x1minx2} up_e.{zc_x2};
   end;
   true
 
@@ -94,7 +92,7 @@ let _ =
   print_endline "R: 0 0";
   print_endline ""
 
-let _ = print_endline "        time\t      x1\t\t      x2\t\tv1\t\tv2"
+let _ = print_endline "        time\t\t      x1\t      x2\t\tv1\t\tv2"
 
 let _ = Solvelucy.run_delta
           (Some max_sim_time) f (fun t -> t +. max_step_size) n_eq n_zc
