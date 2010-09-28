@@ -17,6 +17,11 @@ type lucyf =
 let lmm = ref Cvode.Adams
 let iter = ref Cvode.Functional
 let step = ref Cvode.normal
+let log = ref false
+
+let enable_logging () = (log := true)
+
+let printf = Printf.printf
 
 let run allow_delta tmax (lf : lucyf) advtime n_cstates n_roots =
   let cstates    = Carray.create n_cstates
@@ -55,6 +60,11 @@ let run allow_delta tmax (lf : lucyf) advtime n_cstates n_roots =
     Cvode.set_all_root_directions s Cvode.Increasing;
     match tmax with None -> () | Some t -> Cvode.set_stop_time s t;
     Roots.reset roots_in;
+    if !log then begin
+      print_string "--+\n";
+      print_string "I : ";
+      Carray.print_with_time 0.0 cstates
+    end;
     continuous s (advtime 0.0)
 
   and continuous s t =
@@ -62,8 +72,12 @@ let run allow_delta tmax (lf : lucyf) advtime n_cstates n_roots =
     (* INV: forall i. roots_in[i] = false *)
     let (t', result) = !step s t cstates
     in
-      print_string "C: "; (* XXX *)
-      Carray.print_with_time t' cstates; (* TODO: how to handle display in general *)
+      if !log then begin
+        if result = Cvode.RootsFound
+        then print_string "C': "
+        else print_string "C : ";
+        Carray.print_with_time t' cstates
+      end;
       match result with
       | Cvode.RootsFound -> begin
             Cvode.get_root_info s roots_in;
@@ -78,10 +92,15 @@ let run allow_delta tmax (lf : lucyf) advtime n_cstates n_roots =
   and discrete s t (roots_out, roots_out') =
     (* DISCRETE CALL *)
     (* INV: exists i. roots_in[i] = true *)
-    print_string "R: "; Roots.print roots_in; (* TODO: how to handle display in general *)
+    if !log then begin
+        printf "R : % e\t" t;
+        Roots.print roots_in
+    end;
     if lf false roots_in cstates cder roots_out' then begin
-      print_string "D: "; (* XXX *)
-      Carray.print_with_time t cstates; (* TODO: how to handle display in general *)
+      if !log then begin
+        print_string "D : ";
+        Carray.print_with_time t cstates
+      end;
       calculate_roots_in roots_out roots_out';
 
       if (allow_delta && Roots.exists roots_in)
@@ -95,6 +114,7 @@ let run allow_delta tmax (lf : lucyf) advtime n_cstates n_roots =
     else finish s t
 
   and finish s t =
+    if !log then print_string "--+\n";
     Cvode.free s
 
   in
@@ -174,5 +194,9 @@ let args n_eq =
     ("-onestep",
      Arg.Unit (fun () -> step := Cvode.one_step),
      "Solve the continuous dynamics with CV_ONE_STEP (default: CV_NORMAL).");
+
+    ("-l",
+     Arg.Set log,
+     "Log state variables and zero-crossings to stdout.");
 ]
 

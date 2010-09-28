@@ -96,6 +96,7 @@ let _ = Arg.parse (Solvelucy.args n_eq) (fun _ -> ())
         "nontordu2: chattering on velocity"
 
 let _ =
+  Solvelucy.enable_logging ();
   print_endline "";
   print_endline "C: result of continuous solver";
   print_endline "D: result of discrete solver";

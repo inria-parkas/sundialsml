@@ -63,6 +63,7 @@ type lucyf =
 
 val lmm : Cvode_serial.lmm ref
 val iter : Cvode_serial.iter ref
+val enable_logging : unit -> unit
 
 val args : int -> (Arg.key * Arg.spec * Arg.doc) list
 

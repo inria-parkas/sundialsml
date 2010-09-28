@@ -1,0 +1,27 @@
+# usage:
+#   ./billiard1d > billiard1d.log
+#   gnuplot -persist billiard1d.gplot
+#
+
+datafile = "< sed -ne '/^--+$/,/^--+$/ s/^[CDI].: //p' billiard1d.log"
+zerofile = "< sed -ne '/^--+$/,/^--+$/ s/^R : //p' billiard1d.log"
+
+#set terminal x11;
+set terminal postscript enhanced color
+
+set grid
+
+set multiplot layout 2,1 title "billiard1d"
+
+set title "position (and zero-crossings)"
+plot \
+  datafile using 1:2 title "x1", \
+  ""       using 1:3 title "x2", \
+  zerofile using 1:($2==0?1/0:0) title "up(x1 - x2)", \
+  ""       using 1:($3==0?1/0:0) title "up(x2)"
+
+set title "velocity"
+plot \
+  datafile using 1:4 title "v1", \
+  ""       using 1:5 title "v2"
+

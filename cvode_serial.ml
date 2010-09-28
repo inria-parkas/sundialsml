@@ -71,7 +71,7 @@ module Roots =
     let print v =
       let isroot = get v in
       for i = 0 to (Carray.length v - 1) do
-        if i > 0 then print_string " "; 
+        if i > 0 then print_string "\t"; 
         print_string (if (isroot i) then "1" else "0")
       done;
       print_newline ()

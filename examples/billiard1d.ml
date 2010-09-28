@@ -23,8 +23,10 @@ let max_sim_time = 5.0
 let max_step_size = 0.1
 
 (* initial values *)
-let d1, w1 = -5.0, 2.0
-and d2, w2 = -3.0, 1.0
+let d1 = ref (-5.0)
+and w1 = ref ( 2.0)
+and d2 = ref (-3.0)
+and w2 = ref ( 1.0)
 
 (* index elements of v and der *)
 let x1 = 0
@@ -46,10 +48,10 @@ let f init      (* boolean: true => initialization *)
   begin
     if init then
       begin    (* initialization: calculate v *)
-        v.{x1} <- d1;
-        v.{x2} <- d2;
-        v.{v1} <- w1;
-        v.{v2} <- w2
+        v.{x1} <- !d1;
+        v.{x2} <- !d2;
+        v.{v1} <- !w1;
+        v.{v2} <- !w2
       end
     else
     if Roots.exists up_arr
@@ -75,10 +77,19 @@ let f init      (* boolean: true => initialization *)
   end;
   true
 
-let _ = Arg.parse (Solvelucy.args n_eq) (fun _ -> ())
+let args =
+  [
+    ("-d1", Arg.Set_float d1, "Set the initial position of ball 1");
+    ("-w1", Arg.Set_float w1, "Set the initial velocity of ball 1");
+    ("-d2", Arg.Set_float d2, "Set the initial position of ball 2");
+    ("-w2", Arg.Set_float w2, "Set the initial velocity of ball 2");
+  ]
+
+let _ = Arg.parse (args @ Solvelucy.args n_eq) (fun _ -> ())
         "billiard1d: 1-dimensional billiard balls"
 
 let _ =
+  Solvelucy.enable_logging ();
   print_endline "";
   print_endline "C: result of continuous solver";
   print_endline "D: result of discrete solver";

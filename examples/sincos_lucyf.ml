@@ -31,5 +31,7 @@ let f init rin y der rout =
 let _ = Arg.parse (Solvelucy.args n_eq) (fun _ -> ())
         "sincos_lucyf: simple sinusoidal output"
 
-let _ = Solvelucy.run_delta (Some 10.0) f (fun t -> t +. 0.1) n_eq n_roots
+let _ =
+  Solvelucy.enable_logging ();
+  Solvelucy.run_delta (Some 10.0) f (fun t -> t +. 0.1) n_eq n_roots
 
