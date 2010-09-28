@@ -19,8 +19,8 @@ module Carray = Cvode.Carray
  *)
 
 (* simulation parameters *)
-let max_sim_time = 5.0
-let max_step_size = 0.1
+let max_sim_time = ref 5.0
+let max_step_size = ref 0.1
 
 (* initial values *)
 let d1 = ref (-5.0)
@@ -79,10 +79,12 @@ let f init      (* boolean: true => initialization *)
 
 let args =
   [
-    ("-d1", Arg.Set_float d1, "Set the initial position of ball 1");
-    ("-w1", Arg.Set_float w1, "Set the initial velocity of ball 1");
-    ("-d2", Arg.Set_float d2, "Set the initial position of ball 2");
-    ("-w2", Arg.Set_float w2, "Set the initial velocity of ball 2");
+    ("-d1", Arg.Set_float d1, "initial position of ball 1");
+    ("-w1", Arg.Set_float w1, "initial velocity of ball 1");
+    ("-d2", Arg.Set_float d2, "initial position of ball 2");
+    ("-w2", Arg.Set_float w2, "initial velocity of ball 2");
+    ("-simt", Arg.Set_float max_sim_time, "simulation time");
+    ("-step", Arg.Set_float max_step_size, "maximum step size");
   ]
 
 let _ = Arg.parse (args @ Solvelucy.args n_eq) (fun _ -> ())
@@ -106,5 +108,5 @@ let _ =
 let _ = print_endline "        time\t\t      x1\t      x2\t\tv1\t\tv2"
 
 let _ = Solvelucy.run_delta
-          (Some max_sim_time) f (fun t -> t +. max_step_size) n_eq n_zc
+          (Some !max_sim_time) f (fun t -> t +. !max_step_size) n_eq n_zc
 
