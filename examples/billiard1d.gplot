@@ -1,6 +1,10 @@
 # usage:
 #   ./billiard1d > billiard1d.log
+#   gnuplot billiard1d.gplot > billiard1d.ps
+#
+# (with 'set terminal x11' use rather:
 #   gnuplot -persist billiard1d.gplot
+# )
 #
 
 datafile = "< sed -ne '/^--+$/,/^--+$/ s/^[CDI].: //p' billiard1d.log"
