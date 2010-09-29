@@ -17,8 +17,8 @@ set title "position (and zero-crossings)"
 plot \
   datafile using 1:2 title "x1", \
   ""       using 1:3 title "x2", \
-  zerofile using 1:($2==0?1/0:0) title "up(x1 - x2)", \
-  ""       using 1:($3==0?1/0:0) title "up(x2)"
+  zerofile using 1:(1/$2-1) title "up(x1 - x2)", \
+  ""       using 1:(1/$3-1) title "up(x2)"
 
 set title "velocity"
 plot \
