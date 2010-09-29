@@ -742,6 +742,10 @@ CAMLprim value c_init(value lmm, value iter, value initial, value num_roots,
     CAMLparam4(lmm, iter, initial, num_roots);
     CAMLlocal1(vdata);
 
+    if (sizeof(int) != 4) {
+	caml_failwith("The library assumes that an int (in C) has 32-bits.");
+    }
+
 #ifdef RESTRICT_INTERNAL_PRECISION
 #ifdef __GNUC__
     fpu_control_t fpu_cw;
