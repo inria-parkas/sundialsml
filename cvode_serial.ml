@@ -47,14 +47,14 @@ type rootval_array = Carray.t
 
 (* root arrays *)
 
-type int_array = (int, Bigarray.int_elt, Bigarray.c_layout) Bigarray.Array1.t
-let create_int_array = Bigarray.Array1.create Bigarray.int Carray.layout
+type int_array = (int32, Bigarray.int32_elt, Bigarray.c_layout) Bigarray.Array1.t
+let create_int_array = Bigarray.Array1.create Bigarray.int32 Carray.layout
 
 module Roots =
   struct
     type t = int_array
 
-    let reset v = Bigarray.Array1.fill v 0
+    let reset v = Bigarray.Array1.fill v 0l
 
     let create n =
       let a = create_int_array n in
@@ -63,10 +63,10 @@ module Roots =
 
     let empty = create 0
 
-    let get roots i = roots.{i} <> 0
-    let get' roots i = roots.{i}
+    let get roots i = roots.{i} <> 0l
+    let get' roots i = Int32.to_int roots.{i}
 
-    let set a i v = Bigarray.Array1.set a i (if v then 1 else 0)
+    let set a i v = Bigarray.Array1.set a i (if v then 1l else 0l)
 
     let print v =
       let isroot = get v in
@@ -81,7 +81,7 @@ module Roots =
     let fold_left f a v =
       let rec check (i, a) =
         if i < 0 then a
-        else check (i - 1, f a v.{i})
+        else check (i - 1, f a (Int32.to_int v.{i}))
       in
       check (Bigarray.Array1.dim v - 1, a)
 
@@ -377,9 +377,9 @@ external set_root_direction' : session -> int_array -> unit
 
 let int_of_root_direction x =
   match x with
-  | Increasing -> 1
-  | Decreasing -> -1
-  | IncreasingOrDecreasing -> 0
+  | Increasing -> 1l
+  | Decreasing -> -1l
+  | IncreasingOrDecreasing -> 0l
     
 let set_root_direction s rda =
   let n = nroots s in
