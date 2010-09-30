@@ -15,6 +15,10 @@ OCAML_INCLUDE=`${OCAMLC} -where`
 GNUPLOT=gnuplot
 MAX_LINES=500
 
+# If sundials is configured with --with-blas or --with-lapack
+# then the extra library dependency must also be included below
+LAPACK_LIB= # "-cclib -lSimTKlapack"
+
 BASIC_EXAMPLES="discontinuous sincos cchatter"
 LUCYSOLVE_EXAMPLES="nontordu nontordu2 nontordu3 sincos_lucyf billiard1d"
 SUNDIALS_EXAMPLES="cvRoberts_dns cvAdvDiff_bnd"
@@ -100,6 +104,7 @@ clean)
     ${OCAMLC} -a -o cvode_serial.cma -custom cvode_serial.cmo \
 	-cclib -lsundials_cvode \
 	-cclib -lsundials_nvecserial \
+	${LAPACK_LIB} \
 	-cclib -lcvode_serial || exit 1
 
     if [ "${OCAMLOPT}" != "" ]; then
@@ -108,6 +113,7 @@ clean)
 	    cvode_serial.cmx \
 	    -cclib -lsundials_cvode \
 	    -cclib -lsundials_nvecserial \
+	    ${LAPACK_LIB} \
 	    -cclib -lcvode_serial || exit 1
     fi
 
