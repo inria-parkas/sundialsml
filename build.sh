@@ -13,17 +13,18 @@ OCAMLOPTFLAGS=""
 LIB=/usr/local/lib
 OCAML_INCLUDE=`${OCAMLC} -where`
 GNUPLOT=gnuplot
+MAX_LINES=500
 
 BASIC_EXAMPLES="discontinuous sincos cchatter"
 LUCYSOLVE_EXAMPLES="nontordu nontordu2 nontordu3 sincos_lucyf billiard1d"
 SUNDIALS_EXAMPLES="cvRoberts_dns cvAdvDiff_bnd"
-PLOT="examples/billiard1d "
+PLOT="examples/billiard1d examples/nontordu2 examples/nontordu3 "
 
 function plot_example
 {
     if expr "$PLOT" : ".*/$1 .*" > /dev/null; then
 	echo "* plotting: $f.ps"
-	./$f > $f.log
+	./$f | head -n ${MAX_LINES} > $f.log
 	${GNUPLOT} -persist $f.gplot > $f.ps
     fi
 }

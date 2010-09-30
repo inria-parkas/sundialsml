@@ -1,0 +1,24 @@
+# usage:
+#   ./nontordu3 > nontordu3.log
+#   gnuplot nontordu3.gplot > nontordu3.ps
+#
+# (with 'set terminal x11' use rather:
+#   gnuplot -persist nontordu3.gplot
+# )
+#
+
+datafile = "< sed -ne '/^--+$/,/^--+$/ s/^[CDI].: //p' nontordu3.log"
+zerofile = "< sed -ne '/^--+$/,/^--+$/ s/^R : //p' nontordu3.log"
+
+#set terminal x11;
+set terminal postscript enhanced color
+
+set grid
+
+set title "nontordu3"
+plot \
+  datafile using 1:2 title "x", \
+  ""       using 1:3 title "y", \
+  zerofile using 1:(1/$2-1) title "up(y)", \
+  ""       using 1:(1/$3-1) title "up(-y)"
+

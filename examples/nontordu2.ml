@@ -27,7 +27,7 @@ module Carray = Cvode.Carray
  * there are no cyclic dependencies.
  *)
 
-let max_sim_time = 20.0
+let max_sim_time = 10.0
 let max_step_size = 0.1
 
 (* index elements of v and der *)
