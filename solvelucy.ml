@@ -221,7 +221,10 @@ let float_with_delta_of_string s =
 
   let f = Scanf.sscanf s "%e%s" (fun f s -> (String.iter count_deltas s; f))
   in
-  f +. (float(!tally) *. abs_float f *. epsilon_float *. 100.0)
+  f +. (float(!tally)
+        *. (if f = 0.0 then min_float else abs_float f)
+        *. epsilon_float
+        *. 100.0)
 
 let set_float_delta fr =
   Arg.String (fun s -> fr := float_with_delta_of_string s)
