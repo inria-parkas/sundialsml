@@ -92,6 +92,7 @@ let _ = Arg.parse (args @ Solvelucy.args n_eq) (fun _ -> ())
 
 let _ =
   Solvelucy.enable_logging ();
+  (* Solvelucy.enable_zeroc_logging (); *)
   print_endline "";
   print_endline "C: result of continuous solver";
   print_endline "D: result of discrete solver";

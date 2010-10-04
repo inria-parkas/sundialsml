@@ -18,8 +18,10 @@ let lmm = ref Cvode.Adams
 let iter = ref Cvode.Functional
 let step = ref Cvode.normal
 let log = ref false
+let log_zeroc = ref false
 
 let enable_logging () = (log := true)
+let enable_zeroc_logging () = (log_zeroc := true)
 
 let printf = Printf.printf
 
@@ -37,7 +39,16 @@ let run allow_delta tmax (lf : lucyf) advtime n_cstates n_roots =
   let f t cs ds =
     ignore (lf false roots_in cs ds roots_out)
   and g t cs rs =
-    ignore (lf false no_roots_in cs cder rs)
+    ignore (lf false no_roots_in cs cder rs);
+
+    if !log_zeroc then begin
+      print_endline "(----";
+      print_string " ZC:";
+      Carray.print_with_time t cs;
+      print_string " ZR:";
+      Carray.print_with_time t rs;
+      print_endline " ----)"
+    end
   in
 
   let calculate_roots_out t = g t cstates roots_out in

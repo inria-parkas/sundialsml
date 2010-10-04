@@ -64,6 +64,7 @@ type lucyf =
 val lmm : Cvode_serial.lmm ref
 val iter : Cvode_serial.iter ref
 val enable_logging : unit -> unit
+val enable_zeroc_logging : unit -> unit
 
 val args : int -> (Arg.key * Arg.spec * Arg.doc) list
 val set_float_delta : float ref -> Arg.spec

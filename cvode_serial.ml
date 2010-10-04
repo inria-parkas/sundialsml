@@ -63,6 +63,8 @@ module Roots =
 
     let empty = create 0
 
+    let length = Bigarray.Array1.dim
+
     let get roots i = roots.{i} <> 0l
     let get' roots i = Int32.to_int roots.{i}
 
@@ -70,13 +72,18 @@ module Roots =
 
     let print v =
       let isroot = get v in
-      for i = 0 to (Carray.length v - 1) do
+      for i = 0 to (length v - 1) do
         if i > 0 then print_string "\t"; 
         print_string (if (isroot i) then "1" else "0")
       done;
       print_newline ()
 
-    let length = Bigarray.Array1.dim
+    let print' v =
+      for i = 0 to (length v - 1) do
+        if i > 0 then print_string "\t"; 
+        Printf.printf "% ld" v.{i}
+      done;
+      print_newline ()
 
     let fold_left f a v =
       let rec check (i, a) =
