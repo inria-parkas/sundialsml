@@ -66,6 +66,7 @@ val iter : Cvode_serial.iter ref
 val enable_logging : unit -> unit
 
 val args : int -> (Arg.key * Arg.spec * Arg.doc) list
+val set_float_delta : float ref -> Arg.spec
 
 val run :
   bool ->                   (* allow multiple discrete delta-steps *)

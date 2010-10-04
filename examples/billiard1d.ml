@@ -79,10 +79,10 @@ let f init      (* boolean: true => initialization *)
 
 let args =
   [
-    ("-d1", Arg.Set_float d1, "initial position of ball 1");
-    ("-w1", Arg.Set_float w1, "initial velocity of ball 1");
-    ("-d2", Arg.Set_float d2, "initial position of ball 2");
-    ("-w2", Arg.Set_float w2, "initial velocity of ball 2");
+    ("-d1", Solvelucy.set_float_delta d1, "initial position of ball 1");
+    ("-w1", Solvelucy.set_float_delta w1, "initial velocity of ball 1");
+    ("-d2", Solvelucy.set_float_delta d2, "initial position of ball 2");
+    ("-w2", Solvelucy.set_float_delta w2, "initial velocity of ball 2");
     ("-simt", Arg.Set_float max_sim_time, "simulation time");
     ("-step", Arg.Set_float max_step_size, "maximum step size");
   ]

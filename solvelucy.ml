@@ -200,3 +200,18 @@ let args n_eq =
      "Log state variables and zero-crossings to stdout.");
 ]
 
+let float_with_delta_of_string s =
+  let tally = ref 0 in
+
+  let count_deltas c =
+    if c == '+' then incr tally
+    else if c == '-' then decr tally
+  in
+
+  let f = Scanf.sscanf s "%e%s" (fun f s -> (String.iter count_deltas s; f))
+  in
+  f +. (float(!tally) *. abs_float f *. epsilon_float *. 100.0)
+
+let set_float_delta fr =
+  Arg.String (fun s -> fr := float_with_delta_of_string s)
+
