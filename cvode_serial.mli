@@ -1,5 +1,7 @@
 (* Aug 2010, Timothy Bourke (INRIA) *)
 
+val print_time : string * string -> float -> unit
+
 module Carray :
   sig
     type t = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
@@ -15,6 +17,8 @@ module Carray :
 
     val print_with_time : float -> t -> unit
     val print_with_time' : float -> t -> unit
+
+    val clamp : float -> t -> unit
 
     val vmax_norm : t -> float (* N_VMaxNorm *)
   end

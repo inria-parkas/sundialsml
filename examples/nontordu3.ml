@@ -13,10 +13,8 @@ module Carray = Cvode.Carray
  *
  *)
 
-let max_sim_time = ref (5.0)
-let max_step_size = ref (0.1)
-
 let y0 = ref (-1.0)
+let multiple_discrete = ref (true)
 
 let sgn x = if x < 0.0 then -1.0
             else if x > 0.0 then 1.0
@@ -68,8 +66,8 @@ let f init      (* boolean: true => initialization *)
 let args =
   [
     ("-y0", Solvelucy.set_float_delta y0, "initial value of y");
-    ("-simt", Arg.Set_float max_sim_time, "simulation time");
-    ("-step", Arg.Set_float max_step_size, "maximum step size");
+    ("-single", Arg.Clear multiple_discrete,
+     "restrict to 1 discrete step between continuous steps");
   ]
 
 let _ = Arg.parse (args @ Solvelucy.args n_eq) (fun _ -> ())
@@ -90,8 +88,12 @@ let _ =
   print_endline "R: 0 0";
   print_endline ""
 
-let _ = print_endline "        time\t      x\t\t      y"
+let _ =
+  if !multiple_discrete
+  then print_endline "! allow multiple discrete steps: (C+D+C+)*\n\n"
+  else print_endline "! single discrete step (C+DC+)*";
 
-let _ = Solvelucy.run_delta
-          (Some !max_sim_time) f (fun t -> t +. !max_step_size) n_eq n_zc
+  print_endline "        time\t      x\t\t      y";
+
+  Solvelucy.run !multiple_discrete f None n_eq n_zc
 

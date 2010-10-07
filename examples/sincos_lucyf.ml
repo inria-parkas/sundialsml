@@ -28,10 +28,11 @@ let f init rin y der rout =
       true
     end
 
-let _ = Arg.parse (Solvelucy.args n_eq) (fun _ -> ())
+let _ = Solvelucy.max_sim_time := Some 10.0;
+        Arg.parse (Solvelucy.args n_eq) (fun _ -> ())
         "sincos_lucyf: simple sinusoidal output"
 
 let _ =
   Solvelucy.enable_logging ();
-  Solvelucy.run_delta (Some 10.0) f (fun t -> t +. 0.1) n_eq n_roots
+  Solvelucy.run_delta f None n_eq n_roots
 

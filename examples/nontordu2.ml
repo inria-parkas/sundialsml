@@ -27,9 +27,6 @@ module Carray = Cvode.Carray
  * there are no cyclic dependencies.
  *)
 
-let max_sim_time = 10.0
-let max_step_size = 0.1
-
 (* index elements of v and der *)
 let x    = 0
 and y    = 1
@@ -92,7 +89,8 @@ let f init      (* boolean: true => initialization *)
   end;
   true
 
-let _ = Arg.parse (Solvelucy.args n_eq) (fun _ -> ())
+let _ = Solvelucy.max_sim_time := Some 10.0;
+        Arg.parse (Solvelucy.args n_eq) (fun _ -> ())
         "nontordu2: chattering on velocity"
 
 let _ =
@@ -111,6 +109,5 @@ let _ =
   print_endline ""
 
 let _ = print_endline "        time\t      x\t\t      y\t\t      z\t\t     xdot\t     ydot"
-let _ = Solvelucy.run_delta
-          (Some max_sim_time) f (fun t -> t +. max_step_size) n_eq n_zc
+let _ = Solvelucy.run_delta f None n_eq n_zc
 

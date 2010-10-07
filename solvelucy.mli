@@ -63,6 +63,21 @@ type lucyf =
 
 val lmm : Cvode_serial.lmm ref
 val iter : Cvode_serial.iter ref
+
+val max_step_size : float ref
+val min_step_size : float option ref
+val max_sim_time  : float option ref
+
+exception TooManyZeroCrossings
+val set_zeroc_limit : int -> unit       (* ignored if zero *)
+
+(* Normally, an exception is thrown when a non-zero zeroc_limit is reached.
+ * This function instead commands that any zero-crossings in excess of the
+ * limit, at the same point in time, are ignored. *)
+val ignore_at_zeroc_limit : unit -> unit
+
+val set_zeroc_deadzone : float -> unit
+
 val enable_logging : unit -> unit
 val enable_zeroc_logging : unit -> unit
 
@@ -70,27 +85,24 @@ val args : int -> (Arg.key * Arg.spec * Arg.doc) list
 val set_float_delta : float ref -> Arg.spec
 
 val run :
-  bool ->                   (* allow multiple discrete delta-steps *)
-  float option ->           (* stop time *)
-  lucyf ->                  (* model function *)
-  (float -> float) ->       (* advance time *)
-  int ->                    (* number of continuous states *)
-  int ->                    (* number of zero-crossing functions *)
+  bool ->                     (* allow multiple discrete delta-steps *)
+  lucyf ->                    (* model function *)
+  (float -> float) option ->  (* advance time *)
+  int ->                      (* number of continuous states *)
+  int ->                      (* number of zero-crossing functions *)
   unit
 
 val run_delta :
-  float option ->           (* stop time *)
-  lucyf ->                  (* model function *)
-  (float -> float) ->       (* advance time *)
-  int ->                    (* number of continuous states *)
-  int ->                    (* number of zero-crossing functions *)
+  lucyf ->                    (* model function *)
+  (float -> float) option ->  (* advance time *)
+  int ->                      (* number of continuous states *)
+  int ->                      (* number of zero-crossing functions *)
   unit
 
 val run_synchronous :
-  float option ->           (* stop time *)
-  lucyf ->                  (* model function *)
-  (float -> float) ->       (* advance time *)
-  int ->                    (* number of continuous states *)
-  int ->                    (* number of zero-crossing functions *)
+  lucyf ->                    (* model function *)
+  (float -> float) option ->  (* advance time *)
+  int ->                      (* number of continuous states *)
+  int ->                      (* number of zero-crossing functions *)
   unit
 

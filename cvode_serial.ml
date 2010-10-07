@@ -6,6 +6,8 @@
  *     in cvode_serial.h (and code in cvode_serial.c) must also be updated.
  *)
 
+let print_time (s1, s2) t = Printf.printf "%s%.20e%s" s1 t s2
+
 module Carray =
   struct
     type t = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
@@ -23,19 +25,41 @@ module Carray =
 
     let length = Bigarray.Array1.dim
 
-    let print_with_time' t v =
-      Printf.printf "% .8f" t;
+    let app f v =
       for i = 0 to (length v - 1) do
-        Printf.printf "\t% .8f" v.{i}
-      done;
+        f v.{i}
+      done
+
+    let map f v =
+      for i = 0 to (length v - 1) do
+        v.{i} <- f v.{i}
+      done
+
+    let appi f v =
+      for i = 0 to (length v - 1) do
+        f i v.{i}
+      done
+
+    let mapi f v =
+      for i = 0 to (length v - 1) do
+        v.{i} <- f i v.{i}
+      done
+
+    let print_with_time' t v =
+      print_time ("", "") t;
+      app (Printf.printf "\t% .8f") v;
       print_newline ()
 
     let print_with_time t v =
-      Printf.printf "% e" t;
-      for i = 0 to (length v - 1) do
-        Printf.printf "\t% e" v.{i}
-      done;
+      print_time ("", "") t;
+      app (Printf.printf "\t% e") v;
       print_newline ()
+
+    let clamp thres =
+      let cf v = if abs_float v <= thres then 0.0 else v
+      in
+      if thres = 0.0 then (fun x -> ())
+      else map cf
 
     external vmax_norm : t -> float
       = "c_vmax_norm"
@@ -70,29 +94,28 @@ module Roots =
 
     let set a i v = Bigarray.Array1.set a i (if v then 1l else 0l)
 
-    let print v =
-      let isroot = get v in
-      for i = 0 to (length v - 1) do
+    let print vs =
+      let isroot = get vs in
+      for i = 0 to (length vs - 1) do
         if i > 0 then print_string "\t"; 
         print_string (if (isroot i) then "1" else "0")
       done;
       print_newline ()
 
-    let print' v =
-      for i = 0 to (length v - 1) do
-        if i > 0 then print_string "\t"; 
-        Printf.printf "% ld" v.{i}
-      done;
+    let print' vs =
+      Carray.appi
+      (fun i v -> if i > 0 then print_string "\t"; Printf.printf "% ld" v) vs;
       print_newline ()
 
-    let fold_left f a v =
+    let fold_left f a vs =
       let rec check (i, a) =
         if i < 0 then a
-        else check (i - 1, f a (Int32.to_int v.{i}))
+        else check (i - 1, f a (Int32.to_int vs.{i}))
       in
-      check (Bigarray.Array1.dim v - 1, a)
+      check (Bigarray.Array1.dim vs - 1, a)
 
     let exists = fold_left (fun a x -> a || x <> 0) false
+
   end
 
 let no_roots = (0, (fun _ _ _ -> ()))
