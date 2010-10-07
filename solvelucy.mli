@@ -82,27 +82,29 @@ val enable_logging : unit -> unit
 val enable_zeroc_logging : unit -> unit
 
 val args : int -> (Arg.key * Arg.spec * Arg.doc) list
+val add_epsilons : int -> float -> float
 val set_float_delta : float ref -> Arg.spec
+val add_epsilons : int -> float -> float
 
 val run :
   bool ->                     (* allow multiple discrete delta-steps *)
   lucyf ->                    (* model function *)
   (float -> float) option ->  (* advance time *)
   int ->                      (* number of continuous states *)
-  int ->                      (* number of zero-crossing functions *)
+  string array ->             (* names of zero-crossing functions *)
   unit
 
 val run_delta :
   lucyf ->                    (* model function *)
   (float -> float) option ->  (* advance time *)
   int ->                      (* number of continuous states *)
-  int ->                      (* number of zero-crossing functions *)
+  string array ->             (* names of zero-crossing functions *)
   unit
 
 val run_synchronous :
   lucyf ->                    (* model function *)
   (float -> float) option ->  (* advance time *)
   int ->                      (* number of continuous states *)
-  int ->                      (* number of zero-crossing functions *)
+  string array ->             (* names of zero-crossing functions *)
   unit
 

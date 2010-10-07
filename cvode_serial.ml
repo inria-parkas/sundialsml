@@ -11,7 +11,7 @@ let extra_time_precision = ref false
 let print_time (s1, s2) t =
   if !extra_time_precision
   then Printf.printf "%s%.20e%s" s1 t s2
-  else Printf.printf "%s%e%s" s1 t s2
+  else Printf.printf "%s%f%s" s1 t s2
 
 module Carray =
   struct
@@ -99,17 +99,22 @@ module Roots =
 
     let set a i v = Bigarray.Array1.set a i (if v then 1l else 0l)
 
+    let appi f v =
+      for i = 0 to (length v - 1) do
+        f i (v.{i} <> 0l)
+      done
+
+    let app f v =
+      for i = 0 to (length v - 1) do
+        f (v.{i} <> 0l)
+      done
+
     let print vs =
-      let isroot = get vs in
-      for i = 0 to (length vs - 1) do
-        if i > 0 then print_string "\t"; 
-        print_string (if (isroot i) then "1" else "0")
-      done;
+      app (fun v -> print_string (if v then "\t1" else "\t0")) vs;
       print_newline ()
 
     let print' vs =
-      Carray.appi
-      (fun i v -> if i > 0 then print_string "\t"; Printf.printf "% ld" v) vs;
+      Carray.appi (fun i v -> Printf.printf "\t% ld" v) vs;
       print_newline ()
 
     let fold_left f a vs =

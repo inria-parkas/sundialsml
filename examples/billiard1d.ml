@@ -102,5 +102,6 @@ let _ =
 
 let _ = print_endline "        time\t\t      x1\t      x2\t\tv1\t\tv2"
 
-let _ = Solvelucy.run_delta f None n_eq n_zc
+let roots = [| "up(x1 - x2)"; "up(x2)" |]
+let _ = Solvelucy.run_delta f None n_eq roots
 

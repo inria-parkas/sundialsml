@@ -87,6 +87,7 @@ let _ =
   print_endline "R: 0 0";
   print_endline ""
 
+let roots = [| "up(y)"; "up(z)" |]
 let _ =
   if !multiple_discrete
   then print_endline "! allow multiple discrete steps: (C+D+C+)*\n\n"
@@ -94,5 +95,5 @@ let _ =
 
   print_endline "        time\t\t   x\t\t      y\t\t    z";
 
-  Solvelucy.run !multiple_discrete f None n_eq n_zc
+  Solvelucy.run !multiple_discrete f None n_eq roots
 

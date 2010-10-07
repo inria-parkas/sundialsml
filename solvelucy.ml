@@ -18,12 +18,16 @@ let lmm = ref Cvode.Adams
 let iter = ref Cvode.Functional
 let step = ref Cvode.normal
 
+let show_root_names = ref false
+
 let max_sim_time = ref None
 let min_step_size = ref None
 let max_step_size = ref (0.1)
 
 let rel_tol = ref None
 let abs_tol = ref None
+
+let epsilons_to_add = ref 0
 
 exception TooManyZeroCrossings
 
@@ -44,7 +48,15 @@ let enable_zeroc_logging () = (log_zeroc := true)
 
 let printf = Printf.printf
 
-let run allow_delta (lf : lucyf) advtime n_cstates n_roots =
+let add_epsilons num_eps v =
+  v +. (float(num_eps)
+        *. (if v = 0.0 then min_float else abs_float v)
+        *. epsilon_float
+        *. 100.0)
+
+let run allow_delta (lf : lucyf) advtime n_cstates roots =
+  let n_roots = Array.length roots in
+
   let cstates    = Carray.create n_cstates
   and cder       = Carray.create n_cstates
 
@@ -94,6 +106,8 @@ let run allow_delta (lf : lucyf) advtime n_cstates n_roots =
 
     (* INIT CALL *)
     ignore (lf true roots_in cstates cder roots_out);
+    if !epsilons_to_add <> 0 then
+      Carray.map (add_epsilons !epsilons_to_add) cstates;
 
     let s = Cvode.init (!lmm) (!iter) f (n_roots, g) cstates in
     Cvode.set_all_root_directions s Cvode.Increasing;
@@ -147,8 +161,12 @@ let run allow_delta (lf : lucyf) advtime n_cstates n_roots =
        else raise TooManyZeroCrossings) (* complain *)
     else begin
       if !log then begin
-          Cvode.print_time ("R : ", " ") t;
-          Roots.print roots_in
+        Cvode.print_time ("R : ", " ") t;
+        if !show_root_names
+        then
+          (Roots.appi (fun i r -> if r then printf "\t%s" roots.(i)) roots_in;
+           print_newline ())
+        else Roots.print roots_in
       end;
       if lf false roots_in cstates cder roots_out' then begin
         if !log then begin
@@ -285,6 +303,14 @@ let args n_eq =
      Arg.Set Cvode.extra_time_precision,
      "Plot time values with higher precision.");
 
+    ("-rootnames",
+     Arg.Set show_root_names,
+     "Show the names of active zero-crossings.");
+
+    ("-addepsilons",
+     Arg.Set_int epsilons_to_add,
+     "Shift each initial state by the given number of 'epsilons'.");
+
     ("-l",
      Arg.Set log,
      "Log state variables and zero-crossings to stdout.");
@@ -300,10 +326,7 @@ let float_with_delta_of_string s =
 
   let f = Scanf.sscanf s "%e%s" (fun f s -> (String.iter count_deltas s; f))
   in
-  f +. (float(!tally)
-        *. (if f = 0.0 then min_float else abs_float f)
-        *. epsilon_float
-        *. 100.0)
+  add_epsilons !tally f
 
 let set_float_delta fr =
   Arg.String (fun s -> fr := float_with_delta_of_string s)

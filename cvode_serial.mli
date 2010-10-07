@@ -19,6 +19,12 @@ module Carray :
     val print_with_time : float -> t -> unit
     val print_with_time' : float -> t -> unit
 
+    val app : (float -> unit) -> t -> unit
+    val appi : (int -> float -> unit) -> t -> unit
+
+    val map : (float -> float) -> t -> unit
+    val mapi : (int -> float -> float) -> t -> unit
+
     val clamp : float -> t -> unit
 
     val vmax_norm : t -> float (* N_VMaxNorm *)
@@ -41,6 +47,9 @@ module Roots :
     val length : t -> int 
     val reset : t -> unit
     val exists : t -> bool
+
+    val app : (bool -> unit) -> t -> unit
+    val appi : (int -> bool -> unit) -> t -> unit
   end
 
 type lmm =

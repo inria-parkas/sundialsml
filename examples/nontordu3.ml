@@ -88,6 +88,7 @@ let _ =
   print_endline "R: 0 0";
   print_endline ""
 
+let roots = [| "up(y)"; "up(-y)" |]
 let _ =
   Cvode.extra_time_precision := true;
 
@@ -97,5 +98,5 @@ let _ =
 
   print_endline "        time\t      x\t\t      y";
 
-  Solvelucy.run !multiple_discrete f None n_eq n_zc
+  Solvelucy.run !multiple_discrete f None n_eq roots
 
