@@ -4,33 +4,28 @@ module Roots = Cvode.Roots
 module Carray = Cvode.Carray
 
 (*
- * Albert and Benoît's 'reasonable' sliding mode control example
+ * Example 3 from the HSCC submission
  *
- * der(x) = 0 init - sgn(y0) reset
- *                           | -1 every up(y)
- *                           |  1 every up(-y)
- * der(y) = x init y0
+ * der(x) = 0 init 0 reset
+ *                   | last x + 1 every up(y)
+ *                   | last x + 2 every up(z)
+ * der(y) = 0 init -1 reset 1 every up(z)
+ * der(z) = 1 init -1
  *
  *)
 
-let y0 = ref (-1.0)
 let multiple_discrete = ref (true)
-
-let sgn x = if x < 0.0 then -1.0
-            else if x > 0.0 then 1.0
-            else 0.0
 
 (* index elements of v and der *)
 let x = 0
 and y = 1
-and n_eq = 2
+and z = 2
+and n_eq = 3
 
 (* index elements of up and up_e *)
 and zc_y  = 0       (* up(y)  *)
-and zc_my = 1       (* up(-y) *)
-
+and zc_z = 1        (* up(z) *)
 and n_zc = 2
-
 
 let f init      (* boolean: true => initialization *)
       up_arr    (* array of booleans: zero-crossings, value of up() *)
@@ -40,38 +35,42 @@ let f init      (* boolean: true => initialization *)
   begin
     if init then
       begin    (* initialization: calculate v *)
-        v.{x} <- -. (sgn !y0);  (* x: init - sgn(y0) *)
-        v.{y} <- !y0            (* y: init y0 *)
+        v.{x} <- 0.0;
+        v.{y} <- -1.0;
+        v.{z} <- -1.0
       end
     else
     if Roots.exists up_arr
     then begin (* discrete mode: using up, calculate v *)
       let up = Roots.get up_arr in
 
-      v.{x} <- (if up(zc_y) then -1.0       (* -1 every up(y)  *)
-                else if up(zc_my) then 1.0  (*  1 every up(-y) *)
-                else v.{x})                 (* unchanged *)
+      v.{x} <- (if up(zc_y) then v.{x} +. 1.0
+                else if up(zc_z) then v.{x} +. 2.0
+                else v.{x});
+
+      v.{y} <- (if up(zc_z) then 1.0 else v.{y})
+
     end
     else begin (* continuous mode: using v, calculate der *)
-      der.{x} <- 0.0;           (* der(x) = 0 *)
-      der.{y} <- v.{x}          (* der(y) = x *)
+      der.{x} <- 0.0;
+      der.{y} <- 0.0;
+      der.{z} <- 1.0
     end
   end;
   begin        (* discrete and continuous: calculate up_e *)
-    up_e.{zc_y}  <- v.{y};      (* up(y)  *)
-    up_e.{zc_my} <- (-.v.{y})   (* up(-y) *)
+    up_e.{zc_y} <- v.{y};
+    up_e.{zc_z} <- v.{z}
   end;
   true
 
 let args =
   [
-    ("-y0", Solvelucy.set_float_delta y0, "initial value of y");
     ("-single", Arg.Clear multiple_discrete,
      "restrict to 1 discrete step between continuous steps");
   ]
 
 let _ = Arg.parse (args @ Solvelucy.args n_eq) (fun _ -> ())
-        "nontordu3: non-standard chattering"
+        "example3: double increment"
 
 let _ =
   Solvelucy.enable_logging ();
@@ -80,7 +79,7 @@ let _ =
   print_endline "D: result of discrete solver";
   print_endline "";
   print_endline "    up(y)";
-  print_endline "   /  up(-y)";
+  print_endline "   /  up(z)";
   print_endline "   | /";
   print_endline "   | |";
   print_endline "   | |";
@@ -89,13 +88,11 @@ let _ =
   print_endline ""
 
 let _ =
-  Cvode.extra_time_precision := true;
-
   if !multiple_discrete
   then print_endline "! allow multiple discrete steps: (C+D+C+)*\n\n"
   else print_endline "! single discrete step (C+DC+)*";
 
-  print_endline "        time\t      x\t\t      y";
+  print_endline "        time\t\t   x\t\t      y\t\t    z";
 
   Solvelucy.run !multiple_discrete f None n_eq n_zc
 

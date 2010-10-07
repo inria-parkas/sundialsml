@@ -1,5 +1,6 @@
 (* Aug 2010, Timothy Bourke (INRIA) *)
 
+val extra_time_precision : bool ref
 val print_time : string * string -> float -> unit
 
 module Carray :

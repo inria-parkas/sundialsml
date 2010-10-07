@@ -281,6 +281,10 @@ let args n_eq =
       Arg.Float (fun t -> abs_tol := Some t),
       "Set absolute tolerance (only effective if -reltol is also given).");
 
+    ("-precisetime",
+     Arg.Set Cvode.extra_time_precision,
+     "Plot time values with higher precision.");
+
     ("-l",
      Arg.Set log,
      "Log state variables and zero-crossings to stdout.");

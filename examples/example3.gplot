@@ -1,0 +1,25 @@
+# usage:
+#   ./example3 > example3.log
+#   gnuplot example3.gplot > example3.ps
+#
+# (with 'set terminal x11' use rather:
+#   gnuplot -persist example3.gplot
+# )
+#
+
+datafile = "< sed -ne '/^--+$/,/^--+$/ s/^[CDI].: //p' example3.log"
+zerofile = "< sed -ne '/^--+$/,/^--+$/ s/^R : //p' example3.log"
+
+#set terminal x11;
+set terminal postscript enhanced color
+
+set grid
+
+set title "example3"
+plot \
+  datafile using 1:2 title "x", \
+  ""       using 1:3 title "y", \
+  ""       using 1:4 title "z", \
+  zerofile using 1:(1/$2-1) title "up(y)", \
+  ""       using 1:(1/$3-1) title "up(z)"
+

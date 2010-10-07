@@ -21,9 +21,18 @@ MAX_LINES=500
 LAPACK_LIB= # "-cclib -lSimTKlapack"
 
 BASIC_EXAMPLES="discontinuous sincos cchatter"
-LUCYSOLVE_EXAMPLES="nontordu nontordu2 nontordu3 sincos_lucyf billiard1d"
+LUCYSOLVE_EXAMPLES="nontordu \
+		    nontordu2 \
+		    nontordu3 \
+		    sincos_lucyf \
+		    billiard1d \
+		    example3"
 SUNDIALS_EXAMPLES="cvRoberts_dns cvAdvDiff_bnd"
-PLOT="examples/billiard1d examples/nontordu examples/nontordu2 examples/nontordu3 "
+PLOT="examples/billiard1d \
+      examples/nontordu \
+      examples/nontordu2 \
+      examples/nontordu3 \
+      examples/example3 " 
 
 function plot_example
 {
