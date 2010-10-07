@@ -30,7 +30,7 @@ exception TooManyZeroCrossings
 let zeroc_limit = ref 0
 let zeroc_ignore_at_limit = ref false
 let zeroc_deadzone = ref 0.0
-let zeroc_time_tol = ref (1e-12)
+let zeroc_time_tol = ref epsilon_float
 
 let log = ref false
 let log_zeroc = ref false
