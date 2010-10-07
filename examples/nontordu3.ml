@@ -13,10 +13,10 @@ module Carray = Cvode.Carray
  *
  *)
 
-let max_sim_time = 5.0
-let max_step_size = 0.1
+let max_sim_time = ref (5.0)
+let max_step_size = ref (0.1)
 
-let y0 = -1.0
+let y0 = ref (-1.0)
 
 let sgn x = if x < 0.0 then -1.0
             else if x > 0.0 then 1.0
@@ -42,8 +42,8 @@ let f init      (* boolean: true => initialization *)
   begin
     if init then
       begin    (* initialization: calculate v *)
-        v.{x} <- -. (sgn y0);  (* x: init - sgn(y0) *)
-        v.{y} <- y0            (* y: init y0 *)
+        v.{x} <- -. (sgn !y0);  (* x: init - sgn(y0) *)
+        v.{y} <- !y0            (* y: init y0 *)
       end
     else
     if Roots.exists up_arr
@@ -65,7 +65,14 @@ let f init      (* boolean: true => initialization *)
   end;
   true
 
-let _ = Arg.parse (Solvelucy.args n_eq) (fun _ -> ())
+let args =
+  [
+    ("-y0", Solvelucy.set_float_delta y0, "initial value of y");
+    ("-simt", Arg.Set_float max_sim_time, "simulation time");
+    ("-step", Arg.Set_float max_step_size, "maximum step size");
+  ]
+
+let _ = Arg.parse (args @ Solvelucy.args n_eq) (fun _ -> ())
         "nontordu3: non-standard chattering"
 
 let _ =
@@ -86,5 +93,5 @@ let _ =
 let _ = print_endline "        time\t      x\t\t      y"
 
 let _ = Solvelucy.run_delta
-          (Some max_sim_time) f (fun t -> t +. max_step_size) n_eq n_zc
+          (Some !max_sim_time) f (fun t -> t +. !max_step_size) n_eq n_zc
 
