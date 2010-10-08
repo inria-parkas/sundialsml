@@ -90,21 +90,21 @@ val run :
   bool ->                     (* allow multiple discrete delta-steps *)
   lucyf ->                    (* model function *)
   (float -> float) option ->  (* advance time *)
-  int ->                      (* number of continuous states *)
+  string array ->             (* names of continuous states *)
   string array ->             (* names of zero-crossing functions *)
   unit
 
 val run_delta :
   lucyf ->                    (* model function *)
   (float -> float) option ->  (* advance time *)
-  int ->                      (* number of continuous states *)
+  string array ->             (* names of continuous states *)
   string array ->             (* names of zero-crossing functions *)
   unit
 
 val run_synchronous :
   lucyf ->                    (* model function *)
   (float -> float) option ->  (* advance time *)
-  int ->                      (* number of continuous states *)
+  string array ->             (* names of continuous states *)
   string array ->             (* names of zero-crossing functions *)
   unit
 

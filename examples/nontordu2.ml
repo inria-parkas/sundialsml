@@ -28,21 +28,22 @@ module Carray = Cvode.Carray
  *)
 
 (* index elements of v and der *)
+let states = [| "x"; "y"; "z"; "xdot"; "ydot" |]
+let n_eq = Array.length states
 let x    = 0
 and y    = 1
 and z    = 2
 and xdot = 3
 and ydot = 4
-and n_eq = 5
 
 (* index elements of up and up_e *)
+let roots = [| "up(y)"; "up(-y)"; "up(z)"; "up(x)"; "up(-x)" |]
+let n_zc = Array.length roots
 and zc_y  = 0       (* up(y)  *)
 and zc_my = 1       (* up(-y) *)
 and zc_z  = 2       (* up(z)  *)
 and zc_x  = 3       (* up(x)  *)
 and zc_mx = 4       (* up(-x) *)
-
-and n_zc = 5
 
 let f init      (* boolean: true => initialization *)
       up_arr    (* array of booleans: zero-crossings, value of up() *)
@@ -108,7 +109,5 @@ let _ =
   print_endline "R: 0 0 0 0 0";
   print_endline ""
 
-let _ = print_endline "        time\t      x\t\t      y\t\t      z\t\t     xdot\t     ydot"
-let roots = [| "up(y)"; "up(-y)"; "up(z)"; "up(x)"; "up(-x)" |]
-let _ = Solvelucy.run_delta f None n_eq roots
+let _ = Solvelucy.run_delta f None states roots
 

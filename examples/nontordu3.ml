@@ -21,15 +21,16 @@ let sgn x = if x < 0.0 then -1.0
             else 0.0
 
 (* index elements of v and der *)
+let states = [| "x"; "y" |]
+let n_eq = Array.length states
 let x = 0
 and y = 1
-and n_eq = 2
 
 (* index elements of up and up_e *)
+let roots = [| "up(y)"; "up(-y)" |]
+let n_zc = Array.length roots
 and zc_y  = 0       (* up(y)  *)
 and zc_my = 1       (* up(-y) *)
-
-and n_zc = 2
 
 
 let f init      (* boolean: true => initialization *)
@@ -88,7 +89,6 @@ let _ =
   print_endline "R: 0 0";
   print_endline ""
 
-let roots = [| "up(y)"; "up(-y)" |]
 let _ =
   Cvode.extra_time_precision := true;
 
@@ -96,7 +96,5 @@ let _ =
   then print_endline "! allow multiple discrete steps: (C+D+C+)*\n\n"
   else print_endline "! single discrete step (C+DC+)*";
 
-  print_endline "        time\t      x\t\t      y";
-
-  Solvelucy.run !multiple_discrete f None n_eq roots
+  Solvelucy.run !multiple_discrete f None states roots
 

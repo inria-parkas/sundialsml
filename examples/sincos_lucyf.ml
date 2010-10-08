@@ -3,8 +3,10 @@ module Cvode = Cvode_serial
 module Roots = Cvode.Roots
 module Carray = Cvode.Carray
 
-let n_eq = 3
-let n_roots = 2
+let states = [| "y.{0}"; "y.{1}"; "y.{2}" |]
+let n_eq = Array.length states
+let roots = [| "rout.{0}"; "rout.{1}" |]
+let n_zc = Array.length roots
 
 let f init rin y der rout =
   if init then
@@ -32,8 +34,7 @@ let _ = Solvelucy.max_sim_time := Some 10.0;
         Arg.parse (Solvelucy.args n_eq) (fun _ -> ())
         "sincos_lucyf: simple sinusoidal output"
 
-let roots = [| "y.{0}"; "y.{1}"; "y.{2}" |]
 let _ =
   Solvelucy.enable_logging ();
-  Solvelucy.run_delta f None n_eq roots
+  Solvelucy.run_delta f None states roots
 

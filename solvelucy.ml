@@ -54,8 +54,10 @@ let add_epsilons num_eps v =
         *. epsilon_float
         *. 100.0)
 
-let run allow_delta (lf : lucyf) advtime n_cstates roots =
-  let n_roots = Array.length roots in
+let run allow_delta (lf : lucyf) advtime states roots =
+  let n_roots = Array.length roots
+  and n_cstates = Array.length states
+  in
 
   let cstates    = Carray.create n_cstates
   and cder       = Carray.create n_cstates
@@ -119,6 +121,10 @@ let run allow_delta (lf : lucyf) advtime n_cstates roots =
 
     Roots.reset roots_in;
     if !log then begin
+      print_string "H : time";
+      Array.iter (printf "\t%s") states;
+      print_newline ();
+
       print_string "--+\n";
       print_string "I : ";
       Carray.print_with_time 0.0 cstates

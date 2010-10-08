@@ -17,15 +17,17 @@ module Carray = Cvode.Carray
 let multiple_discrete = ref (true)
 
 (* index elements of v and der *)
+let states = [| "x"; "y"; "z" |]
+let n_eq = Array.length states
 let x = 0
 and y = 1
 and z = 2
-and n_eq = 3
 
 (* index elements of up and up_e *)
+let roots = [| "up(y)"; "up(z)" |]
+let n_zc = Array.length roots
 and zc_y  = 0       (* up(y)  *)
 and zc_z = 1        (* up(z) *)
-and n_zc = 2
 
 let f init      (* boolean: true => initialization *)
       up_arr    (* array of booleans: zero-crossings, value of up() *)
@@ -87,13 +89,10 @@ let _ =
   print_endline "R: 0 0";
   print_endline ""
 
-let roots = [| "up(y)"; "up(z)" |]
 let _ =
   if !multiple_discrete
   then print_endline "! allow multiple discrete steps: (C+D+C+)*\n\n"
   else print_endline "! single discrete step (C+DC+)*";
 
-  print_endline "        time\t\t   x\t\t      y\t\t    z";
-
-  Solvelucy.run !multiple_discrete f None n_eq roots
+  Solvelucy.run !multiple_discrete f None states roots
 

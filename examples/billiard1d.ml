@@ -25,16 +25,18 @@ and d2 = ref (-3.0)
 and w2 = ref ( 1.0)
 
 (* index elements of v and der *)
-let x1 = 0
+let states = [| "x1"; "x2"; "v1"; "v2" |]
+let n_eq = Array.length states
+and x1 = 0
 and x2 = 1
 and v1 = 2
 and v2 = 3
-and n_eq = 4
 
 (* index elements of up and up_e *)
+let roots = [| "up(x1 - x2)"; "up(x2)" |]
+let n_zc = Array.length roots
 and zc_x1minx2  = 0 (* up(x1 - x2)  *)
 and zc_x2 = 1       (* up(x2) *)
-and n_zc = 2
 
 let f init      (* boolean: true => initialization *)
       up_arr    (* array of booleans: zero-crossings, value of up() *)
@@ -100,8 +102,5 @@ let _ =
   print_endline "R: 0 0";
   print_endline ""
 
-let _ = print_endline "        time\t\t      x1\t      x2\t\tv1\t\tv2"
-
-let roots = [| "up(x1 - x2)"; "up(x2)" |]
-let _ = Solvelucy.run_delta f None n_eq roots
+let _ = Solvelucy.run_delta f None states roots
 
