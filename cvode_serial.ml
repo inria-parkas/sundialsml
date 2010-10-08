@@ -10,8 +10,8 @@ let extra_time_precision = ref false
 
 let print_time (s1, s2) t =
   if !extra_time_precision
-  then Printf.printf "%s%.20e%s" s1 t s2
-  else Printf.printf "%s%f%s" s1 t s2
+  then Printf.printf "%s%.15e%s" s1 t s2
+  else Printf.printf "%s%e%s" s1 t s2
 
 module Carray =
   struct
