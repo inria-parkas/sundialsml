@@ -5,8 +5,8 @@ module Carray = Cvode.Carray
 
 (* Simple example of cascaded zero-crossings
  *
- * der(x) = 0 init x0 reset 1 every up(y)
- * der(y) = 0 init y0 reset 1 every up(z)
+ * der(x) = 0 init x0 reset 0 every up(y)
+ * der(y) = 0 init y0 reset 0 every up(z)
  * der(z) = 1 init z0 
  *)
 
@@ -44,8 +44,8 @@ let f init      (* boolean: true => initialization *)
     if Roots.exists up_arr
     then begin (* discrete mode: using up, calculate v *)
       let up = Roots.get up_arr in
-      v.{x} <- (if up(zc_y) then 1.0 else v.{x});
-      v.{y} <- (if up(zc_z) then 1.0 else v.{y});
+      v.{x} <- (if up(zc_y) then 0.0 else v.{x});
+      v.{y} <- (if up(zc_z) then 0.0 else v.{y});
     end
     else begin (* continuous mode: using v, calculate der *)
       der.{x} <- 0.0;
@@ -70,6 +70,7 @@ let _ = Arg.parse (args @ Solvelucy.args n_eq) (fun _ -> ())
         "cascade: simple zero-crossing cascade"
 
 let _ =
+  Solvelucy.max_sim_time := Some 2.0;
   Solvelucy.enable_logging ();
   (* Solvelucy.enable_zeroc_logging (); *)
   Solvelucy.run_delta f None states roots

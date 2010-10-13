@@ -78,6 +78,17 @@ let print_legend roots =
   print_nstrings len " 0";
   print_newline ()
 
+let print_error error_details =
+  prerr_newline ();
+  prerr_string "[";
+  prerr_string error_details.Cvode.module_name;
+  prerr_string " WARNING] ";
+  prerr_string error_details.Cvode.function_name;
+  prerr_newline ();
+  prerr_string "  ";
+  prerr_endline error_details.Cvode.error_message;
+  prerr_newline ()
+
 let run allow_delta (lf : lucyf) advtime states roots =
   let n_roots = Array.length roots
   and n_cstates = Array.length states
@@ -137,6 +148,7 @@ let run allow_delta (lf : lucyf) advtime states roots =
 
     let s = Cvode.init (!lmm) (!iter) f (n_roots, g) cstates in
     Cvode.set_all_root_directions s Cvode.Increasing;
+    Cvode.set_err_handler_fn s print_error;
 
     (match !max_sim_time with None -> () | Some t -> Cvode.set_stop_time s t);
     (match !min_step_size with None -> () | Some t -> Cvode.set_min_step s t);
