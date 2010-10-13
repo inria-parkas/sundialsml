@@ -75,26 +75,12 @@ let _ = Arg.parse (args @ Solvelucy.args n_eq) (fun _ -> ())
         "nontordu3: non-standard chattering"
 
 let _ =
-  Solvelucy.enable_logging ();
-  print_endline "";
-  print_endline "C: result of continuous solver";
-  print_endline "D: result of discrete solver";
-  print_endline "";
-  print_endline "    up(y)";
-  print_endline "   /  up(-y)";
-  print_endline "   | /";
-  print_endline "   | |";
-  print_endline "   | |";
-  print_endline "   | |";
-  print_endline "R: 0 0";
-  print_endline ""
-
-let _ =
   Cvode.extra_time_precision := true;
 
   if !multiple_discrete
   then print_endline "! allow multiple discrete steps: (C+D+C+)*\n\n"
   else print_endline "! single discrete step (C+DC+)*";
 
+  Solvelucy.enable_logging ();
   Solvelucy.run !multiple_discrete f None states roots
 

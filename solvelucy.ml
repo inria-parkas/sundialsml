@@ -54,6 +54,30 @@ let add_epsilons num_eps v =
         *. epsilon_float
         *. 100.0)
 
+let print_legend roots =
+  let rec print_names names prestr =
+    match names with
+    | []        -> Printf.printf "   %s\n" prestr
+    | (nm::nms) -> 
+        Printf.printf "   %s %s\n" prestr nm;
+        if prestr = ""
+        then print_names nms ("/ " ^ prestr)
+        else print_names nms ("| " ^ prestr)
+
+  and print_nstrings n str = 
+    for i = 0 to n do print_string str done;
+    print_newline ()
+
+  and len = Array.length roots - 1
+
+  in
+  print_names (Array.to_list roots) "";
+  print_string "  ";
+  print_nstrings len " |";
+  print_string "R:";
+  print_nstrings len " 0";
+  print_newline ()
+
 let run allow_delta (lf : lucyf) advtime states roots =
   let n_roots = Array.length roots
   and n_cstates = Array.length states
@@ -121,6 +145,12 @@ let run allow_delta (lf : lucyf) advtime states roots =
 
     Roots.reset roots_in;
     if !log then begin
+      print_endline "";
+      print_endline "C: result of continuous solver";
+      print_endline "D: result of discrete solver";
+      print_endline "";
+      print_legend roots;
+
       print_string "H : time";
       Array.iter (printf "\t%s") states;
       print_newline ();

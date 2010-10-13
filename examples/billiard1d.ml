@@ -89,18 +89,5 @@ let _ = Arg.parse (args @ Solvelucy.args n_eq) (fun _ -> ())
 let _ =
   Solvelucy.enable_logging ();
   (* Solvelucy.enable_zeroc_logging (); *)
-  print_endline "";
-  print_endline "C: result of continuous solver";
-  print_endline "D: result of discrete solver";
-  print_endline "";
-  print_endline "    up(x1 - x2)";
-  print_endline "   /  up(x2)";
-  print_endline "   | /";
-  print_endline "   | |";
-  print_endline "   | |";
-  print_endline "   | |";
-  print_endline "R: 0 0";
-  print_endline ""
-
-let _ = Solvelucy.run_delta f None states roots
+  Solvelucy.run_delta f None states roots
 

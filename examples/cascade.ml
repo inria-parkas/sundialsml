@@ -3,31 +3,30 @@ module Cvode = Cvode_serial
 module Roots = Cvode.Roots
 module Carray = Cvode.Carray
 
-(*
- * Example 3 from the HSCC submission
+(* Simple example of cascaded zero-crossings
  *
- * der(x) = 0 init 0 reset
- *                   | last x + 1 every up(y)
- *                   | last x + 2 every up(z)
- * der(y) = 0 init -1 reset 1 every up(z)
- * der(z) = 1 init -1
- *
+ * der(x) = 0 init x0 reset 1 every up(y)
+ * der(y) = 0 init y0 reset 1 every up(z)
+ * der(z) = 1 init z0 
  *)
 
-let multiple_discrete = ref (true)
+(* initial values *)
+let x0 = ref (-1.0)
+and y0 = ref (-1.0)
+and z0 = ref (-1.0)
 
 (* index elements of v and der *)
 let states = [| "x"; "y"; "z" |]
 let n_eq = Array.length states
-let x = 0
+and x = 0
 and y = 1
 and z = 2
 
 (* index elements of up and up_e *)
 let roots = [| "up(y)"; "up(z)" |]
 let n_zc = Array.length roots
-and zc_y  = 0       (* up(y)  *)
-and zc_z = 1        (* up(z) *)
+and zc_y = 0
+and zc_z = 1
 
 let f init      (* boolean: true => initialization *)
       up_arr    (* array of booleans: zero-crossings, value of up() *)
@@ -37,21 +36,16 @@ let f init      (* boolean: true => initialization *)
   begin
     if init then
       begin    (* initialization: calculate v *)
-        v.{x} <- 0.0;
-        v.{y} <- -1.0;
-        v.{z} <- -1.0
+        v.{x} <- !x0;
+        v.{y} <- !y0;
+        v.{z} <- !z0
       end
     else
     if Roots.exists up_arr
     then begin (* discrete mode: using up, calculate v *)
       let up = Roots.get up_arr in
-
-      v.{x} <- (if up(zc_y) then v.{x} +. 1.0
-                else if up(zc_z) then v.{x} +. 2.0
-                else v.{x});
-
-      v.{y} <- (if up(zc_z) then 1.0 else v.{y})
-
+      v.{x} <- (if up(zc_y) then 1.0 else v.{x});
+      v.{y} <- (if up(zc_z) then 1.0 else v.{y});
     end
     else begin (* continuous mode: using v, calculate der *)
       der.{x} <- 0.0;
@@ -67,18 +61,16 @@ let f init      (* boolean: true => initialization *)
 
 let args =
   [
-    ("-single", Arg.Clear multiple_discrete,
-     "restrict to 1 discrete step between continuous steps");
+    ("-x0", Solvelucy.set_float_delta x0, "initial value of x");
+    ("-y0", Solvelucy.set_float_delta y0, "initial value of y");
+    ("-z0", Solvelucy.set_float_delta z0, "initial value of z");
   ]
 
 let _ = Arg.parse (args @ Solvelucy.args n_eq) (fun _ -> ())
-        "example3: double increment"
+        "cascade: simple zero-crossing cascade"
 
 let _ =
-  if !multiple_discrete
-  then print_endline "! allow multiple discrete steps: (C+D+C+)*\n\n"
-  else print_endline "! single discrete step (C+DC+)*";
-
   Solvelucy.enable_logging ();
-  Solvelucy.run !multiple_discrete f None states roots
+  (* Solvelucy.enable_zeroc_logging (); *)
+  Solvelucy.run_delta f None states roots
 

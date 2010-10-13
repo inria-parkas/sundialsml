@@ -92,18 +92,5 @@ let _ = Arg.parse (Solvelucy.args n_eq) (fun _ -> ())
         "nontordu: pathological chattering"
 let _ =
   Solvelucy.enable_logging ();
-  print_endline "";
-  print_endline "C: result of continuous solver";
-  print_endline "D: result of discrete solver";
-  print_endline "";
-  print_endline "    up(y)";
-  print_endline "   /  up(-y)";
-  print_endline "   | /  up(z)";
-  print_endline "   | | /  up(x)";
-  print_endline "   | | | /  up(-x)";
-  print_endline "   | | | | /";
-  print_endline "R: 0 0 0 0 0";
-  print_endline ""
-
-let _ = Solvelucy.run_delta f None states roots
+  Solvelucy.run_delta f None states roots
 

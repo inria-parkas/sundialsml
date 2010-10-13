@@ -26,6 +26,7 @@ LUCYSOLVE_EXAMPLES="nontordu \
 		    nontordu3 \
 		    sincos_lucyf \
 		    billiard1d \
+		    cascade \
 		    example3"
 SUNDIALS_EXAMPLES="cvRoberts_dns cvAdvDiff_bnd"
 PLOT="examples/billiard1d \
