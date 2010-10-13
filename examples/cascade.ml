@@ -5,8 +5,8 @@ module Carray = Cvode.Carray
 
 (* Simple example of cascaded zero-crossings
  *
- * der(x) = 0 init x0 reset 0 every up(y)
- * der(y) = 0 init y0 reset 0 every up(z)
+ * der(x) = rx init x0 reset 0 every up(y)
+ * der(y) = ry init y0 reset 0 every up(z)
  * der(z) = 1 init z0 
  *)
 
@@ -14,6 +14,8 @@ module Carray = Cvode.Carray
 let x0 = ref (-1.0)
 and y0 = ref (-1.0)
 and z0 = ref (-1.0)
+let rx = ref (0.0)
+and ry = ref (1.0)
 
 (* index elements of v and der *)
 let states = [| "x"; "y"; "z" |]
@@ -44,8 +46,8 @@ let f init      (* boolean: true => initialization *)
     if Roots.exists up_arr
     then begin (* discrete mode: using up, calculate v *)
       let up = Roots.get up_arr in
-      v.{x} <- (if up(zc_y) then 0.0 else v.{x});
-      v.{y} <- (if up(zc_z) then 0.0 else v.{y});
+      v.{x} <- (if up(zc_y) then !rx else v.{x});
+      v.{y} <- (if up(zc_z) then !ry else v.{y});
     end
     else begin (* continuous mode: using v, calculate der *)
       der.{x} <- 0.0;
@@ -64,6 +66,8 @@ let args =
     ("-x0", Solvelucy.set_float_delta x0, "initial value of x");
     ("-y0", Solvelucy.set_float_delta y0, "initial value of y");
     ("-z0", Solvelucy.set_float_delta z0, "initial value of z");
+    ("-rx", Solvelucy.set_float_delta rx, "reset value for x");
+    ("-ry", Solvelucy.set_float_delta ry, "reset value for y (try 0.0)");
   ]
 
 let _ = Arg.parse (args @ Solvelucy.args n_eq) (fun _ -> ())
