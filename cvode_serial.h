@@ -5,6 +5,7 @@
  */
 
 #ifndef __CVODE_SERIAL_H__
+#define __CVODE_SERIAL_H__
 
 #include <cvode/cvode.h>
 #include <nvector/nvector_serial.h>
