@@ -1,33 +1,179 @@
 
-type nvector
+type 'a nvector
 
-type 'a nvector_ops = {
-  nvclone           : 'a -> 'a;
-  nvdestroy         : ('a -> unit) option
-  nvspace           : ('a -> (int * int)) option
-  nvlinearsum       : float -> 'a -> float -> 'a -> 'a
-  nvconst           : float -> 'a -> unit
-  nvprod            : 'a -> 'a -> 'a -> unit
-  nvdiv             : 'a -> 'a -> 'a -> unit
-  nvscale           : float -> 'a -> 'a -> unit
-  nvabs             : 'a -> 'a -> unit
-  nvinv             : 'a -> 'a -> unit
-  nvaddconst        : 'a -> float -> 'a -> unit
-  nvmaxnorm         : 'a -> float
-  nvwrmsnorm        : 'a -> 'a -> float
-  nvmin             : 'a -> float
+module Mutable = struct
+  type 'a nvector_ops = {
+    nvclone           : 'a -> 'a;
+    nvdestroy         : ('a -> unit) option;
+    nvspace           : ('a -> (int * int)) option;
+    nvlinearsum       : float -> 'a -> float -> 'a -> 'a -> unit;
+    nvconst           : float -> 'a -> unit;
+    nvprod            : 'a -> 'a -> 'a -> unit;
+    nvdiv             : 'a -> 'a -> 'a -> unit;
+    nvscale           : float -> 'a -> 'a -> unit;
+    nvabs             : 'a -> 'a -> unit;
+    nvinv             : 'a -> 'a -> unit;
+    nvaddconst        : 'a -> float -> 'a -> unit;
+    nvmaxnorm         : 'a -> float;
+    nvwrmsnorm        : 'a -> 'a -> float;
+    nvmin             : 'a -> float;
 
-  nvdotprod         : ('a -> 'a -> float) option
-  nvcompare         : (float -> 'a -> 'a -> unit) option
-  nvinvtest         : ('a -> 'a -> bool) option
+    nvdotprod         : ('a -> 'a -> float) option;
+    nvcompare         : (float -> 'a -> 'a -> unit) option;
+    nvinvtest         : ('a -> 'a -> bool) option;
 
-  nvwl2norm         : ('a -> 'a -> float) option
-  nvl1norm          : ('a -> float) option
-  nvwrmsnormmask    : ('a -> 'a -> 'a -> float) option
-  nvconstrmask      : ('a -> 'a -> 'a -> bool) option
-  nvminquotient     : ('a -> 'a -> float) option
-}
+    nvwl2norm         : ('a -> 'a -> float) option;
+    nvl1norm          : ('a -> float) option;
+    nvwrmsnormmask    : ('a -> 'a -> 'a -> float) option;
+    nvconstrmask      : ('a -> 'a -> 'a -> bool) option;
+    nvminquotient     : ('a -> 'a -> float) option;
+  }
 
-external make_nvector : 'a nvector_ops -> 'a -> nvector
-    = "ml_nvec_new"
+  external make_nvector : 'a nvector_ops -> 'a -> 'a nvector
+      = "ml_nvec_new"
+
+  external nvector_data : 'a nvector -> 'a
+      = "ml_nvec_data"
+end
+
+module Immutable = struct
+  type 'a nvector_ops = {
+    nvclone           : 'a -> 'a;
+    nvdestroy         : ('a -> unit) option;
+    nvspace           : ('a -> (int * int)) option;
+
+    nvlinearsum       : float -> 'a -> float -> 'a -> 'a;
+    nvconst           : float -> 'a;
+    nvprod            : 'a -> 'a -> 'a;
+    nvdiv             : 'a -> 'a -> 'a;
+    nvscale           : float -> 'a -> 'a;
+    nvabs             : 'a -> 'a;
+    nvinv             : 'a -> 'a;
+    nvaddconst        : 'a -> float -> 'a;
+
+    nvmaxnorm         : 'a -> float;
+    nvwrmsnorm        : 'a -> 'a -> float;
+    nvmin             : 'a -> float;
+
+    nvdotprod         : ('a -> 'a -> float) option;
+    nvcompare         : (float -> 'a -> 'a) option;
+    nvinvtest         : ('a -> 'a -> bool) option;
+
+    nvwl2norm         : ('a -> 'a -> float) option;
+    nvl1norm          : ('a -> float) option;
+    nvwrmsnormmask    : ('a -> 'a -> 'a -> float) option;
+    nvconstrmask      : ('a -> 'a -> 'a -> bool) option;
+    nvminquotient     : ('a -> 'a -> float) option;
+  }
+
+  let from_immutable
+    { nvclone = imm_nvclone;
+      nvdestroy = imm_nvdestroy;
+      nvspace = imm_nvspace;
+
+      nvlinearsum = imm_nvlinearsum;
+      nvconst = imm_nvconst;
+      nvprod = imm_nvprod;
+      nvdiv = imm_nvdiv;
+      nvscale = imm_nvscale;
+      nvabs = imm_nvabs;
+      nvinv = imm_nvinv;
+      nvaddconst = imm_nvaddconst;
+
+      nvmaxnorm = imm_nvmaxnorm;
+      nvwrmsnorm = imm_nvwrmsnorm;
+      nvmin = imm_nvmin;
+
+      nvdotprod = imm_nvdotprod;
+      nvcompare = imm_nvcompare;
+      nvinvtest = imm_nvinvtest;
+
+      nvwl2norm = imm_nvwl2norm;
+      nvl1norm = imm_nvl1norm;
+      nvwrmsnormmask = imm_nvwrmsnormmask;
+      nvconstrmask = imm_nvconstrmask;
+      nvminquotient = imm_nvminquotient;
+    } =
+    let single_arg imm_f x rv = (rv := imm_f !x)
+    and double_arg imm_f x y rv = (rv := imm_f !x !y)
+    and single_arg_o f =
+      match f with
+      | None -> None
+      | Some imm_f -> Some (fun rv -> imm_f !rv)
+
+    and double_arg_o f =
+      match f with
+      | None -> None
+      | Some imm_f -> Some (fun rv1 rv2 -> imm_f !rv1 !rv2)
+
+    and triple_arg_o f =
+      match f with
+      | None -> None
+      | Some imm_f -> Some (fun rv1 rv2 rv3 -> imm_f !rv1 !rv2 !rv3)
+    in
+
+    let m_nvclone rv  = ref (imm_nvclone !rv)
+
+    and m_nvdestroy   = single_arg_o imm_nvdestroy
+    and m_nvspace     = single_arg_o imm_nvspace
+
+    and m_nvlinearsum a x b y z = (z := imm_nvlinearsum a !x b !y)
+
+    and m_nvconst c z = (z := imm_nvconst c)
+    and m_nvprod      = double_arg imm_nvprod
+    and m_nvdiv       = double_arg imm_nvprod
+    and m_nvscale c   = single_arg (imm_nvscale c)
+    and m_nvabs       = single_arg imm_nvabs
+    and m_nvinv       = single_arg imm_nvinv
+    and m_nvaddconst x b z = (z := imm_nvaddconst !x b)
+    and m_nvmaxnorm x = imm_nvmaxnorm !x
+    and m_nvwrmsnorm x w  = imm_nvwrmsnorm !x !w
+    and m_nvmin x     = imm_nvmin !x
+
+    and m_nvdotprod   = double_arg_o imm_nvdotprod
+    and m_nvcompare =
+      match imm_nvcompare with
+      | None -> None
+      | Some imm_f -> Some (fun c x z -> z := imm_f c !x)
+    and m_nvinvtest   = double_arg_o imm_nvinvtest
+
+    and m_nvwl2norm      = double_arg_o imm_nvwl2norm
+    and m_nvl1norm       = single_arg_o imm_nvl1norm
+    and m_nvwrmsnormmask = triple_arg_o imm_nvwrmsnormmask
+    and m_nvconstrmask   = triple_arg_o imm_nvconstrmask
+    and m_nvminquotient  = double_arg_o imm_nvminquotient
+
+    in
+    {
+      Mutable.nvclone        = m_nvclone;
+      Mutable.nvdestroy      = m_nvdestroy;
+      Mutable.nvspace        = m_nvspace;
+
+      Mutable.nvlinearsum    = m_nvlinearsum;
+      Mutable.nvconst        = m_nvconst;
+      Mutable.nvprod         = m_nvprod;
+      Mutable.nvdiv          = m_nvdiv;
+      Mutable.nvscale        = m_nvscale;
+      Mutable.nvabs          = m_nvabs;
+      Mutable.nvinv          = m_nvinv;
+      Mutable.nvaddconst     = m_nvaddconst;
+
+      Mutable.nvmaxnorm      = m_nvmaxnorm;
+      Mutable.nvwrmsnorm     = m_nvwrmsnorm;
+      Mutable.nvmin          = m_nvmin;
+
+      Mutable.nvdotprod      = m_nvdotprod;
+      Mutable.nvcompare      = m_nvcompare;
+      Mutable.nvinvtest      = m_nvinvtest;
+
+      Mutable.nvwl2norm      = m_nvwl2norm;
+      Mutable.nvl1norm       = m_nvl1norm;
+      Mutable.nvwrmsnormmask = m_nvwrmsnormmask;
+      Mutable.nvconstrmask   = m_nvconstrmask;
+      Mutable.nvminquotient  = m_nvminquotient;
+    }
+
+  let make_nvector ops = Mutable.make_nvector (from_immutable ops)
+  let nvector_data v = !(Mutable.nvector_data v)
+end
 

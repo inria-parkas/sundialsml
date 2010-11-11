@@ -165,6 +165,12 @@ N_Vector ml_nvec_new(value mlops, value data)
     CAMLreturnT(N_Vector, v);
 }
 
+value ml_nvec_data(N_Vector v)
+{
+    CAMLparam0();
+    CAMLreturn(GET_DATA(v));
+}
+
 N_Vector callml_vcloneempty(N_Vector w)
 {
     N_Vector v = NULL;
@@ -235,8 +241,7 @@ N_Vector callml_vclone(N_Vector w)
     v = callml_vcloneempty(w);
     if (v != NULL) {
 	NVEC_CONTENT(v)->data = r;
-	caml_register_generational_global_root(
-		&NVEC_CONTENT(v)->data);
+	caml_register_generational_global_root(&NVEC_CONTENT(v)->data);
     }
 
     CAMLreturnT(N_Vector, v);
