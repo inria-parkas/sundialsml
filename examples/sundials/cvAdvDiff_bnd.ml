@@ -31,7 +31,7 @@
  * -----------------------------------------------------------------
  *)
 
-module Cvode = Cvode_serial
+module Cvode = Cvode.Serial
 module Carray = Cvode.Carray
 module Roots = Cvode.Roots
 module Dls = Cvode.Dls

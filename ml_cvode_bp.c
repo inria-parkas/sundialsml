@@ -4,7 +4,29 @@
  *
  */
 
-#include "cvode_serial.h"
+#include <cvode/cvode.h>
+#include <sundials/sundials_config.h>
+#include <sundials/sundials_types.h>
+
+#include <caml/mlvalues.h>
+#include <caml/memory.h>
+#include <caml/callback.h>
+#include <caml/custom.h>
+#include <caml/fail.h>
+#include <caml/unixsupport.h>
+#include <caml/bigarray.h>
+#include <caml/alloc.h>
+
+/* linear solvers */
+#include <cvode/cvode_dense.h>
+#include <cvode/cvode_band.h>
+#include <cvode/cvode_diag.h>
+#include <cvode/cvode_spgmr.h>
+#include <cvode/cvode_spbcgs.h>
+#include <cvode/cvode_sptfqmr.h>
+#include <cvode/cvode_bandpre.h>
+
+#include "ml_cvode.h"
 
 CAMLprim value c_last_step_size(value vcvode_mem)
 {

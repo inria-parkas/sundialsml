@@ -1,5 +1,5 @@
 
-module Cvode = Cvode_serial
+module Cvode = Cvode.Serial
 
 let ypos_i = 0
 let yvel_i = 1

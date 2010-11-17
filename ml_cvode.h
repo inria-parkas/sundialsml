@@ -4,31 +4,8 @@
  *
  */
 
-#ifndef __CVODE_SERIAL_H__
-#define __CVODE_SERIAL_H__
-
-#include <cvode/cvode.h>
-#include <nvector/nvector_serial.h>
-#include <sundials/sundials_config.h>
-#include <sundials/sundials_types.h>
-
-#include <caml/mlvalues.h>
-#include <caml/memory.h>
-#include <caml/callback.h>
-#include <caml/custom.h>
-#include <caml/fail.h>
-#include <caml/unixsupport.h>
-#include <caml/bigarray.h>
-#include <caml/alloc.h>
-
-/* linear solvers */
-#include <cvode/cvode_dense.h>
-#include <cvode/cvode_band.h>
-#include <cvode/cvode_diag.h>
-#include <cvode/cvode_spgmr.h>
-#include <cvode/cvode_spbcgs.h>
-#include <cvode/cvode_sptfqmr.h>
-#include <cvode/cvode_bandpre.h>
+#ifndef __ML_CVODE_H__
+#define __ML_CVODE_H__
 
 /* Configuration options */
 #define CHECK_MATRIX_ACCESS 1
@@ -145,7 +122,9 @@ struct ml_cvode_data {
 };
 typedef struct ml_cvode_data* ml_cvode_data_p;
 
-#define CVODE_DATA(v) ((ml_cvode_data_p)(Data_custom_val(v)))
+void set_linear_solver(void *cvode_mem, value ls, int n);
+
+#define CVODE_DATA(v) ((ml_cvode_data_p)Data_custom_val(v))
 #define CVODE_DATA_FROM_ML(name, v) \
     ml_cvode_data_p (name) = (ml_cvode_data_p)CVODE_DATA(v); \
     if ((name)->cvode_mem == NULL) caml_failwith("This session has been freed");
@@ -153,6 +132,8 @@ typedef struct ml_cvode_data* ml_cvode_data_p;
 #define CVODE_MEM_FROM_ML(name, v) \
     void *(name) = ((ml_cvode_data_p)CVODE_DATA(v))->cvode_mem; \
     if ((name) == NULL) caml_failwith("This session has been freed");
+
+value ml_cvode_big_real();
 
 #endif
 

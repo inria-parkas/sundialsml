@@ -7,12 +7,17 @@
  * semantics (run_synchronous), i.e. a single execution at each discrete step.
  *)
 
+type roots_in  = Cvode.Serial.Roots.t
+type val_array = Cvode.Serial.val_array
+type der_array = Cvode.Serial.der_array
+type roots_out = Cvode.Serial.rootval_array
+
 type lucyf =
    bool                         (* true: init, false: continuous/discrete *)
-  -> Cvode_serial.Roots.t       (* solvemode = Discrete
+  -> roots_in                   (* solvemode = Discrete
                                      IN: zero crossings
                                 *)
-  -> Cvode_serial.val_array     (* solvemode = Init:
+  -> val_array                  (* solvemode = Init:
                                      OUT: initial continuous state values
 
                                      solvemode = Discrete
@@ -21,10 +26,10 @@ type lucyf =
                                      solvemode = Continuous:
                                      IN: continuous state values
                                 *)
-  -> Cvode_serial.der_array     (* solvemode = Continuous
+  -> der_array                  (* solvemode = Continuous
                                      OUT: continous derivatives, may be empty
                                 *)
-  -> Cvode_serial.rootval_array (* solvemode = Continuous
+  -> roots_out                  (* solvemode = Continuous
                                      OUT: values used for detecting roots
 
                                    solvemode = Discrete
@@ -61,8 +66,8 @@ type lucyf =
  *      calculate: der, rout
  *)
 
-val lmm : Cvode_serial.lmm ref
-val iter : Cvode_serial.iter ref
+val lmm : Cvode.Serial.lmm ref
+val iter : Cvode.Serial.iter ref
 
 val max_step_size : float ref
 val min_step_size : float option ref

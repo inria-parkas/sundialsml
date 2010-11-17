@@ -2,16 +2,21 @@
  * Timothy Bourke (INRIA) & Marc Pouzet (ENS), August 2009
  *)
 
-module Cvode = Cvode_serial
+module Cvode = Cvode.Serial
 module Roots = Cvode.Roots
 module Carray = Cvode.Carray
 
+type roots_in  = Roots.t
+type val_array = Cvode.val_array
+type der_array = Cvode.der_array
+type roots_out = Cvode.rootval_array
+
 type lucyf =
    bool
-  -> Roots.t
-  -> Cvode.val_array
-  -> Cvode.der_array
-  -> Cvode.rootval_array
+  -> roots_in
+  -> val_array
+  -> der_array
+  -> roots_out
   -> bool
 
 let lmm = ref Cvode.Adams

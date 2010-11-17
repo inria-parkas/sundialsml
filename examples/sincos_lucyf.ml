@@ -1,5 +1,5 @@
 
-module Cvode = Cvode_serial
+module Cvode = Cvode.Serial
 module Roots = Cvode.Roots
 module Carray = Cvode.Carray
 

@@ -30,15 +30,19 @@
  * -----------------------------------------------------------------
  *)
 
-module Cvode = Cvode.Serial
+(* NB: This version does not use the Dense solver which requires the unsupported
+ *     nvector routines: N_VGetArrayPointer and N_VSetArrayPointer
+ *)
+
+module Cvode = Cvode.Nvector
 module Carray = Cvode.Carray
 module Roots = Cvode.Roots
 module Dls = Cvode.Dls
 
 let printf = Printf.printf
 
-let ith v i = v.{i - 1}
-let set_ith v i e = v.{i - 1} <- e
+let ith v i = v.(i - 1)
+let set_ith v i e = v.(i - 1) <- e
 
 (* Problem Constants *)
 
@@ -57,7 +61,7 @@ let nout   = 12       (* number of output times *)
 let nroots = 2        (* number of root functions *)
 
 let f t y yd =
-  let y_ith i = y.{i - 1} in
+  let y_ith i = y.(i - 1) in
   let yd_ith = set_ith yd
   in
   let (y1, y2, y3) = (y_ith 1, y_ith 2, y_ith 3)
@@ -70,7 +74,7 @@ let f t y yd =
   yd_ith 3 yd3
 
 let g t y gout =
-  let y_ith i = y.{i - 1}
+  let y_ith i = y.(i - 1)
   in
   let (y1, y3) = (y_ith 1, y_ith 3)
   in
@@ -78,7 +82,7 @@ let g t y gout =
   gout.{1} <- y3 -. 0.01
 
 let jac arg jmat =
-  let y_ith i = arg.Cvode.jac_y.{i - 1}
+  let y_ith i = arg.Cvode.jac_y.(i - 1)
   and j_ijth (i, j) = Cvode.Densematrix.set jmat (i - 1, j - 1)
   in
   let (y1, y2, y3) = (y_ith 1, y_ith 2, y_ith 3)
@@ -116,11 +120,13 @@ let print_final_stats s =
 
 let main () =
   (* Create serial vector of length NEQ for I.C. and abstol *)
-  let y = Carray.create neq
-  and abstol = Carray.create neq
+  let y = Array.create neq 0.0
+  and abstol = Array.create neq 0.0
   and roots = Roots.create nroots
   in
-  let r = Roots.get' roots in
+  let r = Roots.get' roots
+  and y_nv = Nvector_array.wrap y
+  in
 
   (* Initialize y *)
   set_ith y 1 y1;
@@ -142,11 +148,11 @@ let main () =
   (* Call CVodeRootInit to specify the root function g with 2 components *)
   (* Call CVDense to specify the CVDENSE dense linear solver *)
   let cvode_mem =
-    Cvode.init' Cvode.BDF (Cvode.Newton (Cvode.Dense)) f (nroots, g) y t0
+    Cvode.init' Cvode.BDF (Cvode.Newton (Cvode.Dense)) f (nroots, g) y_nv t0
   in
   (* Call CVodeSVtolerances to specify the scalar relative tolerance
    * and vector absolute tolerances *)
-  Cvode.sv_tolerances cvode_mem rtol abstol;
+  Cvode.sv_tolerances cvode_mem rtol (Nvector_array.wrap abstol);
 
   (* Set the Jacobian routine to Jac (user-supplied) *)
   Dls.set_dense_jac_fn cvode_mem jac;
@@ -159,7 +165,7 @@ let main () =
   in
   while (!iout <> nout) do
 
-    let (t, flag) = Cvode.normal cvode_mem !tout y
+    let (t, flag) = Cvode.normal cvode_mem !tout y_nv
     in
     print_output t (ith y 1) (ith y 2) (ith y 3);
 

@@ -1,5 +1,5 @@
 
-module Cvode = Cvode_serial
+module Cvode = Cvode.Serial
 
 let f t y yd =
   yd.{0} <- 1.0
