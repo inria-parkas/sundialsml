@@ -29,6 +29,8 @@ module Mutable :
 
     val make_nvector    : 'a nvector_ops -> 'a -> 'a nvector
     val nvector_data    : 'a nvector -> 'a
+
+    val add_tracing     : string -> 'a nvector_ops -> 'a nvector_ops
   end
 
 module Immutable :

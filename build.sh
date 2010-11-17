@@ -114,28 +114,6 @@ clean)
 	ml_cvode.o ml_cvode_bp.o ml_cvode_nvec.o ml_cvode_ba.o \
 	ml_nvector.o || exit 1
 
-    if [ "${OCAMLOPT}" != "" ]; then
-	echo "* cvode.ml -> cvode.cmx"
-	${OCAMLOPT} -c ${OCAMLOPTFLAGS} cvode.ml || exit 1
-    fi
-
-    echo "* ... -> cvode.cma"
-    ${OCAMLC} -a -o cvode.cma -custom cvode.cmo \
-	-cclib -lsundials_cvode \
-	-cclib -lsundials_nvecserial \
-	${LAPACK_LIB} \
-	-cclib -lmlcvode || exit 1
-
-    if [ "${OCAMLOPT}" != "" ]; then
-	echo "* ... -> cvode.cmxa"
-	${OCAMLOPT} -a -o cvode.cmxa ${OCAMLOPTFLAGS} \
-	    cvode.cmx \
-	    -cclib -lsundials_cvode \
-	    -cclib -lsundials_nvecserial \
-	    ${LAPACK_LIB} \
-	    -cclib -lmlcvode || exit 1
-    fi
-
     echo "* nvector.mli -> nvector.cmi"
     ${OCAMLC} nvector.mli || exit 1
 
@@ -160,6 +138,34 @@ clean)
 	    -cclib -lmlcvode || exit 1
     fi
 
+    echo "* cvode.mli -> cvode.cmi"
+    ${OCAMLC} cvode.mli || exit 1
+
+    echo "* cvode.ml -> cvode.cmo"
+    ${OCAMLC} -c cvode.ml || exit 1
+
+    if [ "${OCAMLOPT}" != "" ]; then
+	echo "* cvode.ml -> cvode.cmx"
+	${OCAMLOPT} -c ${OCAMLOPTFLAGS} cvode.ml || exit 1
+    fi
+
+    echo "* ... -> cvode.cma"
+    ${OCAMLC} -a -o cvode.cma -custom cvode.cmo \
+	-cclib -lsundials_cvode \
+	-cclib -lsundials_nvecserial \
+	${LAPACK_LIB} \
+	-cclib -lmlcvode || exit 1
+
+    if [ "${OCAMLOPT}" != "" ]; then
+	echo "* ... -> cvode.cmxa"
+	${OCAMLOPT} -a -o cvode.cmxa ${OCAMLOPTFLAGS} \
+	    cvode.cmx \
+	    -cclib -lsundials_cvode \
+	    -cclib -lsundials_nvecserial \
+	    ${LAPACK_LIB} \
+	    -cclib -lmlcvode || exit 1
+    fi
+
     echo "* nvector_array.mli -> nvector_array.cmi"
     ${OCAMLC} nvector_array.mli || exit 1
 
@@ -175,7 +181,7 @@ clean)
     ${OCAMLC} -a -o nvector_array.cma -custom nvector_array.cmo || exit 1
 
     if [ "${OCAMLOPT}" != "" ]; then
-	echo "* ... -> nvector.cmxa"
+	echo "* ... -> nvector_array.cmxa"
 	${OCAMLOPT} -a -o nvector_array.cmxa ${OCAMLOPTFLAGS} \
 	    nvector_array.cmx || exit 1
     fi
