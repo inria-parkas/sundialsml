@@ -61,7 +61,7 @@ static void nvec_destroy_contents(N_Vector v)
 	    mlop = GET_SOME_OP(v, NVECTOR_OPS_NVDESTROY);
 	    caml_callback(mlop, GET_DATA(v));
 	}
-	caml_remove_generational_global_root((&NVEC_CONTENT(v)->data));
+	caml_remove_global_root((&NVEC_CONTENT(v)->data));
     }
     caml_remove_generational_global_root((&NVEC_CONTENT(v)->callbacks));
 
@@ -85,7 +85,7 @@ CAMLprim value ml_nvec_new(value mlops, value data)
 
     /* Create vector */
     rv = caml_alloc_final(sizeof(N_Vector), finalize_nvec,
-	    nvec_rough_size, nvec_rough_size * 10);
+	    nvec_rough_size, nvec_rough_size * 50);
     nv = NVEC_VAL(rv);
 
     /* Create vector operation structure */
@@ -161,7 +161,7 @@ CAMLprim value ml_nvec_new(value mlops, value data)
     content->callbacks = mlops;
     content->data      = data;
     caml_register_generational_global_root(&content->callbacks);
-    caml_register_generational_global_root(&content->data);
+    caml_register_global_root(&content->data);
 
     nv->content = content;
     nv->ops     = ops;
@@ -223,8 +223,8 @@ CAMLprim N_Vector callml_vcloneempty(N_Vector w)
 
     content->callbacks = NVEC_CONTENT(w)->callbacks;
     content->data = EMPTY_DATA;
-    caml_register_generational_global_root(&content->data);
     caml_register_generational_global_root(&content->callbacks);
+    caml_register_global_root(&content->data);
 
     /* Attach content and ops */
     v->content = content;

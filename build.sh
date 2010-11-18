@@ -20,6 +20,7 @@ MAX_LINES=500
 LAPACK_LIB= # "-cclib -lSimTKlapack"
 
 BASIC_EXAMPLES="discontinuous sincos cchatter"
+BASIC_NVECTOR_EXAMPLES="sincos_nvec"
 LUCYSOLVE_EXAMPLES="nontordu \
 		    nontordu2 \
 		    nontordu3 \
@@ -28,7 +29,6 @@ LUCYSOLVE_EXAMPLES="nontordu \
 		    cascade \
 		    example3"
 SUNDIALS_EXAMPLES="cvRoberts_dns cvAdvDiff_bnd"
-SUNDIALS_NVECTOR_EXAMPLES="cvRoberts_dns_nvec"
 PLOT="examples/billiard1d \
       examples/nontordu \
       examples/nontordu2 \
@@ -44,14 +44,20 @@ function plot_example
     fi
 }
 
+
 case $1 in
 clean)
     rm -f ml_cvode.o ml_cvode_bp.o libmlcvode.a
     rm -f ml_cvode_nvec.o ml_cvode_ba.o
     rm -f cvode.cmi cvode.cmo cvode.cma
     rm -f cvode.cmx cvode.cmxa
+    rm -f cvode.a cvode.o
     rm -f nvector.cmo nvector.cmi ml_nvector.o
-    rm -f nvector_array.cmo nvector_array.cmi
+    rm -f nvector.a nvector.o
+    rm -f nvector.cma nvector.cmx nvector.cmxa
+    rm -f nvector_array.cmo nvector_array.cmi nvector_array.o
+    rm -f nvector_array.cmx nvector_array.cmxa
+    rm -f nvector_array.a nvector_array.cma
     rm -f solvelucy.cmi solvelucy.cmo
 
     rm -f solvelucy.cmx solvelucy.o
@@ -73,7 +79,7 @@ clean)
 	rm -f $f.ps
     done
 
-    for f in $BASIC_EXAMPLES $LUCYSOLVE_EXAMPLES; do
+    for f in $BASIC_EXAMPLES $BASIC_NVECTOR_EXAMPLES $LUCYSOLVE_EXAMPLES; do
 	rm -f examples/$f.cmo
 	rm -f examples/$f.o
 	rm -f examples/$f.cmx
@@ -252,6 +258,23 @@ clean)
 	plot_example $f
     done
 
+    for f in $BASIC_NVECTOR_EXAMPLES; do
+	echo "* examples: $f.ml -> $f"
+	${OCAMLC} -o $f -I $LIB -I .. \
+	    unix.cma bigarray.cma cvode.cma \
+	    nvector.cma nvector_array.cma $f.ml || exit 1
+
+	if [ "${OCAMLOPT}" != "" ]; then
+	    echo "* examples: $f.ml -> $f.opt"
+	    ${OCAMLOPT} -o $f.opt -I $LIB -I .. ${OCAMLOPTFLAGS} \
+		unix.cmxa bigarray.cmxa cvode.cmxa \
+		nvector.cmxa nvector_array.cmxa \
+		$f.ml || exit 1
+	fi
+
+	plot_example $f
+    done
+
     # SUNDIALS EXAMPLES
 
     cd sundials/
@@ -266,26 +289,6 @@ clean)
 	    echo "* examples/sundials: $f.ml -> $f.opt"
 	    ${OCAMLOPT} -o $f.opt -I $LIB -I ../.. ${OCAMLOPTFLAGS} \
 		unix.cmxa bigarray.cmxa cvode.cmxa $f.ml \
-		|| exit 1
-	fi
-
-	plot_example $f
-    done
-
-    # SUNDIALS NVECTOR EXAMPLES
-
-    for f in $SUNDIALS_NVECTOR_EXAMPLES; do
-	echo "* examples/sundials: $f.ml -> $f"
-	${OCAMLC} -o $f -I $LIB -I ../.. \
-	    unix.cma bigarray.cma cvode.cma \
-	    nvector.cma nvector_array.cma $f.ml \
-	    || exit 1
-
-	if [ "${OCAMLOPT}" != "" ]; then
-	    echo "* examples/sundials: $f.ml -> $f.opt"
-	    ${OCAMLOPT} -o $f.opt -I $LIB -I ../.. ${OCAMLOPTFLAGS} \
-		unix.cmxa bigarray.cmxa cvode.cmxa \
-		nvector.cmxa nvector_array.cmxa $f.ml \
 		|| exit 1
 	fi
 
