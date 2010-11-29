@@ -122,6 +122,7 @@ struct ml_cvode_data {
 };
 typedef struct ml_cvode_data* ml_cvode_data_p;
 
+value ml_cvode_data_alloc(void* cvode_mem);
 void set_linear_solver(void *cvode_mem, value ls, int n);
 
 #define CVODE_DATA(v) ((ml_cvode_data_p)Data_custom_val(v))
