@@ -9,13 +9,13 @@
 #include <sundials/sundials_types.h>
 
 #include <caml/mlvalues.h>
+#include <caml/alloc.h>
 #include <caml/memory.h>
 #include <caml/callback.h>
 #include <caml/custom.h>
 #include <caml/fail.h>
 #include <caml/unixsupport.h>
 #include <caml/bigarray.h>
-#include <caml/alloc.h>
 
 /* linear solvers */
 #include <cvode/cvode_dense.h>

@@ -6,12 +6,13 @@
 
 #include "ml_nvector.h"
 
+#include <caml/mlvalues.h>
+#include <caml/alloc.h>
 #include <caml/memory.h>
 #include <caml/callback.h>
 #include <caml/custom.h>
 #include <caml/fail.h>
 #include <caml/unixsupport.h>
-#include <caml/alloc.h>
 
 #define NVECTOR_OPS_NVCLONE		0
 #define NVECTOR_OPS_NVDESTROY		(NVECTOR_OPS_NVCLONE + 1)
