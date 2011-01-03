@@ -36,10 +36,12 @@ module type GENERIC =
       end
 
     type rootval_array = Carray.t
+    type int_array =
+      (int32, Bigarray.int32_elt, Bigarray.c_layout) Bigarray.Array1.t
 
     module Roots :
       sig
-        type t
+        type t = int_array
         val empty : t
         val create : int -> t
         val print : t -> unit

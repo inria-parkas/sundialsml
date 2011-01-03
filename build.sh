@@ -7,8 +7,8 @@
 CC=cc
 CFLAGS="" # -DRESTRICT_INTERNAL_PRECISION"
 AR=ar
-OCAMLC=ocamlc
-OCAMLOPT=ocamlopt
+OCAMLC=${OCAML_BIN}ocamlc
+OCAMLOPT=${OCAML_BIN}ocamlopt
 OCAMLOPTFLAGS=""
 LIB=/usr/local/lib
 OCAML_INCLUDE=`${OCAMLC} -where`
