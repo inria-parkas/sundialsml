@@ -9,12 +9,9 @@ let xpos_i = 3
 let under_i = 0
 
 let gravity = -9.81 (* m/s/s *)
-let t_delta = ref 0.05  (* s *)
+let t_delta = ref 0.005  (* s *)
 let x_vel   = 0.8   (* m/s *)
 let x_limit = 14.0  (* m *)
-
-let real_time_delay () =
-  Unix.sleep 1
 
 let f t y yd =
   yd.{xpos_i} <- x_vel;
@@ -99,7 +96,6 @@ let _ =
 
         if !log then Cvode.Carray.print_with_time t' y;
         if !show then Showball.show (y.{xpos_i}, y.{ypos_i});
-        if !delay then real_time_delay ();
 
         t := t' +. !t_delta
   done;
