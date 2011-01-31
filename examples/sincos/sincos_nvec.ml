@@ -35,6 +35,7 @@ let _ =
         match result with
         | Cvode.RootsFound -> begin
               Cvode.get_root_info s rootdata;
+              Cvode.print_time ("R: ", "") t';
               Cvode.Roots.print rootdata
             end
         | Cvode.StopTimeReached -> keep_going := false

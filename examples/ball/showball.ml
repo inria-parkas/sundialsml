@@ -31,7 +31,7 @@ let start trace floor_details =
   Graphics.resize_window 800 600;
   (* Graphics.auto_synchronize false; *)
   Graphics.clear_graph ();
-  Unix.sleep 1; (* TODO: why is this necessary? *)
+  Unix.sleep 1;
   floors := floor_details;
   show_floors ();
   leave_trace := trace
@@ -54,26 +54,4 @@ let show (x, y) =
 let stop () =
   ignore (Graphics.read_key ());
   Graphics.close_graph ()
-
-(*
-let print_stats s =
-  let in_stats = integrator_stats s
-  (* and ls_stats = TODO *)
-  (* and jac_evals = TODO CVDlsGetNumJacEvals *)
-  (* and root_evals = TODO CVodeGetNumGEvals *)
-  and printf = Printf.printf
-  in
-    printf("\nFinal Statistics:\n");
-    printf "nst = %-6ld nfe  = %-6ld nsetups = %-6ld nfeLS = %-6ld nje = %ld\n"
-      in_stats.steps
-      in_stats.rhs_evals
-      in_stats.linear_solver_setups
-      ls_stats.rhs_evals
-      jac_evals;
-    printf "nni = %-6ld ncfn = %-6ld netf = %-6ld nge = %ld\n\n"
-      ls_stats.iterations
-      ls_stats.convergence_failures
-      in_stats.error_test_failures
-      root_evals
-*) 
 

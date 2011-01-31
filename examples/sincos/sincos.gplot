@@ -1,0 +1,13 @@
+
+datafile = "sincos.log"
+rootfile = "sincos-roots.log"
+
+set terminal x11;
+# set terminal ps;
+
+set title "output of sincos"
+set grid
+
+plot datafile using 1:2 title "y1", \
+     rootfile using 1:($2-1) title "zero crossings (on x-axis)"
+

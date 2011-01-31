@@ -1,0 +1,12 @@
+cvode.cmi: nvector.cmi
+nvector.cmi:
+nvector_array.cmi: nvector.cmi
+solvelucy.cmi: cvode.cmi
+cvode.cmo: nvector.cmi cvode.cmi
+cvode.cmx: nvector.cmx cvode.cmi
+nvector.cmo: nvector.cmi
+nvector.cmx: nvector.cmi
+nvector_array.cmo: nvector.cmi cvode.cmi nvector_array.cmi
+nvector_array.cmx: nvector.cmx cvode.cmx nvector_array.cmi
+solvelucy.cmo: cvode.cmi solvelucy.cmi
+solvelucy.cmx: cvode.cmx solvelucy.cmi
