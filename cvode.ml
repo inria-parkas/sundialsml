@@ -667,9 +667,12 @@ module Serial =
       set_root_direction' s rdirs
 
     let set_all_root_directions s rd =
-      let rdirs = create_int_array (nroots s) in
-      Bigarray.Array1.fill rdirs (int_of_root_direction rd);
-      set_root_direction' s rdirs
+      let nr = nroots s in
+      if (nr > 0) then begin
+        let rdirs = create_int_array nr in
+        Bigarray.Array1.fill rdirs (int_of_root_direction rd);
+        set_root_direction' s rdirs
+      end; ()
 
     external set_no_inactive_root_warn      : session -> unit
         = "c_set_no_inactive_root_warn"
