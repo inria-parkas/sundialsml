@@ -303,12 +303,14 @@ void set_linear_solver(void *cvode_mem, value ls, int n)
 	    CHECK_FLAG("CVBand", flag);
 	    break;
 
-#if SUNDIALS_BLAS_LAPACK == 1
 	case VARIANT_LINEAR_SOLVER_LAPACKBAND:
+#if SUNDIALS_BLAS_LAPACK == 1
 	    flag = CVLapackBand(cvode_mem, n, Int_val(field0), Int_val(field1));
 	    CHECK_FLAG("CVLapackBand", flag);
-	    break;
+#else
+	    caml_failwith("Lapack solvers are not available.");
 #endif
+	    break;
 
 	case VARIANT_LINEAR_SOLVER_SPGMR:
 	    flag = CVSpgmr(cvode_mem, precond_type(field0), Int_val(field1));
@@ -376,12 +378,14 @@ void set_linear_solver(void *cvode_mem, value ls, int n)
 	    CHECK_FLAG("CVDense", flag);
 	    break;
 
-#if SUNDIALS_BLAS_LAPACK == 1
 	case VARIANT_LINEAR_SOLVER_LAPACKDENSE:
+#if SUNDIALS_BLAS_LAPACK == 1
 	    flag = CVLapackDense(cvode_mem, n);
 	    CHECK_FLAG("CVLapackDense", flag);
-	    break;
+#else
+	    caml_failwith("Lapack solvers are not available.");
 #endif
+	    break;
 
 	case VARIANT_LINEAR_SOLVER_DIAG:
 	    flag = CVDiag(cvode_mem);

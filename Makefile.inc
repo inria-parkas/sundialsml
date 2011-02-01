@@ -23,7 +23,7 @@ LIB = /usr/local/lib
 
 # If sundials is configured with --with-blas or --with-lapack
 # then the extra library dependency must also be included below
-LAPACK_LIB = # "-cclib -lSimTKlapack"
+LAPACK_LIB = -cclib -lSimTKlapack
 
 UNIX = unix.cma
 UNIXX = unix.cmxa
@@ -47,7 +47,7 @@ OBJ_OPT = $(OBJ:.cmo=.cmx)
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -c $(INCLUDES) $<
 
 .cmo.cma:
-	$(OCAMLC) -a $(OCAMLOPTFLAGS) \
+	$(OCAMLC) -a $(OCAMLFLAGS) \
 	    -o $@ -custom $< $(OCAML_LIBLINK)
 
 .cmx.cmxa:
