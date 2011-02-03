@@ -94,6 +94,11 @@
 #define VARIANT_GRAMSCHMIDT_TYPE_MODIFIEDGS	0
 #define VARIANT_GRAMSCHMIDT_TYPE_CLASSICALGS	1
 
+#define RECORD_DENSEMATRIX_ORMQR_BETA 0
+#define RECORD_DENSEMATRIX_ORMQR_VN   1
+#define RECORD_DENSEMATRIX_ORMQR_VM   2
+#define RECORD_DENSEMATRIX_ORMQR_WORK 3
+
 void ml_cvode_check_flag(const char *call, int flag, void *to_free);
 
 #define CHECK_FLAG(call, flag) if (flag != CV_SUCCESS) \
@@ -127,12 +132,12 @@ void set_linear_solver(void *cvode_mem, value ls, int n);
 
 #define CVODE_DATA(v) ((ml_cvode_data_p)Data_custom_val(v))
 #define CVODE_DATA_FROM_ML(name, v) \
-    ml_cvode_data_p (name) = (ml_cvode_data_p)CVODE_DATA(v); \
-    if ((name)->cvode_mem == NULL) caml_failwith("This session has been freed");
+    ml_cvode_data_p (name) = CVODE_DATA(v); \
+    if ((name)->cvode_mem == NULL) caml_failwith("This session has been freed")
 
 #define CVODE_MEM_FROM_ML(name, v) \
-    void *(name) = ((ml_cvode_data_p)CVODE_DATA(v))->cvode_mem; \
-    if ((name) == NULL) caml_failwith("This session has been freed");
+    void *(name) = (CVODE_DATA(v))->cvode_mem; \
+    if ((name) == NULL) caml_failwith("This session has been freed")
 
 value ml_cvode_big_real();
 

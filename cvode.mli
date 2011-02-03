@@ -7,10 +7,17 @@ module type GENERIC =
     val print_time : string * string -> float -> unit
 
     val big_real : float
+    type real_array =
+      (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
+    val new_real_array : int -> real_array
+
+    type real_array2 =
+      (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
+    val new_real_array2 : int -> int -> real_array2
 
     module Carray :
       sig
-        type t = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
+        type t = real_array
 
         val kind : (float, Bigarray.float64_elt) Bigarray.kind
         val layout : Bigarray.c_layout Bigarray.layout
@@ -38,6 +45,7 @@ module type GENERIC =
     type rootval_array = Carray.t
     type int_array =
       (int32, Bigarray.int32_elt, Bigarray.c_layout) Bigarray.Array1.t
+    val new_int_array  : int -> int_array
 
     module Roots :
       sig
@@ -151,13 +159,62 @@ module type GENERIC =
     module Densematrix :
       sig
         type t
+
+        val new_dense_mat  : int * int -> t
+        val print_mat      : t -> unit
+
+        val set_to_zero    : t -> unit
+        val add_identity   : t -> unit
+        val dense_copy     : t -> t -> unit
+        val dense_scale    : float -> t -> unit
+        val dense_getrf    : t -> int_array -> unit
+        val dense_getrs    : t -> int_array -> real_array -> unit
+        val dense_potrf    : t -> unit
+        val dense_potrs    : t -> real_array -> unit
+        val dense_geqrf    : t -> real_array -> real_array -> unit
+
+        type ormqr = {
+              beta : real_array;
+              vn   : real_array;
+              vm   : real_array;
+              work : real_array;
+            }
+
+        val dense_ormqr    : t -> ormqr -> unit
+
         val get : t -> (int * int) -> float
         val set : t -> (int * int) -> float -> unit
+
+        module Direct :
+          sig
+            type t = real_array2
+
+            val dense_copy  : t -> t -> int * int -> unit
+            val dense_scale : float -> t -> int * int -> unit
+            val dense_add_identity : t -> int -> unit
+            val dense_getrf : t -> int * int -> int_array -> unit
+            val dense_getrs : t -> int -> int_array -> real_array -> unit
+            val dense_potrf : t -> int -> unit
+            val dense_potrs : t -> int -> real_array -> unit
+            val dense_geqrf : t -> int * int -> real_array -> real_array -> unit
+            val dense_ormqr : t -> int * int -> ormqr -> unit
+          end
       end
 
     module Bandmatrix :
       sig
         type t
+
+        val new_band_mat : int * int * int * int -> t (* n, mu, ml, smu *)
+        val print_mat : t -> unit
+
+        val set_to_zero    : t -> unit
+        val add_identity   : t -> unit
+
+        val band_copy : t -> t -> int -> int -> unit
+        val band_scale : float -> t -> unit
+        val band_gbtrf : t -> int_array -> unit
+        val band_gbtrs : t -> int_array -> real_array -> unit
 
         val get : t -> (int * int) -> float
         val set : t -> (int * int) -> float -> unit
@@ -170,6 +227,27 @@ module type GENERIC =
 
             val get : c -> int -> int -> float
             val set : c -> int -> int -> float -> unit
+          end
+
+        module Direct :
+          sig
+            type t = real_array2
+
+            val band_copy : t -> t -> int -> int -> int -> int -> int -> unit
+                        (*  a    b    n     a_smu  b_smu  copymu  copyml *)
+
+            val band_scale : float -> t -> int -> int -> int -> int -> unit
+                        (*  c         a    n      mu     ml     smu *)
+
+            val band_add_identity : t -> int -> int -> unit
+                        (*          a    n      smu *)
+
+            val band_gbtrf : t -> int -> int -> int -> int -> int_array -> unit
+                        (*   a    n      mu     ml     smu    p *)
+
+            val band_gbtrs
+                : t -> int -> int -> int -> int_array -> real_array -> unit
+                (*a    n      smu    ml     p            b *)
           end
       end
   end

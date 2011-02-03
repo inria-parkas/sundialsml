@@ -13,10 +13,17 @@ module type GENERIC =
     val print_time : string * string -> float -> unit
 
     val big_real : float
+    type real_array =
+      (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
+    val new_real_array : int -> real_array
+
+    type real_array2 =
+      (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
+    val new_real_array2 : int -> int -> real_array2
 
     module Carray :
       sig
-        type t = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
+        type t = real_array
 
         val kind : (float, Bigarray.float64_elt) Bigarray.kind
         val layout : Bigarray.c_layout Bigarray.layout
@@ -43,6 +50,7 @@ module type GENERIC =
 
     type rootval_array = Carray.t
     type int_array = (int32, Bigarray.int32_elt, Bigarray.c_layout) Bigarray.Array1.t
+    val new_int_array  : int -> int_array
 
     module Roots :
       sig
@@ -156,13 +164,63 @@ module type GENERIC =
     module Densematrix :
       sig
         type t
+
+        val new_dense_mat  : int * int -> t
+        val print_mat      : t -> unit
+
+        val set_to_zero    : t -> unit
+        val add_identity   : t -> unit
+        val dense_copy     : t -> t -> unit
+        val dense_scale    : float -> t -> unit
+        val dense_getrf    : t -> int_array -> unit
+        val dense_getrs    : t -> int_array -> real_array -> unit
+        val dense_potrf    : t -> unit
+        val dense_potrs    : t -> real_array -> unit
+        val dense_geqrf    : t -> real_array -> real_array -> unit
+
+        type ormqr = {
+              beta : real_array;
+              vn   : real_array;
+              vm   : real_array;
+              work : real_array;
+            }
+
+        val dense_ormqr    : t -> ormqr -> unit
+
         val get : t -> (int * int) -> float
         val set : t -> (int * int) -> float -> unit
+
+        module Direct :
+          sig
+            type t = real_array2
+
+            val dense_copy  : t -> t -> int * int -> unit
+            val dense_scale : float -> t -> int * int -> unit
+            val dense_add_identity : t -> int -> unit
+            val dense_getrf : t -> int * int -> int_array -> unit
+            val dense_getrs : t -> int -> int_array -> real_array -> unit
+            val dense_potrf : t -> int -> unit
+            val dense_potrs : t -> int -> real_array -> unit
+            val dense_geqrf : t -> int * int -> real_array -> real_array -> unit
+            val dense_ormqr : t -> int * int -> ormqr -> unit
+          end
+
       end
 
     module Bandmatrix :
       sig
         type t
+
+        val new_band_mat : int * int * int * int -> t (* n, mu, ml, smu *)
+        val print_mat : t -> unit
+
+        val set_to_zero    : t -> unit
+        val add_identity   : t -> unit
+
+        val band_copy : t -> t -> int -> int -> unit
+        val band_scale : float -> t -> unit
+        val band_gbtrf : t -> int_array -> unit
+        val band_gbtrs : t -> int_array -> real_array -> unit
 
         val get : t -> (int * int) -> float
         val set : t -> (int * int) -> float -> unit
@@ -175,6 +233,27 @@ module type GENERIC =
 
             val get : c -> int -> int -> float
             val set : c -> int -> int -> float -> unit
+          end
+
+        module Direct :
+          sig
+            type t = real_array2
+
+            val band_copy : t -> t -> int -> int -> int -> int -> int -> unit
+                        (*  a    b    n     a_smu  b_smu  copymu  copyml *)
+
+            val band_scale : float -> t -> int -> int -> int -> int -> unit
+                        (*  c         a    n      mu     ml     smu *)
+
+            val band_add_identity : t -> int -> int -> unit
+                        (*          a    n      smu *)
+
+            val band_gbtrf : t -> int -> int -> int -> int -> int_array -> unit
+                        (*   a    n      mu     ml     smu    p *)
+
+            val band_gbtrs
+                : t -> int -> int -> int -> int_array -> real_array -> unit
+                (*a    n      smu    ml     p            b *)
           end
       end
   end
@@ -192,15 +271,22 @@ module Generic =
     external get_big_real : unit -> float
         = "ml_cvode_big_real"
     let big_real = get_big_real ()
+    type real_array =
+      (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
+    let new_real_array =
+      Bigarray.Array1.create Bigarray.float64 Bigarray.c_layout
+
+    type real_array2 =
+      (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
+    let new_real_array2 =
+      Bigarray.Array2.create Bigarray.float64 Bigarray.c_layout
 
     module Carray =
       struct
-        type t = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
+        type t = real_array
 
         let kind = Bigarray.float64
         let layout = Bigarray.c_layout
-        type c_array =
-          (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
         let empty = Bigarray.Array1.create kind layout 0
 
         let create = Bigarray.Array1.create kind layout
@@ -254,6 +340,7 @@ module Generic =
 
     type int_array = (int32, Bigarray.int32_elt, Bigarray.c_layout) Bigarray.Array1.t
     let create_int_array = Bigarray.Array1.create Bigarray.int32 Carray.layout
+    let new_int_array  = create_int_array
 
     type rootval_array = Carray.t
 
@@ -460,17 +547,119 @@ module Generic =
       struct
         type t
 
+        external new_dense_mat  : int * int -> t
+            = "c_densematrix_new_dense_mat"
+
+        external print_mat      : t -> unit
+            = "c_densematrix_print_mat"
+
+        external set_to_zero    : t -> unit
+            = "c_densematrix_set_to_zero"
+
+        external add_identity   : t -> unit
+            = "c_densematrix_add_identity"
+
+        external dense_copy     : t -> t -> unit
+            = "c_densematrix_dense_copy"
+
+        external dense_scale    : float -> t -> unit
+            = "c_densematrix_dense_scale"
+
+        external dense_getrf    : t -> int_array -> unit
+            = "c_densematrix_getrf"
+
+        external dense_getrs    : t -> int_array -> real_array -> unit
+            = "c_densematrix_getrs"
+
+        external dense_potrf    : t -> unit
+            = "c_densematrix_potrf"
+
+        external dense_potrs    : t -> real_array -> unit
+            = "c_densematrix_potrs"
+
+        external dense_geqrf    : t -> real_array -> real_array -> unit
+            = "c_densematrix_geqrf"
+
+        type ormqr = {
+              beta : real_array;
+              vn   : real_array;
+              vm   : real_array;
+              work : real_array;
+            }
+
+        external dense_ormqr : t -> ormqr -> unit
+            = "c_densematrix_ormqr"
+
         external get : t -> (int * int) -> float
             = "c_densematrix_get"
 
         external set : t -> (int * int) -> float -> unit
             = "c_densematrix_set"
+
+        module Direct =
+          struct
+            type t = real_array2
+
+            external dense_copy  : t -> t -> int * int -> unit
+                = "c_densematrix_direct_copy"
+
+            external dense_scale : float -> t -> int * int -> unit
+                = "c_densematrix_direct_scale"
+
+            external dense_add_identity : t -> int -> unit
+                = "c_densematrix_direct_add_identity"
+
+            external dense_getrf : t -> int * int -> int_array -> unit
+                = "c_densematrix_direct_getrf"
+
+            external dense_getrs : t -> int -> int_array -> real_array -> unit
+                = "c_densematrix_direct_getrs"
+
+            external dense_potrf : t -> int -> unit
+                = "c_densematrix_direct_potrf"
+
+            external dense_potrs : t -> int -> real_array -> unit
+                = "c_densematrix_direct_potrs"
+
+            external dense_geqrf : t -> int * int -> real_array -> real_array -> unit
+                = "c_densematrix_direct_geqrf"
+
+            external dense_ormqr : t -> int * int -> ormqr -> unit
+                = "c_densematrix_direct_ormqr"
+          end
       end
 
     (* note: uses BAND_ELEM rather than the more efficient BAND_COL/BAND_COL_ELEM *)
     module Bandmatrix =
       struct
         type t
+
+        external new_band_mat : int * int * int * int -> t
+            = "c_bandmatrix_new_band_mat"
+
+        external print_mat : t -> unit
+            = "c_densematrix_print_mat"
+              (* NB: same as densematrix *)
+
+        external set_to_zero    : t -> unit
+            = "c_densematrix_set_to_zero"
+              (* NB: same as densematrix *)
+
+        external add_identity : t -> unit
+            = "c_densematrix_add_identity"
+              (* NB: same as densematrix *)
+
+        external band_copy : t -> t -> int -> int -> unit
+            = "c_bandmatrix_copy"
+
+        external band_scale : float -> t -> unit
+            = "c_bandmatrix_scale"
+
+        external band_gbtrf : t -> int_array -> unit
+            = "c_bandmatrix_gbtrf"
+
+        external band_gbtrs : t -> int_array -> real_array -> unit
+            = "c_bandmatrix_gbtrs"
 
         external get : t -> (int * int) -> float
             = "c_bandmatrix_get"
@@ -490,6 +679,36 @@ module Generic =
 
             external set : c -> int -> int -> float -> unit
                 = "c_bandmatrix_col_set"
+          end
+
+        module Direct =
+          struct
+            type t = real_array2
+
+            external band_copy' : t -> t -> int * int * int * int * int -> unit
+                = "c_bandmatrix_direct_copy"
+
+            let band_copy a b n a_smu b_smu copymu copyml
+                = band_copy' a b (n, a_smu, b_smu, copymu, copyml)
+
+            external band_scale' : float -> t -> int * int * int * int -> unit
+                = "c_bandmatrix_direct_scale"
+
+            let band_scale c a n mu ml smu = band_scale' c a (n, mu, ml, smu)
+
+            external band_add_identity : t -> int -> int -> unit
+                = "c_bandmatrix_direct_add_identity"
+
+            external band_gbtrf' : t -> int * int * int * int -> int_array -> unit
+                = "c_bandmatrix_direct_gbtrf"
+
+            let band_gbtrf a n mu ml smu p = band_gbtrf' a (n, mu, ml, smu) p
+
+            external band_gbtrs'
+                : t -> int * int * int -> int_array -> real_array -> unit
+                = "c_bandmatrix_direct_gbtrs"
+
+            let band_gbtrs a n smu ml p b = band_gbtrs' a (n, smu, ml) p b
           end
       end
   end
@@ -667,9 +886,9 @@ module Serial =
       set_root_direction' s rdirs
 
     let set_all_root_directions s rd =
-      let nr = nroots s in
-      if (nr > 0) then begin
-        let rdirs = create_int_array nr in
+      let n = nroots s in
+      if (n > 0) then begin
+        let rdirs = create_int_array n in
         Bigarray.Array1.fill rdirs (int_of_root_direction rd);
         set_root_direction' s rdirs
       end; ()
