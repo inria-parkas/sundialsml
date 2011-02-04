@@ -161,6 +161,10 @@ module type GENERIC =
 
     (* direct linear solvers functions *)
 
+    (* Thrown by GETRF routines for a zero diagonal element at the given
+       column index. *)
+    exception ZeroDiagonalElement of int
+
     module Densematrix :
       sig
         type t
@@ -238,6 +242,8 @@ module type GENERIC =
         module Direct :
           sig
             type t = real_array2
+
+            val new_band_mat : int * int * int -> t (* n smu ml *)
 
             val band_copy : t -> t -> int -> int -> int -> int -> int -> unit
                         (*  a    b    n     a_smu  b_smu  copymu  copyml *)
@@ -490,6 +496,8 @@ module Generic =
 
     exception StopTimeReached
 
+    exception ZeroDiagonalElement of int
+
     let _ =
       List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
       [
@@ -514,6 +522,8 @@ module Generic =
         ("cvode_BadK",                    BadK);
         ("cvode_BadT",                    BadT);
         ("cvode_BadDky",                  BadDky);
+
+        ("cvode_ZeroDiagonalElement",     ZeroDiagonalElement 0);
       ]
 
     (* passing callbacks to c *)
@@ -684,6 +694,8 @@ module Generic =
         module Direct =
           struct
             type t = real_array2
+
+            let new_band_mat (n, smu, ml) = new_real_array2 n (smu + ml + 1)
 
             external band_copy' : t -> t -> int * int * int * int * int -> unit
                 = "c_bandmatrix_direct_copy"

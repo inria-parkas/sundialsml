@@ -156,6 +156,10 @@ module type GENERIC =
 
     (* direct linear solvers functions *)
 
+    (* Thrown by GETRF routines for a zero diagonal element at the given
+       column index. *)
+    exception ZeroDiagonalElement of int
+
     module Densematrix :
       sig
         type t
@@ -232,6 +236,8 @@ module type GENERIC =
         module Direct :
           sig
             type t = real_array2
+
+            val new_band_mat : int * int * int -> t (* n smu ml *)
 
             val band_copy : t -> t -> int -> int -> int -> int -> int -> unit
                         (*  a    b    n     a_smu  b_smu  copymu  copyml *)

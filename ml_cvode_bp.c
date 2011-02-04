@@ -490,7 +490,12 @@ CAMLprim value c_densematrix_dense_scale(value vc, value va)
 CAMLprim value c_densematrix_getrf(value va, value vp)
 {
     CAMLparam2(va, vp);
-    DenseGETRF(DLSMAT(va), INT_ARRAY(vp));
+    int r = DenseGETRF(DLSMAT(va), INT_ARRAY(vp));
+
+    if (r != 0) {
+	caml_raise_with_arg(*caml_named_value("cvode_ZeroDiagonalElement"),
+			    Val_int(r));
+    }
     CAMLreturn0;
 }
 
@@ -607,8 +612,12 @@ CAMLprim value c_densematrix_direct_getrf(value va, value vmn, value vp)
     int m = Int_val(Field(vmn, 0));
     int n = Int_val(Field(vmn, 1));
 
-    denseGETRF(REAL_ARRAY2(va), m, n, INT_ARRAY(vp));
+    int r = denseGETRF(REAL_ARRAY2(va), m, n, INT_ARRAY(vp));
 
+    if (r != 0) {
+	caml_raise_with_arg(*caml_named_value("cvode_ZeroDiagonalElement"),
+			    Val_int(r));
+    }
     CAMLreturn0;
 }
 
