@@ -106,7 +106,7 @@ CVodeWFtolerances	    wf_tolerances
 CVodeRootInit		    called inside init
 CVode			    normal (CV_NORMAL), one_step (CV_ONE_STEP)
 CVodeGetDky		    get_dky
-CVodeGetWorkSpace	    Not available.
+CVodeGetWorkSpace	    get_work_space
 CVodeGetNumSteps	    get_num_steps
 CVodeGetNumRhsEvals	    get_num_rhs_evals
 CVodeGetNumLinSolvSetups    get_num_lin_solv_setups
@@ -185,7 +185,7 @@ CVSpilsSetMaxl		    Spils.set_maxl
 CVSpilsSetEpsLin	    Spils.set_eps_lin
 CVSpilsSetPreconditioner    Spils.set_preconditioner
 CVSpilsSetJacTimesVecFn	    Spils.set_jac_times_vec_fn
-CVSpilsGetWorkSpace	    Not implemented.
+CVSpilsGetWorkSpace	    Spils.get_work_space
 CVSpilsGetNumPrecEvals	    Spils.get_num_prec_evals
 CVSpilsGetNumPrecSolves	    Spils.get_num_prec_solves
 CVSpilsGetNumLinIters	    Spils.get_num_lin_iters

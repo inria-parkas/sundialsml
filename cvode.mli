@@ -296,6 +296,7 @@ module Serial :
     val free : session -> unit
     val get_dky : session -> float -> int -> nvec -> unit
 
+    val get_work_space          : session -> int * int
     val get_num_steps           : session -> int
     val get_num_rhs_evals       : session -> int
     val get_num_lin_solv_setups : session -> int
@@ -473,6 +474,7 @@ module Serial :
 
         val set_maxl : session -> int -> unit
 
+        val get_work_space       : session -> int * int
         val get_num_prec_evals   : session -> int
         val get_num_prec_solves  : session -> int
         val get_num_lin_iters    : session -> int
@@ -523,6 +525,7 @@ module Nvector :
     val free : 'a session -> unit
     val get_dky : 'a session -> float -> int -> 'a nvector -> unit
 
+    val get_work_space          : 'a session -> int * int
     val get_num_steps           : 'a session -> int
     val get_num_rhs_evals       : 'a session -> int
     val get_num_lin_solv_setups : 'a session -> int
@@ -702,6 +705,7 @@ module Nvector :
 
         val set_maxl : 'a session -> int -> unit
 
+        val get_work_space       : 'a session -> int * int
         val get_num_prec_evals   : 'a session -> int
         val get_num_prec_solves  : 'a session -> int
         val get_num_lin_iters    : 'a session -> int

@@ -28,6 +28,7 @@
 #include <cvode/cvode_spbcgs.h>
 #include <cvode/cvode_sptfqmr.h>
 #include <cvode/cvode_bandpre.h>
+#include <cvode/cvode_spils.h>
 
 #include "ml_cvode.h"
 
@@ -61,6 +62,27 @@ CAMLprim value c_next_step_size(value vcvode_mem)
     CHECK_FLAG("CVodeGetCurrentStep", flag);
 
     CAMLreturn(caml_copy_double(hcur));
+}
+
+CAMLprim value c_get_work_space(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+    CAMLlocal1(r);
+
+    CVODE_MEM_FROM_ML(cvode_mem, vcvode_mem);
+    int flag;
+    long int lenrw;
+    long int leniw;
+
+    flag = CVodeGetWorkSpace(cvode_mem, &lenrw, &leniw);
+    CHECK_FLAG("CVodeGetWorkSpace", flag);
+
+    r = caml_alloc_tuple(2);
+
+    Store_field(r, 0, Val_int(lenrw));
+    Store_field(r, 1, Val_int(lenrw));
+
+    CAMLreturn(r);
 }
 
 CAMLprim value c_get_num_steps(value vcvode_mem)
@@ -987,6 +1009,27 @@ CAMLprim value c_spils_get_num_conv_fails(value vcvode_mem)
     CHECK_FLAG("CVSpilsGetNumConvFails", flag);
 
     CAMLreturn(Val_long(r));
+}
+
+CAMLprim value c_spils_get_work_space(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+    CAMLlocal1(r);
+
+    CVODE_MEM_FROM_ML(cvode_mem, vcvode_mem);
+    int flag;
+    long int lenrw;
+    long int leniw;
+
+    flag = CVSpilsGetWorkSpace(cvode_mem, &lenrw, &leniw);
+    CHECK_FLAG("CVSpilsGetWorkSpace", flag);
+
+    r = caml_alloc_tuple(2);
+
+    Store_field(r, 0, Val_int(lenrw));
+    Store_field(r, 1, Val_int(lenrw));
+
+    CAMLreturn(r);
 }
 
 CAMLprim value c_spils_get_num_prec_evals(value vcvode_mem)

@@ -792,6 +792,9 @@ module Serial =
     external next_step_size         : session -> float
         = "c_next_step_size"
 
+    external get_work_space         : session -> int * int
+        = "c_get_work_space"
+
     external get_num_steps          : session -> int
         = "c_get_num_steps"
 
@@ -1012,6 +1015,9 @@ module Serial =
         external get_num_conv_fails     : session -> int
             = "c_spils_get_num_conv_fails"
 
+        external get_work_space         : session -> int * int
+            = "c_spils_get_work_space"
+
         external get_num_prec_evals     : session -> int
             = "c_spils_get_num_prec_evals"
 
@@ -1103,6 +1109,9 @@ module Nvector =
 
     external next_step_size         : 'a session -> float
         = "c_next_step_size"
+ 
+    external get_work_space         : 'a session -> int * int
+        = "c_get_work_space"
 
     external get_num_steps          : 'a session -> int
         = "c_get_num_steps"
@@ -1319,6 +1328,9 @@ module Nvector =
 
         external get_num_conv_fails     : 'a session -> int
             = "c_spils_get_num_conv_fails"
+
+        external get_work_space         : 'a session -> int * int
+            = "c_spils_get_work_space"
 
         external get_num_prec_evals     : 'a session -> int
             = "c_spils_get_num_prec_evals"
