@@ -59,7 +59,7 @@ let _ =
       incr i;
 
       Cvode.Carray.print_with_time t' y;
-      Printf.printf "(step size = %e)\n" (Cvode.get_last_step s);
+      Printf.printf "%e\tstep size = %e\n" t' (Cvode.get_last_step s);
         
       match result with
       | Cvode.RootsFound -> print_endline "** root found"
