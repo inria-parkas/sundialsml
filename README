@@ -143,7 +143,7 @@ CVBand			    called inside init and
 			    set_nonlinear_iteration_type when necessary
 CVBandPrecInit		    called inside init and
 			    set_nonlinear_iteration_type when necessary
-CVBandPrecGetWorkSpace	    Not available.
+CVBandPrecGetWorkSpace	    BandPrec.get_work_space
 CVBandPrecGetNumRhsEvals    BandPrec.get_num_rhs_evals
 
 CVDiag			    called inside init and

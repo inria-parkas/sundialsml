@@ -1059,7 +1059,27 @@ CAMLprim value c_diag_get_num_rhs_evals(value vcvode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_bandprec_get_num_rhs_evals (value vcvode_mem)
+CAMLprim value c_bandprec_get_work_space(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+    CAMLlocal1(r);
+    CVODE_MEM_FROM_ML(cvode_mem, vcvode_mem);
+
+    long int lenrwBP;
+    long int leniwBP;
+
+    int flag = CVBandPrecGetWorkSpace(cvode_mem, &lenrwBP, &leniwBP);
+    CHECK_FLAG("CVBandPrecGetWorkSpace", flag);
+
+    r = caml_alloc_tuple(2);
+
+    Store_field(r, 0, Val_int(lenrwBP));
+    Store_field(r, 1, Val_int(leniwBP));
+
+    CAMLreturn(r);
+}
+
+CAMLprim value c_bandprec_get_num_rhs_evals(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
     CVODE_MEM_FROM_ML(cvode_mem, vcvode_mem);

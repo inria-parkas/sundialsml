@@ -999,6 +999,9 @@ module Serial =
 
     module BandPrec =
       struct
+        external get_work_space : session -> int * int
+            = "c_bandprec_get_work_space"
+
         external get_num_rhs_evals    : session -> int
             = "c_bandprec_get_num_rhs_evals"
       end
@@ -1314,6 +1317,9 @@ module Nvector =
 
     module BandPrec =
       struct
+        external get_work_space : 'a session -> int * int
+            = "c_bandprec_get_work_space"
+
         external get_num_rhs_evals      : 'a session -> int
             = "c_bandprec_get_num_rhs_evals"
       end

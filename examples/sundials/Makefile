@@ -3,7 +3,8 @@ include ../../Makefile.inc
 EXAMPLES = cvAdvDiff_bnd.ml \
 	   cvRoberts_dns.ml \
 	   cvRoberts_dns_uw.ml \
-	   cvDiurnal_kry.ml
+	   cvDiurnal_kry.ml \
+	   cvDiurnal_kry_bp.ml
 
 LAPACK_EXAMPLES = cvAdvDiff_bndL.ml \
 	   	  cvRoberts_dnsL.ml
@@ -33,6 +34,9 @@ cvRoberts_dns_uw.opt: cvRoberts_dns_uw.ml
 
 cvDiurnal_kry.byte: cvDiurnal_kry.ml
 cvDiurnal_kry.opt: cvDiurnal_kry.ml
+
+cvDiurnal_kry_bp.byte: cvDiurnal_kry_bp.ml
+cvDiurnal_kry_bp.opt: cvDiurnal_kry_bp.ml
 
 clean:
 	-rm -f $(ALL_EXAMPLES:.ml=.cmo) $(ALL_EXAMPLES:.ml=.cmx)

@@ -444,6 +444,8 @@ module Serial :
 
     module BandPrec :
       sig
+        val get_work_space : session -> int * int
+
         (* No. of r.h.s. calls for finite diff. banded Jacobian evals. *)
         val get_num_rhs_evals : session -> int
       end
@@ -674,6 +676,8 @@ module Nvector :
 
     module BandPrec :
       sig
+        val get_work_space : 'a session -> int * int
+
         (* No. of r.h.s. calls for finite diff. banded Jacobian evals. *)
         val get_num_rhs_evals : 'a session -> int
       end
