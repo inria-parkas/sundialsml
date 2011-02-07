@@ -191,7 +191,12 @@ module type GENERIC =
 
         module Direct :
           sig
-            type t = real_array2
+            type t
+
+            val new_dense_mat  : int * int -> t
+
+            val get : t -> (int * int) -> float
+            val set : t -> (int * int) -> float -> unit
 
             val dense_copy  : t -> t -> int * int -> unit
             val dense_scale : float -> t -> int * int -> unit
@@ -235,9 +240,12 @@ module type GENERIC =
 
         module Direct :
           sig
-            type t = real_array2
+            type t
 
             val new_band_mat : int * int * int -> t (* n smu ml *)
+
+            val get : t -> (int * int) -> float
+            val set : t -> (int * int) -> float -> unit
 
             val band_copy : t -> t -> int -> int -> int -> int -> int -> unit
                         (*  a    b    n     a_smu  b_smu  copymu  copyml *)

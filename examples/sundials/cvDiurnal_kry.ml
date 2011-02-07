@@ -112,15 +112,15 @@ let set_ijkth v i j k e = v.{i - 1 + j * num_species + k * nsmx} <- e
 let slice_ijkth v i j k =
   Bigarray.Array1.sub v (i - 1 + j * num_species + k * nsmx) num_species
 
-let ijth v i j       = v.{j - 1, i - 1}
-let set_ijth v i j e = v.{j - 1, i - 1} <- e
+let ijth v i j       = Direct.get v (j - 1, i - 1)
+let set_ijth v i j e = Direct.set v (j - 1, i - 1) e
 
 (* Type : UserData 
    contains preconditioner blocks, pivot arrays, and problem constants *)
 
 type user_data = {
-        p          : Cvode.real_array2 array array;
-        jbd        : Cvode.real_array2 array array;
+        p          : Direct.t array array;
+        jbd        : Direct.t array array;
         pivot      : Cvode.int_array array array;
         mutable q4 : float;
         om         : float;
@@ -138,13 +138,13 @@ let sqr x = x ** 2.0
 (* Allocate memory for data structure of type UserData *)
 
 let alloc_user_data () =
-  let new_real2 _ = Cvode.new_real_array2 num_species num_species in
+  let new_dmat _ = Direct.new_dense_mat (num_species, num_species) in
   let new_int1 _  = Cvode.new_int_array num_species in
   let new_y_arr elinit _ = Array.init my elinit in
   let new_xy_arr elinit  = Array.init mx (new_y_arr elinit) in
   {
-    p     = new_xy_arr new_real2;
-    jbd   = new_xy_arr new_real2;
+    p     = new_xy_arr new_dmat;
+    jbd   = new_xy_arr new_dmat;
     pivot = new_xy_arr new_int1;
     q4    = 0.0;
     om    = 0.0;
@@ -592,12 +592,12 @@ let main () =
   Spils.set_preconditioner cvode_mem (precond data) (psolve data);
 
   (* In loop over output points, call CVode, print results, test for error *)
+
   printf " \n2-species diurnal advection-diffusion problem\n\n";
   let tout = ref twohr in
   for iout = 1 to nout do
     let (t, flag) = Cvode.normal cvode_mem !tout u in
     print_output cvode_mem u t;
-
     tout := !tout +. twohr
   done;
 

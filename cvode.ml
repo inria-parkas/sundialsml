@@ -196,7 +196,12 @@ module type GENERIC =
 
         module Direct :
           sig
-            type t = real_array2
+            type t
+
+            val new_dense_mat  : int * int -> t
+
+            val get : t -> (int * int) -> float
+            val set : t -> (int * int) -> float -> unit
 
             val dense_copy  : t -> t -> int * int -> unit
             val dense_scale : float -> t -> int * int -> unit
@@ -241,9 +246,12 @@ module type GENERIC =
 
         module Direct :
           sig
-            type t = real_array2
+            type t
 
             val new_band_mat : int * int * int -> t (* n smu ml *)
+
+            val get : t -> (int * int) -> float
+            val set : t -> (int * int) -> float -> unit
 
             val band_copy : t -> t -> int -> int -> int -> int -> int -> unit
                         (*  a    b    n     a_smu  b_smu  copymu  copyml *)
@@ -608,7 +616,16 @@ module Generic =
 
         module Direct =
           struct
-            type t = real_array2
+            type t
+
+            external new_dense_mat  : int * int -> t
+                = "c_densematrix_direct_new_dense_mat"
+
+            external get : t -> (int * int) -> float
+                = "c_densematrix_direct_get"
+
+            external set : t -> (int * int) -> float -> unit
+                = "c_densematrix_direct_set"
 
             external dense_copy  : t -> t -> int * int -> unit
                 = "c_densematrix_direct_copy"
@@ -693,9 +710,18 @@ module Generic =
 
         module Direct =
           struct
-            type t = real_array2
+            type t
 
-            let new_band_mat (n, smu, ml) = new_real_array2 n (smu + ml + 1)
+            external new_band_mat : int * int * int -> t
+                = "c_bandmatrix_direct_new_band_mat"
+
+            external get : t -> (int * int) -> float
+                = "c_densematrix_direct_get"
+                (* NB: same as densematrix_direct *)
+
+            external set : t -> (int * int) -> float -> unit
+                = "c_densematrix_direct_set"
+                (* NB: same as densematrix_direct *)
 
             external band_copy' : t -> t -> int * int * int * int * int -> unit
                 = "c_bandmatrix_direct_copy"
