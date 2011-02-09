@@ -286,6 +286,17 @@ CAMLprim value c_enable_err_handler_fn(value vdata)
     CAMLreturn0;
 }
 
+CAMLprim value c_disable_err_handler_fn(value vdata)
+{
+    CAMLparam1(vdata);
+    CVODE_DATA_FROM_ML(data, vdata);
+
+    int flag = CVodeSetErrHandlerFn(data->cvode_mem, NULL, (void *)data);
+    CHECK_FLAG("CVodeSetErrHandlerFn", flag);
+
+    CAMLreturn0;
+}
+
 /* basic interface */
 
 void set_linear_solver(void *cvode_mem, value ls, int n)

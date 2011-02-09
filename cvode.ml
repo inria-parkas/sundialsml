@@ -883,6 +883,9 @@ module Serial =
     external enable_err_handler_fn  : session -> unit
         = "c_enable_err_handler_fn"
 
+    external clear_err_handler_fn  : session -> unit
+        = "c_disable_err_handler_fn"
+
     let set_err_handler_fn s errh =
       register_handler s ErrorHandler errh;
       enable_err_handler_fn s
@@ -973,12 +976,18 @@ module Serial =
         external enable_dense_jac_fn  : session -> unit
             = "c_ba_dls_enable_dense_jac_fn"
 
+        external clear_dense_jac_fn : session -> unit
+            = "c_ba_dls_disable_dense_jac_fn"
+
         let set_dense_jac_fn s f =
             register_handler s JacFn f;
             enable_dense_jac_fn s
 
         external enable_band_jac_fn   : session -> unit
             = "c_ba_dls_enable_band_jac_fn"
+
+        external clear_band_jac_fn : session -> unit
+            = "c_ba_dls_disable_band_jac_fn"
 
         let set_band_jac_fn s f =
             register_handler s BandJacFn f;
@@ -1032,6 +1041,9 @@ module Serial =
 
         external enable_jac_times_vec_fn : session -> unit
             = "c_ba_enable_jac_times_vec_fn"
+
+        external clear_jac_times_vec_fn : session -> unit
+            = "c_ba_disable_jac_times_vec_fn"
 
         let set_jac_times_vec_fn s f =
             register_handler s JacTimesFn f;
@@ -1204,6 +1216,9 @@ module Nvector =
     external enable_err_handler_fn : 'a session -> unit
         = "c_enable_err_handler_fn"
 
+    external clear_err_handler_fn  : 'a session -> unit
+        = "c_disable_err_handler_fn"
+
     let set_err_handler_fn s errh =
       register_handler s ErrorHandler errh;
       enable_err_handler_fn s
@@ -1291,12 +1306,18 @@ module Nvector =
         external enable_dense_jac_fn    : 'a session -> unit
             = "c_nvec_dls_enable_dense_jac_fn"
 
+        external clear_dense_jac_fn : 'a session -> unit
+            = "c_nvec_dls_disable_dense_jac_fn"
+
         let set_dense_jac_fn s f =
             register_handler s JacFn f;
             enable_dense_jac_fn s
 
         external enable_band_jac_fn     : 'a session -> unit
             = "c_nvec_dls_enable_band_jac_fn"
+
+        external clear_band_jac_fn : 'a session -> unit
+            = "c_nvec_dls_disable_band_jac_fn"
 
         let set_band_jac_fn s f =
             register_handler s BandJacFn f;
@@ -1347,6 +1368,9 @@ module Nvector =
             register_handler s PreSetupFn fsetup;
             register_handler s PreSolveFn fsolve;
             enable_preconditioner s
+
+        external clear_jac_times_vec_fn : 'a session -> unit
+            = "c_nvec_disable_jac_times_vec_fn"
 
         external enable_jac_times_vec_fn    : 'a session -> unit
             = "c_nvec_enable_jac_times_vec_fn"

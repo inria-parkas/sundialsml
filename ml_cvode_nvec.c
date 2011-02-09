@@ -392,11 +392,29 @@ CAMLprim value CVTYPE(dls_enable_dense_jac_fn)(value vdata)
     CAMLreturn0;
 }
 
+CAMLprim value CVTYPE(dls_disable_dense_jac_fn)(value vdata)
+{
+    CAMLparam1(vdata);
+    CVODE_DATA_FROM_ML(data, vdata);
+    int flag = CVDlsSetDenseJacFn(data->cvode_mem, NULL);
+    CHECK_FLAG("CVDlsSetDenseJacFn", flag);
+    CAMLreturn0;
+}
+
 CAMLprim value CVTYPE(dls_enable_band_jac_fn)(value vdata)
 {
     CAMLparam1(vdata);
     CVODE_DATA_FROM_ML(data, vdata);
     int flag = CVDlsSetBandJacFn(data->cvode_mem, bandjacfn);
+    CHECK_FLAG("CVDlsSetBandJacFn", flag);
+    CAMLreturn0;
+}
+
+CAMLprim value CVTYPE(dls_disable_band_jac_fn)(value vdata)
+{
+    CAMLparam1(vdata);
+    CVODE_DATA_FROM_ML(data, vdata);
+    int flag = CVDlsSetBandJacFn(data->cvode_mem, NULL);
     CHECK_FLAG("CVDlsSetBandJacFn", flag);
     CAMLreturn0;
 }
@@ -416,6 +434,15 @@ CAMLprim value CVTYPE(enable_jac_times_vec_fn)(value vdata)
     CAMLparam1(vdata);
     CVODE_DATA_FROM_ML(data, vdata);
     int flag = CVSpilsSetJacTimesVecFn(data->cvode_mem, jactimesfn);
+    CHECK_FLAG("CVSpilsSetJacTimesVecFn", flag);
+    CAMLreturn0;
+}
+
+CAMLprim value CVTYPE(disable_jac_times_vec_fn)(value vdata)
+{
+    CAMLparam1(vdata);
+    CVODE_DATA_FROM_ML(data, vdata);
+    int flag = CVSpilsSetJacTimesVecFn(data->cvode_mem, NULL);
     CHECK_FLAG("CVSpilsSetJacTimesVecFn", flag);
     CAMLreturn0;
 }

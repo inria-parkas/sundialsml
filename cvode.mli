@@ -335,6 +335,7 @@ module Serial :
 
     (* Error handler function *)
     val set_err_handler_fn : session -> (error_details -> unit) -> unit
+    val clear_err_handler_fn : session -> unit
 
     (* Maximum order for BDF or Adams method *)
     val set_max_ord : session -> int -> unit
@@ -424,10 +425,14 @@ module Serial :
           -> (triple_tmp jacobian_arg -> Densematrix.t -> unit)
           -> unit
 
+        val clear_dense_jac_fn : session -> unit
+
         val set_band_jac_fn :
              session
           -> (triple_tmp jacobian_arg -> int -> int -> Bandmatrix.t -> unit)
           -> unit
+
+        val clear_band_jac_fn : session -> unit
 
         (* No. of Jacobian evaluations *)
         val get_num_jac_evals : session -> int
@@ -480,6 +485,7 @@ module Serial :
               -> val_array (* Jv *)
               -> unit)
           -> unit
+        val clear_jac_times_vec_fn : session -> unit
 
         val set_prec_type : session -> preconditioning_type -> unit
 
@@ -566,6 +572,7 @@ module Nvector :
 
     (* Error handler function *)
     val set_err_handler_fn : 'a session -> (error_details -> unit) -> unit
+    val clear_err_handler_fn : 'a session -> unit
 
     (* Maximum order for BDF or Adams method *)
     val set_max_ord : 'a session -> int -> unit
@@ -655,11 +662,15 @@ module Nvector :
           -> (('a triple_tmp, 'a) jacobian_arg -> Densematrix.t -> unit)
           -> unit
 
+        val clear_dense_jac_fn : 'a session -> unit
+
         val set_band_jac_fn :
              'a session
           -> (('a triple_tmp, 'a) jacobian_arg -> int -> int -> Bandmatrix.t
               -> unit)
           -> unit
+
+        val clear_band_jac_fn : 'a session -> unit
 
         (* No. of Jacobian evaluations *)
         val get_num_jac_evals : 'a session -> int
@@ -713,6 +724,7 @@ module Nvector :
               -> 'a (* Jv *)
               -> unit)
           -> unit
+        val clear_jac_times_vec_fn : 'a session -> unit
 
         val set_prec_type : 'a session -> preconditioning_type -> unit
 
