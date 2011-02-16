@@ -1,6 +1,6 @@
 include ../../Makefile.inc
 
-EXAMPLES = cchatter.byte discontinuous.byte
+EXAMPLES = cchatter.byte discontinuous.byte printall.byte
 
 all: $(EXAMPLES)
 opt: $(EXAMPLES:.byte=.opt)
@@ -10,6 +10,9 @@ cchatter.opt: cchatter.ml
 
 discontinuous.byte: discontinuous.ml
 discontinuous.opt: discontinuous.ml
+
+printall.byte: printall.ml
+printall.opt: printall.ml
 
 clean:
 	-rm -f $(EXAMPLES:.byte=.cmo) $(EXAMPLES:.byte=.cmx)
