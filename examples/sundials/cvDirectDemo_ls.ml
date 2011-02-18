@@ -115,6 +115,8 @@ type miter =
 
 (* Private Helper Functions *)
 
+let sqr x = x ** 2.0
+
 (* Functions Called by the Solver *)
 
 let jac1 { Cvode.jac_y = y } j =
@@ -123,7 +125,7 @@ let jac1 { Cvode.jac_y = y } j =
   (* previously calls to DENSE_ELEM: *)
   Densematrix.set j (0, 1) one;
   Densematrix.set j (1, 0) (-. two *. p1_eta *. y0 *. y1 -. one);
-  Densematrix.set j (1, 1) (p1_eta *. (one -. (y0 ** 2.0)))
+  Densematrix.set j (1, 1) (p1_eta *. (one -. sqr y0))
 
 let jac2 arg mu ml jac =
   (*
@@ -269,7 +271,7 @@ let f1 t y ydot =
   let y0 = y.{0} in
   let y1 = y.{1} in
   ydot.{0} <- y1;
-  ydot.{1} <- (one -. (y0 ** 2.0)) *. p1_eta *. y1 -. y0
+  ydot.{1} <- (one -. sqr y0) *. p1_eta *. y1 -. y0
 
 let snd_true (x, _) = (x, true)
 
