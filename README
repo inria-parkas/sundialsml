@@ -133,36 +133,28 @@ CVodeGetReturnFlagName	    Not necessary. No flags are returned, rather
 CVodeFree		    free (called automatically during garbage
 			    collection if not called manually)
 
-CVDense			    called inside init and
-			    set_nonlinear_iteration_type when necessary
+CVDense			    called inside init and set_iter_type when necessary
 
-CVLapackDense		    called inside init and
-			    set_nonlinear_iteration_type when necessary
+CVLapackDense		    called inside init and set_iter_type when necessary
 
-CVBand			    called inside init and
-			    set_nonlinear_iteration_type when necessary
-CVBandPrecInit		    called inside init and
-			    set_nonlinear_iteration_type when necessary
+CVBand			    called inside init and set_iter_type when necessary
+CVBandPrecInit		    called inside init and set_iter_type when necessary
 CVBandPrecGetWorkSpace	    BandPrec.get_work_space
 CVBandPrecGetNumRhsEvals    BandPrec.get_num_rhs_evals
 
-CVDiag			    called inside init and
-			    set_nonlinear_iteration_type when necessary
-CVDiagGetWorkSpace	    Not available
+CVDiag			    called inside init and set_iter_type when necessary
+CVDiagGetWorkSpace	    Diag.get_work_space
 CVDiagGetNumRhsEvals	    Diag.get_num_rhs_evals
 CVDiagGetLastFlag	    Not necessary. No flags are returned, rather
 			    exceptions are thrown when necessary.
 CVDiagGetReturnFlagName	    Not necessary. No flags are returned, rather
 			    exceptions are thrown when necessary.
 
-CVSpgmr			    called inside init and
-			    set_nonlinear_iteration_type when necessary
+CVSpgmr			    called inside init and set_iter_type when necessary
 
-CVSpbcg			    called inside init and
-			    set_nonlinear_iteration_type when necessary
+CVSpbcg			    called inside init and set_iter_type when necessary
 
-CVSptfqmr		    called inside init and
-			    set_nonlinear_iteration_type when necessary
+CVSptfqmr		    called inside init and set_iter_type when necessary
 
 CVBBDPrecInit		    Not implemented (requires parallel N_Vectors)
 CVBBDPrecReInit		    Not implemented (requires parallel N_Vectors)
@@ -171,7 +163,7 @@ CVBBDPrecGetNumGfnEvals	    Not implemented (requires parallel N_Vectors)
 
 CVDlsSetDenseJacFn	    Dls.set_dense_jac_fn
 CVDlsSetBandJacFn	    Dls.set_band_jac_fn
-CVDlsGetWorkSpace	    Not implemented.
+CVDlsGetWorkSpace	    Dls.get_work_space
 CVDlsGetNumJacEvals	    Dls.get_num_jac_evals
 CVDlsGetNumRhsEvals	    Dls.get_num_rhs_evals
 CVDlsGetLastFlag	    Not necessary. No flags are returned, rather
@@ -199,6 +191,7 @@ CVSpilsGetReturnFlagName    Not necessary. No flags are returned, rather
 
 DENSE_ELEM		    Densematrix.get, Densematrix.set
 DENSE_COL		    Not implemented.
+			    TODO: implement this!
 
 BAND_ELEM		    Bandmatrix.get, Bandmatrix.set
 BAND_COL		    Bandmatrix.Col.get_col
@@ -206,4 +199,10 @@ BAND_COL_ELEM		    Bandmatrix.Col.get, Bandmatrix.Col.set
 
 N_VMaxNorm		    Carray.vmax_norm
 others			    Not implemented
+
+Notes on Callback functions
+---------------------------
+* Callback functions are passed the data portion of NVectors directly.
+  For serial NVectors, for example, NV_DATA_S is called on each NVector
+  before passing them to the callback (as bigarrays).
 

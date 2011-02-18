@@ -1023,6 +1023,26 @@ CAMLprim value c_get_num_g_evals(value vcvode_mem)
     CAMLreturn(Val_long(r));
 }
 
+CAMLprim value c_dls_get_work_space(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+    CAMLlocal1(r);
+    CVODE_MEM_FROM_ML(cvode_mem, vcvode_mem);
+
+    long int lenrwLS;
+    long int leniwLS;
+
+    int flag = CVDlsGetWorkSpace(cvode_mem, &lenrwLS, &leniwLS);
+    CHECK_FLAG("CVDlsGetWorkSpace", flag);
+
+    r = caml_alloc_tuple(2);
+
+    Store_field(r, 0, Val_int(lenrwLS));
+    Store_field(r, 1, Val_int(leniwLS));
+
+    CAMLreturn(r);
+}
+
 CAMLprim value c_dls_get_num_jac_evals(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
@@ -1045,6 +1065,26 @@ CAMLprim value c_dls_get_num_rhs_evals(value vcvode_mem)
     CHECK_FLAG("CVDlsGetNumRhsEvals", flag);
 
     CAMLreturn(Val_long(r));
+}
+
+CAMLprim value c_diag_get_work_space(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+    CAMLlocal1(r);
+    CVODE_MEM_FROM_ML(cvode_mem, vcvode_mem);
+
+    long int lenrwLS;
+    long int leniwLS;
+
+    int flag = CVDiagGetWorkSpace(cvode_mem, &lenrwLS, &leniwLS);
+    CHECK_FLAG("CVDiagGetWorkSpace", flag);
+
+    r = caml_alloc_tuple(2);
+
+    Store_field(r, 0, Val_int(lenrwLS));
+    Store_field(r, 1, Val_int(leniwLS));
+
+    CAMLreturn(r);
 }
 
 CAMLprim value c_diag_get_num_rhs_evals(value vcvode_mem)

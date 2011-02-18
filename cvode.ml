@@ -993,6 +993,9 @@ module Serial =
             register_handler s BandJacFn f;
             enable_band_jac_fn s
 
+        external get_work_space : session -> int * int
+            = "c_dls_get_work_space"
+
         external get_num_jac_evals    : session -> int
             = "c_dls_get_num_jac_evals"
 
@@ -1002,6 +1005,9 @@ module Serial =
 
     module Diag =
       struct
+        external get_work_space       : session -> int * int
+            = "c_diag_get_work_space"
+
         external get_num_rhs_evals    : session -> int
             = "c_diag_get_num_rhs_evals"
       end
@@ -1323,6 +1329,9 @@ module Nvector =
             register_handler s BandJacFn f;
             enable_band_jac_fn s
 
+        external get_work_space : 'a session -> int * int
+            = "c_dls_get_work_space"
+
         external get_num_jac_evals      : 'a session -> int
             = "c_dls_get_num_jac_evals"
 
@@ -1332,6 +1341,9 @@ module Nvector =
 
     module Diag =
       struct
+        external get_work_space         : 'a session -> int * int
+            = "c_diag_get_work_space"
+
         external get_num_rhs_evals      : 'a session -> int
             = "c_diag_get_num_rhs_evals"
       end

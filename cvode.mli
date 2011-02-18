@@ -434,6 +434,8 @@ module Serial :
 
         val clear_band_jac_fn : session -> unit
 
+        val get_work_space : session -> int * int
+
         (* No. of Jacobian evaluations *)
         val get_num_jac_evals : session -> int
 
@@ -443,6 +445,8 @@ module Serial :
 
     module Diag :
       sig
+        val get_work_space : session -> int * int
+
         (* No. of r.h.s. calls for finite diff. Jacobian evals. *)
         val get_num_rhs_evals : session -> int
       end
@@ -672,6 +676,8 @@ module Nvector :
 
         val clear_band_jac_fn : 'a session -> unit
 
+        val get_work_space : 'a session -> int * int
+
         (* No. of Jacobian evaluations *)
         val get_num_jac_evals : 'a session -> int
 
@@ -681,6 +687,8 @@ module Nvector :
 
     module Diag :
       sig
+        val get_work_space : 'a session -> int * int
+
         (* No. of r.h.s. calls for finite diff. Jacobian evals. *)
         val get_num_rhs_evals : 'a session -> int
       end
