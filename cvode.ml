@@ -798,9 +798,6 @@ module Serial =
     external get_root_info  : session -> Roots.t -> unit
         = "c_get_root_info"
 
-    external free           : session -> unit
-        = "c_free"
-
     external normal
         : session -> float -> val_array -> float * solver_result
         = "c_ba_normal"
@@ -1136,9 +1133,6 @@ module Nvector =
 
     external get_root_info  : 'a session -> Roots.t -> unit
         = "c_get_root_info"
-
-    external free           : 'a session -> unit
-        = "c_free"
 
     external normal
         : 'a session -> float -> 'a nvector -> float * solver_result

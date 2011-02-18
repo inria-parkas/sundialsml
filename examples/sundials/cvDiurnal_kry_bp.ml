@@ -376,10 +376,7 @@ let main () =
   printf "\n\n-------------------------------------------------------";
   printf "------------\n";
     
-  jrpe_loop Cvode.PrecRight "PREC_RIGHT";
-
-  (* Free memory *)
-  Cvode.free cvode_mem
+  jrpe_loop Cvode.PrecRight "PREC_RIGHT"
 
 let _ = main ()
 

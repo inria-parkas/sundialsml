@@ -307,7 +307,6 @@ module Serial :
     val normal : session -> float -> val_array -> float * solver_result
     val one_step : session -> float -> val_array -> float * solver_result
 
-    val free : session -> unit
     val get_dky : session -> float -> int -> nvec -> unit
 
     val get_work_space          : session -> int * int
@@ -548,7 +547,6 @@ module Nvector :
     val normal : 'a session -> float -> 'a nvector -> float * solver_result
     val one_step : 'a session -> float -> 'a nvector -> float * solver_result
 
-    val free : 'a session -> unit
     val get_dky : 'a session -> float -> int -> 'a nvector -> unit
 
     val get_work_space          : 'a session -> int * int

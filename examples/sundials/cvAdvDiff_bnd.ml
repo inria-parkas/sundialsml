@@ -258,8 +258,7 @@ let main () =
     tout := !tout +. dtout
   done;
 
-  print_final_stats cvode_mem;  (* Print some final statistics   *)
-  Cvode.free cvode_mem  (* Free the integrator memory *)
+  print_final_stats cvode_mem  (* Print some final statistics   *)
 
 let _ = main ()
 

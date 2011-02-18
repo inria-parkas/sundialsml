@@ -456,14 +456,6 @@ CAMLprim value c_get_root_info(value vdata, value roots)
     CAMLreturn0;
 }
 
-CAMLprim value c_free(value vdata)
-{
-    CAMLparam1(vdata);
-    finalize(vdata);
-    Store_field(vdata, 1, (value)NULL);
-    CAMLreturn0;
-}
-
 CAMLprim value c_get_integrator_stats(value vdata)
 {
     CAMLparam1(vdata);

@@ -199,7 +199,6 @@ let prepare_next_run cvode_mem lmm miter mu ml =
     | Func -> assert false
   end
 
-(* XXX *)
 let print_final_stats cvode_mem miter ero =
   let (lenrw, leniw) = Cvode.get_work_space cvode_mem
   and nst = Cvode.get_num_steps cvode_mem
@@ -277,23 +276,20 @@ let snd_true (x, _) = (x, true)
 let problem1 () =
   let nerr = ref 0 in
   let y = Carray.create p1_neq in
+  let init_y () = (y.{0} <- two; y.{1} <- zero) in
   print_intro1 ();
 
   let run cvode_mem lmm reinit miter =
     begin
       let ero = ref zero in
-      y.{0} <- two;
-      y.{1} <- zero;
 
-      if reinit then Cvode.reinit cvode_mem p1_t0 y;
+      if reinit then (init_y (); Cvode.reinit cvode_mem p1_t0 y);
 
       prepare_next_run cvode_mem lmm miter 0 0;
       print_header1 ();
 
       let tout = ref p1_t1 in
       for iout = 1 to p1_nout do
-        tout := !tout +. p1_dtout;
-
         let (t, success) =
           try
             snd_true (Cvode.normal cvode_mem !tout y)
@@ -318,6 +314,8 @@ let problem1 () =
           if er > p1_tol_factor then
             (incr nerr; print_err_output p1_tol_factor)
         end;
+
+        tout := !tout +. p1_dtout
       done;
       print_final_stats cvode_mem miter !ero;
 
@@ -326,13 +324,13 @@ let problem1 () =
   in
 
   let run_tests lmm =
+    init_y ();
     let cvode_mem = Cvode.init' lmm Cvode.Functional f1 Cvode.no_roots y p1_t0
     in
     Cvode.ss_tolerances cvode_mem rtol atol;
 
     ignore (List.fold_left (run cvode_mem lmm) false
-        [ Func; Dense_User; Dense_DQ; Diag]);
-    Cvode.free cvode_mem
+        [ Func; Dense_User; Dense_DQ; Diag])
   in
 
   run_tests Cvode.Adams;
@@ -399,23 +397,20 @@ let max_error ydata t =
 let problem2 () =
   let nerr = ref 0 in
   let y = Carray.create p2_neq in
+  let init_y () = (Cvode.Carray.fill y zero; y.{0} <- one) in
   print_intro2 ();
 
   let run cvode_mem lmm reinit miter =
     begin
       let ero = ref zero in
-      Cvode.Carray.fill y zero;
-      y.{0} <- one;
 
-      if reinit then Cvode.reinit cvode_mem p2_t0 y;
+      if reinit then (init_y (); Cvode.reinit cvode_mem p2_t0 y);
 
       prepare_next_run cvode_mem lmm miter p2_mu p2_ml;
       print_header2 ();
 
       let tout = ref p2_t1 in
       for iout = 1 to p2_nout do
-        tout := !tout *. p2_tout_mult;
-
         let (t, success) =
           try
             snd_true (Cvode.normal cvode_mem !tout y)
@@ -440,7 +435,9 @@ let problem2 () =
           ero := max er !ero;
           if er > p2_tol_factor then
             (incr nerr; print_err_output p2_tol_factor)
-        end
+        end;
+
+        tout := !tout *. p2_tout_mult
       done;
       print_final_stats cvode_mem miter !ero;
 
@@ -449,13 +446,13 @@ let problem2 () =
   in
 
   let run_tests lmm =
+    init_y ();
     let cvode_mem = Cvode.init' lmm Cvode.Functional f2 Cvode.no_roots y p2_t0
     in
     Cvode.ss_tolerances cvode_mem rtol atol;
 
     ignore (List.fold_left (run cvode_mem lmm) false
-        [ Func; Diag; Band_User; Band_DQ]);
-    Cvode.free cvode_mem
+        [ Func; Diag; Band_User; Band_DQ])
   in
 
   run_tests Cvode.Adams;

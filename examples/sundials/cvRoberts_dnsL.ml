@@ -179,10 +179,7 @@ let main () =
   done;
 
   (* Print some final statistics *)
-  print_final_stats cvode_mem;
-
-  (* Free integrator memory *)
-  Cvode.free cvode_mem
+  print_final_stats cvode_mem
 
 let _ = main ()
 

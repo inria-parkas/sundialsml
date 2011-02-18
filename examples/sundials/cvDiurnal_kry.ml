@@ -549,14 +549,6 @@ let psolve data jac_arg solve_arg zdata =
 
 let main () =
 
-  (*
-  realtype abstol, reltol, t, tout;
-  N_Vector u;
-  UserData data;
-  void *cvode_mem;
-  int iout, flag;
-  *)
-
   (* Allocate memory, and set problem data, initial values, tolerances *) 
   let u = Carray.create neq in
   let data = init_user_data (alloc_user_data ()) in
@@ -601,10 +593,7 @@ let main () =
     tout := !tout +. twohr
   done;
 
-  print_final_stats cvode_mem;
-
-  (* Free memory *)
-  Cvode.free cvode_mem
+  print_final_stats cvode_mem
 
 let _ = main ()
 
