@@ -473,14 +473,14 @@ CAMLprim value c_densematrix_add_identity(value va)
     CAMLreturn0;
 }
 
-CAMLprim value c_densematrix_dense_copy(value va, value vb)
+CAMLprim value c_densematrix_copy(value va, value vb)
 {
     CAMLparam2(va, vb);
     DenseCopy(DLSMAT(va), DLSMAT(vb));
     CAMLreturn0;
 }
 
-CAMLprim value c_densematrix_dense_scale(value vc, value va)
+CAMLprim value c_densematrix_scale(value vc, value va)
 {
     CAMLparam2(vc, va);
     DenseScale(Double_val(vc), DLSMAT(va));

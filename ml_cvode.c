@@ -647,3 +647,9 @@ value ml_cvode_big_real()
     CAMLreturn(caml_copy_double(BIG_REAL));
 }
 
+value ml_cvode_unit_roundoff()
+{
+    CAMLparam0();
+    CAMLreturn(caml_copy_double(UNIT_ROUNDOFF));
+}
+

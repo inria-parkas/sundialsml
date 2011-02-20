@@ -7,6 +7,8 @@ module type GENERIC =
     val print_time : string * string -> float -> unit
 
     val big_real : float
+    val unit_roundoff : float
+
     type real_array =
       (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
     val new_real_array : int -> real_array
@@ -169,13 +171,14 @@ module type GENERIC =
 
         val set_to_zero    : t -> unit
         val add_identity   : t -> unit
-        val dense_copy     : t -> t -> unit
-        val dense_scale    : float -> t -> unit
-        val dense_getrf    : t -> int_array -> unit
-        val dense_getrs    : t -> int_array -> real_array -> unit
-        val dense_potrf    : t -> unit
-        val dense_potrs    : t -> real_array -> unit
-        val dense_geqrf    : t -> real_array -> real_array -> unit
+
+        val copy     : t -> t -> unit
+        val scale    : float -> t -> unit
+        val getrf    : t -> int_array -> unit
+        val getrs    : t -> int_array -> real_array -> unit
+        val potrf    : t -> unit
+        val potrs    : t -> real_array -> unit
+        val geqrf    : t -> real_array -> real_array -> unit
 
         type ormqr = {
               beta : real_array;
@@ -184,7 +187,7 @@ module type GENERIC =
               work : real_array;
             }
 
-        val dense_ormqr    : t -> ormqr -> unit
+        val ormqr : t -> ormqr -> unit
 
         val get : t -> (int * int) -> float
         val set : t -> (int * int) -> float -> unit
@@ -198,15 +201,15 @@ module type GENERIC =
             val get : t -> (int * int) -> float
             val set : t -> (int * int) -> float -> unit
 
-            val dense_copy  : t -> t -> int * int -> unit
-            val dense_scale : float -> t -> int * int -> unit
-            val dense_add_identity : t -> int -> unit
-            val dense_getrf : t -> int * int -> int_array -> unit
-            val dense_getrs : t -> int -> int_array -> real_array -> unit
-            val dense_potrf : t -> int -> unit
-            val dense_potrs : t -> int -> real_array -> unit
-            val dense_geqrf : t -> int * int -> real_array -> real_array -> unit
-            val dense_ormqr : t -> int * int -> ormqr -> unit
+            val copy  : t -> t -> int * int -> unit
+            val scale : float -> t -> int * int -> unit
+            val add_identity : t -> int -> unit
+            val getrf : t -> int * int -> int_array -> unit
+            val getrs : t -> int -> int_array -> real_array -> unit
+            val potrf : t -> int -> unit
+            val potrs : t -> int -> real_array -> unit
+            val geqrf : t -> int * int -> real_array -> real_array -> unit
+            val ormqr : t -> int * int -> ormqr -> unit
           end
       end
 
@@ -220,10 +223,10 @@ module type GENERIC =
         val set_to_zero    : t -> unit
         val add_identity   : t -> unit
 
-        val band_copy : t -> t -> int -> int -> unit
-        val band_scale : float -> t -> unit
-        val band_gbtrf : t -> int_array -> unit
-        val band_gbtrs : t -> int_array -> real_array -> unit
+        val copy : t -> t -> int -> int -> unit
+        val scale : float -> t -> unit
+        val gbtrf : t -> int_array -> unit
+        val gbtrs : t -> int_array -> real_array -> unit
 
         val get : t -> (int * int) -> float
         val set : t -> (int * int) -> float -> unit
@@ -247,19 +250,19 @@ module type GENERIC =
             val get : t -> (int * int) -> float
             val set : t -> (int * int) -> float -> unit
 
-            val band_copy : t -> t -> int -> int -> int -> int -> int -> unit
-                        (*  a    b    n     a_smu  b_smu  copymu  copyml *)
+            val copy : t -> t -> int -> int -> int -> int -> int -> unit
+                   (*  a    b    n     a_smu  b_smu  copymu  copyml *)
 
-            val band_scale : float -> t -> int -> int -> int -> int -> unit
-                        (*  c         a    n      mu     ml     smu *)
+            val scale : float -> t -> int -> int -> int -> int -> unit
+                   (*  c         a    n      mu     ml     smu *)
 
-            val band_add_identity : t -> int -> int -> unit
-                        (*          a    n      smu *)
+            val add_identity : t -> int -> int -> unit
+                   (*          a    n      smu *)
 
-            val band_gbtrf : t -> int -> int -> int -> int -> int_array -> unit
-                        (*   a    n      mu     ml     smu    p *)
+            val gbtrf : t -> int -> int -> int -> int -> int_array -> unit
+                   (*   a    n      mu     ml     smu    p *)
 
-            val band_gbtrs
+            val gbtrs
                 : t -> int -> int -> int -> int_array -> real_array -> unit
                 (*a    n      smu    ml     p            b *)
           end

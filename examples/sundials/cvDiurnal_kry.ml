@@ -461,7 +461,7 @@ let precond data jacarg jok gamma =
       (* jok = TRUE: Copy Jbd to P *)
       for jy = 0 to my - 1 do
         for jx = 0 to mx - 1 do
-          Direct.dense_copy jbd.(jx).(jy) p.(jx).(jy) (num_species, num_species)
+          Direct.copy jbd.(jx).(jy) p.(jx).(jy) (num_species, num_species)
         done
       done;
       false
@@ -495,7 +495,7 @@ let precond data jacarg jok gamma =
           set_ijth j 1 2 (-. q2 *. c1 +. q4coef);
           set_ijth j 2 1 (q1 *. c3 -. q2 *. c2);
           set_ijth j 2 2 ((-. q2 *. c1 -. q4coef) +. diag);
-          Direct.dense_copy j a (num_species, num_species)
+          Direct.copy j a (num_species, num_species)
         done
       done;
       true
@@ -505,15 +505,15 @@ let precond data jacarg jok gamma =
   (* Scale by -gamma *)
   for jy = 0 to my - 1 do
     for jx = 0 to mx - 1 do
-      Direct.dense_scale (-. gamma) p.(jx).(jy) (num_species, num_species)
+      Direct.scale (-. gamma) p.(jx).(jy) (num_species, num_species)
     done
   done;
   
   (* Add identity matrix and do LU decompositions on blocks in place. *)
   for jx = 0 to mx - 1 do
     for jy = 0 to my - 1 do
-      Direct.dense_add_identity p.(jx).(jy) num_species;
-      Direct.dense_getrf p.(jx).(jy) (num_species, num_species) pivot.(jx).(jy)
+      Direct.add_identity p.(jx).(jy) num_species;
+      Direct.getrf p.(jx).(jy) (num_species, num_species) pivot.(jx).(jy)
     done
   done;
   r
@@ -536,7 +536,7 @@ let psolve data jac_arg solve_arg zdata =
      in P and pivot data in pivot, and return the solution in z. *)
   for jx = 0 to mx - 1 do
     for jy = 0 to my - 1 do
-      Direct.dense_getrs p.(jx).(jy) num_species pivot.(jx).(jy)
+      Direct.getrs p.(jx).(jy) num_species pivot.(jx).(jy)
                          (slice_ijkth zdata 1 jx jy)
     done
   done

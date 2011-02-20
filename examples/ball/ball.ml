@@ -101,5 +101,3 @@ let _ =
   done;
   if !show then Showball.stop ()
 
-let _ = Cvode.free s
-

@@ -25,5 +25,3 @@ let _ =
         | Cvode.Continue -> ();
   done
 
-let _ = Cvode.free s
-

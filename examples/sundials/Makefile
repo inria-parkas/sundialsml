@@ -6,7 +6,8 @@ EXAMPLES = cvAdvDiff_bnd.ml \
 	   cvDirectDemo_ls.ml \
 	   cvDiurnal_kry.ml \
 	   cvDiurnal_kry_bp.ml \
-	   cvKrylovDemo_ls.ml
+	   cvKrylovDemo_ls.ml \
+	   cvKrylovDemo_prec.ml
 
 LAPACK_EXAMPLES = cvAdvDiff_bndL.ml \
 	   	  cvRoberts_dnsL.ml
@@ -45,6 +46,9 @@ cvDiurnal_kry_bp.opt:  cvDiurnal_kry_bp.ml
 
 cvKrylovDemo_ls.byte: cvKrylovDemo_ls.ml
 cvKrylovDemo_ls.opt:  cvKrylovDemo_ls.ml
+
+cvKrylovDemo_prec.byte: cvKrylovDemo_prec.ml
+cvKrylovDemo_prec.opt:  cvKrylovDemo_prec.ml
 
 clean:
 	-rm -f $(ALL_EXAMPLES:.ml=.cmo) $(ALL_EXAMPLES:.ml=.cmx)

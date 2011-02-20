@@ -43,8 +43,9 @@ module Cvode  = Cvode.Serial
 module Carray = Cvode.Carray
 module Roots  = Cvode.Roots
 module Dls    = Cvode.Dls
-module Direct = Cvode.Densematrix.Direct
+module Densemat = Cvode.Densematrix.Direct
 module Spils  = Cvode.Spils
+open Bigarray
 
 let printf = Printf.printf
 
@@ -119,17 +120,17 @@ type linear_solver =  UseSpgmr | UseSpbcg | UseSptfqmr
 let ijkth v i j k       = v.{i - 1 + j * num_species + k * nsmx}
 let set_ijkth v i j k e = v.{i - 1 + j * num_species + k * nsmx} <- e
 let slice_ijkth v i j k =
-  Bigarray.Array1.sub v (i - 1 + j * num_species + k * nsmx) num_species
+  Array1.sub v (i - 1 + j * num_species + k * nsmx) num_species
 
-let ijth v i j       = Direct.get v (j - 1, i - 1)
-let set_ijth v i j e = Direct.set v (j - 1, i - 1) e
+let ijth v i j       = Densemat.get v (j - 1, i - 1)
+let set_ijth v i j e = Densemat.set v (j - 1, i - 1) e
 
 (* Type : UserData 
    contains preconditioner blocks, pivot arrays, and problem constants *)
 
 type user_data = {
-        p               : Direct.t array array;
-        jbd             : Direct.t array array;
+        p               : Densemat.t array array;
+        jbd             : Densemat.t array array;
         pivot           : Cvode.int_array array array;
         mutable q4      : float;
         mutable om      : float;
@@ -151,7 +152,7 @@ let sqr x = x ** 2.0
 (* Allocate memory for data structure of type UserData *)
 
 let alloc_user_data () =
-  let new_dmat _ = Direct.new_dense_mat (num_species, num_species) in
+  let new_dmat _ = Densemat.new_dense_mat (num_species, num_species) in
   let new_int1 _  = Cvode.new_int_array num_species in
   let new_y_arr elinit _ = Array.init my elinit in
   let new_xy_arr elinit  = Array.init mx (new_y_arr elinit) in
@@ -354,7 +355,8 @@ let precond data jacarg jok gamma =
       (* jok = TRUE: Copy Jbd to P *)
       for jy = 0 to my - 1 do
         for jx = 0 to mx - 1 do
-          Direct.dense_copy jbd.(jx).(jy) p.(jx).(jy) (num_species, num_species)
+          Densemat.copy
+            jbd.(jx).(jy) p.(jx).(jy) (num_species, num_species)
         done
       done;
       false
@@ -388,7 +390,7 @@ let precond data jacarg jok gamma =
           set_ijth j 1 2 (-. q2 *. c1 +. q4coef);
           set_ijth j 2 1 (q1 *. c3 -. q2 *. c2);
           set_ijth j 2 2 ((-. q2 *. c1 -. q4coef) +. diag);
-          Direct.dense_copy j a (num_species, num_species)
+          Densemat.copy j a (num_species, num_species)
         done
       done;
       true
@@ -398,15 +400,16 @@ let precond data jacarg jok gamma =
   (* Scale by -gamma *)
   for jy = 0 to my - 1 do
     for jx = 0 to mx - 1 do
-      Direct.dense_scale (-. gamma) p.(jx).(jy) (num_species, num_species)
+      Densemat.scale (-. gamma) p.(jx).(jy) (num_species, num_species)
     done
   done;
   
   (* Add identity matrix and do LU decompositions on blocks in place. *)
   for jx = 0 to mx - 1 do
     for jy = 0 to my - 1 do
-      Direct.dense_add_identity p.(jx).(jy) num_species;
-      Direct.dense_getrf p.(jx).(jy) (num_species, num_species) pivot.(jx).(jy)
+      Densemat.add_identity p.(jx).(jy) num_species;
+      Densemat.getrf
+        p.(jx).(jy) (num_species, num_species) pivot.(jx).(jy)
     done
   done;
   r
@@ -423,13 +426,13 @@ let psolve data jac_arg solve_arg zdata =
   and pivot = data.pivot
   in
 
-  Bigarray.Array1.blit r zdata;
+  Array1.blit r zdata;
   
   (* Solve the block-diagonal system Px = r using LU factors stored
      in P and pivot data in pivot, and return the solution in z. *)
   for jx = 0 to mx - 1 do
     for jy = 0 to my - 1 do
-      Direct.dense_getrs p.(jx).(jy) num_species pivot.(jx).(jy)
+      Densemat.getrs p.(jx).(jy) num_species pivot.(jx).(jy)
                          (slice_ijkth zdata 1 jx jy)
     done
   done

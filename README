@@ -206,3 +206,10 @@ Notes on Callback functions
   For serial NVectors, for example, NV_DATA_S is called on each NVector
   before passing them to the callback (as bigarrays).
 
+TODO:
+    List Densematrix, Densematrix.Direct,
+	 Bandmatrix, Bandmatrix.Direct functions
+
+TODO:
+    Explain mapping of arguments (original <-> ml version) in callback functions
+

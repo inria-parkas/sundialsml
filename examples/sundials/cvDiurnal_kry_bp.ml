@@ -40,6 +40,7 @@ module Dls    = Cvode.Dls
 module Direct = Cvode.Densematrix.Direct
 module Spils  = Cvode.Spils
 module BandPrec = Cvode.BandPrec 
+open Bigarray
 
 let printf = Printf.printf
 
@@ -110,7 +111,7 @@ let neq      = (num_species * mm) (* neq = number of equations *)
 let ijkth v i j k       = v.{i - 1 + j * num_species + k * nsmx}
 let set_ijkth v i j k e = v.{i - 1 + j * num_species + k * nsmx} <- e
 let slice_ijkth v i j k =
-  Bigarray.Array1.sub v (i - 1 + j * num_species + k * nsmx) num_species
+  Array1.sub v (i - 1 + j * num_species + k * nsmx) num_species
 
 let ijth v i j       = Direct.get v (j - 1, i - 1)
 let set_ijth v i j e = Direct.set v (j - 1, i - 1) e

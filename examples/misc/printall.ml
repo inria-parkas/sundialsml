@@ -49,5 +49,3 @@ let _ =
     done
   with Done -> ()
 
-let _ = Cvode.free s
-
