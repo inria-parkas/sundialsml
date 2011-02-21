@@ -47,7 +47,9 @@ cvDiurnal_kry_bp.opt:  cvDiurnal_kry_bp.ml
 cvKrylovDemo_ls.byte: cvKrylovDemo_ls.ml
 cvKrylovDemo_ls.opt:  cvKrylovDemo_ls.ml
 
+cvKrylovDemo_prec.byte: EXTRA_LIBS = ../../nvector.cma ../../nvector_array.cma
 cvKrylovDemo_prec.byte: cvKrylovDemo_prec.ml
+cvKrylovDemo_prec.opt: EXTRA_LIBS = ../../nvector.cma ../../nvector_array.cma
 cvKrylovDemo_prec.opt:  cvKrylovDemo_prec.ml
 
 clean:
@@ -63,9 +65,11 @@ cleanall: clean
 
 .ml.byte:
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
-	    $(INCLUDES) -I ../../ bigarray.cma unix.cma ../../cvode.cma $<
+	    $(INCLUDES) -I ../../ bigarray.cma unix.cma \
+	    ../../cvode.cma $(EXTRA_LIBS) $<
 
 .ml.opt:
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
-	    $(INCLUDES) -I ../../ bigarray.cmxa unix.cmxa ../../cvode.cmxa $<
+	    $(INCLUDES) -I ../../ bigarray.cmxa unix.cmxa \
+	    ../../cvode.cmxa $(EXTRA_LIBS) $<
 
