@@ -100,7 +100,6 @@ open Bigarray
 
 let printf = Printf.printf
 let array_ops = Nvector_array.Bigarray.array_nvec_ops
-let slice arr off n = Array1.sub arr off n
 let sqr x = x ** 2.0
 
 (* Constants *)
@@ -120,7 +119,7 @@ let alph   = one
 let np     = 3
 let ns     = (2 * np)
 
-let (++) arr off = slice arr off ns
+let (+>+) arr off = Array1.sub arr off ns
 
 (* Method Constants *)
 
@@ -164,7 +163,6 @@ let nout       = 18
 
 (* Structure for user data *)
 
-(* TODO: use float array instead of Cvode.real_array where possible *)
 type web_data = {
     p         : Densemat.t array;
     pivot     : Cvode.int_array array;
@@ -188,12 +186,12 @@ type web_data = {
     jxr       : int array;
     jyr       : int array;
 
-    acoef     : Cvode.real_array2;
-    bcoef     : Cvode.real_array;
-    diff      : Cvode.real_array;
+    acoef     : float array array;
+    bcoef     : float array;
+    diff      : float array;
 
-    cox       : Cvode.real_array;
-    coy       : Cvode.real_array;
+    cox       : float array;
+    coy       : float array;
 
     dx        : float;
     dy        : float;
@@ -219,10 +217,10 @@ let web_rates wdata x y t c rate =
   in
   Array1.fill rate zero;
   Carray.appi
-    (fun j c -> Carray.mapi (fun i rate -> rate +. c *. acoef.{i, j}) rate) c;
+    (fun j c -> Carray.mapi (fun i rate -> rate +. c *. acoef.(i).(j)) rate) c;
   
   let fac = one +. alph *. x *. y in
-  Carray.mapi (fun i rate -> c.{i} *. (bcoef.{i} *. fac +. rate)) rate
+  Carray.mapi (fun i rate -> c.{i} *. (bcoef.(i) *. fac +. rate)) rate
 
 (*
   This routine computes one block of the interaction terms of the
@@ -235,7 +233,7 @@ let fblock wdata t cdata jx jy cdotdata =
   and x = float jx *. wdata.dx
   in
   let ic = wdata.ns * iblok in
-  web_rates wdata x y t (slice cdata ic ns) cdotdata
+  web_rates wdata x y t (cdata +>+ ic) cdotdata
 
 (* Small Vector Kernels *)
 
@@ -319,11 +317,10 @@ let precond wdata jacarg jok gamma =
   (* Add identity matrix and do LU decompositions on blocks. *)
   let f ig p_ig =
     Densemat.add_identity p_ig mp;
-    if (Densemat.getrf p_ig (mp, mp) pivot.(ig) <> 0) then raise Exit
+    Densemat.getrf p_ig (mp, mp) pivot.(ig)
   in
-  try
-    Array.iteri f p; true
-  with Exit -> false
+  Array.iteri f p;
+  true
 
 let v_inc_by_prod u v w =
     Carray.mapi (fun i ui -> ui +. v.(i) *. w.{i}) u
@@ -362,10 +359,10 @@ let gs_iter wdata gamma zd xd =
      Load local arrays beta, beta2, gam, gam2, and cof1. *)
   
   for i = 0 to ns - 1 do
-    let temp = one /. (one +. 2.0 *. gamma *. (cox.{i} +. coy.{i})) in
-    beta.(i)  <- gamma *. cox.{i} *. temp;
+    let temp = one /. (one +. 2.0 *. gamma *. (cox.(i) +. coy.(i))) in
+    beta.(i)  <- gamma *. cox.(i) *. temp;
     beta2.(i) <- 2.0 *. beta.(i);
-    gam.(i)   <- gamma *. coy.{i} *. temp;
+    gam.(i)   <- gamma *. coy.(i) *. temp;
     gam2.(i)  <- 2.0 *. gam.(i);
     cof1.(i)  <- temp
   done;
@@ -376,7 +373,7 @@ let gs_iter wdata gamma zd xd =
     let iyoff = mxns * jy in
     for jx = 0 to mx - 1 do
       let ic = iyoff + ns*jx in
-      v_prod (xd ++ ic) cof1 (zd ++ ic) (* x[ic+i] = cof1[i]z[ic+i] *)
+      v_prod (xd +>+ ic) cof1 (zd +>+ ic) (* x[ic+i] = cof1[i]z[ic+i] *)
     done
   done;
   Array1.fill zd zero;
@@ -401,50 +398,50 @@ let gs_iter wdata gamma zd xd =
             (* jx == 0, jy == 0 *)
             (* x[ic+i] = beta2[i]x[ic+ns+i] + gam2[i]x[ic+mxns+i] *)
             v_sum_prods
-                (xd ++ ic) beta2 (xd ++ (ic + ns)) gam2 (xd ++ (ic + mxns))
+                (xd +>+ ic) beta2 (xd +>+ (ic + ns)) gam2 (xd +>+ (ic + mxns))
 
           | 1 ->
             (* 1 <= jx <= mx-2, jy == 0 *)
             (* x[ic+i] = beta[i]x[ic+ns+i] + gam2[i]x[ic+mxns+i] *)
             v_sum_prods
-                (xd ++ ic) beta (xd ++ (ic + ns)) gam2 (xd ++ (ic + mxns))
+                (xd +>+ ic) beta (xd +>+ (ic + ns)) gam2 (xd +>+ (ic + mxns))
 
           | 2 ->
             (* jx == mx-1, jy == 0 *)
             (* x[ic+i] = gam2[i]x[ic+mxns+i] *)
-            v_prod (xd ++ ic) gam2 (xd ++ (ic + mxns))
+            v_prod (xd +>+ ic) gam2 (xd +>+ (ic + mxns))
 
           | 3 ->
             (* jx == 0, 1 <= jy <= my-2 *)
             (* x[ic+i] = beta2[i]x[ic+ns+i] + gam[i]x[ic+mxns+i] *)
             v_sum_prods
-                (xd ++ ic) beta2 (xd ++ (ic + ns)) gam (xd ++ (ic + mxns))
+                (xd +>+ ic) beta2 (xd +>+ (ic + ns)) gam (xd +>+ (ic + mxns))
 
           | 4 ->
             (* 1 <= jx <= mx-2, 1 <= jy <= my-2 *)
             (* x[ic+i] = beta[i]x[ic+ns+i] + gam[i]x[ic+mxns+i] *)
             v_sum_prods
-                (xd ++ ic) beta (xd ++ (ic + ns)) gam (xd ++ (ic + mxns))
+                (xd +>+ ic) beta (xd +>+ (ic + ns)) gam (xd +>+ (ic + mxns))
 
           | 5 ->
             (* jx == mx-1, 1 <= jy <= my-2 *)
             (* x[ic+i] = gam[i]x[ic+mxns+i] *)
-            v_prod (xd ++ ic) gam (xd ++ (ic + mxns))
+            v_prod (xd +>+ ic) gam (xd +>+ (ic + mxns))
 
           | 6 ->
             (* jx == 0, jy == my-1 *)
             (* x[ic+i] = beta2[i]x[ic+ns+i] *)
-            v_prod (xd ++ ic) beta2 (xd ++ (ic + ns))
+            v_prod (xd +>+ ic) beta2 (xd +>+ (ic + ns))
 
           | 7 ->
             (* 1 <= jx <= mx-2, jy == my-1 *)
             (* x[ic+i] = beta[i]x[ic+ns+i] *)
-            v_prod (xd ++ ic) beta (xd ++ (ic + ns))
+            v_prod (xd +>+ ic) beta (xd +>+ (ic + ns))
 
           | 8 ->
             (* jx == mx-1, jy == my-1 *)
             (* x[ic+i] = 0.0 *)
-            v_zero (xd ++ ic)
+            v_zero (xd +>+ ic)
 
           | _ -> assert false
         done
@@ -467,46 +464,46 @@ let gs_iter wdata gamma zd xd =
         | 1 ->
           (* 1 <= jx <= mx-2, jy == 0 *)
           (* x[ic+i] += beta[i]x[ic-ns+i] *)
-          v_inc_by_prod (xd ++ ic) beta (xd ++ (ic - ns))
+          v_inc_by_prod (xd +>+ ic) beta (xd +>+ (ic - ns))
 
         | 2 ->
           (* jx == mx-1, jy == 0 *)
           (* x[ic+i] += beta2[i]x[ic-ns+i] *)
-          v_inc_by_prod (xd ++ ic) beta2 (xd ++ (ic - ns))
+          v_inc_by_prod (xd +>+ ic) beta2 (xd +>+ (ic - ns))
 
         | 3 ->
           (* jx == 0, 1 <= jy <= my-2 *)
           (* x[ic+i] += gam[i]x[ic-mxns+i] *)
-          v_inc_by_prod (xd ++ ic) gam (xd ++ (ic - mxns))
+          v_inc_by_prod (xd +>+ ic) gam (xd +>+ (ic - mxns))
 
         | 4 ->
           (* 1 <= jx <= mx-2, 1 <= jy <= my-2 *)
           (* x[ic+i] += beta[i]x[ic-ns+i] + gam[i]x[ic-mxns+i] *)
-          v_inc_by_prod (xd ++ ic) beta (xd ++ (ic - ns));
-          v_inc_by_prod (xd ++ ic) gam (xd ++ (ic - mxns))
+          v_inc_by_prod (xd +>+ ic) beta (xd +>+ (ic - ns));
+          v_inc_by_prod (xd +>+ ic) gam (xd +>+ (ic - mxns))
 
         | 5 ->
           (* jx == mx-1, 1 <= jy <= my-2 *)
           (* x[ic+i] += beta2[i]x[ic-ns+i] + gam[i]x[ic-mxns+i] *)
-          v_inc_by_prod (xd ++ ic) beta2 (xd ++ (ic - ns));
-          v_inc_by_prod (xd ++ ic) gam (xd ++ (ic - mxns))
+          v_inc_by_prod (xd +>+ ic) beta2 (xd +>+ (ic - ns));
+          v_inc_by_prod (xd +>+ ic) gam (xd +>+ (ic - mxns))
 
         | 6 ->
           (* jx == 0, jy == my-1 *)
           (* x[ic+i] += gam2[i]x[ic-mxns+i] *)
-          v_inc_by_prod (xd ++ ic) gam2 (xd ++ (ic - mxns))
+          v_inc_by_prod (xd +>+ ic) gam2 (xd +>+ (ic - mxns))
 
         | 7 ->
           (* 1 <= jx <= mx-2, jy == my-1 *)
           (* x[ic+i] += beta[i]x[ic-ns+i] + gam2[i]x[ic-mxns+i] *)
-          v_inc_by_prod (xd ++ ic) beta (xd ++ (ic - ns));
-          v_inc_by_prod (xd ++ ic) gam2 (xd ++ (ic - mxns))
+          v_inc_by_prod (xd +>+ ic) beta (xd +>+ (ic - ns));
+          v_inc_by_prod (xd +>+ ic) gam2 (xd +>+ (ic - mxns))
 
         | 8 ->
           (* jx == mx-1, jy == my-1 *)
           (* x[ic+i] += beta2[i]x[ic-ns+i] + gam2[i]x[ic-mxns+i] *)
-          v_inc_by_prod (xd ++ ic) beta2 (xd ++ (ic - ns));
-          v_inc_by_prod (xd ++ ic) gam2 (xd ++ (ic - mxns))
+          v_inc_by_prod (xd +>+ ic) beta2 (xd +>+ (ic - ns));
+          v_inc_by_prod (xd +>+ ic) gam2 (xd +>+ (ic - mxns))
 
         | _ -> assert false
       done
@@ -552,7 +549,7 @@ let psolve wdata jac_arg solve_arg z =
     for jx = 0 to mx - 1 do
       let igx = jigx.(jx) in
       let ig = igx + igy * ngx in
-      Densemat.getrs p.(ig) mp pivot.(ig) (slice z !iv ns);
+      Densemat.getrs p.(ig) mp pivot.(ig) (z +>+ !iv);
       iv := !iv + mp
     done
   done
@@ -586,7 +583,7 @@ let f wdata t cdata cdotdata =
       let x = float jx *. dx in
       let ic = iyoff + ns * jx in
       (* Get interaction rates at one point (x,y). *)
-      web_rates wdata x y t (cdata ++ ic) (fsave ++ ic);
+      web_rates wdata x y t (cdata +>+ ic) (fsave +>+ ic);
       let idxu = if jx = mx - 1 then -ns else ns in
       let idxl = if jx = 0      then -ns else ns in
       for i = 1 to ns do
@@ -598,8 +595,8 @@ let f wdata t cdata cdotdata =
         let dcxli = cdata.{ici} -. cdata.{ici - idxl} in
         let dcxui = cdata.{ici + idxu} -. cdata.{ici} in
         (* Collect terms and load cdot elements. *)
-        cdotdata.{ici} <- coy.{i - 1} *. (dcyui -. dcyli)
-                          +. cox.{i - 1} *. (dcxui -. dcxli)
+        cdotdata.{ici} <- coy.(i - 1) *. (dcyui -. dcyli)
+                          +. cox.(i - 1) *. (dcxui -. dcxli)
                           +. fsave.{ici}
       done
     done
@@ -641,6 +638,7 @@ let set_groups m ng jg jig jr =
   jr.(ngm1) <- (ngm1 * mper + m - 1) / 2
 
 let alloc_user_data () =
+  let r =
     {
       p         = Array.init ngrp (fun _ -> Densemat.new_dense_mat (ns, ns));
       pivot     = Array.init ngrp (fun _ -> Cvode.new_int_array ns);
@@ -664,12 +662,12 @@ let alloc_user_data () =
       jxr       = Array.make ngx 0;
       jyr       = Array.make ngy 0;
 
-      acoef     = Cvode.new_real_array2 ns ns;
-      bcoef     = Cvode.new_real_array ns;
-      diff      = Cvode.new_real_array ns;
+      acoef     = Array.make_matrix ns ns 0.0;
+      bcoef     = Array.make ns 0.0;
+      diff      = Array.make ns 0.0;
 
-      cox       = Cvode.new_real_array ns;
-      coy       = Cvode.new_real_array ns;
+      cox       = Array.make ns 0.0;
+      coy       = Array.make ns 0.0;
 
       dx        = dx;
       dy        = dy;
@@ -681,34 +679,34 @@ let alloc_user_data () =
 
       cvode_mem = None;
     }
-
-let init_user_data wdata =
-  let acoef = wdata.acoef
-  and bcoef = wdata.bcoef
-  and diff  = wdata.diff
-  and cox   = wdata.cox
-  and coy   = wdata.coy
   in
-  Array2.fill acoef 0.0;
-
+  let acoef = r.acoef
+  and bcoef = r.bcoef
+  and diff  = r.diff
+  and cox   = r.cox
+  and coy   = r.coy
+  in
   for j = 0 to np - 1 do
     for i = 0 to np - 1 do
-      acoef.{np + i, j} <- ee;
-      acoef.{i, np + j} <- -. gg
+      acoef.(np + i).(j) <- ee;
+      acoef.(i).(np + j) <- -. gg
     done;
-    acoef.{j, j}           <- -. aa;
-    acoef.{np + j, np + j} <- -. aa;
-    bcoef.{j}              <- bb;
-    bcoef.{np + j}         <- -. bb;
-    diff.{j}               <- dprey;
-    diff.{np + j}          <- dpred
+    acoef.(j).(j)           <- -. aa;
+    acoef.(np + j).(np + j) <- -. aa;
+    bcoef.(j)              <- bb;
+    bcoef.(np + j)         <- -. bb;
+    diff.(j)               <- dprey;
+    diff.(np + j)          <- dpred
   done;
 
   for i = 0 to ns - 1 do
-    cox.{i} <- diff.{i} /. sqr dx;
-    coy.{i} <- diff.{i} /. sqr dy
+    cox.(i) <- diff.(i) /. sqr dx;
+    coy.(i) <- diff.(i) /. sqr dy
   done;
 
+  r
+
+let init_user_data wdata =
   set_groups mx ngx wdata.jgx wdata.jigx wdata.jxr;
   set_groups my ngy wdata.jgy wdata.jigy wdata.jyr
 
