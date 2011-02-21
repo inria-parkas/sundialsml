@@ -54,7 +54,7 @@ depend:
 
 clean:
 	-rm -f $(MLOBJ) $(MLOBJ:.cmo=.cmx)
-	-rm -f $(COBJ)
+	-rm -f $(COBJ) cvode.annot
 	-rm -f cvode.o nvector.o nvector_array.o
 
 cleanall: clean

@@ -4,8 +4,6 @@
  *
  */
 
-#include <string.h> /* memcpy */
-
 #include <cvode/cvode.h>
 #include <sundials/sundials_config.h>
 #include <sundials/sundials_types.h>
@@ -427,7 +425,7 @@ CAMLprim value c_set_maxl(value vcvode_mem, value maxl)
 
 /* Dense matrix functions */
 
-#define DLSMAT(v) (DlsMat)Data_custom_val(v)
+#define DLSMAT(v) (*(DlsMat *)Data_custom_val(v))
 
 static void finalize_dlsmat(value va)
 {
@@ -437,7 +435,7 @@ static void finalize_dlsmat(value va)
 CAMLprim value c_densematrix_new_dense_mat(value vmn)
 {
     CAMLparam1(vmn);
-    CAMLlocal1(r);
+    CAMLlocal1(vr);
 
     int m = Int_val(Field(vmn, 0));
     int n = Int_val(Field(vmn, 1));
@@ -445,11 +443,12 @@ CAMLprim value c_densematrix_new_dense_mat(value vmn)
     DlsMat a = NewDenseMat(m, n);
     mlsize_t approx_size = m * n * sizeof(realtype);
 
-    r = caml_alloc_final(sizeof(DlsMat), &finalize_dlsmat,
+    vr = caml_alloc_final(sizeof(DlsMat), &finalize_dlsmat,
 			 approx_size, approx_size * 20);
+    DlsMat *r = (DlsMat *)Data_custom_val(vr);
+    *r = a;
 
-    memcpy(DLSMAT(r), a, sizeof(a));
-    CAMLreturn(r);
+    CAMLreturn(vr);
 }
 
 CAMLprim value c_densematrix_print_mat(value va)
@@ -543,7 +542,7 @@ CAMLprim value c_densematrix_ormqr(value va, value vormqr)
 CAMLprim value c_densematrix_get(value vmatrix, value vij)
 {
     CAMLparam2(vmatrix, vij);
-    DlsMat m = (DlsMat)Field(vmatrix, 0);
+    DlsMat m = DLSMAT(vmatrix);
 
     int i = Int_val(Field(vij, 0));
     int j = Int_val(Field(vij, 1));
@@ -559,8 +558,8 @@ CAMLprim value c_densematrix_get(value vmatrix, value vij)
 
 CAMLprim value c_densematrix_set(value vmatrix, value vij, value v)
 {
-    CAMLparam2(vmatrix, vij);
-    DlsMat m = (DlsMat)Field(vmatrix, 0);
+    CAMLparam3(vmatrix, vij, v);
+    DlsMat m = DLSMAT(vmatrix);
 
     int i = Int_val(Field(vij, 0));
     int j = Int_val(Field(vij, 1));
@@ -725,7 +724,7 @@ CAMLprim value c_densematrix_direct_ormqr(value va, value vmn, value vormqr)
 CAMLprim value c_bandmatrix_new_band_mat(value vsizes)
 {
     CAMLparam1(vsizes);
-    CAMLlocal1(r);
+    CAMLlocal1(vr);
 
     int n   = Int_val(Field(vsizes, 0));
     int mu  = Int_val(Field(vsizes, 1));
@@ -735,11 +734,12 @@ CAMLprim value c_bandmatrix_new_band_mat(value vsizes)
     DlsMat va = NewBandMat(n, mu, ml, smu);
     mlsize_t approx_size = n * (smu + ml + 2) * sizeof(realtype);
 
-    r = caml_alloc_final(sizeof(DlsMat), &finalize_dlsmat,
+    vr = caml_alloc_final(sizeof(DlsMat), &finalize_dlsmat,
 			 approx_size, approx_size * 20);
+    DlsMat *r = (DlsMat *)Data_custom_val(vr);
+    *r = va;
 
-    memcpy(DLSMAT(r), va, sizeof(va));
-    CAMLreturn(r);
+    CAMLreturn(vr);
 }
 
 CAMLprim value c_bandmatrix_copy(value va, value vb,
@@ -774,7 +774,7 @@ CAMLprim value c_bandmatrix_gbtrs(value va, value vp, value vb)
 CAMLprim value c_bandmatrix_get(value vmatrix, value vij)
 {
     CAMLparam2(vmatrix, vij);
-    DlsMat m = (DlsMat)Field(vmatrix, 0);
+    DlsMat m = DLSMAT(vmatrix);
 
     int i = Int_val(Field(vij, 0));
     int j = Int_val(Field(vij, 1));
@@ -790,8 +790,8 @@ CAMLprim value c_bandmatrix_get(value vmatrix, value vij)
 
 CAMLprim value c_bandmatrix_set(value vmatrix, value vij, value v)
 {
-    CAMLparam2(vmatrix, vij);
-    DlsMat m = (DlsMat)Field(vmatrix, 0);
+    CAMLparam3(vmatrix, vij, v);
+    DlsMat m = DLSMAT(vmatrix);
 
     int i = Int_val(Field(vij, 0));
     int j = Int_val(Field(vij, 1));
@@ -810,7 +810,7 @@ CAMLprim value c_bandmatrix_col_get_col(value vmatrix, value vj)
     CAMLparam2(vmatrix, vj);
     CAMLlocal1(r);
 
-    DlsMat m = (DlsMat)Field(vmatrix, 0);
+    DlsMat m = DLSMAT(vmatrix);
 
     int j = Int_val(vj);
 

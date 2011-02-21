@@ -215,8 +215,8 @@ static int jacfn(
 
     arg = make_jac_arg(t, y, fy, make_triple_tmp(tmp1, tmp2, tmp3));
 
-    matrix = caml_alloc(1, Abstract_tag);
-    Store_field(matrix, 0, (value)Jac);
+    matrix = caml_alloc_final(sizeof(DlsMat), NULL, 0, 0);
+    *((DlsMat *)Data_custom_val(matrix)) = Jac;
 
     r = caml_callback2_exn(*(data->closure_jacfn), arg, matrix);
     relinquish_jac_arg(arg, 1);
@@ -247,13 +247,13 @@ static int bandjacfn(
     args[0] = Val_int(mupper);
     args[1] = Val_int(mlower);
     args[2] = make_jac_arg(t, y, fy, make_triple_tmp(tmp1, tmp2, tmp3));
-    args[3] = caml_alloc(1, Abstract_tag);
-    Store_field(args[3], 0, (value)Jac);
+    args[3] = caml_alloc_final(sizeof(DlsMat), NULL, 0, 0);
+    *((DlsMat *)Data_custom_val(args[3])) = Jac;
 
     r = caml_callbackN_exn(*(data->closure_bandjacfn), 4, args);
 
     relinquish_jac_arg(args[2], 1);
-    // note: matrix is also invalid after the callback
+    // note: args[3] is also invalid after the callback
 
     CAMLreturn(check_exception(r));
 }
