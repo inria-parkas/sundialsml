@@ -34,7 +34,7 @@ module Cvode = Cvode.Serial
 module Carray = Cvode.Carray
 module Roots = Cvode.Roots
 module Dls = Cvode.Dls
-module Col = Cvode.Bandmatrix.Col (* XXX *)
+module Col = Cvode.Bandmatrix.Col
 
 let printf = Printf.printf
 
@@ -146,6 +146,7 @@ let jac data arg mlower mupper jmat =
       let kthCol = Col.get_col jmat k in
 
       (* set the kth column of jmat *)
+      Col.set kthCol k k (-. two *. (verdc +. hordc));
       if (i <> 1)  then Col.set kthCol (k - my) k (hordc +. horac);
       if (i <> mx) then Col.set kthCol (k + my) k (hordc -. horac);
       if (j <> 1)  then Col.set kthCol (k - 1)  k verdc;
@@ -198,7 +199,7 @@ let print_final_stats s =
   printf "\nFinal Statistics:\n";
   printf "nst = %-6d nfe  = %-6d nsetups = %-6d nfeLS = %-6d nje = %d\n"
   nst nfe nsetups nfeLS nje;
-  printf "nni = %-6d ncfn = %-6d netf = %-6d\n \n"
+  printf "nni = %-6d ncfn = %-6d netf = %d\n \n"
   nni ncfn netf
 
 let main () =
