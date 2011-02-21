@@ -12,6 +12,9 @@ module type GENERIC =
     val extra_time_precision : bool ref
     val print_time : string * string -> float -> unit
 
+    val format_float : string -> float -> string
+    val afloat : float -> string
+
     val big_real : float
     val unit_roundoff : float
 
@@ -283,6 +286,11 @@ module Generic =
       if !extra_time_precision
       then Printf.printf "%s%.15e%s" s1 t s2
       else Printf.printf "%s%e%s" s1 t s2
+
+    external format_float : string -> float -> string
+        = "caml_format_float"
+
+    let afloat = format_float "%a"
 
     external get_big_real : unit -> float
         = "ml_cvode_big_real"

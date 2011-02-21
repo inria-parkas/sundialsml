@@ -6,6 +6,9 @@ module type GENERIC =
     val extra_time_precision : bool ref
     val print_time : string * string -> float -> unit
 
+    val format_float : string -> float -> string
+    val afloat : float -> string
+
     val big_real : float
     val unit_roundoff : float
 
