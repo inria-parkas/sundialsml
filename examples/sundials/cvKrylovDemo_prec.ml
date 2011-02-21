@@ -259,9 +259,10 @@ let precond wdata jacarg jok gamma =
   let { Cvode.jac_t   = t;
         Cvode.jac_y   = cdata;
         Cvode.jac_fy  = fc;
-        Cvode.jac_tmp = (f1, _, _)
+        Cvode.jac_tmp = (vtemp1, _, _)
       } = jacarg
   in
+  let f1 = vtemp1 +>+ 0 in (* shorten to ns *)
   let cvode_mem =
     match wdata.cvode_mem with
     | Some c -> c | None -> assert false
@@ -281,7 +282,6 @@ let precond wdata jacarg jok gamma =
   and mxmp   = wdata.mxmp
   and fsave  = wdata.fsave
   in
-  
   (* Make mp calls to fblock to approximate each diagonal block of Jacobian.
      Here, fsave contains the base value of the rate vector and 
      r0 is a minimum increment factor for the difference quotient. *)
@@ -558,7 +558,6 @@ let psolve wdata jac_arg solve_arg z =
 
 (* Implementation *)
 
-(* XXX *)
 (*
  This routine computes the right-hand side of the ODE system and
  returns it in cdot. The interaction rates are computed by calls to WebRates,
