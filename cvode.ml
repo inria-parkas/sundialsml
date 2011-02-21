@@ -13,7 +13,7 @@ module type GENERIC =
     val print_time : string * string -> float -> unit
 
     val format_float : string -> float -> string
-    val afloat : float -> string
+    val floata : float -> string
 
     val big_real : float
     val unit_roundoff : float
@@ -290,7 +290,7 @@ module Generic =
     external format_float : string -> float -> string
         = "caml_format_float"
 
-    let afloat = format_float "%a"
+    let floata = format_float "%a"
 
     external get_big_real : unit -> float
         = "ml_cvode_big_real"

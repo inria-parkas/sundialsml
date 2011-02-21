@@ -7,7 +7,7 @@ module type GENERIC =
     val print_time : string * string -> float -> unit
 
     val format_float : string -> float -> string
-    val afloat : float -> string
+    val floata : float -> string
 
     val big_real : float
     val unit_roundoff : float
