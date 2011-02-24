@@ -14,6 +14,10 @@
 include Cvode
 
 type 'a nvector = 'a Nvector.nvector
+
+type root_array = Sundials.Roots.t
+type root_val_array = Sundials.Roots.val_array
+
 type 'a session
 
 (* interface *)

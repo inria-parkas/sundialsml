@@ -6,8 +6,8 @@ nvector_array.cmi: nvector.cmi
 sundials.cmi:
 cvode.cmo: sundials.cmi cvode.cmi
 cvode.cmx: sundials.cmx cvode.cmi
-cvode_nvector.cmo: nvector.cmi cvode.cmi cvode_nvector.cmi
-cvode_nvector.cmx: nvector.cmx cvode.cmx cvode_nvector.cmi
+cvode_nvector.cmo: sundials.cmi nvector.cmi cvode.cmi cvode_nvector.cmi
+cvode_nvector.cmx: sundials.cmx nvector.cmx cvode.cmx cvode_nvector.cmi
 cvode_serial.cmo: sundials.cmi cvode.cmi cvode_serial.cmi
 cvode_serial.cmx: sundials.cmx cvode.cmx cvode_serial.cmi
 nvector.cmo: nvector.cmi
