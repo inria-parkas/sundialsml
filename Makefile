@@ -48,7 +48,7 @@ cvode_nvector.mli: cvode_serial.mli
 	-e "s/\([ (]\)triple_tmp\([ )]\|\$\)/\1'a triple_tmp\2/g"	\
 	-e "s/^\(type 'a nvector = \).*/\1'a Nvector.nvector/"		\
 	-e "/(\*ENDINTRO\*)/r cvode_nvector.doc"			\
-	-e "/^(\*\* CVODE/,/(\*ENDINTRO\*)/d"				\
+	-e "/^(\*STARTINTRO\*)/,/(\*ENDINTRO\*)/d"				\
 	$< > $@
 
 cvode.o: cvode_ml.c
@@ -67,7 +67,7 @@ doc/html/index.html: $(MLOBJ:.cmo=.mli) $(MLOBJ:.cmo=.cmi) intro.doc
 	$(OCAMLDOC) -html		\
 	    -pp "$(DOCPP)"		\
 	    -d ./doc/html/		\
-	    -t "Sundials (CVODE)"	\
+	    -t "Sundials (-CVODE)"	\
 	    -intro intro.doc		\
 	    $(MLOBJ:.cmo=.mli)
 

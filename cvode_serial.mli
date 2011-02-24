@@ -11,12 +11,14 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(** CVODE interface for serial NVectors
+(*STARTINTRO*)
+(** Serial nvector interface to the CVODE solver.
 
  @version VERSION()
  @author Timothy Bourke (INRIA)
  @author Marc Pouzet (LIENS)
- *) (*ENDINTRO*)
+ *)
+(*ENDINTRO*)
 
 include module type of Cvode
 

@@ -1,4 +1,4 @@
-(** CVODE interface for abstract NVectors
+(** Abstract nvector interface to the CVODE Solver
 
  @version VERSION()
  @author Timothy Bourke (INRIA)
