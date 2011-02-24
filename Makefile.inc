@@ -9,23 +9,47 @@ AR = ar
 
 OCAMLC = $(OCAML_BIN)ocamlc.opt
 OCAMLFLAGS =
-OCAML_INCLUDE=`${OCAMLC} -where`
+OCAML_INCLUDE := $(shell $(OCAMLC) -where)
 OCAML_LIBLINK=
+
+PKGDIR = $(OCAML_INCLUDE)/sundials
 
 OCAMLOPT = $(OCAML_BIN)ocamlopt.opt
 OCAMLOPTFLAGS =
 
 OCAMLDEP = $(OCAML_BIN)ocamldep
 
+OCAMLMKLIB = $(OCAML_BIN)ocamlmklib -ocamlc "$(OCAMLC)" -ocamlopt "$(OCAMLOPT)"
+OCAMLMKLIBFLAGS = -verbose
+
 GNUPLOT = gnuplot
 
 LIB = /usr/local/lib
 
-EXAMPLES_ROOT = /usr/local/examples
+uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
+ifneq (,$(findstring MINGW,$(uname_S)))
+XA=.lib
+XO=.obj
+XS=.dll
+else
+XA=.a
+XO=.o
+XS=.so
+endif
+
+CP=cp
+RM=rm
+CAT=cat
+ECHO=echo
+MKDIR=mkdir -p
+RMDIR=rmdir
+
+#EXAMPLES_ROOT = /usr/local/examples
+EXAMPLES_ROOT = /home/tbourke/software/sundials-2.4.0/examples
 
 # If sundials is configured with --with-blas or --with-lapack
 # then the extra library dependency must also be included below
-# LAPACK_LIB = -cclib -lSimTKlapack
+LAPACK_LIB = -lSimTKlapack
 
 UNIX = unix.cma
 UNIXX = unix.cmxa

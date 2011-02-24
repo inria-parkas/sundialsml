@@ -77,9 +77,7 @@ cvDiurnal_kry_bp.opt:  cvDiurnal_kry_bp.ml
 cvKrylovDemo_ls.byte: cvKrylovDemo_ls.ml
 cvKrylovDemo_ls.opt:  cvKrylovDemo_ls.ml
 
-cvKrylovDemo_prec.byte: EXTRA_LIBS = ../../nvector.cma ../../nvector_array.cma
 cvKrylovDemo_prec.byte: cvKrylovDemo_prec.ml
-cvKrylovDemo_prec.opt: EXTRA_LIBS = ../../nvector.cma ../../nvector_array.cma
 cvKrylovDemo_prec.opt:  cvKrylovDemo_prec.ml
 
 ##
@@ -99,13 +97,13 @@ cleanall: clean
 
 .ml.byte:
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
-	    $(INCLUDES) -I ../../ bigarray.cma unix.cma \
-	    ../../cvode.cma $(EXTRA_LIBS) $<
+	    $(INCLUDES) -I ../../ -dllpath ../../ bigarray.cma unix.cma \
+	    sundials_cvode.cma $<
 
 .ml.opt:
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
 	    $(INCLUDES) -I ../../ bigarray.cmxa unix.cmxa \
-	    ../../cvode.cmxa $(EXTRA_LIBS) $<
+	    sundials_cvode.cmxa $<
 
 .byte.diff:
 	$(EXAMPLES_ROOT)/cvode/serial/$(<:.byte=) > $(@:.diff=.c.log)

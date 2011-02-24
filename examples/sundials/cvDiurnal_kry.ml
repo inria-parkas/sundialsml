@@ -34,7 +34,7 @@
  * -----------------------------------------------------------------
  *)
 
-module Cvode  = Cvode.Serial
+module Cvode  = Cvode_serial
 module Carray = Cvode.Carray
 module Roots  = Cvode.Roots
 module Dls    = Cvode.Dls
@@ -139,7 +139,7 @@ let sqr x = x ** 2.0
 
 let alloc_user_data () =
   let new_dmat _ = Direct.new_dense_mat (num_species, num_species) in
-  let new_int1 _  = Cvode.new_int_array num_species in
+  let new_int1 _  = Cvode.make_int_array num_species in
   let new_y_arr elinit _ = Array.init my elinit in
   let new_xy_arr elinit  = Array.init mx (new_y_arr elinit) in
   {

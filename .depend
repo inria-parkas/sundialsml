@@ -1,12 +1,18 @@
-cvode.cmi: nvector.cmi
+cvode.cmi: sundials.cmi
+cvode_nvector.cmi: sundials.cmi nvector.cmi cvode.cmi
+cvode_serial.cmi: sundials.cmi cvode.cmi
 nvector.cmi:
 nvector_array.cmi: nvector.cmi
-solvelucy.cmi: cvode.cmi
-cvode.cmo: nvector.cmi cvode.cmi
-cvode.cmx: nvector.cmx cvode.cmi
+sundials.cmi:
+cvode.cmo: sundials.cmi cvode.cmi
+cvode.cmx: sundials.cmx cvode.cmi
+cvode_nvector.cmo: nvector.cmi cvode.cmi cvode_nvector.cmi
+cvode_nvector.cmx: nvector.cmx cvode.cmx cvode_nvector.cmi
+cvode_serial.cmo: sundials.cmi cvode.cmi cvode_serial.cmi
+cvode_serial.cmx: sundials.cmx cvode.cmx cvode_serial.cmi
 nvector.cmo: nvector.cmi
 nvector.cmx: nvector.cmi
-nvector_array.cmo: nvector.cmi cvode.cmi nvector_array.cmi
-nvector_array.cmx: nvector.cmx cvode.cmx nvector_array.cmi
-solvelucy.cmo: cvode.cmi solvelucy.cmi
-solvelucy.cmx: cvode.cmx solvelucy.cmi
+nvector_array.cmo: sundials.cmi nvector.cmi nvector_array.cmi
+nvector_array.cmx: sundials.cmx nvector.cmx nvector_array.cmi
+sundials.cmo: sundials.cmi
+sundials.cmx: sundials.cmi

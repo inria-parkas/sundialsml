@@ -1,5 +1,5 @@
 
-module Cvode = Cvode.Nvector
+module Cvode = Cvode_nvector
 
 let f t y yd =
   yd.(0) <- cos(y.(1));

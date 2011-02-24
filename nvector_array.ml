@@ -118,7 +118,7 @@ module NvectorFn =
         if d = 0.0 then m
         else min m (n /. d)
       in
-      zip_fold_left f Cvode.Serial.big_real
+      zip_fold_left f Sundials.big_real
 
     let array_nvec_ops = {
           Nvector.Mutable.nvclone        = A.copy;

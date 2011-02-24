@@ -1,5 +1,5 @@
 
-module Cvode = Cvode.Serial
+module Cvode = Cvode_serial
 
 (* indices *)
 let x = 0

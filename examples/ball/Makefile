@@ -2,15 +2,15 @@ include ../../Makefile.inc
 
 ball.byte: showball.cmo ball.ml
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
-	    $(INCLUDES) -I ../../ \
+	    $(INCLUDES) -I ../../ -dllpath ../../ \
 	    bigarray.cma unix.cma graphics.cma \
-	    ../../cvode.cma showball.cmo ball.ml
+	    sundials_cvode.cma showball.cmo ball.ml
 
 ball.opt: showball.cmx ball.ml
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
 	    $(INCLUDES) -I ../../ \
 	    bigarray.cmxa unix.cmxa graphics.cmxa \
-	    ../../cvode.cmxa showball.cmx ball.ml
+	    sundials_cvode.cmxa showball.cmx ball.ml
 
 showball.cmo: showball.cmi showball.ml
 showball.cmx: showball.cmi showball.ml

@@ -90,7 +90,7 @@
  * --------------------------------------------------------------------
  *)
 
-module Cvode = Cvode.Serial
+module Cvode = Cvode_serial
 module Carray = Cvode.Carray
 module Roots = Cvode.Roots
 module Dls = Cvode.Dls
@@ -640,7 +640,7 @@ let alloc_user_data () =
   let r =
     {
       p         = Array.init ngrp (fun _ -> Densemat.new_dense_mat (ns, ns));
-      pivot     = Array.init ngrp (fun _ -> Cvode.new_int_array ns);
+      pivot     = Array.init ngrp (fun _ -> Cvode.make_int_array ns);
 
       ns        = ns;
       mxns      = mxns;
@@ -672,7 +672,7 @@ let alloc_user_data () =
       dy        = dy;
       srur      = sqrt Cvode.unit_roundoff;
 
-      fsave     = Cvode.new_real_array neq;
+      fsave     = Cvode.make_real_array neq;
 
       rewt      = Carray.create neq;
 

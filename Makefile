@@ -1,51 +1,65 @@
 include Makefile.inc
 
-MLOBJ = nvector.cmo \
-	cvode.cmo \
-	nvector_array.cmo
+VERSION = 0.5.0
 
-COBJ =	ml_cvode.o \
-	ml_cvode_bp.o \
-	ml_cvode_ba.o \
-	ml_cvode_nvec.o \
-	ml_nvector.o
+MLOBJ = sundials.cmo 		\
+	nvector.cmo 		\
+	nvector_array.cmo 	\
+	cvode.cmo 		\
+	cvode_serial.cmo 	\
+	cvode_nvector.cmo
 
-all: cvode.cma cvode.cmxa nvector.cma nvector.cmxa \
-    	nvector_array.cma nvector_array.cmxa
+COBJ =	cvode_ml$(XO) 		\
+	cvode_ml_ba$(XO) 	\
+	cvode_ml_nvec$(XO) 	\
+	nvector_ml$(XO)
 
-cvode.cma: OCAML_LIBLINK := $(LAPACK_LIB) \
-    			    -cclib -lsundials_cvode \
-    			    -cclib -lsundials_nvecserial \
-    			    -cclib -lmlcvode
-cvode.cma: libmlcvode.a
+INSTALL_FILES = 		\
+    META			\
+    $(MLOBJ:.cmo=.cmi)		\
+    libmlsundials_cvode$(XA)	\
+    sundials_cvode$(XA)		\
+    sundials_cvode.cma		\
+    sundials_cvode.cmxa
 
-cvode.cmxa: OCAML_LIBLINK := $(LAPACK_LIB) \
-			     -cclib -lsundials_cvode \
-    			     -cclib -lsundials_nvecserial \
-    			     -cclib -lmlcvode
-cvode.cmxa: libmlcvode.a
+STUBLIBS = dllmlsundials_cvode$(XS)
 
-libmlcvode.a: ml_cvode.o ml_cvode_bp.o \
-    		ml_cvode_nvec.o ml_cvode_ba.o ml_nvector.o
-	$(AR) rc libmlcvode.a ml_cvode.o ml_cvode_bp.o \
-		 ml_cvode_nvec.o ml_cvode_ba.o ml_nvector.o
+# ##
 
-nvector.cma: nvector.cmi libmlcvode.a
-nvector.cmxa: nvector.cmi libmlcvode.a
+.PHONY: all sundials_cvode install
 
-nvector_array.cma: nvector_array.cmi nvector.cmi libmlcvode.a
-nvector_array.cmxa: nvector_array.cmi nvector.cmi libmlcvode.a
+all: sundials_cvode.cma sundials_cvode.cmxa
 
-ml_cvode.o: ml_cvode.c
-ml_cvode_bp.o: ml_cvode_bp.c
-ml_cvode_nvec.o: ml_cvode_nvec.c
-ml_nvector.o: ml_nvector.c
+sundials_cvode.cma sundials_cvode.cmxa: $(MLOBJ) $(MLOBJ:.cmo=.cmx) $(COBJ)
+	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS) \
+	    -o sundials_cvode -oc mlsundials_cvode $^ \
+	    $(LAPACK_LIB) -lsundials_cvode -lsundials_nvecserial
 
-ml_cvode_ba.o: ml_cvode_nvec.c
-	$(CC) -I $(OCAML_INCLUDE) $(CFLAGS) \
-	    -DML_CVODE_BIGARRAYS -o $@ -c $<
+cvode.o: cvode_ml.c
+cvode_ml_ba.o: cvode_ml_nvec.c
+	$(CC) -I $(OCAML_INCLUDE) $(CFLAGS) -DCVODE_ML_BIGARRAYS -o $@ -c $<
+cvode_ml_nvec.o: cvode_ml_nvec.c
+nvector_ml.o: nvector_ml.c
 
-# TODO: add install target
+META: META.in
+	@$(ECHO) "version = \"$(VERSION)\"" > $@
+	@$(CAT) $< >> $@
+
+# ##
+
+install: sundials_cvode.cma sundials_cvode.cmxa META
+	$(MKDIR) $(PKGDIR)
+	$(CP) $(INSTALL_FILES) $(PKGDIR)/
+	$(CP) $(STUBLIBS) $(OCAML_INCLUDE)/stublibs/
+
+uninstall:
+	for f in $(STUBLIBS); do	 \
+	    $(RM) $(OCAML_INCLUDE)/stublibs/$$f || true; \
+	done
+	for f in $(INSTALL_FILES); do	 \
+	    $(RM) $(PKGDIR)/$$f || true; \
+	done
+	-$(RMDIR) $(PKGDIR)
 
 # ##
 
@@ -53,16 +67,15 @@ depend:
 	$(OCAMLDEP) $(INCLUDES) *.mli *.ml > .depend
 
 clean:
-	-rm -f $(MLOBJ) $(MLOBJ:.cmo=.cmx)
-	-rm -f $(COBJ) cvode.annot
-	-rm -f cvode.o nvector.o nvector_array.o
+	-@$(RM) -f $(MLOBJ) $(MLOBJ:.cmo=.cmx) $(MLOBJ:.cmo=.o)
+	-@$(RM) -f $(COBJ) cvode.annot
+	-@$(RM) -f $(MLOBJ:.cmo=.cma) $(MLOBJ:.cmo=.cmxa)
+	-@$(RM) -f sundials_cvode$(XA)
 
 cleanall: clean
-	-rm -f libmlcvode.a cvode.a
-	-rm -f nvector.a nvector_array.a
-	-rm -f cvode.cma cvode.cmxa
-	-rm -f nvector.cma nvector.cmxa
-	-rm -f nvector_array.cma nvector_array.cmxa
-	-rm -f cvode.cmi nvector.cmi nvector_array.cmi
+	-@$(RM) -f $(MLOBJ:.cmo=.cmi)
+	-@$(RM) -f sundials_cvode.cma sundials_cvode.cmxa
+	-@$(RM) -f libmlsundials_cvode$(XA) dllmlsundials_cvode$(XS)
+	-@$(RM) -f META
 
 -include .depend

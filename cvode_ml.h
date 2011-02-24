@@ -4,11 +4,53 @@
  *
  */
 
-#ifndef __ML_CVODE_H__
-#define __ML_CVODE_H__
+#ifndef _CVODE_ML_H__
+#define _CVODE_ML_H__
 
 /* Configuration options */
 #define CHECK_MATRIX_ACCESS 1
+
+void cvode_ml_check_flag(const char *call, int flag, void *to_free);
+
+#define CHECK_FLAG(call, flag) if (flag != CV_SUCCESS) \
+				 cvode_ml_check_flag(call, flag, NULL)
+
+// TODO: Is there any risk that the Ocaml GC will try to free the
+//	 closures? Do we have to somehow record that we're using them,
+//	 and then release them again in the free routine?
+//	 SEE: cvode_ml_data_alloc and finalize
+struct cvode_ml_data {
+    void *cvode_mem;
+    long int neq;
+    intnat num_roots;
+    value *closure_rhsfn;
+    value *closure_rootsfn;
+    value *closure_errh;
+    value *closure_errw;
+
+    value *closure_jacfn;
+    value *closure_bandjacfn;
+    value *closure_presetupfn;
+    value *closure_presolvefn;
+    value *closure_jactimesfn;
+
+    FILE *err_file;
+};
+typedef struct cvode_ml_data* cvode_ml_data_p;
+
+value cvode_ml_data_alloc(void* cvode_mem);
+void cvode_ml_set_linear_solver(void *cvode_mem, value ls, int n);
+
+#define CVODE_DATA(v) ((cvode_ml_data_p)Data_custom_val(v))
+#define CVODE_DATA_FROM_ML(name, v) \
+    cvode_ml_data_p (name) = CVODE_DATA(v); \
+    if ((name)->cvode_mem == NULL) caml_failwith("This session has been freed")
+
+#define CVODE_MEM_FROM_ML(name, v) \
+    void *(name) = (CVODE_DATA(v))->cvode_mem; \
+    if ((name) == NULL) caml_failwith("This session has been freed")
+
+value cvode_ml_big_real();
 
 /* Interface with Ocaml types */
 
@@ -98,48 +140,6 @@
 #define RECORD_DENSEMATRIX_ORMQR_VN   1
 #define RECORD_DENSEMATRIX_ORMQR_VM   2
 #define RECORD_DENSEMATRIX_ORMQR_WORK 3
-
-void ml_cvode_check_flag(const char *call, int flag, void *to_free);
-
-#define CHECK_FLAG(call, flag) if (flag != CV_SUCCESS) \
-				 ml_cvode_check_flag(call, flag, NULL)
-
-// TODO: Is there any risk that the Ocaml GC will try to free the
-//	 closures? Do we have to somehow record that we're using them,
-//	 and then release them again in the free routine?
-//	 SEE: ml_cvode_data_alloc and finalize
-struct ml_cvode_data {
-    void *cvode_mem;
-    long int neq;
-    intnat num_roots;
-    value *closure_rhsfn;
-    value *closure_rootsfn;
-    value *closure_errh;
-    value *closure_errw;
-
-    value *closure_jacfn;
-    value *closure_bandjacfn;
-    value *closure_presetupfn;
-    value *closure_presolvefn;
-    value *closure_jactimesfn;
-
-    FILE *err_file;
-};
-typedef struct ml_cvode_data* ml_cvode_data_p;
-
-value ml_cvode_data_alloc(void* cvode_mem);
-void set_linear_solver(void *cvode_mem, value ls, int n);
-
-#define CVODE_DATA(v) ((ml_cvode_data_p)Data_custom_val(v))
-#define CVODE_DATA_FROM_ML(name, v) \
-    ml_cvode_data_p (name) = CVODE_DATA(v); \
-    if ((name)->cvode_mem == NULL) caml_failwith("This session has been freed")
-
-#define CVODE_MEM_FROM_ML(name, v) \
-    void *(name) = (CVODE_DATA(v))->cvode_mem; \
-    if ((name) == NULL) caml_failwith("This session has been freed")
-
-value ml_cvode_big_real();
 
 #endif
 

@@ -27,9 +27,11 @@ cleanall: clean
 
 .ml.byte:
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
-	    $(INCLUDES) -I ../../ bigarray.cma unix.cma ../../cvode.cma $<
+	    $(INCLUDES) -I ../../ -dllpath ../../ \
+	    bigarray.cma unix.cma sundials_cvode.cma $<
 
 .ml.opt:
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
-	    $(INCLUDES) -I ../../ bigarray.cmxa unix.cmxa ../../cvode.cmxa $<
+	    $(INCLUDES) -I ../../ \
+	    bigarray.cmxa unix.cmxa sundials_cvode.cmxa $<
 

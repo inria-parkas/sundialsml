@@ -4,7 +4,7 @@
  *
  */
 
-#include "ml_nvector.h"
+#include "nvector_ml.h"
 
 #include <caml/mlvalues.h>
 #include <caml/alloc.h>

@@ -24,12 +24,10 @@ nvec-opt.plot: sincos_nvec.opt
 
 sincos.byte: sincos.ml
 
-sincos_nvec.byte: NVECTOR = nvector.cma nvector_array.cma
 sincos_nvec.byte: sincos_nvec.ml
 
 sincos.opt: sincos.ml
 
-sincos_nvec.opt: NVECTOR = nvector.cmxa nvector_array.cmxa
 sincos_nvec.opt: sincos_nvec.ml
 
 clean:
@@ -44,14 +42,14 @@ cleanall: clean
 .SUFFIXES : .ml .byte .opt
 
 .ml.byte:
-	$(OCAMLC) $(OCAMLFLAGS) -o $@ $(INCLUDES) -I ../../ \
+	$(OCAMLC) $(OCAMLFLAGS) -o $@ $(INCLUDES) -I ../../ -dllpath ../../ \
 	    bigarray.cma unix.cma graphics.cma \
-	    ../../cvode.cma $(NVECTOR) \
+	    sundials_cvode.cma \
 	    $<
 
 .ml.opt:
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ $(INCLUDES) -I ../../ \
 	    bigarray.cmxa unix.cmxa graphics.cmxa \
-	    ../../cvode.cmxa $(NVECTOR) \
+	    sundials_cvode.cmxa \
 	    $<
 

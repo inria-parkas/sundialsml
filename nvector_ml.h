@@ -4,8 +4,8 @@
  *
  */
 
-#ifndef __ML_NVECTOR_H__
-#define __ML_NVECTOR_H__
+#ifndef __NVECTOR_ML_H__
+#define __NVECTOR_ML_H__
 
 #include <sundials/sundials_nvector.h>
 #include <caml/mlvalues.h>

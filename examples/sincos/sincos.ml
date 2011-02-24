@@ -1,5 +1,5 @@
 
-module Cvode = Cvode.Serial
+module Cvode = Cvode_serial
 
 let f t y yd =
   yd.{0} <- cos(y.{1});

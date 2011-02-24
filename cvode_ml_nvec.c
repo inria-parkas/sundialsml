@@ -29,8 +29,8 @@
 #include <cvode/cvode_sptfqmr.h>
 #include <cvode/cvode_bandpre.h>
 
-#include "ml_cvode.h"
-#include "ml_nvector.h"
+#include "cvode_ml.h"
+#include "nvector_ml.h"
 
 #ifdef RESTRICT_INTERNAL_PRECISION
 #ifdef __GNUC__
@@ -38,10 +38,10 @@
 #endif
 #endif
 
-// Call with _ML_CVODE_BIGARRAYS to compile for the Serial NVector to
+// Call with CVODE_ML_BIGARRAYS to compile for the Serial NVector to
 // Bigarray interface code.
 
-#ifdef ML_CVODE_BIGARRAYS
+#ifdef CVODE_ML_BIGARRAYS
 
 #define CVTYPE(fname) c_ba_ ## fname
 #include <nvector/nvector_serial.h>
@@ -90,7 +90,7 @@ static int f(realtype t, N_Vector y, N_Vector ydot, void *user_data)
     CAMLparam0();
     CAMLlocal3(y_d, ydot_d, r);
 
-    value *closure_rhsfn = ((ml_cvode_data_p)user_data)->closure_rhsfn;
+    value *closure_rhsfn = ((cvode_ml_data_p)user_data)->closure_rhsfn;
 
     y_d = WRAP_NVECTOR(y);
     ydot_d = WRAP_NVECTOR(ydot);
@@ -115,7 +115,7 @@ static int roots(realtype t, N_Vector y, realtype *gout, void *user_data)
     CAMLparam0();
     CAMLlocal3(y_d, gout_d, r);
 
-    ml_cvode_data_p data = (ml_cvode_data_p)user_data;
+    cvode_ml_data_p data = (cvode_ml_data_p)user_data;
 
     y_d = WRAP_NVECTOR(y);
 
@@ -136,7 +136,7 @@ static int errw(N_Vector y, N_Vector ewt, void *user_data)
     CAMLparam0();
     CAMLlocal3(y_d, ewt_d, r);
 
-    ml_cvode_data_p data = (ml_cvode_data_p)user_data;
+    cvode_ml_data_p data = (cvode_ml_data_p)user_data;
 
     y_d = WRAP_NVECTOR(y);
     ewt_d = WRAP_NVECTOR(ewt);
@@ -211,7 +211,7 @@ static int jacfn(
     CAMLparam0();
     CAMLlocal3(arg, r, matrix);
 
-    ml_cvode_data_p data = (ml_cvode_data_p)user_data;
+    cvode_ml_data_p data = (cvode_ml_data_p)user_data;
 
     arg = make_jac_arg(t, y, fy, make_triple_tmp(tmp1, tmp2, tmp3));
 
@@ -242,7 +242,7 @@ static int bandjacfn(
     CAMLlocal1(r);
     CAMLlocalN(args, 4);
 
-    ml_cvode_data_p data = (ml_cvode_data_p)user_data;
+    cvode_ml_data_p data = (cvode_ml_data_p)user_data;
 
     args[0] = Val_int(mupper);
     args[1] = Val_int(mlower);
@@ -273,7 +273,7 @@ static int presetupfn(
     CAMLparam0();
     CAMLlocal2(arg, r);
 
-    ml_cvode_data_p data = (ml_cvode_data_p)user_data;
+    cvode_ml_data_p data = (cvode_ml_data_p)user_data;
 
     arg = make_jac_arg(t, y, fy, make_triple_tmp(tmp1, tmp2, tmp3));
 
@@ -330,7 +330,7 @@ static int presolvefn(
     CAMLparam0();
     CAMLlocal4(arg, solvearg, zv, rv);
 
-    ml_cvode_data_p data = (ml_cvode_data_p)user_data;
+    cvode_ml_data_p data = (cvode_ml_data_p)user_data;
 
     arg = make_jac_arg(t, y, fy, WRAP_NVECTOR(tmp));
     solvearg = make_spils_solve_arg(r, gamma, delta, lr);
@@ -357,7 +357,7 @@ static int jactimesfn(
     CAMLparam0();
     CAMLlocal4(arg, varg, jvarg, r);
 
-    ml_cvode_data_p data = (ml_cvode_data_p)user_data;
+    cvode_ml_data_p data = (cvode_ml_data_p)user_data;
 
     arg = make_jac_arg(t, y, fy, WRAP_NVECTOR(tmp));
     varg = WRAP_NVECTOR(v);
@@ -496,7 +496,7 @@ CAMLprim value CVTYPE(init)(value lmm, value iter, value initial,
 
     void *cvode_mem = CVodeCreate(lmm_c, iter_c);
 
-    vdata = ml_cvode_data_alloc(cvode_mem);
+    vdata = cvode_ml_data_alloc(cvode_mem);
     CVODE_DATA_FROM_ML(data, vdata);
 
     data->neq = Caml_ba_array_val(initial)->dim[0];
@@ -510,11 +510,11 @@ CAMLprim value CVTYPE(init)(value lmm, value iter, value initial,
 
     flag = CVodeInit(data->cvode_mem, f, Double_val(t0), initial_nv);
     RELINQUISH_NVECTORIZEDVAL(initial_nv);
-    ml_cvode_check_flag("CVodeInit", flag, data);
+    cvode_ml_check_flag("CVodeInit", flag, data);
 
     if (data->num_roots > 0) {
 	flag = CVodeRootInit(data->cvode_mem, data->num_roots, roots);
-	ml_cvode_check_flag("CVodeRootInit", flag, data);
+	cvode_ml_check_flag("CVodeRootInit", flag, data);
     }
 
     CVodeSetUserData(data->cvode_mem, (void *)data);
@@ -526,7 +526,7 @@ CAMLprim value CVTYPE(init)(value lmm, value iter, value initial,
 
     // default tolerances
     flag = CVodeSStolerances(data->cvode_mem, RCONST(1.0e-4), RCONST(1.0e-8));
-    ml_cvode_check_flag("CVodeSStolerances", flag, data);
+    cvode_ml_check_flag("CVodeSStolerances", flag, data);
 
     CAMLreturn(vdata);
 }
@@ -650,17 +650,5 @@ CAMLprim value CVTYPE(get_est_local_errors)(value vcvode_mem, value vele)
     CHECK_FLAG("CVodeGetEstLocalErrors", flag);
 
     CAMLreturn0;
-}
-
-CAMLprim value CVTYPE(vmax_norm)(value u)
-{
-    CAMLparam0();
-    CAMLlocal1(r);
-
-    N_Vector u_nv = NVECTORIZE_VAL(u);
-    r = caml_copy_double(N_VMaxNorm(u_nv));
-    RELINQUISH_NVECTORIZEDVAL(u_nv);
-
-    CAMLreturn(r);
 }
 

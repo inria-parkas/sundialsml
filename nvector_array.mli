@@ -9,10 +9,10 @@ module type ARRAY_NVECTOR =
     val data            : t Nvector.nvector -> t
   end
 
+include ARRAY_NVECTOR with type t = float array
+
 module Bigarray :
   ARRAY_NVECTOR
   with
     type t = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
-
-include ARRAY_NVECTOR with type t = float array
 
