@@ -1,11 +1,12 @@
 
+CVODE_DOC_ROOT = https://computation.llnl.gov/casc/sundials/documentation/cv_guide
+OCAML_DOC_ROOT = http://caml.inria.fr/pub/docs/manual-ocaml/libref
+
 OCAMLFLAGS =
 OCAMLOPTFLAGS =
 
 CC = gcc
 CFLAGS = # -DRESTRICT_INTERNAL_PRECISION"
-
-AR = ar
 
 OCAMLC = $(OCAML_BIN)ocamlc.opt
 OCAMLFLAGS =
@@ -18,6 +19,7 @@ OCAMLOPT = $(OCAML_BIN)ocamlopt.opt
 OCAMLOPTFLAGS =
 
 OCAMLDEP = $(OCAML_BIN)ocamldep
+OCAMLDOC = $(OCAML_BIN)ocamldoc
 
 OCAMLMKLIB = $(OCAML_BIN)ocamlmklib -ocamlc "$(OCAMLC)" -ocamlopt "$(OCAMLOPT)"
 OCAMLMKLIBFLAGS = -verbose
@@ -43,6 +45,7 @@ CAT=cat
 ECHO=echo
 MKDIR=mkdir -p
 RMDIR=rmdir
+SED=sed
 
 #EXAMPLES_ROOT = /usr/local/examples
 EXAMPLES_ROOT = /home/tbourke/software/sundials-2.4.0/examples
@@ -59,6 +62,11 @@ DIRECTORIES =
 INCLUDES = $(DIRECTORIES:%=-I %)
 
 OBJ_OPT = $(OBJ:.cmo=.cmx)
+
+DOCPP = $(SED) \
+	-e 's|CVODE_DOC_ROOT(\([^\#)]*\)\(\#[^)]*\)\?)|$(CVODE_DOC_ROOT)/\1.html\2|g' \
+	-e 's|OCAML_DOC_ROOT(\([^\#)]*\)\(\#[^)]*\)\?)|$(OCAML_DOC_ROOT)/\1.html\2|g' \
+	-e 's|VERSION()|$(VERSION)|g'
 
 # Common rules
 .SUFFIXES : .mli .ml .cmi .cmo .cmx .lci .lsi .c .o .cma .cmxa

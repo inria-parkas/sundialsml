@@ -1,4 +1,22 @@
-(* Aug 2010, Timothy Bourke (INRIA) *)
+(***********************************************************************)
+(*                                                                     *)
+(*              Ocaml interface to Sundials CVODE solver               *)
+(*                                                                     *)
+(*       Timothy Bourke (INRIA Rennes) and Marc Pouzet (LIENS)         *)
+(*                                                                     *)
+(*  Copyright 2011 Institut National de Recherche en Informatique et   *)
+(*  en Automatique.  All rights reserved.  This file is distributed    *)
+(*  under the terms of the GNU Library General Public License, with    *)
+(*  the special exception on linking described in file LICENSE.        *)
+(*                                                                     *)
+(***********************************************************************)
+
+(** Vector-independent types and values for the CVODE solver.
+
+ @version VERSION()
+ @author Timothy Bourke (INRIA)
+ @author Marc Pouzet (LIENS)
+ *)
 
 include module type of Sundials
 

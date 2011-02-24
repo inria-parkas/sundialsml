@@ -1,8 +1,15 @@
-/* Aug 2010, Timothy Bourke (INRIA)
- *
- * Ocaml interface to the Sundials 2.4.0 CVode solver for serial NVectors.
- *
- */
+/***********************************************************************
+ *                                                                     *
+ *              Ocaml interface to Sundials CVODE solver               *
+ *                                                                     *
+ *       Timothy Bourke (INRIA Rennes) and Marc Pouzet (LIENS)         *
+ *                                                                     *
+ *  Copyright 2011 Institut National de Recherche en Informatique et   *
+ *  en Automatique.  All rights reserved.  This file is distributed    *
+ *  under the terms of the GNU Library General Public License, with    *
+ *  the special exception on linking described in file LICENSE.        *
+ *                                                                     *
+ ***********************************************************************/
 
 #ifndef _CVODE_ML_H__
 #define _CVODE_ML_H__

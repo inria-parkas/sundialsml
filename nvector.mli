@@ -1,3 +1,24 @@
+(***********************************************************************)
+(*                                                                     *)
+(*              Ocaml interface to Sundials CVODE solver               *)
+(*                                                                     *)
+(*       Timothy Bourke (INRIA Rennes) and Marc Pouzet (LIENS)         *)
+(*                                                                     *)
+(*  Copyright 2011 Institut National de Recherche en Informatique et   *)
+(*  en Automatique.  All rights reserved.  This file is distributed    *)
+(*  under the terms of the GNU Library General Public License, with    *)
+(*  the special exception on linking described in file LICENSE.        *)
+(*                                                                     *)
+(***********************************************************************)
+
+(** Define abstract NVectors using imperative or functional operations
+
+ @version VERSION()
+ @author Timothy Bourke (INRIA)
+ @author Marc Pouzet (LIENS)
+ @see <CVODE_DOC_ROOT(node7#s:nvector)> CVode:6
+ *)
+
 type 'a nvector
 
 module Mutable :

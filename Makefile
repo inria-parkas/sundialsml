@@ -2,12 +2,12 @@ include Makefile.inc
 
 VERSION = 0.5.0
 
-MLOBJ = sundials.cmo 		\
-	nvector.cmo 		\
-	nvector_array.cmo 	\
-	cvode.cmo 		\
+MLOBJ = cvode.cmo 		\
+	cvode_nvector.cmo	\
 	cvode_serial.cmo 	\
-	cvode_nvector.cmo
+	nvector_array.cmo 	\
+	nvector.cmo 		\
+	sundials.cmo
 
 COBJ =	cvode_ml$(XO) 		\
 	cvode_ml_ba$(XO) 	\
@@ -26,7 +26,7 @@ STUBLIBS = dllmlsundials_cvode$(XS)
 
 # ##
 
-.PHONY: all sundials_cvode install
+.PHONY: all sundials_cvode install doc
 
 all: sundials_cvode.cma sundials_cvode.cmxa
 
@@ -44,6 +44,16 @@ nvector_ml.o: nvector_ml.c
 META: META.in
 	@$(ECHO) "version = \"$(VERSION)\"" > $@
 	@$(CAT) $< >> $@
+
+doc: doc/html/index.html
+
+doc/html/index.html: $(MLOBJ:.cmo=.mli) $(MLOBJ:.cmo=.cmi) intro.doc
+	$(OCAMLDOC) -html		\
+	    -pp "$(DOCPP)"		\
+	    -d ./doc/html/		\
+	    -t "Sundials (CVODE)"	\
+	    -intro intro.doc		\
+	    $(MLOBJ:.cmo=.mli)
 
 # ##
 
