@@ -1,0 +1,6 @@
+(** CVODE interface for abstract NVectors
+
+ @version VERSION()
+ @author Timothy Bourke (INRIA)
+ @author Marc Pouzet (LIENS)
+ *)

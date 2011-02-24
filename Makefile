@@ -35,6 +35,22 @@ sundials_cvode.cma sundials_cvode.cmxa: $(MLOBJ) $(MLOBJ:.cmo=.cmx) $(COBJ)
 	    -o sundials_cvode -oc mlsundials_cvode $^ \
 	    $(LAPACK_LIB) -lsundials_cvode -lsundials_nvecserial
 
+cvode_nvector.mli: cvode_serial.mli
+	$(SED) \
+	-e "/^type \(val_array\|der_array\) =/d"			\
+	-e "s/ session\( \|\$\)/ 'a session\1/g"			\
+	-e "s/\([ (]\)\([^ ]*\) jacobian_arg\([ )]\|\$\)/\1(\2, 'a) jacobian_arg\3/g" \
+	-e "s/\([ (]\)val_array\([ )]\|\$\)/\1'a\2/g"			\
+	-e "s/\([ (]\)der_array\([ )]\|\$\)/\1'a\2/g"			\
+	-e "s/\([ (]\)nvec\([ )]\|\$\)/\1'a nvector\2/g"		\
+	-e "s/\([ (]\)solve_arg\([ )]\|\$\)/\1'a solve_arg\2/g"		\
+	-e "s/\([ (]\)single_tmp\([ )]\|\$\)/\1'a single_tmp\2/g"	\
+	-e "s/\([ (]\)triple_tmp\([ )]\|\$\)/\1'a triple_tmp\2/g"	\
+	-e "s/^\(type 'a nvector = \).*/\1'a Nvector.nvector/"		\
+	-e "/(\*ENDINTRO\*)/r cvode_nvector.doc"			\
+	-e "/^(\*\* CVODE/,/(\*ENDINTRO\*)/d"				\
+	$< > $@
+
 cvode.o: cvode_ml.c
 cvode_ml_ba.o: cvode_ml_nvec.c
 	$(CC) -I $(OCAML_INCLUDE) $(CFLAGS) -DCVODE_ML_BIGARRAYS -o $@ -c $<
@@ -73,7 +89,7 @@ uninstall:
 
 # ##
 
-depend:
+depend: cvode_nvector.mli
 	$(OCAMLDEP) $(INCLUDES) *.mli *.ml > .depend
 
 clean:

@@ -16,7 +16,7 @@
  @version VERSION()
  @author Timothy Bourke (INRIA)
  @author Marc Pouzet (LIENS)
- *)
+ *) (*ENDINTRO*)
 
 include module type of Cvode
 
@@ -24,38 +24,41 @@ type nvec = Sundials.Carray.t
 type val_array = Sundials.Carray.t
 type der_array = Sundials.Carray.t
 
+type root_array = Sundials.Roots.t
+type root_val_array = Sundials.Roots.val_array
+
 type session
 
 val init :
     lmm
     -> iter
     -> (float -> val_array -> der_array -> unit)
-    -> (int * (float -> val_array -> Sundials.Roots.val_array -> unit))
-    -> val_array
+    -> (int * (float -> val_array -> root_val_array -> unit))
+    -> nvec
     -> session
 
 val init' :
     lmm
     -> iter
     -> (float -> val_array -> der_array -> unit)
-    -> (int * (float -> val_array -> Sundials.Roots.val_array -> unit))
-    -> val_array
+    -> (int * (float -> val_array -> root_val_array -> unit))
+    -> nvec
     -> float (* start time *)
     -> session
 
 val nroots : session -> int
 val neqs : session -> int
 
-val reinit : session -> float -> val_array -> unit
+val reinit : session -> float -> nvec -> unit
 
 val sv_tolerances : session -> float -> nvec -> unit
 val ss_tolerances : session -> float -> float -> unit
-val wf_tolerances : session -> (val_array -> nvec -> unit) -> unit
+val wf_tolerances : session -> (val_array -> val_array -> unit) -> unit
 
-val get_root_info : session -> Sundials.Roots.t -> unit
+val get_root_info : session -> root_array -> unit
 
-val normal : session -> float -> val_array -> float * solver_result
-val one_step : session -> float -> val_array -> float * solver_result
+val normal : session -> float -> nvec -> float * solver_result
+val one_step : session -> float -> nvec -> float * solver_result
 
 val get_dky : session -> float -> int -> nvec -> unit
 
@@ -219,7 +222,7 @@ module Spils :
         left  : bool; (* true: left, false: right *)
       }
 
-    type single_tmp = val_array
+    type single_tmp = nvec
 
     type gramschmidt_type =
       | ModifiedGS
@@ -228,7 +231,7 @@ module Spils :
     val set_preconditioner :
       session
       -> (triple_tmp jacobian_arg -> bool -> float -> bool)
-      -> (single_tmp jacobian_arg -> solve_arg -> val_array -> unit)
+      -> (single_tmp jacobian_arg -> solve_arg -> nvec -> unit)
       -> unit
 
     val set_jac_times_vec_fn :

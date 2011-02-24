@@ -17,6 +17,9 @@ type nvec = Sundials.Carray.t
 type val_array = Sundials.Carray.t
 type der_array = Sundials.Carray.t
 
+type root_array = Sundials.Roots.t
+type root_val_array = Sundials.Roots.val_array
+
 type session
 
 (* interface *)
@@ -314,7 +317,7 @@ module Spils =
         left  : bool;
       }
 
-    type single_tmp = val_array
+    type single_tmp = nvec
 
     type gramschmidt_type =
       | ModifiedGS
