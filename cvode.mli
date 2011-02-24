@@ -24,7 +24,7 @@ include module type of Sundials
  Specify a linear multistep method in {!Cvode_serial.init} and
  {!Cvode_nvector.init}.
 
- @see <CVODE_DOC_ROOT(node5#ss:ivp_sol)> IVP Solution
+ @see <CVODE_DOC_ROOT(node3#ss:ivp_sol)> IVP Solution
  @see <CVODE_DOC_ROOT(node5#sss:cvodemalloc)> CVodeCreate
  *)
 type lmm =
@@ -34,7 +34,7 @@ type lmm =
 (**
  Specify a solution method in {!Cvode_serial.init} and {!Cvode_nvector.init}.
 
- @see <CVODE_DOC_ROOT(node5#ss:ivp_sol)> IVP Solution
+ @see <CVODE_DOC_ROOT(node3#ss:ivp_sol)> IVP Solution
  @see <CVODE_DOC_ROOT(node5#sss:cvodemalloc)> CVodeCreate
  *)
 type iter =
@@ -51,7 +51,7 @@ type iter =
  The Banded Krylov solvers imply an additional call to
  {{:CVODE_DOC_ROOT(node5#sss:cvbandpre)} CVBandPrecInit}.
 
- @see <CVODE_DOC_ROOT(node5#sss:lin_solve_init)> Linear Solver Specification
+ @see <CVODE_DOC_ROOT(node5#sss:lin_solv_init)> Linear Solver Specification
                                                  Functions
  *)
 and linear_solver =
@@ -143,35 +143,45 @@ type error_details = {
 
 
 (**
- @see <CVODE_DOC_ROOT(node5#s:)> 
+ Values for root directions. Passed to {!Cvode_serial.set_root_direction},
+ {!Cvode_serial.set_all_root_directions}, {!Cvode_nvector.set_root_direction},
+ and {!Cvode_nvector.set_all_root_directions}.
+
+ @see <CVODE_DOC_ROOT(node5#sss:optin_root)> CVodeSetRootDirection
  *)
 type root_direction =
-  | Increasing
-  | Decreasing
-  | IncreasingOrDecreasing
+  | Increasing              (** +1 *)
+  | Decreasing              (** -1 *)
+  | IncreasingOrDecreasing  (**  0 *)
 
-(* get_dky exceptions *)
 (**
- @see <CVODE_DOC_ROOT(node5#s:)> 
+ These exceptions may be thrown by {!Cvode_serial.get_dky} and
+ {!Cvode_nvector.get_dky}.
+
+ @see <CVODE_DOC_ROOT(node5#ss:optional_dky)> CVodeGetDky
  *)
-exception BadK
-exception BadT
-exception BadDky
+exception BadK      (** k is not in the range 0, 1, ..., q{_u} (CV_BAD_K) *)
+exception BadT      (** t is not in the interval
+                        [t{_n} - h{_u}, t{_n}] (CV_BAD_T) *)
+exception BadDky    (** invalid dky argument (CV_BAD_DKY) *)
 
 (**
- @see <CVODE_DOC_ROOT(node5#s:)> 
+ This is a convenience value for signalling to {!Cvode_serial.init} and
+ {!Cvode_nvector.init} that there are no roots (zero-crossings) to
+ monitor.
  *)
 val no_roots : (int * ('a -> 'b -> 'c -> unit))
 
 (**
- @see <CVODE_DOC_ROOT(node5#s:)> 
- *)
-(* Throw inside the f callback if the derivatives cannot be calculated at
-   the given time. *)
+ This exception may be thrown inside the RHS callback function (f)
+ if one or more derivatives cannot be calculated at the given time. *)
 exception RecoverableFailure
 
 (**
- @see <CVODE_DOC_ROOT(node5#s:)> 
+ This record holds the results returned by
+ {!Cvode_serial.get_integrator_stats} and
+ {!Cvode_nvector.get_integrator_stats}.
+ @see <CVODE_DOC_ROOT(node5#sss:optout_main)> CVodeGetIntegratorStats
  *)
 type integrator_stats = {
     num_steps : int;
@@ -186,81 +196,92 @@ type integrator_stats = {
     current_time : float
   }
 
-(** {2 Data structures for direct linear solvers} *)
+(**
+  {2 Data structures for Direct Linear Solvers}
+  @see <CVODE_DOC_ROOT(node9#s:dls)>  The DLS Modules
+ *)
 
 (**
- Thrown by GETRF routines for a zero diagonal element at the given column index.
+ Thrown by the getrf functions if a zero diagonal element is encountered during
+ factorization. The argument indicates the column index (from 1).
 
- @see <CVODE_DOC_ROOT(node5#s:)> 
+ @see <CVODE_DOC_ROOT(node9#ss:dense)> DenseGETRF/denseGETRF 
  *)
 exception ZeroDiagonalElement of int
 
-(** {3 Dense linear solver} *)
+(** {3 Dense linear solver}
+ @see <CVODE_DOC_ROOT(node9#ss:dense)> The DENSE Module
+ *)
 
 module Densematrix :
   sig
     (**
-     @see <CVODE_DOC_ROOT(node5#s:)> 
+    This type is essentially a [DlsMat] returned from a call to
+    {!new_dense_mat}.
+
+     @see <CVODE_DOC_ROOT(node9#s:dls)>  Type DlsMat
+     @see <CVODE_DOC_ROOT(node9#ss:dense)> NewDenseMat 
      *)
     type t
 
     (**
-     @see <CVODE_DOC_ROOT(node5#s:)> 
+     @see <CVODE_DOC_ROOT(node9#ss:dense)> NewDenseMat
      *)
     val new_dense_mat  : int * int -> t
 
     (**
-     @see <CVODE_DOC_ROOT(node5#s:)> 
+     @see <CVODE_DOC_ROOT(node9#ss:dense)> PrintMat
      *)
     val print_mat      : t -> unit
 
     (**
-     @see <CVODE_DOC_ROOT(node5#s:)> 
+     @see <CVODE_DOC_ROOT(node9#ss:dense)> SetToZero
      *)
     val set_to_zero    : t -> unit
 
     (**
-     @see <CVODE_DOC_ROOT(node5#s:)> 
+     @see <CVODE_DOC_ROOT(node9#ss:dense)> AddIdentity
      *)
     val add_identity   : t -> unit
 
     (**
-     @see <CVODE_DOC_ROOT(node5#s:)> 
+     @see <CVODE_DOC_ROOT(node9#ss:dense)> DenseCopy
      *)
     val copy     : t -> t -> unit
 
     (**
-     @see <CVODE_DOC_ROOT(node5#s:)> 
+     @see <CVODE_DOC_ROOT(node9#ss:dense)> DenseScale
      *)
     val scale    : float -> t -> unit
 
     (**
-     @see <CVODE_DOC_ROOT(node5#s:)> 
+     @raises ZeroDiagonalElement 
+     @see <CVODE_DOC_ROOT(node9#ss:dense)> DenseGETRF
      *)
     val getrf    : t -> int_array -> unit
 
     (**
-     @see <CVODE_DOC_ROOT(node5#s:)> 
+     @see <CVODE_DOC_ROOT(node9#ss:dense)> DenseGETRS
      *)
     val getrs    : t -> int_array -> real_array -> unit
 
     (**
-     @see <CVODE_DOC_ROOT(node5#s:)> 
+     @see <CVODE_DOC_ROOT(node9#ss:dense)> DensePOTRF
      *)
     val potrf    : t -> unit
 
     (**
-     @see <CVODE_DOC_ROOT(node5#s:)> 
+     @see <CVODE_DOC_ROOT(node9#ss:dense)> DensePOTRS
      *)
     val potrs    : t -> real_array -> unit
 
     (**
-     @see <CVODE_DOC_ROOT(node5#s:)> 
+     @see <CVODE_DOC_ROOT(node9#ss:dense)> DenseGEQRF
      *)
     val geqrf    : t -> real_array -> real_array -> unit
 
     (**
-     @see <CVODE_DOC_ROOT(node5#s:)> 
+     @see <CVODE_DOC_ROOT(node9#ss:dense)> DenseORMQR
      *)
     type ormqr = {
           beta : real_array;
@@ -270,168 +291,179 @@ module Densematrix :
         }
 
     (**
-     @see <CVODE_DOC_ROOT(node5#s:)> 
+     @see <CVODE_DOC_ROOT(node9#ss:dense)> DenseORMQR
      *)
     val ormqr : t -> ormqr -> unit
 
     (**
-     @see <CVODE_DOC_ROOT(node5#s:)> 
+     @see <CVODE_DOC_ROOT(node9#s:dls)> DENSE_ELEM
      *)
     val get : t -> (int * int) -> float
 
     (**
-     @see <CVODE_DOC_ROOT(node5#s:)> 
+     @see <CVODE_DOC_ROOT(node9#s:dls)> DENSE_ELEM
      *)
     val set : t -> (int * int) -> float -> unit
 
     module Direct :
       sig
         (**
-         @see <CVODE_DOC_ROOT(node5#s:)> 
+        This type is essentially a [realtype **] returned from a call to
+        {!new_dense_mat}.
+
+         @see <CVODE_DOC_ROOT(node9#ss:dense)> Small dense matrices
+         @see <CVODE_DOC_ROOT(node9#ss:dense)> newDenseMat 
          *)
         type t
 
         (**
-         @see <CVODE_DOC_ROOT(node5#s:)> 
+         @see <CVODE_DOC_ROOT(node9#ss:dense)> newDenseMat
          *)
         val new_dense_mat  : int * int -> t
 
         (**
-         @see <CVODE_DOC_ROOT(node5#s:)> 
          *)
         val get : t -> (int * int) -> float
 
         (**
-         @see <CVODE_DOC_ROOT(node5#s:)> 
          *)
         val set : t -> (int * int) -> float -> unit
 
         (**
-         @see <CVODE_DOC_ROOT(node5#s:)> 
+         @see <CVODE_DOC_ROOT(node9#ss:dense)> denseCopy
          *)
         val copy  : t -> t -> int * int -> unit
 
-        (**
-         @see <CVODE_DOC_ROOT(node5#s:)> 
+        (*
+         @see <CVODE_DOC_ROOT(node9#ss:dense)> denseScale
          *)
         val scale : float -> t -> int * int -> unit
 
         (**
-         @see <CVODE_DOC_ROOT(node5#s:)> 
+         @see <CVODE_DOC_ROOT(node9#ss:dense)> denseAddIdentity
          *)
         val add_identity : t -> int -> unit
 
         (**
-         @see <CVODE_DOC_ROOT(node5#s:)> 
+         @raises ZeroDiagonalElement 
+         @see <CVODE_DOC_ROOT(node9#ss:dense)> denseGETRF
          *)
         val getrf : t -> int * int -> int_array -> unit
 
         (**
-         @see <CVODE_DOC_ROOT(node5#s:)> 
+         @see <CVODE_DOC_ROOT(node9#ss:dense)> denseGETRS
          *)
         val getrs : t -> int -> int_array -> real_array -> unit
 
         (**
-         @see <CVODE_DOC_ROOT(node5#s:)> 
+         @see <CVODE_DOC_ROOT(node9#ss:dense)> densePOTRF
          *)
         val potrf : t -> int -> unit
 
         (**
-         @see <CVODE_DOC_ROOT(node5#s:)> 
+         @see <CVODE_DOC_ROOT(node9#ss:dense)> densePOTRS
          *)
         val potrs : t -> int -> real_array -> unit
 
         (**
-         @see <CVODE_DOC_ROOT(node5#s:)> 
+         @see <CVODE_DOC_ROOT(node9#ss:dense)> denseGEQRF
          *)
         val geqrf : t -> int * int -> real_array -> real_array -> unit
 
         (**
-         @see <CVODE_DOC_ROOT(node5#s:)> 
+         @see <CVODE_DOC_ROOT(node9#ss:dense)> denseORMQR
          *)
         val ormqr : t -> int * int -> ormqr -> unit
       end
   end
 
-(** {3 Banded linear solver} *)
+(** {3 Banded linear solver}
+ @see <CVODE_DOC_ROOT(node9#ss:band)> The BAND Module
+ *)
 
 module Bandmatrix :
   sig
     (**
-     @see <CVODE_DOC_ROOT(node5#s:)> 
+    This type is essentially a [DlsMat] returned from a call to
+    {!new_band_mat}.
+
+     @see <CVODE_DOC_ROOT(node9#s:dls)>  Type DlsMat
+     @see <CVODE_DOC_ROOT(node9#ss:band)> NewBandMat 
      *)
     type t
 
     (**
-     @see <CVODE_DOC_ROOT(node5#s:)> 
+     TODO: n, mu, ml, smu
+     @see <CVODE_DOC_ROOT(node9#ss:band)> NewBandMat
      *)
-    val new_band_mat : int * int * int * int -> t (* n, mu, ml, smu *)
+    val new_band_mat : int * int * int * int -> t
 
     (**
-     @see <CVODE_DOC_ROOT(node5#s:)> 
+     @see <CVODE_DOC_ROOT(node9#ss:band)> PrintMat
      *)
     val print_mat : t -> unit
 
 
     (**
-     @see <CVODE_DOC_ROOT(node5#s:)> 
+     @see <CVODE_DOC_ROOT(node9#ss:band)> SetToZero
      *)
     val set_to_zero    : t -> unit
 
     (**
-     @see <CVODE_DOC_ROOT(node5#s:)> 
+     @see <CVODE_DOC_ROOT(node9#ss:band)> AddIdentity
      *)
     val add_identity   : t -> unit
 
     (**
-     @see <CVODE_DOC_ROOT(node5#s:)> 
+     @see <CVODE_DOC_ROOT(node9#ss:band)> BandCopy
      *)
     val copy : t -> t -> int -> int -> unit
 
     (**
-     @see <CVODE_DOC_ROOT(node5#s:)> 
+     @see <CVODE_DOC_ROOT(node9#ss:band)> BandScale
      *)
     val scale : float -> t -> unit
 
     (**
-     @see <CVODE_DOC_ROOT(node5#s:)> 
+     @see <CVODE_DOC_ROOT(node9#ss:band)> BandGBTRF
      *)
     val gbtrf : t -> int_array -> unit
 
     (**
-     @see <CVODE_DOC_ROOT(node5#s:)> 
+     @see <CVODE_DOC_ROOT(node9#ss:band)> BandGBTRS
      *)
     val gbtrs : t -> int_array -> real_array -> unit
 
     (**
-     @see <CVODE_DOC_ROOT(node5#s:)> 
+     @see <CVODE_DOC_ROOT(node9#s:dls)> BAND_ELEM
      *)
     val get : t -> (int * int) -> float
 
     (**
-     @see <CVODE_DOC_ROOT(node5#s:)> 
+     @see <CVODE_DOC_ROOT(node9#s:dls)> BAND_ELEM
      *)
     val set : t -> (int * int) -> float -> unit
 
     module Col :
       sig
         (**
-         @see <CVODE_DOC_ROOT(node5#s:)> 
+         TODO: explain this type
+         @see <CVODE_DOC_ROOT(node9#s:dls)> BAND_COL
          *)
         type c
 
         (**
-         @see <CVODE_DOC_ROOT(node5#s:)> 
+         @see <CVODE_DOC_ROOT(node9#s:dls)> BAND_COL
          *)
         val get_col : t -> int -> c
 
         (**
-         @see <CVODE_DOC_ROOT(node5#s:)> 
+         @see <CVODE_DOC_ROOT(node9#s:dls)> BAND_COL_ELEM
          *)
         val get : c -> int -> int -> float
 
         (**
-         @see <CVODE_DOC_ROOT(node5#s:)> 
+         @see <CVODE_DOC_ROOT(node9#s:dls)> BAND_COL_ELEM
          *)
         val set : c -> int -> int -> float -> unit
       end
@@ -439,55 +471,58 @@ module Bandmatrix :
     module Direct :
       sig
         (**
-         @see <CVODE_DOC_ROOT(node5#s:)> 
+        This type is essentially a [realtype **] returned from a call to
+        {!new_band_mat}.
+
+         @see <CVODE_DOC_ROOT(node9#ss:band)> Small band matrices
+         @see <CVODE_DOC_ROOT(node9#ss:band)> NewBandMat 
          *)
         type t
 
         (**
-         @see <CVODE_DOC_ROOT(node5#s:)> 
+         TODO: n smu ml
+         @see <CVODE_DOC_ROOT(node9#ss:band)> newBandMat
          *)
-        val new_band_mat : int * int * int -> t (* n smu ml *)
+        val new_band_mat : int * int * int -> t
 
         (**
-         @see <CVODE_DOC_ROOT(node5#s:)> 
          *)
         val get : t -> (int * int) -> float
 
         (**
-         @see <CVODE_DOC_ROOT(node5#s:)> 
          *)
         val set : t -> (int * int) -> float -> unit
 
         (**
-         @see <CVODE_DOC_ROOT(node5#s:)> 
+         TODO:  a    b    n     a_smu  b_smu  copymu  copyml
+         @see <CVODE_DOC_ROOT(node9#ss:band)> bandCopy
          *)
         val copy : t -> t -> int -> int -> int -> int -> int -> unit
-               (*  a    b    n     a_smu  b_smu  copymu  copyml *)
 
         (**
-         @see <CVODE_DOC_ROOT(node5#s:)> 
+         TODO:  c         a    n      mu     ml     smu
+         @see <CVODE_DOC_ROOT(node9#ss:band)> bandScale
          *)
         val scale : float -> t -> int -> int -> int -> int -> unit
-               (*  c         a    n      mu     ml     smu *)
 
         (**
-         @see <CVODE_DOC_ROOT(node5#s:)> 
+         TODO: a    n      smu
+         @see <CVODE_DOC_ROOT(node9#ss:band)> bandAddIdentity
          *)
         val add_identity : t -> int -> int -> unit
-               (*          a    n      smu *)
 
         (**
-         @see <CVODE_DOC_ROOT(node5#s:)> 
+         TODO: a    n      mu     ml     smu    p
+         @see <CVODE_DOC_ROOT(node9#ss:band)> bandGBTRF
          *)
         val gbtrf : t -> int -> int -> int -> int -> int_array -> unit
-               (*   a    n      mu     ml     smu    p *)
 
         (**
-         @see <CVODE_DOC_ROOT(node5#s:)> 
+         TODO: a    n      smu    ml     p            b
+         @see <CVODE_DOC_ROOT(node9#ss:band)> bandGBTRS
          *)
         val gbtrs
             : t -> int -> int -> int -> int_array -> real_array -> unit
-            (*a    n      smu    ml     p            b *)
       end
   end
 
