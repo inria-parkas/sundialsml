@@ -24,8 +24,8 @@ include module type of Sundials
  Specify a linear multistep method in {!Cvode_serial.init} and
  {!Cvode_nvector.init}.
 
- @see <CVODE_DOC_ROOT(node3#ss:ivp_sol)> IVP Solution
- @see <CVODE_DOC_ROOT(node5#sss:cvodemalloc)> CVodeCreate
+ @cvode <node3#ss:ivp_sol> IVP Solution
+ @cvode <node5#sss:cvodemalloc> CVodeCreate
  *)
 type lmm =
   | Adams   (** Non-stiff systems; Adams-Moulton formulas *)
@@ -255,7 +255,7 @@ module Densematrix :
     val scale    : float -> t -> unit
 
     (**
-     @raises ZeroDiagonalElement 
+     @raise ZeroDiagonalElement Zero found in matrix diagonal
      @see <CVODE_DOC_ROOT(node9#ss:dense)> DenseGETRF
      *)
     val getrf    : t -> int_array -> unit
@@ -345,7 +345,7 @@ module Densematrix :
         val add_identity : t -> int -> unit
 
         (**
-         @raises ZeroDiagonalElement 
+         @raise ZeroDiagonalElement Zero found in matrix diagonal
          @see <CVODE_DOC_ROOT(node9#ss:dense)> denseGETRF
          *)
         val getrf : t -> int * int -> int_array -> unit

@@ -57,14 +57,18 @@ cvode_ml_ba.o: cvode_ml_nvec.c
 cvode_ml_nvec.o: cvode_ml_nvec.c
 nvector_ml.o: nvector_ml.c
 
+dochtml.cmo: INCLUDES += -I +ocamldoc
+
 META: META.in
 	@$(ECHO) "version = \"$(VERSION)\"" > $@
 	@$(CAT) $< >> $@
 
 doc: doc/html/index.html
 
-doc/html/index.html: $(MLOBJ:.cmo=.mli) $(MLOBJ:.cmo=.cmi) intro.doc
-	$(OCAMLDOC) -html		\
+doc/html/index.html: dochtml.cmo \
+    		     $(MLOBJ:.cmo=.mli) $(MLOBJ:.cmo=.cmi) intro.doc
+	$(OCAMLDOC) -g dochtml.cmo \
+	    -cvode-doc-root "$(CVODE_DOC_ROOT)" \
 	    -pp "$(DOCPP)"		\
 	    -d ./doc/html/		\
 	    -t "Sundials (-CVODE)"	\
@@ -97,6 +101,7 @@ clean:
 	-@$(RM) -f $(COBJ) cvode.annot
 	-@$(RM) -f $(MLOBJ:.cmo=.cma) $(MLOBJ:.cmo=.cmxa)
 	-@$(RM) -f sundials_cvode$(XA)
+	-@$(RM) -f dochtml.cmi dochtml.cmo
 
 cleanall: clean
 	-@$(RM) -f $(MLOBJ:.cmo=.cmi)

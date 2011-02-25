@@ -10,6 +10,8 @@ cvode_nvector.cmo: sundials.cmi nvector.cmi cvode.cmi cvode_nvector.cmi
 cvode_nvector.cmx: sundials.cmx nvector.cmx cvode.cmx cvode_nvector.cmi
 cvode_serial.cmo: sundials.cmi cvode.cmi cvode_serial.cmi
 cvode_serial.cmx: sundials.cmx cvode.cmx cvode_serial.cmi
+dochtml.cmo:
+dochtml.cmx:
 nvector.cmo: nvector.cmi
 nvector.cmx: nvector.cmi
 nvector_array.cmo: sundials.cmi nvector.cmi nvector_array.cmi
