@@ -1092,7 +1092,9 @@ CAMLprim value c_densematrix_new_dense_mat(value vmn)
 CAMLprim value c_densematrix_print_mat(value va)
 {
     CAMLparam1(va);
+    fflush(stdout);
     PrintMat(DLSMAT(va));
+    fflush(stdout);
     CAMLreturn0;
 }
 
@@ -1168,12 +1170,12 @@ CAMLprim value c_densematrix_ormqr(value va, value vormqr)
 {
     CAMLparam2(va, vormqr);
 
-    realtype *beta = REAL_ARRAY(Field(vormqr, RECORD_DENSEMATRIX_ORMQR_BETA));
-    realtype *vn   = REAL_ARRAY(Field(vormqr, RECORD_DENSEMATRIX_ORMQR_VN));
-    realtype *vm   = REAL_ARRAY(Field(vormqr, RECORD_DENSEMATRIX_ORMQR_VM));
-    realtype *work = REAL_ARRAY(Field(vormqr, RECORD_DENSEMATRIX_ORMQR_WORK));
+    realtype *beta = REAL_ARRAY(Field(vormqr, 0));
+    realtype *vv   = REAL_ARRAY(Field(vormqr, 1));
+    realtype *vw   = REAL_ARRAY(Field(vormqr, 2));
+    realtype *work = REAL_ARRAY(Field(vormqr, 3));
 
-    DenseORMQR(DLSMAT(va), beta, vn, vm, work);
+    DenseORMQR(DLSMAT(va), beta, vv, vw, work);
     CAMLreturn0;
 }
  
@@ -1247,7 +1249,7 @@ CAMLprim value c_densematrix_direct_get(value va, value vij)
     int i = Int_val(Field(vij, 0));
     int j = Int_val(Field(vij, 1));
 
-    CAMLreturn(caml_copy_double(DDENSEMAT(va)[i][j]));
+    CAMLreturn(caml_copy_double(DDENSEMAT(va)[j][i]));
 }
 
 CAMLprim value c_densematrix_direct_set(value va, value vij, value vv)
@@ -1257,7 +1259,7 @@ CAMLprim value c_densematrix_direct_set(value va, value vij, value vv)
     int i = Int_val(Field(vij, 0));
     int j = Int_val(Field(vij, 1));
 
-    DDENSEMAT(va)[i][j] = Double_val(vv);
+    DDENSEMAT(va)[j][i] = Double_val(vv);
 
     CAMLreturn0;
 }
@@ -1348,12 +1350,12 @@ CAMLprim value c_densematrix_direct_ormqr(value va, value vmn, value vormqr)
     int m = Int_val(Field(vmn, 0));
     int n = Int_val(Field(vmn, 1));
 
-    realtype *beta = REAL_ARRAY(Field(vormqr, RECORD_DENSEMATRIX_ORMQR_BETA));
-    realtype *vn   = REAL_ARRAY(Field(vormqr, RECORD_DENSEMATRIX_ORMQR_VN));
-    realtype *vm   = REAL_ARRAY(Field(vormqr, RECORD_DENSEMATRIX_ORMQR_VM));
-    realtype *work = REAL_ARRAY(Field(vormqr, RECORD_DENSEMATRIX_ORMQR_WORK));
+    realtype *beta = REAL_ARRAY(Field(vormqr, 0));
+    realtype *vv   = REAL_ARRAY(Field(vormqr, 1));
+    realtype *vw   = REAL_ARRAY(Field(vormqr, 2));
+    realtype *work = REAL_ARRAY(Field(vormqr, 3));
 
-    denseORMQR(DDENSEMAT(va), m, n, beta, vn, vm, work);
+    denseORMQR(DDENSEMAT(va), m, n, beta, vv, vw, work);
     CAMLreturn0;
 }
 
@@ -1456,29 +1458,30 @@ CAMLprim value c_bandmatrix_col_get_col(value vmatrix, value vj)
     if (j < 0 || j >= m->N)
 	caml_invalid_argument("Bandmatrix.Col.get_col: invalid j");
 
-    r = caml_alloc(3, Abstract_tag);
-    Store_field(r, 1, Val_int(m->mu));
-    Store_field(r, 2, Val_int(m->ml));
+    r = caml_alloc(4, Abstract_tag);
+    Store_field(r, 2, Val_int(m->mu));
+    Store_field(r, 3, Val_int(m->ml));
 #else
-    r = caml_alloc(1, Abstract_tag);
+    r = caml_alloc(2, Abstract_tag);
 #endif
 
     Store_field(r, 0, (value)BAND_COL(m, j));
+    Store_field(r, 1, vmatrix); /* avoid gc of underlying matrix! */
     CAMLreturn(r);
 }
 
-CAMLprim value c_bandmatrix_col_get(value vbcol, value vi, value vj)
+CAMLprim value c_bandmatrix_col_get(value vbcol, value vij)
 {
-    CAMLparam3(vbcol, vi, vj);
+    CAMLparam2(vbcol, vij);
 
     realtype *bcol = (realtype *)Field(vbcol, 0);
 
-    int i = Int_val(vi);
-    int j = Int_val(vj);
+    int i = Int_val(Field(vij, 0));
+    int j = Int_val(Field(vij, 1));
 
 #if CHECK_MATRIX_ACCESS == 1
-    int mu = Int_val(Field(vbcol, 1));
-    int ml = Int_val(Field(vbcol, 2));
+    int mu = Int_val(Field(vbcol, 2));
+    int ml = Int_val(Field(vbcol, 3));
 
     if (i < (j - mu) || i > (j + ml))
 	caml_invalid_argument("Bandmatrix.Col.get: invalid i");
@@ -1487,18 +1490,18 @@ CAMLprim value c_bandmatrix_col_get(value vbcol, value vi, value vj)
     CAMLreturn(caml_copy_double(BAND_COL_ELEM(bcol, i, j)));
 }
 
-CAMLprim value c_bandmatrix_col_set(value vbcol, value vi, value vj, value ve)
+CAMLprim value c_bandmatrix_col_set(value vbcol, value vij, value ve)
 {
-    CAMLparam4(vbcol, vi, vj, ve);
+    CAMLparam3(vbcol, vij, ve);
 
     realtype *bcol = (realtype *)Field(vbcol, 0);
 
-    int i = Int_val(vi);
-    int j = Int_val(vj);
+    int i = Int_val(Field(vij, 0));
+    int j = Int_val(Field(vij, 1));
 
 #if CHECK_MATRIX_ACCESS == 1
-    int mu = Int_val(Field(vbcol, 1));
-    int ml = Int_val(Field(vbcol, 2));
+    int mu = Int_val(Field(vbcol, 2));
+    int ml = Int_val(Field(vbcol, 3));
 
     if (i < (j - mu) || i > (j + ml))
 	caml_invalid_argument("Bandmatrix.Col.set: invalid i");

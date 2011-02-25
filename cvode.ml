@@ -179,15 +179,11 @@ module Densematrix =
     external geqrf    : t -> real_array -> real_array -> unit
         = "c_densematrix_geqrf"
 
-    type ormqr = {
-          beta : real_array;
-          vn   : real_array;
-          vm   : real_array;
-          work : real_array;
-        }
-
-    external ormqr : t -> ormqr -> unit
+    external ormqr'
+        : t -> (real_array * real_array * real_array * real_array) -> unit
         = "c_densematrix_ormqr"
+
+    let ormqr ~a ~beta ~v ~w ~work = ormqr' a (beta, v, w, work)
 
     external get : t -> (int * int) -> float
         = "c_densematrix_get"
@@ -232,8 +228,13 @@ module Densematrix =
         external geqrf : t -> int * int -> real_array -> real_array -> unit
             = "c_densematrix_direct_geqrf"
 
-        external ormqr : t -> int * int -> ormqr -> unit
+        external ormqr'
+            : t -> int * int
+              -> (real_array * real_array * real_array * real_array)
+              -> unit
             = "c_densematrix_direct_ormqr"
+
+        let ormqr ~a ~mn ~beta ~v ~w ~work = ormqr' a mn (beta, v, w, work)
       end
   end
 
@@ -282,10 +283,10 @@ module Bandmatrix =
         external get_col : t -> int -> c
             = "c_bandmatrix_col_get_col"
 
-        external get : c -> int -> int -> float
+        external get : c -> (int * int) -> float
             = "c_bandmatrix_col_get"
 
-        external set : c -> int -> int -> float -> unit
+        external set : c -> (int * int) -> float -> unit
             = "c_bandmatrix_col_set"
       end
 

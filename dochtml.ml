@@ -37,7 +37,9 @@ class dochtml =
         and title = Str.matched_group 3 s
         in
         Printf.sprintf
-          " <div class=\"cvode\">CVODE docs: <a href=\"%s%s.html%s\">%s</a></div> "
+          "<div class=\"cvode\"><small>
+              See sundials: <a href=\"%s%s.html%s\">%s</a>
+            </small></div>"
           !cvode_doc_root page anchor title
 
     initializer
