@@ -1,3 +1,20 @@
+(***********************************************************************)
+(*                                                                     *)
+(*              Ocaml interface to Sundials CVODE solver               *)
+(*                                                                     *)
+(*       Timothy Bourke (INRIA Rennes) and Marc Pouzet (LIENS)         *)
+(*                                                                     *)
+(*  Copyright 2011 Institut National de Recherche en Informatique et   *)
+(*  en Automatique.  All rights reserved.  This file is distributed    *)
+(*  under the terms of the GNU Library General Public License, with    *)
+(*  the special exception on linking described in file LICENSE.        *)
+(*                                                                     *)
+(***********************************************************************)
+
+(**
+ Custom tags for the ocamldoc comments:
+    @cvode          link to Sundials CVODE documentation
+ *)
 
 let cvode_doc_root =
   ref "https://computation.llnl.gov/casc/sundials/documentation/cv_guide/"
@@ -5,7 +22,6 @@ let cvode_doc_root =
 class dochtml =
   object(self)
     inherit Odoc_html.html
-
 
     val rex_cvode = Str.regexp "<\\([^#>]*\\)\\(#[^)]*\\)?> \\(.*\\)"
 
