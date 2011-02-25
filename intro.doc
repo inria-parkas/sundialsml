@@ -37,6 +37,10 @@ Rather than try to duplicate or replace the comprehensive
 Sundials user manuals}, this documentation provides hyperlinks back to the original
 function descriptions and focuses instead on differences between the
 original library and the Ocaml interface.
+Most of the single line descriptions of functions have, however, been taken
+directly from the original manual written by Alan C. Hindmarsh and Radu
+Serban of the {e Center for Applied Scientific Computing, 
+Lawrence Livermore National Laboratory}.
 
 The top level {!Sundials} module provides some utility routines for dealing
 with arrays of floats and integers, and for accessing certain constants

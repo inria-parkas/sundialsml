@@ -11,6 +11,16 @@
 (*                                                                     *)
 (***********************************************************************)
 
+(***********************************************************************)
+(* Much of the comment text is taken directly from:                    *)
+(*                                                                     *)
+(*               User Documentation for CVODE v2.6.0                   *)
+(*                Alan C. Hindmarsh and Radu Serban                    *)
+(*              Center for Applied Scientific Computing                *)
+(*              Lawrence Livermore National Laboratory                 *)
+(*                                                                     *)
+(***********************************************************************)
+
 (** Define abstract NVectors using imperative or functional operations
 
  @version VERSION()

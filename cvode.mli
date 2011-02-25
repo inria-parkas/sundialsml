@@ -11,6 +11,16 @@
 (*                                                                     *)
 (***********************************************************************)
 
+(***********************************************************************)
+(* Much of the comment text is taken directly from:                    *)
+(*                                                                     *)
+(*               User Documentation for CVODE v2.6.0                   *)
+(*                Alan C. Hindmarsh and Radu Serban                    *)
+(*              Center for Applied Scientific Computing                *)
+(*              Lawrence Livermore National Laboratory                 *)
+(*                                                                     *)
+(***********************************************************************)
+
 (** Vector-independent types and values for the CVODE solver.
 
  @version VERSION()
@@ -376,10 +386,10 @@ module Densematrix :
          This type represents a [realtype **] returned from a call to
          {!new_dense_mat}.
 
-         The underlying array cannot be exposed directly in Ocaml as a Bigarray
-         because it is an array of arrays (an lliffe vector) and, anyway, there
-         is no simple way to attach a custom finalize function to such a big
-         array.
+         The underlying array cannot be exposed directly in Ocaml as a
+         {{:OCAML_DOC_ROOT(Bigarray)} Bigarray} because it is an array of arrays
+         (an lliffe vector) and, anyway, there is no simple way to attach a
+         custom finalize function to such a big array.
 
          @cvode <node9#ss:dense> Small dense matrices
          @cvode <node9#ss:dense> newDenseMat 
@@ -599,9 +609,9 @@ module Bandmatrix :
         (**
          This type represents a bandmatrix ([DlsMat]) column.
 
-         The underlying array cannot be exposed directly in Ocaml as a Bigarray
-         because there is no simple way to attach a custom finalize function to
-         such a big array.
+         The underlying array cannot be exposed directly in Ocaml as a
+         {{:OCAML_DOC_ROOT(Bigarray)} Bigarray} because there is no simple way
+         to attach a custom finalize function to such a big array.
 
          @cvode <node9#s:dls> BAND_COL
          *)
@@ -643,10 +653,10 @@ module Bandmatrix :
          This type represents a [realtype **] returned from a call to
          {!new_band_mat}.
 
-         The underlying array cannot be exposed directly in Ocaml as a Bigarray
-         because it is an array of arrays (an lliffe vector) and, anyway, there
-         is no simple way to attach a custom finalize function to such a big
-         array.
+         The underlying array cannot be exposed directly in Ocaml as a
+         {{:OCAML_DOC_ROOT(Bigarray)} Bigarray} because it is an array of arrays
+         (an lliffe vector) and, anyway, there is no simple way to attach a
+         custom finalize function to such a big array.
 
          @cvode <node9#ss:band> NewBandMat 
          *)

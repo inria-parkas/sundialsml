@@ -672,34 +672,6 @@ value cvode_ml_unit_roundoff()
 #define REAL_ARRAY(v) ((realtype *)Caml_ba_data_val(v))
 #define REAL_ARRAY2(v) ((realtype **)Caml_ba_data_val(v))
 
-CAMLprim value c_last_step_size(value vcvode_mem)
-{
-    CAMLparam1(vcvode_mem);
-
-    CVODE_MEM_FROM_ML(cvode_mem, vcvode_mem);
-    int flag;
-    realtype hlast;
-
-    flag = CVodeGetLastStep(cvode_mem, &hlast);
-    CHECK_FLAG("CVodeGetLastStep", flag);
-
-    CAMLreturn(caml_copy_double(hlast));
-}
-
-CAMLprim value c_next_step_size(value vcvode_mem)
-{
-    CAMLparam1(vcvode_mem);
-
-    CVODE_MEM_FROM_ML(cvode_mem, vcvode_mem);
-    int flag;
-    realtype hcur;
-
-    flag = CVodeGetCurrentStep(cvode_mem, &hcur);
-    CHECK_FLAG("CVodeGetCurrentStep", flag);
-
-    CAMLreturn(caml_copy_double(hcur));
-}
-
 CAMLprim value c_get_work_space(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);

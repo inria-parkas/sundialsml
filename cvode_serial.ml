@@ -104,12 +104,6 @@ let init lmm iter f roots y0 = init' lmm iter f roots y0 0.0
 external get_integrator_stats   : session -> integrator_stats
     = "c_get_integrator_stats"
 
-external last_step_size         : session -> float
-    = "c_last_step_size"
-
-external next_step_size         : session -> float
-    = "c_next_step_size"
-
 external get_work_space         : session -> int * int
     = "c_get_work_space"
 
