@@ -47,12 +47,11 @@ MKDIR=mkdir -p
 RMDIR=rmdir
 SED=sed
 
-#EXAMPLES_ROOT = /usr/local/examples
-EXAMPLES_ROOT = /home/tbourke/software/sundials-2.4.0/examples
+EXAMPLES_ROOT = /usr/local/examples
 
 # If sundials is configured with --with-blas or --with-lapack
 # then the extra library dependency must also be included below
-LAPACK_LIB = -lSimTKlapack
+# LAPACK_LIB = -lSimTKlapack
 
 UNIX = unix.cma
 UNIXX = unix.cmxa
