@@ -729,24 +729,74 @@ module BandPrec :
 
 module Spils :
   sig
+    (** {4 Optional output functions} *)
+
+    (**
+      Arguments passed to the preconditioner solve callback function.
+
+      @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
+     *)
     type solve_arg =
       {
-        rhs   : val_array;
-        gamma : float;
-        delta : float;
-        left  : bool; (* true: left, false: right *)
+        rhs   : val_array;  (** The right-hand side vector, {i r}, of the
+                                linear system. *)
+        gamma : float;      (** The scalar {i g} appearing in the Newton
+                                matrix given by M = I - {i g}J. *)
+        delta : float;      (** Input tolerance to be used if an
+                                iterative method is employed in the
+                                solution. *)
+        left  : bool;       (** [true] (1) if the left preconditioner
+                                is to be used and [false] (2) if the
+                                right preconditioner is to be used. *)
       }
 
-    type gramschmidt_type =
-      | ModifiedGS
-      | ClassicalGS
+    (**
+      Setup preconditioning for any of the SPILS linear solvers. Two functions
+      are required: [psetup] and [psolve].
 
+      [psetup jac jok gamma] preprocesses and/or evaluates any Jacobian-related
+      data needed by the preconditioner. It takes three inputs:
+        - [jac] supplies the basic problem data as a {!jacobian_arg}.
+        - [jok] indicates whether any saved Jacobian-related data can be reused.
+        If [false] any such data must be recomputed from scratch, otherwise, if
+        [true], any such data saved from a previous call to the function can
+        be reused, with the current value of [gamma]. A call with [jok] =
+        [true] can only happen after an earlier call with [jok] = [false].
+        - [gamma] is the scalar {i g} appearing in the Newton matrix given
+        by M = I - {i g}J.
+
+      It must return [true] if the Jacobian-related data was updated, or
+      [false] otherwise, i.e. if the saved data was reused.
+
+      [psolve jac arg z] is called to solve the linear system
+      {i P}[z] = [jac.rhs], where {i P} may be either a left or right
+      preconditioner matrix. {i P} should approximate, however crudely, the
+      Newton matrix M = I - [jac.gamma] J, where J = delr(f) / delr(y).
+      - [jac] supplies the basic problem data as a {!jacobian_arg}.
+      - [arg] specifies the linear system as a {!solve_arg}.
+      - [z] is the vector in which the result must be stored.
+
+      @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
+      @cvode <node5#ss:psolveFn> Linear preconditioning function
+      @cvode <node5#ss:precondFn> Jacobian preconditioning function
+    *)
     val set_preconditioner :
       session
       -> (triple_tmp jacobian_arg -> bool -> float -> bool)
       -> (single_tmp jacobian_arg -> solve_arg -> nvec -> unit)
       -> unit
 
+    (**
+      Specifies a Jacobian-vector function.
+
+      The function given, [jactimes jac v Jv], computes the matrix-vector
+      product {i J}[v].
+      - [v] is the vector by which the Jacobian must be multiplied.
+      - [Jv] is the vector in which the result must be stored.
+
+      @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
+      @cvode <node5#ss:jtimesFn> Product Jacobian function
+    *)
     val set_jac_times_vec_fn :
       session
       -> (single_tmp jacobian_arg
@@ -754,23 +804,117 @@ module Spils :
           -> val_array (* Jv *)
           -> unit)
       -> unit
+
+    (**
+      This function disables the user-supplied Jacobian-vector function, and
+      switches back to the default internal difference quotient approximation.
+      It is equivalent to calling CVSpilsSetJacTimesVecFn with an argument of
+      [NULL].
+
+      @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
+      @cvode <node5#ss:jtimesFn> Product Jacobian function
+    *)
     val clear_jac_times_vec_fn : session -> unit
 
+    (**
+      This function resets the type of preconditioning to be used using a value
+      of type {!Cvode.preconditioning_type}.
+
+      @cvode <node5#sss:optin_spils> CVSpilsSetPrecType
+    *)
     val set_prec_type : session -> preconditioning_type -> unit
 
-    val set_gs_type :
-      session -> gramschmidt_type -> unit
+    (** Constants representing the types of Gram-Schmidt orthogonalization
+        possible for the Spgmr {Cvode.linear_solver}. *)
+    type gramschmidt_type =
+      | ModifiedGS
+            (** Modified Gram-Schmidt orthogonalization (MODIFIED_GS) *)
+      | ClassicalGS
+            (** Classical Gram Schmidt orthogonalization (CLASSICAL_GS) *)
 
+    (**
+      Sets the Gram-Schmidt orthogonalization to be used with the
+      Spgmr {!Cvode.linear_solver}.
+
+      @cvode <node5#sss:optin_spils> CVSpilsSetGSType
+    *)
+    val set_gs_type : session -> gramschmidt_type -> unit
+
+    (**
+      [set_eps_lin eplifac] sets the factor by which the Krylov linear solver's
+      convergence test constant is reduced from the Newton iteration test
+      constant. [eplifac]  must be >= 0. Passing a value of 0 specifies the
+      default (which is 0.05).
+
+      @cvode <node5#sss:optin_spils> CVSpilsSetEpsLin
+    *)
     val set_eps_lin : session -> float -> unit
 
+    (**
+      [set_maxl maxl] resets the maximum Krylov subspace dimension for the
+      Bi-CGStab or TFQMR methods. [maxl] is the maximum dimension of the Krylov
+      subspace, a value of [maxl] <= 0 specifies the default (which is 5.0).
+
+      @cvode <node5#sss:optin_spils> CVSpilsSetMaxl
+    *)
     val set_maxl : session -> int -> unit
 
+    (** {4 Optional input functions} *)
+
+    (**
+      Returns the sizes of the real and integer workspaces used by the SPGMR
+      linear solver.
+
+      @cvode <node5#sss:optout_spils> CVSpilsGetWorkSpace
+      @return ([real_size], [integer_size])
+    *)
     val get_work_space       : session -> int * int
-    val get_num_prec_evals   : session -> int
-    val get_num_prec_solves  : session -> int
+
+    (**
+      Returns the cumulative number of linear iterations.
+
+      @cvode <node5#sss:optout_spils> CVSpilsGetNumLinIters
+    *)
     val get_num_lin_iters    : session -> int
+
+    (**
+      Returns the cumulative number of linear convergence failures.
+
+      @cvode <node5#sss:optout_spils> CVSpilsGetNumConvFails
+    *)
     val get_num_conv_fails   : session -> int
+
+    (**
+      Returns the number of preconditioner evaluations, i.e., the number of
+      calls made to psetup with jok = [false] (see {!set_preconditioner}).
+
+      @cvode <node5#sss:optout_spils> CVSpilsGetNumPrecEvals
+    *)
+    val get_num_prec_evals   : session -> int
+
+    (**
+      Returns the cumulative number of calls made to the preconditioner solve
+      function, psolve (see {!set_preconditioner}).
+
+      @cvode <node5#sss:optout_spils> CVSpilsGetNumPrecSolves
+    *)
+    val get_num_prec_solves  : session -> int
+
+    (**
+      Returns the cumulative number of calls made to the Jacobian-vector
+      function, jtimes (see {! set_jac_times_vec_fn}).
+
+      @cvode <node5#sss:optout_spils> CVSpilsGetNumJtimesEvals
+    *)
     val get_num_jtimes_evals : session -> int
+
+    (**
+      Returns the number of calls to the user right-hand side function for
+      finite difference Jacobian-vector product approximation. This counter is
+      only updated if the default difference quotient function is used.
+
+      @cvode <node5#sss:optout_spils> CVSpilsGetNumRhsEvals
+    *)
     val get_num_rhs_evals    : session -> int
   end
 

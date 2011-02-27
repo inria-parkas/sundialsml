@@ -26,11 +26,16 @@
  @version VERSION()
  @author Timothy Bourke (INRIA)
  @author Marc Pouzet (LIENS)
- @see <CVODE_DOC_ROOT(node7#s:nvector)> CVode:6
+ @cvode <node7#s:nvector> The NVECTOR Module
  *)
 
+(**
+ TODO: describe this type
+ *)
 type 'a nvector
 
+(* TODO: describe each of these functions. Use the same descriptions for
+  Immutable *)
 module Mutable :
   sig
     type 'a nvector_ops = {
@@ -91,6 +96,7 @@ module Immutable :
       nvminquotient     : ('a -> 'a -> float) option;
     }
 
+    (* TODO: explain how these work with an example *)
     val from_immutable  : 'a nvector_ops -> 'a ref Mutable.nvector_ops
     val make_nvector    : 'a nvector_ops -> 'a ref -> 'a ref nvector
     val nvector_data    : 'a ref nvector -> 'a
