@@ -243,7 +243,7 @@ external get_num_nonlin_solv_conv_fails : 'a session -> int
 external get_num_g_evals                : 'a session -> int
     = "c_get_num_g_evals"
 
-type 'a single_tmp = 'a nvector
+type 'a single_tmp = 'a
 type 'a triple_tmp = 'a * 'a * 'a
 
 type ('t, 'a) jacobian_arg =

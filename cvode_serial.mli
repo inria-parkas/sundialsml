@@ -359,7 +359,7 @@ val set_iter_type : session -> iter -> unit
   Returns the real and integer workspace sizes.
 
   @cvode <node5#sss:optout_main> CVodeGetWorkSpace
-  @return ([lenrw], [leniw])
+  @return ([real_size], [integer_size])
  *)
 val get_work_space          : session -> int * int
 
@@ -573,7 +573,7 @@ val reinit : session -> float -> nvec -> unit
 
 (** {2 Linear Solvers} *)
 
-type single_tmp = nvec
+type single_tmp = val_array
 type triple_tmp = val_array * val_array * val_array
 
 (**
@@ -582,14 +582,14 @@ type triple_tmp = val_array * val_array * val_array
   @cvode <node5#ss:djacFn> Dense Jacobian function
   @cvode <node5#ss:bjacFn> Banded Jacobian function
   @cvode <node5#ss:jtimesFn> Product Jacobian function
-  @cvode <node5#ss:psolveFn> Linear Preconditioning function
-  @cvode <node5#ss:precondFn> Jacobian Preconditioning function
+  @cvode <node5#ss:psolveFn> Linear preconditioning function
+  @cvode <node5#ss:precondFn> Jacobian preconditioning function
  *)
 type 't jacobian_arg =
   {
     jac_t   : float;        (** The independent variable. *)
     jac_y   : val_array;    (** The dependent variable vector. *)
-    jac_fy  : val_array;    (** Vector for storing the results of f(t, y). *)
+    jac_fy  : val_array;    (** The derivative vector (i.e. f(t, y)). *)
     jac_tmp : 't            (** Workspace data,
                                 either {!single_tmp} or {!triple_tmp}. *)
   }
@@ -598,26 +598,84 @@ type 't jacobian_arg =
 
 module Dls :
   sig
+    (**
+     Specify a callback function that computes an approximation to the Jacobian
+     matrix J(t, y) for the Dense and Lapackdense {!Cvode.linear_solver}s.
+
+     The callback function takes the {!jacobian_arg} as an input and must store
+     the computed Jacobian as a {!Cvode.Densematrix.t}.
+     
+     @cvode <node5#sss:optin_dls> CVDlsSetDenseJacFn
+     @cvode <node5#ss:djacFn> Dense Jacobian function
+     *)
     val set_dense_jac_fn :
          session
       -> (triple_tmp jacobian_arg -> Densematrix.t -> unit)
       -> unit
 
+    (**
+      This function disables the user-supplied dense Jacobian function, and
+      switches back to the default internal difference quotient approximation
+      that comes with the Dense and Lapackdense {!Cvode.linear_solver}s. It is
+      equivalent to calling CVodeSetDenseJacFn with an argument of [NULL].
+
+      @cvode <node5#ss:djacFn> Dense Jacobian function
+    *)
     val clear_dense_jac_fn : session -> unit
 
+    (**
+     Specify a callback function that computes an approximation to the Jacobian
+     matrix J(t, y) for the Band and Lapackband {!Cvode.linear_solver}s.
+
+     The callback function takes three input arguments:
+     - [jac] the standard {!jacobian_arg} with three work vectors.
+     - [mupper] the upper half-bandwidth of the Jacobian.
+     - [mlower] the lower half-bandwidth of the Jacobian.
+     and it must store the computed Jacobian as a {!Cvode.Bandmatrix.t}.
+
+     @cvode <node5#sss:optin_dls> CVDlsSetBandJacFn
+     @cvode <node5#ss:bjacFn> Banded Jacobian function
+     *)
     val set_band_jac_fn :
          session
       -> (triple_tmp jacobian_arg -> int -> int -> Bandmatrix.t -> unit)
       -> unit
 
+    (**
+      This function disables the user-supplied band Jacobian function, and
+      switches back to the default internal difference quotient approximation
+      that comes with the Band and Lapackband {!Cvode.linear_solver}s. It is
+      equivalent to calling CVodeSetBandJacFn with an argument of [NULL].
+
+      @cvode <node5#ss:bjacFn> Banded Jacobian function
+    *)
     val clear_band_jac_fn : session -> unit
 
+    (**
+      Returns the sizes of the real and integer workspaces used by the Dense and
+      Band direct linear solvers .
+
+      @cvode <node5#sss:optout_dls> CVDlsGetWorkSpace
+      @return ([real_size], [integer_size])
+     *)
     val get_work_space : session -> int * int
 
-    (* No. of Jacobian evaluations *)
+
+    (**
+      Returns the number of calls made to the Dense and Band direct linear
+      solvers Jacobian approximation function.
+
+      @cvode <node5#sss:optout_dls> CVDlsGetNumJacEvals
+    *)
     val get_num_jac_evals : session -> int
 
-    (* No. of r.h.s. calls for finite diff. Jacobian evals. *)
+    (**
+      Returns the number of calls made to the user-supplied right-hand side
+      function due to the finite difference (Dense or Band) Jacobian
+      approximation.
+
+      @cvode <node5#sss:optout_dls> CVDlsGetNumRhsEvals
+    *)
     val get_num_rhs_evals : session -> int
   end
 
@@ -625,19 +683,45 @@ module Dls :
 
 module Diag :
   sig
+    (**
+      Returns the sizes of the real and integer workspaces used by the Diagonal
+      linear solver.
+
+      @cvode <node5#sss:optout_diag> CVDiagGetWorkSpace
+      @return ([real_size], [integer_size])
+     *)
     val get_work_space : session -> int * int
 
-    (* No. of r.h.s. calls for finite diff. Jacobian evals. *)
+    (**
+      Returns the number of calls made to the user-supplied right-hand side
+      function due to finite difference Jacobian approximation in the Diagonal
+      linear solver.
+
+      @cvode <node5#sss:optout_diag> CVDiagGetNumRhsEvals
+    *)
     val get_num_rhs_evals : session -> int
   end
 
-(** {3 Banded preconditioning} *)
+(** {3 Banded preconditioner} *)
 
 module BandPrec :
   sig
+    (**
+      Returns the sizes of the real and integer workspaces used by the serial
+      banded preconditioner module.
+
+      @cvode <node5#sss:cvbandpre> CVBandPrecGetWorkSpace
+      @return ([real_size], [integer_size])
+     *)
     val get_work_space : session -> int * int
 
-    (* No. of r.h.s. calls for finite diff. banded Jacobian evals. *)
+    (**
+      Returns the number of calls made to the user-supplied right-hand side
+      function due to finite difference banded Jacobian approximation in the
+      banded preconditioner setup function.
+
+      @cvode <node5#sss:cvbandpre> CVBandPrecGetNumRhsEvals
+    *)
     val get_num_rhs_evals : session -> int
   end
 

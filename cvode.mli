@@ -67,26 +67,57 @@ type iter =
                                                  Functions
  *)
 and linear_solver =
-  | Dense                                   (** Direct with dense matrix *)
+  | Dense                                   (** Direct with dense matrix,
+                                                see {!Cvode_serial.Dls} and
+                                                {!Cvode_nvector.Dls}.*)
   | LapackDense                             (** Direct with dense matrix,
-                                                with Lapack *)
+                                                with Lapack,
+                                                see {!Cvode_serial.Dls} and
+                                                {!Cvode_nvector.Dls}.*)
 
-  | Band of bandrange                       (** Direct with banded matrix *)
+  | Band of bandrange                       (** Direct with banded matrix,
+                                                see {!Cvode_serial.Dls}
+                                                and {!Cvode_nvector.Dls}.
+                                             *)
   | LapackBand of bandrange                 (** Direct with banded matrix
-                                                with Lapack *)
+                                                with Lapack,
+                                                see {!Cvode_serial.Dls}
+                                                and {!Cvode_nvector.Dls}.
+                                             *)
 
   | Diag                                    (** Diagonal approximation
-                                                of the Jacobian *)
-  | Spgmr of sprange                        (** Krylov Spils solver: SPGMR *)
-  | Spbcg of sprange                        (** Krylov Spils solver: SPBCG *)
-  | Sptfqmr of sprange                      (** Krylov Spils solver: SPFQMR *)
+                                                of the Jacobian,
+                                                see {!Cvode_serial.Diag}
+                                                and {!Cvode_nvector.Diag}. *)
+
+  | Spgmr of sprange                        (** Krylov Spils solver: SPGMR,
+                                                see {!Cvode_serial.Spils}
+                                                and {!Cvode_nvector.Spils}. *)
+  | Spbcg of sprange                        (** Krylov Spils solver: SPBCG,
+                                                see {!Cvode_serial.Spils}
+                                                and {!Cvode_nvector.Spils}. *)
+  | Sptfqmr of sprange                      (** Krylov Spils solver: SPFQMR,
+                                                see {!Cvode_serial.Spils}
+                                                and {!Cvode_nvector.Spils}. *)
 
   | BandedSpgmr of sprange * bandrange      (** Krylov Spils solver
-                                                with banded matrix: SPGMR *)
+                                                with banded matrix: SPGMR,
+                                                see {!Cvode_serial.Spils},
+                                                {!Cvode_serial.BandPrec},
+                                                {!Cvode_nvector.Spils}, and
+                                                {!Cvode_nvector.BandPrec}. *)
   | BandedSpbcg of sprange * bandrange      (** Krylov Spils solver
-                                                with banded matrix: SPBCG *)
+                                                with banded matrix: SPBCG,
+                                                see {!Cvode_serial.Spils},
+                                                {!Cvode_serial.BandPrec},
+                                                {!Cvode_nvector.Spils}, and
+                                                {!Cvode_nvector.BandPrec}. *)
   | BandedSptfqmr of sprange * bandrange    (** Krylov Spils solver
-                                                with banded matrix: SPTFQMR *)
+                                                with banded matrix: SPTFQMR,
+                                                see {!Cvode_serial.Spils},
+                                                {!Cvode_serial.BandPrec},
+                                                {!Cvode_nvector.Spils}, and
+                                                {!Cvode_nvector.BandPrec}. *)
 
 (**
  @cvode <node5#sss:lin_solve_init> CVBand
