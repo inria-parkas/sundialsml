@@ -176,7 +176,7 @@ type error_details = {
     error_message : string;
   }
 
-(** {3 Exceptions} *)
+(** {3:exceptions Exceptions} *)
 
 (** @cvode <node5#sss:cvode> CV_ILL_INPUT *)
 exception IllInput

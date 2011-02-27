@@ -21,6 +21,8 @@
 (*                                                                     *)
 (***********************************************************************)
 
+include module type of Cvode
+
 (*STARTINTRO*)
 (** Serial nvector interface to the CVODE solver.
 
@@ -29,8 +31,6 @@
  @author Marc Pouzet (LIENS)
  *)
 (*ENDINTRO*)
-
-include module type of Cvode
 
 (**
     This type represents a session with the CVODE solver using serial nvectors
@@ -63,24 +63,23 @@ t := t' + 0.1]}
  *)
 type session
 
-(** The type of vectors passed to the solver, see {!Sundials.Carray.t}. *)
-type nvec = Carray.t
+(** The type of vectors passed to the solver. *)
+type nvec = Sundials.Carray.t
 
 (** The type of vectors containing dependent variable values, passed from the
-   solver to callback functions, see {!Sundials.Carray.t} *)
-type val_array = Carray.t
+   solver to callback functions. *)
+type val_array = Sundials.Carray.t
 
 (** The type of vectors containing derivative values, passed from the
-   solver to callback functions, see {!Sundials.Carray.t} *)
-type der_array = Carray.t
+   solver to callback functions. *)
+type der_array = Sundials.Carray.t
 
-(** The type of vectors containing detected roots (zero-crossings), see
-   {!Sundials.Roots.t} *)
-type root_array = Roots.t
+(** The type of vectors containing detected roots (zero-crossings). *)
+type root_array = Sundials.Roots.t
 
 (** The type of vectors containing the values of root functions
-   (zero-crossings), see {!Sundials.Roots.val_array} *)
-type root_val_array = Roots.val_array
+   (zero-crossings). *)
+type root_val_array = Sundials.Roots.val_array
 
 (** {2 Initialization} *)
 
@@ -190,16 +189,32 @@ val wf_tolerances : session -> (val_array -> val_array -> unit) -> unit
 (** {2 Solver functions } *)
 
 (**
-    {b TODO}: write this description.
+   [(tret, r) = normal s tout yout] integrates the ODE over an interval in t.
 
-    @cvode <node5#sss:cvode> CVode (CV_NORMAL)
+   The arguments are:
+   - [s] a session with the solver.
+   - [tout] the next time at which a computed solution is desired.
+   - [yout] a vector to store the computed solution. The same vector as was
+   passed to {!init} can be used again for this argument.
+
+   Two values are returned:
+    - [tret] the time reached by the solver, which will be equal to [tout] if
+      no errors occur.
+    - [r] indicates whether roots were found, or whether an optional stop time, set by
+    {!set_stop_time}, was reached; see {!Cvode.solver_result}.
+
+   This routine will throw one of the solver {!Cvode.exceptions} if an error
+   occurs.
+
+   @cvode <node5#sss:cvode> CVode (CV_NORMAL)
  *)
 val normal : session -> float -> nvec -> float * solver_result
 
 (**
-    {b TODO}: write this description.
+   This function is identical to {!normal}, except that it returns after one
+   internal solver step.
 
-    @cvode <node5#sss:cvode> CVode (CV_ONE_STEP)
+   @cvode <node5#sss:cvode> CVode (CV_ONE_STEP)
  *)
 val one_step : session -> float -> nvec -> float * solver_result
 
@@ -333,8 +348,6 @@ val set_nonlin_conv_coef : session -> float -> unit
 (**
   [set_iter_type s iter] resets the nonlinear solver iteration type to [iter]
   ({!Cvode.iter}).
-
-  {b TODO}: describe what happens internally.
 
   @cvode <node5#sss:optin_main> CVodeSetIterType
  *)
@@ -560,16 +573,26 @@ val reinit : session -> float -> nvec -> unit
 
 (** {2 Linear Solvers} *)
 
-(** {b TODO} *)
+type single_tmp = nvec
+type triple_tmp = val_array * val_array * val_array
+
+(**
+  Arguments common to all Jacobian callback functions.    
+ 
+  @cvode <node5#ss:djacFn> Dense Jacobian function
+  @cvode <node5#ss:bjacFn> Banded Jacobian function
+  @cvode <node5#ss:jtimesFn> Product Jacobian function
+  @cvode <node5#ss:psolveFn> Linear Preconditioning function
+  @cvode <node5#ss:precondFn> Jacobian Preconditioning function
+ *)
 type 't jacobian_arg =
   {
-    jac_t   : float;
-    jac_y   : val_array;
-    jac_fy  : val_array;
-    jac_tmp : 't
+    jac_t   : float;        (** The independent variable. *)
+    jac_y   : val_array;    (** The dependent variable vector. *)
+    jac_fy  : val_array;    (** Vector for storing the results of f(t, y). *)
+    jac_tmp : 't            (** Workspace data,
+                                either {!single_tmp} or {!triple_tmp}. *)
   }
-
-type triple_tmp = val_array * val_array * val_array
 
 (** {3 Direct Linear Solvers (DLS)} *)
 
@@ -629,8 +652,6 @@ module Spils :
         delta : float;
         left  : bool; (* true: left, false: right *)
       }
-
-    type single_tmp = nvec
 
     type gramschmidt_type =
       | ModifiedGS

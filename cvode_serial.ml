@@ -241,6 +241,9 @@ external get_num_nonlin_solv_conv_fails : session -> int
 external get_num_g_evals                : session -> int
     = "c_get_num_g_evals"
 
+type single_tmp = nvec
+type triple_tmp = val_array * val_array * val_array
+
 type 't jacobian_arg =
   {
     jac_t   : float;
@@ -248,8 +251,6 @@ type 't jacobian_arg =
     jac_fy  : val_array;
     jac_tmp : 't
   }
-
-type triple_tmp = val_array * val_array * val_array
 
 module Dls =
   struct
@@ -310,8 +311,6 @@ module Spils =
         delta : float;
         left  : bool;
       }
-
-    type single_tmp = nvec
 
     type gramschmidt_type =
       | ModifiedGS
