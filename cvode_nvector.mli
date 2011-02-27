@@ -34,28 +34,97 @@ include module type of Cvode
     This type represents a 'a session with the CVODE solver using serial 'a nvectortors
     accessed as {{:OCAML_DOC_ROOT(Bigarray.Array1)} Bigarray.Array1}s.
 
-    TODO: write out a sketch of the user's main program in Ocaml.
+    A skeleton of the main program:
+    + {b Set vector of initial values}
+    {[let y = Cvode.Carray.of_array [| 0.0; 0.0; 0.0 |] ]}
+    The length of this vector determines the problem size.    
+    + {b Create and initialize a solver 'a session}
+    {[let s = Cvode.init Cvode.Adams Cvode.Functional f (2, g) y]}
+    This will initialize a specific linear solver and the root-finding
+    mechanism, if necessary.
+    + {b Specify integration tolerances (optional)}, e.g.
+    {[ss_tolerances s reltol abstol]}
+    + {b Set optional inputs}, e.g.
+    {[set_stop_time s 10.0; ...]}
+    Call any of the [set_*] functions to change solver parameters from their
+    defaults.
+    + {b Advance solution in time}, e.g.
+    {[let (t', result) = Cvode.normal s !t y in
+...
+t := t' + 0.1]}
+    Repeatedly call either [normal] or [one_step] to advance the simulation.
+    + {b Get optional outputs}
+    {[let stats = get_integrator_stats s in ...]}
+    Call any of the [get_*] functions to examine solver statistics.
 
     @cvode <node5#ss:skeleton_sim> Skeleton of main program
  *)
 type 'a session
 
+(** The type of vectors passed to the solver, see {!Sundials.Carray.t}. *)
 type 'a nvector = 'a Nvector.nvector
 
-type root_array = Sundials.Roots.t
-type root_val_array = Sundials.Roots.val_array
+(** The type of vectors containing dependent variable values, passed from the
+   solver to callback functions, see {!Sundials.Carray.t} *)
+
+(** The type of vectors containing derivative values, passed from the
+   solver to callback functions, see {!Sundials.Carray.t} *)
+
+(** The type of vectors containing detected roots (zero-crossings), see
+   {!Sundials.Roots.t} *)
+type root_array = Roots.t
+
+(** The type of vectors containing the values of root functions
+   (zero-crossings), see {!Sundials.Roots.val_array} *)
+type root_val_array = Roots.val_array
 
 (** {2 Initialization} *)
 
 (**
-    TODO: EXPLAIN HOW THIS WORKS.
+    [init lmm iter f (nroots, g) y0] initializes the CVODE solver and returns a
+    {!session}.
+    - [lmm]     specifies the linear multistep method, see {!Cvode.lmm}.
+    - [iter]    specifies either functional iteration or Newton iteration
+                with a specific linear solver, see {!Cvode.iter}.
+    - [f]       is the ODE right-hand side function.
+    - [nroots]  specifies the number of root functions (zero-crossings).
+    - [g]       calculates the values of the root functions.
+    - [y0]      is a vector of initial values, the size of this vector
+                determines the number of equations in  the 'a session, see
+                {!Sundials.Carray.t}.
 
     The start time defaults to 0. It can be set manually by instead using
     {!init'}.
 
+    This function calls CVodeCreate, CVodeInit, CVodeRootInit, an appropriate
+    linear solver function, and CVodeSStolerances (with default values for
+    relative tolerance of 1.0e-4 and absolute tolerance as 1.0e-8; these can be
+    changed with {!ss_tolerances}, {!sv_tolerances}, or {!wf_tolerances}).
+    It does everything necessary to initialize a CVODE 'a session; the {!normal} or
+    {!one_step} functions can be called directly afterward.
+
+    The right-hand side function [f] is called by the solver to calculate the
+    instantaneous derivative values, it is passed three arguments: [t], [y], and
+    [dy].
+    - [t] is the current value of the independent variable,
+          i.e., the simulation time.
+    - [y] is a vector of dependent-variable values, i.e. y(t).
+    - [dy] is a vector for storing the value of f(t, y).
+
+    The roots function [g] is called by the solver to calculate the values of
+    root functions (zero-crossing expressions) which are used to detect
+    significant events, it is passed three arguments: [t], [y], and [gout].
+    - [t] and [y] are as for [f].
+    - [gout] is a vector for storing the values of g(t, y).
+    The {!Cvode.no_roots} value can be passed for the [(nroots, g)] argument if
+    root functions are not required.
+
     @cvode <node5#sss:cvodemalloc>   CVodeCreate/CVodeInit
+    @cvode <node5#ss:rhsFn>          ODE right-hand side function
+    @cvode <node5#ss:cvrootinit>     CVodeRootInit
+    @cvode <node5#ss:rootFn>         Rootfinding function
     @cvode <node5#sss:lin_solv_init> Linear solvers
-    @cvode <node5#ss:cvrootinit>     Root initialisation
+    @cvode <node5#sss:cvtolerances> CVodeSStolerances
  *)
 val init :
     lmm
@@ -66,7 +135,8 @@ val init :
     -> 'a session
 
 (**
-  The same as init' except that the start time is given explicitly.
+  [init lmm iter f roots y0 t0] is the same as init' except that the start time,
+  [t0], must be given explicitly.
  *)
 val init' :
     lmm
@@ -116,14 +186,14 @@ val wf_tolerances : 'a session -> ('a -> 'a -> unit) -> unit
 (** {2 Solver functions } *)
 
 (**
-    TODO: write this description.
+    {b TODO}: write this description.
 
     @cvode <node5#sss:cvode> CVode (CV_NORMAL)
  *)
 val normal : 'a session -> float -> 'a nvector -> float * solver_result
 
 (**
-    TODO: write this description.
+    {b TODO}: write this description.
 
     @cvode <node5#sss:cvode> CVode (CV_ONE_STEP)
  *)
@@ -257,8 +327,10 @@ val set_max_conv_fails : 'a session -> int -> unit
 val set_nonlin_conv_coef : 'a session -> float -> unit
 
 (**
-  [set_iter_type s iter] resets the nonlinear solver iteration type to [iter].
-  TODO: describe what happens internally.
+  [set_iter_type s iter] resets the nonlinear solver iteration type to [iter]
+  ({!Cvode.iter}).
+
+  {b TODO}: describe what happens internally.
 
   @cvode <node5#sss:optin_main> CVodeSetIterType
  *)
@@ -484,7 +556,7 @@ val reinit : 'a session -> float -> 'a nvector -> unit
 
 (** {2 Linear Solvers} *)
 
-(** TODO *)
+(** {b TODO} *)
 type ('t, 'a) jacobian_arg =
   {
     jac_t   : float;

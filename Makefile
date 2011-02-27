@@ -2,12 +2,12 @@ include Makefile.inc
 
 VERSION = 0.5.0
 
-MLOBJ = cvode.cmo 		\
-	cvode_nvector.cmo	\
-	cvode_serial.cmo 	\
-	nvector_array.cmo 	\
+MLOBJ = sundials.cmo 		\
 	nvector.cmo 		\
-	sundials.cmo
+	nvector_array.cmo 	\
+	cvode.cmo 		\
+	cvode_nvector.cmo	\
+	cvode_serial.cmo
 
 COBJ =	cvode_ml$(XO) 		\
 	cvode_ml_ba$(XO) 	\
