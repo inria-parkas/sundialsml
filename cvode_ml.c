@@ -13,11 +13,6 @@
 
 /* Sundials interface functions that do not involve NVectors. */
 
-/*
- * TODO:
- * - see notes throughout program related to garbage collection.
- */
-
 #include <cvode/cvode.h>
 #include <sundials/sundials_config.h>
 #include <sundials/sundials_types.h>
@@ -71,7 +66,6 @@ static void finalize(value vdata)
 {
     CVODE_DATA_FROM_ML(data, vdata);
 
-    // TODO:
     // The Ocaml Manual (18.9.1) says:
     // ``Note: the finalize, compare, hash, serialize and deserialize
     // functions attached to custom block descriptors must never trigger a
@@ -103,7 +97,6 @@ static void finalize(value vdata)
     }
 }
 
-// TODO:
 // The Ocaml Manual (18.9.3) says:
 // ``The contents of custom blocks are not scanned by the garbage collector,
 // and must therefore not contain any pointer inside the Caml heap. In other
@@ -591,7 +584,6 @@ CAMLprim value c_register_handler(value vdata, value handler)
 	caml_remove_generational_global_root(*handler_field);
     }
     (*handler_field) = caml_named_value(ocaml_name);
-    // TODO: check if this call is necessary and ok:
     caml_register_generational_global_root(*handler_field);
 
     CAMLreturn0;

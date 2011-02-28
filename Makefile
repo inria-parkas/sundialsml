@@ -35,7 +35,7 @@ sundials_cvode.cma sundials_cvode.cmxa: $(MLOBJ) $(MLOBJ:.cmo=.cmx) $(COBJ)
 	    -o sundials_cvode -oc mlsundials_cvode $^ \
 	    $(LAPACK_LIB) -lsundials_cvode -lsundials_nvecserial
 
-cvode_nvector.mli: cvode_serial.mli
+cvode_nvector.mli: cvode_serial.mli cvode_nvector.doc
 	$(SED) \
 	-e "/^type \(val_array\|der_array\) =/d"			\
 	-e "s/ session\( \|\$\)/ 'a session\1/g"			\
@@ -66,7 +66,8 @@ META: META.in
 doc: doc/html/index.html
 
 doc/html/index.html: dochtml.cmo \
-    		     $(MLOBJ:.cmo=.mli) $(MLOBJ:.cmo=.cmi) intro.doc
+    		     $(MLOBJ:.cmo=.mli) $(MLOBJ:.cmo=.cmi) \
+		     intro.doc cvode_nvector.doc
 	$(OCAMLDOC) -g dochtml.cmo \
 	    -cvode-doc-root "$(CVODE_DOC_ROOT)" \
 	    -pp "$(DOCPP)"		\
@@ -108,5 +109,6 @@ cleanall: clean
 	-@$(RM) -f sundials_cvode.cma sundials_cvode.cmxa
 	-@$(RM) -f libmlsundials_cvode$(XA) dllmlsundials_cvode$(XS)
 	-@$(RM) -f META
+	-@$(RM) -f doc/html/*.html doc/html/style.css
 
 -include .depend

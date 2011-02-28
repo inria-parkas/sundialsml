@@ -35,14 +35,14 @@ include module type of Cvode
  *)
 
 (**
-    This type represents a 'a session with the CVODE solver using serial 'a nvectortors
-    accessed as {{:OCAML_DOC_ROOT(Bigarray.Array1)} Bigarray.Array1}s.
+    This type represents a session with the CVODE solver using
+    {!Nvector.nvector}s.
 
     A skeleton of the main program:
     + {b Set vector of initial values}
-    {[let y = Cvode.Carray.of_array [| 0.0; 0.0; 0.0 |] ]}
+    {[let y = Nvector_array.wrap [| 0.0; 0.0; 0.0 |] ]}
     The length of this vector determines the problem size.    
-    + {b Create and initialize a solver 'a session}
+    + {b Create and initialize a solver session}
     {[let s = Cvode.init Cvode.Adams Cvode.Functional f (2, g) y]}
     This will initialize a specific linear solver and the root-finding
     mechanism, if necessary.
@@ -114,6 +114,10 @@ type root_val_array = Sundials.Roots.val_array
     - [y] is a vector of dependent-variable values, i.e. y(t).
     - [dy] is a vector for storing the value of f(t, y).
 
+    {b NB:} [y] and [dy] must no longer be accessed after [f] has returned a
+            result, i.e. if their values are needed outside of the function
+            call, then they must be copied to separate physical structures.
+
     The roots function [g] is called by the solver to calculate the values of
     root functions (zero-crossing expressions) which are used to detect
     significant events, it is passed three arguments: [t], [y], and [gout].
@@ -121,6 +125,10 @@ type root_val_array = Sundials.Roots.val_array
     - [gout] is a vector for storing the values of g(t, y).
     The {!Cvode.no_roots} value can be passed for the [(nroots, g)] argument if
     root functions are not required.
+
+    {b NB:} [y] and [gout] must no longer be accessed after [g] has returned
+            a result, i.e. if their values are needed outside of the function
+            call, then they must be copied to separate physical structures.
 
     @cvode <node5#sss:cvodemalloc>   CVodeCreate/CVodeInit
     @cvode <node5#ss:rhsFn>          ODE right-hand side function
@@ -612,6 +620,11 @@ module Dls :
 
      The callback function takes the {!jacobian_arg} as an input and must store
      the computed Jacobian as a {!Cvode.Densematrix.t}.
+
+     {b NB:} the elements of the Jacobian argument and the output matrix must no
+     longer be accessed after callback function has returned a result, i.e. if
+     their values are needed outside of the function call, then they must be
+     copied to separate physical structures.
      
      @cvode <node5#sss:optin_dls> CVDlsSetDenseJacFn
      @cvode <node5#ss:djacFn> Dense Jacobian function
@@ -640,6 +653,11 @@ module Dls :
      - [mupper] the upper half-bandwidth of the Jacobian.
      - [mlower] the lower half-bandwidth of the Jacobian.
      and it must store the computed Jacobian as a {!Cvode.Bandmatrix.t}.
+
+    {b NB:} [jac] and the computed Jacobian must no longer be accessed after the
+            calback function has returned a result, i.e. if their values are
+            needed outside of the function call, then they must be copied to
+            separate physical structures.
 
      @cvode <node5#sss:optin_dls> CVDlsSetBandJacFn
      @cvode <node5#ss:bjacFn> Banded Jacobian function
@@ -765,6 +783,11 @@ module Spils :
         - [gamma] is the scalar {i g} appearing in the Newton matrix given
         by M = I - {i g}J.
 
+      {b NB:} The elements of [jac] must no longer be accessed after [psetup]
+              has returned a result, i.e. if their values are needed outside
+              of the function call, then they must be copied to a separate
+              physical structure.
+
       It must return [true] if the Jacobian-related data was updated, or
       [false] otherwise, i.e. if the saved data was reused.
 
@@ -775,6 +798,11 @@ module Spils :
       - [jac] supplies the basic problem data as a {!jacobian_arg}.
       - [arg] specifies the linear system as a {!solve_arg}.
       - [z] is the vector in which the result must be stored.
+
+      {b NB:} The elements of [jac], [arg], and [z] must no longer be accessed
+              after [psolve] has returned a result, i.e. if their values are
+              needed outside of the function call, then they must be copied
+              to separate physical structures.
 
       @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
       @cvode <node5#ss:psolveFn> Linear preconditioning function
@@ -793,6 +821,11 @@ module Spils :
       product {i J}[v].
       - [v] is the vector by which the Jacobian must be multiplied.
       - [Jv] is the vector in which the result must be stored.
+
+      {b NB:} The elements of [jac], [v], and [Jv] must no longer be accessed
+              after [psolve] has returned a result, i.e. if their values are
+              needed outside of the function call, then they must be copied
+              to separate physical structures.
 
       @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
       @cvode <node5#ss:jtimesFn> Product Jacobian function

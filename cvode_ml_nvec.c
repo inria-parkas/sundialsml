@@ -103,13 +103,10 @@ static int f(realtype t, N_Vector y, N_Vector ydot, void *user_data)
     y_d = WRAP_NVECTOR(y);
     ydot_d = WRAP_NVECTOR(ydot);
 
-    // TODO: the data payloads inside y_d and ydot_d are only valid
-    //	     during this call, afterward that memory goes back to cvode.
-    //	     These bigarrays must not be retained by closure_rhsfn! If
-    //	     it wants a permanent copy, then it has to make it manually.
-    //
-    //       Eventually y_d and ydot_d will be reclaimed by the ocaml gc,
-    //       which should not, however, free the attached payload.
+    // the data payloads inside y_d and ydot_d are only valid
+    //during this call, afterward that memory goes back to cvode.
+    //These bigarrays must not be retained by closure_rhsfn! If
+    //it wants a permanent copy, then it has to make it manually.
     r = caml_callback3_exn(*closure_rhsfn, caml_copy_double(t), y_d, ydot_d);
 
     RELINQUISH_WRAPPEDNV(y_d);
@@ -129,7 +126,7 @@ static int roots(realtype t, N_Vector y, realtype *gout, void *user_data)
 
     gout_d = caml_ba_alloc(BIGARRAY_FLOAT, 1, gout, &(data->num_roots));
 
-    // TODO: see notes for f()
+    // see notes for f()
     r = caml_callback3_exn(*(data->closure_rootsfn), caml_copy_double(t),
 				 y_d, gout_d);
 
@@ -149,7 +146,7 @@ static int errw(N_Vector y, N_Vector ewt, void *user_data)
     y_d = WRAP_NVECTOR(y);
     ewt_d = WRAP_NVECTOR(ewt);
 
-    // TODO: see notes for f()
+    // see notes for f()
     r = caml_callback2_exn(*(data->closure_errw), y_d, ewt_d);
 
     RELINQUISH_WRAPPEDNV(y_d);
@@ -578,7 +575,6 @@ static value solver(value vdata, value nextt, value y, int onestep)
 
     N_Vector y_nv = NVECTORIZE_VAL(y);
 
-    // TODO:
     // The payload of y (a big array) must not be shifted by the Ocaml GC
     // during this function call, even though Caml will be reentered
     // through the callback f. Is this guaranteed?

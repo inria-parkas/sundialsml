@@ -94,7 +94,15 @@ or:
 
 [module Cvode = Cvode_nvector]
 
-to access the solver.
+{3:usingcvode Using the library}
+
+Skeletons of the main program are given under {!Cvode_serial.session} and
+{!Cvode_nvector.session}. Such a program can be compiled using the
+[-I +sundials] option and including [unix.cma] (or [.cmxa]),
+[bigarray.cma] (or [.cmxa]) and [sundials_cvode.cma] (or [.cmxa]), for example:
+{[ocamlc -o myprogram -I +sundials unix.cma bigarray.cma sundials_cvode.cma myprogram.ml]}
+or:
+{[ocamlopt -o myprogram -I +sundials unix.cmxa bigarray.cmxa sundials_cvode.cmxa myprogram.ml]}
 
 {2:modules Modules}
 
