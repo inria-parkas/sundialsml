@@ -1,0 +1,39 @@
+Sundials CVODE examples in Ocaml
+--------------------------------
+This directory contains all of the Sundials CVODE examples from the original
+distribution recoded in Ocaml. For the most part these examples have been
+translated directly into an imperative Ocaml style.
+
+The examples can be compiled and their output compared with that of the
+original examples by running:
+    make tests.log; cat tests.log
+
+and if the libraries have been compiled with LAPACK support:
+    make lapack-tests.log
+
+The original examples are found at the path specified in Makefile.inc:
+    EXAMPLES_ROOT
+
+Their output may differ from that of the ocaml versions depending on several
+compilation options that affect the precision of floating point
+calculations. There is an excellent description of the general issues at:
+    http://www.christian-seiler.de/projekte/fpmath/
+
+But for Sundials and Ocaml we found that:
+
+* For an ocaml program using the interface and compiled into native code
+  with ocamlopt, we could replicate the results of a C program compiled
+  directly against Sundials by not using the -O1 nor -O2 options in the
+  latter.
+
+* For an ocaml program using the interface and compiled into byte code with
+  ocamlc, we coul replicate the results of a C program compiled directly
+  against Sundials by using either the options:
+	-mfpmath=sse -march=pentium4 (with or without -O2)
+  or:
+	--ffloat-store (with or without -O2)
+
+* Alternatively, we could obtain identical results by setting the internal
+  precision of the FPU to double (i.e. compile cvode_ml_nvec.c with the
+  option -DRESTRICT_INTERNAL_PRECISION).
+
