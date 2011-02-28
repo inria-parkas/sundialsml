@@ -25,9 +25,13 @@ include module type of Cvode
 
 (** Abstract nvector interface to the CVODE Solver
 
- @version VERSION()
- @author Timothy Bourke (INRIA)
- @author Marc Pouzet (LIENS)
+  Nvectors can be created for an {!Nvector.Mutable} or {!Nvector.Immutable}
+  data type by providing a set of low-level operations which are called by
+  the solver.
+
+  @version VERSION()
+  @author Timothy Bourke (INRIA)
+  @author Marc Pouzet (LIENS)
  *)
 
 (**
@@ -592,8 +596,16 @@ type ('t, 'a) jacobian_arg =
 
 (** {3 Direct Linear Solvers (DLS)} *)
 
+(** Control callbacks and get optional outputs for the Direct Linear Solvers
+    that operate on dense and banded matrices.
+    
+    @cvode <node5#sss:optin_dls> Direct linear solvers optional input functions
+    @cvode <node5#sss:optout_dls> Direct linear solvers optional output functions
+    @cvode <node5#ss:djacFn> Dense Jacobian function
+  *)
 module Dls :
   sig
+    (** {4 Callback functions} *)
     (**
      Specify a callback function that computes an approximation to the Jacobian
      matrix J(t, y) for the Dense and Lapackdense {!Cvode.linear_solver}s.
@@ -647,6 +659,8 @@ module Dls :
     *)
     val clear_band_jac_fn : 'a session -> unit
 
+    (** {4 Optional input functions} *)
+
     (**
       Returns the sizes of the real and integer workspaces used by the Dense and
       Band direct linear solvers .
@@ -677,8 +691,14 @@ module Dls :
 
 (** {3 Diagonal approximation} *)
 
+(** Get optional inputs for the linear solver that gives diagonal approximations
+    of the Jacobian matrix.
+    @cvode <node5#sss:optout_diag> Diagonal linear solver optional output functions
+  *)
 module Diag :
   sig
+    (** {4 Optional input functions} *)
+
     (**
       Returns the sizes of the real and integer workspaces used by the Diagonal
       linear solver.
@@ -698,34 +718,18 @@ module Diag :
     val get_num_rhs_evals : 'a session -> int
   end
 
-(** {3 Banded preconditioner} *)
-
-module BandPrec :
-  sig
-    (**
-      Returns the sizes of the real and integer workspaces used by the serial
-      banded preconditioner module.
-
-      @cvode <node5#sss:cvbandpre> CVBandPrecGetWorkSpace
-      @return ([real_size], [integer_size])
-     *)
-    val get_work_space : 'a session -> int * int
-
-    (**
-      Returns the number of calls made to the user-supplied right-hand side
-      function due to finite difference banded Jacobian approximation in the
-      banded preconditioner setup function.
-
-      @cvode <node5#sss:cvbandpre> CVBandPrecGetNumRhsEvals
-    *)
-    val get_num_rhs_evals : 'a session -> int
-  end
-
 (** {3 Scaled Preconditioned Iterative Linear Solvers (SPILS)} *)
 
+(** Set callback functions, set optional outputs, and get optional inputs for
+    the Scaled Preconditioned Iterative Linear Solvers: SPGMR, SPBCG, SPTFQMR.
+    @cvode <node5#sss:optin_spils> Iterative linear solvers optional input functions.
+    @cvode <node5#sss:optout_spils> Iterative linear solvers optional output functions.
+    @cvode <node5#ss:psolveFn> Linear preconditioning function
+    @cvode <node5#ss:precondFn> Jacobian preconditioning function
+ *)
 module Spils :
   sig
-    (** {4 Optional output functions} *)
+    (** {4 Callback functions} *)
 
     (**
       Arguments passed to the preconditioner solve callback function.
@@ -811,6 +815,8 @@ module Spils :
       @cvode <node5#ss:jtimesFn> Product Jacobian function
     *)
     val clear_jac_times_vec_fn : 'a session -> unit
+
+    (** {4 Optional output functions} *)
 
     (**
       This function resets the type of preconditioning to be used using a value
@@ -912,5 +918,35 @@ module Spils :
       @cvode <node5#sss:optout_spils> CVSpilsGetNumRhsEvals
     *)
     val get_num_rhs_evals    : 'a session -> int
+  end
+
+(** {3 Banded preconditioner} *)
+
+(** Get optional outputs for the banded preconditioner module of the
+    Scaled Preconditioned Iterative Linear Solvers:
+      SPGMR, SPBCG, SPTFQMR.
+    @cvode <node5#sss:cvbandpre> Serial banded preconditioner module
+  *)
+module BandPrec :
+  sig
+    (** {4 Optional input functions} *)
+
+    (**
+      Returns the sizes of the real and integer workspaces used by the serial
+      banded preconditioner module.
+
+      @cvode <node5#sss:cvbandpre> CVBandPrecGetWorkSpace
+      @return ([real_size], [integer_size])
+     *)
+    val get_work_space : 'a session -> int * int
+
+    (**
+      Returns the number of calls made to the user-supplied right-hand side
+      function due to finite difference banded Jacobian approximation in the
+      banded preconditioner setup function.
+
+      @cvode <node5#sss:cvbandpre> CVBandPrecGetNumRhsEvals
+    *)
+    val get_num_rhs_evals : 'a session -> int
   end
 

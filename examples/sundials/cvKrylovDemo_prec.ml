@@ -94,7 +94,7 @@ module Cvode = Cvode_serial
 module Carray = Cvode.Carray
 module Roots = Cvode.Roots
 module Dls = Cvode.Dls
-module Densemat = Cvode.Densematrix.Direct
+module Densemat = Cvode.Directdensematrix
 module Spils  = Cvode.Spils
 open Bigarray
 
@@ -307,7 +307,7 @@ let precond wdata jacarg jok gamma =
         fblock wdata t cdata jx jy f1;
         let fac = -. gamma /. r in
         for i = 0 to mp - 1 do
-          Densemat.set p.(ig) (j, i) ((f1.{i} -. fsave.{if0 + i}) *. fac)
+          Densemat.set p.(ig) (i, j) ((f1.{i} -. fsave.{if0 + i}) *. fac)
         done;
         cdata.{jj} <- save
       done

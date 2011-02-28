@@ -190,55 +190,54 @@ module Densematrix =
 
     external set : t -> (int * int) -> float -> unit
         = "c_densematrix_set"
-
-    module Direct =
-      struct
-        type t
-
-        external new_dense_mat  : int * int -> t
-            = "c_densematrix_direct_new_dense_mat"
-
-        external get : t -> (int * int) -> float
-            = "c_densematrix_direct_get"
-
-        external set : t -> (int * int) -> float -> unit
-            = "c_densematrix_direct_set"
-
-        external copy  : t -> t -> int * int -> unit
-            = "c_densematrix_direct_copy"
-
-        external scale : float -> t -> int * int -> unit
-            = "c_densematrix_direct_scale"
-
-        external add_identity : t -> int -> unit
-            = "c_densematrix_direct_add_identity"
-
-        external getrf : t -> int * int -> int_array -> unit
-            = "c_densematrix_direct_getrf"
-
-        external getrs : t -> int -> int_array -> real_array -> unit
-            = "c_densematrix_direct_getrs"
-
-        external potrf : t -> int -> unit
-            = "c_densematrix_direct_potrf"
-
-        external potrs : t -> int -> real_array -> unit
-            = "c_densematrix_direct_potrs"
-
-        external geqrf : t -> int * int -> real_array -> real_array -> unit
-            = "c_densematrix_direct_geqrf"
-
-        external ormqr'
-            : t -> int * int
-              -> (real_array * real_array * real_array * real_array)
-              -> unit
-            = "c_densematrix_direct_ormqr"
-
-        let ormqr ~a ~mn ~beta ~v ~w ~work = ormqr' a mn (beta, v, w, work)
-      end
   end
 
-(* note: uses BAND_ELEM rather than the more efficient BAND_COL/BAND_COL_ELEM *)
+module Directdensematrix =
+  struct
+    type t
+
+    external new_dense_mat  : int * int -> t
+        = "c_densematrix_direct_new_dense_mat"
+
+    external get : t -> (int * int) -> float
+        = "c_densematrix_direct_get"
+
+    external set : t -> (int * int) -> float -> unit
+        = "c_densematrix_direct_set"
+
+    external copy  : t -> t -> int * int -> unit
+        = "c_densematrix_direct_copy"
+
+    external scale : float -> t -> int * int -> unit
+        = "c_densematrix_direct_scale"
+
+    external add_identity : t -> int -> unit
+        = "c_densematrix_direct_add_identity"
+
+    external getrf : t -> int * int -> int_array -> unit
+        = "c_densematrix_direct_getrf"
+
+    external getrs : t -> int -> int_array -> real_array -> unit
+        = "c_densematrix_direct_getrs"
+
+    external potrf : t -> int -> unit
+        = "c_densematrix_direct_potrf"
+
+    external potrs : t -> int -> real_array -> unit
+        = "c_densematrix_direct_potrs"
+
+    external geqrf : t -> int * int -> real_array -> real_array -> unit
+        = "c_densematrix_direct_geqrf"
+
+    external ormqr'
+        : t -> int * int
+          -> (real_array * real_array * real_array * real_array)
+          -> unit
+        = "c_densematrix_direct_ormqr"
+
+    let ormqr ~a ~mn ~beta ~v ~w ~work = ormqr' a mn (beta, v, w, work)
+  end
+
 module Bandmatrix =
   struct
     type t
@@ -290,45 +289,45 @@ module Bandmatrix =
             = "c_bandmatrix_col_set"
       end
 
-    module Direct =
-      struct
-        type t
-
-        external new_band_mat : int * int * int -> t
-            = "c_bandmatrix_direct_new_band_mat"
-
-        external get : t -> (int * int) -> float
-            = "c_densematrix_direct_get"
-            (* NB: same as densematrix_direct *)
-
-        external set : t -> (int * int) -> float -> unit
-            = "c_densematrix_direct_set"
-            (* NB: same as densematrix_direct *)
-
-        external copy' : t -> t -> int * int * int * int * int -> unit
-            = "c_bandmatrix_direct_copy"
-
-        let copy a b n a_smu b_smu copymu copyml
-            = copy' a b (n, a_smu, b_smu, copymu, copyml)
-
-        external scale' : float -> t -> int * int * int * int -> unit
-            = "c_bandmatrix_direct_scale"
-
-        let scale c a n mu ml smu = scale' c a (n, mu, ml, smu)
-
-        external add_identity : t -> int -> int -> unit
-            = "c_bandmatrix_direct_add_identity"
-
-        external gbtrf' : t -> int * int * int * int -> int_array -> unit
-            = "c_bandmatrix_direct_gbtrf"
-
-        let gbtrf a n mu ml smu p = gbtrf' a (n, mu, ml, smu) p
-
-        external gbtrs'
-            : t -> int * int * int -> int_array -> real_array -> unit
-            = "c_bandmatrix_direct_gbtrs"
-
-        let gbtrs a n smu ml p b = gbtrs' a (n, smu, ml) p b
-      end
   end
 
+module Directbandmatrix =
+  struct
+    type t
+
+    external new_band_mat : int * int * int -> t
+        = "c_bandmatrix_direct_new_band_mat"
+
+    external get : t -> (int * int) -> float
+        = "c_densematrix_direct_get"
+        (* NB: same as densematrix_direct *)
+
+    external set : t -> (int * int) -> float -> unit
+        = "c_densematrix_direct_set"
+        (* NB: same as densematrix_direct *)
+
+    external copy' : t -> t -> int * int * int * int * int -> unit
+        = "c_bandmatrix_direct_copy"
+
+    let copy a b n a_smu b_smu copymu copyml
+        = copy' a b (n, a_smu, b_smu, copymu, copyml)
+
+    external scale' : float -> t -> int * int * int * int -> unit
+        = "c_bandmatrix_direct_scale"
+
+    let scale c a n mu ml smu = scale' c a (n, mu, ml, smu)
+
+    external add_identity : t -> int -> int -> unit
+        = "c_bandmatrix_direct_add_identity"
+
+    external gbtrf' : t -> int * int * int * int -> int_array -> unit
+        = "c_bandmatrix_direct_gbtrf"
+
+    let gbtrf a n mu ml smu p = gbtrf' a (n, mu, ml, smu) p
+
+    external gbtrs'
+        : t -> int * int * int -> int_array -> real_array -> unit
+        = "c_bandmatrix_direct_gbtrs"
+
+    let gbtrs a n smu ml p b = gbtrs' a (n, smu, ml) p b
+  end

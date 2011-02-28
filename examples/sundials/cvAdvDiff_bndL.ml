@@ -147,11 +147,11 @@ let jac data arg mlower mupper jmat =
       let kthCol = Col.get_col jmat k in
 
       (* set the kth column of jmat *)
-      Col.set kthCol k k (-. two *. (verdc +. hordc));
-      if (i <> 1)  then Col.set kthCol (k - my) k (hordc +. horac);
-      if (i <> mx) then Col.set kthCol (k + my) k (hordc -. horac);
-      if (j <> 1)  then Col.set kthCol (k - 1)  k verdc;
-      if (j <> my) then Col.set kthCol (k + 1)  k verdc
+      Col.set kthCol (k, k) (-. two *. (verdc +. hordc));
+      if (i <> 1)  then Col.set kthCol (k - my, k) (hordc +. horac);
+      if (i <> mx) then Col.set kthCol (k + my, k) (hordc -. horac);
+      if (j <> 1)  then Col.set kthCol (k - 1,  k) verdc;
+      if (j <> my) then Col.set kthCol (k + 1,  k) verdc
     done
   done
 

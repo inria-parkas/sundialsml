@@ -147,9 +147,9 @@ let jac2 arg mu ml jac =
     for i = 0 to p2_meshx - 1 do
       let k = i + j * p2_meshx in
       let kth_col = Bandmatrix.Col.get_col jac k in
-      Bandmatrix.Col.set kth_col k k (-. two);
-      if (i != p2_meshx - 1) then Bandmatrix.Col.set kth_col (k + 1) k p2_alph1;
-      if (j != p2_meshy - 1) then Bandmatrix.Col.set kth_col (k + p2_meshx) k p2_alph2
+      Bandmatrix.Col.set kth_col (k, k) (-. two);
+      if (i != p2_meshx - 1) then Bandmatrix.Col.set kth_col (k + 1, k) p2_alph1;
+      if (j != p2_meshy - 1) then Bandmatrix.Col.set kth_col (k + p2_meshx, k) p2_alph2
     done
   done
 

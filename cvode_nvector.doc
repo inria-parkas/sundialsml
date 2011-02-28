@@ -1,6 +1,10 @@
 (** Abstract nvector interface to the CVODE Solver
 
- @version VERSION()
- @author Timothy Bourke (INRIA)
- @author Marc Pouzet (LIENS)
+  Nvectors can be created for an {!Nvector.Mutable} or {!Nvector.Immutable}
+  data type by providing a set of low-level operations which are called by
+  the solver.
+
+  @version VERSION()
+  @author Timothy Bourke (INRIA)
+  @author Marc Pouzet (LIENS)
  *)

@@ -43,7 +43,7 @@ module Cvode  = Cvode_serial
 module Carray = Cvode.Carray
 module Roots  = Cvode.Roots
 module Dls    = Cvode.Dls
-module Densemat = Cvode.Densematrix.Direct
+module Densemat = Cvode.Directdensematrix
 module Spils  = Cvode.Spils
 open Bigarray
 
@@ -122,8 +122,8 @@ let set_ijkth v i j k e = v.{i - 1 + j * num_species + k * nsmx} <- e
 let slice_ijkth v i j k =
   Array1.sub v (i - 1 + j * num_species + k * nsmx) num_species
 
-let ijth v i j       = Densemat.get v (j - 1, i - 1)
-let set_ijth v i j e = Densemat.set v (j - 1, i - 1) e
+let ijth v i j       = Densemat.get v (i - 1, j - 1)
+let set_ijth v i j e = Densemat.set v (i - 1, j - 1) e
 
 (* Type : UserData 
    contains preconditioner blocks, pivot arrays, and problem constants *)

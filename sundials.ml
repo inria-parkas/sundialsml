@@ -89,12 +89,6 @@ module Carray =
       print_time ("", "") t;
       app (Printf.printf "\t% e") v;
       print_newline ()
-
-    let clamp thres =
-      let cf v = if abs_float v <= thres then 0.0 else v
-      in
-      if thres = 0.0 then (fun x -> ())
-      else map cf
   end
 
 (* root arrays *)

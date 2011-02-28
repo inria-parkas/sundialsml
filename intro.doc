@@ -102,6 +102,13 @@ to access the solver.
 {!modules: Nvector Nvector_array}
 {!modules: Cvode Cvode_serial Cvode_nvector}
 
+{2:refs References}
+
+- A. C. Hindmarsh, P. N. Brown, K. E. Grant, S. L. Lee, R. Serban, D. E.
+Shumaker, and C. S. Woodward, "{b SUNDIALS: Suite of Nonlinear and
+Differential/Algebraic Equation Solvers}," ACM Transactions on Mathematical
+Software, 31(3), pp. 363-396, 2005.
+
 {2:indexes Indexes}
 
 {!indexlist}

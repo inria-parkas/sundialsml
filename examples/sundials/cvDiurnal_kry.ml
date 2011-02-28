@@ -38,7 +38,7 @@ module Cvode  = Cvode_serial
 module Carray = Cvode.Carray
 module Roots  = Cvode.Roots
 module Dls    = Cvode.Dls
-module Direct = Cvode.Densematrix.Direct
+module Direct = Cvode.Directdensematrix
 module Spils  = Cvode.Spils
  
 let printf = Printf.printf
@@ -112,8 +112,8 @@ let set_ijkth v i j k e = v.{i - 1 + j * num_species + k * nsmx} <- e
 let slice_ijkth v i j k =
   Bigarray.Array1.sub v (i - 1 + j * num_species + k * nsmx) num_species
 
-let ijth v i j       = Direct.get v (j - 1, i - 1)
-let set_ijth v i j e = Direct.set v (j - 1, i - 1) e
+let ijth v i j       = Direct.get v (i - 1, j - 1)
+let set_ijth v i j e = Direct.set v (i - 1, j - 1) e
 
 (* Type : UserData 
    contains preconditioner blocks, pivot arrays, and problem constants *)

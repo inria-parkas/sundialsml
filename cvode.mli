@@ -280,10 +280,10 @@ exception ZeroDiagonalElement of int
   @cvode <node9#s:dls>  The DLS Modules
  *)
 
-(** {3 Dense linear solver}
- @cvode <node9#ss:dense> The DENSE Module
- *)
+(** {3 Dense matrices}
+    @cvode <node9#ss:dense> The DENSE Module *)
 
+(** Operations for creating and manipulating dense matrices. *)
 module Densematrix :
   sig
     (**
@@ -409,134 +409,137 @@ module Densematrix :
     val ormqr :
       a:t -> beta:real_array -> v:real_array -> w:real_array -> work:real_array -> unit
 
-    (** {4 Direct version} *)
-
-    module Direct :
-      sig
-        (**
-         This type represents a [realtype **] returned from a call to
-         {!new_dense_mat}.
-
-         The underlying array cannot be exposed directly in Ocaml as a
-         {{:OCAML_DOC_ROOT(Bigarray)} Bigarray} because it is an array of arrays
-         (an lliffe vector) and, anyway, there is no simple way to attach a
-         custom finalize function to such a big array.
-
-         @cvode <node9#ss:dense> Small dense matrices
-         @cvode <node9#ss:dense> newDenseMat 
-         *)
-        type t
-
-        (** {4 Basic access} *)
-
-        (**
-         [new_dense_mat m n] returns an [m] by [n] dense small matrix.
-
-         @cvode <node9#ss:dense> newDenseMat
-         *)
-        val new_dense_mat  : int * int -> t
-
-        (**
-         [get a (i, j)] returns the value at row [i] and column [j] in the m by
-         n matrix [a], where 0 <= [i] < m and 0 <= [j] < n.
-         *)
-        val get : t -> (int * int) -> float
-
-        (**
-         [set a (i, j) v] stores the value [v] at row [i] and column [j] in the
-         m by n matrix [a], where 0 <= [i] < m and 0 <= [j] < n.
-         *)
-        val set : t -> (int * int) -> float -> unit
-
-        (** {4 Calculations} *)
-
-        (**
-         [copy src dst (m, n)] copies the contents of one [m] by [n] matrix
-         into another.
-
-         @cvode <node9#ss:dense> denseCopy
-         *)
-        val copy  : t -> t -> int * int -> unit
-
-        (*
-         [scale c a (m, n)] multiplies each element of the [m] by [n]
-         matrix [a] by [c].
-
-         @cvode <node9#ss:dense> denseScale
-         *)
-        val scale : float -> t -> int * int -> unit
-
-        (**
-         [add_identity a n] increments an [n] by [n] matrix by the identity
-         matrix.
-
-         @cvode <node9#ss:dense> denseAddIdentity
-         *)
-        val add_identity : t -> int -> unit
-
-        (**
-         [getrf a (m, n) p] performs the LU factorization of an [m] by [n] matrix
-         [a] with partial pivoting according to [p].
-
-         @cvode <node9#ss:dense> denseGETRF
-         @raise ZeroDiagonalElement Zero found in matrix diagonal
-         *)
-        val getrf : t -> int * int -> int_array -> unit
-
-        (**
-         [getrs a n p b] finds the solution of [ax = b] using LU factorization.
-         [a] must be an [n] by [n]  matrix.
-
-         @cvode <node9#ss:dense> denseGETRS
-         *)
-        val getrs : t -> int -> int_array -> real_array -> unit
-
-        (**
-         [potrf a n] performs the Cholesky factorization of a real symmetric positive
-         [n] by [n] matrix.
-
-         @cvode <node9#ss:dense> DensePOTRF
-         @cvode <node9#ss:dense> densePOTRF
-         *)
-        val potrf : t -> int -> unit
-
-        (**
-         [potrs a n b] finds the solution of [ax = b] using Cholesky
-         factorization. [a] must be an [n] by [n] matrix.
-
-         @cvode <node9#ss:dense> densePOTRS
-         *)
-        val potrs : t -> int -> real_array -> unit
-
-        (**
-         [geqrf a (m, n) beta work] performs the QR factorization of an
-         [m] by [n] matrix, where [m] >= [n].
-
-         @cvode <node9#ss:dense> denseGEQRF
-         *)
-        val geqrf : t -> int * int -> real_array -> real_array -> unit
-
-        (**
-         [ormqr a beta v w work] computes the product [w = Qv], with Q calculated using {!geqrf}.
-
-         @param a       matrix passed to {!geqrf}
-         @param beta    vector apssed to {!geqrf}
-         @param v       vector multiplier
-         @param w       result vector
-         @param work    temporary vector used in the calculation
-         @cvode <node9#ss:dense> denseORMQR
-         *)
-        val ormqr :
-          a:t -> mn:(int * int)
-          -> beta:real_array -> v:real_array -> w:real_array -> work:real_array
-          -> unit
-      end
   end
 
-(** {3 Banded linear solver}
- @cvode <node9#ss:band> The BAND Module
- *)
+(** {3 Direct dense matrices}
+    @cvode <node9#ss:dense> The DENSE Module *)
 
+(** Operations for creating and manipulating direct dense matrices. *)
+module Directdensematrix :
+  sig
+    (**
+     This type represents a [realtype **] returned from a call to
+     {!new_dense_mat}.
+
+     The underlying array cannot be exposed directly in Ocaml as a
+     {{:OCAML_DOC_ROOT(Bigarray)} Bigarray} because it is an array of arrays
+     (an lliffe vector) and, anyway, there is no simple way to attach a
+     custom finalize function to such a big array.
+
+     @cvode <node9#ss:dense> Small dense matrices
+     @cvode <node9#ss:dense> newDenseMat 
+     *)
+    type t
+
+    (** {4 Basic access} *)
+
+    (**
+     [new_dense_mat m n] returns an [m] by [n] dense small matrix.
+
+     @cvode <node9#ss:dense> newDenseMat
+     *)
+    val new_dense_mat  : int * int -> t
+
+    (**
+     [get a (i, j)] returns the value at row [i] and column [j] in the m by
+     n matrix [a], where 0 <= [i] < m and 0 <= [j] < n.
+     *)
+    val get : t -> (int * int) -> float
+
+    (**
+     [set a (i, j) v] stores the value [v] at row [i] and column [j] in the
+     m by n matrix [a], where 0 <= [i] < m and 0 <= [j] < n.
+     *)
+    val set : t -> (int * int) -> float -> unit
+
+    (** {4 Calculations} *)
+
+    (**
+     [copy src dst (m, n)] copies the contents of one [m] by [n] matrix
+     into another.
+
+     @cvode <node9#ss:dense> denseCopy
+     *)
+    val copy  : t -> t -> int * int -> unit
+
+    (*
+     [scale c a (m, n)] multiplies each element of the [m] by [n]
+     matrix [a] by [c].
+
+     @cvode <node9#ss:dense> denseScale
+     *)
+    val scale : float -> t -> int * int -> unit
+
+    (**
+     [add_identity a n] increments an [n] by [n] matrix by the identity
+     matrix.
+
+     @cvode <node9#ss:dense> denseAddIdentity
+     *)
+    val add_identity : t -> int -> unit
+
+    (**
+     [getrf a (m, n) p] performs the LU factorization of an [m] by [n] matrix
+     [a] with partial pivoting according to [p].
+
+     @cvode <node9#ss:dense> denseGETRF
+     @raise ZeroDiagonalElement Zero found in matrix diagonal
+     *)
+    val getrf : t -> int * int -> int_array -> unit
+
+    (**
+     [getrs a n p b] finds the solution of [ax = b] using LU factorization.
+     [a] must be an [n] by [n]  matrix.
+
+     @cvode <node9#ss:dense> denseGETRS
+     *)
+    val getrs : t -> int -> int_array -> real_array -> unit
+
+    (**
+     [potrf a n] performs the Cholesky factorization of a real symmetric positive
+     [n] by [n] matrix.
+
+     @cvode <node9#ss:dense> DensePOTRF
+     @cvode <node9#ss:dense> densePOTRF
+     *)
+    val potrf : t -> int -> unit
+
+    (**
+     [potrs a n b] finds the solution of [ax = b] using Cholesky
+     factorization. [a] must be an [n] by [n] matrix.
+
+     @cvode <node9#ss:dense> densePOTRS
+     *)
+    val potrs : t -> int -> real_array -> unit
+
+    (**
+     [geqrf a (m, n) beta work] performs the QR factorization of an
+     [m] by [n] matrix, where [m] >= [n].
+
+     @cvode <node9#ss:dense> denseGEQRF
+     *)
+    val geqrf : t -> int * int -> real_array -> real_array -> unit
+
+    (**
+     [ormqr a beta v w work] computes the product [w = Qv], with Q calculated using {!geqrf}.
+
+     @param a       matrix passed to {!geqrf}
+     @param beta    vector apssed to {!geqrf}
+     @param v       vector multiplier
+     @param w       result vector
+     @param work    temporary vector used in the calculation
+     @cvode <node9#ss:dense> denseORMQR
+     *)
+    val ormqr :
+      a:t -> mn:(int * int)
+      -> beta:real_array -> v:real_array -> w:real_array -> work:real_array
+      -> unit
+  end
+
+(** {3 Banded matrices}
+    @cvode <node9#ss:band> The BAND Module *)
+
+(** Operations for creating and manipulating banded matrices. *)
 module Bandmatrix :
   sig
     (**
@@ -635,6 +638,7 @@ module Bandmatrix :
 
     (** {4 Column access} *)
 
+    (** Access banded matrix columns *)
     module Col :
       sig
         (**
@@ -675,90 +679,91 @@ module Bandmatrix :
          *)
         val set : c -> (int * int) -> float -> unit
       end
-
-    (** {4 Direct version} *)
-
-    module Direct :
-      sig
-        (**
-         This type represents a [realtype **] returned from a call to
-         {!new_band_mat}.
-
-         The underlying array cannot be exposed directly in Ocaml as a
-         {{:OCAML_DOC_ROOT(Bigarray)} Bigarray} because it is an array of arrays
-         (an lliffe vector) and, anyway, there is no simple way to attach a
-         custom finalize function to such a big array.
-
-         @cvode <node9#ss:band> NewBandMat 
-         *)
-        type t
-
-        (** {4 Basic access} *)
-
-        (**
-         [new_band_mat n smu ml] returns an [n] by [n] band matrix with lower
-         half-bandwidth [ml].
-
-         @cvode <node9#ss:band> newBandMat
-         *)
-        val new_band_mat : int * int * int -> t
-
-        (**
-         [get a (i, j)] returns the value at row [i] and column [j] in the m by
-         n matrix [a], where 0 <= [i] < m and 0 <= [j] < n.
-         *)
-        val get : t -> (int * int) -> float
-
-        (**
-         [set a (i, j) v] stores the value [v] at row [i] and column [j] in the
-         m by n matrix [a], where 0 <= [i] < m and 0 <= [j] < n.
-         *)
-        val set : t -> (int * int) -> float -> unit
-
-        (** {4 Calculations} *)
-
-        (**
-         [copy src dst n a_smu b_smu copymu copyml] copies the submatrix with
-         upper and lower bandwidths [copymu] and [copyml] of the [n] by [n] band
-         matrix [src] into the [n] by [n] band matrix [dst].
-
-         @cvode <node9#ss:band> bandCopy
-         *)
-        val copy : t -> t -> int -> int -> int -> int -> int -> unit
-
-        (**
-         [scale c a n mu ml smu] multiplies each element of the [n] by [n] band
-         matrix [a], having bandwidths [mu] and [ml], by [c].
-
-         @cvode <node9#ss:band> bandScale
-         *)
-        val scale : float -> t -> int -> int -> int -> int -> unit
-
-        (**
-         [add_idenity a n smu] increments the [n] by [n]  matrix [a] by the
-         identity matrix.
-
-         @cvode <node9#ss:band> bandAddIdentity
-         *)
-        val add_identity : t -> int -> int -> unit
-
-        (**
-         [gbtrf a n mu ml smu p] performs the LU factorization of the [n] by [n]
-         band matrix [a], having bandwidths [mu] and [ml], with partial pivoting
-         according to [p].
-
-         @cvode <node9#ss:band> bandGBTRF
-         *)
-        val gbtrf : t -> int -> int -> int -> int -> int_array -> unit
-
-        (**
-         [gbtrs a n smu ml p b] finds the solution of [ax = b] using LU factorization.
-         [a] must be an [n] by [n]  matrix having bandwidths [mu] and [ml].
-
-         @cvode <node9#ss:band> bandGBTRS
-         *)
-        val gbtrs
-            : t -> int -> int -> int -> int_array -> real_array -> unit
-      end
   end
 
+(** {3 Direct banded matrices}
+    @cvode <node9#ss:band> The BAND Module *)
+
+(** Operations for creating and manipulating direct banded matrices. *)
+module Directbandmatrix :
+  sig
+    (**
+     This type represents a [realtype **] returned from a call to
+     {!new_band_mat}.
+
+     The underlying array cannot be exposed directly in Ocaml as a
+     {{:OCAML_DOC_ROOT(Bigarray)} Bigarray} because it is an array of arrays
+     (an lliffe vector) and, anyway, there is no simple way to attach a
+     custom finalize function to such a big array.
+
+     @cvode <node9#ss:band> NewBandMat 
+     *)
+    type t
+
+    (** {4 Basic access} *)
+
+    (**
+     [new_band_mat n smu ml] returns an [n] by [n] band matrix with lower
+     half-bandwidth [ml].
+
+     @cvode <node9#ss:band> newBandMat
+     *)
+    val new_band_mat : int * int * int -> t
+
+    (**
+     [get a (i, j)] returns the value at row [i] and column [j] in the m by
+     n matrix [a], where 0 <= [i] < m and 0 <= [j] < n.
+     *)
+    val get : t -> (int * int) -> float
+
+    (**
+     [set a (i, j) v] stores the value [v] at row [i] and column [j] in the
+     m by n matrix [a], where 0 <= [i] < m and 0 <= [j] < n.
+     *)
+    val set : t -> (int * int) -> float -> unit
+
+    (** {4 Calculations} *)
+
+    (**
+     [copy src dst n a_smu b_smu copymu copyml] copies the submatrix with
+     upper and lower bandwidths [copymu] and [copyml] of the [n] by [n] band
+     matrix [src] into the [n] by [n] band matrix [dst].
+
+     @cvode <node9#ss:band> bandCopy
+     *)
+    val copy : t -> t -> int -> int -> int -> int -> int -> unit
+
+    (**
+     [scale c a n mu ml smu] multiplies each element of the [n] by [n] band
+     matrix [a], having bandwidths [mu] and [ml], by [c].
+
+     @cvode <node9#ss:band> bandScale
+     *)
+    val scale : float -> t -> int -> int -> int -> int -> unit
+
+    (**
+     [add_idenity a n smu] increments the [n] by [n]  matrix [a] by the
+     identity matrix.
+
+     @cvode <node9#ss:band> bandAddIdentity
+     *)
+    val add_identity : t -> int -> int -> unit
+
+    (**
+     [gbtrf a n mu ml smu p] performs the LU factorization of the [n] by [n]
+     band matrix [a], having bandwidths [mu] and [ml], with partial pivoting
+     according to [p].
+
+     @cvode <node9#ss:band> bandGBTRF
+     *)
+    val gbtrf : t -> int -> int -> int -> int -> int_array -> unit
+
+    (**
+     [gbtrs a n smu ml p b] finds the solution of [ax = b] using LU factorization.
+     [a] must be an [n] by [n]  matrix having bandwidths [mu] and [ml].
+
+     @cvode <node9#ss:band> bandGBTRS
+     *)
+    val gbtrs
+        : t -> int -> int -> int -> int_array -> real_array -> unit
+  end
