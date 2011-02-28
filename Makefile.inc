@@ -64,8 +64,8 @@ INCLUDES = $(DIRECTORIES:%=-I %)
 OBJ_OPT = $(OBJ:.cmo=.cmx)
 
 DOCPP = $(SED) \
-	-e 's|CVODE_DOC_ROOT(\([^\#)]*\)\(\#[^)]*\)\?)|$(CVODE_DOC_ROOT)\1.html\2|g' \
-	-e 's|OCAML_DOC_ROOT(\([^\#)]*\)\(\#[^)]*\)\?)|$(OCAML_DOC_ROOT)\1.html\2|g' \
+	-e 's|CVODE_DOC_ROOT(\\([^\#)]*\\)\\(\#[^)]*\\)\\?)|$(CVODE_DOC_ROOT)\\1.html\\2|g' \
+	-e 's|OCAML_DOC_ROOT(\\([^\#)]*\\)\\(\#[^)]*\\)\\?)|$(OCAML_DOC_ROOT)\\1.html\\2|g' \
 	-e 's|VERSION()|$(VERSION)|g'
 
 # Common rules
