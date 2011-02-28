@@ -1,6 +1,6 @@
 include Makefile.inc
 
-VERSION = 0.5.0
+VERSION = 0.9.0
 
 MLOBJ = sundials.cmo 		\
 	nvector.cmo 		\
