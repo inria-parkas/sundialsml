@@ -1,0 +1,50 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Cvode_serial.Spils.html">
+<link rel="Up" href="Cvode_serial.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Cvode_nvector" rel="Chapter" href="Cvode_nvector.html">
+<link title="Cvode_serial" rel="Chapter" href="Cvode_serial.html"><link title="Optional input functions" rel="Section" href="#4_Optionalinputfunctions">
+<title>Sundials (-CVODE) : Cvode_serial.BandPrec</title>
+</head>
+<body>
+<div class="navbar"><a href="Cvode_serial.Spils.html">Previous</a>
+&nbsp;<a href="Cvode_serial.html">Up</a>
+&nbsp;</div>
+<center><h1>Module <a href="type_Cvode_serial.BandPrec.html">Cvode_serial.BandPrec</a></h1></center>
+<br>
+<pre><span class="keyword">module</span> BandPrec: <code class="code">sig</code> <a href="Cvode_serial.BandPrec.html">..</a> <code class="code">end</code></pre>Get optional outputs for the banded preconditioner module of the
+    Scaled Preconditioned Iterative Linear Solvers:
+      SPGMR, SPBCG, SPTFQMR.<br>
+<div class="cvode"><small>
+              See sundials: <a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node5.html#sss:cvbandpre">Serial banded preconditioner module</a>
+            </small></div><hr width="100%">
+<br>
+<span id="4_Optionalinputfunctions"><h4>Optional input functions</h4></span><br>
+<pre><span id="VALget_work_space"><span class="keyword">val</span> get_work_space</span> : <code class="type"><a href="Cvode_serial.html#TYPEsession">Cvode_serial.session</a> -> int * int</code></pre><div class="info">
+Returns the sizes of the real and integer workspaces used by the serial
+      banded preconditioner module.<br>
+<b>Returns</b> (<code class="code">real_size</code>, <code class="code">integer_size</code>)<br>
+<div class="cvode"><small>
+              See sundials: <a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node5.html#sss:cvbandpre">CVBandPrecGetWorkSpace</a>
+            </small></div></div>
+<pre><span id="VALget_num_rhs_evals"><span class="keyword">val</span> get_num_rhs_evals</span> : <code class="type"><a href="Cvode_serial.html#TYPEsession">Cvode_serial.session</a> -> int</code></pre><div class="info">
+Returns the number of calls made to the user-supplied right-hand side
+      function due to finite difference banded Jacobian approximation in the
+      banded preconditioner setup function.<br>
+<div class="cvode"><small>
+              See sundials: <a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node5.html#sss:cvbandpre">CVBandPrecGetNumRhsEvals</a>
+            </small></div></div>
+</body></html>

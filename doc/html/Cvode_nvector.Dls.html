@@ -1,0 +1,117 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="next" href="Cvode_nvector.Diag.html">
+<link rel="Up" href="Cvode_nvector.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Cvode_nvector" rel="Chapter" href="Cvode_nvector.html">
+<link title="Cvode_serial" rel="Chapter" href="Cvode_serial.html"><link title="Callback functions" rel="Section" href="#4_Callbackfunctions">
+<link title="Optional input functions" rel="Section" href="#4_Optionalinputfunctions">
+<title>Sundials (-CVODE) : Cvode_nvector.Dls</title>
+</head>
+<body>
+<div class="navbar">&nbsp;<a href="Cvode_nvector.html">Up</a>
+&nbsp;<a href="Cvode_nvector.Diag.html">Next</a>
+</div>
+<center><h1>Module <a href="type_Cvode_nvector.Dls.html">Cvode_nvector.Dls</a></h1></center>
+<br>
+<pre><span class="keyword">module</span> Dls: <code class="code">sig</code> <a href="Cvode_nvector.Dls.html">..</a> <code class="code">end</code></pre>Control callbacks and get optional outputs for the Direct Linear Solvers
+    that operate on dense and banded matrices.<br>
+<div class="cvode"><small>
+              See sundials: <a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node5.html#sss:optin_dls">Direct linear solvers optional input functions</a>
+            </small></div><div class="cvode"><small>
+              See sundials: <a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node5.html#sss:optout_dls">Direct linear solvers optional output functions</a>
+            </small></div><div class="cvode"><small>
+              See sundials: <a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node5.html#ss:djacFn">Dense Jacobian function</a>
+            </small></div><hr width="100%">
+<br>
+<span id="4_Callbackfunctions"><h4>Callback functions</h4></span><br>
+<pre><span id="VALset_dense_jac_fn"><span class="keyword">val</span> set_dense_jac_fn</span> : <code class="type">'a <a href="Cvode_nvector.html#TYPEsession">Cvode_nvector.session</a> -><br>       (('a <a href="Cvode_nvector.html#TYPEtriple_tmp">Cvode_nvector.triple_tmp</a>, 'a) <a href="Cvode_nvector.html#TYPEjacobian_arg">Cvode_nvector.jacobian_arg</a> -><br>        Densematrix.t -> unit) -><br>       unit</code></pre><div class="info">
+Specify a callback function that computes an approximation to the Jacobian
+     matrix J(t, y) for the Dense and Lapackdense <a href="Cvode.html#TYPElinear_solver"><code class="code">Cvode.linear_solver</code></a>s.
+<p>
+
+     The callback function takes the <a href="Cvode_nvector.html#TYPEjacobian_arg"><code class="code">Cvode_nvector.jacobian_arg</code></a> as an input and must store
+     the computed Jacobian as a <a href="Cvode.Densematrix.html#TYPEt"><code class="code">Cvode.Densematrix.t</code></a>.
+<p>
+
+     <b>NB:</b> the elements of the Jacobian argument and the output matrix must no
+     longer be accessed after callback function has returned a result, i.e. if
+     their values are needed outside of the function call, then they must be
+     copied to separate physical structures.<br>
+<div class="cvode"><small>
+              See sundials: <a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node5.html#sss:optin_dls">CVDlsSetDenseJacFn</a>
+            </small></div><div class="cvode"><small>
+              See sundials: <a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node5.html#ss:djacFn">Dense Jacobian function</a>
+            </small></div></div>
+<pre><span id="VALclear_dense_jac_fn"><span class="keyword">val</span> clear_dense_jac_fn</span> : <code class="type">'a <a href="Cvode_nvector.html#TYPEsession">Cvode_nvector.session</a> -> unit</code></pre><div class="info">
+This function disables the user-supplied dense Jacobian function, and
+      switches back to the default internal difference quotient approximation
+      that comes with the Dense and Lapackdense <a href="Cvode.html#TYPElinear_solver"><code class="code">Cvode.linear_solver</code></a>s. It is
+      equivalent to calling CVodeSetDenseJacFn with an argument of <code class="code">NULL</code>.<br>
+<div class="cvode"><small>
+              See sundials: <a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node5.html#ss:djacFn">Dense Jacobian function</a>
+            </small></div></div>
+<pre><span id="VALset_band_jac_fn"><span class="keyword">val</span> set_band_jac_fn</span> : <code class="type">'a <a href="Cvode_nvector.html#TYPEsession">Cvode_nvector.session</a> -><br>       (('a <a href="Cvode_nvector.html#TYPEtriple_tmp">Cvode_nvector.triple_tmp</a>, 'a) <a href="Cvode_nvector.html#TYPEjacobian_arg">Cvode_nvector.jacobian_arg</a> -><br>        int -> int -> Bandmatrix.t -> unit) -><br>       unit</code></pre><div class="info">
+Specify a callback function that computes an approximation to the Jacobian
+     matrix J(t, y) for the Band and Lapackband <a href="Cvode.html#TYPElinear_solver"><code class="code">Cvode.linear_solver</code></a>s.
+<p>
+
+     The callback function takes three input arguments:<ul>
+<li><code class="code">jac</code> the standard <a href="Cvode_nvector.html#TYPEjacobian_arg"><code class="code">Cvode_nvector.jacobian_arg</code></a> with three work vectors.</li>
+<li><code class="code">mupper</code> the upper half-bandwidth of the Jacobian.</li>
+<li><code class="code">mlower</code> the lower half-bandwidth of the Jacobian.
+     and it must store the computed Jacobian as a <a href="Cvode.Bandmatrix.html#TYPEt"><code class="code">Cvode.Bandmatrix.t</code></a>.</li>
+</ul>
+
+    <b>NB:</b> <code class="code">jac</code> and the computed Jacobian must no longer be accessed after the
+            calback function has returned a result, i.e. if their values are
+            needed outside of the function call, then they must be copied to
+            separate physical structures.<br>
+<div class="cvode"><small>
+              See sundials: <a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node5.html#sss:optin_dls">CVDlsSetBandJacFn</a>
+            </small></div><div class="cvode"><small>
+              See sundials: <a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node5.html#ss:bjacFn">Banded Jacobian function</a>
+            </small></div></div>
+<pre><span id="VALclear_band_jac_fn"><span class="keyword">val</span> clear_band_jac_fn</span> : <code class="type">'a <a href="Cvode_nvector.html#TYPEsession">Cvode_nvector.session</a> -> unit</code></pre><div class="info">
+This function disables the user-supplied band Jacobian function, and
+      switches back to the default internal difference quotient approximation
+      that comes with the Band and Lapackband <a href="Cvode.html#TYPElinear_solver"><code class="code">Cvode.linear_solver</code></a>s. It is
+      equivalent to calling CVodeSetBandJacFn with an argument of <code class="code">NULL</code>.<br>
+<div class="cvode"><small>
+              See sundials: <a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node5.html#ss:bjacFn">Banded Jacobian function</a>
+            </small></div></div>
+<br>
+<span id="4_Optionalinputfunctions"><h4>Optional input functions</h4></span><br>
+<pre><span id="VALget_work_space"><span class="keyword">val</span> get_work_space</span> : <code class="type">'a <a href="Cvode_nvector.html#TYPEsession">Cvode_nvector.session</a> -> int * int</code></pre><div class="info">
+Returns the sizes of the real and integer workspaces used by the Dense and
+      Band direct linear solvers .<br>
+<b>Returns</b> (<code class="code">real_size</code>, <code class="code">integer_size</code>)<br>
+<div class="cvode"><small>
+              See sundials: <a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node5.html#sss:optout_dls">CVDlsGetWorkSpace</a>
+            </small></div></div>
+<pre><span id="VALget_num_jac_evals"><span class="keyword">val</span> get_num_jac_evals</span> : <code class="type">'a <a href="Cvode_nvector.html#TYPEsession">Cvode_nvector.session</a> -> int</code></pre><div class="info">
+Returns the number of calls made to the Dense and Band direct linear
+      solvers Jacobian approximation function.<br>
+<div class="cvode"><small>
+              See sundials: <a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node5.html#sss:optout_dls">CVDlsGetNumJacEvals</a>
+            </small></div></div>
+<pre><span id="VALget_num_rhs_evals"><span class="keyword">val</span> get_num_rhs_evals</span> : <code class="type">'a <a href="Cvode_nvector.html#TYPEsession">Cvode_nvector.session</a> -> int</code></pre><div class="info">
+Returns the number of calls made to the user-supplied right-hand side
+      function due to the finite difference (Dense or Band) Jacobian
+      approximation.<br>
+<div class="cvode"><small>
+              See sundials: <a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node5.html#sss:optout_dls">CVDlsGetNumRhsEvals</a>
+            </small></div></div>
+</body></html>
