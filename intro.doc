@@ -6,8 +6,9 @@ contributions of Peter Brown, Scott Cohen, Aaron Collier, Keith Grant,
 Steven Lee, Dan Reynolds, Dan Shumaker, and Allan Taylor.
 
 This Ocaml interface was written by {{:http://www.tbrk.org} Timothy Bourke}
-of {{:http://www.inria.fr} INRIA} and {{:http://www.di.ens.fr/~pouzet/} Marc
-Pouzet} of {{:http://www.di.ens.fr/} LIENS}.
+of {{:http://www.inria.fr} INRIA}/{{:http://www.di.ens.fr/} LIENS} and
+{{:http://www.di.ens.fr/~pouzet/} Marc Pouzet} of
+{{:http://www.di.ens.fr/} LIENS}.
 
 This library provides an Ocaml interface to Sundials, though {b only the
 CVODE solver with serial nvectors is currently supported}.

@@ -51,8 +51,7 @@ EXAMPLES_ROOT = /usr/local/examples
 
 # If sundials is configured with --with-blas or --with-lapack
 # then the extra library dependency must also be included below
-LAPACK_LIB = 
-# -lSimTKlapack
+LAPACK_LIB = -lSimTKlapack
 
 UNIX = unix.cma
 UNIXX = unix.cmxa
