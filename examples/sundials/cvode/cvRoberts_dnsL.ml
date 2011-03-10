@@ -96,8 +96,8 @@ let jac arg jmat =
 let print_output =
   printf "At t = %0.4e      y =%14.6e  %14.6e  %14.6e\n"
 
-let print_root_info =
-  printf "    rootsfound[] = %3d %3d\n"
+let print_root_info r1 r2 =
+  printf "    rootsfound[] = %3d %3d\n" (Roots.to_int r1) (Roots.to_int r2)
 
 let print_final_stats s =
   let nst = Cvode.get_num_steps s

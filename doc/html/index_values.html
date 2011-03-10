@@ -212,6 +212,11 @@ Transforms a set of vector operations on an immutable data type into a
         set of vector operations on references to that data type.
 </div>
 </td></tr>
+<tr><td><a href="Sundials.Roots.html#VALfrom_int">from_int</a> [<a href="Sundials.Roots.html">Sundials.Roots</a>]</td>
+<td><div class="info">
+Returns NoRoot for 0, Rising for 1, and Falling for -1.
+</div>
+</td></tr>
 <tr><td align="left"><br>G</td></tr>
 <tr><td><a href="Cvode.Directbandmatrix.html#VALgbtrf">gbtrf</a> [<a href="Cvode.Directbandmatrix.html">Cvode.Directbandmatrix</a>]</td>
 <td><div class="info">
@@ -1368,6 +1373,12 @@ Fills the matrix with zeros.
 <td><div class="info">
 <code class="code">sv_tolerances s reltol abstol</code> sets the relative tolerance using a scalar
     value, and the absolute tolerance as a vector.
+</div>
+</td></tr>
+<tr><td align="left"><br>T</td></tr>
+<tr><td><a href="Sundials.Roots.html#VALto_int">to_int</a> [<a href="Sundials.Roots.html">Sundials.Roots</a>]</td>
+<td><div class="info">
+Returns 0 for NoRoot, 1 for Rising, and -1 for Falling.
 </div>
 </td></tr>
 <tr><td align="left"><br>U</td></tr>

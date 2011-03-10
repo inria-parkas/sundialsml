@@ -36,21 +36,21 @@
 <code><span class="keyword">|</span></code></td>
 <td align="left" valign="top" >
 <code><span class="constructor">NoRoot</span></code></td>
-
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" >No root (0)</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr>
 <tr>
 <td align="left" valign="top" >
 <code><span class="keyword">|</span></code></td>
 <td align="left" valign="top" >
 <code><span class="constructor">Rising</span></code></td>
-
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" >Rising root (1)</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr>
 <tr>
 <td align="left" valign="top" >
 <code><span class="keyword">|</span></code></td>
 <td align="left" valign="top" >
 <code><span class="constructor">Falling</span></code></td>
-
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" >Falling root (-1)</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr></table>
 
 
@@ -77,6 +77,12 @@ Returns the length of an array<br>
 </div>
 <pre><span id="VALset"><span class="keyword">val</span> set</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> int -> <a href="Sundials.Roots.html#TYPEroot_event">root_event</a> -> unit</code></pre><div class="info">
 <code class="code">set r i v</code> sets the value of the <code class="code">i</code>th element of <code class="code">r</code>.<br>
+</div>
+<pre><span id="VALto_int"><span class="keyword">val</span> to_int</span> : <code class="type"><a href="Sundials.Roots.html#TYPEroot_event">root_event</a> -> int</code></pre><div class="info">
+Returns 0 for NoRoot, 1 for Rising, and -1 for Falling.<br>
+</div>
+<pre><span id="VALfrom_int"><span class="keyword">val</span> from_int</span> : <code class="type">int -> <a href="Sundials.Roots.html#TYPEroot_event">root_event</a></code></pre><div class="info">
+Returns NoRoot for 0, Rising for 1, and Falling for -1.<br>
 </div>
 <pre><span id="VALreset"><span class="keyword">val</span> reset</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> unit</code></pre><div class="info">
 Resets all elements to NoRoot.<br>

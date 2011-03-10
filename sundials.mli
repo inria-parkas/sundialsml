@@ -112,9 +112,9 @@ module Roots :
     type val_array = Carray.t
 
     type root_event =
-      | NoRoot
-      | Rising
-      | Falling
+      | NoRoot      (** No root (0)       *)
+      | Rising      (** Rising root (1)   *)
+      | Falling     (** Falling root (-1) *)
 
     (** An array with 0 elements. *)
     val empty : t
@@ -139,6 +139,12 @@ module Roots :
 
     (** [set r i v] sets the value of the [i]th element of [r]. *)
     val set : t -> int -> root_event -> unit
+
+    (** Returns 0 for NoRoot, 1 for Rising, and -1 for Falling. *)
+    val to_int : root_event -> int
+
+    (** Returns NoRoot for 0, Rising for 1, and Falling for -1. *)
+    val from_int : int -> root_event
 
     (** Resets all elements to NoRoot. *)
     val reset : t -> unit

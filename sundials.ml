@@ -122,11 +122,20 @@ module Roots =
     let from_int32 x =
       if x = 1l then Rising else if x = -1l then Falling else NoRoot
 
+    let from_int x =
+      if x = 1 then Rising else if x = -1 then Falling else NoRoot
+
     let to_int32 x =
       match x with
       | NoRoot -> 0l
       | Rising -> 1l
       | Falling -> -1l
+
+    let to_int x =
+      match x with
+      | NoRoot -> 0
+      | Rising -> 1
+      | Falling -> -1
 
     let get' roots i = from_int32 roots.{i}
 
