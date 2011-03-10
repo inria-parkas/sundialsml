@@ -29,8 +29,8 @@
 <pre><span class="keyword">module</span> Nvector_array: <code class="code">sig</code> <a href="Nvector_array.html">..</a> <code class="code">end</code></pre><a href="Nvector.html#TYPEnvector"><code class="code">Nvector.nvector</code></a>s for standard arrays and one-dimensional bigarrays<br>
 <b>Author(s):</b> Timothy Bourke (INRIA), Marc Pouzet (LIENS)<br>
 <b>Version:</b> 0.9.0<br>
-<b>See also</b><ul><li><a href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/Array.html">Array</a></li>
-<li><a href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.Array1.html">Bigarray.Array1</a></li>
+<b>See also</b><ul><li><a href="OCAML_DOC_ROOT(Array)">Array</a></li>
+<li><a href="OCAML_DOC_ROOT(Bigarray.Array1)">Bigarray.Array1</a></li>
 </ul>
 <hr width="100%">
 <pre><span class="keyword">module type</span> <a href="Nvector_array.ARRAY_NVECTOR.html">ARRAY_NVECTOR</a> = <code class="code">sig</code> <a href="Nvector_array.ARRAY_NVECTOR.html">..</a> <code class="code">end</code></pre><div class="info">
@@ -39,12 +39,12 @@ An abstract set of functions for working manipulating <a href="Nvector.html#TYPE
 </div>
 <pre><span class="keyword">include</span> <a href="Nvector_array.ARRAY_NVECTOR.html">Nvector_array.ARRAY_NVECTOR</a></pre>
 <div class="info">
-<code class="code">Nvector.nvector</code> on <a href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/Array.html"> Array</a>s of <code class="code">float</code>s.<br>
+<code class="code">Nvector.nvector</code> on <a href="OCAML_DOC_ROOT(Array)"> Array</a>s of <code class="code">float</code>s.<br>
 </div>
 <pre><span class="keyword">module</span> <a href="Nvector_array.Bigarray.html">Bigarray</a>: <code class="type"><a href="Nvector_array.ARRAY_NVECTOR.html">ARRAY_NVECTOR</a></code><code class="type"> 
   with
     type t = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t</code></pre><div class="info">
-<a href="Nvector.html#TYPEnvector"><code class="code">Nvector.nvector</code></a> on <a href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.Array1.html"> Bigarray</a>s
+<a href="Nvector.html#TYPEnvector"><code class="code">Nvector.nvector</code></a> on <a href="OCAML_DOC_ROOT(Bigarray.Array1)"> Bigarray</a>s
    of <code class="code">float</code>s.
 </div>
 </body></html>
