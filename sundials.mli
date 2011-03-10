@@ -111,23 +111,44 @@ module Roots :
     type t = int_array
     type val_array = Carray.t
 
+    type root_event =
+      | NoRoot
+      | Rising
+      | Falling
+
+    (** An array with 0 elements. *)
     val empty : t
+
+    (** [create n] returns an array with [n] elements. *)
     val create : int -> t
+
+    (** Returns the length of an array *)
     val length : t -> int
 
+    (** [print r] prints a line containing a tab-delimited list of the values of
+        [r] (in the format "% d", where 0 = NoRoot, 1 = Rising,
+        -1 = Falling), and then a newline. *)
     val print : t -> unit
-    val print' : t -> unit
 
+    (** [get r i] returns [true] if the value of the [i]th element of [r] is
+        either Rising or Falling. *)
     val get : t -> int -> bool
-    val get' : t -> int -> int
 
-    val set : t -> int -> bool -> unit
+    (** [get r i] returns the value of the [i]th element of [r]. *)
+    val get' : t -> int -> root_event
 
+    (** [set r i v] sets the value of the [i]th element of [r]. *)
+    val set : t -> int -> root_event -> unit
+
+    (** Resets all elements to NoRoot. *)
     val reset : t -> unit
+
+    (** Returns [true] if any elements are equal to Rising or Falling. *)
     val exists : t -> bool
 
-    val app : (bool -> unit) -> t -> unit
-    val appi : (int -> bool -> unit) -> t -> unit
+    (** [appi f r] applies [f] to the indexes and values of each element
+        in [r]. *)
+    val appi : (int -> root_event -> unit) -> t -> unit
   end
 
 (** {2 Miscellaneous utility functions} *)

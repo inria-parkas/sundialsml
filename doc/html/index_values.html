@@ -48,15 +48,17 @@ Increment a square matrix by the identity matrix.
         is called.
 </div>
 </td></tr>
-<tr><td><a href="Sundials.Roots.html#VALapp">app</a> [<a href="Sundials.Roots.html">Sundials.Roots</a>]</td>
-<td></td></tr>
 <tr><td><a href="Sundials.Carray.html#VALapp">app</a> [<a href="Sundials.Carray.html">Sundials.Carray</a>]</td>
 <td><div class="info">
 <code class="code">app f a</code> applies <code class="code">f</code> to the values of each element in <code class="code">a</code>.
 </div>
 </td></tr>
 <tr><td><a href="Sundials.Roots.html#VALappi">appi</a> [<a href="Sundials.Roots.html">Sundials.Roots</a>]</td>
-<td></td></tr>
+<td><div class="info">
+<code class="code">appi f r</code> applies <code class="code">f</code> to the indexes and values of each element
+        in <code class="code">r</code>.
+</div>
+</td></tr>
 <tr><td><a href="Sundials.Carray.html#VALappi">appi</a> [<a href="Sundials.Carray.html">Sundials.Carray</a>]</td>
 <td><div class="info">
 <code class="code">app f a</code> applies <code class="code">f</code> to the indexes and values of each element
@@ -151,7 +153,10 @@ This function disables the user-supplied Jacobian-vector function, and
 </div>
 </td></tr>
 <tr><td><a href="Sundials.Roots.html#VALcreate">create</a> [<a href="Sundials.Roots.html">Sundials.Roots</a>]</td>
-<td></td></tr>
+<td><div class="info">
+<code class="code">create n</code> returns an array with <code class="code">n</code> elements.
+</div>
+</td></tr>
 <tr><td><a href="Sundials.Carray.html#VALcreate">create</a> [<a href="Sundials.Carray.html">Sundials.Carray</a>]</td>
 <td><div class="info">
 <code class="code">create n</code> returns an array with <code class="code">n</code> elements.
@@ -165,14 +170,20 @@ Extracts an array from an nvector.
 </td></tr>
 <tr><td align="left"><br>E</td></tr>
 <tr><td><a href="Sundials.Roots.html#VALempty">empty</a> [<a href="Sundials.Roots.html">Sundials.Roots</a>]</td>
-<td></td></tr>
+<td><div class="info">
+An array with 0 elements.
+</div>
+</td></tr>
 <tr><td><a href="Sundials.Carray.html#VALempty">empty</a> [<a href="Sundials.Carray.html">Sundials.Carray</a>]</td>
 <td><div class="info">
 An array with 0 elements.
 </div>
 </td></tr>
 <tr><td><a href="Sundials.Roots.html#VALexists">exists</a> [<a href="Sundials.Roots.html">Sundials.Roots</a>]</td>
-<td></td></tr>
+<td><div class="info">
+Returns <code class="code">true</code> if any elements are equal to Rising or Falling.
+</div>
+</td></tr>
 <tr><td><a href="Sundials.html#VALextra_time_precision">extra_time_precision</a> [<a href="Sundials.html">Sundials</a>]</td>
 <td><div class="info">
 Controls the precision of <a href="Sundials.html#VALprint_time"><code class="code">Sundials.print_time</code></a>.
@@ -270,9 +281,16 @@ Transforms a set of vector operations on an immutable data type into a
 </div>
 </td></tr>
 <tr><td><a href="Sundials.Roots.html#VALget">get</a> [<a href="Sundials.Roots.html">Sundials.Roots</a>]</td>
-<td></td></tr>
+<td><div class="info">
+<code class="code">get r i</code> returns <code class="code">true</code> if the value of the <code class="code">i</code>th element of <code class="code">r</code> is
+        either Rising or Falling.
+</div>
+</td></tr>
 <tr><td><a href="Sundials.Roots.html#VALget'">get'</a> [<a href="Sundials.Roots.html">Sundials.Roots</a>]</td>
-<td></td></tr>
+<td><div class="info">
+<code class="code">get r i</code> returns the value of the <code class="code">i</code>th element of <code class="code">r</code>.
+</div>
+</td></tr>
 <tr><td><a href="Cvode_serial.html#VALget_actual_init_step">get_actual_init_step</a> [<a href="Cvode_serial.html">Cvode_serial</a>]</td>
 <td><div class="info">
 Returns the the value of the integration step size used on the first step.
@@ -714,7 +732,10 @@ Returns the real and integer workspace sizes.
 </td></tr>
 <tr><td align="left"><br>L</td></tr>
 <tr><td><a href="Sundials.Roots.html#VALlength">length</a> [<a href="Sundials.Roots.html">Sundials.Roots</a>]</td>
-<td></td></tr>
+<td><div class="info">
+Returns the length of an array
+</div>
+</td></tr>
 <tr><td><a href="Sundials.Carray.html#VALlength">length</a> [<a href="Sundials.Carray.html">Sundials.Carray</a>]</td>
 <td><div class="info">
 Returns the length of an array
@@ -893,9 +914,12 @@ Performs Cholesky factorization of a real symmetric positive matrix.
 </div>
 </td></tr>
 <tr><td><a href="Sundials.Roots.html#VALprint">print</a> [<a href="Sundials.Roots.html">Sundials.Roots</a>]</td>
-<td></td></tr>
-<tr><td><a href="Sundials.Roots.html#VALprint'">print'</a> [<a href="Sundials.Roots.html">Sundials.Roots</a>]</td>
-<td></td></tr>
+<td><div class="info">
+<code class="code">print r</code> prints a line containing a tab-delimited list of the values of
+        <code class="code">r</code> (in the format "% d", where 0 = NoRoot, 1 = Rising,
+        -1 = Falling), and then a newline.
+</div>
+</td></tr>
 <tr><td><a href="Cvode_serial.html#VALprint_integrator_stats">print_integrator_stats</a> [<a href="Cvode_serial.html">Cvode_serial</a>]</td>
 <td><div class="info">
 Convenience function that calls get_integrator_stats and prints the results to
@@ -952,7 +976,10 @@ Prints a dense matrix to stdout.
 </div>
 </td></tr>
 <tr><td><a href="Sundials.Roots.html#VALreset">reset</a> [<a href="Sundials.Roots.html">Sundials.Roots</a>]</td>
-<td></td></tr>
+<td><div class="info">
+Resets all elements to NoRoot.
+</div>
+</td></tr>
 <tr><td align="left"><br>S</td></tr>
 <tr><td><a href="Cvode.Directbandmatrix.html#VALscale">scale</a> [<a href="Cvode.Directbandmatrix.html">Cvode.Directbandmatrix</a>]</td>
 <td><div class="info">
@@ -1005,7 +1032,10 @@ Prints a dense matrix to stdout.
 </div>
 </td></tr>
 <tr><td><a href="Sundials.Roots.html#VALset">set</a> [<a href="Sundials.Roots.html">Sundials.Roots</a>]</td>
-<td></td></tr>
+<td><div class="info">
+<code class="code">set r i v</code> sets the value of the <code class="code">i</code>th element of <code class="code">r</code>.
+</div>
+</td></tr>
 <tr><td><a href="Cvode_serial.html#VALset_all_root_directions">set_all_root_directions</a> [<a href="Cvode_serial.html">Cvode_serial</a>]</td>
 <td><div class="info">
 Like <a href="Cvode_serial.html#VALset_root_direction"><code class="code">Cvode_serial.set_root_direction</code></a> but specifies a single direction of type

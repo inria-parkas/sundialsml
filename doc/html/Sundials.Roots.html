@@ -30,4 +30,62 @@
 
 <pre><span id="TYPEval_array"><span class="keyword">type</span> <code class="type"></code>val_array</span> = <code class="type"><a href="Sundials.Carray.html#TYPEt">Sundials.Carray.t</a></code> </pre>
 
-<pre><span id="VALempty"><span class="keyword">val</span> empty</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a></code></pre><pre><span id="VALcreate"><span class="keyword">val</span> create</span> : <code class="type">int -> <a href="Sundials.Roots.html#TYPEt">t</a></code></pre><pre><span id="VALlength"><span class="keyword">val</span> length</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> int</code></pre><pre><span id="VALprint"><span class="keyword">val</span> print</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> unit</code></pre><pre><span id="VALprint'"><span class="keyword">val</span> print'</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> unit</code></pre><pre><span id="VALget"><span class="keyword">val</span> get</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> int -> bool</code></pre><pre><span id="VALget'"><span class="keyword">val</span> get'</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> int -> int</code></pre><pre><span id="VALset"><span class="keyword">val</span> set</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> int -> bool -> unit</code></pre><pre><span id="VALreset"><span class="keyword">val</span> reset</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> unit</code></pre><pre><span id="VALexists"><span class="keyword">val</span> exists</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> bool</code></pre><pre><span id="VALapp"><span class="keyword">val</span> app</span> : <code class="type">(bool -> unit) -> <a href="Sundials.Roots.html#TYPEt">t</a> -> unit</code></pre><pre><span id="VALappi"><span class="keyword">val</span> appi</span> : <code class="type">(int -> bool -> unit) -> <a href="Sundials.Roots.html#TYPEt">t</a> -> unit</code></pre></body></html>
+<br><code><span id="TYPEroot_event"><span class="keyword">type</span> <code class="type"></code>root_event</span> = </code><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span class="constructor">NoRoot</span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span class="constructor">Rising</span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span class="constructor">Falling</span></code></td>
+
+</tr></table>
+
+
+<pre><span id="VALempty"><span class="keyword">val</span> empty</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a></code></pre><div class="info">
+An array with 0 elements.<br>
+</div>
+<pre><span id="VALcreate"><span class="keyword">val</span> create</span> : <code class="type">int -> <a href="Sundials.Roots.html#TYPEt">t</a></code></pre><div class="info">
+<code class="code">create n</code> returns an array with <code class="code">n</code> elements.<br>
+</div>
+<pre><span id="VALlength"><span class="keyword">val</span> length</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> int</code></pre><div class="info">
+Returns the length of an array<br>
+</div>
+<pre><span id="VALprint"><span class="keyword">val</span> print</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> unit</code></pre><div class="info">
+<code class="code">print r</code> prints a line containing a tab-delimited list of the values of
+        <code class="code">r</code> (in the format "% d", where 0 = NoRoot, 1 = Rising,
+        -1 = Falling), and then a newline.<br>
+</div>
+<pre><span id="VALget"><span class="keyword">val</span> get</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> int -> bool</code></pre><div class="info">
+<code class="code">get r i</code> returns <code class="code">true</code> if the value of the <code class="code">i</code>th element of <code class="code">r</code> is
+        either Rising or Falling.<br>
+</div>
+<pre><span id="VALget'"><span class="keyword">val</span> get'</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> int -> <a href="Sundials.Roots.html#TYPEroot_event">root_event</a></code></pre><div class="info">
+<code class="code">get r i</code> returns the value of the <code class="code">i</code>th element of <code class="code">r</code>.<br>
+</div>
+<pre><span id="VALset"><span class="keyword">val</span> set</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> int -> <a href="Sundials.Roots.html#TYPEroot_event">root_event</a> -> unit</code></pre><div class="info">
+<code class="code">set r i v</code> sets the value of the <code class="code">i</code>th element of <code class="code">r</code>.<br>
+</div>
+<pre><span id="VALreset"><span class="keyword">val</span> reset</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> unit</code></pre><div class="info">
+Resets all elements to NoRoot.<br>
+</div>
+<pre><span id="VALexists"><span class="keyword">val</span> exists</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> bool</code></pre><div class="info">
+Returns <code class="code">true</code> if any elements are equal to Rising or Falling.<br>
+</div>
+<pre><span id="VALappi"><span class="keyword">val</span> appi</span> : <code class="type">(int -> <a href="Sundials.Roots.html#TYPEroot_event">root_event</a> -> unit) -> <a href="Sundials.Roots.html#TYPEt">t</a> -> unit</code></pre><div class="info">
+<code class="code">appi f r</code> applies <code class="code">f</code> to the indexes and values of each element
+        in <code class="code">r</code>.<br>
+</div>
+</body></html>

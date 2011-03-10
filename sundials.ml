@@ -101,6 +101,11 @@ module Roots =
     type t = int_array
     type val_array = Carray.t
 
+    type root_event =
+      | NoRoot
+      | Rising
+      | Falling
+
     let reset v = Bigarray.Array1.fill v 0l
 
     let create n =
@@ -113,26 +118,33 @@ module Roots =
     let length = Bigarray.Array1.dim
 
     let get roots i = roots.{i} <> 0l
-    let get' roots i = Int32.to_int roots.{i}
 
-    let set a i v = Bigarray.Array1.set a i (if v then 1l else 0l)
+    let from_int32 x =
+      if x = 1l then Rising else if x = -1l then Falling else NoRoot
+
+    let to_int32 x =
+      match x with
+      | NoRoot -> 0l
+      | Rising -> 1l
+      | Falling -> -1l
+
+    let get' roots i = from_int32 roots.{i}
+
+    let set a i v =
+      Bigarray.Array1.set a i (to_int32 v)
 
     let appi f v =
       for i = 0 to (length v - 1) do
-        f i (v.{i} <> 0l)
+        f i (from_int32 v.{i})
       done
 
     let app f v =
       for i = 0 to (length v - 1) do
-        f (v.{i} <> 0l)
+        f v.{i}
       done
 
     let print vs =
-      app (fun v -> print_string (if v then "\t1" else "\t0")) vs;
-      print_newline ()
-
-    let print' vs =
-      Carray.appi (fun i v -> Printf.printf "\t% ld" v) vs;
+      app (Printf.printf "\t% ld pr") vs;
       print_newline ()
 
     let fold_left f a vs =
