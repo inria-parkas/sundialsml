@@ -467,12 +467,14 @@ Returns the number of nonlinear convergence failures that have occurred.<br>
 <span id="3_Input"><h3>Input</h3></span><br>
 <pre><span id="VALset_root_direction"><span class="keyword">val</span> set_root_direction</span> : <code class="type">'a <a href="Cvode_nvector.html#TYPEsession">session</a> -> root_direction array -> unit</code></pre><div class="info">
 <code class="code">set_root_direction s dir</code> specifies the direction of zero-crossings to be
-  located and returned. <code class="code">dir</code> may contain one entry for each root function.<br>
+  located and returned. <code class="code">dir</code> may contain one entry of type
+  <a href="Cvode.html#TYPEroot_direction"><code class="code">Cvode.root_direction</code></a> for each root function.<br>
 <div class="cvode"><small>
               See sundials: <a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node5.html#sss:optin_root">CVodeSetRootDirection</a>
             </small></div></div>
 <pre><span id="VALset_all_root_directions"><span class="keyword">val</span> set_all_root_directions</span> : <code class="type">'a <a href="Cvode_nvector.html#TYPEsession">session</a> -> root_direction -> unit</code></pre><div class="info">
-Like <a href="Cvode_nvector.html#VALset_root_direction"><code class="code">Cvode_nvector.set_root_direction</code></a> but specifies a single direction for all root
+Like <a href="Cvode_nvector.html#VALset_root_direction"><code class="code">Cvode_nvector.set_root_direction</code></a> but specifies a single direction of type
+  <a href="Cvode.html#TYPEroot_direction"><code class="code">Cvode.root_direction</code></a> for all root
   functions.<br>
 <div class="cvode"><small>
               See sundials: <a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node5.html#sss:optin_root">CVodeSetRootDirection</a>

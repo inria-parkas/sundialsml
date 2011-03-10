@@ -517,14 +517,16 @@ val get_num_nonlin_solv_conv_fails : session -> int
 
 (**
   [set_root_direction s dir] specifies the direction of zero-crossings to be
-  located and returned. [dir] may contain one entry for each root function.
+  located and returned. [dir] may contain one entry of type
+  {!Cvode.root_direction} for each root function.
 
   @cvode <node5#sss:optin_root> CVodeSetRootDirection
  *)
 val set_root_direction : session -> root_direction array -> unit
 
 (**
-  Like {!set_root_direction} but specifies a single direction for all root
+  Like {!set_root_direction} but specifies a single direction of type
+  {!Cvode.root_direction} for all root
   functions.
 
   @cvode <node5#sss:optin_root> CVodeSetRootDirection
