@@ -140,6 +140,14 @@ module Roots :
     (** [set r i v] sets the value of the [i]th element of [r]. *)
     val set : t -> int -> root_event -> unit
 
+    (** [set r i v] sets the value of the [i]th element of [r] to Rising if v is
+        true, and to NoRoot otherwise. *)
+    val set_rising : t -> int -> bool -> unit
+
+    (** [set r i v] sets the value of the [i]th element of [r] to Falling if v is
+        true, and to NoRoot otherwise. *)
+    val set_falling : t -> int -> bool -> unit
+
     (** Returns 0 for NoRoot, 1 for Rising, and -1 for Falling. *)
     val to_int : root_event -> int
 

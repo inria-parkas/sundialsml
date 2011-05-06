@@ -142,6 +142,9 @@ module Roots =
     let set a i v =
       Bigarray.Array1.set a i (to_int32 v)
 
+    let set_rising a i v = set a i (if v then Rising else NoRoot)
+    let set_falling a i v = set a i (if v then Falling else NoRoot)
+
     let appi f v =
       for i = 0 to (length v - 1) do
         f i (from_int32 v.{i})
