@@ -1,6 +1,7 @@
 include ../../Makefile.inc
 
-EXAMPLES = cchatter.byte discontinuous.byte printall.byte
+EXAMPLES = cchatter.byte discontinuous.byte printall.byte \
+	   upvseither.byte
 
 all: $(EXAMPLES)
 opt: $(EXAMPLES:.byte=.opt)
