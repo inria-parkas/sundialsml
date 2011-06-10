@@ -156,7 +156,7 @@ module Roots =
       done
 
     let print vs =
-      app (Printf.printf "\t% ld pr") vs;
+      app (Printf.printf "\t% ld") vs;
       print_newline ()
 
     let fold_left f a vs =
