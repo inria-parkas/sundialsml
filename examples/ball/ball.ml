@@ -64,25 +64,13 @@ let show = ref true
 let delay = ref true
 
 let args = [
-    ("-trace",
-     Arg.Unit (fun () -> trace := true),
-     "Show a trace of ball positions.");
-
-    ("-d",
-     Arg.Float (fun d -> t_delta := d),
-     "Set the default time step.");
-
+    ("-trace", Arg.Set trace, "Show a trace of ball positions.");
+    ("-d", Arg.Set_float t_delta, "Set the default time step.");
+    ("-noshow", Arg.Clear show, "Disable the graphical display.");
+    ("-nodelay", Arg.Clear delay, "No delays between frames.");
     ("-log",
      Arg.Unit (fun () -> log := true; show := false; delay := false),
      "Log state variables to stdout (implies -noshow and -nodelay).");
-
-    ("-noshow",
-     Arg.Unit (fun () -> show := false),
-     "Disable the graphical display.");
-
-    ("-nodelay",
-     Arg.Unit (fun () -> delay := false),
-     "No delays between frames.");
 ]
 
 let _ =
