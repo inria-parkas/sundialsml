@@ -78,6 +78,11 @@ module Carray :
         using the format [% .8f], and then a newline. *)
     val print_with_time' : float -> t -> unit
 
+    (** [print_with_time'' t a] prints a line containing the current time (see
+        {!print_time}) followed by a tab-delimited list of the values of [a],
+        using the format [% .15f], and then a newline. *)
+    val print_with_time'' : float -> t -> unit
+
     (** [app f a] applies [f] to the values of each element in [a]. *)
     val app : (float -> unit) -> t -> unit
 

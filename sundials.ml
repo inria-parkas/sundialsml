@@ -80,6 +80,11 @@ module Carray =
         v.{i} <- f i v.{i}
       done
 
+    let print_with_time'' t v =
+      print_time ("", "") t;
+      app (Printf.printf "\t% .15f") v;
+      print_newline ()
+
     let print_with_time' t v =
       print_time ("", "") t;
       app (Printf.printf "\t% .8f") v;
