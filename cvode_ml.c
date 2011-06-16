@@ -42,6 +42,11 @@
 #include <stdio.h>
 #define MAX_ERRMSG_LEN 256
 
+#define INT_ARRAY(v) ((int *)Caml_ba_data_val(v))
+#define REAL_ARRAY(v) ((realtype *)Caml_ba_data_val(v))
+#define REAL_ARRAY2(v) ((realtype **)Caml_ba_data_val(v))
+
+
 static const char *callback_ocaml_names[] = {
     "cvode_serial_callback_rhsfn",
     "cvode_serial_callback_rootsfn",
@@ -446,7 +451,7 @@ CAMLprim value c_get_root_info(value vdata, value roots)
     CVODE_DATA_FROM_ML(data, vdata);
 
     int roots_l = Caml_ba_array_val(roots)->dim[0];
-    int *roots_d = Caml_ba_data_val(roots);
+    int *roots_d = INT_ARRAY(roots);
 
     if (roots_l < data->num_roots) {
 	caml_invalid_argument("roots array is too short");
@@ -619,7 +624,7 @@ CAMLprim value c_set_root_direction(value vdata, value rootdirs)
     CVODE_DATA_FROM_ML(data, vdata);
 
     int rootdirs_l = Caml_ba_array_val(rootdirs)->dim[0];
-    int *rootdirs_d = Caml_ba_data_val(rootdirs);
+    int *rootdirs_d = INT_ARRAY(rootdirs);
 
     if (rootdirs_l < data->num_roots) {
 	caml_invalid_argument("root directions array is too short");
@@ -659,10 +664,6 @@ value cvode_ml_unit_roundoff()
  * Boiler plate definitions for Sundials interface.
  *
  */
-
-#define INT_ARRAY(v) ((int *)Caml_ba_data_val(v))
-#define REAL_ARRAY(v) ((realtype *)Caml_ba_data_val(v))
-#define REAL_ARRAY2(v) ((realtype **)Caml_ba_data_val(v))
 
 CAMLprim value c_get_work_space(value vcvode_mem)
 {
