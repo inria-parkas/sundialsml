@@ -15,6 +15,9 @@ discontinuous.opt: discontinuous.ml
 printall.byte: printall.ml
 printall.opt: printall.ml
 
+sliding.byte: sliding.ml
+sliding.opt: sliding.ml
+
 clean:
 	-rm -f $(EXAMPLES:.byte=.cmo) $(EXAMPLES:.byte=.cmx)
 	-rm -f $(EXAMPLES:.byte=.o) $(EXAMPLES:.byte=.cmi)
