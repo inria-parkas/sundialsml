@@ -60,6 +60,13 @@ module Carray =
 
     let length = Bigarray.Array1.dim
 
+    let blit = Bigarray.Array1.blit
+
+    let of_carray src =
+      let dst = create (length src) in
+      blit src dst;
+      dst
+
     let app f v =
       for i = 0 to (length v - 1) do
         f v.{i}

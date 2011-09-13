@@ -62,6 +62,13 @@ module Carray :
        {!real_array} *)
     val of_array : float array -> t
 
+    (** Create a new array with the same contents as an existing one. *)
+    val of_carray : t -> t
+
+    (** [fill src dst] copies all elements of array [src] into array [dst]. They
+        must both have the same length. *)
+    val blit : t -> t -> unit
+
     (** [fill a c] sets all elements of the array [a] to the constant [c]. *)
     val fill : t -> float -> unit
 
