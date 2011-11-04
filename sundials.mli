@@ -131,7 +131,7 @@ module Roots :
     (** An array with 0 elements. *)
     val empty : t
 
-    (** [create n] returns an array with [n] elements. *)
+    (** [create n] returns an array with [n] elements, each set to NoRoot. *)
     val create : int -> t
 
     (** Returns the length of an array *)
