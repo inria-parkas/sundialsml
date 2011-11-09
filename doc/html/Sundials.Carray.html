@@ -38,6 +38,13 @@ An array with 0 elements.<br>
 Copies the contents of an <a href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/Array.html"> Array</a> into a
        <a href="Sundials.html#TYPEreal_array"><code class="code">Sundials.real_array</code></a><br>
 </div>
+<pre><span id="VALof_carray"><span class="keyword">val</span> of_carray</span> : <code class="type"><a href="Sundials.Carray.html#TYPEt">t</a> -> <a href="Sundials.Carray.html#TYPEt">t</a></code></pre><div class="info">
+Create a new array with the same contents as an existing one.<br>
+</div>
+<pre><span id="VALblit"><span class="keyword">val</span> blit</span> : <code class="type"><a href="Sundials.Carray.html#TYPEt">t</a> -> <a href="Sundials.Carray.html#TYPEt">t</a> -> unit</code></pre><div class="info">
+<code class="code">fill src dst</code> copies all elements of array <code class="code">src</code> into array <code class="code">dst</code>. They
+        must both have the same length.<br>
+</div>
 <pre><span id="VALfill"><span class="keyword">val</span> fill</span> : <code class="type"><a href="Sundials.Carray.html#TYPEt">t</a> -> float -> unit</code></pre><div class="info">
 <code class="code">fill a c</code> sets all elements of the array <code class="code">a</code> to the constant <code class="code">c</code>.<br>
 </div>
@@ -53,6 +60,11 @@ Returns the length of an array<br>
 <code class="code">print_with_time' t a</code> prints a line containing the current time (see
         <a href="Sundials.html#VALprint_time"><code class="code">Sundials.print_time</code></a>) followed by a tab-delimited list of the values of <code class="code">a</code>,
         using the format <code class="code">% .8f</code>, and then a newline.<br>
+</div>
+<pre><span id="VALprint_with_time''"><span class="keyword">val</span> print_with_time''</span> : <code class="type">float -> <a href="Sundials.Carray.html#TYPEt">t</a> -> unit</code></pre><div class="info">
+<code class="code">print_with_time'' t a</code> prints a line containing the current time (see
+        <a href="Sundials.html#VALprint_time"><code class="code">Sundials.print_time</code></a>) followed by a tab-delimited list of the values of <code class="code">a</code>,
+        using the format <code class="code">% .15f</code>, and then a newline.<br>
 </div>
 <pre><span id="VALapp"><span class="keyword">val</span> app</span> : <code class="type">(float -> unit) -> <a href="Sundials.Carray.html#TYPEt">t</a> -> unit</code></pre><div class="info">
 <code class="code">app f a</code> applies <code class="code">f</code> to the values of each element in <code class="code">a</code>.<br>

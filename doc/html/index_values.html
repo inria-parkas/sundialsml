@@ -76,6 +76,11 @@ The set of nvector operations on an array.
 The BIG_REAL constant.
 </div>
 </td></tr>
+<tr><td><a href="Sundials.Carray.html#VALblit">blit</a> [<a href="Sundials.Carray.html">Sundials.Carray</a>]</td>
+<td><div class="info">
+<code class="code">fill src dst</code> copies all elements of array <code class="code">src</code> into array <code class="code">dst</code>.
+</div>
+</td></tr>
 <tr><td align="left"><br>C</td></tr>
 <tr><td><a href="Cvode_serial.Dls.html#VALclear_band_jac_fn">clear_band_jac_fn</a> [<a href="Cvode_serial.Dls.html">Cvode_serial.Dls</a>]</td>
 <td><div class="info">
@@ -154,7 +159,7 @@ This function disables the user-supplied Jacobian-vector function, and
 </td></tr>
 <tr><td><a href="Sundials.Roots.html#VALcreate">create</a> [<a href="Sundials.Roots.html">Sundials.Roots</a>]</td>
 <td><div class="info">
-<code class="code">create n</code> returns an array with <code class="code">n</code> elements.
+<code class="code">create n</code> returns an array with <code class="code">n</code> elements, each set to NoRoot.
 </div>
 </td></tr>
 <tr><td><a href="Sundials.Carray.html#VALcreate">create</a> [<a href="Sundials.Carray.html">Sundials.Carray</a>]</td>
@@ -190,6 +195,12 @@ Controls the precision of <a href="Sundials.html#VALprint_time"><code class="cod
 </div>
 </td></tr>
 <tr><td align="left"><br>F</td></tr>
+<tr><td><a href="Sundials.Roots.html#VALfalling">falling</a> [<a href="Sundials.Roots.html">Sundials.Roots</a>]</td>
+<td><div class="info">
+<code class="code">falling r i</code> returns <code class="code">true</code> if the value of the <code class="code">i</code>th element of <code class="code">r</code> is
+        Falling.
+</div>
+</td></tr>
 <tr><td><a href="Sundials.Carray.html#VALfill">fill</a> [<a href="Sundials.Carray.html">Sundials.Carray</a>]</td>
 <td><div class="info">
 <code class="code">fill a c</code> sets all elements of the array <code class="code">a</code> to the constant <code class="code">c</code>.
@@ -873,6 +884,11 @@ Copies the contents of an <a href="http://caml.inria.fr/pub/docs/manual-ocaml/li
        <a href="Sundials.html#TYPEreal_array"><code class="code">Sundials.real_array</code></a>
 </div>
 </td></tr>
+<tr><td><a href="Sundials.Carray.html#VALof_carray">of_carray</a> [<a href="Sundials.Carray.html">Sundials.Carray</a>]</td>
+<td><div class="info">
+Create a new array with the same contents as an existing one.
+</div>
+</td></tr>
 <tr><td><a href="Cvode_serial.html#VALone_step">one_step</a> [<a href="Cvode_serial.html">Cvode_serial</a>]</td>
 <td><div class="info">
 This function is identical to <a href="Cvode_serial.html#VALnormal"><code class="code">Cvode_serial.normal</code></a>, except that it returns after one
@@ -967,6 +983,13 @@ Prints a dense matrix to stdout.
         using the format <code class="code">% .8f</code>, and then a newline.
 </div>
 </td></tr>
+<tr><td><a href="Sundials.Carray.html#VALprint_with_time''">print_with_time''</a> [<a href="Sundials.Carray.html">Sundials.Carray</a>]</td>
+<td><div class="info">
+<code class="code">print_with_time'' t a</code> prints a line containing the current time (see
+        <a href="Sundials.html#VALprint_time"><code class="code">Sundials.print_time</code></a>) followed by a tab-delimited list of the values of <code class="code">a</code>,
+        using the format <code class="code">% .15f</code>, and then a newline.
+</div>
+</td></tr>
 <tr><td align="left"><br>R</td></tr>
 <tr><td><a href="Cvode_serial.html#VALreinit">reinit</a> [<a href="Cvode_serial.html">Cvode_serial</a>]</td>
 <td><div class="info">
@@ -983,6 +1006,12 @@ Prints a dense matrix to stdout.
 <tr><td><a href="Sundials.Roots.html#VALreset">reset</a> [<a href="Sundials.Roots.html">Sundials.Roots</a>]</td>
 <td><div class="info">
 Resets all elements to NoRoot.
+</div>
+</td></tr>
+<tr><td><a href="Sundials.Roots.html#VALrising">rising</a> [<a href="Sundials.Roots.html">Sundials.Roots</a>]</td>
+<td><div class="info">
+<code class="code">rising r i</code> returns <code class="code">true</code> if the value of the <code class="code">i</code>th element of <code class="code">r</code> is
+        Rising.
 </div>
 </td></tr>
 <tr><td align="left"><br>S</td></tr>
@@ -1115,6 +1144,12 @@ Specify a callback function that computes an approximation to the Jacobian
 <td><div class="info">
 <code class="code">set_error_file s fname trunc</code> opens the file named <code class="code">fname</code> and to which all
   messages from the default error handler are then directed.
+</div>
+</td></tr>
+<tr><td><a href="Sundials.Roots.html#VALset_falling">set_falling</a> [<a href="Sundials.Roots.html">Sundials.Roots</a>]</td>
+<td><div class="info">
+<code class="code">set r i v</code> sets the value of the <code class="code">i</code>th element of <code class="code">r</code> to Falling if v is
+        true, and to NoRoot otherwise.
 </div>
 </td></tr>
 <tr><td><a href="Cvode_serial.Spils.html#VALset_gs_type">set_gs_type</a> [<a href="Cvode_serial.Spils.html">Cvode_serial.Spils</a>]</td>
@@ -1305,6 +1340,12 @@ Setup preconditioning for any of the SPILS linear solvers.
 <tr><td><a href="Cvode_nvector.Spils.html#VALset_preconditioner">set_preconditioner</a> [<a href="Cvode_nvector.Spils.html">Cvode_nvector.Spils</a>]</td>
 <td><div class="info">
 Setup preconditioning for any of the SPILS linear solvers.
+</div>
+</td></tr>
+<tr><td><a href="Sundials.Roots.html#VALset_rising">set_rising</a> [<a href="Sundials.Roots.html">Sundials.Roots</a>]</td>
+<td><div class="info">
+<code class="code">set r i v</code> sets the value of the <code class="code">i</code>th element of <code class="code">r</code> to Rising if v is
+        true, and to NoRoot otherwise.
 </div>
 </td></tr>
 <tr><td><a href="Cvode_serial.html#VALset_root_direction">set_root_direction</a> [<a href="Cvode_serial.html">Cvode_serial</a>]</td>

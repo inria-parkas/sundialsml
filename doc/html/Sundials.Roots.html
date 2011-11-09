@@ -58,7 +58,7 @@
 An array with 0 elements.<br>
 </div>
 <pre><span id="VALcreate"><span class="keyword">val</span> create</span> : <code class="type">int -> <a href="Sundials.Roots.html#TYPEt">t</a></code></pre><div class="info">
-<code class="code">create n</code> returns an array with <code class="code">n</code> elements.<br>
+<code class="code">create n</code> returns an array with <code class="code">n</code> elements, each set to NoRoot.<br>
 </div>
 <pre><span id="VALlength"><span class="keyword">val</span> length</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> int</code></pre><div class="info">
 Returns the length of an array<br>
@@ -72,11 +72,27 @@ Returns the length of an array<br>
 <code class="code">get r i</code> returns <code class="code">true</code> if the value of the <code class="code">i</code>th element of <code class="code">r</code> is
         either Rising or Falling.<br>
 </div>
+<pre><span id="VALrising"><span class="keyword">val</span> rising</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> int -> bool</code></pre><div class="info">
+<code class="code">rising r i</code> returns <code class="code">true</code> if the value of the <code class="code">i</code>th element of <code class="code">r</code> is
+        Rising.<br>
+</div>
+<pre><span id="VALfalling"><span class="keyword">val</span> falling</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> int -> bool</code></pre><div class="info">
+<code class="code">falling r i</code> returns <code class="code">true</code> if the value of the <code class="code">i</code>th element of <code class="code">r</code> is
+        Falling.<br>
+</div>
 <pre><span id="VALget'"><span class="keyword">val</span> get'</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> int -> <a href="Sundials.Roots.html#TYPEroot_event">root_event</a></code></pre><div class="info">
 <code class="code">get r i</code> returns the value of the <code class="code">i</code>th element of <code class="code">r</code>.<br>
 </div>
 <pre><span id="VALset"><span class="keyword">val</span> set</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> int -> <a href="Sundials.Roots.html#TYPEroot_event">root_event</a> -> unit</code></pre><div class="info">
 <code class="code">set r i v</code> sets the value of the <code class="code">i</code>th element of <code class="code">r</code>.<br>
+</div>
+<pre><span id="VALset_rising"><span class="keyword">val</span> set_rising</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> int -> bool -> unit</code></pre><div class="info">
+<code class="code">set r i v</code> sets the value of the <code class="code">i</code>th element of <code class="code">r</code> to Rising if v is
+        true, and to NoRoot otherwise.<br>
+</div>
+<pre><span id="VALset_falling"><span class="keyword">val</span> set_falling</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> int -> bool -> unit</code></pre><div class="info">
+<code class="code">set r i v</code> sets the value of the <code class="code">i</code>th element of <code class="code">r</code> to Falling if v is
+        true, and to NoRoot otherwise.<br>
 </div>
 <pre><span id="VALto_int"><span class="keyword">val</span> to_int</span> : <code class="type"><a href="Sundials.Roots.html#TYPEroot_event">root_event</a> -> int</code></pre><div class="info">
 Returns 0 for NoRoot, 1 for Rising, and -1 for Falling.<br>
