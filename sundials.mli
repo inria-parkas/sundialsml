@@ -146,6 +146,14 @@ module Roots :
         either Rising or Falling. *)
     val get : t -> int -> bool
 
+    (** [rising r i] returns [true] if the value of the [i]th element of [r] is
+        Rising. *)
+    val rising : t -> int -> bool
+
+    (** [falling r i] returns [true] if the value of the [i]th element of [r] is
+        Falling. *)
+    val falling : t -> int -> bool
+
     (** [get r i] returns the value of the [i]th element of [r]. *)
     val get' : t -> int -> root_event
 

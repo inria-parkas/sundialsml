@@ -131,6 +131,9 @@ module Roots =
 
     let get roots i = roots.{i} <> 0l
 
+    let rising  roots i = roots.{i} = 1l
+    let falling roots i = roots.{i} = -1l
+
     let from_int32 x =
       if x = 1l then Rising else if x = -1l then Falling else NoRoot
 
