@@ -33,7 +33,7 @@ all: sundials_cvode.cma sundials_cvode.cmxa
 sundials_cvode.cma sundials_cvode.cmxa: $(MLOBJ) $(MLOBJ:.cmo=.cmx) $(COBJ)
 	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS) \
 	    -o sundials_cvode -oc mlsundials_cvode $^ \
-	    $(LAPACK_LIB) -lsundials_cvode -lsundials_nvecserial
+	    -lsundials_cvode $(LAPACK_LIB) -lsundials_nvecserial
 
 cvode_nvector.mli: cvode_serial.mli cvode_nvector.doc
 	$(SED) \
