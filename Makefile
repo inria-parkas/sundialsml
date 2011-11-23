@@ -104,6 +104,7 @@ clean:
 	-@$(RM) -f sundials_cvode$(XA)
 	-@$(RM) -f dochtml.cmi dochtml.cmo
 
+realclean: cleanall
 cleanall: clean
 	-@$(RM) -f $(MLOBJ:.cmo=.cmi)
 	-@$(RM) -f sundials_cvode.cma sundials_cvode.cmxa
