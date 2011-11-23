@@ -11,10 +11,10 @@
 (*                                                                     *)
 (***********************************************************************)
 
-let extra_time_precision = ref false
+let extra_precision = ref false
 
 let print_time (s1, s2) t =
-  if !extra_time_precision
+  if !extra_precision
   then Printf.printf "%s%.15e%s" s1 t s2
   else Printf.printf "%s%e%s" s1 t s2
 
@@ -87,19 +87,11 @@ module Carray =
         v.{i} <- f i v.{i}
       done
 
-    let print_with_time'' t v =
-      print_time ("", "") t;
-      app (Printf.printf "\t% .15f") v;
-      print_newline ()
-
-    let print_with_time' t v =
-      print_time ("", "") t;
-      app (Printf.printf "\t% .8f") v;
-      print_newline ()
-
     let print_with_time t v =
       print_time ("", "") t;
-      app (Printf.printf "\t% e") v;
+      if !extra_precision
+      then app (Printf.printf "\t% .15e") v
+      else app (Printf.printf "\t% e") v;
       print_newline ()
   end
 

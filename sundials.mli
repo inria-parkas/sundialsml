@@ -77,18 +77,8 @@ module Carray :
 
     (** [print_with_time t a] prints a line containing the current time (see
         {!print_time}) followed by a tab-delimited list of the values of [a],
-        using the format [% e], and then a newline. *)
+        and then a newline. See also {!extra_precision}. *)
     val print_with_time : float -> t -> unit
-
-    (** [print_with_time' t a] prints a line containing the current time (see
-        {!print_time}) followed by a tab-delimited list of the values of [a],
-        using the format [% .8f], and then a newline. *)
-    val print_with_time' : float -> t -> unit
-
-    (** [print_with_time'' t a] prints a line containing the current time (see
-        {!print_time}) followed by a tab-delimited list of the values of [a],
-        using the format [% .15f], and then a newline. *)
-    val print_with_time'' : float -> t -> unit
 
     (** [app f a] applies [f] to the values of each element in [a]. *)
     val app : (float -> unit) -> t -> unit
@@ -191,11 +181,11 @@ module Roots :
     right.  *)
 val print_time : string * string -> float -> unit
 
-(** Controls the precision of {!print_time}.
+(** Controls the precision of {!print_time} and {!Carray.print_with_time}.
  
     If [true] the format [%.15e] is used, otherwise [%e]
     (the default) is used. *)
-val extra_time_precision : bool ref
+val extra_precision : bool ref
 
 (** [format_float fmt f] formats [f] according to the format string [fmt],
     using the low-level [caml_format_float] function. *)

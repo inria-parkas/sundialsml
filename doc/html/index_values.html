@@ -189,9 +189,9 @@ An array with 0 elements.
 Returns <code class="code">true</code> if any elements are equal to Rising or Falling.
 </div>
 </td></tr>
-<tr><td><a href="Sundials.html#VALextra_time_precision">extra_time_precision</a> [<a href="Sundials.html">Sundials</a>]</td>
+<tr><td><a href="Sundials.html#VALextra_precision">extra_precision</a> [<a href="Sundials.html">Sundials</a>]</td>
 <td><div class="info">
-Controls the precision of <a href="Sundials.html#VALprint_time"><code class="code">Sundials.print_time</code></a>.
+Controls the precision of <a href="Sundials.html#VALprint_time"><code class="code">Sundials.print_time</code></a> and <a href="Sundials.Carray.html#VALprint_with_time"><code class="code">Sundials.Carray.print_with_time</code></a>.
 </div>
 </td></tr>
 <tr><td align="left"><br>F</td></tr>
@@ -973,21 +973,7 @@ Prints a dense matrix to stdout.
 <td><div class="info">
 <code class="code">print_with_time t a</code> prints a line containing the current time (see
         <a href="Sundials.html#VALprint_time"><code class="code">Sundials.print_time</code></a>) followed by a tab-delimited list of the values of <code class="code">a</code>,
-        using the format <code class="code">% e</code>, and then a newline.
-</div>
-</td></tr>
-<tr><td><a href="Sundials.Carray.html#VALprint_with_time'">print_with_time'</a> [<a href="Sundials.Carray.html">Sundials.Carray</a>]</td>
-<td><div class="info">
-<code class="code">print_with_time' t a</code> prints a line containing the current time (see
-        <a href="Sundials.html#VALprint_time"><code class="code">Sundials.print_time</code></a>) followed by a tab-delimited list of the values of <code class="code">a</code>,
-        using the format <code class="code">% .8f</code>, and then a newline.
-</div>
-</td></tr>
-<tr><td><a href="Sundials.Carray.html#VALprint_with_time''">print_with_time''</a> [<a href="Sundials.Carray.html">Sundials.Carray</a>]</td>
-<td><div class="info">
-<code class="code">print_with_time'' t a</code> prints a line containing the current time (see
-        <a href="Sundials.html#VALprint_time"><code class="code">Sundials.print_time</code></a>) followed by a tab-delimited list of the values of <code class="code">a</code>,
-        using the format <code class="code">% .15f</code>, and then a newline.
+        and then a newline.
 </div>
 </td></tr>
 <tr><td align="left"><br>R</td></tr>

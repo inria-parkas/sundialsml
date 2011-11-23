@@ -54,17 +54,7 @@ Returns the length of an array<br>
 <pre><span id="VALprint_with_time"><span class="keyword">val</span> print_with_time</span> : <code class="type">float -> <a href="Sundials.Carray.html#TYPEt">t</a> -> unit</code></pre><div class="info">
 <code class="code">print_with_time t a</code> prints a line containing the current time (see
         <a href="Sundials.html#VALprint_time"><code class="code">Sundials.print_time</code></a>) followed by a tab-delimited list of the values of <code class="code">a</code>,
-        using the format <code class="code">% e</code>, and then a newline.<br>
-</div>
-<pre><span id="VALprint_with_time'"><span class="keyword">val</span> print_with_time'</span> : <code class="type">float -> <a href="Sundials.Carray.html#TYPEt">t</a> -> unit</code></pre><div class="info">
-<code class="code">print_with_time' t a</code> prints a line containing the current time (see
-        <a href="Sundials.html#VALprint_time"><code class="code">Sundials.print_time</code></a>) followed by a tab-delimited list of the values of <code class="code">a</code>,
-        using the format <code class="code">% .8f</code>, and then a newline.<br>
-</div>
-<pre><span id="VALprint_with_time''"><span class="keyword">val</span> print_with_time''</span> : <code class="type">float -> <a href="Sundials.Carray.html#TYPEt">t</a> -> unit</code></pre><div class="info">
-<code class="code">print_with_time'' t a</code> prints a line containing the current time (see
-        <a href="Sundials.html#VALprint_time"><code class="code">Sundials.print_time</code></a>) followed by a tab-delimited list of the values of <code class="code">a</code>,
-        using the format <code class="code">% .15f</code>, and then a newline.<br>
+        and then a newline. See also <a href="Sundials.html#VALextra_precision"><code class="code">Sundials.extra_precision</code></a>.<br>
 </div>
 <pre><span id="VALapp"><span class="keyword">val</span> app</span> : <code class="type">(float -> unit) -> <a href="Sundials.Carray.html#TYPEt">t</a> -> unit</code></pre><div class="info">
 <code class="code">app f a</code> applies <code class="code">f</code> to the values of each element in <code class="code">a</code>.<br>
