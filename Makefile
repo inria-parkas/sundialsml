@@ -1,6 +1,4 @@
-include Makefile.inc
-
-VERSION = 0.9.0
+include config
 
 MLOBJ = sundials.cmo 		\
 	nvector.cmo 		\
@@ -80,21 +78,31 @@ doc/html/index.html: dochtml.cmo \
 
 install: sundials_cvode.cma sundials_cvode.cmxa META
 	$(MKDIR) $(PKGDIR)
-	$(CP) $(INSTALL_FILES) $(PKGDIR)/
-	$(CP) $(STUBLIBS) $(OCAML_INCLUDE)/stublibs/
+	$(CP) $(INSTALL_FILES) $(PKGDIR)
+	$(CP) $(STUBLIBS) $(STUBDIR)
+ifeq ($(INSTALL_DOCS), 1)
+	$(MKDIR) $(DOCDIR)/html
+	$(CP) doc/html/style.css doc/html/*.html $(DOCDIR)/html/
+endif
 
 uninstall:
 	for f in $(STUBLIBS); do	 \
-	    $(RM) $(OCAML_INCLUDE)/stublibs/$$f || true; \
+	    $(RM) $(STUBDIR)$$f || true; \
 	done
 	for f in $(INSTALL_FILES); do	 \
-	    $(RM) $(PKGDIR)/$$f || true; \
+	    $(RM) $(PKGDIR)$$f || true;  \
 	done
 	-$(RMDIR) $(PKGDIR)
+ifeq ($(INSTALL_DOCS), 1)
+	-$(RM) $(DOCDIR)/html/style.css $(DOCDIR)/html/*.html
+	-$(RMDIR) $(DOCDIR)/html
+	-$(RMDIR) $(DOCDIR)
+endif
 
 # ##
 
-depend: cvode_nvector.mli
+depend: .depend
+.depend: cvode_nvector.mli
 	$(OCAMLDEP) $(INCLUDES) *.mli *.ml > .depend
 
 clean:
@@ -104,12 +112,14 @@ clean:
 	-@$(RM) -f sundials_cvode$(XA)
 	-@$(RM) -f dochtml.cmi dochtml.cmo
 
+cleandoc:
+	-@$(RM) -f doc/html/*.html doc/html/style.css
+
 realclean: cleanall
 cleanall: clean
 	-@$(RM) -f $(MLOBJ:.cmo=.cmi)
 	-@$(RM) -f sundials_cvode.cma sundials_cvode.cmxa
 	-@$(RM) -f libmlsundials_cvode$(XA) dllmlsundials_cvode$(XS)
 	-@$(RM) -f META
-	-@$(RM) -f doc/html/*.html doc/html/style.css
 
 -include .depend
