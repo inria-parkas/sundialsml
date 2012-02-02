@@ -1,4 +1,4 @@
-include ../../../Makefile.inc
+include ../../../config
 
 EXAMPLES = cvAdvDiff_bnd.ml \
 	   cvRoberts_dns.ml \
@@ -87,6 +87,7 @@ clean:
 	-@rm -f $(ALL_EXAMPLES:.ml=.o) $(ALL_EXAMPLES:.ml=.cmi)
 	-@rm -f $(ALL_EXAMPLES:.ml=.c.log) $(ALL_EXAMPLES:.ml=.ml.log)
 
+realclean: cleanall
 cleanall: clean
 	-@rm -f $(ALL_EXAMPLES:.ml=.byte) $(ALL_EXAMPLES:.ml=.opt)
 	-@rm -f $(ALL_EXAMPLES:.ml=.diff) tests.log lapack-tests.log

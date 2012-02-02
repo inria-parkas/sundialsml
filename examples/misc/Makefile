@@ -1,4 +1,4 @@
-include ../../Makefile.inc
+include ../../config
 
 EXAMPLES = cchatter.byte discontinuous.byte printall.byte \
 	   upvseither.byte
@@ -22,6 +22,7 @@ clean:
 	-rm -f $(EXAMPLES:.byte=.cmo) $(EXAMPLES:.byte=.cmx)
 	-rm -f $(EXAMPLES:.byte=.o) $(EXAMPLES:.byte=.cmi)
 
+realclean: cleanall
 cleanall: clean
 	-rm -f $(EXAMPLES) $(EXAMPLES:.byte=.opt)
 
