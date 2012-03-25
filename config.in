@@ -7,7 +7,7 @@ OCAML_DOC_ROOT = http://caml.inria.fr/pub/docs/manual-ocaml/libref/
 OCAMLFLAGS =
 OCAMLOPTFLAGS =
 
-CC ?= gcc
+CC = gcc
 CFLAGS = # -DRESTRICT_INTERNAL_PRECISION"
 
 OCAMLC ?= @OCAMLBIN@ocamlc
