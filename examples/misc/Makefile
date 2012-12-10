@@ -1,7 +1,7 @@
 include ../../config
 
 EXAMPLES = cchatter.byte discontinuous.byte printall.byte \
-	   upvseither.byte
+	   upvseither.byte integr_backward.byte one_over_x.byte
 
 all: $(EXAMPLES)
 opt: $(EXAMPLES:.byte=.opt)
