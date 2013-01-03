@@ -1,4 +1,5 @@
 description = "Ocaml interface to Sundials (CVODE)"
-requires = ""
-archive(byte) = "sundialsml_cvode.cma"
-archive(native) = "sundialsml_cvode.cmxa"
+requires = "unix bigarray"
+directory = "+sundials"
+archive(byte) = "sundials_cvode.cma"
+archive(native) = "sundials_cvode.cmxa"

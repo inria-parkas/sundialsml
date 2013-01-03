@@ -1,18 +1,18 @@
 include config
 
-MLOBJ = sundials.cmo 		\
+MLOBJ=  sundials.cmo 		\
 	nvector.cmo 		\
 	nvector_array.cmo 	\
 	cvode.cmo 		\
 	cvode_nvector.cmo	\
 	cvode_serial.cmo
 
-COBJ =	cvode_ml$(XO) 		\
+COBJ=	cvode_ml$(XO) 		\
 	cvode_ml_ba$(XO) 	\
 	cvode_ml_nvec$(XO) 	\
 	nvector_ml$(XO)
 
-INSTALL_FILES = 		\
+INSTALL_FILES= 			\
     META			\
     $(MLOBJ:.cmo=.cmi)		\
     libmlsundials_cvode$(XA)	\
@@ -20,7 +20,9 @@ INSTALL_FILES = 		\
     sundials_cvode.cma		\
     sundials_cvode.cmxa
 
-STUBLIBS = dllmlsundials_cvode$(XS)
+STUBLIBS=dllmlsundials_cvode$(XS)
+
+CFLAGS+=-fPIC
 
 # ##
 
@@ -99,6 +101,9 @@ ifeq ($(INSTALL_DOCS), 1)
 	-$(RMDIR) $(DOCDIR)
 endif
 
+ocamlfind: sundials_cvode.cma sundials_cvode.cmxa META
+	ocamlfind install sundials $(INSTALL_FILES) $(STUBLIBS)
+
 # ##
 
 depend: .depend
@@ -106,6 +111,7 @@ depend: .depend
 	$(OCAMLDEP) $(INCLUDES) *.mli *.ml > .depend
 
 clean:
+	-@(cd examples; make -f Makefile clean)
 	-@$(RM) -f $(MLOBJ) $(MLOBJ:.cmo=.cmx) $(MLOBJ:.cmo=.o)
 	-@$(RM) -f $(COBJ) cvode.annot
 	-@$(RM) -f $(MLOBJ:.cmo=.cma) $(MLOBJ:.cmo=.cmxa)
@@ -117,6 +123,7 @@ cleandoc:
 
 realclean: cleanall
 cleanall: clean
+	-@(cd examples; make -f Makefile cleanall)
 	-@$(RM) -f $(MLOBJ:.cmo=.cmi)
 	-@$(RM) -f sundials_cvode.cma sundials_cvode.cmxa
 	-@$(RM) -f libmlsundials_cvode$(XA) dllmlsundials_cvode$(XS)

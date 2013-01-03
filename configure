@@ -56,6 +56,8 @@ do
 
 	Some influential environment variables:
 	  OCAMLROOT     Path to ocaml installation
+	  LAPACKLIB	Command for linking with Lapack (default: -llapack)
+			(sometimes also: -lSimTKlapack)
 
 	Use these variables to override the choices made by 'configure' or to help
 	it to find libraries and programs with nonstandard names/locations.
@@ -63,16 +65,20 @@ do
 	Report bugs to <$contact>.
 
 END_HELP_TEXT
+	exit 0
 	;;
     OCAMLROOT)
 	OCAMLROOT="${value%/}/"
 	OCAMLBIN="${OCAMLROOT}bin/";;
+    LAPACKLIB)
+	LAPACKLIB="${value}";;
     *)
 	echo "illegal option \"$option\"." 1>&2; exit 2;;
     esac
 done
 
 CPP=${CPP:-cpp}
+LAPACKLIB=${LAPACKLIB:-"-llapack"}
 error=""
 
 # Check for ocaml installation (and version)
@@ -112,7 +118,8 @@ else
 
     case "${sundials_info}" in
 	*,1)
-	    lapack_lib="-lSimTKlapack" ;;
+	    lapack_lib=${LAPACKLIB}
+	    ;;
 	*,0)
 	    unset lapack_lib ;;
 	*)
@@ -123,8 +130,18 @@ fi
 if [ "${lapack_lib}" = "" ]; then
     lapack_info=" (without lapack)"
 else
-    lapack_info=" (with lapack)"
+    lapack_info=" (with lapack: ${lapack_lib})"
 fi
+
+arch=`uname -i`
+case ${arch} in
+    x86_64)
+	cflags="-fPIC"
+	;;
+    *)
+	cflags=""
+	;;
+esac
 
 # Show a summary
 
@@ -135,6 +152,8 @@ echo "-------------"
 echo
 echo "  Ocaml\t\t\t${ocaml_path}${ocaml_version}"
 echo "  Sundials\t\t${sundials_version}${lapack_info}"
+echo
+echo "  Architecture\t\t${arch}"
 echo
 echo "Installation paths"
 echo "  prefix:\t\t${prefix}"
@@ -159,6 +178,7 @@ fi
 	 s#@docdir@#${docdir:-${prefix}share/doc/}#;
 	 s#@install_docs@#${install_docs:-1}#;
 	 s#@lapack_lib@#${lapack_lib}#;
+	 s#@cflags@#${cflags}#;
 	 s#@OCAMLBIN@#${OCAMLBIN}#;
 	 s#@OCAMLROOT@#${OCAMLROOT}#;" config.in) > config
 

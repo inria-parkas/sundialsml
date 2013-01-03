@@ -52,7 +52,7 @@ Compilation and Installation of the library
 
 * Installation:
 
-  1. Edit Makefile.inc if necessary (usually only for LAPACK_LIB, see above).
+  1. Run ./configure and verify the detected options.
 
   2. make
 
@@ -62,7 +62,12 @@ Compilation and Installation of the library
       into it. The dllmlsundials_cvode shared library will be copied into the
       stublibs subdirectory.)
 
+     or:
+       make ocamlfindinstall
+     (This will install the library via "ocamlfind install".)
+
   The library can be uninstalled with: make uninstall
+				   or: ocamlfind remove sundials
 
 * Documentation:
   
@@ -77,4 +82,34 @@ Compilation and Installation of the library
   The programs in examples/sundials can be used to test the Ocaml library
   against results from the standard Sundials examples. See the README file
   in that directory for further information
+
+* Usage (using ocamlfind):
+    #use "topfind";;
+    #require "sundials";;
+
+    module Cvode = Cvode_serial;;
+    let f t y yd = yd.{0} <- 1.0;;
+    let g t y gout = gout.{0} <- y.{0};;
+    let y = Cvode.Carray.of_array [| -1.0 |];;
+    let s = Cvode.init Cvode.Adams Cvode.Functional f (1, g) y;;
+    Cvode.set_stop_time s 2.0;;
+
+    (* repeat the commands below to advance the simulation until t = 2.0 *)
+    let (t', result) = Cvode.one_step s 2.0 y;;
+    Cvode.Carray.print_with_time t' y;;
+
+Common problems
+---------------
+* Symptom:
+  Fatal error: cannot load shared library dllmlsundials_cvode
+  Reason: libsundials_cvode.so.1: cannot open shared object file: No such file or directory
+
+  Likely cause:
+  The path to the Sundials library is not being searched by the dynamic
+  linker.
+
+  Solution:
+  Edit LD_LIBRARY_PATH. For example:
+
+    export LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH}
 

@@ -36,6 +36,11 @@ let start trace floor_details =
   Graphics.synchronize ();
   leave_trace := trace
 
+let minisleep (sec : float) =
+    try
+      ignore (Unix.select [] [] [] sec)
+    with Unix.Unix_error _ -> ()
+
 let last_x = ref 0.0
 let last_y = ref 0.0
 
@@ -48,6 +53,7 @@ let show (x, y) =
   Graphics.set_color Graphics.red;
   Graphics.fill_circle (xc x) (yc y) ball_radius;
   Graphics.synchronize ();
+  minisleep 1.0;
   last_x := x;
   last_y := y
 
