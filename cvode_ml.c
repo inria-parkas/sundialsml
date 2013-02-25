@@ -2,9 +2,9 @@
  *                                                                     *
  *              Ocaml interface to Sundials CVODE solver               *
  *                                                                     *
- *       Timothy Bourke (INRIA Rennes) and Marc Pouzet (LIENS)         *
+ *           Timothy Bourke (INRIA) and Marc Pouzet (LIENS)            *
  *                                                                     *
- *  Copyright 2011 Institut National de Recherche en Informatique et   *
+ *  Copyright 2013 Institut National de Recherche en Informatique et   *
  *  en Automatique.  All rights reserved.  This file is distributed    *
  *  under the terms of the GNU Library General Public License, with    *
  *  the special exception on linking described in file LICENSE.        *
@@ -46,55 +46,16 @@
 #define REAL_ARRAY(v) ((realtype *)Caml_ba_data_val(v))
 #define REAL_ARRAY2(v) ((realtype **)Caml_ba_data_val(v))
 
-
-static const char *callback_ocaml_names[] = {
-    "cvode_serial_callback_rhsfn",
-    "cvode_serial_callback_rootsfn",
-    "cvode_serial_callback_errorhandler",
-    "cvode_serial_callback_errorweight",
-    "cvode_serial_callback_jacfn",
-    "cvode_serial_callback_bandjacfn",
-    "cvode_serial_callback_presetupfn",
-    "cvode_serial_callback_presolvefn",
-    "cvode_serial_callback_jactimesfn",
-};
-
-static void finalize_closure(value** closure_field)
-{
-    if (*closure_field != NULL) {
-	caml_remove_generational_global_root(*closure_field);
-	*closure_field = NULL;
-    }
-}
-
 static void finalize(value vdata)
 {
-    CVODE_DATA_FROM_ML(data, vdata);
-
-    // The Ocaml Manual (18.9.1) says:
-    // ``Note: the finalize, compare, hash, serialize and deserialize
-    // functions attached to custom block descriptors must never trigger a
-    // garbage collection. Within these functions, do not call any of the
-    // Caml allocation functions, and do not perform a callback into Caml
-    // code. Do not use CAMLparam to register the parameters to these
-    // functions, and do not use CAMLreturn to return the result.''
-    //
-    // But, obviously, we're calling two caml functions. We need to find out
-    // if this is ok.
-    finalize_closure(&(data->closure_rhsfn));
-    finalize_closure(&(data->closure_rootsfn));
-    finalize_closure(&(data->closure_errh));
-    finalize_closure(&(data->closure_errw));
-
-    finalize_closure(&(data->closure_jacfn));
-    finalize_closure(&(data->closure_bandjacfn));
-    finalize_closure(&(data->closure_presetupfn));
-    finalize_closure(&(data->closure_presolvefn));
-    finalize_closure(&(data->closure_jactimesfn));
+    CVODE_SESSION_FROM_ML(data, vdata);
 
     if (data->cvode_mem != NULL) {
 	CVodeFree(&(data->cvode_mem));
     }
+
+    caml_remove_generational_global_root(&(data->user_data->callbacks));
+    caml_stat_free((void *)data->user_data);
 
     if (data->err_file != NULL) {
 	fclose(data->err_file);
@@ -102,18 +63,7 @@ static void finalize(value vdata)
     }
 }
 
-// The Ocaml Manual (18.9.3) says:
-// ``The contents of custom blocks are not scanned by the garbage collector,
-// and must therefore not contain any pointer inside the Caml heap. In other
-// terms, never store a Caml value in a custom block, and do not use Field,
-// Store_field nor caml_modify to access the data part of a custom block.
-// Conversely, any C data structure (not containing heap pointers) can be
-// stored in a custom block.''
-//
-// But, obviously, we're storing two closure values in the struct. We need
-// to find out if and when this is ok.
-//
-value cvode_ml_data_alloc(void* cvode_mem)
+value cvode_ml_session_alloc(void* cvode_mem)
 {
     CAMLparam0();
     CAMLlocal1(r);
@@ -121,25 +71,36 @@ value cvode_ml_data_alloc(void* cvode_mem)
     mlsize_t approx_size = 0;
     long int lenrw, leniw;
     if (CVodeGetWorkSpace(cvode_mem, &lenrw, &leniw) == CV_SUCCESS) {
-    	approx_size = lenrw * sizeof(realtype) + leniw * sizeof(long int);
+    	approx_size = (lenrw * sizeof(realtype) + leniw * sizeof(long int)
+		       + sizeof(value) - 1) / sizeof(value);
     }
 
-    r = caml_alloc_final(sizeof(struct cvode_ml_data),
+    r = caml_alloc_final((sizeof(struct cvode_ml_session) + sizeof(value) - 1)
+			 / sizeof(value) + 1,
 			 &finalize, approx_size, approx_size * 5);
 
-    cvode_ml_data_p d = CVODE_DATA(r);
+    cvode_ml_session_p d = CVODE_SESSION(r);
     d->cvode_mem = cvode_mem;
-
     d->err_file = NULL;
-    d->closure_rhsfn = NULL;
-    d->closure_rootsfn = NULL;
-    d->closure_errh = NULL;
-    d->closure_errw = NULL;
-    d->closure_jacfn = NULL;
-    d->closure_bandjacfn = NULL;
-    d->closure_presetupfn = NULL;
-    d->closure_presolvefn = NULL;
-    d->closure_jactimesfn = NULL;
+
+    d->user_data = (cvode_ml_user_data_p)
+		   caml_stat_alloc(sizeof(struct cvode_ml_user_data));
+
+    d->user_data->neq = 0;
+    d->user_data->num_roots = 0;
+    d->user_data->callbacks = caml_alloc_tuple(USER_DATA_NUMCALLBACKS);
+    caml_register_generational_global_root(&(d->user_data->callbacks));
+
+    USER_DATA_SET_RHSFN(d->user_data, 0);
+    USER_DATA_SET_ROOTSFN(d->user_data, 0);
+    USER_DATA_SET_ERRH(d->user_data, 0);
+    USER_DATA_SET_ERRW(d->user_data, 0);
+
+    USER_DATA_SET_JACFN(d->user_data, 0);
+    USER_DATA_SET_BANDJACFN(d->user_data, 0);
+    USER_DATA_SET_PRESETUPFN(d->user_data, 0);
+    USER_DATA_SET_PRESOLVEFN(d->user_data, 0);
+    USER_DATA_SET_JACTIMESFN(d->user_data, 0);
     
     CAMLreturn(r);
 }
@@ -269,25 +230,25 @@ static void errh(
     CAMLparam0();
     CAMLlocal1(a);
 
-    value *closure_errh = ((cvode_ml_data_p)eh_data)->closure_errh;
-
     a = caml_alloc_tuple(4);
     Store_field(a, RECORD_ERROR_DETAILS_ERROR_CODE, Val_int(error_code));
     Store_field(a, RECORD_ERROR_DETAILS_MODULE_NAME, caml_copy_string(module));
     Store_field(a, RECORD_ERROR_DETAILS_FUNCTION_NAME, caml_copy_string(func));
     Store_field(a, RECORD_ERROR_DETAILS_ERROR_MESSAGE, caml_copy_string(msg));
 
-    caml_callback(*closure_errh, a);
+    caml_callback(USER_DATA_ERRH(eh_data), a);
 
     CAMLreturn0;
 }
 
-CAMLprim value c_enable_err_handler_fn(value vdata)
+CAMLprim value c_set_err_handler_fn(value vdata, value ferrh)
 {
-    CAMLparam1(vdata);
-    CVODE_DATA_FROM_ML(data, vdata);
+    CAMLparam2(vdata, ferrh);
+    CVODE_SESSION_FROM_ML(data, vdata);
  
-    int flag = CVodeSetErrHandlerFn(data->cvode_mem, errh, (void *)data);
+    USER_DATA_SET_ERRH(data->user_data, ferrh);
+    int flag = CVodeSetErrHandlerFn(data->cvode_mem, errh,
+				    (void *)data->user_data);
     CHECK_FLAG("CVodeSetErrHandlerFn", flag);
 
     CAMLreturn0;
@@ -296,10 +257,11 @@ CAMLprim value c_enable_err_handler_fn(value vdata)
 CAMLprim value c_disable_err_handler_fn(value vdata)
 {
     CAMLparam1(vdata);
-    CVODE_DATA_FROM_ML(data, vdata);
+    CVODE_SESSION_FROM_ML(data, vdata);
 
-    int flag = CVodeSetErrHandlerFn(data->cvode_mem, NULL, (void *)data);
+    int flag = CVodeSetErrHandlerFn(data->cvode_mem, NULL, NULL);
     CHECK_FLAG("CVodeSetErrHandlerFn", flag);
+    USER_DATA_SET_ERRH(data->user_data, 0);
 
     CAMLreturn0;
 }
@@ -420,22 +382,22 @@ void set_linear_solver(void *cvode_mem, value ls, int n)
 CAMLprim value c_neqs(value vdata)
 {
     CAMLparam1(vdata);
-    CVODE_DATA_FROM_ML(data, vdata);
-    CAMLreturn(Val_int(data->neq));
+    CVODE_SESSION_FROM_ML(data, vdata);
+    CAMLreturn(Val_int(data->user_data->neq));
 }
 
 CAMLprim value c_nroots(value vdata)
 {
     CAMLparam1(vdata);
-    CVODE_DATA_FROM_ML(data, vdata);
-    CAMLreturn(Val_int(data->num_roots));
+    CVODE_SESSION_FROM_ML(data, vdata);
+    CAMLreturn(Val_int(data->user_data->num_roots));
 }
 
 CAMLprim value c_ss_tolerances(value vdata, value reltol, value abstol)
 {
     CAMLparam3(vdata, reltol, abstol);
 
-    CVODE_DATA_FROM_ML(data, vdata);
+    CVODE_SESSION_FROM_ML(data, vdata);
 
     int flag = CVodeSStolerances(data->cvode_mem,
 		 Double_val(reltol), Double_val(abstol));
@@ -448,12 +410,12 @@ CAMLprim value c_get_root_info(value vdata, value roots)
 {
     CAMLparam2(vdata, roots);
 
-    CVODE_DATA_FROM_ML(data, vdata);
+    CVODE_SESSION_FROM_ML(data, vdata);
 
     int roots_l = Caml_ba_array_val(roots)->dim[0];
     int *roots_d = INT_ARRAY(roots);
 
-    if (roots_l < data->num_roots) {
+    if (roots_l < data->user_data->num_roots) {
 	caml_invalid_argument("roots array is too short");
     }
 
@@ -468,7 +430,7 @@ CAMLprim value c_get_integrator_stats(value vdata)
     CAMLparam1(vdata);
     CAMLlocal1(r);
 
-    CVODE_DATA_FROM_ML(data, vdata);
+    CVODE_SESSION_FROM_ML(data, vdata);
     int flag;
 
     long int nsteps;
@@ -519,7 +481,7 @@ CAMLprim value c_set_error_file(value vdata, value vpath, value vtrunc)
 {
     CAMLparam3(vdata, vpath, vtrunc);
 
-    CVODE_DATA_FROM_ML(data, vdata);
+    CVODE_SESSION_FROM_ML(data, vdata);
 
     if (data->err_file != NULL) {
 	fclose(data->err_file);
@@ -536,69 +498,11 @@ CAMLprim value c_set_error_file(value vdata, value vpath, value vtrunc)
     CAMLreturn0;
 }
 
-CAMLprim value c_register_handler(value vdata, value handler)
-{
-    CAMLparam2(vdata, handler);
-
-    CVODE_DATA_FROM_ML(data, vdata);
-    const char* ocaml_name = callback_ocaml_names[Int_val(handler)];
-    value **handler_field;
-
-    switch (Int_val(handler)) {
-    case VARIANT_HANDLER_RHSFN:
-	handler_field = &(data->closure_rhsfn);
-	break;
-
-    case VARIANT_HANDLER_ROOTSFN:
-	handler_field = &(data->closure_rootsfn);
-	break;
-
-    case VARIANT_HANDLER_ERRORHANDLER:
-	handler_field = &(data->closure_errh);
-	break;
-
-    case VARIANT_HANDLER_ERRORWEIGHT:
-	handler_field = &(data->closure_errw);
-	break;
-
-    case VARIANT_HANDLER_JACFN:
-	handler_field = &(data->closure_jacfn);
-	break;
-
-    case VARIANT_HANDLER_BANDJACFN:
-	handler_field = &(data->closure_bandjacfn);
-	break;
-
-    case VARIANT_HANDLER_PRESETUPFN:
-	handler_field = &(data->closure_presetupfn);
-	break;
-
-    case VARIANT_HANDLER_PRESOLVEFN:
-	handler_field = &(data->closure_presolvefn);
-	break;
-
-    case VARIANT_HANDLER_JACTIMESFN:
-	handler_field = &(data->closure_jactimesfn);
-	break;
-
-    default:
-	break;
-    }
-
-    if ((*handler_field) != NULL) {
-	caml_remove_generational_global_root(*handler_field);
-    }
-    (*handler_field) = caml_named_value(ocaml_name);
-    caml_register_generational_global_root(*handler_field);
-
-    CAMLreturn0;
-}
-
 CAMLprim value c_set_iter_type(value vdata, value iter)
 {
     CAMLparam2(vdata, iter);
 
-    CVODE_DATA_FROM_ML(data, vdata);
+    CVODE_SESSION_FROM_ML(data, vdata);
 
     int iter_c;
     if (Is_block(iter)) {
@@ -611,7 +515,8 @@ CAMLprim value c_set_iter_type(value vdata, value iter)
     CHECK_FLAG("CVodeSetIterType", flag);
 
     if (iter_c == CV_NEWTON) {
-	set_linear_solver(data->cvode_mem, Field(iter, 0), data->neq);
+	set_linear_solver(data->cvode_mem, Field(iter, 0),
+			  data->user_data->neq);
     }
 
     CAMLreturn0;
@@ -621,12 +526,12 @@ CAMLprim value c_set_root_direction(value vdata, value rootdirs)
 {
     CAMLparam2(vdata, rootdirs);
 
-    CVODE_DATA_FROM_ML(data, vdata);
+    CVODE_SESSION_FROM_ML(data, vdata);
 
     int rootdirs_l = Caml_ba_array_val(rootdirs)->dim[0];
     int *rootdirs_d = INT_ARRAY(rootdirs);
 
-    if (rootdirs_l < data->num_roots) {
+    if (rootdirs_l < data->user_data->num_roots) {
 	caml_invalid_argument("root directions array is too short");
     }
 

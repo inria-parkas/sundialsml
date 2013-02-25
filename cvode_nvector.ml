@@ -2,9 +2,9 @@
 (*                                                                     *)
 (*              Ocaml interface to Sundials CVODE solver               *)
 (*                                                                     *)
-(*       Timothy Bourke (INRIA Rennes) and Marc Pouzet (LIENS)         *)
+(*           Timothy Bourke (INRIA) and Marc Pouzet (LIENS)            *)
 (*                                                                     *)
-(*  Copyright 2011 Institut National de Recherche en Informatique et   *)
+(*  Copyright 2013 Institut National de Recherche en Informatique et   *)
 (*  en Automatique.  All rights reserved.  This file is distributed    *)
 (*  under the terms of the GNU Library General Public License, with    *)
 (*  the special exception on linking described in file LICENSE.        *)
@@ -22,38 +22,11 @@ type 'a session
 
 (* interface *)
 
-type handler =
-  | RhsFn
-  | RootsFn
-  | ErrorHandler
-  | ErrorWeight
-  | JacFn
-  | BandJacFn
-  | PreSetupFn
-  | PreSolveFn
-  | JacTimesFn
-
-let handler_name h = match h with
-  | RhsFn        -> "cvode_serial_callback_rhsfn"
-  | RootsFn      -> "cvode_serial_callback_rootsfn"
-  | ErrorHandler -> "cvode_serial_callback_errorhandler"
-  | ErrorWeight  -> "cvode_serial_callback_errorweight"
-  | JacFn        -> "cvode_serial_callback_jacfn"
-  | BandJacFn    -> "cvode_serial_callback_bandjacfn"
-  | PreSetupFn   -> "cvode_serial_callback_presetupfn"
-  | PreSolveFn   -> "cvode_serial_callback_presolvefn"
-  | JacTimesFn   -> "cvode_serial_callback_jactimesfn"
-
-external external_register_handler : 'a session -> handler -> unit
-    = "c_register_handler"
-
-let register_handler s h f =
-  Callback.register (handler_name h) f;
-  external_register_handler s h
-
 external external_init
-    : lmm -> iter -> 'a nvector -> int -> float -> 'a session
-    = "c_nvec_init"
+    : lmm -> iter -> (float -> 'a -> 'a -> unit)
+      -> 'a nvector -> int -> (float -> 'a -> root_val_array -> unit)
+      -> float -> 'a session
+    = "c_nvec_init_byte" "c_nvec_init"
 
 external nroots : 'a session -> int
     = "c_nroots"
@@ -73,10 +46,6 @@ external wf_tolerances  : 'a session -> ('a -> 'a -> unit)
                          -> unit
     = "c_nvec_wf_tolerances"
 
-let wf_tolerances s efun =
-  register_handler s ErrorWeight efun;
-  wf_tolerances s efun
-
 external get_root_info  : 'a session -> Roots.t -> unit
     = "c_get_root_info"
 
@@ -93,10 +62,7 @@ external get_dky
     = "c_nvec_get_dky"
 
 let init' lmm iter f (num_roots, roots) y0 t0 =
-  let s = external_init lmm iter y0 num_roots t0 in
-  register_handler s RhsFn f;
-  register_handler s RootsFn roots;
-  s
+  external_init lmm iter f y0 num_roots roots t0
 
 let init lmm iter f roots y0 = init' lmm iter f roots y0 0.0
 
@@ -153,15 +119,11 @@ let print_integrator_stats s =
 external set_error_file : 'a session -> string -> bool -> unit
     = "c_set_error_file"
 
-external enable_err_handler_fn : 'a session -> unit
-    = "c_enable_err_handler_fn"
+external set_err_handler_fn  : 'a session -> (error_details -> unit) -> unit
+    = "c_set_err_handler_fn"
 
 external clear_err_handler_fn  : 'a session -> unit
     = "c_disable_err_handler_fn"
-
-let set_err_handler_fn s errh =
-  register_handler s ErrorHandler errh;
-  enable_err_handler_fn s
 
 external set_max_ord            : 'a session -> int -> unit
     = "c_set_max_ord"
@@ -250,25 +212,20 @@ type ('t, 'a) jacobian_arg =
 
 module Dls =
   struct
-    external enable_dense_jac_fn    : 'a session -> unit
-        = "c_nvec_dls_enable_dense_jac_fn"
+    external set_dense_jac_fn  : 'a session
+      -> (('a triple_tmp, 'a) jacobian_arg -> Densematrix.t -> unit) -> unit
+        = "c_nvec_dls_set_dense_jac_fn"
 
     external clear_dense_jac_fn : 'a session -> unit
         = "c_nvec_dls_disable_dense_jac_fn"
 
-    let set_dense_jac_fn s f =
-        register_handler s JacFn f;
-        enable_dense_jac_fn s
-
-    external enable_band_jac_fn     : 'a session -> unit
-        = "c_nvec_dls_enable_band_jac_fn"
+    external set_band_jac_fn   : 'a session
+      -> (('a triple_tmp, 'a) jacobian_arg -> int -> int
+            -> Bandmatrix.t -> unit) -> unit
+        = "c_nvec_dls_set_band_jac_fn"
 
     external clear_band_jac_fn : 'a session -> unit
         = "c_nvec_dls_disable_band_jac_fn"
-
-    let set_band_jac_fn s f =
-        register_handler s BandJacFn f;
-        enable_band_jac_fn s
 
     external get_work_space : 'a session -> int * int
         = "c_dls_get_work_space"
@@ -312,23 +269,18 @@ module Spils =
       | ModifiedGS
       | ClassicalGS
 
-    external enable_preconditioner      : 'a session -> unit
-        = "c_nvec_enable_preconditioner"
-
-    let set_preconditioner s fsetup fsolve =
-        register_handler s PreSetupFn fsetup;
-        register_handler s PreSolveFn fsolve;
-        enable_preconditioner s
+    external set_preconditioner  : 'a session
+      -> (('a triple_tmp, 'a) jacobian_arg -> bool -> float -> bool)
+      -> (('a single_tmp, 'a) jacobian_arg -> 'a solve_arg
+            -> 'a nvector -> unit) -> unit
+        = "c_nvec_set_preconditioner"
 
     external clear_jac_times_vec_fn : 'a session -> unit
         = "c_nvec_disable_jac_times_vec_fn"
 
-    external enable_jac_times_vec_fn    : 'a session -> unit
-        = "c_nvec_enable_jac_times_vec_fn"
-
-    let set_jac_times_vec_fn s f =
-        register_handler s JacTimesFn f;
-        enable_jac_times_vec_fn s
+    external set_jac_times_vec_fn : 'a session
+      -> (('a single_tmp, 'a) jacobian_arg -> 'a -> 'a -> unit) -> unit
+        = "c_nvec_set_jac_times_vec_fn"
 
     external set_prec_type : 'a session -> preconditioning_type -> unit
         = "c_set_prec_type"

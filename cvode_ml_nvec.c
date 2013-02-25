@@ -98,8 +98,6 @@ static int f(realtype t, N_Vector y, N_Vector ydot, void *user_data)
     CAMLparam0();
     CAMLlocal3(y_d, ydot_d, r);
 
-    value *closure_rhsfn = ((cvode_ml_data_p)user_data)->closure_rhsfn;
-
     y_d = WRAP_NVECTOR(y);
     ydot_d = WRAP_NVECTOR(ydot);
 
@@ -107,7 +105,8 @@ static int f(realtype t, N_Vector y, N_Vector ydot, void *user_data)
     //during this call, afterward that memory goes back to cvode.
     //These bigarrays must not be retained by closure_rhsfn! If
     //it wants a permanent copy, then it has to make it manually.
-    r = caml_callback3_exn(*closure_rhsfn, caml_copy_double(t), y_d, ydot_d);
+    r = caml_callback3_exn(USER_DATA_RHSFN(user_data),
+			   caml_copy_double(t), y_d, ydot_d);
 
     RELINQUISH_WRAPPEDNV(y_d);
     RELINQUISH_WRAPPEDNV(ydot_d);
@@ -120,15 +119,14 @@ static int roots(realtype t, N_Vector y, realtype *gout, void *user_data)
     CAMLparam0();
     CAMLlocal3(y_d, gout_d, r);
 
-    cvode_ml_data_p data = (cvode_ml_data_p)user_data;
-
     y_d = WRAP_NVECTOR(y);
 
-    gout_d = caml_ba_alloc(BIGARRAY_FLOAT, 1, gout, &(data->num_roots));
+    gout_d = caml_ba_alloc(BIGARRAY_FLOAT, 1, gout,
+			   &(USER_DATA_NUM_ROOTS(user_data)));
 
     // see notes for f()
-    r = caml_callback3_exn(*(data->closure_rootsfn), caml_copy_double(t),
-				 y_d, gout_d);
+    r = caml_callback3_exn(USER_DATA_ROOTSFN(user_data),
+			   caml_copy_double(t), y_d, gout_d);
 
     RELINQUISH_WRAPPEDNV(y_d);
     Caml_ba_array_val(gout_d)->dim[0] = 0;
@@ -141,13 +139,11 @@ static int errw(N_Vector y, N_Vector ewt, void *user_data)
     CAMLparam0();
     CAMLlocal3(y_d, ewt_d, r);
 
-    cvode_ml_data_p data = (cvode_ml_data_p)user_data;
-
     y_d = WRAP_NVECTOR(y);
     ewt_d = WRAP_NVECTOR(ewt);
 
     // see notes for f()
-    r = caml_callback2_exn(*(data->closure_errw), y_d, ewt_d);
+    r = caml_callback2_exn(USER_DATA_ERRW(user_data), y_d, ewt_d);
 
     RELINQUISH_WRAPPEDNV(y_d);
     RELINQUISH_WRAPPEDNV(ewt_d);
@@ -216,14 +212,12 @@ static int jacfn(
     CAMLparam0();
     CAMLlocal3(arg, r, matrix);
 
-    cvode_ml_data_p data = (cvode_ml_data_p)user_data;
-
     arg = make_jac_arg(t, y, fy, make_triple_tmp(tmp1, tmp2, tmp3));
 
     matrix = caml_alloc_final(sizeof(DlsMat), NULL, 0, 0);
     *((DlsMat *)Data_custom_val(matrix)) = Jac;
 
-    r = caml_callback2_exn(*(data->closure_jacfn), arg, matrix);
+    r = caml_callback2_exn(USER_DATA_JACFN(user_data), arg, matrix);
     relinquish_jac_arg(arg, 1);
     // note: matrix is also invalid after the callback
 
@@ -247,15 +241,13 @@ static int bandjacfn(
     CAMLlocal1(r);
     CAMLlocalN(args, 4);
 
-    cvode_ml_data_p data = (cvode_ml_data_p)user_data;
-
     args[0] = Val_int(mupper);
     args[1] = Val_int(mlower);
     args[2] = make_jac_arg(t, y, fy, make_triple_tmp(tmp1, tmp2, tmp3));
     args[3] = caml_alloc_final(sizeof(DlsMat), NULL, 0, 0);
     *((DlsMat *)Data_custom_val(args[3])) = Jac;
 
-    r = caml_callbackN_exn(*(data->closure_bandjacfn), 4, args);
+    r = caml_callbackN_exn(USER_DATA_BANDJACFN(user_data), 4, args);
 
     relinquish_jac_arg(args[2], 1);
     // note: args[3] is also invalid after the callback
@@ -278,11 +270,9 @@ static int presetupfn(
     CAMLparam0();
     CAMLlocal2(arg, r);
 
-    cvode_ml_data_p data = (cvode_ml_data_p)user_data;
-
     arg = make_jac_arg(t, y, fy, make_triple_tmp(tmp1, tmp2, tmp3));
 
-    r = caml_callback3_exn(*(data->closure_presetupfn),
+    r = caml_callback3_exn(USER_DATA_PRESETUPFN(user_data),
 	    arg, Val_bool(jok), caml_copy_double(gamma));
 
     relinquish_jac_arg(arg, 1);
@@ -320,6 +310,8 @@ static relinquish_spils_solve_arg(value arg)
     CAMLreturn0;
 }
 
+static int presolvefn_cnt = -1;
+
 static int presolvefn(
 	realtype t,
 	N_Vector y,
@@ -335,13 +327,11 @@ static int presolvefn(
     CAMLparam0();
     CAMLlocal4(arg, solvearg, zv, rv);
 
-    cvode_ml_data_p data = (cvode_ml_data_p)user_data;
-
     arg = make_jac_arg(t, y, fy, WRAP_NVECTOR(tmp));
     solvearg = make_spils_solve_arg(r, gamma, delta, lr);
     zv = WRAP_NVECTOR(z);
 
-    rv = caml_callback3_exn(*(data->closure_presolvefn), arg, solvearg, zv);
+    rv = caml_callback3_exn(USER_DATA_PRESOLVEFN(user_data), arg, solvearg, zv);
 
     relinquish_jac_arg(arg, 0);
     relinquish_spils_solve_arg(solvearg);
@@ -362,13 +352,11 @@ static int jactimesfn(
     CAMLparam0();
     CAMLlocal4(arg, varg, jvarg, r);
 
-    cvode_ml_data_p data = (cvode_ml_data_p)user_data;
-
     arg = make_jac_arg(t, y, fy, WRAP_NVECTOR(tmp));
     varg = WRAP_NVECTOR(v);
     jvarg = WRAP_NVECTOR(Jv);
 
-    r = caml_callback3_exn(*(data->closure_jactimesfn), arg, varg, jvarg);
+    r = caml_callback3_exn(USER_DATA_JACTIMESFN(user_data), arg, varg, jvarg);
 
     relinquish_jac_arg(arg, 0);
     RELINQUISH_WRAPPEDNV(varg);
@@ -377,87 +365,99 @@ static int jactimesfn(
     CAMLreturn(check_exception(r));
 }
 
-CAMLprim value CVTYPE(wf_tolerances)(value vdata)
+CAMLprim value CVTYPE(wf_tolerances)(value vdata, value ferrw)
 {
-    CAMLparam1(vdata);
-    CVODE_DATA_FROM_ML(data, vdata);
+    CAMLparam2(vdata, ferrw);
+    CVODE_SESSION_FROM_ML(data, vdata);
  
+    USER_DATA_SET_ERRW(data->user_data, ferrw);
     int flag = CVodeWFtolerances(data->cvode_mem, errw);
     CHECK_FLAG("CVodeWFtolerances", flag);
 
     CAMLreturn0;
 }
 
-CAMLprim value CVTYPE(dls_enable_dense_jac_fn)(value vdata)
+CAMLprim value CVTYPE(dls_set_dense_jac_fn)(value vdata, value fjacfn)
 {
-    CAMLparam1(vdata);
-    CVODE_DATA_FROM_ML(data, vdata);
+    CAMLparam2(vdata, fjacfn);
+    CVODE_SESSION_FROM_ML(data, vdata);
+    USER_DATA_SET_JACFN(data->user_data, fjacfn);
     int flag = CVDlsSetDenseJacFn(data->cvode_mem, jacfn);
     CHECK_FLAG("CVDlsSetDenseJacFn", flag);
     CAMLreturn0;
 }
 
-CAMLprim value CVTYPE(dls_disable_dense_jac_fn)(value vdata)
+CAMLprim value CVTYPE(dls_clear_dense_jac_fn)(value vdata)
 {
     CAMLparam1(vdata);
-    CVODE_DATA_FROM_ML(data, vdata);
+    CVODE_SESSION_FROM_ML(data, vdata);
     int flag = CVDlsSetDenseJacFn(data->cvode_mem, NULL);
     CHECK_FLAG("CVDlsSetDenseJacFn", flag);
+    USER_DATA_SET_JACFN(data->user_data, 0);
     CAMLreturn0;
 }
 
-CAMLprim value CVTYPE(dls_enable_band_jac_fn)(value vdata)
+CAMLprim value CVTYPE(dls_set_band_jac_fn)(value vdata, value fbandjacfn)
 {
-    CAMLparam1(vdata);
-    CVODE_DATA_FROM_ML(data, vdata);
+    CAMLparam2(vdata, fbandjacfn);
+    CVODE_SESSION_FROM_ML(data, vdata);
+    USER_DATA_SET_BANDJACFN(data->user_data, fbandjacfn);
     int flag = CVDlsSetBandJacFn(data->cvode_mem, bandjacfn);
     CHECK_FLAG("CVDlsSetBandJacFn", flag);
     CAMLreturn0;
 }
 
-CAMLprim value CVTYPE(dls_disable_band_jac_fn)(value vdata)
+CAMLprim value CVTYPE(dls_clear_band_jac_fn)(value vdata)
 {
     CAMLparam1(vdata);
-    CVODE_DATA_FROM_ML(data, vdata);
+    CVODE_SESSION_FROM_ML(data, vdata);
     int flag = CVDlsSetBandJacFn(data->cvode_mem, NULL);
     CHECK_FLAG("CVDlsSetBandJacFn", flag);
+    USER_DATA_SET_BANDJACFN(data->user_data, 0);
     CAMLreturn0;
 }
 
-CAMLprim value CVTYPE(enable_preconditioner)(value vdata)
+CAMLprim value CVTYPE(set_preconditioner)(value vdata, value fpresetup,
+					  value fpresolve)
 {
-    CAMLparam1(vdata);
-    CVODE_DATA_FROM_ML(data, vdata);
+    CAMLparam3(vdata, fpresetup, fpresolve);
+    CVODE_SESSION_FROM_ML(data, vdata);
+    USER_DATA_SET_PRESETUPFN(data->user_data, fpresetup);
+    USER_DATA_SET_PRESOLVEFN(data->user_data, fpresolve);
     int flag = CVSpilsSetPreconditioner(data->cvode_mem,
 	    presetupfn, presolvefn);
     CHECK_FLAG("CVSpilsSetPreconditioner", flag);
     CAMLreturn0;
 }
 
-CAMLprim value CVTYPE(enable_jac_times_vec_fn)(value vdata)
+CAMLprim value CVTYPE(set_jac_times_vec_fn)(value vdata, value fjactimes)
 {
-    CAMLparam1(vdata);
-    CVODE_DATA_FROM_ML(data, vdata);
+    CAMLparam2(vdata, fjactimes);
+    CVODE_SESSION_FROM_ML(data, vdata);
+    USER_DATA_SET_JACTIMESFN(data->user_data, fjactimes);
     int flag = CVSpilsSetJacTimesVecFn(data->cvode_mem, jactimesfn);
     CHECK_FLAG("CVSpilsSetJacTimesVecFn", flag);
     CAMLreturn0;
 }
 
-CAMLprim value CVTYPE(disable_jac_times_vec_fn)(value vdata)
+CAMLprim value CVTYPE(clear_jac_times_vec_fn)(value vdata)
 {
     CAMLparam1(vdata);
-    CVODE_DATA_FROM_ML(data, vdata);
+    CVODE_SESSION_FROM_ML(data, vdata);
     int flag = CVSpilsSetJacTimesVecFn(data->cvode_mem, NULL);
     CHECK_FLAG("CVSpilsSetJacTimesVecFn", flag);
+    USER_DATA_SET_JACTIMESFN(data->user_data, 0);
     CAMLreturn0;
 }
 
 /* basic interface */
 
-CAMLprim value CVTYPE(init)(value lmm, value iter, value initial,
-	value num_roots, value t0)
+CAMLprim value CVTYPE(init)(value lmm, value iter, value rhsfn,
+			    value initial, value num_roots,
+			    value g, value t0)
 {
-    CAMLparam4(lmm, iter, initial, num_roots);
+    CAMLparam5(lmm, iter, rhsfn, initial, num_roots);
+    CAMLxparam2(g, t0);
     CAMLlocal1(vdata);
 
     if (sizeof(int) != 4) {
@@ -500,12 +500,13 @@ CAMLprim value CVTYPE(init)(value lmm, value iter, value initial,
     N_Vector initial_nv = NVECTORIZE_VAL(initial);
 
     void *cvode_mem = CVodeCreate(lmm_c, iter_c);
+    vdata = cvode_ml_session_alloc(cvode_mem);
+    CVODE_SESSION_FROM_ML(data, vdata);
 
-    vdata = cvode_ml_data_alloc(cvode_mem);
-    CVODE_DATA_FROM_ML(data, vdata);
-
-    data->neq = Caml_ba_array_val(initial)->dim[0];
-    data->num_roots = Int_val(num_roots);
+    data->user_data->neq = Caml_ba_array_val(initial)->dim[0];
+    data->user_data->num_roots = Int_val(num_roots);
+    USER_DATA_SET_RHSFN(data->user_data, rhsfn);
+    USER_DATA_SET_ROOTSFN(data->user_data, g);
 
     if (data->cvode_mem == NULL) {
 	free(data);
@@ -517,16 +518,18 @@ CAMLprim value CVTYPE(init)(value lmm, value iter, value initial,
     RELINQUISH_NVECTORIZEDVAL(initial_nv);
     cvode_ml_check_flag("CVodeInit", flag, data);
 
-    if (data->num_roots > 0) {
-	flag = CVodeRootInit(data->cvode_mem, data->num_roots, roots);
+    if (data->user_data->num_roots > 0) {
+	flag = CVodeRootInit(data->cvode_mem,
+			     data->user_data->num_roots, roots);
 	cvode_ml_check_flag("CVodeRootInit", flag, data);
     }
 
-    CVodeSetUserData(data->cvode_mem, (void *)data);
+    CVodeSetUserData(data->cvode_mem, (void *)data->user_data);
 
     // setup linear solvers (if necessary)
     if (iter_c == CV_NEWTON) {
-	set_linear_solver(data->cvode_mem, Field(iter, 0), data->neq);
+	set_linear_solver(data->cvode_mem, Field(iter, 0),
+			  data->user_data->neq);
     }
 
     // default tolerances
@@ -536,11 +539,16 @@ CAMLprim value CVTYPE(init)(value lmm, value iter, value initial,
     CAMLreturn(vdata);
 }
 
+CAMLprim value CVTYPE(init_byte)(value *tbl, int n)
+{
+    CVTYPE(init)(tbl[0], tbl[1], tbl[2], tbl[3], tbl[4], tbl[5], tbl[6]);
+}
+
 CAMLprim value CVTYPE(sv_tolerances)(value vdata, value reltol, value abstol)
 {
     CAMLparam3(vdata, reltol, abstol);
 
-    CVODE_DATA_FROM_ML(data, vdata);
+    CVODE_SESSION_FROM_ML(data, vdata);
 
     N_Vector atol_nv = NVECTORIZE_VAL(abstol);
 
@@ -555,7 +563,7 @@ CAMLprim value CVTYPE(reinit)(value vdata, value t0, value y0)
 {
     CAMLparam3(vdata, t0, y0);
 
-    CVODE_DATA_FROM_ML(data, vdata);
+    CVODE_SESSION_FROM_ML(data, vdata);
 
     N_Vector y0_nv = NVECTORIZE_VAL(y0);
     int flag = CVodeReInit(data->cvode_mem, Double_val(t0), y0_nv);
@@ -567,11 +575,11 @@ CAMLprim value CVTYPE(reinit)(value vdata, value t0, value y0)
 
 static value solver(value vdata, value nextt, value y, int onestep)
 {
-    CAMLparam2(vdata, nextt);
+    CAMLparam3(vdata, nextt, y);
     CAMLlocal1(r);
 
     realtype t = 0.0;
-    CVODE_DATA_FROM_ML(data, vdata);
+    CVODE_SESSION_FROM_ML(data, vdata);
 
     N_Vector y_nv = NVECTORIZE_VAL(y);
 
@@ -618,7 +626,7 @@ CAMLprim value CVTYPE(get_dky)(value vdata, value vt, value vk, value vy)
 {
     CAMLparam4(vdata, vt, vk, vy);
 
-    CVODE_DATA_FROM_ML(data, vdata);
+    CVODE_SESSION_FROM_ML(data, vdata);
     N_Vector y_nv = NVECTORIZE_VAL(vy);
 
     int flag = CVodeGetDky(data->cvode_mem, Double_val(vt), Int_val(vk), y_nv);

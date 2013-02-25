@@ -27,7 +27,7 @@ But for Sundials and Ocaml we found that:
   latter.
 
 * For an ocaml program using the interface and compiled into byte code with
-  ocamlc, we coul replicate the results of a C program compiled directly
+  ocamlc, we could replicate the results of a C program compiled directly
   against Sundials by using either the options:
 	-mfpmath=sse -march=pentium4 (with or without -O2)
   or:
