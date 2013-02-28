@@ -239,6 +239,7 @@ let main () =
         u
         t0
   in
+  Gc.compact ();
 
   (* Call CVodeSStolerances to specify the scalar relative tolerance
    * and scalar absolute tolerance *)
@@ -264,4 +265,5 @@ let main () =
   print_final_stats cvode_mem  (* Print some final statistics   *)
 
 let _ = main ()
+let _ = Gc.compact ()
 

@@ -107,7 +107,7 @@ cleanall: clean
 	    sundials_cvode.cmxa $<
 
 .byte.diff:
-	$(EXAMPLES_ROOT)/cvode/serial/$(<:.byte=) > $(@:.diff=.c.log)
+	cat $(EXAMPLESROOT)/cvode/serial/$(<:.byte=.out) > $(@:.diff=.c.log)
 	./$< > $(@:.diff=.ml.log)
 	diff -u $(@:.diff=.c.log) $(@:.diff=.ml.log) > $@ || true
 

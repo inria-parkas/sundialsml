@@ -144,6 +144,8 @@ let main () =
   let cvode_mem =
     Cvode.init' Cvode.BDF (Cvode.Newton (Cvode.Dense)) f (nroots, g) y t0
   in
+  Gc.compact ();
+
   (* Call CVodeSVtolerances to specify the scalar relative tolerance
    * and vector absolute tolerances *)
   Cvode.sv_tolerances cvode_mem rtol abstol;
@@ -180,4 +182,5 @@ let main () =
   print_final_stats cvode_mem
 
 let _ = main ()
+let _ = Gc.compact ()
 

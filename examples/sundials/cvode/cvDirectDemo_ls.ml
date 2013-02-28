@@ -329,6 +329,7 @@ let problem1 () =
     init_y ();
     let cvode_mem = Cvode.init' lmm Cvode.Functional f1 Cvode.no_roots y p1_t0
     in
+    Gc.compact ();
     Cvode.ss_tolerances cvode_mem rtol atol;
 
     ignore (List.fold_left (run cvode_mem lmm) false
@@ -451,6 +452,7 @@ let problem2 () =
     init_y ();
     let cvode_mem = Cvode.init' lmm Cvode.Functional f2 Cvode.no_roots y p2_t0
     in
+    Gc.compact ();
     Cvode.ss_tolerances cvode_mem rtol atol;
 
     ignore (List.fold_left (run cvode_mem lmm) false
@@ -473,4 +475,5 @@ let main () =
   print_err_info (nerr1 + nerr2)
 
 let _ = main ()
+let _ = Gc.compact ()
 

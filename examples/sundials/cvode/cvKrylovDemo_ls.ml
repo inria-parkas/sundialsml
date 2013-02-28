@@ -466,6 +466,7 @@ let main () =
   let cvode_mem =
     Cvode.init' Cvode.BDF Cvode.Functional (f data) Cvode.no_roots u t0
   in
+  Gc.compact ();
 
   (* Call CVodeSStolerances to specify the scalar relative tolerance
    * and scalar absolute tolerances *)
@@ -553,4 +554,5 @@ let main () =
   ignore (List.fold_left (run cvode_mem) false [UseSpgmr; UseSpbcg; UseSptfqmr])
 
 let _ = main ()
+let _ = Gc.compact ()
 

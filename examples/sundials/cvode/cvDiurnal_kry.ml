@@ -569,6 +569,7 @@ let main () =
           (Cvode.Spgmr { Cvode.pretype = Cvode.PrecLeft; Cvode.maxl = 0}))
       (f data) Cvode.no_roots u t0
   in
+  Gc.compact ();
 
   (* Call CVodeSStolerances to specify the scalar relative tolerance
    * and scalar absolute tolerances *)
@@ -596,4 +597,5 @@ let main () =
   print_final_stats cvode_mem
 
 let _ = main ()
+let _ = Gc.compact ()
 

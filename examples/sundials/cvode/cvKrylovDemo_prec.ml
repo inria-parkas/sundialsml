@@ -849,6 +849,7 @@ let main () =
             (Cvode.Spgmr { Cvode.pretype = Cvode.PrecLeft; Cvode.maxl = maxl}))
         (f wdata) Cvode.no_roots c t0
   in
+  Gc.compact ();
   wdata.cvode_mem <- Some cvode_mem;
   Cvode.ss_tolerances cvode_mem reltol abstol;
   Spils.set_gs_type cvode_mem Spils.ModifiedGS;
@@ -899,4 +900,5 @@ let main () =
   run Cvode.PrecRight Spils.ClassicalGS
 
 let _ = main ()
+let _ = Gc.compact ()
 

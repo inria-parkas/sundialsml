@@ -37,3 +37,6 @@ But for Sundials and Ocaml we found that:
   precision of the FPU to double (i.e. compile cvode_ml_nvec.c with the
   option -DRESTRICT_INTERNAL_PRECISION).
 
+The examples include explicit calls to Gc.compact() to test the pointer
+handling and finalisation calls of the OCaml interface routines.
+

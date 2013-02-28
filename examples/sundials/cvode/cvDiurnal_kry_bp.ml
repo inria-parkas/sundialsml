@@ -341,6 +341,7 @@ let main () =
                               { Cvode.mupper = mu; Cvode.mlower = ml})))
       (f data) Cvode.no_roots u t0
   in
+  Gc.compact ();
 
   (* Call CVodeSStolerances to specify the scalar relative tolerance
    * and scalar absolute tolerances *)
@@ -377,4 +378,5 @@ let main () =
   jrpe_loop Cvode.PrecRight "PREC_RIGHT"
 
 let _ = main ()
+let _ = Gc.compact ()
 

@@ -148,6 +148,8 @@ let main () =
   let cvode_mem =
     Cvode.init' Cvode.BDF (Cvode.Newton (Cvode.Dense)) f (nroots, g) y t0
   in
+  Gc.compact ();
+
   (* Use private function to compute error weights *)
   Cvode.wf_tolerances cvode_mem ewt;
 
@@ -183,4 +185,5 @@ let main () =
   print_final_stats cvode_mem
 
 let _ = main ()
+let _ = Gc.compact ()
 
