@@ -2,9 +2,9 @@
 (*                                                                     *)
 (*              Ocaml interface to Sundials CVODE solver               *)
 (*                                                                     *)
-(*       Timothy Bourke (INRIA Rennes) and Marc Pouzet (LIENS)         *)
+(*           Timothy Bourke (INRIA) and Marc Pouzet (LIENS)            *)
 (*                                                                     *)
-(*  Copyright 2011 Institut National de Recherche en Informatique et   *)
+(*  Copyright 2013 Institut National de Recherche en Informatique et   *)
 (*  en Automatique.  All rights reserved.  This file is distributed    *)
 (*  under the terms of the GNU Library General Public License, with    *)
 (*  the special exception on linking described in file LICENSE.        *)
@@ -84,14 +84,17 @@ type root_val_array = Sundials.Roots.val_array
 (** {2 Initialization} *)
 
 (**
-    [init lmm iter f (nroots, g) y0] initializes the CVODE solver and returns a
-    {!session}.
+    [init lmm iter f (nroots, g) (neqs, y0)] initializes the CVODE solver and
+    returns a {!session}.
     - [lmm]     specifies the linear multistep method, see {!Cvode.lmm}.
     - [iter]    specifies either functional iteration or Newton iteration
                 with a specific linear solver, see {!Cvode.iter}.
     - [f]       is the ODE right-hand side function.
     - [nroots]  specifies the number of root functions (zero-crossings).
     - [g]       calculates the values of the root functions.
+    - [neqs]    specifies the number of equations (continuous state
+                variables). There is no operation for demanding the length
+                of an 'a nvector.
     - [y0]      is a vector of initial values, the size of this vector
                 determines the number of equations in  the 'a session, see
                 {!Sundials.Carray.t}.
@@ -142,19 +145,19 @@ val init :
     -> iter
     -> (float -> 'a -> 'a -> unit)
     -> (int * (float -> 'a -> root_val_array -> unit))
-    -> 'a nvector
+    -> (int * 'a nvector)
     -> 'a session
 
 (**
-  [init lmm iter f roots y0 t0] is the same as init' except that the start time,
-  [t0], must be given explicitly.
+  [init lmm iter f roots (neqs, y0) t0] is the same as init' except that a
+  start time, [t0], can be given explicitly.
  *)
 val init' :
     lmm
     -> iter
     -> (float -> 'a -> 'a -> unit)
     -> (int * (float -> 'a -> root_val_array -> unit))
-    -> 'a nvector
+    -> (int * 'a nvector)
     -> float (* start time *)
     -> 'a session
 

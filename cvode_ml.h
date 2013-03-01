@@ -24,173 +24,109 @@
 /* Configuration options */
 #define CHECK_MATRIX_ACCESS 1
 
-void cvode_ml_check_flag(const char *call, int flag, void *to_free);
+void cvode_ml_check_flag(const char *call, int flag);
 
 #define CHECK_FLAG(call, flag) if (flag != CV_SUCCESS) \
-				 cvode_ml_check_flag(call, flag, NULL)
+				 cvode_ml_check_flag(call, flag)
 
 
 /*
  * The session data structure is shared in four parts across the OCaml and C
  * heaps:
  *
- *           C HEAP                 .           OCAML HEAP             |
- * ---------------------------------.-----------------------------------
- *                                  .
- *                                  .    (Program using Sundials/ML)
- *                                  .                |
- *                                  .               \|/
- *                                  .          +------------+
- *                                  .          |  session   | (Tag = Abstract)
- *                                  .          +------------+
- *             +-------------------------------+ cvode      |
- *             |                +--------------+ user data  |
- *            \|/               |   .          | err_file   |
- *       +------------+         |   .          +------------+
- *       | cvode_mem  |         |   .
- *       +------------+         |   .
- *       |    ...     |         |   .
- *    ---+cv_user_data|         |   .
- *    |  |    ...     |         |   .
- *    |  +------------+         |   .      _____________
- *    |_______     _____________+   .     /            |
- *            |   |                 .    /            \|/
- *           \|/ \|/                .   /     +----------------+
- *       +-----------+       _______.__/      |   callbacks    | (Tag = 0)
- *       | user_data |      /       .         +----------------+
- *       +-----------+     /        .         | closure_rhsfn  |
- *       | neqs      |    /         .         | closure_rootfn |
- *       | nroots    |   /          .         |     ...        |
- *       | callbacks +--/           .         +----------------+
- *       +-----------+              .
- *                                  .
+ *           C HEAP                   .           OCAML HEAP
+ * -----------------------------------.---------------------------------
+ *                                    .
+ *                                    .            (Program using Sundials/ML)
+ *                                    .                               |
+ *                                    .       +--------------+        |
+ *                             +---------+    | weak_hash_fn |        | 
+ *                             | named   |    +--------------+        | 
+ *  *_cvode_ml_get_session --->|  values +--->+ ~ ~ ~ ~ ~ ~  +---+    |
+ *       (value *)             +---------+    +--------------+   |    |
+ * "*_cvode_ml_get_session"           .                         \|/  \|/
+ *                                    .                 +----------------+
+ *                                    .                 |  session       |
+ *                                    .                 +----------------+
+ *             +----------------------------------------+ cvode          |
+ *             |                      .                 | neqs           |
+ *             |                      .                 | nroots         |
+ *            \|/                     .                 | err_file       |
+ *       +------------+               .                 | closure_rhsfn  |
+ *       | cvode_mem  |               .                 | closure_rootfn |
+ *       +------------+               .                 | ...            |
+ *       |    ...     |               .                 +----------------+
+ *       |cv_user_data| = weak_hash   .
+ *       |    ...     |    key        .
+ *       +------------+               .
+ *				      .
  *
- *  Why 4 parts?
+ *  * A cvode_mem structure is allocated by CVodeInit for each session. It
+ *    is the "C side" of the session data structure.
  *
- *  * cvode_mem.cv_user_data is write only. The Sundials API provides no way
- *    to read this value outside of the callback functions (we thus maintain
- *    our own link from session).
+ *  * The "OCaml side" of the session data structure contains a pointer to
+ *    a cvode_mem, several data fields, and the callback closures. It is
+ *    returned to users of the library, and entered into a global array
+ *    of weak pointers.
  *
- *  * user_data is registered with Sundials and then passed to the callback
- *    functions. It must thus be placed in the C Heap (so that it is not
- *    moved by the garbage collector).
+ *  * The index of a session in the weak pointer array is stored in
+ *    cvode_mem.cv_user_data. Callback routines pass this index to a
+ *    *_cvode_ml_get_session function (ba_cvode_ml_get_session, or
+ *    nvec_cvode_ml_get_session) to retrieve the session with its
+ *    callbacks.
  *
- *  * user_data.callbacks is linked to a record in the OCaml heap that
- *    records the various user callback functions for the associated
- *    session. This field is registered as a global root, so that call
- *    backs and the associated closures are not reclaimed; and so that
- *    it is updated after generation copies and compaction.
- *
- *    The closures could be stored directly in user_data, but then each
- *    would have to be registered as a global root.
+ *    By linking through the weak_hash, we do not prevent a session from
+ *    being reclamed when it is no longer needed. Callbacks are only
+ *    activated as effects of functions that take a session value, thus
+ *    guaranteeing that a cv_user_data index will always be valid.
+ * 
+ *  * The *_cvode_ml_get_session functions are registered as named values.
+ *    Value pointers to the functions (value *) are cached in
+ *    ba_cvode_ml_session_hash and nvec_cvode_ml_session_hash.
+ *    The functions may be moved by the garbage collector, but the named
+ *    value* is allocated in the C heap and does not move.
  *
  *  The init command:
- *  1. creates a session in the OCaml heap.
- *  2. calls CVodeInit to create a cvode_mem in the C heap.
- *  3. creates a callback in the OCaml heap.
- *  4. calls caml_stat_alloc to create a user_data in the C heap.
- *  5. registers user_data.callbacks as a global root.
+ *  1. Calls CVodeInit to create a cvode_mem in the C heap.
+ *  2. Returns this session paired with an initial value for err_file.
  *
  *  A finalizer is associated with session, on reclamation it:
- *  1. calls CVodeFree to free cvode_mem.
- *  2. unregisters user_data.callbacks as a global root.
- *  3. calls caml_stat_free to free user_data.
- *  4. closes session.err_file if necessary.
+ *  1. Calls CVodeFree to free cvode_mem.
+ *  2. Closes session.err_file if necessary.
+ * 
+ *  The callback routines dereference and call "*_cvode_ml_*" routines which
+ *  lookup a given session based on the index and call the appropriate
+ *  function.
  */
 
-struct cvode_ml_user_data {
-    long int neq;
-    intnat num_roots;
-    value callbacks;
-};
-
-typedef struct cvode_ml_user_data* cvode_ml_user_data_p;
-
-#define USER_DATA_NUM_ROOTS(ud) ((cvode_ml_user_data_p)(ud))->num_roots
-#define USER_DATA_NEQ(ud) ((cvode_ml_user_data_p)(ud))->neq
-
-#define USER_DATA_RHSFN(ud)   \
-    (Field(((cvode_ml_user_data_p)(ud))->callbacks, 0))
-
-#define USER_DATA_ROOTSFN(ud) \
-    (Field(((cvode_ml_user_data_p)(ud))->callbacks, 1))
-
-#define USER_DATA_ERRH(ud)    \
-    (Field(((cvode_ml_user_data_p)(ud))->callbacks, 2))
-
-#define USER_DATA_ERRW(ud)    \
-    (Field(((cvode_ml_user_data_p)(ud))->callbacks, 3))
-
-#define USER_DATA_JACFN(ud)      \
-    (Field(((cvode_ml_user_data_p)(ud))->callbacks, 4))
-
-#define USER_DATA_BANDJACFN(ud)  \
-    (Field(((cvode_ml_user_data_p)(ud))->callbacks, 5))
-
-#define USER_DATA_PRESETUPFN(ud) \
-    (Field(((cvode_ml_user_data_p)(ud))->callbacks, 6))
-
-#define USER_DATA_PRESOLVEFN(ud) \
-    (Field(((cvode_ml_user_data_p)(ud))->callbacks, 7))
-
-#define USER_DATA_JACTIMESFN(ud) \
-    (Field(((cvode_ml_user_data_p)(ud))->callbacks, 8))
-
-
-#define USER_DATA_SET_RHSFN(ud, f)      \
-    Store_field(((cvode_ml_user_data_p)(ud))->callbacks, 0, (f))
-
-#define USER_DATA_SET_ROOTSFN(ud, f)    \
-    Store_field(((cvode_ml_user_data_p)(ud))->callbacks, 1, (f))
-
-#define USER_DATA_SET_ERRH(ud, f)       \
-    Store_field(((cvode_ml_user_data_p)(ud))->callbacks, 2, (f))
-
-#define USER_DATA_SET_ERRW(ud, f)       \
-    Store_field(((cvode_ml_user_data_p)(ud))->callbacks, 3, (f))
-
-#define USER_DATA_SET_JACFN(ud, f)      \
-    Store_field(((cvode_ml_user_data_p)(ud))->callbacks, 4, (f))
-
-#define USER_DATA_SET_BANDJACFN(ud, f)  \
-    Store_field(((cvode_ml_user_data_p)(ud))->callbacks, 5, (f))
-
-#define USER_DATA_SET_PRESETUPFN(ud, f) \
-    Store_field(((cvode_ml_user_data_p)(ud))->callbacks, 6, (f))
-
-#define USER_DATA_SET_PRESOLVEFN(ud, f) \
-    Store_field(((cvode_ml_user_data_p)(ud))->callbacks, 7, (f))
-
-#define USER_DATA_SET_JACTIMESFN(ud, f) \
-    Store_field(((cvode_ml_user_data_p)(ud))->callbacks, 8, (f))
-
-#define USER_DATA_NUMCALLBACKS 9
-
-struct cvode_ml_session {
-    void *cvode_mem;
-    cvode_ml_user_data_p user_data;
-    FILE *err_file;
-};
-typedef struct cvode_ml_session* cvode_ml_session_p;
-
-#define CVODE_SESSION(v) ((cvode_ml_session_p)Data_custom_val(v))
-#define CVODE_SESSION_FROM_ML(name, v) \
-    cvode_ml_session_p (name) = CVODE_SESSION(v); \
-    if ((name)->cvode_mem == NULL) caml_failwith("This session has been freed")
-
-#define CVODE_MEM_FROM_ML(name, v) \
-    void *(name) = (CVODE_SESSION(v))->cvode_mem; \
-    if ((name) == NULL) caml_failwith("This session has been freed")
-
-value cvode_ml_session_alloc(void* cvode_mem);
 void cvode_ml_set_linear_solver(void *cvode_mem, value ls, int n);
-
 value cvode_ml_big_real();
 
 /* Interface with Ocaml types */
 
 #define BIGARRAY_FLOAT (CAML_BA_FLOAT64 | CAML_BA_C_LAYOUT)
 #define BIGARRAY_INT (CAML_BA_INT32 | CAML_BA_C_LAYOUT)
+
+#define RECORD_SESSION_CVODE      0
+#define RECORD_SESSION_USER_DATA  1
+#define RECORD_SESSION_NEQS       2
+#define RECORD_SESSION_NROOTS     3
+#define RECORD_SESSION_ERRFILE    4
+#define RECORD_SESSION_RHSFN      5
+#define RECORD_SESSION_ROOTSFN    6
+#define RECORD_SESSION_ERRH       7
+#define RECORD_SESSION_ERRW       8
+#define RECORD_SESSION_JACFN      9
+#define RECORD_SESSION_BANDJACFN  10
+#define RECORD_SESSION_PRESETUPFN 11
+#define RECORD_SESSION_PRESOLVEFN 12
+#define RECORD_SESSION_JACTIMESFN 13
+
+#define CVODE_MEM_FROM_ML(v)       ((void *)Field((v), RECORD_SESSION_CVODE))
+#define CVODE_USER_DATA_FROM_ML(v) \
+    ((void *)(Long_val(Field((v), RECORD_SESSION_USER_DATA))))
+#define CVODE_NEQS_FROM_ML(v)      Long_val(Field((v), RECORD_SESSION_NEQS))
+#define CVODE_NROOTS_FROM_ML(v)    Long_val(Field((v), RECORD_SESSION_NROOTS))
 
 #define VARIANT_LMM_ADAMS 0
 #define VARIANT_LMM_BDF   1

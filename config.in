@@ -32,6 +32,8 @@ OCAMLMKLIBFLAGS ?= -verbose
 
 GNUPLOT = gnuplot
 
+EXAMPLESROOT = @EXAMPLESROOT@
+
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 ifneq (,$(findstring MINGW,$(uname_S)))
 XA=.lib

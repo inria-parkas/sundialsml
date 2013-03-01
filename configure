@@ -58,6 +58,7 @@ do
 	  OCAMLROOT     Path to ocaml installation
 	  LAPACKLIB	Command for linking with Lapack (default: -llapack)
 			(sometimes also: -lSimTKlapack)
+	  EXAMPLES	Path to installed examples (for comparison with Sundials).
 
 	Use these variables to override the choices made by 'configure' or to help
 	it to find libraries and programs with nonstandard names/locations.
@@ -72,6 +73,8 @@ END_HELP_TEXT
 	OCAMLBIN="${OCAMLROOT}bin/";;
     LAPACKLIB)
 	LAPACKLIB="${value}";;
+    EXAMPLES)
+	EXAMPLESROOT="${value}";;
     *)
 	echo "illegal option \"$option\"." 1>&2; exit 2;;
     esac
@@ -79,9 +82,10 @@ done
 
 CPP=${CPP:-cpp}
 LAPACKLIB=${LAPACKLIB:-"-llapack"}
+EXAMPLESROOT=${EXAMPLESROOT:-"/usr/local/examples"}
 error=""
 
-# Check for ocaml installation (and version)
+# Check for OCaml installation (and version)
 ocaml_path=`${OCAMLBIN}ocamlc -where`
 ocaml_version=`${OCAMLBIN}ocamlc -version`
 if [ $? -ne 0 ]; then
@@ -100,7 +104,7 @@ else
     ocaml_version=" (${ocaml_version})"
 fi
 
-# Check for sundials installation (and version)
+# Check for Sundials installation (and version)
 unset lapack_lib
 query="#include \"sundials/sundials_config.h\"\nSUNDIALS_PACKAGE_VERSION,SUNDIALS_BLAS_LAPACK"
 sundials_info=`echo "${query}" | ${CPP} -P | tail -1`
@@ -143,6 +147,13 @@ case ${arch} in
 	;;
 esac
 
+# Check for Sundials examples
+if [ -d "$EXAMPLESROOT/cvode/serial" ]; then
+    examples_info="$EXAMPLESROOT"
+else
+    examples_info="NOT FOUND"
+fi
+
 # Show a summary
 
 echo
@@ -152,6 +163,7 @@ echo "-------------"
 echo
 echo "  Ocaml\t\t\t${ocaml_path}${ocaml_version}"
 echo "  Sundials\t\t${sundials_version}${lapack_info}"
+echo "    -examples\t\t${examples_info}"
 echo
 echo "  Architecture\t\t${arch}"
 echo
@@ -179,6 +191,7 @@ fi
 	 s#@install_docs@#${install_docs:-1}#;
 	 s#@lapack_lib@#${lapack_lib}#;
 	 s#@cflags@#${cflags}#;
+	 s#@EXAMPLESROOT@#${EXAMPLESROOT}#;
 	 s#@OCAMLBIN@#${OCAMLBIN}#;
 	 s#@OCAMLROOT@#${OCAMLROOT}#;" config.in) > config
 

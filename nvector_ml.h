@@ -2,9 +2,9 @@
  *                                                                     *
  *              Ocaml interface to Sundials CVODE solver               *
  *                                                                     *
- *       Timothy Bourke (INRIA Rennes) and Marc Pouzet (LIENS)         *
+ *            Timothy Bourke (INRIA) and Marc Pouzet (LIENS)           *
  *                                                                     *
- *  Copyright 2011 Institut National de Recherche en Informatique et   *
+ *  Copyright 2013 Institut National de Recherche en Informatique et   *
  *  en Automatique.  All rights reserved.  This file is distributed    *
  *  under the terms of the GNU Library General Public License, with    *
  *  the special exception on linking described in file LICENSE.        *
@@ -25,7 +25,6 @@ struct _ml_nvec_content {
 typedef struct _ml_nvec_content *ml_nvec_content;
 
 value ml_nvec_new(value mlops, value data);
-N_Vector ml_nvec_val(value nvec);
 
 N_Vector callml_vclone(N_Vector w);
 N_Vector callml_vcloneempty(N_Vector w);

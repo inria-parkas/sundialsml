@@ -20,21 +20,147 @@ type der_array = Sundials.Carray.t
 type root_array = Sundials.Roots.t
 type root_val_array = Sundials.Roots.val_array
 
-type session
+type single_tmp = nvec
+type triple_tmp = val_array * val_array * val_array
+
+type 't jacobian_arg =
+  {
+    jac_t   : float;
+    jac_y   : val_array;
+    jac_fy  : val_array;
+    jac_tmp : 't
+  }
+
+type callback_solve_arg =
+  {
+    rhs   : val_array;
+    gamma : float;
+    delta : float;
+    left  : bool;
+  }
+
+type cvode_mem
+type cvode_file
+type session = {
+        cvode      : cvode_mem;
+        user_data  : int;
+        neqs       : int;
+        nroots     : int;
+        err_file   : cvode_file;
+
+        mutable rhsfn      : float -> val_array -> der_array -> unit;
+        mutable rootsfn    : float -> val_array -> root_val_array -> unit;
+        mutable errh       : error_details -> unit;
+        mutable errw       : val_array -> nvec -> unit;
+        mutable jacfn      : triple_tmp jacobian_arg -> Densematrix.t -> unit;
+        mutable bandjacfn  : triple_tmp jacobian_arg -> int -> int
+                               -> Bandmatrix.t -> unit;
+        mutable presetupfn : triple_tmp jacobian_arg -> bool -> float -> bool;
+        mutable presolvefn : single_tmp jacobian_arg -> callback_solve_arg -> nvec
+                               -> unit;
+        mutable jactimesfn : single_tmp jacobian_arg -> val_array -> val_array
+                               -> unit;
+      }
 
 (* interface *)
 
+external session_finalize : session -> unit
+    = "c_session_finalize"
+
 external external_init
-    : lmm -> iter -> (float -> val_array -> der_array -> unit)
-      -> val_array -> int -> (float -> val_array -> root_val_array -> unit)
-      -> float -> session
-    = "c_ba_init_byte" "c_ba_init"
+    : lmm -> iter -> nvec -> int -> int -> float -> (cvode_mem * cvode_file)
+    = "c_ba_init_bytecode" "c_ba_init"
 
-external nroots         : session -> int
-    = "c_nroots"
+external set_user_data : session -> unit
+    = "c_set_user_data"
 
-external neqs           : session -> int
-    = "c_neqs"
+module SessionTable : sig
+    val proto_init :
+        lmm
+        -> iter
+        -> (float -> val_array -> der_array -> unit)
+        -> (int * (float -> val_array -> root_val_array -> unit))
+        -> nvec
+        -> float
+        -> session
+  end = 
+  struct
+
+  let session_table = ref (Weak.create 10 : session Weak.t)
+
+  let add_session cvode neqs nroots err_file =
+    let length = Weak.length !session_table in
+    let rec find_next i =
+      if i < length
+      then (if Weak.check !session_table i then find_next (i + 1) else i)
+      else
+        let session_table' = Weak.create (2 * length) in
+        Weak.blit !session_table 0 session_table' 0 length;
+        session_table := session_table';
+        i in
+    let idx = find_next 0 in
+    let session = {
+          cvode      = cvode;
+          user_data  = idx;
+          neqs       = neqs;
+          nroots     = nroots;
+          err_file   = err_file;
+
+          rhsfn      = (fun _ _ _ -> ());
+          rootsfn    = (fun _ _ _ -> ());
+          errh       = (fun _ -> ());
+          errw       = (fun _ _ -> ());
+          jacfn      = (fun _ _ -> ());
+          bandjacfn  = (fun _ _ _ _ -> ());
+          presetupfn = (fun _ _ _ -> false);
+          presolvefn = (fun _ _ _ -> ());
+          jactimesfn = (fun _ _ _ -> ());
+        } in
+    Weak.set !session_table idx (Some session);
+    session
+
+  let get_session idx =
+    match Weak.get !session_table idx with
+      None -> raise Not_found
+    | Some s -> s
+
+  let session_rhsfn idx      = (get_session idx).rhsfn
+  let session_errh idx       = (get_session idx).errh
+  let session_errw idx       = (get_session idx).errw
+  let session_jacfn idx      = (get_session idx).jacfn
+  let session_bandjacfn idx  = (get_session idx).bandjacfn
+  let session_presetupfn idx = (get_session idx).presetupfn
+  let session_presolvefn idx = (get_session idx).presolvefn
+  let session_jactimesfn idx = (get_session idx).jactimesfn
+
+  let _ = Callback.register "c_ba_cvode_ml_session"    get_session;
+          Callback.register "c_ba_cvode_ml_rhsfn"      session_rhsfn;
+          Callback.register "c_ba_cvode_ml_errh"       session_errh;
+          Callback.register "c_ba_cvode_ml_errw"       session_errw;
+          Callback.register "c_ba_cvode_ml_jacfn"      session_jacfn;
+          Callback.register "c_ba_cvode_ml_bandjacfn"  session_bandjacfn;
+          Callback.register "c_ba_cvode_ml_presetupfn" session_presetupfn;
+          Callback.register "c_ba_cvode_ml_presolvefn" session_presolvefn;
+          Callback.register "c_ba_cvode_ml_jactimesfn" session_jactimesfn
+
+  let proto_init lmm iter f (num_roots, roots) y0 t0 =
+    let num_eqs = Sundials.Carray.length y0 in
+    let cvode, errfile = external_init lmm iter y0 num_eqs num_roots t0 in
+    let s = add_session cvode num_eqs num_roots errfile in
+    Gc.finalise session_finalize s;
+    s.rhsfn <- f;
+    s.rootsfn <- roots;
+    set_user_data s;
+    s
+
+  end
+
+let init' = SessionTable.proto_init
+let init lmm iter f roots n_y0 =
+  SessionTable.proto_init lmm iter f roots n_y0 0.0
+
+let nroots { nroots } = nroots
+let neqs { neqs } = neqs
 
 external reinit
     : session -> float -> val_array -> unit
@@ -44,8 +170,12 @@ external sv_tolerances  : session -> float -> nvec -> unit
     = "c_ba_sv_tolerances"
 external ss_tolerances  : session -> float -> float -> unit
     = "c_ss_tolerances"
-external wf_tolerances  : session -> (val_array -> nvec -> unit) -> unit
+external wf_tolerances  : session -> unit
     = "c_ba_wf_tolerances"
+
+let wf_tolerances s ferrw =
+  s.errw <- ferrw;
+  wf_tolerances s
 
 external get_root_info  : session -> Roots.t -> unit
     = "c_get_root_info"
@@ -61,11 +191,6 @@ external one_step
 external get_dky
     : session -> float -> int -> nvec -> unit
     = "c_ba_get_dky"
-
-let init' lmm iter f (num_roots, roots) y0 t0 =
-  external_init lmm iter f y0 num_roots roots t0
-
-let init lmm iter f roots y0 = init' lmm iter f roots y0 0.0
 
 external get_integrator_stats   : session -> integrator_stats
     = "c_get_integrator_stats"
@@ -117,14 +242,22 @@ let print_integrator_stats s =
     Printf.printf "current_step = %e\n"        stats.current_step;
     Printf.printf "current_time = %e\n"        stats.current_time;
 
-external set_error_file         : session -> string -> bool -> unit
+external set_error_file : session -> string -> bool -> unit
     = "c_set_error_file"
 
-external set_err_handler_fn  : session -> (error_details -> unit) -> unit
-    = "c_set_err_handler_fn"
+external set_err_handler_fn  : session -> unit
+    = "c_ba_set_err_handler_fn"
+
+let set_err_handler_fn s ferrh =
+  s.errh <- ferrh;
+  set_err_handler_fn s
 
 external clear_err_handler_fn  : session -> unit
-    = "c_disable_err_handler_fn"
+    = "c_ba_clear_err_handler_fn"
+
+let clear_err_handler_fn s =
+  s.errh <- (fun _ -> ());
+  clear_err_handler_fn s
 
 external set_max_ord            : session -> int -> unit
     = "c_set_max_ord"
@@ -203,33 +336,35 @@ external get_num_nonlin_solv_conv_fails : session -> int
 external get_num_g_evals                : session -> int
     = "c_get_num_g_evals"
 
-type single_tmp = nvec
-type triple_tmp = val_array * val_array * val_array
-
-type 't jacobian_arg =
-  {
-    jac_t   : float;
-    jac_y   : val_array;
-    jac_fy  : val_array;
-    jac_tmp : 't
-  }
-
 module Dls =
   struct
-    external set_dense_jac_fn  : session
-      -> (triple_tmp jacobian_arg -> Densematrix.t -> unit) -> unit
+    external set_dense_jac_fn  : session -> unit
         = "c_ba_dls_set_dense_jac_fn"
+
+    let set_dense_jac_fn s fjacfn =
+      s.jacfn <- fjacfn;
+      set_dense_jac_fn s
 
     external clear_dense_jac_fn : session -> unit
         = "c_ba_dls_clear_dense_jac_fn"
 
-    external set_band_jac_fn   : session
-      -> (triple_tmp jacobian_arg -> int -> int -> Bandmatrix.t -> unit)
-      -> unit
+    let clear_dense_jac_fn s =
+      s.jacfn <- (fun _ _ -> ());
+      clear_dense_jac_fn s
+
+    external set_band_jac_fn   : session -> unit
         = "c_ba_dls_set_band_jac_fn"
+
+    let set_band_jac_fn s fbandjacfn =
+      s.bandjacfn <- fbandjacfn;
+      set_band_jac_fn s
 
     external clear_band_jac_fn : session -> unit
         = "c_ba_dls_clear_band_jac_fn"
+
+    let clear_band_jac_fn s =
+      s.bandjacfn <- (fun _ _ _ _ -> ());
+      clear_band_jac_fn s
 
     external get_work_space : session -> int * int
         = "c_dls_get_work_space"
@@ -261,7 +396,7 @@ module BandPrec =
 
 module Spils =
   struct
-    type solve_arg =
+    type solve_arg = callback_solve_arg =
       {
         rhs   : val_array;
         gamma : float;
@@ -273,29 +408,38 @@ module Spils =
       | ModifiedGS
       | ClassicalGS
 
-    external set_preconditioner  : session
-      -> (triple_tmp jacobian_arg -> bool -> float -> bool)
-      -> (single_tmp jacobian_arg -> solve_arg -> nvec -> unit) -> unit
+    external set_preconditioner  : session -> unit
         = "c_ba_set_preconditioner"
 
-    external set_jac_times_vec_fn : session
-      -> (single_tmp jacobian_arg -> val_array -> val_array -> unit) -> unit
+    let set_preconditioner s fpresetupfn fpresolvefn =
+      s.presetupfn <- fpresetupfn;
+      s.presolvefn <- fpresolvefn;
+      set_preconditioner s
+
+    external set_jac_times_vec_fn : session -> unit
         = "c_ba_set_jac_times_vec_fn"
+
+    let set_jac_times_vec_fn s fjactimesfn =
+      s.jactimesfn <- fjactimesfn;
+      set_jac_times_vec_fn s
 
     external clear_jac_times_vec_fn : session -> unit
         = "c_ba_clear_jac_times_vec_fn"
 
-    external set_prec_type
-        : session -> preconditioning_type -> unit
+    let clear_jac_times_vec_fn s =
+      s.jactimesfn <- (fun _ _ _ -> ());
+      clear_jac_times_vec_fn s
+
+    external set_prec_type : session -> preconditioning_type -> unit
         = "c_set_prec_type"
 
     external set_gs_type : session -> gramschmidt_type -> unit
         = "c_set_gs_type"
 
-    external set_eps_lin : session -> float -> unit
+    external set_eps_lin            : session -> float -> unit
         = "c_set_eps_lin"
 
-    external set_maxl   : session -> int -> unit
+    external set_maxl               : session -> int -> unit
         = "c_set_maxl"
 
     external get_num_lin_iters      : session -> int
