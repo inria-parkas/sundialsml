@@ -1,20 +1,20 @@
-cvode.cmi: sundials.cmi
-cvode_nvector.cmi: sundials.cmi nvector.cmi cvode.cmi
-cvode_serial.cmi: sundials.cmi cvode.cmi
-nvector.cmi:
-nvector_array.cmi: nvector.cmi
-sundials.cmi:
-cvode.cmo: sundials.cmi cvode.cmi
-cvode.cmx: sundials.cmx cvode.cmi
-cvode_nvector.cmo: sundials.cmi nvector.cmi cvode.cmi cvode_nvector.cmi
-cvode_nvector.cmx: sundials.cmx nvector.cmx cvode.cmx cvode_nvector.cmi
-cvode_serial.cmo: sundials.cmi cvode.cmi cvode_serial.cmi
-cvode_serial.cmx: sundials.cmx cvode.cmx cvode_serial.cmi
-dochtml.cmo:
-dochtml.cmx:
-nvector.cmo: nvector.cmi
-nvector.cmx: nvector.cmi
-nvector_array.cmo: sundials.cmi nvector.cmi nvector_array.cmi
-nvector_array.cmx: sundials.cmx nvector.cmx nvector_array.cmi
-sundials.cmo: sundials.cmi
-sundials.cmx: sundials.cmi
+cvode.cmi : sundials.cmi
+cvode_nvector.cmi : sundials.cmi nvector.cmi cvode.cmi
+cvode_serial.cmi : sundials.cmi cvode.cmi
+nvector.cmi :
+nvector_array.cmi : nvector.cmi
+sundials.cmi :
+cvode.cmo : sundials.cmi cvode.cmi
+cvode.cmx : sundials.cmx cvode.cmi
+cvode_nvector.cmo : sundials.cmi nvector.cmi cvode.cmi cvode_nvector.cmi
+cvode_nvector.cmx : sundials.cmx nvector.cmx cvode.cmx cvode_nvector.cmi
+cvode_serial.cmo : sundials.cmi cvode.cmi cvode_serial.cmi
+cvode_serial.cmx : sundials.cmx cvode.cmx cvode_serial.cmi
+dochtml.cmo :
+dochtml.cmx :
+nvector.cmo : nvector.cmi
+nvector.cmx : nvector.cmi
+nvector_array.cmo : sundials.cmi nvector.cmi nvector_array.cmi
+nvector_array.cmx : sundials.cmx nvector.cmx nvector_array.cmi
+sundials.cmo : sundials.cmi
+sundials.cmx : sundials.cmi
