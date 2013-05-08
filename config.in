@@ -12,7 +12,7 @@ CFLAGS += @cflags@ # -DRESTRICT_INTERNAL_PRECISION"
 LDFLAGS += @ldflags@
 
 OCAMLC ?= @OCAMLBIN@ocamlc
-OCAMLFLAGS = 
+OCAMLFLAGS = @ocamlflags@
 OCAML_INCLUDE := $(shell $(OCAMLC) -where)
 OCAML_LIBLINK= -cclib "\"$(LDFLAGS)\""
 

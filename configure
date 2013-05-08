@@ -75,12 +75,17 @@ END_HELP_TEXT
 	LAPACKLIB="${value}";;
     EXAMPLES)
 	EXAMPLESROOT="${value}";;
+    CFLAGS)
+	cflags="${value}";;
+    OCAMLFLAGS)
+	ocamlflags="${value}";;
     *)
 	echo "illegal option \"$option\"." 1>&2; exit 2;;
     esac
 done
 
-CPP=${CPP:-cpp `sundials-config -m cvode -t s -l c -s cppflags`}
+CPPFLAGS="${CPPFLAGS} `sundials-config -m cvode -t s -l c -s cppflags`"
+CPP=${CPP:-cpp}
 LAPACKLIB=${LAPACKLIB:-"-llapack"}
 EXAMPLESROOT=${EXAMPLESROOT:-"/usr/local/examples"}
 error=""
@@ -107,7 +112,7 @@ fi
 # Check for Sundials installation (and version)
 unset lapack_lib
 query="#include \"sundials/sundials_config.h\"\nSUNDIALS_PACKAGE_VERSION,SUNDIALS_BLAS_LAPACK"
-sundials_info=`echo "${query}" | ${CPP} -P | tail -1`
+sundials_info=`echo "${query}" | ${CPP} ${CPPFLAGS} -P | tail -1`
 if [ $? -ne 0 ]; then
     error="${error}\n\tcould not find sundials_config.h"
     sundials_version="UNKNOWN"
@@ -138,12 +143,12 @@ else
 fi
 
 cflags="${cflags} `sundials-config -m cvode -t s -l c -s cppflags`"
-ldflags="`sundials-config -m cvode -t s -l c -s libs` ${lapack_lib}"
+ldflags="${ldflags} `sundials-config -m cvode -t s -l c -s libs` ${lapack_lib}"
 
 arch=`uname -i`
 case ${arch} in
     x86_64)
-	cflags=${cflags:-"-fPIC"}
+	cflags="${cflags} -fPIC"
 	;;
     *)
         :
@@ -194,6 +199,7 @@ fi
 	 s#@install_docs@#${install_docs:-1}#;
 	 s#@cflags@#${cflags}#;
 	 s#@ldflags@#${ldflags}#;
+	 s#@ocamlflags@#${ocamlflags}#;
 	 s#@EXAMPLESROOT@#${EXAMPLESROOT}#;
 	 s#@OCAMLBIN@#${OCAMLBIN}#;
 	 s#@OCAMLROOT@#${OCAMLROOT}#;" config.in) > config
