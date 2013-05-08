@@ -80,7 +80,7 @@ END_HELP_TEXT
     esac
 done
 
-CPP=${CPP:-cpp}
+CPP=${CPP:-cpp `sundials-config -m cvode -t s -l c -s cppflags`}
 LAPACKLIB=${LAPACKLIB:-"-llapack"}
 EXAMPLESROOT=${EXAMPLESROOT:-"/usr/local/examples"}
 error=""
@@ -137,13 +137,16 @@ else
     lapack_info=" (with lapack: ${lapack_lib})"
 fi
 
+cflags="${cflags} `sundials-config -m cvode -t s -l c -s cppflags`"
+ldflags="`sundials-config -m cvode -t s -l c -s libs` ${lapack_lib}"
+
 arch=`uname -i`
 case ${arch} in
     x86_64)
-	cflags="-fPIC"
+	cflags=${cflags:-"-fPIC"}
 	;;
     *)
-	cflags=""
+        :
 	;;
 esac
 
@@ -189,8 +192,8 @@ fi
 	 s#@stubdir@#${stubdir:-${ocaml_libpath}stublibs/}#;
 	 s#@docdir@#${docdir:-${prefix}share/doc/}#;
 	 s#@install_docs@#${install_docs:-1}#;
-	 s#@lapack_lib@#${lapack_lib}#;
 	 s#@cflags@#${cflags}#;
+	 s#@ldflags@#${ldflags}#;
 	 s#@EXAMPLESROOT@#${EXAMPLESROOT}#;
 	 s#@OCAMLBIN@#${OCAMLBIN}#;
 	 s#@OCAMLROOT@#${OCAMLROOT}#;" config.in) > config

@@ -33,7 +33,7 @@ all: sundials_cvode.cma sundials_cvode.cmxa
 sundials_cvode.cma sundials_cvode.cmxa: $(MLOBJ) $(MLOBJ:.cmo=.cmx) $(COBJ)
 	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS) \
 	    -o sundials_cvode -oc mlsundials_cvode $^ \
-	    -lsundials_cvode $(LAPACK_LIB) -lsundials_nvecserial
+	    $(OCAML_LIBLINK)
 
 cvode_nvector.mli: cvode_serial.mli cvode_nvector.doc
 	$(SED) \
@@ -66,7 +66,7 @@ META: META.in
 doc: doc/html/index.html
 
 doc/html/index.html: dochtml.cmo \
-    		     $(MLOBJ:.cmo=.mli) $(MLOBJ:.cmo=.cmi) \
+		     $(MLOBJ:.cmo=.mli) $(MLOBJ:.cmo=.cmi) \
 		     intro.doc cvode_nvector.doc
 	$(OCAMLDOC) -g dochtml.cmo \
 	    -cvode-doc-root "$(CVODE_DOC_ROOT)" \
