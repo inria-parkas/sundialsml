@@ -97,8 +97,8 @@ module Carray =
 
 (* root arrays *)
 
-type int_array = (int, Bigarray.int_elt, Bigarray.c_layout) Bigarray.Array1.t
-let make_int_array = Bigarray.Array1.create Bigarray.int Carray.layout
+type lint_array = (int, Bigarray.int_elt, Bigarray.c_layout) Bigarray.Array1.t
+let make_lint_array = Bigarray.Array1.create Bigarray.int Carray.layout
 
 module Roots =
   struct

@@ -99,11 +99,11 @@ module Carray :
 (** {2 Arrays of ints} *)
 
 (** A {{:OCAML_DOC_ROOT(Bigarray.Array1)} (Bigarray)} vector of integers. *)
-type int_array =
+type lint_array =
   (int, Bigarray.int_elt, Bigarray.c_layout) Bigarray.Array1.t
 
-(** [make_int_array n] returns an {!int_array} with [n] elements. *)
-val make_int_array  : int -> int_array
+(** [make_lint_array n] returns a {!lint_array} with [n] elements. *)
+val make_lint_array  : int -> lint_array
 
 (** {2 Arrays of roots (zero-crossings)} *)
 

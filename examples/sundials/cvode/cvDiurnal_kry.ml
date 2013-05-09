@@ -121,7 +121,7 @@ let set_ijth v i j e = Direct.set v (i - 1, j - 1) e
 type user_data = {
         p          : Direct.t array array;
         jbd        : Direct.t array array;
-        pivot      : Cvode.int_array array array;
+        pivot      : Cvode.lint_array array array;
         mutable q4 : float;
         om         : float;
         dx         : float;
@@ -139,7 +139,7 @@ let sqr x = x ** 2.0
 
 let alloc_user_data () =
   let new_dmat _ = Direct.new_dense_mat (num_species, num_species) in
-  let new_int1 _  = Cvode.make_int_array num_species in
+  let new_int1 _  = Cvode.make_lint_array num_species in
   let new_y_arr elinit _ = Array.init my elinit in
   let new_xy_arr elinit  = Array.init mx (new_y_arr elinit) in
   {

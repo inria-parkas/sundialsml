@@ -161,10 +161,10 @@ module Densematrix =
     external scale    : float -> t -> unit
         = "c_densematrix_scale"
 
-    external getrf    : t -> int_array -> unit
+    external getrf    : t -> lint_array -> unit
         = "c_densematrix_getrf"
 
-    external getrs    : t -> int_array -> real_array -> unit
+    external getrs    : t -> lint_array -> real_array -> unit
         = "c_densematrix_getrs"
 
     external potrf    : t -> unit
@@ -211,10 +211,10 @@ module Directdensematrix =
     external add_identity : t -> int -> unit
         = "c_densematrix_direct_add_identity"
 
-    external getrf : t -> int * int -> int_array -> unit
+    external getrf : t -> int * int -> lint_array -> unit
         = "c_densematrix_direct_getrf"
 
-    external getrs : t -> int -> int_array -> real_array -> unit
+    external getrs : t -> int -> lint_array -> real_array -> unit
         = "c_densematrix_direct_getrs"
 
     external potrf : t -> int -> unit
@@ -260,10 +260,10 @@ module Bandmatrix =
     external scale : float -> t -> unit
         = "c_bandmatrix_scale"
 
-    external gbtrf : t -> int_array -> unit
+    external gbtrf : t -> lint_array -> unit
         = "c_bandmatrix_gbtrf"
 
-    external gbtrs : t -> int_array -> real_array -> unit
+    external gbtrs : t -> lint_array -> real_array -> unit
         = "c_bandmatrix_gbtrs"
 
     external get : t -> (int * int) -> float
@@ -317,13 +317,13 @@ module Directbandmatrix =
     external add_identity : t -> int -> int -> unit
         = "c_bandmatrix_direct_add_identity"
 
-    external gbtrf' : t -> int * int * int * int -> int_array -> unit
+    external gbtrf' : t -> int * int * int * int -> lint_array -> unit
         = "c_bandmatrix_direct_gbtrf"
 
     let gbtrf a n mu ml smu p = gbtrf' a (n, mu, ml, smu) p
 
     external gbtrs'
-        : t -> int * int * int -> int_array -> real_array -> unit
+        : t -> int * int * int -> lint_array -> real_array -> unit
         = "c_bandmatrix_direct_gbtrs"
 
     let gbtrs a n smu ml p b = gbtrs' a (n, smu, ml) p b

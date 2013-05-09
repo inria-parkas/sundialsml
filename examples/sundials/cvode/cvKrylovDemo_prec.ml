@@ -165,7 +165,7 @@ let nout       = 18
 
 type web_data = {
     p         : Densemat.t array;
-    pivot     : Cvode.int_array array;
+    pivot     : Cvode.lint_array array;
 
     ns        : int;
     mxns      : int;
@@ -640,7 +640,7 @@ let alloc_user_data () =
   let r =
     {
       p         = Array.init ngrp (fun _ -> Densemat.new_dense_mat (ns, ns));
-      pivot     = Array.init ngrp (fun _ -> Cvode.make_int_array ns);
+      pivot     = Array.init ngrp (fun _ -> Cvode.make_lint_array ns);
 
       ns        = ns;
       mxns      = mxns;

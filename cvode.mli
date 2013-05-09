@@ -368,7 +368,7 @@ module Densematrix :
      @cvode <node9#ss:dense> DenseGETRF
      @raise ZeroDiagonalElement Zero found in matrix diagonal
      *)
-    val getrf    : t -> int_array -> unit
+    val getrf    : t -> lint_array -> unit
 
     (**
      [getrs a p b] finds the solution of [ax = b] using LU factorization.
@@ -376,7 +376,7 @@ module Densematrix :
 
      @cvode <node9#ss:dense> DenseGETRS
      *)
-    val getrs    : t -> int_array -> real_array -> unit
+    val getrs    : t -> lint_array -> real_array -> unit
 
     (**
      Performs Cholesky factorization of a real symmetric positive matrix.
@@ -489,7 +489,7 @@ module Directdensematrix :
      @cvode <node9#ss:dense> denseGETRF
      @raise ZeroDiagonalElement Zero found in matrix diagonal
      *)
-    val getrf : t -> int * int -> int_array -> unit
+    val getrf : t -> int * int -> lint_array -> unit
 
     (**
      [getrs a n p b] finds the solution of [ax = b] using LU factorization.
@@ -497,7 +497,7 @@ module Directdensematrix :
 
      @cvode <node9#ss:dense> denseGETRS
      *)
-    val getrs : t -> int -> int_array -> real_array -> unit
+    val getrs : t -> int -> lint_array -> real_array -> unit
 
     (**
      [potrf a n] performs the Cholesky factorization of a real symmetric positive
@@ -630,7 +630,7 @@ module Bandmatrix :
 
      @cvode <node9#ss:band> BandGBTRF
      *)
-    val gbtrf : t -> int_array -> unit
+    val gbtrf : t -> lint_array -> unit
 
     (**
      [gbtrs a p b] finds the solution of [ax = b] using LU factorization.
@@ -638,7 +638,7 @@ module Bandmatrix :
 
      @cvode <node9#ss:band> BandGBTRS
      *)
-    val gbtrs : t -> int_array -> real_array -> unit
+    val gbtrs : t -> lint_array -> real_array -> unit
 
     (** {4 Column access} *)
 
@@ -760,7 +760,7 @@ module Directbandmatrix :
 
      @cvode <node9#ss:band> bandGBTRF
      *)
-    val gbtrf : t -> int -> int -> int -> int -> int_array -> unit
+    val gbtrf : t -> int -> int -> int -> int -> lint_array -> unit
 
     (**
      [gbtrs a n smu ml p b] finds the solution of [ax = b] using LU factorization.
@@ -769,5 +769,5 @@ module Directbandmatrix :
      @cvode <node9#ss:band> bandGBTRS
      *)
     val gbtrs
-        : t -> int -> int -> int -> int_array -> real_array -> unit
+        : t -> int -> int -> int -> lint_array -> real_array -> unit
   end
