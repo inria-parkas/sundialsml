@@ -26,6 +26,8 @@ do
 	docdir="${value%/}/";;
     --disable-doc)
 	install_docs=0;;
+    --no-lib-path)
+	no_lib_path=1;;
     -h|--help)
 	cat <<-END_HELP_TEXT
 	'configure' configures $sysname $version to adapt to many kinds of systems.
@@ -53,6 +55,7 @@ do
 
 	Optional Features:
 	  --disable-doc          do not install html documentation
+	  --no-lib-path          do not record paths in the OCaml library
 
 	Some influential environment variables:
 	  OCAMLROOT     Path to ocaml installation
@@ -198,8 +201,20 @@ else
     lapack_info=" (with lapack: ${lapack_lib})"
 fi
 
+# Extract compilation flags from sundials-config.
 cflags="${cflags} `sundials-config -m cvode -t s -l c -s cppflags`"
-ldflags="${ldflags} `sundials-config -m cvode -t s -l c -s libs` ${lapack_lib}"
+
+# --no-lib-path removes the -L specification, to prevent it from being recorded
+# in the *.cm(x)a files.  We assume there's only one occurrence of -L and the
+# path contains no spaces.
+if [ ${no_lib_path:-0} -eq 1 ]; then
+    query=`sundials-config -m cvode -t s -l c -s libs \
+	   | sed -e 's#-L[^ ]* -#-#'`
+    ldflags="${ldflags} ${query} ${lapack_lib}"
+else
+    query=`sundials-config -m cvode -t s -l c -s libs`
+    ldflags="${ldflags} ${query} ${lapack_lib}"
+fi
 
 arch=`uname -i`
 case ${arch} in
@@ -237,6 +252,11 @@ echo "  libdir:\t\t${libdir:-${ocaml_libpath}}"
 echo "  stubdir:\t\t${stubdir:-${ocaml_libpath}stublibs/}"
 if [ ${install_docs:-1} -eq 1 ]; then
     echo "  docdir:\t\t${docdir:-${prefix}share/doc/}"
+fi
+if [ ${no_lib_path:-0} -eq 1 ]; then
+    echo
+    echo "Other options"
+    echo "  --no-lib-path given.  Make sure you know what you're doing!"
 fi
 echo
 
