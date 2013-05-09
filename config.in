@@ -14,7 +14,7 @@ LDFLAGS += @ldflags@
 OCAMLC ?= @OCAMLBIN@ocamlc
 OCAMLFLAGS = @ocamlflags@
 OCAML_INCLUDE := $(shell $(OCAMLC) -where)
-OCAML_LIBLINK= -cclib "\"$(LDFLAGS)\""
+OCAML_LIBLINK= $(LDFLAGS)
 
 PKGDIR = @libdir@sundials/
 STUBDIR= @stubdir@
