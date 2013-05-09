@@ -266,7 +266,7 @@ static void relinquish_jac_arg(value arg, int triple)
 }
 
 static int jacfn(
-	int n,
+	long int n,
 	realtype t,
 	N_Vector y,
 	N_Vector fy,	     
@@ -297,9 +297,9 @@ static int jacfn(
 }
 
 static int bandjacfn(
-	int N,
-	int mupper,
-	int mlower, 	 
+	long int N,
+	long int mupper,
+	long int mlower, 	 
 	realtype t,
 	N_Vector y,
 	N_Vector fy, 	 

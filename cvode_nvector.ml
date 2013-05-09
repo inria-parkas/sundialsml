@@ -293,28 +293,14 @@ external set_nonlin_conv_coef   : 'a session -> float -> unit
 external set_iter_type          : 'a session -> iter -> unit
     = "c_set_iter_type"
 
-external set_root_direction'    : 'a session -> int_array -> unit
+external set_root_direction'    : 'a session -> RootDirs.t -> unit
     = "c_set_root_direction"
 
-let int_of_root_direction x =
-  match x with
-  | Increasing -> 1l
-  | Decreasing -> -1l
-  | IncreasingOrDecreasing -> 0l
-
 let set_root_direction s rda =
-  let n = nroots s in
-  let rdirs = make_int_array n in
-  if (n > Array.length rda)
-    then Bigarray.Array1.fill rdirs
-            (int_of_root_direction IncreasingOrDecreasing);
-  Array.iteri (fun i v -> rdirs.{i} <- int_of_root_direction v) rda;
-  set_root_direction' s rdirs
+  set_root_direction' s (RootDirs.create' (nroots s) rda)
 
 let set_all_root_directions s rd =
-  let rdirs = make_int_array (nroots s) in
-  Bigarray.Array1.fill rdirs (int_of_root_direction rd);
-  set_root_direction' s rdirs
+  set_root_direction' s (RootDirs.make (nroots s) rd)
 
 external set_no_inactive_root_warn      : 'a session -> unit
     = "c_set_no_inactive_root_warn"

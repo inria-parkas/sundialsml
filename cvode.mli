@@ -28,7 +28,14 @@
  @author Marc Pouzet (LIENS)
  *)
 
+(* `include module type of' creates a fresh copy of every abstract type, so
+   that e.g. Cvode.Roots.t and Sundials.Roots.t become distinct types, which is
+   not what we want here.  The `with' construct lets us explicitly declare the
+   desired type equalities.  See also
+   http://caml.inria.fr/mantis/print_bug_page.php?bug_id=5241 *)
 include module type of Sundials
+  with type Roots.t = Sundials.Roots.t
+  and type RootDirs.t = Sundials.RootDirs.t
 
 (** {2 General} *)
 
@@ -153,10 +160,7 @@ and preconditioning_type =
  Values for root directions.
  @cvode <node5#sss:optin_root> CVodeSetRootDirection
  *)
-type root_direction =
-  | Increasing              (** Value changes from < 0 to >= 0 (+1) *)
-  | Decreasing              (** Value changes from > 0 to <= 0 (-1) *)
-  | IncreasingOrDecreasing  (** Increasing or Decreasing (0) *)
+type root_direction = RootDirs.root_direction
 
 (**
  This is a convenience value for signalling to {!Cvode_serial.init} and

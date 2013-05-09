@@ -100,7 +100,7 @@ module Carray :
 
 (** A {{:OCAML_DOC_ROOT(Bigarray.Array1)} (Bigarray)} vector of integers. *)
 type int_array =
-  (int32, Bigarray.int32_elt, Bigarray.c_layout) Bigarray.Array1.t
+  (int, Bigarray.int_elt, Bigarray.c_layout) Bigarray.Array1.t
 
 (** [make_int_array n] returns an {!int_array} with [n] elements. *)
 val make_int_array  : int -> int_array
@@ -110,7 +110,7 @@ val make_int_array  : int -> int_array
 (** Utility functions for arrays of roots (zero-crossings). *)
 module Roots :
   sig
-    type t = int_array
+    type t
     type val_array = Carray.t
 
     type root_event =
@@ -127,11 +127,6 @@ module Roots :
     (** Returns the length of an array *)
     val length : t -> int
 
-    (** [print r] prints a line containing a tab-delimited list of the values of
-        [r] (in the format "% d", where 0 = NoRoot, 1 = Rising,
-        -1 = Falling), and then a newline. *)
-    val print : t -> unit
-
     (** [get r i] returns [true] if the value of the [i]th element of [r] is
         either Rising or Falling. *)
     val get : t -> int -> bool
@@ -144,7 +139,7 @@ module Roots :
         Falling. *)
     val falling : t -> int -> bool
 
-    (** [get r i] returns the value of the [i]th element of [r]. *)
+    (** [get' r i] returns the value of the [i]th element of [r]. *)
     val get' : t -> int -> root_event
 
     (** [set r i v] sets the value of the [i]th element of [r]. *)
@@ -161,11 +156,13 @@ module Roots :
     (** Returns 0 for NoRoot, 1 for Rising, and -1 for Falling. *)
     val to_int : root_event -> int
 
-    (** Returns NoRoot for 0, Rising for 1, and Falling for -1. *)
-    val from_int : int -> root_event
-
     (** Resets all elements to NoRoot. *)
     val reset : t -> unit
+
+    (** [print r] prints a line containing a tab-delimited list of the values of
+        [r] (in the format "% d", where 0 = NoRoot, 1 = Rising,
+        -1 = Falling), and then a newline. *)
+    val print : t -> unit
 
     (** Returns [true] if any elements are equal to Rising or Falling. *)
     val exists : t -> bool
@@ -173,6 +170,43 @@ module Roots :
     (** [appi f r] applies [f] to the indexes and values of each element
         in [r]. *)
     val appi : (int -> root_event -> unit) -> t -> unit
+  end
+
+(** Utility functions for arrays of directions to detect on root functions
+    (increasing/decreasing/either). *)
+module RootDirs :
+  sig
+    type t
+
+    type root_direction =
+      | Increasing                      (** Monitor rising zero-crossings *)
+      | Decreasing                      (** Monitor falling zero-crossings *)
+      | IncreasingOrDecreasing          (** Monitor all zero-crossings *)
+
+    (** [string_of_root_direction d] returns d as a human-readable string.  *)
+    val string_of_root_direction : root_direction -> string
+
+    (** [make n] returns an array with [n] elements, each set to the specified
+        value. *)
+    val make : int -> root_direction -> t
+
+    (** [create n] returns an array with [n] elements, each set to
+        IncreasingOrDecreasing. *)
+    val create : int -> t
+
+    (** [create' n a] returns an array with [n] elements, initialized from the
+        contents of a.  If [n > Array.length a], then the extra space is
+        initialized to IncreasingOrDecreasing. *)
+    val create' : int -> root_direction array -> t
+
+    (** Returns the length of an array *)
+    val length : t -> int
+
+    (** [get r i] returns the value of the [i]th element of [r]. *)
+    val get : t -> int -> root_direction
+
+    (** [set r i v] sets the value of the [i]th element of [r]. *)
+    val set : t -> int -> root_direction -> unit
   end
 
 (** {2 Miscellaneous utility functions} *)

@@ -55,10 +55,7 @@ type solver_result =
   | RootsFound
   | StopTimeReached
 
-type root_direction =
-  | Increasing
-  | Decreasing
-  | IncreasingOrDecreasing
+type root_direction = RootDirs.root_direction
 
 type error_details = {
     error_code : int;

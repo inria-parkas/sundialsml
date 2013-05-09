@@ -177,7 +177,7 @@ let wf_tolerances s ferrw =
   s.errw <- ferrw;
   wf_tolerances s
 
-external get_root_info  : session -> Roots.t -> unit
+external get_root_info  : session -> root_array -> unit
     = "c_get_root_info"
 
 external normal
@@ -286,31 +286,14 @@ external set_nonlin_conv_coef   : session -> float -> unit
 external set_iter_type          : session -> iter -> unit
     = "c_set_iter_type"
 
-external set_root_direction'    : session -> int_array -> unit
+external set_root_direction'    : session -> RootDirs.t -> unit
     = "c_set_root_direction"
 
-let int_of_root_direction x =
-  match x with
-  | Increasing -> 1l
-  | Decreasing -> -1l
-  | IncreasingOrDecreasing -> 0l
-
-let set_root_direction s rda =
-  let n = nroots s in
-  let rdirs = make_int_array n in
-  if (n > Array.length rda)
-    then Bigarray.Array1.fill rdirs
-            (int_of_root_direction IncreasingOrDecreasing);
-  Array.iteri (fun i v -> rdirs.{i} <- int_of_root_direction v) rda;
-  set_root_direction' s rdirs
+let set_root_direction s rda = 
+  set_root_direction' s (RootDirs.create' (nroots s) rda)
 
 let set_all_root_directions s rd =
-  let n = nroots s in
-  if (n > 0) then begin
-    let rdirs = make_int_array n in
-    Bigarray.Array1.fill rdirs (int_of_root_direction rd);
-    set_root_direction' s rdirs
-  end; ()
+  set_root_direction' s (RootDirs.make (nroots s) rd)
 
 external set_no_inactive_root_warn      : session -> unit
     = "c_set_no_inactive_root_warn"

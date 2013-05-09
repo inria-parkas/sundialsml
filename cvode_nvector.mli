@@ -21,7 +21,14 @@
 (*                                                                     *)
 (***********************************************************************)
 
+(* `include module type of' creates a fresh copy of every abstract type, so
+   that e.g. Cvode_nvector.Roots.t and Sundials.Roots.t become distinct types,
+   which is not what we want here.  The `with' construct lets us explicitly
+   declare the desired type equalities.  See also
+   http://caml.inria.fr/mantis/print_bug_page.php?bug_id=5241 *)
 include module type of Cvode
+  with type Roots.t = Cvode.Roots.t
+  and type RootDirs.t = Cvode.RootDirs.t
 
 (** Abstract nvector interface to the CVODE Solver
 

@@ -43,6 +43,7 @@
 #define MAX_ERRMSG_LEN 256
 
 #define INT_ARRAY(v) ((int *)Caml_ba_data_val(v))
+#define LONG_ARRAY(v) ((long int *)Caml_ba_data_val(v))
 #define REAL_ARRAY(v) ((realtype *)Caml_ba_data_val(v))
 #define REAL_ARRAY2(v) ((realtype **)Caml_ba_data_val(v))
 
@@ -164,19 +165,20 @@ void set_linear_solver(void *cvode_mem, value ls, int n)
     int flag;
 
     if (Is_block(ls)) {
-	int field0 = Field(Field(ls, 0), 0); /* mupper, pretype */
-	int field1 = Field(Field(ls, 0), 1); /* mlower, maxl */
+	long int field0 = Field(Field(ls, 0), 0); /* mupper, pretype */
+	long int field1 = Field(Field(ls, 0), 1); /* mlower, maxl */
 	value sprange, bandrange;
 
 	switch (Tag_val(ls)) {
 	case VARIANT_LINEAR_SOLVER_BAND:
-	    flag = CVBand(cvode_mem, n, Int_val(field0), Int_val(field1));
+	    flag = CVBand(cvode_mem, n, Long_val(field0), Long_val(field1));
 	    CHECK_FLAG("CVBand", flag);
 	    break;
 
 	case VARIANT_LINEAR_SOLVER_LAPACKBAND:
 #if SUNDIALS_BLAS_LAPACK == 1
-	    flag = CVLapackBand(cvode_mem, n, Int_val(field0), Int_val(field1));
+	    flag = CVLapackBand(cvode_mem, n, Long_val(field0),
+					      Long_val(field1));
 	    CHECK_FLAG("CVLapackBand", flag);
 #else
 	    caml_failwith("Lapack solvers are not available.");
@@ -184,17 +186,17 @@ void set_linear_solver(void *cvode_mem, value ls, int n)
 	    break;
 
 	case VARIANT_LINEAR_SOLVER_SPGMR:
-	    flag = CVSpgmr(cvode_mem, precond_type(field0), Int_val(field1));
+	    flag = CVSpgmr(cvode_mem, precond_type(field0), Long_val(field1));
 	    CHECK_FLAG("CVSpgmr", flag);
 	    break;
 
 	case VARIANT_LINEAR_SOLVER_SPBCG:
-	    flag = CVSpbcg(cvode_mem, precond_type(field0), Int_val(field1));
+	    flag = CVSpbcg(cvode_mem, precond_type(field0), Long_val(field1));
 	    CHECK_FLAG("CVSpbcg", flag);
 	    break;
 
 	case VARIANT_LINEAR_SOLVER_SPTFQMR:
-	    flag = CVSptfqmr(cvode_mem, precond_type(field0), Int_val(field1));
+	    flag = CVSptfqmr(cvode_mem, precond_type(field0), Long_val(field1));
 	    CHECK_FLAG("CVSPtfqmr", flag);
 	    break;
 
@@ -203,11 +205,11 @@ void set_linear_solver(void *cvode_mem, value ls, int n)
 	    bandrange = Field(ls, 1);
 
 	    flag = CVSpgmr(cvode_mem, precond_type(Field(sprange, 0)),
-				      Int_val(Field(sprange, 1)));
+				      Long_val(Field(sprange, 1)));
 	    CHECK_FLAG("CVSpgmr", flag);
 
-	    flag = CVBandPrecInit(cvode_mem, n, Int_val(Field(bandrange, 0)),
-						Int_val(Field(bandrange, 1)));
+	    flag = CVBandPrecInit(cvode_mem, n, Long_val(Field(bandrange, 0)),
+						Long_val(Field(bandrange, 1)));
 	    CHECK_FLAG("CVBandPrecInit", flag);
 	    break;
 
@@ -216,11 +218,11 @@ void set_linear_solver(void *cvode_mem, value ls, int n)
 	    bandrange = Field(ls, 1);
 
 	    flag = CVSpbcg(cvode_mem, precond_type(Field(sprange, 0)),
-				      Int_val(Field(sprange, 1)));
+				      Long_val(Field(sprange, 1)));
 	    CHECK_FLAG("CVSpbcg", flag);
 
-	    flag = CVBandPrecInit(cvode_mem, n, Int_val(Field(bandrange, 0)),
-						Int_val(Field(bandrange, 1)));
+	    flag = CVBandPrecInit(cvode_mem, n, Long_val(Field(bandrange, 0)),
+						Long_val(Field(bandrange, 1)));
 	    CHECK_FLAG("CVBandPrecInit", flag);
 	    break;
 
@@ -229,11 +231,11 @@ void set_linear_solver(void *cvode_mem, value ls, int n)
 	    bandrange = Field(ls, 1);
 
 	    flag = CVSptfqmr(cvode_mem, precond_type(Field(sprange, 0)),
-				        Int_val(Field(sprange, 1)));
+				        Long_val(Field(sprange, 1)));
 	    CHECK_FLAG("CVSptfqmr", flag);
 
-	    flag = CVBandPrecInit(cvode_mem, n, Int_val(Field(bandrange, 0)),
-						Int_val(Field(bandrange, 1)));
+	    flag = CVBandPrecInit(cvode_mem, n, Long_val(Field(bandrange, 0)),
+						Long_val(Field(bandrange, 1)));
 	    CHECK_FLAG("CVBandPrecInit", flag);
 	    break;
 
@@ -863,7 +865,7 @@ CAMLprim value c_densematrix_scale(value vc, value va)
 CAMLprim value c_densematrix_getrf(value va, value vp)
 {
     CAMLparam2(va, vp);
-    int r = DenseGETRF(DLSMAT(va), INT_ARRAY(vp));
+    int r = DenseGETRF(DLSMAT(va), LONG_ARRAY(vp));
 
     if (r != 0) {
 	caml_raise_with_arg(*caml_named_value("cvode_ZeroDiagonalElement"),
@@ -875,7 +877,7 @@ CAMLprim value c_densematrix_getrf(value va, value vp)
 CAMLprim value c_densematrix_getrs(value va, value vp, value vb)
 {
     CAMLparam3(va, vp, vb);
-    DenseGETRS(DLSMAT(va), INT_ARRAY(vp), REAL_ARRAY(vb));
+    DenseGETRS(DLSMAT(va), LONG_ARRAY(vp), REAL_ARRAY(vb));
     CAMLreturn0;
 }
 
@@ -1034,7 +1036,7 @@ CAMLprim value c_densematrix_direct_getrf(value va, value vmn, value vp)
     int m = Int_val(Field(vmn, 0));
     int n = Int_val(Field(vmn, 1));
 
-    int r = denseGETRF(DDENSEMAT(va), m, n, INT_ARRAY(vp));
+    int r = denseGETRF(DDENSEMAT(va), m, n, LONG_ARRAY(vp));
 
     if (r != 0) {
 	caml_raise_with_arg(*caml_named_value("cvode_ZeroDiagonalElement"),
@@ -1047,7 +1049,7 @@ CAMLprim value c_densematrix_direct_getrs(value va, value vn,
 	value vp, value vb)
 {
     CAMLparam4(va, vn, vp, vb);
-    denseGETRS(DDENSEMAT(va), Int_val(vn), INT_ARRAY(vp), REAL_ARRAY(vb));
+    denseGETRS(DDENSEMAT(va), Int_val(vn), LONG_ARRAY(vp), REAL_ARRAY(vb));
     CAMLreturn0;
 }
 
@@ -1135,14 +1137,14 @@ CAMLprim value c_bandmatrix_scale(value vc, value va)
 CAMLprim value c_bandmatrix_gbtrf(value va, value vp)
 {
     CAMLparam2(va, vp);
-    BandGBTRF(DLSMAT(va), INT_ARRAY(vp));
+    BandGBTRF(DLSMAT(va), LONG_ARRAY(vp));
     CAMLreturn0;
 }
 
 CAMLprim value c_bandmatrix_gbtrs(value va, value vp, value vb)
 {
     CAMLparam3(va, vp, vb);
-    BandGBTRS(DLSMAT(va), INT_ARRAY(vp), REAL_ARRAY(vb));
+    BandGBTRS(DLSMAT(va), LONG_ARRAY(vp), REAL_ARRAY(vb));
     CAMLreturn0;
 }
 
@@ -1295,10 +1297,10 @@ CAMLprim value c_bandmatrix_direct_scale(value vc, value va, value vsizes)
 {
     CAMLparam3(vc, va, vsizes);
 
-    int n   = Int_val(Field(vsizes, 0));
-    int mu  = Int_val(Field(vsizes, 1));
-    int ml  = Int_val(Field(vsizes, 2));
-    int smu = Int_val(Field(vsizes, 3));
+    long int n   = Long_val(Field(vsizes, 0));
+    long int mu  = Long_val(Field(vsizes, 1));
+    long int ml  = Long_val(Field(vsizes, 2));
+    long int smu = Long_val(Field(vsizes, 3));
 
     bandScale(Double_val(vc), DBANDMAT(va), n, mu, ml, smu);
     CAMLreturn0;
@@ -1308,7 +1310,7 @@ CAMLprim value c_bandmatrix_direct_add_identity(value va, value vn, value vsmu)
 {
     CAMLparam3(va, vn, vsmu);
 
-    bandAddIdentity(DBANDMAT(va), Int_val(vn), Int_val(vsmu));
+    bandAddIdentity(DBANDMAT(va), Long_val(vn), Long_val(vsmu));
     CAMLreturn0;
 }
 
@@ -1316,12 +1318,12 @@ CAMLprim value c_bandmatrix_direct_gbtrf(value va, value vsizes, value vp)
 {
     CAMLparam3(va, vsizes, vp);
 
-    int n   = Int_val(Field(vsizes, 0));
-    int mu  = Int_val(Field(vsizes, 1));
-    int ml  = Int_val(Field(vsizes, 2));
-    int smu = Int_val(Field(vsizes, 3));
+    long int n   = Long_val(Field(vsizes, 0));
+    long int mu  = Long_val(Field(vsizes, 1));
+    long int ml  = Long_val(Field(vsizes, 2));
+    long int smu = Long_val(Field(vsizes, 3));
 
-    bandGBTRF(DBANDMAT(va), n, mu, ml, smu, INT_ARRAY(vp));
+    bandGBTRF(DBANDMAT(va), n, mu, ml, smu, LONG_ARRAY(vp));
     CAMLreturn0;
 }
 
@@ -1329,11 +1331,11 @@ CAMLprim value c_bandmatrix_direct_gbtrs(value va, value vsizes, value vp, value
 {
     CAMLparam4(va, vsizes, vp, vb);
 
-    int n   = Int_val(Field(vsizes, 0));
-    int smu = Int_val(Field(vsizes, 1));
-    int ml  = Int_val(Field(vsizes, 2));
+    long int n   = Long_val(Field(vsizes, 0));
+    long int smu = Long_val(Field(vsizes, 1));
+    long int ml  = Long_val(Field(vsizes, 2));
 
-    bandGBTRS(DBANDMAT(va), n, smu, ml, INT_ARRAY(vp), REAL_ARRAY(vb));
+    bandGBTRS(DBANDMAT(va), n, smu, ml, LONG_ARRAY(vp), REAL_ARRAY(vb));
     CAMLreturn0;
 }
 
