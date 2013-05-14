@@ -10,7 +10,7 @@ unset stubdir
 unset docdir
 unset install_docs
 
-for option in $*
+for option in "$@"
 do
     name=`expr "$option" : "\([^=]*\).*"`
     value=`expr "$option" : ".*=\(.*\)"`
