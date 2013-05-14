@@ -10,7 +10,7 @@ unset stubdir
 unset docdir
 unset install_docs
 
-for option in $*
+for option in "$@"
 do
     name=`expr "$option" : "\([^=]*\).*"`
     value=`expr "$option" : ".*=\(.*\)"`
@@ -201,19 +201,24 @@ else
     lapack_info=" (with lapack: ${lapack_lib})"
 fi
 
+ldflags="${ldflags} ${lapack_lib}"
+
 # Extract compilation flags from sundials-config.
-cflags="${cflags} `sundials-config -m cvode -t s -l c -s cppflags`"
+
+cvode_cppflags="${cflags} `sundials-config -m cvode -t s -l c -s cppflags`"
+ida_cppflags="${cflags} `sundials-config -m cvode -t s -l c -s cppflags`"
 
 # --no-lib-path removes the -L specification, to prevent it from being recorded
 # in the *.cm(x)a files.  We assume there's only one occurrence of -L and the
 # path contains no spaces.
 if [ ${no_lib_path:-0} -eq 1 ]; then
-    query=`sundials-config -m cvode -t s -l c -s libs \
-	   | sed -e 's#-L[^ ]* -#-#'`
-    ldflags="${ldflags} ${query} ${lapack_lib}"
+    cvode_ldflags="`sundials-config -m cvode -t s -l c -s libs \
+	            | sed -e 's#-L[^ ]* -#-#'`"
+    ida_ldflags="`sundials-config -m ida -t s -l c -s libs \
+	          | sed -e 's#-L[^ ]* -#-#'`"
 else
-    query=`sundials-config -m cvode -t s -l c -s libs`
-    ldflags="${ldflags} ${query} ${lapack_lib}"
+    cvode_ldflags="`sundials-config -m cvode -t s -l c -s libs`"
+    ida_ldflags="`sundials-config -m ida -t s -l c -s libs`"
 fi
 
 arch=`uname -i`
@@ -269,7 +274,12 @@ fi
 	 s#@docdir@#${docdir:-${prefix}share/doc/}#;
 	 s#@install_docs@#${install_docs:-1}#;
 	 s#@cflags@#${cflags}#;
+	 s#@cppflags@#${cppflags}#;
 	 s#@ldflags@#${ldflags}#;
+	 s#@cvode_cppflags@#${cvode_cppflags}#;
+	 s#@ida_cppflags@#${ida_cppflags}#;
+	 s#@cvode_ldflags@#${cvode_ldflags}#;
+	 s#@ida_ldflags@#${ida_ldflags}#;
 	 s#@ocamlflags@#${ocamlflags}#;
 	 s#@EXAMPLESROOT@#${EXAMPLESROOT}#;
 	 s#@OCAMLBIN@#${OCAMLBIN}#;

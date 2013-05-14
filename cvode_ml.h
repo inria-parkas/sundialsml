@@ -21,6 +21,8 @@
 #ifndef _CVODE_ML_H__
 #define _CVODE_ML_H__
 
+#include "sundials_ml.h"
+
 /* Configuration options */
 #define CHECK_MATRIX_ACCESS 1
 
@@ -103,9 +105,6 @@ void cvode_ml_set_linear_solver(void *cvode_mem, value ls, int n);
 value cvode_ml_big_real();
 
 /* Interface with Ocaml types */
-
-#define BIGARRAY_FLOAT (CAML_BA_FLOAT64 | CAML_BA_C_LAYOUT)
-#define BIGARRAY_INT (CAML_BA_INT32 | CAML_BA_C_LAYOUT)
 
 #define RECORD_SESSION_CVODE      0
 #define RECORD_SESSION_USER_DATA  1

@@ -1,16 +1,36 @@
 include config
 
-MLOBJ=  sundials.cmo 		\
-	nvector.cmo 		\
-	nvector_array.cmo 	\
-	cvode.cmo 		\
-	cvode_nvector.cmo	\
-	cvode_serial.cmo
+COMMON_MLOBJ = sundials.cmo        \
+	       nvector.cmo         \
+	       nvector_array.cmo   \
+	       dls.cmo 		
+CVODE_MLOBJ= $(COMMON_MLOBJ)    \
+	     cvode.cmo 		\
+	     cvode_nvector.cmo	\
+	     cvode_serial.cmo
 
-COBJ=	cvode_ml$(XO) 		\
-	cvode_ml_ba$(XO) 	\
-	cvode_ml_nvec$(XO) 	\
-	nvector_ml$(XO)
+IDA_MLOBJ=  $(COMMON_MLOBJ)     \
+	    ida.cmo 		\
+	    ida_nvector.cmo	\
+	    ida_serial.cmo
+
+COMMON_COBJ= sundials_ml.o      \
+	     dls_ml.o
+
+CVODE_COBJ= $(COMMON_COBJ)      \
+	    cvode_ml$(XO)       \
+	    cvode_ml_ba$(XO) 	\
+	    cvode_ml_nvec$(XO) 	\
+	    nvector_ml$(XO)
+
+IDA_COBJ= $(COMMON_COBJ)        \
+	  ida_ml$(XO)           \
+	  ida_ml_ba$(XO)        \
+	  ida_ml_nvec$(XO)      \
+	  nvector_ml$(XO)
+
+MLOBJ=$(CVODE_MLOBJ) $(IDA_MLOBJ)
+COBJ=$(CVODE_COBJ) $(IDA_COBJ)
 
 INSTALL_FILES= 			\
     META			\
@@ -28,12 +48,17 @@ CFLAGS+=-fPIC
 
 .PHONY: all sundials_cvode install doc
 
-all: sundials_cvode.cma sundials_cvode.cmxa
+all: sundials_cvode.cma sundials_cvode.cmxa sundials_ida.cma sundials_ida.cmxa
 
-sundials_cvode.cma sundials_cvode.cmxa: $(MLOBJ) $(MLOBJ:.cmo=.cmx) $(COBJ)
+sundials_cvode.cma sundials_cvode.cmxa: $(CVODE_MLOBJ) $(CVODE_MLOBJ:.cmo=.cmx) $(CVODE_COBJ)
 	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS) \
 	    -o sundials_cvode -oc mlsundials_cvode $^ \
-	    $(OCAML_LIBLINK)
+	    $(OCAML_CVODE_LIBLINK)
+
+sundials_ida.cma sundials_ida.cmxa: $(IDA_MLOBJ) $(IDA_MLOBJ:.cmo=.cmx) $(IDA_COBJ)
+	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS) \
+	    -o sundials_ida -oc mlsundials_ida $^ \
+	    $(OCAML_IDA_LIBLINK)
 
 cvode_nvector.mli: cvode_serial.mli cvode_nvector.doc
 	$(SED) \
@@ -51,11 +76,52 @@ cvode_nvector.mli: cvode_serial.mli cvode_nvector.doc
 	-e "/^(\*STARTINTRO\*)/,/(\*ENDINTRO\*)/d"				\
 	$< > $@
 
-cvode.o: cvode_ml.c
-cvode_ml_ba.o: cvode_ml_nvec.c
-	$(CC) -I $(OCAML_INCLUDE) $(CFLAGS) -DCVODE_ML_BIGARRAYS -o $@ -c $<
-cvode_ml_nvec.o: cvode_ml_nvec.c
+# There three sets of flags:
+#   - one for CVODE-specific files
+#   - one for IDA-specific files
+#   - one for files common to CVODE and IDA
+# Is there a way to group these files and specify their flags all at once?
+
+# These modules are common to CVODE and IDA.  The CFLAGS settings for CVODE
+# works for these; if it doesn't, there's probably stuff in these files that
+# ought to be moved to solver-specific files.
+dls_ml.o: dls_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
+sundials_ml.o: sundials_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
 nvector_ml.o: nvector_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
+
+cvode_ml.o: cvode_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
+cvode_ml_ba.o: cvode_ml_nvec.c
+	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) \
+	      -DCVODE_ML_BIGARRAYS -o $@ -c $<
+cvode_ml_nvec.o: cvode_ml_nvec.c
+	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
+
+ida_nvector.mli: ida_serial.mli ida_nvector.doc
+	$(SED) \
+	-e "/^type \(val_array\|der_array\) =/d"			\
+	-e "s/ session\( \|\$\)/ 'a session\1/g"			\
+	-e "s/\([ (]\)\([^ ]*\) jacobian_arg\([ )]\|\$\)/\1(\2, 'a) jacobian_arg\3/g" \
+	-e "s/\([ (]\)val_array\([ )]\|\$\)/\1'a\2/g"			\
+	-e "s/\([ (]\)der_array\([ )]\|\$\)/\1'a\2/g"			\
+	-e "s/\([ (]\)nvec\([ )]\|\$\)/\1'a nvector\2/g"		\
+	-e "s/\([ (]\)solve_arg\([ )]\|\$\)/\1'a solve_arg\2/g"		\
+	-e "s/\([ (]\)single_tmp\([ )]\|\$\)/\1'a single_tmp\2/g"	\
+	-e "s/\([ (]\)triple_tmp\([ )]\|\$\)/\1'a triple_tmp\2/g"	\
+	-e "s/^\(type 'a nvector = \).*/\1'a Nvector.nvector/"		\
+	-e "/(\*ENDINTRO\*)/r ida_nvector.doc"			\
+	-e "/^(\*STARTINTRO\*)/,/(\*ENDINTRO\*)/d"				\
+	$< > $@
+ida_ml.o: ida_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(IDA_CFLAGS) -o $@ -c $<
+ida_ml_ba.o: ida_ml_nvec.c
+	$(CC) -I $(OCAML_INCLUDE) $(IDA_CFLAGS) \
+	      -DIDA_ML_BIGARRAYS -o $@ -c $<
+ida_ml_nvec.o: ida_ml_nvec.c
+	$(CC) -I $(OCAML_INCLUDE) $(IDA_CFLAGS) -o $@ -c $<
 
 dochtml.cmo: INCLUDES += -I +ocamldoc
 
@@ -67,7 +133,7 @@ doc: doc/html/index.html
 
 doc/html/index.html: dochtml.cmo \
 		     $(MLOBJ:.cmo=.mli) $(MLOBJ:.cmo=.cmi) \
-		     intro.doc cvode_nvector.doc
+		     intro.doc cvode_nvector.doc ida_nvector.doc
 	$(OCAMLDOC) -g dochtml.cmo \
 	    -cvode-doc-root "$(CVODE_DOC_ROOT)" \
 	    -pp "$(DOCPP)"		\

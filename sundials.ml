@@ -24,12 +24,12 @@ external format_float : string -> float -> string
 let floata = format_float "%a"
 
 external get_big_real : unit -> float
-    = "cvode_ml_big_real"
+    = "sundials_ml_big_real"
 
 let big_real = get_big_real ()
 
 external get_unit_roundoff : unit -> float
-    = "cvode_ml_unit_roundoff"
+    = "sundials_ml_unit_roundoff"
 
 let unit_roundoff = get_unit_roundoff ()
 
