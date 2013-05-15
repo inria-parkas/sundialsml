@@ -16,11 +16,14 @@
 #include <caml/mlvalues.h>
 #include <caml/memory.h>
 #include <caml/fail.h>
+#include <caml/alloc.h>
 #include <caml/callback.h>
 #include <caml/bigarray.h>
 
 #include <ida/ida.h>
 #include <ida/ida_dense.h>
+#include <ida/ida_band.h>
+#include <ida/ida_spgmr.h>
 #include <sundials/sundials_config.h>
 
 #include <stdio.h>
@@ -431,6 +434,7 @@ CAMLprim value c_ida_get_actual_init_step(value vida_mem)
 CAMLprim value c_ida_get_last_step(value vida_mem)
 {
     CAMLparam1(vida_mem);
+    CAMLlocal1 (tmp);
 
     int flag;
     realtype v;
@@ -438,7 +442,8 @@ CAMLprim value c_ida_get_last_step(value vida_mem)
     flag = IDAGetLastStep(IDA_MEM_FROM_ML(vida_mem), &v);
     CHECK_FLAG("IDAGetLastStep", flag);
 
-    CAMLreturn(caml_copy_double(v));
+    tmp = caml_copy_double(v);
+    CAMLreturn(tmp);
 }
 
 CAMLprim value c_ida_get_current_step(value vida_mem)

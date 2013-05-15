@@ -56,7 +56,7 @@ sundials_cvode.cma sundials_cvode.cmxa: $(CVODE_MLOBJ) $(CVODE_MLOBJ:.cmo=.cmx) 
 	    $(OCAML_CVODE_LIBLINK)
 
 sundials_ida.cma sundials_ida.cmxa: $(IDA_MLOBJ) $(IDA_MLOBJ:.cmo=.cmx) $(IDA_COBJ)
-	$(OCAMLMKLIB) $(OCAMLFLAGS) $(OCAMLMKLIBFLAGS) \
+	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS) \
 	    -o sundials_ida -oc mlsundials_ida $^ \
 	    $(OCAML_IDA_LIBLINK)
 

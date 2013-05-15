@@ -80,8 +80,10 @@ external external_init
 
 let init' linsolv resfn (nroots, roots) y y' t0 =
   let neqs = Sundials.Carray.length y in
-  (*if neqs <> Sundials.Carray.length y' then
-    raise (Invalid_argument "y and y' have inconsistent sizes");*)
+  (* IDA doesn't check if y and y' have the same length, and corrupt memory if
+   * they aren't.  *)
+  if neqs <> Sundials.Carray.length y' then
+    raise (Invalid_argument "y and y' have inconsistent sizes");
   let (ida_mem, err_file) =
     external_init linsolv y y' neqs nroots t0 in
   let session = { ida        = ida_mem;

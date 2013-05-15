@@ -88,7 +88,7 @@ and print_output ida t y =
   and hused = Ida.get_last_step ida
   in
   printf "%10.4e %12.4e %12.4e %12.4e | %3d  %1d %12.4e\n" 
-    t y.{0} y.{1} y.{2} nst kused hused;
+    t y.{0} y.{1} y.{2} nst kused hused
 and print_final_stats ida =
   let nst = Ida.get_num_steps ida
   and nre = Ida.get_num_res_evals ida
@@ -144,7 +144,7 @@ let main () =
   (* Create and initialize y, y', and absolute tolerance vectors.  For larger
    * vectors, you might want to use Carray.create instead of Carray.of_array to
    * avoid making large temporary OCaml arrays.  *)
-  let y = Carray.of_array [|1.; 0.  (*; 0. *)|]
+  let y = Carray.of_array [|1.; 0.; 0.|]
   and y' = Carray.of_array [|-0.04; 0.04; 0.|]
   and rtol = 1.0e-4
   and avtol = Carray.of_array [|1.0e-8; 1.0e-14; 1.0e-6|] in
@@ -157,12 +157,12 @@ let main () =
   print_header rtol avtol y;
 
   (* Call IDACreate, IDAInit, and IDARootInit to initialize IDA memory with
-   * a 2-component root function.  *)
+   * a 2-component root function and the dense direct linear solver.  *)
   let ida_mem = Ida.init' Ida.Dense resrob (nroots, grob) y y' t0 in
   Gc.compact ();
 
   (* Call IDASVtolerances to set tolerances *)
-  (*Ida.sv_tolerances ida_mem rtol avtol;*)
+  Ida.sv_tolerances ida_mem rtol avtol;
 
   (* Call IDADense and set up the linear solver. *)
   Ida.Dls.set_dense_jac_fn ida_mem jacrob;

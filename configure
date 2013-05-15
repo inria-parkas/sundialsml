@@ -84,6 +84,8 @@ END_HELP_TEXT
 	ocamlflags="${value}";;
     OCAMLOPTFLAGS)
 	ocamloptflags="${value}";;
+    OCAMLMKLIBFLAGS)
+	ocamlmklibflags="${value}";;
     *)
 	echo "illegal option \"$option\"." 1>&2; exit 2;;
     esac
@@ -289,6 +291,7 @@ fi
 	 s#@ida_ldflags@#${ida_ldflags}#;
 	 s#@ocamlflags@#${ocamlflags}#;
 	 s#@ocamloptflags@#${ocamloptflags}#;
+	 s#@ocamlmklibflags@#${ocamlmklibflags}#;
 	 s#@EXAMPLESROOT@#${EXAMPLESROOT}#;
 	 s#@OCAMLBIN@#${OCAMLBIN}#;
 	 s#@OCAMLROOT@#${OCAMLROOT}#;" config.in) > config

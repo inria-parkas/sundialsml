@@ -35,7 +35,7 @@ OCAMLDEP ?= @OCAMLBIN@ocamldep
 OCAMLDOC ?= @OCAMLBIN@ocamldoc
 
 OCAMLMKLIB ?= @OCAMLBIN@ocamlmklib -ocamlc "$(OCAMLC) $(OCAMLFLAGS)" -ocamlopt "$(OCAMLOPT) $(OCAMLOPTFLAGS)"
-OCAMLMKLIBFLAGS ?= -verbose
+OCAMLMKLIBFLAGS ?= @ocamlmklibflags@ -verbose
 
 GNUPLOT = gnuplot
 

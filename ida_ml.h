@@ -31,7 +31,7 @@ void ida_ml_set_linear_solver(void *ida_mem, value ls, int n);
 
 /* Indices into the Ida_*.session type.  This enum must be in the same order as
  * the session type's member declaration.  */
-enum ida_ml_index {
+enum ida_index {
     RECORD_IDA_SESSION_MEM = 0,
     RECORD_IDA_SESSION_NEQS,
     RECORD_IDA_SESSION_NROOTS,
@@ -55,7 +55,7 @@ enum ida_ml_index {
 #define IDA_JACFN_FROM_ML(v)     (Field((v), RECORD_IDA_SESSION_JACFN))
 #define IDA_BANDJACFN_FROM_ML(v) (Field((v), RECORD_IDA_SESSION_BANDJACFN))
 
-enum ida_integrator_stats_ml_index {
+enum ida_integrator_stats_index {
     RECORD_IDA_INTEGRATOR_STATS_STEPS = 0,
     RECORD_IDA_INTEGRATOR_STATS_RES_EVALS,
     RECORD_IDA_INTEGRATOR_STATS_LINEAR_SOLVER_SETUPS,
@@ -68,7 +68,7 @@ enum ida_integrator_stats_ml_index {
     RECORD_IDA_INTEGRATOR_STATS_INTERNAL_TIME,
 };
 
-enum ida_jacobian_arg_ml_index {
+enum ida_jacobian_arg_index {
     RECORD_IDA_JACOBIAN_ARG_JAC_T = 0,
     RECORD_IDA_JACOBIAN_ARG_JAC_COEF,
     RECORD_IDA_JACOBIAN_ARG_JAC_Y,
@@ -77,14 +77,14 @@ enum ida_jacobian_arg_ml_index {
     RECORD_IDA_JACOBIAN_ARG_JAC_TMP,
 };
 
-enum ida_error_details_ml_index {
+enum ida_error_details_index {
     RECORD_IDA_ERROR_DETAILS_ERROR_CODE = 0,
     RECORD_IDA_ERROR_DETAILS_MODULE_NAME,
     RECORD_IDA_ERROR_DETAILS_FUNCTION_NAME,
     RECORD_IDA_ERROR_DETAILS_ERROR_MESSAGE,
 };
 
-enum ida_linear_solver_ml_index {
+enum ida_linear_solver_tag {
     /* untagged: */
     VARIANT_IDA_LINEAR_SOLVER_DENSE = 0,
     VARIANT_IDA_LINEAR_SOLVER_LAPACKDENSE,
@@ -94,6 +94,12 @@ enum ida_linear_solver_ml_index {
     VARIANT_IDA_LINEAR_SOLVER_SPGMR,
     VARIANT_IDA_LINEAR_SOLVER_SPBCG,
     VARIANT_IDA_LINEAR_SOLVER_SPTFQMR,
+};
+
+enum ida_solver_result_tag {
+    VARIANT_IDA_SOLVER_RESULT_CONTINUE = 0,
+    VARIANT_IDA_SOLVER_RESULT_ROOTSFOUND,
+    VARIANT_IDA_SOLVER_RESULT_STOPTIMEREACHED,
 };
 
 #endif /* _IDA_ML_H__ */

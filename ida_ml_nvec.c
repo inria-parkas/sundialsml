@@ -129,58 +129,34 @@ static int check_exception(value r)
 }
 
 
-static int resfn (realtype tres, N_Vector yy, N_Vector yp, 
+static int resfn (realtype t, N_Vector y, N_Vector yp, 
 		  N_Vector resval, void *user_data)
 {
-    caml_failwith ("to be implemented");
-}
+    CAMLparam0 ();
+    CAMLlocal1 (r);
+    CAMLlocalN (args, 4);
+    value *session = (value *)user_data;
+    
+    args[0] = caml_copy_double(t);
+    args[1] = WRAP_NVECTOR (y);
+    args[2] = WRAP_NVECTOR (yp);
+    args[3] = WRAP_NVECTOR (resval);
 
-static int jacfn (long int neq, realtype t, realtype coef,
-		  N_Vector y, N_Vector yp, N_Vector res,
-		  DlsMat jac, void *user_data,
-		  N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
-{
-    value *data = (value *)user_data;
-    caml_failwith ("to be implemented");
-    IDASetUserData (IDA_MEM_FROM_ML (*data), user_data);
-}
+    r = caml_callbackN_exn (Field (*session, RECORD_IDA_SESSION_RESFN),
+			    4, args);
 
-static int bandjacfn (long int neq, long int mupper, long int mlower,
-		      realtype t, realtype coef, N_Vector y, N_Vector yp,
-		      N_Vector res, DlsMat jac, void *user_data,
-		      N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
-{
-    value *data = (value *)user_data;
-    caml_failwith ("to be implemented");
-    IDASetUserData (IDA_MEM_FROM_ML (*data), user_data);
-}
+    RELINQUISH_WRAPPEDNV (args[1]);
+    RELINQUISH_WRAPPEDNV (args[2]);
+    RELINQUISH_WRAPPEDNV (args[3]);
 
-static int rootsfn (realtype t, N_Vector yy, N_Vector yp,
-		    realtype *gout, void *user_data)
-{
-    value *data = (value *)user_data;
-    caml_failwith ("to be implemented");
-    IDASetUserData (IDA_MEM_FROM_ML (*data), data);
-}
-
-static int errw(N_Vector y, N_Vector ewt, void *user_data)
-{
-    CAMLparam0();
-    CAMLlocal3(y_d, ewt_d, r);
-
-    value *session = user_data;
-
-    y_d = WRAP_NVECTOR(y);
-    ewt_d = WRAP_NVECTOR(ewt);
-
-    r = caml_callback2_exn(IDA_ERRW_FROM_ML (*session), y_d, ewt_d);
-
-    RELINQUISH_WRAPPEDNV(y_d);
-    RELINQUISH_WRAPPEDNV(ewt_d);
-
-    IDASetUserData (IDA_MEM_FROM_ML (*session), session);
-
-    CAMLreturn(check_exception(r));
+    /* The OCaml function may have recursively called the solver on the same
+     * session instance, which overwrites the user data.  Since the IDASolve()
+     * could call this stub again without going through solve(), we need to
+     * restore the user data here.
+     * 
+     * FIXME: is such a recursive call meaningful/legal though?  */
+    IDASetUserData (IDA_MEM_FROM_ML (*session), user_data);
+    CAMLreturn (check_exception (r));
 }
 
 static value make_jac_arg(realtype t, double coef, N_Vector y, N_Vector yp,
@@ -232,6 +208,92 @@ static void relinquish_jac_arg(value arg, int triple)
     }
 
     CAMLreturn0;
+}
+
+static int jacfn (long int neq, realtype t, realtype coef,
+		  N_Vector y, N_Vector yp, N_Vector res,
+		  DlsMat jac, void *user_data,
+		  N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
+{
+    CAMLparam0 ();
+    CAMLlocal3 (arg, vjac, r);
+    value *session = (value *)user_data;
+
+    arg = make_jac_arg (t, coef, y, yp, res,
+			make_triple_tmp (tmp1, tmp2, tmp3));
+    vjac = caml_alloc_final (2, NULL, 0, 1);
+    Store_field (vjac, 1, (value)jac);
+
+    r = caml_callback2_exn (Field (*session, RECORD_IDA_SESSION_JACFN),
+			    arg, vjac);
+
+    relinquish_jac_arg (arg, 1);
+
+    /* The OCaml function may have recursively called the solver on the same
+     * session instance, which overwrites the user data.  Since the IDASolve()
+     * could call this stub again without going through solve(), we need to
+     * restore the user data here.
+     * 
+     * FIXME: is such a recursive call meaningful/legal though?  */
+    IDASetUserData (IDA_MEM_FROM_ML (*session), user_data);
+
+    CAMLreturn (check_exception (r));
+}
+
+static int bandjacfn (long int neq, long int mupper, long int mlower,
+		      realtype t, realtype coef, N_Vector y, N_Vector yp,
+		      N_Vector res, DlsMat jac, void *user_data,
+		      N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
+{
+    value *session = (value *)user_data;
+    caml_failwith ("to be implemented");
+    IDASetUserData (IDA_MEM_FROM_ML (*session), user_data);
+}
+
+static int rootsfn (realtype t, N_Vector y, N_Vector yp,
+		    realtype *gout, void *user_data)
+{
+    CAMLparam0 ();
+    CAMLlocalN (args, 4);
+    CAMLlocal4 (r, vy, vyp, roots);
+    value *session = (value *)user_data;
+    intnat nroots = Field (*session, RECORD_IDA_SESSION_NEQS);
+
+    args[0] = caml_copy_double (t);
+    args[1] = WRAP_NVECTOR (y);
+    args[2] = WRAP_NVECTOR (yp);
+    args[3] = caml_ba_alloc (BIGARRAY_FLOAT, 1, gout, &nroots);
+    r = caml_callbackN_exn (Field (*session, RECORD_IDA_SESSION_ROOTSFN),
+			    4, args);
+    
+    /* The OCaml function may have recursively called the solver on the same
+     * session instance, which overwrites the user data.  Since the IDASolve()
+     * could call this stub again without going through solve(), we need to
+     * restore the user data here.
+     * 
+     * FIXME: is such a recursive call meaningful/legal though?  */
+    IDASetUserData (IDA_MEM_FROM_ML (*session), user_data);
+    CAMLreturn (check_exception (r));
+}
+
+static int errw(N_Vector y, N_Vector ewt, void *user_data)
+{
+    CAMLparam0();
+    CAMLlocal3(y_d, ewt_d, r);
+
+    value *session = user_data;
+
+    y_d = WRAP_NVECTOR(y);
+    ewt_d = WRAP_NVECTOR(ewt);
+
+    r = caml_callback2_exn(IDA_ERRW_FROM_ML (*session), y_d, ewt_d);
+
+    RELINQUISH_WRAPPEDNV(y_d);
+    RELINQUISH_WRAPPEDNV(ewt_d);
+
+    IDASetUserData (IDA_MEM_FROM_ML (*session), session);
+
+    CAMLreturn(check_exception(r));
 }
 
 CAMLprim void IDATYPE(wf_tolerances)(value vdata)
@@ -329,7 +391,8 @@ CAMLprim void IDATYPE(sv_tolerances) (value ida_mem, value vrtol, value vavtol)
     int flag;
 
     avtol = NVECTORIZE_VAL (vavtol);
-    flag = IDASVtolerances ((void *)ida_mem, Double_val (vrtol), avtol);
+    flag = IDASVtolerances (IDA_MEM_FROM_ML (ida_mem),
+			    Double_val (vrtol), avtol);
     RELINQUISH_NVECTORIZEDVAL (avtol);
     CHECK_FLAG ("IDASVtolerances", flag);
 
@@ -350,22 +413,63 @@ CAMLprim void IDATYPE(reinit)(value vdata, value t0, value y0, value yp0)
     CAMLreturn0;
 }
 
-static value solver(value vdata, value nextt, value y, value yp, int onestep)
+static value solve (value vdata, value nextt, value vy, value vyp, int onestep)
 {
-    caml_failwith ("to be implemented");
+    CAMLparam4 (vdata, nextt, vy, vyp);
+    CAMLlocal1 (ret);
+    void *ida_mem = IDA_MEM_FROM_ML (vdata);
+    double tret;
+    int flag;
+    N_Vector y, yp;
+    enum ida_solver_result_tag result;
+
+    IDASetUserData (ida_mem, &vdata);
+
+    y = NVECTORIZE_VAL (vy);
+    yp = NVECTORIZE_VAL (vyp);
+    flag = IDASolve (ida_mem, Double_val (nextt), &tret, y, yp,
+	             onestep ? IDA_ONE_STEP : IDA_NORMAL);
+    RELINQUISH_NVECTORIZEDVAL (y);
+    RELINQUISH_NVECTORIZEDVAL (yp);
+    switch (flag) {
+    case IDA_SUCCESS:
+	result = VARIANT_IDA_SOLVER_RESULT_CONTINUE;
+	break;
+
+    case IDA_ROOT_RETURN:
+	result = VARIANT_IDA_SOLVER_RESULT_ROOTSFOUND;
+	break;
+
+    case IDA_TSTOP_RETURN:
+	result = VARIANT_IDA_SOLVER_RESULT_STOPTIMEREACHED;
+	break;
+
+    default:
+	CHECK_FLAG ("IDASolve", flag);
+    }
+
+    ret = caml_alloc_tuple (2);
+    Store_field (ret, 0, caml_copy_double (tret));
+    Store_field (ret, 1, Val_int (result));
+
+    /* For precaution; if we screw up somewhere, we'll promptly segfault
+     * instead of accessing a dangling pointer.  */
+    IDASetUserData (ida_mem, NULL);
+
+    CAMLreturn (ret);
 }
 
 
 CAMLprim value IDATYPE(normal)(value vdata, value nextt, value y, value yp)
 {
     CAMLparam4(vdata, nextt, y, yp);
-    CAMLreturn(solver(vdata, nextt, y, yp, 0));
+    CAMLreturn(solve(vdata, nextt, y, yp, 0));
 }
 
 CAMLprim value IDATYPE(one_step)(value vdata, value nextt, value y, value yp)
 {
     CAMLparam4(vdata, nextt, y, yp);
-    CAMLreturn(solver(vdata, nextt, y, yp, 1));
+    CAMLreturn(solve(vdata, nextt, y, yp, 1));
 }
 
 CAMLprim void IDATYPE(get_dky)(value vdata, value vt, value vk, value vy)
