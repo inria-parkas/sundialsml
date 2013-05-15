@@ -260,6 +260,11 @@ echo "  stubdir:\t\t${stubdir:-${ocaml_libpath}stublibs/}"
 if [ ${install_docs:-1} -eq 1 ]; then
     echo "  docdir:\t\t${docdir:-${prefix}share/doc/}"
 fi
+if [ ${no_lib_path:-0} -eq 1 ]; then
+    echo
+    echo "Other options"
+    echo "  --no-lib-path given.  Make sure you know what you're doing!"
+fi
 echo
 
 if [ -n "${error}" ]; then
