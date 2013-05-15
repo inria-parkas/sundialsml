@@ -17,6 +17,7 @@
 #include "sundials_ml.h"
 
 void ida_ml_check_flag(const char *call, int flag);
+void ida_ml_set_linear_solver(void *ida_mem, value ls, int n);
 
 #define CHECK_FLAG(call, flag) if (flag != IDA_SUCCESS) \
 				 ida_ml_check_flag(call, flag)
@@ -81,6 +82,18 @@ enum ida_error_details_ml_index {
     RECORD_IDA_ERROR_DETAILS_MODULE_NAME,
     RECORD_IDA_ERROR_DETAILS_FUNCTION_NAME,
     RECORD_IDA_ERROR_DETAILS_ERROR_MESSAGE,
+};
+
+enum ida_linear_solver_ml_index {
+    /* untagged: */
+    VARIANT_IDA_LINEAR_SOLVER_DENSE = 0,
+    VARIANT_IDA_LINEAR_SOLVER_LAPACKDENSE,
+    /* tagged: */
+    VARIANT_IDA_LINEAR_SOLVER_BAND = 0,
+    VARIANT_IDA_LINEAR_SOLVER_LAPACKBAND,
+    VARIANT_IDA_LINEAR_SOLVER_SPGMR,
+    VARIANT_IDA_LINEAR_SOLVER_SPBCG,
+    VARIANT_IDA_LINEAR_SOLVER_SPTFQMR,
 };
 
 #endif /* _IDA_ML_H__ */

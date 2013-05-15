@@ -75,14 +75,17 @@ external session_finalize : session -> unit
 (* FIXME: isn't it better to separate out IDARootInit(), since it's
    optional in the C interface?  *)
 external external_init
-  : nvec -> nvec -> int -> int -> float -> (ida_mem * ida_file)
-  = "c_ba_ida_init"
+  : linear_solver -> nvec -> nvec -> int -> int -> float -> (ida_mem * ida_file)
+  = "c_ba_ida_init_bytecode" "c_ba_ida_init"
 
-let init' resfn (nroots, roots) y yp t0 =
+let init' linsolv resfn (nroots, roots) y y' t0 =
+  let neqs = Sundials.Carray.length y in
+  (*if neqs <> Sundials.Carray.length y' then
+    raise (Invalid_argument "y and y' have inconsistent sizes");*)
   let (ida_mem, err_file) =
-    external_init y yp (Sundials.Carray.length y) nroots t0 in
+    external_init linsolv y y' neqs nroots t0 in
   let session = { ida        = ida_mem;
-                  neqs       = Sundials.Carray.length y;
+                  neqs       = neqs;
                   nroots     = nroots;
                   err_file   = err_file;
                   resfn      = resfn;
@@ -96,7 +99,7 @@ let init' resfn (nroots, roots) y yp t0 =
   Gc.finalise session_finalize session;
   session
 
-let init resfn roots y yp = init' resfn roots y yp 0.
+let init linsolv resfn roots y yp = init' linsolv resfn roots y yp 0.
 (*
   module SessionTable : sig
   val proto_init :

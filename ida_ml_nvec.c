@@ -24,6 +24,8 @@
 
 #include <ida/ida.h>
 #include <ida/ida_dense.h>
+#include <ida/ida_band.h>
+#include <ida/ida_spgmr.h>
 
 #include "ida_ml.h"
 #include "nvector_ml.h"
@@ -58,10 +60,6 @@
 #define DOQUOTE(text) #text
 #define QUOTE(val) DOQUOTE(val)
 #define IDATYPESTR(fname) QUOTE(IDATYPE(fname))
-
-/* * * * * * * * * * * * * * * * * * * * * * * * *
- * Trampolines
- */
 
 static void errh(
 	int error_code,
@@ -279,16 +277,18 @@ CAMLprim void IDATYPE(dls_clear_band_jac_fn)(value vdata)
 }
 
 
-/* IDAInit + IDARootInit.  The residual and root functions are set to
- * trampolines; the actual functions should be assigned to the ida_session
- * record to be created on the OCaml side.  */
-CAMLprim value IDATYPE (init) (value vy, value vyp, value vneqs,
-			       value vnroots, value vt0)
+/* IDAInit + IDARootInit + linear solver setup.  The residual and root
+ * functions are set to C stubs; the actual functions should be assigned to the
+ * ida_session record to be created on the OCaml side.  */
+CAMLprim value IDATYPE (init) (value linsolver, value vy, value vyp,
+			       value vneqs, value vnroots, value vt0)
 {
-    CAMLparam5 (vy, vyp, vneqs, vnroots, vt0);
+    CAMLparam5 (linsolver, vy, vyp, vneqs, vnroots);
+    CAMLxparam1 (vt0);
     CAMLlocal1 (r);
     int flag;
     N_Vector y, yp;
+    int neqs = Int_val (vneqs);
 
     void *ida_mem = IDACreate ();
     if (ida_mem == NULL) {
@@ -297,13 +297,18 @@ CAMLprim value IDATYPE (init) (value vy, value vyp, value vneqs,
 
     y = NVECTORIZE_VAL (vy);
     yp = NVECTORIZE_VAL (vyp);
-    flag = IDAInit ((void *)ida_mem, resfn, Double_val (vt0), y, yp);
+    flag = IDAInit (ida_mem, resfn, Double_val (vt0), y, yp);
     RELINQUISH_NVECTORIZEDVAL (y);
     RELINQUISH_NVECTORIZEDVAL (yp);
     CHECK_FLAG ("IDAInit", flag);
 
-    flag = IDARootInit ((void *)ida_mem, Int_val (vneqs), rootsfn);
+    flag = IDARootInit (ida_mem, neqs, rootsfn);
     CHECK_FLAG ("IDARootInit", flag);
+
+    ida_ml_set_linear_solver (ida_mem, linsolver, neqs);
+
+    flag = IDASStolerances (ida_mem, RCONST (1.0e-4), RCONST (1.0e-8));
+    CHECK_FLAG ("IDASStolerances", flag);
 
     r = caml_alloc_tuple(2);
     Store_field(r, 0, (value)ida_mem);
@@ -312,7 +317,12 @@ CAMLprim value IDATYPE (init) (value vy, value vyp, value vneqs,
     CAMLreturn (r);
 }
 
-CAMLprim void IDATYPE (sv_tolerances) (value ida_mem, value vrtol, value vavtol)
+CAMLprim value IDATYPE(init_bytecode) (value args[], int n)
+{
+    return IDATYPE(init)(args[0], args[1], args[2], args[3], args[4], args[5]);
+}
+
+CAMLprim void IDATYPE(sv_tolerances) (value ida_mem, value vrtol, value vavtol)
 {
     CAMLparam3 (ida_mem, vrtol, vavtol);
     N_Vector avtol;
@@ -358,7 +368,7 @@ CAMLprim value IDATYPE(one_step)(value vdata, value nextt, value y, value yp)
     CAMLreturn(solver(vdata, nextt, y, yp, 1));
 }
 
-CAMLprim value IDATYPE(get_dky)(value vdata, value vt, value vk, value vy)
+CAMLprim void IDATYPE(get_dky)(value vdata, value vt, value vk, value vy)
 {
     CAMLparam4(vdata, vt, vk, vy);
 
@@ -372,7 +382,7 @@ CAMLprim value IDATYPE(get_dky)(value vdata, value vt, value vk, value vy)
     CAMLreturn0;
 }
 
-CAMLprim value IDATYPE(get_err_weights)(value vida_mem, value verrws)
+CAMLprim void IDATYPE(get_err_weights)(value vida_mem, value verrws)
 {
     CAMLparam2(vida_mem, verrws);
 
@@ -385,7 +395,7 @@ CAMLprim value IDATYPE(get_err_weights)(value vida_mem, value verrws)
     CAMLreturn0;
 }
 
-CAMLprim value IDATYPE(get_est_local_errors)(value vida_mem, value vele)
+CAMLprim void IDATYPE(get_est_local_errors)(value vida_mem, value vele)
 {
     CAMLparam2(vida_mem, vele);
 

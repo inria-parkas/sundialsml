@@ -28,20 +28,16 @@ type preconditioning_type =
 
 type bandrange = { mupper : int; mlower : int }
 
-type sprange = { pretype : preconditioning_type; maxl: int }
+type sprange = int
 
 type linear_solver =
   | Dense
-  | LapackDense
   | Band of bandrange
+  | LapackDense
   | LapackBand of bandrange
-  | Diag
   | Spgmr of sprange
   | Spbcg of sprange
   | Sptfqmr of sprange
-  | BandedSpgmr of sprange * bandrange
-  | BandedSpbcg of sprange * bandrange
-  | BandedSptfqmr of sprange * bandrange
 
 type iter =
   | Newton of linear_solver

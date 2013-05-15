@@ -93,6 +93,75 @@ void ida_ml_check_flag(const char *call, int flag)
     }
 }
 
+void ida_ml_set_linear_solver(void *ida_mem, value ls, int n)
+{
+    int flag;
+
+    if (Is_block(ls)) {
+	value arg = Field (ls, 0);
+
+	switch (Tag_val(ls)) {
+	case VARIANT_IDA_LINEAR_SOLVER_BAND:
+	    flag = IDABand(ida_mem, n,
+			   Long_val(Field (arg, 0)),
+			   Long_val(Field (arg, 1)));
+	    CHECK_FLAG("IDABand", flag);
+	    break;
+
+	case VARIANT_IDA_LINEAR_SOLVER_LAPACKBAND:
+#if SUNDIALS_BLAS_LAPACK == 1
+	    flag = IDALapackBand(ida_mem, n,
+				 Long_val(Field (arg, 0)),
+				 Long_val(Field (arg, 1)));
+	    CHECK_FLAG("IDALapackBand", flag);
+#else
+	    caml_failwith("Lapack solvers are not available.");
+#endif
+	    break;
+
+	case VARIANT_IDA_LINEAR_SOLVER_SPGMR:
+	    flag = IDASpgmr(ida_mem, Int_val(arg));
+	    CHECK_FLAG("IDASpgmr", flag);
+	    break;
+
+	case VARIANT_IDA_LINEAR_SOLVER_SPBCG:
+	    flag = IDASpbcg(ida_mem, Int_val(arg));
+	    CHECK_FLAG("IDASpbcg", flag);
+	    break;
+
+	case VARIANT_IDA_LINEAR_SOLVER_SPTFQMR:
+	    flag = IDASptfqmr(ida_mem, Int_val(arg));
+	    CHECK_FLAG("IDASPtfqmr", flag);
+	    break;
+
+	default:
+	    caml_failwith("Illegal linear solver block value.");
+	    break;
+	}
+
+    } else {
+	switch (Int_val(ls)) {
+	case VARIANT_IDA_LINEAR_SOLVER_DENSE:
+	    flag = IDADense(ida_mem, n);
+	    CHECK_FLAG("IDADense", flag);
+	    break;
+
+	case VARIANT_IDA_LINEAR_SOLVER_LAPACKDENSE:
+#if SUNDIALS_BLAS_LAPACK == 1
+	    flag = IDALapackDense(ida_mem, n);
+	    CHECK_FLAG("IDALapackDense", flag);
+#else
+	    caml_failwith("Lapack solvers are not available.");
+#endif
+	    break;
+
+	default:
+	    caml_failwith("Illegal linear solver value.");
+	    break;
+	}
+    }
+}
+
 CAMLprim void c_ida_session_finalize(value vdata)
 {
     if (IDA_MEM_FROM_ML(vdata) != NULL) {

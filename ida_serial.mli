@@ -24,6 +24,7 @@
 include module type of Ida
   with type Roots.t = Ida.Roots.t
   and type RootDirs.t = Ida.RootDirs.t
+  and type linear_solver = Ida.linear_solver
 
 (*STARTINTRO*)
 (** Serial nvector interface to the IDA solver.
@@ -94,14 +95,18 @@ type root_val_array = Sundials.Roots.val_array
 (** {2 Initialization} *)
 
 (**
-    [init f (nroots, g) y0] initializes the IDA solver and returns a
-    {!session}.
-    - [f]       is the IDA residual function.
+    [init linsolv f (nroots, g) y0 y'0] initializes the IDA solver to solve
+    the DAE f t y y' = 0 and returns a {!session}.
+    - [linsolv] is the linear solver to attach to this solver.
+    - [f]       is the residual function.
     - [nroots]  specifies the number of root functions (zero-crossings).
     - [g]       calculates the values of the root functions.
-    - [y0]      is a vector of initial values, the size of this vector
-                determines the number of equations in  the session, see
-                {!Sundials.Carray.t}.
+    - [y0]      is a vector of initial values for the dependent-variable vector
+                [y].  This vector's size determines the number of equations
+                in the session, see {!Sundials.Carray.t}.
+    - [y'0]     is a vector of initial values for [y'], i.e. the derivative
+                of [y] with respect to t.  This vector's size must match the
+                size of [y0].
 
     The start time defaults to 0. It can be set manually by instead using
     {!init'}.
@@ -110,26 +115,28 @@ type root_val_array = Sundials.Roots.val_array
     linear solver function, and IDASStolerances (with default values for
     relative tolerance of 1.0e-4 and absolute tolerance as 1.0e-8; these can be
     changed with {!ss_tolerances}, {!sv_tolerances}, or {!wf_tolerances}).
-    It does everything necessary to initialize a IDA session; the {!normal} or
+    It does everything necessary to initialize an IDA session; the {!normal} or
     {!one_step} functions can be called directly afterward.
 
-    The right-hand side function [f] is called by the solver to calculate the
-    instantaneous derivative values, it is passed three arguments: [t], [y], and
-    [dy].
+    The residual function [f] is called by the solver to compute the problem
+    residual, given [t], [y], [y'], and [r], where:
     - [t] is the current value of the independent variable,
           i.e., the simulation time.
     - [y] is a vector of dependent-variable values, i.e. y(t).
-    - [dy] is a vector for storing the value of f(t, y).
+    - [y'] is the derivative of [y] with respect to [t], i.e. dy/dt.
+    - [r] is the output vector to fill in with the value of the residual
+          function for the given values of t, y, and y'.
 
-    {b NB:} [y] and [dy] must no longer be accessed after [f] has returned a
-            result, i.e. if their values are needed outside of the function
-            call, then they must be copied to separate physical structures.
+    {b NB:} [y], [y'], and [r] must no longer be accessed after [f] has
+            returned a result, i.e. if their values are needed outside of
+            the function call, then they must be copied to separate physical
+            structures.
 
     The roots function [g] is called by the solver to calculate the values of
     root functions (zero-crossing expressions) which are used to detect
-    significant events, it is passed three arguments: [t], [y], and [gout].
-    - [t] and [y] are as for [f].
-    - [gout] is a vector for storing the values of g(t, y).
+    significant events.  It is passed four arguments [t], [y], [y'], and [gout]:
+    - [t], [y], [y'] are as for [f].
+    - [gout] is a vector for storing the values of g(t, y, y').
     The {!Ida.no_roots} value can be passed for the [(nroots, g)] argument if
     root functions are not required.
 
@@ -145,18 +152,20 @@ type root_val_array = Sundials.Roots.val_array
     @ida <node5#sss:idatolerances> IDASStolerances
  *)
 val init :
-    (float -> val_array -> der_array -> val_array -> unit)
+    linear_solver
+    -> (float -> val_array -> der_array -> val_array -> unit)
     -> (int * (float -> val_array -> der_array -> root_val_array -> unit))
     -> nvec
     -> nvec
     -> session
 
 (**
-  [init' f roots y0 t0] is the same as init except that a start time,
+  [init' linsolv roots y0 y'0 t0] is the same as init except that a start time,
   [t0], can be given explicitly.
  *)
 val init' :
-    (float -> val_array -> der_array -> val_array -> unit)
+    linear_solver
+    -> (float -> val_array -> der_array -> val_array -> unit)
     -> (int * (float -> val_array -> der_array -> root_val_array -> unit))
     -> nvec
     -> nvec

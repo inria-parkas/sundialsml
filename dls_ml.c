@@ -17,6 +17,8 @@
 #include <sundials/sundials_types.h>
 #include <sundials/sundials_band.h>
 
+#include <sundials/sundials_dense.h>
+
 #include <caml/mlvalues.h>
 #include <caml/alloc.h>
 #include <caml/memory.h>
@@ -63,7 +65,7 @@ CAMLprim value c_densematrix_new_dense_mat(value vmn)
     CAMLreturn(vr);
 }
 
-CAMLprim value c_densematrix_print_mat(value va)
+CAMLprim void c_densematrix_print_mat(value va)
 {
     CAMLparam1(va);
     PrintMat(DLSMAT(va));
@@ -71,35 +73,35 @@ CAMLprim value c_densematrix_print_mat(value va)
     CAMLreturn0;
 }
 
-CAMLprim value c_densematrix_set_to_zero(value va)
+CAMLprim void c_densematrix_set_to_zero(value va)
 {
     CAMLparam1(va);
     SetToZero(DLSMAT(va));
     CAMLreturn0;
 }
 
-CAMLprim value c_densematrix_add_identity(value va)
+CAMLprim void c_densematrix_add_identity(value va)
 {
     CAMLparam1(va);
     AddIdentity(DLSMAT(va));
     CAMLreturn0;
 }
 
-CAMLprim value c_densematrix_copy(value va, value vb)
+CAMLprim void c_densematrix_copy(value va, value vb)
 {
     CAMLparam2(va, vb);
     DenseCopy(DLSMAT(va), DLSMAT(vb));
     CAMLreturn0;
 }
 
-CAMLprim value c_densematrix_scale(value vc, value va)
+CAMLprim void c_densematrix_scale(value vc, value va)
 {
     CAMLparam2(vc, va);
     DenseScale(Double_val(vc), DLSMAT(va));
     CAMLreturn0;
 }
 
-CAMLprim value c_densematrix_getrf(value va, value vp)
+CAMLprim void c_densematrix_getrf(value va, value vp)
 {
     CAMLparam2(va, vp);
     int r = DenseGETRF(DLSMAT(va), LONG_ARRAY(vp));
@@ -111,35 +113,35 @@ CAMLprim value c_densematrix_getrf(value va, value vp)
     CAMLreturn0;
 }
 
-CAMLprim value c_densematrix_getrs(value va, value vp, value vb)
+CAMLprim void c_densematrix_getrs(value va, value vp, value vb)
 {
     CAMLparam3(va, vp, vb);
     DenseGETRS(DLSMAT(va), LONG_ARRAY(vp), REAL_ARRAY(vb));
     CAMLreturn0;
 }
 
-CAMLprim value c_densematrix_potrf(value va)
+CAMLprim void c_densematrix_potrf(value va)
 {
     CAMLparam1(va);
     DensePOTRF(DLSMAT(va));
     CAMLreturn0;
 }
 
-CAMLprim value c_densematrix_potrs(value va, value vb)
+CAMLprim void c_densematrix_potrs(value va, value vb)
 {
     CAMLparam2(va, vb);
     DensePOTRS(DLSMAT(va), REAL_ARRAY(vb));
     CAMLreturn0;
 }
 
-CAMLprim value c_densematrix_geqrf(value va, value vbeta, value vwork)
+CAMLprim void c_densematrix_geqrf(value va, value vbeta, value vwork)
 {
     CAMLparam3(va, vbeta, vwork);
     DenseGEQRF(DLSMAT(va), REAL_ARRAY(vbeta), REAL_ARRAY(vwork));
     CAMLreturn0;
 }
 
-CAMLprim value c_densematrix_ormqr(value va, value vormqr)
+CAMLprim void c_densematrix_ormqr(value va, value vormqr)
 {
     CAMLparam2(va, vormqr);
 
@@ -225,7 +227,7 @@ CAMLprim value c_densematrix_direct_get(value va, value vij)
     CAMLreturn(caml_copy_double(DDENSEMAT(va)[j][i]));
 }
 
-CAMLprim value c_densematrix_direct_set(value va, value vij, value vv)
+CAMLprim void c_densematrix_direct_set(value va, value vij, value vv)
 {
     CAMLparam3(va, vij, vv);
 
@@ -237,7 +239,7 @@ CAMLprim value c_densematrix_direct_set(value va, value vij, value vv)
     CAMLreturn0;
 }
 
-CAMLprim value c_densematrix_direct_copy(value va, value vb, value vmn)
+CAMLprim void c_densematrix_direct_copy(value va, value vb, value vmn)
 {
     CAMLparam3(va, vb, vmn);
 
@@ -248,7 +250,7 @@ CAMLprim value c_densematrix_direct_copy(value va, value vb, value vmn)
     CAMLreturn0;
 }
 
-CAMLprim value c_densematrix_direct_scale(value vc, value va, value vmn)
+CAMLprim void c_densematrix_direct_scale(value vc, value va, value vmn)
 {
     CAMLparam3(vc, va, vmn);
 
@@ -259,14 +261,14 @@ CAMLprim value c_densematrix_direct_scale(value vc, value va, value vmn)
     CAMLreturn0;
 }
 
-CAMLprim value c_densematrix_direct_add_identity(value va, value vn)
+CAMLprim void c_densematrix_direct_add_identity(value va, value vn)
 {
     CAMLparam2(va, vn);
     denseAddIdentity(DDENSEMAT(va), Int_val(vn));
     CAMLreturn0;
 }
 
-CAMLprim value c_densematrix_direct_getrf(value va, value vmn, value vp)
+CAMLprim void c_densematrix_direct_getrf(value va, value vmn, value vp)
 {
     CAMLparam3(va, vmn, vp);
 
@@ -282,7 +284,7 @@ CAMLprim value c_densematrix_direct_getrf(value va, value vmn, value vp)
     CAMLreturn0;
 }
 
-CAMLprim value c_densematrix_direct_getrs(value va, value vn,
+CAMLprim void c_densematrix_direct_getrs(value va, value vn,
 	value vp, value vb)
 {
     CAMLparam4(va, vn, vp, vb);
@@ -290,21 +292,21 @@ CAMLprim value c_densematrix_direct_getrs(value va, value vn,
     CAMLreturn0;
 }
 
-CAMLprim value c_densematrix_direct_potrf(value va, value vm)
+CAMLprim void c_densematrix_direct_potrf(value va, value vm)
 {
     CAMLparam2(va, vm);
     densePOTRF(DDENSEMAT(va), Int_val(vm));
     CAMLreturn0;
 }
 
-CAMLprim value c_densematrix_direct_potrs(value va, value vm, value vb)
+CAMLprim void c_densematrix_direct_potrs(value va, value vm, value vb)
 {
     CAMLparam3(va, vm, vb);
     densePOTRS(DDENSEMAT(va), Int_val(vm), REAL_ARRAY(vb));
     CAMLreturn0;
 }
 
-CAMLprim value c_densematrix_direct_geqrf(value va, value vmn,
+CAMLprim void c_densematrix_direct_geqrf(value va, value vmn,
 	value vbeta, value vv)
 {
     CAMLparam4(va, vmn, vbeta, vv);
@@ -316,7 +318,7 @@ CAMLprim value c_densematrix_direct_geqrf(value va, value vmn,
     CAMLreturn0;
 }
 
-CAMLprim value c_densematrix_direct_ormqr(value va, value vmn, value vormqr)
+CAMLprim void c_densematrix_direct_ormqr(value va, value vmn, value vormqr)
 {
     CAMLparam3(va, vmn, vormqr);
 
@@ -356,7 +358,7 @@ CAMLprim value c_bandmatrix_new_band_mat(value vsizes)
     CAMLreturn(vr);
 }
 
-CAMLprim value c_bandmatrix_copy(value va, value vb,
+CAMLprim void c_bandmatrix_copy(value va, value vb,
 	value vcopymu, value vcopyml)
 {
     CAMLparam4(va, vb, vcopymu, vcopyml);
@@ -364,21 +366,21 @@ CAMLprim value c_bandmatrix_copy(value va, value vb,
     CAMLreturn0;
 }
 
-CAMLprim value c_bandmatrix_scale(value vc, value va)
+CAMLprim void c_bandmatrix_scale(value vc, value va)
 {
     CAMLparam2(vc, va);
     BandScale(Double_val(vc), DLSMAT(va));
     CAMLreturn0;
 }
 
-CAMLprim value c_bandmatrix_gbtrf(value va, value vp)
+CAMLprim void c_bandmatrix_gbtrf(value va, value vp)
 {
     CAMLparam2(va, vp);
     BandGBTRF(DLSMAT(va), LONG_ARRAY(vp));
     CAMLreturn0;
 }
 
-CAMLprim value c_bandmatrix_gbtrs(value va, value vp, value vb)
+CAMLprim void c_bandmatrix_gbtrs(value va, value vp, value vb)
 {
     CAMLparam3(va, vp, vb);
     BandGBTRS(DLSMAT(va), LONG_ARRAY(vp), REAL_ARRAY(vb));
@@ -516,7 +518,7 @@ CAMLprim value c_bandmatrix_direct_new_band_mat(value vargs)
     CAMLreturn(vr);
 }
 
-CAMLprim value c_bandmatrix_direct_copy(value va, value vb, value vsizes)
+CAMLprim void c_bandmatrix_direct_copy(value va, value vb, value vsizes)
 {
     CAMLparam3(va, vb, vsizes);
 
@@ -530,7 +532,7 @@ CAMLprim value c_bandmatrix_direct_copy(value va, value vb, value vsizes)
     CAMLreturn0;
 }
 
-CAMLprim value c_bandmatrix_direct_scale(value vc, value va, value vsizes)
+CAMLprim void c_bandmatrix_direct_scale(value vc, value va, value vsizes)
 {
     CAMLparam3(vc, va, vsizes);
 
@@ -543,7 +545,7 @@ CAMLprim value c_bandmatrix_direct_scale(value vc, value va, value vsizes)
     CAMLreturn0;
 }
 
-CAMLprim value c_bandmatrix_direct_add_identity(value va, value vn, value vsmu)
+CAMLprim void c_bandmatrix_direct_add_identity(value va, value vn, value vsmu)
 {
     CAMLparam3(va, vn, vsmu);
 
@@ -551,7 +553,7 @@ CAMLprim value c_bandmatrix_direct_add_identity(value va, value vn, value vsmu)
     CAMLreturn0;
 }
 
-CAMLprim value c_bandmatrix_direct_gbtrf(value va, value vsizes, value vp)
+CAMLprim void c_bandmatrix_direct_gbtrf(value va, value vsizes, value vp)
 {
     CAMLparam3(va, vsizes, vp);
 
@@ -564,7 +566,7 @@ CAMLprim value c_bandmatrix_direct_gbtrf(value va, value vsizes, value vp)
     CAMLreturn0;
 }
 
-CAMLprim value c_bandmatrix_direct_gbtrs(value va, value vsizes, value vp, value vb)
+CAMLprim void c_bandmatrix_direct_gbtrs(value va, value vsizes, value vp, value vb)
 {
     CAMLparam4(va, vsizes, vp, vb);
 

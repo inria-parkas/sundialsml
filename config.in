@@ -29,12 +29,12 @@ DOCDIR = @docdir@sundials_ml
 INSTALL_DOCS = @install_docs@
 
 OCAMLOPT ?= @OCAMLBIN@ocamlopt.opt
-OCAMLOPTFLAGS =
+OCAMLOPTFLAGS = @ocamloptflags@
 
 OCAMLDEP ?= @OCAMLBIN@ocamldep
 OCAMLDOC ?= @OCAMLBIN@ocamldoc
 
-OCAMLMKLIB ?= @OCAMLBIN@ocamlmklib -ocamlc "$(OCAMLC)" -ocamlopt "$(OCAMLOPT)"
+OCAMLMKLIB ?= @OCAMLBIN@ocamlmklib -ocamlc "$(OCAMLC) $(OCAMLFLAGS)" -ocamlopt "$(OCAMLOPT) $(OCAMLOPTFLAGS)"
 OCAMLMKLIBFLAGS ?= -verbose
 
 GNUPLOT = gnuplot

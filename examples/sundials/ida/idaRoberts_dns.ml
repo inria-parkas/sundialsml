@@ -158,7 +158,7 @@ let main () =
 
   (* Call IDACreate, IDAInit, and IDARootInit to initialize IDA memory with
    * a 2-component root function.  *)
-  let ida_mem = Ida.init' resrob (nroots, grob) y y' t0 in
+  let ida_mem = Ida.init' Ida.Dense resrob (nroots, grob) y y' t0 in
   Gc.compact ();
 
   (* Call IDASVtolerances to set tolerances *)
