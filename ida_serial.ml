@@ -378,24 +378,6 @@ module Dls =
         = "c_ida_dls_get_num_res_evals"
   end
 (*
-module Diag =
-  struct
-    external get_work_space       : session -> int * int
-        = "c_ida_diag_get_work_space"
-
-    external get_num_res_evals    : session -> int
-        = "c_ida_diag_get_num_res_evals"
-  end
-
-module BandPrec =
-  struct
-    external get_work_space : session -> int * int
-        = "c_ida_bandprec_ida_get_work_space"
-
-    external get_num_res_evals    : session -> int
-        = "c_ida_bandprec_ida_get_num_res_evals"
-  end
-
 module Spils =
   struct
     type solve_arg = callback_solve_arg =
@@ -469,3 +451,5 @@ module Spils =
 
 
  *)
+    (* set_constraints -- set inequality constraints
+     *)
