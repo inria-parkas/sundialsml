@@ -263,8 +263,12 @@ static int rootsfn (realtype t, N_Vector y, N_Vector yp,
     args[1] = WRAP_NVECTOR (y);
     args[2] = WRAP_NVECTOR (yp);
     args[3] = caml_ba_alloc (BIGARRAY_FLOAT, 1, gout, &nroots);
+
     r = caml_callbackN_exn (Field (*session, RECORD_IDA_SESSION_ROOTSFN),
 			    4, args);
+
+    RELINQUISH_WRAPPEDNV (args[1]);
+    RELINQUISH_WRAPPEDNV (args[2]);
     
     /* The OCaml function may have recursively called the solver on the same
      * session instance, which overwrites the user data.  Since the IDASolve()
@@ -351,6 +355,7 @@ CAMLprim value IDATYPE (init) (value linsolver, value vy, value vyp,
     int flag;
     N_Vector y, yp;
     int neqs = Int_val (vneqs);
+    int nroots = Int_val (vnroots);
 
     void *ida_mem = IDACreate ();
     if (ida_mem == NULL) {
@@ -364,7 +369,7 @@ CAMLprim value IDATYPE (init) (value linsolver, value vy, value vyp,
     RELINQUISH_NVECTORIZEDVAL (yp);
     CHECK_FLAG ("IDAInit", flag);
 
-    flag = IDARootInit (ida_mem, neqs, rootsfn);
+    flag = IDARootInit (ida_mem, nroots, rootsfn);
     CHECK_FLAG ("IDARootInit", flag);
 
     ida_ml_set_linear_solver (ida_mem, linsolver, neqs);
