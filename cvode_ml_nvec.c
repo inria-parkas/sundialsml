@@ -104,7 +104,7 @@ static void errh(
     CAMLreturn0;
 }
 
-CAMLprim value CVTYPE(set_err_handler_fn)(value vdata)
+CAMLprim void CVTYPE(set_err_handler_fn)(value vdata)
 {
     CAMLparam1(vdata);
  
@@ -115,7 +115,7 @@ CAMLprim value CVTYPE(set_err_handler_fn)(value vdata)
     CAMLreturn0;
 }
 
-CAMLprim value CVTYPE(clear_err_handler_fn)(value vdata)
+CAMLprim void CVTYPE(clear_err_handler_fn)(value vdata)
 {
     CAMLparam1(vdata);
 
@@ -389,14 +389,12 @@ static value make_spils_solve_arg(
     CAMLreturn(v);
 }
 
-static relinquish_spils_solve_arg(value arg)
+static CAMLprim void relinquish_spils_solve_arg(value arg)
 {
     CAMLparam0();
     RELINQUISH_WRAPPEDNV(Field(arg, RECORD_SPILS_SOLVE_ARG_RHS));
     CAMLreturn0;
 }
-
-static int presolvefn_cnt = -1;
 
 static int presolvefn(
 	realtype t,
@@ -463,7 +461,7 @@ static int jactimesfn(
     CAMLreturn(check_exception(r));
 }
 
-CAMLprim value CVTYPE(wf_tolerances)(value vdata)
+CAMLprim void CVTYPE(wf_tolerances)(value vdata)
 {
     CAMLparam1(vdata);
  
@@ -473,7 +471,7 @@ CAMLprim value CVTYPE(wf_tolerances)(value vdata)
     CAMLreturn0;
 }
 
-CAMLprim value CVTYPE(dls_set_dense_jac_fn)(value vdata)
+CAMLprim void CVTYPE(dls_set_dense_jac_fn)(value vdata)
 {
     CAMLparam1(vdata);
     int flag = CVDlsSetDenseJacFn(CVODE_MEM_FROM_ML(vdata), jacfn);
@@ -481,7 +479,7 @@ CAMLprim value CVTYPE(dls_set_dense_jac_fn)(value vdata)
     CAMLreturn0;
 }
 
-CAMLprim value CVTYPE(dls_clear_dense_jac_fn)(value vdata)
+CAMLprim void CVTYPE(dls_clear_dense_jac_fn)(value vdata)
 {
     CAMLparam1(vdata);
     int flag = CVDlsSetDenseJacFn(CVODE_MEM_FROM_ML(vdata), NULL);
@@ -489,7 +487,7 @@ CAMLprim value CVTYPE(dls_clear_dense_jac_fn)(value vdata)
     CAMLreturn0;
 }
 
-CAMLprim value CVTYPE(dls_set_band_jac_fn)(value vdata, value fbandjacfn)
+CAMLprim void CVTYPE(dls_set_band_jac_fn)(value vdata, value fbandjacfn)
 {
     CAMLparam1(vdata);
     int flag = CVDlsSetBandJacFn(CVODE_MEM_FROM_ML(vdata), bandjacfn);
@@ -497,7 +495,7 @@ CAMLprim value CVTYPE(dls_set_band_jac_fn)(value vdata, value fbandjacfn)
     CAMLreturn0;
 }
 
-CAMLprim value CVTYPE(dls_clear_band_jac_fn)(value vdata)
+CAMLprim void CVTYPE(dls_clear_band_jac_fn)(value vdata)
 {
     CAMLparam1(vdata);
     int flag = CVDlsSetBandJacFn(CVODE_MEM_FROM_ML(vdata), NULL);
@@ -505,7 +503,7 @@ CAMLprim value CVTYPE(dls_clear_band_jac_fn)(value vdata)
     CAMLreturn0;
 }
 
-CAMLprim value CVTYPE(set_preconditioner)(value vdata)
+CAMLprim void CVTYPE(set_preconditioner)(value vdata)
 {
     CAMLparam1(vdata);
     int flag = CVSpilsSetPreconditioner(CVODE_MEM_FROM_ML(vdata),
@@ -514,7 +512,7 @@ CAMLprim value CVTYPE(set_preconditioner)(value vdata)
     CAMLreturn0;
 }
 
-CAMLprim value CVTYPE(set_jac_times_vec_fn)(value vdata)
+CAMLprim void CVTYPE(set_jac_times_vec_fn)(value vdata)
 {
     CAMLparam1(vdata);
     int flag = CVSpilsSetJacTimesVecFn(CVODE_MEM_FROM_ML(vdata), jactimesfn);
@@ -522,7 +520,7 @@ CAMLprim value CVTYPE(set_jac_times_vec_fn)(value vdata)
     CAMLreturn0;
 }
 
-CAMLprim value CVTYPE(clear_jac_times_vec_fn)(value vdata)
+CAMLprim void CVTYPE(clear_jac_times_vec_fn)(value vdata)
 {
     CAMLparam1(vdata);
     int flag = CVSpilsSetJacTimesVecFn(CVODE_MEM_FROM_ML(vdata), NULL);
@@ -577,10 +575,8 @@ CAMLprim value CVTYPE(init)(value lmm, value iter, value initial,
     }
 
     void *cvode_mem = CVodeCreate(lmm_c, iter_c);
-    if (cvode_mem == NULL) {
+    if (cvode_mem == NULL)
 	caml_failwith("CVodeCreate returned NULL");
-	CAMLreturn0;
-    }
 
     long int neq = Long_val(num_eqs);
     intnat nroots = Int_val(num_roots);
@@ -622,7 +618,7 @@ CAMLprim value CVTYPE(init_bytecode)(value *tbl, int n)
     return CVTYPE(init)(tbl[0], tbl[1], tbl[2], tbl[3], tbl[4], tbl[5]);
 }
 
-CAMLprim value CVTYPE(sv_tolerances)(value vdata, value reltol, value abstol)
+CAMLprim void CVTYPE(sv_tolerances)(value vdata, value reltol, value abstol)
 {
     CAMLparam3(vdata, reltol, abstol);
 
@@ -636,7 +632,7 @@ CAMLprim value CVTYPE(sv_tolerances)(value vdata, value reltol, value abstol)
     CAMLreturn0;
 }
 
-CAMLprim value CVTYPE(reinit)(value vdata, value t0, value y0)
+CAMLprim void CVTYPE(reinit)(value vdata, value t0, value y0)
 {
     CAMLparam3(vdata, t0, y0);
 
@@ -695,7 +691,7 @@ CAMLprim value CVTYPE(one_step)(value vdata, value nextt, value y)
     CAMLreturn(solver(vdata, nextt, y, 1));
 }
 
-CAMLprim value CVTYPE(get_dky)(value vdata, value vt, value vk, value vy)
+CAMLprim void CVTYPE(get_dky)(value vdata, value vt, value vk, value vy)
 {
     CAMLparam4(vdata, vt, vk, vy);
 
@@ -709,7 +705,7 @@ CAMLprim value CVTYPE(get_dky)(value vdata, value vt, value vk, value vy)
     CAMLreturn0;
 }
 
-CAMLprim value CVTYPE(get_err_weights)(value vcvode_mem, value verrws)
+CAMLprim void CVTYPE(get_err_weights)(value vcvode_mem, value verrws)
 {
     CAMLparam2(vcvode_mem, verrws);
 
@@ -722,7 +718,7 @@ CAMLprim value CVTYPE(get_err_weights)(value vcvode_mem, value verrws)
     CAMLreturn0;
 }
 
-CAMLprim value CVTYPE(get_est_local_errors)(value vcvode_mem, value vele)
+CAMLprim void CVTYPE(get_est_local_errors)(value vcvode_mem, value vele)
 {
     CAMLparam2(vcvode_mem, vele);
 
