@@ -19,6 +19,7 @@
 #include <caml/alloc.h>
 #include <caml/callback.h>
 #include <caml/bigarray.h>
+#include <caml/unixsupport.h>
 
 #include <ida/ida.h>
 #include <ida/ida_dense.h>
@@ -193,7 +194,7 @@ CAMLprim void c_ida_ss_tolerances(value vdata, value reltol, value abstol)
     CAMLreturn0;
 }
 
-CAMLprim value c_ida_get_root_info(value vdata, value roots)
+CAMLprim void c_ida_get_root_info(value vdata, value roots)
 {
     CAMLparam2(vdata, roots);
 
@@ -261,7 +262,7 @@ CAMLprim value c_ida_get_integrator_stats(value vdata)
     CAMLreturn(r);
 }
 
-CAMLprim value c_ida_set_error_file(value vdata, value vpath, value vtrunc)
+CAMLprim void c_ida_set_error_file(value vdata, value vpath, value vtrunc)
 {
     CAMLparam3(vdata, vpath, vtrunc);
 
@@ -285,7 +286,7 @@ CAMLprim value c_ida_set_error_file(value vdata, value vpath, value vtrunc)
     CAMLreturn0;
 }
 
-CAMLprim value c_ida_set_root_direction(value vdata, value rootdirs)
+CAMLprim void c_ida_set_root_direction(value vdata, value rootdirs)
 {
     CAMLparam2(vdata, rootdirs);
 

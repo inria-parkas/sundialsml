@@ -37,6 +37,10 @@
 #include <cvode/cvode_bandpre.h>
 #include <cvode/cvode_spils.h>
 
+#if SUNDIALS_BLAS_LAPACK == 1
+#include <cvode/cvode_lapack.h>
+#endif
+
 #include "cvode_ml.h"
 
 #include <stdio.h>
@@ -280,14 +284,14 @@ CAMLprim void c_session_finalize(value vdata)
     }
 }
 
-CAMLprim value c_set_user_data(value vdata)
+CAMLprim void c_set_user_data(value vdata)
 {
     CAMLparam1(vdata);
     CVodeSetUserData(CVODE_MEM_FROM_ML(vdata), CVODE_USER_DATA_FROM_ML(vdata));
     CAMLreturn0;
 }
  
-CAMLprim value c_ss_tolerances(value vdata, value reltol, value abstol)
+CAMLprim void c_ss_tolerances(value vdata, value reltol, value abstol)
 {
     CAMLparam3(vdata, reltol, abstol);
 
@@ -298,7 +302,7 @@ CAMLprim value c_ss_tolerances(value vdata, value reltol, value abstol)
     CAMLreturn0;
 }
 
-CAMLprim value c_get_root_info(value vdata, value roots)
+CAMLprim void c_get_root_info(value vdata, value roots)
 {
     CAMLparam2(vdata, roots);
 
@@ -366,7 +370,7 @@ CAMLprim value c_get_integrator_stats(value vdata)
     CAMLreturn(r);
 }
 
-CAMLprim value c_set_error_file(value vdata, value vpath, value vtrunc)
+CAMLprim void c_set_error_file(value vdata, value vpath, value vtrunc)
 {
     CAMLparam3(vdata, vpath, vtrunc);
 
@@ -390,7 +394,7 @@ CAMLprim value c_set_error_file(value vdata, value vpath, value vtrunc)
     CAMLreturn0;
 }
 
-CAMLprim value c_set_iter_type(value vdata, value iter)
+CAMLprim void c_set_iter_type(value vdata, value iter)
 {
     CAMLparam2(vdata, iter);
 
@@ -412,7 +416,7 @@ CAMLprim value c_set_iter_type(value vdata, value iter)
     CAMLreturn0;
 }
 
-CAMLprim value c_set_root_direction(value vdata, value rootdirs)
+CAMLprim void c_set_root_direction(value vdata, value rootdirs)
 {
     CAMLparam2(vdata, rootdirs);
 
@@ -429,7 +433,7 @@ CAMLprim value c_set_root_direction(value vdata, value rootdirs)
     CAMLreturn0;
 }
 
-CAMLprim value c_set_prec_type(value vcvode_mem, value vptype)
+CAMLprim void c_set_prec_type(value vcvode_mem, value vptype)
 {
     CAMLparam2(vcvode_mem, vptype);
 
@@ -608,7 +612,7 @@ CAMLprim value c_get_current_time(value vcvode_mem)
     CAMLreturn(caml_copy_double(v));
 }
 
-CAMLprim value c_set_max_ord(value vcvode_mem, value maxord)
+CAMLprim void c_set_max_ord(value vcvode_mem, value maxord)
 {
     CAMLparam2(vcvode_mem, maxord);
 
@@ -619,7 +623,7 @@ CAMLprim value c_set_max_ord(value vcvode_mem, value maxord)
     CAMLreturn0;
 }
 
-CAMLprim value c_set_max_num_steps(value vcvode_mem, value mxsteps)
+CAMLprim void c_set_max_num_steps(value vcvode_mem, value mxsteps)
 {
     CAMLparam2(vcvode_mem, mxsteps);
 
@@ -630,7 +634,7 @@ CAMLprim value c_set_max_num_steps(value vcvode_mem, value mxsteps)
     CAMLreturn0;
 }
 
-CAMLprim value c_set_max_hnil_warns(value vcvode_mem, value mxhnil)
+CAMLprim void c_set_max_hnil_warns(value vcvode_mem, value mxhnil)
 {
     CAMLparam2(vcvode_mem, mxhnil);
 
@@ -641,7 +645,7 @@ CAMLprim value c_set_max_hnil_warns(value vcvode_mem, value mxhnil)
     CAMLreturn0;
 }
 
-CAMLprim value c_set_stab_lim_det(value vcvode_mem, value stldet)
+CAMLprim void c_set_stab_lim_det(value vcvode_mem, value stldet)
 {
     CAMLparam2(vcvode_mem, stldet);
 
@@ -652,7 +656,7 @@ CAMLprim value c_set_stab_lim_det(value vcvode_mem, value stldet)
     CAMLreturn0;
 }
 
-CAMLprim value c_set_init_step(value vcvode_mem, value hin)
+CAMLprim void c_set_init_step(value vcvode_mem, value hin)
 {
     CAMLparam2(vcvode_mem, hin);
 
@@ -663,7 +667,7 @@ CAMLprim value c_set_init_step(value vcvode_mem, value hin)
     CAMLreturn0;
 }
 
-CAMLprim value c_set_min_step(value vcvode_mem, value hmin)
+CAMLprim void c_set_min_step(value vcvode_mem, value hmin)
 {
     CAMLparam2(vcvode_mem, hmin);
 
@@ -674,7 +678,7 @@ CAMLprim value c_set_min_step(value vcvode_mem, value hmin)
     CAMLreturn0;
 }
 
-CAMLprim value c_set_max_step(value vcvode_mem, value hmax)
+CAMLprim void c_set_max_step(value vcvode_mem, value hmax)
 {
     CAMLparam2(vcvode_mem, hmax);
 
@@ -685,7 +689,7 @@ CAMLprim value c_set_max_step(value vcvode_mem, value hmax)
     CAMLreturn0;
 }
 
-CAMLprim value c_set_stop_time(value vcvode_mem, value tstop)
+CAMLprim void c_set_stop_time(value vcvode_mem, value tstop)
 {
     CAMLparam2(vcvode_mem, tstop);
 
@@ -696,7 +700,7 @@ CAMLprim value c_set_stop_time(value vcvode_mem, value tstop)
     CAMLreturn0;
 }
 
-CAMLprim value c_set_max_err_test_fails(value vcvode_mem, value maxnef)
+CAMLprim void c_set_max_err_test_fails(value vcvode_mem, value maxnef)
 {
     CAMLparam2(vcvode_mem, maxnef);
 
@@ -707,7 +711,7 @@ CAMLprim value c_set_max_err_test_fails(value vcvode_mem, value maxnef)
     CAMLreturn0;
 }
 
-CAMLprim value c_set_max_nonlin_iters(value vcvode_mem, value maxcor)
+CAMLprim void c_set_max_nonlin_iters(value vcvode_mem, value maxcor)
 {
     CAMLparam2(vcvode_mem, maxcor);
 
@@ -718,7 +722,7 @@ CAMLprim value c_set_max_nonlin_iters(value vcvode_mem, value maxcor)
     CAMLreturn0;
 }
 
-CAMLprim value c_set_max_conv_fails(value vcvode_mem, value maxncf)
+CAMLprim void c_set_max_conv_fails(value vcvode_mem, value maxncf)
 {
     CAMLparam2(vcvode_mem, maxncf);
 
@@ -729,7 +733,7 @@ CAMLprim value c_set_max_conv_fails(value vcvode_mem, value maxncf)
     CAMLreturn0;
 }
 
-CAMLprim value c_set_nonlin_conv_coef(value vcvode_mem, value nlscoef)
+CAMLprim void c_set_nonlin_conv_coef(value vcvode_mem, value nlscoef)
 {
     CAMLparam2(vcvode_mem, nlscoef);
 
@@ -740,7 +744,7 @@ CAMLprim value c_set_nonlin_conv_coef(value vcvode_mem, value nlscoef)
     CAMLreturn0;
 }
 
-CAMLprim value c_set_no_inactive_root_warn(value vcvode_mem)
+CAMLprim void c_set_no_inactive_root_warn(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -750,7 +754,7 @@ CAMLprim value c_set_no_inactive_root_warn(value vcvode_mem)
     CAMLreturn0;
 }
 
-CAMLprim value c_set_gs_type(value vcvode_mem, value vgstype)
+CAMLprim void c_set_gs_type(value vcvode_mem, value vgstype)
 {
     CAMLparam2(vcvode_mem, vgstype);
 
@@ -771,7 +775,7 @@ CAMLprim value c_set_gs_type(value vcvode_mem, value vgstype)
     CAMLreturn0;
 }
 
-CAMLprim value c_set_eps_lin(value vcvode_mem, value eplifac)
+CAMLprim void c_set_eps_lin(value vcvode_mem, value eplifac)
 {
     CAMLparam2(vcvode_mem, eplifac);
 
@@ -781,7 +785,7 @@ CAMLprim value c_set_eps_lin(value vcvode_mem, value eplifac)
     CAMLreturn0;
 }
 
-CAMLprim value c_set_maxl(value vcvode_mem, value maxl)
+CAMLprim void c_set_maxl(value vcvode_mem, value maxl)
 {
     CAMLparam2(vcvode_mem, maxl);
 

@@ -41,7 +41,6 @@
 
 static void finalize_dlsmat(value va)
 {
-    DlsMat mat = DLSMAT(va);
     DestroyMat(DLSMAT(va));
 }
 

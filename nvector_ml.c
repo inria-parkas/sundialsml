@@ -77,6 +77,7 @@ static void nvec_destroy_contents(N_Vector v)
 
     free(v->ops);
     free(v->content);
+    CAMLreturn0;
 }
 
 static void finalize_nvec(value nvec)

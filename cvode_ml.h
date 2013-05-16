@@ -101,7 +101,7 @@ void cvode_ml_check_flag(const char *call, int flag);
  *  function.
  */
 
-void cvode_ml_set_linear_solver(void *cvode_mem, value ls, int n);
+void set_linear_solver(void *cvode_mem, value ls, int n);
 value cvode_ml_big_real();
 
 /* Interface with Ocaml types */
