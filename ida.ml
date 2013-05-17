@@ -73,12 +73,16 @@ exception RepeatedResFuncErr
 exception UnrecoverableResFuncErr
 exception RootFuncFailure
 
+(* Initial condition calculator exceptions *)
+exception NoRecovery
+exception BadEwt
+
 (* get_dky exceptions *)
 exception BadK
 exception BadT
 exception BadDky
 
-let no_roots = (0, (fun _ _ _ -> ()))
+let no_roots = (0, (fun _ _ _ _ -> ()))
 
 (* Throw inside the f callback if the derivatives cannot be calculated at
    the given time. *)
@@ -119,6 +123,8 @@ let _ =
     ("ida_ResFuncErr",              ResFuncErr);
     ("ida_FirstResFuncFailure",     FirstResFuncFailure);
     ("ida_RepeatedResFuncErr",      RepeatedResFuncErr);
+    ("ida_NoRecovery",              NoRecovery);
+    ("ida_BadEwt",                  BadEwt);
     ("ida_UnrecoverableResFuncErr", UnrecoverableResFuncErr);
     ("ida_RootFuncFailure",         RootFuncFailure);
 

@@ -1,6 +1,7 @@
 include ../../../config
 
-EXAMPLES = idaRoberts_dns.ml
+EXAMPLES = idaRoberts_dns.ml \
+	   idaHeat2D_bnd.ml
 
 LAPACK_EXAMPLES = idaAdvDiff_bndL.ml \
 	   	  idaRoberts_dnsL.ml

@@ -68,6 +68,13 @@ void ida_ml_check_flag(const char *call, int flag)
 	caml_raise_constant(*caml_named_value("ida_LinearSolveFailure"));
 	break;
 
+    case IDA_BAD_EWT:
+	caml_raise_constant(*caml_named_value("ida_BadEwt"));
+	break;
+
+    case IDA_NO_RECOVERY:
+	caml_raise_constant(*caml_named_value("ida_NoRecovery"));
+
     case IDA_RES_FAIL:
 	caml_raise_constant(*caml_named_value("ida_ResFuncFailure"));
 	break;

@@ -987,3 +987,120 @@ module BandPrec :
 
  *)
  *)
+
+(** Inequality constraints on variables.
+
+ @ida <node5#sss:idasetconstraints> IDASetConstraints
+ *)
+module Constraints :
+  sig
+    (** An abstract array type, whose i-th component specifies that the i-th
+        component of the dependent variable vector y should be:
+
+        NonNegative  i.e. >= 0, or
+        NonPositive  i.e. <= 0, or
+        Positive     i.e. > 0, or
+        Negative     i.e. < 0, or
+        Unconstrained
+     *)
+    type t
+    type constraint_type =
+    | Unconstrained
+    | NonNegative
+    | NonPositive
+    | Positive
+    | Negative
+
+    (** [create n] returns an array with [n] elements, each set to
+        Unconstrained.  *)
+    val create : int -> t
+
+    (** Returns the length of an array *)
+    val length : t -> int
+
+    (** [get c i] returns the constraint on the i-th variable in the DAE.  *)
+    val get : t -> int -> constraint_type
+
+    (** [set c i x] sets the constraint on the i-th variable in the DAE to
+        [x].  *)
+    val set : t -> int -> constraint_type -> unit
+
+    (** [fill c x] fills the array so that all variables will have constraint
+        [x].  *)
+    val fill : t -> constraint_type -> unit
+
+    (** [blit a b] copies the contents of [a] to [b].  *)
+    val blit : t -> t -> unit
+  end
+
+(** Variable classification that needs to be specified for computing consistent
+ initial values.
+
+ @ida <node5#sss:idasetid> IDASetId
+ *)
+module Id :
+  sig
+    (** An abstract array type, whose i-th component specifies whether the i-th
+        component of the dependent variable vector y is an algebraic or
+        differential variable, for each i.  *)
+    type t
+    type component_type =
+    | Algebraic    (** Algebraic variable; residual function must not depend
+                       on this component's derivative.  *)
+    | Differential (** Differential variable; residual function can depend on
+                       this component's derivative.  *)
+
+    (** [create n] returns an array with [n] elements, each set to
+        Algebraic.  *)
+    val create : int -> t
+
+    (** Returns the length of an array *)
+    val length : t -> int
+
+    (** [get c i] returns the component type of the i-th variable in the
+        DAE.  *)
+    val get : t -> int -> component_type
+
+    (** [set c i x] sets the component type of the i-th variable in the DAE to
+        [x].  *)
+    val set : t -> int -> component_type -> unit
+
+    (** [fill c x] fills the array so that all variables will have component
+        type [x].  *)
+    val fill : t -> component_type -> unit
+
+    (** [blit a b] copies the contents of [a] to [b].  *)
+    val blit : t -> t -> unit
+  end
+
+val set_constraints : session -> Constraints.t -> unit
+
+(** [calc_ic_y_init ida tout1] corrects the initial values y0 at time t0.  All
+    components of y are computed, using all components of y' as input.
+
+    [tout1] is the first value of t at which a solution will be requested (from
+    IDASolve). This value is needed here only to determine the direction of
+    integration and rough scale in the independent variable t.
+
+    @ida <node#sss:idacalcic> IDACalcIC
+ *)
+val calc_ic_y_init : session -> float -> unit
+
+(** [calc_ic_ya_yd'_init ida id tout1] corrects the initial values y0 and y0'
+    at time t0.  [id] specifies some components of y0 (and y0') as
+    differential, and other components as algebraic.  This function computes
+    the algebraic components of y and differential components of y, given the
+    differential components of y.
+
+    If the i-th component of [id] is Algebraic (or Differential), then the i-th
+    components of y0 and y0' are both treated as algebraic (respectively,
+    differential).
+
+    [tout1] is the first value of t at which a solution will be requested (from
+    IDASolve). This value is needed here only to determine the direction of
+    integration and rough scale in the independent variable t.
+
+    @ida <node#sss:idacalcic> IDACalcIC
+    @ida <node#sss:idasetid> IDASetId
+ *)
+val calc_ic_ya_yd'_init : session -> Id.t -> float -> unit

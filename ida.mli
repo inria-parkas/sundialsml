@@ -104,7 +104,7 @@ type root_direction = RootDirs.root_direction
  {!Ida_nvector.init} that there are no roots (zero-crossings) to
  monitor.
  *)
-val no_roots : (int * ('a -> 'b -> 'c -> unit))
+val no_roots : (int * ('a -> 'b -> 'c -> 'd -> unit))
 
 (** {3 Solver results, statistics, and errors} *)
 

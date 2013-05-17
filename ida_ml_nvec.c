@@ -517,3 +517,55 @@ CAMLprim void IDATYPE(get_est_local_errors)(value vida_mem, value vele)
     CAMLreturn0;
 }
 
+CAMLprim void IDATYPE(calc_ic_y_init)(value vida_mem, value tout1)
+{
+    CAMLparam2 (vida_mem, tout1);
+    int flag;
+    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
+
+    IDASetUserData (ida_mem, &vida_mem);
+
+    flag = IDACalcIC (ida_mem, IDA_Y_INIT, Double_val (tout1));
+    if (flag < 0)
+	CHECK_FLAG ("IDACalcIC", flag);
+
+    CAMLreturn0;
+}
+
+CAMLprim void IDATYPE(calc_ic_ya_ydp_init)(value vida_mem, value vid,
+					   value tout1)
+{
+    CAMLparam2 (vida_mem, tout1);
+    int flag;
+    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
+
+    IDASetUserData (ida_mem, &vida_mem);
+
+    N_Vector id = NVECTORIZE_VAL (vid);
+    flag = IDASetId (ida_mem, id);
+    RELINQUISH_NVECTORIZEDVAL (id);
+    CHECK_FLAG ("IDASetId", flag);
+
+    flag = IDACalcIC (ida_mem, IDA_YA_YDP_INIT, Double_val (tout1));
+    if (flag < 0)
+	CHECK_FLAG ("IDACalcIC", flag);
+
+    /* For precaution; if we screw up somewhere, we'll promptly segfault
+     * instead of accessing a dangling pointer.  */
+    IDASetUserData (ida_mem, NULL);
+
+    CAMLreturn0;
+}
+
+CAMLprim void IDATYPE(set_constraints) (value vida_mem, value vconstraints)
+{
+    CAMLparam2(vida_mem, vconstraints);
+    int flag;
+
+    N_Vector constraints = NVECTORIZE_VAL (vconstraints);
+    flag = IDASetConstraints (IDA_MEM_FROM_ML (vida_mem), constraints);
+    RELINQUISH_NVECTORIZEDVAL (constraints);
+    CHECK_FLAG ("IDASetConstraints", flag);
+
+    CAMLreturn0;
+}

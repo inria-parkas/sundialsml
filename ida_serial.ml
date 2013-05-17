@@ -451,5 +451,78 @@ module Spils =
 
 
  *)
-    (* set_constraints -- set inequality constraints
-     *)
+
+module Constraints =
+  struct
+    type t = nvec
+    type constraint_type =
+    | Unconstrained
+    | NonNegative
+    | NonPositive
+    | Positive
+    | Negative
+
+    let constraint_type_of_float = function
+      | 0.0  -> Unconstrained
+      | 1.0  -> NonNegative
+      | -1.0 -> NonPositive
+      | 2.0  -> Positive
+      | -2.0 -> Negative
+      | f -> raise (Invalid_argument
+                      ("invalid constraint: " ^ string_of_float f))
+    let float_of_constraint_type = function
+      | Unconstrained -> 0.0
+      | NonNegative   -> 1.0
+      | NonPositive   -> -1.0
+      | Positive      -> 2.0
+      | Negative      -> -2.0
+
+    let create = Carray.create
+    let length = Carray.length
+
+    let get a i = constraint_type_of_float a.{i}
+    let set a i x = a.{i} <- float_of_constraint_type x
+    let fill a t =
+      let x = float_of_constraint_type t in
+      Carray.fill a x
+
+    let blit a b = Carray.blit a b
+  end
+
+external set_constraints : session -> Constraints.t -> unit
+  = "c_ba_ida_set_constraints"
+
+module Id =
+  struct
+    type t = nvec
+    type component_type = Algebraic | Differential
+
+    let component_type_of_float = function
+      | 0.0 -> Algebraic
+      | 1.0 -> Differential
+      | f -> raise (Invalid_argument
+                      ("invalid component type: " ^ string_of_float f))
+    let float_of_component_type = function
+      | Algebraic -> 0.0
+      | Differential -> 1.0
+
+    let create = Carray.create
+    let length = Carray.length
+
+    let get a i = component_type_of_float a.{i}
+    let set a i x = a.{i} <- float_of_component_type x
+    let fill a t =
+      let x = float_of_component_type t in
+      Carray.fill a x
+
+    let blit a b = Carray.blit a b
+  end
+
+external calc_ic_y_init : session -> float -> unit
+  = "c_ba_ida_calc_ic_y_init"
+external c_calc_ic_ya_yd'_init : session -> Id.t -> float -> unit
+  = "c_ba_ida_calc_ic_ya_ydp_init"
+let calc_ic_ya_yd'_init session id tout1 =
+  if Id.length id <> neqs session then
+    raise (Invalid_argument ("length of component type array does not match number of equations"));
+  c_calc_ic_ya_yd'_init session id tout1
