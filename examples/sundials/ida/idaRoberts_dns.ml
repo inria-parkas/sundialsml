@@ -34,6 +34,8 @@ module Carray = Ida.Carray
 module Roots = Ida.Roots
 module Dls = Ida.Dls
 
+let printf = Printf.printf
+
 (* Auxiliary indexing functions *)
 (* Translates 1-based indexing into 0-based indexing, just like corresponding
  * macros do in the original C implementation of this example.  *)
@@ -57,14 +59,6 @@ let tmult  = 10.0     (* output time factor     *)
 let nout   = 12       (* number of output times *)
 let nroots = 2        (* number of root functions *)
 
-(* For printing root_events.  Normally, string_of_root_event makes the output
- * easier to interpret, but we print them as int here in order to get the same
- * output as the C version of this example that comes with sundials.  *)
-let int_of_root_event = function
-  | Roots.NoRoot -> 0
-  | Roots.Rising -> 1
-  | Roots.Falling -> -1
-
 let print_header rtol avtol yy =
   let open Printf in
   printf "\nidaRoberts_dns: Robertson kinetics DAE serial example problem for IDA\n";
@@ -82,7 +76,6 @@ let print_header rtol avtol yy =
   printf "      | nst  k      h\n";
   printf "-----------------------------------------------------------------------\n";
 and print_output ida t y =
-  let open Printf in
   let kused = Ida.get_last_order ida
   and nst = Ida.get_num_steps ida
   and hused = Ida.get_last_step ida
@@ -99,7 +92,6 @@ and print_final_stats ida =
   and nreLS = Ida.Dls.get_num_res_evals ida
   and nge = Ida.get_num_g_evals ida
   in
-  let open Printf in
   printf "\nFinal Run Statistics: \n\n";
   printf "Number of steps                    = %d\n" nst;
   printf "Number of residual evaluations     = %d\n" (nre+nreLS);
@@ -109,7 +101,15 @@ and print_final_stats ida =
   printf "Number of nonlinear conv. failures = %d\n" ncfn;
   printf "Number of root fn. evaluations     = %d\n" nge;
 and print_root_info root_f1 root_f2 =
-  Printf.printf "    rootsfound[] = %3d %3d\n"
+  (* For printing root_events.  Normally, string_of_root_event makes the output
+   * easier to interpret, but we print them as int here in order to get the same
+   * output as the C version of this example that comes with sundials.  *)
+  let int_of_root_event = function
+    | Roots.NoRoot -> 0
+    | Roots.Rising -> 1
+    | Roots.Falling -> -1
+  in
+  printf "    rootsfound[] = %3d %3d\n"
     (int_of_root_event root_f1)
     (int_of_root_event root_f2);
 ;;
