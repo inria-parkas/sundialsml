@@ -518,11 +518,11 @@ module Id =
     let blit a b = Carray.blit a b
   end
 
-external calc_ic_y_init : session -> float -> unit
-  = "c_ba_ida_calc_ic_y_init"
-external c_calc_ic_ya_yd'_init : session -> Id.t -> float -> unit
-  = "c_ba_ida_calc_ic_ya_ydp_init"
-let calc_ic_ya_yd'_init session id tout1 =
+external calc_ic_y : session -> float -> unit
+  = "c_ba_ida_calc_ic_y"
+external c_calc_ic_ya_yd' : session -> Id.t -> float -> unit
+  = "c_ba_ida_calc_ic_ya_ydp"
+let calc_ic_ya_yd' session id tout1 =
   if Id.length id <> neqs session then
     raise (Invalid_argument ("length of component type array does not match number of equations"));
-  c_calc_ic_ya_yd'_init session id tout1
+  c_calc_ic_ya_yd' session id tout1

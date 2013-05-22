@@ -25,6 +25,10 @@ include module type of Ida
   with type Roots.t = Ida.Roots.t
   and type RootDirs.t = Ida.RootDirs.t
   and type linear_solver = Ida.linear_solver
+  and type Bandmatrix.t = Dls.Bandmatrix.t
+  and type Directbandmatrix.t = Dls.Directbandmatrix.t
+  and type Densematrix.t = Dls.Densematrix.t
+  and type Directdensematrix.t = Dls.Directdensematrix.t
 
 (*STARTINTRO*)
 (** Serial nvector interface to the IDA solver.
@@ -1065,6 +1069,14 @@ module Id :
         [x].  *)
     val set : t -> int -> component_type -> unit
 
+    (** [set_algebraic c i] sets the component type of the i-th variable in
+        the DAE to algebraic.  *)
+    val set_algebraic : t -> int -> unit
+
+    (** [set_differential c i] sets the component type of the i-th variable
+        in the DAE to differential.  *)
+    val set_differential : t -> int -> unit
+
     (** [fill c x] fills the array so that all variables will have component
         type [x].  *)
     val fill : t -> component_type -> unit
@@ -1075,7 +1087,7 @@ module Id :
 
 val set_constraints : session -> Constraints.t -> unit
 
-(** [calc_ic_y_init ida tout1] corrects the initial values y0 at time t0.  All
+(** [calc_ic_y ida tout1] corrects the initial values y0 at time t0.  All
     components of y are computed, using all components of y' as input.
 
     [tout1] is the first value of t at which a solution will be requested (from
@@ -1084,9 +1096,9 @@ val set_constraints : session -> Constraints.t -> unit
 
     @ida <node#sss:idacalcic> IDACalcIC
  *)
-val calc_ic_y_init : session -> float -> unit
+val calc_ic_y : session -> float -> unit
 
-(** [calc_ic_ya_yd'_init ida id tout1] corrects the initial values y0 and y0'
+(** [calc_ic_ya_yd' ida id tout1] corrects the initial values y0 and y0'
     at time t0.  [id] specifies some components of y0 (and y0') as
     differential, and other components as algebraic.  This function computes
     the algebraic components of y and differential components of y, given the
@@ -1103,4 +1115,4 @@ val calc_ic_y_init : session -> float -> unit
     @ida <node#sss:idacalcic> IDACalcIC
     @ida <node#sss:idasetid> IDASetId
  *)
-val calc_ic_ya_yd'_init : session -> Id.t -> float -> unit
+val calc_ic_ya_yd' : session -> Id.t -> float -> unit

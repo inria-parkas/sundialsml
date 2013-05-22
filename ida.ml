@@ -67,7 +67,7 @@ exception ConvergenceFailure
 exception LinearInitFailure
 exception LinearSetupFailure
 exception LinearSolveFailure
-exception ResFuncErr
+exception ResFuncFailure
 exception FirstResFuncFailure
 exception RepeatedResFuncErr
 exception UnrecoverableResFuncErr
@@ -120,7 +120,7 @@ let _ =
     ("ida_LinearInitFailure",       LinearInitFailure);
     ("ida_LinearSetupFailure",      LinearSetupFailure);
     ("ida_LinearSolveFailure",      LinearSolveFailure);
-    ("ida_ResFuncErr",              ResFuncErr);
+    ("ida_ResFuncFailure",          ResFuncFailure);
     ("ida_FirstResFuncFailure",     FirstResFuncFailure);
     ("ida_RepeatedResFuncErr",      RepeatedResFuncErr);
     ("ida_NoRecovery",              NoRecovery);

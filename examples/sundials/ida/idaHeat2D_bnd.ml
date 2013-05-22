@@ -189,7 +189,7 @@ let main () =
   Ida.set_constraints mem constraints;
 
   (* Call IDASetId and IDACalcIC to correct the initial values.  *)
-  Ida.calc_ic_ya_yd'_init mem id t1;
+  Ida.calc_ic_ya_yd' mem id t1;
 
   (* Print output heading. *)
   print_header rtol atol;

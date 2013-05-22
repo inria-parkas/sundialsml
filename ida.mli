@@ -177,13 +177,13 @@ exception LinearSetupFailure
 (** @ida <node5#sss:ida> IDA_LSOLVE_FAIL *)
 exception LinearSolveFailure        
 
-(** @ida <node5#sss:ida> IDA_RESFUNC_FAIL *)
-exception ResFuncErr                
+(** @ida <node5#sss:ida> IDA_RES_FAIL *)
+exception ResFuncFailure
 
-(** @ida <node5#sss:ida> IDA_FIRST_RESFUNC_FAIL *)
+(** @ida <node5#sss:ida> IDA_FIRST_RES_FAIL *)
 exception FirstResFuncFailure       
 
-(** @ida <node5#sss:ida> IDA_REPTD_RESFUNC_ERR *)
+(** @ida <node5#sss:ida> IDA_REP_RES_ERR *)
 exception RepeatedResFuncErr        
 
 (** @ida <node5#sss:ida> IDA_UNREC_RESFUNC_ERR *)

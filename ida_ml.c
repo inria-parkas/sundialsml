@@ -79,8 +79,11 @@ void ida_ml_check_flag(const char *call, int flag)
 	caml_raise_constant(*caml_named_value("ida_ResFuncFailure"));
 	break;
 
+    case IDA_FIRST_RES_FAIL:
+	caml_raise_constant(*caml_named_value("ida_FirstResFuncFailure"));
+
     case IDA_REP_RES_ERR:
-	caml_raise_constant(*caml_named_value("ida_RepeatedResFuncError"));
+	caml_raise_constant(*caml_named_value("ida_RepeatedResFuncErr"));
 	break;
 
     case IDA_RTFUNC_FAIL:
