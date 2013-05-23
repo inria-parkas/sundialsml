@@ -67,10 +67,8 @@ type session = {
          *)
       }
 
-(* interface *)
-
 external session_finalize : session -> unit
-    = "c_ida_session_finalize"
+  = "c_ida_session_finalize"
 
 (* FIXME: isn't it better to separate out IDARootInit(), since it's
    optional in the C interface?  *)
@@ -511,6 +509,8 @@ module Id =
 
     let get a i = component_type_of_float a.{i}
     let set a i x = a.{i} <- float_of_component_type x
+    let set_algebraic a i = set a i Algebraic
+    and set_differential a i = set a i Differential
     let fill a t =
       let x = float_of_component_type t in
       Carray.fill a x
