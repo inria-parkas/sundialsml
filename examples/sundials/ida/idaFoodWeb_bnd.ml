@@ -124,6 +124,8 @@ let tadd        = 0.3                   (* Increment for tout values *)
  * index anywhere between 0 and num_species.  *)
 let index i j k = i*num_species + j*nsmx + k
 let ij_v (v : Ida.nvec) i j =
+  (* v is type annotated so that the layout of the bigarray is fixed.  This
+     ensures that the compiler can inline accesses to the bigarray elements. *)
   let i0 = index i j 0
   and iend = index i j num_species in
   Bigarray.Array1.sub v i0 (iend - i0)
@@ -255,10 +257,10 @@ let fweb webdata t c crate =
     done
   done
 
-(* System residual function for predator-prety system.  This routine calls fweb
+(* System residual function for predator-prey system.  This routine calls fweb
  * to get all the right-hand sides of the equations, then loads the residual
  * vector accordingly, using c' in the case of prey species.  *)
-let resweb webdata t c c' res =
+let resweb webdata t c (c' : Ida.nvec) res =
   let np = webdata.np in
 
   (* Call Fweb to set res to vector of right-hand sides. *)
