@@ -95,7 +95,7 @@ static void errh(
 CAMLprim void IDATYPE(set_err_handler_fn)(value vdata)
 {
     CAMLparam1(vdata);
- 
+
     int flag = IDASetErrHandlerFn(IDA_MEM_FROM_ML(vdata), errh, NULL);
     CHECK_FLAG("IDASetErrHandlerFn", flag);
 
@@ -114,7 +114,7 @@ CAMLprim void IDATYPE(clear_err_handler_fn)(value vdata)
 
 /* To be called on the return value of a user-supplied callback function.
  * Saves any exceptions before returning an appropriate return code.
- * 
+ *
  * IDA requires the following callbacks from the user (some are optional):
  *  - the residual function
  *  - Jacobian function
@@ -149,7 +149,7 @@ static int callback_return (value *session, value r,
     /* The OCaml function may have recursively called the solver on the same
      * session instance, which would overwrite the user data.  We need to be
      * conservative and reinstate the user data here.
-     * 
+     *
      * FIXME: note there's no IDAGetUserData() so we can't rely on the
      * recursive call to re-establish the previous value of the user data
      * (right now the field is always reset to NULL).  However, perhaps we
@@ -178,14 +178,14 @@ static int callback_return (value *session, value r,
     CAMLreturnT (int, -1);
 }
 
-static int resfn (realtype t, N_Vector y, N_Vector yp, 
+static int resfn (realtype t, N_Vector y, N_Vector yp,
 		  N_Vector resval, void *user_data)
 {
     CAMLparam0 ();
     CAMLlocal1 (r);
     CAMLlocalN (args, 4);
     value *session = (value *)user_data;
-    
+
     args[0] = caml_copy_double(t);
     args[1] = WRAP_NVECTOR (y);
     args[2] = WRAP_NVECTOR (yp);
@@ -438,7 +438,7 @@ static int jactimesfn(
 CAMLprim void IDATYPE(wf_tolerances)(value vdata)
 {
     CAMLparam1(vdata);
- 
+
     int flag = IDAWFtolerances(IDA_MEM_FROM_ML(vdata), errw);
     CHECK_FLAG("IDAWFtolerances", flag);
 
@@ -655,10 +655,10 @@ CAMLprim void IDATYPE(get_dky)(value vdata, value vt, value vk, value vy)
     N_Vector y_nv = NVECTORIZE_VAL(vy);
 
     int flag = IDAGetDky(IDA_MEM_FROM_ML(vdata), Double_val(vt),
-			   Int_val(vk), y_nv);
+			 Int_val(vk), y_nv);
     CHECK_FLAG("IDAGetDky", flag);
     RELINQUISH_NVECTORIZEDVAL(y_nv);
-    
+
     CAMLreturn0;
 }
 
