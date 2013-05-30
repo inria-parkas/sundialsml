@@ -2,10 +2,11 @@ include ../../../config
 
 EXAMPLES = idaRoberts_dns.ml  \
 	   idaHeat2D_bnd.ml   \
+	   idaHeat2D_kry.ml   \
 	   idaFoodWeb_bnd.ml
 
 LAPACK_EXAMPLES = idaAdvDiff_bndL.ml \
-	   	  idaRoberts_dnsL.ml
+		  idaRoberts_dnsL.ml
 
 ALL_EXAMPLES = $(EXAMPLES) $(LAPACK_EXAMPLES)
 
