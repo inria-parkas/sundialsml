@@ -58,6 +58,9 @@ module Carray :
     (** [create n] returns an array with [n] elements. *)
     val create : int -> t
 
+    (** [init n x] returns an array with [n] elements, each set to [x]. *)
+    val init : int -> float -> t
+
     (** Copies the contents of an {{:OCAML_DOC_ROOT(Array)} Array} into a
        {!real_array} *)
     val of_array : float array -> t
@@ -123,6 +126,9 @@ module Roots :
 
     (** [create n] returns an array with [n] elements, each set to NoRoot. *)
     val create : int -> t
+
+    (** [init n x] returns an array with [n] elements, each set to [x]. *)
+    val init : int -> root_event -> t
 
     (** Returns the length of an array *)
     val length : t -> int

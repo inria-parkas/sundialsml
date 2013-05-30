@@ -461,6 +461,7 @@ module Constraints =
       | Negative      -> -2.0
 
     let create = Carray.create
+    let init n v = Carray.init n (float_of_constraint_type v)
     let length = Carray.length
 
     let get a i = constraint_type_of_float a.{i}
@@ -490,6 +491,7 @@ module Id =
       | Differential -> 1.0
 
     let create = Carray.create
+    let init n x = Carray.init n (float_of_component_type x)
     let length = Carray.length
 
     let get a i = component_type_of_float a.{i}

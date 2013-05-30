@@ -102,7 +102,7 @@ type root_val_array = Sundials.Roots.val_array
     [init linsolv f (nroots, g) y0 y'0] initializes the IDA solver to solve
     the DAE f t y y' = 0 and returns a {!session}.
     - [linsolv] is the linear solver to attach to this solver.
-    - [f]       is the residual function.
+    - [f]       is the residual function (see below).
     - [nroots]  specifies the number of root functions (zero-crossings).
     - [g]       calculates the values of the root functions.
     - [y0]      is a vector of initial values for the dependent-variable vector
@@ -122,14 +122,20 @@ type root_val_array = Sundials.Roots.val_array
     It does everything necessary to initialize an IDA session; the {!normal} or
     {!one_step} functions can be called directly afterward.
 
-    The residual function [f] is called by the solver to compute the problem
-    residual, given [t], [y], [y'], and [r], where:
+    The residual function [f] is called by the solver like [f t y y' r] to
+    compute the problem residual, where:
     - [t] is the current value of the independent variable,
           i.e., the simulation time.
     - [y] is a vector of dependent-variable values, i.e. y(t).
     - [y'] is the derivative of [y] with respect to [t], i.e. dy/dt.
     - [r] is the output vector to fill in with the value of the residual
           function for the given values of t, y, and y'.
+    The residual function should return normally if successful, raise
+    RecoverableFailure if a recoverable error occurred (e.g. yy has an
+    illegal value), or raise some other exception if a nonrecoverable error
+    occurred.  If a recoverable error occurred, the integrator will attempt
+    to correct and retry.  If a nonrecoverable error occurred, the integrator
+    will halt and propagate the exception to the caller.
 
     {b NB:} [y], [y'], and [r] must no longer be accessed after [f] has
             returned a result, i.e. if their values are needed outside of
@@ -932,6 +938,9 @@ module Constraints :
         Unconstrained.  *)
     val create : int -> t
 
+    (** [init n x] returns an array with [n] elements, each set to [x]. *)
+    val init : int -> constraint_type -> t
+
     (** Returns the length of an array *)
     val length : t -> int
 
@@ -970,6 +979,9 @@ module Id :
     (** [create n] returns an array with [n] elements, each set to
         Algebraic.  *)
     val create : int -> t
+
+    (** [init n x] returns an array with [n] elements, each set to [x]. *)
+    val init : int -> component_type -> t
 
     (** Returns the length of an array *)
     val length : t -> int

@@ -58,6 +58,11 @@ module Carray =
 
     let fill = Bigarray.Array1.fill
 
+    let init size x =
+      let a = create size in
+      fill a x;
+      a
+
     let length = Bigarray.Array1.dim
 
     let blit = Bigarray.Array1.blit
@@ -139,6 +144,11 @@ module Roots =
     let create n =
       let a = Bigarray.Array1.create Bigarray.int32 Carray.layout n in
       reset a;
+      a
+
+    let init n x =
+      let a = Bigarray.Array1.create Bigarray.int32 Carray.layout n in
+      Bigarray.Array1.fill a (to_int32 x);
       a
 
     let empty = create 0
