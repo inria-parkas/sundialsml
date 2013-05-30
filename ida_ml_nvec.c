@@ -583,7 +583,7 @@ static value solve (value vdata, value nextt, value vy, value vyp, int onestep)
     CAMLparam4 (vdata, nextt, vy, vyp);
     CAMLlocal1 (ret);
     void *ida_mem = IDA_MEM_FROM_ML (vdata);
-    double tret;
+    realtype tret;
     int flag;
     N_Vector y, yp;
     enum ida_solver_result_tag result;

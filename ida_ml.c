@@ -255,7 +255,7 @@ CAMLprim value c_ida_get_integrator_stats(value vdata)
     ); 
     CHECK_FLAG("IDAGetIntegratorStats", flag);
 
-    r = caml_alloc_tuple(10);
+    r = caml_alloc_tuple(RECORD_IDA_INTEGRATOR_STATS_SIZE);
     Store_field(r, RECORD_IDA_INTEGRATOR_STATS_STEPS, Val_long(nsteps));
     Store_field(r, RECORD_IDA_INTEGRATOR_STATS_RES_EVALS, Val_long(nfevals));
     Store_field(r, RECORD_IDA_INTEGRATOR_STATS_LINEAR_SOLVER_SETUPS, Val_long(nlinsetups));
