@@ -597,6 +597,52 @@ CAMLprim void c_ida_set_no_inactive_root_warn(value vida_mem)
     CAMLreturn0;
 }
 
+
+CAMLprim void c_ida_set_gs_type(value vida_mem, value vgstype)
+{
+    CAMLparam2(vida_mem, vgstype);
+
+    int gstype;
+    switch (Int_val(vgstype)) {
+    case VARIANT_GRAMSCHMIDT_TYPE_MODIFIEDGS:
+	gstype = MODIFIED_GS;
+	break;
+
+    case VARIANT_GRAMSCHMIDT_TYPE_CLASSICALGS:
+	gstype = CLASSICAL_GS;
+	break;
+    }
+
+    int flag = IDASpilsSetGSType(IDA_MEM_FROM_ML(vida_mem), gstype);
+    CHECK_FLAG("IDASpilsSetGSType", flag);
+
+    CAMLreturn0;
+}
+
+CAMLprim void c_ida_set_eps_lin(value vida_mem, value eplifac)
+{
+    CAMLparam2(vida_mem, eplifac);
+
+    int flag = IDASpilsSetEpsLin(IDA_MEM_FROM_ML(vida_mem),
+				 Double_val(eplifac));
+    CHECK_FLAG("IDASpilsSetEpsLin", flag);
+
+    CAMLreturn0;
+}
+
+CAMLprim void c_ida_set_maxl(value vida_mem, value maxl)
+{
+    CAMLparam2(vida_mem, maxl);
+
+    int flag = IDASpilsSetMaxl(IDA_MEM_FROM_ML(vida_mem), Int_val(maxl));
+    CHECK_FLAG("IDASpilsSetMaxl", flag);
+
+    CAMLreturn0;
+}
+
+
+/* statistic accessor functions */
+
 CAMLprim value c_ida_get_tol_scale_factor(value vida_mem)
 {
     CAMLparam1(vida_mem);
@@ -683,3 +729,92 @@ CAMLprim value c_ida_dls_get_num_res_evals(value vida_mem)
 
     CAMLreturn(Val_long(r));
 }
+
+/* spils functions */
+
+CAMLprim value c_ida_spils_get_num_lin_iters(value vida_mem)
+{
+    CAMLparam1(vida_mem);
+
+    long int r;
+    int flag = IDASpilsGetNumLinIters(IDA_MEM_FROM_ML(vida_mem), &r);
+    CHECK_FLAG("IDASpilsGetNumLinIters", flag);
+
+    CAMLreturn(Val_long(r));
+}
+
+CAMLprim value c_ida_spils_get_num_conv_fails(value vida_mem)
+{
+    CAMLparam1(vida_mem);
+
+    long int r;
+    int flag = IDASpilsGetNumConvFails(IDA_MEM_FROM_ML(vida_mem), &r);
+    CHECK_FLAG("IDASpilsGetNumConvFails", flag);
+
+    CAMLreturn(Val_long(r));
+}
+
+CAMLprim value c_ida_spils_get_work_space(value vida_mem)
+{
+    CAMLparam1(vida_mem);
+    CAMLlocal1(r);
+
+    int flag;
+    long int lenrw;
+    long int leniw;
+
+    flag = IDASpilsGetWorkSpace(IDA_MEM_FROM_ML(vida_mem), &lenrw, &leniw);
+    CHECK_FLAG("IDASpilsGetWorkSpace", flag);
+
+    r = caml_alloc_tuple(2);
+
+    Store_field(r, 0, Val_int(lenrw));
+    Store_field(r, 1, Val_int(leniw));
+
+    CAMLreturn(r);
+}
+
+CAMLprim value c_ida_spils_get_num_prec_evals(value vida_mem)
+{
+    CAMLparam1(vida_mem);
+
+    long int r;
+    int flag = IDASpilsGetNumPrecEvals(IDA_MEM_FROM_ML(vida_mem), &r);
+    CHECK_FLAG("IDASpilsGetNumPrecEvals", flag);
+
+    CAMLreturn(Val_long(r));
+}
+
+CAMLprim value c_ida_spils_get_num_prec_solves(value vida_mem)
+{
+    CAMLparam1(vida_mem);
+
+    long int r;
+    int flag = IDASpilsGetNumPrecSolves(IDA_MEM_FROM_ML(vida_mem), &r);
+    CHECK_FLAG("IDASpilsGetNumPrecSolves", flag);
+
+    CAMLreturn(Val_long(r));
+}
+
+CAMLprim value c_ida_spils_get_num_jtimes_evals(value vida_mem)
+{
+    CAMLparam1(vida_mem);
+
+    long int r;
+    int flag = IDASpilsGetNumJtimesEvals(IDA_MEM_FROM_ML(vida_mem), &r);
+    CHECK_FLAG("IDASpilsGetNumJtimesEvals", flag);
+
+    CAMLreturn(Val_long(r));
+}
+
+CAMLprim value c_ida_spils_get_num_res_evals (value vida_mem)
+{
+    CAMLparam1(vida_mem);
+
+    long int r;
+    int flag = IDASpilsGetNumResEvals(IDA_MEM_FROM_ML(vida_mem), &r);
+    CHECK_FLAG("IDASpilsGetNumResEvals", flag);
+
+    CAMLreturn(Val_long(r));
+}
+

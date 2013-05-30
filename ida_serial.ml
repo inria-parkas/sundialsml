@@ -20,25 +20,18 @@ type der_array = Sundials.Carray.t
 type root_array = Sundials.Roots.t
 type root_val_array = Sundials.Roots.val_array
 
-type single_tmp = nvec
+type single_tmp = val_array
+type double_tmp = val_array * val_array
 type triple_tmp = val_array * val_array * val_array
 
 type 't jacobian_arg =
   {
     jac_t    : float;
-    jac_coef : float;
     jac_y    : val_array;
     jac_y'   : der_array;
     jac_res  : val_array;
+    jac_coef : float;
     jac_tmp  : 't
-  }
-
-type callback_solve_arg =
-  {
-    rhs   : val_array;
-    gamma : float;
-    delta : float;
-    left  : bool;
   }
 
 type ida_mem
@@ -49,6 +42,10 @@ type session = {
         nroots     : int;
         err_file   : ida_file;
 
+        (* Temporary storage for exceptions raised within callbacks.  Not
+           to be touched from the OCaml side.  *)
+        mutable exn_temp   : exn option;
+
         mutable resfn      : float -> val_array -> der_array -> val_array
                              -> unit;
         mutable rootsfn    : float -> val_array -> der_array -> root_val_array
@@ -58,13 +55,11 @@ type session = {
         mutable jacfn      : triple_tmp jacobian_arg -> Densematrix.t -> unit;
         mutable bandjacfn  : triple_tmp jacobian_arg -> int -> int
                                -> Bandmatrix.t -> unit;
-        (*
-        mutable presetupfn : triple_tmp jacobian_arg -> bool -> float -> bool;
-        mutable presolvefn : single_tmp jacobian_arg -> callback_solve_arg -> nvec
+        mutable presetupfn : triple_tmp jacobian_arg -> unit;
+        mutable presolvefn : single_tmp jacobian_arg -> val_array -> val_array
+                               -> float -> unit;
+        mutable jactimesfn : double_tmp jacobian_arg -> val_array -> val_array
                                -> unit;
-        mutable jactimesfn : single_tmp jacobian_arg -> val_array -> val_array
-                               -> unit;
-         *)
       }
 
 external session_finalize : session -> unit
@@ -88,12 +83,16 @@ let init' linsolv resfn (nroots, roots) y y' t0 =
                   neqs       = neqs;
                   nroots     = nroots;
                   err_file   = err_file;
+                  exn_temp   = None;
                   resfn      = resfn;
                   rootsfn    = roots;
                   errh       = (fun _ -> ());
                   errw       = (fun _ _ -> ());
                   jacfn      = (fun _ _ -> ());
                   bandjacfn  = (fun _ _ _ _ -> ());
+                  presetupfn = (fun _ -> ());
+                  presolvefn = (fun _ _ _ _ -> ());
+                  jactimesfn = (fun _ _ _ -> ());
                 }
   in
   Gc.finalise session_finalize session;
@@ -375,17 +374,9 @@ module Dls =
     external get_num_res_evals    : session -> int
         = "c_ida_dls_get_num_res_evals"
   end
-(*
+
 module Spils =
   struct
-    type solve_arg = callback_solve_arg =
-      {
-        res   : val_array;
-        gamma : float;
-        delta : float;
-        left  : bool;
-      }
-
     type gramschmidt_type =
       | ModifiedGS
       | ClassicalGS
@@ -411,9 +402,6 @@ module Spils =
     let clear_jac_times_vec_fn s =
       s.jactimesfn <- (fun _ _ _ -> ());
       clear_jac_times_vec_fn s
-
-    external set_prec_type : session -> preconditioning_type -> unit
-        = "c_ida_set_prec_type"
 
     external set_gs_type : session -> gramschmidt_type -> unit
         = "c_ida_set_gs_type"
@@ -446,9 +434,6 @@ module Spils =
         = "c_ida_spils_get_num_res_evals"
 
   end
-
-
- *)
 
 module Constraints =
   struct

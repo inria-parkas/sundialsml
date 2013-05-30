@@ -138,11 +138,14 @@ type root_val_array = Sundials.Roots.val_array
 
     The roots function [g] is called by the solver to calculate the values of
     root functions (zero-crossing expressions) which are used to detect
-    significant events.  It is passed four arguments [t], [y], [y'], and [gout]:
+    significant events.  It is passed four arguments [t], [y], [y'], and
+    [gout]:
     - [t], [y], [y'] are as for [f].
     - [gout] is a vector for storing the values of g(t, y, y').
     The {!Ida.no_roots} value can be passed for the [(nroots, g)] argument if
-    root functions are not required.
+    root functions are not required.  If the root function raises an exception,
+    the integrator will halt immediately and propagate the exception to the
+    caller.
 
     {b NB:} [y] and [gout] must no longer be accessed after [g] has returned
             a result, i.e. if their values are needed outside of the function
@@ -581,6 +584,7 @@ val reinit : session -> float -> val_array -> der_array -> unit
 (** {2 Linear Solvers} *)
 
 type single_tmp = val_array
+type double_tmp = val_array * val_array
 type triple_tmp = val_array * val_array * val_array
 
 (**
@@ -595,14 +599,14 @@ type triple_tmp = val_array * val_array * val_array
 type 't jacobian_arg =
   {
     jac_t    : float;        (** The independent variable. *)
+    jac_y    : val_array;    (** The dependent variable vector. *)
+    jac_y'   : der_array;    (** The derivative vector (i.e. dy/dt). *)
+    jac_res  : val_array;    (** The current value of the residual vector. *)
     jac_coef : float;        (** The coefficient [a] in the system Jacobian
                                  to compute,
                                    [J = dF/dy + a*dF/d(y')]
                                  where [F(t,y,y')] is the residual vector.
                                  See Eq (2.5) of IDA's user documentation.  *)
-    jac_y    : val_array;    (** The dependent variable vector. *)
-    jac_y'   : der_array;    (** The derivative vector (i.e. dy/dt). *)
-    jac_res  : val_array;    (** The current value of the residual vector. *)
     jac_tmp  : 't            (** Workspace data,
                                 either {!single_tmp} or {!triple_tmp}. *)
   }
@@ -712,36 +716,6 @@ module Dls :
     val get_num_res_evals : session -> int
   end
 
-(** {3 Diagonal approximation} *)
-(*
-(** Get optional inputs for the linear solver that gives diagonal approximations
-    of the Jacobian matrix.
-    @ida <node5#sss:optout_diag> Diagonal linear solver optional output functions
-  *)
-module Diag :
-  sig
-    (** {4 Optional input functions} *)
-
-    (**
-      Returns the sizes of the real and integer workspaces used by the Diagonal
-      linear solver.
-
-      @ida <node5#sss:optout_diag> IDADiagGetWorkSpace
-      @return ([real_size], [integer_size])
-     *)
-    val get_work_space : session -> int * int
-
-    (**
-      Returns the number of calls made to the user-supplied right-hand side
-      function due to finite difference Jacobian approximation in the Diagonal
-      linear solver.
-
-      @ida <node5#sss:optout_diag> IDADiagGetNumResEvals
-    *)
-    val get_num_res_evals : session -> int
-  end
-(*
-
 (** {3 Scaled Preconditioned Iterative Linear Solvers (SPILS)} *)
 
 (** Set callback functions, set optional outputs, and get optional inputs for
@@ -756,56 +730,35 @@ module Spils :
     (** {4 Callback functions} *)
 
     (**
-      Arguments passed to the preconditioner solve callback function.
-
-      @ida <node5#ss:psolveFn> IDASpilsPrecSolveFn
-     *)
-    type solve_arg =
-      {
-        res   : val_array;  (** The right-hand side vector, {i r}, of the
-                                linear system. *)
-        gamma : float;      (** The scalar {i g} appearing in the Newton
-                                matrix given by M = I - {i g}J. *)
-        delta : float;      (** Input tolerance to be used if an
-                                iterative method is employed in the
-                                solution. *)
-        left  : bool;       (** [true] (1) if the left preconditioner
-                                is to be used and [false] (2) if the
-                                right preconditioner is to be used. *)
-      }
-
-    (**
       Setup preconditioning for any of the SPILS linear solvers. Two functions
       are required: [psetup] and [psolve].
 
-      [psetup jac jok gamma] preprocesses and/or evaluates any Jacobian-related
-      data needed by the preconditioner. It takes three inputs:
+      [psetup jac] preprocesses and/or evaluates any Jacobian-related
+       data needed by the preconditioner.  There is one argument:
         - [jac] supplies the basic problem data as a {!jacobian_arg}.
-        - [jok] indicates whether any saved Jacobian-related data can be reused.
-        If [false] any such data must be recomputed from scratch, otherwise, if
-        [true], any such data saved from a previous call to the function can
-        be reused, with the current value of [gamma]. A call with [jok] =
-        [true] can only happen after an earlier call with [jok] = [false].
-        - [gamma] is the scalar {i g} appearing in the Newton matrix given
-        by M = I - {i g}J.
+
+       Note that unlike in CVODE, whatever data this function computes has to
+       be recomputed every time it is called.
+
+       It should raise RecoverableError to instruct the solver to retry with a
+       different step size, or simply raise any other exception to abort the
+       solver.  In the latter case, the exception will be propagated out of the
+       solver.
 
       {b NB:} The elements of [jac] must no longer be accessed after [psetup]
               has returned a result, i.e. if their values are needed outside
               of the function call, then they must be copied to a separate
               physical structure.
 
-      It must return [true] if the Jacobian-related data was updated, or
-      [false] otherwise, i.e. if the saved data was reused.
-
-      [psolve jac arg z] is called to solve the linear system
-      {i P}[z] = [jac.res], where {i P} may be either a left or right
-      preconditioner matrix. {i P} should approximate, however crudely, the
-      Newton matrix M = I - [jac.gamma] J, where J = delr(f) / delr(y).
+      [psolve jac r z] is called to solve the linear system
+      {i P}[z] = [r], where {i P} is the (left) preconditioner matrix.
+      {i P} should approximate, at least crudely, the system Jacobian matrix
+      J = dF/dy + {jac.coef} * dF/d(y') where F is the residual function.
       - [jac] supplies the basic problem data as a {!jacobian_arg}.
-      - [arg] specifies the linear system as a {!solve_arg}.
+      - [r] is the right-hand side vector.
       - [z] is the vector in which the result must be stored.
 
-      {b NB:} The elements of [jac], [arg], and [z] must no longer be accessed
+      {b NB:} The elements of [jac], [r], and [z] must no longer be accessed
               after [psolve] has returned a result, i.e. if their values are
               needed outside of the function call, then they must be copied
               to separate physical structures.
@@ -816,15 +769,16 @@ module Spils :
     *)
     val set_preconditioner :
       session
-      -> (triple_tmp jacobian_arg -> bool -> float -> bool)
-      -> (single_tmp jacobian_arg -> solve_arg -> nvec -> unit)
+      -> (triple_tmp jacobian_arg -> unit)
+      -> (single_tmp jacobian_arg -> val_array -> val_array -> float -> unit)
       -> unit
 
     (**
-      Specifies a Jacobian-vector function.
+      Specifies a Jacobian-times-vector function.
 
       The function given, [jactimes jac v Jv], computes the matrix-vector
       product {i J}[v].
+      - [jac] provides the data necessary to compute the Jacobian.
       - [v] is the vector by which the Jacobian must be multiplied.
       - [Jv] is the vector in which the result must be stored.
 
@@ -838,7 +792,7 @@ module Spils :
     *)
     val set_jac_times_vec_fn :
       session
-      -> (single_tmp jacobian_arg
+      -> (double_tmp jacobian_arg
           -> val_array (* v *)
           -> val_array (* Jv *)
           -> unit)
@@ -856,14 +810,6 @@ module Spils :
     val clear_jac_times_vec_fn : session -> unit
 
     (** {4 Optional output functions} *)
-
-    (**
-      This function resets the type of preconditioning to be used using a value
-      of type {!Ida.preconditioning_type}.
-
-      @ida <node5#sss:optin_spils> IDASpilsSetPrecType
-    *)
-    val set_prec_type : session -> preconditioning_type -> unit
 
     (** Constants representing the types of Gram-Schmidt orthogonalization
         possible for the Spgmr {Ida.linear_solver}. *)
@@ -958,39 +904,6 @@ module Spils :
     *)
     val get_num_res_evals    : session -> int
   end
-
-(** {3 Banded preconditioner} *)
-
-(** Get optional outputs for the banded preconditioner module of the
-    Scaled Preconditioned Iterative Linear Solvers:
-      SPGMR, SPBCG, SPTFQMR.
-    @ida <node5#sss:cvbandpre> Serial banded preconditioner module
-  *)
-module BandPrec :
-  sig
-    (** {4 Optional input functions} *)
-
-    (**
-      Returns the sizes of the real and integer workspaces used by the serial
-      banded preconditioner module.
-
-      @ida <node5#sss:cvbandpre> IDABandPrecGetWorkSpace
-      @return ([real_size], [integer_size])
-     *)
-    val get_work_space : session -> int * int
-
-    (**
-      Returns the number of calls made to the user-supplied right-hand side
-      function due to finite difference banded Jacobian approximation in the
-      banded preconditioner setup function.
-
-      @ida <node5#sss:cvbandpre> IDABandPrecGetNumResEvals
-    *)
-    val get_num_res_evals : session -> int
-  end
-
- *)
- *)
 
 (** Inequality constraints on variables.
 
