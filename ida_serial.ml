@@ -35,15 +35,18 @@ type 't jacobian_arg =
   }
 
 type ida_mem
+type c_weak_ref
 type ida_file
 type session = {
         ida        : ida_mem;
+        backref    : c_weak_ref; (* Back reference to the whole record that
+                                    goes through a generational root and a
+                                    weak pointer, for access from callbacks *)
         neqs       : int;
         nroots     : int;
         err_file   : ida_file;
 
-        (* Temporary storage for exceptions raised within callbacks.  Not
-           to be touched from the OCaml side.  *)
+        (* Temporary storage for exceptions raised within callbacks.  *)
         mutable exn_temp   : exn option;
 
         mutable resfn      : float -> val_array -> der_array -> val_array
@@ -64,11 +67,61 @@ type session = {
 
 external session_finalize : session -> unit
   = "c_ida_session_finalize"
+let read_weak_ref x : session =
+  match Weak.get x 0 with
+  | Some y -> y
+  | None -> raise (Failure "Internal error: weak reference is dead")
+let adjust_retcode = fun session check_recoverable f x ->
+  try f x; 0
+  with
+  | RecoverableFailure when check_recoverable -> 1
+  | e -> (session.exn_temp <- Some e; -1)
+let call_resfn session t y y' res =
+  let session = read_weak_ref session in
+  adjust_retcode session true (session.resfn t y y') res
+let call_rootsfn session t y y' roots =
+  let session = read_weak_ref session in
+  adjust_retcode session false (session.rootsfn t y y') roots
+let call_errw session y ewt =
+  let session = read_weak_ref session in
+  adjust_retcode session false (session.errw y) ewt
+let call_errh session details =
+  let session = read_weak_ref session in
+  try session.errh details
+  with e ->
+    prerr_endline ("Warning: error handler function raised an exception.  " ^
+                   "This exception will not be propagated.")
+let call_jacfn session jac j =
+  let session = read_weak_ref session in
+  adjust_retcode session true (session.jacfn jac) j
+let call_bandjacfn session jac mupper mlower j =
+  let session = read_weak_ref session in
+  adjust_retcode session true (session.bandjacfn jac mupper mlower) j
+let call_presetupfn session jac =
+  let session = read_weak_ref session in
+  adjust_retcode session true session.presetupfn jac
+let call_presolvefn session jac r z delta =
+  let session = read_weak_ref session in
+  adjust_retcode session true (session.presolvefn jac r z) delta
+let call_jactimesfn session jac r z =
+  let session = read_weak_ref session in
+  adjust_retcode session true (session.jactimesfn jac r) z
+let _ =
+  Callback.register "c_ba_ida_call_resfn"         call_resfn;
+  Callback.register "c_ba_ida_call_rootsfn"       call_rootsfn;
+  Callback.register "c_ba_ida_call_errh"          call_errh;
+  Callback.register "c_ba_ida_call_errw"          call_errw;
+  Callback.register "c_ba_ida_call_jacfn"         call_jacfn;
+  Callback.register "c_ba_ida_call_bandjacfn"     call_bandjacfn;
+  Callback.register "c_ba_ida_call_presetupfn"    call_presetupfn;
+  Callback.register "c_ba_ida_call_presolvefn"    call_presolvefn;
+  Callback.register "c_ba_ida_call_jactimesfn"    call_jactimesfn;
 
 (* FIXME: isn't it better to separate out IDARootInit(), since it's
    optional in the C interface?  *)
-external external_init
-  : linear_solver -> nvec -> nvec -> int -> int -> float -> (ida_mem * ida_file)
+external c_init
+  : 'a Weak.t -> linear_solver -> nvec -> nvec -> int -> int -> float
+    -> (ida_mem * c_weak_ref * ida_file)
   = "c_ba_ida_init_bytecode" "c_ba_ida_init"
 
 let init' linsolv resfn (nroots, roots) y y' t0 =
@@ -77,9 +130,11 @@ let init' linsolv resfn (nroots, roots) y y' t0 =
    * they don't.  *)
   if neqs <> Sundials.Carray.length y' then
     raise (Invalid_argument "y and y' have inconsistent sizes");
-  let (ida_mem, err_file) =
-    external_init linsolv y y' neqs nroots t0 in
+  let weak_ptr_to_session = Weak.create 1 in
+  let (ida_mem, backref, err_file) =
+    c_init weak_ptr_to_session linsolv y y' neqs nroots t0 in
   let session = { ida        = ida_mem;
+                  backref    = backref;
                   neqs       = neqs;
                   nroots     = nroots;
                   err_file   = err_file;
@@ -96,94 +151,10 @@ let init' linsolv resfn (nroots, roots) y y' t0 =
                 }
   in
   Gc.finalise session_finalize session;
+  Weak.set weak_ptr_to_session 0 (Some session);
   session
 
 let init linsolv resfn roots y yp = init' linsolv resfn roots y yp 0.
-(*
-  module SessionTable : sig
-  val proto_init :
-  lmm
-  -> iter
-  -> (float -> val_array -> der_array -> unit)
-  -> (int * (float -> val_array -> root_val_array -> unit))
-  -> nvec
-  -> float
-  -> session
-  end = 
-  struct
-
-  let session_table = ref (Weak.create 10 : session Weak.t)
-
-  let add_session ida neqs nroots err_file =
-  let length = Weak.length !session_table in
-  let rec find_next i =
-  if i < length
-  then (if Weak.check !session_table i then find_next (i + 1) else i)
-  else
-  let session_table' = Weak.create (2 * length) in
-  Weak.blit !session_table 0 session_table' 0 length;
-  session_table := session_table';
-  i in
-  let idx = find_next 0 in
-  let session = {
-  ida      = ida;
-  neqs       = neqs;
-  nroots     = nroots;
-  err_file   = err_file;
-
-  resfn      = (fun _ _ _ -> ());
-  rootsfn    = (fun _ _ _ -> ());
-  errh       = (fun _ -> ());
-  errw       = (fun _ _ -> ());
-  jacfn      = (fun _ _ -> ());
-  bandjacfn  = (fun _ _ _ _ -> ());
-  presetupfn = (fun _ _ _ -> false);
-  presolvefn = (fun _ _ _ -> ());
-  jactimesfn = (fun _ _ _ -> ());
-  } in
-  Weak.set !session_table idx (Some session);
-  session
-
-  let get_session idx =
-  match Weak.get !session_table idx with
-  None -> raise Not_found
-  | Some s -> s
-
-  let session_resfn idx      = (get_session idx).resfn
-  let session_errh idx       = (get_session idx).errh
-  let session_errw idx       = (get_session idx).errw
-  let session_jacfn idx      = (get_session idx).jacfn
-  let session_bandjacfn idx  = (get_session idx).bandjacfn
-  let session_presetupfn idx = (get_session idx).presetupfn
-  let session_presolvefn idx = (get_session idx).presolvefn
-  let session_jactimesfn idx = (get_session idx).jactimesfn
-
-  let _ = Callback.register "c_ba_ida_ml_session"    get_session;
-  Callback.register "c_ba_ida_ml_resfn"      session_resfn;
-  Callback.register "c_ba_ida_ml_errh"       session_errh;
-  Callback.register "c_ba_ida_ml_errw"       session_errw;
-  Callback.register "c_ba_ida_ml_jacfn"      session_jacfn;
-  Callback.register "c_ba_ida_ml_bandjacfn"  session_bandjacfn;
-  Callback.register "c_ba_ida_ml_presetupfn" session_presetupfn;
-  Callback.register "c_ba_ida_ml_presolvefn" session_presolvefn;
-  Callback.register "c_ba_ida_ml_jactimesfn" session_jactimesfn
-
-  let proto_init lmm iter f (num_roots, roots) y0 t0 =
-  let num_eqs = Sundials.Carray.length y0 in
-  let ida, errfile = external_init lmm iter y0 num_eqs num_roots t0 in
-  let s = add_session ida num_eqs num_roots errfile in
-  Gc.finalise session_finalize s;
-  s.resfn <- f;
-  s.rootsfn <- roots;
-  set_user_data s;
-  s
-
-  end
-
-  let init' = SessionTable.proto_init
-  let init lmm iter f roots n_y0 =
-  SessionTable.proto_init lmm iter f roots n_y0 0.0
- *)
 
 let nroots { nroots } = nroots
 let neqs { neqs } = neqs

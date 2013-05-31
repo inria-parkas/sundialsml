@@ -277,7 +277,8 @@ val set_error_file : session -> string -> bool -> unit
 
 (**
   [set_err_handler_fn s efun] specifies a custom function [efun] for handling
-  error messages.
+  error messages.  The error handler function must not fail -- any exceptions
+  raised from it will be captured and silently discarded.
 
   @ida <node5#sss:optin_main> IDASetErrHandlerFn
   @ida <node5#ss:ehFn> Error message handler function

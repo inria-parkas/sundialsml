@@ -33,6 +33,7 @@ void ida_ml_set_linear_solver(void *ida_mem, value ls, int n);
  * the session type's member declaration.  */
 enum ida_index {
     RECORD_IDA_SESSION_MEM = 0,
+    RECORD_IDA_SESSION_BACKREF,
     RECORD_IDA_SESSION_NEQS,
     RECORD_IDA_SESSION_NROOTS,
     RECORD_IDA_SESSION_ERRFILE,

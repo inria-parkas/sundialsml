@@ -26,6 +26,14 @@
 #include <ida/ida_dense.h>
 #include <ida/ida_band.h>
 #include <ida/ida_spgmr.h>
+#include <ida/ida_lapack.h>
+#include <ida/ida_spgmr.h>
+#include <ida/ida_sptfqmr.h>
+#include <ida/ida_spbcgs.h>
+#include <ida/ida_lapack.h>
+#include <sundials/sundials_config.h>
+
+#include <nvector/nvector_serial.h>
 
 #include "ida_ml.h"
 #include "nvector_ml.h"
@@ -61,6 +69,11 @@
 #define QUOTE(val) DOQUOTE(val)
 #define IDATYPESTR(fname) QUOTE(IDATYPE(fname))
 
+#define CAML_FN(name)					\
+    static value *name;					\
+    if (name == NULL)					\
+	name = caml_named_value (IDATYPESTR (name));
+
 #define Val_none (Val_int(0))
 
 static void errh(
@@ -72,10 +85,9 @@ static void errh(
 {
     CAMLparam0();
     CAMLlocal1(a);
+    value *backref = eh_data;
 
-    static value *ida_ml_errh;
-    if (ida_ml_errh == NULL)
-	ida_ml_errh = caml_named_value(IDATYPESTR(ida_ml_errh));
+    CAML_FN (call_errh);
 
     a = caml_alloc_tuple(RECORD_IDA_ERROR_DETAILS_SIZE);
     Store_field(a, RECORD_IDA_ERROR_DETAILS_ERROR_CODE,
@@ -87,7 +99,7 @@ static void errh(
     Store_field(a, RECORD_IDA_ERROR_DETAILS_ERROR_MESSAGE,
 		caml_copy_string(msg));
 
-    caml_callback2(*ida_ml_errh, Val_long((long int)eh_data), a);
+    caml_callback2_exn (*call_errh, *backref, a);
 
     CAMLreturn0;
 }
@@ -112,94 +124,30 @@ CAMLprim void IDATYPE(clear_err_handler_fn)(value vdata)
     CAMLreturn0;
 }
 
-/* To be called on the return value of a user-supplied callback function.
- * Saves any exceptions before returning an appropriate return code.
- *
- * IDA requires the following callbacks from the user (some are optional):
- *  - the residual function
- *  - Jacobian function
- *  - the roots function
- * In IDA's C interface, the residual and Jacobian functions must return 0 for
- * success, 1 for recoverable error (meaning the integrator should retry with
- * different parameters), and -1 for unrecoverable error (meaning the
- * integrator should abort).  The roots function has a similar protocol except
- * that all nonzero exit code aborts the integrator.
- *
- * In the OCaml interface, these functions should instead return unit for
- * success, raise RecoverableFailure for recoverable error, and raise any other
- * exception for unrecoverable error.  The following function, callback_return,
- * implements this interface.  If the returned value is not an exception, it
- * simply returns 0.  It returns 1 if RecoverableFailure was raised and
- * check_recoverable is true.  Otherwise, stores the exception in the session
- * structure and returns -1.  In the last case, the stored exception should be
- * extracted and re-raised after execution leaves the integrator.
- */
-enum cbr_flag {			/* Use this enum for the last parameter. */
-    DONT_CHECK_RECOVERABLE = 0,
-    CHECK_RECOVERABLE = 1
-};
-static int callback_return (value *session, value r,
-			    enum cbr_flag check_recoverable)
-{
-    CAMLparam1(r);
-    CAMLlocal1(exn);
-
-    static value *recoverable_failure = NULL;
-
-    /* The OCaml function may have recursively called the solver on the same
-     * session instance, which would overwrite the user data.  We need to be
-     * conservative and reinstate the user data here.
-     *
-     * FIXME: note there's no IDAGetUserData() so we can't rely on the
-     * recursive call to re-establish the previous value of the user data
-     * (right now the field is always reset to NULL).  However, perhaps we
-     * could cast the mem pointer to IDAMem and access the user data field
-     * directly.  I don't know if that kind of usage for IDAMem is supposed
-     * to be legitimate, though.  */
-    IDASetUserData (IDA_MEM_FROM_ML (*session), session);
-
-    if (!Is_exception_result(r)) return 0;
-
-    r = Extract_exception(r);
-
-    if (check_recoverable) {
-	if (recoverable_failure == NULL) {
-	    recoverable_failure =
-		caml_named_value("ida_RecoverableFailure");
-	}
-	if (Field(r, 0) == *recoverable_failure)
-	    CAMLreturnT (int, 1);
-    }
-
-    /* Unrecoverable error.  Save the exception and return -1.  */
-    exn = caml_alloc_small (1,0);
-    Field (exn,0) = r;
-    Store_field (*session, RECORD_IDA_SESSION_EXN_TEMP, exn);
-    CAMLreturnT (int, -1);
-}
-
 static int resfn (realtype t, N_Vector y, N_Vector yp,
 		  N_Vector resval, void *user_data)
 {
     CAMLparam0 ();
-    CAMLlocal1 (r);
-    CAMLlocalN (args, 4);
-    value *session = (value *)user_data;
+    CAMLlocalN (args, 5);
+    int r;
+    value *backref = (value *)user_data;
+    CAML_FN (call_resfn);
 
-    args[0] = caml_copy_double(t);
-    args[1] = WRAP_NVECTOR (y);
-    args[2] = WRAP_NVECTOR (yp);
-    args[3] = WRAP_NVECTOR (resval);
+    args[0] = *backref;
+    args[1] = caml_copy_double(t);
+    args[2] = WRAP_NVECTOR (y);
+    args[3] = WRAP_NVECTOR (yp);
+    args[4] = WRAP_NVECTOR (resval);
 
-    r = caml_callbackN_exn (Field (*session, RECORD_IDA_SESSION_RESFN),
-			    sizeof (args) / sizeof (*args),
-			    args);
+    r = Int_val (caml_callbackN (*call_resfn,
+				 sizeof (args) / sizeof (*args),
+				 args));
 
-    RELINQUISH_WRAPPEDNV (args[1]);
     RELINQUISH_WRAPPEDNV (args[2]);
     RELINQUISH_WRAPPEDNV (args[3]);
+    RELINQUISH_WRAPPEDNV (args[4]);
 
-    CAMLreturnT (int, callback_return (session, r, CHECK_RECOVERABLE));
+    CAMLreturnT (int, r);
 }
 
 static value make_jac_arg(realtype t, realtype coef, N_Vector y, N_Vector yp,
@@ -242,11 +190,10 @@ static value make_double_tmp(N_Vector tmp1, N_Vector tmp2)
     CAMLreturn(r);
 }
 
-static void relinquish_jac_arg(value arg)
+static void relinquish_jac_arg(value arg, int tmp_size)
 {
     CAMLparam0();
     CAMLlocal1(tmp);
-    int i;
 
     RELINQUISH_WRAPPEDNV(Field(arg, RECORD_IDA_JACOBIAN_ARG_JAC_Y));
     RELINQUISH_WRAPPEDNV(Field(arg, RECORD_IDA_JACOBIAN_ARG_JAC_YP));
@@ -254,8 +201,20 @@ static void relinquish_jac_arg(value arg)
 
     tmp = Field(arg, RECORD_IDA_JACOBIAN_ARG_JAC_TMP);
 
-    for (i = 0; i < Wosize_val (tmp); ++i)
-	RELINQUISH_WRAPPEDNV(Field(tmp, i));
+    switch (tmp_size) {
+    case 1:
+	RELINQUISH_WRAPPEDNV (tmp);
+	break;
+    case 3:
+	RELINQUISH_WRAPPEDNV (Field (tmp, 2));
+	/*FALLTHROUGH*/
+    case 2:
+	RELINQUISH_WRAPPEDNV (Field (tmp, 1));
+	RELINQUISH_WRAPPEDNV (Field (tmp, 0));
+	break;
+    default:
+	abort ();
+    }
 
     CAMLreturn0;
 }
@@ -266,20 +225,24 @@ static int jacfn (long int neq, realtype t, realtype coef,
 		  N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
 {
     CAMLparam0 ();
-    CAMLlocal3 (arg, vjac, r);
-    value *session = (value *)user_data;
+    CAMLlocalN (args, 3);
+    int r;
+    value *backref = (value *)user_data;
+    CAML_FN (call_jacfn);
 
-    arg = make_jac_arg (t, coef, y, yp, res,
-			make_triple_tmp (tmp1, tmp2, tmp3));
-    vjac = caml_alloc_final (2, NULL, 0, 1);
-    Store_field (vjac, 1, (value)jac);
+    args[0] = *backref;
+    args[1] = make_jac_arg (t, coef, y, yp, res,
+			    make_triple_tmp (tmp1, tmp2, tmp3));
+    args[2] = caml_alloc_final (2, NULL, 0, 1);
+    Store_field (args[2], 1, (value)jac);
 
-    r = caml_callback2_exn (Field (*session, RECORD_IDA_SESSION_JACFN),
-			    arg, vjac);
+    r = Int_val (caml_callbackN (*call_jacfn,
+				 sizeof (args) / sizeof (*args),
+				 args));
 
-    relinquish_jac_arg (arg);
+    relinquish_jac_arg (args[1], 3);
 
-    CAMLreturn (callback_return (session, r, CHECK_RECOVERABLE));
+    CAMLreturnT (int, r);
 }
 
 static int bandjacfn (long int neq, long int mupper, long int mlower,
@@ -287,53 +250,98 @@ static int bandjacfn (long int neq, long int mupper, long int mlower,
 		      N_Vector res, DlsMat jac, void *user_data,
 		      N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
 {
-    value *session = (value *)user_data;
-    caml_failwith ("to be implemented");
-    IDASetUserData (IDA_MEM_FROM_ML (*session), user_data);
+    CAMLparam0 ();
+    CAMLlocalN (args, 5);
+    int r;
+    value *backref = (value *)user_data;
+    CAML_FN (call_bandjacfn);
+
+    args[0] = *backref;
+    args[1] = make_jac_arg (t, coef, y, yp, res,
+			    make_triple_tmp (tmp1, tmp2, tmp3));
+    args[2] = Val_int (mupper);
+    args[3] = Val_int (mlower);
+    args[4] = caml_alloc_final (2, NULL, 0, 1);
+    Store_field (args[4], 1, (value)jac);
+
+    r = Int_val (caml_callbackN (*call_bandjacfn,
+				 sizeof (args) / sizeof (*args),
+				 args));
+
+    relinquish_jac_arg (args[1], 3);
+
+    CAMLreturnT (int, r);
 }
 
+CAMLprim void IDATYPE (dump) (value v)
+{
+    CAMLparam1 (v);
+    fprintf (stderr, "#- %p ", (void*)v);
+    if (Is_block (v)) {
+	int i, n;
+	n = Wosize_val (v);
+	if (n > RECORD_IDA_SESSION_SIZE) n = RECORD_IDA_SESSION_SIZE;
+	fprintf (stderr, " -> [");
+	for (i = 0; i < n - 1; ++i)
+	    fprintf (stderr, "%p, ", (void*)Field (v, i));
+	if (i < n)
+	    fprintf (stderr, "%p", (void*)Field (v, i));
+	if (++i < Wosize_val (v))
+	    fprintf (stderr, ", ...");
+	fprintf (stderr, "]");
+    }
+    fprintf (stderr, "-#\n");
+    fflush (stderr);
+    CAMLreturn0;
+}
+
+CAMLprim value caml_weak_get (value ar, value n);
 static int rootsfn (realtype t, N_Vector y, N_Vector yp,
 		    realtype *gout, void *user_data)
 {
     CAMLparam0 ();
-    CAMLlocalN (args, 4);
-    CAMLlocal4 (r, vy, vyp, roots);
-    value *session = (value *)user_data;
-    intnat nroots = Field (*session, RECORD_IDA_SESSION_NEQS);
+    CAMLlocalN (args, 5);
+    value *backref = (value *)user_data;
+    intnat nroots = NV_LENGTH_S (y);
+    int r;
+    CAML_FN (call_rootsfn);
 
-    args[0] = caml_copy_double (t);
-    args[1] = WRAP_NVECTOR (y);
-    args[2] = WRAP_NVECTOR (yp);
-    args[3] = caml_ba_alloc (BIGARRAY_FLOAT, 1, gout, &nroots);
+    args[0] = *backref;
+    args[1] = caml_copy_double (t);
+    args[2] = WRAP_NVECTOR (y);
+    args[3] = WRAP_NVECTOR (yp);
+    args[4] = caml_ba_alloc (BIGARRAY_FLOAT, 1, gout, &nroots);
 
-    r = caml_callbackN_exn (Field (*session, RECORD_IDA_SESSION_ROOTSFN),
-			    sizeof (args) / sizeof (*args),
-			    args);
+    r = Int_val (caml_callbackN (*call_rootsfn,
+				 sizeof (args) / sizeof (*args),
+				 args));
 
-    RELINQUISH_WRAPPEDNV (args[1]);
     RELINQUISH_WRAPPEDNV (args[2]);
+    RELINQUISH_WRAPPEDNV (args[3]);
 
-    CAMLreturn (callback_return (session, r, DONT_CHECK_RECOVERABLE));
+    CAMLreturnT (int, r);
 }
 
 static int errw(N_Vector y, N_Vector ewt, void *user_data)
 {
     CAMLparam0();
-    CAMLlocal3(y_d, ewt_d, r);
+    CAMLlocalN(args, 3);
+    int r;
+    value *backref = user_data;
+    CAML_FN (call_errw);
 
-    value *session = user_data;
+    args[0] = *backref;
+    args[1] = WRAP_NVECTOR(y);
+    args[2] = WRAP_NVECTOR(ewt);
 
-    y_d = WRAP_NVECTOR(y);
-    ewt_d = WRAP_NVECTOR(ewt);
+    r = Int_val (caml_callbackN (*call_errw,
+				 sizeof (args) / sizeof (*args),
+				 args));
 
-    r = caml_callback2_exn(IDA_ERRW_FROM_ML (*session), y_d, ewt_d);
+    RELINQUISH_WRAPPEDNV(args[1]);
+    RELINQUISH_WRAPPEDNV(args[2]);
 
-    RELINQUISH_WRAPPEDNV(y_d);
-    RELINQUISH_WRAPPEDNV(ewt_d);
-
-    IDASetUserData (IDA_MEM_FROM_ML (*session), session);
-
-    CAMLreturn(callback_return(session, r, DONT_CHECK_RECOVERABLE));
+    CAMLreturnT(int, r);
 }
 
 static int presetupfn(
@@ -348,23 +356,21 @@ static int presetupfn(
     N_Vector tmp3)
 {
     CAMLparam0();
-    CAMLlocal2(arg, r);
-    value *session = user_data;
+    CAMLlocalN(args, 2);
+    int r;
+    value *backref = user_data;
+    CAML_FN (call_presetupfn);
 
-#if 0
-    static value *cvode_ml_presetupfn;
-    if (cvode_ml_presetupfn == NULL)
-	cvode_ml_presetupfn = caml_named_value(CVTYPESTR(cvode_ml_presetupfn));
-#endif
+    args[0] = *backref;
+    args[1] = make_jac_arg(t, cj, y, yp, res,
+			   make_triple_tmp(tmp1, tmp2, tmp3));
+    r = Int_val (caml_callbackN (*call_presetupfn,
+				 sizeof (args) / sizeof (*args),
+				 args));
 
-    arg = make_jac_arg(t, cj, y, yp, res, make_triple_tmp(tmp1, tmp2, tmp3));
-    r = caml_callback_exn(Field (IDA_MEM_FROM_ML (*session),
-				 RECORD_IDA_SESSION_PRESETUPFN),
-			  arg);
+    relinquish_jac_arg(args[1], 3);
 
-    relinquish_jac_arg(arg);
-
-    CAMLreturn(callback_return(session, r, CHECK_RECOVERABLE));
+    CAMLreturnT(int, r);
 }
 
 static int presolvefn(
@@ -380,25 +386,26 @@ static int presolvefn(
 	N_Vector tmp)
 {
     CAMLparam0();
-    CAMLlocal1(rv);
-    CAMLlocalN(args, 4);
-    value *session = user_data;
+    CAMLlocalN(args, 5);
+    value *backref = user_data;
+    int rv;
+    CAML_FN (call_presolvefn);
 
-    args[0] = make_jac_arg(t, cj, y, yp, res, WRAP_NVECTOR(tmp));
-    args[1] = WRAP_NVECTOR(r);
-    args[2] = WRAP_NVECTOR(z);
-    args[3] = caml_copy_double (delta);
+    args[0] = *backref;
+    args[1] = make_jac_arg(t, cj, y, yp, res, WRAP_NVECTOR(tmp));
+    args[2] = WRAP_NVECTOR(r);
+    args[3] = WRAP_NVECTOR(z);
+    args[4] = caml_copy_double (delta);
 
-    rv = caml_callbackN_exn(Field (IDA_MEM_FROM_ML (*session),
-				   RECORD_IDA_SESSION_PRESOLVEFN),
-			    sizeof (args) / sizeof (*args),
-			    args);
+    rv = Int_val (caml_callbackN (*call_presolvefn,
+				  sizeof (args) / sizeof (*args),
+				  args));
 
-    relinquish_jac_arg(args[0]);
-    RELINQUISH_WRAPPEDNV(args[1]);
+    relinquish_jac_arg(args[1], 1);
     RELINQUISH_WRAPPEDNV(args[2]);
+    RELINQUISH_WRAPPEDNV(args[3]);
 
-    CAMLreturn(callback_return(session, rv, CHECK_RECOVERABLE));
+    CAMLreturnT (int, rv);
 }
 
 static int jactimesfn(
@@ -413,24 +420,25 @@ static int jactimesfn(
     N_Vector tmp1, N_Vector tmp2)
 {
     CAMLparam0();
-    CAMLlocal1(r);
     CAMLlocalN(args, 4);
-    value *session = user_data;
+    int r;
+    value *backref = user_data;
+    CAML_FN (call_jactimesfn);
 
-    args[0] = make_jac_arg(t, cj, y, yp, res, make_double_tmp (tmp1, tmp2));
-    args[1] = WRAP_NVECTOR(v);
-    args[2] = WRAP_NVECTOR(Jv);
+    args[0] = *backref;
+    args[1] = make_jac_arg(t, cj, y, yp, res, make_double_tmp (tmp1, tmp2));
+    args[2] = WRAP_NVECTOR(v);
+    args[3] = WRAP_NVECTOR(Jv);
 
-    r = caml_callbackN_exn(Field (IDA_MEM_FROM_ML (*session),
-				  RECORD_IDA_SESSION_JACTIMESFN),
-			   sizeof (args) / sizeof (*args),
-			   args);
+    r = Int_val (caml_callbackN (*call_jactimesfn,
+				 sizeof (args) / sizeof (*args),
+				 args));
 
-    relinquish_jac_arg(args[1]);
+    relinquish_jac_arg(args[1], 2);
     RELINQUISH_WRAPPEDNV(args[2]);
     RELINQUISH_WRAPPEDNV(args[3]);
 
-    CAMLreturn(callback_return(session, r, DONT_CHECK_RECOVERABLE));
+    CAMLreturnT (int, r);
 }
 
 
@@ -502,51 +510,151 @@ CAMLprim void IDATYPE(clear_jac_times_vec_fn)(value vdata)
     CAMLreturn0;
 }
 
+/* Cleanup incompletely initialized IDA memory upon failure.  */
+static void cleanup_failed_init (void *mem, value *backref)
+{
+    if (backref) {
+	caml_remove_generational_global_root (backref);
+	free (backref);
+    }
+    IDAFree (mem);
+}
 
 /* IDAInit + IDARootInit + linear solver setup.  The residual and root
  * functions are set to C stubs; the actual functions should be assigned to the
  * ida_session record to be created on the OCaml side.  */
-CAMLprim value IDATYPE (init) (value linsolver, value vy, value vyp,
-			       value vneqs, value vnroots, value vt0)
+CAMLprim value IDATYPE (init) (value weakref, value linsolver, value vy,
+			       value vyp, value vneqs, value vnroots, value vt0)
 {
-    CAMLparam5 (linsolver, vy, vyp, vneqs, vnroots);
-    CAMLxparam1 (vt0);
+    CAMLparam5 (weakref, linsolver, vy, vyp, vneqs);
+    CAMLxparam2 (vnroots, vt0);
     CAMLlocal1 (r);
     int flag;
     N_Vector y, yp;
     int neqs = Int_val (vneqs);
     int nroots = Int_val (vnroots);
+    void *ida_mem = NULL;
+    value *backref = NULL;
 
-    void *ida_mem = IDACreate ();
+    ida_mem = IDACreate ();
     if (ida_mem == NULL) {
 	caml_failwith ("IDACreate failed");
     }
+
+#define CHECK_FLAG_FIN(call, flag)			\
+    do							\
+	if (flag != IDA_SUCCESS) {			\
+	    cleanup_failed_init (ida_mem, backref);	\
+	    ida_ml_check_flag (call, flag);		\
+	}						\
+    while (0)
 
     y = NVECTORIZE_VAL (vy);
     yp = NVECTORIZE_VAL (vyp);
     flag = IDAInit (ida_mem, resfn, Double_val (vt0), y, yp);
     RELINQUISH_NVECTORIZEDVAL (y);
     RELINQUISH_NVECTORIZEDVAL (yp);
-    CHECK_FLAG ("IDAInit", flag);
+    CHECK_FLAG_FIN ("IDAInit", flag);
 
     flag = IDARootInit (ida_mem, nroots, rootsfn);
-    CHECK_FLAG ("IDARootInit", flag);
+    CHECK_FLAG_FIN ("IDARootInit", flag);
 
-    ida_ml_set_linear_solver (ida_mem, linsolver, neqs);
+    /* NB: the user data must be set before specifying the linear solver, so
+     * don't move this code down.  */
+    backref = malloc (sizeof (*backref));
+    if (backref == NULL) {
+	IDAFree (ida_mem);
+	caml_failwith ("Out of memory");
+    }
+    *backref = weakref;
+    caml_register_generational_global_root (backref);
+    IDASetUserData (ida_mem, backref);
+
+    if (Is_block(linsolver)) {
+	value arg = Field (linsolver, 0);
+
+	switch (Tag_val(linsolver)) {
+	case VARIANT_IDA_LINEAR_SOLVER_BAND:
+	    flag = IDABand(ida_mem, neqs,
+			   Long_val(Field (arg, 0)),
+			   Long_val(Field (arg, 1)));
+	    CHECK_FLAG_FIN("IDABand", flag);
+	    break;
+
+	case VARIANT_IDA_LINEAR_SOLVER_LAPACKBAND:
+#if SUNDIALS_BLAS_LAPACK == 1
+	    flag = IDALapackBand(ida_mem, neqs,
+				 Long_val(Field (arg, 0)),
+				 Long_val(Field (arg, 1)));
+	    CHECK_FLAG_FIN("IDALapackBand", flag);
+#else
+	    cleanup_failed_init (ida_mem, backref);
+	    caml_failwith("Lapack solvers are not available.");
+#endif
+	    break;
+
+	case VARIANT_IDA_LINEAR_SOLVER_SPGMR:
+	    flag = IDASpgmr(ida_mem, Int_val(arg));
+	    CHECK_FLAG_FIN("IDASpgmr", flag);
+	    break;
+
+	case VARIANT_IDA_LINEAR_SOLVER_SPBCG:
+	    flag = IDASpbcg(ida_mem, Int_val(arg));
+	    CHECK_FLAG_FIN("IDASpbcg", flag);
+	    break;
+
+	case VARIANT_IDA_LINEAR_SOLVER_SPTFQMR:
+	    flag = IDASptfqmr(ida_mem, Int_val(arg));
+	    CHECK_FLAG_FIN("IDASPtfqmr", flag);
+	    break;
+
+	default:
+	    cleanup_failed_init (ida_mem, backref);
+	    caml_failwith("Illegal linear solver block value.");
+	    break;
+	}
+
+    } else {
+	switch (Int_val(linsolver)) {
+	case VARIANT_IDA_LINEAR_SOLVER_DENSE:
+	    flag = IDADense(ida_mem, neqs);
+	    CHECK_FLAG_FIN("IDADense", flag);
+	    break;
+
+	case VARIANT_IDA_LINEAR_SOLVER_LAPACKDENSE:
+#if SUNDIALS_BLAS_LAPACK == 1
+	    flag = IDALapackDense(ida_mem, neqs);
+	    CHECK_FLAG_FIN("IDALapackDense", flag);
+#else
+	    cleanup_failed_init (ida_mem, backref);
+	    caml_failwith("Lapack solvers are not available.");
+#endif
+	    break;
+
+	default:
+	    cleanup_failed_init (ida_mem, backref);
+	    caml_failwith("Illegal linear solver value.");
+	    break;
+	}
+    }
 
     flag = IDASStolerances (ida_mem, RCONST (1.0e-4), RCONST (1.0e-8));
-    CHECK_FLAG ("IDASStolerances", flag);
+    CHECK_FLAG_FIN ("IDASStolerances", flag);
 
-    r = caml_alloc_tuple(2);
+#undef CHECK_FLAG_FIN
+
+    r = caml_alloc_tuple(3);
     Store_field(r, 0, (value)ida_mem);
-    Store_field(r, 1, (value)NULL); // no err_file = NULL
+    Store_field(r, 1, (value)backref);
+    Store_field(r, 2, (value)NULL); // no err_file = NULL
 
     CAMLreturn (r);
 }
 
 CAMLprim value IDATYPE(init_bytecode) (value args[], int n)
 {
-    return IDATYPE(init)(args[0], args[1], args[2], args[3], args[4], args[5]);
+    return IDATYPE(init)(args[0], args[1], args[2], args[3], args[4],
+			 args[5], args[6]);
 }
 
 CAMLprim void IDATYPE(sv_tolerances) (value ida_mem, value vrtol, value vavtol)
@@ -588,18 +696,12 @@ static value solve (value vdata, value nextt, value vy, value vyp, int onestep)
     N_Vector y, yp;
     enum ida_solver_result_tag result;
 
-    IDASetUserData (ida_mem, &vdata);
-
     y = NVECTORIZE_VAL (vy);
     yp = NVECTORIZE_VAL (vyp);
     flag = IDASolve (ida_mem, Double_val (nextt), &tret, y, yp,
 	             onestep ? IDA_ONE_STEP : IDA_NORMAL);
     RELINQUISH_NVECTORIZEDVAL (y);
     RELINQUISH_NVECTORIZEDVAL (yp);
-
-    /* For precaution; if we screw up somewhere, we'll promptly segfault
-     * rather than follow a dangling pointer.  */
-    IDASetUserData (ida_mem, NULL);
 
     switch (flag) {
     case IDA_SUCCESS:
@@ -694,13 +796,7 @@ static void calc_ic (void *ida_mem, value *session, int icopt, realtype tout1)
     CAMLlocal1 (exn);
     int flag;
 
-    IDASetUserData (ida_mem, session);
-
     flag = IDACalcIC (ida_mem, icopt, tout1);
-
-    /* For precaution; if we screw up somewhere, we'll promptly segfault
-     * instead of accessing a dangling pointer.  */
-    IDASetUserData (ida_mem, NULL);
 
     if (flag < 0) {
 	switch (flag) {
