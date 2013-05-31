@@ -225,7 +225,8 @@ let main () =
 
   (* Call IDACreate to initialize solution with SPGMR linear solver.  *)
 
-  let mem = Ida.init' (Ida.Spgmr 5) (res_heat data) Ida.no_roots u u' t0 in
+  let mem = Ida.init_at_time (Ida.Spgmr 5) (res_heat data) Ida.no_roots u u' t0
+  in
   Ida.set_constraints mem constraints;
   Ida.ss_tolerances mem rtol atol;
   Ida.Spils.set_preconditioner mem (p_setup_heat data) (p_solve_heat data);
@@ -250,7 +251,7 @@ let main () =
 
   let tout = ref t1 in
   for iout = 1 to nout do
-    let (tret, flag) = Ida.normal mem !tout u u' in
+    let (tret, flag) = Ida.solve_normal mem !tout u u' in
     print_output mem tret u;
     tout := !tout *. 2.
   done;
@@ -288,7 +289,7 @@ let main () =
   (* Loop over output times, call IDASolve, and print results. *)
   let tout = ref t1 in
   for iout = 1 to nout do
-    let (tret, flag) = Ida.normal mem !tout u u' in
+    let (tret, flag) = Ida.solve_normal mem !tout u u' in
     print_output mem tret u;
     tout := !tout *. 2.
   done;

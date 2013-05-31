@@ -124,7 +124,7 @@ external c_init
     -> (ida_mem * c_weak_ref * ida_file)
   = "c_ba_ida_init_bytecode" "c_ba_ida_init"
 
-let init' linsolv resfn (nroots, roots) y y' t0 =
+let init_at_time linsolv resfn (nroots, roots) y y' t0 =
   let neqs = Sundials.Carray.length y in
   (* IDA doesn't check if y and y' have the same length, and corrupt memory if
    * they don't.  *)
@@ -154,7 +154,7 @@ let init' linsolv resfn (nroots, roots) y y' t0 =
   Weak.set weak_ptr_to_session 0 (Some session);
   session
 
-let init linsolv resfn roots y yp = init' linsolv resfn roots y yp 0.
+let init linsolv resfn roots y yp = init_at_time linsolv resfn roots y yp 0.
 
 let nroots { nroots } = nroots
 let neqs { neqs } = neqs
@@ -177,11 +177,11 @@ let wf_tolerances s ferrw =
 external get_root_info  : session -> root_array -> unit
     = "c_ida_get_root_info"
 
-external normal
+external solve_normal
     : session -> float -> val_array -> der_array -> float * solver_result
     = "c_ba_ida_normal"
 
-external one_step
+external solve_one_step
     : session -> float -> val_array -> der_array -> float * solver_result
     = "c_ba_ida_one_step"
 

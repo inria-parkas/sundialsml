@@ -387,7 +387,8 @@ let main () =
   let mu = nsmx and ml = nsmx in
   let bandrange = { Ida.mupper = mu; Ida.mlower = ml } in
   let mem =
-    Ida.init' (Ida.Band bandrange) (resweb webdata) Ida.no_roots c c' t0 in
+    Ida.init_at_time (Ida.Band bandrange) (resweb webdata) Ida.no_roots c c' t0
+  in
   Ida.ss_tolerances mem rtol atol;
   let tout1 = 0.001 in
   Ida.calc_ic_ya_yd' mem id tout1;
@@ -399,7 +400,7 @@ let main () =
   (* Loop over iout, call IDASolve (normal mode), print selected output. *)
   let tout = ref tout1 in
   for iout = 1 to nout do
-    let (tret, retval) = Ida.normal mem !tout c c' in
+    let (tret, retval) = Ida.solve_normal mem !tout c c' in
     print_output mem c tret;
     if iout < 3 then tout := !tout *. tmult
     else tout := !tout +. tadd

@@ -178,7 +178,7 @@ let main () =
      specify the linear solver.  *)
   let mu = mgrid and ml = mgrid in
   let mem =
-    Ida.init' (Ida.Band { Ida.mupper=mu; Ida.mlower=ml })
+    Ida.init_at_time (Ida.Band { Ida.mupper=mu; Ida.mlower=ml })
       (fun t u u' r -> heatres t u u' r data)
       Ida.no_roots
       u u' t0
@@ -199,7 +199,7 @@ let main () =
   (* Loop over output times, call IDASolve, and print results. *)
   let tout = ref t1 in
   for iout = 1 to nout do
-    let (tret, flag) = Ida.normal mem !tout u u' in
+    let (tret, flag) = Ida.solve_normal mem !tout u u' in
     print_output mem tret u;
     tout := 2. *. !tout
   done;

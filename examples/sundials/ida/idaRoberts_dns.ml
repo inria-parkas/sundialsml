@@ -158,7 +158,7 @@ let main () =
 
   (* Call IDACreate, IDAInit, and IDARootInit to initialize IDA memory with
    * a 2-component root function and the dense direct linear solver.  *)
-  let ida_mem = Ida.init' Ida.Dense resrob (nroots, grob) y y' t0 in
+  let ida_mem = Ida.init_at_time Ida.Dense resrob (nroots, grob) y y' t0 in
   Gc.compact ();
 
   (* Call IDASVtolerances to set tolerances *)
@@ -177,7 +177,7 @@ let main () =
   let r = Roots.get' roots in
 
   while (!iout <> nout) do
-    let (t, flag) = Ida.normal ida_mem !tout y y' in
+    let (t, flag) = Ida.solve_normal ida_mem !tout y y' in
     print_output ida_mem t y;
     match flag with
     | Ida.RootsFound ->

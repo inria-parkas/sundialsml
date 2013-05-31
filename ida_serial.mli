@@ -32,7 +32,7 @@ include module type of Ida
 
 (*STARTINTRO*)
 (** Serial nvector interface to the IDA solver.
- 
+
   Serial vectors are passed between Sundials and Ocaml programs as
   Bigarrays.
   These vectors are manipulated within the solver using the original low-level
@@ -53,9 +53,9 @@ include module type of Ida
     A skeleton of the main program:
     + {b Set vector of initial values}
     {[let y = Ida.Carray.of_array [| 0.0; 0.0; 0.0 |] ]}
-    The length of this vector determines the problem size.    
+    The length of this vector determines the problem size.
     + {b Create and initialize a solver session}
-    {[let s = Ida.init Ida.Adams Ida.Functional f (2, g) y]}
+    {[let s = Ida.init Ida.Dense f (2, g) y]}
     This will initialize a specific linear solver and the root-finding
     mechanism, if necessary.
     + {b Specify integration tolerances (optional)}, e.g.
@@ -65,10 +65,11 @@ include module type of Ida
     Call any of the [set_*] functions to change solver parameters from their
     defaults.
     + {b Advance solution in time}, e.g.
-    {[let (t', result) = Ida.normal s !t y in
+    {[let (t', result) = Ida.solve_normal s !t y in
 ...
 t := t' + 0.1]}
-    Repeatedly call either [normal] or [one_step] to advance the simulation.
+    Repeatedly call either [solve_normal] or [solve_one_step] to advance the
+    simulation.
     + {b Get optional outputs}
     {[let stats = get_integrator_stats s in ...]}
     Call any of the [get_*] functions to examine solver statistics.
@@ -113,7 +114,7 @@ type root_val_array = Sundials.Roots.val_array
                 size of [y0].
 
     The start time defaults to 0. It can be set manually by instead using
-    {!init'}.
+    {!init_at_time}.
 
     This function calls IDACreate, IDAInit, IDARootInit, an appropriate
     linear solver function, and IDASStolerances (with default values for
@@ -173,10 +174,10 @@ val init :
     -> session
 
 (**
-  [init' linsolv roots y0 y'0 t0] is the same as init except that a start time,
-  [t0], can be given explicitly.
+  [init_at_time linsolv roots y0 y'0 t0] is the same as init except that a
+  start time [t0], can be given explicitly.
  *)
-val init' :
+val init_at_time :
     linear_solver
     -> (float -> val_array -> der_array -> val_array -> unit)
     -> (int * (float -> val_array -> der_array -> root_val_array -> unit))
@@ -244,18 +245,20 @@ val wf_tolerances : session -> (val_array -> val_array -> unit) -> unit
    This routine will throw one of the solver {!Ida.exceptions} if an error
    occurs.
 
+   @ida <node5#sss:ida> IDASolve
    @ida <node5#sss:ida> IDA (IDA_NORMAL)
  *)
-val normal :
+val solve_normal :
   session -> float -> val_array -> der_array -> float * solver_result
 
 (**
    This function is identical to {!normal}, except that it returns after one
    internal solver step.
 
+   @ida <node5#sss:ida> IDASolve
    @ida <node5#sss:ida> IDA (IDA_ONE_STEP)
  *)
-val one_step :
+val solve_one_step :
   session -> float -> val_array -> der_array -> float * solver_result
 
 (** {2 Main optional functions} *)
