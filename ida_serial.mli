@@ -756,13 +756,21 @@ module Spils :
               of the function call, then they must be copied to a separate
               physical structure.
 
-      [psolve jac r z] is called to solve the linear system
+      [psolve jac r z delta] is called to solve the linear system
       {i P}[z] = [r], where {i P} is the (left) preconditioner matrix.
       {i P} should approximate, at least crudely, the system Jacobian matrix
       J = dF/dy + {jac.coef} * dF/d(y') where F is the residual function.
       - [jac] supplies the basic problem data as a {!jacobian_arg}.
       - [r] is the right-hand side vector.
       - [z] is the vector in which the result must be stored.
+      - [delta] is an input tolerance.
+
+      [delta] is be used if an iterative method is employed in the solution.
+      In that than case, the residual vector Res = r - {i P} {i z} of the
+      system should be made less than [delta] in weighted l2 norm, i.e.
+        sqrt (sum_i ((Res_i * ewt_i)^2)) < [delta],
+      where the nvector ewt can be obtained through
+      {!Ida_serial.get_err_weights}.
 
       {b NB:} The elements of [jac], [r], and [z] must no longer be accessed
               after [psolve] has returned a result, i.e. if their values are
