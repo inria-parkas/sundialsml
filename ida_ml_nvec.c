@@ -716,7 +716,10 @@ static value solve (value vdata, value nextt, value vy, value vyp, int onestep)
 	result = VARIANT_IDA_SOLVER_RESULT_STOPTIMEREACHED;
 	break;
 
-    case IDA_RES_FAIL:
+    default:
+	/* If an exception was recorded, propagate it.  This accounts for
+	 * almost all failures except for repeated recoverable failures in the
+	 * residue function.  */
 	ret = Field (vdata, RECORD_IDA_SESSION_EXN_TEMP);
 	if (Is_block (ret)) {
 	    Store_field (vdata, RECORD_IDA_SESSION_EXN_TEMP, Val_none);
@@ -725,10 +728,12 @@ static value solve (value vdata, value nextt, value vy, value vyp, int onestep)
 	     * execution.  */
 	    caml_raise (Field (ret, 0));
 	}
-	/*FALLTHROUGH*/
-    default:
 	CHECK_FLAG ("IDASolve", flag);
     }
+
+    /* Hmm...should this go in the production code or not?  */
+    if (Is_block (Field (vdata, RECORD_IDA_SESSION_EXN_TEMP)))
+	abort ();
 
     ret = caml_alloc_tuple (2);
     Store_field (ret, 0, caml_copy_double (tret));
@@ -790,31 +795,26 @@ CAMLprim void IDATYPE(get_est_local_errors)(value vida_mem, value vele)
     CAMLreturn0;
 }
 
-static void calc_ic (void *ida_mem, value *session, int icopt, realtype tout1)
+static void calc_ic (void *ida_mem, value session, int icopt, realtype tout1)
 {
-    CAMLparam0 ();
+    CAMLparam1 (session);
     CAMLlocal1 (exn);
     int flag;
 
     flag = IDACalcIC (ida_mem, icopt, tout1);
 
     if (flag < 0) {
-	switch (flag) {
-	case IDA_RES_FAIL: case IDA_LSETUP_FAIL: case IDA_LSOLVE_FAIL:
-	    /* If an exception is saved in the session, grab it and re-raise. */
-	    exn = Field (*session, RECORD_IDA_SESSION_EXN_TEMP);
-	    if (Is_block (exn)) {
-		Store_field (*session, RECORD_IDA_SESSION_EXN_TEMP, Val_none);
-		/* FIXME: In bytecode, caml_raise() duplicates some parts of
-		 * the stacktrace.  This does not seem to happen in native code
-		 * execution.  */
-		caml_raise (Field (exn, 0));
-	    }
-	    /* Otherwise, raise the generic exception Ida.ResFuncFailure  */
-	    /*FALLTHROUGH*/
-	default:
-	    CHECK_FLAG ("IDACalcIC", flag);
+	/* If an exception is saved in the session, grab it and re-raise. */
+	exn = Field (session, RECORD_IDA_SESSION_EXN_TEMP);
+	if (Is_block (exn)) {
+	    Store_field (session, RECORD_IDA_SESSION_EXN_TEMP, Val_none);
+	    /* FIXME: In bytecode, caml_raise() duplicates some parts of
+	     * the stacktrace.  This does not seem to happen in native code
+	     * execution.  */
+	    caml_raise (Field (exn, 0));
 	}
+	/* Otherwise, raise a generic exception like Ida.ResFuncFailure */
+	CHECK_FLAG ("IDACalcIC", flag);
     }
     CAMLreturn0;
 }
@@ -824,7 +824,7 @@ CAMLprim void IDATYPE(calc_ic_y)(value vida_mem, value tout1)
     CAMLparam2 (vida_mem, tout1);
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
 
-    calc_ic (ida_mem, &vida_mem, IDA_Y_INIT, Double_val (tout1));
+    calc_ic (ida_mem, vida_mem, IDA_Y_INIT, Double_val (tout1));
 
     CAMLreturn0;
 }
@@ -840,7 +840,7 @@ CAMLprim void IDATYPE(calc_ic_ya_ydp)(value vida_mem, value vid, value tout1)
     RELINQUISH_NVECTORIZEDVAL (id);
     CHECK_FLAG ("IDASetId", flag);
 
-    calc_ic (ida_mem, &vida_mem, IDA_YA_YDP_INIT, Double_val (tout1));
+    calc_ic (ida_mem, vida_mem, IDA_YA_YDP_INIT, Double_val (tout1));
     CAMLreturn0;
 }
 
