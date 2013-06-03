@@ -119,7 +119,7 @@ let alph   = one
 let np     = 3
 let ns     = (2 * np)
 
-let (+>+) arr off = Array1.sub arr off ns
+let (+>+) (arr : Carray.t) off = Array1.sub arr off ns
 
 (* Method Constants *)
 
@@ -237,7 +237,7 @@ let fblock wdata t cdata jx jy cdotdata =
 
 (* Small Vector Kernels *)
 
-let v_sum_prods u p q v w =
+let v_sum_prods u p (q : Carray.t) v (w : Carray.t) =
   Carray.mapi (fun i u -> p.(i) *. q.{i} +. v.(i) *. w.{i}) u
 
 (* Functions Called By The Solver *)
@@ -322,10 +322,10 @@ let precond wdata jacarg jok gamma =
   Array.iteri f p;
   true
 
-let v_inc_by_prod u v w =
+let v_inc_by_prod u v (w : Carray.t) =
     Carray.mapi (fun i ui -> ui +. v.(i) *. w.{i}) u
 
-let v_prod u v w =
+let v_prod u v (w : Carray.t) =
     Carray.mapi (fun i _ -> v.(i) *. w.{i}) u
 
 let v_zero u = Carray.fill u zero
@@ -563,7 +563,7 @@ let psolve wdata jac_arg solve_arg z =
  returns it in cdot. The interaction rates are computed by calls to WebRates,
  and these are saved in fsave for use in preconditioning.
 *)
-let f wdata t cdata cdotdata =
+let f wdata t cdata (cdotdata : Carray.t) =
   let ns    = wdata.ns
   and fsave = wdata.fsave
   and cox   = wdata.cox
@@ -710,7 +710,7 @@ let init_user_data wdata =
   set_groups my ngy wdata.jgy wdata.jigy wdata.jyr
 
 (* This routine computes and loads the vector of initial values. *)
-let cinit wdata cdata =
+let cinit wdata (cdata : Carray.t) =
   let ns   = wdata.ns
   and mxns = wdata.mxns
   and dx   = wdata.dx
@@ -766,7 +766,7 @@ let print_header jpre gstype =
   printf"\nGram-Schmidt method type is    gstype = %s\n\n\n"
     (if gstype = Spils.ModifiedGS then "MODIFIED_GS" else "CLASSICAL_GS")
 
-let print_all_species cdata ns mxns t =
+let print_all_species (cdata : Carray.t) ns mxns t =
   printf "c values at t = %g:\n\n" t;
 
   for i = 1 to ns do

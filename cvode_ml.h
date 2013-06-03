@@ -21,6 +21,8 @@
 #ifndef _CVODE_ML_H__
 #define _CVODE_ML_H__
 
+#include "sundials_ml.h"
+
 /* Configuration options */
 #define CHECK_MATRIX_ACCESS 1
 
@@ -104,9 +106,6 @@ value cvode_ml_big_real();
 
 /* Interface with Ocaml types */
 
-#define BIGARRAY_FLOAT (CAML_BA_FLOAT64 | CAML_BA_C_LAYOUT)
-#define BIGARRAY_INT (CAML_BA_INT32 | CAML_BA_C_LAYOUT)
-
 #define RECORD_SESSION_CVODE      0
 #define RECORD_SESSION_USER_DATA  1
 #define RECORD_SESSION_NEQS       2
@@ -185,9 +184,6 @@ value cvode_ml_big_real();
 #define VARIANT_PRECOND_TYPE_PRECLEFT	1
 #define VARIANT_PRECOND_TYPE_PRECRIGHT	2
 #define VARIANT_PRECOND_TYPE_PRECBOTH	3
-
-#define VARIANT_GRAMSCHMIDT_TYPE_MODIFIEDGS  0
-#define VARIANT_GRAMSCHMIDT_TYPE_CLASSICALGS 1
 
 #define VARIANT_PRECONDITIONING_TYPE_PRECNONE	0
 #define VARIANT_PRECONDITIONING_TYPE_PRECLEFT	1

@@ -11,10 +11,16 @@ CC = gcc
 CFLAGS += @cflags@ # -DRESTRICT_INTERNAL_PRECISION"
 LDFLAGS += @ldflags@
 
+CVODE_LDFLAGS = @cvode_ldflags@ @ldflags@
+CVODE_CFLAGS = @cvode_cppflags@ @cflags@
+IDA_LDFLAGS = @ida_ldflags@ @ldflags@
+IDA_CFLAGS = @ida_cppflags@ @cflags@
+
 OCAMLC ?= @OCAMLBIN@ocamlc
 OCAMLFLAGS = @ocamlflags@
 OCAML_INCLUDE := $(shell $(OCAMLC) -where)
-OCAML_LIBLINK= $(LDFLAGS)
+OCAML_CVODE_LIBLINK = $(CVODE_LDFLAGS)
+OCAML_IDA_LIBLINK = $(IDA_LDFLAGS)
 
 PKGDIR = @libdir@sundials/
 STUBDIR= @stubdir@
@@ -23,13 +29,13 @@ DOCDIR = @docdir@sundials_ml
 INSTALL_DOCS = @install_docs@
 
 OCAMLOPT ?= @OCAMLBIN@ocamlopt.opt
-OCAMLOPTFLAGS =
+OCAMLOPTFLAGS = @ocamloptflags@
 
 OCAMLDEP ?= @OCAMLBIN@ocamldep
 OCAMLDOC ?= @OCAMLBIN@ocamldoc
 
-OCAMLMKLIB ?= @OCAMLBIN@ocamlmklib -ocamlc "$(OCAMLC)" -ocamlopt "$(OCAMLOPT)"
-OCAMLMKLIBFLAGS ?= -verbose
+OCAMLMKLIB ?= @OCAMLBIN@ocamlmklib -ocamlc "$(OCAMLC) $(OCAMLFLAGS)" -ocamlopt "$(OCAMLOPT) $(OCAMLOPTFLAGS)"
+OCAMLMKLIBFLAGS ?= @ocamlmklibflags@ -verbose
 
 GNUPLOT = gnuplot
 
@@ -80,13 +86,15 @@ DOCPP = $(SED) \
 .ml.cmx:
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -c $(INCLUDES) $<
 
-.cmo.cma:
-	$(OCAMLC) -a $(OCAMLFLAGS) \
-	    -o $@ -custom $< $(OCAML_LIBLINK)
-
-.cmx.cmxa:
-	$(OCAMLOPT) -a $(OCAMLOPTFLAGS) \
-	    -o $@ $< $(OCAML_LIBLINK)
+# Linking has to be done with different flags for CVODE and IDA.
+#
+#.cmo.cma:
+#	$(OCAMLC) -a $(OCAMLFLAGS) \
+#	    -o $@ -custom $< $(OCAML_LIBLINK)
+#
+#.cmx.cmxa:
+#	$(OCAMLOPT) -a $(OCAMLOPTFLAGS) \
+#	    -o $@ $< $(OCAML_LIBLINK)
 
 .c.o:
 	$(CC) -I $(OCAML_INCLUDE) $(CFLAGS) -o $@ -c $<

@@ -20,10 +20,6 @@
 include Sundials
 include Dls
 
-type lmm =
-  | Adams
-  | BDF
-
 type preconditioning_type =
   | PrecNone
   | PrecLeft
@@ -32,20 +28,16 @@ type preconditioning_type =
 
 type bandrange = { mupper : int; mlower : int }
 
-type sprange = { pretype : preconditioning_type; maxl: int }
+type sprange = int
 
 type linear_solver =
   | Dense
-  | LapackDense
   | Band of bandrange
+  | LapackDense
   | LapackBand of bandrange
-  | Diag
   | Spgmr of sprange
   | Spbcg of sprange
   | Sptfqmr of sprange
-  | BandedSpgmr of sprange * bandrange
-  | BandedSpbcg of sprange * bandrange
-  | BandedSptfqmr of sprange * bandrange
 
 type iter =
   | Newton of linear_solver
@@ -75,18 +67,22 @@ exception ConvergenceFailure
 exception LinearInitFailure
 exception LinearSetupFailure
 exception LinearSolveFailure
-exception RhsFuncErr
-exception FirstRhsFuncFailure
-exception RepeatedRhsFuncErr
-exception UnrecoverableRhsFuncErr
+exception ResFuncFailure
+exception FirstResFuncFailure
+exception RepeatedResFuncErr
+exception UnrecoverableResFuncErr
 exception RootFuncFailure
+
+(* Initial condition calculator exceptions *)
+exception NoRecovery
+exception BadEwt
 
 (* get_dky exceptions *)
 exception BadK
 exception BadT
 exception BadDky
 
-let no_roots = (0, (fun _ _ _ -> ()))
+let no_roots = (0, (fun _ _ _ _ -> ()))
 
 (* Throw inside the f callback if the derivatives cannot be calculated at
    the given time. *)
@@ -94,7 +90,7 @@ exception RecoverableFailure
 
 type integrator_stats = {
     num_steps : int;
-    num_rhs_evals : int;
+    num_res_evals : int;
     num_lin_solv_setups : int;
     num_err_test_fails : int;
     last_order : int;
@@ -112,29 +108,29 @@ exception ZeroDiagonalElement of int
 let _ =
   List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
   [
-    ("cvode_RecoverableFailure",      RecoverableFailure);
+    ("ida_RecoverableFailure",      RecoverableFailure);
 
-    ("cvode_StopTimeReached",         StopTimeReached);
-    ("cvode_IllInput",                IllInput);
-    ("cvode_TooClose",                TooClose);
-    ("cvode_TooMuchWork",             TooMuchWork);
-    ("cvode_TooMuchAccuracy",         TooMuchAccuracy);
-    ("cvode_ErrFailure",              ErrFailure);
-    ("cvode_ConvergenceFailure",      ConvergenceFailure);
-    ("cvode_LinearInitFailure",       LinearInitFailure);
-    ("cvode_LinearSetupFailure",      LinearSetupFailure);
-    ("cvode_LinearSolveFailure",      LinearSolveFailure);
-    ("cvode_RhsFuncErr",              RhsFuncErr);
-    ("cvode_FirstRhsFuncFailure",     FirstRhsFuncFailure);
-    ("cvode_RepeatedRhsFuncErr",      RepeatedRhsFuncErr);
-    ("cvode_UnrecoverableRhsFuncErr", UnrecoverableRhsFuncErr);
-    ("cvode_RootFuncFailure",         RootFuncFailure);
+    ("ida_StopTimeReached",         StopTimeReached);
+    ("ida_IllInput",                IllInput);
+    ("ida_TooClose",                TooClose);
+    ("ida_TooMuchWork",             TooMuchWork);
+    ("ida_TooMuchAccuracy",         TooMuchAccuracy);
+    ("ida_ErrFailure",              ErrFailure);
+    ("ida_ConvergenceFailure",      ConvergenceFailure);
+    ("ida_LinearInitFailure",       LinearInitFailure);
+    ("ida_LinearSetupFailure",      LinearSetupFailure);
+    ("ida_LinearSolveFailure",      LinearSolveFailure);
+    ("ida_ResFuncFailure",          ResFuncFailure);
+    ("ida_FirstResFuncFailure",     FirstResFuncFailure);
+    ("ida_RepeatedResFuncErr",      RepeatedResFuncErr);
+    ("ida_NoRecovery",              NoRecovery);
+    ("ida_BadEwt",                  BadEwt);
+    ("ida_UnrecoverableResFuncErr", UnrecoverableResFuncErr);
+    ("ida_RootFuncFailure",         RootFuncFailure);
 
-    ("cvode_BadK",                    BadK);
-    ("cvode_BadT",                    BadT);
-    ("cvode_BadDky",                  BadDky);
+    ("ida_BadK",                    BadK);
+    ("ida_BadT",                    BadT);
+    ("ida_BadDky",                  BadDky);
 
-    ("cvode_ZeroDiagonalElement",     ZeroDiagonalElement 0);
+    ("ida_ZeroDiagonalElement",     ZeroDiagonalElement 0);
   ]
-
-
