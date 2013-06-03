@@ -175,6 +175,7 @@ ocamlfind: sundials_cvode.cma sundials_cvode.cmxa META
 depend: .depend
 .depend: cvode_nvector.mli
 	$(OCAMLDEP) $(INCLUDES) *.mli *.ml > .depend
+	$(CC) -MM $(CFLAGS) *.c >> .depend
 
 clean:
 	-@(cd examples; make -f Makefile clean)
