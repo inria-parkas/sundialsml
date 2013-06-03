@@ -972,17 +972,17 @@ module Constraints :
   end
 
 (** Variable classification that needs to be specified for computing consistent
- initial values.
+ initial values and for suppressing local error tests on some variables.
 
  @ida <node5#sss:idasetid> IDASetId
  *)
-module Id :
+module VarTypes :
   sig
     (** An abstract array type, whose i-th component specifies whether the i-th
         component of the dependent variable vector y is an algebraic or
         differential variable, for each i.  *)
     type t
-    type component_type =
+    type var_type =
     | Algebraic    (** Algebraic variable; residual function must not depend
                        on this component's derivative.  *)
     | Differential (** Differential variable; residual function can depend on
@@ -993,18 +993,18 @@ module Id :
     val create : int -> t
 
     (** [init n x] returns an array with [n] elements, each set to [x]. *)
-    val init : int -> component_type -> t
+    val init : int -> var_type -> t
 
     (** Returns the length of an array *)
     val length : t -> int
 
     (** [get c i] returns the component type of the i-th variable in the
         DAE.  *)
-    val get : t -> int -> component_type
+    val get : t -> int -> var_type
 
     (** [set c i x] sets the component type of the i-th variable in the DAE to
         [x].  *)
-    val set : t -> int -> component_type -> unit
+    val set : t -> int -> var_type -> unit
 
     (** [set_algebraic c i] sets the component type of the i-th variable in
         the DAE to algebraic.  *)
@@ -1016,13 +1016,101 @@ module Id :
 
     (** [fill c x] fills the array so that all variables will have component
         type [x].  *)
-    val fill : t -> component_type -> unit
+    val fill : t -> var_type -> unit
+
+    (** [blit a b] copies the contents of [a] to [b].  *)
+    val blit : t -> t -> unit
+  end
+
+(** An unpreferred alias for {!VarTypes}.  SUNDIALS calls variable types by the
+    cryptic name "Id", and this OCaml binding preserves this alternative naming
+    to help users transition from the C interface.  *)
+module Id :
+  sig
+    (** An abstract array type, whose i-th component specifies whether the i-th
+        component of the dependent variable vector y is an algebraic or
+        differential variable, for each i.  *)
+    type t = VarTypes.t
+    type var_type = VarTypes.var_type = Algebraic | Differential
+
+    (** [create n] returns an array with [n] elements, each set to
+        Algebraic.  *)
+    val create : int -> t
+
+    (** [init n x] returns an array with [n] elements, each set to [x]. *)
+    val init : int -> var_type -> t
+
+    (** Returns the length of an array *)
+    val length : t -> int
+
+    (** [get c i] returns the component type of the i-th variable in the
+        DAE.  *)
+    val get : t -> int -> var_type
+
+    (** [set c i x] sets the component type of the i-th variable in the DAE to
+        [x].  *)
+    val set : t -> int -> var_type -> unit
+
+    (** [set_algebraic c i] sets the component type of the i-th variable in
+        the DAE to algebraic.  *)
+    val set_algebraic : t -> int -> unit
+
+    (** [set_differential c i] sets the component type of the i-th variable
+        in the DAE to differential.  *)
+    val set_differential : t -> int -> unit
+
+    (** [fill c x] fills the array so that all variables will have component
+        type [x].  *)
+    val fill : t -> var_type -> unit
 
     (** [blit a b] copies the contents of [a] to [b].  *)
     val blit : t -> t -> unit
   end
 
 val set_constraints : session -> Constraints.t -> unit
+
+(**
+   Specify whether or not to ignore algebraic variables in local error tests.
+   If you set this option to [true], you must also specify which variables are
+   algebraic through {!calc_ic_ya_yd'} or {!set_var_types} -- exactly one of
+   these functions should be called, exactly once, before the first call to
+   {!solve_normal}, {!solve_one_step}, or {!calc_ic}.  Forgetting to do so will
+   cause an {!Ida.IllInput} exception.
+
+   Note: {!set_var_types} is the preferred alias to {!set_id}, which
+   corresponds to [IDASetId] in the C interface.
+
+   In general, suppressing local error tests for algebraic variables is {i
+   discouraged} when solving DAE systems of index 1, whereas it is generally {i
+   encouraged} for systems of index 2 or more.  See pp. 146-147 of the
+   following reference for more on this issue:
+
+   K. E. Brenan, S. L. Campbell, and L. R. Petzold.  Numerical Solution of
+   Initial-Value Problems in Differential-Algebraic Equations.  SIAM,
+   Philadelphia, Pa, 1996.
+
+   @ida <node#sss:idacalcic> IDASetSuppressAlg
+ *)
+val set_suppress_alg : session -> bool -> unit
+
+(** An unpreferred alias for {!set_var_types}.  SUNDIALS calls variable types
+    by the cryptic name "Id", and this OCaml binding preserves this alternative
+    naming to help users transition from the C interface.  *)
+val set_id : session -> Id.t -> unit
+
+(** Specify which variables are algebraic and which variables are differential,
+    needed for {!set_suppress_alg}.  The function {!calc_ic_ya_yd'} also sets
+    the same information, so you only need to call one of these functions.
+    FIXME: it's not clear from the SUNDIALS manual if it's supposed to be safe
+    to change the variable types after you've already set it.
+
+    [set_var_types] corresponds to [IDASetId] in the C interface, and an alias
+    {!set_id} is also available in this binding.  We prefer the more
+    descriptive name {!set_var_types}, however.
+
+    @ida <node#sss:idasetid> IDASetId
+ *)
+val set_var_types : session -> VarTypes.t -> unit
 
 (** [calc_ic_y ida tout1] corrects the initial values y0 at time t0.  All
     components of y are computed, using all components of y' as input.
@@ -1035,8 +1123,8 @@ val set_constraints : session -> Constraints.t -> unit
  *)
 val calc_ic_y : session -> float -> unit
 
-(** [calc_ic_ya_yd' ida id tout1] corrects the initial values y0 and y0'
-    at time t0.  [id] specifies some components of y0 (and y0') as
+(** [calc_ic_ya_yd' ida vartypes tout1] corrects the initial values y0 and y0'
+    at time t0.  [vartypes] specifies some components of y0 (and y0') as
     differential, and other components as algebraic.  This function computes
     the algebraic components of y and differential components of y, given the
     differential components of y.
@@ -1049,7 +1137,14 @@ val calc_ic_y : session -> float -> unit
     IDASolve). This value is needed here only to determine the direction of
     integration and rough scale in the independent variable t.
 
+    Note: [vartypes] is called "id" in the C interface, e.g. [IDASetId].
+
+    [calc_ic_ya_yd'] sets the variable types that {!set_suppress_alg} uses, so
+    you do not need to set it again with {!set_var_types} (or its alias
+    {!set_id}) before calling {!set_suppress_alg}.
+
     @ida <node#sss:idacalcic> IDACalcIC
     @ida <node#sss:idasetid> IDASetId
+    @ida <node#sss:idasetsuppressalg> IDASetSuppressAlg
  *)
-val calc_ic_ya_yd' : session -> Id.t -> float -> unit
+val calc_ic_ya_yd' : session -> VarTypes.t -> float -> unit

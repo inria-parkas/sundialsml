@@ -795,6 +795,21 @@ CAMLprim void IDATYPE(get_est_local_errors)(value vida_mem, value vele)
     CAMLreturn0;
 }
 
+
+CAMLprim void IDATYPE(set_id) (value vida_mem, value vid)
+{
+    CAMLparam2(vida_mem, vid);
+    N_Vector id;
+
+    id = NVECTORIZE_VAL (vid);
+    int flag = IDASetId (IDA_MEM_FROM_ML(vida_mem), id);
+    RELINQUISH_NVECTORIZEDVAL (id);
+    CHECK_FLAG("IDASetId", flag);
+
+    CAMLreturn0;
+}
+
+
 static void calc_ic (void *ida_mem, value session, int icopt, realtype tout1)
 {
     CAMLparam1 (session);
@@ -831,7 +846,7 @@ CAMLprim void IDATYPE(calc_ic_y)(value vida_mem, value tout1)
 
 CAMLprim void IDATYPE(calc_ic_ya_ydp)(value vida_mem, value vid, value tout1)
 {
-    CAMLparam2 (vida_mem, tout1);
+    CAMLparam3 (vida_mem, vid, tout1);
     int flag;
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
 

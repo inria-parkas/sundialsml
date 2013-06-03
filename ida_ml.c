@@ -531,6 +531,16 @@ CAMLprim void c_ida_set_no_inactive_root_warn(value vida_mem)
     CAMLreturn0;
 }
 
+CAMLprim void c_ida_set_suppress_alg (value vida_mem, value vb)
+{
+    CAMLparam2(vida_mem, vb);
+
+    int flag = IDASetSuppressAlg(IDA_MEM_FROM_ML(vida_mem),
+				 Bool_val (vb));
+    CHECK_FLAG("IDASetSuppressAlg", flag);
+
+    CAMLreturn0;
+}
 
 CAMLprim void c_ida_set_gs_type(value vida_mem, value vgstype)
 {

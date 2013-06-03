@@ -447,34 +447,41 @@ module Constraints =
 external set_constraints : session -> Constraints.t -> unit
   = "c_ba_ida_set_constraints"
 
-module Id =
+module VarTypes =
   struct
     type t = nvec
-    type component_type = Algebraic | Differential
+    type var_type = Algebraic | Differential
 
-    let component_type_of_float = function
+    let var_type_of_float = function
       | 0.0 -> Algebraic
       | 1.0 -> Differential
       | f -> raise (Invalid_argument
                       ("invalid component type: " ^ string_of_float f))
-    let float_of_component_type = function
+    let float_of_var_type = function
       | Algebraic -> 0.0
       | Differential -> 1.0
 
     let create = Carray.create
-    let init n x = Carray.init n (float_of_component_type x)
+    let init n x = Carray.init n (float_of_var_type x)
     let length = Carray.length
 
-    let get a i = component_type_of_float a.{i}
-    let set a i x = a.{i} <- float_of_component_type x
+    let get a i = var_type_of_float a.{i}
+    let set a i x = a.{i} <- float_of_var_type x
     let set_algebraic a i = set a i Algebraic
     and set_differential a i = set a i Differential
     let fill a t =
-      let x = float_of_component_type t in
+      let x = float_of_var_type t in
       Carray.fill a x
 
     let blit a b = Carray.blit a b
   end
+module Id = VarTypes
+
+external set_id : session -> Id.t -> unit
+  = "c_ba_ida_set_id"
+let set_var_types = set_id
+external set_suppress_alg : session -> bool -> unit
+  = "c_ida_set_suppress_alg"
 
 external calc_ic_y : session -> float -> unit
   = "c_ba_ida_calc_ic_y"
