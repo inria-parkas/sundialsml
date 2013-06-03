@@ -511,7 +511,7 @@ CAMLprim void IDATYPE(clear_jac_times_vec_fn)(value vdata)
 }
 
 /* Cleanup incompletely initialized IDA memory upon failure.  */
-static void cleanup_failed_init (void *mem, value *backref)
+static void cleanup_failed_init (void **mem, value *backref)
 {
     if (backref) {
 	caml_remove_generational_global_root (backref);
@@ -544,7 +544,7 @@ CAMLprim value IDATYPE (init) (value weakref, value linsolver, value vy,
 #define CHECK_FLAG_FIN(call, flag)			\
     do							\
 	if (flag != IDA_SUCCESS) {			\
-	    cleanup_failed_init (ida_mem, backref);	\
+	    cleanup_failed_init (&ida_mem, backref);	\
 	    ida_ml_check_flag (call, flag);		\
 	}						\
     while (0)
@@ -563,7 +563,7 @@ CAMLprim value IDATYPE (init) (value weakref, value linsolver, value vy,
      * don't move this code down.  */
     backref = malloc (sizeof (*backref));
     if (backref == NULL) {
-	IDAFree (ida_mem);
+	IDAFree (&ida_mem);
 	caml_failwith ("Out of memory");
     }
     *backref = weakref;
@@ -588,7 +588,7 @@ CAMLprim value IDATYPE (init) (value weakref, value linsolver, value vy,
 				 Long_val(Field (arg, 1)));
 	    CHECK_FLAG_FIN("IDALapackBand", flag);
 #else
-	    cleanup_failed_init (ida_mem, backref);
+	    cleanup_failed_init (&ida_mem, backref);
 	    caml_failwith("Lapack solvers are not available.");
 #endif
 	    break;
@@ -609,7 +609,7 @@ CAMLprim value IDATYPE (init) (value weakref, value linsolver, value vy,
 	    break;
 
 	default:
-	    cleanup_failed_init (ida_mem, backref);
+	    cleanup_failed_init (&ida_mem, backref);
 	    caml_failwith("Illegal linear solver block value.");
 	    break;
 	}
@@ -626,13 +626,13 @@ CAMLprim value IDATYPE (init) (value weakref, value linsolver, value vy,
 	    flag = IDALapackDense(ida_mem, neqs);
 	    CHECK_FLAG_FIN("IDALapackDense", flag);
 #else
-	    cleanup_failed_init (ida_mem, backref);
+	    cleanup_failed_init (&ida_mem, backref);
 	    caml_failwith("Lapack solvers are not available.");
 #endif
 	    break;
 
 	default:
-	    cleanup_failed_init (ida_mem, backref);
+	    cleanup_failed_init (&ida_mem, backref);
 	    caml_failwith("Illegal linear solver value.");
 	    break;
 	}
