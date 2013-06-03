@@ -80,6 +80,8 @@ END_HELP_TEXT
 	EXAMPLESROOT="${value}";;
     CFLAGS)
 	cflags="${value}";;
+    LDFLAGS)
+	ldflags="${value}";;
     OCAMLFLAGS)
 	ocamlflags="${value}";;
     OCAMLOPTFLAGS)
