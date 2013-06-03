@@ -61,7 +61,7 @@ let heatres t u u' resval data =
   let mm = data.mm
   and coeff = data.coeff
   in
-  (* Initialize resval to uu, to take care of boundary equations. *)
+  (* Initialize resval to u, to take care of boundary equations. *)
   Carray.blit u resval;
 
   (* Loop over interior points; set res = u' - (central difference). *)
@@ -181,7 +181,7 @@ let main () =
     Ida.init_at_time (Ida.Band { Ida.mupper=mu; Ida.mlower=ml })
       (fun t u u' r -> heatres t u u' r data)
       Ida.no_roots
-      u u' t0
+      t0 u u'
   in
 
   Ida.ss_tolerances mem rtol atol;

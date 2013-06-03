@@ -510,54 +510,50 @@ CAMLprim void IDATYPE(clear_jac_times_vec_fn)(value vdata)
     CAMLreturn0;
 }
 
-/* Cleanup incompletely initialized IDA memory upon failure.  */
-static void cleanup_failed_init (void **mem, value *backref)
+/* Sets the root function to a generic trampoline and set the number of
+ * roots.  */
+CAMLprim void IDATYPE(root_init) (value vida_mem, value vnroots)
 {
-    if (backref) {
-	caml_remove_generational_global_root (backref);
-	free (backref);
-    }
-    IDAFree (mem);
+    CAMLparam2 (vida_mem, vnroots);
+    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
+    int nroots = Int_val (vnroots);
+    int flag;
+    flag = IDARootInit (ida_mem, nroots, rootsfn);
+    CHECK_FLAG ("IDARootInit", flag);
+    Store_field (vida_mem, RECORD_IDA_SESSION_NROOTS, vnroots);
+    CAMLreturn0;
 }
 
-/* IDAInit + IDARootInit + linear solver setup.  The residual and root
- * functions are set to C stubs; the actual functions should be assigned to the
- * ida_session record to be created on the OCaml side.  */
-CAMLprim value IDATYPE (init) (value weakref, value linsolver, value vy,
-			       value vyp, value vneqs, value vnroots, value vt0)
+/* IDACreate + IDAInit + IDASetUser.  The vy and vyp vectors must have the same
+ * length (not checked).  Returns an IDAMem (= void*) along with a global root
+ * wrapping weakref that is attached to the IDAMem.  Before doing the remaining
+ * initialization, these pointers have to be wrapped in a session so that if
+ * initialization fails the GC frees IDAMem and the weak global root.  Doing
+ * that cleanup in C would be ugly, e.g. we wouldn't be able to reuse
+ * c_ida_set_linear_solver() so we have to duplicate it or hack some ad-hoc
+ * extensions to that function.  */
+CAMLprim value IDATYPE (init) (value weakref, value vt0, value vy, value vyp)
 {
-    CAMLparam5 (weakref, linsolver, vy, vyp, vneqs);
-    CAMLxparam2 (vnroots, vt0);
+    CAMLparam4 (weakref, vy, vyp, vt0);
     CAMLlocal1 (r);
     int flag;
     N_Vector y, yp;
-    int neqs = Int_val (vneqs);
-    int nroots = Int_val (vnroots);
     void *ida_mem = NULL;
     value *backref = NULL;
 
     ida_mem = IDACreate ();
-    if (ida_mem == NULL) {
+    if (ida_mem == NULL)
 	caml_failwith ("IDACreate failed");
-    }
-
-#define CHECK_FLAG_FIN(call, flag)			\
-    do							\
-	if (flag != IDA_SUCCESS) {			\
-	    cleanup_failed_init (&ida_mem, backref);	\
-	    ida_ml_check_flag (call, flag);		\
-	}						\
-    while (0)
 
     y = NVECTORIZE_VAL (vy);
     yp = NVECTORIZE_VAL (vyp);
     flag = IDAInit (ida_mem, resfn, Double_val (vt0), y, yp);
     RELINQUISH_NVECTORIZEDVAL (y);
     RELINQUISH_NVECTORIZEDVAL (yp);
-    CHECK_FLAG_FIN ("IDAInit", flag);
-
-    flag = IDARootInit (ida_mem, nroots, rootsfn);
-    CHECK_FLAG_FIN ("IDARootInit", flag);
+    if (flag != IDA_SUCCESS) {
+	IDAFree (ida_mem);
+	CHECK_FLAG ("IDAInit", flag);
+    }
 
     /* NB: the user data must be set before specifying the linear solver, so
      * don't move this code down.  */
@@ -570,91 +566,12 @@ CAMLprim value IDATYPE (init) (value weakref, value linsolver, value vy,
     caml_register_generational_global_root (backref);
     IDASetUserData (ida_mem, backref);
 
-    if (Is_block(linsolver)) {
-	value arg = Field (linsolver, 0);
-
-	switch (Tag_val(linsolver)) {
-	case VARIANT_IDA_LINEAR_SOLVER_BAND:
-	    flag = IDABand(ida_mem, neqs,
-			   Long_val(Field (arg, 0)),
-			   Long_val(Field (arg, 1)));
-	    CHECK_FLAG_FIN("IDABand", flag);
-	    break;
-
-	case VARIANT_IDA_LINEAR_SOLVER_LAPACKBAND:
-#if SUNDIALS_BLAS_LAPACK == 1
-	    flag = IDALapackBand(ida_mem, neqs,
-				 Long_val(Field (arg, 0)),
-				 Long_val(Field (arg, 1)));
-	    CHECK_FLAG_FIN("IDALapackBand", flag);
-#else
-	    cleanup_failed_init (&ida_mem, backref);
-	    caml_failwith("Lapack solvers are not available.");
-#endif
-	    break;
-
-	case VARIANT_IDA_LINEAR_SOLVER_SPGMR:
-	    flag = IDASpgmr(ida_mem, Int_val(arg));
-	    CHECK_FLAG_FIN("IDASpgmr", flag);
-	    break;
-
-	case VARIANT_IDA_LINEAR_SOLVER_SPBCG:
-	    flag = IDASpbcg(ida_mem, Int_val(arg));
-	    CHECK_FLAG_FIN("IDASpbcg", flag);
-	    break;
-
-	case VARIANT_IDA_LINEAR_SOLVER_SPTFQMR:
-	    flag = IDASptfqmr(ida_mem, Int_val(arg));
-	    CHECK_FLAG_FIN("IDASPtfqmr", flag);
-	    break;
-
-	default:
-	    cleanup_failed_init (&ida_mem, backref);
-	    caml_failwith("Illegal linear solver block value.");
-	    break;
-	}
-
-    } else {
-	switch (Int_val(linsolver)) {
-	case VARIANT_IDA_LINEAR_SOLVER_DENSE:
-	    flag = IDADense(ida_mem, neqs);
-	    CHECK_FLAG_FIN("IDADense", flag);
-	    break;
-
-	case VARIANT_IDA_LINEAR_SOLVER_LAPACKDENSE:
-#if SUNDIALS_BLAS_LAPACK == 1
-	    flag = IDALapackDense(ida_mem, neqs);
-	    CHECK_FLAG_FIN("IDALapackDense", flag);
-#else
-	    cleanup_failed_init (&ida_mem, backref);
-	    caml_failwith("Lapack solvers are not available.");
-#endif
-	    break;
-
-	default:
-	    cleanup_failed_init (&ida_mem, backref);
-	    caml_failwith("Illegal linear solver value.");
-	    break;
-	}
-    }
-
-    flag = IDASStolerances (ida_mem, RCONST (1.0e-4), RCONST (1.0e-8));
-    CHECK_FLAG_FIN ("IDASStolerances", flag);
-
-#undef CHECK_FLAG_FIN
-
     r = caml_alloc_tuple(3);
     Store_field(r, 0, (value)ida_mem);
     Store_field(r, 1, (value)backref);
     Store_field(r, 2, (value)NULL); // no err_file = NULL
 
     CAMLreturn (r);
-}
-
-CAMLprim value IDATYPE(init_bytecode) (value args[], int n)
-{
-    return IDATYPE(init)(args[0], args[1], args[2], args[3], args[4],
-			 args[5], args[6]);
 }
 
 CAMLprim void IDATYPE(sv_tolerances) (value ida_mem, value vrtol, value vavtol)
@@ -678,7 +595,8 @@ CAMLprim void IDATYPE(reinit)(value vdata, value t0, value y0, value yp0)
 
     N_Vector y0_nv = NVECTORIZE_VAL(y0);
     N_Vector yp0_nv = NVECTORIZE_VAL(yp0);
-    int flag = IDAReInit(IDA_MEM_FROM_ML(vdata), Double_val(t0), y0_nv, yp0_nv);
+    int flag = IDAReInit(IDA_MEM_FROM_ML(vdata), Double_val(t0),
+			 y0_nv, yp0_nv);
     RELINQUISH_NVECTORIZEDVAL(yp0_nv);
     RELINQUISH_NVECTORIZEDVAL(y0_nv);
     CHECK_FLAG("IDAReInit", flag);

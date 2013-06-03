@@ -225,7 +225,7 @@ let main () =
 
   (* Call IDACreate to initialize solution with SPGMR linear solver.  *)
 
-  let mem = Ida.init_at_time (Ida.Spgmr 5) (res_heat data) Ida.no_roots u u' t0
+  let mem = Ida.init_at_time (Ida.Spgmr 5) (res_heat data) Ida.no_roots t0 u u'
   in
   Ida.set_constraints mem constraints;
   Ida.ss_tolerances mem rtol atol;
@@ -303,4 +303,5 @@ let main () =
   printf "Nonlinear convergence failures = %d\n" ncfn;
   printf "Linear convergence failures    = %d\n" ncfl
 
-  let _ = main ()
+let _ = main ()
+let _ = Gc.compact ()

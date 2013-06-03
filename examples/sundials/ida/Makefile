@@ -4,7 +4,8 @@ EXAMPLES = idaRoberts_dns.ml  \
 	   idaHeat2D_bnd.ml   \
 	   idaHeat2D_kry.ml   \
 	   idaFoodWeb_bnd.ml  \
-	   idaSlCrank_dns.ml
+	   idaSlCrank_dns.ml  \
+	   idaKrylovDemo_ls.ml
 
 LAPACK_EXAMPLES = idaAdvDiff_bndL.ml \
 		  idaRoberts_dnsL.ml

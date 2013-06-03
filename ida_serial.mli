@@ -174,16 +174,16 @@ val init :
     -> session
 
 (**
-  [init_at_time linsolv roots y0 y'0 t0] is the same as init except that a
+  [init_at_time linsolv roots t0 y0 y'0] is the same as init except that a
   start time [t0], can be given explicitly.
  *)
 val init_at_time :
     linear_solver
     -> (float -> val_array -> der_array -> val_array -> unit)
     -> (int * (float -> val_array -> der_array -> root_val_array -> unit))
-    -> nvec
-    -> nvec
     -> float (* start time *)
+    -> nvec
+    -> nvec
     -> session
 
 (** Return the number of root functions. *)
@@ -513,6 +513,17 @@ val get_num_nonlin_solv_iters : session -> int
  *)
 val get_num_nonlin_solv_conv_fails : session -> int
 
+(**
+  Changes the linear solver.
+
+  @ida <node5#sss:optout_main> IDADense
+  @ida <node5#sss:optout_main> IDABand
+  @ida <node5#sss:optout_main> IDASpgmr
+  @ida <node5#sss:optout_main> IDASpbcg
+  @ida <node5#sss:optout_main> IDASptfqmr
+ *)
+val set_linear_solver : session -> linear_solver -> unit
+
 (** {2 Root finding optional functions} *)
 
 (** {3 Input} *)
@@ -583,13 +594,26 @@ val get_dky : session -> float -> int -> nvec -> unit
 (** {2 Reinitialization} *)
 
 (**
-  [reinit s t0 y0] reinitializes the solver session [s] with a new time [t0] and
-  new values for the variables [y0].
+  [reinit s t0 y0 y'0] reinitializes the solver session [s] with a new time
+  [t0] and new values for the variables [y0].  There are two optional arguments
+  to change the linear solver and the set of root functions.
+
+  [linsolv] sets the linear solver.  If omitted, the current linear solver will
+  be kept.
+
+  [roots] sets the root functions.  {!no_roots} may be passed in to turn off
+  root finding.  If omitted, the current root functions will be kept.
 
   @ida <node5#sss:cvreinit> IDAReInit
  *)
-val reinit : session -> float -> val_array -> der_array -> unit
-
+val reinit :
+  session
+  -> ?linsolv:linear_solver
+  -> ?roots:(int * (float -> val_array -> der_array -> root_val_array -> unit))
+  -> float
+  -> val_array
+  -> der_array
+  -> unit
 
 (** {2 Linear Solvers} *)
 

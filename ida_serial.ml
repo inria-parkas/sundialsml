@@ -65,8 +65,17 @@ type session = {
                                -> unit;
       }
 
-external session_finalize : session -> unit
-  = "c_ida_session_finalize"
+external sv_tolerances  : session -> float -> nvec -> unit
+  = "c_ba_ida_sv_tolerances"
+external ss_tolerances  : session -> float -> float -> unit
+  = "c_ida_ss_tolerances"
+external wf_tolerances  : session -> unit
+  = "c_ba_ida_wf_tolerances"
+
+let wf_tolerances s ferrw =
+  s.errw <- ferrw;
+  wf_tolerances s
+
 let read_weak_ref x : session =
   match Weak.get x 0 with
   | Some y -> y
@@ -120,19 +129,30 @@ let _ =
 (* FIXME: isn't it better to separate out IDARootInit(), since it's
    optional in the C interface?  *)
 external c_init
-  : 'a Weak.t -> linear_solver -> nvec -> nvec -> int -> int -> float
-    -> (ida_mem * c_weak_ref * ida_file)
-  = "c_ba_ida_init_bytecode" "c_ba_ida_init"
+  : 'a Weak.t -> float -> val_array -> der_array -> (ida_mem * c_weak_ref * ida_file)
+  = "c_ba_ida_init"
+external session_finalize : session -> unit
+  = "c_ida_session_finalize"
 
-let init_at_time linsolv resfn (nroots, roots) y y' t0 =
+external c_root_init : session -> int -> unit
+  = "c_ba_ida_root_init"
+let root_init ida (nroots, rootsfn) =
+  c_root_init ida nroots;
+  ida.rootsfn <- rootsfn
+
+external set_linear_solver : session -> linear_solver -> unit
+    = "c_ida_set_linear_solver"
+
+let init_at_time linsolv resfn (nroots, rootsfn) t0 y y' =
   let neqs = Sundials.Carray.length y in
   (* IDA doesn't check if y and y' have the same length, and corrupt memory if
    * they don't.  *)
   if neqs <> Sundials.Carray.length y' then
     raise (Invalid_argument "y and y' have inconsistent sizes");
-  let weak_ptr_to_session = Weak.create 1 in
-  let (ida_mem, backref, err_file) =
-    c_init weak_ptr_to_session linsolv y y' neqs nroots t0 in
+  let weakref = Weak.create 1 in
+  let (ida_mem, backref, err_file) = c_init weakref t0 y y' in
+  (* ida_mem and backref have to be immediately captured in a session and
+     associated with the finalizer before we do anything else.  *)
   let session = { ida        = ida_mem;
                   backref    = backref;
                   neqs       = neqs;
@@ -140,7 +160,7 @@ let init_at_time linsolv resfn (nroots, roots) y y' t0 =
                   err_file   = err_file;
                   exn_temp   = None;
                   resfn      = resfn;
-                  rootsfn    = roots;
+                  rootsfn    = rootsfn;
                   errh       = (fun _ -> ());
                   errw       = (fun _ _ -> ());
                   jacfn      = (fun _ _ -> ());
@@ -151,28 +171,30 @@ let init_at_time linsolv resfn (nroots, roots) y y' t0 =
                 }
   in
   Gc.finalise session_finalize session;
-  Weak.set weak_ptr_to_session 0 (Some session);
+  Weak.set weakref 0 (Some session);
+  (* Now the session is safe to use.  If any of the following fails and raises
+     an exception, the GC will take care of freeing ida_mem and backref.  *)
+  c_root_init session nroots;
+  set_linear_solver session linsolv;
+  ss_tolerances session 1.0e-4 1.0e-8;
   session
 
-let init linsolv resfn roots y yp = init_at_time linsolv resfn roots y yp 0.
+let init linsolv resfn roots y yp = init_at_time linsolv resfn roots 0.0 y yp
 
 let nroots { nroots } = nroots
 let neqs { neqs } = neqs
 
-external reinit
+external c_reinit
     : session -> float -> val_array -> der_array -> unit
     = "c_ba_ida_reinit"
-
-external sv_tolerances  : session -> float -> nvec -> unit
-    = "c_ba_ida_sv_tolerances"
-external ss_tolerances  : session -> float -> float -> unit
-    = "c_ida_ss_tolerances"
-external wf_tolerances  : session -> unit
-    = "c_ba_ida_wf_tolerances"
-
-let wf_tolerances s ferrw =
-  s.errw <- ferrw;
-  wf_tolerances s
+let reinit ida ?linsolv ?roots t0 y0 y'0 =
+  c_reinit ida t0 y0 y'0;
+  match linsolv with
+  | None -> ()
+  | Some linsolv -> set_linear_solver ida linsolv;
+  match roots with
+  | None -> ()
+  | Some roots -> root_init ida roots
 
 external get_root_info  : session -> root_array -> unit
     = "c_ida_get_root_info"
