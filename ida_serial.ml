@@ -456,6 +456,12 @@ module Constraints =
     let create = Carray.create
     let init n v = Carray.init n (float_of_constraint_type v)
     let length = Carray.length
+    let of_array a =
+      let ret = create (Array.length a) in
+      for i = 0 to Array.length a - 1 do
+        ret.{i} <- float_of_constraint_type a.(i)
+      done;
+      ret
 
     let get a i = constraint_type_of_float a.{i}
     let set a i x = a.{i} <- float_of_constraint_type x
@@ -485,6 +491,12 @@ module VarTypes =
 
     let create = Carray.create
     let init n x = Carray.init n (float_of_var_type x)
+    let of_array a =
+      let ret = create (Array.length a) in
+      for i = 0 to Array.length a - 1 do
+        ret.{i} <- float_of_var_type a.(i)
+      done;
+      ret
     let length = Carray.length
 
     let get a i = var_type_of_float a.{i}

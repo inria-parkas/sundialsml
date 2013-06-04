@@ -977,6 +977,10 @@ module Constraints :
     (** [init n x] returns an array with [n] elements, each set to [x]. *)
     val init : int -> constraint_type -> t
 
+    (** [of_array a] converts an OCaml array [a] of {!constraint_type}s into an
+        abstract array suitable for passing into IDA.  *)
+    val of_array : constraint_type array -> t
+
     (** Returns the length of an array *)
     val length : t -> int
 
@@ -1018,6 +1022,10 @@ module VarTypes :
 
     (** [init n x] returns an array with [n] elements, each set to [x]. *)
     val init : int -> var_type -> t
+
+    (** [of_array a] converts an OCaml array [a] of {!var_type}s into an
+        abstract array suitable for passing into IDA.  *)
+    val of_array : var_type array -> t
 
     (** Returns the length of an array *)
     val length : t -> int
@@ -1063,6 +1071,10 @@ module Id :
 
     (** [init n x] returns an array with [n] elements, each set to [x]. *)
     val init : int -> var_type -> t
+
+    (** [of_array a] converts an OCaml array [a] of {!var_type}s into an
+        abstract array suitable for passing into IDA.  *)
+    val of_array : var_type array -> t
 
     (** Returns the length of an array *)
     val length : t -> int
