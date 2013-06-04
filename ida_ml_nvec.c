@@ -728,11 +728,13 @@ CAMLprim void IDATYPE(set_id) (value vida_mem, value vid)
 }
 
 
-static void calc_ic (void *ida_mem, value session, int icopt, realtype tout1)
+static void calc_ic (void *ida_mem, value session, int icopt, realtype tout1,
+		     value vy, value vyp)
 {
-    CAMLparam1 (session);
+    CAMLparam3 (session, vy, vyp);
     CAMLlocal1 (exn);
     int flag;
+    N_Vector y, yp;
 
     flag = IDACalcIC (ida_mem, icopt, tout1);
 
@@ -749,22 +751,33 @@ static void calc_ic (void *ida_mem, value session, int icopt, realtype tout1)
 	/* Otherwise, raise a generic exception like Ida.ResFuncFailure */
 	CHECK_FLAG ("IDACalcIC", flag);
     }
+
+    /* Retrieve the calculated initial conditions if y,yp are given.  */
+    y  = (Is_block (vy))  ? NVECTORIZE_VAL (Field (vy, 0))  : NULL;
+    yp = (Is_block (vyp)) ? NVECTORIZE_VAL (Field (vyp, 0)) : NULL;
+    if (y != NULL || yp != NULL) {
+	flag = IDAGetConsistentIC (ida_mem, y, yp);
+	if (y)  RELINQUISH_NVECTORIZEDVAL (y);
+	if (yp) RELINQUISH_NVECTORIZEDVAL (yp);
+	CHECK_FLAG ("IDAGetConsistentIC", flag);
+    }
     CAMLreturn0;
 }
 
-CAMLprim void IDATYPE(calc_ic_y)(value vida_mem, value tout1)
+CAMLprim void IDATYPE(calc_ic_y)(value vida_mem, value vy, value tout1)
 {
-    CAMLparam2 (vida_mem, tout1);
+    CAMLparam3 (vida_mem, vy, tout1);
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
 
-    calc_ic (ida_mem, vida_mem, IDA_Y_INIT, Double_val (tout1));
+    calc_ic (ida_mem, vida_mem, IDA_Y_INIT, Double_val (tout1), vy, Val_none);
 
     CAMLreturn0;
 }
 
-CAMLprim void IDATYPE(calc_ic_ya_ydp)(value vida_mem, value vid, value tout1)
+CAMLprim void IDATYPE(calc_ic_ya_ydp)(value vida_mem, value y, value yp,
+				      value vid, value tout1)
 {
-    CAMLparam3 (vida_mem, vid, tout1);
+    CAMLparam5 (vida_mem, y, yp, vid, tout1);
     int flag;
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
 
@@ -773,7 +786,8 @@ CAMLprim void IDATYPE(calc_ic_ya_ydp)(value vida_mem, value vid, value tout1)
     RELINQUISH_NVECTORIZEDVAL (id);
     CHECK_FLAG ("IDASetId", flag);
 
-    calc_ic (ida_mem, vida_mem, IDA_YA_YDP_INIT, Double_val (tout1));
+    calc_ic (ida_mem, vida_mem, IDA_YA_YDP_INIT, Double_val (tout1), y, yp);
+
     CAMLreturn0;
 }
 

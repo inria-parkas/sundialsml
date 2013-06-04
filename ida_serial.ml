@@ -505,11 +505,23 @@ let set_var_types = set_id
 external set_suppress_alg : session -> bool -> unit
   = "c_ida_set_suppress_alg"
 
-external calc_ic_y : session -> float -> unit
+external get_num_backtrack_ops : session -> int
+  = "c_ida_get_num_backtrack_ops"
+
+external calc_ic_y : session -> ?y:val_array -> float -> unit
   = "c_ba_ida_calc_ic_y"
-external c_calc_ic_ya_yd' : session -> Id.t -> float -> unit
+external c_calc_ic_ya_yd' :
+  session -> val_array option -> der_array option -> Id.t -> float -> unit
   = "c_ba_ida_calc_ic_ya_ydp"
-let calc_ic_ya_yd' session id tout1 =
+let calc_ic_ya_yd' session ?y ?y' id tout1 =
   if Id.length id <> neqs session then
     raise (Invalid_argument ("length of component type array does not match number of equations"));
-  c_calc_ic_ya_yd' session id tout1
+  let len = function
+    | None -> neqs session
+    | Some x -> Carray.length x
+  in
+  if len y <> neqs session then
+    raise (Invalid_argument ("length of buffer receiving computed y vector doesn't match number of equations"));
+  if len y' <> neqs session then
+    raise (Invalid_argument ("length of buffer receiving computed y' vector doesn't match number of equations"));
+  c_calc_ic_ya_yd' session (y : val_array option) y' id tout1

@@ -1136,22 +1136,26 @@ val set_id : session -> Id.t -> unit
  *)
 val set_var_types : session -> VarTypes.t -> unit
 
-(** [calc_ic_y ida tout1] corrects the initial values y0 at time t0.  All
-    components of y are computed, using all components of y' as input.
+(** [calc_ic_y ida ~y:yvar tout1] corrects the initial values y0 at time t0.
+    All components of y are computed, using all components of y' as input.  The
+    optional parameter [~y], if given, will receive the corrected y vector.
 
     [tout1] is the first value of t at which a solution will be requested (from
     IDASolve). This value is needed here only to determine the direction of
     integration and rough scale in the independent variable t.
 
     @ida <node#sss:idacalcic> IDACalcIC
+    @ida <node#sss:idagetconsistentic> IDAGetConsistentIC
  *)
-val calc_ic_y : session -> float -> unit
+val calc_ic_y : session -> ?y:val_array -> float -> unit
 
-(** [calc_ic_ya_yd' ida vartypes tout1] corrects the initial values y0 and y0'
-    at time t0.  [vartypes] specifies some components of y0 (and y0') as
-    differential, and other components as algebraic.  This function computes
-    the algebraic components of y and differential components of y', given the
-    differential components of y.
+(** [calc_ic_ya_yd' ida ~y:yvar ~y':y'var vartypes tout1] corrects the initial
+    values y0 and y0' at time t0.  [vartypes] specifies some components of y0
+    (and y0') as differential, and other components as algebraic.  This
+    function computes the algebraic components of y and differential components
+    of y', given the differential components of y.  If the optional parameters
+    [~y] and/or [~y'] are given, the corrected vectors will be written into
+    them.
 
     If the i-th component of [id] is Algebraic (or Differential), then the i-th
     components of y0 and y0' are both treated as algebraic (respectively,
@@ -1170,5 +1174,18 @@ val calc_ic_y : session -> float -> unit
     @ida <node#sss:idacalcic> IDACalcIC
     @ida <node#sss:idasetid> IDASetId
     @ida <node#sss:idasetsuppressalg> IDASetSuppressAlg
+    @ida <node#sss:idagetconsistentic> IDAGetConsistentIC
  *)
-val calc_ic_ya_yd' : session -> VarTypes.t -> float -> unit
+val calc_ic_ya_yd' :
+  session
+  -> ?y:val_array
+  -> ?y':der_array
+  -> VarTypes.t
+  -> float
+  -> unit
+
+(** [get_num_backtrack_ops ida] gets the number of backtrack operations done in
+    the linesearch algorithm in {!calc_ic_ya_yd'} or {!calc_ic_y}.
+    @ida <ndoe#sss:idagetnumbcktrackops> IDAGetNumBcktrackOps
+ *)
+val get_num_backtrack_ops : session -> int
