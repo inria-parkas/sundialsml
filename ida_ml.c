@@ -496,6 +496,15 @@ CAMLprim value c_ida_get_current_time(value vida_mem)
     CAMLreturn(caml_copy_double(v));
 }
 
+CAMLprim value c_ida_get_num_backtrack_ops (value vida_mem)
+{
+    CAMLparam1 (vida_mem);
+    int flag;
+    long nbo;
+    flag = IDAGetNumBacktrackOps (IDA_MEM_FROM_ML (vida_mem), &nbo);
+    CHECK_FLAG ("IDAGetNumBcktrackOps", flag);
+    CAMLreturn (Val_int (nbo));
+}
 
 CAMLprim void c_ida_set_max_ord(value vida_mem, value maxord)
 {
