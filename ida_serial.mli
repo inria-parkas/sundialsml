@@ -1150,7 +1150,7 @@ val calc_ic_y : session -> float -> unit
 (** [calc_ic_ya_yd' ida vartypes tout1] corrects the initial values y0 and y0'
     at time t0.  [vartypes] specifies some components of y0 (and y0') as
     differential, and other components as algebraic.  This function computes
-    the algebraic components of y and differential components of y, given the
+    the algebraic components of y and differential components of y', given the
     differential components of y.
 
     If the i-th component of [id] is Algebraic (or Differential), then the i-th
