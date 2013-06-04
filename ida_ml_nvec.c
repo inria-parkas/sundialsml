@@ -273,29 +273,6 @@ static int bandjacfn (long int neq, long int mupper, long int mlower,
     CAMLreturnT (int, r);
 }
 
-CAMLprim void IDATYPE (dump) (value v)
-{
-    CAMLparam1 (v);
-    fprintf (stderr, "#- %p ", (void*)v);
-    if (Is_block (v)) {
-	int i, n;
-	n = Wosize_val (v);
-	if (n > RECORD_IDA_SESSION_SIZE) n = RECORD_IDA_SESSION_SIZE;
-	fprintf (stderr, " -> [");
-	for (i = 0; i < n - 1; ++i)
-	    fprintf (stderr, "%p, ", (void*)Field (v, i));
-	if (i < n)
-	    fprintf (stderr, "%p", (void*)Field (v, i));
-	if (++i < Wosize_val (v))
-	    fprintf (stderr, ", ...");
-	fprintf (stderr, "]");
-    }
-    fprintf (stderr, "-#\n");
-    fflush (stderr);
-    CAMLreturn0;
-}
-
-CAMLprim value caml_weak_get (value ar, value n);
 static int rootsfn (realtype t, N_Vector y, N_Vector yp,
 		    realtype *gout, void *user_data)
 {
@@ -753,8 +730,8 @@ static void calc_ic (void *ida_mem, value session, int icopt, realtype tout1,
     }
 
     /* Retrieve the calculated initial conditions if y,yp are given.  */
-    y  = (Is_block (vy))  ? NVECTORIZE_VAL (vy)  : NULL;
-    yp = (Is_block (vyp)) ? NVECTORIZE_VAL (vyp) : NULL;
+    y  = (Is_block (vy))  ? NVECTORIZE_VAL (Field (vy, 0))  : NULL;
+    yp = (Is_block (vyp)) ? NVECTORIZE_VAL (Field (vyp, 0)) : NULL;
     if (y != NULL || yp != NULL) {
 	flag = IDAGetConsistentIC (ida_mem, y, yp);
 	if (y)  RELINQUISH_NVECTORIZEDVAL (y);

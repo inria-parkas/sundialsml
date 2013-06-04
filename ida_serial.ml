@@ -516,4 +516,12 @@ external c_calc_ic_ya_yd' :
 let calc_ic_ya_yd' session ?y ?y' id tout1 =
   if Id.length id <> neqs session then
     raise (Invalid_argument ("length of component type array does not match number of equations"));
-  c_calc_ic_ya_yd' session y y' id tout1
+  let len = function
+    | None -> neqs session
+    | Some x -> Carray.length x
+  in
+  if len y <> neqs session then
+    raise (Invalid_argument ("length of buffer receiving computed y vector doesn't match number of equations"));
+  if len y' <> neqs session then
+    raise (Invalid_argument ("length of buffer receiving computed y' vector doesn't match number of equations"));
+  c_calc_ic_ya_yd' session (y : val_array option) y' id tout1
