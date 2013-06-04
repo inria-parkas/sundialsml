@@ -1148,13 +1148,26 @@ val set_id : session -> Id.t -> unit
  *)
 val set_var_types : session -> VarTypes.t -> unit
 
-(** [calc_ic_y ida ~y:yvar tout1] corrects the initial values y0 at time t0.
-    All components of y are computed, using all components of y' as input.  The
-    optional parameter [~y], if given, will receive the corrected y vector.
+(** [calc_ic_y ida ~y:yvar tout1] corrects the initial values y0 at time t0,
+    using the initial values of the derivatives y'0 that are stored in the
+    session.  That is, if the t0,y0,y'0 that were given to {!init_at_time},
+    {!init}, or {!reinit} does not satisfy F(t0,y0,y'0) = 0, where F is the
+    residual function, then [calc_ic_y] will modify y'0 so that this equation
+    holds.  If F(t0,y0,y'0) = 0 is already true, a call to [calc_ic_y] is
+    unnecessary.
 
-    [tout1] is the first value of t at which a solution will be requested (from
-    IDASolve). This value is needed here only to determine the direction of
-    integration and rough scale in the independent variable t.
+    The optional parameter [~y], if given, will receive the corrected y vector.
+    [tout1] is the first value of t at which a solution will be requested
+    (using {!solve_normal} or {!solve_one_step}). This value is needed here
+    only to determine the direction of integration and rough scale in the
+    independent variable t.
+
+    IDA's initial value correction works for certain index-one problems
+    including a class of systems of semi-implicit form, and uses Newton
+    iteration combined with a linesearch algorithm.  See Section 2.1 of the IDA
+    User Guide and the following reference for more information:
+
+    P. N. Brown, A. C. Hindmarsh, and L. R. Petzold. Consistent Initial Condition Calculation for Differential-Algebraic Systems. SIAM J. Sci. Comput., 19:1495–1512, 1998.
 
     @ida <node#sss:idacalcic> IDACalcIC
     @ida <node#sss:idagetconsistentic> IDAGetConsistentIC
@@ -1162,20 +1175,41 @@ val set_var_types : session -> VarTypes.t -> unit
 val calc_ic_y : session -> ?y:val_array -> float -> unit
 
 (** [calc_ic_ya_yd' ida ~y:yvar ~y':y'var vartypes tout1] corrects the initial
-    values y0 and y0' at time t0.  [vartypes] specifies some components of y0
-    (and y0') as differential, and other components as algebraic.  This
-    function computes the algebraic components of y and differential components
-    of y', given the differential components of y.  If the optional parameters
-    [~y] and/or [~y'] are given, the corrected vectors will be written into
-    them.
+    values y0 and y0' at time t0.  The optional parameters [~y] and [~y'], if
+    given, will be overwritten by the corrected vectors.  [tout1] is the first
+    value of t at which a solution will be requested, and is needed here only
+    to determine the direction of integration and rough scale in the
+    independent variable t.  See {!calc_ic_y} for more general information
+    about initial value correction.
 
-    If the i-th component of [id] is Algebraic (or Differential), then the i-th
-    components of y0 and y0' are both treated as algebraic (respectively,
-    differential).
+    [calc_ic_ya_yd'] differs from {!calc_ic_y} in that, [calc_ic_ya_yd'] can
+    compute the initial values of some derivatives whereas {!calc_ic_y} can
+    only compute the initial values of non-derivatives.
 
-    [tout1] is the first value of t at which a solution will be requested (from
-    IDASolve). This value is needed here only to determine the direction of
-    integration and rough scale in the independent variable t.
+    The [vartypes] argument specifies which components of y are algebraic --
+    meaning their derivatives do not appear in the DAE -- and which components
+    are differential -- meaning their derivatives appear in the DAE.  Note that
+    y here means the vector formed by collecting scalar variables that appear
+    in the mathematical description of your DAE system; it does not mean the
+    array passed in as the labeled argument whose name also happens to be [y].
+    Likewise for [y'].
+
+    [calc_ic_ya_yd'] modifies the algebraic components of y and differential
+    components of y', using the differential components of y as input.  So if
+    Ia is the set of indices at which [vartypes] is [Algebraic] and Id is the
+    set of indices at which [vartypes] is [Differential], then y and y' are
+    partitioned into two subsequences each:
+
+      y  splits into A  = { y.{i}  | i in Ia } and D  = { y.{i}  | i in Id }
+      y' splits into A' = { y'.{i} | i in Ia } and D' = { y'.{i} | i in Id }
+
+    The residual function must be such that it ignores all values in A'.
+    [calc_ic_ya_yd'] then computes (i.e. modifies) A and D' while treating D as
+    read-only and ignoring A'.
+
+      input:   D
+      output:  A, D'
+      ignored: A'
 
     Note: [vartypes] is called "id" in the C interface, e.g. [IDASetId].
 
