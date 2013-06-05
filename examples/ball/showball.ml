@@ -9,6 +9,7 @@ let xc x = truncate (x *. scale) + x_off
 let yc y = truncate (y *. scale) + y_off
 
 let floors = ref ([| 0.0 |], [| 0.0 |])
+let refresh_delay = ref (1.0 /. 60.)
 
 let show_floors () =
   let (heights, extents) = !floors in
@@ -26,7 +27,7 @@ let show_floors () =
 
 let leave_trace = ref false
 
-let start trace floor_details =
+let start trace dt floor_details =
   Graphics.open_graph "";
   Graphics.resize_window 800 600;
   Graphics.auto_synchronize false;
@@ -34,12 +35,13 @@ let start trace floor_details =
   floors := floor_details;
   show_floors ();
   Graphics.synchronize ();
-  leave_trace := trace
+  leave_trace := trace;
+  refresh_delay := dt
 
-let minisleep (sec : float) =
+let rec minisleep (sec : float) =
     try
       ignore (Unix.select [] [] [] sec)
-    with Unix.Unix_error _ -> ()
+    with Unix.Unix_error (Unix.EINTR, _, _) -> minisleep sec
 
 let last_x = ref 0.0
 let last_y = ref 0.0
@@ -53,7 +55,7 @@ let show (x, y) =
   Graphics.set_color Graphics.red;
   Graphics.fill_circle (xc x) (yc y) ball_radius;
   Graphics.synchronize ();
-  minisleep 1.0;
+  minisleep !refresh_delay;
   last_x := x;
   last_y := y
 

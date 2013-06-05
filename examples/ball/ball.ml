@@ -75,7 +75,7 @@ let args = [
 
 let _ =
   Arg.parse args (fun _ -> ()) "ball: simulate a ball bouncing down steps using sundials";
-  if !show then Showball.start !trace (ground, ground_limits);
+  if !show then Showball.start !trace !t_delta (ground, ground_limits);
   if !log then Cvode.Carray.print_with_time 0.0 y;
   let t = ref !t_delta in
   while (y.{xpos_i} < x_limit) do
