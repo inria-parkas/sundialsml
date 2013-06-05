@@ -48,6 +48,9 @@ void ida_ml_check_flag(const char *call, int flag)
 	caml_raise_constant(*caml_named_value("ida_IllInput"));
 	break;
 
+    case IDA_CONV_FAIL:
+	caml_raise_constant(*caml_named_value("ida_ConvergenceFailure"));
+
     case IDA_TOO_MUCH_WORK:
 	caml_raise_constant(*caml_named_value("ida_TooMuchWork"));
 	break;
@@ -103,7 +106,7 @@ void ida_ml_check_flag(const char *call, int flag)
 	break;
 
     default:
-	/* e.g. IDA_MEM_NULL, IDA_ILL_INPUT, IDA_MEM_FAIL */
+	/* e.g. IDA_MEM_NULL, IDA_MEM_FAIL */
 	snprintf(exmsg, MAX_ERRMSG_LEN, "%s: %s", call,
 		 IDAGetReturnFlagName(flag));
 	caml_failwith(exmsg);
