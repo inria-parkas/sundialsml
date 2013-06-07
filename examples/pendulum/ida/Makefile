@@ -1,5 +1,8 @@
 include ../../../config
 
+test-pendulum: pendulum.opt
+	./$< $(PARAMS)
+
 pendulum.byte: showpendulum.cmo pendulum.ml
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
 	    $(INCLUDES) -I ../../../ -dllpath ../../../ \

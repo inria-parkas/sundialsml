@@ -71,7 +71,7 @@ let start scale_val timestep trace (piv_x,piv_y) (obs_x,obs_y) =
      http://caml.inria.fr/mantis/print_bug_page.php?bug_id=4023
    The let rec works around a defect when coupled with Graphics, noted in
      http://caml.inria.fr/pub/ml-archives/ocaml-beginners/2002/03/5984aeef10678485ba179f25a269845c.en.html
-   and this workaround is also slightly defective.  Fantastic.
+   but this workaround is also slightly defective.  Fantastic.
  *)
 let rec minisleep (sec : float) =
   try ignore (Unix.select [] [] [] sec)
