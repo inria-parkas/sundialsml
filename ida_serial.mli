@@ -662,13 +662,23 @@ module Dls :
      matrix J(t, y) for the Dense and Lapackdense {!Ida.linear_solver}s.
 
      The callback function takes the {!jacobian_arg} as an input and must store
-     the computed Jacobian as a {!Ida.Densematrix.t}.
+     the computed Jacobian as a {!Ida.Densematrix.t}.  The Jacobian has the
+     form
+
+       [dF0/dy0 + c dF0/dy'0, dF0/dy1 + c dF0/dy'1, ..., dF0/dyn + c dF0/dy'n]
+       [dF1/dy0 + c dF1/dy'0, dF1/dy1 + c dF1/dy'1, ..., dF1/dyn + c dF1/dy'n]
+           :        :        :             :
+       [dFn/dy0 + c dFn/dy'0, dFn/dy1 + c dFn/dy'1, ..., dFn/dyn + c dFn/dy'n]
+
+     i.e. each row should be a gradient, or put differently, the row index
+     matches the equation index while the column index matches the variable
+     index.
 
      {b NB:} the elements of the Jacobian argument and the output matrix must no
      longer be accessed after callback function has returned a result, i.e. if
      their values are needed outside of the function call, then they must be
      copied to separate physical structures.
-     
+
      @ida <node5#sss:optin_dls> IDADlsSetDenseJacFn
      @ida <node5#ss:djacFn> Dense Jacobian function
      *)

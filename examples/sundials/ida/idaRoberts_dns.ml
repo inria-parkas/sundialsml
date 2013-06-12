@@ -1,32 +1,29 @@
 (*
  * -----------------------------------------------------------------
- * $Revision: 1.2 $
- * $Date: 2008/12/29 22:21:29 $
+ * $Revision: 1.4 $
+ * $Date: 2010/12/01 23:02:23 $
  * -----------------------------------------------------------------
- * Programmer(s): Scott D. Cohen, Alan C. Hindmarsh and
+ * Programmer(s): Allan Taylor, Alan Hindmarsh and
  *                Radu Serban @ LLNL
  * -----------------------------------------------------------------
- * Ocaml port: Jun Inoue, INRIA, May 2013.
- * -----------------------------------------------------------------
- * Example problem:
- * 
- * The following is a simple example problem, with the coding
- * needed for its solution by CVODE. The problem is from
- * chemical kinetics, and consists of the following three rate
- * equations:         
- *    dy1/dt = -.04*y1 + 1.e4*y2*y3
- *    dy2/dt = .04*y1 - 1.e4*y2*y3 - 3.e7*(y2)^2
- *    dy3/dt = 3.e7*(y2)^2
+ * This simple example problem for IDA, due to Robertson, 
+ * is from chemical kinetics, and consists of the following three 
+ * equations:
+
+ *      dy1/dt = -.04*y1 + 1.e4*y2*y3
+ *      dy2/dt = .04*y1 - 1.e4*y2*y3 - 3.e7*y2**2
+ *         0   = y1 + y2 + y3 - 1
+ *
  * on the interval from t = 0.0 to t = 4.e10, with initial
- * conditions: y1 = 1.0, y2 = y3 = 0. The problem is stiff.
+ * conditions: y1 = 1, y2 = y3 = 0.
+ *
  * While integrating the system, we also use the rootfinding
  * feature to find the points at which y1 = 1e-4 or at which
- * y3 = 0.01. This program solves the problem with the BDF method,
- * Newton iteration with the CVDENSE dense linear solver, and a
- * user-supplied Jacobian routine.
- * It uses a scalar relative tolerance and a vector absolute
- * tolerance. Output is printed in decades from t = .4 to t = 4.e10.
- * Run statistics (optional outputs) are printed at the end.
+ * y3 = 0.01.
+ *
+ * The problem is solved with IDA using IDADENSE for the linear
+ * solver, with a user-supplied Jacobian. Output is printed at
+ * t = .4, 4, 40, ..., 4e10.
  * -----------------------------------------------------------------
  *)
 module Ida = Ida_serial;;
