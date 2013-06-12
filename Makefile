@@ -38,9 +38,13 @@ INSTALL_FILES= 			\
     libmlsundials_cvode$(XA)	\
     sundials_cvode$(XA)		\
     sundials_cvode.cma		\
-    sundials_cvode.cmxa
+    sundials_cvode.cmxa		\
+    libmlsundials_ida$(XA)	\
+    sundials_ida$(XA)		\
+    sundials_ida.cma		\
+    sundials_ida.cmxa
 
-STUBLIBS=dllmlsundials_cvode$(XS)
+STUBLIBS=dllmlsundials_cvode$(XS) dllmlsundials_ida(XS)
 
 CFLAGS+=-fPIC
 
@@ -183,6 +187,7 @@ clean:
 	-@$(RM) -f $(COBJ) cvode.annot
 	-@$(RM) -f $(MLOBJ:.cmo=.cma) $(MLOBJ:.cmo=.cmxa)
 	-@$(RM) -f sundials_cvode$(XA)
+	-@$(RM) -f sundials_ida$(XA)
 	-@$(RM) -f dochtml.cmi dochtml.cmo
 
 cleandoc:
@@ -194,6 +199,8 @@ cleanall: clean
 	-@$(RM) -f $(MLOBJ:.cmo=.cmi)
 	-@$(RM) -f sundials_cvode.cma sundials_cvode.cmxa
 	-@$(RM) -f libmlsundials_cvode$(XA) dllmlsundials_cvode$(XS)
+	-@$(RM) -f sundials_ida.cma sundials_ida.cmxa
+	-@$(RM) -f libmlsundials_ida$(XA) dllmlsundials_ida$(XS)
 	-@$(RM) -f META
 
 -include .depend

@@ -153,7 +153,7 @@ static int resfn (realtype t, N_Vector y, N_Vector yp,
 static value make_jac_arg(realtype t, realtype coef, N_Vector y, N_Vector yp,
 			  N_Vector res, value tmp)
 {
-    CAMLparam0();
+    CAMLparam1(tmp);
     CAMLlocal1(r);
 
     r = caml_alloc_tuple(RECORD_IDA_JACOBIAN_ARG_SIZE);
@@ -192,7 +192,7 @@ static value make_double_tmp(N_Vector tmp1, N_Vector tmp2)
 
 static void relinquish_jac_arg(value arg, int tmp_size)
 {
-    CAMLparam0();
+    CAMLparam1(arg);
     CAMLlocal1(tmp);
 
     RELINQUISH_WRAPPEDNV(Field(arg, RECORD_IDA_JACOBIAN_ARG_JAC_Y));
@@ -446,9 +446,9 @@ CAMLprim void IDATYPE(dls_clear_dense_jac_fn)(value vdata)
     CAMLreturn0;
 }
 
-CAMLprim void IDATYPE(dls_set_band_jac_fn)(value vdata, value fbandjacfn)
+CAMLprim void IDATYPE(dls_set_band_jac_fn)(value vdata)
 {
-    CAMLparam1(vdata);
+    CAMLparam2(vdata);
     int flag = IDADlsSetBandJacFn(IDA_MEM_FROM_ML(vdata), bandjacfn);
     CHECK_FLAG("IDADlsSetBandJacFn", flag);
     CAMLreturn0;

@@ -161,12 +161,13 @@ static int precond_type(value vptype)
 
 void set_linear_solver(void *cvode_mem, value ls, int n)
 {
+    CAMLparam1 (ls);
     int flag;
 
     if (Is_block(ls)) {
 	long int field0 = Field(Field(ls, 0), 0); /* mupper, pretype */
 	long int field1 = Field(Field(ls, 0), 1); /* mlower, maxl */
-	value sprange, bandrange;
+	CAMLlocal2 (sprange, bandrange);
 
 	switch (Tag_val(ls)) {
 	case VARIANT_LINEAR_SOLVER_BAND:

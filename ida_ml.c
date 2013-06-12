@@ -243,7 +243,8 @@ CAMLprim void c_ida_set_linear_solver (value vida_mem, value linsolver)
     int flag;
 
     if (Is_block(linsolver)) {
-	value arg = Field (linsolver, 0);
+	CAMLlocal1 (arg);
+	arg = Field (linsolver, 0);
 
 	switch (Tag_val(linsolver)) {
 	case VARIANT_IDA_LINEAR_SOLVER_BAND:

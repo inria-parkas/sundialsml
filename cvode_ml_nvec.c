@@ -220,7 +220,7 @@ static int errw(N_Vector y, N_Vector ewt, void *user_data)
 
 static value make_jac_arg(realtype t, N_Vector y, N_Vector fy, value tmp)
 {
-    CAMLparam0();
+    CAMLparam1(tmp);
     CAMLlocal1(r);
 
     r = caml_alloc_tuple(4);
@@ -246,7 +246,7 @@ static value make_triple_tmp(N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
 
 static void relinquish_jac_arg(value arg, int triple)
 {
-    CAMLparam0();
+    CAMLparam1(arg);
     CAMLlocal1(tmp);
 
     RELINQUISH_WRAPPEDNV(Field(arg, RECORD_JACOBIAN_ARG_JAC_Y));
@@ -391,7 +391,7 @@ static value make_spils_solve_arg(
 
 static CAMLprim void relinquish_spils_solve_arg(value arg)
 {
-    CAMLparam0();
+    CAMLparam1(arg);
     RELINQUISH_WRAPPEDNV(Field(arg, RECORD_SPILS_SOLVE_ARG_RHS));
     CAMLreturn0;
 }
@@ -487,7 +487,7 @@ CAMLprim void CVTYPE(dls_clear_dense_jac_fn)(value vdata)
     CAMLreturn0;
 }
 
-CAMLprim void CVTYPE(dls_set_band_jac_fn)(value vdata, value fbandjacfn)
+CAMLprim void CVTYPE(dls_set_band_jac_fn)(value vdata)
 {
     CAMLparam1(vdata);
     int flag = CVDlsSetBandJacFn(CVODE_MEM_FROM_ML(vdata), bandjacfn);
