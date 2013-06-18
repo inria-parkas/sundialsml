@@ -270,6 +270,7 @@ void set_linear_solver(void *cvode_mem, value ls, int n)
 	    break;
 	}
     }
+    CAMLreturn0;
 }
 
 CAMLprim void c_session_finalize(value vdata)

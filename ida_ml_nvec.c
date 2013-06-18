@@ -448,7 +448,7 @@ CAMLprim void IDATYPE(dls_clear_dense_jac_fn)(value vdata)
 
 CAMLprim void IDATYPE(dls_set_band_jac_fn)(value vdata)
 {
-    CAMLparam2(vdata);
+    CAMLparam1(vdata);
     int flag = IDADlsSetBandJacFn(IDA_MEM_FROM_ML(vdata), bandjacfn);
     CHECK_FLAG("IDADlsSetBandJacFn", flag);
     CAMLreturn0;
