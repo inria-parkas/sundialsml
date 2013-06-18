@@ -679,13 +679,13 @@ static value solver(value vdata, value nextt, value y, int onestep)
     CAMLreturn(r);
 }
 
-CAMLprim value CVTYPE(normal)(value vdata, value nextt, value y)
+CAMLprim value CVTYPE(solve_normal)(value vdata, value nextt, value y)
 {
     CAMLparam3(vdata, nextt, y);
     CAMLreturn(solver(vdata, nextt, y, 0));
 }
 
-CAMLprim value CVTYPE(one_step)(value vdata, value nextt, value y)
+CAMLprim value CVTYPE(solve_one_step)(value vdata, value nextt, value y)
 {
     CAMLparam3(vdata, nextt, y);
     CAMLreturn(solver(vdata, nextt, y, 1));

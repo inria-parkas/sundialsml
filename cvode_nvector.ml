@@ -187,13 +187,13 @@ let wf_tolerances s ferrw =
 external get_root_info  : 'a session -> Roots.t -> unit
     = "c_get_root_info"
 
-external normal
+external solve_normal
     : 'a session -> float -> 'a nvector -> float * solver_result
-    = "c_nvec_normal"
+    = "c_nvec_solve_normal"
 
-external one_step
+external solve_one_step
     : 'a session -> float -> 'a nvector -> float * solver_result
-    = "c_nvec_one_step"
+    = "c_nvec_solve_one_step"
 
 external get_dky
     : 'a session -> float -> int -> 'a nvector -> unit

@@ -589,7 +589,7 @@ let main () =
   printf " \n2-species diurnal advection-diffusion problem\n\n";
   let tout = ref twohr in
   for iout = 1 to nout do
-    let (t, flag) = Cvode.normal cvode_mem !tout u in
+    let (t, flag) = Cvode.solve_normal cvode_mem !tout u in
     print_output cvode_mem u t;
     tout := !tout +. twohr
   done;

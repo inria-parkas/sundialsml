@@ -254,7 +254,7 @@ let main () =
 
   let tout = ref t1 in
   for iout = 1 to nout do
-    let (t, flag) = Cvode.normal cvode_mem !tout u
+    let (t, flag) = Cvode.solve_normal cvode_mem !tout u
     in
     let nst = Cvode.get_num_steps cvode_mem in
 

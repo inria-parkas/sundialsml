@@ -357,7 +357,7 @@ let main () =
     (* In loop over output points, call CVode, print results, test for error *)
     let tout = ref twohr in
     for iout = 1 to nout do
-      let (t, flag) = Cvode.normal cvode_mem !tout u in
+      let (t, flag) = Cvode.solve_normal cvode_mem !tout u in
       print_output cvode_mem u t;
       tout := !tout +. twohr
     done;

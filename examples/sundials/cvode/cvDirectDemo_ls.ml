@@ -294,7 +294,7 @@ let problem1 () =
       for iout = 1 to p1_nout do
         let (t, success) =
           try
-            snd_true (Cvode.normal cvode_mem !tout y)
+            snd_true (Cvode.solve_normal cvode_mem !tout y)
           with _ -> (incr nerr; (!tout, false))
         in
 
@@ -416,7 +416,7 @@ let problem2 () =
       for iout = 1 to p2_nout do
         let (t, success) =
           try
-            snd_true (Cvode.normal cvode_mem !tout y)
+            snd_true (Cvode.solve_normal cvode_mem !tout y)
           with _ -> (incr nerr; (!tout, false))
         in
 

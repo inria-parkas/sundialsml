@@ -541,7 +541,7 @@ let main () =
 
     let tout = ref twohr in
     for iout = 1 to nout do
-      let (t, _) = Cvode.normal cvode_mem !tout u in
+      let (t, _) = Cvode.solve_normal cvode_mem !tout u in
       print_output cvode_mem u t;
       tout := !tout +. twohr
     done;

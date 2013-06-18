@@ -881,7 +881,7 @@ let main () =
     (* Loop over output points, call CVode, print sample solution values. *)
     let tout = ref t1 in
     for iout = 1 to nout do
-      let (t, _) = Cvode.normal cvode_mem !tout c in
+      let (t, _) = Cvode.solve_normal cvode_mem !tout c in
       print_output cvode_mem t;
       if !firstrun && (iout mod 3 = 0) then print_all_species c ns mxns t;
       tout := if !tout > 0.9 then !tout +. dtout else !tout *. tout_mult

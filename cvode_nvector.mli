@@ -202,7 +202,8 @@ val wf_tolerances : 'a session -> ('a -> 'a -> unit) -> unit
 (** {2 Solver functions } *)
 
 (**
-   [(tret, r) = normal s tout yout] integrates the ODE over an interval in t.
+   [(tret, r) = solv_normal s tout yout] integrates the ODE over an interval
+   in t.
 
    The arguments are:
    - [s] a 'a session with the solver.
@@ -221,15 +222,15 @@ val wf_tolerances : 'a session -> ('a -> 'a -> unit) -> unit
 
    @cvode <node5#sss:cvode> CVode (CV_NORMAL)
  *)
-val normal : 'a session -> float -> 'a nvector -> float * solver_result
+val solve_normal : 'a session -> float -> 'a nvector -> float * solver_result
 
 (**
-   This function is identical to {!normal}, except that it returns after one
-   internal solver step.
+   This function is identical to {!solve_normal}, except that it returns after
+   one internal solver step.
 
    @cvode <node5#sss:cvode> CVode (CV_ONE_STEP)
  *)
-val one_step : 'a session -> float -> 'a nvector -> float * solver_result
+val solve_one_step : 'a session -> float -> 'a nvector -> float * solver_result
 
 (** {2 Main optional functions} *)
 

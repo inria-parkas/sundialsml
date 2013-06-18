@@ -29,7 +29,7 @@ let _ =
   let t = ref 0.1 in
   let keep_going = ref true in
   while !keep_going do
-    let (t', result) = Cvode.normal s !t y_nv in
+    let (t', result) = Cvode.solve_normal s !t y_nv in
         print_with_time t' y;
         t := t' +. 0.1;
         match result with

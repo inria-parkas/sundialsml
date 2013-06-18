@@ -161,7 +161,7 @@ let main () =
   in
   while (!iout <> nout) do
 
-    let (t, flag) = Cvode.normal cvode_mem !tout y
+    let (t, flag) = Cvode.solve_normal cvode_mem !tout y
     in
     print_output t (ith y 1) (ith y 2) (ith y 3);
 
