@@ -36,5 +36,11 @@ enum gramschmidt_type {
     VARIANT_GRAMSCHMIDT_TYPE_CLASSICALGS,
 };
 
+#if HAVE_WEAK
+CAMLprim value caml_weak_get (value ar, value n);
+#define sundials_ml_weak_get caml_weak_get
+#else
+value sundials_ml_weak_get (value ar, value n);
+#endif
 
 #endif /* _SUNDIALS_ML_H__ */

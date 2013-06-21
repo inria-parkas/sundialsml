@@ -108,7 +108,8 @@ CAMLprim void IDATYPE(set_err_handler_fn)(value vdata)
 {
     CAMLparam1(vdata);
 
-    int flag = IDASetErrHandlerFn(IDA_MEM_FROM_ML(vdata), errh, NULL);
+    int flag = IDASetErrHandlerFn(IDA_MEM_FROM_ML(vdata), errh,
+				  IDA_BACKREF_FROM_ML(vdata));
     CHECK_FLAG("IDASetErrHandlerFn", flag);
 
     CAMLreturn0;
@@ -273,30 +274,69 @@ static int bandjacfn (long int neq, long int mupper, long int mlower,
     CAMLreturnT (int, r);
 }
 
+#define CHECK_RECOVERABLE      1
+#define DONT_CHECK_RECOVERABLE 0
+static int check_exception(value session, value r, int check_recoverable)
+{
+    CAMLparam2(session, r);
+    CAMLlocal1(exn);
+
+    static value *recoverable_failure = NULL;
+
+    if (!Is_exception_result(r)) return 0;
+
+    r = Extract_exception(r);
+
+    if (check_recoverable) {
+	if (recoverable_failure == NULL) {
+	    recoverable_failure =
+		caml_named_value("ida_RecoverableFailure");
+	}
+	if (Field(r, 0) == *recoverable_failure)
+	    CAMLreturnT (int, 1);
+    }
+
+    /* Unrecoverable error.  Save the exception and return -1.  */
+    exn = caml_alloc_small (1,0);
+    Field (exn,0) = r;
+    Store_field (session, RECORD_IDA_SESSION_EXN_TEMP, exn);
+    CAMLreturnT (int, -1);
+}
+
+value caml_weak_get (value ar, value n);
 static int rootsfn (realtype t, N_Vector y, N_Vector yp,
 		    realtype *gout, void *user_data)
 {
     CAMLparam0 ();
-    CAMLlocalN (args, 5);
+    CAMLlocal2 (session, r);
+    CAMLlocalN (args, 4);
     value *backref = (value *)user_data;
-    intnat nroots = NV_LENGTH_S (y);
-    int r;
-    CAML_FN (call_rootsfn);
+    intnat nroots;
 
-    args[0] = *backref;
-    args[1] = caml_copy_double (t);
-    args[2] = WRAP_NVECTOR (y);
-    args[3] = WRAP_NVECTOR (yp);
-    args[4] = caml_ba_alloc (BIGARRAY_FLOAT, 1, gout, &nroots);
+    /* The length of gout is only available at the nroots field of the session
+     * structure, so a dereference of the backref is unavoidable.  Therefore,
+     * we will do all of the setup here and directly call the user-supplied
+     * OCaml function without going through an OCaml trampoline.  */
+    session = sundials_ml_weak_get (*backref, Val_int (0));
+    if (!Is_block (session))
+	caml_failwith ("Internal error: weak reference is dead");
+    session = Field (session, 0);
 
-    r = Int_val (caml_callbackN (*call_rootsfn,
-				 sizeof (args) / sizeof (*args),
-				 args));
+    nroots = IDA_NROOTS_FROM_ML (session);
 
+    args[0] = caml_copy_double (t);
+    args[1] = WRAP_NVECTOR (y);
+    args[2] = WRAP_NVECTOR (yp);
+    args[3] = caml_ba_alloc (BIGARRAY_FLOAT, 1, gout, &nroots);
+
+    r = caml_callbackN_exn (IDA_ROOTSFN_FROM_ML (session),
+			    sizeof (args) / sizeof (*args),
+			    args);
+
+    RELINQUISH_WRAPPEDNV (args[1]);
     RELINQUISH_WRAPPEDNV (args[2]);
-    RELINQUISH_WRAPPEDNV (args[3]);
 
-    CAMLreturnT (int, r);
+    CAMLreturnT (int, check_exception (session, r, CHECK_RECOVERABLE));
 }
 
 static int errw(N_Vector y, N_Vector ewt, void *user_data)
@@ -532,8 +572,6 @@ CAMLprim value IDATYPE (init) (value weakref, value vt0, value vy, value vyp)
 	CHECK_FLAG ("IDAInit", flag);
     }
 
-    /* NB: the user data must be set before specifying the linear solver, so
-     * don't move this code down.  */
     backref = malloc (sizeof (*backref));
     if (backref == NULL) {
 	IDAFree (&ida_mem);

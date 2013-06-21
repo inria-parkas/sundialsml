@@ -94,6 +94,7 @@ END_HELP_TEXT
 done
 
 CPPFLAGS="${CPPFLAGS} `sundials-config -m cvode -t s -l c -s cppflags`"
+CC=${CC:-cc}
 CPP=${CPP:-cpp}
 LAPACKLIB=${LAPACKLIB:-"-llapack"}
 EXAMPLESROOT=${EXAMPLESROOT:-"/usr/local/examples"}
@@ -168,6 +169,60 @@ if echo $ptr_size | grep -q '[^0-9]'; then
     echo
     exit 1
 fi
+
+
+# Check if we can compile a direct call to caml_weak_get from C.  Usually we
+# can, but it doesn't seem to be supported officially.  Note that a .c + .ml
+# pair is infinitely easier to compile portably than a standalone .c file.
+cat > weak_get.c <<EOF
+/* This file tests if we can call caml_weak_get() directly from C.  */
+#include <caml/mlvalues.h>
+#include <caml/memory.h>
+#include <caml/alloc.h>
+
+CAMLprim value caml_weak_get (value ar, value n);
+CAMLprim value caml_weak_set (value ar, value n, value el);
+CAMLprim value caml_weak_create (value len);
+#define None_val (Val_int(0))
+#define Some_tag 0
+
+CAMLprim value f ()
+{
+  CAMLparam0 ();
+  CAMLlocal3 (table, x, y);
+
+  table = caml_weak_create (Val_int (1));
+  x = caml_weak_get (table, Val_int (0));
+  if (x != None_val)
+    CAMLreturn (Val_int (1));
+
+  y = caml_alloc_small (1, Some_tag);
+  Field (y, 0) = Val_int (42);
+  caml_weak_set (table, Val_int (0), y);
+  x = caml_weak_get (table, Val_int (0));
+  if (!Is_block (x) || Tag_val(x) != Some_tag || Field (x,0) != Field(y,0))
+    CAMLreturn (Val_int (2));
+
+  caml_weak_set (table, Val_int (0), None_val);
+  x = caml_weak_get (table, Val_int (0));
+  if (x != None_val)
+    CAMLreturn (Val_int (3));
+
+  CAMLreturn (Val_int (0));
+}
+EOF
+cat > weak_get_main.ml <<EOF
+external f : unit -> int = "f"
+let _ = exit (f ())
+EOF
+if ${OCAMLBIN}ocamlc weak_get.c weak_get_main.ml -o weak_get -custom \
+    2>&1 > /dev/null && ./weak_get; then
+    have_weak=1
+else
+    have_weak=0
+fi
+rm -f weak_get.c weak_get.o \
+      weak_get_main.ml weak_get_main.cmi weak_get_main.cmo weak_get
 
 if [ "${long_size}" -ne "${ptr_size}" ]; then
     error="${error}\nsizeof (long) does not match sizeof (void*)."
@@ -294,6 +349,7 @@ fi
 	 s#@ocamlflags@#${ocamlflags}#;
 	 s#@ocamloptflags@#${ocamloptflags}#;
 	 s#@ocamlmklibflags@#${ocamlmklibflags}#;
+         s#@have_weak@#${have_weak}#;
 	 s#@EXAMPLESROOT@#${EXAMPLESROOT}#;
 	 s#@OCAMLBIN@#${OCAMLBIN}#;
 	 s#@OCAMLROOT@#${OCAMLROOT}#;" config.in) > config

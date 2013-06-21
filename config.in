@@ -1,6 +1,8 @@
 
 VERSION = @version@
 
+HAVE_WEAK=-DHAVE_WEAK=@have_weak@
+
 CVODE_DOC_ROOT = https://computation.llnl.gov/casc/sundials/documentation/cv_guide/
 OCAML_DOC_ROOT = http://caml.inria.fr/pub/docs/manual-ocaml/libref/
 
@@ -8,13 +10,13 @@ OCAMLFLAGS =
 OCAMLOPTFLAGS =
 
 CC = gcc
-CFLAGS += @cflags@ # -DRESTRICT_INTERNAL_PRECISION"
+CFLAGS += @cflags@ $(HAVE_WEAK) # -DRESTRICT_INTERNAL_PRECISION"
 LDFLAGS += @ldflags@
 
-CVODE_LDFLAGS = @cvode_ldflags@ @ldflags@
-CVODE_CFLAGS = @cvode_cppflags@ @cflags@
-IDA_LDFLAGS = @ida_ldflags@ @ldflags@
-IDA_CFLAGS = @ida_cppflags@ @cflags@
+CVODE_LDFLAGS = @cvode_ldflags@ $(LDFLAGS)
+CVODE_CFLAGS = @cvode_cppflags@ $(CFLAGS)
+IDA_LDFLAGS = @ida_ldflags@ $(LDFLAGS)
+IDA_CFLAGS = @ida_cppflags@ $(CFLAGS)
 
 OCAMLC ?= @OCAMLBIN@ocamlc
 OCAMLFLAGS = @ocamlflags@
