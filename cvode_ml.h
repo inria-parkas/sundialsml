@@ -26,80 +26,122 @@
 /* Configuration options */
 #define CHECK_MATRIX_ACCESS 1
 
-void cvode_ml_check_flag(const char *call, int flag);
-
-#define CHECK_FLAG(call, flag) if (flag != CV_SUCCESS) \
-				 cvode_ml_check_flag(call, flag)
-
-
 /*
  * The session data structure is shared in four parts across the OCaml and C
  * heaps:
  *
- *           C HEAP                   .           OCAML HEAP
- * -----------------------------------.---------------------------------
- *                                    .
- *                                    .            (Program using Sundials/ML)
- *                                    .                               |
- *                                    .       +--------------+        |
- *                             +---------+    | weak_hash_fn |        | 
- *                             | named   |    +--------------+        | 
- *  *_cvode_ml_get_session --->|  values +--->+ ~ ~ ~ ~ ~ ~  +---+    |
- *       (value *)             +---------+    +--------------+   |    |
- * "*_cvode_ml_get_session"           .                         \|/  \|/
- *                                    .                 +----------------+
- *                                    .                 |  session       |
- *                                    .                 +----------------+
- *             +----------------------------------------+ cvode          |
- *             |                      .                 | neqs           |
- *             |                      .                 | nroots         |
- *            \|/                     .                 | err_file       |
- *       +------------+               .                 | closure_rhsfn  |
- *       | cvode_mem  |               .                 | closure_rootfn |
- *       +------------+               .                 | ...            |
- *       |    ...     |               .                 +----------------+
- *       |cv_user_data| = weak_hash   .
- *       |    ...     |    key        .
- *       +------------+               .
- *				      .
+ *           C HEAP                 .             OCAML HEAP
+ * ---------------------------------.-----------------------------------
+ *                                  .       (Program using Sundials/ML)
+ *                                  .                            |
+ *              +---------------+   .   +-------------------+    |
+ *              | generational  +------>| weak ref : Weak.t |    |
+ *              | global root   |   .   +-------------------+    |
+ *              | (type: value) |   .   | ~ ~ ~ ~ ~ ~ ~ ~ ~ |    |
+ *              +---------------+   .   +----------------+--+    |
+ *                      /|\  /|\    .                    |       |
+ *                       |    |     .                    |       |
+ *                       |    |     .                   \|/     \|/
+ *                       |    |     .                 +----------------+
+ *                       |    |     .                 |  session       |
+ *   +------------+      |    |     .                 +----------------+
+ *   | cvode_mem  |<----------------------------------+ cvode          |
+ *   +------------+      |    +-----------------------+ backref        |
+ *   |    ...     |      |          .                 | neqs           |
+ *   |cv_user_data+------+          .                 | nroots         |
+ *   |    ...     |                 .                 | err_file       |
+ *   +------------+                 .                 | closure_rhsfn  |
+ *                                  .                 | closure_rootsfn|
+ *                                  .                 | ...            |
+ *                                  .                 +----------------+
  *
  *  * A cvode_mem structure is allocated by CVodeInit for each session. It
  *    is the "C side" of the session data structure.
  *
- *  * The "OCaml side" of the session data structure contains a pointer to
- *    a cvode_mem, several data fields, and the callback closures. It is
- *    returned to users of the library, and entered into a global array
- *    of weak pointers.
+ *  * The "OCaml side" of the session data structure is a record which contains
+ *    a pointer to cvode_mem, several data fields, and the callback closures.
+ *    It is returned to users of the library and used like any other abstract
+ *    data type in OCaml.
  *
- *  * The index of a session in the weak pointer array is stored in
- *    cvode_mem.cv_user_data. Callback routines pass this index to a
- *    *_cvode_ml_get_session function (ba_cvode_ml_get_session, or
- *    nvec_cvode_ml_get_session) to retrieve the session with its
- *    callbacks.
+ *  * cvode_mem holds an indirect reference to the session record as user data
+ *    (set by CVodeSetUserData).  It cannot directly point to the record
+ *    because GC can change the record's address.  Instead, user data points to
+ *    a global root which the GC updates whenever it relocates the session.
  *
- *    By linking through the weak_hash, we do not prevent a session from
- *    being reclamed when it is no longer needed. Callbacks are only
- *    activated as effects of functions that take a session value, thus
- *    guaranteeing that a cv_user_data index will always be valid.
- * 
- *  * The *_cvode_ml_get_session functions are registered as named values.
- *    Value pointers to the functions (value *) are cached in
- *    ba_cvode_ml_session_hash and nvec_cvode_ml_session_hash.
- *    The functions may be moved by the garbage collector, but the named
- *    value* is allocated in the C heap and does not move.
+ *  * The global root points to a weak reference (a Weak.t of size 1) which
+ *    points to the session record.  The root is destroyed when the session
+ *    record is GC'ed -- note that if the root referenced the session record
+ *    via a non-weak pointer the session would never be GC'ed, hence the root
+ *    would never be destroyed either.
  *
- *  The init command:
- *  1. Calls CVodeInit to create a cvode_mem in the C heap.
- *  2. Returns this session paired with an initial value for err_file.
+ * 1. CVodeInit() on the C side creates cvode_mem and the global root, and the
+ *    OCaml side wraps that in a session record.  The OCaml side associates
+ *    that record with a finalizer that unregisters the global root and frees
+ *    all the C-side memory.
  *
- *  A finalizer is associated with session, on reclamation it:
- *  1. Calls CVodeFree to free cvode_mem.
- *  2. Closes session.err_file if necessary.
- * 
- *  The callback routines dereference and call "*_cvode_ml_*" routines which
- *  lookup a given session based on the index and call the appropriate
- *  function.
+ * 2. Callback functions (the right-hand side function, root function, etc)
+ *    access the session through the user data.  This is the only way they can
+ *    access the session.  The weak pointer is guaranteed to be alive during
+ *    callback because the session record is alive.  The session record is
+ *    captured in a C stack variable of type value when control enters the C
+ *    stub that initiated the callback.
+ *
+ * 3. Other functions, like those that query integrator statistics, access the
+ *    session record directly.
+ *
+ * 4. Eventually, when the user program abandons all references to the session
+ *    record, the GC can reclaim the record because the only remaining direct
+ *    reference to it is the weak pointer.
  */
+/* Implementation note: we have also considered an arrangement where the global
+ * root is replaced by a pointer of type value*.  The idea was that whenever
+ * execution enters the C side, we capture the session record in a stack
+ * variable (which is registered with OCaml's GC through CAMLparam()) and make
+ * the pointer point to this stack variable.  The stack variable is updated by
+ * GC, while the pointer pointing to the stack variable is always at the same
+ * address.
+ *
+ * In the following figure, the GC sees everything on the stack and OCaml heap,
+ * while seeing nothing on the C heap.
+ *
+ *           C HEAP         .     STACK     .        OCAML HEAP
+ * -------------------------.---------------.---------------------------
+ *   +-------------+        . +-----------+ . (Program using Sundials/ML)
+ *   | pointer of  |        . |function   | .                     |
+ *   | type value* +--------->|param of   +--------------+        |
+ *   +-------------+        . |type value | .            |        |
+ *         /|\              . +-----------+ .            |        |
+ *          |               .               .           \|/      \|/
+ *  +-------+               .  NB: This     .        +----------------+
+ *  |                       .  diagram does .        |  session       |
+ *  |  +--------------+     .  NOT show how .        +----------------+
+ *  |  |  cvode_mem   |<-----  the current  ---------+ cvode          |
+ *  |  +--------------+     .  code works!! .        | neqs           |
+ *  |  |     ...      |     .  The diagram  .        | nroots         |
+ *  +--+ cv_user_data |     .  above does!! .        | err_file       |
+ *     | conceptually |     .               .        | closure_rhsfn  |
+ *     | of type      |     .               .        | closure_rootsfn|
+ *     | value **     |     .               .        | ...            |
+ *     |     ...      |     .               .        +----------------+
+ *     +--------------+     .               .
+ *
+ * On the one hand, we dropped this approach because it's invasive and
+ * error-prone.  The error handler callback (errh) needs to access the session
+ * record too, and almost every Sundials API can potentially call this handler.
+ * This means that every C stub must update the pointer before doing anything
+ * else (including functions that do not ostensibly initiate any callbacks),
+ * and we have to ensure that callbacks never see the pointer pointing to an
+ * expired stack variable.
+ *
+ * On the other hand, this approach is probably more efficient than the current
+ * approach with weak tables.  Perhaps if the callback overhead is found to be
+ * a major bottleneck, we can switch over to this alternative.
+ */
+
+void cvode_ml_check_flag(const char *call, int flag);
+
+#define CHECK_FLAG(call, flag) if (flag != CV_SUCCESS) \
+				 cvode_ml_check_flag(call, flag)
 
 void set_linear_solver(void *cvode_mem, value ls, int n);
 value cvode_ml_big_real();

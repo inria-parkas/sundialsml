@@ -22,15 +22,11 @@ void ida_ml_set_linear_solver(void *ida_mem, value ls, int n);
 #define CHECK_FLAG(call, flag) if (flag != IDA_SUCCESS) \
 				 ida_ml_check_flag(call, flag)
 
-/*
- * OCaml's ida_session is a record data type holding the residual function,
- * Jacobian function, number of equations, etc., along with a custom block
- * holding a pointer to an ida "mem" pointer (the stuff returned by
- * IDACreate()).
- */
 
 /* Indices into the Ida_*.session type.  This enum must be in the same order as
- * the session type's member declaration.  */
+ * the session type's member declaration.  The session data structure is shared
+ * in four parts across the OCaml and C heaps.  See cvode_ml.h for details.
+ */
 enum ida_index {
     RECORD_IDA_SESSION_MEM = 0,
     RECORD_IDA_SESSION_BACKREF,
