@@ -236,10 +236,10 @@ exception LinearSetupFailure
 exception LinearSolveFailure        
 
 (** @cvode <node5#sss:cvode> CV_RHSFUNC_FAIL *)
-exception RhsFuncErr                
+exception RhsFuncFailure
 
-(** @cvode <node5#sss:cvode> CV_FIRST_RHSFUNC_FAIL *)
-exception FirstRhsFuncFailure       
+(** @cvode <node5#sss:cvode> CV_FIRST_RHSFUNC_ERR *)
+exception FirstRhsFuncErr
 
 (** @cvode <node5#sss:cvode> CV_REPTD_RHSFUNC_ERR *)
 exception RepeatedRhsFuncErr        

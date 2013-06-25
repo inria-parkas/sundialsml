@@ -96,15 +96,15 @@ void cvode_ml_check_flag(const char *call, int flag)
 	break;
 
     case CV_FIRST_RHSFUNC_ERR:
-	caml_raise_constant(*caml_named_value("cvode_FirstRhsFuncError"));
+	caml_raise_constant(*caml_named_value("cvode_FirstRhsFuncErr"));
 	break;
 
     case CV_REPTD_RHSFUNC_ERR:
-	caml_raise_constant(*caml_named_value("cvode_RepeatedRhsFuncError"));
+	caml_raise_constant(*caml_named_value("cvode_RepeatedRhsFuncErr"));
 	break;
 
     case CV_UNREC_RHSFUNC_ERR:
-	caml_raise_constant(*caml_named_value("cvode_UnrecoverableRhsFuncError"));
+	caml_raise_constant(*caml_named_value("cvode_UnrecoverableRhsFuncErr"));
 	break;
 
     case CV_RTFUNC_FAIL:

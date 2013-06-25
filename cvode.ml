@@ -75,8 +75,8 @@ exception ConvergenceFailure
 exception LinearInitFailure
 exception LinearSetupFailure
 exception LinearSolveFailure
-exception RhsFuncErr
-exception FirstRhsFuncFailure
+exception RhsFuncFailure
+exception FirstRhsFuncErr
 exception RepeatedRhsFuncErr
 exception UnrecoverableRhsFuncErr
 exception RootFuncFailure
@@ -124,8 +124,8 @@ let _ =
     ("cvode_LinearInitFailure",       LinearInitFailure);
     ("cvode_LinearSetupFailure",      LinearSetupFailure);
     ("cvode_LinearSolveFailure",      LinearSolveFailure);
-    ("cvode_RhsFuncErr",              RhsFuncErr);
-    ("cvode_FirstRhsFuncFailure",     FirstRhsFuncFailure);
+    ("cvode_RhsFuncFailure",          RhsFuncFailure);
+    ("cvode_FirstRhsFuncErr",         FirstRhsFuncErr);
     ("cvode_RepeatedRhsFuncErr",      RepeatedRhsFuncErr);
     ("cvode_UnrecoverableRhsFuncErr", UnrecoverableRhsFuncErr);
     ("cvode_RootFuncFailure",         RootFuncFailure);
