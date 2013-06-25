@@ -41,7 +41,7 @@ value sundials_ml_weak_get (value ar, value n)
     CAMLparam2 (ar, n);
     value *weak_get;
     if (weak_get == NULL)
-	weak_get = caml_named_value ("c_sundials_weak_get");
+	weak_get = caml_named_value ("sundials_weak_get");
 
     CAMLreturn (caml_callback2 (*weak_get, ar, n));
 }

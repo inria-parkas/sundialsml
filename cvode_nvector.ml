@@ -40,12 +40,15 @@ type 'a callback_solve_arg =
 
 type cvode_mem
 type cvode_file
+type c_weak_ref
 type 'a session = {
         cvode      : cvode_mem;
-        user_data  : int;
+        backref    : c_weak_ref;
         neqs       : int;
         nroots     : int;
         err_file   : cvode_file;
+
+        mutable exn_temp   : exn option;
 
         mutable rhsfn      : float -> 'a -> 'a -> unit;
         mutable rootsfn    : float -> 'a -> root_val_array -> unit;
@@ -62,60 +65,85 @@ type 'a session = {
 
 (* interface *)
 
+let read_weak_ref x : 'a session =
+  match Weak.get x 0 with
+  | Some y -> y
+  | None -> raise (Failure "Internal error: weak reference is dead")
+let adjust_retcode = fun session check_recoverable f x ->
+  try f x; 0
+  with
+  | RecoverableFailure when check_recoverable -> 1
+  | e -> (session.exn_temp <- Some e; -1)
+let call_rhsfn session t y y' =
+  let session = read_weak_ref session in
+  adjust_retcode session true (session.rhsfn t y) y'
+let call_errw session y ewt =
+  let session = read_weak_ref session in
+  adjust_retcode session false (session.errw y) ewt
+let call_errh session details =
+  let session = read_weak_ref session in
+  try session.errh details
+  with e ->
+    prerr_endline ("Warning: error handler function raised an exception.  " ^
+                   "This exception will not be propagated.")
+let call_jacfn session jac j =
+  let session = read_weak_ref session in
+  adjust_retcode session true (session.jacfn jac) j
+let call_bandjacfn session jac mupper mlower j =
+  let session = read_weak_ref session in
+  adjust_retcode session true (session.bandjacfn jac mupper mlower) j
+let call_presolvefn session jac r z =
+  let session = read_weak_ref session in
+  adjust_retcode session true (session.presolvefn jac r) z
+let call_jactimesfn session jac v jv =
+  let session = read_weak_ref session in
+  adjust_retcode session true (session.jactimesfn jac v) jv
+let _ =
+  Callback.register "c_nvec_call_rhsfn"         call_rhsfn;
+  Callback.register "c_nvec_call_errh"          call_errh;
+  Callback.register "c_nvec_call_errw"          call_errw;
+  Callback.register "c_nvec_call_jacfn"         call_jacfn;
+  Callback.register "c_nvec_call_bandjacfn"     call_bandjacfn;
+  Callback.register "c_nvec_call_presolvefn"    call_presolvefn;
+  Callback.register "c_nvec_call_jactimesfn"    call_jactimesfn;
+
 external session_finalize : 'a session -> unit
     = "c_session_finalize"
 
-external external_init
-    : lmm -> iter -> 'a nvector -> int -> int -> float -> (cvode_mem * cvode_file)
-    = "c_nvec_init_bytecode" "c_nvec_init"
+external c_init
+    : 'a session Weak.t -> lmm -> iter -> 'a nvector -> float
+      -> (cvode_mem * c_weak_ref * cvode_file)
+    = "c_nvec_init"
 
-external set_user_data : 'a session -> unit
-    = "c_set_user_data"
+external c_root_init : 'a session -> int -> unit
+    = "c_nvec_root_init"
 
-(*
- * The session_table is used for sharing session values with C functions. The
- * functions do not care about the type of the underlying nvector representation
- * (i.e., the 'a in 'a session) and we want to use a single (weak) lookup table
- * to store all "'a session"s, we therefore cheat with Obj.repr.
- *
- * Only C functions and init' may call add_session/get_session. The latter is
- * explicitly type constrained to ensure consistency between type variables in
- * the callback functions, the initial vector, and the resulting session type.
- *)
-module SessionTable : sig
-    val proto_init :
-        lmm
-        -> iter
-        -> (float -> 'a -> 'a -> unit)
-        -> (int * (float -> 'a -> root_val_array -> unit))
-        -> (int * 'a nvector)
-        -> float
-        -> 'a session
-  end = 
-  struct
+external set_iter_type          : 'a session -> iter -> unit
+    = "c_set_iter_type"
 
-  let session_table = ref (Weak.create 10 : Obj.t Weak.t)
+external sv_tolerances  : 'a session -> float -> 'a nvector -> unit
+    = "c_nvec_sv_tolerances"
+external ss_tolerances  : 'a session -> float -> float -> unit
+    = "c_ss_tolerances"
+external wf_tolerances  : 'a session -> unit
+    = "c_nvec_wf_tolerances"
 
-  let add_session cvode neqs nroots err_file =
-    let length = Weak.length !session_table in
-    let rec find_next i =
-      if i < length
-      then (if Weak.check !session_table i then find_next (i + 1) else i)
-      else
-        let session_table' = Weak.create (2 * length) in
-        Weak.blit !session_table 0 session_table' 0 length;
-        session_table := session_table';
-        i in
-    let idx = find_next 0 in
-    let session = {
-          cvode      = cvode;
-          user_data  = idx;
+let init' lmm iter f (nroots, roots) (neqs, y0) t0 =
+  let weakref = Weak.create 1 in
+  let cvode_mem, backref, err_file = c_init weakref lmm iter y0 t0 in
+  (* cvode_mem and backref have to be immediately captured in a session and
+     associated with the finalizer before we do anything else.  *)
+  let session = {
+          cvode      = cvode_mem;
+          backref    = backref;
           neqs       = neqs;
           nroots     = nroots;
           err_file   = err_file;
 
-          rhsfn      = (fun _ _ _ -> ());
-          rootsfn    = (fun _ _ _ -> ());
+          exn_temp   = None;
+
+          rhsfn      = f;
+          rootsfn    = roots;
           errh       = (fun _ -> ());
           errw       = (fun _ _ -> ());
           jacfn      = (fun _ _ -> ());
@@ -124,47 +152,16 @@ module SessionTable : sig
           presolvefn = (fun _ _ _ -> ());
           jactimesfn = (fun _ _ _ -> ());
         } in
-    Weak.set !session_table idx (Some (Obj.repr session));
-    session
+  Gc.finalise session_finalize session;
+  Weak.set weakref 0 (Some session);
+  (* Now the session is safe to use.  If any of the following fails and raises
+     an exception, the GC will take care of freeing cvode_mem and backref.  *)
+  c_root_init session nroots;
+  set_iter_type session iter;
+  ss_tolerances session 1.0e-4 1.0e-8;
+  session
 
-  let get_session idx =
-    match Weak.get !session_table idx with
-      None -> raise Not_found
-    | Some s -> Obj.obj s
-
-  let session_rhsfn idx      = (get_session idx).rhsfn
-  let session_errh idx       = (get_session idx).errh
-  let session_errw idx       = (get_session idx).errw
-  let session_jacfn idx      = (get_session idx).jacfn
-  let session_bandjacfn idx  = (get_session idx).bandjacfn
-  let session_presetupfn idx = (get_session idx).presetupfn
-  let session_presolvefn idx = (get_session idx).presolvefn
-  let session_jactimesfn idx = (get_session idx).jactimesfn
-
-  let _ = Callback.register "c_nvec_cvode_ml_session"    get_session;
-          Callback.register "c_nvec_cvode_ml_rhsfn"      session_rhsfn;
-          Callback.register "c_nvec_cvode_ml_errh"       session_errh;
-          Callback.register "c_nvec_cvode_ml_errw"       session_errw;
-          Callback.register "c_nvec_cvode_ml_jacfn"      session_jacfn;
-          Callback.register "c_nvec_cvode_ml_bandjacfn"  session_bandjacfn;
-          Callback.register "c_nvec_cvode_ml_presetupfn" session_presetupfn;
-          Callback.register "c_nvec_cvode_ml_presolvefn" session_presolvefn;
-          Callback.register "c_nvec_cvode_ml_jactimesfn" session_jactimesfn
-
-  let proto_init lmm iter f (num_roots, roots) (num_eqs, y0) t0 =
-    let cvode, errfile = external_init lmm iter y0 num_eqs num_roots t0 in
-    let s = add_session cvode num_eqs num_roots errfile in
-    Gc.finalise session_finalize s;
-    s.rhsfn <- f;
-    s.rootsfn <- roots;
-    set_user_data s;
-    s
-
-  end
-
-let init' = SessionTable.proto_init
-let init lmm iter f roots n_y0 =
-  SessionTable.proto_init lmm iter f roots n_y0 0.0
+let init lmm iter f roots n_y0 = init' lmm iter f roots n_y0 0.0
 
 let nroots { nroots } = nroots
 let neqs { neqs } = neqs
@@ -172,13 +169,6 @@ let neqs { neqs } = neqs
 external reinit
     : 'a session -> float -> 'a nvector -> unit
     = "c_nvec_reinit"
-
-external sv_tolerances  : 'a session -> float -> 'a nvector -> unit
-    = "c_nvec_sv_tolerances"
-external ss_tolerances  : 'a session -> float -> float -> unit
-    = "c_ss_tolerances"
-external wf_tolerances  : 'a session -> unit
-    = "c_nvec_wf_tolerances"
 
 let wf_tolerances s ferrw =
   s.errw <- ferrw;
@@ -290,8 +280,6 @@ external set_max_conv_fails     : 'a session -> int -> unit
     = "c_set_max_conv_fails"
 external set_nonlin_conv_coef   : 'a session -> float -> unit
     = "c_set_nonlin_conv_coef"
-external set_iter_type          : 'a session -> iter -> unit
-    = "c_set_iter_type"
 
 external set_root_direction'    : 'a session -> RootDirs.t -> unit
     = "c_set_root_direction"

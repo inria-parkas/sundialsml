@@ -106,26 +106,34 @@ value cvode_ml_big_real();
 
 /* Interface with Ocaml types */
 
-#define RECORD_SESSION_CVODE      0
-#define RECORD_SESSION_USER_DATA  1
-#define RECORD_SESSION_NEQS       2
-#define RECORD_SESSION_NROOTS     3
-#define RECORD_SESSION_ERRFILE    4
-#define RECORD_SESSION_RHSFN      5
-#define RECORD_SESSION_ROOTSFN    6
-#define RECORD_SESSION_ERRH       7
-#define RECORD_SESSION_ERRW       8
-#define RECORD_SESSION_JACFN      9
-#define RECORD_SESSION_BANDJACFN  10
-#define RECORD_SESSION_PRESETUPFN 11
-#define RECORD_SESSION_PRESOLVEFN 12
-#define RECORD_SESSION_JACTIMESFN 13
+/* Indices into the Cvode_*.session type.  This enum must be in the same order
+ * as the session type's member declaration.  */
+enum cvode_index {
+    RECORD_SESSION_CVODE = 0,
+    RECORD_SESSION_BACKREF,
+    RECORD_SESSION_NEQS,
+    RECORD_SESSION_NROOTS,
+    RECORD_SESSION_ERRFILE,
+    RECORD_SESSION_EXN_TEMP,
+    RECORD_SESSION_RHSFN,
+    RECORD_SESSION_ROOTSFN,
+    RECORD_SESSION_ERRH,
+    RECORD_SESSION_ERRW,
+    RECORD_SESSION_JACFN,
+    RECORD_SESSION_BANDJACFN,
+    RECORD_SESSION_PRESETUPFN,
+    RECORD_SESSION_PRESOLVEFN,
+    RECORD_SESSION_JACTIMESFN,
+    RECORD_SESSION_SIZE,	/* This has to come last.  */
+};
 
 #define CVODE_MEM_FROM_ML(v)       ((void *)Field((v), RECORD_SESSION_CVODE))
-#define CVODE_USER_DATA_FROM_ML(v) \
-    ((void *)(Long_val(Field((v), RECORD_SESSION_USER_DATA))))
+#define CVODE_BACKREF_FROM_ML(v) \
+    ((value *)(Field((v), RECORD_SESSION_BACKREF)))
 #define CVODE_NEQS_FROM_ML(v)      Long_val(Field((v), RECORD_SESSION_NEQS))
 #define CVODE_NROOTS_FROM_ML(v)    Long_val(Field((v), RECORD_SESSION_NROOTS))
+#define CVODE_ROOTSFN_FROM_ML(v)   Field((v), RECORD_SESSION_ROOTSFN)
+#define CVODE_PRESETUPFN_FROM_ML(v)   Field((v), RECORD_SESSION_PRESETUPFN)
 
 #define VARIANT_LMM_ADAMS 0
 #define VARIANT_LMM_BDF   1

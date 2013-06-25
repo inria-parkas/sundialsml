@@ -286,13 +286,6 @@ CAMLprim void c_session_finalize(value vdata)
     }
 }
 
-CAMLprim void c_set_user_data(value vdata)
-{
-    CAMLparam1(vdata);
-    CVodeSetUserData(CVODE_MEM_FROM_ML(vdata), CVODE_USER_DATA_FROM_ML(vdata));
-    CAMLreturn0;
-}
- 
 CAMLprim void c_ss_tolerances(value vdata, value reltol, value abstol)
 {
     CAMLparam3(vdata, reltol, abstol);

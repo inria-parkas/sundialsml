@@ -43,4 +43,12 @@ CAMLprim value caml_weak_get (value ar, value n);
 value sundials_ml_weak_get (value ar, value n);
 #endif
 
+#define WEAK_DEREF(dest, ptr)                                   \
+  do {                                                          \
+    dest = sundials_ml_weak_get ((ptr), Val_int (0));           \
+    if (!Is_block (dest))                                       \
+      caml_failwith ("Internal error: weak reference is dead"); \
+    dest = Field (dest, 0);                                     \
+  } while (0)
+
 #endif /* _SUNDIALS_ML_H__ */
