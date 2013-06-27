@@ -213,7 +213,7 @@ CAMLprim void c_ida_set_error_file(value vdata, value vpath, value vtrunc)
 {
     CAMLparam3(vdata, vpath, vtrunc);
 
-    FILE* err_file = (FILE *)Long_val(Field(vdata, RECORD_IDA_SESSION_ERRFILE));
+    FILE* err_file = (FILE*)Long_val(Field(vdata, RECORD_IDA_SESSION_ERRFILE));
 
     if (err_file != NULL) {
 	fclose(err_file);

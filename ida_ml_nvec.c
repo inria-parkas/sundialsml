@@ -584,7 +584,7 @@ CAMLprim value IDATYPE (init) (value weakref, value vt0, value vy, value vyp)
     r = caml_alloc_tuple(3);
     Store_field(r, 0, (value)ida_mem);
     Store_field(r, 1, (value)backref);
-    Store_field(r, 2, (value)NULL); // no err_file = NULL
+    Store_field(r, 2, Val_long (0)); // no err_file = NULL
 
     CAMLreturn (r);
 }
