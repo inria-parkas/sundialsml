@@ -273,7 +273,7 @@ void set_linear_solver(void *cvode_mem, value ls, int n)
     CAMLreturn0;
 }
 
-CAMLprim void c_session_finalize(value vdata)
+CAMLprim void c_cvode_session_finalize(value vdata)
 {
     if (CVODE_MEM_FROM_ML(vdata) != NULL) {
 	void *cvode_mem = CVODE_MEM_FROM_ML(vdata);
@@ -286,7 +286,7 @@ CAMLprim void c_session_finalize(value vdata)
     }
 }
 
-CAMLprim void c_ss_tolerances(value vdata, value reltol, value abstol)
+CAMLprim void c_cvode_ss_tolerances(value vdata, value reltol, value abstol)
 {
     CAMLparam3(vdata, reltol, abstol);
 
@@ -297,7 +297,7 @@ CAMLprim void c_ss_tolerances(value vdata, value reltol, value abstol)
     CAMLreturn0;
 }
 
-CAMLprim void c_get_root_info(value vdata, value roots)
+CAMLprim void c_cvode_get_root_info(value vdata, value roots)
 {
     CAMLparam2(vdata, roots);
 
@@ -314,7 +314,7 @@ CAMLprim void c_get_root_info(value vdata, value roots)
     CAMLreturn0;
 }
 
-CAMLprim value c_get_integrator_stats(value vdata)
+CAMLprim value c_cvode_get_integrator_stats(value vdata)
 {
     CAMLparam1(vdata);
     CAMLlocal1(r);
@@ -365,7 +365,7 @@ CAMLprim value c_get_integrator_stats(value vdata)
     CAMLreturn(r);
 }
 
-CAMLprim void c_set_error_file(value vdata, value vpath, value vtrunc)
+CAMLprim void c_cvode_set_error_file(value vdata, value vpath, value vtrunc)
 {
     CAMLparam3(vdata, vpath, vtrunc);
 
@@ -389,7 +389,7 @@ CAMLprim void c_set_error_file(value vdata, value vpath, value vtrunc)
     CAMLreturn0;
 }
 
-CAMLprim void c_set_iter_type(value vdata, value iter)
+CAMLprim void c_cvode_set_iter_type(value vdata, value iter)
 {
     CAMLparam2(vdata, iter);
 
@@ -411,7 +411,7 @@ CAMLprim void c_set_iter_type(value vdata, value iter)
     CAMLreturn0;
 }
 
-CAMLprim void c_set_root_direction(value vdata, value rootdirs)
+CAMLprim void c_cvode_set_root_direction(value vdata, value rootdirs)
 {
     CAMLparam2(vdata, rootdirs);
 
@@ -428,7 +428,7 @@ CAMLprim void c_set_root_direction(value vdata, value rootdirs)
     CAMLreturn0;
 }
 
-CAMLprim void c_set_prec_type(value vcvode_mem, value vptype)
+CAMLprim void c_cvode_set_prec_type(value vcvode_mem, value vptype)
 {
     CAMLparam2(vcvode_mem, vptype);
 
@@ -457,7 +457,7 @@ value cvode_ml_unit_roundoff()
  *
  */
 
-CAMLprim value c_get_work_space(value vcvode_mem)
+CAMLprim value c_cvode_get_work_space(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
     CAMLlocal1(r);
@@ -477,7 +477,7 @@ CAMLprim value c_get_work_space(value vcvode_mem)
     CAMLreturn(r);
 }
 
-CAMLprim value c_get_num_steps(value vcvode_mem)
+CAMLprim value c_cvode_get_num_steps(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -490,7 +490,7 @@ CAMLprim value c_get_num_steps(value vcvode_mem)
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_get_num_rhs_evals(value vcvode_mem)
+CAMLprim value c_cvode_get_num_rhs_evals(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -503,7 +503,7 @@ CAMLprim value c_get_num_rhs_evals(value vcvode_mem)
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_get_num_lin_solv_setups(value vcvode_mem)
+CAMLprim value c_cvode_get_num_lin_solv_setups(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -516,7 +516,7 @@ CAMLprim value c_get_num_lin_solv_setups(value vcvode_mem)
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_get_num_err_test_fails(value vcvode_mem)
+CAMLprim value c_cvode_get_num_err_test_fails(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -529,7 +529,7 @@ CAMLprim value c_get_num_err_test_fails(value vcvode_mem)
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_get_last_order(value vcvode_mem)
+CAMLprim value c_cvode_get_last_order(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -542,7 +542,7 @@ CAMLprim value c_get_last_order(value vcvode_mem)
     CAMLreturn(Val_int(v));
 }
 
-CAMLprim value c_get_current_order(value vcvode_mem)
+CAMLprim value c_cvode_get_current_order(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -555,7 +555,7 @@ CAMLprim value c_get_current_order(value vcvode_mem)
     CAMLreturn(Val_int(v));
 }
 
-CAMLprim value c_get_actual_init_step(value vcvode_mem)
+CAMLprim value c_cvode_get_actual_init_step(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -568,7 +568,7 @@ CAMLprim value c_get_actual_init_step(value vcvode_mem)
     CAMLreturn(caml_copy_double(v));
 }
 
-CAMLprim value c_get_last_step(value vcvode_mem)
+CAMLprim value c_cvode_get_last_step(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -581,7 +581,7 @@ CAMLprim value c_get_last_step(value vcvode_mem)
     CAMLreturn(caml_copy_double(v));
 }
 
-CAMLprim value c_get_current_step(value vcvode_mem)
+CAMLprim value c_cvode_get_current_step(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -594,7 +594,7 @@ CAMLprim value c_get_current_step(value vcvode_mem)
     CAMLreturn(caml_copy_double(v));
 }
 
-CAMLprim value c_get_current_time(value vcvode_mem)
+CAMLprim value c_cvode_get_current_time(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -607,7 +607,7 @@ CAMLprim value c_get_current_time(value vcvode_mem)
     CAMLreturn(caml_copy_double(v));
 }
 
-CAMLprim void c_set_max_ord(value vcvode_mem, value maxord)
+CAMLprim void c_cvode_set_max_ord(value vcvode_mem, value maxord)
 {
     CAMLparam2(vcvode_mem, maxord);
 
@@ -618,7 +618,7 @@ CAMLprim void c_set_max_ord(value vcvode_mem, value maxord)
     CAMLreturn0;
 }
 
-CAMLprim void c_set_max_num_steps(value vcvode_mem, value mxsteps)
+CAMLprim void c_cvode_set_max_num_steps(value vcvode_mem, value mxsteps)
 {
     CAMLparam2(vcvode_mem, mxsteps);
 
@@ -629,7 +629,7 @@ CAMLprim void c_set_max_num_steps(value vcvode_mem, value mxsteps)
     CAMLreturn0;
 }
 
-CAMLprim void c_set_max_hnil_warns(value vcvode_mem, value mxhnil)
+CAMLprim void c_cvode_set_max_hnil_warns(value vcvode_mem, value mxhnil)
 {
     CAMLparam2(vcvode_mem, mxhnil);
 
@@ -640,7 +640,7 @@ CAMLprim void c_set_max_hnil_warns(value vcvode_mem, value mxhnil)
     CAMLreturn0;
 }
 
-CAMLprim void c_set_stab_lim_det(value vcvode_mem, value stldet)
+CAMLprim void c_cvode_set_stab_lim_det(value vcvode_mem, value stldet)
 {
     CAMLparam2(vcvode_mem, stldet);
 
@@ -651,7 +651,7 @@ CAMLprim void c_set_stab_lim_det(value vcvode_mem, value stldet)
     CAMLreturn0;
 }
 
-CAMLprim void c_set_init_step(value vcvode_mem, value hin)
+CAMLprim void c_cvode_set_init_step(value vcvode_mem, value hin)
 {
     CAMLparam2(vcvode_mem, hin);
 
@@ -662,7 +662,7 @@ CAMLprim void c_set_init_step(value vcvode_mem, value hin)
     CAMLreturn0;
 }
 
-CAMLprim void c_set_min_step(value vcvode_mem, value hmin)
+CAMLprim void c_cvode_set_min_step(value vcvode_mem, value hmin)
 {
     CAMLparam2(vcvode_mem, hmin);
 
@@ -673,7 +673,7 @@ CAMLprim void c_set_min_step(value vcvode_mem, value hmin)
     CAMLreturn0;
 }
 
-CAMLprim void c_set_max_step(value vcvode_mem, value hmax)
+CAMLprim void c_cvode_set_max_step(value vcvode_mem, value hmax)
 {
     CAMLparam2(vcvode_mem, hmax);
 
@@ -684,7 +684,7 @@ CAMLprim void c_set_max_step(value vcvode_mem, value hmax)
     CAMLreturn0;
 }
 
-CAMLprim void c_set_stop_time(value vcvode_mem, value tstop)
+CAMLprim void c_cvode_set_stop_time(value vcvode_mem, value tstop)
 {
     CAMLparam2(vcvode_mem, tstop);
 
@@ -695,7 +695,7 @@ CAMLprim void c_set_stop_time(value vcvode_mem, value tstop)
     CAMLreturn0;
 }
 
-CAMLprim void c_set_max_err_test_fails(value vcvode_mem, value maxnef)
+CAMLprim void c_cvode_set_max_err_test_fails(value vcvode_mem, value maxnef)
 {
     CAMLparam2(vcvode_mem, maxnef);
 
@@ -706,7 +706,7 @@ CAMLprim void c_set_max_err_test_fails(value vcvode_mem, value maxnef)
     CAMLreturn0;
 }
 
-CAMLprim void c_set_max_nonlin_iters(value vcvode_mem, value maxcor)
+CAMLprim void c_cvode_set_max_nonlin_iters(value vcvode_mem, value maxcor)
 {
     CAMLparam2(vcvode_mem, maxcor);
 
@@ -717,7 +717,7 @@ CAMLprim void c_set_max_nonlin_iters(value vcvode_mem, value maxcor)
     CAMLreturn0;
 }
 
-CAMLprim void c_set_max_conv_fails(value vcvode_mem, value maxncf)
+CAMLprim void c_cvode_set_max_conv_fails(value vcvode_mem, value maxncf)
 {
     CAMLparam2(vcvode_mem, maxncf);
 
@@ -728,7 +728,7 @@ CAMLprim void c_set_max_conv_fails(value vcvode_mem, value maxncf)
     CAMLreturn0;
 }
 
-CAMLprim void c_set_nonlin_conv_coef(value vcvode_mem, value nlscoef)
+CAMLprim void c_cvode_set_nonlin_conv_coef(value vcvode_mem, value nlscoef)
 {
     CAMLparam2(vcvode_mem, nlscoef);
 
@@ -739,7 +739,7 @@ CAMLprim void c_set_nonlin_conv_coef(value vcvode_mem, value nlscoef)
     CAMLreturn0;
 }
 
-CAMLprim void c_set_no_inactive_root_warn(value vcvode_mem)
+CAMLprim void c_cvode_set_no_inactive_root_warn(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -749,7 +749,7 @@ CAMLprim void c_set_no_inactive_root_warn(value vcvode_mem)
     CAMLreturn0;
 }
 
-CAMLprim void c_set_gs_type(value vcvode_mem, value vgstype)
+CAMLprim void c_cvode_set_gs_type(value vcvode_mem, value vgstype)
 {
     CAMLparam2(vcvode_mem, vgstype);
 
@@ -770,7 +770,7 @@ CAMLprim void c_set_gs_type(value vcvode_mem, value vgstype)
     CAMLreturn0;
 }
 
-CAMLprim void c_set_eps_lin(value vcvode_mem, value eplifac)
+CAMLprim void c_cvode_set_eps_lin(value vcvode_mem, value eplifac)
 {
     CAMLparam2(vcvode_mem, eplifac);
 
@@ -780,7 +780,7 @@ CAMLprim void c_set_eps_lin(value vcvode_mem, value eplifac)
     CAMLreturn0;
 }
 
-CAMLprim void c_set_maxl(value vcvode_mem, value maxl)
+CAMLprim void c_cvode_set_maxl(value vcvode_mem, value maxl)
 {
     CAMLparam2(vcvode_mem, maxl);
 
@@ -792,7 +792,7 @@ CAMLprim void c_set_maxl(value vcvode_mem, value maxl)
 
 /* statistic accessor functions */
 
-CAMLprim value c_get_num_stab_lim_order_reds(value vcvode_mem)
+CAMLprim value c_cvode_get_num_stab_lim_order_reds(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -803,7 +803,7 @@ CAMLprim value c_get_num_stab_lim_order_reds(value vcvode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_get_tol_scale_factor(value vcvode_mem)
+CAMLprim value c_cvode_get_tol_scale_factor(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -814,7 +814,7 @@ CAMLprim value c_get_tol_scale_factor(value vcvode_mem)
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value c_get_num_nonlin_solv_iters(value vcvode_mem)
+CAMLprim value c_cvode_get_num_nonlin_solv_iters(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -825,7 +825,7 @@ CAMLprim value c_get_num_nonlin_solv_iters(value vcvode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_get_num_nonlin_solv_conv_fails(value vcvode_mem)
+CAMLprim value c_cvode_get_num_nonlin_solv_conv_fails(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -836,7 +836,7 @@ CAMLprim value c_get_num_nonlin_solv_conv_fails(value vcvode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_get_num_g_evals(value vcvode_mem)
+CAMLprim value c_cvode_get_num_g_evals(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -847,7 +847,7 @@ CAMLprim value c_get_num_g_evals(value vcvode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_dls_get_work_space(value vcvode_mem)
+CAMLprim value c_cvode_dls_get_work_space(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
     CAMLlocal1(r);
@@ -866,7 +866,7 @@ CAMLprim value c_dls_get_work_space(value vcvode_mem)
     CAMLreturn(r);
 }
 
-CAMLprim value c_dls_get_num_jac_evals(value vcvode_mem)
+CAMLprim value c_cvode_dls_get_num_jac_evals(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -877,7 +877,7 @@ CAMLprim value c_dls_get_num_jac_evals(value vcvode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_dls_get_num_rhs_evals(value vcvode_mem)
+CAMLprim value c_cvode_dls_get_num_rhs_evals(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -888,7 +888,7 @@ CAMLprim value c_dls_get_num_rhs_evals(value vcvode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_diag_get_work_space(value vcvode_mem)
+CAMLprim value c_cvode_diag_get_work_space(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
     CAMLlocal1(r);
@@ -907,7 +907,7 @@ CAMLprim value c_diag_get_work_space(value vcvode_mem)
     CAMLreturn(r);
 }
 
-CAMLprim value c_diag_get_num_rhs_evals(value vcvode_mem)
+CAMLprim value c_cvode_diag_get_num_rhs_evals(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -918,7 +918,7 @@ CAMLprim value c_diag_get_num_rhs_evals(value vcvode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_bandprec_get_work_space(value vcvode_mem)
+CAMLprim value c_cvode_bandprec_get_work_space(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
     CAMLlocal1(r);
@@ -937,7 +937,7 @@ CAMLprim value c_bandprec_get_work_space(value vcvode_mem)
     CAMLreturn(r);
 }
 
-CAMLprim value c_bandprec_get_num_rhs_evals(value vcvode_mem)
+CAMLprim value c_cvode_bandprec_get_num_rhs_evals(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -950,7 +950,7 @@ CAMLprim value c_bandprec_get_num_rhs_evals(value vcvode_mem)
 
 /* spils functions */
 
-CAMLprim value c_spils_get_num_lin_iters(value vcvode_mem)
+CAMLprim value c_cvode_spils_get_num_lin_iters(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -961,7 +961,7 @@ CAMLprim value c_spils_get_num_lin_iters(value vcvode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_spils_get_num_conv_fails(value vcvode_mem)
+CAMLprim value c_cvode_spils_get_num_conv_fails(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -972,7 +972,7 @@ CAMLprim value c_spils_get_num_conv_fails(value vcvode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_spils_get_work_space(value vcvode_mem)
+CAMLprim value c_cvode_spils_get_work_space(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
     CAMLlocal1(r);
@@ -992,7 +992,7 @@ CAMLprim value c_spils_get_work_space(value vcvode_mem)
     CAMLreturn(r);
 }
 
-CAMLprim value c_spils_get_num_prec_evals(value vcvode_mem)
+CAMLprim value c_cvode_spils_get_num_prec_evals(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -1003,7 +1003,7 @@ CAMLprim value c_spils_get_num_prec_evals(value vcvode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_spils_get_num_prec_solves(value vcvode_mem)
+CAMLprim value c_cvode_spils_get_num_prec_solves(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -1014,7 +1014,7 @@ CAMLprim value c_spils_get_num_prec_solves(value vcvode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_spils_get_num_jtimes_evals(value vcvode_mem)
+CAMLprim value c_cvode_spils_get_num_jtimes_evals(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -1025,7 +1025,7 @@ CAMLprim value c_spils_get_num_jtimes_evals(value vcvode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_spils_get_num_rhs_evals (value vcvode_mem)
+CAMLprim value c_cvode_spils_get_num_rhs_evals (value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 

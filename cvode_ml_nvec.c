@@ -51,7 +51,7 @@
 
 #ifdef CVODE_ML_BIGARRAYS
 
-#define CVTYPE(fname) c_ba_ ## fname
+#define CVTYPE(fname) c_ba_cvode_ ## fname
 #include <nvector/nvector_serial.h>
 
 #define WRAP_NVECTOR(v) caml_ba_alloc(BIGARRAY_FLOAT, 1, NV_DATA_S(v), &(NV_LENGTH_S(v)))
@@ -62,7 +62,7 @@
 
 #else
 
-#define CVTYPE(fname) c_nvec_ ## fname
+#define CVTYPE(fname) c_nvec_cvode_ ## fname
 #include <sundials/sundials_nvector.h>
 
 #define WRAP_NVECTOR(v) NVEC_DATA(v)

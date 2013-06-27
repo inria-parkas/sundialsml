@@ -143,7 +143,6 @@ void cvode_ml_check_flag(const char *call, int flag);
 #define CHECK_FLAG(call, flag) if (flag != CV_SUCCESS) \
 				 cvode_ml_check_flag(call, flag)
 
-void set_linear_solver(void *cvode_mem, value ls, int n);
 value cvode_ml_big_real();
 
 /* Interface with Ocaml types */

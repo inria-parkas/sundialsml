@@ -101,34 +101,34 @@ let call_jactimesfn session jac v jv =
   let session = read_weak_ref session in
   adjust_retcode session true (session.jactimesfn jac v) jv
 let _ =
-  Callback.register "c_ba_call_rhsfn"         call_rhsfn;
-  Callback.register "c_ba_call_errh"          call_errh;
-  Callback.register "c_ba_call_errw"          call_errw;
-  Callback.register "c_ba_call_jacfn"         call_jacfn;
-  Callback.register "c_ba_call_bandjacfn"     call_bandjacfn;
-  Callback.register "c_ba_call_presolvefn"    call_presolvefn;
-  Callback.register "c_ba_call_jactimesfn"    call_jactimesfn;
+  Callback.register "c_ba_cvode_call_rhsfn"         call_rhsfn;
+  Callback.register "c_ba_cvode_call_errh"          call_errh;
+  Callback.register "c_ba_cvode_call_errw"          call_errw;
+  Callback.register "c_ba_cvode_call_jacfn"         call_jacfn;
+  Callback.register "c_ba_cvode_call_bandjacfn"     call_bandjacfn;
+  Callback.register "c_ba_cvode_call_presolvefn"    call_presolvefn;
+  Callback.register "c_ba_cvode_call_jactimesfn"    call_jactimesfn;
 
 external session_finalize : session -> unit
-    = "c_session_finalize"
+    = "c_cvode_session_finalize"
 
 external c_init
     : session Weak.t -> lmm -> iter -> nvec -> float
       -> (cvode_mem * c_weak_ref * cvode_file)
-    = "c_ba_init"
+    = "c_ba_cvode_init"
 
 external c_root_init : session -> int -> unit
-    = "c_ba_root_init"
+    = "c_ba_cvode_root_init"
 
 external set_iter_type : session -> iter -> unit
-    = "c_set_iter_type"
+    = "c_cvode_set_iter_type"
 
 external sv_tolerances  : session -> float -> nvec -> unit
-    = "c_ba_sv_tolerances"
+    = "c_ba_cvode_sv_tolerances"
 external ss_tolerances  : session -> float -> float -> unit
-    = "c_ss_tolerances"
+    = "c_cvode_ss_tolerances"
 external wf_tolerances  : session -> unit
-    = "c_ba_wf_tolerances"
+    = "c_ba_cvode_wf_tolerances"
 
 let init' lmm iter f (nroots, roots) y0 t0 =
   let neqs    = Carray.length y0 in
@@ -172,62 +172,62 @@ let neqs { neqs } = neqs
 
 external reinit
     : session -> float -> val_array -> unit
-    = "c_ba_reinit"
+    = "c_ba_cvode_reinit"
 
 let wf_tolerances s ferrw =
   s.errw <- ferrw;
   wf_tolerances s
 
 external get_root_info  : session -> root_array -> unit
-    = "c_get_root_info"
+    = "c_cvode_get_root_info"
 
 external solve_normal
     : session -> float -> val_array -> float * solver_result
-    = "c_ba_solve_normal"
+    = "c_ba_cvode_solve_normal"
 
 external solve_one_step
     : session -> float -> val_array -> float * solver_result
-    = "c_ba_solve_one_step"
+    = "c_ba_cvode_solve_one_step"
 
 external get_dky
     : session -> float -> int -> nvec -> unit
-    = "c_ba_get_dky"
+    = "c_ba_cvode_get_dky"
 
 external get_integrator_stats   : session -> integrator_stats
-    = "c_get_integrator_stats"
+    = "c_cvode_get_integrator_stats"
 
 external get_work_space         : session -> int * int
-    = "c_get_work_space"
+    = "c_cvode_get_work_space"
 
 external get_num_steps          : session -> int
-    = "c_get_num_steps"
+    = "c_cvode_get_num_steps"
 
 external get_num_rhs_evals      : session -> int
-    = "c_get_num_rhs_evals"
+    = "c_cvode_get_num_rhs_evals"
 
 external get_num_lin_solv_setups : session -> int
-    = "c_get_num_lin_solv_setups"
+    = "c_cvode_get_num_lin_solv_setups"
 
 external get_num_err_test_fails : session -> int
-    = "c_get_num_err_test_fails"
+    = "c_cvode_get_num_err_test_fails"
 
 external get_last_order         : session -> int
-    = "c_get_last_order"
+    = "c_cvode_get_last_order"
 
 external get_current_order      : session -> int
-    = "c_get_current_order"
+    = "c_cvode_get_current_order"
 
 external get_actual_init_step   : session -> float
-    = "c_get_actual_init_step"
+    = "c_cvode_get_actual_init_step"
 
 external get_last_step          : session -> float
-    = "c_get_last_step"
+    = "c_cvode_get_last_step"
 
 external get_current_step       : session -> float
-    = "c_get_current_step"
+    = "c_cvode_get_current_step"
 
 external get_current_time       : session -> float
-    = "c_get_current_time"
+    = "c_cvode_get_current_time"
 
 let print_integrator_stats s =
   let stats = get_integrator_stats s
@@ -244,49 +244,49 @@ let print_integrator_stats s =
     Printf.printf "current_time = %e\n"        stats.current_time;
 
 external set_error_file : session -> string -> bool -> unit
-    = "c_set_error_file"
+    = "c_cvode_set_error_file"
 
 external set_err_handler_fn  : session -> unit
-    = "c_ba_set_err_handler_fn"
+    = "c_ba_cvode_set_err_handler_fn"
 
 let set_err_handler_fn s ferrh =
   s.errh <- ferrh;
   set_err_handler_fn s
 
 external clear_err_handler_fn  : session -> unit
-    = "c_ba_clear_err_handler_fn"
+    = "c_ba_cvode_clear_err_handler_fn"
 
 let clear_err_handler_fn s =
   s.errh <- (fun _ -> ());
   clear_err_handler_fn s
 
 external set_max_ord            : session -> int -> unit
-    = "c_set_max_ord"
+    = "c_cvode_set_max_ord"
 external set_max_num_steps      : session -> int -> unit
-    = "c_set_max_num_steps"
+    = "c_cvode_set_max_num_steps"
 external set_max_hnil_warns     : session -> int -> unit
-    = "c_set_max_hnil_warns"
+    = "c_cvode_set_max_hnil_warns"
 external set_stab_lim_det       : session -> bool -> unit
-    = "c_set_stab_lim_det"
+    = "c_cvode_set_stab_lim_det"
 external set_init_step          : session -> float -> unit
-    = "c_set_init_step"
+    = "c_cvode_set_init_step"
 external set_min_step           : session -> float -> unit
-    = "c_set_min_step"
+    = "c_cvode_set_min_step"
 external set_max_step           : session -> float -> unit
-    = "c_set_max_step"
+    = "c_cvode_set_max_step"
 external set_stop_time          : session -> float -> unit
-    = "c_set_stop_time"
+    = "c_cvode_set_stop_time"
 external set_max_err_test_fails : session -> int -> unit
-    = "c_set_max_err_test_fails"
+    = "c_cvode_set_max_err_test_fails"
 external set_max_nonlin_iters   : session -> int -> unit
-    = "c_set_max_nonlin_iters"
+    = "c_cvode_set_max_nonlin_iters"
 external set_max_conv_fails     : session -> int -> unit
-    = "c_set_max_conv_fails"
+    = "c_cvode_set_max_conv_fails"
 external set_nonlin_conv_coef   : session -> float -> unit
-    = "c_set_nonlin_conv_coef"
+    = "c_cvode_set_nonlin_conv_coef"
 
 external set_root_direction'    : session -> RootDirs.t -> unit
-    = "c_set_root_direction"
+    = "c_cvode_set_root_direction"
 
 let set_root_direction s rda = 
   set_root_direction' s (RootDirs.create' (nroots s) rda)
@@ -295,85 +295,85 @@ let set_all_root_directions s rd =
   set_root_direction' s (RootDirs.make (nroots s) rd)
 
 external set_no_inactive_root_warn      : session -> unit
-    = "c_set_no_inactive_root_warn"
+    = "c_cvode_set_no_inactive_root_warn"
 
 external get_num_stab_lim_order_reds    : session -> int
-    = "c_get_num_stab_lim_order_reds"
+    = "c_cvode_get_num_stab_lim_order_reds"
 
 external get_tol_scale_factor           : session -> float
-    = "c_get_tol_scale_factor"
+    = "c_cvode_get_tol_scale_factor"
 
 external get_err_weights                : session -> nvec -> unit
-    = "c_ba_get_err_weights"
+    = "c_ba_cvode_get_err_weights"
 
 external get_est_local_errors           : session -> nvec -> unit
-    = "c_ba_get_est_local_errors"
+    = "c_ba_cvode_get_est_local_errors"
 
 external get_num_nonlin_solv_iters      : session -> int
-    = "c_get_num_nonlin_solv_iters"
+    = "c_cvode_get_num_nonlin_solv_iters"
 
 external get_num_nonlin_solv_conv_fails : session -> int
-    = "c_get_num_nonlin_solv_conv_fails"
+    = "c_cvode_get_num_nonlin_solv_conv_fails"
 
 external get_num_g_evals                : session -> int
-    = "c_get_num_g_evals"
+    = "c_cvode_get_num_g_evals"
 
 module Dls =
   struct
     external set_dense_jac_fn  : session -> unit
-        = "c_ba_dls_set_dense_jac_fn"
+        = "c_ba_cvode_dls_set_dense_jac_fn"
 
     let set_dense_jac_fn s fjacfn =
       s.jacfn <- fjacfn;
       set_dense_jac_fn s
 
     external clear_dense_jac_fn : session -> unit
-        = "c_ba_dls_clear_dense_jac_fn"
+        = "c_ba_cvode_dls_clear_dense_jac_fn"
 
     let clear_dense_jac_fn s =
       s.jacfn <- (fun _ _ -> ());
       clear_dense_jac_fn s
 
     external set_band_jac_fn   : session -> unit
-        = "c_ba_dls_set_band_jac_fn"
+        = "c_ba_cvode_dls_set_band_jac_fn"
 
     let set_band_jac_fn s fbandjacfn =
       s.bandjacfn <- fbandjacfn;
       set_band_jac_fn s
 
     external clear_band_jac_fn : session -> unit
-        = "c_ba_dls_clear_band_jac_fn"
+        = "c_ba_cvode_dls_clear_band_jac_fn"
 
     let clear_band_jac_fn s =
       s.bandjacfn <- (fun _ _ _ _ -> ());
       clear_band_jac_fn s
 
     external get_work_space : session -> int * int
-        = "c_dls_get_work_space"
+        = "c_cvode_dls_get_work_space"
 
     external get_num_jac_evals    : session -> int
-        = "c_dls_get_num_jac_evals"
+        = "c_cvode_dls_get_num_jac_evals"
 
     external get_num_rhs_evals    : session -> int
-        = "c_dls_get_num_rhs_evals"
+        = "c_cvode_dls_get_num_rhs_evals"
   end
 
 module Diag =
   struct
     external get_work_space       : session -> int * int
-        = "c_diag_get_work_space"
+        = "c_cvode_diag_get_work_space"
 
     external get_num_rhs_evals    : session -> int
-        = "c_diag_get_num_rhs_evals"
+        = "c_cvode_diag_get_num_rhs_evals"
   end
 
 module BandPrec =
   struct
     external get_work_space : session -> int * int
-        = "c_bandprec_get_work_space"
+        = "c_cvode_bandprec_get_work_space"
 
     external get_num_rhs_evals    : session -> int
-        = "c_bandprec_get_num_rhs_evals"
+        = "c_cvode_bandprec_get_num_rhs_evals"
   end
 
 module Spils =
@@ -391,7 +391,7 @@ module Spils =
       | ClassicalGS
 
     external set_preconditioner  : session -> unit
-        = "c_ba_set_preconditioner"
+        = "c_ba_cvode_set_preconditioner"
 
     let set_preconditioner s fpresetupfn fpresolvefn =
       s.presetupfn <- fpresetupfn;
@@ -399,51 +399,51 @@ module Spils =
       set_preconditioner s
 
     external set_jac_times_vec_fn : session -> unit
-        = "c_ba_set_jac_times_vec_fn"
+        = "c_ba_cvode_set_jac_times_vec_fn"
 
     let set_jac_times_vec_fn s fjactimesfn =
       s.jactimesfn <- fjactimesfn;
       set_jac_times_vec_fn s
 
     external clear_jac_times_vec_fn : session -> unit
-        = "c_ba_clear_jac_times_vec_fn"
+        = "c_ba_cvode_clear_jac_times_vec_fn"
 
     let clear_jac_times_vec_fn s =
       s.jactimesfn <- (fun _ _ _ -> ());
       clear_jac_times_vec_fn s
 
     external set_prec_type : session -> preconditioning_type -> unit
-        = "c_set_prec_type"
+        = "c_cvode_set_prec_type"
 
     external set_gs_type : session -> gramschmidt_type -> unit
-        = "c_set_gs_type"
+        = "c_cvode_set_gs_type"
 
     external set_eps_lin            : session -> float -> unit
-        = "c_set_eps_lin"
+        = "c_cvode_set_eps_lin"
 
     external set_maxl               : session -> int -> unit
-        = "c_set_maxl"
+        = "c_cvode_set_maxl"
 
     external get_num_lin_iters      : session -> int
-        = "c_spils_get_num_lin_iters"
+        = "c_cvode_spils_get_num_lin_iters"
 
     external get_num_conv_fails     : session -> int
-        = "c_spils_get_num_conv_fails"
+        = "c_cvode_spils_get_num_conv_fails"
 
     external get_work_space         : session -> int * int
-        = "c_spils_get_work_space"
+        = "c_cvode_spils_get_work_space"
 
     external get_num_prec_evals     : session -> int
-        = "c_spils_get_num_prec_evals"
+        = "c_cvode_spils_get_num_prec_evals"
 
     external get_num_prec_solves    : session -> int
-        = "c_spils_get_num_prec_solves"
+        = "c_cvode_spils_get_num_prec_solves"
 
     external get_num_jtimes_evals   : session -> int
-        = "c_spils_get_num_jtimes_evals"
+        = "c_cvode_spils_get_num_jtimes_evals"
 
     external get_num_rhs_evals      : session -> int
-        = "c_spils_get_num_rhs_evals"
+        = "c_cvode_spils_get_num_rhs_evals"
 
   end
 
