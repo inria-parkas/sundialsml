@@ -637,11 +637,11 @@ CAMLprim void c_ida_set_gs_type(value vida_mem, value vgstype)
 
     int gstype;
     switch (Int_val(vgstype)) {
-    case VARIANT_GRAMSCHMIDT_TYPE_MODIFIEDGS:
+    case VARIANT_IDA_GRAMSCHMIDT_TYPE_MODIFIEDGS:
 	gstype = MODIFIED_GS;
 	break;
 
-    case VARIANT_GRAMSCHMIDT_TYPE_CLASSICALGS:
+    case VARIANT_IDA_GRAMSCHMIDT_TYPE_CLASSICALGS:
 	gstype = CLASSICAL_GS;
 	break;
     }

@@ -31,11 +31,6 @@ value sundials_ml_unit_roundoff();
 #define REAL_ARRAY(v) ((realtype *)Caml_ba_data_val(v))
 #define REAL_ARRAY2(v) ((realtype **)Caml_ba_data_val(v))
 
-enum gramschmidt_type {
-    VARIANT_GRAMSCHMIDT_TYPE_MODIFIEDGS  = 0,
-    VARIANT_GRAMSCHMIDT_TYPE_CLASSICALGS,
-};
-
 #if HAVE_WEAK
 CAMLprim value caml_weak_get (value ar, value n);
 #define sundials_ml_weak_get caml_weak_get
