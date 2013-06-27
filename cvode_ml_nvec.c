@@ -98,10 +98,14 @@ static void errh(
     CAML_FN (call_errh);
 
     a = caml_alloc_tuple(4);
-    Store_field(a, RECORD_ERROR_DETAILS_ERROR_CODE, Val_int(error_code));
-    Store_field(a, RECORD_ERROR_DETAILS_MODULE_NAME, caml_copy_string(module));
-    Store_field(a, RECORD_ERROR_DETAILS_FUNCTION_NAME, caml_copy_string(func));
-    Store_field(a, RECORD_ERROR_DETAILS_ERROR_MESSAGE, caml_copy_string(msg));
+    Store_field(a, RECORD_CVODE_ERROR_DETAILS_ERROR_CODE,
+                Val_int(error_code));
+    Store_field(a, RECORD_CVODE_ERROR_DETAILS_MODULE_NAME,
+                caml_copy_string(module));
+    Store_field(a, RECORD_CVODE_ERROR_DETAILS_FUNCTION_NAME,
+                caml_copy_string(func));
+    Store_field(a, RECORD_CVODE_ERROR_DETAILS_ERROR_MESSAGE,
+                caml_copy_string(msg));
 
     caml_callback2(*call_errh, *backref, a);
 
@@ -154,7 +158,7 @@ static int check_exception(value session, value r, int check_recoverable)
     /* Unrecoverable error.  Save the exception and return -1.  */
     exn = caml_alloc_small (1,0);
     Field (exn,0) = r;
-    Store_field (session, RECORD_SESSION_EXN_TEMP, exn);
+    Store_field (session, RECORD_CVODE_SESSION_EXN_TEMP, exn);
     CAMLreturnT (int, -1);
 }
 
@@ -243,10 +247,10 @@ static value make_jac_arg(realtype t, N_Vector y, N_Vector fy, value tmp)
     CAMLlocal1(r);
 
     r = caml_alloc_tuple(4);
-    Store_field(r, RECORD_JACOBIAN_ARG_JAC_T, caml_copy_double(t));
-    Store_field(r, RECORD_JACOBIAN_ARG_JAC_Y, WRAP_NVECTOR(y));
-    Store_field(r, RECORD_JACOBIAN_ARG_JAC_FY, WRAP_NVECTOR(fy));
-    Store_field(r, RECORD_JACOBIAN_ARG_JAC_TMP, tmp);
+    Store_field(r, RECORD_CVODE_JACOBIAN_ARG_JAC_T, caml_copy_double(t));
+    Store_field(r, RECORD_CVODE_JACOBIAN_ARG_JAC_Y, WRAP_NVECTOR(y));
+    Store_field(r, RECORD_CVODE_JACOBIAN_ARG_JAC_FY, WRAP_NVECTOR(fy));
+    Store_field(r, RECORD_CVODE_JACOBIAN_ARG_JAC_TMP, tmp);
 
     CAMLreturn(r);
 }
@@ -270,10 +274,10 @@ static void relinquish_jac_arg(value arg, int triple)
     CAMLparam1(arg);
     CAMLlocal1(tmp);
 
-    RELINQUISH_WRAPPEDNV(Field(arg, RECORD_JACOBIAN_ARG_JAC_Y));
-    RELINQUISH_WRAPPEDNV(Field(arg, RECORD_JACOBIAN_ARG_JAC_FY));
+    RELINQUISH_WRAPPEDNV(Field(arg, RECORD_CVODE_JACOBIAN_ARG_JAC_Y));
+    RELINQUISH_WRAPPEDNV(Field(arg, RECORD_CVODE_JACOBIAN_ARG_JAC_FY));
 
-    tmp = Field(arg, RECORD_JACOBIAN_ARG_JAC_TMP);
+    tmp = Field(arg, RECORD_CVODE_JACOBIAN_ARG_JAC_TMP);
 
     if (triple) {
 	RELINQUISH_WRAPPEDNV(Field(tmp, 0));
@@ -401,10 +405,13 @@ static value make_spils_solve_arg(
     CAMLlocal1(v);
 
     v = caml_alloc_tuple(4);
-    Store_field(v, RECORD_SPILS_SOLVE_ARG_RHS, WRAP_NVECTOR(r));
-    Store_field(v, RECORD_SPILS_SOLVE_ARG_GAMMA, caml_copy_double(gamma));
-    Store_field(v, RECORD_SPILS_SOLVE_ARG_DELTA, caml_copy_double(delta));
-    Store_field(v, RECORD_SPILS_SOLVE_ARG_LEFT, lr == 1 ? Val_true : Val_false);
+    Store_field(v, RECORD_CVODE_SPILS_SOLVE_ARG_RHS, WRAP_NVECTOR(r));
+    Store_field(v, RECORD_CVODE_SPILS_SOLVE_ARG_GAMMA,
+                caml_copy_double(gamma));
+    Store_field(v, RECORD_CVODE_SPILS_SOLVE_ARG_DELTA,
+                caml_copy_double(delta));
+    Store_field(v, RECORD_CVODE_SPILS_SOLVE_ARG_LEFT,
+                lr == 1 ? Val_true : Val_false);
 
     CAMLreturn(v);
 }
@@ -412,7 +419,7 @@ static value make_spils_solve_arg(
 static CAMLprim void relinquish_spils_solve_arg(value arg)
 {
     CAMLparam1(arg);
-    RELINQUISH_WRAPPEDNV(Field(arg, RECORD_SPILS_SOLVE_ARG_RHS));
+    RELINQUISH_WRAPPEDNV(Field(arg, RECORD_CVODE_SPILS_SOLVE_ARG_RHS));
     CAMLreturn0;
 }
 
@@ -576,11 +583,11 @@ CAMLprim value CVTYPE(init)(value weakref, value lmm, value iter, value initial,
 
     int lmm_c;
     switch (Int_val(lmm)) {
-    case VARIANT_LMM_ADAMS:
+    case VARIANT_CVODE_LMM_ADAMS:
 	lmm_c = CV_ADAMS;
 	break;
 
-    case VARIANT_LMM_BDF:
+    case VARIANT_CVODE_LMM_BDF:
 	lmm_c = CV_BDF;
 	break;
 
@@ -635,7 +642,7 @@ CAMLprim void CVTYPE(root_init) (value vdata, value vnroots)
     int nroots = Int_val (vnroots);
     int flag = CVodeRootInit (cvode_mem, nroots, roots);
     CHECK_FLAG ("CVodeRootInit", flag);
-    Store_field (vdata, RECORD_SESSION_NROOTS, vnroots);
+    Store_field (vdata, RECORD_CVODE_SESSION_NROOTS, vnroots);
     CAMLreturn0;
 }
 
@@ -686,15 +693,16 @@ static value solver(value vdata, value nextt, value y, int onestep)
 
     switch (flag) {
     case CV_ROOT_RETURN:
-	Store_field(r, 1, Val_int(VARIANT_SOLVER_RESULT_ROOTSFOUND));
+	Store_field(r, 1, Val_int(VARIANT_CVODE_SOLVER_RESULT_ROOTSFOUND));
 	break;
 
     case CV_TSTOP_RETURN:
-	Store_field(r, 1, Val_int(VARIANT_SOLVER_RESULT_STOPTIMEREACHED));
+	Store_field(r, 1,
+                    Val_int(VARIANT_CVODE_SOLVER_RESULT_STOPTIMEREACHED));
 	break;
 
     default:
-	Store_field(r, 1, Val_int(VARIANT_SOLVER_RESULT_CONTINUE));
+	Store_field(r, 1, Val_int(VARIANT_CVODE_SOLVER_RESULT_CONTINUE));
     }
 
     CAMLreturn(r);

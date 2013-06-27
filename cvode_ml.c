@@ -137,19 +137,19 @@ static int precond_type(value vptype)
 
     int ptype;
     switch (Int_val(vptype)) {
-    case VARIANT_PRECONDITIONING_TYPE_PRECNONE:
+    case VARIANT_CVODE_PRECONDITIONING_TYPE_PRECNONE:
 	ptype = PREC_NONE;
 	break;
 
-    case VARIANT_PRECONDITIONING_TYPE_PRECLEFT:
+    case VARIANT_CVODE_PRECONDITIONING_TYPE_PRECLEFT:
 	ptype = PREC_LEFT;
 	break;
 
-    case VARIANT_PRECONDITIONING_TYPE_PRECRIGHT:
+    case VARIANT_CVODE_PRECONDITIONING_TYPE_PRECRIGHT:
 	ptype = PREC_RIGHT;
 	break;
 
-    case VARIANT_PRECONDITIONING_TYPE_PRECBOTH:
+    case VARIANT_CVODE_PRECONDITIONING_TYPE_PRECBOTH:
 	ptype = PREC_BOTH;
 	break;
     }
@@ -170,12 +170,12 @@ void set_linear_solver(void *cvode_mem, value ls, int n)
 	CAMLlocal2 (sprange, bandrange);
 
 	switch (Tag_val(ls)) {
-	case VARIANT_LINEAR_SOLVER_BAND:
+	case VARIANT_CVODE_LINEAR_SOLVER_BAND:
 	    flag = CVBand(cvode_mem, n, Long_val(field0), Long_val(field1));
 	    CHECK_FLAG("CVBand", flag);
 	    break;
 
-	case VARIANT_LINEAR_SOLVER_LAPACKBAND:
+	case VARIANT_CVODE_LINEAR_SOLVER_LAPACKBAND:
 #if SUNDIALS_BLAS_LAPACK == 1
 	    flag = CVLapackBand(cvode_mem, n, Long_val(field0),
 					      Long_val(field1));
@@ -185,22 +185,22 @@ void set_linear_solver(void *cvode_mem, value ls, int n)
 #endif
 	    break;
 
-	case VARIANT_LINEAR_SOLVER_SPGMR:
+	case VARIANT_CVODE_LINEAR_SOLVER_SPGMR:
 	    flag = CVSpgmr(cvode_mem, precond_type(field0), Long_val(field1));
 	    CHECK_FLAG("CVSpgmr", flag);
 	    break;
 
-	case VARIANT_LINEAR_SOLVER_SPBCG:
+	case VARIANT_CVODE_LINEAR_SOLVER_SPBCG:
 	    flag = CVSpbcg(cvode_mem, precond_type(field0), Long_val(field1));
 	    CHECK_FLAG("CVSpbcg", flag);
 	    break;
 
-	case VARIANT_LINEAR_SOLVER_SPTFQMR:
+	case VARIANT_CVODE_LINEAR_SOLVER_SPTFQMR:
 	    flag = CVSptfqmr(cvode_mem, precond_type(field0), Long_val(field1));
 	    CHECK_FLAG("CVSPtfqmr", flag);
 	    break;
 
-	case VARIANT_LINEAR_SOLVER_BANDED_SPGMR:
+	case VARIANT_CVODE_LINEAR_SOLVER_BANDED_SPGMR:
 	    sprange = Field(ls, 0);
 	    bandrange = Field(ls, 1);
 
@@ -213,7 +213,7 @@ void set_linear_solver(void *cvode_mem, value ls, int n)
 	    CHECK_FLAG("CVBandPrecInit", flag);
 	    break;
 
-	case VARIANT_LINEAR_SOLVER_BANDED_SPBCG:
+	case VARIANT_CVODE_LINEAR_SOLVER_BANDED_SPBCG:
 	    sprange = Field(ls, 0);
 	    bandrange = Field(ls, 1);
 
@@ -226,7 +226,7 @@ void set_linear_solver(void *cvode_mem, value ls, int n)
 	    CHECK_FLAG("CVBandPrecInit", flag);
 	    break;
 
-	case VARIANT_LINEAR_SOLVER_BANDED_SPTFQMR:
+	case VARIANT_CVODE_LINEAR_SOLVER_BANDED_SPTFQMR:
 	    sprange = Field(ls, 0);
 	    bandrange = Field(ls, 1);
 
@@ -246,12 +246,12 @@ void set_linear_solver(void *cvode_mem, value ls, int n)
 
     } else {
 	switch (Int_val(ls)) {
-	case VARIANT_LINEAR_SOLVER_DENSE:
+	case VARIANT_CVODE_LINEAR_SOLVER_DENSE:
 	    flag = CVDense(cvode_mem, n);
 	    CHECK_FLAG("CVDense", flag);
 	    break;
 
-	case VARIANT_LINEAR_SOLVER_LAPACKDENSE:
+	case VARIANT_CVODE_LINEAR_SOLVER_LAPACKDENSE:
 #if SUNDIALS_BLAS_LAPACK == 1
 	    flag = CVLapackDense(cvode_mem, n);
 	    CHECK_FLAG("CVLapackDense", flag);
@@ -260,7 +260,7 @@ void set_linear_solver(void *cvode_mem, value ls, int n)
 #endif
 	    break;
 
-	case VARIANT_LINEAR_SOLVER_DIAG:
+	case VARIANT_CVODE_LINEAR_SOLVER_DIAG:
 	    flag = CVDiag(cvode_mem);
 	    CHECK_FLAG("CVDiag", flag);
 	    break;
@@ -280,7 +280,8 @@ CAMLprim void c_cvode_session_finalize(value vdata)
 	CVodeFree(&cvode_mem);
     }
 
-    FILE* err_file = (FILE *)Long_val(Field(vdata, RECORD_SESSION_ERRFILE));
+    FILE* err_file =
+      (FILE *)Long_val(Field(vdata, RECORD_CVODE_SESSION_ERRFILE));
     if (err_file != NULL) {
 	fclose(err_file);
     }
@@ -349,18 +350,18 @@ CAMLprim value c_cvode_get_integrator_stats(value vdata)
     CHECK_FLAG("CVodeGetIntegratorStats", flag);
 
     r = caml_alloc_tuple(10);
-    Store_field(r, RECORD_INTEGRATOR_STATS_STEPS, Val_long(nsteps));
-    Store_field(r, RECORD_INTEGRATOR_STATS_RHS_EVALS, Val_long(nfevals));
-    Store_field(r, RECORD_INTEGRATOR_STATS_LINEAR_SOLVER_SETUPS, Val_long(nlinsetups));
-    Store_field(r, RECORD_INTEGRATOR_STATS_ERROR_TEST_FAILURES, Val_long(netfails));
+    Store_field(r, RECORD_CVODE_INTEGRATOR_STATS_STEPS, Val_long(nsteps));
+    Store_field(r, RECORD_CVODE_INTEGRATOR_STATS_RHS_EVALS, Val_long(nfevals));
+    Store_field(r, RECORD_CVODE_INTEGRATOR_STATS_LINEAR_SOLVER_SETUPS, Val_long(nlinsetups));
+    Store_field(r, RECORD_CVODE_INTEGRATOR_STATS_ERROR_TEST_FAILURES, Val_long(netfails));
 
-    Store_field(r, RECORD_INTEGRATOR_STATS_LAST_INTERNAL_ORDER, Val_int(qlast));
-    Store_field(r, RECORD_INTEGRATOR_STATS_NEXT_INTERNAL_ORDER, Val_int(qcur));
+    Store_field(r, RECORD_CVODE_INTEGRATOR_STATS_LAST_INTERNAL_ORDER, Val_int(qlast));
+    Store_field(r, RECORD_CVODE_INTEGRATOR_STATS_NEXT_INTERNAL_ORDER, Val_int(qcur));
 
-    Store_field(r, RECORD_INTEGRATOR_STATS_INITIAL_STEP_SIZE, caml_copy_double(hinused));
-    Store_field(r, RECORD_INTEGRATOR_STATS_LAST_STEP_SIZE, caml_copy_double(hlast));
-    Store_field(r, RECORD_INTEGRATOR_STATS_NEXT_STEP_SIZE, caml_copy_double(hcur));
-    Store_field(r, RECORD_INTEGRATOR_STATS_INTERNAL_TIME, caml_copy_double(tcur));
+    Store_field(r, RECORD_CVODE_INTEGRATOR_STATS_INITIAL_STEP_SIZE, caml_copy_double(hinused));
+    Store_field(r, RECORD_CVODE_INTEGRATOR_STATS_LAST_STEP_SIZE, caml_copy_double(hlast));
+    Store_field(r, RECORD_CVODE_INTEGRATOR_STATS_NEXT_STEP_SIZE, caml_copy_double(hcur));
+    Store_field(r, RECORD_CVODE_INTEGRATOR_STATS_INTERNAL_TIME, caml_copy_double(tcur));
 
     CAMLreturn(r);
 }
@@ -369,11 +370,12 @@ CAMLprim void c_cvode_set_error_file(value vdata, value vpath, value vtrunc)
 {
     CAMLparam3(vdata, vpath, vtrunc);
 
-    FILE* err_file = (FILE *)Long_val(Field(vdata, RECORD_SESSION_ERRFILE));
+    FILE* err_file =
+      (FILE *)Long_val(Field(vdata, RECORD_CVODE_SESSION_ERRFILE));
 
     if (err_file != NULL) {
 	fclose(err_file);
-	Store_field(vdata, RECORD_SESSION_ERRFILE, 0);
+	Store_field(vdata, RECORD_CVODE_SESSION_ERRFILE, 0);
     }
     char *mode = Bool_val(vtrunc) ? "w" : "a";
     err_file = fopen(String_val(vpath), mode);
@@ -384,7 +386,7 @@ CAMLprim void c_cvode_set_error_file(value vdata, value vpath, value vtrunc)
     int flag = CVodeSetErrFile(CVODE_MEM_FROM_ML(vdata), err_file);
     CHECK_FLAG("CVodeSetErrFile", flag);
 
-    Store_field(vdata, RECORD_SESSION_ERRFILE, Val_long(err_file));
+    Store_field(vdata, RECORD_CVODE_SESSION_ERRFILE, Val_long(err_file));
 
     CAMLreturn0;
 }
@@ -755,11 +757,11 @@ CAMLprim void c_cvode_set_gs_type(value vcvode_mem, value vgstype)
 
     int gstype;
     switch (Int_val(vgstype)) {
-    case VARIANT_GRAMSCHMIDT_TYPE_MODIFIEDGS:
+    case VARIANT_CVODE_GRAMSCHMIDT_TYPE_MODIFIEDGS:
 	gstype = MODIFIED_GS;
 	break;
 
-    case VARIANT_GRAMSCHMIDT_TYPE_CLASSICALGS:
+    case VARIANT_CVODE_GRAMSCHMIDT_TYPE_CLASSICALGS:
 	gstype = CLASSICAL_GS;
 	break;
     }
