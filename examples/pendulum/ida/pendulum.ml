@@ -448,6 +448,8 @@ let main () =
         )
     done
   done;
+  Printf.printf "error test failures = %d\n"
+    (Ida.get_num_err_test_fails ida);
   Showpendulum.stop ()
 
 let _ =
