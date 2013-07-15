@@ -64,7 +64,11 @@ sundials_ida.cma sundials_ida.cmxa: $(IDA_MLOBJ) $(IDA_MLOBJ:.cmo=.cmx) $(IDA_CO
 	    -o sundials_ida -oc mlsundials_ida $^ \
 	    $(OCAML_IDA_LIBLINK)
 
-cvode_nvector.mli: cvode_serial.mli cvode_nvector.doc
+# cvode_nvector.mli was once generated from cvode_serial.mli with the following
+# rule because their interface coincided.  But they don't match completely any
+# more, so this rule was changed to not run automatically.  This target should
+# be invoked manually, only by someone who knows what s/he's doing.
+cvode_nvector.mli:
 	$(SED) \
 	-e "/^type \(val_array\|der_array\) =/d"			\
 	-e "s/ session\( \|\$\)/ 'a session\1/g"			\
@@ -77,8 +81,8 @@ cvode_nvector.mli: cvode_serial.mli cvode_nvector.doc
 	-e "s/\([ (]\)triple_tmp\([ )]\|\$\)/\1'a triple_tmp\2/g"	\
 	-e "s/^\(type 'a nvector = \).*/\1'a Nvector.nvector/"		\
 	-e "/(\*ENDINTRO\*)/r cvode_nvector.doc"			\
-	-e "/^(\*STARTINTRO\*)/,/(\*ENDINTRO\*)/d"				\
-	$< > $@
+	-e "/^(\*STARTINTRO\*)/,/(\*ENDINTRO\*)/d"			\
+	cvode_serial.mli > $@
 
 # There three sets of flags:
 #   - one for CVODE-specific files
