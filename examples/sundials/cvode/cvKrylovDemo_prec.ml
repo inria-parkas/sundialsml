@@ -843,11 +843,11 @@ let main () =
 
   (* Call CVodeInit or CVodeReInit, then CVSpgmr to set up problem *)
   let cvode_mem =
-    Cvode.init'
+    Cvode.init
         Cvode.BDF
         (Cvode.Newton
             (Cvode.Spgmr { Cvode.pretype = Cvode.PrecLeft; Cvode.maxl = maxl}))
-        (f wdata) Cvode.no_roots c t0
+        (f wdata) ~t0:t0 c
   in
   Gc.compact ();
   wdata.cvode_mem <- Some cvode_mem;

@@ -327,7 +327,7 @@ let problem1 () =
 
   let run_tests lmm =
     init_y ();
-    let cvode_mem = Cvode.init' lmm Cvode.Functional f1 Cvode.no_roots y p1_t0
+    let cvode_mem = Cvode.init lmm Cvode.Functional f1 ~t0:p1_t0 y
     in
     Gc.compact ();
     Cvode.ss_tolerances cvode_mem rtol atol;
@@ -450,7 +450,7 @@ let problem2 () =
 
   let run_tests lmm =
     init_y ();
-    let cvode_mem = Cvode.init' lmm Cvode.Functional f2 Cvode.no_roots y p2_t0
+    let cvode_mem = Cvode.init lmm Cvode.Functional f2 ~t0:p2_t0 y
     in
     Gc.compact ();
     Cvode.ss_tolerances cvode_mem rtol atol;

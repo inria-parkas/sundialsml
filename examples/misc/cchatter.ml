@@ -6,7 +6,7 @@ let f t y yd =
 
 let y = Cvode.Carray.of_array [| 1.0 |]
 
-let s = Cvode.init Cvode.Adams Cvode.Functional f Cvode.no_roots y
+let s = Cvode.init Cvode.Adams Cvode.Functional f y
 
 (* let _ = Cvode.set_stop_time s 10.0 *)
 
@@ -16,7 +16,7 @@ let _ =
   let t = ref 0.1 in
   let keep_going = ref true in
   while !keep_going do
-    let (t', result) = Cvode.normal s !t y in
+    let (t', result) = Cvode.solve_normal s !t y in
         Cvode.Carray.print_with_time t' y;
         t := t' +. 0.1;
         match result with

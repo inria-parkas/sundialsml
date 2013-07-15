@@ -464,7 +464,7 @@ let main () =
    * user's right hand side function in u'=f(t,u), the inital time T0, and
    * the initial dependent variable vector u. *)
   let cvode_mem =
-    Cvode.init' Cvode.BDF Cvode.Functional (f data) Cvode.no_roots u t0
+    Cvode.init Cvode.BDF Cvode.Functional (f data) ~t0:t0 u
   in
   Gc.compact ();
 

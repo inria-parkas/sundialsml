@@ -386,8 +386,7 @@ let main () =
      solver. *)
   let mu = nsmx and ml = nsmx in
   let bandrange = { Ida.mupper = mu; Ida.mlower = ml } in
-  let mem =
-    Ida.init_at_time (Ida.Band bandrange) (resweb webdata) Ida.no_roots t0 c c'
+  let mem = Ida.init (Ida.Band bandrange) (resweb webdata) ~t0:t0 c c'
   in
   Ida.ss_tolerances mem rtol atol;
   let tout1 = 0.001 in

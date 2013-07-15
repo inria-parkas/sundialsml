@@ -144,7 +144,8 @@ let main () =
   (* Call CVodeRootInit to specify the root function g with 2 components *)
   (* Call CVDense to specify the CVDENSE dense linear solver *)
   let cvode_mem =
-    Cvode.init' Cvode.BDF (Cvode.Newton (Cvode.Dense)) f (nroots, g) y t0
+    Cvode.init Cvode.BDF (Cvode.Newton (Cvode.Dense)) f
+      ~roots:(nroots, g) ~t0:t0 y
   in
   Gc.compact ();
 

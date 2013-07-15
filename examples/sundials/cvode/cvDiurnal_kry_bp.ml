@@ -335,11 +335,11 @@ let main () =
   and ml = 2
   in
   let cvode_mem =
-    Cvode.init' Cvode.BDF
+    Cvode.init Cvode.BDF
       (Cvode.Newton
           (Cvode.BandedSpgmr ({ Cvode.pretype = Cvode.PrecLeft; Cvode.maxl = 0},
                               { Cvode.mupper = mu; Cvode.mlower = ml})))
-      (f data) Cvode.no_roots u t0
+      (f data) ~t0:t0 u
   in
   Gc.compact ();
 

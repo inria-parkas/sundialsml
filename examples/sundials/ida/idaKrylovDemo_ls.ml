@@ -245,7 +245,7 @@ let main() =
 
   (* Call IDACreate with dummy linear solver *)
 
-  let mem = Ida.init_at_time Ida.Dense (res_heat data) Ida.no_roots t0 u u' in
+  let mem = Ida.init Ida.Dense (res_heat data) ~t0:t0 u u' in
   Ida.set_constraints mem constraints;
   Ida.ss_tolerances mem rtol atol;
 

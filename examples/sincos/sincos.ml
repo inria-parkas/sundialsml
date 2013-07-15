@@ -15,7 +15,7 @@ let g t y gout =
 
 let y = Cvode.Carray.of_array [| 0.0; 0.0; 0.0 |]
 
-let s = Cvode.init Cvode.Adams Cvode.Functional f (2, g) y
+let s = Cvode.init Cvode.Adams Cvode.Functional f ~roots:(2, g) y
 let rootdata = Cvode.Roots.create 2
 
 (* let _ = Cvode.set_stop_time s 20.0 *)

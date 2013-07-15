@@ -231,13 +231,12 @@ let main () =
    * the initial dependent variable vector u. *)
   (* Call CVBand to specify the CVBAND band linear solver *)
   let cvode_mem =
-    Cvode.init'
+    Cvode.init
         Cvode.BDF
         (Cvode.Newton (Cvode.Band {Cvode.mupper = my; Cvode.mlower = my}))
+        ~t0:t0
         (f data)
-        Cvode.no_roots
         u
-        t0
   in
   Gc.compact ();
 
