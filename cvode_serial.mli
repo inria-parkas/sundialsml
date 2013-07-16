@@ -603,7 +603,7 @@ type triple_tmp = val_array * val_array * val_array
  
   @cvode <node5#ss:djacFn> Dense Jacobian function
   @cvode <node5#ss:bjacFn> Banded Jacobian function
-  @cvode <node5#ss:jtimesFn> Product Jacobian function
+  @cvode <node5#ss:jtimesFn> Jacobian-times-vector function
   @cvode <node5#ss:psolveFn> Linear preconditioning function
   @cvode <node5#ss:precondFn> Jacobian preconditioning function
  *)
@@ -842,7 +842,7 @@ module Spils :
               to separate physical structures.
 
       @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
-      @cvode <node5#ss:jtimesFn> Product Jacobian function
+      @cvode <node5#ss:jtimesFn> Jacobian-times-vector function
     *)
     val set_jac_times_vec_fn :
       session
@@ -859,7 +859,7 @@ module Spils :
       [NULL].
 
       @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
-      @cvode <node5#ss:jtimesFn> Product Jacobian function
+      @cvode <node5#ss:jtimesFn> Jacobian-times-vector function
     *)
     val clear_jac_times_vec_fn : session -> unit
 
