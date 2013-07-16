@@ -104,7 +104,7 @@ cvode_ml_ba.o: cvode_ml_nvec.c
 cvode_ml_nvec.o: cvode_ml_nvec.c
 	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
 
-ida_nvector.mli: ida_serial.mli ida_nvector.doc
+ida_nvector.mli:
 	$(SED) \
 	-e "/^type \(val_array\|der_array\) =/d"			\
 	-e "s/ session\( \|\$\)/ 'a session\1/g"			\
