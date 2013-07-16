@@ -4,33 +4,29 @@ COMMON_MLOBJ = sundials.cmo        \
 	       nvector.cmo         \
 	       nvector_array.cmo   \
 	       dls.cmo 		
-CVODE_MLOBJ= $(COMMON_MLOBJ)    \
-	     cvode.cmo 		\
+CVODE_MLOBJ= cvode.cmo 		\
 	     cvode_nvector.cmo	\
 	     cvode_serial.cmo
 
-IDA_MLOBJ=  $(COMMON_MLOBJ)     \
-	    ida.cmo 		\
+IDA_MLOBJ= ida.cmo 		\
 	    ida_nvector.cmo	\
 	    ida_serial.cmo
 
 COMMON_COBJ= sundials_ml.o      \
 	     dls_ml.o
 
-CVODE_COBJ= $(COMMON_COBJ)      \
-	    cvode_ml$(XO)       \
+CVODE_COBJ= cvode_ml$(XO)       \
 	    cvode_ml_ba$(XO) 	\
 	    cvode_ml_nvec$(XO) 	\
 	    nvector_ml$(XO)
 
-IDA_COBJ= $(COMMON_COBJ)        \
-	  ida_ml$(XO)           \
+IDA_COBJ= ida_ml$(XO)           \
 	  ida_ml_ba$(XO)        \
 	  ida_ml_nvec$(XO)      \
 	  nvector_ml$(XO)
 
-MLOBJ=$(CVODE_MLOBJ) $(IDA_MLOBJ)
-COBJ=$(CVODE_COBJ) $(IDA_COBJ)
+MLOBJ=$(COMMON_MLOBJ) $(CVODE_MLOBJ) $(IDA_MLOBJ)
+COBJ=$(COMMON_COBJ) $(CVODE_COBJ) $(IDA_COBJ)
 
 INSTALL_FILES= 			\
     META			\
@@ -44,7 +40,7 @@ INSTALL_FILES= 			\
     sundials_ida.cma		\
     sundials_ida.cmxa
 
-STUBLIBS=dllmlsundials_cvode$(XS) dllmlsundials_ida(XS)
+STUBLIBS=dllmlsundials_cvode$(XS) dllmlsundials_ida$(XS)
 
 CFLAGS+=-fPIC
 
@@ -54,12 +50,12 @@ CFLAGS+=-fPIC
 
 all: sundials_cvode.cma sundials_cvode.cmxa sundials_ida.cma sundials_ida.cmxa
 
-sundials_cvode.cma sundials_cvode.cmxa: $(CVODE_MLOBJ) $(CVODE_MLOBJ:.cmo=.cmx) $(CVODE_COBJ)
+sundials_cvode.cma sundials_cvode.cmxa: $(COMMON_MLOBJ) $(CVODE_MLOBJ) $(CVODE_MLOBJ:.cmo=.cmx) $(COMMON_COBJ) $(CVODE_COBJ)
 	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS) \
 	    -o sundials_cvode -oc mlsundials_cvode $^ \
 	    $(OCAML_CVODE_LIBLINK)
 
-sundials_ida.cma sundials_ida.cmxa: $(IDA_MLOBJ) $(IDA_MLOBJ:.cmo=.cmx) $(IDA_COBJ)
+sundials_ida.cma sundials_ida.cmxa: $(COMMON_MLOBJ) $(IDA_MLOBJ) $(IDA_MLOBJ:.cmo=.cmx) $(COMMON_COBJ) $(IDA_COBJ)
 	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS) \
 	    -o sundials_ida -oc mlsundials_ida $^ \
 	    $(OCAML_IDA_LIBLINK)
