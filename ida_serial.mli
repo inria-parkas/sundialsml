@@ -101,7 +101,7 @@ type root_val_array = Sundials.Roots.val_array
 
 (**
     [init linsolv f (nroots, g) y0 y'0] initializes the IDA solver to solve
-    the DAE f t y y' = 0 and returns a {!session}.
+    the DAE f t y y' = 0 and returns an {!session}.
     - [linsolv] is the linear solver to attach to this solver.
     - [f]       is the residual function (see below).
     - [nroots]  specifies the number of root functions (zero-crossings).
@@ -120,8 +120,9 @@ type root_val_array = Sundials.Roots.val_array
     linear solver function, and IDASStolerances (with default values for
     relative tolerance of 1.0e-4 and absolute tolerance as 1.0e-8; these can be
     changed with {!ss_tolerances}, {!sv_tolerances}, or {!wf_tolerances}).
-    It does everything necessary to initialize an IDA session; the {!normal} or
-    {!one_step} functions can be called directly afterward.
+    It does everything necessary to initialize an IDA session; the
+    {!solve_normal} or {!solve_one_step} functions can be called directly
+    afterward.
 
     The residual function [f] is called by the solver like [f t y y' r] to
     compute the problem residual, where:
@@ -158,8 +159,8 @@ type root_val_array = Sundials.Roots.val_array
             a result, i.e. if their values are needed outside of the function
             call, then they must be copied to separate physical structures.
 
-    @ida <node5#sss:idamalloc>     IDACreate/IDAInit
-    @ida <node5#ss:resFn>          ODE right-hand side function
+    @ida <node5#sss:idainit>       IDACreate/IDAInit
+    @ida <node5#ss:resFn>          DAE residual function
     @ida <node5#ss:idarootinit>    IDARootInit
     @ida <node5#ss:rootFn>         Rootfinding function
     @ida <node5#sss:lin_solv_init> Linear solvers
@@ -198,7 +199,7 @@ val neqs : session -> int
     [ss_tolerances s reltol abstol] sets the relative and absolute
     tolerances using scalar values.
 
-    @ida <node5#sss:cvtolerances> IDASStolerances
+    @ida <node5#sss:idatolerances> IDASStolerances
  *)
 val ss_tolerances : session -> float -> float -> unit
 
@@ -206,7 +207,7 @@ val ss_tolerances : session -> float -> float -> unit
     [sv_tolerances s reltol abstol] sets the relative tolerance using a scalar
     value, and the absolute tolerance as a vector.
 
-    @ida <node5#sss:cvtolerances> IDASVtolerances
+    @ida <node5#sss:idatolerances> IDASVtolerances
  *)
 val sv_tolerances : session -> float -> nvec -> unit
 
@@ -217,7 +218,7 @@ val sv_tolerances : session -> float -> nvec -> unit
     [efun y ewt] is passed the dependent variable vector [y] and is expected to
     set the values inside the error-weight vector [ewt].
 
-    @ida <node5#sss:cvtolerances> IDAWFtolerances
+    @ida <node5#sss:idatolerances> IDAWFtolerances
     @ida <node5#ss:ewtsetFn> Error weight function
  *)
 val wf_tolerances : session -> (val_array -> val_array -> unit) -> unit
@@ -225,8 +226,8 @@ val wf_tolerances : session -> (val_array -> val_array -> unit) -> unit
 (** {2 Solver functions } *)
 
 (**
-   [(tret, r) = normal s tout yout y'out] integrates the DAE over an interval
-   in t.
+   [(tret, r) = solve_normal s tout yout y'out] integrates the DAE over an
+   interval in t.
 
    The arguments are:
    - [s] a session with the solver.
@@ -245,18 +246,16 @@ val wf_tolerances : session -> (val_array -> val_array -> unit) -> unit
    This routine will throw one of the solver {!Ida.exceptions} if an error
    occurs.
 
-   @ida <node5#sss:ida> IDASolve
-   @ida <node5#sss:ida> IDA (IDA_NORMAL)
+   @ida <node5#sss:idasolve> IDASolve (IDA_NORMAL)
  *)
 val solve_normal :
   session -> float -> val_array -> der_array -> float * solver_result
 
 (**
-   This function is identical to {!normal}, except that it returns after one
+   This function is identical to {!solve_normal}, except that it returns after one
    internal solver step.
 
-   @ida <node5#sss:ida> IDASolve
-   @ida <node5#sss:ida> IDA (IDA_ONE_STEP)
+   @ida <node5#sss:idasolve> IDASolve (IDA_ONE_STEP)
  *)
 val solve_one_step :
   session -> float -> val_array -> der_array -> float * solver_result
@@ -580,7 +579,7 @@ val get_num_g_evals : session -> int
   The user may request [k] = 0, 1,..., qu, where qu is the current order.
 
   This function may only be called after a successful return from either
-  {!normal} or {!one_step}.
+  {!solve_normal} or {!solve_one_step}.
 
   Values for the limits may be obtained:
     - tn = {!get_current_time}
@@ -601,8 +600,8 @@ val get_dky : session -> float -> int -> nvec -> unit
   [linsolv] sets the linear solver.  If omitted, the current linear solver will
   be kept.
 
-  [roots] sets the root functions.  {!no_roots} may be passed in to turn off
-  root finding.  If omitted, the current root functions will be kept.
+  [roots] sets the root functions.  {!Ida.no_roots} may be passed in to turn
+  off root finding.  If omitted, the current root functions will be kept.
 
   @ida <node5#sss:cvreinit> IDAReInit
  *)
@@ -626,9 +625,10 @@ type triple_tmp = val_array * val_array * val_array
  
   @ida <node5#ss:djacFn> Dense Jacobian function
   @ida <node5#ss:bjacFn> Banded Jacobian function
-  @ida <node5#ss:jtimesFn> Product Jacobian function
+  @ida <node5#ss:jtimesFn> Jacobian-times-vector function
   @ida <node5#ss:psolveFn> Linear preconditioning function
   @ida <node5#ss:precondFn> Jacobian preconditioning function
+  @ida <node3#ss:ivp_sol> IVP solution
  *)
 type 't jacobian_arg =
   {
@@ -637,10 +637,10 @@ type 't jacobian_arg =
     jac_y'   : der_array;    (** The derivative vector (i.e. dy/dt). *)
     jac_res  : val_array;    (** The current value of the residual vector. *)
     jac_coef : float;        (** The coefficient [a] in the system Jacobian
-                                 to compute,
-                                   [J = dF/dy + a*dF/d(y')]
-                                 where [F(t,y,y')] is the residual vector.
-                                 See Eq (2.5) of IDA's user documentation.  *)
+                                   [J = dF/dy + a*dF/d(y')],
+                                 where [F] is the residual function and
+                                 d denotes partial differentiation.
+                                 See the IVP solution section linked below.  *)
     jac_tmp  : 't            (** Workspace data,
                                 either {!single_tmp} or {!triple_tmp}. *)
   }
@@ -662,17 +662,18 @@ module Dls :
      matrix J(t, y) for the Dense and Lapackdense {!Ida.linear_solver}s.
 
      The callback function takes the {!jacobian_arg} as an input and must store
-     the computed Jacobian as a {!Ida.Densematrix.t}.  The Jacobian has the
+     the computed Jacobian as a {!Dls.Densematrix.t}.  The Jacobian has the
      form
-
-       [dF0/dy0 + c dF0/dy'0, dF0/dy1 + c dF0/dy'1, ..., dF0/dyn + c dF0/dy'n]
-       [dF1/dy0 + c dF1/dy'0, dF1/dy1 + c dF1/dy'1, ..., dF1/dyn + c dF1/dy'n]
-           :        :        :             :
-       [dFn/dy0 + c dFn/dy'0, dFn/dy1 + c dFn/dy'1, ..., dFn/dyn + c dFn/dy'n]
-
+       {v
+       [dF0/dy0 + c*dF0/dy'0,   dF0/dy1 + c*dF0/dy'1,   ...,   dF0/dyn + c*dF0/dy'n]
+       [dF1/dy0 + c*dF1/dy'0,   dF1/dy1 + c*dF1/dy'1,   ...,   dF1/dyn + c*dF1/dy'n]
+           :           :           :           :                  :           :
+       [dFn/dy0 + c*dFn/dy'0,   dFn/dy1 + c*dFn/dy'1,   ...,   dFn/dyn + c*dFn/dy'n]
+       v}
      i.e. each row should be a gradient, or put differently, the row index
      matches the equation index while the column index matches the variable
-     index.
+     index.  The coefficient [c] is the [jac_coef] field of the {!jacobian_arg}
+     record passed into the callback function.
 
      {b NB:} the elements of the Jacobian argument and the output matrix must no
      longer be accessed after callback function has returned a result, i.e. if
@@ -681,6 +682,7 @@ module Dls :
 
      @ida <node5#sss:optin_dls> IDADlsSetDenseJacFn
      @ida <node5#ss:djacFn> Dense Jacobian function
+     @ida <node3#ss:ivp_soln> IVP solution
      *)
     val set_dense_jac_fn :
          session
@@ -698,14 +700,26 @@ module Dls :
     val clear_dense_jac_fn : session -> unit
 
     (**
-     Specify a callback function that computes an approximation to the Jacobian
-     matrix J(t, y) for the Band and Lapackband {!Ida.linear_solver}s.
+     Specify a callback function that computes an approximation to a banded
+     Jacobian matrix J(t, y) for the Band and Lapackband {!Ida.linear_solver}s.
+     The matrix to be approximated is given by:
+       {v
+       [dF0/dy0 + c*dF0/dy'0,   dF0/dy1 + c*dF0/dy'1,   ...,   dF0/dyn + c*dF0/dy'n]
+       [dF1/dy0 + c*dF1/dy'0,   dF1/dy1 + c*dF1/dy'1,   ...,   dF1/dyn + c*dF1/dy'n]
+           :           :           :           :                  :           :
+       [dFn/dy0 + c*dFn/dy'0,   dFn/dy1 + c*dFn/dy'1,   ...,   dFn/dyn + c*dFn/dy'n]
+       v}
+     i.e. each row should be a gradient, or put differently, the row index
+     matches the equation index while the column index matches the variable
+     index.  The coefficient [c] is the [jac_coef] field of the {!jacobian_arg}
+     record passed into the callback function.  The DAE being solve should be
+     such that entries lying outside of the band are negligible.
 
      The callback function takes three input arguments:
      - [jac] the standard {!jacobian_arg} with three work vectors.
      - [mupper] the upper half-bandwidth of the Jacobian.
      - [mlower] the lower half-bandwidth of the Jacobian.
-     and it must store the computed Jacobian as a {!Ida.Bandmatrix.t}.
+     and it must store the computed Jacobian as a {!Dls.Bandmatrix.t}.
 
     {b NB:} [jac] and the computed Jacobian must no longer be accessed after the
             calback function has returned a result, i.e. if their values are
@@ -714,6 +728,7 @@ module Dls :
 
      @ida <node5#sss:optin_dls> IDADlsSetBandJacFn
      @ida <node5#ss:bjacFn> Banded Jacobian function
+     @ida <node3#ss:ivp_soln> IVP solution
      *)
     val set_band_jac_fn :
          session
@@ -804,9 +819,9 @@ module Spils :
       - [delta] is an input tolerance.
 
       [delta] is be used if an iterative method is employed in the solution.
-      In that than case, the residual vector Res = r - {i P} {i z} of the
+      In that than case, the residual vector res = [r] - {i P} [z] of the
       system should be made less than [delta] in weighted l2 norm, i.e.
-        sqrt (sum_i ((Res_i * ewt_i)^2)) < [delta],
+        [sqrt (sum over i ((res.{i} * ewt.{i})^2)) < delta],
       where the nvector ewt can be obtained through
       {!Ida_serial.get_err_weights}.
 
@@ -840,7 +855,7 @@ module Spils :
               to separate physical structures.
 
       @ida <node5#sss:optin_spils> IDASpilsSetJacTimesVecFn
-      @ida <node5#ss:jtimesFn> Product Jacobian function
+      @ida <node5#ss:jtimesFn> Jacobian-times-vector function
     *)
     val set_jac_times_vec_fn :
       session
@@ -857,7 +872,7 @@ module Spils :
       [NULL].
 
       @ida <node5#sss:optin_spils> IDASpilsSetJacTimesVecFn
-      @ida <node5#ss:jtimesFn> Product Jacobian function
+      @ida <node5#ss:jtimesFn> Jacobian-times-vector function
     *)
     val clear_jac_times_vec_fn : session -> unit
 
@@ -959,7 +974,7 @@ module Spils :
 
 (** Inequality constraints on variables.
 
- @ida <node5#sss:idasetconstraints> IDASetConstraints
+ @ida <node5#sss:optin_main> IDASetConstraints
  *)
 module Constraints :
   sig
@@ -1118,10 +1133,10 @@ val set_constraints : session -> Constraints.t -> unit
 (**
    Specify whether or not to ignore algebraic variables in local error tests.
    If you set this option to [true], you must also specify which variables are
-   algebraic through {!calc_ic_ya_yd'} or {!set_var_types} -- exactly one of
+   algebraic through {!calc_ic_ya_yd'} or {!set_var_types}.  Exactly one of
    these functions should be called, exactly once, before the first call to
-   {!solve_normal}, {!solve_one_step}, or {!calc_ic}.  Forgetting to do so will
-   cause an {!Ida.IllInput} exception.
+   {!solve_normal}, {!solve_one_step}, or {!calc_ic_ya_yd'}.  Forgetting to do
+   so will cause an {!Ida.IllInput} exception.
 
    Note: {!set_var_types} is the preferred alias to {!set_id}, which
    corresponds to [IDASetId] in the C interface.
@@ -1135,7 +1150,7 @@ val set_constraints : session -> Constraints.t -> unit
    Initial-Value Problems in Differential-Algebraic Equations.  SIAM,
    Philadelphia, Pa, 1996.
 
-   @ida <node#sss:idacalcic> IDASetSuppressAlg
+   @ida <node5#sss:optin_main> IDASetSuppressAlg
  *)
 val set_suppress_alg : session -> bool -> unit
 
@@ -1154,7 +1169,7 @@ val set_id : session -> Id.t -> unit
     {!set_id} is also available in this binding.  We prefer the more
     descriptive name {!set_var_types}, however.
 
-    @ida <node#sss:idasetid> IDASetId
+    @ida <node5#sss:optin_main> IDASetId
  *)
 val set_var_types : session -> VarTypes.t -> unit
 
@@ -1179,8 +1194,8 @@ val set_var_types : session -> VarTypes.t -> unit
 
     P. N. Brown, A. C. Hindmarsh, and L. R. Petzold. Consistent Initial Condition Calculation for Differential-Algebraic Systems. SIAM J. Sci. Comput., 19:1495–1512, 1998.
 
-    @ida <node#sss:idacalcic> IDACalcIC
-    @ida <node#sss:idagetconsistentic> IDAGetConsistentIC
+    @ida <node5#ss:idacalcic> IDACalcIC
+    @ida <node5#sss:optout_iccalc> IDAGetConsistentIC
  *)
 val calc_ic_y : session -> ?y:val_array -> float -> unit
 
@@ -1210,8 +1225,8 @@ val calc_ic_y : session -> ?y:val_array -> float -> unit
     set of indices at which [vartypes] is [Differential], then y and y' are
     partitioned into two subsequences each:
 
-      y  splits into A  = { y.{i}  | i in Ia } and D  = { y.{i}  | i in Id }
-      y' splits into A' = { y'.{i} | i in Ia } and D' = { y'.{i} | i in Id }
+      - [y]  splits into [A]  = \{ [y.{i}]  | i in Ia \} and D  = \{ [y.{i}]  | [i] in [Id] \}
+      - [y'] splits into [A'] = \{ [y'.{i}] | i in Ia \} and D' = \{ [y'.{i}] | [i] in [Id] \}
 
     The residual function must be such that it ignores all values in A'.
     [calc_ic_ya_yd'] then computes (i.e. modifies) A and D' while treating D as
@@ -1227,10 +1242,10 @@ val calc_ic_y : session -> ?y:val_array -> float -> unit
     you do not need to set it again with {!set_var_types} (or its alias
     {!set_id}) before calling {!set_suppress_alg}.
 
-    @ida <node#sss:idacalcic> IDACalcIC
-    @ida <node#sss:idasetid> IDASetId
-    @ida <node#sss:idasetsuppressalg> IDASetSuppressAlg
-    @ida <node#sss:idagetconsistentic> IDAGetConsistentIC
+    @ida <node5#ss:idacalcic> IDACalcIC
+    @ida <node5#sss:optin_main> IDASetId
+    @ida <node5#sss:optin_main> IDASetSuppressAlg
+    @ida <node5#sss:optout_iccalc> IDAGetConsistentIC
  *)
 val calc_ic_ya_yd' :
   session
@@ -1242,6 +1257,6 @@ val calc_ic_ya_yd' :
 
 (** [get_num_backtrack_ops ida] gets the number of backtrack operations done in
     the linesearch algorithm in {!calc_ic_ya_yd'} or {!calc_ic_y}.
-    @ida <ndoe#sss:idagetnumbcktrackops> IDAGetNumBcktrackOps
+    @ida <node5#sss:optout_iccalc> IDAGetNumBcktrackOps
  *)
 val get_num_backtrack_ops : session -> int

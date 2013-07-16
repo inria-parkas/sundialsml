@@ -9,7 +9,6 @@ CVODE_MLOBJ= cvode.cmo 		\
 	     cvode_serial.cmo
 
 IDA_MLOBJ= ida.cmo 		\
-	    ida_nvector.cmo	\
 	    ida_serial.cmo
 
 COMMON_COBJ= sundials_ml.o      \
@@ -137,12 +136,13 @@ doc: doc/html/index.html
 
 doc/html/index.html: dochtml.cmo \
 		     $(MLOBJ:.cmo=.mli) $(MLOBJ:.cmo=.cmi) \
-		     intro.doc cvode_nvector.doc ida_nvector.doc
+		     intro.doc cvode_nvector.doc
 	$(OCAMLDOC) -g dochtml.cmo \
 	    -cvode-doc-root "$(CVODE_DOC_ROOT)" \
+	    -ida-doc-root "$(IDA_DOC_ROOT)" \
 	    -pp "$(DOCPP)"		\
 	    -d ./doc/html/		\
-	    -t "Sundials (-CVODE)"	\
+	    -t "Sundials (CVODE & IDA)"	\
 	    -intro intro.doc		\
 	    $(MLOBJ:.cmo=.mli)
 

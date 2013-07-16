@@ -4,6 +4,7 @@ VERSION = @version@
 HAVE_WEAK=-DHAVE_WEAK=@have_weak@
 
 CVODE_DOC_ROOT = https://computation.llnl.gov/casc/sundials/documentation/cv_guide/
+IDA_DOC_ROOT = https://computation.llnl.gov/casc/sundials/documentation/ida_guide/
 OCAML_DOC_ROOT = http://caml.inria.fr/pub/docs/manual-ocaml/libref/
 
 OCAMLFLAGS =
@@ -73,6 +74,7 @@ OBJ_OPT = $(OBJ:.cmo=.cmx)
 
 DOCPP = $(SED) \
 	-e 's|CVODE_DOC_ROOT(\\([^\#)]*\\)\\(\#[^)]*\\)\\?)|$(CVODE_DOC_ROOT)\\1.html\\2|g' \
+	-e 's|IDA_DOC_ROOT(\\([^\#)]*\\)\\(\#[^)]*\\)\\?)|$(IDA_DOC_ROOT)\\1.html\\2|g' \
 	-e 's|OCAML_DOC_ROOT(\\([^\#)]*\\)\\(\#[^)]*\\)\\?)|$(OCAML_DOC_ROOT)\\1.html\\2|g' \
 	-e 's|VERSION()|$(VERSION)|g'
 

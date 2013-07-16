@@ -108,8 +108,9 @@ type root_val_array = Sundials.Roots.val_array
     linear solver function, and CVodeSStolerances (with default values for
     relative tolerance of 1.0e-4 and absolute tolerance as 1.0e-8; these can be
     changed with {!ss_tolerances}, {!sv_tolerances}, or {!wf_tolerances}).
-    It does everything necessary to initialize a CVODE 'a session; the {!normal} or
-    {!one_step} functions can be called directly afterward.
+    It does everything necessary to initialize a CVODE 'a session; the
+    {!solve_normal} or {!solve_one_step} functions can be called directly
+    afterward.
 
     The right-hand side function [f] is called by the solver to calculate the
     instantaneous derivative values, it is passed three arguments: [t], [y], and
@@ -565,7 +566,7 @@ val get_num_g_evals : 'a session -> int
   The user may request [k] = 0, 1,..., qu, where qu is the current order.
 
   This function may only be called after a successful return from either
-  {!normal} or {!one_step}.
+  {!solve_normal} or {!solve_one_step}.
 
   Values for the limits may be obtained:
     - tn = {!get_current_time}
@@ -627,7 +628,7 @@ module Dls :
      matrix J(t, y) for the Dense and Lapackdense {!Cvode.linear_solver}s.
 
      The callback function takes the {!jacobian_arg} as an input and must store
-     the computed Jacobian as a {!Cvode.Densematrix.t}.
+     the computed Jacobian as a {!Dls.Densematrix.t}.
 
      {b NB:} the elements of the Jacobian argument and the output matrix must no
      longer be accessed after callback function has returned a result, i.e. if
@@ -660,7 +661,7 @@ module Dls :
      - [jac] the standard {!jacobian_arg} with three work vectors.
      - [mupper] the upper half-bandwidth of the Jacobian.
      - [mlower] the lower half-bandwidth of the Jacobian.
-     and it must store the computed Jacobian as a {!Cvode.Bandmatrix.t}.
+     and it must store the computed Jacobian as a {!Dls.Bandmatrix.t}.
 
     {b NB:} [jac] and the computed Jacobian must no longer be accessed after the
             calback function has returned a result, i.e. if their values are
