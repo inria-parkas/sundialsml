@@ -49,12 +49,12 @@ CFLAGS+=-fPIC
 
 all: sundials_cvode.cma sundials_cvode.cmxa sundials_ida.cma sundials_ida.cmxa
 
-sundials_cvode.cma sundials_cvode.cmxa: $(COMMON_MLOBJ) $(CVODE_MLOBJ) $(CVODE_MLOBJ:.cmo=.cmx) $(COMMON_COBJ) $(CVODE_COBJ)
+sundials_cvode.cma sundials_cvode.cmxa: $(COMMON_MLOBJ) $(COMMON_MLOBJ:.cmo=.cmx) $(CVODE_MLOBJ) $(CVODE_MLOBJ:.cmo=.cmx) $(COMMON_COBJ) $(CVODE_COBJ)
 	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS) \
 	    -o sundials_cvode -oc mlsundials_cvode $^ \
 	    $(OCAML_CVODE_LIBLINK)
 
-sundials_ida.cma sundials_ida.cmxa: $(COMMON_MLOBJ) $(IDA_MLOBJ) $(IDA_MLOBJ:.cmo=.cmx) $(COMMON_COBJ) $(IDA_COBJ)
+sundials_ida.cma sundials_ida.cmxa: $(COMMON_MLOBJ) $(COMMON_MLOBJ:.cmo=.cmx) $(IDA_MLOBJ) $(IDA_MLOBJ:.cmo=.cmx) $(COMMON_COBJ) $(IDA_COBJ)
 	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS) \
 	    -o sundials_ida -oc mlsundials_ida $^ \
 	    $(OCAML_IDA_LIBLINK)
