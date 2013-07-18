@@ -134,7 +134,7 @@ META: META.in
 
 doc: doc/html/index.html
 
-doc/html/index.html: dochtml.cmo \
+doc/html/index.html: doc/html dochtml.cmo \
 		     $(MLOBJ:.cmo=.mli) $(MLOBJ:.cmo=.cmi) \
 		     intro.doc cvode_nvector.doc
 	$(OCAMLDOC) -g dochtml.cmo \
@@ -145,6 +145,9 @@ doc/html/index.html: dochtml.cmo \
 	    -t "Sundials (CVODE & IDA)"	\
 	    -intro intro.doc		\
 	    $(MLOBJ:.cmo=.mli)
+
+doc/html:
+	mkdir $@
 
 # ##
 
