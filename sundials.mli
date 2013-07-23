@@ -66,6 +66,18 @@ module Carray :
        {!real_array} *)
     val of_array : float array -> t
 
+    (** Copies the contents of a {{:OCAML_DOC_ROOT(List)} List} into a
+       {!real_array} *)
+    val of_list : float list -> t
+
+    (** Copies the contents of a {!real_array} into an
+        {{:OCAML_DOC_ROOT(Array)} Array}.  *)
+    val to_array : t -> float array
+
+    (** Copies the contents of a {!real_array} into a {{:OCAML_DOC_ROOT(List)}
+        List}.  *)
+    val to_list : t -> float list
+
     (** Create a new array with the same contents as an existing one. *)
     val of_carray : t -> t
 
