@@ -72,6 +72,22 @@ module Carray =
       blit src dst;
       dst
 
+    let of_list src = of_array (Array.of_list src)
+
+    let to_list v =
+      let rec go ls i =
+        if i < 0 then ls
+        else go (v.{i}::ls) (i-1)
+      in go [] (length v - 1)
+
+    let to_array v =
+      let n = length v in
+      let a = Array.make n v.{0} in
+      for i = 1 to n-1 do
+        a.(i) <- v.{i}
+      done;
+      a
+
     let app f v =
       for i = 0 to (length v - 1) do
         f v.{i}
