@@ -25,6 +25,7 @@ include module type of Ida
   with type Roots.t = Ida.Roots.t
   and type RootDirs.t = Ida.RootDirs.t
   and type linear_solver = Ida.linear_solver
+  and type solver_result = Ida.solver_result
   and type Bandmatrix.t = Dls.Bandmatrix.t
   and type Directbandmatrix.t = Dls.Directbandmatrix.t
   and type Densematrix.t = Dls.Densematrix.t

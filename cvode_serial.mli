@@ -24,6 +24,10 @@
 include module type of Cvode
   with type Roots.t = Cvode.Roots.t
   and type RootDirs.t = Cvode.RootDirs.t
+  and type solver_result = Cvode.solver_result
+  and type Bandmatrix.t = Dls.Bandmatrix.t
+  and type Directbandmatrix.t = Dls.Directbandmatrix.t
+  and type Densematrix.t = Dls.Densematrix.t
 
 (*STARTINTRO*)
 (** Serial nvector interface to the CVODE solver.
