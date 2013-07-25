@@ -212,6 +212,20 @@ let shrink_bigarray1 ?(shrink_size=true) shrink_elem a =
   @@ Stream.concat (Stream.map shrink_at (Stream.enum 0 (n-1)))
 
 (* Helper functions for printing data.  *)
+
+(* set to true to force the output to be a valid OCaml expression *)
+let read_write_invariance = ref false
+let with_read_write_invariance f =
+  try
+    read_write_invariance := true;
+    let ret = f () in
+    read_write_invariance := false;
+    ret
+  with exn -> read_write_invariance := false; raise exn
+
+let show_float x =
+  if !read_write_invariance then string_of_float x
+  else Printf.sprintf "%g" x
 let show_sequence show_elem xs = String.concat "; " (List.map show_elem xs)
 let show_list show_elem xs =
   "[ " ^ show_sequence show_elem xs ^ " ]"
@@ -224,10 +238,10 @@ let list_of_bigarray1 xs =
   done;
   !a
 let show_bigarray1 show_elem xs =
-  "[|| " ^ show_sequence show_elem (list_of_bigarray1 xs) ^ " ||]"
-let dump_bigarray1 dump_elem xs =
-  "(Carray.of_array [|"
-  ^ show_sequence dump_elem (list_of_bigarray1 xs) ^ "|])"
+  if !read_write_invariance
+  then "(Carray.of_array [|" ^ show_sequence show_elem (list_of_bigarray1 xs)
+       ^ "|])"
+  else "[|| " ^ show_sequence show_elem (list_of_bigarray1 xs) ^ " ||]"
 
 (* Types and functions for modeling IDA.  *)
 module IdaModel =
@@ -253,7 +267,9 @@ struct
   let cmp_eps = ref 1e-5
 
   let show_carray = show_bigarray1 string_of_float
-  let dump_carray = dump_bigarray1 string_of_float
+  let dump_carray a =
+    with_read_write_invariance
+      (fun () -> show_carray a)
 
   let show_cmd = function
     | SolveNormal f ->
@@ -261,15 +277,20 @@ struct
       else "SolveNormal (" ^ string_of_float f ^ ")"
   let show_cmds cmds = show_list show_cmd cmds
 
-  let show_solver = function
+  let show_solver s =
+    let solver_name = function
     | Ida.Dense -> "Dense"
     | Ida.Band range -> Printf.sprintf "Band { mupper=%d; mlower=%d }"
                                        range.Ida.mupper range.Ida.mlower
     | Ida.Sptfqmr _ | Ida.Spbcg _ | Ida.Spgmr _
     | Ida.LapackBand _ | Ida.LapackDense _ ->
       raise (Failure "linear solver not implemented")
+    in
+    if !read_write_invariance then "Ida." ^ solver_name s
+    else solver_name s
 
-  let dump_solver solver = "Ida." ^ show_solver solver
+  let dump_solver solver =
+    with_read_write_invariance (fun () -> show_solver solver)
 
   let rec show_result = function
     | Any -> "_"

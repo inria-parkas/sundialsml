@@ -37,29 +37,22 @@ let copy_model m =
 
 type script = session_model * cmd list
 
-let dump_model model =
-  Printf.sprintf "{ resfn=%s; solver=%s; t=%s; vec=%s; vec'=%s; \
-                    t0=%s; vec0=%s; vec'0=%s; consistent=%s }"
-    (dump_resfn_type model.resfn)
-    (dump_solver model.solver)
-    (string_of_float model.t)
-    (dump_carray model.vec)
-    (dump_carray model.vec')
-    (string_of_float model.t0)
-    (dump_carray model.vec0)
-    (dump_carray model.vec'0)
-    (string_of_bool model.consistent)
 let show_model model =
-  Printf.sprintf "{ resfn=%s; solver=%s; t=%g; vec=%s; vec'=%s; \
-                    t0=%g; vec0=%s; vec'0=%s; }"
+  Printf.sprintf "{ resfn = %s; solver = %s; roots = %s; \
+                    t = %s; vec = %s; vec' = %s; \
+                    t0 = %s; vec0 = %s; vec'0 = %s; consistent = %s }"
     (show_resfn_type model.resfn)
     (show_solver model.solver)
-    model.t
+    (show_array string_of_float model.roots)
+    (show_float model.t)
     (show_carray model.vec)
     (show_carray model.vec')
-    model.t0
+    (show_float model.t0)
     (show_carray model.vec0)
     (show_carray model.vec'0)
+    (string_of_bool model.consistent)
+let dump_model model =
+  with_read_write_invariance (fun () -> show_model model)
 
 let show_script (model, cmds) =
   Printf.sprintf "(%s, %s)"
