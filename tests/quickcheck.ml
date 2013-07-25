@@ -54,6 +54,10 @@ struct
       Cons (x, lazy (take_while p (Lazy.force xs)))
     | _ -> Nil
 
+  let rec fold_left f y = function
+    | Nil -> y
+    | Cons (x, lazy xs) -> fold_left f (f y x) xs
+
   let rec generate f =
     match f () with
     | Some x -> Cons (x, lazy (generate f))
@@ -108,14 +112,14 @@ let gen_float () =
   Random.float max_abs -. max_abs /. 2.
 
 (* This generator produces floating point values that are multiples of a fixed
-   floating point value df.  With a sufficiently large df, discretized values
-   makes it easy to detect problems like values being "too close" -- detecting,
-   and properly mimicking, the behavior of the sundials solver would otherwise
-   require writing code that depends on the details of its internals.  *)
-let discrete_unit = ref (1. /. 2.**10.)
+   floating point value discrete_unit.  With a sufficiently large
+   discrete_unit, discretized values make it easy to detect problems like
+   values being "too close" -- detecting, and properly mimicking, the behavior
+   of the sundials solver would otherwise require writing code that depends on
+   the details of its internals.  *)
+let discrete_unit = ref 1.
 let gen_discrete_float () =
-  let df = !discrete_unit in
-  floor (gen_float () /. df +. 0.5) *. df
+  float_of_int (gen_int ()) *. !discrete_unit
 
 let gen_choice choices =
   choices.(Random.int (Array.length choices))
@@ -247,9 +251,10 @@ let show_bigarray1 show_elem xs =
 module IdaModel =
 struct
   module Carray = Sundials.Carray
-  type cmd = SolveNormal of float
+  type cmd = SolveNormal of float       (* NB: carries dt, not t *)
   type result = Unit | Int of int | Float of float
                 | Any
+                | Type of result
                 | Aggr of result list
                 | Carray of Carray.t    (* NB: always copy the array! *)
                 | SolverResult of Ida.solver_result
@@ -297,6 +302,7 @@ struct
     | Unit -> "()"
     | Int i -> string_of_int i
     | Float f -> string_of_float f
+    | Type r -> "Type (" ^ show_result r ^ ")"
     | Carray ca -> show_carray ca
     | SolverResult Ida.Continue -> "Continue"
     | SolverResult Ida.RootsFound -> "RootsFound"
@@ -309,23 +315,39 @@ struct
     | ResFnLinear slope -> "ResFnLinear " ^ show_carray slope
 
   let dump_resfn_type = show_resfn_type ~dump:true
-      
-  let rec results_equal r1 r2 =
+
+  (* Check if r1 is a valid approximation of r2.  *)
+  let rec result_matches r1 r2 =
     match r1, r2 with
     | Any, _ -> true
-    | _, Any -> true
+    | _, Any -> raise (Invalid_argument "result_matches: wild card on rhs")
+    | Type t, _ -> result_type_matches t r2
     | Unit, Unit -> true
     | Int i1, Int i2 -> i1 = i2
     | Float f1, Float f2 -> abs_float (f1 -. f2) < !cmp_eps
-    | Aggr l1, Aggr l2 -> result_lists_equal l1 l2
+    | Aggr l1, Aggr l2 -> for_all2_and_same_len result_matches l1 l2
     | Carray v1, Carray v2 -> carrays_equal v1 v2
     | SolverResult r1, SolverResult r2 -> r1 = r2
     | Exn e1, Exn e2 -> exns_equal e1 e2
     | _, _ -> false
-  and result_lists_equal r1 r2 =
+  and result_type_matches r1 r2 =
+    match r1, r2 with
+    | Any, _ -> true
+    | Type t, _ -> raise (Invalid_argument "result_matches: nested Type")
+    | Unit, Unit -> true
+    | Int _, Int _ -> true
+    | Float _, Float _ -> true
+    | Aggr l1, Aggr l2 -> for_all2_and_same_len result_type_matches l1 l2
+    | Carray _, Carray _ -> true
+    | SolverResult _, SolverResult _ -> true
+    | Exn e1, Exn e2 -> raise (Invalid_argument "result_matches: Type Exn")
+    | _, Any | _, Type _ ->
+      raise (Invalid_argument "result_matches: wild card on rhs")
+    | _, _ -> false
+  and for_all2_and_same_len f r1 r2 =
     match r1, r2 with
     | [], [] -> true
-    | x::xs, y::ys -> results_equal x y && result_lists_equal xs ys
+    | x::xs, y::ys -> f x y && for_all2_and_same_len f xs ys
     | _, _ -> false
   and carrays_equal v1 v2 =
     let n = Carray.length v1 in
