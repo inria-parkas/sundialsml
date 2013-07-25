@@ -389,13 +389,16 @@ let compare_runs (model, cmds) =
       Failed TestCodeOverrun
   in
   cmp 0 ms0 cs0
-let debug_shrink = ref false
+
+let trace_shrink = ref false
+let dump_test_cases = ref false
+
 let shrink script reason =
-  if !debug_shrink then print_char '\n';
+  if !trace_shrink then print_char '\n';
   let rec go ct script reason =
     let failure script =
       let res = compare_runs script in
-      if !debug_shrink then
+      if !trace_shrink then
         (Printf.printf "Trying: %s\n-> %s\n"
            (dump_script script)
            (if res <> OK then "triggers bug"
@@ -409,7 +412,10 @@ let shrink script reason =
     | None -> (ct, script, reason)
     | Some (script, reason) -> go (ct+1) script reason
   in go 0 script reason
+
 let test_script script =
+  if !dump_test_cases then
+    (Printf.printf "Testing: %s\n" (dump_script script); flush stdout);
   match compare_runs script with
   | OK -> true
   | Failed reason ->
@@ -480,14 +486,10 @@ let quickcheck max_tests =
          go (tests-1))
       else Some script
   in go (max 0 max_tests)
-;;
+
 let _ =
-  let randseed =
-    let open Unix in
-    let t = gmtime (time ()) in
-    t.tm_sec + t.tm_min + t.tm_hour + t.tm_mday + t.tm_mon
-    + t.tm_year + t.tm_wday + t.tm_yday in
-  let _ = Random.init randseed in
+  let _ = Random.self_init () in
+  let randseed = ref (Random.int ((1 lsl 30) - 1)) in
   let max_tests = ref 50 in
   let options = [("--exec-file", Arg.Set_string test_exec_file,
                   "test executable name \
@@ -495,10 +497,19 @@ let _ =
                  ("--failed-file", Arg.Set_string test_failed_file,
                   "file in which to dump the failed test case");
                  ("--compiler", Arg.Set_string test_compiler,
-                  "compiler name with compilation options");] in
+                  "compiler name with compilation options");
+                 ("--rand-seed", Arg.Set_int randseed,
+                  "seed value for random generator");
+                 ("--dump-tests", Arg.Set dump_test_cases,
+                  "print every test script in compressed form");
+                 ("--trace-shrink", Arg.Set trace_shrink,
+                  "print intermediate test scripts while shrinking");
+                ] in
   Arg.parse options (fun n -> max_tests := int_of_string n)
     "randomly generate programs using IDA and check if they work as expected";
 
+  Printf.printf "random generator seed value = %d\n" !randseed;
+  Random.init !randseed;
   size := 1;
   quickcheck !max_tests
 
