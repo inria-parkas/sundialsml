@@ -179,9 +179,12 @@ module Roots :
     val reset : t -> unit
 
     (** [print r] prints a line containing a tab-delimited list of the values of
-        [r] (in the format "% d", where 0 = NoRoot, 1 = Rising,
-        -1 = Falling), and then a newline. *)
+        [r] (by their constructor names), and then a newline. *)
     val print : t -> unit
+
+    (** [string_of_root_event r] returns the name of the data constructor [r]
+        of type [root_event] as a string. *)
+    val string_of_root_event : root_event -> string
 
     (** Returns [true] if any elements are equal to Rising or Falling. *)
     val exists : t -> bool
