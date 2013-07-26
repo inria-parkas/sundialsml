@@ -140,8 +140,8 @@ module Roots :
     (** [create n] returns an array with [n] elements, each set to NoRoot. *)
     val create : int -> t
 
-    (** [init n x] returns an array with [n] elements, each set to [x]. *)
-    val init : int -> root_event -> t
+    (** [make n x] returns an array with [n] elements, each set to [x]. *)
+    val make : int -> root_event -> t
 
     (** Returns the length of an array *)
     val length : t -> int
@@ -164,6 +164,9 @@ module Roots :
     (** [set r i v] sets the value of the [i]th element of [r]. *)
     val set : t -> int -> root_event -> unit
 
+    (** [copy r] creates a new array with the contents as [r]. *)
+    val copy : t -> t
+
     (** [set r i v] sets the value of the [i]th element of [r] to Rising if v is
         true, and to NoRoot otherwise. *)
     val set_rising : t -> int -> bool -> unit
@@ -173,7 +176,7 @@ module Roots :
     val set_falling : t -> int -> bool -> unit
 
     (** Returns 0 for NoRoot, 1 for Rising, and -1 for Falling. *)
-    val to_int : root_event -> int
+    val int_of_root_event : root_event -> int
 
     (** Resets all elements to NoRoot. *)
     val reset : t -> unit
@@ -192,6 +195,17 @@ module Roots :
     (** [appi f r] applies [f] to the indexes and values of each element
         in [r]. *)
     val appi : (int -> root_event -> unit) -> t -> unit
+
+    (** Copies the contents of an {{:OCAML_DOC_ROOT(Array)} Array} into an
+        opaque array of type [Roots.t].  *)
+    val of_array : root_event array -> t
+
+    (** [fill_all a x] sets the values of [a] to [x] everywhere. *)
+    val fill_all : t -> root_event -> unit
+
+    (** [fill a i len x] sets the values of [a] from [i] through [i+len-1] to
+        [x]. *)
+    val fill : t -> int -> int -> root_event -> unit
   end
 
 (** Utility functions for arrays of directions to detect on root functions
@@ -229,6 +243,27 @@ module RootDirs :
 
     (** [set r i v] sets the value of the [i]th element of [r]. *)
     val set : t -> int -> root_direction -> unit
+
+    (** [fill a i len x] sets the values of [a] from [i] through [i+len-1] to
+        [x]. *)
+    val fill : t -> int -> int -> root_direction -> unit
+
+    (** [fill_all a x] sets the values of [a] to [x] everywhere. *)
+    val fill_all : t -> root_direction -> unit
+
+    (** [blit a oa b ob len] copies the values of [a] at indices
+        [oa, oa+1, ..., oa+len-1] to [b] at indices
+        [ob, ob+1, ..., ob+len-1]. *)
+    val blit : t -> int -> t -> int -> int -> unit
+
+    (** [blit_all a b] copies the values of [a] to [b].  If
+        [length a > length b], then [b] is filled with a prefix of [a].
+        If [length a < length b], then only a prefix of [b] is modified.  *)
+    val blit_all : t -> t -> unit
+
+    (** [init n f] creates an array of length [n] and sets it to [f i] for each
+        index [i]. *)
+    val init : int -> (int -> root_direction) -> t
   end
 
 (** {2 Miscellaneous utility functions} *)
