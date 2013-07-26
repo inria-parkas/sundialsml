@@ -250,7 +250,8 @@ let make_lint_array = Bigarray.Array1.create Bigarray.int Carray.layout
 
 module Roots =
   struct
-    type t = (int32, Bigarray.int32_elt, Bigarray.c_layout) Bigarray.Array1.t
+    open Bigarray
+    type t = (int32, int32_elt, c_layout) Array1.t
     type val_array = Carray.t
 
     type root_event =
@@ -276,22 +277,21 @@ module Roots =
       | Rising -> 1
       | Falling -> -1
 
-    let reset v = Bigarray.Array1.fill v 0l
+    let reset v = Array1.fill v 0l
 
     let get roots i = roots.{i} <> 0l
     let get' roots i = root_event_of_int32 (roots.{i})
-    let set a i v =
-      Bigarray.Array1.set a i (int32_of_root_event v)
+    let set a i v = a.{i} <- int32_of_root_event v
 
     let create n =
-      let a = Bigarray.Array1.create Bigarray.int32 Carray.layout n in
+      let a = Array1.create int32 c_layout n in
       reset a;
       a
 
-    let length = Bigarray.Array1.dim
+    let length = Array1.dim
 
     module A = ArrayLike (struct
-      type t = (int32, Bigarray.int32_elt, Bigarray.c_layout) Bigarray.Array1.t
+      type t = (int32, int32_elt, c_layout) Array1.t
       and elt = root_event
       let get = get'
       let set = set
@@ -343,7 +343,8 @@ module Roots =
 
 module RootDirs =
   struct
-    type t = (int32, Bigarray.int32_elt, Bigarray.c_layout) Bigarray.Array1.t
+    open Bigarray
+    type t = (int32, int32_elt, c_layout) Array1.t
 
     type root_direction =
       | Increasing
@@ -368,19 +369,18 @@ module RootDirs =
       | _ -> IncreasingOrDecreasing
 
     let make n x =
-      let a = Bigarray.Array1.create Bigarray.int32 Carray.layout n in
-      Bigarray.Array1.fill a (int32_of_root_direction x);
+      let a = Array1.create int32 c_layout n in
+      Array1.fill a (int32_of_root_direction x);
       a
 
     let create n = make n IncreasingOrDecreasing
 
-    let length a = Bigarray.Array1.dim a
+    let length a = Array1.dim a
 
     let create' n src =
-      let a = Bigarray.Array1.create Bigarray.int32 Carray.layout n in
+      let a = Array1.create int32 c_layout n in
       if n > Array.length src
-      then Bigarray.Array1.fill a
-            (int32_of_root_direction IncreasingOrDecreasing);
+      then Array1.fill a (int32_of_root_direction IncreasingOrDecreasing);
       Array.iteri (fun i v -> a.{i} <- int32_of_root_direction v) src;
       a
 
