@@ -188,11 +188,9 @@ let expr_of_cmd last_query_time = function
 let expr_of_cmds last_query_time = function
   | [] -> <:expr<()>>
   | cmds ->
-  <:expr<
-    Array.iter print_result
-    $expr_array (List.map (fun cmd ->
-    <:expr<lazy $expr_of_cmd last_query_time cmd$>>) cmds)$
-    >>
+    let sandbox exp = <:expr<print_result (lazy $exp$)>> in
+    expr_seq (List.map (fun cmd -> sandbox (expr_of_cmd last_query_time cmd))
+                cmds)
 
 (* Run a single command on the model.  *)
 let model_cmd model = function
