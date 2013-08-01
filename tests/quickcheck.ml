@@ -1,104 +1,7 @@
-(* Basic quickcheck infrastructure.  Random generation and shrinking of basic
-   data types, as well as a lazy stream implementation with a usable
-   interface for shrinking.  *)
-module Stream =
-struct
-  type 'a t = Cons of 'a * 'a t Lazy.t | Nil
-  let empty = Nil
-  let null = function
-    | Nil -> true
-    | _ -> false
-  let singleton x = Cons (x, lazy Nil)
-  let rec of_list = function
-    | [] -> Nil
-    | x::xs -> Cons (x, lazy (of_list xs))
-  let rec map f = function
-    | Cons (x, xs) -> Cons (f x, lazy (map f (Lazy.force xs)))
-    | Nil -> Nil
-  let rec iter f = function
-    | Cons (x, xs) -> f x; iter f (Lazy.force xs)
-    | Nil -> ()
-  let to_list xs =
-    let rec go acc = function
-      | Nil -> List.rev acc
-      | Cons (x, xs) -> go (x::acc) (Lazy.force xs)
-    in go [] xs
+open Pprint
+open Pprint_sundials
 
-  let append xs ys =
-    let rec go = function
-      | Nil -> ys
-      | Cons (x,xs) -> Cons (x, lazy (go (Lazy.force xs)))
-    in go xs
-  let cons x xs = Cons (x, lazy xs)
-
-  let concat xss =
-    let rec go = function
-      | Nil -> Nil
-      | Cons (xs, xss) -> flatten xs xss
-    and flatten xs xss =
-      match xs with
-      | Nil -> go (Lazy.force xss)
-      | Cons (x,xs) -> Cons (x, lazy (flatten (Lazy.force xs) xss))
-    in go xss
-
-  let rec take n xs =
-    match n, xs with
-    | 0, _ -> Nil
-    | n, Nil -> Nil
-    | n, Cons (x,xs) -> Cons (x, lazy (take (n-1) (Lazy.force xs)))
-  let rec take_while p = function
-    | Cons (x, xs) when p x -> Cons (x, lazy (take_while p (Lazy.force xs)))
-    | _ -> Nil
-  let rec drop_while p = function
-    | Cons (x, xs) when not (p x) ->
-      Cons (x, lazy (take_while p (Lazy.force xs)))
-    | _ -> Nil
-
-  let rec fold_left f y = function
-    | Nil -> y
-    | Cons (x, lazy xs) -> fold_left f (f y x) xs
-
-  let rec generate f =
-    match f () with
-    | Some x -> Cons (x, lazy (generate f))
-    | None -> Nil
-
-  let rec find p = function
-    | Nil -> None
-    | Cons (x, xs) -> if p x then Some x else find p (Lazy.force xs)
-
-  let rec find_some f = function
-    | Nil -> None
-    | Cons (x, xs) ->
-      match f x with
-      | None -> find_some f (Lazy.force xs)
-      | Some x -> Some x
-
-  let rec iterate f x = Cons (x, lazy (iterate f (f x)))
-  let iterate_on x f = iterate f x
-
-  let rec repeat f = Cons (f (), lazy (repeat f))
-  let repeat_n n f = take n (repeat f)
-
-  let guard b x  = if b then x else Nil
-  let guard1 b x = guard b (singleton x)
-
-  let rec filter p = function
-    | Nil -> Nil
-    | Cons (x, lazy xs) when p x -> Cons (x, lazy (filter p xs))
-    | Cons (_, lazy xs) -> filter p xs
-
-  let rec enum istart iend =
-    if istart <= iend
-    then Cons (istart, lazy (enum (istart + 1) iend))
-    else Nil
-
-  let length xs =
-    let rec go i = function
-      | Nil -> i
-      | Cons (_, lazy xs) -> go (i+1) xs
-    in go 0 xs
-end
+let (@@) = Fstream.append
 
 let size = ref 5
 
@@ -144,47 +47,56 @@ let gen_array ?(size=gen_pos_int ()) gen_elem =
    the outputs are strictly simpler than the input in some sense.  *)
 let is_nan (x : float) = not (x = x)
 
-let (@@) = Stream.append
-
+(* Rearrange as gen -> shrink -> gen -> shrink.  Make gen_* for each type of
+   time value.  *)
 let shrink_int n =
   let less_complex k = abs n > abs k in
-  Stream.guard1 (n < -n) (- n)
-  @@ Stream.filter less_complex
-     (Stream.of_list [0;1;2]
-      @@ Stream.repeat_n (gen_nat ()) (fun () ->
+  Fstream.guard1 (n < -n) (- n)
+  @@ Fstream.filter less_complex
+     (Fstream.of_list [0;1;2]
+      @@ Fstream.repeat_n (gen_nat ()) (fun () ->
         int_of_float (floor (float_of_int n *. (Random.float 2. -. 1.)))))
-let shrink_nat n = Stream.map abs (shrink_int n)
+
+let shrink_nat n = Fstream.map abs (shrink_int n)
+let shrink_pos n = Fstream.map ((+) 1) (shrink_nat (n-1))
 
 let shrink_float f =
   let less_complex g = abs_float f > abs_float g in
-  Stream.guard1 (f < 0.) (-. f)
-  @@ Stream.filter less_complex
-     (Stream.of_list [0.;1.;floor f]
+  Fstream.guard1 (f < 0.) (-. f)
+  @@ Fstream.filter less_complex
+     (Fstream.of_list [0.;1.;floor f]
       (* Shrink magnitude.  *)
-      @@ Stream.guard (f = floor f) (Stream.map float_of_int
+      @@ Fstream.guard (f = floor f) (Fstream.map float_of_int
                                        (shrink_int (int_of_float f)))
       (* Shrink number of significant figures.  *)
-      @@ Stream.map (fun pos -> floor (f *. pos) /. pos)
-         (Stream.take_while ((>=) f) (Stream.iterate (( *.) 2.) 1.)))
+      @@ Fstream.map (fun pos -> floor (f *. pos) /. pos)
+         (Fstream.take_while ((>=) f) (Fstream.iterate (( *.) 2.) 1.)))
+
 let shrink_discrete_float f =
-  Stream.map (fun k -> float_of_int k *. !discrete_unit)
+  Fstream.map (fun k -> float_of_int k *. !discrete_unit)
     (shrink_int (int_of_float (f /. !discrete_unit)))
+let shrink_offseted_discrete_float offs f =
+  Fstream.map (fun f -> f +. offs) (shrink_discrete_float (f -. offs))
 
 let rec shrink_list shrink_elem = function
-  | [] -> Stream.of_list []
+  | [] -> Fstream.of_list []
   | x::xs ->
-    Stream.singleton xs
-    @@ Stream.map (fun xs -> x::xs) (shrink_list shrink_elem xs)
-    @@ Stream.map (fun x -> x::xs) (shrink_elem x)
+    Fstream.singleton xs
+    @@ Fstream.map (fun xs -> x::xs) (shrink_list shrink_elem xs)
+    @@ Fstream.map (fun x -> x::xs) (shrink_elem x)
+
+let shrink_pair shrink_x shrink_y (x,y) =
+  Fstream.map (fun x -> (x,y)) (shrink_x x)
+  @@ Fstream.map (fun y -> (x,y)) (shrink_y y)
 
 let shrink_fixed_size_list shrink_elem = function
-  | [] -> Stream.of_list []
+  | [] -> Fstream.of_list []
   | x::xs ->
-    Stream.map (fun xs -> x::xs) (shrink_list shrink_elem xs)
-    @@ Stream.map (fun x -> x::xs) (shrink_elem x)
+    Fstream.map (fun xs -> x::xs) (shrink_list shrink_elem xs)
+    @@ Fstream.map (fun x -> x::xs) (shrink_elem x)
 
 let shrink_array shrink_elem a =
-  Stream.map Array.of_list (shrink_list shrink_elem (Array.to_list a))
+  Fstream.map Array.of_list (shrink_list shrink_elem (Array.to_list a))
 
 let shrink_bigarray1 ?(shrink_size=true) shrink_elem a =
   let open Bigarray in
@@ -207,45 +119,13 @@ let shrink_bigarray1 ?(shrink_size=true) shrink_elem a =
     b
   in
   let shrink_at i =
-    Stream.map (fun ai -> let a = copy () in
+    Fstream.map (fun ai -> let a = copy () in
                           a.{i} <- ai; a)
       (shrink_elem a.{i})
   in
-  Stream.guard shrink_size (Stream.map drop
-                              (Stream.enum 0 (Bigarray.Array1.dim a)))
-  @@ Stream.concat (Stream.map shrink_at (Stream.enum 0 (n-1)))
-
-(* Helper functions for printing data.  *)
-
-(* set to true to force the output to be a valid OCaml expression *)
-let read_write_invariance = ref false
-let with_read_write_invariance f =
-  try
-    read_write_invariance := true;
-    let ret = f () in
-    read_write_invariance := false;
-    ret
-  with exn -> read_write_invariance := false; raise exn
-
-let show_float x =
-  if !read_write_invariance then string_of_float x
-  else Printf.sprintf "%g" x
-let show_sequence show_elem xs = String.concat "; " (List.map show_elem xs)
-let show_list show_elem xs =
-  "[ " ^ show_sequence show_elem xs ^ " ]"
-let show_array show_elem xs =
-  "[| " ^ show_sequence show_elem (Array.to_list xs) ^ " |]"
-let list_of_bigarray1 xs =
-  let a = ref [] in
-  for i = Bigarray.Array1.dim xs - 1 downto 0 do
-    a := xs.{i}::!a
-  done;
-  !a
-let show_bigarray1 show_elem xs =
-  if !read_write_invariance
-  then "(Carray.of_array [|" ^ show_sequence show_elem (list_of_bigarray1 xs)
-       ^ "|])"
-  else "[|| " ^ show_sequence show_elem (list_of_bigarray1 xs) ^ " ||]"
+  Fstream.guard shrink_size (Fstream.map drop
+                              (Fstream.enum 0 (Bigarray.Array1.dim a)))
+  @@ Fstream.concat (Fstream.map shrink_at (Fstream.enum 0 (n-1)))
 
 (* Types and functions for modeling IDA.  *)
 module IdaModel =
@@ -271,16 +151,29 @@ struct
 
   let cmp_eps = ref 1e-5
 
-  let show_carray = show_bigarray1 string_of_float
-  let dump_carray a =
-    with_read_write_invariance
-      (fun () -> show_carray a)
-
-  let show_cmd = function
+  let pp_cmd, dump_cmd, show_cmd, display_cmd, print_cmd, prerr_cmd =
+    printers_of_pp (fun fmt -> function
     | SolveNormal f ->
-      if f >= 0. then "SolveNormal " ^ string_of_float f
-      else "SolveNormal (" ^ string_of_float f ^ ")"
-  let show_cmds cmds = show_list show_cmd cmds
+      Format.fprintf fmt "SolveNormal ";
+      if f < 0. then Format.fprintf fmt "(";
+      pp_float fmt f;
+      if f < 0. then Format.fprintf fmt ")"
+    )
+  let pp_cmds, dump_cmds, show_cmds, display_cmds, print_cmds, prerr_cmds =
+    printers_of_pp (fun fmt cmds ->
+      if !read_write_invariance then pp_list pp_cmd fmt cmds
+      else
+        (* List one command per line, with step numbers starting from 0.  *)
+        let nsteps = List.length cmds in
+        let step_width = String.length (string_of_int (nsteps - 1)) in
+        let pad_show n = let s = string_of_int n in
+                         String.make (step_width - String.length s) ' ' ^ s
+        in
+        pp_seq "[" ";" "]" fmt
+          (Fstream.mapi (fun i cmd fmt ->
+            Format.fprintf fmt "Step %s: " (pad_show i);
+            pp_cmd fmt cmd)
+             (Fstream.of_list cmds)))
 
   let show_solver s =
     let solver_name = function
@@ -297,24 +190,48 @@ struct
   let dump_solver solver =
     with_read_write_invariance (fun () -> show_solver solver)
 
-  let rec show_result = function
-    | Any -> "_"
-    | Unit -> "()"
-    | Int i -> string_of_int i
-    | Float f -> string_of_float f
-    | Type r -> "Type (" ^ show_result r ^ ")"
-    | Carray ca -> show_carray ca
-    | SolverResult Ida.Continue -> "Continue"
-    | SolverResult Ida.RootsFound -> "RootsFound"
-    | SolverResult Ida.StopTimeReached -> "StopTimeReached"
-    | Aggr rs -> "Aggr [" ^ String.concat "; " (List.map show_result rs) ^ "]"
-    | Exn exn -> "exception " ^ Printexc.to_string exn
+  let show_root_event x =
+    let prefix = if !read_write_invariance then "Ida.Roots." else "" in
+    prefix ^ Ida.Roots.string_of_root_event x
 
-  let show_resfn_type ?(dump=false) = function
-    | ResFnLinear slope when dump -> "ResFnLinear " ^ dump_carray slope
-    | ResFnLinear slope -> "ResFnLinear " ^ show_carray slope
+  let pp_ida_ident fmt ident =
+    if !read_write_invariance then Format.fprintf fmt "Ida.%s" ident
+    else Format.fprintf fmt "%s" ident
 
-  let dump_resfn_type = show_resfn_type ~dump:true
+  let pp_result, dump_result, show_result, display_result,
+    print_result, prerr_result =
+    let rec pre_pp_result arg_pos fmt = function
+      | Any -> Format.fprintf fmt "_"
+      | Unit -> Format.fprintf fmt "()"
+      | Int i -> pp_parens (arg_pos && i < 0) fmt (fun fmt -> pp_int fmt i)
+      | Float f -> pp_parens (arg_pos && f < 0.) fmt
+                      (fun fmt -> pp_float fmt f)
+      | Type r -> pp_parens arg_pos fmt (fun fmt ->
+                    pp_ida_ident fmt "Type ";
+                    pre_pp_result true fmt r)
+      | Carray ca -> pp_carray fmt ca
+      | SolverResult Ida.Continue -> pp_ida_ident fmt "Continue"
+      | SolverResult Ida.RootsFound -> pp_ida_ident fmt "RootsFound"
+      | SolverResult Ida.StopTimeReached -> pp_ida_ident fmt "StopTimeReached"
+      | Aggr rs -> pp_parens arg_pos fmt (fun fmt ->
+                     pp_unquoted_string fmt "Aggr ";
+                     pp_list (pre_pp_result false) fmt rs)
+      | Exn exn -> pp_parens arg_pos fmt (fun fmt ->
+                     pp_unquoted_string fmt "exception ";
+                     pp_unquoted_string fmt (Printexc.to_string exn))
+    in printers_of_pp (pre_pp_result false)
+  let pp_results, dump_results, show_results, display_results,
+    print_results, prerr_results =
+    printers_of_pp (pp_list pp_result)
+
+  let pp_resfn_type, dump_resfn_type, show_resfn_type, display_resfn_type,
+    print_resfn_type, prerr_resfn_type
+      =
+    printers_of_pp
+    (fun fmt -> function
+     | ResFnLinear slope -> pp_unquoted_string fmt "ResFnLinear ";
+                            pp_carray fmt slope
+    )
 
   (* Check if r1 is a valid approximation of r2.  *)
   let rec result_matches r1 r2 =

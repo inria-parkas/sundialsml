@@ -1,8 +1,11 @@
 module Ida = Ida_serial
 module Carray = Ida_serial.Carray
+module Roots = Ida.Roots
 open Quickcheck
 open IdaModel
 open Camlp4.PreCast
+open Pprint
+open Pprint_sundials
 
 (* A state-machine model for IDA sessions.  *)
 type session_model =
@@ -35,36 +38,41 @@ let copy_model m =
     vec'0 = Carray.of_carray m.vec'0;
   }
 
-(* Commands that can be sent to IDA sessions and their return values.  *)
+let pp_model, dump_model, show_model, display_model,
+    print_model, prerr_model
+      =
+  printers_of_pp
+    (let descriptive_fields =
+       ["resfn", (fun fmt m -> pp_of_show show_resfn_type fmt m.resfn);
+        "solver", (fun fmt m -> pp_of_show show_solver fmt m.solver);
+        "roots", (fun fmt m -> pp_array pp_float fmt m.roots);
+        "t", (fun fmt m -> pp_float fmt m.t);
+        "vec", (fun fmt m -> pp_carray fmt m.vec);
+        "vec'", (fun fmt m -> pp_carray fmt m.vec');
+        "t0", (fun fmt m -> pp_float fmt m.t0);
+        "vec0", (fun fmt m -> pp_carray fmt m.vec0);
+        "vec'0", (fun fmt m -> pp_carray fmt m.vec'0);
+       ]
+     and state_fields =
+       ["consistent", (fun fmt m -> pp_bool fmt m.consistent);
+       ]
+     in
+     let rw_invar = pp_record (descriptive_fields @ state_fields)
+     and concise = pp_record descriptive_fields in
+     fun fmt m ->
+       if !read_write_invariance then rw_invar fmt m
+       else concise fmt m)
 
-type script = session_model * cmd list
-
-let show_model model =
-  Printf.sprintf "{ resfn = %s; solver = %s; roots = %s; \
-                    t = %s; vec = %s; vec' = %s; \
-                    t0 = %s; vec0 = %s; vec'0 = %s; consistent = %s }"
-    (show_resfn_type model.resfn)
-    (show_solver model.solver)
-    (show_array string_of_float model.roots)
-    (show_float model.t)
-    (show_carray model.vec)
-    (show_carray model.vec')
-    (show_float model.t0)
-    (show_carray model.vec0)
-    (show_carray model.vec'0)
-    (string_of_bool model.consistent)
-let dump_model model =
-  with_read_write_invariance (fun () -> show_model model)
-
-let show_script (model, cmds) =
-  Printf.sprintf "(%s, %s)"
-    (show_model model)
-    (show_cmds cmds)
-
-let dump_script (model, cmds) =
-  Printf.sprintf "(%s, %s)"
-    (dump_model model)
-    (show_cmds cmds)
+let pp_script, dump_script, show_script, display_script,
+    print_script, prerr_script
+      =
+  printers_of_pp (fun fmt (model, cmds) ->
+    Format.fprintf fmt "@[<hov 2>let model =@ ";
+    pp_model fmt model;
+    Format.fprintf fmt "@]@\n@[<hov 2>let cmds =@ ";
+    pp_cmds fmt cmds;
+    Format.fprintf fmt "@]@\n@[<hov 2>let script =@ (model, cmds)@]"
+  )
 
 (* Find the smallest root(s) in the range (t1..t2].  *)
 let find_roots roots t1 t2 =
@@ -108,6 +116,7 @@ let preamble =
     module Ida = Ida_serial
     module Carray = Ida.Carray
     open Quickcheck.IdaModel
+    open Pprint
     (* Remove error messages so that they don't have to be replicated with 100%
        accuracy in models.  *)
     let nub_exn = function
@@ -173,8 +182,8 @@ let expr_of_roots roots =
   if n = 0 then <:expr<Ida.no_roots>>
   else <:expr<($`int:n$,
                (fun t vec vec' g ->
-                  $Stream.fold_left f (set 0)
-                    (Stream.enum 1 (n-1))$))>>
+                  $Fstream.fold_left f (set 0)
+                    (Fstream.enum 1 (n-1))$))>>
 
 let str_item_of_model model =
   <:str_item<
@@ -227,7 +236,7 @@ let model_cmd model = function
       Aggr [Float model.t; flag; carray model.vec; carray model.vec']
 
 (* Run a list of commands on the model.  *)
-let model_run model cmds =
+let model_run (model, cmds) =
   let model = copy_model model in
   (* Evaluation order requires this let here.  *)
   let head = Aggr [Float model.t;
@@ -365,27 +374,36 @@ let shrink_neqs model cmds =
     in (model, List.map (drop_from_cmd i) cmds)
   in
   let n = Carray.length model.vec in
-  Stream.guard (n > 1) (Stream.map drop_eq (Stream.enum 0 (n - 1)))
+  Fstream.guard (n > 1) (Fstream.map drop_eq (Fstream.enum 0 (n - 1)))
+
+let shrink_root_dir = function
+  | Roots.Rising -> Fstream.nil
+  | Roots.Falling -> Fstream.singleton Roots.Rising
+  | Roots.NoRoot -> assert false
 
 let shrink_model model cmds =
-  Stream.map (fun t -> ({ model with t = t; t0 = t; }, cmds))
+  let update_roots model roots =
+    { model with roots = roots }
+  in
+  Fstream.map (fun t -> ({ model with t = t; t0 = t; }, cmds))
     (shrink_discrete_float model.t)
-  @@ Stream.map (fun roots -> ({ model with roots = roots}, cmds))
-    (shrink_array shrink_discrete_float model.roots)
+  @@ Fstream.map (fun roots -> (update_roots model roots, cmds))
+    (shrink_array shrink_float model.roots)
 
 let shrink_cmd = function
   | SolveNormal dt ->
-    Stream.map (fun dt -> SolveNormal dt) (shrink_discrete_float dt)
+    Fstream.map (fun dt -> SolveNormal dt) (shrink_discrete_float dt)
 
 let shrink_script (model, cmds) =
   shrink_neqs model cmds
-  @@ (shrink_model model cmds)
-  @@ Stream.map (fun cmds -> (model, cmds)) (shrink_list shrink_cmd cmds)
+  @@ shrink_model model cmds
+  @@ Fstream.map (fun cmds -> (model, cmds)) (shrink_list shrink_cmd cmds)
 
 (* Code generation options *)
 let test_exec_file = ref "./tmp"
-let test_compiler = ref "ocamlc -I .. bigarray.cma unix.cma sundials_ida.cma \
-                         quickcheck.cmo"
+let test_compiler =
+  ref "ocamlc -g -I .. bigarray.cma unix.cma sundials_ida.cma \
+       fstream.cmo pprint.cmo pprint_sundials.cmo quickcheck.cmo"
 let test_failed_file = ref "./failed.ml"
 
 (* Generate test code, run it, and return a stream of responses.  *)
@@ -401,8 +419,11 @@ let compile (model, cmds) =
                                    carray vec; carray vec']));
          $expr_of_cmds cmds$
       let _ =
-        Arg.parse [("--marshal-results", Arg.Set marshal_results,
-                    "For internal use only")]
+        Arg.parse
+          [("--marshal-results", Arg.Set marshal_results,
+            "For internal use only");
+           ("--read-write-invariance", Arg.Set read_write_invariance,
+            "print data in a format that can be fed to ocaml toplevel")]
           (fun _ -> ()) "a test case generated by quickcheck";
         test ()
     >>;
@@ -426,21 +447,21 @@ let compile_run script =
     try Some (Marshal.from_channel pipe_stdout : result)
     with End_of_file -> (ignore (Unix.close_process_full pipes); None)
   in
-  Stream.generate recv
+  Fstream.to_list (Fstream.generate recv)
 
 (* Run the model and the actual code and check if their results agree.  *)
-let compare_runs (model, cmds) =
-  let ms0 = model_run model cmds
-  and cs0 = compile_run (model, cmds) in
+let compare_runs script =
+  let ms0 = model_run script
+  and cs0 = compile_run script in
   let rec cmp i ms cs =
     match ms, cs with
-    | [], Stream.Nil -> OK
-    | m::ms, Stream.Cons (c,cs) ->
-      if result_matches m c then cmp (i+1) ms (Lazy.force cs)
+    | [], [] -> OK
+    | m::ms, c::cs ->
+      if result_matches m c then cmp (i+1) ms cs
       else Failed (ResultMismatch (i, m, c))
-    | _::_, Stream.Nil ->
+    | _::_, [] ->
       Failed (TestCodeDied ms)
-    | [], Stream.Cons _ ->
+    | [], _::_ ->
       Failed TestCodeOverrun
   in
   cmp 0 ms0 cs0
@@ -455,7 +476,7 @@ let shrink script reason =
       let res = compare_runs script in
       if !trace_shrink then
         (Printf.printf "Trying: %s\n-> %s\n"
-           (dump_script script)
+           (show_script script)
            (if res <> OK then "triggers bug"
             else "not a counterexample");
          flush stdout);
@@ -463,14 +484,14 @@ let shrink script reason =
       | OK -> None
       | Failed reason -> Some (script, reason)
     in
-    match Stream.find_some failure (shrink_script script) with
+    match Fstream.find_some failure (shrink_script script) with
     | None -> (ct, script, reason)
     | Some (script, reason) -> go (ct+1) script reason
   in go 0 script reason
 
 let test_script script =
   if !dump_test_cases then
-    (Printf.printf "Testing: %s\n" (dump_script script); flush stdout);
+    (Printf.printf "Testing: %s\n" (show_script script); flush stdout);
   match compare_runs script with
   | OK -> true
   | Failed reason ->
@@ -486,8 +507,9 @@ let test_script script =
     (match reason with
        | TestCodeDied rs ->
          Printf.fprintf stderr "Test code exited unexpectedly.  It was \
-                                supposed to produce in addition:\n";
-         List.iter (fun r -> Printf.fprintf stderr "%s\n" (show_result r)) rs
+                                supposed to produce the following additional \
+                                results:\n";
+         prerr_results rs
        | TestCodeOverrun -> assert false (* Shouldn't happen.  *)
        | ResultMismatch (i,e,a) ->
          Printf.fprintf stderr "Result mismatch on %s:\n\
@@ -495,26 +517,15 @@ let test_script script =
            (if i = 0 then "init" else ("step " ^ string_of_int i))
            (show_result e)
            (show_result a));
-    Printf.fprintf stderr "\n[Test Case]\nmodel = %s\ncommands = \n"
-      (dump_model model);
-    let nsteps = List.length cmds in
-    let step_width = String.length (string_of_int (nsteps - 1)) in
-    let pad_show n = let s = string_of_int n in
-                     String.make (step_width - String.length s) ' ' ^ s
-    in
-    ignore
-      (List.fold_left
-         (fun i cmd -> 
-           Printf.fprintf stderr "step %s: %s\n"
-             (pad_show i)
-             (show_cmd cmd);
-           i+1)
-         1
-         cmds);
+    Printf.fprintf stderr "\n[Test Case]\n";
+    prerr_string (show_script script);
     Printf.fprintf stderr "\n\n[Program Output]\n";
     flush stderr;
     flush stdout;
-    let pid = Unix.create_process !test_exec_file [|!test_exec_file|]
+    let pid = Unix.create_process !test_exec_file
+      (if !read_write_invariance
+       then [|!test_exec_file; "--read-write-invariance"|]
+       else [|!test_exec_file|])
       Unix.stdin Unix.stdout Unix.stderr
     in
     let _ = Unix.waitpid [] pid in
@@ -525,8 +536,7 @@ let test_script script =
       with End_of_file -> ()
     in
     Printf.fprintf stderr "\n\n[Expected Output]\n";
-    List.iter (fun res -> Printf.fprintf stderr "%s\n" (show_result res))
-      (model_run model cmds);
+    prerr_results (model_run script);
     false
 
 let quickcheck max_tests =
@@ -559,6 +569,8 @@ let _ =
                   "print every test script in compressed form");
                  ("--trace-shrink", Arg.Set trace_shrink,
                   "print intermediate test scripts while shrinking");
+                 ("--read-write-invariance", Arg.Set read_write_invariance,
+                  "print data in a format that can be fed to ocaml toplevel");
                 ] in
   Arg.parse options (fun n -> max_tests := int_of_string n)
     "randomly generate programs using IDA and check if they work as expected";
