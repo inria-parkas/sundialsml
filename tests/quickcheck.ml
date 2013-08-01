@@ -3,49 +3,13 @@ open Pprint_sundials
 
 let (@@) = Fstream.append
 
+(* Controls the size of the generated test case.  *)
 let size = ref 5
 
-(* Generation *)
+(* Generation & shrinking *)
 let gen_nat () = Random.int !size
-let gen_pos_int () = gen_nat () + 1
+let gen_pos () = gen_nat () + 1
 let gen_int () = Random.int (!size * 2) - !size
-
-let gen_float () =
-  let max_abs = 2. *. float_of_int !size in
-  Random.float max_abs -. max_abs /. 2.
-
-(* This generator produces floating point values that are multiples of a fixed
-   floating point value discrete_unit.  With a sufficiently large
-   discrete_unit, discretized values make it easy to detect problems like
-   values being "too close" -- detecting, and properly mimicking, the behavior
-   of the sundials solver would otherwise require writing code that depends on
-   the details of its internals.  *)
-let discrete_unit = ref 1.
-let gen_discrete_float () =
-  float_of_int (gen_int ()) *. !discrete_unit
-
-let gen_choice choices =
-  choices.(Random.int (Array.length choices))
-
-let enum istart iend =
-  let rec go acc i =
-    if istart <= i then go (i::acc) (i-1)
-    else acc
-  in go [] iend
-
-let gen_list g = List.map (fun _ -> g ()) (enum 1 (gen_nat ()))
-
-let gen_array ?(size=gen_pos_int ()) gen_elem =
-  let v = Array.make size (gen_elem ()) in
-  for i = 1 to size-1 do
-    v.(i) <- gen_elem ()
-  done;
-  v
-
-(* Shrinking.  Some of the algorithms are adapted from Haskell's QuickCheck.
-   Keep in mind that the shrink-and-test cycle requires all shrinkers to ensure
-   the outputs are strictly simpler than the input in some sense.  *)
-let is_nan (x : float) = not (x = x)
 
 (* Rearrange as gen -> shrink -> gen -> shrink.  Make gen_* for each type of
    time value.  *)
@@ -60,30 +24,103 @@ let shrink_int n =
 let shrink_nat n = Fstream.map abs (shrink_int n)
 let shrink_pos n = Fstream.map ((+) 1) (shrink_nat (n-1))
 
-let shrink_float f =
-  let less_complex g = abs_float f > abs_float g in
-  Fstream.guard1 (f < 0.) (-. f)
-  @@ Fstream.filter less_complex
-     (Fstream.of_list [0.;1.;floor f]
-      (* Shrink magnitude.  *)
-      @@ Fstream.guard (f = floor f) (Fstream.map float_of_int
-                                       (shrink_int (int_of_float f)))
-      (* Shrink number of significant figures.  *)
-      @@ Fstream.map (fun pos -> floor (f *. pos) /. pos)
-         (Fstream.take_while ((>=) f) (Fstream.iterate (( *.) 2.) 1.)))
+(* Generators and shrinkers for different kinds of time values.  Time values
+   can occur in several places in a script:
 
-let shrink_discrete_float f =
-  Fstream.map (fun k -> float_of_int k *. !discrete_unit)
-    (shrink_int (int_of_float (f /. !discrete_unit)))
-let shrink_offseted_discrete_float offs f =
-  Fstream.map (fun f -> f +. offs) (shrink_discrete_float (f -. offs))
+   - the query time of SolveNormal
 
-let rec shrink_list shrink_elem = function
-  | [] -> Fstream.of_list []
-  | x::xs ->
-    Fstream.singleton xs
-    @@ Fstream.map (fun xs -> x::xs) (shrink_list shrink_elem xs)
-    @@ Fstream.map (fun x -> x::xs) (shrink_elem x)
+   - the time of the zero of a root function
+
+   - the stop time
+
+   We have to make sure that these three types of events are mutually disjoint,
+   because otherwise the order in which IDA detects them is dictated by
+   floating point error and is unpredictable.
+
+   We therefore:
+
+   - discretize the time values, i.e. make them a multiple of a fixed value
+     called discrete_unit
+
+   - offset each type of time value by a sub-discrete_unit value, so that
+     e.g. the stop time is always distinct from a query time modulo
+     discrete_unit.
+
+ *)
+let discrete_unit = 1.
+let query_time_offs = discrete_unit /. 2.
+let root_time_offs = query_time_offs /. 2.
+let stop_time_offs = root_time_offs /. 2.
+
+(* This must be smaller than any of the offsets.  *)
+let time_epsilon = stop_time_offs /. 2.
+
+type sign = Positive | NonNegative | ArbitrarySign
+(* Returns (gen, shrink) *)
+let discrete_float_type ?(sign=NonNegative) offset =
+  let gen_rank, shrink_rank =
+    match sign with
+    | Positive -> gen_pos, shrink_pos
+    | NonNegative -> gen_nat, shrink_nat
+    | ArbitrarySign -> gen_int, shrink_int
+  in
+  ((fun () -> float_of_int (gen_rank ()) *. discrete_unit +. offset),
+   (fun f ->
+     Fstream.map
+       (fun x -> float_of_int x *. discrete_unit +. offset)
+       (shrink_rank (int_of_float ((f -. offset) /. discrete_unit)))))
+
+let gen_t0, shrink_t0 = discrete_float_type 0.
+let gen_query_time, shrink_query_time = discrete_float_type query_time_offs
+let gen_root_time, shrink_root_time = discrete_float_type root_time_offs
+let gen_stop_time, shrink_stop_time = discrete_float_type stop_time_offs
+
+(* Similar arrangement for non-time values.  *)
+let gen_discrete_float, shrink_discrete_float = discrete_float_type 0.
+
+(* Choose a generator from an array and call it.  *)
+let gen_choice choices =
+  choices.(Random.int (Array.length choices))
+
+let enum istart iend =
+  let rec go acc i =
+    if istart <= i then go (i::acc) (i-1)
+    else acc
+  in go [] iend
+
+let gen_list g = List.map (fun _ -> g ()) (enum 1 (gen_nat ()))
+
+let gen_array ?(size=gen_pos ()) gen_elem =
+  let v = Array.make size (gen_elem ()) in
+  for i = 1 to size-1 do
+    v.(i) <- gen_elem ()
+  done;
+  v
+
+(* Remove duplicates without reordering.  *)
+let uniq_list ls =
+  let seen = Hashtbl.create 10 in
+  let rec go acc = function
+    | [] -> List.rev acc
+    | x::xs when Hashtbl.mem seen x -> go acc xs
+    | x::xs -> Hashtbl.add seen x (); go (x::acc) xs
+  in go [] ls
+
+let uniq_array a =
+  let seen = Hashtbl.create 10 in
+  let b = Array.copy a in
+  let bsize = ref 0 in
+  for i = 0 to Array.length a - 1 do
+    if not (Hashtbl.mem seen a.(i)) then
+      (b.(!bsize) <- a.(i);
+       bsize := !bsize + 1;
+       Hashtbl.add seen a.(i) ())
+  done;
+  Array.sub b 0 !bsize
+
+(* Shrinking.  Some of the algorithms are adapted from Haskell's QuickCheck.
+   Keep in mind that the shrink-and-test cycle requires all shrinkers to ensure
+   the outputs are strictly simpler than the input in some sense.  *)
 
 let shrink_pair shrink_x shrink_y (x,y) =
   Fstream.map (fun x -> (x,y)) (shrink_x x)

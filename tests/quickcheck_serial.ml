@@ -130,7 +130,7 @@ let preamble =
        else (fun r -> Printf.printf "%s\\n" (show_result r)))
       (try (Lazy.force thunk)
        with exn -> Exn (nub_exn exn))
-    let last_tret = ref 0.
+    let last_query = ref 0.
    >>
 
 
@@ -195,16 +195,14 @@ let str_item_of_model model =
                   $expr_of_roots model.roots$
                   $`flo:model.t0$
                   vec vec'
-    let _ = last_tret := $`flo:model.t$
    >>
 
 (* Generate the test code that executes a given command.  *)
-let expr_of_cmd = function
+let expr_of_cmd last_query_time = function
   | SolveNormal dt ->
-    <:expr<let tret, flag =
-                 Ida.solve_normal session (!last_tret +. $`flo:dt$) vec vec'
-           in
-           last_tret := tret;
+    let t = !last_query_time +. dt in
+    last_query_time := t;
+    <:expr<let tret, flag = Ida.solve_normal session $`flo:t$ vec vec' in
            Aggr [Float tret; SolverResult flag; carray vec; carray vec']>>
 
 (* Run a single command on the model.  *)
@@ -213,27 +211,32 @@ let model_cmd model = function
     (* NB: we don't model interpolation failures -- t will be monotonically
        increasing.  *)
     let t = model.t +. dt in
-    if t = model.t0 then Exn Ida.IllInput
+    (* Undocumented behavior (sundials 2.5.0): solve_normal with t=t0 usually
+       fails with "tout too close to t0 to start integration", but sometimes
+       succeeds.  Whether it succeeds seems to be unpredictable.  *)
+    if t = model.t0 then Any
     else
       let tret, flag =
         (* NB: roots that the solver is already sitting on are ignored, unless
            dt = 0.  *)
-        let tstart = if dt = 0. then model.t -. !discrete_unit else model.t in
+        let tstart = if dt = 0. then model.t -. time_epsilon else model.t in
         match find_roots model.roots tstart t with
+        | [] ->
+          (*Roots.reset model.root_info;*)
+          t, SolverResult Ida.Continue
         | i::_ ->
           let tret = model.roots.(i) in
-          tret,
-          (* If the queried time coincides with a root, then it's reasonable
-             for the solver to prioritize either.  In real code, this is most
-             likely determined by the state of the floating point error.  *)
-          (if tret = t then Type (SolverResult Ida.Continue)
+          (tret,
+           (* If the queried time coincides with a root, then it's reasonable
+              for the solver to prioritize either.  In real code, this is most
+              likely determined by the state of the floating point error.  *)
+           if tret = t then Type (SolverResult Ida.Continue)
            else SolverResult Ida.RootsFound)
-        | _ -> t, SolverResult Ida.Continue
       in
-      model.t <- tret;
+      model.t <- t;
       exact_soln model.resfn model.t0 model.vec0 model.vec'0
-                             model.t  model.vec  model.vec';
-      Aggr [Float model.t; flag; carray model.vec; carray model.vec']
+                                 tret model.vec  model.vec';
+      Aggr [Float tret; flag; carray model.vec; carray model.vec']
 
 (* Run a list of commands on the model.  *)
 let model_run (model, cmds) =
@@ -244,12 +247,13 @@ let model_run (model, cmds) =
                    carray model.vec']
   in head :: List.map (model_cmd model) cmds
 
-let expr_of_cmds = function
+let expr_of_cmds last_query_time = function
   | [] -> <:expr<()>>
   | cmds ->
   <:expr<
     Array.iter print_result
-    $expr_array (List.map (fun cmd -> <:expr<lazy $expr_of_cmd cmd$>>) cmds)$
+    $expr_array (List.map (fun cmd ->
+    <:expr<lazy $expr_of_cmd last_query_time cmd$>>) cmds)$
     >>
 
 (* Test case generation.  *)
@@ -277,25 +281,28 @@ let init_vec_for neqs t0 resfn =
   | ResFnLinear slopes -> Carray.init neqs 0., Carray.of_carray slopes
 
 let gen_roots () =
-  (* This is basically just a generator for sorted float arrays, but since
-     empty root functions are an important special case, we make sure 1/3 of
-     the time the generated array is empty.  *)
+  (* We have to ensure the roots don't coincide with any of the query times or
+     with one another, for otherwise the order in which they fire is dictated
+     by floating point error and is unpredictable.  *)
+  let gen_root () = abs_float (gen_discrete_float () +. root_time_offs)
+  in
   match Random.int 3 with
   | 0 -> [||]
-  | _ -> gen_array (fun () -> abs_float (gen_discrete_float ()))
+  | _ -> uniq_array (gen_array gen_root)
 
 let gen_model () =
-  let neqs  = min 10 (gen_pos_int ()) in
+  let neqs  = min 10 (gen_pos ()) in
   let resfn = gen_resfn neqs in
   let t0 = gen_discrete_float () in
   let vec0, vec'0  = init_vec_for neqs t0 resfn in
   let neqs  = Carray.length vec0 in
+  let roots = gen_roots () in
   {
     resfn = resfn;
     solver = gen_solver false neqs;
     t = t0;
     consistent = true;
-    roots = gen_roots ();
+    roots = roots;
     vec   = Carray.of_carray vec0;
     vec'  = Carray.of_carray vec'0;
     t0 = t0;
@@ -325,10 +332,6 @@ let fixup_script (model, cmds) =
                    ignore (model_cmd model cmd);
                    go fs (cmd::processed) model cmds
     | [] -> List.rev processed
-  in
-  let fixup_time model = function
-    | SolveNormal t -> SolveNormal (model.t
-                                    +. (max (abs_float t) !discrete_unit))
   in
   (model, go [] [] (copy_model model) cmds)
 
@@ -388,7 +391,11 @@ let shrink_model model cmds =
   Fstream.map (fun t -> ({ model with t = t; t0 = t; }, cmds))
     (shrink_discrete_float model.t)
   @@ Fstream.map (fun roots -> (update_roots model roots, cmds))
-    (shrink_array shrink_float model.roots)
+    (shrink_array
+       (fun f ->
+         Fstream.map (fun f -> root_time_offs +. f)
+           (shrink_float (f -. root_time_offs)))
+       model.roots)
 
 let shrink_cmd = function
   | SolveNormal dt ->
@@ -410,6 +417,7 @@ let test_failed_file = ref "./failed.ml"
 let compile (model, cmds) =
   let open Camlp4.PreCast.Printers.OCaml in
   let test_src_file = !test_exec_file ^ ".ml" in
+  let last_query_time = ref model.t0 in
   print_implem ~output_file:test_src_file
     <:str_item<
       $preamble$
@@ -417,7 +425,7 @@ let compile (model, cmds) =
       let test () =
          print_result (lazy (Aggr [Float (Ida.get_current_time session);
                                    carray vec; carray vec']));
-         $expr_of_cmds cmds$
+         $expr_of_cmds last_query_time cmds$
       let _ =
         Arg.parse
           [("--marshal-results", Arg.Set marshal_results,
@@ -552,6 +560,7 @@ let quickcheck max_tests =
       else Some script
   in go (max 0 max_tests)
 
+;;
 let _ =
   let _ = Random.self_init () in
   let randseed = ref (Random.int ((1 lsl 30) - 1)) in
