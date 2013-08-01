@@ -259,11 +259,23 @@ module Roots =
       | Rising
       | Falling
 
-    let root_event_of_int32 x =
-      if x = 1l then Rising else if x = -1l then Falling else NoRoot
+    let root_event_of_int32 = function
+      | 1l -> Rising
+      | -1l -> Falling
+      | 0l -> NoRoot
+      | n ->
+        failwith
+          (Printf.sprintf
+             "Sundials.Roots.root_event_of_int32: invalid root event %ld" n)
 
-    let root_event_of_int x =
-      if x = 1 then Rising else if x = -1 then Falling else NoRoot
+    let root_event_of_int = function
+      | 1 -> Rising
+      | -1 -> Falling
+      | 0 -> NoRoot
+      | n ->
+        failwith
+          ("Sundials.Roots.root_event_of_int: invalid root event "
+           ^ string_of_int n)
 
     let int32_of_root_event x =
       match x with
@@ -366,7 +378,12 @@ module RootDirs =
       match x with
       | 1l -> Increasing
       | -1l -> Decreasing
-      | _ -> IncreasingOrDecreasing
+      | 0l -> IncreasingOrDecreasing
+      | n ->
+        failwith
+          (Printf.sprintf
+             "Sundials.Roots.root_direction_of_int32: \
+              invalid root direction code %ld" n)
 
     let make n x =
       let a = Array1.create int32 c_layout n in
