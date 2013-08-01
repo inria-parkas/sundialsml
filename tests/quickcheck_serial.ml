@@ -211,7 +211,9 @@ let model_cmd model = function
         let tstart = if dt = 0. then model.t -. time_epsilon else model.t in
         match find_roots model.roots tstart t with
         | [] ->
-          (*Roots.reset model.root_info;*)
+          (* Undocumented behavior (sundials 2.5.0): a non-root return from
+             solve_normal resets root info to Rising.  *)
+          Roots.fill_all model.root_info Roots.Rising;
           t, SolverResult Ida.Continue
         | (i::_) as is ->
           let tret = fst model.roots.(i) in
@@ -568,6 +570,7 @@ let test_script script =
     in
     Printf.fprintf stderr "\n\n[Expected Output]\n";
     prerr_results (model_run script);
+    Format.pp_print_flush Format.err_formatter ();
     false
 
 let quickcheck max_tests =
