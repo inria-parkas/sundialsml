@@ -30,7 +30,9 @@
 
 include module type of Sundials
   with type Roots.t = Sundials.Roots.t
+  and type Roots.root_event = Sundials.Roots.root_event
   and type RootDirs.t = Sundials.RootDirs.t
+  and type RootDirs.root_direction = Sundials.RootDirs.root_direction
 
 (** {2 General} *)
 
