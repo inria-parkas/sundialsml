@@ -254,7 +254,7 @@ struct
       | SolverResult Ida.RootsFound -> pp_ida_ident fmt "RootsFound"
       | SolverResult Ida.StopTimeReached -> pp_ida_ident fmt "StopTimeReached"
       | RootInfo roots -> pp_parens arg_pos fmt (fun fmt ->
-                            pp_ida_ident fmt "RootInfo ";
+                            pp_unquoted_string fmt "RootInfo ";
                             pp_root_info fmt roots)
       | Aggr rs -> pp_parens arg_pos fmt (fun fmt ->
                      pp_unquoted_string fmt "Aggr ";
