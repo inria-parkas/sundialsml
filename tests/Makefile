@@ -1,30 +1,32 @@
 include ../config
 
-test-quickcheck_serial: quickcheck_serial.opt fstream.cmo pprint.cmo \
-                        pprint_sundials.cmo quickcheck.cmo
+# Object files pertaining to the quickcheck framework.
+QUICKCHECK_OBJS=fstream.cmo pprint.cmo \
+                pprint_sundials.cmo quickcheck.cmo quickcheck_ida.cmo
+
+test-quickcheck_serial: quickcheck_serial.opt $(QUICKCHECK_OBJS)
 	./$< $(PARAMS) --exec-file ./test --failed-file failed.ml \
 	    --compiler "ocamlc -g -I .. bigarray.cma unix.cma \
 	                sundials_ida.cma $(filter-out $<,$^)"
+
+quickcheck_serial.opt: $(QUICKCHECK_OBJS:.cmo=.cmx) quickcheck_serial.cmx
+failed.opt: $(QUICKCHECK_OBJS:.cmo=.cmx) failed.cmx
 
 test-%: %.opt
 	./$< $(PARAMS)
 
 %.cmx: %.ml
-	$(OCAMLOPT) $(OCAMLOPTFLAGS) \
-	    -pp camlp4of -I +camlp4 dynlink.cmxa camlp4lib.cmxa \
-	    -I .. \
+	$(OCAMLOPT) $(OCAMLOPTFLAGS) -pp camlp4of -I +camlp4 -I .. \
 	    bigarray.cmxa unix.cmxa sundials_ida.cmxa -o $@ -c $<
 %.cmo: %.ml
-	$(OCAMLC) $(OCAMLFLAGS) \
-	    -pp camlp4of -I +camlp4 dynlink.cma camlp4lib.cma \
-	    -I .. \
+	$(OCAMLC) $(OCAMLFLAGS) -pp camlp4of -I +camlp4 -I .. \
 	    bigarray.cma unix.cma sundials_ida.cma -o $@ -c $<
 
 %.opt: %.cmx
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
 	    -I +camlp4 dynlink.cmxa camlp4lib.cmxa $(INCLUDES) -I .. \
 	    bigarray.cmxa unix.cmxa sundials_ida.cmxa \
-	    fstream.cmx pprint.cmx pprint_sundials.cmx quickcheck.cmx $^
+	    $(filter-out $<,$^) $<
 
 .SECONDARY: quickcheck_serial.opt quickcheck.cmx quickcheck.cmo
 
