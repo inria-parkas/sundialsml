@@ -48,12 +48,12 @@ let shrink_pos n = Fstream.map ((+) 1) (shrink_nat (n-1))
 
  *)
 let discrete_unit = 1.
-let query_time_offs = discrete_unit /. 2.
-let root_time_offs = query_time_offs /. 2.
-let stop_time_offs = root_time_offs /. 2.
+let query_time_offs = 0.
+let root_time_offs = discrete_unit /. 2.
+let stop_time_offs = discrete_unit /. 4.
 
 (* This must be smaller than any of the offsets.  *)
-let time_epsilon = stop_time_offs /. 2.
+let time_epsilon = discrete_unit /. 8.
 
 type sign = Positive | NonNegative | ArbitrarySign
 (* Returns (gen, shrink) *)
@@ -169,6 +169,7 @@ module IdaModel =
 struct
   module Carray = Sundials.Carray
   type cmd = SolveNormal of float       (* NB: carries dt, not t *)
+             | GetRootInfo
   type result = Unit | Int of int | Float of float
                 | Any
                 | Type of result
@@ -176,6 +177,7 @@ struct
                 | Carray of Carray.t    (* NB: always copy the array! *)
                 | SolverResult of Ida.solver_result
                 | Exn of exn
+                | RootInfo of Ida.Roots.t
   type resfn_type = ResFnLinear of Carray.t
 
   let carray x = Carray (Carray.of_carray x)
@@ -195,6 +197,7 @@ struct
       if f < 0. then Format.fprintf fmt "(";
       pp_float fmt f;
       if f < 0. then Format.fprintf fmt ")"
+    | GetRootInfo -> Format.fprintf fmt "GetRootInfo"
     )
   let pp_cmds, dump_cmds, show_cmds, display_cmds, print_cmds, prerr_cmds =
     printers_of_pp (fun fmt cmds ->
@@ -250,6 +253,9 @@ struct
       | SolverResult Ida.Continue -> pp_ida_ident fmt "Continue"
       | SolverResult Ida.RootsFound -> pp_ida_ident fmt "RootsFound"
       | SolverResult Ida.StopTimeReached -> pp_ida_ident fmt "StopTimeReached"
+      | RootInfo roots -> pp_parens arg_pos fmt (fun fmt ->
+                            pp_ida_ident fmt "RootInfo ";
+                            pp_root_info fmt roots)
       | Aggr rs -> pp_parens arg_pos fmt (fun fmt ->
                      pp_unquoted_string fmt "Aggr ";
                      pp_list (pre_pp_result false) fmt rs)
@@ -283,6 +289,7 @@ struct
     | Carray v1, Carray v2 -> carrays_equal v1 v2
     | SolverResult r1, SolverResult r2 -> r1 = r2
     | Exn e1, Exn e2 -> exns_equal e1 e2
+    | RootInfo r1, RootInfo r2 -> r1 = r2
     | _, _ -> false
   and result_type_matches r1 r2 =
     match r1, r2 with
@@ -294,6 +301,7 @@ struct
     | Aggr l1, Aggr l2 -> for_all2_and_same_len result_type_matches l1 l2
     | Carray _, Carray _ -> true
     | SolverResult _, SolverResult _ -> true
+    | RootInfo _, RootInfo _ -> true
     | Exn e1, Exn e2 -> raise (Invalid_argument "result_matches: Type Exn")
     | _, Any | _, Type _ ->
       raise (Invalid_argument "result_matches: wild card on rhs")

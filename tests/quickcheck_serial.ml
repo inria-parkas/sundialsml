@@ -12,15 +12,18 @@ type session_model =
   {
     resfn : resfn_type;
     mutable solver : Ida.linear_solver;
+    mutable solving : bool;
     mutable consistent : bool;
     mutable t : float;
-    mutable roots : float array;
+    mutable roots : (float * Ida.Roots.root_event) array;
+    mutable root_info : Roots.t;
     vec : Carray.t;
     vec' : Carray.t;
     t0 : float;
     vec0 : Carray.t;
     vec'0 : Carray.t;
   }
+type script = session_model * cmd list
 
 let copy_resfn = function
   | ResFnLinear slopes -> ResFnLinear (Carray.of_carray slopes)
@@ -28,8 +31,10 @@ let copy_model m =
   {
     resfn = copy_resfn m.resfn;
     solver = m.solver;
+    solving = m.solving;
     t = m.t;
     roots = Array.copy m.roots;
+    root_info = Roots.copy m.root_info;
     consistent = m.consistent;
     vec = Carray.of_carray m.vec;
     vec' = Carray.of_carray m.vec';
@@ -45,7 +50,8 @@ let pp_model, dump_model, show_model, display_model,
     (let descriptive_fields =
        ["resfn", (fun fmt m -> pp_of_show show_resfn_type fmt m.resfn);
         "solver", (fun fmt m -> pp_of_show show_solver fmt m.solver);
-        "roots", (fun fmt m -> pp_array pp_float fmt m.roots);
+        "roots", (fun fmt m -> pp_array (pp_pair pp_float pp_root_event)
+          fmt m.roots);
         "t", (fun fmt m -> pp_float fmt m.t);
         "vec", (fun fmt m -> pp_carray fmt m.vec);
         "vec'", (fun fmt m -> pp_carray fmt m.vec');
@@ -54,7 +60,9 @@ let pp_model, dump_model, show_model, display_model,
         "vec'0", (fun fmt m -> pp_carray fmt m.vec'0);
        ]
      and state_fields =
-       ["consistent", (fun fmt m -> pp_bool fmt m.consistent);
+       ["root_info", (fun fmt m -> pp_root_info fmt m.root_info);
+        "solving", (fun fmt m -> pp_bool fmt m.solving);
+        "consistent", (fun fmt m -> pp_bool fmt m.consistent);
        ]
      in
      let rw_invar = pp_record (descriptive_fields @ state_fields)
@@ -77,17 +85,18 @@ let pp_script, dump_script, show_script, display_script,
 (* Find the smallest root(s) in the range (t1..t2].  *)
 let find_roots roots t1 t2 =
   let n = Array.length roots in
+  let pos i = fst roots.(i) in
   if n = 0 then []
   else
     let record  = ref t2
     and holders = ref []
     in
     for i = 0 to n-1 do
-      if t1 < roots.(i) && roots.(i) <= !record
+      if t1 < pos i && pos i <= !record
       then
         begin
-          if roots.(i) < !record then
-            (record := roots.(i);
+          if pos i < !record then
+            (record := pos i;
              holders := [i])
           else
             holders := i::!holders
@@ -177,7 +186,12 @@ let exact_init model =
 
 let expr_of_roots roots =
   let n = Array.length roots in
-  let set i = <:expr<g.{$`int:i$} <- t -. $`flo:roots.(i)$>> in
+  let set i =
+    match roots.(i) with
+    | r, Roots.Rising -> <:expr<g.{$`int:i$} <- t -. $`flo:r$>>
+    | r, Roots.Falling -> <:expr<g.{$`int:i$} <- $`flo:r$ -. t>>
+    | _, Roots.NoRoot -> assert false
+  in
   let f ss i = <:expr<$ss$; $set i$>> in
   if n = 0 then <:expr<Ida.no_roots>>
   else <:expr<($`int:n$,
@@ -204,6 +218,18 @@ let expr_of_cmd last_query_time = function
     last_query_time := t;
     <:expr<let tret, flag = Ida.solve_normal session $`flo:t$ vec vec' in
            Aggr [Float tret; SolverResult flag; carray vec; carray vec']>>
+  | GetRootInfo ->
+    <:expr<let roots = Ida.Roots.create (Ida.nroots session) in
+           Ida.get_root_info session roots;
+           RootInfo roots>>
+let expr_of_cmds last_query_time = function
+  | [] -> <:expr<()>>
+  | cmds ->
+  <:expr<
+    Array.iter print_result
+    $expr_array (List.map (fun cmd ->
+    <:expr<lazy $expr_of_cmd last_query_time cmd$>>) cmds)$
+    >>
 
 (* Run a single command on the model.  *)
 let model_cmd model = function
@@ -224,8 +250,12 @@ let model_cmd model = function
         | [] ->
           (*Roots.reset model.root_info;*)
           t, SolverResult Ida.Continue
-        | i::_ ->
-          let tret = model.roots.(i) in
+        | (i::_) as is ->
+          let tret = fst model.roots.(i) in
+          Roots.reset model.root_info;
+          List.iter
+            (fun i -> Roots.set model.root_info i (snd model.roots.(i)))
+            is;
           (tret,
            (* If the queried time coincides with a root, then it's reasonable
               for the solver to prioritize either.  In real code, this is most
@@ -234,9 +264,15 @@ let model_cmd model = function
            else SolverResult Ida.RootsFound)
       in
       model.t <- t;
+      model.solving <- true;
       exact_soln model.resfn model.t0 model.vec0 model.vec'0
                                  tret model.vec  model.vec';
       Aggr [Float tret; flag; carray model.vec; carray model.vec']
+  | GetRootInfo ->
+    if model.solving then RootInfo (Roots.copy model.root_info)
+    else
+      (* FIXME: this should be Exn Ida.IllInput or something like that.  *)
+      Type (RootInfo (Roots.copy model.root_info))
 
 (* Run a list of commands on the model.  *)
 let model_run (model, cmds) =
@@ -246,15 +282,6 @@ let model_run (model, cmds) =
                    carray model.vec;
                    carray model.vec']
   in head :: List.map (model_cmd model) cmds
-
-let expr_of_cmds last_query_time = function
-  | [] -> <:expr<()>>
-  | cmds ->
-  <:expr<
-    Array.iter print_result
-    $expr_array (List.map (fun cmd ->
-    <:expr<lazy $expr_of_cmd last_query_time cmd$>>) cmds)$
-    >>
 
 (* Test case generation.  *)
 
@@ -284,7 +311,9 @@ let gen_roots () =
   (* We have to ensure the roots don't coincide with any of the query times or
      with one another, for otherwise the order in which they fire is dictated
      by floating point error and is unpredictable.  *)
-  let gen_root () = abs_float (gen_discrete_float () +. root_time_offs)
+  let gen_root () =
+    (gen_root_time (),
+     gen_choice [| Roots.Rising; Roots.Falling |])
   in
   match Random.int 3 with
   | 0 -> [||]
@@ -300,9 +329,11 @@ let gen_model () =
   {
     resfn = resfn;
     solver = gen_solver false neqs;
+    solving = false;
     t = t0;
     consistent = true;
     roots = roots;
+    root_info = Roots.create (Array.length roots);
     vec   = Carray.of_carray vec0;
     vec'  = Carray.of_carray vec'0;
     t0 = t0;
@@ -312,7 +343,8 @@ let gen_model () =
 
 let gen_cmd =
   let cases =
-    [|fun () -> SolveNormal (abs_float (gen_discrete_float ()))|]
+    [| (fun () -> SolveNormal (abs_float (gen_discrete_float ())));
+       (fun () -> GetRootInfo) |]
   in
   fun () -> gen_choice cases ()
 let gen_cmds () = gen_list gen_cmd
@@ -365,6 +397,8 @@ let shrink_neqs model cmds =
       {
         resfn = copy_resfn_drop i model.resfn;
         roots = Array.copy model.roots;
+        root_info = Roots.copy model.root_info;
+        solving = model.solving;
         consistent = model.consistent;
         vec = copy_vec_drop i model.vec;
         vec' = copy_vec_drop i model.vec';
@@ -383,23 +417,23 @@ let shrink_root_dir = function
   | Roots.Rising -> Fstream.nil
   | Roots.Falling -> Fstream.singleton Roots.Rising
   | Roots.NoRoot -> assert false
+let shrink_root_pos = shrink_offseted_discrete_float root_time_offs
 
 let shrink_model model cmds =
   let update_roots model roots =
-    { model with roots = roots }
+    let root_info = Roots.create (Array.length roots) in
+    { model with roots = roots; root_info = root_info }
   in
   Fstream.map (fun t -> ({ model with t = t; t0 = t; }, cmds))
     (shrink_discrete_float model.t)
   @@ Fstream.map (fun roots -> (update_roots model roots, cmds))
-    (shrink_array
-       (fun f ->
-         Fstream.map (fun f -> root_time_offs +. f)
-           (shrink_float (f -. root_time_offs)))
+    (shrink_array (shrink_pair shrink_root_pos shrink_root_dir)
        model.roots)
 
 let shrink_cmd = function
   | SolveNormal dt ->
-    Fstream.map (fun dt -> SolveNormal dt) (shrink_discrete_float dt)
+    Fstream.map (fun dt -> SolveNormal dt) (shrink_query_time dt)
+  | GetRootInfo -> Fstream.nil
 
 let shrink_script (model, cmds) =
   shrink_neqs model cmds
