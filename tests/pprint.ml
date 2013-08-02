@@ -113,9 +113,14 @@ let pp_unquoted_char, dump_unquoted_char, show_unquoted_char,
 
 let pp_float, dump_float, show_float, display_float, print_float, prerr_float =
   printers_of_show (fun f ->
-    if !read_write_invariance
-    then string_of_float f
-    else Printf.sprintf "%g" f
+    match classify_float f with
+    | FP_nan -> "nan"
+    | FP_infinite when !read_write_invariance ->
+      if f > 0. then "infinity"
+      else "neg_infinity"
+    | FP_infinite | FP_normal | FP_subnormal | FP_zero ->
+      if !read_write_invariance then string_of_float f
+      else Printf.sprintf "%g" f
   )
 
 let show_fun _ = "<fun>"
