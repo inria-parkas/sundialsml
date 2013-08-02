@@ -27,8 +27,18 @@ let show_of_pp pp x =
   Buffer.contents buf
 let display_of_pp pp x =
   with_read_write_invariance (fun () -> show_of_pp pp x)
-let print_of_pp pp x = pp Format.std_formatter x
-let prerr_of_pp pp x = pp Format.err_formatter x
+let print_of_pp pp x =
+  pp Format.std_formatter x;
+  (* Flushing every time isn't very good performance-wise, but it seems to be
+     necessary so that this function's outputs interleaves properly with direct
+     outputs to the stdout channel.  *)
+  Format.pp_print_flush Format.std_formatter ()
+let prerr_of_pp pp x =
+  pp Format.err_formatter x;
+  (* Flushing every time isn't very good performance-wise, but it seems to be
+     necessary so that this function's outputs interleaves properly with direct
+     outputs to the stderr channel.  *)
+  Format.pp_print_flush Format.std_formatter ()
 
 (* show -> others *)
 let pp_of_show show fmt x = Format.fprintf fmt "%s" (show x)
@@ -36,8 +46,18 @@ let dump_of_show show fmt x =
   with_read_write_invariance (fun () -> pp_of_show show fmt x)
 let display_of_show show x =
   with_read_write_invariance (fun () -> show x)
-let print_of_show show x = pp_of_show show Format.std_formatter x
-let prerr_of_show show x = pp_of_show show Format.err_formatter x
+let print_of_show show x =
+  pp_of_show show Format.std_formatter x;
+  (* Flushing every time isn't very good performance-wise, but it seems to be
+     necessary so that this function's outputs interleaves properly with direct
+     outputs to the stdout channel.  *)
+  Format.pp_print_flush Format.std_formatter ()
+let prerr_of_show show x =
+  pp_of_show show Format.err_formatter x;
+  (* Flushing every time isn't very good performance-wise, but it seems to be
+     necessary so that this function's outputs interleaves properly with direct
+     outputs to the stderr channel.  *)
+  Format.pp_print_flush Format.err_formatter ()
 
 let printers_of_show show =
   pp_of_show show, dump_of_show show, show, display_of_show show,
