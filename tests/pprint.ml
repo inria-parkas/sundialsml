@@ -100,15 +100,15 @@ let pp_string, dump_string, show_string, display_string,
     print_string, prerr_string =
   printers_of_show (fun s -> show_double_quotes true (String.escaped s))
 
-let pp_unquoted_string, dump_unquoted_string, show_unquoted_string,
-  display_unquoted_string, print_unquoted_string, prerr_unquoted_string =
+let pp_string_verbatim, dump_string_verbatim, show_string_verbatim,
+  display_string_verbatim, print_string_verbatim, prerr_string_verbatim =
   printers_of_show (fun s -> s)
 
 let pp_char, dump_char, show_char, display_char, print_char, prerr_char =
   printers_of_show (fun c -> show_quotes true (Char.escaped c))
 
-let pp_unquoted_char, dump_unquoted_char, show_unquoted_char,
-  display_unquoted_char, print_unquoted_char, prerr_unquoted_char =
+let pp_char_verbatim, dump_char_verbatim, show_char_verbatim,
+  display_char_verbatim, print_char_verbatim, prerr_char_verbatim =
   printers_of_show (fun s -> String.make 1 s)
 
 let pp_float, dump_float, show_float, display_float, print_float, prerr_float =

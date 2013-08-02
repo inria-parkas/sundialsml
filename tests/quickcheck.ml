@@ -254,14 +254,14 @@ struct
       | SolverResult Ida.RootsFound -> pp_ida_ident fmt "RootsFound"
       | SolverResult Ida.StopTimeReached -> pp_ida_ident fmt "StopTimeReached"
       | RootInfo roots -> pp_parens arg_pos fmt (fun fmt ->
-                            pp_unquoted_string fmt "RootInfo ";
+                            pp_string_verbatim fmt "RootInfo ";
                             pp_root_info fmt roots)
       | Aggr rs -> pp_parens arg_pos fmt (fun fmt ->
-                     pp_unquoted_string fmt "Aggr ";
+                     pp_string_verbatim fmt "Aggr ";
                      pp_list (pre_pp_result false) fmt rs)
       | Exn exn -> pp_parens arg_pos fmt (fun fmt ->
-                     pp_unquoted_string fmt "exception ";
-                     pp_unquoted_string fmt (Printexc.to_string exn))
+                     pp_string_verbatim fmt "exception ";
+                     pp_string_verbatim fmt (Printexc.to_string exn))
     in printers_of_pp (pre_pp_result false)
   let pp_results, dump_results, show_results, display_results,
     print_results, prerr_results =
@@ -272,7 +272,7 @@ struct
       =
     printers_of_pp
     (fun fmt -> function
-     | ResFnLinear slope -> pp_unquoted_string fmt "ResFnLinear ";
+     | ResFnLinear slope -> pp_string_verbatim fmt "ResFnLinear ";
                             pp_carray fmt slope
     )
 

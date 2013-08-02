@@ -111,30 +111,32 @@ val display_string : string display
 (* print_string, prerr_string exported through PP *)
 
 (** Returns the string as-is, without adding quotations or escapes.  *)
-val show_unquoted_string : string show
+val show_string_verbatim : string show
 (** Prints the string as-is, without adding quotations or escapes.  *)
-val dump_unquoted_string : string dump
+val dump_string_verbatim : string dump
 (** Prints the string as-is, without adding quotations or escapes.  *)
-val pp_unquoted_string : string pp
+val pp_string_verbatim : string pp
 (** Returns the string as-is, without adding quotations or escapes.  *)
-val display_unquoted_string : string display
+val display_string_verbatim : string display
 (** Prints the string as-is, without adding quotations or escapes.  *)
-val print_unquoted_string : string print
+val print_string_verbatim : string print
 (** Prints the string as-is, without adding quotations or escapes.  *)
-val prerr_unquoted_string : string prerr
+val prerr_string_verbatim : string prerr
 
-(** Returns the char as-is, without adding quotations or escapes.  *)
-val show_unquoted_char : char show
+(** Returns a string containing the char as-is, without adding quotations or
+    escapes.  *)
+val show_char_verbatim : char show
 (** Prints the char as-is, without adding quotations or escapes.  *)
-val dump_unquoted_char : char dump
+val dump_char_verbatim : char dump
 (** Prints the char as-is, without adding quotations or escapes.  *)
-val pp_unquoted_char : char pp
-(** Returns the char as-is, without adding quotations or escapes.  *)
-val display_unquoted_char : char display
+val pp_char_verbatim : char pp
+(** Returns a string containing the char as-is, without adding quotations or
+    escapes.  *)
+val display_char_verbatim : char display
 (** Prints the char as-is, without adding quotations or escapes.  *)
-val print_unquoted_char : char print
+val print_char_verbatim : char print
 (** Prints the char as-is, without adding quotations or escapes.  *)
-val prerr_unquoted_char : char prerr
+val prerr_char_verbatim : char prerr
 
 val show_float : float show
 val dump_float : float dump

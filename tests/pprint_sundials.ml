@@ -30,8 +30,8 @@ let pp_root_info fmt xs =
   in
   if !read_write_invariance
   then pp_array_like Roots.length get "(Roots.of_array [|" "|])"
-         pp_unquoted_string fmt xs
-  else pp_array_like Roots.length get "[<" ">]" pp_unquoted_string fmt xs
+         pp_string_verbatim fmt xs
+  else pp_array_like Roots.length get "[<" ">]" pp_string_verbatim fmt xs
 
 let _, dump_root_info, show_root_info, display_root_info,
   print_root_info, prerr_root_info
@@ -57,8 +57,8 @@ let pp_root_dirs fmt xs =
   in
   if !read_write_invariance
   then pp_array_like RootDirs.length get "(RootDirs.of_array [|" "|])"
-         pp_unquoted_string fmt xs
-  else pp_array_like RootDirs.length get "[<" ">]" pp_unquoted_string fmt xs
+         pp_string_verbatim fmt xs
+  else pp_array_like RootDirs.length get "[<" ">]" pp_string_verbatim fmt xs
 
 let _, dump_root_dirs, show_root_dirs, display_root_dirs,
   print_root_dirs, prerr_root_dirs
