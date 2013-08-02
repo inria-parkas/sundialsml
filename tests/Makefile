@@ -36,5 +36,6 @@ clean:
 depend: .depend
 
 .depend:
-	$(OCAMLDEP) -pp camlp4of *.ml > $@
+	$(OCAMLDEP) -pp camlp4of *.ml *.mli > $@
+
 -include .depend
