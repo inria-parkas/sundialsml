@@ -130,8 +130,9 @@ let display_fun f = display_of_show show_fun f
 let print_fun f = print_of_show show_fun f
 let prerr_fun f = prerr_of_show show_fun f
 
-let pp_seq opening delim closing fmt pp_elems =
-  Format.fprintf fmt "%s@[<hv>" opening;
+let pp_block opening box delim closing fmt pp_elems =
+  Format.fprintf fmt "%s" opening;
+  Format.fprintf fmt box;
   let open Fstream in
   (match Lazy.force pp_elems with
    | Nil -> ()
@@ -140,6 +141,14 @@ let pp_seq opening delim closing fmt pp_elems =
      Fstream.iter (fun pp -> Format.fprintf fmt "%s@ " delim; pp fmt)
        pp_elems);
   Format.fprintf fmt "@]%s" closing
+
+let pp_seq opening delim closing fmt pp_elems =
+  pp_block opening "@[<hov>" delim closing fmt pp_elems
+
+let pp_record pp_fields fmt x =
+  let pp_elem (name, f) fmt = Format.fprintf fmt "%s = " name; f fmt x in
+  pp_block "{" "@[<hv>" ";" "}" fmt
+    (Fstream.map pp_elem (Fstream.of_list pp_fields))
 
 let const k _ = k
 
@@ -225,10 +234,6 @@ let print_bigarray1 kind layout pp_elem =
   print_of_pp (pp_bigarray1 kind layout pp_elem)
 let prerr_bigarray1 kind layout pp_elem =
   prerr_of_pp (pp_bigarray1 kind layout pp_elem)
-
-let pp_record pp_fields fmt x =
-  let pp_elem (name, f) fmt = Format.fprintf fmt "%s = " name; f fmt x in
-  pp_seq "{" ";" "}" fmt (Fstream.map pp_elem (Fstream.of_list pp_fields))
 
 let pp_tuple pp_fields fmt x =
   let pp_elem f fmt = f fmt x in
