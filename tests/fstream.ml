@@ -26,6 +26,36 @@ let mapi f xs =
     | lazy (Cons (x,xs)) -> Cons (f i x, lazy (go (i+1) xs))
   in lazy (go 0 xs)
 
+(* If the streams' sizes differ, the longer one is cut short (i.e. Haskell's
+   semantics, hence the name).  *)
+let zip_with f xs ys =
+  let rec go xs ys =
+    match xs, ys with
+    | lazy Nil, _ -> Nil
+    | _, lazy Nil -> Nil
+    | lazy (Cons (x,xs)), lazy (Cons (y, ys)) -> Cons (f x y, lazy (go xs ys))
+  in lazy (go xs ys)
+
+(* If the streams' sizes differ, raises Invalid_argument.  *)
+let map2 f xs ys =
+  let rec go xs ys =
+    match xs, ys with
+    | lazy Nil, lazy Nil -> Nil
+    | lazy Nil, _ | _, lazy Nil -> invalid_arg "Fstream.map2"
+    | lazy (Cons (x,xs)), lazy (Cons (y, ys)) -> Cons (f x y, lazy (go xs ys))
+  in lazy (go xs ys)
+
+let unzip xys =
+  let rec go = function
+    | lazy Nil -> (Nil, Nil)
+    | lazy (Cons ((x,y), xys)) ->
+      let rest = lazy (go xys) in
+      (Cons (x, lazy (fst (Lazy.force rest))),
+       Cons (y, lazy (snd (Lazy.force rest))))
+  in
+  let unzipped = lazy (go xys) in
+  (lazy (fst (Lazy.force unzipped)), lazy (snd (Lazy.force unzipped)))
+
 let rec iter f = function
   | lazy Cons (x, xs) -> f x; iter f xs
   | lazy Nil -> ()
