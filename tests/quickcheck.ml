@@ -7,9 +7,10 @@ let (@@) = Fstream.append
 let size = ref 5
 
 (* Generation & shrinking *)
-let gen_nat () = Random.int !size
+let gen_nat () = Random.int (max 1 !size)
 let gen_pos () = gen_nat () + 1
-let gen_int () = Random.int (!size * 2) - !size
+let gen_int () = let size = max !size 1 in
+                 Random.int (size * 2) - size
 
 (* Rearrange as gen -> shrink -> gen -> shrink.  Make gen_* for each type of
    time value.  *)
