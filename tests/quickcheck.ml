@@ -361,10 +361,6 @@ let quickcheck gen shrink ?pp_input ?(pp_formatter=Format.err_formatter)
       | Falsified _ ->
         Printf.fprintf stderr "Failed! (after %d test(s))\n" num_passed;
         flush stderr;
-        if trace then
-          (Format.pp_print_string pp_formatter "Counterexample was: ";
-           pp_input pp_formatter x;
-           Format.pp_print_newline pp_formatter ());
         res
       | Failed exc -> 
         Printf.fprintf stderr
