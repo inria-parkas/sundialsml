@@ -99,6 +99,85 @@ let enum istart iend =
   in go [] iend
 
 let gen_list g = List.map (fun _ -> g ()) (enum 1 (gen_nat ()))
+let rec shrink_list shrink_elem = function
+  | [] -> Fstream.of_list []
+  | x::xs ->
+    Fstream.cons xs
+      (Fstream.map (fun xs -> x::xs) (shrink_list shrink_elem xs)
+       @@ Fstream.map (fun x -> x::xs) (shrink_elem x))
+
+(** Generate a list of values that satisfy an invariant which can be checked by
+    scanning the list once, in order.
+
+    [gen_1pass_list gen seed] returns {[[y1, y2, ..., yn]]} where
+    [(seed1, y1) = gen seed,
+     (seed2, y2) = gen seed1,
+     (seed3, y3) = gen seed2,
+     ...].
+
+    [gen x] should produce a value taking into account some information [x]
+    about previously generated elements, and return that value along with [x]
+    updated with information about the new value.  [seed] is the initial value
+    of [x].
+
+    For example, [gen_1pass_list (fun x -> let x = gen_nat () + x in (x,x)) 0]
+    generates non-strictly increasing lists of natural numbers.
+
+ *)
+let gen_1pass_list gen seed =
+  (* In haskell notation,
+     let (seeds_tl, ys) = unzip $ map gen seeds
+         seeds = seed:seeds_tl
+     in take (gen_nat ()) ys
+   *)
+  let rec seeds_tl_and_ys = lazy (Fstream.unzip (Fstream.map gen seeds))
+  and seeds = lazy (Fstream.Cons (seed, fst (Lazy.force seeds_tl_and_ys))) in
+  Fstream.to_list
+    (Fstream.take (gen_nat ()) (snd (Lazy.force seeds_tl_and_ys)))
+
+(** Shrink a list of values while maintaining an invariant that can be checked
+    by scanning the list once, in order.
+
+    {[shrink_1pass_list shrink fixup seed xs]} assumes [shrink] and [fixup] are
+    purely functional.  It must be the case that [xs] is one of the lists that
+    can be produced by [gen_1pass_list gen seed] using the same [seed] and some
+    impure function [gen]; the shrunk lists will also be such lists.
+
+    [shrink] is a function that shrinks one element of the list.  [shrink s x]
+    should produce some or all of the possible return values of [gen s] whose
+    [snd]'s are "smaller" than [x].
+
+    [fixup] is used when an element of the list is shrunk.  Its job is to
+    update all subsequent elements and restore the invariant if it is broken.
+    [fixup s x] should produce one of the possible return values of [gen s].
+    The [snd] of the return value need not be "smaller" than [x], but it should
+    be equal to [x] whenever possible (i.e. it should return [x] as-is if it
+    already satisfies the invariant).  Unlike [gen], [fixup] can (and probably
+    should) be purely functional.
+
+    Currently, [shrink_1pass_list] enumerates lists produced by the following
+    procedure: either drop an element of the list or replace it by a smaller
+    value produced by [shrink]; then pass [fixup] through the whole list to
+    restore any invariants broken by shrinking.
+
+ *)
+let shrink_1pass_list shrink fixup seed xs =
+  let rec fixup_list seed acc = function
+    | [] -> List.rev acc
+    | x::xs -> let (seed, x) = fixup seed x in
+               fixup_list seed (x::acc) xs
+  and go seed = function
+    | [] -> Fstream.nil
+    | x::xs ->
+      Fstream.cons (fixup_list seed [] xs)     (* drop x *)
+        (Fstream.map                           (* keep x *)
+           (fun xs -> x::xs)
+           (go (fst (fixup seed x)) xs)
+         @@ Fstream.map                        (* shrink x *)
+             (fun (seed, x) -> x::fixup_list seed [] xs)
+             (shrink seed x))
+  in
+  go seed xs
 
 let gen_array ?(size=gen_pos ()) gen_elem =
   let v = Array.make size (gen_elem ()) in
