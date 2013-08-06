@@ -253,6 +253,147 @@ let shrink_bigarray1 ?(shrink_size=true) shrink_elem a =
                               (Fstream.enum 0 (Bigarray.Array1.dim a)))
   @@ Fstream.concat (Fstream.map shrink_at (Fstream.enum 0 (n-1)))
 
+
+(** A property is a function from some type ['a] to a ['b test_result].  The
+    test result [OK] means the property holds for that data, [Falsified foo]
+    means the data falsifies the property, where [foo] is a user-defined
+    description of why/how it was falsified, and [Failed] means the property
+    raised an exception.  Properties should not return [Failed] but rather let
+    exceptions propagate; the quickcheck framework catches them and conerts
+    them to [Failed].
+ *)
+type ('a,'b) property = 'a -> 'b test_result
+and  'reason test_result = OK | Falsified of 'reason | Failed of exn
+
+let isOK = function
+  | OK -> true
+  | _ -> false
+
+(** Convert a function of type ['a -> bool] to a property.  *)
+let boolean_prop prop x =
+  if prop x then OK
+  else Falsified ()
+
+(** A formatter that performs no output.  Useful for disabling output from
+    {!quickcheck}, {!minimize}, etc.  *)
+let null_formatter = Format.make_formatter (fun _ _ _ -> ()) (fun _ -> ())
+
+(** A shrinker that always fails to produce a shrunk value.  Used as a stub
+    when you can't supply a shrinking function.  *)
+let no_shrink _ = Fstream.nil
+
+let test_in_sandbox prop x =
+  try prop x
+  with exn -> Failed exn
+
+(** [minimize shrink prop x reason] minimizes a counterexample [x] of property
+    [prop].  [reason] is the return value of [prop x] and is returned when no
+    counterexample smaller than [x] is found.  It's up to the caller to ensure
+    [reason <> OK]; this function just assumes that's the case.
+
+    If the optional argument [pp_input] is supplied, it is used to print each
+    shrunk test case before trying it, along with additional output.  The
+    optional argument [pp_formatter] tells where to direct this output.
+
+    Returns (<number of shrinks performed>, <shrunk data>, <prop result>)
+ *)
+let minimize ?pp_input ?(pp_formatter=Format.err_formatter) shrink prop x res =
+  let trace, pp_input =
+    match pp_input with
+    | Some s -> true, s
+    | None -> false, (fun _ -> failwith "internal error")
+  in
+  if trace then Format.pp_print_char pp_formatter '\n';
+  let rec go ct x reason =
+    let failure x =
+      let res = test_in_sandbox prop x in
+      if trace then
+        (Format.fprintf pp_formatter "Trying: ";
+         pp_input pp_formatter x;
+         Format.fprintf pp_formatter "\n -> %s\n"
+           (if isOK res then "triggers bug"
+            else "not a counterexample"));
+      if res = OK then None
+      else Some (x, res)
+    in
+    match Fstream.find_some failure (shrink x) with
+    | None -> (ct, x, reason)
+    | Some (x, reason) -> go (ct+1) x reason
+  in go 0 x res
+
+(** Returns an input that fails the property with the return value of the
+    property, or lack thereof.  The optional arguments, if specified, dumps
+    intermediate results; see {!minimize} for what they mean.  *)
+let quickcheck gen shrink ?pp_input ?(pp_formatter=Format.err_formatter)
+    prop max_tests =
+  let old_size = !size in
+  let minimize x res =
+    if shrink == no_shrink then (x, res)
+    else
+      begin
+        Printf.fprintf stderr "Shrinking...";
+        flush stderr;
+        let (ct, x, res) =
+          minimize ?pp_input ~pp_formatter shrink prop x res
+        in
+        Printf.fprintf stderr "%d shrinks.\n" ct;
+        flush stderr;
+        (x, res)
+      end
+  in
+  let trace, pp_input =
+    match pp_input with
+    | Some pp_input -> true, pp_input
+    | None -> false, (fun _ -> failwith "internal error")
+  in
+  let rec test num_passed =
+    let gen () =
+      try size := num_passed; gen ()
+      with exc ->
+        Printf.fprintf stderr
+          "Error: the generator failed (after %d tests)\n%s\n"
+          num_passed (Printexc.to_string exc);
+        size := old_size;
+        raise exc
+    in
+    let check_for_bug x =
+      if trace then
+        (Format.fprintf pp_formatter "Testing ";
+         pp_input pp_formatter x;
+         Format.pp_print_newline pp_formatter ());
+      let res = test_in_sandbox prop x in
+      match res with
+      | OK -> res
+      | Falsified _ ->
+        Printf.fprintf stderr "Failed! (after %d test(s))\n" num_passed;
+        flush stderr;
+        if trace then
+          (Format.pp_print_string pp_formatter "Counterexample was: ";
+           pp_input pp_formatter x;
+           Format.pp_print_newline pp_formatter ());
+        res
+      | Failed exc -> 
+        Printf.fprintf stderr
+          "Failed! Exception raised (after %d test(s)):\n%s\n"
+          num_passed
+          (Printexc.to_string exc);
+        flush stderr;
+        res
+    in
+    if num_passed < max_tests then
+      let x = gen () in
+      match check_for_bug x with
+      | OK -> print_char '*'; flush stdout; test (num_passed + 1)
+      | res -> Some (minimize x res)
+    else
+      (Printf.printf "\n+++ OK, passed %d tests." max_tests;
+       None)
+  in
+  let ret = test 0 in
+  size := old_size;
+  ret
+
+
 (* Types and functions for modeling IDA.  *)
 module IdaModel =
 struct
