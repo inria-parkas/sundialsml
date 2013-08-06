@@ -5,11 +5,17 @@ and  'a t = 'a cons Lazy.t
 
 let nil = Lazy.lazy_from_val Nil
 
+let cons x xs = Lazy.lazy_from_val (Cons (x, xs))
+
 let null = function
   | lazy Nil -> true
   | lazy _ -> false
 
 let singleton x = Lazy.lazy_from_val (Cons (x, nil))
+
+let decons = function
+  | lazy Nil -> None
+  | lazy (Cons (x,xs)) -> Some (x,xs)
 
 let rec of_list = function
   | [] -> nil
@@ -36,14 +42,28 @@ let zip_with f xs ys =
     | lazy (Cons (x,xs)), lazy (Cons (y, ys)) -> Cons (f x y, lazy (go xs ys))
   in lazy (go xs ys)
 
-(* If the streams' sizes differ, raises Invalid_argument.  *)
+(* If the streams' sizes differ, raises an exception.  *)
+type which_is_too_short = LeftTooShort | RightTooShort
+exception Stream_length_mismatch of which_is_too_short
+
 let map2 f xs ys =
   let rec go xs ys =
     match xs, ys with
     | lazy Nil, lazy Nil -> Nil
-    | lazy Nil, _ | _, lazy Nil -> invalid_arg "Fstream.map2"
+    | lazy Nil, _ -> raise (Stream_length_mismatch RightTooShort)
+    | _, lazy Nil -> raise (Stream_length_mismatch LeftTooShort)
     | lazy (Cons (x,xs)), lazy (Cons (y, ys)) -> Cons (f x y, lazy (go xs ys))
   in lazy (go xs ys)
+
+let map2i f xs ys =
+  let rec go i xs ys =
+    match xs, ys with
+    | lazy Nil, lazy Nil -> Nil
+    | lazy Nil, _ -> raise (Stream_length_mismatch RightTooShort)
+    | _, lazy Nil -> raise (Stream_length_mismatch LeftTooShort)
+    | lazy (Cons (x,xs)), lazy (Cons (y, ys)) ->
+      Cons (f i x y, lazy (go (i+1) xs ys))
+  in lazy (go 0 xs ys)
 
 let unzip xys =
   let rec go = function

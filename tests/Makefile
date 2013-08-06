@@ -2,14 +2,18 @@ include ../config
 
 # Object files pertaining to the quickcheck framework.
 QUICKCHECK_OBJS=fstream.cmo pprint.cmo \
-                pprint_sundials.cmo quickcheck.cmo quickcheck_ida.cmo
+                quickcheck.cmo quickcheck_sundials.cmo quickcheck_ida.cmo
 
-test-quickcheck_serial: quickcheck_serial.opt $(QUICKCHECK_OBJS)
+test-quickcheck_ida_serial: quickcheck_ida_serial.opt $(QUICKCHECK_OBJS)
 	./$< $(PARAMS) --exec-file ./test --failed-file failed.ml \
 	    --compiler "ocamlc -g -I .. bigarray.cma unix.cma \
 	                sundials_ida.cma $(filter-out $<,$^)"
 
-quickcheck_serial.opt: $(QUICKCHECK_OBJS:.cmo=.cmx) quickcheck_serial.cmx
+quickcheck_ida_serial.opt: $(QUICKCHECK_OBJS:.cmo=.cmx) \
+                           quickcheck_ida_serial.cmx
+
+quickcheck_ida.opt: $(QUICKCHECK_OBJS:.cmo=.cmx) quickcheck_ida.cmx
+
 failed.opt: $(QUICKCHECK_OBJS:.cmo=.cmx) failed.cmx
 
 test-%: %.opt
@@ -28,7 +32,8 @@ test-%: %.opt
 	    bigarray.cmxa unix.cmxa sundials_ida.cmxa \
 	    $(filter-out $<,$^) $<
 
-.SECONDARY: quickcheck_serial.opt quickcheck.cmx quickcheck.cmo
+.SECONDARY: quickcheck_ida_serial.opt quickcheck.cmx quickcheck.cmo \
+            $(QUICKCHECK_OBJS)
 
 clean:
 	-rm -f *.cmi *.cmo *.cmx *.o *.opt
