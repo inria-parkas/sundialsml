@@ -13,14 +13,23 @@ let gen_int () = let size = max !size 1 in
                  Random.int (size * 2) - size
 
 (* Rearrange as gen -> shrink -> gen -> shrink.  Make gen_* for each type of
-   time value.  *)
+   time value.  Algorithm taken from Haskell's quickcheck.  *)
 let shrink_int n =
-  let less_complex k = abs n > abs k in
+  (* abs k < abs n, but taking care of overflow.  *)
+  let less_complex k =
+    match k >= 0, n >= 0 with
+    | true, true   -> k < n
+    | false, false -> k > n
+    | false, true  -> k+n > 0
+    | true, false  -> k+n < 0
+  in
   Fstream.guard1 (n < -n) (- n)
   @@ Fstream.filter less_complex
      (Fstream.of_list [0;1;2]
-      @@ Fstream.repeat_n (gen_nat ()) (fun () ->
-        int_of_float (floor (float_of_int n *. (Random.float 2. -. 1.)))))
+      @@ Fstream.filter (fun x -> x <> 0 && x <> 1 && x <> 2)
+         (Fstream.take_while less_complex
+            (Fstream.map (fun higher_bits -> n - higher_bits)
+               (Fstream.iterate (fun x -> x / 2) n))))
 
 let shrink_nat n = Fstream.map abs (shrink_int n)
 let shrink_pos n = Fstream.map ((+) 1) (shrink_nat (n-1))
