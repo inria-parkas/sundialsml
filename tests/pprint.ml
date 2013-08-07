@@ -68,16 +68,16 @@ let printers_of_pp pp =
   print_of_pp pp, prerr_of_pp pp
 
 
-let pp_enclose left right needed fmt pp =
+let pp_enclose left right needed pp fmt x =
   if needed then Format.fprintf fmt left;
-  pp fmt;
+  pp fmt x;
   if needed then Format.fprintf fmt right
-let pp_parens needed fmt pp = pp_enclose "(" ")" needed fmt pp
-let pp_brackets needed fmt pp = pp_enclose "[" "]" needed fmt pp
-let pp_braces needed fmt pp = pp_enclose "{" "}" needed fmt pp
-let pp_array_brackets needed fmt pp = pp_enclose "[|" "|]" needed fmt pp
-let pp_double_quotes needed fmt pp = pp_enclose "\"" "\"" needed fmt pp
-let pp_quotes needed fmt pp = pp_enclose "'" "'" needed fmt pp
+let pp_parens needed pp fmt x = pp_enclose "(" ")" needed pp fmt x
+let pp_brackets needed pp fmt x = pp_enclose "[" "]" needed pp fmt x
+let pp_braces needed pp fmt x = pp_enclose "{" "}" needed pp fmt x
+let pp_array_brackets needed pp fmt x = pp_enclose "[|" "|]" needed pp fmt x
+let pp_double_quotes needed pp fmt x = pp_enclose "\"" "\"" needed pp fmt x
+let pp_quotes needed pp fmt x = pp_enclose "'" "'" needed pp fmt x
 
 let show_enclose left right needed str =
   if needed then left ^ str ^ right

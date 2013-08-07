@@ -164,48 +164,63 @@ val pp_enclose :
   (unit, Format.formatter, unit) format
   -> (unit, Format.formatter, unit) format
   -> bool
+  -> (Format.formatter -> 'a -> unit)
   -> Format.formatter
-  -> (Format.formatter -> unit)
+  -> 'a
   -> unit
 
 (** [pp_parens cond fmt pp] outputs a pair of parentheses around [pp], provided
     [cond] is true.  Otherwise just runs [pp].  *)
-val pp_parens : bool -> Format.formatter -> (Format.formatter -> unit) -> unit
+val pp_parens :
+  bool
+  -> (Format.formatter -> 'a -> unit)
+  -> Format.formatter
+  -> 'a
+  -> unit
 
 (** [pp_brackets cond fmt pp] outputs a pair of sqaure-brackets around [pp],
     provided [cond] is true.  Otherwise just runs [pp].  *)
 val pp_brackets :
   bool
+  -> (Format.formatter -> 'a -> unit)
   -> Format.formatter
-  -> (Format.formatter -> unit)
+  -> 'a
   -> unit
 
 (** [pp_braces cond fmt pp] outputs a pair of braces around [pp], provided
     [cond] is true.  Otherwise just runs [pp].  *)
-val pp_braces : bool -> Format.formatter -> (Format.formatter -> unit) -> unit
+val pp_braces :
+  bool
+  -> (Format.formatter -> 'a -> unit)
+  -> Format.formatter
+  -> 'a
+  -> unit
 
 (** [pp_array_brackets cond fmt pp] outputs a pair of array brackets [| and |]
     around [pp], provided [cond] is true.  Otherwise just runs [pp].  *)
 val pp_array_brackets :
   bool
+  -> (Format.formatter -> 'a -> unit)
   -> Format.formatter
-  -> (Format.formatter -> unit)
+  -> 'a
   -> unit
 
 (** [pp_double_quotes cond fmt pp] outputs a pair of double-quotes around [pp],
     provided [cond] is true.  Otherwise just runs [pp].  *)
 val pp_double_quotes :
   bool
+  -> (Format.formatter -> 'a -> unit)
   -> Format.formatter
-  -> (Format.formatter -> unit)
+  -> 'a
   -> unit
 
 (** [pp_quotes cond fmt pp] outputs a pair of single-quotes around [pp],
     provided [cond] is true.  Otherwise just runs [pp].  *)
 val pp_quotes :
   bool
+  -> (Format.formatter -> 'a -> unit)
   -> Format.formatter
-  -> (Format.formatter -> unit)
+  -> 'a
   -> unit
 
 (** [show_enclose left right cond str] returns [left ^ str ^ right] if [cond]
