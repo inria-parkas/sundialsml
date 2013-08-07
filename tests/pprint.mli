@@ -251,17 +251,19 @@ val show_quotes : bool -> string -> string
     delimiters.
 
     - [opening] and [closing] are the opening and closing delimiters to output
-    at the beginning and end.
+      at the beginning and end.  They should open and close a box, usually
+      hv box if elements are expected to have irregular lengths or hov box
+      if elements are expected to be rather uniform.
     - [delim] is inserted along with a breakable space after every element
-    except for the last one.
+      except for the last one.
     - [pps] is a stream of pretty-printing functions (of type
-    [(Format.formatter -> unit) Fstream.t]) to run.
+      [(Format.formatter -> unit) Fstream.t]) to run.
 
  *)
 val pp_seq :
-  string
-  -> string
-  -> string
+  (unit, Format.formatter, unit) format
+  -> (unit, Format.formatter, unit) format
+  -> (unit, Format.formatter, unit) format
   -> Format.formatter
   -> (Format.formatter -> unit) Fstream.t
   -> unit
@@ -276,7 +278,11 @@ val prerr_list : 'a pp -> 'a list prerr
 (** {!pp_seq} specialized to array-like data types.  Should be invoked like
     [pp_array_like length get opening closing] where [length], [get] should
     behave like the functions in the module [Array].  *)
-val pp_array_like : ('a -> int) -> ('a -> int -> 'b) -> string -> string
+val pp_array_like :
+  ('a -> int)
+  -> ('a -> int -> 'b)
+  -> (unit, Format.formatter, unit) format
+  -> (unit, Format.formatter, unit) format
   -> 'b pp -> 'a pp
 
 val pp_array : 'a pp -> 'a array pp

@@ -130,30 +130,33 @@ let display_fun f = display_of_show show_fun f
 let print_fun f = print_of_show show_fun f
 let prerr_fun f = prerr_of_show show_fun f
 
-let pp_block opening box delim closing fmt pp_elems =
-  Format.fprintf fmt "%s" opening;
-  Format.fprintf fmt box;
+let pp_block opening delim closing fmt pp_elems =
+  Format.fprintf fmt opening;
   let open Fstream in
-  (match Lazy.force pp_elems with
-   | Nil -> ()
-   | Cons (pp_elem, pp_elems) ->
+  (match Fstream.decons pp_elems with
+   | None -> ()
+   | Some (pp_elem, pp_elems) ->
      pp_elem fmt;
-     Fstream.iter (fun pp -> Format.fprintf fmt "%s@ " delim; pp fmt)
+     Fstream.iter (fun pp -> Format.fprintf fmt delim; pp fmt)
        pp_elems);
-  Format.fprintf fmt "@]%s" closing
+  Format.fprintf fmt closing
 
 let pp_seq opening delim closing fmt pp_elems =
-  pp_block opening "@[<hov>" delim closing fmt pp_elems
+  pp_block
+    ("@[" ^^ opening)
+    (delim ^^ "@ ")
+    (closing ^^ "@]")
+    fmt pp_elems
 
 let pp_record pp_fields fmt x =
   let pp_elem (name, f) fmt = Format.fprintf fmt "%s = " name; f fmt x in
-  pp_block "{" "@[<hv>" ";" "}" fmt
+  pp_block "@[{@[<hv>" ";@ " "@]}@]" fmt
     (Fstream.map pp_elem (Fstream.of_list pp_fields))
 
 let const k _ = k
 
 let pp_list_ix pp_elem fmt xs =
-  pp_seq "[" ";" "]" fmt
+  pp_seq "[@[<hov>" ";" "@]]" fmt
     (Fstream.mapi (fun i x fmt -> pp_elem i fmt x) (Fstream.of_list xs))
 
 let pp_list pp_elem fmt xs = pp_list_ix (const pp_elem) fmt xs
@@ -179,7 +182,7 @@ let pp_array_like length get opening closing pp_elem fmt xs =
        (Fstream.enum 0 (length xs - 1)))
 
 let pp_array pp_elem fmt xs =
-  pp_array_like Array.length Array.get "[|" "|]" pp_elem fmt xs
+  pp_array_like Array.length Array.get "[|@[<hov>" "@]|]" pp_elem fmt xs
 
 let dump_array pp_elem = dump_of_pp (pp_array pp_elem)
 let show_array pp_elem = show_of_pp (pp_array pp_elem)
@@ -194,32 +197,44 @@ let pp_bigarray1 kind layout =
      safety!
      *)
   let kind =
-    if Obj.magic kind = Bigarray.float32 then "Bigarray.float32"
-    else if Obj.magic kind = Bigarray.float64 then "Bigarray.float64"
-    else if Obj.magic kind = Bigarray.complex32 then "Bigarray.complex32"
-    else if Obj.magic kind = Bigarray.complex64 then "Bigarray.complex64"
-    else if Obj.magic kind = Bigarray.int8_signed then "Bigarray.int8_signed"
+    if Obj.magic kind = Bigarray.float32 then
+      ("Bigarray.float32" : ('a,'b,'c) format)
+    else if Obj.magic kind = Bigarray.float64 then
+      ("Bigarray.float64" : ('a,'b,'c) format)
+    else if Obj.magic kind = Bigarray.complex32 then
+      ("Bigarray.complex32" : ('a,'b,'c) format)
+    else if Obj.magic kind = Bigarray.complex64 then
+      ("Bigarray.complex64" : ('a,'b,'c) format)
+    else if Obj.magic kind = Bigarray.int8_signed then
+      ("Bigarray.int8_signed" : ('a,'b,'c) format)
     else if Obj.magic kind = Bigarray.int8_unsigned then
-      "Bigarray.int8_unsigned"
-    else if Obj.magic kind = Bigarray.int16_signed then "Bigarray.int16_signed"
+      ("Bigarray.int8_unsigned" : ('a,'b,'c) format)
+    else if Obj.magic kind = Bigarray.int16_signed then
+      ("Bigarray.int16_signed" : ('a,'b,'c) format)
     else if Obj.magic kind = Bigarray.int16_unsigned then
-      "Bigarray.int16_unsigned"
-    else if Obj.magic kind = Bigarray.int then "Bigarray.int"
-    else if Obj.magic kind = Bigarray.int32 then "Bigarray.int32"
-    else if Obj.magic kind = Bigarray.int64 then "Bigarray.int64"
-    else if Obj.magic kind = Bigarray.nativeint then "Bigarray.nativeint"
-    else if Obj.magic kind = Bigarray.char then "Bigarray.char"
+      ("Bigarray.int16_unsigned" : ('a,'b,'c) format)
+    else if Obj.magic kind = Bigarray.int then
+      ("Bigarray.int" : ('a,'b,'c) format)
+    else if Obj.magic kind = Bigarray.int32 then
+      ("Bigarray.int32" : ('a,'b,'c) format)
+    else if Obj.magic kind = Bigarray.int64 then
+      ("Bigarray.int64" : ('a,'b,'c) format)
+    else if Obj.magic kind = Bigarray.nativeint then
+      ("Bigarray.nativeint" : ('a,'b,'c) format)
+    else if Obj.magic kind = Bigarray.char then
+      ("Bigarray.char" : ('a,'b,'c) format)
     else invalid_arg "Pprint.pp_bigarray1: Unrecognized bigarray kind"
   and layout =
-    if Obj.magic layout = Bigarray.c_layout then "Bigarray.c_layout"
+    if Obj.magic layout = Bigarray.c_layout then
+      ("Bigarray.c_layout" : ('a,'b,'c) format)
     else if Obj.magic layout = Bigarray.fortran_layout then
-      "Bigarray.fortran_layout"
+      ("Bigarray.fortran_layout" : ('a,'b,'c) format)
     else invalid_arg "Pprint.pp_bigarray1: Unrecognized bigarray layout"
   in
   fun pp_elem fmt xs ->
   if !read_write_invariance
   then pp_array_like Bigarray.Array1.dim Bigarray.Array1.get
-        (Printf.sprintf "(Bigarray.Array1.of_array %s %s [|" kind layout)
+        ("(Bigarray.Array1.of_array "^^kind^^" "^^layout^^" [|")
         "|])" pp_elem fmt xs
   else pp_array_like Bigarray.Array1.dim Bigarray.Array1.get
          "[|" "|]" pp_elem fmt xs
@@ -237,7 +252,8 @@ let prerr_bigarray1 kind layout pp_elem =
 
 let pp_tuple pp_fields fmt x =
   let pp_elem f fmt = f fmt x in
-  pp_seq "(" "," ")" fmt (Fstream.map pp_elem (Fstream.of_list pp_fields))
+  pp_seq "(@[<hv>" "," "@])" fmt
+    (Fstream.map pp_elem (Fstream.of_list pp_fields))
 let show_tuple pp_fields x = show_of_pp (pp_tuple pp_fields) x
 let dump_tuple pp_fields = dump_of_pp (pp_tuple pp_fields)
 let display_tuple pp_fields = display_of_pp (pp_tuple pp_fields)
