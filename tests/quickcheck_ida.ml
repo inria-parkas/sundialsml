@@ -228,27 +228,42 @@ let pp_ida_ident fmt ident =
 
 let pp_result, dump_result, show_result, display_result,
   print_result, prerr_result =
+  (* pp_opt_ctor is for constructors that should be dropped unless
+     read_write_invariance is on.  pp_with_ctor is for constructors that should
+     always be printed.  *)
+  let pp_opt_ctor ctor pp_arg arg_pos fmt arg =
+    pp_parens arg_pos (fun fmt arg ->
+      if !read_write_invariance then Format.fprintf fmt "%s " ctor;
+      pp_arg fmt arg) fmt arg
+  and pp_with_ctor ctor pp_arg arg_pos fmt arg =
+    pp_parens arg_pos (fun fmt arg ->
+      Format.fprintf fmt "%s " ctor;
+      pp_arg fmt arg) fmt arg
+  and pp_only_ctor ctor ctor_str fmt =
+    Format.pp_print_string fmt
+      (if !read_write_invariance then ctor
+       else ctor_str)
+  in
   let rec pre_pp_result arg_pos fmt = function
-    | Any -> Format.fprintf fmt "_"
-    | Unit -> Format.pp_print_string fmt (if !read_write_invariance
-                                          then "Unit"
-                                          else "()")
-    | Int i -> pp_parens (arg_pos && i < 0) pp_int fmt i
-    | Float f -> pp_parens (arg_pos && f < 0.) pp_float fmt f
-    | Type r -> pp_parens arg_pos (fun fmt r ->
-      pp_ida_ident fmt "Type ";
-      pre_pp_result true fmt r) fmt r
-    | Carray ca -> pp_carray fmt ca
-    | SolverResult Ida.Continue -> pp_ida_ident fmt "Continue"
-    | SolverResult Ida.RootsFound -> pp_ida_ident fmt "RootsFound"
-    | SolverResult Ida.StopTimeReached -> pp_ida_ident fmt "StopTimeReached"
-    | RootInfo roots -> pp_parens arg_pos (fun fmt roots ->
-      pp_string_verbatim fmt "RootInfo ";
-      pp_root_info fmt roots) fmt roots
-    | Aggr rs -> pp_parens arg_pos (fun fmt rs ->
-      pp_string_verbatim fmt "Aggr ";
-      pp_list (pre_pp_result false) fmt rs) fmt rs
-    | Exn exn -> pp_parens arg_pos (fun fmt exn ->
+    | Any -> pp_only_ctor "Any" "_" fmt
+    | Unit -> pp_only_ctor "Unit" "()" fmt
+    | Int i -> pp_opt_ctor "Int" (pp_parens (i < 0) pp_int) arg_pos fmt i
+    | Float f -> pp_opt_ctor "Float" (pp_parens (f < 0.) pp_float)
+                   arg_pos fmt f
+    | Type r -> pp_with_ctor "Type" (pre_pp_result true) arg_pos fmt r
+    | Carray ca -> pp_opt_ctor "Carray" pp_carray arg_pos fmt ca
+    | SolverResult Ida.Continue ->
+      pp_opt_ctor "SolverResult" pp_ida_ident arg_pos fmt "Continue"
+    | SolverResult Ida.RootsFound ->
+      pp_opt_ctor "SolverResult" pp_ida_ident arg_pos fmt "RootsFound"
+    | SolverResult Ida.StopTimeReached ->
+      pp_opt_ctor "SolverResult" pp_ida_ident arg_pos fmt "StopTimeReached"
+    | RootInfo roots -> pp_with_ctor "RootInfo" pp_root_info arg_pos fmt roots
+    | Aggr rs -> pp_with_ctor "Aggr" (pp_list (pre_pp_result false))
+                   arg_pos fmt rs
+    | Exn exn ->
+      (* Read-write invariance doesn't work for Exn.  *)
+      pp_parens arg_pos (fun fmt exn ->
       pp_string_verbatim fmt "exception ";
       pp_string_verbatim fmt (Printexc.to_string exn)) fmt exn
   in printers_of_pp (pre_pp_result false)
