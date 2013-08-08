@@ -153,6 +153,20 @@ let shrink_1pass_list shrink fixup seed xs =
   in
   go seed xs
 
+(** Drop an element of an array-like structure.  *)
+let array_like_drop_elem make length get set a i =
+  let n = length a in
+  assert (i < n);
+  let a' = make (n-1) (get a 0) in
+  for j = 1 to i-1 do
+    set a' j (get a j)
+  done;
+  for j = i+1 to n-1 do
+    set a' (j-1) (get a j)
+  done;
+  a'
+
+(** Generate an array-like data structure.  *)
 let gen_array_like make set gen_elem ?(size=gen_pos ()) () =
   let a = make size (gen_elem ()) in
   for i = 1 to size-1 do
@@ -160,7 +174,18 @@ let gen_array_like make set gen_elem ?(size=gen_pos ()) () =
   done;
   a
 
-let shrink_array_like make length get set shrink_elem ?(shrink_size=true) a =
+(** Shrink an array-like data structure by dropping elements.  Each array will
+    be returned with the index of the dropped element.  This function doesn't
+    match the usual signature ['a -> 'a Fstream.t] for shrinkers, so it's not
+    given a [shrink_] prefix.  *)
+let shorten_array_like make length get set a =
+  Fstream.map
+    (fun i -> (i, array_like_drop_elem make length get set a i))
+    (Fstream.enum 0 (length a - 1))
+
+(** Shrink an array-like data structure by shrinking its elements.  The
+    returned arrays will have the same length as the input array.  *)
+let shrink_array_like_elem make length get set shrink_elem a =
   let copy a =
     let n = length a in
     if n = 0 then a
@@ -170,32 +195,40 @@ let shrink_array_like make length get set shrink_elem ?(shrink_size=true) a =
         set a' i (get a i)
       done;
       a'
-  and drop a i =
-    let n = length a in
-    assert (i < n);
-    let a' = make (n-1) (get a 0) in
-    for j = 1 to i-1 do
-      set a' j (get a j)
-    done;
-    for j = i+1 to n-1 do
-      set a' (j-1) (get a j)
-    done;
-    a'
   in
   let shrink_one a i =
     Fstream.map (fun x -> let a = copy a in set a i x; a)
       (shrink_elem (get a i))
   in
-  let indices = Fstream.enum 0 (length a - 1) in
+  Fstream.concat (Fstream.map (shrink_one a) (Fstream.enum 0 (length a - 1)))
+
+let shrink_array_like make length get set shrink_elem ?(shrink_size=true) a =
   Fstream.guard shrink_size
-    (Fstream.map (drop a) indices)
-  @@ Fstream.concat (Fstream.map (shrink_one a) indices)
+    (Fstream.map snd (shorten_array_like make length get set a))
+  @@ shrink_array_like_elem make length get set shrink_elem a
+
+(** Like [shrink_array_like ~shrink_size:true], but returns the index of the
+    element that was dropped.  For arrays obtained by shrinking an element
+    without shortening the array, the index will be [-1].  *)
+let shorten_shrink_array_like make length get set shrink_elem a =
+  shorten_array_like make length get set a
+  @@ Fstream.map (fun x -> (-1, x))
+       (shrink_array_like_elem make length get set shrink_elem a)
 
 let gen_array gen_elem =
   gen_array_like Array.make Array.set gen_elem
 
-let shrink_array shrink_elem a =
-  Fstream.map Array.of_list (shrink_list shrink_elem (Array.to_list a))
+let shrink_array shrink_elem =
+  shrink_array_like Array.make Array.length Array.get Array.set shrink_elem
+
+let shorten_array a =
+  shorten_array_like Array.make Array.length Array.get Array.set a
+
+let shorten_shrink_array a =
+  shorten_shrink_array_like Array.make Array.length Array.get Array.set a
+
+let array_drop_elem a i =
+  array_like_drop_elem Array.make Array.length Array.get Array.set a i
 
 let gen_bigarray1 kind layout gen_elem =
   let make n x =

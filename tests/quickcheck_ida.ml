@@ -15,6 +15,7 @@ type session_model =
     mutable last_query_time : float;
     mutable last_tret : float;
     mutable roots : (float * Ida.Roots.root_event) array;
+    mutable root_dirs : Ida.root_direction array;
     mutable root_info : Roots.t;
     mutable root_info_valid : bool;
     vec : Carray.t;
@@ -25,7 +26,8 @@ type session_model =
   }
 and script = session_model * cmd list
 and cmd = SolveNormal of float
-          | GetRootInfo
+        | GetRootInfo
+        | SetRootDirection of Ida.root_direction array
 and result = Unit | Int of int | Float of float
               | Any
               | Type of result
@@ -81,6 +83,7 @@ let gen_model () =
   let vec0, vec'0  = init_vec_for neqs t0 resfn in
   let neqs  = Carray.length vec0 in
   let roots = gen_roots t0 () in
+  let num_roots = Array.length roots in
   {
     resfn = resfn;
     solver = gen_solver false neqs;
@@ -89,8 +92,9 @@ let gen_model () =
     last_tret = t0;
     consistent = true;
     roots = roots;
-    root_info = Roots.create (Array.length roots);
+    root_info = Roots.create num_roots;
     root_info_valid = false;
+    root_dirs = Array.make num_roots RootDirs.IncreasingOrDecreasing;
     vec   = Carray.of_carray vec0;
     vec'  = Carray.of_carray vec'0;
     t0 = t0;
@@ -108,6 +112,7 @@ let copy_model m =
     last_query_time = m.last_query_time;
     last_tret = m.last_tret;
     roots = Array.copy m.roots;
+    root_dirs = Array.copy m.root_dirs;
     root_info = Roots.copy m.root_info;
     root_info_valid = m.root_info_valid;
     consistent = m.consistent;
@@ -125,7 +130,12 @@ let gen_cmd =
   let cases =
     [| (fun model -> let t = gen_query_time model.last_query_time () in
                    ({ model with last_query_time = t }, SolveNormal t));
-       (fun model -> (model, GetRootInfo)) |]
+       (fun model -> (model, GetRootInfo));
+       (fun model ->
+          let dirs = gen_array ~size:(Array.length model.roots)
+                       gen_root_direction ()
+          in (model, SetRootDirection dirs))
+    |]
   in
   fun model -> gen_choice cases model
 
@@ -135,12 +145,20 @@ let shrink_cmd model = function
       (fun t -> ({ model with last_query_time = t}, SolveNormal t))
       (shrink_query_time model.last_query_time t)
   | GetRootInfo -> Fstream.nil
+  | SetRootDirection dirs ->
+    assert (Array.length dirs = Array.length model.roots);
+    Fstream.map
+      (fun dirs -> (model, SetRootDirection dirs))
+      (shrink_array shrink_root_direction ~shrink_size:false dirs)
 
 let fixup_cmd model = function
   | SolveNormal t ->
     let t = max t model.last_query_time in
     ({ model with last_query_time = t }, SolveNormal t)
   | GetRootInfo -> (model, GetRootInfo)
+  | SetRootDirection dirs as cmd ->
+    assert (Array.length dirs = Array.length model.roots);
+    (model, cmd)
 
 let gen_cmds model =
   gen_1pass_list gen_cmd model
@@ -152,17 +170,27 @@ let shrink_model model cmds =
   let fixup_cmds new_model cmds =
     (new_model, fixup_list fixup_cmd new_model cmds)
   in
-  let update_roots model cmds roots =
+  let update_roots model cmds (i, roots) =
     let root_info = Roots.create (Array.length roots) in
-    fixup_cmds { model with roots = roots; root_info = root_info } cmds
+    let model = { model with roots = roots; root_info = root_info } in
+    let fixup_cmd_with_drop model cmd =
+      match cmd with
+      | SolveNormal _ | GetRootInfo -> fixup_cmd model cmd
+      | SetRootDirection root_dirs ->
+        fixup_cmd model (SetRootDirection (array_drop_elem root_dirs i))
+    in
+    (model,
+     fixup_list (if i < 0 then fixup_cmd else fixup_cmd_with_drop) model cmds)
   in
   Fstream.map (fun t -> fixup_cmds { model with last_tret = t; t0 = t; } cmds)
     (shrink_t0 model.t0)
-  @@ Fstream.map (update_roots model cmds)
-    (shrink_array
-       (shrink_pair (shrink_root_time model.t0)
-                    (shrink_choice [| Roots.Rising; Roots.Falling |]))
-       model.roots)
+  @@ Fstream.map
+      (update_roots model cmds)
+      (shorten_shrink_array
+         (shrink_pair
+            (shrink_root_time model.t0)
+            (shrink_choice [| Roots.Rising; Roots.Falling |]))
+         model.roots)
 
 (* Scripts (model + command list) *)
 
@@ -195,6 +223,7 @@ let shrink_neqs model cmds =
       {
         resfn = copy_resfn_drop i model.resfn;
         roots = Array.copy model.roots;
+        root_dirs = Array.copy model.root_dirs;
         root_info = Roots.copy model.root_info;
         root_info_valid = model.root_info_valid;
         solving = model.solving;
@@ -319,7 +348,11 @@ let pp_cmd, dump_cmd, show_cmd, display_cmd, print_cmd, prerr_cmd =
     if f < 0. then Format.fprintf fmt "(";
     pp_float fmt f;
     if f < 0. then Format.fprintf fmt ")"
-  | GetRootInfo -> Format.fprintf fmt "GetRootInfo")
+  | GetRootInfo -> Format.fprintf fmt "GetRootInfo"
+  | SetRootDirection dirs ->
+    Format.fprintf fmt "SetRootDirection ";
+    pp_array pp_root_direction fmt dirs
+    )
 
 let pp_cmds, dump_cmds, show_cmds, display_cmds, print_cmds, prerr_cmds =
   printers_of_pp (fun fmt cmds ->
@@ -489,9 +522,18 @@ let exact_init model =
     model.consistent <- true
 
 (* Find the smallest root(s) in the range (t1..t2].  *)
-let find_roots roots t1 t2 =
+let find_roots roots root_dirs t1 t2 =
   let n = Array.length roots in
   let pos i = fst roots.(i) in
+  let valid i =
+    match root_dirs.(i), snd roots.(i) with
+    | RootDirs.IncreasingOrDecreasing, _ -> true
+    | RootDirs.Increasing, Roots.Rising -> true
+    | RootDirs.Increasing, Roots.Falling -> false
+    | RootDirs.Decreasing, Roots.Rising -> false
+    | RootDirs.Decreasing, Roots.Falling -> true
+    | _, Roots.NoRoot -> assert false
+  in
   if n = 0 then []
   else
     let record  = ref t2
@@ -501,11 +543,12 @@ let find_roots roots t1 t2 =
       if t1 < pos i && pos i <= !record
       then
         begin
-          if pos i < !record then
-            (record := pos i;
-             holders := [i])
-          else
-            holders := i::!holders
+          if valid i then
+            (if pos i < !record then
+               (record := pos i;
+                holders := [i])
+             else
+               holders := i::!holders)
         end
     done;
     !holders
@@ -529,7 +572,7 @@ let model_cmd model = function
           then model.last_tret -. time_epsilon
           else model.last_tret
         in
-        match find_roots model.roots tstart t with
+        match find_roots model.roots model.root_dirs tstart t with
         | [] ->
           (* Undocumented behavior (sundials 2.5.0): a non-root return from
              solve_normal resets root info to undefined.  *)
@@ -560,6 +603,10 @@ let model_cmd model = function
     else
       (* FIXME: this should be Exn Ida.IllInput or something like that.  *)
       Type (RootInfo (Roots.copy model.root_info))
+  | SetRootDirection dirs ->
+    if Array.length model.roots = 0 then Exn Ida.IllInput
+    else (model.root_dirs <- dirs;
+          Unit)
 
 (* Run a list of commands on the model.  *)
 let model_run (model, cmds) =
