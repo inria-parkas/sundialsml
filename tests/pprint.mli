@@ -268,12 +268,33 @@ val pp_seq :
   -> (Format.formatter -> unit) Fstream.t
   -> unit
 
+(** Pretty-prints a list in a hov-box, i.e. output as many elements as fits on
+    each line, just as you would fill a line with words in ordinary English
+    writing.  *)
 val pp_list : 'a pp -> 'a list pp
 val dump_list : 'a pp -> 'a list dump
 val show_list : 'a pp -> 'a list show
 val display_list : 'a pp -> 'a list display
 val print_list : 'a pp -> 'a list print
 val prerr_list : 'a pp -> 'a list prerr
+
+(** Like {!pp_list}, but uses a v-box, i.e. exactly one element is listed per
+    line.  *)
+val pp_vlist : 'a pp -> 'a list pp
+val dump_vlist : 'a pp -> 'a list dump
+val show_vlist : 'a pp -> 'a list show
+val display_vlist : 'a pp -> 'a list display
+val print_vlist : 'a pp -> 'a list print
+val prerr_vlist : 'a pp -> 'a list prerr
+
+(** Like {!pp_list}, but uses an hv-box, i.e. either print everything in one
+    line if that's possible, or else print each element in a separate line.  *)
+val pp_hvlist : 'a pp -> 'a list pp
+val dump_hvlist : 'a pp -> 'a list dump
+val show_hvlist : 'a pp -> 'a list show
+val display_hvlist : 'a pp -> 'a list display
+val print_hvlist : 'a pp -> 'a list print
+val prerr_hvlist : 'a pp -> 'a list prerr
 
 (** {!pp_seq} specialized to array-like data types.  Should be invoked like
     [pp_array_like length get opening closing] where [length], [get] should

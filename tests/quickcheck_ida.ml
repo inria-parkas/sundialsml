@@ -313,7 +313,7 @@ let pp_result, dump_result, show_result, display_result,
 let pp_results, dump_results, show_results, display_results,
   print_results, prerr_results =
   printers_of_pp (fun fmt rs ->
-    if !read_write_invariance then pp_list pp_result fmt rs
+    if !read_write_invariance then pp_vlist pp_result fmt rs
     else
       (* List one result per line, with step numbers starting from 1.  However,
          the first result is the result of init and this will be tagged as

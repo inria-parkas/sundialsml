@@ -145,6 +145,18 @@ let pp_list_ix pp_elem fmt xs =
 
 let pp_list pp_elem fmt xs = pp_list_ix (const pp_elem) fmt xs
 
+let pp_hvlist_ix pp_elem fmt xs =
+  pp_seq "[@[<hv>" ";" "@]]" fmt
+    (Fstream.mapi (fun i x fmt -> pp_elem i fmt x) (Fstream.of_list xs))
+
+let pp_hvlist pp_elem fmt xs = pp_hvlist_ix (const pp_elem) fmt xs
+
+let pp_vlist_ix pp_elem fmt xs =
+  pp_seq "[@[<v>" ";" "@]]" fmt
+    (Fstream.mapi (fun i x fmt -> pp_elem i fmt x) (Fstream.of_list xs))
+
+let pp_vlist pp_elem fmt xs = pp_hvlist_ix (const pp_elem) fmt xs
+
 (* Darn value restriction.  *)
 let dump_list pp_elem = dump_of_pp (pp_list pp_elem)
 let show_list pp_elem = show_of_pp (pp_list pp_elem)
@@ -152,12 +164,35 @@ let display_list pp_elem = display_of_pp (pp_list pp_elem)
 let print_list pp_elem = print_of_pp (pp_list pp_elem)
 let prerr_list pp_elem = prerr_of_pp (pp_list pp_elem)
 
-(* Darn value restriction.  *)
 let dump_list_ix pp_elem = dump_of_pp (pp_list_ix pp_elem)
 let show_list_ix pp_elem = show_of_pp (pp_list_ix pp_elem)
 let display_list_ix pp_elem = display_of_pp (pp_list_ix pp_elem)
 let print_list_ix pp_elem = print_of_pp (pp_list_ix pp_elem)
 let prerr_list_ix pp_elem = prerr_of_pp (pp_list_ix pp_elem)
+
+let dump_hvlist pp_elem = dump_of_pp (pp_hvlist pp_elem)
+let show_hvlist pp_elem = show_of_pp (pp_hvlist pp_elem)
+let display_hvlist pp_elem = display_of_pp (pp_hvlist pp_elem)
+let print_hvlist pp_elem = print_of_pp (pp_hvlist pp_elem)
+let prerr_hvlist pp_elem = prerr_of_pp (pp_hvlist pp_elem)
+
+let dump_hvlist_ix pp_elem = dump_of_pp (pp_hvlist_ix pp_elem)
+let show_hvlist_ix pp_elem = show_of_pp (pp_hvlist_ix pp_elem)
+let display_hvlist_ix pp_elem = display_of_pp (pp_hvlist_ix pp_elem)
+let print_hvlist_ix pp_elem = print_of_pp (pp_hvlist_ix pp_elem)
+let prerr_hvlist_ix pp_elem = prerr_of_pp (pp_hvlist_ix pp_elem)
+
+let dump_vlist pp_elem = dump_of_pp (pp_vlist pp_elem)
+let show_vlist pp_elem = show_of_pp (pp_vlist pp_elem)
+let display_vlist pp_elem = display_of_pp (pp_vlist pp_elem)
+let print_vlist pp_elem = print_of_pp (pp_vlist pp_elem)
+let prerr_vlist pp_elem = prerr_of_pp (pp_vlist pp_elem)
+
+let dump_vlist_ix pp_elem = dump_of_pp (pp_vlist_ix pp_elem)
+let show_vlist_ix pp_elem = show_of_pp (pp_vlist_ix pp_elem)
+let display_vlist_ix pp_elem = display_of_pp (pp_vlist_ix pp_elem)
+let print_vlist_ix pp_elem = print_of_pp (pp_vlist_ix pp_elem)
+let prerr_vlist_ix pp_elem = prerr_of_pp (pp_vlist_ix pp_elem)
 
 let pp_array_like length get opening closing pp_elem fmt xs =
   pp_seq opening ";" closing fmt
