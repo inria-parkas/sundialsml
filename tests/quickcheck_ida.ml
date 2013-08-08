@@ -269,7 +269,25 @@ let pp_result, dump_result, show_result, display_result,
   in printers_of_pp (pre_pp_result false)
 let pp_results, dump_results, show_results, display_results,
   print_results, prerr_results =
-  printers_of_pp (pp_list pp_result)
+  printers_of_pp (fun fmt rs ->
+    if !read_write_invariance then pp_list pp_result fmt rs
+    else
+      (* List one result per line, with step numbers starting from 1.  However,
+         the first result is the result of init and this will be tagged as
+         such.  So the steps are numbered 1 to (length rs - 1). *)
+      let nsteps = List.length rs - 1 in
+      let step_width = String.length (string_of_int (nsteps-1)) in
+      let pad_show n = let s = string_of_int n in
+                       String.make (step_width - String.length s) ' ' ^ s
+      in
+      pp_seq "@[<v>" ";" "@]" fmt
+        (Fstream.mapi (fun i r fmt ->
+          if i = 0 then
+            Format.fprintf fmt "init:%s  " (String.make step_width ' ')
+          else
+            Format.fprintf fmt "step %s: " (pad_show i);
+          pp_result fmt r)
+           (Fstream.of_list rs)))
 
 let pp_resfn_type, dump_resfn_type, show_resfn_type, display_resfn_type,
   print_resfn_type, prerr_resfn_type
@@ -293,15 +311,15 @@ let pp_cmds, dump_cmds, show_cmds, display_cmds, print_cmds, prerr_cmds =
   printers_of_pp (fun fmt cmds ->
     if !read_write_invariance then pp_list pp_cmd fmt cmds
     else
-      (* List one command per line, with step numbers starting from 0.  *)
+      (* List one command per line, with step numbers starting from 1.  *)
       let nsteps = List.length cmds in
-      let step_width = String.length (string_of_int (nsteps - 1)) in
+      let step_width = String.length (string_of_int nsteps) in
       let pad_show n = let s = string_of_int n in
                        String.make (step_width - String.length s) ' ' ^ s
       in
-      pp_seq "[" ";" "]" fmt
+      pp_seq "@[<v>" ";" "@]" fmt
         (Fstream.mapi (fun i cmd fmt ->
-          Format.fprintf fmt "Step %s: " (pad_show i);
+          Format.fprintf fmt "Step %s: " (pad_show (i+1));
           pp_cmd fmt cmd)
            (Fstream.of_list cmds)))
 
@@ -338,11 +356,19 @@ let pp_script, dump_script, show_script, display_script,
     print_script, prerr_script
       =
   printers_of_pp (fun fmt (model, cmds) ->
-    Format.fprintf fmt "@[<hov 2>let model =@ ";
+    Format.fprintf fmt "@[<hov 2>%smodel =@ "
+      (if !read_write_invariance
+       then "let "
+       else "");
     pp_model fmt model;
-    Format.fprintf fmt "@]@\n@[<hov 2>let cmds =@ ";
+    Format.fprintf fmt "@]@\n@[<hov 2>%scmds =@ "
+      (if !read_write_invariance
+       then "let "
+       else "");
     pp_cmds fmt cmds;
-    Format.fprintf fmt "@]@\n@[<hov 2>let script =@ (model, cmds)@]"
+    if !read_write_invariance
+    then Format.fprintf fmt "@]@\n@[<hov 2>let script =@ (model, cmds)@]"
+    else Format.fprintf fmt "@]"
   )
 
 (* Check if r1 is a valid approximation of r2.  *)
@@ -579,10 +605,11 @@ let quickcheck_ida ml_file_of_script max_tests =
         (if i = 0 then "init" else ("step " ^ string_of_int i))
         (show_result e)
         (show_result a));
-    Format.pp_print_string err "\n[Test Case]\n";
+    Format.fprintf err "\n[Test Case]@\n";
     pp_script err script;
-    Format.pp_print_string err "\n\n[Program Output]\n";
     Format.pp_print_flush err ();
+    prerr_string "\n\n[Program Output]\n";
+    flush stderr;
     (* The test file contains the last script tried, not the last script that
        failed.  We need to reinstate the failing script before running it again
        to retrieve its output.  *)
@@ -602,7 +629,7 @@ let quickcheck_ida ml_file_of_script max_tests =
       with End_of_file -> ()
     in
     flush stderr;
-    Format.pp_print_string err "\n\n[Expected Output]\n";
+    Format.fprintf err "@\n[Expected Output]@\n";
     pp_results err (Fstream.to_list (model_run script));
     Format.pp_print_flush err ();
     result

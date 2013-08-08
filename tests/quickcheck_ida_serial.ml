@@ -78,11 +78,13 @@ let expr_of_cmd last_query_time = function
 let expr_of_cmds last_query_time = function
   | [] -> <:expr<()>>
   | cmds ->
-    let sandbox exp = <:expr<print_result (lazy $exp$)>> in
+    let sandbox exp = <:expr<output (lazy $exp$)>> in
     expr_seq (List.map (fun cmd -> sandbox (expr_of_cmd last_query_time cmd))
                 cmds)
 
 let ml_of_script (model, cmds) =
+  let nsteps = List.length cmds in
+  let step_width = String.length (string_of_int nsteps) in
   let last_query_time = ref model.t0 in
   <:str_item<
     module Ida = Ida_serial
@@ -96,12 +98,29 @@ let ml_of_script (model, cmds) =
       | Invalid_argument _ -> Invalid_argument ""
       | exn -> exn
     let marshal_results = ref false
-    let print_result thunk =
-      (if !marshal_results
-       then (fun r -> Marshal.to_channel stdout r [])
-       else (fun r -> Printf.printf "%s\\n" (show_result r)))
-      (try (Lazy.force thunk)
-       with exn -> Exn (nub_exn exn))
+    let step = ref 0
+    let pad_show n = let s = string_of_int n in
+                     String.make ($`int:step_width$ - String.length s) ' ' ^ s
+    let output thunk =
+      let r = try Lazy.force thunk with exn -> Exn (nub_exn exn) in
+      if !marshal_results
+      then Marshal.to_channel stdout r []
+      else
+        begin
+          (match !step, !read_write_invariance with
+          | 0, false ->
+            print_string_verbatim
+              ("init:  " ^ String.make $`int:step_width$ ' ');
+            print_result r
+          | 0, true -> print_result r
+          | s, false ->
+            Format.printf "@,%s" ("step " ^ pad_show s ^ ": ");
+            print_result r
+          | s, true ->
+            Format.printf ";@,";
+            print_result r);
+          step := !step + 1
+        end
     let vec  = $expr_of_carray model.vec0$
     let vec' = $expr_of_carray model.vec'0$
     let session = Ida.init_at_time
@@ -111,9 +130,15 @@ let ml_of_script (model, cmds) =
                   $`flo:model.t0$
                   vec vec'
     let test () =
-      print_result (lazy (Aggr [Float (Ida.get_current_time session);
-                                carray vec; carray vec']));
-      $expr_of_cmds last_query_time cmds$
+      if not !marshal_results then
+        (if !read_write_invariance then Format.printf "@[[@[<v>"
+         else Format.printf "@[<v>");
+      output (lazy (Aggr [Float (Ida.get_current_time session);
+                          carray vec; carray vec']));
+      $expr_of_cmds last_query_time cmds$;
+      if not !marshal_results then
+        (if !read_write_invariance then Format.printf "@]]@."
+         else Format.printf "@.")
     let _ =
       Arg.parse
         [("--marshal-results", Arg.Set marshal_results,

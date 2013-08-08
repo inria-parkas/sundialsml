@@ -300,9 +300,9 @@ let minimize ?pp_input ?(pp_formatter=Format.err_formatter) shrink prop x res =
     let failure x =
       let res = test_in_sandbox prop x in
       if trace then
-        (Format.fprintf pp_formatter "Trying: ";
+        (Format.fprintf pp_formatter "@[<2>Trying:@\n";
          pp_input pp_formatter x;
-         Format.fprintf pp_formatter "\n -> %s\n"
+         Format.fprintf pp_formatter "@]@\n -> %s@."
            (if isOK res then "triggers bug"
             else "not a counterexample"));
       if res = OK then None
@@ -352,9 +352,9 @@ let quickcheck gen shrink ?pp_input ?(pp_formatter=Format.err_formatter)
     in
     let check_for_bug x =
       if trace then
-        (Format.fprintf pp_formatter "Testing ";
+        (Format.fprintf pp_formatter "@[<2>Test Case %d:@\n" (num_passed+1);
          pp_input pp_formatter x;
-         Format.pp_print_newline pp_formatter ());
+         Format.fprintf pp_formatter "@.");
       let res = test_in_sandbox prop x in
       match res with
       | OK -> res
@@ -373,7 +373,9 @@ let quickcheck gen shrink ?pp_input ?(pp_formatter=Format.err_formatter)
     if num_passed < max_tests then
       let x = gen () in
       match check_for_bug x with
-      | OK -> print_char '*'; flush stdout; test (num_passed + 1)
+      | OK -> if (not trace) then print_char '*';
+              flush stdout;
+              test (num_passed + 1)
       | res -> Some (minimize x res)
     else
       (Printf.printf "\n+++ OK, passed %d tests." max_tests;
