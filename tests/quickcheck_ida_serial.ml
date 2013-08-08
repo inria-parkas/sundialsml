@@ -83,6 +83,7 @@ let expr_of_cmd = function
     <:expr<Ida.set_root_direction session
            $expr_array (List.map reify (Array.to_list dirs))$;
            Unit>>
+
 let expr_of_cmds = function
   | [] -> <:expr<()>>
   | cmds ->
@@ -155,14 +156,20 @@ let ml_of_script (model, cmds) =
       test ()
    >>
 
+let randseed =
+  Random.self_init ();
+  ref (Random.int ((1 lsl 30) - 1))
+
 let ml_file_of_script script src_file =
   Camlp4.PreCast.Printers.OCaml.print_implem ~output_file:src_file
-    (ml_of_script script)
+    (ml_of_script script);
+  let chan = open_out_gen [Open_text; Open_append; Open_wronly] 0 src_file in
+  Printf.fprintf chan "\n(* generated with random seed %d, test case %d *)\n"
+    !randseed !test_case_number;
+  close_out chan
 
 ;;
 let _ =
-  let _ = Random.self_init () in
-  let randseed = ref (Random.int ((1 lsl 30) - 1)) in
   let max_tests = ref 50 in
   let options = [("--exec-file", Arg.Set_string test_exec_file,
                   "test executable name \

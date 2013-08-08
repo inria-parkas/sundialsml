@@ -355,11 +355,14 @@ let minimize ?pp_input ?(pp_formatter=Format.err_formatter) shrink prop x res =
     | Some (x, reason) -> go (ct+1) x reason
   in go 0 x res
 
+let test_case_number = ref 0
+
 (** Returns an input that fails the property with the return value of the
     property, or lack thereof.  If the optional argument [pp_input] is
     specified, dumps each test case before trying it.  [pp_formatter] is where
-    this output goes; all other outputs are sent directly to stdout and
-    stdin.  *)
+    this output goes; all other outputs are sent directly to stdout and stdin.
+    All callbacks can refer to the variable [test_case_number] to get a serial
+    number for the test case it is called upon.  *)
 let quickcheck gen shrink ?pp_input ?(pp_formatter=Format.err_formatter)
     prop max_tests =
   let old_size = !size in
@@ -412,6 +415,7 @@ let quickcheck gen shrink ?pp_input ?(pp_formatter=Format.err_formatter)
         flush stderr;
         res
     in
+    test_case_number := num_passed + 1;
     if num_passed < max_tests then
       let x = gen () in
       match check_for_bug x with
