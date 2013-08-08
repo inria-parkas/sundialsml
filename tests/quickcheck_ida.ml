@@ -166,13 +166,23 @@ let gen_cmds model =
 let shrink_cmds model =
   shrink_1pass_list shrink_cmd fixup_cmd model
 
+(* Note that although the interpreter mutates the model record, the entry point
+   of the interpreter creates a deep copy each time, so it's OK for the shrunk
+   model to share structures with each other and with the original model.  *)
 let shrink_model model cmds =
   let fixup_cmds new_model cmds =
     (new_model, fixup_list fixup_cmd new_model cmds)
   in
   let update_roots model cmds (i, roots) =
-    let root_info = Roots.create (Array.length roots) in
-    let model = { model with roots = roots; root_info = root_info } in
+    let n = Array.length roots in
+    let model = { model with
+                  roots = roots;
+                  root_info = if i < 0 then model.root_info
+                              else Roots.create n;
+                  root_dirs = if i < 0 then model.root_dirs
+                              else Array.make n RootDirs.IncreasingOrDecreasing
+                }
+    in
     let fixup_cmd_with_drop model cmd =
       match cmd with
       | SolveNormal _ | GetRootInfo -> fixup_cmd model cmd
