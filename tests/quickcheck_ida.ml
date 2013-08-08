@@ -181,9 +181,11 @@ let shrink_model model cmds =
     in
     (model,
      fixup_list (if i < 0 then fixup_cmd else fixup_cmd_with_drop) model cmds)
+  and update_time model cmds t =
+    let model = { model with last_query_time = t; last_tret = t; t0 = t; } in
+    fixup_cmds model cmds
   in
-  Fstream.map (fun t -> fixup_cmds { model with last_tret = t; t0 = t; } cmds)
-    (shrink_t0 model.t0)
+  Fstream.map (update_time model cmds) (shrink_t0 model.t0)
   @@ Fstream.map
       (update_roots model cmds)
       (shorten_shrink_array
