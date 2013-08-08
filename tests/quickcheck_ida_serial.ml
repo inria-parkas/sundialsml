@@ -189,6 +189,7 @@ let _ =
     "randomly generate programs using IDA and check if they work as expected";
 
   Printf.printf "random generator seed value = %d\n" !randseed;
+  flush stdout;
   Random.init !randseed;
   size := 1;
   quickcheck_ida ml_file_of_script !max_tests
