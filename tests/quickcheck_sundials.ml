@@ -127,7 +127,7 @@ let pp_root_direction, dump_root_direction, show_root_direction,
   display_root_direction, print_root_direction, prerr_root_direction
     =
   printers_of_show (fun x ->
-    (if !read_write_invariance then "Roots." else "")
+    (if !read_write_invariance then "RootDirs." else "")
     ^ RootDirs.string_of_root_direction x)
 
 let pp_root_dirs, dump_root_dirs, show_root_dirs, display_root_dirs

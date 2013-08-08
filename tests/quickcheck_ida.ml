@@ -391,6 +391,8 @@ let pp_model, dump_model, show_model, display_model,
         "last_tret", (fun fmt m -> pp_float fmt m.last_tret);
         "solving", (fun fmt m -> pp_bool fmt m.solving);
         "consistent", (fun fmt m -> pp_bool fmt m.consistent);
+        "root_dirs", (fun fmt m -> pp_array pp_root_direction fmt m.root_dirs);
+        "root_info_valid", (fun fmt m -> pp_bool fmt m.root_info_valid);
        ]
      in
      let rw_invar = pp_record (descriptive_fields @ dynamic_fields)
