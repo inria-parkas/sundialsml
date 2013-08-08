@@ -273,9 +273,13 @@ let uniq_array a =
   Array.sub b 0 !bsize
 
 let gen_pair gen_x gen_y = (gen_x (), gen_y ())
+
 let shrink_pair shrink_x shrink_y (x,y) =
   Fstream.map (fun x -> (x,y)) (shrink_x x)
   @@ Fstream.map (fun y -> (x,y)) (shrink_y y)
+
+let shrink_fst shrink_x (x,y) = Fstream.map (fun x -> (x,y)) (shrink_x x)
+let shrink_snd shrink_y (x,y) = Fstream.map (fun y -> (x,y)) (shrink_y y)
 
 let shrink_fixed_size_list shrink_elem = function
   | [] -> Fstream.of_list []
