@@ -336,6 +336,30 @@ val display_triple : 'a pp -> 'b pp -> 'c pp -> ('a * 'b * 'c) display
 val print_triple : 'a pp -> 'b pp -> 'c pp -> ('a * 'b * 'c) print
 val prerr_triple : 'a pp -> 'b pp -> 'c pp -> ('a * 'b * 'c) prerr
 
+(** [pp_preproc f pp] creates a pretty-printer that pre-processes the input
+    with the function [f] before passing it to [pp].  For example,
+    [pp_preproc fst pp] pretty-prints only the [fst] of its argument.  *)
+val pp_preproc : ('a -> 'b) -> 'b pp -> 'a pp
+val show_preproc : ('a -> 'b) -> 'b pp -> 'a show
+val dump_preproc : ('a -> 'b) -> 'b pp -> 'a dump
+val display_preproc : ('a -> 'b) -> 'b pp -> 'a display
+val print_preproc : ('a -> 'b) -> 'b pp -> 'a print
+val prerr_preproc : ('a -> 'b) -> 'b pp -> 'a prerr
+
+val pp_fst : 'a pp -> ('a * 'b) pp
+val show_fst : 'a pp -> ('a * 'b) show
+val dump_fst : 'a pp -> ('a * 'b) dump
+val display_fst : 'a pp -> ('a * 'b) display
+val print_fst : 'a pp -> ('a * 'b) print
+val prerr_fst : 'a pp -> ('a * 'b) prerr
+
+val pp_snd : 'b pp -> ('a * 'b) pp
+val show_snd : 'b pp -> ('a * 'b) show
+val dump_snd : 'b pp -> ('a * 'b) dump
+val display_snd : 'b pp -> ('a * 'b) display
+val print_snd : 'b pp -> ('a * 'b) print
+val prerr_snd : 'b pp -> ('a * 'b) prerr
+
 module PrettyPrim : sig
   val print_string : string print
   val prerr_string : string prerr

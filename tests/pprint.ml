@@ -252,6 +252,13 @@ let display_pair pp1 pp2 = display_of_pp (pp_pair pp1 pp2)
 let print_pair pp1 pp2 = print_of_pp (pp_pair pp1 pp2)
 let prerr_pair pp1 pp2 = prerr_of_pp (pp_pair pp1 pp2)
 
+let pp_preproc f pp fmt x = pp fmt (f x)
+let show_preproc f pp = show_of_pp (pp_preproc f pp)
+let dump_preproc f pp = dump_of_pp (pp_preproc f pp)
+let display_preproc f pp = display_of_pp (pp_preproc f pp)
+let print_preproc f pp = print_of_pp (pp_preproc f pp)
+let prerr_preproc f pp = prerr_of_pp (pp_preproc f pp)
+
 let pp_triple pp1 pp2 pp3 =
   pp_tuple [(fun fmt (x,y,z) -> pp1 fmt x);
             (fun fmt (x,y,z) -> pp2 fmt y);
@@ -261,6 +268,20 @@ let dump_triple pp1 pp2 pp3 = dump_of_pp (pp_triple pp1 pp2 pp3)
 let display_triple pp1 pp2 pp3 = display_of_pp (pp_triple pp1 pp2 pp3)
 let print_triple pp1 pp2 pp3 = print_of_pp (pp_triple pp1 pp2 pp3)
 let prerr_triple pp1 pp2 pp3 = prerr_of_pp (pp_triple pp1 pp2 pp3)
+
+let pp_fst pp fmt x = pp fmt (fst x)
+let show_fst pp = show_of_pp (pp_fst pp)
+let dump_fst pp = dump_of_pp (pp_fst pp)
+let display_fst pp = display_of_pp (pp_fst pp)
+let print_fst pp = print_of_pp (pp_fst pp)
+let prerr_fst pp = prerr_of_pp (pp_fst pp)
+
+let pp_snd pp fmt x = pp fmt (snd x)
+let show_snd pp = show_of_pp (pp_snd pp)
+let dump_snd pp = dump_of_pp (pp_snd pp)
+let display_snd pp = display_of_pp (pp_snd pp)
+let print_snd pp = print_of_pp (pp_snd pp)
+let prerr_snd pp = prerr_of_pp (pp_snd pp)
 
 module PrettyPrim = struct
   let print_string = print_string
