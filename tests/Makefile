@@ -9,8 +9,10 @@ test-quickcheck_ida_serial: quickcheck_ida_serial.opt $(QUICKCHECK_OBJS)
 	    --compiler "ocamlc -g -I .. bigarray.cma unix.cma \
 	                sundials_ida.cma $(filter-out $<,$^)"
 
-quickcheck_ida_serial.opt: $(QUICKCHECK_OBJS:.cmo=.cmx) \
-                           quickcheck_ida_serial.cmx
+quickcheck_ida_serial.byte: quickcheck_ida_serial.cmo $(QUICKCHECK_OBJS)
+
+quickcheck_ida_serial.opt: quickcheck_ida_serial.cmx \
+                           $(QUICKCHECK_OBJS:.cmo=.cmx)
 
 quickcheck_ida.opt: $(QUICKCHECK_OBJS:.cmo=.cmx) quickcheck_ida.cmx
 
@@ -30,6 +32,12 @@ test-%: %.opt
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
 	    -I +camlp4 dynlink.cmxa camlp4lib.cmxa $(INCLUDES) -I .. \
 	    bigarray.cmxa unix.cmxa sundials_ida.cmxa \
+	    $(filter-out $<,$^) $<
+
+%.byte: %.cmo
+	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
+	    -I +camlp4 dynlink.cma camlp4lib.cma $(INCLUDES) -I .. \
+	    bigarray.cma unix.cma sundials_ida.cma \
 	    $(filter-out $<,$^) $<
 
 .SECONDARY: quickcheck_ida_serial.opt quickcheck.cmx quickcheck.cmo \
