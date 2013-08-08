@@ -16,6 +16,7 @@ type session_model =
     mutable last_tret : float;
     mutable roots : (float * Ida.Roots.root_event) array;
     mutable root_info : Roots.t;
+    mutable root_info_valid : bool;
     vec : Carray.t;
     vec' : Carray.t;
     t0 : float;
@@ -89,6 +90,7 @@ let gen_model () =
     consistent = true;
     roots = roots;
     root_info = Roots.create (Array.length roots);
+    root_info_valid = false;
     vec   = Carray.of_carray vec0;
     vec'  = Carray.of_carray vec'0;
     t0 = t0;
@@ -107,6 +109,7 @@ let copy_model m =
     last_tret = m.last_tret;
     roots = Array.copy m.roots;
     root_info = Roots.copy m.root_info;
+    root_info_valid = m.root_info_valid;
     consistent = m.consistent;
     vec = Carray.of_carray m.vec;
     vec' = Carray.of_carray m.vec';
@@ -193,6 +196,7 @@ let shrink_neqs model cmds =
         resfn = copy_resfn_drop i model.resfn;
         roots = Array.copy model.roots;
         root_info = Roots.copy model.root_info;
+        root_info_valid = model.root_info_valid;
         solving = model.solving;
         consistent = model.consistent;
         vec = copy_vec_drop i model.vec;
@@ -529,9 +533,11 @@ let model_cmd model = function
         | [] ->
           (* Undocumented behavior (sundials 2.5.0): a non-root return from
              solve_normal resets root info to undefined.  *)
+          model.root_info_valid <- false;
           t, SolverResult Ida.Continue
         | (i::_) as is ->
           let tret = fst model.roots.(i) in
+          model.root_info_valid <- true;
           Roots.reset model.root_info;
           List.iter
             (fun i -> Roots.set model.root_info i (snd model.roots.(i)))
@@ -550,7 +556,7 @@ let model_cmd model = function
                                  tret model.vec  model.vec';
       Aggr [Float tret; flag; carray model.vec; carray model.vec']
   | GetRootInfo ->
-    if model.solving then RootInfo (Roots.copy model.root_info)
+    if model.root_info_valid then RootInfo (Roots.copy model.root_info)
     else
       (* FIXME: this should be Exn Ida.IllInput or something like that.  *)
       Type (RootInfo (Roots.copy model.root_info))
