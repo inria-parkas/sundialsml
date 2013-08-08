@@ -65,27 +65,26 @@ let expr_of_roots roots =
                     (Fstream.enum 1 (n-1))$))>>
 
 (* Generate the test code that executes a given command.  *)
-let expr_of_cmd last_query_time = function
-  | SolveNormal dt ->
-    let t = !last_query_time +. dt in
-    last_query_time := t;
+let expr_of_cmd = function
+  | SolveNormal t ->
     <:expr<let tret, flag = Ida.solve_normal session $`flo:t$ vec vec' in
            Aggr [Float tret; SolverResult flag; carray vec; carray vec']>>
   | GetRootInfo ->
     <:expr<let roots = Ida.Roots.create (Ida.nroots session) in
            Ida.get_root_info session roots;
            RootInfo roots>>
-let expr_of_cmds last_query_time = function
+let expr_of_cmds = function
   | [] -> <:expr<()>>
   | cmds ->
     let sandbox exp = <:expr<output (lazy $exp$)>> in
-    expr_seq (List.map (fun cmd -> sandbox (expr_of_cmd last_query_time cmd))
+    expr_seq (List.map (fun cmd -> sandbox (expr_of_cmd cmd))
                 cmds)
 
 let ml_of_script (model, cmds) =
   let nsteps = List.length cmds in
   let step_width = String.length (string_of_int nsteps) in
-  let last_query_time = ref model.t0 in
+  let step_fmt = "step %" ^ string_of_int step_width ^ "d: " in
+  let init_str = "init:  " ^ String.make step_width ' ' in
   <:str_item<
     module Ida = Ida_serial
     module Carray = Ida.Carray
@@ -99,8 +98,6 @@ let ml_of_script (model, cmds) =
       | exn -> exn
     let marshal_results = ref false
     let step = ref 0
-    let pad_show n = let s = string_of_int n in
-                     String.make ($`int:step_width$ - String.length s) ' ' ^ s
     let output thunk =
       let r = try Lazy.force thunk with exn -> Exn (nub_exn exn) in
       if !marshal_results
@@ -109,12 +106,11 @@ let ml_of_script (model, cmds) =
         begin
           (match !step, !read_write_invariance with
           | 0, false ->
-            print_string_verbatim
-              ("init:  " ^ String.make $`int:step_width$ ' ');
+            Format.print_string $`str:init_str$;
             print_result r
           | 0, true -> print_result r
           | s, false ->
-            Format.printf "@,%s" ("step " ^ pad_show s ^ ": ");
+            Format.printf $`str:("@," ^ step_fmt)$ s;
             print_result r
           | s, true ->
             Format.printf ";@,";
@@ -135,7 +131,7 @@ let ml_of_script (model, cmds) =
          else Format.printf "@[<v>");
       output (lazy (Aggr [Float (Ida.get_current_time session);
                           carray vec; carray vec']));
-      $expr_of_cmds last_query_time cmds$;
+      $expr_of_cmds cmds$;
       if not !marshal_results then
         (if !read_write_invariance then Format.printf "@]]@."
          else Format.printf "@.")

@@ -60,12 +60,9 @@ let gen_solver lapack neqs =
   | 0 -> if lapack && Random.bool () then Ida.LapackDense else Ida.Dense
   | _ -> assert false
 
-let gen_roots () =
-  (* We have to ensure the roots don't coincide with any of the query times or
-     with one another, for otherwise the order in which they fire is dictated
-     by floating point error and is unpredictable.  *)
+let gen_roots t0 () =
   let gen_root () =
-    (gen_root_time (),
+    (gen_root_time t0 (),
      gen_choice [| Roots.Rising; Roots.Falling |])
   in
   match Random.int 3 with
@@ -82,7 +79,7 @@ let gen_model () =
   let t0 = gen_t0 () in
   let vec0, vec'0  = init_vec_for neqs t0 resfn in
   let neqs  = Carray.length vec0 in
-  let roots = gen_roots () in
+  let roots = gen_roots t0 () in
   {
     resfn = resfn;
     solver = gen_solver false neqs;
@@ -98,23 +95,6 @@ let gen_model () =
     vec0  = vec0;
     vec'0 = vec'0;
   }
-
-let shrink_root_dir = function
-  | Roots.Rising -> Fstream.nil
-  | Roots.Falling -> Fstream.singleton Roots.Rising
-  | Roots.NoRoot -> assert false
-let shrink_root_pos = shrink_root_time
-
-let shrink_model model cmds =
-  let update_roots model roots =
-    let root_info = Roots.create (Array.length roots) in
-    { model with roots = roots; root_info = root_info }
-  in
-  Fstream.map (fun t -> ({ model with last_tret = t; t0 = t; }, cmds))
-    (shrink_discrete_float model.t0)
-  @@ Fstream.map (fun roots -> (update_roots model roots, cmds))
-    (shrink_array (shrink_pair shrink_root_pos shrink_root_dir)
-       model.roots)
 
 let copy_resfn = function
   | ResFnLinear slopes -> ResFnLinear (Carray.of_carray slopes)
@@ -135,27 +115,57 @@ let copy_model m =
     vec'0 = Carray.of_carray m.vec'0;
   }
 
-(* Commands *)
+(* Commands: note that which commands can be tested without trouble depends on
+   the state of the model.  *)
 
 let gen_cmd =
   let cases =
-    [| (fun () -> SolveNormal (gen_query_time ()));
-       (fun () -> GetRootInfo) |]
+    [| (fun model -> let t = gen_query_time model.last_query_time () in
+                   ({ model with last_query_time = t }, SolveNormal t));
+       (fun model -> (model, GetRootInfo)) |]
   in
-  fun () -> gen_choice cases ()
+  fun model -> gen_choice cases model
 
-let shrink_cmd = function
-  | SolveNormal dt ->
-    Fstream.map (fun dt -> SolveNormal dt) (shrink_query_time dt)
+let shrink_cmd model = function
+  | SolveNormal t ->
+    Fstream.map
+      (fun t -> ({ model with last_query_time = t}, SolveNormal t))
+      (shrink_query_time model.last_query_time t)
   | GetRootInfo -> Fstream.nil
 
-let gen_cmds = gen_list gen_cmd
+let fixup_cmd model = function
+  | SolveNormal t ->
+    let t = max t model.last_query_time in
+    ({ model with last_query_time = t }, SolveNormal t)
+  | GetRootInfo -> (model, GetRootInfo)
+
+let gen_cmds model =
+  gen_1pass_list gen_cmd model
+
+let shrink_cmds model =
+  shrink_1pass_list shrink_cmd fixup_cmd model
+
+let shrink_model model cmds =
+  let fixup_cmds new_model cmds =
+    (new_model, fixup_list fixup_cmd new_model cmds)
+  in
+  let update_roots model cmds roots =
+    let root_info = Roots.create (Array.length roots) in
+    fixup_cmds { model with roots = roots; root_info = root_info } cmds
+  in
+  Fstream.map (fun t -> fixup_cmds { model with last_tret = t; t0 = t; } cmds)
+    (shrink_t0 model.t0)
+  @@ Fstream.map (update_roots model cmds)
+    (shrink_array
+       (shrink_pair (shrink_root_time model.t0)
+                    (shrink_choice [| Roots.Rising; Roots.Falling |]))
+       model.roots)
 
 (* Scripts (model + command list) *)
 
 let gen_script () =
-  let model = gen_model ()
-  and cmds  = gen_cmds ()
+  let model = gen_model () in
+  let cmds  = gen_cmds model ()
   in (model, cmds)
 
 let shrink_neqs model cmds =
@@ -202,7 +212,7 @@ let shrink_neqs model cmds =
 let shrink_script (model, cmds) =
   shrink_neqs model cmds
   @@ shrink_model model cmds
-  @@ Fstream.map (fun cmds -> (model, cmds)) (shrink_list shrink_cmd cmds)
+  @@ Fstream.map (fun cmds -> (model, cmds)) (shrink_cmds model cmds)
 
 (* Pretty-printing and result comparison.  *)
 
@@ -498,10 +508,10 @@ let find_roots roots t1 t2 =
 
 (* Run a single command on the model.  *)
 let model_cmd model = function
-  | SolveNormal dt ->
+  | SolveNormal t ->
     (* NB: we don't model interpolation failures -- t will be monotonically
        increasing.  *)
-    let t = model.last_query_time +. dt in
+    assert (model.last_query_time <= t);
     (* Undocumented behavior (sundials 2.5.0): solve_normal with t=t0 usually
        fails with "tout too close to t0 to start integration", but sometimes
        succeeds.  Whether it succeeds seems to be unpredictable.  *)
@@ -511,15 +521,14 @@ let model_cmd model = function
         (* NB: roots that the solver is already sitting on are ignored, unless
            dt = 0.  *)
         let tstart =
-          if dt = 0.
+          if t = model.last_tret
           then model.last_tret -. time_epsilon
           else model.last_tret
         in
         match find_roots model.roots tstart t with
         | [] ->
           (* Undocumented behavior (sundials 2.5.0): a non-root return from
-             solve_normal resets root info to Rising.  *)
-          Roots.fill_all model.root_info Roots.Rising;
+             solve_normal resets root info to undefined.  *)
           t, SolverResult Ida.Continue
         | (i::_) as is ->
           let tret = fst model.roots.(i) in

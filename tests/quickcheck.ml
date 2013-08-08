@@ -104,6 +104,15 @@ let gen_1pass_list gen seed () =
   Fstream.to_list
     (Fstream.take (gen_nat ()) (snd (Lazy.force seeds_tl_and_ys)))
 
+(** This function fixes up a list given a function to fix up an element.
+   [fixup] should be as specified in {!shrink_1pass_list}.  *)
+let fixup_list fixup seed =
+  let rec go seed acc = function
+    | [] -> List.rev acc
+    | x::xs -> let (seed, x) = fixup seed x in
+               go seed (x::acc) xs
+  in go seed []
+
 (** Shrink a list of values while maintaining an invariant that can be checked
     by scanning the list once, in order.
 
@@ -131,19 +140,15 @@ let gen_1pass_list gen seed () =
 
  *)
 let shrink_1pass_list shrink fixup seed xs =
-  let rec fixup_list seed acc = function
-    | [] -> List.rev acc
-    | x::xs -> let (seed, x) = fixup seed x in
-               fixup_list seed (x::acc) xs
-  and go seed = function
+  let rec go seed = function
     | [] -> Fstream.nil
     | x::xs ->
-      Fstream.cons (fixup_list seed [] xs)     (* drop x *)
+      Fstream.cons (fixup_list fixup seed xs)  (* drop x *)
         (Fstream.map                           (* keep x *)
            (fun xs -> x::xs)
            (go (fst (fixup seed x)) xs)
          @@ Fstream.map                        (* shrink x *)
-             (fun (seed, x) -> x::fixup_list seed [] xs)
+             (fun (seed, x) -> x::fixup_list fixup seed xs)
              (shrink seed x))
   in
   go seed xs

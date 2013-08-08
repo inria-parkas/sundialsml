@@ -51,13 +51,15 @@ let discrete_float_type ?(sign=NonNegative) offset =
     | NonNegative -> gen_nat, shrink_nat
     | ArbitrarySign -> gen_int, shrink_int
   in
-  ((fun () -> float_of_int (gen_rank ()) *. discrete_unit +. offset),
-   (fun f ->
+  ((fun t0 () -> float_of_int (gen_rank ()) *. discrete_unit +. offset +. t0),
+   (fun t0 f ->
      Fstream.map
-       (fun x -> float_of_int x *. discrete_unit +. offset)
-       (shrink_rank (int_of_float ((f -. offset) /. discrete_unit)))))
+       (fun x -> float_of_int x *. discrete_unit +. offset +. t0)
+       (shrink_rank (int_of_float ((f -. t0 -. offset) /. discrete_unit)))))
 
-let gen_t0, shrink_t0 = discrete_float_type 0.
+let gen_t0, shrink_t0 = discrete_float_type ~sign:ArbitrarySign 0.
+let gen_t0, shrink_t0 = gen_t0 0., shrink_t0 0.
+
 let gen_query_time, shrink_query_time = discrete_float_type query_time_offs
 let gen_root_time, shrink_root_time = discrete_float_type root_time_offs
 let gen_stop_time, shrink_stop_time = discrete_float_type stop_time_offs
