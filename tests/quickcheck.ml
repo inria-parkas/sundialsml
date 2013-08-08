@@ -238,6 +238,20 @@ let gen_bigarray1 kind layout gen_elem =
   in
   gen_array_like make Bigarray.Array1.set gen_elem
 
+let bigarray1_drop_elem a i =
+  let make n x =
+    let a =
+      Bigarray.Array1.create
+        (Bigarray.Array1.kind a)
+        (Bigarray.Array1.layout a)
+        n
+    in
+    Bigarray.Array1.fill a x;
+    a
+  in
+  array_like_drop_elem make Bigarray.Array1.dim
+    Bigarray.Array1.get Bigarray.Array1.set a i
+
 let shrink_bigarray1 kind layout shrink_elem =
   let make n x =
     let a = Bigarray.Array1.create kind layout n in

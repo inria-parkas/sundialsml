@@ -74,6 +74,8 @@ let gen_carray gen_elem =
 let shrink_carray ?(shrink_size=true) shrink_elem =
   shrink_bigarray1 Bigarray.float64 Bigarray.c_layout ~shrink_size shrink_elem
 
+let carray_drop_elem : Carray.t -> int -> Carray.t = bigarray1_drop_elem
+
 let pp_carray, dump_carray, show_carray, display_carray,
   print_carray, prerr_carray =
   printers_of_pp (fun fmt xs ->

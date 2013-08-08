@@ -211,43 +211,25 @@ let gen_script () =
   let cmds  = gen_cmds model ()
   in (model, cmds)
 
+(* As noted above, it's OK to not copy the model structure wholesale, but to
+   copy only the parts that are shrunk or need to be fixed up.  *)
 let shrink_neqs model cmds =
   (* Reduce commands that are dependent on number of equations.  *)
   let drop_from_cmd i = function
     | cmd -> cmd
   in
-  let copy_vec_drop i v =
-    let n = Carray.length v in
-    let w = Carray.create (n-1) in
-    for j = 0 to i-1 do
-      w.{j} <- v.{j}
-    done;
-    for j = i+1 to n - 1 do
-      w.{j-1} <- v.{j}
-    done;
-    w
-  in
   let copy_resfn_drop i = function
-    | ResFnLinear slopes -> ResFnLinear (copy_vec_drop i slopes)
+    | ResFnLinear slopes -> ResFnLinear (carray_drop_elem slopes i)
   in
   let drop_eq i =
     let model =
-      {
+      { model with
         resfn = copy_resfn_drop i model.resfn;
-        roots = Array.copy model.roots;
-        root_dirs = Array.copy model.root_dirs;
-        root_info = Roots.copy model.root_info;
-        root_info_valid = model.root_info_valid;
-        solving = model.solving;
-        consistent = model.consistent;
-        vec = copy_vec_drop i model.vec;
-        vec' = copy_vec_drop i model.vec';
+        vec = carray_drop_elem model.vec i;
+        vec' = carray_drop_elem model.vec' i;
         t0 = model.t0;
-        vec0 = copy_vec_drop i model.vec0;
-        vec'0 = copy_vec_drop i model.vec'0;
-        solver = model.solver;
-        last_query_time = model.last_query_time;
-        last_tret = model.last_tret;
+        vec0 = carray_drop_elem model.vec0 i;
+        vec'0 = carray_drop_elem model.vec'0 i;
       }
     in (model, List.map (drop_from_cmd i) cmds)
   in
