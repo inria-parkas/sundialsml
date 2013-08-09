@@ -697,18 +697,20 @@ let quickcheck_ida ml_file_of_script max_tests =
       pp_results err rs
     | TestCodeOverrun -> assert false   (* Shouldn't happen.  *)
     | ResultMismatch (i,e,a) ->
-      Format.fprintf err "Result mismatch on %s:\nexpected\n%s\nbut got\n%s\n"
+      Format.fprintf err "Result mismatch on %s:\ngot\n%s\nwhen we \
+                          expected\n%s\n"
         (if i = 0 then "init" else ("step " ^ string_of_int i))
-        (show_result e)
-        (show_result a));
+        (show_result a)
+        (show_result e));
     Format.fprintf err "\n[Test Case]@\n";
     pp_script err script;
     Format.pp_print_flush err ();
-    prerr_string "\n\n[Program Output]\n";
     flush stderr;
     (* The test file contains the last script tried, not the last script that
        failed.  We need to reinstate the failing script before running it again
        to retrieve its output.  *)
+    prerr_string "\n\n[Program Output]\n";
+    flush stderr;
     compile (ml_file_of_script script);
     let pid = Unix.create_process !test_exec_file
       (if !read_write_invariance
@@ -716,16 +718,18 @@ let quickcheck_ida ml_file_of_script max_tests =
        else [|!test_exec_file|])
       Unix.stdin Unix.stdout Unix.stderr
     in
-    (* Copy the failed test from test_exec_file.ml to test_failed_file.  *)
     let _ = Unix.waitpid [] pid in
+    flush stdout;
+    flush stderr;
+    (* Copy the failed test from test_exec_file.ml to test_failed_file.  *)
     let infile  = open_in (!test_exec_file ^ ".ml")
     and outfile = open_out !test_failed_file in
     let _ =
       try while true do output_char outfile (input_char infile) done
       with End_of_file -> ()
     in
-    flush stderr;
+
     Format.fprintf err "@\n[Expected Output]@\n";
     pp_results err (Fstream.to_list (model_run script));
-    Format.pp_print_flush err ();
+    Format.pp_print_newline err ();
     result
