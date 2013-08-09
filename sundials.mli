@@ -229,10 +229,10 @@ module RootDirs :
         IncreasingOrDecreasing. *)
     val create : int -> t
 
-    (** [create' n a] returns an array with [n] elements, initialized from the
-        contents of a.  If [n > Array.length a], then the extra space is
-        initialized to IncreasingOrDecreasing. *)
-    val create' : int -> root_direction array -> t
+    (** [copy_n n a] returns a fresh array with [n] elements, initialized from
+        the contents of a.  If [n > Array.length a], then the extra space is
+        initialized to IncreasingOrDecreasing.  *)
+    val copy_n : int -> root_direction array -> t
 
     (** Returns the length of an array *)
     val length : t -> int
