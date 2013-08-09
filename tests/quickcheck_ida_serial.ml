@@ -73,6 +73,8 @@ let expr_of_cmd = function
     <:expr<let roots = Ida.Roots.create (Ida.nroots session) in
            Ida.get_root_info session roots;
            RootInfo roots>>
+  | GetNRoots ->
+    <:expr<Int (Ida.nroots session)>>
   | SetRootDirection dirs ->
     let reify = function
       | RootDirs.Increasing -> <:expr<Ida.RootDirs.Increasing>>

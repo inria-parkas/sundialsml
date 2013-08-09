@@ -28,6 +28,7 @@ and script = session_model * cmd list
 and cmd = SolveNormal of float
         | GetRootInfo
         | SetRootDirection of Ida.root_direction array
+        | GetNRoots
 and result = Unit | Int of int | Float of float
               | Any
               | Type of result
@@ -131,9 +132,13 @@ let gen_cmd =
     [| (fun model -> let t = gen_query_time model.last_query_time () in
                    ({ model with last_query_time = t }, SolveNormal t));
        (fun model -> (model, GetRootInfo));
+       (fun model -> (model, GetNRoots));
        (fun model ->
-          let dirs = gen_array ~size:(Array.length model.roots)
-                       gen_root_direction ()
+          (* 20% of the time, we (may) generate an incorrectly sized array.  *)
+          let size = if Random.int 100 < 20 then gen_nat ()
+                     else Array.length model.roots
+          in
+          let dirs = gen_array ~size:size gen_root_direction ()
           in (model, SetRootDirection dirs))
     |]
   in
@@ -145,8 +150,8 @@ let shrink_cmd model = function
       (fun t -> ({ model with last_query_time = t}, SolveNormal t))
       (shrink_query_time model.last_query_time t)
   | GetRootInfo -> Fstream.nil
+  | GetNRoots -> Fstream.nil
   | SetRootDirection dirs ->
-    assert (Array.length dirs = Array.length model.roots);
     Fstream.map
       (fun dirs -> (model, SetRootDirection dirs))
       (shrink_array shrink_root_direction ~shrink_size:false dirs)
@@ -155,10 +160,7 @@ let fixup_cmd model = function
   | SolveNormal t ->
     let t = max t model.last_query_time in
     ({ model with last_query_time = t }, SolveNormal t)
-  | GetRootInfo -> (model, GetRootInfo)
-  | SetRootDirection dirs as cmd ->
-    assert (Array.length dirs = Array.length model.roots);
-    (model, cmd)
+  | GetRootInfo | GetNRoots | SetRootDirection _ as cmd -> (model, cmd)
 
 let gen_cmds model =
   gen_1pass_list gen_cmd model
@@ -185,9 +187,13 @@ let shrink_model model cmds =
     in
     let fixup_cmd_with_drop model cmd =
       match cmd with
-      | SolveNormal _ | GetRootInfo -> fixup_cmd model cmd
+      | SolveNormal _ | GetRootInfo | GetNRoots -> fixup_cmd model cmd
       | SetRootDirection root_dirs ->
-        fixup_cmd model (SetRootDirection (array_drop_elem root_dirs i))
+        if Array.length root_dirs = 0
+        then fixup_cmd model (SetRootDirection root_dirs)
+        else
+          let i = if i < Array.length root_dirs then i else 0 in
+          fixup_cmd model (SetRootDirection (array_drop_elem root_dirs i))
     in
     (model,
      fixup_list (if i < 0 then fixup_cmd else fixup_cmd_with_drop) model cmds)
@@ -346,6 +352,7 @@ let pp_cmd, dump_cmd, show_cmd, display_cmd, print_cmd, prerr_cmd =
     pp_float fmt f;
     if f < 0. then Format.fprintf fmt ")"
   | GetRootInfo -> Format.fprintf fmt "GetRootInfo"
+  | GetNRoots -> Format.fprintf fmt "GetNRoots"
   | SetRootDirection dirs ->
     Format.fprintf fmt "SetRootDirection ";
     pp_array pp_root_direction fmt dirs
@@ -616,10 +623,24 @@ let model_cmd model = function
     else
       (* FIXME: this should be Exn Ida.IllInput or something like that.  *)
       Type (RootInfo (Roots.copy model.root_info))
+  | GetNRoots ->
+    Int (Array.length model.roots)
   | SetRootDirection dirs ->
-    if Array.length model.roots = 0 then Exn Ida.IllInput
-    else (model.root_dirs <- dirs;
-          Unit)
+    if Array.length model.roots = 0
+    then Exn Ida.IllInput
+    else
+      (* The binding adjusts the root array length as needed.  *)
+      let ndirs = Array.length dirs
+      and nroots = Array.length model.roots in
+      let dirs =
+        if ndirs = nroots then dirs
+        else
+          let d = Array.make nroots RootDirs.IncreasingOrDecreasing in
+          Array.blit dirs 0 d 0 (min nroots ndirs);
+          d
+      in
+      (model.root_dirs <- dirs;
+       Unit)
 
 (* Run a list of commands on the model.  *)
 let model_run (model, cmds) =
