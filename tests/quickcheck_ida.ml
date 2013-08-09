@@ -299,10 +299,13 @@ let pp_result, dump_result, show_result, display_result,
     | Aggr rs -> pp_with_ctor "Aggr" (pp_list (pre_pp_result false))
                    arg_pos fmt rs
     | Exn exn ->
-      (* Read-write invariance doesn't work for Exn.  *)
+      (* Read-write invariance doesn't work for Exn except in simple cases.  *)
       pp_parens arg_pos (fun fmt exn ->
-      pp_string_verbatim fmt "exception ";
-      pp_string_verbatim fmt (Printexc.to_string exn)) fmt exn
+      pp_string_verbatim fmt (if !read_write_invariance then "Exn "
+                              else "exception ");
+      let str = Printexc.to_string exn in
+      pp_parens (String.contains str ' ')
+        pp_string_verbatim fmt str) fmt exn
   in printers_of_pp (pre_pp_result false)
 let pp_results, dump_results, show_results, display_results,
   print_results, prerr_results =
