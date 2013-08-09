@@ -64,6 +64,12 @@ let expr_of_roots roots =
                   $Fstream.fold_left f (set 0)
                     (Fstream.enum 1 (n-1))$))>>
 
+let expr_of_root_direction = function
+  | RootDirs.Increasing -> <:expr<Ida.RootDirs.Increasing>>
+  | RootDirs.Decreasing -> <:expr<Ida.RootDirs.Decreasing>>
+  | RootDirs.IncreasingOrDecreasing ->
+    <:expr<Ida.RootDirs.IncreasingOrDecreasing>>
+
 (* Generate the test code that executes a given command.  *)
 let expr_of_cmd = function
   | SolveNormal t ->
@@ -75,15 +81,12 @@ let expr_of_cmd = function
            RootInfo roots>>
   | GetNRoots ->
     <:expr<Int (Ida.nroots session)>>
+  | SetAllRootDirections dir ->
+    <:expr<Ida.set_all_root_directions session $expr_of_root_direction dir$;
+           Unit>>
   | SetRootDirection dirs ->
-    let reify = function
-      | RootDirs.Increasing -> <:expr<Ida.RootDirs.Increasing>>
-      | RootDirs.Decreasing -> <:expr<Ida.RootDirs.Decreasing>>
-      | RootDirs.IncreasingOrDecreasing ->
-        <:expr<Ida.RootDirs.IncreasingOrDecreasing>>
-    in
     <:expr<Ida.set_root_direction session
-           $expr_array (List.map reify (Array.to_list dirs))$;
+           $expr_array (List.map expr_of_root_direction (Array.to_list dirs))$;
            Unit>>
 
 let expr_of_cmds = function

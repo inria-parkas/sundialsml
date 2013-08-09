@@ -28,6 +28,7 @@ and script = session_model * cmd list
 and cmd = SolveNormal of float
         | GetRootInfo
         | SetRootDirection of Ida.root_direction array
+        | SetAllRootDirections of Ida.root_direction
         | GetNRoots
 and result = Unit | Int of int | Float of float
               | Any
@@ -139,7 +140,8 @@ let gen_cmd =
                      else Array.length model.roots
           in
           let dirs = gen_array ~size:size gen_root_direction ()
-          in (model, SetRootDirection dirs))
+          in (model, SetRootDirection dirs));
+       (fun model -> (model, SetAllRootDirections (gen_root_direction ())));
     |]
   in
   fun model -> gen_choice cases model
@@ -151,6 +153,10 @@ let shrink_cmd model = function
       (shrink_query_time model.last_query_time t)
   | GetRootInfo -> Fstream.nil
   | GetNRoots -> Fstream.nil
+  | SetAllRootDirections dir ->
+    Fstream.map
+      (fun dir -> (model, SetAllRootDirections dir))
+      (shrink_root_direction dir)
   | SetRootDirection dirs ->
     Fstream.map
       (fun dirs -> (model, SetRootDirection dirs))
@@ -160,7 +166,8 @@ let fixup_cmd model = function
   | SolveNormal t ->
     let t = max t model.last_query_time in
     ({ model with last_query_time = t }, SolveNormal t)
-  | GetRootInfo | GetNRoots | SetRootDirection _ as cmd -> (model, cmd)
+  | GetRootInfo | GetNRoots | SetRootDirection _
+  | SetAllRootDirections _ as cmd -> (model, cmd)
 
 let gen_cmds model =
   gen_1pass_list gen_cmd model
@@ -187,7 +194,8 @@ let shrink_model model cmds =
     in
     let fixup_cmd_with_drop model cmd =
       match cmd with
-      | SolveNormal _ | GetRootInfo | GetNRoots -> fixup_cmd model cmd
+      | SolveNormal _ | GetRootInfo | GetNRoots
+      | SetAllRootDirections _ -> fixup_cmd model cmd
       | SetRootDirection root_dirs ->
         if Array.length root_dirs = 0
         then fixup_cmd model (SetRootDirection root_dirs)
@@ -353,6 +361,9 @@ let pp_cmd, dump_cmd, show_cmd, display_cmd, print_cmd, prerr_cmd =
     if f < 0. then Format.fprintf fmt ")"
   | GetRootInfo -> Format.fprintf fmt "GetRootInfo"
   | GetNRoots -> Format.fprintf fmt "GetNRoots"
+  | SetAllRootDirections dir ->
+    Format.fprintf fmt "SetAllRootDirections ";
+    pp_root_direction fmt dir
   | SetRootDirection dirs ->
     Format.fprintf fmt "SetRootDirection ";
     pp_array pp_root_direction fmt dirs
@@ -475,7 +486,7 @@ and exns_equal =
           Hashtbl.add fixed_msgs "index out of bounds" ();
           Hashtbl.add fixed_msgs "hd" ();
           Hashtbl.add fixed_msgs "Array.make" ();
-          Hashtbl.add fixed_msgs "Bigarray.create: negative dimension";
+          Hashtbl.add fixed_msgs "Bigarray.create: negative dimension" ();
           fixed_msgs)
   in
   fun e1 e2 ->
@@ -625,6 +636,11 @@ let model_cmd model = function
       Type (RootInfo (Roots.copy model.root_info))
   | GetNRoots ->
     Int (Array.length model.roots)
+  | SetAllRootDirections dir ->
+    if Array.length model.roots = 0
+    then Exn Ida.IllInput
+    else (Array.fill model.root_dirs 0 (Array.length model.root_dirs) dir;
+          Unit)
   | SetRootDirection dirs ->
     if Array.length model.roots = 0
     then Exn Ida.IllInput
