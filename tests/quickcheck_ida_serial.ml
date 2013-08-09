@@ -101,16 +101,10 @@ let ml_of_script (model, cmds) =
     module Carray = Ida.Carray
     open Quickcheck_ida
     open Pprint
-    (* Remove error messages so that they don't have to be replicated with 100%
-       accuracy in models.  *)
-    let nub_exn = function
-      | Failure _ -> Failure ""
-      | Invalid_argument _ -> Invalid_argument ""
-      | exn -> exn
     let marshal_results = ref false
     let step = ref 0
     let output thunk =
-      let r = try Lazy.force thunk with exn -> Exn (nub_exn exn) in
+      let r = try Lazy.force thunk with exn -> Exn exn in
       if !marshal_results
       then Marshal.to_channel stdout r []
       else

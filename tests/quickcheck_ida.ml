@@ -459,11 +459,25 @@ and carrays_equal v1 v2 =
     else true
   in
   n = Carray.length v2 && go 0
-and exns_equal e1 e2 =
-  (* Compare only the tags *)
+and exns_equal =
+  (* Compare only the tags, except for known, common messages.  *)
+  (* The table construction is delayed to avoid having this initialization run
+     every time the test code starts up.  *)
+  let fixed_msgs =
+    lazy (let fixed_msgs = Hashtbl.create 10 in
+          Hashtbl.add fixed_msgs "index out of bounds" ();
+          Hashtbl.add fixed_msgs "hd" ();
+          Hashtbl.add fixed_msgs "Array.make" ();
+          Hashtbl.add fixed_msgs "Bigarray.create: negative dimension";
+          fixed_msgs)
+  in
+  fun e1 e2 ->
   match e1, e2 with
-  | Failure _, Failure _ -> true
-  | Invalid_argument _, Invalid_argument _ -> true
+  | Failure m1, Failure m2
+  | Invalid_argument m1, Invalid_argument m2 ->
+    if Hashtbl.mem (Lazy.force fixed_msgs) m1 then m1 = m2
+    else if Hashtbl.mem (Lazy.force fixed_msgs) m2 then false
+    else true
   | _, _ -> e1 = e2
 
 let is_exn = function
