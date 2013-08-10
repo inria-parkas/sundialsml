@@ -52,6 +52,136 @@ let shrink_choice choices c =
 let gen_shrink_choice choices =
   (fun () -> gen_choice choices), shrink_choice choices
 
+(* Find the least index i s.t. x < a.(i) in a non-strictly increasing array, a.
+   Assumes that an index satisfying this constraint exists.  Note ties are
+   broken by taking the minimum.  *)
+let search_gt a x =
+  let rec go l u =
+    (* Invariant: l < answer <= u *)
+    if u-l <= 1 then u
+    else let m = (l+u)/2 in
+         if x < a.(m) then go l m
+         else go m u
+  in go (-1) (Array.length a - 1)
+
+(* Fills dest with the prefix-sum of src, and returns the total.  src and dest
+   can be physically equal.  The elements are checked to be non-negative.  *)
+let prefix_sum_weights ?context weight_of src dest =
+  let invalid_arg =
+    match context with
+    | None -> (fun s -> invalid_arg ("prefix_sum_nat: " ^ s))
+    | Some f -> (fun s -> invalid_arg (f ^ ": " ^ s))
+  and s = ref 0 in
+  for i = 0 to Array.length src - 1 do
+    let w = weight_of src.(i) in
+    if w < 0 then invalid_arg "negative weight";
+    s := !s + w;
+    (* Not a perfect way to detect overflow, but better than doing nothing.  *)
+    if !s < 0 then invalid_arg "weights overflow";
+    dest.(i) <- !s
+  done;
+  !s
+
+(* Like prefix_sum_weights but doesn't check for negative weights or overflow,
+   and treats src.(i) as 0 if valid.(i) x returns false.  *)
+let unsafe_cond_prefix_sum_weights ?context weight_of valid x src dest =
+  let s = ref 0 in
+  for i = 0 to Array.length src - 1 do
+    let src_i = src.(i) in
+    if valid src_i x then s := !s + weight_of src_i;
+    dest.(i) <- !s
+  done;
+  !s
+
+(* Like unsafe_cond_prefix_sum but with an implicit src that is filled with 1
+   everywhere.  *)
+let cond_collect_valid ?context valid x src dest =
+  let num_valid = ref 0 in
+  for i = 0 to Array.length dest - 1 do
+    if valid src.(i) x then
+      (dest.(!num_valid) <- i;
+       num_valid := !num_valid + 1)
+  done;
+  !num_valid
+
+let ceil_lg x =
+  let rec go ret = function
+    | 0 -> ret
+    | n -> go (ret + 1) (n / 2)
+  in go 0 x
+
+let gen_weighted_choice choices =
+  let cdf = Array.make (Array.length choices) 0 in
+  let total =
+    prefix_sum_weights ~context:"gen_weighted_choice" fst choices cdf
+  in
+  fun () -> snd (choices.(search_gt cdf (Random.int total)))
+
+let gen_cond_choice ?show_input choices =
+  let n = Array.length choices in
+  let perm_index = Array.make (Array.length choices) 0 in
+  let context = "gen_cond_choice" in
+  let no_choice x =
+    let msg = context ^ ": all choices masked out"; in
+    match show_input with
+    | None -> invalid_arg msg
+    | Some show -> invalid_arg (msg ^ " for " ^ show x)
+  in
+  let slow_path x =
+    let num_valid = cond_collect_valid ~context fst x choices perm_index in
+    if num_valid = 0 then no_choice x;
+    snd choices.(perm_index.(Random.int num_valid))
+  in
+  (* The fast path assumes the number of invalidated entries are small.
+     Provided the majority (> 1/2) of elements are valid, we only need to fall
+     back on the slow path with probability at most 1/1024 for n < 1024, and
+     1/n^2 for n >= 1024.  *)
+  let rec fast_path tries x =
+    if tries = 0 then slow_path x
+    else
+      let i = Random.int n in
+      if fst choices.(i) x then snd choices.(i)
+      else fast_path (tries - 1) x
+  in
+  fast_path (max 10 (2 * ceil_lg n))
+
+let gen_weighted_cond_choice ?show_input choices =
+  let context = "gen_weighted_cond_choice" in
+  let weight_of (_,w,_) = w
+  and predicate_of (p,_,_) = p
+  and candidate_of (_,_,c) = c
+  in
+  let n = Array.length choices in
+  let cdf = Array.make (Array.length choices) 0 in
+  let masked_cdf = Array.copy cdf in
+  let total = prefix_sum_weights ~context weight_of choices cdf in
+  let no_choice x =
+    let msg = context ^ ": all choices masked out"; in
+    match show_input with
+    | None -> invalid_arg msg
+    | Some show -> invalid_arg (msg ^ " for " ^ show x)
+  in
+  let slow_path x =
+    let total =
+      unsafe_cond_prefix_sum_weights ~context
+        weight_of predicate_of x choices masked_cdf
+    in
+    if total = 0 then no_choice x;
+    candidate_of choices.(search_gt masked_cdf (Random.int total))
+  in
+  (* The fast path assumes the number of invalidated entries are small.
+     Provided the majority (> 1/2) of elements are valid, we only need to fall
+     back on the slow path with probability at most 1/1024 for n < 1024, and
+     1/n^2 for n >= 1024.  *)
+  let rec fast_path tries x =
+    if tries = 0 then slow_path x
+    else
+      let (valid, _, cand) = choices.(search_gt cdf (Random.int total)) in
+      if valid x then cand
+      else fast_path (tries - 1) x
+  in
+  fast_path (max 10 (2 * ceil_lg n))
+
 let enum istart iend =
   let rec go acc i =
     if istart <= i then go (i::acc) (i-1)

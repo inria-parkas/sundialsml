@@ -38,14 +38,81 @@ val shrink_pos : int -> int Fstream.t
 (** Shrink a negative integer to negative integers.  *)
 val shrink_neg : int -> int Fstream.t
 
-(** Randomly choose an element from an array.  The array elements may be
-    generators themselves, but in that case don't forget to delay the choice
-    until you need it, e.g:
-    {[let gen_int_nat () = gen_choice [|gen_int; gen_nat|]]} ()
+(** Randomly choose an element from an array of candidates.
+
+    The candidates may be generators, but in that case the choice should be
+    delayed until it's needed, e.g:
+    {[let gen_int_nat () = gen_choice [|gen_int; gen_nat|] ()]}
     not
     {[let gen_int_nat = gen_choice [|gen_int;gen_nat|]]}
  *)
 val gen_choice : 'a array -> 'a
+
+(** Weighted-probability random selection.  Given an array
+    {[[|(w0,c0); (w1,c1); ... |]]}, this function returns the candidate [c0]
+    with probability proportional to [w0], the candidate [c1] with probability
+    proportional to [w1], and so on.
+*)
+val gen_weighted_choice : (int * 'a) array -> unit -> 'a
+
+(** Uniform-probability random selection with conditional masking.  This
+    function selects one element of an array of candidates, but only one for
+    which the condition is right.  Given {[[|(p0,c0); (p1,c1); ... |]]} and
+    some [x], this function returns one of the [ci]'s such that the
+    corresponding predicate [pi x] returns [true].  The predicates are
+    recomputed for each [x].  The [pi] must be pure functions.
+
+    This function has an O(n) setup cost when it receives the array, and
+    thereafter for every [x] it runs in O(log n) most of the time, provided a
+    majority of the [pi]'s return [true].  More precisely, it tries an O(1)
+    opportunistic algorithm O(log n) times, each of which can fail with
+    probability k/n where k is the number of [pi]'s that return [false].  If
+    all tries fail, it falls back to an O(n) algorithm.  The probability of
+    falling back on the O(n) algorithm is (k/n)^(2 lg(n)) which, if k <= n/2,
+    is at most 1/n^2.
+
+    It is an error if all of the [pi]'s return [false].  In this case an
+    [Invalid_argument] is thrown.  If the optional argument [show_input] is
+    specified, it is used to get a string representation of the [x] that
+    triggered the error, which is included in the error message.
+*)
+val gen_cond_choice :
+  ?show_input:('a -> string)
+  -> (('a -> bool) * 'b) array
+  -> 'a
+  -> 'b
+
+(** Weighted-probability random selection with conditional masking.  This
+    function selects one element of an array of candidates according to their
+    weights, but only one for which the condition is right.
+
+    Given {[[|(p0,w0,c0); (p1,w1,c1); ... |]]} and some [x], this function
+    returns one of the [ci]'s such that the corresponding predicate [pi x]
+    returns [true].  [c0] is selected with probability proportional to [w0]
+    provided [p0 x] is [true], [c1] is selected with probability proportional
+    to [w1] provided [p1 x] is [true], and so on.  The [pi]'s are recomputed
+    for each [x] (although the function tries to avoid actually evaluating the
+    recompuations as much as it can).  The [pi] must be pure functions.
+
+    This function has an O(n) setup cost when it receives the array, and
+    thereafter for every [x] it runs in O((log n)^2) most of the time, provided
+    a majority of the [pi]'s return [true].  More precisely, it tries an
+    O(log n) opportunistic algorithm O(log n) times, each of which can fail
+    with probability k/n where k is the number of [pi]'s that return [false].
+    If all tries fail, it falls back to an O(n) algorithm.  The probability of
+    falling back on the O(n) algorithm is (k/n)^(2 lg(n)) which, if k <= n/2,
+    is at most 1/n^2.
+
+    It is an error if all of the [pi]'s return [false].  In this case an
+    [Invalid_argument] is thrown.  If the optional argument [show_input] is
+    specified, it is used to get a string representation of the [x] that
+    triggered the error, which is included in the error message.
+*)
+val gen_weighted_cond_choice :
+  ?show_input:('a -> string)
+  -> (('a -> bool) * int * 'b) array
+  -> 'a
+  -> 'b
 
 (** Shrink an element chosen from an array of candidates (a la [gen_choice]),
     which must be comparable by [=].  Candidates listed earlier are considered
