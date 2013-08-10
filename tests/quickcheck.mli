@@ -157,7 +157,7 @@ val shrink_list :
     generates non-strictly increasing lists of natural numbers.
 
  *)
-val gen_1pass_list : ('a -> 'a * 'b) -> 'a -> unit -> 'b list
+val gen_1pass_list : ('a -> 'a * 'b) -> 'a -> ?size:int -> unit -> 'b list
 
 (** Make a shrinker to go with a generator create by [gen_1pass_list].  This
     shrinks a list while maintaining an invariant that can be checked by

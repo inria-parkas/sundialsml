@@ -197,16 +197,16 @@ let rec shrink_list shrink_elem ?(shrink_size=true) = function
     @@ Fstream.map (fun xs -> x::xs) (shrink_list shrink_elem xs)
     @@ Fstream.map (fun x -> x::xs) (shrink_elem x)
 
-let gen_1pass_list gen seed () =
+let gen_1pass_list gen seed ?(size=gen_nat ()) () =
   (* In haskell notation,
      let (seeds_tl, ys) = unzip $ map gen seeds
          seeds = seed:seeds_tl
-     in take (gen_nat ()) ys
+     in take size ys
    *)
   let rec seeds_tl_and_ys = lazy (Fstream.unzip (Fstream.map gen seeds))
   and seeds = lazy (Fstream.Cons (seed, fst (Lazy.force seeds_tl_and_ys))) in
   Fstream.to_list
-    (Fstream.take (gen_nat ()) (snd (Lazy.force seeds_tl_and_ys)))
+    (Fstream.take size (snd (Lazy.force seeds_tl_and_ys)))
 
 let fixup_list fixup seed =
   let rec go seed acc = function
