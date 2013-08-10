@@ -27,7 +27,7 @@ val with_read_write_invariance : (unit -> 'a) -> 'a
 
   Note [print_float], [print_string], and [print_char] are already defined in
   [Pervasives] and their behaviors do not match the description above.  For
-  example, [Pervasives.print_string] never produces double-quotation marks
+  example, [Pervasives.print_string] does not add double-quotation marks
   whereas this module's [print_string] does.  To avoid confusion, the version
   of these function defined in this module are hidden inside a submodule named
   [PrettyPrim] by default.
