@@ -28,6 +28,11 @@ do
 	install_docs=0;;
     --no-lib-path)
 	no_lib_path=1;;
+    --no-safety-checks)
+	bounds_checking=0
+	safety_checks=0;;
+    --no-bounds-checking)
+	bounds_checking=0;;
     -h|--help)
 	cat <<-END_HELP_TEXT
 	'configure' configures $sysname $version to adapt to many kinds of systems.
@@ -56,6 +61,8 @@ do
 	Optional Features:
 	  --disable-doc          do not install html documentation
 	  --no-lib-path          do not record paths in the OCaml library
+	  --no-safety-checks     no safety checks; implies --no-bounds-checking
+	  --no-bounds-checking   no bounds checking in matrix accesses
 
 	Some influential environment variables:
 	  OCAMLROOT     Path to ocaml installation
@@ -99,6 +106,9 @@ CPP=${CPP:-cpp}
 LAPACKLIB=${LAPACKLIB:-"-llapack"}
 EXAMPLESROOT=${EXAMPLESROOT:-"/usr/local/examples"}
 error=""
+
+bounds_checking=${bounds_checking:-1}
+safety_checks=${safety_checks:-1}
 
 # Check for OCaml installation (and version)
 ocaml_path=`${OCAMLBIN}ocamlc -where`
@@ -349,7 +359,9 @@ fi
 	 s#@ocamlflags@#${ocamlflags}#;
 	 s#@ocamloptflags@#${ocamloptflags}#;
 	 s#@ocamlmklibflags@#${ocamlmklibflags}#;
-         s#@have_weak@#${have_weak}#;
+	 s#@have_weak@#${have_weak}#;
+	 s#@safety_checks@#${safety_checks}#;
+	 s#@bounds_checking@#${bounds_checking}#;
 	 s#@EXAMPLESROOT@#${EXAMPLESROOT}#;
 	 s#@OCAMLBIN@#${OCAMLBIN}#;
 	 s#@OCAMLROOT@#${OCAMLROOT}#;" config.in) > config

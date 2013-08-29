@@ -1,8 +1,6 @@
 
 VERSION = @version@
 
-HAVE_WEAK=-DHAVE_WEAK=@have_weak@
-
 CVODE_DOC_ROOT = https://computation.llnl.gov/casc/sundials/documentation/cv_guide/
 IDA_DOC_ROOT = https://computation.llnl.gov/casc/sundials/documentation/ida_guide/
 OCAML_DOC_ROOT = http://caml.inria.fr/pub/docs/manual-ocaml/libref/
@@ -11,7 +9,7 @@ OCAMLFLAGS =
 OCAMLOPTFLAGS =
 
 CC = gcc
-CFLAGS += @cflags@ $(HAVE_WEAK) # -DRESTRICT_INTERNAL_PRECISION"
+CFLAGS += @cflags@ # -DRESTRICT_INTERNAL_PRECISION"
 LDFLAGS += @ldflags@
 
 CVODE_LDFLAGS = @cvode_ldflags@ $(LDFLAGS)
@@ -103,3 +101,14 @@ DOCPP = $(SED) \
 .c.o:
 	$(CC) -I $(OCAML_INCLUDE) $(CFLAGS) -o $@ -c $<
 
+default: all
+
+config.h: config
+	@echo "# regenerating config.h"
+	@echo '/* Automatically generated file - don'\''t edit!  See config.in.  */' > $@
+	@echo '#ifndef __SUNDIALS_CONFIG_H__' >> $@
+	@echo '#define __SUNDIALS_CONFIG_H__' >> $@
+	@echo '#define HAVE_WEAK @have_weak@' >> $@
+	@echo '#define SAFETY_CHECKS @safety_checks@' >> $@
+	@echo '#define CHECK_MATRIX_ACCESS @bounds_checking@' >> $@
+	@echo '#endif /* __SUNDIALS_CONFIG_H__ */' >> $@
