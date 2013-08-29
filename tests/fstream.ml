@@ -169,6 +169,14 @@ let rec enum istart iend =
   then lazy (Cons (istart, enum (istart + 1) iend))
   else lazy Nil
 
+let enum_then istart inext iend =
+  let step = inext - istart in
+  let rec go i =
+    if (step > 0 && i <= iend) || (step < 0 && i >= iend)
+    then lazy (Cons (i, go (i + step)))
+    else lazy Nil
+  in go istart
+
 let length xs =
   let rec go i = function
     | lazy Nil -> i

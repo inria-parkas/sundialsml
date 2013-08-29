@@ -23,6 +23,10 @@ type session_model =
     t0 : float;
     vec0 : Carray.t;
     vec'0 : Carray.t;
+
+    (* Set during command generation to force the next query time to a
+       particular value, if there is a query.  *)
+    mutable next_query_time : float option;
   }
 and script = session_model * cmd list
 and cmd = SolveNormal of float
@@ -30,15 +34,28 @@ and cmd = SolveNormal of float
         | SetRootDirection of Ida.root_direction array
         | SetAllRootDirections of Ida.root_direction
         | GetNRoots
-and result = Unit | Int of int | Float of float
-              | Any
-              | Type of result
-              | Aggr of result list
-              | Carray of Carray.t    (* NB: always copy the array! *)
-              | SolverResult of Ida.solver_result
-              | Exn of exn
-              | RootInfo of Ida.Roots.t
-and resfn_type = ResFnLinear of Carray.t
+        | CalcIC_Y of float * ic_buf
+and ic_buf = GetCorrectedIC
+           | Don'tGetCorrectedIC
+           | GiveBadVector of int (* Pass in a vector of incorrect size. *)
+and result = Unit
+           | Int of int | Float of float
+           | Any
+           | Type of result
+           | Aggr of result list
+           | Carray of Carray.t    (* NB: always copy the array! *)
+           | SolverResult of Ida.solver_result
+           | Exn of exn
+           | RootInfo of Ida.Roots.t
+and resfn_type =
+  | ResFnLinear of Carray.t (* The DAE is
+                                 y'.{i} = coefs.{i}
+                               with general solution
+                                 y.{i} = coefs.{i} * t + C
+                               ic_calc_y fails (because y is unused)
+                               ic_calc_ya_yd' should work.
+                             *)
+  | ResFnExpDecay of Carray.t
 
 let carray x = Carray (Carray.of_carray x)
 
@@ -50,13 +67,28 @@ type failure_type = ResultMismatch of int * result * result
 (* Model *)
 
 let gen_resfn neqs () =
+  let _ () =
+    (* This is a no-op that causes the compiler to direct you here whenever you
+       add a new kind of residual function.  *)
+    match ResFnLinear (Carray.create 0) with
+    | ResFnLinear _ -> ()
+    | ResFnExpDecay _ -> ()
+  in
   gen_choice
     [|
-      fun () -> let v = Carray.create neqs in
-                for i = 0 to Carray.length v - 1 do
-                  v.{i} <- float_of_int i
-                done;
-                ResFnLinear v
+      (fun () ->
+         let v = Carray.create neqs in
+         for i = 0 to Carray.length v - 1 do
+           v.{i} <- float_of_int (i+1)
+         done;
+         ResFnLinear v);
+      (fun () ->
+         let v = Carray.create neqs in
+         (* All coefficients must be non-negative.  *)
+         for i = 0 to Carray.length v - 1 do
+           v.{i} <- float_of_int (i+1)
+         done;
+         ResFnExpDecay v);
     |]
     ()
 
@@ -74,9 +106,15 @@ let gen_roots t0 () =
   | 0 -> [||]
   | _ -> uniq_array (gen_array gen_root ())
 
+(* Returns vec0, vec'0 that satisfies the given resfn.  *)
 let init_vec_for neqs t0 resfn =
   match resfn with
   | ResFnLinear slopes -> Carray.init neqs 0., Carray.of_carray slopes
+  | ResFnExpDecay coefs ->
+    let vec0 = Carray.init neqs 1. in
+    let vec'0 = Carray.of_carray coefs in
+    Carray.mapi (fun i vec0_i -> -. coefs.{i} *. vec0.{i}) vec'0;
+    vec0, vec'0
 
 let gen_model () =
   let neqs  = min 10 (gen_pos ()) in
@@ -102,12 +140,17 @@ let gen_model () =
     t0 = t0;
     vec0  = vec0;
     vec'0 = vec'0;
+    next_query_time = None;
   }
 
 let copy_resfn = function
   | ResFnLinear slopes -> ResFnLinear (Carray.of_carray slopes)
+  | ResFnExpDecay coefs -> ResFnExpDecay (Carray.of_carray coefs)
 let copy_model m =
   {
+    (* Everything is copied explicitly here instead of using { m with ... }
+       because this way the compiler forces us to inspect every new field when
+       it's added, so we won't forget to deep copy any of them.  *)
     resfn = copy_resfn m.resfn;
     solver = m.solver;
     solving = m.solving;
@@ -123,6 +166,7 @@ let copy_model m =
     t0 = m.t0;
     vec0 = Carray.of_carray m.vec0;
     vec'0 = Carray.of_carray m.vec'0;
+    next_query_time = m.next_query_time;
   }
 
 (* Commands: note that which commands can be tested without trouble depends on
@@ -130,8 +174,12 @@ let copy_model m =
 
 let gen_cmd =
   let cases =
-    [| (fun model -> let t = gen_query_time model.last_query_time () in
-                   ({ model with last_query_time = t }, SolveNormal t));
+    [| (fun model ->
+          let t =
+            match model.next_query_time with
+            | None -> gen_query_time model.last_query_time ()
+            | Some t -> t
+          in ({ model with last_query_time = t }, SolveNormal t));
        (fun model -> (model, GetRootInfo));
        (fun model -> (model, GetNRoots));
        (fun model ->
@@ -142,31 +190,87 @@ let gen_cmd =
           let dirs = gen_array ~size:size gen_root_direction ()
           in (model, SetRootDirection dirs));
        (fun model -> (model, SetAllRootDirections (gen_root_direction ())));
+       (fun model ->
+          match model.resfn with
+          (* ic_calc_y doesn't work on ResFnLinear. *)
+          | ResFnLinear _ -> (model, GetRootInfo)
+          | _ ->
+            let t = gen_query_time (model.last_query_time +. discrete_unit) ()
+            and rand = Random.int 100 in
+            let bad_size () =
+              let n = gen_pos () in
+              if n <= Carray.length model.vec then n-1
+              else n
+            in
+            let ic_buf =
+              (* With 40% probability, don't receive corrected vector.
+                 With 10% probability, pass in bad vector.  *)
+              if rand < 40 then Don'tGetCorrectedIC
+              else if rand < 50 then GiveBadVector (bad_size ())
+              else GetCorrectedIC
+            in
+            (model, CalcIC_Y (t, ic_buf)));
     |]
   in
   fun model -> gen_choice cases model
 
+let shrink_ic_buf model = function
+  | GetCorrectedIC -> Fstream.singleton Don'tGetCorrectedIC
+  | Don'tGetCorrectedIC -> Fstream.nil
+  | GiveBadVector n -> Fstream.of_list [Don'tGetCorrectedIC; GetCorrectedIC]
+                       @@ Fstream.map (fun n -> GiveBadVector n)
+                           (Fstream.filter ((<>) (Carray.length model.vec))
+                              (shrink_nat n))
+
 let shrink_cmd model = function
   | SolveNormal t ->
-    Fstream.map
-      (fun t -> ({ model with last_query_time = t}, SolveNormal t))
-      (shrink_query_time model.last_query_time t)
+    begin
+      match model.next_query_time with
+      | Some t -> Fstream.singleton ({ model with last_query_time = t;
+                                                  next_query_time = None; },
+                                     SolveNormal t)
+      | None -> Fstream.map
+                  (fun t -> ({ model with last_query_time = t; },
+                             SolveNormal t))
+                  (shrink_query_time model.last_query_time t)
+    end
   | GetRootInfo -> Fstream.nil
   | GetNRoots -> Fstream.nil
   | SetAllRootDirections dir ->
     Fstream.map
       (fun dir -> (model, SetAllRootDirections dir))
       (shrink_root_direction dir)
+  | CalcIC_Y (t, ic_buf) ->
+    assert (not (model.solving));
+    let model = { model with solving = true } in
+    Fstream.map (fun ic_buf -> (model, CalcIC_Y (t, ic_buf)))
+      (shrink_ic_buf model ic_buf)
+    @@ Fstream.map (fun t -> ({ model with next_query_time = Some t },
+                              CalcIC_Y (t, ic_buf)))
+        (shrink_query_time (model.last_query_time +. discrete_unit) t)
   | SetRootDirection dirs ->
     Fstream.map
       (fun dirs -> (model, SetRootDirection dirs))
       (shrink_array shrink_root_direction ~shrink_size:false dirs)
 
+(* Fix up a command to be executable in a given state (= the model parameter).
+   The incoming model may have fewer equations than when the command was
+   generated, or have a different starting time.  *)
 let fixup_cmd model = function
   | SolveNormal t ->
-    let t = max t model.last_query_time in
-    ({ model with last_query_time = t }, SolveNormal t)
-  | GetRootInfo | GetNRoots | SetRootDirection _
+    begin
+      match model.next_query_time with
+      | Some t -> ({ model with last_query_time = t; next_query_time = None; },
+                   SolveNormal t)
+      | None -> let t = max t model.last_query_time in
+                ({ model with last_query_time = t }, SolveNormal t)
+    end
+  | CalcIC_Y (t, GiveBadVector n) when n = Carray.length model.vec ->
+    (* FIXME: is it OK to perform CalcIC_Y multiple times?  What about with an
+       intervening solve?  Without an intervening solve?  *)
+    ({ model with next_query_time = Some t },
+     CalcIC_Y (t, GiveBadVector (if n = 0 then 1 else (n-1))))
+  | GetRootInfo | GetNRoots | CalcIC_Y _ | SetRootDirection _
   | SetAllRootDirections _ as cmd -> (model, cmd)
 
 let gen_cmds model =
@@ -192,9 +296,11 @@ let shrink_model model cmds =
                               else Array.make n RootDirs.IncreasingOrDecreasing
                 }
     in
+    (* Fix up commands to cope with a shrunk root function set.  The set of
+       equations is not shrunk.  *)
     let fixup_cmd_with_drop model cmd =
       match cmd with
-      | SolveNormal _ | GetRootInfo | GetNRoots
+      | SolveNormal _ | GetRootInfo | GetNRoots | CalcIC_Y _
       | SetAllRootDirections _ -> fixup_cmd model cmd
       | SetRootDirection root_dirs ->
         if Array.length root_dirs = 0
@@ -230,10 +336,13 @@ let gen_script () =
 let shrink_neqs model cmds =
   (* Reduce commands that are dependent on number of equations.  *)
   let drop_from_cmd i = function
+    | CalcIC_Y (t, GiveBadVector n) when n > 0 ->
+      CalcIC_Y (t, GiveBadVector (n-1))
     | cmd -> cmd
   in
   let copy_resfn_drop i = function
     | ResFnLinear slopes -> ResFnLinear (carray_drop_elem slopes i)
+    | ResFnExpDecay coefs -> ResFnExpDecay (carray_drop_elem coefs i)
   in
   let drop_eq i =
     let model =
@@ -248,7 +357,7 @@ let shrink_neqs model cmds =
     in (model, List.map (drop_from_cmd i) cmds)
   in
   let n = Carray.length model.vec in
-  Fstream.guard (n > 1) (Fstream.map drop_eq (Fstream.enum 0 (n - 1)))
+  Fstream.guard (n > 1) (Fstream.map drop_eq (Fstream.enum_then (n-1) (n-2) 0))
 
 let shrink_script (model, cmds) =
   shrink_neqs model cmds
@@ -348,9 +457,23 @@ let pp_resfn_type, dump_resfn_type, show_resfn_type, display_resfn_type,
     =
   printers_of_pp
     (fun fmt -> function
-    | ResFnLinear slope -> pp_string_verbatim fmt "ResFnLinear ";
-      pp_carray fmt slope
+     | ResFnLinear slope ->
+       pp_string_verbatim fmt "ResFnLinear ";
+       pp_carray fmt slope
+     | ResFnExpDecay coefs ->
+       pp_string_verbatim fmt "ResFnExpDecay ";
+       pp_carray fmt coefs
     )
+
+let pp_ic_buf, dump_ic_buf, show_ic_buf, display_ic_buf,
+    print_ic_buf, prerr_ic_buf
+  =
+  printers_of_pp (fun fmt -> function
+      | GiveBadVector n ->
+        Format.fprintf fmt "GiveBadVector ";
+        pp_parens (n < 0) pp_int fmt n
+      | Don'tGetCorrectedIC -> pp_string_verbatim fmt "Don'tGetCorrectedIC"
+      | GetCorrectedIC -> pp_string_verbatim fmt "GetCorrectedIC")
 
 let pp_cmd, dump_cmd, show_cmd, display_cmd, print_cmd, prerr_cmd =
   printers_of_pp (fun fmt -> function
@@ -367,6 +490,12 @@ let pp_cmd, dump_cmd, show_cmd, display_cmd, print_cmd, prerr_cmd =
   | SetRootDirection dirs ->
     Format.fprintf fmt "SetRootDirection ";
     pp_array pp_root_direction fmt dirs
+  | CalcIC_Y (t, ic_buf) ->
+    Format.fprintf fmt "CalcIC_Y (";
+    pp_float fmt t;
+    Format.fprintf fmt ", ";
+    pp_ic_buf fmt ic_buf;
+    Format.fprintf fmt ")"
     )
 
 let pp_cmds, dump_cmds, show_cmds, display_cmds, print_cmds, prerr_cmds =
@@ -545,12 +674,11 @@ let exact_soln typ t0 vec0 vec'0 t vec vec' =
       vec'.{i} <- slopes.{i};
       vec.{i} <- slopes.{i} *. (t -. t0);
     done
-let exact_init model =
-  match model.resfn with
-  | ResFnLinear slopes ->
-    Carray.fill model.vec 0.;
-    Carray.fill model.vec0 0.;
-    model.consistent <- true
+  | ResFnExpDecay coefs ->
+    for i = 0 to Carray.length vec - 1 do
+      vec.{i} <- vec0.{i} *. exp (-. coefs.{i} *. (t -. t0));
+      vec'.{i} <- -. coefs.{i} *. vec.{i}
+    done
 
 (* Find the smallest root(s) in the range (t1..t2].  *)
 let find_roots roots root_dirs t1 t2 =
@@ -636,6 +764,33 @@ let model_cmd model = function
       Type (RootInfo (Roots.copy model.root_info))
   | GetNRoots ->
     Int (Array.length model.roots)
+  | CalcIC_Y (_, GiveBadVector _) -> Exn Ida.IllInput
+     (* Undocumented behavior (sundials 2.5.0): GetConsistentIC() and CalcIC()
+        can only be called before IDASolve().  However, IDA only detects
+        illicit calls of GetConsistentIC(), and for calls to CalcIC() after
+        IDASolve(), it seems to initialize with garbage.
+
+        The OCaml binding contains a flag to detect and prevent this case.
+
+     *)
+  | CalcIC_Y (_, _) when model.solving -> Exn Ida.IllInput
+  | CalcIC_Y (_, ic_buf) ->
+    (* The t carried in the command is just a hint which the exact solver
+       doesn't need.  The time at which vec and vec' should be filled is
+       model.last_tret.  *)
+    begin
+      exact_soln model.resfn model.t0        model.vec0 model.vec'0
+                             model.last_tret model.vec  model.vec';
+      (* Undocumented behavior (sundials 2.5.0): apparently it's OK to call
+         CalcIC() on the same session without an intervening IDASolve() or
+         IDAReInit().  Therefore, we don't set model.solving here.  *)
+      match ic_buf with
+      | Don'tGetCorrectedIC -> Unit (* The current time will be slightly
+                                       ahead of t0.  By exactly how much
+                                       is hard to say.  *)
+      | GetCorrectedIC -> carray model.vec
+      | GiveBadVector _ -> assert false
+    end
   | SetAllRootDirections dir ->
     if Array.length model.roots = 0
     then Exn Ida.IllInput
@@ -685,10 +840,11 @@ let compare_results model_run compiled_run =
 
 let verbose = ref false
 
+let test_ida ml_file_of_script script =
+  compare_results (model_run script) (compile_run (ml_file_of_script script))
+
 let quickcheck_ida ml_file_of_script max_tests =
-  let prop script =
-    compare_results (model_run script) (compile_run (ml_file_of_script script))
-  in
+  let prop script = test_ida ml_file_of_script script in
   let err = Format.err_formatter in
   let fprintf = Format.fprintf err in
   let result =

@@ -43,11 +43,48 @@ let expr_of_linear_solver = function
 
 let expr_of_resfn neqs = function
   | ResFnLinear slopes ->
-    (* forall i. vec.{i} = slopes.{i}*t *)
-    let set i = <:expr<res.{$`int:i$}
+    (* forall i. vec'.{i} = slopes.{i} *)
+    let go i = <:expr<res.{$`int:i$}
                          <- vec'.{$`int:i$} -. $`flo:slopes.{i}$>>
     in <:expr<fun t vec vec' res ->
-               $expr_seq (List.map set (enum 0 (neqs-1)))$>>
+               $expr_seq (List.map go (enum 0 (neqs-1)))$>>
+  | ResFnExpDecay coefs ->
+    (* forall i. vec'.{i} = - coefs.{i} * vec.{i} *)
+    let go i = <:expr<res.{$`int:i$}
+                         <- vec'.{$`int:i$}
+                            +. $`flo:coefs.{i}$ *. vec.{$`int:i$}>>
+    in <:expr<fun t vec vec' res ->
+               $expr_seq (List.map go (enum 0 (neqs-1)))$>>
+
+let jac_expr_of_resfn get set neqs resfn =
+  let go =
+    match resfn with
+    | ResFnLinear slopes ->
+      (* forall i. vec'.{i} - slopes.{i} = 0 *)
+      fun i j -> if i = j then <:expr<$set$ jac ($`int:i$, $`int:j$) c>>
+                 else <:expr<$set$ jac ($`int:i$, $`int:j$) 0.>>
+    | ResFnExpDecay coefs ->
+      (* forall i. vec'.{i} + coefs.{i} * vec.{i} = 0 *)
+      fun i j -> if i = j then <:expr<$set$ jac ($`int:i$, $`int:j$)
+                                                (c +. $`flo:coefs.{i}$)>>
+                 else <:expr<$set$ jac ($`int:i$, $`int:j$) 0.>>
+  and ixs = enum 0 (neqs - 1) in
+  <:expr<fun jac_arg jac ->
+         let c = jac_arg.Ida.jac_coef in
+         $expr_seq (List.concat
+                      (List.map (fun i -> List.map (go i) ixs) ixs))$>>
+
+let set_jac model session =
+  let neqs = Carray.length model.vec in
+  match model.solver with
+  | Ida.Dense -> let dense_get = <:expr<Ida.Densematrix.get>>
+                 and dense_set = <:expr<Ida.Densematrix.set>>
+                 in <:expr<Ida.Dls.set_dense_jac_fn $session$
+                           $jac_expr_of_resfn dense_get dense_set neqs
+                                              model.resfn$>>
+  | Ida.Band _ | Ida.Sptfqmr _ | Ida.Spbcg _ | Ida.Spgmr _
+  | Ida.LapackBand _ | Ida.LapackDense _ ->
+    raise (Failure "linear solver not implemented")
 
 let expr_of_roots roots =
   let n = Array.length roots in
@@ -75,6 +112,16 @@ let expr_of_cmd = function
   | SolveNormal t ->
     <:expr<let tret, flag = Ida.solve_normal session $`flo:t$ vec vec' in
            Aggr [Float tret; SolverResult flag; carray vec; carray vec']>>
+  | CalcIC_Y (t, GetCorrectedIC) ->
+    <:expr<Ida.calc_ic_y session ~y:vec $`flo:t$;
+           carray vec>>
+  | CalcIC_Y (t, Don'tGetCorrectedIC) ->
+    <:expr<Ida.calc_ic_y session $`flo:t$;
+           Unit>>
+  | CalcIC_Y (t, GiveBadVector n) ->
+    <:expr<let bad_vec = Carray.create $`int:n$ in
+           Ida.calc_ic_y session ~y:bad_vec $`flo:t$;
+           Unit>>
   | GetRootInfo ->
     <:expr<let roots = Ida.Roots.create (Ida.nroots session) in
            Ida.get_root_info session roots;
@@ -127,15 +174,18 @@ let ml_of_script (model, cmds) =
             print_result r);
           step := !step + 1
         end
-    let vec  = $expr_of_carray model.vec0$
-    let vec' = $expr_of_carray model.vec'0$
-    let session = Ida.init_at_time
+    let test () =
+      let vec  = $expr_of_carray model.vec0$
+      and vec' = $expr_of_carray model.vec'0$ in
+      let session = Ida.init_at_time
                   $expr_of_linear_solver model.solver$
                   $expr_of_resfn (Carray.length model.vec0) model.resfn$
                   $expr_of_roots model.roots$
                   $`flo:model.t0$
                   vec vec'
-    let test () =
+      in
+      $set_jac model <:expr<session>>$;
+      Ida.ss_tolerances session 1e-9 1e-9;
       output (lazy (Aggr [Float (Ida.get_current_time session);
                           carray vec; carray vec']));
       $expr_of_cmds cmds$

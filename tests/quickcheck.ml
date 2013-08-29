@@ -400,9 +400,18 @@ let minimize ?pp_input ?(pp_formatter=Format.err_formatter) shrink prop x res =
       if res = OK then None
       else Some (x, res)
     in
-    match Fstream.find_some failure (shrink x) with
-    | None -> (ct, x, reason)
-    | Some (x, reason) -> go (ct+1) x reason
+    try
+      match Fstream.find_some failure (shrink x) with
+      | None -> (ct, x, reason)
+      | Some (x, reason) -> go (ct+1) x reason
+    with exn ->
+      if trace then
+        (Format.fprintf pp_formatter "Shrinker failed on:@\n";
+         pp_input pp_formatter x;
+         Format.pp_print_newline pp_formatter ())
+      else pp_string_verbatim pp_formatter "Shrinker failed!\n";
+      Format.pp_print_flush pp_formatter ();
+      raise exn
   in go 0 x res
 
 let test_case_number = ref 0
