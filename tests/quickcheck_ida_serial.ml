@@ -230,7 +230,7 @@ let _ =
                  ("--rand-seed", Arg.Set_int randseed,
                   "seed value for random generator");
                  ("--verbose", Arg.Set verbose,
-                  "print every test script before trying");
+                  "print each test script before trying it");
                  ("--read-write-invariance", Arg.Set read_write_invariance,
                   "print data in a format that can be fed to ocaml toplevel");
                 ] in

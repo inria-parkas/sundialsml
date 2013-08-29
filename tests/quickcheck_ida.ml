@@ -10,7 +10,11 @@ type session_model =
   {
     resfn : resfn_type;
     mutable solver : Ida.linear_solver;
+
+    (* Set when SolveNormal or CalcIC_* has been called on this model.  *)
     mutable solving : bool;
+
+    (* Set when the current state vector satisfies the DAE.  *)
     mutable consistent : bool;
     mutable last_query_time : float;
     mutable last_tret : float;

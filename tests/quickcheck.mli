@@ -148,10 +148,10 @@ val shrink_list :
      (seed3, y3) = gen seed2,
      ...].
 
-    [gen x] should produce a value taking into account some information [x]
-    about previously generated elements, and return that value along with [x]
-    updated with information about the new value.  [seed] is the initial value
-    of [x].
+    [gen x] should return [(x',v)] where [v] is some randomly selected value
+    taking into account some information [x] about previously generated
+    elements, and [x'] is just [x] updated with information about [v].  [seed]
+    is the initial value of [x].
 
     For example, [gen_1pass_list (fun x -> let x = gen_nat () + x in (x,x)) 0]
     generates non-strictly increasing lists of natural numbers.
@@ -183,7 +183,7 @@ val gen_1pass_list : ('a -> 'a * 'b) -> 'a -> ?size:int -> unit -> 'b list
     Currently, [shrink_1pass_list] enumerates lists produced by the following
     procedure: either drop an element of the list or replace it by a smaller
     value produced by [shrink]; then pass [fixup] through the whole list to
-    restore any invariants broken by shrinking.
+    restore any invariants broken by the shrinking.
 
  *)
 val shrink_1pass_list :
