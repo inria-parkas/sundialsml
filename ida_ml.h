@@ -43,6 +43,7 @@ enum ida_index {
     RECORD_IDA_SESSION_PRESETUPFN,
     RECORD_IDA_SESSION_PRESOLVEFN,
     RECORD_IDA_SESSION_JACTIMESFN,
+    RECORD_IDA_SESSION_SAFETY_FLAGS,
     RECORD_IDA_SESSION_SIZE	/* This has to come last. */
 };
 
@@ -57,6 +58,25 @@ enum ida_index {
 #define IDA_ERRW_FROM_ML(v)    (Field((v), RECORD_IDA_SESSION_ERRW))
 #define IDA_JACFN_FROM_ML(v)     (Field((v), RECORD_IDA_SESSION_JACFN))
 #define IDA_BANDJACFN_FROM_ML(v) (Field((v), RECORD_IDA_SESSION_BANDJACFN))
+
+#if SAFETY_CHECKS
+#define IDA_SAFETY_FLAGS(v)    Int_val(Field((v), \
+					     RECORD_IDA_SESSION_SAFETY_FLAGS))
+#define IDA_SET_SAFETY_FLAGS(v, f)				\
+    Store_field ((v), RECORD_IDA_SESSION_SAFETY_FLAGS,		\
+		 Val_int ((IDA_SAFETY_FLAGS((v)) | (f))))
+#else
+/* All uses of the safety flags field must be guarded by #if SAFETY_CHECKS.
+   If you see BUG__SAFETY_CHECKS_IS_FALSE, it means you forgot that guard.  */
+#define IDA_SAFETY_FLAGS(_) BUG__SAFETY_CHECKS_IS_FALSE
+#define IDA_SET_SAFETY_FLAGS(_,__) BUG__SAFETY_CHECKS_IS_FALSE
+#endif
+
+/* Flags kept in IDA_SAFETY_FLAGS.  There must be no more than 31 of them.
+   All flags must be 0 for a new session.  */
+enum ida_safety_flags {
+    IDA_SAFETY_FLAG_SOLVING = 1,	/* IDASolve() has been called.  */
+};
 
 enum ida_integrator_stats_index {
     RECORD_IDA_INTEGRATOR_STATS_STEPS = 0,

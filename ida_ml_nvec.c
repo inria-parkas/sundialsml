@@ -616,6 +616,10 @@ CAMLprim void IDATYPE(reinit)(value vdata, value t0, value y0, value yp0)
     RELINQUISH_NVECTORIZEDVAL(y0_nv);
     CHECK_FLAG("IDAReInit", flag);
 
+#if SAFETY_CHECKS
+    IDA_SET_SAFETY_FLAGS(vdata, 0);
+#endif
+
     CAMLreturn0;
 }
 
@@ -663,6 +667,10 @@ static value solve (value vdata, value nextt, value vy, value vyp, int onestep)
 	}
 	CHECK_FLAG ("IDASolve", flag);
     }
+
+#if SAFETY_CHECKS
+    IDA_SET_SAFETY_FLAGS (vdata, IDA_SAFETY_FLAG_SOLVING);
+#endif
 
     /* Hmm...should this go in the production code or not?  */
     if (Is_block (Field (vdata, RECORD_IDA_SESSION_EXN_TEMP)))
@@ -750,6 +758,13 @@ static void calc_ic (void *ida_mem, value session, int icopt, realtype tout1,
     CAMLlocal1 (exn);
     int flag;
     N_Vector y, yp;
+
+#if SAFETY_CHECKS
+    if (IDA_SAFETY_FLAGS (session) & IDA_SAFETY_FLAG_SOLVING) {
+	/* FIXME: explain the reason to the programmer.  */
+	caml_raise_constant(*caml_named_value("ida_IllInput"));
+    }
+#endif
 
     flag = IDACalcIC (ida_mem, icopt, tout1);
 

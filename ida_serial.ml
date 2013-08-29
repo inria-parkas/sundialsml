@@ -63,6 +63,9 @@ type session = {
                                -> float -> unit;
         mutable jactimesfn : double_tmp jacobian_arg -> val_array -> val_array
                                -> unit;
+
+        (* To be manipulated from the C side only.  *)
+        mutable safety_check_flags : int;
       }
 
 external sv_tolerances  : session -> float -> nvec -> unit
@@ -168,6 +171,7 @@ let init_at_time linsolv resfn (nroots, rootsfn) t0 y y' =
                   presetupfn = (fun _ -> ());
                   presolvefn = (fun _ _ _ _ -> ());
                   jactimesfn = (fun _ _ _ -> ());
+                  safety_check_flags = 0;
                 }
   in
   Gc.finalise session_finalize session;

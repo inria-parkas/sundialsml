@@ -1193,7 +1193,7 @@ val set_var_types : session -> VarTypes.t -> unit
     iteration combined with a linesearch algorithm.  See Section 2.1 of the IDA
     User Guide and the following reference for more information:
 
-    P. N. Brown, A. C. Hindmarsh, and L. R. Petzold. Consistent Initial Condition Calculation for Differential-Algebraic Systems. SIAM J. Sci. Comput., 19:1495–1512, 1998.
+    P. N. Brown, A. C. Hindmarsh, and L. R. Petzold. Consistent Initial Condition Calculation for Differential-Algebraic Systems. SIAM J. Sci. Comput., 19:1495-1512, 1998.
 
     @ida <node5#ss:idacalcic> IDACalcIC
     @ida <node5#sss:optout_iccalc> IDAGetConsistentIC
