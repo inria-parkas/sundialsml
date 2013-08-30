@@ -524,20 +524,29 @@ external set_suppress_alg : session -> bool -> unit
 external get_num_backtrack_ops : session -> int
   = "c_ida_get_num_backtrack_ops"
 
-external calc_ic_y : session -> ?y:val_array -> float -> unit
+external c_calc_ic_y : session -> val_array option -> float -> unit
   = "c_ba_ida_calc_ic_y"
-external c_calc_ic_ya_yd' :
-  session -> val_array option -> der_array option -> Id.t -> float -> unit
-  = "c_ba_ida_calc_ic_ya_ydp"
-let calc_ic_ya_yd' session ?y ?y' id tout1 =
-  if Id.length id <> neqs session then
-    raise (Invalid_argument ("length of component type array does not match number of equations"));
+let calc_ic_y session ?y tout1 =
   let len = function
     | None -> neqs session
     | Some x -> Carray.length x
   in
   if len y <> neqs session then
-    raise (Invalid_argument ("length of buffer receiving computed y vector doesn't match number of equations"));
+    invalid_arg "calc_ic_y: ~y has incorrect length";
+  c_calc_ic_y session y tout1
+
+external c_calc_ic_ya_yd' :
+  session -> val_array option -> der_array option -> Id.t -> float -> unit
+  = "c_ba_ida_calc_ic_ya_ydp"
+let calc_ic_ya_yd' session ?y ?y' id tout1 =
+  if Id.length id <> neqs session then
+    invalid_arg "calc_ic_ya_yd': variable type array (of type VarTypes.t) has incorrect length";
+  let len = function
+    | None -> neqs session
+    | Some x -> Carray.length x
+  in
+  if len y <> neqs session then
+    invalid_arg "calc_ic_ya_yd': ~y has incorrect length";
   if len y' <> neqs session then
-    raise (Invalid_argument ("length of buffer receiving computed y' vector doesn't match number of equations"));
-  c_calc_ic_ya_yd' session (y : val_array option) y' id tout1
+    invalid_arg "calc_ic_ya_yd': ~y' has incorrect length";
+  c_calc_ic_ya_yd' session y y' id tout1

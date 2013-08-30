@@ -195,9 +195,19 @@ module Roots :
         in [r]. *)
     val appi : (int -> root_event -> unit) -> t -> unit
 
+    (** Makes a [Roots.t] from a list of root events.  *)
+    val of_list : root_event list -> t
+
     (** Copies the contents of an {{:OCAML_DOC_ROOT(Array)} Array} into an
         opaque array of type [Roots.t].  *)
     val of_array : root_event array -> t
+
+    (** Copies the contents of an opaque array of type [Roots.t] into an
+        {{:OCAML_DOC_ROOT(Array)} Array}.  *)
+    val to_array : t -> root_event array
+
+    (** Copies the contents of a [Roots.t] into a list.  *)
+    val to_list : t -> root_event list
 
     (** [fill_all a x] sets the values of [a] to [x] everywhere. *)
     val fill_all : t -> root_event -> unit
@@ -263,6 +273,20 @@ module RootDirs :
     (** [init n f] creates an array of length [n] and sets it to [f i] for each
         index [i]. *)
     val init : int -> (int -> root_direction) -> t
+
+    (** Makes a [RootDirs.t] from a list of root events.  *)
+    val of_list : root_direction list -> t
+
+    (** Copies the contents of an {{:OCAML_DOC_ROOT(Array)} Array} into an
+        opaque array of type [RootDirs.t].  *)
+    val of_array : root_direction array -> t
+
+    (** Copies the contents of an opaque array of type [RootDirs.t] into an
+        {{:OCAML_DOC_ROOT(Array)} Array}.  *)
+    val to_array : t -> root_direction array
+
+    (** Copies the contents of a [RootDirs.t] into a list.  *)
+    val to_list : t -> root_direction list
   end
 
 (** {2 Miscellaneous utility functions} *)
