@@ -24,8 +24,14 @@ let _loc = Loc.ghost
 let semis when_empty ctor = function
   | [] -> when_empty
   | e::es -> ctor (List.fold_left (fun e1 e2 -> Ast.ExSem (_loc, e1, e2)) e es)
+
 let expr_array es = semis <:expr<[||]>> (fun e -> Ast.ExArr (_loc, e)) es
+
+let expr_list es =
+  List.fold_right (fun e es -> <:expr<$e$::$es$>>) es <:expr<[]>>
+
 let expr_seq es = semis <:expr<()>> (fun e -> Ast.ExSeq (_loc, e)) es
+
 let expr_of_carray v =
   let n = Carray.length v in
   if n = 0 then <:expr<Carray.create 0>>
@@ -41,15 +47,17 @@ let expr_of_linear_solver = function
   | Ida.LapackBand _ | Ida.LapackDense _ ->
     raise (Failure "linear solver not implemented")
 
-let expr_of_resfn neqs = function
+let expr_of_resfn_impl = function
   | ResFnLinear slopes ->
     (* forall i. vec'.{i} = slopes.{i} *)
+    let neqs = Carray.length slopes in
     let go i = <:expr<res.{$`int:i$}
                          <- vec'.{$`int:i$} -. $`flo:slopes.{i}$>>
     in <:expr<fun t vec vec' res ->
                $expr_seq (List.map go (enum 0 (neqs-1)))$>>
   | ResFnExpDecay coefs ->
     (* forall i. vec'.{i} = - coefs.{i} * vec.{i} *)
+    let neqs = Carray.length coefs in
     let go i = <:expr<res.{$`int:i$}
                          <- vec'.{$`int:i$}
                             +. $`flo:coefs.{i}$ *. vec.{$`int:i$}>>
@@ -107,8 +115,17 @@ let expr_of_root_direction = function
   | RootDirs.IncreasingOrDecreasing ->
     <:expr<Ida.RootDirs.IncreasingOrDecreasing>>
 
+let expr_of_root_event = function
+  | Roots.Rising -> <:expr<Roots.Rising>>
+  | Roots.Falling -> <:expr<Roots.Falling>>
+  | Roots.NoRoot -> <:expr<Roots.NoRoot>>
+
+let expr_of_root_info rs =
+  <:expr<Roots.of_array $expr_array (List.map expr_of_root_event
+                                       (Roots.to_list rs))$>>
+
 (* Generate the test code that executes a given command.  *)
-let expr_of_cmd = function
+let expr_of_cmd_impl = function
   | SolveNormal t ->
     <:expr<let tret, flag = Ida.solve_normal session $`flo:t$ vec vec' in
            Aggr [Float tret; SolverResult flag; carray vec; carray vec']>>
@@ -136,73 +153,151 @@ let expr_of_cmd = function
            $expr_array (List.map expr_of_root_direction (Array.to_list dirs))$;
            Unit>>
 
-let expr_of_cmds = function
+let expr_of_cmds_impl = function
   | [] -> <:expr<()>>
   | cmds ->
-    let sandbox exp = <:expr<output (lazy $exp$)>> in
-    expr_seq (List.map (fun cmd -> sandbox (expr_of_cmd cmd))
+    let sandbox exp = <:expr<do_cmd (lazy $exp$)>> in
+    expr_seq (List.map (fun cmd -> sandbox (expr_of_cmd_impl cmd))
                 cmds)
+
+let expr_of_solver_result = function
+  | Ida.Continue -> <:expr<Ida.Continue>>
+  | Ida.RootsFound -> <:expr<Ida.RootsFound>>
+  | Ida.StopTimeReached -> <:expr<Ida.StopTimeReached>>
+
+let expr_of_exn = function
+  | Invalid_argument msg -> <:expr<Invalid_argument $`str:msg$>>
+  | Not_found -> <:expr<Not_found>>
+  | Ida.IllInput -> <:expr<Ida.IllInput>>
+  | Ida.TooMuchWork -> <:expr<Ida.TooMuchWork>>
+  | Ida.TooClose -> <:expr<Ida.TooClose>>
+  | Ida.TooMuchAccuracy -> <:expr<Ida.TooMuchAccuracy>>
+  | Ida.ErrFailure -> <:expr<Ida.ErrFailure>>
+  | Ida.ConvergenceFailure -> <:expr<Ida.ConvergenceFailure>>
+  | Ida.LinearSetupFailure -> <:expr<Ida.LinearSetupFailure>>
+  | Ida.LinearInitFailure -> <:expr<Ida.LinearInitFailure>>
+  | Ida.LinearSolveFailure -> <:expr<Ida.LinearSolveFailure>>
+  | Ida.FirstResFuncFailure -> <:expr<Ida.FirstResFuncFailure>>
+  | Ida.RepeatedResFuncErr -> <:expr<Ida.RepeatedResFuncErr>>
+  | Ida.UnrecoverableResFuncErr -> <:expr<Ida.UnrecoverableResFuncErr>>
+  | Ida.RootFuncFailure -> <:expr<Ida.RootFuncFailure>>
+  | Ida.BadK -> <:expr<Ida.BadK>>
+  | Ida.BadT -> <:expr<Ida.BadT>>
+  | Ida.BadDky -> <:expr<Ida.BadDky>>
+  | _ -> assert false
+
+let rec expr_of_result = function
+  | Unit -> <:expr<Unit>>
+  | Int n -> <:expr<Int $`int:n$>>
+  | Float f -> <:expr<Float $`flo:f$>>
+  | Any -> <:expr<Any>>
+  | Type r -> <:expr<Type $expr_of_result r$>>
+  | Aggr rs -> <:expr<Aggr $expr_list (List.map expr_of_result rs)$>>
+  | Carray v -> <:expr<Carray $expr_of_carray v$>>
+  | SolverResult s -> <:expr<SolverResult $expr_of_solver_result s$>>
+  | Exn e -> <:expr<Exn $expr_of_exn e$>>
+  | RootInfo r -> <:expr<RootInfo $expr_of_root_info r$>>
+
+let expr_of_results rs = expr_list (List.map expr_of_result rs)
+
+let expr_of_option expr_of_contents = function
+  | None -> <:expr<None>>
+  | Some x -> <:expr<Some $expr_of_contents x$>>
+
+let expr_of_array expr_of_elem a =
+  let f e1 = function
+    | Ast.ExNil _ -> expr_of_elem e1
+    | e2 -> Ast.ExSem (_loc, expr_of_elem e1, e2)
+  in
+  match Array.fold_right f a (Ast.ExNil _loc) with
+  | Ast.ExNil _ -> <:expr<[||]>>
+  | e -> Ast.ExArr (_loc, e)
+
+let expr_of_list expr_of_elem es =
+  List.fold_left
+    (fun es e -> <:expr<$expr_of_elem e$::$es$>>)
+    <:expr<[]>>
+    (List.rev es)
+
+let expr_of_pair expr_of_fst expr_of_snd (x,y) =
+  <:expr<$expr_of_fst x$, $expr_of_snd y$>>
+
+let expr_of_float x = <:expr<$`flo:x$>>
+
+let expr_of_resfn = function
+  | ResFnLinear slopes -> <:expr<ResFnLinear $expr_of_carray slopes$>>
+  | ResFnExpDecay coefs -> <:expr<ResFnExpDecay $expr_of_carray coefs$>>
+
+let expr_of_model model =
+  <:expr<
+    {
+      resfn = $expr_of_resfn model.resfn$;
+      solver = $expr_of_linear_solver model.solver$;
+      solving = $`bool:model.solving$;
+      consistent = $`bool:model.consistent$;
+      last_query_time = $`flo:model.last_query_time$;
+      next_query_time = $expr_of_option expr_of_float model.next_query_time$;
+      last_tret = $`flo:model.last_tret$;
+      roots = $expr_of_array (expr_of_pair expr_of_float expr_of_root_event)
+                 model.roots$;
+      root_dirs = $expr_of_array expr_of_root_direction model.root_dirs$;
+      root_info = $expr_of_root_info model.root_info$;
+      root_info_valid = $`bool:model.root_info_valid$;
+      vec = $expr_of_carray model.vec$;
+      vec' = $expr_of_carray model.vec'$;
+      vec0 = $expr_of_carray model.vec0$;
+      vec'0 = $expr_of_carray model.vec'0$;
+      t0 = $`flo:model.t0$;
+    }
+    >>
+
+let expr_of_ic_buf = function
+  | GetCorrectedIC -> <:expr<GetCorrectedIC>>
+  | Don'tGetCorrectedIC -> <:expr<Don'tGetCorrectedIC>>
+  | GiveBadVector n -> <:expr<GiveBadVector $`int:n$>>
+
+let expr_of_cmd = function
+  | SolveNormal f -> <:expr<SolveNormal $`flo:f$>>
+  | GetRootInfo -> <:expr<GetRootInfo>>
+  | SetRootDirection root_dirs ->
+    <:expr<SetRootDirection $expr_of_array expr_of_root_direction root_dirs$>>
+  | SetAllRootDirections root_dir ->
+    <:expr<SetAllRootDirections $expr_of_root_direction root_dir$>>
+  | GetNRoots -> <:expr<GetNRoots>>
+  | CalcIC_Y (t, ic_buf) ->
+    <:expr<CalcIC_Y ($`flo:t$, $expr_of_ic_buf ic_buf$)>>
 
 let ml_of_script (model, cmds) =
   let nsteps = List.length cmds in
   let step_width = String.length (string_of_int nsteps) in
-  let step_fmt = "step %" ^ string_of_int step_width ^ "d: " in
-  let init_str = "init:  " ^ String.make step_width ' ' in
   <:str_item<
     module Ida = Ida_serial
     module Carray = Ida.Carray
     open Quickcheck_ida
     open Pprint
     let marshal_results = ref false
+    let just_cmp = ref false
     let step = ref 0
-    let output thunk =
-      let r = try Lazy.force thunk with exn -> Exn exn in
-      if !marshal_results
-      then Marshal.to_channel stdout r []
-      else
-        begin
-          (match !step, !read_write_invariance with
-          | 0, false ->
-            Format.print_string $`str:init_str$;
-            print_result r
-          | 0, true -> print_result r
-          | s, false ->
-            Format.printf $`str:("@," ^ step_fmt)$ s;
-            print_result r
-          | s, true ->
-            Format.printf ";@,";
-            print_result r);
-          step := !step + 1
-        end
-    let test () =
+    let model = $expr_of_model model$
+    let cmds = $expr_of_array expr_of_cmd (Array.of_list cmds)$
+    let do_cmd, finish = ida_test_case_driver model cmds
+    let _ =
       let vec  = $expr_of_carray model.vec0$
       and vec' = $expr_of_carray model.vec'0$ in
       let session = Ida.init_at_time
                   $expr_of_linear_solver model.solver$
-                  $expr_of_resfn (Carray.length model.vec0) model.resfn$
+                  $expr_of_resfn_impl model.resfn$
                   $expr_of_roots model.roots$
                   $`flo:model.t0$
                   vec vec'
       in
-      $set_jac model <:expr<session>>$;
       Ida.ss_tolerances session 1e-9 1e-9;
-      output (lazy (Aggr [Float (Ida.get_current_time session);
+      $set_jac model <:expr<session>>$;
+      do_cmd (lazy (Aggr [Float (Ida.get_current_time session);
                           carray vec; carray vec']));
-      $expr_of_cmds cmds$
-    let _ =
-      Arg.parse
-        [("--marshal-results", Arg.Set marshal_results,
-          "For internal use only");
-         ("--read-write-invariance", Arg.Set read_write_invariance,
-          "print data in a format that can be fed to ocaml toplevel")]
-        (fun _ -> ()) "a test case generated by quickcheck";
-      if not !marshal_results then
-        (if !read_write_invariance then Format.printf "@[[@[<v>"
-         else Format.printf "@[<v>");
-      test ();
-      if not !marshal_results then
-        (if !read_write_invariance then Format.printf "@]]@."
-         else Format.printf "@.")
+      [||].(0) <- 0;
+      $expr_of_cmds_impl cmds$;
+      exit (finish ())
    >>
 
 let randseed =
