@@ -1,5 +1,11 @@
 include ../config
 
+CAMLP4=camlp4of
+
+# Object files that implement the deriving extension.
+CAMLP4_OBJS=fstream.cmo pa_deriving.cmo pprint.cmo
+CAMLP4_CMIS=pprint.cmi
+
 # Object files pertaining to the quickcheck framework.
 QUICKCHECK_OBJS=fstream.cmo pprint.cmo \
                 quickcheck.cmo quickcheck_sundials.cmo quickcheck_ida.cmo
@@ -18,14 +24,46 @@ quickcheck_ida.opt: $(QUICKCHECK_OBJS:.cmo=.cmx) quickcheck_ida.cmx
 
 failed.opt: $(QUICKCHECK_OBJS:.cmo=.cmx) failed.cmx
 
+sundials_types.ml: ../sundials.mli extract_types.byte
+	./extract_types.byte $< > $@
+
+extract_types.byte: extract_types.cmo
+	$(OCAMLC) $(OCAMLFLAGS) -I +camlp4 \
+	    dynlink.cma camlp4fulllib.cma camlp4aux.cmo str.cma $^ -o $@
+
+extract_types.cmo: extract_types.ml
+	$(OCAMLC) $(OCAMLFLAGS) -pp camlp4orf -I +camlp4 -I +camlp4/Camlp4Parsers -I +camlp4/Camlp4Printers \
+	    -c $< -o $@
+
+# The deriving preprocessor depends on these files, so they must be built
+# without -pp "camlp4 pa_deriving.cmo"
+$(CAMLP4_OBJS): %.cmo: %.ml
+	$(OCAMLC) $(OCAMLFLAGS) -c -I +camlp4 -pp $(CAMLP4) $< -o $@
+$(CAMLP4_CMIS): %.cmi: %.mli
+	$(OCAMLC) $(OCAMLFLAGS) -c -I +camlp4 -pp $(CAMLP4) $< -o $@
+
+test-deriving: deriving_test.opt
+	./$< > deriving_test.out
+	diff -u deriving_test.expected deriving_test.out
+
+dump-deriving: pa_deriving.cmo pprint.cmo
+	$(CAMLP4) camlp4aux.cmo pa_deriving.cmo \
+	    -printer Camlp4OCamlPrinter \
+	    deriving_test.ml
+
+deriving_test.opt: deriving_test.cmx $(CAMLP4_OBJS:.cmo=.cmx)
+
+
 test-%: %.opt
 	./$< $(PARAMS)
 
-%.cmx: %.ml
-	$(OCAMLOPT) $(OCAMLOPTFLAGS) -pp camlp4of -I +camlp4 -I .. \
+%.cmx: %.ml $(CAMLP4_OBJS)
+	$(OCAMLOPT) $(OCAMLOPTFLAGS) -I +camlp4 -I .. \
+	    -pp "$(CAMLP4) camlp4aux.cmo pa_deriving.cmo" \
 	    bigarray.cmxa unix.cmxa sundials_ida.cmxa -o $@ -c $<
-%.cmo: %.ml
-	$(OCAMLC) $(OCAMLFLAGS) -pp camlp4of -I +camlp4 -I .. \
+%.cmo: %.ml $(CAMLP4_OBJS)
+	$(OCAMLC) $(OCAMLFLAGS) -I +camlp4 -I .. \
+	    -pp "$(CAMLP4) camlp4aux.cmo pa_deriving.cmo" \
 	    bigarray.cma unix.cma sundials_ida.cma -o $@ -c $<
 
 %.opt: %.cmx
@@ -44,11 +82,16 @@ test-%: %.opt
             $(QUICKCHECK_OBJS)
 
 clean:
-	-rm -f *.cmi *.cmo *.cmx *.o *.opt
+	-rm -f *.cmi *.cmo *.cmx *.o *.opt *.byte *.opt failed test *.out
 
 depend: .depend
 
 .depend:
-	$(OCAMLDEP) -pp camlp4of *.ml *.mli > $@
+	$(OCAMLDEP) -pp $(CAMLP4) $(CAMLP4_OBJS:.cmo=.ml) \
+	    $(CAMLP4_CMIS:.cmi=.mli) > $@
+	$(OCAMLDEP) -pp "$(CAMLP4) camlp4aux.cmo pa_deriving.cmo" \
+	    $(filter-out $(CAMLP4_OBJS:.cmo=.ml),*.ml) \
+	    $(filter-out $(CAMLP4_OBJS:.cmo=.mli),*.mli) >> $@
 
--include .depend
+include .depend
+

@@ -1,0 +1,103 @@
+<poly1>
+RWI:    ()
+No RWI: ()
+
+<poly1>
+RWI:    -1
+No RWI: -1
+
+<poly2>
+RWI:    (-1, -1)
+No RWI: (-1, -1)
+
+<poly2>
+RWI:    (1, 1)
+No RWI: (1, 1)
+
+<poly3>
+RWI:    ()
+No RWI: ()
+
+<record1>
+RWI:    {Deriving_test.mfield11 = (); Deriving_test.field12 = ()}
+No RWI: {mfield11 = (); field12 = ()}
+
+<poly1_record2>
+RWI:    {Deriving_test.opt_field21 = ();
+         Deriving_test.opt_mfield22 = [|(); ()|];
+         Deriving_test.opt_mfield23 = lazy ()}
+No RWI: {}
+
+<poly1_record2>
+RWI:    {Deriving_test.opt_field21 = -1;
+         Deriving_test.opt_mfield22 = [|-1; 0|];
+         Deriving_test.opt_mfield23 = <lazy>}
+No RWI: {}
+
+<poly2_record3>
+RWI:    {Deriving_test.polyrec_field31 = <lazy>;
+         Deriving_test.backref_field32 = ((), ());
+         Deriving_test.fwdref_field33 = OptVar11}
+No RWI: {polyrec_field31 = <lazy>;
+         backref_field32 = ((), ());
+         fwdref_field33 = OptVar11}
+
+<poly2_record3>
+RWI:    {Deriving_test.polyrec_field31 = lazy {Deriving_test.polyrec_field31 =
+                                                <lazy>;
+                                               Deriving_test.backref_field32 =
+                                                (1, 2);
+                                               Deriving_test.fwdref_field33 =
+                                                OptVar11};
+         Deriving_test.backref_field32 = (-1, false);
+         Deriving_test.fwdref_field33 = OptVar11}
+No RWI: {polyrec_field31 = lazy {polyrec_field31 = <lazy>;
+                                 backref_field32 = (1, 2);
+                                 fwdref_field33 = OptVar11};
+         backref_field32 = (-1, false);
+         fwdref_field33 = OptVar11}
+
+<var1_0>
+RWI:    OptVar11
+No RWI: OptVar11
+
+<var2_00>
+RWI:    [Var21; Var22]
+No RWI: [Var21; Var22]
+
+<var3_012>
+RWI:    [Var31; Deriving_test.OptVar32 (); Deriving_test.Var33 ((), ())]
+No RWI: [Var31; (); Var33 ((), ())]
+
+<var4_pair>
+RWI:    Deriving_test.Var41 ((), ())
+No RWI: Var41 ((), ())
+
+<poly1_var5_12>
+RWI:    [Deriving_test.Var51 (); Deriving_test.Var52 ((), ())]
+No RWI: [Var51 (); Var52 ((), ())]
+
+<poly1_var5_12>
+RWI:    [Deriving_test.Var51 0; Deriving_test.Var51 (-1);
+         Deriving_test.Var52 (0, -1)]
+No RWI: [Var51 0; Var51 (-1); Var52 (0, -1)]
+
+<poly2_var6_123>
+RWI:    [Deriving_test.Var61 (); Deriving_test.Var62 ((), ());
+         Deriving_test.OptVar63 ((), (), ())]
+No RWI: [Var61 (); Var62 ((), ()); ((), (), ())]
+
+<poly2_var6_123>
+RWI:    [Deriving_test.Var61 1; Deriving_test.Var61 (-1);
+         Deriving_test.Var62 (0, true);
+         Deriving_test.OptVar63 (0, true, false)]
+No RWI: [Var61 1; Var61 (-1); Var62 (0, true); (0, true, false)]
+
+<poly3_var7_2>
+RWI:    [Deriving_test.Var71 (((), ()), ())]
+No RWI: [Var71 (((), ()), ())]
+
+<poly3_var7_2>
+RWI:    [Deriving_test.Var71 ((-1, true), 'a')]
+No RWI: [Var71 ((-1, true), 'a')]
+

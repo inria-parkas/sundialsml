@@ -5,8 +5,54 @@ open Quickcheck_sundials
 module Roots = Sundials.Roots
 module RootDirs = Sundials.RootDirs
 
+(* Derive pretty-printers for types imported from the Ida module.  It would be
+   ideal if we could have the camlp4 extension extract type definitions from
+   ../ida.ml and do everything automatically, but that's too much work.  For
+   now, we'll make do by manually copying the definitions; the types aren't
+   supposed to change often, and the compiler will detect bit rot in this
+   case, so it should be OK.  *)
+module PPIda = struct
+  open Ida (* deriving needs access to type names like linear_solver *)
+
+  (* Copied from ida.mli; must be kept in sync with that file's definition.  *)
+  type linear_solver =
+    | Dense
+    | Band of bandrange
+    | LapackDense
+    | LapackBand of bandrange
+    | Spgmr of sprange
+    | Spbcg of sprange
+    | Sptfqmr of sprange
+  and bandrange = { mupper : int; mlower : int; }
+  and sprange = int
+  and solver_result =
+    | Continue
+    | RootsFound
+    | StopTimeReached
+  and error_details = {
+    error_code : int;
+    module_name : string;
+    function_name : string;
+    error_message : string;
+  }
+  and integrator_stats = {
+    num_steps : int;
+    num_res_evals : int;
+    num_lin_solv_setups : int;
+    num_err_test_fails : int;
+    last_order : int;
+    current_order : int;
+    actual_init_step : float;
+    last_step : float;
+    current_step : float;
+    current_time : float
+  }
+  deriving (pretty ~erase_typedefs:true ~prefix:Ida)
+end
+open PPIda        (* Bring the printers -- and only the printers into scope. *)
+
 (* A state-machine model for IDA sessions.  *)
-type session_model =
+type model =
   {
     resfn : resfn_type;
     mutable solver : Ida.linear_solver;
@@ -32,7 +78,7 @@ type session_model =
        particular value, if there is a query.  *)
     mutable next_query_time : float option;
   }
-and script = session_model * cmd list
+and script = model * cmd list
 and cmd = SolveNormal of float
         | GetRootInfo
         | SetRootDirection of Ida.root_direction array
@@ -50,7 +96,7 @@ and result = Unit
            | Carray of Carray.t    (* NB: always copy the array! *)
            | SolverResult of Ida.solver_result
            | Exn of exn
-           | RootInfo of Ida.Roots.t
+           | RootInfo of Roots.t
 and resfn_type =
   | ResFnLinear of Carray.t (* The DAE is
                                  y'.{i} = coefs.{i}
@@ -60,15 +106,42 @@ and resfn_type =
                                ic_calc_ya_yd' should work.
                              *)
   | ResFnExpDecay of Carray.t
+deriving (pretty ~rename:(Carray.t to carray,
+                          Ida.Roots.root_event to root_event,
+                          Ida.root_direction to root_direction,
+                          Roots.t to root_info,
+                          Ida.linear_solver to linear_solver,
+                          Ida.solver_result to solver_result)
+                 ~optional:(Int, Float, solving, consistent, next_query_time,
+                            last_tret, root_info_valid))
 
 let carray x = Carray (Carray.of_carray x)
 
-  (* Whole-test results *)
-type failure_type = ResultMismatch of int * result * result
-                    | TestCodeDied of result list
-                    | TestCodeOverrun
-
-(* Model *)
+let copy_resfn = function
+  | ResFnLinear slopes -> ResFnLinear (Carray.of_carray slopes)
+  | ResFnExpDecay coefs -> ResFnExpDecay (Carray.of_carray coefs)
+let copy_model m =
+  {
+    (* Everything is copied explicitly here instead of using { m with ... }
+       because this way the compiler forces us to inspect every new field when
+       it's added, so we won't forget to deep copy any of them.  *)
+    resfn = copy_resfn m.resfn;
+    solver = m.solver;
+    solving = m.solving;
+    last_query_time = m.last_query_time;
+    last_tret = m.last_tret;
+    roots = Array.copy m.roots;
+    root_dirs = Array.copy m.root_dirs;
+    root_info = Roots.copy m.root_info;
+    root_info_valid = m.root_info_valid;
+    consistent = m.consistent;
+    vec = Carray.of_carray m.vec;
+    vec' = Carray.of_carray m.vec';
+    t0 = m.t0;
+    vec0 = Carray.of_carray m.vec0;
+    vec'0 = Carray.of_carray m.vec'0;
+    next_query_time = m.next_query_time;
+  }
 
 let gen_resfn neqs () =
   let _ () =
@@ -145,32 +218,6 @@ let gen_model () =
     vec0  = vec0;
     vec'0 = vec'0;
     next_query_time = None;
-  }
-
-let copy_resfn = function
-  | ResFnLinear slopes -> ResFnLinear (Carray.of_carray slopes)
-  | ResFnExpDecay coefs -> ResFnExpDecay (Carray.of_carray coefs)
-let copy_model m =
-  {
-    (* Everything is copied explicitly here instead of using { m with ... }
-       because this way the compiler forces us to inspect every new field when
-       it's added, so we won't forget to deep copy any of them.  *)
-    resfn = copy_resfn m.resfn;
-    solver = m.solver;
-    solving = m.solving;
-    last_query_time = m.last_query_time;
-    last_tret = m.last_tret;
-    roots = Array.copy m.roots;
-    root_dirs = Array.copy m.root_dirs;
-    root_info = Roots.copy m.root_info;
-    root_info_valid = m.root_info_valid;
-    consistent = m.consistent;
-    vec = Carray.of_carray m.vec;
-    vec' = Carray.of_carray m.vec';
-    t0 = m.t0;
-    vec0 = Carray.of_carray m.vec0;
-    vec'0 = Carray.of_carray m.vec'0;
-    next_query_time = m.next_query_time;
   }
 
 (* Commands: note that which commands can be tested without trouble depends on
@@ -372,71 +419,21 @@ let shrink_script (model, cmds) =
 
 let cmp_eps = ref 1e-5
 
-let pp_solver, dump_solver, show_solver, display_solver,
-  print_solver, prerr_solver =
-  printers_of_show (fun s ->
-    let solver_name = function
-      | Ida.Dense -> "Dense"
-      | Ida.Band range -> Printf.sprintf "Band { mupper=%d; mlower=%d }"
-        range.Ida.mupper range.Ida.mlower
-      | Ida.Sptfqmr _ | Ida.Spbcg _ | Ida.Spgmr _
-      | Ida.LapackBand _ | Ida.LapackDense _ ->
-        raise (Failure "linear solver not implemented")
-    in
-    if !read_write_invariance then "Ida." ^ solver_name s
-    else solver_name s)
-
-let pp_ida_ident fmt ident =
-  if !read_write_invariance then Format.fprintf fmt "Ida.%s" ident
-  else Format.fprintf fmt "%s" ident
-
 let pp_result, dump_result, show_result, display_result,
   print_result, prerr_result =
-  (* pp_opt_ctor is for constructors that should be dropped unless
-     read_write_invariance is on.  pp_with_ctor is for constructors that should
-     always be printed.  *)
-  let pp_opt_ctor ctor pp_arg arg_pos fmt arg =
-    pp_parens arg_pos (fun fmt arg ->
-      if !read_write_invariance then Format.fprintf fmt "%s " ctor;
-      pp_arg fmt arg) fmt arg
-  and pp_with_ctor ctor pp_arg arg_pos fmt arg =
-    pp_parens arg_pos (fun fmt arg ->
-      Format.fprintf fmt "%s " ctor;
-      pp_arg fmt arg) fmt arg
-  and pp_only_ctor ctor ctor_str fmt =
-    Format.pp_print_string fmt
-      (if !read_write_invariance then ctor
-       else ctor_str)
-  in
-  let rec pre_pp_result arg_pos fmt = function
-    | Any -> pp_only_ctor "Any" "_" fmt
-    | Unit -> pp_only_ctor "Unit" "()" fmt
-    | Int i -> pp_opt_ctor "Int" (pp_parens (i < 0) pp_int) arg_pos fmt i
-    | Float f -> pp_opt_ctor "Float" (pp_parens (f < 0.) pp_float)
-                   arg_pos fmt f
-    | Type r -> pp_with_ctor "Type" (pre_pp_result true) arg_pos fmt r
-    | Carray ca -> pp_opt_ctor "Carray" pp_carray arg_pos fmt ca
-    | SolverResult Ida.Continue ->
-      pp_opt_ctor "SolverResult" pp_ida_ident arg_pos fmt "Continue"
-    | SolverResult Ida.RootsFound ->
-      pp_opt_ctor "SolverResult" pp_ida_ident arg_pos fmt "RootsFound"
-    | SolverResult Ida.StopTimeReached ->
-      pp_opt_ctor "SolverResult" pp_ida_ident arg_pos fmt "StopTimeReached"
-    | RootInfo roots -> pp_with_ctor "RootInfo" pp_root_info arg_pos fmt roots
-    | Aggr rs -> pp_with_ctor "Aggr" (pp_list (pre_pp_result false))
-                   arg_pos fmt rs
-    | Exn exn ->
-      (* Read-write invariance doesn't work for Exn except in simple cases.  *)
-      pp_parens arg_pos (fun fmt exn ->
-      pp_string_verbatim fmt (if !read_write_invariance then "Exn "
-                              else "exception ");
-      let str = Printexc.to_string exn in
-      pp_parens (String.contains str ' ')
-        pp_string_verbatim fmt str) fmt exn
-  in printers_of_pp (pre_pp_result false)
+  printers_of_pp (fun ?(prec=0) fmt x ->
+      if !read_write_invariance
+      then pp_result ~prec fmt x (* use the derived one *)
+      else
+        match x with
+        | Unit -> pp_string_noquote fmt "()"
+        | Any ->  pp_string_noquote fmt "_"
+        | x -> pp_result ~prec fmt x (* use the derived one *)
+    )
+
 let pp_results, dump_results, show_results, display_results,
   print_results, prerr_results =
-  printers_of_pp (fun fmt rs ->
+  printers_of_pp (fun ?(prec=0) fmt rs ->
     if !read_write_invariance then pp_vlist pp_result fmt rs
     else
       (* List one result per line, with step numbers starting from 1.  However,
@@ -456,54 +453,8 @@ let pp_results, dump_results, show_results, display_results,
           pp_result fmt r)
            (Fstream.of_list rs)))
 
-let pp_resfn_type, dump_resfn_type, show_resfn_type, display_resfn_type,
-  print_resfn_type, prerr_resfn_type
-    =
-  printers_of_pp
-    (fun fmt -> function
-     | ResFnLinear slope ->
-       pp_string_verbatim fmt "ResFnLinear ";
-       pp_carray fmt slope
-     | ResFnExpDecay coefs ->
-       pp_string_verbatim fmt "ResFnExpDecay ";
-       pp_carray fmt coefs
-    )
-
-let pp_ic_buf, dump_ic_buf, show_ic_buf, display_ic_buf,
-    print_ic_buf, prerr_ic_buf
-  =
-  printers_of_pp (fun fmt -> function
-      | GiveBadVector n ->
-        Format.fprintf fmt "GiveBadVector ";
-        pp_parens (n < 0) pp_int fmt n
-      | Don'tGetCorrectedIC -> pp_string_verbatim fmt "Don'tGetCorrectedIC"
-      | GetCorrectedIC -> pp_string_verbatim fmt "GetCorrectedIC")
-
-let pp_cmd, dump_cmd, show_cmd, display_cmd, print_cmd, prerr_cmd =
-  printers_of_pp (fun fmt -> function
-  | SolveNormal f ->
-    Format.fprintf fmt "SolveNormal ";
-    if f < 0. then Format.fprintf fmt "(";
-    pp_float fmt f;
-    if f < 0. then Format.fprintf fmt ")"
-  | GetRootInfo -> Format.fprintf fmt "GetRootInfo"
-  | GetNRoots -> Format.fprintf fmt "GetNRoots"
-  | SetAllRootDirections dir ->
-    Format.fprintf fmt "SetAllRootDirections ";
-    pp_root_direction fmt dir
-  | SetRootDirection dirs ->
-    Format.fprintf fmt "SetRootDirection ";
-    pp_array pp_root_direction fmt dirs
-  | CalcIC_Y (t, ic_buf) ->
-    Format.fprintf fmt "CalcIC_Y (";
-    pp_float fmt t;
-    Format.fprintf fmt ", ";
-    pp_ic_buf fmt ic_buf;
-    Format.fprintf fmt ")"
-    )
-
 let pp_cmds, dump_cmds, show_cmds, display_cmds, print_cmds, prerr_cmds =
-  printers_of_pp (fun fmt cmds ->
+  printers_of_pp (fun ?(prec=0) fmt cmds ->
     if !read_write_invariance then pp_list pp_cmd fmt cmds
     else
       (* List one command per line, with step numbers starting from 1.  *)
@@ -518,45 +469,10 @@ let pp_cmds, dump_cmds, show_cmds, display_cmds, print_cmds, prerr_cmds =
           pp_cmd fmt cmd)
            (Fstream.of_list cmds)))
 
-let pp_option pp fmt = function
-  | None -> Format.pp_print_string fmt "None"
-  | Some x -> Format.fprintf fmt "Some (%s)" (show_of_pp pp x)
-
-let pp_model, dump_model, show_model, display_model,
-    print_model, prerr_model
-      =
-  printers_of_pp
-    (let descriptive_fields =
-       ["resfn", (fun fmt m -> pp_of_show show_resfn_type fmt m.resfn);
-        "solver", (fun fmt m -> pp_of_show show_solver fmt m.solver);
-        "roots", (fun fmt m -> pp_array (pp_pair pp_float pp_root_event)
-                                 fmt m.roots);
-        "vec", (fun fmt m -> pp_carray fmt m.vec);
-        "vec'", (fun fmt m -> pp_carray fmt m.vec');
-        "t0", (fun fmt m -> pp_float fmt m.t0);
-        "vec0", (fun fmt m -> pp_carray fmt m.vec0);
-        "vec'0", (fun fmt m -> pp_carray fmt m.vec'0);
-       ]
-     and dynamic_fields =
-       ["root_info", (fun fmt m -> pp_root_info fmt m.root_info);
-        "last_query_time", (fun fmt m -> pp_float fmt m.last_query_time);
-        "last_tret", (fun fmt m -> pp_float fmt m.last_tret);
-        "solving", (fun fmt m -> pp_bool fmt m.solving);
-        "consistent", (fun fmt m -> pp_bool fmt m.consistent);
-        "root_dirs", (fun fmt m -> pp_array pp_root_direction fmt m.root_dirs);
-        "root_info_valid", (fun fmt m -> pp_bool fmt m.root_info_valid);
-       ]
-     in
-     let rw_invar = pp_record (descriptive_fields @ dynamic_fields)
-     and concise = pp_record descriptive_fields in
-     fun fmt m ->
-       if !read_write_invariance then rw_invar fmt m
-       else concise fmt m)
-
 let pp_script, dump_script, show_script, display_script,
     print_script, prerr_script
       =
-  printers_of_pp (fun fmt (model, cmds) ->
+  printers_of_pp (fun ?prec fmt (model, cmds) ->
     Format.fprintf fmt "@[<hov 2>%smodel =@ "
       (if !read_write_invariance
        then "let "
@@ -617,9 +533,9 @@ and carrays_equal v1 v2 =
 and exns_equal =
   (* NB: exn objects passed through Marshal does not seem to match a pattern
      that it should otherwise match.  For example, an Invalid_argument "foo"
-     that came through Marshal does not match the pattern Invalid_argument _
-     and falls right through.  This is partly why the generated, compiled code
-     does everything from executing the script to comparing results.  *)
+     that came through Marshal does not match the pattern Invalid_argument _.
+     This is partly why the generated, compiled code does everything from
+     executing the script to comparing results.  *)
 
   (* Compare only the tags, except for known, common messages.  *)
   (* The table construction is delayed to avoid having this initialization run
@@ -628,6 +544,7 @@ and exns_equal =
     lazy (let fixed_msgs = Hashtbl.create 10 in
           Hashtbl.add fixed_msgs "index out of bounds" ();
           Hashtbl.add fixed_msgs "hd" ();
+          Hashtbl.add fixed_msgs "tl" ();
           Hashtbl.add fixed_msgs "Array.make" ();
           Hashtbl.add fixed_msgs "Bigarray.create: negative dimension" ();
           fixed_msgs)
@@ -848,21 +765,6 @@ let model_run (model, cmds) =
   let head = model_init model in
   Fstream.cons head (Fstream.map (model_cmd model) (Fstream.of_list cmds))
 
-(* Checking results *)
-let compare_results model_run compiled_run =
-  let rec cmp i ms cs =
-    match Fstream.decons ms, Fstream.decons cs with
-    | None, None -> OK
-    | Some (m, ms), Some (c, cs) ->
-      if result_matches m c then cmp (i+1) ms cs
-      else Falsified (ResultMismatch (i, m, c))
-    | Some _, None ->
-      Falsified (TestCodeDied (Fstream.to_list ms))
-    | None, Some _ ->
-      Falsified TestCodeOverrun
-  in
-  cmp 0 model_run compiled_run
-
 
 let verbose = ref false
 
@@ -922,18 +824,13 @@ let ida_test_case_driver model cmds =
   in
   do_cmd, finish
 
-let pp_process_status fmt = function
-  | Unix.WEXITED n -> Format.fprintf fmt "Unix.WEXITED %d" n
-  | Unix.WSIGNALED n -> Format.fprintf fmt "Unix.WSIGNALED %d" n
-  | Unix.WSTOPPED n -> Format.fprintf fmt "Unix.WSTOPPED %d" n
-
-
 let with_file_descr descr f =
   let ret = try f descr with exn -> Unix.close descr; raise exn in
   Unix.close descr;
   ret
 
-let test_ida_fast ml_file_of_script script =
+(* Just checks if the generated code's self-test is successful.  *)
+let prop_ida_ok ml_file_of_script script =
   compile (ml_file_of_script script);
   let dev_null =
     try Unix.openfile "/dev/null" [Unix.O_RDWR; Unix.O_TRUNC] 0
@@ -943,7 +840,7 @@ let test_ida_fast ml_file_of_script script =
       with Unix.Unix_error (Unix.ENOENT, "open", "NUL") ->
         Printf.fprintf stderr
           "ERROR: Can't find /dev/null or equivalent on your system.  \
-           Giving up.  Fix test_ida_fast in quickcheck_ida.ml and try again.";
+           Giving up.  Fix prop_ida_ok in quickcheck_ida.ml and try again.";
         exit 2
   in
   with_file_descr dev_null (fun dev_null ->
@@ -956,14 +853,8 @@ let test_ida_fast ml_file_of_script script =
       if exit_code = Unix.WEXITED 0 then OK
       else Falsified exit_code)
 
-let test_ida ml_file_of_script script =
-  let expected = model_run script
-  and actual = compile_run (ml_file_of_script script)
-  in
-  compare_results expected actual
-
 let quickcheck_ida ml_file_of_script max_tests =
-  let prop = test_ida_fast ml_file_of_script in
+  let prop = prop_ida_ok ml_file_of_script in
   let err = Format.err_formatter in
   let fprintf = Format.fprintf err in
   let result =
@@ -981,7 +872,7 @@ let quickcheck_ida ml_file_of_script max_tests =
     (* Exit code 1 means the test ran to completion but there was a mismatching
        result.  We can let the test code print the report.  Note we need to
        re-generate the code here because the failed script is generally not the
-       last one that was tried, and its source code has therefore been
+       last one that was tried, and its source code may therefore have been
        overwritten.  *)
     compile (ml_file_of_script script);
     copy_file ~from_file:(!test_exec_file ^ ".ml")
@@ -990,56 +881,26 @@ let quickcheck_ida ml_file_of_script max_tests =
     assert (exit_status = Unix.WEXITED 1);
     Some script
   | Some (script, Falsified stat) ->
-    (* Other exit statuses mean the test case crashed.  *)
-    prerr_of_pp pp_process_status stat;
-    prerr_script script;
+    (* Other exit statuses mean the test case crashed.  We'll run it again,
+       this time letting it produce as much output as it can, and compare that
+       to the expected results.  *)
     compile (ml_file_of_script script);
-    Format.pp_print_newline Format.err_formatter ();
-    exit 10;
-    (match test_ida ml_file_of_script script with
-    | Falsified r -> Printf.fprintf stderr "Falsified\n"
-    | Failed exn -> Printf.fprintf stderr "Falsified %s\n" (Printexc.to_string exn)
-    | OK -> Printf.fprintf stderr "OK\n"; exit 3);
-    let Falsified reason = test_ida ml_file_of_script script in
-    Format.fprintf err "Failed test code saved in %s.\n\n[Reason]\n"
-      !test_failed_file;
-    (match reason with
-    | TestCodeDied rs ->
-      Format.fprintf err "Test code exited unexpectedly.  It was \
-                          supposed to produce the following additional \
-                          results:\n";
-      pp_results err rs
-    | TestCodeOverrun -> assert false   (* Shouldn't happen.  *)
-    | ResultMismatch (i,e,a) ->
-      Format.fprintf err "Result mismatch on %s:\ngot\n%s\nwhen we \
-                          expected\n%s\n"
-        (if i = 0 then "init" else ("step " ^ string_of_int i))
-        (show_result a)
-        (show_result e));
-    Format.fprintf err "\n[Test Case]@\n";
-    pp_script err script;
-    Format.pp_print_flush err ();
-    flush stderr;
-    (* The test file contains the last script tried, not the last script that
-       failed.  We need to reinstate the failing script before running it again
-       to retrieve its output.  *)
-    prerr_string "\n\n[Program Output]\n";
-    flush stderr;
-    compile (ml_file_of_script script);
-    let pid = Unix.create_process !test_exec_file
-      (if !read_write_invariance
-       then [|!test_exec_file; "--read-write-invariance"|]
-       else [|!test_exec_file|])
-      Unix.stdin Unix.stdout Unix.stderr
-    in
-    let _ = Unix.waitpid [] pid in
-    flush stdout;
-    flush stderr;
-    (* Copy the failed test from test_exec_file.ml to test_failed_file.  *)
     copy_file ~from_file:(!test_exec_file ^ ".ml")
               ~to_file:!test_failed_file
               ();
-
+    Format.fprintf err "Failed test code saved in %s.@\n@\n[Reason]@\nTest \
+                        code crashed.@\n@\n[Test Case]@\n"
+      !test_failed_file;
+    pp_script err script;
+    Format.fprintf err "@\n@\n[Program Output]@\n";
+    Format.pp_print_flush err ();
+    flush stderr;
+    ignore (Unix.system
+              (if !read_write_invariance
+               then !test_exec_file ^ " --read-write-invariance"
+               else !test_exec_file));
+    flush stdout;
+    flush stderr;
     Format.fprintf err "@\n[Expected Output]@\n";
     pp_results err (Fstream.to_list (model_run script));
     Format.pp_print_newline err ();

@@ -365,6 +365,7 @@ let no_shrink _ = Fstream.nil
 
 type ('a,'b) property = 'a -> 'b test_result
 and  'reason test_result = OK | Falsified of 'reason | Failed of exn
+deriving pretty
 
 let isOK = function
   | OK -> true
@@ -383,9 +384,9 @@ let test_in_sandbox prop x =
 
 let minimize ?pp_input ?(pp_formatter=Format.err_formatter) shrink prop x res =
   let trace, pp_input =
-    match pp_input with
+    match (pp_input : 'a pp option) with
     | Some s -> true, s
-    | None -> false, (fun _ -> failwith "internal error")
+    | None -> false, (fun ?prec _ -> failwith "internal error")
   in
   if trace then Format.pp_print_char pp_formatter '\n';
   let rec go ct x reason =
@@ -409,7 +410,7 @@ let minimize ?pp_input ?(pp_formatter=Format.err_formatter) shrink prop x res =
         (Format.fprintf pp_formatter "Shrinker failed on:@\n";
          pp_input pp_formatter x;
          Format.pp_print_newline pp_formatter ())
-      else pp_string_verbatim pp_formatter "Shrinker failed!\n";
+      else pp_string_noquote pp_formatter "Shrinker failed!\n";
       Format.pp_print_flush pp_formatter ();
       raise exn
   in go 0 x res
@@ -436,7 +437,7 @@ let quickcheck gen shrink ?pp_input ?(pp_formatter=Format.err_formatter)
   let trace, pp_input =
     match pp_input with
     | Some pp_input -> true, pp_input
-    | None -> false, (fun _ -> failwith "internal error")
+    | None -> false, (fun ?prec _ -> failwith "internal error")
   in
   let rec test num_passed =
     let gen () =

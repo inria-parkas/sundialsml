@@ -371,6 +371,9 @@ val no_shrink : 'a -> 'a Fstream.t
 type ('a,'b) property = 'a -> 'b test_result
 and  'reason test_result = OK | Falsified of 'reason | Failed of exn
 
+val pp_property : 'a pp -> 'b pp -> ('a,'b) property pp
+val pp_test_result : 'a pp -> 'a test_result pp
+
 val isOK : 'a test_result -> bool
 
 (** Convert a function of type ['a -> bool] to a property.  *)

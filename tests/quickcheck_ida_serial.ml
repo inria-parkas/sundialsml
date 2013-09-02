@@ -268,8 +268,6 @@ let expr_of_cmd = function
     <:expr<CalcIC_Y ($`flo:t$, $expr_of_ic_buf ic_buf$)>>
 
 let ml_of_script (model, cmds) =
-  let nsteps = List.length cmds in
-  let step_width = String.length (string_of_int nsteps) in
   <:str_item<
     module Ida = Ida_serial
     module Carray = Ida.Carray
@@ -295,7 +293,6 @@ let ml_of_script (model, cmds) =
       $set_jac model <:expr<session>>$;
       do_cmd (lazy (Aggr [Float (Ida.get_current_time session);
                           carray vec; carray vec']));
-      [||].(0) <- 0;
       $expr_of_cmds_impl cmds$;
       exit (finish ())
    >>

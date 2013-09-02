@@ -164,6 +164,16 @@ let filter p xs =
     | lazy (Cons (_, xs)) -> go xs
   in lazy (go xs)
 
+let filter_map f xs =
+  let rec go xs =
+    match xs with
+    | lazy Nil -> Nil
+    | lazy (Cons (x, xs)) ->
+      match f x with
+      | None -> go xs
+      | Some x -> Cons (x, lazy (go xs))
+  in lazy (go xs)
+
 let rec enum istart iend =
   if istart <= iend
   then lazy (Cons (istart, enum (istart + 1) iend))
@@ -182,3 +192,6 @@ let length xs =
     | lazy Nil -> i
     | lazy Cons (_, xs) -> go (i+1) xs
   in go 0 xs
+
+let of_array a = map (Array.get a) (enum 0 (Array.length a - 1))
+

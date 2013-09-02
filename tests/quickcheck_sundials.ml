@@ -78,7 +78,7 @@ let carray_drop_elem : Carray.t -> int -> Carray.t = bigarray1_drop_elem
 
 let pp_carray, dump_carray, show_carray, display_carray,
   print_carray, prerr_carray =
-  printers_of_pp (fun fmt xs ->
+  printers_of_pp (fun ?prec fmt xs ->
     if !read_write_invariance
     then pp_array_like Carray.length Bigarray.Array1.get
            "(Carray.of_array [|" "|])" pp_float fmt xs
@@ -94,14 +94,14 @@ let gen_root_info = gen_array_like Roots.make Roots.set gen_root_event
 let pp_root_event, dump_root_event, show_root_event, display_root_event,
   print_root_event, prerr_root_event
     =
-  printers_of_show (fun x ->
+  printers_of_show (fun ?prec x ->
     (if !read_write_invariance then "Roots." else "")
     ^ Roots.string_of_root_event x)
 
 let pp_root_info, dump_root_info, show_root_info, display_root_info,
   print_root_info, prerr_root_info
     =
-  printers_of_pp (fun fmt xs ->
+  printers_of_pp (fun ?(prec=0) fmt xs ->
     let get a i =
     (* If Roots is used improperly or if there's a bug in the binding, a root
        info array can contain garbage that doesn't correspond to any of NoRoot,
@@ -110,9 +110,11 @@ let pp_root_info, dump_root_info, show_root_info, display_root_info,
       with Failure _ -> "<garbage>"
     in
     if !read_write_invariance
-    then pp_array_like Roots.length get "(Roots.of_array [|" "|])"
-      pp_string_verbatim fmt xs
-    else pp_array_like Roots.length get "[<" ">]" pp_string_verbatim fmt xs)
+    then pp_parens (prec >= Prec.app)
+           (pp_array_like Roots.length get "(Roots.of_array [|" "|])"
+              pp_string_noquote)
+           fmt xs
+    else pp_array_like Roots.length get "[<" ">]" pp_string_noquote fmt xs)
 
 let gen_root_direction, shrink_root_direction =
   gen_shrink_choice [| RootDirs.Increasing; RootDirs.Decreasing;
@@ -128,24 +130,26 @@ let shrink_root_dirs =
 let pp_root_direction, dump_root_direction, show_root_direction,
   display_root_direction, print_root_direction, prerr_root_direction
     =
-  printers_of_show (fun x ->
+  printers_of_show (fun ?prec x ->
     (if !read_write_invariance then "RootDirs." else "")
     ^ RootDirs.string_of_root_direction x)
 
 let pp_root_dirs, dump_root_dirs, show_root_dirs, display_root_dirs
   , print_root_dirs, prerr_root_dirs =
   printers_of_pp
-    (fun fmt xs ->
+    (fun ?(prec=0) fmt xs ->
       let get a i =
-        (* If Roots is used improperly or if there's a bug in the binding, a root
-           info array can contain garbage that doesn't correspond to any of
-           NoRoot, Rising, or Falling.  Such values trigger a Failure in
-           Roots.get.  *)
+        (* If RootDirs is used improperly or if there's a bug in the binding, a
+           root info array can contain garbage that doesn't correspond to any
+           of Increasing, Decreasing, or IncreasingOrDecreasing.  Such values
+           trigger a Failure in RootDirs.get.  *)
         try RootDirs.string_of_root_direction (RootDirs.get a i)
         with Failure _ -> "<garbage>"
       in
       if !read_write_invariance
-      then pp_array_like RootDirs.length get "(RootDirs.of_array [|" "|])"
-             pp_string_verbatim fmt xs
+      then pp_parens (prec >= Prec.app)
+             (pp_array_like RootDirs.length get "RootDirs.of_array [|" "|]"
+                pp_string_noquote)
+             fmt xs
       else pp_array_like RootDirs.length get "[<" ">]"
-             pp_string_verbatim fmt xs)
+             pp_string_noquote fmt xs)

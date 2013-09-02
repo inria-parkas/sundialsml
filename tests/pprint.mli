@@ -12,7 +12,8 @@ val with_read_write_invariance : (unit -> 'a) -> 'a
 
 (** Naming convention:
 
-     - [pp] pretty-prints to a Format.formatter
+     - [pp] pretty-prints to a Format.formatter.  This is the most primitive
+            type of pretty-printer.
      - [show] returns a string (it creates and uses its own Buffer.t)
 
   [pp] and [show] must respect the [read_write_invariance] flag.  [pp] is the
@@ -22,45 +23,68 @@ val with_read_write_invariance : (unit -> 'a) -> 'a
      - [dump] is [pp] wrapped in {!with_read_write_invariance}
      - [display] is [show] wrapped in {!with_read_write_invariance}
 
-     - [print] is [pp] with the formatter fixed to [std_formatter]
-     - [prerr] is [pp] with the formatter fixed to [err_formatter]
+     - [ppout] prints to [stdout]; this does not go through [std_formatter].
+     - [pperr] prints to [stderr]; this does not go through [err_formatter].
 
-  Note [print_float], [print_string], and [print_char] are already defined in
-  [Pervasives] and their behaviors do not match the description above.  For
-  example, [Pervasives.print_string] does not add double-quotation marks
-  whereas this module's [print_string] does.  To avoid confusion, the version
-  of these function defined in this module are hidden inside a submodule named
-  [PrettyPrim] by default.
+  The optional argument ~prec is the ambient precedence, used to determine if
+  the output needs to be enclosed in parentheses.  For example, the precedence
+  is [Prec.app] when the pretty-printing an object that appears as an argument
+  to a contructor or function application.  Common precedences are defined in
+  the submodule [Prec], but since OCaml has no infix constructors, it's almost
+  always sufficient to use [0] (i.e. immediately inside parens) or [Prec.app]
+  (i.e. in operand position).
+
+  Note that [ppout] is not the same as [pp Format.std_formatter].  [ppout]
+  sends its output directly to [stdout], so it cannot be mixed with calls
+  to [Format.std_formatter].  You have to flush [Format.std_formatter] before
+  calling [ppout], just like you have to flush that formatter before calling
+  [print_string], [print_int], and the like.
+
+  Note also that [show_*] is different from [string_of_*].  The standard
+  library's [string_of_*] functions generally strive for read-write invariance
+  and print everything in one line, whereas [show_*] tries to be more succinct
+  and does not shy away from inserting line breaks (so it can be poorly laid
+  out if it's printed from the middle of a line).
 
  *)
-type 'a pp = Format.formatter -> 'a -> unit
-and  'a show = 'a -> string
-and  'a dump = 'a pp
-and  'a display = 'a show
-and  'a print = 'a -> unit
-and  'a prerr = 'a -> unit
+type 'a pp = ?prec:int -> Format.formatter -> 'a -> unit
+and  'a show = ?prec:int -> 'a -> string
+and  'a dump = ?prec:int -> Format.formatter -> 'a -> unit
+and  'a display = ?prec:int -> 'a -> string
+and  'a ppout = ?prec:int -> 'a -> unit
+and  'a pperr = ?prec:int -> 'a -> unit
+
+module Prec :
+sig
+  val app : int
+  val plus : int
+  val minus : int
+  val times : int
+  val div : int
+end
 
 val show_of_pp : 'a pp -> 'a show
 val display_of_pp : 'a pp -> 'a display
 val dump_of_pp : 'a pp -> 'a dump
-val print_of_pp : 'a pp -> 'a print
-val prerr_of_pp : 'a pp -> 'a prerr
+val ppout_of_pp : 'a pp -> 'a ppout
+val pperr_of_pp : 'a pp -> 'a pperr
 
 val pp_of_show : 'a show -> 'a pp
 val dump_of_show : 'a show -> 'a dump
 val display_of_show : 'a show -> 'a display
-val print_of_show : 'a show -> 'a print
-val prerr_of_show : 'a show -> 'a prerr
+val ppout_of_show : 'a show -> 'a ppout
+val pperr_of_show : 'a show -> 'a pperr
+
 
 (** Generate all the pretty-printer interfaces given an implementation of
     show.  *)
 val printers_of_show :
-  'a show -> 'a pp * 'a dump * 'a show * 'a display * 'a print * 'a prerr
+  'a show -> 'a pp * 'a dump * 'a show * 'a display * 'a ppout * 'a pperr
 
 (** Generate all the pretty-printer interfaces given an implementation of
     pp.  *)
 val printers_of_pp :
-  'a pp -> 'a pp * 'a dump * 'a show * 'a display * 'a print * 'a prerr
+  'a pp -> 'a pp * 'a dump * 'a show * 'a display * 'a ppout * 'a pperr
 
 (*
   Removed because it doesn't work due to value restriction.
@@ -72,77 +96,101 @@ val printers_of_pp :
   * ('a pp -> 'b dump)
   * ('a pp -> 'b show)
   * ('a pp -> 'b display)
-  * ('a pp -> 'b print)
-  * ('a pp -> 'b prerr)
+  * ('a pp -> 'b ppout)
+  * ('a pp -> 'b pperr)
 
   (** Like printers_of_show, but works on a function of type
-  ['a show -> 'a show].  Note that due to technical limitations [print] and
-  [prerr] functions take [pp] as inputs, not [print] or [prerr]. *)
+  ['a show -> 'a show].  Note that due to technical limitations [ppout] and
+  [pperr] functions take [pp] as inputs, not [ppout] or [pperr]. *)
   val ho_printers_of_show :
   ('a show -> 'b show) ->
   ('a pp -> 'b pp)
   * ('a pp -> 'b dump)
   * ('a pp -> 'b show)
   * ('a pp -> 'b display)
-  * ('a pp -> 'b print)
-  * ('a pp -> 'b prerr)
+  * ('a pp -> 'b ppout)
+  * ('a pp -> 'b pperr)
  *)
 
 val show_int : int show
 val dump_int : int dump
 val pp_int : int pp
 val display_int : int display
+val ppout_int : int ppout
+val pperr_int : int pperr
+
+val show_unit : unit show
+val dump_unit : unit dump
+val pp_unit : unit pp
+val display_unit : unit display
+val ppout_unit : unit ppout
+val pperr_unit : unit pperr
 
 val show_bool : bool show
 val dump_bool : bool dump
 val pp_bool : bool pp
 val display_bool : bool display
+val ppout_bool : bool ppout
+val pperr_bool : bool pperr
 
 val show_char : char show
 val dump_char : char dump
 val pp_char : char pp
 val display_char : char display
-(* print_char, prerr_char exported through PP *)
+val ppout_char : char ppout
+val pperr_char : char pperr
 
 val show_string : string show
 val dump_string : string dump
 val pp_string : string pp
 val display_string : string display
-(* print_string, prerr_string exported through PP *)
+val ppout_string : string ppout
+val pperr_string : string pperr
 
 (** Returns the string as-is, without adding quotations or escapes.  *)
-val show_string_verbatim : string show
+val show_string_noquote : string show
 (** Prints the string as-is, without adding quotations or escapes.  *)
-val dump_string_verbatim : string dump
+val dump_string_noquote : string dump
 (** Prints the string as-is, without adding quotations or escapes.  *)
-val pp_string_verbatim : string pp
+val pp_string_noquote : string pp
 (** Returns the string as-is, without adding quotations or escapes.  *)
-val display_string_verbatim : string display
+val display_string_noquote : string display
 (** Prints the string as-is, without adding quotations or escapes.  *)
-val print_string_verbatim : string print
+val ppout_string_noquote : string ppout
 (** Prints the string as-is, without adding quotations or escapes.  *)
-val prerr_string_verbatim : string prerr
+val pperr_string_noquote : string pperr
 
 (** Returns a string containing the char as-is, without adding quotations or
     escapes.  *)
-val show_char_verbatim : char show
+val show_char_noquote : char show
 (** Prints the char as-is, without adding quotations or escapes.  *)
-val dump_char_verbatim : char dump
+val dump_char_noquote : char dump
 (** Prints the char as-is, without adding quotations or escapes.  *)
-val pp_char_verbatim : char pp
+val pp_char_noquote : char pp
 (** Returns a string containing the char as-is, without adding quotations or
     escapes.  *)
-val display_char_verbatim : char display
+val display_char_noquote : char display
 (** Prints the char as-is, without adding quotations or escapes.  *)
-val print_char_verbatim : char print
+val ppout_char_noquote : char ppout
 (** Prints the char as-is, without adding quotations or escapes.  *)
-val prerr_char_verbatim : char prerr
+val pperr_char_noquote : char pperr
 
 val show_float : float show
 val dump_float : float dump
 val pp_float : float pp
 val display_float : float display
-(* print_float, prerr_float exported through PP *)
+val ppout_float : float ppout
+val pperr_float : float pperr
+
+(** Make a pretty-printer that prints a fixed string, regardless of its
+    input.  [~paren_prec], if set, denotes the minimum precedence at which
+    parens are output around the fixed string.  *)
+val pp_const : ?paren_prec:int -> string -> 'a pp
+val show_const : ?paren_prec:int -> string -> 'a show
+val dump_const : ?paren_prec:int -> string -> 'a dump
+val display_const : ?paren_prec:int -> string -> 'a display
+val ppout_const : ?paren_prec:int -> string -> 'a ppout
+val pperr_const : ?paren_prec:int -> string -> 'a pperr
 
 (** Just returns "<fun>".  *)
 val show_fun : ('a -> 'b) show
@@ -153,9 +201,9 @@ val pp_fun : ('a -> 'b) pp
 (** Just prints "<fun>".  *)
 val display_fun : ('a -> 'b) display
 (** Just prints "<fun>".  *)
-val print_fun : ('a -> 'b) print
+val ppout_fun : ('a -> 'b) ppout
 (** Just prints "<fun>".  *)
-val prerr_fun : ('a -> 'b) prerr
+val pperr_fun : ('a -> 'b) pperr
 
 (** [pp_enclose left right cond fmt pp] outputs a pair of delimiters [left] and
     [right], respectively before and after [pp], if [cond] is [true].
@@ -247,8 +295,8 @@ val show_double_quotes : bool -> string -> string
     is [true]; it otherwise returns [str] without change.  *)
 val show_quotes : bool -> string -> string
 
-(** [pp_seq opening delim closing pps] runs a sequence of pretty-printers with
-    delimiters.
+(** [pp_seq opening delim closing fmt pps] runs a sequence of pretty-printers
+    with delimiters.
 
     - [opening] and [closing] are the opening and closing delimiters to output
       at the beginning and end.  They should open and close a box, usually
@@ -268,6 +316,21 @@ val pp_seq :
   -> (Format.formatter -> unit) Fstream.t
   -> unit
 
+(** [pp_fixarg pp x] is just convenient shorthand for [fun fmt -> pp fmt x].
+    Used with {!pp_seq}.  *)
+val pp_fixarg : 'a pp -> 'a -> (Format.formatter -> unit)
+
+(** Uesd to indicate whether a certain part of the output is optional or
+    required.  Optional parts are generally omitted unless
+    [read_write_invariance] is set.  *)
+type 'a pp_needed = Required of 'a | Optional of 'a
+
+(** [pp_record fields] generates a [pp] implementation for a record type.  The
+    argument [fields] is a list of the form ["foo", pp_foo] where [foo] is the
+    name of a field of the record and [pp_foo] extracts that field and
+    pretty-prints it.  *)
+val pp_record : (string * 'a pp) pp_needed array -> 'a pp
+
 (** Pretty-prints a list in a hov-box, i.e. output as many elements as fits on
     each line, just as you would fill a line with words in ordinary English
     writing.  *)
@@ -275,17 +338,25 @@ val pp_list : 'a pp -> 'a list pp
 val dump_list : 'a pp -> 'a list dump
 val show_list : 'a pp -> 'a list show
 val display_list : 'a pp -> 'a list display
-val print_list : 'a pp -> 'a list print
-val prerr_list : 'a pp -> 'a list prerr
+val ppout_list : 'a pp -> 'a list ppout
+val pperr_list : 'a pp -> 'a list pperr
 
-(** Like {!pp_list}, but uses a v-box, i.e. exactly one element is listed per
-    line.  *)
-val pp_vlist : 'a pp -> 'a list pp
-val dump_vlist : 'a pp -> 'a list dump
-val show_vlist : 'a pp -> 'a list show
-val display_vlist : 'a pp -> 'a list display
-val print_vlist : 'a pp -> 'a list print
-val prerr_vlist : 'a pp -> 'a list prerr
+(** Like {!pp_list}, but the element pretty-printer gets the index.  *)
+val pp_list_ix : (int -> 'a pp) -> 'a list pp
+val dump_list_ix : (int -> 'a pp) -> 'a list dump
+val show_list_ix : (int -> 'a pp) -> 'a list show
+val display_list_ix : (int -> 'a pp) -> 'a list display
+val ppout_list_ix : (int -> 'a pp) -> 'a list ppout
+val pperr_list_ix : (int -> 'a pp) -> 'a list pperr
+
+(** Like {!pp_list_ix}, but uses an hv-box, i.e. either print everything in one
+    line if that's possible, or else print each element in a separate line.  *)
+val pp_hvlist_ix : (int -> 'a pp) -> 'a list pp
+val dump_hvlist_ix : (int -> 'a pp) -> 'a list dump
+val show_hvlist_ix : (int -> 'a pp) -> 'a list show
+val display_hvlist_ix : (int -> 'a pp) -> 'a list display
+val ppout_hvlist_ix : (int -> 'a pp) -> 'a list ppout
+val pperr_hvlist_ix : (int -> 'a pp) -> 'a list pperr
 
 (** Like {!pp_list}, but uses an hv-box, i.e. either print everything in one
     line if that's possible, or else print each element in a separate line.  *)
@@ -293,8 +364,26 @@ val pp_hvlist : 'a pp -> 'a list pp
 val dump_hvlist : 'a pp -> 'a list dump
 val show_hvlist : 'a pp -> 'a list show
 val display_hvlist : 'a pp -> 'a list display
-val print_hvlist : 'a pp -> 'a list print
-val prerr_hvlist : 'a pp -> 'a list prerr
+val ppout_hvlist : 'a pp -> 'a list ppout
+val pperr_hvlist : 'a pp -> 'a list pperr
+
+(** Like {!pp_list_ix}, but uses a v-box, i.e. exactly one element is listed
+    per line.  *)
+val pp_vlist_ix : (int -> 'a pp) -> 'a list pp
+val dump_vlist_ix : (int -> 'a pp) -> 'a list dump
+val show_vlist_ix : (int -> 'a pp) -> 'a list show
+val display_vlist_ix : (int -> 'a pp) -> 'a list display
+val ppout_vlist_ix : (int -> 'a pp) -> 'a list ppout
+val pperr_vlist_ix : (int -> 'a pp) -> 'a list pperr
+
+(** Like {!pp_list}, but uses a v-box, i.e. exactly one element is listed
+    per line.  *)
+val pp_vlist : 'a pp -> 'a list pp
+val dump_vlist : 'a pp -> 'a list dump
+val show_vlist : 'a pp -> 'a list show
+val display_vlist : 'a pp -> 'a list display
+val ppout_vlist : 'a pp -> 'a list ppout
+val pperr_vlist : 'a pp -> 'a list pperr
 
 (** {!pp_seq} specialized to array-like data types.  Should be invoked like
     [pp_array_like length get opening closing] where [length], [get] should
@@ -310,10 +399,28 @@ val pp_array : 'a pp -> 'a array pp
 val dump_array : 'a pp -> 'a array dump
 val show_array : 'a pp -> 'a array show
 val display_array : 'a pp -> 'a array display
-val print_array : 'a pp -> 'a array print
-val prerr_array : 'a pp -> 'a array prerr
+val ppout_array : 'a pp -> 'a array ppout
+val pperr_array : 'a pp -> 'a array pperr
 
 open Bigarray
+
+val pp_bigarray_c_layout : c_layout pp
+val pp_bigarray_fortran_layout : fortran_layout pp
+val pp_bigarray_float32_elt : float32_elt pp
+val pp_bigarray_float64_elt : float64_elt pp
+val pp_bigarray_complex32_elt : complex32_elt pp
+val pp_bigarray_complex64_elt : complex64_elt pp
+val pp_bigarray_int8_signed_elt : int8_signed_elt pp
+val pp_bigarray_int8_unsigned_elt : int8_unsigned_elt pp
+val pp_bigarray_int16_signed_elt : int16_signed_elt pp
+val pp_bigarray_int16_unsigned_elt : int16_unsigned_elt pp
+val pp_bigarray_int_elt : int_elt pp
+val pp_bigarray_int32_elt : int32_elt pp
+val pp_bigarray_int32_elt : int32_elt pp
+val pp_bigarray_int64_elt : int64_elt pp
+val pp_bigarray_nativeint_elt : nativeint_elt pp
+val pp_bigarray_char_elt : int8_unsigned_elt pp
+
 val pp_bigarray1 :
   ('a,'b) kind -> 'c layout -> 'a pp -> ('a,'b,'c) Array1.t pp
 val dump_bigarray1 :
@@ -322,16 +429,10 @@ val show_bigarray1 :
   ('a,'b) kind -> 'c layout -> 'a pp -> ('a,'b,'c) Array1.t show
 val display_bigarray1 :
   ('a,'b) kind -> 'c layout -> 'a pp -> ('a,'b,'c) Array1.t display
-val print_bigarray1 :
-  ('a,'b) kind -> 'c layout -> 'a pp -> ('a,'b,'c) Array1.t print
-val prerr_bigarray1 :
-  ('a,'b) kind -> 'c layout -> 'a pp -> ('a,'b,'c) Array1.t prerr
-
-(** [pp_record fields] generates a [pp] implementation for a record type.  The
-    argument [fields] is a list of the form ["foo", pp_foo] where [foo] is the
-    name of a field of the record and [pp_foo] extracts that field and
-    pretty-prints it.  *)
-val pp_record : (string * 'a pp) list -> 'a pp
+val ppout_bigarray1 :
+  ('a,'b) kind -> 'c layout -> 'a pp -> ('a,'b,'c) Array1.t ppout
+val pperr_bigarray1 :
+  ('a,'b) kind -> 'c layout -> 'a pp -> ('a,'b,'c) Array1.t pperr
 
 (** [pp_tuple fields] generates a [pp] implementation for a tuple type.  The
     argument [fields] is a list of functions of type ['a pp] that extracts a
@@ -340,52 +441,86 @@ val pp_tuple : 'a pp list -> 'a pp
 val show_tuple : 'a pp list -> 'a show
 val dump_tuple : 'a pp list -> 'a dump
 val display_tuple : 'a pp list -> 'a display
-val print_tuple : 'a pp list -> 'a print
-val prerr_tuple : 'a pp list -> 'a prerr
+val ppout_tuple : 'a pp list -> 'a ppout
+val pperr_tuple : 'a pp list -> 'a pperr
 
 val pp_pair : 'a pp -> 'b pp -> ('a * 'b) pp
 val show_pair : 'a pp -> 'b pp -> ('a * 'b) show
 val dump_pair : 'a pp -> 'b pp -> ('a * 'b) dump
 val display_pair : 'a pp -> 'b pp -> ('a * 'b) display
-val print_pair : 'a pp -> 'b pp -> ('a * 'b) print
-val prerr_pair : 'a pp -> 'b pp -> ('a * 'b) prerr
+val ppout_pair : 'a pp -> 'b pp -> ('a * 'b) ppout
+val pperr_pair : 'a pp -> 'b pp -> ('a * 'b) pperr
 
 val pp_triple : 'a pp -> 'b pp -> 'c pp -> ('a * 'b * 'c) pp
 val show_triple : 'a pp -> 'b pp -> 'c pp -> ('a * 'b * 'c) show
 val dump_triple : 'a pp -> 'b pp -> 'c pp -> ('a * 'b * 'c) dump
 val display_triple : 'a pp -> 'b pp -> 'c pp -> ('a * 'b * 'c) display
-val print_triple : 'a pp -> 'b pp -> 'c pp -> ('a * 'b * 'c) print
-val prerr_triple : 'a pp -> 'b pp -> 'c pp -> ('a * 'b * 'c) prerr
+val ppout_triple : 'a pp -> 'b pp -> 'c pp -> ('a * 'b * 'c) ppout
+val pperr_triple : 'a pp -> 'b pp -> 'c pp -> ('a * 'b * 'c) pperr
 
-(** [pp_preproc f pp] creates a pretty-printer that pre-processes the input
+(** [pp_precompose f pp] creates a pretty-printer that pre-processes the input
     with the function [f] before passing it to [pp].  For example,
-    [pp_preproc fst pp] pretty-prints only the [fst] of its argument.  *)
-val pp_preproc : ('a -> 'b) -> 'b pp -> 'a pp
-val show_preproc : ('a -> 'b) -> 'b pp -> 'a show
-val dump_preproc : ('a -> 'b) -> 'b pp -> 'a dump
-val display_preproc : ('a -> 'b) -> 'b pp -> 'a display
-val print_preproc : ('a -> 'b) -> 'b pp -> 'a print
-val prerr_preproc : ('a -> 'b) -> 'b pp -> 'a prerr
+    [pp_precompose fst pp] pretty-prints only the [fst] of its argument.  *)
+val pp_precompose : ('a -> 'b) -> 'b pp -> 'a pp
+val show_precompose : ('a -> 'b) -> 'b pp -> 'a show
+val dump_precompose : ('a -> 'b) -> 'b pp -> 'a dump
+val display_precompose : ('a -> 'b) -> 'b pp -> 'a display
+val ppout_precompose : ('a -> 'b) -> 'b pp -> 'a ppout
+val pperr_precompose : ('a -> 'b) -> 'b pp -> 'a pperr
 
 val pp_fst : 'a pp -> ('a * 'b) pp
 val show_fst : 'a pp -> ('a * 'b) show
 val dump_fst : 'a pp -> ('a * 'b) dump
 val display_fst : 'a pp -> ('a * 'b) display
-val print_fst : 'a pp -> ('a * 'b) print
-val prerr_fst : 'a pp -> ('a * 'b) prerr
+val ppout_fst : 'a pp -> ('a * 'b) ppout
+val pperr_fst : 'a pp -> ('a * 'b) pperr
 
 val pp_snd : 'b pp -> ('a * 'b) pp
 val show_snd : 'b pp -> ('a * 'b) show
 val dump_snd : 'b pp -> ('a * 'b) dump
 val display_snd : 'b pp -> ('a * 'b) display
-val print_snd : 'b pp -> ('a * 'b) print
-val prerr_snd : 'b pp -> ('a * 'b) prerr
+val ppout_snd : 'b pp -> ('a * 'b) ppout
+val pperr_snd : 'b pp -> ('a * 'b) pperr
 
-module PrettyPrim : sig
-  val print_string : string print
-  val prerr_string : string prerr
-  val print_float : float print
-  val prerr_float : float prerr
-  val print_char : char print
-  val prerr_char : char prerr
-end
+(** Pretty-print a constructor name and an argument.  For example,
+    [pp_ctor (Required "Some") pp_int (-1)] prints "Some (-1)".  Mult-argument
+    constructors must be destructured on the caller's side.  For some types
+    like [type 'a point = Point of 'a * 'a], it may make sense to do, e.g.
+    [match p with
+     Point (x,y) -> pp_ctor (Optional "Point") (pp_pair pp_int pp_int) (x,y)]
+    with does not output the constructor [Point] unless [read_write_invariance]
+    is set.
+  *)
+val pp_ctor : string pp_needed -> 'a pp -> 'a pp
+
+val pp_option : 'a pp -> 'a option pp
+val show_option : 'a pp -> 'a option show
+val dump_option : 'a pp -> 'a option dump
+val display_option : 'a pp -> 'a option display
+val ppout_option : 'a pp -> 'a option ppout
+val pperr_option : 'a pp -> 'a option pperr
+
+(** Pretty-prints a lazy value.  If the computation has already been forced,
+    this pretty-printer prints the forced value.  Otherwise, this just prints
+    "<lazy>" without forcing computation, just like the top level.  *)
+val pp_lazy_t : 'a pp -> 'a lazy_t pp
+val show_lazy_t : 'a pp -> 'a lazy_t show
+val dump_lazy_t : 'a pp -> 'a lazy_t dump
+val display_lazy_t : 'a pp -> 'a lazy_t display
+val ppout_lazy_t : 'a pp -> 'a lazy_t ppout
+val pperr_lazy_t : 'a pp -> 'a lazy_t pperr
+
+(** Alias for {!pp_lazy_t}.  *)
+val pp_lazy : 'a pp -> 'a lazy_t pp
+val show_lazy : 'a pp -> 'a lazy_t show
+val dump_lazy : 'a pp -> 'a lazy_t dump
+val display_lazy : 'a pp -> 'a lazy_t display
+val ppout_lazy : 'a pp -> 'a lazy_t ppout
+val pperr_lazy : 'a pp -> 'a lazy_t pperr
+
+val show_exn : exn show
+val dump_exn : exn dump
+val pp_exn : exn pp
+val display_exn : exn display
+val ppout_exn : exn ppout
+val pperr_exn : exn pperr
