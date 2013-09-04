@@ -3,6 +3,7 @@ module Carray = Ida_serial.Carray
 module Roots = Ida.Roots
 open Pprint
 open Quickcheck
+open Quickcheck_sundials
 open Quickcheck_ida
 open Camlp4.PreCast
 
@@ -32,12 +33,6 @@ let expr_list es =
 
 let expr_seq es = semis <:expr<()>> (fun e -> Ast.ExSeq (_loc, e)) es
 
-let expr_of_carray v =
-  let n = Carray.length v in
-  if n = 0 then <:expr<Carray.create 0>>
-  else <:expr<Carray.of_array
-              $expr_array (List.map (fun i -> <:expr<$`flo:v.{i}$>>)
-                            (enum 0 (n-1)))$>>
 let expr_of_linear_solver = function
   | Ida.Dense -> <:expr<Ida.Dense>>
   | Ida.Band range -> <:expr<Ida.Band
@@ -108,21 +103,6 @@ let expr_of_roots roots =
                (fun t vec vec' g ->
                   $Fstream.fold_left f (set 0)
                     (Fstream.enum 1 (n-1))$))>>
-
-let expr_of_root_direction = function
-  | RootDirs.Increasing -> <:expr<Ida.RootDirs.Increasing>>
-  | RootDirs.Decreasing -> <:expr<Ida.RootDirs.Decreasing>>
-  | RootDirs.IncreasingOrDecreasing ->
-    <:expr<Ida.RootDirs.IncreasingOrDecreasing>>
-
-let expr_of_root_event = function
-  | Roots.Rising -> <:expr<Roots.Rising>>
-  | Roots.Falling -> <:expr<Roots.Falling>>
-  | Roots.NoRoot -> <:expr<Roots.NoRoot>>
-
-let expr_of_root_info rs =
-  <:expr<Roots.of_array $expr_array (List.map expr_of_root_event
-                                       (Roots.to_list rs))$>>
 
 (* Generate the test code that executes a given command.  *)
 let expr_of_cmd_impl = function

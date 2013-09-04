@@ -23,7 +23,7 @@ auxiliary functions that this generator relies on.
 *)
 
 module Id : Camlp4.Sig.Id = struct
-  let name = "pa_deriving_pprint"
+  let name = "pa_deriving"
   let version = "1.0"
 end
 
@@ -32,203 +32,17 @@ struct
   open Camlp4.Sig
   include Syntax
   open Ast
-  (*open Camlp4aux
-  module GenHelper = GenHelper (Syntax)*)
+
+  module Camlp4aux = Camlp4aux.Make (Syntax)
+  open Camlp4aux
+
+  module M = Meta.Make (Meta.MetaLoc)
+  module MExpr = M.Expr
+  module MPatt = M.Patt
 
   (*
    * Auxiliary defs
    *)
-
-  (* Technique due to Jeremy Yallop
-     https://groups.google.com/forum/#!topic/fa.caml/81RS0IVlS9Y *)
-  let ocaml_printer =
-    let module P = Camlp4.Printers.OCaml.Make(Syntax) in
-    new P.printer ()
-
-  let string_of_of_format format ?(one_line=true) x =
-    let buf = Buffer.create 100 in
-    let bfmt = Format.formatter_of_buffer buf in
-    format bfmt x;
-    Format.pp_print_flush bfmt ();
-    let str = Buffer.contents buf in
-    (* Collapse to one line, so that it's suitable for an error message.  *)
-    if one_line then
-      for i = 0 to String.length str - 1 do
-        if str.[i] = '\n' then str.[i] <- ' '
-      done;
-    str
-
-  let string_of_str_item = string_of_of_format ocaml_printer#str_item
-  let string_of_ctyp = string_of_of_format ocaml_printer#ctyp
-  let string_of_expr = string_of_of_format ocaml_printer#expr
-  let string_of_patt = string_of_of_format ocaml_printer#patt
-  let string_of_ident = string_of_of_format ocaml_printer#ident
-  let string_of_binding = string_of_of_format ocaml_printer#binding
-
-  let hashtbl_of_list xs =
-    let h = Hashtbl.create 10 in
-    ignore (List.fold_left (fun i x -> Hashtbl.add h x i; i+1) 0 xs);
-    h
-
-  let hashtbl_of_assocs xs =
-    let h = Hashtbl.create 10 in
-    List.iter (fun (x,y) -> Hashtbl.add h x y) xs;
-    h
-
-  let fail_at _loc msg = Loc.raise _loc (Failure msg)
-  let fail_ctyp t msg = fail_at (loc_of_ctyp t) (msg ^ ": " ^ string_of_ctyp t)
-
-  let mapi f xs =
-    let rec go acc i = function
-      | [] -> List.rev acc
-      | x::xs -> go (f i x::acc) (i+1) xs
-    in go [] 0 xs
-
-  let rec drop_while f = function
-    | x::xs when f x -> drop_while f xs
-    | xs -> xs
-
-  let string_list_of_ident id =
-    let go = function
-      | <:ident<$lid:x$>> -> x
-      | <:ident<$uid:x$>> -> x
-      | id -> fail_at (loc_of_ident id) ("unrecognized component in \
-                                          identifier: " ^ string_of_ident id)
-    in List.map go (list_of_ident id [])
-
-  (* Mass-term constructors *)
-
-  let fold_expr_with ctor _loc e es =
-    let go e e' =
-      match e, e' with
-      | ExNil _loc, ExNil _loc' -> ExNil (Loc.merge _loc _loc')
-      | e, ExNil _ -> e
-      | ExNil _, e' -> e'
-      | e, e' -> ctor (Loc.merge (loc_of_expr e) (loc_of_expr e')) e e'
-    in List.fold_left go e es
-
-  let fold_right_expr_with ctor _loc es e =
-    let go e e' =
-      match e, e' with
-      | ExNil _loc, ExNil _loc' -> ExNil (Loc.merge _loc _loc')
-      | e, ExNil _ -> e
-      | ExNil _, e' -> e'
-      | e, e' -> ctor (Loc.merge (loc_of_expr e) (loc_of_expr e')) e e'
-    in List.fold_right go es e
-
-  let fold_patt_with ctor _loc p ps =
-    let go p p' =
-      match p, p' with
-      | PaNil _loc, PaNil _loc' -> PaNil (Loc.merge _loc _loc')
-      | p, PaNil _ -> p
-      | PaNil _, p' -> p'
-      | p, p' -> ctor (Loc.merge (loc_of_patt p) (loc_of_patt p')) p p'
-    in List.fold_left go p ps
-
-  let fold_ctyp_with ctor _loc t ts =
-    let go t t' =
-      match t, t' with
-      | TyNil _loc, TyNil _loc' -> TyNil (Loc.merge _loc _loc')
-      | t, TyNil _ -> t
-      | TyNil _, t' -> t'
-      | t, t' -> ctor (Loc.merge (loc_of_ctyp t) (loc_of_ctyp t')) t t'
-    in List.fold_left go t ts
-
-  let fold_right_ctyp_with ctor _loc ts t =
-    let go t t' =
-      match t, t' with
-      | TyNil _loc, TyNil _loc' -> TyNil (Loc.merge _loc _loc')
-      | t, TyNil _ -> t
-      | TyNil _, t' -> t'
-      | t, t' -> ctor (Loc.merge (loc_of_ctyp t) (loc_of_ctyp t')) t t'
-    in List.fold_right go ts t
-
-  let fold_app f xs =
-    match f with
-    | ExNil _loc -> fail_at _loc "internal error in deriving: fold_app got \
-                                  ExNil as function"
-    | _ -> fold_expr_with (fun _loc e e' -> ExApp (_loc, e, e'))
-             (loc_of_expr f) f xs
-
-  let fold_app_ctyp f args =
-    fold_ctyp_with (fun _loc a t -> TyApp (_loc, a, t))
-      (loc_of_ctyp f) f args
-
-  let fold_fun _loc args body =
-    let rec go body = function
-      | [] -> body
-      | arg::args -> go <:expr<fun $lid:arg$ -> $body$>> args
-    in go body (List.rev args)
-
-  let fold_arr args body =
-    fold_right_ctyp_with (fun _loc t u -> <:ctyp<$t$ -> $u$>>)
-      (loc_of_ctyp body) args body
-
-  let forall _loc args body =
-    match List.map (fun x -> <:ctyp<'$lid:x$>>) args with
-    | [] -> body
-    | [arg] -> TyPol (_loc, arg, body)
-    | arg::args -> TyPol (_loc, fold_app_ctyp arg args, body)
-
-  let fold_semi _loc es =
-    match es with
-    | [] -> ExNil _loc
-    | e::es ->
-      let go e e' =
-        match e, e' with
-        | ExNil _loc, ExNil _loc' -> ExNil (Loc.merge _loc _loc')
-        | e, ExNil _ -> e
-        | ExNil _, e' -> e'
-        | e, e' -> ExSem (Loc.merge (loc_of_expr e) (loc_of_expr e'), e, e')
-      in List.fold_left go e es
-
-  let fold_com _loc es =
-    match es with
-    | [] -> ExNil _loc
-    | e::es ->
-      let go e e' =
-        match e, e' with
-        | ExNil _loc, ExNil _loc' -> ExNil (Loc.merge _loc _loc')
-        | e, ExNil _ -> e
-        | ExNil _, e' -> e'
-        | e, e' -> ExCom (Loc.merge (loc_of_expr e) (loc_of_expr e'), e, e')
-      in List.fold_left go e es
-
-  (* [p1;p2;...] -> <:patt<$p1$, $p2$, ...>> *)
-  let fold_com_patt _loc ps =
-    match ps with
-    | [] -> PaNil _loc
-    | p::ps -> fold_patt_with (fun _loc p p' -> PaCom (_loc, p, p')) _loc p ps
-
-  (* [p1;p2;...] -> <:patt<$p1$, $p2$, ...>> *)
-  let fold_app_patt p ps =
-    fold_patt_with (fun _loc p p' -> PaApp (_loc, p, p')) (loc_of_patt p) p ps
-
-  let fold_tuple_patt = function
-    | [] | [_] -> failwith "internal error in deriving: fold_tuple_patt \
-                            argument list too short"
-    | ps -> let p = fold_com_patt Loc.ghost ps in
-            PaTup (loc_of_patt p, p)
-
-  (* [p1;p2;...] -> <:binding<$p1$ and $p2$ and ...>> *)
-  let fold_and_binding _loc bs =
-    match bs with
-    | [] -> BiNil _loc
-    | b::bs ->
-      let go b b' =
-        let _loc = Loc.merge (loc_of_binding b) (loc_of_binding b') in
-        <:binding<$b$ and $b'$>>
-      in List.fold_left go b bs
-
-  (* [m1;m2;...] -> <:match_case<$m1$ | $m2$ | ...>> *)
-  let fold_or_match_case _loc ms =
-    match ms with
-    | [] -> McNil _loc
-    | m::ms ->
-      let go m m' =
-        let _loc = Loc.merge (loc_of_match_case m) (loc_of_match_case m') in
-        <:match_case<$m$ | $m'$>>
-      in List.fold_left go m ms
 
   (* Simplified representation of a type declaration.  *)
   type type_decl_simpl =
@@ -383,7 +197,8 @@ struct
         in
         <:expr<fun ?(prec=0) fmt -> function
           | $fold_tuple_patt (mapi mk_pat xs)$ ->
-            pp_seq "(@[<hv>" "," "@])" [| $fold_semi _loc (mapi mk_pp xs)$ |]
+            pp_seq "(@[<hv>" "," "@])" fmt
+               (Fstream.of_array [| $fold_sem _loc (mapi mk_pp xs)$ |])
         >>
       | TVar (_loc, a) ->
         (try Hashtbl.find pp_table a
@@ -397,7 +212,7 @@ struct
            pp_precompose (fun x -> x.$lid:fname$) $go_type_expr typ$)>>
       in
       <:expr<fun ?(prec=0) fmt ->
-          pp_record [| $fold_semi _loc (List.map go fields)$ |] fmt>>
+          pp_record [| $fold_sem _loc (List.map go fields)$ |] fmt>>
     and go_variant variants =
       let f (_loc, ctor, args) =
         let ctor_str = <:expr<$uid:if Hashtbl.mem omit ctor
@@ -414,7 +229,7 @@ struct
           let xs = mapi (fun i _ -> "x" ^ string_of_int i) args in
           let pat = fold_app_patt <:patt<$uid:ctor$>>
                       (List.map (fun x -> <:patt<$lid:x$>>) xs)
-          and pps = fold_semi _loc
+          and pps = fold_sem _loc
                        (List.map2
                          (fun x t -> <:expr<pp_fixarg $go_type_expr t$
                                             $lid:x$>>)
@@ -437,9 +252,9 @@ struct
     | TAlias rhs -> go_type_expr rhs
 
   (* Pre-defined aliases.  *)
-  let pretty_predef_aliases = Hashtbl.create 10
+  let predef_aliases = Hashtbl.create 10
   let _ =
-    Hashtbl.add pretty_predef_aliases ["Lazy"; "t"] ["lazy_t"]
+    Hashtbl.add predef_aliases ["Lazy"; "t"] ["lazy_t"]
 
   (* Generate a family of pretty-printers for a set of types declared
      simultaneously.  The types may refer to each other, so the whole family is
@@ -447,7 +262,7 @@ struct
   let pretty_of_type_decl_simpl tmp_aliases prefix omit (TDecl (_loc, types)) =
     let pretty_binding (_loc, params, tctor, rhs) =
       (* Load predefined aliases.  *)
-      let aliases = Hashtbl.copy pretty_predef_aliases in
+      let aliases = Hashtbl.copy predef_aliases in
       Hashtbl.iter (Hashtbl.add aliases) tmp_aliases;
       let tctor =
         try
@@ -477,17 +292,132 @@ struct
       >>
     in
     <:str_item<let rec
-               $fold_and_binding _loc (List.map pretty_binding types)$>>
+               $biAnd_of_list (List.map pretty_binding types)$>>
+
+  (* Reification (expr_of) derivation  *)
+
+  (* Generate a type for the reifier of the given type.  This is
+     necessary since the reifier for e.g.
+       type 'a foo = ...
+       and bar = int foo
+     requires polymorphic recursion.  This is the part that needs
+     OCaml >= 3.12.  *)
+  let expr_type _loc param_names tctor =
+    let params = List.map (fun x -> <:ctyp<'$lid:x$>>) param_names in
+    forall _loc param_names
+      (fold_arr (List.map (fun x -> <:ctyp<$x$ -> Ast.expr>>) params)
+         (TyArr (_loc, fold_app_ctyp <:ctyp<$lid:tctor$>> params,
+                 <:ctyp<Ast.expr>>)))
+
+  (* Generate a reifier's body.  The resulting expression has type 'a ->
+     expr.  *)
+  let expr_body _loc aliases prefix params rhs =
+    (* Table from type parameter name to expr0, expr1, etc. *)
+    let ex_table = Hashtbl.create 10 in
+    List.iter (fun x -> Hashtbl.add ex_table x
+                  <:expr<$lid:"expr"^string_of_int
+                           (Hashtbl.length ex_table)$>>)
+      params;
+    let ghost = <:expr<Loc.ghost>> in
+    let prefix = List.map (fun x -> <:ident<$uid:x$>>) prefix in
+    let lqualify str = idAcc_of_list (prefix @ [ <:ident<$lid:str$>> ]) in
+    let uqualify str = idAcc_of_list (prefix @ [ <:ident<$uid:str$>> ]) in
+    let rec go_type_expr = function
+      | TApp (_loc, <:ident<$id:x$>>, args) ->
+        let x = string_list_of_ident x in
+        let x = try Hashtbl.find aliases x with Not_found -> x in
+        let x = String.concat "_" x in
+        fold_app <:expr<$lid:"expr_of_"^x$>> (List.map go_type_expr args)
+      | TTup (_loc, []) -> fail_at _loc
+                           "internal error in deriving: TTup (_,[])"
+      | TTup (_loc, [x]) -> fail_at _loc
+                           "internal error in deriving: TTup (_,[_])"
+      | TTup (_loc, [x;y]) -> <:expr<expr_of_pair $go_type_expr x$
+                                                  $go_type_expr y$>>
+      | TTup (_loc, [x;y;z]) -> <:expr<expr_of_triple $go_type_expr x$
+                                                      $go_type_expr y$
+                                                      $go_type_expr z$>>
+      | TTup (_loc, xs) ->
+        let mk_pat i _ = <:patt<$lid:"x"^string_of_int i$>>
+        and mk_expr i x = <:expr<$go_type_expr x$ $lid:"x"^string_of_int i$>>
+        in
+        <:expr<function
+          | $fold_tuple_patt (mapi mk_pat xs)$ ->
+            $meta_tuple _loc ghost (mapi mk_expr xs)$
+        >>
+      | TVar (_loc, a) ->
+        (try Hashtbl.find ex_table a
+         with Not_found -> fail_at _loc ("unbound type parameter: '"^a))
+      | TFun (_loc, _, _) -> <:expr<pp_fun>>
+    and go_record _loc fields =
+      let go (_loc, fname, _, typ) =
+        let qfname = MExpr.meta_ident _loc (lqualify fname) in
+        <:expr< Ast.RbEq ($ghost$, $qfname$,
+                          $go_type_expr typ$ x.$lid:fname$) >>
+      in
+      let binding = meta_fold_sem_rec_binding ghost (List.map go fields) in
+      <:expr<fun x -> Ast.ExRec ($ghost$, $binding$, Ast.ExNil $ghost$) >>
+    and go_variant variants =
+      let f (_loc, ctor, args) =
+        let qctor = MExpr.meta_expr _loc (meta_ident (uqualify ctor)) in
+        match args with
+        | [] -> <:match_case<$uid:ctor$ -> $qctor$>>
+        | [t] -> <:match_case<$uid:ctor$ x ->
+                              $(meta_app ghost qctor
+                                (app (go_type_expr t) (meta_lid _loc "x")))$>>
+        | ts ->
+          let xs = mapi (fun i _ -> "x" ^ string_of_int i) args in
+          let pat = fold_app_patt <:patt<$uid:ctor$>>
+                      (List.map (fun x -> <:patt<$lid:x$>>) xs)
+          and args = List.map2
+                       (fun x t -> <:expr<$go_type_expr t$ $lid:x$>>)
+                       xs ts
+          in
+          let body = meta_fold_app ghost (qctor::args) in
+          <:match_case<$pat$ -> $body$>>
+      in
+      <:expr<function $fold_or_match_case _loc (List.map f variants)$>>
+    in
+    match rhs with
+    | TRecord (_loc, fields) -> go_record _loc fields
+    | TVariant (_loc, variants) -> go_variant variants
+    | TAlias rhs -> go_type_expr rhs
+
+  let expr_of_of_type_decl_simpl _loc prefix tmp_aliases (TDecl (_loc, types))
+    =
+    let expr_binding (_loc, params, tctor, rhs) =
+      (* Load predefined aliases.  *)
+      let aliases = Hashtbl.copy predef_aliases in
+      Hashtbl.iter (Hashtbl.add aliases) tmp_aliases;
+      let tctor =
+        try
+          let parts = Hashtbl.find aliases [tctor]
+          in String.concat "_" parts
+        with Not_found -> tctor in
+      let exprs = mapi (fun i x -> "expr"^string_of_int i) params in
+      let expr_body = expr_body _loc aliases prefix params rhs in
+      let expr_impl =
+        match exprs with
+        | [] -> (* eta-expand to avoid compiler error *)
+                <:expr<fun x -> $expr_body$ x>>
+        | exprs -> fold_fun _loc exprs expr_body
+      in
+      <:binding<
+        $lid:"expr_of_"^tctor$ : $expr_type _loc params tctor$ = $expr_impl$
+      >>
+    in
+    <:str_item<let rec
+               $fold_and_binding (List.map expr_binding types)$>>
 
   (* Code generation options *)
 
-  type pretty_options =
-    { pretty_optional: (Loc.t * string list) option;
-      pretty_prefix: (Loc.t * ident) option;
-      pretty_aliases: (Loc.t * (string list * string list) list) option;
-      pretty_erase_types: (Loc.t * bool) option; }
+  type options =
+    { opt_optional: (Loc.t * string list) option;
+      opt_prefix: (Loc.t * ident) option;
+      opt_aliases: (Loc.t * (string list * string list) list) option;
+    }
 
-  let pretty_options_merge opt1 opt2 =
+  let options_merge opt1 opt2 =
     let merge_field field_name field =
       match field opt1, field opt2 with
       | None, None -> None
@@ -496,20 +426,43 @@ struct
       | Some (_loc1, _), Some (_loc2, _) ->
         fail_at (Loc.merge _loc1 _loc2) ("duplicate ~"^field_name^" options")
     in
-    { pretty_optional = merge_field "optional" (fun x -> x.pretty_optional);
-      pretty_prefix = merge_field "prefix" (fun x -> x.pretty_prefix);
-      pretty_aliases = merge_field "alias" (fun x -> x.pretty_aliases);
-      pretty_erase_types = merge_field "alias" (fun x -> x.pretty_erase_types);
+    { opt_optional = merge_field "optional" (fun x -> x.opt_optional);
+      opt_prefix = merge_field "prefix" (fun x -> x.opt_prefix);
+      opt_aliases = merge_field "alias" (fun x -> x.opt_aliases);
     }
 
-  let pretty_options_get f default opt =
+  let options_get f default opt =
     match opt with
     | None -> default
     | Some (_, x) -> f x
 
-  let pretty_empty_options =
-    { pretty_optional = None; pretty_prefix = None; pretty_aliases = None;
-      pretty_erase_types = None; }
+  let options_empty =
+    { opt_optional = None; opt_prefix = None; opt_aliases = None;
+    }
+
+  (* Entry points for derivations  *)
+
+  let derive_pretty _loc opts =
+    let optional = options_get (fun x -> x) [] opts.opt_optional
+    and prefix = options_get string_list_of_ident [] opts.opt_prefix
+    and aliases = options_get hashtbl_of_assocs (Hashtbl.create 0)
+        opts.opt_aliases
+    in
+    fun td ->
+      let pretty =
+        pretty_of_type_decl_simpl aliases prefix
+          (hashtbl_of_list optional) (type_decl_simpl_of_ctyp td)
+      in
+      <:str_item<$pretty$>>
+
+  let derive_expr_of _loc opts =
+    let prefix = options_get string_list_of_ident [] opts.opt_prefix
+    and aliases = options_get hashtbl_of_assocs (Hashtbl.create 0)
+        opts.opt_aliases
+    in
+    fun td ->
+      expr_of_of_type_decl_simpl _loc prefix aliases
+        (type_decl_simpl_of_ctyp td)
 
   EXTEND Gram
     GLOBAL: str_item module_longident type_longident;
@@ -519,79 +472,69 @@ struct
         | `UIDENT x -> x ]
       ];
 
-    pretty_erase_typedefs:
-      [ [ `LABEL "erase_typedefs"; "true" ->
-          { pretty_empty_options with
-            pretty_erase_types = Some (_loc, true) } ]
-      ];
-
-    pretty_aliases:
+    opt_aliases:
       [ [ `LABEL "rename"; "(";
           aliases = LIST1 [ x = type_longident; "to"; y = type_longident ->
                             (string_list_of_ident x, string_list_of_ident y) ]
                     SEP ",";
           ")" ->
-          { pretty_empty_options with
-            pretty_aliases = Some (_loc, aliases) } ]
+          { options_empty with
+            opt_aliases = Some (_loc, aliases) } ]
       ];
 
-    pretty_optional:
+    opt_optional:
       [ [ `LABEL "optional"; "("; fs = LIST1 [ x = ident -> x ] SEP ","; ")" ->
-          { pretty_empty_options with
-            pretty_optional = Some (_loc, fs) } ]
+          { options_empty with
+            opt_optional = Some (_loc, fs) } ]
       | [ `LABEL "optional"; x = ident ->
-          { pretty_empty_options with
-            pretty_optional = Some (_loc, [x]) } ]
+          { options_empty with
+            opt_optional = Some (_loc, [x]) } ]
       ];
 
-    pretty_prefix:
+    opt_prefix:
       [ [ `LABEL "prefix"; x = module_longident ->
-          { pretty_empty_options with
-            pretty_prefix = Some (_loc, x) }
+          { options_empty with
+            opt_prefix = Some (_loc, x) }
+        ]
+      ];
+
+    bare_pretty_spec:
+      [ [ `LIDENT "pretty" -> derive_pretty _loc options_empty ]
+      ];
+
+    pretty_spec:
+      [ [ `LIDENT "pretty";
+          opts = LIST0 [ opt_prefix | opt_optional | opt_aliases ]
+          ->
+          derive_pretty _loc (List.fold_left options_merge options_empty opts)
+        ]
+      ];
+
+    bare_expr_of_spec:
+      [ [ `LIDENT "expr_of" -> derive_expr_of _loc options_empty ]
+      ];
+
+    expr_of_spec:
+      [ [ `LIDENT "expr_of"; opts = LIST0 [ opt_prefix | opt_aliases ]
+          ->
+          derive_expr_of _loc (List.fold_left options_merge options_empty opts)
         ]
       ];
 
     deriving_spec:
-      [ [ "("; `LIDENT "pretty";
-          opts = LIST0 [ pretty_prefix | pretty_optional | pretty_aliases
-                       | pretty_erase_typedefs ];
-          ")" ->
-          let opts = List.fold_left pretty_options_merge
-                       pretty_empty_options opts
-          in
-          let optional =
-            pretty_options_get (fun x -> x) [] opts.pretty_optional
-          and prefix =
-            pretty_options_get string_list_of_ident [] opts.pretty_prefix
-          and aliases =
-            pretty_options_get hashtbl_of_assocs (Hashtbl.create 0)
-              opts.pretty_aliases
-          and erase_types =
-            pretty_options_get (fun x -> x) false opts.pretty_erase_types
-          in
-          fun td ->
-            let pretty =
-              pretty_of_type_decl_simpl aliases prefix
-                (hashtbl_of_list optional) (type_decl_simpl_of_ctyp td)
-            in
-            if erase_types then pretty
-            else <:str_item<type $td$
-                            $pretty$>>
-        | `LIDENT "pretty" ->
-          fun td ->
-            let pretty = pretty_of_type_decl_simpl
-                           (Hashtbl.create 0)
-                           []
-                           (Hashtbl.create 0)
-                           (type_decl_simpl_of_ctyp td)
-            in <:str_item<type $td$ $pretty$>>
+      [ [ bare_pretty_spec | bare_expr_of_spec
+        ]
+      | [ "("; specs = LIST1 [ pretty_spec | expr_of_spec ] SEP ","; ")" ->
+          fun td -> fold_str_item _loc (List.map (fun f -> f td) specs)
         ]
       ];
 
     str_item: LEVEL "top"
       [ "top"
-        ["type"; td = type_declaration; "deriving"; spec = deriving_spec ->
-         spec td
+        ["type"; td = type_declaration; "deriving";
+         erase = OPT [ `LIDENT "external_types" ]; spec = deriving_spec ->
+         if erase = None then <:str_item<type $td$ $spec td$>>
+         else spec td
         ]
       ];
 

@@ -4,6 +4,8 @@ open Quickcheck
 open Quickcheck_sundials
 module Roots = Sundials.Roots
 module RootDirs = Sundials.RootDirs
+open Camlp4.PreCast.Syntax
+open Expr_of
 
 (* Derive pretty-printers for types imported from the Ida module.  It would be
    ideal if we could have the camlp4 extension extract type definitions from
@@ -47,9 +49,9 @@ module PPIda = struct
     current_step : float;
     current_time : float
   }
-  deriving (pretty ~erase_typedefs:true ~prefix:Ida)
+  deriving external_types (pretty ~prefix:Ida, expr_of ~prefix:Ida)
 end
-open PPIda        (* Bring the printers -- and only the printers into scope. *)
+include PPIda                           (* Include the derived functions. *)
 
 (* A state-machine model for IDA sessions.  *)
 type model =
@@ -113,7 +115,13 @@ deriving (pretty ~rename:(Carray.t to carray,
                           Ida.linear_solver to linear_solver,
                           Ida.solver_result to solver_result)
                  ~optional:(Int, Float, solving, consistent, next_query_time,
-                            last_tret, root_info_valid))
+                            last_tret, root_info_valid)
+         ,expr_of ~rename:(Carray.t to carray,
+                          Ida.Roots.root_event to root_event,
+                          Ida.root_direction to root_direction,
+                          Roots.t to root_info,
+                          Ida.linear_solver to linear_solver,
+                          Ida.solver_result to solver_result))
 
 let carray x = Carray (Carray.of_carray x)
 

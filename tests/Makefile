@@ -3,17 +3,18 @@ include ../config
 CAMLP4=camlp4of
 
 # Object files that implement the deriving extension.
-CAMLP4_OBJS=fstream.cmo pa_deriving.cmo pprint.cmo
-CAMLP4_CMIS=pprint.cmi
+CAMLP4_OBJS=fstream.cmo camlp4aux.cmo pa_deriving.cmo expr_of.cmo pprint.cmo
+CAMLP4_CMIS=expr_of.cmi pprint.cmi
 
 # Object files pertaining to the quickcheck framework.
-QUICKCHECK_OBJS=fstream.cmo pprint.cmo \
+QUICKCHECK_OBJS=fstream.cmo pprint.cmo camlp4aux.cmo expr_of.cmo \
                 quickcheck.cmo quickcheck_sundials.cmo quickcheck_ida.cmo
 
 test-quickcheck_ida_serial: quickcheck_ida_serial.opt $(QUICKCHECK_OBJS)
 	./$< $(PARAMS) --exec-file ./test --failed-file failed.ml \
-	    --compiler "ocamlc -g -I .. bigarray.cma unix.cma \
-	                sundials_ida.cma $(filter-out $<,$^)"
+	    --compiler "ocamlc -g -I .. -I +camlp4 \
+	        dynlink.cma camlp4lib.cma camlp4aux.cmo expr_of.cmo \
+	        bigarray.cma unix.cma sundials_ida.cma $(filter-out $<,$^)"
 
 quickcheck_ida_serial.byte: quickcheck_ida_serial.cmo $(QUICKCHECK_OBJS)
 
