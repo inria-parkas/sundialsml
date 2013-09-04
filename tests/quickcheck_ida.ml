@@ -108,20 +108,20 @@ and resfn_type =
                                ic_calc_ya_yd' should work.
                              *)
   | ResFnExpDecay of Carray.t
-deriving (pretty ~rename:(Carray.t to carray,
-                          Ida.Roots.root_event to root_event,
-                          Ida.root_direction to root_direction,
-                          Roots.t to root_info,
-                          Ida.linear_solver to linear_solver,
-                          Ida.solver_result to solver_result)
+deriving (pretty ~alias:(Carray.t = carray,
+                         Ida.Roots.root_event = root_event,
+                         Ida.root_direction = root_direction,
+                         Roots.t = root_info,
+                         Ida.linear_solver = linear_solver,
+                         Ida.solver_result = solver_result)
                  ~optional:(Int, Float, solving, consistent, next_query_time,
                             last_tret, root_info_valid)
-         ,expr_of ~rename:(Carray.t to carray,
-                          Ida.Roots.root_event to root_event,
-                          Ida.root_direction to root_direction,
-                          Roots.t to root_info,
-                          Ida.linear_solver to linear_solver,
-                          Ida.solver_result to solver_result))
+         ,expr_of ~alias:(Carray.t = carray,
+                          Ida.Roots.root_event = root_event,
+                          Ida.root_direction = root_direction,
+                          Roots.t = root_info,
+                          Ida.linear_solver = linear_solver,
+                          Ida.solver_result = solver_result))
 
 let carray x = Carray (Carray.of_carray x)
 

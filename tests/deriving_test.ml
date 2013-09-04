@@ -27,9 +27,9 @@ and ('a,'b) poly2_var6_123 = Var61 of 'a | Var62 of 'a * 'b
 and ('a,'b,'c) poly3_var7_2 = Var71 of ('a * 'b) * 'c
 deriving
   (expr_of ~prefix:Deriving_test
-           ~rename:(Lazy.t to lazy_t)
+           ~alias:(Lazy.t = lazy_t)
   ,pretty ~prefix:Deriving_test
-          ~rename:(Lazy.t to lazy_t)
+          ~alias:(Lazy.t = lazy_t)
           ~optional:(Deriving_test,
                      opt_field21,
                      opt_mfield22,

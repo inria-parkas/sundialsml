@@ -472,9 +472,12 @@ struct
         | `UIDENT x -> x ]
       ];
 
+    label_aliases:
+      [ [ `LABEL "alias" -> () | `LABEL "aliases" -> () ] ];
+
     opt_aliases:
-      [ [ `LABEL "rename"; "(";
-          aliases = LIST1 [ x = type_longident; "to"; y = type_longident ->
+      [ [ label_aliases; "(";
+          aliases = LIST1 [ x = type_longident; "="; y = type_longident ->
                             (string_list_of_ident x, string_list_of_ident y) ]
                     SEP ",";
           ")" ->
