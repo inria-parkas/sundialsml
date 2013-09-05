@@ -306,7 +306,7 @@ echo "Configuration"
 echo "-------------"
 
 echo
-echo "  Ocaml\t\t\t${ocaml_path}${ocaml_version}"
+echo "  OCaml\t\t\t${ocaml_path}${ocaml_version}"
 echo "  Sundials\t\t${sundials_version}${lapack_info}"
 echo "    -examples\t\t${examples_info}"
 echo

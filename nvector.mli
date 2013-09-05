@@ -1,8 +1,8 @@
 (***********************************************************************)
 (*                                                                     *)
-(*              Ocaml interface to Sundials CVODE solver               *)
+(*     OCaml interface to Sundials (serial) CVODE and IDA solvers      *)
 (*                                                                     *)
-(*            Timothy Bourke (INRIA) and Marc Pouzet (LIENS)           *)
+(*  Timothy Bourke (Inria), Jun Inoue (Inria), and Marc Pouzet (LIENS) *)
 (*                                                                     *)
 (*  Copyright 2013 Institut National de Recherche en Informatique et   *)
 (*  en Automatique.  All rights reserved.  This file is distributed    *)
@@ -28,7 +28,7 @@
   particular {!nvector} implementation. The {!Cvode_nvector} module operates on
   abstract nvectors.
 
-  The Ocaml interface provides two ways to define generic nvectors: either
+  The OCaml interface provides two ways to define generic nvectors: either
   through a set of (imperative) operations on an underlying {!Mutable} data
   type, or a set of (functional) operations on an underlying {!Immutable} data
   type. A set of {!Immutable} operations is converted into a set of {!Mutable}
@@ -37,7 +37,8 @@
   operations to update it in-place.
 
   @version VERSION()
-  @author Timothy Bourke (INRIA)
+  @author Timothy Bourke (Inria)
+  @author Jun Inoue (Inria)
   @author Marc Pouzet (LIENS)
   @cvode <node7#s:nvector> The NVECTOR Module
  *)
@@ -55,7 +56,7 @@ module Mutable :
   sig
     (**
        The set of operations required to define an {!nvector}. Some operations
-       are optional; default values are either provided by the Ocaml interface
+       are optional; default values are either provided by the OCaml interface
        or the Sundials library.
 
        @cvode <node7#s:nvector> _generic_N_Vector_Ops

@@ -1,8 +1,8 @@
 /***********************************************************************
  *                                                                     *
- *              Ocaml interface to Sundials CVODE solver               *
+ *     OCaml interface to Sundials (serial) CVODE and IDA solvers      *
  *                                                                     *
- *           Timothy Bourke (INRIA) and Marc Pouzet (LIENS)            *
+ *  Timothy Bourke (Inria), Jun Inoue (Inria), and Marc Pouzet (LIENS) *
  *                                                                     *
  *  Copyright 2013 Institut National de Recherche en Informatique et   *
  *  en Automatique.  All rights reserved.  This file is distributed    *
@@ -145,7 +145,7 @@ void cvode_ml_check_flag(const char *call, int flag);
 
 value cvode_ml_big_real();
 
-/* Interface with Ocaml types */
+/* Interface with OCaml types */
 
 /* Indices into the Cvode_*.session type.  This enum must be in the same order
  * as the session type's member declaration.  */

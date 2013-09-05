@@ -6,7 +6,7 @@
  * Programmer(s): Scott D. Cohen, Alan C. Hindmarsh and
  *                Radu Serban @ LLNL
  * -----------------------------------------------------------------
- * Ocaml port: Timothy Bourke, INRIA, Sep 2010.
+ * OCaml port: Timothy Bourke, Inria, Sep 2010.
  * -----------------------------------------------------------------
  * Example problem:
  *

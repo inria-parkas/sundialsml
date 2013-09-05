@@ -1,8 +1,8 @@
 (***********************************************************************)
 (*                                                                     *)
-(*              Ocaml interface to Sundials CVODE solver               *)
+(*     OCaml interface to Sundials (serial) CVODE and IDA solvers      *)
 (*                                                                     *)
-(*           Timothy Bourke (INRIA) and Marc Pouzet (LIENS)            *)
+(*  Timothy Bourke (Inria), Jun Inoue (Inria), and Marc Pouzet (LIENS) *)
 (*                                                                     *)
 (*  Copyright 2013 Institut National de Recherche en Informatique et   *)
 (*  en Automatique.  All rights reserved.  This file is distributed    *)
@@ -14,7 +14,8 @@
 (** {!Nvector.nvector}s for standard arrays and one-dimensional bigarrays
 
   @version VERSION()
-  @author Timothy Bourke (INRIA)
+  @author Timothy Bourke (Inria)
+  @author Jun Inoue (Inria)
   @author Marc Pouzet (LIENS)
   @see <OCAML_DOC_ROOT(Array)> Array
   @see <OCAML_DOC_ROOT(Bigarray.Array1)> Bigarray.Array1

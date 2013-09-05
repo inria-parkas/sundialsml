@@ -1,8 +1,8 @@
 (***********************************************************************)
 (*                                                                     *)
-(*              Ocaml interface to Sundials CVODE solver               *)
+(*     OCaml interface to Sundials (serial) CVODE and IDA solvers      *)
 (*                                                                     *)
-(*           Timothy Bourke (INRIA) and Marc Pouzet (LIENS)            *)
+(*  Timothy Bourke (Inria), Jun Inoue (Inria), and Marc Pouzet (LIENS) *)
 (*                                                                     *)
 (*  Copyright 2013 Institut National de Recherche en Informatique et   *)
 (*  en Automatique.  All rights reserved.  This file is distributed    *)
@@ -28,16 +28,17 @@ include module type of Cvode
 (*STARTINTRO*)
 (** Serial nvector interface to the CVODE solver.
  
-  Serial vectors are passed between Sundials and Ocaml programs as
+  Serial vectors are passed between Sundials and OCaml programs as
   Bigarrays.
   These vectors are manipulated within the solver using the original low-level
   vector operations (cloning, linear sums, adding constants, and etcetera).
   While direct interfaces to these operations are not provided, there are
-  equivalent implementations written in Ocaml for arrays of floats
+  equivalent implementations written in OCaml for arrays of floats
   ({! Nvector_array}) and bigarrays ({! Nvector_array.Bigarray}) of floats.
 
   @version VERSION()
-  @author Timothy Bourke (INRIA)
+  @author Timothy Bourke (Inria)
+  @author Jun Inoue (Inria)
   @author Marc Pouzet (LIENS)
  *)
 

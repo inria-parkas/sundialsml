@@ -6,7 +6,7 @@
  * Programmer(s): Scott D. Cohen, Alan C. Hindmarsh and
  *                Radu Serban @ LLNL
  * -----------------------------------------------------------------
- * Ocaml port: Timothy Bourke, INRIA, Feb 2011.
+ * OCaml port: Timothy Bourke, Inria, Feb 2011.
  * --------------------------------------------------------------------
  * Demonstration program for CVODE - Krylov linear solver.
  * ODE system from ns-species interaction PDE in 2 dimensions.

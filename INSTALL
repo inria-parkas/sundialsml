@@ -1,16 +1,16 @@
-Ocaml interface to Sundials (-CVODE)
-------------------------------------
-------------------------------------
+OCaml interface to Sundials (-CVODE and -IDA)
+---------------------------------------------
 
-Timothy Bourke (INRIA) and Marc Pouzet (LIENS)
+Timothy Bourke (Inria), Jun Inoue (Inria), and Marc Pouzet (LIENS)
+
 Released under a GPL2 license, see LICENSE.
 
 Please send feedback and bug reports to tim@tbrk.org.
 
 Requirements
 ------------
-* Ocaml 3.12.0 or above.
-* Sundials 2.4.0 (see below).
+* OCaml 3.12.0 or above.
+* Sundials 2.5.0 (see below).
 * Gnu Make
 * C compiler and preprocesser (gcc recommended)
 
@@ -26,7 +26,7 @@ Compilation and Installation of Sundials
     ./configure CC=gcc F77=gfortran --enable-examples --enable-shared
     make
 
-  Note that the Ocaml interface assumes 64-bit floats. This means that
+  Note that the OCaml interface assumes 64-bit floats. This means that
   Sundials must be compiled so that realtype = double (i.e. ./configure
   -with-precision=double, which is anyway the default).
 
@@ -79,11 +79,12 @@ Compilation and Installation of the library
 
 * Examples:
 
-  The programs in examples/sundials can be used to test the Ocaml library
+  The programs in examples/sundials can be used to test the OCaml library
   against results from the standard Sundials examples. See the README file
   in that directory for further information
 
 * Usage (using ocamlfind):
+
     #use "topfind";;
     #require "sundials";;
 

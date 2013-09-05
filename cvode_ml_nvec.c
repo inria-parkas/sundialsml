@@ -1,8 +1,8 @@
 /***********************************************************************
  *                                                                     *
- *              Ocaml interface to Sundials CVODE solver               *
+ *     OCaml interface to Sundials (serial) CVODE and IDA solvers      *
  *                                                                     *
- *           Timothy Bourke (INRIA) and Marc Pouzet (LIENS)            * 
+ *  Timothy Bourke (Inria), Jun Inoue (Inria), and Marc Pouzet (LIENS) *
  *                                                                     *
  *  Copyright 2013 Institut National de Recherche en Informatique et   *
  *  en Automatique.  All rights reserved.  This file is distributed    *
@@ -680,7 +680,7 @@ static value solver(value vdata, value nextt, value y, int onestep)
     realtype t = 0.0;
     N_Vector y_nv = NVECTORIZE_VAL(y);
 
-    // The payload of y (a big array) must not be shifted by the Ocaml GC
+    // The payload of y (a big array) must not be shifted by the OCaml GC
     // during this function call, even though Caml will be reentered
     // through the callback f. Is this guaranteed?
     int flag = CVode(CVODE_MEM_FROM_ML(vdata), Double_val(nextt), y_nv, &t,

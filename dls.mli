@@ -1,8 +1,8 @@
 (***********************************************************************)
 (*                                                                     *)
-(*              Ocaml interface to Sundials CVODE solver               *)
+(*     OCaml interface to Sundials (serial) CVODE and IDA solvers      *)
 (*                                                                     *)
-(*            Timothy Bourke (INRIA) and Marc Pouzet (LIENS)           *)
+(*  Timothy Bourke (Inria), Jun Inoue (Inria), and Marc Pouzet (LIENS) *)
 (*                                                                     *)
 (*  Copyright 2013 Institut National de Recherche en Informatique et   *)
 (*  en Automatique.  All rights reserved.  This file is distributed    *)
@@ -158,7 +158,7 @@ module Directdensematrix :
      This type represents a [realtype **] returned from a call to
      {!new_dense_mat}.
 
-     The underlying array cannot be exposed directly in Ocaml as a
+     The underlying array cannot be exposed directly in OCaml as a
      {{:OCAML_DOC_ROOT(Bigarray)} Bigarray} because it is an array of arrays
      (an lliffe vector) and, anyway, there is no simple way to attach a
      custom finalize function to such a big array.
@@ -381,7 +381,7 @@ module Bandmatrix :
         (**
          This type represents a bandmatrix ([DlsMat]) column.
 
-         The underlying array cannot be exposed directly in Ocaml as a
+         The underlying array cannot be exposed directly in OCaml as a
          {{:OCAML_DOC_ROOT(Bigarray)} Bigarray} because there is no simple way
          to attach a custom finalize function to such a big array.
 
@@ -428,7 +428,7 @@ module Directbandmatrix :
      This type represents a [realtype **] returned from a call to
      {!new_band_mat}.
 
-     The underlying array cannot be exposed directly in Ocaml as a
+     The underlying array cannot be exposed directly in OCaml as a
      {{:OCAML_DOC_ROOT(Bigarray)} Bigarray} because it is an array of arrays
      (an lliffe vector) and, anyway, there is no simple way to attach a
      custom finalize function to such a big array.

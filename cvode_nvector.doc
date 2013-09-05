@@ -5,7 +5,8 @@
   the solver.
 
   @version VERSION()
-  @author Timothy Bourke (INRIA)
+  @author Timothy Bourke (Inria)
+  @author Jun Inoue (Inria)
   @author Marc Pouzet (LIENS)
  *)
 

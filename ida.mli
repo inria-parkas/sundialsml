@@ -1,8 +1,8 @@
 (***********************************************************************)
 (*                                                                     *)
-(*              Ocaml interface to Sundials CVODE solver               *)
+(*     OCaml interface to Sundials (serial) CVODE and IDA solvers      *)
 (*                                                                     *)
-(*           Timothy Bourke (INRIA) and Marc Pouzet (LIENS)            *)
+(*  Timothy Bourke (Inria), Jun Inoue (Inria), and Marc Pouzet (LIENS) *)
 (*                                                                     *)
 (*  Copyright 2013 Institut National de Recherche en Informatique et   *)
 (*  en Automatique.  All rights reserved.  This file is distributed    *)
@@ -24,7 +24,8 @@
 (** Vector-independent types and values for the IDA solver.
 
  @version VERSION()
- @author Timothy Bourke (INRIA)
+ @author Timothy Bourke (Inria)
+ @author Jun Inoue (Inria)
  @author Marc Pouzet (LIENS)
  *)
 
@@ -39,7 +40,7 @@ include module type of Sundials
 (**
  Specify a linear solver.
 
- The Lapack solvers require that both Sundials and the Ocaml interface were
+ The Lapack solvers require that both Sundials and the OCaml interface were
  built to link with a LAPACK library.
 
  IDA supports direct linear solvers and Krylov solvers, but for the latter
