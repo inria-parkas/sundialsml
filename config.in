@@ -23,6 +23,9 @@ OCAML_INCLUDE := $(shell $(OCAMLC) -where)
 OCAML_CVODE_LIBLINK = $(CVODE_LDFLAGS)
 OCAML_IDA_LIBLINK = $(IDA_LDFLAGS)
 
+CAMLP4OF= @OCAMLBIN@camlp4of
+CAMLP4ORF= @OCAMLBIN@camlp4orf
+
 PKGDIR = @libdir@sundials/
 STUBDIR= @stubdir@
 

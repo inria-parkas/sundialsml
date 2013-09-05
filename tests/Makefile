@@ -1,7 +1,5 @@
 include ../config
 
-CAMLP4=camlp4of
-
 # Object files that implement the deriving extension.
 CAMLP4_OBJS=fstream.cmo camlp4aux.cmo pa_deriving.cmo expr_of.cmo pprint.cmo
 CAMLP4_CMIS=expr_of.cmi pprint.cmi
@@ -12,7 +10,7 @@ QUICKCHECK_OBJS=fstream.cmo pprint.cmo camlp4aux.cmo expr_of.cmo \
 
 test-quickcheck_ida_serial: quickcheck_ida_serial.opt $(QUICKCHECK_OBJS)
 	./$< $(PARAMS) --exec-file ./test --failed-file failed.ml \
-	    --compiler "ocamlc -g -I .. -I +camlp4 \
+	    --compiler "$(OCAMLC) -g -I .. -I +camlp4 \
 	        dynlink.cma camlp4lib.cma camlp4aux.cmo expr_of.cmo \
 	        bigarray.cma unix.cma sundials_ida.cma $(filter-out $<,$^)"
 
@@ -33,8 +31,11 @@ extract_types.byte: extract_types.cmo
 	    dynlink.cma camlp4fulllib.cma camlp4aux.cmo str.cma $^ -o $@
 
 extract_types.cmo: extract_types.ml
-	$(OCAMLC) $(OCAMLFLAGS) -pp camlp4orf -I +camlp4 -I +camlp4/Camlp4Parsers -I +camlp4/Camlp4Printers \
+	$(OCAMLC) $(OCAMLFLAGS) -pp $(CAMLP4ORF) -I +camlp4 -I +camlp4/Camlp4Parsers -I +camlp4/Camlp4Printers \
 	    -c $< -o $@
+
+deriving.cmo: deriving.ml camlp4aux.cmo
+	$(OCAMLC) $(OCAMLFLAGS) -pp $(CAMLP4ORF) -I +camlp4 -c $< -o $@
 
 # The deriving preprocessor depends on these files, so they must be built
 # without -pp "camlp4 pa_deriving.cmo"
