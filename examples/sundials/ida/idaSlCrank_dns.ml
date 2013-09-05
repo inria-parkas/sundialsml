@@ -105,6 +105,8 @@ let force data y qq =
   qq.{2} <- -. fl *. (x*.s2 -. a*.s21/.2.) /. 2. -. data.f*.s2
 
 let set_ic data y y' =
+  Carray.fill y 0.;
+  Carray.fill y' 0.;
   let a = data.a
   and j1 = data.j1
   and m2 = data.m2
