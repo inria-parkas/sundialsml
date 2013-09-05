@@ -20,6 +20,7 @@
 #include <caml/mlvalues.h>
 #include <caml/memory.h>
 #include <caml/alloc.h>
+#include <caml/callback.h>
 
 #include "sundials_ml.h"
 
@@ -39,7 +40,7 @@ value sundials_ml_unit_roundoff()
 value sundials_ml_weak_get (value ar, value n)
 {
     CAMLparam2 (ar, n);
-    value *weak_get;
+    static value *weak_get;
     if (weak_get == NULL)
 	weak_get = caml_named_value ("sundials_weak_get");
 
