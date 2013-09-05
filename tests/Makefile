@@ -40,9 +40,9 @@ deriving.cmo: deriving.ml camlp4aux.cmo
 # The deriving preprocessor depends on these files, so they must be built
 # without -pp "camlp4 pa_deriving.cmo"
 $(CAMLP4_OBJS): %.cmo: %.ml
-	$(OCAMLC) $(OCAMLFLAGS) -c -I +camlp4 -pp $(CAMLP4) $< -o $@
+	$(OCAMLC) $(OCAMLFLAGS) -c -I +camlp4 -pp $(CAMLP4OF) $< -o $@
 $(CAMLP4_CMIS): %.cmi: %.mli
-	$(OCAMLC) $(OCAMLFLAGS) -c -I +camlp4 -pp $(CAMLP4) $< -o $@
+	$(OCAMLC) $(OCAMLFLAGS) -c -I +camlp4 -pp $(CAMLP4OF) $< -o $@
 
 test-deriving: deriving_test.opt
 	./$< > deriving_test.out
@@ -61,11 +61,11 @@ test-%: %.opt
 
 %.cmx: %.ml $(CAMLP4_OBJS)
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -I +camlp4 -I .. \
-	    -pp "$(CAMLP4) camlp4aux.cmo pa_deriving.cmo" \
+	    -pp "$(CAMLP4OF) camlp4aux.cmo pa_deriving.cmo" \
 	    bigarray.cmxa unix.cmxa sundials_ida.cmxa -o $@ -c $<
 %.cmo: %.ml $(CAMLP4_OBJS)
 	$(OCAMLC) $(OCAMLFLAGS) -I +camlp4 -I .. \
-	    -pp "$(CAMLP4) camlp4aux.cmo pa_deriving.cmo" \
+	    -pp "$(CAMLP4OF) camlp4aux.cmo pa_deriving.cmo" \
 	    bigarray.cma unix.cma sundials_ida.cma -o $@ -c $<
 
 %.opt: %.cmx
@@ -89,9 +89,9 @@ clean:
 depend: .depend
 
 .depend:
-	$(OCAMLDEP) -pp $(CAMLP4) $(CAMLP4_OBJS:.cmo=.ml) \
+	$(OCAMLDEP) -pp $(CAMLP4OF) $(CAMLP4_OBJS:.cmo=.ml) \
 	    $(CAMLP4_CMIS:.cmi=.mli) > $@
-	$(OCAMLDEP) -pp "$(CAMLP4) camlp4aux.cmo pa_deriving.cmo" \
+	$(OCAMLDEP) -pp "$(CAMLP4OF) camlp4aux.cmo pa_deriving.cmo" \
 	    $(filter-out $(CAMLP4_OBJS:.cmo=.ml),*.ml) \
 	    $(filter-out $(CAMLP4_OBJS:.cmo=.mli),*.mli) >> $@
 

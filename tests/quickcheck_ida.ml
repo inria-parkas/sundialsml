@@ -817,7 +817,7 @@ let ida_test_case_driver model cmds =
         let prerr_mismatch (i, exp, act) =
           prerrf "Result mismatch on step %d:@\n got@\n %s@\n \
                   but expected@\n %s@\n"
-            i (show_result exp) (show_result act)
+            i (show_result act) (show_result exp)
         in
         prerrf "Test failed.@\n[Reason]@\n";
         List.iter prerr_mismatch !mismatches;
