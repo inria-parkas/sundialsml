@@ -10,8 +10,8 @@ QUICKCHECK_OBJS=fstream.cmo pprint.cmo camlp4aux.cmo expr_of.cmo \
 
 test-quickcheck_ida_serial: quickcheck_ida_serial.opt $(QUICKCHECK_OBJS)
 	./$< $(PARAMS) --exec-file ./test --failed-file failed.ml \
-	    --compiler "$(OCAMLC) -g -I .. -I +camlp4 \
-	        dynlink.cma camlp4lib.cma camlp4aux.cmo expr_of.cmo \
+	    --compiler "$(OCAMLC).opt -g -I .. -I +camlp4 \
+	        dynlink.cma camlp4lib.cma \
 	        bigarray.cma unix.cma sundials_ida.cma $(filter-out $<,$^)"
 
 quickcheck_ida_serial.byte: quickcheck_ida_serial.cmo $(QUICKCHECK_OBJS)
