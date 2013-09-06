@@ -169,9 +169,13 @@ let gen_resfn neqs () =
          ResFnLinear v);
       (fun () ->
          let v = Carray.create neqs in
-         (* All coefficients must be non-negative.  *)
+         (* All coefficients must be non-negative.  Initially we had the i-th
+            equation's coefficient be i+1, but this turned out to trigger
+            Ida.TooMuchWork, presumably because the higher-coefficient
+            functions decay so fast that they underflow.  Setting them to all
+            1's seems to let us avoid that issue.  *)
          for i = 0 to Carray.length v - 1 do
-           v.{i} <- float_of_int (i+1)
+           v.{i} <- float_of_int 1
          done;
          ResFnExpDecay v);
     |]
