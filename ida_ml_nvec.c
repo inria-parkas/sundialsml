@@ -633,6 +633,15 @@ static value solve (value vdata, value nextt, value vy, value vyp, int onestep)
     N_Vector y, yp;
     enum ida_solver_result_tag result;
 
+#if SAFETY_CHECKS
+    if (IDA_NEQS_FROM_ML (vdata) != Caml_ba_array_val(vy)->dim[0])
+	/* FIXME: explain the reason to the programmer.  */
+	caml_raise_constant(*caml_named_value("ida_IllInput"));
+    if (IDA_NEQS_FROM_ML (vdata) != Caml_ba_array_val(vyp)->dim[0])
+	/* FIXME: explain the reason to the programmer.  */
+	caml_raise_constant(*caml_named_value("ida_IllInput"));
+#endif
+
     y = NVECTORIZE_VAL (vy);
     yp = NVECTORIZE_VAL (vyp);
     flag = IDASolve (ida_mem, Double_val (nextt), &tret, y, yp,
