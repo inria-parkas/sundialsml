@@ -170,7 +170,7 @@ let main () =
   in
 
   let roots = Roots.create nroots in
-  let r = Roots.get' roots in
+  let r = Roots.get roots in
 
   while (!iout <> nout) do
     let (t, flag) = Ida.solve_normal ida_mem !tout y y' in

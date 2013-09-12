@@ -291,8 +291,8 @@ module Roots =
 
     let reset v = Array1.fill v 0l
 
-    let get roots i = roots.{i} <> 0l
-    let get' roots i = root_event_of_int32 (roots.{i})
+    let detected roots i = roots.{i} <> 0l
+    let get roots i = root_event_of_int32 (roots.{i})
     let set a i v = a.{i} <- int32_of_root_event v
 
     let create n =
@@ -305,7 +305,7 @@ module Roots =
     module A = ArrayLike (struct
       type t = (int32, int32_elt, c_layout) Array1.t
       and elt = root_event
-      let get = get'
+      let get = get
       let set = set
       let create = create
       let length = length

@@ -131,7 +131,7 @@ let main () =
   let y = Carray.create neq
   and roots = Roots.create nroots
   in
-  let r = Roots.get' roots in
+  let r = Roots.get roots in
 
   (* Initialize y *)
   set_ith y 1 y1;

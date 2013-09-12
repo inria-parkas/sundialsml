@@ -146,9 +146,9 @@ module Roots :
     (** Returns the length of an array *)
     val length : t -> int
 
-    (** [get r i] returns [true] if the value of the [i]th element of [r] is
-        either Rising or Falling. *)
-    val get : t -> int -> bool
+    (** [detected r i] returns [true] if the value of the [i]th element of [r]
+        is either Rising or Falling. *)
+    val detected : t -> int -> bool
 
     (** [rising r i] returns [true] if the value of the [i]th element of [r] is
         Rising. *)
@@ -158,8 +158,8 @@ module Roots :
         Falling. *)
     val falling : t -> int -> bool
 
-    (** [get' r i] returns the value of the [i]th element of [r]. *)
-    val get' : t -> int -> root_event
+    (** [get r i] returns the value of the [i]th element of [r]. *)
+    val get : t -> int -> root_event
 
     (** [set r i v] sets the value of the [i]th element of [r]. *)
     val set : t -> int -> root_event -> unit
