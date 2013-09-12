@@ -330,8 +330,9 @@ module Roots =
     let rising  roots i = roots.{i} = 1l
     let falling roots i = roots.{i} = -1l
 
-    let set_rising a i v = set a i (if v then Rising else NoRoot)
-    let set_falling a i v = set a i (if v then Falling else NoRoot)
+    let set_noroot a i = set a i NoRoot
+    let set_rising a i = set a i Rising
+    let set_falling a i = set a i Falling
 
     let appi = A.iteri
     let app = A.iter
