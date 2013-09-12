@@ -839,18 +839,19 @@ let ida_test_case_driver model cmds =
       | ms ->
         let prerrf fmt = Format.fprintf Format.err_formatter fmt in
         let prerr_mismatch (i, exp, act) =
-          prerrf "Result mismatch on step %d:@\n got@\n %s@\n \
-                  but expected@\n %s@\n"
+          prerrf "Result mismatch on step %d:@\ngot@\n  %s@\n\
+                  but expected@\n  %s@\n"
             i (show_result act) (show_result exp)
         in
         prerrf "Test failed.@\n[Reason]@\n";
         List.iter prerr_mismatch !mismatches;
         prerrf "@\n[Test Case]@\n";
         prerr_script (model, Array.to_list cmds);
-        prerrf "@\n[Program Output]@\n";
+        prerrf "@\n@\n[Program Output]@\n";
         prerr_results (List.rev !actual_results);
-        prerrf "@\n[Expected Output]@\n";
+        prerrf "@\n@\n[Expected Output]@\n";
         prerr_results (List.rev !expected_results);
+        prerrf "@\n";
         1
     else 0
   in
