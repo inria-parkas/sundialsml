@@ -106,6 +106,11 @@ let expr_of_roots roots =
 
 (* Generate the test code that executes a given command.  *)
 let expr_of_cmd_impl = function
+  | SolveNormalBadVector (t, n) ->
+    <:expr<let tret, flag = Ida.solve_normal session $`flo:t$
+                              (Carray.create $`int:n$)
+                              (Carray.create $`int:n$) in
+           Aggr [Float tret; SolverResult flag; carray vec; carray vec']>>
   | SolveNormal t ->
     <:expr<let tret, flag = Ida.solve_normal session $`flo:t$ vec vec' in
            Aggr [Float tret; SolverResult flag; carray vec; carray vec']>>
@@ -235,17 +240,6 @@ let expr_of_ic_buf = function
   | GetCorrectedIC -> <:expr<GetCorrectedIC>>
   | Don'tGetCorrectedIC -> <:expr<Don'tGetCorrectedIC>>
   | GiveBadVector n -> <:expr<GiveBadVector $`int:n$>>
-
-let expr_of_cmd = function
-  | SolveNormal f -> <:expr<SolveNormal $`flo:f$>>
-  | GetRootInfo -> <:expr<GetRootInfo>>
-  | SetRootDirection root_dirs ->
-    <:expr<SetRootDirection $expr_of_array expr_of_root_direction root_dirs$>>
-  | SetAllRootDirections root_dir ->
-    <:expr<SetAllRootDirections $expr_of_root_direction root_dir$>>
-  | GetNRoots -> <:expr<GetNRoots>>
-  | CalcIC_Y (t, ic_buf) ->
-    <:expr<CalcIC_Y ($`flo:t$, $expr_of_ic_buf ic_buf$)>>
 
 let ml_of_script (model, cmds) =
   <:str_item<

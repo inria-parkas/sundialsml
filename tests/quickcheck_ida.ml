@@ -82,6 +82,7 @@ type model =
   }
 and script = model * cmd list
 and cmd = SolveNormal of float
+        | SolveNormalBadVector of float * int
         | GetRootInfo
         | SetRootDirection of Ida.root_direction array
         | SetAllRootDirections of Ida.root_direction
@@ -236,13 +237,26 @@ let gen_model () =
    the state of the model.  *)
 
 let gen_cmd =
+  let gen_solve_normal model =
+    let t =
+      match model.next_query_time with
+      | None -> gen_query_time model.last_query_time ()
+      | Some t -> t
+    in ({ model with last_query_time = t }, SolveNormal t)
+  in
+  let gen_nat_avoiding k =
+    let n = gen_pos () in
+    if n <= k then n-1
+    else n
+  in
   let cases =
-    [| (fun model ->
-          let t =
-            match model.next_query_time with
-            | None -> gen_query_time model.last_query_time ()
-            | Some t -> t
-          in ({ model with last_query_time = t }, SolveNormal t));
+    [| gen_solve_normal;
+       (fun model ->
+          match gen_solve_normal model with
+          | (model, SolveNormal t) ->
+            (model, SolveNormalBadVector
+               (t, (gen_nat_avoiding (Carray.length model.vec))))
+          | _ -> assert false);
        (fun model -> (model, GetRootInfo));
        (fun model -> (model, GetNRoots));
        (fun model ->
@@ -260,16 +274,12 @@ let gen_cmd =
           | _ ->
             let t = gen_query_time (model.last_query_time +. discrete_unit) ()
             and rand = Random.int 100 in
-            let bad_size () =
-              let n = gen_pos () in
-              if n <= Carray.length model.vec then n-1
-              else n
-            in
             let ic_buf =
               (* With 40% probability, don't receive corrected vector.
                  With 10% probability, pass in bad vector.  *)
               if rand < 40 then Don'tGetCorrectedIC
-              else if rand < 50 then GiveBadVector (bad_size ())
+              else if rand < 50
+              then GiveBadVector (gen_nat_avoiding (Carray.length model.vec))
               else GetCorrectedIC
             in
             (model, CalcIC_Y (t, ic_buf)));
@@ -285,18 +295,24 @@ let shrink_ic_buf model = function
                            (Fstream.filter ((<>) (Carray.length model.vec))
                               (shrink_nat n))
 
+let shrink_solve_time model t =
+  match model.next_query_time with
+  | Some t -> Fstream.singleton ({ model with last_query_time = t;
+                                              next_query_time = None; },
+                                 t)
+  | None -> Fstream.map
+              (fun t -> ({ model with last_query_time = t; }, t))
+              (shrink_query_time model.last_query_time t)
+
 let shrink_cmd model = function
+  | SolveNormalBadVector (t, n) ->
+    Fstream.map (fun (m,t) -> (m, SolveNormalBadVector (t, n)))
+      (shrink_solve_time model t)
+    @@
+    Fstream.map (fun n -> (model, SolveNormalBadVector (t, n)))
+      (Fstream.filter ((<>) (Carray.length model.vec)) (shrink_nat n))
   | SolveNormal t ->
-    begin
-      match model.next_query_time with
-      | Some t -> Fstream.singleton ({ model with last_query_time = t;
-                                                  next_query_time = None; },
-                                     SolveNormal t)
-      | None -> Fstream.map
-                  (fun t -> ({ model with last_query_time = t; },
-                             SolveNormal t))
-                  (shrink_query_time model.last_query_time t)
-    end
+    Fstream.map (fun (m,t) -> (m, SolveNormal t)) (shrink_solve_time model t)
   | GetRootInfo -> Fstream.nil
   | GetNRoots -> Fstream.nil
   | SetAllRootDirections dir ->
@@ -328,13 +344,16 @@ let fixup_cmd model = function
       | None -> let t = max t model.last_query_time in
                 ({ model with last_query_time = t }, SolveNormal t)
     end
+  | SolveNormalBadVector (t, n) when n = Carray.length model.vec ->
+    ({ model with next_query_time = Some t },
+     SolveNormalBadVector (t, if n = 0 then 1 else (n-1)))
   | CalcIC_Y (t, GiveBadVector n) when n = Carray.length model.vec ->
     (* FIXME: is it OK to perform CalcIC_Y multiple times?  What about with an
        intervening solve?  Without an intervening solve?  *)
     ({ model with next_query_time = Some t },
      CalcIC_Y (t, GiveBadVector (if n = 0 then 1 else (n-1))))
   | GetRootInfo | GetNRoots | CalcIC_Y _ | SetRootDirection _
-  | SetAllRootDirections _ as cmd -> (model, cmd)
+  | SolveNormalBadVector _ | SetAllRootDirections _ as cmd -> (model, cmd)
 
 let gen_cmds model =
   gen_1pass_list gen_cmd model
@@ -363,8 +382,8 @@ let shrink_model model cmds =
        equations is not shrunk.  *)
     let fixup_cmd_with_drop model cmd =
       match cmd with
-      | SolveNormal _ | GetRootInfo | GetNRoots | CalcIC_Y _
-      | SetAllRootDirections _ -> fixup_cmd model cmd
+      | SolveNormalBadVector _ | SolveNormal _ | GetRootInfo | GetNRoots
+      | CalcIC_Y _ | SetAllRootDirections _ -> fixup_cmd model cmd
       | SetRootDirection root_dirs ->
         if Array.length root_dirs = 0
         then fixup_cmd model (SetRootDirection root_dirs)
@@ -666,6 +685,7 @@ let find_roots roots root_dirs t1 t2 =
 
 (* Run a single command on the model.  *)
 let model_cmd model = function
+  | SolveNormalBadVector _ -> Exn Ida.IllInput
   | SolveNormal t ->
     (* NB: we don't model interpolation failures -- t will be monotonically
        increasing.  *)
