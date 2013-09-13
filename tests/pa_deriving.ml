@@ -220,7 +220,8 @@ struct
                               $qualify ctor$>>
         in
         match args with
-        | [] -> <:match_case<$uid:ctor$ -> pp_string_noquote fmt $`str:ctor$>>
+        | [] -> <:match_case<$uid:ctor$ ->
+                             pp_string_noquote fmt $qualify ctor$>>
         | [t] -> <:match_case<$uid:ctor$ x ->
                     pp_ctor $ctor_str$
                             $go_type_expr t$
