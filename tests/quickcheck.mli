@@ -128,6 +128,22 @@ val gen_shrink_choice : 'a array -> ((unit -> 'a) * ('a -> 'a Fstream.t))
 (** Utility function.  [enum a b] returns the list [a; a+1; ...; b].  *)
 val enum : int -> int -> int list
 
+(** [gen_option ~percentage_of_some:p g ()] generates [None] with probability
+    [p]%, and [Some (g ())] with [100-p]%.  *)
+val gen_option : ?percentage_of_some:int ->
+  (unit -> 'a) -> (unit -> 'a option)
+
+(** [shrink_option shrink_elem] shrinks the contents of an option type by
+    [shrink_elem].  If the optional argument [~shrink_to_none] is [true], then
+    an argument of [Some x] can be shrunk to [None] (the default behavior); if
+    it's [false], then no value is ever shrunk to [None].  If [~shrink_to_none]
+    is [false] and the input is [None], this function returns the empty
+    stream.  *)
+val shrink_option :
+  ('a -> 'a Fstream.t)
+  -> ?shrink_to_none:bool
+  -> ('a option -> 'a option Fstream.t)
+
 (** Make a generator for ['a list] given a generator for ['a].  *)
 val gen_list : (unit -> 'a) -> (unit -> 'a list)
 
@@ -193,6 +209,16 @@ val shrink_1pass_list :
   -> 'b list
   -> 'b list Fstream.t
 
+(** Just like {!shrink_1pass_list}, but each shrunk list comes with the result
+    of passing the seed value through the shrunk list with the [fixup]
+    function.  *)
+val shrink_1pass_list_cont :
+  ('a -> 'b -> ('a * 'b) Fstream.t)
+  -> ('a -> 'b -> 'a * 'b)
+  -> 'a
+  -> 'b list
+  -> ('a * ('b list)) Fstream.t
+
 (** This is just Haskell's [mapAccumL] that extracts the list and throws away
     the final state.
 
@@ -206,6 +232,10 @@ val shrink_1pass_list :
     This function fixes up a list to satisfy a constraint, in the sense that
     {!shrink_1pass_list} fixes up lists to restore some invariant.  *)
 val fixup_list : ('a -> 'b -> 'a * 'b) -> 'a -> 'b list -> 'b list
+
+(** Just like {!fixup_list}, but returns the final state.  This is just
+    Haskell's [mapAccumL].  *)
+val fixup_list_cont : ('a -> 'b -> 'a * 'b) -> 'a -> 'b list -> 'a * ('b list)
 
 (** [array_like_drop_elem make length get set a i] creates a new array that
     contains all the elements of [a] except the one at index [i].  So the new

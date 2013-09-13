@@ -188,6 +188,15 @@ let enum istart iend =
     else acc
   in go [] iend
 
+let gen_option ?(percentage_of_some=70) gen () =
+  if Random.int 100 < percentage_of_some then Some (gen ())
+  else None
+
+let shrink_option shrink_elem ?(shrink_to_none=true) = function
+  | Some x -> Fstream.guard1 shrink_to_none None
+              @@ Fstream.map (fun x -> Some x) (shrink_elem x)
+  | None -> Fstream.nil
+
 let gen_list g () = List.map (fun _ -> g ()) (enum 1 (gen_nat ()))
 
 let rec shrink_list shrink_elem ?(shrink_size=true) = function
@@ -208,27 +217,33 @@ let gen_1pass_list gen seed ?(size=gen_nat ()) () =
   Fstream.to_list
     (Fstream.take size (snd (Lazy.force seeds_tl_and_ys)))
 
-let fixup_list fixup seed =
+let fixup_list_cont fixup seed =
   let rec go seed acc = function
-    | [] -> List.rev acc
-    | x::xs -> let (seed, x) = fixup seed x in
+    | [] -> seed, List.rev acc
+    | x::xs -> let seed, x = fixup seed x in
                go seed (x::acc) xs
   in go seed []
 
+let fixup_list fixup seed xs = snd (fixup_list_cont fixup seed xs)
 
-let shrink_1pass_list shrink fixup seed xs =
+let shrink_1pass_list_cont shrink fixup seed xs =
   let rec go seed = function
     | [] -> Fstream.nil
     | x::xs ->
-      Fstream.cons (fixup_list fixup seed xs)  (* drop x *)
-        (Fstream.map                           (* keep x *)
-           (fun xs -> x::xs)
+      Fstream.cons (fixup_list_cont fixup seed xs)  (* drop x *)
+        (Fstream.map                                (* keep x *)
+           (fun (seed, xs) -> seed, x::xs)
            (go (fst (fixup seed x)) xs)
-         @@ Fstream.map                        (* shrink x *)
-             (fun (seed, x) -> x::fixup_list fixup seed xs)
+         @@ Fstream.map                             (* shrink x *)
+             (fun (seed, x) ->
+                let seed, xs = fixup_list_cont fixup seed xs in
+                seed, x::xs)
              (shrink seed x))
   in
   go seed xs
+
+let shrink_1pass_list shrink fixup seed xs =
+  Fstream.map snd (shrink_1pass_list_cont shrink fixup seed xs)
 
 let array_like_drop_elem make length get set a i =
   let n = length a in
