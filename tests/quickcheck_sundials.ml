@@ -89,12 +89,13 @@ let expr_of_carray v =
 
 let pp_carray, dump_carray, show_carray, display_carray,
   print_carray, prerr_carray =
-  printers_of_pp (fun ?prec fmt xs ->
+  printers_of_pp (fun ?(prec=0) fmt xs ->
     if !read_write_invariance
-    then pp_array_like Carray.length Bigarray.Array1.get
-           "(Carray.of_array [|" "|])" pp_float fmt xs
+    then pp_parens (prec >= Prec.app)
+          (pp_array_like Carray.length Bigarray.Array1.get
+           "Carray.of_array [|@[<hov>" "@]|]" pp_float) fmt xs
     else pp_array_like Carray.length Bigarray.Array1.get
-           "[<" ">]" pp_float fmt xs)
+           "[<@[<hov>" "@]>]" pp_float fmt xs)
 
 
 let gen_root_event, shrink_root_event =
@@ -127,7 +128,7 @@ let pp_root_info, dump_root_info, show_root_info, display_root_info,
     in
     if !read_write_invariance
     then pp_parens (prec >= Prec.app)
-           (pp_array_like Roots.length get "(Roots.of_array [|" "|])"
+           (pp_array_like Roots.length get "Roots.of_array [|@[<hov>" "@]|]"
               pp_string_noquote)
            fmt xs
     else pp_array_like Roots.length get "[<" ">]" pp_string_noquote fmt xs)
