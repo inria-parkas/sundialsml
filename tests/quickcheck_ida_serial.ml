@@ -96,7 +96,7 @@ let expr_of_roots roots =
                     (Fstream.enum 1 (n-1))$))>>
 
 (* Generate the test code that executes a given command.  *)
-let expr_of_cmd_impl = function
+let expr_of_cmd_impl model = function
   | SolveNormalBadVector (t, n) ->
     <:expr<let tret, flag = Ida.solve_normal session $`flo:t$
                               (Carray.create $`int:n$)
@@ -124,6 +124,15 @@ let expr_of_cmd_impl = function
   | SetAllRootDirections dir ->
     <:expr<Ida.set_all_root_directions session $expr_of_root_direction dir$;
            Unit>>
+  | SetVarTypes ->
+    let n = Carray.length model.vec
+    and _d = <:expr<Ida.VarTypes.Differential>>
+    and _a = <:expr<Ida.VarTypes.Algebraic>> in
+    (match model.resfn with
+     | ResFnLinear _ | ResFnExpDecay _ ->
+       <:expr<Ida.set_var_types session (Ida.VarTypes.of_array
+              $expr_array (List.map (fun _ -> _d) (enum 1 n))$);
+              Unit>>)
   | ReInit params ->
     let roots =
       match params.reinit_roots with
@@ -143,11 +152,11 @@ let expr_of_cmd_impl = function
            $expr_array (List.map expr_of_root_direction (Array.to_list dirs))$;
            Unit>>
 
-let expr_of_cmds_impl = function
+let expr_of_cmds_impl model = function
   | [] -> <:expr<()>>
   | cmds ->
     let sandbox exp = <:expr<do_cmd (lazy $exp$)>> in
-    expr_seq (List.map (fun cmd -> sandbox (expr_of_cmd_impl cmd))
+    expr_seq (List.map (fun cmd -> sandbox (expr_of_cmd_impl model cmd))
                 cmds)
 
 let _ =
@@ -201,7 +210,7 @@ let ml_of_script (model, cmds) =
       $set_jac model <:expr<session>>$;
       do_cmd (lazy (Aggr [Float (Ida.get_current_time session);
                           carray vec; carray vec']));
-      $expr_of_cmds_impl cmds$;
+      $expr_of_cmds_impl model cmds$;
       exit (finish ())
    >>
 

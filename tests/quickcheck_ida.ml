@@ -65,6 +65,7 @@ type model =
     (* Set when the current state vector satisfies the DAE.  Not used right
        now.  *)
     mutable consistent : bool;
+    mutable vartypes_set : bool;
     mutable last_query_time : float;
     mutable last_tret : float;
     mutable roots : roots_spec;
@@ -89,6 +90,7 @@ and cmd = SolveNormal of float
         | GetNRoots
         | CalcIC_Y of float * ic_buf
         | ReInit of reinit_params
+        | SetVarTypes
 and script = model * cmd list
 (* When the model is shrunk, the commands have to be fixed up so that we don't
    run commands whose outcomes are unpredictable.  In most cases the model
@@ -163,6 +165,7 @@ let copy_model m =
     solving = m.solving;
     last_query_time = m.last_query_time;
     last_tret = m.last_tret;
+    vartypes_set = m.vartypes_set;
     roots = Array.copy m.roots;
     root_dirs = Array.copy m.root_dirs;
     root_info = Roots.copy m.root_info;
@@ -304,6 +307,7 @@ let model_cmd model = function
       | GetCorrectedIC -> carray model.vec
       | GiveBadVector _ -> assert false
     end
+  | SetVarTypes -> model.vartypes_set <- true; Unit
   | SetAllRootDirections dir ->
     if Array.length model.roots = 0
     then Exn Ida.IllInput
@@ -416,6 +420,7 @@ let gen_model () =
     last_query_time = t0;
     last_tret = t0;
     consistent = true;
+    vartypes_set = false;
     roots = roots;
     root_info = Roots.create num_roots;
     root_info_valid = false;
@@ -508,7 +513,7 @@ let fixup_cmd ((diff, model) as ctx) = function
        | Some i ->
          let idrop = if i < Array.length root_dirs then i else 0 in
          (ctx, SetRootDirection (array_drop_elem root_dirs idrop)))
-  | GetRootInfo | GetNRoots | CalcIC_Y _
+  | GetRootInfo | GetNRoots | CalcIC_Y _ | SetVarTypes
   | SolveNormalBadVector _ | SetAllRootDirections _ as cmd -> (ctx, cmd)
 
 (* Commands: note that which commands can be tested without trouble depends on
@@ -554,6 +559,7 @@ let gen_cmd =
           | _ -> assert false);
        (fun model -> (model, GetRootInfo));
        (fun model -> (model, GetNRoots));
+       (fun model -> (model, SetVarTypes));
        (fun model ->
           (* 20% of the time, we (may) generate an incorrectly sized array.  *)
           let size = if Random.int 100 < 20 then gen_nat ()
@@ -665,8 +671,6 @@ let shrink_cmd ((diff, model) as ctx) cmd =
   | SolveNormal t ->
     Fstream.map (fun (m,t) -> ((diff, m), SolveNormal t))
       (shrink_solve_time model t)
-  | GetRootInfo -> Fstream.nil
-  | GetNRoots -> Fstream.nil
   | SetAllRootDirections dir ->
     Fstream.map (fun dir -> (ctx, SetAllRootDirections dir))
       (shrink_root_direction dir)
@@ -685,6 +689,7 @@ let shrink_cmd ((diff, model) as ctx) cmd =
     Fstream.map
       (fun dirs -> (ctx, SetRootDirection dirs))
       (shrink_array shrink_root_direction ~shrink_size:false dirs)
+  | GetRootInfo | GetNRoots | SetVarTypes -> Fstream.nil
 
 let shrink_cmds model =
   shrink_1pass_list shrink_cmd fixup_cmd (model_nohint, model)
