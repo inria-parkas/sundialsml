@@ -114,6 +114,14 @@ let take n xs =
     | n, lazy (Cons (x, xs)) -> Cons (x, lazy (go (n-1) xs))
   in lazy (if n < 0 then Nil else go n xs)
 
+let drop n xs =
+  let rec go n xs =
+    match n, xs with
+    | 0, _ -> xs
+    | _, lazy Nil -> nil
+    | n, lazy (Cons (x,xs)) -> go (n-1) xs
+  in lazy (Lazy.force (go n xs))
+
 let take_while p xs =
   let rec go = function
     | lazy (Cons (x, xs)) when p x -> Cons (x, lazy (go xs))

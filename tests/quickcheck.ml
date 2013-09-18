@@ -233,7 +233,7 @@ let shrink_1pass_list_cont shrink fixup seed xs =
       Fstream.cons (fixup_list_cont fixup seed xs)  (* drop x *)
         (Fstream.map                                (* keep x *)
            (fun (seed, xs) -> seed, x::xs)
-           (go (fst (fixup seed x)) xs)
+           (lazy (Lazy.force (go (fst (fixup seed x)) xs)))
          @@ Fstream.map                             (* shrink x *)
              (fun (seed, x) ->
                 let seed, xs = fixup_list_cont fixup seed xs in
