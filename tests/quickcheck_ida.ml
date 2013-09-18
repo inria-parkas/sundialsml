@@ -484,13 +484,14 @@ let fixup_cmd ((diff, model) as ctx) = function
                 ((diff, { model with last_query_time = t }), SolveNormal t)
     end
   | SolveNormalBadVector (t, n) when n = Carray.length model.vec ->
-    ((diff, { model with next_query_time = Some t }),
-     SolveNormalBadVector (t, if n = 0 then 1 else (n-1)))
+    ((diff, model), SolveNormalBadVector (t, if n = 0 then 1 else (n-1)))
   | CalcIC_Y (t, GiveBadVector n) when n = Carray.length model.vec ->
     (* FIXME: is it OK to perform CalcIC_Y multiple times?  What about with an
        intervening solve?  Without an intervening solve?  *)
     ((diff, { model with next_query_time = Some t }),
      CalcIC_Y (t, GiveBadVector (if n = 0 then 1 else (n-1))))
+  | CalcIC_Y (t, _) as cmd ->
+    ((diff, { model with next_query_time = Some t }), cmd)
   | SetRootDirection root_dirs as cmd ->
     let model_roots = Array.length model.roots
     and cmd_roots = Array.length root_dirs in
@@ -513,7 +514,7 @@ let fixup_cmd ((diff, model) as ctx) = function
        | Some i ->
          let idrop = if i < Array.length root_dirs then i else 0 in
          (ctx, SetRootDirection (array_drop_elem root_dirs idrop)))
-  | GetRootInfo | GetNRoots | CalcIC_Y _ | SetVarTypes
+  | GetRootInfo | GetNRoots | SetVarTypes
   | SolveNormalBadVector _ | SetAllRootDirections _ as cmd -> (ctx, cmd)
 
 (* Commands: note that which commands can be tested without trouble depends on
@@ -676,16 +677,13 @@ let shrink_cmd ((diff, model) as ctx) cmd =
       (shrink_root_direction dir)
   | CalcIC_Y (t, ic_buf) ->
     assert (not (model.solving));
-    let model = { model with solving = true } in
-    let ctx = (diff, model) in
-    Fstream.map (fun ic_buf -> (ctx, CalcIC_Y (t, ic_buf)))
+    let model' = { model with solving = true; next_query_time = Some t } in
+    let ctx' = (diff, model') in
+    Fstream.map (fun ic_buf -> (ctx', CalcIC_Y (t, ic_buf)))
       (shrink_ic_buf model ic_buf)
-    @@ Fstream.map (fun t -> ((diff,
-                               { model with next_query_time = Some t }),
-                              CalcIC_Y (t, ic_buf)))
+    @@ Fstream.map (fun t -> (ctx', CalcIC_Y (t, ic_buf)))
         (shrink_query_time (model.last_query_time +. discrete_unit) t)
   | SetRootDirection dirs ->
-    let ctx = (diff, model) in
     Fstream.map
       (fun dirs -> (ctx, SetRootDirection dirs))
       (shrink_array shrink_root_direction ~shrink_size:false dirs)
