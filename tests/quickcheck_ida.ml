@@ -62,17 +62,18 @@ type model =
     (* Set when SolveNormal or CalcIC_* has been called on this model.  *)
     mutable solving : bool;
 
-    (* Set when the current state vector satisfies the DAE.  *)
+    (* Set when the current state vector satisfies the DAE.  Not used right
+       now.  *)
     mutable consistent : bool;
     mutable last_query_time : float;
     mutable last_tret : float;
-    mutable roots : (float * Ida.Roots.root_event) array;
+    mutable roots : roots_spec;
     mutable root_dirs : Ida.root_direction array;
     mutable root_info : Roots.t;
     mutable root_info_valid : bool;
     vec : Carray.t;
     vec' : Carray.t;
-    t0 : float;
+    mutable t0 : float;
     vec0 : Carray.t;
     vec'0 : Carray.t;
 
@@ -80,7 +81,6 @@ type model =
        particular value, if there is a query.  *)
     mutable next_query_time : float option;
   }
-and script = model * cmd list
 and cmd = SolveNormal of float
         | SolveNormalBadVector of float * int
         | GetRootInfo
@@ -88,6 +88,28 @@ and cmd = SolveNormal of float
         | SetAllRootDirections of Ida.root_direction
         | GetNRoots
         | CalcIC_Y of float * ic_buf
+        | ReInit of reinit_params
+and script = model * cmd list
+(* When the model is shrunk, the commands have to be fixed up so that we don't
+   run commands whose outcomes are unpredictable.  In most cases the model
+   gives enough context information to avoid pathologies, but in some cases it
+   helps to have more hints; for instance, if the root set is shrunk, knowing
+   which root was dropped helps to drop the corresponding entry from every
+   root-related command.  This type contains those additional hints.  However,
+   note that in some cases the hint cannot be supplied, so the fixup function
+   must be prepared to do something sensible without any hints.  *)
+and fixup_hint =
+  { hint_root_drop : int option;
+  }
+and reinit_params =
+  {
+    reinit_t0 : float;
+    reinit_roots : roots_spec option;
+    reinit_solver : Ida.linear_solver;
+    reinit_vec0 : Carray.t;
+    reinit_vec'0 : Carray.t;
+  }
+and roots_spec = (float * Ida.Roots.root_event) array
 and ic_buf = GetCorrectedIC
            | Don'tGetCorrectedIC
            | GiveBadVector of int (* Pass in a vector of incorrect size. *)
@@ -126,6 +148,8 @@ deriving (pretty ~alias:(Carray.t = carray,
 
 let carray x = Carray (Carray.of_carray x)
 
+let model_nohint = { hint_root_drop = None }
+
 let copy_resfn = function
   | ResFnLinear slopes -> ResFnLinear (Carray.of_carray slopes)
   | ResFnExpDecay coefs -> ResFnExpDecay (Carray.of_carray coefs)
@@ -151,6 +175,177 @@ let copy_model m =
     vec'0 = Carray.of_carray m.vec'0;
     next_query_time = m.next_query_time;
   }
+
+
+(* Model interpretation *)
+
+let exact_soln typ t0 vec0 vec'0 t vec vec' =
+  match typ with
+  | ResFnLinear slopes ->
+    for i = 0 to Carray.length vec - 1 do
+      vec'.{i} <- slopes.{i};
+      vec.{i} <- slopes.{i} *. (t -. t0);
+    done
+  | ResFnExpDecay coefs ->
+    for i = 0 to Carray.length vec - 1 do
+      vec.{i} <- vec0.{i} *. exp (-. coefs.{i} *. (t -. t0));
+      vec'.{i} <- -. coefs.{i} *. vec.{i}
+    done
+
+(* Find the smallest root(s) in the range (t1..t2].  *)
+let find_roots roots root_dirs t1 t2 =
+  let n = Array.length roots in
+  let pos i = fst roots.(i) in
+  let valid i =
+    match root_dirs.(i), snd roots.(i) with
+    | RootDirs.IncreasingOrDecreasing, _ -> true
+    | RootDirs.Increasing, Roots.Rising -> true
+    | RootDirs.Increasing, Roots.Falling -> false
+    | RootDirs.Decreasing, Roots.Rising -> false
+    | RootDirs.Decreasing, Roots.Falling -> true
+    | _, Roots.NoRoot -> assert false
+  in
+  if n = 0 then []
+  else
+    let record  = ref t2
+    and holders = ref []
+    in
+    for i = 0 to n-1 do
+      if t1 < pos i && pos i <= !record
+      then
+        begin
+          if valid i then
+            (if pos i < !record then
+               (record := pos i;
+                holders := [i])
+             else
+               holders := i::!holders)
+        end
+    done;
+    !holders
+
+(* Destructively update the model according to a command.  *)
+let model_cmd model = function
+  | SolveNormalBadVector _ -> Exn Ida.IllInput
+  | SolveNormal t ->
+    (* NB: we don't model interpolation failures -- t will be monotonically
+       increasing.  *)
+    assert (model.last_query_time <= t);
+    (* Undocumented behavior (sundials 2.5.0): solve_normal with t=t0 usually
+       fails with "tout too close to t0 to start integration", but sometimes
+       succeeds.  Whether it succeeds seems to be unpredictable.  *)
+    if t = model.t0 then Any
+    else
+      let tret, flag =
+        (* NB: roots that the solver is already sitting on are ignored, unless
+           dt = 0.  *)
+        let tstart =
+          if t = model.last_tret
+          then model.last_tret -. time_epsilon
+          else model.last_tret
+        in
+        match find_roots model.roots model.root_dirs tstart t with
+        | [] ->
+          (* Undocumented behavior (sundials 2.5.0): a non-root return from
+             solve_normal resets root info to undefined.  *)
+          model.root_info_valid <- false;
+          t, SolverResult Ida.Continue
+        | (i::_) as is ->
+          let tret = fst model.roots.(i) in
+          model.root_info_valid <- true;
+          Roots.reset model.root_info;
+          List.iter
+            (fun i -> Roots.set model.root_info i (snd model.roots.(i)))
+            is;
+          (tret,
+           (* If the queried time coincides with a root, then it's reasonable
+              for the solver to prioritize either.  In real code, this is most
+              likely determined by the state of the floating point error.  *)
+           if tret = t then Type (SolverResult Ida.Continue)
+           else SolverResult Ida.RootsFound)
+      in
+      model.last_query_time <- t;
+      model.last_tret <- tret;
+      model.solving <- true;
+      exact_soln model.resfn model.t0 model.vec0 model.vec'0
+                                 tret model.vec  model.vec';
+      Aggr [Float tret; flag; carray model.vec; carray model.vec']
+  | GetRootInfo ->
+    if model.root_info_valid then RootInfo (Roots.copy model.root_info)
+    else
+      (* FIXME: this should be Exn Ida.IllInput or something like that.  *)
+      Type (RootInfo (Roots.copy model.root_info))
+  | GetNRoots ->
+    Int (Array.length model.roots)
+  | CalcIC_Y (_, GiveBadVector _) -> Exn (Invalid_argument "")
+     (* Undocumented behavior (sundials 2.5.0): GetConsistentIC() and CalcIC()
+        can only be called before IDASolve().  However, IDA only detects
+        illicit calls of GetConsistentIC(), and for calls to CalcIC() after
+        IDASolve(), it seems to initialize with garbage.
+
+        The OCaml binding contains a flag to detect and prevent this case.
+
+     *)
+  | CalcIC_Y (_, _) when model.solving -> Exn Ida.IllInput
+  | CalcIC_Y (_, ic_buf) ->
+    (* The t carried in the command is just a hint which the exact solver
+       doesn't need.  The time at which vec and vec' should be filled is
+       model.last_tret.  *)
+    begin
+      exact_soln model.resfn model.t0        model.vec0 model.vec'0
+                             model.last_tret model.vec  model.vec';
+      (* Undocumented behavior (sundials 2.5.0): apparently it's OK to call
+         CalcIC() on the same session without an intervening IDASolve() or
+         IDAReInit().  Therefore, we don't set model.solving here.  *)
+      match ic_buf with
+      | Don'tGetCorrectedIC -> Unit (* The current time will be slightly
+                                       ahead of t0.  By exactly how much
+                                       is hard to say.  *)
+      | GetCorrectedIC -> carray model.vec
+      | GiveBadVector _ -> assert false
+    end
+  | SetAllRootDirections dir ->
+    if Array.length model.roots = 0
+    then Exn Ida.IllInput
+    else (Array.fill model.root_dirs 0 (Array.length model.root_dirs) dir;
+          Unit)
+  | SetRootDirection dirs ->
+    if Array.length model.roots = 0
+    then Exn Ida.IllInput
+    else
+      (* The binding adjusts the root array length as needed.  *)
+      let ndirs = Array.length dirs
+      and nroots = Array.length model.roots in
+      let dirs =
+        if ndirs = nroots then dirs
+        else
+          let d = Array.make nroots RootDirs.IncreasingOrDecreasing in
+          Array.blit dirs 0 d 0 (min nroots ndirs);
+          d
+      in
+      (model.root_dirs <- dirs;
+       Unit)
+  | ReInit params ->
+    model.solver <- params.reinit_solver;
+    model.solving <- false;
+    model.consistent <- true;
+    model.last_query_time <- params.reinit_t0;
+    model.last_tret <- params.reinit_t0;
+    (match params.reinit_roots with
+     | None -> ()
+     | Some r ->
+       let n = Array.length r in
+       model.roots <- Array.copy r;
+       model.root_dirs <- Array.make n RootDirs.IncreasingOrDecreasing;
+       model.root_info <- Roots.create n);
+    model.root_info_valid <- false;
+    Carray.blit params.reinit_vec0 model.vec;
+    Carray.blit params.reinit_vec0 model.vec0;
+    Carray.blit params.reinit_vec'0 model.vec';
+    Carray.blit params.reinit_vec'0 model.vec'0;
+    model.t0 <- params.reinit_t0;
+    model.next_query_time <- None;
+    Unit
 
 let gen_resfn neqs () =
   let _ () =
@@ -233,6 +428,89 @@ let gen_model () =
     next_query_time = None;
   }
 
+let shrink_ic_buf model = function
+  | GetCorrectedIC -> Fstream.singleton Don'tGetCorrectedIC
+  | Don'tGetCorrectedIC -> Fstream.nil
+  | GiveBadVector n -> Fstream.of_list [Don'tGetCorrectedIC; GetCorrectedIC]
+                       @@ Fstream.map (fun n -> GiveBadVector n)
+                           (Fstream.filter ((<>) (Carray.length model.vec))
+                              (shrink_nat n))
+
+let shrink_solve_time model t =
+  match model.next_query_time with
+  | Some t -> Fstream.singleton ({ model with last_query_time = t;
+                                              next_query_time = None; },
+                                 t)
+  | None -> Fstream.map
+              (fun t -> ({ model with last_query_time = t; }, t))
+              (shrink_query_time model.last_query_time t)
+
+
+(* Fix up a command to be executable in a given state (= the model parameter).
+   The incoming model will always have the same residual function as when the
+   command was generated, but it may have a different starting time, or a
+   different number of root functions.
+   This function must be able to handle all fallouts from perturbations done to
+   the model in shrink_model below.
+   The model is updated only to the extent necessary to track which commands
+   are testable.
+ *)
+let fixup_cmd ((diff, model) as ctx) = function
+  | ReInit params ->
+    let model' = copy_model model
+    and params' = { params with
+                    reinit_solver = model.solver;
+                  }
+    and diff =
+      match params.reinit_roots with
+      | None -> diff
+      | Some _ -> { hint_root_drop = None }
+    in
+    let cmd' = ReInit params' in
+    ignore (model_cmd model' cmd');
+    ((diff, model'), cmd')
+  | SolveNormal t ->
+    begin
+      match model.next_query_time with
+      | Some t -> ((diff, { model with last_query_time = t;
+                                       next_query_time = None; }),
+                   SolveNormal t)
+      | None -> let t = max t model.last_query_time in
+                ((diff, { model with last_query_time = t }), SolveNormal t)
+    end
+  | SolveNormalBadVector (t, n) when n = Carray.length model.vec ->
+    ((diff, { model with next_query_time = Some t }),
+     SolveNormalBadVector (t, if n = 0 then 1 else (n-1)))
+  | CalcIC_Y (t, GiveBadVector n) when n = Carray.length model.vec ->
+    (* FIXME: is it OK to perform CalcIC_Y multiple times?  What about with an
+       intervening solve?  Without an intervening solve?  *)
+    ((diff, { model with next_query_time = Some t }),
+     CalcIC_Y (t, GiveBadVector (if n = 0 then 1 else (n-1))))
+  | SetRootDirection root_dirs as cmd ->
+    let model_roots = Array.length model.roots
+    and cmd_roots = Array.length root_dirs in
+    if model_roots = cmd_roots then (ctx, cmd)
+    else
+      (match diff.hint_root_drop with
+       | None when cmd_roots < model_roots ->
+         (* pad root_dirs *)
+         (ctx,
+          SetRootDirection
+            (Array.init model_roots
+               (fun i -> if i < cmd_roots then root_dirs.(i)
+                         else RootDirs.IncreasingOrDecreasing)))
+       | None ->
+         (* curtail root_dirs *)
+         (ctx,
+          SetRootDirection
+            (Array.sub root_dirs 0 model_roots))
+       | Some _ when Array.length root_dirs = 0 -> (ctx, cmd)
+       | Some i ->
+         let idrop = if i < Array.length root_dirs then i else 0 in
+         (ctx, SetRootDirection (array_drop_elem root_dirs idrop)))
+  | GetRootInfo | GetNRoots | CalcIC_Y _
+  | SolveNormalBadVector _ | SetAllRootDirections _ as cmd -> (ctx, cmd)
+
 (* Commands: note that which commands can be tested without trouble depends on
    the state of the model.  *)
 
@@ -243,14 +521,31 @@ let gen_cmd =
       | None -> gen_query_time model.last_query_time ()
       | Some t -> t
     in ({ model with last_query_time = t }, SolveNormal t)
-  in
-  let gen_nat_avoiding k =
+  and gen_reinit_params model =
+    let neqs = Carray.length model.vec in
+    let t0 = gen_t0 () in
+    let vec0, vec'0  = init_vec_for neqs t0 model.resfn in
+    let params =
+      {
+        reinit_t0 = gen_t0 ();
+        reinit_roots = if Random.int 100 < 30 then None
+                       else Some (gen_roots t0 ());
+        reinit_solver = gen_solver false neqs;
+        reinit_vec0 = Carray.of_carray vec0;
+        reinit_vec'0 = Carray.of_carray vec'0;
+      }
+    in
+    let model = copy_model model in
+    ignore (model_cmd model (ReInit params));
+    (model, ReInit params)
+  and gen_nat_avoiding k =
     let n = gen_pos () in
     if n <= k then n-1
     else n
   in
   let cases =
     [| gen_solve_normal;
+       gen_reinit_params;
        (fun model ->
           match gen_solve_normal model with
           | (model, SolveNormal t) ->
@@ -287,87 +582,21 @@ let gen_cmd =
   in
   fun model -> gen_choice cases model
 
-let shrink_ic_buf model = function
-  | GetCorrectedIC -> Fstream.singleton Don'tGetCorrectedIC
-  | Don'tGetCorrectedIC -> Fstream.nil
-  | GiveBadVector n -> Fstream.of_list [Don'tGetCorrectedIC; GetCorrectedIC]
-                       @@ Fstream.map (fun n -> GiveBadVector n)
-                           (Fstream.filter ((<>) (Carray.length model.vec))
-                              (shrink_nat n))
 
-let shrink_solve_time model t =
-  match model.next_query_time with
-  | Some t -> Fstream.singleton ({ model with last_query_time = t;
-                                              next_query_time = None; },
-                                 t)
-  | None -> Fstream.map
-              (fun t -> ({ model with last_query_time = t; }, t))
-              (shrink_query_time model.last_query_time t)
+let shrink_roots t0 =
+  shorten_shrink_array
+    (shrink_pair
+       (shrink_root_time t0)
+       (shrink_choice [| Roots.Rising; Roots.Falling |]))
 
-let shrink_cmd model = function
-  | SolveNormalBadVector (t, n) ->
-    Fstream.map (fun (m,t) -> (m, SolveNormalBadVector (t, n)))
-      (shrink_solve_time model t)
-    @@
-    Fstream.map (fun n -> (model, SolveNormalBadVector (t, n)))
-      (Fstream.filter ((<>) (Carray.length model.vec)) (shrink_nat n))
-  | SolveNormal t ->
-    Fstream.map (fun (m,t) -> (m, SolveNormal t)) (shrink_solve_time model t)
-  | GetRootInfo -> Fstream.nil
-  | GetNRoots -> Fstream.nil
-  | SetAllRootDirections dir ->
-    Fstream.map
-      (fun dir -> (model, SetAllRootDirections dir))
-      (shrink_root_direction dir)
-  | CalcIC_Y (t, ic_buf) ->
-    assert (not (model.solving));
-    let model = { model with solving = true } in
-    Fstream.map (fun ic_buf -> (model, CalcIC_Y (t, ic_buf)))
-      (shrink_ic_buf model ic_buf)
-    @@ Fstream.map (fun t -> ({ model with next_query_time = Some t },
-                              CalcIC_Y (t, ic_buf)))
-        (shrink_query_time (model.last_query_time +. discrete_unit) t)
-  | SetRootDirection dirs ->
-    Fstream.map
-      (fun dirs -> (model, SetRootDirection dirs))
-      (shrink_array shrink_root_direction ~shrink_size:false dirs)
+(* Shrink a script by simplifying the model, but without removing equations.
+   The set of changes attempted here must be kept in sync with the set of
+   changes that fixup_cmd above can handle.
 
-(* Fix up a command to be executable in a given state (= the model parameter).
-   The incoming model may have fewer equations than when the command was
-   generated, or have a different starting time.  *)
-let fixup_cmd model = function
-  | SolveNormal t ->
-    begin
-      match model.next_query_time with
-      | Some t -> ({ model with last_query_time = t; next_query_time = None; },
-                   SolveNormal t)
-      | None -> let t = max t model.last_query_time in
-                ({ model with last_query_time = t }, SolveNormal t)
-    end
-  | SolveNormalBadVector (t, n) when n = Carray.length model.vec ->
-    ({ model with next_query_time = Some t },
-     SolveNormalBadVector (t, if n = 0 then 1 else (n-1)))
-  | CalcIC_Y (t, GiveBadVector n) when n = Carray.length model.vec ->
-    (* FIXME: is it OK to perform CalcIC_Y multiple times?  What about with an
-       intervening solve?  Without an intervening solve?  *)
-    ({ model with next_query_time = Some t },
-     CalcIC_Y (t, GiveBadVector (if n = 0 then 1 else (n-1))))
-  | GetRootInfo | GetNRoots | CalcIC_Y _ | SetRootDirection _
-  | SolveNormalBadVector _ | SetAllRootDirections _ as cmd -> (model, cmd)
-
-let gen_cmds model =
-  gen_1pass_list gen_cmd model
-
-let shrink_cmds model =
-  shrink_1pass_list shrink_cmd fixup_cmd model
-
-(* Note that although the interpreter mutates the model record, the entry point
+   Note that although the interpreter mutates the model record, the entry point
    of the interpreter creates a deep copy each time, so it's OK for the shrunk
    model to share structures with each other and with the original model.  *)
 let shrink_model model cmds =
-  let fixup_cmds new_model cmds =
-    (new_model, fixup_list fixup_cmd new_model cmds)
-  in
   let update_roots model cmds (i, roots) =
     let n = Array.length roots in
     let model = { model with
@@ -378,33 +607,87 @@ let shrink_model model cmds =
                               else Array.make n RootDirs.IncreasingOrDecreasing
                 }
     in
-    (* Fix up commands to cope with a shrunk root function set.  The set of
-       equations is not shrunk.  *)
-    let fixup_cmd_with_drop model cmd =
-      match cmd with
-      | SolveNormalBadVector _ | SolveNormal _ | GetRootInfo | GetNRoots
-      | CalcIC_Y _ | SetAllRootDirections _ -> fixup_cmd model cmd
-      | SetRootDirection root_dirs ->
-        if Array.length root_dirs = 0
-        then fixup_cmd model (SetRootDirection root_dirs)
-        else
-          let i = if i < Array.length root_dirs then i else 0 in
-          fixup_cmd model (SetRootDirection (array_drop_elem root_dirs i))
-    in
-    (model,
-     fixup_list (if i < 0 then fixup_cmd else fixup_cmd_with_drop) model cmds)
+    let diff = if i < 0 then model_nohint else { hint_root_drop = Some i } in
+    (model, fixup_list fixup_cmd (diff, model) cmds)
   and update_time model cmds t =
     let model = { model with last_query_time = t; last_tret = t; t0 = t; } in
-    fixup_cmds model cmds
+    (model, fixup_list fixup_cmd (model_nohint, model) cmds)
   in
   Fstream.map (update_time model cmds) (shrink_t0 model.t0)
-  @@ Fstream.map
-      (update_roots model cmds)
-      (shorten_shrink_array
-         (shrink_pair
-            (shrink_root_time model.t0)
-            (shrink_choice [| Roots.Rising; Roots.Falling |]))
-         model.roots)
+  @@ Fstream.map (update_roots model cmds) (shrink_roots model.t0 model.roots)
+
+let gen_cmds model =
+  gen_1pass_list gen_cmd model
+
+let shrink_cmd ((diff, model) as ctx) cmd =
+  (* Either shrink the model or shrink a command; shouldn't have to do both or
+     shrink multiple commands at the same time.  *)
+  assert (diff = model_nohint);
+  match cmd with
+  | ReInit params ->
+    (* Let p = incoming params, p' = outgoing params,
+           d = incoming diff,   d' = outgoing diff.
+       Abbreviate hint_root_drop as root_drop, reinit_roots as roots, and Some
+       x as x.  Then d'.root_drop is determined by the following table.  Keep
+       in mind None can mean "no info" rather than "root set unchanged".
+
+       p.roots      =    _    |       _        |     None    |   Some _
+       p'.roots     = p.roots | drop i p.roots |     None    |   None
+       -----------------------------------------------------------------
+       d'.root_drop =   None  |     Some i     | d.root_drop |   None
+    *)
+    let ret diff' params' =
+      let model' = copy_model model in
+      let cmd = ReInit params' in
+      ignore (model_cmd model' cmd);
+      ((diff', model'), cmd)
+    in
+    (* TODO: implement solver shrinking.  *)
+    (match params.reinit_roots with
+     | None -> Fstream.nil
+     | Some roots ->
+       Fstream.cons (ret { hint_root_drop = None }
+                         { params with reinit_roots = None })
+         (Fstream.map
+            (fun (i, r) ->
+               ret { hint_root_drop = Some i }
+                   { params with reinit_roots = Some r })
+            (shrink_roots params.reinit_t0 roots)))
+    @@
+    Fstream.map (fun t0 -> ret diff { params with reinit_t0 = t0 })
+      (shrink_t0 params.reinit_t0)
+  | SolveNormalBadVector (t, n) ->
+    Fstream.map (fun (m,t) -> ((diff, m), SolveNormalBadVector (t, n)))
+      (shrink_solve_time model t)
+    @@
+    Fstream.map (fun n -> (ctx, SolveNormalBadVector (t, n)))
+      (Fstream.filter ((<>) (Carray.length model.vec)) (shrink_nat n))
+  | SolveNormal t ->
+    Fstream.map (fun (m,t) -> ((diff, m), SolveNormal t))
+      (shrink_solve_time model t)
+  | GetRootInfo -> Fstream.nil
+  | GetNRoots -> Fstream.nil
+  | SetAllRootDirections dir ->
+    Fstream.map (fun dir -> (ctx, SetAllRootDirections dir))
+      (shrink_root_direction dir)
+  | CalcIC_Y (t, ic_buf) ->
+    assert (not (model.solving));
+    let model = { model with solving = true } in
+    let ctx = (diff, model) in
+    Fstream.map (fun ic_buf -> (ctx, CalcIC_Y (t, ic_buf)))
+      (shrink_ic_buf model ic_buf)
+    @@ Fstream.map (fun t -> ((diff,
+                               { model with next_query_time = Some t }),
+                              CalcIC_Y (t, ic_buf)))
+        (shrink_query_time (model.last_query_time +. discrete_unit) t)
+  | SetRootDirection dirs ->
+    let ctx = (diff, model) in
+    Fstream.map
+      (fun dirs -> (ctx, SetRootDirection dirs))
+      (shrink_array shrink_root_direction ~shrink_size:false dirs)
+
+let shrink_cmds model =
+  shrink_1pass_list shrink_cmd fixup_cmd (model_nohint, model)
 
 (* Scripts (model + command list) *)
 
@@ -413,13 +696,19 @@ let gen_script () =
   let cmds  = gen_cmds model ()
   in (model, cmds)
 
-(* As noted above, it's OK to not copy the model structure wholesale, but to
+(* Shrink a script by removing an equation from it.
+   As noted above, it's OK to not copy the model structure wholesale, but to
    copy only the parts that are shrunk or need to be fixed up.  *)
 let shrink_neqs model cmds =
   (* Reduce commands that are dependent on number of equations.  *)
   let drop_from_cmd i = function
     | CalcIC_Y (t, GiveBadVector n) when n > 0 ->
       CalcIC_Y (t, GiveBadVector (n-1))
+    | ReInit params ->
+      ReInit { params with
+               reinit_vec0  = carray_drop_elem params.reinit_vec0 i;
+               reinit_vec'0 = carray_drop_elem params.reinit_vec'0 i;
+             }
     | cmd -> cmd
   in
   let copy_resfn_drop i = function
@@ -635,155 +924,6 @@ let compile_run ml_code =
     with End_of_file -> (ignore (Unix.close_process_full pipes); None)
   in
   Fstream.generate recv
-
-(* Model interpretation *)
-
-let exact_soln typ t0 vec0 vec'0 t vec vec' =
-  match typ with
-  | ResFnLinear slopes ->
-    for i = 0 to Carray.length vec - 1 do
-      vec'.{i} <- slopes.{i};
-      vec.{i} <- slopes.{i} *. (t -. t0);
-    done
-  | ResFnExpDecay coefs ->
-    for i = 0 to Carray.length vec - 1 do
-      vec.{i} <- vec0.{i} *. exp (-. coefs.{i} *. (t -. t0));
-      vec'.{i} <- -. coefs.{i} *. vec.{i}
-    done
-
-(* Find the smallest root(s) in the range (t1..t2].  *)
-let find_roots roots root_dirs t1 t2 =
-  let n = Array.length roots in
-  let pos i = fst roots.(i) in
-  let valid i =
-    match root_dirs.(i), snd roots.(i) with
-    | RootDirs.IncreasingOrDecreasing, _ -> true
-    | RootDirs.Increasing, Roots.Rising -> true
-    | RootDirs.Increasing, Roots.Falling -> false
-    | RootDirs.Decreasing, Roots.Rising -> false
-    | RootDirs.Decreasing, Roots.Falling -> true
-    | _, Roots.NoRoot -> assert false
-  in
-  if n = 0 then []
-  else
-    let record  = ref t2
-    and holders = ref []
-    in
-    for i = 0 to n-1 do
-      if t1 < pos i && pos i <= !record
-      then
-        begin
-          if valid i then
-            (if pos i < !record then
-               (record := pos i;
-                holders := [i])
-             else
-               holders := i::!holders)
-        end
-    done;
-    !holders
-
-(* Run a single command on the model.  *)
-let model_cmd model = function
-  | SolveNormalBadVector _ -> Exn Ida.IllInput
-  | SolveNormal t ->
-    (* NB: we don't model interpolation failures -- t will be monotonically
-       increasing.  *)
-    assert (model.last_query_time <= t);
-    (* Undocumented behavior (sundials 2.5.0): solve_normal with t=t0 usually
-       fails with "tout too close to t0 to start integration", but sometimes
-       succeeds.  Whether it succeeds seems to be unpredictable.  *)
-    if t = model.t0 then Any
-    else
-      let tret, flag =
-        (* NB: roots that the solver is already sitting on are ignored, unless
-           dt = 0.  *)
-        let tstart =
-          if t = model.last_tret
-          then model.last_tret -. time_epsilon
-          else model.last_tret
-        in
-        match find_roots model.roots model.root_dirs tstart t with
-        | [] ->
-          (* Undocumented behavior (sundials 2.5.0): a non-root return from
-             solve_normal resets root info to undefined.  *)
-          model.root_info_valid <- false;
-          t, SolverResult Ida.Continue
-        | (i::_) as is ->
-          let tret = fst model.roots.(i) in
-          model.root_info_valid <- true;
-          Roots.reset model.root_info;
-          List.iter
-            (fun i -> Roots.set model.root_info i (snd model.roots.(i)))
-            is;
-          (tret,
-           (* If the queried time coincides with a root, then it's reasonable
-              for the solver to prioritize either.  In real code, this is most
-              likely determined by the state of the floating point error.  *)
-           if tret = t then Type (SolverResult Ida.Continue)
-           else SolverResult Ida.RootsFound)
-      in
-      model.last_query_time <- t;
-      model.last_tret <- tret;
-      model.solving <- true;
-      exact_soln model.resfn model.t0 model.vec0 model.vec'0
-                                 tret model.vec  model.vec';
-      Aggr [Float tret; flag; carray model.vec; carray model.vec']
-  | GetRootInfo ->
-    if model.root_info_valid then RootInfo (Roots.copy model.root_info)
-    else
-      (* FIXME: this should be Exn Ida.IllInput or something like that.  *)
-      Type (RootInfo (Roots.copy model.root_info))
-  | GetNRoots ->
-    Int (Array.length model.roots)
-  | CalcIC_Y (_, GiveBadVector _) -> Exn (Invalid_argument "")
-     (* Undocumented behavior (sundials 2.5.0): GetConsistentIC() and CalcIC()
-        can only be called before IDASolve().  However, IDA only detects
-        illicit calls of GetConsistentIC(), and for calls to CalcIC() after
-        IDASolve(), it seems to initialize with garbage.
-
-        The OCaml binding contains a flag to detect and prevent this case.
-
-     *)
-  | CalcIC_Y (_, _) when model.solving -> Exn Ida.IllInput
-  | CalcIC_Y (_, ic_buf) ->
-    (* The t carried in the command is just a hint which the exact solver
-       doesn't need.  The time at which vec and vec' should be filled is
-       model.last_tret.  *)
-    begin
-      exact_soln model.resfn model.t0        model.vec0 model.vec'0
-                             model.last_tret model.vec  model.vec';
-      (* Undocumented behavior (sundials 2.5.0): apparently it's OK to call
-         CalcIC() on the same session without an intervening IDASolve() or
-         IDAReInit().  Therefore, we don't set model.solving here.  *)
-      match ic_buf with
-      | Don'tGetCorrectedIC -> Unit (* The current time will be slightly
-                                       ahead of t0.  By exactly how much
-                                       is hard to say.  *)
-      | GetCorrectedIC -> carray model.vec
-      | GiveBadVector _ -> assert false
-    end
-  | SetAllRootDirections dir ->
-    if Array.length model.roots = 0
-    then Exn Ida.IllInput
-    else (Array.fill model.root_dirs 0 (Array.length model.root_dirs) dir;
-          Unit)
-  | SetRootDirection dirs ->
-    if Array.length model.roots = 0
-    then Exn Ida.IllInput
-    else
-      (* The binding adjusts the root array length as needed.  *)
-      let ndirs = Array.length dirs
-      and nroots = Array.length model.roots in
-      let dirs =
-        if ndirs = nroots then dirs
-        else
-          let d = Array.make nroots RootDirs.IncreasingOrDecreasing in
-          Array.blit dirs 0 d 0 (min nroots ndirs);
-          d
-      in
-      (model.root_dirs <- dirs;
-       Unit)
 
 (* Report a summary of the initial model.  *)
 let model_init model = Aggr [Float model.t0;

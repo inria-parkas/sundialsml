@@ -133,6 +133,20 @@ let expr_of_cmd_impl = function
   | SetAllRootDirections dir ->
     <:expr<Ida.set_all_root_directions session $expr_of_root_direction dir$;
            Unit>>
+  | ReInit params ->
+    let roots =
+      match params.reinit_roots with
+      | None -> Ast.ExNil _loc
+      | Some r -> <:expr<~roots:$expr_of_roots r$>>
+    in
+    <:expr<Ida.reinit session
+           ~linsolv:$expr_of_linear_solver params.reinit_solver$
+           $roots$
+           $`flo:params.reinit_t0$
+           $expr_of_carray params.reinit_vec0$
+           $expr_of_carray params.reinit_vec'0$;
+           Unit
+           >>
   | SetRootDirection dirs ->
     <:expr<Ida.set_root_direction session
            $expr_array (List.map expr_of_root_direction (Array.to_list dirs))$;
