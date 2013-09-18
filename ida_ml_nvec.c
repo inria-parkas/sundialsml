@@ -678,7 +678,7 @@ static value solve (value vdata, value nextt, value vy, value vyp, int onestep)
     }
 
 #if SAFETY_CHECKS
-    IDA_SET_SAFETY_FLAGS (vdata, IDA_SAFETY_FLAG_SOLVING);
+    IDA_ADD_SAFETY_FLAG (vdata, IDA_SAFETY_FLAG_SOLVING);
 #endif
 
     /* Hmm...should this go in the production code or not?  */

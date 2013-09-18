@@ -64,6 +64,9 @@ enum ida_index {
 					     RECORD_IDA_SESSION_SAFETY_FLAGS))
 #define IDA_SET_SAFETY_FLAGS(v, f)				\
     Store_field ((v), RECORD_IDA_SESSION_SAFETY_FLAGS,		\
+		 Val_int ((f)))
+#define IDA_ADD_SAFETY_FLAG(v, f)				\
+    Store_field ((v), RECORD_IDA_SESSION_SAFETY_FLAGS,		\
 		 Val_int ((IDA_SAFETY_FLAGS((v)) | (f))))
 #else
 /* All uses of the safety flags field must be guarded by #if SAFETY_CHECKS.
