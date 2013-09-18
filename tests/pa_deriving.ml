@@ -1,24 +1,236 @@
-(* A camlp4 extension for generating pretty printers for data types.  Requires
-OCaml 3.12 or newer.  The code
+(* A camlp4 extension for generating pretty printers and/or expr_of functions
+for data types.  Requires OCaml 3.12 or newer.
+
+[Quick Example]
+
+The code
 
   open Pprint
+  open Expr_of
   type 'a foo = Foo of ('a, int) bar
-  deriving pretty
+  deriving (pretty, expr_of)
 
 generates
 
-  type 'a foo = Foo of ('a, int) bar
+  open Pprint
+  open Expr_of
+  type 'a foo = Foo of ('a, int) bar | Bar
 
   let pp_foo pp0 ?(prec=0) fmt = function
-    | Foo x -> pp_string_noquote fmt "Foo ";
+    | Foo x -> pp_string_noquote fmt "Foo "; pp0 fmt x
+    | Bar -> pp_string_noquote fmt "Bar"
+  let expr_of expr_of_'a = function
+    | Foo x -> <:expr<Foo $expr_of_'a x$>>
 
-Note that open Pprint is strictly necessary.  If the definition of foo refers
-to another type baz, for example, this generator will call a pretty-printer
-named pp_baz.  The user can either write pp_baz by hand or derive it with
-another deriving clause at the definition of type baz, but in any case the user
-is responsible for ensuring that pp_baz exists and is visible.  Pprint supplies
-these functions for base types like int, bool, etc., and it also supplies some
-auxiliary functions that this generator relies on.
+The let definitions shown here are abridged.  The extension generates more
+complicated code to ensure that it's more polymorphic and robust.  It also
+generates not just pp_foo but also show_foo, ppout_foo, and so on for every
+flavor of pretty-printer defined in pprint.mli (see that file's comment on the
+pp type).
+
+"open Pprint" and "open Expr_of" are mandatory.  If the definition of foo
+refers to another type baz, for example, the generated pretty-printer for foo
+will call a pretty-printer named pp_baz.  The user can either write pp_baz by
+hand or derive it with another deriving clause at the definition of type baz,
+but in any case s/he must ensure that pp_baz exists and is visible.  Pprint
+supplies these functions for base types like int, bool, etc., and it also
+supplies some auxiliary functions that this generator relies on.  The same goes
+for expr_of.
+
+[More Detailed Semantics]
+
+<type def>
+deriving pretty
+
+<type def>
+deriving expr_of
+
+<type def>
+deriving (pretty, expr_of)
+
+  These constructs derive just the pretty-printer, just expr_of, and both the
+  pretty-printer and expr_of, respectively, for the types that are defined in
+  the <type def>.
+
+  If <type def> refers to a type t that <type def> itself does not define, then
+  the generated pretty-printer uses a function name pp_t to print that type,
+  and the generated expr_of uses expr_of_t to reify that type.  It is up to the
+  user to make sure that functions of those names are in scope.  If the type t
+  has a module qualification, like Foo.t, then the inferred names are Foo.pp_t
+  and Foo.expr_of_t, respectively.  As an exception, Lazy.t is handled by
+  pp_lazy_t and expr_of_lazy_t (see the ~alias option below).
+
+<type def>
+deriving external_types pretty
+
+<type def>
+deriving external_types expr_of
+
+<type def>
+deriving external_types (pretty, expr_of)
+
+  "deriving external_types" defines the pretty-printers and/or expr_of but
+  eliminates the <type def> from the preprocessed source code.  This is useful
+  for deriving from types that are defined in a different module, and you can't
+  or don't want to modify that module.
+
+  For example, option is defined in the Pervasives module, and you can't modify
+  it.  But you can do
+
+    (* In a module that you control:  *)
+    type 'a option = None | Some of 'a
+    deriving external_types (pretty, expr_of)
+
+  and this will define just the pretty-printer and expr_of without re-defining
+  the option type.  Note that pp_option and expr_of_option are already
+  available in Pprint and Expr_of, respectively, so there's no point in doing
+  this for option; you should do this on other types not covered by Pprint or
+  Expr_of.
+
+[Options]
+
+The deriving commands pretty and expr_of can be given options, with syntax that
+looks like optional function arguments.  Their syntax and semantics follow.
+
+~optional:<constructor / record field / module name>
+~optional:(<comma-separated list of constructor / record field / module name>)
+
+  This is only available for pretty.  If more than one name is supplied, they
+  must be separated by commas and the list of names must be parenthesized.
+  Constructor names, records, or module names declared ~optional will be
+  omitted from the output unless !Pprint.read_write_invariance is true.  For
+  example,
+
+      type foo = { important : int;
+                   unimportant : int; }
+      deriving (pretty ~optional:unimportant)
+
+      let _ = pp_foo Format.std_formatter { important = 42; unimportant = 57 }
+
+  prints
+
+      {important = 42}
+
+  if Pprint.read_write_invariance is false, but the same code prints
+
+      {important = 42; unimportant = 57}
+
+  if Pprint.read_write_invariance is true.  This is useful for hiding internal
+  data that is not interesting to the user and keeping the output concise. For
+  optional constructors, the constructor name is omitted but its arguments are
+  not; for example,
+
+      type positive_int = Positive of int
+      deriving (pretty ~optional:Positive)
+
+      let _ = pp_foo Format.std_formatter (Positive 5)
+
+  prints "5" if Pprint.read_write_invariance is false, and the same code prints
+  "Positive 5" if Pprint.read_write_invariance is true.
+
+~prefix:<modname>
+
+  The argument must not be parenthesized.  <modname> is prepended to every
+  constructor or field name, so that the pretty-printed result or the output
+  of expr_of is useful outside of the current module.  For example, the code
+
+      (* In foo.ml *)
+      type x = X
+      deriving (pretty, expr_of)
+
+      (* In bar.ml *)
+      type x = X
+
+      (* In baz.ml *)
+      let s = Foo.show_x Foo.X
+      let e = Foo.expr_of_x Foo.X
+
+  binds s to "X" and e to <:expr<X>>.  But does this "X" mean Foo.X or Bar.X?
+  You probably mean Foo.X, but this is not reflected in the values.  To avoid
+  this ambiguity, we can write
+
+      (* In foo.ml *)
+      type x = X
+      deriving (pretty ~prefix:Foo, expr_of ~prefix:Foo)
+
+      (* In bar.ml *)
+      type x = X
+
+      (* In baz.ml *)
+      let s = Foo.show_x Foo.X
+      let e = Foo.expr_of_x Foo.X
+
+  which binds s to "Foo.X" and e to <:expr<Foo.X>>.
+
+  In pretty, the prefix is subject to hiding by ~optional, so for example
+
+      type x = X
+      deriving (pretty ~prefix:Foo ~optional:Foo)
+
+      let _ = pp_x Format.std_formatter X
+
+  prints "X" if Pprint.read_write_invariance is false but prints "Foo.X" if
+  Pprint.read_write_invariance is true.
+
+~alias:(<name> = <name>, <name> = <name>, ...)
+
+  This option gives a different name from which to guess the name of the
+  pretty-printer or expr_of function of a type.  For example,
+
+      type 'a foo = Foo of 'a ThirdPartyModule.t
+      deriving pretty
+
+  generates a pretty-printer that refers to ThirdPartyModule.pp_t which may not
+  be supplied by whoever wrote ThirdPartyModule.  In that case, you can use
+  ~alias to make deriving pretend that ThirdPartyModule.t has a different name:
+
+      let pp_tpm_t pp_'a = (* pretty-printer for 'a ThirdPartyModule.t *)
+      type foo = Foo of 'a ThirdPartyModule.t
+      deriving (pretty ~alias:(ThirdPartyModule.t = tpm_t))
+
+  Then pp_foo will use pp_tpm_t to print 'a ThirdPartyModule.t instead of the
+  non-existent ThirdPartyModule.pp_t function.
+
+  The alias Lazy.t = lazy_t is loaded automatically for every deriving clause.
+
+[Syntax]
+
+The complete syntax for deriving is as follows, using pseudo-EBNF with the
+usual convention that [tok] denotes an optional token, * is the Kleene star
+(i.e. repetition for 0 or more times), and | denotes alternatives.  Parentheses
+do not have special meanings; they denote parentheses.  LIST <sep> <foo> means
+a <sep>-separated list of 1 or more <foo>'s.
+
+<deriving_clause> ::=
+  <type def>
+  deriving [external_types] <deriving_commands>
+  [;;]
+
+<deriving_commands> ::=
+  pretty | expr_of | ( LIST , <deriving_command_with_opt> )
+
+<deriving_command_with_opt> ::=
+  pretty <pretty_option>* | expr_of <expr_of_option>*
+
+<pretty_option> ::=
+  ~alias:( LIST , <alias> ) | ~prefix:<modname> | ~optional:<names>
+
+<expr_of_option> ::=
+  ~alias:( LIST , <alias> ) | ~prefix:<modname>
+
+<alias> ::= <name> = <name>
+
+<names> ::= <name> | ( LIST , <name> )
+
+<modname> is any OCaml module name.  For instance Foo is OK (and it doesn't
+matter if a module by that name exists), Foo.Bar is OK, but Foo.bar is not.
+
+<name> is any valid OCaml identifier, capitalized or not.  It can contain
+module qualifications like Foo.bar if needed.
+
+<type def> is any valid type definition of 1 or more non-opaque types.  So
+"type foo = int and 'a bar = 'a" is OK, but "type foo" (without a right-hand
+side) is not OK.
 
 *)
 
