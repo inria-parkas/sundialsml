@@ -49,7 +49,7 @@ test-deriving: deriving_test.opt
 	diff -u deriving_test.expected deriving_test.out
 
 dump-deriving: pa_deriving.cmo pprint.cmo
-	$(CAMLP4) camlp4aux.cmo pa_deriving.cmo \
+	$(CAMLP4OF) camlp4aux.cmo pa_deriving.cmo \
 	    -printer Camlp4OCamlPrinter \
 	    deriving_test.ml
 

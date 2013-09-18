@@ -179,8 +179,8 @@ struct
       | TApp (_loc, <:ident<$x$>>, args) ->
         let x = string_list_of_ident x in
         let x = try Hashtbl.find aliases x with Not_found -> x in
-        let x = String.concat "_" x in
-        fold_app <:expr<$lid:"pp_"^x$>> (List.map go_type_expr args)
+        let x = id_of_string_list _loc (map_last (fun y -> "pp_"^y) x) in
+        fold_app <:expr<$id:x$>> (List.map go_type_expr args)
       | TTup (_loc, []) -> fail_at _loc
                            "internal error in deriving: TTup (_,[])"
       | TTup (_loc, [x]) -> fail_at _loc
@@ -327,8 +327,8 @@ struct
       | TApp (_loc, <:ident<$id:x$>>, args) ->
         let x = string_list_of_ident x in
         let x = try Hashtbl.find aliases x with Not_found -> x in
-        let x = String.concat "_" x in
-        fold_app <:expr<$lid:"expr_of_"^x$>> (List.map go_type_expr args)
+        let x = id_of_string_list _loc (map_last (fun y -> "expr_of_"^y) x) in
+        fold_app <:expr<$id:x$>> (List.map go_type_expr args)
       | TTup (_loc, []) -> fail_at _loc
                            "internal error in deriving: TTup (_,[])"
       | TTup (_loc, [x]) -> fail_at _loc

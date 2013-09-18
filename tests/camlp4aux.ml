@@ -13,6 +13,11 @@ struct
       | x::xs -> go (f i x::acc) (i+1) xs
     in go [] 0 xs
 
+  let map_last f xs =
+    match List.rev xs with
+    | [] -> invalid_arg "map_last: empty list"
+    | x::xs -> List.rev (f x::xs)
+
   let rec drop_while f = function
     | x::xs when f x -> drop_while f xs
     | xs -> xs
@@ -367,6 +372,16 @@ struct
                  e e'
 
   let sem_rec_binding = smart_comb_rec_binding (fun l e e' -> RbSem (l, e, e'))
+
+  let id_of_string_list _loc strs =
+    let f s =
+      if String.length s <= 0 then
+        invalid_arg "id_of_string_list found empty string";
+      if s.[0] = Char.uppercase s.[0]
+      then <:ident<$uid:s$>>
+      else <:ident<$lid:s$>>
+    in
+    idAcc_of_list (List.map f strs)
 
   (* Mass-term constructors *)
 
