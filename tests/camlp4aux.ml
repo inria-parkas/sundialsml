@@ -383,6 +383,11 @@ struct
     in
     idAcc_of_list (List.map f strs)
 
+  let smart_let _loc bindings body =
+    match bindings with
+    | BiNil _ -> body
+    | _ -> <:expr<let $bindings$ in $body$>>
+
   (* Mass-term constructors *)
 
   let fold_expr_with ctor _loc e es = List.fold_left (smart_comb ctor) e es

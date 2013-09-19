@@ -15,6 +15,7 @@ open Expr_of
    case, so it should be OK.  *)
 module PPIda = struct
   open Ida (* deriving needs access to type names like linear_solver *)
+  open VarTypes (* ditto *)
 
   (* Copied from ida.mli; must be kept in sync with that file's definition.  *)
   type linear_solver =
@@ -50,6 +51,9 @@ module PPIda = struct
     current_time : float
   }
   deriving external_types (pretty ~prefix:Ida, expr_of ~prefix:Ida)
+
+  type var_type = Algebraic | Differential
+  deriving external_types (expr_of ~prefix:Ida.VarTypes)
 end
 include PPIda                           (* Include the derived functions. *)
 
@@ -91,6 +95,7 @@ and cmd = SolveNormal of float
         | CalcIC_Y of float * ic_buf
         | ReInit of reinit_params
         | SetVarTypes
+        | CalcIC_YaYd' of float * ic_buf * ic_buf
 and script = model * cmd list
 (* When the model is shrunk, the commands have to be fixed up so that we don't
    run commands whose outcomes are unpredictable.  In most cases the model
@@ -227,6 +232,13 @@ let find_roots roots root_dirs t1 t2 =
     done;
     !holders
 
+(* Find the algebraic vs. differential classification for all variables as an
+   ordinary array.  *)
+let vartypes_of_model model =
+  match model.resfn with
+  | ResFnLinear _ | ResFnExpDecay _ ->
+    Array.make (Carray.length model.vec) Ida.VarTypes.Differential
+
 (* Destructively update the model according to a command.  *)
 let model_cmd model = function
   | SolveNormalBadVector _ -> Exn Ida.IllInput
@@ -307,6 +319,20 @@ let model_cmd model = function
       | GetCorrectedIC -> carray model.vec
       | GiveBadVector _ -> assert false
     end
+  | CalcIC_YaYd' (tout1, ic_buf_y, ic_buf_y') ->
+    (match ic_buf_y, ic_buf_y' with
+     | GiveBadVector _, _ | _, GiveBadVector _ -> Exn (Invalid_argument "")
+     | _, _ when model.solving -> Exn Ida.IllInput
+     | GetCorrectedIC, Don'tGetCorrectedIC ->
+       model.vartypes_set <- true;
+       carray model.vec
+     | Don'tGetCorrectedIC, GetCorrectedIC ->
+       model.vartypes_set <- true;
+       carray model.vec'
+     | Don'tGetCorrectedIC, Don'tGetCorrectedIC -> Unit
+     | GetCorrectedIC, GetCorrectedIC ->
+       model.vartypes_set <- true;
+       Aggr [carray model.vec; carray model.vec']);
   | SetVarTypes -> model.vartypes_set <- true; Unit
   | SetAllRootDirections dir ->
     if Array.length model.roots = 0
@@ -450,6 +476,14 @@ let shrink_solve_time model t =
               (fun t -> ({ model with last_query_time = t; }, t))
               (shrink_query_time model.last_query_time t)
 
+let fixup_ic_buf new_model_vec_len ic_buf =
+  match ic_buf with
+  | GiveBadVector n ->
+    (* Ensure n doesn't match length of model's vector.  *)
+    if n = new_model_vec_len
+    then GiveBadVector (if n = 0 then 1 else (n-1))
+    else ic_buf
+  | Don'tGetCorrectedIC | GetCorrectedIC -> ic_buf
 
 (* Fix up a command to be executable in a given state (= the model parameter).
    The incoming model will always have the same residual function as when the
@@ -485,13 +519,16 @@ let fixup_cmd ((diff, model) as ctx) = function
     end
   | SolveNormalBadVector (t, n) when n = Carray.length model.vec ->
     ((diff, model), SolveNormalBadVector (t, if n = 0 then 1 else (n-1)))
-  | CalcIC_Y (t, GiveBadVector n) when n = Carray.length model.vec ->
+  | CalcIC_Y (t, ic_buf) ->
     (* FIXME: is it OK to perform CalcIC_Y multiple times?  What about with an
        intervening solve?  Without an intervening solve?  *)
     ((diff, { model with next_query_time = Some t }),
-     CalcIC_Y (t, GiveBadVector (if n = 0 then 1 else (n-1))))
-  | CalcIC_Y (t, _) as cmd ->
-    ((diff, { model with next_query_time = Some t }), cmd)
+     CalcIC_Y (t, fixup_ic_buf (Carray.length model.vec) ic_buf))
+  | CalcIC_YaYd' (t, ic_buf_y, ic_buf_y') ->
+    let fixup_ic_buf = fixup_ic_buf (Carray.length model.vec) in
+    ((diff, { model with next_query_time = Some t;
+                         vartypes_set = true }),
+     CalcIC_YaYd' (t, fixup_ic_buf ic_buf_y, fixup_ic_buf ic_buf_y'))
   | SetRootDirection root_dirs as cmd ->
     let model_roots = Array.length model.roots
     and cmd_roots = Array.length root_dirs in
@@ -571,7 +608,25 @@ let gen_cmd =
        (fun model -> (model, SetAllRootDirections (gen_root_direction ())));
        (fun model ->
           match model.resfn with
+          | ResFnLinear _ | ResFnExpDecay _ ->
+            let t = gen_query_time (model.last_query_time +. discrete_unit) ()
+            and gen_ic_buf_y, gen_ic_buf_y' =
+              let b () = GiveBadVector
+                          (gen_nat_avoiding (Carray.length model.vec))
+              and c () = GetCorrectedIC
+              and d () = Don'tGetCorrectedIC in
+              gen_weighted_choice
+                [| (30, (c,c));  (10, (c,d));  (10, (c,b));
+                   (10, (d,c));  ( 5, (d,d));  (10, (d,b));
+                   (10, (b,c));  (10, (b,d));  ( 5, (b,b)); |]
+                ()
+            in
+            let ic_buf_y  = gen_ic_buf_y ()
+            and ic_buf_y' = gen_ic_buf_y' () in
+            (model, CalcIC_YaYd' (t, ic_buf_y, ic_buf_y')));
+       (fun model ->
           (* ic_calc_y doesn't work on ResFnLinear. *)
+          match model.resfn with
           | ResFnLinear _ -> (model, GetRootInfo)
           | _ ->
             let t = gen_query_time (model.last_query_time +. discrete_unit) ()
@@ -676,12 +731,23 @@ let shrink_cmd ((diff, model) as ctx) cmd =
     Fstream.map (fun dir -> (ctx, SetAllRootDirections dir))
       (shrink_root_direction dir)
   | CalcIC_Y (t, ic_buf) ->
-    assert (not (model.solving));
+    assert (not model.solving);
     let model' = { model with solving = true; next_query_time = Some t } in
     let ctx' = (diff, model') in
     Fstream.map (fun ic_buf -> (ctx', CalcIC_Y (t, ic_buf)))
       (shrink_ic_buf model ic_buf)
     @@ Fstream.map (fun t -> (ctx', CalcIC_Y (t, ic_buf)))
+        (shrink_query_time (model.last_query_time +. discrete_unit) t)
+  | CalcIC_YaYd' (t, ic_buf_y, ic_buf_y') ->
+    assert (not model.solving);
+    let model' = { model with solving = true; next_query_time = Some t } in
+    let ctx' = (diff, model') in
+    Fstream.map (fun ic_buf_y -> (ctx', CalcIC_YaYd' (t, ic_buf_y, ic_buf_y')))
+      (shrink_ic_buf model ic_buf_y)
+    @@ Fstream.map
+        (fun ic_buf_y' -> (ctx', CalcIC_YaYd' (t, ic_buf_y, ic_buf_y')))
+        (shrink_ic_buf model ic_buf_y')
+    @@ Fstream.map (fun t -> (ctx', CalcIC_YaYd' (t, ic_buf_y, ic_buf_y')))
         (shrink_query_time (model.last_query_time +. discrete_unit) t)
   | SetRootDirection dirs ->
     Fstream.map
@@ -837,7 +903,7 @@ and result_type_matches r1 r2 =
   | Carray _, Carray _ -> true
   | SolverResult _, SolverResult _ -> true
   | RootInfo _, RootInfo _ -> true
-  | Exn e1, Exn e2 -> raise (Invalid_argument "result_matches: Type Exn")
+  | Exn e1, Exn e2 -> true
   | _, Any | _, Type _ ->
     raise (Invalid_argument "result_matches: wild card on rhs")
   | _, _ -> false
