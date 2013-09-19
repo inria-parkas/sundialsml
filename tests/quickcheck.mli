@@ -401,6 +401,13 @@ val no_shrink : 'a -> 'a Fstream.t
 type ('a,'b) property = 'a -> 'b test_result
 and  'reason test_result = OK | Falsified of 'reason | Failed of exn
 
+(** A wrapper for exceptions that are not caught by the testing framework.
+    Normally, when a test raises an exception, it's treated as a test failure
+    and the framework starts shrinking thei input.  But when something goes so
+    fundamentally wrong that you want to abort the tests immediately, you can
+    raise an exception wrapped in AbortTests.  *)
+exception AbortTests of exn
+
 val pp_property : 'a pp -> 'b pp -> ('a,'b) property pp
 val pp_test_result : 'a pp -> 'a test_result pp
 

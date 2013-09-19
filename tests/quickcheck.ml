@@ -382,6 +382,8 @@ type ('a,'b) property = 'a -> 'b test_result
 and  'reason test_result = OK | Falsified of 'reason | Failed of exn
 deriving pretty
 
+exception AbortTests of exn
+
 let isOK = function
   | OK -> true
   | _ -> false
@@ -395,7 +397,9 @@ let null_formatter = Format.make_formatter (fun _ _ _ -> ()) (fun _ -> ())
 
 let test_in_sandbox prop x =
   try prop x
-  with exn -> Failed exn
+  with
+  | AbortTests _ as exn -> raise exn
+  | exn -> Failed exn
 
 let minimize ?pp_input ?(pp_formatter=Format.err_formatter) shrink prop x res =
   let trace, pp_input =
