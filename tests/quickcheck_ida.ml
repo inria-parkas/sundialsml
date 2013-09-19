@@ -139,6 +139,8 @@ and resfn_type =
                                ic_calc_ya_yd' should work.
                              *)
   | ResFnExpDecay of Carray.t
+  | ResFnDie of float * resfn_type (* A resfn that raises an exception once a
+                                      particular time has been reached.  *)
 deriving (pretty ~alias:(Carray.t = carray,
                          Ida.Roots.root_event = root_event,
                          Ida.root_direction = root_direction,
@@ -158,9 +160,10 @@ let carray x = Carray (Carray.of_carray x)
 
 let model_nohint = { hint_root_drop = None }
 
-let copy_resfn = function
+let rec copy_resfn = function
   | ResFnLinear slopes -> ResFnLinear (Carray.of_carray slopes)
   | ResFnExpDecay coefs -> ResFnExpDecay (Carray.of_carray coefs)
+  | ResFnDie (t, resfn) -> ResFnDie (t, copy_resfn resfn)
 let copy_model m =
   {
     (* Everything is copied explicitly here instead of using { m with ... }
@@ -188,7 +191,7 @@ let copy_model m =
 
 (* Model interpretation *)
 
-let exact_soln typ t0 vec0 vec'0 t vec vec' =
+let rec exact_soln typ t0 vec0 vec'0 t vec vec' =
   match typ with
   | ResFnLinear slopes ->
     for i = 0 to Carray.length vec - 1 do
@@ -200,6 +203,10 @@ let exact_soln typ t0 vec0 vec'0 t vec vec' =
       vec.{i} <- vec0.{i} *. exp (-. coefs.{i} *. (t -. t0));
       vec'.{i} <- -. coefs.{i} *. vec.{i}
     done
+  | ResFnDie (fate, resfn) ->
+    if t >= fate
+    then raise (Failure "exception raised on purpose from residual function")
+    else exact_soln resfn t0 vec0 vec'0 t vec vec'
 
 (* Find the smallest root(s) in the range (t1..t2].  *)
 let find_roots roots root_dirs t1 t2 =
@@ -236,9 +243,11 @@ let find_roots roots root_dirs t1 t2 =
 (* Find the algebraic vs. differential classification for all variables as an
    ordinary array.  *)
 let vartypes_of_model model =
-  match model.resfn with
-  | ResFnLinear _ | ResFnExpDecay _ ->
-    Array.make (Carray.length model.vec) Ida.VarTypes.Differential
+  let rec go = function
+    | ResFnLinear _ | ResFnExpDecay _ ->
+      Array.make (Carray.length model.vec) Ida.VarTypes.Differential
+    | ResFnDie (_, resfn) -> go resfn
+  in go model.resfn
 
 (* Destructively update the model according to a command.  *)
 let model_cmd model = function
@@ -283,9 +292,12 @@ let model_cmd model = function
       model.last_query_time <- t;
       model.last_tret <- tret;
       model.solving <- true;
-      exact_soln model.resfn model.t0 model.vec0 model.vec'0
-                                 tret model.vec  model.vec';
-      Aggr [Float tret; flag; carray model.vec; carray model.vec']
+      (try
+         exact_soln model.resfn model.t0 model.vec0 model.vec'0
+                                    tret model.vec  model.vec';
+         Aggr [Float tret; flag; carray model.vec; carray model.vec']
+       with Failure "exception raised on purpose from residual function" as exn ->
+         Exn exn)
   | GetRootInfo ->
     if model.root_info_valid then RootInfo (Roots.copy model.root_info)
     else
@@ -308,17 +320,21 @@ let model_cmd model = function
        doesn't need.  The time at which vec and vec' should be filled is
        model.last_tret.  *)
     begin
-      exact_soln model.resfn model.t0        model.vec0 model.vec'0
-                             model.last_tret model.vec  model.vec';
-      (* Undocumented behavior (sundials 2.5.0): apparently it's OK to call
-         CalcIC() on the same session without an intervening IDASolve() or
-         IDAReInit().  Therefore, we don't set model.solving here.  *)
-      match ic_buf with
-      | Don'tGetCorrectedIC -> Unit (* The current time will be slightly
-                                       ahead of t0.  By exactly how much
-                                       is hard to say.  *)
-      | GetCorrectedIC -> carray model.vec
-      | GiveBadVector _ -> assert false
+      try
+        exact_soln model.resfn model.t0        model.vec0 model.vec'0
+                               model.last_tret model.vec  model.vec';
+        (* Undocumented behavior (sundials 2.5.0): apparently it's OK to call
+           CalcIC() on the same session without an intervening IDASolve() or
+           IDAReInit().  Therefore, we don't set model.solving here.  *)
+        match ic_buf with
+        | Don'tGetCorrectedIC -> Unit (* The current time will be slightly
+                                         ahead of t0.  By exactly how much
+                                         is hard to say.  *)
+        | GetCorrectedIC -> carray model.vec
+        | GiveBadVector _ -> assert false
+      with
+        Failure "exception raised on purpose from residual function"
+        as exn -> Exn exn
     end
   | CalcIC_YaYd' (tout1, ic_buf_y, ic_buf_y') ->
     (match ic_buf_y, ic_buf_y' with
@@ -385,35 +401,39 @@ let model_cmd model = function
     model.next_query_time <- None;
     Unit
 
-let gen_resfn neqs () =
+let gen_resfn t0 neqs () =
   let _ () =
     (* This is a no-op that causes the compiler to direct you here whenever you
        add a new kind of residual function.  *)
     match ResFnLinear (Carray.create 0) with
-    | ResFnLinear _ -> ()
-    | ResFnExpDecay _ -> ()
+    | ResFnLinear _ | ResFnExpDecay _ | ResFnDie _ -> ()
   in
-  gen_choice
-    [|
-      (fun () ->
-         let v = Carray.create neqs in
-         for i = 0 to Carray.length v - 1 do
-           v.{i} <- float_of_int (i+1)
-         done;
-         ResFnLinear v);
-      (fun () ->
-         let v = Carray.create neqs in
-         (* All coefficients must be non-negative.  Initially we had the i-th
-            equation's coefficient be i+1, but this turned out to trigger
-            Ida.TooMuchWork, presumably because the higher-coefficient
-            functions decay so fast that they underflow.  Setting them to all
-            1's seems to let us avoid that issue.  *)
-         for i = 0 to Carray.length v - 1 do
-           v.{i} <- float_of_int 1
-         done;
-         ResFnExpDecay v);
-    |]
-    ()
+  let safe_resfn =
+    gen_choice
+      [|
+        (fun () ->
+           let v = Carray.create neqs in
+           for i = 0 to Carray.length v - 1 do
+             v.{i} <- float_of_int (i+1)
+           done;
+           ResFnLinear v);
+        (fun () ->
+           let v = Carray.create neqs in
+           (* All coefficients must be non-negative.  Initially we had the i-th
+              equation's coefficient be i+1, but this turned out to trigger
+              Ida.TooMuchWork, presumably because the higher-coefficient
+              functions decay so fast that they underflow.  Setting them to all
+              1's seems to let us avoid that issue.  *)
+           for i = 0 to Carray.length v - 1 do
+             v.{i} <- float_of_int 1
+           done;
+           ResFnExpDecay v);
+      |]
+      ()
+  in
+  if Random.int 100 < 90
+  then safe_resfn
+  else ResFnDie (gen_query_time t0 (), safe_resfn)
 
 let gen_solver lapack neqs =
   match Random.int 1 with
@@ -430,7 +450,7 @@ let gen_roots t0 () =
   | _ -> uniq_array (gen_array gen_root ())
 
 (* Returns vec0, vec'0 that satisfies the given resfn.  *)
-let init_vec_for neqs t0 resfn =
+let rec init_vec_for neqs t0 resfn =
   match resfn with
   | ResFnLinear slopes -> Carray.init neqs 0., Carray.of_carray slopes
   | ResFnExpDecay coefs ->
@@ -438,11 +458,12 @@ let init_vec_for neqs t0 resfn =
     let vec'0 = Carray.of_carray coefs in
     Carray.mapi (fun i vec0_i -> -. coefs.{i} *. vec0.{i}) vec'0;
     vec0, vec'0
+  | ResFnDie (_, resfn) -> init_vec_for neqs t0 resfn
 
 let gen_model () =
   let neqs  = min 10 (gen_pos ()) in
-  let resfn = gen_resfn neqs () in
   let t0 = gen_t0 () in
+  let resfn = gen_resfn t0 neqs () in
   let vec0, vec'0  = init_vec_for neqs t0 resfn in
   let neqs  = Carray.length vec0 in
   let roots = gen_roots t0 () in
@@ -567,6 +588,16 @@ let fixup_cmd ((diff, model) as ctx) = function
    the state of the model.  *)
 
 let gen_cmd =
+  let _ () =
+    (* This is a no-op that causes the compiler to direct you here whenever you
+       add a new kind of command.  Once you finish adding a generator for a
+       command, add that command's case to this match.  *)
+    match failwith "oops" with
+    | SolveNormal _ | ReInit _ | SolveNormalBadVector _
+    | CalcIC_Y _ | CalcIC_YaYd' _ | GetRootInfo | GetNRoots | SetVarTypes
+    | SetSuppressAlg _ | SetAllRootDirections _ | SetRootDirection _
+    -> ()
+  in
   let gen_solve_normal model =
     let t =
       match model.next_query_time with
@@ -595,64 +626,72 @@ let gen_cmd =
     if n <= k then n-1
     else n
   in
-  let cases =
-    [| gen_solve_normal;
-       gen_reinit_params;
-       (fun model ->
-          match gen_solve_normal model with
-          | (model, SolveNormal t) ->
-            (model, SolveNormalBadVector
-               (t, (gen_nat_avoiding (Carray.length model.vec))))
-          | _ -> assert false);
-       (fun model -> (model, GetRootInfo));
-       (fun model -> (model, GetNRoots));
-       (fun model -> (model, SetVarTypes));
-       (fun model ->
-          (* 20% of the time, we (may) generate an incorrectly sized array.  *)
-          let size = if Random.int 100 < 20 then gen_nat ()
-                     else Array.length model.roots
-          in
-          let dirs = gen_array ~size:size gen_root_direction ()
-          in (model, SetRootDirection dirs));
-       (fun model -> (model, SetAllRootDirections (gen_root_direction ())));
-       (fun model ->
-          match model.resfn with
-          | ResFnLinear _ | ResFnExpDecay _ ->
-            let t = gen_query_time (model.last_query_time +. discrete_unit) ()
-            and gen_ic_buf_y, gen_ic_buf_y' =
-              let b () = GiveBadVector
-                          (gen_nat_avoiding (Carray.length model.vec))
-              and c () = GetCorrectedIC
-              and d () = Don'tGetCorrectedIC in
-              gen_weighted_choice
-                [| (30, (c,c));  (10, (c,d));  (10, (c,b));
-                   (10, (d,c));  ( 5, (d,d));  (10, (d,b));
-                   (10, (b,c));  (10, (b,d));  ( 5, (b,b)); |]
-                ()
-            in
-            let ic_buf_y  = gen_ic_buf_y ()
-            and ic_buf_y' = gen_ic_buf_y' () in
-            (model, CalcIC_YaYd' (t, ic_buf_y, ic_buf_y')));
-       (fun model ->
-          (* ic_calc_y doesn't work on ResFnLinear. *)
-          match model.resfn with
-          | ResFnLinear _ -> (model, GetRootInfo)
-          | _ ->
-            let t = gen_query_time (model.last_query_time +. discrete_unit) ()
-            and rand = Random.int 100 in
-            let ic_buf =
-              (* With 40% probability, don't receive corrected vector.
-                 With 10% probability, pass in bad vector.  *)
-              if rand < 40 then Don'tGetCorrectedIC
-              else if rand < 50
-              then GiveBadVector (gen_nat_avoiding (Carray.length model.vec))
-              else GetCorrectedIC
-            in
-            (model, CalcIC_Y (t, ic_buf)));
-       (fun model -> model, SetSuppressAlg (gen_bool ()));
-    |]
+  let gen_calc_ic_ya_yd' model =
+    let rec go = function
+      | ResFnLinear _ | ResFnExpDecay _ ->
+        let t = gen_query_time (model.last_query_time +. discrete_unit) ()
+        and gen_ic_buf_y, gen_ic_buf_y' =
+          let b () = GiveBadVector
+              (gen_nat_avoiding (Carray.length model.vec))
+          and c () = GetCorrectedIC
+          and d () = Don'tGetCorrectedIC in
+          gen_weighted_choice
+            [| (30, (c,c));  (10, (c,d));  (10, (c,b));
+               (10, (d,c));  ( 5, (d,d));  (10, (d,b));
+               (10, (b,c));  (10, (b,d));  ( 5, (b,b)); |]
+            ()
+        in
+        let ic_buf_y  = gen_ic_buf_y ()
+        and ic_buf_y' = gen_ic_buf_y' () in
+        (model, CalcIC_YaYd' (t, ic_buf_y, ic_buf_y'))
+      | ResFnDie (_, resfn) -> go resfn
+    in go model.resfn
+  and gen_calc_ic_y model =
+    let rec go = function
+      | ResFnLinear _ ->
+        (* ic_calc_y doesn't work on ResFnLinear. *)
+        (model, GetRootInfo)
+      | ResFnDie (_, resfn) -> go resfn
+      | ResFnExpDecay _ ->
+        let t = gen_query_time (model.last_query_time +. discrete_unit) ()
+        and rand = Random.int 100 in
+        let ic_buf =
+          (* With 40% probability, don't receive corrected vector.
+             With 10% probability, pass in bad vector.  *)
+          if rand < 40 then Don'tGetCorrectedIC
+          else if rand < 50
+          then GiveBadVector (gen_nat_avoiding (Carray.length model.vec))
+          else GetCorrectedIC
+        in
+        (model, CalcIC_Y (t, ic_buf))
+    in go model.resfn
   in
-  fun model -> gen_choice cases model
+  fun model ->
+    gen_choice
+      [| gen_solve_normal;
+         gen_reinit_params;
+         (fun model ->
+            match gen_solve_normal model with
+            | (model, SolveNormal t) ->
+              (model, SolveNormalBadVector
+                 (t, (gen_nat_avoiding (Carray.length model.vec))))
+            | _ -> assert false);
+         (fun model -> (model, GetRootInfo));
+         (fun model -> (model, GetNRoots));
+         (fun model -> (model, SetVarTypes));
+         (fun model ->
+            (* 20% of the time, we (may) choose an incorrect size.  *)
+            let size = if Random.int 100 < 20 then gen_nat ()
+              else Array.length model.roots
+            in
+            let dirs = gen_array ~size:size gen_root_direction ()
+            in (model, SetRootDirection dirs));
+         (fun model -> (model, SetAllRootDirections (gen_root_direction ())));
+         gen_calc_ic_ya_yd';
+         gen_calc_ic_y;
+         (fun model -> model, SetSuppressAlg (gen_bool ()));
+      |]
+      model
 
 
 let shrink_roots t0 =
@@ -685,6 +724,11 @@ let shrink_model model cmds =
     let model = { model with last_query_time = t; last_tret = t; t0 = t; } in
     (model, fixup_list fixup_cmd (model_nohint, model) cmds)
   in
+  (match model.resfn with
+   | ResFnDie (_, resfn) ->
+     Fstream.singleton ({ model with resfn = resfn}, cmds)
+   | _ -> Fstream.nil)
+  @@
   Fstream.map (update_time model cmds) (shrink_t0 model.t0)
   @@ Fstream.map (update_roots model cmds) (shrink_roots model.t0 model.roots)
 
@@ -790,9 +834,10 @@ let shrink_neqs model cmds =
              }
     | cmd -> cmd
   in
-  let copy_resfn_drop i = function
+  let rec copy_resfn_drop i = function
     | ResFnLinear slopes -> ResFnLinear (carray_drop_elem slopes i)
     | ResFnExpDecay coefs -> ResFnExpDecay (carray_drop_elem coefs i)
+    | ResFnDie (t, resfn) -> ResFnDie (t, copy_resfn_drop i resfn)
   in
   let drop_eq i =
     let model =
