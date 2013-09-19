@@ -617,7 +617,7 @@ CAMLprim void IDATYPE(reinit)(value vdata, value t0, value y0, value yp0)
     CHECK_FLAG("IDAReInit", flag);
 
 #if SAFETY_CHECKS
-    IDA_SET_SAFETY_FLAGS(vdata, 0);
+    IDA_MASK_SAFETY_FLAGS(vdata, IDA_SAFETY_FLAG_REINIT_KEEPS);
 #endif
 
     CAMLreturn0;
@@ -678,7 +678,7 @@ static value solve (value vdata, value nextt, value vy, value vyp, int onestep)
     }
 
 #if SAFETY_CHECKS
-    IDA_ADD_SAFETY_FLAG (vdata, IDA_SAFETY_FLAG_SOLVING);
+    IDA_SET_SAFETY_FLAG (vdata, IDA_SAFETY_FLAG_SOLVING);
 #endif
 
     /* Hmm...should this go in the production code or not?  */
@@ -756,6 +756,10 @@ CAMLprim void IDATYPE(set_id) (value vida_mem, value vid)
     RELINQUISH_NVECTORIZEDVAL (id);
     CHECK_FLAG("IDASetId", flag);
 
+#if SAFETY_CHECKS
+    IDA_SET_SAFETY_FLAG (vida_mem, IDA_SAFETY_FLAG_ID_SET);
+#endif
+
     CAMLreturn0;
 }
 
@@ -824,6 +828,10 @@ CAMLprim void IDATYPE(calc_ic_ya_ydp)(value vida_mem, value y, value yp,
     flag = IDASetId (ida_mem, id);
     RELINQUISH_NVECTORIZEDVAL (id);
     CHECK_FLAG ("IDASetId", flag);
+
+#if SAFETY_CHECKS
+    IDA_SET_SAFETY_FLAG (vida_mem, IDA_SAFETY_FLAG_ID_SET);
+#endif
 
     calc_ic (ida_mem, vida_mem, IDA_YA_YDP_INIT, Double_val (tout1), y, yp);
 

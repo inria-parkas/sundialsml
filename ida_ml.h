@@ -60,25 +60,50 @@ enum ida_index {
 #define IDA_BANDJACFN_FROM_ML(v) (Field((v), RECORD_IDA_SESSION_BANDJACFN))
 
 #if SAFETY_CHECKS
-#define IDA_SAFETY_FLAGS(v)    Int_val(Field((v), \
-					     RECORD_IDA_SESSION_SAFETY_FLAGS))
-#define IDA_SET_SAFETY_FLAGS(v, f)				\
-    Store_field ((v), RECORD_IDA_SESSION_SAFETY_FLAGS,		\
-		 Val_int ((f)))
-#define IDA_ADD_SAFETY_FLAG(v, f)				\
-    Store_field ((v), RECORD_IDA_SESSION_SAFETY_FLAGS,		\
-		 Val_int ((IDA_SAFETY_FLAGS((v)) | (f))))
+
+/* Get the values of all flags in one go.  */
+#define IDA_SAFETY_FLAGS(v)  \
+    Int_val(Field((v), RECORD_IDA_SESSION_SAFETY_FLAGS))
+
+/* Get the value of a particular flag or flags.  */
+#define IDA_TEST_SAFETY_FLAG(v, f) (IDA_SAFETY_FLAGS(v) & (f))
+
+/* Specify the values of all flags in one go.  */
+#define IDA_WRITE_SAFETY_FLAGS(v, f) \
+    Store_field ((v), RECORD_IDA_SESSION_SAFETY_FLAGS, Val_int ((f)))
+
+/* This is like &=.  Set all flags to 0 except those set in m.  */
+#define IDA_MASK_SAFETY_FLAGS(v, m) \
+    IDA_WRITE_SAFETY_FLAGS(v, IDA_SAFETY_FLAGS (v) & (m))
+
+/* This is like |=.  Set a particular flag or flags to 1.  */
+#define IDA_SET_SAFETY_FLAG(v, m)				\
+    IDA_WRITE_SAFETY_FLAGS(v, IDA_SAFETY_FLAGS(v) | (m))
+
+/* This is like &= with ~.  Set a particular flag or flags to 0.  */
+#define IDA_UNSET_SAFETY_FLAG(v, f)				\
+    IDA_WRITE_SAFETY_FLAGS(v, IDA_SAFETY_FLAGS(v) & ~(m))
+
 #else
 /* All uses of the safety flags field must be guarded by #if SAFETY_CHECKS.
    If you see BUG__SAFETY_CHECKS_IS_FALSE, it means you forgot that guard.  */
-#define IDA_SAFETY_FLAGS(_) BUG__SAFETY_CHECKS_IS_FALSE
-#define IDA_SET_SAFETY_FLAGS(_,__) BUG__SAFETY_CHECKS_IS_FALSE
+#define IDA_SAFETY_FLAGS BUG__SAFETY_CHECKS_IS_FALSE
+#define IDA_TEST_SAFETY_FLAGS BUG__SAFETY_CHECKS_IS_FALSE
+#define IDA_WRITE_SAFETY_FLAGS BUG__SAFETY_CHECKS_IS_FALSE
+#define IDA_MASK_SAFETY_FLAGS BUG__SAFETY_CHECKS_IS_FALSE
+#define IDA_SET_SAFETY_FLAG BUG__SAFETY_CHECKS_IS_FALSE
+#define IDA_UNSET_SAFETY_FLAG BUG__SAFETY_CHECKS_IS_FALSE
 #endif
 
 /* Flags kept in IDA_SAFETY_FLAGS.  There must be no more than 31 of them.
    All flags must be 0 for a new session.  */
 enum ida_safety_flags {
     IDA_SAFETY_FLAG_SOLVING = 1,	/* IDASolve() has been called.  */
+    IDA_SAFETY_FLAG_ID_SET = 2,		/* IDASetId() has been called. */
+
+    /* Set of flags that IDAReInit() doesn't change.  */
+    IDA_SAFETY_FLAG_REINIT_KEEPS =
+      IDA_SAFETY_FLAG_ID_SET
 };
 
 enum ida_integrator_stats_index {
