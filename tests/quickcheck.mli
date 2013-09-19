@@ -10,6 +10,9 @@ val size : int ref
     [size], and returns.  *)
 val with_size : int -> (unit -> 'a) -> 'a
 
+(** Generate a boolean.  *)
+val gen_bool : unit -> bool
+
 (** Generate a non-negative integer.  Suitable for deciding the size of arrays,
     lists, etc. to generate.  *)
 val gen_nat : unit -> int

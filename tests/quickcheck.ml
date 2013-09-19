@@ -14,6 +14,7 @@ let with_size s f =
     size := old_size;
     f ()
 
+let gen_bool () = Random.bool ()
 let gen_nat () = Random.int (max 1 !size)
 let gen_pos () = gen_nat () + 1
 let gen_neg () = - gen_pos ()
