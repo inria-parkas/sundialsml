@@ -96,6 +96,7 @@ and cmd = SolveNormal of float
         | ReInit of reinit_params
         | SetVarTypes
         | CalcIC_YaYd' of float * ic_buf * ic_buf
+        | SetSuppressAlg of bool
 and script = model * cmd list
 (* When the model is shrunk, the commands have to be fixed up so that we don't
    run commands whose outcomes are unpredictable.  In most cases the model
@@ -322,18 +323,25 @@ let model_cmd model = function
   | CalcIC_YaYd' (tout1, ic_buf_y, ic_buf_y') ->
     (match ic_buf_y, ic_buf_y' with
      | GiveBadVector _, _ | _, GiveBadVector _ -> Exn (Invalid_argument "")
-     | _, _ when model.solving -> Exn Ida.IllInput
+     | _, _ when model.solving ->
+       (* Right now, the binding will set the var types before invoking
+          IDACalcIC().  *)
+       model.vartypes_set <- true;
+       Exn Ida.IllInput
      | GetCorrectedIC, Don'tGetCorrectedIC ->
        model.vartypes_set <- true;
        carray model.vec
      | Don'tGetCorrectedIC, GetCorrectedIC ->
        model.vartypes_set <- true;
        carray model.vec'
-     | Don'tGetCorrectedIC, Don'tGetCorrectedIC -> Unit
+     | Don'tGetCorrectedIC, Don'tGetCorrectedIC ->
+       model.vartypes_set <- true;
+       Unit
      | GetCorrectedIC, GetCorrectedIC ->
        model.vartypes_set <- true;
        Aggr [carray model.vec; carray model.vec']);
   | SetVarTypes -> model.vartypes_set <- true; Unit
+  | SetSuppressAlg _ -> if model.vartypes_set then Unit else Exn Ida.IllInput
   | SetAllRootDirections dir ->
     if Array.length model.roots = 0
     then Exn Ida.IllInput
@@ -519,6 +527,7 @@ let fixup_cmd ((diff, model) as ctx) = function
     end
   | SolveNormalBadVector (t, n) when n = Carray.length model.vec ->
     ((diff, model), SolveNormalBadVector (t, if n = 0 then 1 else (n-1)))
+  | SetSuppressAlg _ as cmd -> (ctx, cmd)
   | CalcIC_Y (t, ic_buf) ->
     (* FIXME: is it OK to perform CalcIC_Y multiple times?  What about with an
        intervening solve?  Without an intervening solve?  *)
@@ -640,6 +649,7 @@ let gen_cmd =
               else GetCorrectedIC
             in
             (model, CalcIC_Y (t, ic_buf)));
+       (fun model -> model, SetSuppressAlg (gen_bool ()));
     |]
   in
   fun model -> gen_choice cases model
@@ -753,7 +763,7 @@ let shrink_cmd ((diff, model) as ctx) cmd =
     Fstream.map
       (fun dirs -> (ctx, SetRootDirection dirs))
       (shrink_array shrink_root_direction ~shrink_size:false dirs)
-  | GetRootInfo | GetNRoots | SetVarTypes -> Fstream.nil
+  | GetRootInfo | GetNRoots | SetVarTypes | SetSuppressAlg _ -> Fstream.nil
 
 let shrink_cmds model =
   shrink_1pass_list shrink_cmd fixup_cmd (model_nohint, model)

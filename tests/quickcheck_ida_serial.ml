@@ -163,6 +163,7 @@ let expr_of_cmd_impl model = function
        <:expr<Ida.set_var_types session (Ida.VarTypes.of_array
               $expr_array (List.map (fun _ -> _d) (enum 1 n))$);
               Unit>>)
+  | SetSuppressAlg b -> <:expr<Ida.set_suppress_alg session $`bool:b$; Unit>>
   | ReInit params ->
     let roots =
       match params.reinit_roots with
