@@ -10,23 +10,28 @@ The code
   type 'a foo = Foo of ('a, int) bar
   deriving (pretty, expr_of)
 
-generates
+defines the type foo and the functions
+
+  pp_foo : 'a pp -> 'a foo pp                   (* pretty-printer for foo *)
+  expr_of_foo : ('a -> expr) -> 'a foo -> expr  (* reifier for foo *)
+
+where pp is the pretty-printer type defined in pprint.mli (which see; the other
+pretty-printers defined there like show are also derived as show_foo).  The
+type foo takes a type parameter, so the pp_foo and expr_of_foo take one
+parameter each as well.  In general, a type with n parameters will have a
+pretty-printer/reifier with n arguments.
+
+If you want to derive the functions for a type that is already defined
+somewhere else, then you can use the external_types keyword, like:
 
   open Pprint
   open Expr_of
-  type 'a foo = Foo of ('a, int) bar | Bar
+  type 'a foo = Foo of ('a, int) bar
+  deriving external_types (pretty, expr_of)
 
-  let pp_foo pp0 ?(prec=0) fmt = function
-    | Foo x -> pp_string_noquote fmt "Foo "; pp0 fmt x
-    | Bar -> pp_string_noquote fmt "Bar"
-  let expr_of expr_of_'a = function
-    | Foo x -> <:expr<Foo $expr_of_'a x$>>
-
-The let definitions shown here are abridged.  The extension generates more
-complicated code to ensure that it's more polymorphic and robust.  It also
-generates not just pp_foo but also show_foo, ppout_foo, and so on for every
-flavor of pretty-printer defined in pprint.mli (see that file's comment on the
-pp type).
+This defines the functions pp_foo and expr_of_foo as before, but the type
+definition is erased from the preprocessed program source, so if foo is defined
+in a different module, then the type is not re-defined.
 
 "open Pprint" and "open Expr_of" are mandatory.  If the definition of foo
 refers to another type baz, for example, the generated pretty-printer for foo
@@ -39,20 +44,23 @@ for expr_of.
 
 [More Detailed Semantics]
 
-<type def>
+type t1 = ...
+and  t2 = ...
 deriving pretty
 
-<type def>
+type t1 = ...
+and  t2 = ...
 deriving expr_of
 
-<type def>
+type t1 = ...
+and  t2 = ...
 deriving (pretty, expr_of)
 
   These constructs derive just the pretty-printer, just expr_of, and both the
   pretty-printer and expr_of, respectively, for the types that are defined in
-  the <type def>.
+  the type definitions that appear just before the "deriving" keyword.
 
-  If <type def> refers to a type t that <type def> itself does not define, then
+  If the type definition refers to a type t that is defined elsewhere, then
   the generated pretty-printer uses a function name pp_t to print that type,
   and the generated expr_of uses expr_of_t to reify that type.  It is up to the
   user to make sure that functions of those names are in scope.  If the type t
@@ -60,19 +68,22 @@ deriving (pretty, expr_of)
   and Foo.expr_of_t, respectively.  As an exception, Lazy.t is handled by
   pp_lazy_t and expr_of_lazy_t (see the ~alias option below).
 
-<type def>
+type t1 = ...
+and  t2 = ...
 deriving external_types pretty
 
-<type def>
+type t1 = ...
+and  t2 = ...
 deriving external_types expr_of
 
-<type def>
+type t1 = ...
+and  t2 = ...
 deriving external_types (pretty, expr_of)
 
   "deriving external_types" defines the pretty-printers and/or expr_of but
-  eliminates the <type def> from the preprocessed source code.  This is useful
-  for deriving from types that are defined in a different module, and you can't
-  or don't want to modify that module.
+  eliminates the type definitions from the preprocessed source code.  This is
+  useful for deriving from types that are defined in a different module, and
+  you can't or don't want to modify that module.
 
   For example, option is defined in the Pervasives module, and you can't modify
   it.  But you can do
