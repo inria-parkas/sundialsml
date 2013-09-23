@@ -3,7 +3,7 @@ OCaml interface to Sundials (-CVODE and -IDA)
 
 Timothy Bourke (Inria), Jun Inoue (Inria), and Marc Pouzet (LIENS)
 
-Released under a GPL2 license, see LICENSE.
+Released under a BSD 2-Clause license, see LICENSE.
 
 Please send feedback and bug reports to tim@tbrk.org.
 
