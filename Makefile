@@ -83,21 +83,6 @@ cvode_ml_ba.o: cvode_ml_nvec.c
 cvode_ml_nvec.o: cvode_ml_nvec.c
 	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
 
-ida_nvector.mli:
-	$(SED) \
-	-e "/^type \(val_array\|der_array\) =/d"			\
-	-e "s/ session\( \|\$\)/ 'a session\1/g"			\
-	-e "s/\([ (]\)\([^ ]*\) jacobian_arg\([ )]\|\$\)/\1(\2, 'a) jacobian_arg\3/g" \
-	-e "s/\([ (]\)val_array\([ )]\|\$\)/\1'a\2/g"			\
-	-e "s/\([ (]\)der_array\([ )]\|\$\)/\1'a\2/g"			\
-	-e "s/\([ (]\)nvec\([ )]\|\$\)/\1'a nvector\2/g"		\
-	-e "s/\([ (]\)solve_arg\([ )]\|\$\)/\1'a solve_arg\2/g"		\
-	-e "s/\([ (]\)single_tmp\([ )]\|\$\)/\1'a single_tmp\2/g"	\
-	-e "s/\([ (]\)triple_tmp\([ )]\|\$\)/\1'a triple_tmp\2/g"	\
-	-e "s/^\(type 'a nvector = \).*/\1'a Nvector.nvector/"		\
-	-e "/(\*ENDINTRO\*)/r ida_nvector.doc"			\
-	-e "/^(\*STARTINTRO\*)/,/(\*ENDINTRO\*)/d"				\
-	$< > $@
 ida_ml.o: ida_ml.c
 	$(CC) -I $(OCAML_INCLUDE) $(IDA_CFLAGS) -o $@ -c $<
 ida_ml_ba.o: ida_ml_nvec.c
