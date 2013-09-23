@@ -424,6 +424,10 @@ let minimize ?pp_input ?(pp_formatter=Format.err_formatter) shrink prop x res =
       else Some (x, res)
     in
     try
+      if trace then
+        (Format.fprintf pp_formatter "@[<2>Shrinking:@\n";
+         pp_input pp_formatter x;
+         Format.fprintf pp_formatter "@]@\n");
       match Fstream.find_some failure (shrink x) with
       | None -> (ct, x, reason)
       | Some (x, reason) -> go (ct+1) x reason
