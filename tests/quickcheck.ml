@@ -411,14 +411,16 @@ let minimize ?pp_input ?(pp_formatter=Format.err_formatter) shrink prop x res =
   if trace then Format.pp_print_char pp_formatter '\n';
   let rec go ct x reason =
     let failure x =
-      let res = test_in_sandbox prop x in
       if trace then
         (Format.fprintf pp_formatter "@[<2>Trying:@\n";
          pp_input pp_formatter x;
-         Format.fprintf pp_formatter "@]@\n -> %s@."
-           (if isOK res then "triggers bug"
-            else "not a counterexample"));
-      if res = OK then None
+         Format.fprintf pp_formatter "@]@\n");
+      let res = test_in_sandbox prop x in
+      if trace then
+        (Format.fprintf pp_formatter " -> %s@."
+           (if isOK res then "not a counterexample"
+            else "triggers bug"));
+      if isOK res then None
       else Some (x, res)
     in
     try
