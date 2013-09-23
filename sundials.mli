@@ -11,7 +11,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(** Generic definitions for the Sundials suite
+(** Generic definitions for the Sundials suite.
 
  @version VERSION()
  @author Timothy Bourke (Inria)

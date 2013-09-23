@@ -11,7 +11,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(** {!Nvector.nvector}s for standard arrays and one-dimensional bigarrays
+(** {!Nvector.nvector}s for standard arrays and one-dimensional bigarrays.
 
   @version VERSION()
   @author Timothy Bourke (Inria)

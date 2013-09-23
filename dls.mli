@@ -12,7 +12,7 @@
 (***********************************************************************)
 
 (**
-  {2 Data structures for Direct Linear Solvers}
+  {2 Data structures for Direct Linear Solvers.}
   @cvode <node9#s:dls>  The DLS Modules
  *)
 

@@ -157,7 +157,7 @@ or:
 
 {2:modules Modules}
 
-{!modules: Sundials}
+{!modules: Sundials Dls}
 {!modules: Nvector Nvector_array}
 {!modules: Cvode Cvode_serial Cvode_nvector}
 {!modules: Ida Ida_serial}

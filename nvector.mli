@@ -21,7 +21,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(** Define abstract NVectors using imperative or functional operations
+(** Define abstract NVectors using imperative or functional operations.
 
   The Sundials solvers are written in a data-independent manner. They all
   operate on generic vectors through a set of operations defined by the
