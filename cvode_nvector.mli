@@ -50,7 +50,7 @@ include module type of Cvode
     {[let y = Nvector_array.wrap [| 0.0; 0.0; 0.0 |] ]}
     The length of this vector determines the problem size.    
     + {b Create and initialize a solver session}
-    {[let s = Cvode.init Cvode.Adams Cvode.Functional f (2, g) y]}
+    {[let s = Cvode.init Cvode.Adams Cvode.Functional f (2, g) (3, y)]}
     This will initialize a specific linear solver and the root-finding
     mechanism, if necessary.
     + {b Specify integration tolerances (optional)}, e.g.
