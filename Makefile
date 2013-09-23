@@ -59,26 +59,6 @@ sundials_ida.cma sundials_ida.cmxa: $(COMMON_MLOBJ) $(COMMON_MLOBJ:.cmo=.cmx) $(
 	    -o sundials_ida -oc mlsundials_ida $^ \
 	    $(OCAML_IDA_LIBLINK)
 
-# cvode_nvector.mli was once generated from cvode_serial.mli with the following
-# rule because their interface coincided.  But they don't match completely any
-# more, so this rule was changed to not run automatically.  This target should
-# be invoked manually, only by someone who knows what s/he's doing.
-cvode_nvector.mli:
-	$(SED) \
-	-e "/^type \(val_array\|der_array\) =/d"			\
-	-e "s/ session\( \|\$\)/ 'a session\1/g"			\
-	-e "s/\([ (]\)\([^ ]*\) jacobian_arg\([ )]\|\$\)/\1(\2, 'a) jacobian_arg\3/g" \
-	-e "s/\([ (]\)val_array\([ )]\|\$\)/\1'a\2/g"			\
-	-e "s/\([ (]\)der_array\([ )]\|\$\)/\1'a\2/g"			\
-	-e "s/\([ (]\)nvec\([ )]\|\$\)/\1'a nvector\2/g"		\
-	-e "s/\([ (]\)solve_arg\([ )]\|\$\)/\1'a solve_arg\2/g"		\
-	-e "s/\([ (]\)single_tmp\([ )]\|\$\)/\1'a single_tmp\2/g"	\
-	-e "s/\([ (]\)triple_tmp\([ )]\|\$\)/\1'a triple_tmp\2/g"	\
-	-e "s/^\(type 'a nvector = \).*/\1'a Nvector.nvector/"		\
-	-e "/(\*ENDINTRO\*)/r cvode_nvector.doc"			\
-	-e "/^(\*STARTINTRO\*)/,/(\*ENDINTRO\*)/d"			\
-	cvode_serial.mli > $@
-
 # There three sets of flags:
 #   - one for CVODE-specific files
 #   - one for IDA-specific files
@@ -180,7 +160,7 @@ ocamlfind: sundials_cvode.cma sundials_cvode.cmxa META
 # ##
 
 depend: .depend
-.depend: cvode_nvector.mli
+.depend:
 	$(OCAMLDEP) $(INCLUDES) *.mli *.ml > .depend
 	$(CC) -MM $(CFLAGS) *.c >> .depend
 

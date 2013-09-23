@@ -29,7 +29,6 @@ include module type of Cvode
   and type Directbandmatrix.t = Dls.Directbandmatrix.t
   and type Densematrix.t = Dls.Densematrix.t
 
-(*STARTINTRO*)
 (** Serial nvector interface to the CVODE solver.
  
   Serial vectors are passed between Sundials and OCaml programs as
@@ -75,7 +74,6 @@ t := t' + 0.1]}
 
     @cvode <node5#ss:skeleton_sim> Skeleton of main program
  *)
-(*ENDINTRO*)
 type session
 
 (** The type of vectors passed to the solver. *)
@@ -108,7 +106,7 @@ type root_val_array = Sundials.Roots.val_array
     - [nroots]  specifies the number of root functions (zero-crossings).
     - [g]       calculates the values of the root functions.
     - [y0]      is a vector of initial values, the size of this vector
-                determines the number of equations in  the session, see
+                determines the number of equations in the session, see
                 {!Sundials.Carray.t}.
 
     The start time defaults to 0. It can be set manually by instead using
@@ -616,7 +614,7 @@ type 't jacobian_arg =
   {
     jac_t   : float;        (** The independent variable. *)
     jac_y   : val_array;    (** The dependent variable vector. *)
-    jac_fy  : val_array;    (** The derivative vector (i.e. f(t, y)). *)
+    jac_fy  : val_array;    (** The derivative vector (i.e., f(t, y)). *)
     jac_tmp : 't            (** Workspace data,
                                 either {!single_tmp} or {!triple_tmp}. *)
   }

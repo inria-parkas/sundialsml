@@ -24,6 +24,7 @@
 include module type of Cvode
   with type Roots.t = Cvode.Roots.t
   and type RootDirs.t = Cvode.RootDirs.t
+  and type solver_result = Cvode.solver_result
   and type Bandmatrix.t = Dls.Bandmatrix.t
   and type Directbandmatrix.t = Dls.Directbandmatrix.t
   and type Densematrix.t = Dls.Densematrix.t
@@ -74,12 +75,6 @@ type 'a session
 (** The type of vectors passed to the solver. *)
 type 'a nvector = 'a Nvector.nvector
 
-(** The type of vectors containing dependent variable values, passed from the
-   solver to callback functions. *)
-
-(** The type of vectors containing derivative values, passed from the
-   solver to callback functions. *)
-
 (** The type of vectors containing detected roots (zero-crossings). *)
 type root_array = Sundials.Roots.t
 
@@ -102,7 +97,7 @@ type root_val_array = Sundials.Roots.val_array
                 variables). There is no operation for demanding the length
                 of an 'a nvector.
     - [y0]      is a vector of initial values, the size of this vector
-                determines the number of equations in  the 'a session, see
+                determines the number of equations in the session, see
                 {!Sundials.Carray.t}.
 
     The start time defaults to 0. It can be set manually by instead using
@@ -112,7 +107,7 @@ type root_val_array = Sundials.Roots.val_array
     linear solver function, and CVodeSStolerances (with default values for
     relative tolerance of 1.0e-4 and absolute tolerance as 1.0e-8; these can be
     changed with {!ss_tolerances}, {!sv_tolerances}, or {!wf_tolerances}).
-    It does everything necessary to initialize a CVODE 'a session; the
+    It does everything necessary to initialize a CVODE session; the
     {!solve_normal} or {!solve_one_step} functions can be called directly
     afterward.
 
@@ -211,7 +206,7 @@ val wf_tolerances : 'a session -> ('a -> 'a -> unit) -> unit
    in t.
 
    The arguments are:
-   - [s] a 'a session with the solver.
+   - [s] a session with the solver.
    - [tout] the next time at which a computed solution is desired.
    - [yout] a vector to store the computed solution. The same vector as was
    passed to {!init} can be used again for this argument.
@@ -248,7 +243,7 @@ val solve_one_step : 'a session -> float -> 'a nvector -> float * solver_result
   appended to ([trunc] = [false]).
 
   The error file is closed if set_error_file is called again, or otherwise when
-  the 'a session is garbage collected.
+  the session is garbage collected.
    
   @cvode <node5#sss:optin_main> CVodeSetErrFile
  *)
@@ -584,7 +579,7 @@ val get_dky : 'a session -> float -> int -> 'a nvector -> unit
 (** {2 Reinitialization} *)
 
 (**
-  [reinit s t0 y0] reinitializes the solver 'a session [s] with a new time [t0] and
+  [reinit s t0 y0] reinitializes the solver session [s] with a new time [t0] and
   new values for the variables [y0].
 
   @cvode <node5#sss:cvreinit> CVodeReInit
@@ -602,15 +597,15 @@ type 'a triple_tmp = 'a * 'a * 'a
  
   @cvode <node5#ss:djacFn> Dense Jacobian function
   @cvode <node5#ss:bjacFn> Banded Jacobian function
-  @cvode <node5#ss:jtimesFn> Product Jacobian function
+  @cvode <node5#ss:jtimesFn> Jacobian-times-vector function
   @cvode <node5#ss:psolveFn> Linear preconditioning function
   @cvode <node5#ss:precondFn> Jacobian preconditioning function
  *)
 type ('t, 'a) jacobian_arg =
   {
     jac_t   : float;        (** The independent variable. *)
-    jac_y   : 'a;    (** The dependent variable vector. *)
-    jac_fy  : 'a;    (** The derivative vector (i.e. f(t, y)). *)
+    jac_y   : 'a;           (** The dependent variable vector. *)
+    jac_fy  : 'a;           (** The derivative vector (i.e., f(t, y)). *)
     jac_tmp : 't            (** Workspace data,
                                 either {!single_tmp} or {!triple_tmp}. *)
   }
@@ -769,7 +764,7 @@ module Spils :
      *)
     type 'a solve_arg =
       {
-        rhs   : 'a;  (** The right-hand side vector, {i r}, of the
+        rhs   : 'a;         (** The right-hand side vector, {i r}, of the
                                 linear system. *)
         gamma : float;      (** The scalar {i g} appearing in the Newton
                                 matrix given by M = I - {i g}J. *)
@@ -841,7 +836,7 @@ module Spils :
               to separate physical structures.
 
       @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
-      @cvode <node5#ss:jtimesFn> Product Jacobian function
+      @cvode <node5#ss:jtimesFn> Jacobian-times-vector function
     *)
     val set_jac_times_vec_fn :
       'a session
@@ -858,7 +853,7 @@ module Spils :
       [NULL].
 
       @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
-      @cvode <node5#ss:jtimesFn> Product Jacobian function
+      @cvode <node5#ss:jtimesFn> Jacobian-times-vector function
     *)
     val clear_jac_times_vec_fn : 'a session -> unit
 
