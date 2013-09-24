@@ -643,7 +643,8 @@ let gen_cmd =
         in
         let ic_buf_y  = gen_ic_buf_y ()
         and ic_buf_y' = gen_ic_buf_y' () in
-        (model, CalcIC_YaYd' (t, ic_buf_y, ic_buf_y'))
+        ({ model with next_query_time = Some t },
+         CalcIC_YaYd' (t, ic_buf_y, ic_buf_y'))
       | ResFnDie (_, resfn) -> go resfn
     in go model.resfn
   and gen_calc_ic_y model =
@@ -663,7 +664,7 @@ let gen_cmd =
           then GiveBadVector (gen_nat_avoiding (Carray.length model.vec))
           else GetCorrectedIC
         in
-        (model, CalcIC_Y (t, ic_buf))
+        ({ model with next_query_time = Some t }, CalcIC_Y (t, ic_buf))
     in go model.resfn
   in
   fun model ->
