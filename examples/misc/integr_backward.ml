@@ -21,7 +21,7 @@ let g t_s y gout =
 
 let y = Cvode.Carray.of_array [| x_i |]
 
-let s = Cvode.init' Cvode.Adams Cvode.Functional f (1, g) y max_sim_t
+let s = Cvode.init Cvode.Adams Cvode.Functional f ~roots:(1, g) ~t0:max_sim_t y
 let rootdata = Cvode.Roots.create 1
 
 let _ = Cvode.set_stop_time s 0.0
@@ -35,7 +35,7 @@ let _ =
   try
     let i = ref 0 in
     while true do
-      let (t', result) = Cvode.one_step s 0.0 y in
+      let (t', result) = Cvode.solve_one_step s 0.0 y in
 
       Printf.printf "\nstep %3d.\n" !i;
       incr i;

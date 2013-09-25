@@ -85,8 +85,8 @@ type root_val_array = Sundials.Roots.val_array
 (** {2 Initialization} *)
 
 (**
-    [init lmm iter f (nroots, g) (neqs, y0)] initializes the CVODE solver and
-    returns a {!session}.
+    [init lmm iter f ~roots:(nroots, g) ~t0:t0 y0] initializes the CVODE solver
+    and returns a {!session}.
     - [lmm]     specifies the linear multistep method, see {!Cvode.lmm}.
     - [iter]    specifies either functional iteration or Newton iteration
                 with a specific linear solver, see {!Cvode.iter}.
@@ -96,12 +96,13 @@ type root_val_array = Sundials.Roots.val_array
     - [neqs]    specifies the number of equations (continuous state
                 variables). There is no operation for demanding the length
                 of an 'a nvector.
+    - [t0]      is the initial value of the independent variable.
     - [y0]      is a vector of initial values, the size of this vector
                 determines the number of equations in the session, see
                 {!Sundials.Carray.t}.
 
-    The start time defaults to 0. It can be set manually by instead using
-    {!init'}.
+    The labeled arguments [roots] and [t0] are both optional and default to
+    [no_roots] (i.e. no root finding is done) and [0.0], respectively.
 
     This function calls CVodeCreate, CVodeInit, CVodeRootInit, an appropriate
     linear solver function, and CVodeSStolerances (with default values for
@@ -112,8 +113,8 @@ type root_val_array = Sundials.Roots.val_array
     afterward.
 
     The right-hand side function [f] is called by the solver to calculate the
-    instantaneous derivative values, it is passed three arguments: [t], [y], and
-    [dy].
+    instantaneous derivative values, and is passed three arguments: [t], [y],
+    and [dy].
     - [t] is the current value of the independent variable,
           i.e., the simulation time.
     - [y] is a vector of dependent-variable values, i.e. y(t).
@@ -146,21 +147,9 @@ val init :
     lmm
     -> iter
     -> (float -> 'a -> 'a -> unit)
-    -> (int * (float -> 'a -> root_val_array -> unit))
-    -> (int * 'a nvector)
-    -> 'a session
-
-(**
-  [init lmm iter f roots (neqs, y0) t0] is the same as init' except that a
-  start time, [t0], can be given explicitly.
- *)
-val init' :
-    lmm
-    -> iter
-    -> (float -> 'a -> 'a -> unit)
-    -> (int * (float -> 'a -> root_val_array -> unit))
-    -> (int * 'a nvector)
-    -> float (* start time *)
+    -> ?roots:(int * (float -> 'a -> root_val_array -> unit))
+    -> ?t0:float
+    -> int * 'a nvector
     -> 'a session
 
 (** Return the number of root functions. *)
@@ -579,12 +568,32 @@ val get_dky : 'a session -> float -> int -> 'a nvector -> unit
 (** {2 Reinitialization} *)
 
 (**
-  [reinit s t0 y0] reinitializes the solver session [s] with a new time [t0] and
-  new values for the variables [y0].
+  [reinit s ~iter_type:iter_type ~roots:roots ~t0:t0 y0] reinitializes the
+  solver session [s] with new values for the variables [y0].
+
+  The labeled arguments are all optional, and if omitted, their current
+  settings are kept.
+
+  [iter_type] sets the nonlinear solver iteration type.  If omitted, the
+  current iteration type will be kept.
+
+  [roots] sets the root functions; see [init] for what each component does.
+  {!no_roots} may be specified to turn off root finding (if the session has
+  been doing root finding until now).  If omitted, the current root functions
+  or lack thereof will be kept.
+
+  [t0] sets the value of the independent variable.  If omitted, the current
+  time value will be kept.
 
   @cvode <node5#sss:cvreinit> CVodeReInit
  *)
-val reinit : 'a session -> float -> 'a nvector -> unit
+val reinit :
+  'a session
+  -> ?iter_type:iter
+  -> ?roots:(int * (float -> 'a -> root_val_array -> unit))
+  -> float
+  -> 'a nvector
+  -> unit
 
 
 (** {2 Linear Solvers} *)

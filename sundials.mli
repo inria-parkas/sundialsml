@@ -146,9 +146,9 @@ module Roots :
     (** Returns the length of an array *)
     val length : t -> int
 
-    (** [get r i] returns [true] if the value of the [i]th element of [r] is
-        either Rising or Falling. *)
-    val get : t -> int -> bool
+    (** [detected r i] returns [true] if the value of the [i]th element of [r]
+        is either Rising or Falling. *)
+    val detected : t -> int -> bool
 
     (** [rising r i] returns [true] if the value of the [i]th element of [r] is
         Rising. *)
@@ -158,8 +158,8 @@ module Roots :
         Falling. *)
     val falling : t -> int -> bool
 
-    (** [get' r i] returns the value of the [i]th element of [r]. *)
-    val get' : t -> int -> root_event
+    (** [get r i] returns the value of the [i]th element of [r]. *)
+    val get : t -> int -> root_event
 
     (** [set r i v] sets the value of the [i]th element of [r]. *)
     val set : t -> int -> root_event -> unit
@@ -167,13 +167,17 @@ module Roots :
     (** [copy r] creates a new array with the contents as [r]. *)
     val copy : t -> t
 
-    (** [set r i v] sets the value of the [i]th element of [r] to Rising if v is
-        true, and to NoRoot otherwise. *)
-    val set_rising : t -> int -> bool -> unit
+    (** [set_noroot r i] sets the value of the [i]th element of [r] to
+        NoRoot.  *)
+    val set_noroot : t -> int -> unit
 
-    (** [set r i v] sets the value of the [i]th element of [r] to Falling if v is
-        true, and to NoRoot otherwise. *)
-    val set_falling : t -> int -> bool -> unit
+    (** [set_rising r i] sets the value of the [i]th element of [r] to
+        Rising.  *)
+    val set_rising : t -> int -> unit
+
+    (** [set_falling r i] sets the value of the [i]th element of [r] to
+        Falling. *)
+    val set_falling : t -> int -> unit
 
     (** Returns 0 for NoRoot, 1 for Rising, and -1 for Falling. *)
     val int_of_root_event : root_event -> int

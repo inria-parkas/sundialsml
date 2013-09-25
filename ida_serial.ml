@@ -142,7 +142,10 @@ let root_init ida (nroots, rootsfn) =
 external set_linear_solver : session -> linear_solver -> unit
     = "c_ida_set_linear_solver"
 
-let init_at_time linsolv resfn (nroots, rootsfn) t0 y y' =
+let init linsolv resfn ?(roots=no_roots) ?(t0=0.) y y' =
+  let (nroots, rootsfn) = roots in
+  if nroots < 0 then
+    raise (Invalid_argument "number of root functions is negative");
   let neqs = Sundials.Carray.length y in
   (* IDA doesn't check if y and y' have the same length, and corrupt memory if
    * they don't.  *)
@@ -173,12 +176,11 @@ let init_at_time linsolv resfn (nroots, rootsfn) t0 y y' =
   Weak.set weakref 0 (Some session);
   (* Now the session is safe to use.  If any of the following fails and raises
      an exception, the GC will take care of freeing ida_mem and backref.  *)
-  c_root_init session nroots;
+  if nroots > 0 then
+    c_root_init session nroots;
   set_linear_solver session linsolv;
   ss_tolerances session 1.0e-4 1.0e-8;
   session
-
-let init linsolv resfn roots y yp = init_at_time linsolv resfn roots 0.0 y yp
 
 let nroots { nroots } = nroots
 let neqs { neqs } = neqs

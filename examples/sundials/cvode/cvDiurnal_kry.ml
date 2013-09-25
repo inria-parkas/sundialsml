@@ -564,10 +564,10 @@ let main () =
   (* Call CVSpgmr to specify the linear solver CVSPGMR 
    * with left preconditioning and the maximum Krylov dimension maxl *)
   let cvode_mem =
-    Cvode.init' Cvode.BDF
+    Cvode.init Cvode.BDF
       (Cvode.Newton
           (Cvode.Spgmr { Cvode.pretype = Cvode.PrecLeft; Cvode.maxl = 0}))
-      (f data) Cvode.no_roots u t0
+      (f data) ~t0:t0 u
   in
   Gc.compact ();
 

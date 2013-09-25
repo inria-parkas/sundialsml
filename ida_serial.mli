@@ -102,21 +102,21 @@ type root_val_array = Sundials.Roots.val_array
 (** {2 Initialization} *)
 
 (**
-    [init linsolv f (nroots, g) y0 y'0] initializes the IDA solver to solve
-    the DAE f t y y' = 0 and returns an {!session}.
+    [init linsolv f ~roots:(nroots, g) ~t0:t0 y0 y'0] initializes the IDA
+    solver to solve the DAE f t y y' = 0 and returns a {!session}.
+
     - [linsolv] is the linear solver to attach to this solver.
     - [f]       is the residual function (see below).
     - [nroots]  specifies the number of root functions (zero-crossings).
     - [g]       calculates the values of the root functions.
+    - [t0]      is the initial value of the independent variable t, which
+                defaults to 0.
     - [y0]      is a vector of initial values for the dependent-variable vector
                 [y].  This vector's size determines the number of equations
                 in the session, see {!Sundials.Carray.t}.
     - [y'0]     is a vector of initial values for [y'], i.e. the derivative
                 of [y] with respect to t.  This vector's size must match the
                 size of [y0].
-
-    The start time defaults to 0. It can be set manually by instead using
-    {!init_at_time}.
 
     This function calls IDACreate, IDAInit, IDARootInit, an appropriate
     linear solver function, and IDASStolerances (with default values for
@@ -146,16 +146,15 @@ type root_val_array = Sundials.Roots.val_array
             the function call, then they must be copied to separate physical
             structures.
 
-    The roots function [g] is called by the solver to calculate the values of
-    root functions (zero-crossing expressions) which are used to detect
-    significant events.  It is passed four arguments [t], [y], [y'], and
+    The roots function [g], if supplied, is called by the solver to calculate
+    the values of root functions (zero-crossing expressions) which are used to
+    detect significant events.  It is passed four arguments [t], [y], [y'], and
     [gout]:
     - [t], [y], [y'] are as for [f].
     - [gout] is a vector for storing the values of g(t, y, y').
-    The {!Ida.no_roots} value can be passed for the [(nroots, g)] argument if
-    root functions are not required.  If the root function raises an exception,
-    the integrator will halt immediately and propagate the exception to the
-    caller.
+    If the labeled argument ~roots is omitted, then no root finding is
+    performed.  If the root function raises an exception, the integrator will
+    halt immediately and propagate the exception to the caller.
 
     {b NB:} [y] and [gout] must no longer be accessed after [g] has returned
             a result, i.e. if their values are needed outside of the function
@@ -171,20 +170,9 @@ type root_val_array = Sundials.Roots.val_array
 val init :
     linear_solver
     -> (float -> val_array -> der_array -> val_array -> unit)
-    -> (int * (float -> val_array -> der_array -> root_val_array -> unit))
-    -> nvec
-    -> nvec
-    -> session
-
-(**
-  [init_at_time linsolv roots t0 y0 y'0] is the same as init except that a
-  start time [t0], can be given explicitly.
- *)
-val init_at_time :
-    linear_solver
-    -> (float -> val_array -> der_array -> val_array -> unit)
-    -> (int * (float -> val_array -> der_array -> root_val_array -> unit))
-    -> float (* start time *)
+    -> ?roots:(int *
+               (float -> val_array -> der_array -> root_val_array -> unit))
+    -> ?t0:float
     -> nvec
     -> nvec
     -> session
@@ -595,15 +583,18 @@ val get_dky : session -> float -> int -> nvec -> unit
 (** {2 Reinitialization} *)
 
 (**
-  [reinit s t0 y0 y'0] reinitializes the solver session [s] with a new time
-  [t0] and new values for the variables [y0].  There are two optional arguments
-  to change the linear solver and the set of root functions.
 
-  [linsolv] sets the linear solver.  If omitted, the current linear solver will
-  be kept.
+  [reinit s ~linsolv:linsolv ~roots:(nroots, g) t0 y0 y'0] reinitializes the
+  solver session [s] with a new time [t0] and new values for the variables
+  [y0].  There are two optional arguments to change the linear solver and the
+  set of root functions.
 
-  [roots] sets the root functions.  {!Ida.no_roots} may be passed in to turn
-  off root finding.  If omitted, the current root functions will be kept.
+  The optional argument [linsolv] sets the linear solver.  If omitted, the
+  current linear solver will be kept.
+
+  The optional argument [roots] sets the root functions; see [init] for what
+  each component does.  {!no_roots} may be passed in to turn off root finding.
+  If omitted, the current root functions will be kept.
 
   @ida <node5#sss:cvreinit> IDAReInit
  *)

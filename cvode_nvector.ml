@@ -116,6 +116,9 @@ external c_init
 
 external c_root_init : 'a session -> int -> unit
     = "c_nvec_cvode_root_init"
+let root_init ida (nroots, rootsfn) =
+  c_root_init ida nroots;
+  ida.rootsfn <- rootsfn
 
 external set_iter_type          : 'a session -> iter -> unit
     = "c_cvode_set_iter_type"
@@ -127,7 +130,8 @@ external ss_tolerances  : 'a session -> float -> float -> unit
 external wf_tolerances  : 'a session -> unit
     = "c_nvec_cvode_wf_tolerances"
 
-let init' lmm iter f (nroots, roots) (neqs, y0) t0 =
+let init lmm iter f ?(roots=no_roots) ?(t0=0.) (neqs, y0) =
+  let (nroots, roots) = roots in
   let weakref = Weak.create 1 in
   let cvode_mem, backref, err_file = c_init weakref lmm iter y0 t0 in
   (* cvode_mem and backref have to be immediately captured in a session and
@@ -160,14 +164,20 @@ let init' lmm iter f (nroots, roots) (neqs, y0) t0 =
   ss_tolerances session 1.0e-4 1.0e-8;
   session
 
-let init lmm iter f roots n_y0 = init' lmm iter f roots n_y0 0.0
-
 let nroots { nroots } = nroots
 let neqs { neqs } = neqs
 
-external reinit
+external c_reinit
     : 'a session -> float -> 'a nvector -> unit
-    = "c_nvec_cvode_reinit"
+    = "c_ba_cvode_reinit"
+let reinit session ?iter_type ?roots t0 y0 =
+  c_reinit session t0 y0;
+  match iter_type with
+  | None -> ()
+  | Some iter_type -> set_iter_type session iter_type;
+  match roots with
+  | None -> ()
+  | Some roots -> root_init session roots
 
 let wf_tolerances s ferrw =
   s.errw <- ferrw;

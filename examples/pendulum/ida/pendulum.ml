@@ -408,7 +408,7 @@ let main () =
 
   if !use_analytical_correction then init_from_xy_vxvy vars vars';
 
-  let ida = Ida.init Ida.Dense residual (1, roots) vars vars' in
+  let ida = Ida.init Ida.Dense residual ~roots:(1, roots) vars vars' in
   Ida.set_all_root_directions ida Ida.RootDirs.Decreasing;
   Ida.ss_tolerances ida 1e-9 1e-9;
   if !use_analytical_jac then Ida.Dls.set_dense_jac_fn ida jac;

@@ -1,10 +1,11 @@
 
 module Cvode = Cvode_serial
 
-let root_dir  = ref Cvode.Increasing
+let root_dir  = ref Cvode.RootDirs.Increasing
 
 let args = [
-    ("-e", Arg.Unit (fun () -> root_dir := Cvode.IncreasingOrDecreasing),
+    ("-e", Arg.Unit
+      (fun () -> root_dir := Cvode.RootDirs.IncreasingOrDecreasing),
      "Use either instead of up()");
 ]
 
@@ -30,7 +31,7 @@ let g t_s y gout =
 
 let y = Cvode.Carray.of_array [| x_i |]
 
-let s = Cvode.init Cvode.Adams Cvode.Functional f (1, g) y
+let s = Cvode.init Cvode.Adams Cvode.Functional f ~roots:(1, g) y
 let rootdata = Cvode.Roots.create 1
 
 let _ = Cvode.set_all_root_directions s !root_dir
@@ -46,7 +47,7 @@ let _ =
   try
     let i = ref 0 in
     while true do
-      let (t', result) = Cvode.one_step s max_sim_t y in
+      let (t', result) = Cvode.solve_one_step s max_sim_t y in
 
       Printf.printf "\nstep %3d.\n" !i;
       incr i;

@@ -1,5 +1,7 @@
 include ../../config
 
+all: sincos.byte sincos_nvec.byte
+
 NVECTOR=
 
 byte.plot: sincos.byte
