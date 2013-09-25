@@ -44,27 +44,29 @@ type real_array2 =
 let make_real_array2 =
   Bigarray.Array2.create Bigarray.float64 Bigarray.c_layout
 
+(* Note the type annotations are redundant because there's already a .mli, but
+   explicit annotations improve performance for bigarrays.  *)
 module Carray =
   struct
     type t = real_array
 
     let kind = Bigarray.float64
     let layout = Bigarray.c_layout
-    let empty = Bigarray.Array1.create kind layout 0
+    let empty : t = Bigarray.Array1.create kind layout 0
 
-    let create = Bigarray.Array1.create kind layout
-    let of_array = Bigarray.Array1.of_array kind layout
+    let create : int -> t = Bigarray.Array1.create kind layout
+    let of_array : float array -> t = Bigarray.Array1.of_array kind layout
 
-    let fill = Bigarray.Array1.fill
+    let fill : t -> float -> unit = Bigarray.Array1.fill
 
     let init size x =
       let a = create size in
       fill a x;
       a
 
-    let length = Bigarray.Array1.dim
+    let length : t -> int = Bigarray.Array1.dim
 
-    let blit = Bigarray.Array1.blit
+    let blit : t -> t -> unit = Bigarray.Array1.blit
 
     let of_carray src =
       let dst = create (length src) in
@@ -79,7 +81,7 @@ module Carray =
         else go (v.{i}::ls) (i-1)
       in go [] (length v - 1)
 
-    let to_array v =
+    let to_array (v : t) =
       let n = length v in
       let a = Array.make n v.{0} in
       for i = 1 to n-1 do
@@ -87,27 +89,27 @@ module Carray =
       done;
       a
 
-    let app f v =
+    let app f (v : t) =
       for i = 0 to (length v - 1) do
         f v.{i}
       done
 
-    let map f v =
+    let map f (v : t) =
       for i = 0 to (length v - 1) do
         v.{i} <- f v.{i}
       done
 
-    let appi f v =
+    let appi f (v : t) =
       for i = 0 to (length v - 1) do
         f i v.{i}
       done
 
-    let mapi f v =
+    let mapi f (v : t) =
       for i = 0 to (length v - 1) do
         v.{i} <- f i v.{i}
       done
 
-    let print_with_time t v =
+    let print_with_time t (v : t) =
       print_time ("", "") t;
       if !extra_precision
       then app (Printf.printf "\t% .15e") v
