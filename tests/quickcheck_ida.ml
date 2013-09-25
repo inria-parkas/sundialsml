@@ -1186,6 +1186,9 @@ let quickcheck_ida ml_file_of_script max_tests =
               ~to_file:!test_failed_file ();
     let exit_status = Unix.system !test_exec_file in
     assert (exit_status = Unix.WEXITED 1);
+    Format.fprintf err
+      "@\n@\nFailed test code saved in %s, compile with:@\n%s@\n"
+      !test_failed_file (!test_compiler ^ " " ^ !test_failed_file);
     Some script
   | Some (script, Falsified stat) ->
     (* Other exit statuses mean the test case crashed.  We'll run it again,
@@ -1195,9 +1198,8 @@ let quickcheck_ida ml_file_of_script max_tests =
     copy_file ~from_file:(!test_exec_file ^ ".ml")
               ~to_file:!test_failed_file
               ();
-    Format.fprintf err "Failed test code saved in %s.@\n@\n[Reason]@\nTest \
-                        code crashed.@\n@\n[Test Case]@\n"
-      !test_failed_file;
+    Format.fprintf err "@\n[Reason]@\nTest \
+                        code crashed.@\n@\n[Test Case]@\n";
     pp_script err script;
     Format.fprintf err "@\n@\n[Program Output]@\n";
     Format.pp_print_flush err ();
@@ -1211,4 +1213,7 @@ let quickcheck_ida ml_file_of_script max_tests =
     Format.fprintf err "@\n[Expected Output]@\n";
     pp_results err (Fstream.to_list (model_run script));
     Format.pp_print_newline err ();
+    Format.fprintf err
+      "@\n@\nFailed test code saved in %s, compile with:@\n%s@\n"
+      !test_failed_file (!test_compiler ^ " " ^ !test_failed_file);
     Some script
