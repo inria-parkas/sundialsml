@@ -216,11 +216,17 @@ let web_rates wdata x y t c rate =
   and bcoef = wdata.bcoef
   in
   Array1.fill rate zero;
-  Carray.appi
-    (fun j c -> Carray.mapi (fun i rate -> rate +. c *. acoef.(i).(j)) rate) c;
-  
+  for j = 0 to Carray.length c - 1 do
+    let c = c.{j} in
+    for i = 0 to Carray.length rate - 1 do
+      rate.{i} <- rate.{i} +. c *. acoef.(i).(j)
+    done
+  done;
+
   let fac = one +. alph *. x *. y in
-  Carray.mapi (fun i rate -> c.{i} *. (bcoef.(i) *. fac +. rate)) rate
+  for i = 0 to Carray.length rate - 1 do
+    rate.{i} <- c.{i} *. (bcoef.(i) *. fac +. rate.{i})
+  done
 
 (*
   This routine computes one block of the interaction terms of the
@@ -237,8 +243,10 @@ let fblock wdata t cdata jx jy cdotdata =
 
 (* Small Vector Kernels *)
 
-let v_sum_prods u p (q : Carray.t) v (w : Carray.t) =
-  Carray.mapi (fun i u -> p.(i) *. q.{i} +. v.(i) *. w.{i}) u
+let v_sum_prods (u : Carray.t) p (q : Carray.t) v (w : Carray.t) =
+  for i = 0 to Carray.length u - 1 do
+    u.{i} <- p.(i) *. q.{i} +. v.(i) *. w.{i}
+  done
 
 (* Functions Called By The Solver *)
 
@@ -322,11 +330,15 @@ let precond wdata jacarg jok gamma =
   Array.iteri f p;
   true
 
-let v_inc_by_prod u v (w : Carray.t) =
-    Carray.mapi (fun i ui -> ui +. v.(i) *. w.{i}) u
+let v_inc_by_prod (u : Carray.t) v (w : Carray.t) =
+  for i = 0 to Carray.length u - 1 do
+    u.{i} <- u.{i} +. v.(i) *. w.{i}
+  done
 
-let v_prod u v (w : Carray.t) =
-    Carray.mapi (fun i _ -> v.(i) *. w.{i}) u
+let v_prod (u : Carray.t) v (w : Carray.t) =
+  for i = 0 to Carray.length u - 1 do
+    u.{i} <- v.(i) *. w.{i}
+  done
 
 let v_zero u = Carray.fill u zero
 
