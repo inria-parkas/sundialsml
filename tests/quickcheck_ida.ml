@@ -498,12 +498,15 @@ let shrink_ic_buf model = function
 
 let shrink_solve_time model t =
   match model.next_query_time with
-  | Some t -> Fstream.singleton ({ model with last_query_time = t;
-                                              next_query_time = None; },
-                                 t)
+  | Some t' -> assert (t' > model.last_query_time);
+               if t' < t
+               then Fstream.singleton ({ model with last_query_time = t';
+                                                    next_query_time = None; },
+                                       t')
+               else Fstream.nil
   | None -> Fstream.map
               (fun t -> ({ model with last_query_time = t; }, t))
-              (shrink_query_time model.last_query_time t)
+              (shrink_query_time (model.last_query_time +. discrete_unit) t)
 
 let fixup_ic_buf new_model_vec_len ic_buf =
   match ic_buf with
@@ -550,15 +553,21 @@ let fixup_cmd ((diff, model) as ctx) = function
     ((diff, model), SolveNormalBadVector (t, if n = 0 then 1 else (n-1)))
   | SetSuppressAlg _ as cmd -> (ctx, cmd)
   | CalcIC_Y (t, ic_buf) ->
-    (* FIXME: is it OK to perform CalcIC_Y multiple times?  What about with an
+    (* Keep in mind the t carried in CalcIC_Y is the time of the next query
+       which may or may not exist.  If last_query_time has been changed, we may
+       have to bump up this future query time.  The last_query_time itself
+       however does not change after CalcIC_Y.  *)
+    (* Is it OK to perform CalcIC_Y multiple times?  What about with an
        intervening solve?  Without an intervening solve?  *)
-    ((diff, { model with next_query_time = Some t }),
-     CalcIC_Y (t, fixup_ic_buf (Carray.length model.vec) ic_buf))
+    let t' = t (* max t (model.last_query_time +. discrete_unit) *) in
+    ((diff, { model with next_query_time = Some t' }),
+     CalcIC_Y (t', fixup_ic_buf (Carray.length model.vec) ic_buf))
   | CalcIC_YaYd' (t, ic_buf_y, ic_buf_y') ->
+    let t' = max t (model.last_query_time +. discrete_unit) in
     let fixup_ic_buf = fixup_ic_buf (Carray.length model.vec) in
-    ((diff, { model with next_query_time = Some t;
+    ((diff, { model with next_query_time = Some t';
                          vartypes_set = true }),
-     CalcIC_YaYd' (t, fixup_ic_buf ic_buf_y, fixup_ic_buf ic_buf_y'))
+     CalcIC_YaYd' (t', fixup_ic_buf ic_buf_y, fixup_ic_buf ic_buf_y'))
   | SetRootDirection root_dirs as cmd ->
     let model_roots = Array.length model.roots
     and cmd_roots = Array.length root_dirs in

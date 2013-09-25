@@ -47,7 +47,8 @@ let stop_time_offs = discrete_unit /. 4.
 let time_epsilon = discrete_unit /. 8.
 
 type sign = Positive | NonNegative | ArbitrarySign
-(* Returns (gen, shrink) *)
+(* Returns (gen, shrink), where shrink's first argument gives a *non-strict*
+   lower bound on the allowable time values.  *)
 let discrete_float_type ?(sign=NonNegative) offset =
   let gen_rank, shrink_rank =
     match sign with
