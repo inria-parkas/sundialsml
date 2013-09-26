@@ -53,11 +53,10 @@ let rec expr_of_resfn_impl = function
                             +. $`flo:coefs.{i}$ *. vec.{$`int:i$}>>
     in <:expr<fun t vec vec' res ->
                $expr_seq (List.map go (enum 0 (neqs-1)))$>>
-  | ResFnDie (fate, resfn) ->
-    <:expr<fun t vec vec' res ->
-            if t >= $`flo:fate$
-            then failwith "exception raised on purpose from residual function"
-            else $expr_of_resfn_impl resfn$ t vec vec' res>>
+  | ResFnDie ->
+    <:expr<fun _ _ _ _ ->
+            failwith "exception raised on purpose from residual function"
+            >>
 
 let jac_expr_of_resfn get set neqs resfn =
   let rec go resfn =
@@ -71,13 +70,17 @@ let jac_expr_of_resfn get set neqs resfn =
       fun i j -> if i = j then <:expr<$set$ jac ($`int:i$, $`int:j$)
                                                 (c +. $`flo:coefs.{i}$)>>
                  else <:expr<$set$ jac ($`int:i$, $`int:j$) 0.>>
-    | ResFnDie (_, resfn) ->
-      fun i j -> go resfn i j
+    | ResFnDie -> assert false
   and ixs = enum 0 (neqs - 1) in
-  <:expr<fun jac_arg jac ->
-         let c = jac_arg.Ida.jac_coef in
-         $expr_seq (List.concat
-                      (List.map (fun i -> List.map (go resfn i) ixs) ixs))$>>
+  match resfn with
+  | ResFnDie -> <:expr<fun _ -> failwith "exception raised on purpose from \
+                                          dense jacobian function">>
+  | ResFnLinear _ | ResFnExpDecay _ ->
+     <:expr<fun jac_arg jac ->
+            let c = jac_arg.Ida.jac_coef in
+            $expr_seq
+              (List.concat
+                (List.map (fun i -> List.map (go resfn i) ixs) ixs))$>>
 
 let set_jac model session =
   let neqs = Carray.length model.vec in
@@ -162,16 +165,9 @@ let expr_of_cmd_impl model = function
     <:expr<Ida.set_all_root_directions session $expr_of_root_direction dir$;
            Unit>>
   | SetVarTypes ->
-    let n = Carray.length model.vec
-    and _d = <:expr<Ida.VarTypes.Differential>>
-    and _a = <:expr<Ida.VarTypes.Algebraic>> in
-    let rec go = function
-      | ResFnLinear _ | ResFnExpDecay _ ->
-        <:expr<Ida.set_var_types session (Ida.VarTypes.of_array
-               $expr_array (List.map (fun _ -> _d) (enum 1 n))$);
-               Unit>>
-      | ResFnDie (_, resfn) -> go resfn
-    in go model.resfn
+    <:expr<Ida.set_var_types session (Ida.VarTypes.of_array
+           $expr_of_array expr_of_var_type (vartypes_of_model model)$);
+           Unit>>
   | SetSuppressAlg b -> <:expr<Ida.set_suppress_alg session $`bool:b$; Unit>>
   | ReInit params ->
     let roots =
