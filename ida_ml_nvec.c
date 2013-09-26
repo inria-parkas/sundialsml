@@ -25,17 +25,19 @@
 #include <ida/ida_dense.h>
 #include <ida/ida_band.h>
 #include <ida/ida_spgmr.h>
-#include <ida/ida_lapack.h>
 #include <ida/ida_spgmr.h>
 #include <ida/ida_sptfqmr.h>
 #include <ida/ida_spbcgs.h>
-#include <ida/ida_lapack.h>
 #include <sundials/sundials_config.h>
 
 #include <nvector/nvector_serial.h>
 
 #include "ida_ml.h"
 #include "nvector_ml.h"
+
+#if SUNDIALS_BLAS_LAPACK == 1
+#include <ida/ida_lapack.h>
+#endif
 
 // Call with IDA_ML_BIGARRAYS to compile for the Serial NVector to
 // Bigarray interface code.

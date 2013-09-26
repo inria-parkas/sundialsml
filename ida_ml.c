@@ -26,8 +26,11 @@
 #include <ida/ida_spgmr.h>
 #include <ida/ida_sptfqmr.h>
 #include <ida/ida_spbcgs.h>
-#include <ida/ida_lapack.h>
 #include <sundials/sundials_config.h>
+
+#if SUNDIALS_BLAS_LAPACK == 1
+#include <ida/ida_lapack.h>
+#endif
 
 #include <stdio.h>
 #include "ida_ml.h"
@@ -260,7 +263,6 @@ CAMLprim void c_ida_set_linear_solver (value vida_mem, value linsolver)
 				 Long_val(Field (arg, 1)));
 	    CHECK_FLAG("IDALapackBand", flag);
 #else
-	    cleanup_failed_init (&ida_mem, backref);
 	    caml_failwith("Lapack solvers are not available.");
 #endif
 	    break;
