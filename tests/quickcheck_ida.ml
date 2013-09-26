@@ -261,7 +261,7 @@ let model_cmd model = function
        succeeds.  Whether it succeeds seems to be unpredictable.  *)
     if t = model.t0 then Any
     else
-      let tret, flag =
+      let tret, flag, roots_to_update =
         (* NB: roots that the solver is already sitting on are ignored, unless
            dt = 0.  *)
         let tstart =
@@ -273,28 +273,30 @@ let model_cmd model = function
         | [] ->
           (* Undocumented behavior (sundials 2.5.0): a non-root return from
              solve_normal resets root info to undefined.  *)
-          model.root_info_valid <- false;
-          t, SolverResult Ida.Continue
+          t, SolverResult Ida.Continue, []
         | (i::_) as is ->
           let tret = fst model.roots.(i) in
-          model.root_info_valid <- true;
-          Roots.reset model.root_info;
-          List.iter
-            (fun i -> Roots.set model.root_info i (snd model.roots.(i)))
-            is;
           (tret,
            (* If the queried time coincides with a root, then it's reasonable
               for the solver to prioritize either.  In real code, this is most
               likely determined by the state of the floating point error.  *)
-           if tret = t then Type (SolverResult Ida.Continue)
-           else SolverResult Ida.RootsFound)
+           (if tret = t then Type (SolverResult Ida.Continue)
+            else SolverResult Ida.RootsFound),
+           is)
       in
-      model.last_query_time <- t;
-      model.last_tret <- tret;
-      model.solving <- true;
       (try
          exact_soln model.resfn model.t0 model.vec0 model.vec'0
                                     tret model.vec  model.vec';
+         (* The root and query time have to be updated here, after we've
+            checked that the residual function doesn't throw an exception.  *)
+         model.root_info_valid <- (roots_to_update <> []);
+         Roots.reset model.root_info;
+         List.iter
+           (fun i -> Roots.set model.root_info i (snd model.roots.(i)))
+           roots_to_update;
+         model.last_query_time <- t;
+         model.last_tret <- tret;
+         model.solving <- true;
          Aggr [Float tret; flag; carray model.vec; carray model.vec']
        with Failure "exception raised on purpose from residual function" as exn ->
          Exn exn)
@@ -315,12 +317,17 @@ let model_cmd model = function
 
      *)
   | CalcIC_Y (_, _) when model.solving -> Exn Ida.IllInput
-  | CalcIC_Y (_, ic_buf) ->
-    (* The t carried in the command is just a hint which the exact solver
-       doesn't need.  The time at which vec and vec' should be filled is
-       model.last_tret.  *)
+  | CalcIC_Y (tout1, ic_buf) ->
     begin
       try
+        (* tout1 is just a hint to IDA that exact_soln doesn't need, and the
+           time at which vec and vec' should be filled is model.last_tret.
+           However, we need to run the solver up to t because that might
+           trigger an exception.  Whether the exception actually triggers is
+           unpredictable, so if it triggers in the model, the expected output
+           is Any.  *)
+        exact_soln model.resfn model.t0  model.vec0 model.vec'0
+                                  tout1  model.vec  model.vec';
         exact_soln model.resfn model.t0        model.vec0 model.vec'0
                                model.last_tret model.vec  model.vec';
         (* Undocumented behavior (sundials 2.5.0): apparently it's OK to call
@@ -333,29 +340,42 @@ let model_cmd model = function
         | GetCorrectedIC -> carray model.vec
         | GiveBadVector _ -> assert false
       with
-        Failure "exception raised on purpose from residual function"
-        as exn -> Exn exn
+        Failure "exception raised on purpose from residual function" -> Any
     end
+  | CalcIC_YaYd' (tout1, GiveBadVector _, _)
+  | CalcIC_YaYd' (tout1, _, GiveBadVector _) -> Exn (Invalid_argument "")
+  | CalcIC_YaYd' _ when model.solving ->
+    (* Right now, the binding sets var types before invoking IDACalcIC().  *)
+    model.vartypes_set <- true;
+    Exn Ida.IllInput
   | CalcIC_YaYd' (tout1, ic_buf_y, ic_buf_y') ->
-    (match ic_buf_y, ic_buf_y' with
-     | GiveBadVector _, _ | _, GiveBadVector _ -> Exn (Invalid_argument "")
-     | _, _ when model.solving ->
-       (* Right now, the binding will set the var types before invoking
-          IDACalcIC().  *)
-       model.vartypes_set <- true;
-       Exn Ida.IllInput
-     | GetCorrectedIC, Don'tGetCorrectedIC ->
-       model.vartypes_set <- true;
-       carray model.vec
-     | Don'tGetCorrectedIC, GetCorrectedIC ->
-       model.vartypes_set <- true;
-       carray model.vec'
-     | Don'tGetCorrectedIC, Don'tGetCorrectedIC ->
-       model.vartypes_set <- true;
-       Unit
-     | GetCorrectedIC, GetCorrectedIC ->
-       model.vartypes_set <- true;
-       Aggr [carray model.vec; carray model.vec']);
+    begin
+      (* var types are set before calling CalcIC *)
+      model.vartypes_set <- true;
+      try
+        (* tout1 is just a hint to IDA that exact_soln doesn't need, and the
+           time at which vec and vec' should be filled is model.last_tret.
+           However, we need to run the solver up to t because that might
+           trigger an exception.  Whether the exception actually triggers is
+           unpredictable, so if it triggers in the model, the expected output
+           is Any.  *)
+        exact_soln model.resfn model.t0  model.vec0 model.vec'0
+                               tout1     model.vec  model.vec';
+        exact_soln model.resfn model.t0        model.vec0 model.vec'0
+                               model.last_tret model.vec  model.vec';
+        (* Undocumented behavior (sundials 2.5.0): apparently it's OK to call
+           CalcIC() on the same session without an intervening IDASolve() or
+           IDAReInit().  Therefore, we don't set model.solving here.  *)
+        match ic_buf_y, ic_buf_y' with
+        | GetCorrectedIC, Don'tGetCorrectedIC -> carray model.vec
+        | Don'tGetCorrectedIC, GetCorrectedIC -> carray model.vec'
+        | GetCorrectedIC, GetCorrectedIC -> Aggr [carray model.vec;
+                                                  carray model.vec']
+        | Don'tGetCorrectedIC, Don'tGetCorrectedIC -> Unit
+        | _, _ -> assert false
+      with
+        Failure "exception raised on purpose from residual function" -> Any
+    end
   | SetVarTypes -> model.vartypes_set <- true; Unit
   | SetSuppressAlg _ -> if model.vartypes_set then Unit else Exn Ida.IllInput
   | SetAllRootDirections dir ->
