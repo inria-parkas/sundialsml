@@ -572,7 +572,6 @@ let fixup_cmd ((diff, model) as ctx) cmd =
     end
   | SolveNormalBadVector (t, n) when n = Carray.length model.vec ->
     ((diff, model), SolveNormalBadVector (t, if n = 0 then 1 else (n-1)))
-  | SetSuppressAlg _ as cmd -> (ctx, cmd)
   | CalcIC_Y (t, ic_buf) ->
     (* Keep in mind the t carried in CalcIC_Y is the time of the next query
        which may or may not exist.  If last_query_time has been changed, we may
@@ -611,8 +610,11 @@ let fixup_cmd ((diff, model) as ctx) cmd =
        | Some i ->
          let idrop = if i < Array.length root_dirs then i else 0 in
          (ctx, SetRootDirection (array_drop_elem root_dirs idrop)))
-  | GetRootInfo | GetNRoots | SetVarTypes
-  | SolveNormalBadVector _ | SetAllRootDirections _ as cmd -> (ctx, cmd)
+  | SetVarTypes -> ((diff, { model with vartypes_set = true }), cmd)
+  (* These commands need no fixing up, AND doesn't update the model in any
+     way that is relevant to shrinking.  *)
+  | SetSuppressAlg _ | GetRootInfo | GetNRoots
+  | SolveNormalBadVector _ | SetAllRootDirections _ -> (ctx, cmd)
 
 (* Commands: note that which commands can be tested without trouble depends on
    the state of the model.  *)
