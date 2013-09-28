@@ -1092,6 +1092,7 @@ let verbose = ref false
 let ida_test_case_driver model cmds =
   let just_cmp = ref false
   and marshal_results = ref false
+  and orig_model = copy_model model
   in
   Arg.parse
     [("--just-cmp", Arg.Set just_cmp,
@@ -1135,7 +1136,7 @@ let ida_test_case_driver model cmds =
         prerrf "Test failed.@\n[Reason]@\n";
         List.iter prerr_mismatch !mismatches;
         prerrf "@\n[Test Case]@\n";
-        prerr_script (model, Array.to_list cmds);
+        prerr_script (orig_model, Array.to_list cmds);
         prerrf "@\n@\n[Program Output]@\n";
         prerr_results (List.rev !actual_results);
         prerrf "@\n@\n[Expected Output]@\n";
