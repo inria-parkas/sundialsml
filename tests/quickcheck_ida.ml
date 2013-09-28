@@ -790,7 +790,7 @@ let shrink_cmd ((diff, model) as ctx) cmd =
                          { params with reinit_roots = None })
          (Fstream.map
             (fun (i, r) ->
-               ret { hint_root_drop = Some i }
+               ret { hint_root_drop = if i < 0 then None else Some i }
                    { params with reinit_roots = Some r })
             (shrink_roots params.reinit_t0 roots)))
     @@
