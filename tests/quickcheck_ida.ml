@@ -411,8 +411,12 @@ let model_cmd model = function
      | Some r ->
        let n = Array.length r in
        model.roots <- Array.copy r;
-       model.root_dirs <- Array.make n RootDirs.IncreasingOrDecreasing;
-       model.root_info <- Roots.create n);
+       (* Undocumented behavior (sundials 2.5.0): IDARootInit() with the same
+          number of roots as before does not reset the root directions.  *)
+       if n <> Array.length model.root_dirs then
+         (model.root_dirs <- Array.make n RootDirs.IncreasingOrDecreasing;
+          model.root_info <- Roots.create n))
+    ;
     model.root_info_valid <- false;
     Carray.blit params.reinit_vec0 model.vec;
     Carray.blit params.reinit_vec0 model.vec0;
