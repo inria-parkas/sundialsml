@@ -636,7 +636,7 @@ let gen_cmd =
       | None -> gen_query_time model.last_query_time ()
       | Some t -> t
     in ({ model with last_query_time = t }, SolveNormal t)
-  and gen_reinit_params model =
+  and gen_reinit model =
     let neqs = Carray.length model.vec in
     let t0 = gen_t0 () in
     let vec0, vec'0  = init_vec_for neqs t0 model.resfn in
@@ -698,7 +698,7 @@ let gen_cmd =
   fun model ->
     gen_choice
       [| gen_solve_normal;
-         gen_reinit_params;
+         gen_reinit;
          (fun model ->
             match gen_solve_normal model with
             | (model, SolveNormal t) ->
