@@ -49,7 +49,7 @@ include module type of Cvode
     {[let y = Nvector_array.wrap [| 0.0; 0.0; 0.0 |] ]}
     The length of this vector determines the problem size.    
     + {b Create and initialize a solver session}
-    {[let s = Cvode.init Cvode.Adams Cvode.Functional f (2, g) (3, y)]}
+    {[let s = Cvode.init Cvode.Adams Cvode.Functional f ~roots:(2, g) (3, y)]}
     This will initialize a specific linear solver and the root-finding
     mechanism, if necessary.
     + {b Specify integration tolerances (optional)}, e.g.
@@ -84,18 +84,18 @@ type root_val_array = Sundials.Roots.val_array
 (** {2 Initialization} *)
 
 (**
-    [init lmm iter f ~roots:(nroots, g) ~t0:t0 y0] initializes the CVODE solver
-    and returns a {!session}.
+    [init lmm iter f ~roots:(nroots, g) ~t0:t0 (neqs, y0)] initializes the
+    CVODE solver and returns a {!session}.
     - [lmm]     specifies the linear multistep method, see {!Cvode.lmm}.
     - [iter]    specifies either functional iteration or Newton iteration
                 with a specific linear solver, see {!Cvode.iter}.
     - [f]       is the ODE right-hand side function.
     - [nroots]  specifies the number of root functions (zero-crossings).
     - [g]       calculates the values of the root functions.
+    - [t0]      is the initial value of the independent variable.
     - [neqs]    specifies the number of equations (continuous state
                 variables). There is no operation for demanding the length
                 of an 'a nvector.
-    - [t0]      is the initial value of the independent variable.
     - [y0]      is a vector of initial values, the size of this vector
                 determines the number of equations in the session, see
                 {!Sundials.Carray.t}.

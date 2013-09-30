@@ -10,8 +10,6 @@
  *                                                                     *
  ***********************************************************************/
 
-/* Sundials interface functions that do not involve NVectors. */
-
 #include <sundials/sundials_config.h>
 #include <sundials/sundials_types.h>
 #include <sundials/sundials_band.h>
