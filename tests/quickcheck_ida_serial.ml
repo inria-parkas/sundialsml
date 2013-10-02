@@ -187,6 +187,8 @@ let expr_of_cmd_impl model = function
     <:expr<Ida.set_root_direction session
            $expr_array (List.map expr_of_root_direction (Array.to_list dirs))$;
            Unit>>
+  | SetStopTime t ->
+    <:expr<Ida.set_stop_time session $`flo:t$; Unit>>
 
 let expr_of_cmds_impl model = function
   | [] -> <:expr<()>>

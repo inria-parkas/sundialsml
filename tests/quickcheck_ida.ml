@@ -82,6 +82,8 @@ type model =
     vec0 : Carray.t;
     vec'0 : Carray.t;
 
+    mutable stop_time : float;          (* infinity when unset *)
+
     (* Set during command generation to force the next query time to a
        particular value, if there is a query.  *)
     mutable next_query_time : float option;
@@ -97,6 +99,7 @@ and cmd = SolveNormal of float
         | SetVarTypes
         | CalcIC_YaYd' of float * ic_buf * ic_buf
         | SetSuppressAlg of bool
+        | SetStopTime of float
 and script = model * cmd list
 (* When the model is shrunk, the commands have to be fixed up so that we don't
    run commands whose outcomes are unpredictable.  In most cases the model
@@ -190,6 +193,7 @@ let copy_model m =
     vec0 = Carray.of_carray m.vec0;
     vec'0 = Carray.of_carray m.vec'0;
     next_query_time = m.next_query_time;
+    stop_time = m.stop_time;
   }
 
 
@@ -250,13 +254,27 @@ let vartypes_of_model model =
     Array.make (Carray.length model.vec) Ida.VarTypes.Differential
   | ResFnDie -> [|Ida.VarTypes.Differential|]
 
-(* Destructively update the model according to a command.  *)
-let model_cmd model = function
-  | SolveNormalBadVector _ -> Exn Ida.IllInput
+(* Destructively update the model according to a command.  If the expected
+   return value is Exn, this function will actually raise that exception.  The
+   wrapper model_cmd converts it to Exn.  *)
+let model_cmd_internal model = function
+  | SolveNormalBadVector _ -> raise Ida.IllInput
   | SolveNormal t ->
     (* NB: we don't model interpolation failures -- t will be monotonically
        increasing.  *)
     assert (model.last_query_time <= t);
+    (* Behavior documented in source code (sundials 2.5.0): exception raised if
+       stop time is before the first query time.  NB, this only checks the
+       *first* query time.  *)
+    if not model.solving && model.stop_time < model.last_tret
+    then raise Ida.IllInput;
+    let t =
+      (* Account for stop time.  *)
+      (* Undocumented behavior (sundials 2.5.0): once Ida.StopTimeReached is
+         returned, subsequent calls to IDASolve ignore the stop time.  *)
+      if model.last_tret >= model.stop_time then t
+      else min t model.stop_time
+    in
     (* Undocumented behavior (sundials 2.5.0): solve_normal with t=t0 usually
        fails with "tout too close to t0 to start integration", but sometimes
        succeeds.  Whether it succeeds seems to be unpredictable.  *)
@@ -272,16 +290,18 @@ let model_cmd model = function
         in
         match find_roots model.roots model.root_dirs tstart t with
         | [] ->
-          (* Undocumented behavior (sundials 2.5.0): a non-root return from
-             solve_normal resets root info to undefined.  *)
-          t, SolverResult Ida.Continue, []
+          t,
+          SolverResult (if t = model.stop_time then Ida.StopTimeReached
+                        else Ida.Continue),
+          []
         | (i::_) as is ->
           let tret = fst model.roots.(i) in
           (tret,
            (* If the queried time coincides with a root, then it's reasonable
               for the solver to prioritize either.  In real code, this is most
               likely determined by the state of the floating point error.  *)
-           (if tret = t then Type (SolverResult Ida.Continue)
+           (if tret = t || tret = model.stop_time
+            then Type (SolverResult Ida.Continue)
             else SolverResult Ida.RootsFound),
            is)
       in
@@ -290,6 +310,8 @@ let model_cmd model = function
                                     tret model.vec  model.vec';
          (* The root and query time have to be updated here, after we've
             checked that the residual function doesn't throw an exception.  *)
+         (* Undocumented behavior (sundials 2.5.0): a non-root return from
+            solve_normal sets root info to undefined.  *)
          model.root_info_valid <- (roots_to_update <> []);
          Roots.reset model.root_info;
          List.iter
@@ -301,6 +323,13 @@ let model_cmd model = function
          Aggr [Float tret; flag; carray model.vec; carray model.vec']
        with Failure "exception raised on purpose from residual function" as exn ->
          Exn exn)
+  | SetStopTime t ->
+    (* Behavior documented in source code (sundials 2.5.0): can't set stop time
+       in the past, if solving.  Otherwise the check is deferred until solution
+       is polled.  *)
+    if model.solving && t < model.last_tret
+    then Exn Ida.IllInput
+    else (model.stop_time <- t; Unit)
   | GetRootInfo ->
     if model.root_info_valid then RootInfo (Roots.copy model.root_info)
     else
@@ -426,6 +455,10 @@ let model_cmd model = function
     model.next_query_time <- None;
     Unit
 
+let model_cmd model cmd =
+  try model_cmd_internal model cmd
+  with exn -> Exn exn
+
 (* Non-destructively update a model by a command, and return the new model.  *)
 let update_model model cmd =
   let model' = copy_model model in
@@ -516,6 +549,7 @@ let gen_model () =
     vec0  = vec0;
     vec'0 = vec'0;
     next_query_time = None;
+    stop_time = infinity;
   }
 
 let shrink_ic_buf model = function
@@ -606,7 +640,7 @@ let fixup_just_cmd hint model cmd =
   | SetVarTypes -> (hint, cmd)
   (* These commands need no fixing up, AND doesn't update the model in any
      way that is relevant to shrinking.  *)
-  | SetSuppressAlg _ | GetRootInfo | GetNRoots
+  | SetSuppressAlg _ | GetRootInfo | GetNRoots | SetStopTime _
   | SolveNormalBadVector _ | SetAllRootDirections _ -> (hint, cmd)
 
 let fixup_cmd (hint, model) cmd =
@@ -627,6 +661,7 @@ let gen_cmd =
     | SolveNormal _ | ReInit _ | SolveNormalBadVector _
     | CalcIC_Y _ | CalcIC_YaYd' _ | GetRootInfo | GetNRoots | SetVarTypes
     | SetSuppressAlg _ | SetAllRootDirections _ | SetRootDirection _
+    | SetStopTime _
     -> ()
   in
   let gen_solve_normal model =
@@ -705,6 +740,7 @@ let gen_cmd =
            (fun model -> GetRootInfo);
            (fun model -> GetNRoots);
            (fun model -> SetVarTypes);
+           (fun model -> SetStopTime (gen_stop_time model.t0 ()));
            (fun model ->
               (* 20% of the time, we (may) choose an incorrect size.  *)
               let size = if Random.int 100 < 20 then gen_nat ()
@@ -803,13 +839,11 @@ let shrink_just_cmd model = function
     Fstream.map (fun dir -> (model_nohint, SetAllRootDirections dir))
       (shrink_root_direction dir)
   | CalcIC_Y (t, ic_buf) ->
-    assert (not model.solving);
     Fstream.map (fun ic_buf -> (model_nohint, CalcIC_Y (t, ic_buf)))
       (shrink_ic_buf model ic_buf)
     @@ Fstream.map (fun t -> (model_nohint, CalcIC_Y (t, ic_buf)))
         (shrink_query_time (model.last_query_time +. discrete_unit) t)
   | CalcIC_YaYd' (t, ic_buf_y, ic_buf_y') ->
-    assert (not model.solving);
     Fstream.map (fun ic_buf_y -> (model_nohint,
                                   CalcIC_YaYd' (t, ic_buf_y, ic_buf_y')))
       (shrink_ic_buf model ic_buf_y)
@@ -824,6 +858,9 @@ let shrink_just_cmd model = function
     Fstream.map
       (fun dirs -> (model_nohint, SetRootDirection dirs))
       (shrink_array shrink_root_direction ~shrink_size:false dirs)
+  | SetStopTime t ->
+    Fstream.map (fun t -> (model_nohint, SetStopTime t))
+      (shrink_stop_time model.t0 t)
   | GetRootInfo | GetNRoots | SetVarTypes | SetSuppressAlg _ -> Fstream.nil
 
 let shrink_cmd (hint, model) cmd =
