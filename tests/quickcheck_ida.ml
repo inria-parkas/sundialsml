@@ -426,6 +426,12 @@ let model_cmd model = function
     model.next_query_time <- None;
     Unit
 
+(* Non-destructively update a model by a command, and return the new model.  *)
+let update_model model cmd =
+  let model' = copy_model model in
+  let _ = model_cmd model' cmd in
+  model'
+
 let gen_resfn t0 neqs () =
   let _ () =
     (* This is a no-op that causes the compiler to direct you here whenever you
@@ -522,15 +528,10 @@ let shrink_ic_buf model = function
 
 let shrink_solve_time model t =
   match model.next_query_time with
-  | Some t' -> assert (t' > model.last_query_time);
-               if t' < t
-               then Fstream.singleton ({ model with last_query_time = t';
-                                                    next_query_time = None; },
-                                       t')
+  | Some t' -> if t' < t
+               then Fstream.singleton t'
                else Fstream.nil
-  | None -> Fstream.map
-              (fun t -> ({ model with last_query_time = t; }, t))
-              (shrink_query_time (model.last_query_time +. discrete_unit) t)
+  | None -> shrink_query_time (model.last_query_time +. discrete_unit) t
 
 let fixup_ic_buf new_model_vec_len ic_buf =
   match ic_buf with
@@ -542,92 +543,86 @@ let fixup_ic_buf new_model_vec_len ic_buf =
   | Don'tGetCorrectedIC | GetCorrectedIC -> ic_buf
 
 (* Fix up a command to be executable in a given state (= the model parameter).
-   The incoming model will always have the same residual function as when the
-   command was generated, but it may have a different starting time, or a
-   different number of root functions.
    This function must be able to handle all fallouts from perturbations done to
-   the model in shrink_model below.
-   The model is updated only to the extent necessary to track which commands
-   are testable.
+   the model in shrink_model below.  This function returns just an updated hint
+   along with the new command; the model is updated in the wrapper fixup_cmd
+   below.
  *)
-let fixup_cmd ((diff, model) as ctx) cmd =
+let fixup_just_cmd hint model cmd =
   match cmd with
   | ReInit params ->
-    let model' = copy_model model
-    and params' = { params with
+    let params' = { params with
                     reinit_solver = model.solver;
                   }
-    and diff =
+    and hint' =
       match params.reinit_roots with
-      | None -> diff
+      | None -> hint
       | Some _ -> { hint_root_drop = None }
     in
     let cmd' = ReInit params' in
-    ignore (model_cmd model' cmd');
-    ((diff, model'), cmd')
+    (hint', cmd')
   | SolveNormal t ->
     begin
       match model.next_query_time with
-      | Some t -> ((diff, { model with last_query_time = t;
-                                       next_query_time = None; }),
-                   SolveNormal t)
+      | Some t -> (hint, SolveNormal t)
       | None -> let t = max t model.last_query_time in
-                ((diff, { model with last_query_time = t }), SolveNormal t)
+                (hint, SolveNormal t)
     end
   | SolveNormalBadVector (t, n) when n = Carray.length model.vec ->
-    ((diff, model), SolveNormalBadVector (t, if n = 0 then 1 else (n-1)))
-  | CalcIC_Y (t, ic_buf) ->
-    (* Keep in mind the t carried in CalcIC_Y is the time of the next query
-       which may or may not exist.  If last_query_time has been changed, we may
-       have to bump up this future query time.  The last_query_time itself
-       however does not change after CalcIC_Y.  *)
+    (hint, SolveNormalBadVector (t, if n = 0 then 1 else (n-1)))
+  | CalcIC_Y (tout1, ic_buf) ->
+    (* tout1 is the time of the next query which may or may not exist.  If
+       last_query_time has been changed, we have to bump up this future query
+       time.  last_query_time however does not change after CalcIC_Y.  *)
     (* Is it OK to perform CalcIC_Y multiple times?  What about with an
        intervening solve?  Without an intervening solve?  *)
-    let t' = t (* max t (model.last_query_time +. discrete_unit) *) in
-    ((diff, { model with next_query_time = Some t' }),
-     CalcIC_Y (t', fixup_ic_buf (Carray.length model.vec) ic_buf))
-  | CalcIC_YaYd' (t, ic_buf_y, ic_buf_y') ->
-    let t' = max t (model.last_query_time +. discrete_unit) in
+    let tout1' = max tout1 (model.last_query_time +. discrete_unit) in
+    (hint, CalcIC_Y (tout1', fixup_ic_buf (Carray.length model.vec) ic_buf))
+  | CalcIC_YaYd' (tout1, ic_buf_y, ic_buf_y') ->
+    let tout1' = max tout1 (model.last_query_time +. discrete_unit) in
     let fixup_ic_buf = fixup_ic_buf (Carray.length model.vec) in
-    ((diff, { model with next_query_time = Some t';
-                         vartypes_set = true }),
-     CalcIC_YaYd' (t', fixup_ic_buf ic_buf_y, fixup_ic_buf ic_buf_y'))
+    (hint,
+     CalcIC_YaYd' (tout1', fixup_ic_buf ic_buf_y, fixup_ic_buf ic_buf_y'))
   | SetRootDirection root_dirs as cmd ->
     let model_roots = Array.length model.roots
     and cmd_roots = Array.length root_dirs in
-    if model_roots = cmd_roots then (ctx, cmd)
+    if model_roots = cmd_roots then (hint, cmd)
     else
-      (match diff.hint_root_drop with
+      (match hint.hint_root_drop with
        | None when cmd_roots < model_roots ->
          (* pad root_dirs *)
-         (ctx,
+         (hint,
           SetRootDirection
             (Array.init model_roots
                (fun i -> if i < cmd_roots then root_dirs.(i)
                          else RootDirs.IncreasingOrDecreasing)))
        | None ->
          (* curtail root_dirs *)
-         (ctx,
-          SetRootDirection
-            (Array.sub root_dirs 0 model_roots))
-       | Some _ when Array.length root_dirs = 0 -> (ctx, cmd)
+         (hint, SetRootDirection (Array.sub root_dirs 0 model_roots))
+       | Some _ when Array.length root_dirs = 0 -> (hint, cmd)
        | Some i ->
          let idrop = if i < Array.length root_dirs then i else 0 in
-         (ctx, SetRootDirection (array_drop_elem root_dirs idrop)))
-  | SetVarTypes -> ((diff, { model with vartypes_set = true }), cmd)
+         (hint, SetRootDirection (array_drop_elem root_dirs idrop)))
+  | SetVarTypes -> (hint, cmd)
   (* These commands need no fixing up, AND doesn't update the model in any
      way that is relevant to shrinking.  *)
   | SetSuppressAlg _ | GetRootInfo | GetNRoots
-  | SolveNormalBadVector _ | SetAllRootDirections _ -> (ctx, cmd)
+  | SolveNormalBadVector _ | SetAllRootDirections _ -> (hint, cmd)
+
+let fixup_cmd (hint, model) cmd =
+  let hint, cmd = fixup_just_cmd hint model cmd in
+  let model = update_model model cmd in
+  (hint, model), cmd
 
 (* Commands: note that which commands can be tested without trouble depends on
    the state of the model.  *)
 
+
 let gen_cmd =
   let _ () =
     (* This is a no-op that causes the compiler to direct you here whenever you
-       add a new kind of command.  Once you finish adding a generator for a
-       command, add that command's case to this match.  *)
+       add a new command.  Once you finish adding a generator for that command,
+       add that command to this match.  *)
     match failwith "oops" with
     | SolveNormal _ | ReInit _ | SolveNormalBadVector _
     | CalcIC_Y _ | CalcIC_YaYd' _ | GetRootInfo | GetNRoots | SetVarTypes
@@ -639,7 +634,7 @@ let gen_cmd =
       match model.next_query_time with
       | None -> gen_query_time model.last_query_time ()
       | Some t -> t
-    in ({ model with last_query_time = t }, SolveNormal t)
+    in SolveNormal t
   and gen_reinit model =
     let neqs = Carray.length model.vec in
     let t0 = gen_t0 () in
@@ -654,9 +649,7 @@ let gen_cmd =
         reinit_vec'0 = Carray.of_carray vec'0;
       }
     in
-    let model = copy_model model in
-    ignore (model_cmd model (ReInit params));
-    (model, ReInit params)
+    ReInit params
   and gen_nat_avoiding k =
     let n = gen_pos () in
     if n <= k then n-1
@@ -679,13 +672,12 @@ let gen_cmd =
       in
       let ic_buf_y  = gen_ic_buf_y ()
       and ic_buf_y' = gen_ic_buf_y' () in
-      ({ model with next_query_time = Some t },
-       CalcIC_YaYd' (t, ic_buf_y, ic_buf_y'))
+      CalcIC_YaYd' (t, ic_buf_y, ic_buf_y')
   and gen_calc_ic_y model =
     match model.resfn with
     | ResFnLinear _ ->
       (* ic_calc_y doesn't work on ResFnLinear. *)
-      (model, GetRootInfo)
+      GetRootInfo
     | ResFnDie | ResFnExpDecay _ ->
       let t = gen_query_time (model.last_query_time +. discrete_unit) ()
       and rand = Random.int 100 in
@@ -697,34 +689,36 @@ let gen_cmd =
         then GiveBadVector (gen_nat_avoiding (Carray.length model.vec))
         else GetCorrectedIC
       in
-      ({ model with next_query_time = Some t }, CalcIC_Y (t, ic_buf))
+      CalcIC_Y (t, ic_buf)
   in
   fun model ->
-    gen_choice
-      [| gen_solve_normal;
-         gen_reinit;
-         (fun model ->
-            match gen_solve_normal model with
-            | (model, SolveNormal t) ->
-              (model, SolveNormalBadVector
-                 (t, (gen_nat_avoiding (Carray.length model.vec))))
-            | _ -> assert false);
-         (fun model -> (model, GetRootInfo));
-         (fun model -> (model, GetNRoots));
-         (fun model -> (model, SetVarTypes));
-         (fun model ->
-            (* 20% of the time, we (may) choose an incorrect size.  *)
-            let size = if Random.int 100 < 20 then gen_nat ()
-              else Array.length model.roots
-            in
-            let dirs = gen_array ~size:size gen_root_direction ()
-            in (model, SetRootDirection dirs));
-         (fun model -> (model, SetAllRootDirections (gen_root_direction ())));
-         gen_calc_ic_ya_yd';
-         gen_calc_ic_y;
-         (fun model -> model, SetSuppressAlg (gen_bool ()));
-      |]
-      model
+    let cmd =
+      gen_choice
+        [| gen_solve_normal;
+           gen_reinit;
+           (fun model ->
+              match gen_solve_normal model with
+              | SolveNormal t ->
+                SolveNormalBadVector
+                  (t, gen_nat_avoiding (Carray.length model.vec))
+              | _ -> assert false);
+           (fun model -> GetRootInfo);
+           (fun model -> GetNRoots);
+           (fun model -> SetVarTypes);
+           (fun model ->
+              (* 20% of the time, we (may) choose an incorrect size.  *)
+              let size = if Random.int 100 < 20 then gen_nat ()
+                else Array.length model.roots
+              in
+              let dirs = gen_array ~size:size gen_root_direction ()
+              in SetRootDirection dirs);
+           (fun model -> SetAllRootDirections (gen_root_direction ()));
+           gen_calc_ic_ya_yd';
+           gen_calc_ic_y;
+           (fun model -> SetSuppressAlg (gen_bool ()));
+        |]
+        model
+    in (update_model model cmd, cmd)
 
 
 let shrink_roots t0 =
@@ -763,11 +757,12 @@ let shrink_model model cmds =
 let gen_cmds model =
   gen_1pass_list gen_cmd model
 
-let shrink_cmd ((diff, model) as ctx) cmd =
-  (* Either shrink the model or shrink a command; shouldn't have to do both or
-     shrink multiple commands at the same time.  *)
-  assert (diff = model_nohint);
-  match cmd with
+(* Shrink a command so that its outcome is predictable when executed under the
+   given model state.  Return a stream of pairs (hint, cmd') where cmd' is the
+   shrunk command and hint is some hint for fixup_cmd about what has changed,
+   if applicable.  The model sould NOT be updated; the wrapper shrink_cmd will
+   do that.  *)
+let shrink_just_cmd model = function
   | ReInit params ->
     (* Let p = incoming params, p' = outgoing params,
            d = incoming diff,   d' = outgoing diff.
@@ -780,62 +775,63 @@ let shrink_cmd ((diff, model) as ctx) cmd =
        -----------------------------------------------------------------
        d'.root_drop =   None  |     Some i     | d.root_drop |   None
     *)
-    let ret diff' params' =
-      let model' = copy_model model in
-      let cmd = ReInit params' in
-      ignore (model_cmd model' cmd);
-      ((diff', model'), cmd)
-    in
-    (* TODO: implement solver shrinking.  *)
+    (* TODO: shrink the solver.  *)
     (match params.reinit_roots with
      | None -> Fstream.nil
      | Some roots ->
-       Fstream.cons (ret { hint_root_drop = None }
-                         { params with reinit_roots = None })
+       Fstream.cons ({ hint_root_drop = None },
+                     ReInit { params with reinit_roots = None })
          (Fstream.map
             (fun (i, r) ->
-               ret { hint_root_drop = if i < 0 then None else Some i }
-                   { params with reinit_roots = Some r })
+               ({ hint_root_drop = if i < 0 then None else Some i },
+                ReInit { params with reinit_roots = Some r }))
             (shrink_roots params.reinit_t0 roots)))
     @@
-    Fstream.map (fun t0 -> ret diff { params with reinit_t0 = t0 })
+    Fstream.map
+      (fun t0 -> (model_nohint, ReInit { params with reinit_t0 = t0 }))
       (shrink_t0 params.reinit_t0)
   | SolveNormalBadVector (t, n) ->
-    Fstream.map (fun (m,t) -> ((diff, m), SolveNormalBadVector (t, n)))
+    Fstream.map (fun t -> (model_nohint, SolveNormalBadVector (t, n)))
       (shrink_solve_time model t)
     @@
-    Fstream.map (fun n -> (ctx, SolveNormalBadVector (t, n)))
+    Fstream.map (fun n -> (model_nohint, SolveNormalBadVector (t, n)))
       (Fstream.filter ((<>) (Carray.length model.vec)) (shrink_nat n))
   | SolveNormal t ->
-    Fstream.map (fun (m,t) -> ((diff, m), SolveNormal t))
+    Fstream.map (fun t -> (model_nohint, SolveNormal t))
       (shrink_solve_time model t)
   | SetAllRootDirections dir ->
-    Fstream.map (fun dir -> (ctx, SetAllRootDirections dir))
+    Fstream.map (fun dir -> (model_nohint, SetAllRootDirections dir))
       (shrink_root_direction dir)
   | CalcIC_Y (t, ic_buf) ->
     assert (not model.solving);
-    let model' = { model with solving = true; next_query_time = Some t } in
-    let ctx' = (diff, model') in
-    Fstream.map (fun ic_buf -> (ctx', CalcIC_Y (t, ic_buf)))
+    Fstream.map (fun ic_buf -> (model_nohint, CalcIC_Y (t, ic_buf)))
       (shrink_ic_buf model ic_buf)
-    @@ Fstream.map (fun t -> (ctx', CalcIC_Y (t, ic_buf)))
+    @@ Fstream.map (fun t -> (model_nohint, CalcIC_Y (t, ic_buf)))
         (shrink_query_time (model.last_query_time +. discrete_unit) t)
   | CalcIC_YaYd' (t, ic_buf_y, ic_buf_y') ->
     assert (not model.solving);
-    let model' = { model with solving = true; next_query_time = Some t } in
-    let ctx' = (diff, model') in
-    Fstream.map (fun ic_buf_y -> (ctx', CalcIC_YaYd' (t, ic_buf_y, ic_buf_y')))
+    Fstream.map (fun ic_buf_y -> (model_nohint,
+                                  CalcIC_YaYd' (t, ic_buf_y, ic_buf_y')))
       (shrink_ic_buf model ic_buf_y)
     @@ Fstream.map
-        (fun ic_buf_y' -> (ctx', CalcIC_YaYd' (t, ic_buf_y, ic_buf_y')))
+        (fun ic_buf_y' -> (model_nohint,
+                           CalcIC_YaYd' (t, ic_buf_y, ic_buf_y')))
         (shrink_ic_buf model ic_buf_y')
-    @@ Fstream.map (fun t -> (ctx', CalcIC_YaYd' (t, ic_buf_y, ic_buf_y')))
+    @@ Fstream.map (fun t -> (model_nohint,
+                              CalcIC_YaYd' (t, ic_buf_y, ic_buf_y')))
         (shrink_query_time (model.last_query_time +. discrete_unit) t)
   | SetRootDirection dirs ->
     Fstream.map
-      (fun dirs -> (ctx, SetRootDirection dirs))
+      (fun dirs -> (model_nohint, SetRootDirection dirs))
       (shrink_array shrink_root_direction ~shrink_size:false dirs)
   | GetRootInfo | GetNRoots | SetVarTypes | SetSuppressAlg _ -> Fstream.nil
+
+let shrink_cmd (hint, model) cmd =
+  (* Shrink should be called on exactly one command, and all subsequent
+     commands are handled by fixup_cmd.  *)
+  assert (hint = model_nohint);
+  Fstream.map (fun (hint, cmd) -> ((hint, update_model model cmd), cmd))
+    (shrink_just_cmd model cmd)
 
 let shrink_cmds model =
   shrink_1pass_list shrink_cmd fixup_cmd (model_nohint, model)
