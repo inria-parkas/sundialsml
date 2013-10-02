@@ -1218,8 +1218,12 @@ let quickcheck_ida ml_file_of_script max_tests =
     copy_file ~from_file:(!test_exec_file ^ ".ml")
               ~to_file:!test_failed_file
               ();
-    Format.fprintf err "@\n[Reason]@\nTest \
-                        code crashed.@\n@\n[Test Case]@\n";
+    Format.fprintf err "@\n[Reason]@\nTest code %s.@\n\
+                        @\n[Test Case]@\n"
+      (match stat with
+       | Unix.WEXITED n -> Printf.sprintf "crashed (exit code %d)" n
+       | Unix.WSIGNALED n -> Printf.sprintf "received signal %d" n
+       | Unix.WSTOPPED n -> Printf.sprintf "stopped by signal %d" n);
     pp_script err script;
     Format.fprintf err "@\n@\n[Program Output]@\n";
     Format.pp_print_flush err ();
