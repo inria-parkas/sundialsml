@@ -259,10 +259,10 @@ let vartypes_of_model model =
    wrapper model_cmd converts it to Exn.  *)
 let model_cmd_internal model = function
   | SolveNormalBadVector _ -> raise Ida.IllInput
-  | SolveNormal t ->
+  | SolveNormal query_time ->
     (* NB: we don't model interpolation failures -- t will be monotonically
        increasing.  *)
-    assert (model.last_query_time <= t);
+    assert (model.last_query_time <= query_time);
     (* Behavior documented in source code (sundials 2.5.0): exception raised if
        stop time is before the first query time.  NB, this only checks the
        *first* query time.  *)
@@ -272,8 +272,8 @@ let model_cmd_internal model = function
       (* Account for stop time.  *)
       (* Undocumented behavior (sundials 2.5.0): once Ida.StopTimeReached is
          returned, subsequent calls to IDASolve ignore the stop time.  *)
-      if model.last_tret >= model.stop_time then t
-      else min t model.stop_time
+      if model.last_tret >= model.stop_time then query_time
+      else min query_time model.stop_time
     in
     (* Undocumented behavior (sundials 2.5.0): solve_normal with t=t0 usually
        fails with "tout too close to t0 to start integration", but sometimes
@@ -297,38 +297,38 @@ let model_cmd_internal model = function
         | (i::_) as is ->
           let tret = fst model.roots.(i) in
           (tret,
-           (* If the queried time coincides with a root, then it's reasonable
+           (* If the return time coincides with a root, then it's reasonable
               for the solver to prioritize either.  In real code, this is most
               likely determined by the state of the floating point error.  *)
-           (if tret = t || tret = model.stop_time
+           (if tret = t
             then Type (SolverResult Ida.Continue)
             else SolverResult Ida.RootsFound),
            is)
       in
-      (try
-         exact_soln model.resfn model.t0 model.vec0 model.vec'0
-                                    tret model.vec  model.vec';
-         (* The root and query time have to be updated here, after we've
-            checked that the residual function doesn't throw an exception.  *)
-         (* Undocumented behavior (sundials 2.5.0): a non-root return from
-            solve_normal sets root info to undefined.  *)
-         model.root_info_valid <- (roots_to_update <> []);
-         Roots.reset model.root_info;
-         List.iter
-           (fun i -> Roots.set model.root_info i (snd model.roots.(i)))
-           roots_to_update;
-         model.last_query_time <- t;
-         model.last_tret <- tret;
-         model.solving <- true;
-         Aggr [Float tret; flag; carray model.vec; carray model.vec']
-       with Failure "exception raised on purpose from residual function" as exn ->
-         Exn exn)
+      exact_soln model.resfn model.t0 model.vec0 model.vec'0
+                                 tret model.vec  model.vec';
+      (* The root and query time have to be updated here, after we've
+         checked that the residual function doesn't throw an exception.  *)
+      (* Undocumented behavior (sundials 2.5.0): a non-root return from
+         solve_normal sets root info to undefined.  *)
+      model.root_info_valid <- (roots_to_update <> []);
+      Roots.reset model.root_info;
+      List.iter
+        (fun i -> Roots.set model.root_info i (snd model.roots.(i)))
+        roots_to_update;
+      model.last_query_time <- query_time;
+      model.last_tret <- tret;
+      model.solving <- true;
+      (* Undocumented behavior (sundials 2.5.0): stop time is reset when it's
+         hit.  *)
+      if tret = model.stop_time then model.stop_time <- infinity;
+      Aggr [Float tret; flag; carray model.vec; carray model.vec']
   | SetStopTime t ->
     (* Behavior documented in source code (sundials 2.5.0): can't set stop time
        in the past, if solving.  Otherwise the check is deferred until solution
        is polled.  *)
     if model.solving && t < model.last_tret
-    then Exn Ida.IllInput
+    then raise Ida.IllInput
     else (model.stop_time <- t; Unit)
   | GetRootInfo ->
     if model.root_info_valid then RootInfo (Roots.copy model.root_info)
@@ -337,7 +337,7 @@ let model_cmd_internal model = function
       Type (RootInfo (Roots.copy model.root_info))
   | GetNRoots ->
     Int (Array.length model.roots)
-  | CalcIC_Y (_, GiveBadVector _) -> Exn (Invalid_argument "")
+  | CalcIC_Y (_, GiveBadVector _) -> raise (Invalid_argument "")
      (* Undocumented behavior (sundials 2.5.0): GetConsistentIC() and CalcIC()
         can only be called before IDASolve().  However, IDA only detects
         illicit calls of GetConsistentIC(), and for calls to CalcIC() after
@@ -346,89 +346,80 @@ let model_cmd_internal model = function
         The OCaml binding contains a flag to detect and prevent this case.
 
      *)
-  | CalcIC_Y (_, _) when model.solving -> Exn Ida.IllInput
+  | CalcIC_Y (_, _) when model.solving -> raise Ida.IllInput
   | CalcIC_Y (tout1, ic_buf) ->
     begin
-      try
-        (* tout1 is just a hint to IDA that exact_soln doesn't need, and the
-           time at which vec and vec' should be filled is model.last_tret.
-           However, we need to run the solver up to t because that might
-           trigger an exception.  Whether the exception actually triggers is
-           unpredictable, so if it triggers in the model, the expected output
-           is Any.  *)
-        exact_soln model.resfn model.t0  model.vec0 model.vec'0
-                                  tout1  model.vec  model.vec';
-        exact_soln model.resfn model.t0        model.vec0 model.vec'0
-                               model.last_tret model.vec  model.vec';
-        (* Undocumented behavior (sundials 2.5.0): apparently it's OK to call
-           CalcIC() on the same session without an intervening IDASolve() or
-           IDAReInit().  Therefore, we don't set model.solving here.  *)
-        match ic_buf with
-        | Don'tGetCorrectedIC -> Unit (* The current time will be slightly
-                                         ahead of t0.  By exactly how much
-                                         is hard to say.  *)
-        | GetCorrectedIC -> carray model.vec
-        | GiveBadVector _ -> assert false
-      with
-        Failure "exception raised on purpose from residual function" -> Any
+      (* tout1 is just a hint to IDA that exact_soln doesn't need, and the
+         time at which vec and vec' should be filled is model.last_tret.
+         However, we need to run the solver up to t because that might
+         trigger an exception.  Whether the exception actually triggers is
+         unpredictable, so if it triggers in the model, the expected output
+         is Any.  *)
+      exact_soln model.resfn model.t0  model.vec0 model.vec'0
+        tout1  model.vec  model.vec';
+      exact_soln model.resfn model.t0        model.vec0 model.vec'0
+        model.last_tret model.vec  model.vec';
+      (* Undocumented behavior (sundials 2.5.0): apparently it's OK to call
+         CalcIC() on the same session without an intervening IDASolve() or
+         IDAReInit().  Therefore, we don't set model.solving here.  *)
+      match ic_buf with
+      | Don'tGetCorrectedIC -> Unit (* The current time will be slightly
+                                       ahead of t0.  By exactly how much
+                                       is hard to say.  *)
+      | GetCorrectedIC -> carray model.vec
+      | GiveBadVector _ -> assert false
     end
   | CalcIC_YaYd' (tout1, GiveBadVector _, _)
   | CalcIC_YaYd' (tout1, _, GiveBadVector _) -> Exn (Invalid_argument "")
   | CalcIC_YaYd' _ when model.solving ->
     (* Right now, the binding sets var types before invoking IDACalcIC().  *)
     model.vartypes_set <- true;
-    Exn Ida.IllInput
+    raise Ida.IllInput
   | CalcIC_YaYd' (tout1, ic_buf_y, ic_buf_y') ->
     begin
       (* var types are set before calling CalcIC *)
       model.vartypes_set <- true;
-      try
-        (* tout1 is just a hint to IDA that exact_soln doesn't need, and the
-           time at which vec and vec' should be filled is model.last_tret.
-           However, we need to run the solver up to t because that might
-           trigger an exception.  Whether the exception actually triggers is
-           unpredictable, so if it triggers in the model, the expected output
-           is Any.  *)
-        exact_soln model.resfn model.t0  model.vec0 model.vec'0
-                               tout1     model.vec  model.vec';
-        exact_soln model.resfn model.t0        model.vec0 model.vec'0
-                               model.last_tret model.vec  model.vec';
-        (* Undocumented behavior (sundials 2.5.0): apparently it's OK to call
-           CalcIC() on the same session without an intervening IDASolve() or
-           IDAReInit().  Therefore, we don't set model.solving here.  *)
-        match ic_buf_y, ic_buf_y' with
-        | GetCorrectedIC, Don'tGetCorrectedIC -> carray model.vec
-        | Don'tGetCorrectedIC, GetCorrectedIC -> carray model.vec'
-        | GetCorrectedIC, GetCorrectedIC -> Aggr [carray model.vec;
-                                                  carray model.vec']
-        | Don'tGetCorrectedIC, Don'tGetCorrectedIC -> Unit
-        | _, _ -> assert false
-      with
-        Failure "exception raised on purpose from residual function" -> Any
+      (* tout1 is just a hint to IDA that exact_soln doesn't need, and the
+         time at which vec and vec' should be filled is model.last_tret.
+         However, we need to run the solver up to t because that might
+         trigger an exception.  Whether the exception actually triggers is
+         unpredictable, so if it triggers in the model, the expected output
+         is Any.  *)
+      exact_soln model.resfn model.t0  model.vec0 model.vec'0
+                             tout1     model.vec  model.vec';
+      exact_soln model.resfn model.t0        model.vec0 model.vec'0
+                             model.last_tret model.vec  model.vec';
+      (* Undocumented behavior (sundials 2.5.0): apparently it's OK to call
+         CalcIC() on the same session without an intervening IDASolve() or
+         IDAReInit().  Therefore, we don't set model.solving here.  *)
+      match ic_buf_y, ic_buf_y' with
+      | GetCorrectedIC, Don'tGetCorrectedIC -> carray model.vec
+      | Don'tGetCorrectedIC, GetCorrectedIC -> carray model.vec'
+      | GetCorrectedIC, GetCorrectedIC -> Aggr [carray model.vec;
+                                                carray model.vec']
+      | Don'tGetCorrectedIC, Don'tGetCorrectedIC -> Unit
+      | _, _ -> assert false
     end
   | SetVarTypes -> model.vartypes_set <- true; Unit
   | SetSuppressAlg _ -> if model.vartypes_set then Unit else Exn Ida.IllInput
   | SetAllRootDirections dir ->
-    if Array.length model.roots = 0
-    then Exn Ida.IllInput
-    else (Array.fill model.root_dirs 0 (Array.length model.root_dirs) dir;
-          Unit)
+    if Array.length model.roots = 0 then raise Ida.IllInput;
+    Array.fill model.root_dirs 0 (Array.length model.root_dirs) dir;
+    Unit
   | SetRootDirection dirs ->
-    if Array.length model.roots = 0
-    then Exn Ida.IllInput
-    else
-      (* The binding adjusts the root array length as needed.  *)
-      let ndirs = Array.length dirs
-      and nroots = Array.length model.roots in
-      let dirs =
-        if ndirs = nroots then dirs
-        else
-          let d = Array.make nroots RootDirs.IncreasingOrDecreasing in
-          Array.blit dirs 0 d 0 (min nroots ndirs);
-          d
-      in
-      (model.root_dirs <- dirs;
-       Unit)
+    if Array.length model.roots = 0 then raise Ida.IllInput;
+    (* The binding adjusts the root array length as needed.  *)
+    let ndirs = Array.length dirs
+    and nroots = Array.length model.roots in
+    let dirs =
+      if ndirs = nroots then dirs
+      else
+        let d = Array.make nroots RootDirs.IncreasingOrDecreasing in
+        Array.blit dirs 0 d 0 (min nroots ndirs);
+        d
+    in
+    model.root_dirs <- dirs;
+    Unit
   | ReInit params ->
     model.solver <- params.reinit_solver;
     model.solving <- false;
@@ -664,7 +655,8 @@ let gen_cmd =
     | SetStopTime _
     -> ()
   in
-  let gen_solve_normal model =
+  let always_predictable _ = true
+  and gen_solve_normal model =
     let t =
       match model.next_query_time with
       | None -> gen_query_time model.last_query_time ()
@@ -690,72 +682,88 @@ let gen_cmd =
     if n <= k then n-1
     else n
   in
-  let gen_calc_ic_ya_yd' model =
+  let calc_ic_ya_yd'_predictable model =
     match model.resfn with
-    | ResFnLinear _ | ResFnExpDecay _ | ResFnDie ->
-      let t = gen_query_time (model.last_query_time +. discrete_unit) ()
-      and gen_ic_buf_y, gen_ic_buf_y' =
-        let b () = GiveBadVector
-            (gen_nat_avoiding (Carray.length model.vec))
-        and c () = GetCorrectedIC
-        and d () = Don'tGetCorrectedIC in
-        gen_weighted_choice
-          [| (30, (c,c));  (10, (c,d));  (10, (c,b));
-             (10, (d,c));  ( 5, (d,d));  (10, (d,b));
-             (10, (b,c));  (10, (b,d));  ( 5, (b,b)); |]
-          ()
-      in
-      let ic_buf_y  = gen_ic_buf_y ()
-      and ic_buf_y' = gen_ic_buf_y' () in
-      CalcIC_YaYd' (t, ic_buf_y, ic_buf_y')
+    | ResFnLinear _ | ResFnExpDecay _ | ResFnDie -> true
+  and gen_calc_ic_ya_yd' model =
+    let t = gen_query_time (model.last_query_time +. discrete_unit) ()
+    and gen_ic_buf_y, gen_ic_buf_y' =
+      let b () = GiveBadVector
+          (gen_nat_avoiding (Carray.length model.vec))
+      and c () = GetCorrectedIC
+      and d () = Don'tGetCorrectedIC in
+      gen_weighted_choice
+        [| (30, (c,c));  (10, (c,d));  (10, (c,b));
+           (10, (d,c));  ( 5, (d,d));  (10, (d,b));
+           (10, (b,c));  (10, (b,d));  ( 5, (b,b)); |]
+        ()
+    in
+    let ic_buf_y  = gen_ic_buf_y ()
+    and ic_buf_y' = gen_ic_buf_y' () in
+    CalcIC_YaYd' (t, ic_buf_y, ic_buf_y')
+  and calc_ic_y_predictable model =
+    match model.resfn with
+    | ResFnLinear _ -> false (* ic_calc_y doesn't work on ResFnLinear. *)
+    | ResFnDie | ResFnExpDecay _ -> true
   and gen_calc_ic_y model =
-    match model.resfn with
-    | ResFnLinear _ ->
-      (* ic_calc_y doesn't work on ResFnLinear. *)
-      GetRootInfo
-    | ResFnDie | ResFnExpDecay _ ->
-      let t = gen_query_time (model.last_query_time +. discrete_unit) ()
-      and rand = Random.int 100 in
-      let ic_buf =
-        (* With 40% probability, don't receive corrected vector.
-           With 10% probability, pass in bad vector.  *)
-        if rand < 40 then Don'tGetCorrectedIC
-        else if rand < 50
-        then GiveBadVector (gen_nat_avoiding (Carray.length model.vec))
-        else GetCorrectedIC
-      in
-      CalcIC_Y (t, ic_buf)
+    let t = gen_query_time (model.last_query_time +. discrete_unit) ()
+    and rand = Random.int 100 in
+    let ic_buf =
+      (* With 40% probability, don't receive corrected vector.
+         With 10% probability, pass in bad vector.  *)
+      if rand < 40 then Don'tGetCorrectedIC
+      else if rand < 50
+      then GiveBadVector (gen_nat_avoiding (Carray.length model.vec))
+      else GetCorrectedIC
+    in
+    CalcIC_Y (t, ic_buf)
+  and set_stop_time_predictable model =
+    (* Undocumented behavior (sundials 2.5.0): set_stop_time fails if the stop
+       time is already passed; however, the time is compared against IDA's
+       internal time, not the last time that the user specified.  The internal
+       time of IDA can't be guessed a priori, so if model.solving is true, we
+       can't predict the outcome of set_stop_time.  *)
+    not model.solving
+  and gen_set_stop_time model = SetStopTime (gen_stop_time model.t0 ())
+  in
+  let choose =
+    gen_cond_choice
+      [| always_predictable, gen_solve_normal;
+         always_predictable, gen_reinit;
+         always_predictable, (fun model -> GetRootInfo);
+         always_predictable, (fun model -> GetNRoots);
+         always_predictable, (fun model -> SetVarTypes);
+         set_stop_time_predictable, gen_set_stop_time;
+         calc_ic_ya_yd'_predictable, gen_calc_ic_ya_yd';
+         calc_ic_y_predictable, gen_calc_ic_y;
+         always_predictable, (fun model -> SetSuppressAlg (gen_bool ()));
+
+         always_predictable,
+         (fun model ->
+            match gen_solve_normal model with
+            | SolveNormal t ->
+              SolveNormalBadVector
+                (t, gen_nat_avoiding (Carray.length model.vec))
+            | _ -> assert false);
+
+         always_predictable,
+         (fun model ->
+            (* 20% of the time, we (may) choose an incorrect size.  *)
+            let size = if Random.int 100 < 20 then gen_nat ()
+              else Array.length model.roots
+            in
+            let dirs = gen_array ~size:size gen_root_direction ()
+            in SetRootDirection dirs);
+
+         always_predictable,
+         (fun model -> SetAllRootDirections (gen_root_direction ()));
+      |]
   in
   fun model ->
-    let cmd =
-      gen_choice
-        [| gen_solve_normal;
-           gen_reinit;
-           (fun model ->
-              match gen_solve_normal model with
-              | SolveNormal t ->
-                SolveNormalBadVector
-                  (t, gen_nat_avoiding (Carray.length model.vec))
-              | _ -> assert false);
-           (fun model -> GetRootInfo);
-           (fun model -> GetNRoots);
-           (fun model -> SetVarTypes);
-           (fun model -> SetStopTime (gen_stop_time model.t0 ()));
-           (fun model ->
-              (* 20% of the time, we (may) choose an incorrect size.  *)
-              let size = if Random.int 100 < 20 then gen_nat ()
-                else Array.length model.roots
-              in
-              let dirs = gen_array ~size:size gen_root_direction ()
-              in SetRootDirection dirs);
-           (fun model -> SetAllRootDirections (gen_root_direction ()));
-           gen_calc_ic_ya_yd';
-           gen_calc_ic_y;
-           (fun model -> SetSuppressAlg (gen_bool ()));
-        |]
-        model
-    in (update_model model cmd, cmd)
-
+    (* The application to the first model executes the gen_cond_choice, the
+       application to the second model runs the selected generator.  *)
+    let cmd = choose model model in
+    (update_model model cmd, cmd)
 
 let shrink_roots t0 =
   shorten_shrink_array
