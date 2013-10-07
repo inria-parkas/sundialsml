@@ -94,7 +94,7 @@ let set_jac model session =
   | Ida.LapackBand _ | Ida.LapackDense _ ->
     raise (Failure "linear solver not implemented")
 
-let expr_of_roots roots =
+let expr_of_roots model roots =
   let n = Array.length roots in
   let set i =
     match roots.(i) with
@@ -104,7 +104,12 @@ let expr_of_roots roots =
   in
   let f ss i = <:expr<$ss$; $set i$>> in
   if n = 0 then <:expr<Ida.no_roots>>
-  else <:expr<($`int:n$,
+  else if model.root_fails then
+    <:expr<($`int:n$,
+            (fun _ _ _ _ ->
+              failwith "exception raised on purpose from root function"))>>
+  else
+    <:expr<($`int:n$,
                (fun t vec vec' g ->
                   $Fstream.fold_left f (set 0)
                     (Fstream.enum 1 (n-1))$))>>
@@ -173,7 +178,7 @@ let expr_of_cmd_impl model = function
     let roots =
       match params.reinit_roots with
       | None -> Ast.ExNil _loc
-      | Some r -> <:expr<~roots:$expr_of_roots r$>>
+      | Some r -> <:expr<~roots:$expr_of_roots model r$>>
     in
     <:expr<Ida.reinit session
            ~linsolv:$expr_of_linear_solver params.reinit_solver$
@@ -240,7 +245,7 @@ let ml_of_script (model, cmds) =
       let session = Ida.init_at_time
                   $expr_of_linear_solver model.solver$
                   $expr_of_resfn_impl model.resfn$
-                  $expr_of_roots model.roots$
+                  $expr_of_roots model model.roots$
                   $`flo:model.t0$
                   vec vec'
       in

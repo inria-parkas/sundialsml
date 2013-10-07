@@ -76,6 +76,7 @@ type model =
     mutable root_dirs : Ida.root_direction array;
     mutable root_info : Roots.t;
     mutable root_info_valid : bool;
+    mutable root_fails : bool;          (* root function should fail *)
     vec : Carray.t;
     vec' : Carray.t;
     mutable t0 : float;
@@ -116,6 +117,7 @@ and reinit_params =
   {
     reinit_t0 : float;
     reinit_roots : roots_spec option;
+    reinit_root_fails : bool;
     reinit_solver : Ida.linear_solver;
     reinit_vec0 : Carray.t;
     reinit_vec'0 : Carray.t;
@@ -186,6 +188,7 @@ let copy_model m =
     root_dirs = Array.copy m.root_dirs;
     root_info = Roots.copy m.root_info;
     root_info_valid = m.root_info_valid;
+    root_fails = m.root_fails;
     consistent = m.consistent;
     vec = Carray.of_carray m.vec;
     vec' = Carray.of_carray m.vec';
@@ -309,6 +312,8 @@ let model_cmd_internal model = function
                                  tret model.vec  model.vec';
       (* The root and query time have to be updated here, after we've
          checked that the residual function doesn't throw an exception.  *)
+      if Array.length model.roots > 0 && model.root_fails then
+        failwith "exception raised on purpose from root function";
       (* Undocumented behavior (sundials 2.5.0): a non-root return from
          solve_normal sets root info to undefined.  *)
       model.root_info_valid <- (roots_to_update <> []);
@@ -534,6 +539,7 @@ let gen_model () =
     root_info = Roots.create num_roots;
     root_info_valid = false;
     root_dirs = Array.make num_roots RootDirs.IncreasingOrDecreasing;
+    root_fails = Random.int 100 < 80;
     vec   = Carray.of_carray vec0;
     vec'  = Carray.of_carray vec'0;
     t0 = t0;
@@ -671,6 +677,7 @@ let gen_cmd =
         reinit_t0 = gen_t0 ();
         reinit_roots = if Random.int 100 < 30 then None
                        else Some (gen_roots t0 ());
+        reinit_root_fails = Random.int 100 < 30;
         reinit_solver = gen_solver false neqs;
         reinit_vec0 = Carray.of_carray vec0;
         reinit_vec'0 = Carray.of_carray vec'0;
@@ -797,6 +804,8 @@ let shrink_model model cmds =
   in
   Fstream.map (update_time model cmds) (shrink_t0 model.t0)
   @@ Fstream.map (update_roots model cmds) (shrink_roots model.t0 model.roots)
+  @@ Fstream.map (fun rf -> { model with root_fails = rf }, cmds)
+      (Fstream.guard model.root_fails (Fstream.singleton false))
 
 let gen_cmds model =
   gen_1pass_list gen_cmd model
@@ -830,6 +839,10 @@ let shrink_just_cmd model = function
                ({ hint_root_drop = if i < 0 then None else Some i },
                 ReInit { params with reinit_roots = Some r }))
             (shrink_roots params.reinit_t0 roots)))
+    @@
+    Fstream.guard params.reinit_root_fails
+      (Fstream.singleton
+         (model_nohint, ReInit { params with reinit_root_fails = false }))
     @@
     Fstream.map
       (fun t0 -> (model_nohint, ReInit { params with reinit_t0 = t0 }))
