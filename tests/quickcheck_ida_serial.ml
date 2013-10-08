@@ -237,9 +237,6 @@ let ml_of_script (model, cmds) =
     module Carray = Ida.Carray
     open Quickcheck_ida
     open Pprint
-    let marshal_results = ref false
-    let just_cmp = ref false
-    let step = ref 0
     let model = $expr_of_model model$
     let cmds = $expr_of_array expr_of_cmd (Array.of_list cmds)$
     let do_cmd, finish = ida_test_case_driver model cmds
