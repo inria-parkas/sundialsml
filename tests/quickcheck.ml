@@ -1,6 +1,6 @@
 open Pprint
 
-let (@@) = Fstream.append
+let (@+) = Fstream.append
 
 let size = ref 5
 
@@ -31,9 +31,9 @@ let shrink_int n =
     | true, false  -> k+n < 0
   in
   Fstream.guard1 (n < -n) (- n)
-  @@ Fstream.filter less_complex
+  @+ Fstream.filter less_complex
      (Fstream.of_list [0;1;2]
-      @@ Fstream.filter (fun x -> x <> 0 && x <> 1 && x <> 2)
+      @+ Fstream.filter (fun x -> x <> 0 && x <> 1 && x <> 2)
          (Fstream.take_while less_complex
             (Fstream.map (fun higher_bits -> n - higher_bits)
                (Fstream.iterate (fun x -> x / 2) n))))
@@ -195,7 +195,7 @@ let gen_option ?(percentage_of_some=70) gen () =
 
 let shrink_option shrink_elem ?(shrink_to_none=true) = function
   | Some x -> Fstream.guard1 shrink_to_none None
-              @@ Fstream.map (fun x -> Some x) (shrink_elem x)
+              @+ Fstream.map (fun x -> Some x) (shrink_elem x)
   | None -> Fstream.nil
 
 let gen_list g () = List.map (fun _ -> g ()) (enum 1 (gen_nat ()))
@@ -204,8 +204,8 @@ let rec shrink_list shrink_elem ?(shrink_size=true) = function
   | [] -> Fstream.of_list []
   | x::xs ->
     Fstream.guard1 shrink_size xs
-    @@ Fstream.map (fun xs -> x::xs) (shrink_list shrink_elem xs)
-    @@ Fstream.map (fun x -> x::xs) (shrink_elem x)
+    @+ Fstream.map (fun xs -> x::xs) (shrink_list shrink_elem xs)
+    @+ Fstream.map (fun x -> x::xs) (shrink_elem x)
 
 let gen_1pass_list gen seed ?(size=gen_nat ()) () =
   (* In haskell notation,
@@ -235,7 +235,7 @@ let shrink_1pass_list_cont shrink fixup seed xs =
         (Fstream.map                                (* keep x *)
            (fun (seed, xs) -> seed, x::xs)
            (lazy (Lazy.force (go (fst (fixup seed x)) xs)))
-         @@ Fstream.map                             (* shrink x *)
+         @+ Fstream.map                             (* shrink x *)
              (fun (seed, x) ->
                 let seed, xs = fixup_list_cont fixup seed xs in
                 seed, x::xs)
@@ -290,11 +290,11 @@ let shrink_array_like_elem make length get set shrink_elem a =
 let shrink_array_like make length get set shrink_elem ?(shrink_size=true) a =
   Fstream.guard shrink_size
     (Fstream.map snd (shorten_array_like make length get set a))
-  @@ shrink_array_like_elem make length get set shrink_elem a
+  @+ shrink_array_like_elem make length get set shrink_elem a
 
 let shorten_shrink_array_like make length get set shrink_elem a =
   shorten_array_like make length get set a
-  @@ Fstream.map (fun x -> (-1, x))
+  @+ Fstream.map (fun x -> (-1, x))
        (shrink_array_like_elem make length get set shrink_elem a)
 
 let gen_array gen_elem =
@@ -371,7 +371,7 @@ let gen_pair gen_x gen_y () = (gen_x (), gen_y ())
 
 let shrink_pair shrink_x shrink_y (x,y) =
   Fstream.map (fun x -> (x,y)) (shrink_x x)
-  @@ Fstream.map (fun y -> (x,y)) (shrink_y y)
+  @+ Fstream.map (fun y -> (x,y)) (shrink_y y)
 
 let shrink_fst shrink_x (x,y) = Fstream.map (fun x -> (x,y)) (shrink_x x)
 let shrink_snd shrink_y (x,y) = Fstream.map (fun y -> (x,y)) (shrink_y y)

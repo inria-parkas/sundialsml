@@ -502,7 +502,7 @@ let shrink_ic_buf model = function
   | GetCorrectedIC -> Fstream.singleton Don'tGetCorrectedIC
   | Don'tGetCorrectedIC -> Fstream.nil
   | GiveBadVector n -> Fstream.of_list [Don'tGetCorrectedIC; GetCorrectedIC]
-                       @@ Fstream.map (fun n -> GiveBadVector n)
+                       @+ Fstream.map (fun n -> GiveBadVector n)
                            (Fstream.filter ((<>) (Carray.length model.vec))
                               (shrink_nat n))
 
@@ -752,8 +752,8 @@ let shrink_model model cmds =
     (model, fixup_list fixup_cmd (model_nohint, model) cmds)
   in
   Fstream.map (update_time model cmds) (shrink_t0 model.t0)
-  @@ Fstream.map (update_roots model cmds) (shrink_roots model.t0 model.roots)
-  @@ Fstream.map (fun rf -> { model with root_fails = rf }, cmds)
+  @+ Fstream.map (update_roots model cmds) (shrink_roots model.t0 model.roots)
+  @+ Fstream.map (fun rf -> { model with root_fails = rf }, cmds)
       (Fstream.guard model.root_fails (Fstream.singleton false))
 
 let gen_cmds model =
@@ -788,18 +788,18 @@ let shrink_just_cmd model = function
                ({ hint_root_drop = if i < 0 then None else Some i },
                 ReInit { params with reinit_roots = Some r }))
             (shrink_roots params.reinit_t0 roots)))
-    @@
+    @+
     Fstream.guard params.reinit_root_fails
       (Fstream.singleton
          (model_nohint, ReInit { params with reinit_root_fails = false }))
-    @@
+    @+
     Fstream.map
       (fun t0 -> (model_nohint, ReInit { params with reinit_t0 = t0 }))
       (shrink_t0 params.reinit_t0)
   | SolveNormalBadVector (t, n) ->
     Fstream.map (fun t -> (model_nohint, SolveNormalBadVector (t, n)))
       (shrink_solve_time model t)
-    @@
+    @+
     Fstream.map (fun n -> (model_nohint, SolveNormalBadVector (t, n)))
       (Fstream.filter ((<>) (Carray.length model.vec)) (shrink_nat n))
   | SolveNormal t ->
@@ -811,17 +811,17 @@ let shrink_just_cmd model = function
   | CalcIC_Y (t, ic_buf) ->
     Fstream.map (fun ic_buf -> (model_nohint, CalcIC_Y (t, ic_buf)))
       (shrink_ic_buf model ic_buf)
-    @@ Fstream.map (fun t -> (model_nohint, CalcIC_Y (t, ic_buf)))
+    @+ Fstream.map (fun t -> (model_nohint, CalcIC_Y (t, ic_buf)))
         (shrink_query_time (model.last_query_time +. discrete_unit) t)
   | CalcIC_YaYd' (t, ic_buf_y, ic_buf_y') ->
     Fstream.map (fun ic_buf_y -> (model_nohint,
                                   CalcIC_YaYd' (t, ic_buf_y, ic_buf_y')))
       (shrink_ic_buf model ic_buf_y)
-    @@ Fstream.map
+    @+ Fstream.map
         (fun ic_buf_y' -> (model_nohint,
                            CalcIC_YaYd' (t, ic_buf_y, ic_buf_y')))
         (shrink_ic_buf model ic_buf_y')
-    @@ Fstream.map (fun t -> (model_nohint,
+    @+ Fstream.map (fun t -> (model_nohint,
                               CalcIC_YaYd' (t, ic_buf_y, ic_buf_y')))
         (shrink_query_time (model.last_query_time +. discrete_unit) t)
   | SetRootDirection dirs ->
@@ -888,8 +888,8 @@ let shrink_neqs model cmds =
 
 let shrink_script (model, cmds) =
   shrink_neqs model cmds
-  @@ shrink_model model cmds
-  @@ Fstream.map (fun cmds -> (model, cmds)) (shrink_cmds model cmds)
+  @+ shrink_model model cmds
+  @+ Fstream.map (fun cmds -> (model, cmds)) (shrink_cmds model cmds)
 
 (* Pretty-printing and result comparison.  *)
 

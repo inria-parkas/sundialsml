@@ -1,7 +1,7 @@
 open Pprint
 
 (** Alias of [Fstream.append].  *)
-val (@@) : 'a Fstream.t -> 'a Fstream.t -> 'a Fstream.t
+val (@+) : 'a Fstream.t -> 'a Fstream.t -> 'a Fstream.t
 
 (** Controls the size of the generated test case.  *)
 val size : int ref
