@@ -1067,20 +1067,6 @@ let compile mk_ml_file =
     raise (Failure ("Internal error: generated code failed to compile.  \
                      Compilation command was: " ^ compile_command))
 
-(* Compile test code, run it, and return a list of responses.  *)
-let compile_run ml_code =
-  compile ml_code;
-  let (pipe_stdout, pipe_stdin, pipe_stderr) as pipes =
-    Unix.open_process_full
-      (!test_exec_file ^ " --marshal-results")
-      (Unix.environment ())
-  in
-  let recv () =
-    try Some (Marshal.from_channel pipe_stdout : result)
-    with End_of_file -> (ignore (Unix.close_process_full pipes); None)
-  in
-  Fstream.generate recv
-
 (* Report a summary of the initial model.  *)
 let model_init model = Aggr [Float model.t0;
                              carray model.vec;
@@ -1207,7 +1193,11 @@ let quickcheck_ida ml_file_of_script max_tests =
     compile (ml_file_of_script script);
     copy_file ~from_file:(!test_exec_file ^ ".ml")
               ~to_file:!test_failed_file ();
-    let exit_status = Unix.system !test_exec_file in
+    let exit_status =
+      Unix.system (if !read_write_invariance
+                   then !test_exec_file ^ " --read-write-invariance"
+                   else !test_exec_file)
+    in
     assert (exit_status = Unix.WEXITED 1);
     Format.fprintf err
       "@\n@\nFailed test code saved in %s, compile with:@\n%s@\n"
