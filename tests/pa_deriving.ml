@@ -303,6 +303,7 @@ struct
   and type_def_simpl_of_ctyp = function
     | <:ctyp@_loc<| $t$ >> -> TVariant (_loc, flatten_variants t)
     | <:ctyp@_loc<{ $t$ }>> -> TRecord (_loc, flatten_record t)
+    | <:ctyp<$_$ = $t$>> -> type_def_simpl_of_ctyp t
     | t -> TAlias (type_expr_simpl_of_ctyp t)
 
   and flatten_variants t =

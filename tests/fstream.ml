@@ -77,7 +77,7 @@ let unzip xys =
   (lazy (fst (Lazy.force unzipped)), lazy (snd (Lazy.force unzipped)))
 
 let rec iter f = function
-  | lazy Cons (x, xs) -> f x; iter f xs
+  | lazy (Cons (x, xs)) -> f x; iter f xs
   | lazy Nil -> ()
 
 let to_list xs =
@@ -90,7 +90,7 @@ let append xs ys =
   let rec go xs =
     match xs with
     | lazy Nil -> Lazy.force ys
-    | lazy Cons (x,xs) -> Cons (x, lazy (go xs))
+    | lazy (Cons (x,xs)) -> Cons (x, lazy (go xs))
   in lazy (go xs)
 
 let cons x xs = Lazy.lazy_from_val (Cons (x, xs))
@@ -198,7 +198,7 @@ let enum_then istart inext iend =
 let length xs =
   let rec go i = function
     | lazy Nil -> i
-    | lazy Cons (_, xs) -> go (i+1) xs
+    | lazy (Cons (_, xs)) -> go (i+1) xs
   in go 0 xs
 
 let of_array a = map (Array.get a) (enum 0 (Array.length a - 1))
