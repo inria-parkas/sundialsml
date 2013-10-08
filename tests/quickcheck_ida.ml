@@ -1,61 +1,12 @@
 module Carray = Sundials.Carray
 open Pprint
+open Pprint_ida
 open Quickcheck
 open Quickcheck_sundials
 module Roots = Sundials.Roots
 module RootDirs = Sundials.RootDirs
 open Camlp4.PreCast.Syntax
 open Expr_of
-
-(* Derive pretty-printers for types imported from the Ida module.  It would be
-   ideal if we could have the camlp4 extension extract type definitions from
-   ../ida.ml and do everything automatically, but that's too much work.  For
-   now, we'll make do by manually copying the definitions; the types aren't
-   supposed to change often, and the compiler will detect bit rot in this
-   case, so it should be OK.  *)
-module PPIda = struct
-  open Ida (* deriving needs access to type names like linear_solver *)
-  open VarTypes (* ditto *)
-
-  (* Copied from ida.mli; must be kept in sync with that file's definition.  *)
-  type linear_solver =
-    | Dense
-    | Band of bandrange
-    | LapackDense
-    | LapackBand of bandrange
-    | Spgmr of sprange
-    | Spbcg of sprange
-    | Sptfqmr of sprange
-  and bandrange = { mupper : int; mlower : int; }
-  and sprange = int
-  and solver_result =
-    | Continue
-    | RootsFound
-    | StopTimeReached
-  and error_details = {
-    error_code : int;
-    module_name : string;
-    function_name : string;
-    error_message : string;
-  }
-  and integrator_stats = {
-    num_steps : int;
-    num_res_evals : int;
-    num_lin_solv_setups : int;
-    num_err_test_fails : int;
-    last_order : int;
-    current_order : int;
-    actual_init_step : float;
-    last_step : float;
-    current_step : float;
-    current_time : float
-  }
-  deriving external_types (pretty ~prefix:Ida, expr_of ~prefix:Ida)
-
-  type var_type = Algebraic | Differential
-  deriving external_types (expr_of ~prefix:Ida.VarTypes)
-end
-include PPIda                           (* Include the derived functions. *)
 
 (* A state-machine model for IDA sessions.  *)
 type model =
@@ -158,12 +109,10 @@ deriving (pretty ~alias:(Carray.t = carray,
                          Ida.solver_result = solver_result)
                  ~optional:(Int, Float, solving, consistent, next_query_time,
                             last_tret, root_info_valid)
-         ,expr_of ~alias:(Carray.t = carray,
-                          Ida.Roots.root_event = root_event,
-                          Ida.root_direction = root_direction,
-                          Roots.t = root_info,
-                          Ida.linear_solver = linear_solver,
-                          Ida.solver_result = solver_result))
+         (* expr_of is derived in expr_of_ida_model.ml to avoid linking camlp4
+            into test cases.  If you change the ~alias list above, you probably
+            have to update the Makefile's expr_of_ida_model.ml target too.  *)
+         )
 
 let carray x = Carray (Carray.of_carray x)
 

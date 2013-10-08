@@ -1,12 +1,8 @@
-(* Generators, shrinkers, pretty-printers, and expr_of for sundials types that
-   are shared between IDA and CVODE.  *)
+(* Generators, shrinkers, and pretty-printers for sundials types that are
+   shared between IDA and CVODE.  *)
 open Pprint
 open Quickcheck
 open Sundials
-open Camlp4.PreCast
-open Expr_of
-
-let _loc = Loc.ghost
 
 (* Generators and shrinkers for different kinds of time values.  Time values
    can occur in several places in a script:
@@ -81,13 +77,6 @@ let shrink_carray ?(shrink_size=true) shrink_elem =
 
 let carray_drop_elem : Carray.t -> int -> Carray.t = bigarray1_drop_elem
 
-let expr_of_carray v =
-  let n = Carray.length v in
-  if n = 0 then <:expr<Carray.create 0>>
-  else <:expr<Carray.of_array
-              [| $Ast.exSem_of_list (List.map (fun i -> <:expr<$`flo:v.{i}$>>)
-                                      (enum 0 (n-1)))$ |]>>
-
 let pp_carray, dump_carray, show_carray, display_carray,
   print_carray, prerr_carray =
   printers_of_pp (fun ?(prec=0) fmt xs ->
@@ -111,11 +100,6 @@ let pp_root_event, dump_root_event, show_root_event, display_root_event,
     (if !read_write_invariance then "Roots." else "")
     ^ Roots.string_of_root_event x)
 
-let expr_of_root_event = function
-  | Roots.Rising -> <:expr<Roots.Rising>>
-  | Roots.Falling -> <:expr<Roots.Falling>>
-  | Roots.NoRoot -> <:expr<Roots.NoRoot>>
-
 let pp_root_info, dump_root_info, show_root_info, display_root_info,
   print_root_info, prerr_root_info
     =
@@ -133,10 +117,6 @@ let pp_root_info, dump_root_info, show_root_info, display_root_info,
               pp_string_noquote)
            fmt xs
     else pp_array_like Roots.length get "[<" ">]" pp_string_noquote fmt xs)
-
-let expr_of_root_info rs =
-  <:expr<Roots.of_array [| $Ast.exSem_of_list (List.map expr_of_root_event
-                                                 (Roots.to_list rs))$ |]>>
 
 let gen_root_direction, shrink_root_direction =
   gen_shrink_choice [| RootDirs.Increasing; RootDirs.Decreasing;
@@ -175,9 +155,3 @@ let pp_root_dirs, dump_root_dirs, show_root_dirs, display_root_dirs
              fmt xs
       else pp_array_like RootDirs.length get "[<" ">]"
              pp_string_noquote fmt xs)
-
-let expr_of_root_direction = function
-  | RootDirs.Increasing -> <:expr<Ida.RootDirs.Increasing>>
-  | RootDirs.Decreasing -> <:expr<Ida.RootDirs.Decreasing>>
-  | RootDirs.IncreasingOrDecreasing ->
-    <:expr<Ida.RootDirs.IncreasingOrDecreasing>>

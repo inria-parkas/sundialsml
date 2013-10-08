@@ -142,8 +142,13 @@ looks like optional function arguments.  Their syntax and semantics follow.
 ~prefix:<modname>
 
   The argument must not be parenthesized.  <modname> is prepended to every
-  constructor or field name, so that the pretty-printed result or the output
-  of expr_of is useful outside of the current module.  For example, the code
+  constructor or field name, so that the pretty-printed result or the output of
+  expr_of is useful outside of the current module.  Don't confuse this with
+  ~opening below, which prepends a module name to values and names used in the
+  generated functions; by contrast, ~prefix attaches a module name to the names
+  appearing the outputs of the generated functions.
+
+  For example, the code
 
       (* In foo.ml *)
       type x = X
@@ -182,6 +187,41 @@ looks like optional function arguments.  Their syntax and semantics follow.
 
   prints "X" if Pprint.read_write_invariance is false but prints "Foo.X" if
   Pprint.read_write_invariance is true.
+
+~opening:<modname>
+
+  The argument must not be parenthesized.  The derived functions are defined
+  with "let open <modname>" around them.  Don't confuse this with ~prefix,
+  which attaches a module name to names in the outputs of the generated
+  functions, whereas ~opening attaches a module name to the values and types
+  used in the generated functions.
+
+  This is useful in combination with external_types.  For example,
+
+    (* In foo.ml *)
+    type foo = Foo
+
+    (* In bar.ml *)
+    type foo = Foo
+    deriving external_types (pretty ~opening:Foo)
+
+  Without the ~opening:Foo, the code in bar.ml would produce an error because
+  it would generate code that looks like
+
+    (* In bar.ml *)
+    let rec pp_foo : foo pp (* error: foo is not in scope *)
+     = ...
+
+  With ~opening:Foo, this is changed to
+
+    include struct
+      open Foo
+      let rec pp_foo : foo pp (* OK *)
+       = ...
+    end
+
+  (BTW, the type annotation is needed in the first place to ensure the right
+   degree of polymorphism.)
 
 ~alias:(<name> = <name>, <name> = <name>, ...)
 
@@ -634,12 +674,22 @@ struct
     <:str_item<let rec
                $fold_and_binding (List.map expr_binding types)$>>
 
+  let wrap_opening opening str_item =
+    match opening with
+    | None -> str_item
+    | Some (_loc, modname) ->
+      <:str_item<include struct
+                   open $id:modname$
+                   $str_item$
+                 end>>
+
   (* Code generation options *)
 
   type options =
     { opt_optional: (Loc.t * string list) option;
       opt_prefix: (Loc.t * ident) option;
       opt_aliases: (Loc.t * (string list * string list) list) option;
+      opt_opening: (Loc.t * ident) option;
     }
 
   let options_merge opt1 opt2 =
@@ -654,6 +704,7 @@ struct
     { opt_optional = merge_field "optional" (fun x -> x.opt_optional);
       opt_prefix = merge_field "prefix" (fun x -> x.opt_prefix);
       opt_aliases = merge_field "alias" (fun x -> x.opt_aliases);
+      opt_opening = merge_field "opening" (fun x -> x.opt_opening);
     }
 
   let options_get f default opt =
@@ -663,6 +714,7 @@ struct
 
   let options_empty =
     { opt_optional = None; opt_prefix = None; opt_aliases = None;
+      opt_opening = None;
     }
 
   (* Entry points for derivations  *)
@@ -678,7 +730,8 @@ struct
         pretty_of_type_decl_simpl aliases prefix
           (hashtbl_of_list optional) (type_decl_simpl_of_ctyp td)
       in
-      <:str_item<$pretty$>>
+      wrap_opening opts.opt_opening
+        <:str_item<$pretty$>>
 
   let derive_expr_of _loc opts =
     let prefix = options_get string_list_of_ident [] opts.opt_prefix
@@ -686,8 +739,9 @@ struct
         opts.opt_aliases
     in
     fun td ->
-      expr_of_of_type_decl_simpl _loc prefix aliases
-        (type_decl_simpl_of_ctyp td)
+      wrap_opening opts.opt_opening
+        (expr_of_of_type_decl_simpl _loc prefix aliases
+           (type_decl_simpl_of_ctyp td))
 
   EXTEND Gram
     GLOBAL: str_item module_longident type_longident;
@@ -726,13 +780,21 @@ struct
         ]
       ];
 
+    opt_opening:
+      [ [ `LABEL "opening"; x = module_longident ->
+          { options_empty with
+            opt_opening = Some (_loc, x) }
+        ]
+      ];
+
     bare_pretty_spec:
       [ [ `LIDENT "pretty" -> derive_pretty _loc options_empty ]
       ];
 
     pretty_spec:
       [ [ `LIDENT "pretty";
-          opts = LIST0 [ opt_prefix | opt_optional | opt_aliases ]
+          opts = LIST0 [ opt_prefix | opt_optional | opt_aliases
+                       | opt_opening ]
           ->
           derive_pretty _loc (List.fold_left options_merge options_empty opts)
         ]
@@ -743,7 +805,8 @@ struct
       ];
 
     expr_of_spec:
-      [ [ `LIDENT "expr_of"; opts = LIST0 [ opt_prefix | opt_aliases ]
+      [ [ `LIDENT "expr_of"; opts = LIST0 [ opt_prefix | opt_aliases
+                                          | opt_opening ]
           ->
           derive_expr_of _loc (List.fold_left options_merge options_empty opts)
         ]

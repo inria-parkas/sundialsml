@@ -4,11 +4,15 @@ module Roots = Ida.Roots
 open Pprint
 open Quickcheck
 open Quickcheck_sundials
+open Pprint_ida
 open Quickcheck_ida
 open Camlp4.PreCast
 open Syntax
 open Ast
 open Expr_of
+open Expr_of_sundials
+open Expr_of_ida
+open Expr_of_ida_model
 module Camlp4aux = Camlp4aux.Make (Camlp4.PreCast.Syntax)
 open Camlp4aux
 
