@@ -1086,11 +1086,15 @@ let ida_test_case_driver model cmds =
   let just_cmp = ref false
   and marshal_results = ref false
   and orig_model = copy_model model
+  and buffer_errors = ref false
+  and error_buffer = Buffer.create 1
   in
   Arg.parse
     [("--just-cmp", Arg.Set just_cmp,
       "don't print anything; just give the exit code");
      ("--marshal-results", Arg.Set marshal_results,
+      "for internal use only");
+     ("--buffer-errors", Arg.Set buffer_errors,
       "for internal use only");
      ("--read-write-invariance", Arg.Set read_write_invariance,
       "print data in a format that can be fed to ocaml toplevel")]
@@ -1099,6 +1103,12 @@ let ida_test_case_driver model cmds =
   let mismatches = ref [] in
   let expected_results = ref [] in
   let actual_results = ref [] in
+  let errout =
+    Printf.fprintf stderr "buffer_errors = %b\n" !buffer_errors;
+    flush stderr;
+    if !buffer_errors then Format.formatter_of_buffer error_buffer
+    else Format.err_formatter
+  in
   let do_cmd thunk =
     let expected = if !step = 0 then model_init model
                    else model_cmd model cmds.(!step - 1)
@@ -1126,11 +1136,18 @@ let ida_test_case_driver model cmds =
                   but expected@\n  %s@\n"
             i (show_result act) (show_result exp)
         in
+        Format.pp_print_flush errout ();
         prerrf "Test failed.@\n[Reason]@\n";
         List.iter prerr_mismatch !mismatches;
         prerrf "@\n[Test Case]@\n";
         prerr_script (orig_model, Array.to_list cmds);
         prerrf "@\n@\n[Program Output]@\n";
+        (* If we print errors straight to standard error, they will appear
+           before the "[Test Case]" above, which makes it easy to miss.
+           If at all possible, we buffer the output and put it here, under
+           the [Program Output] section.  *)
+        if !buffer_errors then
+          prerrf "%s" (Buffer.contents error_buffer);
         prerr_results (List.rev !actual_results);
         prerrf "@\n@\n[Expected Output]@\n";
         prerr_results (List.rev !expected_results);
@@ -1138,7 +1155,13 @@ let ida_test_case_driver model cmds =
         1
     else 0
   in
-  do_cmd, finish
+  let err_handler details =
+    (* Follows the format of sundials 2.5.0.  *)
+    Format.fprintf errout "\n[%s ERROR]  %s\n  %s\n\n"
+      details.Ida.module_name details.Ida.function_name
+      details.Ida.error_message
+  in
+  do_cmd, finish, err_handler
 
 let with_file_descr descr f =
   let ret = try f descr with exn -> Unix.close descr; raise exn in
@@ -1194,9 +1217,11 @@ let quickcheck_ida ml_file_of_script max_tests =
     copy_file ~from_file:(!test_exec_file ^ ".ml")
               ~to_file:!test_failed_file ();
     let exit_status =
-      Unix.system (if !read_write_invariance
-                   then !test_exec_file ^ " --read-write-invariance"
-                   else !test_exec_file)
+      Unix.system
+        (Printf.sprintf "%s --buffer-errors %s"
+           !test_exec_file
+           (if !read_write_invariance then " --read-write-invariance"
+            else ""))
     in
     assert (exit_status = Unix.WEXITED 1);
     Format.fprintf err
@@ -1221,6 +1246,8 @@ let quickcheck_ida ml_file_of_script max_tests =
     Format.fprintf err "@\n@\n[Program Output]@\n";
     Format.pp_print_flush err ();
     flush stderr;
+    (* No --buffer-errors here, because the test code will likely not get to
+       the point where it flushes the buffer.  *)
     ignore (Unix.system
               (if !read_write_invariance
                then !test_exec_file ^ " --read-write-invariance"

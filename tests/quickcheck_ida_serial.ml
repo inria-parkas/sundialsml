@@ -239,7 +239,7 @@ let ml_of_script (model, cmds) =
     open Pprint
     let model = $expr_of_model model$
     let cmds = $expr_of_array expr_of_cmd (Array.of_list cmds)$
-    let do_cmd, finish = ida_test_case_driver model cmds
+    let do_cmd, finish, err_handler = ida_test_case_driver model cmds
     let _ =
       let vec  = $expr_of_carray model.vec0$
       and vec' = $expr_of_carray model.vec'0$ in
@@ -252,6 +252,7 @@ let ml_of_script (model, cmds) =
       in
       Ida.ss_tolerances session 1e-9 1e-9;
       $set_jac model <:expr<session>>$;
+      Ida.set_err_handler_fn session err_handler;
       do_cmd (lazy (Aggr [Float (Ida.get_current_time session);
                           carray vec; carray vec']));
       $expr_of_cmds_impl model cmds$;
