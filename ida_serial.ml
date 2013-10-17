@@ -62,6 +62,9 @@ type session = {
                                -> float -> unit;
         mutable jactimesfn : double_tmp jacobian_arg -> val_array -> val_array
                                -> unit;
+
+        (* To be manipulated from the C side only.  *)
+        mutable safety_check_flags : int;
       }
 
 external sv_tolerances  : session -> float -> nvec -> unit
@@ -170,6 +173,7 @@ let init linsolv resfn ?(roots=no_roots) ?(t0=0.) y y' =
                   presetupfn = (fun _ -> ());
                   presolvefn = (fun _ _ _ _ -> ());
                   jactimesfn = (fun _ _ _ -> ());
+                  safety_check_flags = 0;
                 }
   in
   Gc.finalise session_finalize session;
@@ -302,7 +306,7 @@ external set_root_direction'    : session -> RootDirs.t -> unit
     = "c_ida_set_root_direction"
 
 let set_root_direction s rda = 
-  set_root_direction' s (RootDirs.create' (nroots s) rda)
+  set_root_direction' s (RootDirs.copy_n (nroots s) rda)
 
 let set_all_root_directions s rd =
   set_root_direction' s (RootDirs.make (nroots s) rd)
@@ -476,42 +480,6 @@ module Constraints =
 external set_constraints : session -> Constraints.t -> unit
   = "c_ba_ida_set_constraints"
 
-module VarTypes =
-  struct
-    type t = nvec
-    type var_type = Algebraic | Differential
-
-    let var_type_of_float = function
-      | 0.0 -> Algebraic
-      | 1.0 -> Differential
-      | f -> raise (Invalid_argument
-                      ("invalid component type: " ^ string_of_float f))
-    let float_of_var_type = function
-      | Algebraic -> 0.0
-      | Differential -> 1.0
-
-    let create = Carray.create
-    let init n x = Carray.init n (float_of_var_type x)
-    let of_array a =
-      let ret = create (Array.length a) in
-      for i = 0 to Array.length a - 1 do
-        ret.{i} <- float_of_var_type a.(i)
-      done;
-      ret
-    let length = Carray.length
-
-    let get a i = var_type_of_float a.{i}
-    let set a i x = a.{i} <- float_of_var_type x
-    let set_algebraic a i = set a i Algebraic
-    and set_differential a i = set a i Differential
-    let fill a t =
-      let x = float_of_var_type t in
-      Carray.fill a x
-
-    let blit a b = Carray.blit a b
-  end
-module Id = VarTypes
-
 external set_id : session -> Id.t -> unit
   = "c_ba_ida_set_id"
 let set_var_types = set_id
@@ -521,20 +489,29 @@ external set_suppress_alg : session -> bool -> unit
 external get_num_backtrack_ops : session -> int
   = "c_ida_get_num_backtrack_ops"
 
-external calc_ic_y : session -> ?y:val_array -> float -> unit
+external c_calc_ic_y : session -> val_array option -> float -> unit
   = "c_ba_ida_calc_ic_y"
-external c_calc_ic_ya_yd' :
-  session -> val_array option -> der_array option -> Id.t -> float -> unit
-  = "c_ba_ida_calc_ic_ya_ydp"
-let calc_ic_ya_yd' session ?y ?y' id tout1 =
-  if Id.length id <> neqs session then
-    raise (Invalid_argument ("length of component type array does not match number of equations"));
+let calc_ic_y session ?y tout1 =
   let len = function
     | None -> neqs session
     | Some x -> Carray.length x
   in
   if len y <> neqs session then
-    raise (Invalid_argument ("length of buffer receiving computed y vector doesn't match number of equations"));
+    invalid_arg "calc_ic_y: ~y has incorrect length";
+  c_calc_ic_y session y tout1
+
+external c_calc_ic_ya_yd' :
+  session -> val_array option -> der_array option -> Id.t -> float -> unit
+  = "c_ba_ida_calc_ic_ya_ydp"
+let calc_ic_ya_yd' session ?y ?y' id tout1 =
+  if Id.length id <> neqs session then
+    invalid_arg "calc_ic_ya_yd': variable type array (of type VarTypes.t) has incorrect length";
+  let len = function
+    | None -> neqs session
+    | Some x -> Carray.length x
+  in
+  if len y <> neqs session then
+    invalid_arg "calc_ic_ya_yd': ~y has incorrect length";
   if len y' <> neqs session then
-    raise (Invalid_argument ("length of buffer receiving computed y' vector doesn't match number of equations"));
-  c_calc_ic_ya_yd' session (y : val_array option) y' id tout1
+    invalid_arg "calc_ic_ya_yd': ~y' has incorrect length";
+  c_calc_ic_ya_yd' session y y' id tout1

@@ -18,6 +18,8 @@
 #ifndef _SUNDIALS_ML_H__
 #define _SUNDIALS_ML_H__
 
+#include "config.h"
+
 value sundials_ml_big_real ();
 value sundials_ml_unit_roundoff();
 

@@ -625,6 +625,13 @@ CAMLprim void c_ida_set_suppress_alg (value vida_mem, value vb)
 {
     CAMLparam2(vida_mem, vb);
 
+#if SAFETY_CHECKS
+    if (! IDA_TEST_SAFETY_FLAG (vida_mem, IDA_SAFETY_FLAG_ID_SET)) {
+	/* FIXME: explain the reason to the programmer.  */
+	caml_raise_constant(*caml_named_value("ida_IllInput"));
+    }
+#endif
+
     int flag = IDASetSuppressAlg(IDA_MEM_FROM_ML(vida_mem),
 				 Bool_val (vb));
     CHECK_FLAG("IDASetSuppressAlg", flag);

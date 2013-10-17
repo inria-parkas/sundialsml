@@ -25,6 +25,7 @@ include module type of Ida
   and type RootDirs.t = Ida.RootDirs.t
   and type linear_solver = Ida.linear_solver
   and type solver_result = Ida.solver_result
+  and type error_details = Ida.error_details
   and type Bandmatrix.t = Dls.Bandmatrix.t
   and type Directbandmatrix.t = Dls.Directbandmatrix.t
   and type Densematrix.t = Dls.Densematrix.t
@@ -1016,110 +1017,6 @@ module Constraints :
     val blit : t -> t -> unit
   end
 
-(** Variable classification that needs to be specified for computing consistent
- initial values and for suppressing local error tests on some variables.
-
- @ida <node5#sss:idasetid> IDASetId
- *)
-module VarTypes :
-  sig
-    (** An abstract array type, whose i-th component specifies whether the i-th
-        component of the dependent variable vector y is an algebraic or
-        differential variable, for each i.  *)
-    type t
-    type var_type =
-    | Algebraic    (** Algebraic variable; residual function must not depend
-                       on this component's derivative.  *)
-    | Differential (** Differential variable; residual function can depend on
-                       this component's derivative.  *)
-
-    (** [create n] returns an array with [n] elements, each set to
-        Algebraic.  *)
-    val create : int -> t
-
-    (** [init n x] returns an array with [n] elements, each set to [x]. *)
-    val init : int -> var_type -> t
-
-    (** [of_array a] converts an OCaml array [a] of {!var_type}s into an
-        abstract array suitable for passing into IDA.  *)
-    val of_array : var_type array -> t
-
-    (** Returns the length of an array *)
-    val length : t -> int
-
-    (** [get c i] returns the component type of the i-th variable in the
-        DAE.  *)
-    val get : t -> int -> var_type
-
-    (** [set c i x] sets the component type of the i-th variable in the DAE to
-        [x].  *)
-    val set : t -> int -> var_type -> unit
-
-    (** [set_algebraic c i] sets the component type of the i-th variable in
-        the DAE to algebraic.  *)
-    val set_algebraic : t -> int -> unit
-
-    (** [set_differential c i] sets the component type of the i-th variable
-        in the DAE to differential.  *)
-    val set_differential : t -> int -> unit
-
-    (** [fill c x] fills the array so that all variables will have component
-        type [x].  *)
-    val fill : t -> var_type -> unit
-
-    (** [blit a b] copies the contents of [a] to [b].  *)
-    val blit : t -> t -> unit
-  end
-
-(** An unpreferred alias for {!VarTypes}.  SUNDIALS calls variable types by the
-    cryptic name "Id", and this OCaml binding preserves this alternative naming
-    to help users transition from the C interface.  *)
-module Id :
-  sig
-    (** An abstract array type, whose i-th component specifies whether the i-th
-        component of the dependent variable vector y is an algebraic or
-        differential variable, for each i.  *)
-    type t = VarTypes.t
-    type var_type = VarTypes.var_type = Algebraic | Differential
-
-    (** [create n] returns an array with [n] elements, each set to
-        Algebraic.  *)
-    val create : int -> t
-
-    (** [init n x] returns an array with [n] elements, each set to [x]. *)
-    val init : int -> var_type -> t
-
-    (** [of_array a] converts an OCaml array [a] of {!var_type}s into an
-        abstract array suitable for passing into IDA.  *)
-    val of_array : var_type array -> t
-
-    (** Returns the length of an array *)
-    val length : t -> int
-
-    (** [get c i] returns the component type of the i-th variable in the
-        DAE.  *)
-    val get : t -> int -> var_type
-
-    (** [set c i x] sets the component type of the i-th variable in the DAE to
-        [x].  *)
-    val set : t -> int -> var_type -> unit
-
-    (** [set_algebraic c i] sets the component type of the i-th variable in
-        the DAE to algebraic.  *)
-    val set_algebraic : t -> int -> unit
-
-    (** [set_differential c i] sets the component type of the i-th variable
-        in the DAE to differential.  *)
-    val set_differential : t -> int -> unit
-
-    (** [fill c x] fills the array so that all variables will have component
-        type [x].  *)
-    val fill : t -> var_type -> unit
-
-    (** [blit a b] copies the contents of [a] to [b].  *)
-    val blit : t -> t -> unit
-  end
-
 val set_constraints : session -> Constraints.t -> unit
 
 (**
@@ -1184,7 +1081,7 @@ val set_var_types : session -> VarTypes.t -> unit
     iteration combined with a linesearch algorithm.  See Section 2.1 of the IDA
     User Guide and the following reference for more information:
 
-    P. N. Brown, A. C. Hindmarsh, and L. R. Petzold. Consistent Initial Condition Calculation for Differential-Algebraic Systems. SIAM J. Sci. Comput., 19:1495–1512, 1998.
+    P. N. Brown, A. C. Hindmarsh, and L. R. Petzold. Consistent Initial Condition Calculation for Differential-Algebraic Systems. SIAM J. Sci. Comput., 19:1495-1512, 1998.
 
     @ida <node5#ss:idacalcic> IDACalcIC
     @ida <node5#sss:optout_iccalc> IDAGetConsistentIC

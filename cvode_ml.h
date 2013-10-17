@@ -22,9 +22,6 @@
 
 #include "sundials_ml.h"
 
-/* Configuration options */
-#define CHECK_MATRIX_ACCESS 1
-
 /*
  * The session data structure is shared in four parts across the OCaml and C
  * heaps:

@@ -396,11 +396,14 @@ module RootDirs =
 
     let length a = Array1.dim a
 
-    let create' n src =
+    let copy_n n src =
+      let nsrc = Array.length src in
       let a = Array1.create int32 c_layout n in
-      if n > Array.length src
+      if n > nsrc
       then Array1.fill a (int32_of_root_direction IncreasingOrDecreasing);
-      Array.iteri (fun i v -> a.{i} <- int32_of_root_direction v) src;
+      for i = 0 to min n nsrc - 1 do
+        a.{i} <- int32_of_root_direction src.(i)
+      done;
       a
 
     let set a i v = a.{i} <- int32_of_root_direction v

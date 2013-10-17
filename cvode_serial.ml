@@ -300,7 +300,7 @@ external set_root_direction'    : session -> RootDirs.t -> unit
     = "c_cvode_set_root_direction"
 
 let set_root_direction s rda = 
-  set_root_direction' s (RootDirs.create' (nroots s) rda)
+  set_root_direction' s (RootDirs.copy_n (nroots s) rda)
 
 let set_all_root_directions s rd =
   set_root_direction' s (RootDirs.make (nroots s) rd)

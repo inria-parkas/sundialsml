@@ -617,6 +617,10 @@ CAMLprim void IDATYPE(reinit)(value vdata, value t0, value y0, value yp0)
     RELINQUISH_NVECTORIZEDVAL(y0_nv);
     CHECK_FLAG("IDAReInit", flag);
 
+#if SAFETY_CHECKS
+    IDA_MASK_SAFETY_FLAGS(vdata, IDA_SAFETY_FLAG_REINIT_KEEPS);
+#endif
+
     CAMLreturn0;
 }
 
@@ -629,6 +633,15 @@ static value solve (value vdata, value nextt, value vy, value vyp, int onestep)
     int flag;
     N_Vector y, yp;
     enum ida_solver_result_tag result;
+
+#if SAFETY_CHECKS
+    if (IDA_NEQS_FROM_ML (vdata) != Caml_ba_array_val(vy)->dim[0])
+	/* FIXME: explain the reason to the programmer.  */
+	caml_raise_constant(*caml_named_value("ida_IllInput"));
+    if (IDA_NEQS_FROM_ML (vdata) != Caml_ba_array_val(vyp)->dim[0])
+	/* FIXME: explain the reason to the programmer.  */
+	caml_raise_constant(*caml_named_value("ida_IllInput"));
+#endif
 
     y = NVECTORIZE_VAL (vy);
     yp = NVECTORIZE_VAL (vyp);
@@ -664,6 +677,10 @@ static value solve (value vdata, value nextt, value vy, value vyp, int onestep)
 	}
 	CHECK_FLAG ("IDASolve", flag);
     }
+
+#if SAFETY_CHECKS
+    IDA_SET_SAFETY_FLAG (vdata, IDA_SAFETY_FLAG_SOLVING);
+#endif
 
     /* Hmm...should this go in the production code or not?  */
     if (Is_block (Field (vdata, RECORD_IDA_SESSION_EXN_TEMP)))
@@ -740,6 +757,10 @@ CAMLprim void IDATYPE(set_id) (value vida_mem, value vid)
     RELINQUISH_NVECTORIZEDVAL (id);
     CHECK_FLAG("IDASetId", flag);
 
+#if SAFETY_CHECKS
+    IDA_SET_SAFETY_FLAG (vida_mem, IDA_SAFETY_FLAG_ID_SET);
+#endif
+
     CAMLreturn0;
 }
 
@@ -751,6 +772,13 @@ static void calc_ic (void *ida_mem, value session, int icopt, realtype tout1,
     CAMLlocal1 (exn);
     int flag;
     N_Vector y, yp;
+
+#if SAFETY_CHECKS
+    if (IDA_SAFETY_FLAGS (session) & IDA_SAFETY_FLAG_SOLVING) {
+	/* FIXME: explain the reason to the programmer.  */
+	caml_raise_constant(*caml_named_value("ida_IllInput"));
+    }
+#endif
 
     flag = IDACalcIC (ida_mem, icopt, tout1);
 
@@ -801,6 +829,10 @@ CAMLprim void IDATYPE(calc_ic_ya_ydp)(value vida_mem, value y, value yp,
     flag = IDASetId (ida_mem, id);
     RELINQUISH_NVECTORIZEDVAL (id);
     CHECK_FLAG ("IDASetId", flag);
+
+#if SAFETY_CHECKS
+    IDA_SET_SAFETY_FLAG (vida_mem, IDA_SAFETY_FLAG_ID_SET);
+#endif
 
     calc_ic (ida_mem, vida_mem, IDA_YA_YDP_INIT, Double_val (tout1), y, yp);
 

@@ -104,6 +104,42 @@ exception StopTimeReached
 
 exception ZeroDiagonalElement of int
 
+module VarTypes =
+  struct
+    type t = Carray.t
+    type var_type = Algebraic | Differential
+
+    let var_type_of_float = function
+      | 0.0 -> Algebraic
+      | 1.0 -> Differential
+      | f -> raise (Invalid_argument
+                      ("invalid component type: " ^ string_of_float f))
+    let float_of_var_type = function
+      | Algebraic -> 0.0
+      | Differential -> 1.0
+
+    let create = Carray.create
+    let init n x = Carray.init n (float_of_var_type x)
+    let of_array a =
+      let ret = create (Array.length a) in
+      for i = 0 to Array.length a - 1 do
+        ret.{i} <- float_of_var_type a.(i)
+      done;
+      ret
+    let length = Carray.length
+
+    let get a i = var_type_of_float a.{i}
+    let set a i x = a.{i} <- float_of_var_type x
+    let set_algebraic a i = set a i Algebraic
+    and set_differential a i = set a i Differential
+    let fill a t =
+      let x = float_of_var_type t in
+      Carray.fill a x
+
+    let blit a b = Carray.blit a b
+  end
+module Id = VarTypes
+
 let _ =
   List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
   [
