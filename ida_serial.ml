@@ -128,8 +128,6 @@ let _ =
   Callback.register "c_ba_ida_call_presolvefn"    call_presolvefn;
   Callback.register "c_ba_ida_call_jactimesfn"    call_jactimesfn;
 
-(* FIXME: isn't it better to separate out IDARootInit(), since it's
-   optional in the C interface?  *)
 external c_init
   : 'a Weak.t -> float -> val_array -> der_array -> (ida_mem * c_weak_ref * ida_file)
   = "c_ba_ida_init"

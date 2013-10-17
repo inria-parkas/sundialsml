@@ -328,19 +328,6 @@ CAMLprim void c_ida_set_root_direction(value vdata, value rootdirs)
     CAMLreturn0;
 }
 
-/* FIXME: move this to sundials_ml.c? */
-value ida_ml_big_real()
-{
-    CAMLparam0();
-    CAMLreturn(caml_copy_double(BIG_REAL));
-}
-
-value ida_ml_unit_roundoff()
-{
-    CAMLparam0();
-    CAMLreturn(caml_copy_double(UNIT_ROUNDOFF));
-}
-
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *
@@ -626,10 +613,8 @@ CAMLprim void c_ida_set_suppress_alg (value vida_mem, value vb)
     CAMLparam2(vida_mem, vb);
 
 #if SAFETY_CHECKS
-    if (! IDA_TEST_SAFETY_FLAG (vida_mem, IDA_SAFETY_FLAG_ID_SET)) {
-	/* FIXME: explain the reason to the programmer.  */
-	caml_raise_constant(*caml_named_value("ida_IllInput"));
-    }
+    if (! IDA_TEST_SAFETY_FLAG (vida_mem, IDA_SAFETY_FLAG_ID_SET))
+	caml_invalid_argument ("Ida.set_suppress_alg: var types not set");
 #endif
 
     int flag = IDASetSuppressAlg(IDA_MEM_FROM_ML(vida_mem),

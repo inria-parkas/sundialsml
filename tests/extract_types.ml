@@ -299,8 +299,8 @@ let print_str (submodname, item) =
                type or exception: " ^ string_of_str_item item)
 
 let main () =
-  (* FIXME: print_interf seems to always fail with "No interface printer".
-     I've tried module Printer = Camlp4OCamlPrinter, I've also tried calling
+  (* print_interf seems to always fail with "No interface printer".  I've tried
+     module Printer = Camlp4OCamlPrinter, I've also tried calling
      Camlp4.Register.enable_ocaml_printer () directly, and neither did anything
      at all.  If we go directly to the Printers.OCaml module it seems to
      work.  *)

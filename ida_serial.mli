@@ -1051,8 +1051,9 @@ val set_id : session -> Id.t -> unit
 (** Specify which variables are algebraic and which variables are differential,
     needed for {!set_suppress_alg}.  The function {!calc_ic_ya_yd'} also sets
     the same information, so you only need to call one of these functions.
-    FIXME: it's not clear from the SUNDIALS manual if it's supposed to be safe
-    to change the variable types after you've already set it.
+
+    The SUNDIALS manual is not clear about whether it's safe to change the
+    variable types after you've already set it.
 
     [set_var_types] corresponds to [IDASetId] in the C interface, and an alias
     {!set_id} is also available in this binding.  We prefer the more

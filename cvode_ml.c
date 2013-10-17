@@ -440,18 +440,6 @@ CAMLprim void c_cvode_set_prec_type(value vcvode_mem, value vptype)
     CAMLreturn0;
 }
 
-value cvode_ml_big_real()
-{
-    CAMLparam0();
-    CAMLreturn(caml_copy_double(BIG_REAL));
-}
-
-value cvode_ml_unit_roundoff()
-{
-    CAMLparam0();
-    CAMLreturn(caml_copy_double(UNIT_ROUNDOFF));
-}
-
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *
  * Boiler plate definitions for Sundials interface.

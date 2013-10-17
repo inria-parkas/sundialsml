@@ -208,9 +208,11 @@ let vartypes_of_model model =
 
 (* Destructively update the model according to a command.  If the expected
    return value is Exn, this function will actually raise that exception.  The
-   wrapper model_cmd converts it to Exn.  *)
+   wrapper model_cmd converts it to Exn.  Keep in mind that for most exceptions
+   the error message is not checked, apart from a few specific messages
+   expected to be stable across versions, like "index out of bounds".  *)
 let model_cmd_internal model = function
-  | SolveNormalBadVector _ -> raise Ida.IllInput
+  | SolveNormalBadVector _ -> invalid_arg ""
   | SolveNormal query_time ->
     (* NB: we don't model interpolation failures -- t will be monotonically
        increasing.  *)
@@ -291,7 +293,7 @@ let model_cmd_internal model = function
       Type (RootInfo (Roots.copy model.root_info))
   | GetNRoots ->
     Int (Array.length model.roots)
-  | CalcIC_Y (_, GiveBadVector _) -> raise (Invalid_argument "")
+  | CalcIC_Y (_, GiveBadVector _) -> invalid_arg ""
      (* Undocumented behavior (sundials 2.5.0): GetConsistentIC() and CalcIC()
         can only be called before IDASolve().  However, IDA only detects
         illicit calls of GetConsistentIC(), and for calls to CalcIC() after
@@ -300,7 +302,7 @@ let model_cmd_internal model = function
         The OCaml binding contains a flag to detect and prevent this case.
 
      *)
-  | CalcIC_Y (_, _) when model.solving -> raise Ida.IllInput
+  | CalcIC_Y (_, _) when model.solving -> invalid_arg ""
   | CalcIC_Y (tout1, ic_buf) ->
     begin
       (* tout1 is just a hint to IDA that exact_soln doesn't need, and the
@@ -328,7 +330,7 @@ let model_cmd_internal model = function
   | CalcIC_YaYd' _ when model.solving ->
     (* Right now, the binding sets var types before invoking IDACalcIC().  *)
     model.vartypes_set <- true;
-    raise Ida.IllInput
+    invalid_arg ""
   | CalcIC_YaYd' (tout1, ic_buf_y, ic_buf_y') ->
     begin
       (* var types are set before calling CalcIC *)
@@ -355,7 +357,7 @@ let model_cmd_internal model = function
       | _, _ -> assert false
     end
   | SetVarTypes -> model.vartypes_set <- true; Unit
-  | SetSuppressAlg _ -> if model.vartypes_set then Unit else Exn Ida.IllInput
+  | SetSuppressAlg _ -> if model.vartypes_set then Unit else invalid_arg ""
   | SetAllRootDirections dir ->
     if Array.length model.roots = 0 then raise Ida.IllInput;
     Array.fill model.root_dirs 0 (Array.length model.root_dirs) dir;

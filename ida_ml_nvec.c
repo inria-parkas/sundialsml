@@ -636,11 +636,9 @@ static value solve (value vdata, value nextt, value vy, value vyp, int onestep)
 
 #if SAFETY_CHECKS
     if (IDA_NEQS_FROM_ML (vdata) != Caml_ba_array_val(vy)->dim[0])
-	/* FIXME: explain the reason to the programmer.  */
-	caml_raise_constant(*caml_named_value("ida_IllInput"));
+	caml_invalid_argument ("Ida.solve: y vector has incorrect length");
     if (IDA_NEQS_FROM_ML (vdata) != Caml_ba_array_val(vyp)->dim[0])
-	/* FIXME: explain the reason to the programmer.  */
-	caml_raise_constant(*caml_named_value("ida_IllInput"));
+	caml_invalid_argument ("Ida.solve: y' vector has incorrect length");
 #endif
 
     y = NVECTORIZE_VAL (vy);
@@ -670,7 +668,7 @@ static value solve (value vdata, value nextt, value vy, value vyp, int onestep)
 	ret = Field (vdata, RECORD_IDA_SESSION_EXN_TEMP);
 	if (Is_block (ret)) {
 	    Store_field (vdata, RECORD_IDA_SESSION_EXN_TEMP, Val_none);
-	    /* FIXME: In bytecode, caml_raise() duplicates some parts of the
+	    /* In bytecode, caml_raise() duplicates some parts of the
 	     * stacktrace.  This does not seem to happen in native code
 	     * execution.  */
 	    caml_raise (Field (ret, 0));
@@ -774,10 +772,8 @@ static void calc_ic (void *ida_mem, value session, int icopt, realtype tout1,
     N_Vector y, yp;
 
 #if SAFETY_CHECKS
-    if (IDA_SAFETY_FLAGS (session) & IDA_SAFETY_FLAG_SOLVING) {
-	/* FIXME: explain the reason to the programmer.  */
-	caml_raise_constant(*caml_named_value("ida_IllInput"));
-    }
+    if (IDA_SAFETY_FLAGS (session) & IDA_SAFETY_FLAG_SOLVING)
+	caml_invalid_argument ("Ida.calc_ic: called after Ida.solve_*");
 #endif
 
     flag = IDACalcIC (ida_mem, icopt, tout1);
@@ -787,8 +783,8 @@ static void calc_ic (void *ida_mem, value session, int icopt, realtype tout1,
 	exn = Field (session, RECORD_IDA_SESSION_EXN_TEMP);
 	if (Is_block (exn)) {
 	    Store_field (session, RECORD_IDA_SESSION_EXN_TEMP, Val_none);
-	    /* FIXME: In bytecode, caml_raise() duplicates some parts of
-	     * the stacktrace.  This does not seem to happen in native code
+	    /* In bytecode, caml_raise() duplicates some parts of the
+	     * stacktrace.  This does not seem to happen in native code
 	     * execution.  */
 	    caml_raise (Field (exn, 0));
 	}
