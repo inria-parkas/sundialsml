@@ -1,2 +1,20 @@
 .depend
 config
+*.cmo
+*.cmx
+*.cmi
+*.cma
+*.cmxa
+*.o
+*.annot
+*.byte
+*.opt
+*.out
+*.diff
+*.log
+*.so
+*.a
+# META is generated from META.in
+META
+config.h
+
