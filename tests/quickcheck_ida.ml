@@ -1106,8 +1106,6 @@ let ida_test_case_driver model cmds =
   let expected_results = ref [] in
   let actual_results = ref [] in
   let errout =
-    Printf.fprintf stderr "buffer_errors = %b\n" !buffer_errors;
-    flush stderr;
     if !buffer_errors then Format.formatter_of_buffer error_buffer
     else Format.err_formatter
   in
