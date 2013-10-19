@@ -30,6 +30,7 @@ and debug = ref false
 and header = ref ""
 and footer = ref ""
 and excluded = ref []
+and debug_exclude = ref false
 
 let die msg =
   Printf.fprintf stderr "Error: %s\n" msg;
@@ -70,6 +71,9 @@ let process_argv () =
      ("--exclude",
       Arg.String (fun s -> excluded := Str.regexp s :: !excluded),
       "exclude types/exceptions matching a regexp");
+     ("--debug-exclude",
+      Arg.Set debug_exclude,
+      "print to stderr which types are excluded and which are kept");
     ]
     (set_string_check_dup "input file" file)
     "\
@@ -129,7 +133,17 @@ excluded if it matches at least one of the <regexp>s.
 
 let exclude submod tctor =
   let type_name = String.concat "." (submod @ [tctor]) in
-  List.exists (fun regexp -> Str.string_match regexp type_name 0) !excluded
+  let match_against r =
+    try let _ = Str.search_forward r type_name 0 in
+        true
+    with Not_found -> false
+  in
+  let ret = List.exists match_against !excluded in
+  if !debug_exclude then
+    Printf.fprintf stderr "%s type %s\n"
+      (if ret then "excluded" else "kept")
+      type_name;
+  ret
 
 let rec trim_tydcl submod td =
   match td with
