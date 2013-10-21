@@ -251,6 +251,9 @@ $(GEN_MLS): %.ml: phony
 
 endif # ifdef DEPFILE
 
+# generated .ml files should be deleted if the command fails
+.DELETE_ON_ERROR:
+
 # clean is always available
 clean:
 	-rm -f *.cmi *.cmo *.cmx *.o *.opt *.byte *.opt failed test *.out

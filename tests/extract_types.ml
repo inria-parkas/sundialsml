@@ -312,6 +312,15 @@ let print_str (submodname, item) =
   | _ -> die ("internal error: extracted something other than \
                type or exception: " ^ string_of_str_item item)
 
+let parse parser_fcn srcname =
+  try
+    let loc = Loc.of_tuple (srcname, 1, 0, 0, 1, 0, 0, false) in
+    with_infile srcname (fun infile ->
+        parser_fcn loc (Stream.of_channel infile))
+  with Loc.Exc_located (loc, Stream.Error msg) ->
+    Printf.fprintf stderr "%s:\nError: %s\n" (Loc.to_string loc) msg;
+    failwith "Input file could not be parsed."
+
 let main () =
   (* print_interf seems to always fail with "No interface printer".  I've tried
      module Printer = Camlp4OCamlPrinter, I've also tried calling
@@ -319,25 +328,22 @@ let main () =
      at all.  If we go directly to the Printers.OCaml module it seems to
      work.  *)
   process_argv ();
-  let loc = Loc.of_tuple (!file, 1, 0, 0, 1, 0, 0, false) in
-  with_infile !file (fun infile ->
-      if Filename.check_suffix !file ".mli" then
-        let src = Parser.parse_interf loc (Stream.of_channel infile) in
-        let skeleton = (sig_extract_types#sig_item src)#acc in
-        print_header_footer !header;
-        List.iter print_sig skeleton;
-        print_header_footer !footer;
-        dbg (Printf.sprintf "collected %d types." (List.length skeleton))
-      else if Filename.check_suffix !file ".ml" then
-        let src = Parser.parse_implem loc (Stream.of_channel infile) in
-        let skeleton = (str_extract_types#str_item src)#acc in
-        print_header_footer !header;
-        List.iter print_str skeleton;
-        print_header_footer !footer;
-        dbg (Printf.sprintf "collected %d types." (List.length skeleton))
-      else
-        die (Printf.sprintf "unrecognized extension: %s" !file)
-    )
+  if Filename.check_suffix !file ".mli" then
+    let src = parse Parser.parse_interf !file in
+    let skeleton = (sig_extract_types#sig_item src)#acc in
+    print_header_footer !header;
+    List.iter print_sig skeleton;
+    print_header_footer !footer;
+    dbg (Printf.sprintf "collected %d types." (List.length skeleton))
+  else if Filename.check_suffix !file ".ml" then
+    let src = parse Parser.parse_implem !file in
+    let skeleton = (str_extract_types#str_item src)#acc in
+    print_header_footer !header;
+    List.iter print_str skeleton;
+    print_header_footer !footer;
+    dbg (Printf.sprintf "collected %d types." (List.length skeleton))
+  else
+    die (Printf.sprintf "unrecognized extension: %s" !file)
 ;;
 
 try
