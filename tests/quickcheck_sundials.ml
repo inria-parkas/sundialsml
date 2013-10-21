@@ -133,7 +133,7 @@ let pp_root_dirs, dump_root_dirs, show_root_dirs, display_root_dirs
            root info array can contain garbage that doesn't correspond to any
            of Increasing, Decreasing, or IncreasingOrDecreasing.  Such values
            trigger a Failure in RootDirs.get.  *)
-        try RootDirs.string_of_root_direction (RootDirs.get a i)
+        try show_root_direction (RootDirs.get a i)
         with Failure _ -> "<garbage>"
       in
       if !read_write_invariance
