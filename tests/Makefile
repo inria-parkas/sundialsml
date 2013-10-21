@@ -179,22 +179,22 @@ expr_of_ida_model.ml: quickcheck_ida.ml extract_types.byte
 
 -include .mindepend
 
-test-%: $(DEPEND_PREREQS)
+test-%: $(DEPEND_PREREQS) phony
 	$(MAKE) DEPFILE=.depend $@
 
-%.cmo: %.ml $(DEPEND_PREREQS)
+%.cmo: %.ml $(DEPEND_PREREQS) phony
 	$(MAKE) DEPFILE=.depend $@
 
-%.cmi: %.mli $(DEPEND_PREREQS)
+%.cmi: %.mli $(DEPEND_PREREQS) phony
 	$(MAKE) DEPFILE=.depend $@
 
-%.cmx: %.ml $(DEPEND_PREREQS)
+%.cmx: %.ml $(DEPEND_PREREQS) phony
 	$(MAKE) DEPFILE=.depend $@
 
-%.opt: %.ml $(DEPEND_PREREQS)
+%.opt: %.ml $(DEPEND_PREREQS) phony
 	$(MAKE) DEPFILE=.depend $@
 
-%.byte: %.ml $(DEPEND_PREREQS)
+%.byte: %.ml $(DEPEND_PREREQS) phony
 	$(MAKE) DEPFILE=.depend $@
 
 else
@@ -207,7 +207,25 @@ endif
 
 else # if DEPFILE is not defined
 
-%:
+test-%: phony
+	$(MAKE) DEPFILE=.mindepend $@
+
+%.cmo: phony
+	$(MAKE) DEPFILE=.mindepend $@
+
+%.cmi: phony
+	$(MAKE) DEPFILE=.mindepend $@
+
+%.cmx: phony
+	$(MAKE) DEPFILE=.mindepend $@
+
+%.opt: phony
+	$(MAKE) DEPFILE=.mindepend $@
+
+%.byte: phony
+	$(MAKE) DEPFILE=.mindepend $@
+
+$(GEN_MLS): %.ml: phony
 	$(MAKE) DEPFILE=.mindepend $@
 
 endif # ifdef DEPFILE
@@ -216,3 +234,6 @@ endif # ifdef DEPFILE
 clean:
 	-rm -f *.cmi *.cmo *.cmx *.o *.opt *.byte *.opt failed test *.out
 	-rm -f .depend .mindepend $(GEN_MLS)
+	-rm -f phony
+
+phony:
