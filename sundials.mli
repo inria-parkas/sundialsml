@@ -293,6 +293,33 @@ module RootDirs :
     val to_list : t -> root_direction list
   end
 
+(** {2 Solver results and error reporting} *)
+
+(**
+ Possible values returned when a CVODE/IDA solver step function succeeds.
+ Failures are indicated by exceptions.
+
+ @cvode <node5#sss:cvode> CVode
+ @ida <node5#sss:ida> IDASolve
+ *)
+type solver_result =
+  | Continue            (** CV_SUCCESS / IDA_SUCCESS *)
+  | RootsFound          (** CV_ROOT_RETURN / IDA_ROOT_RETURN *)
+  | StopTimeReached     (** CV_TSTOP_RETURN / IDA_TSTOP_RETURN *)
+
+(**
+ Type of values passed to a registered error handler function.
+
+ @cvode <node5#sss:optin_main> CVodeSetErrHandlerFn
+ @ida <node5#sss:optin_main> IDASetErrHandlerFn
+ *)
+type error_details = {
+    error_code : int;
+    module_name : string;               (** IDA or CVODE *)
+    function_name : string;
+    error_message : string;
+  }
+
 (** {2 Miscellaneous utility functions} *)
 
 (** [print_time (s1, s2) t] prints [t] with [s1] on the left and [s2] on the

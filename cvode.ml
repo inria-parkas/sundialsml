@@ -50,19 +50,7 @@ type iter =
   | Newton of linear_solver
   | Functional
 
-type solver_result =
-  | Continue
-  | RootsFound
-  | StopTimeReached
-
 type root_direction = RootDirs.root_direction
-
-type error_details = {
-    error_code : int;
-    module_name : string;
-    function_name : string;
-    error_message : string;
-  }
 
 (* Solver exceptions *)
 exception IllInput

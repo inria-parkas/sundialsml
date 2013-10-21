@@ -21,6 +21,11 @@ let expr_of_root_info rs =
   <:expr<Roots.of_array [| $Ast.exSem_of_list (List.map expr_of_root_event
                                                  (Roots.to_list rs))$ |]>>
 
+let expr_of_solver_result = function
+  | Continue -> <:expr<Continue>>
+  | RootsFound -> <:expr<RootsFound>>
+  | StopTimeReached -> <:expr<StopTimeReached>>
+
 let expr_of_root_direction = function
   | RootDirs.Increasing -> <:expr<Ida.RootDirs.Increasing>>
   | RootDirs.Decreasing -> <:expr<Ida.RootDirs.Decreasing>>

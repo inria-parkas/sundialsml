@@ -33,6 +33,8 @@ include module type of Sundials
   and type Roots.root_event = Sundials.Roots.root_event
   and type RootDirs.t = Sundials.RootDirs.t
   and type RootDirs.root_direction = Sundials.RootDirs.root_direction
+  and type solver_result = Sundials.solver_result
+  and type error_details = Sundials.error_details
 
 (** {2 General} *)
 
@@ -166,18 +168,7 @@ type root_direction = RootDirs.root_direction
  *)
 val no_roots : (int * ('a -> 'b -> 'c -> unit))
 
-(** {3 Solver results, statistics, and errors} *)
-
-(**
- Possible values returned when a solver step function succeeds.
- Failures are indicated by exceptions.
-
- @cvode <node5#sss:cvode> CVode
- *)
-type solver_result =
-  | Continue            (** CV_SUCCESS *)
-  | RootsFound          (** CV_ROOT_RETURN *)
-  | StopTimeReached     (** CV_TSTOP_RETURN *)
+(** {3 Integrator statistics} *)
 
 (**
  Aggregated integrator statistics.
@@ -194,18 +185,6 @@ type integrator_stats = {
     last_step : float;
     current_step : float;
     current_time : float
-  }
-
-(**
- Type of values passed to a registered error handler function.
-
- @cvode <node5#sss:optin_main> CVodeSetErrHandlerFn
- *)
-type error_details = {
-    error_code : int;
-    module_name : string;
-    function_name : string;
-    error_message : string;
   }
 
 (** {3:exceptions Exceptions} *)

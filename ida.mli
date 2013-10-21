@@ -33,6 +33,8 @@ include module type of Sundials
   and type Roots.root_event = Sundials.Roots.root_event
   and type RootDirs.t = Sundials.RootDirs.t
   and type RootDirs.root_direction = Sundials.RootDirs.root_direction
+  and type solver_result = Sundials.solver_result
+  and type error_details = Sundials.error_details
 
 (** {2 General} *)
 
@@ -111,17 +113,6 @@ val no_roots : (int * ('a -> 'b -> 'c -> 'd -> unit))
 (** {3 Solver results, statistics, and errors} *)
 
 (**
- Possible values returned when a solver step function succeeds.
- Failures are indicated by exceptions.
-
- @ida <node5#sss:ida> IDA
- *)
-type solver_result =
-  | Continue            (** IDA_SUCCESS *)
-  | RootsFound          (** IDA_ROOT_RETURN *)
-  | StopTimeReached     (** IDA_TSTOP_RETURN *)
-
-(**
  Aggregated integrator statistics.
  @ida <node5#sss:optout_main> IDAGetIntegratorStats
  *)
@@ -136,18 +127,6 @@ type integrator_stats = {
     last_step : float;
     current_step : float;
     current_time : float
-  }
-
-(**
- Type of values passed to a registered error handler function.
-
- @ida <node5#sss:optin_main> IDASetErrHandlerFn
- *)
-type error_details = {
-    error_code : int;
-    module_name : string;
-    function_name : string;
-    error_message : string;
   }
 
 (** {3:exceptions Exceptions} *)

@@ -2,8 +2,14 @@
 # be built: the syntax extension (pa_deriving.cmo) must be built; some
 # automatically generated .ml files must be created.  Let us call these files
 # depend-prereqs.
-GEN_MLS=pprint_ida.ml expr_of_ida.ml expr_of_ida_model.ml # generated .ml's
-DERIVING_OBJS=camlp4aux.cmo pa_deriving.cmo		  # syntax extension
+
+# generated .ml's; note expr_of_sundials.ml is not generated
+GEN_MLS=pprint_sundials.ml pprint_ida.ml expr_of_ida.ml \
+	expr_of_ida_model.ml
+
+# syntax extension
+DERIVING_OBJS=camlp4aux.cmo pa_deriving.cmo
+
 DEPEND_PREREQS=$(DERIVING_OBJS) $(GEN_MLS)
 
 # We've tried a few strategies to capture the dependencies of depend-prereqs:
@@ -54,8 +60,8 @@ SUNDIALS_LIB=-I .. bigarray.cma unix.cma sundials.cma
 QUICKCHECK_OBJS=fstream.cmo pprint.cmo quickcheck.cmo
 
 # Object files to be linked into generated IDA test cases.
-IDA_TEST_OBJS=$(QUICKCHECK_OBJS) quickcheck_sundials.cmo pprint_ida.cmo \
-	quickcheck_ida.cmo
+IDA_TEST_OBJS=$(QUICKCHECK_OBJS) pprint_sundials.cmo quickcheck_sundials.cmo \
+	pprint_ida.cmo quickcheck_ida.cmo
 
 # Object files needed for the generator of IDA test cases.
 IDA_GEN_OBJS=$(IDA_TEST_OBJS) camlp4aux.cmo expr_of.cmo expr_of_sundials.cmo \
@@ -129,13 +135,28 @@ extract_types.cmo: extract_types.ml
 	    -I +camlp4/Camlp4Parsers -I +camlp4/Camlp4Printers \
 	    -c $< -o $@
 
+SUNDIALS_EXTRACT_EXCLUDE='\.t$$\|array2$$\|val_array$$'
+
+# If you update this target, you should probably update the expr_of_sundials.ml
+# target as well.
+pprint_sundials.ml: ../sundials.mli extract_types.byte
+	./extract_types.byte \
+	--header "(* Automatically generated file: do no edit! *)\n\
+	(* Pretty-printers for types in the Sundials module. *)\n\
+	open Sundials\n\
+	open Pprint" \
+	--replace "%Tderiving external_types (pretty ~prefix:%M ~opening:%M\
+	                ~optional:(Sundials,Roots,RootDirs))" \
+	--exclude $(SUNDIALS_EXTRACT_EXCLUDE) \
+	$< > $@
+
 IDA_EXTRACT_EXCLUDE="VarTypes.t\\|Id.t\\|root_direction"
 # If you update this target, you should probably update the expr_of_ida.ml
 # target as well.
 pprint_ida.ml: ../ida.mli extract_types.byte
 	./extract_types.byte \
 	--header "(* Automatically generated file: do no edit! *)\n\
-	(* Pretty-printer for types in the Ida module. *)\n\
+	(* Pretty-printers for types in the Ida module. *)\n\
 	open Ida\n\
 	open Pprint" \
 	--replace "%Tderiving external_types (pretty ~prefix:%M ~opening:%M)" \

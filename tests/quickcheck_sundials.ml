@@ -1,8 +1,10 @@
 (* Generators, shrinkers, and pretty-printers for sundials types that are
-   shared between IDA and CVODE.  *)
+   shared between IDA and CVODE.  Pretty-printers derived in pprint_sundials.ml
+   are wrapped or overridden to fine-tune the output.  *)
 open Pprint
 open Quickcheck
 open Sundials
+include Pprint_sundials
 
 (* Generators and shrinkers for different kinds of time values.  Time values
    can occur in several places in a script:
@@ -93,13 +95,6 @@ let gen_root_event, shrink_root_event =
 
 let gen_root_info = gen_array_like Roots.make Roots.set gen_root_event
 
-let pp_root_event, dump_root_event, show_root_event, display_root_event,
-  print_root_event, prerr_root_event
-    =
-  printers_of_show (fun ?prec x ->
-    (if !read_write_invariance then "Roots." else "")
-    ^ Roots.string_of_root_event x)
-
 let pp_root_info, dump_root_info, show_root_info, display_root_info,
   print_root_info, prerr_root_info
     =
@@ -128,13 +123,6 @@ let gen_root_dirs =
 let shrink_root_dirs =
   shrink_array_like RootDirs.make RootDirs.length RootDirs.get RootDirs.set
     shrink_root_direction
-
-let pp_root_direction, dump_root_direction, show_root_direction,
-  display_root_direction, print_root_direction, prerr_root_direction
-    =
-  printers_of_show (fun ?prec x ->
-    (if !read_write_invariance then "RootDirs." else "")
-    ^ RootDirs.string_of_root_direction x)
 
 let pp_root_dirs, dump_root_dirs, show_root_dirs, display_root_dirs
   , print_root_dirs, prerr_root_dirs =

@@ -433,3 +433,14 @@ module RootDirs =
 
   end
 
+type solver_result =
+  | Continue
+  | RootsFound
+  | StopTimeReached
+
+type error_details = {
+    error_code : int;
+    module_name : string;
+    function_name : string;
+    error_message : string;
+  }
