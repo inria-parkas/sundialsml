@@ -242,7 +242,9 @@ looks like optional function arguments.  Their syntax and semantics follow.
   Then pp_foo will use pp_tpm_t to print 'a ThirdPartyModule.t instead of the
   non-existent ThirdPartyModule.pp_t function.
 
-  The alias Lazy.t = lazy_t is loaded automatically for every deriving clause.
+  Some aliases are automatically loaded for every deriving clause, for example
+    Lazy.t = lazy_t
+  See predef_aliases for a complete list of predefined aliases.
 
 [Syntax]
 
@@ -519,7 +521,27 @@ struct
   (* Pre-defined aliases.  *)
   let predef_aliases = Hashtbl.create 10
   let _ =
-    Hashtbl.add predef_aliases ["Lazy"; "t"] ["lazy_t"]
+    let add = Hashtbl.add predef_aliases in
+    add ["Lazy"; "t"] ["lazy_t"];
+    add ["Bigarray"; "Array1"; "t"] ["bigarray1"];
+    add ["Bigarray"; "c_layout"] ["bigarray_c_layout"];
+    add ["Bigarray"; "fortran_layout"] ["bigarray_fortran_layout"];
+    add ["Bigarray"; "float32_elt"] ["bigarray_float32_elt"];
+    add ["Bigarray"; "float64_elt"] ["bigarray_float64_elt"];
+    add ["Bigarray"; "complex32_elt"] ["bigarray_complex32_elt"];
+    add ["Bigarray"; "complex64_elt"] ["bigarray_complex64_elt"];
+    add ["Bigarray"; "int8_signed_elt"] ["bigarray_int8_signed_elt"];
+    add ["Bigarray"; "int8_unsigned_elt"] ["bigarray_int8_unsigned_elt"];
+    add ["Bigarray"; "int16_signed_elt"] ["bigarray_int16_signed_elt"];
+    add ["Bigarray"; "int16_unsigned_elt"] ["bigarray_int16_unsigned_elt"];
+    add ["Bigarray"; "int_elt"] ["bigarray_int_elt"];
+    add ["Bigarray"; "int32_elt"] ["bigarray_int32_elt"];
+    add ["Bigarray"; "int32_elt"] ["bigarray_int32_elt"];
+    add ["Bigarray"; "int64_elt"] ["bigarray_int64_elt"];
+    add ["Bigarray"; "nativeint_elt"] ["bigarray_nativeint_elt"];
+    add ["Bigarray"; "char_elt"] ["bigarray_int8_unsigned_elt"];
+    add ["Lazy"; "t"] ["lazy_t"];
+    ()
 
   (* Generate a family of pretty-printers for a set of types declared
      simultaneously.  The types may refer to each other, so the whole family is

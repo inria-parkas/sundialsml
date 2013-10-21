@@ -278,58 +278,56 @@ let format_of_bigarray_layout layout =
       ("Bigarray.fortran_layout" : ('a,'b,'c) format)
     else invalid_arg "Pprint.pp_bigarray1: Unrecognized bigarray layout"
 
-let pp_bigarray_kind ?prec fmt kind =
+let pp__fail : 'a. string -> 'a pp = fun fcn ?prec _ _ ->
+  failwith (fcn ^ " shouldn't actually be called")
+
+let pp_bigarray_kind _ _ ?prec fmt kind =
   Format.fprintf fmt (format_of_bigarray_kind kind)
 
-let pp_bigarray_layout ?prec fmt layout =
+let pp_bigarray_layout _ ?prec fmt layout =
   Format.fprintf fmt (format_of_bigarray_layout layout)
 
-let pp_bigarray_c_layout = pp_bigarray_layout
-let pp_bigarray_fortran_layout = pp_bigarray_layout
-let pp_bigarray_float32_elt = pp_bigarray_kind
-let pp_bigarray_float64_elt = pp_bigarray_kind
-let pp_bigarray_complex32_elt = pp_bigarray_kind
-let pp_bigarray_complex64_elt = pp_bigarray_kind
-let pp_bigarray_int8_signed_elt = pp_bigarray_kind
-let pp_bigarray_int8_unsigned_elt = pp_bigarray_kind
-let pp_bigarray_int16_signed_elt = pp_bigarray_kind
-let pp_bigarray_int16_unsigned_elt = pp_bigarray_kind
-let pp_bigarray_int_elt = pp_bigarray_kind
-let pp_bigarray_int32_elt = pp_bigarray_kind
-let pp_bigarray_int32_elt = pp_bigarray_kind
-let pp_bigarray_int64_elt = pp_bigarray_kind
-let pp_bigarray_nativeint_elt = pp_bigarray_kind
-let pp_bigarray_char_elt = pp_bigarray_kind
+let pp_bigarray_c_layout = pp_bigarray_layout (pp__fail "")
+let pp_bigarray_fortran_layout = pp_bigarray_layout (pp__fail "")
 
-let pp_bigarray1 kind layout =
-  (* Hmm...this use of Obj.magic is rather grotesque, but without it the kind
-     and layout parameters must be both strings, which means the caller can
-     confuse which is which.  Obj.magic in this case actually *increases* type
-     safety!
-     *)
-  let kind = format_of_bigarray_kind kind
-  and layout = format_of_bigarray_layout layout
-  in
-  fun pp_elem ?(prec=0) fmt xs ->
+let pp_bigarray_float32_elt = pp__fail "pp_bigarray_float32_elt"
+let pp_bigarray_float64_elt = pp__fail "pp_bigarray_float64_elt"
+let pp_bigarray_complex32_elt = pp__fail "pp_bigarray_complex32_elt"
+let pp_bigarray_complex64_elt = pp__fail "pp_bigarray_complex64_elt"
+let pp_bigarray_int8_signed_elt = pp__fail "pp_bigarray_int8_signed_elt"
+let pp_bigarray_int8_unsigned_elt = pp__fail "pp_bigarray_int8_unsigned_elt"
+let pp_bigarray_int16_signed_elt = pp__fail "pp_bigarray_int16_signed_elt"
+let pp_bigarray_int16_unsigned_elt = pp__fail "pp_bigarray_int16_unsigned_elt"
+let pp_bigarray_int_elt = pp__fail "pp_bigarray_int_elt"
+let pp_bigarray_int32_elt = pp__fail "pp_bigarray_int32_elt"
+let pp_bigarray_int32_elt = pp__fail "pp_bigarray_int32_elt"
+let pp_bigarray_int64_elt = pp__fail "pp_bigarray_int64_elt"
+let pp_bigarray_nativeint_elt = pp__fail "pp_bigarray_nativeint_elt"
+let pp_bigarray_char_elt = pp__fail "pp_bigarray_char_elt"
+
+let pp_bigarray1 pp_elem _ _ ?(prec=0) fmt xs =
   if !read_write_invariance
-  then pp_parens (prec >= Prec.app)
-        (pp_array_like Bigarray.Array1.dim Bigarray.Array1.get
+  then
+    let kind = format_of_bigarray_kind (Bigarray.Array1.kind xs)
+    and layout = format_of_bigarray_layout (Bigarray.Array1.layout xs) in
+    pp_parens (prec >= Prec.app)
+      (pp_array_like Bigarray.Array1.dim Bigarray.Array1.get
          ("Bigarray.Array1.of_array "^^kind^^" "^^layout^^" [|")
-          "|]" pp_elem ~prec:Prec.app) fmt xs
-  else pp_array_like Bigarray.Array1.dim Bigarray.Array1.get
-         "[|" "|]" pp_elem ~prec fmt xs
+         "|]" pp_elem ~prec:Prec.app) fmt xs
+  else
+    pp_array_like Bigarray.Array1.dim Bigarray.Array1.get
+      "[|" "|]" pp_elem ~prec fmt xs
 
-
-let dump_bigarray1 kind layout pp_elem =
-  dump_of_pp (pp_bigarray1 kind layout pp_elem)
-let show_bigarray1 kind layout pp_elem =
-  show_of_pp (pp_bigarray1 kind layout pp_elem)
-let display_bigarray1 kind layout pp_elem =
-  display_of_pp (pp_bigarray1 kind layout pp_elem)
-let ppout_bigarray1 kind layout pp_elem =
-  ppout_of_pp (pp_bigarray1 kind layout pp_elem)
-let pperr_bigarray1 kind layout pp_elem =
-  pperr_of_pp (pp_bigarray1 kind layout pp_elem)
+let dump_bigarray1 pp_elem pp_repr pp_layout =
+  dump_of_pp (pp_bigarray1 pp_elem pp_repr pp_layout)
+let show_bigarray1 pp_elem pp_repr pp_layout =
+  show_of_pp (pp_bigarray1 pp_elem pp_repr pp_layout)
+let display_bigarray1 pp_elem pp_repr pp_layout =
+  display_of_pp (pp_bigarray1 pp_elem pp_repr pp_layout)
+let ppout_bigarray1 pp_elem pp_repr pp_layout =
+  ppout_of_pp (pp_bigarray1 pp_elem pp_repr pp_layout)
+let pperr_bigarray1 pp_elem pp_repr pp_layout =
+  pperr_of_pp (pp_bigarray1 pp_elem pp_repr pp_layout)
 
 let pp_tuple pp_fields ?(prec=0) fmt x =
   pp_seq "(@[<hv>" "," "@])" fmt

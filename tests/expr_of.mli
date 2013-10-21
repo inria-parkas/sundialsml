@@ -23,6 +23,8 @@ val expr_of_triple : ('a -> expr) -> ('b -> expr) -> ('c -> expr)
 
 val expr_of_option : ('a -> expr) -> ('a option -> expr)
 
+(* TODO: expr_of for bigarray-related types.  *)
+
 (** Reifies an exception object.  Since exception objects are open-ended, this
     function can only handle exceptions that it knows about.  By default,
     [expr_of_exn exn] works only if [exn] is an exception defined in

@@ -406,6 +406,10 @@ open Bigarray
 
 val pp_bigarray_c_layout : c_layout pp
 val pp_bigarray_fortran_layout : fortran_layout pp
+
+(** [pp_bigarray_float32_elt] is a placeholder and always fails when called.
+    It is only used as arguments to {!pp_bigarray1} so as to make the interface
+    consistent.  The same goes for all other [_elt] functions.  *)
 val pp_bigarray_float32_elt : float32_elt pp
 val pp_bigarray_float64_elt : float64_elt pp
 val pp_bigarray_complex32_elt : complex32_elt pp
@@ -421,18 +425,20 @@ val pp_bigarray_int64_elt : int64_elt pp
 val pp_bigarray_nativeint_elt : nativeint_elt pp
 val pp_bigarray_char_elt : int8_unsigned_elt pp
 
+
+
 val pp_bigarray1 :
-  ('a,'b) kind -> 'c layout -> 'a pp -> ('a,'b,'c) Array1.t pp
+  'a pp -> 'b pp -> 'c pp -> ('a,'b,'c) Array1.t pp
 val dump_bigarray1 :
-  ('a,'b) kind -> 'c layout -> 'a pp -> ('a,'b,'c) Array1.t dump
+  'a pp -> 'b pp -> 'c pp -> ('a,'b,'c) Array1.t dump
 val show_bigarray1 :
-  ('a,'b) kind -> 'c layout -> 'a pp -> ('a,'b,'c) Array1.t show
+  'a pp -> 'b pp -> 'c pp -> ('a,'b,'c) Array1.t show
 val display_bigarray1 :
-  ('a,'b) kind -> 'c layout -> 'a pp -> ('a,'b,'c) Array1.t display
+  'a pp -> 'b pp -> 'c pp -> ('a,'b,'c) Array1.t display
 val ppout_bigarray1 :
-  ('a,'b) kind -> 'c layout -> 'a pp -> ('a,'b,'c) Array1.t ppout
+  'a pp -> 'b pp -> 'c pp -> ('a,'b,'c) Array1.t ppout
 val pperr_bigarray1 :
-  ('a,'b) kind -> 'c layout -> 'a pp -> ('a,'b,'c) Array1.t pperr
+  'a pp -> 'b pp -> 'c pp -> ('a,'b,'c) Array1.t pperr
 
 (** [pp_tuple fields] generates a [pp] implementation for a tuple type.  The
     argument [fields] is a list of functions of type ['a pp] that extracts a
