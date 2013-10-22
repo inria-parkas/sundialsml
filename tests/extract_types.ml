@@ -227,6 +227,10 @@ let str_extract_types =
         let from_submod =
           ({< submod = submod@[modname] >}#str_item structure)#acc
         in {< acc = List.rev_append from_submod acc >}
+      | <:str_item<module $modname$ : $_$ = struct $structure$ end>> ->
+        let from_submod =
+          ({< submod = submod@[modname] >}#str_item structure)#acc
+        in {< acc = List.rev_append from_submod acc >}
       | <:str_item<class $_$>> ->
         warn (Printf.sprintf "%s: classes are not supported, ignoring..."
                (Loc.to_string _loc));
