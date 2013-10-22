@@ -229,17 +229,16 @@ let _ =
       | exn -> cont exn
     )
 
-let expr_of_results rs = expr_of_list expr_of_result
-
 let ml_of_script (model, cmds) =
   <:str_item<
     module Ida = Ida_serial
     module Carray = Ida.Carray
+    open Quickcheck_sundials
     open Quickcheck_ida
     open Pprint
     let model = $expr_of_model model$
     let cmds = $expr_of_array expr_of_cmd (Array.of_list cmds)$
-    let do_cmd, finish, err_handler = ida_test_case_driver model cmds
+    let do_cmd, finish, err_handler = test_case_driver model cmds
     let _ =
       let vec  = $expr_of_carray model.vec0$
       and vec' = $expr_of_carray model.vec'0$ in
@@ -295,5 +294,5 @@ let _ =
   flush stdout;
   Random.init !randseed;
   size := 1;
-  quickcheck_ida ml_file_of_script !max_tests
+  quickcheck_script ml_file_of_script !max_tests
 

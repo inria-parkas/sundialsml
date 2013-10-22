@@ -196,6 +196,7 @@ expr_of_ida_model.ml: quickcheck_ida.ml extract_types.byte
 	Roots.t = root_info, \
 	Ida.linear_solver = linear_solver, \
 	Ida.solver_result = solver_result))" \
+	--exclude 'IDALang\.' \
 	$< > $@
 
 -include .mindepend

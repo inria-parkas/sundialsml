@@ -77,15 +77,6 @@ and roots_spec = (float * Ida.Roots.root_event) array
 and ic_buf = GetCorrectedIC
            | Don'tGetCorrectedIC
            | GiveBadVector of int (* Pass in a vector of incorrect size. *)
-and result = Unit
-           | Int of int | Float of float
-           | Any
-           | Type of result
-           | Aggr of result list
-           | Carray of Carray.t    (* NB: always copy the array! *)
-           | SolverResult of Ida.solver_result
-           | Exn of exn
-           | RootInfo of Roots.t
 and resfn_type =
   | ResFnLinear of Carray.t (* The DAE is
                                  y'.{i} = coefs.{i}
@@ -107,7 +98,7 @@ deriving (pretty ~alias:(Carray.t = carray,
                          Roots.t = root_info,
                          Ida.linear_solver = linear_solver,
                          Ida.solver_result = solver_result)
-                 ~optional:(Int, Float, solving, consistent, next_query_time,
+                 ~optional:(solving, consistent, next_query_time,
                             last_tret, root_info_valid)
          (* expr_of is derived in expr_of_ida_model.ml to avoid linking camlp4
             into test cases.  If you change the ~alias list above, you probably
@@ -893,371 +884,41 @@ let shrink_script (model, cmds) =
   @+ shrink_model model cmds
   @+ Fstream.map (fun cmds -> (model, cmds)) (shrink_cmds model cmds)
 
-(* Pretty-printing and result comparison.  *)
-
-let cmp_eps = ref 1e-5
-
-let pp_result, dump_result, show_result, display_result,
-  print_result, prerr_result =
-  printers_of_pp (fun ?(prec=0) fmt x ->
-      if !read_write_invariance
-      then pp_result ~prec fmt x (* use the derived one *)
-      else
-        match x with
-        | Unit -> pp_string_noquote fmt "()"
-        | Any ->  pp_string_noquote fmt "_"
-        | x -> pp_result ~prec fmt x (* use the derived one *)
-    )
-
-let pp_results, dump_results, show_results, display_results,
-  print_results, prerr_results =
-  printers_of_pp (fun ?(prec=0) fmt rs ->
-    if !read_write_invariance then pp_vlist pp_result fmt rs
-    else
-      (* List one result per line, with step numbers starting from 1.  However,
-         the first result is the result of init and this will be tagged as
-         such.  So the steps are numbered 1 to (length rs - 1). *)
-      let nsteps = List.length rs - 1 in
-      let step_width = String.length (string_of_int (nsteps-1)) in
-      let pad_show n = let s = string_of_int n in
-                       String.make (step_width - String.length s) ' ' ^ s
-      in
-      pp_seq "@[<v>" ";" "@]" fmt
-        (Fstream.mapi (fun i r fmt ->
-          if i = 0 then
-            Format.fprintf fmt "init:%s  " (String.make step_width ' ')
-          else
-            Format.fprintf fmt "step %s: " (pad_show i);
-          pp_result fmt r)
-           (Fstream.of_list rs)))
-
-let pp_cmds, dump_cmds, show_cmds, display_cmds, print_cmds, prerr_cmds =
-  printers_of_pp (fun ?(prec=0) fmt cmds ->
-    if !read_write_invariance then pp_list pp_cmd fmt cmds
-    else
-      (* List one command per line, with step numbers starting from 1.  *)
-      let nsteps = List.length cmds in
-      let step_width = String.length (string_of_int nsteps) in
-      let pad_show n = let s = string_of_int n in
-                       String.make (step_width - String.length s) ' ' ^ s
-      in
-      pp_seq "@[<v>" ";" "@]" fmt
-        (Fstream.mapi (fun i cmd fmt ->
-          Format.fprintf fmt "Step %s: " (pad_show (i+1));
-          pp_cmd fmt cmd)
-           (Fstream.of_list cmds)))
-
-let pp_script, dump_script, show_script, display_script,
-    print_script, prerr_script
-      =
-  printers_of_pp (fun ?prec fmt (model, cmds) ->
-    Format.fprintf fmt "@[<hov 2>%smodel =@ "
-      (if !read_write_invariance
-       then "let "
-       else "");
-    pp_model fmt model;
-    Format.fprintf fmt "@]@\n@[<hov 2>%scmds =@ "
-      (if !read_write_invariance
-       then "let "
-       else "");
-    pp_cmds fmt cmds;
-    if !read_write_invariance
-    then Format.fprintf fmt "@]@\n@[<hov 2>let script =@ (model, cmds)@]"
-    else Format.fprintf fmt "@]"
-  )
-
-(* Check if r1 is a valid approximation of r2.  *)
-let rec result_matches r1 r2 =
-  match r1, r2 with
-  | Any, _ -> true
-  | _, Any -> raise (Invalid_argument "result_matches: wild card on rhs")
-  | Type t, _ -> result_type_matches t r2
-  | Unit, Unit -> true
-  | Int i1, Int i2 -> i1 = i2
-  | Float f1, Float f2 -> abs_float (f1 -. f2) < !cmp_eps
-  | Aggr l1, Aggr l2 -> for_all2_and_same_len result_matches l1 l2
-  | Carray v1, Carray v2 -> carrays_equal v1 v2
-  | SolverResult r1, SolverResult r2 -> r1 = r2
-  | Exn e1, Exn e2 -> exns_equal e1 e2
-  | RootInfo r1, RootInfo r2 -> r1 = r2
-  | _, _ -> false
-and result_type_matches r1 r2 =
-  match r1, r2 with
-  | Any, _ -> true
-  | Type t, _ -> raise (Invalid_argument "result_matches: nested Type")
-  | Unit, Unit -> true
-  | Int _, Int _ -> true
-  | Float _, Float _ -> true
-  | Aggr l1, Aggr l2 -> for_all2_and_same_len result_type_matches l1 l2
-  | Carray _, Carray _ -> true
-  | SolverResult _, SolverResult _ -> true
-  | RootInfo _, RootInfo _ -> true
-  | Exn e1, Exn e2 -> true
-  | _, Any | _, Type _ ->
-    raise (Invalid_argument "result_matches: wild card on rhs")
-  | _, _ -> false
-and for_all2_and_same_len f r1 r2 =
-  match r1, r2 with
-  | [], [] -> true
-  | x::xs, y::ys -> f x y && for_all2_and_same_len f xs ys
-  | _, _ -> false
-and carrays_equal v1 v2 =
-  let n = Carray.length v1 in
-  let rec go i =
-    if i < n then abs_float (v1.{i} -. v2.{i}) < !cmp_eps && go (i+1)
-    else true
-  in
-  n = Carray.length v2 && go 0
-and exns_equal =
-  (* NB: exn objects passed through Marshal does not seem to match a pattern
-     that it should otherwise match.  For example, an Invalid_argument "foo"
-     that came through Marshal does not match the pattern Invalid_argument _.
-     This is partly why the generated, compiled code does everything from
-     executing the script to comparing results.  *)
-
-  (* Compare only the tags, except for known, common messages.  *)
-  (* The table construction is delayed to avoid having this initialization run
-     every time the test code starts up.  *)
-  let fixed_msgs =
-    lazy (let fixed_msgs = Hashtbl.create 10 in
-          Hashtbl.add fixed_msgs "index out of bounds" ();
-          Hashtbl.add fixed_msgs "hd" ();
-          Hashtbl.add fixed_msgs "tl" ();
-          Hashtbl.add fixed_msgs "Array.make" ();
-          Hashtbl.add fixed_msgs "Bigarray.create: negative dimension" ();
-          fixed_msgs)
-  in
-  fun e1 e2 ->
-  match e1, e2 with
-  | Failure m1, Failure m2
-  | Invalid_argument m1, Invalid_argument m2 ->
-    if Hashtbl.mem (Lazy.force fixed_msgs) m1 then m1 = m2
-    else if Hashtbl.mem (Lazy.force fixed_msgs) m2 then false
-    else true
-  | _, _ -> e1 = e2
-
 let is_exn = function
   | Exn _ -> true
   | _ -> false
 let not_exn x = not (is_exn x)
-
-(* Compilation and execution *)
-
-let copy_file ~from_file ~to_file () =
-  let infile  = open_in from_file
-  and outfile = open_out to_file in
-  (try while true do output_char outfile (input_char infile) done
-   with End_of_file -> ());
-  close_in infile;
-  close_out outfile
-
-(* Code generation options *)
-let test_exec_file = ref "./tmp"
-let test_compiler = ref "false"
-let test_failed_file = ref "./failed.ml"
-
-let compile mk_ml_file =
-  let test_src_file = !test_exec_file ^ ".ml" in
-  mk_ml_file test_src_file;
-  let compile_command =
-    !test_compiler ^ " -o " ^ !test_exec_file ^ " " ^ test_src_file
-  in
-  match Unix.system compile_command with
-  | Unix.WEXITED 0 -> ()
-  | Unix.WEXITED _ | Unix.WSIGNALED _ | Unix.WSTOPPED _ ->
-    copy_file ~from_file:test_src_file ~to_file:!test_failed_file ();
-    raise (Failure ("Internal error: generated code failed to compile.  \
-                     Compilation command was: " ^ compile_command))
 
 (* Report a summary of the initial model.  *)
 let model_init model = Aggr [Float model.t0;
                              carray model.vec;
                              carray model.vec']
 
-(* Run a list of commands on the model.  *)
-let model_run (model, cmds) =
-  let model = copy_model model in
-  (* Evaluation order requires this let here.  *)
-  let head = model_init model in
-  Fstream.cons head (Fstream.map (model_cmd model) (Fstream.of_list cmds))
+type ida_model = model
+and ida_cmd = cmd
 
+module IDALang =
+  struct
+    type model = ida_model
+    and cmd = ida_cmd
 
-let verbose = ref false
+    type script = model * cmd list
 
-let ida_test_case_driver model cmds =
-  let just_cmp = ref false
-  and marshal_results = ref false
-  and orig_model = copy_model model
-  and buffer_errors = ref false
-  and error_buffer = Buffer.create 1
-  in
-  Arg.parse
-    [("--just-cmp", Arg.Set just_cmp,
-      "don't print anything; just give the exit code");
-     ("--marshal-results", Arg.Set marshal_results,
-      "for internal use only");
-     ("--buffer-errors", Arg.Set buffer_errors,
-      "for internal use only");
-     ("--read-write-invariance", Arg.Set read_write_invariance,
-      "print data in a format that can be fed to ocaml toplevel")]
-    (fun _ -> ()) "a test case generated by quickcheck";
-  let step = ref 0 in
-  let mismatches = ref [] in
-  let expected_results = ref [] in
-  let actual_results = ref [] in
-  let errout =
-    if !buffer_errors then Format.formatter_of_buffer error_buffer
-    else Format.err_formatter
-  in
-  let do_cmd thunk =
-    let expected = if !step = 0 then model_init model
-                   else model_cmd model cmds.(!step - 1)
-    and actual = try Lazy.force thunk with exn -> Exn exn in
-    if !just_cmp then
-      (if not (result_matches expected actual)
-       then exit 1)
-    else if !marshal_results
-    then Marshal.to_channel stdout actual []
-    else
-      (actual_results := actual::!actual_results;
-       expected_results := expected::!expected_results;
-       if not (result_matches expected actual)
-       then mismatches := (!step, expected, actual)::!mismatches);
-    step := !step + 1
-  in
-  let finish () =
-    if not !just_cmp && not !marshal_results then
-      match !mismatches with
-      | [] -> Printf.printf "OK, test successful.\n"; 0
-      | ms ->
-        let prerrf fmt = Format.fprintf Format.err_formatter fmt in
-        let prerr_mismatch (i, exp, act) =
-          prerrf "Result mismatch on step %d:@\ngot@\n  %s@\n\
-                  but expected@\n  %s@\n"
-            i (show_result act) (show_result exp)
-        in
-        Format.pp_print_flush errout ();
-        prerrf "Test failed.@\n[Reason]@\n";
-        List.iter prerr_mismatch !mismatches;
-        prerrf "@\n[Test Case]@\n";
-        prerr_script (orig_model, Array.to_list cmds);
-        prerrf "@\n@\n[Program Output]@\n";
-        (* If we print errors straight to standard error, they will appear
-           before the "[Test Case]" above, which makes it easy to miss.
-           If at all possible, we buffer the output and put it here, under
-           the [Program Output] section.  *)
-        if !buffer_errors then
-          prerrf "%s" (Buffer.contents error_buffer);
-        prerr_results (List.rev !actual_results);
-        prerrf "@\n@\n[Expected Output]@\n";
-        prerr_results (List.rev !expected_results);
-        prerrf "@\n";
-        1
-    else 0
-  in
-  let err_handler details =
-    (* Follows the format of sundials 2.5.0.  *)
-    Format.fprintf errout "\n[%s ERROR]  %s\n  %s\n\n"
-      details.Ida.module_name details.Ida.function_name
-      details.Ida.error_message
-  in
-  do_cmd, finish, err_handler
+    let pp_model = pp_model
+    let pp_cmd = pp_cmd
 
-let with_file_descr descr f =
-  let ret = try f descr with exn -> Unix.close descr; raise exn in
-  Unix.close descr;
-  ret
+    let copy_model = copy_model
 
-(* Just checks if the generated code's self-test is successful.  *)
-let prop_ida_ok ml_file_of_script script =
-  compile (ml_file_of_script script);
-  let dev_null =
-    try Unix.openfile "/dev/null" [Unix.O_RDWR; Unix.O_TRUNC] 0
-    with Unix.Unix_error (Unix.ENOENT, "open", "/dev/null") ->
-      (* Windows *)
-      try Unix.openfile "NUL" [Unix.O_RDWR; Unix.O_TRUNC] 0
-      with Unix.Unix_error (Unix.ENOENT, "open", "NUL") ->
-        Printf.fprintf stderr
-          "ERROR: Can't find /dev/null or equivalent on your system.  \
-           Giving up.  Fix prop_ida_ok in quickcheck_ida.ml and try again.";
-        exit 2
-  in
-  with_file_descr dev_null (fun dev_null ->
-      let pid =
-        Unix.create_process !test_exec_file
-          [|!test_exec_file; "--just-cmp"|]
-          dev_null dev_null dev_null
-      in
-      let _, exit_code = Unix.waitpid [] pid in
-      if exit_code = Unix.WEXITED 0 then OK
-      else Falsified exit_code)
+    let gen_script = gen_script
+    let shrink_script = shrink_script
 
-let quickcheck_ida ml_file_of_script max_tests =
-  let prop = prop_ida_ok ml_file_of_script in
-  let err = Format.err_formatter in
-  let fprintf = Format.fprintf err in
-  let result =
-    if !verbose then
-      quickcheck gen_script shrink_script ~pp_input:pp_script prop max_tests
-    else
-      quickcheck gen_script shrink_script prop max_tests
-  in
-  match result with
-  | None | Some (_, OK) -> None
-  | Some (_, Failed exn) ->
-    fprintf "internal error; uncaught exception in property";
-    raise exn
-  | Some (script, Falsified (Unix.WEXITED 1)) ->
-    (* Exit code 1 means the test ran to completion but there was a mismatching
-       result.  We can let the test code print the report.  Note we need to
-       re-generate the code here because the failed script is generally not the
-       last one that was tried, and its source code may therefore have been
-       overwritten.  *)
-    compile (ml_file_of_script script);
-    copy_file ~from_file:(!test_exec_file ^ ".ml")
-              ~to_file:!test_failed_file ();
-    let exit_status =
-      Unix.system
-        (Printf.sprintf "%s --buffer-errors %s"
-           !test_exec_file
-           (if !read_write_invariance then " --read-write-invariance"
-            else ""))
-    in
-    assert (exit_status = Unix.WEXITED 1);
-    Format.fprintf err
-      "@\n@\nFailed test code saved in %s, compile with:@\n%s@\n"
-      !test_failed_file (!test_compiler ^ " " ^ !test_failed_file);
-    Some script
-  | Some (script, Falsified stat) ->
-    (* Other exit statuses mean the test case crashed.  We'll run it again,
-       this time letting it produce as much output as it can, and compare that
-       to the expected results.  *)
-    compile (ml_file_of_script script);
-    copy_file ~from_file:(!test_exec_file ^ ".ml")
-              ~to_file:!test_failed_file
-              ();
-    Format.fprintf err "@\n[Reason]@\nTest code %s.@\n\
-                        @\n[Test Case]@\n"
-      (match stat with
-       | Unix.WEXITED n -> Printf.sprintf "crashed (exit code %d)" n
-       | Unix.WSIGNALED n -> Printf.sprintf "received signal %d" n
-       | Unix.WSTOPPED n -> Printf.sprintf "stopped by signal %d" n);
-    pp_script err script;
-    Format.fprintf err "@\n@\n[Program Output]@\n";
-    Format.pp_print_flush err ();
-    flush stderr;
-    (* No --buffer-errors here, because the test code will likely not get to
-       the point where it flushes the buffer.  *)
-    ignore (Unix.system
-              (if !read_write_invariance
-               then !test_exec_file ^ " --read-write-invariance"
-               else !test_exec_file));
-    flush stdout;
-    flush stderr;
-    Format.fprintf err "@\n[Expected Output]@\n";
-    pp_results err (Fstream.to_list (model_run script));
-    Format.pp_print_newline err ();
-    Format.fprintf err
-      "@\n@\nFailed test code saved in %s, compile with:@\n%s@\n"
-      !test_failed_file (!test_compiler ^ " " ^ !test_failed_file);
-    Some script
+    let exec_cmd = model_cmd
+    let model_init = model_init
+
+    let result_matches = result_matches
+
+    type ml_file_of_script = script -> string -> unit
+  end
+
+include TestImperativeLang (IDALang)
+
