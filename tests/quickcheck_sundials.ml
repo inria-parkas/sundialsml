@@ -490,7 +490,8 @@ struct
 
     (* Just checks if the generated code's self-test is successful.  *)
     let prop_script_ok (ml_file_of_script : ml_file_of_script) script =
-      compile (ml_file_of_script script);
+      (try compile (ml_file_of_script script)
+       with exn -> raise (AbortTests exn));
       let dev_null =
         try Unix.openfile "/dev/null" [Unix.O_RDWR; Unix.O_TRUNC] 0
         with Unix.Unix_error (Unix.ENOENT, "open", "/dev/null") ->
