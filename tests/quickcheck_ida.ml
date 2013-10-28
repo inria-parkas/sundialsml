@@ -208,6 +208,7 @@ let model_cmd_internal model = function
     (* NB: we don't model interpolation failures -- t will be monotonically
        increasing.  *)
     assert (model.last_query_time <= query_time);
+    model.last_query_time <- query_time;
     (* Behavior documented in source code (sundials 2.5.0): exception raised if
        stop time is before the first query time.  NB, this only checks the
        *first* query time.  *)
@@ -263,7 +264,6 @@ let model_cmd_internal model = function
       List.iter
         (fun i -> Roots.set model.root_info i (snd model.roots.(i)))
         roots_to_update;
-      model.last_query_time <- query_time;
       model.last_tret <- tret;
       model.solving <- true;
       (* Undocumented behavior (sundials 2.5.0): stop time is reset when it's
