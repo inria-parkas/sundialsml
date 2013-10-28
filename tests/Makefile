@@ -47,7 +47,7 @@ ifdef DEPFILE
 
 include ../config
 
-SUNDIALS_LIB=-I .. bigarray.cma unix.cma sundials_ida.cma
+SUNDIALS_LIB=-I .. bigarray.cma unix.cma sundials.cma
 
 # Object files that constitute the quickcheck framework, independent of
 # sundials.

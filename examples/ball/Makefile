@@ -4,13 +4,13 @@ ball.byte: showball.cmo ball.ml
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
 	    $(INCLUDES) -I ../../ -dllpath ../../ \
 	    bigarray.cma unix.cma graphics.cma \
-	    sundials_cvode.cma showball.cmo ball.ml
+	    sundials.cma showball.cmo ball.ml
 
 ball.opt: showball.cmx ball.ml
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
 	    $(INCLUDES) -I ../../ \
 	    bigarray.cmxa unix.cmxa graphics.cmxa \
-	    sundials_cvode.cmxa showball.cmx ball.ml
+	    sundials.cmxa showball.cmx ball.ml
 
 showball.cmo: showball.cmi showball.ml
 showball.cmx: showball.cmi showball.ml

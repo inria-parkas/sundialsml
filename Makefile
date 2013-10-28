@@ -1,78 +1,46 @@
 include config
 
-COMMON_MLOBJ = sundials.cmo        \
-	       nvector.cmo         \
-	       nvector_array.cmo   \
-	       dls.cmo 		
-CVODE_MLOBJ= cvode.cmo 		\
-	     cvode_nvector.cmo	\
-	     cvode_serial.cmo
+MLOBJ = sundials.cmo nvector.cmo nvector_array.cmo dls.cmo cvode.cmo	\
+	cvode_nvector.cmo cvode_serial.cmo ida.cmo ida_serial.cmo
 
-IDA_MLOBJ= ida.cmo 		\
-	    ida_serial.cmo
+COMMON_COBJ= sundials_ml$(XO) dls_ml$(XO) nvector_ml$(XO)
 
-COMMON_COBJ= sundials_ml.o      \
-	     dls_ml.o
+CVODE_COBJ= cvode_ml$(XO) cvode_ml_ba$(XO) cvode_ml_nvec$(XO)
 
-CVODE_COBJ= cvode_ml$(XO)       \
-	    cvode_ml_ba$(XO) 	\
-	    cvode_ml_nvec$(XO) 	\
-	    nvector_ml$(XO)
+IDA_COBJ= ida_ml$(XO) ida_ml_ba$(XO) ida_ml_nvec$(XO)
 
-IDA_COBJ= ida_ml$(XO)           \
-	  ida_ml_ba$(XO)        \
-	  ida_ml_nvec$(XO)      \
-	  nvector_ml$(XO)
-
-MLOBJ=$(COMMON_MLOBJ) $(CVODE_MLOBJ) $(IDA_MLOBJ)
 COBJ=$(COMMON_COBJ) $(CVODE_COBJ) $(IDA_COBJ)
 
 INSTALL_FILES= 			\
     META			\
     $(MLOBJ:.cmo=.cmi)		\
-    libmlsundials_cvode$(XA)	\
-    sundials_cvode$(XA)		\
-    sundials_cvode.cma		\
-    sundials_cvode.cmxa		\
-    libmlsundials_ida$(XA)	\
-    sundials_ida$(XA)		\
-    sundials_ida.cma		\
-    sundials_ida.cmxa
+    libmlsundials$(XA)	\
+    sundials$(XA)		\
+    sundials.cma		\
+    sundials.cmxa		\
 
-STUBLIBS=dllmlsundials_cvode$(XS) dllmlsundials_ida$(XS)
+STUBLIBS=dllmlsundials$(XS) dllmlsundials$(XS)
 
 CFLAGS+=-fPIC
 
 # ##
 
-.PHONY: all sundials_cvode install doc
+.PHONY: all sundials install doc
 
-all: sundials_cvode.cma sundials_cvode.cmxa sundials_ida.cma sundials_ida.cmxa
+all: sundials.cma sundials.cmxa
 
-sundials_cvode.cma sundials_cvode.cmxa: $(COMMON_MLOBJ) $(COMMON_MLOBJ:.cmo=.cmx) $(CVODE_MLOBJ) $(CVODE_MLOBJ:.cmo=.cmx) $(COMMON_COBJ) $(CVODE_COBJ)
+sundials.cma sundials.cmxa: $(MLOBJ) $(MLOBJ:.cmo=.cmx) $(COBJ)
 	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS) \
-	    -o sundials_cvode -oc mlsundials_cvode $^ \
-	    $(OCAML_CVODE_LIBLINK)
+	    -o sundials -oc mlsundials $^ \
+	    $(OCAML_IDA_LIBLINK) $(OCAML_CVODE_LIBLINK)
 
-sundials_ida.cma sundials_ida.cmxa: $(COMMON_MLOBJ) $(COMMON_MLOBJ:.cmo=.cmx) $(IDA_MLOBJ) $(IDA_MLOBJ:.cmo=.cmx) $(COMMON_COBJ) $(IDA_COBJ)
-	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS) \
-	    -o sundials_ida -oc mlsundials_ida $^ \
-	    $(OCAML_IDA_LIBLINK)
-
-# There three sets of flags:
+# There are three sets of flags:
 #   - one for CVODE-specific files
 #   - one for IDA-specific files
 #   - one for files common to CVODE and IDA
-# Is there a way to group these files and specify their flags all at once?
 
-# These modules are common to CVODE and IDA.  The CFLAGS settings for CVODE
-# works for these; if it doesn't, there's probably stuff in these files that
-# ought to be moved to solver-specific files.
-dls_ml.o: dls_ml.c
-	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
-sundials_ml.o: sundials_ml.c
-	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
-nvector_ml.o: nvector_ml.c
+# The CFLAGS settings for CVODE works for modules common to CVODE and IDA.
+$(COMMON_COBJ): %.o: %.c
 	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
 
 cvode_ml.o: cvode_ml.c
@@ -116,7 +84,7 @@ doc/html:
 
 # ##
 
-install: sundials_cvode.cma sundials_cvode.cmxa META
+install: sundials.cma sundials.cmxa META
 	$(MKDIR) $(PKGDIR)
 	$(CP) $(INSTALL_FILES) $(PKGDIR)
 	$(CP) $(STUBLIBS) $(STUBDIR)
@@ -139,7 +107,7 @@ ifeq ($(INSTALL_DOCS), 1)
 	-$(RMDIR) $(DOCDIR)
 endif
 
-ocamlfind: sundials_cvode.cma sundials_cvode.cmxa META
+ocamlfind: sundials.cma sundials.cmxa META
 	ocamlfind install sundials $(INSTALL_FILES) $(STUBLIBS)
 
 # ##
@@ -152,10 +120,9 @@ depend: .depend
 clean:
 	-@(cd examples; make -f Makefile clean)
 	-@$(RM) -f $(MLOBJ) $(MLOBJ:.cmo=.cmx) $(MLOBJ:.cmo=.o)
-	-@$(RM) -f $(COBJ) cvode.annot
+	-@$(RM) -f $(COBJ) $(MLOBJ:.cmo=.annot)
 	-@$(RM) -f $(MLOBJ:.cmo=.cma) $(MLOBJ:.cmo=.cmxa)
-	-@$(RM) -f sundials_cvode$(XA)
-	-@$(RM) -f sundials_ida$(XA)
+	-@$(RM) -f sundials$(XA)
 	-@$(RM) -f dochtml.cmi dochtml.cmo
 
 cleandoc:
@@ -165,10 +132,8 @@ realclean: cleanall
 cleanall: clean
 	-@(cd examples; make -f Makefile cleanall)
 	-@$(RM) -f $(MLOBJ:.cmo=.cmi)
-	-@$(RM) -f sundials_cvode.cma sundials_cvode.cmxa
-	-@$(RM) -f libmlsundials_cvode$(XA) dllmlsundials_cvode$(XS)
-	-@$(RM) -f sundials_ida.cma sundials_ida.cmxa
-	-@$(RM) -f libmlsundials_ida$(XA) dllmlsundials_ida$(XS)
+	-@$(RM) -f sundials.cma sundials.cmxa
+	-@$(RM) -f libmlsundials$(XA) dllmlsundials$(XS)
 	-@$(RM) -f META
 
 -include .depend

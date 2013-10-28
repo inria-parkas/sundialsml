@@ -10,7 +10,7 @@ EXAMPLES = cvAdvDiff_bnd.ml \
 	   cvKrylovDemo_prec.ml
 
 LAPACK_EXAMPLES = cvAdvDiff_bndL.ml \
-	   	  cvRoberts_dnsL.ml
+		  cvRoberts_dnsL.ml
 
 ALL_EXAMPLES = $(EXAMPLES) $(LAPACK_EXAMPLES)
 
@@ -38,7 +38,7 @@ genlog = \
 
 # requires a valid EXAMPLESROOT to avoid:
 #   make: *** No rule to make target `cvAdvDiff_bnd.sundials.out',
-#   					needed by `tests.byte.log'.  Stop.
+#					needed by `tests.byte.log'.  Stop.
 tests.byte.log: $(EXAMPLES:.ml=.byte.out) $(EXAMPLES:.ml=.sundials.out)
 	@for f in $(EXAMPLES:.ml=); do \
 	    diff -u $$f.sundials.out $$f.byte.out > $$f.byte.diff || true; \
@@ -61,7 +61,7 @@ tests.self.log: $(EXAMPLES:.ml=.byte.out) $(EXAMPLES:.ml=.opt.out)
 	cat $@
 
 lapack-tests.byte.log: $(LAPACK_EXAMPLES:.ml=.byte.out) \
-    		       $(LAPACK_EXAMPLES:.ml=.sundials.out)
+		       $(LAPACK_EXAMPLES:.ml=.sundials.out)
 	@for f in $(LAPACK_EXAMPLES:.ml=); do \
 	    diff -u $$f.sundials.out $$f.byte.out > $$f.byte.diff || true; \
 	done
@@ -69,7 +69,7 @@ lapack-tests.byte.log: $(LAPACK_EXAMPLES:.ml=.byte.out) \
 	cat $@
 
 lapack-tests.opt.log: $(LAPACK_EXAMPLES:.ml=.opt.out) \
-    		      $(LAPACK_EXAMPLES:.ml=.sundials.out)
+		      $(LAPACK_EXAMPLES:.ml=.sundials.out)
 	@for f in $(LAPACK_EXAMPLES:.ml=); do \
 	    diff -u $$f.sundials.out $$f.opt.out > $$f.opt.diff || true; \
 	done
@@ -133,12 +133,12 @@ cleanall: clean
 .ml.byte:
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
 	    $(INCLUDES) -I ../../../ -dllpath ../../../ bigarray.cma unix.cma \
-	    sundials_cvode.cma $<
+	    sundials.cma $<
 
 .ml.opt:
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
 	    $(INCLUDES) -I ../../../ bigarray.cmxa unix.cmxa \
-	    sundials_cvode.cmxa $<
+	    sundials.cmxa $<
 
 %.byte.out: %.byte
 	./$< > $@

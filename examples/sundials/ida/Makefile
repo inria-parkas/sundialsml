@@ -36,7 +36,7 @@ genlog = \
 
 # requires a valid EXAMPLESROOT to avoid:
 #   make: *** No rule to make target `cvAdvDiff_bnd.sundials.out',
-#   					needed by `tests.byte.log'.  Stop.
+#					needed by `tests.byte.log'.  Stop.
 tests.byte.log: $(EXAMPLES:.ml=.byte.out) $(EXAMPLES:.ml=.sundials.out)
 	@for f in $(EXAMPLES:.ml=); do \
 	    diff -u $$f.sundials.out $$f.byte.out > $$f.byte.diff || true; \
@@ -99,12 +99,12 @@ cleanall: clean
 .ml.byte:
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
 	    $(INCLUDES) -I ../../../ -dllpath ../../../ bigarray.cma unix.cma \
-	    sundials_ida.cma $<
+	    sundials.cma $<
 
 .ml.opt:
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
 	    $(INCLUDES) -I ../../../ bigarray.cmxa unix.cmxa \
-	    sundials_ida.cmxa $<
+	    sundials.cmxa $<
 
 %.byte.out: %.byte
 	./$< > $@
