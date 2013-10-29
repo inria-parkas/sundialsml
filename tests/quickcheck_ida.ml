@@ -218,10 +218,7 @@ let model_cmd_internal model = function
     then raise Ida.IllInput;
     let t =
       (* Account for stop time.  *)
-      (* Undocumented behavior (sundials 2.5.0): once Ida.StopTimeReached is
-         returned, subsequent calls to IDASolve ignore the stop time.  *)
-      if model.last_tret >= model.stop_time then query_time
-      else min query_time model.stop_time
+      min query_time model.stop_time
     in
     (* Undocumented behavior (sundials 2.5.0): solve_normal with t=t0 usually
        fails with "tout too close to t0 to start integration", but sometimes
