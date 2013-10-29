@@ -520,7 +520,7 @@ let quickcheck gen shrink ?pp_input ?(pp_formatter=Format.err_formatter)
               test (num_passed + 1)
       | res -> Some (minimize x res)
     else
-      (Printf.printf "\n+++ OK, passed %d tests." max_tests;
+      (Printf.printf "\n+++ OK, passed %d tests.\n" max_tests;
        None)
   in
   let ret = test 0 in
