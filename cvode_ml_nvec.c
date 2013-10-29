@@ -663,6 +663,11 @@ CAMLprim void CVTYPE(reinit)(value vdata, value t0, value y0)
 {
     CAMLparam3(vdata, t0, y0);
 
+#if SAFETY_CHECKS
+    if (CVODE_NEQS_FROM_ML (vdata) != Caml_ba_array_val(y0)->dim[0])
+	caml_invalid_argument ("Cvode.reinit: y vector has incorrect length");
+#endif
+
     N_Vector y0_nv = NVECTORIZE_VAL(y0);
     int flag = CVodeReInit(CVODE_MEM_FROM_ML(vdata), Double_val(t0), y0_nv);
     RELINQUISH_NVECTORIZEDVAL(y0_nv);
@@ -679,6 +684,11 @@ static value solver(value vdata, value nextt, value vy, int onestep)
     int flag;
     N_Vector y;
     enum cvode_solver_result_tag result;
+
+#if SAFETY_CHECKS
+    if (CVODE_NEQS_FROM_ML (vdata) != Caml_ba_array_val(vy)->dim[0])
+	caml_invalid_argument ("Cvode.solve: y vector has incorrect length");
+#endif
 
     y = NVECTORIZE_VAL (vy);
     // Caml_ba_data_val(y) must not be shifted by the OCaml GC during this
