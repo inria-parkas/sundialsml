@@ -184,12 +184,21 @@ let expr_of_cmd_impl model = function
       | None -> Ast.ExNil _loc
       | Some r -> <:expr<~roots:$expr_of_roots model r$>>
     in
+    let vec0 =
+      match params.reinit_vec0_badlen with
+      | None -> expr_of_carray params.reinit_vec0
+      | Some n -> <:expr<Carray.create $`int:n$>>
+    and vec'0 =
+      match params.reinit_vec'0_badlen with
+      | None -> expr_of_carray params.reinit_vec'0
+      | Some n -> <:expr<Carray.create $`int:n$>>
+    in
     <:expr<Ida.reinit session
            ~linsolv:$expr_of_linear_solver params.reinit_solver$
            $roots$
            $`flo:params.reinit_t0$
-           $expr_of_carray params.reinit_vec0$
-           $expr_of_carray params.reinit_vec'0$;
+           $vec0$
+           $vec'0$;
            Unit
            >>
   | SetRootDirection dirs ->

@@ -71,7 +71,9 @@ and reinit_params =
     reinit_root_fails : bool;
     reinit_solver : Ida.linear_solver;
     reinit_vec0 : Carray.t;
+    reinit_vec0_badlen : int option;
     reinit_vec'0 : Carray.t;
+    reinit_vec'0_badlen : int option;
   }
 and roots_spec = (float * Ida.Roots.root_event) array
 and ic_buf = GetCorrectedIC
@@ -368,6 +370,9 @@ let model_cmd_internal model = function
     model.root_dirs <- dirs;
     Unit
   | ReInit params ->
+    if params.reinit_vec0_badlen <> None || params.reinit_vec'0_badlen <> None
+    then invalid_arg "reinit: incorrect length"
+    ;
     model.solver <- params.reinit_solver;
     model.solving <- false;
     model.consistent <- true;
@@ -622,7 +627,11 @@ let gen_cmd =
         reinit_root_fails = Random.int 100 < 30;
         reinit_solver = gen_solver false neqs;
         reinit_vec0 = Carray.of_carray vec0;
+        reinit_vec0_badlen = if Random.int 100 < 95 then None
+                             else Some (gen_nat_avoiding neqs);
         reinit_vec'0 = Carray.of_carray vec'0;
+        reinit_vec'0_badlen = if Random.int 100 < 95 then None
+                              else Some (gen_nat_avoiding neqs);
       }
     in
     ReInit params
@@ -785,6 +794,22 @@ let shrink_just_cmd model = function
     Fstream.map
       (fun t0 -> (model_nohint, ReInit { params with reinit_t0 = t0 }))
       (shrink_t0 params.reinit_t0)
+    @+
+    (match params.reinit_vec0_badlen with
+     | None -> Fstream.nil
+     | Some l ->
+       Fstream.map
+         (fun l' -> (model_nohint,
+                    ReInit { params with reinit_vec0_badlen = Some l' }))
+         (shrink_nat_avoiding (Carray.length model.vec) l))
+    @+
+    (match params.reinit_vec'0_badlen with
+     | None -> Fstream.nil
+     | Some l ->
+       Fstream.map
+         (fun l' -> (model_nohint,
+                    ReInit { params with reinit_vec'0_badlen = Some l' }))
+         (shrink_nat_avoiding (Carray.length model.vec) l))
   | SolveNormalBadVector (t, n) ->
     Fstream.map (fun t -> (model_nohint, SolveNormalBadVector (t, n)))
       (shrink_solve_time model t)

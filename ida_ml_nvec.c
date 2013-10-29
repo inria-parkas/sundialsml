@@ -607,6 +607,13 @@ CAMLprim void IDATYPE(reinit)(value vdata, value t0, value y0, value yp0)
 {
     CAMLparam4(vdata, t0, y0, yp0);
 
+#if SAFETY_CHECKS
+    if (IDA_NEQS_FROM_ML (vdata) != Caml_ba_array_val(y0)->dim[0])
+	caml_invalid_argument ("Ida.reinit: y vector has incorrect length");
+    if (IDA_NEQS_FROM_ML (vdata) != Caml_ba_array_val(yp0)->dim[0])
+	caml_invalid_argument ("Ida.reinit: y' vector has incorrect length");
+#endif
+
     N_Vector y0_nv = NVECTORIZE_VAL(y0);
     N_Vector yp0_nv = NVECTORIZE_VAL(yp0);
     int flag = IDAReInit(IDA_MEM_FROM_ML(vdata), Double_val(t0),
