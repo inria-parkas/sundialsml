@@ -47,4 +47,6 @@ value sundials_ml_weak_get (value ar, value n);
     dest = Field (dest, 0);                                     \
   } while (0)
 
+#define Val_none (Val_int(0))
+
 #endif /* _SUNDIALS_ML_H__ */

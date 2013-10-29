@@ -671,40 +671,60 @@ CAMLprim void CVTYPE(reinit)(value vdata, value t0, value y0)
     CAMLreturn0;
 }
 
-static value solver(value vdata, value nextt, value y, int onestep)
+static value solver(value vdata, value nextt, value vy, int onestep)
 {
-    CAMLparam3(vdata, nextt, y);
-    CAMLlocal1(r);
+    CAMLparam3(vdata, nextt, vy);
+    CAMLlocal1(ret);
+    realtype tret;
+    int flag;
+    N_Vector y;
+    enum cvode_solver_result_tag result;
 
-    realtype t = 0.0;
-    N_Vector y_nv = NVECTORIZE_VAL(y);
-
-    // The payload of y (a big array) must not be shifted by the OCaml GC
-    // during this function call, even though Caml will be reentered
-    // through the callback f. Is this guaranteed?
-    int flag = CVode(CVODE_MEM_FROM_ML(vdata), Double_val(nextt), y_nv, &t,
-		     onestep ? CV_ONE_STEP : CV_NORMAL);
-    RELINQUISH_NVECTORIZEDVAL(y_nv);
-    CHECK_FLAG("CVode", flag);
-
-    r = caml_alloc_tuple(2);
-    Store_field(r, 0, caml_copy_double(t));
+    y = NVECTORIZE_VAL (vy);
+    // Caml_ba_data_val(y) must not be shifted by the OCaml GC during this
+    // function call, which calls Caml through the callback f.  Is this
+    // guaranteed?
+    flag = CVode (CVODE_MEM_FROM_ML (vdata), Double_val (nextt), y, &tret,
+		  onestep ? CV_ONE_STEP : CV_NORMAL);
+    RELINQUISH_NVECTORIZEDVAL (y);
 
     switch (flag) {
+    case CV_SUCCESS:
+	result = VARIANT_CVODE_SOLVER_RESULT_CONTINUE;
+	break;
+
     case CV_ROOT_RETURN:
-	Store_field(r, 1, Val_int(VARIANT_CVODE_SOLVER_RESULT_ROOTSFOUND));
+	result = VARIANT_CVODE_SOLVER_RESULT_ROOTSFOUND;
 	break;
 
     case CV_TSTOP_RETURN:
-	Store_field(r, 1,
-                    Val_int(VARIANT_CVODE_SOLVER_RESULT_STOPTIMEREACHED));
+	result = VARIANT_CVODE_SOLVER_RESULT_STOPTIMEREACHED;
 	break;
 
     default:
-	Store_field(r, 1, Val_int(VARIANT_CVODE_SOLVER_RESULT_CONTINUE));
+	/* If an exception was recorded, propagate it.  This accounts for
+	 * almost all failures except for repeated recoverable failures in the
+	 * residue function.  */
+	ret = Field (vdata, RECORD_CVODE_SESSION_EXN_TEMP);
+	if (Is_block (ret)) {
+	    Store_field (vdata, RECORD_CVODE_SESSION_EXN_TEMP, Val_none);
+	    /* In bytecode, caml_raise() duplicates some parts of the
+	     * stacktrace.  This does not seem to happen in native code
+	     * execution.  */
+	    caml_raise (Field (ret, 0));
+	}
+	CHECK_FLAG ("CVode", flag);
     }
 
-    CAMLreturn(r);
+    /* Hmm...should this go in the production code or not?  */
+    if (Is_block (Field (vdata, RECORD_CVODE_SESSION_EXN_TEMP)))
+	abort ();
+
+    ret = caml_alloc_tuple (2);
+    Store_field (ret, 0, caml_copy_double (tret));
+    Store_field (ret, 1, Val_int (result));
+
+    CAMLreturn (ret);
 }
 
 CAMLprim value CVTYPE(solve_normal)(value vdata, value nextt, value y)

@@ -75,8 +75,6 @@
     if (name == NULL)					\
 	name = caml_named_value (IDATYPESTR (name));
 
-#define Val_none (Val_int(0))
-
 static void errh(
 	int error_code,
 	const char *module,
