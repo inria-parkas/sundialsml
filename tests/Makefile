@@ -4,8 +4,9 @@
 # depend-prereqs.
 
 # generated .ml's; note expr_of_sundials.ml is not generated
-GEN_MLS=pprint_sundials.ml pprint_ida.ml expr_of_ida.ml \
-	expr_of_ida_model.ml
+GEN_MLS=pprint_sundials.ml pprint_cvode.ml expr_of_cvode.ml \
+	pprint_ida.ml expr_of_ida.ml \
+	expr_of_cvode_model.ml expr_of_ida_model.ml
 
 # syntax extension
 DERIVING_OBJS=camlp4aux.cmo pa_deriving.cmo
@@ -49,6 +50,13 @@ DEPEND_PREREQS=$(DERIVING_OBJS) $(GEN_MLS)
 # rather than .mindepend, which lists dependencies for all *.ml and *.mli files
 # in this directory.
 
+all: quickcheck_cvode_serial.opt quickcheck_ida_serial.opt
+	@echo "### Testing CVODE-serial."
+	$(MAKE) -s test-cvode-serial
+	@echo ""
+	@echo "### Testing IDA-serial."
+	$(MAKE) -s test-ida-serial
+
 ifdef DEPFILE
 
 include ../config
@@ -58,6 +66,14 @@ SUNDIALS_LIB=-I .. bigarray.cma unix.cma sundials.cma
 # Object files that constitute the quickcheck framework, independent of
 # sundials.
 QUICKCHECK_OBJS=fstream.cmo pprint.cmo quickcheck.cmo
+
+# Object files to be linked into generated CVODE test cases.
+CVODE_TEST_OBJS=$(QUICKCHECK_OBJS) pprint_sundials.cmo \
+	quickcheck_sundials.cmo pprint_cvode.cmo quickcheck_cvode.cmo
+
+# Object files needed for the generator of CVODE test cases.
+CVODE_GEN_OBJS=$(CVODE_TEST_OBJS) camlp4aux.cmo expr_of.cmo \
+	expr_of_sundials.cmo expr_of_cvode.cmo expr_of_cvode_model.cmo
 
 # Object files to be linked into generated IDA test cases.
 IDA_TEST_OBJS=$(QUICKCHECK_OBJS) pprint_sundials.cmo quickcheck_sundials.cmo \
@@ -77,9 +93,16 @@ $(DERIVING_OBJS:.cmo=.cmx): %.cmx: %.ml
 
 ifeq "$(DEPFILE)" ".depend"
 
+test-cvode-serial: quickcheck_cvode_serial.opt $(CVODE_TEST_OBJS)
+	./$< $(PARAMS) --exec-file ./test --failed-file failed.ml --compiler \
+	    "$(OCAMLC).opt -w -26 -g $(SUNDIALS_LIB) $(filter-out $<,$^)"
+
+quickcheck_cvode_serial.opt: quickcheck_cvode_serial.cmx \
+	                     $(CVODE_GEN_OBJS:.cmo=.cmx)
+
 test-ida-serial: quickcheck_ida_serial.opt $(IDA_TEST_OBJS)
-	./$< $(PARAMS) --exec-file ./test --failed-file failed.ml \
-	    --compiler "$(OCAMLC).opt -g $(SUNDIALS_LIB) $(filter-out $<,$^)"
+	./$< $(PARAMS) --exec-file ./test --failed-file failed.ml --compiler \
+	    "$(OCAMLC).opt -w -26 -g $(SUNDIALS_LIB) $(filter-out $<,$^)"
 
 quickcheck_ida_serial.opt: quickcheck_ida_serial.cmx $(IDA_GEN_OBJS:.cmo=.cmx)
 
@@ -197,6 +220,57 @@ expr_of_ida_model.ml: quickcheck_ida.ml extract_types.byte
 	Ida.linear_solver = linear_solver, \
 	Ida.solver_result = solver_result))" \
 	--exclude 'IDALang\.' \
+	$< > $@
+
+
+CVODE_EXTRACT_EXCLUDE="root_direction"
+# If you update this target, you should probably update the expr_of_cvode.ml
+# target as well.
+pprint_cvode.ml: ../cvode.mli extract_types.byte
+	./extract_types.byte \
+	--header "(* Automatically generated file: do no edit! *)\n\
+	(* Pretty-printers for types in the Cvode module. *)\n\
+	open Cvode\n\
+	open Pprint" \
+	--replace "%Tderiving external_types (pretty ~prefix:%M ~opening:%M)" \
+	--exclude $(CVODE_EXTRACT_EXCLUDE) \
+	$< > $@
+
+# If you update this target, you should probably update the pprint_cvode.ml
+# target as well.
+expr_of_cvode.ml: ../cvode.mli extract_types.byte
+	./extract_types.byte \
+	--header "(* Automatically generated file: do not edit! *)\n\
+	(* expr_of for types defined in the Cvode module. *)\n\
+	open Cvode\n\
+	open Expr_of\n\
+	open Camlp4.PreCast" \
+	--replace "%Tderiving external_types (expr_of ~prefix:%M ~opening:%M)" \
+	--exclude $(CVODE_EXTRACT_EXCLUDE) \
+	$< > $@
+
+expr_of_cvode_model.ml: quickcheck_cvode.ml extract_types.byte
+	./extract_types.byte \
+	--header "(* Automatically generated file: do not edit! *)\n\
+	(* expr_of for types defined in the Quickcheck_cvode module. *)\n\
+	open Cvode\n\
+	open Expr_of\n\
+	open Expr_of_sundials\n\
+	open Expr_of_cvode\n\
+	open Quickcheck_sundials\n\
+	open Quickcheck_cvode\n\
+	open Quickcheck\n\
+	open Camlp4.PreCast" \
+	--replace \
+	"%Tderiving external_types \
+	(expr_of ~alias:(Carray.t = carray, \
+	Cvode.Roots.root_event = root_event, \
+	Cvode.root_direction = root_direction, \
+	Roots.t = root_info, \
+	Cvode.iter = iter, \
+	Cvode.lmm = lmm, \
+	Cvode.solver_result = solver_result))" \
+	--exclude 'CvodeLang\.' \
 	$< > $@
 
 -include .mindepend
