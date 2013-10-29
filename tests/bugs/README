@@ -1,0 +1,14 @@
+This directory contains tests that expose bugs in sundials (the C version from
+LLNL).  Quickcheck generally works around those bugs by just not generating
+programs that trigger them, but we'd like to keep these here for our records.
+
+
+Additional gotchas:
+
+* [sundials 2.5.0] reinit doesn't clear stop time
+
+In IDA and CVODE, the only way to clear the stop time, once set, is to
+integrate past it.  In CVODE, the bug explained in cvode_stop_time.ml compounds
+this problem: if you set a stop time, you have to either integrate past that
+time before doing a reinit, or you must reinit to a time before the stop time.
+
