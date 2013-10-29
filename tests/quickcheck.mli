@@ -41,6 +41,15 @@ val shrink_pos : int -> int Fstream.t
 (** Shrink a negative integer to negative integers.  *)
 val shrink_neg : int -> int Fstream.t
 
+(** Generate a natural number distinct from the given number.  Useful for
+    generating the size of an array that deliberately mismatches the size of
+    another array.  *)
+val gen_nat_avoiding : int -> int
+
+(** [shrink_nat_avoiding bad n] shrinks a natural number [n] but avoids
+    returning [bad].  *)
+val shrink_nat_avoiding : int -> int -> int Fstream.t
+
 (** Randomly choose an element from an array of candidates.
 
     The candidates may be generators, but in that case the choice should be

@@ -626,10 +626,6 @@ let gen_cmd =
       }
     in
     ReInit params
-  and gen_nat_avoiding k =
-    let n = gen_pos () in
-    if n <= k then n-1
-    else n
   in
   let calc_ic_ya_yd'_predictable model =
     match model.resfn with

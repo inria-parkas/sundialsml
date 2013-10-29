@@ -42,6 +42,22 @@ let shrink_nat n = Fstream.map abs (shrink_int n)
 let shrink_pos n = Fstream.map ((+) 1) (shrink_nat (n-1))
 let shrink_neg n = Fstream.map (fun x -> -x) (shrink_pos (-n))
 
+let gen_nat_avoiding bad =
+  let n = gen_pos () in
+  if n <= bad then n-1
+  else n
+
+let shrink_nat_avoiding bad n =
+  let n =
+    if n < bad then n+1
+    else if n > bad then n
+    else invalid_arg (Printf.sprintf "shrink_nat_avoiding %d %d" bad n)
+  and fixup n =
+    if n <= bad then n-1
+    else n
+  in
+  Fstream.map fixup (shrink_pos n)
+
 let gen_choice choices = choices.(Random.int (Array.length choices))
 
 let shrink_choice choices c =
