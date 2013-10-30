@@ -20,6 +20,9 @@
 
 (** {2 Constants} *)
 
+(** [true] iff this binding is compiled with BLAS/LAPACK support.  *)
+val blas_lapack_supported : bool
+
 (** The BIG_REAL constant.
     @cvode <node5#s:types> Data Types
  *)

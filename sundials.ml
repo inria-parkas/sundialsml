@@ -10,6 +10,11 @@
 (*                                                                     *)
 (***********************************************************************)
 
+external c_blas_lapack_supported : unit -> bool
+  = "sundials_ml_blas_lapack_supported"
+
+let blas_lapack_supported = c_blas_lapack_supported ()
+
 let extra_precision = ref false
 
 let print_time (s1, s2) t =

@@ -23,20 +23,26 @@
 
 #include "sundials_ml.h"
 
-value sundials_ml_big_real()
+CAMLprim value sundials_ml_blas_lapack_supported ()
+{
+    CAMLparam0();
+    CAMLreturn(Val_bool (SUNDIALS_BLAS_LAPACK));
+}
+
+CAMLprim value sundials_ml_big_real()
 {
     CAMLparam0();
     CAMLreturn(caml_copy_double(BIG_REAL));
 }
 
-value sundials_ml_unit_roundoff()
+CAMLprim value sundials_ml_unit_roundoff()
 {
     CAMLparam0();
     CAMLreturn(caml_copy_double(UNIT_ROUNDOFF));
 }
 
 #if !HAVE_WEAK
-value sundials_ml_weak_get (value ar, value n)
+CAMLprim value sundials_ml_weak_get (value ar, value n)
 {
     CAMLparam2 (ar, n);
     static value *weak_get;
