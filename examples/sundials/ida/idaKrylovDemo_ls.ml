@@ -245,7 +245,7 @@ let main() =
 
   (* Call IDACreate with dummy linear solver *)
 
-  let mem = Ida.init Ida.Dense (res_heat data) ~t0:t0 u u' in
+  let mem = Ida.init (Ida.Dense None) (res_heat data) ~t0:t0 u u' in
   Ida.set_constraints mem constraints;
   Ida.ss_tolerances mem rtol atol;
 
@@ -253,34 +253,44 @@ let main() =
   let solvers = [|USE_SPGMR; USE_SPBCG; USE_SPTFQMR|] in
   for i = 0 to Array.length solvers - 1 do
     let linsolver = solvers.(i) in
+
+    (* Note: the original C version of this example reinitializes the linear
+       solver only when i > 0, but the OCaml interface prohibits setting the
+       linear solver without a reinit (which isn't a sensible thing to do
+       anyway).  So we reinit each time here.  *)
+
     if i <> 0 then
-      begin
-        (* Re-initialize uu, up. *)
-        set_initial_profile data u u' res;
+      (* Re-initialize uu, up. *)
+      set_initial_profile data u u' res;
 
-        (* Re-initialize IDA *)
-        Ida.reinit mem t0 u u';
-      end;
-
-    (* Print header and attach a solver module *)
+    (* Print header and reinit with a new solver module *)
+    let spils_init = { Ida.maxl = 0;
+                       Ida.prec_setup_fn = Some (p_setup_heat data);
+                       Ida.prec_solve_fn = p_solve_heat data;
+                       Ida.jac_times_vec_fn = None;
+                     }
+    in
     begin
       match linsolver with
       | USE_SPGMR -> (printf " -------";
                       printf " \n| SPGMR |\n";
                       printf " -------\n";
-                      Ida.set_linear_solver mem (Ida.Spgmr 0))
+                      flush stdout;
+                      Ida.reinit mem ~linsolv:(Ida.Spgmr spils_init)
+                        t0 u u')
       | USE_SPBCG -> (printf " -------";
                       printf " \n| SPBCG |\n";
                       printf " -------\n";
-                      Ida.set_linear_solver mem (Ida.Spbcg 0))
+                      flush stdout;
+                      Ida.reinit mem ~linsolv:(Ida.Spbcg spils_init)
+                        t0 u u')
       | USE_SPTFQMR -> (printf " ---------";
                         printf " \n| SPTFQMR |\n";
                         printf " ---------\n";
-                        Ida.set_linear_solver mem (Ida.Sptfqmr 0))
+                      flush stdout;
+                        Ida.reinit mem ~linsolv:(Ida.Sptfqmr spils_init)
+                          t0 u u')
     end;
-
-    (* Specify preconditioner *)
-    Ida.Spils.set_preconditioner mem (p_setup_heat data) (p_solve_heat data);
 
     (* Print output heading. *)
     print_header rtol atol linsolver;

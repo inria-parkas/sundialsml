@@ -12,7 +12,7 @@ open Expr_of
 type model =
   {
     resfn : resfn_type;
-    mutable solver : Ida.linear_solver;
+    mutable solver : model_linear_solver;
 
     (* Set when SolveNormal or CalcIC_* has been called on this model.  *)
     mutable solving : bool;
@@ -40,6 +40,23 @@ type model =
        particular value, if there is a query.  *)
     mutable next_query_time : float option;
   }
+and model_linear_solver =
+  (* Just like linear_solver, but avoids components that depend on the
+     nvector type.  Optional callbacks are replaced by booleans to indicate
+     whether they should be specified.  *)
+  | MDense of bool
+  | MLapackDense of bool
+  | MBand of model_band_init
+  | MLapackBand of model_band_init
+  | MSpgmr of model_spils_init
+  | MSpbcg of model_spils_init
+  | MSptfqmr of model_spils_init
+and model_band_init = { mmupper : int;
+                        mmlower : int;
+                        mband_jac : bool; }
+and model_spils_init = { mmaxl : int;
+                         mprec_setup_fn : bool;
+                         mjac_times_vec_fn : bool; }
 and cmd = SolveNormal of float
         | SolveNormalBadVector of float * int
         | GetRootInfo
@@ -69,7 +86,7 @@ and reinit_params =
     reinit_t0 : float;
     reinit_roots : roots_spec option;
     reinit_root_fails : bool;
-    reinit_solver : Ida.linear_solver;
+    reinit_solver : model_linear_solver;
     reinit_vec0 : Carray.t;
     reinit_vec0_badlen : int option;
     reinit_vec'0 : Carray.t;
@@ -98,8 +115,8 @@ deriving (pretty ~alias:(Carray.t = carray,
                          Ida.Roots.root_event = root_event,
                          Ida.root_direction = root_direction,
                          Roots.t = root_info,
-                         Ida.linear_solver = linear_solver,
-                         Ida.solver_result = solver_result)
+                         Ida.solver_result = solver_result
+                        )
                  ~optional:(solving, consistent, next_query_time,
                             last_tret, root_info_valid)
          (* expr_of is derived in expr_of_ida_model.ml to avoid linking camlp4
@@ -439,9 +456,11 @@ let gen_resfn t0 neqs () =
   then safe_resfn
   else ResFnDie
 
-let gen_solver lapack neqs =
+let gen_solver neqs =
   match Random.int 1 with
-  | 0 -> if lapack && Random.bool () then Ida.LapackDense else Ida.Dense
+  | 0 -> if Sundials.blas_lapack_supported && Random.bool ()
+         then MLapackDense (Random.bool ())
+         else MDense (Random.bool ())
   | _ -> assert false
 
 let gen_roots t0 () =
@@ -473,7 +492,7 @@ let gen_model () =
   let num_roots = Array.length roots in
   {
     resfn = resfn;
-    solver = gen_solver false neqs;
+    solver = gen_solver neqs;
     solving = false;
     last_query_time = t0;
     last_tret = t0;
@@ -622,7 +641,7 @@ let gen_cmd =
         reinit_roots = if Random.int 100 < 30 then None
                        else Some (gen_roots t0 ());
         reinit_root_fails = Random.int 100 < 30;
-        reinit_solver = gen_solver false neqs;
+        reinit_solver = gen_solver neqs;
         reinit_vec0 = Carray.of_carray vec0;
         reinit_vec0_badlen = if Random.int 100 < 95 then None
                              else Some (gen_nat_avoiding neqs);

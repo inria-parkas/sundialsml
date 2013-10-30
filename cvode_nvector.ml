@@ -29,13 +29,44 @@ type ('t, 'a) jacobian_arg =
     jac_tmp : 't
   }
 
-type 'a callback_solve_arg =
+type 'a prec_solve_arg =
   {
     rhs   : 'a;
     gamma : float;
     delta : float;
     left  : bool;
   }
+
+(* Note this definition differs from the one in cvode_serial, so the tag
+   values are different.  *)
+type 'a linear_solver =
+  | Diag
+  | Spgmr of spils_params * 'a spils_callbacks
+  | Spbcg of spils_params * 'a spils_callbacks
+  | Sptfqmr of spils_params * 'a spils_callbacks
+  | BandedSpgmr of spils_params * bandrange
+  | BandedSpbcg of spils_params * bandrange
+  | BandedSptfqmr of spils_params * bandrange
+and bandrange = { mupper : int;
+                  mlower : int; }
+and spils_params = { maxl : int;
+                     prec_type : preconditioning_type; }
+and 'a spils_callbacks =
+  {
+    prec_solve_fn : ('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
+      -> 'a nvector -> unit;
+    prec_setup_fn : (('a triple_tmp, 'a) jacobian_arg -> bool -> float -> bool)
+                    option;
+    jac_times_vec_fn :
+      (('a single_tmp, 'a) jacobian_arg
+       -> 'a (* v *)
+       -> 'a (* Jv *)
+       -> unit) option;
+  }
+
+type 'a iter =
+  | Newton of 'a linear_solver
+  | Functional
 
 type cvode_mem
 type cvode_file
@@ -57,7 +88,7 @@ type 'a session = {
         mutable bandjacfn  : ('a triple_tmp, 'a) jacobian_arg -> int -> int
                                -> Bandmatrix.t -> unit;
         mutable presetupfn : ('a triple_tmp, 'a) jacobian_arg -> bool -> float -> bool;
-        mutable presolvefn : ('a single_tmp, 'a) jacobian_arg -> 'a callback_solve_arg
+        mutable presolvefn : ('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
                                -> 'a nvector -> unit;
         mutable jactimesfn : ('a single_tmp, 'a) jacobian_arg -> 'a -> 'a -> unit;
       }
@@ -110,18 +141,111 @@ external session_finalize : 'a session -> unit
     = "c_cvode_session_finalize"
 
 external c_init
-    : 'a session Weak.t -> lmm -> iter -> 'a nvector -> float
+    : 'a session Weak.t -> lmm -> 'a iter -> 'a nvector -> float
       -> (cvode_mem * c_weak_ref * cvode_file)
     = "c_nvec_cvode_init"
 
 external c_root_init : 'a session -> int -> unit
     = "c_nvec_cvode_root_init"
-let root_init ida (nroots, rootsfn) =
-  c_root_init ida nroots;
-  ida.rootsfn <- rootsfn
+let root_init session (nroots, rootsfn) =
+  c_root_init session nroots;
+  session.rootsfn <- rootsfn
 
-external set_iter_type          : 'a session -> iter -> unit
-    = "c_cvode_set_iter_type"
+external c_dls_dense : 'a session -> bool -> unit
+  = "c_nvec_cvode_dls_dense"
+
+external c_dls_lapack_dense : 'a session -> bool -> unit
+  = "c_nvec_cvode_dls_lapack_dense"
+
+external c_dls_band : 'a session -> int -> int -> bool -> unit
+  = "c_nvec_cvode_dls_band"
+
+external c_dls_lapack_band : 'a session -> int -> int -> bool -> unit
+  = "c_nvec_cvode_dls_lapack_band"
+
+external c_diag : 'a session -> unit
+  = "c_cvode_diag"
+
+external c_spils_spgmr
+  : 'a session -> int -> preconditioning_type -> bool -> bool -> unit
+  = "c_nvec_cvode_spils_spgmr"
+
+external c_spils_spbcg
+  : 'a session -> int -> preconditioning_type -> bool -> bool -> unit
+  = "c_nvec_cvode_spils_spbcg"
+
+external c_spils_sptfqmr
+  : 'a session -> int -> preconditioning_type -> bool -> bool -> unit
+  = "c_nvec_cvode_spils_sptfqmr"
+
+external c_spils_banded_spgmr
+  : 'a session -> int -> int -> int -> preconditioning_type -> unit
+  = "c_nvec_cvode_spils_banded_spgmr"
+
+external c_spils_banded_spbcg
+  : 'a session -> int -> int -> int -> preconditioning_type -> unit
+  = "c_nvec_cvode_spils_banded_spbcg"
+
+external c_spils_banded_sptfqmr
+  : 'a session -> int -> int -> int -> preconditioning_type -> unit
+  = "c_nvec_cvode_spils_banded_sptfqmr"
+
+external c_set_functional : 'a session -> unit
+  = "c_cvode_set_functional"
+
+let shouldn't_be_called fcn =
+  failwith ("internal error in sundials: " ^ fcn ^ " is called")
+let dummy_dense_jac _ _ = shouldn't_be_called "dummy_dense_jac"
+let dummy_band_jac _ _ _ _ = shouldn't_be_called "dummy_band_jac"
+let dummy_prec_setup _ _ _ = shouldn't_be_called "dummy_prec_setup"
+let dummy_prec_solve _ _ _ = shouldn't_be_called "dummy_prec_solve"
+let dummy_jac_times_vec _ _ _ = shouldn't_be_called "dummy_jac_times_vec"
+
+let set_iter_type session iter =
+  let optionally f = function
+    | None -> ()
+    | Some x -> f x
+  in
+  (* Release references to all linear-solver--related callbacks.  *)
+  session.jacfn      <- dummy_dense_jac;
+  session.bandjacfn  <- dummy_band_jac;
+  session.presetupfn <- dummy_prec_setup;
+  session.presolvefn <- dummy_prec_solve;
+  session.jactimesfn <- dummy_jac_times_vec;
+  match iter with
+  | Functional -> c_set_functional session
+  | Newton linsolv ->
+    (* Iter type will be set to CV_NEWTON in the functions that set the linear
+       solver.  *)
+    match linsolv with
+    | Diag -> c_diag session
+    | Spgmr (par, cb) ->
+      c_spils_spgmr session par.maxl par.prec_type
+                            (cb.prec_setup_fn <> None)
+                            (cb.jac_times_vec_fn <> None);
+      optionally (fun f -> session.presetupfn <- f) cb.prec_setup_fn;
+      session.presolvefn <- cb.prec_solve_fn;
+      optionally (fun f -> session.jactimesfn <- f) cb.jac_times_vec_fn
+    | Spbcg (par, cb) ->
+      c_spils_spbcg session par.maxl par.prec_type
+                            (cb.prec_setup_fn <> None)
+                            (cb.jac_times_vec_fn <> None);
+      optionally (fun f -> session.presetupfn <- f) cb.prec_setup_fn;
+      session.presolvefn <- cb.prec_solve_fn;
+      optionally (fun f -> session.jactimesfn <- f) cb.jac_times_vec_fn
+    | Sptfqmr (par, cb) ->
+      c_spils_sptfqmr session par.maxl par.prec_type
+                              (cb.prec_setup_fn <> None)
+                              (cb.jac_times_vec_fn <> None);
+      optionally (fun f -> session.presetupfn <- f) cb.prec_setup_fn;
+      session.presolvefn <- cb.prec_solve_fn;
+      optionally (fun f -> session.jactimesfn <- f) cb.jac_times_vec_fn
+    | BandedSpgmr (sp, br) ->
+      c_spils_banded_spgmr session br.mupper br.mlower sp.maxl sp.prec_type
+    | BandedSpbcg (sp, br) ->
+      c_spils_banded_spbcg session br.mupper br.mlower sp.maxl sp.prec_type
+    | BandedSptfqmr (sp, br) ->
+      c_spils_banded_sptfqmr session br.mupper br.mlower sp.maxl sp.prec_type
 
 external sv_tolerances  : 'a session -> float -> 'a nvector -> unit
     = "c_nvec_cvode_sv_tolerances"
@@ -149,17 +273,18 @@ let init lmm iter f ?(roots=no_roots) ?(t0=0.) (neqs, y0) =
           rootsfn    = roots;
           errh       = (fun _ -> ());
           errw       = (fun _ _ -> ());
-          jacfn      = (fun _ _ -> ());
-          bandjacfn  = (fun _ _ _ _ -> ());
-          presetupfn = (fun _ _ _ -> false);
-          presolvefn = (fun _ _ _ -> ());
-          jactimesfn = (fun _ _ _ -> ());
+          jacfn      = dummy_dense_jac;
+          bandjacfn  = dummy_band_jac;
+          presetupfn = dummy_prec_setup;
+          presolvefn = dummy_prec_solve;
+          jactimesfn = dummy_jac_times_vec;
         } in
   Gc.finalise session_finalize session;
   Weak.set weakref 0 (Some session);
   (* Now the session is safe to use.  If any of the following fails and raises
      an exception, the GC will take care of freeing cvode_mem and backref.  *)
-  c_root_init session nroots;
+  if nroots > 0 then
+    c_root_init session nroots;
   set_iter_type session iter;
   ss_tolerances session 1.0e-4 1.0e-8;
   session
@@ -169,7 +294,7 @@ let neqs { neqs } = neqs
 
 external c_reinit
     : 'a session -> float -> 'a nvector -> unit
-    = "c_ba_cvode_reinit"
+    = "c_nvec_cvode_reinit"
 let reinit session ?iter_type ?roots t0 y0 =
   c_reinit session t0 y0;
   match iter_type with
@@ -326,31 +451,31 @@ external get_num_g_evals                : 'a session -> int
 module Dls =
   struct
     external set_dense_jac_fn  : 'a session -> unit
-        = "c_nvec_cvode_dls_set_dense_jac_fn"
+        = "c_ba_cvode_dls_set_dense_jac_fn"
 
     let set_dense_jac_fn s fjacfn =
       s.jacfn <- fjacfn;
       set_dense_jac_fn s
 
     external clear_dense_jac_fn : 'a session -> unit
-        = "c_nvec_cvode_dls_clear_dense_jac_fn"
+        = "c_ba_cvode_dls_clear_dense_jac_fn"
 
     let clear_dense_jac_fn s =
-      s.jacfn <- (fun _ _ -> ());
+      s.jacfn <- dummy_dense_jac;
       clear_dense_jac_fn s
 
     external set_band_jac_fn   : 'a session -> unit
-        = "c_nvec_cvode_dls_set_band_jac_fn"
+        = "c_ba_cvode_dls_set_band_jac_fn"
 
     let set_band_jac_fn s fbandjacfn =
       s.bandjacfn <- fbandjacfn;
       set_band_jac_fn s
 
     external clear_band_jac_fn : 'a session -> unit
-        = "c_nvec_cvode_dls_clear_band_jac_fn"
+        = "c_ba_cvode_dls_clear_band_jac_fn"
 
     let clear_band_jac_fn s =
-      s.bandjacfn <- (fun _ _ _ _ -> ());
+      s.bandjacfn <- dummy_band_jac;
       clear_band_jac_fn s
 
     external get_work_space : 'a session -> int * int
@@ -383,12 +508,12 @@ module BandPrec =
 
 module Spils =
   struct
-    type 'a solve_arg = 'a callback_solve_arg =
+    type 'a solve_arg = 'a prec_solve_arg =
       {
-        rhs   : 'a;
+        rhs : 'a;
         gamma : float;
         delta : float;
-        left  : bool;
+        left : bool;
       }
 
     type gramschmidt_type =

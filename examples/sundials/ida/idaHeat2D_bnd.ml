@@ -178,7 +178,7 @@ let main () =
      specify the linear solver.  *)
   let mu = mgrid and ml = mgrid in
   let mem =
-    Ida.init (Ida.Band { Ida.mupper=mu; Ida.mlower=ml })
+    Ida.init (Ida.Band ({ Ida.mupper=mu; Ida.mlower=ml }, None))
       (fun t u u' r -> heatres t u u' r data)
       ~t0:t0 u u'
   in

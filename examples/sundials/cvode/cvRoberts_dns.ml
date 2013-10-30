@@ -143,8 +143,9 @@ let main () =
    * the initial dependent variable vector y. *)
   (* Call CVodeRootInit to specify the root function g with 2 components *)
   (* Call CVDense to specify the CVDENSE dense linear solver *)
+  (* Set the Jacobian routine to Jac (user-supplied) *)
   let cvode_mem =
-    Cvode.init Cvode.BDF (Cvode.Newton (Cvode.Dense)) f
+    Cvode.init Cvode.BDF (Cvode.Newton (Cvode.Dense (Some jac))) f
       ~roots:(nroots, g) ~t0:t0 y
   in
   Gc.compact ();
@@ -152,9 +153,6 @@ let main () =
   (* Call CVodeSVtolerances to specify the scalar relative tolerance
    * and vector absolute tolerances *)
   Cvode.sv_tolerances cvode_mem rtol abstol;
-
-  (* Set the Jacobian routine to Jac (user-supplied) *)
-  Dls.set_dense_jac_fn cvode_mem jac;
 
   (* In loop, call CVode, print results, and test for error.
   Break out of loop when NOUT preset output times have been reached.  *)

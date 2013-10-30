@@ -219,6 +219,8 @@ static void relinquish_jac_arg(value arg, int tmp_size)
     CAMLreturn0;
 }
 
+/* Dense and band Jacobians only work with serial NVectors.  */
+#if IDA_ML_BIGARRAYS
 static int jacfn (long int neq, realtype t, realtype coef,
 		  N_Vector y, N_Vector yp, N_Vector res,
 		  DlsMat jac, void *user_data,
@@ -272,6 +274,7 @@ static int bandjacfn (long int neq, long int mupper, long int mlower,
 
     CAMLreturnT (int, r);
 }
+#endif	/* IDA_ML_BIGARRAYS */
 
 #define CHECK_RECOVERABLE      1
 #define DONT_CHECK_RECOVERABLE 0
@@ -458,14 +461,37 @@ static int jactimesfn(
 }
 
 
-
-CAMLprim void IDATYPE(wf_tolerances)(value vdata)
+/* Dense and Band can only be used with serial NVectors.  */
+#ifdef IDA_ML_BIGARRAYS
+CAMLprim void IDATYPE(dls_dense) (value vida_mem, value vset_jac)
 {
-    CAMLparam1(vdata);
+    CAMLparam2(vida_mem, vset_jac);
+    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
+    long neqs = IDA_NEQS_FROM_ML (vida_mem);
+    int flag;
 
-    int flag = IDAWFtolerances(IDA_MEM_FROM_ML(vdata), errw);
-    CHECK_FLAG("IDAWFtolerances", flag);
+    flag = IDADense (ida_mem, neqs);
+    CHECK_FLAG ("IDADense", flag);
+    if (Bool_val (vset_jac)) {
+	flag = IDADlsSetDenseJacFn(IDA_MEM_FROM_ML(vida_mem), jacfn);
+	CHECK_FLAG("IDADlsSetDenseJacFn", flag);
+    }
+    CAMLreturn0;
+}
 
+CAMLprim void IDATYPE(dls_lapack_dense) (value vida_mem, value vset_jac)
+{
+    CAMLparam2 (vida_mem, vset_jac);
+    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
+    long neqs = IDA_NEQS_FROM_ML (vida_mem);
+    int flag;
+
+    flag = IDALapackDense (ida_mem, neqs);
+    CHECK_FLAG ("IDALapackDense", flag);
+    if (Bool_val (vset_jac)) {
+	flag = IDADlsSetDenseJacFn (IDA_MEM_FROM_ML (vida_mem), jacfn);
+	CHECK_FLAG("IDADlsSetDenseJacFn", flag);
+    }
     CAMLreturn0;
 }
 
@@ -485,6 +511,44 @@ CAMLprim void IDATYPE(dls_clear_dense_jac_fn)(value vdata)
     CAMLreturn0;
 }
 
+CAMLprim void IDATYPE(dls_band) (value vida_mem, value mupper, value mlower,
+				 value vset_jac)
+{
+    CAMLparam4(vida_mem, mupper, mlower, vset_jac);
+    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
+    long neqs = IDA_NEQS_FROM_ML (vida_mem);
+    int flag;
+
+    flag = IDABand (ida_mem, neqs, Long_val (mupper), Long_val (mlower));
+    CHECK_FLAG ("IDABand", flag);
+    if (Bool_val (vset_jac)) {
+	flag = IDADlsSetBandJacFn(IDA_MEM_FROM_ML(vida_mem), bandjacfn);
+	CHECK_FLAG("IDADlsSetBandJacFn", flag);
+    }
+    CAMLreturn0;
+}
+
+CAMLprim void IDATYPE(dls_lapack_band) (value vida_mem, value mupper,
+					value mlower, value vset_jac)
+{
+    CAMLparam4(vida_mem, mupper, mlower, vset_jac);
+#if SUNDIALS_BLAS_LAPACK
+    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
+    long neqs = IDA_NEQS_FROM_ML (vida_mem);
+    int flag;
+
+    flag = IDALapackBand (ida_mem, neqs, Long_val (mupper), Long_val (mlower));
+    CHECK_FLAG ("IDALapackBand", flag);
+    if (Bool_val (vset_jac)) {
+	flag = IDADlsSetBandJacFn(IDA_MEM_FROM_ML(vida_mem), bandjacfn);
+	CHECK_FLAG("IDADlsSetBandJacFn", flag);
+    }
+#else
+    caml_failwith("Lapack solvers are not available.");
+#endif
+    CAMLreturn0;
+}
+
 CAMLprim void IDATYPE(dls_set_band_jac_fn)(value vdata)
 {
     CAMLparam1(vdata);
@@ -498,6 +562,74 @@ CAMLprim void IDATYPE(dls_clear_band_jac_fn)(value vdata)
     CAMLparam1(vdata);
     int flag = IDADlsSetBandJacFn(IDA_MEM_FROM_ML(vdata), NULL);
     CHECK_FLAG("IDADlsSetBandJacFn", flag);
+    CAMLreturn0;
+}
+#endif	/* IDA_ML_BIGARRAYS */
+
+CAMLprim void IDATYPE(spils_spgmr) (value vida_mem, value vmaxl,
+				    value vset_presetup, value vset_jac)
+{
+    CAMLparam4 (vida_mem, vmaxl, vset_presetup, vset_jac);
+    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
+    IDASpilsPrecSetupFn setup = Bool_val (vset_presetup) ? presetupfn : NULL;
+    int flag;
+
+    flag = IDASpgmr (ida_mem, Int_val (vmaxl));
+    CHECK_FLAG ("IDASpgmr", flag);
+    flag = IDASpilsSetPreconditioner (ida_mem, setup, presolvefn);
+    CHECK_FLAG ("IDASpilsSetPreconditioner", flag);
+    if (Bool_val (vset_jac)) {
+	flag = IDASpilsSetJacTimesVecFn (ida_mem, jactimesfn);
+	CHECK_FLAG ("IDASpilsSetJacTimesVecFn", flag);
+    }
+    CAMLreturn0;
+}
+
+CAMLprim void IDATYPE(spils_spbcg) (value vida_mem, value vmaxl,
+				    value vset_presetup, value vset_jac)
+{
+    CAMLparam4 (vida_mem, vmaxl, vset_presetup, vset_jac);
+    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
+    IDASpilsPrecSetupFn setup = Bool_val (vset_presetup) ? presetupfn : NULL;
+    int flag;
+
+    flag = IDASpbcg (ida_mem, Int_val (vmaxl));
+    CHECK_FLAG ("IDASpbcg", flag);
+    flag = IDASpilsSetPreconditioner (ida_mem, setup, presolvefn);
+    CHECK_FLAG ("IDASpilsSetPreconditioner", flag);
+    if (Bool_val (vset_jac)) {
+	flag = IDASpilsSetJacTimesVecFn (ida_mem, jactimesfn);
+	CHECK_FLAG ("IDASpilsSetJacTimesVecFn", flag);
+    }
+    CAMLreturn0;
+}
+
+CAMLprim void IDATYPE(spils_sptfqmr) (value vida_mem, value vmaxl,
+				      value vset_presetup, value vset_jac)
+{
+    CAMLparam4 (vida_mem, vmaxl, vset_presetup, vset_jac);
+    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
+    IDASpilsPrecSetupFn setup = Bool_val (vset_presetup) ? presetupfn : NULL;
+    int flag;
+
+    flag = IDASptfqmr (ida_mem, Int_val (vmaxl));
+    CHECK_FLAG ("IDASptfqmr", flag);
+    flag = IDASpilsSetPreconditioner (ida_mem, setup, presolvefn);
+    CHECK_FLAG ("IDASpilsSetPreconditioner", flag);
+    if (Bool_val (vset_jac)) {
+	flag = IDASpilsSetJacTimesVecFn (ida_mem, jactimesfn);
+	CHECK_FLAG ("IDASpilsSetJacTimesVecFn", flag);
+    }
+    CAMLreturn0;
+}
+
+CAMLprim void IDATYPE(wf_tolerances)(value vdata)
+{
+    CAMLparam1(vdata);
+
+    int flag = IDAWFtolerances(IDA_MEM_FROM_ML(vdata), errw);
+    CHECK_FLAG("IDAWFtolerances", flag);
+
     CAMLreturn0;
 }
 

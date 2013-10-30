@@ -217,7 +217,6 @@ expr_of_ida_model.ml: quickcheck_ida.ml extract_types.byte
 	Ida.Roots.root_event = root_event, \
 	Ida.root_direction = root_direction, \
 	Roots.t = root_info, \
-	Ida.linear_solver = linear_solver, \
 	Ida.solver_result = solver_result))" \
 	--exclude 'IDALang\.' \
 	$< > $@

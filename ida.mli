@@ -41,63 +41,6 @@ include module type of Sundials
 (** {3 Solver initialisation} *)
 
 (**
- Specify a linear solver.
-
- The Lapack solvers require that both Sundials and the OCaml interface were
- built to link with a LAPACK library.
-
- IDA supports direct linear solvers and Krylov solvers, but for the latter
- does not support banded preconditioning.
-
- @ida <node5#sss:lin_solv_init> Linear Solver Specification
-                                                 Functions
- *)
-type linear_solver =
-  | Dense                                   (** Direct with dense matrix,
-                                                see {!Ida_serial.Dls} and
-                                                {!Ida_nvector.Dls}.*)
-  | Band of bandrange                       (** Direct with banded matrix,
-                                                see {!Ida_serial.Dls}
-                                                and {!Ida_nvector.Dls}.
-                                             *)
-  | LapackDense                             (** Direct with dense matrix,
-                                                with Lapack,
-                                                see {!Ida_serial.Dls} and
-                                                {!Ida_nvector.Dls}.*)
-
-  | LapackBand of bandrange                 (** Direct with banded matrix
-                                                with Lapack,
-                                                see {!Ida_serial.Dls}
-                                                and {!Ida_nvector.Dls}.
-                                             *)
-
-  | Spgmr of sprange                        (** Krylov Spils solver: SPGMR,
-                                                see {!Ida_serial.Spils}
-                                                and {!Ida_nvector.Spils}. *)
-  | Spbcg of sprange                        (** Krylov Spils solver: SPBCG,
-                                                see {!Ida_serial.Spils}
-                                                and {!Ida_nvector.Spils}. *)
-  | Sptfqmr of sprange                      (** Krylov Spils solver: SPFQMR,
-                                                see {!Ida_serial.Spils}
-                                                and {!Ida_nvector.Spils}. *)
-
-(**
- @ida <node5#sss:lin_solve_init> IDABand
- @ida <node5#sss:idabandpre> IDABandPrecInit
- *)
-and bandrange = {
-    mupper : int; (** upper half-bandwidth of the Jacobian approximation. *)
-    mlower : int; (** lower half-bandwidth of the Jacobian approximation. *)
-  }
-
-
-(**
- Parameters for Krylov solvers.
- @ida <node5#sss:lin_solv_init> IDASpgmr/IDASpbcg/IDASptfqrm
- *)
-and sprange = int
-
-(**
  Values for root directions.
  @ida <node5#sss:optin_root> IDASetRootDirection
  *)
@@ -110,7 +53,7 @@ type root_direction = RootDirs.root_direction
  *)
 val no_roots : (int * ('a -> 'b -> 'c -> 'd -> unit))
 
-(** {3 Solver results, statistics, and errors} *)
+(** {3 Statistics} *)
 
 (**
  Aggregated integrator statistics.

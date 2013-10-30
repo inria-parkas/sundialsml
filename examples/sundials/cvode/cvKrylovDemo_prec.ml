@@ -858,7 +858,11 @@ let main () =
     Cvode.init
         Cvode.BDF
         (Cvode.Newton
-            (Cvode.Spgmr { Cvode.pretype = Cvode.PrecLeft; Cvode.maxl = maxl}))
+            (Cvode.Spgmr
+               ({ Cvode.prec_type = Cvode.PrecLeft; Cvode.maxl = maxl},
+                { Cvode.prec_setup_fn = Some (precond wdata);
+                  Cvode.prec_solve_fn = psolve wdata;
+                  Cvode.jac_times_vec_fn = None })))
         (f wdata) ~t0:t0 c
   in
   Gc.compact ();
@@ -866,7 +870,6 @@ let main () =
   Cvode.ss_tolerances cvode_mem reltol abstol;
   Spils.set_gs_type cvode_mem Spils.ModifiedGS;
   Spils.set_eps_lin cvode_mem delt;
-  Spils.set_preconditioner cvode_mem (precond wdata) (psolve wdata);
 
   let ns   = wdata.ns
   and mxns = wdata.mxns

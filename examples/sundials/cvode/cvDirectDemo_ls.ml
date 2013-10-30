@@ -153,7 +153,7 @@ let jac2 arg mu ml jac =
     done
   done
 
-let prepare_next_run cvode_mem lmm miter mu ml =
+let prepare_next_run cvode_mem lmm miter mu ml t y =
   printf "\n\n-------------------------------------------------------------";
   
   printf "\n\nLinear Multistep Method : ";
@@ -162,6 +162,8 @@ let prepare_next_run cvode_mem lmm miter mu ml =
    | Cvode.BDF -> printf "BDF\n");
   
   printf "Iteration               : ";
+
+  (* Func comes first and is set via init; for all other cases, reinit.  *)
   if miter = Func
   then printf "FUNCTIONAL\n"
   else begin
@@ -171,31 +173,36 @@ let prepare_next_run cvode_mem lmm miter mu ml =
     match miter with
     | Dense_User -> begin
           printf "Dense, User-Supplied Jacobian\n";
-          Cvode.set_iter_type cvode_mem (Cvode.Newton Cvode.Dense);
-          Dls.set_dense_jac_fn cvode_mem jac1
+          Cvode.reinit cvode_mem t y
+            ~iter_type:(Cvode.Newton (Cvode.Dense (Some jac1)))
         end
 
     | Dense_DQ -> begin
           printf("Dense, Difference Quotient Jacobian\n");
-          Dls.clear_dense_jac_fn cvode_mem
+          Cvode.reinit cvode_mem t y
+            ~iter_type:(Cvode.Newton (Cvode.Dense None))
         end
 
     | Diag -> begin
           printf("Diagonal Jacobian\n");
-          Cvode.set_iter_type cvode_mem (Cvode.Newton Cvode.Diag)
+          Cvode.reinit cvode_mem t y ~iter_type:(Cvode.Newton Cvode.Diag)
         end
 
     | Band_User -> begin
           printf("Band, User-Supplied Jacobian\n");
-          Cvode.set_iter_type cvode_mem
-            (Cvode.Newton
-              (Cvode.Band { Cvode.mupper = mu; Cvode.mlower = ml }));
-          Dls.set_band_jac_fn cvode_mem jac2
+          Cvode.reinit cvode_mem t y
+            ~iter_type:
+              (Cvode.Newton
+                 (Cvode.Band ({ Cvode.mupper = mu; Cvode.mlower = ml },
+                              Some jac2)))
         end
 
     | Band_DQ -> begin
           printf("Band, Difference Quotient Jacobian\n");
-          Dls.clear_band_jac_fn cvode_mem
+          Cvode.reinit cvode_mem t y
+            ~iter_type:
+              (Cvode.Newton
+                 (Cvode.Band ({ Cvode.mupper = mu; Cvode.mlower = ml }, None)))
         end
 
     | Func -> assert false
@@ -281,13 +288,15 @@ let problem1 () =
   let init_y () = (y.{0} <- two; y.{1} <- zero) in
   print_intro1 ();
 
-  let run cvode_mem lmm reinit miter =
+  let run cvode_mem lmm miter =
     begin
       let ero = ref zero in
 
-      if reinit then (init_y (); Cvode.reinit cvode_mem p1_t0 y);
+      (* Func comes first and is set via init; for all other cases, reinit.  *)
+      if miter <> Func then init_y ();
 
-      prepare_next_run cvode_mem lmm miter 0 0;
+      prepare_next_run cvode_mem lmm miter 0 0 p1_t0 y;
+
       print_header1 ();
 
       let tout = ref p1_t1 in
@@ -319,9 +328,7 @@ let problem1 () =
 
         tout := !tout +. p1_dtout
       done;
-      print_final_stats cvode_mem miter !ero;
-
-      true
+      print_final_stats cvode_mem miter !ero
     end
   in
 
@@ -332,8 +339,7 @@ let problem1 () =
     Gc.compact ();
     Cvode.ss_tolerances cvode_mem rtol atol;
 
-    ignore (List.fold_left (run cvode_mem lmm) false
-        [ Func; Dense_User; Dense_DQ; Diag])
+    List.iter (run cvode_mem lmm) [ Func; Dense_User; Dense_DQ; Diag]
   in
 
   run_tests Cvode.Adams;
@@ -403,13 +409,13 @@ let problem2 () =
   let init_y () = (Cvode.Carray.fill y zero; y.{0} <- one) in
   print_intro2 ();
 
-  let run cvode_mem lmm reinit miter =
+  let run cvode_mem lmm miter =
     begin
       let ero = ref zero in
 
-      if reinit then (init_y (); Cvode.reinit cvode_mem p2_t0 y);
-
-      prepare_next_run cvode_mem lmm miter p2_mu p2_ml;
+      (* Func comes first and is set via init; for all other cases, reinit.  *)
+      if miter <> Func then init_y ();
+      prepare_next_run cvode_mem lmm miter p2_mu p2_ml p2_t0 y;
       print_header2 ();
 
       let tout = ref p2_t1 in
@@ -443,8 +449,6 @@ let problem2 () =
         tout := !tout *. p2_tout_mult
       done;
       print_final_stats cvode_mem miter !ero;
-
-      true
     end
   in
 
@@ -455,8 +459,7 @@ let problem2 () =
     Gc.compact ();
     Cvode.ss_tolerances cvode_mem rtol atol;
 
-    ignore (List.fold_left (run cvode_mem lmm) false
-        [ Func; Diag; Band_User; Band_DQ])
+    List.iter (run cvode_mem lmm) [ Func; Diag; Band_User; Band_DQ]
   in
 
   run_tests Cvode.Adams;

@@ -473,19 +473,21 @@ let main () =
   Cvode.ss_tolerances cvode_mem reltol abstol;
 
   (* START: Loop through SPGMR, SPBCG and SPTFQMR linear solver modules *)
-  let run cvode_mem reinit linsolver =
+  let run cvode_mem linsolver =
 
-    if reinit then begin
-      (* Re-initialize user data *)
-      init_user_data data;
-      set_initial_profiles u data.dx data.dy;
+    (* Note: the original C version of this example reinitializes the linear
+       solver only for the second run and after, but the OCaml interface
+       prohibits setting the linear solver without a reinit (which isn't a
+       sensible thing to do anyway).  We simply reinit each time here, but
+       the first reinit can be avoided if Cvode.init is called with the right
+       parameters.  *)
 
-      (* Re-initialize CVode for the solution of the same problem, but
-         using a different linear solver module *)
-      Cvode.reinit cvode_mem t0 u
-    end;
+    (* Re-initialize user data *)
+    init_user_data data;
+    set_initial_profiles u data.dx data.dy;
 
-    (* Attach a linear solver module *)
+    (* Re-initialize CVode for the solution of the same problem, but
+       using a different linear solver module *)
     (match linsolver with
 
     (* (a) SPGMR *)
@@ -497,8 +499,14 @@ let main () =
 
         (* Call CVSpgmr to specify the linear solver CVSPGMR 
            with left preconditioning and the maximum Krylov dimension maxl *)
-        Cvode.set_iter_type cvode_mem (Cvode.Newton
-            (Cvode.Spgmr { Cvode.pretype = Cvode.PrecLeft; Cvode.maxl = 0 }));
+        Cvode.reinit cvode_mem t0 u
+          ~iter_type:
+            (Cvode.Newton
+               (Cvode.Spgmr
+                  ({ Cvode.prec_type = Cvode.PrecLeft; Cvode.maxl = 0 },
+                   { Cvode.prec_setup_fn = Some (precond data);
+                     Cvode.prec_solve_fn = psolve data;
+                     Cvode.jac_times_vec_fn = None })));
 
         (* Set modified Gram-Schmidt orthogonalization, preconditioner 
            setup and solve routines Precond and PSolve, and the pointer 
@@ -515,8 +523,14 @@ let main () =
 
         (* Call CVSpbcg to specify the linear solver CVSPBCG 
            with left preconditioning and the maximum Krylov dimension maxl *)
-        Cvode.set_iter_type cvode_mem (Cvode.Newton
-            (Cvode.Spbcg { Cvode.pretype = Cvode.PrecLeft; Cvode.maxl = 0 }))
+        Cvode.reinit cvode_mem t0 u
+          ~iter_type:
+            (Cvode.Newton
+               (Cvode.Spbcg
+                  ({ Cvode.prec_type = Cvode.PrecLeft; Cvode.maxl = 0 },
+                   { Cvode.prec_setup_fn = Some (precond data);
+                     Cvode.prec_solve_fn = psolve data;
+                     Cvode.jac_times_vec_fn = None })))
       end
 
     (* (c) SPTFQMR *)
@@ -526,15 +540,17 @@ let main () =
         printf " \n| SPTFQMR |\n";
         printf " ---------\n";
 
-        (* Call CVSptfqmr to specify the linear solver CVSPTFQMR 
+        (* Call CVSptfqmr to specify the linear solver CVSPTFQMR
            with left preconditioning and the maximum Krylov dimension maxl *)
-        Cvode.set_iter_type cvode_mem (Cvode.Newton
-            (Cvode.Sptfqmr { Cvode.pretype = Cvode.PrecLeft; Cvode.maxl = 0 }))
+        Cvode.reinit cvode_mem t0 u
+          ~iter_type:
+            (Cvode.Newton
+               (Cvode.Sptfqmr
+                  ({ Cvode.prec_type = Cvode.PrecLeft; Cvode.maxl = 0 },
+                   { Cvode.prec_setup_fn = Some (precond data);
+                     Cvode.prec_solve_fn = psolve data;
+                     Cvode.jac_times_vec_fn = None })))
       end);
-
-    (* Set preconditioner setup and solve routines Precond and PSolve,
-       and the pointer to the user-defined block data *)
-    Spils.set_preconditioner cvode_mem (precond data) (psolve data);
 
     (* In loop over output points, call CVode, print results, test for error *)
     printf " \n2-species diurnal advection-diffusion problem\n\n";
@@ -546,12 +562,11 @@ let main () =
       tout := !tout +. twohr
     done;
 
-    print_final_stats cvode_mem linsolver;
+    print_final_stats cvode_mem linsolver
 
-    true
   in  (* END: Loop through SPGMR, SPBCG and SPTFQMR linear solver modules *)
 
-  ignore (List.fold_left (run cvode_mem) false [UseSpgmr; UseSpbcg; UseSptfqmr])
+  ignore (List.iter (run cvode_mem) [UseSpgmr; UseSpbcg; UseSptfqmr])
 
 let _ = main ()
 let _ = Gc.compact ()

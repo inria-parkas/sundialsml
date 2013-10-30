@@ -19,29 +19,6 @@
 include Sundials
 include Dls
 
-type preconditioning_type =
-  | PrecNone
-  | PrecLeft
-  | PrecRight
-  | PrecBoth
-
-type bandrange = { mupper : int; mlower : int }
-
-type sprange = int
-
-type linear_solver =
-  | Dense
-  | Band of bandrange
-  | LapackDense
-  | LapackBand of bandrange
-  | Spgmr of sprange
-  | Spbcg of sprange
-  | Sptfqmr of sprange
-
-type iter =
-  | Newton of linear_solver
-  | Functional
-
 type root_direction = RootDirs.root_direction
 
 (* Solver exceptions *)

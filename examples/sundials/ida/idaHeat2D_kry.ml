@@ -225,11 +225,15 @@ let main () =
 
   (* Call IDACreate to initialize solution with SPGMR linear solver.  *)
 
-  let mem = Ida.init (Ida.Spgmr 5) (res_heat data) ~t0:t0 u u'
+  let solver = Ida.Spgmr { Ida.maxl = 5;
+                           Ida.prec_setup_fn = Some (p_setup_heat data);
+                           Ida.prec_solve_fn = p_solve_heat data;
+                           Ida.jac_times_vec_fn = None;
+                         }
   in
+  let mem = Ida.init solver (res_heat data) ~t0:t0 u u' in
   Ida.set_constraints mem constraints;
   Ida.ss_tolerances mem rtol atol;
-  Ida.Spils.set_preconditioner mem (p_setup_heat data) (p_solve_heat data);
 
   (* Print output heading. *)
   print_header rtol atol;

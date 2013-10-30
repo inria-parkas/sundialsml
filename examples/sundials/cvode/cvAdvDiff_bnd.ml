@@ -230,22 +230,17 @@ let main () =
    * user's right hand side function in u'=f(t,u), the inital time T0, and
    * the initial dependent variable vector u. *)
   (* Call CVBand to specify the CVBAND band linear solver *)
-  let cvode_mem =
-    Cvode.init
-        Cvode.BDF
-        (Cvode.Newton (Cvode.Band {Cvode.mupper = my; Cvode.mlower = my}))
-        ~t0:t0
-        (f data)
-        u
+  (* Set the user-supplied Jacobian routine Jac *)
+  let solver = Cvode.Band ({Cvode.mupper = my; Cvode.mlower = my},
+                           Some (jac data))
+  in
+  let cvode_mem = Cvode.init Cvode.BDF (Cvode.Newton solver) ~t0:t0 (f data) u
   in
   Gc.compact ();
 
   (* Call CVodeSStolerances to specify the scalar relative tolerance
    * and scalar absolute tolerance *)
   Cvode.ss_tolerances cvode_mem reltol abstol;
-
-  (* Set the user-supplied Jacobian routine Jac *)
-  Dls.set_band_jac_fn cvode_mem (jac data);
 
   (* In loop over output points: call CVode, print results, test for errors *)
 

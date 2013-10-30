@@ -73,22 +73,26 @@ let jac_expr_of_rhsfn get set neqs rhsfn =
               (List.concat
                 (List.map (fun i -> List.map (go rhsfn i) ixs) ixs))$>>
 
-let set_jac model session =
+let expr_of_linear_solver model solver =
   let neqs = Carray.length model.vec in
-  match model.iter with
-  | Cvode.Functional -> <:expr<()>>
-  | Cvode.Newton Cvode.Dense ->
-    let dense_get = <:expr<Cvode.Densematrix.get>>
-    and dense_set = <:expr<Cvode.Densematrix.set>>
-    in <:expr<Cvode.Dls.set_dense_jac_fn $session$
-              $jac_expr_of_rhsfn dense_get dense_set neqs model.rhsfn$>>
-  | Cvode.Newton (Cvode.Band _) | Cvode.Newton (Cvode.Sptfqmr _)
-  | Cvode.Newton (Cvode.Spbcg _) | Cvode.Newton (Cvode.Spgmr _)
-  | Cvode.Newton (Cvode.LapackBand _) | Cvode.Newton (Cvode.LapackDense _)
-  | Cvode.Newton (Cvode.BandedSptfqmr _) | Cvode.Newton (Cvode.BandedSpbcg _)
-  | Cvode.Newton (Cvode.BandedSpgmr _) | Cvode.Newton Cvode.Diag ->
-    raise (Failure (Printf.sprintf "iter type %s not implemented"
-                      (show_iter model.iter)))
+  let dense_jac = function
+    | false -> <:expr<None>>
+    | true ->
+      let dense_get = <:expr<Cvode.Densematrix.get>>
+      and dense_set = <:expr<Cvode.Densematrix.set>> in
+      <:expr<Some $jac_expr_of_rhsfn dense_get dense_set neqs model.rhsfn$>>
+  in
+  match solver with
+  | MDense user_def -> <:expr<Cvode.Dense $dense_jac user_def$>>
+  | MLapackDense user_def ->
+    <:expr<Cvode.LapackDense $dense_jac user_def$>>
+  | MDiag -> <:expr<Cvode.Diag>>
+  | MBand _ | MLapackBand _ ->
+    failwith "linear solver not implemented"
+
+let expr_of_iter model = function
+  | MFunctional -> <:expr<Cvode.Functional>>
+  | MNewton s -> <:expr<Cvode.Newton $expr_of_linear_solver model s$>>
 
 let expr_of_roots model roots =
   let n = Array.length roots in
@@ -140,7 +144,7 @@ let expr_of_cmd_impl model = function
       | Some n -> <:expr<Carray.create $`int:n$>>
     in
     <:expr<Cvode.reinit session
-           ~iter_type:$expr_of_iter params.reinit_iter$
+           ~iter_type:$expr_of_iter model params.reinit_iter$
            $roots$
            $`flo:params.reinit_t0$
            $vec0$;
@@ -197,14 +201,13 @@ let ml_of_script (model, cmds) =
       let vec  = $expr_of_carray model.vec0$ in
       let session = Cvode.init
                     $expr_of_lmm model.lmm$
-                    $expr_of_iter model.iter$
+                    $expr_of_iter model model.iter$
                     $expr_of_rhsfn_impl model.rhsfn$
                     ~roots:$expr_of_roots model model.roots$
                     ~t0:$`flo:model.t0$
                     vec
       in
       Cvode.ss_tolerances session 1e-9 1e-9;
-      $set_jac model <:expr<session>>$;
       Cvode.set_err_handler_fn session err_handler;
       do_cmd (lazy (Aggr [Float (Cvode.get_current_time session);
                           carray vec]));

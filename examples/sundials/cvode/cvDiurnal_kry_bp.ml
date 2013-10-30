@@ -337,8 +337,9 @@ let main () =
   let cvode_mem =
     Cvode.init Cvode.BDF
       (Cvode.Newton
-          (Cvode.BandedSpgmr ({ Cvode.pretype = Cvode.PrecLeft; Cvode.maxl = 0},
-                              { Cvode.mupper = mu; Cvode.mlower = ml})))
+          (Cvode.BandedSpgmr
+             ({ Cvode.prec_type = Cvode.PrecLeft; Cvode.maxl = 0},
+              { Cvode.mupper = mu; Cvode.mlower = ml})))
       (f data) ~t0:t0 u
   in
   Gc.compact ();
@@ -371,6 +372,12 @@ let main () =
   (* On second run, re-initialize u, the solver, and CVSPGMR *)
   set_initial_profiles u data.dx data.dy;
   Cvode.reinit cvode_mem t0 u;
+
+  (* NB: the prec type could be changed by giving a suitable ~iter_type
+     parameter to reinit, but this is avoided here because reinit also resets
+     the statistics.  The number of rhs function evaluation in sundials' C code
+     is cumulative, and using set_prec_type is necessary to simulate that
+     behavior.  *)
   Spils.set_prec_type cvode_mem Cvode.PrecRight;
   printf "\n\n-------------------------------------------------------";
   printf "------------\n";

@@ -563,10 +563,15 @@ let main () =
   (* Set the pointer to user-defined data *)
   (* Call CVSpgmr to specify the linear solver CVSPGMR 
    * with left preconditioning and the maximum Krylov dimension maxl *)
+  (* set the Jacobian-times-vector function *)
+  (* Set the preconditioner solve and setup functions *)
   let cvode_mem =
     Cvode.init Cvode.BDF
       (Cvode.Newton
-          (Cvode.Spgmr { Cvode.pretype = Cvode.PrecLeft; Cvode.maxl = 0}))
+          (Cvode.Spgmr ({ Cvode.prec_type = Cvode.PrecLeft; Cvode.maxl = 0},
+                        { Cvode.prec_setup_fn = Some (precond data);
+                          Cvode.prec_solve_fn = psolve data;
+                          Cvode.jac_times_vec_fn = Some (jtv data); })))
       (f data) ~t0:t0 u
   in
   Gc.compact ();
@@ -575,14 +580,8 @@ let main () =
    * and scalar absolute tolerances *)
   Cvode.ss_tolerances cvode_mem reltol abstol;
 
-  (* set the JAcobian-times-vector function *)
-  Spils.set_jac_times_vec_fn cvode_mem (jtv data);
-
   (* Set modified Gram-Schmidt orthogonalization *)
   Spils.set_gs_type cvode_mem Spils.ModifiedGS;
-
-  (* Set the preconditioner solve and setup functions *)
-  Spils.set_preconditioner cvode_mem (precond data) (psolve data);
 
   (* In loop over output points, call CVode, print results, test for error *)
 

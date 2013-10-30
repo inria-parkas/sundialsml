@@ -33,6 +33,30 @@ type 't jacobian_arg =
     jac_tmp  : 't
   }
 
+(* Note this definition differs from the one in ida_nvector, so the
+   tag values are different.  *)
+type linear_solver =
+  | Dense of dense_jac_fn option
+  | LapackDense of dense_jac_fn option
+  | Band of bandrange * band_jac_fn option
+  | LapackBand of bandrange * band_jac_fn option
+  | Spgmr of spils_params
+  | Spbcg of spils_params
+  | Sptfqmr of spils_params
+and dense_jac_fn = triple_tmp jacobian_arg -> Densematrix.t -> unit
+and band_jac_fn = triple_tmp jacobian_arg -> int -> int -> Bandmatrix.t -> unit
+and spils_params =
+  {
+    maxl : int;
+    prec_solve_fn : (single_tmp jacobian_arg -> val_array -> val_array -> float
+                     -> unit);
+    prec_setup_fn : (triple_tmp jacobian_arg -> unit) option;
+    jac_times_vec_fn : (double_tmp jacobian_arg -> val_array -> val_array
+                        -> unit) option;
+  }
+and bandrange = { mupper : int;
+                  mlower : int; }
+
 type ida_mem
 type c_weak_ref
 type ida_file
@@ -140,8 +164,77 @@ let root_init ida (nroots, rootsfn) =
   c_root_init ida nroots;
   ida.rootsfn <- rootsfn
 
-external set_linear_solver : session -> linear_solver -> unit
-    = "c_ida_set_linear_solver"
+external c_dls_dense : session -> bool -> unit
+  = "c_ba_ida_dls_dense"
+
+external c_dls_lapack_dense : session -> bool -> unit
+  = "c_ba_ida_dls_lapack_dense"
+
+external c_dls_band : session -> int -> int -> bool -> unit
+  = "c_ba_ida_dls_band"
+
+external c_dls_lapack_band : session -> int -> int -> bool -> unit
+  = "c_ba_ida_dls_lapack_band"
+
+external c_spils_spgmr : session -> int -> bool -> bool -> unit
+  = "c_ba_ida_spils_spgmr"
+
+external c_spils_spbcg : session -> int -> bool -> bool -> unit
+  = "c_ba_ida_spils_spbcg"
+
+external c_spils_sptfqmr : session -> int -> bool -> bool -> unit
+  = "c_ba_ida_spils_sptfqmr"
+
+let shouldn't_be_called fcn =
+  failwith ("internal error in sundials: " ^ fcn ^ " is called")
+let dummy_dense_jac _ _ = shouldn't_be_called "dummy_dense_jac"
+let dummy_band_jac _ _ _ _ = shouldn't_be_called "dummy_band_jac"
+let dummy_prec_setup _ = shouldn't_be_called "dummy_prec_setup"
+let dummy_prec_solve _ _ _ _ = shouldn't_be_called "dummy_prec_solve"
+let dummy_jac_times_vec _ _ _ = shouldn't_be_called "dummy_jac_times_vec"
+
+let set_linear_solver session solver =
+  let optionally f = function
+    | None -> ()
+    | Some x -> f x
+  in
+  (* Release references to all linear-solver--related callbacks.  *)
+  session.jacfn      <- dummy_dense_jac;
+  session.bandjacfn  <- dummy_band_jac;
+  session.presetupfn <- dummy_prec_setup;
+  session.presolvefn <- dummy_prec_solve;
+  session.jactimesfn <- dummy_jac_times_vec;
+  match solver with
+  | Dense jac ->
+    c_dls_dense session (jac <> None);
+    optionally (fun f -> session.jacfn <- f) jac
+  | LapackDense jac ->
+    c_dls_lapack_dense session (jac <> None);
+    optionally (fun f -> session.jacfn <- f) jac
+  | Band (p, jac) ->
+    c_dls_band session p.mupper p.mlower (jac <> None);
+    optionally (fun f -> session.bandjacfn <- f) jac
+  | LapackBand (p, jac) ->
+    c_dls_lapack_band session p.mupper p.mlower (jac <> None);
+    optionally (fun f -> session.bandjacfn <- f) jac
+  | Spgmr p ->
+    c_spils_spgmr session p.maxl (p.prec_setup_fn <> None)
+                                 (p.jac_times_vec_fn <> None);
+    optionally (fun f -> session.presetupfn <- f) p.prec_setup_fn;
+    session.presolvefn <- p.prec_solve_fn;
+    optionally (fun f -> session.jactimesfn <- f) p.jac_times_vec_fn
+  | Spbcg p ->
+    c_spils_spbcg session p.maxl (p.prec_setup_fn <> None)
+                                 (p.jac_times_vec_fn <> None);
+    optionally (fun f -> session.presetupfn <- f) p.prec_setup_fn;
+    session.presolvefn <- p.prec_solve_fn;
+    optionally (fun f -> session.jactimesfn <- f) p.jac_times_vec_fn
+  | Sptfqmr p ->
+    c_spils_sptfqmr session p.maxl (p.prec_setup_fn <> None)
+                                   (p.jac_times_vec_fn <> None);
+    optionally (fun f -> session.presetupfn <- f) p.prec_setup_fn;
+    session.presolvefn <- p.prec_solve_fn;
+    optionally (fun f -> session.jactimesfn <- f) p.jac_times_vec_fn
 
 let init linsolv resfn ?(roots=no_roots) ?(t0=0.) y y' =
   let (nroots, rootsfn) = roots in
@@ -166,11 +259,11 @@ let init linsolv resfn ?(roots=no_roots) ?(t0=0.) y y' =
                   rootsfn    = rootsfn;
                   errh       = (fun _ -> ());
                   errw       = (fun _ _ -> ());
-                  jacfn      = (fun _ _ -> ());
-                  bandjacfn  = (fun _ _ _ _ -> ());
-                  presetupfn = (fun _ -> ());
-                  presolvefn = (fun _ _ _ _ -> ());
-                  jactimesfn = (fun _ _ _ -> ());
+                  jacfn      = dummy_dense_jac;
+                  bandjacfn  = dummy_band_jac;
+                  presetupfn = dummy_prec_setup;
+                  presolvefn = dummy_prec_solve;
+                  jactimesfn = dummy_jac_times_vec;
                   safety_check_flags = 0;
                 }
   in
@@ -187,9 +280,9 @@ let init linsolv resfn ?(roots=no_roots) ?(t0=0.) y y' =
 let nroots { nroots } = nroots
 let neqs { neqs } = neqs
 
-external c_reinit
-    : session -> float -> val_array -> der_array -> unit
+external c_reinit : session -> float -> val_array -> der_array -> unit
     = "c_ba_ida_reinit"
+
 let reinit ida ?linsolv ?roots t0 y0 y'0 =
   c_reinit ida t0 y0 y'0;
   match linsolv with
@@ -344,7 +437,7 @@ module Dls =
         = "c_ba_ida_dls_clear_dense_jac_fn"
 
     let clear_dense_jac_fn s =
-      s.jacfn <- (fun _ _ -> ());
+      s.jacfn <- dummy_dense_jac;
       clear_dense_jac_fn s
 
     external set_band_jac_fn   : session -> unit
@@ -358,7 +451,7 @@ module Dls =
         = "c_ba_ida_dls_clear_band_jac_fn"
 
     let clear_band_jac_fn s =
-      s.bandjacfn <- (fun _ _ _ _ -> ());
+      s.bandjacfn <- dummy_band_jac;
       clear_band_jac_fn s
 
     external get_work_space : session -> int * int

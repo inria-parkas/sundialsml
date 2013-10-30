@@ -318,7 +318,7 @@ type solver_result =
  *)
 type error_details = {
     error_code : int;
-    module_name : string;               (** IDA or CVODE *)
+    module_name : string;               (** IDA, CVODE, CVSPGMR, etc. *)
     function_name : string;
     error_message : string;
   }

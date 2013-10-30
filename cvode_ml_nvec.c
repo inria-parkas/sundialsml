@@ -35,9 +35,14 @@
 #include <cvode/cvode_spbcgs.h>
 #include <cvode/cvode_sptfqmr.h>
 #include <cvode/cvode_bandpre.h>
+#include <sundials/sundials_config.h>
 
 #include "cvode_ml.h"
 #include "nvector_ml.h"
+
+#if SUNDIALS_BLAS_LAPACK == 1
+#include <cvode/cvode_lapack.h>
+#endif
 
 #ifdef RESTRICT_INTERNAL_PRECISION
 #ifdef __GNUC__
@@ -289,6 +294,8 @@ static void relinquish_jac_arg(value arg, int triple)
     CAMLreturn0;
 }
 
+/* Dense and band Jacobians only work with serial NVectors.  */
+#if CVODE_ML_BIGARRAYS
 static int jacfn(
 	long int n,
 	realtype t,
@@ -356,6 +363,7 @@ static int bandjacfn(
 
     CAMLreturnT(int, r);
 }
+#endif	/* CVODE_ML_BIGARRAYS */
 
 static int presetupfn(
     realtype t,
@@ -489,13 +497,68 @@ static int jactimesfn(
     CAMLreturnT(int, retcode);
 }
 
-CAMLprim void CVTYPE(wf_tolerances)(value vdata)
-{
-    CAMLparam1(vdata);
- 
-    int flag = CVodeWFtolerances(CVODE_MEM_FROM_ML(vdata), errw);
-    CHECK_FLAG("CVodeWFtolerances", flag);
 
+static int precond_type(value vptype)
+{
+    CAMLparam1(vptype);
+
+    int ptype;
+    switch (Int_val(vptype)) {
+    case VARIANT_CVODE_PRECONDITIONING_TYPE_PRECNONE:
+	ptype = PREC_NONE;
+	break;
+
+    case VARIANT_CVODE_PRECONDITIONING_TYPE_PRECLEFT:
+	ptype = PREC_LEFT;
+	break;
+
+    case VARIANT_CVODE_PRECONDITIONING_TYPE_PRECRIGHT:
+	ptype = PREC_RIGHT;
+	break;
+
+    case VARIANT_CVODE_PRECONDITIONING_TYPE_PRECBOTH:
+	ptype = PREC_BOTH;
+	break;
+    }
+
+    CAMLreturn(ptype);
+}
+
+/* Dense and Band can only be used with serial NVectors.  */
+#ifdef CVODE_ML_BIGARRAYS
+CAMLprim void CVTYPE(dls_dense) (value vcvode_mem, value vset_jac)
+{
+    CAMLparam2(vcvode_mem, vset_jac);
+    void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
+    long neqs = CVODE_NEQS_FROM_ML (vcvode_mem);
+    int flag;
+
+    flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
+    CHECK_FLAG ("CVodeSetIterType", flag);
+    flag = CVDense (cvode_mem, neqs);
+    CHECK_FLAG ("CVDense", flag);
+    if (Bool_val (vset_jac)) {
+	flag = CVDlsSetDenseJacFn(CVODE_MEM_FROM_ML(vcvode_mem), jacfn);
+	CHECK_FLAG("CVDlsSetDenseJacFn", flag);
+    }
+    CAMLreturn0;
+}
+
+CAMLprim void CVTYPE(dls_lapack_dense) (value vcvode_mem, value vset_jac)
+{
+    CAMLparam2 (vcvode_mem, vset_jac);
+    void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
+    long neqs = CVODE_NEQS_FROM_ML (vcvode_mem);
+    int flag;
+
+    flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
+    CHECK_FLAG ("CVodeSetIterType", flag);
+    flag = CVLapackDense (cvode_mem, neqs);
+    CHECK_FLAG ("CVLapackDense", flag);
+    if (Bool_val (vset_jac)) {
+	flag = CVDlsSetDenseJacFn (CVODE_MEM_FROM_ML (vcvode_mem), jacfn);
+	CHECK_FLAG("CVDlsSetDenseJacFn", flag);
+    }
     CAMLreturn0;
 }
 
@@ -515,6 +578,50 @@ CAMLprim void CVTYPE(dls_clear_dense_jac_fn)(value vdata)
     CAMLreturn0;
 }
 
+CAMLprim void CVTYPE(dls_band) (value vcvode_mem,
+				value vmupper, value vmlower,
+				value vset_jac)
+{
+    CAMLparam4(vcvode_mem, vmupper, vmlower, vset_jac);
+    void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
+    long neqs = CVODE_NEQS_FROM_ML (vcvode_mem);
+    int flag;
+
+    flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
+    CHECK_FLAG ("CVodeSetIterType", flag);
+    flag = CVBand (cvode_mem, neqs, Long_val (vmupper), Long_val (vmlower));
+    CHECK_FLAG ("CVBand", flag);
+    if (Bool_val (vset_jac)) {
+	flag = CVDlsSetBandJacFn(CVODE_MEM_FROM_ML(vcvode_mem), bandjacfn);
+	CHECK_FLAG("CVDlsSetBandJacFn", flag);
+    }
+    CAMLreturn0;
+}
+
+CAMLprim void CVTYPE(dls_lapack_band) (value vcvode_mem, value vmupper,
+					value vmlower, value vset_jac)
+{
+    CAMLparam4(vcvode_mem, vmupper, vmlower, vset_jac);
+#if SUNDIALS_BLAS_LAPACK
+    void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
+    long neqs = CVODE_NEQS_FROM_ML (vcvode_mem);
+    int flag;
+
+    flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
+    CHECK_FLAG ("CVodeSetIterType", flag);
+    flag = CVLapackBand (cvode_mem, neqs,
+			 Long_val (vmupper), Long_val (vmlower));
+    CHECK_FLAG ("CVLapackBand", flag);
+    if (Bool_val (vset_jac)) {
+	flag = CVDlsSetBandJacFn(CVODE_MEM_FROM_ML(vcvode_mem), bandjacfn);
+	CHECK_FLAG("CVDlsSetBandJacFn", flag);
+    }
+#else
+    caml_failwith("Lapack solvers are not available.");
+#endif
+    CAMLreturn0;
+}
+
 CAMLprim void CVTYPE(dls_set_band_jac_fn)(value vdata)
 {
     CAMLparam1(vdata);
@@ -528,6 +635,138 @@ CAMLprim void CVTYPE(dls_clear_band_jac_fn)(value vdata)
     CAMLparam1(vdata);
     int flag = CVDlsSetBandJacFn(CVODE_MEM_FROM_ML(vdata), NULL);
     CHECK_FLAG("CVDlsSetBandJacFn", flag);
+    CAMLreturn0;
+}
+#endif	/* CVODE_ML_BIGARRAYS */
+
+CAMLprim void CVTYPE(spils_spgmr) (value vcvode_mem, value vmaxl, value vtype,
+				   value vset_presetup, value vset_jac)
+{
+    CAMLparam5 (vcvode_mem, vmaxl, vtype, vset_presetup, vset_jac);
+    void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
+    CVSpilsPrecSetupFn setup = Bool_val (vset_presetup) ? presetupfn : NULL;
+    int flag;
+
+    flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
+    CHECK_FLAG ("CVodeSetIterType", flag);
+    flag = CVSpgmr (cvode_mem, precond_type (vtype), Int_val (vmaxl));
+    CHECK_FLAG ("CVSpgmr", flag);
+    flag = CVSpilsSetPreconditioner (cvode_mem, setup, presolvefn);
+    CHECK_FLAG ("CVSpilsSetPreconditioner", flag);
+    if (Bool_val (vset_jac)) {
+	flag = CVSpilsSetJacTimesVecFn (cvode_mem, jactimesfn);
+	CHECK_FLAG ("CVSpilsSetJacTimesVecFn", flag);
+    }
+    CAMLreturn0;
+}
+
+CAMLprim void CVTYPE(spils_spbcg) (value vcvode_mem, value vmaxl, value vtype,
+				   value vset_presetup, value vset_jac)
+{
+    CAMLparam5 (vcvode_mem, vmaxl, vtype, vset_presetup, vset_jac);
+    void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
+    CVSpilsPrecSetupFn setup = Bool_val (vset_presetup) ? presetupfn : NULL;
+    int flag;
+
+    flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
+    CHECK_FLAG ("CVodeSetIterType", flag);
+    flag = CVSpbcg (cvode_mem, precond_type (vtype), Int_val (vmaxl));
+    CHECK_FLAG ("CVSpbcg", flag);
+    flag = CVSpilsSetPreconditioner (cvode_mem, setup, presolvefn);
+    CHECK_FLAG ("CVSpilsSetPreconditioner", flag);
+    if (Bool_val (vset_jac)) {
+	flag = CVSpilsSetJacTimesVecFn (cvode_mem, jactimesfn);
+	CHECK_FLAG ("CVSpilsSetJacTimesVecFn", flag);
+    }
+    CAMLreturn0;
+}
+
+CAMLprim void CVTYPE(spils_sptfqmr) (value vcvode_mem, value vmaxl, value vtype,
+				      value vset_presetup, value vset_jac)
+{
+    CAMLparam5 (vcvode_mem, vmaxl, vtype, vset_presetup, vset_jac);
+    void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
+    CVSpilsPrecSetupFn setup = Bool_val (vset_presetup) ? presetupfn : NULL;
+    int flag;
+
+    flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
+    CHECK_FLAG ("CVodeSetIterType", flag);
+    flag = CVSptfqmr (cvode_mem, precond_type (vtype), Int_val (vmaxl));
+    CHECK_FLAG ("CVSptfqmr", flag);
+    flag = CVSpilsSetPreconditioner (cvode_mem, setup, presolvefn);
+    CHECK_FLAG ("CVSpilsSetPreconditioner", flag);
+    if (Bool_val (vset_jac)) {
+	flag = CVSpilsSetJacTimesVecFn (cvode_mem, jactimesfn);
+	CHECK_FLAG ("CVSpilsSetJacTimesVecFn", flag);
+    }
+    CAMLreturn0;
+}
+
+CAMLprim void CVTYPE(spils_banded_spgmr) (value vcvode_mem,
+					  value vmupper, value vmlower,
+					  value vmaxl, value vtype)
+{
+    CAMLparam5 (vcvode_mem, vmupper, vmlower, vmaxl, vtype);
+    void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
+    long neqs = CVODE_NEQS_FROM_ML (vcvode_mem);
+    int flag;
+
+    flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
+    CHECK_FLAG ("CVodeSetIterType", flag);
+    flag = CVSpgmr (cvode_mem, precond_type (vtype), Int_val (vmaxl));
+    CHECK_FLAG ("CVSpgmr", flag);
+    flag = CVBandPrecInit (cvode_mem, neqs,
+			   Long_val (vmupper), Long_val (vmlower));
+    CHECK_FLAG ("CVBandPrecInit", flag);
+    CAMLreturn0;
+}
+
+CAMLprim void CVTYPE(spils_banded_spbcg) (value vcvode_mem,
+					  value vmupper, value vmlower,
+					  value vmaxl, value vtype)
+{
+    CAMLparam5 (vcvode_mem, vmupper, vmlower, vmaxl, vtype);
+    void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
+    long neqs = CVODE_NEQS_FROM_ML (vcvode_mem);
+    int flag;
+
+    flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
+    CHECK_FLAG ("CVodeSetIterType", flag);
+    flag = CVSpbcg (cvode_mem, precond_type (vtype), Int_val (vmaxl));
+    CHECK_FLAG ("CVSpbcg", flag);
+    flag = CVBandPrecInit (cvode_mem, neqs,
+			   Long_val (vmupper), Long_val (vmlower));
+    CHECK_FLAG ("CVBandPrecInit", flag);
+    CAMLreturn0;
+}
+
+CAMLprim void CVTYPE(spils_banded_sptfqmr) (value vcvode_mem,
+					    value vmupper, value vmlower,
+					    value vmaxl, value vtype)
+{
+    CAMLparam5 (vcvode_mem, vmupper, vmlower, vmaxl, vtype);
+    void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
+    long neqs = CVODE_NEQS_FROM_ML (vcvode_mem);
+    int flag;
+
+    flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
+    CHECK_FLAG ("CVodeSetIterType", flag);
+    flag = CVSptfqmr (cvode_mem, precond_type (vtype), Int_val (vmaxl));
+    CHECK_FLAG ("CVSptfqmr", flag);
+    flag = CVBandPrecInit (cvode_mem, neqs,
+			   Long_val (vmupper), Long_val (vmlower));
+    CHECK_FLAG ("CVBandPrecInit", flag);
+    CAMLreturn0;
+}
+
+
+CAMLprim void CVTYPE(wf_tolerances)(value vdata)
+{
+    CAMLparam1(vdata);
+ 
+    int flag = CVodeWFtolerances(CVODE_MEM_FROM_ML(vdata), errw);
+    CHECK_FLAG("CVodeWFtolerances", flag);
+
     CAMLreturn0;
 }
 

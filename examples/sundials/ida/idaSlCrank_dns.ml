@@ -203,7 +203,7 @@ let main () =
   let dt = (tf -. t0) /. float_of_int (nout - 1) in
 
   (* IDA initialization *)
-  let mem = Ida.init Ida.Dense (ressc data) ~t0:t0 y y' in
+  let mem = Ida.init (Ida.Dense None) (ressc data) ~t0:t0 y y' in
   Ida.ss_tolerances mem rtol atol;
   Ida.set_var_types mem id;
   Ida.set_suppress_alg mem true;

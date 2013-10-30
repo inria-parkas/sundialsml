@@ -75,16 +75,20 @@ let jac_expr_of_resfn get set neqs resfn =
               (List.concat
                 (List.map (fun i -> List.map (go resfn i) ixs) ixs))$>>
 
-let set_jac model session =
+let expr_of_linear_solver model solver =
   let neqs = Carray.length model.vec in
-  match model.solver with
-  | Ida.Dense -> let dense_get = <:expr<Ida.Densematrix.get>>
-                 and dense_set = <:expr<Ida.Densematrix.set>>
-                 in <:expr<Ida.Dls.set_dense_jac_fn $session$
-                           $jac_expr_of_resfn dense_get dense_set neqs
-                                              model.resfn$>>
-  | Ida.Band _ | Ida.Sptfqmr _ | Ida.Spbcg _ | Ida.Spgmr _
-  | Ida.LapackBand _ | Ida.LapackDense _ ->
+  let dense_jac = function
+    | false -> <:expr<None>>
+    | true ->
+      let dense_get = <:expr<Ida.Densematrix.get>>
+      and dense_set = <:expr<Ida.Densematrix.set>> in
+      <:expr<Some $jac_expr_of_resfn dense_get dense_set neqs model.resfn$>>
+  in
+  match solver with
+  | MDense user_def -> <:expr<Ida.Dense $dense_jac user_def$>>
+  | MLapackDense user_def -> <:expr<Ida.LapackDense $dense_jac user_def$>>
+  | MBand _ | MSptfqmr _ | MSpbcg _ | MSpgmr _
+  | MLapackBand _ ->
     raise (Failure "linear solver not implemented")
 
 let expr_of_roots model roots =
@@ -183,7 +187,7 @@ let expr_of_cmd_impl model = function
       | Some n -> <:expr<Carray.create $`int:n$>>
     in
     <:expr<Ida.reinit session
-           ~linsolv:$expr_of_linear_solver params.reinit_solver$
+           ~linsolv:$expr_of_linear_solver model params.reinit_solver$
            $roots$
            $`flo:params.reinit_t0$
            $vec0$
@@ -241,14 +245,13 @@ let ml_of_script (model, cmds) =
       let vec  = $expr_of_carray model.vec0$
       and vec' = $expr_of_carray model.vec'0$ in
       let session = Ida.init
-                  $expr_of_linear_solver model.solver$
+                  $expr_of_linear_solver model model.solver$
                   $expr_of_resfn_impl model.resfn$
                   ~roots:$expr_of_roots model model.roots$
                   ~t0:$`flo:model.t0$
                   vec vec'
       in
       Ida.ss_tolerances session 1e-9 1e-9;
-      $set_jac model <:expr<session>>$;
       Ida.set_err_handler_fn session err_handler;
       do_cmd (lazy (Aggr [Float (Ida.get_current_time session);
                           carray vec; carray vec']));

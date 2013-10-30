@@ -158,120 +158,6 @@ static int precond_type(value vptype)
 
 /* basic interface */
 
-void set_linear_solver(void *cvode_mem, value ls, int n)
-{
-    CAMLparam1 (ls);
-    int flag;
-
-    if (Is_block(ls)) {
-	long int field0 = Field(Field(ls, 0), 0); /* mupper, pretype */
-	long int field1 = Field(Field(ls, 0), 1); /* mlower, maxl */
-	CAMLlocal2 (sprange, bandrange);
-
-	switch (Tag_val(ls)) {
-	case VARIANT_CVODE_LINEAR_SOLVER_BAND:
-	    flag = CVBand(cvode_mem, n, Long_val(field0), Long_val(field1));
-	    CHECK_FLAG("CVBand", flag);
-	    break;
-
-	case VARIANT_CVODE_LINEAR_SOLVER_LAPACKBAND:
-#if SUNDIALS_BLAS_LAPACK == 1
-	    flag = CVLapackBand(cvode_mem, n, Long_val(field0),
-					      Long_val(field1));
-	    CHECK_FLAG("CVLapackBand", flag);
-#else
-	    caml_failwith("Lapack solvers are not available.");
-#endif
-	    break;
-
-	case VARIANT_CVODE_LINEAR_SOLVER_SPGMR:
-	    flag = CVSpgmr(cvode_mem, precond_type(field0), Long_val(field1));
-	    CHECK_FLAG("CVSpgmr", flag);
-	    break;
-
-	case VARIANT_CVODE_LINEAR_SOLVER_SPBCG:
-	    flag = CVSpbcg(cvode_mem, precond_type(field0), Long_val(field1));
-	    CHECK_FLAG("CVSpbcg", flag);
-	    break;
-
-	case VARIANT_CVODE_LINEAR_SOLVER_SPTFQMR:
-	    flag = CVSptfqmr(cvode_mem, precond_type(field0), Long_val(field1));
-	    CHECK_FLAG("CVSPtfqmr", flag);
-	    break;
-
-	case VARIANT_CVODE_LINEAR_SOLVER_BANDED_SPGMR:
-	    sprange = Field(ls, 0);
-	    bandrange = Field(ls, 1);
-
-	    flag = CVSpgmr(cvode_mem, precond_type(Field(sprange, 0)),
-				      Long_val(Field(sprange, 1)));
-	    CHECK_FLAG("CVSpgmr", flag);
-
-	    flag = CVBandPrecInit(cvode_mem, n, Long_val(Field(bandrange, 0)),
-						Long_val(Field(bandrange, 1)));
-	    CHECK_FLAG("CVBandPrecInit", flag);
-	    break;
-
-	case VARIANT_CVODE_LINEAR_SOLVER_BANDED_SPBCG:
-	    sprange = Field(ls, 0);
-	    bandrange = Field(ls, 1);
-
-	    flag = CVSpbcg(cvode_mem, precond_type(Field(sprange, 0)),
-				      Long_val(Field(sprange, 1)));
-	    CHECK_FLAG("CVSpbcg", flag);
-
-	    flag = CVBandPrecInit(cvode_mem, n, Long_val(Field(bandrange, 0)),
-						Long_val(Field(bandrange, 1)));
-	    CHECK_FLAG("CVBandPrecInit", flag);
-	    break;
-
-	case VARIANT_CVODE_LINEAR_SOLVER_BANDED_SPTFQMR:
-	    sprange = Field(ls, 0);
-	    bandrange = Field(ls, 1);
-
-	    flag = CVSptfqmr(cvode_mem, precond_type(Field(sprange, 0)),
-				        Long_val(Field(sprange, 1)));
-	    CHECK_FLAG("CVSptfqmr", flag);
-
-	    flag = CVBandPrecInit(cvode_mem, n, Long_val(Field(bandrange, 0)),
-						Long_val(Field(bandrange, 1)));
-	    CHECK_FLAG("CVBandPrecInit", flag);
-	    break;
-
-	default:
-	    caml_failwith("Illegal linear solver block value.");
-	    break;
-	}
-
-    } else {
-	switch (Int_val(ls)) {
-	case VARIANT_CVODE_LINEAR_SOLVER_DENSE:
-	    flag = CVDense(cvode_mem, n);
-	    CHECK_FLAG("CVDense", flag);
-	    break;
-
-	case VARIANT_CVODE_LINEAR_SOLVER_LAPACKDENSE:
-#if SUNDIALS_BLAS_LAPACK == 1
-	    flag = CVLapackDense(cvode_mem, n);
-	    CHECK_FLAG("CVLapackDense", flag);
-#else
-	    caml_failwith("Lapack solvers are not available.");
-#endif
-	    break;
-
-	case VARIANT_CVODE_LINEAR_SOLVER_DIAG:
-	    flag = CVDiag(cvode_mem);
-	    CHECK_FLAG("CVDiag", flag);
-	    break;
-
-	default:
-	    caml_failwith("Illegal linear solver value.");
-	    break;
-	}
-    }
-    CAMLreturn0;
-}
-
 CAMLprim void c_cvode_session_finalize(value vdata)
 {
     if (CVODE_MEM_FROM_ML(vdata) != NULL) {
@@ -390,25 +276,11 @@ CAMLprim void c_cvode_set_error_file(value vdata, value vpath, value vtrunc)
     CAMLreturn0;
 }
 
-CAMLprim void c_cvode_set_iter_type(value vdata, value iter)
+CAMLprim void c_cvode_set_functional (value vdata)
 {
-    CAMLparam2(vdata, iter);
-
-    int iter_c;
-    if (Is_block(iter)) {
-	iter_c = CV_NEWTON;
-    } else {
-	iter_c = CV_FUNCTIONAL;
-    }
-
-    int flag = CVodeSetIterType(CVODE_MEM_FROM_ML(vdata), iter_c);
-    CHECK_FLAG("CVodeSetIterType", flag);
-
-    if (iter_c == CV_NEWTON) {
-	set_linear_solver(CVODE_MEM_FROM_ML(vdata), Field(iter, 0),
-			  CVODE_NEQS_FROM_ML(vdata));
-    }
-
+    CAMLparam1 (vdata);
+    int flag = CVodeSetIterType (CVODE_MEM_FROM_ML (vdata), CV_FUNCTIONAL);
+    CHECK_FLAG ("CVodeSetIterType", flag);
     CAMLreturn0;
 }
 
@@ -437,6 +309,16 @@ CAMLprim void c_cvode_set_prec_type(value vcvode_mem, value vptype)
 				  precond_type(vptype));
     CHECK_FLAG("CVSpilsSetPrecType", flag);
 
+    CAMLreturn0;
+}
+
+CAMLprim void c_cvode_diag (value vcvode_mem)
+{
+    CAMLparam1 (vcvode_mem);
+    int flag = CVodeSetIterType (CVODE_MEM_FROM_ML (vcvode_mem), CV_NEWTON);
+    CHECK_FLAG ("CVodeSetIterType", flag);
+    flag = CVDiag(CVODE_MEM_FROM_ML (vcvode_mem));
+    CHECK_FLAG("CVDiag", flag);
     CAMLreturn0;
 }
 

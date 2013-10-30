@@ -29,27 +29,6 @@ type preconditioning_type =
   | PrecRight
   | PrecBoth
 
-type bandrange = { mupper : int; mlower : int }
-
-type sprange = { pretype : preconditioning_type; maxl: int }
-
-type linear_solver =
-  | Dense
-  | LapackDense
-  | Band of bandrange
-  | LapackBand of bandrange
-  | Diag
-  | Spgmr of sprange
-  | Spbcg of sprange
-  | Sptfqmr of sprange
-  | BandedSpgmr of sprange * bandrange
-  | BandedSpbcg of sprange * bandrange
-  | BandedSptfqmr of sprange * bandrange
-
-type iter =
-  | Newton of linear_solver
-  | Functional
-
 type root_direction = RootDirs.root_direction
 
 (* Solver exceptions *)
