@@ -105,13 +105,3 @@ DOCPP = $(SED) \
 	$(CC) -I $(OCAML_INCLUDE) $(CFLAGS) -o $@ -c $<
 
 default: all
-
-config.h: config
-	@echo "# regenerating config.h"
-	@echo '/* Automatically generated file - don'\''t edit!  See config.in.  */' > $@
-	@echo '#ifndef __SUNDIALS_CONFIG_H__' >> $@
-	@echo '#define __SUNDIALS_CONFIG_H__' >> $@
-	@echo '#define HAVE_WEAK @have_weak@' >> $@
-	@echo '#define SAFETY_CHECKS @safety_checks@' >> $@
-	@echo '#define CHECK_MATRIX_ACCESS @bounds_checking@' >> $@
-	@echo '#endif /* __SUNDIALS_CONFIG_H__ */' >> $@
