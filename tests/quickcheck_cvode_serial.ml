@@ -215,41 +215,13 @@ let ml_of_script (model, cmds) =
       exit (finish ())
    >>
 
-let randseed =
-  Random.self_init ();
-  ref (Random.int ((1 lsl 30) - 1))
-
-let ml_file_of_script script src_file =
+let ml_file_of_script randseed script src_file =
   Camlp4.PreCast.Printers.OCaml.print_implem ~output_file:src_file
     (ml_of_script script);
   let chan = open_out_gen [Open_text; Open_append; Open_wronly] 0 src_file in
   Printf.fprintf chan "\n(* generated with random seed %d, test case %d *)\n"
-    !randseed !test_case_number;
+    randseed !test_case_number;
   close_out chan
 
 ;;
-let _ =
-  let max_tests = ref 50 in
-  let options = [("--exec-file", Arg.Set_string test_exec_file,
-                  "test executable name \
-                   (must be absolute, prefixed with ./, or on path)");
-                 ("--failed-file", Arg.Set_string test_failed_file,
-                  "file in which to dump the failed test case");
-                 ("--compiler", Arg.Set_string test_compiler,
-                  "compiler name with compilation options");
-                 ("--rand-seed", Arg.Set_int randseed,
-                  "seed value for random generator");
-                 ("--verbose", Arg.Set verbose,
-                  "print each test script before trying it");
-                 ("--read-write-invariance", Arg.Set read_write_invariance,
-                  "print data in a format that can be fed to ocaml toplevel");
-                ] in
-  Arg.parse options (fun n -> max_tests := int_of_string n)
-    "randomly generate programs using CVODE and check if they work as expected";
-
-  Printf.printf "random generator seed value = %d\n" !randseed;
-  flush stdout;
-  Random.init !randseed;
-  size := 1;
-  quickcheck_script ml_file_of_script !max_tests
-
+let _ = quickcheck_main ml_file_of_script

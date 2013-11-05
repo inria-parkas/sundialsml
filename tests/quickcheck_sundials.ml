@@ -513,16 +513,16 @@ struct
           if exit_code = Unix.WEXITED 0 then OK
           else Falsified exit_code)
 
-    let quickcheck_script ml_file_of_script max_tests =
+    let quickcheck_script ml_file_of_script shrink max_tests =
       let err = Format.err_formatter in
       let fprintf = Format.fprintf err in
       let prop = prop_script_ok ml_file_of_script in
+      let shrinker = if shrink then shrink_script else (fun _ -> Fstream.nil)
+      in
       let result =
-        if !verbose then
-          quickcheck gen_script shrink_script
-            ~pp_input:pp_script prop max_tests
-        else
-          quickcheck gen_script shrink_script prop max_tests
+        if !verbose
+        then quickcheck gen_script shrinker ~pp_input:pp_script prop max_tests
+        else quickcheck gen_script shrinker prop max_tests
       in
       match result with
       | None | Some (_, OK) -> None
@@ -584,4 +584,38 @@ struct
           !test_failed_file (!test_compiler ^ " " ^ !test_failed_file);
         Some script
 
+
+    (* Entry point for the test generator.  ml_file_of_script receives the
+       random seed as the first argument, for informative purposes.  *)
+    let quickcheck_main ml_file_of_script =
+      let randseed =
+        Random.self_init ();
+        ref (Random.int ((1 lsl 30) - 1))
+      and max_tests = ref 50
+      and shrink = ref true
+      in
+      let options = [("--exec-file", Arg.Set_string test_exec_file,
+                      "test executable name \
+                       (must be absolute, prefixed with ./, or on path)");
+                     ("--no-shrink", Arg.Clear shrink,
+                      "don't shrink the failed test case");
+                     ("--failed-file", Arg.Set_string test_failed_file,
+                      "file in which to dump the failed test case");
+                     ("--compiler", Arg.Set_string test_compiler,
+                      "compiler name with compilation options");
+                     ("--rand-seed", Arg.Set_int randseed,
+                      "seed value for random generator");
+                     ("--verbose", Arg.Set verbose,
+                      "print each test script before trying it");
+                     ("--read-write-invariance", Arg.Set read_write_invariance,
+                      "print data in a format that can be fed to ocaml toplevel");
+                    ] in
+      Arg.parse options (fun n -> max_tests := int_of_string n)
+        "randomly generate programs using CVODE and check if they work as expected";
+
+      Printf.printf "random generator seed value = %d\n" !randseed;
+      flush stdout;
+      Random.init !randseed;
+      size := 1;
+      quickcheck_script (ml_file_of_script !randseed) !shrink !max_tests
   end
