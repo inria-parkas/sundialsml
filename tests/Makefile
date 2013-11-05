@@ -90,6 +90,19 @@ $(DERIVING_OBJS:.cmo=.cmx): %.cmx: %.ml
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -I +camlp4 -I .. \
 	    -pp $(CAMLP4OF) -o $@ -c $<
 
+# Start a toplevel session.  The OCaml code generator modules are not loaded by
+# default (because they start running tests), but they are included in the
+# dependency list so that they are ready to be loaded manually.
+toplevel: quickcheck_sundials_toplevel.cma quickcheck_cvode_serial.cmo \
+          quickcheck_ida_serial.cmo
+	$(OCAML) -I .. unix.cma bigarray.cma ../sundials.cma \
+	    -I +camlp4 dynlink.cma camlp4of.cma \
+	    $< camlp4aux.cmo pa_deriving.cmo
+
+quickcheck_sundials_toplevel.cma: $(IDA_GEN_OBJS) $(CVODE_GEN_OBJS) \
+                                  quickcheck_sundials_toplevel.cmo
+	$(OCAMLC) -a -o $@ $^
+
 
 ifeq "$(DEPFILE)" ".depend"
 
@@ -100,11 +113,15 @@ test-cvode-serial: quickcheck_cvode_serial.opt $(CVODE_TEST_OBJS)
 quickcheck_cvode_serial.opt: quickcheck_cvode_serial.cmx \
 	                     $(CVODE_GEN_OBJS:.cmo=.cmx)
 
+quickcheck_cvode_serial.byte: quickcheck_cvode_serial.cmo $(CVODE_GEN_OBJS)
+
 test-ida-serial: quickcheck_ida_serial.opt $(IDA_TEST_OBJS)
 	./$< $(PARAMS) --exec-file ./test --failed-file failed.ml --compiler \
 	    "$(OCAMLC).opt -w -26 -g $(SUNDIALS_LIB) $(filter-out $<,$^)"
 
 quickcheck_ida_serial.opt: quickcheck_ida_serial.cmx $(IDA_GEN_OBJS:.cmo=.cmx)
+
+quickcheck_ida_serial.byte: quickcheck_ida_serial.cmo $(IDA_GEN_OBJS)
 
 P4DERIVING=-pp "$(CAMLP4OF) camlp4aux.cmo pa_deriving.cmo" -I +camlp4
 
@@ -280,6 +297,9 @@ test-%: $(DEPEND_PREREQS) phony
 %.cmo: %.ml $(DEPEND_PREREQS) phony
 	$(MAKE) DEPFILE=.depend $@
 
+%.cma: $(DEPEND_PREREQS) phony
+	$(MAKE) DEPFILE=.depend $@
+
 %.cmi: %.mli $(DEPEND_PREREQS) phony
 	$(MAKE) DEPFILE=.depend $@
 
@@ -305,7 +325,13 @@ else # if DEPFILE is not defined
 test-%: phony
 	$(MAKE) DEPFILE=.mindepend $@
 
+toplevel: phony
+	$(MAKE) DEPFILE=.mindepend $@
+
 %.cmo: phony
+	$(MAKE) DEPFILE=.mindepend $@
+
+%.cma: phony
 	$(MAKE) DEPFILE=.mindepend $@
 
 %.cmi: phony

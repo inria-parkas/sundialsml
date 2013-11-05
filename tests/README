@@ -36,6 +36,17 @@ set of tests.  This includes the ones that succeeded.  If you just want to run
 a particular test that failed before, you're better off copying failed.ml
 instead.
 
+If you need to debug the quickcheck framework itself, especially its
+sundials-specific parts, you might find this handy:
+
+$ make toplevel
+
+This command starts an OCaml toplevel with all the modules in this directory
+pre-loaded.  You should also try
+
+$ make all PARAMS="-help"
+
+to find useful options that can be given to the test case generator.
 
 
 [Pitfalls]

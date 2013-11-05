@@ -215,13 +215,13 @@ let ml_of_script (model, cmds) =
       exit (finish ())
    >>
 
-let ml_file_of_script randseed script src_file =
+let ml_file_of_script script src_file =
   Camlp4.PreCast.Printers.OCaml.print_implem ~output_file:src_file
-    (ml_of_script script);
-  let chan = open_out_gen [Open_text; Open_append; Open_wronly] 0 src_file in
-  Printf.fprintf chan "\n(* generated with random seed %d, test case %d *)\n"
-    randseed !test_case_number;
-  close_out chan
+    (ml_of_script script)
 
+(* Mainly used from the toplevel.  *)
+let quickcheck_scripts = quickcheck_scripts ml_file_of_script
+and quickcheck_main = quickcheck_main ml_file_of_script
+and prop_script_ok = prop_script_ok ml_file_of_script
 ;;
-let _ = quickcheck_main ml_file_of_script
+let _ = quickcheck_main ()

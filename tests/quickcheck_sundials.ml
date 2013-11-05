@@ -245,6 +245,19 @@ and exns_equal =
   | _, _ -> e1 = e2
 and cmp_eps = ref 1e-5
 
+(* The quickcheck_main function below is called whenever any of the modules
+   Quickcheck_ida_serial, Quickcheck_cvode_serial, etc. is loaded, which serves
+   as the program's entry point.  The problem is, this happens even when
+   loading from the top level.  This is not only very time consuming, but
+   quickcheck_main almost always fails because the top level doesn't set up
+   command line arguments properly.  So the loading of the module fails
+   altogether.
+
+   To avoid this problem, the following flag inhibits quickcheck_main, turning
+   it into a no-op.  The uninhibited quickcheck_main can still be called
+   explicitly as quickcheck_main_internal if needed.  *)
+let inhibit_quickcheck_main = ref false
+
 (* Model of an imperative language that involves only straight-line code.  Each
    sundials module (CVODE, IDA, etc) should implement this module type and pass
    it to TestImperativeLang below.  *)
@@ -277,7 +290,7 @@ sig
 
      but an implementation of that signature generally depends on camlp4, which
      is big enough to slow down linking.  TestImperativeLang is used in both
-     the test case generator and the generated test cases; as test cases
+     the test case generator and the generated test cases; as test cases are
      compiled and linked many times, we want to confine dependence on camlp4 to
      the test generator only.  *)
   type ml_file_of_script = script -> string -> unit
@@ -513,7 +526,7 @@ struct
           if exit_code = Unix.WEXITED 0 then OK
           else Falsified exit_code)
 
-    let quickcheck_script ml_file_of_script shrink max_tests =
+    let quickcheck_scripts ml_file_of_script shrink max_tests =
       let err = Format.err_formatter in
       let fprintf = Format.fprintf err in
       let prop = prop_script_ok ml_file_of_script in
@@ -587,7 +600,7 @@ struct
 
     (* Entry point for the test generator.  ml_file_of_script receives the
        random seed as the first argument, for informative purposes.  *)
-    let quickcheck_main ml_file_of_script =
+    let quickcheck_main_internal ml_file_of_script () =
       let randseed =
         Random.self_init ();
         ref (Random.int ((1 lsl 30) - 1))
@@ -617,5 +630,20 @@ struct
       flush stdout;
       Random.init !randseed;
       size := 1;
-      quickcheck_script (ml_file_of_script !randseed) !shrink !max_tests
+
+      let ml_file_of_script script file =
+        ml_file_of_script script file;
+        let chan = open_out_gen [Open_text; Open_append; Open_wronly] 0 file in
+        Printf.fprintf chan
+          "\n(* generated with random seed %d, test case %d *)\n"
+          !randseed !test_case_number;
+        close_out chan
+      in
+
+      (* If loaded from top level,  *)
+      quickcheck_scripts ml_file_of_script !shrink !max_tests
+
+    let quickcheck_main ml_file_of_script () =
+      if !inhibit_quickcheck_main then None
+      else quickcheck_main_internal ml_file_of_script ()
   end
