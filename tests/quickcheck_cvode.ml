@@ -194,15 +194,12 @@ let model_cmd_internal model = function
        increasing.  *)
     assert (model.last_query_time <= query_time);
     model.last_query_time <- query_time;
-    (* Bug (sundials 2.5.0): the source code says an exception is raised if
-       stop time is before the first query time, but this check doesn't always
-       succeed.  *)
+    (* Bug (sundials 2.5.0): the comment in sundials source code says an
+       exception is raised if stop time is before the first query time, but
+       this check doesn't always succeed.  *)
     let t =
       (* Account for stop time.  *)
-      (* Undocumented behavior (sundials 2.5.0): once Cvode.StopTimeReached is
-         returned, subsequent calls to Cvode() ignore the stop time.  *)
-      if model.last_tret >= model.stop_time then query_time
-      else min query_time model.stop_time
+      min query_time model.stop_time
     in
     (* Undocumented behavior (sundials 2.5.0): solve_normal with t=t0 usually
        fails with "tout too close to t0 to start integration", but sometimes
@@ -455,9 +452,14 @@ let fixup_just_cmd hint model cmd =
        | Some i ->
          let idrop = if i < Array.length root_dirs then i else 0 in
          (hint, SetRootDirection (array_drop_elem root_dirs idrop)))
+  | SetStopTime t ->
+    (* Note t0 can grow as a result of shrinking if a ReInit command that
+       resets t0 to a smaller value is removed.  *)
+    if t <= model.t0 then (hint, SetStopTime (model.t0 +. stop_time_offs))
+    else (hint, cmd)
   (* These commands need no fixing up, AND doesn't update the model in any
      way that is relevant to shrinking.  *)
-  | GetRootInfo | GetNRoots | SetStopTime _
+  | GetRootInfo | GetNRoots
   | SolveNormalBadVector _ | SetAllRootDirections _ -> (hint, cmd)
 
 let fixup_cmd (hint, model) cmd =
@@ -629,7 +631,13 @@ let shrink_just_cmd model = function
     @+
     Fstream.map
       (fun t0 -> (model_nohint, ReInit { params with reinit_t0 = t0 }))
-      (shrink_t0 params.reinit_t0)
+      (* If the stop time is unset, t0 can take on any value.  Otherwise,
+         we need to shrink to some t0 > stop time.  *)
+      (if model.stop_time = infinity then shrink_t0 params.reinit_t0
+       else
+         shrink_query_time
+           (model.stop_time -. stop_time_offs +. discrete_unit)
+           params.reinit_t0)
     @+
     (match params.reinit_vec0_badlen with
      | None -> Fstream.nil
