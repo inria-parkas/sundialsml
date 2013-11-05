@@ -423,6 +423,8 @@ deriving pretty
 
 exception AbortTests of exn
 
+exception ShrinkCycle
+
 let isOK = function
   | OK -> true
   | _ -> false
@@ -440,11 +442,47 @@ let test_in_sandbox prop x =
   | AbortTests _ as exn -> raise exn
   | exn -> Failed exn
 
-let minimize ?pp_input ?(pp_formatter=Format.err_formatter) shrink prop x res =
+let minimize ?pp_input ?(pp_formatter=Format.err_formatter)
+    ?(detect_shrink_cycles = false) shrink prop x0 res =
   let trace, pp_input =
     match (pp_input : 'a pp option) with
     | Some s -> true, s
     | None -> false, (fun ?prec _ -> failwith "internal error")
+  in
+  let check_cycle =
+    if not detect_shrink_cycles
+    then (fun _ -> failwith "internal error")
+    else
+      let history = Hashtbl.create 100 in
+      let timestamp = ref 0 in
+      let add x = Hashtbl.add history x !timestamp; timestamp := !timestamp + 1
+      in
+      let collect_chain x tmin tmax =
+        let a = Array.make (tmax - tmin + 1) x in
+        Hashtbl.iter (fun x t -> if tmin <= t && t <= tmax
+                                 then a.(t - tmin) <- x)
+          history;
+        Format.fprintf pp_formatter "@[<2>Shrink cycle detected";
+        if trace
+        then
+          begin
+            Format.fprintf pp_formatter ":";
+            for i = 0 to Array.length a - 1 do
+              Format.fprintf pp_formatter "@\n@\n@[";
+              pp_input pp_formatter a.(i);
+              if i < Array.length a - 1 then
+                Format.fprintf pp_formatter "@\n@\n|@\nv@]"
+            done;
+          end;
+        Format.fprintf pp_formatter "@]";
+        Format.pp_print_newline pp_formatter ();
+        Format.pp_print_newline pp_formatter ();
+        raise ShrinkCycle
+      in
+      add x0;
+      (fun x ->
+         try collect_chain x (Hashtbl.find history x) !timestamp
+         with Not_found -> add x)
   in
   if trace then Format.pp_print_char pp_formatter '\n';
   let rec go ct x reason =
@@ -468,8 +506,12 @@ let minimize ?pp_input ?(pp_formatter=Format.err_formatter) shrink prop x res =
          Format.fprintf pp_formatter "@]@\n");
       match Fstream.find_some failure (shrink x) with
       | None -> (ct, x, reason)
-      | Some (x, reason) -> go (ct+1) x reason
-    with exn ->
+      | Some (x, reason) ->
+        if detect_shrink_cycles then check_cycle x;
+        go (ct+1) x reason
+    with
+    | ShrinkCycle as exn -> raise exn
+    | exn ->
       if trace then
         (Format.fprintf pp_formatter "Shrinker failed on:@\n";
          pp_input pp_formatter x;
@@ -477,12 +519,12 @@ let minimize ?pp_input ?(pp_formatter=Format.err_formatter) shrink prop x res =
       else pp_string_noquote pp_formatter "Shrinker failed!\n";
       Format.pp_print_flush pp_formatter ();
       raise exn
-  in go 0 x res
+  in go 0 x0 res
 
 let test_case_number = ref 0
 
 let quickcheck gen shrink ?pp_input ?(pp_formatter=Format.err_formatter)
-    prop max_tests =
+    ?(detect_shrink_cycles=false) prop max_tests =
   let old_size = !size in
   let minimize x res =
     if shrink == no_shrink then (x, res)
@@ -491,7 +533,8 @@ let quickcheck gen shrink ?pp_input ?(pp_formatter=Format.err_formatter)
         Printf.fprintf stderr "Shrinking...";
         flush stderr;
         let (ct, x, res) =
-          minimize ?pp_input ~pp_formatter shrink prop x res
+          minimize ?pp_input ~pp_formatter ~detect_shrink_cycles
+            shrink prop x res
         in
         Printf.fprintf stderr "%d shrinks.\n" ct;
         flush stderr;

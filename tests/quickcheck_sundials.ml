@@ -309,6 +309,7 @@ struct
   open L
 
   let verbose = ref false
+  let detect_shrink_cycles = ref false
 
   (* Print results in the form
      init:   foo
@@ -532,10 +533,11 @@ struct
       let prop = prop_script_ok ml_file_of_script in
       let shrinker = if shrink then shrink_script else (fun _ -> Fstream.nil)
       in
+      let iftrue cond x = if cond then Some x else None in
       let result =
-        if !verbose
-        then quickcheck gen_script shrinker ~pp_input:pp_script prop max_tests
-        else quickcheck gen_script shrinker prop max_tests
+        quickcheck gen_script shrinker prop max_tests
+          ?pp_input:(iftrue !verbose pp_script)
+          ~detect_shrink_cycles:!detect_shrink_cycles
       in
       match result with
       | None | Some (_, OK) -> None
@@ -620,8 +622,11 @@ struct
                       "seed value for random generator");
                      ("--verbose", Arg.Set verbose,
                       "print each test script before trying it");
+                     ("--detect-shrink-cycles", Arg.Set detect_shrink_cycles,
+                      "detect infinite loops in the shrinker");
                      ("--read-write-invariance", Arg.Set read_write_invariance,
-                      "print data in a format that can be fed to ocaml toplevel");
+                      "print data in a format that can be fed to ocaml \
+                       toplevel");
                     ] in
       Arg.parse options (fun n -> max_tests := int_of_string n)
         "randomly generate programs using CVODE and check if they work as expected";

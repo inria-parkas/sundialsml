@@ -443,14 +443,21 @@ val null_formatter : Format.formatter
     [reason <> OK]; this function just assumes that's the case.
 
     If the optional argument [pp_input] is supplied, it is used to print each
-    shrunk test case before trying it, along with additional output.  The
-    optional argument [pp_formatter] tells where to direct this output.
+    shrunk test case before trying it, along with additional output.
 
-    Returns (<number of shrinks performed>, <shrunk data>, <prop result>)
+    If the optional argument [detect_shrink_cycles] is set to [true], then this
+    function will check if a test case shrinks to itself in 1 or more steps and
+    aborts if it does.  This option defaults to [false].
+
+    The optional argument [pp_formatter] tells where to direct the output from
+    [pp_input].  It defaults to standard error (i.e. [Format.err_formatter]).
+
+    Returns (<number of shrinks performed>, <shrunk data>, <prop result>).
  *)
 val minimize :
   ?pp_input : 'a pp
   -> ?pp_formatter : Format.formatter
+  -> ?detect_shrink_cycles : bool
   -> ('a -> 'a Fstream.t)
   -> ('a,'b) property
   -> 'a
@@ -462,16 +469,18 @@ val minimize :
 val test_case_number : int ref
 
 (** Returns an input that fails the property along with the corresponding
-    [test_result], or lack thereof.  If the optional argument [pp_input] is
-    specified, dumps each test case before trying it.  [pp_formatter] is where
-    this output goes; all other outputs are sent directly to stdout and stderr.
+    [test_result], or lack thereof.  Called like [quickcheck generator shrinker
+    property number_of_test].  Optional arguments have the same meaning as
+    those of {!minimize}.
+
     All callbacks can refer to the variable [test_case_number] to get a serial
     number for the test case it is called upon.  *)
 val quickcheck :
   (unit -> 'a)
   -> ('a -> 'a Fstream.t)
-  -> ?pp_input:'a pp
-  -> ?pp_formatter:Format.formatter
+  -> ?pp_input : 'a pp
+  -> ?pp_formatter : Format.formatter
+  -> ?detect_shrink_cycles : bool
   -> ('a,'b) property
   -> int
   -> ('a * 'b test_result) option
