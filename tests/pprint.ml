@@ -70,9 +70,9 @@ let dump_of_show (show : 'a show) ?(prec=0) fmt x =
 let display_of_show (show : 'a show) ?(prec=0) x =
   with_read_write_invariance (fun () -> show ~prec x)
 let ppout_of_show (show : 'a show) ?(prec=0) x =
-  pp_of_show show ~prec Format.std_formatter x
+  print_string (show ~prec x)
 let pperr_of_show (show : 'a show) ?(prec=0) x =
-  pp_of_show show ~prec Format.err_formatter x
+  prerr_string (show ~prec x)
 
 let printers_of_show show =
   pp_of_show show, dump_of_show show, show, display_of_show show,
