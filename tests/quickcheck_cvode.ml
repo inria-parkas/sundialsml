@@ -667,7 +667,8 @@ let shrink_cmd (hint, model) cmd =
     (shrink_just_cmd model cmd)
 
 let shrink_cmds model =
-  shrink_1pass_list shrink_cmd fixup_cmd (model_nohint, model)
+  shrink_1pass_list ~shrink_tails_first:true
+    shrink_cmd fixup_cmd (model_nohint, model)
 
 (* Scripts (model + command list) *)
 
@@ -709,8 +710,8 @@ let shrink_neqs model cmds =
 
 let shrink_script (model, cmds) =
   shrink_neqs model cmds
-  @+ shrink_model model cmds
   @+ Fstream.map (fun cmds -> (model, cmds)) (shrink_cmds model cmds)
+  @+ shrink_model model cmds
 
 let is_exn = function
   | Exn _ -> true

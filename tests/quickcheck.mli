@@ -213,9 +213,13 @@ val gen_1pass_list : ('a -> 'a * 'b) -> 'a -> ?size:int -> unit -> 'b list
     value produced by [shrink]; then pass [fixup] through the whole list to
     restore any invariants broken by the shrinking.
 
+    When [shrink_tails_first] is set to [true], then this function tries to
+    drop or shrink elements toward the tail of the list first.
+
  *)
 val shrink_1pass_list :
-  ('a -> 'b -> ('a * 'b) Fstream.t)
+  ?shrink_tails_first:bool
+  -> ('a -> 'b -> ('a * 'b) Fstream.t)
   -> ('a -> 'b -> 'a * 'b)
   -> 'a
   -> 'b list
@@ -225,7 +229,8 @@ val shrink_1pass_list :
     of passing the seed value through the shrunk list with the [fixup]
     function.  *)
 val shrink_1pass_list_cont :
-  ('a -> 'b -> ('a * 'b) Fstream.t)
+  ?shrink_tails_first:bool
+  -> ('a -> 'b -> ('a * 'b) Fstream.t)
   -> ('a -> 'b -> 'a * 'b)
   -> 'a
   -> 'b list

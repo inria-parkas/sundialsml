@@ -243,24 +243,46 @@ let fixup_list_cont fixup seed =
 
 let fixup_list fixup seed xs = snd (fixup_list_cont fixup seed xs)
 
-let shrink_1pass_list_cont shrink fixup seed xs =
-  let rec go seed = function
+let shrink_1pass_list_cont ?(shrink_tails_first=false) shrink fixup seed xs =
+  (* Make two passes: one that tries dropping one element and another that
+     tries shrinking them.  The assumption is that dropping elements are more
+     beneficial if successful.  It's possible to do this in one pass, but it
+     would be much more tricky to place all "drop 1 element" shrinks before all
+     "shrink 1 element" shrinks.  *)
+  let next seed x = fst (fixup seed x) in
+  let (@@) f x = f x in
+  let rec drops seed rev_prefix = function
     | [] -> Fstream.nil
     | x::xs ->
-      Fstream.cons (fixup_list_cont fixup seed xs)  (* drop x *)
-        (Fstream.map                                (* keep x *)
-           (fun (seed, xs) -> seed, x::xs)
-           (lazy (Lazy.force (go (fst (fixup seed x)) xs)))
-         @+ Fstream.map                             (* shrink x *)
-             (fun (seed, x) ->
-                let seed, xs = fixup_list_cont fixup seed xs in
-                seed, x::xs)
-             (shrink seed x))
+      let drop_x = lazy (let (seed', xs') = fixup_list_cont fixup seed xs in
+                         Lazy.force @@
+                           Fstream.singleton
+                           (seed', List.rev_append rev_prefix xs'))
+      and keep_x = lazy (Lazy.force @@ drops (next seed x) (x::rev_prefix) xs)
+      in
+      if shrink_tails_first
+      then keep_x @+ drop_x
+      else drop_x @+ keep_x
+  and shrinks seed rev_prefix = function
+    | [] -> Fstream.nil
+    | x::xs ->
+      let shrink_x =
+        Fstream.map
+          (fun (seed', x') ->
+             let seed'', xs' = fixup_list_cont fixup seed' xs in
+             seed'', List.rev_append rev_prefix (x'::xs'))
+          (lazy (Lazy.force (shrink seed x)))
+      and keep_x = shrinks (next seed x) (x::rev_prefix) xs
+      in
+      if shrink_tails_first
+      then keep_x @+ shrink_x
+      else shrink_x @+ keep_x
   in
-  go seed xs
+  drops seed [] xs @+ shrinks seed [] xs
 
-let shrink_1pass_list shrink fixup seed xs =
-  Fstream.map snd (shrink_1pass_list_cont shrink fixup seed xs)
+let shrink_1pass_list ?(shrink_tails_first=false) shrink fixup seed xs =
+  Fstream.map snd
+    (shrink_1pass_list_cont ~shrink_tails_first shrink fixup seed xs)
 
 let array_like_drop_elem make length get set a i =
   let n = length a in
