@@ -419,16 +419,12 @@ let fixup_just_cmd hint model cmd =
        solutions when polled. *)
     (hint, GetNRoots)
   | ReInit params ->
-    let params' = { params with
-                    reinit_iter = model.iter;
-                  }
-    and hint' =
+    let hint' =
       match params.reinit_roots with
       | None -> hint
       | Some _ -> { hint_root_drop = None }
     in
-    let cmd' = ReInit params' in
-    (hint', cmd')
+    (hint', cmd)
   | SolveNormal t -> (hint, SolveNormal (max t model.last_query_time))
   | SolveNormalBadVector (t, n) when n = Carray.length model.vec ->
     (hint, SolveNormalBadVector (t, if n = 0 then 1 else (n-1)))
