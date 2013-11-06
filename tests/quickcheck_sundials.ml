@@ -485,8 +485,8 @@ struct
       ret
 
     (* Code generation options *)
-    let test_exec_file = ref "./tmp"
-    let test_compiler = ref "false"
+    let test_exec_file = ref "./test"
+    let test_compiler = ref "test_compiler is not set"
     let test_failed_file = ref "./failed.ml"
 
     let compile mk_ml_file =
@@ -645,7 +645,6 @@ struct
         close_out chan
       in
 
-      (* If loaded from top level,  *)
       quickcheck_scripts ml_file_of_script !shrink !max_tests
 
     let quickcheck_main ml_file_of_script () =

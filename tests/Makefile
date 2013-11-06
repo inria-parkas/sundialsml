@@ -99,6 +99,8 @@ toplevel: quickcheck_sundials_toplevel.cma quickcheck_cvode_serial.cmo \
 	    -I +camlp4 dynlink.cma camlp4of.cma \
 	    $< camlp4aux.cmo pa_deriving.cmo
 
+COMPILE_COMMAND=$(OCAMLC).opt -w -26 -g $(SUNDIALS_LIB)
+
 quickcheck_sundials_toplevel.cma: $(IDA_GEN_OBJS) $(CVODE_GEN_OBJS) \
                                   quickcheck_sundials_toplevel.cmo
 	$(OCAMLC) -a -o $@ $^
@@ -107,8 +109,7 @@ quickcheck_sundials_toplevel.cma: $(IDA_GEN_OBJS) $(CVODE_GEN_OBJS) \
 ifeq "$(DEPFILE)" ".depend"
 
 test-cvode-serial: quickcheck_cvode_serial.opt $(CVODE_TEST_OBJS)
-	./$< $(PARAMS) --exec-file ./test --failed-file failed.ml --compiler \
-	    "$(OCAMLC).opt -w -26 -g $(SUNDIALS_LIB) $(filter-out $<,$^)"
+	./$< $(PARAMS)
 
 quickcheck_cvode_serial.opt: quickcheck_cvode_serial.cmx \
 	                     $(CVODE_GEN_OBJS:.cmo=.cmx)
@@ -116,8 +117,7 @@ quickcheck_cvode_serial.opt: quickcheck_cvode_serial.cmx \
 quickcheck_cvode_serial.byte: quickcheck_cvode_serial.cmo $(CVODE_GEN_OBJS)
 
 test-ida-serial: quickcheck_ida_serial.opt $(IDA_TEST_OBJS)
-	./$< $(PARAMS) --exec-file ./test --failed-file failed.ml --compiler \
-	    "$(OCAMLC).opt -w -26 -g $(SUNDIALS_LIB) $(filter-out $<,$^)"
+	./$< $(PARAMS)
 
 quickcheck_ida_serial.opt: quickcheck_ida_serial.cmx $(IDA_GEN_OBJS:.cmo=.cmx)
 
@@ -219,7 +219,7 @@ expr_of_ida.ml: ../ida.mli extract_types.byte
 expr_of_ida_model.ml: quickcheck_ida.ml extract_types.byte
 	./extract_types.byte \
 	--header "(* Automatically generated file: do not edit! *)\n\
-	(* expr_of for types defined in the Quickcheck_ida module. *)\n\
+	(* expr_of for types defined in Quickcheck_ida + some setup. *)\n\
 	open Ida\n\
 	open Expr_of\n\
 	open Expr_of_sundials\n\
@@ -237,6 +237,8 @@ expr_of_ida_model.ml: quickcheck_ida.ml extract_types.byte
 	Ida.solver_result = solver_result))" \
 	--exclude 'IDALang\.' \
 	$< > $@
+	echo >> $@
+	echo "let compiler = \"$(COMPILE_COMMAND) $(IDA_TEST_OBJS)\"" >> $@
 
 
 CVODE_EXTRACT_EXCLUDE="root_direction"
@@ -268,7 +270,7 @@ expr_of_cvode.ml: ../cvode.mli extract_types.byte
 expr_of_cvode_model.ml: quickcheck_cvode.ml extract_types.byte
 	./extract_types.byte \
 	--header "(* Automatically generated file: do not edit! *)\n\
-	(* expr_of for types defined in the Quickcheck_cvode module. *)\n\
+	(* expr_of for types defined in Quickcheck_cvode + some setup. *)\n\
 	open Cvode\n\
 	open Expr_of\n\
 	open Expr_of_sundials\n\
@@ -288,6 +290,8 @@ expr_of_cvode_model.ml: quickcheck_cvode.ml extract_types.byte
 	Cvode.solver_result = solver_result))" \
 	--exclude 'CvodeLang\.' \
 	$< > $@
+	echo >> $@
+	echo "let compiler = \"$(COMPILE_COMMAND) $(CVODE_TEST_OBJS)\"" >> $@
 
 -include .mindepend
 

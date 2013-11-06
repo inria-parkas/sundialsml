@@ -268,4 +268,9 @@ let quickcheck_scripts = quickcheck_scripts ml_file_of_script
 and quickcheck_main = quickcheck_main ml_file_of_script
 and prop_script_ok = prop_script_ok ml_file_of_script
 ;;
+
+(* Set up compiler flags for compiling IDA test cases.  *)
+test_compiler := Expr_of_ida_model.compiler;;
+
+(* Program entry; no-op if in toplevel.  *)
 let _ = quickcheck_main ()
