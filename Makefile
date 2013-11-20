@@ -19,7 +19,7 @@ INSTALL_FILES= 			\
     sundials.cma		\
     sundials.cmxa		\
 
-STUBLIBS=dllmlsundials$(XS) dllmlsundials$(XS)
+STUBLIBS=dllmlsundials$(XS)
 
 CFLAGS+=-fPIC
 
