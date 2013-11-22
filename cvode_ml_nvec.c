@@ -547,6 +547,7 @@ CAMLprim void CVTYPE(dls_dense) (value vcvode_mem, value vset_jac)
 CAMLprim void CVTYPE(dls_lapack_dense) (value vcvode_mem, value vset_jac)
 {
     CAMLparam2 (vcvode_mem, vset_jac);
+#if SUNDIALS_BLAS_LAPACK
     void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
     long neqs = CVODE_NEQS_FROM_ML (vcvode_mem);
     int flag;
@@ -559,6 +560,9 @@ CAMLprim void CVTYPE(dls_lapack_dense) (value vcvode_mem, value vset_jac)
 	flag = CVDlsSetDenseJacFn (CVODE_MEM_FROM_ML (vcvode_mem), jacfn);
 	CHECK_FLAG("CVDlsSetDenseJacFn", flag);
     }
+#else
+    caml_failwith("Lapack solvers are not available.");
+#endif
     CAMLreturn0;
 }
 

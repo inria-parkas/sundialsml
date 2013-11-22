@@ -482,6 +482,7 @@ CAMLprim void IDATYPE(dls_dense) (value vida_mem, value vset_jac)
 CAMLprim void IDATYPE(dls_lapack_dense) (value vida_mem, value vset_jac)
 {
     CAMLparam2 (vida_mem, vset_jac);
+#if SUNDIALS_BLAS_LAPACK
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
     long neqs = IDA_NEQS_FROM_ML (vida_mem);
     int flag;
@@ -492,6 +493,9 @@ CAMLprim void IDATYPE(dls_lapack_dense) (value vida_mem, value vset_jac)
 	flag = IDADlsSetDenseJacFn (IDA_MEM_FROM_ML (vida_mem), jacfn);
 	CHECK_FLAG("IDADlsSetDenseJacFn", flag);
     }
+#else
+    caml_failwith("Lapack solvers are not available.");
+#endif
     CAMLreturn0;
 }
 
