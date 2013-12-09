@@ -27,7 +27,7 @@ CFLAGS+=-fPIC
 
 .PHONY: all sundials install doc
 
-all: sundials.cma sundials.cmxa
+all: sundials.cma sundials.cmxa doc
 
 sundials.cma sundials.cmxa: $(MLOBJ) $(MLOBJ:.cmo=.cmx) $(COBJ)
 	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS) \
@@ -84,7 +84,7 @@ doc/html:
 
 # ##
 
-install: sundials.cma sundials.cmxa META
+install: sundials.cma sundials.cmxa doc META
 	$(MKDIR) $(PKGDIR)
 	$(CP) $(INSTALL_FILES) $(PKGDIR)
 	$(CP) $(STUBLIBS) $(STUBDIR)
