@@ -15,6 +15,14 @@ external c_blas_lapack_supported : unit -> bool
 
 let blas_lapack_supported = c_blas_lapack_supported ()
 
+external c_sundials_ml_register_weak_get
+  : ('a Weak.t -> int -> 'a option) -> unit
+  = "sundials_ml_register_weak_get"
+
+let _ =
+  (* Give Weak.get to C in case configure couldn't detect how to link to it. *)
+  c_sundials_ml_register_weak_get Weak.get
+
 let extra_precision = ref false
 
 let print_time (s1, s2) t =

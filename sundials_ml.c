@@ -41,14 +41,27 @@ CAMLprim value sundials_ml_unit_roundoff()
     CAMLreturn(caml_copy_double(UNIT_ROUNDOFF));
 }
 
+
+/* Setting up access to Weak.get */
+
+#if !HAVE_WEAK
+static value weak_get = 0;
+#endif
+
+CAMLprim void sundials_ml_register_weak_get (value vweak_get)
+{
+    CAMLparam1 (vweak_get);
+#if !HAVE_WEAK
+    caml_register_generational_global_root (&weak_get);
+    weak_get = vweak_get;
+#endif
+    CAMLreturn0;
+}
+
 #if !HAVE_WEAK
 CAMLprim value sundials_ml_weak_get (value ar, value n)
 {
     CAMLparam2 (ar, n);
-    static value *weak_get;
-    if (weak_get == NULL)
-	weak_get = caml_named_value ("sundials_weak_get");
-
-    CAMLreturn (caml_callback2 (*weak_get, ar, n));
+    CAMLreturn (caml_callback2 (weak_get, ar, n));
 }
 #endif	/* !HAVE_WEAK */
