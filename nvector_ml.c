@@ -94,16 +94,16 @@ CAMLprim value ml_nvec_new(value mlops, value data)
     ml_nvec_content content = NULL;
 
     /* Create vector */
-    rv = caml_alloc_final(sizeof(N_Vector), finalize_nvec,
-	    nvec_rough_size, nvec_rough_size * 50);
+    size_t custom_len;		/* number of words, not bytes */
+    custom_len = (sizeof (*nv) + sizeof (value) - 1) / sizeof (value);
+    rv = caml_alloc_final(custom_len, finalize_nvec,
+			  nvec_rough_size, nvec_rough_size * 50);
     nv = NVEC_VAL(rv);
 
     /* Create vector operation structure */
-    ops = (N_Vector_Ops) malloc(sizeof(struct _generic_N_Vector_Ops));
-    if (ops == NULL) {
-	free(nv);
+    ops = (N_Vector_Ops) malloc(sizeof(*ops));
+    if (ops == NULL)
 	caml_failwith("ml_nvec_new: malloc failed for N_Vector_Ops");
-    }
 
     ops->nvclone           = callml_vclone;
     ops->nvcloneempty      = callml_vcloneempty;
@@ -161,10 +161,9 @@ CAMLprim value ml_nvec_new(value mlops, value data)
 	ops->nvminquotient = callml_vminquotient;
 
     /* Create content */
-    content = (ml_nvec_content) malloc(sizeof(struct _ml_nvec_content));
+    content = (ml_nvec_content) malloc(sizeof(*content));
     if (content == NULL) {
 	free(ops);
-	free(nv);
 	caml_failwith("ml_nvec_new: malloc failed for ml_vec_content");
     }
 
@@ -198,7 +197,7 @@ CAMLprim N_Vector callml_vcloneempty(N_Vector w)
     if (v == NULL) return(NULL);
 
     /* Create vector operation structure */
-    ops = (N_Vector_Ops) malloc(sizeof(struct _generic_N_Vector_Ops));
+    ops = (N_Vector_Ops) malloc(sizeof (*ops));
     if (ops == NULL) { free(v); return(NULL); }
 
     ops->nvclone           = w->ops->nvclone;
