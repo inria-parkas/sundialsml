@@ -151,18 +151,6 @@ let root_init session (nroots, rootsfn) =
   c_root_init session nroots;
   session.rootsfn <- rootsfn
 
-external c_dls_dense : 'a session -> bool -> unit
-  = "c_nvec_cvode_dls_dense"
-
-external c_dls_lapack_dense : 'a session -> bool -> unit
-  = "c_nvec_cvode_dls_lapack_dense"
-
-external c_dls_band : 'a session -> int -> int -> bool -> unit
-  = "c_nvec_cvode_dls_band"
-
-external c_dls_lapack_band : 'a session -> int -> int -> bool -> unit
-  = "c_nvec_cvode_dls_lapack_band"
-
 external c_diag : 'a session -> unit
   = "c_cvode_diag"
 
