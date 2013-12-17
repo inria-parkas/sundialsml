@@ -906,7 +906,8 @@ CAMLprim void CVTYPE(reinit)(value vdata, value t0, value y0)
 {
     CAMLparam3(vdata, t0, y0);
 
-#if SAFETY_CHECKS
+#if SAFETY_CHECKS && CVODE_ML_BIGARRAYS
+    /* This can't be checked for generic nvectors.  */
     if (CVODE_NEQS_FROM_ML (vdata) != Caml_ba_array_val(y0)->dim[0])
 	caml_invalid_argument ("Cvode.reinit: y vector has incorrect length");
 #endif
@@ -928,7 +929,8 @@ static value solver(value vdata, value nextt, value vy, int onestep)
     N_Vector y;
     enum cvode_solver_result_tag result;
 
-#if SAFETY_CHECKS
+#if SAFETY_CHECKS && CVODE_ML_BIGARRAYS
+    /* This can't be checked for generic nvectors.  */
     if (CVODE_NEQS_FROM_ML (vdata) != Caml_ba_array_val(vy)->dim[0])
 	caml_invalid_argument ("Cvode.solve: y vector has incorrect length");
 #endif

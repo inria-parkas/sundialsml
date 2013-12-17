@@ -743,7 +743,8 @@ CAMLprim void IDATYPE(reinit)(value vdata, value t0, value y0, value yp0)
 {
     CAMLparam4(vdata, t0, y0, yp0);
 
-#if SAFETY_CHECKS
+#if SAFETY_CHECKS && IDA_ML_BIGARRAYS
+    /* This can't be checked for generic nvectors.  */
     if (IDA_NEQS_FROM_ML (vdata) != Caml_ba_array_val(y0)->dim[0])
 	caml_invalid_argument ("Ida.reinit: y vector has incorrect length");
     if (IDA_NEQS_FROM_ML (vdata) != Caml_ba_array_val(yp0)->dim[0])
@@ -775,7 +776,8 @@ static value solve (value vdata, value nextt, value vy, value vyp, int onestep)
     N_Vector y, yp;
     enum ida_solver_result_tag result;
 
-#if SAFETY_CHECKS
+#if SAFETY_CHECKS && IDA_ML_BIGARRAYS
+    /* This can't be checked for generic nvectors.  */
     if (IDA_NEQS_FROM_ML (vdata) != Caml_ba_array_val(vy)->dim[0])
 	caml_invalid_argument ("Ida.solve: y vector has incorrect length");
     if (IDA_NEQS_FROM_ML (vdata) != Caml_ba_array_val(vyp)->dim[0])
