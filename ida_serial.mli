@@ -290,16 +290,22 @@ and bandrange = { mupper : int; (** The upper half-bandwidth.  *)
 
 (** Initialization parameters and callbacks for Krylov iterative
     {!linear_solver}s.  Used with the {!linear_solver}s: [Spgmr], [Spbcg], and
-    [Sptfqmr].  *)
+    [Sptfqmr].  If you don't want any preconditioning, you should use
+    {!spils_no_precond}, optionally with the [maxl] field overridden like
+    [{ spils_no_precond with maxl = ... }].  *)
 and spils_params =
   {
     maxl : int;   (** Maximum dimension of the Krylov subspace to be used.
                       Pass [0] to use the default value [5]. *)
 
     prec_solve_fn : (single_tmp jacobian_arg -> val_array -> val_array -> float
-                     -> unit);
+                     -> unit) option;
     (** Called like [prec_solve_fn arg r z delta] to solve the linear system
         {i P}[z] = [r], where {i P} is the (left) preconditioner matrix.
+
+        If set to [None] then no preconditioning is performed, and
+        [prec_setup_fn] and [jac_times_vec_fn] are ignored.
+
         {i P} should approximate, at least crudely, the system Jacobian matrix
         {i J = dF/dy + {jac.coef} * dF/dy'} where {i F} is the residual
         function.
@@ -403,6 +409,10 @@ and spils_params =
        @ida <node5#ss:jtimesFn> Jacobian-times-vector function
      *)
   }
+
+(** Specifies no preconditioning, with default dimension size.  See
+    {!spils_params}.  *)
+val spils_no_precond : spils_params
 
 (** {3 Direct Linear Solvers (DLS)} *)
 

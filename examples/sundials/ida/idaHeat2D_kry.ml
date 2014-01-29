@@ -227,7 +227,7 @@ let main () =
 
   let solver = Ida.Spgmr { Ida.maxl = 5;
                            Ida.prec_setup_fn = Some (p_setup_heat data);
-                           Ida.prec_solve_fn = p_solve_heat data;
+                           Ida.prec_solve_fn = Some (p_solve_heat data);
                            Ida.jac_times_vec_fn = None;
                          }
   in

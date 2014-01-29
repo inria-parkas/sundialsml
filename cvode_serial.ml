@@ -61,11 +61,14 @@ and spils_params = { prec_type : preconditioning_type;
 and spils_callbacks =
   {
     prec_solve_fn : (single_tmp jacobian_arg -> prec_solve_arg -> nvec
-                     -> unit);
+                     -> unit) option;
     prec_setup_fn : (triple_tmp jacobian_arg -> bool -> float -> bool) option;
     jac_times_vec_fn : (single_tmp jacobian_arg -> val_array -> val_array
                         -> unit) option;
   }
+let spils_no_precond = { prec_solve_fn = None;
+                         prec_setup_fn = None;
+                         jac_times_vec_fn = None; }
 
 type iter =
   | Newton of linear_solver
@@ -172,15 +175,15 @@ external c_diag : session -> unit
   = "c_cvode_diag"
 
 external c_spils_spgmr
-  : session -> int -> preconditioning_type -> bool -> bool -> unit
+  : session -> int -> preconditioning_type -> unit
   = "c_ba_cvode_spils_spgmr"
 
 external c_spils_spbcg
-  : session -> int -> preconditioning_type -> bool -> bool -> unit
+  : session -> int -> preconditioning_type -> unit
   = "c_ba_cvode_spils_spbcg"
 
 external c_spils_sptfqmr
-  : session -> int -> preconditioning_type -> bool -> bool -> unit
+  : session -> int -> preconditioning_type -> unit
   = "c_ba_cvode_spils_sptfqmr"
 
 external c_spils_banded_spgmr
@@ -194,6 +197,10 @@ external c_spils_banded_spbcg
 external c_spils_banded_sptfqmr
   : session -> int -> int -> int -> preconditioning_type -> unit
   = "c_ba_cvode_spils_banded_sptfqmr"
+
+external c_spils_set_preconditioner
+  : session -> bool -> bool -> unit
+  = "c_ba_cvode_spils_set_preconditioner"
 
 external c_set_functional : session -> unit
   = "c_cvode_set_functional"
@@ -211,7 +218,22 @@ let set_iter_type session iter =
     | None -> ()
     | Some x -> f x
   in
-  (* Release references to all linear-solver--related callbacks.  *)
+  let set_precond prec_type cb =
+    match prec_type with
+    | PrecNone -> ()
+    | PrecLeft | PrecRight | PrecBoth ->
+      match cb.prec_solve_fn with
+      | None -> invalid_arg "preconditioning type is not PrecNone, but no \
+                             solve function given"
+      | Some solve_fn ->
+        c_spils_set_preconditioner session
+          (cb.prec_setup_fn <> None)
+          (cb.jac_times_vec_fn <> None);
+        session.presolvefn <- solve_fn;
+        optionally (fun f -> session.presetupfn <- f) cb.prec_setup_fn;
+        optionally (fun f -> session.jactimesfn <- f) cb.jac_times_vec_fn
+  in
+  (* Release references to all linear solver-related callbacks.  *)
   session.jacfn      <- dummy_dense_jac;
   session.bandjacfn  <- dummy_band_jac;
   session.presetupfn <- dummy_prec_setup;
@@ -237,26 +259,14 @@ let set_iter_type session iter =
       optionally (fun f -> session.bandjacfn <- f) jac
     | Diag -> c_diag session
     | Spgmr (par, cb) ->
-      c_spils_spgmr session par.maxl par.prec_type
-                            (cb.prec_setup_fn <> None)
-                            (cb.jac_times_vec_fn <> None);
-      optionally (fun f -> session.presetupfn <- f) cb.prec_setup_fn;
-      session.presolvefn <- cb.prec_solve_fn;
-      optionally (fun f -> session.jactimesfn <- f) cb.jac_times_vec_fn
+      c_spils_spgmr session par.maxl par.prec_type;
+      set_precond par.prec_type cb
     | Spbcg (par, cb) ->
-      c_spils_spbcg session par.maxl par.prec_type
-                            (cb.prec_setup_fn <> None)
-                            (cb.jac_times_vec_fn <> None);
-      optionally (fun f -> session.presetupfn <- f) cb.prec_setup_fn;
-      session.presolvefn <- cb.prec_solve_fn;
-      optionally (fun f -> session.jactimesfn <- f) cb.jac_times_vec_fn
+      c_spils_spbcg session par.maxl par.prec_type;
+      set_precond par.prec_type cb
     | Sptfqmr (par, cb) ->
-      c_spils_sptfqmr session par.maxl par.prec_type
-                              (cb.prec_setup_fn <> None)
-                              (cb.jac_times_vec_fn <> None);
-      optionally (fun f -> session.presetupfn <- f) cb.prec_setup_fn;
-      session.presolvefn <- cb.prec_solve_fn;
-      optionally (fun f -> session.jactimesfn <- f) cb.jac_times_vec_fn
+      c_spils_sptfqmr session par.maxl par.prec_type;
+      set_precond par.prec_type cb
     | BandedSpgmr (sp, br) ->
       c_spils_banded_spgmr session br.mupper br.mlower sp.maxl sp.prec_type
     | BandedSpbcg (sp, br) ->

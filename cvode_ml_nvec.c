@@ -643,66 +643,64 @@ CAMLprim void CVTYPE(dls_clear_band_jac_fn)(value vdata)
 }
 #endif	/* CVODE_ML_BIGARRAYS */
 
-CAMLprim void CVTYPE(spils_spgmr) (value vcvode_mem, value vmaxl, value vtype,
-				   value vset_presetup, value vset_jac)
+CAMLprim void CVTYPE(spils_set_preconditioner) (value vsession,
+						value vset_presetup,
+						value vset_jac)
 {
-    CAMLparam5 (vcvode_mem, vmaxl, vtype, vset_presetup, vset_jac);
-    void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
+    CAMLparam3 (vsession, vset_presetup, vset_jac);
+    int flag;
+    void *mem = CVODE_MEM_FROM_ML (vsession);
     CVSpilsPrecSetupFn setup = Bool_val (vset_presetup) ? presetupfn : NULL;
+
+    flag = CVSpilsSetPreconditioner (mem, setup, presolvefn);
+    CHECK_FLAG ("CVSpilsSetPreconditioner", flag);
+    if (Bool_val (vset_jac)) {
+	flag = CVSpilsSetJacTimesVecFn (mem, jactimesfn);
+	CHECK_FLAG ("CVSpilsSetJacTimesVecFn", flag);
+    }
+
+    CAMLreturn0;
+}
+
+CAMLprim void CVTYPE(spils_spgmr) (value vcvode_mem, value vmaxl, value vtype)
+{
+    CAMLparam3 (vcvode_mem, vmaxl, vtype);
+    void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
     int flag;
 
     flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
     CHECK_FLAG ("CVodeSetIterType", flag);
     flag = CVSpgmr (cvode_mem, precond_type (vtype), Int_val (vmaxl));
     CHECK_FLAG ("CVSpgmr", flag);
-    flag = CVSpilsSetPreconditioner (cvode_mem, setup, presolvefn);
-    CHECK_FLAG ("CVSpilsSetPreconditioner", flag);
-    if (Bool_val (vset_jac)) {
-	flag = CVSpilsSetJacTimesVecFn (cvode_mem, jactimesfn);
-	CHECK_FLAG ("CVSpilsSetJacTimesVecFn", flag);
-    }
     CAMLreturn0;
 }
 
-CAMLprim void CVTYPE(spils_spbcg) (value vcvode_mem, value vmaxl, value vtype,
-				   value vset_presetup, value vset_jac)
+CAMLprim void CVTYPE(spils_spbcg) (value vcvode_mem, value vmaxl, value vtype)
 {
-    CAMLparam5 (vcvode_mem, vmaxl, vtype, vset_presetup, vset_jac);
+    CAMLparam3 (vcvode_mem, vmaxl, vtype);
     void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
-    CVSpilsPrecSetupFn setup = Bool_val (vset_presetup) ? presetupfn : NULL;
     int flag;
 
     flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
     CHECK_FLAG ("CVodeSetIterType", flag);
     flag = CVSpbcg (cvode_mem, precond_type (vtype), Int_val (vmaxl));
     CHECK_FLAG ("CVSpbcg", flag);
-    flag = CVSpilsSetPreconditioner (cvode_mem, setup, presolvefn);
-    CHECK_FLAG ("CVSpilsSetPreconditioner", flag);
-    if (Bool_val (vset_jac)) {
-	flag = CVSpilsSetJacTimesVecFn (cvode_mem, jactimesfn);
-	CHECK_FLAG ("CVSpilsSetJacTimesVecFn", flag);
-    }
+
     CAMLreturn0;
 }
 
-CAMLprim void CVTYPE(spils_sptfqmr) (value vcvode_mem, value vmaxl, value vtype,
-				      value vset_presetup, value vset_jac)
+CAMLprim void CVTYPE(spils_sptfqmr) (value vcvode_mem, value vmaxl,
+				     value vtype)
 {
-    CAMLparam5 (vcvode_mem, vmaxl, vtype, vset_presetup, vset_jac);
+    CAMLparam3 (vcvode_mem, vmaxl, vtype);
     void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
-    CVSpilsPrecSetupFn setup = Bool_val (vset_presetup) ? presetupfn : NULL;
     int flag;
 
     flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
     CHECK_FLAG ("CVodeSetIterType", flag);
     flag = CVSptfqmr (cvode_mem, precond_type (vtype), Int_val (vmaxl));
     CHECK_FLAG ("CVSptfqmr", flag);
-    flag = CVSpilsSetPreconditioner (cvode_mem, setup, presolvefn);
-    CHECK_FLAG ("CVSpilsSetPreconditioner", flag);
-    if (Bool_val (vset_jac)) {
-	flag = CVSpilsSetJacTimesVecFn (cvode_mem, jactimesfn);
-	CHECK_FLAG ("CVSpilsSetJacTimesVecFn", flag);
-    }
+
     CAMLreturn0;
 }
 

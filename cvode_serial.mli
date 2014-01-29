@@ -303,11 +303,13 @@ and spils_params = { prec_type : preconditioning_type;
                      maxl : int; (** Maximum dimension of the Krylov subspace
                                      to be used.  Pass [0] to use the default
                                      value [5]. *)}
-(** Callbacks for Krylov subspace linear solvers.  *)
+(** Callbacks for Krylov subspace linear solvers.  Ignored if the
+    {!Cvode.preconditioning_type} is set to [PrecNone].  In that case, you
+    should use {!spils_no_precond} as [spils_callbacks].  *)
 and spils_callbacks =
   {
     prec_solve_fn : (single_tmp jacobian_arg -> prec_solve_arg -> nvec
-                     -> unit);
+                     -> unit) option;
     (** Called like [prec_solve_fn jac_arg solve_arg z] to solve the linear
         system {i P}[z] = [solve_arg.rhs], where {i P} may be either a left or
         right preconditioner matrix.  {i P} should approximate, however
@@ -392,6 +394,9 @@ and prec_solve_arg =
                             is to be used and [false] if the
                             right preconditioner is to be used. *)
   }
+
+(** See {!spils_callbacks}.  *)
+val spils_no_precond : spils_callbacks
 
 (** {3 Direct Linear Solvers (DLS)} *)
 

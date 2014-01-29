@@ -505,7 +505,7 @@ let main () =
                (Cvode.Spgmr
                   ({ Cvode.prec_type = Cvode.PrecLeft; Cvode.maxl = 0 },
                    { Cvode.prec_setup_fn = Some (precond data);
-                     Cvode.prec_solve_fn = psolve data;
+                     Cvode.prec_solve_fn = Some (psolve data);
                      Cvode.jac_times_vec_fn = None })));
 
         (* Set modified Gram-Schmidt orthogonalization, preconditioner 
@@ -529,7 +529,7 @@ let main () =
                (Cvode.Spbcg
                   ({ Cvode.prec_type = Cvode.PrecLeft; Cvode.maxl = 0 },
                    { Cvode.prec_setup_fn = Some (precond data);
-                     Cvode.prec_solve_fn = psolve data;
+                     Cvode.prec_solve_fn = Some (psolve data);
                      Cvode.jac_times_vec_fn = None })))
       end
 
@@ -548,7 +548,7 @@ let main () =
                (Cvode.Sptfqmr
                   ({ Cvode.prec_type = Cvode.PrecLeft; Cvode.maxl = 0 },
                    { Cvode.prec_setup_fn = Some (precond data);
-                     Cvode.prec_solve_fn = psolve data;
+                     Cvode.prec_solve_fn = Some (psolve data);
                      Cvode.jac_times_vec_fn = None })))
       end);
 

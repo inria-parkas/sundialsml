@@ -570,7 +570,7 @@ let main () =
       (Cvode.Newton
           (Cvode.Spgmr ({ Cvode.prec_type = Cvode.PrecLeft; Cvode.maxl = 0},
                         { Cvode.prec_setup_fn = Some (precond data);
-                          Cvode.prec_solve_fn = psolve data;
+                          Cvode.prec_solve_fn = Some (psolve data);
                           Cvode.jac_times_vec_fn = Some (jtv data); })))
       (f data) ~t0:t0 u
   in

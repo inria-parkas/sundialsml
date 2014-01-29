@@ -49,13 +49,19 @@ and spils_params =
   {
     maxl : int;
     prec_solve_fn : (single_tmp jacobian_arg -> val_array -> val_array -> float
-                     -> unit);
+                     -> unit) option;
     prec_setup_fn : (triple_tmp jacobian_arg -> unit) option;
     jac_times_vec_fn : (double_tmp jacobian_arg -> val_array -> val_array
                         -> unit) option;
   }
 and bandrange = { mupper : int;
                   mlower : int; }
+
+let spils_no_precond = { maxl = 0;
+                         prec_solve_fn = None;
+                         prec_setup_fn = None;
+                         jac_times_vec_fn = None;
+                       }
 
 type ida_mem
 type c_weak_ref
@@ -176,14 +182,17 @@ external c_dls_band : session -> int -> int -> bool -> unit
 external c_dls_lapack_band : session -> int -> int -> bool -> unit
   = "c_ba_ida_dls_lapack_band"
 
-external c_spils_spgmr : session -> int -> bool -> bool -> unit
+external c_spils_spgmr : session -> int -> unit
   = "c_ba_ida_spils_spgmr"
 
-external c_spils_spbcg : session -> int -> bool -> bool -> unit
+external c_spils_spbcg : session -> int -> unit
   = "c_ba_ida_spils_spbcg"
 
-external c_spils_sptfqmr : session -> int -> bool -> bool -> unit
+external c_spils_sptfqmr : session -> int -> unit
   = "c_ba_ida_spils_sptfqmr"
+
+external c_spils_set_preconditioner : session -> bool -> bool -> unit
+  = "c_ba_ida_spils_set_preconditioner"
 
 let shouldn't_be_called fcn =
   failwith ("internal error in sundials: " ^ fcn ^ " is called")
@@ -197,6 +206,17 @@ let set_linear_solver session solver =
   let optionally f = function
     | None -> ()
     | Some x -> f x
+  in
+  let set_precond p =
+    match p.prec_solve_fn with
+    | None -> ()
+    | Some solve_fn ->
+      c_spils_set_preconditioner session
+        (p.prec_setup_fn <> None)
+        (p.jac_times_vec_fn <> None);
+      session.presolvefn <- solve_fn;
+      optionally (fun f -> session.presetupfn <- f) p.prec_setup_fn;
+      optionally (fun f -> session.jactimesfn <- f) p.jac_times_vec_fn
   in
   (* Release references to all linear-solver--related callbacks.  *)
   session.jacfn      <- dummy_dense_jac;
@@ -218,23 +238,14 @@ let set_linear_solver session solver =
     c_dls_lapack_band session p.mupper p.mlower (jac <> None);
     optionally (fun f -> session.bandjacfn <- f) jac
   | Spgmr p ->
-    c_spils_spgmr session p.maxl (p.prec_setup_fn <> None)
-                                 (p.jac_times_vec_fn <> None);
-    optionally (fun f -> session.presetupfn <- f) p.prec_setup_fn;
-    session.presolvefn <- p.prec_solve_fn;
-    optionally (fun f -> session.jactimesfn <- f) p.jac_times_vec_fn
+    c_spils_spgmr session p.maxl;
+    set_precond p
   | Spbcg p ->
-    c_spils_spbcg session p.maxl (p.prec_setup_fn <> None)
-                                 (p.jac_times_vec_fn <> None);
-    optionally (fun f -> session.presetupfn <- f) p.prec_setup_fn;
-    session.presolvefn <- p.prec_solve_fn;
-    optionally (fun f -> session.jactimesfn <- f) p.jac_times_vec_fn
+    c_spils_spbcg session p.maxl;
+    set_precond p
   | Sptfqmr p ->
-    c_spils_sptfqmr session p.maxl (p.prec_setup_fn <> None)
-                                   (p.jac_times_vec_fn <> None);
-    optionally (fun f -> session.presetupfn <- f) p.prec_setup_fn;
-    session.presolvefn <- p.prec_solve_fn;
-    optionally (fun f -> session.jactimesfn <- f) p.jac_times_vec_fn
+    c_spils_sptfqmr session p.maxl;
+    set_precond p
 
 let init linsolv resfn ?(roots=no_roots) ?(t0=0.) y y' =
   let (nroots, rootsfn) = roots in

@@ -570,60 +570,58 @@ CAMLprim void IDATYPE(dls_clear_band_jac_fn)(value vdata)
 }
 #endif	/* IDA_ML_BIGARRAYS */
 
-CAMLprim void IDATYPE(spils_spgmr) (value vida_mem, value vmaxl,
-				    value vset_presetup, value vset_jac)
+CAMLprim void IDATYPE(spils_set_preconditioner) (value vsession,
+						 value vset_presetup,
+						 value vset_jac)
 {
-    CAMLparam4 (vida_mem, vmaxl, vset_presetup, vset_jac);
-    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
+    CAMLparam3 (vsession, vset_presetup, vset_jac);
+    void *mem = IDA_MEM_FROM_ML (vsession);
     IDASpilsPrecSetupFn setup = Bool_val (vset_presetup) ? presetupfn : NULL;
+    int flag;
+
+    flag = IDASpilsSetPreconditioner (mem, setup, presolvefn);
+    CHECK_FLAG ("IDASpilsSetPreconditioner", flag);
+    if (Bool_val (vset_jac)) {
+	flag = IDASpilsSetJacTimesVecFn (mem, jactimesfn);
+	CHECK_FLAG ("IDASpilsSetJacTimesVecFn", flag);
+    }
+
+    CAMLreturn0;
+}
+
+CAMLprim void IDATYPE(spils_spgmr) (value vida_mem, value vmaxl)
+{
+    CAMLparam2 (vida_mem, vmaxl);
+    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
     int flag;
 
     flag = IDASpgmr (ida_mem, Int_val (vmaxl));
     CHECK_FLAG ("IDASpgmr", flag);
-    flag = IDASpilsSetPreconditioner (ida_mem, setup, presolvefn);
-    CHECK_FLAG ("IDASpilsSetPreconditioner", flag);
-    if (Bool_val (vset_jac)) {
-	flag = IDASpilsSetJacTimesVecFn (ida_mem, jactimesfn);
-	CHECK_FLAG ("IDASpilsSetJacTimesVecFn", flag);
-    }
+
     CAMLreturn0;
 }
 
-CAMLprim void IDATYPE(spils_spbcg) (value vida_mem, value vmaxl,
-				    value vset_presetup, value vset_jac)
+CAMLprim void IDATYPE(spils_spbcg) (value vida_mem, value vmaxl)
 {
-    CAMLparam4 (vida_mem, vmaxl, vset_presetup, vset_jac);
+    CAMLparam2 (vida_mem, vmaxl);
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
-    IDASpilsPrecSetupFn setup = Bool_val (vset_presetup) ? presetupfn : NULL;
     int flag;
 
     flag = IDASpbcg (ida_mem, Int_val (vmaxl));
     CHECK_FLAG ("IDASpbcg", flag);
-    flag = IDASpilsSetPreconditioner (ida_mem, setup, presolvefn);
-    CHECK_FLAG ("IDASpilsSetPreconditioner", flag);
-    if (Bool_val (vset_jac)) {
-	flag = IDASpilsSetJacTimesVecFn (ida_mem, jactimesfn);
-	CHECK_FLAG ("IDASpilsSetJacTimesVecFn", flag);
-    }
+
     CAMLreturn0;
 }
 
-CAMLprim void IDATYPE(spils_sptfqmr) (value vida_mem, value vmaxl,
-				      value vset_presetup, value vset_jac)
+CAMLprim void IDATYPE(spils_sptfqmr) (value vida_mem, value vmaxl)
 {
-    CAMLparam4 (vida_mem, vmaxl, vset_presetup, vset_jac);
+    CAMLparam2 (vida_mem, vmaxl);
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
-    IDASpilsPrecSetupFn setup = Bool_val (vset_presetup) ? presetupfn : NULL;
     int flag;
 
     flag = IDASptfqmr (ida_mem, Int_val (vmaxl));
     CHECK_FLAG ("IDASptfqmr", flag);
-    flag = IDASpilsSetPreconditioner (ida_mem, setup, presolvefn);
-    CHECK_FLAG ("IDASpilsSetPreconditioner", flag);
-    if (Bool_val (vset_jac)) {
-	flag = IDASpilsSetJacTimesVecFn (ida_mem, jactimesfn);
-	CHECK_FLAG ("IDASpilsSetJacTimesVecFn", flag);
-    }
+
     CAMLreturn0;
 }
 
