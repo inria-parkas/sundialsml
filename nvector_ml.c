@@ -47,8 +47,6 @@
 #define NVECTOR_OPS_NVCONSTRMASK	(NVECTOR_OPS_NVWRMSNORMMASK + 1)
 #define NVECTOR_OPS_NVMINQUOTIENT	(NVECTOR_OPS_NVCONSTRMASK + 1)
 
-#define NVEC_CONTENT(nvec) ((ml_nvec_content)nvec->content)
-
 #define GET_OP(nvec, x) (Field(NVEC_CONTENT(nvec)->callbacks, x))
 #define GET_DATA(nvec) (NVEC_CONTENT(nvec)->data)
 #define EMPTY_DATA Val_int(0)
