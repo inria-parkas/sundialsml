@@ -296,12 +296,12 @@ external c_reinit : session -> float -> val_array -> der_array -> unit
 
 let reinit ida ?linsolv ?roots t0 y0 y'0 =
   c_reinit ida t0 y0 y'0;
-  match linsolv with
-  | None -> ()
-  | Some linsolv -> set_linear_solver ida linsolv;
-  match roots with
-  | None -> ()
-  | Some roots -> root_init ida roots
+  (match linsolv with
+   | None -> ()
+   | Some linsolv -> set_linear_solver ida linsolv);
+  (match roots with
+   | None -> ()
+   | Some roots -> root_init ida roots)
 
 external get_root_info  : session -> root_array -> unit
     = "c_ida_get_root_info"

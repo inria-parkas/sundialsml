@@ -295,12 +295,12 @@ external c_reinit
     = "c_nvec_cvode_reinit"
 let reinit session ?iter_type ?roots t0 y0 =
   c_reinit session t0 y0;
-  match iter_type with
-  | None -> ()
-  | Some iter_type -> set_iter_type session iter_type;
-  match roots with
-  | None -> ()
-  | Some roots -> root_init session roots
+  (match iter_type with
+   | None -> ()
+   | Some iter_type -> set_iter_type session iter_type);
+  (match roots with
+   | None -> ()
+   | Some roots -> root_init session roots)
 
 let wf_tolerances s ferrw =
   s.errw <- ferrw;
