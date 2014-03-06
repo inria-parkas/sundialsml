@@ -1,7 +1,8 @@
 include config
 
 MLOBJ = sundials.cmo nvector.cmo nvector_array.cmo dls.cmo cvode.cmo	\
-	cvode_nvector.cmo cvode_serial.cmo ida.cmo ida_serial.cmo
+	cvode_nvector.cmo cvode_serial.cmo ida.cmo \
+	ida_nvector.cmo ida_serial.cmo
 
 COMMON_COBJ= sundials_ml$(XO) dls_ml$(XO) nvector_ml$(XO)
 
