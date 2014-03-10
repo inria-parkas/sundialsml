@@ -118,9 +118,6 @@ type 'a iter =
 (**
    Specify a linear solver.
 
-   The Lapack solvers require that both Sundials and the OCaml interface were
-   built to link with a LAPACK library.
-
    The Banded Krylov solvers imply an additional call to
    {{:CVODE_DOC_ROOT(node5#sss:cvbandpre)} CVBandPrecInit}.
 
