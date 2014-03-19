@@ -1,7 +1,8 @@
 include ../../config
 
 EXAMPLES = cchatter.byte discontinuous.byte printall.byte \
-	   upvseither.byte integr_backward.byte one_over_x.byte
+	   upvseither.byte integr_backward.byte one_over_x.byte \
+	   ramp.byte
 
 all: $(EXAMPLES)
 opt: $(EXAMPLES:.byte=.opt)
@@ -17,6 +18,9 @@ printall.opt: printall.ml
 
 sliding.byte: sliding.ml
 sliding.opt: sliding.ml
+
+ramp.byte: ramp.ml
+ramp.opt: ramp.ml
 
 clean:
 	-rm -f $(EXAMPLES:.byte=.cmo) $(EXAMPLES:.byte=.cmx)
