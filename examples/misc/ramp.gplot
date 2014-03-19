@@ -1,0 +1,27 @@
+
+datafile = "ramp.log"
+
+set terminal x11;
+# set terminal ps;
+
+set grid
+set key top left
+
+set multiplot layout 2,1 title "ramp"
+
+set yrange [0:3.1]
+set y2tics
+set y2label "error"
+set rmargin 14
+plot datafile using 1:3 title "y" with linespoints, \
+     datafile using 1:($4-$3) title "error" with linespoints axes x1y2
+
+set y2label "err test fails"
+plot datafile using 1:6 title "step size" with linespoints, \
+     datafile using 1:7 title "err test fails" axes x1y2
+
+unset multiplot
+
+pause -1
+
+
