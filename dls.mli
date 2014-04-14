@@ -159,7 +159,7 @@ module Directdensematrix :
 
      The underlying array cannot be exposed directly in OCaml as a
      {{:OCAML_DOC_ROOT(Bigarray)} Bigarray} because it is an array of arrays
-     (an lliffe vector) and, anyway, there is no simple way to attach a
+     (an Iliffe vector) and, anyway, there is no simple way to attach a
      custom finalize function to such a big array.
 
      @cvode <node9#ss:dense> Small dense matrices
@@ -429,7 +429,7 @@ module Directbandmatrix :
 
      The underlying array cannot be exposed directly in OCaml as a
      {{:OCAML_DOC_ROOT(Bigarray)} Bigarray} because it is an array of arrays
-     (an lliffe vector) and, anyway, there is no simple way to attach a
+     (an Iliffe vector) and, anyway, there is no simple way to attach a
      custom finalize function to such a big array.
 
      @cvode <node9#ss:band> NewBandMat 
