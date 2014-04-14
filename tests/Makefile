@@ -156,6 +156,12 @@ dump-deriving: pa_deriving.cmo pprint.cmo
 	    $(SUNDIALS_LIB:.cma=.cmxa) \
 	    $(filter-out $<,$^) $< -o $@
 
+%.byte: %.cmo
+	$(OCAMLC) $(OCAMLFLAGS) -I +camlp4 \
+	    dynlink.cma camlp4lib.cma \
+	    $(SUNDIALS_LIB) \
+	    $(filter-out $<,$^) $< -o $@
+
 -include .depend
 
 else ifeq "$(DEPFILE)" ".mindepend"
