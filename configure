@@ -277,7 +277,7 @@ ldflags="${ldflags} ${lapack_lib}"
 # Extract compilation flags from sundials-config.
 
 cvode_cppflags="${cflags} `sundials-config -m cvode -t s -l c -s cppflags`"
-ida_cppflags="${cflags} `sundials-config -m cvode -t s -l c -s cppflags`"
+ida_cppflags="${cflags} `sundials-config -m ida -t s -l c -s cppflags`"
 
 # --no-lib-path removes the -L specification, to prevent it from being recorded
 # in the *.cm(x)a files.  We assume there's only one occurrence of -L and the
