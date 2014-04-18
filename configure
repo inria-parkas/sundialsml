@@ -96,7 +96,7 @@ END_HELP_TEXT
     OCAMLMKLIBFLAGS)
 	ocamlmklibflags="${value}";;
     *)
-	echo "illegal option \"$option\"." 1>&2; exit 2;;
+	printf "illegal option \"$option\".\n" 1>&2; exit 2;;
     esac
 done
 
@@ -162,21 +162,18 @@ int_size=`expr "$ilp_size" : "^\([^,]*\),*"`
 long_size=`expr "$ilp_size" : "^[^,]*,\([^,]*\),*"`
 ptr_size=`expr "$ilp_size" : "^[^,]*,[^,]*,\([^,]*\)"`
 if echo $int_size | grep -q '[^0-9]'; then
-    echo "Failed to detect size of \`int'.  This might be a problem"
-    echo "with detecting your system's C preprocessor."
-    echo
+    printf "Failed to detect size of \`int'.  This might be a problem\n"
+    printf "with detecting your system's C preprocessor.\n\n"
     exit 1
 fi
 if echo $long_size | grep -q '[^0-9]'; then
-    echo "Failed to detect size of \`long'.  This might be a problem"
-    echo "with detecting your system's C preprocessor."
-    echo
+    printf "Failed to detect size of \`long'.  This might be a problem\n"
+    printf "with detecting your system's C preprocessor.\n\n"
     exit 1
 fi
 if echo $ptr_size | grep -q '[^0-9]'; then
-    echo "Failed to detect size of pointers.  This might be a problem"
-    echo "with detecting your system's C preprocessor."
-    echo
+    printf "Failed to detect size of pointers.  This might be a problem\n"
+    printf "with detecting your system's C preprocessor.\n\n"
     exit 1
 fi
 
@@ -311,38 +308,34 @@ fi
 
 # Show a summary
 
-echo
-echo "Configuration"
-echo "-------------"
+printf "\nConfiguration\n-------------\n\n"
 
-echo
-echo "  OCaml\t\t\t${ocaml_path}${ocaml_version}"
-echo "  Sundials\t\t${sundials_version}${lapack_info}"
-echo "    -examples\t\t${examples_info}"
-echo
-echo "  Architecture\t\t${arch}"
-echo
-echo "Installation paths"
-echo "  prefix:\t\t${prefix}"
-echo "  libdir:\t\t${libdir:-${ocaml_libpath}}"
-echo "  stubdir:\t\t${stubdir:-${ocaml_libpath}stublibs/}"
+printf "  OCaml\t\t\t${ocaml_path}${ocaml_version}\n"
+printf "  Sundials\t\t${sundials_version}${lapack_info}\n"
+printf "    -examples\t\t${examples_info}\n"
+printf "\n"
+printf "  Architecture\t\t${arch}\n"
+printf "\n"
+printf "Installation paths\n"
+printf "  prefix:\t\t${prefix}\n"
+printf "  libdir:\t\t${libdir:-${ocaml_libpath}}\n"
+printf "  stubdir:\t\t${stubdir:-${ocaml_libpath}stublibs/}\n"
 if [ ${install_docs:-1} -eq 1 ]; then
-    echo "  docdir:\t\t${docdir:-${prefix}share/doc/}"
+    printf "  docdir:\t\t${docdir:-${prefix}share/doc/}\n"
 fi
 if [ ${no_lib_path:-0} -eq 1 ]; then
-    echo
-    echo "Other options"
-    echo "  --no-lib-path given.  Make sure you know what you're doing!"
+    printf "\n"
+    printf "Other options\n"
+    printf "  --no-lib-path given.  Make sure you know what you're doing!\n"
 fi
-echo
+printf "\n"
 
 if [ -n "${error}" ]; then
-    echo "Some errors occurred during configuration:${error}"
-    echo
+    printf "Some errors occurred during configuration:${error}\n\n"
     exit 1
 fi
 
-(echo "# # # THIS FILE IS GENERATED AUTOMATICALLY BY CONFIGURE # # #"; \
+(printf "# # # THIS FILE IS GENERATED AUTOMATICALLY BY CONFIGURE # # #\n"; \
  sed -e "s#@prefix@#${prefix}#;
 	 s#@version@#${version}#;
 	 s#@libdir@#${libdir:-${ocaml_libpath}}#;
@@ -364,11 +357,12 @@ fi
 	 s#@OCAMLBIN@#${OCAMLBIN}#;
 	 s#@OCAMLROOT@#${OCAMLROOT}#;" config.in) > config
 
-echo "/* Automatically generated file - don't edit!  See configure.  */"\
+printf "/* Automatically generated file - don't edit!  See configure.  */\n"\
      > config.h
-echo "#ifndef __SUNDIALS_CONFIG_H__" >> config.h
-echo "#define __SUNDIALS_CONFIG_H__" >> config.h
-echo "#define HAVE_WEAK ${have_weak}" >> config.h
-echo "#define SAFETY_CHECKS ${safety_checks}" >> config.h
-echo "#define CHECK_MATRIX_ACCESS ${bounds_checking}" >> config.h
-echo "#endif /* __SUNDIALS_CONFIG_H__ */" >> config.h
+printf "#ifndef __SUNDIALS_CONFIG_H__\n" >> config.h
+printf "#define __SUNDIALS_CONFIG_H__\n" >> config.h
+printf "#define HAVE_WEAK ${have_weak}\n" >> config.h
+printf "#define SAFETY_CHECKS ${safety_checks}\n" >> config.h
+printf "#define CHECK_MATRIX_ACCESS ${bounds_checking}\n" >> config.h
+printf "#endif /* __SUNDIALS_CONFIG_H__ */\n" >> config.h
+
