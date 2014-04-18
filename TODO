@@ -15,13 +15,16 @@
 
 4. (Tim) Doc generation to work for both OCaml 3.12 and 4.x.
 
-5. (Jun) Interface to CVODES and IDAS with maximal reuse and minimal
+5. (Jun) Interface the Alternate Linear Solver Modules
+   http://computation.llnl.gov/casc/sundials/documentation/cv_guide/node8.html
+
+6. (Jun) Interface to CVODES and IDAS with maximal reuse and minimal
    copy-paste
 
-6. (Jun) OPAM/findlib wrappers.
+7. (Jun) OPAM/findlib wrappers.
    - Everything properly supported in a toplevel
 
-7. (Tim) Eventual release:
+8. (Tim) Eventual release:
    - Dêpot APP.
    - Repository on Github.
    - Release on Opam.
