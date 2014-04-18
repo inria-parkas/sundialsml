@@ -1,0 +1,29 @@
+
+1. (Tim) Change the copyright headers:
+   - OCaml interface to (serial) Sundials.
+   - Copyright 2014...
+
+2. (Tim) Tidy up and complete the linear solver interface:
+   - Spils
+   - Custom linear solvers
+   - Smoother integration with CVODE and IDA.
+   - Add tests / examples (from Sundials?)
+
+3. (Tim) Interface to KINSOL.
+   - Write the interface.
+   - Adapt examples from Sundials.
+
+4. (Tim) Doc generation to work for both OCaml 3.12 and 4.x.
+
+5. (Jun) Interface to CVODES and IDAS with maximal reuse and minimal
+   copy-paste
+
+6. (Jun) OPAM/findlib wrappers.
+   - Everything properly supported in a toplevel
+
+7. (Tim) Eventual release:
+   - Dêpot APP.
+   - Repository on Github.
+   - Release on Opam.
+   - Announce on OCaml and Sundials lists.
+
