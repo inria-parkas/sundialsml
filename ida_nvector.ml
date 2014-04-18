@@ -75,9 +75,9 @@ type 'a session = {
         mutable errh       : error_details -> unit;
         mutable errw       : 'a -> 'a -> unit;
         mutable jacfn      : ('a triple_tmp, 'a) jacobian_arg
-                               -> Densematrix.t -> unit;
+                               -> DenseMatrix.t -> unit;
         mutable bandjacfn  : ('a triple_tmp, 'a) jacobian_arg -> int -> int
-                               -> Bandmatrix.t -> unit;
+                               -> BandMatrix.t -> unit;
         mutable presetupfn : ('a triple_tmp, 'a) jacobian_arg -> unit;
         mutable presolvefn : ('a single_tmp, 'a) jacobian_arg -> 'a -> 'a
                                -> float -> unit;

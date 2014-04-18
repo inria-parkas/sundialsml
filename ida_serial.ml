@@ -43,8 +43,8 @@ type linear_solver =
   | Spgmr of spils_params
   | Spbcg of spils_params
   | Sptfqmr of spils_params
-and dense_jac_fn = triple_tmp jacobian_arg -> Densematrix.t -> unit
-and band_jac_fn = triple_tmp jacobian_arg -> int -> int -> Bandmatrix.t -> unit
+and dense_jac_fn = triple_tmp jacobian_arg -> DenseMatrix.t -> unit
+and band_jac_fn = triple_tmp jacobian_arg -> int -> int -> BandMatrix.t -> unit
 and spils_params =
   {
     maxl : int;
@@ -84,9 +84,9 @@ type session = {
                              -> unit;
         mutable errh       : error_details -> unit;
         mutable errw       : val_array -> nvec -> unit;
-        mutable jacfn      : triple_tmp jacobian_arg -> Densematrix.t -> unit;
+        mutable jacfn      : triple_tmp jacobian_arg -> DenseMatrix.t -> unit;
         mutable bandjacfn  : triple_tmp jacobian_arg -> int -> int
-                               -> Bandmatrix.t -> unit;
+                               -> BandMatrix.t -> unit;
         mutable presetupfn : triple_tmp jacobian_arg -> unit;
         mutable presolvefn : single_tmp jacobian_arg -> val_array -> val_array
                                -> float -> unit;

@@ -26,9 +26,10 @@ include module type of Cvode
   and type lmm = Cvode.lmm
   and type error_details = Cvode.error_details
   and type solver_result = Cvode.solver_result
-  and type Bandmatrix.t = Dls.Bandmatrix.t
-  and type Directbandmatrix.t = Dls.Directbandmatrix.t
-  and type Densematrix.t = Dls.Densematrix.t
+  and type BandMatrix.t = Dls.BandMatrix.t
+  and type ArrayBandMatrix.t = Dls.ArrayBandMatrix.t
+  and type DenseMatrix.t = Dls.DenseMatrix.t
+  and type ArrayDenseMatrix.t = Dls.ArrayDenseMatrix.t
 
 (** Serial nvector interface to the CVODE solver.
  
@@ -266,7 +267,7 @@ and linear_solver =
     @cvode <node5#sss:optin_dls> CVDlsSetDenseJacFn
     @cvode <node5#ss:djacFn> Dense Jacobian function
  *)
-and dense_jac_fn = triple_tmp jacobian_arg -> Densematrix.t -> unit
+and dense_jac_fn = triple_tmp jacobian_arg -> DenseMatrix.t -> unit
 
 (** A user-supplied callback function that computes an approximation to
     the Jacobian matrix for the Band and Lapackband
@@ -291,7 +292,7 @@ and dense_jac_fn = triple_tmp jacobian_arg -> Densematrix.t -> unit
     function call, then they must be copied to separate physical
     structures.
  *)
-and band_jac_fn = triple_tmp jacobian_arg -> int -> int -> Bandmatrix.t -> unit
+and band_jac_fn = triple_tmp jacobian_arg -> int -> int -> BandMatrix.t -> unit
 
 (** The range of nonzero entries in a band matrix.  *)
 and bandrange = { mupper : int; (** The upper half-bandwidth.  *)

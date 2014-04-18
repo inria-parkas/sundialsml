@@ -11,7 +11,7 @@
 (***********************************************************************)
 
 (**
-  {2 Data structures for Direct Linear Solvers.}
+  {2 Direct Linear Solvers.}
   @cvode <node9#s:dls>  The DLS Modules
  *)
 
@@ -19,7 +19,7 @@
     @cvode <node9#ss:dense> The DENSE Module *)
 
 (** Operations for creating and manipulating dense matrices. *)
-module Densematrix :
+module DenseMatrix :
   sig
     (**
     This type represents a [DlsMat] returned from a call to
@@ -147,11 +147,11 @@ module Densematrix :
 
   end
 
-(** {3 Direct dense matrices}
+(** {3 Array-based dense matrices}
     @cvode <node9#ss:dense> The DENSE Module *)
 
-(** Operations for creating and manipulating direct dense matrices. *)
-module Directdensematrix :
+(** Operations for creating and manipulating dense matrices based on arrays. *)
+module ArrayDenseMatrix :
   sig
     (**
      This type represents a [realtype **] returned from a call to
@@ -276,7 +276,7 @@ module Directdensematrix :
     @cvode <node9#ss:band> The BAND Module *)
 
 (** Operations for creating and manipulating banded matrices. *)
-module Bandmatrix :
+module BandMatrix :
   sig
     (**
     This type represents a [DlsMat] returned from a call to
@@ -421,7 +421,7 @@ module Bandmatrix :
     @cvode <node9#ss:band> The BAND Module *)
 
 (** Operations for creating and manipulating direct banded matrices. *)
-module Directbandmatrix :
+module ArrayBandMatrix :
   sig
     (**
      This type represents a [realtype **] returned from a call to

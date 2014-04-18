@@ -184,16 +184,16 @@ CAMLprim value c_densematrix_set(value vmatrix, value vij, value v)
     CAMLreturn(caml_copy_double(v));
 }
 
-/* Direct dense matrix functions */
+/* Array dense matrix functions */
 
 #define DDENSEMAT(v) (*(realtype ***)(Data_custom_val(v)))
 
-static void finalize_direct_densemat(value va)
+static void finalize_arraydensematrix(value va)
 {
     destroyMat(DDENSEMAT(va));
 }
 
-CAMLprim value c_densematrix_direct_new_dense_mat(value vmn)
+CAMLprim value c_arraydensematrix_new_dense_mat(value vmn)
 {
     CAMLparam1(vmn);
     CAMLlocal1(vr);
@@ -203,17 +203,17 @@ CAMLprim value c_densematrix_direct_new_dense_mat(value vmn)
 
     realtype **a = newDenseMat(m, n);
     if (a == NULL)
-	caml_failwith("Could not create Direct Dense Matrix.");
+	caml_failwith("Could not create Array Dense Matrix.");
     mlsize_t approx_size = m * n * sizeof(realtype);
 
-    vr = caml_alloc_final(2, &finalize_direct_densemat,
+    vr = caml_alloc_final(2, &finalize_arraydensematrix,
 			  approx_size, approx_size * 20);
     Store_field(vr, 1, (value)a);
 
     CAMLreturn(vr);
 }
 
-CAMLprim value c_densematrix_direct_get(value va, value vij)
+CAMLprim value c_arraydensematrix_get(value va, value vij)
 {
     CAMLparam2(va, vij);
 
@@ -223,7 +223,7 @@ CAMLprim value c_densematrix_direct_get(value va, value vij)
     CAMLreturn(caml_copy_double(DDENSEMAT(va)[j][i]));
 }
 
-CAMLprim void c_densematrix_direct_set(value va, value vij, value vv)
+CAMLprim void c_arraydensematrix_set(value va, value vij, value vv)
 {
     CAMLparam3(va, vij, vv);
 
@@ -235,7 +235,7 @@ CAMLprim void c_densematrix_direct_set(value va, value vij, value vv)
     CAMLreturn0;
 }
 
-CAMLprim void c_densematrix_direct_copy(value va, value vb, value vmn)
+CAMLprim void c_arraydensematrix_copy(value va, value vb, value vmn)
 {
     CAMLparam3(va, vb, vmn);
 
@@ -246,7 +246,7 @@ CAMLprim void c_densematrix_direct_copy(value va, value vb, value vmn)
     CAMLreturn0;
 }
 
-CAMLprim void c_densematrix_direct_scale(value vc, value va, value vmn)
+CAMLprim void c_arraydensematrix_scale(value vc, value va, value vmn)
 {
     CAMLparam3(vc, va, vmn);
 
@@ -257,14 +257,14 @@ CAMLprim void c_densematrix_direct_scale(value vc, value va, value vmn)
     CAMLreturn0;
 }
 
-CAMLprim void c_densematrix_direct_add_identity(value va, value vn)
+CAMLprim void c_arraydensematrix_add_identity(value va, value vn)
 {
     CAMLparam2(va, vn);
     denseAddIdentity(DDENSEMAT(va), Int_val(vn));
     CAMLreturn0;
 }
 
-CAMLprim void c_densematrix_direct_getrf(value va, value vmn, value vp)
+CAMLprim void c_arraydensematrix_getrf(value va, value vmn, value vp)
 {
     CAMLparam3(va, vmn, vp);
 
@@ -280,7 +280,7 @@ CAMLprim void c_densematrix_direct_getrf(value va, value vmn, value vp)
     CAMLreturn0;
 }
 
-CAMLprim void c_densematrix_direct_getrs(value va, value vn,
+CAMLprim void c_arraydensematrix_getrs(value va, value vn,
 	value vp, value vb)
 {
     CAMLparam4(va, vn, vp, vb);
@@ -288,21 +288,21 @@ CAMLprim void c_densematrix_direct_getrs(value va, value vn,
     CAMLreturn0;
 }
 
-CAMLprim void c_densematrix_direct_potrf(value va, value vm)
+CAMLprim void c_arraydensematrix_potrf(value va, value vm)
 {
     CAMLparam2(va, vm);
     densePOTRF(DDENSEMAT(va), Int_val(vm));
     CAMLreturn0;
 }
 
-CAMLprim void c_densematrix_direct_potrs(value va, value vm, value vb)
+CAMLprim void c_arraydensematrix_potrs(value va, value vm, value vb)
 {
     CAMLparam3(va, vm, vb);
     densePOTRS(DDENSEMAT(va), Int_val(vm), REAL_ARRAY(vb));
     CAMLreturn0;
 }
 
-CAMLprim void c_densematrix_direct_geqrf(value va, value vmn,
+CAMLprim void c_arraydensematrix_geqrf(value va, value vmn,
 	value vbeta, value vv)
 {
     CAMLparam4(va, vmn, vbeta, vv);
@@ -314,7 +314,7 @@ CAMLprim void c_densematrix_direct_geqrf(value va, value vmn,
     CAMLreturn0;
 }
 
-CAMLprim void c_densematrix_direct_ormqr(value va, value vmn, value vormqr)
+CAMLprim void c_arraydensematrix_ormqr(value va, value vmn, value vormqr)
 {
     CAMLparam3(va, vmn, vormqr);
 
@@ -484,16 +484,16 @@ CAMLprim value c_bandmatrix_col_set(value vbcol, value vij, value ve)
     CAMLreturn(Val_unit);
 }
 
-/* Band matrix direct functions */
+/* Array Band matrix functions */
 
 #define DBANDMAT(v) (*(realtype ***)(Data_custom_val(v)))
 
-static void finalize_direct_bandmat(value va)
+static void finalize_arraybandmatrix(value va)
 {
     destroyMat(DBANDMAT(va));
 }
 
-CAMLprim value c_bandmatrix_direct_new_band_mat(value vargs)
+CAMLprim value c_arraybandmatrix_new_band_mat(value vargs)
 {
     CAMLparam1(vargs);
     CAMLlocal1(vr);
@@ -504,17 +504,17 @@ CAMLprim value c_bandmatrix_direct_new_band_mat(value vargs)
 
     realtype **a = newBandMat(n, smu, ml);
     if (a == NULL)
-	caml_failwith("Could not create Direct Band Matrix.");
+	caml_failwith("Could not create Array Band Matrix.");
     mlsize_t approx_size = n * (smu + ml + 2) * sizeof(realtype);
 
-    vr = caml_alloc_final(2, &finalize_direct_bandmat,
+    vr = caml_alloc_final(2, &finalize_arraybandmatrix,
 			  approx_size, approx_size * 20);
     Store_field(vr, 1, (value)a);
 
     CAMLreturn(vr);
 }
 
-CAMLprim void c_bandmatrix_direct_copy(value va, value vb, value vsizes)
+CAMLprim void c_arraybandmatrix_copy(value va, value vb, value vsizes)
 {
     CAMLparam3(va, vb, vsizes);
 
@@ -528,7 +528,7 @@ CAMLprim void c_bandmatrix_direct_copy(value va, value vb, value vsizes)
     CAMLreturn0;
 }
 
-CAMLprim void c_bandmatrix_direct_scale(value vc, value va, value vsizes)
+CAMLprim void c_arraybandmatrix_scale(value vc, value va, value vsizes)
 {
     CAMLparam3(vc, va, vsizes);
 
@@ -541,7 +541,7 @@ CAMLprim void c_bandmatrix_direct_scale(value vc, value va, value vsizes)
     CAMLreturn0;
 }
 
-CAMLprim void c_bandmatrix_direct_add_identity(value va, value vn, value vsmu)
+CAMLprim void c_arraybandmatrix_add_identity(value va, value vn, value vsmu)
 {
     CAMLparam3(va, vn, vsmu);
 
@@ -549,7 +549,7 @@ CAMLprim void c_bandmatrix_direct_add_identity(value va, value vn, value vsmu)
     CAMLreturn0;
 }
 
-CAMLprim void c_bandmatrix_direct_gbtrf(value va, value vsizes, value vp)
+CAMLprim void c_arraybandmatrix_gbtrf(value va, value vsizes, value vp)
 {
     CAMLparam3(va, vsizes, vp);
 
@@ -562,7 +562,7 @@ CAMLprim void c_bandmatrix_direct_gbtrf(value va, value vsizes, value vp)
     CAMLreturn0;
 }
 
-CAMLprim void c_bandmatrix_direct_gbtrs(value va, value vsizes, value vp, value vb)
+CAMLprim void c_arraybandmatrix_gbtrs(value va, value vsizes, value vp, value vb)
 {
     CAMLparam4(va, vsizes, vp, vb);
 

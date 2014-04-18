@@ -16,7 +16,7 @@ type real_array = Sundials.real_array
 (* direct linear solvers functions *)
 
 (* note: uses DENSE_ELEM rather than the more efficient DENSE_COL. *)
-module Densematrix =
+module DenseMatrix =
   struct
     type t
 
@@ -66,53 +66,53 @@ module Densematrix =
         = "c_densematrix_set"
   end
 
-module Directdensematrix =
+module ArrayDenseMatrix =
   struct
     type t
 
     external new_dense_mat  : int * int -> t
-        = "c_densematrix_direct_new_dense_mat"
+        = "c_arraydensematrix_new_dense_mat"
 
     external get : t -> (int * int) -> float
-        = "c_densematrix_direct_get"
+        = "c_arraydensematrix_get"
 
     external set : t -> (int * int) -> float -> unit
-        = "c_densematrix_direct_set"
+        = "c_arraydensematrix_set"
 
     external copy  : t -> t -> int * int -> unit
-        = "c_densematrix_direct_copy"
+        = "c_arraydensematrix_copy"
 
     external scale : float -> t -> int * int -> unit
-        = "c_densematrix_direct_scale"
+        = "c_arraydensematrix_scale"
 
     external add_identity : t -> int -> unit
-        = "c_densematrix_direct_add_identity"
+        = "c_arraydensematrix_add_identity"
 
     external getrf : t -> int * int -> lint_array -> unit
-        = "c_densematrix_direct_getrf"
+        = "c_arraydensematrix_getrf"
 
     external getrs : t -> int -> lint_array -> real_array -> unit
-        = "c_densematrix_direct_getrs"
+        = "c_arraydensematrix_getrs"
 
     external potrf : t -> int -> unit
-        = "c_densematrix_direct_potrf"
+        = "c_arraydensematrix_potrf"
 
     external potrs : t -> int -> real_array -> unit
-        = "c_densematrix_direct_potrs"
+        = "c_arraydensematrix_potrs"
 
     external geqrf : t -> int * int -> real_array -> real_array -> unit
-        = "c_densematrix_direct_geqrf"
+        = "c_arraydensematrix_geqrf"
 
     external ormqr'
         : t -> int * int
           -> (real_array * real_array * real_array * real_array)
           -> unit
-        = "c_densematrix_direct_ormqr"
+        = "c_arraydensematrix_ormqr"
 
     let ormqr ~a ~mn ~beta ~v ~w ~work = ormqr' a mn (beta, v, w, work)
   end
 
-module Bandmatrix =
+module BandMatrix =
   struct
     type t
 
@@ -165,43 +165,43 @@ module Bandmatrix =
 
   end
 
-module Directbandmatrix =
+module ArrayBandMatrix =
   struct
     type t
 
     external new_band_mat : int * int * int -> t
-        = "c_bandmatrix_direct_new_band_mat"
+        = "c_arraybandmatrix_new_band_mat"
 
     external get : t -> (int * int) -> float
-        = "c_densematrix_direct_get"
-        (* NB: same as densematrix_direct *)
+        = "c_arraydensematrix_get"
+        (* NB: same as arraydensematrix *)
 
     external set : t -> (int * int) -> float -> unit
-        = "c_densematrix_direct_set"
-        (* NB: same as densematrix_direct *)
+        = "c_arraydensematrix_set"
+        (* NB: same as arraydensematrix *)
 
     external copy' : t -> t -> int * int * int * int * int -> unit
-        = "c_bandmatrix_direct_copy"
+        = "c_arraybandmatrix_copy"
 
     let copy a b n a_smu b_smu copymu copyml
         = copy' a b (n, a_smu, b_smu, copymu, copyml)
 
     external scale' : float -> t -> int * int * int * int -> unit
-        = "c_bandmatrix_direct_scale"
+        = "c_arraybandmatrix_scale"
 
     let scale c a n mu ml smu = scale' c a (n, mu, ml, smu)
 
     external add_identity : t -> int -> int -> unit
-        = "c_bandmatrix_direct_add_identity"
+        = "c_arraybandmatrix_add_identity"
 
     external gbtrf' : t -> int * int * int * int -> lint_array -> unit
-        = "c_bandmatrix_direct_gbtrf"
+        = "c_arraybandmatrix_gbtrf"
 
     let gbtrf a n mu ml smu p = gbtrf' a (n, mu, ml, smu) p
 
     external gbtrs'
         : t -> int * int * int -> lint_array -> real_array -> unit
-        = "c_bandmatrix_direct_gbtrs"
+        = "c_arraybandmatrix_gbtrs"
 
     let gbtrs a n smu ml p b = gbtrs' a (n, smu, ml) p b
   end

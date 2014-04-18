@@ -160,7 +160,8 @@ exception RecoverableFailure
 exception ZeroDiagonalElement of int
 
 include module type of Dls
-  with type Bandmatrix.t = Dls.Bandmatrix.t
-  and  type Directbandmatrix.t = Dls.Directbandmatrix.t
-  and  type Densematrix.t = Dls.Densematrix.t
-  and  type Directdensematrix.t = Dls.Directdensematrix.t
+  with type BandMatrix.t = Dls.BandMatrix.t
+  and  type ArrayBandMatrix.t = Dls.ArrayBandMatrix.t
+  and  type DenseMatrix.t = Dls.DenseMatrix.t
+  and  type ArrayDenseMatrix.t = Dls.ArrayDenseMatrix.t
+

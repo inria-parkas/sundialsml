@@ -25,10 +25,10 @@ include module type of Ida
   and type RootDirs.t = Ida.RootDirs.t
   and type solver_result = Ida.solver_result
   and type error_details = Ida.error_details
-  and type Bandmatrix.t = Dls.Bandmatrix.t
-  and type Directbandmatrix.t = Dls.Directbandmatrix.t
-  and type Densematrix.t = Dls.Densematrix.t
-  and type Directdensematrix.t = Dls.Directdensematrix.t
+  and type BandMatrix.t = Dls.BandMatrix.t
+  and type ArrayBandMatrix.t = Dls.ArrayBandMatrix.t
+  and type DenseMatrix.t = Dls.DenseMatrix.t
+  and type ArrayDenseMatrix.t = Dls.ArrayDenseMatrix.t
 
 (*STARTINTRO*)
 (** Serial nvector interface to the IDA solver.
@@ -243,7 +243,7 @@ type linear_solver =
     @ida <node5#ss:djacFn> Dense Jacobian function
     @ida <node3#ss:ivp_soln> IVP solution
 *)
-and dense_jac_fn = triple_tmp jacobian_arg -> Densematrix.t -> unit
+and dense_jac_fn = triple_tmp jacobian_arg -> DenseMatrix.t -> unit
 
 (** The type of a user-supplied callback function that computes an
     approximation to the Jacobian matrix for the [Band] and [LapackBand]
@@ -282,7 +282,7 @@ and dense_jac_fn = triple_tmp jacobian_arg -> Densematrix.t -> unit
     @ida <node5#ss:bjacFn> Banded Jacobian function
     @ida <node3#ss:ivp_soln> IVP solution
  *)
-and band_jac_fn = triple_tmp jacobian_arg -> int -> int -> Bandmatrix.t -> unit
+and band_jac_fn = triple_tmp jacobian_arg -> int -> int -> BandMatrix.t -> unit
 
 (** The range of nonzero entries in a band matrix.  *)
 and bandrange = { mupper : int; (** The upper half-bandwidth.  *)
