@@ -417,10 +417,10 @@ module BandMatrix :
       end
   end
 
-(** {3 Direct banded matrices}
+(** {3 Array-based banded matrices}
     @cvode <node9#ss:band> The BAND Module *)
 
-(** Operations for creating and manipulating direct banded matrices. *)
+(** Operations for creating and manipulating banded matrices based on arrays. *)
 module ArrayBandMatrix :
   sig
     (**
