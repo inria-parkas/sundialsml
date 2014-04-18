@@ -1,4 +1,7 @@
 
+TODO
+----
+
 1. (Tim) Change the copyright headers:
    - OCaml interface to (serial) Sundials.
    - Copyright 2014...
@@ -29,4 +32,7 @@
    - Repository on Github.
    - Release on Opam.
    - Announce on OCaml and Sundials lists.
+
+TO DISCUSS
+----------
 
