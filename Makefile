@@ -68,9 +68,8 @@ META: META.in
 
 doc: doc/html/index.html
 
-doc/html/index.html: doc/html dochtml.cmo \
-		     $(MLOBJ:.cmo=.mli) $(MLOBJ:.cmo=.cmi) \
-		     intro.doc cvode_nvector.doc
+doc/html/index.html: doc/html dochtml.cmo intro.doc \
+		     $(MLOBJ:.cmo=.mli) $(MLOBJ:.cmo=.cmi) 
 	$(OCAMLDOC) -g dochtml.cmo \
 	    -cvode-doc-root "$(CVODE_DOC_ROOT)" \
 	    -ida-doc-root "$(IDA_DOC_ROOT)" \
