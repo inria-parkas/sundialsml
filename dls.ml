@@ -20,10 +20,10 @@ module DenseMatrix =
   struct
     type t
 
-    external new_dense_mat  : int * int -> t
+    external make : int -> int -> t
         = "c_densematrix_new_dense_mat"
 
-    external print_mat      : t -> unit
+    external print          : t -> unit
         = "c_densematrix_print_mat"
 
     external set_to_zero    : t -> unit
@@ -59,10 +59,10 @@ module DenseMatrix =
 
     let ormqr ~a ~beta ~v ~w ~work = ormqr' a (beta, v, w, work)
 
-    external get : t -> (int * int) -> float
+    external get : t -> int -> int -> float
         = "c_densematrix_get"
 
-    external set : t -> (int * int) -> float -> unit
+    external set : t -> int -> int -> float -> unit
         = "c_densematrix_set"
   end
 
@@ -70,25 +70,25 @@ module ArrayDenseMatrix =
   struct
     type t
 
-    external new_dense_mat  : int * int -> t
+    external make  : int -> int -> t
         = "c_arraydensematrix_new_dense_mat"
 
-    external get : t -> (int * int) -> float
+    external get : t -> int -> int -> float
         = "c_arraydensematrix_get"
 
-    external set : t -> (int * int) -> float -> unit
+    external set : t -> int -> int -> float -> unit
         = "c_arraydensematrix_set"
 
-    external copy  : t -> t -> int * int -> unit
+    external copy  : t -> t -> int -> int -> unit
         = "c_arraydensematrix_copy"
 
-    external scale : float -> t -> int * int -> unit
+    external scale : float -> t -> int -> int -> unit
         = "c_arraydensematrix_scale"
 
     external add_identity : t -> int -> unit
         = "c_arraydensematrix_add_identity"
 
-    external getrf : t -> int * int -> lint_array -> unit
+    external getrf : t -> int -> int -> lint_array -> unit
         = "c_arraydensematrix_getrf"
 
     external getrs : t -> int -> lint_array -> real_array -> unit
@@ -100,8 +100,11 @@ module ArrayDenseMatrix =
     external potrs : t -> int -> real_array -> unit
         = "c_arraydensematrix_potrs"
 
-    external geqrf : t -> int * int -> real_array -> real_array -> unit
+    external geqrf' : t -> int * int -> real_array -> real_array -> unit
         = "c_arraydensematrix_geqrf"
+
+    let geqrf a m n beta v
+        = geqrf' a (m, n) beta v
 
     external ormqr'
         : t -> int * int
@@ -109,17 +112,17 @@ module ArrayDenseMatrix =
           -> unit
         = "c_arraydensematrix_ormqr"
 
-    let ormqr ~a ~mn ~beta ~v ~w ~work = ormqr' a mn (beta, v, w, work)
+    let ormqr ~a ~m ~n ~beta ~v ~w ~work = ormqr' a (m, n) (beta, v, w, work)
   end
 
 module BandMatrix =
   struct
     type t
 
-    external new_band_mat : int * int * int * int -> t
+    external make : int -> int -> int -> int -> t
         = "c_bandmatrix_new_band_mat"
 
-    external print_mat : t -> unit
+    external print          : t -> unit
         = "c_densematrix_print_mat"
           (* NB: same as densematrix *)
 
@@ -143,10 +146,10 @@ module BandMatrix =
     external gbtrs : t -> lint_array -> real_array -> unit
         = "c_bandmatrix_gbtrs"
 
-    external get : t -> (int * int) -> float
+    external get : t -> int -> int -> float
         = "c_bandmatrix_get"
 
-    external set : t -> (int * int) -> float -> unit
+    external set : t -> int -> int -> float -> unit
         = "c_bandmatrix_set"
 
     module Col =
@@ -156,10 +159,10 @@ module BandMatrix =
         external get_col : t -> int -> c
             = "c_bandmatrix_col_get_col"
 
-        external get : c -> (int * int) -> float
+        external get : c -> int -> int -> float
             = "c_bandmatrix_col_get"
 
-        external set : c -> (int * int) -> float -> unit
+        external set : c -> int -> int -> float -> unit
             = "c_bandmatrix_col_set"
       end
 
@@ -169,14 +172,14 @@ module ArrayBandMatrix =
   struct
     type t
 
-    external new_band_mat : int * int * int -> t
+    external make : int -> int -> int -> t
         = "c_arraybandmatrix_new_band_mat"
 
-    external get : t -> (int * int) -> float
+    external get : t -> int -> int -> float
         = "c_arraydensematrix_get"
         (* NB: same as arraydensematrix *)
 
-    external set : t -> (int * int) -> float -> unit
+    external set : t -> int -> int -> float -> unit
         = "c_arraydensematrix_set"
         (* NB: same as arraydensematrix *)
 

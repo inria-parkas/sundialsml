@@ -41,13 +41,13 @@ static void finalize_dlsmat(value va)
     DestroyMat(DLSMAT(va));
 }
 
-CAMLprim value c_densematrix_new_dense_mat(value vmn)
+CAMLprim value c_densematrix_new_dense_mat(value vm, value vn)
 {
-    CAMLparam1(vmn);
+    CAMLparam2(vm, vn);
     CAMLlocal1(vr);
 
-    int m = Int_val(Field(vmn, 0));
-    int n = Int_val(Field(vmn, 1));
+    int m = Int_val(vm);
+    int n = Int_val(vn);
 
     DlsMat a = NewDenseMat(m, n);
     if (a == NULL)
@@ -150,13 +150,13 @@ CAMLprim void c_densematrix_ormqr(value va, value vormqr)
     CAMLreturn0;
 }
  
-CAMLprim value c_densematrix_get(value vmatrix, value vij)
+CAMLprim value c_densematrix_get(value vmatrix, value vi, value vj)
 {
-    CAMLparam2(vmatrix, vij);
+    CAMLparam3(vmatrix, vi, vj);
     DlsMat m = DLSMAT(vmatrix);
 
-    int i = Int_val(Field(vij, 0));
-    int j = Int_val(Field(vij, 1));
+    int i = Int_val(vi);
+    int j = Int_val(vj);
 
 #if CHECK_MATRIX_ACCESS == 1
     if (i < 0 || i >= m->M) caml_invalid_argument("Densematrix.get: invalid i");
@@ -167,13 +167,13 @@ CAMLprim value c_densematrix_get(value vmatrix, value vij)
     CAMLreturn(caml_copy_double(v));
 }
 
-CAMLprim value c_densematrix_set(value vmatrix, value vij, value v)
+CAMLprim value c_densematrix_set(value vmatrix, value vi, value vj, value v)
 {
-    CAMLparam3(vmatrix, vij, v);
+    CAMLparam4(vmatrix, vi, vj, v);
     DlsMat m = DLSMAT(vmatrix);
 
-    int i = Int_val(Field(vij, 0));
-    int j = Int_val(Field(vij, 1));
+    int i = Int_val(vi);
+    int j = Int_val(vj);
 
 #if CHECK_MATRIX_ACCESS == 1
     if (i < 0 || i >= m->M) caml_invalid_argument("Densematrix.set: invalid i");
@@ -193,13 +193,13 @@ static void finalize_arraydensematrix(value va)
     destroyMat(DDENSEMAT(va));
 }
 
-CAMLprim value c_arraydensematrix_new_dense_mat(value vmn)
+CAMLprim value c_arraydensematrix_new_dense_mat(value vm, value vn)
 {
-    CAMLparam1(vmn);
+    CAMLparam2(vm, vn);
     CAMLlocal1(vr);
 
-    int m = Int_val(Field(vmn, 0));
-    int n = Int_val(Field(vmn, 1));
+    int m = Int_val(vm);
+    int n = Int_val(vn);
 
     realtype **a = newDenseMat(m, n);
     if (a == NULL)
@@ -213,45 +213,45 @@ CAMLprim value c_arraydensematrix_new_dense_mat(value vmn)
     CAMLreturn(vr);
 }
 
-CAMLprim value c_arraydensematrix_get(value va, value vij)
+CAMLprim value c_arraydensematrix_get(value va, value vi, value vj)
 {
-    CAMLparam2(va, vij);
+    CAMLparam3(va, vi, vj);
 
-    int i = Int_val(Field(vij, 0));
-    int j = Int_val(Field(vij, 1));
+    int i = Int_val(vi);
+    int j = Int_val(vj);
 
     CAMLreturn(caml_copy_double(DDENSEMAT(va)[j][i]));
 }
 
-CAMLprim void c_arraydensematrix_set(value va, value vij, value vv)
+CAMLprim void c_arraydensematrix_set(value va, value vi, value vj, value vv)
 {
-    CAMLparam3(va, vij, vv);
+    CAMLparam4(va, vi, vj, vv);
 
-    int i = Int_val(Field(vij, 0));
-    int j = Int_val(Field(vij, 1));
+    int i = Int_val(vi);
+    int j = Int_val(vj);
 
     DDENSEMAT(va)[j][i] = Double_val(vv);
 
     CAMLreturn0;
 }
 
-CAMLprim void c_arraydensematrix_copy(value va, value vb, value vmn)
+CAMLprim void c_arraydensematrix_copy(value va, value vb, value vm, value vn)
 {
-    CAMLparam3(va, vb, vmn);
+    CAMLparam4(va, vb, vm, vn);
 
-    int m = Int_val(Field(vmn, 0));
-    int n = Int_val(Field(vmn, 1));
+    int m = Int_val(vm);
+    int n = Int_val(vn);
 
     denseCopy(DDENSEMAT(va), DDENSEMAT(vb), m, n);
     CAMLreturn0;
 }
 
-CAMLprim void c_arraydensematrix_scale(value vc, value va, value vmn)
+CAMLprim void c_arraydensematrix_scale(value vc, value va, value vm, value vn)
 {
-    CAMLparam3(vc, va, vmn);
+    CAMLparam4(vc, va, vm, vn);
 
-    int m = Int_val(Field(vmn, 0));
-    int n = Int_val(Field(vmn, 1));
+    int m = Int_val(vm);
+    int n = Int_val(vn);
 
     denseScale(Double_val(vc), DDENSEMAT(va), m, n);
     CAMLreturn0;
@@ -264,12 +264,12 @@ CAMLprim void c_arraydensematrix_add_identity(value va, value vn)
     CAMLreturn0;
 }
 
-CAMLprim void c_arraydensematrix_getrf(value va, value vmn, value vp)
+CAMLprim void c_arraydensematrix_getrf(value va, value vm, value vn, value vp)
 {
-    CAMLparam3(va, vmn, vp);
+    CAMLparam4(va, vm, vn, vp);
 
-    int m = Int_val(Field(vmn, 0));
-    int n = Int_val(Field(vmn, 1));
+    int m = Int_val(vn);
+    int n = Int_val(vm);
 
     int r = denseGETRF(DDENSEMAT(va), m, n, LONG_ARRAY(vp));
 
@@ -332,15 +332,16 @@ CAMLprim void c_arraydensematrix_ormqr(value va, value vmn, value vormqr)
 
 /* Band matrix functions */
 
-CAMLprim value c_bandmatrix_new_band_mat(value vsizes)
+CAMLprim value c_bandmatrix_new_band_mat(value vn, value vmu,
+	value vml, value vsmu)
 {
-    CAMLparam1(vsizes);
+    CAMLparam4(vn, vmu, vml, vsmu);
     CAMLlocal1(vr);
 
-    int n   = Int_val(Field(vsizes, 0));
-    int mu  = Int_val(Field(vsizes, 1));
-    int ml  = Int_val(Field(vsizes, 2));
-    int smu = Int_val(Field(vsizes, 3));
+    int n   = Int_val(vn);
+    int mu  = Int_val(vmu);
+    int ml  = Int_val(vml);
+    int smu = Int_val(vsmu);
 
     DlsMat a = NewBandMat(n, mu, ml, smu);
     if (a == NULL)
@@ -383,13 +384,13 @@ CAMLprim void c_bandmatrix_gbtrs(value va, value vp, value vb)
     CAMLreturn0;
 }
 
-CAMLprim value c_bandmatrix_get(value vmatrix, value vij)
+CAMLprim value c_bandmatrix_get(value vmatrix, value vi, value vj)
 {
-    CAMLparam2(vmatrix, vij);
+    CAMLparam3(vmatrix, vi, vj);
     DlsMat m = DLSMAT(vmatrix);
 
-    int i = Int_val(Field(vij, 0));
-    int j = Int_val(Field(vij, 1));
+    int i = Int_val(vi);
+    int j = Int_val(vj);
 
 #if CHECK_MATRIX_ACCESS == 1
     if (i < 0 || i >= m->M) caml_invalid_argument("Bandmatrix.get: invalid i");
@@ -400,13 +401,13 @@ CAMLprim value c_bandmatrix_get(value vmatrix, value vij)
     CAMLreturn(caml_copy_double(v));
 }
 
-CAMLprim value c_bandmatrix_set(value vmatrix, value vij, value v)
+CAMLprim value c_bandmatrix_set(value vmatrix, value vi, value vj, value v)
 {
-    CAMLparam3(vmatrix, vij, v);
+    CAMLparam4(vmatrix, vi, vj, v);
     DlsMat m = DLSMAT(vmatrix);
 
-    int i = Int_val(Field(vij, 0));
-    int j = Int_val(Field(vij, 1));
+    int i = Int_val(vi);
+    int j = Int_val(vj);
 
 #if CHECK_MATRIX_ACCESS == 1
     if (i < 0 || i >= m->M) caml_invalid_argument("Bandmatrix.set: invalid i");
@@ -442,14 +443,14 @@ CAMLprim value c_bandmatrix_col_get_col(value vmatrix, value vj)
     CAMLreturn(r);
 }
 
-CAMLprim value c_bandmatrix_col_get(value vbcol, value vij)
+CAMLprim value c_bandmatrix_col_get(value vbcol, value vi, value vj)
 {
-    CAMLparam2(vbcol, vij);
+    CAMLparam3(vbcol, vi, vj);
 
     realtype *bcol = (realtype *)Field(vbcol, 0);
 
-    int i = Int_val(Field(vij, 0));
-    int j = Int_val(Field(vij, 1));
+    int i = Int_val(vi);
+    int j = Int_val(vj);
 
 #if CHECK_MATRIX_ACCESS == 1
     int mu = Int_val(Field(vbcol, 2));
@@ -462,14 +463,14 @@ CAMLprim value c_bandmatrix_col_get(value vbcol, value vij)
     CAMLreturn(caml_copy_double(BAND_COL_ELEM(bcol, i, j)));
 }
 
-CAMLprim value c_bandmatrix_col_set(value vbcol, value vij, value ve)
+CAMLprim value c_bandmatrix_col_set(value vbcol, value vi, value vj, value ve)
 {
-    CAMLparam3(vbcol, vij, ve);
+    CAMLparam4(vbcol, vi, vj, ve);
 
     realtype *bcol = (realtype *)Field(vbcol, 0);
 
-    int i = Int_val(Field(vij, 0));
-    int j = Int_val(Field(vij, 1));
+    int i = Int_val(vi);
+    int j = Int_val(vj);
 
 #if CHECK_MATRIX_ACCESS == 1
     int mu = Int_val(Field(vbcol, 2));
@@ -493,14 +494,14 @@ static void finalize_arraybandmatrix(value va)
     destroyMat(DBANDMAT(va));
 }
 
-CAMLprim value c_arraybandmatrix_new_band_mat(value vargs)
+CAMLprim value c_arraybandmatrix_new_band_mat(value vn, value vsmu, value vml)
 {
-    CAMLparam1(vargs);
+    CAMLparam3(vn, vsmu, vml);
     CAMLlocal1(vr);
 
-    int n   = Int_val(Field(vargs, 0));
-    int smu = Int_val(Field(vargs, 1));
-    int ml  = Int_val(Field(vargs, 2));
+    int n   = Int_val(vn);
+    int smu = Int_val(vsmu);
+    int ml  = Int_val(vml);
 
     realtype **a = newBandMat(n, smu, ml);
     if (a == NULL)
@@ -573,3 +574,4 @@ CAMLprim void c_arraybandmatrix_gbtrs(value va, value vsizes, value vp, value vb
     bandGBTRS(DBANDMAT(va), n, smu, ml, LONG_ARRAY(vp), REAL_ARRAY(vb));
     CAMLreturn0;
 }
+

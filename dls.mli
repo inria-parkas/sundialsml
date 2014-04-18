@@ -23,7 +23,7 @@ module DenseMatrix :
   sig
     (**
     This type represents a [DlsMat] returned from a call to
-    {!new_dense_mat}.
+    {!make}.
 
      @cvode <node9#s:dls>  Type DlsMat
      @cvode <node9#ss:dense> NewDenseMat 
@@ -33,34 +33,34 @@ module DenseMatrix :
     (** {4 Basic access} *)
 
     (**
-     [new_dense_mat m n] returns an [m] by [n]  dense matrix.
+     [make m n] returns an [m] by [n]  dense matrix.
 
      @cvode <node9#ss:dense> NewDenseMat
      *)
-    val new_dense_mat  : int * int -> t
+    val make  : int -> int -> t
 
     (**
      Prints a dense matrix to stdout.
 
      @cvode <node9#ss:dense> PrintMat
      *)
-    val print_mat      : t -> unit
+    val print : t -> unit
 
     (**
-     [get a (i, j)] returns the value at row [i] and column [j] in [a],
+     [get a i j] returns the value at row [i] and column [j] in [a],
      where [0 <= i < m] and [0 <= j < n].
 
      @cvode <node9#s:dls> DENSE_ELEM
      *)
-    val get : t -> (int * int) -> float
+    val get : t -> int -> int -> float
 
     (**
-     [set a (i, j) v] stores the value [v] at row [i] and column [j] in [a],
+     [set a i j v] stores the value [v] at row [i] and column [j] in [a],
      where [0 <= i < m] and [0 <= j < n].
 
      @cvode <node9#s:dls> DENSE_ELEM
      *)
-    val set : t -> (int * int) -> float -> unit
+    val set : t -> int -> int -> float -> unit
 
     (** {4 Calculations} *)
 
@@ -155,7 +155,7 @@ module ArrayDenseMatrix :
   sig
     (**
      This type represents a [realtype **] returned from a call to
-     {!new_dense_mat}.
+     {!make}.
 
      The underlying array cannot be exposed directly in OCaml as a
      {{:OCAML_DOC_ROOT(Bigarray)} Bigarray} because it is an array of arrays
@@ -170,41 +170,41 @@ module ArrayDenseMatrix :
     (** {4 Basic access} *)
 
     (**
-     [new_dense_mat m n] returns an [m] by [n] dense small matrix.
+     [make m n] returns an [m] by [n] dense small matrix.
 
      @cvode <node9#ss:dense> newDenseMat
      *)
-    val new_dense_mat  : int * int -> t
+    val make : int -> int -> t
 
     (**
      [get a (i, j)] returns the value at row [i] and column [j] in the m by
      n matrix [a], where 0 <= [i] < m and 0 <= [j] < n.
      *)
-    val get : t -> (int * int) -> float
+    val get : t -> int -> int -> float
 
     (**
      [set a (i, j) v] stores the value [v] at row [i] and column [j] in the
      m by n matrix [a], where 0 <= [i] < m and 0 <= [j] < n.
      *)
-    val set : t -> (int * int) -> float -> unit
+    val set : t -> int -> int -> float -> unit
 
     (** {4 Calculations} *)
 
     (**
-     [copy src dst (m, n)] copies the contents of one [m] by [n] matrix
+     [copy src dst m n] copies the contents of one [m] by [n] matrix
      into another.
 
      @cvode <node9#ss:dense> denseCopy
      *)
-    val copy  : t -> t -> int * int -> unit
+    val copy  : t -> t -> int -> int -> unit
 
     (*
-     [scale c a (m, n)] multiplies each element of the [m] by [n]
+     [scale c a m n] multiplies each element of the [m] by [n]
      matrix [a] by [c].
 
      @cvode <node9#ss:dense> denseScale
      *)
-    val scale : float -> t -> int * int -> unit
+    val scale : float -> t -> int -> int -> unit
 
     (**
      [add_identity a n] increments an [n] by [n] matrix by the identity
@@ -215,13 +215,13 @@ module ArrayDenseMatrix :
     val add_identity : t -> int -> unit
 
     (**
-     [getrf a (m, n) p] performs the LU factorization of an [m] by [n] matrix
+     [getrf a m n p] performs the LU factorization of an [m] by [n] matrix
      [a] with partial pivoting according to [p].
 
      @cvode <node9#ss:dense> denseGETRF
      @raise ZeroDiagonalElement Zero found in matrix diagonal
      *)
-    val getrf : t -> int * int -> Sundials.lint_array -> unit
+    val getrf : t -> int -> int -> Sundials.lint_array -> unit
 
     (**
      [getrs a n p b] finds the solution of [ax = b] using LU factorization.
@@ -249,12 +249,12 @@ module ArrayDenseMatrix :
     val potrs : t -> int -> Sundials.real_array -> unit
 
     (**
-     [geqrf a (m, n) beta work] performs the QR factorization of an
+     [geqrf a m n beta work] performs the QR factorization of an
      [m] by [n] matrix, where [m] >= [n].
 
      @cvode <node9#ss:dense> denseGEQRF
      *)
-    val geqrf : t -> int * int -> Sundials.real_array -> Sundials.real_array -> unit
+    val geqrf : t -> int -> int -> Sundials.real_array -> Sundials.real_array -> unit
 
     (**
      [ormqr a beta v w work] computes the product [w = Qv], with Q calculated using {!geqrf}.
@@ -267,7 +267,7 @@ module ArrayDenseMatrix :
      @cvode <node9#ss:dense> denseORMQR
      *)
     val ormqr :
-      a:t -> mn:(int * int) -> beta:Sundials.real_array ->
+      a:t -> m:int -> n:int -> beta:Sundials.real_array ->
       v:Sundials.real_array -> w:Sundials.real_array -> work:Sundials.real_array
       -> unit
   end
@@ -280,7 +280,7 @@ module BandMatrix :
   sig
     (**
     This type represents a [DlsMat] returned from a call to
-    {!new_band_mat}.
+    {!make}.
 
      @cvode <node9#s:dls>  Type DlsMat
      @cvode <node9#ss:band> NewBandMat 
@@ -290,39 +290,39 @@ module BandMatrix :
     (** {4 Basic access} *)
 
     (**
-     [new_band_mat n mu ml smu] returns an [n] by [n] band matrix of upper
+     [make n mu ml smu] returns an [n] by [n] band matrix of upper
      bandwith [mu] and lower bandwidth [ml].
      - If [smu] = [mu], the result will {b not} be LU factored.
      - Otherwise pass [smu] = min([n]-1, [mu] + [ml]).
 
      @cvode <node9#ss:band> NewBandMat
      *)
-    val new_band_mat : int * int * int * int -> t
+    val make : int -> int -> int -> int -> t
 
     (**
      Prints a band matrix to stdout.
 
      @cvode <node9#ss:band> PrintMat
      *)
-    val print_mat : t -> unit
+    val print : t -> unit
 
     (**
-     [get a (i, j)] returns the value at row [i] and column [j] of the n by n
+     [get a i j] returns the value at row [i] and column [j] of the n by n
      matrix [a],
      where 0 <= [i], [j] <= n - 1 and [j] - mu(A) <= [i] <= [j] + ml(A).
 
      @cvode <node9#s:dls> BAND_ELEM
      *)
-    val get : t -> (int * int) -> float
+    val get : t -> int -> int -> float
 
     (**
-      [set a (i, j) v] stores the value [v] at row [i] and column [j] of the
+      [set a i j v] stores the value [v] at row [i] and column [j] of the
       n by n matrix [a], where 0 <= [i], [j] <= n - 1 and
       [j] - mu(A) <= [i] <= [j] + ml(A).
 
       @cvode <node9#s:dls> BAND_ELEM
      *)
-    val set : t -> (int * int) -> float -> unit
+    val set : t -> int -> int -> float -> unit
 
     (** {4 Calculations} *)
 
@@ -398,22 +398,22 @@ module BandMatrix :
         val get_col : t -> int -> c
 
         (**
-         [get c (i, j)] returns the ([i], [j])th entry of the band matrix from
+         [get c i j] returns the ([i], [j])th entry of the band matrix from
          which the column [c] has already been selected;
          provided that [j] - mu(c) <= [i] <= [j] + ml(c).
 
          @cvode <node9#s:dls> BAND_COL_ELEM
          *)
-        val get : c -> (int * int) -> float
+        val get : c -> int -> int -> float
 
         (**
-         [set c (i, j) v] stores the value [v] at the ([i], [j])th entry of
+         [set c i j v] stores the value [v] at the ([i], [j])th entry of
          the band matrix from which the column [c] has already been selected;
          provided that [j] - mu(c) <= [i] <= [j] + ml(c).
 
          @cvode <node9#s:dls> BAND_COL_ELEM
          *)
-        val set : c -> (int * int) -> float -> unit
+        val set : c -> int -> int -> float -> unit
       end
   end
 
@@ -425,7 +425,7 @@ module ArrayBandMatrix :
   sig
     (**
      This type represents a [realtype **] returned from a call to
-     {!new_band_mat}.
+     {!make}.
 
      The underlying array cannot be exposed directly in OCaml as a
      {{:OCAML_DOC_ROOT(Bigarray)} Bigarray} because it is an array of arrays
@@ -439,24 +439,24 @@ module ArrayBandMatrix :
     (** {4 Basic access} *)
 
     (**
-     [new_band_mat n smu ml] returns an [n] by [n] band matrix with lower
+     [make n smu ml] returns an [n] by [n] band matrix with lower
      half-bandwidth [ml].
 
      @cvode <node9#ss:band> newBandMat
      *)
-    val new_band_mat : int * int * int -> t
+    val make : int -> int -> int -> t
 
     (**
-     [get a (i, j)] returns the value at row [i] and column [j] in the m by
+     [get a i j] returns the value at row [i] and column [j] in the m by
      n matrix [a], where 0 <= [i] < m and 0 <= [j] < n.
      *)
-    val get : t -> (int * int) -> float
+    val get : t -> int -> int -> float
 
     (**
-     [set a (i, j) v] stores the value [v] at row [i] and column [j] in the
+     [set a i j v] stores the value [v] at row [i] and column [j] in the
      m by n matrix [a], where 0 <= [i] < m and 0 <= [j] < n.
      *)
-    val set : t -> (int * int) -> float -> unit
+    val set : t -> int -> int -> float -> unit
 
     (** {4 Calculations} *)
 
@@ -504,3 +504,4 @@ module ArrayBandMatrix :
         : t -> int -> int -> int -> Sundials.lint_array ->
       Sundials.real_array -> unit
   end
+
