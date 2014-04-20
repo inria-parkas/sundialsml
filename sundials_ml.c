@@ -20,6 +20,7 @@
 #include <caml/memory.h>
 #include <caml/alloc.h>
 #include <caml/callback.h>
+#include <caml/bigarray.h>
 
 #include "sundials_ml.h"
 
@@ -65,3 +66,48 @@ CAMLprim value sundials_ml_weak_get (value ar, value n)
     CAMLreturn (caml_callback2 (weak_get, ar, n));
 }
 #endif	/* !HAVE_WEAK */
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ *
+ * Two-dimensional (Iliffe) arrays based on BigArrays.
+ *
+ * We represent these as pairs:
+ *	Field(ra, 0) = the underlying 2 dimensional big array
+ *		       (for use from within OCaml)
+ *	Field(ra, 1) = a custom value giving a realtype ** table pointing into
+ *		       the rows of the big array (for passing to Sundials)
+ */
+
+CAMLprim value c_sundials_realarray2_wrap(value vba)
+{
+    CAMLparam1(vba);
+    CAMLlocal1(r);
+
+    struct caml_ba_array *ba = Caml_ba_array_val(vba);
+    int nr = ba->dim[0];
+    int nc = ba->dim[1];
+
+    mlsize_t table_size = nr * sizeof(realtype *);
+    value vtable = caml_alloc_final(nr, NULL, table_size, table_size * 20);
+    realtype **table = (realtype **)Data_custom_val(vtable);
+
+    int i;
+
+    table[0] = (realtype *)(ba->data);
+    for (i = 1; i < nr; ++i) {
+	table[i] = table[i - 1] + nc;
+    }
+
+    r = caml_alloc_tuple(2);
+    Store_field(r, 0, vba);
+    Store_field(r, 1, vtable);
+
+    CAMLreturn(r);
+}
+
+CAMLprim value c_sundials_realarray2_unwrap(value vra)
+{
+    CAMLparam1(vra);
+    CAMLreturn(Field(vra, 0));
+}
+

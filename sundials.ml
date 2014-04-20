@@ -51,12 +51,6 @@ type real_array =
 let make_real_array =
   Bigarray.Array1.create Bigarray.float64 Bigarray.c_layout
 
-type real_array2 =
-  (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
-
-let make_real_array2 =
-  Bigarray.Array2.create Bigarray.float64 Bigarray.c_layout
-
 (* Note the type annotations are redundant because there's already a .mli, but
    explicit annotations improve performance for bigarrays.  *)
 module Carray =
@@ -443,6 +437,35 @@ module RootDirs =
     let blit_all = A.blit_all
 
     let init = A.init
+
+  end
+
+(* Arrays of pointers to arrays of reals. *)
+
+module RealArray2 =
+  struct
+    type t
+
+    type data =
+      (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
+
+    external wrap : data -> t
+      = "c_sundials_realarray2_wrap"
+
+    external unwrap : t -> data
+      = "c_sundials_realarray2_unwrap"
+
+    let make nr nc =
+      let d = Bigarray.Array2.create Bigarray.float64 Bigarray.c_layout nr nc
+      in wrap d
+
+    let copy d =
+      let b = unwrap d in
+      let r = Bigarray.Array2.dim1 b in
+      let c = Bigarray.Array2.dim2 b in
+      let b' = Bigarray.Array2.create Bigarray.float64 Bigarray.c_layout r c in
+      Bigarray.Array2.blit b b';
+      wrap b'
 
   end
 

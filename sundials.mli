@@ -42,14 +42,6 @@ type real_array =
 (** [make_real_array n] returns a {!real_array} with [n] elements. *)
 val make_real_array : int -> real_array
 
-(** A {{:OCAML_DOC_ROOT(Bigarray.Array2)} (Bigarray)} two-dimensional array of
-   floats. *)
-type real_array2 =
-  (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
-
-(** [make_real_array2 m n] returns a {!real_array2} with [m] x [n]  elements. *)
-val make_real_array2 : int -> int -> real_array2
-
 (** Utility functions for serial nvectors as used in {!Cvode_serial}. *)
 module Carray :
   sig
@@ -294,6 +286,33 @@ module RootDirs :
 
     (** Copies the contents of a [RootDirs.t] into a list.  *)
     val to_list : t -> root_direction list
+  end
+
+(** {2 Two-dimensional arrays of arrays of reals} *)
+
+(** Arrays of pointers to arrays of reals. *)
+module RealArray2 :
+  sig
+    type t
+
+    (** The underlying data is stored as a two-dimensional
+       {{:OCAML_DOC_ROOT(Bigarray.Array2)}Bigarray} of floats. *)
+    type data =
+      (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
+
+    (** [make nr nc] creates an [nr] by [nc] wrapped array. *)
+    val make : int -> int -> t
+
+    (** [copy a] creates a copy of [a] and its underlying {!data} array. *)
+    val copy : t -> t
+
+    (** Creates a new array from an existing {!data} array; changes to either
+        array affect the other. *)
+    val wrap : data -> t
+
+    (** Returns an underlying {!data} array; changes to either array affect the
+        other. *)
+    val unwrap : t -> data
   end
 
 (** {2 Solver results and error reporting} *)
