@@ -22,13 +22,21 @@ let cvode_doc_root =
 let ida_doc_root =
   ref "https://computation.llnl.gov/casc/sundials/documentation/ida_guide/"
 
+#if OCAML_3X
 class dochtml =
   object(self)
-    inherit Odoc_html.html
+    inherit Odoc_html.html as super
+#else
+module Generator (G : Odoc_html.Html_generator) =
+struct
+  class html =
+  object(self)
+    inherit G.html as super
+#endif
 
     val rex_cvode = Str.regexp "<\\([^#>]*\\)\\(#[^)]*\\)?> \\(.*\\)"
 
-    method html_of_cvode t =
+    method private html_of_cvode t =
       let s = Odoc_info.text_string_of_text t in
       if not (Str.string_match rex_cvode s 0) then
         failwith "Bad parse!"
@@ -40,12 +48,10 @@ class dochtml =
         and title = Str.matched_group 3 s
         in
         Printf.sprintf
-          "<div class=\"cvode\"><small>
-              See sundials: <a href=\"%s%s.html%s\">%s</a>
-            </small></div>"
+          "<div class=\"cvode\"><small>See sundials: <a href=\"%s%s.html%s\">%s</a></small></div>"
           !cvode_doc_root page anchor title
 
-    method html_of_ida t =
+    method private html_of_ida t =
       let s = Odoc_info.text_string_of_text t in
       if not (Str.string_match rex_cvode s 0) then
         failwith "Bad parse!"
@@ -57,9 +63,7 @@ class dochtml =
         and title = Str.matched_group 3 s
         in
         Printf.sprintf
-          "<div class=\"ida\"><small>
-              See sundials: <a href=\"%s%s.html%s\">%s</a>
-            </small></div>"
+          "<div class=\"ida\"><small>See sundials: <a href=\"%s%s.html%s\">%s</a></small></div>"
           !ida_doc_root page anchor title
 
     initializer
@@ -68,6 +72,11 @@ class dochtml =
 
   end
 
+#if OCAML_3X
+#else
+end
+#endif
+
 let option_cvode_doc_root =
   ("-cvode-doc-root", Arg.String (fun d -> cvode_doc_root := d), 
    "<dir>  specify the root url for the Sundials CVODE documentation.")
@@ -75,10 +84,16 @@ let option_ida_doc_root =
   ("-ida-doc-root", Arg.String (fun d -> ida_doc_root := d), 
    "<dir>  specify the root url for the Sundials IDA documentation.")
 
+#if OCAML_3X
 let _ =
   let dochtml = new dochtml in
   Odoc_args.add_option option_cvode_doc_root;
   Odoc_args.add_option option_ida_doc_root;
   Odoc_args.set_doc_generator
     (Some (dochtml :> Odoc_args.doc_generator))
-
+#else
+let _ =
+  Odoc_args.add_option option_cvode_doc_root;
+  Odoc_args.add_option option_ida_doc_root;
+  Odoc_args.extend_html_generator (module Generator : Odoc_gen.Html_functor)
+#endif

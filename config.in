@@ -11,6 +11,7 @@ OCAMLOPTFLAGS =
 CC = gcc
 CFLAGS += @cflags@ # -DRESTRICT_INTERNAL_PRECISION"
 LDFLAGS += @ldflags@
+CPPFLAGS ?= -P -x c
 
 CVODE_LDFLAGS = @cvode_ldflags@ $(LDFLAGS)
 CVODE_CFLAGS = @cvode_cppflags@ $(CFLAGS)
@@ -22,6 +23,7 @@ OCAMLFLAGS = @ocamlflags@
 OCAML_INCLUDE := $(shell $(OCAMLC) -where)
 OCAML_CVODE_LIBLINK = $(CVODE_LDFLAGS)
 OCAML_IDA_LIBLINK = $(IDA_LDFLAGS)
+OCAML_3X = @ocaml_3x@
 
 OCAML ?= @OCAMLBIN@ocaml
 

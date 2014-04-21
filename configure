@@ -118,11 +118,17 @@ if [ $? -ne 0 ]; then
     ocaml_path='NOT FOUND'
     ocaml_version=''
     ocaml_libpath=''
+    ocaml_3x=''
 else
     case "${ocaml_version}" in
 	[0-2].*.* | 3.0* | 3.[2-9].* | 3.10.* | 3.11.*)
 	    error="${error}\n\tocaml >= 3.12.0 required" ;;
 	*) ;;
+    esac
+
+    case "${ocaml_version}" in
+	3.*) ocaml_3x=1 ;;
+	*) ocaml_3x=0 ;;
     esac
 
     ocaml_libpath="${ocaml_path%/}/"
@@ -351,6 +357,7 @@ fi
 	 s#@ida_ldflags@#${ida_ldflags}#;
 	 s#@ocamlflags@#${ocamlflags}#;
 	 s#@ocamloptflags@#${ocamloptflags}#;
+	 s#@ocaml_3x@#${ocaml_3x}#;
 	 s#@ocamlmklibflags@#${ocamlmklibflags}#;
 	 s#@bounds_checking@#${bounds_checking}#;
 	 s#@EXAMPLESROOT@#${EXAMPLESROOT}#;

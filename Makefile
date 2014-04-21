@@ -61,6 +61,7 @@ ida_ml_nvec.o: ida_ml_nvec.c
 	$(CC) -I $(OCAML_INCLUDE) $(IDA_CFLAGS) -o $@ -c $<
 
 dochtml.cmo: INCLUDES += -I +ocamldoc
+dochtml.cmo: OCAMLFLAGS += -pp "cpp $(CPPFLAGS) -DOCAML_3X=$(OCAML_3X)"
 
 META: META.in
 	@$(ECHO) "version = \"$(VERSION)\"" > $@
