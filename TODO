@@ -16,7 +16,7 @@ TODO
    - Write the interface.
    - Adapt examples from Sundials.
 
-4. (Tim) Doc generation to work for both OCaml 3.12 and 4.x.
+DONE 4. (Tim) Doc generation to work for both OCaml 3.12 and 4.x.
 
 5. (Jun) Interface the Alternate Linear Solver Modules
    http://computation.llnl.gov/casc/sundials/documentation/cv_guide/node8.html
