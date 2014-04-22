@@ -22,7 +22,7 @@ let cvode_doc_root =
 let ida_doc_root =
   ref "https://computation.llnl.gov/casc/sundials/documentation/ida_guide/"
 
-#if OCAML_3X
+#if OCAML_3X == 1
 class dochtml =
   object(self)
     inherit Odoc_html.html as super
@@ -72,8 +72,7 @@ struct
 
   end
 
-#if OCAML_3X
-#else
+#if OCAML_3X == 0
 end
 #endif
 
