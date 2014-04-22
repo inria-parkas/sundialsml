@@ -442,7 +442,7 @@ module RootDirs =
 
 (* Arrays of pointers to arrays of reals. *)
 
-module RealArray2 =
+module Realarray2 =
   struct
     type t
 
@@ -452,21 +452,29 @@ module RealArray2 =
     external wrap : data -> t
       = "c_sundials_realarray2_wrap"
 
-    external unwrap : t -> data
-      = "c_sundials_realarray2_unwrap"
+    let unwrap (x : t) = (Obj.obj (Obj.field (Obj.repr x) 0) : data)
 
     let make nr nc =
-      let d = Bigarray.Array2.create Bigarray.float64 Bigarray.c_layout nr nc
+      let d = Bigarray.Array2.create Bigarray.float64 Bigarray.c_layout nc nr
       in wrap d
 
-    let copy d =
-      let b = unwrap d in
-      let r = Bigarray.Array2.dim1 b in
-      let c = Bigarray.Array2.dim2 b in
-      let b' = Bigarray.Array2.create Bigarray.float64 Bigarray.c_layout r c in
-      Bigarray.Array2.blit b b';
-      wrap b'
+    let size a =
+      let d = unwrap a in
+      (Bigarray.Array2.dim1 d, Bigarray.Array2.dim2 d)
 
+    let get x i j = Bigarray.Array2.get (unwrap x) j i
+    let set x i j = Bigarray.Array2.set (unwrap x) j i
+
+    let copy a =
+      let d = unwrap a in
+      let c = Bigarray.Array2.dim1 d in
+      let r = Bigarray.Array2.dim2 d in
+      let d' = Bigarray.Array2.create Bigarray.float64 Bigarray.c_layout c r in
+      Bigarray.Array2.blit d d';
+      wrap d'
+
+    let copyinto a1 a2 =
+      Bigarray.Array2.blit (unwrap a1) (unwrap a2)
   end
 
 type solver_result =

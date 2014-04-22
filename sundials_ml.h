@@ -31,6 +31,8 @@ value sundials_ml_unit_roundoff();
 #define LONG_ARRAY(v) ((long int *)Caml_ba_data_val(v))
 #define REAL_ARRAY(v) ((realtype *)Caml_ba_data_val(v))
 
+#define ARRAY1_LEN(v) (Caml_ba_array_val((v))->dim[0])
+
 #if HAVE_WEAK
 CAMLprim value caml_weak_get (value ar, value n);
 #define sundials_ml_weak_get caml_weak_get
@@ -48,8 +50,9 @@ value sundials_ml_weak_get (value ar, value n);
 
 #define Val_none (Val_int(0))
 
-#define ARRAY2_NROWS(v) (Caml_ba_array_val(Field((v), 0))->dim[0])
-#define ARRAY2_NCOLS(v) (Caml_ba_array_val(Field((v), 0))->dim[1])
-#define ARRAY2_REALT(v) ((realtype **) Data_custom_val(Field((v), 1)))
+#define ARRAY2_DATA(v)  (Caml_ba_array_val(Field((v), 0)))
+#define ARRAY2_ACOLS(v) ((realtype **) Data_custom_val(Field((v), 1)))
+#define ARRAY2_NCOLS(v) (ARRAY2_DATA(v)->dim[0])
+#define ARRAY2_NROWS(v) (ARRAY2_DATA(v)->dim[1])
 
 #endif /* _SUNDIALS_ML_H__ */

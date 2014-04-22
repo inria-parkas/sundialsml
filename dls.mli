@@ -15,6 +15,14 @@
   @cvode <node9#s:dls>  The DLS Modules
  *)
 
+(**
+ Thrown by the getrf functions if a zero diagonal element is encountered during
+ factorization. The argument indicates the column index (from 1).
+
+ @cvode <node9#ss:dense> DenseGETRF/denseGETRF 
+ *)
+exception ZeroDiagonalElement of int
+
 (** {3 Dense matrices}
     @cvode <node9#ss:dense> The DENSE Module *)
 
@@ -154,18 +162,13 @@ module DenseMatrix :
 module ArrayDenseMatrix :
   sig
     (**
-     This type represents a [realtype **] returned from a call to
-     {!make}.
-
-     The underlying array cannot be exposed directly in OCaml as a
-     {{:OCAML_DOC_ROOT(Bigarray)} Bigarray} because it is an array of arrays
-     (an Iliffe vector) and, anyway, there is no simple way to attach a
-     custom finalize function to such a big array.
+     This type represents a two-dimensional matrix returned from a call to
+     {!make}, {!Sundials.Realarray2.make}, or {!Sundials.Realarray2.wrap}.
 
      @cvode <node9#ss:dense> Small dense matrices
      @cvode <node9#ss:dense> newDenseMat 
      *)
-    type t
+    type t = Sundials.Realarray2.t
 
     (** {4 Basic access} *)
 
@@ -177,13 +180,13 @@ module ArrayDenseMatrix :
     val make : int -> int -> t
 
     (**
-     [get a (i, j)] returns the value at row [i] and column [j] in the m by
+     [get a i j] returns the value at row [i] and column [j] in the m by
      n matrix [a], where 0 <= [i] < m and 0 <= [j] < n.
      *)
     val get : t -> int -> int -> float
 
     (**
-     [set a (i, j) v] stores the value [v] at row [i] and column [j] in the
+     [set a i j v] stores the value [v] at row [i] and column [j] in the
      m by n matrix [a], where 0 <= [i] < m and 0 <= [j] < n.
      *)
     val set : t -> int -> int -> float -> unit
@@ -191,73 +194,75 @@ module ArrayDenseMatrix :
     (** {4 Calculations} *)
 
     (**
-     [copy src dst m n] copies the contents of one [m] by [n] matrix
-     into another.
+     [copy src dst] copies the contents of one matrix into another. Both
+     must have the same size.
 
      @cvode <node9#ss:dense> denseCopy
      *)
-    val copy  : t -> t -> int -> int -> unit
+    val copy  : t -> t -> unit
 
     (*
-     [scale c a m n] multiplies each element of the [m] by [n]
-     matrix [a] by [c].
+     [scale c a] multiplies each element of the matrix [a] by [c].
 
      @cvode <node9#ss:dense> denseScale
      *)
-    val scale : float -> t -> int -> int -> unit
+    val scale : float -> t -> unit
 
     (**
-     [add_identity a n] increments an [n] by [n] matrix by the identity
-     matrix.
+     [add_identity a] increments the (square) matrix [a] by the identity matrix.
 
      @cvode <node9#ss:dense> denseAddIdentity
      *)
-    val add_identity : t -> int -> unit
+    val add_identity : t -> unit
 
     (**
-     [getrf a m n p] performs the LU factorization of an [m] by [n] matrix
-     [a] with partial pivoting according to [p].
+     [getrf a p] performs the LU factorization of an m by n matrix [a] with
+     partial pivoting according to [p] (of length n).
 
      @cvode <node9#ss:dense> denseGETRF
      @raise ZeroDiagonalElement Zero found in matrix diagonal
      *)
-    val getrf : t -> int -> int -> Sundials.lint_array -> unit
+    val getrf : t -> Sundials.lint_array -> unit
 
     (**
-     [getrs a n p b] finds the solution of [ax = b] using LU factorization.
-     [a] must be an [n] by [n]  matrix.
+     [getrs a p b] finds the solution of [ax = b] using LU factorization.
+     [a] must be an n by n matrix and [b] and [p] must be of length n.
 
      @cvode <node9#ss:dense> denseGETRS
      *)
-    val getrs : t -> int -> Sundials.lint_array -> Sundials.real_array -> unit
+    val getrs : t -> Sundials.lint_array -> Sundials.real_array -> unit
 
     (**
-     [potrf a n] performs the Cholesky factorization of a real symmetric positive
-     [n] by [n] matrix.
+     [potrf a] performs the Cholesky factorization of a real symmetric positive
+     n by n matrix.
 
-     @cvode <node9#ss:dense> DensePOTRF
      @cvode <node9#ss:dense> densePOTRF
      *)
-    val potrf : t -> int -> unit
+    val potrf : t -> unit
 
     (**
-     [potrs a n b] finds the solution of [ax = b] using Cholesky
-     factorization. [a] must be an [n] by [n] matrix.
+     [potrs a b] finds the solution of [ax = b] using Cholesky
+     factorization. [a] must be an n by n matrix and [b] must be of
+     length n.
 
      @cvode <node9#ss:dense> densePOTRS
      *)
-    val potrs : t -> int -> Sundials.real_array -> unit
+    val potrs : t -> Sundials.real_array -> unit
 
     (**
-     [geqrf a m n beta work] performs the QR factorization of an
-     [m] by [n] matrix, where [m] >= [n].
+     [geqrf a beta work] performs the QR factorization of an
+     m by n matrix, where m >= n. The [beta] vector must be of length n.
+     The [work] vector must be of length m.
 
      @cvode <node9#ss:dense> denseGEQRF
      *)
-    val geqrf : t -> int -> int -> Sundials.real_array -> Sundials.real_array -> unit
+    val geqrf : t -> Sundials.real_array -> Sundials.real_array -> unit
 
     (**
-     [ormqr a beta v w work] computes the product [w = Qv], with Q calculated using {!geqrf}.
+     [ormqr a beta v w work] computes the product [w = Qv], with Q calculated
+     using {!geqrf}, where [a] is an m by n matrix with m >= n, [beta] is of
+     length n, [v] is of length n, [w] is of length m, and [work] is of length
+     m.
 
      @param a       matrix passed to {!geqrf}
      @param beta    vector apssed to {!geqrf}
@@ -267,7 +272,7 @@ module ArrayDenseMatrix :
      @cvode <node9#ss:dense> denseORMQR
      *)
     val ormqr :
-      a:t -> m:int -> n:int -> beta:Sundials.real_array ->
+      a:t -> beta:Sundials.real_array ->
       v:Sundials.real_array -> w:Sundials.real_array -> work:Sundials.real_array
       -> unit
   end
@@ -424,84 +429,83 @@ module BandMatrix :
 module ArrayBandMatrix :
   sig
     (**
-     This type represents a [realtype **] returned from a call to
-     {!make}.
+     This type represents a two-dimensional matrix returned from a call to
+     {!make}, {!Sundials.Realarray2.make}, or {!Sundials.Realarray2.wrap}.
 
-     The underlying array cannot be exposed directly in OCaml as a
-     {{:OCAML_DOC_ROOT(Bigarray)} Bigarray} because it is an array of arrays
-     (an Iliffe vector) and, anyway, there is no simple way to attach a
-     custom finalize function to such a big array.
-
-     @cvode <node9#ss:band> NewBandMat 
+     @cvode <node9#ss:band> newBandMat 
      *)
-    type t
+    type t = Sundials.Realarray2.t
 
     (** {4 Basic access} *)
 
     (**
      [make n smu ml] returns an [n] by [n] band matrix with lower
-     half-bandwidth [ml].
+     half-bandwidth [ml] and storage upper bandwidth [smu].
 
      @cvode <node9#ss:band> newBandMat
      *)
     val make : int -> int -> int -> t
 
     (**
-     [get a i j] returns the value at row [i] and column [j] in the m by
-     n matrix [a], where 0 <= [i] < m and 0 <= [j] < n.
+     [get a smu i j] returns the value at row [i] and column [j] in the 
+     band matrix [a] with storage upper bandwidth [smu].
      *)
-    val get : t -> int -> int -> float
+    val get : t -> int -> int -> int -> float
 
     (**
-     [set a i j v] stores the value [v] at row [i] and column [j] in the
-     m by n matrix [a], where 0 <= [i] < m and 0 <= [j] < n.
+     [set a smu i j v] stores the value [v] at row [i] and column [j] in the
+     band matrix [a] with storage upper bandwidth [smu].
      *)
-    val set : t -> int -> int -> float -> unit
+    val set : t -> int -> int -> int -> float -> unit
 
     (** {4 Calculations} *)
 
     (**
-     [copy src dst n a_smu b_smu copymu copyml] copies the submatrix with
-     upper and lower bandwidths [copymu] and [copyml] of the [n] by [n] band
-     matrix [src] into the [n] by [n] band matrix [dst].
+     [copy src dst a_smu b_smu copymu copyml] copies the submatrix with
+     upper and lower bandwidths [copymu] and [copyml] of the band
+     matrix [src] into the band matrix [dst]. Both matrices must be
+     square and of the same size.
 
      @cvode <node9#ss:band> bandCopy
      *)
-    val copy : t -> t -> int -> int -> int -> int -> int -> unit
+    val copy : t -> t -> int -> int -> int -> int -> unit
 
     (**
-     [scale c a n mu ml smu] multiplies each element of the [n] by [n] band
-     matrix [a], having bandwidths [mu] and [ml], by [c].
+     [scale c a mu ml smu] multiplies each element of the (square) band
+     matrix [a], of upper bandwidth [mu], lower bandwidth [ml], and
+     storage upper bandwidth [smu], by [c].
 
      @cvode <node9#ss:band> bandScale
      *)
-    val scale : float -> t -> int -> int -> int -> int -> unit
+    val scale : float -> t -> int -> int -> int -> unit
 
     (**
-     [add_idenity a n smu] increments the [n] by [n]  matrix [a] by the
-     identity matrix.
+     [add_idenity a smu] increments the (square) band matrix [a] of storage
+     upper bandwidth [smu] by the identity matrix.
 
      @cvode <node9#ss:band> bandAddIdentity
      *)
-    val add_identity : t -> int -> int -> unit
+    val add_identity : t -> int -> unit
 
     (**
-     [gbtrf a n mu ml smu p] performs the LU factorization of the [n] by [n]
-     band matrix [a], having bandwidths [mu] and [ml], with partial pivoting
-     according to [p].
+     [gbtrf a mu ml smu p] performs the LU factorization of the (square) band
+     matrix [a], having bandwidths [mu] and [ml], and storage bandwidth [smu],
+     with partial pivoting according to [p]. If [a] has size n by n then [p]
+     must have length n.
 
      @cvode <node9#ss:band> bandGBTRF
      *)
-    val gbtrf : t -> int -> int -> int -> int -> Sundials.lint_array -> unit
+    val gbtrf : t -> int -> int -> int -> Sundials.lint_array -> unit
 
     (**
-     [gbtrs a n smu ml p b] finds the solution of [ax = b] using LU factorization.
-     [a] must be an [n] by [n]  matrix having bandwidths [mu] and [ml].
+     [gbtrs a smu ml p b] finds the solution of [ax = b] using LU factorization.
+     [a] must be a (Square) band matrix having storage bandwidth [smu] and lower
+     bandwidth [ml]. If [a] has size n by n then [p] and [b] both must have
+     length n.
 
      @cvode <node9#ss:band> bandGBTRS
      *)
-    val gbtrs
-        : t -> int -> int -> int -> Sundials.lint_array ->
+    val gbtrs : t -> int -> int -> Sundials.lint_array ->
       Sundials.real_array -> unit
   end
 

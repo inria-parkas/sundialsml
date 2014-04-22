@@ -52,8 +52,8 @@ type linear_solver =
   | BandedSpgmr of spils_params * bandrange
   | BandedSpbcg of spils_params * bandrange
   | BandedSptfqmr of spils_params * bandrange
-and dense_jac_fn = triple_tmp jacobian_arg -> DenseMatrix.t -> unit
-and band_jac_fn = triple_tmp jacobian_arg -> int -> int -> BandMatrix.t -> unit
+and dense_jac_fn = triple_tmp jacobian_arg -> Dls.DenseMatrix.t -> unit
+and band_jac_fn = triple_tmp jacobian_arg -> int -> int -> Dls.BandMatrix.t -> unit
 and bandrange = { mupper : int;
                   mlower : int; }
 and spils_params = { prec_type : preconditioning_type;
@@ -90,9 +90,9 @@ type session = {
         mutable rootsfn    : float -> val_array -> root_val_array -> unit;
         mutable errh       : error_details -> unit;
         mutable errw       : val_array -> nvec -> unit;
-        mutable jacfn      : triple_tmp jacobian_arg -> DenseMatrix.t -> unit;
+        mutable jacfn      : triple_tmp jacobian_arg -> Dls.DenseMatrix.t -> unit;
         mutable bandjacfn  : triple_tmp jacobian_arg -> int -> int
-                               -> BandMatrix.t -> unit;
+                               -> Dls.BandMatrix.t -> unit;
         mutable presetupfn : triple_tmp jacobian_arg -> bool -> float -> bool;
         mutable presolvefn : single_tmp jacobian_arg -> prec_solve_arg -> nvec
                                -> unit;

@@ -17,7 +17,6 @@
  *)
 
 include Sundials
-include Dls
 
 type lmm =
   | Adams
@@ -73,8 +72,6 @@ type integrator_stats = {
 
 exception StopTimeReached
 
-exception ZeroDiagonalElement of int
-
 let _ =
   List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
   [
@@ -99,8 +96,6 @@ let _ =
     ("cvode_BadK",                    BadK);
     ("cvode_BadT",                    BadT);
     ("cvode_BadDky",                  BadDky);
-
-    ("cvode_ZeroDiagonalElement",     ZeroDiagonalElement 0);
   ]
 
 

@@ -291,27 +291,45 @@ module RootDirs :
 (** {2 Two-dimensional arrays of arrays of reals} *)
 
 (** Arrays of pointers to arrays of reals. *)
-module RealArray2 :
+module Realarray2 :
   sig
     type t
 
     (** The underlying data is stored as a two-dimensional
-       {{:OCAML_DOC_ROOT(Bigarray.Array2)}Bigarray} of floats. *)
+       {{:OCAML_DOC_ROOT(Bigarray.Array2)}Bigarray} of floats.
+       Note that, in the underlying array, Sundials stores columns
+       in the first dimension and rows in the second. So, the value
+       at row [i] and column [j] in an array [m] is [m.{j}.{i}].
+     *)
     type data =
       (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
 
     (** [make nr nc] creates an [nr] by [nc] wrapped array. *)
     val make : int -> int -> t
 
+    (** [get a i j] gives the value of the [(i, j)]th element of [a]. *)
+    val get : t -> int -> int -> float
+
+    (** [set a i j v] sets the value of the [(i, j)]th element of [a] to [v]. *)
+    val set : t -> int -> int -> float -> unit
+
+    (** [nr, nc = size a] gives the number of rows, [nr], and the number of
+        columns, [nc], in [a] *)
+    val size : t -> int * int
+
     (** [copy a] creates a copy of [a] and its underlying {!data} array. *)
     val copy : t -> t
 
+    (** [copyinto a b] copies the contents of [a] into [b]. Both arrays
+        must have the same dimensions. *)
+    val copyinto : t -> t -> unit
+
     (** Creates a new array from an existing {!data} array; changes to either
-        array affect the other. *)
+        array affect the other (i.e., they share the same underlying storage). *)
     val wrap : data -> t
 
     (** Returns an underlying {!data} array; changes to either array affect the
-        other. *)
+        other (i.e., they share the same underlying storage). *)
     val unwrap : t -> data
   end
 

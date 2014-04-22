@@ -5,17 +5,15 @@ Documentation (for maintenance)
 	    sundials.ml
 	    sundials_ml.h
 	    sundials_ml.c
-	        |
-		|
-	     dls.mli		    -- interfaces to direct linear solvers
-	     dls.ml		       (dense, array dense, band, and
-	     dls_ml.c			array band matrices)
-	    /	 |   \
-	   /     |    \
-      CVODE     IDA    KINSOL	    -- interfaces to solvers
-     /CVODES   /IDAS
-
-    SPILS -- interfaces to scaled preconditioned iterative linear solvers
+	   /              \
+	  /	           \
+  	SPILS               dls.mli	       -- interfaces to direct linear solvers
+   -- interfaces to         dls.ml	          (dense, array dense, band, and
+   scaled preconditioned    dls_ml.c	 	  array band matrices)
+   linear solvers          /    |   \
+	                  /     |    \
+                     CVODE     IDA    KINSOL   -- interfaces to solvers
+                    /CVODES   /IDAS
 
 CVODE
 -----

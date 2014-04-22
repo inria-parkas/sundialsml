@@ -235,18 +235,3 @@ module Id :
     val blit : t -> t -> unit
   end
 
-
-(**
- Thrown by the getrf functions if a zero diagonal element is encountered during
- factorization. The argument indicates the column index (from 1).
-
- @ida <node9#ss:dense> DenseGETRF/denseGETRF 
- *)
-exception ZeroDiagonalElement of int
-
-include module type of Dls
-  with type BandMatrix.t = Dls.BandMatrix.t
-  and  type ArrayBandMatrix.t = Dls.ArrayBandMatrix.t
-  and  type DenseMatrix.t = Dls.DenseMatrix.t
-  and  type ArrayDenseMatrix.t = Dls.ArrayDenseMatrix.t
-

@@ -69,13 +69,13 @@ CAMLprim value sundials_ml_weak_get (value ar, value n)
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *
- * Two-dimensional (Iliffe) arrays based on BigArrays.
+ * Two-dimensional real arrays based on BigArrays with a column-access table.
  *
  * We represent these as pairs:
  *	Field(ra, 0) = the underlying 2 dimensional big array
  *		       (for use from within OCaml)
  *	Field(ra, 1) = a custom value giving a realtype ** table pointing into
- *		       the rows of the big array (for passing to Sundials)
+ *		       the columns of the big array (for passing to Sundials)
  */
 
 CAMLprim value c_sundials_realarray2_wrap(value vba)
@@ -84,18 +84,18 @@ CAMLprim value c_sundials_realarray2_wrap(value vba)
     CAMLlocal1(r);
 
     struct caml_ba_array *ba = Caml_ba_array_val(vba);
-    int nr = ba->dim[0];
-    int nc = ba->dim[1];
+    int nc = ba->dim[0];
+    int nr = ba->dim[1];
 
-    mlsize_t table_size = nr * sizeof(realtype *);
-    value vtable = caml_alloc_final(nr, NULL, table_size, table_size * 20);
+    mlsize_t table_size = nc * sizeof(realtype *);
+    value vtable = caml_alloc_final(nc, NULL, table_size, table_size * 20);
     realtype **table = (realtype **)Data_custom_val(vtable);
 
-    int i;
+    int j;
 
     table[0] = (realtype *)(ba->data);
-    for (i = 1; i < nr; ++i) {
-	table[i] = table[i - 1] + nc;
+    for (j = 1; j < nc; ++j) {
+	table[j] = table[j - 1] + nr;
     }
 
     r = caml_alloc_tuple(2);
@@ -103,11 +103,5 @@ CAMLprim value c_sundials_realarray2_wrap(value vba)
     Store_field(r, 1, vtable);
 
     CAMLreturn(r);
-}
-
-CAMLprim value c_sundials_realarray2_unwrap(value vra)
-{
-    CAMLparam1(vra);
-    CAMLreturn(Field(vra, 0));
 }
 

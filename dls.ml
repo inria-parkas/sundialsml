@@ -15,6 +15,14 @@ type real_array = Sundials.real_array
 
 (* direct linear solvers functions *)
 
+exception ZeroDiagonalElement of int
+
+let _ =
+  List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
+  [
+    ("dls_ZeroDiagonalElement",     ZeroDiagonalElement 0);
+  ]
+
 (* note: uses DENSE_ELEM rather than the more efficient DENSE_COL. *)
 module DenseMatrix =
   struct
@@ -68,51 +76,40 @@ module DenseMatrix =
 
 module ArrayDenseMatrix =
   struct
-    type t
+    type t = Sundials.Realarray2.t
 
-    external make  : int -> int -> t
-        = "c_arraydensematrix_new_dense_mat"
+    let make = Sundials.Realarray2.make
+    let get = Sundials.Realarray2.get
+    let set = Sundials.Realarray2.set
 
-    external get : t -> int -> int -> float
-        = "c_arraydensematrix_get"
+    let copy = Sundials.Realarray2.copyinto
 
-    external set : t -> int -> int -> float -> unit
-        = "c_arraydensematrix_set"
-
-    external copy  : t -> t -> int -> int -> unit
-        = "c_arraydensematrix_copy"
-
-    external scale : float -> t -> int -> int -> unit
+    external scale : float -> t -> unit
         = "c_arraydensematrix_scale"
 
-    external add_identity : t -> int -> unit
+    external add_identity : t -> unit
         = "c_arraydensematrix_add_identity"
 
-    external getrf : t -> int -> int -> lint_array -> unit
+    external getrf : t -> lint_array -> unit
         = "c_arraydensematrix_getrf"
 
-    external getrs : t -> int -> lint_array -> real_array -> unit
+    external getrs : t -> lint_array -> real_array -> unit
         = "c_arraydensematrix_getrs"
 
-    external potrf : t -> int -> unit
+    external potrf : t -> unit
         = "c_arraydensematrix_potrf"
 
-    external potrs : t -> int -> real_array -> unit
+    external potrs : t -> real_array -> unit
         = "c_arraydensematrix_potrs"
 
-    external geqrf' : t -> int * int -> real_array -> real_array -> unit
+    external geqrf : t -> real_array -> real_array -> unit
         = "c_arraydensematrix_geqrf"
 
-    let geqrf a m n beta v
-        = geqrf' a (m, n) beta v
-
     external ormqr'
-        : t -> int * int
-          -> (real_array * real_array * real_array * real_array)
-          -> unit
+        : t -> (real_array * real_array * real_array * real_array) -> unit
         = "c_arraydensematrix_ormqr"
 
-    let ormqr ~a ~m ~n ~beta ~v ~w ~work = ormqr' a (m, n) (beta, v, w, work)
+    let ormqr ~a ~beta ~v ~w ~work = ormqr' a (beta, v, w, work)
   end
 
 module BandMatrix =
@@ -170,42 +167,40 @@ module BandMatrix =
 
 module ArrayBandMatrix =
   struct
-    type t
+    type t = Sundials.Realarray2.t
 
-    external make : int -> int -> int -> t
-        = "c_arraybandmatrix_new_band_mat"
+    let make n smu ml =
+      Sundials.Realarray2.make (smu + ml + 1) n
 
-    external get : t -> int -> int -> float
-        = "c_arraydensematrix_get"
-        (* NB: same as arraydensematrix *)
+    let get a smu i j =
+      Sundials.Realarray2.get a (i - j + smu) j
 
-    external set : t -> int -> int -> float -> unit
-        = "c_arraydensematrix_set"
-        (* NB: same as arraydensematrix *)
+    let set a smu i j v =
+      Sundials.Realarray2.set a (i - j + smu) j v
 
-    external copy' : t -> t -> int * int * int * int * int -> unit
+    external copy' : t -> t -> int * int * int * int -> unit
         = "c_arraybandmatrix_copy"
 
-    let copy a b n a_smu b_smu copymu copyml
-        = copy' a b (n, a_smu, b_smu, copymu, copyml)
+    let copy a b a_smu b_smu copymu copyml
+        = copy' a b (a_smu, b_smu, copymu, copyml)
 
-    external scale' : float -> t -> int * int * int * int -> unit
+    external scale' : float -> t -> int * int * int -> unit
         = "c_arraybandmatrix_scale"
 
-    let scale c a n mu ml smu = scale' c a (n, mu, ml, smu)
+    let scale c a mu ml smu = scale' c a (mu, ml, smu)
 
-    external add_identity : t -> int -> int -> unit
+    external add_identity : t -> int -> unit
         = "c_arraybandmatrix_add_identity"
 
-    external gbtrf' : t -> int * int * int * int -> lint_array -> unit
+    external gbtrf' : t -> int * int * int -> lint_array -> unit
         = "c_arraybandmatrix_gbtrf"
 
-    let gbtrf a n mu ml smu p = gbtrf' a (n, mu, ml, smu) p
+    let gbtrf a mu ml smu p = gbtrf' a (mu, ml, smu) p
 
     external gbtrs'
-        : t -> int * int * int -> lint_array -> real_array -> unit
+        : t -> int * int -> lint_array -> real_array -> unit
         = "c_arraybandmatrix_gbtrs"
 
-    let gbtrs a n smu ml p b = gbtrs' a (n, smu, ml) p b
+    let gbtrs a smu ml p b = gbtrs' a (smu, ml) p b
   end
 

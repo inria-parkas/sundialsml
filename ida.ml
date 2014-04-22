@@ -17,7 +17,6 @@
  *)
 
 include Sundials
-include Dls
 
 type root_direction = RootDirs.root_direction
 
@@ -66,8 +65,6 @@ type integrator_stats = {
   }
 
 exception StopTimeReached
-
-exception ZeroDiagonalElement of int
 
 module VarTypes =
   struct
@@ -131,6 +128,4 @@ let _ =
     ("ida_BadK",                    BadK);
     ("ida_BadT",                    BadT);
     ("ida_BadDky",                  BadDky);
-
-    ("ida_ZeroDiagonalElement",     ZeroDiagonalElement 0);
   ]
