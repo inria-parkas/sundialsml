@@ -444,15 +444,15 @@ module RootDirs =
 
 module Realarray2 =
   struct
-    type t
-
     type data =
       (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
+
+    type t = data * Obj.t
 
     external wrap : data -> t
       = "c_sundials_realarray2_wrap"
 
-    let unwrap (x : t) = (Obj.obj (Obj.field (Obj.repr x) 0) : data)
+    let unwrap = fst
 
     let make nr nc =
       let d = Bigarray.Array2.create Bigarray.float64 Bigarray.c_layout nc nr
