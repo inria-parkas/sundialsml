@@ -31,6 +31,9 @@ module DenseMatrix =
     external make : int -> int -> t
         = "c_densematrix_new_dense_mat"
 
+    external size : t -> (int * int)
+        = "c_densematrix_size"
+
     external print          : t -> unit
         = "c_densematrix_print_mat"
 
@@ -118,6 +121,9 @@ module BandMatrix =
 
     external make : int -> int -> int -> int -> t
         = "c_bandmatrix_new_band_mat"
+
+    external size : t -> (int * int * int)
+        = "c_bandmatrix_size"
 
     external print          : t -> unit
         = "c_densematrix_print_mat"

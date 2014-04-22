@@ -48,6 +48,12 @@ module DenseMatrix :
     val make  : int -> int -> t
 
     (**
+     [m, n = size a] returns the number of columns ([m]) and rows ([n]) of the
+     dense matrix [a].
+     *)
+    val size  : t -> (int * int)
+
+    (**
      Prints a dense matrix to stdout.
 
      @cvode <node9#ss:dense> PrintMat
@@ -303,6 +309,12 @@ module BandMatrix :
      @cvode <node9#ss:band> NewBandMat
      *)
     val make : int -> int -> int -> int -> t
+
+    (**
+     [mu, smu, ml = size a] returns the upper bandwidth ([mu]), upper storage
+     bandwidth ([smu]), and lower bandwidth ([ml]) of the band matrix [a].
+     *)
+    val size  : t -> (int * int * int)
 
     (**
      Prints a band matrix to stdout.

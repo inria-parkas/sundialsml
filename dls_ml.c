@@ -63,6 +63,19 @@ CAMLprim value c_densematrix_new_dense_mat(value vm, value vn)
     CAMLreturn(vr);
 }
 
+CAMLprim value c_densematrix_size(value va)
+{
+    CAMLparam1(va);
+    CAMLlocal1(vr);
+
+    DlsMat ma = DLSMAT(va);
+    vr = caml_alloc_tuple(2);
+    Store_field(vr, 0, Val_long(ma->M));
+    Store_field(vr, 1, Val_long(ma->N));
+
+    CAMLreturn(vr);
+}
+
 CAMLprim void c_densematrix_print_mat(value va)
 {
     CAMLparam1(va);
@@ -368,6 +381,20 @@ CAMLprim value c_bandmatrix_new_band_mat(value vn, value vmu,
     /* a DlsMat is a pointer to a struct _DlsMat */
     vr = caml_alloc_final(2, &finalize_dlsmat, approx_size, approx_size * 20);
     Store_field(vr, 1, (value)a);
+
+    CAMLreturn(vr);
+}
+
+CAMLprim value c_bandmatrix_size(value va)
+{
+    CAMLparam1(va);
+    CAMLlocal1(vr);
+
+    DlsMat ma = DLSMAT(va);
+    vr = caml_alloc_tuple(3);
+    Store_field(vr, 0, Val_long(ma->mu));
+    Store_field(vr, 1, Val_long(ma->s_mu));
+    Store_field(vr, 2, Val_long(ma->ml));
 
     CAMLreturn(vr);
 }

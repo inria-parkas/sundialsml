@@ -1,6 +1,7 @@
 include ../../config
 
-EXAMPLES = arraydense.byte arraydense dense
+EXAMPLES = arraydense.byte arraydense \
+	   dense.byte dense
 
 CVODE_LIBS := $(shell sundials-config -t s -l c -m cvode -s libs) -llapack
 CFLAGS += -Wall
@@ -11,6 +12,7 @@ opt: $(EXAMPLES:.byte=.opt)
 arraydense.byte: arraydense.ml
 arraydense: arraydense.c
 	cc -o $@ $(CFLAGS) $< $(CVODE_LIBS)
+dense.byte: dense.ml
 dense: dense.c
 	cc -o $@ $(CFLAGS) $< $(CVODE_LIBS)
 
