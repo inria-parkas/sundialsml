@@ -65,7 +65,9 @@ printf "getrf: a=@\n%a@\n" print_mat a;
 printf "       p=@\n%a@\n@\n" print_p p;;
 
 let s = make_real_array 3;;
-Array1.fill s 0.0;
+s.{0} <-  5.0;
+s.{1} <- 18.0;
+s.{2} <-  6.0;
 M.getrs a p s;
 printf "getrs: s=@\n%a@\n" print_vec s;;
 

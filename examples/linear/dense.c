@@ -47,7 +47,7 @@ int main(int argc, char** argv)
     DlsMat a = NewDenseMat(NROWS, NCOLS);
     DlsMat b = NewDenseMat(NROWS, NCOLS);
     long int p[NROWS] = { 0.0 };
-    realtype s[NROWS] = { 0.0 };
+    realtype s[NROWS] = { 5.0, 18.0, 6.0 };
     int i, j;
 
     for (i=0; i < NROWS; ++i) {
