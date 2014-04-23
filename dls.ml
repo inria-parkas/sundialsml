@@ -122,7 +122,7 @@ module BandMatrix =
     external make : int -> int -> int -> int -> t
         = "c_bandmatrix_new_band_mat"
 
-    external size : t -> (int * int * int)
+    external size : t -> (int * int * int * int)
         = "c_bandmatrix_size"
 
     external print          : t -> unit

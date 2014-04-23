@@ -311,10 +311,11 @@ module BandMatrix :
     val make : int -> int -> int -> int -> t
 
     (**
-     [mu, smu, ml = size a] returns the upper bandwidth ([mu]), upper storage
-     bandwidth ([smu]), and lower bandwidth ([ml]) of the band matrix [a].
+     [n, mu, ml, smu = size a] returns the size ([n]), upper bandwidth ([mu]),
+     lower bandwidth ([ml]), and upper storage bandwidth ([smu]) of the band
+     matrix [a].
      *)
-    val size  : t -> (int * int * int)
+    val size  : t -> (int * int * int * int)
 
     (**
      Prints a band matrix to stdout.
@@ -451,8 +452,8 @@ module ArrayBandMatrix :
     (** {4 Basic access} *)
 
     (**
-     [make n smu ml] returns an [n] by [n] band matrix with lower
-     half-bandwidth [ml] and storage upper bandwidth [smu].
+     [make n smu ml] returns an [n] by [n] band matrix with
+     storage upper bandwidth [smu] and lower half-bandwidth [ml].
 
      @cvode <node9#ss:band> newBandMat
      *)

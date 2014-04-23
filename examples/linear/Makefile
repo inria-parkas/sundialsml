@@ -1,7 +1,10 @@
 include ../../config
 
 EXAMPLES = arraydense.byte arraydense \
-	   dense.byte dense
+	   dense.byte dense \
+	   arrayband.byte arrayband \
+	   band.byte band \
+	   noband.byte
 
 CVODE_LIBS := $(shell sundials-config -t s -l c -m cvode -s libs) -llapack
 CFLAGS += -Wall
@@ -15,6 +18,15 @@ arraydense: arraydense.c
 dense.byte: dense.ml
 dense: dense.c
 	cc -o $@ $(CFLAGS) $< $(CVODE_LIBS)
+
+arrayband.byte: arrayband.ml
+arrayband: arrayband.c
+	cc -o $@ $(CFLAGS) $< $(CVODE_LIBS)
+band.byte: band.ml
+band: band.c
+	cc -o $@ $(CFLAGS) $< $(CVODE_LIBS)
+
+noband.byte: noband.ml
 
 clean:
 	-rm -f $(EXAMPLES:.byte=.cmo) $(EXAMPLES:.byte=.cmx)
