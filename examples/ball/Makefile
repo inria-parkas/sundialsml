@@ -1,5 +1,7 @@
 include ../../config
 
+all: ball.byte ball.opt
+
 ball.byte: showball.cmo ball.ml
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
 	    $(INCLUDES) -I ../../ -dllpath ../../ \
