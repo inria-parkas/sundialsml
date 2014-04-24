@@ -193,10 +193,10 @@ and bandrange = { mupper : int; (** The upper half-bandwidth.  *)
 and spils_params = { maxl : int; (** Maximum dimension of the Krylov subspace
                                      to be used.  Pass [0] to use the default
                                      value [5]. *)
-                     prec_type : preconditioning_type;
+                     prec_type : Spils.preconditioning_type;
                      (** The type of preconditioning to be done.  *) }
 (** Callbacks for Krylov subspace linear solvers.  Ignored if the
-    {!Cvode.preconditioning_type} is set to [PrecNone].  In that case, you
+    {!Spils.preconditioning_type} is set to [PrecNone].  In that case, you
     should use {!spils_no_precond} as [spils_callbacks].  *)
 and 'a spils_callbacks =
   {
@@ -384,19 +384,11 @@ module Spils :
 
     (**
       This function resets the type of preconditioning to be used using a value
-      of type {!Cvode.preconditioning_type}.
+      of type {!Spils.preconditioning_type}.
 
       @cvode <node5#sss:optin_spils> CVSpilsSetPrecType
     *)
-    val set_prec_type : 'a session -> preconditioning_type -> unit
-
-    (** Constants representing the types of Gram-Schmidt orthogonalization
-        possible for the Spgmr {Cvode.linear_solver}. *)
-    type gramschmidt_type =
-      | ModifiedGS
-            (** Modified Gram-Schmidt orthogonalization (MODIFIED_GS) *)
-      | ClassicalGS
-            (** Classical Gram Schmidt orthogonalization (CLASSICAL_GS) *)
+    val set_prec_type : 'a session -> Spils.preconditioning_type -> unit
 
     (**
       Sets the Gram-Schmidt orthogonalization to be used with the
@@ -404,7 +396,7 @@ module Spils :
 
       @cvode <node5#sss:optin_spils> CVSpilsSetGSType
     *)
-    val set_gs_type : 'a session -> gramschmidt_type -> unit
+    val set_gs_type : 'a session -> Spils.gramschmidt_type -> unit
 
     (**
       [set_eps_lin eplifac] sets the factor by which the Krylov linear solver's

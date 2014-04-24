@@ -24,6 +24,51 @@
 #include <caml/bigarray.h>
 
 #include "sundials_ml.h"
+#include "spils_ml.h"
+
+int spils_precond_type(value vptype)
+{
+    CAMLparam1(vptype);
+
+    int ptype;
+    switch (Int_val(vptype)) {
+    case VARIANT_SPILS_PRECONDITIONING_TYPE_PRECNONE:
+	ptype = PREC_NONE;
+	break;
+
+    case VARIANT_SPILS_PRECONDITIONING_TYPE_PRECLEFT:
+	ptype = PREC_LEFT;
+	break;
+
+    case VARIANT_SPILS_PRECONDITIONING_TYPE_PRECRIGHT:
+	ptype = PREC_RIGHT;
+	break;
+
+    case VARIANT_SPILS_PRECONDITIONING_TYPE_PRECBOTH:
+	ptype = PREC_BOTH;
+	break;
+    }
+
+    CAMLreturn(ptype);
+}
+
+int spils_gs_type(value vgstype)
+{
+    CAMLparam1(vgstype);
+
+    int gstype;
+    switch (Int_val(vgstype)) {
+    case VARIANT_SPILS_GRAMSCHMIDT_TYPE_MODIFIEDGS:
+	gstype = MODIFIED_GS;
+	break;
+
+    case VARIANT_SPILS_GRAMSCHMIDT_TYPE_CLASSICALGS:
+	gstype = CLASSICAL_GS;
+	break;
+    }
+
+    CAMLreturn(gstype);
+}
 
 CAMLprim value c_spils_qr_fact(value vn, value vh, value vq, value vnewjob)
 {

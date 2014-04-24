@@ -40,6 +40,7 @@
 #include <cvode/cvode_lapack.h>
 #endif
 
+#include "spils_ml.h"
 #include "cvode_ml.h"
 
 #include <stdio.h>
@@ -128,32 +129,6 @@ void cvode_ml_check_flag(const char *call, int flag)
 		 CVodeGetReturnFlagName(flag));
 	caml_failwith(exmsg);
     }
-}
-
-static int precond_type(value vptype)
-{
-    CAMLparam1(vptype);
-
-    int ptype;
-    switch (Int_val(vptype)) {
-    case VARIANT_CVODE_PRECONDITIONING_TYPE_PRECNONE:
-	ptype = PREC_NONE;
-	break;
-
-    case VARIANT_CVODE_PRECONDITIONING_TYPE_PRECLEFT:
-	ptype = PREC_LEFT;
-	break;
-
-    case VARIANT_CVODE_PRECONDITIONING_TYPE_PRECRIGHT:
-	ptype = PREC_RIGHT;
-	break;
-
-    case VARIANT_CVODE_PRECONDITIONING_TYPE_PRECBOTH:
-	ptype = PREC_BOTH;
-	break;
-    }
-
-    CAMLreturn(ptype);
 }
 
 /* basic interface */
@@ -306,7 +281,7 @@ CAMLprim void c_cvode_set_prec_type(value vcvode_mem, value vptype)
     CAMLparam2(vcvode_mem, vptype);
 
     int flag = CVSpilsSetPrecType(CVODE_MEM_FROM_ML(vcvode_mem),
-				  precond_type(vptype));
+				  spils_precond_type(vptype));
     CHECK_FLAG("CVSpilsSetPrecType", flag);
 
     CAMLreturn0;
@@ -624,18 +599,8 @@ CAMLprim void c_cvode_set_gs_type(value vcvode_mem, value vgstype)
 {
     CAMLparam2(vcvode_mem, vgstype);
 
-    int gstype;
-    switch (Int_val(vgstype)) {
-    case VARIANT_CVODE_GRAMSCHMIDT_TYPE_MODIFIEDGS:
-	gstype = MODIFIED_GS;
-	break;
-
-    case VARIANT_CVODE_GRAMSCHMIDT_TYPE_CLASSICALGS:
-	gstype = CLASSICAL_GS;
-	break;
-    }
-
-    int flag = CVSpilsSetGSType(CVODE_MEM_FROM_ML(vcvode_mem), gstype);
+    int flag = CVSpilsSetGSType(CVODE_MEM_FROM_ML(vcvode_mem),
+				spils_gs_type(vgstype));
     CHECK_FLAG("CVSpilsSetGSType", flag);
 
     CAMLreturn0;

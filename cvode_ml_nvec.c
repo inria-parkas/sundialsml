@@ -37,6 +37,7 @@
 #include <cvode/cvode_bandpre.h>
 #include <sundials/sundials_config.h>
 
+#include "spils_ml.h"
 #include "cvode_ml.h"
 #include "nvector_ml.h"
 
@@ -497,33 +498,6 @@ static int jactimesfn(
     CAMLreturnT(int, retcode);
 }
 
-
-static int precond_type(value vptype)
-{
-    CAMLparam1(vptype);
-
-    int ptype;
-    switch (Int_val(vptype)) {
-    case VARIANT_CVODE_PRECONDITIONING_TYPE_PRECNONE:
-	ptype = PREC_NONE;
-	break;
-
-    case VARIANT_CVODE_PRECONDITIONING_TYPE_PRECLEFT:
-	ptype = PREC_LEFT;
-	break;
-
-    case VARIANT_CVODE_PRECONDITIONING_TYPE_PRECRIGHT:
-	ptype = PREC_RIGHT;
-	break;
-
-    case VARIANT_CVODE_PRECONDITIONING_TYPE_PRECBOTH:
-	ptype = PREC_BOTH;
-	break;
-    }
-
-    CAMLreturn(ptype);
-}
-
 /* Dense and Band can only be used with serial NVectors.  */
 #ifdef CVODE_ML_BIGARRAYS
 CAMLprim void CVTYPE(dls_dense) (value vcvode_mem, value vset_jac)
@@ -670,7 +644,7 @@ CAMLprim void CVTYPE(spils_spgmr) (value vcvode_mem, value vmaxl, value vtype)
 
     flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
     CHECK_FLAG ("CVodeSetIterType", flag);
-    flag = CVSpgmr (cvode_mem, precond_type (vtype), Int_val (vmaxl));
+    flag = CVSpgmr (cvode_mem, spils_precond_type (vtype), Int_val (vmaxl));
     CHECK_FLAG ("CVSpgmr", flag);
     CAMLreturn0;
 }
@@ -683,7 +657,7 @@ CAMLprim void CVTYPE(spils_spbcg) (value vcvode_mem, value vmaxl, value vtype)
 
     flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
     CHECK_FLAG ("CVodeSetIterType", flag);
-    flag = CVSpbcg (cvode_mem, precond_type (vtype), Int_val (vmaxl));
+    flag = CVSpbcg (cvode_mem, spils_precond_type (vtype), Int_val (vmaxl));
     CHECK_FLAG ("CVSpbcg", flag);
 
     CAMLreturn0;
@@ -698,7 +672,7 @@ CAMLprim void CVTYPE(spils_sptfqmr) (value vcvode_mem, value vmaxl,
 
     flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
     CHECK_FLAG ("CVodeSetIterType", flag);
-    flag = CVSptfqmr (cvode_mem, precond_type (vtype), Int_val (vmaxl));
+    flag = CVSptfqmr (cvode_mem, spils_precond_type (vtype), Int_val (vmaxl));
     CHECK_FLAG ("CVSptfqmr", flag);
 
     CAMLreturn0;
@@ -715,7 +689,7 @@ CAMLprim void CVTYPE(spils_banded_spgmr) (value vcvode_mem,
 
     flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
     CHECK_FLAG ("CVodeSetIterType", flag);
-    flag = CVSpgmr (cvode_mem, precond_type (vtype), Int_val (vmaxl));
+    flag = CVSpgmr (cvode_mem, spils_precond_type (vtype), Int_val (vmaxl));
     CHECK_FLAG ("CVSpgmr", flag);
     flag = CVBandPrecInit (cvode_mem, neqs,
 			   Long_val (vmupper), Long_val (vmlower));
@@ -734,7 +708,7 @@ CAMLprim void CVTYPE(spils_banded_spbcg) (value vcvode_mem,
 
     flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
     CHECK_FLAG ("CVodeSetIterType", flag);
-    flag = CVSpbcg (cvode_mem, precond_type (vtype), Int_val (vmaxl));
+    flag = CVSpbcg (cvode_mem, spils_precond_type (vtype), Int_val (vmaxl));
     CHECK_FLAG ("CVSpbcg", flag);
     flag = CVBandPrecInit (cvode_mem, neqs,
 			   Long_val (vmupper), Long_val (vmlower));
@@ -753,7 +727,7 @@ CAMLprim void CVTYPE(spils_banded_sptfqmr) (value vcvode_mem,
 
     flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
     CHECK_FLAG ("CVodeSetIterType", flag);
-    flag = CVSptfqmr (cvode_mem, precond_type (vtype), Int_val (vmaxl));
+    flag = CVSptfqmr (cvode_mem, spils_precond_type (vtype), Int_val (vmaxl));
     CHECK_FLAG ("CVSptfqmr", flag);
     flag = CVBandPrecInit (cvode_mem, neqs,
 			   Long_val (vmupper), Long_val (vmlower));

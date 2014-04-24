@@ -18,18 +18,26 @@
 (***********************************************************************)
 
 (**
-  {2 Scaled Preconditioned Iterative Linear Solvers.}
+  Scaled Preconditioned Iterative Linear Solvers (SPILS) routines.
   @cvode <node9#s:spils>  The SPILS Modules
  *)
 
-(* TODO: replace the declarations used elsewhere? *)
+(**
+ Constants representing the types of Gram-Schmidt orthogonalization possible for
+ the SPGMR linear solver ({!Spils_nvector.SPGMR.solve}/{!Spils_serial.SPGMR.solve}).
+ @cvode <node9.html#ss:spgmr> ModifiedGS/ClassicalGS
+ *)
 type gramschmidt_type =
   | ModifiedGS
         (** Modified Gram-Schmidt orthogonalization (MODIFIED_GS) *)
   | ClassicalGS
         (** Classical Gram Schmidt orthogonalization (CLASSICAL_GS) *)
 
-(* TODO: replace the declarations used elsewhere? *)
+(**
+ Type of preconditioning for Krylov solvers.
+ @cvode <node3#s:preconditioning> Preconditioning
+ @cvode <node5#sss:lin_solv_init> CVSpgmr/CVSpbcg/CVSptfqrm
+ *)
 type preconditioning_type =
   | PrecNone
   | PrecLeft

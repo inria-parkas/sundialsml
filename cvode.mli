@@ -49,17 +49,6 @@ type lmm =
   | BDF     (** Stiff systems;     Backward Differentiation Formulas *)
 
 (**
- Type of preconditioning for Krylov solvers.
- @cvode <node3#s:preconditioning> Preconditioning
- @cvode <node5#sss:lin_solv_init> CVSpgmr/CVSpbcg/CVSptfqrm
- *)
-and preconditioning_type =
-  | PrecNone
-  | PrecLeft
-  | PrecRight
-  | PrecBoth
-
-(**
  Values for root directions.
  @cvode <node5#sss:optin_root> CVodeSetRootDirection
  *)

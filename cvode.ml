@@ -22,12 +22,6 @@ type lmm =
   | Adams
   | BDF
 
-type preconditioning_type =
-  | PrecNone
-  | PrecLeft
-  | PrecRight
-  | PrecBoth
-
 type root_direction = RootDirs.root_direction
 
 (* Solver exceptions *)

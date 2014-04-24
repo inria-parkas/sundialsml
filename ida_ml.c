@@ -33,6 +33,7 @@
 #endif
 
 #include <stdio.h>
+#include "spils_ml.h"
 #include "ida_ml.h"
 
 #define MAX_ERRMSG_LEN 256
@@ -552,18 +553,8 @@ CAMLprim void c_ida_set_gs_type(value vida_mem, value vgstype)
 {
     CAMLparam2(vida_mem, vgstype);
 
-    int gstype;
-    switch (Int_val(vgstype)) {
-    case VARIANT_IDA_GRAMSCHMIDT_TYPE_MODIFIEDGS:
-	gstype = MODIFIED_GS;
-	break;
-
-    case VARIANT_IDA_GRAMSCHMIDT_TYPE_CLASSICALGS:
-	gstype = CLASSICAL_GS;
-	break;
-    }
-
-    int flag = IDASpilsSetGSType(IDA_MEM_FROM_ML(vida_mem), gstype);
+    int flag = IDASpilsSetGSType(IDA_MEM_FROM_ML(vida_mem),
+				 spils_gs_type(vgstype));
     CHECK_FLAG("IDASpilsSetGSType", flag);
 
     CAMLreturn0;

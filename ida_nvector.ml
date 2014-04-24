@@ -452,10 +452,6 @@ module Dls =
 
 module Spils =
   struct
-    type gramschmidt_type =
-      | ModifiedGS
-      | ClassicalGS
-
     external set_preconditioner  : 'a session -> unit
         = "c_nvec_ida_set_preconditioner"
 
@@ -478,7 +474,7 @@ module Spils =
       s.jactimesfn <- (fun _ _ _ -> ());
       clear_jac_times_vec_fn s
 
-    external set_gs_type : 'a session -> gramschmidt_type -> unit
+    external set_gs_type : 'a session -> Spils.gramschmidt_type -> unit
         = "c_ida_set_gs_type"
 
     external set_eps_lin            : 'a session -> float -> unit

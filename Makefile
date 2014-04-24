@@ -6,7 +6,6 @@ MLOBJ = sundials.cmo nvector.cmo nvector_array.cmo dls.cmo cvode.cmo	\
 	ida_nvector.cmo ida_serial.cmo
 
 COMMON_COBJ= sundials_ml$(XO) dls_ml$(XO) nvector_ml$(XO) \
-	     spils_ml$(XO)
 
 CVODE_COBJ= cvode_ml$(XO) cvode_ml_ba$(XO) cvode_ml_nvec$(XO)
 
@@ -61,6 +60,14 @@ ida_ml_ba.o: ida_ml_nvec.c
 	      -DIDA_ML_BIGARRAYS -o $@ -c $<
 ida_ml_nvec.o: ida_ml_nvec.c
 	$(CC) -I $(OCAML_INCLUDE) $(IDA_CFLAGS) -o $@ -c $<
+
+spils_ml.o: spils_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
+spils_ml_ba.o: spils_ml_nvec.c
+	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) \
+	      -DSPILS_ML_BIGARRAYS -o $@ -c $<
+spils_ml_nvec.o: spils_ml_nvec.c
+	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
 
 dochtml.cmo: INCLUDES += -I +ocamldoc
 dochtml.cmo: OCAMLFLAGS += -pp "cpp $(CPPFLAGS) -DOCAML_3X=$(OCAML_3X)"

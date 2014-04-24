@@ -50,7 +50,7 @@ type 'a linear_solver =
 and bandrange = { mupper : int;
                   mlower : int; }
 and spils_params = { maxl : int;
-                     prec_type : preconditioning_type; }
+                     prec_type : Spils.preconditioning_type; }
 and 'a spils_callbacks =
   {
     prec_solve_fn : (('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
@@ -158,27 +158,27 @@ external c_diag : 'a session -> unit
   = "c_cvode_diag"
 
 external c_spils_spgmr
-  : 'a session -> int -> preconditioning_type -> unit
+  : 'a session -> int -> Spils.preconditioning_type -> unit
   = "c_nvec_cvode_spils_spgmr"
 
 external c_spils_spbcg
-  : 'a session -> int -> preconditioning_type -> unit
+  : 'a session -> int -> Spils.preconditioning_type -> unit
   = "c_nvec_cvode_spils_spbcg"
 
 external c_spils_sptfqmr
-  : 'a session -> int -> preconditioning_type -> unit
+  : 'a session -> int -> Spils.preconditioning_type -> unit
   = "c_nvec_cvode_spils_sptfqmr"
 
 external c_spils_banded_spgmr
-  : 'a session -> int -> int -> int -> preconditioning_type -> unit
+  : 'a session -> int -> int -> int -> Spils.preconditioning_type -> unit
   = "c_nvec_cvode_spils_banded_spgmr"
 
 external c_spils_banded_spbcg
-  : 'a session -> int -> int -> int -> preconditioning_type -> unit
+  : 'a session -> int -> int -> int -> Spils.preconditioning_type -> unit
   = "c_nvec_cvode_spils_banded_spbcg"
 
 external c_spils_banded_sptfqmr
-  : 'a session -> int -> int -> int -> preconditioning_type -> unit
+  : 'a session -> int -> int -> int -> Spils.preconditioning_type -> unit
   = "c_nvec_cvode_spils_banded_sptfqmr"
 
 external c_spils_set_preconditioner
@@ -203,8 +203,8 @@ let set_iter_type session iter =
   in
   let set_precond prec_type cb =
     match prec_type with
-    | PrecNone -> ()
-    | PrecLeft | PrecRight | PrecBoth ->
+    | Spils.PrecNone -> ()
+    | Spils.PrecLeft | Spils.PrecRight | Spils.PrecBoth ->
       match cb.prec_solve_fn with
       | None -> invalid_arg "preconditioning type is not PrecNone, but no \
                              solve function given"
@@ -514,10 +514,6 @@ module Spils =
         left : bool;
       }
 
-    type gramschmidt_type =
-      | ModifiedGS
-      | ClassicalGS
-
     external set_preconditioner  : 'a session -> unit
         = "c_nvec_cvode_set_preconditioner"
 
@@ -540,10 +536,10 @@ module Spils =
       s.jactimesfn <- (fun _ _ _ -> ());
       clear_jac_times_vec_fn s
 
-    external set_prec_type : 'a session -> preconditioning_type -> unit
+    external set_prec_type : 'a session -> Spils.preconditioning_type -> unit
         = "c_cvode_set_prec_type"
 
-    external set_gs_type : 'a session -> gramschmidt_type -> unit
+    external set_gs_type : 'a session -> Spils.gramschmidt_type -> unit
         = "c_cvode_set_gs_type"
 
     external set_eps_lin            : 'a session -> float -> unit

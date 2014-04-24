@@ -160,9 +160,4 @@ enum ida_solver_result_tag {
     VARIANT_IDA_SOLVER_RESULT_STOPTIMEREACHED,
 };
 
-enum ida_gramschmidt_type {
-    VARIANT_IDA_GRAMSCHMIDT_TYPE_MODIFIEDGS  = 0,
-    VARIANT_IDA_GRAMSCHMIDT_TYPE_CLASSICALGS,
-};
-
 #endif /* _IDA_ML_H__ */

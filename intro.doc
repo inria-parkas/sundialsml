@@ -41,7 +41,7 @@ For instance, [CVodeSetErrHandlerFn], becomes
 Constants have been replaced by variant types in most cases.
 They have also been renamed by converting them to {e CamlCase} and removing
 underscores.
-For instance, [PREC_NONE] becomes [Cvode.PrecNone].
+For instance, [PREC_NONE] becomes [Spils.PrecNone].
 
 Rather than try to duplicate or replace the comprehensive
 {{:https://computation.llnl.gov/casc/sundials/documentation/documentation.html}
@@ -157,7 +157,11 @@ or:
 
 {2:modules Modules}
 
-{!modules: Sundials Dls}
+{!modules: Sundials}
+
+{!modules: Dls}
+{!modules: Spils Spils_nvector}
+
 {!modules: Nvector Nvector_array}
 {!modules: Cvode Cvode_serial Cvode_nvector}
 {!modules: Ida Ida_serial}

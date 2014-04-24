@@ -383,20 +383,12 @@ module Spils :
 
     (** {4 Optional output functions} *)
 
-    (** Constants representing the types of Gram-Schmidt orthogonalization
-        possible for the [Spgmr] {!linear_solver}. *)
-    type gramschmidt_type =
-      | ModifiedGS
-            (** Modified Gram-Schmidt orthogonalization (MODIFIED_GS) *)
-      | ClassicalGS
-            (** Classical Gram Schmidt orthogonalization (CLASSICAL_GS) *)
-
     (** Sets the Gram-Schmidt orthogonalization to be used with the [Spgmr]
         {!linear_solver}.
 
       @ida <node5#sss:optin_spils> IDASpilsSetGSType
     *)
-    val set_gs_type : 'a session -> gramschmidt_type -> unit
+    val set_gs_type : 'a session -> Spils.gramschmidt_type -> unit
 
     (**
       [set_eps_lin eplifac] sets the factor by which the Krylov linear solver's
