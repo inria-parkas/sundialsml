@@ -1,7 +1,7 @@
 include config
 
 MLOBJ = sundials.cmo nvector.cmo nvector_array.cmo dls.cmo cvode.cmo	\
-	spils.cmo spils_nvector.cmo \
+	spils.cmo spils_nvector.cmo spils_serial.cmo \
 	cvode_nvector.cmo cvode_serial.cmo ida.cmo \
 	ida_nvector.cmo ida_serial.cmo
 
@@ -11,7 +11,9 @@ CVODE_COBJ= cvode_ml$(XO) cvode_ml_ba$(XO) cvode_ml_nvec$(XO)
 
 IDA_COBJ= ida_ml$(XO) ida_ml_ba$(XO) ida_ml_nvec$(XO)
 
-COBJ=$(COMMON_COBJ) $(CVODE_COBJ) $(IDA_COBJ)
+SPILS_COBJ= spils_ml$(XO) spils_ml_ba$(XO) spils_ml_nvec$(XO)
+
+COBJ=$(COMMON_COBJ) $(SPILS_COBJ) $(CVODE_COBJ) $(IDA_COBJ)
 
 INSTALL_FILES= 			\
     META			\
@@ -61,8 +63,6 @@ ida_ml_ba.o: ida_ml_nvec.c
 ida_ml_nvec.o: ida_ml_nvec.c
 	$(CC) -I $(OCAML_INCLUDE) $(IDA_CFLAGS) -o $@ -c $<
 
-spils_ml.o: spils_ml.c
-	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
 spils_ml_ba.o: spils_ml_nvec.c
 	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) \
 	      -DSPILS_ML_BIGARRAYS -o $@ -c $<

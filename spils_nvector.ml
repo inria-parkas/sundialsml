@@ -10,11 +10,23 @@
 (*                                                                     *)
 (***********************************************************************)
 
+include Spils (* Vital for registering Spils exceptions. *)
+
 type 'a nvector = 'a Nvector.nvector
 
-type 'a atimes = 'a nvector -> 'a nvector -> int
+type 'a atimes = 'a -> 'a -> unit
 
-type 'a psolve = 'a nvector -> 'a nvector -> bool -> int
+type 'a psolve = 'a -> 'a -> bool -> unit
+
+exception ATimesException of int
+exception PSolveException of int
+
+let _ =
+  List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
+  [
+    ("c_nvec_spils_ATimesException", ATimesException 0);
+    ("c_nvec_spils_PSolveException", PSolveException 0);
+  ]
 
 external modified_gs : ('a nvector) array
                        -> Sundials.Realarray2.t

@@ -160,7 +160,7 @@ or:
 {!modules: Sundials}
 
 {!modules: Dls}
-{!modules: Spils Spils_nvector}
+{!modules: Spils Spils_serial Spils_nvector}
 
 {!modules: Nvector Nvector_array}
 {!modules: Cvode Cvode_serial Cvode_nvector}

@@ -17,13 +17,13 @@
 (* National Laboratory.                                                *)
 (***********************************************************************)
 
-(** Abstract nvector interface to the SPILS routines. *)
-
-(** The type of vectors passed to the solver. *)
-type 'a nvector = 'a Nvector.nvector
+(** Serial nvector interface to the SPILS routines. *)
 
 (** For signalling failure within an atimes function. *)
 exception ATimesException of int
+
+(** The type of vectors. *)
+type real_array = Sundials.real_array
 
 (**
   The type of a function [f v z] that calculates [z = A v] using an internal
@@ -31,7 +31,7 @@ exception ATimesException of int
   in [z]. This function should signal failure by raising an {!ATimesException}
   with a non-zero value.
  *)
-type 'a atimes = 'a -> 'a -> unit
+type atimes = real_array -> real_array -> unit
 
 (** For signalling failure within a psolve function. *)
 exception PSolveException of int
@@ -43,7 +43,7 @@ exception PSolveException of int
   should signal failure by raising an {!PSolveException} with a non-zero
   value.
  *)
-type 'a psolve = 'a -> 'a -> bool -> unit
+type psolve = real_array -> real_array -> bool -> unit
 
 (**
   [new_vk_norm = modified_gs v h k p new_vk_norm] performs a modified
@@ -65,7 +65,7 @@ type 'a psolve = 'a -> 'a -> bool -> unit
   not normalized and is stored over the old [v.{k}]. Once the orthogonalization
   has been performed, the Euclidean norm of [v.{k}] is stored in [new_vk_norm].                           
  *)
-val modified_gs : ('a nvector) array
+val modified_gs : real_array array
                  -> Sundials.Realarray2.t
                  -> int
                  -> int
@@ -93,12 +93,12 @@ val modified_gs : ('a nvector) array
   not normalized and is stored over the old [v.{k}]. Once the orthogonalization
   has been performed, the Euclidean norm of [v.{k}] is stored in [new_vk_norm].                           
  *)
-val classical_gs : ('a nvector) array
+val classical_gs : real_array array
                   -> Sundials.Realarray2.t
                   -> int
                   -> int
-                  -> 'a nvector
-                  -> Sundials.real_array
+                  -> real_array
+                  -> real_array
                   -> float
 
 (** {3 Scaled Preconditioned GMRES Method }
@@ -113,7 +113,7 @@ module SPGMR :
      This type represents a solver instance, based on {!Nvector.nvector}s,
      returned from a call to {!make}.
     *)
-    type 'a t
+    type t
 
     (**
      [make lmax temp] returns a solver session, where [lmax] is the maximum
@@ -123,7 +123,7 @@ module SPGMR :
      @cvode <node9#ss:spgmr> SpgmrMalloc
      @raise MemoryRequestFailure Memory could not be allocated.
      *)
-    val make  : int -> 'a nvector -> 'a t
+    val make  : int -> real_array -> t
 
     (**
      [solved, res_norm, nli, nps = solve s x b pretype gstype delta max_restarts
@@ -164,17 +164,17 @@ module SPGMR :
       @raise GSFailure Gram-Schmidt routine failed.
       @raise QRSolFailure QRsol found singular R.
      *)
-    val solve : 'a t
-                -> 'a nvector
-                -> 'a nvector
+    val solve : t
+                -> real_array
+                -> real_array
                 -> Spils.preconditioning_type
                 -> Spils.gramschmidt_type 
                 -> float
                 -> int
-                -> ('a nvector) option
-                -> ('a nvector) option
-                -> 'a atimes
-                -> ('a psolve) option
+                -> real_array option
+                -> real_array option
+                -> atimes
+                -> psolve option
                 -> bool * float * int * int
   end
 
@@ -190,7 +190,7 @@ module SPBCG :
      This type represents a solver instance, based on {!Nvector.nvector}s,
      returned from a call to {!make}.
     *)
-    type 'a t
+    type t
 
     (**
      [make lmax temp] returns a solver session, where [lmax] is the maximum
@@ -200,7 +200,7 @@ module SPBCG :
      @cvode <node9#ss:spbcg> SpbcgMalloc
      @raise MemoryRequestFailure Memory could not be allocated.
      *)
-    val make  : int -> 'a nvector -> 'a t
+    val make  : int -> real_array -> t
 
     (**
      [solved, res_norm, nli, nps = solve s x b pretype delta sx sb atimes
@@ -234,15 +234,15 @@ module SPBCG :
       @raise ATimesFailure atimes failed (recoverable or not)
       @raise PSetFailure pset failed (recoverable or not)
      *)
-    val solve : 'a t
-                -> 'a nvector
-                -> 'a nvector
+    val solve : t
+                -> real_array
+                -> real_array
                 -> Spils.preconditioning_type
                 -> float
-                -> ('a nvector) option
-                -> ('a nvector) option
-                -> 'a atimes
-                -> ('a psolve) option
+                -> real_array option
+                -> real_array option
+                -> atimes
+                -> psolve option
                 -> bool * float * int * int
 
  end
@@ -259,7 +259,7 @@ module SPTFQMR :
      This type represents a solver instance, based on {!Nvector.nvector}s,
      returned from a call to {!make}.
     *)
-    type 'a t
+    type t
 
     (**
      [make lmax temp] returns a solver session, where [lmax] is the maximum
@@ -269,7 +269,7 @@ module SPTFQMR :
      @cvode <node9#ss:sptfqmr> SptfqmrMalloc
      @raise MemoryRequestFailure Memory could not be allocated.
      *)
-    val make  : int -> 'a nvector -> 'a t
+    val make  : int -> real_array -> t
 
     (**
      [solved, res_norm, nli, nps = solve s x b pretype delta sx sb atimes
@@ -304,15 +304,15 @@ module SPTFQMR :
       @raise ATimesFailure atimes failed (recoverable or not)
       @raise PSetFailure pset failed (recoverable or not)
      *)
-    val solve : 'a t
-                -> 'a nvector
-                -> 'a nvector
+    val solve : t
+                -> real_array
+                -> real_array
                 -> Spils.preconditioning_type
                 -> float
-                -> ('a nvector) option
-                -> ('a nvector) option
-                -> 'a atimes
-                -> ('a psolve) option
+                -> real_array option
+                -> real_array option
+                -> atimes
+                -> psolve option
                 -> bool * float * int * int
 
  end
