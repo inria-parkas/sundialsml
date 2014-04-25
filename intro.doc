@@ -164,7 +164,7 @@ or:
 
 {!modules: Nvector Nvector_array}
 {!modules: Cvode Cvode_serial Cvode_nvector}
-{!modules: Ida Ida_serial}
+{!modules: Ida Ida_serial Ida_nvector}
 
 {2:refs References}
 
