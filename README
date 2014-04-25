@@ -5,15 +5,43 @@ Documentation (for maintenance)
 	    sundials.ml
 	    sundials_ml.h
 	    sundials_ml.c
-	   /              \
-	  /	           \
-  	SPILS               dls.mli	       -- interfaces to direct linear solvers
-   -- interfaces to         dls.ml	          (dense, array dense, band, and
-   scaled preconditioned    dls_ml.c	 	  array band matrices)
-   linear solvers          /    |   \
-	                  /     |    \
+	         |
+	      NVECTORS		    -- abstract nvectors
+	    /           \
+	   /	         \
+  	SPILS              dls.mli	       -- interfaces to direct linear solvers
+   -- interfaces to        dls.ml	          (dense, array dense, band, and
+   scaled preconditioned   dls_ml.c	 	  array band matrices)
+   linear solvers         /    |   \
+	                 /     |    \
                      CVODE     IDA    KINSOL   -- interfaces to solvers
                     /CVODES   /IDAS
+
+NVECTORS
+--------
+     nvector.mli
+     nvector.ml
+
+     nvector_ml.h
+     nvector_ml.c
+
+     nvector_array.mli
+     nvector_array.ml
+
+SPILS
+-----
+    spils.mli
+    spils.ml
+
+    spils_nvector.mli
+    spils_nvector.ml
+
+    spils_serial.mli
+    spils_serial.ml
+
+    spils_ml.c
+    spils_ml.h
+    spils_ml_nvec.c
 
 CVODE
 -----
@@ -58,19 +86,4 @@ nvectors (cvode_ml_nvec.h). The latter are compiled twice, once with
 -DIDA_ML_BIGARRAYS to produce code that works with Bigarrays as nvectors (to
 be called from Ida_serial), and once without to produce code that works with
 abstract nvectors (to be called from Ida_nvector).
-
-SPILS
------
-     spils.mli
-     spils.ml
- 
-     spils_serial.mli
-     spils_serial.ml
- 
-     spils_nvector.mli
-     spils_nvector.ml
-
-     spils_ml.h
-     spils_ml.c
-     spils_ml_nvec.c
 

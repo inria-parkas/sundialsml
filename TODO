@@ -6,9 +6,8 @@ TODO
    - OCaml interface to (serial) Sundials.
    - Copyright 2014...
 
-2. (Tim) Tidy up and complete the linear solver interface:
+DONE 2. (Tim) Tidy up and complete the linear solver interface:
    - Spils
-   - Custom linear solvers
    - Smoother integration with CVODE and IDA.
    - Add tests / examples (from Sundials?)
 
