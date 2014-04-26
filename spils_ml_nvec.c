@@ -1,10 +1,10 @@
 /***********************************************************************
  *                                                                     *
- *     OCaml interface to Sundials (serial) CVODE and IDA solvers      *
+ *               OCaml interface to (serial) Sundials                  *
  *                                                                     *
  *  Timothy Bourke (Inria), Jun Inoue (Inria), and Marc Pouzet (LIENS) * 
  *                                                                     *
- *  Copyright 2013 Institut National de Recherche en Informatique et   *
+ *  Copyright 2014 Institut National de Recherche en Informatique et   *
  *  en Automatique.  All rights reserved.  This file is distributed    *
  *  under a BSD 2-Clause License, refer to the file LICENSE.           *
  *                                                                     *

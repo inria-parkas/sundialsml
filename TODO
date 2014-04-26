@@ -2,7 +2,7 @@
 TODO
 ----
 
-1. (Tim) Change the copyright headers:
+DONE 1. (Tim) Change the copyright headers:
    - OCaml interface to (serial) Sundials.
    - Copyright 2014...
 
