@@ -3,6 +3,7 @@ include config
 MLOBJ = sundials.cmo nvector.cmo nvector_array.cmo dls.cmo cvode.cmo	\
 	spils.cmo spils_nvector.cmo spils_serial.cmo \
 	cvode_nvector.cmo cvode_serial.cmo ida.cmo \
+	kinsol_nvector.cmo \
 	ida_nvector.cmo ida_serial.cmo
 
 COMMON_COBJ= sundials_ml$(XO) dls_ml$(XO) nvector_ml$(XO) \
@@ -11,9 +12,11 @@ CVODE_COBJ= cvode_ml$(XO) cvode_ml_ba$(XO) cvode_ml_nvec$(XO)
 
 IDA_COBJ= ida_ml$(XO) ida_ml_ba$(XO) ida_ml_nvec$(XO)
 
+KINSOL_COBJ=
+
 SPILS_COBJ= spils_ml$(XO) spils_ml_ba$(XO) spils_ml_nvec$(XO)
 
-COBJ=$(COMMON_COBJ) $(SPILS_COBJ) $(CVODE_COBJ) $(IDA_COBJ)
+COBJ=$(COMMON_COBJ) $(SPILS_COBJ) $(CVODE_COBJ) $(IDA_COBJ) $(KINSOL_OBJ)
 
 INSTALL_FILES= 			\
     META			\
