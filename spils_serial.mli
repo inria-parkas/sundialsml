@@ -17,10 +17,13 @@
 (* National Laboratory.                                                *)
 (***********************************************************************)
 
-(** Serial nvector interface to the SPILS routines. *)
+(** Serial nvector interface to the SPILS routines.
 
-(** For signalling failure within an atimes function. *)
-exception ATimesException of int
+  @version VERSION()
+  @author Timothy Bourke (Inria)
+  @author Jun Inoue (Inria)
+  @author Marc Pouzet (LIENS)
+ *)
 
 (** The type of vectors. *)
 type real_array = Sundials.real_array
@@ -28,20 +31,16 @@ type real_array = Sundials.real_array
 (**
   The type of a function [f v z] that calculates [z = A v] using an internal
   representation of [A]. The vector [v] must not be changed. Results are stored
-  in [z]. This function should signal failure by raising an {!ATimesException}
-  with a non-zero value.
+  in [z]. This function should signal failure by raising
+  {!Sundials.FailedCallback}.
  *)
 type atimes = real_array -> real_array -> unit
-
-(** For signalling failure within a psolve function. *)
-exception PSolveException of int
 
 (**
   The type of a fucntion [f r z lr] that solves the preconditioner equation
   [P z = r] for the vector [z]. If [lr] is true then [P] should be taken as the
   left preconditioner and otherwise as the right preconditioner. This function
-  should signal failure by raising an {!PSolveException} with a non-zero
-  value.
+  should signal failure by raising {!Sundials.FailedCallback}.
  *)
 type psolve = real_array -> real_array -> bool -> unit
 

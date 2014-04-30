@@ -17,31 +17,30 @@
 (* National Laboratory.                                                *)
 (***********************************************************************)
 
-(** Abstract nvector interface to the SPILS routines. *)
+(** Abstract nvector interface to the SPILS routines.
+
+  @version VERSION()
+  @author Timothy Bourke (Inria)
+  @author Jun Inoue (Inria)
+  @author Marc Pouzet (LIENS)
+ *)
 
 (** The type of vectors passed to the solver. *)
 type 'a nvector = 'a Nvector.nvector
 
-(** For signalling failure within an atimes function. *)
-exception ATimesException of int
-
 (**
   The type of a function [f v z] that calculates [z = A v] using an internal
   representation of [A]. The vector [v] must not be changed. Results are stored
-  in [z]. This function should signal failure by raising an {!ATimesException}
-  with a non-zero value.
+  in [z]. This function should signal failure by raising
+  {!Sundials.FailedCallback}.
  *)
 type 'a atimes = 'a -> 'a -> unit
-
-(** For signalling failure within a psolve function. *)
-exception PSolveException of int
 
 (**
   The type of a fucntion [f r z lr] that solves the preconditioner equation
   [P z = r] for the vector [z]. If [lr] is true then [P] should be taken as the
-  left preconditioner and otherwise as the right preconditioner. This function
-  should signal failure by raising an {!PSolveException} with a non-zero
-  value.
+  left preconditioner and otherwise as the right preconditioner.
+  This function should signal failure by raising {!Sundials.FailedCallback}.
  *)
 type 'a psolve = 'a -> 'a -> bool -> unit
 

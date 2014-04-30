@@ -45,6 +45,8 @@ external get_unit_roundoff : unit -> float
 
 let unit_roundoff = get_unit_roundoff ()
 
+exception FailedCallback of bool
+
 type real_array =
   (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
 

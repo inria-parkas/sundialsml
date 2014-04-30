@@ -26,7 +26,7 @@ include module type of Cvode
   and type lmm = Cvode.lmm
   and type solver_result = Cvode.solver_result
 
-(** Abstract nvector interface to the CVODE Solver
+(** Abstract nvector interface to the CVODE Solver.
 
   Nvectors can be created for an {!Nvector.Mutable} or {!Nvector.Immutable}
   data type by providing a set of low-level operations which are called by

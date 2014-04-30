@@ -18,14 +18,10 @@ type atimes = real_array -> real_array -> unit
 
 type psolve = real_array -> real_array -> bool -> unit
 
-exception ATimesException of int
-exception PSolveException of int
-
 let _ =
   List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
   [
-    ("c_ba_spils_ATimesException", ATimesException 0);
-    ("c_ba_spils_PSolveException", PSolveException 0);
+    ("c_ba_spils_FailedCallback", Sundials.FailedCallback false);
   ]
 
 external modified_gs : real_array array

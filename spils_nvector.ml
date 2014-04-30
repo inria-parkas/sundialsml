@@ -18,14 +18,10 @@ type 'a atimes = 'a -> 'a -> unit
 
 type 'a psolve = 'a -> 'a -> bool -> unit
 
-exception ATimesException of int
-exception PSolveException of int
-
 let _ =
   List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
   [
-    ("c_nvec_spils_ATimesException", ATimesException 0);
-    ("c_nvec_spils_PSolveException", PSolveException 0);
+    ("c_nvec_spils_FailedCallback", Sundials.FailedCallback false);
   ]
 
 external modified_gs : ('a nvector) array

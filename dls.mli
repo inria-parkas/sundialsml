@@ -12,6 +12,12 @@
 
 (**
   {2 Direct Linear Solvers.}
+
+  @version VERSION()
+  @author Timothy Bourke (Inria)
+  @author Jun Inoue (Inria)
+  @author Marc Pouzet (LIENS)
+
   @cvode <node9#s:dls>  The DLS Modules
  *)
 
