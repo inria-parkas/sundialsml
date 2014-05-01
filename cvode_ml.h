@@ -61,8 +61,11 @@
  *
  *  * cvode_mem holds an indirect reference to the session record as user data
  *    (set by CVodeSetUserData).  It cannot directly point to the record
- *    because GC can change the record's address.  Instead, user data points to
- *    a global root which the GC updates whenever it relocates the session.
+ *    because the GC can change the record's address.  Instead, user data points
+ *    to a global root which the GC updates whenever it relocates the session.
+ *    We cannot simply point cv_user_data to the weak reference and make it
+ *    a global root, because cvode_mem is abstract (we only ever have
+ *    a void *).
  *
  *  * The global root points to a weak reference (a Weak.t of size 1) which
  *    points to the session record.  The root is destroyed when the session
