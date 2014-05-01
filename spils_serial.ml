@@ -21,7 +21,7 @@ type psolve = real_array -> real_array -> bool -> unit
 let _ =
   List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
   [
-    ("c_ba_spils_FailedCallback", Sundials.FailedCallback false);
+    ("c_ba_spils_RecoverableFailure", Sundials.RecoverableFailure);
   ]
 
 external modified_gs : real_array array

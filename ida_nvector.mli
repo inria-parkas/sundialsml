@@ -188,7 +188,7 @@ and 'a spils_params =
         l2 norm, i.e. [sqrt (sum over i ((res.{i} * ewt.{i})^2)) < delta],
         where the vector ewt can be obtained through {!get_err_weights}.
 
-        This function can raise {!Ida.RecoverableFailure} to instruct the
+        This function can raise {!Sundials.RecoverableFailure} to instruct the
         integrator to retry with a different step size.  Raising any other
         kind of exception aborts the integrator.
 
@@ -213,7 +213,7 @@ and 'a spils_params =
         Note that unlike in CVODE, whatever data this function computes has to
         be recomputed every time it is called.
 
-        This function can raise {!Ida.RecoverableFailure} to instruct the
+        This function can raise {!Sundials.RecoverableFailure} to instruct the
         integrator to retry with a different step size.  Raising any other
         kind of exception aborts the integrator.
 
@@ -270,8 +270,8 @@ and 'a spils_params =
                needed outside of the function call, then they must be copied to
                separate physical structures.
 
-       Raising any kind of exception (including {!Ida.RecoverableFailure}) from
-       this function results in the integrator being aborted.
+       Raising any kind of exception (including {!Sundials.RecoverableFailure})
+       from this function results in the integrator being aborted.
 
        @ida <node5#sss:optin_spils> IDASpilsSetJacTimesVecFn
        @ida <node5#ss:jtimesFn> Jacobian-times-vector function
@@ -504,11 +504,11 @@ module Spils :
     - [r] is the output vector to fill in with the value of the residual
           function for the given values of t, y, and y'.
     The residual function should return normally if successful, raise
-    {!Ida.RecoverableFailure} if a recoverable error occurred (e.g. [y] has an
-    illegal value), or raise some other exception if a nonrecoverable error
-    occurred.  If a recoverable error occurred, the integrator will attempt
-    to correct and retry.  If a nonrecoverable error occurred, the integrator
-    will halt and propagate the exception to the caller.
+    {!Sundials.RecoverableFailure} if a recoverable error occurred (e.g. [y] has
+    an illegal value), or raise some other exception if a nonrecoverable error
+    occurred.  If a recoverable error occurred, the integrator will attempt to
+    correct and retry.  If a nonrecoverable error occurred, the integrator will
+    halt and propagate the exception to the caller.
 
     {b NB:} [y], [y'], and [r] must no longer be accessed after [f] has
             returned a result, i.e. if their values are needed outside of

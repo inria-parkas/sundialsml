@@ -58,6 +58,7 @@ let spils_no_precond = { maxl = 0;
 type ida_mem
 type c_weak_ref
 type ida_file
+
 type 'a session = {
         ida        : ida_mem;
         backref    : c_weak_ref; (* Back reference to the whole record that
@@ -90,8 +91,10 @@ type 'a session = {
 
 external sv_tolerances  : 'a session -> float -> 'a nvector -> unit
   = "c_nvec_ida_sv_tolerances"
+
 external ss_tolerances  : 'a session -> float -> float -> unit
   = "c_ida_ss_tolerances"
+
 external wf_tolerances  : 'a session -> unit
   = "c_nvec_ida_wf_tolerances"
 
@@ -106,38 +109,48 @@ let read_weak_ref x : 'a session =
 let adjust_retcode = fun session check_recoverable f x ->
   try f x; 0
   with
-  | RecoverableFailure when check_recoverable -> 1
+  | Sundials.RecoverableFailure when check_recoverable -> 1
   | e -> (session.exn_temp <- Some e; -1)
+
 let call_resfn session t y y' res =
   let session = read_weak_ref session in
   adjust_retcode session true (session.resfn t y y') res
+
 let call_rootsfn session t y y' roots =
   let session = read_weak_ref session in
   adjust_retcode session false (session.rootsfn t y y') roots
+
 let call_errw session y ewt =
   let session = read_weak_ref session in
   adjust_retcode session false (session.errw y) ewt
+
 let call_errh session details =
   let session = read_weak_ref session in
   try session.errh details
   with e ->
     prerr_endline ("Warning: error handler function raised an exception.  " ^
                    "This exception will not be propagated.")
+
 let call_jacfn session jac j =
   let session = read_weak_ref session in
   adjust_retcode session true (session.jacfn jac) j
+
 let call_bandjacfn session jac mupper mlower j =
   let session = read_weak_ref session in
   adjust_retcode session true (session.bandjacfn jac mupper mlower) j
+
 let call_presetupfn session jac =
   let session = read_weak_ref session in
   adjust_retcode session true session.presetupfn jac
+
 let call_presolvefn session jac r z delta =
   let session = read_weak_ref session in
   adjust_retcode session true (session.presolvefn jac r z) delta
+
 let call_jactimesfn session jac r z =
   let session = read_weak_ref session in
   adjust_retcode session true (session.jactimesfn jac r) z
+
 let _ =
   Callback.register "c_nvec_ida_call_resfn"         call_resfn;
   Callback.register "c_nvec_ida_call_rootsfn"       call_rootsfn;

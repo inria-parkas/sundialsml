@@ -239,8 +239,9 @@ and 'a spils_callbacks =
         - [v] is initially the right-hand side vector [r]. On completion, it
         must contain the solution [z].
 
-        The {!Sundials.FailedCallback} exception can be raised to indicate
-        failure (recoverable or otherwise).
+        The {!Sundials.RecoverableFailure} exception can be raised to indicate a
+        recoverable failure. Any other exception indicates an unrecoverable
+        failure.
 
         {b NB:} The fields of [jarg], [sarg], and [z] must no longer be accessed
         after [psolve] has returned a result, i.e. if their values are needed
@@ -552,12 +553,12 @@ module Spils :
    - [tmpl]    used as a template to initialize the session (e.g., the
                initial guess vector), and,
 
-   The system function [f] should throw a {!Sundials.FailedCallback} exception
-   if there is a problem.
+   The {!Sundials.RecoverableFailure} exception can be raised to indicate a
+   recoverable failure. Any other exception indicates an unrecoverable failure.
 
-    @kinsol <node5#sss:kinmalloc>      KINCreate/KINInit
-    @kinsol <node5#ss:sysFn>           Problem-defining function
-    @kinsol <node5#sss:lin_solve_init> Linear solver specification functions
+   @kinsol <node5#sss:kinmalloc>      KINCreate/KINInit
+   @kinsol <node5#ss:sysFn>           Problem-defining function
+   @kinsol <node5#sss:lin_solve_init> Linear solver specification functions
  *)
 val init :
     'a linear_solver

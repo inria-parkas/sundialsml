@@ -254,6 +254,10 @@ and linear_solver =
     Only nonzero elements need to be loaded into [jac] because [jac] is set to
     the zero matrix before the call to the Jacobian function.
 
+    The function may raise a {!Sundials.RecoverableFailure} exception to
+    indicate that a recoverable error has occurred. Any other exception is
+    treated as an unrecoverable error.
+
     {b NB:} The elements of both arguments to this function must no longer be
     accessed after the callback has returned, i.e. if their values are needed
     outside of the function call, then they must be copied to separate physical
@@ -282,6 +286,10 @@ and dense_jac_fn = triple_tmp jacobian_arg -> Dls.DenseMatrix.t -> unit
 
     Only nonzero elements need to be loaded into [jac] because [jac] is set to
     the zero matrix before the call to the Jacobian function.
+
+    The function may raise a {!Sundials.RecoverableFailure} exception to
+    indicate that a recoverable error has occurred. Any other exception is
+    treated as an unrecoverable error.
 
     {b NB:} The elements of [arg] and [jac] must no longer be accessed after
     this function has returned.  If their values are needed outside of the
@@ -317,14 +325,17 @@ and spils_callbacks =
         - [solve_arg] specifies the linear system as a {!prec_solve_arg}.
         - [z] is the vector in which the result must be stored.
 
+        The function may raise a {!Sundials.RecoverableFailure} exception to
+        indicate that a recoverable error has occurred. Any other exception is
+        treated as an unrecoverable error.
+
         {b NB:} The elements of [jac], [arg], and [z] must no longer be
         accessed after [psolve] has returned a result, i.e. if their values are
         needed outside of the function call, then they must be copied to
         separate physical structures.
 
         @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
-        @cvode <node5#ss:psolveFn> Linear preconditioning function
-        @cvode <node5#ss:precondFn> Jacobian preconditioning function
+        @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
     *)
 
     prec_setup_fn : (triple_tmp jacobian_arg -> bool -> float -> bool) option;
@@ -346,10 +357,17 @@ and spils_callbacks =
         This function must return [true] if the Jacobian-related data was
         updated, or [false] otherwise, i.e. if the saved data was reused.
 
+        The function may raise a {!Sundials.RecoverableFailure} exception to
+        indicate that a recoverable error has occurred. Any other exception is
+        treated as an unrecoverable error.
+
         {b NB:} The fields of [arg] must no longer be accessed after this
         callback has returned, i.e. if their values are needed outside of the
         function call, then they must be copied to a separate physical
         structure.
+
+        @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
+        @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn
      *)
 
     jac_times_vec_fn : (single_tmp jacobian_arg -> val_array -> val_array
@@ -366,10 +384,17 @@ and spils_callbacks =
         partial derivative of the {i i}-th equation with respect to the
         {i j}-th variable.
 
+        The function may raise a {!Sundials.RecoverableFailure} exception to
+        indicate that a recoverable error has occurred. Any other exception is
+        treated as an unrecoverable error.
+
         {b NB:} The elements of [arg], [v], and [jv] must no longer be
         accessed after this callback has returned, i.e. if their values are
         needed outside of the function call, then they must be copied to a
         separate physical structure.
+
+        @cvode <node5#ss:jtimesfn> CVSpilsJacTimesVecFn
+        @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
      *)
   }
 
@@ -717,6 +742,9 @@ module BandPrec :
           i.e., the simulation time.
     - [y] is a vector of dependent-variable values, i.e. y(t).
     - [dy] is a vector for storing the value of f(t, y).
+    The function may raise a {!Sundials.RecoverableFailure} exception to
+    indicate that a recoverable error has occurred. Any other exception is
+    treated as an unrecoverable error.
 
     {b NB:} [y] and [dy] must no longer be accessed after [f] has returned a
             result, i.e. if their values are needed outside of the function

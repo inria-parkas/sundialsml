@@ -833,7 +833,7 @@ CAMLprim value CVTYPE(init)(value weakref, value lmm, value iter, value initial,
     backref = malloc (sizeof (*backref));
     if (backref == NULL) {
 	CVodeFree (cvode_mem);
-	caml_failwith ("Out of memory");
+	caml_raise_out_of_memory();
     }
     *backref = weakref;
     caml_register_generational_global_root (backref);

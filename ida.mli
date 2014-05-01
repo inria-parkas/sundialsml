@@ -125,12 +125,6 @@ exception BadT      (** t is not in the interval
 exception BadDky    (** invalid dky argument (IDA_BAD_DKY)
                         @ida <node5#ss:optional_dky> IDAGetDky *)
 
-(**
- This exception may be thrown inside the RES callback function (f)
- to indicate that one or more derivatives cannot be calculated at
- the given time offset. *)
-exception RecoverableFailure
-
 (** Variable classification that needs to be specified for computing consistent
  initial values and for suppressing local error tests on some variables.
 

@@ -133,9 +133,4 @@ exception BadT      (** t is not in the interval
 exception BadDky    (** invalid dky argument (CV_BAD_DKY)
                         @cvode <node5#ss:optional_dky> CVodeGetDky *)
 
-(**
- This exception may be thrown inside the RHS callback function (f)
- to indicate that one or more derivatives cannot be calculated at
- the given time offset. *)
-exception RecoverableFailure
 

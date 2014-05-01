@@ -47,10 +47,6 @@ exception BadDky
 
 let no_roots = (0, (fun _ _ _ -> ()))
 
-(* Throw inside the f callback if the derivatives cannot be calculated at
-   the given time. *)
-exception RecoverableFailure
-
 type integrator_stats = {
     num_steps : int;
     num_rhs_evals : int;
@@ -69,7 +65,7 @@ exception StopTimeReached
 let _ =
   List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
   [
-    ("cvode_RecoverableFailure",      RecoverableFailure);
+    ("cvode_RecoverableFailure",      Sundials.RecoverableFailure);
 
     ("cvode_StopTimeReached",         StopTimeReached);
     ("cvode_IllInput",                IllInput);

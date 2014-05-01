@@ -77,6 +77,7 @@ type iter =
 type cvode_mem
 type cvode_file
 type c_weak_ref
+
 type session = {
         cvode      : cvode_mem;
         backref    : c_weak_ref;
@@ -106,35 +107,44 @@ let read_weak_ref x : session =
   match Weak.get x 0 with
   | Some y -> y
   | None -> raise (Failure "Internal error: weak reference is dead")
+
 let adjust_retcode = fun session check_recoverable f x ->
   try f x; 0
   with
-  | RecoverableFailure when check_recoverable -> 1
+  | Sundials.RecoverableFailure when check_recoverable -> 1
   | e -> (session.exn_temp <- Some e; -1)
+
 let call_rhsfn session t y y' =
   let session = read_weak_ref session in
   adjust_retcode session true (session.rhsfn t y) y'
+
 let call_errw session y ewt =
   let session = read_weak_ref session in
   adjust_retcode session false (session.errw y) ewt
+
 let call_errh session details =
   let session = read_weak_ref session in
   try session.errh details
   with e ->
     prerr_endline ("Warning: error handler function raised an exception.  " ^
                    "This exception will not be propagated.")
+
 let call_jacfn session jac j =
   let session = read_weak_ref session in
   adjust_retcode session true (session.jacfn jac) j
+
 let call_bandjacfn session jac mupper mlower j =
   let session = read_weak_ref session in
   adjust_retcode session true (session.bandjacfn jac mupper mlower) j
+
 let call_presolvefn session jac r z =
   let session = read_weak_ref session in
   adjust_retcode session true (session.presolvefn jac r) z
+
 let call_jactimesfn session jac v jv =
   let session = read_weak_ref session in
   adjust_retcode session true (session.jactimesfn jac v) jv
+
 let _ =
   Callback.register "c_ba_cvode_call_rhsfn"         call_rhsfn;
   Callback.register "c_ba_cvode_call_errh"          call_errh;
@@ -154,10 +164,10 @@ external c_init
 
 external c_root_init : session -> int -> unit
     = "c_ba_cvode_root_init"
+
 let root_init session (nroots, rootsfn) =
   c_root_init session nroots;
   session.rootsfn <- rootsfn
-
 
 external c_dls_dense : session -> bool -> unit
   = "c_ba_cvode_dls_dense"

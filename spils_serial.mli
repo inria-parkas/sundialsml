@@ -31,16 +31,17 @@ type real_array = Sundials.real_array
 (**
   The type of a function [f v z] that calculates [z = A v] using an internal
   representation of [A]. The vector [v] must not be changed. Results are stored
-  in [z]. This function should signal failure by raising
-  {!Sundials.FailedCallback}.
+  in [z]. The {!Sundials.RecoverableFailure} exception can be raised to indicate
+  a recoverable failure. Any other exception indicates an unrecoverable failure.
  *)
 type atimes = real_array -> real_array -> unit
 
 (**
   The type of a fucntion [f r z lr] that solves the preconditioner equation
   [P z = r] for the vector [z]. If [lr] is true then [P] should be taken as the
-  left preconditioner and otherwise as the right preconditioner. This function
-  should signal failure by raising {!Sundials.FailedCallback}.
+  left preconditioner and otherwise as the right preconditioner. The
+  {!Sundials.RecoverableFailure} exception can be raised to indicate a
+  recoverable failure. Any other exception indicates an unrecoverable failure.
  *)
 type psolve = real_array -> real_array -> bool -> unit
 

@@ -171,11 +171,7 @@ static int atimes_f(void *a_fn, N_Vector v, N_Vector z)
     res = caml_callback2_exn((value)a_fn, vv, vz);
     if (Is_exception_result(res)) {
 	res = Extract_exception(res);
-	if (Field(res, 0) == *caml_named_value(CVTYPESTR(FailedCallback))) {
-	    r = (Bool_val(Field(res, 1))?1:-1);
-	} else {
-	    r = -1;
-	}
+	r = (Field(res, 0) == *caml_named_value(CVTYPESTR(RecoverableFailure)))?1:-1;
     }
 
     RELINQUISH_WRAPPEDNV(vv);
@@ -200,11 +196,7 @@ static int psolve_f(void *p_fn, N_Vector r, N_Vector z, int lr)
     res = caml_callback3_exn((value)p_fn, vr, vz, Val_bool(lr == 1));
     if (Is_exception_result(res)) {
 	res = Extract_exception(res);
-	if (Field(res, 0) == *caml_named_value(CVTYPESTR(FailedCallback))) {
-	    fr = (Bool_val(Field(res, 1))?1:-1);
-	} else {
-	    fr = -1;
-	}
+	fr = (Field(res, 0) == *caml_named_value(CVTYPESTR(RecoverableFailure)))?1:-1;
     }
 
     RELINQUISH_WRAPPEDNV(vr);

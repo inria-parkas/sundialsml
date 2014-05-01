@@ -35,14 +35,11 @@ val unit_roundoff : float
 
 (** {2 Exceptions} *)
 
-(* TODO: Port to Cvode and Ida if possible.
-         (properly handle failures in the spils_callbacks.)
-   Register separately in each submodule under a different name.
-   Replace Cvode.RecoverableFailure? Or use it?
- *)
-
-(** Used to indicate failure of a callback (recoverable or unrecoverable). *)
-exception FailedCallback of bool
+(**
+ This exception may be thrown inside most callback functions to indicate a
+ recoverable failure. Throwing any other kind of exception normally indicates an
+ unrecoverable failure. *)
+exception RecoverableFailure
 
 (** {2 Arrays of floats} *)
 
