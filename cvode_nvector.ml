@@ -88,9 +88,6 @@ type 'a session = {
         mutable rootsfn    : float -> 'a -> root_val_array -> unit;
         mutable errh       : error_details -> unit;
         mutable errw       : 'a -> 'a -> unit;
-        mutable jacfn      : ('a triple_tmp, 'a) jacobian_arg -> Dls.DenseMatrix.t -> unit;
-        mutable bandjacfn  : ('a triple_tmp, 'a) jacobian_arg -> int -> int
-                               -> Dls.BandMatrix.t -> unit;
         mutable presetupfn : ('a triple_tmp, 'a) jacobian_arg -> bool -> float -> bool;
         mutable presolvefn : ('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
                                -> 'a nvector -> unit;
@@ -124,13 +121,6 @@ let call_errh session details =
   with e ->
     prerr_endline ("Warning: error handler function raised an exception.  " ^
                    "This exception will not be propagated.")
-let call_jacfn session jac j =
-  let session = read_weak_ref session in
-  adjust_retcode session true (session.jacfn jac) j
-
-let call_bandjacfn session jac mupper mlower j =
-  let session = read_weak_ref session in
-  adjust_retcode session true (session.bandjacfn jac mupper mlower) j
 
 let call_presolvefn session jac r z =
   let session = read_weak_ref session in
@@ -144,8 +134,6 @@ let _ =
   Callback.register "c_nvec_cvode_call_rhsfn"         call_rhsfn;
   Callback.register "c_nvec_cvode_call_errh"          call_errh;
   Callback.register "c_nvec_cvode_call_errw"          call_errw;
-  Callback.register "c_nvec_cvode_call_jacfn"         call_jacfn;
-  Callback.register "c_nvec_cvode_call_bandjacfn"     call_bandjacfn;
   Callback.register "c_nvec_cvode_call_presolvefn"    call_presolvefn;
   Callback.register "c_nvec_cvode_call_jactimesfn"    call_jactimesfn;
 
@@ -227,8 +215,6 @@ let set_iter_type session iter =
         optionally (fun f -> session.jactimesfn <- f) cb.jac_times_vec_fn
   in
   (* Release references to all linear solver-related callbacks.  *)
-  session.jacfn      <- dummy_dense_jac;
-  session.bandjacfn  <- dummy_band_jac;
   session.presetupfn <- dummy_prec_setup;
   session.presolvefn <- dummy_prec_solve;
   session.jactimesfn <- dummy_jac_times_vec;
@@ -281,8 +267,6 @@ let init lmm iter f ?(roots=no_roots) ?(t0=0.) (neqs, y0) =
           rootsfn    = roots;
           errh       = (fun _ -> ());
           errw       = (fun _ _ -> ());
-          jacfn      = dummy_dense_jac;
-          bandjacfn  = dummy_band_jac;
           presetupfn = dummy_prec_setup;
           presolvefn = dummy_prec_solve;
           jactimesfn = dummy_jac_times_vec;
