@@ -59,9 +59,8 @@
 module Cvode = Cvode_serial
 module Carray = Cvode.Carray
 module Roots = Cvode.Roots
-module Dls = Cvode.Dls
-module Densematrix = Cvode.Densematrix
-module Bandmatrix = Cvode.Bandmatrix
+module Densematrix = Dls.DenseMatrix
+module Bandmatrix = Dls.BandMatrix
 
 let printf = Printf.printf
 
@@ -123,9 +122,9 @@ let jac1 { Cvode.jac_y = y } j =
   let y0 = y.{0} in
   let y1 = y.{1} in
   (* previously calls to DENSE_ELEM: *)
-  Densematrix.set j (0, 1) one;
-  Densematrix.set j (1, 0) (-. two *. p1_eta *. y0 *. y1 -. one);
-  Densematrix.set j (1, 1) (p1_eta *. (one -. sqr y0))
+  Densematrix.set j 0 1 one;
+  Densematrix.set j 1 0 (-. two *. p1_eta *. y0 *. y1 -. one);
+  Densematrix.set j 1 1 (p1_eta *. (one -. sqr y0))
 
 let jac2 arg mu ml jac =
   (*
@@ -147,9 +146,9 @@ let jac2 arg mu ml jac =
     for i = 0 to p2_meshx - 1 do
       let k = i + j * p2_meshx in
       let kth_col = Bandmatrix.Col.get_col jac k in
-      Bandmatrix.Col.set kth_col (k, k) (-. two);
-      if (i != p2_meshx - 1) then Bandmatrix.Col.set kth_col (k + 1, k) p2_alph1;
-      if (j != p2_meshy - 1) then Bandmatrix.Col.set kth_col (k + p2_meshx, k) p2_alph2
+      Bandmatrix.Col.set kth_col k k (-. two);
+      if (i != p2_meshx - 1) then Bandmatrix.Col.set kth_col (k + 1) k p2_alph1;
+      if (j != p2_meshy - 1) then Bandmatrix.Col.set kth_col (k + p2_meshx) k p2_alph2
     done
   done
 
@@ -231,14 +230,14 @@ let print_final_stats cvode_mem miter ero =
     let nje, nfeLS, (lenrwLS, leniwLS) =
       match miter with
       | Dense_User | Dense_DQ ->
-          Dls.get_num_jac_evals cvode_mem,
-          Dls.get_num_rhs_evals cvode_mem,
-          Dls.get_work_space    cvode_mem
+          Cvode.Dls.get_num_jac_evals cvode_mem,
+          Cvode.Dls.get_num_rhs_evals cvode_mem,
+          Cvode.Dls.get_work_space    cvode_mem
 
       | Band_User | Band_DQ ->
-          Dls.get_num_jac_evals cvode_mem,
-          Dls.get_num_rhs_evals cvode_mem,
-          Dls.get_work_space    cvode_mem
+          Cvode.Dls.get_num_jac_evals cvode_mem,
+          Cvode.Dls.get_num_rhs_evals cvode_mem,
+          Cvode.Dls.get_work_space    cvode_mem
 
       | Diag ->
           nsetups,

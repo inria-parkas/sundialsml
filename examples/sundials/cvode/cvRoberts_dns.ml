@@ -33,7 +33,6 @@
 module Cvode = Cvode_serial
 module Carray = Cvode.Carray
 module Roots = Cvode.Roots
-module Dls = Cvode.Dls
 
 let printf = Printf.printf
 
@@ -79,7 +78,7 @@ let g t y gout =
 
 let jac arg jmat =
   let y_ith i = arg.Cvode.jac_y.{i - 1}
-  and j_ijth (i, j) = Cvode.Densematrix.set jmat (i - 1, j - 1)
+  and j_ijth (i, j) = Dls.DenseMatrix.set jmat (i - 1) (j - 1)
   in
   let (y1, y2, y3) = (y_ith 1, y_ith 2, y_ith 3)
   in

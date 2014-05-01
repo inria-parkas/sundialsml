@@ -36,9 +36,7 @@
 module Cvode  = Cvode_serial
 module Carray = Cvode.Carray
 module Roots  = Cvode.Roots
-module Dls    = Cvode.Dls
-module Direct = Cvode.Directdensematrix
-module Spils  = Cvode.Spils
+module Direct = Dls.ArrayDenseMatrix
 module BandPrec = Cvode.BandPrec 
 open Bigarray
 
@@ -203,12 +201,12 @@ let print_final_stats s =
   and nni = Cvode.get_num_nonlin_solv_iters s
   and ncfn = Cvode.get_num_nonlin_solv_conv_fails s
   in
-  let lenrwLS, leniwLS = Spils.get_work_space s
-  and nli   = Spils.get_num_lin_iters s
-  and npe   = Spils.get_num_prec_evals s
-  and nps   = Spils.get_num_prec_solves s
-  and ncfl = Spils.get_num_conv_fails s
-  and nfeLS = Spils.get_num_rhs_evals s
+  let lenrwLS, leniwLS = Cvode.Spils.get_work_space s
+  and nli   = Cvode.Spils.get_num_lin_iters s
+  and npe   = Cvode.Spils.get_num_prec_evals s
+  and nps   = Cvode.Spils.get_num_prec_solves s
+  and ncfl  = Cvode.Spils.get_num_conv_fails s
+  and nfeLS = Cvode.Spils.get_num_rhs_evals s
   in
   let lenrwBP, leniwBP = BandPrec.get_work_space s in
   let nfeBP = BandPrec.get_num_rhs_evals s in
@@ -338,7 +336,7 @@ let main () =
     Cvode.init Cvode.BDF
       (Cvode.Newton
           (Cvode.BandedSpgmr
-             ({ Cvode.prec_type = Cvode.PrecLeft; Cvode.maxl = 0},
+             ({ Cvode.prec_type = Spils.PrecLeft; Cvode.maxl = 0},
               { Cvode.mupper = mu; Cvode.mlower = ml})))
       (f data) ~t0:t0 u
   in
@@ -367,7 +365,7 @@ let main () =
     print_final_stats cvode_mem
   in (* End of jpre loop *)
 
-  jrpe_loop Cvode.PrecLeft  "PREC_LEFT";
+  jrpe_loop Spils.PrecLeft  "PREC_LEFT";
 
   (* On second run, re-initialize u, the solver, and CVSPGMR *)
   set_initial_profiles u data.dx data.dy;
@@ -378,11 +376,11 @@ let main () =
      the statistics.  The number of rhs function evaluation in sundials' C code
      is cumulative, and using set_prec_type is necessary to simulate that
      behavior.  *)
-  Spils.set_prec_type cvode_mem Cvode.PrecRight;
+  Cvode.Spils.set_prec_type cvode_mem Spils.PrecRight;
   printf "\n\n-------------------------------------------------------";
   printf "------------\n";
     
-  jrpe_loop Cvode.PrecRight "PREC_RIGHT"
+  jrpe_loop Spils.PrecRight "PREC_RIGHT"
 
 let _ = main ()
 let _ = Gc.compact ()

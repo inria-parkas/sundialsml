@@ -42,9 +42,7 @@
 module Cvode  = Cvode_serial
 module Carray = Cvode.Carray
 module Roots  = Cvode.Roots
-module Dls    = Cvode.Dls
-module Densemat = Cvode.Directdensematrix
-module Spils  = Cvode.Spils
+module Densemat = Dls.ArrayDenseMatrix
 open Bigarray
 
 let printf = Printf.printf
@@ -122,8 +120,8 @@ let set_ijkth v i j k e = v.{i - 1 + j * num_species + k * nsmx} <- e
 let slice_ijkth v i j k =
   Array1.sub v (i - 1 + j * num_species + k * nsmx) num_species
 
-let ijth v i j       = Densemat.get v (i - 1, j - 1)
-let set_ijth v i j e = Densemat.set v (i - 1, j - 1) e
+let ijth v i j       = Densemat.get v (i - 1) (j - 1)
+let set_ijth v i j e = Densemat.set v (i - 1) (j - 1) e
 
 (* Type : UserData 
    contains preconditioner blocks, pivot arrays, and problem constants *)
@@ -152,7 +150,7 @@ let sqr x = x ** 2.0
 (* Allocate memory for data structure of type UserData *)
 
 let alloc_user_data () =
-  let new_dmat _ = Densemat.new_dense_mat (num_species, num_species) in
+  let new_dmat _ = Densemat.make num_species num_species in
   let new_int1 _  = Cvode.make_lint_array num_species in
   let new_y_arr elinit _ = Array.init my elinit in
   let new_xy_arr elinit  = Array.init mx (new_y_arr elinit) in
@@ -235,12 +233,12 @@ let print_final_stats s linsolver =
   and nni = Cvode.get_num_nonlin_solv_iters s
   and ncfn = Cvode.get_num_nonlin_solv_conv_fails s
   in
-  let lenrwLS, leniwLS = Spils.get_work_space s
-  and nli   = Spils.get_num_lin_iters s
-  and npe   = Spils.get_num_prec_evals s
-  and nps   = Spils.get_num_prec_solves s
-  and ncfl = Spils.get_num_conv_fails s
-  and nfeLS = Spils.get_num_rhs_evals s
+  let lenrwLS, leniwLS = Cvode.Spils.get_work_space s
+  and nli   = Cvode.Spils.get_num_lin_iters s
+  and npe   = Cvode.Spils.get_num_prec_evals s
+  and nps   = Cvode.Spils.get_num_prec_solves s
+  and ncfl  = Cvode.Spils.get_num_conv_fails s
+  and nfeLS = Cvode.Spils.get_num_rhs_evals s
   in
   printf "\nFinal Statistics.. \n\n";
   printf "lenrw   = %5d     leniw   = %5d\n"   lenrw leniw;
@@ -355,8 +353,7 @@ let precond data jacarg jok gamma =
       (* jok = TRUE: Copy Jbd to P *)
       for jy = 0 to my - 1 do
         for jx = 0 to mx - 1 do
-          Densemat.copy
-            jbd.(jx).(jy) p.(jx).(jy) (num_species, num_species)
+          Densemat.copy jbd.(jx).(jy) p.(jx).(jy)
         done
       done;
       false
@@ -390,7 +387,7 @@ let precond data jacarg jok gamma =
           set_ijth j 1 2 (-. q2 *. c1 +. q4coef);
           set_ijth j 2 1 (q1 *. c3 -. q2 *. c2);
           set_ijth j 2 2 ((-. q2 *. c1 -. q4coef) +. diag);
-          Densemat.copy j a (num_species, num_species)
+          Densemat.copy j a
         done
       done;
       true
@@ -400,16 +397,15 @@ let precond data jacarg jok gamma =
   (* Scale by -gamma *)
   for jy = 0 to my - 1 do
     for jx = 0 to mx - 1 do
-      Densemat.scale (-. gamma) p.(jx).(jy) (num_species, num_species)
+      Densemat.scale (-. gamma) p.(jx).(jy)
     done
   done;
   
   (* Add identity matrix and do LU decompositions on blocks in place. *)
   for jx = 0 to mx - 1 do
     for jy = 0 to my - 1 do
-      Densemat.add_identity p.(jx).(jy) num_species;
-      Densemat.getrf
-        p.(jx).(jy) (num_species, num_species) pivot.(jx).(jy)
+      Densemat.add_identity p.(jx).(jy);
+      Densemat.getrf p.(jx).(jy) pivot.(jx).(jy)
     done
   done;
   r
@@ -417,8 +413,10 @@ let precond data jacarg jok gamma =
 (* Preconditioner solve routine *)
 
 let psolve data jac_arg solve_arg zdata =
-  let { Spils.rhs = r; Spils.gamma = gamma;
-        Spils.delta = delta; Spils.left = lr } = solve_arg
+  let { Cvode.Spils.rhs = r;
+        Cvode.Spils.gamma = gamma;
+        Cvode.Spils.delta = delta;
+        Cvode.Spils.left = lr } = solve_arg
   in
 
   (* Extract the P and pivot arrays from user_data. *)
@@ -432,8 +430,7 @@ let psolve data jac_arg solve_arg zdata =
      in P and pivot data in pivot, and return the solution in z. *)
   for jx = 0 to mx - 1 do
     for jy = 0 to my - 1 do
-      Densemat.getrs p.(jx).(jy) num_species pivot.(jx).(jy)
-                         (slice_ijkth zdata 1 jx jy)
+      Densemat.getrs p.(jx).(jy) pivot.(jx).(jy) (slice_ijkth zdata 1 jx jy)
     done
   done
 
@@ -503,7 +500,7 @@ let main () =
           ~iter_type:
             (Cvode.Newton
                (Cvode.Spgmr
-                  ({ Cvode.prec_type = Cvode.PrecLeft; Cvode.maxl = 0 },
+                  ({ Cvode.prec_type = Spils.PrecLeft; Cvode.maxl = 0 },
                    { Cvode.prec_setup_fn = Some (precond data);
                      Cvode.prec_solve_fn = Some (psolve data);
                      Cvode.jac_times_vec_fn = None })));
@@ -511,7 +508,7 @@ let main () =
         (* Set modified Gram-Schmidt orthogonalization, preconditioner 
            setup and solve routines Precond and PSolve, and the pointer 
            to the user-defined block data *)
-        Spils.set_gs_type cvode_mem Spils.ModifiedGS
+        Cvode.Spils.set_gs_type cvode_mem Spils.ModifiedGS
       end
 
     (* (b) SPBCG *)
@@ -527,7 +524,7 @@ let main () =
           ~iter_type:
             (Cvode.Newton
                (Cvode.Spbcg
-                  ({ Cvode.prec_type = Cvode.PrecLeft; Cvode.maxl = 0 },
+                  ({ Cvode.prec_type = Spils.PrecLeft; Cvode.maxl = 0 },
                    { Cvode.prec_setup_fn = Some (precond data);
                      Cvode.prec_solve_fn = Some (psolve data);
                      Cvode.jac_times_vec_fn = None })))
@@ -546,7 +543,7 @@ let main () =
           ~iter_type:
             (Cvode.Newton
                (Cvode.Sptfqmr
-                  ({ Cvode.prec_type = Cvode.PrecLeft; Cvode.maxl = 0 },
+                  ({ Cvode.prec_type = Spils.PrecLeft; Cvode.maxl = 0 },
                    { Cvode.prec_setup_fn = Some (precond data);
                      Cvode.prec_solve_fn = Some (psolve data);
                      Cvode.jac_times_vec_fn = None })))

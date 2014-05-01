@@ -34,8 +34,8 @@
 module Cvode = Cvode_serial
 module Carray = Cvode.Carray
 module Roots = Cvode.Roots
+module Col = Dls.BandMatrix.Col
 module Dls = Cvode.Dls
-module Col = Cvode.Bandmatrix.Col
 
 let printf = Printf.printf
 let vmax_norm = Nvector_array.Bigarray.array_nvec_ops.Nvector.Mutable.nvmaxnorm
@@ -148,11 +148,11 @@ let jac data arg mlower mupper jmat =
 
       (* set the kth column of jmat *)
 
-      Col.set kthCol (k, k) (-. two *. (verdc +. hordc));
-      if (i <> 1)  then Col.set kthCol (k - my, k) (hordc +. horac);
-      if (i <> mx) then Col.set kthCol (k + my, k) (hordc -. horac);
-      if (j <> 1)  then Col.set kthCol (k - 1,  k) verdc;
-      if (j <> my) then Col.set kthCol (k + 1,  k) verdc
+      Col.set kthCol k k (-. two *. (verdc +. hordc));
+      if (i <> 1)  then Col.set kthCol (k - my) k (hordc +. horac);
+      if (i <> mx) then Col.set kthCol (k + my) k (hordc -. horac);
+      if (j <> 1)  then Col.set kthCol (k - 1)  k verdc;
+      if (j <> my) then Col.set kthCol (k + 1)  k verdc
     done
   done
 

@@ -6,7 +6,8 @@ translated directly into an imperative OCaml style.
 
 The examples can be compiled and their output compared with that of the
 original examples by running:
-    make tests.log; cat tests.log
+    make tests.byte.log; cat tests.log
+    make tests.opt.log; cat tests.log
 
 and if the libraries have been compiled with LAPACK support:
     make lapack-tests.log

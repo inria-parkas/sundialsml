@@ -93,9 +93,7 @@
 module Cvode = Cvode_serial
 module Carray = Cvode.Carray
 module Roots = Cvode.Roots
-module Dls = Cvode.Dls
-module Densemat = Cvode.Directdensematrix
-module Spils  = Cvode.Spils
+module Densemat = Dls.ArrayDenseMatrix
 open Bigarray
 
 let printf = Printf.printf
@@ -315,7 +313,7 @@ let precond wdata jacarg jok gamma =
         fblock wdata t cdata jx jy f1;
         let fac = -. gamma /. r in
         for i = 0 to mp - 1 do
-          Densemat.set p.(ig) (i, j) ((f1.{i} -. fsave.{if0 + i}) *. fac)
+          Densemat.set p.(ig) i j ((f1.{i} -. fsave.{if0 + i}) *. fac)
         done;
         cdata.{jj} <- save
       done
@@ -324,8 +322,8 @@ let precond wdata jacarg jok gamma =
   
   (* Add identity matrix and do LU decompositions on blocks. *)
   let f ig p_ig =
-    Densemat.add_identity p_ig mp;
-    Densemat.getrf p_ig (mp, mp) pivot.(ig)
+    Densemat.add_identity p_ig;
+    Densemat.getrf p_ig pivot.(ig)
   in
   Array.iteri f p;
   true
@@ -537,7 +535,7 @@ let gs_iter wdata gamma zd xd =
 *)
 let psolve wdata jac_arg solve_arg z =
   let { Cvode.jac_tmp = vtemp; } = jac_arg
-  and { Spils.rhs = r; Spils.gamma = gamma } = solve_arg
+  and { Cvode.Spils.rhs = r; Cvode.Spils.gamma = gamma } = solve_arg
   in
   Array1.blit r z;
 
@@ -561,7 +559,7 @@ let psolve wdata jac_arg solve_arg z =
     for jx = 0 to mx - 1 do
       let igx = jigx.(jx) in
       let ig = igx + igy * ngx in
-      Densemat.getrs p.(ig) mp pivot.(ig) (z +>+ !iv);
+      Densemat.getrs p.(ig) pivot.(ig) (z +>+ !iv);
       iv := !iv + mp
     done
   done
@@ -651,7 +649,7 @@ let set_groups m ng jg jig jr =
 let alloc_user_data () =
   let r =
     {
-      p         = Array.init ngrp (fun _ -> Densemat.new_dense_mat (ns, ns));
+      p         = Array.init ngrp (fun _ -> Densemat.make ns ns);
       pivot     = Array.init ngrp (fun _ -> Cvode.make_lint_array ns);
 
       ns        = ns;
@@ -774,7 +772,7 @@ let print_intro () =
 
 let print_header jpre gstype =
   printf "\n\nPreconditioner type is           jpre = %s\n"
-    (if jpre = Cvode.PrecLeft then "PREC_LEFT" else "PREC_RIGHT");
+    (if jpre = Spils.PrecLeft then "PREC_LEFT" else "PREC_RIGHT");
   printf"\nGram-Schmidt method type is    gstype = %s\n\n\n"
     (if gstype = Spils.ModifiedGS then "MODIFIED_GS" else "CLASSICAL_GS")
 
@@ -811,12 +809,12 @@ let print_final_stats s =
   and nni = Cvode.get_num_nonlin_solv_iters s
   and ncfn = Cvode.get_num_nonlin_solv_conv_fails s
   in
-  let lenrwLS, leniwLS = Spils.get_work_space s
-  and nli   = Spils.get_num_lin_iters s
-  and npe   = Spils.get_num_prec_evals s
-  and nps   = Spils.get_num_prec_solves s
-  and ncfl = Spils.get_num_conv_fails s
-  and nfeLS = Spils.get_num_rhs_evals s
+  let lenrwLS, leniwLS = Cvode.Spils.get_work_space s
+  and nli   = Cvode.Spils.get_num_lin_iters s
+  and npe   = Cvode.Spils.get_num_prec_evals s
+  and nps   = Cvode.Spils.get_num_prec_solves s
+  and ncfl  = Cvode.Spils.get_num_conv_fails s
+  and nfeLS = Cvode.Spils.get_num_rhs_evals s
   in
 
   printf "\n\n Final statistics for this run:\n\n";
@@ -859,7 +857,7 @@ let main () =
         Cvode.BDF
         (Cvode.Newton
             (Cvode.Spgmr
-               ({ Cvode.prec_type = Cvode.PrecLeft; Cvode.maxl = maxl},
+               ({ Cvode.prec_type = Spils.PrecLeft; Cvode.maxl = maxl},
                 { Cvode.prec_setup_fn = Some (precond wdata);
                   Cvode.prec_solve_fn = Some (psolve wdata);
                   Cvode.jac_times_vec_fn = None })))
@@ -868,8 +866,8 @@ let main () =
   Gc.compact ();
   wdata.cvode_mem <- Some cvode_mem;
   Cvode.ss_tolerances cvode_mem reltol abstol;
-  Spils.set_gs_type cvode_mem Spils.ModifiedGS;
-  Spils.set_eps_lin cvode_mem delt;
+  Cvode.Spils.set_gs_type cvode_mem Spils.ModifiedGS;
+  Cvode.Spils.set_eps_lin cvode_mem delt;
 
   let ns   = wdata.ns
   and mxns = wdata.mxns
@@ -889,8 +887,8 @@ let main () =
       print_all_species c ns mxns t0
     else begin
       Cvode.reinit cvode_mem t0 c;
-      Spils.set_prec_type cvode_mem jpre;
-      Spils.set_gs_type cvode_mem gstype
+      Cvode.Spils.set_prec_type cvode_mem jpre;
+      Cvode.Spils.set_gs_type cvode_mem gstype
     end;
     
     (* Loop over output points, call CVode, print sample solution values. *)
@@ -909,10 +907,10 @@ let main () =
   in
       
   (* Loop over jpre and gstype (four cases) *)
-  run Cvode.PrecLeft  Spils.ModifiedGS;
-  run Cvode.PrecLeft  Spils.ClassicalGS;
-  run Cvode.PrecRight Spils.ModifiedGS;
-  run Cvode.PrecRight Spils.ClassicalGS
+  run Spils.PrecLeft  Spils.ModifiedGS;
+  run Spils.PrecLeft  Spils.ClassicalGS;
+  run Spils.PrecRight Spils.ModifiedGS;
+  run Spils.PrecRight Spils.ClassicalGS
 
 let _ = main ()
 let _ = Gc.compact ()
