@@ -35,13 +35,7 @@ DONE 4. (Tim) Doc generation to work for both OCaml 3.12 and 4.x.
 MINOR PATCHES
 -------------
 1. Rename all functions *_err_* to *_error_*.
-2. Change the set_err_file and set_info_file functions to accept a FILE*
-   rather than a filename. Put this value inside the session types to
-   prevent premature garbage collection.
-3. Rename c_cvode_ba_* functions inside the Spils module (also for ida?)
-4. It seems that many of the functions inside cvode_ml_nvec.c could just as
-   well go in cvode_ml.c.
-5. Eliminate the Dls functions:
+2. Eliminate the Dls functions:
      set_dense_jac_fn
      clear_dense_jac_fn
      set_band_jac_fn
@@ -52,6 +46,8 @@ MINOR PATCHES
      clear_jac_times_vec_fn
 
    and just provide a reinit function.
+3. CVODE/IDA: set_preconditioner should allow the setup function to be
+   optional.
 
 TO DISCUSS
 ----------
