@@ -383,6 +383,10 @@ static int presetupfn(
     CAMLlocalN(args, 3);
     value *backref = user_data;
 
+    /* The presetup function must return a boolean (in addition to possible
+     * exceptions), so, we do all of the setup here and directly call the
+     * user-supplied OCaml function without going through an OCaml
+     * trampoline.  */
     WEAK_DEREF (session, *backref);
 
     args[0] = make_jac_arg(t, y, fy, make_triple_tmp(tmp1, tmp2, tmp3));
