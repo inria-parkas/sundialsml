@@ -184,33 +184,33 @@ external c_dls_lapack_band : session -> int -> int -> bool -> unit
 external c_diag : session -> unit
   = "c_cvode_diag"
 
-external c_spils_spgmr
-  : session -> int -> Spils.preconditioning_type -> unit
-  = "c_ba_cvode_spils_spgmr"
-
-external c_spils_spbcg
-  : session -> int -> Spils.preconditioning_type -> unit
-  = "c_ba_cvode_spils_spbcg"
-
-external c_spils_sptfqmr
-  : session -> int -> Spils.preconditioning_type -> unit
-  = "c_ba_cvode_spils_sptfqmr"
-
-external c_spils_banded_spgmr
-  : session -> int -> int -> int -> Spils.preconditioning_type -> unit
-  = "c_ba_cvode_spils_banded_spgmr"
-
-external c_spils_banded_spbcg
-  : session -> int -> int -> int -> Spils.preconditioning_type -> unit
-  = "c_ba_cvode_spils_banded_spbcg"
-
-external c_spils_banded_sptfqmr
-  : session -> int -> int -> int -> Spils.preconditioning_type -> unit
-  = "c_ba_cvode_spils_banded_sptfqmr"
-
 external c_spils_set_preconditioner
   : session -> bool -> bool -> unit
   = "c_ba_cvode_spils_set_preconditioner"
+
+external c_spils_spgmr
+  : session -> int -> Spils.preconditioning_type -> unit
+  = "c_cvode_spils_spgmr"
+
+external c_spils_spbcg
+  : session -> int -> Spils.preconditioning_type -> unit
+  = "c_cvode_spils_spbcg"
+
+external c_spils_sptfqmr
+  : session -> int -> Spils.preconditioning_type -> unit
+  = "c_cvode_spils_sptfqmr"
+
+external c_spils_banded_spgmr
+  : session -> int -> int -> int -> Spils.preconditioning_type -> unit
+  = "c_cvode_spils_banded_spgmr"
+
+external c_spils_banded_spbcg
+  : session -> int -> int -> int -> Spils.preconditioning_type -> unit
+  = "c_cvode_spils_banded_spbcg"
+
+external c_spils_banded_sptfqmr
+  : session -> int -> int -> int -> Spils.preconditioning_type -> unit
+  = "c_cvode_spils_banded_sptfqmr"
 
 external c_set_functional : session -> unit
   = "c_cvode_set_functional"
