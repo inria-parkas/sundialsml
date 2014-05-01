@@ -120,7 +120,7 @@ CAMLprim void c_ida_session_finalize(value vdata)
 {
     if (IDA_MEM_FROM_ML(vdata) != NULL) {
 	void *ida_mem = IDA_MEM_FROM_ML(vdata);
-	value *backref = (value*)Field (vdata, RECORD_IDA_SESSION_BACKREF);
+	value *backref = IDA_BACKREF_FROM_ML(vdata);
 	IDAFree(&ida_mem);
 	caml_remove_generational_global_root (backref);
 	free (backref);

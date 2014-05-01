@@ -137,7 +137,7 @@ CAMLprim void c_cvode_session_finalize(value vdata)
 {
     if (CVODE_MEM_FROM_ML(vdata) != NULL) {
 	void *cvode_mem = CVODE_MEM_FROM_ML(vdata);
-	value *backref = (value*)Field (vdata, RECORD_CVODE_SESSION_BACKREF);
+	value *backref = CVODE_BACKREF_FROM_ML(vdata);
 	CVodeFree(&cvode_mem);
 	caml_remove_generational_global_root (backref);
 	free (backref);
