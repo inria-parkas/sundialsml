@@ -167,6 +167,10 @@ let root_init session (nroots, rootsfn) =
 external c_diag : 'a session -> unit
   = "c_cvode_diag"
 
+external c_spils_set_preconditioner
+  : 'a session -> bool -> bool -> unit
+  = "c_nvec_cvode_spils_set_preconditioner"
+
 external c_spils_spgmr
   : 'a session -> int -> Spils.preconditioning_type -> unit
   = "c_nvec_cvode_spils_spgmr"
@@ -190,10 +194,6 @@ external c_spils_banded_spbcg
 external c_spils_banded_sptfqmr
   : 'a session -> int -> int -> int -> Spils.preconditioning_type -> unit
   = "c_nvec_cvode_spils_banded_sptfqmr"
-
-external c_spils_set_preconditioner
-  : 'a session -> bool -> bool -> unit
-  = "c_ba_cvode_spils_set_preconditioner"
 
 external c_set_functional : 'a session -> unit
   = "c_cvode_set_functional"
@@ -455,46 +455,6 @@ external get_num_nonlin_solv_conv_fails : 'a session -> int
 
 external get_num_g_evals                : 'a session -> int
     = "c_cvode_get_num_g_evals"
-
-module Dls =
-  struct
-    external set_dense_jac_fn  : 'a session -> unit
-        = "c_ba_cvode_dls_set_dense_jac_fn"
-
-    let set_dense_jac_fn s fjacfn =
-      s.jacfn <- fjacfn;
-      set_dense_jac_fn s
-
-    external clear_dense_jac_fn : 'a session -> unit
-        = "c_ba_cvode_dls_clear_dense_jac_fn"
-
-    let clear_dense_jac_fn s =
-      s.jacfn <- dummy_dense_jac;
-      clear_dense_jac_fn s
-
-    external set_band_jac_fn   : 'a session -> unit
-        = "c_ba_cvode_dls_set_band_jac_fn"
-
-    let set_band_jac_fn s fbandjacfn =
-      s.bandjacfn <- fbandjacfn;
-      set_band_jac_fn s
-
-    external clear_band_jac_fn : 'a session -> unit
-        = "c_ba_cvode_dls_clear_band_jac_fn"
-
-    let clear_band_jac_fn s =
-      s.bandjacfn <- dummy_band_jac;
-      clear_band_jac_fn s
-
-    external get_work_space : 'a session -> int * int
-        = "c_cvode_dls_get_work_space"
-
-    external get_num_jac_evals    : 'a session -> int
-        = "c_cvode_dls_get_num_jac_evals"
-
-    external get_num_rhs_evals    : 'a session -> int
-        = "c_cvode_dls_get_num_rhs_evals"
-  end
 
 module Diag =
   struct

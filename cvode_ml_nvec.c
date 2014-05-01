@@ -735,7 +735,6 @@ CAMLprim void CVTYPE(spils_banded_sptfqmr) (value vcvode_mem,
     CAMLreturn0;
 }
 
-
 CAMLprim void CVTYPE(wf_tolerances)(value vdata)
 {
     CAMLparam1(vdata);
