@@ -49,6 +49,7 @@ MINOR PATCHES
    and the Spils functions:
      set_preconditioner
      set_jac_times_vec_fn
+     clear_jac_times_vec_fn
 
    and just provide a reinit function.
 

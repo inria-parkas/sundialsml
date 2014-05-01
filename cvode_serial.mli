@@ -582,6 +582,18 @@ module Spils :
           -> unit)
       -> unit
 
+    (**
+      This function restores the default Jacobian-times-vector function. It is
+      equivalent to calling CVodeSetJacTimesVecFn with an argument of [NULL]. It
+      may be unsafe to use this function without a {!reinit}.  Users are
+      encouraged to use the [iter_type] parameter of {!reinit} instead, unless
+      they are desperate for performance.
+
+      @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
+      @cvode <node5#ss:jtimesFn> Jacobian-times-vector function
+    *)
+    val clear_jac_times_vec_fn : session -> unit
+
     (** {4 Optional output functions} *)
 
     (**
