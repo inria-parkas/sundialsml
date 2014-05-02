@@ -10,35 +10,46 @@
 (*                                                                     *)
 (***********************************************************************)
 
-type 'a nvector = 'a Nvector.nvector
+type nvec = Sundials.Carray.t
 
-type 'a single_tmp = 'a
-type 'a double_tmp = 'a * 'a
+type single_tmp = nvec
+type double_tmp = nvec * nvec
 
-type ('t, 'a) jacobian_arg =
+type 't jacobian_arg =
   {
-    jac_u   : 'a nvector;
-    jac_fu  : 'a nvector;
+    jac_u   : nvec;
+    jac_fu  : nvec;
     jac_tmp : 't
   }
 
-type 'a linear_solver =
-  | Spgmr of int option * 'a spils_callbacks
-  | Spbcg of int option * 'a spils_callbacks
-  | Sptfqmr of int option * 'a spils_callbacks
+type linear_solver =
+  | Dense of dense_jac_fn option
+  | LapackDense of dense_jac_fn option
+  | Band of bandrange * band_jac_fn option
+  | LapackBand of bandrange * band_jac_fn option
+  | Spgmr of int option * spils_callbacks
+  | Spbcg of int option * spils_callbacks
+  | Sptfqmr of int option * spils_callbacks
 
-and 'a spils_callbacks =
+and dense_jac_fn = double_tmp jacobian_arg -> Dls.DenseMatrix.t -> unit
+
+and band_jac_fn = double_tmp jacobian_arg -> int
+                      -> int -> Dls.BandMatrix.t -> unit
+
+and bandrange = { mupper : int; mlower : int; }
+
+and spils_callbacks =
   {
-    prec_solve_fn : (('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
-                      -> 'a nvector -> unit) option;
+    prec_solve_fn : (single_tmp jacobian_arg -> prec_solve_arg
+                      -> nvec -> unit) option;
 
-    prec_setup_fn : (('a double_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
+    prec_setup_fn : (double_tmp jacobian_arg -> prec_solve_arg
                      -> unit) option;
 
-    jac_times_vec_fn : ('a -> 'a -> 'a -> bool -> bool) option;
+    jac_times_vec_fn : (nvec -> nvec -> nvec -> bool -> bool) option;
   }
 
-and 'a prec_solve_arg = { uscale : 'a nvector; fscale : 'a nvector; }
+and prec_solve_arg = { uscale : nvec; fscale : nvec; }
 
 let spils_no_precond = {
   prec_solve_fn = None;
@@ -66,7 +77,7 @@ type kin_mem
 type kin_file
 type c_weak_ref
 
-type 'a session = {
+type session = {
   kinsol    : kin_mem;
   backref   : c_weak_ref;
   neqs      : int;
@@ -75,19 +86,20 @@ type 'a session = {
 
   mutable exn_temp : exn option;
 
-  mutable sysfn      : 'a -> 'a -> unit;
+  mutable sysfn      : nvec -> nvec -> unit;
   mutable errh       : Sundials.error_details -> unit;
   mutable infoh      : Sundials.error_details -> unit;
-  mutable presetupfn : ('a double_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
-                       -> unit;
-  mutable presolvefn : ('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
-                       -> 'a nvector -> unit;
-  mutable jactimesfn : 'a -> 'a -> 'a -> bool -> bool;
+  mutable jacfn      : dense_jac_fn;
+  mutable bandjacfn  : band_jac_fn;
+  mutable presetupfn : double_tmp jacobian_arg -> prec_solve_arg -> unit;
+  mutable presolvefn : single_tmp jacobian_arg -> prec_solve_arg
+                       -> nvec -> unit;
+  mutable jactimesfn : nvec -> nvec -> nvec -> bool -> bool;
 }
 
 (* interface *)
 
-let read_weak_ref x : 'a session =
+let read_weak_ref x : session =
   match Weak.get x 0 with
   | Some y -> y
   | None -> raise (Failure "Internal error: weak reference is dead")
@@ -116,6 +128,14 @@ let call_infoh session details =
     prerr_endline ("Warning: error handler function raised an exception.  " ^
                    "This exception will not be propagated.")
 
+let call_jacfn session jac j =
+  let session = read_weak_ref session in
+  adjust_retcode session true (session.jacfn jac) j
+
+let call_bandjacfn session jac mupper mlower j =
+  let session = read_weak_ref session in
+  adjust_retcode session true (session.bandjacfn jac mupper mlower) j
+
 let call_presolvefn session jac ps =
   let session = read_weak_ref session in
   adjust_retcode session true (session.presolvefn jac) ps
@@ -135,11 +155,13 @@ let _ =
   Callback.register "c_nvec_kinsol_call_sysfn"         call_sysfn;
   Callback.register "c_nvec_kinsol_call_errh"          call_errh;
   Callback.register "c_nvec_kinsol_call_infoh"         call_infoh;
+  Callback.register "c_nvec_kinsol_call_jacfn"         call_jacfn;
+  Callback.register "c_nvec_kinsol_call_bandjacfn"     call_bandjacfn;
   Callback.register "c_nvec_kinsol_call_presolvefn"    call_presolvefn;
   Callback.register "c_nvec_kinsol_call_presetupfn"    call_presetupfn;
   Callback.register "c_nvec_kinsol_call_jactimesfn"    call_jactimesfn
 
-external session_finalize : 'a session -> unit
+external session_finalize : session -> unit
     = "c_kinsol_session_finalize"
 
 let shouldn't_be_called fcn =
@@ -150,17 +172,57 @@ let dummy_prec_setup _ _ = shouldn't_be_called "dummy_prec_setup"
 let dummy_prec_solve _ _ _ = shouldn't_be_called "dummy_prec_solve"
 let dummy_jac_times_vec _ _ _ = shouldn't_be_called "dummy_jac_times_vec"
 
+module Dls =
+  struct
+    external set_dense_jac_fn : session -> unit
+        = "c_ba_kinsol_dls_set_dense_jac_fn"
+
+    let set_dense_jac_fn s fjacfn =
+      s.jacfn <- fjacfn;
+      set_dense_jac_fn s
+
+    external clear_dense_jac_fn : session -> unit
+        = "c_ba_kinsol_dls_clear_dense_jac_fn"
+
+    let clear_dense_jac_fn s =
+      s.jacfn <- dummy_dense_jac;
+      clear_dense_jac_fn s
+
+    external set_band_jac_fn : session -> unit
+        = "c_ba_kinsol_dls_set_band_jac_fn"
+
+    let set_band_jac_fn s fbandjacfn =
+      s.bandjacfn <- fbandjacfn;
+      set_band_jac_fn s
+
+    external clear_band_jac_fn : session -> unit
+        = "c_ba_kinsol_dls_clear_band_jac_fn"
+
+    let clear_band_jac_fn s =
+      s.bandjacfn <- dummy_band_jac;
+      clear_band_jac_fn s
+
+    external get_work_space : session -> int * int
+        = "c_kinsol_dls_get_work_space"
+
+    external get_num_jac_evals : session -> int
+        = "c_kinsol_dls_get_num_jac_evals"
+
+    external get_num_func_evals : session -> int
+        = "c_kinsol_dls_get_num_func_evals"
+  end
+
 module Spils =
   struct
-    type 'a solve_arg = 'a prec_solve_arg =
+    type solve_arg = prec_solve_arg =
       {
-        uscale : 'a nvector;
-        fscale : 'a nvector;
+        uscale : nvec;
+        fscale : nvec;
       }
 
     (* TODO: CVODE/IDA versions to allow optional setup function. *)
     (* TODO: Eliminate this function and just provide reinit? *)
-    external c_set_preconditioner : 'a session -> bool -> unit
+    external c_set_preconditioner : session -> bool -> unit
         = "c_nvec_kinsol_spils_set_preconditioner"
 
     let set_preconditioner s fpresetupfn fpresolvefn =
@@ -173,100 +235,109 @@ module Spils =
       c_set_preconditioner s withprec
 
     (* TODO: Eliminate this function and just provide reinit? *)
-    external c_set_jac_times_vec_fn : 'a session -> unit
+    external c_set_jac_times_vec_fn : session -> unit
         = "c_nvec_kinsol_spils_set_jac_times_vec_fn"
 
     let set_jac_times_vec_fn s fjactimesfn =
       s.jactimesfn <- fjactimesfn;
       c_set_jac_times_vec_fn s
 
-    external c_clear_jac_times_vec_fn : 'a session -> unit
+    external c_clear_jac_times_vec_fn : session -> unit
         = "c_nvec_cvode_clear_jac_times_vec_fn"
 
     let clear_jac_times_vec_fn s =
       s.jactimesfn <- dummy_jac_times_vec;
       c_clear_jac_times_vec_fn s
 
-    external get_work_space       : 'a session -> int * int
+    external get_work_space       : session -> int * int
         = "c_kinsol_spils_get_work_space"
 
-    external get_num_lin_iters    : 'a session -> int
+    external get_num_lin_iters    : session -> int
         = "c_kinsol_spils_get_num_lin_iters"
 
-    external get_num_conv_fails   : 'a session -> int
+    external get_num_conv_fails   : session -> int
         = "c_kinsol_spils_get_num_conv_fails"
 
-    external get_num_prec_evals   : 'a session -> int
+    external get_num_prec_evals   : session -> int
         = "c_kinsol_spils_get_num_prec_evals"
 
-    external get_num_prec_solves  : 'a session -> int
+    external get_num_prec_solves  : session -> int
         = "c_kinsol_spils_get_num_prec_solves"
 
-    external get_num_jtimes_evals : 'a session -> int
+    external get_num_jtimes_evals : session -> int
         = "c_kinsol_spils_get_num_jtimes_evals"
 
-    external get_num_func_evals    : 'a session -> int
+    external get_num_func_evals    : session -> int
         = "c_kinsol_spils_get_num_func_evals"
   end
 
-external set_error_file : 'a session -> string -> bool -> unit
+external set_error_file : session -> string -> bool -> unit
     = "c_kinsol_set_error_file"
 
-external c_set_err_handler_fn : 'a session -> unit
+external c_set_err_handler_fn : session -> unit
     = "c_nvec_kinsol_set_err_handler_fn"
 
 let set_err_handler_fn s ferrh =
   s.errh <- ferrh;
   c_set_err_handler_fn s
 
-external c_clear_err_handler_fn : 'a session -> unit
+external c_clear_err_handler_fn : session -> unit
     = "c_nvec_kinsol_clear_err_handler_fn"
 
 let clear_err_handler_fn s =
   s.errh <- (fun _ -> ());
   c_clear_err_handler_fn s
 
-external set_info_file : 'a session -> string -> bool -> unit
+external set_info_file : session -> string -> bool -> unit
     = "c_kinsol_set_info_file"
 
-external c_set_info_handler_fn : 'a session -> unit
+external c_set_info_handler_fn : session -> unit
     = "c_nvec_kinsol_set_info_handler_fn"
 
 let set_info_handler_fn s finfoh =
   s.infoh <- finfoh;
   c_set_info_handler_fn s
 
-external c_clear_info_handler_fn : 'a session -> unit
+external c_clear_info_handler_fn : session -> unit
     = "c_nvec_kinsol_clear_info_handler_fn"
 
 let clear_info_handler_fn s =
   s.infoh <- (fun _ -> ());
   c_clear_info_handler_fn s
 
-external set_print_level : 'a session -> print_level -> unit
+external set_print_level : session -> print_level -> unit
     = "c_kinsol_set_print_level"
 
-external set_num_max_iters : 'a session -> int -> unit
+external set_num_max_iters : session -> int -> unit
     = "c_kinsol_set_num_max_iters"
 
-external set_no_init_setup : 'a session -> bool -> unit
+external set_no_init_setup : session -> bool -> unit
     = "c_kinsol_set_no_init_setup"
 
 let int_default = function None -> 0 | Some v -> v
 
-external c_set_max_setup_calls : 'a session -> int -> unit
+external set_no_res_mon : session -> bool -> unit
+    = "c_ba_kinsol_set_no_res_mon"
+
+external c_set_max_sub_setup_calls : session -> int -> unit
+    = "c_ba_kinsol_set_max_sub_setup_calls"
+
+let set_max_sub_setup_calls s msbset =
+  c_set_max_sub_setup_calls s (int_default msbset)
+
+external c_set_max_setup_calls : session -> int -> unit
     = "c_kinsol_set_max_setup_calls"
 
 let set_max_setup_calls s msbset =
   c_set_max_setup_calls s (match msbset with None -> 0 | Some i -> i)
 
-external c_set_eta_form : 'a session -> eta_choice -> unit
+external c_set_eta_form : session -> eta_choice -> unit
     = "c_kinsol_set_eta_form"
 
-external c_set_eta_const_value : 'a session -> float -> unit
+external c_set_eta_const_value : session -> float -> unit
     = "c_kinsol_set_eta_form"
 
-external c_set_eta_params : 'a session -> float -> float -> unit
+external c_set_eta_params : session -> float -> float -> unit
     = "c_kinsol_set_eta_form"
 
 let float_default = function None -> 0.0 | Some v -> v
@@ -280,85 +351,97 @@ let set_eta_choice s etachoice =
       c_set_eta_const_value s (float_default eta);
   c_set_eta_form s etachoice
 
-external c_set_res_mon_const_value : 'a session -> float -> unit
+external c_set_res_mon_const_value : session -> float -> unit
     = "c_kinsol_set_res_mon_const_value"
 
 let set_res_mon_const_value s omegaconst =
   c_set_res_mon_const_value s (float_default omegaconst)
 
-external c_set_res_mon_params : 'a session -> float -> float -> unit
+external c_set_res_mon_params : session -> float -> float -> unit
     = "c_kinsol_set_res_mon_params"
 
 let set_res_mon_params s omegamin omegamax =
   c_set_res_mon_params s (float_default omegamin) (float_default omegamax)
 
-external set_no_min_eps : 'a session -> bool -> unit
+external set_no_min_eps : session -> bool -> unit
     = "c_kinsol_set_no_min_eps"
 
-external c_set_max_newton_step : 'a session -> float -> unit
+external c_set_max_newton_step : session -> float -> unit
     = "c_kinsol_set_max_newton_step"
 
 let set_max_newton_step s mxnewtstep =
   c_set_max_newton_step s (float_default mxnewtstep)
 
-external c_set_max_beta_fails : 'a session -> float -> unit
+external c_set_max_beta_fails : session -> float -> unit
     = "c_kinsol_set_max_beta_fails"
 
 let set_max_beta_fails s mxnbcf =
   c_set_max_beta_fails s (float_default mxnbcf)
 
-external c_set_rel_err_func : 'a session -> float -> unit
+external c_set_rel_err_func : session -> float -> unit
     = "c_kinsol_set_rel_err_func"
 
 let set_rel_err_func s relfunc =
   c_set_rel_err_func s (float_default relfunc)
 
-external c_set_func_norm_tol : 'a session -> float -> unit
+external c_set_func_norm_tol : session -> float -> unit
     = "c_kinsol_set_func_norm_tol"
 
 let set_func_norm_tol s fnormtol =
   c_set_func_norm_tol s (float_default fnormtol)
 
-external c_set_scaled_step_tol : 'a session -> float -> unit
+external c_set_scaled_step_tol : session -> float -> unit
     = "c_kinsol_set_scaled_step_tol"
 
 let set_scaled_step_tol s scsteptol =
   c_set_scaled_step_tol s (float_default scsteptol)
 
-external set_constraints : 'a session -> 'a -> unit
+external set_constraints : session -> nvec -> unit
     = "c_nvec_kinsol_set_constraints"
 
 let set_sys_func s fsys =
   s.sysfn <- fsys
 
-external get_work_space : 'a session -> int * int
+external get_work_space : session -> int * int
     = "c_kinsol_get_work_space"
 
-external get_num_func_evals : 'a session -> int
+external get_num_func_evals : session -> int
     = "c_kinsol_get_num_func_evals"
 
-external get_num_nonlin_solv_iters : 'a session -> int
+external get_num_nonlin_solv_iters : session -> int
     = "c_kinsol_get_num_nonlin_solv_iters"
 
-external get_num_beta_cond_fails : 'a session -> int
+external get_num_beta_cond_fails : session -> int
     = "c_kinsol_get_num_beta_cond_fails"
 
-external get_num_backtrack_ops : 'a session -> int
+external get_num_backtrack_ops : session -> int
     = "c_kinsol_get_num_backtrack_ops"
 
-external get_func_norm : 'a session -> float
+external get_func_norm : session -> float
     = "c_kinsol_get_func_norm"
 
-external get_step_length : 'a session -> float
+external get_step_length : session -> float
     = "c_kinsol_get_step_length"
 
-external c_spils_spgmr : 'a session -> int -> unit
+external c_dls_dense : session -> bool -> unit
+  = "c_ba_kinsol_dls_dense"
+
+external c_dls_lapack_dense : session -> bool -> unit
+  = "c_ba_kinsol_dls_lapack_dense"
+
+external c_dls_band : session -> int -> int -> bool -> unit
+  = "c_ba_kinsol_dls_band"
+
+external c_dls_lapack_band : session -> int -> int -> bool -> unit
+  = "c_ba_kinsol_dls_lapack_band"
+
+external c_spils_spgmr : session -> int -> unit
   = "c_kinsol_spils_spgmr"
 
-external c_spils_spbcg : 'a session -> int -> unit
+external c_spils_spbcg : session -> int -> unit
   = "c_kinsol_spils_spbcg"
 
-external c_spils_sptfqmr : 'a session -> int -> unit
+external c_spils_sptfqmr : session -> int -> unit
   = "c_kinsol_spils_sptfqmr"
 
 let set_spils_callbacks s {prec_solve_fn; prec_setup_fn; jac_times_vec_fn} =
@@ -371,6 +454,34 @@ let set_spils_callbacks s {prec_solve_fn; prec_setup_fn; jac_times_vec_fn} =
 
 let set_linear_solver s neqs lsolver =
   match lsolver with
+  | Dense None ->
+      c_dls_dense s false
+
+  | Dense (Some f) ->
+      (s.jacfn <- f;
+       c_dls_dense s true)
+
+  | LapackDense None ->
+      c_dls_lapack_dense s false
+
+  | LapackDense (Some f) ->
+      (s.jacfn <- f;
+       c_dls_lapack_dense s true)
+
+  | Band ({ mupper; mlower }, None) ->
+      c_dls_band s mupper mlower false
+
+  | Band ({ mupper; mlower }, Some f) ->
+      (s.bandjacfn <- f;
+       c_dls_band s mupper mlower true)
+
+  | LapackBand ({ mupper; mlower }, None) ->
+      c_dls_lapack_band s mupper mlower false
+
+  | LapackBand ({ mupper; mlower }, Some f) ->
+      (s.bandjacfn <- f;
+       c_dls_lapack_band s mupper mlower true)
+
   | Spgmr (maxl, callbacks) ->
       c_spils_spgmr s (int_default maxl);
       set_spils_callbacks s callbacks
@@ -384,11 +495,12 @@ let set_linear_solver s neqs lsolver =
       set_spils_callbacks s callbacks
 
 external c_init
-    : 'a session Weak.t -> 'a nvector
+    : session Weak.t -> nvec
       -> (kin_mem * c_weak_ref * kin_file * kin_file)
     = "c_nvec_kinsol_init"
 
-let init lsolver f (neqs, u0) =
+let init lsolver f u0 =
+  let neqs = Sundials.Carray.length u0 in
   let weakref = Weak.create 1 in
   let kin_mem, backref, err_file, info_file = c_init weakref u0
   in
@@ -404,6 +516,8 @@ let init lsolver f (neqs, u0) =
           sysfn      = f;
           errh       = (fun _ -> ());
           infoh      = (fun _ -> ());
+          jacfn      = dummy_dense_jac;
+          bandjacfn  = dummy_band_jac;
           presetupfn = dummy_prec_setup;
           presolvefn = dummy_prec_solve;
           jactimesfn = dummy_jac_times_vec;
@@ -418,7 +532,6 @@ type result =
   | InitialGuessOK    (** KIN_INITIAL_GUESS_OK *)
   | StoppedOnStepTol  (** KIN_STEP_LT_STPTOL *)
 
-external solve : 'a session -> 'a nvector -> bool -> 'a nvector
-                  -> 'a nvector -> result
+external solve : session -> nvec -> bool -> nvec -> nvec -> result
     = "c_nvec_kinsol_solve"
 
