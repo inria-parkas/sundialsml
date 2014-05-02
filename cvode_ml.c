@@ -57,71 +57,54 @@ void cvode_ml_check_flag(const char *call, int flag)
     switch (flag) {
     case CV_ILL_INPUT:
 	caml_raise_constant(*caml_named_value("cvode_IllInput"));
-	break;
 
     case CV_TOO_CLOSE:
 	caml_raise_constant(*caml_named_value("cvode_TooClose"));
-	break;
 
     case CV_TOO_MUCH_WORK:
 	caml_raise_constant(*caml_named_value("cvode_TooMuchWork"));
-	break;
 
     case CV_TOO_MUCH_ACC:
 	caml_raise_constant(*caml_named_value("cvode_TooMuchAccuracy"));
-	break;
 
     case CV_ERR_FAILURE:
 	caml_raise_constant(*caml_named_value("cvode_ErrFailure"));
-	break;
 
     case CV_CONV_FAILURE:
 	caml_raise_constant(*caml_named_value("cvode_ConvergenceFailure"));
-	break;
 
     case CV_LINIT_FAIL:
 	caml_raise_constant(*caml_named_value("cvode_LinearInitFailure"));
-	break;
 
     case CV_LSETUP_FAIL:
 	caml_raise_constant(*caml_named_value("cvode_LinearSetupFailure"));
-	break;
 
     case CV_LSOLVE_FAIL:
 	caml_raise_constant(*caml_named_value("cvode_LinearSolveFailure"));
-	break;
 
     case CV_RHSFUNC_FAIL:
 	caml_raise_constant(*caml_named_value("cvode_RhsFuncFailure"));
-	break;
 
     case CV_FIRST_RHSFUNC_ERR:
 	caml_raise_constant(*caml_named_value("cvode_FirstRhsFuncErr"));
-	break;
 
     case CV_REPTD_RHSFUNC_ERR:
 	caml_raise_constant(*caml_named_value("cvode_RepeatedRhsFuncErr"));
-	break;
 
     case CV_UNREC_RHSFUNC_ERR:
 	caml_raise_constant(*caml_named_value("cvode_UnrecoverableRhsFuncErr"));
-	break;
 
     case CV_RTFUNC_FAIL:
 	caml_raise_constant(*caml_named_value("cvode_RootFuncFailure"));
-	break;
 
     case CV_BAD_K:
 	caml_raise_constant(*caml_named_value("cvode_BadK"));
-	break;
 
     case CV_BAD_T:
 	caml_raise_constant(*caml_named_value("cvode_BadT"));
-	break;
 
     case CV_BAD_DKY:
 	caml_raise_constant(*caml_named_value("cvode_BadDky"));
-	break;
 
     default:
 	/* e.g. CVDIAG_MEM_NULL, CVDIAG_ILL_INPUT, CVDIAG_MEM_FAIL */
@@ -212,7 +195,7 @@ CAMLprim value c_cvode_get_integrator_stats(value vdata)
     ); 
     CHECK_FLAG("CVodeGetIntegratorStats", flag);
 
-    r = caml_alloc_tuple(10);
+    r = caml_alloc_tuple(RECORD_CVODE_INTEGRATOR_STATS_SIZE);
     Store_field(r, RECORD_CVODE_INTEGRATOR_STATS_STEPS, Val_long(nsteps));
     Store_field(r, RECORD_CVODE_INTEGRATOR_STATS_RHS_EVALS, Val_long(nfevals));
     Store_field(r, RECORD_CVODE_INTEGRATOR_STATS_LINEAR_SOLVER_SETUPS, Val_long(nlinsetups));
@@ -320,8 +303,8 @@ CAMLprim value c_cvode_get_work_space(value vcvode_mem)
 
     r = caml_alloc_tuple(2);
 
-    Store_field(r, 0, Val_int(lenrw));
-    Store_field(r, 1, Val_int(leniw));
+    Store_field(r, 0, Val_long(lenrw));
+    Store_field(r, 1, Val_long(leniw));
 
     CAMLreturn(r);
 }
@@ -459,7 +442,6 @@ CAMLprim value c_cvode_get_current_time(value vcvode_mem)
 CAMLprim void c_cvode_set_max_ord(value vcvode_mem, value maxord)
 {
     CAMLparam2(vcvode_mem, maxord);
-
 
     int flag = CVodeSetMaxOrd(CVODE_MEM_FROM_ML(vcvode_mem), Int_val(maxord));
     CHECK_FLAG("CVodeSetMaxOrd", flag);
@@ -699,8 +681,8 @@ CAMLprim value c_cvode_dls_get_work_space(value vcvode_mem)
 
     r = caml_alloc_tuple(2);
 
-    Store_field(r, 0, Val_int(lenrwLS));
-    Store_field(r, 1, Val_int(leniwLS));
+    Store_field(r, 0, Val_long(lenrwLS));
+    Store_field(r, 1, Val_long(leniwLS));
 
     CAMLreturn(r);
 }
@@ -740,8 +722,8 @@ CAMLprim value c_cvode_diag_get_work_space(value vcvode_mem)
 
     r = caml_alloc_tuple(2);
 
-    Store_field(r, 0, Val_int(lenrwLS));
-    Store_field(r, 1, Val_int(leniwLS));
+    Store_field(r, 0, Val_long(lenrwLS));
+    Store_field(r, 1, Val_long(leniwLS));
 
     CAMLreturn(r);
 }
@@ -770,8 +752,8 @@ CAMLprim value c_cvode_bandprec_get_work_space(value vcvode_mem)
 
     r = caml_alloc_tuple(2);
 
-    Store_field(r, 0, Val_int(lenrwBP));
-    Store_field(r, 1, Val_int(leniwBP));
+    Store_field(r, 0, Val_long(lenrwBP));
+    Store_field(r, 1, Val_long(leniwBP));
 
     CAMLreturn(r);
 }
@@ -925,8 +907,8 @@ CAMLprim value c_cvode_spils_get_work_space(value vcvode_mem)
 
     r = caml_alloc_tuple(2);
 
-    Store_field(r, 0, Val_int(lenrw));
-    Store_field(r, 1, Val_int(leniw));
+    Store_field(r, 0, Val_long(lenrw));
+    Store_field(r, 1, Val_long(leniw));
 
     CAMLreturn(r);
 }

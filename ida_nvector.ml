@@ -73,7 +73,7 @@ type 'a session = {
 
         mutable resfn      : float -> 'a -> 'a -> 'a -> unit;
         mutable rootsfn    : float -> 'a -> 'a -> root_val_array -> unit;
-        mutable errh       : error_details -> unit;
+        mutable errh       : Sundials.error_details -> unit;
         mutable errw       : 'a -> 'a -> unit;
         mutable jacfn      : ('a triple_tmp, 'a) jacobian_arg
                                -> Dls.DenseMatrix.t -> unit;

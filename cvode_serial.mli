@@ -24,7 +24,6 @@ include module type of Cvode
   with type Roots.t = Cvode.Roots.t
   and type RootDirs.t = Cvode.RootDirs.t
   and type lmm = Cvode.lmm
-  and type error_details = Cvode.error_details
   and type solver_result = Cvode.solver_result
 
 (** Serial nvector interface to the CVODE solver.
@@ -883,7 +882,7 @@ val set_error_file : session -> string -> bool -> unit
   @cvode <node5#sss:optin_main> CVodeSetErrHandlerFn
   @cvode <node5#ss:ehFn> Error message handler function
  *)
-val set_err_handler_fn : session -> (error_details -> unit) -> unit
+val set_err_handler_fn : session -> (Sundials.error_details -> unit) -> unit
 
 (**
   This function restores the default error handling function. It is equivalent

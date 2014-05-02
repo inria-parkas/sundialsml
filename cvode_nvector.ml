@@ -86,7 +86,7 @@ type 'a session = {
 
         mutable rhsfn      : float -> 'a -> 'a -> unit;
         mutable rootsfn    : float -> 'a -> root_val_array -> unit;
-        mutable errh       : error_details -> unit;
+        mutable errh       : Sundials.error_details -> unit;
         mutable errw       : 'a -> 'a -> unit;
         mutable presetupfn : ('a triple_tmp, 'a) jacobian_arg -> bool -> float -> bool;
         mutable presolvefn : ('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg

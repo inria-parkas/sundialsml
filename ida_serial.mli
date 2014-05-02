@@ -24,7 +24,6 @@ include module type of Ida
   with type Roots.t = Ida.Roots.t
   and type RootDirs.t = Ida.RootDirs.t
   and type solver_result = Ida.solver_result
-  and type error_details = Ida.error_details
 
 (*STARTINTRO*)
 (** Serial nvector interface to the IDA solver.
@@ -820,7 +819,7 @@ val set_error_file : session -> string -> bool -> unit
   @ida <node5#sss:optin_main> IDASetErrHandlerFn
   @ida <node5#ss:ehFn> Error message handler function
  *)
-val set_err_handler_fn : session -> (error_details -> unit) -> unit
+val set_err_handler_fn : session -> (Sundials.error_details -> unit) -> unit
 
 (**
   This function restores the default error handling function. It is equivalent

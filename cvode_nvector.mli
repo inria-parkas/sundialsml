@@ -701,7 +701,7 @@ val set_error_file : 'a session -> string -> bool -> unit
   @cvode <node5#sss:optin_main> CVodeSetErrHandlerFn
   @cvode <node5#ss:ehFn> Error message handler function
  *)
-val set_err_handler_fn : 'a session -> (error_details -> unit) -> unit
+val set_err_handler_fn : 'a session -> (Sundials.error_details -> unit) -> unit
 
 (**
   This function restores the default error handling function. It is equivalent

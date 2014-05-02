@@ -146,14 +146,6 @@ enum ida_jacobian_arg_index {
     RECORD_IDA_JACOBIAN_ARG_SIZE /* This has to come last. */
 };
 
-enum ida_error_details_index {
-    RECORD_IDA_ERROR_DETAILS_ERROR_CODE = 0,
-    RECORD_IDA_ERROR_DETAILS_MODULE_NAME,
-    RECORD_IDA_ERROR_DETAILS_FUNCTION_NAME,
-    RECORD_IDA_ERROR_DETAILS_ERROR_MESSAGE,
-    RECORD_IDA_ERROR_DETAILS_SIZE /* This has to come last. */
-};
-
 enum ida_solver_result_tag {
     VARIANT_IDA_SOLVER_RESULT_CONTINUE = 0,
     VARIANT_IDA_SOLVER_RESULT_ROOTSFOUND,

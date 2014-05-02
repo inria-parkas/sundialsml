@@ -88,14 +88,14 @@ static void errh(
 
     CAML_FN (call_errh);
 
-    a = caml_alloc_tuple(RECORD_IDA_ERROR_DETAILS_SIZE);
-    Store_field(a, RECORD_IDA_ERROR_DETAILS_ERROR_CODE,
+    a = caml_alloc_tuple(RECORD_SUNDIALS_ERROR_DETAILS_SIZE);
+    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_ERROR_CODE,
 		Val_int(error_code));
-    Store_field(a, RECORD_IDA_ERROR_DETAILS_MODULE_NAME,
+    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_MODULE_NAME,
 		caml_copy_string(module));
-    Store_field(a, RECORD_IDA_ERROR_DETAILS_FUNCTION_NAME,
+    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_FUNCTION_NAME,
 		caml_copy_string(func));
-    Store_field(a, RECORD_IDA_ERROR_DETAILS_ERROR_MESSAGE,
+    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_ERROR_MESSAGE,
 		caml_copy_string(msg));
 
     caml_callback2_exn (*call_errh, *backref, a);
@@ -261,8 +261,8 @@ static int bandjacfn (long int neq, long int mupper, long int mlower,
     args[0] = *backref;
     args[1] = make_jac_arg (t, coef, y, yp, res,
 			    make_triple_tmp (tmp1, tmp2, tmp3));
-    args[2] = Val_int (mupper);
-    args[3] = Val_int (mlower);
+    args[2] = Val_long (mupper);
+    args[3] = Val_long (mlower);
     args[4] = caml_alloc_final (2, NULL, 0, 1);
     Store_field (args[4], 1, (value)jac);
 
@@ -276,31 +276,27 @@ static int bandjacfn (long int neq, long int mupper, long int mlower,
 }
 #endif	/* IDA_ML_BIGARRAYS */
 
-#define CHECK_RECOVERABLE      1
-#define DONT_CHECK_RECOVERABLE 0
-static int check_exception(value session, value r, int check_recoverable)
+static int check_exception(value session, value r)
 {
     CAMLparam2(session, r);
     CAMLlocal1(exn);
 
     static value *recoverable_failure = NULL;
+    if (recoverable_failure == NULL) {
+	recoverable_failure =
+	    caml_named_value("ida_RecoverableFailure");
+    }
 
     if (!Is_exception_result(r)) return 0;
 
     r = Extract_exception(r);
 
-    if (check_recoverable) {
-	if (recoverable_failure == NULL) {
-	    recoverable_failure =
-		caml_named_value("ida_RecoverableFailure");
-	}
-	if (Field(r, 0) == *recoverable_failure)
-	    CAMLreturnT (int, 1);
-    }
+    if (Field(r, 0) == *recoverable_failure)
+	CAMLreturnT (int, 1);
 
     /* Unrecoverable error.  Save the exception and return -1.  */
     exn = caml_alloc_small (1,0);
-    Field (exn,0) = r;
+    Field (exn, 0) = r;
     Store_field (session, RECORD_IDA_SESSION_EXN_TEMP, exn);
     CAMLreturnT (int, -1);
 }
@@ -338,7 +334,7 @@ static int rootsfn (realtype t, N_Vector y, N_Vector yp,
     RELINQUISH_WRAPPEDNV (args[1]);
     RELINQUISH_WRAPPEDNV (args[2]);
 
-    CAMLreturnT (int, check_exception (session, r, CHECK_RECOVERABLE));
+    CAMLreturnT (int, check_exception (session, r));
 }
 
 static int errw(N_Vector y, N_Vector ewt, void *user_data)

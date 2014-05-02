@@ -34,7 +34,6 @@ include module type of Sundials
   and type RootDirs.t = Sundials.RootDirs.t
   and type RootDirs.root_direction = Sundials.RootDirs.root_direction
   and type solver_result = Sundials.solver_result
-  and type error_details = Sundials.error_details
 
 (** {2 General} *)
 

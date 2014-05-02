@@ -89,7 +89,7 @@ type session = {
 
         mutable rhsfn      : float -> val_array -> der_array -> unit;
         mutable rootsfn    : float -> val_array -> root_val_array -> unit;
-        mutable errh       : error_details -> unit;
+        mutable errh       : Sundials.error_details -> unit;
         mutable errw       : val_array -> nvec -> unit;
         mutable jacfn      : triple_tmp jacobian_arg -> Dls.DenseMatrix.t -> unit;
         mutable bandjacfn  : triple_tmp jacobian_arg -> int -> int

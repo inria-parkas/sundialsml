@@ -55,4 +55,12 @@ value sundials_ml_weak_get (value ar, value n);
 #define ARRAY2_NCOLS(v) (ARRAY2_DATA(v)->dim[0])
 #define ARRAY2_NROWS(v) (ARRAY2_DATA(v)->dim[1])
 
+enum sundials_error_details_index {
+  RECORD_SUNDIALS_ERROR_DETAILS_ERROR_CODE    = 0,
+  RECORD_SUNDIALS_ERROR_DETAILS_MODULE_NAME,
+  RECORD_SUNDIALS_ERROR_DETAILS_FUNCTION_NAME,
+  RECORD_SUNDIALS_ERROR_DETAILS_ERROR_MESSAGE,
+  RECORD_SUNDIALS_ERROR_DETAILS_SIZE /* This has to come last. */
+};
+
 #endif /* _SUNDIALS_ML_H__ */
