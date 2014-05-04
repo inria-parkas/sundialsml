@@ -435,11 +435,7 @@ module Spils :
    @kinsol <node5#ss:sysFn>           Problem-defining function
    @kinsol <node5#sss:lin_solve_init> Linear solver specification functions
  *)
-val init :
-    'a linear_solver
-    -> ('a -> 'a -> unit)
-    -> (int * 'a nvector)
-    -> 'a session
+val init : 'a linear_solver -> ('a -> 'a -> unit) -> 'a nvector -> 'a session
 
 (** {2 Solver functions } *)
 

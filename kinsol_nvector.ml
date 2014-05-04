@@ -69,7 +69,6 @@ type c_weak_ref
 type 'a session = {
   kinsol    : kin_mem;
   backref   : c_weak_ref;
-  neqs      : int;
   err_file  : kin_file;
   info_file : kin_file;
 
@@ -369,7 +368,7 @@ let set_spils_callbacks s {prec_solve_fn; prec_setup_fn; jac_times_vec_fn} =
   | None -> ()
   | Some jtimes -> Spils.set_jac_times_vec_fn s jtimes
 
-let set_linear_solver s neqs lsolver =
+let set_linear_solver s lsolver =
   match lsolver with
   | Spgmr (maxl, callbacks) ->
       c_spils_spgmr s (int_default maxl);
@@ -388,14 +387,13 @@ external c_init
       -> (kin_mem * c_weak_ref * kin_file * kin_file)
     = "c_nvec_kinsol_init"
 
-let init lsolver f (neqs, u0) =
+let init lsolver f u0 =
   let weakref = Weak.create 1 in
   let kin_mem, backref, err_file, info_file = c_init weakref u0
   in
   let session = {
           kinsol     = kin_mem;
           backref    = backref;
-          neqs       = neqs;
           err_file   = err_file;
           info_file  = info_file;
 
@@ -410,7 +408,7 @@ let init lsolver f (neqs, u0) =
         } in
   Gc.finalise session_finalize session;
   Weak.set weakref 0 (Some session);
-  set_linear_solver session neqs lsolver;
+  set_linear_solver session lsolver;
   session
 
 type result =
