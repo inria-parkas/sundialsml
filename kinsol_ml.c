@@ -125,8 +125,43 @@ CAMLprim void c_kinsol_session_finalize(value vdata)
     }
 }
 
-
 /* boiler plate */
+
+CAMLprim void c_kinsol_spils_spgmr(value vkin_mem, value vmaxl)
+{
+    CAMLparam2(vkin_mem, vmaxl);
+    void *kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
+    int flag;
+
+    flag = KINSpgmr (kin_mem, Int_val (vmaxl));
+    CHECK_FLAG ("KINSpgmr", flag);
+
+    CAMLreturn0;
+}
+
+CAMLprim void c_kinsol_spils_spbcg(value vkin_mem, value vmaxl)
+{
+    CAMLparam2(vkin_mem, vmaxl);
+    void *kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
+    int flag;
+
+    flag = KINSpbcg (kin_mem, Int_val (vmaxl));
+    CHECK_FLAG ("KINSpbcg", flag);
+
+    CAMLreturn0;
+}
+
+CAMLprim void c_kinsol_spils_sptfqmr(value vkin_mem, value vmaxl)
+{
+    CAMLparam2(vkin_mem, vmaxl);
+    void *kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
+    int flag;
+
+    flag = KINSptfqmr (kin_mem, Int_val (vmaxl));
+    CHECK_FLAG ("KINSptfqmr", flag);
+
+    CAMLreturn0;
+}
 
 CAMLprim value c_kinsol_dls_get_work_space(value vkin_mem)
 {

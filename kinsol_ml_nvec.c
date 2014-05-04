@@ -548,42 +548,6 @@ CAMLprim void CVTYPE(dls_clear_band_jac_fn)(value vdata)
 }
 #endif	/* KINSOL_ML_BIGARRAYS */
 
-CAMLprim void CVTYPE(spils_spgmr) (value vkin_mem, value vmaxl)
-{
-    CAMLparam2(vkin_mem, vmaxl);
-    void *kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
-    int flag;
-
-    flag = KINSpgmr (kin_mem, Int_val (vmaxl));
-    CHECK_FLAG ("KINSpgmr", flag);
-
-    CAMLreturn0;
-}
-
-CAMLprim void CVTYPE(spils_spbcg) (value vkin_mem, value vmaxl)
-{
-    CAMLparam2(vkin_mem, vmaxl);
-    void *kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
-    int flag;
-
-    flag = KINSpbcg (kin_mem, Int_val (vmaxl));
-    CHECK_FLAG ("KINSpbcg", flag);
-
-    CAMLreturn0;
-}
-
-CAMLprim void CVTYPE(spils_sptfqmr) (value vkin_mem, value vmaxl)
-{
-    CAMLparam2(vkin_mem, vmaxl);
-    void *kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
-    int flag;
-
-    flag = KINSptfqmr (kin_mem, Int_val (vmaxl));
-    CHECK_FLAG ("KINSptfqmr", flag);
-
-    CAMLreturn0;
-}
-
 CAMLprim void CVTYPE(spils_set_preconditioner) (value vsession,
 						value vset_presetup)
 {
