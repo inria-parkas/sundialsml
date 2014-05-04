@@ -296,7 +296,7 @@ if [ ${no_lib_path:-0} -eq 1 ]; then
 else
     cvode_ldflags="`sundials-config -m cvode -t s -l c -s libs`"
     ida_ldflags="`sundials-config -m ida -t s -l c -s libs`"
-    ida_ldflags="`sundials-config -m kinsol -t s -l c -s libs`"
+    kinsol_ldflags="`sundials-config -m kinsol -t s -l c -s libs`"
 fi
 
 arch=`uname -i`
