@@ -3,6 +3,7 @@ VERSION = @version@
 
 CVODE_DOC_ROOT = https://computation.llnl.gov/casc/sundials/documentation/cv_guide/
 IDA_DOC_ROOT = https://computation.llnl.gov/casc/sundials/documentation/ida_guide/
+KINSOL_DOC_ROOT = https://computation.llnl.gov/casc/sundials/documentation/kin_guide/
 OCAML_DOC_ROOT = http://caml.inria.fr/pub/docs/manual-ocaml/libref/
 
 OCAMLFLAGS =

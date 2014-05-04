@@ -30,39 +30,39 @@
 
 (** {3:exceptions Exceptions} *)
 
-(** @cvode <node5#sss:kinsol> KIN_ILL_INPUT *)
+(** @kinsol <node5#sss:kinsol> KIN_ILL_INPUT *)
 exception IllInput
 
-(** @cvode <node5#sss:kinsol> KIN_LINESEARCH_NONCONV *)
+(** @kinsol <node5#sss:kinsol> KIN_LINESEARCH_NONCONV *)
 exception LineSearchNonConvergence
 
-(** @cvode <node5#sss:kinsol> KIN_MAXITER_REACHED *)
+(** @kinsol <node5#sss:kinsol> KIN_MAXITER_REACHED *)
 exception MaxIterationsReached
 
-(** @cvode <node5#sss:kinsol> KIN_MXNEWT_5X_EXCEEDED *)
+(** @kinsol <node5#sss:kinsol> KIN_MXNEWT_5X_EXCEEDED *)
 exception MaxNewtonStepExceeded
 
-(** @cvode <node5#sss:kinsol> KIN_LINESEARCH_BCFAIL *)
+(** @kinsol <node5#sss:kinsol> KIN_LINESEARCH_BCFAIL *)
 exception LineSearchBetaConditionFailure
 
-(** @cvode <node5#sss:kinsol> KIN_LINSOLV_NO_RECOVERY *)
+(** @kinsol <node5#sss:kinsol> KIN_LINSOLV_NO_RECOVERY *)
 exception LinearSolverNoRecovery
 
-(** @cvode <node5#sss:kinsol> KIN_LINIT_FAIL *)
+(** @kinsol <node5#sss:kinsol> KIN_LINIT_FAIL *)
 exception LinearSolverInitFailure
 
-(** @cvode <node5#sss:kinsol> KIN_LSETUP_FAIL *)
+(** @kinsol <node5#sss:kinsol> KIN_LSETUP_FAIL *)
 exception LinearSetupFailure
 
-(** @cvode <node5#sss:kinsol> KIN_LSOLVE_FAIL *)
+(** @kinsol <node5#sss:kinsol> KIN_LSOLVE_FAIL *)
 exception LinearSolverFailure
 
-(** @cvode <node5#sss:kinsol> KIN_SYSFUNC_FAIL *)
+(** @kinsol <node5#sss:kinsol> KIN_SYSFUNC_FAIL *)
 exception SystemFunctionFailure
 
-(** @cvode <node5#sss:kinsol> KIN_FIRST_SYSFUNC_FAIL *)
+(** @kinsol <node5#sss:kinsol> KIN_FIRST_SYSFUNC_FAIL *)
 exception FirstSystemFunctionFailure
 
-(** @cvode <node5#sss:kinsol> KIN_REPTD_SYSFUNC_ERR *)
+(** @kinsol <node5#sss:kinsol> KIN_REPTD_SYSFUNC_ERR *)
 exception RepeatedSystemFunctionFailure
 

@@ -155,6 +155,20 @@ Skeletons of the main program are given under {!Ida_serial.session} and
 or:
 {[ocamlopt -o myprogram -I +sundials unix.cmxa bigarray.cmxa sundials_ida.cmxa myprogram.ml]}
 
+{2:kinsol KINSOL}
+
+TODO: add docs
+
+{3:usingkinsol Using KINSOL}
+
+Skeletons of the main program are given under {!Kinsol_serial.session} and
+{!Kinsol_nvector.session}. Such a program can be compiled using the
+[-I +sundials] option and including [unix.cma] (or [.cmxa]),
+[bigarray.cma] (or [.cmxa]) and [sundials_kinsol.cma] (or [.cmxa]), for example:
+{[ocamlc -o myprogram -I +sundials unix.cma bigarray.cma sundials_kinsol.cma myprogram.ml]}
+or:
+{[ocamlopt -o myprogram -I +sundials unix.cmxa bigarray.cmxa sundials_kinsol.cmxa myprogram.ml]}
+
 {2:modules Modules}
 
 {!modules: Sundials}
@@ -165,6 +179,7 @@ or:
 {!modules: Nvector Nvector_array}
 {!modules: Cvode Cvode_serial Cvode_nvector}
 {!modules: Ida Ida_serial Ida_nvector}
+{!modules: Kinsol Kinsol_serial Kinsol_nvector}
 
 {2:refs References}
 

@@ -1,10 +1,10 @@
 include config
 
-MLOBJ = sundials.cmo nvector.cmo nvector_array.cmo dls.cmo cvode.cmo	\
+MLOBJ = sundials.cmo nvector.cmo nvector_array.cmo dls.cmo \
 	spils.cmo spils_nvector.cmo spils_serial.cmo \
-	cvode_nvector.cmo cvode_serial.cmo ida.cmo \
-	kinsol_nvector.cmo kinsol_serial.cmo \
-	ida_nvector.cmo ida_serial.cmo
+	cvode.cmo cvode_nvector.cmo cvode_serial.cmo \
+	kinsol.cmo kinsol_nvector.cmo kinsol_serial.cmo \
+	ida.cmo ida_nvector.cmo ida_serial.cmo
 
 COMMON_COBJ= sundials_ml$(XO) dls_ml$(XO) nvector_ml$(XO) \
 
@@ -96,6 +96,7 @@ doc/html/index.html: doc/html dochtml.cmo intro.doc \
 	$(OCAMLDOC) -g dochtml.cmo \
 	    -cvode-doc-root "$(CVODE_DOC_ROOT)" \
 	    -ida-doc-root "$(IDA_DOC_ROOT)" \
+	    -kinsol-doc-root "$(KINSOL_DOC_ROOT)" \
 	    -pp "$(DOCPP)"		\
 	    -d ./doc/html/		\
 	    -t "Sundials (CVODE, IDA & KINSOL)"	\

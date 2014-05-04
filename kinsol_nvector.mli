@@ -312,13 +312,8 @@ module Spils :
         fscale : 'a nvector;
       }
 
-    (* TODO: CVODE/IDA versions to allow optional setup function. *)
-    (* TODO: Eliminate this function and just provide reinit? *)
     (**
-      Set preconditioning functions (see {!spils_callbacks}).  It may be unsafe
-      to use this function without a {!reinit}.  Users are encouraged to use
-      the [iter_type] parameter of {!reinit} instead, unless they are desperate
-      for performance.
+      Set preconditioning functions (see {!spils_callbacks}).
 
       @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
       @kinsol <node5#ss:precondFn> Jacobian preconditioning function
@@ -332,20 +327,14 @@ module Spils :
       -> unit
 
     (**
-      Use the default Jacobian-times-vector function. It may be unsafe to use
-      this function without a {!reinit}.  Users are encouraged to use the
-      [iter_type] parameter of {!reinit} instead, unless they are desperate for
-      performance.
+      Use the default Jacobian-times-vector function.
 
       @kinsol <node5#sss:optin_spils> KINSpilsSetJacTimesVecFn
     *)
     val clear_jac_times_vec_fn : 'a session -> unit
 
-    (* TODO: Eliminate this function and just provide reinit? *)
     (**
-      Set the Jacobian-times-vector function. It may be unsafe to use this
-      function without a {!reinit}.  Users are encouraged to use the [iter_type]
-      parameter of {!reinit} instead, unless they are desperate for performance.
+      Set the Jacobian-times-vector function.
 
       @kinsol <node5#sss:optin_spils> KINSpilsSetJacTimesVecFn
       @kinsol <node5#ss:jtimesFn> KINSpilsJacTimesVecFn
@@ -522,7 +511,7 @@ val solve :
   The error file is closed if {!set_error_file} is called again, or otherwise
   when the session is garbage collected.
    
-  @kinsol <node5#sss:optin_main> KINSetErrFile
+  @kinsol <node5#ss:optin_main> KINSetErrFile
  *)
 val set_error_file : 'a session -> string -> bool -> unit
 
@@ -530,7 +519,7 @@ val set_error_file : 'a session -> string -> bool -> unit
   [set_err_handler_fn s efun] specifies a custom function [efun] for handling
   error messages.
 
-  @kinsol <node5#sss:optin_main> KINSetErrHandlerFn
+  @kinsol <node5#ss:optin_main> KINSetErrHandlerFn
   @kinsol <node5#ss:ehFn> KINErrHandlerFn
  *)
 val set_err_handler_fn : 'a session -> (Sundials.error_details -> unit) -> unit
@@ -539,7 +528,7 @@ val set_err_handler_fn : 'a session -> (Sundials.error_details -> unit) -> unit
   This function restores the default error handling function. It is equivalent
   to calling KINSetErrHandlerFn with an argument of [NULL].
 
-  @kinsol <node5#sss:optin_main> KINSetErrHandlerFn
+  @kinsol <node5#ss:optin_main> KINSetErrHandlerFn
  *)
 val clear_err_handler_fn : 'a session -> unit
 
@@ -552,7 +541,7 @@ val clear_err_handler_fn : 'a session -> unit
   The info file is closed if {!set_info_file} is called again, or otherwise when
   the session is garbage collected.
    
-  @kinsol <node5#sss:optin_main> KINSetInfoFile
+  @kinsol <node5#ss:optin_main> KINSetInfoFile
  *)
 val set_info_file : 'a session -> string -> bool -> unit
 
@@ -561,7 +550,7 @@ val set_info_file : 'a session -> string -> bool -> unit
   informative (non-error) messages. The [error_code] field of the
   {!Sundials.error_details} value is set to zero for informative messages.
 
-  @kinsol <node5#sss:optin_main> KINSetInfoHandlerFn
+  @kinsol <node5#ss:optin_main> KINSetInfoHandlerFn
   @kinsol <node5#ss:ihFn> KINInfoHandlerFn
  *)
 val set_info_handler_fn : 'a session -> (Sundials.error_details -> unit) -> unit
@@ -570,21 +559,21 @@ val set_info_handler_fn : 'a session -> (Sundials.error_details -> unit) -> unit
   This function restores the default info handling function. It is equivalent
   to calling KINSetInfoHandlerFn with an argument of [NULL].
 
-  @kinsol <node5#sss:optin_main> KINSetErrHandlerFn
+  @kinsol <node5#ss:optin_main> KINSetErrHandlerFn
  *)
 val clear_info_handler_fn : 'a session -> unit
 
 (**
   Sets the level of verbosity of the output (see {!print_level}).
 
-  @kinsol <node5#sss:optin_main> KINSetPrintLevel
+  @kinsol <node5#ss:optin_main> KINSetPrintLevel
  *)
 val set_print_level : 'a session -> print_level -> unit
 
 (**
   Specify the maximum number of nonlinear iterations allowed (defaults to 200).
 
-  @kinsol <node5#sss:optin_main> KINSetNumMaxIters
+  @kinsol <node5#ss:optin_main> KINSetNumMaxIters
  *)
 val set_num_max_iters : 'a session -> int -> unit
 
@@ -596,7 +585,7 @@ val set_num_max_iters : 'a session -> int -> unit
   preconditioner values of a problem becomes the initial value for the next
   problem.
 
-  @kinsol <node5#sss:optin_main> KINSetNoInitSetup
+  @kinsol <node5#ss:optin_main> KINSetNoInitSetup
  *)
 val set_no_init_setup : 'a session -> bool -> unit
 
@@ -604,7 +593,7 @@ val set_no_init_setup : 'a session -> bool -> unit
   Specifies the maximum number of nonlinear iterations between calls to the
   preconditioner setup function. Pass [None] to set the default (10).
 
-  @kinsol <node5#sss:optin_main> KINSetMaxSetupCalls
+  @kinsol <node5#ss:optin_main> KINSetMaxSetupCalls
  *)
 val set_max_setup_calls : 'a session -> int option -> unit
 
@@ -613,9 +602,9 @@ val set_max_setup_calls : 'a session -> int option -> unit
   in the calculation of the linear solver convergence tolerance. (See
   {!eta_choice}; the default is [EtaChoice1])
 
-  @kinsol <node5#sss:optin_main> KINSetEtaForm
-  @kinsol <node5#sss:optin_main> KINSetEtaConstValue
-  @kinsol <node5#sss:optin_main> KINSetEtaParams
+  @kinsol <node5#ss:optin_main> KINSetEtaForm
+  @kinsol <node5#ss:optin_main> KINSetEtaConstValue
+  @kinsol <node5#ss:optin_main> KINSetEtaParams
  *)
 val set_eta_choice : 'a session -> eta_choice -> unit
 
@@ -624,7 +613,7 @@ val set_eta_choice : 'a session -> eta_choice -> unit
   Pass [None] to specify the default value (0.9). The legal values are
   0 < [omegaconst] < 1.0.
 
-  @kinsol <node5#sss:optin_main> KINSetResMonConstValue
+  @kinsol <node5#ss:optin_main> KINSetResMonConstValue
  *)
 val set_res_mon_const_value : 'a session -> float option -> unit
 
@@ -633,7 +622,7 @@ val set_res_mon_const_value : 'a session -> float option -> unit
   for {i omega}. Pass [None] to specify the default values (0.00001 and 0.9,
   respectively). The legal values are 0 < [omegamin] < [omegamax] < 1.0.
 
-  @kinsol <node5#sss:optin_main> KINSetResMonParams
+  @kinsol <node5#ss:optin_main> KINSetResMonParams
   @kinsol <node3#SECTION00300800000000000000> Residual monitoring for Modified
                                               Newton method (2.3)
  *)
@@ -646,8 +635,8 @@ val set_res_mon_params : 'a session -> float option -> float option -> unit
   The default value for this flag is [false] meaning that a positive minimum
   value equal to [0.01*fnormtol] is applied to {i epsilon}.
 
-  @kinsol <node5#sss:optin_main> KINSetNoMinEps
-  @kinsol <node5#sss:optin_main> KINSetFuncNormTol
+  @kinsol <node5#ss:optin_main> KINSetNoMinEps
+  @kinsol <node5#ss:optin_main> KINSetFuncNormTol
  *)
 val set_no_min_eps : 'a session -> bool -> unit
 
@@ -656,7 +645,7 @@ val set_no_min_eps : 'a session -> bool -> unit
   to specify the default value (1000*||u_0||_Du), otherwise the given value must
   be greater than zero.
 
-  @kinsol <node5#sss:optin_main> KINSetMaxNewtonStep
+  @kinsol <node5#ss:optin_main> KINSetMaxNewtonStep
  *)
 val set_max_newton_step : 'a session -> float option -> unit
 
@@ -664,7 +653,7 @@ val set_max_newton_step : 'a session -> float option -> unit
   Specifies the maximum number of {i beta}-condition failures in the linesearch
   algorithm. Pass [None] to specify the default (10).
 
-  @kinsol <node5#sss:optin_main> KINSetMaxBetaFails
+  @kinsol <node5#ss:optin_main> KINSetMaxBetaFails
  *)
 val set_max_beta_fails : 'a session -> float option -> unit
 
@@ -673,7 +662,7 @@ val set_max_beta_fails : 'a session -> float option -> unit
   difference quotient approximation of the Jacobian-vector product. Pass [None]
   to specify the default value (the square root of unit roundoff).
 
-  @kinsol <node5#sss:optin_main> KINSetRelErrFunc
+  @kinsol <node5#ss:optin_main> KINSetRelErrFunc
  *)
 val set_rel_err_func : 'a session -> float option -> unit
 
@@ -682,7 +671,7 @@ val set_rel_err_func : 'a session -> float option -> unit
   function {i F(u)}, which must be greater than zero ([fnormtol]). Pass [None]
   to specify the default value (unit roundoff^1/3).
 
-  @kinsol <node5#sss:optin_main> KINSetFuncNormTol
+  @kinsol <node5#ss:optin_main> KINSetFuncNormTol
  *)
 val set_func_norm_tol : 'a session -> float option -> unit
 
@@ -691,7 +680,7 @@ val set_func_norm_tol : 'a session -> float option -> unit
   be greater than zeor ([scsteptol]). Pass [None] to specify the default value
   (unit roundoff^1/3).
 
-  @kinsol <node5#sss:optin_main> KINSetScaledStepTol
+  @kinsol <node5#ss:optin_main> KINSetScaledStepTol
  *)
 val set_scaled_step_tol : 'a session -> float option -> unit
 
@@ -704,7 +693,7 @@ val set_scaled_step_tol : 'a session -> float option -> unit
   -  2.0: constrain u_i > 0.0, and,
   - -2.0: constrain u_i < 0.0.
 
-  @kinsol <node5#sss:optin_main> KINSetConstraints
+  @kinsol <node5#ss:optin_main> KINSetConstraints
  *)
 val set_constraints : 'a session -> 'a -> unit
 
@@ -712,7 +701,7 @@ val set_constraints : 'a session -> 'a -> unit
   Allows one to change the system function so as to solve several problems of
   the same size but with different functions.
 
-  @kinsol <node5#sss:optin_main> KINSetSysFunc
+  @kinsol <node5#ss:optin_main> KINSetSysFunc
   @kinsol <node5#ss:sysFn> Problem-defining function
  *)
 val set_sys_func : 'a session -> ('a -> 'a -> unit) -> unit
@@ -730,21 +719,21 @@ val get_work_space : 'a session -> int * int
 (**
   Returns the number of evaluations of the system function.
 
-  @kinsol <node5#sss:optout_main> KINGetNumFuncEvals
+  @kinsol <node5#ss:optout_main> KINGetNumFuncEvals
  *)
 val get_num_func_evals : 'a session -> int
 
 (**
   Returns the number of nonlinear iterations.
 
-  @kinsol <node5#sss:optout_main> KINGetNumNonlinSolvIters
+  @kinsol <node5#ss:optout_main> KINGetNumNonlinSolvIters
  *)
 val get_num_nonlin_solv_iters : 'a session -> int
 
 (**
   Returns the number of {i beta}-condition failures.
 
-  @kinsol <node5#sss:optout_main> KINGetNumBetaCondFails
+  @kinsol <node5#ss:optout_main> KINGetNumBetaCondFails
  *)
 val get_num_beta_cond_fails : 'a session -> int
 
@@ -752,7 +741,7 @@ val get_num_beta_cond_fails : 'a session -> int
   Returns the number of backtrack operations (step length adjustments) performed
   by the linesearch algorithm.
 
-  @kinsol <node5#sss:optout_main> KINGetNumBacktrackOps
+  @kinsol <node5#ss:optout_main> KINGetNumBacktrackOps
  *)
 val get_num_backtrack_ops : 'a session -> int
 
@@ -760,7 +749,7 @@ val get_num_backtrack_ops : 'a session -> int
   Returns the scaled Euclidiean {i l2} norm of the nonlinear system function
   {i F(u)} evaluated at the current iterate.
 
-  @kinsol <node5#sss:optout_main> KINGetFuncNorm
+  @kinsol <node5#ss:optout_main> KINGetFuncNorm
  *)
 val get_func_norm : 'a session -> float
 
@@ -768,7 +757,7 @@ val get_func_norm : 'a session -> float
   Returns the scaled Euclidiean {i l2} norm of the step used during the previous
   iteration.
 
-  @kinsol <node5#sss:optout_main> KINGetStepLength
+  @kinsol <node5#ss:optout_main> KINGetStepLength
  *)
 val get_step_length : 'a session -> float
 
