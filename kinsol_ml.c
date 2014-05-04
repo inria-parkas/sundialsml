@@ -91,7 +91,7 @@ void kinsol_ml_check_flag(const char *call, int flag)
     case KIN_SYSFUNC_FAIL:
         caml_raise_constant(*caml_named_value("kinsol_SystemFunctionFailure"));
 
-    case KIN_FIRST_SYSFUNC_FAIL:
+    case KIN_FIRST_SYSFUNC_ERR:
         caml_raise_constant(*caml_named_value(
 		    "kinsol_FirstSystemFunctionFailure"));
 

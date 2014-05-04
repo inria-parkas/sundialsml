@@ -281,6 +281,7 @@ ldflags="${ldflags} ${lapack_lib}"
 
 cvode_cppflags="${cflags} `sundials-config -m cvode -t s -l c -s cppflags`"
 ida_cppflags="${cflags} `sundials-config -m ida -t s -l c -s cppflags`"
+kinsol_cppflags="${cflags} `sundials-config -m kinsol -t s -l c -s cppflags`"
 
 # --no-lib-path removes the -L specification, to prevent it from being recorded
 # in the *.cm(x)a files.  We assume there's only one occurrence of -L and the
@@ -290,9 +291,12 @@ if [ ${no_lib_path:-0} -eq 1 ]; then
 	            | sed -e 's#-L[^ ]* -#-#'`"
     ida_ldflags="`sundials-config -m ida -t s -l c -s libs \
 	          | sed -e 's#-L[^ ]* -#-#'`"
+    kinsol_ldflags="`sundials-config -m kinsol -t s -l c -s libs \
+	          | sed -e 's#-L[^ ]* -#-#'`"
 else
     cvode_ldflags="`sundials-config -m cvode -t s -l c -s libs`"
     ida_ldflags="`sundials-config -m ida -t s -l c -s libs`"
+    ida_ldflags="`sundials-config -m kinsol -t s -l c -s libs`"
 fi
 
 arch=`uname -i`
@@ -355,6 +359,8 @@ fi
 	 s#@ida_cppflags@#${ida_cppflags}#;
 	 s#@cvode_ldflags@#${cvode_ldflags}#;
 	 s#@ida_ldflags@#${ida_ldflags}#;
+	 s#@kinsol_cppflags@#${kinsol_cppflags}#;
+	 s#@kinsol_ldflags@#${kinsol_ldflags}#;
 	 s#@ocamlflags@#${ocamlflags}#;
 	 s#@ocamloptflags@#${ocamloptflags}#;
 	 s#@ocaml_3x@#${ocaml_3x}#;

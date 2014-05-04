@@ -25,7 +25,7 @@
 void kinsol_ml_check_flag(const char *call, int flag);
 
 #define CHECK_FLAG(call, flag) if (flag != KIN_SUCCESS) \
-				 cvode_ml_check_flag(call, flag)
+				 kinsol_ml_check_flag(call, flag)
 
 /* Indices into the Kinsol_*.session type.  This enum must be in the same order as
  * the session type's member declaration.  The session data structure is shared
@@ -49,7 +49,7 @@ enum kinsol_index {
     RECORD_KINSOL_SESSION_PRESOLVEFN,
     RECORD_KINSOL_SESSION_JACTIMESFN,
     RECORD_KINSOL_SESSION_SIZE	/* This has to come last. */
-}
+};
 
 #define KINSOL_MEM_FROM_ML(v)   ((void *)Field((v), RECORD_KINSOL_SESSION_MEM))
 #define KINSOL_BACKREF_FROM_ML(v) \

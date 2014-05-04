@@ -183,31 +183,6 @@ CAMLprim void CVTYPE(clear_info_handler_fn)(value vdata)
     CAMLreturn0;
 }
 
-static int check_exception(value session, value r)
-{
-    CAMLparam2(session, r);
-    CAMLlocal1(exn);
-
-    static value *recoverable_failure = NULL;
-    if (recoverable_failure == NULL) {
-	recoverable_failure =
-	    caml_named_value("kinsol_RecoverableFailure");
-    }
-
-    if (!Is_exception_result(r)) return 0;
-
-    r = Extract_exception(r);
-
-    if (Field(r, 0) == *recoverable_failure)
-	CAMLreturnT (int, 1);
-
-    /* Unrecoverable error.  Save the exception and return -1.  */
-    exn = caml_alloc_small (1,0);
-    Field (exn, 0) = r;
-    Store_field (session, RECORD_KINSOL_SESSION_EXN_TEMP, exn);
-    CAMLreturnT (int, -1);
-}
-
 static int sysfn(N_Vector uu, N_Vector val, void *user_data)
 {
     CAMLparam0();
@@ -236,7 +211,7 @@ static value make_prec_solve_arg(N_Vector uscale, N_Vector fscale)
     CAMLparam0();
     CAMLlocal1(r);
 
-    r = caml_alloc_tuple(RECORD_KINSOL_PREC_SOLVE_ARG_SIZE);
+    r = caml_alloc_tuple(RECORD_KINSOL_SPILS_PREC_SOLVE_ARG_SIZE);
     Store_field(r, RECORD_KINSOL_SPILS_PREC_SOLVE_ARG_USCALE,
 	        WRAP_NVECTOR(uscale));
     Store_field(r, RECORD_KINSOL_SPILS_PREC_SOLVE_ARG_FSCALE,
@@ -398,13 +373,6 @@ static int presetupfn(
     CAMLreturnT(int, retcode);
 }
 
-static CAMLprim void relinquish_spils_solve_arg(value arg)
-{
-    CAMLparam1(arg);
-    RELINQUISH_WRAPPEDNV(Field(arg, RECORD_KINSOL_SPILS_SOLVE_ARG_RHS));
-    CAMLreturn0;
-}
-
 static int presolvefn(
 	N_Vector uu,
 	N_Vector uscale,
@@ -436,37 +404,6 @@ static int presolvefn(
 }
 
 static int jactimesfn(
-    N_Vector v,
-    N_Vector Jv,
-    realtype t,
-    N_Vector y,
-    N_Vector fy,
-    void *user_data,
-    N_Vector tmp)
-{
-    CAMLparam0();
-    CAMLlocal1(r);
-    CAMLlocalN(args, 4);
-    int retcode;
-    value *backref = user_data;
-    CAML_FN (call_jactimesfn);
-
-    args[0] = *backref;
-    args[1] = make_jac_arg(t, y, fy, WRAP_NVECTOR(tmp));
-    args[2] = WRAP_NVECTOR(v);
-    args[3] = WRAP_NVECTOR(Jv);
-
-    retcode = Int_val (caml_callbackN(*call_jactimesfn,
-                                      sizeof (args) / sizeof (*args),
-                                      args));
-
-    relinquish_jac_arg(args[1], SINGLE);
-    RELINQUISH_WRAPPEDNV(args[2]);
-    RELINQUISH_WRAPPEDNV(args[3]);
-
-    CAMLreturnT(int, retcode);
-}
-static int jactimesfn(
 	N_Vector v,
 	N_Vector Jv,
 	N_Vector u,
@@ -477,12 +414,13 @@ static int jactimesfn(
     CAMLlocal1(vr);
     CAMLlocalN (args, 5);
     value *backref = user_data;
-    CAML_FN (call_jacfn);
+    CAML_FN (call_jactimesfn);
+    int r;
 
     args[0] = *backref;
-    args[1] = WRAP_NVECTOR(vv);
-    args[2] = WRAP_NVECTOR(vJv);
-    args[3] = WRAP_NVECTOR(vu);
+    args[1] = WRAP_NVECTOR(v);
+    args[2] = WRAP_NVECTOR(Jv);
+    args[3] = WRAP_NVECTOR(u);
     args[4] = Val_bool(*new_uu);
 
     vr = caml_callbackN (*call_jactimesfn,
@@ -497,7 +435,6 @@ static int jactimesfn(
 
     CAMLreturnT(int, r);
 }
-
 
 /* Dense and Band can only be used with serial NVectors.  */
 #ifdef KINSOL_ML_BIGARRAYS
@@ -664,7 +601,7 @@ CAMLprim void CVTYPE(spils_set_preconditioner) (value vsession,
 CAMLprim void CVTYPE(spils_set_jac_times_vec_fn)(value vdata)
 {
     CAMLparam1(vdata);
-    int flag = KINSpilsSetJacTimesVecFn(KINSOL_MEM_FROM_ML(vdata), bandjacfn);
+    int flag = KINSpilsSetJacTimesVecFn(KINSOL_MEM_FROM_ML(vdata), jactimesfn);
     CHECK_FLAG("KINSpilsSetJacTimesVecFn", flag);
     CAMLreturn0;
 }
@@ -709,7 +646,7 @@ CAMLprim void CVTYPE(set_constraints)(value vkin_mem, value vconstraints)
     N_Vector constraints;
 
 #if SAFETY_CHECKS && KINSOL_ML_BIGARRAYS
-    int neqs = KINSOL_NEQS_FROM_ML (vdata);
+    int neqs = KINSOL_NEQS_FROM_ML (vkin_mem);
 
     if (neqs != Caml_ba_array_val(vconstraints)->dim[0])
 	caml_invalid_argument (
@@ -729,6 +666,7 @@ CAMLprim void CVTYPE(set_constraints)(value vkin_mem, value vconstraints)
 
 /* KINCreate() + KINInit().  */
 CAMLprim value CVTYPE(init)(value weakref, value vtemp)
+{
     CAMLparam2(weakref, vtemp);
     CAMLlocal1(r);
     int flag;
@@ -754,9 +692,9 @@ CAMLprim value CVTYPE(init)(value weakref, value vtemp)
 	caml_failwith("KINCreate returned NULL");
 
     temp = NVECTORIZE_VAL(vtemp);
-    flag = KINInit(kin_mem, f, temp);
+    flag = KINInit(kin_mem, sysfn, temp);
     RELINQUISH_NVECTORIZEDVAL(temp);
-    if (flag != CV_SUCCESS) {
+    if (flag != KIN_SUCCESS) {
 	KINFree (kin_mem);
 	CHECK_FLAG("KINInit", flag);
     }
@@ -779,13 +717,13 @@ CAMLprim value CVTYPE(init)(value weakref, value vtemp)
     CAMLreturn(r);
 }
 
-CAMLprim value CVTYPE(solve)(value vkin_mem, value vu, vlinesearch,
-	 		     vuscale, vfscale)
+CAMLprim value CVTYPE(solve)(value vdata, value vu, value vlinesearch,
+	 		     value vuscale, value vfscale)
 {
-    CAMLparam5(vkin_mem, vu, vlinesearch, vuscale, vfscale);
-    CAMLlocal0();
+    CAMLparam5(vdata, vu, vlinesearch, vuscale, vfscale);
+    CAMLlocal1(ret);
     int flag;
-    enum kinsol_solver_result_tag result;
+    enum kinsol_result_tag result;
     N_Vector u;
     N_Vector uscale;
     N_Vector fscale;
@@ -805,7 +743,7 @@ CAMLprim value CVTYPE(solve)(value vkin_mem, value vu, vlinesearch,
     u = NVECTORIZE_VAL (vu);
     uscale = NVECTORIZE_VAL (vuscale);
     fscale = NVECTORIZE_VAL (vfscale);
-    flag = KINSol(KINSOL_MEM_FROM_ML(vkin_mem),
+    flag = KINSol(KINSOL_MEM_FROM_ML(vdata),
 		  u,
 		  Bool_val (vlinesearch) ? KIN_LINESEARCH : KIN_NONE,
 		  uscale,

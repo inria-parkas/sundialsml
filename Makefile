@@ -12,11 +12,11 @@ CVODE_COBJ= cvode_ml$(XO) cvode_ml_ba$(XO) cvode_ml_nvec$(XO)
 
 IDA_COBJ= ida_ml$(XO) ida_ml_ba$(XO) ida_ml_nvec$(XO)
 
-KINSOL_COBJ=
+KINSOL_COBJ= kinsol_ml$(XO) kinsol_ml_ba$(XO) kinsol_ml_nvec$(XO)
 
 SPILS_COBJ= spils_ml$(XO) spils_ml_ba$(XO) spils_ml_nvec$(XO)
 
-COBJ=$(COMMON_COBJ) $(SPILS_COBJ) $(CVODE_COBJ) $(IDA_COBJ) $(KINSOL_OBJ)
+COBJ=$(COMMON_COBJ) $(SPILS_COBJ) $(CVODE_COBJ) $(IDA_COBJ) $(KINSOL_COBJ)
 
 INSTALL_FILES= 			\
     META			\
@@ -39,7 +39,9 @@ all: sundials.cma sundials.cmxa doc
 sundials.cma sundials.cmxa: $(MLOBJ) $(MLOBJ:.cmo=.cmx) $(COBJ)
 	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS) \
 	    -o sundials -oc mlsundials $^ \
-	    $(OCAML_IDA_LIBLINK) $(OCAML_CVODE_LIBLINK)
+	    $(OCAML_CVODE_LIBLINK) \
+	    $(OCAML_IDA_LIBLINK) \
+	    $(OCAML_KINSOL_LIBLINK)
 
 # There are three sets of flags:
 #   - one for CVODE-specific files
@@ -66,6 +68,14 @@ ida_ml_ba.o: ida_ml_nvec.c
 ida_ml_nvec.o: ida_ml_nvec.c
 	$(CC) -I $(OCAML_INCLUDE) $(IDA_CFLAGS) -o $@ -c $<
 
+kinsol_ml.o: kinsol_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(KINSOL_CFLAGS) -o $@ -c $<
+kinsol_ml_ba.o: kinsol_ml_nvec.c
+	$(CC) -I $(OCAML_INCLUDE) $(KINSOL_CFLAGS) \
+	      -DKINSOL_ML_BIGARRAYS -o $@ -c $<
+kinsol_ml_nvec.o: kinsol_ml_nvec.c
+	$(CC) -I $(OCAML_INCLUDE) $(KINSOL_CFLAGS) -o $@ -c $<
+
 spils_ml_ba.o: spils_ml_nvec.c
 	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) \
 	      -DSPILS_ML_BIGARRAYS -o $@ -c $<
@@ -88,7 +98,7 @@ doc/html/index.html: doc/html dochtml.cmo intro.doc \
 	    -ida-doc-root "$(IDA_DOC_ROOT)" \
 	    -pp "$(DOCPP)"		\
 	    -d ./doc/html/		\
-	    -t "Sundials (CVODE & IDA)"	\
+	    -t "Sundials (CVODE, IDA & KINSOL)"	\
 	    -intro intro.doc		\
 	    $(MLOBJ:.cmo=.mli)
 
