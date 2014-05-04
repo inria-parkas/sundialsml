@@ -538,7 +538,7 @@ module BandPrec :
 (** {2 Initialization} *)
 
 (**
-    [init lmm iter f ~roots:(nroots, g) ~t0:t0 y0] initializes the
+    [init lmm iter f ~roots:(nroots, g) ~t0:t0 (neqs, y0)] initializes the
     CVODE solver and returns a {!session}.
     - [lmm]     specifies the linear multistep method, see {!Cvode.lmm}.
     - [iter]    specifies either functional iteration or Newton iteration
@@ -547,6 +547,9 @@ module BandPrec :
     - [nroots]  specifies the number of root functions (zero-crossings).
     - [g]       calculates the values of the root functions.
     - [t0]      is the initial value of the independent variable.
+    - [neqs]    specifies the number of equations (continuous state
+                variables). There is no operation for demanding the length
+                of an 'a nvector.
     - [y0]      is a vector of initial values, the size of this vector
                 determines the number of equations in the session, see
                 {!Sundials.Carray.t}.
@@ -602,11 +605,14 @@ val init :
     -> (float -> 'a -> 'a -> unit)
     -> ?roots:(int * (float -> 'a -> root_val_array -> unit))
     -> ?t0:float
-    -> 'a nvector
+    -> int * 'a nvector
     -> 'a session
 
 (** Return the number of root functions. *)
 val nroots : 'a session -> int
+
+(** Return the number of equations. *)
+val neqs : 'a session -> int
 
 (** {2 Tolerance specification} *)
 

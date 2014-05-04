@@ -151,9 +151,7 @@ value cvode_ml_big_real();
 enum cvode_session_index {
     RECORD_CVODE_SESSION_CVODE = 0,
     RECORD_CVODE_SESSION_BACKREF,
-#if CVODE_ML_BIGARRAYS
     RECORD_CVODE_SESSION_NEQS,
-#endif
     RECORD_CVODE_SESSION_NROOTS,
     RECORD_CVODE_SESSION_ERRFILE,
     RECORD_CVODE_SESSION_EXN_TEMP,
@@ -172,15 +170,13 @@ enum cvode_session_index {
 };
 
 #define CVODE_MEM_FROM_ML(v)   ((void *)Field((v), RECORD_CVODE_SESSION_CVODE))
+#define CVODE_NEQS_FROM_ML(v)  Long_val(Field((v), RECORD_CVODE_SESSION_NEQS))
 #define CVODE_BACKREF_FROM_ML(v) \
     ((value *)(Field((v), RECORD_CVODE_SESSION_BACKREF)))
 #define CVODE_NROOTS_FROM_ML(v) \
   Long_val(Field((v), RECORD_CVODE_SESSION_NROOTS))
 #define CVODE_ROOTSFN_FROM_ML(v)    Field((v), RECORD_CVODE_SESSION_ROOTSFN)
 #define CVODE_PRESETUPFN_FROM_ML(v) Field((v), RECORD_CVODE_SESSION_PRESETUPFN)
-#if CVODE_ML_BIGARRAYS
-#define CVODE_NEQS_FROM_ML(v)  Long_val(Field((v), RECORD_CVODE_SESSION_NEQS))
-#endif
 
 enum cvode_lmm_tag {
   VARIANT_CVODE_LMM_ADAMS = 0,
