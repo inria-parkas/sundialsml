@@ -78,7 +78,6 @@ type c_weak_ref
 type 'a session = {
         cvode      : cvode_mem;
         backref    : c_weak_ref;
-        neqs       : int;
         nroots     : int;
         err_file   : cvode_file;
 
@@ -248,7 +247,7 @@ external ss_tolerances  : 'a session -> float -> float -> unit
 external wf_tolerances  : 'a session -> unit
     = "c_nvec_cvode_wf_tolerances"
 
-let init lmm iter f ?(roots=no_roots) ?(t0=0.) (neqs, y0) =
+let init lmm iter f ?(roots=no_roots) ?(t0=0.) y0 =
   let (nroots, roots) = roots in
   let weakref = Weak.create 1 in
   let cvode_mem, backref, err_file = c_init weakref lmm iter y0 t0 in
@@ -257,7 +256,6 @@ let init lmm iter f ?(roots=no_roots) ?(t0=0.) (neqs, y0) =
   let session = {
           cvode      = cvode_mem;
           backref    = backref;
-          neqs       = neqs;
           nroots     = nroots;
           err_file   = err_file;
 
@@ -282,7 +280,6 @@ let init lmm iter f ?(roots=no_roots) ?(t0=0.) (neqs, y0) =
   session
 
 let nroots { nroots } = nroots
-let neqs { neqs } = neqs
 
 external c_reinit
     : 'a session -> float -> 'a nvector -> unit
