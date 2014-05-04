@@ -14,7 +14,7 @@ and
 {{:http://www.di.ens.fr/} LIENS}.
 
 This library provides an OCaml interface to Sundials, though {b only the
-CVODE and IDA solvers with serial nvectors are currently supported}.
+CVODE, IDA, and KINSOL solvers with serial nvectors are currently supported}.
 The structure and naming conventions largely follow the original libraries,
 both for ease of reading the existing documentation and for converting
 existing source code, but several changes have been made for programming
