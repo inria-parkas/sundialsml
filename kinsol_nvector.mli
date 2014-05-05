@@ -700,6 +700,14 @@ val set_scaled_step_tol : 'a session -> float option -> unit
 val set_constraints : 'a session -> 'a -> unit
 
 (**
+  Allows one to change the linear solver so as to try solve a problem using
+  different tools or parameters.
+
+  @kinsol <node5#sss:lin_solve_init> Linear solver specification functions
+ *)
+val set_linear_solver : 'a session -> 'a linear_solver -> unit
+
+(**
   Allows one to change the system function so as to solve several problems of
   the same size but with different functions.
 

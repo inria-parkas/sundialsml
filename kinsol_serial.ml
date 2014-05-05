@@ -455,7 +455,7 @@ let set_spils_callbacks s {prec_solve_fn; prec_setup_fn; jac_times_vec_fn} =
   | None -> ()
   | Some jtimes -> Spils.set_jac_times_vec_fn s jtimes
 
-let set_linear_solver s neqs lsolver =
+let set_linear_solver s lsolver =
   match lsolver with
   | Dense None ->
       c_dls_dense s false
@@ -530,7 +530,7 @@ let init lsolver f u0 =
         } in
   Gc.finalise session_finalize session;
   Weak.set weakref 0 (Some session);
-  set_linear_solver session neqs lsolver;
+  set_linear_solver session lsolver;
   session
 
 type result =
