@@ -27,7 +27,7 @@ type linear_solver =
   | LapackDense of dense_jac_fn option
   | Band of bandrange * band_jac_fn option
   | LapackBand of bandrange * band_jac_fn option
-  | Spgmr of int option * spils_callbacks
+  | Spgmr of int option * int option * spils_callbacks
   | Spbcg of int option * spils_callbacks
   | Sptfqmr of int option * spils_callbacks
 
@@ -249,7 +249,7 @@ module Spils =
       s.jactimesfn <- dummy_jac_times_vec;
       c_clear_jac_times_vec_fn s
 
-    external set_max_restarts     : session -> int -> unit
+    external c_set_max_restarts     : session -> int -> unit
         = "c_kinsol_spils_set_max_restarts"
 
     external get_work_space       : session -> int * int
@@ -485,8 +485,11 @@ let set_linear_solver s neqs lsolver =
       (s.bandjacfn <- f;
        c_dls_lapack_band s mupper mlower true)
 
-  | Spgmr (maxl, callbacks) ->
+  | Spgmr (maxl, omaxrs, callbacks) ->
       c_spils_spgmr s (int_default maxl);
+      (match omaxrs with
+       | None -> ()
+       | Some maxrs -> Spils.c_set_max_restarts s maxrs);
       set_spils_callbacks s callbacks
 
   | Spbcg (maxl, callbacks) ->

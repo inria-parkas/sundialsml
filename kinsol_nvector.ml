@@ -23,7 +23,7 @@ type ('t, 'a) jacobian_arg =
   }
 
 type 'a linear_solver =
-  | Spgmr of int option * 'a spils_callbacks
+  | Spgmr of int option * int option * 'a spils_callbacks
   | Spbcg of int option * 'a spils_callbacks
   | Sptfqmr of int option * 'a spils_callbacks
 
@@ -186,7 +186,7 @@ module Spils =
       s.jactimesfn <- dummy_jac_times_vec;
       c_clear_jac_times_vec_fn s
 
-    external set_max_restarts     : 'a session -> int -> unit
+    external c_set_max_restarts     : 'a session -> int -> unit
         = "c_kinsol_spils_set_max_restarts"
 
     external get_work_space       : 'a session -> int * int
@@ -373,8 +373,11 @@ let set_spils_callbacks s {prec_solve_fn; prec_setup_fn; jac_times_vec_fn} =
 
 let set_linear_solver s lsolver =
   match lsolver with
-  | Spgmr (maxl, callbacks) ->
+  | Spgmr (maxl, omaxrs, callbacks) ->
       c_spils_spgmr s (int_default maxl);
+      (match omaxrs with
+       | None -> ()
+       | Some maxrs -> Spils.c_set_max_restarts s maxrs);
       set_spils_callbacks s callbacks
 
   | Spbcg (maxl, callbacks) ->

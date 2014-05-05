@@ -96,11 +96,13 @@ type ('t, 'a) jacobian_arg =
    @kinsol <node5#sss:lin_solv_init> Linear Solver Specification Functions
 *)
 type 'a linear_solver =
-  | Spgmr of int option * 'a spils_callbacks
+  | Spgmr of int option * int option * 'a spils_callbacks
   (** Krylov iterative solver with the scaled preconditioned GMRES method.
       The arguments specify the maximum dimension of the Krylov subspace (Pass
-      None to use the default value 5) and the preconditioner callback functions
-      ({!spils_callbacks}).  See also {!Spils}.
+      None to use the default value 5), the maximum number of restarts of the
+      iterative linear solver (Pass None to use the default value 0) and the
+      preconditioner callback functions ({!spils_callbacks}).  See also
+      {!Spils}.
 
       @kinsol <node5#sss:lin_solve_init> KINSpgmr
       @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
@@ -349,16 +351,6 @@ module Spils :
       -> unit
 
     val clear_jac_times_vec_fn : 'a session -> unit
-
-    (** {4 Optional output functions} *)
-
-    (**
-      Sets the maximum number of times the iterative linear solver can be
-      restarted (the default is 0).
-     
-      @kinsol <node5#sss:optout_spils> KINSpilsSetMaxRestarts
-     *)
-    val set_max_restarts : 'a session -> int -> unit
 
     (** {4 Optional input functions} *)
 
