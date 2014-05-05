@@ -249,6 +249,9 @@ module Spils =
       s.jactimesfn <- dummy_jac_times_vec;
       c_clear_jac_times_vec_fn s
 
+    external set_max_restarts     : session -> int -> unit
+        = "c_kinsol_spils_set_max_restarts"
+
     external get_work_space       : session -> int * int
         = "c_kinsol_spils_get_work_space"
 

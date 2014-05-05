@@ -424,7 +424,8 @@ module Spils :
       }
 
     (**
-      Set preconditioning functions (see {!spils_callbacks}).
+      [set_preconditioner s psetup psolve] sets the preconditioning functions
+      (see {!spils_callbacks}).
 
       @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
       @kinsol <node5#ss:precondFn> Jacobian preconditioning function
@@ -459,6 +460,16 @@ module Spils :
       @kinsol <node5#sss:optin_spils> KINSpilsSetJacTimesVecFn
     *)
     val clear_jac_times_vec_fn : session -> unit
+
+    (** {4 Optional output functions} *)
+
+    (**
+      Sets the maximum number of times the iterative linear solver can be
+      restarted (the default is 0).
+     
+      @kinsol <node5#sss:optout_spils> KINSpilsSetMaxRestarts
+     *)
+    val set_max_restarts : session -> int -> unit
 
     (** {4 Optional input functions} *)
 

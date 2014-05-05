@@ -163,6 +163,16 @@ CAMLprim void c_kinsol_spils_sptfqmr(value vkin_mem, value vmaxl)
     CAMLreturn0;
 }
 
+CAMLprim void c_kinsol_spils_set_max_restarts(value vkin_mem, value vmaxrs)
+{
+    CAMLparam2(vkin_mem, vmaxrs);
+
+    int flag = KINSpilsSetMaxRestarts(KINSOL_MEM_FROM_ML(vkin_mem), Int_val(vmaxrs));
+    CHECK_FLAG("KINSetMaxRestarts", flag);
+
+    CAMLreturn0;
+}
+
 CAMLprim value c_kinsol_dls_get_work_space(value vkin_mem)
 {
     CAMLparam1(vkin_mem);
