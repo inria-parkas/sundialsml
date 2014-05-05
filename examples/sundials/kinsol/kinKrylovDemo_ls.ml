@@ -1,6 +1,6 @@
 (*
  * -----------------------------------------------------------------
- * $Revision: 1.3 $
+ * $Revision: 1.2 $
  * $Date: 2010/12/01 23:08:49 $
  * -----------------------------------------------------------------
  * Programmer(s): Allan Taylor, Alan Hindmarsh and
@@ -8,6 +8,10 @@
  * -----------------------------------------------------------------
  * OCaml port: Timothy Bourke, Inria, May 2014.
  * -----------------------------------------------------------------
+ *
+ * This example loops through the available iterative linear solvers:
+ * SPGMR, SPBCG and SPTFQMR.
+ *
  * Example (serial):
  *
  * This example solves a nonlinear system that arises from a system
@@ -103,8 +107,8 @@ let num_species =   6  (* must equal 2*(number of prey or predators)
 
 let pi          = 3.1415926535898   (* pi *) 
 
-let mx          = 8                 (* MX = number of x mesh points *)
-let my          = 8                 (* MY = number of y mesh points *)
+let mx          = 5                 (* MX = number of x mesh points *)
+let my          = 5                 (* MY = number of y mesh points *)
 let nsmx        = (num_species * mx)
 let neq         = (nsmx * my)       (* number of equations in the system *)
 let aa          = 1.0    (* value of coefficient AA in above eqns *)
@@ -124,6 +128,13 @@ let one         = 1.0    (* 1. *)
 let two         = 2.0    (* 2. *)
 let preyin      = 1.0    (* initial guess for prey concentrations. *)
 let predin      = 30000.0(* initial guess for predator concs.      *)
+
+(* Linear Solver Loop Constants *)
+
+type linear_solver =
+  | Use_Spgmr     (* 0 *)
+  | Use_Spbcg     (* 1 *)
+  | Use_Sptfqmr   (* 2 *)
 
 (* User-defined vector access macro: IJ_Vptr *)
 
@@ -352,14 +363,20 @@ let set_initial_profiles cc sc =
   done
 
 (* Print first lines of output (problem description) *)
-let print_header globalstrategy maxl maxlrst fnormtol scsteptol =
+let print_header globalstrategy maxl maxlrst fnormtol scsteptol linsolver =
   printf "\nPredator-prey test problem --  KINSol (serial version)\n\n";
   printf "Mesh dimensions = %d X %d\n" mx my;
   printf "Number of species = %d\n" num_species;
   printf "Total system size = %d\n\n" neq;
   printf "Flag globalstrategy = %d (0 = None, 1 = Linesearch)\n"
          (if globalstrategy then 1 else 0);
-  printf "Linear solver is SPGMR with maxl = %d, maxlrst = %d\n" maxl maxlrst;
+  (match linsolver with
+   | Use_Spgmr ->
+     printf "Linear solver is SPGMR with maxl = %d, maxlrst = %d\n"
+            maxl maxlrst
+   | Use_Spbcg -> printf "Linear solver is SPBCG with maxl = %d\n" maxl
+   | Use_Sptfqmr -> printf "Linear solver is SPTFQMR with maxl = %d\n" maxl
+  );
   printf "Preconditioning uses interaction-only block-diagonal matrix\n";
   printf "Positivity constraints imposed on all components \n";
   printf "Tolerance parameters:  fnormtol = %g   scsteptol = %g\n"
@@ -394,7 +411,7 @@ let print_output cc =
   printf("\n\n")
 
 (* Print final statistics contained in iopt *)
-let print_final_stats kmem =
+let print_final_stats kmem linsolver =
   let nni = Kinsol.get_num_nonlin_solv_iters kmem in
   let nfe = Kinsol.get_num_func_evals kmem in
   let nli = Kinsol.Spils.get_num_lin_iters kmem in
@@ -405,7 +422,9 @@ let print_final_stats kmem =
   printf "Final Statistics.. \n";
   printf "nni    = %5d    nli   = %5d\n" nni nli;
   printf "nfe    = %5d    nfeSG = %5d\n" nfe nfeSG;
-  printf "nps    = %5d    npe   = %5d     ncfl  = %5d\n" nps npe ncfl
+  printf "nps    = %5d    npe   = %5d     ncfl  = %5d\n" nps npe ncfl;
+  if linsolver <> Use_Sptfqmr then
+    printf "\n=========================================================\n\n"
 
 (* MAIN PROGRAM *)
 let main () =
@@ -435,21 +454,61 @@ let main () =
   Kinsol.set_func_norm_tol kmem (Some fnormtol);
   Kinsol.set_scaled_step_tol kmem (Some scsteptol);
 
-  (* Print out the problem size, solution parameters, initial guess. *)
-  print_header globalstrategy maxl maxlrst fnormtol scsteptol;
+  let go linsolver =
+    if linsolver != Use_Spgmr then set_initial_profiles cc sc;
+    (match linsolver with
+     | Use_Spgmr ->
+         printf " -------";
+         printf " \n| SPGMR |\n";
+         printf " -------\n"
 
-  (* Call KINSol and print output concentration profile *)
-  ignore (Kinsol.solve kmem           (* KINSol memory block *)
-                 cc             (* initial guess on input; solution vector *)
-                 globalstrategy (* global stragegy choice *)
-                 sc             (* scaling vector, for the variable cc *)
-                 sc);           (* scaling vector for function values fval *)
+     | Use_Spbcg ->
+         printf " -------";
+         printf " \n| SPBCG |\n";
+         printf " -------\n";
 
-  printf("\n\nComputed equilibrium species concentrations:\n");
-  print_output cc;
+         (* Call KINSpbcg to specify the linear solver KINSPBCG with preconditioner
+           routines PrecSetupBD and PrecSolveBD, and the pointer to the user block
+           data. *)
+         let maxl = 15 in
+         Kinsol.set_linear_solver kmem
+            (Kinsol.Spbcg (Some maxl, {
+                           Kinsol.prec_setup_fn=Some prec_setup_bd;
+                           Kinsol.prec_solve_fn=Some prec_solve_bd;
+                           Kinsol.jac_times_vec_fn=None; }))
+        
+     | Use_Sptfqmr ->
+         printf " ---------";
+         printf " \n| SPTFQMR |\n";
+         printf " ---------\n";
 
-  (* Print final statistics and free memory *)  
-  print_final_stats kmem
+         (* Call KINSptfqmr to specify the linear solver KINSPTFQMR with
+            preconditioner routines PrecSetupBD and PrecSolveBD, and the pointer to
+            the user block data. *)
+         let maxl = 25 in
+         Kinsol.set_linear_solver kmem
+            (Kinsol.Sptfqmr (Some maxl, {
+                             Kinsol.prec_setup_fn=Some prec_setup_bd;
+                             Kinsol.prec_solve_fn=Some prec_solve_bd;
+                             Kinsol.jac_times_vec_fn=None; })));
+
+    (* Print out the problem size, solution parameters, initial guess. *)
+    print_header globalstrategy maxl maxlrst fnormtol scsteptol linsolver;
+
+    (* Call KINSol and print output concentration profile *)
+    ignore (Kinsol.solve kmem           (* KINSol memory block *)
+                   cc             (* initial guess on input; solution vector *)
+                   globalstrategy (* global stragegy choice *)
+                   sc             (* scaling vector, for the variable cc *)
+                   sc);           (* scaling vector for function values fval *)
+
+    printf("\n\nComputed equilibrium species concentrations:\n");
+    print_output cc;
+
+    (* Print final statistics and free memory *)  
+    print_final_stats kmem linsolver
+  in
+  List.iter go [ Use_Spgmr; Use_Spbcg; Use_Sptfqmr ]
 
 let _ = main ()
 let _ = Gc.compact ()
