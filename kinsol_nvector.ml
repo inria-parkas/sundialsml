@@ -19,8 +19,8 @@ type 'a double_tmp = 'a * 'a
 
 type ('t, 'a) jacobian_arg =
   {
-    jac_u   : 'a nvector;
-    jac_fu  : 'a nvector;
+    jac_u   : 'a;
+    jac_fu  : 'a;
     jac_tmp : 't
   }
 
@@ -32,7 +32,7 @@ type 'a linear_solver =
 and 'a spils_callbacks =
   {
     prec_solve_fn : (('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
-                      -> 'a nvector -> unit) option;
+                      -> 'a -> unit) option;
 
     prec_setup_fn : (('a double_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
                      -> unit) option;
@@ -40,7 +40,7 @@ and 'a spils_callbacks =
     jac_times_vec_fn : ('a -> 'a -> 'a -> bool -> bool) option;
   }
 
-and 'a prec_solve_arg = { uscale : 'a nvector; fscale : 'a nvector; }
+and 'a prec_solve_arg = { uscale : 'a; fscale : 'a; }
 
 let spils_no_precond = {
   prec_solve_fn = None;
@@ -82,7 +82,7 @@ type 'a session = {
   mutable presetupfn : ('a double_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
                        -> unit;
   mutable presolvefn : ('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
-                       -> 'a nvector -> unit;
+                       -> 'a -> unit;
   mutable jactimesfn : 'a -> 'a -> 'a -> bool -> bool;
 }
 
@@ -155,8 +155,8 @@ module Spils =
   struct
     type 'a solve_arg = 'a prec_solve_arg =
       {
-        uscale : 'a nvector;
-        fscale : 'a nvector;
+        uscale : 'a;
+        fscale : 'a;
       }
 
     (* TODO: CVODE/IDA versions to allow optional setup function. *)

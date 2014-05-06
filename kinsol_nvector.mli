@@ -76,8 +76,8 @@ type 'a double_tmp = 'a * 'a
  *)
 type ('t, 'a) jacobian_arg =
   {
-    jac_u   : 'a nvector;   (** The current (unscaled) iterate. *)
-    jac_fu  : 'a nvector;   (** The current value of the vector F([u]). *)
+    jac_u   : 'a;   (** The current (unscaled) iterate. *)
+    jac_fu  : 'a;   (** The current value of the vector F([u]). *)
     jac_tmp : 't            (** Workspace data,
                                 either {!single_tmp} or {!double_tmp}. *)
   }
@@ -160,7 +160,7 @@ type 'a linear_solver =
 and 'a spils_callbacks =
   {
     prec_solve_fn : (('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
-                      -> 'a nvector -> unit) option;
+                      -> 'a -> unit) option;
     (**
         This callback is invoked as [prec_solve_fn jarg sarg v] to solve
         the preconditioning system [P z = r]. The preconditioning matrix, [P],
@@ -237,10 +237,10 @@ and 'a spils_callbacks =
  *)
 and 'a prec_solve_arg =
   {
-    uscale : 'a nvector;  (** A vector containing diagonal elements of the
-                              scaling matrix for [u] *)
-    fscale : 'a nvector;  (** A vector containing diagonal elements of the
-                              scaling matrix for [fval]. *)
+    uscale : 'a;  (** A vector containing diagonal elements of the
+                      scaling matrix for [u] *)
+    fscale : 'a;  (** A vector containing diagonal elements of the
+                      scaling matrix for [fval]. *)
   }
 
 (** See {!spils_callbacks}. *)
@@ -310,8 +310,8 @@ module Spils :
     (** Alias for {!prec_solve_arg}.  *)
     type 'a solve_arg = 'a prec_solve_arg =
       {
-        uscale : 'a nvector;
-        fscale : 'a nvector;
+        uscale : 'a;
+        fscale : 'a;
       }
 
     (**
@@ -325,7 +325,7 @@ module Spils :
       'a session
       -> (('a double_tmp, 'a) jacobian_arg -> 'a prec_solve_arg -> unit) option
       -> (('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
-            -> 'a nvector -> unit)
+            -> 'a -> unit)
       -> unit
 
     (**
