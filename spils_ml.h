@@ -13,6 +13,8 @@
 #ifndef _SPILS_ML_H__
 #define _SPILS_ML_H__
 
+#include <caml/mlvalues.h>
+
 enum gramschmidt_type_tag {
   VARIANT_SPILS_GRAMSCHMIDT_TYPE_MODIFIEDGS  = 0,
   VARIANT_SPILS_GRAMSCHMIDT_TYPE_CLASSICALGS,
