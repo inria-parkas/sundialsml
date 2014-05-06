@@ -10,6 +10,8 @@
 (*                                                                     *)
 (***********************************************************************)
 
+include Kinsol (* Need to register shared exceptions *)
+
 type nvec = Sundials.Carray.t
 
 type single_tmp = nvec

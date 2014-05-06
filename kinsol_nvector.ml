@@ -10,6 +10,8 @@
 (*                                                                     *)
 (***********************************************************************)
 
+include Kinsol (* Need to register shared exceptions *)
+
 type 'a nvector = 'a Nvector.nvector
 
 type 'a single_tmp = 'a
