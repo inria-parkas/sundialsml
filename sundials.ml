@@ -96,6 +96,14 @@ module Carray =
         else go (v.{i}::ls) (i-1)
       in go [] (length v - 1)
 
+    let into_array (src : t) dst =
+      let n = length src in
+      if n <> Array.length dst
+        then invalid_arg "into_array: array sizes do not match";
+      for i = 1 to n-1 do
+        dst.(i) <- src.{i}
+      done
+
     let to_array (v : t) =
       let n = length v in
       let a = Array.make n v.{0} in
