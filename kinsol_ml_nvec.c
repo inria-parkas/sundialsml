@@ -384,7 +384,7 @@ static int presolvefn(
 {
     CAMLparam0();
     CAMLlocal1(rv);
-    CAMLlocalN(args, 3);
+    CAMLlocalN(args, 4);
     int retcode;
     value *backref = user_data;
     CAML_FN (call_presolvefn);
@@ -392,6 +392,7 @@ static int presolvefn(
     args[0] = *backref;
     args[1] = make_jac_arg(uu, fu, WRAP_NVECTOR(tmp));
     args[2] = make_prec_solve_arg(uscale, fscale);
+    args[3] = WRAP_NVECTOR(vv);
 
     retcode = Int_val (caml_callbackN(*call_presolvefn,
                                       sizeof (args) / sizeof (*args),
@@ -399,6 +400,7 @@ static int presolvefn(
 
     relinquish_jac_arg(args[1], SINGLE);
     relinquish_prec_solve_arg(args[2]);
+    RELINQUISH_WRAPPEDNV(args[3]);
 
     CAMLreturnT(int, retcode);
 }

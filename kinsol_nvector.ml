@@ -117,9 +117,9 @@ let call_infoh session details =
     prerr_endline ("Warning: error handler function raised an exception.  " ^
                    "This exception will not be propagated.")
 
-let call_presolvefn session jac ps =
+let call_presolvefn session jac ps u =
   let session = read_weak_ref session in
-  adjust_retcode session true (session.presolvefn jac) ps
+  adjust_retcode session true (session.presolvefn jac ps) u
 
 let call_presetupfn session jac ps =
   let session = read_weak_ref session in
