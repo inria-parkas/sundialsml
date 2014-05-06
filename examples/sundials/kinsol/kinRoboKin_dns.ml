@@ -41,7 +41,10 @@ let zero  = 0.0
 let one   = 1.0
 let two   = 2.0
 
-let set_ijth = Dls.DenseMatrix.set
+let ith v i = v.{i - 1}
+let set_ith v i e = v.{i - 1} <- e
+
+let set_ijth m i j = Dls.DenseMatrix.set m (i - 1) (j - 1)
 
 (* System function *)
 let func yd fd =
@@ -192,7 +195,10 @@ let print_output y =
   printf "   ----------------------------------\n";
 
   for i=1 to nvar do
-    printf " %10.6g   %10.6g   %10.6g\n" y.{i+nvar} y.{i} y.{i+2*nvar}
+    printf " %10.6g   %10.6g   %10.6g\n"
+      (ith y (i+nvar))
+      (ith y i)
+      (ith y (i+2*nvar))
   done
 
 (* Print final statistics *)
@@ -212,7 +218,10 @@ let main () =
   printf "KINSOL problem size: 8 + 2*8 = 24 \n\n";
 
   (* Create vectors for solution, scales, and constraints *)
-  let y = Carray.init neq (sqrt(two) /. two) in
+  let y = Carray.init neq one in
+  for i = 1 to nvar do
+    set_ith y i (sqrt(two) /. two)
+  done;
   let scale = Carray.init neq one in
 
   (* Initialize and allocate memory for KINSOL *)
@@ -220,7 +229,11 @@ let main () =
   let kmem = Kinsol.init (Kinsol.Dense (Some jac)) func y in
 
   (* Set optional inputs *)
-  Kinsol.set_constraints kmem (Carray.init neq one);
+  let constraints = Carray.init neq zero in
+  for i=nvar+1 to neq do
+    set_ith constraints i one
+  done;
+  Kinsol.set_constraints kmem constraints;
   Kinsol.set_func_norm_tol kmem (Some ftol);
   Kinsol.set_scaled_step_tol kmem (Some stol);
 
@@ -244,4 +257,7 @@ let main () =
 
   (* Print final statistics and free memory *)  
   print_final_stats kmem
+
+let _ = main ()
+let _ = Gc.compact ()
 
