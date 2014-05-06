@@ -282,7 +282,7 @@ let main () =
   (* Re-initialize IDA and IDASPGMR *)
 
   Ida.reinit mem t0 u u';
-  Ida.Spils.set_gs_type mem Ida.Spils.ClassicalGS;
+  Ida.Spils.set_gs_type mem Spils.ClassicalGS;
   
   (* Print case number, output table heading, and initial line of table. *)
   printf "\n\nCase 2: gstype = CLASSICAL_GS\n";

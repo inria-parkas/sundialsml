@@ -85,8 +85,7 @@
 module Ida = Ida_serial
 module Carray = Ida.Carray
 module Roots = Ida.Roots
-module Dls = Ida.Dls
-module Matrix = Ida.Directdensematrix
+module Matrix = Dls.ArrayDenseMatrix
 
 let printf = Printf.printf
 
@@ -155,7 +154,7 @@ let init_user_data () =
       np    = nprey;
       dx    = ax /. float_of_int (mx-1);
       dy    = ay /. float_of_int (my-1);
-      acoef = Matrix.new_dense_mat (num_species, num_species);
+      acoef = Matrix.make num_species num_species;
       cox   = Array.make num_species 0.;
       coy   = Array.make num_species 0.;
       bcoef = Array.make num_species 0.;
@@ -178,15 +177,15 @@ let init_user_data () =
   for i = 0 to np-1 do
     (* Fill in the portion of acoef in the four quadrants, row by row. *)
     for j = 0 to np-1 do
-      Matrix.set acoef (np+j, i)    (-. gg);
-      Matrix.set acoef (j, i+np)    ee;
-      Matrix.set acoef (j, i)       0.;
-      Matrix.set acoef (np+j, i+np) 0.;
+      Matrix.set acoef (np+j) i      (-. gg);
+      Matrix.set acoef j      (i+np)      ee;
+      Matrix.set acoef j      i           0.;
+      Matrix.set acoef (np+j) (i+np)      0.;
     done;
 
     (* Reset the diagonal elements of acoef to -AA.  *)
-    Matrix.set acoef (i, i) (-. aa);
-    Matrix.set acoef (i+np, i+np) (-. aa);
+    Matrix.set acoef i i (-. aa);
+    Matrix.set acoef (i+np) (i+np) (-. aa);
 
     (* Set coefficients for b and diffusion terms.  *)
     bcoef.(i) <- bb; bcoef.(i+np) <- -. bb;
@@ -205,7 +204,7 @@ let web_rates webdata x y (cxy : Ida.nvec) (ratesxy : Ida.nvec) =
     (* ratesxy.{is} <- dotprod cxy (Directdensematrix.column acoef is) *)
     ratesxy.{is} <- 0.;
     for j = 0 to num_species-1 do
-      ratesxy.{is} <- ratesxy.{is} +. cxy.{j} *. Matrix.get acoef (j,is)
+      ratesxy.{is} <- ratesxy.{is} +. cxy.{j} *. Matrix.get acoef j is
     done
   done;
 

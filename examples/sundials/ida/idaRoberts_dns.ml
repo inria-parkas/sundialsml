@@ -29,15 +29,14 @@
 module Ida = Ida_serial;;
 module Carray = Ida.Carray
 module Roots = Ida.Roots
-module Dls = Ida.Dls
 
 let printf = Printf.printf
 
 (* Auxiliary indexing functions *)
 (* Translates 1-based indexing into 0-based indexing, just like corresponding
  * macros do in the original C implementation of this example.  *)
-let ijth a (i,j) = Ida.Densematrix.get a (i-1, j-1)
-and set_ijth a (i,j) x = Ida.Densematrix.set a (i-1, j-1) x
+let ijth a (i,j) = Dls.DenseMatrix.get a (i-1) (j-1)
+and set_ijth a (i,j) x = Dls.DenseMatrix.set a (i-1) (j-1) x
 and ith v i = v.{i-1}
 and set_ith v i x = v.{i-1} <- x
 
