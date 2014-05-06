@@ -123,6 +123,12 @@ CAMLprim void c_kinsol_session_finalize(value vdata)
     if (err_file != NULL) {
 	fclose(err_file);
     }
+
+    FILE* info_file =
+      (FILE *)Long_val(Field(vdata, RECORD_KINSOL_SESSION_INFOFILE));
+    if (info_file != NULL) {
+	fclose(info_file);
+    }
 }
 
 /* boiler plate */

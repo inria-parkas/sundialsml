@@ -80,9 +80,9 @@ type c_weak_ref
 type session = {
   kinsol    : kin_mem;
   backref   : c_weak_ref;
-  neqs      : int;
   err_file  : kin_file;
   info_file : kin_file;
+  neqs      : int;
 
   mutable exn_temp : exn option;
 
@@ -152,14 +152,14 @@ let call_jactimesfn session v jv u new_uu =
   | e -> (session.exn_temp <- Some e; (false, -1))
 
 let _ =
-  Callback.register "c_nvec_kinsol_call_sysfn"         call_sysfn;
-  Callback.register "c_nvec_kinsol_call_errh"          call_errh;
-  Callback.register "c_nvec_kinsol_call_infoh"         call_infoh;
-  Callback.register "c_nvec_kinsol_call_jacfn"         call_jacfn;
-  Callback.register "c_nvec_kinsol_call_bandjacfn"     call_bandjacfn;
-  Callback.register "c_nvec_kinsol_call_presolvefn"    call_presolvefn;
-  Callback.register "c_nvec_kinsol_call_presetupfn"    call_presetupfn;
-  Callback.register "c_nvec_kinsol_call_jactimesfn"    call_jactimesfn
+  Callback.register "c_ba_kinsol_call_sysfn"         call_sysfn;
+  Callback.register "c_ba_kinsol_call_errh"          call_errh;
+  Callback.register "c_ba_kinsol_call_infoh"         call_infoh;
+  Callback.register "c_ba_kinsol_call_jacfn"         call_jacfn;
+  Callback.register "c_ba_kinsol_call_bandjacfn"     call_bandjacfn;
+  Callback.register "c_ba_kinsol_call_presolvefn"    call_presolvefn;
+  Callback.register "c_ba_kinsol_call_presetupfn"    call_presetupfn;
+  Callback.register "c_ba_kinsol_call_jactimesfn"    call_jactimesfn
 
 external session_finalize : session -> unit
     = "c_kinsol_session_finalize"
@@ -223,7 +223,7 @@ module Spils =
     (* TODO: CVODE/IDA versions to allow optional setup function. *)
     (* TODO: Eliminate this function and just provide reinit? *)
     external c_set_preconditioner : session -> bool -> unit
-        = "c_nvec_kinsol_spils_set_preconditioner"
+        = "c_ba_kinsol_spils_set_preconditioner"
 
     let set_preconditioner s fpresetupfn fpresolvefn =
       let withprec =
@@ -236,14 +236,14 @@ module Spils =
 
     (* TODO: Eliminate this function and just provide reinit? *)
     external c_set_jac_times_vec_fn : session -> unit
-        = "c_nvec_kinsol_spils_set_jac_times_vec_fn"
+        = "c_ba_kinsol_spils_set_jac_times_vec_fn"
 
     let set_jac_times_vec_fn s fjactimesfn =
       s.jactimesfn <- fjactimesfn;
       c_set_jac_times_vec_fn s
 
     external c_clear_jac_times_vec_fn : session -> unit
-        = "c_nvec_cvode_clear_jac_times_vec_fn"
+        = "c_ba_cvode_clear_jac_times_vec_fn"
 
     let clear_jac_times_vec_fn s =
       s.jactimesfn <- dummy_jac_times_vec;
@@ -278,14 +278,14 @@ external set_error_file : session -> string -> bool -> unit
     = "c_kinsol_set_error_file"
 
 external c_set_err_handler_fn : session -> unit
-    = "c_nvec_kinsol_set_err_handler_fn"
+    = "c_ba_kinsol_set_err_handler_fn"
 
 let set_err_handler_fn s ferrh =
   s.errh <- ferrh;
   c_set_err_handler_fn s
 
 external c_clear_err_handler_fn : session -> unit
-    = "c_nvec_kinsol_clear_err_handler_fn"
+    = "c_ba_kinsol_clear_err_handler_fn"
 
 let clear_err_handler_fn s =
   s.errh <- (fun _ -> ());
@@ -295,14 +295,14 @@ external set_info_file : session -> string -> bool -> unit
     = "c_kinsol_set_info_file"
 
 external c_set_info_handler_fn : session -> unit
-    = "c_nvec_kinsol_set_info_handler_fn"
+    = "c_ba_kinsol_set_info_handler_fn"
 
 let set_info_handler_fn s finfoh =
   s.infoh <- finfoh;
   c_set_info_handler_fn s
 
 external c_clear_info_handler_fn : session -> unit
-    = "c_nvec_kinsol_clear_info_handler_fn"
+    = "c_ba_kinsol_clear_info_handler_fn"
 
 let clear_info_handler_fn s =
   s.infoh <- (fun _ -> ());
@@ -400,7 +400,7 @@ let set_scaled_step_tol s scsteptol =
   c_set_scaled_step_tol s (float_default scsteptol)
 
 external set_constraints : session -> nvec -> unit
-    = "c_nvec_kinsol_set_constraints"
+    = "c_ba_kinsol_set_constraints"
 
 let set_sys_func s fsys =
   s.sysfn <- fsys
@@ -503,7 +503,7 @@ let set_linear_solver s lsolver =
 external c_init
     : session Weak.t -> nvec
       -> (kin_mem * c_weak_ref * kin_file * kin_file)
-    = "c_nvec_kinsol_init"
+    = "c_ba_kinsol_init"
 
 let init lsolver f u0 =
   let neqs = Sundials.Carray.length u0 in
@@ -539,5 +539,5 @@ type result =
   | StoppedOnStepTol  (** KIN_STEP_LT_STPTOL *)
 
 external solve : session -> nvec -> bool -> nvec -> nvec -> result
-    = "c_nvec_kinsol_solve"
+    = "c_ba_kinsol_solve"
 

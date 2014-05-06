@@ -21,6 +21,7 @@
 #define _KINSOL_ML_H__
 
 #include "sundials_ml.h"
+#include "nvector_ml.h"
 
 void kinsol_ml_check_flag(const char *call, int flag);
 
@@ -34,11 +35,14 @@ void kinsol_ml_check_flag(const char *call, int flag);
 enum kinsol_index {
     RECORD_KINSOL_SESSION_MEM = 0,
     RECORD_KINSOL_SESSION_BACKREF,
+    RECORD_KINSOL_SESSION_ERRFILE,
+    RECORD_KINSOL_SESSION_INFOFILE,
+    /* All fields used in kinsol_ml.c (i.e., in finalize) must occur
+       before the entry below (since these functions are shared by
+       both _nvec_ and _ba_ routines. */
 #if KINSOL_ML_BIGARRAYS
     RECORD_KINSOL_SESSION_NEQS,
 #endif
-    RECORD_KINSOL_SESSION_ERRFILE,
-    RECORD_KINSOL_SESSION_INFOFILE,
     RECORD_KINSOL_SESSION_EXN_TEMP,
     RECORD_KINSOL_SESSION_SYSFN,
     RECORD_KINSOL_SESSION_ERRH,

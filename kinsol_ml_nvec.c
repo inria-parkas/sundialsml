@@ -189,7 +189,7 @@ static int sysfn(N_Vector uu, N_Vector val, void *user_data)
     CAMLlocal2(vuu, vval);
     int r;
     value *backref = user_data;
-    CAML_FN (call_rhsfn);
+    CAML_FN (call_sysfn);
 
     vuu = WRAP_NVECTOR(uu);
     vval = WRAP_NVECTOR(val);
@@ -198,7 +198,7 @@ static int sysfn(N_Vector uu, N_Vector val, void *user_data)
     // call, afterward that memory goes back to kinsol. These bigarrays must
     // not be retained by closure_rhsfn! If it wants a permanent copy, then
     // it has to make it manually.
-    r = Int_val (caml_callback3(*call_rhsfn, *backref, vuu, vval));
+    r = Int_val (caml_callback3(*call_sysfn, *backref, vuu, vval));
 
     RELINQUISH_WRAPPEDNV(vuu);
     RELINQUISH_WRAPPEDNV(vval);
@@ -654,7 +654,6 @@ CAMLprim value CVTYPE(init)(value weakref, value vtemp)
     kin_mem = KINCreate();
     if (kin_mem == NULL)
 	caml_failwith("KINCreate returned NULL");
-
     temp = NVECTORIZE_VAL(vtemp);
     flag = KINInit(kin_mem, sysfn, temp);
     RELINQUISH_NVECTORIZEDVAL(temp);
