@@ -44,7 +44,7 @@ let vn = vmax_norm u]}
     val wrap            : t -> t Nvector.nvector
 
     (** Extracts an array from an nvector. *)
-    val data            : t Nvector.nvector -> t
+    val unwrap          : t Nvector.nvector -> t
   end
 
 (** {!Nvector.nvector} on {{:OCAML_DOC_ROOT(Array)} Array}s of [float]s. *)

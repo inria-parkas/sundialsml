@@ -17,7 +17,7 @@ module type ARRAY_NVECTOR =
     val array_nvec_ops  : t Nvector.Mutable.nvector_ops
     val make            : int -> float -> t Nvector.nvector
     val wrap            : t -> t Nvector.nvector
-    val data            : t Nvector.nvector -> t
+    val unwrap          : t Nvector.nvector -> t
   end
 
 module NvectorFn =
@@ -162,7 +162,7 @@ module NvectorFn =
       Nvector.Mutable.make_nvector array_nvec_ops a
       (* (Nvector.Mutable.add_tracing "::" array_nvec_ops) *)
 
-    let data = Nvector.Mutable.nvector_data
+    let unwrap = Nvector.Mutable.nvector_data
   end
 
 module Array = NvectorFn (
