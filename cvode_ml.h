@@ -20,8 +20,6 @@
 #ifndef _CVODE_ML_H__
 #define _CVODE_ML_H__
 
-#include "sundials_ml.h"
-
 /*
  * The session data structure is shared in four parts across the OCaml and C
  * heaps:

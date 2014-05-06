@@ -42,6 +42,7 @@
 
 #include "spils_ml.h"
 #include "cvode_ml.h"
+#include "sundials_ml.h"
 
 #include <stdio.h>
 #define MAX_ERRMSG_LEN 256
