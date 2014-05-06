@@ -149,14 +149,14 @@ let ij_vptr vv i j = subarray vv (ij_vptr_idx i j) num_species
    contains preconditioner blocks, pivot arrays, and problem constants *)
 
 let p =
-  Array.init (mx - 1) (fun jx ->
-    Array.init (my - 1) (fun jy ->
+  Array.init mx (fun jx ->
+    Array.init my (fun jy ->
       Dense.make num_species num_species
     ))
 
 let pivot =
-  Array.init (mx - 1) (fun jx ->
-    Array.init (my - 1) (fun jy ->
+  Array.init mx (fun jx ->
+    Array.init my (fun jy ->
       let v = Sundials.make_lint_array num_species in
       Bigarray.Array1.fill v 0;
       v
@@ -261,11 +261,11 @@ let func cc fval =
       for is = 0 to num_species - 1 do
         (* Differencing in x direction *)
         let dcyli = cxy.{is} -. cc.{cxy_ij - idyl + is} in
-        let dcyui = cxy.{idyu + is} -. cxy.{is} in
+        let dcyui = cc.{cxy_ij + idyu + is} -. cxy.{is} in
         
         (* Differencing in y direction *)
         let dcxli = cxy.{is} -. cc.{cxy_ij - idxl + is} in
-        let dcxri = cxy.{idxr+is} -. cxy.{is} in
+        let dcxri = cc.{cxy_ij + idxr+is} -. cxy.{is} in
         
         (* Compute the total rate value at (xx,yy) *)
         fxy.{is} <- coy.{is} *. (dcyui -. dcyli)
