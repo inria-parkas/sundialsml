@@ -697,7 +697,7 @@ val set_scaled_step_tol : 'a session -> float option -> unit
 
   @kinsol <node5#ss:optin_main> KINSetConstraints
  *)
-val set_constraints : 'a session -> 'a -> unit
+val set_constraints : 'a session -> 'a nvector -> unit
 
 (**
   Allows one to change the linear solver so as to try solve a problem using

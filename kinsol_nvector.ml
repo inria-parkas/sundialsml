@@ -329,7 +329,7 @@ external c_set_scaled_step_tol : 'a session -> float -> unit
 let set_scaled_step_tol s scsteptol =
   c_set_scaled_step_tol s (float_default scsteptol)
 
-external set_constraints : 'a session -> 'a -> unit
+external set_constraints : 'a session -> 'a nvector -> unit
     = "c_nvec_kinsol_set_constraints"
 
 let set_sys_func s fsys =
