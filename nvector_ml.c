@@ -12,6 +12,37 @@
 
 /* OCaml interface for custom NVectors. */
 
+/*
+    ML NVectors can be created in two different ways:
+
+    1. From OCaml by Nvector_array.make or Nvector_array.wrap.
+
+       on creation:
+	   ml_nvec_new is invoked (it allocates memory in the C heap)
+       on deletion:
+	   finalize_nec is invoked to free memory
+	   (it, in turn, invokes callml_vdestroy)
+
+    2. From C (Sundials) by NV_Clone.
+
+       on creation:
+           callml_vclone is invoked (it allocates memory in the C heap)
+       on deletion:
+	    callml_vdestroy is invoked to free memory
+
+    The underlying N_Vector is allocated in the C heap (rather than inside a
+    custom value) so that it will not be moved by the garbage collector.
+    
+    An ML NVector (in the C heap) points to two OCaml values:
+	content.data
+	content.callback
+
+    These are registered as global roots so that the garbage collector does
+    not destroy the table of operations or the underlying data. These
+    registrations also ensure that the values are updated correctly if the
+    underlying data is moved (compacted).
+ */
+
 #include "nvector_ml.h"
 
 #include <caml/mlvalues.h>
@@ -61,7 +92,7 @@ enum nvector_ops_tag {
 static mlsize_t nvec_rough_size =
     sizeof(struct _generic_N_Vector_Ops) + sizeof(struct _ml_nvec_content);
 
-static void nvec_destroy_contents(N_Vector v)
+CAMLprim void callml_vdestroy(N_Vector v)
 {
     CAMLparam0();
     CAMLlocal1(mlop);
@@ -71,110 +102,111 @@ static void nvec_destroy_contents(N_Vector v)
 	    mlop = GET_SOME_OP(v, NVECTOR_OPS_NVDESTROY);
 	    caml_callback(mlop, GET_DATA(v));
 	}
-	caml_remove_global_root((&NVEC_CONTENT(v)->data));
     }
-    caml_remove_generational_global_root((&NVEC_CONTENT(v)->callbacks));
 
-    free(v->ops);
-    free(v->content);
+    caml_remove_global_root((&NVEC_CONTENT(v)->data));
+    caml_remove_generational_global_root((&NVEC_CONTENT(v)->callbacks));
+    free(v);
+
     CAMLreturn0;
 }
 
 static void finalize_nvec(value nvec)
 {
-    nvec_destroy_contents(NVEC_VAL(nvec));
+    callml_vdestroy(NVEC_VAL(nvec));
+}
+
+static N_Vector malloc_nvec()
+{
+    char* mem = NULL; // pointer arithmetic in bytes
+    N_Vector nv;
+
+    /* Alloc memory in C heap */
+    mem = malloc(sizeof(*nv) + sizeof(*nv->ops) + sizeof(ml_nvec_content));
+    if (mem == NULL) return NULL;
+
+    nv = (N_Vector) mem;
+    nv->ops     = (N_Vector_Ops) (mem + sizeof(*nv));
+    nv->content = (ml_nvec_content) (mem + sizeof(*nv) + sizeof(*nv->ops));
+
+    return nv;
 }
 
 CAMLprim value ml_nvec_new(value mlops, value data)
 {
     CAMLparam2(mlops, data);
     CAMLlocal1(rv);
-
-    N_Vector nv = NULL;
-    N_Vector_Ops ops = NULL;
     ml_nvec_content content = NULL;
 
-    /* Create vector */
-    size_t custom_len;		/* number of words, not bytes */
-    custom_len = (sizeof (*nv) + sizeof (value) - 1) / sizeof (value);
-    rv = caml_alloc_final(custom_len, finalize_nvec,
+    N_Vector nv = malloc_nvec();
+    if (nv == NULL) caml_raise_out_of_memory();
+    content = NVEC_CONTENT(nv);
+
+    rv = caml_alloc_final(2, finalize_nvec,
 			  nvec_rough_size, nvec_rough_size * 50);
-    nv = NVEC_VAL(rv);
+    Store_field(rv, 1, (value)nv);
 
     /* Create vector operation structure */
-    ops = (N_Vector_Ops) malloc(sizeof(*ops));
-    if (ops == NULL)
-	caml_failwith("ml_nvec_new: malloc failed for N_Vector_Ops");
+    nv->ops->nvclone           = callml_vclone;
+    nv->ops->nvcloneempty      = callml_vcloneempty;
+    nv->ops->nvdestroy         = callml_vdestroy;
 
-    ops->nvclone           = callml_vclone;
-    ops->nvcloneempty      = callml_vcloneempty;
-    ops->nvdestroy         = callml_vdestroy;
-
-    ops->nvspace = NULL;
+    nv->ops->nvspace = NULL;
     if (HAS_OP(mlops, NVECTOR_OPS_NVSPACE))
-	ops->nvspace = callml_vspace;
+	nv->ops->nvspace = callml_vspace;
 
-    ops->nvlinearsum       = callml_vlinearsum;
-    ops->nvconst           = callml_vconst;
-    ops->nvprod            = callml_vprod;
-    ops->nvdiv             = callml_vdiv;
-    ops->nvscale           = callml_vscale;
-    ops->nvabs             = callml_vabs;
-    ops->nvinv             = callml_vinv;
-    ops->nvaddconst        = callml_vaddconst;
-    ops->nvmaxnorm         = callml_vmaxnorm;
-    ops->nvwrmsnorm        = callml_vwrmsnorm;
-    ops->nvmin             = callml_vmin;
+    nv->ops->nvlinearsum       = callml_vlinearsum;
+    nv->ops->nvconst           = callml_vconst;
+    nv->ops->nvprod            = callml_vprod;
+    nv->ops->nvdiv             = callml_vdiv;
+    nv->ops->nvscale           = callml_vscale;
+    nv->ops->nvabs             = callml_vabs;
+    nv->ops->nvinv             = callml_vinv;
+    nv->ops->nvaddconst        = callml_vaddconst;
+    nv->ops->nvmaxnorm         = callml_vmaxnorm;
+    nv->ops->nvwrmsnorm        = callml_vwrmsnorm;
+    nv->ops->nvmin             = callml_vmin;
 
-    ops->nvgetarraypointer = NULL;
-    ops->nvsetarraypointer = NULL;
+    nv->ops->nvgetarraypointer = NULL;
+    nv->ops->nvsetarraypointer = NULL;
 
-    ops->nvdotprod = NULL;
+    nv->ops->nvdotprod = NULL;
     if (HAS_OP(mlops, NVECTOR_OPS_NVDOTPROD))
-	ops->nvdotprod = callml_vdotprod;
+	nv->ops->nvdotprod = callml_vdotprod;
 
-    ops->nvcompare = NULL;
+    nv->ops->nvcompare = NULL;
     if (HAS_OP(mlops, NVECTOR_OPS_NVCOMPARE))
-	ops->nvcompare = callml_vcompare;
+	nv->ops->nvcompare = callml_vcompare;
 
-    ops->nvinvtest = NULL;
+    nv->ops->nvinvtest = NULL;
     if (HAS_OP(mlops, NVECTOR_OPS_NVINVTEST))
-	ops->nvinvtest = callml_vinvtest;
+	nv->ops->nvinvtest = callml_vinvtest;
 
-    ops->nvwl2norm = NULL;
+    nv->ops->nvwl2norm = NULL;
     if (HAS_OP(mlops, NVECTOR_OPS_NVWL2NORM))
-	ops->nvwl2norm = callml_vwl2norm;
+	nv->ops->nvwl2norm = callml_vwl2norm;
 
-    ops->nvl1norm = NULL;
+    nv->ops->nvl1norm = NULL;
     if (HAS_OP(mlops, NVECTOR_OPS_NVL1NORM))
-	ops->nvl1norm = callml_vl1norm;
+	nv->ops->nvl1norm = callml_vl1norm;
 
-    ops->nvwrmsnormmask = NULL;
+    nv->ops->nvwrmsnormmask = NULL;
     if (HAS_OP(mlops, NVECTOR_OPS_NVWRMSNORMMASK))
-	ops->nvwrmsnormmask = callml_vwrmsnormmask;
+	nv->ops->nvwrmsnormmask = callml_vwrmsnormmask;
 
-    ops->nvconstrmask = NULL;
+    nv->ops->nvconstrmask = NULL;
     if (HAS_OP(mlops, NVECTOR_OPS_NVCONSTRMASK))
-	ops->nvconstrmask = callml_vconstrmask;
+	nv->ops->nvconstrmask = callml_vconstrmask;
 
-    ops->nvminquotient = NULL;
+    nv->ops->nvminquotient = NULL;
     if (HAS_OP(mlops, NVECTOR_OPS_NVMINQUOTIENT))
-	ops->nvminquotient = callml_vminquotient;
+	nv->ops->nvminquotient = callml_vminquotient;
 
     /* Create content */
-    content = (ml_nvec_content) malloc(sizeof(*content));
-    if (content == NULL) {
-	free(ops);
-	caml_failwith("ml_nvec_new: malloc failed for ml_vec_content");
-    }
-
     content->callbacks = mlops;
     content->data      = data;
     caml_register_generational_global_root(&content->callbacks);
     caml_register_global_root(&content->data);
-
-    nv->content = content;
-    nv->ops     = ops;
 
     CAMLreturn(rv);
 }
@@ -187,58 +219,44 @@ CAMLprim value ml_nvec_data(N_Vector v)
 
 CAMLprim N_Vector callml_vcloneempty(N_Vector w)
 {
-    N_Vector v = NULL;
-    N_Vector_Ops ops = NULL;
-    ml_nvec_content content = NULL;
-
-    if (w == NULL) return NULL;
-
     /* Create vector */
-    v = (N_Vector) malloc(sizeof *v);
-    if (v == NULL) return(NULL);
+    N_Vector v = malloc_nvec();
+    if (v == NULL) return NULL;
+
+    ml_nvec_content content = NVEC_CONTENT(v);
 
     /* Create vector operation structure */
-    ops = (N_Vector_Ops) malloc(sizeof (*ops));
-    if (ops == NULL) { free(v); return(NULL); }
-
-    ops->nvclone           = w->ops->nvclone;
-    ops->nvcloneempty      = w->ops->nvcloneempty;
-    ops->nvdestroy         = w->ops->nvdestroy;
-    ops->nvspace           = w->ops->nvspace;
-    ops->nvgetarraypointer = w->ops->nvgetarraypointer;
-    ops->nvsetarraypointer = w->ops->nvsetarraypointer;
-    ops->nvlinearsum       = w->ops->nvlinearsum;
-    ops->nvconst           = w->ops->nvconst;  
-    ops->nvprod            = w->ops->nvprod;   
-    ops->nvdiv             = w->ops->nvdiv;
-    ops->nvscale           = w->ops->nvscale; 
-    ops->nvabs             = w->ops->nvabs;
-    ops->nvinv             = w->ops->nvinv;
-    ops->nvaddconst        = w->ops->nvaddconst;
-    ops->nvdotprod         = w->ops->nvdotprod;
-    ops->nvmaxnorm         = w->ops->nvmaxnorm;
-    ops->nvwrmsnormmask    = w->ops->nvwrmsnormmask;
-    ops->nvwrmsnorm        = w->ops->nvwrmsnorm;
-    ops->nvmin             = w->ops->nvmin;
-    ops->nvwl2norm         = w->ops->nvwl2norm;
-    ops->nvl1norm          = w->ops->nvl1norm;
-    ops->nvcompare         = w->ops->nvcompare;    
-    ops->nvinvtest         = w->ops->nvinvtest;
-    ops->nvconstrmask      = w->ops->nvconstrmask;
-    ops->nvminquotient     = w->ops->nvminquotient;
+    v->ops->nvclone           = w->ops->nvclone;
+    v->ops->nvcloneempty      = w->ops->nvcloneempty;
+    v->ops->nvdestroy         = w->ops->nvdestroy;
+    v->ops->nvspace           = w->ops->nvspace;
+    v->ops->nvgetarraypointer = w->ops->nvgetarraypointer;
+    v->ops->nvsetarraypointer = w->ops->nvsetarraypointer;
+    v->ops->nvlinearsum       = w->ops->nvlinearsum;
+    v->ops->nvconst           = w->ops->nvconst;  
+    v->ops->nvprod            = w->ops->nvprod;   
+    v->ops->nvdiv             = w->ops->nvdiv;
+    v->ops->nvscale           = w->ops->nvscale; 
+    v->ops->nvabs             = w->ops->nvabs;
+    v->ops->nvinv             = w->ops->nvinv;
+    v->ops->nvaddconst        = w->ops->nvaddconst;
+    v->ops->nvdotprod         = w->ops->nvdotprod;
+    v->ops->nvmaxnorm         = w->ops->nvmaxnorm;
+    v->ops->nvwrmsnormmask    = w->ops->nvwrmsnormmask;
+    v->ops->nvwrmsnorm        = w->ops->nvwrmsnorm;
+    v->ops->nvmin             = w->ops->nvmin;
+    v->ops->nvwl2norm         = w->ops->nvwl2norm;
+    v->ops->nvl1norm          = w->ops->nvl1norm;
+    v->ops->nvcompare         = w->ops->nvcompare;    
+    v->ops->nvinvtest         = w->ops->nvinvtest;
+    v->ops->nvconstrmask      = w->ops->nvconstrmask;
+    v->ops->nvminquotient     = w->ops->nvminquotient;
 
     /* Create content */
-    content = (ml_nvec_content) malloc(sizeof(struct _ml_nvec_content));
-    if (content == NULL) { free(ops); free(v); return(NULL); }
-
     content->callbacks = NVEC_CONTENT(w)->callbacks;
     content->data = EMPTY_DATA;
     caml_register_generational_global_root(&content->callbacks);
     caml_register_global_root(&content->data);
-
-    /* Attach content and ops */
-    v->content = content;
-    v->ops     = ops;
 
     return v;
 }
@@ -259,12 +277,6 @@ CAMLprim N_Vector callml_vclone(N_Vector w)
     }
 
     CAMLreturnT(N_Vector, v);
-}
-
-CAMLprim void callml_vdestroy(N_Vector v)
-{
-    nvec_destroy_contents(v);
-    free(v);
 }
 
 CAMLprim void callml_vspace(N_Vector v, long int *lrw, long int *liw)

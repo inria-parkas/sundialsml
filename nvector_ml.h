@@ -49,10 +49,10 @@ booleantype callml_vinvtest(N_Vector x, N_Vector z);
 booleantype callml_vconstrmask(N_Vector c, N_Vector x, N_Vector m);
 realtype callml_vminquotient(N_Vector num, N_Vector denom);
 
-#define NVEC_CONTENT(nvec) ((ml_nvec_content)nvec->content)
+#define NVEC_CONTENT(nvec) ((ml_nvec_content)((nvec)->content))
 
 #define NVEC_DATA(nvec) (NVEC_CONTENT(nvec)->data)
-#define NVEC_VAL(v) ((N_Vector)Data_custom_val(v))
+#define NVEC_VAL(v) (*(N_Vector *)Data_custom_val(v))
 
 #endif
 
