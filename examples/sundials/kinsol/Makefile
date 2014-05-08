@@ -6,14 +6,14 @@ EXAMPLES = kinFerTron_dns.ml   \
 	   kinLaplace_bnd.ml   \
 	   kinRoboKin_dns.ml
 
-ALL_EXAMPLES = $(EXAMPLES)
+ALL_EXAMPLES = $(EXAMPLES) kinFoodWeb_kry_serial.ml
 
 DIVIDER = "----------------------------------------------------------------------"
 
 ##
 
-all: $(EXAMPLES:.ml=.byte)
-opt: $(EXAMPLES:.ml=.opt)
+all: $(ALL_EXAMPLES:.ml=.byte)
+opt: $(ALL_EXAMPLES:.ml=.opt)
 
 lapack: $(LAPACK_EXAMPLES:.ml=.byte)
 lapack.opt: $(LAPACK_EXAMPLES:.ml=.opt)
@@ -77,6 +77,9 @@ kinFerTron_dns.opt:  kinFerTron_dns.ml
 
 kinFoodWeb_kry.byte: kinFoodWeb_kry.ml
 kinFoodWeb_kry.opt:  kinFoodWeb_kry.ml
+
+kinFoodWeb_kry_serial.byte: kinFoodWeb_kry_serial.ml
+kinFoodWeb_kry_serial.opt:  kinFoodWeb_kry_serial.ml
 
 kinKrylovDemo_ls.byte: kinKrylovDemo_ls.ml
 kinKrylovDemo_ls.opt:  kinKrylovDemo_ls.ml
