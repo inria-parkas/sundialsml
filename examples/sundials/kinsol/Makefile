@@ -12,7 +12,9 @@ DIVIDER = "---------------------------------------------------------------------
 
 ##
 
-all: $(ALL_EXAMPLES:.ml=.byte)
+all: byte opt
+
+byte: $(ALL_EXAMPLES:.ml=.byte)
 opt: $(ALL_EXAMPLES:.ml=.opt)
 
 lapack: $(LAPACK_EXAMPLES:.ml=.byte)
