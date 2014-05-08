@@ -76,6 +76,16 @@ While direct interfaces to these operations are not provided, there are
 equivalent implementations written in OCaml for arrays of floats
 ({! Nvector_array}) and bigarrays ({! Nvector_array.Bigarray}) of floats.
 
+Each of the solvers provides two interfaces: one using abstract nvectors and
+another specialized for serial nvectors.
+Serial nvectors have three advantages over abstract nvectors:
++ {e efficiency}, since the low-level vector operations are implemented
+directly in C (rather than as C stubs around OCaml callbacks) and memory
+management is simpler, and,
++ {e support} for all linear solvers, since some linear solvers do not
+support abstract nvectors,
++ {e convenience}, since the interface is simpler and more direct.
+
 {2:cvode CVODE}
 
 CVODE solves ODE initial value problems using a variable-step solver with
@@ -85,14 +95,10 @@ functions related to parallel nvectors and custom linear solvers.
 
 Two interfaces are provided, one for serial nvectors ({!Cvode_serial}) and
 one for abstract nvectors ({!Cvode_nvector}).
-They are identical except for the type signatures, and one or two small
+They are mostly identical except for the type signatures, one or two small
 changes required to accomodate the polymorphic argument of the abstract
-nvector type.
-Serial nvectors have two advantages over abstract nvectors:
-+ {e efficiency}, since the low-level vector operations are implemented
-directly in C (rather than as C stubs around OCaml callbacks), and,
-+ {e convenience}, since the interface is simpler and more direct.
-
+nvector type, and the fact that some linear solvers only support serial
+nvectors.
 Both interfaces directly include the {!Cvode} module, which contains nvector
 independent types and values, which in turn includes the {!Sundials} module.
 This flattening of the module structure intends to simplify working with the
@@ -125,14 +131,10 @@ functions related to parallel nvectors and custom linear solvers.
 
 Two interfaces are provided, one for serial nvectors ({!Ida_serial}) and
 one for abstract nvectors ({!Ida_nvector}).
-They are identical except for the type signatures, and one or two small
+They are mostly identical except for the type signatures, one or two small
 changes required to accomodate the polymorphic argument of the abstract
-nvector type.
-Serial nvectors have two advantages over abstract nvectors:
-+ {e efficiency}, since the low-level vector operations are implemented
-directly in C (rather than as C stubs around OCaml callbacks), and,
-+ {e convenience}, since the interface is simpler and more direct.
-
+nvector type, and the fact that some linear solvers only support serial
+nvectors.
 Both interfaces directly include the {!Ida} module, which contains nvector
 independent types and values, which in turn includes the {!Sundials} module.
 This flattening of the module structure intends to simplify working with the
@@ -157,7 +159,27 @@ or:
 
 {2:kinsol KINSOL}
 
-TODO: add docs
+KINSOL solves nonlinear systems using Newton-Krylov techniques.
+This library provides an interface to the entire KINSOL library except for
+functions related to parallel nvectors and custom linear solvers.
+
+Two interfaces are provided, one for serial nvectors ({!Kinsol_serial}) and
+one for abstract nvectors ({!Kinsol_nvector}).
+They are mostly identical except for the type signatures, one or two small
+changes required to accomodate the polymorphic argument of the abstract
+nvector type, and the fact that some linear solvers only support serial
+nvectors.
+Both interfaces directly include the {!Kinsol} module, which contains nvector
+independent types and values, which in turn includes the {!Sundials} module.
+This flattening of the module structure intends to simplify working with the
+library.
+Each program need then only begin with a single aliasing definition, either:
+
+[module Kinsol = Kinsol_serial]
+
+or:
+
+[module Kinsol = Kinsol_nvector]
 
 {3:usingkinsol Using KINSOL}
 
