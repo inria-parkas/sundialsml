@@ -53,6 +53,14 @@ MINOR PATCHES
 4. Revisit the structure of modules (for instance, should we include
    Sundials everywhere?)
 
+5. Rather than ss_tolerances and sv_tolerances, provide a set_tolerances
+   function that takes an argument of SSTolerance, SVTolerance, etc.
+   Such an argument should be provided to the init function (i.e., an
+   arbitrary default should not be taken inside the library!)
+
+6. Tidy up the documentation; in particular, add @raise tags for functions
+   that raise exceptions (like get_dky... )
+
 TO DISCUSS
 ----------
 
