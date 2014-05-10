@@ -61,6 +61,8 @@ MINOR PATCHES
 6. Tidy up the documentation; in particular, add @raise tags for functions
    that raise exceptions (like get_dky... )
 
+7. All call-back functions to be typed/documented as per CVODES.
+
 TO DISCUSS
 ----------
 
