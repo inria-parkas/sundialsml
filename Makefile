@@ -155,11 +155,12 @@ cleandoc:
 	-@$(RM) -f doc/html/*.html doc/html/style.css
 
 realclean: cleanall
-cleanall: clean
+cleanall: clean cleandoc
 	-@(cd examples; make -f Makefile cleanall)
 	-@$(RM) -f $(MLOBJ:.cmo=.cmi)
 	-@$(RM) -f sundials.cma sundials.cmxa
 	-@$(RM) -f libmlsundials$(XA) dllmlsundials$(XS)
 	-@$(RM) -f META
+	-@$(RM) -f config config.h
 
 -include .depend
