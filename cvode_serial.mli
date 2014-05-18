@@ -51,7 +51,7 @@ include module type of Cvode
     {[let y = Cvode.Carray.of_array [| 0.0; 0.0; 0.0 |] ]}
     The length of this vector determines the problem size.    
     + {b Create and initialize a solver session}
-    {[let s = Cvode.init Cvode.Adams Cvode.Functional f ~roots:(2, g) y]}
+    {[let s = Cvode.init Cvode.Adams Cvode.Functional tols f ~roots:(2, g) y]}
     This will initialize a specific linear solver and the root-finding
     mechanism, if necessary.
     + {b Specify integration tolerances (optional)}, e.g.

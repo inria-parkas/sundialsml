@@ -51,7 +51,7 @@ include module type of Ida
     {[let y = Nvector_array.wrap [| 0.0; 0.0; 0.0 |] ]}
     The length of this vector determines the problem size.
     + {b Create and initialize a solver session}
-    {[let s = Ida.init (Ida.Spgmr spils_no_precond) f ~roots:(2, g) (3, y)]}
+    {[let s = Ida.init (Ida.Spgmr spils_no_precond) tols f ~roots:(2, g) (3, y)]}
     This will initialize a specific linear solver and the root-finding
     mechanism, if necessary.
     + {b Specify integration tolerances (optional)}, e.g.
