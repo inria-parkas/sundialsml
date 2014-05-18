@@ -144,14 +144,11 @@ let main () =
   (* Call CVDense to specify the CVDENSE dense linear solver *)
   (* Set the Jacobian routine to Jac (user-supplied) *)
   let cvode_mem =
-    Cvode.init Cvode.BDF (Cvode.Newton (Cvode.Dense (Some jac))) f
+    Cvode.init Cvode.BDF (Cvode.Newton (Cvode.Dense (Some jac)))
+               (Cvode.SVTolerances (rtol, abstol)) f
       ~roots:(nroots, g) ~t0:t0 y
   in
   Gc.compact ();
-
-  (* Call CVodeSVtolerances to specify the scalar relative tolerance
-   * and vector absolute tolerances *)
-  Cvode.sv_tolerances cvode_mem rtol abstol;
 
   (* In loop, call CVode, print results, and test for error.
   Break out of loop when NOUT preset output times have been reached.  *)

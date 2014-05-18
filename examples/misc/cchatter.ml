@@ -6,7 +6,8 @@ let f t y yd =
 
 let y = Cvode.Carray.of_array [| 1.0 |]
 
-let s = Cvode.init Cvode.Adams Cvode.Functional f y
+let s = Cvode.init Cvode.Adams Cvode.Functional
+                   Cvode.default_tolerances f y
 
 (* let _ = Cvode.set_stop_time s 10.0 *)
 

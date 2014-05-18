@@ -861,11 +861,11 @@ let main () =
                 { Cvode.prec_setup_fn = Some (precond wdata);
                   Cvode.prec_solve_fn = Some (psolve wdata);
                   Cvode.jac_times_vec_fn = None })))
+        (Cvode.SSTolerances (reltol, abstol))
         (f wdata) ~t0:t0 c
   in
   Gc.compact ();
   wdata.cvode_mem <- Some cvode_mem;
-  Cvode.ss_tolerances cvode_mem reltol abstol;
   Cvode.Spils.set_gs_type cvode_mem Spils.ModifiedGS;
   Cvode.Spils.set_eps_lin cvode_mem delt;
 

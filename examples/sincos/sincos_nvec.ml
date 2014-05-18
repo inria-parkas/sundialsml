@@ -13,7 +13,8 @@ let g t y gout =
 let y = [| 0.0; 0.0; 0.0 |]
 let y_nv = Nvector_array.wrap y
 
-let s = Cvode.init Cvode.Adams Cvode.Functional f ~roots:(2, g) (2, y_nv)
+let s = Cvode.init Cvode.Adams Cvode.Functional Cvode.default_tolerances
+                   f ~roots:(2, g) (2, y_nv)
 let rootdata = Cvode.Roots.create 2
 
 (* let _ = Cvode.set_stop_time s 10.0 *)

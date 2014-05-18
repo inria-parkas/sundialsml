@@ -12,7 +12,7 @@ OCAMLOPTFLAGS =
 CC = gcc
 CFLAGS += @cflags@ # -DRESTRICT_INTERNAL_PRECISION"
 LDFLAGS += @ldflags@
-CPPFLAGS ?= -P -x c
+CPPFLAGS ?= -P -x c -traditional-cpp
 
 CVODE_LDFLAGS = @cvode_ldflags@ $(LDFLAGS)
 CVODE_CFLAGS = @cvode_cppflags@ $(CFLAGS)

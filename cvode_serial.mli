@@ -125,6 +125,7 @@ type 't jacobian_arg =
 type iter =
   | Newton of linear_solver (** Newton iteration with a given linear solver *)
   | Functional              (** Functional iteration (non-stiff systems only) *)
+
 (**
    Specify a linear solver.
 
@@ -234,7 +235,7 @@ and linear_solver =
       implementation using a banded matrix of difference quotients.  The
       arguments are the same as [BandedSpgmr].
 
-      @cvode <node5#sss:lin_solve_init> CVSpbcg
+      @cvode <node5#sss:lin_solve_init> CVSptfqmr
       @cvode <node5#sss:cvbandpre> CVBandPrecInit
     *)
 
@@ -498,19 +499,9 @@ module Diag :
   sig
     (** {4 Optional input functions} *)
 
-    (**
-      Returns the sizes of the real and integer workspaces used by the Diagonal
-      linear solver.
-
-      @cvode <node5#sss:optout_diag> CVDiagGetWorkSpace
-      @return ([real_size], [integer_size])
-     *)
-    val get_work_space : session -> int * int
-
-    (**
-      Returns the number of calls made to the user-supplied right-hand side
-      function due to finite difference Jacobian approximation in the Diagonal
-      linear solver.
+    (** Returns the number of calls made to the user-supplied right-hand side
+        function due to finite difference Jacobian approximation in the Diagonal
+        linear solver.
 
       @cvode <node5#sss:optout_diag> CVDiagGetWorkSpace
       @return ([real_size], [integer_size])
@@ -539,6 +530,7 @@ module Spils :
   sig
     (** {4 Low-level solver manipulation} *)
 
+    (* TODO: why does this exist? *)
     (** Alias for {!prec_solve_arg}.  *)
     type solve_arg = prec_solve_arg =
       {
@@ -548,6 +540,9 @@ module Spils :
         left  : bool;
       }
 
+    (* TODO: do we really need this function? In any case, use
+       spils_callbacks... *)
+    (* TODO: maybe get rid of it here and everywhere else. *)
     (**
       Set preconditioning functions (see {!spils_callbacks}).  It may be unsafe
       to use this function without a {!reinit}.  Users are encouraged to use
@@ -593,7 +588,7 @@ module Spils :
     *)
     val clear_jac_times_vec_fn : session -> unit
 
-    (** {4 Optional output functions} *)
+    (** {4 Optional input functions} *)
 
     (**
       This function resets the type of preconditioning to be used using a value
@@ -630,7 +625,7 @@ module Spils :
     *)
     val set_maxl : session -> int -> unit
 
-    (** {4 Optional input functions} *)
+    (** {4 Optional output functions} *)
 
     (**
       Returns the sizes of the real and integer workspaces used by the SPGMR
@@ -719,18 +714,33 @@ module BandPrec :
     val get_num_rhs_evals : session -> int
   end
 
+type tolerance =
+  | SSTolerances of float * float
+    (** [(rel, abs)] : scalar relative and absolute tolerances. *)
+  | SVTolerances of float * nvec
+    (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
+  | WFTolerances of (val_array -> val_array -> unit)
+    (** Specifies a function [efun y ewt] that sets the multiplicative
+        error weights Wi for use in the weighted RMS norm. The function is
+        passed the dependent variable vector [y] and is expected to set the
+        values inside the error-weight vector [ewt]. *)
+
+(** A default relative tolerance of 1.0e-4 and absolute tolerance of 1.0e-8. *)
+val default_tolerances : tolerance
+
 (** {2 Initialization} *)
 
 (**
-    [init lmm iter f ~roots:(nroots, g) ~t0:t0 y0] initializes the CVODE solver
-    and returns a {!session}.
-    - [lmm]     specifies the linear multistep method, see {!Cvode.lmm}.
+    [init lmm iter tol f ~roots:(nroots, g) ~t0:t0 y0] initializes the CVODE
+    solver and returns a {!session}.
+    - [lmm]     specifies the linear multistep method, see {!Cvode.lmm},
     - [iter]    specifies either functional iteration or Newton iteration
-                with a specific linear solver, see {!iter}.
-    - [f]       is the ODE right-hand side function.
-    - [nroots]  specifies the number of root functions (zero-crossings).
-    - [g]       calculates the values of the root functions.
-    - [t0]      is the initial value of the independent variable.
+                with a specific linear solver, see {!iter},
+    - [tol]     specifies the integration tolerances,
+    - [f]       is the ODE right-hand side function,
+    - [nroots]  specifies the number of root functions (zero-crossings),
+    - [g]       calculates the values of the root functions,
+    - [t0]      is the initial value of the independent variable, and,
     - [y0]      is a vector of initial values, the size of this vector
                 determines the number of equations in the session, see
                 {!Sundials.Carray.t}.
@@ -739,12 +749,10 @@ module BandPrec :
     {!Cvode.no_roots} (i.e. no root finding is done) and [0.0], respectively.
 
     This function calls CVodeCreate, CVodeInit, CVodeRootInit, an appropriate
-    linear solver function, and CVodeSStolerances (with default values for
-    relative tolerance of 1.0e-4 and absolute tolerance as 1.0e-8; these can be
-    changed with {!ss_tolerances}, {!sv_tolerances}, or {!wf_tolerances}).
-    It does everything necessary to initialize a CVODE session; the
-    {!solve_normal} or {!solve_one_step} functions can be called directly
-    afterward.
+    linear solver function, and one of CVodeSStolerances, CVodeSVtolerances, or
+    CVodeWFtolerances. It does everything necessary to initialize a CVODE
+    session; the {!solve_normal} or {!solve_one_step} functions can be called
+    directly afterward.
 
     The right-hand side function [f] is called by the solver to calculate the
     instantaneous derivative values, and is passed three arguments: [t], [y],
@@ -778,11 +786,15 @@ module BandPrec :
     @cvode <node5#ss:cvrootinit>     CVodeRootInit
     @cvode <node5#ss:rootFn>         Rootfinding function
     @cvode <node5#sss:lin_solv_init> Linear solvers
-    @cvode <node5#sss:cvtolerances> CVodeSStolerances
+    @cvode <node5#sss:cvtolerances>  CVodeSStolerances
+    @cvode <node5#sss:cvtolerances>  CVodeSVtolerances
+    @cvode <node5#sss:cvtolerances>  CVodeWFtolerances
+    @cvode <node5#ss:ewtsetFn> Error weight function
  *)
 val init :
     lmm
     -> iter
+    -> tolerance
     -> (float -> val_array -> der_array -> unit)
     -> ?roots:(int * (float -> val_array -> root_val_array -> unit))
     -> ?t0:float
@@ -794,36 +806,6 @@ val nroots : session -> int
 
 (** Return the number of equations. *)
 val neqs : session -> int
-
-(** {2 Tolerance specification} *)
-
-(**
-    [ss_tolerances s reltol abstol] sets the relative and absolute
-    tolerances using scalar values.
-
-    @cvode <node5#sss:cvtolerances> CVodeSStolerances
- *)
-val ss_tolerances : session -> float -> float -> unit
-
-(**
-    [sv_tolerances s reltol abstol] sets the relative tolerance using a scalar
-    value, and the absolute tolerance as a vector.
-
-    @cvode <node5#sss:cvtolerances> CVodeSVtolerances
- *)
-val sv_tolerances : session -> float -> nvec -> unit
-
-(**
-    [wf_tolerances s efun] specifies a function [efun] that sets the multiplicative
-    error weights Wi for use in the weighted RMS norm.
-
-    [efun y ewt] is passed the dependent variable vector [y] and is expected to
-    set the values inside the error-weight vector [ewt].
-
-    @cvode <node5#sss:cvtolerances> CVodeWFtolerances
-    @cvode <node5#ss:ewtsetFn> Error weight function
- *)
-val wf_tolerances : session -> (val_array -> val_array -> unit) -> unit
 
 (** {2 Solver functions } *)
 
@@ -861,6 +843,15 @@ val solve_one_step : session -> float -> nvec -> float * solver_result
 (** {2 Main optional functions} *)
 
 (** {3 Input} *)
+
+(** Set the integration tolerances.
+
+    @cvode <node5#sss:cvtolerances> CVodeSStolerances
+    @cvode <node5#sss:cvtolerances> CVodeSVtolerances
+    @cvode <node5#sss:cvtolerances> CVodeWFtolerances
+    @cvode <node5#ss:ewtsetFn> Error weight function
+ *)
+val set_tolerances : session -> tolerance -> unit
 
 (**
   [set_error_file s fname trunc] opens the file named [fname] and to which all

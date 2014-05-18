@@ -643,31 +643,44 @@ module Spils :
     val get_num_res_evals    : session -> int
   end
 
+type tolerance =
+  | SSTolerances of float * float
+    (** [(rel, abs)] : scalar relative and absolute tolerances. *)
+  | SVTolerances of float * nvec
+    (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
+  | WFTolerances of (val_array -> val_array -> unit)
+    (** Specifies a function [efun y ewt] that sets the multiplicative
+        error weights Wi for use in the weighted RMS norm. The function is
+        passed the dependent variable vector [y] and is expected to set the
+        values inside the error-weight vector [ewt]. *)
+
+(** A default relative tolerance of 1.0e-4 and absolute tolerance of 1.0e-8. *)
+val default_tolerances : tolerance
+
 (** {2 Initialization} *)
 
 (**
-    [init linsolv f ~roots:(nroots, g) ~t0:t0 y0 y'0] initializes the IDA
+    [init linsolv tol f ~roots:(nroots, g) ~t0:t0 y0 y'0] initializes the IDA
     solver to solve the DAE f t y y' = 0 and returns a {!session}.
 
-    - [linsolv] is the linear solver to attach to this solver.
-    - [f]       is the residual function (see below).
-    - [nroots]  specifies the number of root functions (zero-crossings).
-    - [g]       calculates the values of the root functions.
+    - [linsolv] is the linear solver to attach to this solver,
+    - [tol]     specifies the integration tolerances,
+    - [f]       is the residual function (see below),
+    - [nroots]  specifies the number of root functions (zero-crossings),
+    - [g]       calculates the values of the root functions,
     - [t0]      is the initial value of the independent variable t, which
-                defaults to 0.
+                defaults to 0,
     - [y0]      is a vector of initial values for the dependent-variable vector
                 [y].  This vector's size determines the number of equations
-                in the session, see {!Sundials.Carray.t}.
+                in the session, see {!Sundials.Carray.t}, and,
     - [y'0]     is a vector of initial values for [y'], i.e. the derivative
                 of [y] with respect to t.  This vector's size must match the
                 size of [y0].
 
-    This function calls IDACreate, IDAInit, IDARootInit, an appropriate
-    linear solver function, and IDASStolerances (with default values for
-    relative tolerance of 1.0e-4 and absolute tolerance as 1.0e-8; these can be
-    changed with {!ss_tolerances}, {!sv_tolerances}, or {!wf_tolerances}).
-    It does everything necessary to initialize an IDA session; the
-    {!solve_normal} or {!solve_one_step} functions can be called directly
+    This function calls IDACreate, IDAInit, IDARootInit, an appropriate linear
+    solver function, and one of IDASStolerances, IDASVtolerances, or
+    IDAWFtolerances. It does everything necessary to initialize an IDA session;
+    the {!solve_normal} or {!solve_one_step} functions can be called directly
     afterward.
 
     The residual function [f] is called by the solver like [f t y y' r] to
@@ -713,6 +726,7 @@ module Spils :
  *)
 val init :
     linear_solver
+    -> tolerance
     -> (float -> val_array -> der_array -> val_array -> unit)
     -> ?roots:(int *
                (float -> val_array -> der_array -> root_val_array -> unit))
@@ -726,36 +740,6 @@ val nroots : session -> int
 
 (** Return the number of equations. *)
 val neqs : session -> int
-
-(** {2 Tolerance specification} *)
-
-(**
-    [ss_tolerances s reltol abstol] sets the relative and absolute
-    tolerances using scalar values.
-
-    @ida <node5#sss:idatolerances> IDASStolerances
- *)
-val ss_tolerances : session -> float -> float -> unit
-
-(**
-    [sv_tolerances s reltol abstol] sets the relative tolerance using a scalar
-    value, and the absolute tolerance as a vector.
-
-    @ida <node5#sss:idatolerances> IDASVtolerances
- *)
-val sv_tolerances : session -> float -> nvec -> unit
-
-(**
-    [wf_tolerances s efun] specifies a function [efun] that sets the multiplicative
-    error weights Wi for use in the weighted RMS norm.
-
-    [efun y ewt] is passed the dependent variable vector [y] and is expected to
-    set the values inside the error-weight vector [ewt].
-
-    @ida <node5#sss:idatolerances> IDAWFtolerances
-    @ida <node5#ss:ewtsetFn> Error weight function
- *)
-val wf_tolerances : session -> (val_array -> val_array -> unit) -> unit
 
 (** {2 Solver functions } *)
 
@@ -797,6 +781,15 @@ val solve_one_step :
 (** {2 Main optional functions} *)
 
 (** {3 Input} *)
+
+(** Set the integration tolerances.
+
+    @ida <node5#sss:idatolerances> IDASStolerances
+    @ida <node5#sss:idatolerances> IDASVtolerances
+    @ida <node5#sss:idatolerances> IDAWFtolerances
+    @ida <node5#ss:ewtsetFn> Error weight function
+ *)
+val set_tolerances : session -> tolerance -> unit
 
 (**
   [set_error_file s fname trunc] opens the file named [fname] and to which all

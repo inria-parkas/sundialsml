@@ -148,13 +148,10 @@ let main () =
   (* Call CVDense to specify the CVDENSE dense linear solver *)
   (* Set the Jacobian routine to Jac (user-supplied) *)
   let cvode_mem =
-    Cvode.init Cvode.BDF (Cvode.Newton (Cvode.Dense (Some jac))) f
-      ~roots:(nroots, g) ~t0:t0 y
+    Cvode.init Cvode.BDF (Cvode.Newton (Cvode.Dense (Some jac)))
+      (Cvode.WFTolerances ewt) f ~roots:(nroots, g) ~t0:t0 y
   in
   Gc.compact ();
-
-  (* Use private function to compute error weights *)
-  Cvode.wf_tolerances cvode_mem ewt;
 
   (* In loop, call CVode, print results, and test for error.
   Break out of loop when NOUT preset output times have been reached.  *)

@@ -245,9 +245,9 @@ let main() =
 
   (* Call IDACreate with dummy linear solver *)
 
-  let mem = Ida.init (Ida.Dense None) (res_heat data) ~t0:t0 u u' in
+  let mem = Ida.init (Ida.Dense None) (Ida.SSTolerances (rtol, atol))
+                     (res_heat data) ~t0:t0 u u' in
   Ida.set_constraints mem constraints;
-  Ida.ss_tolerances mem rtol atol;
 
   (* START: Loop through SPGMR, SPBCG and SPTFQMR linear solver modules *)
   let solvers = [|USE_SPGMR; USE_SPBCG; USE_SPTFQMR|] in

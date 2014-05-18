@@ -253,7 +253,20 @@ external ss_tolerances  : 'a session -> float -> float -> unit
 external wf_tolerances  : 'a session -> unit
     = "c_nvec_cvode_wf_tolerances"
 
-let init lmm iter f ?(roots=no_roots) ?(t0=0.) (neqs, y0) =
+type 'a tolerance =
+  | SSTolerances of float * float
+  | SVTolerances of float * 'a nvector
+  | WFTolerances of ('a -> 'a -> unit)
+
+let default_tolerances = SSTolerances (1.0e-4, 1.0e-8)
+
+let set_tolerances s tol =
+  match tol with
+  | SSTolerances (rel, abs) -> ss_tolerances s rel abs
+  | SVTolerances (rel, abs) -> sv_tolerances s rel abs
+  | WFTolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
+
+let init lmm iter tol f ?(roots=no_roots) ?(t0=0.) (neqs, y0) =
   let (nroots, roots) = roots in
   let weakref = Weak.create 1 in
   let cvode_mem, backref, err_file = c_init weakref lmm iter y0 t0 in
@@ -283,7 +296,7 @@ let init lmm iter f ?(roots=no_roots) ?(t0=0.) (neqs, y0) =
   if nroots > 0 then
     c_root_init session nroots;
   set_iter_type session iter;
-  ss_tolerances session 1.0e-4 1.0e-8;
+  set_tolerances session tol;
   session
 
 let nroots { nroots } = nroots
@@ -300,10 +313,6 @@ let reinit session ?iter_type ?roots t0 y0 =
   (match roots with
    | None -> ()
    | Some roots -> root_init session roots)
-
-let wf_tolerances s ferrw =
-  s.errw <- ferrw;
-  wf_tolerances s
 
 external get_root_info  : 'a session -> Roots.t -> unit
     = "c_cvode_get_root_info"

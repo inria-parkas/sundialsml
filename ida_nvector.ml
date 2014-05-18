@@ -98,9 +98,24 @@ external ss_tolerances  : 'a session -> float -> float -> unit
 external wf_tolerances  : 'a session -> unit
   = "c_nvec_ida_wf_tolerances"
 
-let wf_tolerances s ferrw =
-  s.errw <- ferrw;
-  wf_tolerances s
+type 'a tolerance =
+  | SSTolerances of float * float
+    (** [(rel, abs)] : scalar relative and absolute tolerances. *)
+  | SVTolerances of float * 'a nvector
+    (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
+  | WFTolerances of ('a -> 'a -> unit)
+    (** Specifies a function [efun y ewt] that sets the multiplicative
+        error weights Wi for use in the weighted RMS norm. The function is
+        passed the dependent variable vector [y] and is expected to set the
+        values inside the error-weight vector [ewt]. *)
+
+let default_tolerances = SSTolerances (1.0e-4, 1.0e-8)
+
+let set_tolerances s tol =
+  match tol with
+  | SSTolerances (rel, abs) -> ss_tolerances s rel abs
+  | SVTolerances (rel, abs) -> sv_tolerances s rel abs
+  | WFTolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
 
 let read_weak_ref x : 'a session =
   match Weak.get x 0 with
@@ -240,7 +255,7 @@ let set_linear_solver session solver =
     c_spils_sptfqmr session p.maxl;
     set_precond p
 
-let init linsolv resfn ?(roots=no_roots) ?(t0=0.) neqs y y' =
+let init linsolv tol resfn ?(roots=no_roots) ?(t0=0.) neqs y y' =
   let (nroots, rootsfn) = roots in
   if nroots < 0 then
     raise (Invalid_argument "number of root functions is negative");
@@ -273,7 +288,7 @@ let init linsolv resfn ?(roots=no_roots) ?(t0=0.) neqs y y' =
   if nroots > 0 then
     c_root_init session nroots;
   set_linear_solver session linsolv;
-  ss_tolerances session 1.0e-4 1.0e-8;
+  set_tolerances session tol;
   session
 
 let nroots { nroots } = nroots
