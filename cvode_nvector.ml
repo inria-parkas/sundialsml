@@ -44,11 +44,6 @@ type 'a linear_solver =
   | Spgmr of spils_params * 'a spils_callbacks
   | Spbcg of spils_params * 'a spils_callbacks
   | Sptfqmr of spils_params * 'a spils_callbacks
-  | BandedSpgmr of spils_params * bandrange
-  | BandedSpbcg of spils_params * bandrange
-  | BandedSptfqmr of spils_params * bandrange
-and bandrange = { mupper : int;
-                  mlower : int; }
 and spils_params = { maxl : int;
                      prec_type : Spils.preconditioning_type; }
 and 'a spils_callbacks =
@@ -239,12 +234,6 @@ let set_iter_type session iter =
     | Sptfqmr (par, cb) ->
       c_spils_sptfqmr session par.maxl par.prec_type;
       set_precond par.prec_type cb
-    | BandedSpgmr (sp, br) ->
-      c_spils_banded_spgmr session br.mupper br.mlower sp.maxl sp.prec_type
-    | BandedSpbcg (sp, br) ->
-      c_spils_banded_spbcg session br.mupper br.mlower sp.maxl sp.prec_type
-    | BandedSptfqmr (sp, br) ->
-      c_spils_banded_sptfqmr session br.mupper br.mlower sp.maxl sp.prec_type
 
 external sv_tolerances  : 'a session -> float -> 'a nvector -> unit
     = "c_nvec_cvode_sv_tolerances"

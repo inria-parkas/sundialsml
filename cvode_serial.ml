@@ -202,15 +202,15 @@ external c_spils_sptfqmr
 
 external c_spils_banded_spgmr
   : session -> int -> int -> int -> Spils.preconditioning_type -> unit
-  = "c_cvode_spils_banded_spgmr"
+  = "c_ba_cvode_spils_banded_spgmr"
 
 external c_spils_banded_spbcg
   : session -> int -> int -> int -> Spils.preconditioning_type -> unit
-  = "c_cvode_spils_banded_spbcg"
+  = "c_ba_cvode_spils_banded_spbcg"
 
 external c_spils_banded_sptfqmr
   : session -> int -> int -> int -> Spils.preconditioning_type -> unit
-  = "c_cvode_spils_banded_sptfqmr"
+  = "c_ba_cvode_spils_banded_sptfqmr"
 
 external c_set_functional : session -> unit
   = "c_cvode_set_functional"

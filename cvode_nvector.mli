@@ -156,42 +156,6 @@ and 'a linear_solver =
       @cvode <node5#ss:psolveFn> Linear preconditioning function
       @cvode <node5#ss:precondFn> Jacobian preconditioning function
     *)
-  (* TODO: Double check that this solver can be used for generic nvectors... *)
-  | BandedSpgmr of spils_params * bandrange
-  (** Same as Spgmr (the Krylov iterative solver with scaled preconditioned
-      GMRES), but the preconditioner is set to CVODE's internal implementation
-      using a banded matrix of difference quotients.  The arguments specify the
-      maximum dimension of the Krylov subspace and preconditioning type
-      ({!spils_params}), along with the width of the band matrix
-      ({!bandrange}).
-
-      @cvode <node5#sss:lin_solve_init> CVSpgmr
-      @cvode <node5#sss:cvbandpre> CVBandPrecInit
-    *)
-  (* TODO: Double check that this solver can be used for generic nvectors... *)
-  | BandedSpbcg of spils_params * bandrange
-  (** Same as Spbcg (the Krylov iterative solver with scaled preconditioned
-      Bi-CGStab), but the preconditioner is set to CVODE's internal
-      implementation using a banded matrix of difference quotients.  The
-      arguments are the same as [BandedSpgmr].
-
-      @cvode <node5#sss:lin_solve_init> CVSpbcg
-      @cvode <node5#sss:cvbandpre> CVBandPrecInit
-    *)
-  (* TODO: Double check that this solver can be used for generic nvectors... *)
-  | BandedSptfqmr of spils_params * bandrange
-  (** Same as Spbcg (the Krylov iterative solver with scaled preconditioned
-      Bi-CGStab), but the preconditioner is set to CVODE's internal
-      implementation using a banded matrix of difference quotients.  The
-      arguments are the same as [BandedSpgmr].
-
-      @cvode <node5#sss:lin_solve_init> CVSptfqmr
-      @cvode <node5#sss:cvbandpre> CVBandPrecInit
-    *)
-
-(** The range of nonzero entries in a band matrix.  *)
-and bandrange = { mupper : int; (** The upper half-bandwidth.  *)
-                  mlower : int; (** The lower half-bandwidth.  *) }
 
 (** Common parameters for Krylov subspace linear solvers.  *)
 and spils_params = { maxl : int; (** Maximum dimension of the Krylov subspace

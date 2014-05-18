@@ -616,6 +616,65 @@ CAMLprim void CVTYPE(dls_clear_band_jac_fn)(value vdata)
     CHECK_FLAG("CVDlsSetBandJacFn", flag);
     CAMLreturn0;
 }
+
+CAMLprim void CVTYPE(spils_banded_spgmr) (value vcvode_mem,
+					  value vmupper, value vmlower,
+					  value vmaxl, value vtype)
+{
+    CAMLparam5 (vcvode_mem, vmupper, vmlower, vmaxl, vtype);
+    void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
+    long neqs = CVODE_NEQS_FROM_ML (vcvode_mem);
+    int flag;
+
+    flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
+    CHECK_FLAG ("CVodeSetIterType", flag);
+    flag = CVSpgmr (cvode_mem, spils_precond_type (vtype), Int_val (vmaxl));
+    CHECK_FLAG ("CVSpgmr", flag);
+    flag = CVBandPrecInit (cvode_mem, neqs,
+			   Long_val (vmupper), Long_val (vmlower));
+    CHECK_FLAG ("CVBandPrecInit", flag);
+    CAMLreturn0;
+}
+
+CAMLprim void CVTYPE(spils_banded_spbcg) (value vcvode_mem,
+					  value vmupper, value vmlower,
+					  value vmaxl, value vtype)
+{
+    CAMLparam5 (vcvode_mem, vmupper, vmlower, vmaxl, vtype);
+    void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
+    long neqs = CVODE_NEQS_FROM_ML (vcvode_mem);
+    int flag;
+
+    flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
+    CHECK_FLAG ("CVodeSetIterType", flag);
+    flag = CVSpbcg (cvode_mem, spils_precond_type (vtype), Int_val (vmaxl));
+    CHECK_FLAG ("CVSpbcg", flag);
+    flag = CVBandPrecInit (cvode_mem, neqs,
+			   Long_val (vmupper), Long_val (vmlower));
+    CHECK_FLAG ("CVBandPrecInit", flag);
+    CAMLreturn0;
+}
+
+CAMLprim void CVTYPE(spils_banded_sptfqmr) (value vcvode_mem,
+					    value vmupper, value vmlower,
+					    value vmaxl, value vtype)
+{
+    CAMLparam5 (vcvode_mem, vmupper, vmlower, vmaxl, vtype);
+    void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
+    long neqs = CVODE_NEQS_FROM_ML (vcvode_mem);
+    int flag;
+
+    flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
+    CHECK_FLAG ("CVodeSetIterType", flag);
+    flag = CVSptfqmr (cvode_mem, spils_precond_type (vtype), Int_val (vmaxl));
+    CHECK_FLAG ("CVSptfqmr", flag);
+    flag = CVBandPrecInit (cvode_mem, neqs,
+			   Long_val (vmupper), Long_val (vmlower));
+    CHECK_FLAG ("CVBandPrecInit", flag);
+    CAMLreturn0;
+}
+
+
 #endif	/* CVODE_ML_BIGARRAYS */
 
 CAMLprim void CVTYPE(spils_set_preconditioner) (value vsession,
