@@ -44,7 +44,7 @@ type 'a linear_solver =
   | Spgmr of spils_params * 'a spils_callbacks
   | Spbcg of spils_params * 'a spils_callbacks
   | Sptfqmr of spils_params * 'a spils_callbacks
-and spils_params = { maxl : int;
+and spils_params = { maxl : int option;
                      prec_type : Spils.preconditioning_type; }
 and 'a spils_callbacks =
   {
@@ -226,14 +226,17 @@ let set_iter_type session iter =
     match linsolv with
     | Diag -> c_diag session
     | Spgmr (par, cb) ->
-      c_spils_spgmr session par.maxl par.prec_type;
-      set_precond par.prec_type cb
+        let maxl = match par.maxl with None -> 0 | Some ml -> ml in
+        c_spils_spgmr session maxl par.prec_type;
+        set_precond par.prec_type cb
     | Spbcg (par, cb) ->
-      c_spils_spbcg session par.maxl par.prec_type;
-      set_precond par.prec_type cb
+        let maxl = match par.maxl with None -> 0 | Some ml -> ml in
+        c_spils_spbcg session maxl par.prec_type;
+        set_precond par.prec_type cb
     | Sptfqmr (par, cb) ->
-      c_spils_sptfqmr session par.maxl par.prec_type;
-      set_precond par.prec_type cb
+        let maxl = match par.maxl with None -> 0 | Some ml -> ml in
+        c_spils_sptfqmr session maxl par.prec_type;
+        set_precond par.prec_type cb
 
 external sv_tolerances  : 'a session -> float -> 'a nvector -> unit
     = "c_nvec_cvode_sv_tolerances"

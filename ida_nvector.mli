@@ -162,8 +162,8 @@ and bandrange = { mupper : int; (** The upper half-bandwidth.  *)
     [{ spils_no_precond with maxl = ... }].  *)
 and 'a spils_params =
   {
-    maxl : int;   (** Maximum dimension of the Krylov subspace to be used.
-                      Pass [0] to use the default value [5]. *)
+    maxl : int option;   (** Maximum dimension of the Krylov subspace to be
+                             used. Pass [None] to use the default value [5]. *)
 
     prec_solve_fn : (('a single_tmp, 'a) jacobian_arg -> 'a -> 'a -> float
                      -> unit) option;

@@ -158,10 +158,9 @@ and 'a linear_solver =
     *)
 
 (** Common parameters for Krylov subspace linear solvers.  *)
-and spils_params = { maxl : int; (** Maximum dimension of the Krylov subspace
-                                     to be used.  Pass [0] to use the default
-                                     value [5]. *)
-                                 (* TODO: make an option; here and elsewhere *)
+and spils_params = { maxl : int option; (** Maximum dimension of the Krylov subspace
+                                            to be used.  Pass [None] to use the default
+                                            value [5]. *)
                      prec_type : Spils.preconditioning_type;
                      (** The type of preconditioning to be done.  *) }
 (** Callbacks for Krylov subspace linear solvers.  Ignored if the

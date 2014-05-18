@@ -39,7 +39,7 @@ type 'a linear_solver =
   | Sptfqmr of 'a spils_params
 and 'a spils_params =
   {
-    maxl : int;
+    maxl : int option;
     prec_solve_fn : (('a single_tmp, 'a) jacobian_arg -> 'a -> 'a -> float
                      -> unit) option;
     prec_setup_fn : (('a triple_tmp, 'a) jacobian_arg -> unit) option;
@@ -49,7 +49,7 @@ and 'a spils_params =
 and bandrange = { mupper : int;
                   mlower : int; }
 
-let spils_no_precond = { maxl = 0;
+let spils_no_precond = { maxl = None;
                          prec_solve_fn = None;
                          prec_setup_fn = None;
                          jac_times_vec_fn = None;
@@ -246,14 +246,17 @@ let set_linear_solver session solver =
   session.jactimesfn <- dummy_jac_times_vec;
   match solver with
   | Spgmr p ->
-    c_spils_spgmr session p.maxl;
-    set_precond p
+      let maxl = match p.maxl with None -> 0 | Some ml -> ml in
+      c_spils_spgmr session maxl;
+      set_precond p
   | Spbcg p ->
-    c_spils_spbcg session p.maxl;
-    set_precond p
+      let maxl = match p.maxl with None -> 0 | Some ml -> ml in
+      c_spils_spbcg session maxl;
+      set_precond p
   | Sptfqmr p ->
-    c_spils_sptfqmr session p.maxl;
-    set_precond p
+      let maxl = match p.maxl with None -> 0 | Some ml -> ml in
+      c_spils_sptfqmr session maxl;
+      set_precond p
 
 let init linsolv tol resfn ?(roots=no_roots) ?(t0=0.) neqs y y' =
   let (nroots, rootsfn) = roots in

@@ -305,9 +305,9 @@ and bandrange = { mupper : int; (** The upper half-bandwidth.  *)
 (** Common parameters for Krylov subspace linear solvers.  *)
 and spils_params = { prec_type : Spils.preconditioning_type;
                      (** The type of preconditioning to be done.  *)
-                     maxl : int; (** Maximum dimension of the Krylov subspace
-                                     to be used.  Pass [0] to use the default
-                                     value [5]. *)}
+                     maxl : int option; (** Maximum dimension of the Krylov subspace
+                                            to be used.  Pass [None] to use the default
+                                            value [5]. *)}
 (** Callbacks for Krylov subspace linear solvers.  Ignored if the
     {!Spils.preconditioning_type} is set to [PrecNone].  In that case, you
     should use {!spils_no_precond} as [spils_callbacks].  *)

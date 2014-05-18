@@ -47,7 +47,7 @@ and dense_jac_fn = triple_tmp jacobian_arg -> Dls.DenseMatrix.t -> unit
 and band_jac_fn = triple_tmp jacobian_arg -> int -> int -> Dls.BandMatrix.t -> unit
 and spils_params =
   {
-    maxl : int;
+    maxl : int option;
     prec_solve_fn : (single_tmp jacobian_arg -> val_array -> val_array -> float
                      -> unit) option;
     prec_setup_fn : (triple_tmp jacobian_arg -> unit) option;
@@ -57,7 +57,7 @@ and spils_params =
 and bandrange = { mupper : int;
                   mlower : int; }
 
-let spils_no_precond = { maxl = 0;
+let spils_no_precond = { maxl = None;
                          prec_solve_fn = None;
                          prec_setup_fn = None;
                          jac_times_vec_fn = None;
@@ -253,14 +253,17 @@ let set_linear_solver session solver =
     c_dls_lapack_band session p.mupper p.mlower (jac <> None);
     optionally (fun f -> session.bandjacfn <- f) jac
   | Spgmr p ->
-    c_spils_spgmr session p.maxl;
-    set_precond p
+      let maxl = match p.maxl with None -> 0 | Some ml -> ml in
+      c_spils_spgmr session maxl;
+      set_precond p
   | Spbcg p ->
-    c_spils_spbcg session p.maxl;
-    set_precond p
+      let maxl = match p.maxl with None -> 0 | Some ml -> ml in
+      c_spils_spbcg session maxl;
+      set_precond p
   | Sptfqmr p ->
-    c_spils_sptfqmr session p.maxl;
-    set_precond p
+      let maxl = match p.maxl with None -> 0 | Some ml -> ml in
+      c_spils_sptfqmr session maxl;
+      set_precond p
 
 let init linsolv tol resfn ?(roots=no_roots) ?(t0=0.) y y' =
   let (nroots, rootsfn) = roots in
