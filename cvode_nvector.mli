@@ -47,7 +47,7 @@ include module type of Cvode
     {[let y = Nvector_array.wrap [| 0.0; 0.0; 0.0 |] ]}
     The length of this vector determines the problem size.    
     + {b Create and initialize a solver session}
-    {[let s = Cvode.init Cvode.Adams Cvode.Functional tols f ~roots:(2, g) (3, y)]}
+    {[let s = Cvode.init Cvode.Adams Cvode.Functional tols f ~roots:(2, g) y]}
     This will initialize a specific linear solver and the root-finding
     mechanism, if necessary.
     + {b Specify integration tolerances (optional)}, e.g.
@@ -590,14 +590,11 @@ val init :
     -> (float -> 'a -> 'a -> unit)
     -> ?roots:(int * (float -> 'a -> root_val_array -> unit))
     -> ?t0:float
-    -> int * 'a nvector
+    -> 'a nvector
     -> 'a session
 
 (** Return the number of root functions. *)
 val nroots : 'a session -> int
-
-(** Return the number of equations. *)
-val neqs : 'a session -> int
 
 (** {2 Solver functions } *)
 
