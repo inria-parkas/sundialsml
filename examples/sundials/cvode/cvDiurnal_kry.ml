@@ -571,13 +571,10 @@ let main () =
                         { Cvode.prec_setup_fn = Some (precond data);
                           Cvode.prec_solve_fn = Some (psolve data);
                           Cvode.jac_times_vec_fn = Some (jtv data); })))
+      (Cvode.SSTolerances (reltol, abstol))
       (f data) ~t0:t0 u
   in
   Gc.compact ();
-
-  (* Call CVodeSStolerances to specify the scalar relative tolerance
-   * and scalar absolute tolerances *)
-  Cvode.ss_tolerances cvode_mem reltol abstol;
 
   (* Set modified Gram-Schmidt orthogonalization *)
   Cvode.Spils.set_gs_type cvode_mem Spils.ModifiedGS;

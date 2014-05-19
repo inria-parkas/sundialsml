@@ -57,7 +57,7 @@ and band_jac_fn = triple_tmp jacobian_arg -> int -> int -> Dls.BandMatrix.t -> u
 and bandrange = { mupper : int;
                   mlower : int; }
 and spils_params = { prec_type : Spils.preconditioning_type;
-                     maxl : int; }
+                     maxl : int option; }
 and spils_callbacks =
   {
     prec_solve_fn : (single_tmp jacobian_arg -> prec_solve_arg -> nvec
@@ -202,15 +202,15 @@ external c_spils_sptfqmr
 
 external c_spils_banded_spgmr
   : session -> int -> int -> int -> Spils.preconditioning_type -> unit
-  = "c_cvode_spils_banded_spgmr"
+  = "c_ba_cvode_spils_banded_spgmr"
 
 external c_spils_banded_spbcg
   : session -> int -> int -> int -> Spils.preconditioning_type -> unit
-  = "c_cvode_spils_banded_spbcg"
+  = "c_ba_cvode_spils_banded_spbcg"
 
 external c_spils_banded_sptfqmr
   : session -> int -> int -> int -> Spils.preconditioning_type -> unit
-  = "c_cvode_spils_banded_sptfqmr"
+  = "c_ba_cvode_spils_banded_sptfqmr"
 
 external c_set_functional : session -> unit
   = "c_cvode_set_functional"
@@ -269,20 +269,26 @@ let set_iter_type session iter =
       optionally (fun f -> session.bandjacfn <- f) jac
     | Diag -> c_diag session
     | Spgmr (par, cb) ->
-      c_spils_spgmr session par.maxl par.prec_type;
-      set_precond par.prec_type cb
+        let maxl = match par.maxl with None -> 0 | Some ml -> ml in
+        c_spils_spgmr session maxl par.prec_type;
+        set_precond par.prec_type cb
     | Spbcg (par, cb) ->
-      c_spils_spbcg session par.maxl par.prec_type;
-      set_precond par.prec_type cb
+        let maxl = match par.maxl with None -> 0 | Some ml -> ml in
+        c_spils_spbcg session maxl par.prec_type;
+        set_precond par.prec_type cb
     | Sptfqmr (par, cb) ->
-      c_spils_sptfqmr session par.maxl par.prec_type;
-      set_precond par.prec_type cb
+        let maxl = match par.maxl with None -> 0 | Some ml -> ml in
+        c_spils_sptfqmr session maxl par.prec_type;
+        set_precond par.prec_type cb
     | BandedSpgmr (sp, br) ->
-      c_spils_banded_spgmr session br.mupper br.mlower sp.maxl sp.prec_type
+        let maxl = match sp.maxl with None -> 0 | Some ml -> ml in
+        c_spils_banded_spgmr session br.mupper br.mlower maxl sp.prec_type
     | BandedSpbcg (sp, br) ->
-      c_spils_banded_spbcg session br.mupper br.mlower sp.maxl sp.prec_type
+        let maxl = match sp.maxl with None -> 0 | Some ml -> ml in
+        c_spils_banded_spbcg session br.mupper br.mlower maxl sp.prec_type
     | BandedSptfqmr (sp, br) ->
-      c_spils_banded_sptfqmr session br.mupper br.mlower sp.maxl sp.prec_type
+        let maxl = match sp.maxl with None -> 0 | Some ml -> ml in
+        c_spils_banded_sptfqmr session br.mupper br.mlower maxl sp.prec_type
 
 external sv_tolerances  : session -> float -> nvec -> unit
     = "c_ba_cvode_sv_tolerances"
@@ -291,7 +297,20 @@ external ss_tolerances  : session -> float -> float -> unit
 external wf_tolerances  : session -> unit
     = "c_ba_cvode_wf_tolerances"
 
-let init lmm iter f ?(roots=no_roots) ?(t0=0.) y0 =
+type tolerance =
+  | SSTolerances of float * float
+  | SVTolerances of float * nvec
+  | WFTolerances of (val_array -> val_array -> unit)
+
+let default_tolerances = SSTolerances (1.0e-4, 1.0e-8)
+
+let set_tolerances s tol =
+  match tol with
+  | SSTolerances (rel, abs) -> ss_tolerances s rel abs
+  | SVTolerances (rel, abs) -> sv_tolerances s rel abs
+  | WFTolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
+
+let init lmm iter tol f ?(roots=no_roots) ?(t0=0.) y0 =
   let (nroots, roots) = roots in
   if nroots < 0 then
     raise (Invalid_argument "number of root functions is negative");
@@ -326,7 +345,7 @@ let init lmm iter f ?(roots=no_roots) ?(t0=0.) y0 =
   if nroots > 0 then
     c_root_init session nroots;
   set_iter_type session iter;
-  ss_tolerances session 1.0e-4 1.0e-8;
+  set_tolerances session tol;
   session
 
 let nroots { nroots } = nroots
@@ -343,10 +362,6 @@ let reinit session ?iter_type ?roots t0 y0 =
   (match roots with
    | None -> ()
    | Some roots -> root_init session roots)
-
-let wf_tolerances s ferrw =
-  s.errw <- ferrw;
-  wf_tolerances s
 
 external get_root_info  : session -> root_array -> unit
     = "c_cvode_get_root_info"

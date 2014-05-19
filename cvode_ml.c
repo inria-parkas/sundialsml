@@ -814,64 +814,6 @@ CAMLprim void c_cvode_spils_sptfqmr (value vcvode_mem, value vmaxl,
     CAMLreturn0;
 }
 
-CAMLprim void c_cvode_spils_banded_spgmr (value vcvode_mem,
-					  value vmupper, value vmlower,
-					  value vmaxl, value vtype)
-{
-    CAMLparam5 (vcvode_mem, vmupper, vmlower, vmaxl, vtype);
-    void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
-    long neqs = CVODE_NEQS_FROM_ML (vcvode_mem);
-    int flag;
-
-    flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
-    CHECK_FLAG ("CVodeSetIterType", flag);
-    flag = CVSpgmr (cvode_mem, spils_precond_type (vtype), Int_val (vmaxl));
-    CHECK_FLAG ("CVSpgmr", flag);
-    flag = CVBandPrecInit (cvode_mem, neqs,
-			   Long_val (vmupper), Long_val (vmlower));
-    CHECK_FLAG ("CVBandPrecInit", flag);
-    CAMLreturn0;
-}
-
-CAMLprim void c_cvode_spils_banded_spbcg (value vcvode_mem,
-					  value vmupper, value vmlower,
-					  value vmaxl, value vtype)
-{
-    CAMLparam5 (vcvode_mem, vmupper, vmlower, vmaxl, vtype);
-    void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
-    long neqs = CVODE_NEQS_FROM_ML (vcvode_mem);
-    int flag;
-
-    flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
-    CHECK_FLAG ("CVodeSetIterType", flag);
-    flag = CVSpbcg (cvode_mem, spils_precond_type (vtype), Int_val (vmaxl));
-    CHECK_FLAG ("CVSpbcg", flag);
-    flag = CVBandPrecInit (cvode_mem, neqs,
-			   Long_val (vmupper), Long_val (vmlower));
-    CHECK_FLAG ("CVBandPrecInit", flag);
-    CAMLreturn0;
-}
-
-CAMLprim void c_cvode_spils_banded_sptfqmr (value vcvode_mem,
-					    value vmupper, value vmlower,
-					    value vmaxl, value vtype)
-{
-    CAMLparam5 (vcvode_mem, vmupper, vmlower, vmaxl, vtype);
-    void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
-    long neqs = CVODE_NEQS_FROM_ML (vcvode_mem);
-    int flag;
-
-    flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
-    CHECK_FLAG ("CVodeSetIterType", flag);
-    flag = CVSptfqmr (cvode_mem, spils_precond_type (vtype), Int_val (vmaxl));
-    CHECK_FLAG ("CVSptfqmr", flag);
-    flag = CVBandPrecInit (cvode_mem, neqs,
-			   Long_val (vmupper), Long_val (vmlower));
-    CHECK_FLAG ("CVBandPrecInit", flag);
-    CAMLreturn0;
-}
-
-
 CAMLprim value c_cvode_spils_get_num_lin_iters(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);

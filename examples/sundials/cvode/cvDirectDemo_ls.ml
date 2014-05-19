@@ -333,11 +333,10 @@ let problem1 () =
 
   let run_tests lmm =
     init_y ();
-    let cvode_mem = Cvode.init lmm Cvode.Functional f1 ~t0:p1_t0 y
+    let cvode_mem = Cvode.init lmm Cvode.Functional
+                               (Cvode.SSTolerances (rtol, atol)) f1 ~t0:p1_t0 y
     in
     Gc.compact ();
-    Cvode.ss_tolerances cvode_mem rtol atol;
-
     List.iter (run cvode_mem lmm) [ Func; Dense_User; Dense_DQ; Diag]
   in
 
@@ -453,11 +452,10 @@ let problem2 () =
 
   let run_tests lmm =
     init_y ();
-    let cvode_mem = Cvode.init lmm Cvode.Functional f2 ~t0:p2_t0 y
+    let cvode_mem = Cvode.init lmm Cvode.Functional
+                               (Cvode.SSTolerances (rtol, atol)) f2 ~t0:p2_t0 y
     in
     Gc.compact ();
-    Cvode.ss_tolerances cvode_mem rtol atol;
-
     List.iter (run cvode_mem lmm) [ Func; Diag; Band_User; Band_DQ]
   in
 

@@ -234,13 +234,11 @@ let main () =
   let solver = Cvode.Band ({Cvode.mupper = my; Cvode.mlower = my},
                            Some (jac data))
   in
-  let cvode_mem = Cvode.init Cvode.BDF (Cvode.Newton solver) ~t0:t0 (f data) u
+  let cvode_mem = Cvode.init Cvode.BDF (Cvode.Newton solver)
+                             (Cvode.SSTolerances (reltol, abstol))
+                             ~t0:t0 (f data) u
   in
   Gc.compact ();
-
-  (* Call CVodeSStolerances to specify the scalar relative tolerance
-   * and scalar absolute tolerance *)
-  Cvode.ss_tolerances cvode_mem reltol abstol;
 
   (* In loop over output points: call CVode, print results, test for errors *)
 

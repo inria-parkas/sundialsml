@@ -44,12 +44,7 @@ type 'a linear_solver =
   | Spgmr of spils_params * 'a spils_callbacks
   | Spbcg of spils_params * 'a spils_callbacks
   | Sptfqmr of spils_params * 'a spils_callbacks
-  | BandedSpgmr of spils_params * bandrange
-  | BandedSpbcg of spils_params * bandrange
-  | BandedSptfqmr of spils_params * bandrange
-and bandrange = { mupper : int;
-                  mlower : int; }
-and spils_params = { maxl : int;
+and spils_params = { maxl : int option;
                      prec_type : Spils.preconditioning_type; }
 and 'a spils_callbacks =
   {
@@ -231,20 +226,17 @@ let set_iter_type session iter =
     match linsolv with
     | Diag -> c_diag session
     | Spgmr (par, cb) ->
-      c_spils_spgmr session par.maxl par.prec_type;
-      set_precond par.prec_type cb
+        let maxl = match par.maxl with None -> 0 | Some ml -> ml in
+        c_spils_spgmr session maxl par.prec_type;
+        set_precond par.prec_type cb
     | Spbcg (par, cb) ->
-      c_spils_spbcg session par.maxl par.prec_type;
-      set_precond par.prec_type cb
+        let maxl = match par.maxl with None -> 0 | Some ml -> ml in
+        c_spils_spbcg session maxl par.prec_type;
+        set_precond par.prec_type cb
     | Sptfqmr (par, cb) ->
-      c_spils_sptfqmr session par.maxl par.prec_type;
-      set_precond par.prec_type cb
-    | BandedSpgmr (sp, br) ->
-      c_spils_banded_spgmr session br.mupper br.mlower sp.maxl sp.prec_type
-    | BandedSpbcg (sp, br) ->
-      c_spils_banded_spbcg session br.mupper br.mlower sp.maxl sp.prec_type
-    | BandedSptfqmr (sp, br) ->
-      c_spils_banded_sptfqmr session br.mupper br.mlower sp.maxl sp.prec_type
+        let maxl = match par.maxl with None -> 0 | Some ml -> ml in
+        c_spils_sptfqmr session maxl par.prec_type;
+        set_precond par.prec_type cb
 
 external sv_tolerances  : 'a session -> float -> 'a nvector -> unit
     = "c_nvec_cvode_sv_tolerances"
@@ -253,7 +245,20 @@ external ss_tolerances  : 'a session -> float -> float -> unit
 external wf_tolerances  : 'a session -> unit
     = "c_nvec_cvode_wf_tolerances"
 
-let init lmm iter f ?(roots=no_roots) ?(t0=0.) (neqs, y0) =
+type 'a tolerance =
+  | SSTolerances of float * float
+  | SVTolerances of float * 'a nvector
+  | WFTolerances of ('a -> 'a -> unit)
+
+let default_tolerances = SSTolerances (1.0e-4, 1.0e-8)
+
+let set_tolerances s tol =
+  match tol with
+  | SSTolerances (rel, abs) -> ss_tolerances s rel abs
+  | SVTolerances (rel, abs) -> sv_tolerances s rel abs
+  | WFTolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
+
+let init lmm iter tol f ?(roots=no_roots) ?(t0=0.) (neqs, y0) =
   let (nroots, roots) = roots in
   let weakref = Weak.create 1 in
   let cvode_mem, backref, err_file = c_init weakref lmm iter y0 t0 in
@@ -283,7 +288,7 @@ let init lmm iter f ?(roots=no_roots) ?(t0=0.) (neqs, y0) =
   if nroots > 0 then
     c_root_init session nroots;
   set_iter_type session iter;
-  ss_tolerances session 1.0e-4 1.0e-8;
+  set_tolerances session tol;
   session
 
 let nroots { nroots } = nroots
@@ -300,10 +305,6 @@ let reinit session ?iter_type ?roots t0 y0 =
   (match roots with
    | None -> ()
    | Some roots -> root_init session roots)
-
-let wf_tolerances s ferrw =
-  s.errw <- ferrw;
-  wf_tolerances s
 
 external get_root_info  : 'a session -> Roots.t -> unit
     = "c_cvode_get_root_info"

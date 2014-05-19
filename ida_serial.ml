@@ -47,7 +47,7 @@ and dense_jac_fn = triple_tmp jacobian_arg -> Dls.DenseMatrix.t -> unit
 and band_jac_fn = triple_tmp jacobian_arg -> int -> int -> Dls.BandMatrix.t -> unit
 and spils_params =
   {
-    maxl : int;
+    maxl : int option;
     prec_solve_fn : (single_tmp jacobian_arg -> val_array -> val_array -> float
                      -> unit) option;
     prec_setup_fn : (triple_tmp jacobian_arg -> unit) option;
@@ -57,7 +57,7 @@ and spils_params =
 and bandrange = { mupper : int;
                   mlower : int; }
 
-let spils_no_precond = { maxl = 0;
+let spils_no_precond = { maxl = None;
                          prec_solve_fn = None;
                          prec_setup_fn = None;
                          jac_times_vec_fn = None;
@@ -104,9 +104,24 @@ external ss_tolerances  : session -> float -> float -> unit
 external wf_tolerances  : session -> unit
   = "c_ba_ida_wf_tolerances"
 
-let wf_tolerances s ferrw =
-  s.errw <- ferrw;
-  wf_tolerances s
+type tolerance =
+  | SSTolerances of float * float
+    (** [(rel, abs)] : scalar relative and absolute tolerances. *)
+  | SVTolerances of float * nvec
+    (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
+  | WFTolerances of (val_array -> val_array -> unit)
+    (** Specifies a function [efun y ewt] that sets the multiplicative
+        error weights Wi for use in the weighted RMS norm. The function is
+        passed the dependent variable vector [y] and is expected to set the
+        values inside the error-weight vector [ewt]. *)
+
+let default_tolerances = SSTolerances (1.0e-4, 1.0e-8)
+
+let set_tolerances s tol =
+  match tol with
+  | SSTolerances (rel, abs) -> ss_tolerances s rel abs
+  | SVTolerances (rel, abs) -> sv_tolerances s rel abs
+  | WFTolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
 
 let read_weak_ref x : session =
   match Weak.get x 0 with
@@ -238,16 +253,19 @@ let set_linear_solver session solver =
     c_dls_lapack_band session p.mupper p.mlower (jac <> None);
     optionally (fun f -> session.bandjacfn <- f) jac
   | Spgmr p ->
-    c_spils_spgmr session p.maxl;
-    set_precond p
+      let maxl = match p.maxl with None -> 0 | Some ml -> ml in
+      c_spils_spgmr session maxl;
+      set_precond p
   | Spbcg p ->
-    c_spils_spbcg session p.maxl;
-    set_precond p
+      let maxl = match p.maxl with None -> 0 | Some ml -> ml in
+      c_spils_spbcg session maxl;
+      set_precond p
   | Sptfqmr p ->
-    c_spils_sptfqmr session p.maxl;
-    set_precond p
+      let maxl = match p.maxl with None -> 0 | Some ml -> ml in
+      c_spils_sptfqmr session maxl;
+      set_precond p
 
-let init linsolv resfn ?(roots=no_roots) ?(t0=0.) y y' =
+let init linsolv tol resfn ?(roots=no_roots) ?(t0=0.) y y' =
   let (nroots, rootsfn) = roots in
   if nroots < 0 then
     raise (Invalid_argument "number of root functions is negative");
@@ -285,7 +303,7 @@ let init linsolv resfn ?(roots=no_roots) ?(t0=0.) y y' =
   if nroots > 0 then
     c_root_init session nroots;
   set_linear_solver session linsolv;
-  ss_tolerances session 1.0e-4 1.0e-8;
+  set_tolerances session tol;
   session
 
 let nroots { nroots } = nroots

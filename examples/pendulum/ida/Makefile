@@ -1,5 +1,7 @@
 include ../../../config
 
+all: pendulum.byte pendulum.opt
+
 test-pendulum: pendulum.opt
 	./$< $(PARAMS)
 

@@ -31,7 +31,8 @@ let g t_s y gout =
 
 let y = Cvode.Carray.of_array [| x_i |]
 
-let s = Cvode.init Cvode.Adams Cvode.Functional f ~roots:(1, g) y
+let s = Cvode.init Cvode.Adams Cvode.Functional Cvode.default_tolerances
+                   f ~roots:(1, g) y
 let rootdata = Cvode.Roots.create 1
 
 let _ = Cvode.set_all_root_directions s !root_dir

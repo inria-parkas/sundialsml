@@ -338,13 +338,10 @@ let main () =
           (Cvode.BandedSpgmr
              ({ Cvode.prec_type = Spils.PrecLeft; Cvode.maxl = 0},
               { Cvode.mupper = mu; Cvode.mlower = ml})))
+      (Cvode.SSTolerances (reltol, abstol))
       (f data) ~t0:t0 u
   in
   Gc.compact ();
-
-  (* Call CVodeSStolerances to specify the scalar relative tolerance
-   * and scalar absolute tolerances *)
-  Cvode.ss_tolerances cvode_mem reltol abstol;
 
   print_intro mu ml;
 

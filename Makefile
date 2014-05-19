@@ -141,7 +141,9 @@ ocamlfind: sundials.cma sundials.cmxa META
 
 depend: .depend
 .depend:
-	$(OCAMLDEP) $(INCLUDES) *.mli *.ml > .depend
+	$(OCAMLDEP) $(INCLUDES) \
+	    -pp "cpp $(CPPFLAGS) -DOCAML_3X=$(OCAML_3X)" \
+	    *.mli *.ml > .depend
 	$(CC) -MM $(CFLAGS) *.c >> .depend
 
 clean:

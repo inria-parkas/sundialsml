@@ -461,13 +461,10 @@ let main () =
    * user's right hand side function in u'=f(t,u), the inital time T0, and
    * the initial dependent variable vector u. *)
   let cvode_mem =
-    Cvode.init Cvode.BDF Cvode.Functional (f data) ~t0:t0 u
+    Cvode.init Cvode.BDF Cvode.Functional
+               (Cvode.SSTolerances (reltol, abstol)) (f data) ~t0:t0 u
   in
   Gc.compact ();
-
-  (* Call CVodeSStolerances to specify the scalar relative tolerance
-   * and scalar absolute tolerances *)
-  Cvode.ss_tolerances cvode_mem reltol abstol;
 
   (* START: Loop through SPGMR, SPBCG and SPTFQMR linear solver modules *)
   let run cvode_mem linsolver =
