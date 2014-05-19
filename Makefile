@@ -2,7 +2,8 @@ include config
 
 MLOBJ = sundials.cmo nvector.cmo nvector_array.cmo dls.cmo \
 	spils.cmo spils_nvector.cmo spils_serial.cmo \
-	cvode.cmo cvode_nvector.cmo cvode_serial.cmo \
+	cvode.cmo cvode_session_nvector.cmo cvode_session_serial.cmo \
+	cvode_nvector.cmo cvode_serial.cmo \
 	cvodes_nvector.cmo \
 	kinsol.cmo kinsol_nvector.cmo kinsol_serial.cmo \
 	ida.cmo ida_nvector.cmo ida_serial.cmo
