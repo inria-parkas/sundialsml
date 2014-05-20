@@ -169,7 +169,7 @@ and spils_params = { maxl : int option; (** Maximum dimension of the Krylov subs
 and 'a spils_callbacks =
   {
     prec_solve_fn : (('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
-                     -> 'a nvector -> unit) option;
+                     -> 'a -> unit) option;
     (** Called like [prec_solve_fn jac_arg solve_arg z] to solve the linear
         system {i P}[z] = [solve_arg.rhs], where {i P} may be either a left or
         right preconditioner matrix.  {i P} should approximate, however
@@ -344,8 +344,7 @@ module Spils :
     val set_preconditioner :
       'a session
       -> (('a triple_tmp, 'a) jacobian_arg -> bool -> float -> bool)
-      -> (('a single_tmp, 'a) jacobian_arg -> 'a solve_arg
-          -> 'a nvector -> unit)
+      -> (('a single_tmp, 'a) jacobian_arg -> 'a solve_arg -> 'a -> unit)
       -> unit
 
     (**

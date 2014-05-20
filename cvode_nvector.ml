@@ -49,7 +49,7 @@ and spils_params = { maxl : int option;
 and 'a spils_callbacks =
   {
     prec_solve_fn : (('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
-                     -> 'a nvector -> unit) option;
+                     -> 'a -> unit) option;
     prec_setup_fn : (('a triple_tmp, 'a) jacobian_arg -> bool -> float -> bool)
                     option;
     jac_times_vec_fn :
@@ -90,7 +90,7 @@ type 'a session = {
         mutable errw       : 'a -> 'a -> unit;
         mutable presetupfn : ('a triple_tmp, 'a) jacobian_arg -> bool -> float -> bool;
         mutable presolvefn : ('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
-                               -> 'a nvector -> unit;
+                               -> 'a -> unit;
         mutable jactimesfn : ('a single_tmp, 'a) jacobian_arg -> 'a -> 'a -> unit;
       }
 
