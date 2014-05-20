@@ -130,12 +130,15 @@ let new_sensext s =
     s.sensext <- Some (Obj.repr se);
     se
 
-let bsensext {bsession=bs} =
+let bsensext ({bsession=bs} : 'a bsession) =
   match bs.sensext with
   | None -> raise NoSensExt
   | Some se -> ((Obj.obj se) : 'a bsensext)
 
-let empty_bsensext = {
+let new_bsensext ({bsession=bs} as s) =
+  try bsensext s
+  with NoSensExt ->
+    let se = {
       brhsfn      = (fun _ _ _ _ -> ());
       brhsfn1     = (fun _ _ _ _ _ -> ());
       bquadrhsfn  = (fun _ _ _ _ -> ());
@@ -149,12 +152,7 @@ let empty_bsensext = {
       bdense_jac = dummy_bdense_jac;
       bband_jac = dummy_bband_jac;
 *)
-    }
-
-let new_bsensext ({bsession=bs} as s) =
-  try bsensext s
-  with NoSensExt ->
-    let se = empty_bsensext in
+    } in
     bs.sensext <- Some (Obj.repr se);
     se
 
@@ -608,7 +606,7 @@ module Adjoint =
       : 'a session -> int -> int -> Spils.preconditioning_type -> unit
       = "c_cvode_adj_spils_sptfqmr"
 
-(* XXX serial only
+(* TODO serial only
     external c_spils_banded_spgmr
       : 'a session -> int -> int -> int -> int
                    -> Spils.preconditioning_type -> unit
@@ -691,20 +689,14 @@ module Adjoint =
 
     let init_backward s lmm iter tol mf t0 y0 =
       let weakref = Weak.create 1 in
-      let se, (cvode_mem, which, backref, err_file) =
+      let cvode_mem, which, backref, err_file =
         match mf with
-        | BackBasic f -> begin
-              { empty_bsensext with brhsfn = f },
-              c_init_backward weakref lmm iter y0 t0
-            end
-        | BackWithSens f -> begin
-              { empty_bsensext with brhsfn1 = f },
-              c_init_backward_1 weakref lmm iter y0 t0
-            end
+        | BackBasic _ -> c_init_backward weakref lmm iter y0 t0
+        | BackWithSens _ -> c_init_backward_1 weakref lmm iter y0 t0
       in
       (* cvode_mem and backref have to be immediately captured in a session and
          associated with the finalizer before we do anything else.  *)
-      let backsession = {
+      let backsession = ({
               cvode      = cvode_mem;
               backref    = backref;
               nroots     = 0;
@@ -720,13 +712,17 @@ module Adjoint =
               presolvefn = dummy_prec_solve;
               jactimesfn = dummy_jac_times_vec;
 
-              sensext    = Some (Obj.repr se);
-            } in
+              sensext    = None;
+            } : 'a session) in
       Gc.finalise bsession_finalize backsession;
       Weak.set weakref 0 (Some backsession);
       (* Now the session is safe to use.  If any of the following fails and raises
          an exception, the GC will take care of freeing cvode_mem and backref.  *)
       let session = {parent=s; bsession=backsession; which=which} in
+      let se = new_bsensext session in
+      (match mf with
+       | BackBasic f -> se.brhsfn <- f
+       | BackWithSens f -> se.brhsfn1 <- f);
       set_iter_type session iter;
       set_tolerances session tol;
       session
