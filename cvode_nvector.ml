@@ -91,28 +91,8 @@ external c_spils_sptfqmr
   : 'a session -> int -> Spils.preconditioning_type -> unit
   = "c_cvode_spils_sptfqmr"
 
-external c_spils_banded_spgmr
-  : 'a session -> int -> int -> int -> Spils.preconditioning_type -> unit
-  = "c_cvode_spils_banded_spgmr"
-
-external c_spils_banded_spbcg
-  : 'a session -> int -> int -> int -> Spils.preconditioning_type -> unit
-  = "c_cvode_spils_banded_spbcg"
-
-external c_spils_banded_sptfqmr
-  : 'a session -> int -> int -> int -> Spils.preconditioning_type -> unit
-  = "c_cvode_spils_banded_sptfqmr"
-
 external c_set_functional : 'a session -> unit
   = "c_cvode_set_functional"
-
-let shouldn't_be_called fcn =
-  failwith ("internal error in sundials: " ^ fcn ^ " is called")
-let dummy_dense_jac _ _ = shouldn't_be_called "dummy_dense_jac"
-let dummy_band_jac _ _ _ _ = shouldn't_be_called "dummy_band_jac"
-let dummy_prec_setup _ _ _ = shouldn't_be_called "dummy_prec_setup"
-let dummy_prec_solve _ _ _ = shouldn't_be_called "dummy_prec_solve"
-let dummy_jac_times_vec _ _ _ = shouldn't_be_called "dummy_jac_times_vec"
 
 let set_iter_type session iter =
   let optionally f = function

@@ -44,7 +44,6 @@ module Quadrature :
 
     (** {3:quadexcept Exceptions} *)
 
-    (* TODO: add to the standard CHECK_FLAG function? *)
     (* TODO: add @raise everywhere? *)
     (** Quadrature integration was not initialized.
 
@@ -92,25 +91,12 @@ module Quadrature :
     (** Activates the integration of quadrature equations.
 
         @cvodes <node5#ss:quad_malloc> CVodeQuadInit *)
-    val init : 'a session -> 'a quadrhsfn -> 'a -> unit
+    val init : 'a session -> 'a quadrhsfn -> 'a nvector -> unit
 
     (** Reinitialize the integration of quadrature equations.
 
         @cvodes <node5#ss:quad_malloc> CVodeQuadReInit *)
-    val reinit : 'a session -> 'a -> unit
-
-(* XXX WORKING: for implementation XXX
-
-   CVodeQuadInit
-     fQ   : float -> 'a -> 'a -> unit (CVQuadRhsFn)
-     yQ0  : 'a nvector
-
-   CVodeQuadReInit
-     yQ0  : 'a nvector
-     (check for CV_NO_QUAD if cvode_mem not QuadInited... )
-
-  Accept tolerances during initialization?
- *)
+    val reinit : 'a session -> 'a nvector -> unit
 
     (** {3:quadtol Tolerance specification} *)
 
@@ -121,12 +107,6 @@ module Quadrature :
         (** [(rel, abs)] : scalar relative and absolute tolerances. *)
       | SVTolerances of float * 'a nvector
         (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
-
-(* TODO: for implementation:
-    val set_err_con : 'a session -> bool -> unit
-    val ss_tolerances : 'a session -> float -> float -> unit
-    val sv_tolerances : 'a session -> float -> 'a vector -> unit
- *)
 
     (** Specify whether and how quadrature variables should be used in the step
         size control mechanism.
@@ -185,6 +165,7 @@ module Quadrature :
 
 (** {2:forward Forward Sensitivity Analysis} *)
 
+(* TODO: Rename to Sens or Sensitivity? *)
 module Forward :
   sig
     (** {3:fwdtol Tolerance specification} *)
@@ -198,15 +179,8 @@ module Forward :
         (** Calculate the integration tolerances for sensitivities based
             on those for state variables and the scaling factors. *)
 
-(* TODO: for implementation:
-    val ss_tolerances : 'a session -> float -> float -> unit
-    val sv_tolerances : 'a session -> float -> 'a vector -> unit
-    val ee_tolerances : unit -> unit
- *)
-
     (** {3:fwdexcept Exceptions} *)
 
-    (* TODO: add to the standard CHECK_FLAG function? *)
     (* TODO: add @raise everywhere? *)
     (** Forward sensitivity analysis was not initialized.
 
@@ -246,7 +220,7 @@ module Forward :
             approach can only be used if the user-provided sensitivity
             right-hand side function is of type {!OneByOne} (CV_STAGGERED1). *)
 
-    type 'a fwdrhsfn =
+    type 'a sensrhsfn =
         AllAtOnce of
          (float           (* t *)
            -> 'a          (* y *)
@@ -295,15 +269,39 @@ module Forward :
 
            @cvodes <node6#ss:user_fct_fwd> CVSensRhs1Fn *)
 
-    (** This function, [init s ism fS yS0], activates the forward sensitivity
-        computation, where [ism] 
+    (** Used for specifying problem parameter information for
+        sensitivity calculations.
+
+        @cvodes <node6#ss:sens_optional_input> CVodeSetSensParams *)
+    type sens_params = {
+        pvals  : Sundials.real_array option;
+        (** The parameters used to evaluate {i f(t, y, p)}. *)
+        pbar   : Sundials.real_array option;
+        (** An array of {i ns} positive scaling factors. *)
+        plist  : int array option;
+        (** An array of non-negative indices to specify which components
+            to use in estimating the sensitivity equations. *)
+      }
+
+    val no_sens_params : sens_params
+
+    (** This function, [init s ism ps fS yS0], activates the forward sensitivity
+        computation, where [ism] selects the sensitivity solution method, [ps]
+        gives problem parameter information, [fS] computes the sensitivity
+        right-hand sides, and [yS0] gives the initial values of the
+        sensitivities.
+        
+        Note that any array specified by [ps.pvals] is used to pass parameter
+        information during problem solution, that is, the library will normally
+        write to it from time to time.
 
         @cvodes <node6#ss:sensi_malloc> CVodeSensInit
         @cvodes <node6#ss:sensi_malloc> CVodeSensInit1 *)
     val init : 'a session
                -> 'a tolerance
                -> fwd_method
-               -> 'a fwdrhsfn
+               -> sens_params
+               -> 'a sensrhsfn
                -> 'a nvector array
                -> unit
 
@@ -311,23 +309,6 @@ module Forward :
 
         @cvodes <node6#ss:sensi_malloc> CVodeSensReInit *)
     val reinit : 'a session -> fwd_method -> 'a nvector array -> unit
-
-(* XXX WORKING: for implementation XXX
- 
-   CVodeSensInit
-     m    : method      (* Staggered1 not allowed *)
-     fS   : 'a rhsfn
-     ys0  : 'a nvector array (get ns from here)
-
-   CVodeSensInit1
-     m    : method
-     fS   : 'a rhs1fn
-     ys0  : 'a nvector array (get ns from here)
-
-   CVodeSensReInit
-     m    : method      (* may not always pass Staggered1 *)
-     ys0  : 'a nvector array
-  *)
 
     (** Deactivates forward sensitivity calculations without deallocating
         memory. Sensitivities can be reactivated with {!reinit}.
@@ -385,23 +366,6 @@ module Forward :
 
         @cvodes <node5#ss:sens_optional_input> CVodeSetSensErrCon *)
     val set_err_con : 'a session -> bool -> unit
-
-    (* TODO: check that a lint_array is compatabile with int* *)
-    (* TODO:  If non-NULL, p must point to a field in the user's data structure
-              user_data passed to the right-hand side function. (See §5.1). *)
-    (* TODO: check that pbar and plist are ns long. *)
-    (** [set_params s p pbar plist] specifies problem parameter information for
-        sensitivity calculations:
-        - [p], the parameters used to evaluate {i f(t, y, p)},
-        - [pbar], an array of {i ns} positive scaling factors, and,
-        - [plist], an array of non-negative indices to specify which components
-        to use in estimating the sensitivity equations.
-
-        @cvodes <node6#ss:sens_optional_input> CVodeSetSensParams *)
-    val set_params : 'a session -> Sundials.real_array option
-                     -> Sundials.real_array option
-                     -> Sundials.lint_array option
-                     -> unit
 
     type dq_method = DQCentered (* CV_CENTERED *)
                    | DQForward  (* CV_FORWARD *)
@@ -510,7 +474,6 @@ module Forward :
 
         (** {4:quadsensexcept Exceptions} *)
 
-        (* TODO: add to the standard CHECK_FLAG function? *)
         (* TODO: add @raise everywhere? *)
         (** Quadrature integration was not initialized.
 
@@ -565,17 +528,6 @@ module Forward :
             @cvodes <node6#ss:quad_sens_init> CVodeQuadSensReInit *)
         val reinit : 'a session -> 'a nvector array -> unit
 
-    (* XXX WORKING XXX
-
-       TODO: must call CVodeSensInit or CVodeSensInit1 first ...
-       CVodeQuadSensInit
-         fQ   : 'a quadsensrhsfn
-         yqs0  : 'a nvector array
-
-       CVodeQuadSensReInit
-         yqs0  : 'a nvector array
-     *)
-
         (** {4:fwdquad Tolerance specification} *)
 
         type 'a tolerance =
@@ -598,13 +550,6 @@ module Forward :
             @cvodes <node6#ss:quad_sens_optional_input> CVodeQuadSensSVtolerances
             @cvodes <node6#ss:quad_sens_optional_input> CVodeQuadSensEEtolerances *)
         val set_tolerances : 'a session -> 'a tolerance -> unit
-
-    (* TODO: implementation
-        val set_err_con : 'a session -> bool -> unit
-        val ss_tolerances : 'a session -> float -> Sundials.real_array -> unit
-        val sv_tolerances : 'a session -> float -> 'a vector array -> unit
-        val ee_tolerances : unit -> unit
-     *)
 
         (** {4:extraction Extraction functions} *)
 
@@ -685,7 +630,6 @@ module Adjoint :
 
     (** {3:adjexcept Exceptions} *)
 
-    (* TODO: add to the standard CHECK_FLAG function? *)
     (* TODO: add @raise everywhere? *)
     (* TODO: check that all return flags have been considered; here and
        elsewhere *)
@@ -786,7 +730,7 @@ module Adjoint :
         @cvodes <node7#ss:ODErhs_bs> CVRhsFnBS
         @cvodes <node3#e:adj_eqns> Eq 2.19, Adjoint sensitivity analysis
         @cvodes <node3#e:adj1_eqns> Eq 2.21, Adjoint sensitivity analysis *)
-    type 'a rhsfnb =
+    type 'a brhsfn =
         BackBasic of (float       (* t *)
                        -> 'a      (* y *)
                        -> 'a      (* yb *)
@@ -839,10 +783,10 @@ module Adjoint :
     and 'a linear_solver =
 (*
       (* TODO: not for nvectors *)
-      | Dense of dense_jac_fnb option
+      | Dense of bdense_jac_fn option
       (** Direct linear solver with dense matrix.  The optional argument specifies
           a callback function that computes an approximation to the Jacobian matrix
-          (see {!dense_jac_fn} for details).  If this argument is [None], then
+          (see {!bdense_jac_fn} for details).  If this argument is [None], then
           CVODE uses a default implementation based on difference quotients.  See
           also {!Dls}.
 
@@ -850,7 +794,7 @@ module Adjoint :
           @cvodes <node7#SECTION00728200000000000000> CVDlsSetDenseJacFnB
           @cvodes <node7#ss:densejac_b> CVDlsDenseJacFnB *)
       (* TODO: not for nvectors *)
-      | LapackDense of dense_jac_fnb option
+      | LapackDense of bdense_jac_fn option
       (** Direct linear solver with dense matrix, using LAPACK.  The argument is
           the same as [Dense].  See also {!Dls}.
 
@@ -858,17 +802,17 @@ module Adjoint :
           @cvodes <node7#SECTION00728200000000000000> CVDlsSetDenseJacFnB
           @cvodes <node7#ss:densejac_b> CVDlsDenseJacFnB *)
       (* TODO: not for nvectors *)
-      | Band of bandrange * band_jac_fnb option
+      | Band of bandrange * bband_jac_fn option
       (** Direct linear solver with banded matrix.  The arguments specify the width
           of the band ({!bandrange}) and an optional Jacobian function
-          ({!band_jac_fn}).  If the Jacobian function is [None], CVODES uses an
+          ({!bband_jac_fn}).  If the Jacobian function is [None], CVODES uses an
           internal implementation based on difference quotients.  See also {!Dls}.
 
           @cvodes <node7#sss:lin_solv_b> CVBandB
           @cvodes <node7#SECTION00728300000000000000> CVDlsSetBandJacFnB
           @cvodes <node7#ss:bandjac_b> CVDlsBandJacFnB *)
       (* TODO: not for nvectors *)
-      | LapackBand of bandrange * band_jac_fnb option
+      | LapackBand of bandrange * bband_jac_fn option
       (** Direct linear solver with banded matrix using LAPACK.  The arguments
           are the same as [Band].
 
@@ -938,27 +882,34 @@ module Adjoint :
           @cvodes <node7#SECTION00741000000000000000> CVBandPrecInitB *)
 *)
 
+(*
+(* TODO: not for nvectors *)
     (** This function computes the dense Jacobian of the backward problem (or an
         approximation to it).
 
         @cvodes <node7#ss:densejac_b> CVDlsDenseJacFnB *)
-    and 'a dense_jac_fnb =
+    and 'a bdense_jac_fn =
       ('a triple_tmp, 'a) jacobian_arg -> Dls.DenseMatrix.t -> unit
 
     (** This function computes the banded Jacobian of the backward problem (or
         an approximation to it).
 
         @cvodes <node7#ss:bandjac_b> CVDlsBandJacFnB *)
-    and 'a band_jac_fnb =
+    and 'a bband_jac_fn =
       bandrange -> ('a triple_tmp, 'a) jacobian_arg -> Dls.DenseMatrix.t -> unit
 
 
     (** The range of nonzero entries in a band matrix.  *)
     and bandrange = { mupper : int; (** The upper half-bandwidth.  *)
                       mlower : int; (** The lower half-bandwidth.  *) }
+*)
 
     (** Common parameters for Krylov subspace linear solvers.  *)
-    and spils_params = { prec_type : Spils.preconditioning_type;
+    and spils_params = { maxl : int option;
+                         (** Maximum dimension of the Krylov subspace
+                             to be used.  Pass [None] to use the default
+                             value [5]. *)
+                         prec_type : Spils.preconditioning_type;
                          (** The type of preconditioning to be done.  *) }
 
     (** Callbacks for Krylov subspace linear solvers.  Ignored if the
@@ -1011,16 +962,6 @@ module Adjoint :
 
     (** Identifies a backward problem. *)
     type 'a bsession
-    (* TODO:
-      
-        cvode_memB = CVodeGetAdjCVodeBmem(cvode_mem, which)
-
-        gets the cvode_mem associated with 'which'. The CVodeGet* and CVode*Get*
-        functions can be called on this. "The user should not modify in any way
-        cvode_memB"...
-
-        How do we handle this?
-     *)
 
     (** [init_backward s lmm iter tol fB tB0 yB0] adds and initializes a
         backward problem that may or may not depend on forward sensitivities,
@@ -1047,7 +988,7 @@ module Adjoint :
       -> Cvode.lmm
       -> 'a iter
       -> 'a tolerance
-      -> 'a rhsfnb
+      -> 'a brhsfn
       -> float
       -> 'a nvector
       -> 'a bsession
@@ -1081,7 +1022,6 @@ module Adjoint :
         @cvodes <node7#sss:cvsolveb> CVodeGetB *)
     val get : 'a bsession -> 'a nvector -> float
 
-    (* TODO: call the underlying CVodeGetDky function *)
     (** [tret = get_dky s t k dkys] fills [dkys] with the derivatives of the
         sensitivity solution vectors after a successful return from
         {!backward_normal} or {!backward_one_step}. The time requested, [t],
@@ -1095,17 +1035,17 @@ module Adjoint :
 
     (** {3 Optional output functions} *)
 
+    (** Instructs {!forward_normal} and {!forward_one_step} not to save
+        checkpointing data for forward sensitivities anymore.
+
+        @cvodes <node7#SECTION00727000000000000000> CVodeAdjSetNoSensi *)
+    val set_no_sensitivity : 'a session -> unit
+
     (** Specify the integration tolerances for the backward problem.
 
         @cvodes <node7#sss:cvtolerances_b> CVodeSStolerancesB
         @cvodes <node7#sss:cvtolerances_b> CVodeSVtolerancesB *)
     val set_tolerances : 'a bsession -> 'a tolerance -> unit
-
-    (** Instructs {!forward_normal} and {!forward_one_step} not to save
-        checkpointing data for forward sensitivities anymore.
-
-        @cvodes <node7#SECTION00727000000000000000> CVodeAdjSetNoSensi *)
-    val set_no_sensitivity : 'a bsession -> unit
 
     (** Specifies the maximum order of the linear multistep method.
 
@@ -1201,11 +1141,11 @@ module Adjoint :
 
         (** [set_maxl maxl] resets the maximum Krylov subspace dimension for the
             Bi-CGStab or TFQMR methods. [maxl] is the maximum dimension of the
-            Krylov subspace, a value of [maxl] <= 0 specifies the default (which
-            is 5.0).
+            Krylov subspace. a value of [None] (or [maxl] <= 0) specifies the
+            default of 5.0).
 
             @cvodes <node7#SECTION00728400000000000000> CVSpilsSetMaxlB *)
-        val set_maxl : 'a bsession -> int -> unit
+        val set_maxl : 'a bsession -> int option -> unit
 
         (** {4 Optional output functions} *)
 
@@ -1393,8 +1333,6 @@ module Adjoint :
     (** {3 Backward integration of quadrature equations} *)
     module Quadrature :
       sig
-        (* TODO: use standard exceptions from Quadrature *)
-
         (** {3:backquadinit Initialization} *)
 
         (** These functions compute the quadrature equation right-hand side for the
@@ -1402,7 +1340,7 @@ module Adjoint :
 
             @cvodes <node7#ss:ODErhs_quad_b> CVQuadRhsFnB
             @cvodes <node7#ss:ODErhs_quad_sens_B> CVQuadRhsFnBS *)
-        type 'a quadrhsfnb =
+        type 'a bquadrhsfn =
             QuadBasic of (float         (* t *)
                            -> 'a        (* y *)
                            -> 'a        (* yb *)
@@ -1422,7 +1360,7 @@ module Adjoint :
 
             @cvodes <node6#sss:cvquadinitb> CVodeQuadInitB
             @cvodes <node6#sss:cvquadinitb> CVodeQuadInitBS *)
-        val init : 'a bsession -> 'a quadrhsfnb -> 'a nvector -> unit
+        val init : 'a bsession -> 'a bquadrhsfn -> 'a nvector -> unit
 
         (** This function reinitializes the integration of quadrature equations
             during the backward phase.
@@ -1451,24 +1389,15 @@ module Adjoint :
           | SVTolerances of float * 'a nvector
             (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
 
-        (* TODO: for implementation:
-            val set_err_con : 'a session -> bool -> unit
-            val ss_tolerances : 'a session -> float -> float -> unit
-            val sv_tolerances : 'a session -> float -> 'a vector -> unit
-         *)
-
         (** Specify whether and how quadrature variables should be used in the step
             size control mechanism.
 
             @cvodes <node5#ss:quad_optional_input> CVodeSetQuadErrCon
             @cvodes <node5#ss:quad_optional_input> CVodeQuadSStolerances
             @cvodes <node5#ss:quad_optional_input> CVodeQuadSVtolerances *)
-        val set_tolerances : 'a session -> 'a tolerance -> unit
+        val set_tolerances : 'a bsession -> 'a tolerance -> unit
 
         (** {3 Optional output functions} *)
-
-        (* TODO: use CVodeGetAdjCVodeBmem for indirect access via the
-           CVodeGetQuad* functions. *)
 
         (** Returns the number of calls to the user's quadrature right-hand side
             function.
@@ -1477,7 +1406,7 @@ module Adjoint :
                                                       functions for backward
                                                       quadrature integration
             @cvodes <node5#ss:quad_optional_output> CVodeGetQuadNumRhsEvals *)
-        val get_num_rhs_evals       : 'a session -> int
+        val get_num_rhs_evals       : 'a bsession -> int
 
         (** Returns the number of local error test failures due to quadrature
             variables.
@@ -1486,7 +1415,7 @@ module Adjoint :
                                                       functions for backward
                                                       quadrature integration
             @cvodes <node5#ss:quad_optional_output> CVodeGetQuadNumErrTestFails *)
-        val get_num_err_test_fails  : 'a session -> int
+        val get_num_err_test_fails  : 'a bsession -> int
 
         (** Returns the quadrature error weights at the current time.
 
@@ -1494,7 +1423,7 @@ module Adjoint :
                                                       functions for backward
                                                       quadrature integration
             @cvodes <node5#ss:quad_optional_output> CVodeGetQuadErrWeights *)
-        val get_quad_err_weights : 'a session -> 'a nvector -> unit
+        val get_quad_err_weights : 'a bsession -> 'a nvector -> unit
 
         (** [nfqevals, nqetfails = get_stats s] returns
             - [fqevals], the number of calls to the user's quadrature function, and,
@@ -1504,7 +1433,7 @@ module Adjoint :
                                                       functions for backward
                                                       quadrature integration
             @cvodes <node5#ss:quad_optional_output> CVodeGetQuadStats *)
-        val get_stats : 'a session -> int * int
+        val get_stats : 'a bsession -> int * int
       end
   end
 

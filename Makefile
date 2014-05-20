@@ -1,5 +1,7 @@
 include config
 
+# TODO: Make sure that the *_session_*.cmi files are not included!
+
 MLOBJ = sundials.cmo nvector.cmo nvector_array.cmo dls.cmo \
 	spils.cmo spils_nvector.cmo spils_serial.cmo \
 	cvode.cmo cvode_session_nvector.cmo cvode_session_serial.cmo \
@@ -103,6 +105,7 @@ doc/html/index.html: doc/html dochtml.cmo intro.doc \
 	    -kinsol-doc-root "$(KINSOL_DOC_ROOT)" \
 	    -pp "$(DOCPP)"		\
 	    -d ./doc/html/		\
+	    -hide Cvode_session_serial,Cvode_session_nvector \
 	    -t "Sundials (CVODE, IDA & KINSOL)"	\
 	    -intro intro.doc		\
 	    $(MLOBJ:.cmo=.mli)

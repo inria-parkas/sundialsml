@@ -67,7 +67,7 @@ t := t' + 0.1]}
 
     @cvode <node5#ss:skeleton_sim> Skeleton of main program
  *)
-type 'a session
+type 'a session = 'a Cvode_session_nvector.session
 
 (** The type of vectors passed to the solver. *)
 type 'a nvector = 'a Nvector.nvector
@@ -86,8 +86,6 @@ type 'a triple_tmp = 'a * 'a * 'a
 (**
   Arguments common to all Jacobian callback functions.    
  
-  @cvode <node5#ss:djacFn> Dense Jacobian function
-  @cvode <node5#ss:bjacFn> Banded Jacobian function
   @cvode <node5#ss:jtimesFn> Jacobian-times-vector function
   @cvode <node5#ss:psolveFn> Linear preconditioning function
   @cvode <node5#ss:precondFn> Jacobian preconditioning function
@@ -169,7 +167,7 @@ and spils_params = { maxl : int option; (** Maximum dimension of the Krylov subs
 and 'a spils_callbacks =
   {
     prec_solve_fn : (('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
-                     -> 'a nvector -> unit) option;
+                     -> 'a -> unit) option;
     (** Called like [prec_solve_fn jac_arg solve_arg z] to solve the linear
         system {i P}[z] = [solve_arg.rhs], where {i P} may be either a left or
         right preconditioner matrix.  {i P} should approximate, however
@@ -344,8 +342,7 @@ module Spils :
     val set_preconditioner :
       'a session
       -> (('a triple_tmp, 'a) jacobian_arg -> bool -> float -> bool)
-      -> (('a single_tmp, 'a) jacobian_arg -> 'a solve_arg
-          -> 'a nvector -> unit)
+      -> (('a single_tmp, 'a) jacobian_arg -> 'a solve_arg -> 'a -> unit)
       -> unit
 
     (**

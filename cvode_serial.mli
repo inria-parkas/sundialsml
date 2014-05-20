@@ -71,7 +71,7 @@ t := t' + 0.1]}
 
     @cvode <node5#ss:skeleton_sim> Skeleton of main program
  *)
-type session
+type session = Cvode_session_serial.session
 
 (** The type of vectors passed to the solver. *)
 type nvec = Sundials.Carray.t

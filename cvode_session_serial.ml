@@ -104,3 +104,11 @@ type session = {
         mutable sensext    : Obj.t option (* Used by CVODES *)
       }
 
+let shouldn't_be_called fcn =
+  failwith ("internal error in sundials: " ^ fcn ^ " is called")
+let dummy_dense_jac _ _ = shouldn't_be_called "dummy_dense_jac"
+let dummy_band_jac _ _ _ _ = shouldn't_be_called "dummy_band_jac"
+let dummy_prec_setup _ _ _ = shouldn't_be_called "dummy_prec_setup"
+let dummy_prec_solve _ _ _ = shouldn't_be_called "dummy_prec_solve"
+let dummy_jac_times_vec _ _ _ = shouldn't_be_called "dummy_jac_times_vec"
+

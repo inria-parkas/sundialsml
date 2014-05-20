@@ -50,7 +50,7 @@ and spils_params = { maxl : int option;
 and 'a spils_callbacks =
   {
     prec_solve_fn : (('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
-                     -> 'a nvector -> unit) option;
+                     -> 'a -> unit) option;
     prec_setup_fn : (('a triple_tmp, 'a) jacobian_arg -> bool -> float -> bool)
                     option;
     jac_times_vec_fn :
@@ -69,22 +69,28 @@ type cvode_file
 type c_weak_ref
 
 type 'a session = {
-        cvode      : cvode_mem;
-        backref    : c_weak_ref;
-        nroots     : int;
-        err_file   : cvode_file;
+      cvode      : cvode_mem;
+      backref    : c_weak_ref;
+      nroots     : int;
+      err_file   : cvode_file;
 
-        mutable exn_temp   : exn option;
+      mutable exn_temp   : exn option;
 
-        mutable rhsfn      : float -> 'a -> 'a -> unit;
-        mutable rootsfn    : float -> 'a -> root_val_array -> unit;
-        mutable errh       : Sundials.error_details -> unit;
-        mutable errw       : 'a -> 'a -> unit;
-        mutable presetupfn : ('a triple_tmp, 'a) jacobian_arg -> bool -> float -> bool;
-        mutable presolvefn : ('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
-                               -> 'a nvector -> unit;
-        mutable jactimesfn : ('a single_tmp, 'a) jacobian_arg -> 'a -> 'a -> unit;
+      mutable rhsfn      : float -> 'a -> 'a -> unit;
+      mutable rootsfn    : float -> 'a -> root_val_array -> unit;
+      mutable errh       : Sundials.error_details -> unit;
+      mutable errw       : 'a -> 'a -> unit;
+      mutable presetupfn : ('a triple_tmp, 'a) jacobian_arg -> bool -> float -> bool;
+      mutable presolvefn : ('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
+                             -> 'a -> unit;
+      mutable jactimesfn : ('a single_tmp, 'a) jacobian_arg -> 'a -> 'a -> unit;
 
-        mutable sensext    : Obj.t option (* Used by CVODES *)
-      }
+      mutable sensext    : Obj.t option (* Used by CVODES *)
+    }
+
+let shouldn't_be_called fcn =
+  failwith ("internal error in sundials: " ^ fcn ^ " is called")
+let dummy_prec_setup _ _ _ = shouldn't_be_called "dummy_prec_setup"
+let dummy_prec_solve _ _ _ = shouldn't_be_called "dummy_prec_solve"
+let dummy_jac_times_vec _ _ _ = shouldn't_be_called "dummy_jac_times_vec"
 
