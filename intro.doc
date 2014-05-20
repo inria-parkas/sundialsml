@@ -121,6 +121,10 @@ Skeletons of the main program are given under {!Cvode_serial.session} and
 or:
 {[ocamlopt -o myprogram -I +sundials unix.cmxa bigarray.cmxa sundials_cvode.cmxa myprogram.ml]}
 
+{2:cvodes CVODES}
+
+TODO: write this section.
+
 {2:ida IDA}
 
 IDA solves DAE initial value problems using a variable-step solver with
@@ -200,6 +204,7 @@ or:
 
 {!modules: Nvector Nvector_array}
 {!modules: Cvode Cvode_serial Cvode_nvector}
+{!modules: Cvodes_serial Cvodes_nvector}
 {!modules: Ida Ida_serial Ida_nvector}
 {!modules: Kinsol Kinsol_serial Kinsol_nvector}
 

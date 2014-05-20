@@ -1,14 +1,16 @@
 include config
 
-# TODO: Make sure that the *_session_*.cmi files are not included!
+MLOBJ_MAIN = sundials.cmo nvector.cmo nvector_array.cmo dls.cmo \
+	     spils.cmo spils_nvector.cmo spils_serial.cmo \
+	     cvode.cmo cvode_nvector.cmo cvode_serial.cmo \
+	     cvodes_nvector.cmo \
+	     kinsol.cmo kinsol_nvector.cmo kinsol_serial.cmo \
+	     ida.cmo ida_nvector.cmo ida_serial.cmo
 
-MLOBJ = sundials.cmo nvector.cmo nvector_array.cmo dls.cmo \
-	spils.cmo spils_nvector.cmo spils_serial.cmo \
-	cvode.cmo cvode_session_nvector.cmo cvode_session_serial.cmo \
-	cvode_nvector.cmo cvode_serial.cmo \
-	cvodes_nvector.cmo \
-	kinsol.cmo kinsol_nvector.cmo kinsol_serial.cmo \
-	ida.cmo ida_nvector.cmo ida_serial.cmo
+MLOBJ_LOCAL = cvode_session_nvector.cmo \
+	      cvode_session_serial.cmo
+
+MLOBJ = $(MLOBJ_MAIN) $(MLOBJ_LOCAL)
 
 COMMON_COBJ= sundials_ml$(XO) dls_ml$(XO) nvector_ml$(XO) \
 
@@ -26,8 +28,8 @@ COBJ=$(COMMON_COBJ) $(SPILS_COBJ) $(CVODE_COBJ) $(IDA_COBJ) $(KINSOL_COBJ)
 
 INSTALL_FILES= 			\
     META			\
-    $(MLOBJ:.cmo=.cmi)		\
-    libmlsundials$(XA)	\
+    $(MLOBJ_MAIN:.cmo=.cmi)	\
+    libmlsundials$(XA)		\
     sundials$(XA)		\
     sundials.cma		\
     sundials.cmxa		\
@@ -98,7 +100,7 @@ META: META.in
 doc: doc/html/index.html
 
 doc/html/index.html: doc/html dochtml.cmo intro.doc \
-		     $(MLOBJ:.cmo=.mli) $(MLOBJ:.cmo=.cmi) 
+		     $(MLOBJ_MAIN:.cmo=.mli) $(MLOBJ_MAIN:.cmo=.cmi) 
 	$(OCAMLDOC) -g dochtml.cmo \
 	    -cvode-doc-root "$(CVODE_DOC_ROOT)" \
 	    -ida-doc-root "$(IDA_DOC_ROOT)" \
@@ -108,7 +110,7 @@ doc/html/index.html: doc/html dochtml.cmo intro.doc \
 	    -hide Cvode_session_serial,Cvode_session_nvector \
 	    -t "Sundials (CVODE, IDA & KINSOL)"	\
 	    -intro intro.doc		\
-	    $(MLOBJ:.cmo=.mli)
+	    $(MLOBJ_MAIN:.cmo=.mli)
 
 doc/html:
 	mkdir $@

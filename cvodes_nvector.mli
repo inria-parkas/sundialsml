@@ -26,7 +26,7 @@
          and likewise for CVODE and IDA *)
 (* TODO: redo heading links {3:... } *)
 
-(** Abstract nvector interface to the CVODES Extensions.
+(** Abstract nvector interface to the CVODES solver.
 
   @version VERSION()
   @author Timothy Bourke (Inria)
