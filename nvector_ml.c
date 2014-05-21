@@ -122,7 +122,7 @@ static N_Vector malloc_nvec()
     N_Vector nv;
 
     /* Alloc memory in C heap */
-    mem = malloc(sizeof(*nv) + sizeof(*nv->ops) + sizeof(ml_nvec_content));
+    mem = malloc(sizeof(*nv) + sizeof(*nv->ops) + sizeof(struct _ml_nvec_content));
     if (mem == NULL) return NULL;
 
     nv = (N_Vector) mem;
