@@ -76,6 +76,8 @@ kinsol_ml_ba.o: kinsol_ml_nvec.c spils_ml.h nvector_ml.h kinsol_ml.h
 kinsol_ml_nvec.o: kinsol_ml_nvec.c spils_ml.h nvector_ml.h kinsol_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(KINSOL_CFLAGS) -o $@ -c $<
 
+spils_ml.o: spils_ml.c sundials_ml.h spils_ml.h
+	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
 spils_ml_ba.o: spils_ml_nvec.c sundials_ml.h spils_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) \
 	      -DSPILS_ML_BIGARRAYS -o $@ -c $<

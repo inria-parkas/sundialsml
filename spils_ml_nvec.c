@@ -82,7 +82,7 @@ CAMLprim value CVTYPE(modified_gs)(value vv, value vh, value vk, value vp)
 
     if ((hm < k) || (hn < k))
 	caml_invalid_argument("Spils.modified_gs: h is too small.");
-    if (caml_array_length(vv) < k)
+    if (Wosize_val (vv) < k)
 	caml_invalid_argument("Spils.modified_gs: v is too small.");
 #endif
 
@@ -128,7 +128,7 @@ CAMLprim value CVTYPE(classical_gs)(value vargs)
 
     if ((hm < k) || (hn < k))
 	caml_invalid_argument("Spils.classical_gs: h is too small.");
-    if (caml_array_length(vv) < k)
+    if (Wosize_val (vv) < k)
 	caml_invalid_argument("Spils.classical_gs: v is too small.");
     if (ARRAY1_LEN(vs) < k)
 	caml_invalid_argument("Spils.classical_gs: s is too small.");

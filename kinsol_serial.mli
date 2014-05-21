@@ -47,7 +47,7 @@
     Call any of the [set_*] functions to change solver and linear solver
     parameters from their defaults.
     + {b Solve problem}
-    {[let result = Kinsol.solve s u u_scale f_scale}
+    {[let result = Kinsol.solve s u u_scale f_scale]}
     + {b Get optional outputs}
     {[let fnorm = Kinsol.get_func_norm s in ...]}
     Call any of the [get_*] functions to examine solver and linear solver
