@@ -438,14 +438,14 @@ let main () =
   let fnormtol  = ftol in
   let scsteptol = stol in
 
-  let maxl = 15 in
+  let maxl = ref 15 in
   let maxlrst = 2 in
 
   (* Call KINCreate/KINInit to initialize KINSOL using the linear solver
      KINSPGMR with preconditioner routines prec_setup_bd
      and prec_solve_bd. *)
   let kmem = Kinsol.init
-              (Kinsol.Spgmr (Some maxl, Some maxlrst, {
+              (Kinsol.Spgmr (Some !maxl, Some maxlrst, {
                              Kinsol.prec_setup_fn=Some prec_setup_bd;
                              Kinsol.prec_solve_fn=Some prec_solve_bd;
                              Kinsol.jac_times_vec_fn=None; }))
@@ -470,9 +470,9 @@ let main () =
          (* Call KINSpbcg to specify the linear solver KINSPBCG with preconditioner
            routines PrecSetupBD and PrecSolveBD, and the pointer to the user block
            data. *)
-         let maxl = 15 in
+         maxl := 15;
          Kinsol.set_linear_solver kmem
-            (Kinsol.Spbcg (Some maxl, {
+            (Kinsol.Spbcg (Some !maxl, {
                            Kinsol.prec_setup_fn=Some prec_setup_bd;
                            Kinsol.prec_solve_fn=Some prec_solve_bd;
                            Kinsol.jac_times_vec_fn=None; }))
@@ -485,15 +485,15 @@ let main () =
          (* Call KINSptfqmr to specify the linear solver KINSPTFQMR with
             preconditioner routines PrecSetupBD and PrecSolveBD, and the pointer to
             the user block data. *)
-         let maxl = 25 in
+         maxl := 25;
          Kinsol.set_linear_solver kmem
-            (Kinsol.Sptfqmr (Some maxl, {
+            (Kinsol.Sptfqmr (Some !maxl, {
                              Kinsol.prec_setup_fn=Some prec_setup_bd;
                              Kinsol.prec_solve_fn=Some prec_solve_bd;
                              Kinsol.jac_times_vec_fn=None; })));
 
     (* Print out the problem size, solution parameters, initial guess. *)
-    print_header globalstrategy maxl maxlrst fnormtol scsteptol linsolver;
+    print_header globalstrategy !maxl maxlrst fnormtol scsteptol linsolver;
 
     (* Call KINSol and print output concentration profile *)
     ignore (Kinsol.solve kmem           (* KINSol memory block *)
