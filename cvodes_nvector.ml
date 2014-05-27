@@ -95,7 +95,7 @@ module Quadrature =
         = "c_cvodes_quad_get_stats"
   end
 
-module Forward =
+module Sensitivity =
   struct
     type 'a tolerance =
         SSTolerances of float * float
@@ -134,7 +134,7 @@ module Forward =
       | FwdSensExt se -> se
       | _ -> raise SensNotInitialized
 
-    type fwd_method =
+    type sens_method =
         Simultaneous
       | Staggered
       | Staggered1
@@ -158,10 +158,10 @@ module Forward =
 
     let no_sens_params = { pvals = None; pbar = None; plist = None }
 
-    external c_init : 'a session -> fwd_method -> 'a nvector array -> unit
+    external c_init : 'a session -> sens_method -> 'a nvector array -> unit
         = "c_nvec_cvodes_sens_init"
 
-    external c_init_1 : 'a session -> fwd_method -> 'a nvector array -> unit
+    external c_init_1 : 'a session -> sens_method -> 'a nvector array -> unit
         = "c_nvec_cvodes_sens_init_1"
 
     (* TODO: check that pbar and plist are ns long. *)
@@ -187,7 +187,7 @@ module Forward =
       set_params s sparams;
       set_tolerances s tol
 
-    external reinit : 'a session -> fwd_method -> 'a nvector array -> unit
+    external reinit : 'a session -> sens_method -> 'a nvector array -> unit
         = "c_nvec_cvodes_sens_reinit"
 
     external toggle_off : 'a session -> unit

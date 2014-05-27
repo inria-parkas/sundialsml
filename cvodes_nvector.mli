@@ -163,12 +163,11 @@ module Quadrature :
 
   end
 
-(** {2:forward Forward Sensitivity Analysis} *)
+(** {2:sens (Forward) Sensitivity Analysis} *)
 
-(* TODO: Rename to Sens or Sensitivity? *)
-module Forward :
+module Sensitivity :
   sig
-    (** {3:fwdtol Tolerance specification} *)
+    (** {3:senstol Tolerance specification} *)
 
     type 'a tolerance =
         SSTolerances of float * float
@@ -179,10 +178,10 @@ module Forward :
         (** Calculate the integration tolerances for sensitivities based
             on those for state variables and the scaling factors. *)
 
-    (** {3:fwdexcept Exceptions} *)
+    (** {3:sensexcept Exceptions} *)
 
     (* TODO: add @raise everywhere? *)
-    (** Forward sensitivity analysis was not initialized.
+    (** Sensitivity analysis was not initialized.
 
         @cvodes <node5#ss:sensi_get> CV_NO_SENS *)
     exception SensNotInitialized
@@ -199,9 +198,9 @@ module Forward :
     (** @cvodes <node6#SECTION00623000000000000000> CV_UNREC_SRHSFUNC_ERR *)
     exception UnrecoverableSensRhsFuncErr
 
-    (** {3:fwdinit Initialization} *)
+    (** {3:sensinit Initialization} *)
 
-    type fwd_method =
+    type sens_method =
         Simultaneous
         (** Correct state and sensitivity variables at the same time.
             If {!Cvode_nvector.Newton} was selected as the nonlinear system
@@ -299,7 +298,7 @@ module Forward :
         @cvodes <node6#ss:sensi_malloc> CVodeSensInit1 *)
     val init : 'a session
                -> 'a tolerance
-               -> fwd_method
+               -> sens_method
                -> sens_params
                -> 'a sensrhsfn
                -> 'a nvector array
@@ -308,7 +307,7 @@ module Forward :
     (** This function reinitializes the forward sensitivity computation.
 
         @cvodes <node6#ss:sensi_malloc> CVodeSensReInit *)
-    val reinit : 'a session -> fwd_method -> 'a nvector array -> unit
+    val reinit : 'a session -> sens_method -> 'a nvector array -> unit
 
     (** Deactivates forward sensitivity calculations without deallocating
         memory. Sensitivities can be reactivated with {!reinit}.
@@ -528,7 +527,7 @@ module Forward :
             @cvodes <node6#ss:quad_sens_init> CVodeQuadSensReInit *)
         val reinit : 'a session -> 'a nvector array -> unit
 
-        (** {4:fwdquad Tolerance specification} *)
+        (** {4:sensquad Tolerance specification} *)
 
         type 'a tolerance =
             NoStepSizeControl
