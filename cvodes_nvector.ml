@@ -12,149 +12,18 @@
 
 include Cvode_session_nvector
 
-type 'a bsession = {
-    parent   : 'a session;
-    bsession : 'a session;
-    which    : int;
-  }
-
-type 'a quadrhsfn = float -> 'a -> 'a -> unit
-
-type 'a sensrhsfn =
-    AllAtOnce of (float -> 'a -> 'a -> 'a array -> 'a array -> 'a -> 'a -> unit)
-  | OneByOne of (float -> 'a -> 'a -> int -> 'a -> 'a -> 'a -> 'a -> unit)
-
-type 'a quadsensrhsfn =
-   float -> 'a nvector -> 'a nvector -> 'a nvector -> 'a nvector array
-         -> 'a nvector -> 'a nvector -> unit
-
-type 'a brhsfn =
-        BackBasic of (float -> 'a -> 'a -> 'a -> unit)
-      | BackWithSens of (float -> 'a -> 'a array -> 'a -> 'a -> unit)
-
-type 'a bquadrhsfn =
-        QuadBasic of (float -> 'a -> 'a -> 'a -> unit)
-      | QuadWithSens of (float -> 'a -> 'a array -> 'a -> 'a -> unit)
-
-type ('t, 'a) bjacobian_arg =
-  {
-    jac_t   : float;
-    jac_y   : 'a;
-    jac_yb  : 'a;
-    jac_fyb : 'a;
-    jac_tmp : 't
-  }
-
-type 'a bprec_solve_arg =
-  {
-    rvecB   : 'a;
-    gammaB : float;
-    deltaB : float;
-  }
-
-(*
-    (* TODO: not for nvectors *)
-type 'a bdense_jac_fn =
-      ('a triple_tmp, 'a) bjacobian_arg -> Dls.DenseMatrix.t -> unit
-
- and 'a bband_jac_fn =
-      bandrange -> ('a triple_tmp, 'a) bjacobian_arg -> Dls.DenseMatrix.t -> unit
-
- and bandrange = { mupper : int; mlower : int }
-*)
-
-type 'a sensext = {
-    (* Quadrature *)
-    mutable quadrhsfn     : 'a quadrhsfn;
-
-    (* Forward *)
-    mutable senspvals     : Sundials.real_array option;
-                            (* keep a reference to prevent garbage collection *)
-
-    mutable sensrhsfn     : (float -> 'a -> 'a -> 'a array
-                               -> 'a array -> 'a -> 'a -> unit);
-    mutable sensrhsfn1    : (float -> 'a -> 'a -> int -> 'a
-                               -> 'a -> 'a -> 'a -> unit);
-    mutable quadsensrhsfn : 'a quadsensrhsfn;
-  }
-
-let shouldn't_be_called fcn =
-  failwith ("internal error in sundials: " ^ fcn ^ " is called")
-(*
-(* TODO: include in serial vesrsion *)
-let dummy_bdense_jac _ _ = shouldn't_be_called "dummy_dense_jac"
-let dummy_bband_jac _ _ _ _ = shouldn't_be_called "dummy_band_jac"
-*)
-let dummy_bprec_setup _ _ _ = shouldn't_be_called "dummy_prec_setup"
-let dummy_bprec_solve _ _ _ = shouldn't_be_called "dummy_prec_solve"
-let dummy_bjac_times_vec _ _ _ = shouldn't_be_called "dummy_jac_times_vec"
-
-type 'a bsensext = {
-    (* Adjoint *)
-    mutable brhsfn        : (float -> 'a -> 'a -> 'a -> unit);
-    mutable brhsfn1       : (float -> 'a -> 'a array -> 'a -> 'a -> unit);
-    mutable bquadrhsfn    : (float -> 'a -> 'a -> 'a -> unit);
-    mutable bquadrhsfn1   : (float -> 'a -> 'a array -> 'a -> 'a -> unit);
-
-    mutable bpresetupfn : ('a triple_tmp, 'a) bjacobian_arg -> bool
-                            -> float -> bool;
-    mutable bpresolvefn : ('a single_tmp, 'a) bjacobian_arg
-                            -> 'a bprec_solve_arg -> 'a -> unit;
-    mutable bjactimesfn : ('a single_tmp, 'a) bjacobian_arg -> 'a -> 'a -> unit;
-
-    (*
-    (* TODO: include in serial version *)
-    mutable bjacfn      : 'a bdense_jac_fn;
-    mutable bbandjacfn  : 'a bband_jac_fn;
-    *)
-  }
-
-exception NoSensExt
-
-let sensext (s : 'a session) =
+let add_fwdsensext s =
   match s.sensext with
-  | None -> raise NoSensExt
-  | Some se -> ((Obj.obj se) : 'a sensext)
-
-let new_sensext s =
-  try sensext s
-  with NoSensExt ->
-    let se = {
-        senspvals     = None;
+  | FwdSensExt se -> ()
+  | BwdSensExt _ -> failwith "Quadrature.add_fwdsensext: internal error"
+  | NoSensExt ->
+      s.sensext <- FwdSensExt {
         quadrhsfn     = (fun _ _ _ -> ());
+        senspvals     = None;
         sensrhsfn     = (fun _ _ _ _ _ _ _ -> ());
         sensrhsfn1    = (fun _ _ _ _ _ _ _ _ -> ());
         quadsensrhsfn = (fun _ _ _ _ _ _ _ -> ());
       }
-    in
-    s.sensext <- Some (Obj.repr se);
-    se
-
-let bsensext ({bsession=bs} : 'a bsession) =
-  match bs.sensext with
-  | None -> raise NoSensExt
-  | Some se -> ((Obj.obj se) : 'a bsensext)
-
-let new_bsensext ({bsession=bs} as s) =
-  try bsensext s
-  with NoSensExt ->
-    let se = {
-      brhsfn      = (fun _ _ _ _ -> ());
-      brhsfn1     = (fun _ _ _ _ _ -> ());
-      bquadrhsfn  = (fun _ _ _ _ -> ());
-      bquadrhsfn1 = (fun _ _ _ _ _ -> ());
-
-      bpresetupfn = dummy_bprec_setup;
-      bpresolvefn = dummy_bprec_solve;
-      bjactimesfn = dummy_bjac_times_vec;
-
-(* TODO: for serial
-      bdense_jac = dummy_bdense_jac;
-      bband_jac = dummy_bband_jac;
-*)
-    } in
-    bs.sensext <- Some (Obj.repr se);
-    se
 
 (* TODO: add callback 'trampolines' *)
 
@@ -168,13 +37,19 @@ module Quadrature =
     exception RepeatedQuadRhsFuncErr
     exception UnrecoverableQuadRhsFuncErr
 
+    let fwdsensext s =
+      match s.sensext with
+      | FwdSensExt se -> se
+      | _ -> raise QuadNotInitialized
+
     type 'a quadrhsfn = float -> 'a -> 'a -> unit
 
     external c_init : 'a session -> 'a nvector -> unit
         = "c_nvec_cvodes_quad_init"
 
     let init s f v0 =
-      let se = new_sensext s in
+      add_fwdsensext s;
+      let se = fwdsensext s in
       se.quadrhsfn <- f;
       c_init s v0
 
@@ -254,6 +129,11 @@ module Forward =
     exception RepeatedSensRhsFuncErr
     exception UnrecoverableSensRhsFuncErr
 
+    let fwdsensext s =
+      match s.sensext with
+      | FwdSensExt se -> se
+      | _ -> raise SensNotInitialized
+
     type fwd_method =
         Simultaneous
       | Staggered
@@ -289,7 +169,8 @@ module Forward =
         = "c_cvodes_sens_set_params"
 
     let init s tol fmethod sparams fm v0 =
-      let se = sensext s in
+      add_fwdsensext s;
+      let se = fwdsensext s in
       c_init s fmethod v0;
       (match fm with
        | AllAtOnce f -> begin
@@ -403,7 +284,7 @@ module Forward =
             = "c_nvec_cvodes_quadsens_init"
 
         let init s f v0 =
-          let se = sensext s in
+          let se = fwdsensext s in
           se.quadsensrhsfn <- f;
           c_init s v0
 
@@ -471,7 +352,7 @@ module Adjoint =
     (* TODO: check that all return flags have been considered; here and
        elsewhere *)
 
-    exception SensNotInitialized
+    exception AdjointNotInitialized
     exception NoForwardCall
     exception ForwardReinitializationFailed
     exception ForwardFailed
@@ -567,43 +448,43 @@ module Adjoint =
         deltaB : float;
       }
 
+    type 'a bsession = Bsession of 'a session
+    let tosession = function Bsession s -> s
+
     type 'a tolerance =
       | SSTolerances of float * float
       | SVTolerances of float * 'a nvector
 
     external ss_tolerances
-        : 'a session -> int -> float -> float -> unit
+        : 'a bsession -> float -> float -> unit
         = "c_cvodes_adj_ss_tolerancesb"
 
     external sv_tolerances
-        : 'a session -> int -> float -> 'a nvector -> unit
+        : 'a bsession -> float -> 'a nvector -> unit
         = "c_nvec_cvodes_adj_sv_tolerancesb"
 
-    let set_tolerances {parent=s; which=w} tol =
+    let set_tolerances bs tol =
       match tol with
-      | SSTolerances (rel, abs) -> ss_tolerances s w rel abs
-      | SVTolerances (rel, abs) -> sv_tolerances s w rel abs
+      | SSTolerances (rel, abs) -> ss_tolerances bs rel abs
+      | SVTolerances (rel, abs) -> sv_tolerances bs rel abs
 
-    type 'a _bsession = 'a bsession
-    type 'a bsession = 'a _bsession
-
-    external c_diag : 'a session -> int -> unit
+    external c_diag : 'a bsession -> unit
       = "c_cvode_adj_diag"
 
     external c_spils_set_preconditioner
-      : 'a session -> int -> bool -> bool -> unit
+      : 'a bsession -> bool -> bool -> unit
       = "c_nvec_cvode_adj_spils_set_preconditioner"
 
     external c_spils_spgmr
-      : 'a session -> int -> int -> Spils.preconditioning_type -> unit
+      : 'a bsession -> int -> Spils.preconditioning_type -> unit
       = "c_cvode_adj_spils_spgmr"
 
     external c_spils_spbcg
-      : 'a session -> int -> int -> Spils.preconditioning_type -> unit
+      : 'a bsession -> int -> Spils.preconditioning_type -> unit
       = "c_cvode_adj_spils_spbcg"
 
     external c_spils_sptfqmr
-      : 'a session -> int -> int -> Spils.preconditioning_type -> unit
+      : 'a bsession -> int -> Spils.preconditioning_type -> unit
       = "c_cvode_adj_spils_sptfqmr"
 
 (* TODO serial only
@@ -623,12 +504,17 @@ module Adjoint =
       = "c_cvode_adj_spils_banded_sptfqmr"
 *)
 
-    external c_set_functional : 'a session -> int -> unit
+    external c_set_functional : 'a bsession -> unit
       = "c_cvode_adj_set_functional"
 
+    let bwdsensext = function (Bsession bs) ->
+      match bs.sensext with
+      | BwdSensExt se -> se
+      | _ -> raise AdjointNotInitialized
+
     (* TODO: rework for serial nvectors *)
-    let set_iter_type ({parent=s;which=w} as session) iter =
-      let se = bsensext session in
+    let set_iter_type bs iter =
+      let se = bwdsensext bs in
       let optionally f = function
         | None -> ()
         | Some x -> f x
@@ -641,7 +527,7 @@ module Adjoint =
           | None -> invalid_arg "preconditioning type is not PrecNone, but no \
                                  solve function given"
           | Some solve_fn ->
-            c_spils_set_preconditioner s w
+            c_spils_set_preconditioner bs
               (cb.prec_setup_fn <> None)
               (cb.jac_times_vec_fn <> None);
             se.bpresolvefn <- solve_fn;
@@ -653,23 +539,23 @@ module Adjoint =
       se.bpresolvefn <- dummy_bprec_solve;
       se.bjactimesfn <- dummy_bjac_times_vec;
       match iter with
-      | Functional -> c_set_functional s w
+      | Functional -> c_set_functional bs
       | Newton linsolv ->
         (* Iter type will be set to CV_NEWTON in the functions that set the linear
            solver.  *)
         match linsolv with
-        | Diag -> c_diag s w
+        | Diag -> c_diag bs
         | Spgmr (par, cb) ->
             let maxl = match par.maxl with None -> 0 | Some ml -> ml in
-            c_spils_spgmr s w maxl par.prec_type;
+            c_spils_spgmr bs maxl par.prec_type;
             set_precond par.prec_type cb
         | Spbcg (par, cb) ->
             let maxl = match par.maxl with None -> 0 | Some ml -> ml in
-            c_spils_spbcg s w maxl par.prec_type;
+            c_spils_spbcg bs maxl par.prec_type;
             set_precond par.prec_type cb
         | Sptfqmr (par, cb) ->
             let maxl = match par.maxl with None -> 0 | Some ml -> ml in
-            c_spils_sptfqmr s w maxl par.prec_type;
+            c_spils_sptfqmr bs maxl par.prec_type;
             set_precond par.prec_type cb
 
     external bsession_finalize : 'a session -> unit
@@ -696,7 +582,7 @@ module Adjoint =
       in
       (* cvode_mem and backref have to be immediately captured in a session and
          associated with the finalizer before we do anything else.  *)
-      let backsession = ({
+      let bs = Bsession {
               cvode      = cvode_mem;
               backref    = backref;
               nroots     = 0;
@@ -712,171 +598,176 @@ module Adjoint =
               presolvefn = dummy_prec_solve;
               jactimesfn = dummy_jac_times_vec;
 
-              sensext    = None;
-            } : 'a session) in
-      Gc.finalise bsession_finalize backsession;
-      Weak.set weakref 0 (Some backsession);
+              sensext    = BwdSensExt {
+                parent   = s;
+                which    = which;
+
+                brhsfn      = (match mf with
+                               | BackBasic f -> f
+                               | _ -> (fun _ _ _ _ -> ()));
+
+                brhsfn1     = (match mf with
+                               | BackWithSens f -> f
+                               | _ -> (fun _ _ _ _ _ -> ()));
+
+                bquadrhsfn  = (fun _ _ _ _ -> ());
+                bquadrhsfn1 = (fun _ _ _ _ _ -> ());
+
+                bpresetupfn = dummy_bprec_setup;
+                bpresolvefn = dummy_bprec_solve;
+                bjactimesfn = dummy_bjac_times_vec;
+
+                (* TODO: for serial
+                bdense_jac = dummy_bdense_jac;
+                bband_jac = dummy_bband_jac;
+                *)
+              };
+            } in
+      Gc.finalise bsession_finalize (tosession bs);
+      Weak.set weakref 0 (Some (tosession bs));
       (* Now the session is safe to use.  If any of the following fails and raises
          an exception, the GC will take care of freeing cvode_mem and backref.  *)
-      let session = {parent=s; bsession=backsession; which=which} in
-      let se = new_bsensext session in
-      (match mf with
-       | BackBasic f -> se.brhsfn <- f
-       | BackWithSens f -> se.brhsfn1 <- f);
-      set_iter_type session iter;
-      set_tolerances session tol;
-      session
+      set_iter_type bs iter;
+      set_tolerances bs tol;
+      bs
 
-    external c_reinit : 'a session -> int -> float -> 'a nvector -> unit
+    external reinit : 'a bsession -> float -> 'a nvector -> unit
         = "c_nvec_cvodes_adj_reinit"
-    let reinit {parent=s; which=w} = c_reinit s w
 
-    external c_backward_normal : 'a session -> float -> unit
+    external backward_normal : 'a session -> float -> unit
         = "c_cvodes_adj_backward_normal"
-    let backward_normal {parent=s} = c_backward_normal s
 
-    external c_backward_one_step : 'a session -> float -> unit
+    external backward_one_step : 'a session -> float -> unit
         = "c_cvodes_adj_backward_one_step"
-    let backward_one_step {parent=s} = c_backward_one_step s
 
-    external c_get : 'a session -> int -> 'a nvector -> float
+    external get : 'a bsession -> 'a nvector -> float
         = "c_nvec_cvodes_adj_backward_one_step"
-    let get {parent=s; which=w} = c_get s w
 
-    let get_dky {bsession=bs} = Cvode_nvector.get_dky bs
+    let get_dky bs = Cvode_nvector.get_dky (tosession bs)
 
     external set_no_sensitivity : 'a session -> unit
         = "c_cvodes_adj_set_no_sensitivity"
 
-    external c_set_max_ord : 'a session -> int -> int -> unit
+    external set_max_ord : 'a bsession -> int -> unit
         = "c_cvodes_set_max_ord"
-    let set_max_ord {parent=s; which=w} = c_set_max_ord s w
 
-    external c_set_max_num_steps : 'a session -> int -> int -> unit
+    external set_max_num_steps : 'a bsession -> int -> unit
         = "c_cvodes_set_max_num_steps"
-    let set_max_num_steps {parent=s; which=w} = c_set_max_num_steps s w
 
-    external c_set_init_step : 'a session -> int -> float -> unit
+    external set_init_step : 'a bsession -> float -> unit
         = "c_cvodes_set_init_step"
-    let set_init_step {parent=s; which=w} = c_set_init_step s w
 
-    external c_set_min_step : 'a session -> int -> float -> unit
+    external set_min_step : 'a bsession -> float -> unit
         = "c_cvodes_set_min_step"
-    let set_min_step {parent=s; which=w} = c_set_min_step s w
 
-    external c_set_max_step : 'a session -> int -> float -> unit
+    external set_max_step : 'a bsession -> float -> unit
         = "c_cvodes_set_max_step"
-    let set_max_step {parent=s; which=w} = c_set_max_step s w
 
-    external c_set_stab_lim_det : 'a session -> int -> bool -> unit
+    external set_stab_lim_det : 'a bsession -> bool -> unit
         = "c_cvodes_set_stab_lim_det"
-    let set_stab_lim_det {parent=s; which=w} = c_set_stab_lim_det s w
 
     module Diag =
       struct
-        let get_work_space {bsession=s} =
-          Cvode_nvector.Diag.get_work_space s
+        let get_work_space bs =
+          Cvode_nvector.Diag.get_work_space (tosession bs)
 
-        let get_num_rhs_evals {bsession=s} =
-          Cvode_nvector.Diag.get_num_rhs_evals s
+        let get_num_rhs_evals bs =
+          Cvode_nvector.Diag.get_num_rhs_evals (tosession bs)
       end
 
     module Spils =
       struct
-        external c_set_prec_type
-            : 'a session -> int -> Spils.preconditioning_type -> unit
+        external set_prec_type
+            : 'a bsession -> Spils.preconditioning_type -> unit
             = "c_cvodes_set_prec_type"
-        let set_prec_type {parent=s; which=w} = c_set_prec_type s w
 
-        external c_set_gs_type
-            : 'a session -> int -> Spils.gramschmidt_type -> unit
+        external set_gs_type : 'a bsession -> Spils.gramschmidt_type -> unit
             = "c_cvodes_set_gs_type"
-        let set_gs_type {parent=s; which=w} = c_set_gs_type s w
 
-        external c_set_eps_lin : 'a session -> int -> float -> unit
+        external set_eps_lin : 'a bsession -> float -> unit
             = "c_cvodes_set_eps_lin"
-        let set_eps_lin {parent=s; which=w} = c_set_eps_lin s w
 
-        external c_set_maxl : 'a session -> int -> int -> unit
+        external c_set_maxl : 'a bsession -> int -> unit
             = "c_cvodes_set_maxl"
-        let set_maxl {parent=s; which=w} omaxl =
-          let maxl = match omaxl with
-                     | None -> 0
-                     | Some x -> x
-          in c_set_maxl s w maxl
+        let set_maxl bs omaxl =
+          c_set_maxl bs (match omaxl with None -> 0 | Some x -> x)
 
-        let get_work_space {bsession=s} =
-          Cvode_nvector.Spils.get_work_space s
+        let get_work_space bs =
+          Cvode_nvector.Spils.get_work_space (tosession bs)
 
-        let get_num_lin_iters {bsession=s} =
-          Cvode_nvector.Spils.get_num_lin_iters s
+        let get_num_lin_iters bs =
+          Cvode_nvector.Spils.get_num_lin_iters (tosession bs)
 
-        let get_num_conv_fails {bsession=s} =
-          Cvode_nvector.Spils.get_num_conv_fails s
+        let get_num_conv_fails bs =
+          Cvode_nvector.Spils.get_num_conv_fails (tosession bs)
 
-        let get_num_prec_evals {bsession=s} =
-          Cvode_nvector.Spils.get_num_prec_evals s
+        let get_num_prec_evals bs =
+          Cvode_nvector.Spils.get_num_prec_evals (tosession bs)
 
-        let get_num_prec_solves {bsession=s} =
-          Cvode_nvector.Spils.get_num_prec_solves s
+        let get_num_prec_solves bs =
+          Cvode_nvector.Spils.get_num_prec_solves (tosession bs)
 
-        let get_num_jtimes_evals {bsession=s} =
-          Cvode_nvector.Spils.get_num_jtimes_evals s
+        let get_num_jtimes_evals bs =
+          Cvode_nvector.Spils.get_num_jtimes_evals (tosession bs)
 
-        let get_num_rhs_evals {bsession=s} =
-          Cvode_nvector.Spils.get_num_rhs_evals s
+        let get_num_rhs_evals bs =
+          Cvode_nvector.Spils.get_num_rhs_evals (tosession bs)
       end
 
     module BandPrec =
       struct
-        let get_work_space {bsession=s} =
-          Cvode_nvector.BandPrec.get_work_space s
-        let get_num_rhs_evals {bsession=s} =
-          Cvode_nvector.BandPrec.get_num_rhs_evals s
+        let get_work_space bs =
+          Cvode_nvector.BandPrec.get_work_space (tosession bs)
+        let get_num_rhs_evals bs =
+          Cvode_nvector.BandPrec.get_num_rhs_evals (tosession bs)
       end
 
-    let get_work_space {bsession=s} = Cvode_nvector.get_work_space s
+    let get_work_space bs = Cvode_nvector.get_work_space (tosession bs)
 
-    let get_num_steps {bsession=s} = Cvode_nvector.get_num_steps s
+    let get_num_steps bs = Cvode_nvector.get_num_steps (tosession bs)
 
-    let get_num_rhs_evals {bsession=s} = Cvode_nvector.get_num_rhs_evals s
+    let get_num_rhs_evals bs = Cvode_nvector.get_num_rhs_evals (tosession bs)
 
-    let get_num_lin_solv_setups {bsession=s} =
-      Cvode_nvector.get_num_lin_solv_setups s
+    let get_num_lin_solv_setups bs =
+      Cvode_nvector.get_num_lin_solv_setups (tosession bs)
 
-    let get_num_err_test_fails {bsession=s} =
-      Cvode_nvector.get_num_err_test_fails s
+    let get_num_err_test_fails bs =
+      Cvode_nvector.get_num_err_test_fails (tosession bs)
 
-    let get_last_order {bsession=s} = Cvode_nvector.get_last_order s
+    let get_last_order bs = Cvode_nvector.get_last_order (tosession bs)
 
-    let get_current_order {bsession=s} = Cvode_nvector.get_current_order s
+    let get_current_order bs = Cvode_nvector.get_current_order (tosession bs)
 
-    let get_last_step {bsession=s} = Cvode_nvector.get_last_step s
+    let get_last_step bs = Cvode_nvector.get_last_step (tosession bs)
 
-    let get_current_step {bsession=s} = Cvode_nvector.get_current_step s
+    let get_current_step bs = Cvode_nvector.get_current_step (tosession bs)
 
-    let get_actual_init_step {bsession=s} = Cvode_nvector.get_actual_init_step s
+    let get_actual_init_step bs =
+      Cvode_nvector.get_actual_init_step (tosession bs)
 
-    let get_current_time {bsession=s} = Cvode_nvector.get_current_time s
+    let get_current_time bs = Cvode_nvector.get_current_time (tosession bs)
 
-    let get_num_stab_lim_order_reds {bsession=s} =
-      Cvode_nvector.get_num_stab_lim_order_reds s
+    let get_num_stab_lim_order_reds bs =
+      Cvode_nvector.get_num_stab_lim_order_reds (tosession bs)
 
-    let get_tol_scale_factor {bsession=s} = Cvode_nvector.get_tol_scale_factor s
+    let get_tol_scale_factor bs =
+      Cvode_nvector.get_tol_scale_factor (tosession bs)
 
-    let get_err_weights {bsession=s} = Cvode_nvector.get_err_weights s
-    let get_est_local_errors {bsession=s} = Cvode_nvector.get_est_local_errors s
+    let get_err_weights bs = Cvode_nvector.get_err_weights (tosession bs)
+    let get_est_local_errors bs =
+      Cvode_nvector.get_est_local_errors (tosession bs)
 
-    let get_integrator_stats {bsession=s} = Cvode_nvector.get_integrator_stats s
+    let get_integrator_stats bs =
+      Cvode_nvector.get_integrator_stats (tosession bs)
 
-    let print_integrator_stats {bsession=s} =
-      Cvode_nvector.print_integrator_stats s
+    let print_integrator_stats bs =
+      Cvode_nvector.print_integrator_stats (tosession bs)
 
-    let get_num_nonlin_solv_iters {bsession=s} =
-      Cvode_nvector.get_num_nonlin_solv_iters s
+    let get_num_nonlin_solv_iters bs =
+      Cvode_nvector.get_num_nonlin_solv_iters (tosession bs)
 
-    let get_num_nonlin_solv_conv_fails {bsession=s} =
-      Cvode_nvector.get_num_nonlin_solv_conv_fails s
+    let get_num_nonlin_solv_conv_fails bs =
+      Cvode_nvector.get_num_nonlin_solv_conv_fails (tosession bs)
 
     module Quadrature =
       struct
@@ -887,59 +778,56 @@ module Adjoint =
             QuadBasic of (float -> 'a -> 'a -> 'a -> unit)
           | QuadWithSens of (float -> 'a -> 'a array -> 'a -> 'a -> unit)
 
-        external c_init : 'a session -> int -> 'a nvector -> unit
+        external c_init : 'a bsession -> 'a nvector -> unit
             = "c_nvec_cvodes_quad_initb"
-        external c_init_s : 'a session -> int -> 'a nvector -> unit
+        external c_init_s : 'a bsession -> 'a nvector -> unit
             = "c_nvec_cvodes_quad_initbs"
 
-        let init ({parent=p; which=w} as s) mf y0 =
-          let bse = new_bsensext s in
+        let init bs mf y0 =
+          let se = bwdsensext bs in
           match mf with
-           | QuadBasic f -> (bse.bquadrhsfn <- f;
-                             c_init p w y0)
-           | QuadWithSens f -> (bse.bquadrhsfn1 <- f;
-                                c_init_s p w y0)
+           | QuadBasic f -> (se.bquadrhsfn <- f; c_init bs y0)
+           | QuadWithSens f -> (se.bquadrhsfn1 <- f; c_init_s bs y0)
 
-        external c_reinit : 'a session -> int -> 'a nvector -> unit
+        external reinit : 'a bsession -> 'a nvector -> unit
             = "c_nvec_cvodes_quad_reinitb"
 
-        let reinit {parent=s; which=w} = c_reinit s w
-
-        external c_get : 'a session -> int -> 'a nvector array -> float
+        external get : 'a bsession -> 'a nvector array -> float
             = "c_nvec_cvodes_quad_getb"
-
-        let get {parent=s; which=w} = c_get s w
 
         type 'a tolerance =
             NoStepSizeControl
           | SSTolerances of float * float
           | SVTolerances of float * 'a nvector
 
-        external set_err_con : 'a session -> int -> bool -> unit
+        external set_err_con : 'a bsession -> bool -> unit
             = "c_nvec_cvodes_quad_set_err_conb"
 
         external sv_tolerances
-            : 'a session -> int -> float -> 'a nvector -> unit
+            : 'a bsession -> float -> 'a nvector -> unit
             = "c_nvec_cvodes_quad_sv_tolerancesb"
 
-        external ss_tolerances  : 'a session -> int -> float -> float -> unit
+        external ss_tolerances  : 'a bsession -> float -> float -> unit
             = "c_cvodes_quad_ss_tolerancesb"
 
-        let set_tolerances {parent=s; which=w} tol =
+        let set_tolerances bs tol =
           match tol with
-          | NoStepSizeControl -> set_err_con s w false
-          | SSTolerances (rel, abs) -> (set_err_con s w true;
-                                        ss_tolerances s w rel abs)
-          | SVTolerances (rel, abs) -> (set_err_con s w true;
-                                        sv_tolerances s w rel abs)
+          | NoStepSizeControl -> set_err_con bs false
+          | SSTolerances (rel, abs) -> (set_err_con bs true;
+                                        ss_tolerances bs rel abs)
+          | SVTolerances (rel, abs) -> (set_err_con bs true;
+                                        sv_tolerances bs rel abs)
 
-        let get_num_rhs_evals {bsession=s} =
-          Quadrature.get_num_rhs_evals s
-        let get_num_err_test_fails {bsession=s} =
-          Quadrature.get_num_err_test_fails s
-        let get_quad_err_weights {bsession=s} =
-          Quadrature.get_quad_err_weights s
-        let get_stats {bsession=s} = Quadrature.get_stats s
+        let get_num_rhs_evals bs =
+          Quadrature.get_num_rhs_evals (tosession bs)
+
+        let get_num_err_test_fails bs =
+          Quadrature.get_num_err_test_fails (tosession bs)
+
+        let get_quad_err_weights bs =
+          Quadrature.get_quad_err_weights (tosession bs)
+
+        let get_stats bs = Quadrature.get_stats (tosession bs)
       end
   end
 

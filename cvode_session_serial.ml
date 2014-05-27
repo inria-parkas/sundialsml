@@ -12,6 +12,8 @@
 
 include Cvode
 
+(* basic cvode types *)
+
 type nvec = Sundials.Carray.t
 type val_array = Sundials.Carray.t
 type der_array = Sundials.Carray.t
@@ -38,6 +40,24 @@ type prec_solve_arg =
     left  : bool;
   }
 
+type bandrange = { mupper : int; mlower : int; }
+
+type spils_params = { prec_type : Spils.preconditioning_type;
+                      maxl : int option; }
+
+type dense_jac_fn = triple_tmp jacobian_arg -> Dls.DenseMatrix.t -> unit
+
+type band_jac_fn = triple_tmp jacobian_arg -> int -> int -> Dls.BandMatrix.t -> unit
+
+type spils_callbacks =
+  {
+    prec_solve_fn : (single_tmp jacobian_arg -> prec_solve_arg -> nvec
+                     -> unit) option;
+    prec_setup_fn : (triple_tmp jacobian_arg -> bool -> float -> bool) option;
+    jac_times_vec_fn : (single_tmp jacobian_arg -> val_array -> val_array
+                        -> unit) option;
+  }
+
 (* Note this definition differs from the one in cvode_nvector, so the tag
    values are different.  *)
 type linear_solver =
@@ -53,27 +73,58 @@ type linear_solver =
   | BandedSpbcg of spils_params * bandrange
   | BandedSptfqmr of spils_params * bandrange
 
-and dense_jac_fn = triple_tmp jacobian_arg -> Dls.DenseMatrix.t -> unit
-
-and band_jac_fn = triple_tmp jacobian_arg -> int -> int -> Dls.BandMatrix.t -> unit
-
-and bandrange = { mupper : int; mlower : int; }
-
-and spils_params = { prec_type : Spils.preconditioning_type;
-                     maxl : int option; }
-
-and spils_callbacks =
-  {
-    prec_solve_fn : (single_tmp jacobian_arg -> prec_solve_arg -> nvec
-                     -> unit) option;
-    prec_setup_fn : (triple_tmp jacobian_arg -> bool -> float -> bool) option;
-    jac_times_vec_fn : (single_tmp jacobian_arg -> val_array -> val_array
-                        -> unit) option;
-  }
-
 type iter =
   | Newton of linear_solver
   | Functional
+
+(* basic cvodes types *)
+
+type quadrhsfn = float -> val_array -> der_array -> unit
+
+type sensrhsfn =
+    AllAtOnce of (float -> val_array -> der_array
+                        -> val_array array -> der_array array
+                        -> nvec -> nvec -> unit)
+  | OneByOne of (float -> val_array -> der_array -> int
+                       -> val_array -> der_array -> nvec -> nvec -> unit)
+
+type quadsensrhsfn =
+   float -> val_array -> val_array -> der_array -> val_array array
+         -> nvec -> nvec -> unit
+
+type brhsfn =
+        BackBasic of (float -> val_array -> val_array -> der_array -> unit)
+      | BackWithSens of (float -> val_array -> val_array array
+                               -> val_array -> der_array -> unit)
+
+type bquadrhsfn =
+        QuadBasic of (float -> val_array -> val_array -> der_array -> unit)
+      | QuadWithSens of (float -> val_array -> val_array array
+                               -> val_array -> der_array -> unit)
+
+type 't bjacobian_arg =
+  {
+    jac_t   : float;
+    jac_y   : val_array;
+    jac_yb  : val_array;
+    jac_fyb : val_array;
+    jac_tmp : 't
+  }
+
+type bprec_solve_arg =
+  {
+    rvecB  : val_array;
+    gammaB : float;
+    deltaB : float;
+  }
+
+type bdense_jac_fn =
+      triple_tmp bjacobian_arg -> Dls.DenseMatrix.t -> unit
+
+ and bband_jac_fn =
+      bandrange -> triple_tmp bjacobian_arg -> Dls.DenseMatrix.t -> unit
+
+(* the session type *)
 
 type cvode_mem
 type cvode_file
@@ -101,8 +152,51 @@ type session = {
         mutable jactimesfn : single_tmp jacobian_arg -> val_array -> val_array
                                -> unit;
 
-        mutable sensext    : Obj.t option (* Used by CVODES *)
+        mutable sensext    : sensext (* Used by CVODES *)
       }
+
+and sensext =
+      NoSensExt
+    | FwdSensExt of fsensext
+    | BwdSensExt of bsensext
+
+and fsensext = {
+    (* Quadrature *)
+    mutable quadrhsfn     : quadrhsfn;
+
+    (* Forward *)
+    mutable senspvals     : Sundials.real_array option;
+                            (* keep a reference to prevent garbage collection *)
+
+    mutable sensrhsfn     : (float -> val_array -> der_array -> val_array array
+                               -> der_array array -> nvec -> nvec -> unit);
+    mutable sensrhsfn1    : (float -> val_array -> der_array -> int -> val_array 
+                               -> der_array -> nvec -> nvec -> unit);
+    mutable quadsensrhsfn : quadsensrhsfn;
+  }
+
+and bsensext = {
+    (* Adjoint *)
+    parent                : session ;
+    which                 : int;
+
+    mutable brhsfn        : (float -> val_array -> val_array
+                                   -> der_array -> unit);
+    mutable brhsfn1       : (float -> val_array -> val_array array
+                                   -> val_array -> der_array -> unit);
+    mutable bquadrhsfn    : (float -> val_array -> val_array
+                                   -> der_array -> unit);
+    mutable bquadrhsfn1   : (float -> val_array -> val_array array
+                                   -> val_array -> der_array -> unit);
+
+    mutable bpresetupfn : triple_tmp bjacobian_arg -> bool -> float -> bool;
+    mutable bpresolvefn : single_tmp bjacobian_arg
+                            -> bprec_solve_arg -> nvec -> unit;
+    mutable bjactimesfn : single_tmp bjacobian_arg -> nvec -> nvec -> unit;
+
+    mutable bjacfn      : bdense_jac_fn;
+    mutable bbandjacfn  : bband_jac_fn;
+  }
 
 let shouldn't_be_called fcn =
   failwith ("internal error in sundials: " ^ fcn ^ " is called")
@@ -111,4 +205,9 @@ let dummy_band_jac _ _ _ _ = shouldn't_be_called "dummy_band_jac"
 let dummy_prec_setup _ _ _ = shouldn't_be_called "dummy_prec_setup"
 let dummy_prec_solve _ _ _ = shouldn't_be_called "dummy_prec_solve"
 let dummy_jac_times_vec _ _ _ = shouldn't_be_called "dummy_jac_times_vec"
+let dummy_bprec_setup _ _ _ = shouldn't_be_called "dummy_prec_setup"
+let dummy_bprec_solve _ _ _ = shouldn't_be_called "dummy_prec_solve"
+let dummy_bjac_times_vec _ _ _ = shouldn't_be_called "dummy_jac_times_vec"
+let dummy_bdense_jac _ _ = shouldn't_be_called "dummy_dense_jac"
+let dummy_bband_jac _ _ _ _ = shouldn't_be_called "dummy_band_jac"
 

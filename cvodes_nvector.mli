@@ -636,7 +636,7 @@ module Adjoint :
     (** Adjoint sensitivity analysis was not initialized.
 
         @cvodes <node7#sss:cvsolvef> CV_NO_ADJ *)
-    exception SensNotInitialized
+    exception AdjointNotInitialized
 
     (** Neither {!forward_normal} nor {!forward_one_step} has previously been
         called.
@@ -1007,16 +1007,16 @@ module Adjoint :
 
         @cvodes <node7#sss:cvsolveb> CVodeB
         TODO: list of exceptions raised. *)
-    val backward_normal : 'a bsession -> float -> unit
+    val backward_normal : 'a session -> float -> unit
 
     (** [backward_one_step s tbout] integrates the backward ODE problem. The
         function takes one internal step ([CV_ONE_STEP]).
 
         @cvodes <node7#sss:cvsolveb> CVodeB
         TODO: list of exceptions raised. *)
-    val backward_one_step : 'a bsession -> float -> unit
+    val backward_one_step : 'a session -> float -> unit
 
-    (** [tret = get s which yb] returns the solution of the backward ODE problem
+    (** [tret = get bs yb] returns the solution of the backward ODE problem
         in [yb] at time [tret].
 
         @cvodes <node7#sss:cvsolveb> CVodeGetB *)

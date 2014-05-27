@@ -180,7 +180,7 @@ let init lmm iter tol f ?(roots=no_roots) ?(t0=0.) y0 =
           presolvefn = dummy_prec_solve;
           jactimesfn = dummy_jac_times_vec;
 
-          sensext    = None;
+          sensext    = NoSensExt;
         } in
   Gc.finalise session_finalize session;
   Weak.set weakref 0 (Some session);
