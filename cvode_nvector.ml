@@ -46,6 +46,8 @@ let call_presolvefn session jac r z =
   let session = read_weak_ref session in
   adjust_retcode session true (session.presolvefn jac r) z
 
+(* the presetupfn is called directly from C. *)
+
 let call_jactimesfn session jac v jv =
   let session = read_weak_ref session in
   adjust_retcode session true (session.jactimesfn jac v) jv
