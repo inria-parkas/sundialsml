@@ -25,7 +25,82 @@ let add_fwdsensext s =
         quadsensrhsfn = (fun _ _ _ _ _ _ _ -> ());
       }
 
-(* TODO: add callback 'trampolines' *)
+let read_weak_fwd_ref x =
+  match Weak.get x 0 with
+  | Some y -> (match y.sensext with
+               | FwdSensExt se -> (y, se)
+               | _ -> raise (Failure "Internal error: not forward extension"))
+  | None -> raise (Failure "Internal error: weak reference is dead")
+
+let read_weak_bwd_ref x =
+  match Weak.get x 0 with
+  | Some y -> (match y.sensext with
+               | BwdSensExt se -> (y, se)
+               | _ -> raise (Failure "Internal error: not backward extension"))
+  | None -> raise (Failure "Internal error: weak reference is dead")
+
+let adjust_retcode = fun session f x ->
+  try f x; 0
+  with
+  | Sundials.RecoverableFailure -> 1
+  | e -> (session.exn_temp <- Some e; -1)
+
+let call_quadrhsfn session t y yqdot =
+  let (session, fwdsensext) = read_weak_fwd_ref session in
+  adjust_retcode session (fwdsensext.quadrhsfn t y) yqdot
+
+let call_sensrhsfn session t y ydot yS ySdot tmp1 tmp2 =
+  let (session, fwdsensext) = read_weak_fwd_ref session in
+  adjust_retcode session (fwdsensext.sensrhsfn t y ydot yS ySdot tmp1) tmp2
+
+let call_sensrhsfn1 session t y ydot iS yS ySdot tmp1 tmp2 =
+  let (session, fwdsensext) = read_weak_fwd_ref session in
+  adjust_retcode session
+    (fwdsensext.sensrhsfn1 t y ydot iS yS ySdot tmp1) tmp2
+
+let call_quadsensrhsfn session t y yS yQdot rhsvalQs tmp1 tmp2 =
+  let (session, fwdsensext) = read_weak_fwd_ref session in
+  adjust_retcode session
+    (fwdsensext.quadsensrhsfn t y yS yQdot rhsvalQs tmp1) tmp2
+
+let call_brhsfn session t y yb ybdot =
+  let (session, bwdsensext) = read_weak_bwd_ref session in
+  adjust_retcode session (bwdsensext.brhsfn t y yb) ybdot
+
+let call_brhsfn1 session t y ys yb ybdot =
+  let (session, bwdsensext) = read_weak_bwd_ref session in
+  adjust_retcode session (bwdsensext.brhsfn1 t y ys yb) ybdot
+
+let call_bquadrhsfn session t y yb qbdot =
+  let (session, bwdsensext) = read_weak_bwd_ref session in
+  adjust_retcode session (bwdsensext.bquadrhsfn t y yb) qbdot
+
+let call_bquadrhsfn1 session t y ys yb qbdot =
+  let (session, bwdsensext) = read_weak_bwd_ref session in
+  adjust_retcode session (bwdsensext.bquadrhsfn1 t y ys yb) qbdot
+
+(* the bpresetupfn is called directly from C. *)
+
+let call_bpresolvefn session jac ps rvecB =
+  let (session, bwdsensext) = read_weak_bwd_ref session in
+  adjust_retcode session (bwdsensext.bpresolvefn jac ps) rvecB
+
+let call_bjactimesfn session jac vB jvB =
+  let (session, bwdsensext) = read_weak_bwd_ref session in
+  adjust_retcode session (bwdsensext.bjactimesfn jac vB) jvB
+
+let _ =
+  Callback.register "c_nvec_cvodes_call_quadrhsfn"     call_quadrhsfn;
+  Callback.register "c_nvec_cvodes_call_sensrhsfn"     call_sensrhsfn;
+  Callback.register "c_nvec_cvodes_call_sensrhsfn1"    call_sensrhsfn1;
+  Callback.register "c_nvec_cvodes_call_quadsensrhsfn" call_quadsensrhsfn;
+
+  Callback.register "c_nvec_cvodes_call_brhsfn"        call_brhsfn;
+  Callback.register "c_nvec_cvodes_call_brhsfn1"       call_brhsfn1;
+  Callback.register "c_nvec_cvodes_call_bquadrhsfn"    call_bquadrhsfn;
+  Callback.register "c_nvec_cvodes_call_bquadrhsfn1"   call_bquadrhsfn1;
+  Callback.register "c_nvec_cvodes_call_bpresolvefn"   call_bpresolvefn;
+  Callback.register "c_nvec_cvodes_call_bjactimesfn"   call_bjactimesfn
 
 let _ = List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
   [
@@ -46,7 +121,7 @@ module Quadrature =
         ("cvodes_QuadRhsFuncFailure",           QuadRhsFuncFailure);
         ("cvodes_FirstQuadRhsFuncErr",          FirstQuadRhsFuncErr);
         ("cvodes_RepeatedQuadRhsFuncErr",       RepeatedQuadRhsFuncErr);
-        ("cvodes_UnrecoverableQuadRhsFuncErr",  UnrecoverableQuadRhsFuncErr)
+        ("cvodes_UnrecoverableQuadRhsFuncErr",  UnrecoverableQuadRhsFuncErr);
       ]
 
     let fwdsensext s =
@@ -147,7 +222,7 @@ module Sensitivity =
         ("cvodes_FirstSensRhsFuncErr",          FirstSensRhsFuncErr);
         ("cvodes_RepeatedSensRhsFuncErr",       RepeatedSensRhsFuncErr);
         ("cvodes_UnrecoverableSensRhsFuncErr",  UnrecoverableSensRhsFuncErr);
-        ("cvodes_BadIS",                        BadIS)
+        ("cvodes_BadIS",                        BadIS);
       ]
 
     let fwdsensext s =
@@ -297,7 +372,7 @@ module Sensitivity =
             ("cvodes_FirstQuadSensRhsFuncErr",    FirstQuadSensRhsFuncErr);
             ("cvodes_RepeatedQuadSensRhsFuncErr", RepeatedQuadSensRhsFuncErr);
             ("cvodes_UnrecoverableQuadSensRhsFuncErr",
-                                             UnrecoverableQuadSensRhsFuncErr)
+                                             UnrecoverableQuadSensRhsFuncErr);
           ]
 
         type 'a quadsensrhsfn =
@@ -393,7 +468,7 @@ module Adjoint =
         ("cvodes_ForwardFailed",                 ForwardFailed);
         ("cvodes_NoBackwardProblem",             NoBackwardProblem);
         ("cvodes_BadTB0",                        BadTB0);
-        ("cvodes_BadT",                          BadT)
+        ("cvodes_BadT",                          BadT);
       ]
 
     type interpolation = IPolynomial | IHermite
