@@ -6,9 +6,6 @@ IDA_DOC_ROOT = https://computation.llnl.gov/casc/sundials/documentation/ida_guid
 KINSOL_DOC_ROOT = https://computation.llnl.gov/casc/sundials/documentation/kin_guide/
 OCAML_DOC_ROOT = http://caml.inria.fr/pub/docs/manual-ocaml/libref/
 
-OCAMLFLAGS =
-OCAMLOPTFLAGS =
-
 CC = gcc
 CFLAGS += @cflags@ # -DRESTRICT_INTERNAL_PRECISION"
 LDFLAGS += @ldflags@
@@ -22,7 +19,7 @@ KINSOL_LDFLAGS = @kinsol_ldflags@ $(LDFLAGS)
 KINSOL_CFLAGS = @kinsol_cppflags@ $(CFLAGS)
 
 OCAMLC ?= @OCAMLBIN@ocamlc
-OCAMLFLAGS = @ocamlflags@
+OCAMLFLAGS = -annot @ocamlflags@
 OCAML_INCLUDE := $(shell $(OCAMLC) -where)
 OCAML_CVODE_LIBLINK = $(CVODE_LDFLAGS)
 OCAML_IDA_LIBLINK = $(IDA_LDFLAGS)
