@@ -27,15 +27,27 @@ let add_fwdsensext s =
 
 (* TODO: add callback 'trampolines' *)
 
+let _ = List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
+  [
+    ("cvodes_RecoverableFailure",      Sundials.RecoverableFailure);
+  ]
+
 module Quadrature =
   struct
-
-    (* TODO: add to the standard CHECK_FLAG function? *)
     exception QuadNotInitialized
     exception QuadRhsFuncFailure
     exception FirstQuadRhsFuncErr
     exception RepeatedQuadRhsFuncErr
     exception UnrecoverableQuadRhsFuncErr
+
+    let _ = List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
+      [
+        ("cvodes_QuadNotInitialized",           QuadNotInitialized);
+        ("cvodes_QuadRhsFuncFailure",           QuadRhsFuncFailure);
+        ("cvodes_FirstQuadRhsFuncErr",          FirstQuadRhsFuncErr);
+        ("cvodes_RepeatedQuadRhsFuncErr",       RepeatedQuadRhsFuncErr);
+        ("cvodes_UnrecoverableQuadRhsFuncErr",  UnrecoverableQuadRhsFuncErr)
+      ]
 
     let fwdsensext s =
       match s.sensext with
@@ -121,13 +133,22 @@ module Sensitivity =
       | EETolerances -> ee_tolerances s
     
 
-    (* TODO: add to the standard CHECK_FLAG function? *)
-    
     exception SensNotInitialized
     exception SensRhsFuncFailure
     exception FirstSensRhsFuncErr
     exception RepeatedSensRhsFuncErr
     exception UnrecoverableSensRhsFuncErr
+    exception BadIS
+
+    let _ = List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
+      [
+        ("cvodes_SensNotInitialized",           SensNotInitialized);
+        ("cvodes_SensRhsFuncFailure",           SensRhsFuncFailure);
+        ("cvodes_FirstSensRhsFuncErr",          FirstSensRhsFuncErr);
+        ("cvodes_RepeatedSensRhsFuncErr",       RepeatedSensRhsFuncErr);
+        ("cvodes_UnrecoverableSensRhsFuncErr",  UnrecoverableSensRhsFuncErr);
+        ("cvodes_BadIS",                        BadIS)
+      ]
 
     let fwdsensext s =
       match s.sensext with
@@ -263,12 +284,21 @@ module Sensitivity =
     module Quadrature =
       struct
 
-        (* TODO: add to the standard CHECK_FLAG function? *)
         exception QuadSensNotInitialized
         exception QuadSensRhsFuncFailure
         exception FirstQuadSensRhsFuncErr
         exception RepeatedQuadSensRhsFuncErr
         exception UnrecoverableQuadSensRhsFuncErr
+
+        let _ = List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
+          [
+            ("cvodes_QuadSensNotInitialized",     QuadSensNotInitialized);
+            ("cvodes_QuadSensRhsFuncFailure",     QuadSensRhsFuncFailure);
+            ("cvodes_FirstQuadSensRhsFuncErr",    FirstQuadSensRhsFuncErr);
+            ("cvodes_RepeatedQuadSensRhsFuncErr", RepeatedQuadSensRhsFuncErr);
+            ("cvodes_UnrecoverableQuadSensRhsFuncErr",
+                                             UnrecoverableQuadSensRhsFuncErr)
+          ]
 
         type 'a quadsensrhsfn =
            float                  (* t *)
@@ -347,17 +377,24 @@ module Sensitivity =
 
 module Adjoint =
   struct
-
-    (* TODO: add to the standard CHECK_FLAG function? *)
-    (* TODO: check that all return flags have been considered; here and
-       elsewhere *)
-
     exception AdjointNotInitialized
     exception NoForwardCall
     exception ForwardReinitializationFailed
     exception ForwardFailed
     exception NoBackwardProblem
-    exception NoBackwardProblem
+    exception BadTB0
+    exception BadT
+
+    let _ = List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
+      [
+        ("cvodes_AdjointNotInitialized",         AdjointNotInitialized);
+        ("cvodes_NoForwardCall",                 NoForwardCall);
+        ("cvodes_ForwardReinitializationFailed", ForwardReinitializationFailed);
+        ("cvodes_ForwardFailed",                 ForwardFailed);
+        ("cvodes_NoBackwardProblem",             NoBackwardProblem);
+        ("cvodes_BadTB0",                        BadTB0);
+        ("cvodes_BadT",                          BadT)
+      ]
 
     type interpolation = IPolynomial | IHermite
 

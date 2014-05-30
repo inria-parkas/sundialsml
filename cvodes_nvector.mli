@@ -198,6 +198,9 @@ module Sensitivity :
     (** @cvodes <node6#SECTION00623000000000000000> CV_UNREC_SRHSFUNC_ERR *)
     exception UnrecoverableSensRhsFuncErr
 
+    (** @cvodes <node6> CV_BAD_IS *)
+    exception BadIS
+
     (** {3:sensinit Initialization} *)
 
     type sens_method =
@@ -663,7 +666,7 @@ module Adjoint :
         problem was solved.
 
         @cvodes <node7#sss:cvinitb> CV_BAD_TB0 *)
-    exception NoBackwardProblem
+    exception BadTB0
 
     (** {3:adjinit Initialization and Forward Solution} *)
 
@@ -780,6 +783,10 @@ module Adjoint :
 
         @cvodes <node7#sss:lin_solv_b> Linear Solver Initialization Functions *)
     and 'a linear_solver =
+      | Diag
+      (** Diagonal approximation of the Jacobian by difference quotients.
+
+          @cvodes <node7#sss:lin_solv_b> CVDiagB *)
 (*
       (* TODO: not for nvectors *)
       | Dense of bdense_jac_fn option
@@ -819,10 +826,6 @@ module Adjoint :
           @cvodes <node7#SECTION00728300000000000000> CVDlsSetBandJacFnB
           @cvodes <node7#ss:bandjac_b> CVDlsBandJacFnB *)
 *)
-      | Diag
-      (** Diagonal approximation of the Jacobian by difference quotients.
-
-          @cvodes <node7#sss:lin_solv_b> CVDiagB *)
       | Spgmr of spils_params * 'a spils_callbacks
       (** Krylov iterative solver with the scaled preconditioned GMRES method.  The
           arguments specify the maximum dimension of the Krylov subspace and
@@ -896,7 +899,6 @@ module Adjoint :
         @cvodes <node7#ss:bandjac_b> CVDlsBandJacFnB *)
     and 'a bband_jac_fn =
       bandrange -> ('a triple_tmp, 'a) jacobian_arg -> Dls.DenseMatrix.t -> unit
-
 
     (** The range of nonzero entries in a band matrix.  *)
     and bandrange = { mupper : int; (** The upper half-bandwidth.  *)

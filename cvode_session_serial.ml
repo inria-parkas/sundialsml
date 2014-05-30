@@ -42,8 +42,8 @@ type prec_solve_arg =
 
 type bandrange = { mupper : int; mlower : int; }
 
-type spils_params = { prec_type : Spils.preconditioning_type;
-                      maxl : int option; }
+type spils_params = { maxl : int option;
+                      prec_type : Spils.preconditioning_type; }
 
 type dense_jac_fn = triple_tmp jacobian_arg -> Dls.DenseMatrix.t -> unit
 

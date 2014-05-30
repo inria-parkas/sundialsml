@@ -1,5 +1,7 @@
 include config
 
+# TODO: compile two .cmas, one with cvodes and one without.
+
 MLOBJ_MAIN = sundials.cmo nvector.cmo nvector_array.cmo dls.cmo \
 	     spils.cmo spils_nvector.cmo spils_serial.cmo \
 	     cvode.cmo cvode_nvector.cmo cvode_serial.cmo \
