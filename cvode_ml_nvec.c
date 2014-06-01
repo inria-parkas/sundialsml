@@ -164,7 +164,7 @@ static int check_exception(value session, value r)
     CAMLreturnT (int, -1);
 }
 
-static int f(realtype t, N_Vector y, N_Vector ydot, void *user_data)
+static int rhsfn(realtype t, N_Vector y, N_Vector ydot, void *user_data)
 {
     CAMLparam0();
     CAMLlocalN(args, 4);
@@ -782,7 +782,7 @@ CAMLprim value CVTYPE(init)(value weakref, value lmm, value iter, value initial,
 	caml_failwith("CVodeCreate returned NULL");
 
     N_Vector initial_nv = NVECTORIZE_VAL(initial);
-    flag = CVodeInit(cvode_mem, f, Double_val(t0), initial_nv);
+    flag = CVodeInit(cvode_mem, rhsfn, Double_val(t0), initial_nv);
     RELINQUISH_NVECTORIZEDVAL(initial_nv);
     if (flag != CV_SUCCESS) {
 	CVodeFree (cvode_mem);
