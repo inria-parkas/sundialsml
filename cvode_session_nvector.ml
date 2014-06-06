@@ -75,8 +75,7 @@ type 'a sensrhsfn =
   | OneByOne of (float -> 'a -> 'a -> int -> 'a -> 'a -> 'a -> 'a -> unit)
 
 type 'a quadsensrhsfn =
-   float -> 'a nvector -> 'a nvector -> 'a nvector -> 'a nvector array
-         -> 'a nvector -> 'a nvector -> unit
+   float -> 'a -> 'a array -> 'a -> 'a array -> 'a -> 'a -> unit
 
 type 'a brhsfn =
         BackBasic of (float -> 'a -> 'a -> 'a -> unit)
@@ -135,23 +134,28 @@ and 'a sensext =
 
 and 'a fsensext = {
     (* Quadrature *)
-    mutable quadrhsfn     : 'a quadrhsfn;
+    mutable quadrhsfn       : 'a quadrhsfn;
 
-    (* Forward *)
-    mutable senspvals     : Sundials.real_array option;
+    (* Forward *);
+    mutable num_sensitivies : int;
+    mutable sensarray1      : 'a array;
+    mutable sensarray2      : 'a array;
+    mutable senspvals       : Sundials.real_array option;
                             (* keep a reference to prevent garbage collection *)
 
-    mutable sensrhsfn     : (float -> 'a -> 'a -> 'a array
+    mutable sensrhsfn       : (float -> 'a -> 'a -> 'a array
                                -> 'a array -> 'a -> 'a -> unit);
-    mutable sensrhsfn1    : (float -> 'a -> 'a -> int -> 'a
+    mutable sensrhsfn1      : (float -> 'a -> 'a -> int -> 'a
                                -> 'a -> 'a -> 'a -> unit);
-    mutable quadsensrhsfn : 'a quadsensrhsfn;
+    mutable quadsensrhsfn   : 'a quadsensrhsfn;
   }
 
 and 'a bsensext = {
     (* Adjoint *)
     parent                : 'a session ;
     which                 : int;
+
+    bsensarray            : 'a array;
 
     mutable brhsfn        : (float -> 'a -> 'a -> 'a -> unit);
     mutable brhsfn1       : (float -> 'a -> 'a array -> 'a -> 'a -> unit);

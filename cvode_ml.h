@@ -199,7 +199,7 @@ enum cvode_bandrange_index {
 
 enum cvode_spils_params_index {
   RECORD_CVODE_SPILS_PARAMS_MAXL = 0,
-  RECORD_CVODE_SPILS_PARAMS_PRETYPE,
+  RECORD_CVODE_SPILS_PARAMS_PREC_TYPE,
   RECORD_CVODE_SPILS_PARAMS_SIZE
 };
 

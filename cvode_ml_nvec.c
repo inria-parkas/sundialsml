@@ -532,7 +532,7 @@ CAMLprim void CVTYPE(dls_lapack_dense) (value vcvode_mem, value vset_jac)
     flag = CVLapackDense (cvode_mem, neqs);
     CHECK_FLAG ("CVLapackDense", flag);
     if (Bool_val (vset_jac)) {
-	flag = CVDlsSetDenseJacFn (CVODE_MEM_FROM_ML (vcvode_mem), jacfn);
+	flag = CVDlsSetDenseJacFn (cvode_mem, jacfn);
 	CHECK_FLAG("CVDlsSetDenseJacFn", flag);
     }
 #else
@@ -571,7 +571,7 @@ CAMLprim void CVTYPE(dls_band) (value vcvode_mem,
     flag = CVBand (cvode_mem, neqs, Long_val (vmupper), Long_val (vmlower));
     CHECK_FLAG ("CVBand", flag);
     if (Bool_val (vset_jac)) {
-	flag = CVDlsSetBandJacFn(CVODE_MEM_FROM_ML(vcvode_mem), bandjacfn);
+	flag = CVDlsSetBandJacFn(cvode_mem, bandjacfn);
 	CHECK_FLAG("CVDlsSetBandJacFn", flag);
     }
     CAMLreturn0;
@@ -592,7 +592,7 @@ CAMLprim void CVTYPE(dls_lapack_band) (value vcvode_mem, value vmupper,
 			 Long_val (vmupper), Long_val (vmlower));
     CHECK_FLAG ("CVLapackBand", flag);
     if (Bool_val (vset_jac)) {
-	flag = CVDlsSetBandJacFn(CVODE_MEM_FROM_ML(vcvode_mem), bandjacfn);
+	flag = CVDlsSetBandJacFn(cvode_mem, bandjacfn);
 	CHECK_FLAG("CVDlsSetBandJacFn", flag);
     }
 #else

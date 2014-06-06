@@ -152,7 +152,7 @@ module Quadrature :
     (** Returns the quadrature error weights at the current time.
 
         @cvodes <node5#ss:quad_optional_output> CVodeGetQuadErrWeights *)
-    val get_quad_err_weights : 'a session -> 'a nvector -> unit
+    val get_err_weights : 'a session -> 'a nvector -> unit
 
     (** [nfqevals, nqetfails = get_stats s] returns
         - [fqevals], the number of calls to the user's quadrature function, and,
@@ -461,6 +461,7 @@ module Sensitivity :
 
       @cvode <node6#ss:sens_optional_output> CVodeGetStgrSensNumNonlinSolvIters *)
     val get_num_stgr_nonlin_solv_iters : 'a session
+
                                          -> Sundials.lint_array -> unit
 
     (** Returns the number of nonlinear convergence failures that have occurred
@@ -507,13 +508,13 @@ module Sensitivity :
           
            @cvodes <node6#ss:user_fct_quad_sens> CVodeQuadSensRhsFn *)
         type 'a quadsensrhsfn =
-           float                  (* t *)
-           -> 'a nvector          (* y *)
-           -> 'a nvector          (* yS *)
-           -> 'a nvector          (* yQdot *)
-           -> 'a nvector array    (* rhsvalQs *)
-           -> 'a nvector          (* tmp1 *)
-           -> 'a nvector          (* tmp2 *)
+           float          (* t *)
+           -> 'a          (* y *)
+           -> 'a array    (* yS *)
+           -> 'a          (* yQdot *)
+           -> 'a array    (* rhsvalQs *)
+           -> 'a          (* tmp1 *)
+           -> 'a          (* tmp2 *)
            -> unit
 
         (** This function, [init s fQS yQS0], activates integration of
@@ -611,7 +612,7 @@ module Sensitivity :
         (** Returns the quadrature error weights at the current time.
 
             @cvodes <node6#ss:quad_sens_optional_output> CVodeGetQuadSensErrWeights *)
-        val get_quad_err_weights : 'a session -> 'a nvector array -> unit
+        val get_err_weights : 'a session -> 'a nvector array -> unit
 
         (** [nfqevals, nqetfails = get_stats s] returns
             - [fqevals], the number of calls to the user's quadrature function,
@@ -1378,7 +1379,7 @@ module Adjoint :
 
           @cvodes <node7#sss:quad_get_b> CVodeGetQuadB
          *)
-        val get : 'a bsession -> 'a nvector array -> float
+        val get : 'a bsession -> 'a nvector -> float
 
         (** {4 Optional input functions} *)
 
@@ -1424,7 +1425,7 @@ module Adjoint :
                                                       functions for backward
                                                       quadrature integration
             @cvodes <node5#ss:quad_optional_output> CVodeGetQuadErrWeights *)
-        val get_quad_err_weights : 'a bsession -> 'a nvector -> unit
+        val get_err_weights : 'a bsession -> 'a nvector -> unit
 
         (** [nfqevals, nqetfails = get_stats s] returns
             - [fqevals], the number of calls to the user's quadrature function, and,

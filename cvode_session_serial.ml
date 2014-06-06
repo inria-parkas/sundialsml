@@ -162,23 +162,28 @@ and sensext =
 
 and fsensext = {
     (* Quadrature *)
-    mutable quadrhsfn     : quadrhsfn;
+    mutable quadrhsfn       : quadrhsfn;
 
     (* Forward *)
-    mutable senspvals     : Sundials.real_array option;
+    mutable num_sensitivies : int;
+    mutable sensarray1      : val_array array;
+    mutable sensarray2      : der_array array;
+    mutable senspvals       : Sundials.real_array option;
                             (* keep a reference to prevent garbage collection *)
 
-    mutable sensrhsfn     : (float -> val_array -> der_array -> val_array array
+    mutable sensrhsfn       : (float -> val_array -> der_array -> val_array array
                                -> der_array array -> nvec -> nvec -> unit);
-    mutable sensrhsfn1    : (float -> val_array -> der_array -> int -> val_array 
+    mutable sensrhsfn1      : (float -> val_array -> der_array -> int -> val_array 
                                -> der_array -> nvec -> nvec -> unit);
-    mutable quadsensrhsfn : quadsensrhsfn;
+    mutable quadsensrhsfn   : quadsensrhsfn;
   }
 
 and bsensext = {
     (* Adjoint *)
     parent                : session ;
     which                 : int;
+
+    bsensarray            : val_array;
 
     mutable brhsfn        : (float -> val_array -> val_array
                                    -> der_array -> unit);
