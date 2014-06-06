@@ -15,7 +15,38 @@
 
 #include "cvode_ml.h"
 
-// TODO: document how it is all supposed to work
+/* The sessions of CVODES work almost exactly as described in cvode_ml.h.
+ *
+ * 1. Standard (quadrature, sensitivity, sensitivity/quadrature,
+ *    adjoint-forward) sessions are created by the basic cvode code. Extra
+ *    details are added and accessed through the sensext field.
+ *
+ * 2. In CVodes backward sessions are 'piggy-backed' onto parent sessions;
+ *    the parent maintains a linked list and each session is identified by a
+ *    'which-id' (basically its order in the list). For all set* functions,
+ *    one must pass the pair of parent and which-id, but for many get*
+ *    functions, one passes the underlying cvode_mem record associated with
+ *    the backward session (normally accessed through CVodeGetAdjCVodeBmem).
+ *
+ *    In the OCaml interface to CVodes we create a session object for each
+ *    backward session that works almost exactly like the basic CVode
+ *    sessions (as described in cvode_ml.h); i.e., we set the user-data for
+ *    the backward session (CVodeSetUserDataB) to a weak pointer to a
+ *    session object on the OCaml side. The sensext field is used to track
+ *    parent, which-id, and callbacks. The first two are used for set*
+ *    interface functions and the session itself is used for get* interface
+ *    functions.
+ *
+ *    There are two small differences. First, on the OCaml side, we type
+ *    each such session as a 'bsession' (rather than as a 'session'), even
+ *    though the underlying representation is compatible with a standard
+ *    session (excepting the sensext field). Second, the finalizer neither
+ *    calls CVodeFree, since the parent takes care of this, nor closes an
+ *    error file, since one cannot be created (backward sessions inherit
+ *    from the parent at the time of their creation). Note that a parent
+ *    will always be garbage collected after all of its children (since the
+ *    latter hold references to the former and not vice-versa).
+ */
 
 void cvodes_ml_check_flag(const char *call, int flag);
 
