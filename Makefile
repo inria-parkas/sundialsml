@@ -8,7 +8,7 @@ MLOBJ_MAIN = sundials.cmo nvector.cmo nvector_array.cmo dls.cmo \
 	     kinsol.cmo kinsol_nvector.cmo kinsol_serial.cmo \
 	     ida.cmo ida_nvector.cmo ida_serial.cmo
 
-MLOBJ_SENS = cvodes_nvector.cmo
+MLOBJ_SENS = cvodes_nvector.cmo cvodes_serial.cmo
 
 MLOBJ_LOCAL = cvode_session_nvector.cmo \
 	      cvode_session_serial.cmo
