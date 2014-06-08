@@ -47,7 +47,8 @@ type spils_params = { maxl : int option;
 
 type dense_jac_fn = triple_tmp jacobian_arg -> Dls.DenseMatrix.t -> unit
 
-type band_jac_fn = triple_tmp jacobian_arg -> int -> int -> Dls.BandMatrix.t -> unit
+type band_jac_fn = bandrange -> triple_tmp jacobian_arg
+                             -> Dls.BandMatrix.t -> unit
 
 type spils_callbacks =
   {
@@ -113,9 +114,10 @@ type 't bjacobian_arg =
 
 type bprec_solve_arg =
   {
-    rvecB  : val_array;
-    gammaB : float;
-    deltaB : float;
+    rvec  : val_array;
+    gamma : float;
+    delta : float;
+    left  : bool;
   }
 
 type bdense_jac_fn =
@@ -143,9 +145,8 @@ type session = {
         mutable rootsfn    : float -> val_array -> root_val_array -> unit;
         mutable errh       : Sundials.error_details -> unit;
         mutable errw       : val_array -> nvec -> unit;
-        mutable jacfn      : triple_tmp jacobian_arg -> Dls.DenseMatrix.t -> unit;
-        mutable bandjacfn  : triple_tmp jacobian_arg -> int -> int
-                               -> Dls.BandMatrix.t -> unit;
+        mutable jacfn      : dense_jac_fn;
+        mutable bandjacfn  : band_jac_fn;
         mutable presetupfn : triple_tmp jacobian_arg -> bool -> float -> bool;
         mutable presolvefn : single_tmp jacobian_arg -> prec_solve_arg -> nvec
                                -> unit;
@@ -164,18 +165,24 @@ and fsensext = {
     (* Quadrature *)
     mutable quadrhsfn       : quadrhsfn;
 
-    (* Forward *)
-    mutable num_sensitivies : int;
-    mutable sensarray1      : val_array array;
-    mutable sensarray2      : der_array array;
-    mutable senspvals       : Sundials.real_array option;
+    (* Sensitivity *)
+    mutable num_sensitivities : int;
+    mutable sensarray1        : val_array array;
+    mutable sensarray2        : der_array array;
+    mutable senspvals         : Sundials.real_array option;
                             (* keep a reference to prevent garbage collection *)
 
-    mutable sensrhsfn       : (float -> val_array -> der_array -> val_array array
-                               -> der_array array -> nvec -> nvec -> unit);
-    mutable sensrhsfn1      : (float -> val_array -> der_array -> int -> val_array 
-                               -> der_array -> nvec -> nvec -> unit);
-    mutable quadsensrhsfn   : quadsensrhsfn;
+    mutable sensrhsfn         : (float -> val_array -> der_array -> val_array array
+                                 -> der_array array -> nvec -> nvec -> unit);
+    mutable sensrhsfn1        : (float -> val_array -> der_array -> int -> val_array 
+                                 -> der_array -> nvec -> nvec -> unit);
+    mutable quadsensrhsfn     : quadsensrhsfn;
+
+    (* Adjoint *)
+    mutable bsessions         : session list; (* hold references to prevent
+                                                 garbage collection of
+                                                 backward sessions which are
+                                                 needed for callbacks. *)
   }
 
 and bsensext = {
@@ -183,6 +190,7 @@ and bsensext = {
     parent                : session ;
     which                 : int;
 
+    bnum_sensitivities    : int;
     bsensarray            : val_array;
 
     mutable brhsfn        : (float -> val_array -> val_array
@@ -206,7 +214,7 @@ and bsensext = {
 let shouldn't_be_called fcn =
   failwith ("internal error in sundials: " ^ fcn ^ " is called")
 let dummy_dense_jac _ _ = shouldn't_be_called "dummy_dense_jac"
-let dummy_band_jac _ _ _ _ = shouldn't_be_called "dummy_band_jac"
+let dummy_band_jac _ _ _ = shouldn't_be_called "dummy_band_jac"
 let dummy_prec_setup _ _ _ = shouldn't_be_called "dummy_prec_setup"
 let dummy_prec_solve _ _ _ = shouldn't_be_called "dummy_prec_solve"
 let dummy_jac_times_vec _ _ _ = shouldn't_be_called "dummy_jac_times_vec"

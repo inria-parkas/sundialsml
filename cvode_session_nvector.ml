@@ -96,9 +96,10 @@ type ('t, 'a) bjacobian_arg =
 
 type 'a bprec_solve_arg =
   {
-    rvecB   : 'a;
-    gammaB : float;
-    deltaB : float;
+    rvec   : 'a;
+    gamma  : float;
+    delta  : float;
+    left   : bool
   }
 
 (* the session type *)
@@ -136,18 +137,24 @@ and 'a fsensext = {
     (* Quadrature *)
     mutable quadrhsfn       : 'a quadrhsfn;
 
-    (* Forward *);
-    mutable num_sensitivies : int;
-    mutable sensarray1      : 'a array;
-    mutable sensarray2      : 'a array;
-    mutable senspvals       : Sundials.real_array option;
+    (* Sensitivity *)
+    mutable num_sensitivities : int;
+    mutable sensarray1        : 'a array;
+    mutable sensarray2        : 'a array;
+    mutable senspvals         : Sundials.real_array option;
                             (* keep a reference to prevent garbage collection *)
 
-    mutable sensrhsfn       : (float -> 'a -> 'a -> 'a array
-                               -> 'a array -> 'a -> 'a -> unit);
-    mutable sensrhsfn1      : (float -> 'a -> 'a -> int -> 'a
-                               -> 'a -> 'a -> 'a -> unit);
-    mutable quadsensrhsfn   : 'a quadsensrhsfn;
+    mutable sensrhsfn         : (float -> 'a -> 'a -> 'a array
+                                 -> 'a array -> 'a -> 'a -> unit);
+    mutable sensrhsfn1        : (float -> 'a -> 'a -> int -> 'a
+                                 -> 'a -> 'a -> 'a -> unit);
+    mutable quadsensrhsfn     : 'a quadsensrhsfn;
+
+    (* Adjoint *)
+    mutable bsessions         : 'a session list; (* hold references to prevent
+                                                    garbage collection of
+                                                    backward sessions which are
+                                                    needed for callbacks. *)
   }
 
 and 'a bsensext = {
@@ -155,6 +162,7 @@ and 'a bsensext = {
     parent                : 'a session ;
     which                 : int;
 
+    bnum_sensitivities    : int;
     bsensarray            : 'a array;
 
     mutable brhsfn        : (float -> 'a -> 'a -> 'a -> unit);

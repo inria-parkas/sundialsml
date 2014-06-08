@@ -277,7 +277,8 @@ and dense_jac_fn = triple_tmp jacobian_arg -> Dls.DenseMatrix.t -> unit
     @ida <node5#ss:bjacFn> Banded Jacobian function
     @ida <node3#ss:ivp_soln> IVP solution
  *)
-and band_jac_fn = triple_tmp jacobian_arg -> int -> int -> Dls.BandMatrix.t -> unit
+and band_jac_fn = bandrange -> triple_tmp jacobian_arg
+                            -> Dls.BandMatrix.t -> unit
 
 (** The range of nonzero entries in a band matrix.  *)
 and bandrange = { mupper : int; (** The upper half-bandwidth.  *)

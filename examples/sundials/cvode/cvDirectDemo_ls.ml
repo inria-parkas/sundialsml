@@ -126,7 +126,7 @@ let jac1 { Cvode.jac_y = y } j =
   Densematrix.set j 1 0 (-. two *. p1_eta *. y0 *. y1 -. one);
   Densematrix.set j 1 1 (p1_eta *. (one -. sqr y0))
 
-let jac2 arg mu ml jac =
+let jac2 {Cvode.mupper=mu; Cvode.mlower=ml} arg jac =
   (*
      The components of f(t,y) which depend on y    are
                                                i,j

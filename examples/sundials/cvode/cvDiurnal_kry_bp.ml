@@ -336,7 +336,7 @@ let main () =
     Cvode.init Cvode.BDF
       (Cvode.Newton
           (Cvode.BandedSpgmr
-             ({ Cvode.prec_type = Spils.PrecLeft; Cvode.maxl = 0},
+             ({ Cvode.prec_type = Spils.PrecLeft; Cvode.maxl = None},
               { Cvode.mupper = mu; Cvode.mlower = ml})))
       (Cvode.SSTolerances (reltol, abstol))
       (f data) ~t0:t0 u

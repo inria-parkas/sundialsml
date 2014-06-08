@@ -46,9 +46,9 @@ let call_jacfn session jac j =
   let session = read_weak_ref session in
   adjust_retcode session true (session.jacfn jac) j
 
-let call_bandjacfn session jac mupper mlower j =
+let call_bandjacfn session range jac j =
   let session = read_weak_ref session in
-  adjust_retcode session true (session.bandjacfn jac mupper mlower) j
+  adjust_retcode session true (session.bandjacfn range jac) j
 
 let call_presolvefn session jac r z =
   let session = read_weak_ref session in

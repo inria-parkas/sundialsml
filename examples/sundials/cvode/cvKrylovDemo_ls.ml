@@ -497,7 +497,7 @@ let main () =
           ~iter_type:
             (Cvode.Newton
                (Cvode.Spgmr
-                  ({ Cvode.prec_type = Spils.PrecLeft; Cvode.maxl = 0 },
+                  ({ Cvode.prec_type = Spils.PrecLeft; Cvode.maxl = None },
                    { Cvode.prec_setup_fn = Some (precond data);
                      Cvode.prec_solve_fn = Some (psolve data);
                      Cvode.jac_times_vec_fn = None })));
@@ -521,7 +521,7 @@ let main () =
           ~iter_type:
             (Cvode.Newton
                (Cvode.Spbcg
-                  ({ Cvode.prec_type = Spils.PrecLeft; Cvode.maxl = 0 },
+                  ({ Cvode.prec_type = Spils.PrecLeft; Cvode.maxl = None },
                    { Cvode.prec_setup_fn = Some (precond data);
                      Cvode.prec_solve_fn = Some (psolve data);
                      Cvode.jac_times_vec_fn = None })))
@@ -540,7 +540,7 @@ let main () =
           ~iter_type:
             (Cvode.Newton
                (Cvode.Sptfqmr
-                  ({ Cvode.prec_type = Spils.PrecLeft; Cvode.maxl = 0 },
+                  ({ Cvode.prec_type = Spils.PrecLeft; Cvode.maxl = None },
                    { Cvode.prec_setup_fn = Some (precond data);
                      Cvode.prec_solve_fn = Some (psolve data);
                      Cvode.jac_times_vec_fn = None })))

@@ -274,10 +274,10 @@ and dense_jac_fn = triple_tmp jacobian_arg -> Dls.DenseMatrix.t -> unit
     {!linear_solver}s.  If this field is [None], CVODE uses a
     default implementation based on difference quotients.
 
-    The function is called like [band_jac_fn arg mupper mlower jac] where:
-    - [arg] is the standard {!jacobian_arg} with three work vectors.
+    The function is called as [band_jac_fn {mupper; mlower} arg jac] where:
     - [mupper] is the upper half-bandwidth of the Jacobian.
     - [mlower] is the lower half-bandwidth of the Jacobian.
+    - [arg] is the standard {!jacobian_arg} with three work vectors.
     - [jac] is the matrix in which to store the computed Jacobian.
     The function should load the ({i i,j}) entry of the Jacobian with {i
     dFi/dyj}, i.e. the partial derivative of the right-hand side of the {i
@@ -296,7 +296,8 @@ and dense_jac_fn = triple_tmp jacobian_arg -> Dls.DenseMatrix.t -> unit
     function call, then they must be copied to separate physical
     structures.
  *)
-and band_jac_fn = triple_tmp jacobian_arg -> int -> int -> Dls.BandMatrix.t -> unit
+and band_jac_fn = bandrange -> triple_tmp jacobian_arg
+                            -> Dls.BandMatrix.t -> unit
 
 (** The range of nonzero entries in a band matrix.  *)
 and bandrange = { mupper : int; (** The upper half-bandwidth.  *)

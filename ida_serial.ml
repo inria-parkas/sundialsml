@@ -44,7 +44,8 @@ type linear_solver =
   | Spbcg of spils_params
   | Sptfqmr of spils_params
 and dense_jac_fn = triple_tmp jacobian_arg -> Dls.DenseMatrix.t -> unit
-and band_jac_fn = triple_tmp jacobian_arg -> int -> int -> Dls.BandMatrix.t -> unit
+and band_jac_fn = bandrange -> triple_tmp jacobian_arg
+                            -> Dls.BandMatrix.t -> unit
 and spils_params =
   {
     maxl : int option;
@@ -84,9 +85,8 @@ type session = {
                              -> unit;
         mutable errh       : Sundials.error_details -> unit;
         mutable errw       : val_array -> nvec -> unit;
-        mutable jacfn      : triple_tmp jacobian_arg -> Dls.DenseMatrix.t -> unit;
-        mutable bandjacfn  : triple_tmp jacobian_arg -> int -> int
-                               -> Dls.BandMatrix.t -> unit;
+        mutable jacfn      : dense_jac_fn;
+        mutable bandjacfn  : band_jac_fn;
         mutable presetupfn : triple_tmp jacobian_arg -> unit;
         mutable presolvefn : single_tmp jacobian_arg -> val_array -> val_array
                                -> float -> unit;
@@ -150,9 +150,9 @@ let call_errh session details =
 let call_jacfn session jac j =
   let session = read_weak_ref session in
   adjust_retcode session true (session.jacfn jac) j
-let call_bandjacfn session jac mupper mlower j =
+let call_bandjacfn session range jac j =
   let session = read_weak_ref session in
-  adjust_retcode session true (session.bandjacfn jac mupper mlower) j
+  adjust_retcode session true (session.bandjacfn range jac) j
 let call_presetupfn session jac =
   let session = read_weak_ref session in
   adjust_retcode session true session.presetupfn jac
@@ -212,7 +212,7 @@ external c_spils_set_preconditioner : session -> bool -> bool -> unit
 let shouldn't_be_called fcn =
   failwith ("internal error in sundials: " ^ fcn ^ " is called")
 let dummy_dense_jac _ _ = shouldn't_be_called "dummy_dense_jac"
-let dummy_band_jac _ _ _ _ = shouldn't_be_called "dummy_band_jac"
+let dummy_band_jac _ _ _ = shouldn't_be_called "dummy_band_jac"
 let dummy_prec_setup _ = shouldn't_be_called "dummy_prec_setup"
 let dummy_prec_solve _ _ _ _ = shouldn't_be_called "dummy_prec_solve"
 let dummy_jac_times_vec _ _ _ = shouldn't_be_called "dummy_jac_times_vec"

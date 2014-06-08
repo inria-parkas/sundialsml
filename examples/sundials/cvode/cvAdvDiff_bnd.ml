@@ -124,7 +124,7 @@ let f data t udata dudata =
 
 (* Jacobian routine. Compute J(t,u). *)
 
-let jac data arg mlower mupper jmat =
+let jac data {Cvode.mupper=mupper; Cvode.mlower=mlower} arg jmat =
   (*
     The components of f = udot that depend on u(i,j) are
     f(i,j), f(i-1,j), f(i+1,j), f(i,j-1), f(i,j+1), with

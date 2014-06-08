@@ -857,7 +857,7 @@ let main () =
         Cvode.BDF
         (Cvode.Newton
             (Cvode.Spgmr
-               ({ Cvode.prec_type = Spils.PrecLeft; Cvode.maxl = maxl},
+               ({ Cvode.prec_type = Spils.PrecLeft; Cvode.maxl = Some maxl},
                 { Cvode.prec_setup_fn = Some (precond wdata);
                   Cvode.prec_solve_fn = Some (psolve wdata);
                   Cvode.jac_times_vec_fn = None })))

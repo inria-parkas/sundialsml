@@ -329,10 +329,10 @@ static int jacfn(
 static int bandjacfn(
 	long int N,
 	long int mupper,
-	long int mlower, 	 
+	long int mlower,
 	realtype t,
 	N_Vector y,
-	N_Vector fy, 	 
+	N_Vector fy,
 	DlsMat Jac,
 	void *user_data, 	 
 	N_Vector tmp1,
@@ -340,24 +340,25 @@ static int bandjacfn(
 	N_Vector tmp3)
 {
     CAMLparam0();
-    CAMLlocalN(args, 5);
+    CAMLlocalN(args, 4);
     int r;
     value *backref = user_data;
     CAML_FN (call_bandjacfn);
 
     args[0] = *backref;
-    args[1] = make_jac_arg(t, y, fy, make_triple_tmp(tmp1, tmp2, tmp3));
-    args[2] = Val_long(mupper);
-    args[3] = Val_long(mlower);
-    args[4] = caml_alloc_final(2, NULL, 0, 1);
-    Store_field (args[4], 1, (value)Jac);
+    args[1] = caml_alloc_tuple(RECORD_CVODE_BANDRANGE_SIZE);
+    Store_field(args[1], RECORD_CVODE_BANDRANGE_MUPPER, Val_long(mupper));
+    Store_field(args[1], RECORD_CVODE_BANDRANGE_MLOWER, Val_long(mlower));
+    args[2] = make_jac_arg(t, y, fy, make_triple_tmp(tmp1, tmp2, tmp3));
+    args[3] = caml_alloc_final(2, NULL, 0, 1);
+    Store_field (args[3], 1, (value)Jac);
 
     r = Int_val (caml_callbackN(*call_bandjacfn,
                                 sizeof (args) / sizeof (*args),
                                 args));
 
-    relinquish_jac_arg(args[1], TRIPLE);
-    // note: args[4] is also invalid after the callback
+    relinquish_jac_arg(args[2], TRIPLE);
+    // note: args[3] is also invalid after the callback
 
     CAMLreturnT(int, r);
 }

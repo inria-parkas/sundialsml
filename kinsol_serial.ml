@@ -35,8 +35,8 @@ type linear_solver =
 
 and dense_jac_fn = double_tmp jacobian_arg -> Dls.DenseMatrix.t -> unit
 
-and band_jac_fn = double_tmp jacobian_arg -> int
-                      -> int -> Dls.BandMatrix.t -> unit
+and band_jac_fn = bandrange -> double_tmp jacobian_arg
+                            -> Dls.BandMatrix.t -> unit
 
 and bandrange = { mupper : int; mlower : int; }
 
@@ -134,9 +134,9 @@ let call_jacfn session jac j =
   let session = read_weak_ref session in
   adjust_retcode session true (session.jacfn jac) j
 
-let call_bandjacfn session jac mupper mlower j =
+let call_bandjacfn session range jac j =
   let session = read_weak_ref session in
-  adjust_retcode session true (session.bandjacfn jac mupper mlower) j
+  adjust_retcode session true (session.bandjacfn range jac) j
 
 let call_presolvefn session jac ps u =
   let session = read_weak_ref session in
@@ -169,7 +169,7 @@ external session_finalize : session -> unit
 let shouldn't_be_called fcn =
   failwith ("internal error in sundials: " ^ fcn ^ " is called")
 let dummy_dense_jac _ _ = shouldn't_be_called "dummy_dense_jac"
-let dummy_band_jac _ _ _ _ = shouldn't_be_called "dummy_band_jac"
+let dummy_band_jac _ _ _ = shouldn't_be_called "dummy_band_jac"
 let dummy_prec_setup _ _ = shouldn't_be_called "dummy_prec_setup"
 let dummy_prec_solve _ _ _ = shouldn't_be_called "dummy_prec_solve"
 let dummy_jac_times_vec _ _ _ = shouldn't_be_called "dummy_jac_times_vec"
