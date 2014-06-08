@@ -38,9 +38,6 @@ type 'a prec_solve_arg =
     left  : bool;
   }
 
-type spils_params = { maxl : int option;
-                      prec_type : Spils.preconditioning_type; }
-
 type 'a spils_callbacks =
   {
     prec_solve_fn : (('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg

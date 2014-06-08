@@ -24,6 +24,7 @@ include module type of Ida
   with type Roots.t = Ida.Roots.t
   and type RootDirs.t = Ida.RootDirs.t
   and type solver_result = Ida.solver_result
+  and type bandrange = Ida.bandrange
 
 (*STARTINTRO*)
 (** Serial nvector interface to the IDA solver.
@@ -150,10 +151,6 @@ type 'a linear_solver =
       @ida <node5#ss:psolveFn> Linear preconditioning function
       @ida <node5#ss:precondFn> Jacobian preconditioning function
     *)
-
-(** The range of nonzero entries in a band matrix.  *)
-and bandrange = { mupper : int; (** The upper half-bandwidth.  *)
-                  mlower : int; (** The lower half-bandwidth.  *) }
 
 (** Initialization parameters and callbacks for Krylov iterative
     {!linear_solver}s.  Used with the {!linear_solver}s: [Spgmr], [Spbcg], and

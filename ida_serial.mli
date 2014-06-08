@@ -24,6 +24,7 @@ include module type of Ida
   with type Roots.t = Ida.Roots.t
   and type RootDirs.t = Ida.RootDirs.t
   and type solver_result = Ida.solver_result
+  and type bandrange = Ida.bandrange
 
 (*STARTINTRO*)
 (** Serial nvector interface to the IDA solver.
@@ -157,9 +158,9 @@ type linear_solver =
       @ida <node5#sss:optin_dls> IDADlsSetDenseJacFn
       @ida <node5#ss:djacFn> Dense Jacobian function
       @ida <node3#ss:ivp_soln> IVP solution  *)
-  | Band of bandrange * band_jac_fn option
+  | Band of Ida.bandrange * band_jac_fn option
   (** Direct linear solver with banded matrix.  The arguments specify the width
-      of the band ({!bandrange}) and an optional Jacobian function
+      of the band ({!Ida.bandrange}) and an optional Jacobian function
       ({!band_jac_fn}).  If the Jacobian function is [None], IDA uses an
       internal implementation based on difference quotients.
 
@@ -167,7 +168,7 @@ type linear_solver =
       @ida <node5#sss:optin_dls> IDADlsSetBandJacFn
       @ida <node5#ss:bjacFn> Banded Jacobian function
       @ida <node3#ss:ivp_soln> IVP solution *)
-  | LapackBand of bandrange * band_jac_fn option
+  | LapackBand of Ida.bandrange * band_jac_fn option
   (** Direct linear solver with banded matrix using LAPACK.  The arguments are
       the same as [Band].
 
@@ -277,12 +278,8 @@ and dense_jac_fn = triple_tmp jacobian_arg -> Dls.DenseMatrix.t -> unit
     @ida <node5#ss:bjacFn> Banded Jacobian function
     @ida <node3#ss:ivp_soln> IVP solution
  *)
-and band_jac_fn = bandrange -> triple_tmp jacobian_arg
-                            -> Dls.BandMatrix.t -> unit
-
-(** The range of nonzero entries in a band matrix.  *)
-and bandrange = { mupper : int; (** The upper half-bandwidth.  *)
-                  mlower : int; (** The lower half-bandwidth.  *) }
+and band_jac_fn = Ida.bandrange -> triple_tmp jacobian_arg
+                                -> Dls.BandMatrix.t -> unit
 
 (** Initialization parameters and callbacks for Krylov iterative
     {!linear_solver}s.  Used with the {!linear_solver}s: [Spgmr], [Spbcg], and

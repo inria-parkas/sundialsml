@@ -46,8 +46,6 @@ and 'a spils_params =
     jac_times_vec_fn : (('a double_tmp, 'a) jacobian_arg -> 'a -> 'a
                         -> unit) option;
   }
-and bandrange = { mupper : int;
-                  mlower : int; }
 
 let spils_no_precond = { maxl = None;
                          prec_solve_fn = None;

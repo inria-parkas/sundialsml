@@ -614,14 +614,6 @@ module Adjoint =
     type single_tmp = val_array
     type triple_tmp = val_array * val_array * val_array
 
-    type _bandrange = bandrange = { mupper : int; mlower : int; }
-    type bandrange = _bandrange = { mupper : int; mlower : int; }
-
-    type spils_params = {
-          maxl : int option;
-          prec_type : Spils.preconditioning_type;
-      }
-
     type 't jacobian_arg = 't bjacobian_arg =
       {
         jac_t   : float;

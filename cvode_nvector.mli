@@ -25,6 +25,8 @@ include module type of Cvode
   and type RootDirs.t = Cvode.RootDirs.t
   and type lmm = Cvode.lmm
   and type solver_result = Cvode.solver_result
+  and type bandrange = Cvode.bandrange
+  and type spils_params = Cvode.spils_params
 
 (** Abstract nvector interface to the CVODE Solver.
 
@@ -124,18 +126,18 @@ and 'a linear_solver =
 
       @cvode <node5#sss:lin_solve_init> CVDiag
     *)
-  | Spgmr of spils_params * 'a spils_callbacks
+  | Spgmr of Cvode.spils_params * 'a spils_callbacks
   (** Krylov iterative solver with the scaled preconditioned GMRES method.  The
       arguments specify the maximum dimension of the Krylov subspace and
-      preconditioning type ({!spils_params}) and the preconditioner callback
-      functions ({!spils_callbacks}).  See also {!Spils}.
+      preconditioning type ({!Cvode.spils_params}) and the preconditioner
+      callback functions ({!spils_callbacks}).  See also {!Spils}.
 
       @cvode <node5#sss:lin_solve_init> CVSpgmr
       @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
       @cvode <node5#ss:psolveFn> Linear preconditioning function
       @cvode <node5#ss:precondFn> Jacobian preconditioning function
     *)
-  | Spbcg of spils_params * 'a spils_callbacks
+  | Spbcg of Cvode.spils_params * 'a spils_callbacks
   (** Krylov iterative solver with the scaled preconditioned Bi-CGStab method.
       The arguments are the same as [Spgmr].  See also {!Spils}.
 
@@ -145,7 +147,7 @@ and 'a linear_solver =
       @cvode <node5#ss:precondFn> Jacobian preconditioning function
       (* TODO: change all these titles into function names? *)
     *)
-  | Sptfqmr of spils_params * 'a spils_callbacks
+  | Sptfqmr of Cvode.spils_params * 'a spils_callbacks
   (** Krylov iterative with the scaled preconditioned TFQMR method.  The
       arguments are the same as [Spgmr].  See also {!Spils}.
 
@@ -155,12 +157,6 @@ and 'a linear_solver =
       @cvode <node5#ss:precondFn> Jacobian preconditioning function
     *)
 
-(** Common parameters for Krylov subspace linear solvers.  *)
-and spils_params = { maxl : int option; (** Maximum dimension of the Krylov subspace
-                                            to be used.  Pass [None] to use the default
-                                            value [5]. *)
-                     prec_type : Spils.preconditioning_type;
-                     (** The type of preconditioning to be done.  *) }
 (** Callbacks for Krylov subspace linear solvers.  Ignored if the
     {!Spils.preconditioning_type} is set to [PrecNone].  In that case, you
     should use {!spils_no_precond} as [spils_callbacks].  *)
@@ -346,10 +342,10 @@ module Spils :
       -> unit
 
     (**
-      Set the Jacobian-times-vector function (see {!spils_params}).  It may be
-      unsafe to use this function without a {!reinit}.  Users are encouraged to
-      use the [iter_type] parameter of {!reinit} instead, unless they are
-      desperate for performance.
+      Set the Jacobian-times-vector function (see {!Cvode.spils_params}).  It
+      may be unsafe to use this function without a {!reinit}.  Users are
+      encouraged to use the [iter_type] parameter of {!reinit} instead, unless
+      they are desperate for performance.
 
       @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
       @cvode <node5#ss:jtimesFn> Jacobian-times-vector function

@@ -25,6 +25,8 @@ include module type of Cvode
   and type RootDirs.t = Cvode.RootDirs.t
   and type lmm = Cvode.lmm
   and type solver_result = Cvode.solver_result
+  and type bandrange = Cvode.bandrange
+  and type spils_params = Cvode.spils_params
 
 (** Serial nvector interface to the CVODE solver.
  
@@ -157,9 +159,9 @@ and linear_solver =
       @cvode <node5#sss:optin_dls> CVDlsSetDenseJacFn
       @cvode <node5#ss:djacFn> Dense Jacobian function
    *)
-  | Band of bandrange * band_jac_fn option
+  | Band of Cvode.bandrange * band_jac_fn option
   (** Direct linear solver with banded matrix.  The arguments specify the width
-      of the band ({!bandrange}) and an optional Jacobian function
+      of the band ({!Cvode.bandrange}) and an optional Jacobian function
       ({!band_jac_fn}).  If the Jacobian function is [None], CVODE uses an
       internal implementation based on difference quotients.  See also {!Dls}.
 
@@ -167,7 +169,7 @@ and linear_solver =
       @cvode <node5#sss:optin_dls> CVDlsSetBandJacFn
       @cvode <node5#ss:bjacFn> Banded Jacobian function
    *)
-  | LapackBand of bandrange * band_jac_fn option
+  | LapackBand of Cvode.bandrange * band_jac_fn option
   (** Direct linear solver with banded matrix using LAPACK.  The arguments
       are the same as [Band].
 
@@ -180,18 +182,18 @@ and linear_solver =
 
       @cvode <node5#sss:lin_solve_init> CVDiag
     *)
-  | Spgmr of spils_params * spils_callbacks
-  (** Krylov iterative solver with the scaled preconditioned GMRES method.  The
+  | Spgmr of Cvode.spils_params * spils_callbacks
+  (** Krylov iterative solver with the scaled preconditioned GMRES method. The
       arguments specify the maximum dimension of the Krylov subspace and
-      preconditioning type ({!spils_params}) and the preconditioner callback
-      functions ({!spils_callbacks}).  See also {!Spils}.
+      preconditioning type ({!Cvode.spils_params}) and the preconditioner
+      callback functions ({!spils_callbacks}).  See also {!Spils}.
 
       @cvode <node5#sss:lin_solve_init> CVSpgmr
       @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
       @cvode <node5#ss:psolveFn> Linear preconditioning function
       @cvode <node5#ss:precondFn> Jacobian preconditioning function
     *)
-  | Spbcg of spils_params * spils_callbacks
+  | Spbcg of Cvode.spils_params * spils_callbacks
   (** Krylov iterative solver with the scaled preconditioned Bi-CGStab method.
       The arguments are the same as [Spgmr].  See also {!Spils}.
 
@@ -200,7 +202,7 @@ and linear_solver =
       @cvode <node5#ss:psolveFn> Linear preconditioning function
       @cvode <node5#ss:precondFn> Jacobian preconditioning function
     *)
-  | Sptfqmr of spils_params * spils_callbacks
+  | Sptfqmr of Cvode.spils_params * spils_callbacks
   (** Krylov iterative with the scaled preconditioned TFQMR method.  The
       arguments are the same as [Spgmr].  See also {!Spils}.
 
@@ -209,18 +211,18 @@ and linear_solver =
       @cvode <node5#ss:psolveFn> Linear preconditioning function
       @cvode <node5#ss:precondFn> Jacobian preconditioning function
     *)
-  | BandedSpgmr of spils_params * bandrange
+  | BandedSpgmr of Cvode.spils_params * Cvode.bandrange
   (** Same as Spgmr (the Krylov iterative solver with scaled preconditioned
       GMRES), but the preconditioner is set to CVODE's internal implementation
       using a banded matrix of difference quotients.  The arguments specify the
       maximum dimension of the Krylov subspace and preconditioning type
-      ({!spils_params}), along with the width of the band matrix
-      ({!bandrange}).
+      ({!Cvode.spils_params}), along with the width of the band matrix
+      ({!Cvode.bandrange}).
 
       @cvode <node5#sss:lin_solve_init> CVSpgmr
       @cvode <node5#sss:cvbandpre> CVBandPrecInit
     *)
-  | BandedSpbcg of spils_params * bandrange
+  | BandedSpbcg of Cvode.spils_params * Cvode.bandrange
   (** Same as Spbcg (the Krylov iterative solver with scaled preconditioned
       Bi-CGStab), but the preconditioner is set to CVODE's internal
       implementation using a banded matrix of difference quotients.  The
@@ -229,7 +231,7 @@ and linear_solver =
       @cvode <node5#sss:lin_solve_init> CVSpbcg
       @cvode <node5#sss:cvbandpre> CVBandPrecInit
     *)
-  | BandedSptfqmr of spils_params * bandrange
+  | BandedSptfqmr of Cvode.spils_params * Cvode.bandrange
   (** Same as Spbcg (the Krylov iterative solver with scaled preconditioned
       Bi-CGStab), but the preconditioner is set to CVODE's internal
       implementation using a banded matrix of difference quotients.  The
@@ -296,19 +298,9 @@ and dense_jac_fn = triple_tmp jacobian_arg -> Dls.DenseMatrix.t -> unit
     function call, then they must be copied to separate physical
     structures.
  *)
-and band_jac_fn = bandrange -> triple_tmp jacobian_arg
-                            -> Dls.BandMatrix.t -> unit
+and band_jac_fn = Cvode.bandrange -> triple_tmp jacobian_arg
+                                  -> Dls.BandMatrix.t -> unit
 
-(** The range of nonzero entries in a band matrix.  *)
-and bandrange = { mupper : int; (** The upper half-bandwidth.  *)
-                  mlower : int; (** The lower half-bandwidth.  *) }
-
-(** Common parameters for Krylov subspace linear solvers.  *)
-and spils_params = { maxl : int option; (** Maximum dimension of the Krylov subspace
-                                            to be used.  Pass [None] to use the default
-                                            value [5]. *)
-                     prec_type : Spils.preconditioning_type;
-                     (** The type of preconditioning to be done.  *) }
 (** Callbacks for Krylov subspace linear solvers.  Ignored if the
     {!Spils.preconditioning_type} is set to [PrecNone].  In that case, you
     should use {!spils_no_precond} as [spils_callbacks].  *)
@@ -561,10 +553,10 @@ module Spils :
       -> unit
 
     (**
-      Set the Jacobian-times-vector function (see {!spils_params}).  It may be
-      unsafe to use this function without a {!reinit}.  Users are encouraged to
-      use the [iter_type] parameter of {!reinit} instead, unless they are
-      desperate for performance.
+      Set the Jacobian-times-vector function (see {!Cvode.spils_params}).  It
+      may be unsafe to use this function without a {!reinit}.  Users are
+      encouraged to use the [iter_type] parameter of {!reinit} instead, unless
+      they are desperate for performance.
 
       @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
       @cvode <node5#ss:jtimesFn> Jacobian-times-vector function

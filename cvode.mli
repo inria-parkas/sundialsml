@@ -79,6 +79,17 @@ type integrator_stats = {
     current_time : float
   }
 
+(** The range of nonzero entries in a band matrix.  *)
+type bandrange = { mupper : int; (** The upper half-bandwidth.  *)
+                   mlower : int; (** The lower half-bandwidth.  *) }
+
+(** Common parameters for Krylov subspace linear solvers.  *)
+type spils_params = { maxl : int option; (** Maximum dimension of the Krylov subspace
+                                            to be used.  Pass [None] to use the default
+                                            value [5]. *)
+                      prec_type : Spils.preconditioning_type;
+                      (** The type of preconditioning to be done.  *) }
+
 (** {3:exceptions Exceptions} *)
 
 (** @cvode <node5#sss:cvode> CV_ILL_INPUT *)

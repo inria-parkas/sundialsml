@@ -71,6 +71,10 @@ type integrator_stats = {
     current_time : float
   }
 
+(** The range of nonzero entries in a band matrix.  *)
+type bandrange = { mupper : int; (** The upper half-bandwidth.  *)
+                   mlower : int; (** The lower half-bandwidth.  *) }
+
 (** {3:exceptions Exceptions} *)
 
 (** @ida <node5#sss:ida> IDA_ILL_INPUT *)

@@ -620,11 +620,6 @@ module Adjoint =
       | Spbcg of spils_params * 'a spils_callbacks
       | Sptfqmr of spils_params * 'a spils_callbacks
 
-    and spils_params = {
-          maxl : int option;
-          prec_type : Spils.preconditioning_type;
-      }
-
     and 'a spils_callbacks =
       {
         prec_solve_fn : (('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg

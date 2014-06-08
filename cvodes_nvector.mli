@@ -837,18 +837,18 @@ module Adjoint :
 
           @cvodes <node7#sss:lin_solv_b> CVDiagB *)
 
-      | Spgmr of spils_params * 'a spils_callbacks
+      | Spgmr of Cvode.spils_params * 'a spils_callbacks
       (** Krylov iterative solver with the scaled preconditioned GMRES method.  The
           arguments specify the maximum dimension of the Krylov subspace and
-          preconditioning type ({!spils_params}) and the preconditioner callback
-          functions ({!spils_callbacks}).  See also {!Spils}.
+          preconditioning type ({!Cvode.spils_params}) and the preconditioner
+          callback functions ({!spils_callbacks}).  See also {!Spils}.
 
           @cvodes <node7#sss:lin_solv_b> CVSpgmrB
           @cvodes <node7#SECTION00728400000000000000> CVSpilsSetPreconditionerB
           @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB
           @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB *)
 
-      | Spbcg of spils_params * 'a spils_callbacks
+      | Spbcg of Cvode.spils_params * 'a spils_callbacks
       (** Krylov iterative solver with the scaled preconditioned Bi-CGStab method.
           The arguments are the same as [Spgmr].  See also {!Spils}.
 
@@ -857,16 +857,7 @@ module Adjoint :
           @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB
           @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB *)
 
-      | Sptfqmr of spils_params * 'a spils_callbacks
-
-
-    (** Common parameters for Krylov subspace linear solvers.  *)
-    and spils_params = { maxl : int option;
-                         (** Maximum dimension of the Krylov subspace
-                             to be used.  Pass [None] to use the default
-                             value [5]. *)
-                         prec_type : Spils.preconditioning_type;
-                         (** The type of preconditioning to be done.  *) }
+      | Sptfqmr of Cvode.spils_params * 'a spils_callbacks
 
     (** Callbacks for Krylov subspace linear solvers.  Ignored if the
         {!Spils.preconditioning_type} is set to [PrecNone].  In that case, you

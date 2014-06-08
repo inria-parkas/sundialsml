@@ -816,18 +816,6 @@ module Adjoint :
                                     either {!single_tmp} or {!triple_tmp}. *)
       }
 
-    (** The range of nonzero entries in a band matrix.  *)
-    type bandrange = { mupper : int; (** The upper half-bandwidth.  *)
-                       mlower : int; (** The lower half-bandwidth.  *) }
-
-    (** Common parameters for Krylov subspace linear solvers.  *)
-    type spils_params = { maxl : int option;
-                         (** Maximum dimension of the Krylov subspace
-                             to be used.  Pass [None] to use the default
-                             value [5]. *)
-                         prec_type : Spils.preconditioning_type;
-                         (** The type of preconditioning to be done.  *) }
-
     (** Arguments passed to the preconditioner solve callback function.  See
         [prec_solve_fn] in {!spils_callbacks}.
 
@@ -884,7 +872,7 @@ module Adjoint :
 
         @cvodes <node7#ss:bandjac_b> CVDlsBandJacFnB *)
     type bband_jac_fn =
-      bandrange -> triple_tmp jacobian_arg -> Dls.DenseMatrix.t -> unit
+      Cvode.bandrange -> triple_tmp jacobian_arg -> Dls.DenseMatrix.t -> unit
 
     (** Specify a linear solver.
 
@@ -920,17 +908,19 @@ module Adjoint :
           @cvodes <node7#SECTION00728200000000000000> CVDlsSetDenseJacFnB
           @cvodes <node7#ss:densejac_b> CVDlsDenseJacFnB *)
 
-      | Band of bandrange * bband_jac_fn option
-      (** Direct linear solver with banded matrix.  The arguments specify the width
-          of the band ({!bandrange}) and an optional Jacobian function
-          ({!bband_jac_fn}).  If the Jacobian function is [None], CVODES uses an
-          internal implementation based on difference quotients.  See also {!Dls}.
+      | Band of Cvode.bandrange * bband_jac_fn option
+
+      (** Direct linear solver with banded matrix.  The arguments specify the
+          width of the band ({!Cvode.bandrange}) and an optional Jacobian
+          function ({!bband_jac_fn}).  If the Jacobian function is [None],
+          CVODES uses an internal implementation based on difference quotients.
+          See also {!Dls}.
 
           @cvodes <node7#sss:lin_solv_b> CVBandB
           @cvodes <node7#SECTION00728300000000000000> CVDlsSetBandJacFnB
           @cvodes <node7#ss:bandjac_b> CVDlsBandJacFnB *)
 
-      | LapackBand of bandrange * bband_jac_fn option
+      | LapackBand of Cvode.bandrange * bband_jac_fn option
       (** Direct linear solver with banded matrix using LAPACK.  The arguments
           are the same as [Band].
 
@@ -938,18 +928,18 @@ module Adjoint :
           @cvodes <node7#SECTION00728300000000000000> CVDlsSetBandJacFnB
           @cvodes <node7#ss:bandjac_b> CVDlsBandJacFnB *)
 
-      | Spgmr of spils_params * spils_callbacks
+      | Spgmr of Cvode.spils_params * spils_callbacks
       (** Krylov iterative solver with the scaled preconditioned GMRES method.  The
           arguments specify the maximum dimension of the Krylov subspace and
-          preconditioning type ({!spils_params}) and the preconditioner callback
-          functions ({!spils_callbacks}).  See also {!Spils}.
+          preconditioning type ({!Cvode.spils_params}) and the preconditioner
+          callback functions ({!spils_callbacks}).  See also {!Spils}.
 
           @cvodes <node7#sss:lin_solv_b> CVSpgmrB
           @cvodes <node7#SECTION00728400000000000000> CVSpilsSetPreconditionerB
           @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB
           @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB *)
 
-      | Spbcg of spils_params * spils_callbacks
+      | Spbcg of Cvode.spils_params * spils_callbacks
       (** Krylov iterative solver with the scaled preconditioned Bi-CGStab method.
           The arguments are the same as [Spgmr].  See also {!Spils}.
 
@@ -958,7 +948,7 @@ module Adjoint :
           @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB
           @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB *)
 
-      | Sptfqmr of spils_params * spils_callbacks
+      | Sptfqmr of Cvode.spils_params * spils_callbacks
 
       (** Krylov iterative with the scaled preconditioned TFQMR method.  The
           arguments are the same as [Spgmr].  See also {!Spils}.
@@ -967,18 +957,18 @@ module Adjoint :
           @cvodes <node7#SECTION00728400000000000000> CVSpilsSetPreconditionerB
           @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB
           @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB *)
-      | BandedSpgmr of spils_params * bandrange
+      | BandedSpgmr of Cvode.spils_params * Cvode.bandrange
       (** Same as Spgmr (the Krylov iterative solver with scaled preconditioned
           GMRES), but the preconditioner is set to CVODE's internal implementation
           using a banded matrix of difference quotients.  The arguments specify the
           maximum dimension of the Krylov subspace and preconditioning type
-          ({!spils_params}), along with the width of the band matrix
-          ({!bandrange}).
+          ({!Cvode.spils_params}), along with the width of the band matrix
+          ({!Cvode.bandrange}).
 
           @cvodes <node7#sss:lin_solv_b> CVSpgmrB
           @cvodes <node7#SECTION00741000000000000000> CVBandPrecInitB *)
 
-      | BandedSpbcg of spils_params * bandrange
+      | BandedSpbcg of Cvode.spils_params * Cvode.bandrange
       (** Same as Spbcg (the Krylov iterative solver with scaled preconditioned
           Bi-CGStab), but the preconditioner is set to CVODE's internal
           implementation using a banded matrix of difference quotients.  The
@@ -987,7 +977,7 @@ module Adjoint :
           @cvodes <node7#sss:lin_solv_b> CVSpbcgB
           @cvodes <node7#SECTION00741000000000000000> CVBandPrecInitB *)
 
-      | BandedSptfqmr of spils_params * bandrange
+      | BandedSptfqmr of Cvode.spils_params * Cvode.bandrange
       (** Same as Spbcg (the Krylov iterative solver with scaled preconditioned
           Bi-CGStab), but the preconditioner is set to CVODE's internal
           implementation using a banded matrix of difference quotients.  The
