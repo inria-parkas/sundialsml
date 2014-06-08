@@ -119,7 +119,7 @@ type bdense_jac_fn =
       triple_tmp bjacobian_arg -> Dls.DenseMatrix.t -> unit
 
  and bband_jac_fn =
-      bandrange -> triple_tmp bjacobian_arg -> Dls.DenseMatrix.t -> unit
+      bandrange -> triple_tmp bjacobian_arg -> Dls.BandMatrix.t -> unit
 
 (* the session type *)
 

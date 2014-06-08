@@ -872,7 +872,7 @@ module Adjoint :
 
         @cvodes <node7#ss:bandjac_b> CVDlsBandJacFnB *)
     type bband_jac_fn =
-      Cvode.bandrange -> triple_tmp jacobian_arg -> Dls.DenseMatrix.t -> unit
+      Cvode.bandrange -> triple_tmp jacobian_arg -> Dls.BandMatrix.t -> unit
 
     (** Specify a linear solver.
 
