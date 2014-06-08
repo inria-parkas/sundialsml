@@ -170,9 +170,9 @@ module Sensitivity :
     (** {3:senstol Tolerance specification} *)
 
     type 'a tolerance =
-        SSTolerances of float * float
+        SSTolerances of float * Sundials.real_array
         (** [(rel, abs)] : scalar relative and absolute tolerances. *)
-      | SVTolerances of float * 'a nvector
+      | SVTolerances of float * 'a nvector array
         (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
       | EETolerances
         (** Calculate the integration tolerances for sensitivities based
@@ -536,9 +536,9 @@ module Sensitivity :
         type 'a tolerance =
             NoStepSizeControl
             (** Do not use quadrature variables for step-size control (default). *)
-          | SSTolerances of float * float
+          | SSTolerances of float * Sundials.real_array
             (** [(rel, abs)] : scalar relative and absolute tolerances. *)
-          | SVTolerances of float * 'a nvector
+          | SVTolerances of float * 'a nvector array
             (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
           | EETolerances
             (** Estimate the tolerances for the sensitivity-dependent
@@ -947,13 +947,15 @@ module Adjoint :
         @cvode <node7#ss:psolveFn> CVSpilsPrecSolveFnB *)
     and 'a prec_solve_arg =
       {
-        rvecB   : 'a;       (** The right-hand side vector, {i r}, of the
-                                linear system. *)
-        gammaB : float;     (** The scalar {i g} appearing in the Newton
-                                matrix given by M = I - {i g}J. *)
-        deltaB : float;     (** Input tolerance to be used if an
-                                iterative method is employed in the
-                                solution. *)
+        rvec   : 'a;       (** The right-hand side vector, {i r}, of the
+                               linear system. *)
+        gamma : float;     (** The scalar {i g} appearing in the Newton
+                               matrix given by M = I - {i g}J. *)
+        delta : float;     (** Input tolerance to be used if an iterative method
+                               is employed in the solution. *)
+
+        left  : bool;      (** Indicates whether to use the left preconditioner
+                               ([true]) or the right one ([false]). *)
       }
 
     type 'a tolerance =

@@ -44,11 +44,14 @@
 #endif
 
 #include "spils_ml.h"
+#include "cvode_ml.h"
 #include "cvodes_ml.h"
 #include "sundials_ml.h"
 
+#define MAX_ERRMSG_LEN 256
+
 // TODO: must ensure that these exceptions are registered...
-void cvodes_ml_check_flag(const char *call, int flag)
+void cvodes_ml_SCHECK_FLAG(const char *call, int flag)
 {
     static char exmsg[MAX_ERRMSG_LEN] = "";
 
@@ -205,7 +208,7 @@ CAMLprim void c_cvodes_quad_set_err_con(value vdata, value verrconq)
     int flag;
     
     flag = CVodeSetQuadErrCon(CVODE_MEM_FROM_ML(vdata), Bool_val(verrconq));
-    CHECK_FLAG("CVodeSetQuadErrCon", flag);
+    SCHECK_FLAG("CVodeSetQuadErrCon", flag);
 
     CAMLreturn0;
 }
@@ -218,7 +221,7 @@ CAMLprim void c_cvodes_quad_ss_tolerances(value vdata,
 
     int flag = CVodeQuadSStolerances(CVODE_MEM_FROM_ML(vdata),
 		 Double_val(reltol), Double_val(abstol));
-    CHECK_FLAG("CVodeQuadSStolerances", flag);
+    SCHECK_FLAG("CVodeQuadSStolerances", flag);
 
     CAMLreturn0;
 }
@@ -231,7 +234,7 @@ CAMLprim value c_cvodes_quad_get_num_rhs_evals(value vdata)
     long int v;
 
     flag = CVodeGetQuadNumRhsEvals(CVODE_MEM_FROM_ML(vdata), &v);
-    CHECK_FLAG("CVodeGetQuadNumRhsEvals", flag);
+    SCHECK_FLAG("CVodeGetQuadNumRhsEvals", flag);
 
     CAMLreturn(Val_long(v));
 }
@@ -244,7 +247,7 @@ CAMLprim value c_cvodes_quad_get_num_err_test_fails(value vdata)
     long int v;
 
     flag = CVodeGetQuadNumErrTestFails(CVODE_MEM_FROM_ML(vdata), &v);
-    CHECK_FLAG("CVodeGetQuadNumErrTestFails", flag);
+    SCHECK_FLAG("CVodeGetQuadNumErrTestFails", flag);
 
     CAMLreturn(Val_long(v));
 }
@@ -260,7 +263,7 @@ CAMLprim value c_cvodes_quad_get_stats(value vdata)
 
     flag = CVodeGetQuadStats(CVODE_MEM_FROM_ML(vdata), &nfqevals,
 	    &nqetfails);
-    CHECK_FLAG("CVodeGetQuadStats", flag);
+    SCHECK_FLAG("CVodeGetQuadStats", flag);
 
     r = caml_alloc_tuple(2);
 
@@ -277,8 +280,8 @@ CAMLprim void c_cvodes_sens_set_err_con(value vdata, value verrcons)
     CAMLparam2(vdata, verrcons);
     int flag;
     
-    flag = CVodeSetSensErrCon(CVODE_MEM_FROM_ML(vdata, Bool_val(verrcons));
-    CHECK_FLAG("CVodeSetSensErrCon", flag);
+    flag = CVodeSetSensErrCon(CVODE_MEM_FROM_ML(vdata), Bool_val(verrcons));
+    SCHECK_FLAG("CVodeSetSensErrCon", flag);
 
     CAMLreturn0;
 }
@@ -290,8 +293,8 @@ CAMLprim void c_cvodes_sens_ss_tolerances(value vdata,
     CAMLparam3(vdata, reltol, abstol);
 
     int flag = CVodeSensSStolerances(CVODE_MEM_FROM_ML(vdata),
-		 Double_val(reltol), Double_val(abstol));
-    CHECK_FLAG("CVodeSensSStolerances", flag);
+		 Double_val(reltol), REAL_ARRAY(abstol));
+    SCHECK_FLAG("CVodeSensSStolerances", flag);
 
     CAMLreturn0;
 }
@@ -301,7 +304,7 @@ CAMLprim void c_cvodes_sens_ee_tolerances(value vdata)
     CAMLparam1(vdata);
 
     int flag = CVodeSensEEtolerances(CVODE_MEM_FROM_ML(vdata));
-    CHECK_FLAG("CVodeSensEEtolerances", flag);
+    SCHECK_FLAG("CVodeSensEEtolerances", flag);
 
     CAMLreturn0;
 }
@@ -335,7 +338,7 @@ CAMLprim void c_cvodes_sens_set_params(value vdata, value vparams)
 
     int flag = CVodeSetSensParams(CVODE_MEM_FROM_ML(vdata), p, pbar, plist);
     if (plist != NULL) free(plist);
-    CHECK_FLAG("CVodeSetSensParams", flag);
+    SCHECK_FLAG("CVodeSetSensParams", flag);
 
     CAMLreturn0;
 }
@@ -345,7 +348,7 @@ CAMLprim void c_cvodes_sens_toggle_off(value vdata)
     CAMLparam1(vdata);
 
     int flag = CVodeSensToggleOff(CVODE_MEM_FROM_ML(vdata));
-    CHECK_FLAG("CVodeSensToggleOff", flag);
+    SCHECK_FLAG("CVodeSensToggleOff", flag);
 
     CAMLreturn0;
 }
@@ -371,7 +374,7 @@ CAMLprim void c_cvodes_sens_set_dq_method(value vdata, value vdqtype,
 
     int flag = CVodeSetSensDQMethod(CVODE_MEM_FROM_ML(vdata), dqtype,
 				    Double_val(vdqrhomax));
-    CHECK_FLAG("CVodeSetSensMaxNonlinIters", flag);
+    SCHECK_FLAG("CVodeSetSensMaxNonlinIters", flag);
 
     CAMLreturn0;
 }
@@ -382,7 +385,7 @@ CAMLprim void c_cvodes_sens_set_max_nonlin_iters(value vdata, value vmaxcors)
 
     int flag = CVodeSetSensMaxNonlinIters(CVODE_MEM_FROM_ML(vdata),
 	    Int_val(vmaxcors));
-    CHECK_FLAG("CVodeSetSensMaxNonlinIters", flag);
+    SCHECK_FLAG("CVodeSetSensMaxNonlinIters", flag);
 
     CAMLreturn0;
 }
@@ -395,12 +398,12 @@ CAMLprim value c_cvodes_sens_get_num_sens_evals(value vdata)
     long int v;
 
     flag = CVodeGetSensNumRhsEvals(CVODE_MEM_FROM_ML(vdata), &v);
-    CHECK_FLAG("CVodeGetSensNumRhsEvals", flag);
+    SCHECK_FLAG("CVodeGetSensNumRhsEvals", flag);
 
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_cvodes_sens_get_num_sens_evals(value vdata)
+CAMLprim value c_cvodes_sens_get_num_rhs_evals(value vdata)
 {
     CAMLparam1(vdata);
 
@@ -408,12 +411,12 @@ CAMLprim value c_cvodes_sens_get_num_sens_evals(value vdata)
     long int v;
 
     flag = CVodeGetNumRhsEvalsSens(CVODE_MEM_FROM_ML(vdata), &v);
-    CHECK_FLAG("CVodeGetNumRhsEvalsSens", flag);
+    SCHECK_FLAG("CVodeGetNumRhsEvalsSens", flag);
 
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_cvodes_sens_quad_get_num_err_test_fails(value vdata)
+CAMLprim value c_cvodes_sens_get_num_err_test_fails(value vdata)
 {
     CAMLparam1(vdata);
 
@@ -421,7 +424,7 @@ CAMLprim value c_cvodes_sens_quad_get_num_err_test_fails(value vdata)
     long int v;
 
     flag = CVodeGetSensNumErrTestFails(CVODE_MEM_FROM_ML(vdata), &v);
-    CHECK_FLAG("CVodeGetSensNumErrTestFails", flag);
+    SCHECK_FLAG("CVodeGetSensNumErrTestFails", flag);
 
     CAMLreturn(Val_long(v));
 }
@@ -434,7 +437,7 @@ CAMLprim value c_cvodes_sens_get_num_lin_solv_setups(value vdata)
     long int v;
 
     flag = CVodeGetSensNumLinSolvSetups(CVODE_MEM_FROM_ML(vdata), &v);
-    CHECK_FLAG("CVodeGetSensNumLinSolvSetups", flag);
+    SCHECK_FLAG("CVodeGetSensNumLinSolvSetups", flag);
 
     CAMLreturn(Val_long(v));
 }
@@ -452,7 +455,7 @@ CAMLprim value c_cvodes_sens_get_stats(value vdata)
 
     flag = CVodeGetSensStats(CVODE_MEM_FROM_ML(vdata), &nfsevals,
 	    &nfevalss, &nsetfails, &nlinsetupss);
-    CHECK_FLAG("CVodeGetSensStats", flag);
+    SCHECK_FLAG("CVodeGetSensStats", flag);
 
     r = caml_alloc_tuple(RECORD_CVODES_SENS_STATS_SIZE);
     Store_field(r, RECORD_CVODES_SENS_STATS_NUM_RHS_EVALS, Val_long(nfsevals));
@@ -473,7 +476,7 @@ CAMLprim value c_cvodes_sens_get_num_nonlin_solv_iters(value vdata)
     long int v;
 
     flag = CVodeGetSensNumNonlinSolvIters(CVODE_MEM_FROM_ML(vdata), &v);
-    CHECK_FLAG("CVodeGetSensNumNonlinSolvIters", flag);
+    SCHECK_FLAG("CVodeGetSensNumNonlinSolvIters", flag);
 
     CAMLreturn(Val_long(v));
 }
@@ -486,7 +489,7 @@ CAMLprim value c_cvodes_sens_get_num_nonlin_solv_conv_fails(value vdata)
     long int v;
 
     flag = CVodeGetSensNumNonlinSolvConvFails(CVODE_MEM_FROM_ML(vdata), &v);
-    CHECK_FLAG("CVodeGetSensNumNonlinSolvConvFails", flag);
+    SCHECK_FLAG("CVodeGetSensNumNonlinSolvConvFails", flag);
 
     CAMLreturn(Val_long(v));
 }
@@ -502,7 +505,7 @@ CAMLprim value c_cvodes_sens_get_nonlin_solv_stats(value vdata)
 
     flag = CVodeGetSensNonlinSolvStats(CVODE_MEM_FROM_ML(vdata), &nsniters,
 	    &nsncfails);
-    CHECK_FLAG("CVodeGetSensNonlinSolvStats", flag);
+    SCHECK_FLAG("CVodeGetSensNonlinSolvStats", flag);
 
     r = caml_alloc_tuple(RECORD_CVODES_SENS_NONLIN_STATS_SIZE);
     Store_field(r, RECORD_CVODES_SENS_NONLIN_STATS_NUM_SOLV_ITERS,
@@ -521,7 +524,7 @@ CAMLprim void c_cvodes_sens_get_stgr_nonlin_solv_iters(value vdata, value vr)
 
     flag = CVodeGetStgrSensNumNonlinSolvIters(CVODE_MEM_FROM_ML(vdata),
 					      LONG_ARRAY(vr));
-    CHECK_FLAG("CVodeGetStgrSensNumNonlinSolvIters", flag);
+    SCHECK_FLAG("CVodeGetStgrSensNumNonlinSolvIters", flag);
 
     CAMLreturn0;
 }
@@ -531,11 +534,9 @@ CAMLprim void c_cvodes_sens_get_num_stgr_nonlin_solv_conv_fails(value vdata,
 {
     CAMLparam2(vdata, vr);
 
-    int flag;
-
-    flag = CVodeGetStgrSensNumNonlinSolvConfFails(CVODE_MEM_FROM_ML(vdata),
-					          LONG_ARRAY(vr));
-    CHECK_FLAG("CVodeGetStgrSensNumNonlinSolvConfFails", flag);
+    int flag = CVodeGetStgrSensNumNonlinSolvConvFails(CVODE_MEM_FROM_ML(vdata),
+						      LONG_ARRAY(vr));
+    SCHECK_FLAG("CVodeGetStgrSensNumNonlinSolvConvFails", flag);
 
     CAMLreturn0;
 }
@@ -547,8 +548,8 @@ CAMLprim void c_cvodes_quadsens_set_err_con(value vdata, value verrconq)
     CAMLparam2(vdata, verrconq);
     int flag;
     
-    flag = CVodeSetQuadSensErrCon(CVODE_MEM_FROM_ML(vdata, Bool_val(verrconq));
-    CHECK_FLAG("CVodeSetQuadSensErrCon", flag);
+    flag = CVodeSetQuadSensErrCon(CVODE_MEM_FROM_ML(vdata), Bool_val(verrconq));
+    SCHECK_FLAG("CVodeSetQuadSensErrCon", flag);
 
     CAMLreturn0;
 }
@@ -561,8 +562,8 @@ CAMLprim void c_cvodes_quadsens_ss_tolerances(value vdata,
 
     int flag = CVodeQuadSensSStolerances(CVODE_MEM_FROM_ML(vdata),
 					 Double_val(reltol),
-					 Double_val(abstol));
-    CHECK_FLAG("CVodeQuadSensSStolerances", flag);
+					 REAL_ARRAY(abstol));
+    SCHECK_FLAG("CVodeQuadSensSStolerances", flag);
 
     CAMLreturn0;
 }
@@ -572,7 +573,7 @@ CAMLprim void c_cvodes_quadsens_ee_tolerances(value vdata)
     CAMLparam1(vdata);
 
     int flag = CVodeQuadSensEEtolerances(CVODE_MEM_FROM_ML(vdata));
-    CHECK_FLAG("CVodeQuadSensEEtolerances", flag);
+    SCHECK_FLAG("CVodeQuadSensEEtolerances", flag);
 
     CAMLreturn0;
 }
@@ -585,7 +586,7 @@ CAMLprim value c_cvodes_quadsens_get_num_rhs_evals(value vdata)
     long int v;
 
     flag = CVodeGetQuadSensNumRhsEvals(CVODE_MEM_FROM_ML(vdata), &v);
-    CHECK_FLAG("CVodeGetQuadSensNumRhsEvals", flag);
+    SCHECK_FLAG("CVodeGetQuadSensNumRhsEvals", flag);
 
     CAMLreturn(Val_long(v));
 }
@@ -598,7 +599,7 @@ CAMLprim value c_cvodes_quadsens_get_num_err_test_fails(value vdata)
     long int v;
 
     flag = CVodeGetQuadSensNumErrTestFails(CVODE_MEM_FROM_ML(vdata), &v);
-    CHECK_FLAG("CVodeGetQuadSensNumErrTestFails", flag);
+    SCHECK_FLAG("CVodeGetQuadSensNumErrTestFails", flag);
 
     CAMLreturn(Val_long(v));
 }
@@ -614,7 +615,7 @@ CAMLprim value c_cvodes_quadsens_get_stats(value vdata)
 
     flag = CVodeGetQuadSensStats(CVODE_MEM_FROM_ML(vdata), &nfqsevals,
 				 &nqsetfails);
-    CHECK_FLAG("CVodeGetQuadSensStats", flag);
+    SCHECK_FLAG("CVodeGetQuadSensStats", flag);
 
     r = caml_alloc_tuple(2);
     Store_field(r, 0, Val_long(nfqsevals));
@@ -645,7 +646,7 @@ CAMLprim void c_cvodes_adj_init(value vdata, value vnd, value vinterptype)
 
     int flag = CVodeAdjInit(CVODE_MEM_FROM_ML(vdata), Long_val(vnd),
 			    interptype);
-    CHECK_FLAG("CVodeAdjInit", flag);
+    SCHECK_FLAG("CVodeAdjInit", flag);
 
     CAMLreturn0;
 }
@@ -656,8 +657,8 @@ CAMLprim void c_cvodes_adj_ss_tolerances(value vparent, value vwhich,
     CAMLparam4(vparent, vwhich, vreltol, vabstol);
 
     int flag = CVodeSStolerancesB(CVODE_MEM_FROM_ML(vparent),
-		 Int_val(which), Double_val(vreltol), Double_val(vabstol));
-    CHECK_FLAG("CVodeSStolerancesB", flag);
+		 Int_val(vwhich), Double_val(vreltol), Double_val(vabstol));
+    SCHECK_FLAG("CVodeSStolerancesB", flag);
 
     CAMLreturn0;
 }
@@ -666,8 +667,8 @@ CAMLprim void c_cvodes_adj_diag(value vparent, value vwhich)
 {
     CAMLparam2(vparent, vwhich);
 
-    int flag = CVodeDiagB(CVODE_MEM_FROM_ML(vparent), Int_val(vwhich));
-    CHECK_FLAG("CVodeDiagB", flag);
+    int flag = CVDiagB(CVODE_MEM_FROM_ML(vparent), Int_val(vwhich));
+    SCHECK_FLAG("CVDiagB", flag);
 
     CAMLreturn0;
 }
@@ -681,10 +682,10 @@ CAMLprim void c_cvodes_adj_spils_spgmr (value vparent, value vwhich,
     int flag;
 
     flag = CVodeSetIterTypeB (cvode_mem, which, CV_NEWTON);
-    CHECK_FLAG ("CVodeSetIterTypeB", flag);
+    SCHECK_FLAG ("CVodeSetIterTypeB", flag);
     flag = CVSpgmrB (cvode_mem, which, spils_precond_type (vtype),
 		     Int_val (vmaxl));
-    CHECK_FLAG ("CVSpgmrB", flag);
+    SCHECK_FLAG ("CVSpgmrB", flag);
     CAMLreturn0;
 }
 
@@ -697,10 +698,10 @@ CAMLprim void c_cvodes_adj_spils_spbcg (value vparent, value vwhich,
     int flag;
 
     flag = CVodeSetIterTypeB (cvode_mem, which, CV_NEWTON);
-    CHECK_FLAG ("CVodeSetIterTypeB", flag);
+    SCHECK_FLAG ("CVodeSetIterTypeB", flag);
     flag = CVSpbcgB (cvode_mem, which, spils_precond_type (vtype),
 		     Int_val (vmaxl));
-    CHECK_FLAG ("CVSpbcgB", flag);
+    SCHECK_FLAG ("CVSpbcgB", flag);
     CAMLreturn0;
 }
 
@@ -713,26 +714,25 @@ CAMLprim void c_cvodes_adj_spils_sptfqmr (value vparent, value vwhich,
     int flag;
 
     flag = CVodeSetIterTypeB (cvode_mem, which, CV_NEWTON);
-    CHECK_FLAG ("CVodeSetIterTypeB", flag);
+    SCHECK_FLAG ("CVodeSetIterTypeB", flag);
     flag = CVSptfqmrB (cvode_mem, which, spils_precond_type (vtype),
 		       Int_val (vmaxl));
-    CHECK_FLAG ("CVSptfqmrB", flag);
+    SCHECK_FLAG ("CVSptfqmrB", flag);
     CAMLreturn0;
 }
 
-CAMLprim void c_cvode_set_functional (value vparent, value vwhich)
+CAMLprim void c_cvodes_set_functional (value vparent, value vwhich)
 {
     CAMLparam2 (vparent, vwhich);
     int flag = CVodeSetIterTypeB (CVODE_MEM_FROM_ML (vparent), Int_val(vwhich),
 				  CV_FUNCTIONAL);
-    CHECK_FLAG ("CVodeSetIterTypeB", flag);
+    SCHECK_FLAG ("CVodeSetIterTypeB", flag);
     CAMLreturn0;
 }
 
 CAMLprim void c_cvodes_adj_bsession_finalize(value vdata)
 {
     if (CVODE_MEM_FROM_ML(vdata) != NULL) {
-	void *cvode_mem = CVODE_MEM_FROM_ML(vdata);
 	value *backref = CVODE_BACKREF_FROM_ML(vdata);
 	// NB: CVodeFree() is *not* called: parents free-up backward problems
 	caml_remove_generational_global_root (backref);
@@ -745,7 +745,7 @@ CAMLprim void c_cvodes_adj_backward_normal(value vdata, value vtbout)
     CAMLparam2(vdata, vtbout);
 
     int flag = CVodeB(CVODE_MEM_FROM_ML(vdata), Double_val(vtbout), CV_NORMAL);
-    CHECK_FLAG("CVodeB", flag);
+    SCHECK_FLAG("CVodeB", flag);
 
     CAMLreturn0;
 }
@@ -756,7 +756,7 @@ CAMLprim void c_cvodes_adj_backward_one_step(value vdata, value vtbout)
 
     int flag = CVodeB(CVODE_MEM_FROM_ML(vdata), Double_val(vtbout),
 		      CV_ONE_STEP);
-    CHECK_FLAG("CVodeB", flag);
+    SCHECK_FLAG("CVodeB", flag);
 
     CAMLreturn0;
 }
@@ -765,77 +765,77 @@ CAMLprim void c_cvodes_adj_set_no_sensitivity(value vdata)
 {
     CAMLparam1(vdata);
 
-    int flag = CVodeAdjSetNoSensi(CVODE_MEM_FROM_ML(vdata));
-    CHECK_FLAG("CVodeAdjSetNoSensi", flag);
+    int flag = CVodeSetAdjNoSensi(CVODE_MEM_FROM_ML(vdata));
+    SCHECK_FLAG("CVodeSetAdjNoSensi", flag);
 
     CAMLreturn0;
 }
 
-CAMLprim void c_cvodes_adj_set_max_ord(value vparent, value which,
+CAMLprim void c_cvodes_adj_set_max_ord(value vparent, value vwhich,
 				       value vmaxord)
 {
     CAMLparam3(vparent, vwhich, vmaxord);
 
     int flag = CVodeSetMaxOrdB(CVODE_MEM_FROM_ML(vparent), Int_val(vwhich),
 			       Int_val(vmaxord));
-    CHECK_FLAG("CVodeSetMaxOrdB", flag);
+    SCHECK_FLAG("CVodeSetMaxOrdB", flag);
 
     CAMLreturn0;
 }
 
-CAMLprim void c_cvodes_adj_set_max_num_steps(value vparent, value which,
+CAMLprim void c_cvodes_adj_set_max_num_steps(value vparent, value vwhich,
 					     value vmxsteps)
 {
     CAMLparam3(vparent, vwhich, vmxsteps);
 
     int flag = CVodeSetMaxNumStepsB(CVODE_MEM_FROM_ML(vparent), Int_val(vwhich),
 				    Long_val(vmxsteps));
-    CHECK_FLAG("CVodeSetMaxNumStepsB", flag);
+    SCHECK_FLAG("CVodeSetMaxNumStepsB", flag);
 
     CAMLreturn0;
 }
 
-CAMLprim void c_cvodes_adj_set_init_step(value vparent, value which, value vhin)
+CAMLprim void c_cvodes_adj_set_init_step(value vparent, value vwhich, value vhin)
 {
     CAMLparam3(vparent, vwhich, vhin);
 
     int flag = CVodeSetInitStepB(CVODE_MEM_FROM_ML(vparent), Int_val(vwhich),
 			         Double_val(vhin));
-    CHECK_FLAG("CVodeSetInitStepB", flag);
+    SCHECK_FLAG("CVodeSetInitStepB", flag);
 
     CAMLreturn0;
 }
 
-CAMLprim void c_cvodes_adj_set_min_step(value vparent, value which, value vhmin)
+CAMLprim void c_cvodes_adj_set_min_step(value vparent, value vwhich, value vhmin)
 {
     CAMLparam3(vparent, vwhich, vhmin);
 
     int flag = CVodeSetMinStepB(CVODE_MEM_FROM_ML(vparent), Int_val(vwhich),
 			        Double_val(vhmin));
-    CHECK_FLAG("CVodeSetMinStepB", flag);
+    SCHECK_FLAG("CVodeSetMinStepB", flag);
 
     CAMLreturn0;
 }
 
-CAMLprim void c_cvodes_adj_set_max_step(value vparent, value which, value vhmax)
+CAMLprim void c_cvodes_adj_set_max_step(value vparent, value vwhich, value vhmax)
 {
     CAMLparam3(vparent, vwhich, vhmax);
 
     int flag = CVodeSetMaxStepB(CVODE_MEM_FROM_ML(vparent), Int_val(vwhich),
 			        Double_val(vhmax));
-    CHECK_FLAG("CVodeSetMaxStepB", flag);
+    SCHECK_FLAG("CVodeSetMaxStepB", flag);
 
     CAMLreturn0;
 }
 
-CAMLprim void c_cvodes_adj_set_stab_lim_det(value vparent, value which,
+CAMLprim void c_cvodes_adj_set_stab_lim_det(value vparent, value vwhich,
 					    value vstldet)
 {
     CAMLparam3(vparent, vwhich, vstldet);
 
     int flag = CVodeSetStabLimDetB(CVODE_MEM_FROM_ML(vparent), Int_val(vwhich),
 			           Bool_val(vstldet));
-    CHECK_FLAG("CVodeSetStabLimDetB", flag);
+    SCHECK_FLAG("CVodeSetStabLimDetB", flag);
 
     CAMLreturn0;
 }
@@ -845,9 +845,9 @@ CAMLprim void c_cvodes_adj_set_prec_type(value vparent, value vwhich,
 {
     CAMLparam3(vparent, vwhich, vptype);
 
-    int flag = CVSpilsSetPrecTypeB(CVODE_MEM_FROM_ML(vcvode_mem),
+    int flag = CVSpilsSetPrecTypeB(CVODE_MEM_FROM_ML(vparent),
 				   Int_val(vwhich), spils_precond_type(vptype));
-    CHECK_FLAG("CVSpilsSetPrecTypeB", flag);
+    SCHECK_FLAG("CVSpilsSetPrecTypeB", flag);
 
     CAMLreturn0;
 }
@@ -859,7 +859,7 @@ CAMLprim void c_cvodes_adj_set_gs_type(value vparent, value vwhich,
 
     int flag = CVSpilsSetGSTypeB(CVODE_MEM_FROM_ML(vparent), Int_val(vwhich),
 				 spils_gs_type(vgstype));
-    CHECK_FLAG("CVSpilsSetGSTypeB", flag);
+    SCHECK_FLAG("CVSpilsSetGSTypeB", flag);
 
     CAMLreturn0;
 }
@@ -869,9 +869,9 @@ CAMLprim void c_cvodes_adj_set_eps_lin(value vparent, value vwhich,
 {
     CAMLparam3(vparent, vwhich, eplifac);
 
-    int flag = CVSpilsSetEpsLinB(CVODE_MEM_FROM_ML(vparent), Int_val(vwhich),
+    int flag = CVSpilsSetEpslinB(CVODE_MEM_FROM_ML(vparent), Int_val(vwhich),
 				 Double_val(eplifac));
-    CHECK_FLAG("CVSpilsSetEpsLinB", flag);
+    SCHECK_FLAG("CVSpilsSetEpslinB", flag);
 
     CAMLreturn0;
 }
@@ -882,7 +882,7 @@ CAMLprim void c_cvodes_adj_set_maxl(value vparent, value vwhich, value maxl)
 
     int flag = CVSpilsSetMaxlB(CVODE_MEM_FROM_ML(vparent), Int_val(vwhich),
 			       Int_val(maxl));
-    CHECK_FLAG("CVSpilsSetMaxlB", flag);
+    SCHECK_FLAG("CVSpilsSetMaxlB", flag);
 
     CAMLreturn0;
 }
@@ -897,7 +897,7 @@ CAMLprim void c_cvodes_adjquad_set_err_con(value vparent, value vwhich,
     
     flag = CVodeSetQuadErrConB(CVODE_MEM_FROM_ML(vparent), Int_val(vwhich),
 			       Bool_val(verrconq));
-    CHECK_FLAG("CVodeSetQuadErrConB", flag);
+    SCHECK_FLAG("CVodeSetQuadErrConB", flag);
 
     CAMLreturn0;
 }
@@ -910,7 +910,7 @@ CAMLprim void c_cvodes_adjquad_ss_tolerances(value vparent, value vwhich,
     int flag = CVodeQuadSStolerancesB(CVODE_MEM_FROM_ML(vparent),
 				      Int_val(vwhich), Double_val(reltol),
 				      Double_val(abstol));
-    CHECK_FLAG("CVodeQuadSStolerancesB", flag);
+    SCHECK_FLAG("CVodeQuadSStolerancesB", flag);
 
     CAMLreturn0;
 }

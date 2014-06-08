@@ -13,8 +13,6 @@
 #ifndef _CVODES_ML_H__
 #define _CVODES_ML_H__
 
-#include "cvode_ml.h"
-
 /* The sessions of CVODES work almost exactly as described in cvode_ml.h.
  *
  * 1. Standard (quadrature, sensitivity, sensitivity/quadrature,
@@ -43,32 +41,40 @@
  *    session (excepting the sensext field). Second, the finalizer neither
  *    calls CVodeFree, since the parent takes care of this, nor closes an
  *    error file, since one cannot be created (backward sessions inherit
- *    from the parent at the time of their creation). Note that a parent
- *    will always be garbage collected after all of its children (since the
- *    latter hold references to the former and not vice-versa).
+ *    from the parent at the time of their creation). In the parent we
+ *    maintain a list of child (backward) sessions and in each child we
+ *    maintain a reference to the parent so that all are garbage collected
+ *    at once (such loops are not a problem since they are completely on the
+ *    OCaml side). If we did not maintain a link from the parent to a child,
+ *    a child could be garbage collected and then the callback (triggered by
+ *    a CVodeB on the parent) would fail.
+ *
  */
 
 void cvodes_ml_check_flag(const char *call, int flag);
 
 // NB: overrides CHECK_FLAG macro in cvode_ml.h
-#define CHECK_FLAG(call, flag) if (flag != CV_SUCCESS) \
-				 cvodes_ml_check_flag(call, flag)
+#define SCHECK_FLAG(call, flag) if (flag != CV_SUCCESS) \
+				  cvodes_ml_check_flag(call, flag)
 
 enum cvodes_sensext {
     VARIANT_CVODES_SENSEXT_NONE = 0,
     VARIANT_CVODES_SENSEXT_FWD,
-    VARIANT_CVODES_SENSEXT_BWD,
+    VARIANT_CVODES_SENSEXT_BWD
+};
 
 enum cvodes_fwd_session_index {
     RECORD_CVODES_FWD_SESSION_QUADRHSFN = 0,
+    RECORD_CVODES_FWD_SESSION_NUMSENSITIVITIES,
     RECORD_CVODES_FWD_SESSION_SENSARRAY1,
     RECORD_CVODES_FWD_SESSION_SENSARRAY2,
     RECORD_CVODES_FWD_SESSION_SENSPVALS,
     RECORD_CVODES_FWD_SESSION_SENSRHSFN,
     RECORD_CVODES_FWD_SESSION_SENSRHSFN1,
     RECORD_CVODES_FWD_SESSION_QUADSENSRHSFN,
+    RECORD_CVODES_FWD_SESSION_BSESSIONS,
     RECORD_CVODES_FWD_SESSION_SIZE
-}
+};
 
 #define CVODES_SENSARRAY1_FROM_EXT(v)    Field((v), RECORD_CVODES_FWD_SESSION_SENSARRAY1)
 #define CVODES_SENSARRAY2_FROM_EXT(v)    Field((v), RECORD_CVODES_FWD_SESSION_SENSARRAY2)
@@ -78,6 +84,7 @@ enum cvodes_fwd_session_index {
 enum cvodes_bwd_session_index {
     RECORD_CVODES_BWD_SESSION_PARENT = 0,
     RECORD_CVODES_BWD_SESSION_WHICH,
+    RECORD_CVODES_BWD_SESSION_NUMSENSITIVITIES,
     RECORD_CVODES_BWD_SESSION_BSENSARRAY,
     RECORD_CVODES_BWD_SESSION_BRHSFN,
     RECORD_CVODES_BWD_SESSION_BRHSFN1,
@@ -87,7 +94,7 @@ enum cvodes_bwd_session_index {
     RECORD_CVODES_BWD_SESSION_BPRESOLVEFN,
     RECORD_CVODES_BWD_SESSION_BJACTIMESFN,
     RECORD_CVODES_BWD_SESSION_SIZE
-}
+};
 
 #define CVODES_BPARENT_FROM_EXT(v) Field((v), RECORD_CVODES_BWD_SESSION_PARENT)
 #define CVODES_BWHICH_FROM_EXT(v)  Field((v), RECORD_CVODES_BWD_SESSION_WHICH)
@@ -100,37 +107,37 @@ enum cvodes_bwd_session_index {
 enum cvodes_quad_tol_tag {
     VARIANT_CVODES_QUAD_TOL_NONE = 0,
     VARIANT_CVODES_QUAD_TOL_SS,
-    VARIANT_CVODES_QUAD_TOL_SV,
-}
+    VARIANT_CVODES_QUAD_TOL_SV
+};
 
 enum cvodes_sens_tol_tag {
     VARIANT_CVODES_SENS_TOL_SS = 0,
     VARIANT_CVODES_SENS_TOL_SV,
-    VARIANT_CVODES_SENS_TOL_EE,
-}
+    VARIANT_CVODES_SENS_TOL_EE
+};
 
 enum cvodes_sens_method {
     VARIANT_CVODES_SENS_METHOD_SIMULTANEOUS = 0,
     VARIANT_CVODES_SENS_METHOD_STAGGERED,
-    VARIANT_CVODES_SENS_METHOD_STAGGERED1,
-}
+    VARIANT_CVODES_SENS_METHOD_STAGGERED1
+};
 
 enum cvodes_sens_rhsfn {
     VARIANT_CVODES_SENS_RHSFN_ALLATONCE = 0,
-    VARIANT_CVODES_SENS_RHSFN_ONEBYONE,
-}
+    VARIANT_CVODES_SENS_RHSFN_ONEBYONE
+};
 
 enum cvodes_sens_params_index {
     RECORD_CVODES_SENS_PARAMS_PVALS   = 0,
     RECORD_CVODES_SENS_PARAMS_PBAR,
     RECORD_CVODES_SENS_PARAMS_PLIST,
     RECORD_CVODES_SENS_PARAMS_SIZE
-}
+};
 
 enum cvodes_sens_dq_method {
     VARIANT_CVODES_SENS_DQ_METHOD_CENTERED = 0,
-    VARIANT_CVODES_SENS_DQ_METHOD_FORWARD,
-}
+    VARIANT_CVODES_SENS_DQ_METHOD_FORWARD
+};
 
 enum cvodes_sens_stats_index {
     RECORD_CVODES_SENS_STATS_NUM_RHS_EVALS = 0,
@@ -138,30 +145,30 @@ enum cvodes_sens_stats_index {
     RECORD_CVODES_SENS_STATS_NUM_ERR_TEST_FAILS,
     RECORD_CVODES_SENS_STATS_NUM_LIN_SOLV_SETUPS,
     RECORD_CVODES_SENS_STATS_SIZE
-}
+};
 
 enum cvodes_sens_nonlin_stats_index {
     RECORD_CVODES_SENS_NONLIN_STATS_NUM_SOLV_ITERS = 0,
     RECORD_CVODES_SENS_NONLIN_STATS_NUM_CONV_FAILS,
     RECORD_CVODES_SENS_NONLIN_STATS_SIZE
-}
+};
 
 enum cvodes_sens_quad_tol_tag {
     VARIANT_CVODES_SENS_QUAD_TOL_NONE = 0,
     VARIANT_CVODES_SENS_QUAD_TOL_SS,
     VARIANT_CVODES_SENS_QUAD_TOL_SV,
-    VARIANT_CVODES_SENS_QUAD_TOL_EE,
-}
+    VARIANT_CVODES_SENS_QUAD_TOL_EE
+};
 
 enum cvodes_adj_interpolation {
     VARIANT_CVODES_ADJ_INTERPOLATION_POLYNOMIAL = 0,
-    VARIANT_CVODES_ADJ_INTERPOLATION_HERMITE,
-}
+    VARIANT_CVODES_ADJ_INTERPOLATION_HERMITE
+};
 
 enum cvodes_adj_brhsfn {
     VARIANT_CVODES_ADJ_BRHSFN_BASIC = 0,
-    VARIANT_CVODES_ADJ_BRHSFN_WITHSENS,
-}
+    VARIANT_CVODES_ADJ_BRHSFN_WITHSENS
+};
 
 enum cvodes_adj_jacobian_arg_index {
     RECORD_CVODES_ADJ_JACOBIAN_ARG_JAC_T   = 0,
@@ -170,7 +177,7 @@ enum cvodes_adj_jacobian_arg_index {
     RECORD_CVODES_ADJ_JACOBIAN_ARG_JAC_FYB,
     RECORD_CVODES_ADJ_JACOBIAN_ARG_JAC_TMP,
     RECORD_CVODES_ADJ_JACOBIAN_ARG_JAC_SIZE
-}
+};
 
 enum cvodes_adj_iter_tag {
     VARIANT_CVODES_ADJ_ITER_TAG_NEWTON = 0,
@@ -208,9 +215,9 @@ enum cvodes_adj_bandrange_index {
 };
 
 enum cvodes_adj_spils_params_index {
-    RECORD_CVODE_SPILS_PARAMS_MAXL = 0,
-    RECORD_CVODE_SPILS_PARAMS_PREC_TYPE,
-    RECORD_CVODE_SPILS_PARAMS_SIZE
+    RECORD_CVODES_SPILS_PARAMS_MAXL = 0,
+    RECORD_CVODES_SPILS_PARAMS_PREC_TYPE,
+    RECORD_CVODES_SPILS_PARAMS_SIZE
 };
 
 enum cvodes_adj_spils_callbacks_index {
@@ -221,26 +228,27 @@ enum cvodes_adj_spils_callbacks_index {
 };
 
 enum cvodes_adj_solve_arg_index {
-    RECORD_CVODES_ADJ_SPILS_SOLVE_ARG_RVECB   = 0,
-    RECORD_CVODES_ADJ_SPILS_SOLVE_ARG_GAMMAB,
-    RECORD_CVODES_ADJ_SPILS_SOLVE_ARG_DELTAB,
+    RECORD_CVODES_ADJ_SPILS_SOLVE_ARG_RVEC   = 0,
+    RECORD_CVODES_ADJ_SPILS_SOLVE_ARG_GAMMA,
+    RECORD_CVODES_ADJ_SPILS_SOLVE_ARG_DELTA,
+    RECORD_CVODES_ADJ_SPILS_SOLVE_ARG_LR,
     RECORD_CVODES_ADJ_SPILS_SOLVE_ARG_SIZE
 };
 
 enum cvodes_adj_tol_tag {
     VARIANT_CVODES_ADJ_TOL_SS = 0,
-    VARIANT_CVODES_ADJ_TOL_SV,
-}
+    VARIANT_CVODES_ADJ_TOL_SV
+};
 
 enum cvodes_adj_quad_bquadrhsfn {
-    VARIANT_CVODES_ADJ_BRHSFN_BASIC = 0,
-    VARIANT_CVODES_ADJ_BRHSFN_WITHSENS,
-}
+    VARIANT_CVODES_ADJ_BQUADRHSFN_BASIC = 0,
+    VARIANT_CVODES_ADJ_BQUADRHSFN_WITHSENS
+};
 
 enum cvodes_adj_quad_tol_tag {
-    VARIANT_CVODES_ADJ_TOL_NONE = 0,
-    VARIANT_CVODES_ADJ_TOL_SS,
-    VARIANT_CVODES_ADJ_TOL_SV,
-}
+    VARIANT_CVODES_ADJQUAD_TOL_NONE = 0,
+    VARIANT_CVODES_ADJQUAD_TOL_SS,
+    VARIANT_CVODES_ADJQUAD_TOL_SV
+};
 
 #endif

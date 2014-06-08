@@ -5,20 +5,22 @@ include config
 MLOBJ_MAIN = sundials.cmo nvector.cmo nvector_array.cmo dls.cmo \
 	     spils.cmo spils_nvector.cmo spils_serial.cmo \
 	     cvode.cmo cvode_nvector.cmo cvode_serial.cmo \
-	     cvodes_nvector.cmo \
 	     kinsol.cmo kinsol_nvector.cmo kinsol_serial.cmo \
 	     ida.cmo ida_nvector.cmo ida_serial.cmo
+
+MLOBJ_SENS = cvodes_nvector.cmo
 
 MLOBJ_LOCAL = cvode_session_nvector.cmo \
 	      cvode_session_serial.cmo
 
-MLOBJ = $(MLOBJ_MAIN) $(MLOBJ_LOCAL)
+MLOBJ_WOS = $(MLOBJ_MAIN) $(MLOBJ_LOCAL)
+MLOBJ = $(MLOBJ_WOS) $(MLOBJ_SENS)
 
 COMMON_COBJ= sundials_ml$(XO) dls_ml$(XO) nvector_ml$(XO) \
 
 CVODE_COBJ= cvode_ml$(XO) cvode_ml_ba$(XO) cvode_ml_nvec$(XO)
 
-# CVODES_COBJ= cvodes_ml$(XO) cvodes_ml_ba$(XO) cvodes_ml_nvec$(XO)
+CVODES_COBJ= cvodes_ml$(XO) cvodes_ml_ba$(XO) cvodes_ml_nvec$(XO)
 
 IDA_COBJ= ida_ml$(XO) ida_ml_ba$(XO) ida_ml_nvec$(XO)
 
@@ -26,15 +28,21 @@ KINSOL_COBJ= kinsol_ml$(XO) kinsol_ml_ba$(XO) kinsol_ml_nvec$(XO)
 
 SPILS_COBJ= spils_ml$(XO) spils_ml_ba$(XO) spils_ml_nvec$(XO)
 
-COBJ=$(COMMON_COBJ) $(SPILS_COBJ) $(CVODE_COBJ) $(IDA_COBJ) $(KINSOL_COBJ)
+COBJ_WOS=$(COMMON_COBJ) $(SPILS_COBJ) $(CVODE_COBJ) $(IDA_COBJ) $(KINSOL_COBJ)
+COBJ=$(COBJ_WOS) $(CVODES_COBJ)
 
 INSTALL_FILES= 			\
     META			\
     $(MLOBJ_MAIN:.cmo=.cmi)	\
+    $(MLOBJ_SENS:.cmo=.cmi)	\
     libmlsundials$(XA)		\
     sundials$(XA)		\
     sundials.cma		\
     sundials.cmxa		\
+    libmlsundials_wos$(XA)	\
+    sundials_wos$(XA)		\
+    sundials_wos.cma		\
+    sundials_wos.cmxa
 
 STUBLIBS=dllmlsundials$(XS)
 
@@ -44,11 +52,27 @@ CFLAGS+=-fPIC
 
 .PHONY: all sundials install doc
 
-all: sundials.cma sundials.cmxa doc
+all: sundials.cma sundials.cmxa sundials_wos.cma sundials_wos.cmxa doc
 
-sundials.cma sundials.cmxa: $(MLOBJ) $(MLOBJ:.cmo=.cmx) $(COBJ)
+# TODO: fix this:
+sundials.cma sundials.cmxa: sundials.cmo sundials.cmx cvode.cmo cvode.cmx \
+			    $(MLOBJ_LOCAL) $(MLOBJ_LOCAL:.cmo=.cmx) \
+			    $(MLOBJ) $(MLOBJ:.cmo=.cmx) \
+			    $(COBJ)
 	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS) \
 	    -o sundials -oc mlsundials $^ \
+	    $(OCAML_CVODES_LIBLINK) \
+	    $(OCAML_IDA_LIBLINK) \
+	    $(OCAML_KINSOL_LIBLINK)
+
+# wos = without sensitivity
+# TODO: fix this:
+sundials_wos.cma sundials_wos.cmxa: sundials.cmo sundials.cmx cvode.cmo cvode.cmx \
+				    $(MLOBJ_LOCAL) $(MLOBJ_LOCAL:.cmo=.cmx) \
+				    $(MLOBJ_WOS) $(MLOBJ_WOS:.cmo=.cmx) \
+				    $(COBJ_WOS)
+	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS) \
+	    -o sundials_wos -oc mlsundials_wos $^ \
 	    $(OCAML_CVODE_LIBLINK) \
 	    $(OCAML_IDA_LIBLINK) \
 	    $(OCAML_KINSOL_LIBLINK)
@@ -68,6 +92,16 @@ cvode_ml_ba.o: cvode_ml_nvec.c spils_ml.h sundials_ml.h cvode_ml.h nvector_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) \
 	      -DCVODE_ML_BIGARRAYS -o $@ -c $<
 cvode_ml_nvec.o: cvode_ml_nvec.c spils_ml.h sundials_ml.h cvode_ml.h nvector_ml.h
+	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
+
+cvodes_ml.o: cvodes_ml.c spils_ml.h cvode_ml.h cvodes_ml.h sundials_ml.h
+	$(CC) -I $(OCAML_INCLUDE) $(CVODES_CFLAGS) -o $@ -c $<
+cvodes_ml_ba.o: cvodes_ml_nvec.c spils_ml.h sundials_ml.h nvector_ml.h \
+    		cvode_ml.h cvodes_ml.h
+	$(CC) -I $(OCAML_INCLUDE) $(CVODES_CFLAGS) \
+	      -DCVODE_ML_BIGARRAYS -o $@ -c $<
+cvodes_ml_nvec.o: cvodes_ml_nvec.c spils_ml.h sundials_ml.h nvector_ml.h \
+    		  cvode_ml.h cvodes_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
 
 ida_ml.o: ida_ml.c spils_ml.h ida_ml.h
@@ -102,9 +136,11 @@ META: META.in
 doc: doc/html/index.html
 
 doc/html/index.html: doc/html dochtml.cmo intro.doc \
-		     $(MLOBJ_MAIN:.cmo=.mli) $(MLOBJ_MAIN:.cmo=.cmi) 
+		     $(MLOBJ_MAIN:.cmo=.mli) $(MLOBJ_MAIN:.cmo=.cmi)  \
+		     $(MLOBJ_SENS:.cmo=.mli) $(MLOBJ_SENS:.cmo=.cmi) 
 	$(OCAMLDOC) -g dochtml.cmo \
 	    -cvode-doc-root "$(CVODE_DOC_ROOT)" \
+	    -cvodes-doc-root "$(CVODES_DOC_ROOT)" \
 	    -ida-doc-root "$(IDA_DOC_ROOT)" \
 	    -kinsol-doc-root "$(KINSOL_DOC_ROOT)" \
 	    -pp "$(DOCPP)"		\
@@ -112,14 +148,14 @@ doc/html/index.html: doc/html dochtml.cmo intro.doc \
 	    -hide Cvode_session_serial,Cvode_session_nvector \
 	    -t "Sundials (CVODE, IDA & KINSOL)"	\
 	    -intro intro.doc		\
-	    $(MLOBJ_MAIN:.cmo=.mli)
+	    $(MLOBJ_MAIN:.cmo=.mli) $(MLOBJ_SENS:.cmo=.mli)
 
 doc/html:
 	mkdir $@
 
 # ##
 
-install: sundials.cma sundials.cmxa doc META
+install: sundials.cma sundials.cmxa sundials_wos.cma sundials_wos.cmxa doc META
 	$(MKDIR) $(PKGDIR)
 	$(CP) $(INSTALL_FILES) $(PKGDIR)
 	$(CP) $(STUBLIBS) $(STUBDIR)
@@ -159,7 +195,7 @@ clean:
 	-@$(RM) -f $(MLOBJ) $(MLOBJ:.cmo=.cmx) $(MLOBJ:.cmo=.o)
 	-@$(RM) -f $(COBJ) $(MLOBJ:.cmo=.annot)
 	-@$(RM) -f $(MLOBJ:.cmo=.cma) $(MLOBJ:.cmo=.cmxa)
-	-@$(RM) -f sundials$(XA)
+	-@$(RM) -f sundials$(XA) sundials_wos$(XA)
 	-@$(RM) -f dochtml.cmi dochtml.cmo
 
 cleandoc:
@@ -170,7 +206,9 @@ cleanall: clean
 	-@(cd examples; make -f Makefile cleanall)
 	-@$(RM) -f $(MLOBJ:.cmo=.cmi)
 	-@$(RM) -f sundials.cma sundials.cmxa
+	-@$(RM) -f sundials_wos.cma sundials_wos.cmxa
 	-@$(RM) -f libmlsundials$(XA) dllmlsundials$(XS)
+	-@$(RM) -f libmlsundials_wos$(XA) dllmlsundials_wos$(XS)
 	-@$(RM) -f META
 
 -include .depend
