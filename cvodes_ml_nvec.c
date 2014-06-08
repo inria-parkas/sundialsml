@@ -1081,45 +1081,65 @@ CAMLprim void CVTYPE(quadsens_get_err_weights)(value vdata, value veqweights)
 
 /* adjoint interface */
 
-CAMLprim value CVTYPE(adj_forward_normal)(value vdata, value vtout, value vyret)
+static value forward_solver(value vdata, value vtout, value vyret, int onestep)
 {
     CAMLparam3(vdata, vtout, vyret);
-    CAMLlocal1(r);
+    CAMLlocal1(ret);
     N_Vector yret = NVECTORIZE_VAL(vyret);
     realtype tret;
     int ncheck;
+    enum cvode_solver_result_tag solver_result;
 
     int flag = CVodeF(CVODE_MEM_FROM_ML(vdata), Double_val(vtout), yret,
-		      &tret, CV_NORMAL, &ncheck);
+		      &tret, onestep ? CV_ONE_STEP : CV_NORMAL, &ncheck);
     RELINQUISH_NVECTORIZEDVAL(yret);
-    SCHECK_FLAG("CVodeF", flag);
+    switch (flag) {
+    case CV_SUCCESS:
+	solver_result = VARIANT_CVODE_SOLVER_RESULT_CONTINUE;
+	break;
 
-    r = caml_alloc_tuple(2);
-    Store_field(r, 0, caml_copy_double(tret));
-    Store_field(r, 1, Val_int(ncheck));
+    case CV_TSTOP_RETURN:
+	solver_result = VARIANT_CVODE_SOLVER_RESULT_STOPTIMEREACHED;
+	break;
 
-    CAMLreturn(r);
+    default:
+	/* If an exception was recorded, propagate it.  This accounts for
+	 * almost all failures except for repeated recoverable failures in the
+	 * residue function.  */
+	ret = Field (vdata, RECORD_CVODE_SESSION_EXN_TEMP);
+	if (Is_block (ret)) {
+	    Store_field (vdata, RECORD_CVODE_SESSION_EXN_TEMP, Val_none);
+	    /* In bytecode, caml_raise() duplicates some parts of the
+	     * stacktrace.  This does not seem to happen in native code
+	     * execution.  */
+	    caml_raise (Field (ret, 0));
+	}
+	SCHECK_FLAG ("CVodeF", flag);
+    }
+
+    /* Hmm...should this go in the production code or not?  */
+    if (Is_block (Field (vdata, RECORD_CVODE_SESSION_EXN_TEMP)))
+	abort ();
+
+    ret = caml_alloc_tuple(3);
+    Store_field(ret, 0, caml_copy_double(tret));
+    Store_field(ret, 1, Val_int(ncheck));
+    Store_field(ret, 2, Val_int(solver_result));
+
+    CAMLreturn(ret);
+}
+
+CAMLprim value CVTYPE(adj_forward_normal)(value vdata, value vtout, value vyret)
+{
+    CAMLparam3(vdata, vtout, vyret);
+    CAMLreturn(forward_solver(vdata, vtout, vyret, 0));
 }
 
 CAMLprim value CVTYPE(adj_forward_one_step)(value vdata, value vtout,
 					    value vyret)
 {
     CAMLparam3(vdata, vtout, vyret);
-    CAMLlocal1(r);
-    N_Vector yret = NVECTORIZE_VAL(vyret);
-    realtype tret;
-    int ncheck;
-
-    int flag = CVodeF(CVODE_MEM_FROM_ML(vdata), Double_val(vtout), yret,
-		      &tret, CV_ONE_STEP, &ncheck);
-    RELINQUISH_NVECTORIZEDVAL(yret);
-    SCHECK_FLAG("CVodeF", flag);
-
-    r = caml_alloc_tuple(2);
-    Store_field(r, 0, caml_copy_double(tret));
-    Store_field(r, 1, Val_int(ncheck));
-
-    CAMLreturn(r);
+    CAMLreturn(forward_solver(vdata, vtout, vyret, 1));
 }
 
 CAMLprim void CVTYPE(adj_sv_tolerances)(value vparent, value vwhich,

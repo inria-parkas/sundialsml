@@ -353,10 +353,10 @@ module Sensitivity =
       then invalid_arg "get_dky: wrong number of sensitivity vectors";
       c_get_dky s t k dkys
 
-    external get' : 'a session -> int -> 'a nvector -> float
+    external get1 : 'a session -> int -> 'a nvector -> float
         = "c_nvec_cvodes_sens_get1"
 
-    external get_dky' : 'a session -> float -> int -> int -> 'a nvector -> unit
+    external get_dky1 : 'a session -> float -> int -> int -> 'a nvector -> unit
         = "c_nvec_cvodes_sens_get_dky1"
 
     type dq_method = DQCentered | DQForward
@@ -567,8 +567,8 @@ module Adjoint =
     exception ForwardReinitializationFailed
     exception ForwardFailed
     exception NoBackwardProblem
-    exception BadTB0
-    exception BadT
+    exception BadFinalTime
+    exception BadOutputTime
 
     let _ = List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
       [
@@ -577,8 +577,8 @@ module Adjoint =
         ("cvodes_ForwardReinitializationFailed", ForwardReinitializationFailed);
         ("cvodes_ForwardFailed",                 ForwardFailed);
         ("cvodes_NoBackwardProblem",             NoBackwardProblem);
-        ("cvodes_BadTB0",                        BadTB0);
-        ("cvodes_BadT",                          BadT);
+        ("cvodes_BadFinalTime",                  BadFinalTime);
+        ("cvodes_BadOutputTime",                 BadOutputTime);
       ]
 
     type interpolation = IPolynomial | IHermite
@@ -595,10 +595,12 @@ module Adjoint =
       | FwdSensExt se -> se
       | _ -> raise AdjointNotInitialized
 
-    external forward_normal : 'a session -> float -> 'a nvector -> float * int
+    external forward_normal : 'a session -> float -> 'a nvector
+                                         -> float * int * Cvode.solver_result
         = "c_nvec_cvodes_adj_forward_normal"
 
-    external forward_one_step : 'a session -> float -> 'a nvector -> float * int
+    external forward_one_step : 'a session -> float -> 'a nvector
+                                           -> float * int * Cvode.solver_result
         = "c_nvec_cvodes_adj_forward_one_step"
 
     type 'a _brhsfn = 'a brhsfn =
@@ -679,6 +681,12 @@ module Adjoint =
         delta  : float;
         left   : bool;
       }
+
+    let spils_no_precond = {
+      prec_solve_fn = None;
+      prec_setup_fn = None;
+      jac_times_vec_fn = None;
+    }
 
     type 'a bsession = Bsession of 'a session
     let tosession = function Bsession s -> s

@@ -181,7 +181,7 @@ void cvodes_ml_SCHECK_FLAG(const char *call, int flag)
 	    caml_raise_constant(*caml_named_value("cvodes_NoBackwardProblem"));
 
         case CV_BAD_TB0:
-	    caml_raise_constant(*caml_named_value("cvodes_BadTB0"));
+	    caml_raise_constant(*caml_named_value("cvodes_BadFinalTime"));
 
         case CV_REIFWD_FAIL:
 	    caml_raise_constant(*caml_named_value("cvodes_ForwardReinitializationFailed"));
@@ -190,7 +190,7 @@ void cvodes_ml_SCHECK_FLAG(const char *call, int flag)
 	    caml_raise_constant(*caml_named_value("cvodes_ForwardFailed"));
 
         case CV_GETY_BADT:
-	    caml_raise_constant(*caml_named_value("cvodes_BadT"));
+	    caml_raise_constant(*caml_named_value("cvodes_BadOutputTime"));
 
 	default:
 	    /* e.g. CVDIAG_MEM_NULL, CVDIAG_ILL_INPUT, CVDIAG_MEM_FAIL */
