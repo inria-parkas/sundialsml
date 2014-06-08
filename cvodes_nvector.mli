@@ -921,7 +921,6 @@ module Adjoint :
                     with a specific linear solver, see {!iter},
         - [tol]     specifies the tolerances, see {!tolerance},
         - [fB]      computes the right-hand side of the backward ODE problem,
-        - [nroots]  specifies the number of root functions (zero-crossings).
         - [tB0]     specifies the endpoint where final conditions are provided
                     for the backward problem, normally equal to the endpoint of
                     the forward integration, and,
