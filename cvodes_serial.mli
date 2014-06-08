@@ -809,9 +809,9 @@ module Adjoint :
     type 't jacobian_arg =
       {
         jac_t   : float;        (** The independent variable. *)
-        jac_y   : val_array;    (** The forward solution vector. *)
-        jac_yb  : val_array;    (** The backward dependent variable vector. *)
-        jac_fyb : val_array;    (** The backward right-hand side function fB. *)
+        jac_u   : val_array;    (** The forward solution vector. *)
+        jac_ub  : val_array;    (** The backward dependent variable vector. *)
+        jac_fub : val_array;    (** The backward right-hand side function fB. *)
         jac_tmp : 't            (** Workspace data,
                                     either {!single_tmp} or {!triple_tmp}. *)
       }

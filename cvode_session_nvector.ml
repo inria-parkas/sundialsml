@@ -85,9 +85,9 @@ type 'a bquadrhsfn =
 type ('t, 'a) bjacobian_arg =
   {
     jac_t   : float;
-    jac_y   : 'a;
-    jac_yb  : 'a;
-    jac_fyb : 'a;
+    jac_u   : 'a;
+    jac_ub  : 'a;
+    jac_fub : 'a;
     jac_tmp : 't
   }
 

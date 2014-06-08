@@ -101,9 +101,9 @@ type bquadrhsfn =
 type 't bjacobian_arg =
   {
     jac_t   : float;
-    jac_y   : val_array;
-    jac_yb  : val_array;
-    jac_fyb : val_array;
+    jac_u   : val_array;
+    jac_ub  : val_array;
+    jac_fub : val_array;
     jac_tmp : 't
   }
 
