@@ -205,6 +205,7 @@ realclean: cleanall
 cleanall: clean
 	-@(cd examples; make -f Makefile cleanall)
 	-@$(RM) -f $(MLOBJ:.cmo=.cmi)
+	-@$(RM) -f $(MLOBJ:.cmo=.annot)
 	-@$(RM) -f sundials.cma sundials.cmxa
 	-@$(RM) -f sundials_wos.cma sundials_wos.cmxa
 	-@$(RM) -f libmlsundials$(XA) dllmlsundials$(XS)

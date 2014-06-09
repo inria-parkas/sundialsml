@@ -86,6 +86,7 @@ cleanall: clean
 	-@rm -f $(ALL_EXAMPLES:.ml=.byte) $(ALL_EXAMPLES:.ml=.opt)
 	-@rm -f $(ALL_EXAMPLES:.ml=.byte.out) $(ALL_EXAMPLES:.ml=.opt.out)
 	-@rm -f $(ALL_EXAMPLES:.ml=.sundials.out)
+	-@rm -f $(ALL_EXAMPLES:.ml=.annot)
 	-@rm -f $(ALL_EXAMPLES:.ml=.byte.diff) $(ALL_EXAMPLES:.ml=.opt.diff)
 	-@rm -f $(ALL_EXAMPLES:.ml=.self.diff)
 	-@rm -f tests.log lapack-tests.log tests.self.log
