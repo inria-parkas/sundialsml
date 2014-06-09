@@ -387,7 +387,7 @@ module Sensitivity =
         = "c_cvodes_sens_get_num_nonlin_solv_iters"
 
     external get_num_nonlin_solv_conv_fails : 'a session -> int
-        = "c_cvodes_sens_get_num_nonlin_solv_conf_fails"
+        = "c_cvodes_sens_get_num_nonlin_solv_conv_fails"
 
     type nonlin_stats = {
         num_nonlin_solv_iters : int;
@@ -535,7 +535,7 @@ module Sensitivity =
             = "c_cvodes_quadsens_get_num_err_test_fails"
 
         external c_get_err_weights : 'a session -> 'a nvector array -> unit
-            = "c_cvodes_quadsens_get_err_weights"
+            = "c_nvec_cvodes_quadsens_get_err_weights"
 
         let get_err_weights s esweight =
           let ns = num_sensitivities s in
@@ -1028,7 +1028,7 @@ module Adjoint =
           | SVTolerances of float * 'a nvector
 
         external set_err_con : 'a bsession -> bool -> unit
-            = "c_nvec_cvodes_adjquad_set_err_con"
+            = "c_cvodes_adjquad_set_err_con"
 
         external sv_tolerances
             : 'a session -> int -> float -> 'a nvector -> unit

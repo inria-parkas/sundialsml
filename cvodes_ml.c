@@ -51,7 +51,7 @@
 #define MAX_ERRMSG_LEN 256
 
 // TODO: must ensure that these exceptions are registered...
-void cvodes_ml_SCHECK_FLAG(const char *call, int flag)
+void cvodes_ml_check_flag(const char *call, int flag)
 {
     static char exmsg[MAX_ERRMSG_LEN] = "";
 
@@ -516,7 +516,8 @@ CAMLprim value c_cvodes_sens_get_nonlin_solv_stats(value vdata)
     CAMLreturn(r);
 }
 
-CAMLprim void c_cvodes_sens_get_stgr_nonlin_solv_iters(value vdata, value vr)
+CAMLprim void c_cvodes_sens_get_num_stgr_nonlin_solv_iters(value vdata,
+							  value vr)
 {
     CAMLparam2(vdata, vr);
 
@@ -721,7 +722,7 @@ CAMLprim void c_cvodes_adj_spils_sptfqmr (value vparent, value vwhich,
     CAMLreturn0;
 }
 
-CAMLprim void c_cvodes_set_functional (value vparent, value vwhich)
+CAMLprim void c_cvodes_adj_set_functional (value vparent, value vwhich)
 {
     CAMLparam2 (vparent, vwhich);
     int flag = CVodeSetIterTypeB (CVODE_MEM_FROM_ML (vparent), Int_val(vwhich),
@@ -840,8 +841,8 @@ CAMLprim void c_cvodes_adj_set_stab_lim_det(value vparent, value vwhich,
     CAMLreturn0;
 }
 
-CAMLprim void c_cvodes_adj_set_prec_type(value vparent, value vwhich,
-					 value vptype)
+CAMLprim void c_cvodes_adj_spils_set_prec_type(value vparent, value vwhich,
+					       value vptype)
 {
     CAMLparam3(vparent, vwhich, vptype);
 
@@ -852,8 +853,8 @@ CAMLprim void c_cvodes_adj_set_prec_type(value vparent, value vwhich,
     CAMLreturn0;
 }
 
-CAMLprim void c_cvodes_adj_set_gs_type(value vparent, value vwhich,
-				       value vgstype)
+CAMLprim void c_cvodes_adj_spils_set_gs_type(value vparent, value vwhich,
+				             value vgstype)
 {
     CAMLparam3(vparent, vwhich, vgstype);
 
@@ -864,19 +865,20 @@ CAMLprim void c_cvodes_adj_set_gs_type(value vparent, value vwhich,
     CAMLreturn0;
 }
 
-CAMLprim void c_cvodes_adj_set_eps_lin(value vparent, value vwhich,
-				       value eplifac)
+CAMLprim void c_cvodes_adj_spils_set_eps_lin(value vparent, value vwhich,
+				             value eplifac)
 {
     CAMLparam3(vparent, vwhich, eplifac);
 
-    int flag = CVSpilsSetEpslinB(CVODE_MEM_FROM_ML(vparent), Int_val(vwhich),
+    int flag = CVSpilsSetEpsLinB(CVODE_MEM_FROM_ML(vparent), Int_val(vwhich),
 				 Double_val(eplifac));
-    SCHECK_FLAG("CVSpilsSetEpslinB", flag);
+    SCHECK_FLAG("CVSpilsSetEpsLinB", flag);
 
     CAMLreturn0;
 }
 
-CAMLprim void c_cvodes_adj_set_maxl(value vparent, value vwhich, value maxl)
+CAMLprim void c_cvodes_adj_spils_set_maxl(value vparent, value vwhich,
+					  value maxl)
 {
     CAMLparam3(vparent, vwhich, maxl);
 

@@ -399,7 +399,7 @@ module Sensitivity =
         = "c_cvodes_sens_get_num_nonlin_solv_iters"
 
     external get_num_nonlin_solv_conv_fails : session -> int
-        = "c_cvodes_sens_get_num_nonlin_solv_conf_fails"
+        = "c_cvodes_sens_get_num_nonlin_solv_conv_fails"
 
     type nonlin_stats = {
         num_nonlin_solv_iters : int;
@@ -546,7 +546,7 @@ module Sensitivity =
             = "c_cvodes_quadsens_get_num_err_test_fails"
 
         external c_get_err_weights : session -> nvec array -> unit
-            = "c_cvodes_quadsens_get_err_weights"
+            = "c_ba_cvodes_quadsens_get_err_weights"
 
         let get_err_weights s esweight =
           let ns = num_sensitivities s in
@@ -736,17 +736,17 @@ module Adjoint =
     external c_spils_banded_spgmr
       : (session * int * int) -> int -> int -> int
                         -> Spils.preconditioning_type -> unit
-      = "c_cvodes_adj_spils_banded_spgmr"
+      = "c_ba_cvodes_adj_spils_banded_spgmr"
 
     external c_spils_banded_spbcg
       : (session * int * int) -> int -> int -> int
                         -> Spils.preconditioning_type -> unit
-      = "c_cvodes_adj_spils_banded_spbcg"
+      = "c_ba_cvodes_adj_spils_banded_spbcg"
 
     external c_spils_banded_sptfqmr
       : (session * int * int) -> int -> int -> int
                         -> Spils.preconditioning_type -> unit
-      = "c_cvodes_adj_spils_banded_sptfqmr"
+      = "c_ba_cvodes_adj_spils_banded_sptfqmr"
 
     external c_set_functional : bsession -> unit
       = "c_cvodes_adj_set_functional"
@@ -1118,7 +1118,7 @@ module Adjoint =
           | SVTolerances of float * nvec
 
         external set_err_con : bsession -> bool -> unit
-            = "c_ba_cvodes_adjquad_set_err_con"
+            = "c_cvodes_adjquad_set_err_con"
 
         external sv_tolerances
             : session -> int -> float -> nvec -> unit
