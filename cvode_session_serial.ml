@@ -80,9 +80,9 @@ type quadrhsfn = float -> val_array -> der_array -> unit
 type sensrhsfn =
     AllAtOnce of (float -> val_array -> der_array
                         -> val_array array -> der_array array
-                        -> nvec -> nvec -> unit)
+                        -> nvec -> nvec -> unit) option
   | OneByOne of (float -> val_array -> der_array -> int
-                       -> val_array -> der_array -> nvec -> nvec -> unit)
+                       -> val_array -> der_array -> nvec -> nvec -> unit) option
 
 type quadsensrhsfn =
    float -> val_array -> val_array array -> der_array -> val_array array

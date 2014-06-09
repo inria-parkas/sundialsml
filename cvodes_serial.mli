@@ -203,7 +203,7 @@ module Sensitivity :
            -> der_array array  (* ySdot *)
            -> nvec             (* tmp1 *)
            -> nvec             (* tmp2 *)
-           -> unit)
+           -> unit) option
         (** This function, [fS t y ydot yS ySdot tmp1 tmp2], computes the
             sensitivity right-hand side for all sensitivity equations at
             once, given
@@ -215,8 +215,12 @@ module Sensitivity :
             - [ySdot], the sensitivity right-hand side vectors must be stored
             here,
             - [tmp1], and [tmp2] can be used as temporary storage.
+
+            If a function is not given ([None]) then the default internal
+            difference quotient sensitivity right-hand side routine is used.
  
-            @cvodes <node6#ss:user_fct_fwd> CVSensRhsFn *)
+            @cvodes <node6#ss:user_fct_fwd> CVSensRhsFn
+            @cvodes <node6#ss:sensi_malloc> CVodeSensInit *)
       | OneByOne of
          (float           (* t *)
            -> val_array   (* y *)
@@ -226,7 +230,7 @@ module Sensitivity :
            -> der_array   (* ySdot *)
            -> nvec        (* tmp1 *)
            -> nvec        (* tmp2 *)
-           -> unit)
+           -> unit) option
         (** This function, [fS t y ydot iS yS ySdot tmp1 tmp2], computes the
             sensitivity right-hand side one sensitivity parameter at a time,
             given
@@ -241,7 +245,11 @@ module Sensitivity :
             stored here,
             - [tmp1], and [tmp2] can be used as temporary storage.
 
-           @cvodes <node6#ss:user_fct_fwd> CVSensRhs1Fn *)
+            If a function is not given ([None]) then the default internal
+            difference quotient sensitivity right-hand side routine is used.
+
+           @cvodes <node6#ss:user_fct_fwd> CVSensRhs1Fn
+           @cvodes <node6#ss:sensi_malloc> CVodeSensInit1 *)
 
     type sens_method =
         Simultaneous

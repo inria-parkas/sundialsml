@@ -124,7 +124,7 @@ enum cvodes_sens_method {
 
 enum cvodes_sens_rhsfn {
     VARIANT_CVODES_SENS_RHSFN_ALLATONCE = 0,
-    VARIANT_CVODES_SENS_RHSFN_ONEBYONE
+    VARIANT_CVODES_SENS_RHSFN_ONEBYONE,
 };
 
 enum cvodes_sens_params_index {

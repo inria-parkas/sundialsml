@@ -256,17 +256,17 @@ module Sensitivity =
     type _sensrhsfn = sensrhsfn =
         AllAtOnce of
           (float -> val_array -> der_array -> val_array array
-                 -> der_array array -> nvec -> nvec -> unit)
+                 -> der_array array -> nvec -> nvec -> unit) option
       | OneByOne of
           (float -> val_array -> der_array -> int -> val_array
-                 -> der_array -> nvec -> nvec -> unit)
+                 -> der_array -> nvec -> nvec -> unit) option
     type sensrhsfn = _sensrhsfn =
         AllAtOnce of
           (float -> val_array -> der_array -> val_array array
-                 -> der_array array -> nvec -> nvec -> unit)
+                 -> der_array array -> nvec -> nvec -> unit) option
       | OneByOne of
           (float -> val_array -> der_array -> int -> val_array
-                 -> der_array -> nvec -> nvec -> unit)
+                 -> der_array -> nvec -> nvec -> unit) option
 
     type sens_params = {
         pvals  : Sundials.real_array option;
@@ -276,10 +276,12 @@ module Sensitivity =
 
     let no_sens_params = { pvals = None; pbar = None; plist = None }
 
-    external c_sens_init : session -> sens_method -> val_array array -> unit
+    external c_sens_init
+        : session -> sens_method -> bool -> val_array array -> unit
         = "c_ba_cvodes_sens_init"
 
-    external c_sens_init_1 : session -> sens_method -> val_array array -> unit
+    external c_sens_init_1
+        : session -> sens_method -> bool -> val_array array -> unit
         = "c_ba_cvodes_sens_init_1"
 
     external c_set_params : session -> sens_params -> unit
@@ -307,15 +309,15 @@ module Sensitivity =
       let se = fwdsensext s in
       let ns = Array.length v0 in
       (match fm with
-       | AllAtOnce f -> begin
+       | AllAtOnce fo -> begin
            if fmethod = Staggered1 then
              failwith "Forward.init: Cannot combine AllAtOnce and Staggered1";
-           se.sensrhsfn <- f;
-           c_sens_init s fmethod v0
+           (match fo with Some f -> se.sensrhsfn <- f | None -> ());
+           c_sens_init s fmethod (fo <> None) v0
          end
-       | OneByOne f -> begin
-            se.sensrhsfn1 <- f;
-            c_sens_init_1 s fmethod v0
+       | OneByOne fo -> begin
+           (match fo with Some f -> se.sensrhsfn1 <- f | None -> ());
+           c_sens_init_1 s fmethod (fo <> None) v0
          end);
       se.num_sensitivities <- ns;
       se.senspvals <- sparams.pvals;

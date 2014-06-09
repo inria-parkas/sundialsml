@@ -68,8 +68,10 @@ type 'a iter =
 type 'a quadrhsfn = float -> 'a -> 'a -> unit
 
 type 'a sensrhsfn =
-    AllAtOnce of (float -> 'a -> 'a -> 'a array -> 'a array -> 'a -> 'a -> unit)
-  | OneByOne of (float -> 'a -> 'a -> int -> 'a -> 'a -> 'a -> 'a -> unit)
+    AllAtOnce of
+      (float -> 'a -> 'a -> 'a array -> 'a array -> 'a -> 'a -> unit) option
+  | OneByOne of
+      (float -> 'a -> 'a -> int -> 'a -> 'a -> 'a -> 'a -> unit) option
 
 type 'a quadsensrhsfn =
    float -> 'a -> 'a array -> 'a -> 'a array -> 'a -> 'a -> unit
