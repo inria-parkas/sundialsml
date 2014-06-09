@@ -264,7 +264,7 @@ CAMLprim void c_cvode_set_root_direction(value vdata, value rootdirs)
     CAMLreturn0;
 }
 
-CAMLprim void c_cvode_set_prec_type(value vcvode_mem, value vptype)
+CAMLprim void c_cvode_spils_set_prec_type(value vcvode_mem, value vptype)
 {
     CAMLparam2(vcvode_mem, vptype);
 
@@ -582,7 +582,7 @@ CAMLprim void c_cvode_set_no_inactive_root_warn(value vcvode_mem)
     CAMLreturn0;
 }
 
-CAMLprim void c_cvode_set_gs_type(value vcvode_mem, value vgstype)
+CAMLprim void c_cvode_spils_set_gs_type(value vcvode_mem, value vgstype)
 {
     CAMLparam2(vcvode_mem, vgstype);
 
@@ -593,7 +593,7 @@ CAMLprim void c_cvode_set_gs_type(value vcvode_mem, value vgstype)
     CAMLreturn0;
 }
 
-CAMLprim void c_cvode_set_eps_lin(value vcvode_mem, value eplifac)
+CAMLprim void c_cvode_spils_set_eps_lin(value vcvode_mem, value eplifac)
 {
     CAMLparam2(vcvode_mem, eplifac);
 
@@ -603,7 +603,7 @@ CAMLprim void c_cvode_set_eps_lin(value vcvode_mem, value eplifac)
     CAMLreturn0;
 }
 
-CAMLprim void c_cvode_set_maxl(value vcvode_mem, value maxl)
+CAMLprim void c_cvode_spils_set_maxl(value vcvode_mem, value maxl)
 {
     CAMLparam2(vcvode_mem, maxl);
 

@@ -503,16 +503,16 @@ module Spils =
       clear_jac_times_vec_fn s
 
     external set_prec_type : session -> Spils.preconditioning_type -> unit
-        = "c_cvode_set_prec_type"
+        = "c_cvode_spils_set_prec_type"
 
     external set_gs_type : session -> Spils.gramschmidt_type -> unit
-        = "c_cvode_set_gs_type"
+        = "c_cvode_spils_set_gs_type"
 
     external set_eps_lin            : session -> float -> unit
-        = "c_cvode_set_eps_lin"
+        = "c_cvode_spils_set_eps_lin"
 
     external set_maxl               : session -> int -> unit
-        = "c_cvode_set_maxl"
+        = "c_cvode_spils_set_maxl"
 
     external get_num_lin_iters      : session -> int
         = "c_cvode_spils_get_num_lin_iters"
