@@ -59,10 +59,11 @@ include module type of Cvode
     Call any of the [set_*] functions to change solver parameters from their
     defaults.
     + {b Advance solution in time}, e.g.
-    {[let (t', result) = Cvode.normal s !t y in
+    {[let (t', result) = Cvode.solve_normal s !t y in
 ...
 t := t' + 0.1]}
-    Repeatedly call either [normal] or [one_step] to advance the simulation.
+    Repeatedly call either [solve_normal] or [solve_one_step] to advance the
+    simulation.
     + {b Get optional outputs}
     {[let stats = get_integrator_stats s in ...]}
     Call any of the [get_*] functions to examine solver statistics.
