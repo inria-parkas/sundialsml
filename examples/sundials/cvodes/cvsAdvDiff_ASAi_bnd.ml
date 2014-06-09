@@ -44,7 +44,6 @@
 module Cvode = Cvode_serial
 module Adjoint = Cvodes_serial.Adjoint
 module Carray = Cvode.Carray
-module Roots = Cvode.Roots
 module Col = Dls.BandMatrix.Col
 module Dls = Cvode.Dls
 

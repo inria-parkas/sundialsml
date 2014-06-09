@@ -1,6 +1,7 @@
 include ../../../config
 
-EXAMPLES = cvsAdvDiff_ASAi_bnd.ml
+EXAMPLES = cvsAdvDiff_ASAi_bnd.ml \
+	   cvsAdvDiff_FSA_non.ml
 
 LAPACK_EXAMPLES =
 
