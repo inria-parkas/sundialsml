@@ -234,7 +234,7 @@ let main () =
         Sens.init cvode_mem
                          Sens.EETolerances
                          sensi_meth
-                         { Sens.pvals = Some data.p ;
+                         { Sens.pvals = Some data.p;
                            Sens.pbar = Some pbar;
                            Sens.plist = Some plist; }
                          (Sens.OneByOne None)
@@ -252,7 +252,7 @@ let main () =
 
         (fun s -> (ignore (Sens.get s uS); print_output_s uS))
       end
-    in
+  in
 
   (* In loop over output points, call CVode, print results, test for error *)
   printf "\n\n";
