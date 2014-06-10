@@ -409,14 +409,14 @@ module Sensitivity :
     (** Returns the number of calls to the sensitivity right-hand side function.
 
         @cvode <node6#ss:sens_optional_output> CVodeGetSensNumRhsEvals *)
-    val get_num_sens_evals       : session -> int
+    val get_num_rhs_evals       : session -> int
 
     (** Returns the number of calls to the user's right-hand side function due
         to the internal finite difference approximation of the sensitivity
         right-hand sides.
 
         @cvode <node6#ss:sens_optional_output> CVodeGetNumRhsEvalsSens *)
-    val get_num_rhs_evals      : session -> int
+    val get_num_rhs_evals_sens  : session -> int
 
     (** Returns the number of local error test failures for the sensitivity
         variables that have occurred.

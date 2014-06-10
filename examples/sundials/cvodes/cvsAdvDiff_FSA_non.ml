@@ -178,8 +178,8 @@ let print_final_stats cvode_mem sensi =
   printf "nni     = %5d    ncfn     = %5d\n" nni ncfn;
 
   if sensi then begin
-    let nfSe = Sens.get_num_sens_evals cvode_mem
-    and nfeS = Sens.get_num_rhs_evals cvode_mem
+    let nfSe = Sens.get_num_rhs_evals cvode_mem
+    and nfeS = Sens.get_num_rhs_evals_sens cvode_mem
     and nsetupsS = Sens.get_num_lin_solv_setups cvode_mem
     and netfS = Sens.get_num_err_test_fails cvode_mem
     and nniS = Sens.get_num_nonlin_solv_iters cvode_mem

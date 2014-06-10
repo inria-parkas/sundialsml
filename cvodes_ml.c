@@ -390,7 +390,7 @@ CAMLprim void c_cvodes_sens_set_max_nonlin_iters(value vdata, value vmaxcors)
     CAMLreturn0;
 }
 
-CAMLprim value c_cvodes_sens_get_num_sens_evals(value vdata)
+CAMLprim value c_cvodes_sens_get_num_rhs_evals(value vdata)
 {
     CAMLparam1(vdata);
 
@@ -403,7 +403,7 @@ CAMLprim value c_cvodes_sens_get_num_sens_evals(value vdata)
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_cvodes_sens_get_num_rhs_evals(value vdata)
+CAMLprim value c_cvodes_sens_get_num_rhs_evals_sens(value vdata)
 {
     CAMLparam1(vdata);
 

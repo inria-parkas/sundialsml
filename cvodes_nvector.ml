@@ -355,11 +355,11 @@ module Sensitivity =
     external set_max_nonlin_iters : 'a session -> int -> unit
         = "c_cvodes_sens_set_max_nonlin_iters"
 
-    external get_num_sens_evals : 'a session -> int
-        = "c_cvodes_sens_get_num_sens_evals"
-
     external get_num_rhs_evals : 'a session -> int
         = "c_cvodes_sens_get_num_rhs_evals"
+
+    external get_num_rhs_evals_sens : 'a session -> int
+        = "c_cvodes_sens_get_num_rhs_evals_sens"
 
     external get_num_err_test_fails : 'a session -> int
         = "c_cvodes_sens_get_num_err_test_fails"
