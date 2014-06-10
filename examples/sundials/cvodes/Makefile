@@ -1,8 +1,9 @@
 include ../../../config
 
 EXAMPLES = cvsAdvDiff_ASAi_bnd.ml \
-	   cvsAdvDiff_FSA_non.ml \
-	   cvsDiurnal_FSA_kry.ml
+	   cvsAdvDiff_FSA_non.ml  \
+	   cvsDiurnal_FSA_kry.ml  \
+	   cvsFoodWeb_ASAi_kry.ml
 
 LAPACK_EXAMPLES =
 

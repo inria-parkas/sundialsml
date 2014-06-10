@@ -5,7 +5,7 @@
  * -----------------------------------------------------------------
  * Programmer(s): Radu Serban @ LLNL
  * -----------------------------------------------------------------
- * OCaml port: Timothy Bourke, Inria, Sep 2010.
+ * OCaml port: Timothy Bourke, Inria, Jun 2014.
  * -----------------------------------------------------------------
  * Adjoint sensitivity example problem:
  *
