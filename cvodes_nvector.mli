@@ -716,12 +716,13 @@ module Adjoint :
 
     (** {4:adjfwdintegration Forward Integration} *)
 
-    (** [tret, ncheck = forward_normal s tout yret] integrates the forward
+    (** [tret, ncheck, sr = forward_normal s tout yret] integrates the forward
         problem over an interval and saves checkpointing data. The function
         takes as arguments the next time at which a solution is desired
         ([tout]), a vector for storing the computed result ([yret]), and returns
         the time reached by the solver ([tret]) and the number of checkpoints
-        stored so far ([ncheck]).
+        stored so far ([ncheck]), and whether the solver reached [tout] or not
+        ([sr]).
 
         This call asks the solver to take internal steps until it has reached or
         just passed the [tout] parameter ([CV_NORMAL]). The solver then
@@ -746,12 +747,13 @@ module Adjoint :
       -> 'a nvector
       -> float * int * Cvode.solver_result
 
-    (** [tret, ncheck = forward_normal s tout yret] integrates the forward
+    (** [tret, ncheck, sr = forward_normal s tout yret] integrates the forward
         problem over an interval and saves checkpointing data. The function
         takes as arguments the next time at which a solution is desired
         ([tout]), a vector for storing the computed result ([yret]), and returns
         the time reached by the solver ([tret]) and the number of checkpoints
-        stored so far ([ncheck]).
+        stored so far ([ncheck]), and whether the solver reached [tout] or not
+        ([sr]).
 
         This call asks the solver to take one internal step and to return the
         solution at the point reached by that step ([CV_ONE_STEP]).
