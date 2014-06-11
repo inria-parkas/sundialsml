@@ -146,7 +146,7 @@ doc/html/index.html: doc/html dochtml.cmo intro.doc \
 	    -pp "$(DOCPP)"		\
 	    -d ./doc/html/		\
 	    -hide Cvode_session_serial,Cvode_session_nvector \
-	    -t "Sundials (CVODE, IDA & KINSOL)"	\
+	    -t "Sundials"	\
 	    -intro intro.doc		\
 	    $(MLOBJ_MAIN:.cmo=.mli) $(MLOBJ_SENS:.cmo=.mli)
 
