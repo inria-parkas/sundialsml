@@ -1112,6 +1112,15 @@ val get_num_nonlin_solv_iters : session -> int
  *)
 val get_num_nonlin_solv_conv_fails : session -> int
 
+(**
+  [nniters, nncfails = get_nonlin_solv_stats s] returns both the numbers of
+  nonlinear iterations performed [nniters] and of nonlinear convergence
+  failures that have occurred [nncfails].
+
+  @cvode <node5#sss:optout_main> CVodeGetNonlinSolvStats
+ *)
+val get_nonlin_solv_stats : session -> int *int
+
 (** {2 Root finding optional functions} *)
 
 (** {3 Input} *)

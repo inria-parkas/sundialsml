@@ -659,6 +659,23 @@ CAMLprim value c_cvode_get_num_nonlin_solv_conv_fails(value vcvode_mem)
     CAMLreturn(Val_long(r));
 }
 
+CAMLprim value c_cvode_get_nonlin_solv_stats(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+    CAMLlocal1(r);
+
+    long int nniters, nncfails;
+    int flag = CVodeGetNonlinSolvStats(CVODE_MEM_FROM_ML(vcvode_mem),
+				       &nniters, &nncfails);
+    CHECK_FLAG("CVodeGetNonlinSolvStats", flag);
+
+    r = caml_alloc_tuple(2);
+    Store_field(r, 0, Val_long(nniters));
+    Store_field(r, 1, Val_long(nncfails));
+
+    CAMLreturn(r);
+}
+
 CAMLprim value c_cvode_get_num_g_evals(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
@@ -682,7 +699,6 @@ CAMLprim value c_cvode_dls_get_work_space(value vcvode_mem)
     CHECK_FLAG("CVDlsGetWorkSpace", flag);
 
     r = caml_alloc_tuple(2);
-
     Store_field(r, 0, Val_long(lenrwLS));
     Store_field(r, 1, Val_long(leniwLS));
 

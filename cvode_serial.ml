@@ -409,6 +409,9 @@ external get_num_nonlin_solv_iters      : session -> int
 external get_num_nonlin_solv_conv_fails : session -> int
     = "c_cvode_get_num_nonlin_solv_conv_fails"
 
+external get_nonlin_solv_stats          : session -> int * int
+    = "c_cvode_get_nonlin_solv_stats"
+
 external get_num_g_evals                : session -> int
     = "c_cvode_get_num_g_evals"
 
