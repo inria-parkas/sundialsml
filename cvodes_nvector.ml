@@ -982,6 +982,9 @@ module Adjoint =
     let get_num_nonlin_solv_conv_fails bs =
       Cvode_nvector.get_num_nonlin_solv_conv_fails (tosession bs)
 
+    let get_nonlin_solv_stats bs =
+      Cvode_nvector.get_nonlin_solv_stats (tosession bs)
+
     module Quadrature =
       struct
         type 'a _bquadrhsfn = 'a bquadrhsfn =
