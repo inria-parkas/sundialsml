@@ -391,12 +391,7 @@ module Sensitivity =
     external get_num_nonlin_solv_conv_fails : 'a session -> int
         = "c_cvodes_sens_get_num_nonlin_solv_conv_fails"
 
-    type nonlin_stats = {
-        num_nonlin_solv_iters : int;
-        num_nonlin_solv_conv_fails : int;
-      }
-
-    external get_nonlin_solv_stats : 'a session -> nonlin_stats
+    external get_nonlin_solv_stats : 'a session -> int * int
         = "c_cvodes_sens_get_nonlin_solv_stats"
 
     external c_get_num_stgr_nonlin_solv_iters

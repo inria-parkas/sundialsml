@@ -460,16 +460,15 @@ module Sensitivity :
       @cvode <node6#ss:sens_optional_output> CVodeGetSensNumNonlinSolvConvFails *)
     val get_num_nonlin_solv_conv_fails : session -> int
 
-    type nonlin_stats = {
-        num_nonlin_solv_iters : int;
-        num_nonlin_solv_conv_fails : int;
-      }
-
-    (** Returns the sensitivity-related nonlinear solver statistics as a group.
+    (** [nni, ncfn = get_nonlin_solv_stats s] returns the sensitivity-related
+        nonlinear solver statistics as a group, where [nni] is the number of
+        nonlinear iterations performed for sensitivity calculations, and [ncfn]
+        is the number of nonlinear convergence failures that have occurred for
+        sensitivity calculations.
 
         @cvode <node6#ss:sens_optional_output> CVodeGetSensNonlinSolvStats
      *)
-    val get_nonlin_solv_stats : session -> nonlin_stats
+    val get_nonlin_solv_stats : session -> int * int
 
     (** Returns the number of nonlinear (functional or Newton) iterations
         performed for each sensitivity equation separately, in the [Staggered1]
@@ -477,7 +476,6 @@ module Sensitivity :
 
       @cvode <node6#ss:sens_optional_output> CVodeGetStgrSensNumNonlinSolvIters *)
     val get_num_stgr_nonlin_solv_iters : session
-
                                          -> Sundials.lint_array -> unit
 
     (** Returns the number of nonlinear convergence failures that have occurred

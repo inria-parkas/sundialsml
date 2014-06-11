@@ -507,11 +507,9 @@ CAMLprim value c_cvodes_sens_get_nonlin_solv_stats(value vdata)
 	    &nsncfails);
     SCHECK_FLAG("CVodeGetSensNonlinSolvStats", flag);
 
-    r = caml_alloc_tuple(RECORD_CVODES_SENS_NONLIN_STATS_SIZE);
-    Store_field(r, RECORD_CVODES_SENS_NONLIN_STATS_NUM_SOLV_ITERS,
-							    Val_long(nsniters));
-    Store_field(r, RECORD_CVODES_SENS_NONLIN_STATS_NUM_CONV_FAILS,
-							   Val_long(nsncfails));
+    r = caml_alloc_tuple(2);
+    Store_field(r, 0, Val_long(nsniters));
+    Store_field(r, 1, Val_long(nsncfails));
 
     CAMLreturn(r);
 }

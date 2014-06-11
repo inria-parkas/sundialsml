@@ -147,12 +147,6 @@ enum cvodes_sens_stats_index {
     RECORD_CVODES_SENS_STATS_SIZE
 };
 
-enum cvodes_sens_nonlin_stats_index {
-    RECORD_CVODES_SENS_NONLIN_STATS_NUM_SOLV_ITERS = 0,
-    RECORD_CVODES_SENS_NONLIN_STATS_NUM_CONV_FAILS,
-    RECORD_CVODES_SENS_NONLIN_STATS_SIZE
-};
-
 enum cvodes_sens_quad_tol_tag {
     VARIANT_CVODES_SENS_QUAD_TOL_NONE = 0,
     VARIANT_CVODES_SENS_QUAD_TOL_SS,
