@@ -25,6 +25,7 @@ include module type of Cvode
   and type RootDirs.t = Cvode.RootDirs.t
   and type lmm = Cvode.lmm
   and type solver_result = Cvode.solver_result
+  and type integrator_stats = Cvode.integrator_stats
   and type bandrange = Cvode.bandrange
   and type spils_params = Cvode.spils_params
 
