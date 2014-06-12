@@ -63,6 +63,9 @@ MINOR PATCHES
 
 7. All call-back functions to be typed/documented as per CVODES.
 
+8. Rename Carray to Realarray?
+9. Change SSTolerances (etc.) to SStolerances?
+
 TO DISCUSS
 ----------
 
