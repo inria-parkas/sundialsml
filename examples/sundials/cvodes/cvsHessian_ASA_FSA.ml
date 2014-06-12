@@ -416,20 +416,20 @@ let main () =
     Adj.init_backward cvode_mem Cvode.BDF
                                 (Adj.Newton (Adj.Dense None))
                                 (Adj.SSTolerances (reltol, abstolB))
-                                (Adj.BackWithSens (fB1 data))
+                                (Adj.WithSens (fB1 data))
                                 tf yB1
   in
-  QuadAdj.init cvode_memB1 (QuadAdj.QuadWithSens (fQB1 data)) yQB1;
+  QuadAdj.init cvode_memB1 (QuadAdj.WithSens (fQB1 data)) yQB1;
   QuadAdj.set_tolerances cvode_memB1 (QuadAdj.SSTolerances (reltol, abstolQB));
 
   let cvode_memB2 =
     Adj.init_backward cvode_mem Cvode.BDF
                                 (Adj.Newton (Adj.Dense None))
                                 (Adj.SSTolerances (reltol, abstolB))
-                                (Adj.BackWithSens (fB2 data))
+                                (Adj.WithSens (fB2 data))
                                 tf yB2
   in
-  QuadAdj.init cvode_memB2 (QuadAdj.QuadWithSens (fQB2 data)) yQB2;
+  QuadAdj.init cvode_memB2 (QuadAdj.WithSens (fQB2 data)) yQB2;
   QuadAdj.set_tolerances cvode_memB2 (QuadAdj.SSTolerances (reltol, abstolB));
 
   (* Backward integration *)

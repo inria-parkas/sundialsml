@@ -77,12 +77,12 @@ type 'a quadsensrhsfn =
    float -> 'a -> 'a array -> 'a -> 'a array -> 'a -> 'a -> unit
 
 type 'a brhsfn =
-        BackBasic of (float -> 'a -> 'a -> 'a -> unit)
-      | BackWithSens of (float -> 'a -> 'a array -> 'a -> 'a -> unit)
+        Basic of (float -> 'a -> 'a -> 'a -> unit)
+      | WithSens of (float -> 'a -> 'a array -> 'a -> 'a -> unit)
 
 type 'a bquadrhsfn =
-        QuadBasic of (float -> 'a -> 'a -> 'a -> unit)
-      | QuadWithSens of (float -> 'a -> 'a array -> 'a -> 'a -> unit)
+        Basic of (float -> 'a -> 'a -> 'a -> unit)
+      | WithSens of (float -> 'a -> 'a array -> 'a -> 'a -> unit)
 
 type ('t, 'a) bjacobian_arg =
   {

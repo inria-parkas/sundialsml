@@ -600,13 +600,13 @@ module Adjoint =
         = "c_ba_cvodes_adj_forward_one_step"
 
     type _brhsfn = brhsfn =
-        BackBasic of (float -> val_array -> val_array -> der_array -> unit)
-      | BackWithSens of (float -> val_array -> val_array array
-                               -> val_array -> der_array -> unit)
+        Basic of (float -> val_array -> val_array -> der_array -> unit)
+      | WithSens of (float -> val_array -> val_array array
+                           -> val_array -> der_array -> unit)
     type brhsfn = _brhsfn =
-        BackBasic of (float -> val_array -> val_array -> der_array -> unit)
-      | BackWithSens of (float -> val_array -> val_array array
-                               -> val_array -> der_array -> unit)
+        Basic of (float -> val_array -> val_array -> der_array -> unit)
+      | WithSens of (float -> val_array -> val_array array
+                           -> val_array -> der_array -> unit)
 
     type single_tmp = val_array
     type triple_tmp = val_array * val_array * val_array
@@ -840,8 +840,8 @@ module Adjoint =
       let weakref = Weak.create 1 in
       let cvode_mem, which, backref, err_file =
         match mf with
-        | BackBasic _ -> c_init_backward s weakref (lmm, iter, t0, y0) false
-        | BackWithSens _ -> c_init_backward s weakref (lmm, iter, t0, y0) true
+        | Basic _ -> c_init_backward s weakref (lmm, iter, t0, y0) false
+        | WithSens _ -> c_init_backward s weakref (lmm, iter, t0, y0) true
       in
       (* cvode_mem and backref have to be immediately captured in a session and
          associated with the finalizer before we do anything else.  *)
@@ -872,11 +872,11 @@ module Adjoint =
                 bsensarray = c_alloc_nvector_array ns;
 
                 brhsfn      = (match mf with
-                               | BackBasic f -> f
+                               | Basic f -> f
                                | _ -> (fun _ _ _ _ -> ()));
 
                 brhsfn1     = (match mf with
-                               | BackWithSens f -> f
+                               | WithSens f -> f
                                | _ -> (fun _ _ _ _ _ -> ()));
 
                 bquadrhsfn  = (fun _ _ _ _ -> ());
@@ -1076,13 +1076,13 @@ module Adjoint =
     module Quadrature =
       struct
         type _bquadrhsfn = bquadrhsfn =
-            QuadBasic of (float -> val_array -> val_array -> der_array -> unit)
-          | QuadWithSens of (float -> val_array -> val_array array
-                                   -> val_array -> der_array -> unit)
+            Basic of (float -> val_array -> val_array -> der_array -> unit)
+          | WithSens of (float -> val_array -> val_array array
+                               -> val_array -> der_array -> unit)
         type bquadrhsfn = _bquadrhsfn =
-            QuadBasic of (float -> val_array -> val_array -> der_array -> unit)
-          | QuadWithSens of (float -> val_array -> val_array array
-                                   -> val_array -> der_array -> unit)
+            Basic of (float -> val_array -> val_array -> der_array -> unit)
+          | WithSens of (float -> val_array -> val_array array
+                               -> val_array -> der_array -> unit)
 
         external c_quad_initb : session -> int -> val_array -> unit
             = "c_ba_cvodes_adjquad_initb"
@@ -1093,10 +1093,10 @@ module Adjoint =
           let parent, which = parent_and_which bs in
           let se = bwdsensext bs in
           match mf with
-           | QuadBasic f -> (se.bquadrhsfn <- f;
-                             c_quad_initb parent which y0)
-           | QuadWithSens f -> (se.bquadrhsfn1 <- f;
-                                c_quad_initbs parent which y0)
+           | Basic f -> (se.bquadrhsfn <- f;
+                         c_quad_initb parent which y0)
+           | WithSens f -> (se.bquadrhsfn1 <- f;
+                            c_quad_initbs parent which y0)
 
         external c_reinit : session -> int -> val_array -> unit
             = "c_ba_cvodes_adjquad_reinit"

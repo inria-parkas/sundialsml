@@ -89,13 +89,13 @@ type quadsensrhsfn =
          -> nvec -> nvec -> unit
 
 type brhsfn =
-        BackBasic of (float -> val_array -> val_array -> der_array -> unit)
-      | BackWithSens of (float -> val_array -> val_array array
-                               -> val_array -> der_array -> unit)
+        Basic of (float -> val_array -> val_array -> der_array -> unit)
+      | WithSens of (float -> val_array -> val_array array
+                           -> val_array -> der_array -> unit)
 
 type bquadrhsfn =
-        QuadBasic of (float -> val_array -> val_array -> der_array -> unit)
-      | QuadWithSens of (float -> val_array -> val_array array
+        Basic of (float -> val_array -> val_array -> der_array -> unit)
+      | WithSens of (float -> val_array -> val_array array
                                -> val_array -> der_array -> unit)
 
 type 't bjacobian_arg =

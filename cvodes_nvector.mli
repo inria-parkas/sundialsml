@@ -784,24 +784,23 @@ module Adjoint :
     (** {4:adjbwdinit Initialization} *)
 
     (** These functions evaluate the right-hand side of the backward ODE system
-        with or without a dependence on forward sensitivies.
-
-        @cvodes <node7#ss:ODErhs_b> CVRhsFnB
-        @cvodes <node7#ss:ODErhs_bs> CVRhsFnBS
-        @cvodes <node3#e:adj_eqns> Eq 2.19, Adjoint sensitivity analysis
-        @cvodes <node3#e:adj1_eqns> Eq 2.21, Adjoint sensitivity analysis *)
+        with or without a dependence on forward sensitivities. *)
     type 'a brhsfn =
-        BackBasic of (float       (* t *)
-                       -> 'a      (* y *)
-                       -> 'a      (* yb *)
-                       -> 'a      (* ybdot *)
-                       -> unit)
-      | BackWithSens of (float          (* t *)
-                          -> 'a         (* y *)
-                          -> 'a array   (* ys *)
-                          -> 'a         (* yb *)
-                          -> 'a         (* ybdot *)
-                          -> unit)
+        Basic of (float    (* t *)
+                  -> 'a    (* y *)
+                  -> 'a    (* yb *)
+                  -> 'a    (* ybdot *)
+                  -> unit)
+        (** @cvodes <node7#ss:ODErhs_b> CVRhsFnB
+            @cvodes <node3#e:adj_eqns> Eq 2.19, Adjoint sensitivity analysis *)
+      | WithSens of (float        (* t *)
+                     -> 'a        (* y *)
+                     -> 'a array  (* ys *)
+                     -> 'a        (* yb *)
+                     -> 'a        (* ybdot *)
+                     -> unit)
+        (** @cvodes <node7#ss:ODErhs_bs> CVRhsFnBS
+            @cvodes <node3#e:adj1_eqns> Eq 2.21, Adjoint sensitivity analysis *)
 
     type 'a single_tmp = 'a
     type 'a triple_tmp = 'a * 'a * 'a
@@ -1362,22 +1361,21 @@ module Adjoint :
         (** {3:adjquadinit Initialization} *)
 
         (** These functions compute the quadrature equation right-hand side for the
-            backward problem.
-
-            @cvodes <node7#ss:ODErhs_quad_b> CVQuadRhsFnB
-            @cvodes <node7#ss:ODErhs_quad_sens_B> CVQuadRhsFnBS *)
+            backward problem. *)
         type 'a bquadrhsfn =
-            QuadBasic of (float         (* t *)
-                           -> 'a        (* y *)
-                           -> 'a        (* yb *)
-                           -> 'a        (* qbdot *)
-                           -> unit)
-          | QuadWithSens of (float           (* t *)
-                              -> 'a          (* y *)
-                              -> 'a array    (* ys *)
-                              -> 'a          (* yb *)
-                              -> 'a          (* qbdot *)
-                              -> unit)
+            Basic of (float   (* t *)
+                      -> 'a   (* y *)
+                      -> 'a   (* yb *)
+                      -> 'a   (* qbdot *)
+                      -> unit)
+            (** @cvodes <node7#ss:ODErhs_quad_b> CVQuadRhsFnB *)
+          | WithSens of (float        (* t *)
+                         -> 'a        (* y *)
+                         -> 'a array  (* ys *)
+                         -> 'a        (* yb *)
+                         -> 'a        (* qbdot *)
+                         -> unit)
+            (** @cvodes <node7#ss:ODErhs_quad_sens_B> CVQuadRhsFnBS *)
 
         (** This function, [init s fQB yQB0], activates integration of
             quadrature equations, with or without sensitivities, where [fQB]
