@@ -154,15 +154,15 @@ module Quadrature =
 
     type 'a tolerance =
         NoStepSizeControl
-      | SSTolerances of float * float
-      | SVTolerances of float * 'a nvector
+      | SStolerances of float * float
+      | SVtolerances of float * 'a nvector
 
     let set_tolerances s tol =
       match tol with
       | NoStepSizeControl -> set_err_con s false
-      | SSTolerances (rel, abs) -> (set_err_con s true;
+      | SStolerances (rel, abs) -> (set_err_con s true;
                                     ss_tolerances s rel abs)
-      | SVTolerances (rel, abs) -> (set_err_con s true;
+      | SVtolerances (rel, abs) -> (set_err_con s true;
                                     sv_tolerances s rel abs)
 
     external get : 'a session -> 'a nvector -> float
@@ -187,9 +187,9 @@ module Quadrature =
 module Sensitivity =
   struct
     type 'a tolerance =
-        SSTolerances of float * Sundials.real_array
-      | SVTolerances of float * 'a nvector array
-      | EETolerances
+        SStolerances of float * Sundials.real_array
+      | SVtolerances of float * 'a nvector array
+      | EEtolerances
 
     external set_err_con : 'a session -> bool -> unit
         = "c_cvodes_sens_set_err_con"
@@ -206,17 +206,17 @@ module Sensitivity =
     let set_tolerances s tol =
       let ns = num_sensitivities s in
       match tol with
-      | SSTolerances (rel, abs) -> begin
+      | SStolerances (rel, abs) -> begin
             if Bigarray.Array1.dim abs <> ns
             then invalid_arg "set_tolerances: abstol has the wrong length";
             ss_tolerances s rel abs
           end
-      | SVTolerances (rel, abs) -> begin
+      | SVtolerances (rel, abs) -> begin
             if Array.length abs <> ns
             then invalid_arg "set_tolerances: abstol has the wrong length";
             sv_tolerances s rel abs
           end
-      | EETolerances -> ee_tolerances s
+      | EEtolerances -> ee_tolerances s
 
     exception SensNotInitialized
     exception SensRhsFuncFailure
@@ -463,9 +463,9 @@ module Sensitivity =
 
         type 'a tolerance =
             NoStepSizeControl
-          | SSTolerances of float * Sundials.real_array
-          | SVTolerances of float * 'a nvector array
-          | EETolerances
+          | SStolerances of float * Sundials.real_array
+          | SVtolerances of float * 'a nvector array
+          | EEtolerances
 
         external set_err_con : 'a session -> bool -> unit
             = "c_cvodes_quadsens_set_err_con"
@@ -484,19 +484,19 @@ module Sensitivity =
           let ns = num_sensitivities s in
           match tol with
           | NoStepSizeControl -> set_err_con s false
-          | SSTolerances (rel, abs) -> begin
+          | SStolerances (rel, abs) -> begin
                 if Bigarray.Array1.dim abs <> ns
                 then invalid_arg "set_tolerances: abstol has the wrong length";
                 set_err_con s true;
                 ss_tolerances s rel abs
               end
-          | SVTolerances (rel, abs) -> begin
+          | SVtolerances (rel, abs) -> begin
                 if Array.length abs <> ns
                 then invalid_arg "set_tolerances: abstol has the wrong length";
                 set_err_con s true;
                 sv_tolerances s rel abs
               end
-          | EETolerances -> (set_err_con s true;
+          | EEtolerances -> (set_err_con s true;
                              ee_tolerances s)
     
         external c_get : 'a session -> 'a nvector array -> float
@@ -652,8 +652,8 @@ module Adjoint =
       | _ -> failwith "Internal error: bsession invalid"
 
     type 'a tolerance =
-      | SSTolerances of float * float
-      | SVTolerances of float * 'a nvector
+      | SStolerances of float * float
+      | SVtolerances of float * 'a nvector
 
     external ss_tolerances
         : 'a session -> int -> float -> float -> unit
@@ -666,8 +666,8 @@ module Adjoint =
     let set_tolerances bs tol =
       let parent, which = parent_and_which bs in
       match tol with
-      | SSTolerances (rel, abs) -> ss_tolerances parent which rel abs
-      | SVTolerances (rel, abs) -> sv_tolerances parent which rel abs
+      | SStolerances (rel, abs) -> ss_tolerances parent which rel abs
+      | SVtolerances (rel, abs) -> sv_tolerances parent which rel abs
 
     external c_diag : 'a session -> int -> unit
       = "c_cvodes_adj_diag"
@@ -1024,8 +1024,8 @@ module Adjoint =
 
         type 'a tolerance =
             NoStepSizeControl
-          | SSTolerances of float * float
-          | SVTolerances of float * 'a nvector
+          | SStolerances of float * float
+          | SVtolerances of float * 'a nvector
 
         external set_err_con : 'a bsession -> bool -> unit
             = "c_cvodes_adjquad_set_err_con"
@@ -1041,9 +1041,9 @@ module Adjoint =
           let parent, which = parent_and_which bs in
           match tol with
           | NoStepSizeControl -> set_err_con bs false
-          | SSTolerances (rel, abs) -> (set_err_con bs true;
+          | SStolerances (rel, abs) -> (set_err_con bs true;
                                         ss_tolerances parent which rel abs)
-          | SVTolerances (rel, abs) -> (set_err_con bs true;
+          | SVtolerances (rel, abs) -> (set_err_con bs true;
                                         sv_tolerances parent which rel abs)
 
         let get_num_rhs_evals bs =

@@ -205,17 +205,17 @@ external wf_tolerances  : session -> unit
     = "c_ba_cvode_wf_tolerances"
 
 type tolerance =
-  | SSTolerances of float * float
-  | SVTolerances of float * nvec
-  | WFTolerances of (val_array -> val_array -> unit)
+  | SStolerances of float * float
+  | SVtolerances of float * nvec
+  | WFtolerances of (val_array -> val_array -> unit)
 
-let default_tolerances = SSTolerances (1.0e-4, 1.0e-8)
+let default_tolerances = SStolerances (1.0e-4, 1.0e-8)
 
 let set_tolerances s tol =
   match tol with
-  | SSTolerances (rel, abs) -> ss_tolerances s rel abs
-  | SVTolerances (rel, abs) -> sv_tolerances s rel abs
-  | WFTolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
+  | SStolerances (rel, abs) -> ss_tolerances s rel abs
+  | SVtolerances (rel, abs) -> sv_tolerances s rel abs
+  | WFtolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
 
 let init lmm iter tol f ?(roots=no_roots) ?(t0=0.) y0 =
   let (nroots, roots) = roots in

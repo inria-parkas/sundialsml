@@ -297,7 +297,7 @@ let main () =
                            Some (jac data))
   in
   let cvode_mem = Cvode.init Cvode.BDF (Cvode.Newton solver)
-                             (Cvode.SSTolerances (reltol, abstol))
+                             (Cvode.SStolerances (reltol, abstol))
                              ~t0:t0 (f data) u
   in
   Gc.compact ();
@@ -323,8 +323,8 @@ let main () =
   let bcvode_mem = Adjoint.init_backward cvode_mem
         Cvode.BDF
         (Adjoint.Newton bsolver)
-        (Adjoint.SSTolerances (rtolb, atol))
-        (Adjoint.BackBasic (fB data)) tout uB in
+        (Adjoint.SStolerances (rtolb, atol))
+        (Adjoint.Basic (fB data)) tout uB in
 
   (* Perform backward integration *)
   printf "\nBackward integration\n";

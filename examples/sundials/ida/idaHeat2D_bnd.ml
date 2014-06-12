@@ -179,7 +179,7 @@ let main () =
   let mu = mgrid and ml = mgrid in
   let mem =
     Ida.init (Ida.Band ({ Ida.mupper=mu; Ida.mlower=ml }, None))
-             (Ida.SSTolerances (rtol, atol))
+             (Ida.SStolerances (rtol, atol))
              (fun t u u' r -> heatres t u u' r data)
              ~t0:t0 u u'
   in

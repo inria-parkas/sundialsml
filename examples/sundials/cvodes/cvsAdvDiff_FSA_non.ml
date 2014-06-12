@@ -213,7 +213,7 @@ let main () =
   let cvode_mem = Cvode.init
                     Cvode.Adams
                     Cvode.Functional
-                    (Cvode.SSTolerances (reltol, abstol))
+                    (Cvode.SStolerances (reltol, abstol))
                     (f data)
                     ~t0:t0
                     u
@@ -232,7 +232,7 @@ let main () =
         let uS = Array.init ns (fun _ -> Carray.init neq 0.0) in
 
         Sens.init cvode_mem
-                         Sens.EETolerances
+                         Sens.EEtolerances
                          sensi_meth
                          { Sens.pvals = Some data.p;
                            Sens.pbar = Some pbar;

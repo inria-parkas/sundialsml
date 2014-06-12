@@ -1047,7 +1047,7 @@ let main () =
                 { Cvode.prec_setup_fn = Some (precond wdata);
                   Cvode.prec_solve_fn = Some (psolve wdata);
                   Cvode.jac_times_vec_fn = None })))
-        (Cvode.SSTolerances (reltol, abstol))
+        (Cvode.SStolerances (reltol, abstol))
         (f wdata) ~t0:t0 c
   in
   Gc.compact ();
@@ -1085,8 +1085,8 @@ let main () =
           { Adj.prec_setup_fn = Some (precondb wdata);
             Adj.prec_solve_fn = Some (psolveb wdata);
             Adj.jac_times_vec_fn = None })))
-      (Adj.SSTolerances (reltolb, abstolb))
-      (Adj.BackBasic (fB wdata))
+      (Adj.SStolerances (reltolb, abstolb))
+      (Adj.Basic (fB wdata))
       tout
       cB
   in

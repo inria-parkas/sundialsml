@@ -462,7 +462,7 @@ let main () =
    * the initial dependent variable vector u. *)
   let cvode_mem =
     Cvode.init Cvode.BDF Cvode.Functional
-               (Cvode.SSTolerances (reltol, abstol)) (f data) ~t0:t0 u
+               (Cvode.SStolerances (reltol, abstol)) (f data) ~t0:t0 u
   in
   Gc.compact ();
 

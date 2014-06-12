@@ -357,20 +357,20 @@ let main () =
     Cvode.init
         Cvode.BDF
         (Cvode.Newton (Cvode.Dense None))
-        (Cvode.SSTolerances (reltol, abstol))
+        (Cvode.SStolerances (reltol, abstol))
         (f data)
         ~t0:t0
         y
   in
   Quad.init cvode_mem (fQ data) yQ;
-  Quad.set_tolerances cvode_mem (Quad.SSTolerances (reltol, abstolQ));
+  Quad.set_tolerances cvode_mem (Quad.SStolerances (reltol, abstolQ));
 
-  Sens.init cvode_mem Sens.EETolerances Sens.Simultaneous
+  Sens.init cvode_mem Sens.EEtolerances Sens.Simultaneous
                       Sens.no_sens_params (Sens.AllAtOnce (Some (fS data))) yS;
   Sens.set_err_con cvode_mem true;
 
   QuadSens.init cvode_mem (fQS data) yQS;
-  QuadSens.set_tolerances cvode_mem (QuadSens.EETolerances);
+  QuadSens.set_tolerances cvode_mem (QuadSens.EEtolerances);
 
   (* Initialize ASA *)
   let steps = 100 in
@@ -415,22 +415,22 @@ let main () =
   let cvode_memB1 =
     Adj.init_backward cvode_mem Cvode.BDF
                                 (Adj.Newton (Adj.Dense None))
-                                (Adj.SSTolerances (reltol, abstolB))
+                                (Adj.SStolerances (reltol, abstolB))
                                 (Adj.WithSens (fB1 data))
                                 tf yB1
   in
   QuadAdj.init cvode_memB1 (QuadAdj.WithSens (fQB1 data)) yQB1;
-  QuadAdj.set_tolerances cvode_memB1 (QuadAdj.SSTolerances (reltol, abstolQB));
+  QuadAdj.set_tolerances cvode_memB1 (QuadAdj.SStolerances (reltol, abstolQB));
 
   let cvode_memB2 =
     Adj.init_backward cvode_mem Cvode.BDF
                                 (Adj.Newton (Adj.Dense None))
-                                (Adj.SSTolerances (reltol, abstolB))
+                                (Adj.SStolerances (reltol, abstolB))
                                 (Adj.WithSens (fB2 data))
                                 tf yB2
   in
   QuadAdj.init cvode_memB2 (QuadAdj.WithSens (fQB2 data)) yQB2;
-  QuadAdj.set_tolerances cvode_memB2 (QuadAdj.SSTolerances (reltol, abstolB));
+  QuadAdj.set_tolerances cvode_memB2 (QuadAdj.SStolerances (reltol, abstolB));
 
   (* Backward integration *)
   printf "---------------------------------------------\n";
@@ -480,7 +480,7 @@ let main () =
     Cvode.init
         Cvode.BDF
         (Cvode.Newton (Cvode.Dense None))
-        (Cvode.SSTolerances (reltol, abstol))
+        (Cvode.SStolerances (reltol, abstol))
         (f data)
         ~t0:t0
         y
@@ -488,7 +488,7 @@ let main () =
   Carray.fill y one;
   Carray.fill yQ zero;
   Quad.init cvode_mem (fQ data) yQ;
-  Quad.set_tolerances cvode_mem (Quad.SSTolerances (reltol, abstolQ));
+  Quad.set_tolerances cvode_mem (Quad.SStolerances (reltol, abstolQ));
 
   data.p1 <- data.p1 +. dp;
 

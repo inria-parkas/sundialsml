@@ -235,7 +235,7 @@ let main () =
                            Some (jac data))
   in
   let cvode_mem = Cvode.init Cvode.BDF (Cvode.Newton solver)
-                             (Cvode.SSTolerances (reltol, abstol))
+                             (Cvode.SStolerances (reltol, abstol))
                              ~t0:t0 (f data) u
   in
   Gc.compact ();

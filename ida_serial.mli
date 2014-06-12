@@ -642,11 +642,11 @@ module Spils :
   end
 
 type tolerance =
-  | SSTolerances of float * float
+  | SStolerances of float * float
     (** [(rel, abs)] : scalar relative and absolute tolerances. *)
-  | SVTolerances of float * nvec
+  | SVtolerances of float * nvec
     (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
-  | WFTolerances of (val_array -> val_array -> unit)
+  | WFtolerances of (val_array -> val_array -> unit)
     (** Specifies a function [efun y ewt] that sets the multiplicative
         error weights Wi for use in the weighted RMS norm. The function is
         passed the dependent variable vector [y] and is expected to set the

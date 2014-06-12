@@ -499,11 +499,11 @@ module BandPrec :
   end
 
 type 'a tolerance =
-  | SSTolerances of float * float
+  | SStolerances of float * float
     (** [(rel, abs)] : scalar relative and absolute tolerances. *)
-  | SVTolerances of float * 'a nvector
+  | SVtolerances of float * 'a nvector
     (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
-  | WFTolerances of ('a -> 'a -> unit)
+  | WFtolerances of ('a -> 'a -> unit)
     (** Specifies a function [efun y ewt] that sets the multiplicative
         error weights Wi for use in the weighted RMS norm. The function is
         passed the dependent variable vector [y] and is expected to set the

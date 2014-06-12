@@ -103,23 +103,23 @@ external wf_tolerances  : session -> unit
   = "c_ba_ida_wf_tolerances"
 
 type tolerance =
-  | SSTolerances of float * float
+  | SStolerances of float * float
     (** [(rel, abs)] : scalar relative and absolute tolerances. *)
-  | SVTolerances of float * nvec
+  | SVtolerances of float * nvec
     (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
-  | WFTolerances of (val_array -> val_array -> unit)
+  | WFtolerances of (val_array -> val_array -> unit)
     (** Specifies a function [efun y ewt] that sets the multiplicative
         error weights Wi for use in the weighted RMS norm. The function is
         passed the dependent variable vector [y] and is expected to set the
         values inside the error-weight vector [ewt]. *)
 
-let default_tolerances = SSTolerances (1.0e-4, 1.0e-8)
+let default_tolerances = SStolerances (1.0e-4, 1.0e-8)
 
 let set_tolerances s tol =
   match tol with
-  | SSTolerances (rel, abs) -> ss_tolerances s rel abs
-  | SVTolerances (rel, abs) -> sv_tolerances s rel abs
-  | WFTolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
+  | SStolerances (rel, abs) -> ss_tolerances s rel abs
+  | SVtolerances (rel, abs) -> sv_tolerances s rel abs
+  | WFtolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
 
 let read_weak_ref x : session =
   match Weak.get x 0 with

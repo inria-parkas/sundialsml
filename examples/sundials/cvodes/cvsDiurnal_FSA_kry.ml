@@ -532,7 +532,7 @@ let main () =
                         { Cvode.prec_setup_fn = Some (precond data);
                           Cvode.prec_solve_fn = Some (psolve data);
                           Cvode.jac_times_vec_fn = None; })))
-      (Cvode.SSTolerances (reltol, abstol))
+      (Cvode.SStolerances (reltol, abstol))
       (f data) ~t0:t0 y
   in
   Cvode.set_max_num_steps cvode_mem 2000;
@@ -551,7 +551,7 @@ let main () =
         let uS = Array.init ns (fun _ -> Carray.init neq 0.0) in
 
         Sens.init cvode_mem
-                         Sens.EETolerances
+                         Sens.EEtolerances
                          sensi_meth
                          { Sens.pvals = Some data.params;
                            Sens.pbar = Some pbar;

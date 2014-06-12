@@ -98,9 +98,9 @@ module Quadrature :
     type 'a tolerance =
         NoStepSizeControl
         (** Do not use quadrature variables for step-size control (default). *)
-      | SSTolerances of float * float
+      | SStolerances of float * float
         (** [(rel, abs)] : scalar relative and absolute tolerances. *)
-      | SVTolerances of float * 'a nvector
+      | SVtolerances of float * 'a nvector
         (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
 
     (** Specify whether and how quadrature variables should be used in the step
@@ -285,11 +285,11 @@ module Sensitivity :
     val no_sens_params : sens_params
 
     type 'a tolerance =
-        SSTolerances of float * Sundials.real_array
+        SStolerances of float * Sundials.real_array
         (** [(rel, abs)] : scalar relative and absolute tolerances. *)
-      | SVTolerances of float * 'a nvector array
+      | SVtolerances of float * 'a nvector array
         (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
-      | EETolerances
+      | EEtolerances
         (** Calculate the integration tolerances for sensitivities based
             on those for state variables and the scaling factors. *)
 
@@ -553,11 +553,11 @@ module Sensitivity :
         type 'a tolerance =
             NoStepSizeControl
             (** Do not use quadrature variables for step-size control (default). *)
-          | SSTolerances of float * Sundials.real_array
+          | SStolerances of float * Sundials.real_array
             (** [(rel, abs)] : scalar relative and absolute tolerances. *)
-          | SVTolerances of float * 'a nvector array
+          | SVtolerances of float * 'a nvector array
             (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
-          | EETolerances
+          | EEtolerances
             (** Estimate the tolerances for the sensitivity-dependent
                 quadratures from those provided for the pure quadrature
                 variables. *)
@@ -915,9 +915,9 @@ module Adjoint :
     val spils_no_precond : 'a spils_callbacks
 
     type 'a tolerance =
-      | SSTolerances of float * float
+      | SStolerances of float * float
         (** [(rel, abs)] : scalar relative and absolute tolerances. *)
-      | SVTolerances of float * 'a nvector
+      | SVtolerances of float * 'a nvector
         (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
 
     (** [init_backward s lmm iter tol fB tB0 yB0] adds and initializes a
@@ -1408,9 +1408,9 @@ module Adjoint :
         type 'a tolerance =
             NoStepSizeControl
             (** Do not use quadrature variables for step-size control (default). *)
-          | SSTolerances of float * float
+          | SStolerances of float * float
             (** [(rel, abs)] : scalar relative and absolute tolerances. *)
-          | SVTolerances of float * 'a nvector
+          | SVtolerances of float * 'a nvector
             (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
 
         (** Specify whether and how quadrature variables should be used in the step

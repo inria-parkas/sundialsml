@@ -155,7 +155,7 @@ let main () =
   (* Call IDACreate, IDAInit, and IDARootInit to initialize IDA memory with
    * a 2-component root function and the dense direct linear solver.  *)
   let ida_mem =
-    Ida.init (Ida.Dense (Some jacrob)) (Ida.SVTolerances (rtol, avtol))
+    Ida.init (Ida.Dense (Some jacrob)) (Ida.SVtolerances (rtol, avtol))
              resrob ~roots:(nroots, grob) ~t0:t0 y y'
   in
   (* In loop, call IDASolve, print results, and test for error.  Break out of
