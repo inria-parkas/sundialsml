@@ -20,8 +20,6 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(* TODO: add "skeletons" for each solver extension *)
-
 (** Serial nvector interface to the CVODES solver.
 
   @version VERSION()
@@ -39,6 +37,27 @@ type der_array = Cvode_serial.der_array
 
 module Quadrature :
   sig
+    (** A skeleton of an enhanced main program:
+        + {b Initialize a session [s] per the skeleton at
+           {!Cvode_serial.session}}
+        {[...]}
+        The vector of initial values should not include values for the
+        quadrature variables.
+        + {b Set vector of quadrature variables }
+        {[let yQ = Cvode.Carray.of_array [| 0.0; 0.0 |] ]}
+        The length of this vector determines the number of quadrature variables.    
+        + {b Initialize quadrature integration}
+        {[init s fQ yQ]}
+        + {b Specify integration tolerances (optional)}, e.g.
+        {[set_tolerances s SStolerances (reltol, abstol)]}
+        + {b Advance the solution in time as per normal}
+        + {b Extract quadrature variables}
+        {[get s yQ]}
+        + {b Get quadrature optional outputs}
+        {[let nre = get_num_rhs_evals s in ...]}
+        Call any of the [get_*] functions to examine solver statistics.
+
+        @cvodes <node5#SECTION00570000000000000000> Integration of pure quadrature equations *)
 
     (** {3:quadexcept Exceptions} *)
 
@@ -86,7 +105,7 @@ module Quadrature :
     type quadrhsfn = float -> val_array -> der_array -> unit
 
     (** Activates the integration of quadrature equations.
-
+     
         @cvodes <node5#ss:quad_malloc> CVodeQuadInit *)
     val init : session -> quadrhsfn -> val_array -> unit
 
@@ -170,6 +189,25 @@ module Quadrature :
 
 module Sensitivity :
   sig
+    (** A skeleton of an enhanced main program:
+        + {b Initialize a session [s] per the skeleton at
+           {!Cvode_serial.session} or {!Cvodes_serial.Quadrature.init}}
+        {[...]}
+        + {b Define the sensitivity problem}
+        {[let p = Cvode.Carray.create np in
+let sp = { pvals = Some p; pbar = ...; plist = ... }]}
+        + {b Set sensitivity initial conditions }
+        {[let yS0 = Array.init ns (fun _ -> Carray.init neq 0.0) in]}
+        + {b Activate sensitivity calculations}
+        {[init s (SStolerances ...) Simultaneous sp fS yS0]}
+        + {b Set optional inputs}
+        {[set_dq_method s ...]}
+        + {b Advance the solution in time as per normal}
+        + {b Extract sensitivity solution}
+        {[let t = get s yS]}
+
+        @cvodes <node6#ss:forward_usage> Enhanced skeleton for sensitivity analysis *)
+
     (** {3:sensexcept Exceptions} *)
 
     (** Sensitivity analysis was not initialized.
@@ -457,7 +495,7 @@ module Sensitivity :
     (** Returns the number of nonlinear convergence failures that have occurred
         for sensitivity calculations.
 
-      @cvode <node6#ss:sens_optional_output> CVodeGetSensNumNonlinSolvConvFails *)
+        @cvode <node6#ss:sens_optional_output> CVodeGetSensNumNonlinSolvConvFails *)
     val get_num_nonlin_solv_conv_fails : session -> int
 
     (** [nni, ncfn = get_nonlin_solv_stats s] returns the sensitivity-related
@@ -494,6 +532,23 @@ module Sensitivity :
 
     module Quadrature :
       sig
+        (** A skeleton of an enhanced main program:
+            + {b Initialize a session [s] per the skeleton at {!Sensitivity.init}}
+            {[...]}
+            + {b Set initial values of quadrature variables}
+            {[let yQS = Array.init ns (fun _ -> Carray.of_array [0.0; 0.0]) in]}
+            + {b Initialize sensitivity-dependent quadrature integration}
+            {[init s fQS yQS]}
+            + {b Set optional inputs}
+            {[set_tolerances s ...]}
+            + {b Advance the solution in time as per normal}
+            + {b Extract sensitivity-dependent quadrature variables}
+            {[let t = get s yQS]}
+            + {b Get sensitivity-dependent optional outputs}
+            {[let e, f = get_stats s]}
+
+            @cvodes <node6#SECTION00640000000000000000> Integration of quadrature equations depending on forward sensitivities *)
+
         (** {3:quadsensexcept Exceptions} *)
 
         (** Quadrature integration was not initialized.
@@ -655,6 +710,30 @@ module Sensitivity :
 
 module Adjoint :
   sig
+    (**
+        A skeleton of an enhanced main program:
+        + {b Initialize a session [s] per the skeleton at {!Cvode_serial.init}}
+        {[...]}
+        Adding quadrature variables using {!Quadrature.init} if desired.
+        + {b Initialize the adjoint computation}
+        {[init s nsteps IHermite]}
+        + {b Integrate forward problem}
+        {[let t, ncheck, r = forward_normal s tout y0]}
+        + {b Setup the backward problem and attach a linear solver}
+        {[let yB0 = Carray.of_list [0.0; 0.0; ...]
+let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
+        + {b Set optional inputs}
+        {[set_max_ord bs ...]}
+        + {b Initialize quadrature calculation}
+        {[Quadrature.init bs fQb yQB0]}
+        + {b Integrate backward problem}
+        {[backward_normal s tB]}
+        + {b Extract quadrature variables}
+        {[let t = Quadrature.get s yQS]}
+
+        @cvodes <node7#ss:skeleton_adj> Enhanced Skeleton for Adjoint Sensitivity Analysis
+    *)
+
     (** {3:adjexcept Exceptions} *)
 
     (** Adjoint sensitivity analysis was not initialized.
@@ -734,8 +813,7 @@ module Adjoint :
         @raise Cvode.TooMuchAccuracy    Could not satisfy the demanded accuracy
         @raise Cvode.ErrFailure         Too many error test failures.
         @raise Cvode.ConvergenceFailure Too many convergence test failures.
-        @raise Cvode.LinearSetupFailure Unrecoverable failure in linear solver
-                                        setup function.
+        @raise Cvode.LinearSetupFailure Unrecoverable failure in linear solver setup function.
         @raise Cvode.LinearSolveFailure Unrecoverable failure in linear solver
                                         solve function.
         @raise AdjointNotInitialized    The [init] function has not previously
@@ -764,12 +842,9 @@ module Adjoint :
         @raise Cvode.TooMuchAccuracy    Could not satisfy the demanded accuracy
         @raise Cvode.ErrFailure         Too many error test failures.
         @raise Cvode.ConvergenceFailure Too many convergence test failures.
-        @raise Cvode.LinearSetupFailure Unrecoverable failure in linear solver
-                                        setup function.
-        @raise Cvode.LinearSolveFailure Unrecoverable failure in linear solver
-                                        solve function.
-        @raise AdjointNotInitialized    The [init] function has not previously
-                                        been called.
+        @raise Cvode.LinearSetupFailure Unrecoverable failure in linear solver setup function.
+        @raise Cvode.LinearSolveFailure Unrecoverable failure in linear solver solve function.
+        @raise AdjointNotInitialized    The [init] function has not previously been called.
      *)
     val forward_one_step :
       session
@@ -1028,10 +1103,8 @@ module Adjoint :
         @cvodes <node7#sss:cvinitb> CVodeInitBS
         @cvodes <node7#sss:cvtolerances_b> CVodeSStolerancesB
         @cvodes <node7#sss:cvtolerances_b> CVodeSVtolerancesB 
-        @raise AdjointNotInitialized    The [init] function has not previously
-                                        been called.
-        @raise BadFinalTime      The final time is outside the interval over
-                                 which the forward problem was solved.
+        @raise AdjointNotInitialized    The [init] function has not previously been called.
+        @raise BadFinalTime      The final time is outside the interval over which the forward problem was solved.
         *)
     val init_backward :
          session
@@ -1046,10 +1119,8 @@ module Adjoint :
     (** Reinitialize the backward problem.
 
         @cvodes <node7#sss:cvinitb> CVodeReInitB
-        @raise AdjointNotInitialized    The [init] function has not previously
-                                        been called.
-        @raise BadFinalTime      The final time is outside the interval over
-                                 which the forward problem was solved. *)
+        @raise AdjointNotInitialized    The [init] function has not previously been called.
+        @raise BadFinalTime      The final time is outside the interval over which the forward problem was solved. *)
     val reinit : bsession -> float -> val_array -> unit
 
     (** {4:adjbwdintegration Backward Integration} *)
@@ -1060,31 +1131,19 @@ module Adjoint :
         in order to return an approximate value of [y(tbout)].
 
         @cvodes <node7#sss:cvsolveb> CVodeB
-        @raise AdjointNotInitialized    The [init] function has not previously
-                                        been called.
-        @raise NoBackwardProblem        The [init_backward] function has not
-                                        previously been called.
-        @raise NoForwardCall            Neither [forward_normal] nor
-                                        [forward_one_step] has previously been
-                                        called.
+        @raise AdjointNotInitialized    The [init] function has not previously been called.
+        @raise NoBackwardProblem        The [init_backward] function has not previously been called.
+        @raise NoForwardCall            Neither [forward_normal] nor [forward_one_step] has previously been called.
         @raise Cvode.IllInput           One of the inputs is invalid.
         @raise Cvode.TooMuchWork        Could not reach [tout] in [mxstep] steps
         @raise Cvode.TooMuchAccuracy    Could not satisfy the demanded accuracy
         @raise Cvode.ErrFailure         Too many error test failures.
         @raise Cvode.ConvergenceFailure Too many convergence test failures.
-        @raise Cvode.LinearSetupFailure Unrecoverable failure in linear solver
-                                        setup function.
-        @raise Cvode.LinearSolveFailure Unrecoverable failure in linear solver
-                                        solve function.
-        @raise BadOutputTime            The requested output time is outside
-                                        the interval over which the forward
-                                        problem was solved.
-        @raise ForwardReinitializationFailed Reinitialization of the forward
-                                        problem failed at the first checkpoint
-                                        (corresponding to the initial time of
-                                        the forward problem).
-        @raise ForwardFail              An error occurred during the integration
-                                        of the forward problem.
+        @raise Cvode.LinearSetupFailure Unrecoverable failure in linear solver setup function.
+        @raise Cvode.LinearSolveFailure Unrecoverable failure in linear solver solve function.
+        @raise BadOutputTime            The requested output time is outside the interval over which the forward problem was solved.
+        @raise ForwardReinitializationFailed Reinitialization of the forward problem failed at the first checkpoint (corresponding to the initial time of the forward problem).
+        @raise ForwardFail              An error occurred during the integration of the forward problem.
      *)
     val backward_normal : session -> float -> unit
 
@@ -1092,31 +1151,19 @@ module Adjoint :
         function takes one internal step ([CV_ONE_STEP]).
 
         @cvodes <node7#sss:cvsolveb> CVodeB
-        @raise AdjointNotInitialized    The [init] function has not previously
-                                        been called.
-        @raise NoBackwardProblem        The [init_backward] function has not
-                                        previously been called.
-        @raise NoForwardCall            Neither [forward_normal] nor
-                                        [forward_one_step] has previously been
-                                        called.
+        @raise AdjointNotInitialized    The [init] function has not previously been called.
+        @raise NoBackwardProblem        The [init_backward] function has not previously been called.
+        @raise NoForwardCall            Neither [forward_normal] nor [forward_one_step] has previously been called.
         @raise Cvode.IllInput           One of the inputs is invalid.
         @raise Cvode.TooMuchWork        Could not reach [tout] in [mxstep] steps
         @raise Cvode.TooMuchAccuracy    Could not satisfy the demanded accuracy
         @raise Cvode.ErrFailure         Too many error test failures.
         @raise Cvode.ConvergenceFailure Too many convergence test failures.
-        @raise Cvode.LinearSetupFailure Unrecoverable failure in linear solver
-                                        setup function.
-        @raise Cvode.LinearSolveFailure Unrecoverable failure in linear solver
-                                        solve function.
-        @raise BadOutputTime            The requested output time is outside
-                                        the interval over which the forward
-                                        problem was solved.
-        @raise ForwardReinitializationFailed Reinitialization of the forward
-                                        problem failed at the first checkpoint
-                                        (corresponding to the initial time of
-                                        the forward problem).
-        @raise ForwardFail              An error occurred during the integration
-                                        of the forward problem.
+        @raise Cvode.LinearSetupFailure Unrecoverable failure in linear solver setup function.
+        @raise Cvode.LinearSolveFailure Unrecoverable failure in linear solver solve function.
+        @raise BadOutputTime            The requested output time is outside the interval over which the forward problem was solved.
+        @raise ForwardReinitializationFailed Reinitialization of the forward problem failed at the first checkpoint (corresponding to the initial time of the forward problem).
+        @raise ForwardFail              An error occurred during the integration of the forward problem.
     *)
     val backward_one_step : session -> float -> unit
 
@@ -1190,8 +1237,7 @@ module Adjoint :
     (** Get optional inputs for the linear solver that gives diagonal approximations
         of the Jacobian matrix.
 
-        @cvodes <node7#ss:optional_output_b> Optional output functions for
-                                             the backward problem. *)
+        @cvodes <node7#ss:optional_output_b> Optional output functions for the backward problem. *)
     module Diag :
       sig
         (** Returns the number of calls made to the user-supplied right-hand
@@ -1215,8 +1261,7 @@ module Adjoint :
     (** Set optional outputs, and get optional inputs for the Scaled
         Preconditioned Iterative Linear Solvers: SPGMR, SPBCG, SPTFQMR.
 
-        @cvodes <node7#ss:optional_output_b> Optional output functions for
-                                             the backward problem. *)
+        @cvodes <node7#ss:optional_output_b> Optional output functions for the backward problem. *)
     module Spils :
       sig
         (** {5:adjbwdspilsoptin Optional Input Functions} *)
@@ -1300,8 +1345,7 @@ module Adjoint :
     (** Get optional outputs for the banded preconditioner module of the
         Scaled Preconditioned Iterative Linear Solvers: SPGMR, SPBCG, SPTFQMR.
 
-        @cvodes <node7#ss:optional_output_b> Optional output functions for
-                                             the backward problem. *)
+        @cvodes <node7#ss:optional_output_b> Optional output functions for the backward problem. *)
     module BandPrec :
       sig
         (** Returns the sizes of the real and integer workspaces used by the
@@ -1515,26 +1559,20 @@ module Adjoint :
         (** Returns the number of calls to the user's quadrature right-hand side
             function.
 
-            @cvodes <node7#sss:quad_optional_input_B> Optional input/output
-                                                      functions for backward
-                                                      quadrature integration
+            @cvodes <node7#sss:quad_optional_input_B> Optional input/output functions for backward quadrature integration
             @cvodes <node5#ss:quad_optional_output> CVodeGetQuadNumRhsEvals *)
         val get_num_rhs_evals       : bsession -> int
 
         (** Returns the number of local error test failures due to quadrature
             variables.
 
-            @cvodes <node7#sss:quad_optional_input_B> Optional input/output
-                                                      functions for backward
-                                                      quadrature integration
+            @cvodes <node7#sss:quad_optional_input_B> Optional input/output functions for backward quadrature integration
             @cvodes <node5#ss:quad_optional_output> CVodeGetQuadNumErrTestFails *)
         val get_num_err_test_fails  : bsession -> int
 
         (** Returns the quadrature error weights at the current time.
 
-            @cvodes <node7#sss:quad_optional_input_B> Optional input/output
-                                                      functions for backward
-                                                      quadrature integration
+            @cvodes <node7#sss:quad_optional_input_B> Optional input/output functions for backward quadrature integration
             @cvodes <node5#ss:quad_optional_output> CVodeGetQuadErrWeights *)
         val get_err_weights : bsession -> nvec -> unit
 
@@ -1542,9 +1580,7 @@ module Adjoint :
             - [fqevals], the number of calls to the user's quadrature function, and,
             - [nqetfails], the number of error test failures due to quadrature variables.
 
-            @cvodes <node7#sss:quad_optional_input_B> Optional input/output
-                                                      functions for backward
-                                                      quadrature integration
+            @cvodes <node7#sss:quad_optional_input_B> Optional input/output functions for backward quadrature integration
             @cvodes <node5#ss:quad_optional_output> CVodeGetQuadStats *)
         val get_stats : bsession -> int * int
       end

@@ -58,7 +58,7 @@ include module type of Cvode
     This will initialize a specific linear solver and the root-finding
     mechanism, if necessary.
     + {b Specify integration tolerances (optional)}, e.g.
-    {[ss_tolerances s reltol abstol]}
+    {[set_tolerances s SStolerances (reltol, abstol)]}
     + {b Set optional inputs}, e.g.
     {[set_stop_time s 10.0; ...]}
     Call any of the [set_*] functions to change solver parameters from their

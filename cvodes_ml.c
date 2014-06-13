@@ -12,8 +12,6 @@
 
 /* Interface functions that do not involve NVectors. */
 
-// TODO: remove unneeded header files, add needed ones
-
 #include <cvodes/cvodes.h>
 #include <sundials/sundials_config.h>
 #include <sundials/sundials_types.h>
@@ -50,7 +48,6 @@
 
 #define MAX_ERRMSG_LEN 256
 
-// TODO: must ensure that these exceptions are registered...
 void cvodes_ml_check_flag(const char *call, int flag)
 {
     static char exmsg[MAX_ERRMSG_LEN] = "";
