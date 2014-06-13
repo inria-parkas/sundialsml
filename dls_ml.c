@@ -29,11 +29,6 @@
 
 #include "sundials_ml.h"
 
-#define INT_ARRAY(v) ((int *)Caml_ba_data_val(v))
-#define LONG_ARRAY(v) ((long int *)Caml_ba_data_val(v))
-#define REAL_ARRAY(v) ((realtype *)Caml_ba_data_val(v))
-#define REAL_ARRAY2(v) ((realtype **)Caml_ba_data_val(v))
-
 /* Dense matrix functions */
 
 #define DLSMAT(v) (*(DlsMat *)Data_custom_val(v))

@@ -152,4 +152,10 @@ enum ida_solver_result_tag {
     VARIANT_IDA_SOLVER_RESULT_STOPTIMEREACHED,
 };
 
+enum ida_bandrange_index {
+  RECORD_IDA_BANDRANGE_MUPPER = 0,
+  RECORD_IDA_BANDRANGE_MLOWER,
+  RECORD_IDA_BANDRANGE_SIZE
+};
+
 #endif /* _IDA_ML_H__ */

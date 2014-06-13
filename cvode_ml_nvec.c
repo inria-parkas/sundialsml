@@ -164,7 +164,7 @@ static int check_exception(value session, value r)
     CAMLreturnT (int, -1);
 }
 
-static int f(realtype t, N_Vector y, N_Vector ydot, void *user_data)
+static int rhsfn(realtype t, N_Vector y, N_Vector ydot, void *user_data)
 {
     CAMLparam0();
     CAMLlocalN(args, 4);
@@ -329,10 +329,10 @@ static int jacfn(
 static int bandjacfn(
 	long int N,
 	long int mupper,
-	long int mlower, 	 
+	long int mlower,
 	realtype t,
 	N_Vector y,
-	N_Vector fy, 	 
+	N_Vector fy,
 	DlsMat Jac,
 	void *user_data, 	 
 	N_Vector tmp1,
@@ -340,24 +340,25 @@ static int bandjacfn(
 	N_Vector tmp3)
 {
     CAMLparam0();
-    CAMLlocalN(args, 5);
+    CAMLlocalN(args, 4);
     int r;
     value *backref = user_data;
     CAML_FN (call_bandjacfn);
 
     args[0] = *backref;
-    args[1] = make_jac_arg(t, y, fy, make_triple_tmp(tmp1, tmp2, tmp3));
-    args[2] = Val_long(mupper);
-    args[3] = Val_long(mlower);
-    args[4] = caml_alloc_final(2, NULL, 0, 1);
-    Store_field (args[4], 1, (value)Jac);
+    args[1] = caml_alloc_tuple(RECORD_CVODE_BANDRANGE_SIZE);
+    Store_field(args[1], RECORD_CVODE_BANDRANGE_MUPPER, Val_long(mupper));
+    Store_field(args[1], RECORD_CVODE_BANDRANGE_MLOWER, Val_long(mlower));
+    args[2] = make_jac_arg(t, y, fy, make_triple_tmp(tmp1, tmp2, tmp3));
+    args[3] = caml_alloc_final(2, NULL, 0, 1);
+    Store_field (args[3], 1, (value)Jac);
 
     r = Int_val (caml_callbackN(*call_bandjacfn,
                                 sizeof (args) / sizeof (*args),
                                 args));
 
-    relinquish_jac_arg(args[1], TRIPLE);
-    // note: args[4] is also invalid after the callback
+    relinquish_jac_arg(args[2], TRIPLE);
+    // note: args[3] is also invalid after the callback
 
     CAMLreturnT(int, r);
 }
@@ -532,7 +533,7 @@ CAMLprim void CVTYPE(dls_lapack_dense) (value vcvode_mem, value vset_jac)
     flag = CVLapackDense (cvode_mem, neqs);
     CHECK_FLAG ("CVLapackDense", flag);
     if (Bool_val (vset_jac)) {
-	flag = CVDlsSetDenseJacFn (CVODE_MEM_FROM_ML (vcvode_mem), jacfn);
+	flag = CVDlsSetDenseJacFn (cvode_mem, jacfn);
 	CHECK_FLAG("CVDlsSetDenseJacFn", flag);
     }
 #else
@@ -571,7 +572,7 @@ CAMLprim void CVTYPE(dls_band) (value vcvode_mem,
     flag = CVBand (cvode_mem, neqs, Long_val (vmupper), Long_val (vmlower));
     CHECK_FLAG ("CVBand", flag);
     if (Bool_val (vset_jac)) {
-	flag = CVDlsSetBandJacFn(CVODE_MEM_FROM_ML(vcvode_mem), bandjacfn);
+	flag = CVDlsSetBandJacFn(cvode_mem, bandjacfn);
 	CHECK_FLAG("CVDlsSetBandJacFn", flag);
     }
     CAMLreturn0;
@@ -592,7 +593,7 @@ CAMLprim void CVTYPE(dls_lapack_band) (value vcvode_mem, value vmupper,
 			 Long_val (vmupper), Long_val (vmlower));
     CHECK_FLAG ("CVLapackBand", flag);
     if (Bool_val (vset_jac)) {
-	flag = CVDlsSetBandJacFn(CVODE_MEM_FROM_ML(vcvode_mem), bandjacfn);
+	flag = CVDlsSetBandJacFn(cvode_mem, bandjacfn);
 	CHECK_FLAG("CVDlsSetBandJacFn", flag);
     }
 #else
@@ -782,7 +783,7 @@ CAMLprim value CVTYPE(init)(value weakref, value lmm, value iter, value initial,
 	caml_failwith("CVodeCreate returned NULL");
 
     N_Vector initial_nv = NVECTORIZE_VAL(initial);
-    flag = CVodeInit(cvode_mem, f, Double_val(t0), initial_nv);
+    flag = CVodeInit(cvode_mem, rhsfn, Double_val(t0), initial_nv);
     RELINQUISH_NVECTORIZEDVAL(initial_nv);
     if (flag != CV_SUCCESS) {
 	CVodeFree (cvode_mem);

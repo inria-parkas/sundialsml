@@ -32,6 +32,7 @@ value sundials_ml_unit_roundoff();
 #define INT_ARRAY(v) ((int *)Caml_ba_data_val(v))
 #define LONG_ARRAY(v) ((long int *)Caml_ba_data_val(v))
 #define REAL_ARRAY(v) ((realtype *)Caml_ba_data_val(v))
+#define REAL_ARRAY2(v) ((realtype **)Caml_ba_data_val(v))
 
 #define ARRAY1_LEN(v) (Caml_ba_array_val((v))->dim[0])
 
@@ -51,6 +52,7 @@ value sundials_ml_weak_get (value ar, value n);
   } while (0)
 
 #define Val_none (Val_int(0))
+#define Some_val(v) (Field((v), 0))
 
 #define ARRAY2_DATA(v)  (Caml_ba_array_val(Field((v), 0)))
 #define ARRAY2_ACOLS(v) ((realtype **) Data_custom_val(Field((v), 1)))

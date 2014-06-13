@@ -385,7 +385,7 @@ let main () =
      solver. *)
   let mu = nsmx and ml = nsmx in
   let solver = Ida.Band ({ Ida.mupper = mu; Ida.mlower = ml }, None) in
-  let mem = Ida.init solver (Ida.SSTolerances (rtol, atol))
+  let mem = Ida.init solver (Ida.SStolerances (rtol, atol))
                      (resweb webdata) ~t0:t0 c c' in
   let tout1 = 0.001 in
   Ida.calc_ic_ya_yd' mem id tout1;

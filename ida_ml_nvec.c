@@ -253,24 +253,25 @@ static int bandjacfn (long int neq, long int mupper, long int mlower,
 		      N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
 {
     CAMLparam0 ();
-    CAMLlocalN (args, 5);
+    CAMLlocalN (args, 4);
     int r;
     value *backref = (value *)user_data;
     CAML_FN (call_bandjacfn);
 
     args[0] = *backref;
-    args[1] = make_jac_arg (t, coef, y, yp, res,
+    args[1] = caml_alloc_tuple(RECORD_IDA_BANDRANGE_SIZE);
+    Store_field(args[1], RECORD_IDA_BANDRANGE_MUPPER, Val_long(mupper));
+    Store_field(args[1], RECORD_IDA_BANDRANGE_MLOWER, Val_long(mlower));
+    args[2] = make_jac_arg (t, coef, y, yp, res,
 			    make_triple_tmp (tmp1, tmp2, tmp3));
-    args[2] = Val_long (mupper);
-    args[3] = Val_long (mlower);
-    args[4] = caml_alloc_final (2, NULL, 0, 1);
-    Store_field (args[4], 1, (value)jac);
+    args[3] = caml_alloc_final (2, NULL, 0, 1);
+    Store_field (args[3], 1, (value)jac);
 
     r = Int_val (caml_callbackN (*call_bandjacfn,
 				 sizeof (args) / sizeof (*args),
 				 args));
 
-    relinquish_jac_arg (args[1], 3);
+    relinquish_jac_arg (args[2], 3);
 
     CAMLreturnT (int, r);
 }

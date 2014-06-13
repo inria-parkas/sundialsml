@@ -1,14 +1,13 @@
 include ../../../config
 
-EXAMPLES = idaRoberts_dns.ml  \
-	   idaHeat2D_bnd.ml   \
-	   idaHeat2D_kry.ml   \
-	   idaFoodWeb_bnd.ml  \
-	   idaSlCrank_dns.ml  \
-	   idaKrylovDemo_ls.ml
+EXAMPLES = cvsAdvDiff_ASAi_bnd.ml \
+	   cvsAdvDiff_FSA_non.ml  \
+	   cvsDiurnal_FSA_kry.ml  \
+	   cvsFoodWeb_ASAi_kry.ml \
+	   cvsFoodWeb_ASAp_kry.ml \
+	   cvsHessian_ASA_FSA.ml
 
-LAPACK_EXAMPLES = idaAdvDiff_bndL.ml \
-		  idaRoberts_dnsL.ml
+LAPACK_EXAMPLES =
 
 ALL_EXAMPLES = $(EXAMPLES) $(LAPACK_EXAMPLES)
 
@@ -77,6 +76,11 @@ lapack-tests.opt.log: $(LAPACK_EXAMPLES:.ml=.opt.out) \
 
 ##
 
+cvsAdvDiff_ASAi_bnd.byte: cvsAdvDiff_ASAi_bnd.ml
+cvsAdvDiff_ASAi_bnd.opt: cvsAdvDiff_ASAi_bnd.ml
+
+##
+
 clean:
 	-@rm -f $(ALL_EXAMPLES:.ml=.cmo) $(ALL_EXAMPLES:.ml=.cmx)
 	-@rm -f $(ALL_EXAMPLES:.ml=.o) $(ALL_EXAMPLES:.ml=.cmi)
@@ -114,6 +118,6 @@ cleanall: clean
 %.opt.out: %.opt
 	./$< > $@
 
-%.sundials.out : $(EXAMPLESROOT)/ida/serial/%
+%.sundials.out : $(EXAMPLESROOT)/cvode/serial/%
 	$< > $@
 

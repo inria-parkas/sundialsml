@@ -211,8 +211,8 @@ and dense_jac_fn = double_tmp jacobian_arg -> Dls.DenseMatrix.t -> unit
     @kinsol <node5#sss:optin_dls> KINDlsSetBandJacFn
     @kinsol <node5#ss:bjacFn> KINDlsBandJacFn
  *)
-and band_jac_fn = double_tmp jacobian_arg
-                      -> int -> int -> Dls.BandMatrix.t -> unit
+and band_jac_fn = bandrange -> double_tmp jacobian_arg
+                            -> Dls.BandMatrix.t -> unit
 
 (** The range of nonzero entries in a band matrix.  *)
 and bandrange = { mupper : int; (** The upper half-bandwidth.  *)

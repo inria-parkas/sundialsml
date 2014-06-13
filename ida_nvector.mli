@@ -24,6 +24,7 @@ include module type of Ida
   with type Roots.t = Ida.Roots.t
   and type RootDirs.t = Ida.RootDirs.t
   and type solver_result = Ida.solver_result
+  and type bandrange = Ida.bandrange
 
 (*STARTINTRO*)
 (** Serial nvector interface to the IDA solver.
@@ -55,7 +56,7 @@ include module type of Ida
     This will initialize a specific linear solver and the root-finding
     mechanism, if necessary.
     + {b Specify integration tolerances (optional)}, e.g.
-    {[ss_tolerances s reltol abstol]}
+    {[set_tolerances s SStolerances (reltol, abstol)]}
     + {b Set optional inputs}, e.g.
     {[set_stop_time s 10.0; ...]}
     Call any of the [set_*] functions to change solver parameters from their
@@ -150,10 +151,6 @@ type 'a linear_solver =
       @ida <node5#ss:psolveFn> Linear preconditioning function
       @ida <node5#ss:precondFn> Jacobian preconditioning function
     *)
-
-(** The range of nonzero entries in a band matrix.  *)
-and bandrange = { mupper : int; (** The upper half-bandwidth.  *)
-                  mlower : int; (** The lower half-bandwidth.  *) }
 
 (** Initialization parameters and callbacks for Krylov iterative
     {!linear_solver}s.  Used with the {!linear_solver}s: [Spgmr], [Spbcg], and
@@ -468,11 +465,11 @@ module Spils :
   end
 
 type 'a tolerance =
-  | SSTolerances of float * float
+  | SStolerances of float * float
     (** [(rel, abs)] : scalar relative and absolute tolerances. *)
-  | SVTolerances of float * 'a nvector
+  | SVtolerances of float * 'a nvector
     (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
-  | WFTolerances of ('a -> 'a -> unit)
+  | WFtolerances of ('a -> 'a -> unit)
     (** Specifies a function [efun y ewt] that sets the multiplicative
         error weights Wi for use in the weighted RMS norm. The function is
         passed the dependent variable vector [y] and is expected to set the

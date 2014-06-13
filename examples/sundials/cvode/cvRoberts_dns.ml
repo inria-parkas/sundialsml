@@ -145,7 +145,7 @@ let main () =
   (* Set the Jacobian routine to Jac (user-supplied) *)
   let cvode_mem =
     Cvode.init Cvode.BDF (Cvode.Newton (Cvode.Dense (Some jac)))
-               (Cvode.SVTolerances (rtol, abstol)) f
+               (Cvode.SVtolerances (rtol, abstol)) f
       ~roots:(nroots, g) ~t0:t0 y
   in
   Gc.compact ();

@@ -44,7 +44,8 @@ type linear_solver =
   | Spbcg of spils_params
   | Sptfqmr of spils_params
 and dense_jac_fn = triple_tmp jacobian_arg -> Dls.DenseMatrix.t -> unit
-and band_jac_fn = triple_tmp jacobian_arg -> int -> int -> Dls.BandMatrix.t -> unit
+and band_jac_fn = bandrange -> triple_tmp jacobian_arg
+                            -> Dls.BandMatrix.t -> unit
 and spils_params =
   {
     maxl : int option;
@@ -54,8 +55,6 @@ and spils_params =
     jac_times_vec_fn : (double_tmp jacobian_arg -> val_array -> val_array
                         -> unit) option;
   }
-and bandrange = { mupper : int;
-                  mlower : int; }
 
 let spils_no_precond = { maxl = None;
                          prec_solve_fn = None;
@@ -84,9 +83,8 @@ type session = {
                              -> unit;
         mutable errh       : Sundials.error_details -> unit;
         mutable errw       : val_array -> nvec -> unit;
-        mutable jacfn      : triple_tmp jacobian_arg -> Dls.DenseMatrix.t -> unit;
-        mutable bandjacfn  : triple_tmp jacobian_arg -> int -> int
-                               -> Dls.BandMatrix.t -> unit;
+        mutable jacfn      : dense_jac_fn;
+        mutable bandjacfn  : band_jac_fn;
         mutable presetupfn : triple_tmp jacobian_arg -> unit;
         mutable presolvefn : single_tmp jacobian_arg -> val_array -> val_array
                                -> float -> unit;
@@ -105,23 +103,23 @@ external wf_tolerances  : session -> unit
   = "c_ba_ida_wf_tolerances"
 
 type tolerance =
-  | SSTolerances of float * float
+  | SStolerances of float * float
     (** [(rel, abs)] : scalar relative and absolute tolerances. *)
-  | SVTolerances of float * nvec
+  | SVtolerances of float * nvec
     (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
-  | WFTolerances of (val_array -> val_array -> unit)
+  | WFtolerances of (val_array -> val_array -> unit)
     (** Specifies a function [efun y ewt] that sets the multiplicative
         error weights Wi for use in the weighted RMS norm. The function is
         passed the dependent variable vector [y] and is expected to set the
         values inside the error-weight vector [ewt]. *)
 
-let default_tolerances = SSTolerances (1.0e-4, 1.0e-8)
+let default_tolerances = SStolerances (1.0e-4, 1.0e-8)
 
 let set_tolerances s tol =
   match tol with
-  | SSTolerances (rel, abs) -> ss_tolerances s rel abs
-  | SVTolerances (rel, abs) -> sv_tolerances s rel abs
-  | WFTolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
+  | SStolerances (rel, abs) -> ss_tolerances s rel abs
+  | SVtolerances (rel, abs) -> sv_tolerances s rel abs
+  | WFtolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
 
 let read_weak_ref x : session =
   match Weak.get x 0 with
@@ -150,9 +148,9 @@ let call_errh session details =
 let call_jacfn session jac j =
   let session = read_weak_ref session in
   adjust_retcode session true (session.jacfn jac) j
-let call_bandjacfn session jac mupper mlower j =
+let call_bandjacfn session range jac j =
   let session = read_weak_ref session in
-  adjust_retcode session true (session.bandjacfn jac mupper mlower) j
+  adjust_retcode session true (session.bandjacfn range jac) j
 let call_presetupfn session jac =
   let session = read_weak_ref session in
   adjust_retcode session true session.presetupfn jac
@@ -212,7 +210,7 @@ external c_spils_set_preconditioner : session -> bool -> bool -> unit
 let shouldn't_be_called fcn =
   failwith ("internal error in sundials: " ^ fcn ^ " is called")
 let dummy_dense_jac _ _ = shouldn't_be_called "dummy_dense_jac"
-let dummy_band_jac _ _ _ _ = shouldn't_be_called "dummy_band_jac"
+let dummy_band_jac _ _ _ = shouldn't_be_called "dummy_band_jac"
 let dummy_prec_setup _ = shouldn't_be_called "dummy_prec_setup"
 let dummy_prec_solve _ _ _ _ = shouldn't_be_called "dummy_prec_solve"
 let dummy_jac_times_vec _ _ _ = shouldn't_be_called "dummy_jac_times_vec"
@@ -518,13 +516,13 @@ module Spils =
       clear_jac_times_vec_fn s
 
     external set_gs_type : session -> Spils.gramschmidt_type -> unit
-        = "c_ida_set_gs_type"
+        = "c_ida_spils_set_gs_type"
 
     external set_eps_lin            : session -> float -> unit
-        = "c_ida_set_eps_lin"
+        = "c_ida_spils_set_eps_lin"
 
     external set_maxl               : session -> int -> unit
-        = "c_ida_set_maxl"
+        = "c_ida_spils_set_maxl"
 
     external get_num_lin_iters      : session -> int
         = "c_ida_spils_get_num_lin_iters"

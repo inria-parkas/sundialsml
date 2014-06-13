@@ -231,7 +231,7 @@ let main () =
                            Ida.jac_times_vec_fn = None;
                          }
   in
-  let mem = Ida.init solver (Ida.SSTolerances (rtol, atol))
+  let mem = Ida.init solver (Ida.SStolerances (rtol, atol))
                      (res_heat data) ~t0:t0 u u' in
   Ida.set_constraints mem constraints;
 

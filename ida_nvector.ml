@@ -46,8 +46,6 @@ and 'a spils_params =
     jac_times_vec_fn : (('a double_tmp, 'a) jacobian_arg -> 'a -> 'a
                         -> unit) option;
   }
-and bandrange = { mupper : int;
-                  mlower : int; }
 
 let spils_no_precond = { maxl = None;
                          prec_solve_fn = None;
@@ -99,23 +97,23 @@ external wf_tolerances  : 'a session -> unit
   = "c_nvec_ida_wf_tolerances"
 
 type 'a tolerance =
-  | SSTolerances of float * float
+  | SStolerances of float * float
     (** [(rel, abs)] : scalar relative and absolute tolerances. *)
-  | SVTolerances of float * 'a nvector
+  | SVtolerances of float * 'a nvector
     (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
-  | WFTolerances of ('a -> 'a -> unit)
+  | WFtolerances of ('a -> 'a -> unit)
     (** Specifies a function [efun y ewt] that sets the multiplicative
         error weights Wi for use in the weighted RMS norm. The function is
         passed the dependent variable vector [y] and is expected to set the
         values inside the error-weight vector [ewt]. *)
 
-let default_tolerances = SSTolerances (1.0e-4, 1.0e-8)
+let default_tolerances = SStolerances (1.0e-4, 1.0e-8)
 
 let set_tolerances s tol =
   match tol with
-  | SSTolerances (rel, abs) -> ss_tolerances s rel abs
-  | SVTolerances (rel, abs) -> sv_tolerances s rel abs
-  | WFTolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
+  | SStolerances (rel, abs) -> ss_tolerances s rel abs
+  | SVtolerances (rel, abs) -> sv_tolerances s rel abs
+  | WFtolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
 
 let read_weak_ref x : 'a session =
   match Weak.get x 0 with
@@ -506,13 +504,13 @@ module Spils =
       clear_jac_times_vec_fn s
 
     external set_gs_type : 'a session -> Spils.gramschmidt_type -> unit
-        = "c_ida_set_gs_type"
+        = "c_ida_spils_set_gs_type"
 
     external set_eps_lin            : 'a session -> float -> unit
-        = "c_ida_set_eps_lin"
+        = "c_ida_spils_set_eps_lin"
 
     external set_maxl               : 'a session -> int -> unit
-        = "c_ida_set_maxl"
+        = "c_ida_spils_set_maxl"
 
     external get_num_lin_iters      : 'a session -> int
         = "c_ida_spils_get_num_lin_iters"

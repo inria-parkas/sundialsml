@@ -20,6 +20,8 @@ include Sundials
 
 type root_direction = RootDirs.root_direction
 
+type bandrange = { mupper : int; mlower : int; }
+
 (* Solver exceptions *)
 exception IllInput
 exception TooClose

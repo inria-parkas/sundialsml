@@ -126,7 +126,7 @@ let jac1 { Cvode.jac_y = y } j =
   Densematrix.set j 1 0 (-. two *. p1_eta *. y0 *. y1 -. one);
   Densematrix.set j 1 1 (p1_eta *. (one -. sqr y0))
 
-let jac2 arg mu ml jac =
+let jac2 {Cvode.mupper=mu; Cvode.mlower=ml} arg jac =
   (*
      The components of f(t,y) which depend on y    are
                                                i,j
@@ -334,7 +334,7 @@ let problem1 () =
   let run_tests lmm =
     init_y ();
     let cvode_mem = Cvode.init lmm Cvode.Functional
-                               (Cvode.SSTolerances (rtol, atol)) f1 ~t0:p1_t0 y
+                               (Cvode.SStolerances (rtol, atol)) f1 ~t0:p1_t0 y
     in
     Gc.compact ();
     List.iter (run cvode_mem lmm) [ Func; Dense_User; Dense_DQ; Diag]
@@ -453,7 +453,7 @@ let problem2 () =
   let run_tests lmm =
     init_y ();
     let cvode_mem = Cvode.init lmm Cvode.Functional
-                               (Cvode.SSTolerances (rtol, atol)) f2 ~t0:p2_t0 y
+                               (Cvode.SStolerances (rtol, atol)) f2 ~t0:p2_t0 y
     in
     Gc.compact ();
     List.iter (run cvode_mem lmm) [ Func; Diag; Band_User; Band_DQ]

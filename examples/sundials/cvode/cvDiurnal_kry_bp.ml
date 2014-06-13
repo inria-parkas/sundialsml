@@ -338,7 +338,7 @@ let main () =
           (Cvode.BandedSpgmr
              ({ Cvode.prec_type = Spils.PrecLeft; Cvode.maxl = None },
               { Cvode.mupper = mu; Cvode.mlower = ml})))
-      (Cvode.SSTolerances (reltol, abstol))
+      (Cvode.SStolerances (reltol, abstol))
       (f data) ~t0:t0 u
   in
   Gc.compact ();

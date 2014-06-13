@@ -57,6 +57,12 @@ enum kinsol_index {
     RECORD_KINSOL_SESSION_SIZE	/* This has to come last. */
 };
 
+enum kinsol_bandrange_index {
+  RECORD_KINSOL_BANDRANGE_MUPPER = 0,
+  RECORD_KINSOL_BANDRANGE_MLOWER,
+  RECORD_KINSOL_BANDRANGE_SIZE
+};
+
 #define KINSOL_MEM_FROM_ML(v)   ((void *)Field((v), RECORD_KINSOL_SESSION_MEM))
 #define KINSOL_BACKREF_FROM_ML(v) \
     ((value *)(Field((v), RECORD_KINSOL_SESSION_BACKREF)))

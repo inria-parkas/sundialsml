@@ -25,6 +25,9 @@ include module type of Cvode
   and type RootDirs.t = Cvode.RootDirs.t
   and type lmm = Cvode.lmm
   and type solver_result = Cvode.solver_result
+  and type integrator_stats = Cvode.integrator_stats
+  and type bandrange = Cvode.bandrange
+  and type spils_params = Cvode.spils_params
 
 (** Abstract nvector interface to the CVODE Solver.
 
@@ -47,27 +50,28 @@ include module type of Cvode
     {[let y = Nvector_array.wrap [| 0.0; 0.0; 0.0 |] ]}
     The length of this vector determines the problem size.    
     + {b Create and initialize a solver session}
-    {[let s = Cvode.init Cvode.Adams Cvode.Functional tols f ~roots:(2, g) (3, y)]}
+    {[let s = Cvode.init Cvode.Adams Cvode.Functional tols f ~roots:(2, g) y]}
     This will initialize a specific linear solver and the root-finding
     mechanism, if necessary.
     + {b Specify integration tolerances (optional)}, e.g.
-    {[ss_tolerances s reltol abstol]}
+    {[set_tolerances s SStolerances (reltol, abstol)]}
     + {b Set optional inputs}, e.g.
     {[set_stop_time s 10.0; ...]}
     Call any of the [set_*] functions to change solver parameters from their
     defaults.
     + {b Advance solution in time}, e.g.
-    {[let (t', result) = Cvode.normal s !t y in
+    {[let (t', result) = Cvode.solve_normal s !t y in
 ...
 t := t' + 0.1]}
-    Repeatedly call either [normal] or [one_step] to advance the simulation.
+    Repeatedly call either [solve_normal] or [solve_one_step] to advance the
+    simulation.
     + {b Get optional outputs}
     {[let stats = get_integrator_stats s in ...]}
     Call any of the [get_*] functions to examine solver statistics.
 
     @cvode <node5#ss:skeleton_sim> Skeleton of main program
  *)
-type 'a session
+type 'a session = 'a Cvode_session_nvector.session
 
 (** The type of vectors passed to the solver. *)
 type 'a nvector = 'a Nvector.nvector
@@ -86,8 +90,6 @@ type 'a triple_tmp = 'a * 'a * 'a
 (**
   Arguments common to all Jacobian callback functions.    
  
-  @cvode <node5#ss:djacFn> Dense Jacobian function
-  @cvode <node5#ss:bjacFn> Banded Jacobian function
   @cvode <node5#ss:jtimesFn> Jacobian-times-vector function
   @cvode <node5#ss:psolveFn> Linear preconditioning function
   @cvode <node5#ss:precondFn> Jacobian preconditioning function
@@ -126,18 +128,18 @@ and 'a linear_solver =
 
       @cvode <node5#sss:lin_solve_init> CVDiag
     *)
-  | Spgmr of spils_params * 'a spils_callbacks
+  | Spgmr of Cvode.spils_params * 'a spils_callbacks
   (** Krylov iterative solver with the scaled preconditioned GMRES method.  The
       arguments specify the maximum dimension of the Krylov subspace and
-      preconditioning type ({!spils_params}) and the preconditioner callback
-      functions ({!spils_callbacks}).  See also {!Spils}.
+      preconditioning type ({!Cvode.spils_params}) and the preconditioner
+      callback functions ({!spils_callbacks}).  See also {!Spils}.
 
       @cvode <node5#sss:lin_solve_init> CVSpgmr
       @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
       @cvode <node5#ss:psolveFn> Linear preconditioning function
       @cvode <node5#ss:precondFn> Jacobian preconditioning function
     *)
-  | Spbcg of spils_params * 'a spils_callbacks
+  | Spbcg of Cvode.spils_params * 'a spils_callbacks
   (** Krylov iterative solver with the scaled preconditioned Bi-CGStab method.
       The arguments are the same as [Spgmr].  See also {!Spils}.
 
@@ -147,7 +149,7 @@ and 'a linear_solver =
       @cvode <node5#ss:precondFn> Jacobian preconditioning function
       (* TODO: change all these titles into function names? *)
     *)
-  | Sptfqmr of spils_params * 'a spils_callbacks
+  | Sptfqmr of Cvode.spils_params * 'a spils_callbacks
   (** Krylov iterative with the scaled preconditioned TFQMR method.  The
       arguments are the same as [Spgmr].  See also {!Spils}.
 
@@ -157,12 +159,6 @@ and 'a linear_solver =
       @cvode <node5#ss:precondFn> Jacobian preconditioning function
     *)
 
-(** Common parameters for Krylov subspace linear solvers.  *)
-and spils_params = { maxl : int option; (** Maximum dimension of the Krylov subspace
-                                            to be used.  Pass [None] to use the default
-                                            value [5]. *)
-                     prec_type : Spils.preconditioning_type;
-                     (** The type of preconditioning to be done.  *) }
 (** Callbacks for Krylov subspace linear solvers.  Ignored if the
     {!Spils.preconditioning_type} is set to [PrecNone].  In that case, you
     should use {!spils_no_precond} as [spils_callbacks].  *)
@@ -348,10 +344,10 @@ module Spils :
       -> unit
 
     (**
-      Set the Jacobian-times-vector function (see {!spils_params}).  It may be
-      unsafe to use this function without a {!reinit}.  Users are encouraged to
-      use the [iter_type] parameter of {!reinit} instead, unless they are
-      desperate for performance.
+      Set the Jacobian-times-vector function (see {!Cvode.spils_params}).  It
+      may be unsafe to use this function without a {!reinit}.  Users are
+      encouraged to use the [iter_type] parameter of {!reinit} instead, unless
+      they are desperate for performance.
 
       @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
       @cvode <node5#ss:jtimesFn> Jacobian-times-vector function
@@ -503,11 +499,11 @@ module BandPrec :
   end
 
 type 'a tolerance =
-  | SSTolerances of float * float
+  | SStolerances of float * float
     (** [(rel, abs)] : scalar relative and absolute tolerances. *)
-  | SVTolerances of float * 'a nvector
+  | SVtolerances of float * 'a nvector
     (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
-  | WFTolerances of ('a -> 'a -> unit)
+  | WFtolerances of ('a -> 'a -> unit)
     (** Specifies a function [efun y ewt] that sets the multiplicative
         error weights Wi for use in the weighted RMS norm. The function is
         passed the dependent variable vector [y] and is expected to set the
@@ -589,14 +585,11 @@ val init :
     -> (float -> 'a -> 'a -> unit)
     -> ?roots:(int * (float -> 'a -> root_val_array -> unit))
     -> ?t0:float
-    -> int * 'a nvector
+    -> 'a nvector
     -> 'a session
 
 (** Return the number of root functions. *)
 val nroots : 'a session -> int
-
-(** Return the number of equations. *)
-val neqs : 'a session -> int
 
 (** {2 Solver functions } *)
 
@@ -908,6 +901,15 @@ val get_num_nonlin_solv_iters : 'a session -> int
   @cvode <node5#sss:optout_main> CVodeGetNumNonlinSolvConvFails
  *)
 val get_num_nonlin_solv_conv_fails : 'a session -> int
+
+(**
+  [nniters, nncfails = get_nonlin_solv_stats s] returns both the numbers of
+  nonlinear iterations performed [nniters] and of nonlinear convergence
+  failures that have occurred [nncfails].
+
+  @cvode <node5#sss:optout_main> CVodeGetNonlinSolvStats
+ *)
+val get_nonlin_solv_stats : 'a session -> int *int
 
 (** {2 Root finding optional functions} *)
 

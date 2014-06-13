@@ -536,7 +536,7 @@ CAMLprim void c_ida_set_suppress_alg (value vida_mem, value vb)
     CAMLreturn0;
 }
 
-CAMLprim void c_ida_set_gs_type(value vida_mem, value vgstype)
+CAMLprim void c_ida_spils_set_gs_type(value vida_mem, value vgstype)
 {
     CAMLparam2(vida_mem, vgstype);
 
@@ -547,7 +547,7 @@ CAMLprim void c_ida_set_gs_type(value vida_mem, value vgstype)
     CAMLreturn0;
 }
 
-CAMLprim void c_ida_set_eps_lin(value vida_mem, value eplifac)
+CAMLprim void c_ida_spils_set_eps_lin(value vida_mem, value eplifac)
 {
     CAMLparam2(vida_mem, eplifac);
 
@@ -558,7 +558,7 @@ CAMLprim void c_ida_set_eps_lin(value vida_mem, value eplifac)
     CAMLreturn0;
 }
 
-CAMLprim void c_ida_set_maxl(value vida_mem, value maxl)
+CAMLprim void c_ida_spils_set_maxl(value vida_mem, value maxl)
 {
     CAMLparam2(vida_mem, maxl);
 

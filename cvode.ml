@@ -24,6 +24,11 @@ type lmm =
 
 type root_direction = RootDirs.root_direction
 
+type bandrange = { mupper : int; mlower : int; }
+
+type spils_params = { maxl : int option;
+                      prec_type : Spils.preconditioning_type; }
+
 (* Solver exceptions *)
 exception IllInput
 exception TooClose

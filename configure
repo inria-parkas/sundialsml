@@ -280,6 +280,7 @@ ldflags="${ldflags} ${lapack_lib}"
 # Extract compilation flags from sundials-config.
 
 cvode_cppflags="${cflags} `sundials-config -m cvode -t s -l c -s cppflags`"
+cvodes_cppflags="${cflags} `sundials-config -m cvodes -t s -l c -s cppflags`"
 ida_cppflags="${cflags} `sundials-config -m ida -t s -l c -s cppflags`"
 kinsol_cppflags="${cflags} `sundials-config -m kinsol -t s -l c -s cppflags`"
 
@@ -289,12 +290,15 @@ kinsol_cppflags="${cflags} `sundials-config -m kinsol -t s -l c -s cppflags`"
 if [ ${no_lib_path:-0} -eq 1 ]; then
     cvode_ldflags="`sundials-config -m cvode -t s -l c -s libs \
 	            | sed -e 's#-L[^ ]* -#-#'`"
+    cvodes_ldflags="`sundials-config -m cvodes -t s -l c -s libs \
+	             | sed -e 's#-L[^ ]* -#-#'`"
     ida_ldflags="`sundials-config -m ida -t s -l c -s libs \
 	          | sed -e 's#-L[^ ]* -#-#'`"
     kinsol_ldflags="`sundials-config -m kinsol -t s -l c -s libs \
 	          | sed -e 's#-L[^ ]* -#-#'`"
 else
     cvode_ldflags="`sundials-config -m cvode -t s -l c -s libs`"
+    cvodes_ldflags="`sundials-config -m cvodes -t s -l c -s libs`"
     ida_ldflags="`sundials-config -m ida -t s -l c -s libs`"
     kinsol_ldflags="`sundials-config -m kinsol -t s -l c -s libs`"
 fi
@@ -356,8 +360,10 @@ fi
 	 s#@cppflags@#${cppflags}#;
 	 s#@ldflags@#${ldflags}#;
 	 s#@cvode_cppflags@#${cvode_cppflags}#;
+	 s#@cvodes_cppflags@#${cvodes_cppflags}#;
 	 s#@ida_cppflags@#${ida_cppflags}#;
 	 s#@cvode_ldflags@#${cvode_ldflags}#;
+	 s#@cvodes_ldflags@#${cvodes_ldflags}#;
 	 s#@ida_ldflags@#${ida_ldflags}#;
 	 s#@kinsol_cppflags@#${kinsol_cppflags}#;
 	 s#@kinsol_ldflags@#${kinsol_ldflags}#;

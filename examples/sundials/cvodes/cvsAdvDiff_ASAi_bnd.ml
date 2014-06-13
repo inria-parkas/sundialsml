@@ -1,39 +1,49 @@
 (*
  * -----------------------------------------------------------------
- * $Revision: 1.2 $
- * $Date: 2008/12/29 22:21:28 $
+ * $Revision: 1.3 $
+ * $Date: 2011/11/23 23:53:02 $
  * -----------------------------------------------------------------
- * Programmer(s): Scott D. Cohen, Alan C. Hindmarsh and
- *                Radu Serban @ LLNL
+ * Programmer(s): Radu Serban @ LLNL
  * -----------------------------------------------------------------
- * OCaml port: Timothy Bourke, Inria, Sep 2010.
+ * OCaml port: Timothy Bourke, Inria, Jun 2014.
  * -----------------------------------------------------------------
- * Example problem:
+ * Adjoint sensitivity example problem:
  *
  * The following is a simple example problem with a banded Jacobian,
- * with the program for its solution by CVODE.
+ * with the program for its solution by CVODES.
  * The problem is the semi-discrete form of the advection-diffusion
  * equation in 2-D:
  *   du/dt = d^2 u / dx^2 + .5 du/dx + d^2 u / dy^2
  * on the rectangle 0 <= x <= 2, 0 <= y <= 1, and the time
  * interval 0 <= t <= 1. Homogeneous Dirichlet boundary conditions
- * are posed, and the initial condition is
+ * are posed, and the initial condition is the following:
  *   u(x,y,t=0) = x(2-x)y(1-y)exp(5xy).
  * The PDE is discretized on a uniform MX+2 by MY+2 grid with
  * central differencing, and with boundary values eliminated,
  * leaving an ODE system of size NEQ = MX*MY.
  * This program solves the problem with the BDF method, Newton
- * iteration with the CVBAND band linear solver, and a user-supplied
+ * iteration with the CVODE band linear solver, and a user-supplied
  * Jacobian routine.
  * It uses scalar relative and absolute tolerances.
  * Output is printed at t = .1, .2, ..., 1.
  * Run statistics (optional outputs) are printed at the end.
+ *
+ * Additionally, CVODES integrates backwards in time the
+ * the semi-discrete form of the adjoint PDE:
+ *   d(lambda)/dt = - d^2(lambda) / dx^2 + 0.5 d(lambda) / dx
+ *                  - d^2(lambda) / dy^2 - 1.0
+ * with homogeneous Dirichlet boundary conditions and final
+ * conditions:
+ *   lambda(x,y,t=t_final) = 0.0
+ * whose solution at t = 0 represents the sensitivity of
+ *   G = int_0^t_final int_x int _y u(t,x,y) dx dy dt
+ * with respect to the initial conditions of the original problem.
  * -----------------------------------------------------------------
  *)
 
 module Cvode = Cvode_serial
+module Adjoint = Cvodes_serial.Adjoint
 module Carray = Cvode.Carray
-module Roots = Cvode.Roots
 module Col = Dls.BandMatrix.Col
 module Dls = Cvode.Dls
 
@@ -50,17 +60,20 @@ let set_ith v i e = v.{i - 1} <- e
 
 let xmax   = 2.0        (* domain boundaries         *)
 let ymax   = 1.0
-let mx     = 10         (* mesh dimensions           *)
-let my     = 5
+let mx     = 40         (* mesh dimensions           *)
+let my     = 20
 let neq    = mx * my    (* number of equations       *)
 let atol   = 1.0e-5     (* scalar absolute tolerance *)
+let rtolb  = 1.0e-6
 let t0     = 0.0        (* initial time              *)
 let t1     = 0.1        (* first output time         *)
 let dtout  = 0.1        (* output time increment     *)
 let nout   = 10         (* number of output times    *)
 
+let tout   = 1.0        (* final time                    *)
+let nstep  = 50         (* check point saved every NSTEP *)
+
 let zero  = 0.0
-let half  = 0.5
 let one   = 1.0
 let two   = 2.0
 let five  = 5.0
@@ -72,7 +85,7 @@ let five  = 5.0
    to the underlying 1-dimensional storage. 
    IJth(vdata,i,j) references the element in the vdata array for
    u at mesh point (i,j), where 1 <= i <= MX, 1 <= j <= MY.
-   The vdata array is obtained via the macro call vdata = NV_DATA_S(v),
+   The vdata array is obtained via the macro call vdata = N_VDATA_S(v),
    where v is an N_Vector. 
    The variables are ordered by the y index j, then by the x index i. *)
 
@@ -89,7 +102,7 @@ type user_data = {
   vdcoef : float;
 }
 
-(* f routine. Compute f(t,u). *)
+(* f routine. right-hand side of forward ODE. *)
 
 let f data t udata dudata =
   (* Extract needed constants from data *)
@@ -122,7 +135,7 @@ let f data t udata dudata =
     done
   done
 
-(* Jacobian routine. Compute J(t,u). *)
+(* Jac function. Jacobian of forward ODE. *)
 
 let jac data {Cvode.mupper=mupper; Cvode.mlower=mlower} arg jmat =
   (*
@@ -156,6 +169,61 @@ let jac data {Cvode.mupper=mupper; Cvode.mlower=mlower} arg jmat =
     done
   done
 
+(* fB function. Right-hand side of backward ODE. *)
+
+let fB data tB u uB uBdot =
+  (* Extract needed constants from data *)
+  let hordc = data.hdcoef in
+  let horac = data.hacoef in
+  let verdc = data.vdcoef in
+
+  (* Loop over all grid points. *)
+  for j=1 to my do
+    for i=1 to mx do
+      (* Extract u at x_i, y_j and four neighboring points *)
+      let uBij = ijth uB i j in
+      let uBdn = if j = 1  then zero else ijth uB i (j-1) in
+      let uBup = if j = my then zero else ijth uB i (j+1) in
+      let uBlt = if i = 1  then zero else ijth uB (i-1) j in
+      let uBrt = if i = mx then zero else ijth uB (i+1) j in
+
+      (* Set diffusion and advection terms and load into udot *)
+
+      let hdiffB = hordc*.(-. uBlt +. two*.uBij -. uBrt) in
+      let hadvB  = horac*.(uBrt -. uBlt) in
+      let vdiffB = verdc*.(-. uBup +. two*.uBij -. uBdn) in
+      set_ijth uBdot i j (hdiffB +. hadvB +. vdiffB -. one)
+    done
+  done
+
+(* JacB function. Jacobian of backward ODE. *)
+
+let jacb data { Cvode.mupper = muB; Cvode.mlower = mlB }
+              { Adjoint.jac_t = tB;
+                Adjoint.jac_u = u;
+                Adjoint.jac_ub = uB;
+                Adjoint.jac_fub = fuB;
+                Adjoint.jac_tmp = (tmp1B, tmp2B, tmp3B) } jb =
+
+  (* The Jacobian of the adjoint system is: JB = -J^T *)
+  let hordc = data.hdcoef in
+  let horac = data.hacoef in
+  let verdc = data.vdcoef in
+
+  for j=1 to my do
+    for i=1 to mx do
+      let k = j-1 + (i-1)*my in
+      let kthCol = Col.get_col jb k in
+
+      (* set the kth column of J *)
+      Col.set kthCol k k (two*.(verdc+.hordc));
+      if i != 1  then Col.set kthCol (k-my) k (-. hordc +. horac);
+      if i != mx then Col.set kthCol (k+my) k (-. hordc -. horac);
+      if j != 1  then Col.set kthCol (k-1) k  (-. verdc);
+      if j != my then Col.set kthCol (k+1) k  (-. verdc)
+    done
+  done
+
 (* Set initial conditions in u vector *)
 
 let set_ic u data =
@@ -174,35 +242,32 @@ let set_ic u data =
     done
   done
 
-(* Print first lines of output (problem description) *)
+(* Print results after backward integration *)
 
-let print_header reltol abstol umax =
-  printf "\n2-D Advection-Diffusion Equation\n";
-  printf "Mesh dimensions = %d X %d\n" mx my;
-  printf "Total system size = %d\n" neq;
+let print_output uB data =
+  let x = ref 0.0 in
+  let y = ref 0.0 in
 
-  printf "Tolerance parameters: reltol = %g   abstol = %g\n\n" reltol abstol;
-  printf "At t = %g      max.norm(u) =%14.6e \n" t0 umax
+  let dx = data.dx in
+  let dy = data.dy in
 
-(* Print current value *)
+  let uBmax = ref 0.0 in
 
-let print_output = printf "At t = %4.2f   max.norm(u) =%14.6e   nst = %4d\n"
+  for j=1 to my do
+    for i=1 to mx do
+      let uBij = ijth uB i j in
+      if (abs_float uBij > !uBmax) then begin
+        uBmax := uBij;
+        x := float i *.dx;
+        y := float j *.dy
+      end
+    done
+  done;
 
-let print_final_stats s =
-  let nst = Cvode.get_num_steps s
-  and nfe = Cvode.get_num_rhs_evals s
-  and nsetups = Cvode.get_num_lin_solv_setups s
-  and netf = Cvode.get_num_err_test_fails s
-  and nni = Cvode.get_num_nonlin_solv_iters s
-  and ncfn = Cvode.get_num_nonlin_solv_conv_fails s
-  and nje = Cvode.Dls.get_num_jac_evals s
-  and nfeLS = Cvode.Dls.get_num_rhs_evals s
-  in
-  printf "\nFinal Statistics:\n";
-  printf "nst = %-6d nfe  = %-6d nsetups = %-6d nfeLS = %-6d nje = %d\n"
-  nst nfe nsetups nfeLS nje;
-  printf "nni = %-6d ncfn = %-6d netf = %d\n \n"
-  nni ncfn netf
+  printf "\nMaximum sensitivity\n";
+  printf "  lambda max = %e\n" !uBmax;
+  printf "at\n";
+  printf "  x = %e\n  y = %e\n" !x !y
 
 let main () =
   (* Create a serial vector *)
@@ -218,19 +283,16 @@ let main () =
   let data = {
     dx = dx; dy = dy;
     hdcoef = one /. (dx *. dx);
-    hacoef = half /. (two *. dx);
+    hacoef = 1.5 /. (two *. dx);
     vdcoef = one /. (dy *. dy);
   } in
 
   set_ic u data;  (* Initialize u vector *)
 
-  (* Call CVodeCreate to create the solver memory and specify the 
-   * Backward Differentiation Formula and the use of a Newton iteration *)
-  (* Call CVodeInit to initialize the integrator memory and specify the
-   * user's right hand side function in u'=f(t,u), the inital time T0, and
-   * the initial dependent variable vector u. *)
-  (* Call CVBand to specify the CVBAND band linear solver *)
-  (* Set the user-supplied Jacobian routine Jac *)
+  (* Create and allocate CVODES memory for forward run *)
+  printf "\nCreate and allocate CVODES memory for forward runs\n";
+
+  (* Call CVBand with  bandwidths ml = mu = MY, *)
   let solver = Cvode.Band ({Cvode.mupper = my; Cvode.mlower = my},
                            Some (jac data))
   in
@@ -240,21 +302,36 @@ let main () =
   in
   Gc.compact ();
 
-  (* In loop over output points: call CVode, print results, test for errors *)
+  (* Allocate global memory *)
+  printf "\nAllocate global memory\n";
 
-  print_header reltol abstol (vmax_norm u);
+  Adjoint.init cvode_mem nstep Adjoint.IHermite;
 
-  let tout = ref t1 in
-  for iout = 1 to nout do
-    let (t, flag) = Cvode.solve_normal cvode_mem !tout u
-    in
-    let nst = Cvode.get_num_steps cvode_mem in
+  (* Perform forward run *)
+  printf "\nForward integration\n";
+  let t, ncheck, _ = Adjoint.forward_normal cvode_mem tout u in
+  printf "\nncheck = %d\n" ncheck;
 
-    print_output t (vmax_norm u) nst;
-    tout := !tout +. dtout
-  done;
+  (* Allocate uB *)
+  let uB = Carray.init neq 0.0 in
 
-  print_final_stats cvode_mem  (* Print some final statistics   *)
+  (* Create and allocate CVODES memory for backward run *)
+  printf "\nCreate and allocate CVODES memory for backward run\n";
+
+  let bsolver = Adjoint.Band ({Cvode.mupper = my; Cvode.mlower = my},
+                              Some (jacb data)) in
+  let bcvode_mem = Adjoint.init_backward cvode_mem
+        Cvode.BDF
+        (Adjoint.Newton bsolver)
+        (Adjoint.SStolerances (rtolb, atol))
+        (Adjoint.Basic (fB data)) tout uB in
+
+  (* Perform backward integration *)
+  printf "\nBackward integration\n";
+  Adjoint.backward_normal cvode_mem t0;
+  let _ = Adjoint.get bcvode_mem uB in
+
+  print_output uB data
 
 let _ = main ()
 let _ = Gc.compact ()

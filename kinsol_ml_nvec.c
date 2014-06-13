@@ -320,24 +320,25 @@ static int bandjacfn(
 	N_Vector tmp2)
 {
     CAMLparam0();
-    CAMLlocalN(args, 5);
+    CAMLlocalN(args, 4);
     int r;
     value *backref = user_data;
     CAML_FN (call_bandjacfn);
 
     args[0] = *backref;
-    args[1] = make_jac_arg(u, fu, make_double_tmp(tmp1, tmp2));
-    args[2] = Val_long(mupper);
-    args[3] = Val_long(mlower);
-    args[4] = caml_alloc_final(2, NULL, 0, 1);
-    Store_field (args[4], 1, (value)Jac);
+    args[1] = caml_alloc_tuple(RECORD_KINSOL_BANDRANGE_SIZE);
+    Store_field(args[1], RECORD_KINSOL_BANDRANGE_MUPPER, Val_long(mupper));
+    Store_field(args[1], RECORD_KINSOL_BANDRANGE_MLOWER, Val_long(mlower));
+    args[2] = make_jac_arg(u, fu, make_double_tmp(tmp1, tmp2));
+    args[3] = caml_alloc_final(2, NULL, 0, 1);
+    Store_field (args[3], 1, (value)Jac);
 
     r = Int_val (caml_callbackN(*call_bandjacfn,
                                 sizeof (args) / sizeof (*args),
                                 args));
 
-    relinquish_jac_arg(args[1], DOUBLE);
-    // note: args[4] is also invalid after the callback
+    relinquish_jac_arg(args[2], DOUBLE);
+    // note: args[3] is also invalid after the callback
 
     CAMLreturnT(int, r);
 }

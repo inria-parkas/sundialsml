@@ -13,12 +13,16 @@
 (**
  Custom tags for the ocamldoc comments:
     @cvode          link to Sundials CVODE documentation
+    @cvodes         link to Sundials CVODES documentation
     @ida            link to Sundials IDA documentation
     @kinsol         link to Sundials KINSOL documentation
  *)
 
 let cvode_doc_root =
   ref "https://computation.llnl.gov/casc/sundials/documentation/cv_guide/"
+
+let cvodes_doc_root =
+  ref "https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/"
 
 let ida_doc_root =
   ref "https://computation.llnl.gov/casc/sundials/documentation/ida_guide/"
@@ -59,6 +63,12 @@ struct
         "<div class=\"cvode\"><small>See sundials: <a href=\"%s%s.html%s\">%s</a></small></div>"
         !cvode_doc_root page anchor title
 
+    method private html_of_cvodes t =
+      let (page, anchor, title) = self#split_text t in
+      Printf.sprintf
+        "<div class=\"cvodes\"><small>See sundials: <a href=\"%s%s.html%s\">%s</a></small></div>"
+        !cvodes_doc_root page anchor title
+
     method private html_of_ida t =
       let (page, anchor, title) = self#split_text t in
       Printf.sprintf
@@ -73,6 +83,7 @@ struct
 
     initializer
       tag_functions <- ("cvode",  self#html_of_cvode) :: tag_functions;
+      tag_functions <- ("cvodes", self#html_of_cvodes) :: tag_functions;
       tag_functions <- ("ida",    self#html_of_ida) :: tag_functions;
       tag_functions <- ("kinsol", self#html_of_kinsol) :: tag_functions
 
@@ -85,6 +96,9 @@ end
 let option_cvode_doc_root =
   ("-cvode-doc-root", Arg.String (fun d -> cvode_doc_root := d), 
    "<dir>  specify the root url for the Sundials CVODE documentation.")
+let option_cvodes_doc_root =
+  ("-cvodes-doc-root", Arg.String (fun d -> cvode_doc_root := d), 
+   "<dir>  specify the root url for the Sundials CVODES documentation.")
 let option_ida_doc_root =
   ("-ida-doc-root", Arg.String (fun d -> ida_doc_root := d), 
    "<dir>  specify the root url for the Sundials IDA documentation.")
@@ -96,6 +110,7 @@ let option_kinsol_doc_root =
 let _ =
   let dochtml = new dochtml in
   Odoc_args.add_option option_cvode_doc_root;
+  Odoc_args.add_option option_cvodes_doc_root;
   Odoc_args.add_option option_ida_doc_root;
   Odoc_args.add_option option_kinsol_doc_root;
   Odoc_args.set_doc_generator
@@ -103,6 +118,7 @@ let _ =
 #else
 let _ =
   Odoc_args.add_option option_cvode_doc_root;
+  Odoc_args.add_option option_cvodes_doc_root;
   Odoc_args.add_option option_ida_doc_root;
   Odoc_args.add_option option_kinsol_doc_root;
   Odoc_args.extend_html_generator (module Generator : Odoc_gen.Html_functor)

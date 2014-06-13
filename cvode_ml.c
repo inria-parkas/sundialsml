@@ -10,7 +10,7 @@
  *                                                                     *
  ***********************************************************************/
 
-/* Sundials interface functions that do not involve NVectors. */
+/* Interface functions that do not involve NVectors. */
 
 #include <cvode/cvode.h>
 #include <sundials/sundials_config.h>
@@ -28,6 +28,7 @@
 
 /* linear solvers */
 #include <cvode/cvode_dense.h>
+#include <cvode/cvode_direct.h>
 #include <cvode/cvode_band.h>
 #include <cvode/cvode_diag.h>
 #include <cvode/cvode_spgmr.h>
@@ -52,66 +53,66 @@ void cvode_ml_check_flag(const char *call, int flag)
     static char exmsg[MAX_ERRMSG_LEN] = "";
 
     if (flag == CV_SUCCESS
-	|| flag == CV_ROOT_RETURN
-	|| flag == CV_TSTOP_RETURN) return;
+	    || flag == CV_ROOT_RETURN
+	    || flag == CV_TSTOP_RETURN) return;
 
     switch (flag) {
-    case CV_ILL_INPUT:
-	caml_raise_constant(*caml_named_value("cvode_IllInput"));
+	case CV_ILL_INPUT:
+	    caml_raise_constant(*caml_named_value("cvode_IllInput"));
 
-    case CV_TOO_CLOSE:
-	caml_raise_constant(*caml_named_value("cvode_TooClose"));
+	case CV_TOO_CLOSE:
+	    caml_raise_constant(*caml_named_value("cvode_TooClose"));
 
-    case CV_TOO_MUCH_WORK:
-	caml_raise_constant(*caml_named_value("cvode_TooMuchWork"));
+	case CV_TOO_MUCH_WORK:
+	    caml_raise_constant(*caml_named_value("cvode_TooMuchWork"));
 
-    case CV_TOO_MUCH_ACC:
-	caml_raise_constant(*caml_named_value("cvode_TooMuchAccuracy"));
+	case CV_TOO_MUCH_ACC:
+	    caml_raise_constant(*caml_named_value("cvode_TooMuchAccuracy"));
 
-    case CV_ERR_FAILURE:
-	caml_raise_constant(*caml_named_value("cvode_ErrFailure"));
+	case CV_ERR_FAILURE:
+	    caml_raise_constant(*caml_named_value("cvode_ErrFailure"));
 
-    case CV_CONV_FAILURE:
-	caml_raise_constant(*caml_named_value("cvode_ConvergenceFailure"));
+	case CV_CONV_FAILURE:
+	    caml_raise_constant(*caml_named_value("cvode_ConvergenceFailure"));
 
-    case CV_LINIT_FAIL:
-	caml_raise_constant(*caml_named_value("cvode_LinearInitFailure"));
+	case CV_LINIT_FAIL:
+	    caml_raise_constant(*caml_named_value("cvode_LinearInitFailure"));
 
-    case CV_LSETUP_FAIL:
-	caml_raise_constant(*caml_named_value("cvode_LinearSetupFailure"));
+	case CV_LSETUP_FAIL:
+	    caml_raise_constant(*caml_named_value("cvode_LinearSetupFailure"));
 
-    case CV_LSOLVE_FAIL:
-	caml_raise_constant(*caml_named_value("cvode_LinearSolveFailure"));
+	case CV_LSOLVE_FAIL:
+	    caml_raise_constant(*caml_named_value("cvode_LinearSolveFailure"));
 
-    case CV_RHSFUNC_FAIL:
-	caml_raise_constant(*caml_named_value("cvode_RhsFuncFailure"));
+	case CV_RHSFUNC_FAIL:
+	    caml_raise_constant(*caml_named_value("cvode_RhsFuncFailure"));
 
-    case CV_FIRST_RHSFUNC_ERR:
-	caml_raise_constant(*caml_named_value("cvode_FirstRhsFuncErr"));
+	case CV_FIRST_RHSFUNC_ERR:
+	    caml_raise_constant(*caml_named_value("cvode_FirstRhsFuncErr"));
 
-    case CV_REPTD_RHSFUNC_ERR:
-	caml_raise_constant(*caml_named_value("cvode_RepeatedRhsFuncErr"));
+	case CV_REPTD_RHSFUNC_ERR:
+	    caml_raise_constant(*caml_named_value("cvode_RepeatedRhsFuncErr"));
 
-    case CV_UNREC_RHSFUNC_ERR:
-	caml_raise_constant(*caml_named_value("cvode_UnrecoverableRhsFuncErr"));
+	case CV_UNREC_RHSFUNC_ERR:
+	    caml_raise_constant(*caml_named_value("cvode_UnrecoverableRhsFuncErr"));
 
-    case CV_RTFUNC_FAIL:
-	caml_raise_constant(*caml_named_value("cvode_RootFuncFailure"));
+	case CV_RTFUNC_FAIL:
+	    caml_raise_constant(*caml_named_value("cvode_RootFuncFailure"));
 
-    case CV_BAD_K:
-	caml_raise_constant(*caml_named_value("cvode_BadK"));
+	case CV_BAD_K:
+	    caml_raise_constant(*caml_named_value("cvode_BadK"));
 
-    case CV_BAD_T:
-	caml_raise_constant(*caml_named_value("cvode_BadT"));
+	case CV_BAD_T:
+	    caml_raise_constant(*caml_named_value("cvode_BadT"));
 
-    case CV_BAD_DKY:
-	caml_raise_constant(*caml_named_value("cvode_BadDky"));
+	case CV_BAD_DKY:
+	    caml_raise_constant(*caml_named_value("cvode_BadDky"));
 
-    default:
-	/* e.g. CVDIAG_MEM_NULL, CVDIAG_ILL_INPUT, CVDIAG_MEM_FAIL */
-	snprintf(exmsg, MAX_ERRMSG_LEN, "%s: %s", call,
-		 CVodeGetReturnFlagName(flag));
-	caml_failwith(exmsg);
+	default:
+	    /* e.g. CVDIAG_MEM_NULL, CVDIAG_ILL_INPUT, CVDIAG_MEM_FAIL */
+	    snprintf(exmsg, MAX_ERRMSG_LEN, "%s: %s", call,
+		    CVodeGetReturnFlagName(flag));
+	    caml_failwith(exmsg);
     }
 }
 
@@ -263,7 +264,7 @@ CAMLprim void c_cvode_set_root_direction(value vdata, value rootdirs)
     CAMLreturn0;
 }
 
-CAMLprim void c_cvode_set_prec_type(value vcvode_mem, value vptype)
+CAMLprim void c_cvode_spils_set_prec_type(value vcvode_mem, value vptype)
 {
     CAMLparam2(vcvode_mem, vptype);
 
@@ -581,7 +582,7 @@ CAMLprim void c_cvode_set_no_inactive_root_warn(value vcvode_mem)
     CAMLreturn0;
 }
 
-CAMLprim void c_cvode_set_gs_type(value vcvode_mem, value vgstype)
+CAMLprim void c_cvode_spils_set_gs_type(value vcvode_mem, value vgstype)
 {
     CAMLparam2(vcvode_mem, vgstype);
 
@@ -592,7 +593,7 @@ CAMLprim void c_cvode_set_gs_type(value vcvode_mem, value vgstype)
     CAMLreturn0;
 }
 
-CAMLprim void c_cvode_set_eps_lin(value vcvode_mem, value eplifac)
+CAMLprim void c_cvode_spils_set_eps_lin(value vcvode_mem, value eplifac)
 {
     CAMLparam2(vcvode_mem, eplifac);
 
@@ -602,7 +603,7 @@ CAMLprim void c_cvode_set_eps_lin(value vcvode_mem, value eplifac)
     CAMLreturn0;
 }
 
-CAMLprim void c_cvode_set_maxl(value vcvode_mem, value maxl)
+CAMLprim void c_cvode_spils_set_maxl(value vcvode_mem, value maxl)
 {
     CAMLparam2(vcvode_mem, maxl);
 
@@ -658,6 +659,23 @@ CAMLprim value c_cvode_get_num_nonlin_solv_conv_fails(value vcvode_mem)
     CAMLreturn(Val_long(r));
 }
 
+CAMLprim value c_cvode_get_nonlin_solv_stats(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+    CAMLlocal1(r);
+
+    long int nniters, nncfails;
+    int flag = CVodeGetNonlinSolvStats(CVODE_MEM_FROM_ML(vcvode_mem),
+				       &nniters, &nncfails);
+    CHECK_FLAG("CVodeGetNonlinSolvStats", flag);
+
+    r = caml_alloc_tuple(2);
+    Store_field(r, 0, Val_long(nniters));
+    Store_field(r, 1, Val_long(nncfails));
+
+    CAMLreturn(r);
+}
+
 CAMLprim value c_cvode_get_num_g_evals(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
@@ -681,7 +699,6 @@ CAMLprim value c_cvode_dls_get_work_space(value vcvode_mem)
     CHECK_FLAG("CVDlsGetWorkSpace", flag);
 
     r = caml_alloc_tuple(2);
-
     Store_field(r, 0, Val_long(lenrwLS));
     Store_field(r, 1, Val_long(leniwLS));
 

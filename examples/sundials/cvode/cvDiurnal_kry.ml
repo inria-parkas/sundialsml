@@ -571,7 +571,7 @@ let main () =
                         { Cvode.prec_setup_fn = Some (precond data);
                           Cvode.prec_solve_fn = Some (psolve data);
                           Cvode.jac_times_vec_fn = Some (jtv data); })))
-      (Cvode.SSTolerances (reltol, abstol))
+      (Cvode.SStolerances (reltol, abstol))
       (f data) ~t0:t0 u
   in
   Gc.compact ();

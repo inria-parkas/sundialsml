@@ -36,6 +36,7 @@ DONE 4. (Tim) Doc generation to work for both OCaml 3.12 and 4.x.
 MINOR PATCHES
 -------------
 1. Rename all functions *_err_* to *_error_*.
+
 2. Eliminate the Dls functions:
      set_dense_jac_fn
      clear_dense_jac_fn
@@ -47,12 +48,22 @@ MINOR PATCHES
      clear_jac_times_vec_fn
 
    and just provide a reinit function.
+
 3. CVODE/IDA: set_preconditioner should allow the setup function to be
    optional.
 
 4. Revisit the structure of modules (for instance, should we include
    Sundials everywhere?)
 
+5. Tidy up the documentation; in particular, add @raise tags for functions
+   that raise exceptions (like get_dky... )
+
+6. All call-back functions to be typed/documented as per CVODES.
+
+7. Rename Carray to Realarray?
+
 TO DISCUSS
 ----------
+* The above patches.
+
 

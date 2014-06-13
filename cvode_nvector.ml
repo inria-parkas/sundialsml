@@ -10,91 +10,11 @@
 (*                                                                     *)
 (***********************************************************************)
 
-include Cvode
+include Cvode_session_nvector
 
-type 'a nvector = 'a Nvector.nvector
-
-type root_array = Sundials.Roots.t
-type root_val_array = Sundials.Roots.val_array
-
-
-type 'a single_tmp = 'a
-type 'a triple_tmp = 'a * 'a * 'a
-
-type ('t, 'a) jacobian_arg =
-  {
-    jac_t   : float;
-    jac_y   : 'a;
-    jac_fy  : 'a;
-    jac_tmp : 't
-  }
-
-type 'a prec_solve_arg =
-  {
-    rhs   : 'a;
-    gamma : float;
-    delta : float;
-    left  : bool;
-  }
-
-(* Note this definition differs from the one in cvode_serial, so the tag
-   values are different.  *)
-type 'a linear_solver =
-  | Diag
-  | Spgmr of spils_params * 'a spils_callbacks
-  | Spbcg of spils_params * 'a spils_callbacks
-  | Sptfqmr of spils_params * 'a spils_callbacks
-and spils_params = { maxl : int option;
-                     prec_type : Spils.preconditioning_type; }
-and 'a spils_callbacks =
-  {
-    prec_solve_fn : (('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
-                     -> 'a -> unit) option;
-    prec_setup_fn : (('a triple_tmp, 'a) jacobian_arg -> bool -> float -> bool)
-                    option;
-    jac_times_vec_fn :
-      (('a single_tmp, 'a) jacobian_arg
-       -> 'a (* v *)
-       -> 'a (* Jv *)
-       -> unit) option;
-  }
 let spils_no_precond = { prec_solve_fn = None;
                          prec_setup_fn = None;
                          jac_times_vec_fn = None; }
-
-type 'a iter =
-  | Newton of 'a linear_solver
-  | Functional
-
-type cvode_mem
-type cvode_file
-type c_weak_ref
-
-(*
-   In the nvector interface, we only need 'neqs' for the Banded preconditioner
-   module which requires the problem size on initialization (CVBandPredInit).
-   (Note that we cannot query an abstract nvector for its size.)
- *)
-type 'a session = {
-        cvode      : cvode_mem;
-        backref    : c_weak_ref;
-        neqs       : int;
-        nroots     : int;
-        err_file   : cvode_file;
-
-        mutable exn_temp   : exn option;
-
-        mutable rhsfn      : float -> 'a -> 'a -> unit;
-        mutable rootsfn    : float -> 'a -> root_val_array -> unit;
-        mutable errh       : Sundials.error_details -> unit;
-        mutable errw       : 'a -> 'a -> unit;
-        mutable presetupfn : ('a triple_tmp, 'a) jacobian_arg -> bool -> float -> bool;
-        mutable presolvefn : ('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
-                               -> 'a -> unit;
-        mutable jactimesfn : ('a single_tmp, 'a) jacobian_arg -> 'a -> 'a -> unit;
-      }
-
-(* interface *)
 
 let read_weak_ref x : 'a session =
   match Weak.get x 0 with
@@ -125,6 +45,8 @@ let call_errh session details =
 let call_presolvefn session jac r z =
   let session = read_weak_ref session in
   adjust_retcode session true (session.presolvefn jac r) z
+
+(* the presetupfn is called directly from C. *)
 
 let call_jactimesfn session jac v jv =
   let session = read_weak_ref session in
@@ -171,28 +93,8 @@ external c_spils_sptfqmr
   : 'a session -> int -> Spils.preconditioning_type -> unit
   = "c_cvode_spils_sptfqmr"
 
-external c_spils_banded_spgmr
-  : 'a session -> int -> int -> int -> Spils.preconditioning_type -> unit
-  = "c_cvode_spils_banded_spgmr"
-
-external c_spils_banded_spbcg
-  : 'a session -> int -> int -> int -> Spils.preconditioning_type -> unit
-  = "c_cvode_spils_banded_spbcg"
-
-external c_spils_banded_sptfqmr
-  : 'a session -> int -> int -> int -> Spils.preconditioning_type -> unit
-  = "c_cvode_spils_banded_sptfqmr"
-
 external c_set_functional : 'a session -> unit
   = "c_cvode_set_functional"
-
-let shouldn't_be_called fcn =
-  failwith ("internal error in sundials: " ^ fcn ^ " is called")
-let dummy_dense_jac _ _ = shouldn't_be_called "dummy_dense_jac"
-let dummy_band_jac _ _ _ _ = shouldn't_be_called "dummy_band_jac"
-let dummy_prec_setup _ _ _ = shouldn't_be_called "dummy_prec_setup"
-let dummy_prec_solve _ _ _ = shouldn't_be_called "dummy_prec_solve"
-let dummy_jac_times_vec _ _ _ = shouldn't_be_called "dummy_jac_times_vec"
 
 let set_iter_type session iter =
   let optionally f = function
@@ -246,19 +148,19 @@ external wf_tolerances  : 'a session -> unit
     = "c_nvec_cvode_wf_tolerances"
 
 type 'a tolerance =
-  | SSTolerances of float * float
-  | SVTolerances of float * 'a nvector
-  | WFTolerances of ('a -> 'a -> unit)
+  | SStolerances of float * float
+  | SVtolerances of float * 'a nvector
+  | WFtolerances of ('a -> 'a -> unit)
 
-let default_tolerances = SSTolerances (1.0e-4, 1.0e-8)
+let default_tolerances = SStolerances (1.0e-4, 1.0e-8)
 
 let set_tolerances s tol =
   match tol with
-  | SSTolerances (rel, abs) -> ss_tolerances s rel abs
-  | SVTolerances (rel, abs) -> sv_tolerances s rel abs
-  | WFTolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
+  | SStolerances (rel, abs) -> ss_tolerances s rel abs
+  | SVtolerances (rel, abs) -> sv_tolerances s rel abs
+  | WFtolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
 
-let init lmm iter tol f ?(roots=no_roots) ?(t0=0.) (neqs, y0) =
+let init lmm iter tol f ?(roots=no_roots) ?(t0=0.) y0 =
   let (nroots, roots) = roots in
   let weakref = Weak.create 1 in
   let cvode_mem, backref, err_file = c_init weakref lmm iter y0 t0 in
@@ -267,7 +169,6 @@ let init lmm iter tol f ?(roots=no_roots) ?(t0=0.) (neqs, y0) =
   let session = {
           cvode      = cvode_mem;
           backref    = backref;
-          neqs       = neqs;
           nroots     = nroots;
           err_file   = err_file;
 
@@ -280,6 +181,8 @@ let init lmm iter tol f ?(roots=no_roots) ?(t0=0.) (neqs, y0) =
           presetupfn = dummy_prec_setup;
           presolvefn = dummy_prec_solve;
           jactimesfn = dummy_jac_times_vec;
+
+          sensext    = NoSensExt;
         } in
   Gc.finalise session_finalize session;
   Weak.set weakref 0 (Some session);
@@ -292,7 +195,6 @@ let init lmm iter tol f ?(roots=no_roots) ?(t0=0.) (neqs, y0) =
   session
 
 let nroots { nroots } = nroots
-let neqs { neqs } = neqs
 
 external c_reinit
     : 'a session -> float -> 'a nvector -> unit
@@ -443,6 +345,9 @@ external get_num_nonlin_solv_iters      : 'a session -> int
 external get_num_nonlin_solv_conv_fails : 'a session -> int
     = "c_cvode_get_num_nonlin_solv_conv_fails"
 
+external get_nonlin_solv_stats          : 'a session -> int * int
+    = "c_cvode_get_nonlin_solv_stats"
+
 external get_num_g_evals                : 'a session -> int
     = "c_cvode_get_num_g_evals"
 
@@ -497,16 +402,16 @@ module Spils =
       clear_jac_times_vec_fn s
 
     external set_prec_type : 'a session -> Spils.preconditioning_type -> unit
-        = "c_cvode_set_prec_type"
+        = "c_cvode_spils_set_prec_type"
 
     external set_gs_type : 'a session -> Spils.gramschmidt_type -> unit
-        = "c_cvode_set_gs_type"
+        = "c_cvode_spils_set_gs_type"
 
     external set_eps_lin            : 'a session -> float -> unit
-        = "c_cvode_set_eps_lin"
+        = "c_cvode_spils_set_eps_lin"
 
     external set_maxl               : 'a session -> int -> unit
-        = "c_cvode_set_maxl"
+        = "c_cvode_spils_set_maxl"
 
     external get_num_lin_iters      : 'a session -> int
         = "c_cvode_spils_get_num_lin_iters"
