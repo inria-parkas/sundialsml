@@ -180,6 +180,7 @@ enum cvode_session_index {
   Long_val(Field((v), RECORD_CVODE_SESSION_NROOTS))
 #define CVODE_ROOTSFN_FROM_ML(v)    Field((v), RECORD_CVODE_SESSION_ROOTSFN)
 #define CVODE_PRESETUPFN_FROM_ML(v) Field((v), RECORD_CVODE_SESSION_PRESETUPFN)
+#define CVODE_SENSEXT_FROM_ML(v) Field(Field((v), RECORD_CVODE_SESSION_SENSEXT), 0)
 
 enum cvode_lmm_tag {
   VARIANT_CVODE_LMM_ADAMS = 0,

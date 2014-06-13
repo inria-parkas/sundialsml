@@ -87,17 +87,21 @@ CAMLprim value CVTYPE(alloc_nvector_array)(value vn)
     value r;
     int n = Int_val(vn);
 
-    r = caml_alloc_tuple(n);
+    if (n > 0) {
+	r = caml_alloc_tuple(n);
 
 #ifdef CVODE_ML_BIGARRAYS
-    intnat emptydim = 0;
-    int i;
-    for (i = 0; i < n; ++i) {
-	Store_field(r, i,
-	  caml_ba_alloc(BIGARRAY_FLOAT, 1,
-			(void *)1 /* Any non-NULL value */, &emptydim));
-    }
+	intnat emptydim = 0;
+	int i;
+	for (i = 0; i < n; ++i) {
+	    Store_field(r, i,
+	      caml_ba_alloc(BIGARRAY_FLOAT, 1,
+			    (void *)1 /* Any non-NULL value */, &emptydim));
+	}
 #endif
+    } else {
+	r = Val_int(0);
+    }
 
     CAMLreturn(r);
 }
@@ -215,15 +219,14 @@ static int sensrhsfn(int ns, realtype t, N_Vector y, N_Vector ydot,
 		     N_Vector tmp1, N_Vector tmp2)
 {
     CAMLparam0();
-    CAMLlocal2(session, sensext);
+    CAMLlocal3(session, sensext, r);
     CAMLlocalN(args, 8);
-    int r;
     value *backref = user_data;
 
     /* We need to dereference on the C side, so that we can get access to
      * the values used to pass arrays of nvectors. */
     WEAK_DEREF (session, *backref);
-    sensext = Field(session, RECORD_CVODE_SESSION_SENSEXT);
+    sensext = CVODE_SENSEXT_FROM_ML(session);
 
     args[0] = *backref;
     args[1] = caml_copy_double(t);
@@ -298,16 +301,15 @@ static int quadsensrhsfn(int ns, realtype t, N_Vector y, N_Vector *ys,
 		         N_Vector tmp1, N_Vector tmp2)
 {
     CAMLparam0();
-    CAMLlocal2(session, sensext);
+    CAMLlocal3(session, sensext, r);
     CAMLlocalN(args, 8);
-    int r;
     value *backref = user_data;
     CAML_FN (call_quadsensrhsfn);
 
     /* We need to dereference on the C side, so that we can get access to
      * the values used to pass arrays of nvectors. */
     WEAK_DEREF (session, *backref);
-    sensext = Field(session, RECORD_CVODE_SESSION_SENSEXT);
+    sensext = CVODE_SENSEXT_FROM_ML(session);
 
     args[0] = *backref;
     args[1] = caml_copy_double(t);
@@ -373,16 +375,15 @@ static int brhsfn1(realtype t, N_Vector y, N_Vector *ys, N_Vector yb,
 		   N_Vector ybdot, void *user_data)
 {
     CAMLparam0();
-    CAMLlocal2(session, sensext);
+    CAMLlocal3(session, sensext, r);
     CAMLlocalN(args, 6);
-    int r;
     value *backref = user_data;
     int ns;
 
     /* We need to dereference on the C side, so that we can get access to
      * the values used to pass arrays of nvectors. */
     WEAK_DEREF (session, *backref);
-    sensext = Field(session, RECORD_CVODE_SESSION_SENSEXT);
+    sensext = CVODE_SENSEXT_FROM_ML(session);
     ns = Field(sensext, RECORD_CVODES_BWD_SESSION_NUMSENSITIVITIES);
 
     args[0] = *backref;
@@ -445,14 +446,14 @@ static int bquadrhsfn1(realtype t, N_Vector y, N_Vector *ys, N_Vector yb,
 {
     CAMLparam0();
     CAMLlocalN(args, 6);
-    CAMLlocal2(session, sensext);
-    int r, ns;
+    CAMLlocal3(session, sensext, r);
+    int ns;
     value *backref = user_data;
 
     /* We need to dereference on the C side, so that we can get access to
      * the values used to pass arrays of nvectors. */
     WEAK_DEREF (session, *backref);
-    sensext = Field(session, RECORD_CVODE_SESSION_SENSEXT);
+    sensext = CVODE_SENSEXT_FROM_ML(session);
     ns = Field(sensext, RECORD_CVODES_BWD_SESSION_NUMSENSITIVITIES);
 
     args[0] = *backref;
@@ -619,7 +620,7 @@ static int bpresetupfn(
      * user-supplied OCaml function without going through an OCaml
      * trampoline.  */
     WEAK_DEREF (session, *backref);
-    sensext = Field(session, RECORD_CVODE_SESSION_SENSEXT);
+    sensext = CVODE_SENSEXT_FROM_ML(session);
 
     args[0] = make_jac_arg(t, y, yb, fyb, make_triple_tmp(tmp1b, tmp2b, tmp3b));
     args[1] = Val_bool(jokb);
