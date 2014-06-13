@@ -1117,7 +1117,7 @@ module Adjoint =
           | SStolerances of float * float
           | SVtolerances of float * nvec
 
-        external set_err_con : bsession -> bool -> unit
+        external set_err_con : session -> int -> bool -> unit
             = "c_cvodes_adjquad_set_err_con"
 
         external sv_tolerances
@@ -1130,10 +1130,10 @@ module Adjoint =
         let set_tolerances bs tol =
           let parent, which = parent_and_which bs in
           match tol with
-          | NoStepSizeControl -> set_err_con bs false
-          | SStolerances (rel, abs) -> (set_err_con bs true;
+          | NoStepSizeControl -> set_err_con parent which false
+          | SStolerances (rel, abs) -> (set_err_con parent which true;
                                         ss_tolerances parent which rel abs)
-          | SVtolerances (rel, abs) -> (set_err_con bs true;
+          | SVtolerances (rel, abs) -> (set_err_con parent which true;
                                         sv_tolerances parent which rel abs)
 
         let get_num_rhs_evals bs =

@@ -90,11 +90,10 @@ let fS data t y ydot yS ySdot tmp1 tmp2 =
   and y2 = ith y 2
   and y3 = ith y 3
   in
-
   (* 1st sensitivity RHS *)
-  let s1 = ith yS.(0) 1
-  and s2 = ith yS.(0) 2
-  and s3 = ith yS.(0) 3
+  let s1 = ith yS.(0) 1 in
+  let s2 = ith yS.(0) 2 in
+  let s3 = ith yS.(0) 3
   in
   let fys1 = -. 2.0*.p1*.y1 *. s1 -. s3
   and fys2 = -. s2
@@ -349,7 +348,7 @@ let main () =
   (* Initializations for forward problem *)
   let y = Carray.init neq one in
   let yQ = Carray.init 1 zero in
-  let yS = Array.init np (fun _ -> Carray.init 1 zero) in
+  let yS = Array.init np (fun _ -> Carray.init neq zero) in
   let yQS = Array.init np (fun _ -> Carray.init 1 zero) in
 
   (* Create and initialize forward problem *)
@@ -405,7 +404,6 @@ let main () =
   print_fwd_stats cvode_mem;
 
   (* Initializations for backward problems *)
-
   let yB1  = Carray.init (2 * neq) zero in
   let yQB1 = Carray.init np2 zero in
   let yB2  = Carray.init (2 * neq) zero in

@@ -220,7 +220,7 @@ static int sensrhsfn(int ns, realtype t, N_Vector y, N_Vector ydot,
 {
     CAMLparam0();
     CAMLlocal3(session, sensext, r);
-    CAMLlocalN(args, 8);
+    CAMLlocalN(args, 7);
     value *backref = user_data;
 
     /* We need to dereference on the C side, so that we can get access to
@@ -228,17 +228,16 @@ static int sensrhsfn(int ns, realtype t, N_Vector y, N_Vector ydot,
     WEAK_DEREF (session, *backref);
     sensext = CVODE_SENSEXT_FROM_ML(session);
 
-    args[0] = *backref;
-    args[1] = caml_copy_double(t);
-    args[2] = WRAP_NVECTOR(y);
-    args[3] = WRAP_NVECTOR(ydot);
-    args[4] = CVODES_SENSARRAY1_FROM_EXT(sensext);
-    args[5] = CVODES_SENSARRAY2_FROM_EXT(sensext);
-    args[6] = WRAP_NVECTOR(tmp1);
-    args[7] = WRAP_NVECTOR(tmp2);
+    args[0] = caml_copy_double(t);
+    args[1] = WRAP_NVECTOR(y);
+    args[2] = WRAP_NVECTOR(ydot);
+    args[3] = CVODES_SENSARRAY1_FROM_EXT(sensext);
+    args[4] = CVODES_SENSARRAY2_FROM_EXT(sensext);
+    args[5] = WRAP_NVECTOR(tmp1);
+    args[6] = WRAP_NVECTOR(tmp2);
 
-    wrap_to_nvector_table(ns, args[4], ys);
-    wrap_to_nvector_table(ns, args[5], ysdot);
+    wrap_to_nvector_table(ns, args[3], ys);
+    wrap_to_nvector_table(ns, args[4], ysdot);
 
     // The data payloads inside args[2..7] are only valid during this call,
     // afterward that memory goes back to cvode. These bigarrays must not be
@@ -248,12 +247,12 @@ static int sensrhsfn(int ns, realtype t, N_Vector y, N_Vector ydot,
 			   sizeof (args) / sizeof (*args),
                            args);
 
+    RELINQUISH_WRAPPEDNV(args[1]);
     RELINQUISH_WRAPPEDNV(args[2]);
-    RELINQUISH_WRAPPEDNV(args[3]);
+    relinquish_from_nvector_table(ns, args[3]);
     relinquish_from_nvector_table(ns, args[4]);
-    relinquish_from_nvector_table(ns, args[5]);
+    RELINQUISH_WRAPPEDNV(args[5]);
     RELINQUISH_WRAPPEDNV(args[6]);
-    RELINQUISH_WRAPPEDNV(args[7]);
 
     CAMLreturnT(int, check_exception(session, r));
 }
@@ -302,26 +301,24 @@ static int quadsensrhsfn(int ns, realtype t, N_Vector y, N_Vector *ys,
 {
     CAMLparam0();
     CAMLlocal3(session, sensext, r);
-    CAMLlocalN(args, 8);
+    CAMLlocalN(args, 7);
     value *backref = user_data;
-    CAML_FN (call_quadsensrhsfn);
 
     /* We need to dereference on the C side, so that we can get access to
      * the values used to pass arrays of nvectors. */
     WEAK_DEREF (session, *backref);
     sensext = CVODE_SENSEXT_FROM_ML(session);
 
-    args[0] = *backref;
-    args[1] = caml_copy_double(t);
-    args[2] = WRAP_NVECTOR(y);
-    args[3] = CVODES_SENSARRAY1_FROM_EXT(sensext);
-    args[4] = WRAP_NVECTOR(yqdot);
-    args[5] = CVODES_SENSARRAY2_FROM_EXT(sensext);
-    args[6] = WRAP_NVECTOR(tmp1);
-    args[7] = WRAP_NVECTOR(tmp2);
+    args[0] = caml_copy_double(t);
+    args[1] = WRAP_NVECTOR(y);
+    args[2] = CVODES_SENSARRAY1_FROM_EXT(sensext);
+    args[3] = WRAP_NVECTOR(yqdot);
+    args[4] = CVODES_SENSARRAY2_FROM_EXT(sensext);
+    args[5] = WRAP_NVECTOR(tmp1);
+    args[6] = WRAP_NVECTOR(tmp2);
 
-    wrap_to_nvector_table(ns, args[3], ys);
-    wrap_to_nvector_table(ns, args[5], yqsdot);
+    wrap_to_nvector_table(ns, args[2], ys);
+    wrap_to_nvector_table(ns, args[4], yqsdot);
 
     // The data payloads inside args[2..7] are only valid during this call,
     // afterward that memory goes back to cvode. These bigarrays must not be
@@ -331,12 +328,12 @@ static int quadsensrhsfn(int ns, realtype t, N_Vector y, N_Vector *ys,
 		           sizeof (args) / sizeof (*args),
                            args);
 
-    RELINQUISH_WRAPPEDNV(args[2]);
-    relinquish_from_nvector_table(ns, args[3]);
-    RELINQUISH_WRAPPEDNV(args[4]);
-    relinquish_from_nvector_table(ns, args[5]);
+    RELINQUISH_WRAPPEDNV(args[1]);
+    relinquish_from_nvector_table(ns, args[2]);
+    RELINQUISH_WRAPPEDNV(args[3]);
+    relinquish_from_nvector_table(ns, args[4]);
+    RELINQUISH_WRAPPEDNV(args[5]);
     RELINQUISH_WRAPPEDNV(args[6]);
-    RELINQUISH_WRAPPEDNV(args[7]);
 
     CAMLreturnT(int, check_exception(session, r));
 }
@@ -376,7 +373,7 @@ static int brhsfn1(realtype t, N_Vector y, N_Vector *ys, N_Vector yb,
 {
     CAMLparam0();
     CAMLlocal3(session, sensext, r);
-    CAMLlocalN(args, 6);
+    CAMLlocalN(args, 5);
     value *backref = user_data;
     int ns;
 
@@ -384,16 +381,15 @@ static int brhsfn1(realtype t, N_Vector y, N_Vector *ys, N_Vector yb,
      * the values used to pass arrays of nvectors. */
     WEAK_DEREF (session, *backref);
     sensext = CVODE_SENSEXT_FROM_ML(session);
-    ns = Field(sensext, RECORD_CVODES_BWD_SESSION_NUMSENSITIVITIES);
+    ns = Int_val(Field(sensext, RECORD_CVODES_BWD_SESSION_NUMSENSITIVITIES));
 
-    args[0] = *backref;
-    args[1] = caml_copy_double(t);
-    args[2] = WRAP_NVECTOR(y);
-    args[3] = CVODES_BSENSARRAY_FROM_EXT(sensext);
-    args[4] = WRAP_NVECTOR(yb);
-    args[5] = WRAP_NVECTOR(ybdot);
+    args[0] = caml_copy_double(t);
+    args[1] = WRAP_NVECTOR(y);
+    args[2] = CVODES_BSENSARRAY_FROM_EXT(sensext);
+    args[3] = WRAP_NVECTOR(yb);
+    args[4] = WRAP_NVECTOR(ybdot);
 
-    wrap_to_nvector_table(ns, args[3], ys);
+    wrap_to_nvector_table(ns, args[2], ys);
 
     // The data payloads inside args[2..5] are only valid during this call,
     // afterward that memory goes back to cvode. These bigarrays must not be
@@ -403,10 +399,10 @@ static int brhsfn1(realtype t, N_Vector y, N_Vector *ys, N_Vector yb,
                            sizeof (args) / sizeof (*args),
                            args);
 
-    RELINQUISH_WRAPPEDNV(args[2]);
-    relinquish_from_nvector_table(ns, args[3]);
+    RELINQUISH_WRAPPEDNV(args[1]);
+    relinquish_from_nvector_table(ns, args[2]);
+    RELINQUISH_WRAPPEDNV(args[3]);
     RELINQUISH_WRAPPEDNV(args[4]);
-    RELINQUISH_WRAPPEDNV(args[5]);
 
     CAMLreturnT(int, check_exception(session, r));
 }
@@ -445,7 +441,7 @@ static int bquadrhsfn1(realtype t, N_Vector y, N_Vector *ys, N_Vector yb,
 		       N_Vector qbdot, void *user_data)
 {
     CAMLparam0();
-    CAMLlocalN(args, 6);
+    CAMLlocalN(args, 5);
     CAMLlocal3(session, sensext, r);
     int ns;
     value *backref = user_data;
@@ -454,16 +450,15 @@ static int bquadrhsfn1(realtype t, N_Vector y, N_Vector *ys, N_Vector yb,
      * the values used to pass arrays of nvectors. */
     WEAK_DEREF (session, *backref);
     sensext = CVODE_SENSEXT_FROM_ML(session);
-    ns = Field(sensext, RECORD_CVODES_BWD_SESSION_NUMSENSITIVITIES);
+    ns = Int_val(Field(sensext, RECORD_CVODES_BWD_SESSION_NUMSENSITIVITIES));
 
-    args[0] = *backref;
-    args[1] = caml_copy_double(t);
-    args[2] = WRAP_NVECTOR(y);
-    args[3] = CVODES_BSENSARRAY_FROM_EXT(sensext);
-    args[4] = WRAP_NVECTOR(yb);
-    args[5] = WRAP_NVECTOR(qbdot);
+    args[0] = caml_copy_double(t);
+    args[1] = WRAP_NVECTOR(y);
+    args[2] = CVODES_BSENSARRAY_FROM_EXT(sensext);
+    args[3] = WRAP_NVECTOR(yb);
+    args[4] = WRAP_NVECTOR(qbdot);
 
-    wrap_to_nvector_table(ns, args[3], ys);
+    wrap_to_nvector_table(ns, args[2], ys);
 
     // The data payloads inside args[2..5] are only valid during this call,
     // afterward that memory goes back to cvode. These bigarrays must not be
@@ -473,10 +468,10 @@ static int bquadrhsfn1(realtype t, N_Vector y, N_Vector *ys, N_Vector yb,
                        sizeof (args) / sizeof (*args),
                        args);
 
-    RELINQUISH_WRAPPEDNV(args[2]);
-    relinquish_from_nvector_table(ns, args[3]);
+    RELINQUISH_WRAPPEDNV(args[1]);
+    relinquish_from_nvector_table(ns, args[2]);
+    RELINQUISH_WRAPPEDNV(args[3]);
     RELINQUISH_WRAPPEDNV(args[4]);
-    RELINQUISH_WRAPPEDNV(args[5]);
 
     CAMLreturnT(int, check_exception(session, r));
 }
