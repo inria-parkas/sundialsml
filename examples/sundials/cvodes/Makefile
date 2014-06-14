@@ -5,7 +5,8 @@ EXAMPLES = cvsAdvDiff_ASAi_bnd.ml \
 	   cvsDiurnal_FSA_kry.ml  \
 	   cvsFoodWeb_ASAi_kry.ml \
 	   cvsFoodWeb_ASAp_kry.ml \
-	   cvsHessian_ASA_FSA.ml
+	   cvsHessian_ASA_FSA.ml \
+	   cvsRoberts_ASAi_dns.ml
 
 LAPACK_EXAMPLES =
 
