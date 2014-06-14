@@ -248,12 +248,12 @@ let print_output_s uS =
 (* Get and print final statistics *)
 
 let print_final_stats s sensi =
-  let nst = Cvode.get_num_steps s
-  and nfe = Cvode.get_num_rhs_evals s
+  let nst     = Cvode.get_num_steps s
+  and nfe     = Cvode.get_num_rhs_evals s
   and nsetups = Cvode.get_num_lin_solv_setups s
-  and netf = Cvode.get_num_err_test_fails s
-  and nni = Cvode.get_num_nonlin_solv_iters s
-  and ncfn = Cvode.get_num_nonlin_solv_conv_fails s
+  and netf    = Cvode.get_num_err_test_fails s
+  and nni     = Cvode.get_num_nonlin_solv_iters s
+  and ncfn    = Cvode.get_num_nonlin_solv_conv_fails s
   in
   let nli   = Cvode.Spils.get_num_lin_iters s
   and ncfl  = Cvode.Spils.get_num_conv_fails s
