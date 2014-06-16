@@ -696,9 +696,6 @@ module Adjoint =
       | SStolerances (rel, abs) -> ss_tolerances parent which rel abs
       | SVtolerances (rel, abs) -> sv_tolerances parent which rel abs
 
-(* TODO serial onlyj
-    -- parent -> which -> nbeqs ->
-*)
     external c_dls_dense : session -> int -> int -> bool -> unit
       = "c_ba_cvodes_adj_dls_dense"
 
