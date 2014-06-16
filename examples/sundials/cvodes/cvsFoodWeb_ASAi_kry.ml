@@ -703,7 +703,7 @@ let f wdata t cdata (cdotdata : Carray.t) =
   and dx    = wdata.dx
   and dy    = wdata.dy
   in
-   
+
   for jy = 0 to my - 1 do
     let y = float jy *. dy in
     let iyoff = mxns*jy in
@@ -964,7 +964,7 @@ let precondb wdata jacarg jok gamma =
         let r = max (srur *. abs_float save) (r0 /. rewtdata.{jj}) in
         cdata.{jj} <- cdata.{jj} +. r;
         fblock wdata t cdata jx jy f1;
-        let fac = -. gamma /. r in
+        let fac = gamma /. r in
         for i = 0 to mp - 1 do
           Densemat.set p.(ig) i j ((f1.{i} -. fsave.{if0 + i}) *. fac)
         done;
@@ -1063,7 +1063,7 @@ let main () =
 
   printf "\nncheck = %d\n"  ncheck;
 
-  printf "\n   G = int_t int_x int_y c%d(t x,y dx dy dt = %f \n\n"
+  printf "\n   G = int_t int_x int_y c%d(t,x,y) dx dy dt = %f \n\n"
          ispec c.{neq};
 
   (* Set-up backward problem *)

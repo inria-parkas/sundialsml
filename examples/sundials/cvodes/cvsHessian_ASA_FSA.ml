@@ -443,9 +443,9 @@ let main () =
   ignore (Adj.get cvode_memB2 yB2);
   ignore (QuadAdj.get cvode_memB2 yQB2);
 
-  printf "   dG/dp:  %12.4e %12.4e   (from backward pb. 1\n"
+  printf "   dG/dp:  %12.4e %12.4e   (from backward pb. 1)\n"
                                                   (-.ith yQB1 1) (-.ith yQB1 2);
-  printf "           %12.4e %12.4e   (from backward pb. 2\n"
+  printf "           %12.4e %12.4e   (from backward pb. 2)\n"
                                                  (-.ith yQB2 1)  (-.ith yQB2 2);
   printf "\n";
   printf "   H = d2G/dp2:\n";
