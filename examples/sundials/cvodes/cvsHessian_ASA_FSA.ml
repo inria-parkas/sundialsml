@@ -474,6 +474,7 @@ let main () =
 
   printf "del_p = %g\n\n" dp;
 
+  Carray.fill y one;
   let cvode_mem =
     Cvode.init
         Cvode.BDF
@@ -483,7 +484,6 @@ let main () =
         ~t0:t0
         y
   in
-  Carray.fill y one;
   Carray.fill yQ zero;
   Quad.init cvode_mem (fQ data) yQ;
   Quad.set_tolerances cvode_mem (Quad.SStolerances (reltol, abstolQ));
@@ -562,8 +562,8 @@ let main () =
   printf "           %12.4e %12.4e   (bck FD)\n"  grdG_bck.(0)  grdG_bck.(1);
   printf "           %12.4e %12.4e   (cntr FD)\n" grdG_cntr.(0) grdG_cntr.(1);
   printf "\n";
-  printf "  H(1 1):  %12.4e\n"  h11;
-  printf "  H(2 2):  %12.4e\n"  h22
+  printf "  H(1,1):  %12.4e\n"  h11;
+  printf "  H(2,2):  %12.4e\n"  h22
 
 let _ = main ()
 let _ = Gc.compact ()
