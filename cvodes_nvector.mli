@@ -410,6 +410,9 @@ let sp = { pvals = Some p; pbar = ...; plist = ... }]}
 
     (** Specify the integration tolerances for sensitivities.
 
+        {b NB}: Unlike the other [set_tolerances] functions, this one does {b
+        not} call {!set_err_con} (which defaults to [false]).
+
         @cvodes <node6#sss:cvfwdtolerances> CVodeSensSStolerances
         @cvodes <node6#ss:cvfwdtolerances> CVodeSensSVtolerances
         @cvodes <node6#ss:cvfwdtolerances> CVodeSensEEtolerances *)

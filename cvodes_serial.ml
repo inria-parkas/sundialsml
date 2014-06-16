@@ -168,10 +168,10 @@ module Quadrature =
     let set_tolerances s tol =
       match tol with
       | NoStepSizeControl -> set_err_con s false
-      | SStolerances (rel, abs) -> (set_err_con s true;
-                                    ss_tolerances s rel abs)
-      | SVtolerances (rel, abs) -> (set_err_con s true;
-                                    sv_tolerances s rel abs)
+      | SStolerances (rel, abs) -> (ss_tolerances s rel abs;
+                                    set_err_con s true)
+      | SVtolerances (rel, abs) -> (sv_tolerances s rel abs;
+                                    set_err_con s true)
 
     external get : session -> val_array -> float
         = "c_ba_cvodes_quad_get"
@@ -499,17 +499,17 @@ module Sensitivity =
           | SStolerances (rel, abs) -> begin
                 if Bigarray.Array1.dim abs <> ns
                 then invalid_arg "set_tolerances: abstol has the wrong length";
-                set_err_con s true;
-                ss_tolerances s rel abs
+                ss_tolerances s rel abs;
+                set_err_con s true
               end
           | SVtolerances (rel, abs) -> begin
                 if Array.length abs <> ns
                 then invalid_arg "set_tolerances: abstol has the wrong length";
-                set_err_con s true;
-                sv_tolerances s rel abs
+                sv_tolerances s rel abs;
+                set_err_con s true
               end
-          | EEtolerances -> (set_err_con s true;
-                             ee_tolerances s)
+          | EEtolerances -> (ee_tolerances s;
+                             set_err_con s true)
     
         external c_get : session -> val_array array -> float
             = "c_ba_cvodes_quadsens_get"
@@ -1128,10 +1128,10 @@ module Adjoint =
           let parent, which = parent_and_which bs in
           match tol with
           | NoStepSizeControl -> set_err_con parent which false
-          | SStolerances (rel, abs) -> (set_err_con parent which true;
-                                        ss_tolerances parent which rel abs)
-          | SVtolerances (rel, abs) -> (set_err_con parent which true;
-                                        sv_tolerances parent which rel abs)
+          | SStolerances (rel, abs) -> (ss_tolerances parent which rel abs;
+                                        set_err_con parent which true)
+          | SVtolerances (rel, abs) -> (sv_tolerances parent which rel abs;
+                                        set_err_con parent which true)
 
         let get_num_rhs_evals bs =
           Quadrature.get_num_rhs_evals (tosession bs)
