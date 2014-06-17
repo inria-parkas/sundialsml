@@ -97,7 +97,7 @@ let option_cvode_doc_root =
   ("-cvode-doc-root", Arg.String (fun d -> cvode_doc_root := d), 
    "<dir>  specify the root url for the Sundials CVODE documentation.")
 let option_cvodes_doc_root =
-  ("-cvodes-doc-root", Arg.String (fun d -> cvode_doc_root := d), 
+  ("-cvodes-doc-root", Arg.String (fun d -> cvodes_doc_root := d), 
    "<dir>  specify the root url for the Sundials CVODES documentation.")
 let option_ida_doc_root =
   ("-ida-doc-root", Arg.String (fun d -> ida_doc_root := d), 
