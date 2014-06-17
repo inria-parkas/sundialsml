@@ -62,33 +62,33 @@ let zero  = 0.0
 let one   = 1.0
 let two   = 2.0
 
-let num_species   = 2           (* number of species         *)
-let c1_scale      = 1.0e6       (* coefficients in initial profiles    *)
-let c2_scale      = 1.0e12
+let num_species = 2                (* number of species         *)
+let c1_scale    = 1.0e6            (* coefficients in initial profiles    *)
+let c2_scale    = 1.0e12
 
-let t0            = zero        (* initial time *)
-let nout          = 12          (* number of output times *)
-let twohr         = 7200.0      (* number of seconds in two hours  *)
-let halfday       = 4.32e4      (* number of seconds in a half day *)
-let pi            = 3.1415926535898 (* pi *) 
+let t0          = zero             (* initial time *)
+let nout        = 12               (* number of output times *)
+let twohr       = 7200.0           (* number of seconds in two hours  *)
+let halfday     = 4.32e4           (* number of seconds in a half day *)
+let pi          = 3.1415926535898  (* pi *) 
 
-let xmin          = zero        (* grid boundaries in x  *)
-let xmax          = 20.0           
-let zmin          = 30.0        (* grid boundaries in z  *)
-let zmax          = 50.0
-let xmid          = 10.0        (* grid midpoints in x,z *)          
-let zmid          = 40.0
+let xmin        = zero             (* grid boundaries in x  *)
+let xmax        = 20.0           
+let zmin        = 30.0             (* grid boundaries in z  *)
+let zmax        = 50.0
+let xmid        = 10.0             (* grid midpoints in x,z *)          
+let zmid        = 40.0
 
-let mx            = 10          (* mx = number of x mesh points *)
-let mz            = 10          (* my = number of z mesh points *)
-let nsmx          = 20          (* nsmx = num_species*mx *)
-let mm            = (mx * mz)   (* mm = mx*mz *)
+let mx          = 15               (* mx = number of x mesh points *)
+let mz          = 15               (* my = number of z mesh points *)
+let nsmx        = num_species * mx (* nsmx = num_species*mx *)
+let mm          = mx * mz          (* mm = mx*mz *)
 
-let rtol          = 1.0e-5      (* scalar relative tolerance *)
-let floor         = 100.0       (* value of C1 or C2 at which tolerances *)
-                                (* change from relative to absolute      *)
-let atol     = (rtol *. floor)  (* scalar absolute tolerance *)
-let neq      = (num_species * mm) (* neq = number of equations *)
+let rtol        = 1.0e-5           (* scalar relative tolerance *)
+let floor       = 100.0            (* value of C1 or C2 at which tolerances *)
+                                     (* change from relative to absolute      *)
+let atol        = rtol *. floor    (* scalar absolute tolerance *)
+let neq         = num_species * mm (* neq = number of equations *)
 
 (* Sensitivity Constants *)
 let np = 8
@@ -290,8 +290,8 @@ let f data t ydata ydot =
   and q2  = data.params.{1}
   and c3  = data.params.{2}
   and a3  = data.params.{3}
-  and a4  = data.params.{4} in
-
+  and a4  = data.params.{4}
+  in
   (* Set diurnal rate coefficients. *)
   let s = sin (data.om *. t) in
   let q3 = if s > zero then exp(-. a3 /.s) else zero in
@@ -563,11 +563,11 @@ let main () =
 
         printf "Sensitivity: YES ";
         (match sensi_meth with
-         | Sens.Simultaneous -> printf "  SIMULTANEOUS +"
-         | Sens.Staggered    -> printf "  STAGGERED +"
-         | Sens.Staggered1   -> printf "  STAGGERED1 +");
-        printf (if err_con then " FULL ERROR CONTROL "
-                           else " PARTIAL ERROR CONTROL ");
+         | Sens.Simultaneous -> printf "( SIMULTANEOUS +"
+         | Sens.Staggered    -> printf "( STAGGERED +"
+         | Sens.Staggered1   -> printf "( STAGGERED1 +");
+        printf (if err_con then " FULL ERROR CONTROL )"
+                           else " PARTIAL ERROR CONTROL )");
 
         (fun s -> (ignore (Sens.get s uS); print_output_s uS))
       end
