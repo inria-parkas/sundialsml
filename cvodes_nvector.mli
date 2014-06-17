@@ -973,7 +973,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
     (** Arguments passed to the preconditioner solve callback function.  See
         [prec_solve_fn] in {!spils_callbacks}.
 
-        @cvode <node7#ss:psolveFn> CVSpilsPrecSolveFnB *)
+        @cvode <node7#ss:psolve_b> CVSpilsPrecSolveFnB *)
     and 'a prec_solve_arg =
       {
         rvec   : 'a;       (** The right-hand side vector, {i r}, of the
