@@ -802,6 +802,7 @@ let precond wdata jacarg jok gamma =
       let if0 = if00 + jx * mp in
       let ig  = igx + igy * ngx in
       (* Generate ig-th diagonal block *)
+      let pdata = Sundials.Realarray2.unwrap p.(ig) in
       for j = 0 to mp - 1 do
         (* Generate the jth column as a difference quotient *)
         let jj = if0 + j in
@@ -811,7 +812,7 @@ let precond wdata jacarg jok gamma =
         fblock wdata t cdata jx jy f1;
         let fac = -. gamma /. r in
         for i = 0 to mp - 1 do
-          Densemat.set p.(ig) i j ((f1.{i} -. fsave.{if0 + i}) *. fac)
+          pdata.{j, i} <- (f1.{i} -. fsave.{if0 + i}) *. fac
         done;
         cdata.{jj} <- save
       done
@@ -962,6 +963,7 @@ let precondb wdata jacarg jok gamma =
       let if0 = if00 + jx * mp in
       let ig  = igx + igy * ngx in
       (* Generate ig-th diagonal block *)
+      let pdata = Sundials.Realarray2.unwrap p.(ig) in
       for j = 0 to mp - 1 do
         (* Generate the jth column as a difference quotient *)
         let jj = if0 + j in
@@ -969,9 +971,9 @@ let precondb wdata jacarg jok gamma =
         let r = max (srur *. abs_float save) (r0 /. rewtdata.{jj}) in
         cdata.{jj} <- cdata.{jj} +. r;
         fblock wdata t cdata jx jy f1;
-        let fac = -. gamma /. r in
+        let fac = gamma /. r in
         for i = 0 to mp - 1 do
-          Densemat.set p.(ig) i j ((f1.{i} -. fsave.{if0 + i}) *. fac)
+          pdata.{i, j} <- (f1.{i} -. fsave.{if0 + i}) *. fac
         done;
         cdata.{jj} <- save
       done

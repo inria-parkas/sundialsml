@@ -17,7 +17,7 @@ DONE 3. (Tim) Interface to KINSOL.
 
 DONE 4. (Tim) Doc generation to work for both OCaml 3.12 and 4.x.
 
-5. (Tim) Interface to CVODES with maximal reuse and minimal copy-paste
+DONE 5. (Tim) Interface to CVODES with maximal reuse and minimal copy-paste
 
 6. (Jun) Interface the Alternate Linear Solver Modules
    http://computation.llnl.gov/casc/sundials/documentation/cv_guide/node8.html
@@ -32,6 +32,10 @@ DONE 4. (Tim) Doc generation to work for both OCaml 3.12 and 4.x.
    - Repository on Github.
    - Release on Opam.
    - Announce on OCaml and Sundials lists.
+
+10. Examine performance of examples:
+	sundials/cvodes/cvsFoodWeb_ASAi_kry
+	sundials/cvodes/cvsFoodWeb_ASAp_kry
 
 MINOR PATCHES
 -------------

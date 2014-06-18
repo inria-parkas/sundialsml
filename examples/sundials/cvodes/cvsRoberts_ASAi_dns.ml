@@ -229,11 +229,11 @@ let main () =
   printf "\nAdjoint Sensitivity Example for Chemical Kinetics\n";
   printf "-------------------------------------------------\n\n";
   printf "ODE: dy1/dt = -p1*y1 + p2*y2*y3\n";
-  printf "     dy2/dt =  p1*y1 - p2*y2*y3 - p3*(y2^2)\n";
-  printf "     dy3/dt =  p3*(y2^2)\n\n";
+  printf "     dy2/dt =  p1*y1 - p2*y2*y3 - p3*(y2)^2\n";
+  printf "     dy3/dt =  p3*(y2)^2\n\n";
   printf "Find dG/dp for\n";
-  printf "     G = int_t0^tB0 g(t p y dt)\n";
-  printf "     g(t p y) = y3\n\n\n";
+  printf "     G = int_t0^tB0 g(t,p,y) dt\n";
+  printf "     g(t,p,y) = y3\n\n\n";
 
   (* User data structure *)
   let data = { p = Array.of_list [ 0.04; 1.0e4; 3.0e7 ] } in
@@ -343,5 +343,5 @@ let main () =
   print_output tb2 yB qB
 
 let _ = main ()
-let _ = Gc.compact ()
+let _ = printf "Free memory\n\n"; Gc.compact ()
 

@@ -791,6 +791,7 @@ let precond wdata jacarg jok gamma =
       let if0 = if00 + jx * mp in
       let ig  = igx + igy * ngx in
       (* Generate ig-th diagonal block *)
+      let pdata = Sundials.Realarray2.unwrap p.(ig) in
       for j = 0 to mp - 1 do
         (* Generate the jth column as a difference quotient *)
         let jj = if0 + j in
@@ -800,7 +801,7 @@ let precond wdata jacarg jok gamma =
         fblock wdata t cdata jx jy f1;
         let fac = -. gamma /. r in
         for i = 0 to mp - 1 do
-          Densemat.set p.(ig) i j ((f1.{i} -. fsave.{if0 + i}) *. fac)
+          pdata.{j, i} <- (f1.{i} -. fsave.{if0 + i}) *. fac
         done;
         cdata.{jj} <- save
       done
@@ -957,6 +958,7 @@ let precondb wdata jacarg jok gamma =
       let if0 = if00 + jx * mp in
       let ig  = igx + igy * ngx in
       (* Generate ig-th diagonal block *)
+      let pdata = Sundials.Realarray2.unwrap p.(ig) in
       for j = 0 to mp - 1 do
         (* Generate the jth column as a difference quotient *)
         let jj = if0 + j in
@@ -966,7 +968,7 @@ let precondb wdata jacarg jok gamma =
         fblock wdata t cdata jx jy f1;
         let fac = gamma /. r in
         for i = 0 to mp - 1 do
-          Densemat.set p.(ig) i j ((f1.{i} -. fsave.{if0 + i}) *. fac)
+          pdata.{i, j} <- (f1.{i} -. fsave.{if0 + i}) *. fac
         done;
         cdata.{jj} <- save
       done
@@ -1037,6 +1039,7 @@ let main () =
   (* Call CVodeCreate/CVodeInit for forward run *)
   (* Call CVSpgmr for forward run *)
   printf "\nCreate and allocate CVODE memory for forward run\n";
+  flush stdout;
 
   let cvode_mem =
     Cvode.init
@@ -1059,6 +1062,7 @@ let main () =
 
   (* Perform forward run *)
   printf "\nForward integration\n";
+  flush stdout;
   let t, ncheck, _ = Adj.forward_normal cvode_mem tout c in
 
   printf "\nncheck = %d\n"  ncheck;
@@ -1075,6 +1079,7 @@ let main () =
   (* Create and allocate CVODES memory for backward run *)
   (* Call CVSpgmr *)
   printf "\nCreate and allocate CVODES memory for backward run\n";
+  flush stdout;
 
   let cvode_memb =
     Adj.init_backward
@@ -1097,6 +1102,7 @@ let main () =
 
   printf "\nBackward integration\n";
   Adj.backward_normal cvode_mem t0;
+  flush stdout;
   let _ = Adj.get cvode_memb cB in
   print_output wdata cB ns mxns
 
