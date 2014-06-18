@@ -94,6 +94,23 @@ let printf = Printf.printf
 let array_ops = Nvector_array.Bigarray.array_nvec_ops
 let sqr x = x ** 2.0
 
+
+(* Same as the functions in Nvector_array.Bigarray.  Redefined here
+   for performance. *)
+let nvwrmsnorm (x : Carray.t) (w : Carray.t) =
+  let f a x w = a +. ((x *. w) ** 2.0) in
+  let rec go acc i =
+    if i < Carray.length x
+    then go (f acc x.{i} w.{i}) (i+1)
+    else acc
+  in
+  sqrt (go 0.0 0 /. float (Carray.length x))
+
+let nvlinearsum a (x : Carray.t) b (y : Carray.t) (z : Carray.t) =
+  for i = 0 to Carray.length x - 1 do
+    z.{i} <- a *. x.{i} +. b *. y.{i}
+  done
+
 let zero  = 0.0
 let one   = 1.0
 
@@ -202,22 +219,25 @@ let ispec  =  6  (* species # in objective *)
 
 (* Small Vector Kernels *)
 
-let v_sum_prods (u : Carray.t) p (q : Carray.t) v (w : Carray.t) =
-  for i = 0 to Carray.length u - 1 do
-    u.{i} <- p.(i) *. q.{i} +. v.(i) *. w.{i}
+let v_sum_prods n (u : Carray.t) uoffs p (q : Carray.t) qoffs v (w : Carray.t) woffs =
+  for i = 0 to n - 1 do
+    u.{uoffs + i} <- p.(i) *. q.{qoffs + i} +. v.(i) *. w.{woffs + i}
   done
 
-let v_inc_by_prod (u : Carray.t) v (w : Carray.t) =
-  for i = 0 to Carray.length u - 1 do
-    u.{i} <- u.{i} +. v.(i) *. w.{i}
+let v_inc_by_prod n (u : Carray.t) uoffs v (w : Carray.t) woffs =
+  for i = 0 to n - 1 do
+    u.{uoffs + i} <- u.{uoffs + i} +. v.(i) *. w.{woffs + i}
   done
 
-let v_prod (u : Carray.t) v (w : Carray.t) =
-  for i = 0 to Carray.length u - 1 do
-    u.{i} <- v.(i) *. w.{i}
+let v_prod n (u : Carray.t) uoffs v (w : Carray.t) woffs =
+  for i = 0 to n - 1 do
+    u.{uoffs + i} <- v.(i) *. w.{woffs + i}
   done
 
-let v_zero u = Carray.fill u zero
+let v_zero n u offs =
+  for i = 0 to n - 1 do
+    u.{offs + i} <- zero
+  done
 
 (*
  * This routine sets arrays jg, jig, and jr describing
@@ -369,7 +389,7 @@ let cinit wdata (cdata : Carray.t) =
  * and at time t.
  *)
 
-let web_rates wdata x y t c rate =
+let web_rates wdata x y t (c : Carray.t) (rate : Carray.t) =
   let ns = wdata.ns
   and acoef = wdata.acoef
   and bcoef = wdata.bcoef
@@ -389,7 +409,7 @@ let web_rates wdata x y t c rate =
 
 (* This routine computes the interaction rates for the backward problem *)
 
-let web_rates_b wdata x y t c cB rate rateB =
+let web_rates_b wdata x y t (c : Carray.t) (cB : Carray.t) (rate : Carray.t) (rateB : Carray.t) =
   let ns = wdata.ns
   and acoef = wdata.acoef
   and bcoef = wdata.bcoef in
@@ -475,7 +495,7 @@ let gs_iter wdata gamma zd xd =
     let iyoff = mxns * jy in
     for jx = 0 to mx - 1 do
       let ic = iyoff + ns*jx in
-      v_prod (xd +>+ ic) cof1 (zd +>+ ic) (* x[ic+i] = cof1[i]z[ic+i] *)
+      v_prod ns xd ic cof1 zd ic (* x[ic+i] = cof1[i]z[ic+i] *)
     done
   done;
   Array1.fill zd zero;
@@ -499,51 +519,47 @@ let gs_iter wdata gamma zd xd =
           | 0 ->
             (* jx == 0, jy == 0 *)
             (* x[ic+i] = beta2[i]x[ic+ns+i] + gam2[i]x[ic+mxns+i] *)
-            v_sum_prods
-                (xd +>+ ic) beta2 (xd +>+ (ic + ns)) gam2 (xd +>+ (ic + mxns))
+            v_sum_prods ns xd ic beta2 xd (ic + ns) gam2 xd (ic + mxns)
 
           | 1 ->
             (* 1 <= jx <= mx-2, jy == 0 *)
             (* x[ic+i] = beta[i]x[ic+ns+i] + gam2[i]x[ic+mxns+i] *)
-            v_sum_prods
-                (xd +>+ ic) beta (xd +>+ (ic + ns)) gam2 (xd +>+ (ic + mxns))
+            v_sum_prods ns xd ic beta xd (ic + ns) gam2 xd (ic + mxns)
 
           | 2 ->
             (* jx == mx-1, jy == 0 *)
             (* x[ic+i] = gam2[i]x[ic+mxns+i] *)
-            v_prod (xd +>+ ic) gam2 (xd +>+ (ic + mxns))
+            v_prod ns xd ic gam2 xd (ic + mxns)
 
           | 3 ->
             (* jx == 0, 1 <= jy <= my-2 *)
             (* x[ic+i] = beta2[i]x[ic+ns+i] + gam[i]x[ic+mxns+i] *)
-            v_sum_prods
-                (xd +>+ ic) beta2 (xd +>+ (ic + ns)) gam (xd +>+ (ic + mxns))
+            v_sum_prods ns xd ic beta2 xd (ic + ns) gam xd (ic + mxns)
 
           | 4 ->
             (* 1 <= jx <= mx-2, 1 <= jy <= my-2 *)
             (* x[ic+i] = beta[i]x[ic+ns+i] + gam[i]x[ic+mxns+i] *)
-            v_sum_prods
-                (xd +>+ ic) beta (xd +>+ (ic + ns)) gam (xd +>+ (ic + mxns))
+            v_sum_prods ns xd ic beta xd (ic + ns) gam xd (ic + mxns)
 
           | 5 ->
             (* jx == mx-1, 1 <= jy <= my-2 *)
             (* x[ic+i] = gam[i]x[ic+mxns+i] *)
-            v_prod (xd +>+ ic) gam (xd +>+ (ic + mxns))
+            v_prod ns xd ic gam xd (ic + mxns)
 
           | 6 ->
             (* jx == 0, jy == my-1 *)
             (* x[ic+i] = beta2[i]x[ic+ns+i] *)
-            v_prod (xd +>+ ic) beta2 (xd +>+ (ic + ns))
+            v_prod ns xd ic beta2 xd (ic + ns)
 
           | 7 ->
             (* 1 <= jx <= mx-2, jy == my-1 *)
             (* x[ic+i] = beta[i]x[ic+ns+i] *)
-            v_prod (xd +>+ ic) beta (xd +>+ (ic + ns))
+            v_prod ns xd ic beta xd (ic + ns)
 
           | 8 ->
             (* jx == mx-1, jy == my-1 *)
             (* x[ic+i] = 0.0 *)
-            v_zero (xd +>+ ic)
+            v_zero ns xd ic
 
           | _ -> assert false
         done
@@ -566,58 +582,58 @@ let gs_iter wdata gamma zd xd =
         | 1 ->
           (* 1 <= jx <= mx-2, jy == 0 *)
           (* x[ic+i] += beta[i]x[ic-ns+i] *)
-          v_inc_by_prod (xd +>+ ic) beta (xd +>+ (ic - ns))
+          v_inc_by_prod ns xd ic beta xd (ic - ns)
 
         | 2 ->
           (* jx == mx-1, jy == 0 *)
           (* x[ic+i] += beta2[i]x[ic-ns+i] *)
-          v_inc_by_prod (xd +>+ ic) beta2 (xd +>+ (ic - ns))
+          v_inc_by_prod ns xd ic beta2 xd (ic - ns)
 
         | 3 ->
           (* jx == 0, 1 <= jy <= my-2 *)
           (* x[ic+i] += gam[i]x[ic-mxns+i] *)
-          v_inc_by_prod (xd +>+ ic) gam (xd +>+ (ic - mxns))
+          v_inc_by_prod ns xd ic gam xd (ic - mxns)
 
         | 4 ->
           (* 1 <= jx <= mx-2, 1 <= jy <= my-2 *)
           (* x[ic+i] += beta[i]x[ic-ns+i] + gam[i]x[ic-mxns+i] *)
-          v_inc_by_prod (xd +>+ ic) beta (xd +>+ (ic - ns));
-          v_inc_by_prod (xd +>+ ic) gam (xd +>+ (ic - mxns))
+          v_inc_by_prod ns xd ic beta xd (ic - ns);
+          v_inc_by_prod ns xd ic gam xd (ic - mxns)
 
         | 5 ->
           (* jx == mx-1, 1 <= jy <= my-2 *)
           (* x[ic+i] += beta2[i]x[ic-ns+i] + gam[i]x[ic-mxns+i] *)
-          v_inc_by_prod (xd +>+ ic) beta2 (xd +>+ (ic - ns));
-          v_inc_by_prod (xd +>+ ic) gam (xd +>+ (ic - mxns))
+          v_inc_by_prod ns xd ic beta2 xd (ic - ns);
+          v_inc_by_prod ns xd ic gam xd (ic - mxns)
 
         | 6 ->
           (* jx == 0, jy == my-1 *)
           (* x[ic+i] += gam2[i]x[ic-mxns+i] *)
-          v_inc_by_prod (xd +>+ ic) gam2 (xd +>+ (ic - mxns))
+          v_inc_by_prod ns xd ic gam2 xd (ic - mxns)
 
         | 7 ->
           (* 1 <= jx <= mx-2, jy == my-1 *)
           (* x[ic+i] += beta[i]x[ic-ns+i] + gam2[i]x[ic-mxns+i] *)
-          v_inc_by_prod (xd +>+ ic) beta (xd +>+ (ic - ns));
-          v_inc_by_prod (xd +>+ ic) gam2 (xd +>+ (ic - mxns))
+          v_inc_by_prod ns xd ic beta xd (ic - ns);
+          v_inc_by_prod ns xd ic gam2 xd (ic - mxns)
 
         | 8 ->
           (* jx == mx-1, jy == my-1 *)
           (* x[ic+i] += beta2[i]x[ic-ns+i] + gam2[i]x[ic-mxns+i] *)
-          v_inc_by_prod (xd +>+ ic) beta2 (xd +>+ (ic - ns));
-          v_inc_by_prod (xd +>+ ic) gam2 (xd +>+ (ic - mxns))
+          v_inc_by_prod ns xd ic beta2 xd (ic - ns);
+          v_inc_by_prod ns xd ic gam2 xd (ic - mxns)
 
         | _ -> assert false
       done
     done;
     
     (* Add increment x to z : z <- z+x *)
-    array_ops.Nvector.Mutable.nvlinearsum one zd one xd zd
+    nvlinearsum one zd one xd zd
   done
 
 (* Print maximum sensitivity of G for each species *)
 
-let print_output wdata cdata ns mxns =
+let print_output wdata (cdata : Carray.t) ns mxns =
   let x = ref zero
   and y = ref zero in
 
@@ -642,7 +658,7 @@ let print_output wdata cdata ns mxns =
 
 (* Compute double space integral *)
 
-let double_intgr cdata i wdata =
+let double_intgr (cdata : Carray.t) i wdata =
   let ns   = wdata.ns
   and mx   = wdata.mx
   and my   = wdata.my
@@ -694,7 +710,7 @@ let double_intgr cdata i wdata =
  * and these are saved in fsave for use in preconditioning.
  *)
 
-let f wdata t cdata (cdotdata : Carray.t) =
+let f wdata t (cdata : Carray.t) (cdotdata : Carray.t) =
   let ns    = wdata.ns
   and fsave = wdata.fsave
   and cox   = wdata.cox
@@ -779,7 +795,7 @@ let precond wdata jacarg jok gamma =
      Here, fsave contains the base value of the rate vector and 
      r0 is a minimum increment factor for the difference quotient. *)
 
-  let fac = array_ops.Nvector.Mutable.nvwrmsnorm fc rewtdata in
+  let fac = nvwrmsnorm fc rewtdata in
   let r0 = 1000.0 *. abs_float gamma *. uround *. float (neq + 1) *. fac in
   let r0 = if r0 = zero then one else r0 in
   
@@ -827,7 +843,7 @@ let precond wdata jacarg jok gamma =
  * blocks in P, and pivot information in pivot, and returns the result in z.
  *)
 
-let psolve wdata jac_arg solve_arg z =
+let psolve wdata jac_arg solve_arg (z : Carray.t) =
   let { Cvode.jac_tmp = vtemp; } = jac_arg
   and { Cvode.Spils.rhs = r; Cvode.Spils.gamma = gamma } = solve_arg
   in
@@ -867,7 +883,7 @@ let psolve wdata jac_arg solve_arg z =
  * interaction rates are computed by calls to WebRatesB.
  *)
 
-let fB wdata t cdata cBdata cBdotdata =
+let fB wdata t cdata (cBdata : Carray.t) (cBdotdata : Carray.t) =
   let mxns   = wdata.mxns
   and ns     = wdata.ns
   and fsave  = wdata.fsave
@@ -946,7 +962,7 @@ let precondb wdata jacarg jok gamma =
      Here, fsave contains the base value of the rate vector and 
      r0 is a minimum increment factor for the difference quotient. *)
 
-  let fac = array_ops.Nvector.Mutable.nvwrmsnorm fcBdata rewtdata in
+  let fac = nvwrmsnorm fcBdata rewtdata in
   let r0 = 1000.0 *. abs_float gamma *. uround *. float neq *. fac in
   let r0 = if r0 = zero then one else r0 in
 
