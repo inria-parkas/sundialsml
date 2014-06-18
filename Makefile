@@ -52,7 +52,7 @@ CFLAGS+=-fPIC
 
 .PHONY: all sundials install doc
 
-all: sundials.cma sundials.cmxa sundials_wos.cma sundials_wos.cmxa doc
+all: sundials.cma sundials.cmxa sundials_wos.cma sundials_wos.cmxa
 
 # TODO: fix this:
 sundials.cma sundials.cmxa: sundials.cmo sundials.cmx cvode.cmo cvode.cmx \
