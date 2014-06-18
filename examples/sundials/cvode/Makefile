@@ -135,12 +135,12 @@ cleanall: clean
 .ml.byte:
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
 	    $(INCLUDES) -I ../../../ -dllpath ../../../ bigarray.cma unix.cma \
-	    sundials.cma $<
+	    sundials_wos.cma $<
 
 .ml.opt:
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
 	    $(INCLUDES) -I ../../../ bigarray.cmxa unix.cmxa \
-	    sundials.cmxa $<
+	    sundials_wos.cmxa $<
 
 %.byte.out: %.byte
 	./$< > $@
