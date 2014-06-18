@@ -97,11 +97,11 @@ cvode_ml_nvec.o: cvode_ml_nvec.c spils_ml.h sundials_ml.h cvode_ml.h nvector_ml.
 cvodes_ml.o: cvodes_ml.c spils_ml.h cvode_ml.h cvodes_ml.h sundials_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(CVODES_CFLAGS) -o $@ -c $<
 cvodes_ml_ba.o: cvodes_ml_nvec.c spils_ml.h sundials_ml.h nvector_ml.h \
-    		cvode_ml.h cvodes_ml.h
+		cvode_ml.h cvodes_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(CVODES_CFLAGS) \
 	      -DCVODE_ML_BIGARRAYS -o $@ -c $<
 cvodes_ml_nvec.o: cvodes_ml_nvec.c spils_ml.h sundials_ml.h nvector_ml.h \
-    		  cvode_ml.h cvodes_ml.h
+		  cvode_ml.h cvodes_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
 
 ida_ml.o: ida_ml.c spils_ml.h ida_ml.h

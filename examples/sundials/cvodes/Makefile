@@ -78,11 +78,6 @@ lapack-tests.opt.log: $(LAPACK_EXAMPLES:.ml=.opt.out) \
 
 ##
 
-cvsAdvDiff_ASAi_bnd.byte: cvsAdvDiff_ASAi_bnd.ml
-cvsAdvDiff_ASAi_bnd.opt: cvsAdvDiff_ASAi_bnd.ml
-
-##
-
 clean:
 	-@rm -f $(ALL_EXAMPLES:.ml=.cmo) $(ALL_EXAMPLES:.ml=.cmx)
 	-@rm -f $(ALL_EXAMPLES:.ml=.o) $(ALL_EXAMPLES:.ml=.cmi)
@@ -120,6 +115,5 @@ cleanall: clean
 %.opt.out: %.opt
 	./$< > $@
 
-%.sundials.out : $(EXAMPLESROOT)/cvode/serial/%
+%.sundials.out : $(EXAMPLESROOT)/cvodes/serial/%
 	$< > $@
-
