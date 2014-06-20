@@ -78,6 +78,28 @@ lapack-tests.opt.log: $(LAPACK_EXAMPLES:.ml=.opt.out) \
 
 ##
 
+# Tests with command-line arguments (make same choice as Sundials distrib)
+
+cvsAdvDiff_FSA_non.byte.out: cvsAdvDiff_FSA_non.byte
+	./$< -sensi sim t > $@
+
+cvsDiurnal_FSA_kry.byte.out: cvsDiurnal_FSA_kry.byte
+	./$< -sensi sim t > $@
+
+cvsRoberts_FSA_dns.byte.out: cvsRoberts_FSA_dns.byte
+	./$< -sensi sim t > $@
+
+cvsAdvDiff_FSA_non.opt.out: cvsAdvDiff_FSA_non.opt
+	./$< -sensi sim t > $@
+
+cvsDiurnal_FSA_kry.opt.out: cvsDiurnal_FSA_kry.opt
+	./$< -sensi sim t > $@
+
+cvsRoberts_FSA_dns.opt.out: cvsRoberts_FSA_dns.opt
+	./$< -sensi sim t > $@
+
+##
+
 clean:
 	-@rm -f $(ALL_EXAMPLES:.ml=.cmo) $(ALL_EXAMPLES:.ml=.cmx)
 	-@rm -f $(ALL_EXAMPLES:.ml=.o) $(ALL_EXAMPLES:.ml=.cmi)
@@ -117,3 +139,4 @@ cleanall: clean
 
 %.sundials.out : $(EXAMPLESROOT)/cvodes/serial/%
 	$< > $@
+
