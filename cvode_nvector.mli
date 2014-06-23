@@ -522,12 +522,9 @@ val default_tolerances : 'a tolerance
                 with a specific linear solver, see {!iter},
     - [tol]     specifies the integration tolerances,
     - [f]       is the ODE right-hand side function,
-    - [nroots]  specifies the number of root functions (zero-crossings).
+    - [nroots]  specifies the number of root functions (zero-crossings),
     - [g]       calculates the values of the root functions,
-    - [t0]      is the initial value of the independent variable,
-    - [neqs]    specifies the number of equations (continuous state
-                variables). There is no operation for demanding the length
-                of an 'a nvector, and,
+    - [t0]      is the initial value of the independent variable, and,
     - [y0]      is a vector of initial values, the size of this vector
                 determines the number of equations in the session, see
                 {!Sundials.Carray.t}.
