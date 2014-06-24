@@ -19,23 +19,32 @@ DONE 4. (Tim) Doc generation to work for both OCaml 3.12 and 4.x.
 
 DONE 5. (Tim) Interface to CVODES with maximal reuse and minimal copy-paste
 
-6. (Jun) Interface the Alternate Linear Solver Modules
+6. (Tim) Interface the Alternate Linear Solver Modules
    http://computation.llnl.gov/casc/sundials/documentation/cv_guide/node8.html
 
-7. (Jun) Interface to IDAS with maximal reuse and minimal copy-paste
+7. (Tim) Interface with Parallel NVectors
 
-8. (Jun) OPAM/findlib wrappers.
+8. (Jun) Interface to IDAS with maximal reuse and minimal copy-paste
+
+
+9. (Jun) OPAM/findlib wrappers.
    - Everything properly supported in a toplevel
 
-9. (Tim) Eventual release:
+10. (Jun) Examine performance of examples, especially:
+	sundials/cvodes/cvsFoodWeb_ASAi_kry
+	sundials/cvodes/cvsFoodWeb_ASAp_kry
+
+    Possibly with a Makefile target to generate data comparing the examples
+    executed in C and in OCaml (i.e., two wall-clock times for each example,
+    normalized so that the bar for C is equal to 1; each example executed
+    several times and an average computed).
+
+11. (Tim) Eventual release:
    - Dêpot APP.
    - Repository on Github.
    - Release on Opam.
    - Announce on OCaml and Sundials lists.
 
-10. Examine performance of examples:
-	sundials/cvodes/cvsFoodWeb_ASAi_kry
-	sundials/cvodes/cvsFoodWeb_ASAp_kry
 
 MINOR PATCHES
 -------------
@@ -69,5 +78,7 @@ MINOR PATCHES
 TO DISCUSS
 ----------
 * The above patches.
+
+* Should we remove all examples except the Sundials ones?
 
 
