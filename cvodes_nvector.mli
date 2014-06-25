@@ -1031,10 +1031,8 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
     (** Reinitialize the backward problem.
 
         @cvodes <node7#sss:cvinitb> CVodeReInitB
-        @raise AdjointNotInitialized    The [init] function has not previously
-                                        been called.
-        @raise BadFinalTime      The final time is outside the interval over
-                                 which the forward problem was solved. *)
+        @raise AdjointNotInitialized    The [init] function has not previously been called.
+        @raise BadFinalTime      The final time is outside the interval over which the forward problem was solved. *)
     val reinit : 'a bsession -> float -> 'a nvector -> unit
 
     (** {4:adjbwdintegration Backward Integration} *)
@@ -1045,10 +1043,8 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
         in order to return an approximate value of [y(tbout)].
 
         @cvodes <node7#sss:cvsolveb> CVodeB
-        @raise AdjointNotInitialized    The [init] function has not previously
-                                        been called.
-        @raise NoBackwardProblem        The [init_backward] function has not
-                                        previously been called.
+        @raise AdjointNotInitialized    The [init] function has not previously been called.
+        @raise NoBackwardProblem        The [init_backward] function has not previously been called.
         @raise NoForwardCall            Neither [forward_normal] nor [forward_one_step] has previously been called.
         @raise Cvode.IllInput           One of the inputs is invalid.
         @raise Cvode.TooMuchWork        Could not reach [tout] in [mxstep] steps
