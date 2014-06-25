@@ -44,7 +44,7 @@ module Quadrature :
         The vector of initial values should not include values for the
         quadrature variables.
         + {b Set vector of quadrature variables }
-        {[let yQ = Cvode.Carray.of_array [| 0.0; 0.0 |] ]}
+        {[let yQ = Cvode.RealArray.of_array [| 0.0; 0.0 |] ]}
         The length of this vector determines the number of quadrature variables.    
         + {b Initialize quadrature integration}
         {[init s fQ yQ]}
@@ -194,10 +194,10 @@ module Sensitivity :
            {!Cvode_serial.session} or {!Cvodes_serial.Quadrature.init}}
         {[...]}
         + {b Define the sensitivity problem}
-        {[let p = Cvode.Carray.create np in
+        {[let p = Cvode.RealArray.make np in
 let sp = { pvals = Some p; pbar = ...; plist = ... }]}
         + {b Set sensitivity initial conditions }
-        {[let yS0 = Array.init ns (fun _ -> Carray.init neq 0.0) in]}
+        {[let yS0 = Array.init ns (fun _ -> RealArray.init neq 0.0) in]}
         + {b Activate sensitivity calculations}
         {[init s (SStolerances ...) Simultaneous sp fS yS0]}
         + {b Set optional inputs}
@@ -313,9 +313,9 @@ let sp = { pvals = Some p; pbar = ...; plist = ... }]}
 
         @cvodes <node6#ss:sens_optional_input> CVodeSetSensParams *)
     type sens_params = {
-        pvals  : Sundials.real_array option;
+        pvals  : Sundials.RealArray.t option;
         (** The parameters used to evaluate {i f(t, y, p)}. *)
-        pbar   : Sundials.real_array option;
+        pbar   : Sundials.RealArray.t option;
         (** An array of {i ns} positive scaling factors. *)
         plist  : int array option;
         (** An array of non-negative indices to specify which components
@@ -325,7 +325,7 @@ let sp = { pvals = Some p; pbar = ...; plist = ... }]}
     val no_sens_params : sens_params
 
     type tolerance =
-        SStolerances of float * Sundials.real_array
+        SStolerances of float * Sundials.RealArray.t
         (** [(rel, abs)] : scalar relative and absolute tolerances. *)
       | SVtolerances of float * nvec array
         (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
@@ -517,14 +517,14 @@ let sp = { pvals = Some p; pbar = ...; plist = ... }]}
 
       @cvode <node6#ss:sens_optional_output> CVodeGetStgrSensNumNonlinSolvIters *)
     val get_num_stgr_nonlin_solv_iters : session
-                                         -> Sundials.lint_array -> unit
+                                         -> Sundials.LintArray.t -> unit
 
     (** Returns the number of nonlinear convergence failures that have occurred
         for each sensitivity equation separately, in the [Staggered1] case.
 
       @cvode <node6#ss:sens_optional_output> CVodeGetStgrSensNumNonlinSolvConvFails *)
     val get_num_stgr_nonlin_solv_conv_fails : session
-                                              -> Sundials.lint_array -> unit
+                                              -> Sundials.LintArray.t -> unit
 
     (** {2:quadsens Quadrature Equations} *)
 
@@ -539,7 +539,7 @@ let sp = { pvals = Some p; pbar = ...; plist = ... }]}
             + {b Initialize a session [s] per the skeleton at {!Sensitivity.init}}
             {[...]}
             + {b Set initial values of quadrature variables}
-            {[let yQS = Array.init ns (fun _ -> Carray.of_array [0.0; 0.0]) in]}
+            {[let yQS = Array.init ns (fun _ -> RealArray.of_array [0.0; 0.0]) in]}
             + {b Initialize sensitivity-dependent quadrature integration}
             {[init s fQS yQS]}
             + {b Set optional inputs}
@@ -612,7 +612,7 @@ let sp = { pvals = Some p; pbar = ...; plist = ... }]}
         type tolerance =
             NoStepSizeControl
             (** Do not use quadrature variables for step-size control (default). *)
-          | SStolerances of float * Sundials.real_array
+          | SStolerances of float * Sundials.RealArray.t
             (** [(rel, abs)] : scalar relative and absolute tolerances. *)
           | SVtolerances of float * nvec array
             (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
@@ -723,7 +723,7 @@ module Adjoint :
         + {b Integrate forward problem}
         {[let t, ncheck, r = forward_normal s tout y0]}
         + {b Setup the backward problem and attach a linear solver}
-        {[let yB0 = Carray.of_list [0.0; 0.0; ...]
+        {[let yB0 = RealArray.of_list [0.0; 0.0; ...]
 let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
         + {b Set optional inputs}
         {[set_max_ord bs ...]}

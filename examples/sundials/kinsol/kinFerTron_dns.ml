@@ -47,9 +47,7 @@
  *)
 
 module Kinsol = Kinsol_serial
-module Carray = Sundials.Carray
-
-type real_array = Sundials.real_array
+module RealArray = Sundials.RealArray
 
 let printf = Printf.printf
 let ith v i = v.{i - 1}
@@ -78,8 +76,8 @@ let ith v i = v.{i - 1}
 let set_ith v i e = v.{i - 1} <- e
 
 (* System function for predator-prey system *)
-let lb = Carray.create nvar
-let ub = Carray.create nvar
+let lb = RealArray.make nvar
+let ub = RealArray.make nvar
 
 let func udata fdata =
   let x1  = udata.{0} in
@@ -159,11 +157,11 @@ let main () =
   ub.{1} <- two*.pi;
 
   (* Create serial vectors of length NEQ *)
-  let u1 = Carray.create neq in
-  let u2 = Carray.create neq in
-  let u  = Carray.create neq in
-  let s  = Carray.init neq one in (* no scaling *)
-  let c = Carray.of_list [
+  let u1 = RealArray.make neq in
+  let u2 = RealArray.make neq in
+  let u  = RealArray.make neq in
+  let s  = RealArray.init neq one in (* no scaling *)
+  let c = RealArray.of_list [
      zero; (* no constraint on x1 *)
      zero; (* no constraint on x2 *)
       one; (* l1 = x1 - x1_min >= 0 *)
@@ -193,22 +191,22 @@ let main () =
   printf "  [x1,x2] = ";
   print_output u1;
 
-  Carray.blit u1 u;
+  RealArray.blit u1 u;
   solve_it kmem u s false 1;
 
   (* --------------------------- *)
 
-  Carray.blit u1 u;
+  RealArray.blit u1 u;
   solve_it kmem u s true 1;
 
   (* --------------------------- *)
 
-  Carray.blit u1 u;
+  RealArray.blit u1 u;
   solve_it kmem u s false 0;
 
   (* --------------------------- *)
 
-  Carray.blit u1 u;
+  RealArray.blit u1 u;
   solve_it kmem u s true 0;
 
   (* --------------------------- *)
@@ -218,22 +216,22 @@ let main () =
   printf "  [x1,x2] = ";
   print_output u2;
 
-  Carray.blit u2 u;
+  RealArray.blit u2 u;
   solve_it kmem u s false 1;
 
   (* --------------------------- *)
 
-  Carray.blit u2 u;
+  RealArray.blit u2 u;
   solve_it kmem u s true 1;
 
   (* --------------------------- *)
 
-  Carray.blit u2 u;
+  RealArray.blit u2 u;
   solve_it kmem u s false 0;
 
   (* --------------------------- *)
 
-  Carray.blit u2 u;
+  RealArray.blit u2 u;
   solve_it kmem u s true 0
 
 let _ = main ()

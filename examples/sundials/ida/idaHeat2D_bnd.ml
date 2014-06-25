@@ -31,7 +31,7 @@
  * -----------------------------------------------------------------
  *)
 module Ida = Ida_serial;;
-module Carray = Ida.Carray
+module RealArray = Ida.RealArray
 module Roots = Ida.Roots
 module Dls = Ida.Dls
 module Constraints = Ida.Constraints
@@ -62,7 +62,7 @@ let heatres t u u' resval data =
   and coeff = data.coeff
   in
   (* Initialize resval to u, to take care of boundary equations. *)
-  Carray.blit u resval;
+  RealArray.blit u resval;
 
   (* Loop over interior points; set res = u' - (central difference). *)
   for j = 1 to mm-2 do
@@ -95,7 +95,7 @@ let set_initial_profile data u u' id res =
   done;
 
   (* Initialize u' vector to 0. *)
-  Carray.fill u' 0.;
+  RealArray.fill u' 0.;
 
   (* heatres sets res to negative of ODE RHS values at interior points. *)
   heatres 0. u u' res data;
@@ -147,9 +147,9 @@ let print_output mem t u =
 
 let main () =
   (* Create vectors uu, up, res, constraints, id.  *)
-  let u = Carray.create neq
-  and u' = Carray.create neq
-  and res = Carray.create neq
+  let u = RealArray.make neq
+  and u' = RealArray.make neq
+  and res = RealArray.make neq
   and constraints = Constraints.create neq
   and id = Ida.Id.create neq in
 

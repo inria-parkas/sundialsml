@@ -10,8 +10,8 @@
 (*                                                                     *)
 (***********************************************************************)
 
-type lint_array = Sundials.lint_array
-type real_array = Sundials.real_array
+type lint_array = Sundials.LintArray.t
+type real_array = Sundials.RealArray.t
 
 (* direct linear solvers functions *)
 
@@ -79,13 +79,13 @@ module DenseMatrix =
 
 module ArrayDenseMatrix =
   struct
-    type t = Sundials.Realarray2.t
+    type t = Sundials.RealArray2.t
 
-    let make = Sundials.Realarray2.make
-    let get = Sundials.Realarray2.get
-    let set = Sundials.Realarray2.set
+    let make = Sundials.RealArray2.make
+    let get = Sundials.RealArray2.get
+    let set = Sundials.RealArray2.set
 
-    let copy = Sundials.Realarray2.copyinto
+    let copy = Sundials.RealArray2.copyinto
 
     external scale : float -> t -> unit
         = "c_arraydensematrix_scale"
@@ -173,16 +173,16 @@ module BandMatrix =
 
 module ArrayBandMatrix =
   struct
-    type t = Sundials.Realarray2.t
+    type t = Sundials.RealArray2.t
 
     let make n smu ml =
-      Sundials.Realarray2.make (smu + ml + 1) n
+      Sundials.RealArray2.make (smu + ml + 1) n
 
     let get a smu i j =
-      Sundials.Realarray2.get a (i - j + smu) j
+      Sundials.RealArray2.get a (i - j + smu) j
 
     let set a smu i j v =
-      Sundials.Realarray2.set a (i - j + smu) j v
+      Sundials.RealArray2.set a (i - j + smu) j v
 
     external copy' : t -> t -> int * int * int * int -> unit
         = "c_arraybandmatrix_copy"

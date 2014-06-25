@@ -79,24 +79,24 @@
  *)
 
 module Cvode  = Cvode_serial
-module Carray = Cvode.Carray
+module RealArray = Cvode.RealArray
 module Adj = Cvodes_serial.Adjoint
 module Densemat = Dls.ArrayDenseMatrix
 open Bigarray
 
 (* Same as the functions in Nvector_array.Bigarray.  Redefined here
    for performance. *)
-let nvwrmsnorm (x : Carray.t) (w : Carray.t) =
+let nvwrmsnorm (x : RealArray.t) (w : RealArray.t) =
   let f a x w = a +. ((x *. w) ** 2.0) in
   let rec go acc i =
-    if i < Carray.length x
+    if i < RealArray.length x
     then go (f acc x.{i} w.{i}) (i+1)
     else acc
   in
-  sqrt (go 0.0 0 /. float (Carray.length x))
+  sqrt (go 0.0 0 /. float (RealArray.length x))
 
-let nvlinearsum a (x : Carray.t) b (y : Carray.t) (z : Carray.t) =
-  let lim = Carray.length x - 1 in
+let nvlinearsum a (x : RealArray.t) b (y : RealArray.t) (z : RealArray.t) =
+  let lim = RealArray.length x - 1 in
   for i = 0 to lim do
     z.{i} <- a *. x.{i} +. b *. y.{i}
   done
@@ -120,7 +120,7 @@ let alph  = one
 let np    = 3
 let ns    = (2*np)
 
-let (+>+) (arr : Carray.t) off = Array1.sub arr off ns
+let (+>+) (arr : RealArray.t) off = Array1.sub arr off ns
 
 (* Method Constants *)
 
@@ -158,7 +158,7 @@ let tout  = 10.0
 
 type web_data = {
     p         : Densemat.t array;
-    pivot     : Cvode.lint_array array;
+    pivot     : Sundials.LintArray.t array;
 
     ns        : int;
     mxns      : int;
@@ -190,8 +190,8 @@ type web_data = {
     dy        : float;
     srur      : float;
 
-    fsave     : Cvode.real_array;
-    fbsave    : Cvode.real_array;
+    fsave     : RealArray.t;
+    fbsave    : RealArray.t;
 
     rewt      : Cvode.nvec;
 
@@ -213,17 +213,17 @@ let ispec  =  6  (* species # in objective *)
 
 (* Small Vector Kernels *)
 
-let v_sum_prods n (u : Carray.t) uoffs p (q : Carray.t) qoffs v (w : Carray.t) woffs =
+let v_sum_prods n (u : RealArray.t) uoffs p (q : RealArray.t) qoffs v (w : RealArray.t) woffs =
   for i = 0 to n - 1 do
     u.{uoffs + i} <- p.(i) *. q.{qoffs + i} +. v.(i) *. w.{woffs + i}
   done
 
-let v_inc_by_prod n (u : Carray.t) uoffs v (w : Carray.t) woffs =
+let v_inc_by_prod n (u : RealArray.t) uoffs v (w : RealArray.t) woffs =
   for i = 0 to n - 1 do
     u.{uoffs + i} <- u.{uoffs + i} +. v.(i) *. w.{woffs + i}
   done
 
-let v_prod n (u : Carray.t) uoffs v (w : Carray.t) woffs =
+let v_prod n (u : RealArray.t) uoffs v (w : RealArray.t) woffs =
   for i = 0 to n - 1 do
     u.{uoffs + i} <- v.(i) *. w.{woffs + i}
   done
@@ -275,7 +275,7 @@ let alloc_user_data () =
   let r =
     {
       p          = Array.init ngrp (fun _ -> Densemat.make ns ns);
-      pivot      = Array.init ngrp (fun _ -> Cvode.make_lint_array ns);
+      pivot      = Array.init ngrp (fun _ -> Sundials.LintArray.make ns);
 
       ns         = ns;
       mxns       = mxns;
@@ -307,10 +307,10 @@ let alloc_user_data () =
       dy         = dy;
       srur       = sqrt Cvode.unit_roundoff;
 
-      fsave      = Cvode.make_real_array neq;
-      fbsave     = Cvode.make_real_array neq;
+      fsave      = RealArray.make neq;
+      fbsave     = RealArray.make neq;
 
-      rewt       = Carray.create neq;
+      rewt       = RealArray.make neq;
 
       cvode_mem  = None;
       cvode_memb = None;
@@ -350,7 +350,7 @@ let init_user_data wdata =
 
 (* This routine computes and loads the vector of initial values. *)
 
-let cinit wdata (cdata : Carray.t) =
+let cinit wdata (cdata : RealArray.t) =
   let ns   = wdata.ns
   and mxns = wdata.mxns
   and dx   = wdata.dx
@@ -377,11 +377,11 @@ let cinit wdata (cdata : Carray.t) =
 
 (* This function computes and loads the final values for the adjoint variables *)
 
-let cb_init wdata (cdata : Carray.t) is =
+let cb_init wdata (cdata : RealArray.t) is =
   let ns   = wdata.ns
   and mxns = wdata.mxns
   in
-  let gu = Carray.init ns zero in
+  let gu = RealArray.init ns zero in
   gu.{ispec-1} <- one;
 
   for jy = 0 to my-1 do
@@ -401,7 +401,7 @@ let cb_init wdata (cdata : Carray.t) is =
  * and at time t.
  *)
 
-let web_rates wdata x y t (c : Carray.t) (rate : Carray.t) =
+let web_rates wdata x y t (c : RealArray.t) (rate : RealArray.t) =
   let ns = wdata.ns
   and acoef = wdata.acoef
   and bcoef = wdata.bcoef
@@ -421,7 +421,7 @@ let web_rates wdata x y t (c : Carray.t) (rate : Carray.t) =
 
 (* This routine computes the interaction rates for the backward problem *)
 
-let web_rates_b wdata x y t (c : Carray.t) (cB : Carray.t) (rate : Carray.t) (rateB : Carray.t) =
+let web_rates_b wdata x y t (c : RealArray.t) (cB : RealArray.t) (rate : RealArray.t) (rateB : RealArray.t) =
   let ns = wdata.ns
   and acoef = wdata.acoef
   and bcoef = wdata.bcoef in
@@ -670,7 +670,7 @@ let print_output wdata cdata ns mxns =
 
 (* Compute double space integral *)
 
-let double_intgr (cdata : Carray.t) i wdata =
+let double_intgr (cdata : RealArray.t) i wdata =
   let ns   = wdata.ns
   and mx   = wdata.mx
   and my   = wdata.my
@@ -722,7 +722,7 @@ let double_intgr (cdata : Carray.t) i wdata =
  * and these are saved in fsave for use in preconditioning.
  *)
 
-let f wdata t cdata (cdotdata : Carray.t) =
+let f wdata t cdata (cdotdata : RealArray.t) =
   let ns    = wdata.ns
   and fsave = wdata.fsave
   and cox   = wdata.cox
@@ -817,7 +817,7 @@ let precond wdata jacarg jok gamma =
       let if0 = if00 + jx * mp in
       let ig  = igx + igy * ngx in
       (* Generate ig-th diagonal block *)
-      let pdata = Sundials.Realarray2.unwrap p.(ig) in
+      let pdata = Sundials.RealArray2.unwrap p.(ig) in
       for j = 0 to mp - 1 do
         (* Generate the jth column as a difference quotient *)
         let jj = if0 + j in
@@ -891,7 +891,7 @@ let psolve wdata jac_arg solve_arg z =
  * interaction rates are computed by calls to WebRatesB.
  *)
 
-let fB wdata t (cdata : Carray.t) (cBdata : Carray.t) (cBdotdata : Carray.t) =
+let fB wdata t (cdata : RealArray.t) (cBdata : RealArray.t) (cBdotdata : RealArray.t) =
   let mxns   = wdata.mxns
   and ns     = wdata.ns
   and fsave  = wdata.fsave
@@ -978,7 +978,7 @@ let precondb wdata jacarg jok gamma =
       let if0 = if00 + jx * mp in
       let ig  = igx + igy * ngx in
       (* Generate ig-th diagonal block *)
-      let pdata = Sundials.Realarray2.unwrap p.(ig) in
+      let pdata = Sundials.RealArray2.unwrap p.(ig) in
       for j = 0 to mp - 1 do
         (* Generate the jth column as a difference quotient *)
         let jj = if0 + j in
@@ -1005,7 +1005,7 @@ let precondb wdata jacarg jok gamma =
 
 (* Preconditioner solve function for the backward problem *)
 
-let psolveb wdata jac_arg solve_arg (z : Carray.t) =
+let psolveb wdata jac_arg solve_arg (z : RealArray.t) =
   let { Adj.jac_tmp = vtemp; } = jac_arg
   and { Adj.rvec = r; Adj.gamma = gamma } = solve_arg
   in
@@ -1053,7 +1053,7 @@ let main () =
 
   (* Set-up forward problem *)
   (* Initializations *)
-  let c = Carray.create neq in
+  let c = RealArray.make neq in
   cinit wdata c;
 
   (* Call CVodeCreate/CVodeInit for forward run *)
@@ -1092,7 +1092,7 @@ let main () =
 
   (* Allocate cB *)
   (* Initialize cB = 0 *)
-  let cB = Carray.init neq zero in
+  let cB = RealArray.init neq zero in
   cb_init wdata cB ispec;
 
   (* Create and allocate CVODES memory for backward run *)

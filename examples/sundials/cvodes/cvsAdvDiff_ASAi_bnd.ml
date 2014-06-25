@@ -43,7 +43,7 @@
 
 module Cvode = Cvode_serial
 module Adjoint = Cvodes_serial.Adjoint
-module Carray = Cvode.Carray
+module RealArray = Sundials.RealArray
 module Col = Dls.BandMatrix.Col
 module Dls = Cvode.Dls
 
@@ -271,7 +271,7 @@ let print_output uB data =
 
 let main () =
   (* Create a serial vector *)
-  let u = Carray.create neq in  (* Allocate u vector *)
+  let u = RealArray.make neq in  (* Allocate u vector *)
 
   let reltol = zero  (* Set the tolerances *)
   and abstol = atol
@@ -313,7 +313,7 @@ let main () =
   printf "\nncheck = %d\n" ncheck;
 
   (* Allocate uB *)
-  let uB = Carray.init neq 0.0 in
+  let uB = RealArray.init neq 0.0 in
 
   (* Create and allocate CVODES memory for backward run *)
   printf "\nCreate and allocate CVODES memory for backward run\n";

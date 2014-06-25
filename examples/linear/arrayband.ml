@@ -7,7 +7,7 @@ let printf = Format.printf
 let fprintf = Format.fprintf
 
 let print_mat_data out m =
-  let d = Realarray2.unwrap m in
+  let d = RealArray2.unwrap m in
   let nc = Array2.dim1 d in
   let nr = Array2.dim2 d in
   fprintf out "@[<v>";
@@ -21,7 +21,7 @@ let print_mat_data out m =
   fprintf out "@]"
 
 let print_mat mu ml smu out m =
-  let (nr, nc) = Realarray2.size m in
+  let (nr, nc) = RealArray2.size m in
   fprintf out "@[<v>";
   for i = 0 to nr - 1 do
     fprintf out "@[<h>";
@@ -35,7 +35,7 @@ let print_mat mu ml smu out m =
   fprintf out "@]"
 
 let print_factored_mat mu ml smu out m =
-  let (nr, nc) = Realarray2.size m in
+  let (nr, nc) = RealArray2.size m in
   fprintf out "@[<v>";
   for i = 0 to nr - 1 do
     fprintf out "@[<h>";
@@ -72,7 +72,7 @@ and ml = 1;;
 let smu = min (n - 1) (mu + ml);;
 
 let a = M.make n smu ml;;
-Array2.fill (Realarray2.unwrap a) 0.0;;
+Array2.fill (RealArray2.unwrap a) 0.0;;
 
 M.set a smu 0 0 ( 1.0);
 M.set a smu 0 1 ( 2.0);
@@ -96,7 +96,7 @@ printf "initially: a.data=@\n%a@\n" print_mat_data a;;
 
 printf "initially: a=@\n%a@\n" (print_mat mu ml smu) a;;
 
-let b = Realarray2.copy a;;
+let b = RealArray2.copy a;;
 
 M.scale 2.0 b mu ml smu;
 printf "scale copy x2: b=@\n%a@\n" (print_mat mu ml smu) b;;
@@ -104,13 +104,13 @@ printf "scale copy x2: b=@\n%a@\n" (print_mat mu ml smu) b;;
 M.add_identity b smu;
 printf "add identity: b=@\n%a@\n" (print_mat mu ml smu) b;;
 
-let p = make_lint_array 5;;
+let p = LintArray.make 5;;
 Array1.fill p 0;
 M.gbtrf a mu ml smu p;
 printf "getrf: a=@\n%a@\n" (print_factored_mat mu ml smu) a;
 printf "       p=@\n%a@\n@\n" print_p p;;
 
-let s = make_real_array n;;
+let s = RealArray.make n;;
 s.{0} <-  5.0;
 s.{1} <- 15.0;
 s.{2} <- 31.0;

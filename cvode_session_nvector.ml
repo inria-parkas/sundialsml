@@ -140,7 +140,7 @@ and 'a fsensext = {
     mutable num_sensitivities : int;
     mutable sensarray1        : 'a array;
     mutable sensarray2        : 'a array;
-    mutable senspvals         : Sundials.real_array option;
+    mutable senspvals         : Sundials.RealArray.t option;
                             (* keep a reference to prevent garbage collection *)
 
     mutable sensrhsfn         : (float -> 'a -> 'a -> 'a array

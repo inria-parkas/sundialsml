@@ -221,7 +221,7 @@ let init lmm iter tol f ?(roots=no_roots) ?(t0=0.) y0 =
   let (nroots, roots) = roots in
   if nroots < 0 then
     raise (Invalid_argument "number of root functions is negative");
-  let neqs    = Carray.length y0 in
+  let neqs    = Sundials.RealArray.length y0 in
   let weakref = Weak.create 1 in
   let cvode_mem, backref, err_file = c_init weakref lmm iter y0 t0 in
   (* cvode_mem and backref have to be immediately captured in a session and

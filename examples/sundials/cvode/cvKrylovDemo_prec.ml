@@ -91,7 +91,7 @@
  *)
 
 module Cvode = Cvode_serial
-module Carray = Cvode.Carray
+module RealArray = Cvode.RealArray
 module Roots = Cvode.Roots
 module Densemat = Dls.ArrayDenseMatrix
 open Bigarray
@@ -117,7 +117,7 @@ let alph   = one
 let np     = 3
 let ns     = (2 * np)
 
-let (+>+) (arr : Carray.t) off = Array1.sub arr off ns
+let (+>+) (arr : RealArray.t) off = Array1.sub arr off ns
 
 (* Method Constants *)
 
@@ -163,7 +163,7 @@ let nout       = 18
 
 type web_data = {
     p         : Densemat.t array;
-    pivot     : Cvode.lint_array array;
+    pivot     : Sundials.LintArray.t array;
 
     ns        : int;
     mxns      : int;
@@ -195,7 +195,7 @@ type web_data = {
     dy        : float;
     srur      : float;
 
-    fsave     : Cvode.real_array;
+    fsave     : RealArray.t;
 
     rewt      : Cvode.nvec;
 
@@ -214,15 +214,15 @@ let web_rates wdata x y t c rate =
   and bcoef = wdata.bcoef
   in
   Array1.fill rate zero;
-  for j = 0 to Carray.length c - 1 do
+  for j = 0 to RealArray.length c - 1 do
     let c = c.{j} in
-    for i = 0 to Carray.length rate - 1 do
+    for i = 0 to RealArray.length rate - 1 do
       rate.{i} <- rate.{i} +. c *. acoef.(i).(j)
     done
   done;
 
   let fac = one +. alph *. x *. y in
-  for i = 0 to Carray.length rate - 1 do
+  for i = 0 to RealArray.length rate - 1 do
     rate.{i} <- c.{i} *. (bcoef.(i) *. fac +. rate.{i})
   done
 
@@ -241,8 +241,8 @@ let fblock wdata t cdata jx jy cdotdata =
 
 (* Small Vector Kernels *)
 
-let v_sum_prods (u : Carray.t) p (q : Carray.t) v (w : Carray.t) =
-  for i = 0 to Carray.length u - 1 do
+let v_sum_prods (u : RealArray.t) p (q : RealArray.t) v (w : RealArray.t) =
+  for i = 0 to RealArray.length u - 1 do
     u.{i} <- p.(i) *. q.{i} +. v.(i) *. w.{i}
   done
 
@@ -304,7 +304,7 @@ let precond wdata jacarg jok gamma =
       let if0 = if00 + jx * mp in
       let ig  = igx + igy * ngx in
       (* Generate ig-th diagonal block *)
-      let pdata = Sundials.Realarray2.unwrap p.(ig) in
+      let pdata = Sundials.RealArray2.unwrap p.(ig) in
       for j = 0 to mp - 1 do
         (* Generate the jth column as a difference quotient *)
         let jj = if0 + j in
@@ -329,17 +329,17 @@ let precond wdata jacarg jok gamma =
   Array.iteri f p;
   true
 
-let v_inc_by_prod (u : Carray.t) v (w : Carray.t) =
-  for i = 0 to Carray.length u - 1 do
+let v_inc_by_prod (u : RealArray.t) v (w : RealArray.t) =
+  for i = 0 to RealArray.length u - 1 do
     u.{i} <- u.{i} +. v.(i) *. w.{i}
   done
 
-let v_prod (u : Carray.t) v (w : Carray.t) =
-  for i = 0 to Carray.length u - 1 do
+let v_prod (u : RealArray.t) v (w : RealArray.t) =
+  for i = 0 to RealArray.length u - 1 do
     u.{i} <- v.(i) *. w.{i}
   done
 
-let v_zero u = Carray.fill u zero
+let v_zero u = RealArray.fill u zero
 
 (*
   This routine performs ITMAX=5 Gauss-Seidel iterations to compute an
@@ -574,7 +574,7 @@ let psolve wdata jac_arg solve_arg z =
  returns it in cdot. The interaction rates are computed by calls to WebRates,
  and these are saved in fsave for use in preconditioning.
 *)
-let f wdata t cdata (cdotdata : Carray.t) =
+let f wdata t cdata (cdotdata : RealArray.t) =
   let ns    = wdata.ns
   and fsave = wdata.fsave
   and cox   = wdata.cox
@@ -651,7 +651,7 @@ let alloc_user_data () =
   let r =
     {
       p         = Array.init ngrp (fun _ -> Densemat.make ns ns);
-      pivot     = Array.init ngrp (fun _ -> Cvode.make_lint_array ns);
+      pivot     = Array.init ngrp (fun _ -> Sundials.LintArray.make ns);
 
       ns        = ns;
       mxns      = mxns;
@@ -683,9 +683,9 @@ let alloc_user_data () =
       dy        = dy;
       srur      = sqrt Cvode.unit_roundoff;
 
-      fsave     = Cvode.make_real_array neq;
+      fsave     = RealArray.make neq;
 
-      rewt      = Carray.create neq;
+      rewt      = RealArray.make neq;
 
       cvode_mem = None;
     }
@@ -721,7 +721,7 @@ let init_user_data wdata =
   set_groups my ngy wdata.jgy wdata.jigy wdata.jyr
 
 (* This routine computes and loads the vector of initial values. *)
-let cinit wdata (cdata : Carray.t) =
+let cinit wdata (cdata : RealArray.t) =
   let ns   = wdata.ns
   and mxns = wdata.mxns
   and dx   = wdata.dx
@@ -777,7 +777,7 @@ let print_header jpre gstype =
   printf"\nGram-Schmidt method type is    gstype = %s\n\n\n"
     (if gstype = Spils.ModifiedGS then "MODIFIED_GS" else "CLASSICAL_GS")
 
-let print_all_species (cdata : Carray.t) ns mxns t =
+let print_all_species (cdata : RealArray.t) ns mxns t =
   printf "c values at t = %g:\n\n" t;
 
   for i = 1 to ns do
@@ -847,7 +847,7 @@ let main () =
   and reltol = rtol
   in
   (* Initializations *)
-  let c = Carray.create neq in
+  let c = RealArray.make neq in
   let wdata = alloc_user_data () in
   init_user_data wdata;
   cinit wdata c;

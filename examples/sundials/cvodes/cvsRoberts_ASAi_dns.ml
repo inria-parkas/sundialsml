@@ -58,7 +58,7 @@ module Cvode = Cvode_serial
 module Quad = Cvodes_serial.Quadrature
 module Adj = Cvodes_serial.Adjoint
 module QuadAdj = Cvodes_serial.Adjoint.Quadrature
-module Carray = Cvode.Carray
+module RealArray = Cvode.RealArray
 module Densemat = Dls.DenseMatrix
 
 let printf = Printf.printf
@@ -239,10 +239,10 @@ let main () =
   let data = { p = Array.of_list [ 0.04; 1.0e4; 3.0e7 ] } in
 
   (* Initialize y *)
-  let y = Carray.of_list [ 1.0; zero; zero ] in
+  let y = RealArray.of_list [ 1.0; zero; zero ] in
 
   (* Initialize q *)
-  let q = Carray.of_list [ zero ] in
+  let q = RealArray.of_list [ zero ] in
 
   (* Set the scalar realtive and absolute tolerances reltolQ and abstolQ *)
   let reltolQ = rtol
@@ -276,10 +276,10 @@ let main () =
   printf "--------------------------------------------------------\n\n";
 
   (* Initialize yB *)
-  let yB = Carray.of_list [ zero; zero; zero ] in
+  let yB = RealArray.of_list [ zero; zero; zero ] in
 
   (* Initialize qB *)
-  let qB = Carray.of_list [ zero; zero; zero ] in
+  let qB = RealArray.of_list [ zero; zero; zero ] in
 
   (* Set the scalar relative tolerance reltolB *)
   let reltolB = rtol in

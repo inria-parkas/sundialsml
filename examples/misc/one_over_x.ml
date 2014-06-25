@@ -20,7 +20,7 @@ let g t_s y gout =
 
 (* simulation *)
 
-let y = Cvode.Carray.of_array [| x_i |]
+let y = Sundials.RealArray.of_array [| x_i |]
 
 let s = Cvode.init Cvode.Adams Cvode.Functional Cvode.default_tolerances
                    f ~roots:(1, g) y
@@ -33,7 +33,7 @@ exception Done
 let _ =
   Printf.printf "time\t\t t\n";
   Printf.printf "------------------------------------\n";
-  Cvode.Carray.print_with_time 0.0 y;
+  Sundials.RealArray.print_with_time 0.0 y;
   try
     let i = ref 0 in
     while true do
@@ -42,7 +42,7 @@ let _ =
       Printf.printf "\nstep %3d.\n" !i;
       incr i;
 
-      Cvode.Carray.print_with_time t' y;
+      Sundials.RealArray.print_with_time t' y;
       Printf.printf "\t\t(step size = %e)\n" (Cvode.get_last_step s);
         
       match result with

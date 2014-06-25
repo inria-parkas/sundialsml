@@ -41,32 +41,18 @@ val unit_roundoff : float
  unrecoverable failure. *)
 exception RecoverableFailure
 
-(** {2 Arrays of floats} *)
+(** {2 Arrays} *)
 
-(** A {{:OCAML_DOC_ROOT(Bigarray.Array1)} (Bigarray)} vector of floats. *)
-type real_array =
-  (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
-
-(** [make_real_array n] returns a {!real_array} with [n] elements. *)
-val make_real_array : int -> real_array
-
-(** A {{:OCAML_DOC_ROOT(Bigarray.Array2)} (Bigarray)} 2D vector of floats. *)
-type real_array2 =
-  (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
-
-(** [make_real_array2 m n] returns a {!real_array2} with [m] by [n] elements. *)
-val make_real_array2 : int -> int -> real_array2
-
-(** Utility functions for serial nvectors as used in {!Cvode_serial}. *)
-module Carray :
+module RealArray :
   sig
-    type t = real_array
+    (** A {{:OCAML_DOC_ROOT(Bigarray.Array1)} (Bigarray)} vector of floats. *)
+    type t = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
+
+    (** [make n] returns an array with [n] elements. *)
+    val make : int -> t
 
     (** An array with 0 elements. *)
     val empty : t
-
-    (** [create n] returns an array with [n] elements. *)
-    val create : int -> t
 
     (** [init n x] returns an array with [n] elements, each set to [x]. *)
     val init : int -> float -> t
@@ -92,7 +78,7 @@ module Carray :
     val to_list : t -> float list
 
     (** Create a new array with the same contents as an existing one. *)
-    val of_carray : t -> t
+    val clone : t -> t
 
     (** [blit src dst] copies all elements of array [src] into array [dst]. They
         must both have the same length. *)
@@ -125,14 +111,60 @@ module Carray :
     val mapi : (int -> float -> float) -> t -> unit
   end
 
-(** {2 Arrays of ints} *)
+module RealArray2 :
+  sig
+    (** A {{:OCAML_DOC_ROOT(Bigarray.Array2)} (Bigarray)} 2D vector of floats. *)
+    type data = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
 
-(** A {{:OCAML_DOC_ROOT(Bigarray.Array1)} (Bigarray)} vector of integers. *)
-type lint_array =
-  (int, Bigarray.int_elt, Bigarray.c_layout) Bigarray.Array1.t
+    (** [make m n] returns an [m] by [n] array. *)
+    val make_data : int -> int -> data
 
-(** [make_lint_array n] returns a {!lint_array} with [n] elements. *)
-val make_lint_array  : int -> lint_array
+    (** The underlying data is stored as a two-dimensional
+       {{:OCAML_DOC_ROOT(Bigarray.Array2)}Bigarray} of floats.
+       Note that, in the underlying array, Sundials stores columns
+       in the first dimension and rows in the second. So, the value
+       at row [i] and column [j] in an array [m] is [m.{j}.{i}].
+     *)
+    type t
+
+    (** [make nr nc] creates an [nr] by [nc] wrapped array. *)
+    val make : int -> int -> t
+
+    (** [get a i j] gives the value of the [(i, j)]th element of [a]. *)
+    val get : t -> int -> int -> float
+
+    (** [set a i j v] sets the value of the [(i, j)]th element of [a] to [v]. *)
+    val set : t -> int -> int -> float -> unit
+
+    (** [nr, nc = size a] gives the number of rows, [nr], and the number of
+        columns, [nc], in [a] *)
+    val size : t -> int * int
+
+    (** [copy a] creates a copy of [a] and its underlying {!real_array2}
+        array. *)
+    val copy : t -> t
+
+    (** [copyinto a b] copies the contents of [a] into [b]. Both arrays
+        must have the same dimensions. *)
+    val copyinto : t -> t -> unit
+
+    (** Creates a new array from an existing {!real_array2}; changes to either
+        array affect the other (i.e., they share the same underlying storage). *)
+    val wrap : data -> t
+
+    (** Returns an underlying {!real_array2}; changes to either array affect the
+        other (i.e., they share the same underlying storage). *)
+    val unwrap : t -> data
+  end
+
+module LintArray :
+  sig
+    (** A {{:OCAML_DOC_ROOT(Bigarray.Array1)} (Bigarray)} vector of integers. *)
+    type t = (int, Bigarray.int_elt, Bigarray.c_layout) Bigarray.Array1.t
+
+    (** [make_lint_array n] returns a {!lint_array} with [n] elements. *)
+    val make  : int -> t
+  end
 
 (** {2 Arrays of roots (zero-crossings)} *)
 
@@ -140,7 +172,7 @@ val make_lint_array  : int -> lint_array
 module Roots :
   sig
     type t
-    type val_array = Carray.t
+    type val_array = RealArray.t
 
     type root_event =
       | NoRoot      (** No root (0)       *)
@@ -307,49 +339,6 @@ module RootDirs :
     val to_list : t -> root_direction list
   end
 
-(** {2 Two-dimensional arrays of arrays of reals} *)
-
-(** Arrays of pointers to arrays of reals. *)
-module Realarray2 :
-  sig
-    (** The underlying data is stored as a two-dimensional
-       {{:OCAML_DOC_ROOT(Bigarray.Array2)}Bigarray} of floats.
-       Note that, in the underlying array, Sundials stores columns
-       in the first dimension and rows in the second. So, the value
-       at row [i] and column [j] in an array [m] is [m.{j}.{i}].
-     *)
-    type t
-
-    (** [make nr nc] creates an [nr] by [nc] wrapped array. *)
-    val make : int -> int -> t
-
-    (** [get a i j] gives the value of the [(i, j)]th element of [a]. *)
-    val get : t -> int -> int -> float
-
-    (** [set a i j v] sets the value of the [(i, j)]th element of [a] to [v]. *)
-    val set : t -> int -> int -> float -> unit
-
-    (** [nr, nc = size a] gives the number of rows, [nr], and the number of
-        columns, [nc], in [a] *)
-    val size : t -> int * int
-
-    (** [copy a] creates a copy of [a] and its underlying {!real_array2}
-        array. *)
-    val copy : t -> t
-
-    (** [copyinto a b] copies the contents of [a] into [b]. Both arrays
-        must have the same dimensions. *)
-    val copyinto : t -> t -> unit
-
-    (** Creates a new array from an existing {!real_array2}; changes to either
-        array affect the other (i.e., they share the same underlying storage). *)
-    val wrap : real_array2 -> t
-
-    (** Returns an underlying {!real_array2}; changes to either array affect the
-        other (i.e., they share the same underlying storage). *)
-    val unwrap : t -> real_array2
-  end
-
 (** {2 Solver results and error reporting} *)
 
 (**
@@ -383,7 +372,7 @@ type error_details = {
     right.  *)
 val print_time : string * string -> float -> unit
 
-(** Controls the precision of {!print_time} and {!Carray.print_with_time}.
+(** Controls the precision of {!print_time} and {!RealArray.print_with_time}.
  
     If [true] the format [%.15e] is used, otherwise [%e]
     (the default) is used. *)

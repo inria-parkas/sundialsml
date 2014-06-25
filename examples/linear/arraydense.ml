@@ -7,7 +7,7 @@ let printf = Format.printf
 let fprintf = Format.fprintf
 
 let print_mat out m =
-  let (nr, nc) = Realarray2.size m in
+  let (nr, nc) = RealArray2.size m in
   fprintf out "@[<v>";
   for i = 0 to nr - 1 do
     fprintf out "@[<h>";
@@ -51,7 +51,7 @@ M.set a 2 2 (-3.0);;
 
 printf "initially: a=@\n%a@\n" print_mat a;;
 
-let b = Realarray2.copy a;;
+let b = RealArray2.copy a;;
 
 M.scale 2.0 b;
 printf "scale copy x2: b=@\n%a@\n" print_mat b;;
@@ -59,13 +59,13 @@ printf "scale copy x2: b=@\n%a@\n" print_mat b;;
 M.add_identity b;
 printf "add identity: b=@\n%a@\n" print_mat b;;
 
-let p = make_lint_array nrows;;
+let p = LintArray.make nrows;;
 Array1.fill p 0;
 M.getrf a p;
 printf "getrf: a=@\n%a@\n" print_mat a;
 printf "       p=@\n%a@\n@\n" print_p p;;
 
-let s = make_real_array nrows;;
+let s = RealArray.make nrows;;
 s.{0} <-  5.0;
 s.{1} <- 18.0;
 s.{2} <-  6.0;

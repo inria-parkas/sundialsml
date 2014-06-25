@@ -66,7 +66,7 @@ exception Done
 
 let run_experiment with_zeros with_reinit =
   disc_state := RampingUp;
-  let y = Cvode.Carray.of_array [| t_i; y_i |] in
+  let y = Sundials.RealArray.of_array [| t_i; y_i |] in
 
   let gg = if with_zeros then (2, g) else Cvode.no_roots in
   let ff = if with_zeros then f1 else f2 in

@@ -195,14 +195,14 @@ module Quadrature =
 module Sensitivity =
   struct
     type tolerance =
-        SStolerances of float * Sundials.real_array
+        SStolerances of float * Sundials.RealArray.t
       | SVtolerances of float * nvec array
       | EEtolerances
 
     external set_err_con : session -> bool -> unit
         = "c_cvodes_sens_set_err_con"
 
-    external ss_tolerances  : session -> float -> Sundials.real_array -> unit
+    external ss_tolerances  : session -> float -> Sundials.RealArray.t -> unit
         = "c_cvodes_sens_ss_tolerances"
 
     external ee_tolerances  : session -> unit
@@ -269,8 +269,8 @@ module Sensitivity =
                  -> der_array -> nvec -> nvec -> unit) option
 
     type sens_params = {
-        pvals  : Sundials.real_array option;
-        pbar   : Sundials.real_array option;
+        pvals  : Sundials.RealArray.t option;
+        pbar   : Sundials.RealArray.t option;
         plist  : int array option;
       }
 
@@ -407,7 +407,7 @@ module Sensitivity =
         = "c_cvodes_sens_get_nonlin_solv_stats"
 
     external c_get_num_stgr_nonlin_solv_iters
-        : session -> Sundials.lint_array -> unit
+        : session -> Sundials.LintArray.t -> unit
         = "c_cvodes_sens_get_num_stgr_nonlin_solv_iters"
 
     let get_num_stgr_nonlin_solv_iters s r =
@@ -416,7 +416,7 @@ module Sensitivity =
       c_get_num_stgr_nonlin_solv_iters s r
 
     external c_get_num_stgr_nonlin_solv_conv_fails
-        : session -> Sundials.lint_array -> unit
+        : session -> Sundials.LintArray.t -> unit
         = "c_cvodes_sens_get_num_stgr_nonlin_solv_conv_fails"
 
     let get_num_stgr_nonlin_solv_conv_fails s r =
@@ -475,14 +475,14 @@ module Sensitivity =
 
         type tolerance =
             NoStepSizeControl
-          | SStolerances of float * Sundials.real_array
+          | SStolerances of float * Sundials.RealArray.t
           | SVtolerances of float * nvec array
           | EEtolerances
 
         external set_err_con : session -> bool -> unit
             = "c_cvodes_quadsens_set_err_con"
 
-        external ss_tolerances  : session -> float -> Sundials.real_array
+        external ss_tolerances  : session -> float -> Sundials.RealArray.t
                                              -> unit
             = "c_cvodes_quadsens_ss_tolerances"
 
@@ -833,7 +833,7 @@ module Adjoint =
     let init_backward s lmm iter tol mf t0 y0 =
       let { bsessions } as se = fwdsensext s in
       let ns = num_sensitivities s in
-      let neqs = Carray.length y0 in
+      let neqs = Sundials.RealArray.length y0 in
       let weakref = Weak.create 1 in
       let cvode_mem, which, backref, err_file =
         match mf with

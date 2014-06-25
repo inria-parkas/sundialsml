@@ -76,7 +76,8 @@ MINOR PATCHES
 
 6. All call-back functions to be typed/documented as per CVODES.
 
-7. Rename Carray to Realarray?
+7. (Done) Rename Carray to Realarray?
+   Rename create functions to make?
 
 TO DISCUSS
 ----------

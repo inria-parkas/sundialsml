@@ -187,14 +187,14 @@ module Quadrature =
 module Sensitivity =
   struct
     type 'a tolerance =
-        SStolerances of float * Sundials.real_array
+        SStolerances of float * Sundials.RealArray.t
       | SVtolerances of float * 'a nvector array
       | EEtolerances
 
     external set_err_con : 'a session -> bool -> unit
         = "c_cvodes_sens_set_err_con"
 
-    external ss_tolerances  : 'a session -> float -> Sundials.real_array -> unit
+    external ss_tolerances  : 'a session -> float -> Sundials.RealArray.t -> unit
         = "c_cvodes_sens_ss_tolerances"
 
     external ee_tolerances  : 'a session -> unit
@@ -257,8 +257,8 @@ module Sensitivity =
           (float -> 'a -> 'a -> int -> 'a -> 'a -> 'a -> 'a -> unit) option
 
     type sens_params = {
-        pvals  : Sundials.real_array option;
-        pbar   : Sundials.real_array option;
+        pvals  : Sundials.RealArray.t option;
+        pbar   : Sundials.RealArray.t option;
         plist  : int array option;
       }
 
@@ -395,7 +395,7 @@ module Sensitivity =
         = "c_cvodes_sens_get_nonlin_solv_stats"
 
     external c_get_num_stgr_nonlin_solv_iters
-        : 'a session -> Sundials.lint_array -> unit
+        : 'a session -> Sundials.LintArray.t -> unit
         = "c_cvodes_sens_get_num_stgr_nonlin_solv_iters"
 
     let get_num_stgr_nonlin_solv_iters s r =
@@ -404,7 +404,7 @@ module Sensitivity =
       c_get_num_stgr_nonlin_solv_iters s r
 
     external c_get_num_stgr_nonlin_solv_conv_fails
-        : 'a session -> Sundials.lint_array -> unit
+        : 'a session -> Sundials.LintArray.t -> unit
         = "c_cvodes_sens_get_num_stgr_nonlin_solv_conv_fails"
 
     let get_num_stgr_nonlin_solv_conv_fails s r =
@@ -463,14 +463,14 @@ module Sensitivity =
 
         type 'a tolerance =
             NoStepSizeControl
-          | SStolerances of float * Sundials.real_array
+          | SStolerances of float * Sundials.RealArray.t
           | SVtolerances of float * 'a nvector array
           | EEtolerances
 
         external set_err_con : 'a session -> bool -> unit
             = "c_cvodes_quadsens_set_err_con"
 
-        external ss_tolerances  : 'a session -> float -> Sundials.real_array
+        external ss_tolerances  : 'a session -> float -> Sundials.RealArray.t
                                              -> unit
             = "c_cvodes_quadsens_ss_tolerances"
 

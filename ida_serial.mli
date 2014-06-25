@@ -49,7 +49,7 @@ include module type of Ida
 
     A skeleton of the main program:
     + {b Set vector of initial values}
-    {[let y = Ida.Carray.of_array [| 0.0; 0.0; 0.0 |] ]}
+    {[let y = Ida.RealArray.of_array [| 0.0; 0.0; 0.0 |] ]}
     The length of this vector determines the problem size.
     + {b Create and initialize a solver session}
     {[let s = Ida.init Ida.Dense tols f ~roots:(2, g) y]}
@@ -77,15 +77,15 @@ t := t' + 0.1]}
 type session
 
 (** The type of vectors passed to the solver. *)
-type nvec = Sundials.Carray.t
+type nvec = Sundials.RealArray.t
 
 (** The type of vectors containing dependent variable values, passed from the
    solver to callback functions. *)
-type val_array = Sundials.Carray.t
+type val_array = Sundials.RealArray.t
 
 (** The type of vectors containing derivative values, passed from the
    solver to callback functions. *)
-type der_array = Sundials.Carray.t
+type der_array = Sundials.RealArray.t
 
 (** The type of vectors containing detected roots (zero-crossings). *)
 type root_array = Sundials.Roots.t
@@ -670,7 +670,7 @@ val default_tolerances : tolerance
                 defaults to 0,
     - [y0]      is a vector of initial values for the dependent-variable vector
                 [y].  This vector's size determines the number of equations
-                in the session, see {!Sundials.Carray.t}, and,
+                in the session, see {!Sundials.RealArray.t}, and,
     - [y'0]     is a vector of initial values for [y'], i.e. the derivative
                 of [y] with respect to t.  This vector's size must match the
                 size of [y0].

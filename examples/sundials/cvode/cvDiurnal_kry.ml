@@ -35,7 +35,7 @@
  *)
 
 module Cvode  = Cvode_serial
-module Carray = Cvode.Carray
+module RealArray = Cvode.RealArray
 module Roots  = Cvode.Roots
 module Direct = Dls.ArrayDenseMatrix
  
@@ -119,7 +119,7 @@ let set_ijth v i j e = Direct.set v (i - 1) (j - 1) e
 type user_data = {
         p          : Direct.t array array;
         jbd        : Direct.t array array;
-        pivot      : Cvode.lint_array array array;
+        pivot      : Sundials.LintArray.t array array;
         mutable q4 : float;
         om         : float;
         dx         : float;
@@ -137,7 +137,7 @@ let sqr x = x ** 2.0
 
 let alloc_user_data () =
   let new_dmat _ = Direct.make num_species num_species in
-  let new_int1 _  = Cvode.make_lint_array num_species in
+  let new_int1 _  = Sundials.LintArray.make num_species in
   let new_y_arr elinit _ = Array.init my elinit in
   let new_xy_arr elinit  = Array.init mx (new_y_arr elinit) in
   {
@@ -549,7 +549,7 @@ let psolve data jac_arg solve_arg zdata =
 let main () =
 
   (* Allocate memory, and set problem data, initial values, tolerances *) 
-  let u = Carray.create neq in
+  let u = RealArray.make neq in
   let data = init_user_data (alloc_user_data ()) in
   set_initial_profiles u data.dx data.dy;
 

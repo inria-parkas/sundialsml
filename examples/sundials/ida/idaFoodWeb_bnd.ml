@@ -83,7 +83,7 @@
  * -----------------------------------------------------------------
  *)
 module Ida = Ida_serial
-module Carray = Ida.Carray
+module RealArray = Ida.RealArray
 module Roots = Ida.Roots
 module Matrix = Dls.ArrayDenseMatrix
 
@@ -141,7 +141,7 @@ type user_data =
     cox   : float array;
     coy   : float array;
     bcoef : float array;
-    rates : Carray.t
+    rates : RealArray.t
   }
 
 (* init_user_data: Load problem constants in webdata (of type user_data).  *)
@@ -158,7 +158,7 @@ let init_user_data () =
       cox   = Array.make num_species 0.;
       coy   = Array.make num_species 0.;
       bcoef = Array.make num_species 0.;
-      rates = Carray.create neq;
+      rates = RealArray.make neq;
     } in
   (* Set up shorthands. *)
   let acoef = webdata.acoef
@@ -375,8 +375,8 @@ let print_final_stats mem =
 
 let main () =
   let webdata = init_user_data ()
-  and c  = Carray.create neq
-  and c' = Carray.create neq
+  and c  = RealArray.make neq
+  and c' = RealArray.make neq
   and id = Ida.Id.create neq in
   set_initial_profiles webdata c c' id;
   (* Set remaining inputs to IDAInit. *)

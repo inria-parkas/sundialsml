@@ -66,7 +66,7 @@ exception StopTimeReached
 
 module VarTypes =
   struct
-    type t = Carray.t
+    type t = RealArray.t
     type var_type = Algebraic | Differential
 
     let var_type_of_float = function
@@ -78,15 +78,15 @@ module VarTypes =
       | Algebraic -> 0.0
       | Differential -> 1.0
 
-    let create = Carray.create
-    let init n x = Carray.init n (float_of_var_type x)
+    let create = RealArray.make
+    let init n x = RealArray.init n (float_of_var_type x)
     let of_array a =
       let ret = create (Array.length a) in
       for i = 0 to Array.length a - 1 do
         ret.{i} <- float_of_var_type a.(i)
       done;
       ret
-    let length = Carray.length
+    let length = RealArray.length
 
     let get a i = var_type_of_float a.{i}
     let set a i x = a.{i} <- float_of_var_type x
@@ -94,9 +94,9 @@ module VarTypes =
     and set_differential a i = set a i Differential
     let fill a t =
       let x = float_of_var_type t in
-      Carray.fill a x
+      RealArray.fill a x
 
-    let blit a b = Carray.blit a b
+    let blit a b = RealArray.blit a b
   end
 module Id = VarTypes
 

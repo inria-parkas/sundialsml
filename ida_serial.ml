@@ -12,9 +12,9 @@
 
 include Ida
 
-type nvec = Sundials.Carray.t
-type val_array = Sundials.Carray.t
-type der_array = Sundials.Carray.t
+type nvec = Sundials.RealArray.t
+type val_array = Sundials.RealArray.t
+type der_array = Sundials.RealArray.t
 
 type root_array = Sundials.Roots.t
 type root_val_array = Sundials.Roots.val_array
@@ -267,10 +267,10 @@ let init linsolv tol resfn ?(roots=no_roots) ?(t0=0.) y y' =
   let (nroots, rootsfn) = roots in
   if nroots < 0 then
     raise (Invalid_argument "number of root functions is negative");
-  let neqs = Sundials.Carray.length y in
+  let neqs = Sundials.RealArray.length y in
   (* IDA doesn't check if y and y' have the same length, and corrupt memory if
    * they don't.  *)
-  if neqs <> Sundials.Carray.length y' then
+  if neqs <> Sundials.RealArray.length y' then
     raise (Invalid_argument "y and y' have inconsistent sizes");
   let weakref = Weak.create 1 in
   let (ida_mem, backref, err_file) = c_init weakref t0 y y' in
@@ -572,9 +572,9 @@ module Constraints =
       | Positive      -> 2.0
       | Negative      -> -2.0
 
-    let create = Carray.create
-    let init n v = Carray.init n (float_of_constraint_type v)
-    let length = Carray.length
+    let create = RealArray.make
+    let init n v = RealArray.init n (float_of_constraint_type v)
+    let length = RealArray.length
     let of_array a =
       let ret = create (Array.length a) in
       for i = 0 to Array.length a - 1 do
@@ -586,9 +586,9 @@ module Constraints =
     let set a i x = a.{i} <- float_of_constraint_type x
     let fill a t =
       let x = float_of_constraint_type t in
-      Carray.fill a x
+      RealArray.fill a x
 
-    let blit a b = Carray.blit a b
+    let blit a b = RealArray.blit a b
   end
 
 external set_constraints : session -> Constraints.t -> unit
@@ -608,7 +608,7 @@ external c_calc_ic_y : session -> val_array option -> float -> unit
 let calc_ic_y session ?y tout1 =
   let len = function
     | None -> neqs session
-    | Some x -> Carray.length x
+    | Some x -> RealArray.length x
   in
   if len y <> neqs session then
     invalid_arg "calc_ic_y: ~y has incorrect length";
@@ -622,7 +622,7 @@ let calc_ic_ya_yd' session ?y ?y' id tout1 =
     invalid_arg "calc_ic_ya_yd': variable type array (of type VarTypes.t) has incorrect length";
   let len = function
     | None -> neqs session
-    | Some x -> Carray.length x
+    | Some x -> RealArray.length x
   in
   if len y <> neqs session then
     invalid_arg "calc_ic_ya_yd': ~y has incorrect length";

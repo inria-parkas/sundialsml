@@ -12,7 +12,7 @@
 
 include Kinsol (* Need to register shared exceptions *)
 
-type nvec = Sundials.Carray.t
+type nvec = Sundials.RealArray.t
 
 type single_tmp = nvec
 type double_tmp = nvec * nvec
@@ -508,7 +508,7 @@ external c_init
     = "c_ba_kinsol_init"
 
 let init lsolver f u0 =
-  let neqs = Sundials.Carray.length u0 in
+  let neqs = Sundials.RealArray.length u0 in
   let weakref = Weak.create 1 in
   let kin_mem, backref, err_file, info_file = c_init weakref u0
   in

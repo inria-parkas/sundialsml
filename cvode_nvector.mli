@@ -527,7 +527,7 @@ val default_tolerances : 'a tolerance
     - [t0]      is the initial value of the independent variable, and,
     - [y0]      is a vector of initial values, the size of this vector
                 determines the number of equations in the session, see
-                {!Sundials.Carray.t}.
+                {!Sundials.RealArray.t}.
 
     The labeled arguments [roots] and [t0] are both optional and default to
     {!Cvode.no_roots} (i.e. no root finding is done) and [0.0], respectively.

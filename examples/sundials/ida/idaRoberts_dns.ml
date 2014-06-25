@@ -27,7 +27,7 @@
  * -----------------------------------------------------------------
  *)
 module Ida = Ida_serial;;
-module Carray = Ida.Carray
+module RealArray = Ida.RealArray
 module Roots = Ida.Roots
 
 let printf = Printf.printf
@@ -138,12 +138,12 @@ and grob t y y' gout =
 
 let main () =
   (* Create and initialize y, y', and absolute tolerance vectors.  For larger
-   * vectors, you might want to use Carray.create instead of Carray.of_array to
+   * vectors, you might want to use RealArray.create instead of RealArray.of_array to
    * avoid making large temporary OCaml arrays.  *)
-  let y = Carray.of_array [|1.; 0.; 0.|]
-  and y' = Carray.of_array [|-0.04; 0.04; 0.|]
+  let y = RealArray.of_array [|1.; 0.; 0.|]
+  and y' = RealArray.of_array [|-0.04; 0.04; 0.|]
   and rtol = 1.0e-4
-  and avtol = Carray.of_array [|1.0e-8; 1.0e-14; 1.0e-6|] in
+  and avtol = RealArray.of_array [|1.0e-8; 1.0e-14; 1.0e-6|] in
   (* Integration limits *)
   let t0 = 0.0
   and tout1 = 0.4

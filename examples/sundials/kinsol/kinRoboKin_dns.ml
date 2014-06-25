@@ -23,9 +23,7 @@
  *)
 
 module Kinsol = Kinsol_serial
-module Carray = Sundials.Carray
-
-type real_array = Sundials.real_array
+module RealArray = Sundials.RealArray
 
 let printf = Printf.printf
 
@@ -218,18 +216,18 @@ let main () =
   printf "KINSOL problem size: 8 + 2*8 = 24 \n\n";
 
   (* Create vectors for solution, scales, and constraints *)
-  let y = Carray.init neq one in
+  let y = RealArray.init neq one in
   for i = 1 to nvar do
     set_ith y i (sqrt(two) /. two)
   done;
-  let scale = Carray.init neq one in
+  let scale = RealArray.init neq one in
 
   (* Initialize and allocate memory for KINSOL *)
   (* Attach dense linear solver *)
   let kmem = Kinsol.init (Kinsol.Dense (Some jac)) func y in
 
   (* Set optional inputs *)
-  let constraints = Carray.init neq zero in
+  let constraints = RealArray.init neq zero in
   for i=nvar+1 to neq do
     set_ith constraints i one
   done;

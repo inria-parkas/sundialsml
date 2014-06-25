@@ -57,7 +57,7 @@
  *)
 
 module Cvode = Cvode_serial
-module Carray = Cvode.Carray
+module RealArray = Cvode.RealArray
 module Roots = Cvode.Roots
 module Densematrix = Dls.DenseMatrix
 module Bandmatrix = Dls.BandMatrix
@@ -283,7 +283,7 @@ let snd_true (x, _) = (x, true)
 
 let problem1 () =
   let nerr = ref 0 in
-  let y = Carray.create p1_neq in
+  let y = RealArray.make p1_neq in
   let init_y () = (y.{0} <- two; y.{1} <- zero) in
   print_intro1 ();
 
@@ -403,8 +403,8 @@ let max_error ydata t =
 
 let problem2 () =
   let nerr = ref 0 in
-  let y = Carray.create p2_neq in
-  let init_y () = (Cvode.Carray.fill y zero; y.{0} <- one) in
+  let y = RealArray.make p2_neq in
+  let init_y () = (Cvode.RealArray.fill y zero; y.{0} <- one) in
   print_intro2 ();
 
   let run cvode_mem lmm miter =

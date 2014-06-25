@@ -493,7 +493,7 @@ val default_tolerances : 'a tolerance
                 defaults to 0,
     - [y0]      is a vector of initial values for the dependent-variable vector
                 [y].  This vector's size determines the number of equations
-                in the session, see {!Sundials.Carray.t}, and,
+                in the session, see {!Sundials.RealArray.t}, and,
     - [y'0]     is a vector of initial values for [y'], i.e. the derivative
                 of [y] with respect to t.  This vector's size must match the
                 size of [y0].

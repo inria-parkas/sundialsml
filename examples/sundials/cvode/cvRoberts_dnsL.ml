@@ -30,7 +30,7 @@
  *)
 
 module Cvode = Cvode_serial
-module Carray = Cvode.Carray
+module RealArray = Cvode.RealArray
 module Roots = Cvode.Roots
 module Dls = Cvode.Dls
 
@@ -118,8 +118,8 @@ let print_final_stats s =
 
 let main () =
   (* Create serial vector of length NEQ for I.C. and abstol *)
-  let y = Carray.create neq
-  and abstol = Carray.create neq
+  let y = RealArray.make neq
+  and abstol = RealArray.make neq
   and roots = Roots.create nroots
   in
   let r = Roots.get' roots in

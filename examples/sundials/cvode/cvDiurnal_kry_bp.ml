@@ -34,7 +34,7 @@
  *)
 
 module Cvode  = Cvode_serial
-module Carray = Cvode.Carray
+module RealArray = Cvode.RealArray
 module Roots  = Cvode.Roots
 module Direct = Dls.ArrayDenseMatrix
 module BandPrec = Cvode.BandPrec 
@@ -315,7 +315,7 @@ let main () =
   *)
 
   (* Allocate and initialize u, and set problem data and tolerances *)
-  let u = Carray.create neq in
+  let u = RealArray.make neq in
   let data = init_user_data () in
   set_initial_profiles u data.dx data.dy;
 

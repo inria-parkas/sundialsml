@@ -21,9 +21,7 @@
  *)
 
 module Kinsol = Kinsol_serial
-module Carray = Sundials.Carray
-
-type real_array = Sundials.real_array
+module RealArray = Sundials.RealArray
 
 let printf = Printf.printf
 let ith v i = v.{i - 1}
@@ -141,7 +139,7 @@ let main () =
   (* -------------
    * Initial guess 
    * ------------- *)
-  let y = Carray.init neq zero in
+  let y = RealArray.init neq zero in
 
   (* -----------------------------------------
    * Initialize and allocate memory for KINSOL
@@ -175,7 +173,7 @@ let main () =
    * ---------------------------- *)
 
   (* No scaling used *)
-  let scale = Carray.init neq one in
+  let scale = RealArray.init neq one in
 
   (* Call main solver *)
   ignore (Kinsol.solve

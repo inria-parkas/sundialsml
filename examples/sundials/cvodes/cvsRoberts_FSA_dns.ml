@@ -49,7 +49,7 @@
 
 module Cvode = Cvode_serial
 module Sens = Cvodes_serial.Sensitivity
-module Carray = Cvode.Carray
+module RealArray = Cvode.RealArray
 module Densemat = Dls.DenseMatrix
 
 let printf = Printf.printf
@@ -273,7 +273,7 @@ let main () =
   let data = { p = Array.of_list [ 0.04; 1.0e4; 3.0e7 ] } in
 
   (* Initial conditions *)
-  let y = Carray.of_list [y1; y2; y3] in
+  let y = RealArray.of_list [y1; y2; y3] in
 
   (* Create CVODES object *)
   let cvode_mem =
@@ -288,9 +288,9 @@ let main () =
     match sensi with
     | None -> (printf "Sensitivity: NO "; (fun _ -> ()))
     | Some sensi_meth -> begin
-        let pbar = Carray.of_array data.p in
+        let pbar = RealArray.of_array data.p in
 
-        let yS = Array.init ns (fun _ -> Carray.init neq 0.0) in
+        let yS = Array.init ns (fun _ -> RealArray.init neq 0.0) in
 
         Sens.init cvode_mem
                          Sens.EEtolerances

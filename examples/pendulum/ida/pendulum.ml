@@ -145,7 +145,7 @@ module Ida = Ida_serial
 module Matrix = Dls.DenseMatrix
 let pi = 4. *. atan (1.)
 let degree_to_radian x = x *. pi /. 180.
-let show_nvector (a : Ida_serial.Carray.t) =
+let show_nvector (a : Sundials.RealArray.t) =
   let n = Bigarray.Array1.dim a in
   let str = ref "[" in
   for i = 0 to n-2 do
@@ -189,8 +189,8 @@ let neqs   = 5
 (* Number of residues should match the number of variables. *)
 let _ = assert (neqs = nvars)
 
-let vars = Ida.Carray.create neqs
-let vars' = Ida.Carray.create neqs
+let vars = Sundials.RealArray.make neqs
+let vars' = Sundials.RealArray.make neqs
 let var_types =
   let d = Ida.VarTypes.Differential and a = Ida.VarTypes.Algebraic in
   Ida.VarTypes.of_array [|d; d; d; d; a|]
@@ -379,7 +379,7 @@ let init_from_xy_vxvy vars vars' =
 let pivot = (0.5, 0.8)
 
 let check_satisfaction =
-  let res = Ida.Carray.create neqs in
+  let res = Sundials.RealArray.make neqs in
   fun t vars vars' ->
     residual t vars vars' res;
     if !check_consistency then
@@ -396,7 +396,7 @@ let check_satisfaction =
 
 let main () =
   Arg.parse args (fun _ -> ()) "pendulum: simulate a pendulum hitting against an oblique wall";
-  if !log then Ida.Carray.print_with_time 0.0 vars;
+  if !log then Sundials.RealArray.print_with_time 0.0 vars;
   let t_delay = if !delay then !dt else 0. in
   if !show then Showpendulum.start (1.5 *. r) t_delay !trace pivot wall;
   let frames = int_of_float (!t_end /. !dt) in
@@ -409,7 +409,7 @@ let main () =
   if !use_analytical_correction then init_from_xy_vxvy vars vars';
 
   let solver = Ida.Dense (if !use_analytical_jac then Some jac else None) in
-  let ida = Ida.init solver (Ida.SSTolerances (1e-9, 1e-9)) residual
+  let ida = Ida.init solver (Ida.SStolerances (1e-9, 1e-9)) residual
                      ~roots:(1, roots) vars vars' in
   Ida.set_all_root_directions ida Ida.RootDirs.Decreasing;
   if !use_analytical_jac then Ida.Dls.set_dense_jac_fn ida jac;
@@ -430,7 +430,7 @@ let main () =
       let (tret, flag) = Ida.solve_normal ida !tnext vars vars' in
       t := tret;
       if !show then Showpendulum.show (vars.{x_i}, vars.{y_i});
-      if !log then Ida.Carray.print_with_time tret vars;
+      if !log then Sundials.RealArray.print_with_time tret vars;
 
       if flag = Ida.RootsFound then
         (Printf.printf "Bang!  Hit against the wall.\n";

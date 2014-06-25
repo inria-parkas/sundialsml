@@ -32,7 +32,7 @@
  *)
 
 module Cvode = Cvode_serial
-module Carray = Cvode.Carray
+module RealArray = Cvode.RealArray
 module Roots = Cvode.Roots
 module Col = Dls.BandMatrix.Col
 module Dls = Cvode.Dls
@@ -206,7 +206,7 @@ let print_final_stats s =
 
 let main () =
   (* Create a serial vector *)
-  let u = Carray.create neq in  (* Allocate u vector *)
+  let u = RealArray.make neq in  (* Allocate u vector *)
 
   let reltol = zero  (* Set the tolerances *)
   and abstol = atol

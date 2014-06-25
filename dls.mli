@@ -122,7 +122,7 @@ module DenseMatrix :
      @cvode <node9#ss:dense> DenseGETRF
      @raise ZeroDiagonalElement Zero found in matrix diagonal
      *)
-    val getrf    : t -> Sundials.lint_array -> unit
+    val getrf    : t -> Sundials.LintArray.t -> unit
 
     (**
      [getrs a p b] finds the solution of [ax = b] using LU factorization
@@ -130,7 +130,7 @@ module DenseMatrix :
 
      @cvode <node9#ss:dense> DenseGETRS
      *)
-    val getrs    : t -> Sundials.lint_array -> Sundials.real_array -> unit
+    val getrs    : t -> Sundials.LintArray.t -> Sundials.RealArray.t -> unit
 
     (**
      Performs Cholesky factorization of a real symmetric positive matrix.
@@ -146,7 +146,7 @@ module DenseMatrix :
 
      @cvode <node9#ss:dense> DensePOTRS
      *)
-    val potrs    : t -> Sundials.real_array -> unit
+    val potrs    : t -> Sundials.RealArray.t -> unit
 
     (**
      [geqrf a beta work] performs the QR factorization of an
@@ -155,7 +155,7 @@ module DenseMatrix :
 
      @cvode <node9#ss:dense> DenseGEQRF
      *)
-    val geqrf    : t -> Sundials.real_array -> Sundials.real_array -> unit
+    val geqrf    : t -> Sundials.RealArray.t -> Sundials.RealArray.t -> unit
 
     (**
      [ormqr a beta v w work] computes the product [w = Qv], with Q calculated
@@ -171,8 +171,8 @@ module DenseMatrix :
      @cvode <node9#ss:dense> DenseORMQR
      *)
     val ormqr :
-      a:t -> beta:Sundials.real_array -> v:Sundials.real_array ->
-      w:Sundials.real_array -> work:Sundials.real_array -> unit
+      a:t -> beta:Sundials.RealArray.t -> v:Sundials.RealArray.t ->
+      w:Sundials.RealArray.t -> work:Sundials.RealArray.t -> unit
 
   end
 
@@ -189,7 +189,7 @@ module ArrayDenseMatrix :
      @cvode <node9#ss:dense> Small dense matrices
      @cvode <node9#ss:dense> newDenseMat 
      *)
-    type t = Sundials.Realarray2.t
+    type t = Sundials.RealArray2.t
 
     (** {4 Basic access} *)
 
@@ -246,7 +246,7 @@ module ArrayDenseMatrix :
      @cvode <node9#ss:dense> denseGETRF
      @raise ZeroDiagonalElement Zero found in matrix diagonal
      *)
-    val getrf : t -> Sundials.lint_array -> unit
+    val getrf : t -> Sundials.LintArray.t -> unit
 
     (**
      [getrs a p b] finds the solution of [ax = b] using LU factorization
@@ -254,7 +254,7 @@ module ArrayDenseMatrix :
 
      @cvode <node9#ss:dense> denseGETRS
      *)
-    val getrs : t -> Sundials.lint_array -> Sundials.real_array -> unit
+    val getrs : t -> Sundials.LintArray.t -> Sundials.RealArray.t -> unit
 
     (**
      [potrf a] performs the Cholesky factorization of a real symmetric positive
@@ -271,7 +271,7 @@ module ArrayDenseMatrix :
 
      @cvode <node9#ss:dense> densePOTRS
      *)
-    val potrs : t -> Sundials.real_array -> unit
+    val potrs : t -> Sundials.RealArray.t -> unit
 
     (**
      [geqrf a beta work] performs the QR factorization of an
@@ -280,7 +280,7 @@ module ArrayDenseMatrix :
 
      @cvode <node9#ss:dense> denseGEQRF
      *)
-    val geqrf : t -> Sundials.real_array -> Sundials.real_array -> unit
+    val geqrf : t -> Sundials.RealArray.t -> Sundials.RealArray.t -> unit
 
     (**
      [ormqr a beta v w work] computes the product [w = Qv], with Q calculated
@@ -296,9 +296,9 @@ module ArrayDenseMatrix :
      @cvode <node9#ss:dense> denseORMQR
      *)
     val ormqr :
-      a:t -> beta:Sundials.real_array ->
-      v:Sundials.real_array -> w:Sundials.real_array -> work:Sundials.real_array
-      -> unit
+      a:t -> beta:Sundials.RealArray.t ->
+      v:Sundials.RealArray.t -> w:Sundials.RealArray.t ->
+        work:Sundials.RealArray.t -> unit
   end
 
 (** {3 Banded matrices}
@@ -403,7 +403,7 @@ module BandMatrix :
 
      @cvode <node9#ss:band> BandGBTRF
      *)
-    val gbtrf : t -> Sundials.lint_array -> unit
+    val gbtrf : t -> Sundials.LintArray.t -> unit
 
     (**
      [gbtrs a p b] finds the solution of [ax = b] using an LU factorization
@@ -412,7 +412,7 @@ module BandMatrix :
 
      @cvode <node9#ss:band> BandGBTRS
      *)
-    val gbtrs : t -> Sundials.lint_array -> Sundials.real_array -> unit
+    val gbtrs : t -> Sundials.LintArray.t -> Sundials.RealArray.t -> unit
 
     (** {4 Column access} *)
 
@@ -467,7 +467,7 @@ module ArrayBandMatrix :
 
      @cvode <node9#ss:band> newBandMat 
      *)
-    type t = Sundials.Realarray2.t
+    type t = Sundials.RealArray2.t
 
     (** {4 Basic access} *)
 
@@ -535,7 +535,7 @@ module ArrayBandMatrix :
 
      @cvode <node9#ss:band> bandGBTRF
      *)
-    val gbtrf : t -> int -> int -> int -> Sundials.lint_array -> unit
+    val gbtrf : t -> int -> int -> int -> Sundials.LintArray.t -> unit
 
     (**
      [gbtrs a smu ml p b] finds the solution of [ax = b] using LU factorization.
@@ -544,7 +544,7 @@ module ArrayBandMatrix :
 
      @cvode <node9#ss:band> bandGBTRS
      *)
-    val gbtrs : t -> int -> int -> Sundials.lint_array ->
-      Sundials.real_array -> unit
+    val gbtrs : t -> int -> int -> Sundials.LintArray.t ->
+      Sundials.RealArray.t -> unit
   end
 

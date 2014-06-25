@@ -34,7 +34,7 @@
  * -----------------------------------------------------------------
  *)
 module Ida = Ida_serial
-module Carray = Ida.Carray
+module RealArray = Ida.RealArray
 
 let nvscale = Nvector_array.Bigarray.array_nvec_ops.Nvector.Mutable.nvscale
 and nvprod = Nvector_array.Bigarray.array_nvec_ops.Nvector.Mutable.nvprod
@@ -55,7 +55,7 @@ type user_data = {
   mm : int;                             (* number of grid points *)
   dx : float;
   coeff : float;
-  pp : Carray.t;                        (* vector of prec. diag. elements *)
+  pp : RealArray.t;                        (* vector of prec. diag. elements *)
 }
 
 (* Output functions *)
@@ -118,7 +118,7 @@ let res_heat data t u u' res =
   and mm    = data.mm in
 
   (* Initialize res to u, to take care of boundary equations. *)
-  Carray.blit u res;
+  RealArray.blit u res;
 
   (* Loop over interior points; set res = up - (central difference). *)
   for j = 1 to mgrid-2 do
@@ -154,7 +154,7 @@ let p_setup_heat data jac =
 
   (* Initialize the entire vector to 1., then set the interior points to the
      correct value for preconditioning. *)
-  Carray.fill data.pp 1.;
+  RealArray.fill data.pp 1.;
     
   (* Compute the inverse of the preconditioner diagonal elements. *)
   let pelinv = 1./.(c_j +. 4.*.data.coeff) in
@@ -196,7 +196,7 @@ let set_initial_profile data u u' res =
   done;
 
   (* Initialize up vector to 0. *)
-  Carray.fill u' 0.;
+  RealArray.fill u' 0.;
 
   (* res_heat sets res to negative of ODE RHS values at interior points. *)
   res_heat data 0. u u' res;
@@ -215,9 +215,9 @@ let set_initial_profile data u u' res =
 
 let main() =
   (* Allocate N-vectors and the user data structure. *)
-  let u = Carray.create neq
-  and u' = Carray.create neq
-  and res = Carray.create neq
+  let u = RealArray.make neq
+  and u' = RealArray.make neq
+  and res = RealArray.make neq
   and constraints = Ida.Constraints.create neq in
   let dx = 1. /. float_of_int (mgrid - 1) in
   let data =
@@ -225,7 +225,7 @@ let main() =
       mm = mgrid;
       dx = dx;
       coeff = 1. /. (dx *. dx);
-      pp = Carray.create neq;
+      pp = RealArray.make neq;
     }
   in
 

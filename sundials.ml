@@ -47,35 +47,23 @@ let unit_roundoff = get_unit_roundoff ()
 
 exception RecoverableFailure
 
-type real_array =
-  (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
-
-let make_real_array =
-  Bigarray.Array1.create Bigarray.float64 Bigarray.c_layout
-
-type real_array2 =
-  (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
-
-let make_real_array2 =
-  Bigarray.Array2.create Bigarray.float64 Bigarray.c_layout
-
 (* Note the type annotations are redundant because there's already a .mli, but
    explicit annotations improve performance for bigarrays.  *)
-module Carray =
+module RealArray =
   struct
-    type t = real_array
-
     let kind = Bigarray.float64
     let layout = Bigarray.c_layout
+    type t = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
+
     let empty : t = Bigarray.Array1.create kind layout 0
 
-    let create : int -> t = Bigarray.Array1.create kind layout
+    let make : int -> t = Bigarray.Array1.create kind layout
     let of_array : float array -> t = Bigarray.Array1.of_array kind layout
 
     let fill : t -> float -> unit = Bigarray.Array1.fill
 
     let init size x =
-      let a = create size in
+      let a = make size in
       fill a x;
       a
 
@@ -83,8 +71,8 @@ module Carray =
 
     let blit : t -> t -> unit = Bigarray.Array1.blit
 
-    let of_carray src =
-      let dst = create (length src) in
+    let clone src =
+      let dst = make (length src) in
       blit src dst;
       dst
 
@@ -139,6 +127,45 @@ module Carray =
       else app (Printf.printf "\t% e") v;
       print_newline ()
   end
+
+module RealArray2 =
+  struct
+    type data =
+      (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
+
+    let make_data =
+      Bigarray.Array2.create Bigarray.float64 Bigarray.c_layout
+
+    type t = data * Obj.t
+
+    external wrap : data -> t
+      = "c_sundials_realarray2_wrap"
+
+    let unwrap = fst
+
+    let make nr nc =
+      let d = Bigarray.Array2.create Bigarray.float64 Bigarray.c_layout nc nr
+      in wrap d
+
+    let size a =
+      let d = unwrap a in
+      (Bigarray.Array2.dim1 d, Bigarray.Array2.dim2 d)
+
+    let get x i j = Bigarray.Array2.get (unwrap x) j i
+    let set x i j = Bigarray.Array2.set (unwrap x) j i
+
+    let copy a =
+      let d = unwrap a in
+      let c = Bigarray.Array2.dim1 d in
+      let r = Bigarray.Array2.dim2 d in
+      let d' = Bigarray.Array2.create Bigarray.float64 Bigarray.c_layout c r in
+      Bigarray.Array2.blit d d';
+      wrap d'
+
+    let copyinto a1 a2 =
+      Bigarray.Array2.blit (unwrap a1) (unwrap a2)
+  end
+
 
 (* Opaque arrays *)
 
@@ -269,14 +296,18 @@ module ArrayLike (A : ArrayBaseOps) =
 
 (* root arrays *)
 
-type lint_array = (int, Bigarray.int_elt, Bigarray.c_layout) Bigarray.Array1.t
-let make_lint_array = Bigarray.Array1.create Bigarray.int Carray.layout
+module LintArray =
+  struct
+    type t = (int, Bigarray.int_elt, Bigarray.c_layout) Bigarray.Array1.t
+
+    let make = Bigarray.Array1.create Bigarray.int RealArray.layout
+  end
 
 module Roots =
   struct
     open Bigarray
     type t = (int32, int32_elt, c_layout) Array1.t
-    type val_array = Carray.t
+    type val_array = RealArray.t
 
     type root_event =
       | NoRoot
@@ -454,40 +485,6 @@ module RootDirs =
 
     let init = A.init
 
-  end
-
-(* Arrays of pointers to arrays of reals. *)
-
-module Realarray2 =
-  struct
-    type t = real_array2 * Obj.t
-
-    external wrap : real_array2 -> t
-      = "c_sundials_realarray2_wrap"
-
-    let unwrap = fst
-
-    let make nr nc =
-      let d = Bigarray.Array2.create Bigarray.float64 Bigarray.c_layout nc nr
-      in wrap d
-
-    let size a =
-      let d = unwrap a in
-      (Bigarray.Array2.dim1 d, Bigarray.Array2.dim2 d)
-
-    let get x i j = Bigarray.Array2.get (unwrap x) j i
-    let set x i j = Bigarray.Array2.set (unwrap x) j i
-
-    let copy a =
-      let d = unwrap a in
-      let c = Bigarray.Array2.dim1 d in
-      let r = Bigarray.Array2.dim2 d in
-      let d' = Bigarray.Array2.create Bigarray.float64 Bigarray.c_layout c r in
-      Bigarray.Array2.blit d d';
-      wrap d'
-
-    let copyinto a1 a2 =
-      Bigarray.Array2.blit (unwrap a1) (unwrap a2)
   end
 
 type solver_result =

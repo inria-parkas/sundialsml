@@ -66,7 +66,7 @@ type 'a psolve = 'a -> 'a -> bool -> unit
   has been performed, the Euclidean norm of [v.{k}] is stored in [new_vk_norm].                           
  *)
 val modified_gs : ('a nvector) array
-                 -> Sundials.Realarray2.t
+                 -> Sundials.RealArray2.t
                  -> int
                  -> int
                  -> float
@@ -94,11 +94,11 @@ val modified_gs : ('a nvector) array
   has been performed, the Euclidean norm of [v.{k}] is stored in [new_vk_norm].                           
  *)
 val classical_gs : ('a nvector) array
-                  -> Sundials.Realarray2.t
+                  -> Sundials.RealArray2.t
                   -> int
                   -> int
                   -> 'a nvector
-                  -> Sundials.real_array
+                  -> Sundials.RealArray.t
                   -> float
 
 (** {3 Scaled Preconditioned GMRES Method }

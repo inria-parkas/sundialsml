@@ -17,7 +17,7 @@
  * -----------------------------------------------------------------
  *)
 module Ida = Ida_serial
-module Carray = Ida.Carray
+module RealArray = Ida.RealArray
 
 (* Problem Constants *)
 
@@ -105,8 +105,8 @@ let force data y qq =
   qq.{2} <- -. fl *. (x*.s2 -. a*.s21/.2.) /. 2. -. data.f*.s2
 
 let set_ic data y y' =
-  Carray.fill y 0.;
-  Carray.fill y' 0.;
+  RealArray.fill y 0.;
+  RealArray.fill y' 0.;
   let a = data.a
   and j1 = data.j1
   and m2 = data.m2
@@ -114,7 +114,7 @@ let set_ic data y y' =
   and pi = 4. *. atan (1.)
   in
 
-  let qq = Carray.create 3
+  let qq = RealArray.make 3
   and q = pi/.2.
   and p = asin (-.a) in
   let x = cos p in
@@ -135,7 +135,7 @@ let ressc data tres y y' res =
   and m2 = data.m2
   and j2 = data.j2 in
 
-  let qq = Carray.create 3
+  let qq = RealArray.make 3
   and q = y.{0}
   and x = y.{1}
   and p = y.{2}
@@ -181,8 +181,8 @@ let main () =
   in
 
   (* Create nvectors *)
-  let y = Carray.create neq
-  and y' = Carray.create neq in
+  let y = RealArray.make neq
+  and y' = RealArray.make neq in
 
   (* Consistent IC *)
   set_ic data y y';

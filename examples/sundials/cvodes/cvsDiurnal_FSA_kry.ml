@@ -50,7 +50,7 @@
  *)
 
 module Cvode  = Cvode_serial
-module Carray = Cvode.Carray
+module RealArray = Cvode.RealArray
 module Direct = Dls.ArrayDenseMatrix
 module Sens = Cvodes_serial.Sensitivity
  
@@ -126,10 +126,10 @@ let set_ijth v i j e = Direct.set v (i - 1) (j - 1) e
    contains preconditioner blocks, pivot arrays, and problem constants *)
 
 type user_data = {
-        params     : Carray.t;
+        params     : RealArray.t;
         p          : Direct.t array array;
         jbd        : Direct.t array array;
-        pivot      : Cvode.lint_array array array;
+        pivot      : Sundials.LintArray.t array array;
         mutable q4 : float;
         om         : float;
         dx         : float;
@@ -147,11 +147,11 @@ let sqr x = x ** 2.0
 
 let alloc_user_data () =
   let new_dmat _ = Direct.make num_species num_species in
-  let new_int1 _  = Cvode.make_lint_array num_species in
+  let new_int1 _  = Sundials.LintArray.make num_species in
   let new_z_arr elinit _ = Array.init mz elinit in
   let new_xz_arr elinit  = Array.init mx (new_z_arr elinit) in
   {
-    params = Carray.init np 0.0;
+    params = RealArray.init np 0.0;
     p      = new_xz_arr new_dmat;
     jbd    = new_xz_arr new_dmat;
     pivot  = new_xz_arr new_int1;
@@ -515,7 +515,7 @@ let main () =
   let sensi, err_con = process_args () in
 
   (* Problem parameters and initial states *)
-  let y = Carray.create neq in
+  let y = RealArray.make neq in
   let data = init_user_data (alloc_user_data ()) in
   set_initial_profiles y data.dx data.dz;
 
@@ -545,10 +545,10 @@ let main () =
     | None -> (printf "Sensitivity: NO "; (fun _ -> ()))
     | Some sensi_meth -> begin
         let plist = Array.init ns (fun i -> i) in
-        let pbar = Carray.create ns in
-        Carray.mapi (fun is _ -> data.params.{plist.(is)}) pbar;
+        let pbar = RealArray.make ns in
+        RealArray.mapi (fun is _ -> data.params.{plist.(is)}) pbar;
 
-        let uS = Array.init ns (fun _ -> Carray.init neq 0.0) in
+        let uS = Array.init ns (fun _ -> RealArray.init neq 0.0) in
 
         Sens.init cvode_mem
                          Sens.EEtolerances

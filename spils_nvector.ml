@@ -25,18 +25,18 @@ let _ =
   ]
 
 external modified_gs : ('a nvector) array
-                       -> Sundials.Realarray2.t
+                       -> Sundials.RealArray2.t
                        -> int
                        -> int
                        -> float
     = "c_nvec_spils_modified_gs"
 
 external classical_gs' : ('a nvector) array
-                         * Sundials.Realarray2.t
+                         * Sundials.RealArray2.t
                          * int
                          * int
                          * 'a nvector
-                         * Sundials.real_array
+                         * Sundials.RealArray.t
                          -> float
     = "c_nvec_spils_classical_gs"
 

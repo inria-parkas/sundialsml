@@ -46,16 +46,16 @@ let _ =
   ]
 
 external qr_fact : int
-                   -> Sundials.Realarray2.t
-                   -> Sundials.real_array
+                   -> Sundials.RealArray2.t
+                   -> Sundials.RealArray.t
                    -> bool
                    -> int
     = "c_spils_qr_fact"
  
 external qr_sol : int
-                 -> Sundials.Realarray2.t
-                 -> Sundials.real_array
-                 -> Sundials.real_array
+                 -> Sundials.RealArray2.t
+                 -> Sundials.RealArray.t
+                 -> Sundials.RealArray.t
                  -> int
     = "c_spils_qr_sol"
 

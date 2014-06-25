@@ -31,7 +31,7 @@
  * -----------------------------------------------------------------
  *)
 module Ida = Ida_serial
-module Carray = Ida.Carray
+module RealArray = Ida.RealArray
 
 (* Problem Constants *)
 let nout  = 11
@@ -66,7 +66,7 @@ let res_heat data t u u' r =
   and mm    = data.mm in
   
   (* Initialize r to u, to take care of boundary equations. *)
-  Carray.blit u r;
+  RealArray.blit u r;
   
   (* Loop over interior points; set res = up - (central difference).  *)
   for j = 1 to mgrid-2 do
@@ -103,7 +103,7 @@ let p_setup_heat data jac =
 
   (* Initialize the entire vector to 1., then set the interior points to the
      correct value for preconditioning. *)
-  Carray.fill pp 1.;
+  RealArray.fill pp 1.;
   
   (* Compute the inverse of the preconditioner diagonal elements. *)
   let pelinv = 1. /. (c_j +. 4.*.data.coeff) in
@@ -145,7 +145,7 @@ let set_initial_profile data u u' res =
   done;
 
   (* Initialize up vector to 0. *)
-  Carray.fill u' 0.;
+  RealArray.fill u' 0.;
 
   (* res_heat sets res to negative of ODE RHS values at interior points. *)
   res_heat data 0. u u' res;
@@ -197,13 +197,13 @@ let print_output mem t u =
 
 let main () =
   (* Allocate N-vectors and the user data structure. *)
-  let u = Carray.create neq
-  and u' = Carray.create neq
-  and res = Carray.create neq
+  let u = RealArray.make neq
+  and u' = RealArray.make neq
+  and res = RealArray.make neq
   and constraints = Ida.Constraints.create neq in
 
   let dx = 1. /. float_of_int (mgrid - 1) in
-  let data = { pp = Carray.create neq;
+  let data = { pp = RealArray.make neq;
                mm = mgrid;
                dx = dx;
                coeff = 1. /. (dx *. dx);

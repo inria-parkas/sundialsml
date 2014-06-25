@@ -14,9 +14,9 @@ include Cvode
 
 (* basic cvode types *)
 
-type nvec = Sundials.Carray.t
-type val_array = Sundials.Carray.t
-type der_array = Sundials.Carray.t
+type nvec = Sundials.RealArray.t
+type val_array = Sundials.RealArray.t
+type der_array = Sundials.RealArray.t
 
 type root_array = Sundials.Roots.t
 type root_val_array = Sundials.Roots.val_array
@@ -164,7 +164,7 @@ and fsensext = {
     mutable num_sensitivities : int;
     mutable sensarray1        : val_array array;
     mutable sensarray2        : der_array array;
-    mutable senspvals         : Sundials.real_array option;
+    mutable senspvals         : Sundials.RealArray.t option;
                             (* keep a reference to prevent garbage collection *)
 
     mutable sensrhsfn         : (float -> val_array -> der_array -> val_array array

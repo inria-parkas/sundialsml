@@ -36,7 +36,7 @@
  *)
 
 module Cvode  = Cvode_serial
-module Carray = Cvode.Carray
+module RealArray = Cvode.RealArray
 module Quad = Cvodes_serial.Quadrature
 module Sens = Cvodes_serial.Sensitivity
 module QuadSens = Cvodes_serial.Sensitivity.Quadrature
@@ -346,10 +346,10 @@ let main () =
   let abstolQB = 1.0e-8 in
 
   (* Initializations for forward problem *)
-  let y = Carray.init neq one in
-  let yQ = Carray.init 1 zero in
-  let yS = Array.init np (fun _ -> Carray.init neq zero) in
-  let yQS = Array.init np (fun _ -> Carray.init 1 zero) in
+  let y = RealArray.init neq one in
+  let yQ = RealArray.init 1 zero in
+  let yS = Array.init np (fun _ -> RealArray.init neq zero) in
+  let yQS = Array.init np (fun _ -> RealArray.init 1 zero) in
 
   (* Create and initialize forward problem *)
   let cvode_mem =
@@ -404,10 +404,10 @@ let main () =
   print_fwd_stats cvode_mem;
 
   (* Initializations for backward problems *)
-  let yB1  = Carray.init (2 * neq) zero in
-  let yQB1 = Carray.init np2 zero in
-  let yB2  = Carray.init (2 * neq) zero in
-  let yQB2 = Carray.init np2 zero in
+  let yB1  = RealArray.init (2 * neq) zero in
+  let yQB1 = RealArray.init np2 zero in
+  let yB2  = RealArray.init (2 * neq) zero in
+  let yQB2 = RealArray.init np2 zero in
 
   (* Create and initialize backward problems (one for each column of the Hessian) *)
   let cvode_memB1 =
@@ -474,7 +474,7 @@ let main () =
 
   printf "del_p = %g\n\n" dp;
 
-  Carray.fill y one;
+  RealArray.fill y one;
   let cvode_mem =
     Cvode.init
         Cvode.BDF
@@ -484,7 +484,7 @@ let main () =
         ~t0:t0
         y
   in
-  Carray.fill yQ zero;
+  RealArray.fill yQ zero;
   Quad.init cvode_mem (fQ data) yQ;
   Quad.set_tolerances cvode_mem (Quad.SStolerances (reltol, abstolQ));
 
@@ -499,8 +499,8 @@ let main () =
 
   data.p1 <- data.p1 -. 2.0*.dp;
 
-  Carray.fill y one;
-  Carray.fill yQ zero;
+  RealArray.fill y one;
+  RealArray.fill yQ zero;
 
   Cvode.reinit cvode_mem t0 y;
   Quad.reinit cvode_mem yQ;
@@ -521,8 +521,8 @@ let main () =
 
   data.p2 <- data.p2 +. dp;
 
-  Carray.fill y one;
-  Carray.fill yQ zero;
+  RealArray.fill y one;
+  RealArray.fill yQ zero;
 
   Cvode.reinit cvode_mem t0 y;
   Quad.reinit cvode_mem yQ;
@@ -536,8 +536,8 @@ let main () =
  
   data.p2 <- data.p2 -. 2.0*.dp;
 
-  Carray.fill y one;
-  Carray.fill yQ zero;
+  RealArray.fill y one;
+  RealArray.fill yQ zero;
 
   Cvode.reinit cvode_mem t0 y;
   Quad.reinit cvode_mem yQ;

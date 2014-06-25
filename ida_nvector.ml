@@ -537,7 +537,7 @@ module Spils =
 
 module Constraints =
   struct
-    type t = Sundials.Carray.t
+    type t = Sundials.RealArray.t
     type constraint_type =
     | Unconstrained
     | NonNegative
@@ -560,9 +560,9 @@ module Constraints =
       | Positive      -> 2.0
       | Negative      -> -2.0
 
-    let create = Carray.create
-    let init n v = Carray.init n (float_of_constraint_type v)
-    let length = Carray.length
+    let create = RealArray.make
+    let init n v = RealArray.init n (float_of_constraint_type v)
+    let length = RealArray.length
     let of_array a =
       let ret = create (Array.length a) in
       for i = 0 to Array.length a - 1 do
@@ -574,9 +574,9 @@ module Constraints =
     let set a i x = a.{i} <- float_of_constraint_type x
     let fill a t =
       let x = float_of_constraint_type t in
-      Carray.fill a x
+      RealArray.fill a x
 
-    let blit a b = Carray.blit a b
+    let blit a b = RealArray.blit a b
   end
 
 external set_constraints : 'a session -> Constraints.t -> unit

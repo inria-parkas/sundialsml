@@ -51,7 +51,7 @@ include module type of Cvode
 
     A skeleton of the main program:
     + {b Set vector of initial values}
-    {[let y = Cvode.Carray.of_array [| 0.0; 0.0; 0.0 |] ]}
+    {[let y = Cvode.RealArray.of_array [| 0.0; 0.0; 0.0 |] ]}
     The length of this vector determines the problem size.    
     + {b Create and initialize a solver session}
     {[let s = Cvode.init Cvode.Adams Cvode.Functional tols f ~roots:(2, g) y]}
@@ -78,15 +78,15 @@ t := t' + 0.1]}
 type session = Cvode_session_serial.session
 
 (** The type of vectors passed to the solver. *)
-type nvec = Sundials.Carray.t
+type nvec = Sundials.RealArray.t
 
 (** The type of vectors containing dependent variable values, passed from the
    solver to callback functions. *)
-type val_array = Sundials.Carray.t
+type val_array = Sundials.RealArray.t
 
 (** The type of vectors containing derivative values, passed from the
    solver to callback functions. *)
-type der_array = Sundials.Carray.t
+type der_array = Sundials.RealArray.t
 
 (** The type of vectors containing detected roots (zero-crossings). *)
 type root_array = Sundials.Roots.t
@@ -738,7 +738,7 @@ val default_tolerances : tolerance
     - [t0]      is the initial value of the independent variable, and,
     - [y0]      is a vector of initial values, the size of this vector
                 determines the number of equations in the session, see
-                {!Sundials.Carray.t}.
+                {!Sundials.RealArray.t}.
 
     The labeled arguments [roots] and [t0] are both optional and default to
     {!Cvode.no_roots} (i.e. no root finding is done) and [0.0], respectively.

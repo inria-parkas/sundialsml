@@ -58,7 +58,7 @@
 type session
 
 (** The type of vectors passed to the solver. *)
-type nvec = Sundials.Carray.t
+type nvec = Sundials.RealArray.t
 
 (** {2 Linear Solvers} *)
 

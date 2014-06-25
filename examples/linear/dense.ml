@@ -61,13 +61,13 @@ printf "scale copy x2: b=@\n%a@\n" print_mat b;;
 M.add_identity b;
 printf "add identity: b=@\n%a@\n" print_mat b;;
 
-let p = make_lint_array nrows;;
+let p = LintArray.make nrows;;
 Array1.fill p 0;
 M.getrf a p;
 printf "getrf: a=@\n%a@\n" print_mat a;
 printf "       p=@\n%a@\n@\n" print_p p;;
 
-let s = make_real_array nrows;;
+let s = RealArray.make nrows;;
 s.{0} <-  5.0;
 s.{1} <- 18.0;
 s.{2} <-  6.0;

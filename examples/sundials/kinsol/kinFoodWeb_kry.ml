@@ -80,10 +80,10 @@
 
 module Kinsol = Kinsol_nvector
 module Dense = Dls.ArrayDenseMatrix
-module Carray = Sundials.Carray
+module RealArray = Sundials.RealArray
 
 let printf = Printf.printf
-let matrix_unwrap = Sundials.Realarray2.unwrap
+let matrix_unwrap = Sundials.RealArray2.unwrap
 let wrap = Nvector_array.wrap
 let slice_left = Bigarray.Array2.slice_left
 let nvwl2norm =
@@ -143,7 +143,7 @@ let p =
 let pivot =
   Array.init mx (fun jx ->
     Array.init my (fun jy ->
-      let v = Sundials.make_lint_array num_species in
+      let v = Sundials.LintArray.make num_species in
       Bigarray.Array1.fill v 0;
       v
     ))
@@ -305,7 +305,7 @@ let prec_setup_bd { Kinsol.jac_u=cc;
   done (* end of jy loop *)
   
 (* Preconditioner solve routine *)
-let vxy = Carray.create num_species
+let vxy = RealArray.make num_species
 
 let prec_solve_bd { Kinsol.jac_u=cc;
                     Kinsol.jac_fu=fval;

@@ -26,7 +26,7 @@
  *)
 
 (** The type of vectors. *)
-type real_array = Sundials.real_array
+type real_array = Sundials.RealArray.t
 
 (**
   The type of a function [f v z] that calculates [z = A v] using an internal
@@ -66,7 +66,7 @@ type psolve = real_array -> real_array -> bool -> unit
   has been performed, the Euclidean norm of [v.{k}] is stored in [new_vk_norm].                           
  *)
 val modified_gs : real_array array
-                 -> Sundials.Realarray2.t
+                 -> Sundials.RealArray2.t
                  -> int
                  -> int
                  -> float
@@ -94,7 +94,7 @@ val modified_gs : real_array array
   has been performed, the Euclidean norm of [v.{k}] is stored in [new_vk_norm].                           
  *)
 val classical_gs : real_array array
-                  -> Sundials.Realarray2.t
+                  -> Sundials.RealArray2.t
                   -> int
                   -> int
                   -> real_array

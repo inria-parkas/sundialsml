@@ -12,7 +12,7 @@
 
 include Spils (* Vital for registering Spils exceptions. *)
 
-type real_array = Sundials.real_array
+type real_array = Sundials.RealArray.t
 
 type atimes = real_array -> real_array -> unit
 
@@ -25,14 +25,14 @@ let _ =
   ]
 
 external modified_gs : real_array array
-                       -> Sundials.Realarray2.t
+                       -> Sundials.RealArray2.t
                        -> int
                        -> int
                        -> float
     = "c_ba_spils_modified_gs"
 
 external classical_gs' : real_array array
-                         * Sundials.Realarray2.t
+                         * Sundials.RealArray2.t
                          * int
                          * int
                          * real_array

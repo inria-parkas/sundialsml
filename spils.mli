@@ -74,8 +74,8 @@ exception QRSolFailure
   could not divide by the zero diagonal entry.                             
  *)
 val qr_fact : int
-              -> Sundials.Realarray2.t
-              -> Sundials.real_array
+              -> Sundials.RealArray2.t
+              -> Sundials.RealArray.t
               -> bool
               -> int
  
@@ -95,8 +95,8 @@ val qr_fact : int
   equation number (numbered from 1, not 0) of the zero entry.
  *)
 val qr_sol : int
-             -> Sundials.Realarray2.t
-             -> Sundials.real_array
-             -> Sundials.real_array
+             -> Sundials.RealArray2.t
+             -> Sundials.RealArray.t
+             -> Sundials.RealArray.t
              -> int
 

@@ -79,15 +79,13 @@
  *)
 
 module Kinsol = Kinsol_serial
-module Carray = Sundials.Carray
+module RealArray = Sundials.RealArray
 module Dense = Dls.ArrayDenseMatrix
-
-type real_array = Sundials.real_array
 
 let printf = Printf.printf
 let subarray = Bigarray.Array1.sub
 let slice_left = Bigarray.Array2.slice_left
-let unwrap = Sundials.Realarray2.unwrap
+let unwrap = Sundials.RealArray2.unwrap
 let nvwl2norm =
   match Nvector_array.Bigarray.array_nvec_ops.Nvector.Mutable.nvwl2norm with
   | Some fn -> fn
@@ -146,17 +144,17 @@ let p =
 let pivot =
   Array.init mx (fun jx ->
     Array.init my (fun jy ->
-      let v = Sundials.make_lint_array num_species in
+      let v = Sundials.LintArray.make num_species in
       Bigarray.Array1.fill v 0;
       v
     ))
 
-let acoef = Sundials.make_real_array2 num_species num_species
-let bcoef = Carray.create num_species
-let cox = Carray.create num_species
-let coy = Carray.create num_species
+let acoef = Sundials.RealArray2.make_data num_species num_species
+let bcoef = RealArray.make num_species
+let cox = RealArray.make num_species
+let coy = RealArray.make num_species
 
-let rates = Carray.create neq
+let rates = RealArray.make neq
 
 (* Load problem constants in data *)
 
@@ -270,7 +268,7 @@ let prec_setup_bd { Kinsol.jac_u=cc;
                     Kinsol.jac_tmp=(vtemp1, vtemp2)}
                   { Kinsol.uscale=cscale;
                     Kinsol.fscale=fscale } =
-  let perturb_rates = Sundials.make_real_array num_species in
+  let perturb_rates = Sundials.RealArray.make num_species in
   
   let delx = dx in
   let dely = dy in
@@ -412,8 +410,8 @@ let main () =
   let globalstrategy = false in
 
   (* Create serial vectors of length NEQ *)
-  let cc = Carray.create neq in
-  let sc = Carray.create neq in
+  let cc = RealArray.make neq in
+  let sc = RealArray.make neq in
   set_initial_profiles cc sc;
 
   let fnormtol  = ftol in
@@ -431,7 +429,7 @@ let main () =
                              Kinsol.prec_solve_fn=Some prec_solve_bd;
                              Kinsol.jac_times_vec_fn=None; }))
               func cc in
-  Kinsol.set_constraints kmem (Carray.init neq two);
+  Kinsol.set_constraints kmem (RealArray.init neq two);
   Kinsol.set_func_norm_tol kmem (Some fnormtol);
   Kinsol.set_scaled_step_tol kmem (Some scsteptol);
 

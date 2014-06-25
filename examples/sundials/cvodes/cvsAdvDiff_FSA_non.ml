@@ -47,7 +47,7 @@
 
 module Cvode = Cvode_serial
 module Sens = Cvodes_serial.Sensitivity
-module Carray = Cvode.Carray
+module RealArray = Cvode.RealArray
 
 let printf = Printf.printf
 let vmax_norm = Nvector_array.Bigarray.array_nvec_ops.Nvector.Mutable.nvmaxnorm
@@ -72,7 +72,7 @@ let zero  = 0.0
    contains problem parameters, grid constants, work array. *)
 
 type user_data = {
-  p  : Carray.t;
+  p  : RealArray.t;
   dx : float;
 }
 
@@ -197,12 +197,12 @@ let main () =
   (* Set user data *)
   let dx = xmax/.(float (mx+1)) in
   let data = {
-      p = Carray.of_list [ 1.0; 0.5 ];
+      p = RealArray.of_list [ 1.0; 0.5 ];
       dx = dx;
     } in
 
   (* Allocate and set initial states *)
-  let u = Carray.create neq in
+  let u = RealArray.make neq in
   set_ic u dx;
 
   (* Set integration tolerances *)
@@ -226,10 +226,10 @@ let main () =
     | None -> (printf "Sensitivity: NO "; (fun _ -> ()))
     | Some sensi_meth -> begin
         let plist = Array.init ns (fun i -> i) in
-        let pbar = Carray.create ns in
-        Carray.mapi (fun is _ -> data.p.{plist.(is)}) pbar;
+        let pbar = RealArray.make ns in
+        RealArray.mapi (fun is _ -> data.p.{plist.(is)}) pbar;
 
-        let uS = Array.init ns (fun _ -> Carray.init neq 0.0) in
+        let uS = Array.init ns (fun _ -> RealArray.init neq 0.0) in
 
         Sens.init cvode_mem
                          Sens.EEtolerances
