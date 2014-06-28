@@ -33,12 +33,12 @@
  * -----------------------------------------------------------------
  *)
 
-module Cvode  = Cvode_serial
-module RealArray = Cvode.RealArray
-module Roots  = Cvode.Roots
+module RealArray = Sundials.RealArray
+module Roots  = Sundials.Roots
 module Direct = Dls.ArrayDenseMatrix
-module BandPrec = Cvode.BandPrec 
+module BandedSpils = Cvode.Spils.Banded
 open Bigarray
+let unvec = Sundials.unvec
 
 let printf = Printf.printf
 
@@ -208,8 +208,8 @@ let print_final_stats s =
   and ncfl  = Cvode.Spils.get_num_conv_fails s
   and nfeLS = Cvode.Spils.get_num_rhs_evals s
   in
-  let lenrwBP, leniwBP = BandPrec.get_work_space s in
-  let nfeBP = BandPrec.get_num_rhs_evals s in
+  let lenrwBP, leniwBP = BandedSpils.get_work_space s in
+  let nfeBP = BandedSpils.get_num_rhs_evals s in
 
   printf "\nFinal Statistics.. \n\n";
   printf "lenrw   = %5d     leniw   = %5d\n"   lenrw leniw;
@@ -315,9 +315,9 @@ let main () =
   *)
 
   (* Allocate and initialize u, and set problem data and tolerances *)
-  let u = RealArray.make neq in
+  let u = Nvector_serial.make neq 0.0 in
   let data = init_user_data () in
-  set_initial_profiles u data.dx data.dy;
+  set_initial_profiles (unvec u) data.dx data.dy;
 
   let abstol = atol
   and reltol = rtol
@@ -335,9 +335,8 @@ let main () =
   let cvode_mem =
     Cvode.init Cvode.BDF
       (Cvode.Newton
-          (Cvode.BandedSpgmr
-             ({ Cvode.prec_type = Spils.PrecLeft; Cvode.maxl = None },
-              { Cvode.mupper = mu; Cvode.mlower = ml})))
+          (Cvode.Spils.Banded.spgmr None Spils.PrecLeft
+                                    { Cvode.mupper = mu; Cvode.mlower = ml}))
       (Cvode.SStolerances (reltol, abstol))
       (f data) ~t0:t0 u
   in
@@ -354,7 +353,7 @@ let main () =
     let tout = ref twohr in
     for iout = 1 to nout do
       let (t, flag) = Cvode.solve_normal cvode_mem !tout u in
-      print_output cvode_mem u t;
+      print_output cvode_mem (unvec u) t;
       tout := !tout +. twohr
     done;
     
@@ -365,7 +364,7 @@ let main () =
   jrpe_loop Spils.PrecLeft  "PREC_LEFT";
 
   (* On second run, re-initialize u, the solver, and CVSPGMR *)
-  set_initial_profiles u data.dx data.dy;
+  set_initial_profiles (unvec u) data.dx data.dy;
   Cvode.reinit cvode_mem t0 u;
 
   (* NB: the prec type could be changed by giving a suitable ~iter_type

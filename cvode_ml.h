@@ -1,6 +1,6 @@
 /***********************************************************************
  *                                                                     *
- *               OCaml interface to (serial) Sundials                  *
+ *                   OCaml interface to Sundials                       *
  *                                                                     *
  *  Timothy Bourke (Inria), Jun Inoue (Inria), and Marc Pouzet (LIENS) *
  *                                                                     *
@@ -41,11 +41,10 @@
  *   +------------+      |    |     .                 +----------------+
  *   | cvode_mem  |<----------------------------------+ cvode          |
  *   +------------+      |    +-----------------------+ backref        |
- *   |    ...     |      |          .                 | neqs           |
- *   |cv_user_data+------+          .                 | nroots         |
- *   |    ...     |                 .                 | err_file       |
- *   +------------+                 .                 | closure_rhsfn  |
- *                                  .                 | closure_rootsfn|
+ *   |    ...     |      |          .                 | nroots         |
+ *   |cv_user_data+------+          .                 | err_file       |
+ *   |    ...     |                 .                 | closure_rhsfn  |
+ *   +------------+                 .                 | closure_rootsfn|
  *                                  .                 | ...            |
  *                                  .                 +----------------+
  *
@@ -113,12 +112,12 @@
  *  |                       .  diagram does .        |  session       |
  *  |  +--------------+     .  NOT show how .        +----------------+
  *  |  |  cvode_mem   |<-----  the current  ---------+ cvode          |
- *  |  +--------------+     .  code works!! .        | neqs           |
- *  |  |     ...      |     .  The diagram  .        | nroots         |
- *  +--+ cv_user_data |     .  above does!! .        | err_file       |
- *     | conceptually |     .               .        | closure_rhsfn  |
- *     | of type      |     .               .        | closure_rootsfn|
- *     | value **     |     .               .        | ...            |
+ *  |  +--------------+     .  code works!! .        | nroots         |
+ *  |  |     ...      |     .  The diagram  .        | err_file       |
+ *  +--+ cv_user_data |     .  above does!! .        | closure_rhsfn  |
+ *     | conceptually |     .               .        | closure_rootsfn|
+ *     | of type      |     .               .        | ...            |
+ *     | value **     |     .               .        |                |
  *     |     ...      |     .               .        +----------------+
  *     +--------------+     .               .
  *
@@ -149,9 +148,6 @@ value cvode_ml_big_real();
 enum cvode_session_index {
     RECORD_CVODE_SESSION_CVODE = 0,
     RECORD_CVODE_SESSION_BACKREF,
-#if CVODE_ML_BIGARRAYS
-    RECORD_CVODE_SESSION_NEQS,
-#endif
     RECORD_CVODE_SESSION_NROOTS,
     RECORD_CVODE_SESSION_ERRFILE,
     RECORD_CVODE_SESSION_EXN_TEMP,
@@ -159,10 +155,8 @@ enum cvode_session_index {
     RECORD_CVODE_SESSION_ROOTSFN,
     RECORD_CVODE_SESSION_ERRH,
     RECORD_CVODE_SESSION_ERRW,
-#if CVODE_ML_BIGARRAYS
     RECORD_CVODE_SESSION_JACFN,
     RECORD_CVODE_SESSION_BANDJACFN,
-#endif
     RECORD_CVODE_SESSION_PRESETUPFN,
     RECORD_CVODE_SESSION_PRESOLVEFN,
     RECORD_CVODE_SESSION_JACTIMESFN,
@@ -171,9 +165,6 @@ enum cvode_session_index {
 };
 
 #define CVODE_MEM_FROM_ML(v)   ((void *)Field((v), RECORD_CVODE_SESSION_CVODE))
-#if CVODE_ML_BIGARRAYS
-#define CVODE_NEQS_FROM_ML(v)  Long_val(Field((v), RECORD_CVODE_SESSION_NEQS))
-#endif
 #define CVODE_BACKREF_FROM_ML(v) \
     ((value *)(Field((v), RECORD_CVODE_SESSION_BACKREF)))
 #define CVODE_NROOTS_FROM_ML(v) \
@@ -230,4 +221,3 @@ enum cvode_spils_solve_arg_index {
 };
 
 #endif
-

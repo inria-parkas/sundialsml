@@ -22,7 +22,8 @@ all: byte opt
 byte: $(EXAMPLES:.ml=.byte)
 opt: $(EXAMPLES:.ml=.opt)
 
-lapack: $(LAPACK_EXAMPLES:.ml=.byte)
+lapack: lapack.byte lapack.opt
+lapack.byte: $(LAPACK_EXAMPLES:.ml=.byte)
 lapack.opt: $(LAPACK_EXAMPLES:.ml=.opt)
 
 genlog = \

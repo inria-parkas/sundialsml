@@ -29,10 +29,9 @@
  * -----------------------------------------------------------------
  *)
 
-module Cvode = Cvode_serial
-module RealArray = Cvode.RealArray
-module Roots = Cvode.Roots
-module Dls = Cvode.Dls
+module RealArray = Sundials.RealArray
+module Roots = Sundials.Roots
+let unvec = Sundials.unvec
 
 let printf = Printf.printf
 
@@ -79,7 +78,7 @@ let g t y gout =
 
 let jac arg jmat =
   let y_ith i = arg.Cvode.jac_y.{i - 1}
-  and j_ijth (i, j) = Cvode.Densematrix.set jmat (i - 1, j - 1)
+  and j_ijth (i, j) = Dls.DenseMatrix.set jmat (i - 1) (j - 1)
   in
   let (y1, y2, y3) = (y_ith 1, y_ith 2, y_ith 3)
   in
@@ -97,7 +96,9 @@ let print_output =
   printf "At t = %0.4e      y =%14.6e  %14.6e  %14.6e\n"
 
 let print_root_info r1 r2 =
-  printf "    rootsfound[] = %3d %3d\n" (Roots.to_int r1) (Roots.to_int r2)
+  printf "    rootsfound[] = %3d %3d\n"
+    (Roots.int_of_root_event r1)
+    (Roots.int_of_root_event r2)
 
 let print_final_stats s =
   let nst = Cvode.get_num_steps s
@@ -118,16 +119,17 @@ let print_final_stats s =
 
 let main () =
   (* Create serial vector of length NEQ for I.C. and abstol *)
-  let y = RealArray.make neq
+  let y = Nvector_serial.make neq 0.0
   and abstol = RealArray.make neq
   and roots = Roots.create nroots
   in
-  let r = Roots.get' roots in
+  let ydata = unvec y in
+  let r = Roots.get roots in
 
   (* Initialize y *)
-  set_ith y 1 y1;
-  set_ith y 2 y2;
-  set_ith y 3 y3;
+  set_ith ydata 1 y1;
+  set_ith ydata 2 y2;
+  set_ith ydata 3 y3;
 
   (* Set the vector absolute tolerance *)
   set_ith abstol 1 atol1;
@@ -143,40 +145,36 @@ let main () =
    * the initial dependent variable vector y. *)
   (* Call CVodeRootInit to specify the root function g with 2 components *)
   (* Call CVLapackDense to specify the LAPACK dense linear solver *)
+  (* Set the Jacobian routine to Jac (user-supplied) *)
   let cvode_mem =
-    Cvode.init' Cvode.BDF (Cvode.Newton (Cvode.LapackDense)) f (nroots, g) y t0
+    Cvode.init Cvode.BDF (Cvode.Newton (Cvode.Dls.lapack_dense (Some jac)))
+               (Cvode.SVtolerances (rtol, (Nvector_serial.wrap abstol))) f
+               ~roots:(nroots, g) ~t0:t0 y
   in
   Gc.compact ();
 
-  (* Call CVodeSVtolerances to specify the scalar relative tolerance
-   * and vector absolute tolerances *)
-  Cvode.sv_tolerances cvode_mem rtol abstol;
-
-  (* Set the Jacobian routine to Jac (user-supplied) *)
-  Dls.set_dense_jac_fn cvode_mem jac;
-
   (* In loop, call CVode, print results, and test for error.
-   * Break out of loop when NOUT preset output times have been reached.  *)
+     Break out of loop when NOUT preset output times have been reached.  *)
 
   let tout = ref t1
   and iout = ref 0
   in
   while (!iout <> nout) do
 
-    let (t, flag) = Cvode.normal cvode_mem !tout y
+    let (t, flag) = Cvode.solve_normal cvode_mem !tout y
     in
-    print_output t (ith y 1) (ith y 2) (ith y 3);
+    print_output t (ith ydata 1) (ith ydata 2) (ith ydata 3);
 
     match flag with
-    | Cvode.RootsFound ->
+    | Sundials.RootsFound ->
         Cvode.get_root_info cvode_mem roots;
         print_root_info (r 0) (r 1)
 
-    | Cvode.Continue ->
+    | Sundials.Continue ->
         iout := !iout + 1;
         tout := !tout *. tmult
 
-    | Cvode.StopTimeReached ->
+    | Sundials.StopTimeReached ->
         iout := nout
   done;
 

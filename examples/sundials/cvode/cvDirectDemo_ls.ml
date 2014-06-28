@@ -56,11 +56,11 @@
  * -----------------------------------------------------------------
  *)
 
-module Cvode = Cvode_serial
-module RealArray = Cvode.RealArray
-module Roots = Cvode.Roots
+module RealArray = Sundials.RealArray
+module Roots = Sundials.Roots
 module Densematrix = Dls.DenseMatrix
 module Bandmatrix = Dls.BandMatrix
+let unvec = Sundials.unvec
 
 let printf = Printf.printf
 
@@ -173,18 +173,19 @@ let prepare_next_run cvode_mem lmm miter mu ml t y =
     | Dense_User -> begin
           printf "Dense, User-Supplied Jacobian\n";
           Cvode.reinit cvode_mem t y
-            ~iter_type:(Cvode.Newton (Cvode.Dense (Some jac1)))
+            ~iter_type:(Cvode.Newton (Cvode.Dls.dense (Some jac1)))
         end
 
     | Dense_DQ -> begin
           printf("Dense, Difference Quotient Jacobian\n");
           Cvode.reinit cvode_mem t y
-            ~iter_type:(Cvode.Newton (Cvode.Dense None))
+            ~iter_type:(Cvode.Newton (Cvode.Dls.dense None))
         end
 
     | Diag -> begin
           printf("Diagonal Jacobian\n");
-          Cvode.reinit cvode_mem t y ~iter_type:(Cvode.Newton Cvode.Diag)
+          Cvode.reinit cvode_mem t y
+                         ~iter_type:(Cvode.Newton Cvode.Diag.solver)
         end
 
     | Band_User -> begin
@@ -192,8 +193,8 @@ let prepare_next_run cvode_mem lmm miter mu ml t y =
           Cvode.reinit cvode_mem t y
             ~iter_type:
               (Cvode.Newton
-                 (Cvode.Band ({ Cvode.mupper = mu; Cvode.mlower = ml },
-                              Some jac2)))
+                 (Cvode.Dls.band { Cvode.mupper = mu; Cvode.mlower = ml }
+                                 (Some jac2)))
         end
 
     | Band_DQ -> begin
@@ -201,7 +202,7 @@ let prepare_next_run cvode_mem lmm miter mu ml t y =
           Cvode.reinit cvode_mem t y
             ~iter_type:
               (Cvode.Newton
-                 (Cvode.Band ({ Cvode.mupper = mu; Cvode.mlower = ml }, None)))
+                 (Cvode.Dls.band { Cvode.mupper = mu; Cvode.mlower = ml } None))
         end
 
     | Func -> assert false
@@ -283,8 +284,9 @@ let snd_true (x, _) = (x, true)
 
 let problem1 () =
   let nerr = ref 0 in
-  let y = RealArray.make p1_neq in
-  let init_y () = (y.{0} <- two; y.{1} <- zero) in
+  let y = Nvector_serial.make p1_neq 0.0 in
+  let ydata = unvec y in
+  let init_y () = (ydata.{0} <- two; ydata.{1} <- zero) in
   print_intro1 ();
 
   let run cvode_mem lmm miter =
@@ -316,10 +318,10 @@ let problem1 () =
           with _ -> (incr nerr; 0.0)
         in
 
-        print_output1 t y.{0} y.{1} qu hu;
+        print_output1 t ydata.{0} ydata.{1} qu hu;
 
         if success && (iout mod 2 = 0) then begin
-          let er = abs_float y.{0} /. atol in
+          let er = abs_float ydata.{0} /. atol in
           ero := max er !ero;
           if er > p1_tol_factor then
             (incr nerr; print_err_output p1_tol_factor)
@@ -334,7 +336,7 @@ let problem1 () =
   let run_tests lmm =
     init_y ();
     let cvode_mem = Cvode.init lmm Cvode.Functional
-                               (Cvode.SStolerances (rtol, atol)) f1 ~t0:p1_t0 y
+                           (Cvode.SStolerances (rtol, atol)) f1 ~t0:p1_t0 y
     in
     Gc.compact ();
     List.iter (run cvode_mem lmm) [ Func; Dense_User; Dense_DQ; Diag]
@@ -403,8 +405,9 @@ let max_error ydata t =
 
 let problem2 () =
   let nerr = ref 0 in
-  let y = RealArray.make p2_neq in
-  let init_y () = (Cvode.RealArray.fill y zero; y.{0} <- one) in
+  let y = Nvector_serial.make p2_neq 0.0 in
+  let ydata = unvec y in
+  let init_y () = (RealArray.fill ydata zero; ydata.{0} <- one) in
   print_intro2 ();
 
   let run cvode_mem lmm miter =
@@ -424,7 +427,7 @@ let problem2 () =
           with _ -> (incr nerr; (!tout, false))
         in
 
-        let erm = max_error y t in
+        let erm = max_error ydata t in
         let qu =
           try
             Cvode.get_last_order cvode_mem;
@@ -453,7 +456,7 @@ let problem2 () =
   let run_tests lmm =
     init_y ();
     let cvode_mem = Cvode.init lmm Cvode.Functional
-                               (Cvode.SStolerances (rtol, atol)) f2 ~t0:p2_t0 y
+                           (Cvode.SStolerances (rtol, atol)) f2 ~t0:p2_t0 y
     in
     Gc.compact ();
     List.iter (run cvode_mem lmm) [ Func; Diag; Band_User; Band_DQ]

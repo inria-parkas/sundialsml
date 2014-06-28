@@ -1,6 +1,6 @@
 (***********************************************************************)
 (*                                                                     *)
-(*               OCaml interface to (serial) Sundials                  *)
+(*                   OCaml interface to Sundials                       *)
 (*                                                                     *)
 (*  Timothy Bourke (Inria), Jun Inoue (Inria), and Marc Pouzet (LIENS) *)
 (*                                                                     *)
@@ -40,6 +40,19 @@ val unit_roundoff : float
  recoverable failure. Throwing any other kind of exception normally indicates an
  unrecoverable failure. *)
 exception RecoverableFailure
+
+(** {2 Nvectors} *)
+
+(** The type representing an nvector with underlying data of type ['data]. The
+    additional type argument, ['kind], is typically either [serial], [parallel],
+    or [custom]. It is needed because some linear solvers make additional
+    assumptions about the underlying vector representation.
+
+    @cvode <node7#s:nvector> N_Vector *)
+type ('data, 'kind) nvector
+
+(** [unvec nv] returns the data underlying the nvector [nv]. *)
+val unvec : ('data, 'kind) nvector -> 'data
 
 (** {2 Arrays} *)
 

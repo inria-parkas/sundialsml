@@ -31,14 +31,14 @@
  * -----------------------------------------------------------------
  *)
 
-module Cvode = Cvode_serial
-module RealArray = Cvode.RealArray
-module Roots = Cvode.Roots
+module RealArray = Sundials.RealArray
+module Roots = Sundials.Roots
 module Col = Dls.BandMatrix.Col
 module Dls = Cvode.Dls
+let unvec = Sundials.unvec
 
 let printf = Printf.printf
-let vmax_norm = Nvector_array.Bigarray.array_nvec_ops.Nvector.Mutable.nvmaxnorm
+let vmax_norm = Nvector_array.Bigarray.array_nvec_ops.Nvector_custom.nvmaxnorm
 
 let ith v i = v.{i - 1}
 let set_ith v i e = v.{i - 1} <- e
@@ -140,6 +140,7 @@ let jac data {Cvode.mupper=mupper; Cvode.mlower=mlower} arg jmat =
   and verdc = data.vdcoef
   in
 
+  (* set non-zero Jacobian etnries *)
   for j = 1 to my do
     for i = 1 to mx do
   
@@ -147,7 +148,6 @@ let jac data {Cvode.mupper=mupper; Cvode.mlower=mlower} arg jmat =
       let kthCol = Col.get_col jmat k in
 
       (* set the kth column of jmat *)
-
       Col.set kthCol k k (-. two *. (verdc +. hordc));
       if (i <> 1)  then Col.set kthCol (k - my) k (hordc +. horac);
       if (i <> mx) then Col.set kthCol (k + my) k (hordc -. horac);
@@ -206,7 +206,7 @@ let print_final_stats s =
 
 let main () =
   (* Create a serial vector *)
-  let u = RealArray.make neq in  (* Allocate u vector *)
+  let u = Nvector_serial.make neq 0.0 in (* Allocate u vector *)
 
   let reltol = zero  (* Set the tolerances *)
   and abstol = atol
@@ -222,7 +222,7 @@ let main () =
     vdcoef = one /. (dy *. dy);
   } in
 
-  set_ic u data;  (* Initialize u vector *)
+  set_ic (unvec u) data;  (* Initialize u vector *)
 
   (* Call CVodeCreate to create the solver memory and specify the 
    * Backward Differentiation Formula and the use of a Newton iteration *)
@@ -231,8 +231,8 @@ let main () =
    * the initial dependent variable vector u. *)
   (* Call CVBand to specify the CVBAND band linear solver *)
   (* Set the user-supplied Jacobian routine Jac *)
-  let solver = Cvode.Band ({Cvode.mupper = my; Cvode.mlower = my},
-                           Some (jac data))
+  let solver = Cvode.Dls.band {Cvode.mupper = my; Cvode.mlower = my}
+                              (Some (jac data))
   in
   let cvode_mem = Cvode.init Cvode.BDF (Cvode.Newton solver)
                              (Cvode.SStolerances (reltol, abstol))
@@ -242,7 +242,7 @@ let main () =
 
   (* In loop over output points: call CVode, print results, test for errors *)
 
-  print_header reltol abstol (vmax_norm u);
+  print_header reltol abstol (vmax_norm (unvec u));
 
   let tout = ref t1 in
   for iout = 1 to nout do
@@ -250,7 +250,7 @@ let main () =
     in
     let nst = Cvode.get_num_steps cvode_mem in
 
-    print_output t (vmax_norm u) nst;
+    print_output t (vmax_norm (unvec u)) nst;
     tout := !tout +. dtout
   done;
 

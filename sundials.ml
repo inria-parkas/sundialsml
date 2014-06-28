@@ -1,6 +1,6 @@
 (***********************************************************************)
 (*                                                                     *)
-(*               OCaml interface to (serial) Sundials                  *)
+(*                   OCaml interface to Sundials                       *)
 (*                                                                     *)
 (*  Timothy Bourke (Inria), Jun Inoue (Inria), and Marc Pouzet (LIENS) *)
 (*                                                                     *)
@@ -46,6 +46,11 @@ external get_unit_roundoff : unit -> float
 let unit_roundoff = get_unit_roundoff ()
 
 exception RecoverableFailure
+
+type cnvec
+type ('data, 'kind) nvector = 'data * cnvec
+
+let unvec (payload, _) = payload
 
 (* Note the type annotations are redundant because there's already a .mli, but
    explicit annotations improve performance for bigarrays.  *)

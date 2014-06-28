@@ -1,6 +1,6 @@
 (***********************************************************************)
 (*                                                                     *)
-(*               OCaml interface to (serial) Sundials                  *)
+(*                   OCaml interface to Sundials                       *)
 (*                                                                     *)
 (*  Timothy Bourke (Inria), Jun Inoue (Inria), and Marc Pouzet (LIENS) *)
 (*                                                                     *)
@@ -10,11 +10,10 @@
 (*                                                                     *)
 (***********************************************************************)
 
-include Cvode
-
 (* basic cvode types *)
 
-type 'a nvector = 'a Nvector.nvector
+type ('data, 'kind) nvector = ('data, 'kind) Sundials.nvector
+type real_array = Sundials.RealArray.t
 
 type root_array = Sundials.Roots.t
 type root_val_array = Sundials.Roots.val_array
@@ -50,18 +49,6 @@ type 'a spils_callbacks =
        -> 'a (* Jv *)
        -> unit) option;
   }
-
-(* Note this definition differs from the one in cvode_serial, so the tag
-   values are different.  *)
-type 'a linear_solver =
-  | Diag
-  | Spgmr of spils_params * 'a spils_callbacks
-  | Spbcg of spils_params * 'a spils_callbacks
-  | Sptfqmr of spils_params * 'a spils_callbacks
-
-type 'a iter =
-  | Newton of 'a linear_solver
-  | Functional
 
 (* basic cvodes types *)
 
@@ -101,13 +88,29 @@ type 'a bprec_solve_arg =
     left   : bool
   }
 
+type bandrange = { mupper : int; mlower : int; }
+
+type dense_jac_fn = (real_array triple_tmp, real_array) jacobian_arg
+                        -> Dls.DenseMatrix.t -> unit
+
+type band_jac_fn = bandrange -> (real_array triple_tmp, real_array) jacobian_arg
+                             -> Dls.BandMatrix.t -> unit
+
+type bdense_jac_fn =
+      (real_array triple_tmp, real_array) bjacobian_arg
+          -> Dls.DenseMatrix.t -> unit
+
+type bband_jac_fn =
+      bandrange -> (real_array triple_tmp, real_array) bjacobian_arg
+          -> Dls.BandMatrix.t -> unit
+
 (* the session type *)
 
 type cvode_mem
 type cvode_file
 type c_weak_ref
 
-type 'a session = {
+type ('a, 'kind) session = {
       cvode      : cvode_mem;
       backref    : c_weak_ref;
       nroots     : int;
@@ -119,20 +122,22 @@ type 'a session = {
       mutable rootsfn    : float -> 'a -> root_val_array -> unit;
       mutable errh       : Sundials.error_details -> unit;
       mutable errw       : 'a -> 'a -> unit;
+      mutable jacfn      : dense_jac_fn;
+      mutable bandjacfn  : band_jac_fn;
       mutable presetupfn : ('a triple_tmp, 'a) jacobian_arg -> bool -> float -> bool;
       mutable presolvefn : ('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
                              -> 'a -> unit;
       mutable jactimesfn : ('a single_tmp, 'a) jacobian_arg -> 'a -> 'a -> unit;
 
-      mutable sensext    : 'a sensext (* Used by CVODES *)
+      mutable sensext    : ('a, 'kind) sensext (* Used by CVODES *)
     }
 
-and 'a sensext =
+and ('a, 'kind) sensext =
       NoSensExt
-    | FwdSensExt of 'a fsensext
-    | BwdSensExt of 'a bsensext
+    | FwdSensExt of ('a, 'kind) fsensext
+    | BwdSensExt of ('a, 'kind) bsensext
 
-and 'a fsensext = {
+and ('a, 'kind) fsensext = {
     (* Quadrature *)
     mutable quadrhsfn       : 'a quadrhsfn;
 
@@ -150,15 +155,15 @@ and 'a fsensext = {
     mutable quadsensrhsfn     : 'a quadsensrhsfn;
 
     (* Adjoint *)
-    mutable bsessions         : 'a session list; (* hold references to prevent
-                                                    garbage collection of
-                                                    backward sessions which are
-                                                    needed for callbacks. *)
+    mutable bsessions         : ('a, 'kind) session list;
+                                (* hold references to prevent garbage collection
+                                   of backward sessions which are needed for
+                                   callbacks. *)
   }
 
-and 'a bsensext = {
+and ('a, 'kind) bsensext = {
     (* Adjoint *)
-    parent                : 'a session ;
+    parent                : ('a, 'kind) session ;
     which                 : int;
 
     bnum_sensitivities    : int;
@@ -174,14 +179,21 @@ and 'a bsensext = {
     mutable bpresolvefn : ('a single_tmp, 'a) bjacobian_arg
                             -> 'a bprec_solve_arg -> 'a -> unit;
     mutable bjactimesfn : ('a single_tmp, 'a) bjacobian_arg -> 'a -> 'a -> unit;
+
+    mutable bjacfn      : bdense_jac_fn;
+    mutable bbandjacfn  : bband_jac_fn;
   }
 
 let shouldn't_be_called fcn =
   failwith ("internal error in sundials: " ^ fcn ^ " is called")
+let dummy_dense_jac _ _ = shouldn't_be_called "dummy_dense_jac"
+let dummy_band_jac _ _ _ = shouldn't_be_called "dummy_band_jac"
 let dummy_prec_setup _ _ _ = shouldn't_be_called "dummy_prec_setup"
 let dummy_prec_solve _ _ _ = shouldn't_be_called "dummy_prec_solve"
 let dummy_jac_times_vec _ _ _ = shouldn't_be_called "dummy_jac_times_vec"
 let dummy_bprec_setup _ _ _ = shouldn't_be_called "dummy_prec_setup"
 let dummy_bprec_solve _ _ _ = shouldn't_be_called "dummy_prec_solve"
 let dummy_bjac_times_vec _ _ _ = shouldn't_be_called "dummy_jac_times_vec"
+let dummy_bdense_jac _ _ = shouldn't_be_called "dummy_dense_jac"
+let dummy_bband_jac _ _ _ = shouldn't_be_called "dummy_band_jac"
 

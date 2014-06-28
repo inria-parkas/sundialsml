@@ -1,6 +1,4 @@
 
-module Cvode = Cvode_serial
-
 let ypos_i = 0
 let yvel_i = 1
 let yacc_i = 2
@@ -41,23 +39,24 @@ let g t y gout =
   gout.{under_i} <- y.{ypos_i} -. ground.(idx)
 
 let y = Sundials.RealArray.make 4
+let y_nvec = Nvector_serial.wrap y
 let _ = y.{xpos_i} <- 0.0;
         y.{ypos_i} <- 10.0;
         y.{yvel_i} <- 0.0;
         y.{yacc_i} <- gravity
 
 let n_roots = 1
-let rootdata = Cvode.Roots.create n_roots
+let rootdata = Sundials.Roots.create n_roots
 let ball_event s t y =
   Cvode.get_root_info s rootdata;
 
-  if (Cvode.Roots.detected rootdata under_i && y.{yvel_i} <= 0.0) then
+  if (Sundials.Roots.detected rootdata under_i && y.{yvel_i} <= 0.0) then
     (print_endline "hit ground!";
      y.{yvel_i} <- (-0.8 *. y.{yvel_i});
-     Cvode.reinit s t y)
+     Cvode.reinit s t y_nvec)
 
 let s = Cvode.init Cvode.Adams Cvode.Functional Cvode.default_tolerances
-                   f ~roots:(n_roots, g) y
+                   f ~roots:(n_roots, g) y_nvec
 
 let trace = ref false
 let log = ref false
@@ -80,8 +79,8 @@ let _ =
   if !log then Sundials.RealArray.print_with_time 0.0 y;
   let t = ref !t_delta in
   while (y.{xpos_i} < x_limit) do
-    let (t', result) = Cvode.solve_normal s !t y in
-        if (result = Cvode.RootsFound) then ball_event s t' y;
+    let (t', result) = Cvode.solve_normal s !t y_nvec in
+        if (result = Sundials.RootsFound) then ball_event s t' y;
 
         if !log then Sundials.RealArray.print_with_time t' y;
         if !show then Showball.show (y.{xpos_i}, y.{ypos_i});

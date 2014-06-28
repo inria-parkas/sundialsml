@@ -1,6 +1,6 @@
 
 open Sundials
-open Spils_nvector
+open Spils
 
 let nvec = Nvector_array.wrap
 

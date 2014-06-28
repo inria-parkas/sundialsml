@@ -84,11 +84,11 @@
  * -----------------------------------------------------------------
  *)
 
-module Cvode  = Cvode_serial
-module RealArray = Cvode.RealArray
-module Adj = Cvodes_serial.Adjoint
+module RealArray = Sundials.RealArray
+module Adj = Cvodes.Adjoint
 module Densemat = Dls.ArrayDenseMatrix
 open Bigarray
+let unvec = Sundials.unvec
 
 let printf = Printf.printf
 let array_ops = Nvector_array.Bigarray.array_nvec_ops
@@ -199,10 +199,10 @@ type web_data = {
     fsave     : RealArray.t;
     fbsave    : RealArray.t;
 
-    rewt      : Cvode.nvec;
+    rewt      : Nvector_serial.t;
 
-    mutable cvode_mem  : Cvode.session option;
-    mutable cvode_memb : Adj.bsession option;
+    mutable cvode_mem  : Cvode.serial_session option;
+    mutable cvode_memb : Adj.serial_bsession option;
   }
 
 (* Adjoint calculation constants *)
@@ -311,12 +311,12 @@ let alloc_user_data () =
 
       dx         = dx;
       dy         = dy;
-      srur       = sqrt Cvode.unit_roundoff;
+      srur       = sqrt Sundials.unit_roundoff;
 
       fsave      = RealArray.make neq;
       fbsave     = RealArray.make neq;
 
-      rewt       = RealArray.make (neq + 1);
+      rewt       = Nvector_serial.make (neq + 1) 0.0;
 
       cvode_mem  = None;
       cvode_memb = None;
@@ -775,11 +775,11 @@ let precond wdata jacarg jok gamma =
   let cvode_mem =
     match wdata.cvode_mem with
     | Some c -> c | None -> assert false
-  and rewtdata  = wdata.rewt
+  and rewtdata  = unvec wdata.rewt
   in
-  Cvode.get_err_weights cvode_mem rewtdata;
+  Cvode.get_err_weights cvode_mem wdata.rewt;
 
-  let uround = Cvode.unit_roundoff
+  let uround = Sundials.unit_roundoff
   and p      = wdata.p
   and pivot  = wdata.pivot
   and jxr    = wdata.jxr
@@ -942,11 +942,11 @@ let precondb wdata jacarg jok gamma =
   let cvode_mem =
     match wdata.cvode_memb with
     | Some c -> c | None -> assert false
-  and rewtdata = wdata.rewt
+  and rewtdata = unvec wdata.rewt
   in
-  Adj.get_err_weights cvode_mem rewtdata;
+  Adj.get_err_weights cvode_mem wdata.rewt;
 
-  let uround = Cvode.unit_roundoff
+  let uround = Sundials.unit_roundoff
   and p      = wdata.p
   and pivot  = wdata.pivot
   and jxr    = wdata.jxr
@@ -1003,7 +1003,7 @@ let precondb wdata jacarg jok gamma =
 
 let psolveb wdata jac_arg solve_arg z =
   let { Adj.jac_tmp = vtemp; } = jac_arg
-  and { Adj.rvec = r; Adj.gamma = gamma } = solve_arg
+  and { Adj.Spils.rvec = r; Adj.Spils.gamma = gamma } = solve_arg
   in
   Array1.blit r z;
 
@@ -1049,8 +1049,8 @@ let main () =
 
   (* Set-up forward problem *)
   (* Initializations *)
-  let c = RealArray.make (neq + 1) in
-  cinit wdata c;
+  let c = Nvector_serial.make (neq + 1) 0.0 in
+  cinit wdata (unvec c);
 
   (* Call CVodeCreate/CVodeInit for forward run *)
   (* Call CVSpgmr for forward run *)
@@ -1061,11 +1061,10 @@ let main () =
     Cvode.init
         Cvode.BDF
         (Cvode.Newton
-            (Cvode.Spgmr
-               ({ Cvode.prec_type = Spils.PrecLeft; Cvode.maxl = None },
-                { Cvode.prec_setup_fn = Some (precond wdata);
-                  Cvode.prec_solve_fn = Some (psolve wdata);
-                  Cvode.jac_times_vec_fn = None })))
+            (Cvode.Spils.spgmr None Spils.PrecLeft
+                { Cvode.Spils.prec_setup_fn = Some (precond wdata);
+                  Cvode.Spils.prec_solve_fn = Some (psolve wdata);
+                  Cvode.Spils.jac_times_vec_fn = None }))
         (Cvode.SStolerances (reltol, abstol))
         (f wdata) ~t0:t0 c
   in
@@ -1084,13 +1083,13 @@ let main () =
   printf "\nncheck = %d\n"  ncheck;
 
   printf "\n   G = int_t int_x int_y c%d(t,x,y) dx dy dt = %f \n\n"
-         ispec c.{neq};
+         ispec (unvec c).{neq};
 
   (* Set-up backward problem *)
 
   (* Allocate cB *)
   (* Initialize cB = 0 *)
-  let cB = RealArray.init neq zero in
+  let cB = Nvector_serial.make neq zero in
 
   (* Create and allocate CVODES memory for backward run *)
   (* Call CVSpgmr *)
@@ -1101,11 +1100,10 @@ let main () =
     Adj.init_backward
       cvode_mem
       Cvode.BDF
-      (Adj.Newton (Adj.Spgmr
-         ({ Cvode.prec_type = Spils.PrecLeft; Cvode.maxl = None },
-          { Adj.prec_setup_fn = Some (precondb wdata);
-            Adj.prec_solve_fn = Some (psolveb wdata);
-            Adj.jac_times_vec_fn = None })))
+      (Adj.Newton (Adj.Spils.spgmr None Spils.PrecLeft
+          { Adj.Spils.prec_setup_fn = Some (precondb wdata);
+            Adj.Spils.prec_solve_fn = Some (psolveb wdata);
+            Adj.Spils.jac_times_vec_fn = None }))
       (Adj.SStolerances (reltolb, abstolb))
       (Adj.Basic (fB wdata))
       tout
@@ -1120,7 +1118,7 @@ let main () =
   Adj.backward_normal cvode_mem t0;
   flush stdout;
   let _ = Adj.get cvode_memb cB in
-  print_output wdata cB ns mxns
+  print_output wdata (unvec cB) ns mxns
 
 let _ = main ()
 let _ = Gc.compact ()

@@ -20,8 +20,8 @@
  * -----------------------------------------------------------------
  *)
 
-module Kinsol = Kinsol_serial
 module RealArray = Sundials.RealArray
+let unvec = Sundials.unvec
 
 let printf = Printf.printf
 let ith v i = v.{i - 1}
@@ -139,7 +139,7 @@ let main () =
   (* -------------
    * Initial guess 
    * ------------- *)
-  let y = RealArray.init neq zero in
+  let y = Nvector_serial.make neq zero in
 
   (* -----------------------------------------
    * Initialize and allocate memory for KINSOL
@@ -147,7 +147,7 @@ let main () =
    * Attach band linear solver 
    * ----------------------------------------- *)
   let kmem = Kinsol.init
-                (Kinsol.Band ({Kinsol.mupper=ny; Kinsol.mlower=ny}, None))
+                (Kinsol.Dls.band {Kinsol.mupper=ny; Kinsol.mlower=ny} None)
                 func y
   in
   (* -------------------
@@ -173,7 +173,7 @@ let main () =
    * ---------------------------- *)
 
   (* No scaling used *)
-  let scale = RealArray.init neq one in
+  let scale = Nvector_serial.make neq one in
 
   (* Call main solver *)
   ignore (Kinsol.solve
@@ -192,7 +192,7 @@ let main () =
   let fnorm = Kinsol.get_func_norm kmem in
   printf "\nComputed solution (||F|| = %g):\n\n" fnorm;
 
-  print_output y;
+  print_output (unvec y);
 
   print_final_stats kmem
 

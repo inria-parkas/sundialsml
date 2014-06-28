@@ -1,6 +1,6 @@
 (***********************************************************************)
 (*                                                                     *)
-(*               OCaml interface to (serial) Sundials                  *)
+(*                   OCaml interface to Sundials                       *)
 (*                                                                     *)
 (*  Timothy Bourke (Inria), Jun Inoue (Inria), and Marc Pouzet (LIENS) *)
 (*                                                                     *)
@@ -10,10 +10,126 @@
 (*                                                                     *)
 (***********************************************************************)
 
-type 'a nvector
+type kind
+type 'a t = ('a, kind) Sundials.nvector
+
+type 'a nvector_ops = {
+  nvclone           : 'a -> 'a;
+  nvdestroy         : ('a -> unit) option;
+  nvspace           : ('a -> (int * int)) option;
+  nvlinearsum       : float -> 'a -> float -> 'a -> 'a -> unit;
+  nvconst           : float -> 'a -> unit;
+  nvprod            : 'a -> 'a -> 'a -> unit;
+  nvdiv             : 'a -> 'a -> 'a -> unit;
+  nvscale           : float -> 'a -> 'a -> unit;
+  nvabs             : 'a -> 'a -> unit;
+  nvinv             : 'a -> 'a -> unit;
+  nvaddconst        : 'a -> float -> 'a -> unit;
+  nvmaxnorm         : 'a -> float;
+  nvwrmsnorm        : 'a -> 'a -> float;
+  nvmin             : 'a -> float;
+
+  nvdotprod         : ('a -> 'a -> float) option;
+  nvcompare         : (float -> 'a -> 'a -> unit) option;
+  nvinvtest         : ('a -> 'a -> bool) option;
+
+  nvwl2norm         : ('a -> 'a -> float) option;
+  nvl1norm          : ('a -> float) option;
+  nvwrmsnormmask    : ('a -> 'a -> 'a -> float) option;
+  nvconstrmask      : ('a -> 'a -> 'a -> bool) option;
+  nvminquotient     : ('a -> 'a -> float) option;
+}
+
+external make : 'a nvector_ops -> 'a -> 'a t
+    = "ml_nvec_wrap_custom"
+
+let add_tracing msg ops =
+  let pr s = print_string msg; print_endline s in
+  let {
+      nvclone           = nvclone;
+      nvdestroy         = nvdestroy;
+      nvspace           = nvspace;
+      nvlinearsum       = nvlinearsum;
+      nvconst           = nvconst;
+      nvprod            = nvprod;
+      nvdiv             = nvdiv;
+      nvscale           = nvscale;
+      nvabs             = nvabs;
+      nvinv             = nvinv;
+      nvaddconst        = nvaddconst;
+      nvmaxnorm         = nvmaxnorm;
+      nvwrmsnorm        = nvwrmsnorm;
+      nvmin             = nvmin;
+
+      nvdotprod         = nvdotprod;
+      nvcompare         = nvcompare;
+      nvinvtest         = nvinvtest;
+
+      nvwl2norm         = nvwl2norm;
+      nvl1norm          = nvl1norm;
+      nvwrmsnormmask    = nvwrmsnormmask;
+      nvconstrmask      = nvconstrmask;
+      nvminquotient     = nvminquotient;
+    } = ops
+  in
+  let fo f f' = match f with None -> None | Some f -> Some (f' f) in
+
+  let tr_nvclone a = pr "nvclone"; nvclone a
+  and tr_nvdestroy = fo nvdestroy (fun f -> fun a -> (pr "nvdestroy"; f a))
+  and tr_nvspace = fo nvspace (fun f -> fun a -> (pr "nvspace"; f a))
+  and tr_nvlinearsum a x b y z = pr "nvlinearsum"; nvlinearsum a x b y z
+  and tr_nvconst c z = pr "nvconst"; nvconst c z
+  and tr_nvprod x y z = pr "nvprod"; nvprod x y z
+  and tr_nvdiv x y z = pr "nvdiv"; nvdiv x y z
+  and tr_nvscale c x z = pr "nvscale"; nvscale c x z
+  and tr_nvabs x z = pr "nvabs"; nvabs x z
+  and tr_nvinv x z = pr "nvinv"; nvinv x z
+  and tr_nvaddconst x b z = pr "nvaddconst"; nvaddconst x b z
+  and tr_nvmaxnorm x = pr "nvmaxnorm"; nvmaxnorm x
+  and tr_nvwrmsnorm x w = pr "nvwrmsnorm"; nvwrmsnorm x w
+  and tr_nvmin x = pr "nvmin"; nvmin x
+  and tr_nvdotprod = fo nvdotprod (fun f -> fun x y -> pr "nvdotprod"; f x y)
+  and tr_nvcompare =
+    fo nvcompare (fun f -> fun c x z -> pr "nvcompare"; f c x z)
+  and tr_nvinvtest = fo nvinvtest (fun f -> fun x z -> pr "nvinvtest"; f x z)
+  and tr_nvwl2norm = fo nvwl2norm (fun f -> fun x w -> pr "nvwl2norm"; f x w)
+  and tr_nvl1norm = fo nvl1norm (fun f -> fun x -> pr "nvl1norm"; f x)
+  and tr_nvwrmsnormmask =
+    fo nvwrmsnormmask (fun f -> fun x w id -> pr "nvwrmsnormmask"; f x w id)
+  and tr_nvconstrmask =
+    fo nvconstrmask (fun f -> fun c x m -> pr "nvconstrmask"; f c x m)
+  and tr_nvminquotient =
+    fo nvminquotient (fun f -> fun n d -> pr "nvminquotient"; f n d)
+  in
+  {
+      nvclone           = tr_nvclone;
+      nvdestroy         = tr_nvdestroy;
+      nvspace           = tr_nvspace;
+      nvlinearsum       = tr_nvlinearsum;
+      nvconst           = tr_nvconst;
+      nvprod            = tr_nvprod;
+      nvdiv             = tr_nvdiv;
+      nvscale           = tr_nvscale;
+      nvabs             = tr_nvabs;
+      nvinv             = tr_nvinv;
+      nvaddconst        = tr_nvaddconst;
+      nvmaxnorm         = tr_nvmaxnorm;
+      nvwrmsnorm        = tr_nvwrmsnorm;
+      nvmin             = tr_nvmin;
+
+      nvdotprod         = tr_nvdotprod;
+      nvcompare         = tr_nvcompare;
+      nvinvtest         = tr_nvinvtest;
+
+      nvwl2norm         = tr_nvwl2norm;
+      nvl1norm          = tr_nvl1norm;
+      nvwrmsnormmask    = tr_nvwrmsnormmask;
+      nvconstrmask      = tr_nvconstrmask;
+      nvminquotient     = tr_nvminquotient;
+   }
 
 module Mutable = struct
-  type 'a nvector_ops = {
+  type 'a _nvector_ops = 'a nvector_ops = {
     nvclone           : 'a -> 'a;
     nvdestroy         : ('a -> unit) option;
     nvspace           : ('a -> (int * int)) option;
@@ -40,100 +156,39 @@ module Mutable = struct
     nvminquotient     : ('a -> 'a -> float) option;
   }
 
-  external make_nvector : 'a nvector_ops -> 'a -> 'a nvector
-      = "ml_nvec_new"
+  type 'a nvector_ops = 'a _nvector_ops = {
+    nvclone           : 'a -> 'a;
+    nvdestroy         : ('a -> unit) option;
+    nvspace           : ('a -> (int * int)) option;
+    nvlinearsum       : float -> 'a -> float -> 'a -> 'a -> unit;
+    nvconst           : float -> 'a -> unit;
+    nvprod            : 'a -> 'a -> 'a -> unit;
+    nvdiv             : 'a -> 'a -> 'a -> unit;
+    nvscale           : float -> 'a -> 'a -> unit;
+    nvabs             : 'a -> 'a -> unit;
+    nvinv             : 'a -> 'a -> unit;
+    nvaddconst        : 'a -> float -> 'a -> unit;
+    nvmaxnorm         : 'a -> float;
+    nvwrmsnorm        : 'a -> 'a -> float;
+    nvmin             : 'a -> float;
 
-  external nvector_data : 'a nvector -> 'a
-      = "ml_nvec_data"
+    nvdotprod         : ('a -> 'a -> float) option;
+    nvcompare         : (float -> 'a -> 'a -> unit) option;
+    nvinvtest         : ('a -> 'a -> bool) option;
 
-  let add_tracing msg ops =
-    let pr s = print_string msg; print_endline s in
-    let {
-        nvclone           = nvclone;
-        nvdestroy         = nvdestroy;
-        nvspace           = nvspace;
-        nvlinearsum       = nvlinearsum;
-        nvconst           = nvconst;
-        nvprod            = nvprod;
-        nvdiv             = nvdiv;
-        nvscale           = nvscale;
-        nvabs             = nvabs;
-        nvinv             = nvinv;
-        nvaddconst        = nvaddconst;
-        nvmaxnorm         = nvmaxnorm;
-        nvwrmsnorm        = nvwrmsnorm;
-        nvmin             = nvmin;
+    nvwl2norm         : ('a -> 'a -> float) option;
+    nvl1norm          : ('a -> float) option;
+    nvwrmsnormmask    : ('a -> 'a -> 'a -> float) option;
+    nvconstrmask      : ('a -> 'a -> 'a -> bool) option;
+    nvminquotient     : ('a -> 'a -> float) option;
+  }
 
-        nvdotprod         = nvdotprod;
-        nvcompare         = nvcompare;
-        nvinvtest         = nvinvtest;
-
-        nvwl2norm         = nvwl2norm;
-        nvl1norm          = nvl1norm;
-        nvwrmsnormmask    = nvwrmsnormmask;
-        nvconstrmask      = nvconstrmask;
-        nvminquotient     = nvminquotient;
-      } = ops
-    in
-    let fo f f' = match f with None -> None | Some f -> Some (f' f) in
-
-    let tr_nvclone a = pr "nvclone"; nvclone a
-    and tr_nvdestroy = fo nvdestroy (fun f -> fun a -> (pr "nvdestroy"; f a))
-    and tr_nvspace = fo nvspace (fun f -> fun a -> (pr "nvspace"; f a))
-    and tr_nvlinearsum a x b y z = pr "nvlinearsum"; nvlinearsum a x b y z
-    and tr_nvconst c z = pr "nvconst"; nvconst c z
-    and tr_nvprod x y z = pr "nvprod"; nvprod x y z
-    and tr_nvdiv x y z = pr "nvdiv"; nvdiv x y z
-    and tr_nvscale c x z = pr "nvscale"; nvscale c x z
-    and tr_nvabs x z = pr "nvabs"; nvabs x z
-    and tr_nvinv x z = pr "nvinv"; nvinv x z
-    and tr_nvaddconst x b z = pr "nvaddconst"; nvaddconst x b z
-    and tr_nvmaxnorm x = pr "nvmaxnorm"; nvmaxnorm x
-    and tr_nvwrmsnorm x w = pr "nvwrmsnorm"; nvwrmsnorm x w
-    and tr_nvmin x = pr "nvmin"; nvmin x
-    and tr_nvdotprod = fo nvdotprod (fun f -> fun x y -> pr "nvdotprod"; f x y)
-    and tr_nvcompare =
-      fo nvcompare (fun f -> fun c x z -> pr "nvcompare"; f c x z)
-    and tr_nvinvtest = fo nvinvtest (fun f -> fun x z -> pr "nvinvtest"; f x z)
-    and tr_nvwl2norm = fo nvwl2norm (fun f -> fun x w -> pr "nvwl2norm"; f x w)
-    and tr_nvl1norm = fo nvl1norm (fun f -> fun x -> pr "nvl1norm"; f x)
-    and tr_nvwrmsnormmask =
-      fo nvwrmsnormmask (fun f -> fun x w id -> pr "nvwrmsnormmask"; f x w id)
-    and tr_nvconstrmask =
-      fo nvconstrmask (fun f -> fun c x m -> pr "nvconstrmask"; f c x m)
-    and tr_nvminquotient =
-      fo nvminquotient (fun f -> fun n d -> pr "nvminquotient"; f n d)
-    in
-    {
-        nvclone           = tr_nvclone;
-        nvdestroy         = tr_nvdestroy;
-        nvspace           = tr_nvspace;
-        nvlinearsum       = tr_nvlinearsum;
-        nvconst           = tr_nvconst;
-        nvprod            = tr_nvprod;
-        nvdiv             = tr_nvdiv;
-        nvscale           = tr_nvscale;
-        nvabs             = tr_nvabs;
-        nvinv             = tr_nvinv;
-        nvaddconst        = tr_nvaddconst;
-        nvmaxnorm         = tr_nvmaxnorm;
-        nvwrmsnorm        = tr_nvwrmsnorm;
-        nvmin             = tr_nvmin;
-
-        nvdotprod         = tr_nvdotprod;
-        nvcompare         = tr_nvcompare;
-        nvinvtest         = tr_nvinvtest;
-
-        nvwl2norm         = tr_nvwl2norm;
-        nvl1norm          = tr_nvl1norm;
-        nvwrmsnormmask    = tr_nvwrmsnormmask;
-        nvconstrmask      = tr_nvconstrmask;
-        nvminquotient     = tr_nvminquotient;
-     }
-
+  let make = make
 end
 
 module Immutable = struct
+  type 'a mutable_nvector_ops = 'a nvector_ops
+
   type 'a nvector_ops = {
     nvclone           : 'a -> 'a;
     nvdestroy         : ('a -> unit) option;
@@ -270,7 +325,7 @@ module Immutable = struct
       Mutable.nvminquotient  = m_nvminquotient;
     }
 
-  let make_nvector ops = Mutable.make_nvector (from_immutable ops)
-  let nvector_data v = !(Mutable.nvector_data v)
+  let make ops = Mutable.make (from_immutable ops)
+  let unwrap v = !(Sundials.unvec v)
 end
 

@@ -82,16 +82,16 @@
  * -----------------------------------------------------------------
  *)
 
-module Kinsol = Kinsol_serial
 module RealArray = Sundials.RealArray
 module Dense = Dls.ArrayDenseMatrix
+let unvec = Sundials.unvec
 
 let printf = Printf.printf
 let subarray = Bigarray.Array1.sub
 let slice_left = Bigarray.Array2.slice_left
 let unwrap = Sundials.RealArray2.unwrap
 let nvwl2norm =
-  match Nvector_array.Bigarray.array_nvec_ops.Nvector.Mutable.nvwl2norm with
+  match Nvector_array.Bigarray.array_nvec_ops.Nvector_custom.nvwl2norm with
   | Some fn -> fn
   | None -> failwith "nvwl2norm not found!"
 
@@ -277,8 +277,8 @@ let func cc fval =
 let prec_setup_bd { Kinsol.jac_u=cc;
                     Kinsol.jac_fu=fval;
                     Kinsol.jac_tmp=(vtemp1, vtemp2)}
-                  { Kinsol.uscale=cscale;
-                    Kinsol.fscale=fscale } =
+                  { Kinsol.Spils.uscale=cscale;
+                    Kinsol.Spils.fscale=fscale } =
   let perturb_rates = Sundials.RealArray.make num_species in
   
   let delx = dx in
@@ -326,8 +326,8 @@ let prec_setup_bd { Kinsol.jac_u=cc;
 let prec_solve_bd { Kinsol.jac_u=cc;
                     Kinsol.jac_fu=fval;
                     Kinsol.jac_tmp=ftem}
-                  { Kinsol.uscale=cscale;
-                    Kinsol.fscale=fscale }
+                  { Kinsol.Spils.uscale=cscale;
+                    Kinsol.Spils.fscale=fscale }
                   vv =
   for jx = 0 to mx - 1 do
     for jy = 0 to my - 1 do
@@ -429,9 +429,9 @@ let main () =
   let globalstrategy = false in
 
   (* Create serial vectors of length NEQ *)
-  let cc = RealArray.make neq in
-  let sc = RealArray.make neq in
-  set_initial_profiles cc sc;
+  let cc = Nvector_serial.make neq 0.0 in
+  let sc = Nvector_serial.make neq 0.0 in
+  set_initial_profiles (unvec cc) (unvec sc);
 
   let fnormtol  = ftol in
   let scsteptol = stol in
@@ -443,17 +443,17 @@ let main () =
      KINSPGMR with preconditioner routines prec_setup_bd
      and prec_solve_bd. *)
   let kmem = Kinsol.init
-              (Kinsol.Spgmr (Some !maxl, Some maxlrst, {
-                             Kinsol.prec_setup_fn=Some prec_setup_bd;
-                             Kinsol.prec_solve_fn=Some prec_solve_bd;
-                             Kinsol.jac_times_vec_fn=None; }))
+              (Kinsol.Spils.spgmr (Some !maxl) (Some maxlrst)
+                            {Kinsol.Spils.prec_setup_fn=Some prec_setup_bd;
+                             Kinsol.Spils.prec_solve_fn=Some prec_solve_bd;
+                             Kinsol.Spils.jac_times_vec_fn=None; })
               func cc in
-  Kinsol.set_constraints kmem (RealArray.init neq two);
+  Kinsol.set_constraints kmem (Nvector_serial.make neq two);
   Kinsol.set_func_norm_tol kmem (Some fnormtol);
   Kinsol.set_scaled_step_tol kmem (Some scsteptol);
 
   let go linsolver =
-    if linsolver != Use_Spgmr then set_initial_profiles cc sc;
+    if linsolver != Use_Spgmr then set_initial_profiles (unvec cc) (unvec sc);
     (match linsolver with
      | Use_Spgmr ->
          printf " -------";
@@ -470,10 +470,10 @@ let main () =
            data. *)
          maxl := 15;
          Kinsol.set_linear_solver kmem
-            (Kinsol.Spbcg (Some !maxl, {
-                           Kinsol.prec_setup_fn=Some prec_setup_bd;
-                           Kinsol.prec_solve_fn=Some prec_solve_bd;
-                           Kinsol.jac_times_vec_fn=None; }))
+            (Kinsol.Spils.spbcg (Some !maxl)
+                                {Kinsol.Spils.prec_setup_fn=Some prec_setup_bd;
+                                 Kinsol.Spils.prec_solve_fn=Some prec_solve_bd;
+                                 Kinsol.Spils.jac_times_vec_fn=None; })
         
      | Use_Sptfqmr ->
          printf " ---------";
@@ -485,10 +485,10 @@ let main () =
             the user block data. *)
          maxl := 25;
          Kinsol.set_linear_solver kmem
-            (Kinsol.Sptfqmr (Some !maxl, {
-                             Kinsol.prec_setup_fn=Some prec_setup_bd;
-                             Kinsol.prec_solve_fn=Some prec_solve_bd;
-                             Kinsol.jac_times_vec_fn=None; })));
+            (Kinsol.Spils.sptfqmr (Some !maxl)
+                                  {Kinsol.Spils.prec_setup_fn=Some prec_setup_bd;
+                                   Kinsol.Spils.prec_solve_fn=Some prec_solve_bd;
+                                   Kinsol.Spils.jac_times_vec_fn=None; }));
 
     (* Print out the problem size, solution parameters, initial guess. *)
     print_header globalstrategy !maxl maxlrst fnormtol scsteptol linsolver;
@@ -501,7 +501,7 @@ let main () =
                    sc);           (* scaling vector for function values fval *)
 
     printf("\n\nComputed equilibrium species concentrations:\n");
-    print_output cc;
+    print_output (unvec cc);
 
     (* Print final statistics and free memory *)  
     print_final_stats kmem linsolver

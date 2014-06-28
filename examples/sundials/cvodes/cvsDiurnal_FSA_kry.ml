@@ -49,10 +49,10 @@
  * -----------------------------------------------------------------
  *)
 
-module Cvode  = Cvode_serial
-module RealArray = Cvode.RealArray
+module RealArray = Sundials.RealArray
 module Direct = Dls.ArrayDenseMatrix
-module Sens = Cvodes_serial.Sensitivity
+module Sens = Cvodes.Sensitivity
+let unvec = Sundials.unvec
  
 let printf = Printf.printf
 
@@ -217,10 +217,11 @@ let set_initial_profiles y dx dz =
 
 (* Print current t, step count, order, stepsize, and sampled c1,c2 values *)
 
-let print_output s t ydata =
+let print_output s t y =
   let nst = Cvode.get_num_steps s
   and qu  = Cvode.get_last_order s
   and hu  = Cvode.get_last_step s
+  and ydata = unvec y
   in
   printf "%8.3e %2d  %8.3e %5d\n"  t qu hu nst;
   printf "                                Solution       ";
@@ -231,14 +232,14 @@ let print_output s t ydata =
 (* Print sampled sensitivities *)
 
 let print_output_s uS =
-  let sdata = uS.(0) in
+  let sdata = unvec uS.(0) in
   printf "                                ----------------------------------------\n"; 
   printf "                                Sensitivity 1  ";
   printf "%12.4e %12.4e \n" (ijkth sdata 1 0 0) (ijkth sdata 1 (mx-1) (mz-1)); 
   printf "                                               ";
   printf "%12.4e %12.4e \n" (ijkth sdata 2 0 0) (ijkth sdata 2 (mx-1) (mz-1));
 
-  let sdata = uS.(1) in
+  let sdata = unvec uS.(1) in
   printf "                                ----------------------------------------\n"; 
   printf "                                Sensitivity 2  ";
   printf "%12.4e %12.4e \n" (ijkth sdata 1 0 0) (ijkth sdata 1 (mx-1) (mz-1)); 
@@ -515,9 +516,9 @@ let main () =
   let sensi, err_con = process_args () in
 
   (* Problem parameters and initial states *)
-  let y = RealArray.make neq in
+  let y = Nvector_serial.make neq 0.0 in
   let data = init_user_data (alloc_user_data ()) in
-  set_initial_profiles y data.dx data.dz;
+  set_initial_profiles (unvec y) data.dx data.dz;
 
   (* Tolerances *)
   let abstol = atol
@@ -528,10 +529,10 @@ let main () =
   let cvode_mem =
     Cvode.init Cvode.BDF
       (Cvode.Newton
-          (Cvode.Spgmr ({ Cvode.prec_type = Spils.PrecLeft; Cvode.maxl = None},
-                        { Cvode.prec_setup_fn = Some (precond data);
-                          Cvode.prec_solve_fn = Some (psolve data);
-                          Cvode.jac_times_vec_fn = None; })))
+          (Cvode.Spils.spgmr None Spils.PrecLeft
+                        { Cvode.Spils.prec_setup_fn = Some (precond data);
+                          Cvode.Spils.prec_solve_fn = Some (psolve data);
+                          Cvode.Spils.jac_times_vec_fn = None; }))
       (Cvode.SStolerances (reltol, abstol))
       (f data) ~t0:t0 y
   in
@@ -548,7 +549,7 @@ let main () =
         let pbar = RealArray.make ns in
         RealArray.mapi (fun is _ -> data.params.{plist.(is)}) pbar;
 
-        let uS = Array.init ns (fun _ -> RealArray.init neq 0.0) in
+        let uS = Array.init ns (fun _ -> Nvector_serial.make neq 0.0) in
 
         Sens.init cvode_mem
                          Sens.EEtolerances

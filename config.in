@@ -8,7 +8,7 @@ KINSOL_DOC_ROOT = https://computation.llnl.gov/casc/sundials/documentation/kin_g
 OCAML_DOC_ROOT = http://caml.inria.fr/pub/docs/manual-ocaml/libref/
 
 CC = gcc
-CFLAGS += @cflags@ # -DRESTRICT_INTERNAL_PRECISION"
+CFLAGS += @cflags@ -Wall -Werror
 LDFLAGS += @ldflags@
 CPPFLAGS ?= -P -x c -traditional-cpp
 

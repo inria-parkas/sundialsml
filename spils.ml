@@ -1,6 +1,6 @@
 (***********************************************************************)
 (*                                                                     *)
-(*               OCaml interface to (serial) Sundials                  *)
+(*                   OCaml interface to Sundials                       *)
 (*                                                                     *)
 (*  Timothy Bourke (Inria), Jun Inoue (Inria), and Marc Pouzet (LIENS) *)
 (*                                                                     *)
@@ -58,4 +58,107 @@ external qr_sol : int
                  -> Sundials.RealArray.t
                  -> int
     = "c_spils_qr_sol"
+
+type ('a, 'k) nvector = ('a, 'k) Sundials.nvector
+
+type 'a atimes = 'a -> 'a -> unit
+
+type 'a psolve = 'a -> 'a -> bool -> unit
+
+let _ =
+  List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
+  [
+    ("c_spils_RecoverableFailure", Sundials.RecoverableFailure);
+  ]
+
+external modified_gs : (('a, 'k) nvector) array
+                       -> Sundials.RealArray2.t
+                       -> int
+                       -> int
+                       -> float
+    = "c_spils_modified_gs"
+
+external classical_gs' : (('a, 'k) nvector) array
+                         * Sundials.RealArray2.t
+                         * int
+                         * int
+                         * ('a, 'k) nvector
+                         * Sundials.RealArray.t
+                         -> float
+    = "c_spils_classical_gs"
+
+let classical_gs v h k p temp s = classical_gs' (v, h, k, p, temp, s)
+
+module SPGMR =
+  struct
+    type 'a t
+
+    external make  : int -> ('a, 'k) nvector -> 'a t
+        = "c_spils_spgmr_make"
+
+    external solve' : 'a t                            (*  0 *)
+                      * ('a, 'k) nvector                    (*  1 *)
+                      * ('a, 'k) nvector                    (*  2 *)
+                      * preconditioning_type    (*  3 *)
+                      * gramschmidt_type        (*  4 *)
+                      * float                         (*  5 *)
+                      * int                           (*  6 *)
+                      * (('a, 'k) nvector) option           (*  7 *)
+                      * (('a, 'k) nvector) option           (*  8 *)
+                      * 'a atimes                     (*  9 *)
+                      * ('a psolve) option            (* 10 *)
+                      -> bool * float * int * int
+        = "c_spils_spgmr_solve"
+
+    let solve s x b pretype gstype delta max_restarts s1 s2 atimes psolve
+        = solve' (s, x, b, pretype, gstype, delta, max_restarts, s1, s2,
+                  atimes, psolve)
+
+  end
+
+module SPBCG =
+  struct
+    type 'a t
+
+    external make  : int -> ('a, 'k) nvector -> 'a t
+        = "c_spils_spbcg_make"
+
+    external solve' : 'a t
+                      * ('a, 'k) nvector
+                      * ('a, 'k) nvector
+                      * preconditioning_type
+                      * float
+                      * (('a, 'k) nvector) option
+                      * (('a, 'k) nvector) option
+                      * 'a atimes
+                      * ('a psolve) option
+                      -> bool * float * int * int
+        = "c_spils_spbcg_solve"
+    let solve s x b pretype delta sx sb atimes psolve =
+      solve' (s, x, b, pretype, delta, sx, sb, atimes, psolve)
+ end
+
+module SPTFQMR =
+  struct
+    
+    type 'a t
+
+    external make  : int -> ('a, 'k) nvector -> 'a t
+        = "c_spils_sptfqmr_make"
+
+    external solve' : 'a t
+                      * ('a, 'k) nvector
+                      * ('a, 'k) nvector
+                      * preconditioning_type
+                      * float
+                      * (('a, 'k) nvector) option
+                      * (('a, 'k) nvector) option
+                      * 'a atimes
+                      * ('a psolve) option
+                      -> bool * float * int * int
+        = "c_spils_sptfqmr_solve"
+    let solve s x b pretype delta sx sb atimes psolve =
+      solve' (s, x, b, pretype, delta, sx, sb, atimes, psolve)
+
+ end
 

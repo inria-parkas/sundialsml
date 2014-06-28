@@ -45,12 +45,12 @@
  * -----------------------------------------------------------------
  *)
 
-module Cvode = Cvode_serial
-module Sens = Cvodes_serial.Sensitivity
-module RealArray = Cvode.RealArray
+module Sens = Cvodes.Sensitivity
+module RealArray = Sundials.RealArray
+let unvec = Sundials.unvec
 
 let printf = Printf.printf
-let vmax_norm = Nvector_array.Bigarray.array_nvec_ops.Nvector.Mutable.nvmaxnorm
+let vmax_norm = Nvector_array.Bigarray.array_nvec_ops.Nvector_custom.nvmaxnorm
 
 (* Problem Constants *)
 
@@ -151,15 +151,15 @@ let print_output cvode_mem t u =
   let hu  = Cvode.get_last_step cvode_mem in
   printf "%8.3e %2d  %8.3e %5d\n" t qu hu nst;
   printf "                                Solution       ";
-  printf "%12.4e \n" (vmax_norm u)
+  printf "%12.4e \n" (vmax_norm (unvec u))
 
 (* Print max norm of sensitivities *)
 
 let print_output_s uS =
   printf "                                Sensitivity 1  ";
-  printf "%12.4e \n" (vmax_norm uS.(0));
+  printf "%12.4e \n" (vmax_norm (unvec uS.(0)));
   printf "                                Sensitivity 2  ";
-  printf "%12.4e \n" (vmax_norm uS.(1))
+  printf "%12.4e \n" (vmax_norm (unvec uS.(1)))
 
 
 (* Print some final statistics located in the CVODES memory *)
@@ -202,8 +202,8 @@ let main () =
     } in
 
   (* Allocate and set initial states *)
-  let u = RealArray.make neq in
-  set_ic u dx;
+  let u = Nvector_serial.make neq 0.0 in
+  set_ic (unvec u) dx;
 
   (* Set integration tolerances *)
   let reltol = zero in
@@ -229,7 +229,7 @@ let main () =
         let pbar = RealArray.make ns in
         RealArray.mapi (fun is _ -> data.p.{plist.(is)}) pbar;
 
-        let uS = Array.init ns (fun _ -> RealArray.init neq 0.0) in
+        let uS = Array.init ns (fun _ -> Nvector_serial.make neq 0.0) in
 
         Sens.init cvode_mem
                          Sens.EEtolerances

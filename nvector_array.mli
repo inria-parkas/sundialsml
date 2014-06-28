@@ -1,6 +1,6 @@
 (***********************************************************************)
 (*                                                                     *)
-(*               OCaml interface to (serial) Sundials                  *)
+(*                   OCaml interface to Sundials                       *)
 (*                                                                     *)
 (*  Timothy Bourke (Inria), Jun Inoue (Inria), and Marc Pouzet (LIENS) *)
 (*                                                                     *)
@@ -34,17 +34,14 @@ module type ARRAY_NVECTOR =
 let vn = vmax_norm u]}
      
      *)
-    val array_nvec_ops  : t Nvector.Mutable.nvector_ops
+    val array_nvec_ops  : t Nvector_custom.nvector_ops
 
     (** [make n x] creates an {!Nvector.nvector} containing an array
         of [n] elements, each of which is equal to [x]. *)
-    val make            : int -> float -> t Nvector.nvector
+    val make            : int -> float -> t Nvector_custom.t
 
     (** Lifts an array to an nvector. *)
-    val wrap            : t -> t Nvector.nvector
-
-    (** Extracts an array from an nvector. *)
-    val unwrap          : t Nvector.nvector -> t
+    val wrap            : t -> t Nvector_custom.t
   end
 
 (** {!Nvector.nvector} on {{:OCAML_DOC_ROOT(Array)} Array}s of [float]s. *)

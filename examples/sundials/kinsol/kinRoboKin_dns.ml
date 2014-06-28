@@ -22,7 +22,6 @@
  * -----------------------------------------------------------------
  *)
 
-module Kinsol = Kinsol_serial
 module RealArray = Sundials.RealArray
 
 let printf = Printf.printf
@@ -216,22 +215,23 @@ let main () =
   printf "KINSOL problem size: 8 + 2*8 = 24 \n\n";
 
   (* Create vectors for solution, scales, and constraints *)
-  let y = RealArray.init neq one in
+  let y = Nvector_serial.make neq one in
+  let ydata = Sundials.unvec y in
   for i = 1 to nvar do
-    set_ith y i (sqrt(two) /. two)
+    set_ith ydata i (sqrt(two) /. two)
   done;
-  let scale = RealArray.init neq one in
+  let scale = Nvector_serial.make neq one in
 
   (* Initialize and allocate memory for KINSOL *)
   (* Attach dense linear solver *)
-  let kmem = Kinsol.init (Kinsol.Dense (Some jac)) func y in
+  let kmem = Kinsol.init (Kinsol.Dls.dense (Some jac)) func y in
 
   (* Set optional inputs *)
   let constraints = RealArray.init neq zero in
   for i=nvar+1 to neq do
     set_ith constraints i one
   done;
-  Kinsol.set_constraints kmem constraints;
+  Kinsol.set_constraints kmem (Nvector_serial.wrap constraints);
   Kinsol.set_func_norm_tol kmem (Some ftol);
   Kinsol.set_scaled_step_tol kmem (Some stol);
 
@@ -240,7 +240,7 @@ let main () =
 
   (* Initial guess *)
   printf "Initial guess:\n";
-  print_output y;
+  print_output ydata;
 
   (* Call KINSol to solve problem *)
   ignore (Kinsol.solve
@@ -251,7 +251,7 @@ let main () =
             scale); (* scaling vector for function values fval *)
 
   printf "\nComputed solution:\n";
-  print_output y;
+  print_output ydata;
 
   (* Print final statistics and free memory *)  
   print_final_stats kmem

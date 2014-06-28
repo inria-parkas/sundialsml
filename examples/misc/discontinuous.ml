@@ -1,6 +1,4 @@
 
-module Cvode = Cvode_serial
-
 let t = 0
 let x = 1
 
@@ -38,10 +36,11 @@ let g t_s y gout =
 (* simulation *)
 
 let y = Sundials.RealArray.of_array [| t_i; x_i |]
+let y_nvec= Nvector_serial.wrap y
 
 let s = Cvode.init Cvode.Adams Cvode.Functional Cvode.default_tolerances
-                   f ~roots:(1, g) y
-let rootdata = Cvode.Roots.create 1
+                   f ~roots:(1, g) y_nvec
+let rootdata = Sundials.Roots.create 1
 
 let _ = Cvode.set_stop_time s max_sim_t
 
@@ -54,7 +53,7 @@ let _ =
   try
     let i = ref 0 in
     while true do
-      let (t', result) = Cvode.solve_one_step s max_sim_t y in
+      let (t', result) = Cvode.solve_one_step s max_sim_t y_nvec in
 
       Printf.printf "\nstep %3d.\n" !i;
       incr i;
@@ -63,9 +62,9 @@ let _ =
       Printf.printf "%e\tstep size = %e\n" t' (Cvode.get_last_step s);
         
       match result with
-      | Cvode.RootsFound -> print_endline "** root found"
-      | Cvode.StopTimeReached -> raise Done
-      | Cvode.Continue -> ()
+      | Sundials.RootsFound -> print_endline "** root found"
+      | Sundials.StopTimeReached -> raise Done
+      | Sundials.Continue -> ()
     done
   with Done -> ()
 

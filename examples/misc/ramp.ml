@@ -3,8 +3,6 @@
            bigarray.cma unix.cma sundials.cma ramp.ml
  *)
 
-module Cvode = Cvode_serial
-
 type mode = RampingUp | Flat | RampingDown
 
 let string_of_mode m =
@@ -53,26 +51,27 @@ let g t_s y gout =
 
 let handle_roots r =
   if !debug then printf "handle_roots: ";
-  if Cvode.Roots.detected r 0
+  if Sundials.Roots.detected r 0
   then (if !debug then printf "up0"; disc_state := Flat);
-  if Cvode.Roots.detected r 1
+  if Sundials.Roots.detected r 1
   then (if !debug then printf "up1"; disc_state := RampingDown);
   if !debug then printf "\n"
 
 (* simulation *)
 
-let rootdata = Cvode.Roots.create 2
+let rootdata = Sundials.Roots.create 2
 exception Done
 
 let run_experiment with_zeros with_reinit =
   disc_state := RampingUp;
   let y = Sundials.RealArray.of_array [| t_i; y_i |] in
+  let y_nvec= Nvector_serial.wrap y in
 
   let gg = if with_zeros then (2, g) else Cvode.no_roots in
   let ff = if with_zeros then f1 else f2 in
 
   let s = Cvode.init Cvode.Adams Cvode.Functional Cvode.default_tolerances
-                     ff ~roots:gg y in
+                     ff ~roots:gg y_nvec in
   let _ = Cvode.set_stop_time s max_sim_t in
 
   printf "t_sim\t\t\tt\t\t\ty\t\t\ty (ideal)\t\tattempted step\t\tactual step\t\terr test fails\n";
@@ -81,7 +80,7 @@ let run_experiment with_zeros with_reinit =
     let pre_err_test_fails = ref 0 in
     while true do
       let curr_step_size = Cvode.get_current_step s in
-      let (t', result) = Cvode.solve_one_step s max_sim_t y in
+      let (t', result) = Cvode.solve_one_step s max_sim_t y_nvec in
       let last_step_size = Cvode.get_last_step s in
 
       let y_ideal =
@@ -96,12 +95,12 @@ let run_experiment with_zeros with_reinit =
       pre_err_test_fails := err_test_fails;
 
       match result with
-      | Cvode.RootsFound ->
+      | Sundials.RootsFound ->
           Cvode.get_root_info s rootdata;
           handle_roots rootdata;
-          if with_reinit then Cvode.reinit s t' y
-      | Cvode.StopTimeReached -> raise Done
-      | Cvode.Continue -> ()
+          if with_reinit then Cvode.reinit s t' y_nvec
+      | Sundials.StopTimeReached -> raise Done
+      | Sundials.Continue -> ()
     done
   with Done -> ()
 

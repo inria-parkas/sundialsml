@@ -1,8 +1,8 @@
 
 open Sundials
-open Spils_serial
+open Spils
 
-let nvec = Nvector_array.wrap
+let nvec = Nvector_serial.wrap
 
 let printf = Format.printf
 let fprintf = Format.fprintf
@@ -25,15 +25,15 @@ let atimes x z =
   z.{1} <-        x.{0} +. 2.0 *. x.{1} -.        x.{2};
   z.{2} <-        x.{0} -.        x.{1} +. 2.0 *. x.{2}
 
-let b = RealArray.of_array [| -1.0; 6.0; -3.0 |];;
+let b = RealArray.of_array [| -1.0; 6.0; -3.0 |]
 
 (* SPGMR *)
 
-let s = SPGMR.make 3 b;;
+let s = SPGMR.make 3 (nvec b);;
 
 let x = RealArray.of_array [|  0.0; 0.0;  0.0 |];;
 let solved, res_norm, nli, nps =
-    SPGMR.solve s x b Spils.PrecNone Spils.ModifiedGS
+    SPGMR.solve s (nvec x) (nvec b) Spils.PrecNone Spils.ModifiedGS
                 1.0e-4 0 None None atimes None ;;
 
 printf "SPGMR solution: x=@\n%a@\n" print_vec x;;
@@ -41,11 +41,11 @@ printf "  (solved=%B res_norm=%e nli=%d nps=%d)@\n" solved res_norm nli nps;;
 
 (* SPBCG *)
 
-let s = SPBCG.make 3 b;;
+let s = SPBCG.make 3 (nvec b);;
 
 let x = RealArray.of_array [|  0.0; 0.0;  0.0 |];;
 let solved, res_norm, nli, nps =
-    SPBCG.solve s x b Spils.PrecNone
+    SPBCG.solve s (nvec x) (nvec b) Spils.PrecNone
                 1.0e-4 None None atimes None ;;
 
 printf "SPBCG solution: x=@\n%a@\n" print_vec x;;
@@ -53,11 +53,11 @@ printf "  (solved=%B res_norm=%e nli=%d nps=%d)@\n" solved res_norm nli nps;;
 
 (* SPTFQMR *)
 
-let s = SPTFQMR.make 3 b;;
+let s = SPTFQMR.make 3 (nvec b);;
 
 let x = RealArray.of_array [|  0.0; 0.0;  0.0 |];;
 let solved, res_norm, nli, nps =
-    SPTFQMR.solve s x b Spils.PrecNone
+    SPTFQMR.solve s (nvec x) (nvec b) Spils.PrecNone
                   1.0e-4 None None atimes None ;;
 
 printf "SPTFQMR solution: x=@\n%a@\n" print_vec x;;

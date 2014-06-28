@@ -54,12 +54,12 @@
  * -----------------------------------------------------------------
  *)
 
-module Cvode = Cvode_serial
-module Quad = Cvodes_serial.Quadrature
-module Adj = Cvodes_serial.Adjoint
-module QuadAdj = Cvodes_serial.Adjoint.Quadrature
-module RealArray = Cvode.RealArray
+module Quad = Cvodes.Quadrature
+module Adj = Cvodes.Adjoint
+module QuadAdj = Cvodes.Adjoint.Quadrature
+module RealArray = Sundials.RealArray
 module Densemat = Dls.DenseMatrix
+let unvec = Sundials.unvec
 
 let printf = Printf.printf
 
@@ -239,10 +239,12 @@ let main () =
   let data = { p = Array.of_list [ 0.04; 1.0e4; 3.0e7 ] } in
 
   (* Initialize y *)
-  let y = RealArray.of_list [ 1.0; zero; zero ] in
+  let ydata = RealArray.of_list [ 1.0; zero; zero ] in
+  let y = Nvector_serial.wrap ydata in
 
   (* Initialize q *)
-  let q = RealArray.of_list [ zero ] in
+  let qdata = RealArray.of_list [ zero ] in
+  let q = Nvector_serial.wrap qdata in
 
   (* Set the scalar realtive and absolute tolerances reltolQ and abstolQ *)
   let reltolQ = rtol
@@ -252,7 +254,7 @@ let main () =
   printf "Create and allocate CVODES memory for forward runs\n";
 
   let cvode_mem =
-    Cvode.init Cvode.BDF (Cvode.Newton (Cvode.Dense (Some (jac data))))
+    Cvode.init Cvode.BDF (Cvode.Newton (Cvode.Dls.dense (Some (jac data))))
       (Cvode.WFtolerances (ewt data)) (f data) ~t0:t0 y
   in
 
@@ -272,14 +274,16 @@ let main () =
   ignore (Quad.get cvode_mem q);
 
   printf "--------------------------------------------------------\n";
-  printf "G:          %12.4e \n" (ith q 1);
+  printf "G:          %12.4e \n" (ith qdata 1);
   printf "--------------------------------------------------------\n\n";
 
   (* Initialize yB *)
-  let yB = RealArray.of_list [ zero; zero; zero ] in
+  let yBdata = RealArray.of_list [ zero; zero; zero ] in
+  let yB = Nvector_serial.wrap yBdata in
 
   (* Initialize qB *)
-  let qB = RealArray.of_list [ zero; zero; zero ] in
+  let qBdata = RealArray.of_list [ zero; zero; zero ] in
+  let qB = Nvector_serial.wrap qBdata in
 
   (* Set the scalar relative tolerance reltolB *)
   let reltolB = rtol in
@@ -295,7 +299,7 @@ let main () =
 
   let cvode_memB =
     Adj.init_backward cvode_mem Cvode.BDF
-                                (Adj.Newton (Adj.Dense (Some (jacb data))))
+                                (Adj.Newton (Adj.Dls.dense (Some (jacb data))))
                                 (Adj.SStolerances (reltolB, abstolB))
                                 (Adj.Basic (fB data))
                                 tb1 yB
@@ -313,17 +317,17 @@ let main () =
   ignore (Adj.get cvode_memB yB);
   ignore (QuadAdj.get cvode_memB qB);
 
-  print_output tb1 yB qB;
+  print_output tb1 yBdata qBdata;
 
   (* Reinitialize backward phase (new tB0) *)
 
-  set_ith yB 1 zero;
-  set_ith yB 2 zero;
-  set_ith yB 3 zero;
+  set_ith yBdata 1 zero;
+  set_ith yBdata 2 zero;
+  set_ith yBdata 3 zero;
 
-  set_ith qB 1 zero;
-  set_ith qB 2 zero;
-  set_ith qB 3 zero;
+  set_ith qBdata 1 zero;
+  set_ith qBdata 2 zero;
+  set_ith qBdata 3 zero;
 
   printf "Re-initialize CVODES memory for backward run\n";
 
@@ -340,7 +344,7 @@ let main () =
   ignore (Adj.get cvode_memB yB);
   ignore (QuadAdj.get cvode_memB qB);
 
-  print_output tb2 yB qB
+  print_output tb2 yBdata qBdata
 
 let _ = main ()
 let _ = printf "Free memory\n\n"; Gc.compact ()

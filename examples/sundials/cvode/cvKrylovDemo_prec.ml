@@ -90,11 +90,11 @@
  * --------------------------------------------------------------------
  *)
 
-module Cvode = Cvode_serial
-module RealArray = Cvode.RealArray
-module Roots = Cvode.Roots
+module RealArray = Sundials.RealArray
+module Roots = Sundials.Roots
 module Densemat = Dls.ArrayDenseMatrix
 open Bigarray
+let unvec = Sundials.unvec
 
 let printf = Printf.printf
 let array_ops = Nvector_array.Bigarray.array_nvec_ops
@@ -197,9 +197,9 @@ type web_data = {
 
     fsave     : RealArray.t;
 
-    rewt      : Cvode.nvec;
+    rewt      : Nvector_serial.t;
 
-    mutable cvode_mem : Cvode.session option;
+    mutable cvode_mem : Cvode.serial_session option;
   }
 
 (* Private Helper Functions *)
@@ -272,11 +272,11 @@ let precond wdata jacarg jok gamma =
   let cvode_mem =
     match wdata.cvode_mem with
     | Some c -> c | None -> assert false
-  and rewtdata  = wdata.rewt
+  and rewtdata  = Sundials.unvec wdata.rewt
   in
-  Cvode.get_err_weights cvode_mem rewtdata;
+  Cvode.get_err_weights cvode_mem wdata.rewt;
 
-  let uround = Cvode.unit_roundoff
+  let uround = Sundials.unit_roundoff
   and p      = wdata.p
   and pivot  = wdata.pivot
   and jxr    = wdata.jxr
@@ -292,7 +292,7 @@ let precond wdata jacarg jok gamma =
      Here, fsave contains the base value of the rate vector and 
      r0 is a minimum increment factor for the difference quotient. *)
   
-  let fac = array_ops.Nvector.Mutable.nvwrmsnorm fc rewtdata in
+  let fac = array_ops.Nvector_custom.nvwrmsnorm fc rewtdata in
   let r0 = 1000.0 *. abs_float gamma *. uround *. float neq *. fac in
   let r0 = if r0 = zero then one else r0 in
   
@@ -521,7 +521,7 @@ let gs_iter wdata gamma zd xd =
     done;
     
     (* Add increment x to z : z <- z+x *)
-    array_ops.Nvector.Mutable.nvlinearsum one zd one xd zd
+    array_ops.Nvector_custom.nvlinearsum one zd one xd zd
   done
 
 (*
@@ -536,7 +536,8 @@ let gs_iter wdata gamma zd xd =
 *)
 let psolve wdata jac_arg solve_arg z =
   let { Cvode.jac_tmp = vtemp; } = jac_arg
-  and { Cvode.Spils.rhs = r; Cvode.Spils.gamma = gamma } = solve_arg
+  and { Cvode.Spils.rhs = r;
+        Cvode.Spils.gamma = gamma } = solve_arg
   in
   Array1.blit r z;
 
@@ -681,11 +682,11 @@ let alloc_user_data () =
 
       dx        = dx;
       dy        = dy;
-      srur      = sqrt Cvode.unit_roundoff;
+      srur      = sqrt Sundials.unit_roundoff;
 
       fsave     = RealArray.make neq;
 
-      rewt      = RealArray.make neq;
+      rewt      = Nvector_serial.wrap (RealArray.make neq);
 
       cvode_mem = None;
     }
@@ -847,21 +848,22 @@ let main () =
   and reltol = rtol
   in
   (* Initializations *)
-  let c = RealArray.make neq in
+  let c = Nvector_serial.make neq 0.0 in
   let wdata = alloc_user_data () in
   init_user_data wdata;
-  cinit wdata c;
+  cinit wdata (unvec c);
 
   (* Call CVodeInit or CVodeReInit, then CVSpgmr to set up problem *)
   let cvode_mem =
     Cvode.init
         Cvode.BDF
         (Cvode.Newton
-            (Cvode.Spgmr
-               ({ Cvode.prec_type = Spils.PrecLeft; Cvode.maxl = Some maxl },
-                { Cvode.prec_setup_fn = Some (precond wdata);
-                  Cvode.prec_solve_fn = Some (psolve wdata);
-                  Cvode.jac_times_vec_fn = None })))
+            (Cvode.Spils.spgmr
+                (Some maxl)
+                Spils.PrecLeft
+                { Cvode.Spils.prec_setup_fn = Some (precond wdata);
+                  Cvode.Spils.prec_solve_fn = Some (psolve wdata);
+                  Cvode.Spils.jac_times_vec_fn = None }))
         (Cvode.SStolerances (reltol, abstol))
         (f wdata) ~t0:t0 c
   in
@@ -880,12 +882,12 @@ let main () =
   let firstrun = ref true in
   let run jpre gstype =
     (* Initialize c and print heading *)
-    cinit wdata c;
+    cinit wdata (unvec c);
     print_header jpre gstype;
 
     if !firstrun then
       (* Print initial values *)
-      print_all_species c ns mxns t0
+      print_all_species (unvec c) ns mxns t0
     else begin
       Cvode.reinit cvode_mem t0 c;
       Cvode.Spils.set_prec_type cvode_mem jpre;
@@ -897,7 +899,8 @@ let main () =
     for iout = 1 to nout do
       let (t, _) = Cvode.solve_normal cvode_mem !tout c in
       print_output cvode_mem t;
-      if !firstrun && (iout mod 3 = 0) then print_all_species c ns mxns t;
+      if !firstrun && (iout mod 3 = 0)
+        then print_all_species (unvec c) ns mxns t;
       tout := if !tout > 0.9 then !tout +. dtout else !tout *. tout_mult
     done;
     

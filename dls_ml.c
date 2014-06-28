@@ -1,6 +1,6 @@
 /***********************************************************************
  *                                                                     *
- *               OCaml interface to (serial) Sundials                  *
+ *                   OCaml interface to Sundials                       *
  *                                                                     *
  *  Timothy Bourke (Inria), Jun Inoue (Inria), and Marc Pouzet (LIENS) * 
  *                                                                     *

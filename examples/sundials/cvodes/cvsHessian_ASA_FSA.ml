@@ -35,14 +35,14 @@
  * -----------------------------------------------------------------
  *)
 
-module Cvode  = Cvode_serial
-module RealArray = Cvode.RealArray
-module Quad = Cvodes_serial.Quadrature
-module Sens = Cvodes_serial.Sensitivity
-module QuadSens = Cvodes_serial.Sensitivity.Quadrature
-module Adj = Cvodes_serial.Adjoint
-module QuadAdj = Cvodes_serial.Adjoint.Quadrature
+module RealArray = Sundials.RealArray
+module Quad = Cvodes.Quadrature
+module Sens = Cvodes.Sensitivity
+module QuadSens = Cvodes.Sensitivity.Quadrature
+module Adj = Cvodes.Adjoint
+module QuadAdj = Cvodes.Adjoint.Quadrature
 open Bigarray
+let unvec = Sundials.unvec
 
 let printf = Printf.printf
 
@@ -346,16 +346,17 @@ let main () =
   let abstolQB = 1.0e-8 in
 
   (* Initializations for forward problem *)
-  let y = RealArray.init neq one in
-  let yQ = RealArray.init 1 zero in
-  let yS = Array.init np (fun _ -> RealArray.init neq zero) in
-  let yQS = Array.init np (fun _ -> RealArray.init 1 zero) in
+  let y = Nvector_serial.make neq one in
+  let ydata = unvec y in
+  let yQ = Nvector_serial.make 1 zero in
+  let yS = Array.init np (fun _ -> Nvector_serial.make neq zero) in
+  let yQS = Array.init np (fun _ -> Nvector_serial.make 1 zero) in
 
   (* Create and initialize forward problem *)
   let cvode_mem =
     Cvode.init
         Cvode.BDF
-        (Cvode.Newton (Cvode.Dense None))
+        (Cvode.Newton (Cvode.Dls.dense None))
         (Cvode.SStolerances (reltol, abstol))
         (f data)
         ~t0:t0
@@ -381,22 +382,28 @@ let main () =
   printf "-------------------\n\n";
   let time, ncheck, _ = Adj.forward_normal cvode_mem tf y in
   ignore (Quad.get cvode_mem yQ);
-  let g = ith yQ 1 in
+  let g = ith (unvec yQ) 1 in
 
   ignore (Sens.get cvode_mem yS);
   ignore (QuadSens.get cvode_mem yQS);
 
   printf "ncheck = %d\n"  ncheck;
   printf "\n";
-  printf "     y:    %12.4e %12.4e %12.4e" (ith y 1) (ith y 2) (ith y 3);
-  printf "     G:    %12.4e\n"  (ith yQ 1);
+  printf "     y:    %12.4e %12.4e %12.4e"
+                    (ith ydata 1) (ith ydata 2) (ith ydata 3);
+  printf "     G:    %12.4e\n"  (ith (unvec yQ) 1);
   printf "\n";
   printf "     yS1:  %12.4e %12.4e %12.4e\n"
-                                (ith yS.(0) 1) (ith yS.(0) 2) (ith yS.(0) 3);
+                                (ith (unvec yS.(0)) 1)
+                                (ith (unvec yS.(0)) 2)
+                                (ith (unvec yS.(0)) 3);
   printf "     yS2:  %12.4e %12.4e %12.4e\n"
-                                (ith yS.(1) 1) (ith yS.(1) 2) (ith yS.(1) 3);
+                                (ith (unvec yS.(1)) 1)
+                                (ith (unvec yS.(1)) 2)
+                                (ith (unvec yS.(1)) 3);
   printf "\n";
-  printf "   dG/dp:  %12.4e %12.4e\n" (ith yQS.(0) 1) (ith yQS.(1) 1);
+  printf "   dG/dp:  %12.4e %12.4e\n" (ith (unvec yQS.(0)) 1)
+                                      (ith (unvec yQS.(1)) 1);
   printf "\n";
 
   printf "Final Statistics for forward pb.\n";
@@ -404,15 +411,15 @@ let main () =
   print_fwd_stats cvode_mem;
 
   (* Initializations for backward problems *)
-  let yB1  = RealArray.init (2 * neq) zero in
-  let yQB1 = RealArray.init np2 zero in
-  let yB2  = RealArray.init (2 * neq) zero in
-  let yQB2 = RealArray.init np2 zero in
+  let yB1  = Nvector_serial.make (2 * neq) zero in
+  let yQB1 = Nvector_serial.make np2 zero in
+  let yB2  = Nvector_serial.make (2 * neq) zero in
+  let yQB2 = Nvector_serial.make np2 zero in
 
   (* Create and initialize backward problems (one for each column of the Hessian) *)
   let cvode_memB1 =
     Adj.init_backward cvode_mem Cvode.BDF
-                                (Adj.Newton (Adj.Dense None))
+                                (Adj.Newton (Adj.Dls.dense None))
                                 (Adj.SStolerances (reltol, abstolB))
                                 (Adj.WithSens (fB1 data))
                                 tf yB1
@@ -422,7 +429,7 @@ let main () =
 
   let cvode_memB2 =
     Adj.init_backward cvode_mem Cvode.BDF
-                                (Adj.Newton (Adj.Dense None))
+                                (Adj.Newton (Adj.Dls.dense None))
                                 (Adj.SStolerances (reltol, abstolB))
                                 (Adj.WithSens (fB2 data))
                                 tf yB2
@@ -444,14 +451,16 @@ let main () =
   ignore (QuadAdj.get cvode_memB2 yQB2);
 
   printf "   dG/dp:  %12.4e %12.4e   (from backward pb. 1)\n"
-                                                  (-.ith yQB1 1) (-.ith yQB1 2);
+                                                  (-.ith (unvec yQB1) 1)
+                                                  (-.ith (unvec yQB1) 2);
   printf "           %12.4e %12.4e   (from backward pb. 2)\n"
-                                                 (-.ith yQB2 1)  (-.ith yQB2 2);
+                                                 (-.ith (unvec yQB2) 1)
+                                                 (-.ith (unvec yQB2) 2);
   printf "\n";
   printf "   H = d2G/dp2:\n";
   printf "        (1)            (2)\n";
-  printf "  %12.4e   %12.4e\n" (-.ith yQB1 3) (-.ith yQB2 3);
-  printf "  %12.4e   %12.4e\n" (-.ith yQB1 4) (-.ith yQB2 4);
+  printf "  %12.4e   %12.4e\n" (-.ith (unvec yQB1) 3) (-.ith (unvec yQB2) 3);
+  printf "  %12.4e   %12.4e\n" (-.ith (unvec yQB1) 4) (-.ith (unvec yQB2) 4);
   printf "\n";
 
   printf "Final Statistics for backward pb. 1\n";
@@ -474,17 +483,17 @@ let main () =
 
   printf "del_p = %g\n\n" dp;
 
-  RealArray.fill y one;
+  RealArray.fill (unvec y) one;
   let cvode_mem =
     Cvode.init
         Cvode.BDF
-        (Cvode.Newton (Cvode.Dense None))
+        (Cvode.Newton (Cvode.Dls.dense None))
         (Cvode.SStolerances (reltol, abstol))
         (f data)
         ~t0:t0
         y
   in
-  RealArray.fill yQ zero;
+  RealArray.fill (unvec yQ) zero;
   Quad.init cvode_mem (fQ data) yQ;
   Quad.set_tolerances cvode_mem (Quad.SStolerances (reltol, abstolQ));
 
@@ -493,14 +502,16 @@ let main () =
   ignore (Cvode.solve_normal cvode_mem tf y);
   ignore (Quad.get cvode_mem yQ);
 
-  let gp = ith yQ 1 in
-  printf "p1+  y:   %12.4e %12.4e %12.4e" (ith y 1) (ith y 2) (ith y 3);
-  printf "     G:   %12.4e\n" (ith yQ 1);
+  let gp = ith (unvec yQ) 1 in
+  printf "p1+  y:   %12.4e %12.4e %12.4e" (ith (unvec y) 1)
+                                          (ith (unvec y) 2)
+                                          (ith (unvec y) 3);
+  printf "     G:   %12.4e\n" (ith (unvec yQ) 1);
 
   data.p1 <- data.p1 -. 2.0*.dp;
 
-  RealArray.fill y one;
-  RealArray.fill yQ zero;
+  RealArray.fill (unvec y) one;
+  RealArray.fill (unvec yQ) zero;
 
   Cvode.reinit cvode_mem t0 y;
   Quad.reinit cvode_mem yQ;
@@ -508,9 +519,11 @@ let main () =
   ignore (Cvode.solve_normal cvode_mem tf y);
   ignore (Quad.get cvode_mem yQ);
 
-  let gm = ith yQ 1 in
-  printf "p1-  y:   %12.4e %12.4e %12.4e" (ith y 1) (ith y 2) (ith y 3);
-  printf "     G:   %12.4e\n" (ith yQ 1);
+  let gm = ith (unvec yQ) 1 in
+  printf "p1-  y:   %12.4e %12.4e %12.4e" (ith (unvec y) 1)
+                                          (ith (unvec y) 2)
+                                          (ith (unvec y) 3);
+  printf "     G:   %12.4e\n" (ith (unvec yQ) 1);
  
   data.p1 <- data.p1 +. dp;
 
@@ -521,8 +534,8 @@ let main () =
 
   data.p2 <- data.p2 +. dp;
 
-  RealArray.fill y one;
-  RealArray.fill yQ zero;
+  RealArray.fill (unvec y) one;
+  RealArray.fill (unvec yQ) zero;
 
   Cvode.reinit cvode_mem t0 y;
   Quad.reinit cvode_mem yQ;
@@ -530,14 +543,16 @@ let main () =
   ignore (Cvode.solve_normal cvode_mem tf y);
   ignore (Quad.get cvode_mem yQ);
 
-  let gp = ith yQ 1 in
-  printf "p2+  y:   %12.4e %12.4e %12.4e" (ith y 1) (ith y 2) (ith y 3);
-  printf "     G:   %12.4e\n" (ith yQ 1);
+  let gp = ith (unvec yQ) 1 in
+  printf "p2+  y:   %12.4e %12.4e %12.4e" (ith (unvec y) 1)
+                                          (ith (unvec y) 2)
+                                          (ith (unvec y) 3);
+  printf "     G:   %12.4e\n" (ith (unvec yQ) 1);
  
   data.p2 <- data.p2 -. 2.0*.dp;
 
-  RealArray.fill y one;
-  RealArray.fill yQ zero;
+  RealArray.fill (unvec y) one;
+  RealArray.fill (unvec yQ) zero;
 
   Cvode.reinit cvode_mem t0 y;
   Quad.reinit cvode_mem yQ;
@@ -545,9 +560,11 @@ let main () =
   ignore (Cvode.solve_normal cvode_mem tf y);
   ignore (Quad.get cvode_mem yQ);
 
-  let gm = ith yQ 1 in
-  printf "p2-  y:   %12.4e %12.4e %12.4e" (ith y 1) (ith y 2) (ith y 3);
-  printf "     G:   %12.4e\n" (ith yQ 1);
+  let gm = ith (unvec yQ) 1 in
+  printf "p2-  y:   %12.4e %12.4e %12.4e" (ith (unvec y) 1)
+                                          (ith (unvec y) 2)
+                                          (ith (unvec y) 3);
+  printf "     G:   %12.4e\n" (ith (unvec yQ) 1);
 
   data.p2 <- data.p2 +. dp;
 

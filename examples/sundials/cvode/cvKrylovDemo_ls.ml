@@ -39,11 +39,11 @@
  * -----------------------------------------------------------------
  *)
 
-module Cvode  = Cvode_serial
-module RealArray = Cvode.RealArray
-module Roots  = Cvode.Roots
+module RealArray = Sundials.RealArray
+module Roots  = Sundials.Roots
 module Densemat = Dls.ArrayDenseMatrix
 open Bigarray
+let unvec = Sundials.unvec
 
 let printf = Printf.printf
 
@@ -443,10 +443,10 @@ let psolve data jac_arg solve_arg zdata =
 let main () =
 
   (* Allocate memory, and set problem data, initial values, tolerances *) 
-  let u = RealArray.make neq in
+  let u = Nvector_serial.make neq 0.0 in
   let data = alloc_user_data () in
   init_user_data data;
-  set_initial_profiles u data.dx data.dy;
+  set_initial_profiles (unvec u) data.dx data.dy;
 
   let abstol = atol
   and reltol = rtol
@@ -478,7 +478,7 @@ let main () =
 
     (* Re-initialize user data *)
     init_user_data data;
-    set_initial_profiles u data.dx data.dy;
+    set_initial_profiles (unvec u) data.dx data.dy;
 
     (* Re-initialize CVode for the solution of the same problem, but
        using a different linear solver module *)
@@ -496,11 +496,10 @@ let main () =
         Cvode.reinit cvode_mem t0 u
           ~iter_type:
             (Cvode.Newton
-               (Cvode.Spgmr
-                  ({ Cvode.prec_type = Spils.PrecLeft; Cvode.maxl = None },
-                   { Cvode.prec_setup_fn = Some (precond data);
-                     Cvode.prec_solve_fn = Some (psolve data);
-                     Cvode.jac_times_vec_fn = None })));
+               (Cvode.Spils.spgmr None Spils.PrecLeft
+                   { Cvode.Spils.prec_setup_fn = Some (precond data);
+                     Cvode.Spils.prec_solve_fn = Some (psolve data);
+                     Cvode.Spils.jac_times_vec_fn = None }));
 
         (* Set modified Gram-Schmidt orthogonalization, preconditioner 
            setup and solve routines Precond and PSolve, and the pointer 
@@ -520,11 +519,10 @@ let main () =
         Cvode.reinit cvode_mem t0 u
           ~iter_type:
             (Cvode.Newton
-               (Cvode.Spbcg
-                  ({ Cvode.prec_type = Spils.PrecLeft; Cvode.maxl = None },
-                   { Cvode.prec_setup_fn = Some (precond data);
-                     Cvode.prec_solve_fn = Some (psolve data);
-                     Cvode.jac_times_vec_fn = None })))
+               (Cvode.Spils.spbcg None Spils.PrecLeft
+                   { Cvode.Spils.prec_setup_fn = Some (precond data);
+                     Cvode.Spils.prec_solve_fn = Some (psolve data);
+                     Cvode.Spils.jac_times_vec_fn = None }))
       end
 
     (* (c) SPTFQMR *)
@@ -539,11 +537,10 @@ let main () =
         Cvode.reinit cvode_mem t0 u
           ~iter_type:
             (Cvode.Newton
-               (Cvode.Sptfqmr
-                  ({ Cvode.prec_type = Spils.PrecLeft; Cvode.maxl = None },
-                   { Cvode.prec_setup_fn = Some (precond data);
-                     Cvode.prec_solve_fn = Some (psolve data);
-                     Cvode.jac_times_vec_fn = None })))
+               (Cvode.Spils.sptfqmr None Spils.PrecLeft
+                   { Cvode.Spils.prec_setup_fn = Some (precond data);
+                     Cvode.Spils.prec_solve_fn = Some (psolve data);
+                     Cvode.Spils.jac_times_vec_fn = None }))
       end);
 
     (* In loop over output points, call CVode, print results, test for error *)
@@ -552,7 +549,7 @@ let main () =
     let tout = ref twohr in
     for iout = 1 to nout do
       let (t, _) = Cvode.solve_normal cvode_mem !tout u in
-      print_output cvode_mem u t;
+      print_output cvode_mem (unvec u) t;
       tout := !tout +. twohr
     done;
 

@@ -1,6 +1,6 @@
 /***********************************************************************
  *                                                                     *
- *               OCaml interface to (serial) Sundials                  *
+ *                   OCaml interface to Sundials                       *
  *                                                                     *
  *  Timothy Bourke (Inria), Jun Inoue (Inria), and Marc Pouzet (LIENS) *
  *                                                                     *
@@ -87,6 +87,8 @@ enum cvodes_bwd_session_index {
     RECORD_CVODES_BWD_SESSION_BPRESETUPFN,
     RECORD_CVODES_BWD_SESSION_BPRESOLVEFN,
     RECORD_CVODES_BWD_SESSION_BJACTIMESFN,
+    RECORD_CVODES_BWD_SESSION_BJACFN,
+    RECORD_CVODES_BWD_SESSION_BBANDJACFN,
     RECORD_CVODES_BWD_SESSION_SIZE
 };
 

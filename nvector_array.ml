@@ -1,6 +1,6 @@
 (***********************************************************************)
 (*                                                                     *)
-(*               OCaml interface to (serial) Sundials                  *)
+(*                   OCaml interface to Sundials                       *)
 (*                                                                     *)
 (*  Timothy Bourke (Inria), Jun Inoue (Inria), and Marc Pouzet (LIENS) *)
 (*                                                                     *)
@@ -14,10 +14,9 @@ module type ARRAY_NVECTOR =
   sig
     type t
 
-    val array_nvec_ops  : t Nvector.Mutable.nvector_ops
-    val make            : int -> float -> t Nvector.nvector
-    val wrap            : t -> t Nvector.nvector
-    val unwrap          : t Nvector.nvector -> t
+    val array_nvec_ops  : t Nvector_custom.nvector_ops
+    val make            : int -> float -> t Nvector_custom.t
+    val wrap            : t -> t Nvector_custom.t
   end
 
 module NvectorFn =
@@ -131,38 +130,36 @@ module NvectorFn =
       zip_fold_left f Sundials.big_real
 
     let array_nvec_ops = {
-          Nvector.Mutable.nvclone        = A.copy;
-          Nvector.Mutable.nvdestroy      = None;
-          Nvector.Mutable.nvspace        = None;
-          Nvector.Mutable.nvlinearsum    = arr_nvlinearsum;
-          Nvector.Mutable.nvconst        = arr_nvconst;
-          Nvector.Mutable.nvprod         = lift_bop ( *. );
-          Nvector.Mutable.nvdiv          = lift_bop ( /. );
-          Nvector.Mutable.nvscale        = (fun c -> lift_op (fun x -> c *. x));
-          Nvector.Mutable.nvabs          = lift_op abs_float;
-          Nvector.Mutable.nvinv          = lift_op (fun x -> 1.0 /. x);
-          Nvector.Mutable.nvaddconst     = arr_nvaddconst;
-          Nvector.Mutable.nvmaxnorm      = arr_nvmaxnorm;
-          Nvector.Mutable.nvwrmsnorm     = arr_nvwrmsnorm;
-          Nvector.Mutable.nvmin          = arr_nvmin;
-          Nvector.Mutable.nvdotprod      = Some arr_nvdotprod;
-          Nvector.Mutable.nvcompare      = Some arr_nvcompare;
-          Nvector.Mutable.nvinvtest      = Some arr_nvinvtest;
-          Nvector.Mutable.nvwl2norm      = Some arr_nvwl2norm;
-          Nvector.Mutable.nvl1norm       = Some arr_nvl1norm;
-          Nvector.Mutable.nvwrmsnormmask = Some arr_nvwrmsnormmask;
-          Nvector.Mutable.nvconstrmask   = Some arr_nvconstrmask;
-          Nvector.Mutable.nvminquotient  = Some arr_nvminquotient;
+          Nvector_custom.nvclone        = A.copy;
+          Nvector_custom.nvdestroy      = None;
+          Nvector_custom.nvspace        = None;
+          Nvector_custom.nvlinearsum    = arr_nvlinearsum;
+          Nvector_custom.nvconst        = arr_nvconst;
+          Nvector_custom.nvprod         = lift_bop ( *. );
+          Nvector_custom.nvdiv          = lift_bop ( /. );
+          Nvector_custom.nvscale        = (fun c -> lift_op (fun x -> c *. x));
+          Nvector_custom.nvabs          = lift_op abs_float;
+          Nvector_custom.nvinv          = lift_op (fun x -> 1.0 /. x);
+          Nvector_custom.nvaddconst     = arr_nvaddconst;
+          Nvector_custom.nvmaxnorm      = arr_nvmaxnorm;
+          Nvector_custom.nvwrmsnorm     = arr_nvwrmsnorm;
+          Nvector_custom.nvmin          = arr_nvmin;
+          Nvector_custom.nvdotprod      = Some arr_nvdotprod;
+          Nvector_custom.nvcompare      = Some arr_nvcompare;
+          Nvector_custom.nvinvtest      = Some arr_nvinvtest;
+          Nvector_custom.nvwl2norm      = Some arr_nvwl2norm;
+          Nvector_custom.nvl1norm       = Some arr_nvl1norm;
+          Nvector_custom.nvwrmsnormmask = Some arr_nvwrmsnormmask;
+          Nvector_custom.nvconstrmask   = Some arr_nvconstrmask;
+          Nvector_custom.nvminquotient  = Some arr_nvminquotient;
     }
 
     let make n e =
-      Nvector.Mutable.make_nvector array_nvec_ops (A.make n e)
+      Nvector_custom.make array_nvec_ops (A.make n e)
 
     let wrap a =
-      Nvector.Mutable.make_nvector array_nvec_ops a
+      Nvector_custom.make array_nvec_ops a
       (* (Nvector.Mutable.add_tracing "::" array_nvec_ops) *)
-
-    let unwrap = Nvector.Mutable.nvector_data
   end
 
 module Array = NvectorFn (

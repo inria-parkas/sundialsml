@@ -78,7 +78,6 @@
  * -----------------------------------------------------------------
  *)
 
-module Kinsol = Kinsol_nvector
 module Dense = Dls.ArrayDenseMatrix
 module RealArray = Sundials.RealArray
 
@@ -87,7 +86,7 @@ let matrix_unwrap = Sundials.RealArray2.unwrap
 let wrap = Nvector_array.wrap
 let slice_left = Bigarray.Array2.slice_left
 let nvwl2norm =
-  match Nvector_array.array_nvec_ops.Nvector.Mutable.nvwl2norm with
+  match Nvector_array.array_nvec_ops.Nvector_custom.nvwl2norm with
   | Some fn -> fn
   | None -> failwith "nvwl2norm not found!"
 
@@ -261,8 +260,8 @@ let func cc fval =
 let prec_setup_bd { Kinsol.jac_u=cc;
                     Kinsol.jac_fu=fval;
                     Kinsol.jac_tmp=(vtemp1, vtemp2)}
-                  { Kinsol.uscale=cscale;
-                    Kinsol.fscale=fscale } =
+                  { Kinsol.Spils.uscale=cscale;
+                    Kinsol.Spils.fscale=fscale } =
   let perturb_rates = Array.create num_species 0.0 in
   
   let delx = dx in
@@ -310,8 +309,8 @@ let vxy = RealArray.make num_species
 let prec_solve_bd { Kinsol.jac_u=cc;
                     Kinsol.jac_fu=fval;
                     Kinsol.jac_tmp=ftem}
-                  { Kinsol.uscale=cscale;
-                    Kinsol.fscale=fscale }
+                  { Kinsol.Spils.uscale=cscale;
+                    Kinsol.Spils.fscale=fscale }
                   vv =
   for jx = 0 to mx - 1 do
     for jy = 0 to my - 1 do
@@ -431,10 +430,10 @@ let main () =
      KINSPGMR with preconditioner routines prec_setup_bd
      and prec_solve_bd. *)
   let kmem = Kinsol.init
-              (Kinsol.Spgmr (Some maxl, Some maxlrst, {
-                             Kinsol.prec_setup_fn=Some prec_setup_bd;
-                             Kinsol.prec_solve_fn=Some prec_solve_bd;
-                             Kinsol.jac_times_vec_fn=None; }))
+              (Kinsol.Spils.spgmr (Some maxl) (Some maxlrst)
+                                {Kinsol.Spils.prec_setup_fn=Some prec_setup_bd;
+                                 Kinsol.Spils.prec_solve_fn=Some prec_solve_bd;
+                                 Kinsol.Spils.jac_times_vec_fn=None; })
               func ccnv in
   Kinsol.set_constraints kmem (wrap (Array.create neq two));
   Kinsol.set_func_norm_tol kmem (Some fnormtol);

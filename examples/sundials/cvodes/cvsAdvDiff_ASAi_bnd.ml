@@ -41,14 +41,14 @@
  * -----------------------------------------------------------------
  *)
 
-module Cvode = Cvode_serial
-module Adjoint = Cvodes_serial.Adjoint
+module Adjoint = Cvodes.Adjoint
 module RealArray = Sundials.RealArray
 module Col = Dls.BandMatrix.Col
 module Dls = Cvode.Dls
+let unvec = Sundials.unvec
 
 let printf = Printf.printf
-let vmax_norm = Nvector_array.Bigarray.array_nvec_ops.Nvector.Mutable.nvmaxnorm
+let vmax_norm = Nvector_array.Bigarray.array_nvec_ops.Nvector_custom.nvmaxnorm
 
 let ith v i = v.{i - 1}
 let set_ith v i e = v.{i - 1} <- e
@@ -198,7 +198,7 @@ let fB data tB u uB uBdot =
 
 (* JacB function. Jacobian of backward ODE. *)
 
-let jacb data { Cvode.mupper = muB; Cvode.mlower = mlB }
+let jacb data { Adjoint.mupper = muB; Adjoint.mlower = mlB }
               { Adjoint.jac_t = tB;
                 Adjoint.jac_u = u;
                 Adjoint.jac_ub = uB;
@@ -272,6 +272,7 @@ let print_output uB data =
 let main () =
   (* Create a serial vector *)
   let u = RealArray.make neq in  (* Allocate u vector *)
+  let u_nvec = Nvector_serial.wrap u in
 
   let reltol = zero  (* Set the tolerances *)
   and abstol = atol
@@ -293,12 +294,12 @@ let main () =
   printf "\nCreate and allocate CVODES memory for forward runs\n";
 
   (* Call CVBand with  bandwidths ml = mu = MY, *)
-  let solver = Cvode.Band ({Cvode.mupper = my; Cvode.mlower = my},
-                           Some (jac data))
+  let solver = Cvode.Dls.band {Cvode.mupper = my; Cvode.mlower = my}
+                              (Some (jac data))
   in
   let cvode_mem = Cvode.init Cvode.BDF (Cvode.Newton solver)
                              (Cvode.SStolerances (reltol, abstol))
-                             ~t0:t0 (f data) u
+                             ~t0:t0 (f data) u_nvec
   in
   Gc.compact ();
 
@@ -309,17 +310,17 @@ let main () =
 
   (* Perform forward run *)
   printf "\nForward integration\n";
-  let t, ncheck, _ = Adjoint.forward_normal cvode_mem tout u in
+  let t, ncheck, _ = Adjoint.forward_normal cvode_mem tout u_nvec in
   printf "\nncheck = %d\n" ncheck;
 
   (* Allocate uB *)
-  let uB = RealArray.init neq 0.0 in
+  let uB = Nvector_serial.make neq 0.0 in
 
   (* Create and allocate CVODES memory for backward run *)
   printf "\nCreate and allocate CVODES memory for backward run\n";
 
-  let bsolver = Adjoint.Band ({Cvode.mupper = my; Cvode.mlower = my},
-                              Some (jacb data)) in
+  let bsolver = Adjoint.Dls.band {Adjoint.mupper = my; Adjoint.mlower = my}
+                                 (Some (jacb data)) in
   let bcvode_mem = Adjoint.init_backward cvode_mem
         Cvode.BDF
         (Adjoint.Newton bsolver)
@@ -331,7 +332,7 @@ let main () =
   Adjoint.backward_normal cvode_mem t0;
   let _ = Adjoint.get bcvode_mem uB in
 
-  print_output uB data
+  print_output (unvec uB) data
 
 let _ = main ()
 let _ = Gc.compact ()

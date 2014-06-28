@@ -306,7 +306,7 @@ fi
 arch=`uname -i`
 case ${arch} in
     x86_64)
-	cflags="${cflags} -Wall -fPIC"
+	cflags="${cflags} -fPIC"
 	;;
     *)
         :

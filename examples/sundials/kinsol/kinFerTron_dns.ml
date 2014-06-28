@@ -46,7 +46,6 @@
  * -----------------------------------------------------------------
  *)
 
-module Kinsol = Kinsol_serial
 module RealArray = Sundials.RealArray
 
 let printf = Printf.printf
@@ -147,7 +146,7 @@ let solve_it kmem u s glstr mset =
   Kinsol.set_max_setup_calls kmem (Some mset);
   ignore (Kinsol.solve kmem u glstr s s);
   printf "Solution:\n  [x1,x2] = ";
-  print_output u;
+  print_output (Sundials.unvec u);
   print_final_stats kmem
 
 let main () =
@@ -160,7 +159,8 @@ let main () =
   let u1 = RealArray.make neq in
   let u2 = RealArray.make neq in
   let u  = RealArray.make neq in
-  let s  = RealArray.init neq one in (* no scaling *)
+  let u_nvec = Nvector_serial.wrap u in
+  let s_nvec = Nvector_serial.make neq one in (* no scaling *)
   let c = RealArray.of_list [
      zero; (* no constraint on x1 *)
      zero; (* no constraint on x2 *)
@@ -169,6 +169,7 @@ let main () =
       one; (* l2 = x2 - x2_min >= 0 *)
     -.one; (* L2 = x2 - x22_min <= 0 *)
   ] in
+  let c_nvec = Nvector_serial.wrap c in
   set_initial_guess1 u1;
   set_initial_guess2 u2;
 
@@ -176,8 +177,8 @@ let main () =
   let scsteptol = stol in
 
   (* Call KINDense to specify the linear solver *)
-  let kmem = Kinsol.init (Kinsol.Dense None) func u in
-  Kinsol.set_constraints kmem c;
+  let kmem = Kinsol.init (Kinsol.Dls.dense None) func u_nvec in
+  Kinsol.set_constraints kmem c_nvec;
   Kinsol.set_func_norm_tol kmem (Some fnormtol);
   Kinsol.set_scaled_step_tol kmem (Some scsteptol);
 
@@ -192,22 +193,22 @@ let main () =
   print_output u1;
 
   RealArray.blit u1 u;
-  solve_it kmem u s false 1;
+  solve_it kmem u_nvec s_nvec false 1;
 
   (* --------------------------- *)
 
   RealArray.blit u1 u;
-  solve_it kmem u s true 1;
+  solve_it kmem u_nvec s_nvec true 1;
 
   (* --------------------------- *)
 
   RealArray.blit u1 u;
-  solve_it kmem u s false 0;
+  solve_it kmem u_nvec s_nvec false 0;
 
   (* --------------------------- *)
 
   RealArray.blit u1 u;
-  solve_it kmem u s true 0;
+  solve_it kmem u_nvec s_nvec true 0;
 
   (* --------------------------- *)
 
@@ -217,22 +218,22 @@ let main () =
   print_output u2;
 
   RealArray.blit u2 u;
-  solve_it kmem u s false 1;
+  solve_it kmem u_nvec s_nvec false 1;
 
   (* --------------------------- *)
 
   RealArray.blit u2 u;
-  solve_it kmem u s true 1;
+  solve_it kmem u_nvec s_nvec true 1;
 
   (* --------------------------- *)
 
   RealArray.blit u2 u;
-  solve_it kmem u s false 0;
+  solve_it kmem u_nvec s_nvec false 0;
 
   (* --------------------------- *)
 
   RealArray.blit u2 u;
-  solve_it kmem u s true 0
+  solve_it kmem u_nvec s_nvec true 0
 
 let _ = main ()
 let _ = Gc.compact ()

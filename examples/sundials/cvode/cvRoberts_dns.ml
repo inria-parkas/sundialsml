@@ -30,9 +30,9 @@
  * -----------------------------------------------------------------
  *)
 
-module Cvode = Cvode_serial
-module RealArray = Cvode.RealArray
-module Roots = Cvode.Roots
+module RealArray = Sundials.RealArray
+module Roots = Sundials.Roots
+let unvec = Sundials.unvec
 
 let printf = Printf.printf
 
@@ -117,16 +117,17 @@ let print_final_stats s =
 
 let main () =
   (* Create serial vector of length NEQ for I.C. and abstol *)
-  let y = RealArray.make neq
+  let y = Nvector_serial.make neq 0.0
   and abstol = RealArray.make neq
   and roots = Roots.create nroots
   in
+  let ydata = unvec y in
   let r = Roots.get roots in
 
   (* Initialize y *)
-  set_ith y 1 y1;
-  set_ith y 2 y2;
-  set_ith y 3 y3;
+  set_ith ydata 1 y1;
+  set_ith ydata 2 y2;
+  set_ith ydata 3 y3;
 
   (* Set the vector absolute tolerance *)
   set_ith abstol 1 atol1;
@@ -144,14 +145,14 @@ let main () =
   (* Call CVDense to specify the CVDENSE dense linear solver *)
   (* Set the Jacobian routine to Jac (user-supplied) *)
   let cvode_mem =
-    Cvode.init Cvode.BDF (Cvode.Newton (Cvode.Dense (Some jac)))
-               (Cvode.SVtolerances (rtol, abstol)) f
-      ~roots:(nroots, g) ~t0:t0 y
+    Cvode.init Cvode.BDF (Cvode.Newton (Cvode.Dls.dense (Some jac)))
+               (Cvode.SVtolerances (rtol, (Nvector_serial.wrap abstol))) f
+               ~roots:(nroots, g) ~t0:t0 y
   in
   Gc.compact ();
 
   (* In loop, call CVode, print results, and test for error.
-  Break out of loop when NOUT preset output times have been reached.  *)
+     Break out of loop when NOUT preset output times have been reached.  *)
 
   let tout = ref t1
   and iout = ref 0
@@ -160,18 +161,18 @@ let main () =
 
     let (t, flag) = Cvode.solve_normal cvode_mem !tout y
     in
-    print_output t (ith y 1) (ith y 2) (ith y 3);
+    print_output t (ith ydata 1) (ith ydata 2) (ith ydata 3);
 
     match flag with
-    | Cvode.RootsFound ->
+    | Sundials.RootsFound ->
         Cvode.get_root_info cvode_mem roots;
         print_root_info (r 0) (r 1)
 
-    | Cvode.Continue ->
+    | Sundials.Continue ->
         iout := !iout + 1;
         tout := !tout *. tmult
 
-    | Cvode.StopTimeReached ->
+    | Sundials.StopTimeReached ->
         iout := nout
   done;
 

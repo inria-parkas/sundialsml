@@ -47,10 +47,10 @@
  * -----------------------------------------------------------------
  *)
 
-module Cvode = Cvode_serial
-module Sens = Cvodes_serial.Sensitivity
-module RealArray = Cvode.RealArray
+module Sens = Cvodes.Sensitivity
+module RealArray = Sundials.RealArray
 module Densemat = Dls.DenseMatrix
+let unvec = Sundials.unvec
 
 let printf = Printf.printf
 
@@ -214,13 +214,13 @@ let print_output s t udata =
 (* Print sensitivities. *)
 
 let print_output_s uS =
-  let sdata = uS.(0) in
+  let sdata = unvec uS.(0) in
   printf "                  Sensitivity 1  ";
   printf "%12.4e %12.4e %12.4e \n"  sdata.{0} sdata.{1} sdata.{2};
-  let sdata = uS.(1) in
+  let sdata = unvec uS.(1) in
   printf "                  Sensitivity 2  ";
   printf "%12.4e %12.4e %12.4e \n"  sdata.{0} sdata.{1} sdata.{2};
-  let sdata = uS.(2) in
+  let sdata = unvec uS.(2) in
   printf "                  Sensitivity 3  ";
   printf "%12.4e %12.4e %12.4e \n"  sdata.{0} sdata.{1} sdata.{2}
 
@@ -273,11 +273,12 @@ let main () =
   let data = { p = Array.of_list [ 0.04; 1.0e4; 3.0e7 ] } in
 
   (* Initial conditions *)
-  let y = RealArray.of_list [y1; y2; y3] in
+  let ydata = RealArray.of_list [y1; y2; y3] in
+  let y = Nvector_serial.wrap ydata in
 
   (* Create CVODES object *)
   let cvode_mem =
-    Cvode.init Cvode.BDF (Cvode.Newton (Cvode.Dense (Some (jac data))))
+    Cvode.init Cvode.BDF (Cvode.Newton (Cvode.Dls.dense (Some (jac data))))
       (Cvode.WFtolerances (ewt data)) (f data) ~t0:t0 y
   in
 
@@ -290,7 +291,7 @@ let main () =
     | Some sensi_meth -> begin
         let pbar = RealArray.of_array data.p in
 
-        let yS = Array.init ns (fun _ -> RealArray.init neq 0.0) in
+        let yS = Array.init ns (fun _ -> Nvector_serial.make neq 0.0) in
 
         Sens.init cvode_mem
                          Sens.EEtolerances
@@ -326,7 +327,7 @@ let main () =
   let tout = ref t1 in
   for iout = 1 to nout do
     let t, _ = Cvode.solve_normal cvode_mem !tout y in
-    print_output cvode_mem t y;
+    print_output cvode_mem t ydata;
     print_sensi cvode_mem;
     printf "-----------------------------------------";
     printf "------------------------------\n";
