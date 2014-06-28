@@ -33,19 +33,19 @@
 
 static N_Vector alloc_cnvec(size_t content_size, value backlink)
 {
-    char* mem = NULL; // pointer arithmetic in bytes
     N_Vector nv;
 
     /* Alloc memory in C heap */
-    mem = malloc(sizeof(*nv)
-		 + sizeof(value)
-		 + sizeof(*nv->ops)
-		 + content_size);
-    if (mem == NULL) return NULL;
+    nv = (N_Vector)malloc(sizeof(struct cnvec));
+    if (nv == NULL) return NULL;
 
-    nv = (N_Vector) mem;
-    nv->ops     = (N_Vector_Ops) (mem + sizeof(value) + sizeof(*nv));
-    nv->content = (void *) (nv->ops + sizeof(*nv->ops));
+    nv->ops = NULL;
+    nv->ops = (N_Vector_Ops) malloc(sizeof(struct _generic_N_Vector_Ops));
+    if (nv->ops == NULL) { free(nv); return(NULL); }
+
+    nv->content = NULL;
+    nv->content = (void *) malloc(content_size);
+    if (nv->content == NULL) { free(nv->ops); free(nv); return(NULL); }
 
     NVEC_BACKLINK(nv) = backlink;
     caml_register_global_root(&NVEC_BACKLINK(nv));
@@ -56,6 +56,8 @@ static N_Vector alloc_cnvec(size_t content_size, value backlink)
 static void free_cnvec(N_Vector nv)
 {
     caml_remove_global_root(&NVEC_BACKLINK(nv));
+    free(nv->content);
+    free(nv->ops);
     free(nv);
 }
 

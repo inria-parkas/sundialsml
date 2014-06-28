@@ -63,20 +63,15 @@
       +--------+                :        +---------+  |
      ("caml-nvec")		:        |backlink |--+
 				:        +---------+
-				:        |  ops    |
-				:        +---------+
-				:        |content  |
-				:        +---------+
 				:         ("c-nvec")
 
-  The c-nvec comprises four values placed contiguously in malloc-ed memory:
-  a Sundials N_Vector, a backlink, memory for the nvector ops field, memory
-  for the nvector content field. The N_Vector is passed to Sundials
-  functions (the ops and content fields are used from within the N_Vector).
-  The backlink is an OCaml Value that is registered as a root with the OCaml
-  GC, it points to the OCaml representation of the nvector contents. The
-  find details of the c-nvec depend on the type of nvector, they are
-  discussed below.
+  The c-nvec comprises two values placed contiguously in malloc-ed memory: a
+  Sundials N_Vector and a backlink. The N_Vector itself contains two
+  pointers to other malloc-ed memory: for the ops field and for the content
+  field. The N_Vector is passed to Sundials functions. The backlink is an
+  OCaml Value that is registered as a root with the OCaml GC, it points to
+  the OCaml representation of the nvector contents. The find details of the
+  c-nvec depend on the type of nvector, they are discussed below.
 
   The caml-nvec exists for a "created" nvector. It pairs a 'data field that
   references a payload box with a pointer to the NVector part of the
@@ -183,8 +178,13 @@ enum nvector_ops_tag {
   NVECTOR_OPS_SIZE
 };
 
+struct cnvec {
+    struct _generic_N_Vector nvec;
+    value backlink;
+};
+
 // Return the OCaml version of the nvector payload
-#define NVEC_BACKLINK(nvec) (*(value *)(nvec + sizeof(struct _generic_N_Vector)))
+#define NVEC_BACKLINK(nvec) (((struct cnvec *)nvec)->backlink)
 
 // NVEC_VAL turns an caml-nvec into a c-nvec
 #define NVEC_CVAL(v) (*(N_Vector *)Data_custom_val(v))
