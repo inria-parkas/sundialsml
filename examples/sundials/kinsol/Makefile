@@ -35,6 +35,9 @@ genlog = \
 # requires a valid EXAMPLESROOT to avoid:
 #   make: *** No rule to make target `cvAdvDiff_bnd.sundials.out',
 #					needed by `tests.byte.log'.  Stop.
+# e.g., make EXAMPLESROOT=/path/to/sundials-2.x.0/examples tests.log
+tests.log: tests.byte.log tests.opt.log
+
 tests.byte.log: $(EXAMPLES:.ml=.byte.out) $(EXAMPLES:.ml=.sundials.out)
 	@for f in $(EXAMPLES:.ml=); do \
 	    diff -u $$f.sundials.out $$f.byte.out > $$f.byte.diff || true; \
