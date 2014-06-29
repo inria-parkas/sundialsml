@@ -142,9 +142,9 @@ let fS data t y ydot iS yS ySdot tmp1 tmp2 =
   in
   let sd1, sd2, sd3 =
     (match iS with
-     | 0 -> (sd1 +. -.y1, sd2 +. y2, sd3)
-     | 1 -> (sd1 +. y2*.y3, sd2 +. -.y2*.y3, sd3)
-     | 2 -> (sd1, sd2 +. -.y2*.y2, sd3 +. y2*.y2)
+     | 0 -> (sd1 -. y1, sd2 +. y1, sd3)
+     | 1 -> (sd1 +. y2*.y3, sd2 -. y2*.y3, sd3)
+     | 2 -> (sd1, sd2 -. y2*.y2, sd3 +. y2*.y2)
      | _ -> assert false);
   in
   set_ith ySdot 1 sd1;
