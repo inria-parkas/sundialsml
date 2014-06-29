@@ -1174,7 +1174,7 @@ module Adjoint =
           | SStolerances of float * float
           | SVtolerances of float * ('a, 'k) nvector
 
-        external set_err_con : ('a, 'k) bsession -> bool -> unit
+        external set_err_con : ('a, 'k) session -> int -> bool -> unit
             = "c_cvodes_adjquad_set_err_con"
 
         external sv_tolerances
@@ -1188,11 +1188,11 @@ module Adjoint =
         let set_tolerances bs tol =
           let parent, which = parent_and_which bs in
           match tol with
-          | NoStepSizeControl -> set_err_con bs false
+          | NoStepSizeControl -> set_err_con parent which false
           | SStolerances (rel, abs) -> (ss_tolerances parent which rel abs;
-                                        set_err_con bs true)
+                                        set_err_con parent which true)
           | SVtolerances (rel, abs) -> (sv_tolerances parent which rel abs;
-                                        set_err_con bs true)
+                                        set_err_con parent which true)
 
         let get_num_rhs_evals bs =
           Quadrature.get_num_rhs_evals (tosession bs)
