@@ -100,7 +100,7 @@ static void free_nvector_array(N_Vector *nvarr)
 
 /* Callbacks */
 
-#define CVTYPE(fname) c_nvec_cvodes_ ## fname
+#define CVTYPE(fname) c_cvodes_ ## fname
 #define DOQUOTE(text) #text
 #define QUOTE(val) DOQUOTE(val)
 #define CVTYPESTR(fname) QUOTE(CVTYPE(fname))

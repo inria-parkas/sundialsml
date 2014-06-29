@@ -94,6 +94,14 @@ let call_bjactimesfn session jac vB jvB =
   let (session, bwdsensext) = read_weak_bwd_ref session in
   adjust_retcode session (bwdsensext.bjactimesfn jac vB) jvB
 
+let call_bjacfn session jac m =
+  let (session, bwdsensext) = read_weak_bwd_ref session in
+  adjust_retcode session (bwdsensext.bjacfn jac) m
+
+let call_bbandjacfn session range jac m =
+  let (session, bwdsensext) = read_weak_bwd_ref session in
+  adjust_retcode session (bwdsensext.bbandjacfn range jac) m
+
 let _ =
   Callback.register "c_cvodes_call_quadrhsfn"     call_quadrhsfn;
   Callback.register "c_cvodes_call_sensrhsfn1"    call_sensrhsfn1;
@@ -101,7 +109,9 @@ let _ =
   Callback.register "c_cvodes_call_brhsfn"        call_brhsfn;
   Callback.register "c_cvodes_call_bquadrhsfn"    call_bquadrhsfn;
   Callback.register "c_cvodes_call_bpresolvefn"   call_bpresolvefn;
-  Callback.register "c_cvodes_call_bjactimesfn"   call_bjactimesfn
+  Callback.register "c_cvodes_call_bjactimesfn"   call_bjactimesfn;
+  Callback.register "c_cvodes_call_bjacfn"        call_bjacfn;
+  Callback.register "c_cvodes_call_bbandjacfn"    call_bbandjacfn
 
 let _ = List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
   [
