@@ -102,6 +102,15 @@ cvsDiurnal_FSA_kry.opt.out: cvsDiurnal_FSA_kry.opt
 cvsRoberts_FSA_dns.opt.out: cvsRoberts_FSA_dns.opt
 	./$< -sensi sim t > $@
 
+cvsAdvDiff_FSA_non.sundials.out:$(EXAMPLESROOT)/cvodes/serial/cvsAdvDiff_FSA_non
+	$< -sensi sim t > $@
+
+cvsDiurnal_FSA_kry.sundials.out:$(EXAMPLESROOT)/cvodes/serial/cvsDiurnal_FSA_kry
+	$< -sensi sim t > $@
+
+cvsRoberts_FSA_dns.sundials.out:$(EXAMPLESROOT)/cvodes/serial/cvsRoberts_FSA_dns
+	$< -sensi sim t > $@
+
 ##
 
 clean:

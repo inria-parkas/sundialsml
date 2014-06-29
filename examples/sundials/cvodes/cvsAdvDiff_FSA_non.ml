@@ -218,7 +218,7 @@ let main () =
                     ~t0:t0
                     u
   in
-  printf "\n1-D advection-diffusion equation mesh size =%3d\n" mx;
+  printf "\n1-D advection-diffusion equation, mesh size =%3d\n" mx;
 
   (* Sensitivity-related settings *)
   let print_sensi =
@@ -244,11 +244,11 @@ let main () =
 
         printf "Sensitivity: YES ";
         (match sensi_meth with
-         | Sens.Simultaneous -> printf "  SIMULTANEOUS +"
-         | Sens.Staggered    -> printf "  STAGGERED +"
-         | Sens.Staggered1   -> printf "  STAGGERED1 +");
-        printf (if err_con then " FULL ERROR CONTROL "
-                           else " PARTIAL ERROR CONTROL ");
+         | Sens.Simultaneous -> printf "( SIMULTANEOUS +"
+         | Sens.Staggered    -> printf "( STAGGERED +"
+         | Sens.Staggered1   -> printf "( STAGGERED1 +");
+        printf (if err_con then " FULL ERROR CONTROL )"
+                           else " PARTIAL ERROR CONTROL )");
 
         (fun s -> (ignore (Sens.get s uS); print_output_s uS))
       end
