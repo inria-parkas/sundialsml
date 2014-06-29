@@ -19,7 +19,7 @@ DONE 4. (Tim) Doc generation to work for both OCaml 3.12 and 4.x.
 
 DONE 5. (Tim) Interface to CVODES with maximal reuse and minimal copy-paste
 
-6. (Tim) Rework the nvector interface and eliminate code duplication.
+DONE 6. (Tim) Rework the nvector interface and eliminate code duplication.
 
 7. (Tim) Interface the Alternate Linear Solver Modules
    http://computation.llnl.gov/casc/sundials/documentation/cv_guide/node8.html
