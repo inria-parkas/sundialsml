@@ -44,8 +44,10 @@ static N_Vector alloc_cnvec(size_t content_size, value backlink)
     if (nv->ops == NULL) { free(nv); return(NULL); }
 
     nv->content = NULL;
-    nv->content = (void *) malloc(content_size);
-    if (nv->content == NULL) { free(nv->ops); free(nv); return(NULL); }
+    if (content_size != 0) {
+	nv->content = (void *) malloc(content_size);
+	if (nv->content == NULL) { free(nv->ops); free(nv); return(NULL); }
+    }
 
     NVEC_BACKLINK(nv) = backlink;
     caml_register_global_root(&NVEC_BACKLINK(nv));
@@ -56,7 +58,7 @@ static N_Vector alloc_cnvec(size_t content_size, value backlink)
 static void free_cnvec(N_Vector nv)
 {
     caml_remove_global_root(&NVEC_BACKLINK(nv));
-    free(nv->content);
+    if (nv->content != NULL) free(nv->content);
     free(nv->ops);
     free(nv);
 }
@@ -325,9 +327,9 @@ CAMLprim value ml_nvec_wrap_parallel(value payload)
 
 /** Custom nvectors * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#define CNVEC_OP_TABLE(nvec)  (*(value*)((nvec)->content))
+#define CNVEC_OP_TABLE(nvec)  ((nvec)->content)
 
-#define GET_OP(nvec, x) (Field(CNVEC_OP_TABLE(nvec), x))
+#define GET_OP(nvec, x) (Field((value)CNVEC_OP_TABLE(nvec), x))
 
 #define HAS_OP(ops, x)	     (Field(ops, x) != Val_int(0))
 #define IS_SOME_OP(nvec, x)  (HAS_OP(CNVEC_OP_TABLE(nvec), x))
@@ -343,7 +345,8 @@ CAMLprim void callml_vdestroy(N_Vector v)
 	caml_callback(mlop, NVEC_BACKLINK(v));
     }
 
-    caml_remove_generational_global_root(&CNVEC_OP_TABLE(v));
+    caml_remove_generational_global_root((value *)&CNVEC_OP_TABLE(v));
+    v->content = NULL;
     free_cnvec(v);
 
     CAMLreturn0;
@@ -425,7 +428,7 @@ CAMLprim value ml_nvec_wrap_custom(value mlops, value payload)
 
     /* Create content */
     nv->content = (void *)mlops;
-    caml_register_generational_global_root(&CNVEC_OP_TABLE(nv));
+    caml_register_generational_global_root((value *)&CNVEC_OP_TABLE(nv));
 
     vcnvec = caml_alloc_tuple(2);
     Store_field(vcnvec, 0, payload);
@@ -438,7 +441,6 @@ CAMLprim N_Vector callml_vclone(N_Vector w)
 {
     CAMLparam0();
     CAMLlocal2(v_payload, w_payload);
-
     N_Vector v;
 
     if (w == NULL) return(NULL);
@@ -455,7 +457,7 @@ CAMLprim N_Vector callml_vclone(N_Vector w)
 
     /* Create content */
     v->content = (void *) CNVEC_OP_TABLE(w);
-    caml_register_generational_global_root(&CNVEC_OP_TABLE(v));
+    caml_register_generational_global_root((value *)&CNVEC_OP_TABLE(v));
 
     CAMLreturnT(N_Vector, v);
 }

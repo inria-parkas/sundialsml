@@ -93,7 +93,7 @@ type ('a, 'k) session = {
   info_file : kin_file;
 
   mutable neqs       : int;    (* only valid for 'kind = serial *)
-  mutable exn_temp : exn option;
+  mutable exn_temp   : exn option;
 
   mutable sysfn      : 'a -> 'a -> unit;
   mutable errh       : Sundials.error_details -> unit;
