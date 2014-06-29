@@ -78,16 +78,15 @@
  * -----------------------------------------------------------------
  *)
 
-module RealArray = Sundials.RealArray
 module Dense = Dls.ArrayDenseMatrix
-let unvec = Sundials.unvec
+module RealArray = Sundials.RealArray
 
 let printf = Printf.printf
-let subarray = Bigarray.Array1.sub
+let matrix_unwrap = Sundials.RealArray2.unwrap
+let wrap = Nvector_array.wrap
 let slice_left = Bigarray.Array2.slice_left
-let unwrap = Sundials.RealArray2.unwrap
 let nvwl2norm =
-  match Nvector_array.Bigarray.array_nvec_ops.Nvector_custom.nvwl2norm with
+  match Nvector_array.array_nvec_ops.Nvector_custom.nvwl2norm with
   | Some fn -> fn
   | None -> failwith "nvwl2norm not found!"
 
@@ -130,7 +129,6 @@ let predin      = 30000.0(* initial guess for predator concs.      *)
    ij_vptr vv i j  returns a pointer to the location in vv corresponding to 
    indices is = 0, jx = i, jy = j.    *)
 let ij_vptr_idx i j = i*num_species + j*nsmx
-let ij_vptr vv i j = subarray vv (ij_vptr_idx i j) num_species
 
 (* Type : UserData 
    contains preconditioner blocks, pivot arrays, and problem constants *)
@@ -149,12 +147,12 @@ let pivot =
       v
     ))
 
-let acoef = Sundials.RealArray2.make_data num_species num_species
-let bcoef = RealArray.make num_species
-let cox = RealArray.make num_species
-let coy = RealArray.make num_species
+let acoef = Array.make_matrix num_species num_species 0.0
+let bcoef = Array.create num_species 0.0
+let cox = Array.create num_species 0.0
+let coy = Array.create num_species 0.0
 
-let rates = RealArray.make neq
+let rates = Array.create neq 0.0
 
 (* Load problem constants in data *)
 
@@ -170,50 +168,50 @@ let init_user_data =
 
   (* Fill in the portion of acoef in the four quadrants, row by row *)
   for i = 0 to np - 1 do
-    let a1 = subarray (slice_left acoef i) np np in
-    let a2 = slice_left acoef (i + np) in
-    let a3 = slice_left acoef i in
-    let a4 = subarray (slice_left acoef (i + np)) np np in
+    let a1, a1off = acoef.(i), np in
+    let a2 = acoef.(i + np) in
+    let a3 = acoef.(i) in
+    let a4, a4off = acoef.(i + np), np in
 
     for j = 0 to np - 1 do
-      a1.{j} <- -.gg;
-      a2.{j} <-   ee;
-      a3.{j} <-   zero;
-      a4.{j} <-   zero
+      a1.(a1off+j) <- -.gg;
+      a2.(j)       <-   ee;
+      a3.(j)       <-   zero;
+      a4.(a4off+j) <-   zero
     done;
 
     (* and then change the diagonal elements of acoef to -AA *)
-    acoef.{i, i} <- -.aa;
-    acoef.{i+np, i+np} <- -.aa;
+    acoef.(i).(i) <- -.aa;
+    acoef.(i+np).(i+np) <- -.aa;
 
-    bcoef.{i} <- bb;
-    bcoef.{i+np} <- -.bb;
+    bcoef.(i) <- bb;
+    bcoef.(i+np) <- -.bb;
 
-    cox.{i} <- dprey/.dx2;
-    cox.{i+np} <- dpred/.dx2;
+    cox.(i) <- dprey/.dx2;
+    cox.(i+np) <- dpred/.dx2;
 
-    coy.{i} <- dprey/.dy2;
-    coy.{i+np} <- dpred/.dy2
+    coy.(i) <- dprey/.dy2;
+    coy.(i+np) <- dpred/.dy2
   done
 
 (* Dot product routine for realtype arrays *)
-let dot_prod size x1 x2 =
+let dot_prod size (x1, x1idx) (x2, x2idx) =
   let temp =ref zero in
   for i = 0 to size - 1 do
-    temp := !temp +. x1.{i} *. x2.{i}
+    temp := !temp +. x1.(x1idx+i) *. x2.(x2idx+i)
   done;
   !temp
 
 (* Interaction rate function routine *)
 
-let web_rate xx yy cxy ratesxy =
+let web_rate xx yy (cxy, cidx) (ratesxy, ridx) =
   for i = 0 to num_species - 1 do
-    ratesxy.{i} <- dot_prod num_species cxy (slice_left acoef i)
+    ratesxy.(ridx+i) <- dot_prod num_species (cxy, cidx) (acoef.(i), 0)
   done;
   
   let fac = one +. alpha *. xx *. yy in
   for i = 0 to num_species - 1 do
-    ratesxy.{i} <- cxy.{i} *. (bcoef.{i} *. fac +. ratesxy.{i})
+    ratesxy.(ridx+i) <- cxy.(cidx+i) *. (bcoef.(i) *. fac +. ratesxy.(ridx+i))
   done
 
 (* System function for predator-prey system *)
@@ -237,26 +235,22 @@ let func cc fval =
       let idxl = if jx <>  0   then num_species else -num_species in
       let idxr = if jx <> mx-1 then num_species else -num_species in
 
-      let cxy = ij_vptr cc jx jy in
-      let cxy_ij = ij_vptr_idx jx jy in
-      let rxy = ij_vptr rates jx jy in
-      let fxy = ij_vptr fval jx jy in
-
+      let idx = ij_vptr_idx jx jy in
       (* Get species interaction rate array at (xx,yy) *)
-      web_rate xx yy cxy rxy;
+      web_rate xx yy (cc, idx) (rates, idx);
 
       for is = 0 to num_species - 1 do
         (* Differencing in x direction *)
-        let dcyli = cxy.{is} -. cc.{cxy_ij - idyl + is} in
-        let dcyui = cc.{cxy_ij + idyu + is} -. cxy.{is} in
+        let dcyli = cc.(idx + is) -. cc.(idx - idyl + is) in
+        let dcyui = cc.(idx + idyu + is) -. cc.(idx + is) in
         
         (* Differencing in y direction *)
-        let dcxli = cxy.{is} -. cc.{cxy_ij - idxl + is} in
-        let dcxri = cc.{cxy_ij + idxr+is} -. cxy.{is} in
+        let dcxli = cc.(idx + is) -. cc.(idx - idxl + is) in
+        let dcxri = cc.(idx + idxr+is) -. cc.(idx + is) in
         
         (* Compute the total rate value at (xx,yy) *)
-        fxy.{is} <- coy.{is} *. (dcyui -. dcyli)
-                    +. cox.{is} *. (dcxri -. dcxli) +. rxy.{is}
+        fval.(idx + is) <- coy.(is) *. (dcyui -. dcyli)
+                            +. cox.(is) *. (dcxri -. dcxli) +. rates.(idx + is)
 
       done (* end of is loop *)
     done (* end of jx loop *)
@@ -268,7 +262,7 @@ let prec_setup_bd { Kinsol.jac_u=cc;
                     Kinsol.jac_tmp=(vtemp1, vtemp2)}
                   { Kinsol.Spils.uscale=cscale;
                     Kinsol.Spils.fscale=fscale } =
-  let perturb_rates = Sundials.RealArray.make num_species in
+  let perturb_rates = Array.create num_species 0.0 in
   
   let delx = dx in
   let dely = dy in
@@ -284,25 +278,23 @@ let prec_setup_bd { Kinsol.jac_u=cc;
     for jx = 0 to mx - 1 do
       let xx = float(jx) *. delx in
       let pxy = p.(jx).(jy) in
-      let cxy = ij_vptr cc jx jy in
-      let scxy = ij_vptr cscale jx jy in
-      let ratesxy = ij_vptr rates jx jy in
+      let idx = ij_vptr_idx jx jy in
       
       (* Compute difference quotients of interaction rate fn. *)
       for j = 0 to num_species - 1 do
-        let csave = cxy.{j} in  (* Save the j,jx,jy element of cc *)
-        let r = max (sqruround *. abs_float csave) (r0/.scxy.{j}) in
-        cxy.{j} <- cxy.{j} +. r; (* Perturb the j,jx,jy element of cc *)
+        let csave = cc.(idx+j) in  (* Save the j,jx,jy element of cc *)
+        let r = max (sqruround *. abs_float csave) (r0/.cscale.(idx+j)) in
+        cc.(idx+j) <- cc.(idx+j) +. r; (* Perturb the j,jx,jy element of cc *)
         let fac = one/.r in
-        web_rate xx yy cxy perturb_rates;
+        web_rate xx yy (cc,idx) (perturb_rates,0);
         
         (* Restore j,jx,jy element of cc *)
-        cxy.{j} <- csave;
+        cc.(idx+j) <- csave;
         
         (* Load the j-th column of difference quotients *)
-        let pxycol = slice_left (unwrap pxy) j in
+        let pxycol = slice_left (matrix_unwrap pxy) j in
         for i = 0 to num_species - 1 do
-          pxycol.{i} <- (perturb_rates.{i} -. ratesxy.{i}) *. fac
+          pxycol.{i} <- (perturb_rates.(i) -. rates.(idx+i)) *. fac
         done
       done; (* end of j loop *)
       
@@ -312,6 +304,8 @@ let prec_setup_bd { Kinsol.jac_u=cc;
   done (* end of jy loop *)
   
 (* Preconditioner solve routine *)
+let vxy = RealArray.make num_species
+
 let prec_solve_bd { Kinsol.jac_u=cc;
                     Kinsol.jac_fu=fval;
                     Kinsol.jac_tmp=ftem}
@@ -324,10 +318,22 @@ let prec_solve_bd { Kinsol.jac_u=cc;
          vxy is the address of the corresponding portion of the vector vv;
          Pxy is the address of the corresponding block of the matrix P;
          piv is the address of the corresponding block of the array pivot. *)
-      let vxy = ij_vptr vv jx jy in
+      let idx = ij_vptr_idx jx jy in
+      for i=0 to num_species-1 do
+        vxy.{i} <- vv.(idx+i)
+      done;
+
       let pxy = p.(jx).(jy) in
       let piv = pivot.(jx).(jy) in
-      Dense.getrs pxy piv vxy
+      Dense.getrs pxy piv vxy;
+
+      for i=0 to num_species-1 do
+        vv.(idx+i) <- vxy.{i}
+      done
+      (* Note: here we must copy from and back into a float array,
+               but it's just to demonstrate the kinsol_nvector
+               interface; the kinsol_serial interface does not
+               necessitate such copying. *)
     done (* end of jy loop *)
   done (* end of jx loop *)
 
@@ -336,15 +342,14 @@ let set_initial_profiles cc sc =
   (* Load initial profiles into cc and sc vector. *)
   for jy = 0 to my - 1 do
     for jx = 0 to mx - 1 do
-      let cloc = ij_vptr cc jx jy in
-      let sloc = ij_vptr sc jx jy in
+      let idx = ij_vptr_idx jx jy in
       for i = 0 to num_species/2 - 1 do
-        cloc.{i} <- preyin;
-        sloc.{i} <- one
+        cc.(idx + i) <- preyin;
+        sc.(idx + i) <- one
       done;
       for i = num_species/2 to num_species - 1 do
-        cloc.{i} <- predin;
-        sloc.{i} <- 0.00001
+        cc.(idx + i) <- predin;
+        sc.(idx + i) <- 0.00001
       done
     done
   done
@@ -370,24 +375,24 @@ let print_header globalstrategy maxl maxlrst fnormtol scsteptol =
 let print_output cc =
   let jy = 0 in
   let jx = 0 in
-  let ct = ij_vptr cc jx jy in
+  let ct = ij_vptr_idx jx jy in
   printf "\nAt bottom left:";
 
   (* Print out lines with up to 6 values per line *)
   for is = 0 to num_species - 1 do
     if ((is mod 6)*6 = is) then printf "\n";
-    printf " %g" ct.{is}
+    printf " %g" cc.(ct+is)
   done;
   
   let jy = my-1 in
   let jx = mx-1 in
-  let ct = ij_vptr cc jx jy in
+  let ct = ij_vptr_idx jx jy in
   printf("\n\nAt top right:");
 
   (* Print out lines with up to 6 values per line *)
   for is = 0 to num_species - 1 do
     if ((is mod 6)*6 = is) then printf("\n");
-    printf " %g" ct.{is}
+    printf " %g" cc.(ct+is)
   done;
   printf("\n\n")
 
@@ -410,9 +415,10 @@ let main () =
   let globalstrategy = false in
 
   (* Create serial vectors of length NEQ *)
-  let cc = Nvector_serial.make neq 0.0 in
-  let sc = Nvector_serial.make neq 0.0 in
-  set_initial_profiles (unvec cc) (unvec sc);
+  let cc = Array.create neq 0.0 in
+  let sc = Array.create neq 0.0 in
+  let ccnv, scnv = wrap cc, wrap sc in
+  set_initial_profiles cc sc;
 
   let fnormtol  = ftol in
   let scsteptol = stol in
@@ -428,8 +434,8 @@ let main () =
                                 {Kinsol.Spils.prec_setup_fn=Some prec_setup_bd;
                                  Kinsol.Spils.prec_solve_fn=Some prec_solve_bd;
                                  Kinsol.Spils.jac_times_vec_fn=None; })
-              func cc in
-  Kinsol.set_constraints kmem (Nvector_serial.make neq two);
+              func ccnv in
+  Kinsol.set_constraints kmem (wrap (Array.create neq two));
   Kinsol.set_func_norm_tol kmem (Some fnormtol);
   Kinsol.set_scaled_step_tol kmem (Some scsteptol);
 
@@ -437,14 +443,14 @@ let main () =
   print_header globalstrategy maxl maxlrst fnormtol scsteptol;
 
   (* Call KINSol and print output concentration profile *)
-  ignore (Kinsol.solve kmem           (* KINSol memory block *)
-                 cc             (* initial guess on input; solution vector *)
+  ignore (Kinsol.solve kmem     (* KINSol memory block *)
+                 ccnv           (* initial guess on input; solution vector *)
                  globalstrategy (* global stragegy choice *)
-                 sc             (* scaling vector, for the variable cc *)
-                 sc);           (* scaling vector for function values fval *)
+                 scnv           (* scaling vector, for the variable cc *)
+                 scnv);         (* scaling vector for function values fval *)
 
   printf("\n\nComputed equilibrium species concentrations:\n");
-  print_output (unvec cc);
+  print_output cc;
 
   (* Print final statistics and free memory *)  
   print_final_stats kmem
