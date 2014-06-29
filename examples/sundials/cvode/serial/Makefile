@@ -1,4 +1,4 @@
-include ../../../config
+include ../../../../config
 
 EXAMPLES = cvAdvDiff_bnd.ml \
 	   cvRoberts_dns.ml \
@@ -138,12 +138,12 @@ cleanall: clean
 
 .ml.byte:
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
-	    $(INCLUDES) -I ../../../ -dllpath ../../../ bigarray.cma unix.cma \
+	    $(INCLUDES) -I ../../../../ -dllpath ../../../../ bigarray.cma unix.cma \
 	    sundials_wos.cma $<
 
 .ml.opt:
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
-	    $(INCLUDES) -I ../../../ bigarray.cmxa unix.cmxa \
+	    $(INCLUDES) -I ../../../../ bigarray.cmxa unix.cmxa \
 	    sundials_wos.cmxa $<
 
 %.byte.out: %.byte

@@ -1,4 +1,4 @@
-include ../../../config
+include ../../../../config
 
 EXAMPLES = idaRoberts_dns.ml  \
 	   idaHeat2D_bnd.ml   \
@@ -103,12 +103,12 @@ cleanall: clean
 
 .ml.byte:
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
-	    $(INCLUDES) -I ../../../ -dllpath ../../../ bigarray.cma unix.cma \
+	    $(INCLUDES) -I ../../../../ -dllpath ../../../../ bigarray.cma unix.cma \
 	    sundials.cma $<
 
 .ml.opt:
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
-	    $(INCLUDES) -I ../../../ bigarray.cmxa unix.cmxa \
+	    $(INCLUDES) -I ../../../../ bigarray.cmxa unix.cmxa \
 	    sundials.cmxa $<
 
 %.byte.out: %.byte

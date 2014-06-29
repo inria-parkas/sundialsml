@@ -1,4 +1,4 @@
-include ../../../config
+include ../../../../config
 
 EXAMPLES = kinFerTron_dns.ml   \
 	   kinFoodWeb_kry.ml   \
@@ -16,9 +16,6 @@ all: byte opt
 
 byte: $(ALL_EXAMPLES:.ml=.byte)
 opt: $(ALL_EXAMPLES:.ml=.opt)
-
-lapack: $(LAPACK_EXAMPLES:.ml=.byte)
-lapack.opt: $(LAPACK_EXAMPLES:.ml=.opt)
 
 genlog = \
     @(for f in $(1); do  \
@@ -59,22 +56,6 @@ tests.self.log: $(EXAMPLES:.ml=.byte.out) $(EXAMPLES:.ml=.opt.out)
 	$(call genlog, $(EXAMPLES:.ml=.self.diff), $@)
 	cat $@
 
-lapack-tests.byte.log: $(LAPACK_EXAMPLES:.ml=.byte.out) \
-		       $(LAPACK_EXAMPLES:.ml=.sundials.out)
-	@for f in $(LAPACK_EXAMPLES:.ml=); do \
-	    diff -u $$f.sundials.out $$f.byte.out > $$f.byte.diff || true; \
-	done
-	$(call genlog, $(LAPACK_EXAMPLES:.ml=.byte.diff), $@)
-	cat $@
-
-lapack-tests.opt.log: $(LAPACK_EXAMPLES:.ml=.opt.out) \
-		      $(LAPACK_EXAMPLES:.ml=.sundials.out)
-	@for f in $(LAPACK_EXAMPLES:.ml=); do \
-	    diff -u $$f.sundials.out $$f.opt.out > $$f.opt.diff || true; \
-	done
-	$(call genlog, $(LAPACK_EXAMPLES:.ml=.opt.diff), $@)
-	cat $@
-
 ##
 
 kinFerTron_dns.byte: kinFerTron_dns.ml
@@ -110,9 +91,7 @@ cleanall: clean
 	-@rm -f $(ALL_EXAMPLES:.ml=.annot)
 	-@rm -f $(ALL_EXAMPLES:.ml=.byte.diff) $(ALL_EXAMPLES:.ml=.opt.diff)
 	-@rm -f $(ALL_EXAMPLES:.ml=.self.diff)
-	-@rm -f tests.log lapack-tests.log tests.self.log
-	-@rm -f tests.byte.log lapack-tests.byte.log
-	-@rm -f tests.opt.log lapack-tests.opt.log
+	-@rm -f tests.log tests.self.log tests.byte.log tests.opt.log
 
 # #
 
@@ -120,12 +99,12 @@ cleanall: clean
 
 .ml.byte:
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
-	    $(INCLUDES) -I ../../../ -dllpath ../../../ bigarray.cma unix.cma \
+	    $(INCLUDES) -I ../../../../ -dllpath ../../../../ bigarray.cma unix.cma \
 	    sundials.cma $<
 
 .ml.opt:
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
-	    $(INCLUDES) -I ../../../ bigarray.cmxa unix.cmxa \
+	    $(INCLUDES) -I ../../../../ bigarray.cmxa unix.cmxa \
 	    sundials.cmxa $<
 
 %.byte.out: %.byte
