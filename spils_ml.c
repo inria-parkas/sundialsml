@@ -189,7 +189,7 @@ CAMLprim value c_spils_spgmr_make(value vl_max, value vvec_tmpl)
 
     if (s == NULL) caml_raise_out_of_memory();
     vs = caml_alloc_final(2, &spgmr_finalize, approx_size, approx_size * 20);
-    Store_field(vs, 1, (value)s);
+    SPGMR_SESSION(vs) = s;
 
     CAMLreturn(vs);
 }
@@ -311,7 +311,7 @@ CAMLprim value c_spils_spbcg_make(value vl_max, value vvec_tmpl)
 
     if (s == NULL) caml_raise_out_of_memory();
     vs = caml_alloc_final(2, &spbcg_finalize, approx_size, approx_size * 20);
-    Store_field(vs, 1, (value)s);
+    SPBCG_SESSION(vs) = s;
 
     CAMLreturn(vs);
 }
@@ -422,7 +422,7 @@ CAMLprim value c_spils_sptfqmr_make(value vl_max, value vvec_tmpl)
 
     if (s == NULL) caml_raise_out_of_memory();
     vs = caml_alloc_final(2, &sptfqmr_finalize, approx_size, approx_size * 20);
-    Store_field(vs, 1, (value)s);
+    SPTFQMR_SESSION(vs) = s;
 
     CAMLreturn(vs);
 }

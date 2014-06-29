@@ -75,7 +75,7 @@ static CAMLprim value val_cnvec(N_Vector nv, void (*finalizer)(value))
     CAMLlocal1(r);
 
     r = caml_alloc_final(2, finalizer, nvec_rough_size, nvec_rough_size * 30);
-    Store_field(r, 1, (value)nv);
+    NVEC_CVAL(r) = nv;
 
     CAMLreturn(r);
 }

@@ -28,10 +28,9 @@
 #include <stdio.h>
 
 #include "sundials_ml.h"
+#include "dls_ml.h"
 
 /* Dense matrix functions */
-
-#define DLSMAT(v) (*(DlsMat *)Data_custom_val(v))
 
 static void finalize_dlsmat(value va)
 {
@@ -53,7 +52,7 @@ CAMLprim value c_densematrix_new_dense_mat(value vm, value vn)
 
     /* a DlsMat is a pointer to a struct _DlsMat */
     vr = caml_alloc_final(2, &finalize_dlsmat, approx_size, approx_size * 20);
-    Store_field(vr, 1, (value)a);
+    DLSMAT(vr) = a;
 
     CAMLreturn(vr);
 }
@@ -375,7 +374,7 @@ CAMLprim value c_bandmatrix_new_band_mat(value vn, value vmu,
 
     /* a DlsMat is a pointer to a struct _DlsMat */
     vr = caml_alloc_final(2, &finalize_dlsmat, approx_size, approx_size * 20);
-    Store_field(vr, 1, (value)a);
+    DLSMAT(vr) = a;
 
     CAMLreturn(vr);
 }

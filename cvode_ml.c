@@ -34,6 +34,7 @@
 #include <sundials/sundials_config.h>
 #include <sundials/sundials_nvector.h>
 
+#include "dls_ml.h"
 #include "spils_ml.h"
 #include "sundials_ml.h"
 #include "cvode_ml.h"
@@ -246,7 +247,7 @@ static int jacfn(
     args[0] = *backref;
     args[1] = make_jac_arg (t, y, fy, make_triple_tmp (tmp1, tmp2, tmp3));
     args[2] = caml_alloc_final (2, NULL, 0, 1);
-    Store_field (args[2], 1, (value)Jac);
+    DLSMAT(args[2]) = Jac;
 
     r = Int_val (caml_callbackN (*call_jacfn,
 				 sizeof (args) / sizeof (*args),
@@ -280,7 +281,7 @@ static int bandjacfn(
     Store_field(args[1], RECORD_CVODE_BANDRANGE_MLOWER, Val_long(mlower));
     args[2] = make_jac_arg(t, y, fy, make_triple_tmp(tmp1, tmp2, tmp3));
     args[3] = caml_alloc_final(2, NULL, 0, 1);
-    Store_field (args[3], 1, (value)Jac);
+    DLSMAT(args[3]) = Jac;
 
     r = Int_val (caml_callbackN(*call_bandjacfn,
                                 sizeof (args) / sizeof (*args),

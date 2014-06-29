@@ -34,6 +34,7 @@
 
 #include "ida_ml.h"
 #include "nvector_ml.h"
+#include "dls_ml.h"
 
 #if SUNDIALS_BLAS_LAPACK == 1
 #include <ida/ida_lapack.h>
@@ -236,7 +237,7 @@ static int jacfn (long int neq, realtype t, realtype coef,
     args[1] = make_jac_arg (t, coef, y, yp, res,
 			    make_triple_tmp (tmp1, tmp2, tmp3));
     args[2] = caml_alloc_final (2, NULL, 0, 1);
-    Store_field (args[2], 1, (value)jac);
+    DLSMAT(args[2]) = jac;
 
     r = Int_val (caml_callbackN (*call_jacfn,
 				 sizeof (args) / sizeof (*args),
@@ -265,7 +266,7 @@ static int bandjacfn (long int neq, long int mupper, long int mlower,
     args[2] = make_jac_arg (t, coef, y, yp, res,
 			    make_triple_tmp (tmp1, tmp2, tmp3));
     args[3] = caml_alloc_final (2, NULL, 0, 1);
-    Store_field (args[3], 1, (value)jac);
+    DLSMAT(args[3]) = jac;
 
     r = Int_val (caml_callbackN (*call_bandjacfn,
 				 sizeof (args) / sizeof (*args),

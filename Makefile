@@ -76,13 +76,14 @@ sundials_wos.cma sundials_wos.cmxa: $(MLOBJ_LOCAL) $(MLOBJ_LOCAL:.cmo=.cmx) \
 $(COMMON_COBJ): %.o: %.c
 	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
 
-cvode_ml.o: cvode_ml.c spils_ml.h cvode_ml.h sundials_ml.h
+cvode_ml.o: cvode_ml.c dls_ml.h spils_ml.h cvode_ml.h sundials_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
 
-cvodes_ml.o: cvodes_ml.c spils_ml.h cvode_ml.h cvodes_ml.h sundials_ml.h
+cvodes_ml.o: cvodes_ml.c dls_ml.h spils_ml.h \
+    	     cvode_ml.h cvodes_ml.h sundials_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(CVODES_CFLAGS) -o $@ -c $<
 
-ida_ml.o: ida_ml.c spils_ml.h ida_ml.h
+ida_ml.o: ida_ml.c dls_ml.h spils_ml.h ida_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(IDA_CFLAGS) -o $@ -c $<
 ida_ml_ba.o: ida_ml_nvec.c nvector_ml.h ida_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(IDA_CFLAGS) \
@@ -90,7 +91,7 @@ ida_ml_ba.o: ida_ml_nvec.c nvector_ml.h ida_ml.h
 ida_ml_nvec.o: ida_ml_nvec.c nvector_ml.h ida_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(IDA_CFLAGS) -o $@ -c $<
 
-kinsol_ml.o: kinsol_ml.c spils_ml.h kinsol_ml.h
+kinsol_ml.o: kinsol_ml.c dls_ml.h spils_ml.h kinsol_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(KINSOL_CFLAGS) -o $@ -c $<
 
 spils_ml.o: spils_ml.c sundials_ml.h spils_ml.h

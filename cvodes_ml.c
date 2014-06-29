@@ -43,6 +43,7 @@
 #include <cvodes/cvodes_lapack.h>
 #endif
 
+#include "dls_ml.h"
 #include "spils_ml.h"
 #include "sundials_ml.h"
 #include "cvode_ml.h"
@@ -551,7 +552,7 @@ static int bjacfn(
     args[0] = *backref;
     args[1] = make_jac_arg(t, y, yb, fyb, make_triple_tmp(tmp1b, tmp2b, tmp3b));
     args[2] = caml_alloc_final (2, NULL, 0, 1);
-    Store_field (args[2], 1, (value)jacb);
+    DLSMAT(args[2]) = jacb;
 
     retcode = Int_val (caml_callbackN(*call_bjacfn,
                                       sizeof (args) / sizeof (*args),
@@ -586,7 +587,7 @@ static int bbandjacfn(
     Store_field(args[1], RECORD_CVODES_ADJ_BANDRANGE_MLOWER, Val_long(mlowerb));
     args[2] = make_jac_arg(t, y, yb, fyb, make_triple_tmp(tmp1b, tmp2b, tmp3b));
     args[3] = caml_alloc_final(2, NULL, 0, 1);
-    Store_field (args[3], 1, (value)jacb);
+    DLSMAT(args[3]) = jacb;
 
     r = Int_val (caml_callbackN(*call_bbandjacfn,
                                 sizeof (args) / sizeof (*args),
