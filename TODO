@@ -85,4 +85,10 @@ TO DISCUSS
 
 * Should we remove all examples except the Sundials ones?
 
+* Don't use sundials-config?
+  - it leads to duplicate options.
+  - it's not possible to request both "-t s" and "-t p" at the same time
+  - it's not really suited to building a library with everything
+  Or propose changes on the sundials-users list?
+
 
