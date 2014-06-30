@@ -48,7 +48,7 @@
 type kind
 type 'a t = ('a, kind) Sundials.nvector
 
-(** {2 Custom imperative nvectors *)
+(** {2 Custom imperative nvectors} *)
 
 (**
    The set of operations required to define an {!nvector}. Some operations
@@ -190,7 +190,7 @@ val make  : 'a nvector_ops -> 'a -> 'a t
     vector operations. *)
 val add_tracing     : string -> 'a nvector_ops -> 'a nvector_ops
 
-(** {2 Custom persistent nvectors *)
+(** {2 Custom persistent nvectors} *)
 
 module Immutable :
 sig
