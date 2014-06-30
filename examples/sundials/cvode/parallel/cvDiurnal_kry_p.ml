@@ -57,18 +57,12 @@ module BandedSpils = Cvode.Spils.Banded
 open Bigarray
 
 let unvec = Sundials.unvec
-let slice ba offset len = Array.init len (fun i -> ba.{offset + i})
+let slice = Array1.sub
 let printf = Printf.printf
 let eprintf = Printf.eprintf
 
-
-let blit_from_buf buf buf_offset dst dst_offset len =
-  for i = 0 to len do
-    dst.{dst_offset + i} <- buf.(buf_offset + i)
-  done
-
 let blit buf buf_offset dst dst_offset len =
-  for i = 0 to len do
+  for i = 0 to len-1 do
     dst.{dst_offset + i} <- buf.{buf_offset + i}
   done
 
@@ -245,22 +239,24 @@ let set_initial_profiles data u =
 
 let print_output s my_pe comm u t =
   let npelast = npex*npey - 1 in
-  let tempu = Array.make 2 0.0 in
+  let tempu = RealArray.make 2 in
   let udata, _, _ = unvec u in
 
   (* Send c1,c2 at top right mesh point to PE 0 *)
-  if my_pe = npelast then
+  if my_pe = npelast then begin
     let i0 = nvars*mxsub*mysub - 2 in
     let i1 = i0 + 1 in
-    if npelast <> 0 then Mpi.send_float_array (slice udata i0 2) 0 0 comm
-    else (tempu.(0) <- udata.{i0}; tempu.(1) <- udata.{i1});
+    if npelast <> 0 then Mpi.send (slice udata i0 2) 0 0 comm
+    else (tempu.{0} <- udata.{i0}; tempu.{1} <- udata.{i1})
+  end;
 
   (* On PE 0, receive c1,c2 at top right, then print performance data
      and sampled solution values *) 
-  if my_pe == 0 then begin
-    if npelast <> 0 then
-      let buf = Mpi.receive npelast 0 comm in
-      Array.blit buf 0 tempu 0 2;
+  if my_pe = 0 then begin
+    if npelast <> 0 then begin
+      let buf = (Mpi.receive npelast 0 comm : RealArray.t) in
+      blit buf 0 tempu 0 2
+    end;
 
     let nst = Cvode.get_num_steps s
     and qu  = Cvode.get_last_order s
@@ -268,8 +264,8 @@ let print_output s my_pe comm u t =
     in
     printf "t = %.2e   no. steps = %d   order = %d   stepsize = %.2e\n" 
                                                                   t nst qu hu;
-    printf "At bottom left:  c1  c2 = %12.3e %12.3e \n" udata.{0} udata.{1};
-    printf "At top right:    c1  c2 = %12.3e %12.3e \n\n" tempu.(0) tempu.(1)
+    printf "At bottom left:  c1, c2 = %12.3e %12.3e \n" udata.{0} udata.{1};
+    printf "At top right:    c1, c2 = %12.3e %12.3e \n\n" tempu.{0} tempu.{1}
   end
 
 (* Print final statistics contained in iopt *)
@@ -302,30 +298,24 @@ let print_final_stats s =
  
 (* Routine to send boundary data to neighboring PEs *)
 
-(* OCaml MPI (1998) does not use Bigarrays (2000), so we copy from a Bigarray
-   into a float array, and it copies back into a double array for sending... *)
 let bsend comm my_pe isubx isuby dsizex dsizey udata =
-  let buf = Array.make (nvars*mysub) 0.0 in
+  let buf = RealArray.make (nvars*mysub) in
 
   (* If isuby > 0, send data from bottom x-line of u *)
-  if isuby <> 0 then
-    Mpi.send_float_array (slice udata 0 dsizex) (my_pe-npex) 0 comm;
+  if isuby <> 0 then Mpi.send (slice udata 0 dsizex) (my_pe-npex) 0 comm;
 
   (* If isuby < NPEY-1, send data from top x-line of u *)
-  if isuby <> npey-1 then
+  if isuby <> npey-1 then begin
     let offsetu = (mysub-1)*dsizex in
-    Mpi.send_float_array (slice udata offsetu dsizex) (my_pe+npex) 0 comm;
+    Mpi.send (slice udata offsetu dsizex) (my_pe+npex) 0 comm
+  end;
 
   (* If isubx > 0, send data from left y-line of u (via bufleft) *)
   if isubx <> 0 then begin
     for ly = 0 to mysub-1 do
-      let offsetbuf = ly*nvars in
-      let offsetu = ly*dsizex in
-      for i = 0 to nvars-1 do
-        buf.(offsetbuf+i) <- udata.{offsetu+i}
-      done
+      blit udata (ly*dsizex) buf (ly*nvars) nvars
     done;
-    Mpi.send_float_array buf (my_pe-1) 0 comm
+    Mpi.send buf (my_pe-1) 0 comm
   end;
 
   (* If isubx < NPEX-1, send data from right y-line of u (via bufright) *)
@@ -333,11 +323,9 @@ let bsend comm my_pe isubx isuby dsizex dsizey udata =
     for ly = 0 to mysub-1 do
       let offsetbuf = ly*nvars in
       let offsetu = offsetbuf*mxsub + (mxsub-1)*nvars in
-      for i = 0 to nvars-1 do
-        buf.(offsetbuf+i) <- udata.{offsetu+i}
-      done
+      blit udata offsetu buf offsetbuf nvars
     done;
-    Mpi.send_float_array buf (my_pe+1) 0 comm
+    Mpi.send buf (my_pe+1) 0 comm
   end
  
 (* Routine to start receiving boundary data from neighboring PEs.
@@ -347,21 +335,27 @@ let bsend comm my_pe isubx isuby dsizex dsizey udata =
    be manipulated between the two calls.
    2) request should have 4 entries, and should be passed in both calls also. *)
 
+let bytes x = 43 + 8 * x
+
 let brecvpost comm my_pe isubx isuby dsizex dsizey =
   (* If isuby > 0, receive data for bottom x-line of uext *)
-  let r0 = if isuby <> 0 then Mpi.ireceive dsizex (my_pe-npex) 0 comm
+  let r0 = if isuby <> 0
+           then Mpi.ireceive (bytes dsizex) (my_pe-npex) 0 comm
            else Mpi.null_request
   in
   (* If isuby < NPEY-1, receive data for top x-line of uext *)
-  let r1 = if isuby <> npey-1 then Mpi.ireceive dsizex (my_pe+npex) 0 comm
+  let r1 = if isuby <> npey-1
+           then Mpi.ireceive (bytes dsizex) (my_pe+npex) 0 comm
            else Mpi.null_request
   in
   (* If isubx > 0, receive data for left y-line of uext (via bufleft) *)
-  let r2 = if isubx <> 0 then Mpi.ireceive dsizey (my_pe-1) 0 comm
+  let r2 = if isubx <> 0
+           then Mpi.ireceive (bytes dsizey) (my_pe-1) 0 comm
            else Mpi.null_request
   in
   (* If isubx < NPEX-1, receive data for right y-line of uext (via bufright) *)
-  let r3 = if isubx <> npex-1 then Mpi.ireceive dsizey (my_pe+1) 0 comm
+  let r3 = if isubx <> npex-1
+           then Mpi.ireceive (bytes dsizey) (my_pe+1) 0 comm
            else Mpi.null_request
   in
   Array.of_list [r0; r1; r2; r3]
@@ -377,33 +371,36 @@ let brecvwait request isubx isuby dsizex uext =
   let dsizex2 = dsizex + 2*nvars in
 
   (* If isuby > 0, receive data for bottom x-line of uext *)
-  if isuby <> 0 then
-    let buf = (Mpi.wait_receive request.(0) : float array) in
-    blit_from_buf buf 0 uext nvars dsizex;
+  if isuby <> 0 then begin
+    let buf = (Mpi.wait_receive request.(0) : RealArray.t) in
+    blit buf 0 uext nvars dsizex
+  end;
 
   (* If isuby < NPEY-1, receive data for top x-line of uext *)
-  if isuby <> npey-1 then
-    let buf = (Mpi.wait_receive request.(1) : float array) in
-    blit_from_buf buf 0 uext (nvars*(1 + (mysub+1)*(mxsub+2))) dsizex;
+  if isuby <> npey-1 then begin
+    let buf = (Mpi.wait_receive request.(1) : RealArray.t) in
+    blit buf 0 uext (nvars*(1 + (mysub+1)*(mxsub+2))) dsizex
+  end;
 
   (* If isubx > 0, receive data for left y-line of uext (via bufleft) *)
-  if isubx <> 0 then
-    let bufleft = (Mpi.wait_receive request.(2) : float array) in
+  if isubx <> 0 then begin
+    let bufleft = (Mpi.wait_receive request.(2) : RealArray.t) in
     (* Copy the buffer to uext *)
     for ly = 0 to mysub - 1 do
       let offsetbuf = ly*nvars in
       let offsetue = (ly+1)*dsizex2 in
-      blit_from_buf bufleft offsetbuf uext offsetue nvars
-    done;
+      blit bufleft offsetbuf uext offsetue nvars
+    done
+  end;
 
   (* If isubx < NPEX-1, receive data for right y-line of uext (via bufright) *)
   if isubx <> npex-1 then begin
-    let bufright = (Mpi.wait_receive request.(3) : float array) in
+    let bufright = (Mpi.wait_receive request.(3) : RealArray.t) in
     (* Copy the buffer to uext *)
     for ly = 0 to mysub-1 do
       let offsetbuf = ly*nvars in
       let offsetue = (ly+2)*dsizex2 - nvars in
-      blit_from_buf bufright offsetbuf uext offsetue nvars
+      blit bufright offsetbuf uext offsetue nvars
     done
   end
 
@@ -440,7 +437,6 @@ let fcalc data t udata dudata =
   and nvmxsub2 = data.nvmxsub2
   and uext     = data.uext
   in
-
   (* Copy local segment of u vector into the working extended array uext *)
   for ly = 0 to mysub-1 do
     blit udata (ly*nvmxsub) uext ((ly + 1)*nvmxsub2 + nvars) nvmxsub;
@@ -607,8 +603,8 @@ let precond data jacarg jok gamma =
   done;
   
   (* Add identity matrix and do LU decompositions on blocks in place. *)
-  for lx = 0 to mx - 1 do
-    for ly = 0 to my - 1 do
+  for lx = 0 to mxsub - 1 do
+    for ly = 0 to mysub - 1 do
       Direct.add_identity p.(lx).(ly);
       Direct.getrf p.(lx).(ly) pivot.(lx).(ly)
     done
