@@ -202,11 +202,11 @@ or:
 {!modules: Dls}
 {!modules: Spils Spils_serial Spils_nvector}
 
-{!modules: Nvector Nvector_array}
-{!modules: Cvode Cvode_serial Cvode_nvector}
-{!modules: Cvodes_serial Cvodes_nvector}
+{!modules: Nvector_serial Nvector_parallel Nvector_custom Nvector_array}
+{!modules: Cvode}
+{!modules: Cvodes}
 {!modules: Ida Ida_serial Ida_nvector}
-{!modules: Kinsol Kinsol_serial Kinsol_nvector}
+{!modules: Kinsol}
 
 {2:refs References}
 
