@@ -5,6 +5,7 @@ include config
 
 MLOBJ_MAIN = sundials.cmo dls.cmo \
 	     nvector_serial.cmo nvector_custom.cmo nvector_array.cmo \
+	     $(NVECTOR_OTHER) \
 	     spils.cmo cvode.cmo kinsol.cmo
 	     #ida.cmo ida_nvector.cmo ida_serial.cmo
 
@@ -53,7 +54,8 @@ sundials.cma sundials.cmxa: $(MLOBJ_LOCAL) $(MLOBJ_LOCAL:.cmo=.cmx) \
 	    -o sundials -oc mlsundials $^ \
 	    $(OCAML_CVODES_LIBLINK) \
 	    $(OCAML_IDA_LIBLINK) \
-	    $(OCAML_KINSOL_LIBLINK)
+	    $(OCAML_KINSOL_LIBLINK) \
+	    $(NVECTOR_LIB)
 
 # wos = without sensitivity
 # TODO: fix this:
@@ -65,7 +67,8 @@ sundials_wos.cma sundials_wos.cmxa: $(MLOBJ_LOCAL) $(MLOBJ_LOCAL:.cmo=.cmx) \
 	    -o sundials_wos -oc mlsundials_wos $^ \
 	    $(OCAML_CVODE_LIBLINK) \
 	    $(OCAML_IDA_LIBLINK) \
-	    $(OCAML_KINSOL_LIBLINK)
+	    $(OCAML_KINSOL_LIBLINK) \
+	    $(NVECTOR_LIB)
 
 # There are three sets of flags:
 #   - one for CVODE-specific files
@@ -73,8 +76,14 @@ sundials_wos.cma sundials_wos.cmxa: $(MLOBJ_LOCAL) $(MLOBJ_LOCAL:.cmo=.cmx) \
 #   - one for files common to CVODE and IDA
 
 # The CFLAGS settings for CVODE works for modules common to CVODE and IDA.
-$(COMMON_COBJ): %.o: %.c
+sundials_ml.o: sundials_ml.c sundials_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
+
+dls_ml.o: dls_ml.c dls_ml.h
+	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
+
+nvector_ml.o: nvector_ml.c nvector_ml.h
+	$(MPICC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
 
 cvode_ml.o: cvode_ml.c dls_ml.h spils_ml.h cvode_ml.h sundials_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<

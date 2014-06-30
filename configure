@@ -9,6 +9,7 @@ unset libdir
 unset stubdir
 unset docdir
 unset install_docs
+unset enable_mpi
 
 for option in "$@"
 do
@@ -26,6 +27,9 @@ do
 	docdir="${value%/}/";;
     --disable-doc)
 	install_docs=0;;
+    --enable-mpi)
+	enable_mpi=1
+	mpicc="${mpicc:-${value}}";;
     --no-lib-path)
 	no_lib_path=1;;
     --no-safety-checks)
@@ -49,7 +53,7 @@ do
 
 	Installation directories:
 	  --prefix=PREFIX         install architecture-independent files in PREFIX
-				  [$prefix]
+	                          [$prefix]
 
 	For better control, use the options below.
 
@@ -60,15 +64,18 @@ do
 
 	Optional Features:
 	  --disable-doc          do not install html documentation
+	  --enable-mpi		 build with parallel features
 	  --no-lib-path          do not record paths in the OCaml library
 	  --no-safety-checks     no safety checks; implies --no-bounds-checking
 	  --no-bounds-checking   no bounds checking in matrix accesses
 
 	Some influential environment variables:
-	  OCAMLROOT     Path to ocaml installation
+	  OCAMLROOT     Path to OCaml installation
 	  LAPACKLIB	Command for linking with Lapack (default: -llapack)
-			(sometimes also: -lSimTKlapack)
+		                (sometimes also: -lSimTKlapack)
 	  EXAMPLES	Path to installed examples (for comparison with Sundials).
+	  OCAMLMPI	Path to OCamlMPI installation
+	  MPICC		Name of the MPI compiler (default: mpicc; implies --enable-mpi)
 
 	Use these variables to override the choices made by 'configure' or to help
 	it to find libraries and programs with nonstandard names/locations.
@@ -89,12 +96,17 @@ END_HELP_TEXT
 	cflags="${value}";;
     LDFLAGS)
 	ldflags="${value}";;
+    OCAMLMPI)
+	OCAMLMPI="${value}";;
     OCAMLFLAGS)
 	ocamlflags="${value}";;
     OCAMLOPTFLAGS)
 	ocamloptflags="${value}";;
     OCAMLMKLIBFLAGS)
 	ocamlmklibflags="${value}";;
+    MPICC)
+	mpicc="${value}"
+	enable_mpi=1;;
     *)
 	printf "illegal option \"$option\".\n" 1>&2; exit 2;;
     esac
@@ -109,6 +121,13 @@ error=""
 
 bounds_checking=${bounds_checking:-1}
 safety_checks=${safety_checks:-1}
+
+# Check for opam
+if command -v opam >/dev/null 2>&1; then
+    opam_libpath="$(opam config var lib)/"
+else
+    opam_libpath=''
+fi
 
 # Check for OCaml installation (and version)
 ocaml_path=`${OCAMLBIN}ocamlc -where`
@@ -133,6 +152,31 @@ else
 
     ocaml_libpath="${ocaml_path%/}/"
     ocaml_version=" (${ocaml_version})"
+fi
+
+# Check for OCamlMPI installation
+ocamlmpi="${OCAMLMPI:-${ocaml_libpath}mpi}"
+if [ ${enable_mpi:-0} -eq 0 ]; then
+    ocamlmpi_enabled=0
+    ocamlmpi='NOT ENABLED (default; no parallel features)'
+else
+    ocamlmpi_enabled=1
+    if [ ! -e "${ocamlmpi}/mpi.cmi" ]; then
+	ocamlmpi="${ocaml_libpath}site-lib/mpi"
+	if [ ! -e "${ocamlmpi}/mpi.cmi" ]; then
+	    ocamlmpi="${opam_libpath}mpi"
+	    if [ ! -e "${ocamlmpi}/mpi.cmi" ]; then
+		ocamlmpi='NOT FOUND (no parallel features)'
+		ocamlmpi_enabled=0
+	    fi
+	fi
+    fi
+fi
+if [ ${ocamlmpi_enabled} -eq 0 ]; then
+    ocamlmpi_path=''
+else
+    ocamlmpi_path="$ocamlmpi"
+    ocamlmpi="${ocamlmpi} (compiler: ${mpicc:-mpicc})"
 fi
 
 # Check for Sundials installation (and version)
@@ -327,6 +371,7 @@ printf "\nConfiguration\n-------------\n\n"
 printf "  OCaml\t\t\t${ocaml_path}${ocaml_version}\n"
 printf "  Sundials\t\t${sundials_version}${lapack_info}\n"
 printf "    -examples\t\t${examples_info}\n"
+printf "  OCamlMPI\t\t${ocamlmpi}\n"
 printf "\n"
 printf "  Architecture\t\t${arch}\n"
 printf "\n"
@@ -372,6 +417,9 @@ fi
 	 s#@ocaml_3x@#${ocaml_3x}#;
 	 s#@ocamlmklibflags@#${ocamlmklibflags}#;
 	 s#@bounds_checking@#${bounds_checking}#;
+	 s#@ocamlmpi_path@#${ocamlmpi_path}#;
+	 s#@ocamlmpi_enabled@#${ocamlmpi_enabled}#;
+	 s#@mpicc@#${mpicc:-mpicc}#;
 	 s#@EXAMPLESROOT@#${EXAMPLESROOT}#;
 	 s#@OCAMLBIN@#${OCAMLBIN}#;
 	 s#@OCAMLROOT@#${OCAMLROOT}#;" config.in) > config

@@ -15,7 +15,7 @@
  
     @cvode <node7#ss:nvec_par> NVECTOR_PARALLEL *)
 type kind
-type t = (Sundials.RealArray.t * int * MPI.Communicator, kind) nvector
+type t = (Sundials.RealArray.t * int * Mpi.communicator, kind) Sundials.nvector
 
 (** Raised by make if the given global length is not consistent with the sum of
     local lengths across all parallel instances. *)
@@ -24,7 +24,7 @@ exception IncorrectGlobalSize
 (** [make nl ng c iv] creates a new parallel nvector with [nl] local elements,
     that is part of a global array with [ng] elements. The local elements are
     initialized to [iv], and communications occur on [c]. *)
-val make : int -> int -> MPI.Communicator -> float -> t
+val make : int -> int -> Mpi.communicator -> float -> t
 
 (** [unwrap nv] returns the local data [a] underlying the parallel nvector
     [nv]. *)
@@ -34,5 +34,5 @@ val unwrap : t -> Sundials.RealArray.t
 val global_length : t -> int
 
 (** Returns the communicator used for by the parallel nvector. *)
-val communicator : t -> MPI.Communicator
+val communicator : t -> Mpi.communicator
 

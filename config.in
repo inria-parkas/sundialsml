@@ -12,6 +12,8 @@ CFLAGS += @cflags@ -Wall -Werror
 LDFLAGS += @ldflags@
 CPPFLAGS ?= -P -x c -traditional-cpp
 
+MPICC = @mpicc@ -DSUNDIALSML_WITHMPI
+
 CVODE_LDFLAGS = @cvode_ldflags@ $(LDFLAGS)
 CVODE_CFLAGS = @cvode_cppflags@ $(CFLAGS)
 CVODES_LDFLAGS = @cvodes_ldflags@ $(LDFLAGS)
@@ -31,6 +33,10 @@ OCAML_KINSOL_LIBLINK = $(KINSOL_LDFLAGS)
 OCAML_3X = @ocaml_3x@
 
 OCAML ?= @OCAMLBIN@ocaml
+
+OCAMLMPI ?= @ocamlmpi_path@
+NVECTOR_OTHER = $(if @ocamlmpi_enabled@, nvector_parallel.cmo)
+NVECTOR_LIB   = $(if @ocamlmpi_enabled@, -lsundials_nvecparallel)
 
 CAMLP4OF= @OCAMLBIN@camlp4of
 CAMLP4ORF= @OCAMLBIN@camlp4orf
@@ -76,7 +82,7 @@ SED    ?= sed
 UNIX = unix.cma
 UNIXX = unix.cmxa
 
-DIRECTORIES = 
+DIRECTORIES = $(if @ocamlmpi_enabled@, @ocamlmpi_path@)
 
 INCLUDES = $(DIRECTORIES:%=-I %)
 
@@ -85,6 +91,7 @@ OBJ_OPT = $(OBJ:.cmo=.cmx)
 DOCPP = $(SED) \
 	-e 's|CVODE_DOC_ROOT(\\([^\#)]*\\)\\(\#[^)]*\\)\\?)|$(CVODE_DOC_ROOT)\\1.html\\2|g' \
 	-e 's|CVODES_DOC_ROOT(\\([^\#)]*\\)\\(\#[^)]*\\)\\?)|$(CVODES_DOC_ROOT)\\1.html\\2|g' \
+	-e 's|KINSOL_DOC_ROOT(\\([^\#)]*\\)\\(\#[^)]*\\)\\?)|$(KINSOL_DOC_ROOT)\\1.html\\2|g' \
 	-e 's|IDA_DOC_ROOT(\\([^\#)]*\\)\\(\#[^)]*\\)\\?)|$(IDA_DOC_ROOT)\\1.html\\2|g' \
 	-e 's|OCAML_DOC_ROOT(\\([^\#)]*\\)\\(\#[^)]*\\)\\?)|$(OCAML_DOC_ROOT)\\1.html\\2|g' \
 	-e 's|VERSION()|$(VERSION)|g'

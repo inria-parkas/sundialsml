@@ -22,7 +22,7 @@
 
 #include <nvector/nvector_serial.h>
 
-#ifdef CVODE_ML_WITHMPI
+#ifdef SUNDIALSML_WITHMPI
 #include <nvector/nvector_parallel.h>
 
 /* Must correspond with camlmpi.h */
@@ -210,7 +210,7 @@ CAMLprim value ml_nvec_wrap_serial(value payload)
 
 /** Parallel nvectors * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifdef CVODE_ML_WITHMPI
+#ifdef SUNDIALSML_WITHMPI
 
 /* Adapted from sundials-2.5.0/src/nvec_par/nvector_parallel.c:
    N_VCloneEmpty_Parallel */
@@ -230,8 +230,8 @@ static N_Vector clone_parallel(N_Vector w)
     v_payload = caml_alloc_tuple(3);
     Store_field(v_payload, 0,
 		caml_ba_alloc(w_ba->flags, w_ba->num_dims, NULL, w_ba->dim));
-    Store_field(v_payload, 1, Field(w_payload, 1))
-    Store_field(v_payload, 2, Field(w_payload, 2))
+    Store_field(v_payload, 1, Field(w_payload, 1));
+    Store_field(v_payload, 2, Field(w_payload, 2));
     
     v = alloc_cnvec(sizeof(struct _N_VectorContent_Parallel), v_payload);
     if (v == NULL) caml_raise_out_of_memory();
@@ -254,13 +254,13 @@ static N_Vector clone_parallel(N_Vector w)
    N_VNewEmpty_Parallel */
 CAMLprim value ml_nvec_wrap_parallel(value payload)
 {
-    CAMLparam0(payload);
+    CAMLparam1(payload);
     CAMLlocal2(vnvec, vlocalba);
 
     N_Vector nv;
     N_Vector_Ops ops;
     N_VectorContent_Parallel content;
-    MPI_Comm comm,
+    MPI_Comm comm;
     long int n, nsum, local_length, global_length;
 
     vlocalba      = Field(payload, 0);
@@ -270,8 +270,8 @@ CAMLprim value ml_nvec_wrap_parallel(value payload)
 
     /* Compute global length as sum of local lengths */
     n = local_length;
-    MPI_Allreduce(&n, &Nsum, 1, PVEC_INTEGER_MPI_TYPE, MPI_SUM, comm);
-    if (Nsum != global_length)
+    MPI_Allreduce(&n, &nsum, 1, PVEC_INTEGER_MPI_TYPE, MPI_SUM, comm);
+    if (nsum != global_length)
         caml_raise_constant(
 	    *caml_named_value("nvector_parallel_IncorrectGlobalSize"));
 
@@ -312,7 +312,7 @@ CAMLprim value ml_nvec_wrap_parallel(value payload)
     /* Attach lengths and communicator */
     content->local_length  = local_length;
     content->global_length = global_length;
-    content->comm          = comm
+    content->comm          = comm;
     content->own_data      = 0;
     content->data          = Caml_ba_data_val(vlocalba);
 
