@@ -79,6 +79,9 @@ MINOR PATCHES
 7. (Done) Rename Carray to Realarray?
    Rename create functions to make?
 
+8. Using spgmr linear solver with prec_setup = None and prec_solve = Some
+   crashes.
+
 TO DISCUSS
 ----------
 * The above patches.
