@@ -66,6 +66,14 @@ let blit buf buf_offset dst dst_offset len =
     dst.{dst_offset + i} <- buf.{buf_offset + i}
   done
 
+let header_and_empty_array_size =
+  Marshal.total_size (Marshal.to_string (RealArray.empty) []) 0
+let float_cell_size =
+  Marshal.total_size (Marshal.to_string (RealArray.make 1) []) 0
+  - header_and_empty_array_size
+
+let bytes x = header_and_empty_array_size + x * float_cell_size
+
 (* Problem Constants *)
 
 let nvars =    2            (* number of species         *)
@@ -335,8 +343,6 @@ let bsend comm my_pe isubx isuby dsizex dsizey udata =
    be manipulated between the two calls.
    2) request should have 4 entries, and should be passed in both calls also. *)
 
-let bytes x = 43 + 8 * x
-
 let brecvpost comm my_pe isubx isuby dsizex dsizey =
   (* If isuby > 0, receive data for bottom x-line of uext *)
   let r0 = if isuby <> 0
@@ -541,11 +547,11 @@ let precond data jacarg jok gamma =
         Cvode.jac_y   = (udata, _, _);
       } = jacarg
   in
-
   (* Make local copies of pointers in user_data, and of pointer to u's data *)
   let p       = data.p
   and jbd     = data.jbd
   and pivot   = data.pivot
+  and isuby   = data.isuby
   and nvmxsub = data.nvmxsub
   in
 
@@ -567,11 +573,11 @@ let precond data jacarg jok gamma =
       and verdco = data.vdco
       and hordco = data.hdco
       in
-      
       (* Compute 2x2 diagonal Jacobian blocks (using q4 values 
          computed on the last f call).  Load into P. *)
       for ly = 0 to mysub - 1 do
-        let ydn = ymin +. (float ly -. 0.5) *. dely in
+        let jy  = ly + isuby*mysub in
+        let ydn = ymin +. (float jy -. 0.5) *. dely in
         let yup = ydn +. dely in
         let cydn = verdco *. exp(0.2 *. ydn)
         and cyup = verdco *. exp(0.2 *. yup)
@@ -619,7 +625,6 @@ let psolve data jac_arg solve_arg (zdata, _, _) =
         Cvode.Spils.delta = delta;
         Cvode.Spils.left = lr } = solve_arg
   in
-
   (* Extract the P and pivot arrays from user_data. *)
   let p       = data.p
   and pivot   = data.pivot
@@ -627,7 +632,7 @@ let psolve data jac_arg solve_arg (zdata, _, _) =
   in
 
   Bigarray.Array1.blit r zdata;
-  
+
   (* Solve the block-diagonal system Px = r using LU factors stored
      in P and pivot data in pivot, and return the solution in z. *)
   for lx = 0 to mxsub - 1 do
