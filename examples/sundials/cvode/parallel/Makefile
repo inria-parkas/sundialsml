@@ -55,9 +55,11 @@ tests.self.log: $(EXAMPLES:.ml=.byte.out) $(EXAMPLES:.ml=.opt.out)
 cvDiurnal_kry_p.byte: cvDiurnal_kry_p.ml
 cvDiurnal_kry_p.opt: cvDiurnal_kry_p.ml
 cvDiurnal_kry_p.byte.out: cvDiurnal_kry_p.byte
-	$(MPIRUN) -np 4 $<
+	$(MPIRUN) -np 4 $< > $@
 cvDiurnal_kry_p.opt.out: cvDiurnal_kry_p.opt
-	$(MPIRUN) -np 4 $<
+	$(MPIRUN) -np 4 $< > $@
+cvDiurnal_kry_p.sundials.out: $(EXAMPLESROOT)/cvode/parallel/cvDiurnal_kry_p
+	$(MPIRUN) -np 4 $< > $@
 
 ##
 

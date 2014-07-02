@@ -290,7 +290,7 @@ static int bandjacfn(
     CAMLreturnT(int, r);
 }
 
-static int presetupfn(
+static int precsetupfn(
     realtype t,
     N_Vector y,
     N_Vector fy,
@@ -307,7 +307,7 @@ static int presetupfn(
     CAMLlocalN(args, 3);
     value *backref = user_data;
 
-    /* The presetup function must return a boolean (in addition to possible
+    /* The precsetup function must return a boolean (in addition to possible
      * exceptions), so, we do all of the setup here and directly call the
      * user-supplied OCaml function without going through an OCaml
      * trampoline.  */
@@ -317,7 +317,7 @@ static int presetupfn(
     args[1] = Val_bool(jok);
     args[2] = caml_copy_double(gamma);
 
-    r = caml_callbackN_exn(CVODE_PRESETUPFN_FROM_ML (session),
+    r = caml_callbackN_exn(CVODE_PRECSETUPFN_FROM_ML (session),
                            sizeof (args) / sizeof (*args),
                            args);
 
@@ -350,7 +350,7 @@ static value make_spils_solve_arg(
     CAMLreturn(v);
 }
 
-static int presolvefn(
+static int precsolvefn(
 	realtype t,
 	N_Vector y,
 	N_Vector fy,
@@ -367,14 +367,14 @@ static int presolvefn(
     CAMLlocalN(args, 4);
     int retcode;
     value *backref = user_data;
-    CAML_FN (call_presolvefn);
+    CAML_FN (call_precsolvefn);
 
     args[0] = *backref;
     args[1] = make_jac_arg(t, y, fy, NVEC_BACKLINK(tmp));
     args[2] = make_spils_solve_arg(r, gamma, delta, lr);
     args[3] = NVEC_BACKLINK(z);
 
-    retcode = Int_val (caml_callbackN(*call_presolvefn,
+    retcode = Int_val (caml_callbackN(*call_precsolvefn,
                                       sizeof (args) / sizeof (*args),
                                       args));
 
@@ -585,15 +585,15 @@ CAMLprim void c_cvode_spils_banded_sptfqmr (value vcvode_mem_neqs,
 }
 
 CAMLprim void c_cvode_spils_set_preconditioner (value vsession,
-						value vset_presetup,
+						value vset_precsetup,
 						value vset_jac)
 {
-    CAMLparam3 (vsession, vset_presetup, vset_jac);
+    CAMLparam3 (vsession, vset_precsetup, vset_jac);
     int flag;
     void *mem = CVODE_MEM_FROM_ML (vsession);
-    CVSpilsPrecSetupFn setup = Bool_val (vset_presetup) ? presetupfn : NULL;
+    CVSpilsPrecSetupFn setup = Bool_val (vset_precsetup) ? precsetupfn : NULL;
 
-    flag = CVSpilsSetPreconditioner (mem, setup, presolvefn);
+    flag = CVSpilsSetPreconditioner (mem, setup, precsolvefn);
     CHECK_FLAG ("CVSpilsSetPreconditioner", flag);
     if (Bool_val (vset_jac)) {
 	flag = CVSpilsSetJacTimesVecFn (mem, jactimesfn);
@@ -613,11 +613,13 @@ CAMLprim void c_cvode_wf_tolerances (value vdata)
     CAMLreturn0;
 }
 
-CAMLprim void c_cvode_set_preconditioner(value vdata)
+CAMLprim void c_cvode_set_preconditioner(value vdata, value vset_precsetup)
 {
-    CAMLparam1(vdata);
+    CAMLparam2(vdata, vset_precsetup);
+    CVSpilsPrecSetupFn setup = Bool_val (vset_precsetup) ? precsetupfn : NULL;
+
     int flag = CVSpilsSetPreconditioner(CVODE_MEM_FROM_ML(vdata),
-					presetupfn, presolvefn);
+					setup, precsolvefn);
     CHECK_FLAG("CVSpilsSetPreconditioner", flag);
     CAMLreturn0;
 }

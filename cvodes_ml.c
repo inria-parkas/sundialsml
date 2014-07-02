@@ -10,9 +10,6 @@
  *                                                                     *
  ***********************************************************************/
 
-// TODO: rename presetup to precsetup everywhere
-// TODO: rename presolve to precsolve everywhere
-
 #include <cvodes/cvodes.h>
 #include <sundials/sundials_config.h>
 #include <sundials/sundials_types.h>
@@ -430,7 +427,7 @@ static value make_spils_solve_arg(
     CAMLreturn(v);
 }
 
-static int bpresolvefn(
+static int bprecsolvefn(
 	realtype t,
 	N_Vector y,
 	N_Vector yb,
@@ -448,21 +445,21 @@ static int bpresolvefn(
     CAMLlocalN(args, 4);
     int retcode;
     value *backref = user_data;
-    CAML_FN (call_bpresolvefn);
+    CAML_FN (call_bprecsolvefn);
 
     args[0] = *backref;
     args[1] = make_jac_arg(t, y, yb, fyb, NVEC_BACKLINK(tmpb));
     args[2] = make_spils_solve_arg(rvecb, gammab, deltab, lrb);
     args[3] = NVEC_BACKLINK(zvecb);
 
-    retcode = Int_val (caml_callbackN(*call_bpresolvefn,
+    retcode = Int_val (caml_callbackN(*call_bprecsolvefn,
                                       sizeof (args) / sizeof (*args),
                                       args));
 
     CAMLreturnT(int, retcode);
 }
 
-static int bpresetupfn(
+static int bprecsetupfn(
     realtype t,
     N_Vector y,
     N_Vector yb,
@@ -476,22 +473,23 @@ static int bpresetupfn(
     N_Vector tmp3b)
 {
     CAMLparam0();
-    CAMLlocal3(session, sensext, r);
+    CAMLlocal2(session, r);
     CAMLlocalN(args, 3);
     value *backref = user_data;
 
-    /* The presetup function must return a boolean (in addition to possible
+    /* The precsetup function must return a boolean (in addition to possible
      * exceptions), so, we do all of the setup here and directly call the
      * user-supplied OCaml function without going through an OCaml
      * trampoline.  */
     WEAK_DEREF (session, *backref);
-    sensext = CVODE_SENSEXT_FROM_ML(session);
 
     args[0] = make_jac_arg(t, y, yb, fyb, make_triple_tmp(tmp1b, tmp2b, tmp3b));
     args[1] = Val_bool(jokb);
     args[2] = caml_copy_double(gammab);
 
-    r = caml_callbackN_exn(CVODES_BPRESETUPFN_FROM_EXT (sensext),
+    /* We ignore the variant labels and require that
+	Cvode_session.B.spils_callbacks ~= Cvode_Session.spils_callbacks */
+    r = caml_callbackN_exn(CVODE_PRECSETUPFN_FROM_ML (session),
                            sizeof (args) / sizeof (*args),
                            args);
 
@@ -1004,16 +1002,16 @@ CAMLprim void c_cvodes_adj_sv_tolerances(value vparent, value vwhich,
 
 CAMLprim void c_cvodes_adj_spils_set_preconditioner(value vparent,
 						   value vwhich,
-						   value vset_presetup,
+						   value vset_precsetup,
 						   value vset_jac)
 {
-    CAMLparam4(vparent, vwhich, vset_presetup, vset_jac);
+    CAMLparam4(vparent, vwhich, vset_precsetup, vset_jac);
     int flag;
     void *mem = CVODE_MEM_FROM_ML(vparent);
     int which = Int_val(vwhich);
-    CVSpilsPrecSetupFnB bsetup = Bool_val(vset_presetup) ? bpresetupfn : NULL;
+    CVSpilsPrecSetupFnB bsetup = Bool_val(vset_precsetup) ? bprecsetupfn : NULL;
 
-    flag = CVSpilsSetPreconditionerB(mem, which, bsetup, bpresolvefn);
+    flag = CVSpilsSetPreconditionerB(mem, which, bsetup, bprecsolvefn);
     SCHECK_FLAG ("CVSpilsSetPreconditionerB", flag);
     if (Bool_val(vset_jac)) {
 	flag = CVSpilsSetJacTimesVecFnB(mem, which, bjactimesfn);

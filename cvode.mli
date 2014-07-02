@@ -516,7 +516,7 @@ module Spils :
         @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
     val set_preconditioner :
       ('a, 'k) session
-      -> (('a triple_tmp, 'a) jacobian_arg -> bool -> float -> bool)
+      -> (('a triple_tmp, 'a) jacobian_arg -> bool -> float -> bool) option
       -> (('a single_tmp, 'a) jacobian_arg -> 'a solve_arg -> 'a -> unit)
       -> unit
 

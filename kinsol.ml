@@ -86,6 +86,24 @@ type c_weak_ref
 
 type 'a prec_solve_arg = { uscale : 'a; fscale : 'a; }
 
+type 'a spils_callbacks =
+  {
+    prec_solve_fn : (('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
+                      -> 'a -> unit) option;
+
+    prec_setup_fn : (('a double_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
+                     -> unit) option;
+
+    jac_times_vec_fn : ('a -> 'a -> 'a -> bool -> bool) option;
+  }
+
+type ('a, 'kind) linsolv_callbacks =
+  | NoCallbacks
+
+  | DenseCallback of dense_jac_fn
+  | BandCallback  of band_jac_fn
+  | SpilsCallback of 'a spils_callbacks
+
 type ('a, 'k) session = {
   kinsol    : kin_mem;
   backref   : c_weak_ref;
@@ -98,13 +116,8 @@ type ('a, 'k) session = {
   mutable sysfn      : 'a -> 'a -> unit;
   mutable errh       : Sundials.error_details -> unit;
   mutable infoh      : Sundials.error_details -> unit;
-  mutable jacfn      : dense_jac_fn;
-  mutable bandjacfn  : band_jac_fn;
-  mutable presetupfn : ('a double_tmp, 'a) jacobian_arg
-                          -> 'a prec_solve_arg -> unit;
-  mutable presolvefn : ('a single_tmp, 'a) jacobian_arg
-                          -> 'a prec_solve_arg -> 'a -> unit;
-  mutable jactimesfn : 'a -> 'a -> 'a -> bool -> bool;
+
+  mutable ls_callbacks : ('a, 'k) linsolv_callbacks;
 }
 
 type serial_session = (real_array, Nvector_serial.kind) session
@@ -146,26 +159,38 @@ let call_infoh session details =
 
 let call_jacfn session jac j =
   let session = read_weak_ref session in
-  adjust_retcode session true (session.jacfn jac) j
+  match session.ls_callbacks with
+  | DenseCallback f -> adjust_retcode session true (f jac) j
+  | _ -> assert false
 
 let call_bandjacfn session range jac j =
   let session = read_weak_ref session in
-  adjust_retcode session true (session.bandjacfn range jac) j
+  match session.ls_callbacks with
+  | BandCallback f -> adjust_retcode session true (f range jac) j
+  | _ -> assert false
 
-let call_presolvefn session jac ps u =
+let call_precsolvefn session jac ps u =
   let session = read_weak_ref session in
-  adjust_retcode session true (session.presolvefn jac ps) u
+  match session.ls_callbacks with
+  | SpilsCallback { prec_solve_fn = Some f } ->
+      adjust_retcode session true (f jac ps) u
+  | _ -> assert false
 
-let call_presetupfn session jac ps =
+let call_precsetupfn session jac ps =
   let session = read_weak_ref session in
-  adjust_retcode session true (session.presetupfn jac) ps
+  match session.ls_callbacks with
+  | SpilsCallback { prec_setup_fn = Some f } ->
+      adjust_retcode session true (f jac) ps
+  | _ -> assert false
 
 let call_jactimesfn session v jv u new_uu =
   let session = read_weak_ref session in
-  try (session.jactimesfn v jv u new_uu, 0)
-  with
-  | Sundials.RecoverableFailure -> (false, 1)
-  | e -> (session.exn_temp <- Some e; (false, -1))
+  match session.ls_callbacks with
+  | SpilsCallback { jac_times_vec_fn = Some f } ->
+      (try (f v jv u new_uu, 0) with
+       | Sundials.RecoverableFailure -> (false, 1)
+       | e -> (session.exn_temp <- Some e; (false, -1)))
+  | _ -> assert false
 
 let _ =
   Callback.register "c_kinsol_call_sysfn"         call_sysfn;
@@ -173,20 +198,12 @@ let _ =
   Callback.register "c_kinsol_call_infoh"         call_infoh;
   Callback.register "c_kinsol_call_jacfn"         call_jacfn;
   Callback.register "c_kinsol_call_bandjacfn"     call_bandjacfn;
-  Callback.register "c_kinsol_call_presolvefn"    call_presolvefn;
-  Callback.register "c_kinsol_call_presetupfn"    call_presetupfn;
+  Callback.register "c_kinsol_call_precsolvefn"   call_precsolvefn;
+  Callback.register "c_kinsol_call_precsetupfn"   call_precsetupfn;
   Callback.register "c_kinsol_call_jactimesfn"    call_jactimesfn
 
 external session_finalize : ('a, 'k) session -> unit
     = "c_kinsol_session_finalize"
-
-let shouldn't_be_called fcn =
-  failwith ("internal error in sundials: " ^ fcn ^ " is called")
-let dummy_dense_jac _ _ = shouldn't_be_called "dummy_dense_jac"
-let dummy_band_jac _ _ _ = shouldn't_be_called "dummy_band_jac"
-let dummy_prec_setup _ _ = shouldn't_be_called "dummy_prec_setup"
-let dummy_prec_solve _ _ _ = shouldn't_be_called "dummy_prec_solve"
-let dummy_jac_times_vec _ _ _ = shouldn't_be_called "dummy_jac_times_vec"
 
 let int_default = function None -> 0 | Some v -> v
 
@@ -211,15 +228,19 @@ module Dls =
       (match onv with
        | Some nv -> s.neqs <- Sundials.RealArray.length (Sundials.unvec nv)
        | None -> ());
-      s.jacfn <- (match fo with Some f -> f | None -> dummy_dense_jac);
-      c_dls_dense s (fo <> None)
+      c_dls_dense s (fo <> None);
+      s.ls_callbacks <- match fo with
+                        | None -> NoCallbacks
+                        | Some f -> DenseCallback f
 
     let lapack_dense fo s onv =
       (match onv with
        | Some nv -> s.neqs <- Sundials.RealArray.length (Sundials.unvec nv)
        | None -> ());
-      s.jacfn <- (match fo with Some f -> f | None -> dummy_dense_jac);
-      c_dls_lapack_dense s (fo <> None)
+      c_dls_lapack_dense s (fo <> None);
+      s.ls_callbacks <- match fo with
+                        | None -> NoCallbacks
+                        | Some f -> DenseCallback f
 
     type band_jac_fn = bandrange
                         -> (real_array double_tmp, real_array) jacobian_arg
@@ -229,43 +250,51 @@ module Dls =
       (match onv with
        | Some nv -> s.neqs <- Sundials.RealArray.length (Sundials.unvec nv)
        | None -> ());
-      s.bandjacfn <- (match fo with Some f -> f | None -> dummy_band_jac);
-      c_dls_band s mupper mlower (fo <> None)
+      c_dls_band s mupper mlower (fo <> None);
+      s.ls_callbacks <- match fo with
+                        | None -> NoCallbacks
+                        | Some f -> BandCallback f
 
     let lapack_band { mupper; mlower } fo s onv =
       (match onv with
        | Some nv -> s.neqs <- Sundials.RealArray.length (Sundials.unvec nv)
        | None -> ());
-      s.bandjacfn <- (match fo with Some f -> f | None -> dummy_band_jac);
-      c_dls_lapack_band s mupper mlower (fo <> None)
+      c_dls_lapack_band s mupper mlower (fo <> None);
+      s.ls_callbacks <- match fo with
+                        | None -> NoCallbacks
+                        | Some f -> BandCallback f
 
     external set_dense_jac_fn : serial_session -> unit
         = "c_kinsol_dls_set_dense_jac_fn"
 
     let set_dense_jac_fn s fjacfn =
-      s.jacfn <- fjacfn;
+      s.ls_callbacks <- DenseCallback fjacfn;
       set_dense_jac_fn s
 
     external clear_dense_jac_fn : serial_session -> unit
         = "c_kinsol_dls_clear_dense_jac_fn"
 
     let clear_dense_jac_fn s =
-      s.jacfn <- dummy_dense_jac;
-      clear_dense_jac_fn s
+      match s.ls_callbacks with
+      | DenseCallback _ -> (s.ls_callbacks <- NoCallbacks;
+                            clear_dense_jac_fn s)
+      | _ -> failwith "dense linear solver not in use"
 
     external set_band_jac_fn : serial_session -> unit
         = "c_kinsol_dls_set_band_jac_fn"
 
     let set_band_jac_fn s fbandjacfn =
-      s.bandjacfn <- fbandjacfn;
+      s.ls_callbacks <- BandCallback fbandjacfn;
       set_band_jac_fn s
 
     external clear_band_jac_fn : serial_session -> unit
         = "c_kinsol_dls_clear_band_jac_fn"
 
     let clear_band_jac_fn s =
-      s.bandjacfn <- dummy_band_jac;
-      clear_band_jac_fn s
+      match s.ls_callbacks with
+      | BandCallback _ -> (s.ls_callbacks <- NoCallbacks;
+                           clear_band_jac_fn s)
+      | _ -> failwith "dense linear solver not in use"
 
     external get_work_space : serial_session -> int * int
         = "c_kinsol_dls_get_work_space"
@@ -285,7 +314,7 @@ module Spils =
         fscale : 'a;
       }
 
-    type 'a callbacks =
+    type 'a callbacks = 'a spils_callbacks =
       {
         prec_solve_fn : (('a single_tmp, 'a) jacobian_arg -> 'a solve_arg
                           -> 'a -> unit) option;
@@ -305,33 +334,37 @@ module Spils =
     external c_set_max_restarts     : ('a, 'k) session -> int -> unit
         = "c_kinsol_spils_set_max_restarts"
 
-    (* TODO: CVODE/IDA versions to allow optional setup function. *)
     external c_set_preconditioner : ('a, 'k) session -> bool -> unit
         = "c_kinsol_spils_set_preconditioner"
 
-    let set_preconditioner s fpresetupfn fpresolvefn =
-      let withprec =
-        match fpresetupfn with
-        | None -> (s.presetupfn <- dummy_prec_setup; false)
-        | Some fn -> (s.presetupfn <- fn; true)
-      in
-      s.presolvefn <- fpresolvefn;
-      c_set_preconditioner s withprec
+    let set_preconditioner s fprecsetupfn fprecsolvefn =
+      (match s.ls_callbacks with
+       | SpilsCallback cbs ->
+           s.ls_callbacks <- SpilsCallback { cbs with
+                               prec_setup_fn = fprecsetupfn;
+                               prec_solve_fn = Some fprecsolvefn }
+       | _ -> failwith "spils solver not in use");
+      c_set_preconditioner s (fprecsetupfn <> None)
 
     external c_set_jac_times_vec_fn : ('a, 'k) session -> unit
         = "c_kinsol_spils_set_jac_times_vec_fn"
 
     let set_jac_times_vec_fn s fjactimesfn =
-      s.jactimesfn <- fjactimesfn;
+      (match s.ls_callbacks with
+       | SpilsCallback cbs ->
+           s.ls_callbacks <- SpilsCallback { cbs with
+                               jac_times_vec_fn = Some fjactimesfn }
+       | _ -> failwith "spils solver not in use");
       c_set_jac_times_vec_fn s
 
-    let set_spils_callbacks s {prec_solve_fn; prec_setup_fn; jac_times_vec_fn} =
-      match (prec_solve_fn, prec_setup_fn) with
-      | None, _ -> ()
-      | Some solve, osetup -> set_preconditioner s osetup solve;
-      match jac_times_vec_fn with
-      | None -> ()
-      | Some jtimes -> set_jac_times_vec_fn s jtimes
+    let set_callbacks s ({prec_solve_fn; prec_setup_fn; jac_times_vec_fn} as cb)
+      = (match (prec_solve_fn, prec_setup_fn) with
+         | None, _ -> ()
+         | Some solve, osetup -> c_set_preconditioner s (osetup <> None));
+        (match jac_times_vec_fn with
+         | None -> ()
+          | Some jtimes -> c_set_jac_times_vec_fn s);
+        s.ls_callbacks <- SpilsCallback cb
 
     external c_spils_spgmr : ('a, 'k) session -> int -> unit
       = "c_kinsol_spils_spgmr"
@@ -341,27 +374,30 @@ module Spils =
       (match omaxrs with
        | None -> ()
        | Some maxrs -> c_set_max_restarts s maxrs);
-      set_spils_callbacks s callbacks
+      set_callbacks s callbacks
 
     external c_spils_spbcg : ('a, 'k) session -> int -> unit
       = "c_kinsol_spils_spbcg"
 
     let spbcg maxl callbacks s _ =
       c_spils_spbcg s (int_default maxl);
-      set_spils_callbacks s callbacks
+      set_callbacks s callbacks
 
     external c_spils_sptfqmr : ('a, 'k) session -> int -> unit
       = "c_kinsol_spils_sptfqmr"
 
     let sptfqmr maxl callbacks s _ =
       c_spils_sptfqmr s (int_default maxl);
-      set_spils_callbacks s callbacks
+      set_callbacks s callbacks
 
     external c_clear_jac_times_vec_fn : ('a, 'k) session -> unit
         = "c_cvode_clear_jac_times_vec_fn"
 
     let clear_jac_times_vec_fn s =
-      s.jactimesfn <- dummy_jac_times_vec;
+      (match s.ls_callbacks with
+       | SpilsCallback cbs ->
+           s.ls_callbacks <- SpilsCallback { cbs with jac_times_vec_fn = None }
+       | _ -> failwith "spils solver not in use");
       c_clear_jac_times_vec_fn s
 
     external get_work_space       : ('a, 'k) session -> int * int
@@ -548,23 +584,20 @@ let init lsolver f u0 =
   let kin_mem, backref, err_file, info_file = c_init weakref u0
   in
   let session = {
-          kinsol     = kin_mem;
-          backref    = backref;
-          err_file   = err_file;
-          info_file  = info_file;
+          kinsol       = kin_mem;
+          backref      = backref;
+          err_file     = err_file;
+          info_file    = info_file;
 
-          exn_temp   = None;
+          exn_temp     = None;
 
-          neqs       = 0;
+          neqs         = 0;
 
-          sysfn      = f;
-          errh       = (fun _ -> ());
-          infoh      = (fun _ -> ());
-          jacfn      = dummy_dense_jac;
-          bandjacfn  = dummy_band_jac;
-          presetupfn = dummy_prec_setup;
-          presolvefn = dummy_prec_solve;
-          jactimesfn = dummy_jac_times_vec;
+          sysfn        = f;
+          errh         = (fun _ -> ());
+          infoh        = (fun _ -> ());
+
+          ls_callbacks = NoCallbacks
         } in
   Gc.finalise session_finalize session;
   Weak.set weakref 0 (Some session);

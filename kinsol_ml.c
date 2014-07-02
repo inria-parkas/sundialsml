@@ -270,7 +270,7 @@ static int bandjacfn(
     CAMLreturnT(int, r);
 }
 
-static int presetupfn(
+static int precsetupfn(
     N_Vector uu,
     N_Vector uscale,
     N_Vector fu,
@@ -284,20 +284,20 @@ static int presetupfn(
     CAMLlocalN(args, 3);
     int retcode;
     value *backref = user_data;
-    CAML_FN (call_presetupfn);
+    CAML_FN (call_precsetupfn);
 
     args[0] = *backref;
     args[1] = make_jac_arg(uu, fu, make_double_tmp(tmp1, tmp2));
     args[2] = make_prec_solve_arg(uscale, fscale);
 
-    retcode = Int_val (caml_callbackN(*call_presetupfn,
+    retcode = Int_val (caml_callbackN(*call_precsetupfn,
                                       sizeof (args) / sizeof (*args),
                                       args));
 
     CAMLreturnT(int, retcode);
 }
 
-static int presolvefn(
+static int precsolvefn(
 	N_Vector uu,
 	N_Vector uscale,
 	N_Vector fu,
@@ -311,14 +311,14 @@ static int presolvefn(
     CAMLlocalN(args, 4);
     int retcode;
     value *backref = user_data;
-    CAML_FN (call_presolvefn);
+    CAML_FN (call_precsolvefn);
 
     args[0] = *backref;
     args[1] = make_jac_arg(uu, fu, NVEC_BACKLINK(tmp));
     args[2] = make_prec_solve_arg(uscale, fscale);
     args[3] = NVEC_BACKLINK(vv);
 
-    retcode = Int_val (caml_callbackN(*call_presolvefn,
+    retcode = Int_val (caml_callbackN(*call_precsolvefn,
                                       sizeof (args) / sizeof (*args),
                                       args));
 
@@ -465,14 +465,14 @@ CAMLprim void c_kinsol_dls_clear_band_jac_fn(value vdata)
 }
 
 CAMLprim void c_kinsol_spils_set_preconditioner (value vsession,
-						value vset_presetup)
+						value vset_precsetup)
 {
-    CAMLparam2 (vsession, vset_presetup);
+    CAMLparam2 (vsession, vset_precsetup);
     int flag;
     void *mem = KINSOL_MEM_FROM_ML (vsession);
-    KINSpilsPrecSetupFn setup = Bool_val (vset_presetup) ? presetupfn : NULL;
+    KINSpilsPrecSetupFn setup = Bool_val (vset_precsetup) ? precsetupfn : NULL;
 
-    flag = KINSpilsSetPreconditioner (mem, setup, presolvefn);
+    flag = KINSpilsSetPreconditioner (mem, setup, precsolvefn);
     CHECK_FLAG ("KINCVSpilsSetPreconditioner", flag);
 
     CAMLreturn0;
@@ -584,7 +584,7 @@ CAMLprim value c_kinsol_init(value weakref, value vtemp)
 }
 
 CAMLprim value c_kinsol_solve(value vdata, value vu, value vlinesearch,
-	 		     value vuscale, value vfscale)
+	 		      value vuscale, value vfscale)
 {
     CAMLparam5(vdata, vu, vlinesearch, vuscale, vfscale);
     CAMLlocal1(ret);

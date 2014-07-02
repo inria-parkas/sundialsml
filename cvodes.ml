@@ -84,23 +84,33 @@ let call_bquadrhsfn session t y yb qbdot =
 
 (* bwdsensext.bquadrhsfn1 is called directly from C *)
 
-(* the bpresetupfn is called directly from C. *)
+(* the bprecsetupfn is called directly from C. *)
 
-let call_bpresolvefn session jac ps rvecB =
+let call_bprecsolvefn session jac ps rvecB =
   let (session, bwdsensext) = read_weak_bwd_ref session in
-  adjust_retcode session (bwdsensext.bpresolvefn jac ps) rvecB
+  match session.ls_callbacks with
+  | BSpilsCallback { B.prec_solve_fn = Some f } ->
+      adjust_retcode session (f jac ps) rvecB
+  | _ -> assert false
 
 let call_bjactimesfn session jac vB jvB =
   let (session, bwdsensext) = read_weak_bwd_ref session in
-  adjust_retcode session (bwdsensext.bjactimesfn jac vB) jvB
+  match session.ls_callbacks with
+  | BSpilsCallback { B.jac_times_vec_fn = Some f } ->
+      adjust_retcode session (f jac vB) jvB
+  | _ -> assert false
 
 let call_bjacfn session jac m =
   let (session, bwdsensext) = read_weak_bwd_ref session in
-  adjust_retcode session (bwdsensext.bjacfn jac) m
+  match session.ls_callbacks with
+  | BDenseCallback f -> adjust_retcode session (f jac) m
+  | _ -> assert false
 
 let call_bbandjacfn session range jac m =
   let (session, bwdsensext) = read_weak_bwd_ref session in
-  adjust_retcode session (bwdsensext.bbandjacfn range jac) m
+  match session.ls_callbacks with
+  | BBandCallback f -> adjust_retcode session (f range jac) m
+  | _ -> assert false
 
 let _ =
   Callback.register "c_cvodes_call_quadrhsfn"     call_quadrhsfn;
@@ -108,7 +118,7 @@ let _ =
 
   Callback.register "c_cvodes_call_brhsfn"        call_brhsfn;
   Callback.register "c_cvodes_call_bquadrhsfn"    call_bquadrhsfn;
-  Callback.register "c_cvodes_call_bpresolvefn"   call_bpresolvefn;
+  Callback.register "c_cvodes_call_bprecsolvefn"  call_bprecsolvefn;
   Callback.register "c_cvodes_call_bjactimesfn"   call_bjactimesfn;
   Callback.register "c_cvodes_call_bjacfn"        call_bjacfn;
   Callback.register "c_cvodes_call_bbandjacfn"    call_bbandjacfn
@@ -612,17 +622,14 @@ module Adjoint =
                                          -> float * int * Sundials.solver_result
         = "c_cvodes_adj_forward_one_step"
 
-    type 'a _brhsfn = 'a brhsfn =
-        Basic of (float -> 'a -> 'a -> 'a -> unit)
-      | WithSens of (float -> 'a -> 'a array -> 'a -> 'a -> unit)
-    type 'a brhsfn = 'a _brhsfn =
+    type 'a brhsfn = 'a B.brhsfn =
         Basic of (float -> 'a -> 'a -> 'a -> unit)
       | WithSens of (float -> 'a -> 'a array -> 'a -> 'a -> unit)
 
     type 'a single_tmp = 'a
     type 'a triple_tmp = 'a * 'a * 'a
 
-    type ('t, 'a) jacobian_arg = ('t, 'a) bjacobian_arg =
+    type ('t, 'a) jacobian_arg = ('t, 'a) B.jacobian_arg =
       {
         jac_t   : float;
         jac_u   : 'a;
@@ -679,11 +686,6 @@ module Adjoint =
       | _ -> raise AdjointNotInitialized
 
     let set_iter_type bs iter nv =
-      let se = bwdsensext bs in
-      (* Release references to all linear solver-related callbacks.  *)
-      se.bpresetupfn <- dummy_bprec_setup;
-      se.bpresolvefn <- dummy_bprec_solve;
-      se.bjactimesfn <- dummy_bjac_times_vec;
       match iter with
       | Functional -> c_set_functional bs
       | Newton linsolv -> linsolv bs nv
@@ -712,22 +714,18 @@ module Adjoint =
       (* cvode_mem and backref have to be immediately captured in a session and
          associated with the finalizer before we do anything else.  *)
       let bs = Bsession {
-              cvode      = cvode_mem;
-              backref    = backref;
-              nroots     = 0;
-              err_file   = err_file;
+              cvode        = cvode_mem;
+              backref      = backref;
+              nroots       = 0;
+              err_file     = err_file;
 
-              exn_temp   = None;
+              exn_temp     = None;
 
-              rhsfn      = (fun _ _ _ -> ());
-              rootsfn    = (fun _ _ _ -> ());
-              errh       = (fun _ -> ());
-              errw       = (fun _ _ -> ());
-              jacfn      = dummy_dense_jac;
-              bandjacfn  = dummy_band_jac;
-              presetupfn = dummy_prec_setup;
-              presolvefn = dummy_prec_solve;
-              jactimesfn = dummy_jac_times_vec;
+              rhsfn        = (fun _ _ _ -> ());
+              rootsfn      = (fun _ _ _ -> ());
+              errh         = (fun _ -> ());
+              errw         = (fun _ _ -> ());
+              ls_callbacks = NoCallbacks;
 
               sensext    = BwdSensExt {
                 parent   = s;
@@ -746,13 +744,6 @@ module Adjoint =
 
                 bquadrhsfn  = (fun _ _ _ _ -> ());
                 bquadrhsfn1 = (fun _ _ _ _ _ -> ());
-
-                bpresetupfn = dummy_bprec_setup;
-                bpresolvefn = dummy_bprec_solve;
-                bjactimesfn = dummy_bjac_times_vec;
-
-                bjacfn      = dummy_bdense_jac;
-                bbandjacfn  = dummy_bband_jac;
               };
             } in
       Gc.finalise bsession_finalize (tosession bs);
@@ -851,10 +842,10 @@ module Adjoint =
 
     module Dls =
       struct
-        type bdense_jac_fn = (real_array triple_tmp, real_array) jacobian_arg
+        type dense_jac_fn = (real_array triple_tmp, real_array) jacobian_arg
                                 -> Dls.DenseMatrix.t -> unit
 
-        type bband_jac_fn = bandrange
+        type band_jac_fn = bandrange
                             -> (real_array triple_tmp, real_array) jacobian_arg
                             -> Dls.BandMatrix.t -> unit
 
@@ -874,35 +865,39 @@ module Adjoint =
           = "c_cvodes_adj_dls_lapack_band"
 
         let dense jac bs nv =
-          let se = bwdsensext bs in
           let parent, which = parent_and_which bs in
           let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
           c_dls_dense parent which neqs (jac <> None);
-          optionally (fun f -> se.bjacfn <- f) jac
+          (tosession bs).ls_callbacks <- match jac with
+                                         | None -> NoCallbacks
+                                         | Some f -> BDenseCallback f
 
         let lapack_dense jac bs nv =
-          let se = bwdsensext bs in
           let parent, which = parent_and_which bs in
           let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
           c_dls_lapack_dense parent which neqs (jac <> None);
-          optionally (fun f -> se.bjacfn <- f) jac
+          (tosession bs).ls_callbacks <- match jac with
+                                         | None -> NoCallbacks
+                                         | Some f -> BDenseCallback f
 
         type ('data, 'kind) linear_solver =
           ('data, 'kind) bsession -> ('data, 'kind) nvector -> unit
 
         let band p jac bs nv =
-          let se = bwdsensext bs in
           let parent, which = parent_and_which bs in
           let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
           c_dls_band (parent, which) neqs p.mupper p.mlower (jac <> None);
-          optionally (fun f -> se.bbandjacfn <- f) jac
+          (tosession bs).ls_callbacks <- match jac with
+                                         | None -> NoCallbacks
+                                         | Some f -> BBandCallback f
 
         let lapack_band p jac bs nv =
-          let se = bwdsensext bs in
           let parent, which = parent_and_which bs in
           let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
           c_dls_lapack_band (parent,which) neqs p.mupper p.mlower (jac <> None);
-          optionally (fun f -> se.bbandjacfn <- f) jac
+          (tosession bs).ls_callbacks <- match jac with
+                                         | None -> NoCallbacks
+                                         | Some f -> BBandCallback f
       end
 
     module Spils =
@@ -917,7 +912,7 @@ module Adjoint =
           | PrecRight
           | PrecBoth
 
-        type 'a solve_arg = 'a bprec_solve_arg =
+        type 'a solve_arg = 'a B.prec_solve_arg =
           {
             rvec   : 'a;
             gamma  : float;
@@ -925,7 +920,7 @@ module Adjoint =
             left   : bool;
           }
 
-        type 'a callbacks =
+        type 'a callbacks = 'a B.spils_callbacks =
           {
             prec_solve_fn : (('a single_tmp, 'a) jacobian_arg -> 'a solve_arg
                              -> 'a -> unit) option;
@@ -959,41 +954,36 @@ module Adjoint =
           : ('a, 'k) session -> int -> int -> Spils.preconditioning_type -> unit
           = "c_cvodes_adj_spils_sptfqmr"
 
-        let set_precond parent which se prec_type cb =
+        let set_precond bs parent which prec_type cb =
           match prec_type with
           | Spils.PrecNone -> ()
           | Spils.PrecLeft | Spils.PrecRight | Spils.PrecBoth ->
             match cb.prec_solve_fn with
-            | None -> invalid_arg "preconditioning type is not PrecNone, but \
-                                   no solve function given"
+            | None -> invalid_arg "preconditioning type is not PrecNone, but no \
+                                   solve function given"
             | Some solve_fn ->
               c_spils_set_preconditioner parent which
                 (cb.prec_setup_fn <> None)
                 (cb.jac_times_vec_fn <> None);
-              se.bpresolvefn <- solve_fn;
-              optionally (fun f -> se.bpresetupfn <- f) cb.prec_setup_fn;
-              optionally (fun f -> se.bjactimesfn <- f) cb.jac_times_vec_fn
+              (tosession bs).ls_callbacks <- BSpilsCallback cb
 
         let spgmr maxl prec_type cb bs _ =
-          let se = bwdsensext bs in
           let parent, which = parent_and_which bs in
           let maxl = match maxl with None -> 0 | Some ml -> ml in
           c_spils_spgmr parent which maxl prec_type;
-          set_precond parent which se prec_type cb
+          set_precond bs parent which prec_type cb
 
         let spbcg maxl prec_type cb bs _ =
-          let se = bwdsensext bs in
           let parent, which = parent_and_which bs in
           let maxl = match maxl with None -> 0 | Some ml -> ml in
           c_spils_spbcg parent which maxl prec_type;
-          set_precond parent which se prec_type cb
+          set_precond bs parent which prec_type cb
 
         let sptfqmr maxl prec_type cb bs _ =
-          let se = bwdsensext bs in
           let parent, which = parent_and_which bs in
           let maxl = match maxl with None -> 0 | Some ml -> ml in
           c_spils_sptfqmr parent which maxl prec_type;
-          set_precond parent which se prec_type cb
+          set_precond bs parent which prec_type cb
 
         external set_prec_type
             : ('a, 'k) bsession -> Spils.preconditioning_type -> unit
@@ -1132,10 +1122,7 @@ module Adjoint =
 
     module Quadrature =
       struct
-        type 'a _bquadrhsfn = 'a bquadrhsfn =
-            Basic of (float -> 'a -> 'a -> 'a -> unit)
-          | WithSens of (float -> 'a -> 'a array -> 'a -> 'a -> unit)
-        type 'a bquadrhsfn = 'a _bquadrhsfn =
+        type 'a bquadrhsfn = 'a B.bquadrhsfn =
             Basic of (float -> 'a -> 'a -> 'a -> unit)
           | WithSens of (float -> 'a -> 'a array -> 'a -> 'a -> unit)
 

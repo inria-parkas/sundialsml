@@ -50,7 +50,13 @@ type 'a spils_callbacks =
        -> unit) option;
   }
 
-(* basic cvodes types *)
+type bandrange = { mupper : int; mlower : int; }
+
+type dense_jac_fn = (real_array triple_tmp, real_array) jacobian_arg
+                        -> Dls.DenseMatrix.t -> unit
+
+type band_jac_fn = bandrange -> (real_array triple_tmp, real_array) jacobian_arg
+                             -> Dls.BandMatrix.t -> unit
 
 type 'a quadrhsfn = float -> 'a -> 'a -> unit
 
@@ -63,46 +69,56 @@ type 'a sensrhsfn =
 type 'a quadsensrhsfn =
    float -> 'a -> 'a array -> 'a -> 'a array -> 'a -> 'a -> unit
 
-type 'a brhsfn =
-        Basic of (float -> 'a -> 'a -> 'a -> unit)
-      | WithSens of (float -> 'a -> 'a array -> 'a -> 'a -> unit)
+module B =
+  struct
+    type 'a brhsfn =
+            Basic of (float -> 'a -> 'a -> 'a -> unit)
+          | WithSens of (float -> 'a -> 'a array -> 'a -> 'a -> unit)
 
-type 'a bquadrhsfn =
-        Basic of (float -> 'a -> 'a -> 'a -> unit)
-      | WithSens of (float -> 'a -> 'a array -> 'a -> 'a -> unit)
+    type 'a bquadrhsfn =
+            Basic of (float -> 'a -> 'a -> 'a -> unit)
+          | WithSens of (float -> 'a -> 'a array -> 'a -> 'a -> unit)
 
-type ('t, 'a) bjacobian_arg =
-  {
-    jac_t   : float;
-    jac_u   : 'a;
-    jac_ub  : 'a;
-    jac_fub : 'a;
-    jac_tmp : 't
-  }
+    type ('t, 'a) jacobian_arg =
+      {
+        jac_t   : float;
+        jac_u   : 'a;
+        jac_ub  : 'a;
+        jac_fub : 'a;
+        jac_tmp : 't
+      }
 
-type 'a bprec_solve_arg =
-  {
-    rvec   : 'a;
-    gamma  : float;
-    delta  : float;
-    left   : bool
-  }
+    type 'a prec_solve_arg =
+      {
+        rvec   : 'a;
+        gamma  : float;
+        delta  : float;
+        left   : bool
+      }
 
-type bandrange = { mupper : int; mlower : int; }
+    type 'a spils_callbacks =
+      (* NB: field order must match (normal) spils_callbacks!
+         (see precsetupfn in cvodes_ml.c) *)
+      {
+        prec_solve_fn : (('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
+                         -> 'a -> unit) option;
+        prec_setup_fn : (('a triple_tmp, 'a) jacobian_arg -> bool -> float
+                        -> bool) option;
+        jac_times_vec_fn :
+          (('a single_tmp, 'a) jacobian_arg
+           -> 'a (* v *)
+           -> 'a (* Jv *)
+           -> unit) option;
+      }
 
-type dense_jac_fn = (real_array triple_tmp, real_array) jacobian_arg
-                        -> Dls.DenseMatrix.t -> unit
+    type dense_jac_fn =
+          (real_array triple_tmp, real_array) jacobian_arg
+              -> Dls.DenseMatrix.t -> unit
 
-type band_jac_fn = bandrange -> (real_array triple_tmp, real_array) jacobian_arg
-                             -> Dls.BandMatrix.t -> unit
-
-type bdense_jac_fn =
-      (real_array triple_tmp, real_array) bjacobian_arg
-          -> Dls.DenseMatrix.t -> unit
-
-type bband_jac_fn =
-      bandrange -> (real_array triple_tmp, real_array) bjacobian_arg
-          -> Dls.BandMatrix.t -> unit
+    type band_jac_fn =
+          bandrange -> (real_array triple_tmp, real_array) jacobian_arg
+              -> Dls.BandMatrix.t -> unit
+  end
 
 (* the session type *)
 
@@ -110,26 +126,33 @@ type cvode_mem
 type cvode_file
 type c_weak_ref
 
+type ('a, 'kind) linsolv_callbacks =
+  | NoCallbacks
+
+  | DenseCallback of dense_jac_fn
+  | BandCallback  of band_jac_fn
+  | SpilsCallback of 'a spils_callbacks
+
+  | BDenseCallback of B.dense_jac_fn
+  | BBandCallback  of B.band_jac_fn
+  | BSpilsCallback of 'a B.spils_callbacks
+
 type ('a, 'kind) session = {
       cvode      : cvode_mem;
       backref    : c_weak_ref;
       nroots     : int;
       err_file   : cvode_file;
 
-      mutable exn_temp   : exn option;
+      mutable exn_temp     : exn option;
+  
+      mutable rhsfn        : float -> 'a -> 'a -> unit;
+      mutable rootsfn      : float -> 'a -> root_val_array -> unit;
+      mutable errh         : Sundials.error_details -> unit;
+      mutable errw         : 'a -> 'a -> unit;
 
-      mutable rhsfn      : float -> 'a -> 'a -> unit;
-      mutable rootsfn    : float -> 'a -> root_val_array -> unit;
-      mutable errh       : Sundials.error_details -> unit;
-      mutable errw       : 'a -> 'a -> unit;
-      mutable jacfn      : dense_jac_fn;
-      mutable bandjacfn  : band_jac_fn;
-      mutable presetupfn : ('a triple_tmp, 'a) jacobian_arg -> bool -> float -> bool;
-      mutable presolvefn : ('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
-                             -> 'a -> unit;
-      mutable jactimesfn : ('a single_tmp, 'a) jacobian_arg -> 'a -> 'a -> unit;
+      mutable ls_callbacks : ('a, 'kind) linsolv_callbacks;
 
-      mutable sensext    : ('a, 'kind) sensext (* Used by CVODES *)
+      mutable sensext      : ('a, 'kind) sensext (* Used by CVODES *)
     }
 
 and ('a, 'kind) sensext =
@@ -173,27 +196,5 @@ and ('a, 'kind) bsensext = {
     mutable brhsfn1       : (float -> 'a -> 'a array -> 'a -> 'a -> unit);
     mutable bquadrhsfn    : (float -> 'a -> 'a -> 'a -> unit);
     mutable bquadrhsfn1   : (float -> 'a -> 'a array -> 'a -> 'a -> unit);
-
-    mutable bpresetupfn : ('a triple_tmp, 'a) bjacobian_arg -> bool
-                            -> float -> bool;
-    mutable bpresolvefn : ('a single_tmp, 'a) bjacobian_arg
-                            -> 'a bprec_solve_arg -> 'a -> unit;
-    mutable bjactimesfn : ('a single_tmp, 'a) bjacobian_arg -> 'a -> 'a -> unit;
-
-    mutable bjacfn      : bdense_jac_fn;
-    mutable bbandjacfn  : bband_jac_fn;
   }
-
-let shouldn't_be_called fcn =
-  failwith ("internal error in sundials: " ^ fcn ^ " is called")
-let dummy_dense_jac _ _ = shouldn't_be_called "dummy_dense_jac"
-let dummy_band_jac _ _ _ = shouldn't_be_called "dummy_band_jac"
-let dummy_prec_setup _ _ _ = shouldn't_be_called "dummy_prec_setup"
-let dummy_prec_solve _ _ _ = shouldn't_be_called "dummy_prec_solve"
-let dummy_jac_times_vec _ _ _ = shouldn't_be_called "dummy_jac_times_vec"
-let dummy_bprec_setup _ _ _ = shouldn't_be_called "dummy_prec_setup"
-let dummy_bprec_solve _ _ _ = shouldn't_be_called "dummy_prec_solve"
-let dummy_bjac_times_vec _ _ _ = shouldn't_be_called "dummy_jac_times_vec"
-let dummy_bdense_jac _ _ = shouldn't_be_called "dummy_dense_jac"
-let dummy_bband_jac _ _ _ = shouldn't_be_called "dummy_band_jac"
 

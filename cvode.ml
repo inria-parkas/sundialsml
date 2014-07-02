@@ -124,21 +124,31 @@ let call_errh session details =
 
 let call_jacfn session jac j =
   let session = read_weak_ref session in
-  adjust_retcode session true (session.jacfn jac) j
+  match session.ls_callbacks with
+  | DenseCallback f -> adjust_retcode session true (f jac) j
+  | _ -> assert false
 
 let call_bandjacfn session range jac j =
   let session = read_weak_ref session in
-  adjust_retcode session true (session.bandjacfn range jac) j
+  match session.ls_callbacks with
+  | BandCallback f -> adjust_retcode session true (f range jac) j
+  | _ -> assert false
 
-let call_presolvefn session jac r z =
+let call_precsolvefn session jac r z =
   let session = read_weak_ref session in
-  adjust_retcode session true (session.presolvefn jac r) z
+  match session.ls_callbacks with
+  | SpilsCallback { prec_solve_fn = Some f } ->
+      adjust_retcode session true (f jac r) z
+  | _ -> assert false
 
-(* the presetupfn is called directly from C. *)
+(* the precsetupfn is called directly from C. *)
 
 let call_jactimesfn session jac v jv =
   let session = read_weak_ref session in
-  adjust_retcode session true (session.jactimesfn jac v) jv
+  match session.ls_callbacks with
+  | SpilsCallback { jac_times_vec_fn = Some f } ->
+      adjust_retcode session true (f jac v) jv
+  | _ -> assert false
 
 let _ =
   Callback.register "c_cvode_call_rhsfn"         call_rhsfn;
@@ -146,7 +156,7 @@ let _ =
   Callback.register "c_cvode_call_errw"          call_errw;
   Callback.register "c_cvode_call_jacfn"         call_jacfn;
   Callback.register "c_cvode_call_bandjacfn"     call_bandjacfn;
-  Callback.register "c_cvode_call_presolvefn"    call_presolvefn;
+  Callback.register "c_cvode_call_precsolvefn"   call_precsolvefn;
   Callback.register "c_cvode_call_jactimesfn"    call_jactimesfn;
 
 external session_finalize : ('a, 'kind) session -> unit
@@ -178,10 +188,6 @@ module Diag =
         = "c_cvode_diag_get_num_rhs_evals"
   end
 
-let optionally f = function
-  | None -> ()
-  | Some x -> f x
-
 module Dls =
   struct
     type dense_jac_fn = (real_array triple_tmp, real_array) jacobian_arg
@@ -205,13 +211,17 @@ module Dls =
 
     let dense jac session nv =
       let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
-      c_dls_dense session neqs (jac <> None);
-      optionally (fun f -> session.jacfn <- f) jac
+      (session.ls_callbacks <- match jac with
+                               | None -> NoCallbacks
+                               | Some f -> DenseCallback f);
+      c_dls_dense session neqs (jac <> None)
 
     let lapack_dense jac session nv =
       let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
-      c_dls_lapack_dense session neqs (jac <> None);
-      optionally (fun f -> session.jacfn <- f) jac
+      (session.ls_callbacks <- match jac with
+                               | None -> NoCallbacks
+                               | Some f -> DenseCallback f);
+      c_dls_lapack_dense session neqs (jac <> None)
 
     type band_jac_fn = bandrange
                         -> (real_array triple_tmp, real_array) jacobian_arg
@@ -219,38 +229,46 @@ module Dls =
 
     let band p jac session nv =
       let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
-      c_dls_band (session, neqs) p.mupper p.mlower (jac <> None);
-      optionally (fun f -> session.bandjacfn <- f) jac
+      (session.ls_callbacks <- match jac with
+                              | None -> NoCallbacks
+                              | Some f -> BandCallback f);
+      c_dls_band (session, neqs) p.mupper p.mlower (jac <> None)
 
     let lapack_band p jac session nv =
       let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
-      c_dls_lapack_band (session, neqs) p.mupper p.mlower (jac <> None);
-      optionally (fun f -> session.bandjacfn <- f) jac
+      (session.ls_callbacks <- match jac with
+                               | None -> NoCallbacks
+                               | Some f -> BandCallback f);
+      c_dls_lapack_band (session, neqs) p.mupper p.mlower (jac <> None)
 
     let set_dense_jac_fn s fjacfn =
-      s.jacfn <- fjacfn;
+      s.ls_callbacks <- DenseCallback fjacfn;
       set_dense_jac_fn s
 
     external clear_dense_jac_fn : serial_session -> unit
         = "c_cvode_dls_clear_dense_jac_fn"
 
     let clear_dense_jac_fn s =
-      s.jacfn <- dummy_dense_jac;
-      clear_dense_jac_fn s
+      match s.ls_callbacks with
+      | DenseCallback _ -> (s.ls_callbacks <- NoCallbacks;
+                            clear_dense_jac_fn s)
+      | _ -> failwith "dense linear solver not in use"
 
     external set_band_jac_fn : serial_session -> unit
         = "c_cvode_dls_set_band_jac_fn"
 
     let set_band_jac_fn s fbandjacfn =
-      s.bandjacfn <- fbandjacfn;
+      s.ls_callbacks <- BandCallback fbandjacfn;
       set_band_jac_fn s
 
     external clear_band_jac_fn : serial_session -> unit
         = "c_cvode_dls_clear_band_jac_fn"
 
     let clear_band_jac_fn s =
-      s.bandjacfn <- dummy_band_jac;
-      clear_band_jac_fn s
+      match s.ls_callbacks with
+      | BandCallback _ -> (s.ls_callbacks <- NoCallbacks;
+                           clear_band_jac_fn s)
+      | _ -> failwith "dense linear solver not in use"
 
     external get_work_space : serial_session -> int * int
         = "c_cvode_dls_get_work_space"
@@ -325,12 +343,10 @@ module Spils =
         | None -> invalid_arg "preconditioning type is not PrecNone, but no \
                                solve function given"
         | Some solve_fn ->
-          c_spils_set_preconditioner session
-            (cb.prec_setup_fn <> None)
-            (cb.jac_times_vec_fn <> None);
-          session.presolvefn <- solve_fn;
-          optionally (fun f -> session.presetupfn <- f) cb.prec_setup_fn;
-          optionally (fun f -> session.jactimesfn <- f) cb.jac_times_vec_fn
+            session.ls_callbacks <- SpilsCallback cb;
+            c_spils_set_preconditioner session
+              (cb.prec_setup_fn <> None)
+              (cb.jac_times_vec_fn <> None)
 
     let spgmr maxl prec_type cb session nv =
       let maxl = match maxl with None -> 0 | Some ml -> ml in
@@ -347,26 +363,37 @@ module Spils =
       c_spils_sptfqmr session maxl prec_type;
       set_precond session prec_type cb
 
-    external set_preconditioner  : ('a, 'k) session -> unit
+    external set_preconditioner  : ('a, 'k) session -> bool -> unit
         = "c_cvode_set_preconditioner"
 
-    let set_preconditioner s fpresetupfn fpresolvefn =
-      s.presetupfn <- fpresetupfn;
-      s.presolvefn <- fpresolvefn;
-      set_preconditioner s
+    let set_preconditioner s fprecsetupfn fprecsolvefn =
+      (match s.ls_callbacks with
+       | SpilsCallback cbs ->
+           s.ls_callbacks <- SpilsCallback { cbs with
+                               prec_setup_fn = fprecsetupfn;
+                               prec_solve_fn = Some fprecsolvefn }
+       | _ -> failwith "spils solver not in use");
+      set_preconditioner s (fprecsetupfn <> None)
 
     external set_jac_times_vec_fn : ('a, 'k) session -> unit
         = "c_cvode_set_jac_times_vec_fn"
 
     let set_jac_times_vec_fn s fjactimesfn =
-      s.jactimesfn <- fjactimesfn;
+      (match s.ls_callbacks with
+       | SpilsCallback cbs ->
+           s.ls_callbacks <- SpilsCallback { cbs with
+                               jac_times_vec_fn = Some fjactimesfn }
+       | _ -> failwith "spils solver not in use");
       set_jac_times_vec_fn s
 
     external clear_jac_times_vec_fn : ('a, 'k) session -> unit
         = "c_cvode_clear_jac_times_vec_fn"
 
     let clear_jac_times_vec_fn s =
-      s.jactimesfn <- (fun _ _ _ -> ());
+      (match s.ls_callbacks with
+       | SpilsCallback cbs ->
+           s.ls_callbacks <- SpilsCallback { cbs with jac_times_vec_fn = None }
+       | _ -> failwith "spils solver not in use");
       clear_jac_times_vec_fn s
 
     external set_prec_type
@@ -447,12 +474,7 @@ external c_set_functional : ('a, 'k) session -> unit
   = "c_cvode_set_functional"
 
 let set_iter_type session nv iter =
-  (* Release references to all linear solver-related callbacks.  *)
-  session.jacfn      <- dummy_dense_jac;
-  session.bandjacfn  <- dummy_band_jac;
-  session.presetupfn <- dummy_prec_setup;
-  session.presolvefn <- dummy_prec_solve;
-  session.jactimesfn <- dummy_jac_times_vec;
+  session.ls_callbacks <- NoCallbacks;
   match iter with
   | Functional -> c_set_functional session
   | Newton linsolv -> linsolv session nv
@@ -488,24 +510,21 @@ let init lmm iter tol f ?(roots=no_roots) ?(t0=0.) y0 =
   (* cvode_mem and backref have to be immediately captured in a session and
      associated with the finalizer before we do anything else.  *)
   let session = {
-          cvode      = cvode_mem;
-          backref    = backref;
-          nroots     = nroots;
-          err_file   = err_file;
+          cvode        = cvode_mem;
+          backref      = backref;
+          nroots       = nroots;
+          err_file     = err_file;
 
-          exn_temp   = None;
+          exn_temp     = None;
 
-          rhsfn      = f;
-          rootsfn    = roots;
-          errh       = (fun _ -> ());
-          errw       = (fun _ _ -> ());
-          jacfn      = dummy_dense_jac;
-          bandjacfn  = dummy_band_jac;
-          presetupfn = dummy_prec_setup;
-          presolvefn = dummy_prec_solve;
-          jactimesfn = dummy_jac_times_vec;
+          rhsfn        = f;
+          rootsfn      = roots;
+          errh         = (fun _ -> ());
+          errw         = (fun _ _ -> ());
 
-          sensext    = NoSensExt;
+          ls_callbacks = NoCallbacks;
+
+          sensext      = NoSensExt;
         } in
   Gc.finalise session_finalize session;
   Weak.set weakref 0 (Some session);

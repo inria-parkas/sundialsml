@@ -1112,27 +1112,27 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
             (or an approximation to it).
 
             @cvodes <node7#ss:densejac_b> CVDlsDenseJacFnB *)
-        type bdense_jac_fn = (real_array triple_tmp, real_array) jacobian_arg
+        type dense_jac_fn = (real_array triple_tmp, real_array) jacobian_arg
                                 -> Dls.DenseMatrix.t -> unit
 
         (** This function computes the banded Jacobian of the backward problem
             (or an approximation to it).
 
             @cvodes <node7#ss:bandjac_b> CVDlsBandJacFnB *)
-        type bband_jac_fn = bandrange
+        type band_jac_fn = bandrange
                             -> (real_array triple_tmp, real_array) jacobian_arg
                             -> Dls.BandMatrix.t -> unit
 
         (** Direct linear solver with dense matrix.  The optional argument
             specifies a callback function that computes an approximation to the
-            Jacobian matrix (see {!bdense_jac_fn} for details).  If this
+            Jacobian matrix (see {!dense_jac_fn} for details).  If this
             argument is [None], then CVODE uses a default implementation based
             on difference quotients.  See also {!Dls}.
 
             @cvodes <node7#sss:lin_solv_b> CVDenseB
             @cvodes <node7#SECTION00728200000000000000> CVDlsSetDenseJacFnB
             @cvodes <node7#ss:densejac_b> CVDlsDenseJacFnB *)
-        val dense : bdense_jac_fn option -> serial_linear_solver
+        val dense : dense_jac_fn option -> serial_linear_solver
 
         (** Direct linear solver with dense matrix, using LAPACK.  The argument
             is the same as [Dense].  See also {!Dls}.
@@ -1140,7 +1140,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
             @cvodes <node7#sss:lin_solv_b> CVLapackDenseB
             @cvodes <node7#SECTION00728200000000000000> CVDlsSetDenseJacFnB
             @cvodes <node7#ss:densejac_b> CVDlsDenseJacFnB *)
-        val lapack_dense : bdense_jac_fn option -> serial_linear_solver
+        val lapack_dense : dense_jac_fn option -> serial_linear_solver
 
         (** Direct linear solver with banded matrix.  The arguments specify the
             width of the band ({!bandrange}) and an optional Jacobian
@@ -1151,7 +1151,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
             @cvodes <node7#sss:lin_solv_b> CVBandB
             @cvodes <node7#SECTION00728300000000000000> CVDlsSetBandJacFnB
             @cvodes <node7#ss:bandjac_b> CVDlsBandJacFnB *)
-        val band : bandrange -> bband_jac_fn option -> serial_linear_solver
+        val band : bandrange -> band_jac_fn option -> serial_linear_solver
 
         (** Direct linear solver with banded matrix using LAPACK.  The arguments
             are the same as [Band].
@@ -1159,7 +1159,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
             @cvodes <node7#sss:lin_solv_b> CVLapackBandB
             @cvodes <node7#SECTION00728300000000000000> CVDlsSetBandJacFnB
             @cvodes <node7#ss:bandjac_b> CVDlsBandJacFnB *)
-        val lapack_band : bandrange -> bband_jac_fn option
+        val lapack_band : bandrange -> band_jac_fn option
                             -> serial_linear_solver
 
       end
