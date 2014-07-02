@@ -158,7 +158,7 @@ fi
 ocamlmpi="${OCAMLMPI:-${ocaml_libpath}mpi}"
 if [ ${enable_mpi:-0} -eq 0 ]; then
     ocamlmpi_enabled=0
-    ocamlmpi='NOT ENABLED (default; no parallel features)'
+    ocamlmpi='NOT ENABLED (--enable-mpi for parallel features)'
 else
     ocamlmpi_enabled=1
     if [ ! -e "${ocamlmpi}/mpi.cmi" ]; then
