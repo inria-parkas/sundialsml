@@ -56,7 +56,7 @@ let read_weak_bwd_ref x =
 let adjust_retcode = fun session f x ->
   try f x; 0
   with
-  | Sundials.RecoverableFailure -> 1
+  | Sundials.RecoverableFailure _ -> 1
   | e -> (session.exn_temp <- Some e; -1)
 
 let call_quadrhsfn session t y yqdot =
@@ -123,9 +123,10 @@ let _ =
   Callback.register "c_cvodes_call_bjacfn"        call_bjacfn;
   Callback.register "c_cvodes_call_bbandjacfn"    call_bbandjacfn
 
+  (* TODO: no need to register RecoverableFailure after changes *)
 let _ = List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
   [
-    ("cvodes_RecoverableFailure",      Sundials.RecoverableFailure);
+    ("cvodes_RecoverableFailure", Sundials.RecoverableFailure true);
   ]
 
 module Quadrature =

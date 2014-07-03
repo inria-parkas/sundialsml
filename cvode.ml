@@ -13,6 +13,8 @@
 include Cvode_session
 type serial_session = (real_array, Nvector_serial.kind) session
 
+(* TODO: conditional compilation *)
+type parallel_session = (Nvector_parallel.data, Nvector_parallel.kind) session
 (*
  * NB: The order of variant constructors and record fields is important!
  *     If these types are changed or augmented, the corresponding declarations
@@ -50,6 +52,9 @@ type ('data, 'kind) linear_solver = ('data, 'kind) session
                                         -> ('data, 'kind) nvector -> unit
 
 type serial_linear_solver = (real_array, Nvector_serial.kind) linear_solver
+(* TODO: conditional compilation: *)
+type parallel_linear_solver =
+          (Nvector_parallel.data, Nvector_parallel.kind) linear_solver
 
 type ('a, 'kind) iter =
   | Newton of ('a, 'kind) linear_solver
@@ -73,7 +78,7 @@ exception StopTimeReached
 let _ =
   List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
   [
-    ("cvode_RecoverableFailure",      Sundials.RecoverableFailure);
+    ("cvode_RecoverableFailure",      Sundials.RecoverableFailure true);
 
     ("cvode_StopTimeReached",         StopTimeReached);
     ("cvode_IllInput",                IllInput);
@@ -104,8 +109,14 @@ let read_weak_ref x : ('a, 'kind) session =
 let adjust_retcode = fun session check_recoverable f x ->
   try f x; 0
   with
-  | Sundials.RecoverableFailure when check_recoverable -> 1
+  | Sundials.RecoverableFailure _ when check_recoverable -> 1
   | e -> (session.exn_temp <- Some e; -1)
+
+let adjust_retcode_and_bool = fun session f x ->
+  try (f x, 0)
+  with
+  | Sundials.RecoverableFailure r -> (r, 1)
+  | e -> (session.exn_temp <- Some e; (false, -1))
 
 let call_rhsfn session t y y' =
   let session = read_weak_ref session in
@@ -150,14 +161,66 @@ let call_jactimesfn session jac v jv =
       adjust_retcode session true (f jac v) jv
   | _ -> assert false
 
+let call_linit session =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | AlternateCallback { linit = Some f } ->
+      adjust_retcode session false f ()
+  | _ -> assert false
+
+let call_lsetup session convfail ypred fpred tmp =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | AlternateCallback { lsetup = Some f } ->
+      adjust_retcode_and_bool session (f convfail ypred fpred) tmp
+  | _ -> assert false
+
+let call_lsolve session b weight ycur fcur =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | AlternateCallback { lsolve = f } ->
+      adjust_retcode session true (f b weight ycur) fcur
+  | _ -> assert false
+
+let call_lfree session =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | AlternateCallback { lfree = Some f } -> adjust_retcode session false f ()
+  | _ -> assert false
+
+let call_bbdlocal session t y glocal =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | BBDCallback { Bbd.local_fn = f } ->
+      adjust_retcode session true (f t y) glocal
+  | _ -> assert false
+
+let call_bbdcomm session t y =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | BBDCallback { Bbd.comm_fn = Some f } -> adjust_retcode session true (f t) y
+  | _ -> assert false
+
 let _ =
   Callback.register "c_cvode_call_rhsfn"         call_rhsfn;
+
   Callback.register "c_cvode_call_errh"          call_errh;
   Callback.register "c_cvode_call_errw"          call_errw;
+
   Callback.register "c_cvode_call_jacfn"         call_jacfn;
   Callback.register "c_cvode_call_bandjacfn"     call_bandjacfn;
+
   Callback.register "c_cvode_call_precsolvefn"   call_precsolvefn;
   Callback.register "c_cvode_call_jactimesfn"    call_jactimesfn;
+
+  Callback.register "c_cvode_call_linit"         call_linit;
+  Callback.register "c_cvode_call_lsetup"        call_lsetup;
+  Callback.register "c_cvode_call_lsolve"        call_lsolve;
+  Callback.register "c_cvode_call_lfree"         call_lfree;
+
+  Callback.register "c_cvode_call_bbdlocal"      call_bbdlocal;
+  Callback.register "c_cvode_call_bbdcomm"       call_bbdcomm;
+
 
 external session_finalize : ('a, 'kind) session -> unit
     = "c_cvode_session_finalize"
@@ -468,6 +531,102 @@ module Spils =
         external get_num_rhs_evals : serial_session -> int
             = "c_cvode_bandprec_get_num_rhs_evals"
       end
+
+    module BandBlock =
+      struct
+        type data = Nvector_parallel.data
+
+        type bandwidths = Bbd.bandwidths =
+          {
+            mudq    : int;
+            mldq    : int;
+            mukeep  : int;
+            mlkeep  : int;
+          }
+
+        type callbacks = Bbd.callbacks =
+          {
+            local_fn : float -> data -> data -> unit;
+
+            comm_fn  : (float -> data -> unit) option;
+          }
+
+        external c_bbd_prec_init
+            : parallel_session -> int -> bandwidths -> float -> bool -> unit
+            = "c_cvode_bbd_prec_init"
+
+        let spgmr maxl prec_type bws dqrely cb session nv =
+          let maxl   = match maxl with None -> 0 | Some ml -> ml in
+          let dqrely = match dqrely with None -> 0.0 | Some v -> v in
+          let ba, _, _ = Sundials.unvec nv in
+          let localn   = Sundials.RealArray.length ba in
+          c_spils_spgmr session maxl prec_type;
+          c_bbd_prec_init session localn bws dqrely (cb.comm_fn <> None);
+          session.ls_callbacks <- BBDCallback cb
+
+        let spbcg maxl prec_type bws dqrely cb session nv =
+          let maxl   = match maxl with None -> 0 | Some ml -> ml in
+          let dqrely = match dqrely with None -> 0.0 | Some v -> v in
+          let ba, _, _ = Sundials.unvec nv in
+          let localn   = Sundials.RealArray.length ba in
+          c_spils_spbcg session maxl prec_type;
+          c_bbd_prec_init session localn bws dqrely (cb.comm_fn <> None);
+          session.ls_callbacks <- BBDCallback cb
+
+        let sptfqmr maxl prec_type bws dqrely cb session nv =
+          let maxl   = match maxl with None -> 0 | Some ml -> ml in
+          let dqrely = match dqrely with None -> 0.0 | Some v -> v in
+          let ba, _, _ = Sundials.unvec nv in
+          let localn   = Sundials.RealArray.length ba in
+          c_spils_sptfqmr session maxl prec_type;
+          c_bbd_prec_init session localn bws dqrely (cb.comm_fn <> None);
+          session.ls_callbacks <- BBDCallback cb
+
+        external c_bbd_prec_reinit
+            : parallel_session -> int -> int -> float -> unit
+            = "c_cvode_bbd_prec_reinit"
+
+        let reinit s mudq mldq dqrely =
+          let dqrely = match dqrely with None -> 0.0 | Some v -> v in
+          c_bbd_prec_reinit s mudq mldq dqrely
+
+        external get_work_space : parallel_session -> int * int
+            = "c_cvode_bbd_get_work_space"
+
+        external get_num_gfn_evals : parallel_session -> int
+            = "c_cvode_bbd_get_num_gfn_evals"
+      end
+  end
+
+module Alternate =
+  struct
+    type _conv_fail = conv_fail =
+      | NoFailures
+      | FailBadJ
+      | FailOther
+    type conv_fail = _conv_fail =
+      | NoFailures
+      | FailBadJ
+      | FailOther
+
+    type 'data callbacks = 'data alternate_linsolv =
+      {
+        linit   : (unit -> bool) option;
+        lsetup  : (conv_fail -> 'data -> 'data -> 'data triple_tmp -> bool)
+                  option;
+        lsolve  : 'data -> 'data -> 'data -> 'data -> unit;
+        lfree   : (unit -> bool) option;
+      }
+
+    external c_set_alternate
+      : ('data, 'kind) session -> bool -> bool -> bool -> unit
+      = "c_cvode_set_alternate"
+
+    let make_solver f s nv =
+      let { linit; lsetup; lsolve; lfree } as cb = f s nv in
+      c_set_alternate s (linit <> None) (lsetup <> None) (lfree <> None);
+      s.ls_callbacks <- AlternateCallback cb
+
   end
 
 external c_set_functional : ('a, 'k) session -> unit

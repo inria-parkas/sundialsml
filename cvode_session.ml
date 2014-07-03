@@ -69,6 +69,27 @@ type 'a sensrhsfn =
 type 'a quadsensrhsfn =
    float -> 'a -> 'a array -> 'a -> 'a array -> 'a -> 'a -> unit
 
+(* TODO: conditional compilation *)
+(* BBD definitions *)
+module Bbd =
+  struct
+    type data = Nvector_parallel.data
+
+    type bandwidths =
+      {
+        mudq    : int;
+        mldq    : int;
+        mukeep  : int;
+        mlkeep  : int;
+      }
+
+    type callbacks =
+      {
+        local_fn : float -> data -> data -> unit;
+        comm_fn  : (float -> data -> unit) option;
+      }
+  end
+
 module B =
   struct
     type 'a brhsfn =
@@ -118,7 +139,31 @@ module B =
     type band_jac_fn =
           bandrange -> (real_array triple_tmp, real_array) jacobian_arg
               -> Dls.BandMatrix.t -> unit
+
+    (* TODO: conditional compilation *)
+    module Bbd =
+      struct
+        type data = Nvector_parallel.data
+        type callbacks =
+          {
+            local_fn : float -> data -> data -> data -> bool;
+            comm_fn  : (float -> data -> data -> bool) option;
+          }
+      end
   end
+
+type conv_fail =
+  | NoFailures
+  | FailBadJ
+  | FailOther
+
+type 'a alternate_linsolv =
+  {
+    linit  : (unit -> bool) option;
+    lsetup : (conv_fail -> 'a -> 'a -> 'a triple_tmp -> bool) option;
+    lsolve : 'a -> 'a -> 'a -> 'a -> unit;
+    lfree  : (unit -> bool) option;
+  }
 
 (* the session type *)
 
@@ -132,10 +177,14 @@ type ('a, 'kind) linsolv_callbacks =
   | DenseCallback of dense_jac_fn
   | BandCallback  of band_jac_fn
   | SpilsCallback of 'a spils_callbacks
+  | BBDCallback of Bbd.callbacks
+
+  | AlternateCallback of 'a alternate_linsolv
 
   | BDenseCallback of B.dense_jac_fn
   | BBandCallback  of B.band_jac_fn
   | BSpilsCallback of 'a B.spils_callbacks
+  | BBBDCallback of B.Bbd.callbacks
 
 type ('a, 'kind) session = {
       cvode      : cvode_mem;

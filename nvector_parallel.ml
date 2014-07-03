@@ -1,6 +1,7 @@
 
 type kind
-type t = (Sundials.RealArray.t * int * Mpi.communicator, kind) Sundials.nvector
+type data = Sundials.RealArray.t * int * Mpi.communicator
+type t = (data, kind) Sundials.nvector
 
 exception IncorrectGlobalSize
 

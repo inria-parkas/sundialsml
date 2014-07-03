@@ -26,7 +26,7 @@ exception RepeatedSystemFunctionFailure  (* KIN_REPTD_SYSFUNC_ERR *)
 let _ =
   List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
   [
-    ("kinsol_RecoverableFailure",             Sundials.RecoverableFailure);
+    ("kinsol_RecoverableFailure",             Sundials.RecoverableFailure true);
 
     ("kinsol_IllInput",                       IllInput);
     ("kinsol_LineSearchNonConvergence",       LineSearchNonConvergence);
@@ -136,7 +136,7 @@ let read_weak_ref x : ('a, 'k) session =
 let adjust_retcode = fun session check_recoverable f x ->
   try f x; 0
   with
-  | Sundials.RecoverableFailure when check_recoverable -> 1
+  | Sundials.RecoverableFailure _ when check_recoverable -> 1
   | e -> (session.exn_temp <- Some e; -1)
 
 let call_sysfn session u fval =
@@ -188,7 +188,7 @@ let call_jactimesfn session v jv u new_uu =
   match session.ls_callbacks with
   | SpilsCallback { jac_times_vec_fn = Some f } ->
       (try (f v jv u new_uu, 0) with
-       | Sundials.RecoverableFailure -> (false, 1)
+       | Sundials.RecoverableFailure _ -> (false, 1)
        | e -> (session.exn_temp <- Some e; (false, -1)))
   | _ -> assert false
 

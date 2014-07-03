@@ -116,6 +116,9 @@ type ('a, 'k) session = ('a, 'k) Cvode_session.session
 type real_array = Sundials.RealArray.t
 type serial_session = (real_array, Nvector_serial.kind) session
 
+(* TODO: conditional compilation: *)
+type parallel_session = (Nvector_parallel.data, Nvector_parallel.kind) session
+
 (** The type of vectors passed to the solver. *)
 type ('data, 'kind) nvector = ('data, 'kind) Sundials.nvector
 
@@ -126,6 +129,10 @@ type ('data, 'kind) nvector = ('data, 'kind) Sundials.nvector
     @cvode <node5#sss:lin_solv_init> Linear Solver Specification Functions *)
 type ('data, 'kind) linear_solver
 type serial_linear_solver = (real_array, Nvector_serial.kind) linear_solver
+
+(* TODO: conditional compilation: *)
+type parallel_linear_solver =
+          (Nvector_parallel.data, Nvector_parallel.kind) linear_solver
 
 module Diag :
   sig
@@ -485,7 +492,7 @@ module Spils :
                     -> ('data, 'kind) linear_solver
 
     (** Krylov iterative solver with the scaled preconditioned Bi-CGStab method.
-        The arguments are the same as [Spgmr].  See also {!Spils}.
+        The arguments are the same as [spgmr].  See also {!Spils}.
 
         @cvode <node5#sss:lin_solve_init> CVSpbcg
         @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
@@ -495,7 +502,7 @@ module Spils :
                     -> ('data, 'kind) linear_solver
 
     (** Krylov iterative with the scaled preconditioned TFQMR method.  The
-        arguments are the same as [Spgmr].  See also {!Spils}.
+        arguments are the same as [spgmr].  See also {!Spils}.
 
         @cvode <node5#sss:lin_solve_init> CVSptfqmr
         @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
@@ -639,7 +646,7 @@ module Spils :
         (** Same as Spbcg (the Krylov iterative solver with scaled preconditioned
             Bi-CGStab), but the preconditioner is set to CVODE's internal
             implementation using a banded matrix of difference quotients.  The
-            arguments are the same as [BandedSpgmr].
+            arguments are the same as [spgmr].
 
             @cvode <node5#sss:lin_solve_init> CVSpbcg
             @cvode <node5#sss:cvbandpre> CVBandPrecInit *)
@@ -649,7 +656,7 @@ module Spils :
         (** Same as Spbcg (the Krylov iterative solver with scaled preconditioned
             Bi-CGStab), but the preconditioner is set to CVODE's internal
             implementation using a banded matrix of difference quotients.  The
-            arguments are the same as [BandedSpgmr].
+            arguments are the same as [spgmr].
 
             @cvode <node5#sss:lin_solve_init> CVSptfqmr
             @cvode <node5#sss:cvbandpre> CVBandPrecInit *)
@@ -672,6 +679,201 @@ module Spils :
             @cvode <node5#sss:cvbandpre> CVBandPrecGetNumRhsEvals *)
         val get_num_rhs_evals : serial_session -> int
       end
+
+    (* TODO: conditional compilation: only with parallel nvectors *)
+
+    (** TODO:
+        3. Adapt for CVodes.Adjoint.
+        4. Implement examples (cvode/parallel and cvodes/parallel).
+        5. Update the TODO file.
+        6. Compile conditionally.
+      *)
+    module BandBlock :
+      sig
+        (** Parallel Band-Block-Diagonal preconditioners
+
+            @cvode <node5#sss:cvbbdpre> Parallel band-block-diagonal preconditioner module *)
+
+        type data = Nvector_parallel.data
+
+        type bandwidths =
+          {
+            mudq    : int; (** Upper half-bandwidth to be used in the difference
+                               quotient Jacobian approximation. *)
+            mldq    : int; (** Lower half-bandwidth to be used in the difference
+                               quotient Jacobian approximation. *)
+            mukeep  : int; (** Upper half-bandwidth of the retained banded
+                               approximate Jacobian block. *)
+            mlkeep  : int; (** Lower half-bandwidth of the retained banded
+                               approximate Jacobian block. *)
+          }
+
+        type callbacks =
+          {
+            local_fn : float -> data -> data -> unit;
+              (** [gloc t y gd] computes [g(t, y)] into [gd]. This function
+                  should raise {!Sundials.RecoverableFailure} on a
+                  recoverable error, any other exception is treated as an
+                  unrecoverable error. *)
+
+            comm_fn  : (float -> data -> unit) option;
+              (** [cfn t y] performs all interprocess communication necessary
+                  for the execution of [local_fn] using the input vector [y].
+                  This function should raise {!Sundials.RecoverableFailure} on a
+                  recoverable error, any other exception is treated as an
+                  unrecoverable error. *)
+          }
+
+        (** Same as Spgmr (the Krylov iterative solver with scaled
+            preconditioned GMRES), but the preconditioner is set to CVODE's
+            Parallel Band-Block-Diagonal implementation.
+            
+            The arguments specify the maximum dimension of the Krylov subspace
+            (pass [None] to use the default value [5].), the preconditioning
+            type, the bandwidths described under {!bandwidths}, the relative
+            increment in components of [y] used in the difference quotient
+            approximations (pass [None] to use the default value [sqrt
+            unit_roundoff]), and the callbacks described under {!callbacks}.
+
+            @cvode <node5#sss:lin_solve_init> CVSpgmr
+            @cvode <node5#sss:cvbbdpre> CVBBDPrecInit *)
+        val spgmr : int option -> preconditioning_type -> bandwidths
+                        -> float option -> callbacks -> parallel_linear_solver
+
+        (** Same as Spbcg (the Krylov iterative solver with scaled
+            preconditioned Bi-CGStab), but the preconditioner is set to CVODE's
+            Parallel Band-Block-Diagonal implementation. The arguments are the
+            same as for [spgmr].
+
+            @cvode <node5#sss:lin_solve_init> CVSpbcg
+            @cvode <node5#sss:cvbbdpre> CVBBDPrecInit *)
+        val spbcg : int option -> preconditioning_type -> bandwidths
+                        -> float option -> callbacks -> parallel_linear_solver
+
+        (** Same as Spbcg (the Krylov iterative solver with scaled
+            preconditioned Bi-CGStab), but the preconditioner is set to CVODE's
+            Parallel Band-Block-Diagonal implementation. The arguments are the
+            same as for [spgmr].
+
+            @cvode <node5#sss:lin_solve_init> CVSptfqmr
+            @cvode <node5#sss:cvbbdpre> CVBBDPrecInit *)
+        val sptfqmr : int option -> preconditioning_type -> bandwidths
+                        -> float option -> callbacks -> parallel_linear_solver
+
+        (** [reinit s mudq mldq dqrely] reinitializes the BBD preconditioner
+            with upper ([mudq]) and lower ([mldq]) half-bandwidths to be used in
+            the difference quotient Jacobian approximation, and an optional
+            relative increment in components of [y] (passing [None] uses the
+            default value [sqrt unit_roundoff]).
+
+            @cvode <node5#sss:cvbbdpre> CVBBDPrecReInit *)
+        val reinit : parallel_session -> int -> int -> float option -> unit
+
+        (** {4 Optional output functions} *)
+
+        (** Returns the sizes of the real and integer workspaces used by the
+            band-block-diagonal preconditioner module.
+
+            @cvode <node5#sss:cvbbdpre> CVBBDPrecGetWorkSpace
+            @return ([real_size], [integer_size]) *)
+        val get_work_space : parallel_session -> int * int
+
+        (** Returns the number of calls made to the user-supplied right-hand
+            side function due to finite difference banded Jacobian approximation in
+            the preconditioner setup function.
+
+            @cvode <node5#sss:cvbbdpre> CVBBDPrecGetNumGfnEvals *)
+        val get_num_gfn_evals : parallel_session -> int
+      end
+  end
+
+module Alternate :
+  sig
+    (** Alternate Linear Solvers
+
+        @cvode <node8#s:new_linsolv> Providing Alternate Linear Solver Modules *)
+
+    (* TODO:
+       2. Test.
+       3. Adapt for Kinsol.
+     *)
+
+    (** A flag that indicates any problems that occured during the solution of
+        the nonlinear equation on the current time step for which the linear
+        solver is being used. This flag can be used to help decide whether the
+        Jacobian data kept by a linear solver needs to be updated or not. *)
+    type conv_fail =
+      | NoFailures
+          (** Passed on the first call for a step, or if the lcoal error test
+              failed on the previous attempt at this setup but the Newton
+              iteration converged. *)
+      | FailBadJ
+          (**  Passed if
+               - the previous Newton corrector iteration did not converge and
+                 the linear solver's setup routine indicated that its
+                 Jacobian-related data is not current, or,
+
+               - during the previous Newton corrector iteration, the linear
+                 solver's {!solve} routine failed in a recoverable manner and
+                 the linear solver's setup routine indicated that its
+                 Jacobian-related data is not current. *)
+      | FailOther
+          (** Passed if the previous Newton iteration failed to converge even
+              though the linear solver was using current Jacobian-related
+              data. *)
+
+    type 'data callbacks =
+      {
+        linit   : (unit -> bool) option;
+          (** Complete initializations for a specific linear solver, such as
+              counters and statistics. Returns [true] if successful.
+
+              @cvode <node8#SECTION00810000000000000000> linit *)
+
+        lsetup : (conv_fail -> 'data -> 'data -> 'data triple_tmp -> bool)
+                 option;
+          (** [jcur = lsetup convfail ypred fpred tmp] prepares the linear
+              solver for subsequent calls to {!lsolve}. Its arguments are:
+              - [convfail], indicating any problem that occurred during the
+                 solution of the nonlinear equation on the current time step,
+              - [ypred], the predicted [y] vector for the current internal
+                step,
+              - [fpred], the value of the right-hand side at [ypred], and,
+              - [tmp], temporary variables for use by the routine.
+           
+              This function must return [true] if the Jacobian-related data is
+              current after the call, or [false] otherwise. It may raise a
+              {!Sundials.RecoverableFailure} exception to indicate that a
+              recoverable error has occurred. Any other exception is treated as
+              an unrecoverable error.
+           
+              @cvode <node8#SECTION00820000000000000000> lsetup *)
+           
+        lsolve : 'data -> 'data -> 'data -> 'data -> unit;
+          (** [lsolve b weight ycur fcur] must solve the linear equation given:
+              - [b], is the vector into which the solution is to be calculated,
+              - [weight] contains the error weights,
+              - [ycur] contains the solvers current approximation to [y], and,
+              - [fcur] is a vector that contains [f(tn, ycur)].
+              
+              This function may raise a {!Sundials.RecoverableFailure} exception
+              to indicate that a recoverable error has occurred. Any other
+              exception is treated as an unrecoverable error.
+          
+              @cvode <node8#SECTION00830000000000000000> lsolve *)
+
+        lfree  : (unit -> bool) option;
+          (** This function is called once a problem has been completed and the
+              linear solver is no longer needed.
+
+              @cvode <node8#SECTION00840000000000000000> lfree *)
+      }
+
+    (** Create a linear solver from a function returning a set of callback
+        functions *)
+    val make_solver :
+          (('data, 'kind) session -> ('data, 'kind) nvector -> 'data callbacks)
+          -> ('data, 'kind) linear_solver
   end
 
 (** {2 Tolerances} *)

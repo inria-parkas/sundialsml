@@ -45,7 +45,7 @@ external get_unit_roundoff : unit -> float
 
 let unit_roundoff = get_unit_roundoff ()
 
-exception RecoverableFailure
+exception RecoverableFailure of bool
 
 type cnvec
 type ('data, 'kind) nvector = 'data * cnvec

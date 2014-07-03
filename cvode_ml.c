@@ -31,6 +31,7 @@
 #include <cvode/cvode_spbcgs.h>
 #include <cvode/cvode_sptfqmr.h>
 #include <cvode/cvode_bandpre.h>
+#include <cvode/cvode_impl.h>
 #include <sundials/sundials_config.h>
 #include <sundials/sundials_nvector.h>
 
@@ -167,6 +168,7 @@ static int roots(realtype t, N_Vector y, realtype *gout, void *user_data)
      * we do all of the setup here and directly call the user-supplied OCaml
      * function without going through an OCaml trampoline.  */
     WEAK_DEREF (session, *backref);
+    // TODO: implement this in the normal way...
 
     nroots = CVODE_NROOTS_FROM_ML (session);
 
@@ -321,6 +323,11 @@ static int precsetupfn(
                            sizeof (args) / sizeof (*args),
                            args);
 
+    // TODO: we should set this boolean on a recoverable error!
+    //	     make a function that returns a pair of bool and exception
+    //	     and just call in the normal way (also in kinsol and cvodes).
+    //	     see lsetup...
+    //	     do likewise for rootsfn and then get rid of check_exception.
     if (!Is_exception_result(r)) {
 	*jcurPtr = Bool_val(r);
     }
@@ -408,6 +415,216 @@ static int jactimesfn(
 
     CAMLreturnT(int, retcode);
 }
+
+// TODO: compile this file with this option
+#ifdef SUNDIALSML_WITHMPI
+static int bbdlocal(int nlocal, realtype t, N_Vector y, N_Vector glocal,
+		    void *user_data)
+{
+    CAMLparam0();
+    CAMLlocalN(args, 4);
+    int r;
+    value *backref = user_data;
+    CAML_FN (call_bbdlocal);
+
+    args[0] = *backref;
+    args[1] = caml_copy_double(t);
+    args[2] = NVEC_BACKLINK(y);
+    args[3] = NVEC_BACKLINK(glocal);
+
+    r = Int_val (caml_callbackN(*call_bddlocal,
+                                sizeof (args) / sizeof (*args),
+                                args));
+
+    CAMLreturnT(int, r);
+}
+
+static int bbdcomm(int nlocal, realtype t, N_Vector y, void *user_data)
+{
+    CAMLparam0();
+    CAMLlocalN(args, 3);
+    int r;
+    value *backref = user_data;
+    CAML_FN (call_bbdcomm);
+
+    args[0] = *backref;
+    args[1] = caml_copy_double(t);
+    args[2] = NVEC_BACKLINK(y);
+
+    r = Int_val (caml_callbackN(*call_bddcomm,
+                                sizeof (args) / sizeof (*args),
+                                args));
+
+    CAMLreturnT(int, r);
+}
+#endif
+
+static int linit(CVodeMem cv_mem)
+{
+    CAMLparam0();
+    int r;
+    value *backref = cv_mem->cv_user_data;
+    CAML_FN (call_linit);
+
+    r = Int_val (caml_callback(*call_linit, *backref));
+
+    CAMLreturnT(int, r);
+}
+
+static int lsetup(CVodeMem cv_mem, int convfail,
+		  N_Vector ypred, N_Vector fpred, booleantype *jcurPtr,
+		  N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
+{
+    CAMLparam0();
+    CAMLlocalN(args, 5);
+    CAMLlocal1(vr);
+    value *backref = cv_mem->cv_user_data;
+    CAML_FN (call_lsetup);
+
+    args[0] = *backref;
+    switch (convfail) {
+    case CV_NO_FAILURES:
+	args[1] = Val_int(VARIANT_CVODE_ALTERNATE_NO_FAILURES);
+	break;
+
+    case CV_FAIL_BAD_J:
+	args[1] = Val_int(VARIANT_CVODE_ALTERNATE_FAIL_BAD_J);
+	break;
+
+    case CV_FAIL_OTHER:
+	args[1] = Val_int(VARIANT_CVODE_ALTERNATE_FAIL_OTHER);
+	break;
+    }
+    args[2] = NVEC_BACKLINK(ypred);
+    args[3] = NVEC_BACKLINK(fpred);
+    args[4] = make_triple_tmp(tmp1, tmp2, tmp3);
+
+    vr = caml_callbackN(*call_lsetup, sizeof (args) / sizeof (*args), args);
+    *jcurPtr = Bool_val(Field(vr, 0));
+
+    CAMLreturnT(int, Int_val(Field(vr, 1)));
+}
+
+static int lsolve(CVodeMem cv_mem, N_Vector b, N_Vector weight, N_Vector ycur,
+		  N_Vector fcur)
+{
+    CAMLparam0();
+    CAMLlocalN(args, 5);
+    int r;
+    value *backref = cv_mem->cv_user_data;
+    CAML_FN (call_lsolve);
+
+    args[0] = *backref;
+    args[1] = NVEC_BACKLINK(b);
+    args[2] = NVEC_BACKLINK(weight);
+    args[3] = NVEC_BACKLINK(ycur);
+    args[4] = NVEC_BACKLINK(fcur);
+
+    r = Int_val (caml_callbackN(*call_lsolve,
+				sizeof (args) / sizeof (*args),
+				args));
+
+    CAMLreturnT(int, r);
+}
+
+static void lfree(CVodeMem cv_mem)
+{
+    CAMLparam0();
+    value *backref = cv_mem->cv_user_data;
+    CAML_FN (call_lfree);
+
+    caml_callback(*call_lfree, *backref);
+
+    CAMLreturn0;
+}
+
+CAMLprim void c_cvode_set_alternate (value vcvode_mem, value vhas_init,
+				     value vhas_setup, value vhas_free)
+{
+    CAMLparam4(vcvode_mem, vhas_init, vhas_setup, vhas_free);
+    CVodeMem cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
+
+    cvode_mem->cv_linit  = Bool_val(vhas_init)  ? linit : NULL;
+    cvode_mem->cv_lsetup  = Bool_val(vhas_setup) ? lsetup : NULL;
+    cvode_mem->cv_lsolve = lsolve;
+    cvode_mem->cv_lfree  = Bool_val(vhas_free)  ? lfree : NULL;
+    cvode_mem->cv_lmem   = NULL;
+
+    CAMLreturn0;
+}
+
+#ifdef SUNDIALSML_WITHMPI
+
+CAMLprim void c_cvode_bbd_prec_init (value vcvode_mem, value vlocaln,
+				     value vbandwidths, value vdqrely,
+				     value vhascomm)
+{
+    CAMLparam5(vcvode_mem, vlocaln, vbandwidths, vdqrely, vhascomm);
+    void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
+    int flag;
+
+    flag = CVBBDPrecInit (cvode_mem,
+	Long_val(vlocaln),
+	Long_val(Field(vbandwidths, RECORD_CVODE_BANDBLOCK_BANDWIDTHS_MUDQ)),
+	Long_val(Field(vbandwidths, RECORD_CVODE_BANDBLOCK_BANDWIDTHS_MLDQ)),
+	Long_val(Field(vbandwidths, RECORD_CVODE_BANDBLOCK_BANDWIDTHS_MUKEEP)),
+	Long_val(Field(vbandwidths, RECORD_CVODE_BANDBLOCK_BANDWIDTHS_MLKEEP)),
+	Double_val(vdqrely),
+	bbdlocal,
+	Bool_val(vhascomm) ? bbdcomm : NULL);
+    CHECK_FLAG ("CVBBDPrecInit", flag);
+
+    CAMLreturn0;
+}
+
+CAMLprim void c_cvode_bbd_prec_reinit (value vcvode_mem, value vmudq,
+				       value vmldq, value vdqrely)
+{
+    CAMLparam4(vcvode_mem, vmudq, vmldq, vdqrely);
+    void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
+    int flag;
+
+    flag = CVBBDPrecReInit (cvode_mem, Long_val(vmudq), Long_val(vmldq),
+				       Double_val(vdqrely));
+    CHECK_FLAG ("CVBBDPrecReInit", flag);
+
+    CAMLreturn0;
+}
+
+CAMLprim value c_cvode_bbd_get_work_space(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+    CAMLlocal1(r);
+
+    int flag;
+    long int lenrw;
+    long int leniw;
+
+    flag = CVBBDPrecGetWorkSpace(CVODE_MEM_FROM_ML(vcvode_mem), &lenrw, &leniw);
+    CHECK_FLAG("CVBBDPrecGetWorkSpace", flag);
+
+    r = caml_alloc_tuple(2);
+
+    Store_field(r, 0, Val_long(lenrw));
+    Store_field(r, 1, Val_long(leniw));
+
+    CAMLreturn(r);
+}
+
+CAMLprim value c_cvode_bbd_get_num_gfn_evals(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+
+    int flag;
+    long int v;
+
+    flag = CVBBDPrecGetNumGfnEvals(CVODE_MEM_FROM_ML(vcvode_mem), &v);
+    CHECK_FLAG("CVBBDPrecGetNumGfnEvals", flag);
+
+    CAMLreturn(Val_long(v));
+}
+  
+#endif
 
 /* Dense and Band can only be used with serial NVectors.  */
 CAMLprim void c_cvode_dls_dense (value vcvode_mem, value vneqs, value vset_jac)
