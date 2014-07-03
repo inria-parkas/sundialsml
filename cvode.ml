@@ -78,8 +78,6 @@ exception StopTimeReached
 let _ =
   List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
   [
-    ("cvode_RecoverableFailure",      Sundials.RecoverableFailure true);
-
     ("cvode_StopTimeReached",         StopTimeReached);
     ("cvode_IllInput",                IllInput);
     ("cvode_TooClose",                TooClose);
@@ -122,6 +120,8 @@ let call_rhsfn session t y y' =
   let session = read_weak_ref session in
   adjust_retcode session true (session.rhsfn t y) y'
 
+(* the roots function is called directly from C. *)
+
 let call_errw session y ewt =
   let session = read_weak_ref session in
   adjust_retcode session false (session.errw y) ewt
@@ -152,7 +152,12 @@ let call_precsolvefn session jac r z =
       adjust_retcode session true (f jac r) z
   | _ -> assert false
 
-(* the precsetupfn is called directly from C. *)
+let call_precsetupfn session jac jok gamma =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | SpilsCallback { prec_setup_fn = Some f } ->
+      adjust_retcode_and_bool session (f jac jok) gamma
+  | _ -> assert false
 
 let call_jactimesfn session jac v jv =
   let session = read_weak_ref session in
@@ -211,6 +216,7 @@ let _ =
   Callback.register "c_cvode_call_bandjacfn"     call_bandjacfn;
 
   Callback.register "c_cvode_call_precsolvefn"   call_precsolvefn;
+  Callback.register "c_cvode_call_precsetupfn"   call_precsetupfn;
   Callback.register "c_cvode_call_jactimesfn"    call_jactimesfn;
 
   Callback.register "c_cvode_call_linit"         call_linit;

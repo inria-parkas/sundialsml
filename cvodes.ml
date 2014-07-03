@@ -39,25 +39,34 @@ let num_sensitivities s =
   | BwdSensExt se -> se.bnum_sensitivities
   | _ -> 0
 
-let read_weak_fwd_ref x =
+let read_weak_ref x : ('a, 'kind) session =
   match Weak.get x 0 with
-  | Some y -> (match y.sensext with
-               | FwdSensExt se -> (y, se)
-               | _ -> raise (Failure "Internal error: not forward extension"))
+  | Some y -> y
   | None -> raise (Failure "Internal error: weak reference is dead")
 
+let read_weak_fwd_ref x =
+  let y = read_weak_ref x in
+  match y.sensext with
+  | FwdSensExt se -> (y, se)
+  | _ -> raise (Failure "Internal error: not forward extension")
+
 let read_weak_bwd_ref x =
-  match Weak.get x 0 with
-  | Some y -> (match y.sensext with
-               | BwdSensExt se -> (y, se)
-               | _ -> raise (Failure "Internal error: not backward extension"))
-  | None -> raise (Failure "Internal error: weak reference is dead")
+  let y = read_weak_ref x in
+  match y.sensext with
+  | BwdSensExt se -> (y, se)
+  | _ -> raise (Failure "Internal error: not backward extension")
 
 let adjust_retcode = fun session f x ->
   try f x; 0
   with
   | Sundials.RecoverableFailure _ -> 1
   | e -> (session.exn_temp <- Some e; -1)
+
+let adjust_retcode_and_bool = fun session f x ->
+  try (f x, 0)
+  with
+  | Sundials.RecoverableFailure r -> (r, 1)
+  | e -> (session.exn_temp <- Some e; (false, -1))
 
 let call_quadrhsfn session t y yqdot =
   let (session, fwdsensext) = read_weak_fwd_ref session in
@@ -84,30 +93,35 @@ let call_bquadrhsfn session t y yb qbdot =
 
 (* bwdsensext.bquadrhsfn1 is called directly from C *)
 
-(* the bprecsetupfn is called directly from C. *)
+let call_bprecsetupfn session jac jok gamma =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | BSpilsCallback { B.prec_setup_fn = Some f } ->
+      adjust_retcode_and_bool session (f jac jok) gamma
+  | _ -> assert false
 
 let call_bprecsolvefn session jac ps rvecB =
-  let (session, bwdsensext) = read_weak_bwd_ref session in
+  let session = read_weak_ref session in
   match session.ls_callbacks with
   | BSpilsCallback { B.prec_solve_fn = Some f } ->
       adjust_retcode session (f jac ps) rvecB
   | _ -> assert false
 
 let call_bjactimesfn session jac vB jvB =
-  let (session, bwdsensext) = read_weak_bwd_ref session in
+  let session = read_weak_ref session in
   match session.ls_callbacks with
   | BSpilsCallback { B.jac_times_vec_fn = Some f } ->
       adjust_retcode session (f jac vB) jvB
   | _ -> assert false
 
 let call_bjacfn session jac m =
-  let (session, bwdsensext) = read_weak_bwd_ref session in
+  let session = read_weak_ref session in
   match session.ls_callbacks with
   | BDenseCallback f -> adjust_retcode session (f jac) m
   | _ -> assert false
 
 let call_bbandjacfn session range jac m =
-  let (session, bwdsensext) = read_weak_bwd_ref session in
+  let session = read_weak_ref session in
   match session.ls_callbacks with
   | BBandCallback f -> adjust_retcode session (f range jac) m
   | _ -> assert false
@@ -118,16 +132,11 @@ let _ =
 
   Callback.register "c_cvodes_call_brhsfn"        call_brhsfn;
   Callback.register "c_cvodes_call_bquadrhsfn"    call_bquadrhsfn;
+  Callback.register "c_cvodes_call_bprecsetupfn"  call_bprecsetupfn;
   Callback.register "c_cvodes_call_bprecsolvefn"  call_bprecsolvefn;
   Callback.register "c_cvodes_call_bjactimesfn"   call_bjactimesfn;
   Callback.register "c_cvodes_call_bjacfn"        call_bjacfn;
   Callback.register "c_cvodes_call_bbandjacfn"    call_bbandjacfn
-
-  (* TODO: no need to register RecoverableFailure after changes *)
-let _ = List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
-  [
-    ("cvodes_RecoverableFailure", Sundials.RecoverableFailure true);
-  ]
 
 module Quadrature =
   struct

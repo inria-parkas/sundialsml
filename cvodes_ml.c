@@ -112,17 +112,9 @@ static int check_exception(value session, value r)
     CAMLparam2(session, r);
     CAMLlocal1(exn);
 
-    static value *recoverable_failure = NULL;
-    if (recoverable_failure == NULL) {
-	recoverable_failure = caml_named_value("cvodes_RecoverableFailure");
-    }
-
     if (!Is_exception_result(r)) return 0;
 
     r = Extract_exception(r);
-
-    if (Field(r, 0) == *recoverable_failure)
-	CAMLreturnT (int, 1);
 
     /* Unrecoverable error.  Save the exception and return -1.  */
     exn = caml_alloc_small (1,0);
@@ -473,31 +465,20 @@ static int bprecsetupfn(
     N_Vector tmp3b)
 {
     CAMLparam0();
-    CAMLlocal2(session, r);
+    CAMLlocal2(session, vr);
     CAMLlocalN(args, 3);
-    value *backref = user_data;
-
-    /* The precsetup function must return a boolean (in addition to possible
-     * exceptions), so, we do all of the setup here and directly call the
-     * user-supplied OCaml function without going through an OCaml
-     * trampoline.  */
-    WEAK_DEREF (session, *backref);
+    CAML_FN (call_bprecsetupfn);
 
     args[0] = make_jac_arg(t, y, yb, fyb, make_triple_tmp(tmp1b, tmp2b, tmp3b));
     args[1] = Val_bool(jokb);
     args[2] = caml_copy_double(gammab);
 
-    /* We ignore the variant labels and require that
-	Cvode_session.B.spils_callbacks ~= Cvode_Session.spils_callbacks */
-    r = caml_callbackN_exn(CVODE_PRECSETUPFN_FROM_ML (session),
-                           sizeof (args) / sizeof (*args),
-                           args);
+    vr = caml_callbackN(*call_bprecsetupfn,
+			sizeof (args) / sizeof (*args),
+			args);
+    *jcurPtrB = Bool_val(Field(vr, 0));
 
-    if (!Is_exception_result(r)) {
-	*jcurPtrB = Bool_val(r);
-    }
-
-    CAMLreturnT(int, check_exception(session, r));
+    CAMLreturnT(int, Int_val(Field(vr, 1)));
 }
 
 static int bjactimesfn(

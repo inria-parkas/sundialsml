@@ -114,18 +114,9 @@ static int check_exception(value session, value r)
     CAMLparam2(session, r);
     CAMLlocal1(exn);
 
-    static value *recoverable_failure = NULL;
-    if (recoverable_failure == NULL) {
-	recoverable_failure =
-	    caml_named_value("cvode_RecoverableFailure");
-    }
-
     if (!Is_exception_result(r)) return 0;
 
     r = Extract_exception(r);
-
-    if (Field(r, 0) == *recoverable_failure)
-	CAMLreturnT (int, 1);
 
     /* Unrecoverable error.  Save the exception and return -1.  */
     exn = caml_alloc_small (1,0);
@@ -168,7 +159,6 @@ static int roots(realtype t, N_Vector y, realtype *gout, void *user_data)
      * we do all of the setup here and directly call the user-supplied OCaml
      * function without going through an OCaml trampoline.  */
     WEAK_DEREF (session, *backref);
-    // TODO: implement this in the normal way...
 
     nroots = CVODE_NROOTS_FROM_ML (session);
 
@@ -305,34 +295,20 @@ static int precsetupfn(
     N_Vector tmp3)
 {
     CAMLparam0();
-    CAMLlocal2(session, r);
+    CAMLlocal2(session, vr);
     CAMLlocalN(args, 3);
-    value *backref = user_data;
-
-    /* The precsetup function must return a boolean (in addition to possible
-     * exceptions), so, we do all of the setup here and directly call the
-     * user-supplied OCaml function without going through an OCaml
-     * trampoline.  */
-    WEAK_DEREF (session, *backref);
+    CAML_FN (call_precsetupfn);
 
     args[0] = make_jac_arg(t, y, fy, make_triple_tmp(tmp1, tmp2, tmp3));
     args[1] = Val_bool(jok);
     args[2] = caml_copy_double(gamma);
 
-    r = caml_callbackN_exn(CVODE_PRECSETUPFN_FROM_ML (session),
-                           sizeof (args) / sizeof (*args),
-                           args);
+    vr = caml_callbackN(*call_precsetupfn,
+			sizeof (args) / sizeof (*args),
+			args);
+    *jcurPtr = Bool_val(Field(vr, 0));
 
-    // TODO: we should set this boolean on a recoverable error!
-    //	     make a function that returns a pair of bool and exception
-    //	     and just call in the normal way (also in kinsol and cvodes).
-    //	     see lsetup...
-    //	     do likewise for rootsfn and then get rid of check_exception.
-    if (!Is_exception_result(r)) {
-	*jcurPtr = Bool_val(r);
-    }
-
-    CAMLreturnT(int, check_exception(session, r));
+    CAMLreturnT(int, Int_val(Field(vr, 1)));
 }
 
 static value make_spils_solve_arg(
