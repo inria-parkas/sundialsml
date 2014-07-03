@@ -225,7 +225,7 @@ let _ =
   Callback.register "c_cvode_call_lfree"         call_lfree;
 
   Callback.register "c_cvode_call_bbdlocal"      call_bbdlocal;
-  Callback.register "c_cvode_call_bbdcomm"       call_bbdcomm;
+  Callback.register "c_cvode_call_bbdcomm"       call_bbdcomm
 
 
 external session_finalize : ('a, 'kind) session -> unit
@@ -621,7 +621,7 @@ module Alternate =
         lsetup  : (conv_fail -> 'data -> 'data -> 'data triple_tmp -> bool)
                   option;
         lsolve  : 'data -> 'data -> 'data -> 'data -> unit;
-        lfree   : (unit -> bool) option;
+        lfree   : (unit -> unit) option;
       }
 
     external c_set_alternate

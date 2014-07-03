@@ -683,7 +683,6 @@ module Spils :
     (* TODO: conditional compilation: only with parallel nvectors *)
 
     (** TODO:
-        3. Adapt for CVodes.Adjoint.
         4. Implement examples (cvode/parallel and cvodes/parallel).
         5. Update the TODO file.
         6. Compile conditionally.
@@ -707,7 +706,11 @@ module Spils :
             mlkeep  : int; (** Lower half-bandwidth of the retained banded
                                approximate Jacobian block. *)
           }
+ 
+        (** User-supplied functions for CVBBDPRE.
 
+            @cvodes <node5#sss:cvbbdpre> CVBBDLocalFn
+            @cvodes <node5#sss:cvbbdpre> CVBBDCommFn *)
         type callbacks =
           {
             local_fn : float -> data -> data -> unit;
@@ -793,10 +796,7 @@ module Alternate :
 
         @cvode <node8#s:new_linsolv> Providing Alternate Linear Solver Modules *)
 
-    (* TODO:
-       2. Test.
-       3. Adapt for Kinsol.
-     *)
+    (* TODO: 2. Test. *)
 
     (** A flag that indicates any problems that occured during the solution of
         the nonlinear equation on the current time step for which the linear
@@ -862,7 +862,7 @@ module Alternate :
           
               @cvode <node8#SECTION00830000000000000000> lsolve *)
 
-        lfree  : (unit -> bool) option;
+        lfree  : (unit -> unit) option;
           (** This function is called once a problem has been completed and the
               linear solver is no longer needed.
 

@@ -146,8 +146,8 @@ module B =
         type data = Nvector_parallel.data
         type callbacks =
           {
-            local_fn : float -> data -> data -> data -> bool;
-            comm_fn  : (float -> data -> data -> bool) option;
+            local_fn : float -> data -> data -> data -> unit;
+            comm_fn  : (float -> data -> data -> unit) option;
           }
       end
   end
@@ -162,7 +162,7 @@ type 'a alternate_linsolv =
     linit  : (unit -> bool) option;
     lsetup : (conv_fail -> 'a -> 'a -> 'a triple_tmp -> bool) option;
     lsolve : 'a -> 'a -> 'a -> 'a -> unit;
-    lfree  : (unit -> bool) option;
+    lfree  : (unit -> unit) option;
   }
 
 (* the session type *)

@@ -126,6 +126,20 @@ let call_bbandjacfn session range jac m =
   | BBandCallback f -> adjust_retcode session (f range jac) m
   | _ -> assert false
 
+let call_bbbdlocal session t y yb glocal =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | BBBDCallback { B.Bbd.local_fn = f } ->
+      adjust_retcode session (f t y yb) glocal
+  | _ -> assert false
+
+let call_bbbdcomm session t y yb =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | BBBDCallback { B.Bbd.comm_fn = Some f } ->
+      adjust_retcode session (f t y) yb
+  | _ -> assert false
+
 let _ =
   Callback.register "c_cvodes_call_quadrhsfn"     call_quadrhsfn;
   Callback.register "c_cvodes_call_sensrhsfn1"    call_sensrhsfn1;
@@ -136,7 +150,10 @@ let _ =
   Callback.register "c_cvodes_call_bprecsolvefn"  call_bprecsolvefn;
   Callback.register "c_cvodes_call_bjactimesfn"   call_bjactimesfn;
   Callback.register "c_cvodes_call_bjacfn"        call_bjacfn;
-  Callback.register "c_cvodes_call_bbandjacfn"    call_bbandjacfn
+  Callback.register "c_cvodes_call_bbandjacfn"    call_bbandjacfn;
+
+  Callback.register "c_cvode_call_bbbdlocal"      call_bbbdlocal;
+  Callback.register "c_cvode_call_bbbdcomm"       call_bbbdcomm
 
 module Quadrature =
   struct
@@ -654,11 +671,17 @@ module Adjoint =
     type ('a, 'k) bsession = Bsession of ('a, 'k) session
     let tosession = function Bsession s -> s
     type serial_bsession = (real_array, Nvector_serial.kind) bsession
+    (* TODO: conditional compilation: *)
+    type bparallel_session =
+                      (Nvector_parallel.data, Nvector_parallel.kind) bsession
 
     type ('data, 'kind) linear_solver =
       ('data, 'kind) bsession -> ('data, 'kind) nvector -> unit
 
     type serial_linear_solver = (real_array, Nvector_serial.kind) linear_solver
+    (* TODO: conditional compilation: *)
+    type parallel_linear_solver =
+              (Nvector_parallel.data, Nvector_parallel.kind) linear_solver
 
     type ('data, 'kind) iter =
       | Newton of ('data, 'kind) linear_solver
@@ -1078,6 +1101,71 @@ module Adjoint =
               Cvode.Spils.Banded.get_num_rhs_evals (tosession bs)
           end
 
+          module BandBlock =
+            struct
+              type data = Nvector_parallel.data
+
+              type callbacks = B.Bbd.callbacks =
+                {
+                  local_fn : float -> data -> data -> data -> unit;
+
+                  comm_fn  : (float -> data -> data -> unit) option;
+                }
+
+              external c_bbd_prec_initb
+                  : (Cvode.parallel_session * int) -> int
+                    -> Cvode.Spils.BandBlock.bandwidths -> float -> bool -> unit
+                  = "c_cvodes_bbd_prec_initb"
+
+              let spgmr maxl prec_type bws dqrely cb bs nv =
+                let parent, which = parent_and_which bs in
+                let maxl   = match maxl with None -> 0 | Some ml -> ml in
+                let dqrely = match dqrely with None -> 0.0 | Some v -> v in
+                let ba, _, _ = Sundials.unvec nv in
+                let localn   = Sundials.RealArray.length ba in
+                c_spils_spgmr parent which maxl prec_type;
+                c_bbd_prec_initb (parent, which) localn bws dqrely
+                                                          (cb.comm_fn <> None);
+                (tosession bs).ls_callbacks <- BBBDCallback cb
+
+              let spbcg maxl prec_type bws dqrely cb bs nv =
+                let parent, which = parent_and_which bs in
+                let maxl   = match maxl with None -> 0 | Some ml -> ml in
+                let dqrely = match dqrely with None -> 0.0 | Some v -> v in
+                let ba, _, _ = Sundials.unvec nv in
+                let localn   = Sundials.RealArray.length ba in
+                c_spils_spbcg parent which maxl prec_type;
+                c_bbd_prec_initb (parent, which) localn bws dqrely
+                                                          (cb.comm_fn <> None);
+                (tosession bs).ls_callbacks <- BBBDCallback cb
+
+              let sptfqmr maxl prec_type bws dqrely cb bs nv =
+                let parent, which = parent_and_which bs in
+                let maxl   = match maxl with None -> 0 | Some ml -> ml in
+                let dqrely = match dqrely with None -> 0.0 | Some v -> v in
+                let ba, _, _ = Sundials.unvec nv in
+                let localn   = Sundials.RealArray.length ba in
+                c_spils_sptfqmr parent which maxl prec_type;
+                c_bbd_prec_initb (parent, which) localn bws dqrely
+                                                          (cb.comm_fn <> None);
+                (tosession bs).ls_callbacks <- BBBDCallback cb
+
+              external c_bbd_prec_reinitb
+                  : Cvode.parallel_session -> int -> int
+                    -> int -> float -> unit
+                  = "c_cvode_bbd_prec_reinitb"
+
+              let reinit bs mudq mldq dqrely =
+                let parent, which = parent_and_which bs in
+                let dqrely = match dqrely with None -> 0.0 | Some v -> v in
+                c_bbd_prec_reinitb parent which mudq mldq dqrely
+
+              let get_work_space bs =
+                        Cvode.Spils.BandBlock.get_work_space (tosession bs)
+
+              let get_num_gfn_evals bs =
+                        Cvode.Spils.BandBlock.get_num_gfn_evals (tosession bs)
+            end
       end
 
     let get_work_space bs = Cvode.get_work_space (tosession bs)

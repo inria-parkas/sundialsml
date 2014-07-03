@@ -470,6 +470,62 @@ module Spils :
     val get_num_func_evals    : ('a, 'k) session -> int
   end
 
+module Alternate :
+  sig
+    (** Alternate Linear Solvers
+
+        @kinsol <node8#s:new_linsolv> Providing Alternate Linear Solver Modules *)
+
+    (* TODO: 2. Test. *)
+
+    type 'data callbacks =
+      {
+        linit   : (unit -> bool) option;
+          (** Complete initializations for a specific linear solver, such as
+              counters and statistics. Returns [true] if successful.
+
+              @kinsol <node8#SECTION00810000000000000000> linit *)
+
+        lsetup : (unit -> unit) option;
+          (** The job of lsetup is to prepare the linear solver for subsequent
+              calls to lsolve. It may recompute Jacobian-related data if it
+              deems necessary.
+           
+              This function may raise a {!Sundials.RecoverableFailure} exception
+              to indicate that a recoverable error has occurred. Any other
+              exception is treated as an unrecoverable error.
+           
+              @kinsol <node8#SECTION00820000000000000000> lsetup *)
+           
+        lsolve : 'data -> 'data -> float;
+          (** [res_norm = lsolve x b] must solve the linear equation given:
+              - [x], on entry: an initial guess, on return: it should contain
+                the solution to [Jx = b].
+              - [b] is the right-hand side vector, set to [-F(u)], evaluated at
+                the current iterate.
+
+              This function should return the L2 norm of the residual vector. It
+              may raise a {!Sundials.RecoverableFailure} exception to indicate
+              that a recoverable error has occurred. Any other exception is
+              treated as an unrecoverable error.
+          
+              @kinsol <node8#SECTION00830000000000000000> lsolve *)
+
+        lfree  : (unit -> unit) option;
+          (** This function is called once a problem has been completed and the
+              linear solver is no longer needed.
+
+              @kinsol <node8#SECTION00840000000000000000> lfree *)
+      }
+
+    (** Create a linear solver from a function returning a set of callback
+        functions *)
+    val make_solver :
+          (('data, 'kind) session -> ('data, 'kind) nvector option
+                                                        -> 'data callbacks)
+          -> ('data, 'kind) linear_solver
+  end
+
 (** Increasing levels of verbosity for informational messages. *)
 type print_level =
   | NoInformation     (** [0] no information displayed. *)

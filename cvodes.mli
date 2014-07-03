@@ -865,6 +865,10 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
     type ('data, 'kind) bsession
     type serial_bsession = (real_array, Nvector_serial.kind) bsession
 
+    (* TODO: conditional compilation: *)
+    type bparallel_session =
+                      (Nvector_parallel.data, Nvector_parallel.kind) bsession
+
     (** {4:adjbwdinit Initialization} *)
 
     (** These functions evaluate the right-hand side of the backward ODE system
@@ -914,12 +918,13 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
         The Lapack solvers require that both Sundials and the OCaml interface
         were built to link with a LAPACK library.
 
-        The Banded Krylov solvers imply an additional call to
-        {{:CVODE_DOC_ROOT(node7#SECTION00741000000000000000)} CVBandPrecInitB}.
-
         @cvodes <node7#sss:lin_solv_b> Linear Solver Initialization Functions *)
     type ('data, 'kind) linear_solver
     type serial_linear_solver = (real_array, Nvector_serial.kind) linear_solver
+
+    (* TODO: conditional compilation: *)
+    type parallel_linear_solver =
+              (Nvector_parallel.data, Nvector_parallel.kind) linear_solver
 
     type ('a, 'k) tolerance =
       | SStolerances of float * float
@@ -1387,6 +1392,105 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
           val get_num_rhs_evals : serial_bsession -> int
         end
 
+        (* TODO: implement in C and ml. *)
+        (* TODO: conditional compilation: only with parallel nvectors *)
+        module BandBlock :
+          sig
+            (** Parallel Band-Block-Diagonal preconditioners
+
+                @cvodes <node7#SECTION00742000000000000000> Using the band-block-diagonal preconditioner CVBBDPRE *)
+            type data = Nvector_parallel.data
+
+            (** User-supplied functions for CVBBDPRE.
+
+                @cvodes <node7#SECTION00742200000000000000> CVBBDLocalFnB
+                @cvodes <node7#SECTION00742200000000000000> CVBBDCommFnB *)
+            type callbacks =
+              {
+                local_fn : float -> data -> data -> data -> unit;
+                  (** [gloc t y yb gb] computes [g(t, y)] into [gb] from the
+                      value of the independent variable [t], the current forward
+                      solution vector [y], and the current value of the backward
+                      dependent variable vector. This function should raise
+                      {!Sundials.RecoverableFailure} on a recoverable error, any
+                      other exception is treated as an unrecoverable error. *)
+
+                comm_fn  : (float -> data -> data -> unit) option;
+                  (** [cfn t y yb] performs all interprocess communication
+                      necessary for the execution of [local_fn] using the
+                      forward solution vector [y] and the backward dependent
+                      variable vector [yb]. This function should raise
+                      {!Sundials.RecoverableFailure} on a recoverable error, any
+                      other exception is treated as an unrecoverable error. *)
+              }
+
+            (** Same as Spgmr (the Krylov iterative solver with scaled
+                preconditioned GMRES), but the preconditioner is set to CVODE's
+                Parallel Band-Block-Diagonal implementation.
+                
+                The arguments specify the maximum dimension of the Krylov
+                subspace (pass [None] to use the default value [5].), the
+                preconditioning type, the bandwidths described under
+                {!bandwidths}, the relative increment in components of [y] used
+                in the difference quotient approximations (pass [None] to use
+                the default value [sqrt unit_roundoff]), and the callbacks
+                described under {!callbacks}.
+
+                @cvodes <node7#sss:lin_solv_b> CVSpgmrB
+                @cvodes <node7#SECTION00742100000000000000> CVBBDPrecInitB *)
+            val spgmr : int option -> preconditioning_type
+                        -> Cvode.Spils.BandBlock.bandwidths
+                        -> float option -> callbacks -> parallel_linear_solver
+
+            (** Same as Spbcg (the Krylov iterative solver with scaled
+                preconditioned Bi-CGStab), but the preconditioner is set to CVODE's
+                Parallel Band-Block-Diagonal implementation. The arguments are the
+                same as for [spgmr].
+
+                @cvodes <node7#sss:lin_solv_b> CVSpbcgB
+                @cvodes <node7#SECTION00742100000000000000> CVBBDPrecInitB *)
+            val spbcg : int option -> preconditioning_type
+                        -> Cvode.Spils.BandBlock.bandwidths
+                        -> float option -> callbacks -> parallel_linear_solver
+
+            (** Same as Spbcg (the Krylov iterative solver with scaled
+                preconditioned Bi-CGStab), but the preconditioner is set to CVODE's
+                Parallel Band-Block-Diagonal implementation. The arguments are the
+                same as for [spgmr].
+
+                @cvodes <node7#sss:lin_solv_b> CVSptfqmrB
+                @cvodes <node7#SECTION00742100000000000000> CVBBDPrecInitB *)
+            val sptfqmr : int option -> preconditioning_type
+                          -> Cvode.Spils.BandBlock.bandwidths
+                          -> float option -> callbacks -> parallel_linear_solver
+
+            (** [reinit s mudq mldq dqrely] reinitializes the BBD preconditioner
+                with upper ([mudq]) and lower ([mldq]) half-bandwidths to be used in
+                the difference quotient Jacobian approximation, and an optional
+                relative increment in components of [y] (passing [None] uses the
+                default value [sqrt unit_roundoff]).
+
+                @cvodes <node7#SECTION00742000000000000000> CVBBDPrecReInitB *)
+            val reinit : bparallel_session -> int -> int -> float option -> unit
+
+            (** {4 Optional output functions} *)
+
+            (** Returns the sizes of the real and integer workspaces used by the
+                band-block-diagonal preconditioner module.
+
+                (* TODO: this @cvode is correct *)
+                @cvode <node7#SECTION00742000000000000000> CVBBDPrecGetWorkSpace
+                @return ([real_size], [integer_size]) *)
+            val get_work_space : bparallel_session -> int * int
+
+            (** Returns the number of calls made to the user-supplied right-hand
+                side function due to finite difference banded Jacobian approximation in
+                the preconditioner setup function.
+
+                (* TODO: this @cvode is correct *)
+                @cvode <node7#SECTION00742000000000000000> CVBBDPrecGetNumGfnEvals *)
+            val get_num_gfn_evals : bparallel_session -> int
+          end
       end
 
     (** {4:adjbwdout Output} *)
@@ -1506,6 +1610,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
 
       @cvode <node5#sss:optout_main> CVodeGetNonlinSolvStats *)
     val get_nonlin_solv_stats : ('a, 'k) bsession -> int *int
+    (* TODO: check all @cvode links *)
 
     (** {2:adjquad Quadrature Equations} *)
 

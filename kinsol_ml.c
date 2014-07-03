@@ -32,6 +32,7 @@
 #include <kinsol/kinsol_sptfqmr.h>
 #include <kinsol/kinsol_bbdpre.h>
 #include <kinsol/kinsol_spils.h>
+#include <kinsol/kinsol_impl.h>
 
 #if SUNDIALS_BLAS_LAPACK == 1
 #include <kinsol/kinsol_lapack.h>
@@ -352,6 +353,74 @@ static int jactimesfn(
     if (r == 0) *new_uu = Bool_val(Field(vr, 0));
 
     CAMLreturnT(int, r);
+}
+
+static int linit(KINMem kin_mem)
+{
+    CAMLparam0();
+    int r;
+    value *backref = kin_mem->kin_user_data;
+    CAML_FN (call_linit);
+
+    r = Int_val (caml_callback(*call_linit, *backref));
+
+    CAMLreturnT(int, r);
+}
+
+static int lsetup(KINMem kin_mem)
+{
+    CAMLparam0();
+    int r;
+    value *backref = kin_mem->kin_user_data;
+    CAML_FN (call_lsetup);
+
+    r = Int_val (caml_callback(*call_lsetup, *backref));
+
+    CAMLreturnT(int, r);
+}
+
+static int lsolve(KINMem kin_mem, N_Vector x, N_Vector b, realtype *res_norm)
+{
+    CAMLparam0();
+    CAMLlocalN(args, 3);
+    CAMLlocal1(vr);
+    value *backref = kin_mem->kin_user_data;
+    CAML_FN (call_lsolve);
+
+    args[0] = *backref;
+    args[1] = NVEC_BACKLINK(x);
+    args[2] = NVEC_BACKLINK(b);
+
+    vr = caml_callbackN(*call_lsolve, sizeof (args) / sizeof (*args), args);
+    *res_norm = Double_val(Field(vr, 0));
+
+    CAMLreturnT(int, Int_val(Field(vr, 1)));
+}
+
+static void lfree(KINMem kin_mem)
+{
+    CAMLparam0();
+    value *backref = kin_mem->kin_user_data;
+    CAML_FN (call_lfree);
+
+    caml_callback(*call_lfree, *backref);
+
+    CAMLreturn0;
+}
+
+CAMLprim void c_kinsol_set_alternate (value vkin_mem, value vhas_init,
+				      value vhas_setup, value vhas_free)
+{
+    CAMLparam4(vkin_mem, vhas_init, vhas_setup, vhas_free);
+    KINMem kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
+
+    kin_mem->kin_linit  = Bool_val(vhas_init)  ? linit : NULL;
+    kin_mem->kin_lsetup = Bool_val(vhas_setup) ? lsetup : NULL;
+    kin_mem->kin_lsolve = lsolve;
+    kin_mem->kin_lfree  = Bool_val(vhas_free)  ? lfree : NULL;
+    kin_mem->kin_lmem   = NULL;
+
+    CAMLreturn0;
 }
 
 /* Dense and Band can only be used with serial NVectors.  */

@@ -97,12 +97,22 @@ type 'a spils_callbacks =
     jac_times_vec_fn : ('a -> 'a -> 'a -> bool -> bool) option;
   }
 
+type 'a alternate_linsolv =
+  {
+    linit  : (unit -> bool) option;
+    lsetup : (unit -> unit) option;
+    lsolve : 'a -> 'a -> float;
+    lfree  : (unit -> unit) option;
+  }
+
 type ('a, 'kind) linsolv_callbacks =
   | NoCallbacks
 
   | DenseCallback of dense_jac_fn
   | BandCallback  of band_jac_fn
   | SpilsCallback of 'a spils_callbacks
+
+  | AlternateCallback of 'a alternate_linsolv
 
 type ('a, 'k) session = {
   kinsol    : kin_mem;
@@ -138,6 +148,12 @@ let adjust_retcode = fun session check_recoverable f x ->
   with
   | Sundials.RecoverableFailure _ when check_recoverable -> 1
   | e -> (session.exn_temp <- Some e; -1)
+
+let adjust_retcode_and_float = fun session f x ->
+  try (f x, 0)
+  with
+  | Sundials.RecoverableFailure _ -> (0.0, 1)
+  | e -> (session.exn_temp <- Some e; (0.0, -1))
 
 let call_sysfn session u fval =
   let session = read_weak_ref session in
@@ -192,15 +208,50 @@ let call_jactimesfn session v jv u new_uu =
        | e -> (session.exn_temp <- Some e; (false, -1)))
   | _ -> assert false
 
+let call_linit session =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | AlternateCallback { linit = Some f } ->
+      adjust_retcode session false f ()
+  | _ -> assert false
+
+let call_lsetup session =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | AlternateCallback { lsetup = Some f } ->
+      adjust_retcode session true f ()
+  | _ -> assert false
+
+let call_lsolve session x b =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | AlternateCallback { lsolve = f } ->
+      adjust_retcode_and_float session (f x) b
+  | _ -> assert false
+
+let call_lfree session =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | AlternateCallback { lfree = Some f } -> adjust_retcode session false f ()
+  | _ -> assert false
+
 let _ =
-  Callback.register "c_kinsol_call_sysfn"         call_sysfn;
-  Callback.register "c_kinsol_call_errh"          call_errh;
-  Callback.register "c_kinsol_call_infoh"         call_infoh;
-  Callback.register "c_kinsol_call_jacfn"         call_jacfn;
-  Callback.register "c_kinsol_call_bandjacfn"     call_bandjacfn;
-  Callback.register "c_kinsol_call_precsolvefn"   call_precsolvefn;
-  Callback.register "c_kinsol_call_precsetupfn"   call_precsetupfn;
-  Callback.register "c_kinsol_call_jactimesfn"    call_jactimesfn
+  Callback.register "c_kinsol_call_sysfn"        call_sysfn;
+  Callback.register "c_kinsol_call_errh"         call_errh;
+  Callback.register "c_kinsol_call_infoh"        call_infoh;
+
+  Callback.register "c_kinsol_call_jacfn"        call_jacfn;
+  Callback.register "c_kinsol_call_bandjacfn"    call_bandjacfn;
+
+  Callback.register "c_kinsol_call_precsolvefn"  call_precsolvefn;
+  Callback.register "c_kinsol_call_precsetupfn"  call_precsetupfn;
+  Callback.register "c_kinsol_call_jactimesfn"   call_jactimesfn;
+
+  Callback.register "c_kinsol_call_linit"        call_linit;
+  Callback.register "c_kinsol_call_lsetup"       call_lsetup;
+  Callback.register "c_kinsol_call_lsolve"       call_lsolve;
+  Callback.register "c_kinsol_call_lfree"        call_lfree
+
 
 external session_finalize : ('a, 'k) session -> unit
     = "c_kinsol_session_finalize"
@@ -420,6 +471,28 @@ module Spils =
 
     external get_num_func_evals    : ('a, 'k) session -> int
         = "c_kinsol_spils_get_num_func_evals"
+  end
+
+module Alternate =
+  struct
+
+    type 'data callbacks = 'data alternate_linsolv =
+      {
+        linit  : (unit -> bool) option;
+        lsetup : (unit -> unit) option;
+        lsolve : 'data -> 'data -> float;
+        lfree  : (unit -> unit) option;
+      }
+
+    external c_set_alternate
+      : ('data, 'kind) session -> bool -> bool -> bool -> unit
+      = "c_kinsol_set_alternate"
+
+    let make_solver f s nv =
+      let { linit; lsetup; lsolve; lfree } as cb = f s nv in
+      c_set_alternate s (linit <> None) (lsetup <> None) (lfree <> None);
+      s.ls_callbacks <- AlternateCallback cb
+
   end
 
 external set_error_file : ('a, 'k) session -> string -> bool -> unit
