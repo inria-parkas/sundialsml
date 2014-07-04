@@ -5,13 +5,13 @@ include config
 
 MLOBJ_MAIN = sundials.cmo dls.cmo \
 	     nvector_serial.cmo nvector_custom.cmo nvector_array.cmo \
-	     $(NVECTOR_OTHER) \
+	     $(MPI_MODULES) \
 	     spils.cmo cvode.cmo kinsol.cmo
 	     #ida.cmo ida_nvector.cmo ida_serial.cmo
 
 MLOBJ_SENS = cvodes.cmo
 
-MLOBJ_LOCAL = cvode_session.cmo
+MLOBJ_LOCAL = cvode_impl.cmo kinsol_impl.cmo
 
 MLOBJ_WOS = $(MLOBJ_LOCAL) $(MLOBJ_MAIN)
 MLOBJ = $(MLOBJ_WOS) $(MLOBJ_SENS)
@@ -125,7 +125,7 @@ doc/html/index.html: doc/html dochtml.cmo intro.doc \
 	    -kinsol-doc-root "$(KINSOL_DOC_ROOT)" 	\
 	    -pp "$(DOCPP)"				\
 	    -d ./doc/html/				\
-	    -hide Cvode_session 			\
+	    -hide Cvode_impl,Kinsol_impl 		\
 	    -t "Sundials"				\
 	    -intro intro.doc				\
 	    $(MLOBJ_MAIN:.cmo=.mli) $(MLOBJ_SENS:.cmo=.mli)

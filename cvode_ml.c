@@ -392,7 +392,6 @@ static int jactimesfn(
     CAMLreturnT(int, retcode);
 }
 
-// TODO: compile this file with this option
 #ifdef SUNDIALSML_WITHMPI
 static int bbdlocal(int nlocal, realtype t, N_Vector y, N_Vector glocal,
 		    void *user_data)

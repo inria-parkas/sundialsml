@@ -10,6 +10,8 @@
 (*                                                                     *)
 (***********************************************************************)
 
+include Kinsol_impl
+
 exception IllInput                       (* KIN_ILL_INPUT *)
 exception LineSearchNonConvergence       (* KIN_LINESEARCH_NONCONV *)
 exception MaxIterationsReached           (* KIN_MAXITER_REACHED *)
@@ -42,27 +44,6 @@ let _ =
     ("kinsol_RepeatedSystemFunctionFailure",  RepeatedSystemFunctionFailure);
   ]
 
-type ('a, 'k) nvector = ('a, 'k) Sundials.nvector
-
-type 'a single_tmp = 'a
-type 'a double_tmp = 'a * 'a
-
-type ('t, 'a) jacobian_arg =
-  {
-    jac_u   : 'a;
-    jac_fu  : 'a;
-    jac_tmp : 't
-  }
-
-type real_array = Sundials.RealArray.t
-
-type dense_jac_fn = (real_array double_tmp, real_array) jacobian_arg
-                        -> Dls.DenseMatrix.t -> unit
-
-type bandrange = { mupper : int; mlower : int; }
-
-type band_jac_fn = bandrange -> (real_array double_tmp, real_array) jacobian_arg
-                        -> Dls.BandMatrix.t -> unit
 
 type print_level =
   | NoInformation     (* 0 *)
@@ -80,80 +61,10 @@ type eta_choice =
   | EtaChoice2 of eta_params    (* KIN_ETACHOICE2 *)
   | EtaConstant of float option (* KIN_ETACONSTANT *)
 
-type kin_mem
-type kin_file
-type c_weak_ref
-
-type 'a prec_solve_arg = { uscale : 'a; fscale : 'a; }
-
-type 'a spils_callbacks =
-  {
-    prec_solve_fn : (('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
-                      -> 'a -> unit) option;
-
-    prec_setup_fn : (('a double_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
-                     -> unit) option;
-
-    jac_times_vec_fn : ('a -> 'a -> 'a -> bool -> bool) option;
-  }
-
-type 'a alternate_linsolv =
-  {
-    linit  : (unit -> bool) option;
-    lsetup : (unit -> unit) option;
-    lsolve : 'a -> 'a -> float;
-    lfree  : (unit -> unit) option;
-  }
-
-type ('a, 'kind) linsolv_callbacks =
-  | NoCallbacks
-
-  | DenseCallback of dense_jac_fn
-  | BandCallback  of band_jac_fn
-  | SpilsCallback of 'a spils_callbacks
-
-  | AlternateCallback of 'a alternate_linsolv
-
-type ('a, 'k) session = {
-  kinsol    : kin_mem;
-  backref   : c_weak_ref;
-  err_file  : kin_file;
-  info_file : kin_file;
-
-  mutable neqs       : int;    (* only valid for 'kind = serial *)
-  mutable exn_temp   : exn option;
-
-  mutable sysfn      : 'a -> 'a -> unit;
-  mutable errh       : Sundials.error_details -> unit;
-  mutable infoh      : Sundials.error_details -> unit;
-
-  mutable ls_callbacks : ('a, 'k) linsolv_callbacks;
-}
-
 type serial_session = (real_array, Nvector_serial.kind) session
-
-type ('data, 'kind) linear_solver =
-  ('data, 'kind) session -> (('data, 'kind) nvector) option -> unit
 type serial_linear_solver = (real_array, Nvector_serial.kind) linear_solver
 
 (* interface *)
-
-let read_weak_ref x : ('a, 'k) session =
-  match Weak.get x 0 with
-  | Some y -> y
-  | None -> raise (Failure "Internal error: weak reference is dead")
-
-let adjust_retcode = fun session check_recoverable f x ->
-  try f x; 0
-  with
-  | Sundials.RecoverableFailure _ when check_recoverable -> 1
-  | e -> (session.exn_temp <- Some e; -1)
-
-let adjust_retcode_and_float = fun session f x ->
-  try (f x, 0)
-  with
-  | Sundials.RecoverableFailure _ -> (0.0, 1)
-  | e -> (session.exn_temp <- Some e; (0.0, -1))
 
 let call_sysfn session u fval =
   let session = read_weak_ref session in
@@ -251,7 +162,6 @@ let _ =
   Callback.register "c_kinsol_call_lsetup"       call_lsetup;
   Callback.register "c_kinsol_call_lsolve"       call_lsolve;
   Callback.register "c_kinsol_call_lfree"        call_lfree
-
 
 external session_finalize : ('a, 'k) session -> unit
     = "c_kinsol_session_finalize"

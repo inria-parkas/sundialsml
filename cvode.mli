@@ -111,13 +111,10 @@ t := t' + 0.1]}
 
     @cvode <node5#ss:skeleton_sim> Skeleton of main program
  *)
-type ('a, 'k) session = ('a, 'k) Cvode_session.session
+type ('a, 'k) session = ('a, 'k) Cvode_impl.session
 
 type real_array = Sundials.RealArray.t
 type serial_session = (real_array, Nvector_serial.kind) session
-
-(* TODO: conditional compilation: *)
-type parallel_session = (Nvector_parallel.data, Nvector_parallel.kind) session
 
 (** The type of vectors passed to the solver. *)
 type ('data, 'kind) nvector = ('data, 'kind) Sundials.nvector
@@ -127,12 +124,8 @@ type ('data, 'kind) nvector = ('data, 'kind) Sundials.nvector
 (** Specify a linear solver.
 
     @cvode <node5#sss:lin_solv_init> Linear Solver Specification Functions *)
-type ('data, 'kind) linear_solver
+type ('data, 'kind) linear_solver = ('data, 'kind) Cvode_impl.linear_solver
 type serial_linear_solver = (real_array, Nvector_serial.kind) linear_solver
-
-(* TODO: conditional compilation: *)
-type parallel_linear_solver =
-          (Nvector_parallel.data, Nvector_parallel.kind) linear_solver
 
 module Diag :
   sig
@@ -678,115 +671,6 @@ module Spils :
 
             @cvode <node5#sss:cvbandpre> CVBandPrecGetNumRhsEvals *)
         val get_num_rhs_evals : serial_session -> int
-      end
-
-    (* TODO: conditional compilation: only with parallel nvectors *)
-
-    (** TODO:
-        4. Implement examples (cvode/parallel and cvodes/parallel).
-        5. Update the TODO file.
-        6. Compile conditionally.
-      *)
-    module BandBlock :
-      sig
-        (** Parallel Band-Block-Diagonal preconditioners
-
-            @cvode <node5#sss:cvbbdpre> Parallel band-block-diagonal preconditioner module *)
-
-        type data = Nvector_parallel.data
-
-        type bandwidths =
-          {
-            mudq    : int; (** Upper half-bandwidth to be used in the difference
-                               quotient Jacobian approximation. *)
-            mldq    : int; (** Lower half-bandwidth to be used in the difference
-                               quotient Jacobian approximation. *)
-            mukeep  : int; (** Upper half-bandwidth of the retained banded
-                               approximate Jacobian block. *)
-            mlkeep  : int; (** Lower half-bandwidth of the retained banded
-                               approximate Jacobian block. *)
-          }
- 
-        (** User-supplied functions for CVBBDPRE.
-
-            @cvodes <node5#sss:cvbbdpre> CVBBDLocalFn
-            @cvodes <node5#sss:cvbbdpre> CVBBDCommFn *)
-        type callbacks =
-          {
-            local_fn : float -> data -> data -> unit;
-              (** [gloc t y gd] computes [g(t, y)] into [gd]. This function
-                  should raise {!Sundials.RecoverableFailure} on a
-                  recoverable error, any other exception is treated as an
-                  unrecoverable error. *)
-
-            comm_fn  : (float -> data -> unit) option;
-              (** [cfn t y] performs all interprocess communication necessary
-                  for the execution of [local_fn] using the input vector [y].
-                  This function should raise {!Sundials.RecoverableFailure} on a
-                  recoverable error, any other exception is treated as an
-                  unrecoverable error. *)
-          }
-
-        (** Same as Spgmr (the Krylov iterative solver with scaled
-            preconditioned GMRES), but the preconditioner is set to CVODE's
-            Parallel Band-Block-Diagonal implementation.
-            
-            The arguments specify the maximum dimension of the Krylov subspace
-            (pass [None] to use the default value [5].), the preconditioning
-            type, the bandwidths described under {!bandwidths}, the relative
-            increment in components of [y] used in the difference quotient
-            approximations (pass [None] to use the default value [sqrt
-            unit_roundoff]), and the callbacks described under {!callbacks}.
-
-            @cvode <node5#sss:lin_solve_init> CVSpgmr
-            @cvode <node5#sss:cvbbdpre> CVBBDPrecInit *)
-        val spgmr : int option -> preconditioning_type -> bandwidths
-                        -> float option -> callbacks -> parallel_linear_solver
-
-        (** Same as Spbcg (the Krylov iterative solver with scaled
-            preconditioned Bi-CGStab), but the preconditioner is set to CVODE's
-            Parallel Band-Block-Diagonal implementation. The arguments are the
-            same as for [spgmr].
-
-            @cvode <node5#sss:lin_solve_init> CVSpbcg
-            @cvode <node5#sss:cvbbdpre> CVBBDPrecInit *)
-        val spbcg : int option -> preconditioning_type -> bandwidths
-                        -> float option -> callbacks -> parallel_linear_solver
-
-        (** Same as Spbcg (the Krylov iterative solver with scaled
-            preconditioned Bi-CGStab), but the preconditioner is set to CVODE's
-            Parallel Band-Block-Diagonal implementation. The arguments are the
-            same as for [spgmr].
-
-            @cvode <node5#sss:lin_solve_init> CVSptfqmr
-            @cvode <node5#sss:cvbbdpre> CVBBDPrecInit *)
-        val sptfqmr : int option -> preconditioning_type -> bandwidths
-                        -> float option -> callbacks -> parallel_linear_solver
-
-        (** [reinit s mudq mldq dqrely] reinitializes the BBD preconditioner
-            with upper ([mudq]) and lower ([mldq]) half-bandwidths to be used in
-            the difference quotient Jacobian approximation, and an optional
-            relative increment in components of [y] (passing [None] uses the
-            default value [sqrt unit_roundoff]).
-
-            @cvode <node5#sss:cvbbdpre> CVBBDPrecReInit *)
-        val reinit : parallel_session -> int -> int -> float option -> unit
-
-        (** {4 Optional output functions} *)
-
-        (** Returns the sizes of the real and integer workspaces used by the
-            band-block-diagonal preconditioner module.
-
-            @cvode <node5#sss:cvbbdpre> CVBBDPrecGetWorkSpace
-            @return ([real_size], [integer_size]) *)
-        val get_work_space : parallel_session -> int * int
-
-        (** Returns the number of calls made to the user-supplied right-hand
-            side function due to finite difference banded Jacobian approximation in
-            the preconditioner setup function.
-
-            @cvode <node5#sss:cvbbdpre> CVBBDPrecGetNumGfnEvals *)
-        val get_num_gfn_evals : parallel_session -> int
       end
   end
 

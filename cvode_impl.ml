@@ -69,24 +69,13 @@ type 'a sensrhsfn =
 type 'a quadsensrhsfn =
    float -> 'a -> 'a array -> 'a -> 'a array -> 'a -> 'a -> unit
 
-(* TODO: conditional compilation *)
 (* BBD definitions *)
 module Bbd =
   struct
-    type data = Nvector_parallel.data
-
-    type bandwidths =
+    type 'data callbacks =
       {
-        mudq    : int;
-        mldq    : int;
-        mukeep  : int;
-        mlkeep  : int;
-      }
-
-    type callbacks =
-      {
-        local_fn : float -> data -> data -> unit;
-        comm_fn  : (float -> data -> unit) option;
+        local_fn : float -> 'data -> 'data -> unit;
+        comm_fn  : (float -> 'data -> unit) option;
       }
   end
 
@@ -140,14 +129,12 @@ module B =
           bandrange -> (real_array triple_tmp, real_array) jacobian_arg
               -> Dls.BandMatrix.t -> unit
 
-    (* TODO: conditional compilation *)
     module Bbd =
       struct
-        type data = Nvector_parallel.data
-        type callbacks =
+        type 'data callbacks =
           {
-            local_fn : float -> data -> data -> data -> unit;
-            comm_fn  : (float -> data -> data -> unit) option;
+            local_fn : float -> 'data -> 'data -> 'data -> unit;
+            comm_fn  : (float -> 'data -> 'data -> unit) option;
           }
       end
   end
@@ -177,14 +164,14 @@ type ('a, 'kind) linsolv_callbacks =
   | DenseCallback of dense_jac_fn
   | BandCallback  of band_jac_fn
   | SpilsCallback of 'a spils_callbacks
-  | BBDCallback of Bbd.callbacks
+  | BBDCallback of 'a Bbd.callbacks
 
   | AlternateCallback of 'a alternate_linsolv
 
   | BDenseCallback of B.dense_jac_fn
   | BBandCallback  of B.band_jac_fn
   | BSpilsCallback of 'a B.spils_callbacks
-  | BBBDCallback of B.Bbd.callbacks
+  | BBBDCallback of 'a B.Bbd.callbacks
 
 type ('a, 'kind) session = {
       cvode      : cvode_mem;
@@ -246,4 +233,29 @@ and ('a, 'kind) bsensext = {
     mutable bquadrhsfn    : (float -> 'a -> 'a -> 'a -> unit);
     mutable bquadrhsfn1   : (float -> 'a -> 'a array -> 'a -> 'a -> unit);
   }
+
+type ('a, 'k) bsession = Bsession of ('a, 'k) session
+let tosession = function Bsession s -> s
+
+type ('data, 'kind) linear_solver = ('data, 'kind) session
+                                        -> ('data, 'kind) nvector -> unit
+type ('data, 'kind) blinear_solver = ('data, 'kind) bsession
+                                        -> ('data, 'kind) nvector -> unit
+
+let read_weak_ref x : ('a, 'kind) session =
+  match Weak.get x 0 with
+  | Some y -> y
+  | None -> raise (Failure "Internal error: weak reference is dead")
+
+let adjust_retcode = fun session check_recoverable f x ->
+  try f x; 0
+  with
+  | Sundials.RecoverableFailure _ when check_recoverable -> 1
+  | e -> (session.exn_temp <- Some e; -1)
+
+let adjust_retcode_and_bool = fun session f x ->
+  try (f x, 0)
+  with
+  | Sundials.RecoverableFailure r -> (r, 1)
+  | e -> (session.exn_temp <- Some e; (false, -1))
 

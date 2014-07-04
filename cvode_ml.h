@@ -176,17 +176,6 @@ enum cvode_spils_callbacks_index {
   RECORD_CVODE_SPILS_CALLBACKS_SIZE
 };
 
-// Field(					    -- Some _
-//	 Field(					    -- .prec_setup_fn
-//	       Field(				    -- SpilsCallback _
-//		     CVODE_CALLBACKS_FROM_ML((v)),  -- session.callbacks
-//		     0),
-//	       RECORD_CVODE_SPILS_CALLBACKS_PREC_SETUP_FN),
-//	 0)
-#define CVODE_PRECSETUPFN_FROM_ML(v) Field(Field(		\
-		Field(CVODE_CALLBACKS_FROM_ML((v)), 0),		\
-		RECORD_CVODE_SPILS_CALLBACKS_PREC_SETUP_FN), 0)
-
 enum cvode_lmm_tag {
   VARIANT_CVODE_LMM_ADAMS = 0,
   VARIANT_CVODE_LMM_BDF,

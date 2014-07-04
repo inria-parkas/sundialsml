@@ -355,6 +355,45 @@ static int jactimesfn(
     CAMLreturnT(int, r);
 }
 
+#ifdef SUNDIALSML_WITHMPI
+static int bbdlocal(int nlocal, N_Vector u, N_Vector gval, void *user_data)
+{
+    CAMLparam0();
+    CAMLlocalN(args, 3);
+    int r;
+    value *backref = user_data;
+    CAML_FN (call_bbdlocal);
+
+    args[0] = *backref;
+    args[1] = NVEC_BACKLINK(u);
+    args[2] = NVEC_BACKLINK(gval);
+
+    r = Int_val (caml_callbackN(*call_bddlocal,
+                                sizeof (args) / sizeof (*args),
+                                args));
+
+    CAMLreturnT(int, r);
+}
+
+static int bbdcomm(int nlocal, N_Vector u, void *user_data)
+{
+    CAMLparam0();
+    CAMLlocalN(args, 2);
+    int r;
+    value *backref = user_data;
+    CAML_FN (call_bbdcomm);
+
+    args[0] = *backref;
+    args[1] = NVEC_BACKLINK(u);
+
+    r = Int_val (caml_callbackN(*call_bddcomm,
+                                sizeof (args) / sizeof (*args),
+                                args));
+
+    CAMLreturnT(int, r);
+}
+#endif
+
 static int linit(KINMem kin_mem)
 {
     CAMLparam0();
@@ -422,6 +461,65 @@ CAMLprim void c_kinsol_set_alternate (value vkin_mem, value vhas_init,
 
     CAMLreturn0;
 }
+
+#ifdef SUNDIALSML_WITHMPI
+
+CAMLprim void c_kinsol_bbd_prec_init (value vkin_mem, value vlocaln,
+				      value vbandwidths, value vdqrely,
+				      value vhascomm)
+{
+    CAMLparam5(vkin_mem, vlocaln, vbandwidths, vdqrely, vhascomm);
+    void *kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
+    int flag;
+
+    flag = KINBBDPrecInit (kin_mem,
+	Long_val(vlocaln),
+	Long_val(Field(vbandwidths, RECORD_KINSOL_BANDBLOCK_BANDWIDTHS_MUDQ)),
+	Long_val(Field(vbandwidths, RECORD_KINSOL_BANDBLOCK_BANDWIDTHS_MLDQ)),
+	Long_val(Field(vbandwidths, RECORD_KINSOL_BANDBLOCK_BANDWIDTHS_MUKEEP)),
+	Long_val(Field(vbandwidths, RECORD_KINSOL_BANDBLOCK_BANDWIDTHS_MLKEEP)),
+	Double_val(vdqrely),
+	bbdlocal,
+	Bool_val(vhascomm) ? bbdcomm : NULL);
+    CHECK_FLAG ("KINBBDPrecInit", flag);
+
+    CAMLreturn0;
+}
+
+CAMLprim value c_kinsol_bbd_get_work_space(value vkin_mem)
+{
+    CAMLparam1(vkin_mem);
+    CAMLlocal1(r);
+
+    int flag;
+    long int lenrw;
+    long int leniw;
+
+    flag = KINBBDPrecGetWorkSpace(KIN_MEM_FROM_ML(vkin_mem), &lenrw, &leniw);
+    CHECK_FLAG("KINBBDPrecGetWorkSpace", flag);
+
+    r = caml_alloc_tuple(2);
+
+    Store_field(r, 0, Val_long(lenrw));
+    Store_field(r, 1, Val_long(leniw));
+
+    CAMLreturn(r);
+}
+
+CAMLprim value c_kinsol_bbd_get_num_gfn_evals(value vkin_mem)
+{
+    CAMLparam1(vkin_mem);
+
+    int flag;
+    long int v;
+
+    flag = KINBBDPrecGetNumGfnEvals(KIN_MEM_FROM_ML(vkin_mem), &v);
+    CHECK_FLAG("KINBBDPrecGetNumGfnEvals", flag);
+
+    CAMLreturn(Val_long(v));
+}
+  
+#endif
 
 /* Dense and Band can only be used with serial NVectors.  */
 CAMLprim void c_kinsol_dls_dense (value vkin_mem, value vset_jac)

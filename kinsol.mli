@@ -88,7 +88,7 @@ exception RepeatedSystemFunctionFailure
     statistics.
 
     @kinsol <node5#ss:skeleton_sol> Skeleton of main program *)
-type ('data, 'kind) session
+type ('data, 'kind) session = ('data, 'kind) Kinsol_impl.session
 
 type real_array = Sundials.RealArray.t
 type serial_session = (real_array, Nvector_serial.kind) session
@@ -105,7 +105,7 @@ type ('data, 'kind) nvector = ('data, 'kind) Sundials.nvector
    built to link with a LAPACK library.
 
    @kinsol <node5#sss:lin_solv_init> Linear Solver Specification Functions *)
-type ('data, 'kind) linear_solver
+type ('data, 'kind) linear_solver = ('data, 'kind) Kinsol_impl.linear_solver
 type serial_linear_solver = (real_array, Nvector_serial.kind) linear_solver
 
 type 'a single_tmp = 'a

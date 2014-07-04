@@ -157,7 +157,7 @@ fi
 # Check for OCamlMPI installation
 ocamlmpi="${OCAMLMPI:-${ocaml_libpath}mpi}"
 if [ ${enable_mpi:-0} -eq 0 ]; then
-    ocamlmpi_enabled=0
+    ocamlmpi_enabled=
     ocamlmpi='NOT ENABLED (--enable-mpi for parallel features)'
 else
     ocamlmpi_enabled=1
@@ -167,16 +167,16 @@ else
 	    ocamlmpi="${opam_libpath}mpi"
 	    if [ ! -e "${ocamlmpi}/mpi.cmi" ]; then
 		ocamlmpi='NOT FOUND (no parallel features)'
-		ocamlmpi_enabled=0
+		ocamlmpi_enabled=
 	    fi
 	fi
     fi
 fi
-if [ ${ocamlmpi_enabled} -eq 0 ]; then
-    ocamlmpi_path=''
-else
+if [ ${ocamlmpi_enabled} -eq 1 ]; then
     ocamlmpi_path="$ocamlmpi"
     ocamlmpi="${ocamlmpi} (compiler: ${mpicc:-mpicc})"
+else
+    ocamlmpi_path=''
 fi
 
 # Check for Sundials installation (and version)
