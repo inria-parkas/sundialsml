@@ -1,4 +1,9 @@
 
+Decrees
+-------
+* Makefiles will be used for the build system; though we will try to
+  simplify and improve them.
+
 TODO
 ----
 
@@ -21,12 +26,19 @@ DONE 5. (Tim) Interface to CVODES with maximal reuse and minimal copy-paste
 
 DONE 6. (Tim) Rework the nvector interface and eliminate code duplication.
 
-7. (Tim) Interface the Alternate Linear Solver Modules
+DONE 7. (Tim) Interface the Alternate Linear Solver Modules
    http://computation.llnl.gov/casc/sundials/documentation/cv_guide/node8.html
 
-8. (Tim) Interface with Parallel NVectors
+DONE 8. (Tim) Interface with Parallel NVectors
 
 9. (Jun) Interface to IDAS with maximal reuse and minimal copy-paste
+    - adapt for parallel nvector changes
+    - add alternate linear solver modules
+    - add BDD solver.
+    - ensure consistency with recent changes cvode/cvodes.
+
+10. (Jun) Ensure that all examples are implemented.
+    Add the missing parallel examples for cvode, cvodes, kinsol, ida, idas. 
 
 10. (Jun) OPAM/findlib wrappers.
    - Everything properly supported in a toplevel
@@ -67,19 +79,15 @@ MINOR PATCHES
 
 3. CVODE/IDA: set_preconditioner should allow the setup function to be
    optional.
+   - done for CVODE.
 
-4. Revisit the structure of modules (for instance, should we include
-   Sundials everywhere?)
-
-5. Tidy up the documentation; in particular, add @raise tags for functions
+4. Tidy up the documentation; in particular, add @raise tags for functions
    that raise exceptions (like get_dky... )
 
-6. All call-back functions to be typed/documented as per CVODES.
-
-7. (Done) Rename Carray to Realarray?
+DONE 5. Rename Carray to Realarray?
    Rename create functions to make?
 
-8. Using spgmr linear solver with prec_setup = None and prec_solve = Some
+6. Using spgmr linear solver with prec_setup = None and prec_solve = Some
    crashes.
 
 TO DISCUSS
@@ -94,4 +102,7 @@ TO DISCUSS
   - it's not really suited to building a library with everything
   Or propose changes on the sundials-users list?
 
+* Change the payload of Parallel_nvectors to just a real_array (i.e., no
+  global length and no communciator; none of the sundials examples use
+  these.)
 
