@@ -2,7 +2,8 @@ include ../../../../config
 
 MPIRUN = mpirun
 EXAMPLES = cvDiurnal_kry_p.ml \
-	   cvDiurnal_kry_bbd_p.ml
+	   cvDiurnal_kry_bbd_p.ml \
+	   cvAdvDiff_non_p.ml
 
 DIVIDER = "----------------------------------------------------------------------"
 
@@ -71,6 +72,16 @@ cvDiurnal_kry_bbd_p.opt.out: cvDiurnal_kry_bbd_p.opt
 cvDiurnal_kry_bbd_p.sundials.out: \
     			$(EXAMPLESROOT)/cvode/parallel/cvDiurnal_kry_bbd_p
 	$(MPIRUN) -np 4 $< > $@
+
+cvAdvDiff_non_p.byte: cvAdvDiff_non_p.ml
+cvAdvDiff_non_p.opt: cvAdvDiff_non_p.ml
+cvAdvDiff_non_p.byte.out: cvAdvDiff_non_p.byte
+	$(MPIRUN) -np 6 $< > $@
+cvAdvDiff_non_p.opt.out: cvAdvDiff_non_p.opt
+	$(MPIRUN) -np 6 $< > $@
+cvAdvDiff_non_p.sundials.out: \
+    			$(EXAMPLESROOT)/cvode/parallel/cvAdvDiff_non_p
+	$(MPIRUN) -np 6 $< > $@
 
 ##
 

@@ -105,6 +105,13 @@ module RealArray =
       done;
       a
 
+    let fold_left f b (v : t) =
+      let acc = ref b in
+      for i = 0 to (length v - 1) do
+        acc := f !acc v.{i}
+      done;
+      !acc
+
     let app f (v : t) =
       for i = 0 to (length v - 1) do
         f v.{i}

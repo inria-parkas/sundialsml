@@ -108,6 +108,9 @@ module RealArray :
         and then a newline. See also {!extra_precision}. *)
     val print_with_time : float -> t -> unit
 
+    (** [fold_left f b a] returns [f (f (f b a.{0}) a.{1}) ...]. *)
+    val fold_left : ('a -> float -> 'a) -> 'a -> t -> 'a
+
     (** [app f a] applies [f] to the values of each element in [a]. *)
     val app : (float -> unit) -> t -> unit
 

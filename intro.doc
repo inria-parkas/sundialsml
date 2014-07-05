@@ -200,7 +200,7 @@ or:
 {!modules: Sundials}
 
 {!modules: Dls}
-{!modules: Spils Spils_serial Spils_nvector}
+{!modules: Spils}
 
 {!modules: Nvector_serial Nvector_parallel Nvector_custom Nvector_array}
 {!modules: Cvode Cvode_bbd}

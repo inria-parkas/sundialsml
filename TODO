@@ -102,7 +102,3 @@ TO DISCUSS
   - it's not really suited to building a library with everything
   Or propose changes on the sundials-users list?
 
-* Change the payload of Parallel_nvectors to just a real_array (i.e., no
-  global length and no communciator; none of the sundials examples use
-  these.)
-
