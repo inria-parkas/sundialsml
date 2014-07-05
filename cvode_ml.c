@@ -10,10 +10,6 @@
  *                                                                     *
  ***********************************************************************/
 
-#include <cvode/cvode.h>
-#include <sundials/sundials_config.h>
-#include <sundials/sundials_types.h>
-
 #include <caml/mlvalues.h>
 #include <caml/alloc.h>
 #include <caml/memory.h>
@@ -22,6 +18,47 @@
 #include <caml/fail.h>
 #include <caml/unixsupport.h>
 #include <caml/bigarray.h>
+
+#include <sundials/sundials_config.h>
+#include <sundials/sundials_types.h>
+#include <sundials/sundials_nvector.h>
+
+// When we compile with sensitivity (CVODES), we are obliged to use the
+// cvodes/cvodes_* header files. In fact, nearly everything functions
+// correctly if the cvode/cvode_* header files are used instead (the
+// function prototypes are identical), except for the function
+// c_cvode_set_alternate which relies on the internal representation of
+// CVodeMem (for cv_lsolve, etc.). In any case, it seems a better idea to
+// use the appropriate header files even if this introduces a minor
+// complication in the build system.
+
+#ifdef SUNDIALSML_WITHSENS
+/* CVODES (with sensitivity) */
+
+#include <cvodes/cvodes.h>
+
+/* linear solvers */
+#include <cvodes/cvodes_dense.h>
+#include <cvodes/cvodes_band.h>
+#include <cvodes/cvodes_diag.h>
+#include <cvodes/cvodes_spgmr.h>
+#include <cvodes/cvodes_spbcgs.h>
+#include <cvodes/cvodes_sptfqmr.h>
+#include <cvodes/cvodes_bandpre.h>
+#include <cvodes/cvodes_impl.h>
+
+#if SUNDIALS_BLAS_LAPACK == 1
+#include <cvodes/cvodes_lapack.h>
+#endif
+
+#ifdef SUNDIALSML_WITHMPI
+#include <cvodes/cvodes_bbdpre.h>
+#endif
+
+#else
+/* CVODE (without sensitivity) */
+
+#include <cvode/cvode.h>
 
 /* linear solvers */
 #include <cvode/cvode_dense.h>
@@ -32,10 +69,15 @@
 #include <cvode/cvode_sptfqmr.h>
 #include <cvode/cvode_bandpre.h>
 #include <cvode/cvode_impl.h>
-#include <sundials/sundials_config.h>
-#include <sundials/sundials_nvector.h>
+
+#if SUNDIALS_BLAS_LAPACK == 1
+#include <cvode/cvode_lapack.h>
+#endif
+
 #ifdef SUNDIALSML_WITHMPI
 #include <cvode/cvode_bbdpre.h>
+#endif
+
 #endif
 
 #include "dls_ml.h"
@@ -43,10 +85,6 @@
 #include "sundials_ml.h"
 #include "cvode_ml.h"
 #include "nvector_ml.h"
-
-#if SUNDIALS_BLAS_LAPACK == 1
-#include <cvode/cvode_lapack.h>
-#endif
 
 #include <stdio.h>
 #define MAX_ERRMSG_LEN 256
@@ -526,6 +564,7 @@ CAMLprim void c_cvode_set_alternate (value vcvode_mem, value vhas_init,
 
     cvode_mem->cv_linit  = Bool_val(vhas_init)  ? linit : NULL;
     cvode_mem->cv_lsetup  = Bool_val(vhas_setup) ? lsetup : NULL;
+    cvode_mem->cv_setupNonNull = Bool_val(vhas_setup);
     cvode_mem->cv_lsolve = lsolve;
     cvode_mem->cv_lfree  = Bool_val(vhas_free)  ? lfree : NULL;
     cvode_mem->cv_lmem   = NULL;
@@ -962,6 +1001,7 @@ static value solver(value vdata, value nextt, value vy, int onestep)
     if (CVODE_NEQS_FROM_ML (vdata) != Caml_ba_array_val(vy)->dim[0])
 	caml_invalid_argument ("Cvode.solve: y vector has incorrect length");
 #endif
+
 
     y = NVEC_VAL (vy);
     // Caml_ba_data_val(y) must not be shifted by the OCaml GC during this

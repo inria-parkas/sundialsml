@@ -457,6 +457,7 @@ CAMLprim void c_kinsol_set_alternate (value vkin_mem, value vhas_init,
 
     kin_mem->kin_linit  = Bool_val(vhas_init)  ? linit : NULL;
     kin_mem->kin_lsetup = Bool_val(vhas_setup) ? lsetup : NULL;
+    kin_mem->kin_setupNonNull = Bool_val(vhas_setup);
     kin_mem->kin_lsolve = lsolve;
     kin_mem->kin_lfree  = Bool_val(vhas_free)  ? lfree : NULL;
     kin_mem->kin_lmem   = NULL;

@@ -1,8 +1,5 @@
 include config
 
-# TODO: compile two .cmas, one with cvodes and one without.
-# TODO: add nvector_parallel (with optional compilation)
-
 MLOBJ_MAIN = sundials.cmo dls.cmo \
 	     nvector_serial.cmo nvector_custom.cmo nvector_array.cmo \
 	     $(MPI_MODULES) \
@@ -16,11 +13,12 @@ MLOBJ_LOCAL = cvode_impl.cmo kinsol_impl.cmo
 MLOBJ_WOS = sundials.cmo $(MLOBJ_LOCAL) $(filter-out sundials.cmo,$(MLOBJ_MAIN))
 MLOBJ = $(MLOBJ_WOS) $(MLOBJ_SENS)
 
-COMMON_COBJ= sundials_ml$(XO) dls_ml$(XO) nvector_ml$(XO) \
+COMMON_COBJ= sundials_ml$(XO) dls_ml$(XO) nvector_ml$(XO) spils_ml$(XO)
 
-COBJ_WOS = $(COMMON_COBJ) \
-	   spils_ml$(XO) cvode_ml$(XO) $(IDA_COBJ) kinsol_ml$(XO)
-COBJ=$(COBJ_WOS) cvodes_ml$(XO)
+COBJ_WOS = $(COMMON_COBJ) cvode_ml$(XO) $(IDA_COBJ) kinsol_ml$(XO)
+COBJ = $(COMMON_COBJ) cvode_ml_s$(XO) cvodes_ml$(XO) $(IDA_COBJ) kinsol_ml$(XO)
+
+ALL_COBJ= $(COBJ) cvode_ml$(XO)
 
 INSTALL_FILES= 			\
     META			\
@@ -82,6 +80,10 @@ nvector_ml.o: nvector_ml.c nvector_ml.h
 
 cvode_ml.o: cvode_ml.c dls_ml.h spils_ml.h cvode_ml.h sundials_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
+
+cvode_ml_s.o: cvode_ml.c dls_ml.h spils_ml.h cvode_ml.h sundials_ml.h
+	$(CC) -DSUNDIALSML_WITHSENS -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) \
+	    -o $@ -c $<
 
 cvodes_ml.o: cvodes_ml.c dls_ml.h spils_ml.h \
     	     cvode_ml.h cvodes_ml.h sundials_ml.h
@@ -168,7 +170,7 @@ depend: .depend
 clean:
 	-@(cd examples; make -f Makefile clean)
 	-@$(RM) -f $(MLOBJ) $(MLOBJ:.cmo=.cmx) $(MLOBJ:.cmo=.o)
-	-@$(RM) -f $(COBJ) $(MLOBJ:.cmo=.annot)
+	-@$(RM) -f $(ALL_COBJ) $(MLOBJ:.cmo=.annot)
 	-@$(RM) -f $(MLOBJ:.cmo=.cma) $(MLOBJ:.cmo=.cmxa)
 	-@$(RM) -f sundials$(XA) sundials_wos$(XA)
 	-@$(RM) -f dochtml.cmi dochtml.cmo
