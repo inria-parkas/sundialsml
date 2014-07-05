@@ -13,7 +13,7 @@ MLOBJ_SENS = cvodes.cmo
 
 MLOBJ_LOCAL = cvode_impl.cmo kinsol_impl.cmo
 
-MLOBJ_WOS = $(MLOBJ_LOCAL) $(MLOBJ_MAIN)
+MLOBJ_WOS = sundials.cmo $(MLOBJ_LOCAL) $(filter-out sundials.cmo,$(MLOBJ_MAIN))
 MLOBJ = $(MLOBJ_WOS) $(MLOBJ_SENS)
 
 COMMON_COBJ= sundials_ml$(XO) dls_ml$(XO) nvector_ml$(XO) \
@@ -46,28 +46,23 @@ CFLAGS+=-fPIC
 all: sundials.cma sundials.cmxa sundials_wos.cma sundials_wos.cmxa
 
 # TODO: fix this:
-sundials.cma sundials.cmxa: $(MLOBJ_LOCAL) $(MLOBJ_LOCAL:.cmo=.cmx) \
-			    $(MLOBJ_MAIN) $(MLOBJ_MAIN:.cmo=.cmx) \
-			    $(COBJ) \
-			    $(MLOBJ) $(MLOBJ:.cmo=.cmx)
-	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS) \
-	    -o sundials -oc mlsundials $^ \
-	    $(OCAML_CVODES_LIBLINK) \
-	    $(OCAML_IDA_LIBLINK) \
-	    $(OCAML_KINSOL_LIBLINK) \
+sundials.cma sundials.cmxa: $(MLOBJ) $(MLOBJ:.cmo=.cmx) $(COBJ)
+	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS) 	\
+	    -o sundials -oc mlsundials $^ 	\
+	    $(OCAML_CVODES_LIBLINK) 		\
+	    $(OCAML_IDA_LIBLINK) 		\
+	    $(OCAML_KINSOL_LIBLINK) 		\
 	    $(NVECTOR_LIB)
 
 # wos = without sensitivity
 # TODO: fix this:
-sundials_wos.cma sundials_wos.cmxa: $(MLOBJ_LOCAL) $(MLOBJ_LOCAL:.cmo=.cmx) \
-				    $(COBJ_WOS) \
-			    	    $(MLOBJ_MAIN) $(MLOBJ_MAIN:.cmo=.cmx) \
-				    $(MLOBJ_WOS) $(MLOBJ_WOS:.cmo=.cmx)
-	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS) \
+sundials_wos.cma sundials_wos.cmxa: $(MLOBJ_WOS) $(MLOBJ_WOS:.cmo=.cmx) \
+    				    $(COBJ_WOS)
+	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS) 	  \
 	    -o sundials_wos -oc mlsundials_wos $^ \
-	    $(OCAML_CVODE_LIBLINK) \
-	    $(OCAML_IDA_LIBLINK) \
-	    $(OCAML_KINSOL_LIBLINK) \
+	    $(OCAML_CVODE_LIBLINK) 		  \
+	    $(OCAML_IDA_LIBLINK) 		  \
+	    $(OCAML_KINSOL_LIBLINK) 		  \
 	    $(NVECTOR_LIB)
 
 # There are three sets of flags:

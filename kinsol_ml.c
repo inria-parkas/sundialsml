@@ -30,9 +30,11 @@
 #include <kinsol/kinsol_spgmr.h>
 #include <kinsol/kinsol_spbcgs.h>
 #include <kinsol/kinsol_sptfqmr.h>
-#include <kinsol/kinsol_bbdpre.h>
 #include <kinsol/kinsol_spils.h>
 #include <kinsol/kinsol_impl.h>
+#ifdef SUNDIALSML_WITHMPI
+#include <kinsol/kinsol_bbdpre.h>
+#endif
 
 #if SUNDIALS_BLAS_LAPACK == 1
 #include <kinsol/kinsol_lapack.h>
@@ -356,7 +358,7 @@ static int jactimesfn(
 }
 
 #ifdef SUNDIALSML_WITHMPI
-static int bbdlocal(int nlocal, N_Vector u, N_Vector gval, void *user_data)
+static int bbdlocal(long int nlocal, N_Vector u, N_Vector gval, void *user_data)
 {
     CAMLparam0();
     CAMLlocalN(args, 3);
@@ -368,14 +370,14 @@ static int bbdlocal(int nlocal, N_Vector u, N_Vector gval, void *user_data)
     args[1] = NVEC_BACKLINK(u);
     args[2] = NVEC_BACKLINK(gval);
 
-    r = Int_val (caml_callbackN(*call_bddlocal,
+    r = Int_val (caml_callbackN(*call_bbdlocal,
                                 sizeof (args) / sizeof (*args),
                                 args));
 
     CAMLreturnT(int, r);
 }
 
-static int bbdcomm(int nlocal, N_Vector u, void *user_data)
+static int bbdcomm(long int nlocal, N_Vector u, void *user_data)
 {
     CAMLparam0();
     CAMLlocalN(args, 2);
@@ -386,7 +388,7 @@ static int bbdcomm(int nlocal, N_Vector u, void *user_data)
     args[0] = *backref;
     args[1] = NVEC_BACKLINK(u);
 
-    r = Int_val (caml_callbackN(*call_bddcomm,
+    r = Int_val (caml_callbackN(*call_bbdcomm,
                                 sizeof (args) / sizeof (*args),
                                 args));
 
@@ -495,7 +497,7 @@ CAMLprim value c_kinsol_bbd_get_work_space(value vkin_mem)
     long int lenrw;
     long int leniw;
 
-    flag = KINBBDPrecGetWorkSpace(KIN_MEM_FROM_ML(vkin_mem), &lenrw, &leniw);
+    flag = KINBBDPrecGetWorkSpace(KINSOL_MEM_FROM_ML(vkin_mem), &lenrw, &leniw);
     CHECK_FLAG("KINBBDPrecGetWorkSpace", flag);
 
     r = caml_alloc_tuple(2);
@@ -513,7 +515,7 @@ CAMLprim value c_kinsol_bbd_get_num_gfn_evals(value vkin_mem)
     int flag;
     long int v;
 
-    flag = KINBBDPrecGetNumGfnEvals(KIN_MEM_FROM_ML(vkin_mem), &v);
+    flag = KINBBDPrecGetNumGfnEvals(KINSOL_MEM_FROM_ML(vkin_mem), &v);
     CHECK_FLAG("KINBBDPrecGetNumGfnEvals", flag);
 
     CAMLreturn(Val_long(v));

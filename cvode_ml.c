@@ -34,6 +34,9 @@
 #include <cvode/cvode_impl.h>
 #include <sundials/sundials_config.h>
 #include <sundials/sundials_nvector.h>
+#ifdef SUNDIALSML_WITHMPI
+#include <cvode/cvode_bbdpre.h>
+#endif
 
 #include "dls_ml.h"
 #include "spils_ml.h"
@@ -296,12 +299,14 @@ static int precsetupfn(
 {
     CAMLparam0();
     CAMLlocal2(session, vr);
-    CAMLlocalN(args, 3);
+    CAMLlocalN(args, 4);
+    value *backref = user_data;
     CAML_FN (call_precsetupfn);
 
-    args[0] = make_jac_arg(t, y, fy, make_triple_tmp(tmp1, tmp2, tmp3));
-    args[1] = Val_bool(jok);
-    args[2] = caml_copy_double(gamma);
+    args[0] = *backref;
+    args[1] = make_jac_arg(t, y, fy, make_triple_tmp(tmp1, tmp2, tmp3));
+    args[2] = Val_bool(jok);
+    args[3] = caml_copy_double(gamma);
 
     vr = caml_callbackN(*call_precsetupfn,
 			sizeof (args) / sizeof (*args),
@@ -393,7 +398,7 @@ static int jactimesfn(
 }
 
 #ifdef SUNDIALSML_WITHMPI
-static int bbdlocal(int nlocal, realtype t, N_Vector y, N_Vector glocal,
+static int bbdlocal(long int nlocal, realtype t, N_Vector y, N_Vector glocal,
 		    void *user_data)
 {
     CAMLparam0();
@@ -407,14 +412,14 @@ static int bbdlocal(int nlocal, realtype t, N_Vector y, N_Vector glocal,
     args[2] = NVEC_BACKLINK(y);
     args[3] = NVEC_BACKLINK(glocal);
 
-    r = Int_val (caml_callbackN(*call_bddlocal,
+    r = Int_val (caml_callbackN(*call_bbdlocal,
                                 sizeof (args) / sizeof (*args),
                                 args));
 
     CAMLreturnT(int, r);
 }
 
-static int bbdcomm(int nlocal, realtype t, N_Vector y, void *user_data)
+static int bbdcomm(long int nlocal, realtype t, N_Vector y, void *user_data)
 {
     CAMLparam0();
     CAMLlocalN(args, 3);
@@ -426,7 +431,7 @@ static int bbdcomm(int nlocal, realtype t, N_Vector y, void *user_data)
     args[1] = caml_copy_double(t);
     args[2] = NVEC_BACKLINK(y);
 
-    r = Int_val (caml_callbackN(*call_bddcomm,
+    r = Int_val (caml_callbackN(*call_bbdcomm,
                                 sizeof (args) / sizeof (*args),
                                 args));
 

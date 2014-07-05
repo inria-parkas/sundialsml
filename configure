@@ -172,11 +172,11 @@ else
 	fi
     fi
 fi
-if [ ${ocamlmpi_enabled} -eq 1 ]; then
+if [ -z ${ocamlmpi_enabled} ]; then
+    ocamlmpi_path=''
+else
     ocamlmpi_path="$ocamlmpi"
     ocamlmpi="${ocamlmpi} (compiler: ${mpicc:-mpicc})"
-else
-    ocamlmpi_path=''
 fi
 
 # Check for Sundials installation (and version)

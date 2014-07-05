@@ -35,6 +35,9 @@
 #include <cvodes/cvodes_sptfqmr.h>
 #include <cvodes/cvodes_bandpre.h>
 #include <cvodes/cvodes_spils.h>
+#ifdef SUNDIALSML_WITHMPI
+#include <cvodes/cvodes_bbdpre.h>
+#endif
 
 #if SUNDIALS_BLAS_LAPACK == 1
 #include <cvodes/cvodes_lapack.h>
@@ -466,12 +469,14 @@ static int bprecsetupfn(
 {
     CAMLparam0();
     CAMLlocal2(session, vr);
-    CAMLlocalN(args, 3);
+    CAMLlocalN(args, 4);
+    value *backref = user_data;
     CAML_FN (call_bprecsetupfn);
 
-    args[0] = make_jac_arg(t, y, yb, fyb, make_triple_tmp(tmp1b, tmp2b, tmp3b));
-    args[1] = Val_bool(jokb);
-    args[2] = caml_copy_double(gammab);
+    args[0] = *backref;
+    args[1] = make_jac_arg(t, y, yb, fyb, make_triple_tmp(tmp1b, tmp2b, tmp3b));
+    args[2] = Val_bool(jokb);
+    args[3] = caml_copy_double(gammab);
 
     vr = caml_callbackN(*call_bprecsetupfn,
 			sizeof (args) / sizeof (*args),
@@ -577,7 +582,7 @@ static int bbandjacfn(
 
 // TODO: compile this file with this option
 #ifdef SUNDIALSML_WITHMPI
-static int bbbdlocal(int nlocal, realtype t, N_Vector y, N_Vector yb,
+static int bbbdlocal(long int nlocal, realtype t, N_Vector y, N_Vector yb,
 		     N_Vector glocal, void *user_data)
 {
     CAMLparam0();
@@ -592,14 +597,14 @@ static int bbbdlocal(int nlocal, realtype t, N_Vector y, N_Vector yb,
     args[3] = NVEC_BACKLINK(yb);
     args[4] = NVEC_BACKLINK(glocal);
 
-    r = Int_val (caml_callbackN(*call_bbddlocal,
+    r = Int_val (caml_callbackN(*call_bbbdlocal,
                                 sizeof (args) / sizeof (*args),
                                 args));
 
     CAMLreturnT(int, r);
 }
 
-static int bbbdcomm(int nlocal, realtype t, N_Vector y, N_Vector yb,
+static int bbbdcomm(long int nlocal, realtype t, N_Vector y, N_Vector yb,
 		    void *user_data)
 {
     CAMLparam0();

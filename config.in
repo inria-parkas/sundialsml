@@ -12,7 +12,7 @@ CFLAGS += @cflags@ -Wall -Werror
 LDFLAGS += @ldflags@
 CPPFLAGS ?= -P -x c -traditional-cpp
 
-MPI_FLAGS = $(if @ocamlmpi_enabled@, -DSUNDIALS_WITHMPI)
+MPI_FLAGS = $(if @ocamlmpi_enabled@, -DSUNDIALSML_WITHMPI)
 MPICC = @mpicc@ $(MPI_FLAGS)
 
 CVODE_LDFLAGS = @cvode_ldflags@ $(LDFLAGS)

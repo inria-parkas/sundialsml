@@ -107,8 +107,6 @@ module B =
       }
 
     type 'a spils_callbacks =
-      (* NB: field order must match (normal) spils_callbacks!
-         (see precsetupfn in cvodes_ml.c) *)
       {
         prec_solve_fn : (('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
                          -> 'a -> unit) option;
