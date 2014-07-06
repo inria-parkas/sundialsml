@@ -40,10 +40,15 @@ DONE 8. (Tim) Interface with Parallel NVectors
 10. (Jun) Ensure that all examples are implemented.
     Add the missing parallel examples for cvode, cvodes, kinsol, ida, idas. 
 
-10. (Jun) OPAM/findlib wrappers.
+10. (Jun) Add a perf.log target (like tests.log) to each examples
+    subdirectory. Run each binary (both C and opt and byte) 10 times and
+    take the average wall clock time. Generate a table with three columns
+    (original, .opt, .byte) and one number in each.
+
+11. (Jun) OPAM/findlib wrappers.
    - Everything properly supported in a toplevel
 
-11. (Jun) Examine performance of examples, especially:
+12. (Jun) Examine performance of examples, especially:
 	sundials/cvodes/cvsFoodWeb_ASAi_kry
 	sundials/cvodes/cvsFoodWeb_ASAp_kry
 
@@ -54,12 +59,14 @@ DONE 8. (Tim) Interface with Parallel NVectors
 
     Compare to the same examples in pySUNDIALS or python-sundials?
 
-12. (Tim) Eventual release:
+13. (Tim) Fix, simplify, and generally tidy up all doc comments. Write the
+    missing documentation and rewrite intro.doc.
+
+14. (Tim) Eventual release:
    - Dêpot APP.
    - Repository on Github.
    - Release on Opam.
    - Announce on OCaml and Sundials lists.
-
 
 MINOR PATCHES
 -------------
