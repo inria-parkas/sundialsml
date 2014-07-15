@@ -16,8 +16,7 @@
  *
  * -----------------------------------------------------------------
  *)
-module Ida = Ida_serial
-module RealArray = Ida.RealArray
+module RealArray = Sundials.RealArray
 
 (* Problem Constants *)
 
@@ -188,9 +187,9 @@ let main () =
   set_ic data y y';
 
   (* ID array *)
-  let id = Ida.Id.init neq Ida.Id.Differential in
+  let id = RealArray.init neq Ida.VarType.differential in
   for i = 6 to 9 do
-    Ida.Id.set id i Ida.Id.Algebraic
+    id.{i} <- Ida.VarType.algebraic
   done;
 
   (* Tolerances *)
@@ -202,10 +201,16 @@ let main () =
   and tf = tend in
   let dt = (tf -. t0) /. float_of_int (nout - 1) in
 
+  (* Wrap y and y' in nvectors.  Operations performed on the wrapped
+     representation affect the originals y and y'.  *)
+  let wy = Nvector_serial.wrap y
+  and wy' = Nvector_serial.wrap y'
+  in
+
   (* IDA initialization *)
-  let mem = Ida.init (Ida.Dense None) (Ida.SStolerances (rtol, atol))
-                     (ressc data) ~t0:t0 y y' in
-  Ida.set_var_types mem id;
+  let mem = Ida.init (Ida.Dls.dense None) (Ida.SStolerances (rtol, atol))
+                     (ressc data) ~t0:t0 wy wy' in
+  Ida.set_var_types mem (Nvector_serial.wrap id);
   Ida.set_suppress_alg mem true;
 
   print_header rtol atol y;
@@ -218,7 +223,7 @@ let main () =
     try
       for iout = 1 to nout-1 do
         tout := float_of_int iout *. dt;
-        let (tret, flag) = Ida.solve_normal mem !tout y y' in
+        let (tret, flag) = Ida.solve_normal mem !tout wy wy' in
         print_output mem tret y;
       done;
     with _ -> ()

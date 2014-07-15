@@ -65,13 +65,14 @@
 				:        +---------+
 				:         ("c-nvec")
 
-  The c-nvec comprises two values placed contiguously in malloc-ed memory: a
-  Sundials N_Vector and a backlink. The N_Vector itself contains two
+  The c-nvec comprises two values placed contiguously in malloc-ed memory:
+  a Sundials N_Vector and a backlink. The N_Vector itself contains two
   pointers to other malloc-ed memory: for the ops field and for the content
-  field. The N_Vector is passed to Sundials functions. The backlink is an
-  OCaml Value that is registered as a root with the OCaml GC, it points to
-  the OCaml representation of the nvector contents. The find details of the
-  c-nvec depend on the type of nvector, they are discussed below.
+  field (the fields are not shown in the diagram). The N_Vector is passed
+  to Sundials functions. The backlink is an OCaml Value that is registered
+  as a root with the OCaml GC, it points to the OCaml representation of the
+  nvector contents. The fine details of the c-nvec depend on the type of
+  nvector, they are discussed below.
 
   The caml-nvec exists for a "created" nvector. It pairs a 'data field that
   references a payload box with a pointer to the NVector part of the
@@ -121,8 +122,8 @@
   The payload is a Bigarray of floats and, as per usual, the underlying data
   is allocated in the C heap (it will not be moved by the GC).
 
-  The N_Vector content->data field points into the data underlying the
-  payload Bigarray.
+  The N_Vector content->data field points to the data in the C heap which
+  underlies the payload Bigarray.
 
   The N_Vector ops are identical to those of a standard serial N_Vector,
   except for nvclone, nvcloneempty, and nvdestroy which are functions,
@@ -132,15 +133,15 @@
   -----------------
   The payload is a triple of Bigarray, int, and MPI communicator.
 
-  The N_Vector content->data field points into the data underlying the
-  payload Bigarray. The content->local_length field is set to the length of
-  the Bigarray, the content->global_length field is set to the value of the
-  int, and the C value corresponding to the MPI communicator is duplicated
-  into content->comm.
+  The N_Vector content->data field points to the data in the C heap which
+  underlies the payload Bigarray. The content->local_length field is set to
+  the length of the Bigarray, the content->global_length field is set to
+  the value of the int, and the C value corresponding to the MPI
+  communicator is duplicated into content->comm.
 
   The N_Vector ops are identical to those of a standard serial N_Vector,
   except for nvclone, nvcloneempty, and nvdestroy which are functions,
-  implemented in this file, to create the arrangement described here.
+  implemented in nvector_ml.c, to create the arrangement described here.
 
   Custom nvectors
   ---------------

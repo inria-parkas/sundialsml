@@ -82,9 +82,8 @@
  *     pp. 1495-1512.
  * -----------------------------------------------------------------
  *)
-module Ida = Ida_serial
-module RealArray = Ida.RealArray
-module Roots = Ida.Roots
+module RealArray = Sundials.RealArray
+module Roots = Sundials.Roots
 module Matrix = Dls.ArrayDenseMatrix
 
 let printf = Printf.printf
@@ -122,7 +121,7 @@ let tadd        = 0.3                   (* Increment for tout values *)
  * slice of vv corresponding to x-index ix = i, and y-index jy = j, and species
  * index anywhere between 0 and num_species.  *)
 let index i j k = i*num_species + j*nsmx + k
-let ij_v (v : Ida.nvec) i j =
+let ij_v (v : RealArray.t) i j =
   (* v is type annotated so that the layout of the bigarray is fixed.  This
      ensures that the compiler can inline accesses to the bigarray elements. *)
   let i0 = index i j 0
@@ -196,7 +195,7 @@ let init_user_data () =
 
 (* web_rates: Evaluate reaction rates at a given spatial point.
  * At a given (x,y), evaluate the array of ns reaction terms R. *)
-let web_rates webdata x y (cxy : Ida.nvec) (ratesxy : Ida.nvec) =
+let web_rates webdata x y (cxy : RealArray.t) (ratesxy : RealArray.t) =
   let acoef = webdata.acoef
   and bcoef = webdata.bcoef in
 
@@ -259,7 +258,7 @@ let fweb webdata t c crate =
 (* System residual function for predator-prey system.  This routine calls fweb
  * to get all the right-hand sides of the equations, then loads the residual
  * vector accordingly, using c' in the case of prey species.  *)
-let resweb webdata t c (c' : Ida.nvec) res =
+let resweb webdata t c (c' : RealArray.t) res =
   let np = webdata.np in
 
   (* Call Fweb to set res to vector of right-hand sides. *)
@@ -296,9 +295,9 @@ let set_initial_profiles webdata c c' id =
       for is = 0 to num_species-1 do
         if is < webdata.np
         then (c.{loc+is} <- 10.0 +. float_of_int (is+1) *. xyfactor;
-              Ida.Id.set_differential id (loc+is))
+              id.{loc+is} <- Ida.VarType.differential)
         else (c.{loc+is} <- 1.0e5;
-              Ida.Id.set_algebraic id (loc+is))
+              id.{loc+is} <- Ida.VarType.algebraic)
       done
     done
   done;
@@ -377,18 +376,26 @@ let main () =
   let webdata = init_user_data ()
   and c  = RealArray.make neq
   and c' = RealArray.make neq
-  and id = Ida.Id.create neq in
+  and id = RealArray.make neq in
   set_initial_profiles webdata c c' id;
+
   (* Set remaining inputs to IDAInit. *)
   let t0 = 0. in
+
+  (* Wrap c and c' in nvectors.  Operations performed on the wrapped
+     representation affect the originals c and c'.  *)
+  let wc = Nvector_serial.wrap c
+  and wc' = Nvector_serial.wrap c'
+  in
+
   (* Call IDACreate and IDABand to initialize IDA including the linear
      solver. *)
   let mu = nsmx and ml = nsmx in
-  let solver = Ida.Band ({ Ida.mupper = mu; Ida.mlower = ml }, None) in
+  let solver = Ida.Dls.band { Ida.mupper = mu; Ida.mlower = ml } None in
   let mem = Ida.init solver (Ida.SStolerances (rtol, atol))
-                     (resweb webdata) ~t0:t0 c c' in
+                     (resweb webdata) ~t0:t0 wc wc' in
   let tout1 = 0.001 in
-  Ida.calc_ic_ya_yd' mem id tout1;
+  Ida.calc_ic_ya_yd' mem (Nvector_serial.wrap id) tout1;
 
   (* Print heading, basic parameters, and initial values. *)
   print_header mu ml rtol atol;
@@ -397,7 +404,7 @@ let main () =
   (* Loop over iout, call IDASolve (normal mode), print selected output. *)
   let tout = ref tout1 in
   for iout = 1 to nout do
-    let (tret, retval) = Ida.solve_normal mem !tout c c' in
+    let (tret, retval) = Ida.solve_normal mem !tout wc wc' in
     print_output mem c tret;
     if iout < 3 then tout := !tout *. tmult
     else tout := !tout +. tadd

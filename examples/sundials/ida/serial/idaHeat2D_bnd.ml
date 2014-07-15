@@ -30,15 +30,14 @@
  * IDACalcIC cost statistics only.)
  * -----------------------------------------------------------------
  *)
-module Ida = Ida_serial;;
-module RealArray = Ida.RealArray
-module Roots = Ida.Roots
+module RealArray = Sundials.RealArray
+module Roots = Sundials.Roots
 module Dls = Ida.Dls
-module Constraints = Ida.Constraints
+module Constraint = Ida.Constraint
 
 let printf = Printf.printf
-let vmax_norm = Nvector_array.Bigarray.array_nvec_ops.Nvector.Mutable.nvmaxnorm
-let vscale = Nvector_array.Bigarray.array_nvec_ops.Nvector.Mutable.nvscale
+let vmax_norm = Nvector_array.Bigarray.array_nvec_ops.Nvector_custom.nvmaxnorm
+let vscale = Nvector_array.Bigarray.array_nvec_ops.Nvector_custom.nvscale
 
 
 (* Problem Constants *)
@@ -77,8 +76,8 @@ let heatres t u u' resval data =
   done
 
 let set_initial_profile data u u' id res =
-  (* Initialize id to Differential. *)
-  Ida.Id.fill id Ida.Id.Differential;
+  (* Initialize id to differential. *)
+  RealArray.fill id Ida.VarType.differential;
 
   let mm = data.mm in
   let mm1 = mm - 1 in
@@ -111,7 +110,7 @@ let set_initial_profile data u u' id res =
       if j = 0 || j = mm1 || i = 0 || i = mm1
       then (u.{loc} <- bval;
             u'.{loc} <- 0.;
-            Ida.Id.set id loc Ida.Id.Algebraic)
+            id.{loc} <- Ida.VarType.algebraic)
     done
   done
 
@@ -150,8 +149,8 @@ let main () =
   let u = RealArray.make neq
   and u' = RealArray.make neq
   and res = RealArray.make neq
-  and constraints = Constraints.create neq
-  and id = Ida.Id.create neq in
+  and constraints = RealArray.make neq
+  and id = RealArray.make neq in
 
   (* Create and load problem data block.  *)
   let data =
@@ -165,7 +164,7 @@ let main () =
   set_initial_profile data u u' id res;
 
   (* Set constraints to all NonNegative for nonnegative solution values.  *)
-  Constraints.fill constraints Constraints.NonNegative;
+  RealArray.fill constraints Constraint.non_negative;
 
   (* Set remaining input parameters.  *)
   let t0 = 0.
@@ -174,19 +173,25 @@ let main () =
   and atol = 1.0e-3
   in
 
+  (* Wrap u and u' in nvectors.  Operations performed on the wrapped
+     representation affect the originals u and u'.  *)
+  let wu = Nvector_serial.wrap u
+  and wu' = Nvector_serial.wrap u'
+  in
+
   (* Call IDACreate and IDAMalloc to initialize solution, and call IDABand to
      specify the linear solver.  *)
   let mu = mgrid and ml = mgrid in
   let mem =
-    Ida.init (Ida.Band ({ Ida.mupper=mu; Ida.mlower=ml }, None))
+    Ida.init (Ida.Dls.band { Ida.mupper=mu; Ida.mlower=ml } None)
              (Ida.SStolerances (rtol, atol))
              (fun t u u' r -> heatres t u u' r data)
-             ~t0:t0 u u'
+             ~t0:t0 wu wu'
   in
-  Ida.set_constraints mem constraints;
+  Ida.set_constraints mem (Nvector_serial.wrap constraints);
 
   (* Call IDASetId and IDACalcIC to correct the initial values.  *)
-  Ida.calc_ic_ya_yd' mem id t1;
+  Ida.calc_ic_ya_yd' mem (Nvector_serial.wrap id) t1;
 
   (* Print output heading. *)
   print_header rtol atol;
@@ -196,7 +201,7 @@ let main () =
   (* Loop over output times, call IDASolve, and print results. *)
   let tout = ref t1 in
   for iout = 1 to nout do
-    let (tret, flag) = Ida.solve_normal mem !tout u u' in
+    let (tret, flag) = Ida.solve_normal mem !tout wu wu' in
     print_output mem tret u;
     tout := 2. *. !tout
   done;

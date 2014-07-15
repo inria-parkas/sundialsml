@@ -26,9 +26,8 @@
  * t = .4, 4, 40, ..., 4e10.
  * -----------------------------------------------------------------
  *)
-module Ida = Ida_serial;;
-module RealArray = Ida.RealArray
-module Roots = Ida.Roots
+module RealArray = Sundials.RealArray
+module Roots = Sundials.Roots
 
 let printf = Printf.printf
 
@@ -137,9 +136,10 @@ and grob t y y' gout =
 ;;
 
 let main () =
-  (* Create and initialize y, y', and absolute tolerance vectors.  For larger
-   * vectors, you might want to use RealArray.create instead of RealArray.of_array to
-   * avoid making large temporary OCaml arrays.  *)
+  (* Create and initialize y, y', and absolute tolerance vectors.  For
+     larger vectors, you might want to use RealArray.create instead of
+     RealArray.of_array to avoid making large temporary OCaml
+     arrays.  *)
   let y = RealArray.of_array [|1.; 0.; 0.|]
   and y' = RealArray.of_array [|-0.04; 0.04; 0.|]
   and rtol = 1.0e-4
@@ -149,14 +149,21 @@ let main () =
   and tout1 = 0.4
   in
 
+  (* Wrap y and y' in nvectors.  Operations performed on the wrapped
+     representation affect the originals y and y'.  *)
+  let wy = Nvector_serial.wrap y
+  and wy' = Nvector_serial.wrap y'
+  in
+
   (* Print header information.  *)
   print_header rtol avtol y;
 
   (* Call IDACreate, IDAInit, and IDARootInit to initialize IDA memory with
    * a 2-component root function and the dense direct linear solver.  *)
   let ida_mem =
-    Ida.init (Ida.Dense (Some jacrob)) (Ida.SVtolerances (rtol, avtol))
-             resrob ~roots:(nroots, grob) ~t0:t0 y y'
+    Ida.init (Ida.Dls.dense (Some jacrob))
+             (Ida.SVtolerances (rtol, Nvector_serial.wrap avtol))
+             resrob ~roots:(nroots, grob) ~t0:t0 wy wy'
   in
   (* In loop, call IDASolve, print results, and test for error.  Break out of
    * loop when NOUT preset output times have been reached. *)
@@ -168,18 +175,18 @@ let main () =
   let r = Roots.get roots in
 
   while (!iout <> nout) do
-    let (t, flag) = Ida.solve_normal ida_mem !tout y y' in
+    let (t, flag) = Ida.solve_normal ida_mem !tout wy wy' in
     print_output ida_mem t y;
     match flag with
-    | Ida.RootsFound ->
+    | Sundials.RootsFound ->
         Ida.get_root_info ida_mem roots;
         print_root_info (r 0) (r 1)
 
-    | Ida.Continue ->
+    | Sundials.Continue ->
         iout := !iout + 1;
         tout := !tout *. tmult
 
-    | Ida.StopTimeReached ->
+    | Sundials.StopTimeReached ->
         iout := nout
   done;
 

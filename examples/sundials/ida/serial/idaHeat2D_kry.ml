@@ -30,8 +30,7 @@
  * The second run uses IDAReInit and IDAReInitSpgmr.
  * -----------------------------------------------------------------
  *)
-module Ida = Ida_serial
-module RealArray = Ida.RealArray
+module RealArray = Sundials.RealArray
 
 (* Problem Constants *)
 let nout  = 11
@@ -39,9 +38,9 @@ let mgrid = 10
 let neq   = mgrid*mgrid
 
 (* Shorthands *)
-let nvscale = Nvector_array.Bigarray.array_nvec_ops.Nvector.Mutable.nvscale
-let nvprod = Nvector_array.Bigarray.array_nvec_ops.Nvector.Mutable.nvprod
-let nvmaxnorm = Nvector_array.Bigarray.array_nvec_ops.Nvector.Mutable.nvmaxnorm
+let nvscale = Nvector_array.Bigarray.array_nvec_ops.Nvector_custom.nvscale
+let nvprod = Nvector_array.Bigarray.array_nvec_ops.Nvector_custom.nvprod
+let nvmaxnorm = Nvector_array.Bigarray.array_nvec_ops.Nvector_custom.nvmaxnorm
 let printf = Printf.printf
 
 (* User data *)
@@ -50,7 +49,7 @@ type user_data =
     mm    : int;                        (* number of grid points *)
     dx    : float;
     coeff : float;
-    pp    : Ida.nvec;                   (* vector of prec. diag. elements *)
+    pp    : RealArray.t;          (* vector of prec. diag. elements *)
   }
 
 (*
@@ -200,7 +199,7 @@ let main () =
   let u = RealArray.make neq
   and u' = RealArray.make neq
   and res = RealArray.make neq
-  and constraints = Ida.Constraints.create neq in
+  and constraints = RealArray.make neq in
 
   let dx = 1. /. float_of_int (mgrid - 1) in
   let data = { pp = RealArray.make neq;
@@ -213,8 +212,8 @@ let main () =
   (* Initialize u, u'. *)
   set_initial_profile data u u' res;
 
-  (* Set constraints to all NonNegative. *)
-  Ida.Constraints.fill constraints Ida.Constraints.NonNegative;
+  (* Set constraints to all non-negative. *)
+  RealArray.fill constraints Ida.Constraint.non_negative;
 
   (* Assign various parameters. *)
 
@@ -223,21 +222,28 @@ let main () =
   and rtol = 0.0
   and atol = 1.0e-3 in
 
+  (* Wrap u and u' in nvectors.  Operations performed on the wrapped
+     representation affect the originals u and u'.  *)
+  let wu = Nvector_serial.wrap u
+  and wu' = Nvector_serial.wrap u'
+  in
+
   (* Call IDACreate to initialize solution with SPGMR linear solver.  *)
 
-  let solver = Ida.Spgmr { Ida.maxl = Some 5;
-                           Ida.prec_setup_fn = Some (p_setup_heat data);
-                           Ida.prec_solve_fn = Some (p_solve_heat data);
-                           Ida.jac_times_vec_fn = None;
-                         }
+  let solver =
+    Ida.Spils.spgmr (Some 5)
+      { Ida.Spils.prec_setup_fn = Some (p_setup_heat data);
+        Ida.Spils.prec_solve_fn = Some (p_solve_heat data);
+        Ida.Spils.jac_times_vec_fn = None;
+      }
   in
   let mem = Ida.init solver (Ida.SStolerances (rtol, atol))
-                     (res_heat data) ~t0:t0 u u' in
-  Ida.set_constraints mem constraints;
+                     (res_heat data) ~t0:t0 wu wu' in
+  Ida.set_constraints mem (Nvector_serial.wrap constraints);
 
   (* Print output heading. *)
   print_header rtol atol;
-  
+
   (* 
    * -------------------------------------------------------------------------
    * CASE I 
@@ -255,7 +261,7 @@ let main () =
 
   let tout = ref t1 in
   for iout = 1 to nout do
-    let (tret, flag) = Ida.solve_normal mem !tout u u' in
+    let (tret, flag) = Ida.solve_normal mem !tout wu wu' in
     print_output mem tret u;
     tout := !tout *. 2.
   done;
@@ -281,7 +287,7 @@ let main () =
   
   (* Re-initialize IDA and IDASPGMR *)
 
-  Ida.reinit mem t0 u u';
+  Ida.reinit mem t0 wu wu';
   Ida.Spils.set_gs_type mem Spils.ClassicalGS;
   
   (* Print case number, output table heading, and initial line of table. *)
@@ -293,7 +299,7 @@ let main () =
   (* Loop over output times, call IDASolve, and print results. *)
   let tout = ref t1 in
   for iout = 1 to nout do
-    let (tret, flag) = Ida.solve_normal mem !tout u u' in
+    let (tret, flag) = Ida.solve_normal mem !tout wu wu' in
     print_output mem tret u;
     tout := !tout *. 2.
   done;

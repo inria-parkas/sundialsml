@@ -3,24 +3,24 @@ include config
 MLOBJ_MAIN = sundials.cmo dls.cmo \
 	     nvector_serial.cmo nvector_custom.cmo nvector_array.cmo \
 	     $(MPI_MODULES) \
-	     spils.cmo cvode.cmo kinsol.cmo
-	     #ida.cmo ida_nvector.cmo ida_serial.cmo
+	     spils.cmo cvode.cmo kinsol.cmo \
+	     ida.cmo
 
 MLOBJ_SENS = cvodes.cmo
 
-MLOBJ_LOCAL = cvode_impl.cmo kinsol_impl.cmo
+MLOBJ_LOCAL = cvode_impl.cmo ida_impl.cmo kinsol_impl.cmo
 
 MLOBJ_WOS = sundials.cmo $(MLOBJ_LOCAL) $(filter-out sundials.cmo,$(MLOBJ_MAIN))
 MLOBJ = $(MLOBJ_WOS) $(MLOBJ_SENS)
 
 COMMON_COBJ= sundials_ml$(XO) dls_ml$(XO) nvector_ml$(XO) spils_ml$(XO)
 
-COBJ_WOS = $(COMMON_COBJ) cvode_ml$(XO) $(IDA_COBJ) kinsol_ml$(XO)
-COBJ = $(COMMON_COBJ) cvode_ml_s$(XO) cvodes_ml$(XO) $(IDA_COBJ) kinsol_ml$(XO)
+COBJ_WOS = $(COMMON_COBJ) cvode_ml$(XO) ida_ml$(XO) kinsol_ml$(XO)
+COBJ = $(COMMON_COBJ) cvode_ml_s$(XO) cvodes_ml$(XO) ida_ml$(XO) kinsol_ml$(XO)
 
-ALL_COBJ= $(COBJ) cvode_ml$(XO)
+ALL_COBJ= $(COBJ) cvode_ml$(XO) ida_ml$(XO)
 
-INSTALL_FILES= 			\
+INSTALL_FILES=			\
     META			\
     $(MLOBJ_MAIN:.cmo=.cmi)	\
     $(MLOBJ_SENS:.cmo=.cmi)	\
@@ -45,22 +45,22 @@ all: sundials.cma sundials.cmxa sundials_wos.cma sundials_wos.cmxa
 
 # TODO: fix this:
 sundials.cma sundials.cmxa: $(MLOBJ) $(MLOBJ:.cmo=.cmx) $(COBJ)
-	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS) 	\
-	    -o sundials -oc mlsundials $^ 	\
-	    $(OCAML_CVODES_LIBLINK) 		\
-	    $(OCAML_IDA_LIBLINK) 		\
-	    $(OCAML_KINSOL_LIBLINK) 		\
+	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS)	\
+	    -o sundials -oc mlsundials $^	\
+	    $(OCAML_CVODES_LIBLINK)		\
+	    $(OCAML_IDA_LIBLINK)		\
+	    $(OCAML_KINSOL_LIBLINK)		\
 	    $(NVECTOR_LIB)
 
 # wos = without sensitivity
 # TODO: fix this:
 sundials_wos.cma sundials_wos.cmxa: $(MLOBJ_WOS) $(MLOBJ_WOS:.cmo=.cmx) \
-    				    $(COBJ_WOS)
-	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS) 	  \
+				    $(COBJ_WOS)
+	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS)	  \
 	    -o sundials_wos -oc mlsundials_wos $^ \
-	    $(OCAML_CVODE_LIBLINK) 		  \
-	    $(OCAML_IDA_LIBLINK) 		  \
-	    $(OCAML_KINSOL_LIBLINK) 		  \
+	    $(OCAML_CVODE_LIBLINK)		  \
+	    $(OCAML_IDA_LIBLINK)		  \
+	    $(OCAML_KINSOL_LIBLINK)		  \
 	    $(NVECTOR_LIB)
 
 # There are three sets of flags:
@@ -86,15 +86,10 @@ cvode_ml_s.o: cvode_ml.c dls_ml.h spils_ml.h cvode_ml.h sundials_ml.h
 	    -o $@ -c $<
 
 cvodes_ml.o: cvodes_ml.c dls_ml.h spils_ml.h \
-    	     cvode_ml.h cvodes_ml.h sundials_ml.h
+	     cvode_ml.h cvodes_ml.h sundials_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(CVODES_CFLAGS) -o $@ -c $<
 
 ida_ml.o: ida_ml.c dls_ml.h spils_ml.h ida_ml.h
-	$(CC) -I $(OCAML_INCLUDE) $(IDA_CFLAGS) -o $@ -c $<
-ida_ml_ba.o: ida_ml_nvec.c nvector_ml.h ida_ml.h
-	$(CC) -I $(OCAML_INCLUDE) $(IDA_CFLAGS) \
-	      -DIDA_ML_BIGARRAYS -o $@ -c $<
-ida_ml_nvec.o: ida_ml_nvec.c nvector_ml.h ida_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(IDA_CFLAGS) -o $@ -c $<
 
 kinsol_ml.o: kinsol_ml.c dls_ml.h spils_ml.h kinsol_ml.h
@@ -122,7 +117,7 @@ doc/html/index.html: doc/html dochtml.cmo intro.doc \
 	    -kinsol-doc-root "$(KINSOL_DOC_ROOT)" 	\
 	    -pp "$(DOCPP)"				\
 	    -d ./doc/html/				\
-	    -hide Cvode_impl,Kinsol_impl 		\
+	    -hide Cvode_impl,Ida_impl,Kinsol_impl	\
 	    -t "Sundials"				\
 	    -intro intro.doc				\
 	    $(MLOBJ_MAIN:.cmo=.mli) $(MLOBJ_SENS:.cmo=.mli)

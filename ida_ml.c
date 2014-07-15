@@ -38,6 +38,875 @@
 
 #define MAX_ERRMSG_LEN 256
 
+#include "ida_ml.h"
+#include "nvector_ml.h"
+#include "dls_ml.h"
+
+#if SUNDIALS_BLAS_LAPACK == 1
+#include <ida/ida_lapack.h>
+#endif
+
+// Call with IDA_ML_BIGARRAYS to compile for the Serial NVector to
+// Bigarray interface code.
+
+#ifdef IDA_ML_BIGARRAYS
+
+#include <nvector/nvector_serial.h>
+
+#else
+
+#include <sundials/sundials_nvector.h>
+
+#endif
+
+#define IDATYPE(fname) c_ida_ ## fname
+#define DOQUOTE(text) #text
+#define QUOTE(val) DOQUOTE(val)
+#define IDATYPESTR(fname) QUOTE(IDATYPE(fname))
+
+#define CAML_FN(name)					\
+    static value *name;					\
+    if (name == NULL)					\
+	name = caml_named_value (IDATYPESTR (name)) /* no semicolon */
+
+static void errh(
+	int error_code,
+	const char *module,
+	const char *func,
+	char *msg,
+	void *eh_data)
+{
+    CAMLparam0();
+    CAMLlocal1(a);
+    value *backref = eh_data;
+
+    CAML_FN (call_errh);
+
+    a = caml_alloc_tuple(RECORD_SUNDIALS_ERROR_DETAILS_SIZE);
+    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_ERROR_CODE,
+		Val_int(error_code));
+    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_MODULE_NAME,
+		caml_copy_string(module));
+    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_FUNCTION_NAME,
+		caml_copy_string(func));
+    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_ERROR_MESSAGE,
+		caml_copy_string(msg));
+
+    caml_callback2_exn (*call_errh, *backref, a);
+
+    CAMLreturn0;
+}
+
+CAMLprim void c_ida_set_err_handler_fn(value vdata)
+{
+    CAMLparam1(vdata);
+
+    int flag = IDASetErrHandlerFn(IDA_MEM_FROM_ML(vdata), errh,
+				  IDA_BACKREF_FROM_ML(vdata));
+    CHECK_FLAG("IDASetErrHandlerFn", flag);
+
+    CAMLreturn0;
+}
+
+CAMLprim void c_ida_clear_err_handler_fn(value vdata)
+{
+    CAMLparam1(vdata);
+
+    int flag = IDASetErrHandlerFn(IDA_MEM_FROM_ML(vdata), NULL, NULL);
+    CHECK_FLAG("IDASetErrHandlerFn", flag);
+
+    CAMLreturn0;
+}
+#include <stdio.h>
+static int resfn (realtype t, N_Vector y, N_Vector yp,
+		  N_Vector resval, void *user_data)
+{
+    CAMLparam0 ();
+    CAMLlocalN (args, 5);
+    int r;
+    value *backref = user_data;
+    CAML_FN (call_resfn);
+
+    args[0] = *backref;
+    args[1] = caml_copy_double(t);
+    args[2] = NVEC_BACKLINK (y);
+    args[3] = NVEC_BACKLINK (yp);
+    args[4] = NVEC_BACKLINK (resval);
+
+    r = Int_val (caml_callbackN (*call_resfn,
+				 sizeof (args) / sizeof (*args),
+				 args));
+
+    CAMLreturnT (int, r);
+}
+
+static value make_jac_arg(realtype t, realtype coef, N_Vector y, N_Vector yp,
+			  N_Vector res, value tmp)
+{
+    CAMLparam1(tmp);
+    CAMLlocal1(r);
+
+    r = caml_alloc_tuple(RECORD_IDA_JACOBIAN_ARG_SIZE);
+    Store_field(r, RECORD_IDA_JACOBIAN_ARG_JAC_T, caml_copy_double(t));
+    Store_field(r, RECORD_IDA_JACOBIAN_ARG_JAC_COEF, caml_copy_double(coef));
+    Store_field(r, RECORD_IDA_JACOBIAN_ARG_JAC_Y, NVEC_BACKLINK(y));
+    Store_field(r, RECORD_IDA_JACOBIAN_ARG_JAC_YP, NVEC_BACKLINK(yp));
+    Store_field(r, RECORD_IDA_JACOBIAN_ARG_JAC_RES, NVEC_BACKLINK(res));
+    Store_field(r, RECORD_IDA_JACOBIAN_ARG_JAC_TMP, tmp);
+
+    CAMLreturn(r);
+}
+
+static value make_triple_tmp(N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
+{
+    CAMLparam0();
+    CAMLlocal1(r);
+
+    r = caml_alloc_tuple(3);
+    Store_field(r, 0, NVEC_BACKLINK(tmp1));
+    Store_field(r, 1, NVEC_BACKLINK(tmp2));
+    Store_field(r, 2, NVEC_BACKLINK(tmp3));
+    CAMLreturn(r);
+}
+
+static value make_double_tmp(N_Vector tmp1, N_Vector tmp2)
+{
+    CAMLparam0();
+    CAMLlocal1(r);
+
+    r = caml_alloc_tuple(2);
+    Store_field(r, 0, NVEC_BACKLINK(tmp1));
+    Store_field(r, 1, NVEC_BACKLINK(tmp2));
+    CAMLreturn(r);
+}
+
+/* Dense and band Jacobians only work with serial NVectors.  */
+static int jacfn (long int neq, realtype t, realtype coef,
+		  N_Vector y, N_Vector yp, N_Vector res,
+		  DlsMat jac, void *user_data,
+		  N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
+{
+    CAMLparam0 ();
+    CAMLlocalN (args, 3);
+    int r;
+    value *backref = user_data;
+    CAML_FN (call_jacfn);
+
+    args[0] = *backref;
+    args[1] = make_jac_arg (t, coef, y, yp, res,
+			    make_triple_tmp (tmp1, tmp2, tmp3));
+    args[2] = caml_alloc_final (2, NULL, 0, 1);
+    DLSMAT(args[2]) = jac;
+
+    r = Int_val (caml_callbackN (*call_jacfn,
+				 sizeof (args) / sizeof (*args),
+				 args));
+
+    CAMLreturnT (int, r);
+}
+
+static int bandjacfn (long int neq, long int mupper, long int mlower,
+		      realtype t, realtype coef, N_Vector y, N_Vector yp,
+		      N_Vector res, DlsMat jac, void *user_data,
+		      N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
+{
+    CAMLparam0 ();
+    CAMLlocalN (args, 4);
+    int r;
+    value *backref = user_data;
+    CAML_FN (call_bandjacfn);
+
+    args[0] = *backref;
+    args[1] = caml_alloc_tuple(RECORD_IDA_BANDRANGE_SIZE);
+    Store_field(args[1], RECORD_IDA_BANDRANGE_MUPPER, Val_long(mupper));
+    Store_field(args[1], RECORD_IDA_BANDRANGE_MLOWER, Val_long(mlower));
+    args[2] = make_jac_arg (t, coef, y, yp, res,
+			    make_triple_tmp (tmp1, tmp2, tmp3));
+    args[3] = caml_alloc_final (2, NULL, 0, 1);
+    DLSMAT(args[3]) = jac;
+
+    r = Int_val (caml_callbackN (*call_bandjacfn,
+				 sizeof (args) / sizeof (*args),
+				 args));
+
+    CAMLreturnT (int, r);
+}
+
+static int check_exception(value session, value r)
+{
+    CAMLparam2(session, r);
+    CAMLlocal1(exn);
+
+    static value *recoverable_failure = NULL;
+    if (recoverable_failure == NULL) {
+	recoverable_failure =
+	    caml_named_value("ida_RecoverableFailure");
+    }
+
+    if (!Is_exception_result(r)) return 0;
+
+    r = Extract_exception(r);
+
+    if (Field(r, 0) == *recoverable_failure)
+	CAMLreturnT (int, 1);
+
+    /* Unrecoverable error.  Save the exception and return -1.  */
+    exn = caml_alloc_small (1,0);
+    Field (exn, 0) = r;
+    Store_field (session, RECORD_IDA_SESSION_EXN_TEMP, exn);
+    CAMLreturnT (int, -1);
+}
+
+static int rootsfn (realtype t, N_Vector y, N_Vector yp,
+		    realtype *gout, void *user_data)
+{
+    CAMLparam0 ();
+    CAMLlocal2 (session, r);
+    CAMLlocalN (args, 4);
+    value *backref = (value *)user_data;
+    intnat nroots;
+
+    /* The length of gout is only available at the nroots field of the session
+     * structure, so a dereference of the backref is unavoidable.  Therefore,
+     * we will do all of the setup here and directly call the user-supplied
+     * OCaml function without going through an OCaml trampoline.  */
+    session = sundials_ml_weak_get (*backref, Val_int (0));
+    if (!Is_block (session))
+	caml_failwith ("Internal error: weak reference is dead");
+    session = Field (session, 0);
+
+    nroots = IDA_NROOTS_FROM_ML (session);
+
+    args[0] = caml_copy_double (t);
+    args[1] = NVEC_BACKLINK (y);
+    args[2] = NVEC_BACKLINK (yp);
+    args[3] = caml_ba_alloc (BIGARRAY_FLOAT, 1, gout, &nroots);
+
+    r = caml_callbackN_exn (IDA_ROOTSFN_FROM_ML (session),
+			    sizeof (args) / sizeof (*args),
+			    args);
+
+    CAMLreturnT (int, check_exception (session, r));
+}
+
+static int errw(N_Vector y, N_Vector ewt, void *user_data)
+{
+    CAMLparam0();
+    CAMLlocalN(args, 3);
+    int r;
+    value *backref = user_data;
+    CAML_FN (call_errw);
+
+    args[0] = *backref;
+    args[1] = NVEC_BACKLINK (y);
+    args[2] = NVEC_BACKLINK (ewt);
+
+    r = Int_val (caml_callbackN (*call_errw,
+				 sizeof (args) / sizeof (*args),
+				 args));
+
+    CAMLreturnT(int, r);
+}
+
+static int presetupfn(
+    realtype t,
+    N_Vector y,
+    N_Vector yp,
+    N_Vector res,
+    realtype cj,
+    void *user_data,
+    N_Vector tmp1,
+    N_Vector tmp2,
+    N_Vector tmp3)
+{
+    CAMLparam0();
+    CAMLlocalN(args, 2);
+    int r;
+    value *backref = user_data;
+    CAML_FN (call_presetupfn);
+
+    args[0] = *backref;
+    args[1] = make_jac_arg(t, cj, y, yp, res,
+			   make_triple_tmp(tmp1, tmp2, tmp3));
+    r = Int_val (caml_callbackN (*call_presetupfn,
+				 sizeof (args) / sizeof (*args),
+				 args));
+
+    CAMLreturnT(int, r);
+}
+
+static int presolvefn(
+	realtype t,
+	N_Vector y,
+	N_Vector yp,
+	N_Vector res,
+	N_Vector r,
+	N_Vector z,
+	realtype cj,
+	realtype delta,
+	void *user_data,
+	N_Vector tmp)
+{
+    CAMLparam0();
+    CAMLlocalN(args, 5);
+    value *backref = user_data;
+    int rv;
+    CAML_FN (call_presolvefn);
+
+    args[0] = *backref;
+    args[1] = make_jac_arg(t, cj, y, yp, res, NVEC_BACKLINK (tmp));
+    args[2] = NVEC_BACKLINK (r);
+    args[3] = NVEC_BACKLINK (z);
+    args[4] = caml_copy_double (delta);
+
+    rv = Int_val (caml_callbackN (*call_presolvefn,
+				  sizeof (args) / sizeof (*args),
+				  args));
+
+    CAMLreturnT (int, rv);
+}
+
+static int jactimesfn(
+    realtype t,
+    N_Vector y,
+    N_Vector yp,
+    N_Vector res,
+    N_Vector v,
+    N_Vector Jv,
+    realtype cj,
+    void *user_data,
+    N_Vector tmp1, N_Vector tmp2)
+{
+    CAMLparam0();
+    CAMLlocalN(args, 4);
+    int r;
+    value *backref = user_data;
+    CAML_FN (call_jactimesfn);
+
+    args[0] = *backref;
+    args[1] = make_jac_arg (t, cj, y, yp, res, make_double_tmp (tmp1, tmp2));
+    args[2] = NVEC_BACKLINK (v);
+    args[3] = NVEC_BACKLINK (Jv);
+
+    r = Int_val (caml_callbackN (*call_jactimesfn,
+				 sizeof (args) / sizeof (*args),
+				 args));
+
+    CAMLreturnT (int, r);
+}
+
+
+/* Dense and Band can only be used with serial NVectors.  */
+CAMLprim void c_ida_dls_dense (value vida_mem, value vneqs, value vset_jac)
+{
+    CAMLparam3(vida_mem, vneqs, vset_jac);
+    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
+    long neqs = Long_val (vneqs);
+    int flag;
+
+    flag = IDADense (ida_mem, neqs);
+    CHECK_FLAG ("IDADense", flag);
+    if (Bool_val (vset_jac)) {
+	flag = IDADlsSetDenseJacFn(IDA_MEM_FROM_ML(vida_mem), jacfn);
+	CHECK_FLAG("IDADlsSetDenseJacFn", flag);
+    }
+    CAMLreturn0;
+}
+
+CAMLprim void c_ida_dls_lapack_dense (value vida_mem, value vneqs,
+				      value vset_jac)
+{
+    CAMLparam3 (vida_mem, vneqs, vset_jac);
+#if SUNDIALS_BLAS_LAPACK
+    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
+    long neqs = Long_val (vneqs);
+    int flag;
+
+    flag = IDALapackDense (ida_mem, neqs);
+    CHECK_FLAG ("IDALapackDense", flag);
+    if (Bool_val (vset_jac)) {
+	flag = IDADlsSetDenseJacFn (IDA_MEM_FROM_ML (vida_mem), jacfn);
+	CHECK_FLAG("IDADlsSetDenseJacFn", flag);
+    }
+#else
+    caml_failwith("Lapack solvers are not available.");
+#endif
+    CAMLreturn0;
+}
+
+CAMLprim void c_ida_dls_set_dense_jac_fn(value vdata)
+{
+    CAMLparam1(vdata);
+    int flag = IDADlsSetDenseJacFn(IDA_MEM_FROM_ML(vdata), jacfn);
+    CHECK_FLAG("IDADlsSetDenseJacFn", flag);
+    CAMLreturn0;
+}
+
+CAMLprim void c_ida_dls_clear_dense_jac_fn(value vdata)
+{
+    CAMLparam1(vdata);
+    int flag = IDADlsSetDenseJacFn(IDA_MEM_FROM_ML(vdata), NULL);
+    CHECK_FLAG("IDADlsSetDenseJacFn", flag);
+    CAMLreturn0;
+}
+
+CAMLprim void c_ida_dls_band (value vida_mem, value vneqs,
+			      value mupper, value mlower, value vset_jac)
+{
+    CAMLparam5(vida_mem, vneqs, mupper, mlower, vset_jac);
+    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
+    long neqs = Long_val (vneqs);
+    int flag;
+
+    flag = IDABand (ida_mem, neqs, Long_val (mupper), Long_val (mlower));
+    CHECK_FLAG ("IDABand", flag);
+    if (Bool_val (vset_jac)) {
+	flag = IDADlsSetBandJacFn(IDA_MEM_FROM_ML(vida_mem), bandjacfn);
+	CHECK_FLAG("IDADlsSetBandJacFn", flag);
+    }
+    CAMLreturn0;
+}
+
+CAMLprim void c_ida_dls_lapack_band (value vida_mem, value vneqs,
+				     value mupper, value mlower,
+				     value vset_jac)
+{
+    CAMLparam5(vida_mem, vneqs, mupper, mlower, vset_jac);
+#if SUNDIALS_BLAS_LAPACK
+    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
+    long neqs = Long_val (vneqs);
+    int flag;
+
+    flag = IDALapackBand (ida_mem, neqs, Long_val (mupper), Long_val (mlower));
+    CHECK_FLAG ("IDALapackBand", flag);
+    if (Bool_val (vset_jac)) {
+	flag = IDADlsSetBandJacFn(IDA_MEM_FROM_ML(vida_mem), bandjacfn);
+	CHECK_FLAG("IDADlsSetBandJacFn", flag);
+    }
+#else
+    caml_failwith("Lapack solvers are not available.");
+#endif
+    CAMLreturn0;
+}
+
+CAMLprim void c_ida_dls_set_band_jac_fn(value vdata)
+{
+    CAMLparam1(vdata);
+    int flag = IDADlsSetBandJacFn(IDA_MEM_FROM_ML(vdata), bandjacfn);
+    CHECK_FLAG("IDADlsSetBandJacFn", flag);
+    CAMLreturn0;
+}
+
+CAMLprim void c_ida_dls_clear_band_jac_fn(value vdata)
+{
+    CAMLparam1(vdata);
+    int flag = IDADlsSetBandJacFn(IDA_MEM_FROM_ML(vdata), NULL);
+    CHECK_FLAG("IDADlsSetBandJacFn", flag);
+    CAMLreturn0;
+}
+
+CAMLprim void c_ida_spils_set_preconditioner (value vsession,
+						 value vset_presetup,
+						 value vset_jac)
+{
+    CAMLparam3 (vsession, vset_presetup, vset_jac);
+    void *mem = IDA_MEM_FROM_ML (vsession);
+    IDASpilsPrecSetupFn setup = Bool_val (vset_presetup) ? presetupfn : NULL;
+    int flag;
+
+    flag = IDASpilsSetPreconditioner (mem, setup, presolvefn);
+    CHECK_FLAG ("IDASpilsSetPreconditioner", flag);
+    if (Bool_val (vset_jac)) {
+	flag = IDASpilsSetJacTimesVecFn (mem, jactimesfn);
+	CHECK_FLAG ("IDASpilsSetJacTimesVecFn", flag);
+    }
+
+    CAMLreturn0;
+}
+
+CAMLprim void c_ida_spils_spgmr (value vida_mem, value vmaxl)
+{
+    CAMLparam2 (vida_mem, vmaxl);
+    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
+    int flag;
+
+    flag = IDASpgmr (ida_mem, Int_val (vmaxl));
+    CHECK_FLAG ("IDASpgmr", flag);
+
+    CAMLreturn0;
+}
+
+CAMLprim void c_ida_spils_spbcg (value vida_mem, value vmaxl)
+{
+    CAMLparam2 (vida_mem, vmaxl);
+    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
+    int flag;
+
+    flag = IDASpbcg (ida_mem, Int_val (vmaxl));
+    CHECK_FLAG ("IDASpbcg", flag);
+
+    CAMLreturn0;
+}
+
+CAMLprim void c_ida_spils_sptfqmr (value vida_mem, value vmaxl)
+{
+    CAMLparam2 (vida_mem, vmaxl);
+    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
+    int flag;
+
+    flag = IDASptfqmr (ida_mem, Int_val (vmaxl));
+    CHECK_FLAG ("IDASptfqmr", flag);
+
+    CAMLreturn0;
+}
+
+CAMLprim void c_ida_wf_tolerances(value vdata)
+{
+    CAMLparam1(vdata);
+
+    int flag = IDAWFtolerances(IDA_MEM_FROM_ML(vdata), errw);
+    CHECK_FLAG("IDAWFtolerances", flag);
+
+    CAMLreturn0;
+}
+
+/* This is just a minimal skin over IDASpilsSetPreconditioner, whereas
+ * c_ida_spils_set_preconditioner sets up the Jacobian-times-vector
+ * function as well.  FIXME: remove this in favor of
+ * c_ida_spils_set_preconditioner.  */
+CAMLprim void c_ida_set_preconditioner(value vdata)
+{
+    CAMLparam1(vdata);
+    int flag = IDASpilsSetPreconditioner(IDA_MEM_FROM_ML(vdata),
+					 presetupfn, presolvefn);
+    CHECK_FLAG("IDASpilsSetPreconditioner", flag);
+    CAMLreturn0;
+}
+
+CAMLprim void c_ida_set_jac_times_vec_fn(value vdata)
+{
+    CAMLparam1(vdata);
+    int flag = IDASpilsSetJacTimesVecFn(IDA_MEM_FROM_ML(vdata), jactimesfn);
+    CHECK_FLAG("IDASpilsSetJacTimesVecFn", flag);
+    CAMLreturn0;
+}
+
+CAMLprim void c_ida_clear_jac_times_vec_fn(value vdata)
+{
+    CAMLparam1(vdata);
+    int flag = IDASpilsSetJacTimesVecFn(IDA_MEM_FROM_ML(vdata), NULL);
+    CHECK_FLAG("IDASpilsSetJacTimesVecFn", flag);
+    CAMLreturn0;
+}
+
+/* Sets the root function to a generic trampoline and set the number of
+ * roots.  */
+CAMLprim void c_ida_root_init (value vida_mem, value vnroots)
+{
+    CAMLparam2 (vida_mem, vnroots);
+    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
+    int nroots = Int_val (vnroots);
+    int flag;
+    flag = IDARootInit (ida_mem, nroots, rootsfn);
+    CHECK_FLAG ("IDARootInit", flag);
+    Store_field (vida_mem, RECORD_IDA_SESSION_NROOTS, vnroots);
+    CAMLreturn0;
+}
+
+/* IDACreate + IDAInit + IDASetUser.  The vy and vyp vectors must have the same
+ * length (not checked).  Returns an IDAMem (= void*) along with a global root
+ * wrapping weakref that is attached to the IDAMem.  Before doing the remaining
+ * initialization, these pointers have to be wrapped in a session so that if
+ * initialization fails the GC frees IDAMem and the weak global root.  Doing
+ * that cleanup in C would be ugly, e.g. we wouldn't be able to reuse
+ * c_ida_set_linear_solver() so we have to duplicate it or hack some ad-hoc
+ * extensions to that function.  */
+CAMLprim value c_ida_init (value weakref, value vt0, value vy, value vyp)
+{
+    CAMLparam4 (weakref, vy, vyp, vt0);
+    CAMLlocal1 (r);
+    int flag;
+    N_Vector y, yp;
+    void *ida_mem = NULL;
+    value *backref = NULL;
+
+    ida_mem = IDACreate ();
+    if (ida_mem == NULL)
+	caml_failwith ("IDACreate failed");
+
+    y = NVEC_VAL (vy);
+    yp = NVEC_VAL (vyp);
+    flag = IDAInit (ida_mem, resfn, Double_val (vt0), y, yp);
+    if (flag != IDA_SUCCESS) {
+	IDAFree (ida_mem);
+	CHECK_FLAG ("IDAInit", flag);
+    }
+
+    backref = malloc (sizeof (*backref));
+    if (backref == NULL) {
+	IDAFree (&ida_mem);
+	caml_failwith ("Out of memory");
+    }
+    *backref = weakref;
+    caml_register_generational_global_root (backref);
+    IDASetUserData (ida_mem, backref);
+
+    r = caml_alloc_tuple(3);
+    Store_field(r, 0, (value)ida_mem);
+    Store_field(r, 1, (value)backref);
+    Store_field(r, 2, Val_long (0)); // no err_file = NULL
+
+    CAMLreturn (r);
+}
+
+CAMLprim void c_ida_sv_tolerances (value ida_mem, value vrtol, value vavtol)
+{
+    CAMLparam3 (ida_mem, vrtol, vavtol);
+    N_Vector avtol;
+    int flag;
+
+    avtol = NVEC_VAL (vavtol);
+    flag = IDASVtolerances (IDA_MEM_FROM_ML (ida_mem),
+			    Double_val (vrtol), avtol);
+    CHECK_FLAG ("IDASVtolerances", flag);
+
+    CAMLreturn0;
+}
+
+CAMLprim void c_ida_reinit(value vdata, value t0, value y0, value yp0)
+{
+    CAMLparam4(vdata, t0, y0, yp0);
+
+    N_Vector y0_nv = NVEC_VAL(y0);
+    N_Vector yp0_nv = NVEC_VAL(yp0);
+    int flag = IDAReInit(IDA_MEM_FROM_ML(vdata), Double_val(t0),
+			 y0_nv, yp0_nv);
+    CHECK_FLAG("IDAReInit", flag);
+
+#if SAFETY_CHECKS
+    IDA_MASK_SAFETY_FLAGS(vdata, IDA_SAFETY_FLAG_REINIT_KEEPS);
+#endif
+
+    CAMLreturn0;
+}
+
+static value solve (value vdata, value nextt, value vy, value vyp, int onestep)
+{
+    CAMLparam4 (vdata, nextt, vy, vyp);
+    CAMLlocal1 (ret);
+    void *ida_mem = IDA_MEM_FROM_ML (vdata);
+    realtype tret;
+    int flag;
+    N_Vector y, yp;
+    enum ida_solver_result_tag result;
+
+#if SAFETY_CHECKS && IDA_ML_BIGARRAYS
+    /* This can't be checked for generic nvectors.  */
+    if (IDA_NEQS_FROM_ML (vdata) != Caml_ba_array_val(vy)->dim[0])
+	caml_invalid_argument ("Ida.solve: y vector has incorrect length");
+    if (IDA_NEQS_FROM_ML (vdata) != Caml_ba_array_val(vyp)->dim[0])
+	caml_invalid_argument ("Ida.solve: y' vector has incorrect length");
+#endif
+
+    y = NVEC_VAL (vy);
+    yp = NVEC_VAL (vyp);
+    flag = IDASolve (ida_mem, Double_val (nextt), &tret, y, yp,
+	             onestep ? IDA_ONE_STEP : IDA_NORMAL);
+
+    switch (flag) {
+    case IDA_SUCCESS:
+	result = VARIANT_IDA_SOLVER_RESULT_CONTINUE;
+	break;
+
+    case IDA_ROOT_RETURN:
+	result = VARIANT_IDA_SOLVER_RESULT_ROOTSFOUND;
+	break;
+
+    case IDA_TSTOP_RETURN:
+	result = VARIANT_IDA_SOLVER_RESULT_STOPTIMEREACHED;
+	break;
+
+    default:
+	/* If an exception was recorded, propagate it.  This accounts for
+	 * almost all failures except for repeated recoverable failures in the
+	 * residue function.  */
+	ret = Field (vdata, RECORD_IDA_SESSION_EXN_TEMP);
+	if (Is_block (ret)) {
+	    Store_field (vdata, RECORD_IDA_SESSION_EXN_TEMP, Val_none);
+	    /* In bytecode, caml_raise() duplicates some parts of the
+	     * stacktrace.  This does not seem to happen in native code
+	     * execution.  */
+	    caml_raise (Field (ret, 0));
+	}
+	CHECK_FLAG ("IDASolve", flag);
+    }
+
+#if SAFETY_CHECKS
+    IDA_SET_SAFETY_FLAG (vdata, IDA_SAFETY_FLAG_SOLVING);
+#endif
+
+    /* Hmm...should this go in the production code or not?  */
+    if (Is_block (Field (vdata, RECORD_IDA_SESSION_EXN_TEMP)))
+	abort ();
+
+    ret = caml_alloc_tuple (2);
+    Store_field (ret, 0, caml_copy_double (tret));
+    Store_field (ret, 1, Val_int (result));
+
+    CAMLreturn (ret);
+}
+
+
+CAMLprim value c_ida_solve_normal (value vdata, value nextt,
+				   value y, value yp)
+{
+    CAMLparam4(vdata, nextt, y, yp);
+    CAMLreturn(solve(vdata, nextt, y, yp, 0));
+}
+
+CAMLprim value c_ida_solve_one_step (value vdata, value nextt,
+				     value y, value yp)
+{
+    CAMLparam4(vdata, nextt, y, yp);
+    CAMLreturn(solve(vdata, nextt, y, yp, 1));
+}
+
+CAMLprim void c_ida_get_dky(value vdata, value vt, value vk, value vy)
+{
+    CAMLparam4(vdata, vt, vk, vy);
+
+    N_Vector y_nv = NVEC_VAL(vy);
+
+    int flag = IDAGetDky(IDA_MEM_FROM_ML(vdata), Double_val(vt),
+			 Int_val(vk), y_nv);
+    CHECK_FLAG("IDAGetDky", flag);
+
+    CAMLreturn0;
+}
+
+CAMLprim void c_ida_get_err_weights(value vida_mem, value verrws)
+{
+    CAMLparam2(vida_mem, verrws);
+
+    N_Vector errws_nv = NVEC_VAL(verrws);
+
+    int flag = IDAGetErrWeights(IDA_MEM_FROM_ML(vida_mem), errws_nv);
+    CHECK_FLAG("IDAGetErrWeights", flag);
+
+    CAMLreturn0;
+}
+
+CAMLprim void c_ida_get_est_local_errors(value vida_mem, value vele)
+{
+    CAMLparam2(vida_mem, vele);
+
+    N_Vector ele_nv = NVEC_VAL(vele);
+
+    int flag = IDAGetEstLocalErrors(IDA_MEM_FROM_ML(vida_mem), ele_nv);
+    CHECK_FLAG("IDAGetEstLocalErrors", flag);
+
+    CAMLreturn0;
+}
+
+
+CAMLprim void c_ida_set_id (value vida_mem, value vid)
+{
+    CAMLparam2(vida_mem, vid);
+    N_Vector id;
+
+    id = NVEC_VAL (vid);
+    int flag = IDASetId (IDA_MEM_FROM_ML(vida_mem), id);
+    CHECK_FLAG("IDASetId", flag);
+
+#if SAFETY_CHECKS
+    IDA_SET_SAFETY_FLAG (vida_mem, IDA_SAFETY_FLAG_ID_SET);
+#endif
+
+    CAMLreturn0;
+}
+
+
+static void calc_ic (void *ida_mem, value session, int icopt, realtype tout1,
+		     value vy, value vyp)
+{
+    CAMLparam3 (session, vy, vyp);
+    CAMLlocal1 (exn);
+    int flag;
+    N_Vector y, yp;
+
+#if SAFETY_CHECKS
+    if (IDA_SAFETY_FLAGS (session) & IDA_SAFETY_FLAG_SOLVING)
+	caml_invalid_argument ("Ida.calc_ic: called after Ida.solve_*");
+#endif
+
+    flag = IDACalcIC (ida_mem, icopt, tout1);
+
+    if (flag < 0) {
+	/* If an exception is saved in the session, grab it and re-raise. */
+	exn = Field (session, RECORD_IDA_SESSION_EXN_TEMP);
+	if (Is_block (exn)) {
+	    Store_field (session, RECORD_IDA_SESSION_EXN_TEMP, Val_none);
+	    /* In bytecode, caml_raise() duplicates some parts of the
+	     * stacktrace.  This does not seem to happen in native code
+	     * execution.  */
+	    caml_raise (Field (exn, 0));
+	}
+	/* Otherwise, raise a generic exception like Ida.ResFuncFailure */
+	CHECK_FLAG ("IDACalcIC", flag);
+    }
+
+    /* Retrieve the calculated initial conditions if y,yp are given.  */
+    y  = (Is_block (vy))  ? NVEC_VAL (Field (vy, 0))  : NULL;
+    yp = (Is_block (vyp)) ? NVEC_VAL (Field (vyp, 0)) : NULL;
+    if (y != NULL || yp != NULL) {
+	flag = IDAGetConsistentIC (ida_mem, y, yp);
+	CHECK_FLAG ("IDAGetConsistentIC", flag);
+    }
+    CAMLreturn0;
+}
+
+CAMLprim void c_ida_calc_ic_y(value vida_mem, value vy, value tout1)
+{
+    CAMLparam3 (vida_mem, vy, tout1);
+    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
+
+    calc_ic (ida_mem, vida_mem, IDA_Y_INIT, Double_val (tout1), vy, Val_none);
+
+    CAMLreturn0;
+}
+
+CAMLprim void c_ida_calc_ic_ya_ydp(value vida_mem, value y, value yp,
+				      value vid, value tout1)
+{
+    CAMLparam5 (vida_mem, y, yp, vid, tout1);
+    int flag;
+    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
+
+    N_Vector id = NVEC_VAL (vid);
+    flag = IDASetId (ida_mem, id);
+    CHECK_FLAG ("IDASetId", flag);
+
+#if SAFETY_CHECKS
+    IDA_SET_SAFETY_FLAG (vida_mem, IDA_SAFETY_FLAG_ID_SET);
+#endif
+
+    calc_ic (ida_mem, vida_mem, IDA_YA_YDP_INIT, Double_val (tout1), y, yp);
+
+    CAMLreturn0;
+}
+
+CAMLprim void c_ida_set_constraints (value vida_mem, value vconstraints)
+{
+    CAMLparam2(vida_mem, vconstraints);
+    int flag;
+
+    N_Vector constraints = NVEC_VAL (vconstraints);
+    flag = IDASetConstraints (IDA_MEM_FROM_ML (vida_mem), constraints);
+    CHECK_FLAG ("IDASetConstraints", flag);
+
+    CAMLreturn0;
+}
+
 void ida_ml_check_flag(const char *call, int flag)
 {
     static char exmsg[MAX_ERRMSG_LEN] = "";
@@ -602,6 +1471,23 @@ CAMLprim value c_ida_get_num_nonlin_solv_conv_fails(value vida_mem)
     CHECK_FLAG("IDAGetNumNonlinSolvConvFails", flag);
 
     CAMLreturn(Val_long(r));
+}
+
+CAMLprim value c_ida_get_nonlin_solv_stats(value vida_mem)
+{
+    CAMLparam1(vida_mem);
+    CAMLlocal1(ret);
+
+    long int nniters, nncfails;
+    int flag = IDAGetNonlinSolvStats(IDA_MEM_FROM_ML(vida_mem),
+				     &nniters, &nncfails);
+    CHECK_FLAG("IDAGetNonlinSolvStats", flag);
+
+    ret = caml_alloc_tuple (2);
+    Store_field (ret, 0, Val_long (nniters));
+    Store_field (ret, 1, Val_long (nncfails));
+
+    CAMLreturn(ret);
 }
 
 CAMLprim value c_ida_get_num_g_evals(value vida_mem)

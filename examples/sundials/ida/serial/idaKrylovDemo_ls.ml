@@ -33,12 +33,11 @@
  * is taken at t = 0, .01, .02, .04,..., 10.24.
  * -----------------------------------------------------------------
  *)
-module Ida = Ida_serial
-module RealArray = Ida.RealArray
+module RealArray = Sundials.RealArray
 
-let nvscale = Nvector_array.Bigarray.array_nvec_ops.Nvector.Mutable.nvscale
-and nvprod = Nvector_array.Bigarray.array_nvec_ops.Nvector.Mutable.nvprod
-and nvmaxnorm = Nvector_array.Bigarray.array_nvec_ops.Nvector.Mutable.nvmaxnorm
+let nvscale = Nvector_array.Bigarray.array_nvec_ops.Nvector_custom.nvscale
+and nvprod = Nvector_array.Bigarray.array_nvec_ops.Nvector_custom.nvprod
+and nvmaxnorm = Nvector_array.Bigarray.array_nvec_ops.Nvector_custom.nvmaxnorm
 
 (* Problem Constants *)
 let nout  = 11
@@ -174,7 +173,7 @@ let p_setup_heat data jac =
  * computed in PrecondHeateq), returning the result in zvec.      
  *)
 let p_solve_heat data jac r z delta =
-  Nvector_array.Bigarray.array_nvec_ops.Nvector.Mutable.nvprod data.pp r z
+  nvprod data.pp r z
 
 (*
  * set_initial_profile: routine to initialize u and u' vectors.
@@ -218,7 +217,7 @@ let main() =
   let u = RealArray.make neq
   and u' = RealArray.make neq
   and res = RealArray.make neq
-  and constraints = Ida.Constraints.create neq in
+  and constraints = RealArray.make neq in
   let dx = 1. /. float_of_int (mgrid - 1) in
   let data =
     {
@@ -234,7 +233,7 @@ let main() =
   set_initial_profile data u u' res;
 
   (* Set constraints to all nonnegative solution values. *)
-  Ida.Constraints.fill constraints Ida.Constraints.NonNegative;
+  RealArray.fill constraints Ida.Constraint.non_negative;
 
   (* Assign various parameters. *)
 
@@ -243,11 +242,17 @@ let main() =
   and rtol = 0.
   and atol = 1.0e-3 in
 
+  (* Wrap u and u' in nvectors.  Operations performed on the wrapped
+     representation affect the originals u and u'.  *)
+  let wu = Nvector_serial.wrap u
+  and wu' = Nvector_serial.wrap u'
+  in
+
   (* Call IDACreate with dummy linear solver *)
 
-  let mem = Ida.init (Ida.Dense None) (Ida.SStolerances (rtol, atol))
-                     (res_heat data) ~t0:t0 u u' in
-  Ida.set_constraints mem constraints;
+  let mem = Ida.init (Ida.Dls.dense None) (Ida.SStolerances (rtol, atol))
+                     (res_heat data) ~t0:t0 wu wu' in
+  Ida.set_constraints mem (Nvector_serial.wrap constraints);
 
   (* START: Loop through SPGMR, SPBCG and SPTFQMR linear solver modules *)
   let solvers = [|USE_SPGMR; USE_SPBCG; USE_SPTFQMR|] in
@@ -264,10 +269,9 @@ let main() =
       set_initial_profile data u u' res;
 
     (* Print header and reinit with a new solver module *)
-    let spils_init = { Ida.maxl = None;
-                       Ida.prec_setup_fn = Some (p_setup_heat data);
-                       Ida.prec_solve_fn = Some (p_solve_heat data);
-                       Ida.jac_times_vec_fn = None;
+    let spils_init = { Ida.Spils.prec_setup_fn = Some (p_setup_heat data);
+                       Ida.Spils.prec_solve_fn = Some (p_solve_heat data);
+                       Ida.Spils.jac_times_vec_fn = None;
                      }
     in
     begin
@@ -276,20 +280,21 @@ let main() =
                       printf " \n| SPGMR |\n";
                       printf " -------\n";
                       flush stdout;
-                      Ida.reinit mem ~linsolv:(Ida.Spgmr spils_init)
-                        t0 u u')
+                      Ida.reinit mem ~linsolv:(Ida.Spils.spgmr None spils_init)
+                        t0 wu wu')
       | USE_SPBCG -> (printf " -------";
                       printf " \n| SPBCG |\n";
                       printf " -------\n";
                       flush stdout;
-                      Ida.reinit mem ~linsolv:(Ida.Spbcg spils_init)
-                        t0 u u')
+                      Ida.reinit mem ~linsolv:(Ida.Spils.spbcg None spils_init)
+                        t0 wu wu')
       | USE_SPTFQMR -> (printf " ---------";
                         printf " \n| SPTFQMR |\n";
                         printf " ---------\n";
                       flush stdout;
-                        Ida.reinit mem ~linsolv:(Ida.Sptfqmr spils_init)
-                          t0 u u')
+                        Ida.reinit mem ~linsolv:(Ida.Spils.sptfqmr None
+                                                   spils_init)
+                          t0 wu wu')
     end;
 
     (* Print output heading. *)
@@ -305,7 +310,7 @@ let main() =
 
     let tout = ref t1 in
     for iout = 1 to nout do
-      let (tret, flag) = Ida.solve_normal mem !tout u u' in
+      let (tret, flag) = Ida.solve_normal mem !tout wu wu' in
       print_output mem tret u linsolver;
       tout := !tout *. 2.
     done;
