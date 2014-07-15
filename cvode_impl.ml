@@ -12,6 +12,12 @@
 
 (* basic cvode types *)
 
+(*
+ * NB: The order of variant constructors and record fields is important!
+ *     If these types are changed or augmented, the corresponding declarations
+ *     in cvode_ml.h (and code in cvode_ml.c) must also be updated.
+ *)
+
 type ('data, 'kind) nvector = ('data, 'kind) Sundials.nvector
 type real_array = Sundials.RealArray.t
 

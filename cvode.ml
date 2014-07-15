@@ -295,7 +295,7 @@ module Dls =
       match s.ls_callbacks with
       | BandCallback _ -> (s.ls_callbacks <- NoCallbacks;
                            clear_band_jac_fn s)
-      | _ -> failwith "dense linear solver not in use"
+      | _ -> failwith "banded linear solver not in use"
 
     external get_work_space : serial_session -> int * int
         = "c_cvode_dls_get_work_space"

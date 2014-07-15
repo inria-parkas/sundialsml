@@ -99,7 +99,7 @@
 #define CAML_FN(name)					\
     static value *name;					\
     if (name == NULL)					\
-	name = caml_named_value (CVTYPESTR (name));
+	name = caml_named_value (CVTYPESTR (name)) /* no semicolon */
 
 static void errh(
 	int error_code,
@@ -849,6 +849,10 @@ CAMLprim void c_cvode_wf_tolerances (value vdata)
     CAMLreturn0;
 }
 
+/* This is just a minimal skin over CVSpilsSetPreconditioner, whereas
+ * c_cvode_spils_set_preconditioner sets up the Jacobian-times-vector
+ * function as well.  FIXME: remove this in favor of
+ * c_cvode_spils_set_preconditioner.  */
 CAMLprim void c_cvode_set_preconditioner(value vdata, value vset_precsetup)
 {
     CAMLparam2(vdata, vset_precsetup);

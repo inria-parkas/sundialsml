@@ -321,7 +321,7 @@ module Dls :
     (** {4 Optional output functions} *)
 
     (** Returns the sizes of the real and integer workspaces used by the Dense
-        and Band direct linear solvers .
+        or Band direct linear solver.
 
         @cvode <node5#sss:optout_dls> CVDlsGetWorkSpace
         @return ([real_size], [integer_size]) *)
@@ -875,8 +875,8 @@ val nroots : ('a, 'k) session -> int
 
 (** {2 Solver functions } *)
 
-(** [(tret, r) = solv_normal s tout yout] integrates the ODE over an interval
-    in t.
+(** [(tret, r) = solve_normal s tout yout] integrates the ODE over an
+    interval in t.
 
     The arguments are:
     - [s] a session with the solver.
@@ -1127,7 +1127,7 @@ val get_num_nonlin_solv_iters : ('a, 'k) session -> int
     @cvode <node5#sss:optout_main> CVodeGetNumNonlinSolvConvFails *)
 val get_num_nonlin_solv_conv_fails : ('a, 'k) session -> int
 
-(** [nniters, nncfails = get_nonlin_solv_stats s] returns both the numbers of
+(** [nniters, nncfails = get_nonlin_solv_stats s] obtains both the numbers of
     nonlinear iterations performed [nniters] and of nonlinear convergence
     failures that have occurred [nncfails].
 
