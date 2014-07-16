@@ -477,6 +477,10 @@ let main () =
   let nerr2 = problem2 () in
   print_err_info (nerr1 + nerr2)
 
-let _ = main ()
-let _ = Gc.compact ()
+let n =
+  match Sys.argv with
+  | [|_; n|] -> int_of_string n
+  | _ -> 1
+let _ = for i = 1 to n do main () done
 
+let _ = Gc.compact ()

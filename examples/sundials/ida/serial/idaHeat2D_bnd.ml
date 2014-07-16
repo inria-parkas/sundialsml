@@ -213,5 +213,11 @@ let main () =
   printf "\n netf = %d,   ncfn = %d \n" netf ncfn
 ;;
 
-let _ = main ()
+
+let n =
+  match Sys.argv with
+  | [|_; n|] -> int_of_string n
+  | _ -> 1
+let _ = for i = 1 to n do main () done
+
 let _ = Gc.compact ()

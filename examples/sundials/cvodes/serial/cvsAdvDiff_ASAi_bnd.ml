@@ -335,5 +335,5 @@ let main () =
   print_output (unvec uB) data
 
 let _ = main ()
-let _ = Gc.compact ()
+let _ = Gc.full_major ()
 

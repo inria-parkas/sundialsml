@@ -313,5 +313,10 @@ let main () =
   printf "Nonlinear convergence failures = %d\n" ncfn;
   printf "Linear convergence failures    = %d\n" ncfl
 
-let _ = main ()
+let n =
+  match Sys.argv with
+  | [|_; n|] -> int_of_string n
+  | _ -> 1
+let _ = for i = 1 to n do main (); Gc.compact () done
+
 let _ = Gc.compact ()

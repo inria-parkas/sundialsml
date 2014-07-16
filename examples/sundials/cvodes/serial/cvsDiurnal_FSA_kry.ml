@@ -53,6 +53,12 @@ module RealArray = Sundials.RealArray
 module Direct = Dls.ArrayDenseMatrix
 module Sens = Cvodes.Sensitivity
 let unvec = Sundials.unvec
+
+(* As a slight deviation from the sundials/C code, we allow an extra
+   argument to repeat the test, used to check that garbage collection
+   works properly.  argv is updated to remove that extra argument so
+   the rest of the test can exactly mirror the C code.  *)
+let argv = ref Sys.argv
  
 let printf = Printf.printf
 
@@ -478,7 +484,7 @@ let wrong_args name =
   exit 0
 
 let process_args () =
-  let argv = Sys.argv in
+  let argv = !argv in
   let argc = Array.length argv in
   if argc < 2 then wrong_args argv.(0);
   
@@ -592,6 +598,16 @@ let main () =
   (* Print final statistics *)
   print_final_stats cvode_mem (sensi <> None)
 
-let _ = main ()
-let _ = Gc.compact ()
+(* Check if the last argument is a repetition count.  *)
+let reps =
+  let n = Array.length !argv in
+  try
+    if n >= 2 then
+      let reps = int_of_string !argv.(n-1) in
+      argv := Array.sub !argv 0 (n-1);
+      reps
+    else 1
+  with _ -> 1
+let _ = for i = 1 to reps do main () done
+let _ = Gc.full_major ()
 

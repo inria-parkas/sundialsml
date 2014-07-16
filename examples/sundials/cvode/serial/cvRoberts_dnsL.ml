@@ -181,6 +181,12 @@ let main () =
   (* Print some final statistics *)
   print_final_stats cvode_mem
 
-let _ = main ()
+let n =
+  match Sys.argv with
+  | [|_; n|] -> int_of_string n
+  | _ -> 1
+let _ = for i = 1 to n do main () done
+
+
 let _ = Gc.compact ()
 

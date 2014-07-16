@@ -1121,5 +1121,5 @@ let main () =
   print_output wdata (unvec cB) ns mxns
 
 let _ = main ()
-let _ = Gc.compact ()
+let _ = Gc.full_major ()
 

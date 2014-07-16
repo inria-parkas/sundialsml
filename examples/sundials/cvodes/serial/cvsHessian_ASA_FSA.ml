@@ -583,5 +583,5 @@ let main () =
   printf "  H(2,2):  %12.4e\n"  h22
 
 let _ = main ()
-let _ = Gc.compact ()
+let _ = Gc.full_major ()
 

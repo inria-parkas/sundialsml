@@ -508,6 +508,10 @@ let main () =
   in
   List.iter go [ Use_Spgmr; Use_Spbcg; Use_Sptfqmr ]
 
-let _ = main ()
-let _ = Gc.compact ()
+let n =
+  match Sys.argv with
+  | [|_; n|] -> int_of_string n
+  | _ -> 1
+let _ = for i = 1 to n do main (); Gc.compact () done
 
+let _ = Gc.compact ()
