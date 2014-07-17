@@ -43,9 +43,8 @@
  *   +------------+      |    +-----------------------+ backref        |
  *   |    ...     |      |          .                 | nroots         |
  *   |cv_user_data+------+          .                 | err_file       |
- *   |    ...     |                 .                 | closure_rhsfn  |
- *   +------------+                 .                 | closure_rootsfn|
- *                                  .                 | ...            |
+ *   |    ...     |                 .                 | ls_callbacks   |
+ *   +------------+                 .                 | ...            |
  *                                  .                 +----------------+
  *
  *  * A cvode_mem structure is allocated by CVodeInit for each session. It
@@ -58,11 +57,11 @@
  *
  *  * cvode_mem holds an indirect reference to the session record as user data
  *    (set by CVodeSetUserData).  It cannot directly point to the record
- *    because the GC can change the record's address.  Instead, user data points
- *    to a global root which the GC updates whenever it relocates the session.
- *    We cannot simply point cv_user_data to the weak reference and make it
- *    a global root, because cvode_mem is abstract (we only ever have
- *    a void *).
+ *    because the GC can change the record's address.  Instead, user data
+ *    points to a global root which the GC updates whenever it relocates the
+ *    session.  We cannot simply point cv_user_data to the weak reference and
+ *    make it a global root, because we have no direct access to the members of
+ *    cvode_mem.
  *
  *  * The global root points to a weak reference (a Weak.t of size 1) which
  *    points to the session record.  The root is destroyed when the session
@@ -70,8 +69,8 @@
  *    via a non-weak pointer the session would never be GC'ed, hence the root
  *    would never be destroyed either.
  *
- * 1. CVodeInit() on the C side creates cvode_mem and the global root, and the
- *    OCaml side wraps that in a session record.  The OCaml side associates
+ * 1. c_cvode_init() on the C side creates cvode_mem and the global root, and
+ *    the OCaml side wraps that in a session record.  The OCaml side associates
  *    that record with a finalizer that unregisters the global root and frees
  *    all the C-side memory.
  *
@@ -88,6 +87,12 @@
  * 4. Eventually, when the user program abandons all references to the session
  *    record, the GC can reclaim the record because the only remaining direct
  *    reference to it is the weak pointer.
+ *
+ * NB: cv_user_data can't point directly to the session, unlike how in nvectors
+ * (see nvector_ml.h) the backlink points directly to the payload.  This is
+ * because the session contains the closure ls_callback, which may close over
+ * the session in reasonable use cases.  In nvectors, by contrast, the payload
+ * should be just an array of float's.
  */
 /* Implementation note: we have also considered an arrangement where the global
  * root is replaced by a pointer of type value*.  The idea was that whenever
