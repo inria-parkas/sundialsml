@@ -20,6 +20,9 @@
 #include <caml/bigarray.h>
 #include <caml/unixsupport.h>
 
+#ifdef SUNDIALSML_WITHSENS
+/* IDAS (with sensitivity) */
+
 #include <ida/ida.h>
 #include <ida/ida_dense.h>
 #include <ida/ida_band.h>
@@ -32,6 +35,22 @@
 #include <ida/ida_lapack.h>
 #endif
 
+#else  /* IDA (without sensitivity) */
+
+#include <ida/ida.h>
+#include <ida/ida_dense.h>
+#include <ida/ida_band.h>
+#include <ida/ida_spgmr.h>
+#include <ida/ida_sptfqmr.h>
+#include <ida/ida_spbcgs.h>
+#include <sundials/sundials_config.h>
+
+#if SUNDIALS_BLAS_LAPACK == 1
+#include <ida/ida_lapack.h>
+#endif
+
+#endif
+
 #include <stdio.h>
 #include "spils_ml.h"
 #include "ida_ml.h"
@@ -41,10 +60,6 @@
 #include "ida_ml.h"
 #include "nvector_ml.h"
 #include "dls_ml.h"
-
-#if SUNDIALS_BLAS_LAPACK == 1
-#include <ida/ida_lapack.h>
-#endif
 
 // Call with IDA_ML_BIGARRAYS to compile for the Serial NVector to
 // Bigarray interface code.

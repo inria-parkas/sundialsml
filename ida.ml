@@ -522,8 +522,6 @@ external c_reinit
     : ('a, 'k) session -> float -> ('a, 'k) nvector -> ('a, 'k) nvector -> unit
     = "c_ida_reinit"
 let reinit session ?linsolv ?roots t0 y0 y'0 =
-  (* FIXME: can we check y and y' have the same length, at least for
-     some nvector types?  *)
   c_reinit session t0 y0 y'0;
   (match linsolv with
    | None -> ()

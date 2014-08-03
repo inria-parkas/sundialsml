@@ -376,16 +376,15 @@ static int sensresfn(int Ns, realtype t,
     args[1] = NVEC_BACKLINK(y);
     args[2] = NVEC_BACKLINK(yp);
     args[3] = NVEC_BACKLINK(resval);
-    args[4] = IDAS_SENSARRAY1_FROM_EXT(sensext);
-    args[5] = IDAS_SENSARRAY2_FROM_EXT(sensext);
-    args[6] = IDAS_SENSARRAY3_FROM_EXT(sensext);
+    LOAD_NVECTOR_TABLE (args[4], yS, Ns,
+			IDAS_SENSARRAY1_FROM_EXT(sensext));
+    LOAD_NVECTOR_TABLE (args[5], ypS, Ns,
+			IDAS_SENSARRAY2_FROM_EXT(sensext));
+    LOAD_NVECTOR_TABLE (args[6], resvalS, Ns,
+			IDAS_SENSARRAY3_FROM_EXT(sensext));
     args[7] = NVEC_BACKLINK(tmp1);
     args[8] = NVEC_BACKLINK(tmp2);
     args[9] = NVEC_BACKLINK(tmp3);
-
-    wrap_to_nvector_table(Ns, args[4], yS);
-    wrap_to_nvector_table(Ns, args[5], ypS);
-    wrap_to_nvector_table(Ns, args[6], resvalS);
 
     // The data payloads inside args[1..6] are only valid during this call,
     // afterward that memory goes back to IDA. These bigarrays must not be
@@ -1534,7 +1533,7 @@ CAMLprim void c_idas_adj_init(value vdata, value vnd, value vinterptype)
     }
 
     int flag = IDAAdjInit(IDA_MEM_FROM_ML(vdata), Long_val(vnd),
-			    interptype);
+			  interptype);
     SCHECK_FLAG("IDAAdjInit", flag);
 
     CAMLreturn0;
