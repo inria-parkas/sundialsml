@@ -51,18 +51,24 @@ type dense_jac_fn = (real_array triple_tmp, real_array) jacobian_arg
 type band_jac_fn = bandrange -> (real_array triple_tmp, real_array) jacobian_arg
                  -> Dls.BandMatrix.t -> unit
 
-(*
-type 'a quadrhsfn = float -> 'a -> 'a -> unit
 
-type 'a sensrhsfn =
-    AllAtOnce of
-      (float -> 'a -> 'a -> 'a array -> 'a array -> 'a -> 'a -> unit) option
-  | OneByOne of
-      (float -> 'a -> 'a -> int -> 'a -> 'a -> 'a -> 'a -> unit) option
+type 'a quadrhsfn = float -> 'a -> 'a -> 'a -> unit
+
+type 'a sensresfn =
+      float                            (* t *)
+      -> 'a                            (* y *)
+      -> 'a                            (* y' *)
+      -> 'a                            (* resval *)
+      -> 'a array                      (* yS *)
+      -> 'a array                      (* y'S *)
+      -> 'a array                      (* resvalS *)
+      -> 'a                            (* tmp1 *)
+      -> 'a                            (* tmp2 *)
+      -> 'a                            (* tmp3 *)
+      -> unit
 
 type 'a quadsensrhsfn =
    float -> 'a -> 'a array -> 'a -> 'a array -> 'a -> 'a -> unit
-*)
 
 (* BBD definitions *)
 module Bbd =
@@ -73,12 +79,28 @@ module Bbd =
         comm_fn  : (float -> 'data -> unit) option;
       }
   end
-(*
+
 module B =
   struct
-    type 'a brhsfn =
-            Basic of (float -> 'a -> 'a -> 'a -> unit)
-          | WithSens of (float -> 'a -> 'a array -> 'a -> 'a -> unit)
+    type 'a resfnb = float             (* t *)
+                     -> 'a             (* y *)
+                     -> 'a             (* y' *)
+                     -> 'a             (* yB *)
+                     -> 'a             (* y'B *)
+                     -> 'a             (* resvalB *)
+                     -> unit
+    and 'a resfnbs = float          (* t *)
+                     -> 'a          (* y *)
+                     -> 'a          (* y' *)
+                     -> 'a array    (* yS *)
+                     -> 'a array    (* y'S *)
+                     -> 'a          (* yB *)
+                     -> 'a          (* y'B *)
+                     -> 'a          (* resvalB *)
+                     -> unit
+    type 'a bresfn =
+            Basic of 'a resfnb
+          | WithSens of 'a resfnbs
 
     type 'a bquadrhsfn =
             Basic of (float -> 'a -> 'a -> 'a -> unit)
@@ -87,26 +109,20 @@ module B =
     type ('t, 'a) jacobian_arg =
       {
         jac_t   : float;
-        jac_u   : 'a;
-        jac_ub  : 'a;
-        jac_fub : 'a;
+        jac_y   : 'a;
+        jac_y'  : 'a;
+        jac_yb  : 'a;
+        jac_y'b : 'a;
+        jac_resb : 'a;
+        jac_coef : float;
         jac_tmp : 't
-      }
-
-    type 'a prec_solve_arg =
-      {
-        rvec   : 'a;
-        gamma  : float;
-        delta  : float;
-        left   : bool
       }
 
     type 'a spils_callbacks =
       {
-        prec_solve_fn : (('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
-                         -> 'a -> unit) option;
-        prec_setup_fn : (('a triple_tmp, 'a) jacobian_arg -> bool -> float
-                        -> bool) option;
+        prec_solve_fn : (('a single_tmp, 'a) jacobian_arg
+                         -> 'a -> 'a -> float -> unit) option;
+        prec_setup_fn : (('a triple_tmp, 'a) jacobian_arg -> unit) option;
         jac_times_vec_fn :
           (('a single_tmp, 'a) jacobian_arg
            -> 'a (* v *)
@@ -131,8 +147,7 @@ module B =
           }
       end
   end
-*)
-(*
+
 type conv_fail =
   | NoFailures
   | FailBadJ
@@ -145,7 +160,7 @@ type 'a alternate_linsolv =
     lsolve : 'a -> 'a -> 'a -> 'a -> unit;
     lfree  : (unit -> unit) option;
   }
-*)
+
 (* the session type *)
 
 type ida_mem
@@ -158,7 +173,7 @@ type ('a, 'kind) linsolv_callbacks =
   | DenseCallback of dense_jac_fn
   | BandCallback  of band_jac_fn
   | SpilsCallback of 'a spils_callbacks
-(*  | BBDCallback of 'a Bbd.callbacks
+  | BBDCallback of 'a Bbd.callbacks
 
   | AlternateCallback of 'a alternate_linsolv
 
@@ -166,7 +181,7 @@ type ('a, 'kind) linsolv_callbacks =
   | BBandCallback  of B.band_jac_fn
   | BSpilsCallback of 'a B.spils_callbacks
   | BBBDCallback of 'a B.Bbd.callbacks
-*)
+
 type ('a,'kind) session = {
         ida        : ida_mem;
         backref    : c_weak_ref;
@@ -183,10 +198,11 @@ type ('a,'kind) session = {
 
         mutable ls_callbacks : ('a, 'kind) linsolv_callbacks;
 
+        mutable sensext      : ('a, 'kind) sensext; (* Used by IDAS *)
+
         (* To be manipulated from the C side only.  *)
         mutable safety_check_flags : int;
       }
-(*
 and ('a, 'kind) sensext =
       NoSensExt
     | FwdSensExt of ('a, 'kind) fsensext
@@ -200,13 +216,12 @@ and ('a, 'kind) fsensext = {
     mutable num_sensitivities : int;
     mutable sensarray1        : 'a array;
     mutable sensarray2        : 'a array;
+    mutable sensarray3        : 'a array;
     mutable senspvals         : Sundials.RealArray.t option;
                             (* keep a reference to prevent garbage collection *)
 
-    mutable sensrhsfn         : (float -> 'a -> 'a -> 'a array
-                                 -> 'a array -> 'a -> 'a -> unit);
-    mutable sensrhsfn1        : (float -> 'a -> 'a -> int -> 'a
-                                 -> 'a -> 'a -> 'a -> unit);
+    mutable sensresfn         : 'a sensresfn;
+
     mutable quadsensrhsfn     : 'a quadsensrhsfn;
 
     (* Adjoint *)
@@ -221,18 +236,19 @@ and ('a, 'kind) bsensext = {
     parent                : ('a, 'kind) session ;
     which                 : int;
 
+    (* FIXME: extract num_sensitivities from bsensarray1 *)
     bnum_sensitivities    : int;
-    bsensarray            : 'a array;
+    bsensarray1           : 'a array;
+    bsensarray2           : 'a array;
 
-    mutable brhsfn        : (float -> 'a -> 'a -> 'a -> unit);
-    mutable brhsfn1       : (float -> 'a -> 'a array -> 'a -> 'a -> unit);
+    mutable resfnb        : 'a B.resfnb;
+    mutable resfnbs       : 'a B.resfnbs;
     mutable bquadrhsfn    : (float -> 'a -> 'a -> 'a -> unit);
     mutable bquadrhsfn1   : (float -> 'a -> 'a array -> 'a -> 'a -> unit);
   }
 
 type ('a, 'k) bsession = Bsession of ('a, 'k) session
 let tosession = function Bsession s -> s
-*)
 
 (* IDA's linear_solver receives two vectors, y and y'.  They usually
    (always?) have identical size and other properties, so one of them
@@ -241,9 +257,10 @@ type ('data, 'kind) linear_solver = ('data, 'kind) session
                                     -> ('data, 'kind) nvector (* y *)
                                     -> ('data, 'kind) nvector (* y' *)
                                     -> unit
-(*type ('data, 'kind) blinear_solver = ('data, 'kind) bsession
-                                        -> ('data, 'kind) nvector -> unit
-*)
+type ('data, 'kind) blinear_solver = ('data, 'kind) bsession
+                                     -> ('data, 'kind) nvector (* y *)
+                                     -> ('data, 'kind) nvector (* y' *)
+                                     -> unit
 
 let read_weak_ref x : ('a, 'kind) session =
   match Weak.get x 0 with

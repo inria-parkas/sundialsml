@@ -326,6 +326,7 @@ ldflags="${ldflags} ${lapack_lib}"
 cvode_cppflags="${cflags} `sundials-config -m cvode -t s -l c -s cppflags`"
 cvodes_cppflags="${cflags} `sundials-config -m cvodes -t s -l c -s cppflags`"
 ida_cppflags="${cflags} `sundials-config -m ida -t s -l c -s cppflags`"
+idas_cppflags="${cflags} `sundials-config -m idas -t s -l c -s cppflags`"
 kinsol_cppflags="${cflags} `sundials-config -m kinsol -t s -l c -s cppflags`"
 
 # --no-lib-path removes the -L specification, to prevent it from being recorded
@@ -338,12 +339,15 @@ if [ ${no_lib_path:-0} -eq 1 ]; then
 	             | sed -e 's#-L[^ ]* -#-#'`"
     ida_ldflags="`sundials-config -m ida -t s -l c -s libs \
 	          | sed -e 's#-L[^ ]* -#-#'`"
+    idas_ldflags="`sundials-config -m idas -t s -l c -s libs \
+	           | sed -e 's#-L[^ ]* -#-#'`"
     kinsol_ldflags="`sundials-config -m kinsol -t s -l c -s libs \
 	          | sed -e 's#-L[^ ]* -#-#'`"
 else
     cvode_ldflags="`sundials-config -m cvode -t s -l c -s libs`"
     cvodes_ldflags="`sundials-config -m cvodes -t s -l c -s libs`"
     ida_ldflags="`sundials-config -m ida -t s -l c -s libs`"
+    idas_ldflags="`sundials-config -m idas -t s -l c -s libs`"
     kinsol_ldflags="`sundials-config -m kinsol -t s -l c -s libs`"
 fi
 
@@ -407,9 +411,11 @@ fi
 	 s#@cvode_cppflags@#${cvode_cppflags}#;
 	 s#@cvodes_cppflags@#${cvodes_cppflags}#;
 	 s#@ida_cppflags@#${ida_cppflags}#;
+	 s#@idas_cppflags@#${idas_cppflags}#;
 	 s#@cvode_ldflags@#${cvode_ldflags}#;
 	 s#@cvodes_ldflags@#${cvodes_ldflags}#;
 	 s#@ida_ldflags@#${ida_ldflags}#;
+	 s#@idas_ldflags@#${idas_ldflags}#;
 	 s#@kinsol_cppflags@#${kinsol_cppflags}#;
 	 s#@kinsol_ldflags@#${kinsol_ldflags}#;
 	 s#@ocamlflags@#${ocamlflags}#;

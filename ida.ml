@@ -503,6 +503,7 @@ let init linsolv tol resfn ?(roots=no_roots) ?(t0=0.) y y' =
                   errw       = (fun _ _ -> ());
                   ls_callbacks = NoCallbacks;
                   safety_check_flags = 0;
+                  sensext    = NoSensExt;
                 }
   in
   Gc.finalise session_finalize session;

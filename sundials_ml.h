@@ -67,4 +67,24 @@ enum sundials_error_details_index {
   RECORD_SUNDIALS_ERROR_DETAILS_SIZE /* This has to come last. */
 };
 
+
+/* Generate trampolines needed for functions with >= 6 arguments.  */
+#define COMMA ,
+#define BYTE_STUB(fcn_name, extras)				\
+    CAMLprim value fcn_name##_byte (value *args, int n)		\
+    {								\
+	return fcn_name (args[0], args[1], args[2],		\
+			 args[3], args[4], args[5] extras);	\
+    }
+#define BYTE_STUB6(fcn_name)			\
+    BYTE_STUB(fcn_name, /* empty */)
+#define BYTE_STUB7(fcn_name)			\
+    BYTE_STUB(fcn_name, COMMA args[6])
+#define BYTE_STUB8(fcn_name)			\
+    BYTE_STUB(fcn_name, COMMA args[6] COMMA args[7])
+#define BYTE_STUB9(fcn_name)			\
+    BYTE_STUB(fcn_name, COMMA args[6] COMMA args[7] COMMA args[8])
+#define BYTE_STUB10(fcn_name)			\
+    BYTE_STUB(fcn_name, COMMA args[6] COMMA args[7] COMMA args[8] COMMA args[9])
+
 #endif /* _SUNDIALS_ML_H__ */

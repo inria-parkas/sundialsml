@@ -6,7 +6,7 @@ MLOBJ_MAIN = sundials.cmo dls.cmo \
 	     spils.cmo cvode.cmo kinsol.cmo \
 	     ida.cmo
 
-MLOBJ_SENS = cvodes.cmo
+MLOBJ_SENS = cvodes.cmo idas.cmo
 
 MLOBJ_LOCAL = cvode_impl.cmo ida_impl.cmo kinsol_impl.cmo
 
@@ -16,7 +16,8 @@ MLOBJ = $(MLOBJ_WOS) $(MLOBJ_SENS)
 COMMON_COBJ= sundials_ml$(XO) dls_ml$(XO) nvector_ml$(XO) spils_ml$(XO)
 
 COBJ_WOS = $(COMMON_COBJ) cvode_ml$(XO) ida_ml$(XO) kinsol_ml$(XO)
-COBJ = $(COMMON_COBJ) cvode_ml_s$(XO) cvodes_ml$(XO) ida_ml$(XO) kinsol_ml$(XO)
+COBJ = $(COMMON_COBJ) cvode_ml_s$(XO) cvodes_ml$(XO) \
+	ida_ml_s$(XO) idas_ml$(XO) kinsol_ml$(XO)
 
 ALL_COBJ= $(COBJ) cvode_ml$(XO) ida_ml$(XO)
 
@@ -48,7 +49,7 @@ sundials.cma sundials.cmxa: $(MLOBJ) $(MLOBJ:.cmo=.cmx) $(COBJ)
 	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS)	\
 	    -o sundials -oc mlsundials $^	\
 	    $(OCAML_CVODES_LIBLINK)		\
-	    $(OCAML_IDA_LIBLINK)		\
+	    $(OCAML_IDAS_LIBLINK)		\
 	    $(OCAML_KINSOL_LIBLINK)		\
 	    $(NVECTOR_LIB)
 
@@ -92,6 +93,14 @@ cvodes_ml.o: cvodes_ml.c dls_ml.h spils_ml.h \
 ida_ml.o: ida_ml.c dls_ml.h spils_ml.h ida_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(IDA_CFLAGS) -o $@ -c $<
 
+ida_ml_s.o: ida_ml.c dls_ml.h spils_ml.h ida_ml.h
+	$(CC) -DSUNDIALSML_WITHSENS -I $(OCAML_INCLUDE) $(IDA_CFLAGS) \
+	    -o $@ -c $<
+
+idas_ml.o: idas_ml.c dls_ml.h spils_ml.h \
+	     ida_ml.h idas_ml.h sundials_ml.h
+	$(CC) -I $(OCAML_INCLUDE) $(IDAS_CFLAGS) -o $@ -c $<
+
 kinsol_ml.o: kinsol_ml.c dls_ml.h spils_ml.h kinsol_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(KINSOL_CFLAGS) -o $@ -c $<
 
@@ -114,6 +123,7 @@ doc/html/index.html: doc/html dochtml.cmo intro.doc \
 	    -cvode-doc-root "$(CVODE_DOC_ROOT)" 	\
 	    -cvodes-doc-root "$(CVODES_DOC_ROOT)" 	\
 	    -ida-doc-root "$(IDA_DOC_ROOT)" 		\
+	    -idas-doc-root "$(IDAS_DOC_ROOT)" 		\
 	    -kinsol-doc-root "$(KINSOL_DOC_ROOT)" 	\
 	    -pp "$(DOCPP)"				\
 	    -d ./doc/html/				\

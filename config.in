@@ -21,6 +21,8 @@ CVODES_LDFLAGS = @cvodes_ldflags@ $(LDFLAGS)
 CVODES_CFLAGS = @cvodes_cppflags@ $(MPI_FLAGS) $(CFLAGS)
 IDA_LDFLAGS = @ida_ldflags@ $(LDFLAGS)
 IDA_CFLAGS = @ida_cppflags@ $(MPI_FLAGS) $(CFLAGS)
+IDAS_LDFLAGS = @idas_ldflags@ $(LDFLAGS)
+IDAS_CFLAGS = @idas_cppflags@ $(MPI_FLAGS) $(CFLAGS)
 KINSOL_LDFLAGS = @kinsol_ldflags@ $(LDFLAGS)
 KINSOL_CFLAGS = @kinsol_cppflags@ $(MPI_FLAGS) $(CFLAGS)
 
@@ -30,6 +32,7 @@ OCAML_INCLUDE := $(shell $(OCAMLC) -where)
 OCAML_CVODE_LIBLINK = $(CVODE_LDFLAGS)
 OCAML_CVODES_LIBLINK = $(CVODES_LDFLAGS)
 OCAML_IDA_LIBLINK = $(IDA_LDFLAGS)
+OCAML_IDAS_LIBLINK = $(IDAS_LDFLAGS)
 OCAML_KINSOL_LIBLINK = $(KINSOL_LDFLAGS)
 OCAML_3X = @ocaml_3x@
 
@@ -95,6 +98,7 @@ DOCPP = $(SED) \
 	-e 's|CVODES_DOC_ROOT(\\([^\#)]*\\)\\(\#[^)]*\\)\\?)|$(CVODES_DOC_ROOT)\\1.html\\2|g' \
 	-e 's|KINSOL_DOC_ROOT(\\([^\#)]*\\)\\(\#[^)]*\\)\\?)|$(KINSOL_DOC_ROOT)\\1.html\\2|g' \
 	-e 's|IDA_DOC_ROOT(\\([^\#)]*\\)\\(\#[^)]*\\)\\?)|$(IDA_DOC_ROOT)\\1.html\\2|g' \
+	-e 's|IDAS_DOC_ROOT(\\([^\#)]*\\)\\(\#[^)]*\\)\\?)|$(IDAS_DOC_ROOT)\\1.html\\2|g' \
 	-e 's|OCAML_DOC_ROOT(\\([^\#)]*\\)\\(\#[^)]*\\)\\?)|$(OCAML_DOC_ROOT)\\1.html\\2|g' \
 	-e 's|VERSION()|$(VERSION)|g'
 
