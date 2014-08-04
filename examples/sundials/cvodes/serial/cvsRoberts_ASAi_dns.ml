@@ -173,7 +173,7 @@ let fB data t y yB yBdot =
 
 (* JacB routine. Compute JB(t,y,yB). *)
 
-let jacb data { Adj.jac_u = y } jbmat =
+let jacb data { Adj.jac_y = y } jbmat =
   let p1 = data.p.(0) (* The p vector *)
   and p2 = data.p.(1)
   and p3 = data.p.(2)

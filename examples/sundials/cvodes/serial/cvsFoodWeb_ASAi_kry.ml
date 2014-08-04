@@ -932,9 +932,9 @@ let fB wdata t cdata (cBdata : RealArray.t) (cBdotdata : RealArray.t) =
 
 let precondb wdata jacarg jok gamma =
   let { Adj.jac_t   = t;
-        Adj.jac_u   = cdata;
-        Adj.jac_ub  = cBdata;
-        Adj.jac_fub = fcBdata;
+        Adj.jac_y   = cdata;
+        Adj.jac_yb  = cBdata;
+        Adj.jac_fyb = fcBdata;
         Adj.jac_tmp = (vtemp1, _, _)
       } = jacarg
   in

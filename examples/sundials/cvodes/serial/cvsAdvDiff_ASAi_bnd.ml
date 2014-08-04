@@ -200,9 +200,9 @@ let fB data tB u uB uBdot =
 
 let jacb data { Adjoint.mupper = muB; Adjoint.mlower = mlB }
               { Adjoint.jac_t = tB;
-                Adjoint.jac_u = u;
-                Adjoint.jac_ub = uB;
-                Adjoint.jac_fub = fuB;
+                Adjoint.jac_y = u;
+                Adjoint.jac_yb = uB;
+                Adjoint.jac_fyb = fuB;
                 Adjoint.jac_tmp = (tmp1B, tmp2B, tmp3B) } jb =
 
   (* The Jacobian of the adjoint system is: JB = -J^T *)

@@ -175,7 +175,7 @@ static int sensrhsfn(int ns, realtype t, N_Vector y, N_Vector ydot,
     wrap_to_nvector_table(ns, args[3], ys);
     wrap_to_nvector_table(ns, args[4], ysdot);
 
-    // The data payloads inside args[2..7] are only valid during this call,
+    // The data payloads inside args[1..6] are only valid during this call,
     // afterward that memory goes back to cvode. These bigarrays must not be
     // retained by closure_quadrhsfn! If it wants a permanent copy, then it
     // has to make it manually.
@@ -379,7 +379,7 @@ static value make_jac_arg(realtype t, N_Vector y, N_Vector yb,
     CAMLparam1(tmp);
     CAMLlocal1(r);
 
-    r = caml_alloc_tuple(RECORD_CVODES_ADJ_JACOBIAN_ARG_JAC_SIZE);
+    r = caml_alloc_tuple(RECORD_CVODES_ADJ_JACOBIAN_ARG_SIZE);
     Store_field(r, RECORD_CVODES_ADJ_JACOBIAN_ARG_JAC_T, caml_copy_double(t));
     Store_field(r, RECORD_CVODES_ADJ_JACOBIAN_ARG_JAC_Y, NVEC_BACKLINK(y));
     Store_field(r, RECORD_CVODES_ADJ_JACOBIAN_ARG_JAC_YB, NVEC_BACKLINK(yb));
@@ -436,7 +436,6 @@ static int bprecsolvefn(
 	N_Vector tmpb)
 {
     CAMLparam0();
-    CAMLlocal1(rv);
     CAMLlocalN(args, 4);
     int retcode;
     value *backref = user_data;
@@ -782,7 +781,7 @@ CAMLprim void c_cvodes_sens_reinit(value vdata, value vmethod, value vs0)
 			   decode_sens_method(vmethod),
 			   s0);
     free_nvector_array(s0);
-    SCHECK_FLAG("CVodeQuadReInit", flag);
+    SCHECK_FLAG("CVodeSensReInit", flag);
 
     CAMLreturn0;
 }

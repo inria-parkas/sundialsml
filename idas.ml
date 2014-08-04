@@ -556,9 +556,6 @@ module Adjoint =
         ("idas_BadOutputTime",                 BadOutputTime);
       ]
 
-    let optionally f = function
-      | None -> ()
-      | Some x -> f x
 
     type interpolation = IPolynomial | IHermite
 
@@ -1000,9 +997,9 @@ module Adjoint =
           let se = bwdsensext bs in
           match mf with
            | Basic f -> (se.bquadrhsfn <- f;
-                             c_quad_initb parent which y0)
+                         c_quad_initb parent which y0)
            | WithSens f -> (se.bquadrhsfn1 <- f;
-                                c_quad_initbs parent which y0)
+                            c_quad_initbs parent which y0)
 
         external c_reinit : ('a, 'k) session -> int -> ('a, 'k) nvector -> unit
             = "c_idas_adjquad_reinit"

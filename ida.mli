@@ -66,9 +66,6 @@ exception FirstResFuncFailure
 (** @ida <node5#sss:ida> IDA_REP_RES_ERR *)
 exception RepeatedResFuncErr        
 
-(** @ida <node5#sss:ida> IDA_UNREC_RESFUNC_ERR *)
-exception UnrecoverableResFuncErr   
-
 (** @ida <node5#sss:ida> IDA_RTFUNC_FAIL *)
 exception RootFuncFailure           
 

@@ -1615,7 +1615,7 @@ CAMLprim void c_idas_adj_backward_one_step(value vdata, value vtbout)
 }
 
 CAMLprim void c_idas_adj_set_max_ord(value vparent, value vwhich,
-				       value vmaxord)
+				     value vmaxord)
 {
     CAMLparam3(vparent, vwhich, vmaxord);
 
@@ -1627,7 +1627,7 @@ CAMLprim void c_idas_adj_set_max_ord(value vparent, value vwhich,
 }
 
 CAMLprim void c_idas_adj_set_max_num_steps(value vparent, value vwhich,
-					     value vmxsteps)
+					   value vmxsteps)
 {
     CAMLparam3(vparent, vwhich, vmxsteps);
 
@@ -1806,8 +1806,8 @@ CAMLprim void c_idas_adj_spils_set_preconditioner(value vparent,
 #ifdef SUNDIALSML_WITHMPI
 
 CAMLprim void c_idas_bbd_prec_initb (value vparentwhich, value vlocaln,
-				       value vbandwidths, value vdqrely,
-				       value vhascomm)
+				     value vbandwidths, value vdqrely,
+				     value vhascomm)
 {
     CAMLparam5(vparentwhich, vlocaln, vbandwidths, vdqrely, vhascomm);
     void *ida_mem = IDA_MEM_FROM_ML (Field(vparentwhich, 0));

@@ -32,7 +32,6 @@ exception LinearSolveFailure
 exception ResFuncFailure
 exception FirstResFuncFailure
 exception RepeatedResFuncErr
-exception UnrecoverableResFuncErr
 exception RootFuncFailure
 
 (* Initial condition calculator exceptions *)
@@ -101,7 +100,6 @@ let _ =
     ("ida_RepeatedResFuncErr",      RepeatedResFuncErr);
     ("ida_NoRecovery",              NoRecovery);
     ("ida_BadEwt",                  BadEwt);
-    ("ida_UnrecoverableResFuncErr", UnrecoverableResFuncErr);
     ("ida_RootFuncFailure",         RootFuncFailure);
 
     ("ida_BadK",                    BadK);
