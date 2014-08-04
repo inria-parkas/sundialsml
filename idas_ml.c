@@ -390,7 +390,7 @@ static int sensresfn(int Ns, realtype t,
     // afterward that memory goes back to IDA. These bigarrays must not be
     // retained by closure_quadrhsfn! If it wants a permanent copy, then it
     // has to make it manually.
-    r = caml_callbackN_exn(IDAS_SENSRHSFN_FROM_EXT(sensext),
+    r = caml_callbackN_exn(IDAS_SENSRESFN_FROM_EXT(sensext),
 			   sizeof (args) / sizeof (*args),
                            args);
 
@@ -464,7 +464,7 @@ static int resfnb(realtype t, N_Vector y, N_Vector yp,
     // afterward that memory goes back to cvode. These bigarrays must not be
     // retained by closure_quadrhsfn! If it wants a permanent copy, then it
     // has to make it manually.
-    r = caml_callbackN_exn (IDAS_RESFNBS_FROM_EXT(bsensext),
+    r = caml_callbackN_exn (IDAS_RESFNB_FROM_EXT(bsensext),
 			    sizeof (args) / sizeof (*args),
 			    args);
 

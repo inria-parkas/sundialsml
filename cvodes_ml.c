@@ -772,7 +772,7 @@ CAMLprim void c_cvodes_sens_init_1(value vdata, value vmethod, value vrhsfn,
 
 CAMLprim void c_cvodes_sens_reinit(value vdata, value vmethod, value vs0)
 {
-    CAMLparam2(vdata, vs0);
+    CAMLparam3(vdata, vmethod, vs0);
     CAMLlocal1(r);
     int flag;
     N_Vector *s0 = nvector_table_to_array(vs0);

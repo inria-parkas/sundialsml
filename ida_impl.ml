@@ -68,7 +68,17 @@ type 'a sensresfn =
       -> unit
 
 type 'a quadsensrhsfn =
-   float -> 'a -> 'a array -> 'a -> 'a array -> 'a -> 'a -> unit
+  float          (* t *)
+  -> 'a          (* y *)
+  -> 'a          (* y' *)
+  -> 'a array    (* yS *)
+  -> 'a array    (* y'S *)
+  -> 'a          (* rrQ *)
+  -> 'a array    (* rhsvalQs *)
+  -> 'a          (* tmp1 *)
+  -> 'a          (* tmp2 *)
+  -> 'a          (* tmp3 *)
+  -> unit
 
 (* BBD definitions *)
 module Bbd =
@@ -103,8 +113,27 @@ module B =
           | WithSens of 'a resfnbs
 
     type 'a bquadrhsfn =
-            Basic of (float -> 'a -> 'a -> 'a -> unit)
-          | WithSens of (float -> 'a -> 'a array -> 'a -> 'a -> unit)
+            Basic of 'a bquadrhsfn_basic
+          | WithSens of 'a bquadrhsfn_withsens
+      (* FIXME: less ad-hoc names *)
+    and 'a bquadrhsfn_basic =
+      float             (* t *)
+      -> 'a             (* y *)
+      -> 'a             (* y' *)
+      -> 'a             (* yB *)
+      -> 'a             (* y'B *)
+      -> 'a             (* rhsvalBQS *)
+      -> unit
+    and 'a bquadrhsfn_withsens =
+      float          (* t *)
+      -> 'a          (* y *)
+      -> 'a          (* y' *)
+      -> 'a array    (* yS *)
+      -> 'a array    (* y'S *)
+      -> 'a          (* yB *)
+      -> 'a          (* y'B *)
+      -> 'a          (* rhsvalBQS *)
+      -> unit
 
     type ('t, 'a) jacobian_arg =
       {
@@ -243,8 +272,8 @@ and ('a, 'kind) bsensext = {
 
     mutable resfnb        : 'a B.resfnb;
     mutable resfnbs       : 'a B.resfnbs;
-    mutable bquadrhsfn    : (float -> 'a -> 'a -> 'a -> unit);
-    mutable bquadrhsfn1   : (float -> 'a -> 'a array -> 'a -> 'a -> unit);
+    mutable bquadrhsfn    : 'a B.bquadrhsfn_basic;
+    mutable bquadrhsfn1   : 'a B.bquadrhsfn_withsens;
   }
 
 type ('a, 'k) bsession = Bsession of ('a, 'k) session

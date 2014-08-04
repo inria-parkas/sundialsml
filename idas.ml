@@ -29,7 +29,7 @@ let add_fwdsensext s =
         quadrhsfn       = (fun _ _ _ _ -> ());
         senspvals       = None;
         sensresfn       = (fun _ _ _ _ _ _ _ _ _ _ -> ());
-        quadsensrhsfn   = (fun _ _ _ _ _ _ _ -> ());
+        quadsensrhsfn   = (fun _ _ _ _ _ _ _ _ _ _ -> ());
         bsessions       = [];
       }
 
@@ -53,7 +53,7 @@ let read_weak_fwd_ref x =
 let read_weak_bwd_ref x =
   let y = read_weak_ref x in
   match y.sensext with
-  (*| BwdSensExt se -> (y, se)*)
+  | BwdSensExt se -> (y, se)
   | _ -> raise (Failure "Internal error: not backward extension")
 
 let adjust_retcode = fun session f x ->
@@ -72,19 +72,61 @@ let call_quadrhsfn session t y y' rhsQ =
   let (session, fwdsensext) = read_weak_fwd_ref session in
   adjust_retcode session (fwdsensext.quadrhsfn t y y') rhsQ
 
+(* fwdsensext.quadsensrhsfn is called directly from C *)
+
+(* bwdsensext.resfnb is called directly from C *)
+
+(* bwdsensext.resfnbs is called directly from C *)
+
+let call_bquadrhsfn session t y y' yb y'b rhsvalbq =
+  let (session, bwdsensext) = read_weak_bwd_ref session in
+  adjust_retcode session (bwdsensext.bquadrhsfn t y y' yb y'b) rhsvalbq
+
+(* bwdsensext.bquadrhsfn1 is called directly from C *)
+
+let call_bprecsetupfn session jac =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | BSpilsCallback { B.prec_setup_fn = Some f } ->
+      adjust_retcode session f jac
+  | _ -> assert false
+
+let call_bprecsolvefn session jac rvec zvec deltab =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | BSpilsCallback { B.prec_solve_fn = Some f } ->
+      adjust_retcode session (f jac rvec zvec) deltab
+  | _ -> assert false
+
+let call_bjactimesfn session jac vB jvB =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | BSpilsCallback { B.jac_times_vec_fn = Some f } ->
+      adjust_retcode session (f jac vB) jvB
+  | _ -> assert false
+
+let call_bjacfn session jac m =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | BDenseCallback f -> adjust_retcode session (f jac) m
+  | _ -> assert false
+
+let call_bbandjacfn session range jac m =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | BBandCallback f -> adjust_retcode session (f range jac) m
+  | _ -> assert false
+
 (* fwdsensext.sensrhsfn is called directly from C *)
 
 let _ =
   Callback.register "c_idas_call_quadrhsfn"     call_quadrhsfn;
-(*
-  Callback.register "c_idas_call_brhsfn"        call_brhsfn;
   Callback.register "c_idas_call_bquadrhsfn"    call_bquadrhsfn;
   Callback.register "c_idas_call_bprecsetupfn"  call_bprecsetupfn;
   Callback.register "c_idas_call_bprecsolvefn"  call_bprecsolvefn;
   Callback.register "c_idas_call_bjactimesfn"   call_bjactimesfn;
   Callback.register "c_idas_call_bjacfn"        call_bjacfn;
   Callback.register "c_idas_call_bbandjacfn"    call_bbandjacfn
-*)
 
 module Quadrature =
   struct
@@ -701,8 +743,8 @@ module Adjoint =
                                | WithSens f -> f
                                | _ -> (fun _ _ _ _ _ _ _ _ -> ()));
 
-                bquadrhsfn  = (fun _ _ _ _ -> ());
-                bquadrhsfn1 = (fun _ _ _ _ _ -> ());
+                bquadrhsfn  = (fun _ _ _ _ _ _ -> ());
+                bquadrhsfn1 = (fun _ _ _ _ _ _ _ _ -> ());
               };
             } in
       Gc.finalise bsession_finalize (tosession bs);
@@ -716,12 +758,15 @@ module Adjoint =
       bs
 
     external c_reinit
-        : ('a, 'k) session -> int -> float -> ('a, 'k) nvector -> unit
+        : ('a, 'k) session -> int -> float
+          -> ('a, 'k) nvector
+          -> ('a, 'k) nvector
+          -> unit
         = "c_idas_adj_reinit"
 
-    let reinit bs tb0 yb0 =
+    let reinit bs tb0 yb0 y'b0 =
       let parent, which = parent_and_which bs in
-      c_reinit parent which tb0 yb0
+      c_reinit parent which tb0 yb0 y'b0
 
     external backward_normal : ('a, 'k) session -> float -> unit
         = "c_idas_adj_backward_normal"
@@ -982,8 +1027,22 @@ module Adjoint =
     module Quadrature =
       struct
         type 'a bquadrhsfn = 'a B.bquadrhsfn =
-            Basic of (float -> 'a -> 'a -> 'a -> unit)
-          | WithSens of (float -> 'a -> 'a array -> 'a -> 'a -> unit)
+            Basic of (float             (* t *)
+                      -> 'a             (* y *)
+                      -> 'a             (* y' *)
+                      -> 'a             (* yB *)
+                      -> 'a             (* y'B *)
+                      -> 'a             (* rhsvalBQS *)
+                      -> unit)
+          | WithSens of (float          (* t *)
+                         -> 'a          (* y *)
+                         -> 'a          (* y' *)
+                         -> 'a array    (* yS *)
+                         -> 'a array    (* y'S *)
+                         -> 'a          (* yB *)
+                         -> 'a          (* y'B *)
+                         -> 'a          (* rhsvalBQS *)
+                         -> unit)
 
         external c_quad_initb
             : ('a, 'k) session -> int -> ('a, 'k) nvector -> unit
