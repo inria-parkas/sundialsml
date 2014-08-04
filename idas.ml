@@ -598,6 +598,10 @@ module Adjoint =
         ("idas_BadOutputTime",                 BadOutputTime);
       ]
 
+    let parent_and_which s =
+      match (tosession s).sensext with
+      | BwdSensExt se -> (se.parent, se.which)
+      | _ -> failwith "Internal error: bsession invalid"
 
     type interpolation = IPolynomial | IHermite
 
@@ -612,6 +616,58 @@ module Adjoint =
       match s.sensext with
       | FwdSensExt se -> se
       | _ -> raise AdjointNotInitialized
+
+    external c_set_var_types : ('a,'k) session -> int -> ('a,'k) nvector -> unit
+      = "c_idas_adj_set_var_types"
+
+    let set_var_types b var_types =
+      let parent, which = parent_and_which b in
+      c_set_var_types parent which var_types
+
+    external c_set_suppress_alg : ('a,'k) session -> int -> bool -> unit
+      = "c_idas_adj_set_suppress_alg"
+
+    let set_suppress_alg b suppress =
+      let parent, which = parent_and_which b in
+      c_set_suppress_alg parent which suppress
+
+    external c_adj_calc_ic :
+      ('a,'k) session
+      -> int
+      -> float
+      -> ('a,'k) nvector
+      -> ('a,'k) nvector
+      -> unit
+      = "c_idas_adj_calc_ic"
+
+    external c_adj_calc_ic_sens :
+      ('a,'k) session
+      -> int
+      -> float
+      -> ('a,'k) nvector
+      -> ('a,'k) nvector
+      -> ('a,'k) nvector array
+      -> ('a,'k) nvector array
+      -> unit
+      = "c_idas_adj_calc_ic_sens_byte"
+        "c_idas_adj_calc_ic_sens"
+
+    external c_adj_get_consistent_ic :
+      ('a,'k) session -> int
+      -> ('a,'k) nvector option
+      -> ('a,'k) nvector option
+      -> unit
+      = "c_idas_adj_get_consistent_ic"
+
+    let calc_ic bsession ?yb ?y'b tout1 yb0 y'b0 =
+      let parent, which = parent_and_which bsession in
+      c_adj_calc_ic parent which tout1 yb0 y'b0;
+      c_adj_get_consistent_ic parent which yb y'b
+
+    let calc_ic_sens bsession ?yb ?y'b tout1 yb0 y'b0 ys0 y's0 =
+      let parent, which = parent_and_which bsession in
+      c_adj_calc_ic_sens parent which tout1 yb0 y'b0 ys0 y's0;
+      c_adj_get_consistent_ic parent which yb y'b
 
     external forward_normal : ('a, 'k) session -> float
                               -> ('a, 'k) nvector -> ('a, 'k) nvector
@@ -654,11 +710,6 @@ module Adjoint =
     type ('data, 'kind) iter =
       | Newton of ('data, 'kind) linear_solver
       | Functional
-
-    let parent_and_which s =
-      match (tosession s).sensext with
-      | BwdSensExt se -> (se.parent, se.which)
-      | _ -> failwith "Internal error: bsession invalid"
 
     type ('a, 'k) tolerance =
       | SStolerances of float * float

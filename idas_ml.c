@@ -1972,6 +1972,75 @@ CAMLprim value c_idas_adj_init_backward(value vparent, value weakref,
 
 BYTE_STUB6(c_idas_adj_init_backward)
 
+CAMLprim void c_idas_adj_set_var_types (value vparent, value vwhich, value vid)
+{
+    CAMLparam3 (vparent, vwhich, vid);
+    int flag = IDASetIdB (IDA_MEM_FROM_ML (vparent), Int_val (vwhich),
+			  NVEC_VAL (vid));
+    SCHECK_FLAG ("IDASetIdB", flag);
+    CAMLreturn0;
+}
+
+CAMLprim void c_idas_adj_set_suppress_alg (value vparent, value vwhich,
+					   value vsuppress)
+{
+    CAMLparam3 (vparent, vwhich, vsuppress);
+    int flag = IDASetSuppressAlgB (IDA_MEM_FROM_ML (vparent), Int_val (vwhich),
+				   Bool_val (vsuppress));
+    SCHECK_FLAG ("IDASetSuppressAlgB", flag);
+    CAMLreturn0;
+}
+
+CAMLprim void c_idas_adj_calc_ic (value vparent, value vwhich,
+				  value vtB, value vyB0, value vypB0)
+{
+    CAMLparam5 (vparent, vwhich, vtB, vyB0, vypB0);
+    int flag = IDACalcICB (IDA_MEM_FROM_ML (vparent), Int_val (vwhich),
+			   Double_val (vtB), NVEC_VAL (vyB0), NVEC_VAL (vypB0));
+    SCHECK_FLAG ("IDACalcICB", flag);
+    CAMLreturn0;
+}
+
+CAMLprim value c_idas_adj_calc_ic_sens (value vparent, value vwhich,
+					value vtB, value vyB0, value vypB0,
+					value vyS0, value vypS0)
+{
+    CAMLparam5 (vparent, vwhich, vtB, vyB0, vypB0);
+    CAMLxparam2 (vyS0, vypS0);
+    N_Vector *yS0 = nvector_table_to_array (vyS0);
+    N_Vector *ypS0 = nvector_table_to_array (vypS0);
+    int flag;
+
+    flag = IDACalcICBS (IDA_MEM_FROM_ML (vparent), Int_val (vwhich),
+			Double_val (vtB), NVEC_VAL (vyB0), NVEC_VAL (vypB0),
+			yS0, ypS0);
+    free_nvector_array (yS0);
+    free_nvector_array (ypS0);
+    SCHECK_FLAG ("IDACalcICBS", flag);
+
+    CAMLreturn (Val_unit);
+}
+
+BYTE_STUB7 (c_idas_adj_calc_ic_sens)
+
+CAMLprim value c_idas_adj_get_consistent_ic (value vparent, value vwhich,
+					     value vyB, value vypB)
+{
+    CAMLparam4 (vparent, vwhich, vyB, vypB);
+    N_Vector yB, ypB;
+
+    yB  = Is_block (vyB) ? NVEC_VAL (Field (vyB, 0)) : NULL;
+    ypB = Is_block (vypB) ? NVEC_VAL (Field (vypB, 0)) : NULL;
+
+    if (yB || ypB) {
+	int flag = IDAGetConsistentICB (IDA_MEM_FROM_ML (vparent),
+					Int_val (vwhich),
+					yB, ypB);
+	SCHECK_FLAG ("IDAGetConsistentICB", flag);
+    }
+
+    CAMLreturn (Val_unit);
+}
 
 CAMLprim void c_idas_adj_reinit(value vparent, value vwhich,
 				value vtB0, value vyB0, value vypB0)
