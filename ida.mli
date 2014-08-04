@@ -791,7 +791,18 @@ type ('data, 'kind) tolerance =
     (** Specifies a function [efun y ewt] that sets the multiplicative
         error weights Wi for use in the weighted RMS norm. The function is
         passed the dependent variable vector [y] and is expected to set the
-        values inside the error-weight vector [ewt]. *)
+        values inside the error-weight vector [ewt].
+
+        The error weight vector must have all components positive.  It
+        is the user's responsibility to perform this test in [efun]
+        and throw a {!Sundials.NonPositiveEwt} exception.
+
+        If [efun] throws any other kind of exception, it will be
+        recorded in the session and propagated on the first chance to
+        do so.  But note this chance may or may not come promptly, as
+        sundials doesn't allow [efun] to immediately abort the solver.
+        It's best to avoid raising any exceptions (besides
+        [NonPositiveEwt]) in [efun].  *)
 
 (** A default relative tolerance of 1.0e-4 and absolute tolerance of 1.0e-8. *)
 val default_tolerances : ('data, 'kind) tolerance

@@ -41,6 +41,11 @@ val unit_roundoff : float
     kind of exception normally indicates an unrecoverable failure. *)
 exception RecoverableFailure of bool
 
+(** This exception may be thrown from error-weight functions to
+    indicate that an error weight became non-positive.  See
+    [WFtolerances] in {!Cvode.tolerance} or {!Ida.tolerance}. *)
+exception NonPositiveEwt
+
 (** {2 Nvectors} *)
 
 (** The type representing an nvector with underlying data of type ['data]. The

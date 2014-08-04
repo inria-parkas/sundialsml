@@ -166,7 +166,7 @@ let ewt data y w =
   for i = 1 to 3 do
     let yy = ith y i in
     let ww = rtol *. (abs_float yy) +. atol.(i-1) in
-    if ww <= 0.0 then failwith "ewt: ww negative";
+    if ww <= 0.0 then raise Sundials.NonPositiveEwt;
     set_ith w i (1.0/.ww)
   done
 

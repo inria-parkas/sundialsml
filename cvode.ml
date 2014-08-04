@@ -99,7 +99,10 @@ let call_rhsfn session t y y' =
 
 let call_errw session y ewt =
   let session = read_weak_ref session in
-  adjust_retcode session false (session.errw y) ewt
+  try session.errw y ewt; 0
+  with
+  | Sundials.NonPositiveEwt -> -1
+  | e -> (session.exn_temp <- Some e; -1)
 
 let call_errh session details =
   let session = read_weak_ref session in
