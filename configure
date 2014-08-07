@@ -14,7 +14,7 @@ unset enable_mpi
 for option in "$@"
 do
     name=`expr "$option" : "\([^=]*\).*"`
-    value=`expr "$option" : ".*=\(.*\)"`
+    value=`expr "$option" : "[^=]*=\(.*\)"`
 
     case "$name" in
     --prefix)
