@@ -59,10 +59,12 @@ DONE 8. (Tim) Interface with Parallel NVectors
 
     Compare to the same examples in pySUNDIALS or python-sundials?
 
-13. (Tim) Fix, simplify, and generally tidy up all doc comments. Write the
+13. (Tim) Parallel CVODES and KINSOL examples.
+
+14. (Tim) Fix, simplify, and generally tidy up all doc comments. Write the
     missing documentation and rewrite intro.doc.
 
-14. (Tim) Eventual release:
+15. (Tim) Eventual release:
    - Dêpot APP.
    - Repository on Github.
    - Release on Opam.
