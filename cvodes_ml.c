@@ -81,7 +81,7 @@ static void wrap_to_nvector_table(int n, value vy, N_Vector *y)
 
 static N_Vector *nvector_table_to_array(value vtable)
 {
-    int ns = (int)caml_array_length(vtable);
+    int ns = Wosize_val (vtable); /* vtable : nvector array */
     N_Vector *r = calloc(ns + 1, sizeof(N_Vector));
     int i;
 
@@ -740,7 +740,7 @@ CAMLprim void c_cvodes_sens_init(value vdata, value vmethod, value vrhsfn,
 				value vys0)
 {
     CAMLparam4(vdata, vmethod, vrhsfn, vys0);
-    int ns = (int)caml_array_length(vys0);
+    int ns = Wosize_val (vys0); /* vys0 : nvector array */
     N_Vector *ys0 = nvector_table_to_array(vys0);
 
     int flag = CVodeSensInit(CVODE_MEM_FROM_ML(vdata), ns,
@@ -757,7 +757,7 @@ CAMLprim void c_cvodes_sens_init_1(value vdata, value vmethod, value vrhsfn,
 				  value vys0)
 {
     CAMLparam4(vdata, vmethod, vrhsfn, vys0);
-    int ns = (int)caml_array_length(vys0);
+    int ns = Wosize_val (vys0); /* vys0 : nvector array */
     N_Vector *ys0 = nvector_table_to_array(vys0);
 
     int flag = CVodeSensInit1(CVODE_MEM_FROM_ML(vdata), ns,
@@ -1732,7 +1732,7 @@ CAMLprim void c_cvodes_sens_set_params(value vdata, value vparams)
 
     if (vplist != Val_none) {
 	vplist = Some_val(vplist);
-	ns = (int)caml_array_length(vplist);
+	ns = Wosize_val (vplist); /* vplist : int array */
 	plist = calloc(ns, sizeof(int));
 
 	for (i=0; i < ns; ++i) {

@@ -87,7 +87,7 @@ static void wrap_to_nvector_table(int n, value vy, N_Vector *y)
 
 static N_Vector *nvector_table_to_array(value vtable)
 {
-    int ns = (int)caml_array_length(vtable);
+    int ns = Wosize_val (vtable); /* vtable : nvector array */
     N_Vector *r = calloc(ns + 1, sizeof(N_Vector));
     int i;
 
@@ -886,7 +886,7 @@ CAMLprim void c_idas_sens_init(value vdata, value vmethod, value vrhsfn,
 			       value vyS0, value vypS0)
 {
     CAMLparam5(vdata, vmethod, vrhsfn, vyS0, vypS0);
-    int ns = (int)caml_array_length(vyS0);
+    int ns = Wosize_val (vyS0);	/* vyS0 : nvector array */
     N_Vector *yS0 = nvector_table_to_array(vyS0);
     N_Vector *ypS0 = nvector_table_to_array(vypS0);
 
@@ -1135,7 +1135,7 @@ CAMLprim void c_idas_sens_set_params(value vdata, value vparams)
 
     if (vplist != Val_none) {
 	vplist = Some_val(vplist);
-	ns = (int)caml_array_length(vplist);
+	ns = Wosize_val (vplist); /* vplist : int array */
 	plist = calloc(ns, sizeof(int));
 
 	for (i=0; i < ns; ++i) {
