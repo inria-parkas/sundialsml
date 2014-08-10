@@ -582,6 +582,12 @@ let main () =
   printf "  H(1,1):  %12.4e\n"  h11;
   printf "  H(2,2):  %12.4e\n"  h22
 
-let _ = main ()
+
+let n =
+  match Sys.argv with
+  | [|_; n|] -> int_of_string n
+  | _ -> 1
+let _ = for i = 1 to n do main (); Gc.compact () done
+
 let _ = Gc.full_major ()
 

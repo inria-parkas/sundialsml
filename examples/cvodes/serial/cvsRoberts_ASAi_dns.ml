@@ -346,6 +346,11 @@ let main () =
 
   print_output tb2 yBdata qBdata
 
-let _ = main ()
+
+let n =
+  match Sys.argv with
+  | [|_; n|] -> int_of_string n
+  | _ -> 1
+let _ = for i = 1 to n do main (); Gc.compact () done
 let _ = printf "Free memory\n\n"; Gc.compact ()
 
