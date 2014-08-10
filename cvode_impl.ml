@@ -263,3 +263,32 @@ let adjust_retcode_and_bool = fun session f x ->
   | Sundials.RecoverableFailure r -> (r, 1)
   | e -> (session.exn_temp <- Some e; (false, -1))
 
+(* Dummy callbacks.  These dummies getting called indicates a fatal
+   bug.  Rather than raise an exception (which may or may not get
+   propagated properly depending on the context), we immediately abort
+   the program. *)
+external crash : string -> unit = "sundials_crash"
+let dummy_resfn _ _ _ _ =
+  crash "Internal error: dummy_resfn called\n"
+let dummy_rootsfn _ _ _ _ =
+  crash "Internal error: dummy_rootsfn called\n"
+let dummy_errh _ =
+  crash "Internal error: dummy_errh called\n"
+let dummy_errw _ _ =
+  crash "Internal error: dummy_errw called\n"
+let dummy_resfnb _ _ _ _ _ _ =
+  crash "Internal error: dummy_resfnb called\n"
+let dummy_resfnbs _ _ _ _ _ _ _ _ =
+  crash "Internal error: dummy_resfnbs called\n"
+let dummy_bquadrhsfn _ _ _ _ _ _ =
+  crash "Internal error: dummy_bquadrhsfn called\n"
+let dummy_bquadrhsfn1 _ _ _ _ _ _ _ _ =
+  crash "Internal error: dummy_bquadrhsfn1 called\n"
+let dummy_quadrhsfn _ _ _ =
+  crash "Internal error: dummy_quadrhsfn called\n"
+let dummy_sensrhsfn _ _ _ _ _ _ _ =
+  crash "Internal error: dummy_sensresfn called\n"
+let dummy_sensrhsfn1 _ _ _ _ _ _ _ _ =
+  crash "Internal error: dummy_sensresfn called\n"
+let dummy_quadsensrhsfn _ _ _ _ _ _ _ =
+  crash "Internal error: dummy_quadsensrhsfn called\n"

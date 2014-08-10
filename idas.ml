@@ -26,10 +26,10 @@ let add_fwdsensext s =
         sensarray1      = c_alloc_nvector_array 0;
         sensarray2      = c_alloc_nvector_array 0;
         sensarray3      = c_alloc_nvector_array 0;
-        quadrhsfn       = (fun _ _ _ _ -> ());
+        quadrhsfn       = dummy_quadrhsfn;
         senspvals       = None;
-        sensresfn       = (fun _ _ _ _ _ _ _ _ _ _ -> ());
-        quadsensrhsfn   = (fun _ _ _ _ _ _ _ _ _ _ -> ());
+        sensresfn       = dummy_sensresfn;
+        quadsensrhsfn   = dummy_quadsensrhsfn;
         bsessions       = [];
       }
 
@@ -770,10 +770,10 @@ module Adjoint =
 
               exn_temp     = None;
 
-              resfn        = (fun _ _ _ _ -> ());
-              rootsfn      = (fun _ _ _ _ -> ());
-              errh         = (fun _ -> ());
-              errw         = (fun _ _ -> ());
+              resfn        = dummy_resfn;
+              rootsfn      = dummy_rootsfn;
+              errh         = dummy_errh;
+              errw         = dummy_errw;
               ls_callbacks = NoCallbacks;
 
               safety_check_flags = 0;
@@ -788,14 +788,14 @@ module Adjoint =
 
                 resfnb      = (match mf with
                                | Basic f -> f
-                               | _ -> (fun _ _ _ _ _ _ -> ()));
+                               | _ -> dummy_resfnb);
 
                 resfnbs     = (match mf with
                                | WithSens f -> f
-                               | _ -> (fun _ _ _ _ _ _ _ _ -> ()));
+                               | _ -> dummy_resfnbs);
 
-                bquadrhsfn  = (fun _ _ _ _ _ _ -> ());
-                bquadrhsfn1 = (fun _ _ _ _ _ _ _ _ -> ());
+                bquadrhsfn  = dummy_bquadrhsfn;
+                bquadrhsfn1 = dummy_bquadrhsfn1;
               };
             } in
       Gc.finalise bsession_finalize (tosession bs);

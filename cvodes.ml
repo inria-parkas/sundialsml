@@ -25,11 +25,11 @@ let add_fwdsensext s =
         num_sensitivities = 0;
         sensarray1      = c_alloc_nvector_array 0;
         sensarray2      = c_alloc_nvector_array 0;
-        quadrhsfn       = (fun _ _ _ -> ());
+        quadrhsfn       = dummy_quadrhsfn;
         senspvals       = None;
-        sensrhsfn       = (fun _ _ _ _ _ _ _ -> ());
-        sensrhsfn1      = (fun _ _ _ _ _ _ _ _ -> ());
-        quadsensrhsfn   = (fun _ _ _ _ _ _ _ -> ());
+        sensrhsfn       = dummy_sensrhsfn;
+        sensrhsfn1      = dummy_sensrhsfn1;
+        quadsensrhsfn   = dummy_quadsensrhsfn;
         bsessions       = [];
       }
 

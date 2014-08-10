@@ -22,6 +22,8 @@
 #include <caml/callback.h>
 #include <caml/bigarray.h>
 
+#include <stdio.h>
+
 #include "sundials_ml.h"
 
 CAMLprim value sundials_ml_blas_lapack_supported ()
@@ -105,3 +107,11 @@ CAMLprim value c_sundials_realarray2_wrap(value vba)
     CAMLreturn(r);
 }
 
+CAMLprim void sundials_crash (value msg)
+{
+    CAMLparam1 (msg);
+    fputs (String_val (msg), stderr);
+    fflush (stderr);
+    abort ();
+    CAMLreturn0;
+}

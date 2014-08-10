@@ -577,8 +577,8 @@ let init lmm iter tol f ?(roots=no_roots) ?(t0=0.) y0 =
 
           rhsfn        = f;
           rootsfn      = roots;
-          errh         = (fun _ -> ());
-          errw         = (fun _ _ -> ());
+          errh         = dummy_errh;
+          errw         = dummy_errw;
 
           ls_callbacks = NoCallbacks;
 
