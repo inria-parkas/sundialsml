@@ -33,6 +33,7 @@ exception ResFuncFailure
 exception FirstResFuncFailure
 exception RepeatedResFuncErr
 exception RootFuncFailure
+exception ConstraintFailure
 
 (* Initial condition calculator exceptions *)
 exception NoRecovery
@@ -101,6 +102,7 @@ let _ =
     ("ida_NoRecovery",              NoRecovery);
     ("ida_BadEwt",                  BadEwt);
     ("ida_RootFuncFailure",         RootFuncFailure);
+    ("ida_ConstraintFailure",       ConstraintFailure);
 
     ("ida_BadK",                    BadK);
     ("ida_BadT",                    BadT);

@@ -138,11 +138,11 @@ module Quadrature =
 
     let _ = List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
       [
-        ("idas_QuadNotInitialized",           QuadNotInitialized);
-        ("idas_QuadRhsFuncFailure",           QuadRhsFuncFailure);
-        ("idas_FirstQuadRhsFuncErr",          FirstQuadRhsFuncErr);
-        ("idas_RepeatedQuadRhsFuncErr",       RepeatedQuadRhsFuncErr);
-        ("idas_UnrecoverableQuadRhsFuncErr",  UnrecoverableQuadRhsFuncErr);
+        ("ida_QuadNotInitialized",           QuadNotInitialized);
+        ("ida_QuadRhsFuncFailure",           QuadRhsFuncFailure);
+        ("ida_FirstQuadRhsFuncErr",          FirstQuadRhsFuncErr);
+        ("ida_RepeatedQuadRhsFuncErr",       RepeatedQuadRhsFuncErr);
+        ("ida_UnrecoverableQuadRhsFuncErr",  UnrecoverableQuadRhsFuncErr);
       ]
 
     let fwdsensext s =
@@ -243,20 +243,20 @@ module Sensitivity =
       | EEtolerances -> ee_tolerances s
 
     exception SensNotInitialized
-    exception SensResFuncFailure
-    exception FirstSensRhsFuncErr
+    exception SensResFuncErr
+    exception FirstSensResFuncErr
     exception RepeatedSensRhsFuncErr
     exception UnrecoverableSensRhsFuncErr
     exception BadIS
 
     let _ = List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
       [
-        ("idas_SensNotInitialized",           SensNotInitialized);
-        ("idas_SensResFuncFailure",           SensResFuncFailure);
-        ("idas_FirstSensRhsFuncErr",          FirstSensRhsFuncErr);
-        ("idas_RepeatedSensRhsFuncErr",       RepeatedSensRhsFuncErr);
-        ("idas_UnrecoverableSensRhsFuncErr",  UnrecoverableSensRhsFuncErr);
-        ("idas_BadIS",                        BadIS);
+        ("ida_SensNotInitialized",           SensNotInitialized);
+        ("ida_SensResFuncErr",               SensResFuncErr);
+        ("ida_FirstSensResFuncErr",          FirstSensResFuncErr);
+        ("ida_RepeatedSensRhsFuncErr",       RepeatedSensRhsFuncErr);
+        ("ida_UnrecoverableSensRhsFuncErr",  UnrecoverableSensRhsFuncErr);
+        ("ida_BadIS",                        BadIS);
       ]
 
     let fwdsensext s =
@@ -443,7 +443,6 @@ module Sensitivity =
       exception QuadSensRhsFuncFailure
       exception FirstQuadSensRhsFuncErr
       exception RepeatedQuadSensRhsFuncErr
-      exception UnrecoverableQuadSensRhsFuncErr
 
       let _ = List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
           [
@@ -451,8 +450,6 @@ module Sensitivity =
             ("ida_QuadSensRhsFuncFailure",     QuadSensRhsFuncFailure);
             ("ida_FirstQuadSensRhsFuncErr",    FirstQuadSensRhsFuncErr);
             ("ida_RepeatedQuadSensRhsFuncErr", RepeatedQuadSensRhsFuncErr);
-            ("ida_UnrecoverableQuadSensRhsFuncErr",
-             UnrecoverableQuadSensRhsFuncErr);
           ]
 
       type 'a quadsensrhsfn =
@@ -589,13 +586,13 @@ module Adjoint =
 
     let _ = List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
       [
-        ("idas_AdjointNotInitialized",         AdjointNotInitialized);
-        ("idas_NoForwardCall",                 NoForwardCall);
-        ("idas_ForwardReinitializationFailed", ForwardReinitializationFailed);
-        ("idas_ForwardFailed",                 ForwardFailed);
-        ("idas_NoBackwardProblem",             NoBackwardProblem);
-        ("idas_BadFinalTime",                  BadFinalTime);
-        ("idas_BadOutputTime",                 BadOutputTime);
+        ("ida_AdjointNotInitialized",         AdjointNotInitialized);
+        ("ida_NoForwardCall",                 NoForwardCall);
+        ("ida_ForwardReinitializationFailed", ForwardReinitializationFailed);
+        ("ida_ForwardFailed",                 ForwardFailed);
+        ("ida_NoBackwardProblem",             NoBackwardProblem);
+        ("ida_BadFinalTime",                  BadFinalTime);
+        ("ida_BadOutputTime",                 BadOutputTime);
       ]
 
     let parent_and_which s =

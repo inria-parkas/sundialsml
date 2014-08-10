@@ -970,6 +970,9 @@ void ida_ml_check_flag(const char *call, int flag)
     case IDA_RTFUNC_FAIL:
 	caml_raise_constant(*caml_named_value("ida_RootFuncFailure"));
 
+    case IDA_CONSTR_FAIL:
+	caml_raise_constant(*caml_named_value("ida_ConstraintFailure"));
+
     case IDA_BAD_K:
 	caml_raise_constant(*caml_named_value("ida_BadK"));
 

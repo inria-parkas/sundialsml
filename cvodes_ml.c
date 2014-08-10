@@ -1461,7 +1461,8 @@ void cvodes_ml_check_flag(const char *call, int flag)
 
     if (flag == CV_SUCCESS
 	    || flag == CV_ROOT_RETURN
-	    || flag == CV_TSTOP_RETURN) return;
+	    || flag == CV_TSTOP_RETURN
+	    || flag == CV_WARNING) return;
 
     switch (flag) {
 	case CV_TOO_MUCH_WORK:
