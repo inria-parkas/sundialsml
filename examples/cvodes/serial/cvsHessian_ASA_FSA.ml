@@ -369,7 +369,7 @@ let main () =
                       Sens.no_sens_params (Sens.AllAtOnce (Some (fS data))) yS;
   Sens.set_err_con cvode_mem true;
 
-  QuadSens.init cvode_mem (fQS data) yQS;
+  QuadSens.init cvode_mem (Some (fQS data)) yQS;
   QuadSens.set_tolerances cvode_mem (QuadSens.EEtolerances);
 
   (* Initialize ASA *)

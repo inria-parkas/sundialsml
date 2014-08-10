@@ -597,14 +597,16 @@ let sp = { pvals = Some p; pbar = ...; plist = ... }]}
            -> unit
 
         (** This function, [init s fQS yQS0], activates integration of
-            quadrature equations depending on sensitivities, where [fQS]
-            computes the right-hand side of the sensitivity-dependent quadrature
-            equations, and [yQS0] contains the initial values of
-            sensitivity-dependent quadratures.
+            quadrature equations depending on sensitivities, where
+            [fQS] computes the right-hand side of the
+            sensitivity-dependent quadrature equations, and [yQS0]
+            contains the initial values of sensitivity-dependent
+            quadratures.  When no [fQB] is supplied, the solver uses
+            an internal implementation based on difference quotients.
 
             @cvodes <node6#ss:quad_sens_init> CVodeQuadSensInit *)
-        val init : ('a, 'k) session -> 'a quadsensrhsfn
-                          -> ('a, 'k) nvector array -> unit
+        val init : ('a, 'k) session -> 'a quadsensrhsfn option
+                 -> ('a, 'k) nvector array -> unit
 
         (** This function reinitializes the forward sensitivity computation.
 
@@ -1538,7 +1540,8 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
 
             @cvodes <node6#sss:cvquadinitb> CVodeQuadInitB
             @cvodes <node6#sss:cvquadinitb> CVodeQuadInitBS *)
-        val init : ('a, 'k) bsession -> 'a bquadrhsfn -> ('a, 'k) nvector -> unit
+        val init : ('a, 'k) bsession -> 'a bquadrhsfn
+                 -> ('a, 'k) nvector -> unit
 
         (** This function reinitializes the integration of quadrature equations
             during the backward phase.

@@ -842,12 +842,14 @@ CAMLprim void c_cvodes_sens_get_err_weights(value vdata, value vesweight)
 
 /* sensitivity/quadrature interface */
 
-CAMLprim void c_cvodes_quadsens_init(value vdata, value vyqs0)
+CAMLprim void c_cvodes_quadsens_init(value vdata, value vrhsfn, value vyqs0)
 {
-    CAMLparam2(vdata, vyqs0);
+    CAMLparam3(vdata, vrhsfn, vyqs0);
     N_Vector *yqs0 = nvector_table_to_array(vyqs0);
 
-    int flag = CVodeQuadSensInit(CVODE_MEM_FROM_ML(vdata), quadsensrhsfn, yqs0);
+    int flag = CVodeQuadSensInit(CVODE_MEM_FROM_ML(vdata),
+				 Bool_val (vrhsfn) ? quadsensrhsfn : NULL,
+				 yqs0);
     free_nvector_array(yqs0); 
     SCHECK_FLAG("CVodeQuadSensInit", flag);
 

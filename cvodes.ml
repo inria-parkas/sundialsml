@@ -474,7 +474,7 @@ module Sensitivity =
            -> unit
 
         external c_quadsens_init
-            : ('a, 'k) session -> ('a, 'k) nvector array -> unit
+            : ('a, 'k) session -> bool -> ('a, 'k) nvector array -> unit
             = "c_cvodes_quadsens_init"
 
         let init s f v0 =
@@ -482,8 +482,10 @@ module Sensitivity =
           let ns = num_sensitivities s in
           if Array.length v0 <> ns
           then invalid_arg "init: wrong number of vectors";
-          se.quadsensrhsfn <- f;
-          c_quadsens_init s v0
+          match f with
+          | Some f -> se.quadsensrhsfn <- f;
+                      c_quadsens_init s true v0
+          | None -> c_quadsens_init s false v0
 
         external c_reinit : ('a, 'k) session -> ('a, 'k) nvector array -> unit
             = "c_cvodes_quadsens_reinit"
