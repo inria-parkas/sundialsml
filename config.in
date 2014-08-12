@@ -42,6 +42,7 @@ OCAML ?= @OCAMLBIN@ocaml
 OCAMLMPI ?= @ocamlmpi_path@
 MPI_MODULES = $(if @ocamlmpi_enabled@, nvector_parallel.cmo \
 				cvode_bbd.cmo cvodes_bbd.cmo kinsol_bbd.cmo)
+MPI_COBJ = $(if @ocamlmpi_enabled@, nvector_parallel_ml$(XO))
 NVECTOR_LIB = $(if @ocamlmpi_enabled@, -lsundials_nvecparallel)
 
 CAMLP4OF= @OCAMLBIN@camlp4of

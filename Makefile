@@ -6,7 +6,7 @@ MLOBJ_MAIN = sundials.cmo dls.cmo \
 	     spils.cmo cvode.cmo kinsol.cmo \
 	     ida.cmo
 
-MLOBJ_SENS = cvodes.cmo idas.cmo
+MLOBJ_SENS = cvodes.cmo
 
 MLOBJ_LOCAL = cvode_impl.cmo ida_impl.cmo kinsol_impl.cmo
 
@@ -14,7 +14,7 @@ MLOBJ_WOS = sundials.cmo $(MLOBJ_LOCAL) $(filter-out sundials.cmo,$(MLOBJ_MAIN))
 MLOBJ = $(MLOBJ_WOS) $(MLOBJ_SENS)
 
 COMMON_COBJ= sundials_ml$(XO) dls_ml$(XO) nvector_ml$(XO) spils_ml$(XO) \
-	     nvector_parallel_ml$(XO)
+	     $(MPI_COBJ)
 
 COBJ_WOS = $(COMMON_COBJ) cvode_ml$(XO) ida_ml$(XO) kinsol_ml$(XO)
 COBJ = $(COMMON_COBJ) cvode_ml_s$(XO) cvodes_ml$(XO) \
