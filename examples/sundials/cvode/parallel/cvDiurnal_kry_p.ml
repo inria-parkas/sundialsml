@@ -655,7 +655,7 @@ let main () =
 
   if npes <> npex*npey then begin
     if my_pe = 0 then
-      eprintf "\nMPI_ERROR(0: npes = %d is not equal to NPEX*NPEY = %d\n\n"
+      eprintf "\nMPI_ERROR(0): npes = %d is not equal to NPEX*NPEY = %d\n\n"
                                                               npes (npex*npey);
     exit 1
   end;

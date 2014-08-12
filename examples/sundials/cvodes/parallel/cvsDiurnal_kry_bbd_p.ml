@@ -1,13 +1,11 @@
 (*
  * -----------------------------------------------------------------
- * $Revision: 1.4 $
- * $Date: 2010/12/14 21:31:59 $
+ * $Revision: 1.3 $
+ * $Date: 2010/12/14 22:15:31 $
  * -----------------------------------------------------------------
  * Programmer(s): S. D. Cohen, A. C. Hindmarsh, M. R. Wittman, and
  *                Radu Serban  @ LLNL
- * -----------------------------------------------------------------
- * OCaml port: Timothy Bourke, Inria, Jun 2014.
- * -----------------------------------------------------------------
+ * --------------------------------------------------------------------
  * Example problem:
  *
  * An ODE system is generated from the following 2-species diurnal
@@ -26,7 +24,7 @@
  * The PDE system is treated by central differences on a uniform
  * mesh, with simple polynomial initial profiles.
  *
- * The problem is solved by CVODE on NPE processors, treated
+ * The problem is solved by CVODES on NPE processors, treated
  * as a rectangular process grid of size NPEX by NPEY, with
  * NPE = NPEX*NPEY. Each processor contains a subgrid of size MXSUB
  * by MYSUB of the (x,y) mesh. Thus the actual mesh sizes are
@@ -49,17 +47,12 @@
  * on completion.
  *
  * This version uses MPI for user routines.
- * 
- * Execution: mpirun -np N cvDiurnal_kry_p   with N = NPEX*NPEY
- * (see constants below).
- * -----------------------------------------------------------------
+ * Execute with number of processors = NPEX*NPEY (see constants below).
+ * --------------------------------------------------------------------
  *)
 
 module RealArray = Sundials.RealArray
-module Roots  = Sundials.Roots
-module BBD = Cvode_bbd
 open Bigarray
-
 let unvec = Sundials.unvec
 let slice = Array1.sub
 let printf = Printf.printf
@@ -80,52 +73,52 @@ let bytes x = header_and_empty_array_size + x * float_cell_size
 
 (* Problem Constants *)
 
-let nvars =    2            (* number of species         *)
-let kh =       4.0e-6       (* horizontal diffusivity Kh *)
-let vel =      0.001        (* advection velocity V      *)
-let kv0 =      1.0e-8       (* coefficient in Kv(y)      *)
-let q1 =       1.63e-16     (* coefficients q1, q2, c3   *) 
-let q2 =       4.66e-16
-let c3 =       3.7e16
-let a3 =       22.62        (* coefficient in expression for q3(t) *)
-let a4 =       7.601        (* coefficient in expression for q4(t) *)
-let c1_scale = 1.0e6        (* coefficients in initial profiles    *)
-let c2_scale = 1.0e12
+let zero =         0.0
 
-let t0 =       0.0          (* initial time *)
-let nout =     12           (* number of output times *)
-let twohr =    7200.0       (* number of seconds in two hours  *)
-let halfday =  4.32e4       (* number of seconds in a half day *)
-let pi =       3.1415926535898  (* pi *) 
+let nvars =        2         (* number of species         *)
+let kh =           4.0e-6    (* horizontal diffusivity Kh *)
+let vel =          0.001     (* advection velocity V      *)
+let kv0 =          1.0e-8    (* coefficient in Kv(y)      *)
+let q1 =           1.63e-16  (* coefficients q1, q2, c3   *) 
+let q2 =           4.66e-16
+let c3 =           3.7e16
+let a3 =           22.62     (* coefficient in expression for q3(t) *)
+let a4 =           7.601     (* coefficient in expression for q4(t) *)
+let c1_scale =     1.0e6     (* coefficients in initial profiles    *)
+let c2_scale =     1.0e12
 
-let xmin =     0.0          (* grid boundaries in x  *)
-let xmax =     20.0           
-let ymin =     30.0         (* grid boundaries in y  *)
-let ymax =     50.0
+let t0 =           zero      (* initial time *)
+let nout =         12        (* number of output times *)
+let twohr =        7200.0    (* number of seconds in two hours  *)
+let halfday =      4.32e4    (* number of seconds in a half day *)
+let pi =           3.1415926535898 (* pi *) 
 
-let npex =     2            (* no. PEs in x direction of PE array *)
-let npey =     2            (* no. PEs in y direction of PE array *)
-                            (* Total no. PEs = NPEX*NPEY *)
-let mxsub =    5            (* no. x points per subgrid *)
-let mysub =    5            (* no. y points per subgrid *)
+let xmin =         zero      (* grid boundaries in x  *)
+let xmax =         20.0
+let ymin =         30.0      (* grid boundaries in y  *)
+let ymax =         50.0
 
-let mx =       npex*mxsub   (* MX = number of x mesh points *)
-let my =       npey*mysub   (* MY = number of y mesh points *)
-                            (* Spatial mesh is MX by MY *)
+let npex =         2         (* no. PEs in x direction of PE array *)
+let npey =         2         (* no. PEs in y direction of PE array *)
+                                  (* Total no. PEs = NPEX*NPEY *)
+let mxsub =        5         (* no. x points per subgrid *)
+let mysub =        5         (* no. y points per subgrid *)
 
+let mx =           (npex*mxsub)   (* MX = number of x mesh points *)
+let my =           (npey*mysub)   (* MY = number of y mesh points *)
+                                    (* Spatial mesh is MX by MY *)
 (* CVodeInit Constants *)
 
-let rtol =     1.0e-5       (* scalar relative tolerance *)
-let floor =    100.0        (* value of C1 or C2 at which tolerances *)
-                            (* change from relative to absolute      *)
-let atol =     rtol*.floor  (* scalar absolute tolerance *)
+let rtol =    1.0e-5            (* scalar relative tolerance *)
+let floor =   100.0             (* value of C1 or C2 at which tolerances *)
+                                  (* change from relative to absolute      *)
+let atol =    (rtol*.floor)     (* scalar absolute tolerance *)
 
 (* Type : UserData 
    contains problem constants, extended dependent variable array,
    grid constants, processor indices, MPI communicator *)
 
 type user_data = {
-
         mutable q4 : float;
         om         : float;
         dx         : float;
@@ -135,16 +128,16 @@ type user_data = {
         vdco       : float;
 
         uext       : RealArray.t;
-        
+
         my_pe      : int;
+        comm       : Mpi.communicator;
+
         isubx      : int;
         isuby      : int;
-
         nvmxsub    : int;
         nvmxsub2   : int;
 
-        comm       : Mpi.communicator;
-
+        local_n    : int;
     }
 
 (*********************** Private Helper Functions ************************)
@@ -153,24 +146,25 @@ type user_data = {
 
 let sqr x = x ** 2.0
 
-let init_user_data my_pe comm =
-  let dx    = (xmax-.xmin)/.(float (mx-1)) in
-  let dy    = (ymax-.ymin)/.(float (my-1)) in
-  let isuby = my_pe/npex in
+let init_user_data my_pe local_n comm =
+  let dx = (xmax -. xmin) /. float (mx - 1) in
+  let dy = (ymax -. ymin) /. float (my - 1) in
+  let isuby    = my_pe / npex in
   {
-    q4       = 0.0; (* set later *)
+    q4     = 0.0; (* set laster *)
 
     (* Set problem constants *)
-    om       = pi/.halfday;
-    dx       = dx;
-    dy       = dy;
-    hdco     = kh/.sqr(dx);
-    haco     = vel/.(2.0*.dx);
-    vdco     = (1.0/.sqr(dy))*.kv0;
+    om = pi /. halfday;
+    dx = dx;
+    dy = dy;
+    hdco = kh /. sqr(dx);
+    haco = vel /. (2.0 *. dx);
+    vdco = (1.0 /. sqr(dy)) *. kv0;
 
     (* Set machine-related constants *)
     comm     = comm;
     my_pe    = my_pe;
+    local_n = local_n;
 
     (* isubx and isuby are the PE grid indices corresponding to my_pe *)
     isuby    = isuby;
@@ -182,6 +176,7 @@ let init_user_data my_pe comm =
     nvmxsub  = nvars*mxsub;
     nvmxsub2 = nvars*(mxsub+2);
   }
+
 
 (* Set initial conditions in u *)
 
@@ -221,7 +216,7 @@ let set_initial_profiles data u =
 
 let print_intro npes mudq mldq mukeep mlkeep =
   printf "\n2-species diurnal advection-diffusion problem\n";
-  printf "  %d by %d mesh on %d processors\n" mx my npes;
+  printf "  %d by %d mesh on %d processors\n"  mx my npes;
   printf "  Using CVBBDPRE preconditioner module\n";
   printf "    Difference-quotient half-bandwidths are";
   printf " mudq = %d,  mldq = %d\n" mudq mldq;
@@ -289,8 +284,8 @@ let print_final_stats s =
   printf "npe     = %5d     nps     = %5d\n"   npe nps;
   printf "ncfn    = %5d     ncfl    = %5d\n\n" ncfn ncfl;
 
-  let lenrwBBDP, leniwBBDP = BBD.get_work_space s in
-  let ngevalsBBDP = BBD.get_num_gfn_evals s in
+  let lenrwBBDP, leniwBBDP = Cvode_bbd.get_work_space s in
+  let ngevalsBBDP = Cvode_bbd.get_num_gfn_evals s in
   printf "In CVBBDPRE: real/integer local work space sizes = %d, %d\n"
                                                           lenrwBBDP leniwBBDP;  
   printf "             no. flocal evals. = %d\n" ngevalsBBDP
@@ -401,10 +396,10 @@ let brecvwait request isubx isuby dsizex uext =
     done
   end
 
-(* fucomm routine. This routine performs all inter-processor
+(* fucomm routine.  This routine performs all inter-processor
    communication of data in u needed to calculate f.         *)
 
-let fucomm data t ((udata : RealArray.t),_,_) =
+let fucomm data t (udata, _, _) =
   let comm    = data.comm
   and my_pe   = data.my_pe
   and isubx   = data.isubx
@@ -422,11 +417,15 @@ let fucomm data t ((udata : RealArray.t),_,_) =
   (* Finish receiving boundary data from neighboring PEs *)
   brecvwait request isubx isuby nvmxsub uext
 
-(* fcalc routine. Compute f(t,y).  This routine assumes that communication 
-   between processors of data needed to calculate f has already been done,
-   and this data is in the work array uext. *)
+(***************** Function called by the solver **************************)
 
-let flocal data t ((udata : RealArray.t),_,_) ((dudata : RealArray.t),_,_) =
+(***************** Functions called by the CVBBDPRE module ****************)
+
+(* flocal routine.  Compute f(t,y).  This routine assumes that all
+   inter-processor communication of data needed to calculate f has already
+   been done, and this data is in the work array uext.                    *)
+
+let flocal data t (udata, _, _) (dudata, _, _) =
   (* Get subgrid indices, data sizes, extended work array uext *)
   let isubx    = data.isubx
   and isuby    = data.isuby
@@ -434,6 +433,7 @@ let flocal data t ((udata : RealArray.t),_,_) ((dudata : RealArray.t),_,_) =
   and nvmxsub2 = data.nvmxsub2
   and uext     = data.uext
   in
+
   (* Copy local segment of u vector into the working extended array uext *)
   for ly = 0 to mysub-1 do
     blit udata (ly*nvmxsub) uext ((ly + 1)*nvmxsub2 + nvars) nvmxsub;
@@ -521,16 +521,15 @@ let flocal data t ((udata : RealArray.t),_,_) ((dudata : RealArray.t),_,_) =
     done
   done
 
-(***************** Functions Called by the Solver *************************)
-
 (* f routine.  Evaluate f(t,y).  First call fucomm to do communication of 
    subgrid boundary data into uext.  Then calculate f by a call to flocal. *)
 
-let f data t u du =
+let f data t u udot =
   (* Call fucomm to do inter-processor communication *)
   fucomm data t u;
-  (* Call fcalc to calculate all right-hand sides *)
-  flocal data t u du
+  (* Call flocal to calculate all right-hand sides *)
+  flocal data t u udot
+
 
 (***************************** Main Program ******************************)
 
@@ -554,34 +553,38 @@ let main () =
   let local_N = nvars*mxsub*mysub in
 
   (* Allocate and load user data block *)
-  let data = init_user_data my_pe comm in
+  let data = init_user_data my_pe local_N comm in
 
-  (* Allocate u, and set initial values and tolerances *) 
+  (* Allocate and initialize u, and set tolerances *) 
   let u = Nvector_parallel.make local_N neq comm 0.0 in
   set_initial_profiles data u;
   let abstol = atol
   and reltol = rtol
   in
-  (* Call CVodeCreate to create the solver memory and specify the 
-   * Backward Differentiation Formula and the use of a Newton iteration *)
+
+  (* Initialize BBD preconditioner *)
   let mudq   = nvars * mxsub in
   let mldq   = mudq in
   let mukeep = nvars in
   let mlkeep = mukeep in
+  let bbd_spgmr = Cvode_bbd.spgmr
+        None
+        Spils.PrecLeft
+        { Cvode_bbd.mudq = mudq;     Cvode_bbd.mldq = mldq;
+          Cvode_bbd.mukeep = mukeep; Cvode_bbd.mlkeep = mlkeep; }
+        None
+        { Cvode_bbd.local_fn = flocal data; Cvode_bbd.comm_fn  = None; }
+  in
+
+  (* Call CVodeCreate to create the solver memory and specify the 
+   * Backward Differentiation Formula and the use of a Newton iteration *)
   let cvode_mem =
     Cvode.init Cvode.BDF
-      (Cvode.Newton
-        (BBD.spgmr
-                None
-                Spils.PrecLeft
-                { BBD.mudq   = mudq;   BBD.mldq = mldq;
-                  BBD.mukeep = mukeep; BBD.mlkeep = mlkeep }
-                None
-                { BBD.local_fn = (flocal data); BBD.comm_fn = None }))
+      (Cvode.Newton bbd_spgmr)
       (Cvode.SStolerances (reltol, abstol))
       (f data) ~t0:t0 u
   in
-    
+
   (* Print heading *)
   if my_pe = 0 then print_intro npes mudq mldq mukeep mlkeep;
 
@@ -590,7 +593,7 @@ let main () =
     if jpre = Spils.PrecRight then begin
       set_initial_profiles data u;
       Cvode.reinit cvode_mem t0 u;
-      BBD.reinit cvode_mem mudq mldq None;
+      Cvode_bbd.reinit cvode_mem mudq mldq None;
       Cvode.Spils.set_prec_type cvode_mem Spils.PrecRight;
 
       if my_pe = 0 then begin
@@ -614,13 +617,9 @@ let main () =
     (* Print final statistics *)  
     if my_pe = 0 then print_final_stats cvode_mem
   in
+  (* Loop over jpre (= PREC_LEFT, PREC_RIGHT), and solve the problem *)
   List.iter solve_problem [Spils.PrecLeft; Spils.PrecRight]
 
-let n =
-  match Sys.argv with
-  | [|_; n|] -> int_of_string n
-  | _ -> 1
-let _ = for i = 1 to n do main () done
-
+let _ = main ()
 let _ = Gc.full_major ()
 
