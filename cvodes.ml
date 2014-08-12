@@ -679,7 +679,7 @@ module Adjoint =
       | SStolerances (rel, abs) -> ss_tolerances parent which rel abs
       | SVtolerances (rel, abs) -> sv_tolerances parent which rel abs
 
-    external c_set_functional : ('a, 'k) bsession -> unit
+    external c_set_functional : ('a, 'k) session -> int -> unit
       = "c_cvodes_adj_set_functional"
 
     let bwdsensext = function (Bsession bs) ->
@@ -689,7 +689,9 @@ module Adjoint =
 
     let set_iter_type bs iter nv =
       match iter with
-      | Functional -> c_set_functional bs
+      | Functional ->
+          let parent, which = parent_and_which bs in
+          c_set_functional parent which
       | Newton linsolv -> linsolv bs nv
         (* Iter type will be set to CV_NEWTON in the functions that
            set the linear solver.  *)
