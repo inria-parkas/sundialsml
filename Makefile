@@ -6,7 +6,7 @@ MLOBJ_MAIN = sundials.cmo dls.cmo \
 	     spils.cmo cvode.cmo kinsol.cmo \
 	     ida.cmo
 
-MLOBJ_SENS = cvodes.cmo
+MLOBJ_SENS = cvodes.cmo idas.cmo
 
 MLOBJ_LOCAL = cvode_impl.cmo ida_impl.cmo kinsol_impl.cmo
 
