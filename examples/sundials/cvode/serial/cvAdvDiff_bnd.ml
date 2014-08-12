@@ -38,7 +38,7 @@ module Dls = Cvode.Dls
 let unvec = Sundials.unvec
 
 let printf = Printf.printf
-let vmax_norm = Nvector_array.Bigarray.array_nvec_ops.Nvector_custom.nvmaxnorm
+let vmax_norm = Nvector_serial.Ops.n_vmaxnorm
 
 let ith v i = v.{i - 1}
 let set_ith v i e = v.{i - 1} <- e
@@ -242,7 +242,7 @@ let main () =
 
   (* In loop over output points: call CVode, print results, test for errors *)
 
-  print_header reltol abstol (vmax_norm (unvec u));
+  print_header reltol abstol (vmax_norm u);
 
   let tout = ref t1 in
   for iout = 1 to nout do
@@ -250,7 +250,7 @@ let main () =
     in
     let nst = Cvode.get_num_steps cvode_mem in
 
-    print_output t (vmax_norm (unvec u)) nst;
+    print_output t (vmax_norm u) nst;
     tout := !tout +. dtout
   done;
 

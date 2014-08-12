@@ -56,7 +56,7 @@ let unvec = Sundials.unvec
 let argv = ref Sys.argv
 
 let printf = Printf.printf
-let vmax_norm = Nvector_array.Bigarray.array_nvec_ops.Nvector_custom.nvmaxnorm
+let vmax_norm = Nvector_serial.Ops.n_vmaxnorm
 
 (* Problem Constants *)
 
@@ -157,15 +157,15 @@ let print_output cvode_mem t u =
   let hu  = Cvode.get_last_step cvode_mem in
   printf "%8.3e %2d  %8.3e %5d\n" t qu hu nst;
   printf "                                Solution       ";
-  printf "%12.4e \n" (vmax_norm (unvec u))
+  printf "%12.4e \n" (vmax_norm u)
 
 (* Print max norm of sensitivities *)
 
 let print_output_s uS =
   printf "                                Sensitivity 1  ";
-  printf "%12.4e \n" (vmax_norm (unvec uS.(0)));
+  printf "%12.4e \n" (vmax_norm uS.(0));
   printf "                                Sensitivity 2  ";
-  printf "%12.4e \n" (vmax_norm (unvec uS.(1)))
+  printf "%12.4e \n" (vmax_norm uS.(1))
 
 
 (* Print some final statistics located in the CVODES memory *)

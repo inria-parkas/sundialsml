@@ -143,7 +143,8 @@ CAMLprim void ml_nvec_par_n_vlinearsum(value va, value vx, value vb, value vy,
 				       value vz)
 {
     CAMLparam5(va, vx, vb, vy, vz);
-    N_VLinearSum_Parallel(Double_val(va), NVEC_VAL(vx), Double_val(vb), NVEC_VAL(vy), NVEC_VAL(vz));
+    N_VLinearSum_Parallel(Double_val(va), NVEC_VAL(vx), Double_val(vb),
+			  NVEC_VAL(vy), NVEC_VAL(vz));
     CAMLreturn0;
 }
 
@@ -220,7 +221,8 @@ CAMLprim value ml_nvec_par_n_vwrmsnorm(value vx, value vw)
 CAMLprim value ml_nvec_par_n_vwrmsnormmask(value vx, value vw, value vid)
 {
     CAMLparam3(vx, vw, vid);
-    realtype r = N_VWrmsNormMask_Parallel(NVEC_VAL(vx), NVEC_VAL(vw), NVEC_VAL(vid));
+    realtype r = N_VWrmsNormMask_Parallel(NVEC_VAL(vx), NVEC_VAL(vw),
+					  NVEC_VAL(vid));
     CAMLreturn(caml_copy_double(r));
 }
 
@@ -262,7 +264,8 @@ CAMLprim value ml_nvec_par_n_vinvtest(value vx, value vz)
 CAMLprim value ml_nvec_par_n_vconstrmask(value vc, value vx, value vm)
 {
     CAMLparam3(vc, vx, vm);
-    booleantype r = N_VConstrMask_Parallel(NVEC_VAL(vc), NVEC_VAL(vx), NVEC_VAL(vm));
+    booleantype r = N_VConstrMask_Parallel(NVEC_VAL(vc), NVEC_VAL(vx),
+					   NVEC_VAL(vm));
     CAMLreturn(Val_bool(r));
 }
 

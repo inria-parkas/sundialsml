@@ -37,7 +37,7 @@ module Dls = Cvode.Dls
 let unvec = Sundials.unvec
 
 let printf = Printf.printf
-let vmax_norm = Nvector_array.Bigarray.array_nvec_ops.Nvector_custom.nvmaxnorm
+let vmax_norm = Nvector_serial.Ops.n_vmaxnorm
 
 let ith v i = v.{i - 1}
 let set_ith v i e = v.{i - 1} <- e

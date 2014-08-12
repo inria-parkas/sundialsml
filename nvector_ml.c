@@ -574,3 +574,142 @@ CAMLprim realtype callml_vminquotient(N_Vector num, N_Vector denom)
     CAMLreturnT(realtype, Double_val(r));
 }
 
+/** Interface to underlying serial nvector functions */
+
+CAMLprim void ml_nvec_ser_n_vlinearsum(value va, value vx, value vb, value vy,
+				       value vz)
+{
+    CAMLparam5(va, vx, vb, vy, vz);
+    N_VLinearSum_Serial(Double_val(va), NVEC_VAL(vx), Double_val(vb),
+			NVEC_VAL(vy), NVEC_VAL(vz));
+    CAMLreturn0;
+}
+
+CAMLprim void ml_nvec_ser_n_vconst(value vc, value vz)
+{
+    CAMLparam2(vc, vz);
+    N_VConst_Serial(Double_val(vc), NVEC_VAL(vz));
+    CAMLreturn0;
+}
+
+CAMLprim void ml_nvec_ser_n_vprod(value vx, value vy, value vz)
+{
+    CAMLparam3(vx, vy, vz);
+    N_VProd_Serial(NVEC_VAL(vx), NVEC_VAL(vy), NVEC_VAL(vz));
+    CAMLreturn0;
+}
+
+CAMLprim void ml_nvec_ser_n_vdiv(value vx, value vy, value vz)
+{
+    CAMLparam3(vx, vy, vz);
+    N_VDiv_Serial(NVEC_VAL(vx), NVEC_VAL(vy), NVEC_VAL(vz));
+    CAMLreturn0;
+}
+
+CAMLprim void ml_nvec_ser_n_vscale(value vc, value vx, value vz)
+{
+    CAMLparam3(vc, vx, vz);
+    N_VScale_Serial(Double_val(vc), NVEC_VAL(vx), NVEC_VAL(vz));
+    CAMLreturn0;
+}
+
+CAMLprim void ml_nvec_ser_n_vabs(value vx, value vz)
+{
+    CAMLparam2(vx, vz);
+    N_VAbs_Serial(NVEC_VAL(vx), NVEC_VAL(vz));
+    CAMLreturn0;
+}
+
+CAMLprim void ml_nvec_ser_n_vinv(value vx, value vz)
+{
+    CAMLparam2(vx, vz);
+    N_VInv_Serial(NVEC_VAL(vx), NVEC_VAL(vz));
+    CAMLreturn0;
+}
+
+CAMLprim void ml_nvec_ser_n_vaddconst(value vx, value vb, value vz)
+{
+    CAMLparam3(vx, vb, vz);
+    N_VAddConst_Serial(NVEC_VAL(vx), Double_val(vb), NVEC_VAL(vz));
+    CAMLreturn0;
+}
+
+CAMLprim value ml_nvec_ser_n_vdotprod(value vx, value vy)
+{
+    CAMLparam2(vx, vy);
+    realtype r = N_VDotProd_Serial(NVEC_VAL(vx), NVEC_VAL(vy));
+    CAMLreturn(caml_copy_double(r));
+}
+
+CAMLprim value ml_nvec_ser_n_vmaxnorm(value vx)
+{
+    CAMLparam1(vx);
+    realtype r = N_VMaxNorm_Serial(NVEC_VAL(vx));
+    CAMLreturn(caml_copy_double(r));
+}
+
+CAMLprim value ml_nvec_ser_n_vwrmsnorm(value vx, value vw)
+{
+    CAMLparam2(vx, vw);
+    realtype r = N_VWrmsNorm_Serial(NVEC_VAL(vx), NVEC_VAL(vw));
+    CAMLreturn(caml_copy_double(r));
+}
+
+CAMLprim value ml_nvec_ser_n_vwrmsnormmask(value vx, value vw, value vid)
+{
+    CAMLparam3(vx, vw, vid);
+    realtype r = N_VWrmsNormMask_Serial(NVEC_VAL(vx), NVEC_VAL(vw),
+					NVEC_VAL(vid));
+    CAMLreturn(caml_copy_double(r));
+}
+
+CAMLprim value ml_nvec_ser_n_vmin(value vx)
+{
+    CAMLparam1(vx);
+    realtype r = N_VMin_Serial(NVEC_VAL(vx));
+    CAMLreturn(caml_copy_double(r));
+}
+
+CAMLprim value ml_nvec_ser_n_vwl2norm(value vx, value vw)
+{
+    CAMLparam2(vx, vw);
+    realtype r = N_VWL2Norm_Serial(NVEC_VAL(vx), NVEC_VAL(vw));
+    CAMLreturn(caml_copy_double(r));
+}
+
+CAMLprim value ml_nvec_ser_n_vl1norm(value vx)
+{
+    CAMLparam1(vx);
+    realtype r = N_VL1Norm_Serial(NVEC_VAL(vx));
+    CAMLreturn(caml_copy_double(r));
+}
+
+CAMLprim void ml_nvec_ser_n_vcompare(value vc, value vx, value vz)
+{
+    CAMLparam3(vc, vx, vz);
+    N_VCompare_Serial(Double_val(vc), NVEC_VAL(vx), NVEC_VAL(vz));
+    CAMLreturn0;
+}
+
+CAMLprim value ml_nvec_ser_n_vinvtest(value vx, value vz)
+{
+    CAMLparam2(vx, vz);
+    booleantype r = N_VInvTest_Serial(NVEC_VAL(vx), NVEC_VAL(vz));
+    CAMLreturn(Val_bool(r));
+}
+
+CAMLprim value ml_nvec_ser_n_vconstrmask(value vc, value vx, value vm)
+{
+    CAMLparam3(vc, vx, vm);
+    booleantype r = N_VConstrMask_Serial(NVEC_VAL(vc), NVEC_VAL(vx),
+					 NVEC_VAL(vm));
+    CAMLreturn(Val_bool(r));
+}
+
+CAMLprim value ml_nvec_ser_n_vminquotient(value vnum, value vdenom)
+{
+    CAMLparam2(vnum, vdenom);
+    realtype r = N_VMinQuotient_Serial(NVEC_VAL(vnum), NVEC_VAL(vdenom));
+    CAMLreturn(caml_copy_double(r));
+}
+
