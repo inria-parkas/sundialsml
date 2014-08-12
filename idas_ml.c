@@ -1787,48 +1787,6 @@ CAMLprim void c_idas_adj_spils_set_preconditioner(value vparent,
     CAMLreturn0;
 }
 
-#ifdef SUNDIALSML_WITHMPI
-
-CAMLprim void c_idas_bbd_prec_initb (value vparentwhich, value vlocaln,
-				     value vbandwidths, value vdqrely,
-				     value vhascomm)
-{
-    CAMLparam5(vparentwhich, vlocaln, vbandwidths, vdqrely, vhascomm);
-    void *ida_mem = IDA_MEM_FROM_ML (Field(vparentwhich, 0));
-    int flag;
-
-    flag = IDABBDPrecInitB (ida_mem, Int_val(Field(vparentwhich, 1)),
-	Long_val(vlocaln),
-	Long_val(Field(vbandwidths, RECORD_IDA_BANDBLOCK_BANDWIDTHS_MUDQ)),
-	Long_val(Field(vbandwidths, RECORD_IDA_BANDBLOCK_BANDWIDTHS_MLDQ)),
-	Long_val(Field(vbandwidths, RECORD_IDA_BANDBLOCK_BANDWIDTHS_MUKEEP)),
-	Long_val(Field(vbandwidths, RECORD_IDA_BANDBLOCK_BANDWIDTHS_MLKEEP)),
-	Double_val(vdqrely),
-	bbbdlocal,
-	Bool_val(vhascomm) ? bbbdcomm : NULL);
-    CHECK_FLAG ("IDABBDPrecInitB", flag);
-
-    CAMLreturn0;
-}
-
-CAMLprim void c_idas_bbd_prec_reinitb (value vparent, value vwhich,
-					 value vmudq, value vmldq,
-					 value vdqrely)
-{
-    CAMLparam5(vparent, vwhich, vmudq, vmldq, vdqrely);
-    void *ida_mem = IDA_MEM_FROM_ML (vparent);
-    int flag;
-
-    flag = IDABBDPrecReInitB (ida_mem, Int_val(vwhich),
-			     Long_val(vmudq), Long_val(vmldq),
-			     Double_val(vdqrely));
-    CHECK_FLAG ("IDABBDPrecReInitB", flag);
-
-    CAMLreturn0;
-}
-
-#endif
-
 /* Dense and Band can only be used with serial NVectors.  */
 CAMLprim void c_idas_adj_dls_dense(value vparent, value vwhich,
 				    value vnb, value vset_jac)

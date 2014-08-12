@@ -27,6 +27,9 @@ let cvodes_doc_root =
 let ida_doc_root =
   ref "https://computation.llnl.gov/casc/sundials/documentation/ida_guide/"
 
+let idas_doc_root =
+  ref "https://computation.llnl.gov/casc/sundials/documentation/idas_guide/"
+
 let kinsol_doc_root =
   ref "https://computation.llnl.gov/casc/sundials/documentation/kin_guide/"
 
@@ -75,6 +78,12 @@ struct
         "<div class=\"ida\"><small>See sundials: <a href=\"%s%s.html%s\">%s</a></small></div>"
         !ida_doc_root page anchor title
 
+    method private html_of_idas t =
+      let (page, anchor, title) = self#split_text t in
+      Printf.sprintf
+        "<div class=\"idas\"><small>See sundials: <a href=\"%s%s.html%s\">%s</a></small></div>"
+        !idas_doc_root page anchor title
+
     method private html_of_kinsol t =
       let (page, anchor, title) = self#split_text t in
       Printf.sprintf
@@ -102,6 +111,9 @@ let option_cvodes_doc_root =
 let option_ida_doc_root =
   ("-ida-doc-root", Arg.String (fun d -> ida_doc_root := d), 
    "<dir>  specify the root url for the Sundials IDA documentation.")
+let option_idas_doc_root =
+  ("-idas-doc-root", Arg.String (fun d -> idas_doc_root := d), 
+   "<dir>  specify the root url for the Sundials IDAS documentation.")
 let option_kinsol_doc_root =
   ("-kinsol-doc-root", Arg.String (fun d -> kinsol_doc_root := d), 
    "<dir>  specify the root url for the Sundials KINSOL documentation.")
@@ -112,6 +124,7 @@ let _ =
   Odoc_args.add_option option_cvode_doc_root;
   Odoc_args.add_option option_cvodes_doc_root;
   Odoc_args.add_option option_ida_doc_root;
+  Odoc_args.add_option option_idas_doc_root;
   Odoc_args.add_option option_kinsol_doc_root;
   Odoc_args.set_doc_generator
     (Some (dochtml :> Odoc_args.doc_generator))
@@ -120,6 +133,7 @@ let _ =
   Odoc_args.add_option option_cvode_doc_root;
   Odoc_args.add_option option_cvodes_doc_root;
   Odoc_args.add_option option_ida_doc_root;
+  Odoc_args.add_option option_idas_doc_root;
   Odoc_args.add_option option_kinsol_doc_root;
   Odoc_args.extend_html_generator (module Generator : Odoc_gen.Html_functor)
 #endif
