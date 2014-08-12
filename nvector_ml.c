@@ -22,16 +22,9 @@
 
 #include <nvector/nvector_serial.h>
 
-#ifdef SUNDIALSML_WITHMPI
-#include <nvector/nvector_parallel.h>
-
-/* Must correspond with camlmpi.h */
-#define Comm_val(comm) (*((MPI_Comm *) &Field(comm, 1)))
-#endif
-
 /** Generic nvector functions and macros */
 
-static N_Vector alloc_cnvec(size_t content_size, value backlink)
+N_Vector alloc_cnvec(size_t content_size, value backlink)
 {
     N_Vector nv;
 
@@ -55,7 +48,7 @@ static N_Vector alloc_cnvec(size_t content_size, value backlink)
     return nv;
 }
 
-static void free_cnvec(N_Vector nv)
+void free_cnvec(N_Vector nv)
 {
     caml_remove_global_root(&NVEC_BACKLINK(nv));
     if (nv->content != NULL) free(nv->content);
@@ -69,7 +62,7 @@ static mlsize_t nvec_rough_size =
     + sizeof(struct _generic_N_Vector_Ops)
     + 4 * sizeof(void *);
 
-static CAMLprim value val_cnvec(N_Vector nv, void (*finalizer)(value))
+CAMLprim value val_cnvec(N_Vector nv, void (*finalizer)(value))
 {
     CAMLparam0();
     CAMLlocal1(r);
@@ -80,12 +73,12 @@ static CAMLprim value val_cnvec(N_Vector nv, void (*finalizer)(value))
     CAMLreturn(r);
 }
 
-static CAMLprim void finalize_cnvec(value vnv)
+CAMLprim void finalize_cnvec(value vnv)
 {
     free_cnvec(NVEC_CVAL(vnv));
 }
 
-static void clone_ops(N_Vector dst, N_Vector src)
+void clone_cnvec_ops(N_Vector dst, N_Vector src)
 {
     N_Vector_Ops ops = (N_Vector_Ops) dst->ops;
 
@@ -140,7 +133,7 @@ static N_Vector clone_serial(N_Vector w)
     content = (N_VectorContent_Serial) v->content;
 
     /* Create vector operation structure */
-    clone_ops(v, w);
+    clone_cnvec_ops(v, w);
 
     /* Create content */
     content->length   = NV_LENGTH_S(w);
@@ -207,123 +200,6 @@ CAMLprim value ml_nvec_wrap_serial(value payload)
 
     CAMLreturn(vnvec);
 }
-
-/** Parallel nvectors * * * * * * * * * * * * * * * * * * * * * * * * * * */
-
-#ifdef SUNDIALSML_WITHMPI
-
-/* Adapted from sundials-2.5.0/src/nvec_par/nvector_parallel.c:
-   N_VCloneEmpty_Parallel */
-static N_Vector clone_parallel(N_Vector w)
-{
-    CAMLparam0();
-    CAMLlocal2(v_payload, w_payload);
-
-    N_Vector v;
-    N_VectorContent_Parallel content;
-
-    if (w == NULL) return(NULL);
-    w_payload = NVEC_BACKLINK(w);
-    struct caml_ba_array *w_ba = Caml_ba_array_val(Field(w_payload, 0));
-
-    /* Create vector (we need not copy the data) */
-    v_payload = caml_alloc_tuple(3);
-    Store_field(v_payload, 0,
-		caml_ba_alloc(w_ba->flags, w_ba->num_dims, NULL, w_ba->dim));
-    Store_field(v_payload, 1, Field(w_payload, 1));
-    Store_field(v_payload, 2, Field(w_payload, 2));
-    
-    v = alloc_cnvec(sizeof(struct _N_VectorContent_Parallel), v_payload);
-    if (v == NULL) caml_raise_out_of_memory();
-    content = (N_VectorContent_Parallel) v->content;
-
-    /* Create vector operation structure */
-    clone_ops(v, w);
-
-    /* Attach lengths and communicator */
-    content->local_length  = NV_LOCLENGTH_P(w);
-    content->global_length = NV_GLOBLENGTH_P(w);
-    content->comm          = NV_COMM_P(w);
-    content->own_data      = 0;
-    content->data          = Caml_ba_data_val(Field(v_payload, 0));
-
-    CAMLreturnT(N_Vector, v);
-}
-
-/* Adapted from sundials-2.5.0/src/nvec_par/nvector_parallel.c:
-   N_VNewEmpty_Parallel */
-CAMLprim value ml_nvec_wrap_parallel(value payload)
-{
-    CAMLparam1(payload);
-    CAMLlocal2(vnvec, vlocalba);
-
-    N_Vector nv;
-    N_Vector_Ops ops;
-    N_VectorContent_Parallel content;
-    MPI_Comm comm;
-    long int n, nsum, local_length, global_length;
-
-    vlocalba      = Field(payload, 0);
-    local_length  = (Caml_ba_array_val(vlocalba))->dim[0];
-    global_length = Long_val(Field(payload, 1));
-    comm          = Comm_val(Field(payload, 2));
-
-    /* Compute global length as sum of local lengths */
-    n = local_length;
-    MPI_Allreduce(&n, &nsum, 1, PVEC_INTEGER_MPI_TYPE, MPI_SUM, comm);
-    if (nsum != global_length)
-        caml_raise_constant(
-	    *caml_named_value("nvector_parallel_IncorrectGlobalSize"));
-
-    /* Create vector */
-    nv = alloc_cnvec(sizeof(struct _N_VectorContent_Parallel), payload);
-    if (nv == NULL) caml_raise_out_of_memory();
-    ops = (N_Vector_Ops) nv->ops;
-    content = (N_VectorContent_Parallel) nv->content;
-
-    /* Create vector operation structure */
-    ops->nvclone           = clone_parallel;		    /* ours */
-    ops->nvcloneempty      = NULL;
-    ops->nvdestroy         = free_cnvec;
-
-    ops->nvspace           = N_VSpace_Parallel;		    /* theirs */
-    ops->nvgetarraypointer = N_VGetArrayPointer_Parallel;
-    ops->nvsetarraypointer = N_VSetArrayPointer_Parallel;
-    ops->nvlinearsum       = N_VLinearSum_Parallel;
-    ops->nvconst           = N_VConst_Parallel;
-    ops->nvprod            = N_VProd_Parallel;
-    ops->nvdiv             = N_VDiv_Parallel;
-    ops->nvscale           = N_VScale_Parallel;
-    ops->nvabs             = N_VAbs_Parallel;
-    ops->nvinv             = N_VInv_Parallel;
-    ops->nvaddconst        = N_VAddConst_Parallel;
-    ops->nvdotprod         = N_VDotProd_Parallel;
-    ops->nvmaxnorm         = N_VMaxNorm_Parallel;
-    ops->nvwrmsnormmask    = N_VWrmsNormMask_Parallel;
-    ops->nvwrmsnorm        = N_VWrmsNorm_Parallel;
-    ops->nvmin             = N_VMin_Parallel;
-    ops->nvwl2norm         = N_VWL2Norm_Parallel;
-    ops->nvl1norm          = N_VL1Norm_Parallel;
-    ops->nvcompare         = N_VCompare_Parallel;
-    ops->nvinvtest         = N_VInvTest_Parallel;
-    ops->nvconstrmask      = N_VConstrMask_Parallel;
-    ops->nvminquotient     = N_VMinQuotient_Parallel;
-
-    /* Attach lengths and communicator */
-    content->local_length  = local_length;
-    content->global_length = global_length;
-    content->comm          = comm;
-    content->own_data      = 0;
-    content->data          = Caml_ba_data_val(vlocalba);
-
-    vnvec = caml_alloc_tuple(2);
-    Store_field(vnvec, 0, payload);
-    Store_field(vnvec, 1, val_cnvec(nv, finalize_cnvec));
-
-    CAMLreturn(vnvec);
-}
-
-#endif
 
 /** Custom nvectors * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
@@ -453,7 +329,7 @@ CAMLprim N_Vector callml_vclone(N_Vector w)
     if (v == NULL) caml_raise_out_of_memory();
 
     /* Create vector operation structure */
-    clone_ops(v, w);
+    clone_cnvec_ops(v, w);
 
     /* Create content */
     v->content = (void *) CNVEC_OP_TABLE(w);

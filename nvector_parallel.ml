@@ -25,3 +25,64 @@ let communicator nv =
   let _, _, comm = Sundials.unvec nv in
   comm
 
+module Ops = struct
+
+  external n_vlinearsum    : float -> t -> float -> t -> t -> unit
+    = "ml_nvec_par_n_vlinearsum"
+
+  external n_vconst        : float -> t -> unit
+    = "ml_nvec_par_n_vconst"
+
+  external n_vprod         : t -> t -> t -> unit
+    = "ml_nvec_par_n_vprod"
+
+  external n_vdiv          : t -> t -> t -> unit
+    = "ml_nvec_par_n_vdiv"
+
+  external n_vscale        : float -> t -> t -> unit
+    = "ml_nvec_par_n_vscale"
+
+  external n_vabs          : t -> t -> unit
+    = "ml_nvec_par_n_vabs"
+
+  external n_vinv          : t -> t -> unit
+    = "ml_nvec_par_n_vinv"
+
+  external n_vaddconst     : t -> float -> t -> unit
+    = "ml_nvec_par_n_vaddconst"
+
+  external n_vdotprod      : t -> t -> float
+    = "ml_nvec_par_n_vdotprod"
+
+  external n_vmaxnorm      : t -> float
+    = "ml_nvec_par_n_vmaxnorm"
+
+  external n_vwrmsnorm     : t -> t -> float
+    = "ml_nvec_par_n_vwrmsnorm"
+
+  external n_vwrmsnormmask : t -> t -> t -> float
+    = "ml_nvec_par_n_vwrmsnormmask"
+
+  external n_vmin          : t -> float
+    = "ml_nvec_par_n_vmin"
+
+  external n_vwl2norm      : t -> t -> float
+    = "ml_nvec_par_n_vwl2norm"
+
+  external n_vl1norm       : t -> float
+    = "ml_nvec_par_n_vl1norm"
+
+  external n_vcompare      : float -> t -> t -> unit
+    = "ml_nvec_par_n_vcompare"
+
+  external n_vinvtest      : t -> t -> bool
+    = "ml_nvec_par_n_vinvtest"
+
+  external n_vconstrmask   : t -> t -> t -> bool
+    = "ml_nvec_par_n_vconstrmask"
+
+  external n_vminquotient  : t -> t -> float
+    = "ml_nvec_par_n_vminquotient"
+
+end
+

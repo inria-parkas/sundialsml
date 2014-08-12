@@ -13,7 +13,8 @@ MLOBJ_LOCAL = cvode_impl.cmo ida_impl.cmo kinsol_impl.cmo
 MLOBJ_WOS = sundials.cmo $(MLOBJ_LOCAL) $(filter-out sundials.cmo,$(MLOBJ_MAIN))
 MLOBJ = $(MLOBJ_WOS) $(MLOBJ_SENS)
 
-COMMON_COBJ= sundials_ml$(XO) dls_ml$(XO) nvector_ml$(XO) spils_ml$(XO)
+COMMON_COBJ= sundials_ml$(XO) dls_ml$(XO) nvector_ml$(XO) spils_ml$(XO) \
+	     nvector_parallel_ml$(XO)
 
 COBJ_WOS = $(COMMON_COBJ) cvode_ml$(XO) ida_ml$(XO) kinsol_ml$(XO)
 COBJ = $(COMMON_COBJ) cvode_ml_s$(XO) cvodes_ml$(XO) \
@@ -77,6 +78,9 @@ dls_ml.o: dls_ml.c dls_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
 
 nvector_ml.o: nvector_ml.c nvector_ml.h
+	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
+
+nvector_parallel_ml.o: nvector_parallel_ml.c nvector_parallel_ml.h nvector_ml.h
 	$(MPICC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
 
 cvode_ml.o: cvode_ml.c dls_ml.h spils_ml.h cvode_ml.h sundials_ml.h
