@@ -30,7 +30,7 @@ type band_jac_fn =
     bandrange ->
     (real_array triple_tmp, real_array) jacobian_arg ->
     Dls.BandMatrix.t -> unit
-type 'a quadrhsfn = float -> 'a -> 'a -> 'a -> unit
+type 'a quadrhsfn = 'a Ida_impl.quadrhsfn (* = float -> 'a -> 'a -> 'a -> unit*)
 type 'a sensresfn =
     float ->
     'a ->
@@ -232,7 +232,7 @@ module Quadrature :
     exception RepeatedQuadRhsFuncErr
     exception UnrecoverableQuadRhsFuncErr
     val fwdsensext : ('a, 'b) session -> ('a, 'b) fsensext
-    type 'a quadrhsfn = float -> 'a -> 'a -> unit
+    type 'a quadrhsfn = float -> 'a -> 'a -> 'a -> unit
     external c_quad_init : ('a, 'k) session -> ('a, 'k) nvector -> unit
       = "c_idas_quad_init"
     val init : ('a, 'b) session -> 'a quadrhsfn -> ('a, 'b) nvector -> unit
@@ -455,35 +455,13 @@ module Adjoint :
     exception NoBackwardProblem
     exception BadFinalTime
     exception BadOutputTime
-    val parent_and_which : ('a, 'b) bsession -> ('a, 'b) session * int
+    type ('a, 'k) bsession = ('a, 'k) Ida_impl.bsession
+    type serial_bsession = (real_array, Nvector_serial.kind) bsession
     type interpolation = IPolynomial | IHermite
-    external c_init : ('a, 'k) session -> int -> interpolation -> unit
-      = "c_idas_adj_init"
     val init : ('a, 'b) session -> int -> interpolation -> unit
     val fwdsensext : ('a, 'b) session -> ('a, 'b) fsensext
-    external c_set_var_types :
-      ('a, 'k) session -> int -> ('a, 'k) nvector -> unit
-      = "c_idas_adj_set_var_types"
     val set_var_types : ('a, 'b) bsession -> ('a, 'b) nvector -> unit
-    external c_set_suppress_alg : ('a, 'k) session -> int -> bool -> unit
-      = "c_idas_adj_set_suppress_alg"
     val set_suppress_alg : ('a, 'b) bsession -> bool -> unit
-    external c_adj_calc_ic :
-      ('a, 'k) session ->
-      int -> float -> ('a, 'k) nvector -> ('a, 'k) nvector -> unit
-      = "c_idas_adj_calc_ic"
-    external c_adj_calc_ic_sens :
-      ('a, 'k) session ->
-      int ->
-      float ->
-      ('a, 'k) nvector ->
-      ('a, 'k) nvector ->
-      ('a, 'k) nvector array -> ('a, 'k) nvector array -> unit
-      = "c_idas_adj_calc_ic_sens_byte" "c_idas_adj_calc_ic_sens"
-    external c_adj_get_consistent_ic :
-      ('a, 'k) session ->
-      int -> ('a, 'k) nvector option -> ('a, 'k) nvector option -> unit
-      = "c_idas_adj_get_consistent_ic"
     val calc_ic :
       ('a, 'b) bsession ->
       ?yb:('a, 'b) nvector ->
@@ -527,8 +505,6 @@ module Adjoint :
       jac_tmp : 't;
     }
     type bandrange = Cvode_impl.bandrange = { mupper : int; mlower : int; }
-    type ('a, 'k) bsession = ('a, 'k) Cvode_impl.bsession
-    type serial_bsession = (real_array, Nvector_serial.kind) bsession
     type ('data, 'kind) linear_solver =
         ('data, 'kind) Cvode_impl.blinear_solver
     type serial_linear_solver =
@@ -546,7 +522,6 @@ module Adjoint :
       ('a, 'k) session -> int -> float -> ('a, 'k) nvector -> unit
       = "c_idas_adj_sv_tolerances"
     val set_tolerances : ('a, 'b) bsession -> ('a, 'b) tolerance -> unit
-    val bwdsensext : ('a, 'b) bsession -> ('a, 'b) bsensext
     val set_linear_solver :
       ('a, 'b) bsession ->
       (('a, 'b) bsession -> 'c -> 'd -> 'e) -> 'c -> 'd -> 'e

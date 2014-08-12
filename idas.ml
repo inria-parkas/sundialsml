@@ -150,7 +150,7 @@ module Quadrature =
       | FwdSensExt se -> se
       | _ -> raise QuadNotInitialized
 
-    type 'a quadrhsfn = float -> 'a -> 'a -> unit
+    type 'a quadrhsfn = 'a Ida_impl.quadrhsfn
 
     external c_quad_init : ('a, 'k) session -> ('a, 'k) nvector -> unit
         = "c_idas_quad_init"
@@ -584,6 +584,9 @@ module Adjoint =
     exception BadFinalTime
     exception BadOutputTime
 
+    type ('a, 'k) bsession = ('a, 'k) Ida_impl.bsession
+    type serial_bsession = (real_array, Nvector_serial.kind) bsession
+
     let _ = List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
       [
         ("ida_AdjointNotInitialized",         AdjointNotInitialized);
@@ -696,9 +699,6 @@ module Adjoint =
       }
 
     type bandrange = Cvode_impl.bandrange = { mupper : int; mlower : int; }
-
-    type ('a, 'k) bsession = ('a, 'k) Cvode_impl.bsession
-    type serial_bsession = (real_array, Nvector_serial.kind) bsession
 
     type ('data, 'kind) linear_solver = ('data, 'kind) Cvode_impl.blinear_solver
 
