@@ -2,7 +2,6 @@ include ../../../../config
 
 MPIRUN = mpirun
 EXAMPLES = cvsAdvDiff_ASAp_non_p.ml
-
 	   #cvsAdvDiff_FSA_non_p.ml	\
 	   #cvsAdvDiff_non_p.ml		\
 	   #cvsAtmDisp_ASAi_kry_bbd_p.ml \
@@ -64,7 +63,7 @@ cvsAdvDiff_ASAp_non_p.byte.out: cvsAdvDiff_ASAp_non_p.byte
 	$(MPIRUN) -np 4 $< > $@
 cvsAdvDiff_ASAp_non_p.opt.out: cvsAdvDiff_ASAp_non_p.opt
 	$(MPIRUN) -np 4 $< > $@
-cvsAdvDiff_ASAp_non_p.sundials.out: $(EXAMPLESROOT)/cvode/parallel/cvsAdvDiff_ASAp_non_p
+cvsAdvDiff_ASAp_non_p.sundials.out: $(EXAMPLESROOT)/cvodes/parallel/cvsAdvDiff_ASAp_non_p
 	$(MPIRUN) -np 4 $< > $@
 
 ##

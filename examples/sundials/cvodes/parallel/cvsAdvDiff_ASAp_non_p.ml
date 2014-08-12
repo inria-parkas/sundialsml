@@ -207,6 +207,7 @@ let print_output data g_val uB =
 (* f routine. Compute f(t,u) for forward phase. *)
 
 let f data t (udata, _, _) (dudata, _, _) =
+
   (* Extract MPI info. from data *)
   let comm      = data.comm in
   let npes      = data.npes in
@@ -227,16 +228,14 @@ let f data t (udata, _, _) (dudata, _, _) =
     let my_length = Array1.dim udata in
 
     (* Pass needed data to processes before and after current process. *)
-    if my_pe <> 0 then
-      Mpi.send_float udata.{0} my_pe_m1 0 comm;
-    if my_pe <> last_pe then
-      Mpi.send_float udata.{my_length-1} my_pe_p1 0 comm;
+    if my_pe <> 0 then Mpi.send_float udata.{0} my_pe_m1 0 comm;
+    if my_pe <> last_pe then Mpi.send_float udata.{my_length-1} my_pe_p1 0 comm;
 
     (* Receive needed data from processes before and after current process. *)
     let uLeft =
       if my_pe <> 0 then Mpi.receive_float my_pe_m1 0 comm else zero in
     let uRight =
-      if my_pe != last_pe then Mpi.receive_float my_pe_m1 0 comm else zero in
+      if my_pe <> last_pe then Mpi.receive_float my_pe_p1 0 comm else zero in
 
     (* Loop over all grid points in current process. *)
     for i=0 to my_length - 1 do
@@ -267,7 +266,7 @@ let fB data t (udata, _, _) (uBdata, _, _) (duBdata, _, _) =
     (* Loop over all other processes and load right hand side of quadrature eqs. *)
     duBdata.{0} <- zero;
     duBdata.{1} <- zero;
-    for i=0 to npes -1 do
+    for i=0 to npes - 1 do
       let intgr1 = Mpi.receive_float i 0 comm in
       duBdata.{0} <- duBdata.{0} +. intgr1;
       let intgr2 = Mpi.receive_float i 0 comm in
@@ -285,16 +284,17 @@ let fB data t (udata, _, _) (uBdata, _, _) (duBdata, _, _) =
 
     (* Compute related parameters. *)
     let my_pe_m1 = my_pe - 1 in
+    let my_pe_p1 = my_pe + 1 in
     let last_pe  = npes - 1 in
 
     (* Pass needed data to processes before and after current process. *)
     if my_pe <> 0 then begin
-      let data_out = [| udata.{0}; uBdata.{0} |] in
+      let data_out = RealArray.of_list [ udata.{0}; uBdata.{0} ] in
       Mpi.send data_out my_pe_m1 0 comm
     end;
     if my_pe <> last_pe then begin
-      let data_out = [| udata.{my_length-1}; uBdata.{my_length-1} |] in
-      Mpi.send data_out my_pe_m1 0 comm
+      let data_out = RealArray.of_list [ udata.{my_length-1}; uBdata.{my_length-1} ] in
+      Mpi.send data_out my_pe_p1 0 comm
     end;
     
     (* Receive needed data from processes before and after current process. *)
@@ -307,7 +307,7 @@ let fB data t (udata, _, _) (uBdata, _, _) (duBdata, _, _) =
 
     let uRight, uBRight =
       if my_pe <> last_pe then
-        let data_in = (Mpi.receive my_pe_m1 0 comm : RealArray.t) in
+        let data_in = (Mpi.receive my_pe_p1 0 comm : RealArray.t) in
         data_in.{0}, data_in.{1}
       else zero, zero
     in
@@ -340,8 +340,8 @@ let fB data t (udata, _, _) (uBdata, _, _) (duBdata, _, _) =
     let intgr2 = xintgr' z2 my_length dx in
 
     (* Send local integrals to 'quadrature' process *)
-    Mpi.send intgr1 npes 0 comm;
-    Mpi.send intgr2 npes 0 comm
+    Mpi.send_float intgr1 npes 0 comm;
+    Mpi.send_float intgr2 npes 0 comm
   end
 
 (*
