@@ -1,7 +1,7 @@
 include ../config
 
 DIRS=cvode cvodes ida idas kinsol
-SUBDIRS=serial $(if MPI_ENABLED, parallel)
+SUBDIRS=serial $(if $(MPI_ENABLED), parallel)
 
 .PHONY: default tests.byte.log tests.opt.log
 
