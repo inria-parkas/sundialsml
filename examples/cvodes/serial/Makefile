@@ -25,7 +25,6 @@ genlog = \
      done;                               	\
      echo "Summary (each should be 0):"; 	\
      for f in $(1); do  			\
-	wc -l $$f;                       	\
 	(cd ../..; wc -l cvodes/serial/$$f);	\
      done;                               	\
     ) > $(2)
