@@ -123,7 +123,7 @@ doc: doc/html/index.html
 doc/html/index.html: doc/html dochtml.cmo intro.doc \
 		     $(MLOBJ_MAIN:.cmo=.mli) $(MLOBJ_MAIN:.cmo=.cmi)  \
 		     $(MLOBJ_SENS:.cmo=.mli) $(MLOBJ_SENS:.cmo=.cmi) 
-	$(OCAMLDOC) -g dochtml.cmo \
+	$(OCAMLDOC) -g dochtml.cmo $(INCLUDES) \
 	    -cvode-doc-root "$(CVODE_DOC_ROOT)" 	\
 	    -cvodes-doc-root "$(CVODES_DOC_ROOT)" 	\
 	    -ida-doc-root "$(IDA_DOC_ROOT)" 		\
