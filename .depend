@@ -6,14 +6,15 @@ cvodes_bbd.cmi : spils.cmi nvector_parallel.cmi cvodes.cmi cvode_impl.cmo \
     cvode_bbd.cmi
 dls.cmi : sundials.cmi
 ida.cmi : sundials.cmi spils.cmi nvector_serial.cmi ida_impl.cmo dls.cmi
+ida_bbd.cmi : nvector_parallel.cmi ida.cmi
 idas.cmi : sundials.cmi spils.cmi nvector_serial.cmi ida_impl.cmo ida.cmi \
-    dls.cmi cvode_impl.cmo
+    dls.cmi
+idas_bbd.cmi : nvector_parallel.cmi idas.cmi ida_impl.cmo ida_bbd.cmi
 kinsol.cmi : sundials.cmi nvector_serial.cmi kinsol_impl.cmo dls.cmi
 kinsol_bbd.cmi : nvector_parallel.cmi kinsol_impl.cmo kinsol.cmi
 nvector_array.cmi : nvector_custom.cmi
 nvector_custom.cmi : sundials.cmi
-nvector_parallel.cmi : sundials.cmi \
-    /home/tbourke/.opam/system/lib/mpi/mpi.cmi
+nvector_parallel.cmi : sundials.cmi /home/jun/.opam/system/lib/mpi/mpi.cmi
 nvector_serial.cmi : sundials.cmi
 spils.cmi : sundials.cmi
 sundials.cmi :
@@ -41,12 +42,20 @@ dochtml.cmo :
 dochtml.cmx :
 ida.cmo : sundials.cmi spils.cmi nvector_serial.cmi ida_impl.cmo ida.cmi
 ida.cmx : sundials.cmx spils.cmx nvector_serial.cmx ida_impl.cmx ida.cmi
+ida_bbd.cmo : sundials.cmi nvector_parallel.cmi ida_impl.cmo ida.cmi \
+    ida_bbd.cmi
+ida_bbd.cmx : sundials.cmx nvector_parallel.cmx ida_impl.cmx ida.cmx \
+    ida_bbd.cmi
 ida_impl.cmo : sundials.cmi dls.cmi
 ida_impl.cmx : sundials.cmx dls.cmx
 idas.cmo : sundials.cmi spils.cmi nvector_serial.cmi ida_impl.cmo ida.cmi \
-    dls.cmi cvode_impl.cmo idas.cmi
+    dls.cmi idas.cmi
 idas.cmx : sundials.cmx spils.cmx nvector_serial.cmx ida_impl.cmx ida.cmx \
-    dls.cmx cvode_impl.cmx idas.cmi
+    dls.cmx idas.cmi
+idas_bbd.cmo : sundials.cmi nvector_parallel.cmi idas.cmi ida_impl.cmo \
+    ida_bbd.cmi idas_bbd.cmi
+idas_bbd.cmx : sundials.cmx nvector_parallel.cmx idas.cmx ida_impl.cmx \
+    ida_bbd.cmx idas_bbd.cmi
 kinsol.cmo : sundials.cmi nvector_serial.cmi kinsol_impl.cmo dls.cmi \
     kinsol.cmi
 kinsol.cmx : sundials.cmx nvector_serial.cmx kinsol_impl.cmx dls.cmx \
@@ -61,25 +70,34 @@ nvector_array.cmo : sundials.cmi nvector_custom.cmi nvector_array.cmi
 nvector_array.cmx : sundials.cmx nvector_custom.cmx nvector_array.cmi
 nvector_custom.cmo : sundials.cmi nvector_custom.cmi
 nvector_custom.cmx : sundials.cmx nvector_custom.cmi
-nvector_parallel.cmo : sundials.cmi \
-    /home/tbourke/.opam/system/lib/mpi/mpi.cmi nvector_parallel.cmi
-nvector_parallel.cmx : sundials.cmx \
-    /home/tbourke/.opam/system/lib/mpi/mpi.cmi nvector_parallel.cmi
+nvector_parallel.cmo : sundials.cmi /home/jun/.opam/system/lib/mpi/mpi.cmi \
+    nvector_parallel.cmi
+nvector_parallel.cmx : sundials.cmx /home/jun/.opam/system/lib/mpi/mpi.cmi \
+    nvector_parallel.cmi
 nvector_serial.cmo : sundials.cmi nvector_serial.cmi
 nvector_serial.cmx : sundials.cmx nvector_serial.cmi
 spils.cmo : sundials.cmi spils.cmi
 spils.cmx : sundials.cmx spils.cmi
 sundials.cmo : sundials.cmi
 sundials.cmx : sundials.cmi
+cvode_bbd_ml.o: cvode_bbd_ml.c sundials_ml.h config.h cvode_ml.h \
+ nvector_ml.h
 cvode_ml.o: cvode_ml.c dls_ml.h spils_ml.h sundials_ml.h config.h \
  cvode_ml.h nvector_ml.h
+cvodes_bbd_ml.o: cvodes_bbd_ml.c dls_ml.h spils_ml.h sundials_ml.h \
+ config.h cvode_ml.h cvodes_ml.h nvector_ml.h
 cvodes_ml.o: cvodes_ml.c dls_ml.h spils_ml.h sundials_ml.h config.h \
  cvode_ml.h cvodes_ml.h nvector_ml.h
 dls_ml.o: dls_ml.c sundials_ml.h config.h dls_ml.h
+ida_bbd_ml.o: ida_bbd_ml.c sundials_ml.h config.h ida_ml.h nvector_ml.h
 ida_ml.o: ida_ml.c spils_ml.h ida_ml.h sundials_ml.h config.h \
  nvector_ml.h dls_ml.h
+idas_bbd_ml.o: idas_bbd_ml.c dls_ml.h spils_ml.h sundials_ml.h config.h \
+ ida_ml.h idas_ml.h nvector_ml.h
 idas_ml.o: idas_ml.c spils_ml.h ida_ml.h sundials_ml.h config.h idas_ml.h \
  nvector_ml.h dls_ml.h
+kinsol_bbd_ml.o: kinsol_bbd_ml.c dls_ml.h spils_ml.h kinsol_ml.h \
+ sundials_ml.h config.h nvector_ml.h
 kinsol_ml.o: kinsol_ml.c dls_ml.h spils_ml.h kinsol_ml.h sundials_ml.h \
  config.h nvector_ml.h
 nvector_ml.o: nvector_ml.c nvector_ml.h

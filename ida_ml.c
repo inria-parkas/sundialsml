@@ -74,16 +74,6 @@
 
 #endif
 
-#define IDATYPE(fname) c_ida_ ## fname
-#define DOQUOTE(text) #text
-#define QUOTE(val) DOQUOTE(val)
-#define IDATYPESTR(fname) QUOTE(IDATYPE(fname))
-
-#define CAML_FN(name)					\
-    static value *name;					\
-    if (name == NULL)					\
-	name = caml_named_value (IDATYPESTR (name)) /* no semicolon */
-
 static void errh(
 	int error_code,
 	const char *module,

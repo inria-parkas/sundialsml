@@ -154,4 +154,16 @@ enum ida_bandrange_index {
   RECORD_IDA_BANDRANGE_SIZE
 };
 
+
+#define IDATYPE(fname) c_ida_ ## fname
+#define DOQUOTE(text) #text
+#define QUOTE(val) DOQUOTE(val)
+#define IDATYPESTR(fname) QUOTE(IDATYPE(fname))
+
+#define CAML_FN(name)					\
+    static value *name;					\
+    if (name == NULL)					\
+	name = caml_named_value (IDATYPESTR (name)) /* no semicolon */
+
+
 #endif /* _IDA_ML_H__ */

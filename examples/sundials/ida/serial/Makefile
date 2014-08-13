@@ -1,5 +1,11 @@
 include ../../../../config
 
+# Invoke `make' with USELIB=sundials to run the tests with the
+# sensitivity-agnostic subset of IDAS.  Note that memory usage
+# statistics will differ from the versions in sundials/C, unless those
+# are recompiled to link against IDAS.
+USELIB ?= sundials_nosensi
+
 EXAMPLES = idaRoberts_dns.ml  \
 	   idaHeat2D_bnd.ml   \
 	   idaHeat2D_kry.ml   \
@@ -104,12 +110,12 @@ cleanall: clean
 .ml.byte:
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
 	    $(INCLUDES) -I ../../../../ -dllpath ../../../../ bigarray.cma unix.cma \
-	    sundials.cma $<
+	    $(USELIB).cma $<
 
 .ml.opt:
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
 	    $(INCLUDES) -I ../../../../ bigarray.cmxa unix.cmxa \
-	    sundials.cmxa $<
+	    $(USELIB).cmxa $<
 
 %.byte.out: %.byte
 	./$< > $@

@@ -148,4 +148,21 @@ enum cvodes_adj_solve_arg_index {
     RECORD_CVODES_ADJ_SPILS_SOLVE_ARG_SIZE
 };
 
+
+/* Callbacks */
+#undef CVTYPE
+#undef DOQUOTE
+#undef QUOTE
+#undef CVTYPESTR
+#undef CAML_FN
+#define CVTYPE(fname) c_cvodes_ ## fname
+#define DOQUOTE(text) #text
+#define QUOTE(val) DOQUOTE(val)
+#define CVTYPESTR(fname) QUOTE(CVTYPE(fname))
+
+#define CAML_FN(name)					\
+    static value *name;					\
+    if (name == NULL)					\
+	name = caml_named_value (CVTYPESTR (name));
+
 #endif

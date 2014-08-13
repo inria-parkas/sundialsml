@@ -1,5 +1,11 @@
 include ../../../../config
 
+# Invoke `make' with USELIB=sundials to run the tests with the
+# sensitivity-agnostic subset of CVODES.  Note that memory usage
+# statistics will differ from the versions in sundials/C, unless those
+# are recompiled to link against CVODES.
+USELIB ?= sundials_nosensi
+
 EXAMPLES = cvAdvDiff_bnd.ml \
 	   cvRoberts_dns.ml \
 	   cvRoberts_dns_uw.ml \
@@ -139,12 +145,12 @@ cleanall: clean
 .ml.byte:
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
 	    $(INCLUDES) -I ../../../../ -dllpath ../../../../ bigarray.cma unix.cma \
-	    sundials_wos.cma $<
+	    $(USELIB).cma $<
 
 .ml.opt:
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
 	    $(INCLUDES) -I ../../../../ bigarray.cmxa unix.cmxa \
-	    sundials_wos.cmxa $<
+	    $(USELIB).cmxa $<
 
 %.byte.out: %.byte
 	./$< > $@

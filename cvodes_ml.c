@@ -98,18 +98,6 @@ static void free_nvector_array(N_Vector *nvarr)
     free(nvarr);
 }
 
-/* Callbacks */
-
-#define CVTYPE(fname) c_cvodes_ ## fname
-#define DOQUOTE(text) #text
-#define QUOTE(val) DOQUOTE(val)
-#define CVTYPESTR(fname) QUOTE(CVTYPE(fname))
-
-#define CAML_FN(name)					\
-    static value *name;					\
-    if (name == NULL)					\
-	name = caml_named_value (CVTYPESTR (name));
-
 static int check_exception(value session, value r)
 {
     CAMLparam2(session, r);
@@ -125,6 +113,8 @@ static int check_exception(value session, value r)
     Store_field (session, RECORD_CVODE_SESSION_EXN_TEMP, exn);
     CAMLreturnT (int, -1);
 }
+
+/* Callbacks */
 
 static int quadrhsfn(realtype t, N_Vector y, N_Vector yQdot, void *user_data)
 {

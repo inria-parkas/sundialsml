@@ -91,16 +91,6 @@
 
 /* callbacks */
 
-#define CVTYPE(fname) c_cvode_ ## fname
-#define DOQUOTE(text) #text
-#define QUOTE(val) DOQUOTE(val)
-#define CVTYPESTR(fname) QUOTE(CVTYPE(fname))
-
-#define CAML_FN(name)					\
-    static value *name;					\
-    if (name == NULL)					\
-	name = caml_named_value (CVTYPESTR (name)) /* no semicolon */
-
 static void errh(
 	int error_code,
 	const char *module,
@@ -434,48 +424,6 @@ static int jactimesfn(
 
     CAMLreturnT(int, retcode);
 }
-
-#ifdef SUNDIALSML_WITHMPI
-static int bbdlocal(long int nlocal, realtype t, N_Vector y, N_Vector glocal,
-		    void *user_data)
-{
-    CAMLparam0();
-    CAMLlocalN(args, 4);
-    int r;
-    value *backref = user_data;
-    CAML_FN (call_bbdlocal);
-
-    args[0] = *backref;
-    args[1] = caml_copy_double(t);
-    args[2] = NVEC_BACKLINK(y);
-    args[3] = NVEC_BACKLINK(glocal);
-
-    r = Int_val (caml_callbackN(*call_bbdlocal,
-                                sizeof (args) / sizeof (*args),
-                                args));
-
-    CAMLreturnT(int, r);
-}
-
-static int bbdcomm(long int nlocal, realtype t, N_Vector y, void *user_data)
-{
-    CAMLparam0();
-    CAMLlocalN(args, 3);
-    int r;
-    value *backref = user_data;
-    CAML_FN (call_bbdcomm);
-
-    args[0] = *backref;
-    args[1] = caml_copy_double(t);
-    args[2] = NVEC_BACKLINK(y);
-
-    r = Int_val (caml_callbackN(*call_bbdcomm,
-                                sizeof (args) / sizeof (*args),
-                                args));
-
-    CAMLreturnT(int, r);
-}
-#endif
 
 static int linit(CVodeMem cv_mem)
 {

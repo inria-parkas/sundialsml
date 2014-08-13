@@ -160,4 +160,18 @@ enum idas_adj_solve_arg_index {
     RECORD_IDAS_ADJ_SPILS_SOLVE_ARG_SIZE
 };
 
+#undef IDATYPE
+#undef DOQUOTE
+#undef QUOTE
+#undef IDATYPESTR
+#define IDATYPE(fname) c_ida_ ## fname
+#define DOQUOTE(text) #text
+#define QUOTE(val) DOQUOTE(val)
+#define IDATYPESTR(fname) QUOTE(IDATYPE(fname))
+
+#define CAML_FN(name)					\
+    static value *name;					\
+    if (name == NULL)					\
+	name = caml_named_value (IDATYPESTR (name)) /* no semicolon */
+
 #endif

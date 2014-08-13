@@ -13,8 +13,8 @@ CFLAGS += @cflags@ -Wall
 LDFLAGS += @ldflags@
 CPPFLAGS ?= -P -x c -traditional-cpp
 
-MPI_FLAGS = $(if @ocamlmpi_enabled@, -DSUNDIALSML_WITHMPI)
 MPICC = @mpicc@ $(MPI_FLAGS)
+MPI_ENABLED=@ocamlmpi_enabled@
 
 CVODE_LDFLAGS = @cvode_ldflags@ $(LDFLAGS)
 CVODE_CFLAGS = @cvode_cppflags@ $(MPI_FLAGS) $(CFLAGS)
@@ -35,15 +35,13 @@ OCAML_CVODES_LIBLINK = $(CVODES_LDFLAGS)
 OCAML_IDA_LIBLINK = $(IDA_LDFLAGS)
 OCAML_IDAS_LIBLINK = $(IDAS_LDFLAGS)
 OCAML_KINSOL_LIBLINK = $(KINSOL_LDFLAGS)
+OCAML_MPI_LIBLINK = -lsundials_nvecparallel
 OCAML_3X = @ocaml_3x@
 
 OCAML ?= @OCAMLBIN@ocaml
 
 OCAMLMPI ?= @ocamlmpi_path@
-MPI_MODULES = $(if @ocamlmpi_enabled@, nvector_parallel.cmo \
-				cvode_bbd.cmo cvodes_bbd.cmo kinsol_bbd.cmo)
-MPI_COBJ = $(if @ocamlmpi_enabled@, nvector_parallel_ml$(XO))
-NVECTOR_LIB = $(if @ocamlmpi_enabled@, -lsundials_nvecparallel)
+MPI_ENABLED=@ocamlmpi_enabled@
 
 CAMLP4OF= @OCAMLBIN@camlp4of
 CAMLP4ORF= @OCAMLBIN@camlp4orf

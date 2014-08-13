@@ -1,116 +1,147 @@
 include config
 
-MLOBJ_MAIN = sundials.cmo dls.cmo \
-	     nvector_serial.cmo nvector_custom.cmo nvector_array.cmo \
-	     $(MPI_MODULES) \
-	     spils.cmo cvode.cmo kinsol.cmo \
-	     ida.cmo
+### Objects shared between sundials.cma and sundials_nosensi.cma.
 
+# Common to CVODE, IDA, and KINSOL.
+COBJ_COMMON = sundials_ml$(XO) dls_ml$(XO) nvector_ml$(XO) spils_ml$(XO)
+
+COBJ_MAIN = $(COBJ_COMMON) kinsol_ml$(XO)
+
+MLOBJ_MAIN = sundials.cmo dls.cmo spils.cmo				\
+	     nvector_serial.cmo nvector_custom.cmo nvector_array.cmo	\
+	     cvode_impl.cmo ida_impl.cmo kinsol_impl.cmo		\
+	     cvode.cmo kinsol.cmo ida.cmo
+
+### Objects specific to sundials.cma.
+COBJ_SENS  = cvode_ml_s$(XO) ida_ml_s$(XO) cvodes_ml.o idas_ml.o
 MLOBJ_SENS = cvodes.cmo idas.cmo
 
-MLOBJ_LOCAL = cvode_impl.cmo ida_impl.cmo kinsol_impl.cmo
+### Objects specific to sundials_nosensi.cma.
+COBJ_NOSENSI = cvode_ml$(XO) ida_ml$(XO)
+MLBJ_NOSENSI = 
 
-MLOBJ_WOS = sundials.cmo $(MLOBJ_LOCAL) $(filter-out sundials.cmo,$(MLOBJ_MAIN))
-MLOBJ = $(MLOBJ_WOS) $(MLOBJ_SENS)
+### Objects specific to sundials_mpi.cma.
+COBJ_MPI = nvector_parallel_ml.o kinsol_bbd_ml.o		\
+	   cvode_bbd_ml.o cvodes_bbd_ml.o			\
+	   cvode_bbd_ml.o cvodes_bbd_ml.o kinsol_bbd_ml.o
+MLOBJ_MPI = nvector_parallel.cmo kinsol_bbd.cmo	\
+	    cvode_bbd.cmo cvodes_bbd.cmo	\
+	    ida_bbd.cmo idas_bbd.cmo
 
-COMMON_COBJ= sundials_ml$(XO) dls_ml$(XO) nvector_ml$(XO) spils_ml$(XO) \
-	     $(MPI_COBJ)
+MPI_LIBLINK= -lsundials_nvecparallel
 
-COBJ_WOS = $(COMMON_COBJ) cvode_ml$(XO) ida_ml$(XO) kinsol_ml$(XO)
-COBJ = $(COMMON_COBJ) cvode_ml_s$(XO) cvodes_ml$(XO) \
-	ida_ml_s$(XO) idas_ml$(XO) kinsol_ml$(XO)
+### Other sets of files.
 
-ALL_COBJ= $(COBJ) cvode_ml$(XO) ida_ml$(XO)
+# For `make clean'.  All object files, including ones that may not be
+# built/updated under the current configuration.  Duplicates OK.
+ALL_COBJ = $(COBJ_MAIN) $(COBJ_SENS) $(COBJ_NOSENSI) $(COBJ_MPI)
+ALL_MLOBJ = $(MLOBJ_MAIN) $(MLOBJ_SENS) $(MLOBJ_NOSENSI)
+ALL_CMA = sundials.cma sundials_nosensi.cma sundials_mpi.cma
+
+# Installed files.
+
+INSTALL_CMA=sundials.cma sundials_nosensi.cma \
+	    $(if $(MPI_ENABLED), sundials_mpi.cma)
+
+STUBLIBS=$(foreach file,$(INSTALL_CMA:.cma=$(XS)), dllml$(file))
 
 INSTALL_FILES=			\
     META			\
     $(MLOBJ_MAIN:.cmo=.cmi)	\
     $(MLOBJ_SENS:.cmo=.cmi)	\
-    libmlsundials$(XA)		\
-    sundials$(XA)		\
-    sundials.cma		\
-    sundials.cmxa		\
-    libmlsundials_wos$(XA)	\
-    sundials_wos$(XA)		\
-    sundials_wos.cma		\
-    sundials_wos.cmxa
+    $(MLOBJ_NOSENSI:.cmo=.cmi)	\
+    $(MLOBJ_MPI:.cmo=.cmi)	\
+    $(INSTALL_CMA)		\
+    $(INSTALL_CMA:.cma=.cmxa)	\
+    $(INSTALL_CMA:.cma=$(XA))	\
+    $(foreach file,$(INSTALL_CMA:.cma=$(XA)), libml$(file))
 
-STUBLIBS=dllmlsundials$(XS)
-
+# FIXME: remove.
 CFLAGS+=-fPIC
 
-# ##
+### Build rules.
 
-.PHONY: all sundials install doc
+.PHONY: all sundials install doc clean cleanall
 
-all: sundials.cma sundials.cmxa sundials_wos.cma sundials_wos.cmxa
+all: $(INSTALL_CMA) $(INSTALL_CMA:.cma=.cmxa)
 
-# TODO: fix this:
-sundials.cma sundials.cmxa: $(MLOBJ) $(MLOBJ:.cmo=.cmx) $(COBJ)
+sundials.cma sundials.cmxa: $(MLOBJ_MAIN) $(MLOBJ_SENS)			    \
+			    $(MLOBJ_MAIN:.cmo=.cmx) $(MLOBJ_SENS:.cmo=.cmx) \
+			    $(COBJ_MAIN) $(COBJ_SENS)
 	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS)	\
 	    -o sundials -oc mlsundials $^	\
 	    $(OCAML_CVODES_LIBLINK)		\
 	    $(OCAML_IDAS_LIBLINK)		\
-	    $(OCAML_KINSOL_LIBLINK)		\
-	    $(NVECTOR_LIB)
+	    $(OCAML_KINSOL_LIBLINK)
 
-# wos = without sensitivity
-# TODO: fix this:
-sundials_wos.cma sundials_wos.cmxa: $(MLOBJ_WOS) $(MLOBJ_WOS:.cmo=.cmx) \
-				    $(COBJ_WOS)
+sundials_nosensi.cma sundials_nosensi.cmxa:				  \
+			$(MLOBJ_MAIN) $(MLOBJ_NOSENSI)			  \
+			$(MLOBJ_MAIN:.cmo=.cmx) $(MLOBJ_NOSENSI:.cmo=.cmx) \
+			$(COBJ_MAIN) $(COBJ_NOSENSI)
 	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS)	  \
-	    -o sundials_wos -oc mlsundials_wos $^ \
+	    -o sundials_nosensi -oc mlsundials_nosensi $^ \
 	    $(OCAML_CVODE_LIBLINK)		  \
 	    $(OCAML_IDA_LIBLINK)		  \
-	    $(OCAML_KINSOL_LIBLINK)		  \
-	    $(NVECTOR_LIB)
+	    $(OCAML_KINSOL_LIBLINK)
 
-# There are three sets of flags:
-#   - one for CVODE-specific files
-#   - one for IDA-specific files
-#   - one for files common to CVODE and IDA
+sundials_mpi.cma sundials_mpi.cmxa: $(MLOBJ_MPI) $(MLOBJ_MPI:.cmo=.cmx) \
+				    $(COBJ_MPI)
+	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS)	\
+	    -o sundials_mpi -oc mlsundials_mpi $^	\
+	    $(OCAML_CVODE_LIBLINK)			\
+	    $(OCAML_IDA_LIBLINK)			\
+	    $(OCAML_KINSOL_LIBLINK)			\
+	    $(MPI_LIBLINK)
 
 # The CFLAGS settings for CVODE works for modules common to CVODE and IDA.
-sundials_ml.o: sundials_ml.c sundials_ml.h
+$(COBJ_COMMON): %.o: %.c
 	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
 
-dls_ml.o: dls_ml.c dls_ml.h
-	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
-
-nvector_ml.o: nvector_ml.c nvector_ml.h
-	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
-
-nvector_parallel_ml.o: nvector_parallel_ml.c nvector_parallel_ml.h nvector_ml.h
+nvector_parallel_ml.o: nvector_parallel_ml.c
 	$(MPICC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
 
-cvode_ml.o: cvode_ml.c dls_ml.h spils_ml.h cvode_ml.h sundials_ml.h
+# KINSOL-specific C files.
+kinsol_ml.o: kinsol_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(KINSOL_CFLAGS) -o $@ -c $<
+
+kinsol_bbd_ml.o: kinsol_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(KINSOL_CFLAGS) -o $@ -c $<
+
+# CVODE[S]-specific C files.
+cvode_ml.o: cvode_ml.c
 	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
 
-cvode_ml_s.o: cvode_ml.c dls_ml.h spils_ml.h cvode_ml.h sundials_ml.h
+cvode_ml_s.o: cvode_ml.c
 	$(CC) -DSUNDIALSML_WITHSENS -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) \
 	    -o $@ -c $<
 
-cvodes_ml.o: cvodes_ml.c dls_ml.h spils_ml.h \
-	     cvode_ml.h cvodes_ml.h sundials_ml.h
+cvodes_ml.o: cvodes_ml.c
 	$(CC) -I $(OCAML_INCLUDE) $(CVODES_CFLAGS) -o $@ -c $<
 
-ida_ml.o: ida_ml.c dls_ml.h spils_ml.h ida_ml.h
+cvode_bbd_ml.o: cvode_bbd_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
+
+cvodes_bbd_ml.o: cvodes_bbd_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(CVODES_CFLAGS) -o $@ -c $<
+
+# IDA[S]-specific C files.
+ida_ml.o: ida_ml.c
 	$(CC) -I $(OCAML_INCLUDE) $(IDA_CFLAGS) -o $@ -c $<
 
-ida_ml_s.o: ida_ml.c dls_ml.h spils_ml.h ida_ml.h
+ida_ml_s.o: ida_ml.c
 	$(CC) -DSUNDIALSML_WITHSENS -I $(OCAML_INCLUDE) $(IDA_CFLAGS) \
 	    -o $@ -c $<
 
-idas_ml.o: idas_ml.c dls_ml.h spils_ml.h \
-	     ida_ml.h idas_ml.h sundials_ml.h
+idas_ml.o: idas_ml.c
 	$(CC) -I $(OCAML_INCLUDE) $(IDAS_CFLAGS) -o $@ -c $<
 
-kinsol_ml.o: kinsol_ml.c dls_ml.h spils_ml.h kinsol_ml.h
-	$(CC) -I $(OCAML_INCLUDE) $(KINSOL_CFLAGS) -o $@ -c $<
+ida_bbd_ml.o: ida_bbd_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(IDA_CFLAGS) -o $@ -c $<
 
-spils_ml.o: spils_ml.c sundials_ml.h spils_ml.h
-	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
+idas_bbd_ml.o: idas_bbd_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(IDAS_CFLAGS) -o $@ -c $<
 
+# Docs.
 dochtml.cmo: INCLUDES += -I +ocamldoc
 dochtml.cmo: OCAMLFLAGS += -pp "cpp $(CPPFLAGS) -DOCAML_3X=$(OCAML_3X)"
 
@@ -139,9 +170,9 @@ doc/html/index.html: doc/html dochtml.cmo intro.doc \
 doc/html:
 	mkdir $@
 
-# ##
+### Install / Uninstall
 
-install: sundials.cma sundials.cmxa sundials_wos.cma sundials_wos.cmxa doc META
+install: $(INSTALL_CMA) $(INSTALL_CMA:.cma=.cmxa) doc META
 	$(MKDIR) $(PKGDIR)
 	$(CP) $(INSTALL_FILES) $(PKGDIR)
 	$(CP) $(STUBLIBS) $(STUBDIR)
@@ -164,10 +195,10 @@ ifeq ($(INSTALL_DOCS), 1)
 	-$(RMDIR) $(DOCDIR)
 endif
 
-ocamlfind: sundials.cma sundials.cmxa META
+ocamlfind: $(INSTALL_CMA) $(INSTALL_CMA:.cma=.cmxa) META
 	ocamlfind install sundials $(INSTALL_FILES) $(STUBLIBS)
 
-# ##
+### Misc
 
 depend: .depend
 .depend:
@@ -177,11 +208,13 @@ depend: .depend
 	$(CC) -MM $(CFLAGS) *.c >> .depend
 
 clean:
-	-@(cd examples; make -f Makefile clean)
-	-@$(RM) -f $(MLOBJ) $(MLOBJ:.cmo=.cmx) $(MLOBJ:.cmo=.o)
-	-@$(RM) -f $(ALL_COBJ) $(MLOBJ:.cmo=.annot)
-	-@$(RM) -f $(MLOBJ:.cmo=.cma) $(MLOBJ:.cmo=.cmxa)
-	-@$(RM) -f sundials$(XA) sundials_wos$(XA)
+	-@($(MAKE) -C examples clean)
+	-@$(RM) -f $(ALL_MLOBJ) $(ALL_MLOBJ:.cmo=.cmx) $(ALL_MLOBJ:.cmo=.o)
+	-@$(RM) -f $(ALL_MLOBJ:.cmo=.cmi) $(ALL_MLOBJ:.cmo=.annot) $(ALL_COBJ)
+	-@$(RM) -f $(ALL_CMA) $(ALL_CMA:.cma=.cmxa)
+	-@$(RM) -f $(foreach file,$(INSTALL_CMA:.cma=$(XA)),libml$(file))
+	-@$(RM) -f $(foreach file,$(INSTALL_CMA:.cma=$(XS)),dllml$(file))
+	-@$(RM) -f $(STUBLIBS)
 	-@$(RM) -f dochtml.cmi dochtml.cmo
 
 cleandoc:
@@ -189,13 +222,7 @@ cleandoc:
 
 realclean: cleanall
 cleanall: clean cleandoc
-	-@(cd examples; make -f Makefile cleanall)
-	-@$(RM) -f $(MLOBJ:.cmo=.cmi)
-	-@$(RM) -f $(MLOBJ:.cmo=.annot)
-	-@$(RM) -f sundials.cma sundials.cmxa
-	-@$(RM) -f sundials_wos.cma sundials_wos.cmxa
-	-@$(RM) -f libmlsundials$(XA) dllmlsundials$(XS)
-	-@$(RM) -f libmlsundials_wos$(XA) dllmlsundials_wos$(XS)
+	-@($(MAKE) -C examples cleanall)
 	-@$(RM) -f META
 	-@$(RM) -f config config.h
 

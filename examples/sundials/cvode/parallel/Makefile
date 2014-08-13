@@ -1,5 +1,11 @@
 include ../../../../config
 
+# Invoke `make' with USELIB=sundials to run the tests with the
+# sensitivity-agnostic subset of CVODES.  Note that memory usage
+# statistics will differ from the versions in sundials/C, unless those
+# are recompiled to link against CVODES.
+USELIB ?= sundials_nosensi
+
 MPIRUN = mpirun
 EXAMPLES = cvDiurnal_kry_p.ml \
 	   cvDiurnal_kry_bbd_p.ml \
@@ -70,7 +76,7 @@ cvDiurnal_kry_bbd_p.byte.out: cvDiurnal_kry_bbd_p.byte
 cvDiurnal_kry_bbd_p.opt.out: cvDiurnal_kry_bbd_p.opt
 	$(MPIRUN) -np 4 $< > $@
 cvDiurnal_kry_bbd_p.sundials.out: \
-    			$(EXAMPLESROOT)/cvode/parallel/cvDiurnal_kry_bbd_p
+			$(EXAMPLESROOT)/cvode/parallel/cvDiurnal_kry_bbd_p
 	$(MPIRUN) -np 4 $< > $@
 
 cvAdvDiff_non_p.byte: cvAdvDiff_non_p.ml
@@ -80,7 +86,7 @@ cvAdvDiff_non_p.byte.out: cvAdvDiff_non_p.byte
 cvAdvDiff_non_p.opt.out: cvAdvDiff_non_p.opt
 	$(MPIRUN) -np 6 $< > $@
 cvAdvDiff_non_p.sundials.out: \
-    			$(EXAMPLESROOT)/cvode/parallel/cvAdvDiff_non_p
+			$(EXAMPLESROOT)/cvode/parallel/cvAdvDiff_non_p
 	$(MPIRUN) -np 6 $< > $@
 
 ##
@@ -109,12 +115,12 @@ cleanall: clean
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
 	    $(INCLUDES) -I ../../../../ -dllpath ../../../../ \
 	    bigarray.cma unix.cma mpi.cma \
-	    sundials_wos.cma $<
+	    $(USELIB).cma sundials_mpi.cma $<
 
 .ml.opt:
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
 	    $(INCLUDES) -I ../../../../ bigarray.cmxa unix.cmxa mpi.cmxa \
-	    sundials_wos.cmxa $<
+	    $(USELIB).cmxa sundials_mpi.cmxa $<
 
 %.byte.out: %.byte
 	./$< > $@

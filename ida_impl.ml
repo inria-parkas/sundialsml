@@ -85,8 +85,8 @@ module Bbd =
   struct
     type 'data callbacks =
       {
-        local_fn : float -> 'data -> 'data -> unit;
-        comm_fn  : (float -> 'data -> unit) option;
+        local_fn : float -> 'data -> 'data -> 'data  -> unit;
+        comm_fn  : (float -> 'data -> 'data -> unit) option;
       }
   end
 
@@ -171,8 +171,10 @@ module B =
       struct
         type 'data callbacks =
           {
-            local_fn : float -> 'data -> 'data -> 'data -> unit;
-            comm_fn  : (float -> 'data -> 'data -> unit) option;
+            local_fn : float -> 'data -> 'data -> 'data
+                       -> 'data -> 'data -> unit;
+            comm_fn  : (float -> 'data -> 'data -> 'data -> 'data -> unit)
+                       option;
           }
       end
   end

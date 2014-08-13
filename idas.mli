@@ -43,8 +43,8 @@ module Bbd :
   sig
     type 'data callbacks =
       'data Ida_impl.Bbd.callbacks = {
-      local_fn : float -> 'data -> 'data -> unit;
-      comm_fn : (float -> 'data -> unit) option;
+      local_fn : float -> 'data -> 'data -> 'data -> unit;
+      comm_fn : (float -> 'data -> 'data -> unit) option;
     }
   end
 module B :
@@ -93,10 +93,13 @@ module B :
     module Bbd :
       sig
         type 'data callbacks =
-          'data Ida_impl.B.Bbd.callbacks = {
-          local_fn : float -> 'data -> 'data -> 'data -> unit;
-          comm_fn : (float -> 'data -> 'data -> unit) option;
-        }
+          'data Ida_impl.B.Bbd.callbacks =
+          {
+            local_fn : float -> 'data -> 'data -> 'data
+                       -> 'data -> 'data -> unit;
+            comm_fn  : (float -> 'data -> 'data -> 'data -> 'data -> unit)
+                       option;
+          }
       end
   end
 type conv_fail = Ida_impl.conv_fail = NoFailures | FailBadJ | FailOther
