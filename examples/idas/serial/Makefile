@@ -54,6 +54,9 @@ tests.self.log: $(EXAMPLES:.ml=.byte.out) $(EXAMPLES:.ml=.opt.out)
 
 # Tests with command-line arguments (make same choice as Sundials distrib)
 
+idasRoberts_FSA_dns.byte.out: idasRoberts_FSA_dns.byte
+	./$< -sensi sim t > $@
+
 idasRoberts_FSA_dns.opt.out: idasRoberts_FSA_dns.opt
 	./$< -sensi sim t > $@
 
