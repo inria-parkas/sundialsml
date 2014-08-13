@@ -698,9 +698,9 @@ module Adjoint =
         jac_tmp : 't
       }
 
-    type bandrange = Cvode_impl.bandrange = { mupper : int; mlower : int; }
+    type bandrange = Ida_impl.bandrange = { mupper : int; mlower : int; }
 
-    type ('data, 'kind) linear_solver = ('data, 'kind) Cvode_impl.blinear_solver
+    type ('data, 'kind) linear_solver = ('data, 'kind) Ida_impl.blinear_solver
 
     type serial_linear_solver = (real_array, Nvector_serial.kind) linear_solver
 
