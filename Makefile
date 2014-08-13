@@ -151,21 +151,24 @@ META: META.in
 
 doc: doc/html/index.html
 
-doc/html/index.html: doc/html dochtml.cmo intro.doc \
-		     $(MLOBJ_MAIN:.cmo=.mli) $(MLOBJ_MAIN:.cmo=.cmi)  \
-		     $(MLOBJ_SENS:.cmo=.mli) $(MLOBJ_SENS:.cmo=.cmi) 
-	$(OCAMLDOC) -g dochtml.cmo $(INCLUDES) \
-	    -cvode-doc-root "$(CVODE_DOC_ROOT)" 	\
-	    -cvodes-doc-root "$(CVODES_DOC_ROOT)" 	\
-	    -ida-doc-root "$(IDA_DOC_ROOT)" 		\
-	    -idas-doc-root "$(IDAS_DOC_ROOT)" 		\
-	    -kinsol-doc-root "$(KINSOL_DOC_ROOT)" 	\
-	    -pp "$(DOCPP)"				\
-	    -d ./doc/html/				\
-	    -hide Cvode_impl,Ida_impl,Kinsol_impl	\
-	    -t "Sundials"				\
-	    -intro intro.doc				\
-	    $(MLOBJ_MAIN:.cmo=.mli) $(MLOBJ_SENS:.cmo=.mli)
+doc/html/index.html: doc/html dochtml.cmo intro.doc 			\
+		     $(filter-out %_impl.cmi, $(MLOBJ_MAIN:.cmo=.cmi))	\
+		     $(MLOBJ_SENS:.cmo=.cmi) 				\
+		     $(if $(MPI_ENABLED), $(MLOBJ_MPI:.cmo=.cmi))
+	$(OCAMLDOC) -g dochtml.cmo $(INCLUDES) 			\
+	    -cvode-doc-root "$(CVODE_DOC_ROOT)" 		\
+	    -cvodes-doc-root "$(CVODES_DOC_ROOT)" 		\
+	    -ida-doc-root "$(IDA_DOC_ROOT)" 			\
+	    -idas-doc-root "$(IDAS_DOC_ROOT)" 			\
+	    -kinsol-doc-root "$(KINSOL_DOC_ROOT)" 		\
+	    -pp "$(DOCPP)"					\
+	    -d ./doc/html/					\
+	    -hide Cvode_impl,Ida_impl,Kinsol_impl		\
+	    -t "Sundials"					\
+	    -intro intro.doc					\
+	    $(filter-out %_impl.mli, $(MLOBJ_MAIN:.cmo=.mli))	\
+	    $(if $(MPI_ENABLED), $(MLOBJ_MPI:.cmo=.mli))	\
+	    $(MLOBJ_SENS:.cmo=.mli)
 
 doc/html:
 	mkdir $@

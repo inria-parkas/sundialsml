@@ -94,6 +94,7 @@ struct
       tag_functions <- ("cvode",  self#html_of_cvode) :: tag_functions;
       tag_functions <- ("cvodes", self#html_of_cvodes) :: tag_functions;
       tag_functions <- ("ida",    self#html_of_ida) :: tag_functions;
+      tag_functions <- ("idas",   self#html_of_idas) :: tag_functions;
       tag_functions <- ("kinsol", self#html_of_kinsol) :: tag_functions
 
   end
