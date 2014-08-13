@@ -1,4 +1,4 @@
-include ../../../../config
+include ../../../config
 
 # Invoke `make' with USELIB=sundials to run the tests with the
 # sensitivity-agnostic subset of IDAS.  Note that memory usage
@@ -30,15 +30,15 @@ lapack: $(LAPACK_EXAMPLES:.ml=.byte)
 lapack.opt: $(LAPACK_EXAMPLES:.ml=.opt)
 
 genlog = \
-    @(for f in $(1); do  \
-	echo $(DIVIDER);                  \
-	echo "--$$f";                    \
-	cat $$f;                         \
-     done;                               \
-     echo "Summary (each should be 0):"; \
-     for f in $(1); do  \
-	wc -l $$f;                       \
-     done;                               \
+    @(for f in $(1); do  			\
+	echo $(DIVIDER);                 	\
+	echo "--ida/serial/$$f";         	\
+	cat $$f;                         	\
+     done;                               	\
+     echo "Summary (each should be 0):"; 	\
+     for f in $(1); do  			\
+	(cd ../..; wc -l ida/serial/$$f);	\
+     done;                               	\
     ) > $(2)
 
 # requires a valid EXAMPLESROOT to avoid:
@@ -86,12 +86,11 @@ lapack-tests.opt.log: $(LAPACK_EXAMPLES:.ml=.opt.out) \
 
 ##
 
+distclean: clean
 clean:
 	-@rm -f $(ALL_EXAMPLES:.ml=.cmo) $(ALL_EXAMPLES:.ml=.cmx)
 	-@rm -f $(ALL_EXAMPLES:.ml=.o) $(ALL_EXAMPLES:.ml=.cmi)
 	-@rm -f $(ALL_EXAMPLES:.ml=.c.log) $(ALL_EXAMPLES:.ml=.ml.log)
-
-distclean: clean
 	-@rm -f $(ALL_EXAMPLES:.ml=.byte) $(ALL_EXAMPLES:.ml=.opt)
 	-@rm -f $(ALL_EXAMPLES:.ml=.byte.out) $(ALL_EXAMPLES:.ml=.opt.out)
 	-@rm -f $(ALL_EXAMPLES:.ml=.sundials.out)
@@ -108,12 +107,12 @@ distclean: clean
 
 .ml.byte:
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
-	    $(INCLUDES) -I ../../../../ -dllpath ../../../../ bigarray.cma unix.cma \
+	    $(INCLUDES) -I ../../../ -dllpath ../../../ bigarray.cma unix.cma \
 	    $(USELIB).cma $<
 
 .ml.opt:
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
-	    $(INCLUDES) -I ../../../../ bigarray.cmxa unix.cmxa \
+	    $(INCLUDES) -I ../../../ bigarray.cmxa unix.cmxa \
 	    $(USELIB).cmxa $<
 
 %.byte.out: %.byte

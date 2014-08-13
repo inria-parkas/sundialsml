@@ -1,4 +1,4 @@
-include ../../../../config
+include ../../../config
 
 EXAMPLES = idasRoberts_FSA_dns.ml idasAkzoNob_ASAi_dns.ml idasAkzoNob_dns.ml \
            idasHessian_ASA_FSA.ml idasRoberts_ASAi_dns.ml idasSlCrank_FSA_dns.ml
@@ -12,15 +12,15 @@ byte: $(EXAMPLES:.ml=.byte)
 opt: $(EXAMPLES:.ml=.opt)
 
 genlog = \
-    @(for f in $(1); do  \
-	echo $(DIVIDER);                  \
-	echo "--$$f";                    \
-	cat $$f;                         \
-     done;                               \
-     echo "Summary (each should be 0):"; \
-     for f in $(1); do  \
-	wc -l $$f;                       \
-     done;                               \
+    @(for f in $(1); do  			\
+	echo $(DIVIDER);                 	\
+	echo "--idas/serial/$$f";        	\
+	cat $$f;                         	\
+     done;                               	\
+     echo "Summary (each should be 0):"; 	\
+     for f in $(1); do  			\
+	(cd ../..; wc -l idas/serial/$$f);	\
+     done;                               	\
     ) > $(2)
 
 # requires a valid EXAMPLESROOT to avoid:
@@ -62,12 +62,11 @@ idasRoberts_FSA_dns.sundials.out:$(EXAMPLESROOT)/idas/serial/idasRoberts_FSA_dns
 
 ##
 
+distclean: clean
 clean:
 	-@rm -f $(EXAMPLES:.ml=.cmo)   $(EXAMPLES:.ml=.cmx)
 	-@rm -f $(EXAMPLES:.ml=.o)     $(EXAMPLES:.ml=.cmi)
 	-@rm -f $(EXAMPLES:.ml=.c.log) $(EXAMPLES:.ml=.ml.log)
-
-distclean: clean
 	-@rm -f $(EXAMPLES:.ml=.byte) $(EXAMPLES:.ml=.opt)
 	-@rm -f $(EXAMPLES:.ml=.byte.out) $(EXAMPLES:.ml=.opt.out)
 	-@rm -f $(EXAMPLES:.ml=.sundials.out)
@@ -83,12 +82,12 @@ distclean: clean
 
 .ml.byte:
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
-	    $(INCLUDES) -I ../../../../ -dllpath ../../../../ bigarray.cma unix.cma \
+	    $(INCLUDES) -I ../../../ -dllpath ../../../ bigarray.cma unix.cma \
 	    sundials.cma $<
 
 .ml.opt:
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
-	    $(INCLUDES) -I ../../../../ bigarray.cmxa unix.cmxa \
+	    $(INCLUDES) -I ../../../ bigarray.cmxa unix.cmxa \
 	    sundials.cmxa $<
 
 %.byte.out: %.byte

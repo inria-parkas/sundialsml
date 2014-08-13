@@ -41,7 +41,6 @@ OCAML_3X = @ocaml_3x@
 OCAML ?= @OCAMLBIN@ocaml
 
 OCAMLMPI ?= @ocamlmpi_path@
-MPI_ENABLED=@ocamlmpi_enabled@
 
 CAMLP4OF= @OCAMLBIN@camlp4of
 CAMLP4ORF= @OCAMLBIN@camlp4orf

@@ -1,15 +1,10 @@
-include ../../../../config
-
-# Invoke `make' with USELIB=sundials to run the tests with the
-# sensitivity-agnostic subset of CVODES.  Note that memory usage
-# statistics will differ from the versions in sundials/C, unless those
-# are recompiled to link against CVODES.
-USELIB ?= sundials_nosensi
+include ../../../config
 
 MPIRUN = mpirun
-EXAMPLES = cvDiurnal_kry_p.ml \
-	   cvDiurnal_kry_bbd_p.ml \
-	   cvAdvDiff_non_p.ml
+EXAMPLES = cvsAdvDiff_ASAp_non_p.ml      \
+	   cvsAdvDiff_FSA_non_p.ml       \
+	   cvsDiurnal_FSA_kry_p.ml	 #\
+	   #cvsAtmDisp_ASAi_kry_bbd_p.ml
 
 DIVIDER = "----------------------------------------------------------------------"
 
@@ -20,15 +15,16 @@ byte: $(EXAMPLES:.ml=.byte)
 opt: $(EXAMPLES:.ml=.opt)
 
 genlog = \
-    @(for f in $(1); do  \
-	echo $(DIVIDER);                  \
-	echo "--$$f";                    \
-	cat $$f;                         \
-     done;                               \
-     echo "Summary (each should be 0):"; \
-     for f in $(1); do  \
-	wc -l $$f;                       \
-     done;                               \
+    @(for f in $(1); do  			\
+	echo $(DIVIDER);                 	\
+	echo "--cvodes/parallel/$$f";    	\
+	cat $$f;                         	\
+     done;                               	\
+     echo "Summary (each should be 0):"; 	\
+     for f in $(1); do  			\
+	wc -l $$f;                       	\
+	(cd ../..; wc -l cvodes/parallel/$$f);	\
+     done;                               	\
     ) > $(2)
 
 # requires a valid EXAMPLESROOT to avoid:
@@ -59,44 +55,40 @@ tests.self.log: $(EXAMPLES:.ml=.byte.out) $(EXAMPLES:.ml=.opt.out)
 	cat $@
 
 ##
-
-cvDiurnal_kry_p.byte: cvDiurnal_kry_p.ml
-cvDiurnal_kry_p.opt: cvDiurnal_kry_p.ml
-cvDiurnal_kry_p.byte.out: cvDiurnal_kry_p.byte
+cvsAdvDiff_ASAp_non_p.byte: cvsAdvDiff_ASAp_non_p.ml
+cvsAdvDiff_ASAp_non_p.opt: cvsAdvDiff_ASAp_non_p.ml
+cvsAdvDiff_ASAp_non_p.byte.out: cvsAdvDiff_ASAp_non_p.byte
 	$(MPIRUN) -np 4 $< > $@
-cvDiurnal_kry_p.opt.out: cvDiurnal_kry_p.opt
+cvsAdvDiff_ASAp_non_p.opt.out: cvsAdvDiff_ASAp_non_p.opt
 	$(MPIRUN) -np 4 $< > $@
-cvDiurnal_kry_p.sundials.out: $(EXAMPLESROOT)/cvode/parallel/cvDiurnal_kry_p
-	$(MPIRUN) -np 4 $< > $@
-
-cvDiurnal_kry_bbd_p.byte: cvDiurnal_kry_bbd_p.ml
-cvDiurnal_kry_bbd_p.opt: cvDiurnal_kry_bbd_p.ml
-cvDiurnal_kry_bbd_p.byte.out: cvDiurnal_kry_bbd_p.byte
-	$(MPIRUN) -np 4 $< > $@
-cvDiurnal_kry_bbd_p.opt.out: cvDiurnal_kry_bbd_p.opt
-	$(MPIRUN) -np 4 $< > $@
-cvDiurnal_kry_bbd_p.sundials.out: \
-			$(EXAMPLESROOT)/cvode/parallel/cvDiurnal_kry_bbd_p
+cvsAdvDiff_ASAp_non_p.sundials.out: $(EXAMPLESROOT)/cvodes/parallel/cvsAdvDiff_ASAp_non_p
 	$(MPIRUN) -np 4 $< > $@
 
-cvAdvDiff_non_p.byte: cvAdvDiff_non_p.ml
-cvAdvDiff_non_p.opt: cvAdvDiff_non_p.ml
-cvAdvDiff_non_p.byte.out: cvAdvDiff_non_p.byte
-	$(MPIRUN) -np 6 $< > $@
-cvAdvDiff_non_p.opt.out: cvAdvDiff_non_p.opt
-	$(MPIRUN) -np 6 $< > $@
-cvAdvDiff_non_p.sundials.out: \
-			$(EXAMPLESROOT)/cvode/parallel/cvAdvDiff_non_p
-	$(MPIRUN) -np 6 $< > $@
+cvsAdvDiff_FSA_non_p.byte: cvsAdvDiff_FSA_non_p.ml
+cvsAdvDiff_FSA_non_p.opt: cvsAdvDiff_FSA_non_p.ml
+cvsAdvDiff_FSA_non_p.byte.out: cvsAdvDiff_FSA_non_p.byte
+	$(MPIRUN) -np 4 $< -sensi sim t > $@
+cvsAdvDiff_FSA_non_p.opt.out: cvsAdvDiff_FSA_non_p.opt
+	$(MPIRUN) -np 4 $< -sensi sim t > $@
+cvsAdvDiff_FSA_non_p.sundials.out: $(EXAMPLESROOT)/cvodes/parallel/cvsAdvDiff_FSA_non_p
+	$(MPIRUN) -np 4 $< -sensi sim t > $@
+
+cvsDiurnal_FSA_kry_p.byte: cvsDiurnal_FSA_kry_p.ml
+cvsDiurnal_FSA_kry_p.opt: cvsDiurnal_FSA_kry_p.ml
+cvsDiurnal_FSA_kry_p.byte.out: cvsDiurnal_FSA_kry_p.byte
+	$(MPIRUN) -np 4 $< -sensi sim t > $@
+cvsDiurnal_FSA_kry_p.opt.out: cvsDiurnal_FSA_kry_p.opt
+	$(MPIRUN) -np 4 $< -sensi sim t > $@
+cvsDiurnal_FSA_kry_p.sundials.out: $(EXAMPLESROOT)/cvodes/parallel/cvsDiurnal_FSA_kry_p
+	$(MPIRUN) -np 4 $< -sensi sim t > $@
 
 ##
 
+distclean: clean
 clean:
 	-@rm -f $(EXAMPLES:.ml=.cmo)   $(EXAMPLES:.ml=.cmx)
 	-@rm -f $(EXAMPLES:.ml=.o)     $(EXAMPLES:.ml=.cmi)
 	-@rm -f $(EXAMPLES:.ml=.c.log) $(EXAMPLES:.ml=.ml.log)
-
-distclean: clean
 	-@rm -f $(EXAMPLES:.ml=.byte) $(EXAMPLES:.ml=.opt)
 	-@rm -f $(EXAMPLES:.ml=.byte.out) $(EXAMPLES:.ml=.opt.out)
 	-@rm -f $(EXAMPLES:.ml=.sundials.out)
@@ -112,14 +104,14 @@ distclean: clean
 
 .ml.byte:
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
-	    $(INCLUDES) -I ../../../../ -dllpath ../../../../ \
+	    $(INCLUDES) -I ../../../ -dllpath ../../../ \
 	    bigarray.cma unix.cma mpi.cma \
-	    $(USELIB).cma sundials_mpi.cma $<
+	    sundials.cma sundials_mpi.cma $<
 
 .ml.opt:
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
-	    $(INCLUDES) -I ../../../../ bigarray.cmxa unix.cmxa mpi.cmxa \
-	    $(USELIB).cmxa sundials_mpi.cmxa $<
+	    $(INCLUDES) -I ../../../ bigarray.cmxa unix.cmxa mpi.cmxa \
+	    sundials.cmxa sundials_mpi.cmxa $<
 
 %.byte.out: %.byte
 	./$< > $@
