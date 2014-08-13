@@ -164,7 +164,7 @@ enum idas_adj_solve_arg_index {
 #undef DOQUOTE
 #undef QUOTE
 #undef IDATYPESTR
-#define IDATYPE(fname) c_ida_ ## fname
+#define IDATYPE(fname) c_idas_ ## fname
 #define DOQUOTE(text) #text
 #define QUOTE(val) DOQUOTE(val)
 #define IDATYPESTR(fname) QUOTE(IDATYPE(fname))
