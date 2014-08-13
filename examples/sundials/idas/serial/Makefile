@@ -67,8 +67,7 @@ clean:
 	-@rm -f $(EXAMPLES:.ml=.o)     $(EXAMPLES:.ml=.cmi)
 	-@rm -f $(EXAMPLES:.ml=.c.log) $(EXAMPLES:.ml=.ml.log)
 
-realclean: cleanall
-cleanall: clean
+distclean: clean
 	-@rm -f $(EXAMPLES:.ml=.byte) $(EXAMPLES:.ml=.opt)
 	-@rm -f $(EXAMPLES:.ml=.byte.out) $(EXAMPLES:.ml=.opt.out)
 	-@rm -f $(EXAMPLES:.ml=.sundials.out)

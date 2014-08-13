@@ -26,8 +26,7 @@ clean:
 	-rm -f $(EXAMPLES:.byte=.cmo) $(EXAMPLES:.byte=.cmx)
 	-rm -f $(EXAMPLES:.byte=.o) $(EXAMPLES:.byte=.cmi)
 
-realclean: cleanall
-cleanall: clean
+distclean: clean
 	-rm -f $(EXAMPLES) $(EXAMPLES:.byte=.opt)
 
 # #

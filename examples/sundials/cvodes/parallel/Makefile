@@ -3,7 +3,7 @@ include ../../../../config
 MPIRUN = mpirun
 EXAMPLES = cvsAdvDiff_ASAp_non_p.ml      \
 	   cvsAdvDiff_FSA_non_p.ml       \
-	   cvsDiurnal_FSA_kry_p.ml
+	   cvsDiurnal_FSA_kry_p.ml	 #\
 	   #cvsAtmDisp_ASAi_kry_bbd_p.ml
 
 DIVIDER = "----------------------------------------------------------------------"
@@ -88,8 +88,7 @@ clean:
 	-@rm -f $(EXAMPLES:.ml=.o)     $(EXAMPLES:.ml=.cmi)
 	-@rm -f $(EXAMPLES:.ml=.c.log) $(EXAMPLES:.ml=.ml.log)
 
-realclean: cleanall
-cleanall: clean
+distclean: clean
 	-@rm -f $(EXAMPLES:.ml=.byte) $(EXAMPLES:.ml=.opt)
 	-@rm -f $(EXAMPLES:.ml=.byte.out) $(EXAMPLES:.ml=.opt.out)
 	-@rm -f $(EXAMPLES:.ml=.sundials.out)

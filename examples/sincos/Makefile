@@ -37,8 +37,7 @@ clean:
 	-rm -f sincos_nvec.cmi sincos_nvec.cmo sincos_nvec.cmx sincos_nvec.o
 	-rm -f sincos.log sincos-roots.log
 
-realclean: cleanall
-cleanall: clean
+distclean: clean
 	-rm -f sincos.byte sincos.opt
 	-rm -f sincos_nvec.opt sincos_nvec.byte
 

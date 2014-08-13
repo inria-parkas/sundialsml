@@ -22,7 +22,6 @@ clean:
 	-rm -f showball.cmi showball.cmo showball.cmx showball.o
 	-rm -f ball.cmi ball.cmo ball.cmx ball.o
 
-realclean:cleanall
-cleanall: clean
+distclean: clean
 	-rm -f ball.byte ball.opt
 
