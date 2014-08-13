@@ -14,7 +14,7 @@ kinsol.cmi : sundials.cmi nvector_serial.cmi kinsol_impl.cmo dls.cmi
 kinsol_bbd.cmi : nvector_parallel.cmi kinsol_impl.cmo kinsol.cmi
 nvector_array.cmi : nvector_custom.cmi
 nvector_custom.cmi : sundials.cmi
-nvector_parallel.cmi : sundials.cmi /home/jun/.opam/system/lib/mpi/mpi.cmi
+nvector_parallel.cmi : sundials.cmi
 nvector_serial.cmi : sundials.cmi
 spils.cmi : sundials.cmi
 sundials.cmi :
@@ -70,10 +70,8 @@ nvector_array.cmo : sundials.cmi nvector_custom.cmi nvector_array.cmi
 nvector_array.cmx : sundials.cmx nvector_custom.cmx nvector_array.cmi
 nvector_custom.cmo : sundials.cmi nvector_custom.cmi
 nvector_custom.cmx : sundials.cmx nvector_custom.cmi
-nvector_parallel.cmo : sundials.cmi /home/jun/.opam/system/lib/mpi/mpi.cmi \
-    nvector_parallel.cmi
-nvector_parallel.cmx : sundials.cmx /home/jun/.opam/system/lib/mpi/mpi.cmi \
-    nvector_parallel.cmi
+nvector_parallel.cmo : sundials.cmi nvector_parallel.cmi
+nvector_parallel.cmx : sundials.cmx nvector_parallel.cmi
 nvector_serial.cmo : sundials.cmi nvector_serial.cmi
 nvector_serial.cmx : sundials.cmx nvector_serial.cmi
 spils.cmo : sundials.cmi spils.cmi

@@ -35,7 +35,7 @@ MPI_LIBLINK= -lsundials_nvecparallel
 # For `make clean'.  All object files, including ones that may not be
 # built/updated under the current configuration.  Duplicates OK.
 ALL_COBJ = $(COBJ_MAIN) $(COBJ_SENS) $(COBJ_NOSENSI) $(COBJ_MPI)
-ALL_MLOBJ = $(MLOBJ_MAIN) $(MLOBJ_SENS) $(MLOBJ_NOSENSI)
+ALL_MLOBJ = $(MLOBJ_MAIN) $(MLOBJ_SENS) $(MLOBJ_NOSENSI) $(MLOBJ_MPI)
 ALL_CMA = sundials.cma sundials_nosensi.cma sundials_mpi.cma
 
 # Installed files.
@@ -202,7 +202,7 @@ ocamlfind: $(INSTALL_CMA) $(INSTALL_CMA:.cma=.cmxa) META
 
 depend: .depend
 .depend:
-	$(OCAMLDEP) $(INCLUDES) \
+	$(OCAMLDEP) \
 	    -pp "cpp $(CPPFLAGS) -DOCAML_3X=$(OCAML_3X)" \
 	    *.mli *.ml > .depend
 	$(CC) -MM $(CFLAGS) *.c >> .depend
@@ -211,7 +211,7 @@ clean:
 	-@($(MAKE) -C examples clean)
 	-@$(RM) -f $(ALL_MLOBJ) $(ALL_MLOBJ:.cmo=.cmx) $(ALL_MLOBJ:.cmo=.o)
 	-@$(RM) -f $(ALL_MLOBJ:.cmo=.cmi) $(ALL_MLOBJ:.cmo=.annot) $(ALL_COBJ)
-	-@$(RM) -f $(ALL_CMA) $(ALL_CMA:.cma=.cmxa)
+	-@$(RM) -f $(ALL_CMA) $(ALL_CMA:.cma=.cmxa) $(ALL_CMA:.cma=.a)
 	-@$(RM) -f $(foreach file,$(INSTALL_CMA:.cma=$(XA)),libml$(file))
 	-@$(RM) -f $(foreach file,$(INSTALL_CMA:.cma=$(XS)),dllml$(file))
 	-@$(RM) -f $(STUBLIBS)
@@ -220,8 +220,7 @@ clean:
 cleandoc:
 	-@$(RM) -f doc/html/*.html doc/html/style.css
 
-realclean: cleanall
-cleanall: clean cleandoc
+distclean: clean cleandoc
 	-@($(MAKE) -C examples cleanall)
 	-@$(RM) -f META
 	-@$(RM) -f config config.h
