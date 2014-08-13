@@ -3,8 +3,7 @@ include ../../../../config
 MPIRUN = mpirun
 EXAMPLES = cvsAdvDiff_ASAp_non_p.ml      \
 	   cvsAdvDiff_FSA_non_p.ml       \
-	   cvsDiurnal_FSA_kry_p.ml	 \
-	   cvsDiurnal_kry_bbd_p.ml
+	   cvsDiurnal_FSA_kry_p.ml
 	   #cvsAtmDisp_ASAi_kry_bbd_p.ml
 
 DIVIDER = "----------------------------------------------------------------------"
@@ -81,15 +80,6 @@ cvsDiurnal_FSA_kry_p.opt.out: cvsDiurnal_FSA_kry_p.opt
 	$(MPIRUN) -np 4 $< -sensi sim t > $@
 cvsDiurnal_FSA_kry_p.sundials.out: $(EXAMPLESROOT)/cvodes/parallel/cvsDiurnal_FSA_kry_p
 	$(MPIRUN) -np 4 $< -sensi sim t > $@
-
-cvsDiurnal_kry_bbd_p.byte: cvsDiurnal_kry_bbd_p.ml
-cvsDiurnal_kry_bbd_p.opt: cvsDiurnal_kry_bbd_p.ml
-cvsDiurnal_kry_bbd_p.byte.out: cvsDiurnal_kry_bbd_p.byte
-	$(MPIRUN) -np 4 $< > $@
-cvsDiurnal_kry_bbd_p.opt.out: cvsDiurnal_kry_bbd_p.opt
-	$(MPIRUN) -np 4 $< > $@
-cvsDiurnal_kry_bbd_p.sundials.out: $(EXAMPLESROOT)/cvodes/parallel/cvsDiurnal_kry_bbd_p
-	$(MPIRUN) -np 4 $< > $@
 
 ##
 
