@@ -9,6 +9,7 @@ all:
 	@echo "Main targets (cvode, cvodes, ida, idas, kinsol):"
 	@echo "  tests.byte.log    run standard tests (byte code)"
 	@echo "  tests.opt.log     run standard tests (native code)"
+	@echo "Subdirectory ocaml/ has additional examples, invoked separately."
 
 tests.byte.log:
 	@for d in ${DIRS}; do		\
