@@ -154,6 +154,10 @@ module RealArray2 :
     (** [get a i j] gives the value of the [(i, j)]th element of [a]. *)
     val get : t -> int -> int -> float
 
+    (** [col a j] slices the [j]th column of [a].  The slice shares
+        storage with [a]. *)
+    val col : t -> int -> RealArray.t
+
     (** [set a i j v] sets the value of the [(i, j)]th element of [a] to [v]. *)
     val set : t -> int -> int -> float -> unit
 

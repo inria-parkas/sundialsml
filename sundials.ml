@@ -167,6 +167,8 @@ module RealArray2 =
     let get x i j = Bigarray.Array2.get (unwrap x) j i
     let set x i j = Bigarray.Array2.set (unwrap x) j i
 
+    let col x j = Bigarray.Array2.slice_left (unwrap x) j
+
     let copy a =
       let d = unwrap a in
       let c = Bigarray.Array2.dim1 d in
