@@ -40,6 +40,7 @@ val global_length : t -> int
 val communicator : t -> Mpi.communicator
 
 module Ops : sig
+  val n_vclone        : t -> t
   val n_vlinearsum    : float -> t -> float -> t -> t -> unit
   val n_vconst        : float -> t -> unit
   val n_vprod         : t -> t -> t -> unit

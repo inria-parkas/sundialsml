@@ -26,6 +26,9 @@ let communicator nv =
   comm
 
 module Ops = struct
+  let n_vclone nv =
+    let loc, glen, comm = Sundials.unvec nv in
+    wrap (Sundials.RealArray.clone loc, glen, comm)
 
   external n_vlinearsum    : float -> t -> float -> t -> t -> unit
     = "ml_nvec_par_n_vlinearsum"
