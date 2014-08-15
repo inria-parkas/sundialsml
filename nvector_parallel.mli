@@ -15,6 +15,8 @@
  
     @cvode <node7#ss:nvec_par> NVECTOR_PARALLEL *)
 type kind
+
+(** (local array, global length, MPI communicator) *)
 type data = Sundials.RealArray.t * int * Mpi.communicator
 type t = (data, kind) Sundials.nvector
 
