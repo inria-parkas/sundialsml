@@ -323,32 +323,46 @@ ldflags="${ldflags} ${lapack_lib}"
 
 # Extract compilation flags from sundials-config.
 
+# CPP flags:
 cvode_cppflags="${cflags} `sundials-config -m cvode -t s -l c -s cppflags`"
 cvodes_cppflags="${cflags} `sundials-config -m cvodes -t s -l c -s cppflags`"
 ida_cppflags="${cflags} `sundials-config -m ida -t s -l c -s cppflags`"
 idas_cppflags="${cflags} `sundials-config -m idas -t s -l c -s cppflags`"
 kinsol_cppflags="${cflags} `sundials-config -m kinsol -t s -l c -s cppflags`"
 
-# --no-lib-path removes the -L specification, to prevent it from being recorded
-# in the *.cm(x)a files.  We assume there's only one occurrence of -L and the
-# path contains no spaces.
+# Libraries: sundials-config's options are too coarse-grained, so we
+# need to parse and separate it out.  Specifically:
+#
+# (a) sundials_mpi.cma must be linked without commiting to either
+# -lsundials_cvode or -lsundials_cvodes (and likewise for ida/idas).
+#
+# (b) --no-lib-path removes the -L specification, to prevent it from
+# being recorded in the *.cm(x)a files.  This assumes the sundials
+# libraries are installed in a standard path cc searches by default.
+#
+# We assume there's only one occurrence of -L and the path contains no
+# spaces.
+
+# Flags sans -L.  The sed script sets up sentinels, erases -L, then
+# erases sentinels.
+
+cvode_ldflags="`sundials-config -m cvode -t s -l c -s libs \
+	       | sed -e 's/^/ /; s/$/ /; s/ -L[^ ]* / /; s/^ //; s/ $//'`"
+cvodes_ldflags="`sundials-config -m cvodes -t s -l c -s libs \
+	        | sed -e 's/^/ /; s/$/ /; s/ -L[^ ]* / /; s/^ //; s/ $//'`"
+ida_ldflags="`sundials-config -m ida -t s -l c -s libs \
+	     | sed -e 's/^/ /; s/$/ /; s/ -L[^ ]* / /; s/^ //; s/ $//'`"
+idas_ldflags="`sundials-config -m idas -t s -l c -s libs \
+	      | sed -e 's/^/ /; s/$/ /; s/ -L[^ ]* / /; s/^ //; s/ $//'`"
+kinsol_ldflags="`sundials-config -m kinsol -t s -l c -s libs \
+	        | sed -e 's/^/ /; s/$/ /; s/ -L[^ ]* / /; s/^ //; s/ $//'`"
+
+# The -L flag.
 if [ ${no_lib_path:-0} -eq 1 ]; then
-    cvode_ldflags="`sundials-config -m cvode -t s -l c -s libs \
-	            | sed -e 's#-L[^ ]* -#-#'`"
-    cvodes_ldflags="`sundials-config -m cvodes -t s -l c -s libs \
-	             | sed -e 's#-L[^ ]* -#-#'`"
-    ida_ldflags="`sundials-config -m ida -t s -l c -s libs \
-	          | sed -e 's#-L[^ ]* -#-#'`"
-    idas_ldflags="`sundials-config -m idas -t s -l c -s libs \
-	           | sed -e 's#-L[^ ]* -#-#'`"
-    kinsol_ldflags="`sundials-config -m kinsol -t s -l c -s libs \
-	          | sed -e 's#-L[^ ]* -#-#'`"
+    sundials_lib_path=
 else
-    cvode_ldflags="`sundials-config -m cvode -t s -l c -s libs`"
-    cvodes_ldflags="`sundials-config -m cvodes -t s -l c -s libs`"
-    ida_ldflags="`sundials-config -m ida -t s -l c -s libs`"
-    idas_ldflags="`sundials-config -m idas -t s -l c -s libs`"
-    kinsol_ldflags="`sundials-config -m kinsol -t s -l c -s libs`"
+    sundials_lib_path="`sundials-config -m cvode -t s -l c -s libs \
+	               | sed -e 's/^/ /; s/$/ /; s/^.* \(-L[^ ]*\) .*/\1/'`"
 fi
 
 arch=`uname -i`
@@ -418,6 +432,7 @@ fi
 	 s#@idas_ldflags@#${idas_ldflags}#;
 	 s#@kinsol_cppflags@#${kinsol_cppflags}#;
 	 s#@kinsol_ldflags@#${kinsol_ldflags}#;
+	 s#@sundials_lib_path@#${sundials_lib_path}#;
 	 s#@ocamlflags@#${ocamlflags}#;
 	 s#@ocamloptflags@#${ocamloptflags}#;
 	 s#@ocaml_3x@#${ocaml_3x}#;

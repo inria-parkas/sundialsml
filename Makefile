@@ -70,6 +70,7 @@ sundials.cma sundials.cmxa: $(MLOBJ_MAIN) $(MLOBJ_SENS)			    \
 			    $(COBJ_MAIN) $(COBJ_SENS)
 	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS)	\
 	    -o sundials -oc mlsundials $^	\
+	    $(LIB_PATH)				\
 	    $(OCAML_CVODES_LIBLINK)		\
 	    $(OCAML_IDAS_LIBLINK)		\
 	    $(OCAML_KINSOL_LIBLINK)
@@ -78,20 +79,18 @@ sundials_nosensi.cma sundials_nosensi.cmxa:				  \
 			$(MLOBJ_MAIN) $(MLOBJ_NOSENSI)			  \
 			$(MLOBJ_MAIN:.cmo=.cmx) $(MLOBJ_NOSENSI:.cmo=.cmx) \
 			$(COBJ_MAIN) $(COBJ_NOSENSI)
-	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS)	  \
-	    -o sundials_nosensi -oc mlsundials_nosensi $^ \
-	    $(OCAML_CVODE_LIBLINK)		  \
-	    $(OCAML_IDA_LIBLINK)		  \
+	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS)			\
+	    -o sundials_nosensi -oc mlsundials_nosensi $^	\
+	    $(LIB_PATH)						\
+	    $(OCAML_CVODE_LIBLINK)				\
+	    $(OCAML_IDA_LIBLINK)				\
 	    $(OCAML_KINSOL_LIBLINK)
 
 sundials_mpi.cma sundials_mpi.cmxa: $(MLOBJ_MPI) $(MLOBJ_MPI:.cmo=.cmx) \
 				    $(COBJ_MPI)
-	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS)	\
+	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS)		\
 	    -o sundials_mpi -oc mlsundials_mpi $^	\
-	    $(OCAML_CVODE_LIBLINK)			\
-	    $(OCAML_IDA_LIBLINK)			\
-	    $(OCAML_KINSOL_LIBLINK)			\
-	    $(MPI_LIBLINK)
+	    $(LIB_PATH) $(MPI_LIBLINK)
 
 # The CFLAGS settings for CVODE works for modules common to CVODE and IDA.
 $(COBJ_COMMON): %.o: %.c
