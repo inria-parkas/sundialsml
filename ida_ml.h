@@ -155,6 +155,14 @@ enum ida_bandrange_index {
 };
 
 
+enum ida_bandwidths_index {
+  RECORD_IDA_BANDWIDTHS_MUDQ = 0,
+  RECORD_IDA_BANDWIDTHS_MLDQ,
+  RECORD_IDA_BANDWIDTHS_MUKEEP,
+  RECORD_IDA_BANDWIDTHS_MLKEEP,
+  RECORD_IDA_BANDWIDTHS_SIZE
+};
+
 #define IDATYPE(fname) c_ida_ ## fname
 #define DOQUOTE(text) #text
 #define QUOTE(val) DOQUOTE(val)

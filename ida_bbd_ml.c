@@ -49,7 +49,7 @@ static int bbdlocal(long int nlocal, realtype t, N_Vector y, N_Vector yp,
     args[1] = caml_copy_double(t);
     args[2] = NVEC_BACKLINK(y);
     args[3] = NVEC_BACKLINK(yp);
-    args[4] = NVEC_BACKLINK(glocal);
+    args[4] = NVEC_BACKLINK(gval);
 
     r = Int_val (caml_callbackN(*call_bbdlocal,
                                 sizeof (args) / sizeof (*args),
@@ -89,10 +89,10 @@ CAMLprim void c_ida_bbd_prec_init (value vida_mem, value vlocaln,
 
     flag = IDABBDPrecInit (ida_mem,
 	Long_val(vlocaln),
-	Long_val(Field(vbandwidths, RECORD_IDA_BANDBLOCK_BANDWIDTHS_MUDQ)),
-	Long_val(Field(vbandwidths, RECORD_IDA_BANDBLOCK_BANDWIDTHS_MLDQ)),
-	Long_val(Field(vbandwidths, RECORD_IDA_BANDBLOCK_BANDWIDTHS_MUKEEP)),
-	Long_val(Field(vbandwidths, RECORD_IDA_BANDBLOCK_BANDWIDTHS_MLKEEP)),
+	Long_val(Field(vbandwidths, RECORD_IDA_BANDWIDTHS_MUDQ)),
+	Long_val(Field(vbandwidths, RECORD_IDA_BANDWIDTHS_MLDQ)),
+	Long_val(Field(vbandwidths, RECORD_IDA_BANDWIDTHS_MUKEEP)),
+	Long_val(Field(vbandwidths, RECORD_IDA_BANDWIDTHS_MLKEEP)),
 	Double_val(vdqrely),
 	bbdlocal,
 	Bool_val(vhascomm) ? bbdcomm : NULL);

@@ -23,7 +23,7 @@ MLBJ_NOSENSI =
 ### Objects specific to sundials_mpi.cma.
 COBJ_MPI = nvector_parallel_ml.o kinsol_bbd_ml.o		\
 	   cvode_bbd_ml.o cvodes_bbd_ml.o			\
-	   cvode_bbd_ml.o cvodes_bbd_ml.o kinsol_bbd_ml.o
+	   ida_bbd_ml.o idas_bbd_ml.o
 MLOBJ_MPI = nvector_parallel.cmo kinsol_bbd.cmo	\
 	    cvode_bbd.cmo cvodes_bbd.cmo	\
 	    ida_bbd.cmo idas_bbd.cmo
