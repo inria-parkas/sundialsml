@@ -105,8 +105,7 @@ enum idas_bwd_session_index {
 
 enum idas_sens_method {
     VARIANT_IDAS_SENS_METHOD_SIMULTANEOUS = 0,
-    VARIANT_IDAS_SENS_METHOD_STAGGERED,
-    VARIANT_IDAS_SENS_METHOD_STAGGERED1
+    VARIANT_IDAS_SENS_METHOD_STAGGERED
 };
 
 enum idas_sens_params_index {

@@ -267,7 +267,6 @@ module Sensitivity =
     type sens_method =
         Simultaneous
       | Staggered
-      | Staggered1
 
     type 'a sensresfn = 'a Ida_impl.sensresfn
 

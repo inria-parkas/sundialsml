@@ -291,7 +291,7 @@ module Sensitivity :
     exception UnrecoverableSensRhsFuncErr
     exception BadIS
     val fwdsensext : ('a, 'b) session -> ('a, 'b) fsensext
-    type sens_method = Simultaneous | Staggered | Staggered1
+    type sens_method = Simultaneous | Staggered
     type 'a sensresfn = 'a Ida_impl.sensresfn
     type sens_params = {
       pvals : Sundials.RealArray.t option;
