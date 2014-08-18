@@ -23,16 +23,16 @@
 #ifdef SUNDIALSML_WITHSENS
 /* IDAS (with sensitivity) */
 
-#include <ida/ida.h>
-#include <ida/ida_dense.h>
-#include <ida/ida_band.h>
-#include <ida/ida_spgmr.h>
-#include <ida/ida_sptfqmr.h>
-#include <ida/ida_spbcgs.h>
+#include <idas/idas.h>
+#include <idas/idas_dense.h>
+#include <idas/idas_band.h>
+#include <idas/idas_spgmr.h>
+#include <idas/idas_sptfqmr.h>
+#include <idas/idas_spbcgs.h>
 #include <sundials/sundials_config.h>
 
 #if SUNDIALS_BLAS_LAPACK == 1
-#include <ida/ida_lapack.h>
+#include <idas/idas_lapack.h>
 #endif
 
 #else  /* IDA (without sensitivity) */
