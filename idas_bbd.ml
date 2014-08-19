@@ -34,8 +34,8 @@ let call_bbbdcomm session t y y' yb y'b =
   | _ -> assert false
 
 let _ =
-  Callback.register "c_ida_call_bbbdlocal"      call_bbbdlocal;
-  Callback.register "c_ida_call_bbbdcomm"       call_bbbdcomm
+  Callback.register "c_idas_call_bbbdlocal"      call_bbbdlocal;
+  Callback.register "c_idas_call_bbbdcomm"       call_bbbdcomm
 
 type callbacks =
   {
@@ -104,7 +104,7 @@ let sptfqmr maxl bws dqrely cb bs nv nv' =
 
 external c_bbd_prec_reinitb
     : parallel_session -> int -> int -> int -> float -> unit
-    = "c_ida_bbd_prec_reinitb"
+    = "c_idas_bbd_prec_reinitb"
 
 let reinit bs mudq mldq dqrely =
   let parent, which = parent_and_which bs in
