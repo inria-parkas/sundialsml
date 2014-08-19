@@ -61,7 +61,7 @@ CFLAGS+=-fPIC
 
 ### Build rules.
 
-.PHONY: all sundials install doc clean cleanall
+.PHONY: all sundials install doc clean distclean
 
 all: $(INSTALL_CMA) $(INSTALL_CMA:.cma=.cmxa)
 
@@ -223,7 +223,7 @@ cleandoc:
 	-@$(RM) -f doc/html/*.html doc/html/style.css
 
 distclean: clean cleandoc
-	-@($(MAKE) -C examples cleanall)
+	-@($(MAKE) -C examples distclean)
 	-@$(RM) -f META
 	-@$(RM) -f config config.h
 
