@@ -36,7 +36,7 @@ let add_fwdsensext s =
 let num_sensitivities s =
   match s.sensext with
   | FwdSensExt se -> se.num_sensitivities
-  (*| BwdSensExt se -> se.bnum_sensitivities*)
+  | BwdSensExt se -> se.bnum_sensitivities
   | _ -> 0
 
 let read_weak_ref x : ('a, 'kind) session =
