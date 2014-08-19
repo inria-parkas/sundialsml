@@ -41,10 +41,7 @@ let unvec = Sundials.unvec
 
 let printf = Printf.printf
 
-let vmaxnorm x =
-  let xd, _, comm = unvec x in
-  let m = RealArray.fold_left (fun x y -> max x (abs_float y)) 0.0 xd in
-  Mpi.allreduce_float m Mpi.Float_max comm
+let vmaxnorm = Nvector_parallel.Ops.n_vmaxnorm
 
 (* Problem Constants *)
 
