@@ -4,6 +4,8 @@
  * -----------------------------------------------------------------
  * Programmer(s): Cosmin Petra and Radu Serban @ LLNL
  * -----------------------------------------------------------------
+ * OCaml port: Jun Inoue, Inria, Aug 2014.
+ * -----------------------------------------------------------------
  * Example program for IDAS: Brusselator, parallel, GMRES, IDABBD
  * preconditioner, ASA
  *

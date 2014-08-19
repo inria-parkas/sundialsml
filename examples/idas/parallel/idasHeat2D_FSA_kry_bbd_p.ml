@@ -5,6 +5,8 @@
  * -----------------------------------------------------------------
  * Programmer(s): Radu Serban @ LLNL
  * -----------------------------------------------------------------
+ * OCaml port: Jun Inoue, Inria, Aug 2014.
+ * -----------------------------------------------------------------
  * Example problem for IDAS: FSA for 2D heat equation, parallel,
  * GMRES, IDABBDPRE.
  *
