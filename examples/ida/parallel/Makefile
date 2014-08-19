@@ -19,15 +19,15 @@ byte: $(EXAMPLES:.ml=.byte)
 opt: $(EXAMPLES:.ml=.opt)
 
 genlog = \
-    @(for f in $(1); do  \
-	echo $(DIVIDER);                  \
-	echo "--$$f";                    \
-	cat $$f;                         \
-     done;                               \
-     echo "Summary (each should be 0):"; \
-     for f in $(1); do  \
-	wc -l $$f;                       \
-     done;                               \
+    @(for f in $(1); do  			\
+	echo $(DIVIDER);                 	\
+	echo "--ida/parallel/$$f";         	\
+	cat $$f;                         	\
+     done;                               	\
+     echo "Summary (each should be 0):"; 	\
+     for f in $(1); do  			\
+	(cd ../..; wc -l ida/parallel/$$f);	\
+     done;                               	\
     ) > $(2)
 
 # requires a valid EXAMPLESROOT to avoid:
