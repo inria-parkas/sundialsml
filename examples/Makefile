@@ -18,9 +18,11 @@ tests.byte.log:
 	    done;			\
 	done
 	@echo ======================================================================
+	@echo 'Summary (each should be 0):'
 	@for d in ${DIRS}; do		\
 	    for s in ${SUBDIRS}; do	\
-		cat $$d/$$s/$@;		\
+		cat $$d/$$s/$@		\
+		| grep '^[0-9]';	\
 	    done;			\
 	done
 
@@ -31,9 +33,11 @@ tests.opt.log:
 	    done;			\
 	done
 	@echo ======================================================================
+	@echo 'Summary (each should be 0):'
 	@for d in ${DIRS}; do		\
 	    for s in ${SUBDIRS}; do	\
-		cat $$d/$$s/$@;		\
+		cat $$d/$$s/$@		\
+		| grep '^[0-9]';	\
 	    done;			\
 	done
 
