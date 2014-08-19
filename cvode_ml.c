@@ -51,10 +51,6 @@
 #include <cvodes/cvodes_lapack.h>
 #endif
 
-#ifdef SUNDIALSML_WITHMPI
-#include <cvodes/cvodes_bbdpre.h>
-#endif
-
 #else
 /* CVODE (without sensitivity) */
 
@@ -72,10 +68,6 @@
 
 #if SUNDIALS_BLAS_LAPACK == 1
 #include <cvode/cvode_lapack.h>
-#endif
-
-#ifdef SUNDIALSML_WITHMPI
-#include <cvode/cvode_bbdpre.h>
 #endif
 
 #endif
@@ -519,79 +511,6 @@ CAMLprim void c_cvode_set_alternate (value vcvode_mem, value vhas_init,
 
     CAMLreturn0;
 }
-
-#ifdef SUNDIALSML_WITHMPI
-
-CAMLprim void c_cvode_bbd_prec_init (value vcvode_mem, value vlocaln,
-				     value vbandwidths, value vdqrely,
-				     value vhascomm)
-{
-    CAMLparam5(vcvode_mem, vlocaln, vbandwidths, vdqrely, vhascomm);
-    void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
-    int flag;
-
-    flag = CVBBDPrecInit (cvode_mem,
-	Long_val(vlocaln),
-	Long_val(Field(vbandwidths, RECORD_CVODE_BANDBLOCK_BANDWIDTHS_MUDQ)),
-	Long_val(Field(vbandwidths, RECORD_CVODE_BANDBLOCK_BANDWIDTHS_MLDQ)),
-	Long_val(Field(vbandwidths, RECORD_CVODE_BANDBLOCK_BANDWIDTHS_MUKEEP)),
-	Long_val(Field(vbandwidths, RECORD_CVODE_BANDBLOCK_BANDWIDTHS_MLKEEP)),
-	Double_val(vdqrely),
-	bbdlocal,
-	Bool_val(vhascomm) ? bbdcomm : NULL);
-    CHECK_FLAG ("CVBBDPrecInit", flag);
-
-    CAMLreturn0;
-}
-
-CAMLprim void c_cvode_bbd_prec_reinit (value vcvode_mem, value vmudq,
-				       value vmldq, value vdqrely)
-{
-    CAMLparam4(vcvode_mem, vmudq, vmldq, vdqrely);
-    void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
-    int flag;
-
-    flag = CVBBDPrecReInit (cvode_mem, Long_val(vmudq), Long_val(vmldq),
-				       Double_val(vdqrely));
-    CHECK_FLAG ("CVBBDPrecReInit", flag);
-
-    CAMLreturn0;
-}
-
-CAMLprim value c_cvode_bbd_get_work_space(value vcvode_mem)
-{
-    CAMLparam1(vcvode_mem);
-    CAMLlocal1(r);
-
-    int flag;
-    long int lenrw;
-    long int leniw;
-
-    flag = CVBBDPrecGetWorkSpace(CVODE_MEM_FROM_ML(vcvode_mem), &lenrw, &leniw);
-    CHECK_FLAG("CVBBDPrecGetWorkSpace", flag);
-
-    r = caml_alloc_tuple(2);
-
-    Store_field(r, 0, Val_long(lenrw));
-    Store_field(r, 1, Val_long(leniw));
-
-    CAMLreturn(r);
-}
-
-CAMLprim value c_cvode_bbd_get_num_gfn_evals(value vcvode_mem)
-{
-    CAMLparam1(vcvode_mem);
-
-    int flag;
-    long int v;
-
-    flag = CVBBDPrecGetNumGfnEvals(CVODE_MEM_FROM_ML(vcvode_mem), &v);
-    CHECK_FLAG("CVBBDPrecGetNumGfnEvals", flag);
-
-    CAMLreturn(Val_long(v));
-}
-  
-#endif
 
 /* Dense and Band can only be used with serial NVectors.  */
 CAMLprim void c_cvode_dls_dense (value vcvode_mem, value vneqs, value vset_jac)

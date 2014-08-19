@@ -104,7 +104,7 @@ let sptfqmr maxl prec_type bws dqrely cb bs nv =
 
 external c_bbd_prec_reinitb
     : parallel_session -> int -> int -> int -> float -> unit
-    = "c_cvode_bbd_prec_reinitb"
+    = "c_cvodes_bbd_prec_reinitb"
 
 let reinit bs mudq mldq dqrely =
   let parent, which = parent_and_which bs in

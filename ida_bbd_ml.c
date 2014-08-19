@@ -32,10 +32,6 @@
 #include "ida_ml.h"
 #include "nvector_ml.h"
 
-#include <stdio.h>
-#define MAX_ERRMSG_LEN 256
-
-
 static int bbdlocal(long int nlocal, realtype t, N_Vector y, N_Vector yp,
 		    N_Vector gval, void *user_data)
 {
