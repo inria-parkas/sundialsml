@@ -187,8 +187,11 @@ module LintArray :
     (** A {{:OCAML_DOC_ROOT(Bigarray.Array1)} (Bigarray)} vector of integers. *)
     type t = (int, Bigarray.int_elt, Bigarray.c_layout) Bigarray.Array1.t
 
-    (** [make_lint_array n] returns a {!lint_array} with [n] elements. *)
-    val make  : int -> t
+    (** [make n v] returns a {!lint_array} with [n] elements each set to [v]. *)
+    val make  : int -> int -> t
+
+    (** [create n] returns a {!lint_array} with [n] elements. *)
+    val create  : int -> t
   end
 
 (** {2 Arrays of roots (zero-crossings)} *)

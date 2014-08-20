@@ -315,7 +315,13 @@ module LintArray =
   struct
     type t = (int, Bigarray.int_elt, Bigarray.c_layout) Bigarray.Array1.t
 
-    let make = Bigarray.Array1.create Bigarray.int RealArray.layout
+    let create = Bigarray.Array1.create Bigarray.int RealArray.layout
+
+    let make n x =
+      let v = create n in
+      Bigarray.Array1.fill v x;
+      v
+
   end
 
 module Roots =
