@@ -34,8 +34,8 @@ let call_bbbdcomm session t y yb =
   | _ -> assert false
 
 let _ =
-  Callback.register "c_cvode_call_bbbdlocal"      call_bbbdlocal;
-  Callback.register "c_cvode_call_bbbdcomm"       call_bbbdcomm
+  Callback.register "c_cvodes_call_bbbdlocal"      call_bbbdlocal;
+  Callback.register "c_cvodes_call_bbbdcomm"       call_bbbdcomm
 
 type callbacks =
   {
