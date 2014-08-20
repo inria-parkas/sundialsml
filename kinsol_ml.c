@@ -437,7 +437,7 @@ CAMLprim void c_kinsol_dls_lapack_dense (value vkin_mem, value vset_jac)
     int flag;
 
     flag = KINLapackDense (kin_mem, neqs);
-    CHECK_FLAG ("KINCVLapackDense", flag);
+    CHECK_FLAG ("KINLapackDense", flag);
     if (Bool_val (vset_jac)) {
 	flag = KINDlsSetDenseJacFn (KINSOL_MEM_FROM_ML (vkin_mem), jacfn);
 	CHECK_FLAG("KINDlsSetDenseJacFn", flag);
@@ -530,7 +530,7 @@ CAMLprim void c_kinsol_spils_set_preconditioner (value vsession,
     KINSpilsPrecSetupFn setup = Bool_val (vset_precsetup) ? precsetupfn : NULL;
 
     flag = KINSpilsSetPreconditioner (mem, setup, precsolvefn);
-    CHECK_FLAG ("KINCVSpilsSetPreconditioner", flag);
+    CHECK_FLAG ("KINSpilsSetPreconditioner", flag);
 
     CAMLreturn0;
 }
