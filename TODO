@@ -101,15 +101,16 @@ DONE 6. Rename create functions to make?
 
 TO DISCUSS
 ----------
+* Should we check consistency of vector lengths?
+
+  - To do this generically, we need a new function in nvector_*.ml to compare
+    array lengths.
+
+* Pass nvectors to callbacks or to pass payload (as we do now)?
+
 * The above patches.
 
 * Should we remove all examples except the Sundials ones?
-
-* Don't use sundials-config?
-  - it leads to duplicate options.
-  - it's not possible to request both "-t s" and "-t p" at the same time
-  - it's not really suited to building a library with everything
-  Or propose changes on the sundials-users list?
 
 TO EXPLAIN IN DOCS
 ------------------
@@ -118,4 +119,3 @@ TO EXPLAIN IN DOCS
   size 5).
 * Check the various links (@cvode, @cvodes, @ida, @idas, etc.)
   (automatically with a script?)
-
