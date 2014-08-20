@@ -29,14 +29,14 @@ let unvec = Sundials.unvec
 (* TODO: replace with Nvector.Ops.n_vdotprod *)
 let n_vdotprod comm xd yd =
   let sum = ref 0.0 in
-  for i=0 to RealArray.length xd do
+  for i=0 to RealArray.length xd - 1 do
     sum := !sum +. xd.{i} *. yd.{i}
   done;
   Mpi.allreduce_float !sum Mpi.Float_sum comm
 
 (* TODO: replace with Nvector.Ops.n_vscale *)
 let n_vscale c x z =
-  for i = 0 to RealArray.length x do
+  for i = 0 to RealArray.length x - 1 do
     z.{i} <- c *. x.{i}
   done
 
@@ -46,7 +46,6 @@ let n_vscale c x z =
  *------------------------------------------------------------------
  *)
 
-(* TODO: test 3D version... *)
 let dim = 2 (* = 3 (* USE3D *) *)
 
 (* Domain definition *)
@@ -87,7 +86,7 @@ let g_min =     1.0e-5
 let diff_coef = 1.0
 let v_max =     1.0
 let l =         (ymax-.ymin)/.2.0
-let v_coeff =   v_max/.l/.l
+let v_coeff =   v_max/.(ymax-.ymin)/.2.0/.(ymax-.ymin)/.2.0
 
 (* Initial and final times *)
 
@@ -226,7 +225,7 @@ let set_source d =
       [] -> let g = p1 +. p2 in
             set_ijth l_m pdata ii (if g < g_min then zero else g)
     | d::ds ->
-        for i = 0 to l_m.(d) do
+        for i = 0 to l_m.(d) - 1 do
           ii.(d) <- i;
           let x = xmin.(d) +. float (m_start.(d) + i) *. dx.(d) in
           let p1 = p1 *. exp (-. sqr (g1.(d) -. x) /. sqr g1_sigma) in
@@ -286,20 +285,20 @@ let set_data comm npes myId =
      l_m:     length of the subdomain *)
   let m_start = array_of_second (
     List.fold_left (function (dv, r) -> fun i ->
-        dv / n.(i), r @ [ (myId mod dv) * nd.(i) ])
+        dv / n.(i), r @ [ (dv mod n.(i)) * nd.(i) ])
       (myId, []) dims)
   in
   let l_m = Array.of_list (List.map (fun i -> 
-        if nbr_right.(0) = myId then m.(0) - m_start.(0) else nd.(0)) dims)
+        if nbr_right.(i) = myId then m.(i) - m_start.(i) else nd.(i)) dims)
   in
 
   (* Allocate memory for the y_ext array 
      (local solution + data from neighbors) *)
-  let yext_size = List.fold_left (fun s i -> s * l_m.(i) + 2) 1 dims in
+  let yext_size = List.fold_left (fun s i -> s * (l_m.(i) + 2)) 1 dims in
 
   (* Allocate space for the source parameters *)
-  let neq = List.fold_left (fun s i -> s * m.(dim)) 1 dims in
-  let l_neq = List.fold_left (fun s i -> s * l_m.(dim)) 1 dims in
+  let neq = List.fold_left (fun s i -> s * m.(i)) 1 dims in
+  let l_neq = List.fold_left (fun s i -> s * l_m.(i)) 1 dims in
 
   let data = {
     xmin   = xmin;
@@ -386,7 +385,7 @@ let f_comm d t (ydata, _, _) =
       (* If subdomain at boundary, no communication in this direction *)
       if id <> nbr.(d).(dir) then begin
         (* Compute the index of the boundary (right or left) *)
-        i.(d) <- if (dir lxor proc_cond.(d) = 1) then l_m.(d)-1 else 0;
+        i.(d) <- if (dir lxor proc_cond.(d) <> 0) then l_m.(d)-1 else 0;
 
         (* Loop over all other dimensions and copy data into buf_send *)
         let l = Array.init (dim - 1) (fun i -> (d + 1 + i) mod dim) in
@@ -420,7 +419,7 @@ let f_comm d t (ydata, _, _) =
         in
 
         (* Compute the index of the boundary (right or left) in yextdata *)
-        i.(d) <- if dir lxor proc_cond.(d) = 1 then l_m.(d) else -1;
+        i.(d) <- if dir lxor proc_cond.(d) <> 0 then l_m.(d) else -1;
 
         (* Loop over all other dimensions and copy data into yextdata *)
         let c = ref 0 in
@@ -457,11 +456,11 @@ let load_yext data src =
     if d < 0 then
       set_ijth_ext l_m data.y_ext i (ijth l_m src i)
     else
-      for j = 0 to l_m.(d) do
-        i.(j) <- j;
+      for j = 0 to l_m.(d) - 1 do
+        i.(d) <- j;
         copy (d - 1)
       done
-  in copy dim
+  in copy (dim - 1)
 
 (*
  *------------------------------------------------------------------
@@ -507,7 +506,7 @@ let print_final_stats s =
   and ncfl     = Cvode.Spils.get_num_conv_fails s
   and nfeSPGMR = Cvode.Spils.get_num_rhs_evals s
   in
-  printf "\nFinal Statistics: \n\n";
+  printf "\nFinal Statistics.. \n\n";
   printf "lenrw   = %6d     leniw = %6d\n"   lenrw leniw;
   printf "llrw    = %6d     lliw  = %6d\n"   lenrwSPGMR leniwSPGMR;
   printf "nst     = %6d\n"                   nst;
@@ -533,7 +532,7 @@ let print_final_statsB s =
   and ncfl     = Adj.Spils.get_num_conv_fails s
   and nfeSPGMR = Adj.Spils.get_num_rhs_evals s
   in
-  printf "\nFinal Statistics: \n\n";
+  printf "\nFinal Statistics.. \n\n";
   printf "lenrw   = %6d     leniw = %6d\n"   lenrw leniw;
   printf "llrw    = %6d     lliw  = %6d\n"   lenrwSPGMR leniwSPGMR;
   printf "nst     = %6d\n"                   nst;
@@ -761,7 +760,6 @@ let fQ data t (y, _, _) (dqdata, _, _) =
  *)
 
 let fB_local data t (ydata, _, _) (yBdata, _, _) (dyBdata, _, _) =
-
   (* Extract stuff from data structure *)
   let id = data.myId in
   let xmin = data.xmin in
