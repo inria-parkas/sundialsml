@@ -6,6 +6,8 @@
  * Programmer(s): Allan Taylor, Alan Hindmarsh and
  *                Radu Serban @ LLNL
  * -----------------------------------------------------------------
+ * OCaml port: Jun Inoue, Inria, Aug 2014.
+ * -----------------------------------------------------------------
  * This simple example problem for IDA, due to Robertson, 
  * is from chemical kinetics, and consists of the following three 
  * equations:

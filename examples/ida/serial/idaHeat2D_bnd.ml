@@ -6,6 +6,8 @@
  * Programmer(s): Allan Taylor, Alan Hindmarsh and
  *                Radu Serban @ LLNL
  * -----------------------------------------------------------------
+ * OCaml port: Jun Inoue, Inria, Aug 2014.
+ * -----------------------------------------------------------------
  * Example problem for IDA: 2D heat equation, serial, banded.
  *
  * This example solves a discretized 2D heat equation problem.

@@ -6,6 +6,8 @@
  * Programmer(s): Allan Taylor, Alan Hindmarsh and
  *                Radu Serban @ LLNL
  * -----------------------------------------------------------------
+ * OCaml port: Jun Inoue, Inria, Aug 2014.
+ * -----------------------------------------------------------------
  *
  * This example loops through the available iterative linear solvers:
  * SPGMR, SPBCG and SPTFQMR.

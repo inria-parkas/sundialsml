@@ -5,6 +5,8 @@
  * -----------------------------------------------------------------
  * Programmer: Radu Serban @ LLNL
  * -----------------------------------------------------------------
+ * OCaml port: Jun Inoue, Inria, Aug 2014.
+ * -----------------------------------------------------------------
  * Simulation of a slider-crank mechanism modelled with 3 generalized
  * coordinates: crank angle, connecting bar angle, and slider location.
  * The mechanism moves under the action of a constant horizontal force

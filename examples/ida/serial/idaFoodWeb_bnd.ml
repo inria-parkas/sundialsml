@@ -6,6 +6,8 @@
  * Programmer(s): Allan Taylor, Alan Hindmarsh and
  *                Radu Serban @ LLNL
  * -----------------------------------------------------------------
+ * OCaml port: Jun Inoue, Inria, Aug 2014.
+ * -----------------------------------------------------------------
  * Example program for IDA: Food web problem.
  *
  * This example program (serial version) uses the IDABAND linear 
