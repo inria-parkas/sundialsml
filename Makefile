@@ -56,9 +56,6 @@ INSTALL_FILES=			\
     $(INSTALL_CMA:.cma=$(XA))	\
     $(foreach file,$(INSTALL_CMA:.cma=$(XA)), libml$(file))
 
-# FIXME: remove.
-CFLAGS+=-fPIC
-
 ### Build rules.
 
 .PHONY: all sundials install doc clean distclean
