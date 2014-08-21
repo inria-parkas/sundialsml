@@ -320,8 +320,8 @@ let main () =
   let data = { p = RealArray.of_array [|p1;p2;p3|] } in
 
   (* Consistent IC *)
-  let yy = RealArray.make neq
-  and yp = RealArray.make neq
+  let yy = RealArray.create neq
+  and yp = RealArray.create neq
   in
   yy.{0} <- 1.0;
   yy.{1} <- 0.0;
@@ -330,7 +330,7 @@ let main () =
   yp.{1} <- p1;
   yp.{2} <- 0.0;
 
-  let q = RealArray.make 1 in
+  let q = RealArray.create 1 in
   nvconst 0.0 q;
 
   (* Wrap arrays in nvectors.  *)
@@ -403,8 +403,8 @@ let main () =
   *******************************)
 
   (* Consistent IC. *)
-  let yyB1 = RealArray.make (2*neq)
-  and ypB1 = RealArray.make (2*neq)
+  let yyB1 = RealArray.create (2*neq)
+  and ypB1 = RealArray.create (2*neq)
   in
 
   nvconst 0.0 yyB1;
@@ -417,7 +417,7 @@ let main () =
   ypB1.{3} <- (Sundials.unvec yyS.(0)).{2} -. (Sundials.unvec yyS.(0)).{0};
   ypB1.{4} <- (Sundials.unvec yyS.(0)).{2} -. (Sundials.unvec yyS.(0)).{1};
 
-  let qB1 = RealArray.make (2*np) in
+  let qB1 = RealArray.create (2*np) in
   nvconst 0.0 qB1;
 
   let wyyB1 = Nvector_serial.wrap yyB1
@@ -439,8 +439,8 @@ let main () =
   *******************************)
 
   (* Consistent IC. *)
-  let yyB2 = RealArray.make (2*neq)
-  and ypB2 = RealArray.make (2*neq)
+  let yyB2 = RealArray.create (2*neq)
+  and ypB2 = RealArray.create (2*neq)
   in
 
   nvconst 0.0 yyB2;
@@ -453,7 +453,7 @@ let main () =
   ypB2.{3} <- (Sundials.unvec yyS.(1)).{2} -. (Sundials.unvec yyS.(1)).{0};
   ypB2.{4} <- (Sundials.unvec yyS.(1)).{2} -. (Sundials.unvec yyS.(1)).{1};
 
-  let qB2 = RealArray.make(2*np) in
+  let qB2 = RealArray.create (2*np) in
   nvconst 0.0 qB2;
 
   let wyyB2 = Nvector_serial.wrap yyB2
@@ -559,9 +559,9 @@ let main () =
   let gm = q.{0} in
 
   (* Compute FD for p1. *)
-  let grdG_fwd = RealArray.make 2
-  and grdG_bck = RealArray.make 2
-  and grdG_cntr = RealArray.make 2
+  let grdG_fwd = RealArray.create 2
+  and grdG_bck = RealArray.create 2
+  and grdG_cntr = RealArray.create 2
   in
   grdG_fwd.{0} <- (gp-.g)/.dp1;
   grdG_bck.{0} <- (g-.gm)/.dp1;

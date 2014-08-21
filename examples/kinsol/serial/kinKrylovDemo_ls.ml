@@ -83,12 +83,14 @@
  *)
 
 module RealArray = Sundials.RealArray
+module LintArray = Sundials.LintArray
 module Dense = Dls.ArrayDenseMatrix
 let unvec = Sundials.unvec
+open Bigarray
 
 let printf = Printf.printf
-let subarray = Bigarray.Array1.sub
-let slice_left = Bigarray.Array2.slice_left
+let subarray = Array1.sub
+let slice_left = Array2.slice_left
 let unwrap = Sundials.RealArray2.unwrap
 let nvwl2norm =
   match Nvector_array.Bigarray.array_nvec_ops.Nvector_custom.nvwl2norm with
@@ -155,17 +157,17 @@ let p =
 let pivot =
   Array.init mx (fun jx ->
     Array.init my (fun jy ->
-      let v = Sundials.LintArray.make num_species in
-      Bigarray.Array1.fill v 0;
+      let v = LintArray.create num_species in
+      Array1.fill v 0;
       v
     ))
 
 let acoef = Sundials.RealArray2.make_data num_species num_species
-let bcoef = RealArray.make num_species
-let cox = RealArray.make num_species
-let coy = RealArray.make num_species
+let bcoef = RealArray.create num_species
+let cox = RealArray.create num_species
+let coy = RealArray.create num_species
 
-let rates = RealArray.make neq
+let rates = RealArray.create neq
 
 (* Load problem constants in data *)
 
@@ -279,7 +281,7 @@ let prec_setup_bd { Kinsol.jac_u=cc;
                     Kinsol.jac_tmp=(vtemp1, vtemp2)}
                   { Kinsol.Spils.uscale=cscale;
                     Kinsol.Spils.fscale=fscale } =
-  let perturb_rates = Sundials.RealArray.make num_species in
+  let perturb_rates = Sundials.RealArray.create num_species in
   
   let delx = dx in
   let dely = dy in

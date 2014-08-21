@@ -40,6 +40,7 @@
  *)
 
 module RealArray = Sundials.RealArray
+module LintArray = Sundials.LintArray
 module Roots  = Sundials.Roots
 module Densemat = Dls.ArrayDenseMatrix
 open Bigarray
@@ -151,7 +152,7 @@ let sqr x = x ** 2.0
 
 let alloc_user_data () =
   let new_dmat _ = Densemat.make num_species num_species in
-  let new_int1 _  = Sundials.LintArray.make num_species in
+  let new_int1 _  = LintArray.create num_species in
   let new_y_arr elinit _ = Array.init my elinit in
   let new_xy_arr elinit  = Array.init mx (new_y_arr elinit) in
   {

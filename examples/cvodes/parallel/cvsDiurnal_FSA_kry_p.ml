@@ -67,6 +67,7 @@
  *)
 
 module RealArray = Sundials.RealArray
+module LintArray = Sundials.LintArray
 module Direct = Dls.ArrayDenseMatrix
 module Sens = Cvodes.Sensitivity
 open Bigarray
@@ -83,7 +84,7 @@ let blit buf buf_offset dst dst_offset len =
 let header_and_empty_array_size =
   Marshal.total_size (Marshal.to_string (RealArray.empty) []) 0
 let float_cell_size =
-  Marshal.total_size (Marshal.to_string (RealArray.make 1) []) 0
+  Marshal.total_size (Marshal.to_string (RealArray.create 1) []) 0
   - header_and_empty_array_size
 
 let bytes x = header_and_empty_array_size + x * float_cell_size
@@ -169,7 +170,7 @@ type user_data = {
         (* For preconditioner *)
         p          : Direct.t array array;
         jbd        : Direct.t array array;
-        pivot      : Sundials.LintArray.t array array;
+        pivot      : LintArray.t array array;
     }
 
 (* Private Helper Functions *)
@@ -224,7 +225,7 @@ let process_args my_pe =
 
 let init_user_data my_pe comm =
   let new_dmat _ = Direct.make nvars nvars in
-  let new_int1 _  = Sundials.LintArray.make nvars in
+  let new_int1 _  = LintArray.create nvars in
   let new_y_arr elinit _ = Array.init mysub elinit in
   let new_xy_arr elinit  = Array.init mxsub (new_y_arr elinit) in
 
@@ -261,7 +262,7 @@ let init_user_data my_pe comm =
     isuby    = isuby;
     isubx    = my_pe - isuby*npex;
 
-    uext     = RealArray.init (nvars*(mxsub+2)*(mysub+2)) 0.0;
+    uext     = RealArray.make (nvars*(mxsub+2)*(mysub+2)) 0.0;
 
     (* Set the sizes of a boundary x-line in u and uext *)
     nvmxsub  = nvars*mxsub;
@@ -310,7 +311,7 @@ let set_initial_profiles data u =
 (* Routine to send boundary data to neighboring PEs. *)
 
 let bsend comm my_pe isubx isuby dsizex dsizey udata =
-  let buf = RealArray.make (nvars*mysub) in
+  let buf = RealArray.create (nvars*mysub) in
 
   (* If isuby > 0, send data from bottom x-line of u *)
   if isuby <> 0 then Mpi.send (slice udata 0 dsizex) (my_pe-npex) 0 comm;
@@ -549,7 +550,7 @@ let fcalc data t udata dudata =
 
 let print_output s my_pe comm u t =
   let npelast = npex*npey - 1 in
-  let tempu = RealArray.make 2 in
+  let tempu = RealArray.create 2 in
   let udata, _, _ = unvec u in
 
   (* Send c at top right mesh point to PE 0 *)
@@ -583,7 +584,7 @@ let print_output s my_pe comm u t =
 
 let print_output_s my_pe comm uS =
   let npelast = npex*npey - 1 in
-  let temps = RealArray.make 2 in
+  let temps = RealArray.create 2 in
 
   let show i =
     let sdata, _, _ = unvec uS.(i - 1) in
@@ -829,7 +830,7 @@ let main () =
         end
     | Some sensi_meth -> begin
         let plist = Array.init ns (fun i -> i) in
-        let pbar = RealArray.make ns in
+        let pbar = RealArray.create ns in
         RealArray.mapi (fun is _ -> data.params.{plist.(is)}) pbar;
 
         let uS = Array.init ns

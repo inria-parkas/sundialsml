@@ -227,7 +227,7 @@ let main () =
   let kmem = Kinsol.init (Kinsol.Dls.dense (Some jac)) func y in
 
   (* Set optional inputs *)
-  let constraints = RealArray.init neq zero in
+  let constraints = RealArray.make neq zero in
   for i=nvar+1 to neq do
     set_ith constraints i one
   done;

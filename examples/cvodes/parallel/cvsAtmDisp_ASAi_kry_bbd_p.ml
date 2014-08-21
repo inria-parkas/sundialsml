@@ -319,7 +319,7 @@ let set_data comm npes myId =
     m_start   = m_start;
     l_m       = l_m;
 
-    y_ext = RealArray.make yext_size;
+    y_ext = RealArray.create yext_size;
 
     (* Initialize Buffer field.
        Size of buffer is checked when needed *)
@@ -357,7 +357,7 @@ let f_comm d t (ydata, _, _) =
 
   (* Adjust buffer size if necessary *)
   if d.buf_size < size then begin
-    d.buf_send <- RealArray.make size;
+    d.buf_send <- RealArray.create size;
     d.buf_size <- size
   end;
   let buf_send = d.buf_send in

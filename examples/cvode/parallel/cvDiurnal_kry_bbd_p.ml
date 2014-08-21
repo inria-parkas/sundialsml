@@ -73,7 +73,7 @@ let blit buf buf_offset dst dst_offset len =
 let header_and_empty_array_size =
   Marshal.total_size (Marshal.to_string (RealArray.empty) []) 0
 let float_cell_size =
-  Marshal.total_size (Marshal.to_string (RealArray.make 1) []) 0
+  Marshal.total_size (Marshal.to_string (RealArray.create 1) []) 0
   - header_and_empty_array_size
 
 let bytes x = header_and_empty_array_size + x * float_cell_size
@@ -176,7 +176,7 @@ let init_user_data my_pe comm =
     isuby    = isuby;
     isubx    = my_pe - isuby*npex;
 
-    uext     = RealArray.init (nvars*(mxsub+2)*(mysub+2)) 0.0;
+    uext     = RealArray.make (nvars*(mxsub+2)*(mysub+2)) 0.0;
 
     (* Set the sizes of a boundary x-line in u and uext *)
     nvmxsub  = nvars*mxsub;
@@ -232,7 +232,7 @@ let print_intro npes mudq mldq mukeep mlkeep =
 
 let print_output s my_pe comm u t =
   let npelast = npex*npey - 1 in
-  let tempu = RealArray.make 2 in
+  let tempu = RealArray.create 2 in
   let udata, _, _ = unvec u in
 
   (* Send c1,c2 at top right mesh point to PE 0 *)
@@ -298,7 +298,7 @@ let print_final_stats s =
 (* Routine to send boundary data to neighboring PEs *)
 
 let bsend comm my_pe isubx isuby dsizex dsizey udata =
-  let buf = RealArray.make (nvars*mysub) in
+  let buf = RealArray.create (nvars*mysub) in
 
   (* If isuby > 0, send data from bottom x-line of u *)
   if isuby <> 0 then Mpi.send (slice udata 0 dsizex) (my_pe-npex) 0 comm;

@@ -79,6 +79,7 @@
  *)
 
 module RealArray = Sundials.RealArray
+module LintArray = Sundials.LintArray
 module Adj = Cvodes.Adjoint
 module Densemat = Dls.ArrayDenseMatrix
 open Bigarray
@@ -158,7 +159,7 @@ let tout  = 10.0
 
 type web_data = {
     p         : Densemat.t array;
-    pivot     : Sundials.LintArray.t array;
+    pivot     : LintArray.t array;
 
     ns        : int;
     mxns      : int;
@@ -275,7 +276,7 @@ let alloc_user_data () =
   let r =
     {
       p          = Array.init ngrp (fun _ -> Densemat.make ns ns);
-      pivot      = Array.init ngrp (fun _ -> Sundials.LintArray.make ns);
+      pivot      = Array.init ngrp (fun _ -> LintArray.create ns);
 
       ns         = ns;
       mxns       = mxns;
@@ -307,8 +308,8 @@ let alloc_user_data () =
       dy         = dy;
       srur       = sqrt Sundials.unit_roundoff;
 
-      fsave      = RealArray.make neq;
-      fbsave     = RealArray.make neq;
+      fsave      = RealArray.create neq;
+      fbsave     = RealArray.create neq;
 
       rewt       = Nvector_serial.make neq 0.0;
 
@@ -381,7 +382,7 @@ let cb_init wdata (cdata : RealArray.t) is =
   let ns   = wdata.ns
   and mxns = wdata.mxns
   in
-  let gu = RealArray.init ns zero in
+  let gu = RealArray.make ns zero in
   gu.{ispec-1} <- one;
 
   for jy = 0 to my-1 do

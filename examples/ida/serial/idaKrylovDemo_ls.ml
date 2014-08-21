@@ -216,17 +216,17 @@ let set_initial_profile data u u' res =
 
 let main() =
   (* Allocate N-vectors and the user data structure. *)
-  let u = RealArray.make neq
-  and u' = RealArray.make neq
-  and res = RealArray.make neq
-  and constraints = RealArray.make neq in
+  let u = RealArray.create neq
+  and u' = RealArray.create neq
+  and res = RealArray.create neq
+  and constraints = RealArray.create neq in
   let dx = 1. /. float_of_int (mgrid - 1) in
   let data =
     {
       mm = mgrid;
       dx = dx;
       coeff = 1. /. (dx *. dx);
-      pp = RealArray.make neq;
+      pp = RealArray.create neq;
     }
   in
 

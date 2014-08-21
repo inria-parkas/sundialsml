@@ -75,8 +75,8 @@ let ith v i = v.{i - 1}
 let set_ith v i e = v.{i - 1} <- e
 
 (* System function for predator-prey system *)
-let lb = RealArray.make nvar
-let ub = RealArray.make nvar
+let lb = RealArray.create nvar
+let ub = RealArray.create nvar
 
 let func udata fdata =
   let x1  = udata.{0} in
@@ -156,9 +156,9 @@ let main () =
   ub.{1} <- two*.pi;
 
   (* Create serial vectors of length NEQ *)
-  let u1 = RealArray.make neq in
-  let u2 = RealArray.make neq in
-  let u  = RealArray.make neq in
+  let u1 = RealArray.create neq in
+  let u2 = RealArray.create neq in
+  let u  = RealArray.create neq in
   let u_nvec = Nvector_serial.wrap u in
   let s_nvec = Nvector_serial.make neq one in (* no scaling *)
   let c = RealArray.of_list [

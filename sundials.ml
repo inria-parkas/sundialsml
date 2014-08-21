@@ -63,14 +63,21 @@ module RealArray =
 
     let empty : t = Bigarray.Array1.create kind layout 0
 
-    let make : int -> t = Bigarray.Array1.create kind layout
+    let create : int -> t = Bigarray.Array1.create kind layout
     let of_array : float array -> t = Bigarray.Array1.of_array kind layout
 
     let fill : t -> float -> unit = Bigarray.Array1.fill
 
-    let init size x =
-      let a = make size in
+    let make size x =
+      let a = create size in
       fill a x;
+      a
+
+    let init size f =
+      let a = create size in
+      for i = 0 to size - 1 do
+        a.{i} <- f i
+      done;
       a
 
     let length : t -> int = Bigarray.Array1.dim
@@ -78,7 +85,7 @@ module RealArray =
     let blit : t -> t -> unit = Bigarray.Array1.blit
 
     let clone src =
-      let dst = make (length src) in
+      let dst = create (length src) in
       blit src dst;
       dst
 

@@ -124,7 +124,7 @@ let blit buf buf_offset dst dst_offset len =
 let header_and_empty_array_size =
   Marshal.total_size (Marshal.to_string (RealArray.empty) []) 0
 let float_cell_size =
-  Marshal.total_size (Marshal.to_string (RealArray.make 1) []) 0
+  Marshal.total_size (Marshal.to_string (RealArray.create 1) []) 0
   - header_and_empty_array_size
 
 let bytes x = header_and_empty_array_size + x * float_cell_size
@@ -232,8 +232,8 @@ let dotprod size (x1 : RealArray.t) (x2 : RealArray.t) =
  *)
 
 let bsend comm my_pe isubx isuby dsizex dsizey udata =
-  let bufleft = RealArray.make (num_species*mysub)
-  and bufright = RealArray.make (num_species*mysub)
+  let bufleft = RealArray.create (num_species*mysub)
+  and bufright = RealArray.create (num_species*mysub)
   in
 
   (* If isuby > 0, send data from bottom x-line of u *)
@@ -565,11 +565,11 @@ let init_user_data local_N system_size thispe npes comm =
   let dx2 = dx*.dx in
   let dy2 = dy*.dy in
 
-  let bcoef = RealArray.make num_species in
-  let cox = RealArray.make num_species in
-  let coy = RealArray.make num_species in
-  let rhs = RealArray.make num_species in
-  let cext = RealArray.make ((mxsub+2)*(mysub+2)*num_species) in
+  let bcoef = RealArray.create num_species in
+  let cox = RealArray.create num_species in
+  let coy = RealArray.create num_species in
+  let rhs = RealArray.create num_species in
+  let cext = RealArray.create ((mxsub+2)*(mysub+2)*num_species) in
 
   for i = 0 to np-1 do
     (*  Fill in the portion of acoef in the four quadrants, row by row. *)
@@ -701,7 +701,7 @@ let print_header system_size maxl mudq mldq mukeep mlkeep rtol atol =
  *)
 
 let print_output webdata mem cc tt comm =
-  let clast = RealArray.make 2 in
+  let clast = RealArray.create 2 in
   let thispe = webdata.thispe in
   let npelast = webdata.npes - 1 in
   let cdata,_,_ = cc in

@@ -72,7 +72,7 @@ let blit buf buf_offset dst dst_offset len =
 let header_and_empty_array_size =
   Marshal.total_size (Marshal.to_string (RealArray.empty) []) 0
 let float_cell_size =
-  Marshal.total_size (Marshal.to_string (RealArray.make 1) []) 0
+  Marshal.total_size (Marshal.to_string (RealArray.create 1) []) 0
   - header_and_empty_array_size
 
 let bytes x = header_and_empty_array_size + x * float_cell_size
@@ -197,7 +197,7 @@ let init_user_data thispe comm =
     coeffx = coeffx;
     coeffy = coeffy;
     coeffxy = coeffxy;
-    uext = RealArray.make ((mxsub+2)*(mysub+2));
+    uext = RealArray.create ((mxsub+2)*(mysub+2));
     comm = comm;
     p = RealArray.of_array [|one; one|];
   }
@@ -207,8 +207,8 @@ let init_user_data thispe comm =
  *)
 
 let bsend comm thispe ixsub jysub dsizex dsizey uarray =
-  let bufleft = RealArray.make mysub
-  and bufright = RealArray.make mysub
+  let bufleft = RealArray.create mysub
+  and bufright = RealArray.create mysub
   in
 
   (* If jysub > 0, send data from bottom x-line of u. *)

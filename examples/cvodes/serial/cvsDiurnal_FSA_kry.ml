@@ -50,6 +50,7 @@
  *)
 
 module RealArray = Sundials.RealArray
+module LintArray = Sundials.LintArray
 module Direct = Dls.ArrayDenseMatrix
 module Sens = Cvodes.Sensitivity
 let unvec = Sundials.unvec
@@ -135,7 +136,7 @@ type user_data = {
         params     : RealArray.t;
         p          : Direct.t array array;
         jbd        : Direct.t array array;
-        pivot      : Sundials.LintArray.t array array;
+        pivot      : LintArray.t array array;
         mutable q4 : float;
         om         : float;
         dx         : float;
@@ -153,11 +154,11 @@ let sqr x = x ** 2.0
 
 let alloc_user_data () =
   let new_dmat _ = Direct.make num_species num_species in
-  let new_int1 _  = Sundials.LintArray.make num_species in
+  let new_int1 _  = LintArray.create num_species in
   let new_z_arr elinit _ = Array.init mz elinit in
   let new_xz_arr elinit  = Array.init mx (new_z_arr elinit) in
   {
-    params = RealArray.init np 0.0;
+    params = RealArray.make np 0.0;
     p      = new_xz_arr new_dmat;
     jbd    = new_xz_arr new_dmat;
     pivot  = new_xz_arr new_int1;
@@ -552,7 +553,7 @@ let main () =
     | None -> (printf "Sensitivity: NO "; (fun _ -> ()))
     | Some sensi_meth -> begin
         let plist = Array.init ns (fun i -> i) in
-        let pbar = RealArray.make ns in
+        let pbar = RealArray.create ns in
         RealArray.mapi (fun is _ -> data.params.{plist.(is)}) pbar;
 
         let uS = Array.init ns (fun _ -> Nvector_serial.make neq 0.0) in

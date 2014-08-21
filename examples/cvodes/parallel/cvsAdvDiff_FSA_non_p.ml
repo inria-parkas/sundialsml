@@ -323,7 +323,7 @@ let main () =
     | Some sensi_meth -> begin
         (* sensitivity w.r.t. i-th parameter *)
         let plist = Array.init ns (fun i -> i) in
-        let pbar = RealArray.make ns in
+        let pbar = RealArray.create ns in
         RealArray.mapi (fun is _ -> data.p.{plist.(is)}) pbar;
 
         let uS = Array.init ns

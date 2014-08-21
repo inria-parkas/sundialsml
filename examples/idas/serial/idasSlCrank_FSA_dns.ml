@@ -117,7 +117,7 @@ let set_ic data yy yp =
   yy.{1} <- x;
   yy.{2} <- p;
 
-  let _Q = RealArray.make 3 in
+  let _Q = RealArray.create 3 in
 
   force data yy _Q;
 
@@ -150,7 +150,7 @@ let ressc data tres yval ypval rval =
   let s2 = sin(p) in
   let c2 = cos(p) in
 
-  let _Q = RealArray.make 3 in
+  let _Q = RealArray.create 3 in
 
   force data yval _Q;
 
@@ -225,16 +225,16 @@ let print_final_stats mem =
  *)
 
 let main () =
-  let pbar = RealArray.make 2
-  and gm = RealArray.make 2
-  and gp = RealArray.make 2
-  and atolS = RealArray.make np
+  let pbar = RealArray.create 2
+  and gm = RealArray.create 2
+  and gp = RealArray.create 2
+  and atolS = RealArray.create np
   in
 
-  let id = RealArray.make neq in
-  let yy = RealArray.make neq in
-  let yp = RealArray.make neq in
-  let q = RealArray.make 1 in
+  let id = RealArray.create neq in
+  let yy = RealArray.create neq in
+  let yp = RealArray.create neq in
+  let q = RealArray.create 1 in
 
   let yyS= Array.init np (fun _ -> Nvector_serial.wrap (RealArray.clone yy)) in
   let ypS= Array.init np (fun _ -> Nvector_serial.wrap (RealArray.clone yp)) in

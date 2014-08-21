@@ -91,6 +91,7 @@
  *)
 
 module RealArray = Sundials.RealArray
+module LintArray = Sundials.LintArray
 module Roots = Sundials.Roots
 module Densemat = Dls.ArrayDenseMatrix
 open Bigarray
@@ -652,7 +653,7 @@ let alloc_user_data () =
   let r =
     {
       p         = Array.init ngrp (fun _ -> Densemat.make ns ns);
-      pivot     = Array.init ngrp (fun _ -> Sundials.LintArray.make ns);
+      pivot     = Array.init ngrp (fun _ -> LintArray.create ns);
 
       ns        = ns;
       mxns      = mxns;
@@ -684,9 +685,9 @@ let alloc_user_data () =
       dy        = dy;
       srur      = sqrt Sundials.unit_roundoff;
 
-      fsave     = RealArray.make neq;
+      fsave     = RealArray.create neq;
 
-      rewt      = Nvector_serial.wrap (RealArray.make neq);
+      rewt      = Nvector_serial.wrap (RealArray.create neq);
 
       cvode_mem = None;
     }

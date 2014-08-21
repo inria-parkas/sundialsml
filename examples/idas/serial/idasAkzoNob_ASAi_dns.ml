@@ -207,8 +207,8 @@ let main () =
   in
 
   (* Allocate N-vectors. *)
-  let yy = RealArray.make neq
-  and yp = RealArray.make neq
+  let yy = RealArray.create neq
+  and yp = RealArray.create neq
   in
 
   (* Consistent IC for  y, y'. *)
@@ -228,12 +228,12 @@ let main () =
   (* Get y' = - res(t0, y, 0) *)
   nvconst 0. yp;
 
-  let rr = RealArray.make neq in
+  let rr = RealArray.create neq in
   res data t0 yy yp rr;
   nvscale (-1.0) rr yp;
 
   (* Create and initialize q0 for quadratures. *)
-  let q = RealArray.make 1 in
+  let q = RealArray.create 1 in
   q.{0} <- 0.0;
 
   (* Wrap arrays in nvectors.  *)
@@ -273,10 +273,10 @@ let main () =
   (* BACKWARD run *)
 
   (* Initialize yB *)
-  let yB = RealArray.make neq in
+  let yB = RealArray.create neq in
   nvconst 0. yB;
 
-  let ypB = RealArray.make neq in
+  let ypB = RealArray.create neq in
   nvconst 0. ypB;
   ypB.{0} <- - 1.0;
 

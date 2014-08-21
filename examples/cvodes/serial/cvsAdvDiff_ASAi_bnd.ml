@@ -270,7 +270,7 @@ let print_output uB data =
 
 let main () =
   (* Create a serial vector *)
-  let u = RealArray.make neq in  (* Allocate u vector *)
+  let u = RealArray.create neq in  (* Allocate u vector *)
   let u_nvec = Nvector_serial.wrap u in
 
   let reltol = zero  (* Set the tolerances *)

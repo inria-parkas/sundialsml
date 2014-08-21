@@ -159,7 +159,7 @@ let init_user_data () =
       cox   = Array.make num_species 0.;
       coy   = Array.make num_species 0.;
       bcoef = Array.make num_species 0.;
-      rates = RealArray.make neq;
+      rates = RealArray.create neq;
     } in
   (* Set up shorthands. *)
   let acoef = webdata.acoef
@@ -376,9 +376,9 @@ let print_final_stats mem =
 
 let main () =
   let webdata = init_user_data ()
-  and c  = RealArray.make neq
-  and c' = RealArray.make neq
-  and id = RealArray.make neq in
+  and c  = RealArray.create neq
+  and c' = RealArray.create neq
+  and id = RealArray.create neq in
   set_initial_profiles webdata c c' id;
 
   (* Set remaining inputs to IDAInit. *)

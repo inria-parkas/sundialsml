@@ -72,7 +72,7 @@ let blit buf buf_offset dst dst_offset len =
 let header_and_empty_array_size =
   Marshal.total_size (Marshal.to_string (RealArray.empty) []) 0
 let float_cell_size =
-  Marshal.total_size (Marshal.to_string (RealArray.make 1) []) 0
+  Marshal.total_size (Marshal.to_string (RealArray.create 1) []) 0
   - header_and_empty_array_size
 
 let bytes x = header_and_empty_array_size + x * float_cell_size
@@ -249,8 +249,8 @@ let brecvwait request ixsub jysub dsizex cext =
  * to the appropriate neighbor PEs.
  *)
 let bsend comm my_pe ixsub jysub dsizex dsizey cdata =
-  let bufleft = RealArray.make (num_species * mysub)
-  and bufright = RealArray.make (num_species * mysub)
+  let bufleft = RealArray.create (num_species * mysub)
+  and bufright = RealArray.create (num_species * mysub)
   in
   (* If jysub > 0, send data from bottom x-line of uv. *)
 
@@ -366,7 +366,7 @@ let reslocal data tt uv uvp rr =
   let eps =        data.eps in
   (* Get data pointers, subgrid data, array sizes, work array cext. *)
   let uvdata,_,_ = uv in
-  let rates = RealArray.make 2 in
+  let rates = RealArray.create 2 in
 
   let dx2 = dx *. dx in
   let dy2 = dy *. dy in
@@ -561,12 +561,12 @@ let init_user_data thispe npes comm =
     eps = eps;
     dx = dx;
     dy = dy;
-    cox = RealArray.make num_species;
-    coy = RealArray.make num_species;
-    gridext = RealArray.make ((mxsub+2)*(mysub+2)*num_species);
-    rhs = RealArray.make num_species;
+    cox = RealArray.create num_species;
+    coy = RealArray.create num_species;
+    gridext = RealArray.create ((mxsub+2)*(mysub+2)*num_species);
+    rhs = RealArray.create num_species;
     comm = comm;
-    rates = RealArray.make 2;
+    rates = RealArray.create 2;
     n_local = n_local;
   }
 
@@ -694,7 +694,7 @@ let print_output mem uv tt data comm =
   let thispe = data.thispe in
   let npelast = data.npes - 1 in
   let cdata = Nvector_parallel.unwrap uv in
-  let clast = RealArray.make 2 in
+  let clast = RealArray.create 2 in
 
   (* Send conc. at top right mesh point from PE npes-1 to PE 0. *)
   if thispe = npelast then begin

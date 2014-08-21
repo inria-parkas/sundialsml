@@ -125,7 +125,7 @@ let blit buf buf_offset dst dst_offset len =
 let header_and_empty_array_size =
   Marshal.total_size (Marshal.to_string (RealArray.empty) []) 0
 let float_cell_size =
-  Marshal.total_size (Marshal.to_string (RealArray.make 1) []) 0
+  Marshal.total_size (Marshal.to_string (RealArray.create 1) []) 0
   - header_and_empty_array_size
 
 let bytes x = header_and_empty_array_size + x * float_cell_size
@@ -241,7 +241,7 @@ let alloc_init_user_data comm local_N system_size thispe npes =
   and pivot =
     Array.init mxsub (fun ix ->
         Array.init mysub (fun jy ->
-            LintArray.make num_species))
+            LintArray.create num_species))
   in
 
   let acoef = RealArray2.make num_species num_species
@@ -260,11 +260,11 @@ let alloc_init_user_data comm local_N system_size thispe npes =
   (* Set up the coefficients a and b plus others found in the equations. *)
   let dx2 = dx*.dx and dy2 = dy*.dy in
 
-  let bcoef = RealArray.make num_species in
-  let cox   = RealArray.make num_species in
-  let coy   = RealArray.make num_species in
-  let rhs   = RealArray.make num_species in
-  let cext  = RealArray.make ((mxsub+2)*(mysub+2)*num_species) in
+  let bcoef = RealArray.create num_species in
+  let cox   = RealArray.create num_species in
+  let coy   = RealArray.create num_species in
+  let rhs   = RealArray.create num_species in
+  let cext  = RealArray.create ((mxsub+2)*(mysub+2)*num_species) in
 
   for i = 0 to np-1 do
     (*  Fill in the portion of acoef in the four quadrants, row by row. *)
@@ -330,7 +330,7 @@ let print_output webdata comm mem (cdata,_,_) tt =
   let thispe = webdata.thispe in
   let npelast = webdata.npes - 1 in
 
-  let clast = RealArray.make 2 in
+  let clast = RealArray.create 2 in
 
   (* Send conc. at top right mesh point from PE npes-1 to PE 0. *)
   if thispe = npelast then
@@ -406,8 +406,8 @@ let print_final_stats mem =
  *)
 
 let bsend comm my_pe isubx isuby dsizex dsizey udata =
-  let bufleft = RealArray.make (num_species*mysub)
-  and bufright = RealArray.make (num_species*mysub)
+  let bufleft = RealArray.create (num_species*mysub)
+  and bufright = RealArray.create (num_species*mysub)
   in
 
   (* If isuby > 0, send data from bottom x-line of u *)
@@ -767,7 +767,7 @@ let precondbd webdata jac =
   let rates =      webdata.rates in
   let ns =         webdata.ns in
 
-  let perturb_rates = RealArray.make num_species in
+  let perturb_rates = RealArray.create num_species in
 
   let uround = Sundials.unit_roundoff in
   let sqru = sqrt uround in

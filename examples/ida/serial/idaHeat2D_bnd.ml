@@ -148,11 +148,11 @@ let print_output mem t u =
 
 let main () =
   (* Create vectors uu, up, res, constraints, id.  *)
-  let u = RealArray.make neq
-  and u' = RealArray.make neq
-  and res = RealArray.make neq
-  and constraints = RealArray.make neq
-  and id = RealArray.make neq in
+  let u = RealArray.create neq
+  and u' = RealArray.create neq
+  and res = RealArray.create neq
+  and constraints = RealArray.create neq
+  and id = RealArray.create neq in
 
   (* Create and load problem data block.  *)
   let data =

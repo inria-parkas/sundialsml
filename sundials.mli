@@ -66,14 +66,18 @@ module RealArray :
     (** A {{:OCAML_DOC_ROOT(Bigarray.Array1)} (Bigarray)} vector of floats. *)
     type t = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
 
-    (** [make n] returns an array with [n] elements. *)
-    val make : int -> t
-
     (** An array with 0 elements. *)
     val empty : t
 
-    (** [init n x] returns an array with [n] elements, each set to [x]. *)
-    val init : int -> float -> t
+    (** [make n x] returns an array with [n] elements each initialized to x. *)
+    val make : int -> float -> t
+
+    (** [create n] returns an array with [n] elements. *)
+    val create : int -> t
+
+    (** [init n f] returns an array with [n] elements, with element [i]
+        initialized to [f i]. *)
+    val init : int -> (int -> float) -> t
 
     (** Copies the contents of an {{:OCAML_DOC_ROOT(Array)} Array} into a
        {!real_array} *)

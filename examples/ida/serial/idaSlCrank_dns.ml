@@ -115,7 +115,7 @@ let set_ic data y y' =
   and pi = 4. *. atan (1.)
   in
 
-  let qq = RealArray.make 3
+  let qq = RealArray.create 3
   and q = pi/.2.
   and p = asin (-.a) in
   let x = cos p in
@@ -136,7 +136,7 @@ let ressc data tres y y' res =
   and m2 = data.m2
   and j2 = data.j2 in
 
-  let qq = RealArray.make 3
+  let qq = RealArray.create 3
   and q = y.{0}
   and x = y.{1}
   and p = y.{2}
@@ -182,14 +182,14 @@ let main () =
   in
 
   (* Create nvectors *)
-  let y = RealArray.make neq
-  and y' = RealArray.make neq in
+  let y = RealArray.create neq
+  and y' = RealArray.create neq in
 
   (* Consistent IC *)
   set_ic data y y';
 
   (* ID array *)
-  let id = RealArray.init neq Ida.VarType.differential in
+  let id = RealArray.make neq Ida.VarType.differential in
   for i = 6 to 9 do
     id.{i} <- Ida.VarType.algebraic
   done;

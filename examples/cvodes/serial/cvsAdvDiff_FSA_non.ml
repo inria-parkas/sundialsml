@@ -232,7 +232,7 @@ let main () =
     | None -> (printf "Sensitivity: NO "; (fun _ -> ()))
     | Some sensi_meth -> begin
         let plist = Array.init ns (fun i -> i) in
-        let pbar = RealArray.make ns in
+        let pbar = RealArray.create ns in
         RealArray.mapi (fun is _ -> data.p.{plist.(is)}) pbar;
 
         let uS = Array.init ns (fun _ -> Nvector_serial.make neq 0.0) in
