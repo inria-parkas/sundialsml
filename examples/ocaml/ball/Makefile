@@ -19,9 +19,9 @@ showball.cmx: showball.cmi showball.ml
 showball.cmi: showball.mli
 
 clean:
-	-rm -f showball.cmi showball.cmo showball.cmx showball.o
-	-rm -f ball.cmi ball.cmo ball.cmx ball.o
+	-@rm -f showball.cmi showball.cmo showball.cmx showball.o
+	-@rm -f ball.cmi ball.cmo ball.cmx ball.o
 
 distclean: clean
-	-rm -f ball.byte ball.opt
+	-@rm -f ball.byte ball.opt
 

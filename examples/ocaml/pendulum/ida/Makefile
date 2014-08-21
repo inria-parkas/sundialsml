@@ -21,10 +21,10 @@ showpendulum.cmo: showpendulum.ml
 showpendulum.cmx: showpendulum.ml
 
 clean:
-	-rm -f showpendulum.cmi showpendulum.cmo showpendulum.cmx showpendulum.o
-	-rm -f pendulum.cmi pendulum.cmo pendulum.cmx pendulum.o
+	-@rm -f showpendulum.cmi showpendulum.cmo showpendulum.cmx showpendulum.o
+	-@rm -f pendulum.cmi pendulum.cmo pendulum.cmx pendulum.o
 
 realclean:cleanall
 cleanall: clean
-	-rm -f pendulum.byte pendulum.opt
+	-@rm -f pendulum.byte pendulum.opt
 

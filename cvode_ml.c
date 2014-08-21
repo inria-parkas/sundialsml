@@ -716,21 +716,6 @@ CAMLprim void c_cvode_wf_tolerances (value vdata)
     CAMLreturn0;
 }
 
-/* This is just a minimal skin over CVSpilsSetPreconditioner, whereas
- * c_cvode_spils_set_preconditioner sets up the Jacobian-times-vector
- * function as well.  FIXME: remove this in favor of
- * c_cvode_spils_set_preconditioner.  */
-CAMLprim void c_cvode_set_preconditioner(value vdata, value vset_precsetup)
-{
-    CAMLparam2(vdata, vset_precsetup);
-    CVSpilsPrecSetupFn setup = Bool_val (vset_precsetup) ? precsetupfn : NULL;
-
-    int flag = CVSpilsSetPreconditioner(CVODE_MEM_FROM_ML(vdata),
-					setup, precsolvefn);
-    CHECK_FLAG("CVSpilsSetPreconditioner", flag);
-    CAMLreturn0;
-}
-
 CAMLprim void c_cvode_set_jac_times_vec_fn(value vdata)
 {
     CAMLparam1(vdata);

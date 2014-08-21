@@ -393,9 +393,6 @@ module Spils =
       c_spils_sptfqmr session maxl prec_type;
       set_precond session prec_type cb
 
-    external set_preconditioner  : ('a, 'k) session -> bool -> unit
-        = "c_cvode_set_preconditioner"
-
     let set_preconditioner s fprecsetupfn fprecsolvefn =
       (match s.ls_callbacks with
        | SpilsCallback cbs ->
@@ -403,7 +400,7 @@ module Spils =
                                prec_setup_fn = fprecsetupfn;
                                prec_solve_fn = Some fprecsolvefn }
        | _ -> failwith "spils solver not in use");
-      set_preconditioner s (fprecsetupfn <> None)
+      c_spils_set_preconditioner s (fprecsetupfn <> None) false
 
     external set_jac_times_vec_fn : ('a, 'k) session -> unit
         = "c_cvode_set_jac_times_vec_fn"

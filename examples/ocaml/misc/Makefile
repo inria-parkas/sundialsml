@@ -23,11 +23,11 @@ ramp.byte: ramp.ml
 ramp.opt: ramp.ml
 
 clean:
-	-rm -f $(EXAMPLES:.byte=.cmo) $(EXAMPLES:.byte=.cmx)
-	-rm -f $(EXAMPLES:.byte=.o) $(EXAMPLES:.byte=.cmi)
+	-@rm -f $(EXAMPLES:.byte=.cmo) $(EXAMPLES:.byte=.cmx)
+	-@rm -f $(EXAMPLES:.byte=.o) $(EXAMPLES:.byte=.cmi)
 
 distclean: clean
-	-rm -f $(EXAMPLES) $(EXAMPLES:.byte=.opt)
+	-@rm -f $(EXAMPLES) $(EXAMPLES:.byte=.opt)
 
 # #
 

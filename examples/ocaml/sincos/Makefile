@@ -33,13 +33,13 @@ sincos.opt: sincos.ml
 sincos_nvec.opt: sincos_nvec.ml
 
 clean:
-	-rm -f sincos.cmi sincos.cmo sincos.cmx sincos.o
-	-rm -f sincos_nvec.cmi sincos_nvec.cmo sincos_nvec.cmx sincos_nvec.o
-	-rm -f sincos.log sincos-roots.log
+	-@rm -f sincos.cmi sincos.cmo sincos.cmx sincos.o
+	-@rm -f sincos_nvec.cmi sincos_nvec.cmo sincos_nvec.cmx sincos_nvec.o
+	-@rm -f sincos.log sincos-roots.log
 
 distclean: clean
-	-rm -f sincos.byte sincos.opt
-	-rm -f sincos_nvec.opt sincos_nvec.byte
+	-@rm -f sincos.byte sincos.opt
+	-@rm -f sincos_nvec.opt sincos_nvec.byte
 
 .SUFFIXES : .ml .byte .opt
 
