@@ -303,9 +303,7 @@ let main () =
   in
 
   Quad.init ida_mem (rhsQ data) wq;
-  Quad.ss_tolerances ida_mem reltolQ abstolQ;
-
-  Quad.set_err_con ida_mem true;
+  Quad.set_tolerances ida_mem (Quad.SStolerances (reltolQ,abstolQ));
 
   (* Allocate global memory *)
 

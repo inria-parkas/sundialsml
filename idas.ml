@@ -1093,7 +1093,7 @@ module Adjoint =
 
     module Quadrature =
       struct
-        type 'a bquadrhsfn = 'a B.bquadrhsfn =
+        type 'a bquadrhsfn = 'a Ida_impl.B.bquadrhsfn =
             Basic of (float             (* t *)
                       -> 'a             (* y *)
                       -> 'a             (* y' *)

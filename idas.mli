@@ -1,68 +1,897 @@
+(***********************************************************************)
+(*                                                                     *)
+(*                   OCaml interface to Sundials                       *)
+(*                                                                     *)
+(*  Timothy Bourke (Inria), Jun Inoue (Inria), and Marc Pouzet (LIENS) *)
+(*                                                                     *)
+(*  Copyright 2014 Institut National de Recherche en Informatique et   *)
+(*  en Automatique.  All rights reserved.  This file is distributed    *)
+(*  under a BSD 2-Clause License, refer to the file LICENSE.           *)
+(*                                                                     *)
+(***********************************************************************)
+
+(***********************************************************************)
+(* Much of the comment text is taken directly from:                    *)
+(*                                                                     *)
+(*               User Documentation for CVODES v2.7.0                  *)
+(*               User Documentation for IDAS v1.1.0                    *)
+(*                Alan C. Hindmarsh and Radu Serban                    *)
+(*              Center for Applied Scientific Computing                *)
+(*              Lawrence Livermore National Laboratory                 *)
+(*                                                                     *)
+(***********************************************************************)
+
+(** Interface to the IDAS solver.
+
+  @version VERSION()
+  @author Timothy Bourke (Inria)
+  @author Jun Inoue (Inria)
+  @author Marc Pouzet (LIENS)
+ *)
+type ('data, 'kind) session = ('data, 'kind) Ida.session
 type ('data, 'kind) nvector = ('data, 'kind) Sundials.nvector
+
 type real_array = Sundials.RealArray.t
-type root_array = Sundials.Roots.t
-type root_val_array = Sundials.Roots.val_array
-type 'a single_tmp = 'a
-type 'a double_tmp = 'a * 'a
-type 'a triple_tmp = 'a * 'a * 'a
-type ('t, 'a) jacobian_arg =
-  ('t, 'a) Ida_impl.jacobian_arg = {
-  jac_t : float;
-  jac_y : 'a;
-  jac_y' : 'a;
-  jac_res : 'a;
-  jac_coef : float;
-  jac_tmp : 't;
-}
-and 'a spils_callbacks =
-  'a Ida_impl.spils_callbacks = {
-  prec_solve_fn :
-    (('a single_tmp, 'a) jacobian_arg -> 'a -> 'a -> float -> unit) option;
-  prec_setup_fn : (('a triple_tmp, 'a) jacobian_arg -> unit) option;
-  jac_times_vec_fn :
-    (('a double_tmp, 'a) jacobian_arg -> 'a -> 'a -> unit) option;
-}
-type bandrange = Ida_impl.bandrange = { mupper : int; mlower : int; }
-type dense_jac_fn =
-    (real_array triple_tmp, real_array) jacobian_arg ->
-    Dls.DenseMatrix.t -> unit
-type band_jac_fn =
-    bandrange ->
-    (real_array triple_tmp, real_array) jacobian_arg ->
-    Dls.BandMatrix.t -> unit
-type 'a quadrhsfn = 'a Ida_impl.quadrhsfn (* = float -> 'a -> 'a -> 'a -> unit*)
-type 'a sensresfn =
-    float ->
-    'a ->
-    'a -> 'a -> 'a array -> 'a array -> 'a array -> 'a -> 'a -> 'a -> unit
-type 'a quadsensrhsfn =
-    float ->
-    'a ->
-    'a -> 'a array -> 'a array -> 'a -> 'a array -> 'a -> 'a -> 'a -> unit
-module Bbd :
+type conv_fail = Ida_impl.conv_fail = NoFailures | FailBadJ | FailOther
+
+(** {2:quad Quadrature Equations} *)
+
+module Quadrature :
   sig
-    type 'data callbacks =
-      'data Ida_impl.Bbd.callbacks = {
-      local_fn : float -> 'data -> 'data -> 'data -> unit;
-      comm_fn : (float -> 'data -> 'data -> unit) option;
-    }
+    (** A skeleton of an enhanced main program:
+        + {b Initialize a session [s] per the skeleton at
+           {!Ida.session}}
+        {[...]}
+        The vector of initial values should not include values for the
+        quadrature variables.
+        + {b Set vector of quadrature variables }
+        {[let yQ = Ida.RealArray.of_array [| 0.0; 0.0 |] ]}
+        The length of this vector determines the number of quadrature variables.
+        + {b Initialize quadrature integration}
+        {[init s fQ yQ]}
+        + {b Specify integration tolerances (optional)}, e.g.
+        {[set_tolerances s SStolerances (reltol, abstol)]}
+        + {b Advance the solution in time as per normal}
+        + {b Extract quadrature variables}
+        {[get s yQ]}
+        + {b Get quadrature optional outputs}
+        {[let nre = get_num_rhs_evals s in ...]}
+        Call any of the [get_*] functions to examine solver statistics.
+
+        @idas <node5#SECTION00570000000000000000> Integration of pure quadrature equations *)
+
+    (** {3:quadexcept Exceptions} *)
+
+    (** Quadrature integration was not initialized.
+
+        @idas <node5#ss:quad_get> IDA_NO_QUAD *)
+    exception QuadNotInitialized
+
+    (** The quadrature right-hand side function failed in an unrecoverable
+        manner.
+
+        @idas <node5#SECTION00572000000000000000> IDA_QRHSFUNC_FAIL *)
+    exception QuadRhsFuncFailure
+
+    (** The quadrature right-hand side function failed in an
+        unrecoverable manner on the first call.
+
+        @idas <node5#SECTION00572000000000000000> IDA_FIRST_QRHS_ERR *)
+    exception FirstQuadRhsFuncErr
+
+    (** Convergence test failures occurred too many times due to
+        repeated recoverable errors in the quadrature right-hand side
+        function. This value will also be returned if the quadrature
+        right-hand side function had repeated recoverable errors
+        during the estimation of an initial step size (assuming the
+        quadrature variables are included in the error tests).
+
+        @idas <node5#SECTION00572000000000000000> IDA_REP_QRHS_ERR *)
+    exception RepeatedQuadRhsFuncErr
+
+    (** {3:quadinit Initialization} *)
+
+    (** This function, [fQ t y y' rhsQ], computes the quadrature
+        equation right-hand side [rhsQ] for a given value of the
+        independent variable [t] and state vectors [y] and [y'].
+
+        @idas <node5#ss:user_fct_quad> IDAQuadRhsFn *)
+    type 'a quadrhsfn = float -> 'a -> 'a -> 'a -> unit
+
+    (** Activates the integration of quadrature equations.
+
+        @idas <node5#ss:quad_malloc> IDAQuadInit *)
+    val init : ('a, 'b) session -> 'a quadrhsfn -> ('a, 'b) nvector -> unit
+
+    (** Reinitialize the integration of quadrature equations.
+
+        @idas <node5#ss:quad_malloc> IDAQuadReInit *)
+    val reinit : ('a, 'k) session -> ('a, 'k) nvector -> unit
+
+    (** {3:quadtol Tolerance specification} *)
+
+    type ('a, 'k) tolerance =
+        NoStepSizeControl
+        (** Do not use quadrature variables for step-size control (default). *)
+      | SStolerances of float * float
+        (** [(rel, abs)] : scalar relative and absolute tolerances. *)
+      | SVtolerances of float * ('a, 'k) nvector
+        (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
+
+    (** Specify whether and how quadrature variables should be used in the step
+        size control mechanism.
+
+        @idas <node5#ss:quad_optional_input> IDASetQuadErrCon
+        @idas <node5#ss:quad_optional_input> IDAQuadSStolerances
+        @idas <node5#ss:quad_optional_input> IDAQuadSVtolerances *)
+    val set_tolerances : ('a, 'b) session -> ('a, 'b) tolerance -> unit
+
+    (** {3:quadout Output Functions} *)
+
+    (** [tret = get s yq] fills [yq] with the quadrature solution
+        vector after a successful return from {!Ida.solve_normal} or
+        {!Ida.solve_one_step}, and returns the time reached by the
+        solver.
+
+        @idas <node5#ss:quad_get> IdaGetQuad *)
+    val get : ('a, 'k) session -> ('a, 'k) nvector -> float
+
+    (** [tret = get_dky s t k dkyq] fills [dkyq] with the derivatives
+        of the quadrature solution vector after a successful return
+        from {!Ida.solve_normal} or {!Ida.solve_one_step}. The time
+        requested, [t], must fall within the interval defined by the
+        last successful step ({!Ida.get_last_step}). The requested
+        order, [k], must be less than or equal to the value returned
+        by {!Ida.get_last_order}.
+
+        @idas <node5#ss:quad_get> IdaGetQuadDky
+        @raise BadK [k] is not in the range 0, 1, ..., [qlast].
+        @raise BadT [t] is not in the allowed range. *)
+    val get_dky : ('a, 'k) session -> float -> int -> ('a, 'k) nvector -> unit
+
+    (** {3:quadoptout Optional Output Functions} *)
+
+    (** Returns the number of calls to the user's quadrature
+        right-hand side function.
+
+        @idas <node5#ss:quad_optional_output> IDAGetQuadNumRhsEvals *)
+    val get_num_rhs_evals : ('a, 'k) session -> int
+
+    (** Returns the number of local error test failures due to quadrature
+        variables.
+
+        @idas <node5#ss:quad_optional_output> CVodeGetQuadNumErrTestFails *)
+    val get_num_err_test_fails : ('a, 'k) session -> int
+
+    (** Returns the quadrature error weights at the current time.
+
+        @cvodes <node5#ss:quad_optional_output> CVodeGetQuadErrWeights *)
+    val get_err_weights : ('a, 'k) session -> ('a, 'k) nvector -> unit
+
+    (** [nfqevals, nqetfails = get_stats s] returns
+        - [fqevals], the number of calls to the user's quadrature function, and,
+        - [nqetfails], the number of error test failures due to quadrature
+          variables.
+
+        @cvodes <node5#ss:quad_optional_output> CVodeGetQuadStats *)
+    val get_stats : ('a, 'k) session -> int * int
+
   end
-module B :
+
+(** {2:sens (Forward) Sensitivity Analysis} *)
+
+module Sensitivity :
   sig
-    type 'a resfnb = float -> 'a -> 'a -> 'a -> 'a -> 'a -> unit
-    and 'a resfnbs =
-        float -> 'a -> 'a -> 'a array -> 'a array -> 'a -> 'a -> 'a -> unit
+    (** A skeleton of an enhanced main program:
+        + {b Initialize a session [s] per the skeleton at
+           {!Ida.session} or {!Idas.Quadrature.init}}
+        {[...]}
+          Initial value correction, if needed, should be held off
+          until sensitivity calculations are activated below.
+        + {b Define the sensitivity problem}
+        {[let p = Ida.RealArray.make np in
+let sp = { pvals = Some p; pbar = ...; plist = ... }]}
+        + {b Set sensitivity initial conditions }
+        {[let yS0 = Array.init ns (fun _ -> RealArray.init neq 0.0)
+let yS'0 = Array.init ns (fun _ -> RealArray.init neq 0.0)]}
+        + {b Activate sensitivity calculations}
+        {[init s (SStolerances ...) Simultaneous sp fS yS0 y'S0]}
+        + {b Correct initial values (optional)}
+        {[calc_ic_y s tout1]}
+        + {b Set optional inputs}
+        {[set_dq_method s ...]}
+        + {b Advance the solution in time as per normal}
+        + {b Extract sensitivity solution}
+        {[let t = get s yS]}
+
+        @idas <node6#ss:forward_usage> Enhanced skeleton for sensitivity analysis *)
+
+    (** {3:sensexcept Exceptions} *)
+
+    (** Forward sensitivity analysis was not initialized.
+
+        @cvodes <node5#ss:sensi_get> IDA_NO_SENS *)
+    exception SensNotInitialized
+
+    (** The sensitivity residual function failed in an unrecoverable manner.
+
+        @idas <node6#SECTION00623000000000000000> IDA_SRES_FAIL *)
+    exception SensResFuncFailure
+
+    (** The sensitivity residual function failed in an unrecoverable manner.
+
+        @idas <node6#SECTION00623000000000000000> IDA_REP_SRES_ERR *)
+    exception RepeatedSensResFuncErr
+
+    (** The sensitivity identifier is not valid.  This happens, for
+        example, if you have [3] sensitivity variables and request the
+        value of sensitivity variable number [5] in {!get_dky1}.
+
+        @idas <node6#SECTION00623000000000000000> IDA_BAD_IS *)
+    exception BadIS
+
+    (** {3:sensinit Initialization} *)
+
+    (** This function, [fS t y y' res yS y'S resS tmp1 tmp2 tmp3],
+        computes the sensitivity residual for all sensitivity equations,
+        given
+        - [t], the current value of the independent variable,
+        - [y], the current value of the state vector,
+        - [y'], the current value of the right-hand side of the
+                state equations,
+        - [yS], the current values of the sensitivity vectors,
+        - [y'S], the current values of the derivatives of the
+                 sensitivity vectors,
+        - [resS], the sensitivity residual vectors.
+        - [tmp1], [tmp2], [tmp3] can be used as temporary storage.
+
+        For each [i], this function must compute the vector
+        {i (dF/dy)s_i(t)+(dF/dy')s'_i(t)+(dF/dp_i)} and store it in
+        {[resS[i]]}.
+
+        If a function is not given during {!init}, then the default
+        internal difference-quotient implementation is used.
+
+        @cvodes <node6#ss:user_fct_fwd> IDASensResFn  *)
+    type 'a sensresfn = 'a Ida_impl.sensresfn (* =
+      float                            (* t *)
+      -> 'a                            (* y *)
+      -> 'a                            (* y' *)
+      -> 'a                            (* resval *)
+      -> 'a array                      (* yS *)
+      -> 'a array                      (* y'S *)
+      -> 'a array                      (* resvalS *)
+      -> 'a                            (* tmp1 *)
+      -> 'a                            (* tmp2 *)
+      -> 'a                            (* tmp3 *)
+      -> unit*)
+
+    (** Specifies a sensitivity solution method.
+
+        @cvodes <node6#ss:sensi_malloc> IDASensInit
+      *)
+    type sens_method =
+        Simultaneous
+        (** The state and sensitivity variables are corrected at the
+            same time. *)
+      | Staggered
+        (** The correction step for the sensitivity variables takes
+            place at the same time for all sensitivity equations, but
+            only after the correction of the state variables has
+            converged and the state variables have passed the local
+            error test; *)
+
+    (** Used for specifying problem parameter information for
+        sensitivity calculations.
+
+        @cvodes <node6#ss:sens_optional_input> CVodeSetSensParams *)
+    type sens_params = {
+      pvals : Sundials.RealArray.t option;
+        (** The parameters used to evaluate {i F(t, y, y', p)}. *)
+      pbar : Sundials.RealArray.t option;
+        (** An array of {i ns} positive scaling factors. *)
+      plist : int array option;
+        (** An array of non-negative indices to specify which components
+            to use in estimating the sensitivity equations. *)
+    }
+
+    val no_sens_params : sens_params
+
+    type ('a, 'k) tolerance =
+        SStolerances of float * Sundials.RealArray.t
+        (** [(rel, abs)] : scalar relative and absolute tolerances. *)
+      | SVtolerances of float * ('a, 'k) nvector array
+        (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
+      | EEtolerances
+        (** Calculate the integration tolerances for sensitivities
+            based on those for state variables and the scaling factors
+            (i.e. [pbar] in {!sens_params}). *)
+
+    (** This function, [init s tol ism ps fS yS0 y'S0], activates the
+        forward sensitivity computation, where [ism] selects the
+        sensitivity solution method, [ps] gives problem parameter
+        information, [fS] computes the sensitivity residuals, [yS0]
+        gives the initial values of the sensitivities, and [y'S0]
+        gives the initial values of the derivatives of sensitivities.
+
+        Note that any array specified by [ps.pvals] is used to pass
+        parameter information during problem solution, that is, the
+        library will normally write to it from time to time.
+
+        @cvodes <node6#ss:sensi_malloc> IDASensInit *)
+    val init :
+      ('a, 'b) session ->
+      ('a, 'b) tolerance ->
+      sens_method ->
+      sens_params ->
+      'a sensresfn option ->
+      ('a, 'b) nvector array -> ('a, 'b) nvector array -> unit
+
+    (** This function reinitializes the forward sensitivity computation.
+
+        @cvodes <node6#ss:sensi_malloc> IDASensReInit *)
+    val reinit :
+      ('a, 'b) session ->
+      sens_method -> ('a, 'b) nvector array -> ('a, 'b) nvector array -> unit
+
+    (** Like {!Ida.calc_ic_ya_yd'}, but has extra output parameters
+        [ys] and [y's] for receiving corrected sensitivities.
+
+        @ida <node5#ss:idacalcic> IDACalcIC
+        @ida <node5#sss:optout_iccalc> IDAGetConsistentIC
+        @idas <node6#ss:idacalcic> IDASensGetConsistentIC
+      *)
+    val calc_ic_ya_yd' :
+      ('a, 'b) session ->
+      ?y:('a, 'b) nvector ->
+      ?y':('a, 'b) nvector ->
+      ?ys:('a, 'b) nvector array ->
+      ?y's:('a, 'b) nvector array -> ('a, 'b) nvector -> float -> unit
+
+    (** Like {!Ida.calc_ic_y}, but has an extra output parameter [ys]
+        for receiving corrected sensitivities.
+        @ida <node5#ss:idacalcic> IDACalcIC
+        @ida <node5#sss:optout_iccalc> IDAGetConsistentIC
+        @idas <node6#ss:idacalcic> IDASensGetConsistentIC
+     *)
+    val calc_ic_y :
+      ('a, 'b) session ->
+      ?y:('a, 'b) nvector -> ?ys:('a, 'b) nvector array -> float -> unit
+
+    (** Deactivates forward sensitivity calculations without deallocating
+        memory. Sensitivities can be reactivated with {!reinit}.
+
+        @cvodes <node6#ss:sensi_malloc> IDASensToggleOff *)
+    val toggle_off : ('a, 'k) session -> unit
+
+    (** {3:sensout Output Functions} *)
+
+    (** [tret = get s ys] fills [ys] with the sensitivity solution
+        vectors after a successful return from {!Ida.solve_normal} or
+        {!Ida.solve_one_step}, and returns the time reached by the
+        solver.
+
+        @cvodes <node6#ss:sensi_get> CVodeGetSens
+      *)
+    val get : ('a, 'b) session -> ('a, 'b) nvector array -> float
+
+    (** [tret = get_dky s t k dkys] fills [dkys] with the
+        derivatives of the sensitivity solution vectors after a
+        successful return from {!Ida.solve_normal} or
+        {!Ida.solve_one_step}. The time requested, [t], must fall
+        within the interval defined by the last successful step
+        ({!Ida.get_last_step}). The requested order, [k], must be less
+        than or equal to the value returned by {!Ida.get_last_order}.
+
+        @cvodes <node6#ss:sensi_get> IDAGetSensDky
+        @raise BadK [k] is not in the range 0, 1, ..., [qlast].
+        @raise BadT [t] is not in the allowed range.
+    *)
+    val get_dky :
+      ('a, 'b) session -> float -> int -> ('a, 'b) nvector array -> unit
+
+    (** [tret = get1 s i ys] fills [ys] with the [i]th sensitivity
+        solution vector after a successful return from
+        {!Cvode.solve_normal} or {!Ida.solve_one_step}, and returns
+        the time reached by the solver.
+
+        @cvodes <node6#ss:sensi_get> IDAGetSens1
+        @raise BadIS The index [i] is not in the allowed range. *)
+    val get1 : ('a, 'k) session -> int -> ('a, 'k) nvector -> float
+
+    (** [tret = get_dky1 s t k i dkys] fills [dkys] with the
+        derivatives of the [i]th sensitivity solution vector after a
+        successful return from {!Ida.solve_normal} or
+        {!Ida.solve_one_step}. The time requested, [t], must fall
+        within the interval defined by the last successful step
+        ({!Ida.get_last_step}). The requested order, [k], must be
+        less than or equal to the value returned by
+        {!Ida.get_last_order}.
+
+        @cvodes <node6#ss:sensi_get> IDAGetSensDky1
+        @raise BadIS The index [i] is not in the allowed range.
+        @raise BadK [k] is not in the range 0, 1, ..., [qlast].
+        @raise BadT [t] is not in the allowed range.  *)
+    val get_dky1 :
+      ('a, 'k) session -> float -> int -> int -> ('a, 'k) nvector -> unit
+
+    (** {3:sensoptin Optional Input Functions} *)
+
+    (** Specify the integration tolerances for sensitivities.
+
+        {b NB}: Unlike the other [set_tolerances] functions in [Idas],
+        this one does {b not} call {!set_err_con} (which defaults to
+        [false]).
+
+        @cvodes <node6#sss:cvfwdtolerances> IDASensSStolerances
+        @cvodes <node6#ss:cvfwdtolerances> IDASensSVtolerances
+        @cvodes <node6#ss:cvfwdtolerances> IDASensEEtolerances *)
+    val set_tolerances : ('a, 'b) session -> ('a, 'b) tolerance -> unit
+
+    (** Set whether sensitivity variables should be used in the error
+        control mechanism (the default is [false]).
+
+        @cvodes <node5#ss:sens_optional_input> IDASetSensErrCon *)
+    val set_err_con : ('a, 'k) session -> bool -> unit
+
+    type dq_method = DQCentered (** IDA_CENTERED *)
+                   | DQForward  (** IDA_FORWARD *)
+
+    (** [set_dq_method s dqtype dqrhomax] specifies the difference quotient
+        strategy in the case in which the right-hand side of the sensitivity
+        equations is to be computed by IDAS; [dqrhomax] is used in deciding
+        the switching between simultaneous or separate approximations of the two
+        terms in the sensitivity residual.
+
+        @cvodes <node6#ss:sens_optional_input> CVodeSetSensDQMethod
+        @cvodes <node3#ss:fwd_sensi> Forward Sensitivity Analysis *)
+    val set_dq_method : ('a, 'k) session -> dq_method -> float -> unit
+
+    (** Specifies the maximum number of nonlinear solver iterations for
+        sensitivity variables permitted per step.
+
+        @cvode <node5#ss:sens_optional_input> IDASetSensMaxNonlinIters *)
+    val set_max_nonlin_iters : ('a, 'k) session -> int -> unit
+
+    (** {3:sensoptout Optional Output Functions} *)
+
+    (** Returns the number of calls to the sensitivity residual function.
+
+        @cvode <node6#ss:sens_optional_output> IDAGetSensNumResEvals *)
+    val get_num_res_evals : ('a, 'k) session -> int
+
+    (** Returns the number of calls to the user's residual function due
+        to the internal finite difference approximation of the sensitivity
+        residual.
+
+        @idas <node6#ss:sens_optional_output> IDAGetNumResEvalsSens *)
+    val get_num_res_evals_sens : ('a, 'k) session -> int
+
+    (** Returns the number of local error test failures for the sensitivity
+        variables that have occurred.
+
+        @cvode <node6#ss:sens_optional_output> IDAGetSensNumErrTestFails *)
+    val get_num_err_test_fails : ('a, 'k) session -> int
+
+    (** Returns the number of calls made to the linear solver's setup function
+        due to forward sensitivity calculations.
+
+        @cvode <node6#ss:sens_optional_output> IDAGetSensNumLinSolvSetups *)
+    val get_num_lin_solv_setups : ('a, 'k) session -> int
+
+    (** Return type of {!get_stats}. *)
+    type sensitivity_stats = {
+      num_res_evals : int;
+      num_sens_evals : int;
+      num_err_test_fails : int;
+      num_lin_solv_setups : int;
+    }
+
+    (** Returns all of the sensitivity-related solver statistics as a group.
+
+        @cvode <node6#ss:sens_optional_output> IDAGetSensStats *)
+    val get_stats : ('a, 'k) session -> sensitivity_stats
+
+    (** Returns the sensitivity error weight vectors at the current time.
+
+        @cvode <node6#ss:sens_optional_output> IDAGetSensErrWeights
+        @cvode <node3#e:errwt> Eq. (2.7) IVP solution (W_i) *)
+    val get_err_weights : ('a, 'k) session -> ('a, 'k) nvector array -> unit
+
+    (** Returns the number of nonlinear iterations performed for sensitivity
+        calculations.
+
+        @cvode <node6#ss:sens_optional_output> IDAGetSensNumNonlinSolvIters *)
+    val get_num_nonlin_solv_iters : ('a, 'k) session -> int
+
+
+    (** Returns the number of nonlinear convergence failures that have occurred
+        for sensitivity calculations.
+
+        @cvode <node6#ss:sens_optional_output> IDAGetSensNumNonlinSolvConvFails *)
+    val get_num_nonlin_solv_conv_fails : ('a, 'k) session -> int
+
+    (** [nni, ncfn = get_nonlin_solv_stats s] returns the sensitivity-related
+        nonlinear solver statistics as a group, where [nni] is the number of
+        nonlinear iterations performed for sensitivity calculations, and [ncfn]
+        is the number of nonlinear convergence failures that have occurred for
+        sensitivity calculations.
+
+        @cvode <node6#ss:sens_optional_output> CVodeGetSensNonlinSolvStats
+     *)
+    val get_nonlin_solv_stats : ('a, 'k) session -> int * int
+
+    (** {2:quadsens Quadrature Equations} *)
+
+    (**
+       Support for integration of quadrature equations that depends not only on
+       the state variables but also on forward sensitivities.
+     *)
+    module Quadrature :
+      sig
+        (** A skeleton of an enhanced main program:
+            + {b Initialize a session [s] per the skeleton at {!Sensitivity.init}}
+            {[...]}
+            + {b Set initial values of quadrature variables}
+            {[let yQS = Array.init ns (fun _ -> RealArray.of_array [0.0; 0.0]) in]}
+            + {b Initialize sensitivity-dependent quadrature integration}
+            {[init s fQS yQS]}
+            + {b Set optional inputs}
+            {[set_tolerances s ...]}
+            + {b Advance the solution in time as per normal}
+            + {b Extract sensitivity-dependent quadrature variables}
+            {[let t = get s yQS]}
+            + {b Get sensitivity-dependent optional outputs}
+            {[let e, f = get_stats s]}
+
+            @cvodes <node6#SECTION00640000000000000000> Integration of quadrature equations depending on forward sensitivities *)
+
+        (** {3:quadsensexcept Exceptions} *)
+
+        (** Quadrature integration was not initialized.
+
+            @cvodes <node5#SECTION00642000000000000000> IDA_NO_QUADSENS *)
+        exception QuadSensNotInitialized
+
+        (** The sensitivity quadrature right-hand side function failed
+            in an unrecoverable manner.
+
+            @cvodes <node5#SECTION00642000000000000000> IDA_QSRHS_FAIL
+          *)
+        exception QuadSensRhsFuncFailure
+
+        (** The user-provided sensitivity-dependent quadrature right-
+            hand side function failed in an unrecoverable manner on
+            the first call.
+
+            @cvodes <node5#SECTION00642000000000000000> IDA_FIRST_QSRHS_ERR *)
+        exception FirstQuadSensRhsFuncErr
+
+        (** The user-provided sensitivity-dependent quadrature right-
+            hand side repeatedly returned a recoverable error flag,
+            but the solver was unable to recover.
+
+            @cvodes <node6#SECTION00642000000000000000> IDA_REP_QSRHS_ERR
+          *)
+        exception RepeatedQuadSensRhsFuncErr
+
+        (** {3:quadsensinit Initialization} *)
+
+        (** This function, [fQS t y yS yQdot rhsvalQs tmp1 tmp2], computes the
+            sensitivity quadrature equation right-hand side given
+            - [t], the current value of the independent variable,
+            - [y], the current value of the state vector,
+            - [y'], the current value of the derivative of the state vector,
+            - [yS], an array of dependent sensitivity vectors,
+            - [y'S], an array of derivatives of dependent sensitivity vectors,
+            - [rrQ], the current value of the quadrature residual,
+            - [rhsvalQs], the right-hand side vectors must be stored here,
+            - [tmp1], [tmp2], and [tmp3] can be used as temporary storage.
+
+           @cvodes <node6#ss:user_fct_quad_sens> IDAQuadSensRhsFn *)
+        type 'a quadsensrhsfn =
+          float          (* t *)
+          -> 'a          (* y *)
+          -> 'a          (* y' *)
+          -> 'a array    (* yS *)
+          -> 'a array    (* y'S *)
+          -> 'a          (* rrQ *)
+          -> 'a array    (* rhsvalQs *)
+          -> 'a          (* tmp1 *)
+          -> 'a          (* tmp2 *)
+          -> 'a          (* tmp3 *)
+          -> unit
+        (** This function, [init s fQS yQS0], activates integration of
+            quadrature equations depending on sensitivities, where
+            [fQS] computes the right-hand side of the
+            sensitivity-dependent quadrature equations, and [yQS0]
+            contains the initial values of sensitivity-dependent
+            quadratures.  When no [fQB] is supplied, the solver uses
+            an internal implementation based on difference quotients.
+
+            @cvodes <node6#ss:quad_sens_init> IDAQuadSensInit *)
+        val init :
+          ('a, 'b) session ->
+          'a quadsensrhsfn option -> ('a, 'b) nvector array -> unit
+
+        (** This function reinitializes the forward sensitivity computation.
+
+            @cvodes <node6#ss:quad_sens_init> IDAQuadSensReInit *)
+        val reinit : ('a, 'b) session -> ('a, 'b) nvector array -> unit
+
+
+        (** {3:quadsenstol Tolerance specification} *)
+        type ('a, 'k) tolerance =
+            NoStepSizeControl
+            (** Do not use quadrature variables for step-size control
+                (default). *)
+          | SStolerances of float * Sundials.RealArray.t
+            (** [(rel, abs)] : scalar relative and absolute tolerances. *)
+          | SVtolerances of float * ('a, 'k) nvector array
+            (** [(rel, abs)] : scalar relative and vector absolute
+                tolerances. *)
+          | EEtolerances
+            (** Estimate the tolerances for the sensitivity-dependent
+                quadratures from those provided for the pure quadrature
+                variables. *)
+
+        (** Specify whether and how quadrature variables should be used in the
+            step size control mechanism.
+
+            @cvodes <node6#ss:quad_sens_optional_input> IDASetQuadSensErrCon
+            @cvodes <node6#ss:quad_sens_optional_input> IDAQuadSensSStolerances
+            @cvodes <node6#ss:quad_sens_optional_input> IDAQuadSensSVtolerances
+            @cvodes <node6#ss:quad_sens_optional_input> IDAQuadSensEEtolerances *)
+        val set_tolerances : ('a, 'k) session -> ('a, 'k) tolerance -> unit
+
+        (** {3:quadsensout Output Functions} *)
+
+        (** [tret = get s yqs] fills [yqs] with quadrature solution vectors
+            after a successful return from {!Ida.solve_normal} or
+            {!Ida.solve_one_step}, and returns the time reached by
+            the solver.
+
+            @cvodes <node6#ss:quad_sens_get> IDAGetQuadSens *)
+        val get : ('a, 'b) session -> ('a, 'b) nvector array -> float
+
+        (** [tret = get s i yqs] fills [yqs] with the [i]th quadrature
+            solution vector after a successful return from
+            {!Ida.solve_normal} or {!Ida.solve_one_step}, and
+            returns the time reached by the solver.
+
+            @cvodes <node6#ss:quad_sens_get> IDAGetQuadSens1
+            @raise BadIS The index [i] is not in the allowed range.
+          *)
+        val get1 : ('a, 'k) session -> int -> ('a, 'k) nvector -> float
+
+        (** [tret = get_dky s t k dkyqs] fills [dkyqs] with the
+            derivatives of the quadrature solution vectors after a
+            successful return from {!Ida.solve_normal} or
+            {!Ida.solve_one_step}. The time requested, [t], must
+            fall within the interval defined by the last successful
+            step ({!Ida.get_last_step}). The requested order, [k],
+            must be less than or equal to the value returned by
+            {!Ida.get_last_order}.
+
+            @cvodes <node6#ss:quad_sens_get> IDAGetQuadSensDky
+            @raise BadIS The index is not in the allowed range.
+            @raise BadK [k] is not in the range 0, 1, ..., [qlast].
+            @raise BadT [t] is not in the allowed range. *)
+        val get_dky :
+          ('a, 'b) session -> float -> int -> ('a, 'b) nvector array -> unit
+
+        (** [tret = get_dky s t k i dkyqs] fills [dkyqs] with the derivatives of
+            the [i]th quadrature solution vector after a successful return from
+            {!Cvode.solve_normal} or {!Cvode.solve_one_step}.
+            The time requested, [t], must fall within the interval defined by
+            the last successful step ({!Cvode.get_last_step}). The
+            requested order, [k], must be less than or equal to the value
+            returned by {!Cvode.get_last_order}.
+
+            @cvodes <node6#ss:quad_sens_get> IDAGetQuadSensDky1
+            @raise BadK [k] is not in the range 0, 1, ..., [qlast].
+            @raise BadT [t] is not in the allowed range. *)
+        val get_dky1 :
+          ('a, 'k) session -> float -> int -> int -> ('a, 'k) nvector -> unit
+
+        (** Returns the number of calls to the user's quadrature right-hand side
+            function.
+
+            @cvodes <node6#ss:quad_sens_optional_output> IDAGetQuadSensNumRhsEvals *)
+        val get_num_rhs_evals : ('a, 'k) session -> int
+
+        (** Returns the number of local error test failures due to quadrature
+            variables.
+
+            @cvodes <node6#ss:quad_sens_optional_output> IDAGetQuadSensNumErrTestFails *)
+        val get_num_err_test_fails : ('a, 'k) session -> int
+
+        (** Returns the quadrature error weights at the current time.
+
+            @cvodes <node6#ss:quad_sens_optional_output> IDAGetQuadSensErrWeights *)
+        val get_err_weights :
+          ('a, 'b) session -> ('a, 'b) nvector array -> unit
+
+        (** [nfqevals, nqetfails = get_stats s] returns
+            - [fqevals], the number of calls to the user's quadrature function,
+            and,
+            - [nqetfails], the number of error test failures due to quadrature
+            variables.
+
+          @cvodes <node6#ss:quad_sens_optional_output> IDAGetQuadSensStats *)
+        val get_stats : ('a, 'k) session -> int * int
+      end
+  end
+
+
+(** {2:adj Adjoint Sensitivity Analysis} *)
+
+module Adjoint :
+  sig
+    (** A skeleton of an enhanced main program:
+        + {b Initialize a session [s] per the skeleton at {!Ida.init}}
+          {[...]}
+          Adding quadrature variables using {!Quadrature.init} if desired.
+          Initial value correction, if needed, should be held off
+          until sensitivity calculations are activated below.
+        + {b Initialize the adjoint computation}
+          {[init s nsteps IHermite]}
+        + {b Integrate forward problem}
+          {[let t, ncheck, r = forward_normal s tout y0]}
+        + {b Setup the backward problem and attach a linear solver}
+          {[let yB0  = RealArray.of_list [0.0; 0.0; ...]
+          let yB'0 = RealArray.of_list [0.0; 0.0; ...]
+let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (Basic fB) tB0 yB0 yB'0]}
+        + {b Set optional inputs}
+          {[set_max_ord bs ...]}
+        + {b Initialize quadrature calculation}
+          {[Quadrature.init bs fQb yQB0]}
+        + {b Integrate backward problem}
+          {[backward_normal s tB]}
+        + {b Extract quadrature variables}
+          {[let t = Quadrature.get s yQS]}
+
+        @idas <node7#ss:skeleton_adj> Enhanced Skeleton for Adjoint Sensitivity Analysis
+    *)
+
+    (** Adjoint sensitivity analysis was not initialized.
+
+        @cvodes <node7#sss:cvsolvef> IDA_NO_ADJ *)
+    exception AdjointNotInitialized
+
+    (** Neither {!forward_normal} nor {!forward_one_step} has previously been
+        called.
+
+        @cvodes <node7#sss:cvsolveb> IDA_NO_FWD *)
+    exception NoForwardCall
+
+    (** Reinitialization of the forward problem failed at the first checkpoint
+        (corresponding to the initial time of the forward problem).
+
+        @cvodes <node7#sss:cvsolveb> IDA_REIFWD_FAIL *)
+    exception ForwardReinitializationFailed
+
+    (** An error occured during the integration of the forward problem.
+
+        @cvodes <node7#sss:cvsolveb> IDA_FWD_FAIL *)
+    exception ForwardFailed
+
+    (** No backward problem has been created.
+
+        @cvodes <node7#sss:cvsolveb> IDA_NO_BCK *)
+    exception NoBackwardProblem
+
+    (** The final time [tB0] was outside the interval over which the forward
+        problem was solved.
+
+        @cvodes <node7#sss:cvinitb> IDA_BAD_TB0 *)
+    exception BadFinalTime
+
+    (** {3:adjfwd Forward Solutions} *)
+
+    (** {4:adjfwdinit Initialization} *)
+
+    (** Specifies the type of interpolation.
+
+        @cvodes <node3#ss:checkpointing> Checkpointing scheme *)
+    type interpolation = IPolynomial    (** IDA_POLYNOMIAL *)
+                       | IHermite       (** IDA_HERMITE *)
+
+    (** [init s nd interp] initializes the forward-backward problem with [nd]
+        integration steps between consecutive checkpoints and variable-degree
+        interpolation according to [interp]. This function must be called before
+        either {!forward_normal} or {!forward_one_step}.
+
+        @cvodes <node7#ss:cvadjinit> IDAAdjInit *)
+    val init : ('a, 'k) session -> int -> interpolation -> unit
+
+    (** {4:adjfwdintegration Forward Integration} *)
+    (** [tret, ncheck, sr = forward_normal s tout y y'] integrates the
+        forward problem over an interval and saves checkpointing
+        data. The function takes as arguments the next time at which a
+        solution is desired ([tout]), two vectors for storing the
+        computed result ([y] and [y']), and returns the time reached
+        by the solver ([tret]), the number of checkpoints stored so
+        far ([ncheck]), and whether the solver reached [tout] or not
+        ([sr]).
+
+        This call asks the solver to take internal steps until it has
+        reached or just passed the [tout] parameter
+        ([IDA_NORMAL]). The solver then interpolates in order to
+        return an approximate value of [y] and [y'] at time [tout].
+
+        @cvodes <node7#sss:cvsolvef> IDASolveF
+        @raise Ida.IllInput           One of the inputs is invalid.
+        @raise Ida.TooMuchWork        Could not reach [tout] in [mxstep] steps
+        @raise Ida.TooMuchAccuracy    Could not satisfy the demanded accuracy
+        @raise Ida.ErrFailure         Too many error test failures.
+        @raise Ida.ConvergenceFailure Too many convergence test failures.
+        @raise Ida.LinearSetupFailure Unrecoverable failure in linear solver setup function.
+        @raise Ida.LinearSolveFailure Unrecoverable failure in linear solver solve function.
+        @raise AdjointNotInitialized    The [init] function has not previously been called. *)
+    val forward_normal :
+      ('a, 'k) session ->
+      float ->
+      ('a, 'k) nvector ->
+      ('a, 'k) nvector -> float * int * Sundials.solver_result
+
+    (** [tret, ncheck, sr = forward_normal s tout y y'] integrates the
+        forward problem over an interval and saves checkpointing
+        data. The function takes as arguments the next time at which a
+        solution is desired ([tout]), two vectors for storing the
+        computed result ([y] and [y']), and returns the time reached
+        by the solver ([tret]), the number of checkpoints stored so
+        far ([ncheck]), and whether the solver reached [tout] or not
+        ([sr]).
+
+        This call asks the solver to take one internal step and to
+        return the solution at the point reached by that step
+        ([IDA_ONE_STEP]).
+
+        @cvodes <node7#sss:cvsolvef> IDASolveF
+        @raise Ida.IllInput           One of the inputs is invalid.
+        @raise Ida.TooMuchWork        Could not reach [tout] in [mxstep] steps
+        @raise Ida.TooMuchAccuracy    Could not satisfy the demanded accuracy
+        @raise Ida.ErrFailure         Too many error test failures.
+        @raise Ida.ConvergenceFailure Too many convergence test failures.
+        @raise Ida.LinearSetupFailure Unrecoverable failure in linear solver setup function.
+        @raise Ida.LinearSolveFailure Unrecoverable failure in linear solver solve function.
+        @raise AdjointNotInitialized    The [init] function has not previously been called. *)
+    val forward_one_step :
+      ('a, 'k) session ->
+      float ->
+      ('a, 'k) nvector ->
+      ('a, 'k) nvector -> float * int * Sundials.solver_result
+
+    (** {3:adjbwd Backward Problems} *)
+
+    (** Identifies a backward problem. *)
+    type ('a, 'k) bsession = ('a, 'k) Ida_impl.bsession
+    type serial_bsession = (real_array, Nvector_serial.kind) bsession
+
+    (** {4:adjbwdinit Initialization} *)
+
+    (** These functions evaluate the right-hand side of the backward ODE system
+        with or without a dependence on forward sensitivities. *)
     type 'a bresfn =
       'a Ida_impl.B.bresfn =
-        Basic of 'a resfnb
-      | WithSens of 'a resfnbs
-    type 'a bquadrhsfn =
-      'a Ida_impl.B.bquadrhsfn =
-        Basic of 'a bquadrhsfn_basic
-      | WithSens of 'a bquadrhsfn_withsens
-    and 'a bquadrhsfn_basic = float -> 'a -> 'a -> 'a -> 'a -> 'a -> unit
-    and 'a bquadrhsfn_withsens =
-        float -> 'a -> 'a -> 'a array -> 'a array -> 'a -> 'a -> 'a -> unit
+        Basic of 'a Ida_impl.B.resfnb
+      (** @idas <node7#ss:ODErhs_b> IDARhsFnB
+          @idas <node3#e:adj_eqns> Eq 2.19, Adjoint sensitivity analysis *)
+      | WithSens of 'a Ida_impl.B.resfnbs
+      (** @idas <node7#ss:ODErhs_bs> IDARhsFnBS
+          @idas <node3#e:adj1_eqns> Eq 2.21, Adjoint sensitivity analysis *)
+
+    type 'a single_tmp = 'a
+    type 'a triple_tmp = 'a * 'a * 'a
+
+    (** Arguments common to all Jacobian callback functions.
+
+        @cvodes <node7#ss:densejac_b> IDADlsDenseJacFnB
+        @cvodes <node7#ss:bandjac_b> IDADlsBandJacFnB 
+        @cvodes <node7#ss:jtimesv_b> IDASpilsJacTimesVecFnB
+        @cvodes <node7#ss:psolve_b> IDASpilsPrecSolveFnB
+        @cvodes <node7#ss:psetup_b> IDASpilsPrecSetupFnB *)
     type ('t, 'a) jacobian_arg =
       ('t, 'a) Ida_impl.B.jacobian_arg = {
       jac_t : float;
@@ -74,396 +903,137 @@ module B :
       jac_coef : float;
       jac_tmp : 't;
     }
-    type 'a spils_callbacks =
-      'a Ida_impl.B.spils_callbacks = {
-      prec_solve_fn :
-        (('a single_tmp, 'a) jacobian_arg -> 'a -> 'a -> float -> unit)
-        option;
-      prec_setup_fn : (('a triple_tmp, 'a) jacobian_arg -> unit) option;
-      jac_times_vec_fn :
-        (('a single_tmp, 'a) jacobian_arg -> 'a -> 'a -> unit) option;
-    }
-    type dense_jac_fn =
-        (real_array triple_tmp, real_array) jacobian_arg ->
-        Dls.DenseMatrix.t -> unit
-    type band_jac_fn =
-        bandrange ->
-        (real_array triple_tmp, real_array) jacobian_arg ->
-        Dls.BandMatrix.t -> unit
-    module Bbd :
-      sig
-        type 'data callbacks =
-          'data Ida_impl.B.Bbd.callbacks =
-          {
-            local_fn : float -> 'data -> 'data -> 'data
-                       -> 'data -> 'data -> unit;
-            comm_fn  : (float -> 'data -> 'data -> 'data -> 'data -> unit)
-                       option;
-          }
-      end
-  end
-type conv_fail = Ida_impl.conv_fail = NoFailures | FailBadJ | FailOther
-type 'a alternate_linsolv =
-  'a Ida_impl.alternate_linsolv = {
-  linit : (unit -> bool) option;
-  lsetup : (conv_fail -> 'a -> 'a -> 'a triple_tmp -> bool) option;
-  lsolve : 'a -> 'a -> 'a -> 'a -> unit;
-  lfree : (unit -> unit) option;
-}
-type ida_mem = Ida_impl.ida_mem
-type c_weak_ref = Ida_impl.c_weak_ref
-type ida_file = Ida_impl.ida_file
-type ('a, 'kind) linsolv_callbacks =
-  ('a, 'kind) Ida_impl.linsolv_callbacks =
-    NoCallbacks
-  | DenseCallback of dense_jac_fn
-  | BandCallback of band_jac_fn
-  | SpilsCallback of 'a spils_callbacks
-  | BBDCallback of 'a Bbd.callbacks
-  | AlternateCallback of 'a alternate_linsolv
-  | BDenseCallback of B.dense_jac_fn
-  | BBandCallback of B.band_jac_fn
-  | BSpilsCallback of 'a B.spils_callbacks
-  | BBBDCallback of 'a B.Bbd.callbacks
-type ('a, 'kind) session =
-  ('a, 'kind) Ida_impl.session = {
-  ida : ida_mem;
-  backref : c_weak_ref;
-  nroots : int;
-  err_file : ida_file;
-  mutable exn_temp : exn option;
-  mutable resfn : float -> 'a -> 'a -> 'a -> unit;
-  mutable rootsfn : float -> 'a -> 'a -> root_val_array -> unit;
-  mutable errh : Sundials.error_details -> unit;
-  mutable errw : 'a -> 'a -> unit;
-  mutable ls_callbacks : ('a, 'kind) linsolv_callbacks;
-  mutable sensext : ('a, 'kind) sensext;
-  mutable safety_check_flags : int;
-}
-and ('a, 'kind) sensext =
-  ('a, 'kind) Ida_impl.sensext =
-    NoSensExt
-  | FwdSensExt of ('a, 'kind) fsensext
-  | BwdSensExt of ('a, 'kind) bsensext
-and ('a, 'kind) fsensext =
-  ('a, 'kind) Ida_impl.fsensext = {
-  mutable quadrhsfn : 'a quadrhsfn;
-  mutable num_sensitivities : int;
-  mutable sensarray1 : 'a array;
-  mutable sensarray2 : 'a array;
-  mutable sensarray3 : 'a array;
-  mutable senspvals : Sundials.RealArray.t option;
-  mutable sensresfn : 'a sensresfn;
-  mutable quadsensrhsfn : 'a quadsensrhsfn;
-  mutable bsessions : ('a, 'kind) session list;
-}
-and ('a, 'kind) bsensext =
-  ('a, 'kind) Ida_impl.bsensext = {
-  parent : ('a, 'kind) session;
-  which : int;
-  bnum_sensitivities : int;
-  bsensarray1 : 'a array;
-  bsensarray2 : 'a array;
-  mutable resfnb : 'a B.resfnb;
-  mutable resfnbs : 'a B.resfnbs;
-  mutable bquadrhsfn : 'a B.bquadrhsfn_basic;
-  mutable bquadrhsfn1 : 'a B.bquadrhsfn_withsens;
-}
-type ('a, 'k) bsession =
-  ('a, 'k) Ida_impl.bsession =
-    Bsession of ('a, 'k) session
-val tosession : ('a, 'b) bsession -> ('a, 'b) session
-type ('data, 'kind) linear_solver =
-    ('data, 'kind) session ->
-    ('data, 'kind) nvector -> ('data, 'kind) nvector -> unit
-type ('data, 'kind) blinear_solver =
-    ('data, 'kind) bsession ->
-    ('data, 'kind) nvector -> ('data, 'kind) nvector -> unit
-external crash : string -> unit = "sundials_crash"
-val dummy_resfn : 'a -> 'b -> 'c -> 'd -> unit
-val dummy_rootsfn : 'a -> 'b -> 'c -> 'd -> unit
-val dummy_errh : 'a -> unit
-val dummy_errw : 'a -> 'b -> unit
-val dummy_resfnb : 'a -> 'b -> 'c -> 'd -> 'e -> 'f -> unit
-val dummy_resfnbs : 'a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'g -> 'h -> unit
-val dummy_bquadrhsfn : 'a -> 'b -> 'c -> 'd -> 'e -> 'f -> unit
-val dummy_bquadrhsfn1 : 'a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'g -> 'h -> unit
-val dummy_quadrhsfn : 'a -> 'b -> 'c -> 'd -> unit
-val dummy_sensresfn :
-  'a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'g -> 'h -> 'i -> 'j -> unit
-val dummy_quadsensrhsfn :
-  'a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'g -> 'h -> 'i -> 'j -> unit
-type serial_session = (real_array, Nvector_serial.kind) session
-external c_alloc_nvector_array : int -> 'a array
-  = "c_idas_alloc_nvector_array"
-val add_fwdsensext : ('a, 'b) session -> unit
-val num_sensitivities : ('a, 'b) session -> int
-val read_weak_ref : ('a, 'kind) session Weak.t -> ('a, 'kind) session
-val read_weak_fwd_ref :
-  ('a, 'b) session Weak.t -> ('a, 'b) session * ('a, 'b) fsensext
-val read_weak_bwd_ref :
-  ('a, 'b) session Weak.t -> ('a, 'b) session * ('a, 'b) bsensext
-val adjust_retcode : ('a, 'b) session -> ('c -> 'd) -> 'c -> int
-val adjust_retcode_and_bool :
-  ('a, 'b) session -> ('c -> bool) -> 'c -> bool * int
-val call_quadrhsfn :
-  ('a, 'b) session Weak.t -> float -> 'a -> 'a -> 'a -> int
-val call_bquadrhsfn :
-  ('a, 'b) session Weak.t -> float -> 'a -> 'a -> 'a -> 'a -> 'a -> int
-val call_bprecsetupfn :
-  ('a, 'b) session Weak.t -> ('a triple_tmp, 'a) B.jacobian_arg -> int
-val call_bprecsolvefn :
-  ('a, 'b) session Weak.t ->
-  ('a single_tmp, 'a) B.jacobian_arg -> 'a -> 'a -> float -> int
-val call_bjactimesfn :
-  ('a, 'b) session Weak.t ->
-  ('a single_tmp, 'a) B.jacobian_arg -> 'a -> 'a -> int
-val call_bjacfn :
-  ('a, 'b) session Weak.t ->
-  (real_array triple_tmp, real_array) B.jacobian_arg ->
-  Dls.DenseMatrix.t -> int
-val call_bbandjacfn :
-  ('a, 'b) session Weak.t ->
-  bandrange ->
-  (real_array triple_tmp, real_array) B.jacobian_arg ->
-  Dls.BandMatrix.t -> int
-module Quadrature :
-  sig
-    exception QuadNotInitialized
-    exception QuadRhsFuncFailure
-    exception FirstQuadRhsFuncErr
-    exception RepeatedQuadRhsFuncErr
-    val fwdsensext : ('a, 'b) session -> ('a, 'b) fsensext
-    type 'a quadrhsfn = float -> 'a -> 'a -> 'a -> unit
-    external c_quad_init : ('a, 'k) session -> ('a, 'k) nvector -> unit
-      = "c_idas_quad_init"
-    val init : ('a, 'b) session -> 'a quadrhsfn -> ('a, 'b) nvector -> unit
-    external reinit : ('a, 'k) session -> ('a, 'k) nvector -> unit
-      = "c_idas_quad_reinit"
-    external set_err_con : ('a, 'k) session -> bool -> unit
-      = "c_idas_quad_set_err_con"
-    external sv_tolerances :
-      ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
-      = "c_idas_quad_sv_tolerances"
-    external ss_tolerances : ('a, 'k) session -> float -> float -> unit
-      = "c_idas_quad_ss_tolerances"
-    type ('a, 'k) tolerance =
-        NoStepSizeControl
-      | SStolerances of float * float
-      | SVtolerances of float * ('a, 'k) nvector
-    val set_tolerances : ('a, 'b) session -> ('a, 'b) tolerance -> unit
-    external get : ('a, 'k) session -> ('a, 'k) nvector -> float
-      = "c_idas_quad_get"
-    external get_dky :
-      ('a, 'k) session -> float -> int -> ('a, 'k) nvector -> unit
-      = "c_idas_quad_get_dky"
-    external get_num_rhs_evals : ('a, 'k) session -> int
-      = "c_idas_quad_get_num_rhs_evals"
-    external get_num_err_test_fails : ('a, 'k) session -> int
-      = "c_idas_quad_get_num_err_test_fails"
-    external get_err_weights : ('a, 'k) session -> ('a, 'k) nvector -> unit
-      = "c_idas_quad_get_err_weights"
-    external get_stats : ('a, 'k) session -> int * int
-      = "c_idas_quad_get_stats"
-  end
-module Sensitivity :
-  sig
-    type ('a, 'k) tolerance =
-        SStolerances of float * Sundials.RealArray.t
-      | SVtolerances of float * ('a, 'k) nvector array
-      | EEtolerances
-    external set_err_con : ('a, 'k) session -> bool -> unit
-      = "c_idas_sens_set_err_con"
-    external ss_tolerances :
-      ('a, 'k) session -> float -> Sundials.RealArray.t -> unit
-      = "c_idas_sens_ss_tolerances"
-    external ee_tolerances : ('a, 'k) session -> unit
-      = "c_idas_sens_ee_tolerances"
-    external sv_tolerances :
-      ('a, 'k) session -> float -> ('a, 'k) nvector array -> unit
-      = "c_idas_sens_sv_tolerances"
-    val set_tolerances : ('a, 'b) session -> ('a, 'b) tolerance -> unit
-    exception SensNotInitialized
-    exception BadIS
-    val fwdsensext : ('a, 'b) session -> ('a, 'b) fsensext
-    type sens_method = Simultaneous | Staggered
-    type 'a sensresfn = 'a Ida_impl.sensresfn
-    type sens_params = {
-      pvals : Sundials.RealArray.t option;
-      pbar : Sundials.RealArray.t option;
-      plist : int array option;
-    }
-    val no_sens_params : sens_params
-    external c_sens_init :
-      ('a, 'k) session ->
-      sens_method ->
-      bool -> ('a, 'k) nvector array -> ('a, 'k) nvector array -> unit
-      = "c_idas_sens_init"
-    external c_set_params : ('a, 'k) session -> sens_params -> unit
-      = "c_idas_sens_set_params"
-    val set_params : ('a, 'b) session -> sens_params -> unit
-    val init :
-      ('a, 'b) session ->
-      ('a, 'b) tolerance ->
-      sens_method ->
-      sens_params ->
-      'a sensresfn option ->
-      ('a, 'b) nvector array -> ('a, 'b) nvector array -> unit
-    external c_reinit :
-      ('a, 'k) session ->
-      sens_method -> ('a, 'k) nvector array -> ('a, 'k) nvector array -> unit
-      = "c_idas_sens_reinit"
-    val reinit :
-      ('a, 'b) session ->
-      sens_method -> ('a, 'b) nvector array -> ('a, 'b) nvector array -> unit
-    external toggle_off : ('a, 'k) session -> unit = "c_idas_sens_toggle_off"
-    external c_get : ('a, 'k) session -> ('a, 'k) nvector array -> float
-      = "c_idas_sens_get"
-    val get : ('a, 'b) session -> ('a, 'b) nvector array -> float
-    external c_get_dky :
-      ('a, 'k) session -> float -> int -> ('a, 'k) nvector array -> unit
-      = "c_idas_sens_get_dky"
-    val get_dky :
-      ('a, 'b) session -> float -> int -> ('a, 'b) nvector array -> unit
-    external get1 : ('a, 'k) session -> int -> ('a, 'k) nvector -> float
-      = "c_idas_sens_get1"
-    external get_dky1 :
-      ('a, 'k) session -> float -> int -> int -> ('a, 'k) nvector -> unit
-      = "c_idas_sens_get_dky1"
-    type dq_method = DQCentered | DQForward
-    external set_dq_method : ('a, 'k) session -> dq_method -> float -> unit
-      = "c_idas_sens_set_dq_method"
-    external set_max_nonlin_iters : ('a, 'k) session -> int -> unit
-      = "c_idas_sens_set_max_nonlin_iters"
-    external get_num_res_evals : ('a, 'k) session -> int
-      = "c_idas_sens_get_num_res_evals"
-    external get_num_res_evals_sens : ('a, 'k) session -> int
-      = "c_idas_sens_get_num_res_evals_sens"
-    external get_num_err_test_fails : ('a, 'k) session -> int
-      = "c_idas_sens_get_num_err_test_fails"
-    external get_num_lin_solv_setups : ('a, 'k) session -> int
-      = "c_idas_sens_get_num_lin_solv_setups"
-    type sensitivity_stats = {
-      num_res_evals : int;
-      num_sens_evals : int;
-      num_err_test_fails : int;
-      num_lin_solv_setups : int;
-    }
-    external get_stats : ('a, 'k) session -> sensitivity_stats
-      = "c_idas_sens_get_stats"
-    external c_get_err_weights :
-      ('a, 'k) session -> ('a, 'k) nvector array -> unit
-      = "c_idas_sens_get_err_weights"
-    val get_err_weights : ('a, 'b) session -> ('a, 'b) nvector array -> unit
-    external c_sens_calc_ic_ya_yd' :
-      ('a, 'k) session ->
-      ('a, 'k) nvector option ->
-      ('a, 'k) nvector option ->
-      ('a, 'k) nvector array option ->
-      ('a, 'k) nvector array option -> ('a, 'k) nvector -> float -> unit
-      = "c_ida_sens_calc_ic_ya_ydp_byte" "c_ida_sens_calc_ic_ya_ydp"
-    external c_sens_calc_ic_y :
-      ('a, 'k) session ->
-      ('a, 'k) nvector option -> ('a, 'k) nvector option -> float -> unit
-      = "c_ida_sens_calc_ic_y"
-    val calc_ic_ya_yd' :
-      ('a, 'b) session ->
-      ?y:('a, 'b) nvector ->
-      ?y':('a, 'b) nvector ->
-      ?ys:('a, 'b) nvector array ->
-      ?y's:('a, 'b) nvector array -> ('a, 'b) nvector -> float -> unit
-    val calc_ic_y :
-      ('a, 'b) session ->
-      ?y:('a, 'b) nvector -> ?ys:('a, 'b) nvector -> float -> unit
-    external get_num_nonlin_solv_iters : ('a, 'k) session -> int
-      = "c_idas_sens_get_num_nonlin_solv_iters"
-    external get_num_nonlin_solv_conv_fails : ('a, 'k) session -> int
-      = "c_idas_sens_get_num_nonlin_solv_conv_fails"
-    external get_nonlin_solv_stats : ('a, 'k) session -> int * int
-      = "c_idas_sens_get_nonlin_solv_stats"
-    module Quadrature :
-      sig
-        exception QuadSensNotInitialized
-        exception QuadSensRhsFuncFailure
-        exception FirstQuadSensRhsFuncErr
-        exception RepeatedQuadSensRhsFuncErr
-        type 'a quadsensrhsfn =
-            float ->
-            'a ->
-            'a ->
-            'a array -> 'a array -> 'a -> 'a array -> 'a -> 'a -> 'a -> unit
-        external c_quadsens_init :
-          ('a, 'k) session -> bool -> ('a, 'k) nvector array -> unit
-          = "c_idas_quadsens_init"
-        val init :
-          ('a, 'b) session ->
-          'a quadsensrhsfn option -> ('a, 'b) nvector array -> unit
-        external c_reinit :
-          ('a, 'k) session -> ('a, 'k) nvector array -> unit
-          = "c_idas_quadsens_reinit"
-        val reinit : ('a, 'b) session -> ('a, 'b) nvector array -> unit
-        type ('a, 'k) tolerance =
-            NoStepSizeControl
-          | SStolerances of float * Sundials.RealArray.t
-          | SVtolerances of float * ('a, 'k) nvector array
-          | EEtolerances
-        external set_err_con : ('a, 'k) session -> bool -> unit
-          = "c_idas_quadsens_set_err_con"
-        external ss_tolerances :
-          ('a, 'k) session -> float -> Sundials.RealArray.t -> unit
-          = "c_idas_quadsens_ss_tolerances"
-        external sv_tolerances :
-          ('a, 'k) session -> float -> ('a, 'k) nvector array -> unit
-          = "c_idas_quadsens_sv_tolerances"
-        external ee_tolerances : ('a, 'k) session -> unit
-          = "c_idas_quadsens_ee_tolerances"
-        val set_tolerances : ('a, 'b) session -> ('a, 'b) tolerance -> unit
-        external c_get : ('a, 'k) session -> ('a, 'k) nvector array -> float
-          = "c_idas_quadsens_get"
-        val get : ('a, 'b) session -> ('a, 'b) nvector array -> float
-        external get1 : ('a, 'k) session -> int -> ('a, 'k) nvector -> float
-          = "c_idas_quadsens_get1"
-        external c_get_dky :
-          ('a, 'k) session -> float -> int -> ('a, 'k) nvector array -> unit
-          = "c_idas_quadsens_get_dky"
-        val get_dky :
-          ('a, 'b) session -> float -> int -> ('a, 'b) nvector array -> unit
-        external get_dky1 :
-          ('a, 'k) session -> float -> int -> int -> ('a, 'k) nvector -> unit
-          = "c_idas_quadsens_get_dky1"
-        external get_num_rhs_evals : ('a, 'k) session -> int
-          = "c_idas_quadsens_get_num_rhs_evals"
-        external get_num_err_test_fails : ('a, 'k) session -> int
-          = "c_idas_quadsens_get_num_err_test_fails"
-        external c_get_err_weights :
-          ('a, 'k) session -> ('a, 'k) nvector array -> unit
-          = "c_idas_quadsens_get_err_weights"
-        val get_err_weights :
-          ('a, 'b) session -> ('a, 'b) nvector array -> unit
-        external get_stats : ('a, 'k) session -> int * int
-          = "c_idas_quadsens_get_stats"
-      end
-  end
-module Adjoint :
-  sig
-    exception AdjointNotInitialized
-    exception NoForwardCall
-    exception ForwardReinitializationFailed
-    exception ForwardFailed
-    exception NoBackwardProblem
-    exception BadFinalTime
-    type ('a, 'k) bsession = ('a, 'k) Ida_impl.bsession
-    type serial_bsession = (real_array, Nvector_serial.kind) bsession
-    type interpolation = IPolynomial | IHermite
-    val init : ('a, 'b) session -> int -> interpolation -> unit
-    val fwdsensext : ('a, 'b) session -> ('a, 'b) fsensext
+
+    type bandrange = { mupper : int; (** The upper half-bandwidth.  *)
+                       mlower : int; (** The lower half-bandwidth.  *) }
+
+    (** Specify which variables are algebraic and which variables are
+        differential, needed for {!set_suppress_alg}.  This function must
+        not be called if you already called {!calc_ic_ya_yd'}.
+
+        The SUNDIALS manual is not clear about whether it's safe to change the
+        variable types after you've already set it.
+
+        [set_var_types] corresponds to [IDASetIdB] in the C interface,
+        and an alias {!set_id} is also available in this binding.  We
+        prefer the more descriptive name {!set_var_types}, however.
+
+        @ida <node5#sss:optin_main> IDASetIdB
+    *)
     val set_var_types : ('a, 'b) bsession -> ('a, 'b) nvector -> unit
+    (** An unpreferred alias for {!set_var_types}.  SUNDIALS calls
+        variable types by the cryptic name "Id", and this OCaml
+        binding preserves this alternative naming to help users
+        transition from the C interface.
+
+        @ida <node5#sss:optin_main> IDASetIdB
+    *)
+    val set_id : ('a, 'b) bsession -> ('a, 'b) nvector -> unit
+
+    (** Indicate whether or not to ignore algebraic variables in the local
+        error test.  This is set to [false] by default.  Before you can
+        set it to [true], you must specify which variables are algebraic
+        through {!calc_ic_ya_yd'} or {!set_var_types}, but not both.
+
+        Exactly one of these functions should be called, exactly once,
+        before the first call to {!solve_normal}, {!solve_one_step}, or
+        {!calc_ic_ya_yd'}.  Forgetting to do so will cause an
+        {!Ida.IllInput} exception.
+
+        Note: {!set_var_types} is the preferred alias to {!set_id}, which
+        corresponds to [IDASetId] in the C interface.
+
+        In general, suppressing local error tests for algebraic variables
+        is {i discouraged} when solving DAE systems of index 1, whereas it
+        is generally {i encouraged} for systems of index 2 or more.  See
+        pp. 146-147 of the following reference for more on this issue:
+
+        K. E. Brenan, S. L. Campbell, and L. R. Petzold.  Numerical
+        Solution of Initial-Value Problems in Differential-Algebraic
+        Equations.  SIAM, Philadelphia, Pa, 1996.
+
+        @ida <node5#sss:optin_main> IDASetId
+        @ida <node5#sss:optin_main> IDASetSuppressAlg
+    *)
     val set_suppress_alg : ('a, 'b) bsession -> bool -> unit
+
+    (** This function provides the same functionality for backward
+        problems as {!Ida.calc_ic_ya_yd'} provides for forward
+        problems: compute the algebraic components of [yB] and
+        differential components of [y'B], given the differential
+        components of [yB].  If [bs] is a backward session initialized
+        with a call to {!init_backward} at time value [tB0] and a
+        residual function independent of forward sensitivities, then
+        [calc_ic bs tBout1 yB0 y'B0 yS0 y'S0] corrects the initial
+        values [yB0] and [y'B0] at time [tB0] for the backward
+        problem, where:
+        - [tBout1] is the first value of [t] at which a solution will
+          be requested (with {!backward_normal} or
+          {!backward_one_step}). This value is needed here only to
+          determine the direction of integration and rough scale in
+          the independent variable [t].
+        - [yB0] is the forward solution at final time [tB0].
+        - [y'B0] is the forward derivative solution at final time [tB0].
+
+        The optional arguments [~yb] and [~y'b], if present, will be
+        filled with the corrected values of [yB] and [y'B],
+        respectively.  The storage for [~yb] and [~y'b] should not
+        overlap with each other, but they can overlap with [yB] and/or
+        [y'B].
+
+        Calling this function is optional. It is only necessary when
+        the initial conditions do not satisfy the adjoint system.
+
+        This function works if the residual function is independent of
+        forward sensitivities.  If the residual function depends on
+        sensitivities, {!calc_ic_sens} should be used instead.
+
+        @idas <node5#sss:optin_main> IDACalcICB
+        @idas <node5#sss:optin_main> IDAGetConsistentICB
+      *)
     val calc_ic :
       ('a, 'b) bsession ->
       ?yb:('a, 'b) nvector ->
       ?y'b:('a, 'b) nvector ->
       float -> ('a, 'b) nvector -> ('a, 'b) nvector -> unit
+
+    (** This function provides the same functionality for backward
+        problems as {!Ida.calc_ic_ya_yd'} provides for forward
+        problems: compute the algebraic components of [yB] and
+        differential components of [y'B], given the differential
+        components of [yB].  If [bs] is a backward session initialized
+        with a call to {!init_backward} at time value [tB0] and a
+        sensitivity-dependent residual function, then [calc_ic bs
+        tBout1 yB0 y'B0 yS0 y'S0] corrects the initial values [yB0]
+        and [y'B0] at time [tB0] for the backward problem, where:
+        - [tBout1] is the first value of [t] at which a solution will
+          be requested (with {!backward_normal} or
+          {!backward_one_step}). This value is needed here only to
+          determine the direction of integration and rough scale in
+          the independent variable [t].
+        - [yB0] is the forward solution at final time [tB0].
+        - [y'B0] is the forward derivative solution at final time [tB0].
+        - [yS0] is an array of vectors containing the sensitivities
+          of the forward solution at final time [tB0].
+        - [y'S0] is an array of vectors containing the sensitivities
+          of the forward derivative solution at final time [tB0].
+
+        The optional arguments [~yb] and [~y'b], if present, will be
+        filled with the corrected values of [yB] and [y'B],
+        respectively.  The storage for [~yb] and [~y'b] should not
+        overlap with each other, but they can overlap with [yB] and/or
+        [y'B].
+
+        Calling this function is optional. It is only necessary when
+        the initial conditions do not satisfy the adjoint system.
+
+        This function works if the residual function is independent of
+        forward sensitivities.  If the residual function depends on
+        sensitivities, {!calc_ic_sens} should be used instead.
+
+        @idas <node5#sss:optin_main> IDACalcICBS
+        @idas <node5#sss:optin_main> IDAGetConsistentICBS
+      *)
     val calc_ic_sens :
       ('a, 'b) bsession ->
       ?yb:('a, 'b) nvector ->
@@ -472,129 +1042,209 @@ module Adjoint :
       ('a, 'b) nvector ->
       ('a, 'b) nvector ->
       ('a, 'b) nvector array -> ('a, 'b) nvector array -> unit
-    external forward_normal :
-      ('a, 'k) session ->
-      float ->
-      ('a, 'k) nvector ->
-      ('a, 'k) nvector -> float * int * Sundials.solver_result
-      = "c_idas_adj_forward_normal"
-    external forward_one_step :
-      ('a, 'k) session ->
-      float ->
-      ('a, 'k) nvector ->
-      ('a, 'k) nvector -> float * int * Sundials.solver_result
-      = "c_idas_adj_forward_one_step"
-    type 'a bresfn =
-      'a B.bresfn =
-        Basic of 'a B.resfnb
-      | WithSens of 'a B.resfnbs
-    type 'a single_tmp = 'a
-    type 'a triple_tmp = 'a * 'a * 'a
-    type ('t, 'a) jacobian_arg =
-      ('t, 'a) B.jacobian_arg = {
-      jac_t : float;
-      jac_y : 'a;
-      jac_y' : 'a;
-      jac_yb : 'a;
-      jac_y'b : 'a;
-      jac_resb : 'a;
-      jac_coef : float;
-      jac_tmp : 't;
-    }
-    type bandrange = Ida_impl.bandrange = { mupper : int; mlower : int; }
+
+    (** Specify a linear solver.
+
+        @cvodes <node7#sss:lin_solv_b> Linear Solver Initialization Functions *)
     type ('data, 'kind) linear_solver =
         ('data, 'kind) Ida_impl.blinear_solver
     type serial_linear_solver =
         (real_array, Nvector_serial.kind) linear_solver
-    type ('data, 'kind) iter =
-        Newton of ('data, 'kind) linear_solver
-      | Functional
+
     type ('a, 'k) tolerance =
         SStolerances of float * float
+        (** [(rel, abs)] : scalar relative and absolute tolerances. *)
       | SVtolerances of float * ('a, 'k) nvector
-    external ss_tolerances :
-      ('a, 'k) session -> int -> float -> float -> unit
-      = "c_idas_adj_ss_tolerances"
-    external sv_tolerances :
-      ('a, 'k) session -> int -> float -> ('a, 'k) nvector -> unit
-      = "c_idas_adj_sv_tolerances"
-    val set_tolerances : ('a, 'b) bsession -> ('a, 'b) tolerance -> unit
-    val set_linear_solver :
-      ('a, 'b) bsession ->
-      (('a, 'b) bsession -> 'c -> 'd -> 'e) -> 'c -> 'd -> 'e
-    external bsession_finalize : ('a, 'k) session -> unit
-      = "c_idas_adj_bsession_finalize"
-    external c_init_backward :
-      ('a, 'k) session ->
-      ('a, 'k) session Weak.t ->
-      float ->
-      ('a, 'k) nvector ->
-      ('a, 'k) nvector -> bool -> ida_mem * int * c_weak_ref * ida_file
-      = "c_idas_adj_init_backward_byte" "c_idas_adj_init_backward"
+        (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
+
+    (** [init_backward s linsolv tol fB tB0 yB0 yB'0] adds and initializes a
+        backward problem that may or may not depend on forward sensitivities,
+        where
+        - [s] is the parent session (going forward),
+        - [linsolv] specifies a linear solver,
+        - [tol]     specifies the tolerances, see {!tolerance},
+        - [fB]      computes the right-hand side of the backward ODE problem,
+        - [tB0]     specifies the endpoint where final conditions are provided
+                    for the backward problem, normally equal to the endpoint of
+                    the forward integration, and,
+        - [yB0]     is the final value of the backward problem.
+
+        @cvodes <node7#sss:cvinitb> IDACreateB
+        @cvodes <node7#sss:cvinitb> IDAInitB
+        @cvodes <node7#sss:cvinitb> IDAInitBS
+        @cvodes <node7#sss:cvtolerances_b> IDASStolerancesB
+        @cvodes <node7#sss:cvtolerances_b> IDASVtolerancesB 
+        @raise AdjointNotInitialized    The [init] function has not previously been called.
+        @raise BadFinalTime      The final time is outside the interval over which the forward problem was solved. *)
     val init_backward :
-      ('a, 'b) session ->
-      (('a, 'b) bsession -> ('a, 'b) nvector -> ('a, 'b) nvector -> 'c) ->
-      ('a, 'b) tolerance ->
-      'a bresfn ->
-      float -> ('a, 'b) nvector -> ('a, 'b) nvector -> ('a, 'b) bsession
-    external c_reinit :
-      ('a, 'k) session ->
-      int -> float -> ('a, 'k) nvector -> ('a, 'k) nvector -> unit
-      = "c_idas_adj_reinit"
+         ('a, 'k) session
+      -> ('a, 'k) linear_solver
+      -> ('a, 'k) tolerance
+      -> 'a bresfn
+      -> float
+      -> ('a, 'k) nvector
+      -> ('a, 'k) nvector
+      -> ('a, 'k) bsession
+
+    (** Reinitialize the backward problem.
+
+        @cvodes <node7#sss:cvinitb> IDAReInitB
+        @raise AdjointNotInitialized    The [init] function has not previously been called.
+        @raise BadFinalTime      The final time is outside the interval over which the forward problem was solved. *)
     val reinit :
       ('a, 'b) bsession ->
       float -> ('a, 'b) nvector -> ('a, 'b) nvector -> unit
-    external backward_normal : ('a, 'k) session -> float -> unit
-      = "c_idas_adj_backward_normal"
-    external backward_one_step : ('a, 'k) session -> float -> unit
-      = "c_idas_adj_backward_one_step"
-    external c_get :
-      ('a, 'k) session ->
-      int -> ('a, 'k) nvector -> ('a, 'k) nvector -> float = "c_idas_adj_get"
+
+    (** {4:adjbwdintegration Backward Integration} *)
+
+    (** [backward_normal s tbout] integrates the backward DAE
+        problem. The function takes internal steps until it has
+        reached or just passed the user-specified value [tbout]
+        ([IDA_NORMAL]). The solver then interpolates in order to
+        return an approximate value of [y(tbout)] when {!get} is
+        called.
+
+        @idas <node7#sss:cvsolveb> IDASolveB
+        @raise AdjointNotInitialized    The [init] function has not previously been called.
+        @raise NoBackwardProblem        The [init_backward] function has not previously been called.
+        @raise NoForwardCall            Neither [forward_normal] nor [forward_one_step] has previously been called.
+        @raise Ida.IllInput           One of the inputs is invalid.
+        @raise Ida.TooMuchWork        Could not reach [tout] in [mxstep] steps
+        @raise Ida.TooMuchAccuracy    Could not satisfy the demanded accuracy
+        @raise Ida.ErrFailure         Too many error test failures.
+        @raise Ida.ConvergenceFailure Too many convergence test failures.
+        @raise Ida.LinearSetupFailure Unrecoverable failure in linear solver setup function.
+        @raise Ida.LinearSolveFailure Unrecoverable failure in linear solver solve function.
+        @raise BadOutputTime            The requested output time is outside the interval over which the forward problem was solved.
+        @raise ForwardReinitializationFailed Reinitialization of the forward problem failed at the first checkpoint (corresponding to the initial time of the forward problem).
+        @raise ForwardFail              An error occurred during the integration of the forward problem. *)
+    val backward_normal : ('a, 'k) session -> float -> unit
+
+    (** [backward_one_step s tbout] integrates the backward DAE problem. The
+        function takes one internal step ([IDA_ONE_STEP]).
+
+        @cvodes <node7#sss:cvsolveb> IDASolveB
+        @raise AdjointNotInitialized    The [init] function has not previously been called.
+        @raise NoBackwardProblem        The [init_backward] function has not previously been called.
+        @raise NoForwardCall            Neither [forward_normal] nor [forward_one_step] has previously been called.
+        @raise Ida.IllInput           One of the inputs is invalid.
+        @raise Ida.TooMuchWork        Could not reach [tout] in [mxstep] steps
+        @raise Ida.TooMuchAccuracy    Could not satisfy the demanded accuracy
+        @raise Ida.ErrFailure         Too many error test failures.
+        @raise Ida.ConvergenceFailure Too many convergence test failures.
+        @raise Ida.LinearSetupFailure Unrecoverable failure in linear solver setup function.
+        @raise Ida.LinearSolveFailure Unrecoverable failure in linear solver solve function.
+        @raise BadOutputTime            The requested output time is outside the interval over which the forward problem was solved.
+        @raise ForwardReinitializationFailed Reinitialization of the forward problem failed at the first checkpoint (corresponding to the initial time of the forward problem).
+        @raise ForwardFail              An error occurred during the integration of the forward problem. *)
+    val backward_one_step : ('a, 'k) session -> float -> unit
+
+    (** [tret = get bs yB y'B] returns the solution of the backward DAE problem
+        in [yB] and [y'B] at time [tret].
+
+        @cvodes <node7#sss:cvsolveb> IDAGetB *)
     val get :
       ('a, 'b) bsession -> ('a, 'b) nvector -> ('a, 'b) nvector -> float
+
+    (** [tret = get_dky s t k dkys] fills [dkys] with the derivatives of the
+        sensitivity solution vectors after a successful return from
+        {!backward_normal} or {!backward_one_step}. The time requested, [t],
+        must fall within the interval defined by the last successful step
+        ({!get_last_step}). The requested order, [k], must be less than or equal
+        to the value returned by {!get_last_order}.
+
+        @cvodes <node5#ss:optional_dky> IDAGetDky
+        @cvodes <node5#ss:optional_dky> IDAGetAdjIDABmem
+        @raise BadK [k] is not in the range 0, 1, ..., [qlast].
+        @raise BadT [t] is not in the allowed range. *)
     val get_dky :
       ('a, 'b) bsession -> float -> int -> ('a, 'b) Ida.nvector -> unit
-    external c_set_max_ord : ('a, 'k) session -> int -> int -> unit
-      = "c_idas_adj_set_max_ord"
+
+    (** {4:adjbwdoptout Optional Output Functions} *)
+
+    (** Instructs {!forward_normal} and {!forward_one_step} not to save
+        checkpointing data for forward sensitivities anymore.
+
+        @cvodes <node7#SECTION00727000000000000000> IDAAdjSetNoSensi *)
+    val set_no_sensitivity : ('a, 'k) session -> unit
+
+    (** Specifies the maximum order of the linear multistep method.
+
+        @cvodes <node7#ss:optional_input_b> IDASetMaxOrdB *)
     val set_max_ord : ('a, 'b) bsession -> int -> unit
-    external c_set_max_num_steps : ('a, 'k) session -> int -> int -> unit
-      = "c_idas_adj_set_max_num_steps"
+
+    (** Specifies the maximum number of steps to be taken by the solver in its
+        attempt to reach the next output time.
+
+        @cvodes <node7#ss:optional_input_b> IDASetMaxNumStepsB *)
     val set_max_num_steps : ('a, 'b) bsession -> int -> unit
-    external c_set_init_step : ('a, 'k) session -> int -> float -> unit
-      = "c_idas_adj_set_init_step"
+
+    (** Specifies the initial step size.
+
+        @cvodes <node7#ss:optional_input_b> IDASetInitStepB *)
     val set_init_step : ('a, 'b) bsession -> float -> unit
-    external c_set_max_step : ('a, 'k) session -> int -> float -> unit
-      = "c_idas_adj_set_max_step"
+
+    (** Specifies an upper bound on the magnitude of the step size.
+
+        @cvodes <node7#ss:optional_input_b> IDASetMaxStepB *)
     val set_max_step : ('a, 'b) bsession -> float -> unit
+
+    (** {4:adjbwddirect Direct Linear Solver} *)
+
     module Dls :
       sig
+        (** This module provides the same functionality as {!Ida.Dls}, but
+            for backward problems specifically.  Note sundials (as of
+            2.5.0) doesn't support LAPACK for backward problems.  *)
+
+        (** This function computes the dense Jacobian of the backward problem
+            (or an approximation to it).
+
+            @cvodes <node7#ss:densejac_b> CVDlsDenseJacFnB *)
         type dense_jac_fn =
             (real_array triple_tmp, real_array) jacobian_arg ->
             Dls.DenseMatrix.t -> unit
+
+        (** This function computes the banded Jacobian of the backward problem
+            (or an approximation to it).
+
+            @cvodes <node7#ss:bandjac_b> CVDlsBandJacFnB *)
         type band_jac_fn =
             bandrange ->
             (real_array triple_tmp, real_array) jacobian_arg ->
             Dls.BandMatrix.t -> unit
-        external c_dls_dense : serial_session -> int -> int -> bool -> unit
-          = "c_idas_adj_dls_dense"
-        external c_dls_band :
-          serial_session * int -> int -> int -> int -> bool -> unit
-          = "c_idas_adj_dls_band"
-        val dense :
-          B.dense_jac_fn option ->
-          (real_array, Nvector_serial.kind) bsession ->
-          (Sundials.RealArray.t, 'a) Sundials.nvector -> 'b -> unit
-        type ('data, 'kind) linear_solver =
-            ('data, 'kind) bsession -> ('data, 'kind) nvector -> unit
-        val band :
-          bandrange ->
-          B.band_jac_fn option ->
-          (real_array, Nvector_serial.kind) bsession ->
-          (Sundials.RealArray.t, 'a) Sundials.nvector -> 'b -> unit
+
+        (** Direct linear solver with dense matrix.  The optional argument
+            specifies a callback function that computes an approximation to the
+            Jacobian matrix (see {!dense_jac_fn} for details).  If this
+            argument is [None], then CVODE uses a default implementation based
+            on difference quotients.  See also {!Dls}.
+
+            @cvodes <node7#sss:lin_solv_b> CVDenseB
+            @cvodes <node7#SECTION00728200000000000000> CVDlsSetDenseJacFnB
+            @cvodes <node7#ss:densejac_b> CVDlsDenseJacFnB *)
+        val dense : Ida_impl.B.dense_jac_fn option -> serial_linear_solver
+
+        (** Direct linear solver with banded matrix.  The arguments specify the
+            width of the band ({!bandrange}) and an optional Jacobian
+            function ({!bband_jac_fn}).  If the Jacobian function is [None],
+            CVODES uses an internal implementation based on difference
+            quotients. See also {!Dls}.
+
+            @cvodes <node7#sss:lin_solv_b> CVBandB
+            @cvodes <node7#SECTION00728300000000000000> CVDlsSetBandJacFnB
+            @cvodes <node7#ss:bandjac_b> CVDlsBandJacFnB *)
+        val band : bandrange -> Ida_impl.B.band_jac_fn option -> serial_linear_solver
       end
+
+    (** {4:adjbwdspils Scaled Preconditioned Iterative Linear Solvers (SPILS)} *)
+
     module Spils :
       sig
+        (** Scaled Preconditioned Iterative Linear Solvers (SPILS)
+
+            @cvodes <node7#ss:optional_output_b> Optional output functions for the backward problem. *)
+
         type gramschmidt_type =
           Spils.gramschmidt_type =
             ModifiedGS
@@ -606,108 +1256,489 @@ module Adjoint :
           | PrecRight
           | PrecBoth
         type 'a callbacks =
-          'a B.spils_callbacks = {
+          'a Ida_impl.B.spils_callbacks = {
           prec_solve_fn :
             (('a single_tmp, 'a) jacobian_arg -> 'a -> 'a -> float -> unit)
             option;
+          (** Called like [prec_solve_fn arg r z delta] to solve the
+              linear system {i P}[z] = [r], where {i P} is the (left)
+              preconditioner matrix.
+
+              If set to [None] then no preconditioning is performed, and
+              [prec_setup_fn] and [jac_times_vec_fn] are ignored.
+
+              {i P} should approximate, at least crudely, the system
+              Jacobian matrix {i J = dF/dy + {jac.coef} * dF/dy'} where {i
+              F} is the residual function.
+              - [arg] supplies the basic problem data as a {!jacobian_arg}.
+              - [r] is the right-hand side vector.
+              - [z] is the vector in which the result must be stored.
+              - [delta] is an input tolerance.
+
+              [delta] is an input tolerance to be used if an iterative method is
+              employed in the solution.  In that case, the residual vector res = [r]
+              - {i P} [z] of the system should be made less than [delta] in weighted
+              l2 norm, i.e. [sqrt (sum over i ((res.{i} * ewt.{i})^2)) < delta],
+              where the vector ewt can be obtained through {!get_err_weights}.
+
+              This function can raise {!Sundials.RecoverableFailure} to instruct the
+              integrator to retry with a different step size.  Raising any other
+              kind of exception aborts the integrator.
+
+              {b NB:} [r], [z], and the elements of [arg] must no longer be accessed
+                  after [prec_solve_fn] has returned, i.e. if their values are
+                  needed outside of the function call, then they must be copied
+                  to separate physical structures.
+
+              @ida <node5#sss:optin_spils> IDASpilsSetPreconditioner
+              @ida <node5#ss:psolveFn> Linear preconditioning function
+              @ida <node5#ss:precondFn> Jacobian preconditioning function
+          *)
+
           prec_setup_fn : (('a triple_tmp, 'a) jacobian_arg -> unit) option;
+          (** A function that preprocesses and/or evaluates any
+              Jacobian-related data needed by [prec_solve_fn] above.  When
+              [prec_solve_fn] doesn't need any such data, this field can
+              be [None].
+
+              The sole argument to this function specifies the basic
+              problem data as a {!jacobian_arg}.
+
+              Note that unlike in CVODES, whatever data this function
+              computes has to be recomputed every time it is called.
+
+              This function can raise {!Sundials.RecoverableFailure} to
+              instruct the integrator to retry with a different step size.
+              Raising any other kind of exception aborts the integrator.
+
+              {b NB:} The elements of [jac] must no longer be accessed
+                  after [psetup] has returned a result, i.e. if their
+                  values are needed outside of the function call, then
+                  they must be copied to a separate physical
+                  structure.
+
+              @ida <node5#sss:optin_spils> IDASpilsSetPreconditionerB
+              @ida <node5#ss:psolveFn> Linear preconditioning function
+              @ida <node5#ss:precondFn> Jacobian preconditioning function
+          *)
+
           jac_times_vec_fn :
             (('a single_tmp, 'a) jacobian_arg -> 'a -> 'a -> unit) option;
+          (** Specifies a Jacobian-times-vector function.  When this field is [None],
+              IDA uses a default implementation based on difference quotients.
+
+              [jac_times_vec_fn arg v jv] should compute the matrix-vector product {i
+              J}[v], where {i J} is the system Jacobian.
+              - [arg] provides the data necessary to compute the Jacobian.
+              - [v] is the vector by which the Jacobian must be multiplied.
+              - [jv] is the vector in which the result must be stored.
+
+              The Jacobian {i J} (which is not explicitly constructed)
+              has ({i i,j}) entry {i dFi/dyj + c*dFi/dy'j} where {i F}
+              is the residual function, i.e. the partial derivative of
+              the [i]-th equation with respect to the [j]-th component
+              of the non-derivative vector.  [c] is the [jac_coef]
+              field of [arg] (see {!jacobian_arg}).  See the [Dense]
+              {!linear_solver} for a more detailed explanation.
+
+              {b NB:} The elements of [jac], [v], and [Jv] must no
+                      longer be accessed after [psolve] has returned a
+                      result, i.e. if their values are needed outside
+                      of the function call, then they must be copied
+                      to separate physical structures.
+
+              Raising any kind of exception (including
+              {!Sundials.RecoverableFailure}) from this function
+              results in the integrator being aborted.
+
+              @idas <node5#sss:optin_spils> IDASpilsSetJacTimesVecFnB
+              @idas <node5#ss:jtimesFn> Jacobian-times-vector function
+          *)
         }
+
+        (** No preconditioning functions. *)
         val no_precond : 'a callbacks
-        external c_spils_set_preconditioner :
-          ('a, 'k) session -> int -> bool -> bool -> unit
-          = "c_idas_adj_spils_set_preconditioner"
-        external c_spils_spgmr : ('a, 'k) session -> int -> int -> unit
-          = "c_idas_adj_spils_spgmr"
-        external c_spils_spbcg : ('a, 'k) session -> int -> int -> unit
-          = "c_idas_adj_spils_spbcg"
-        external c_spils_sptfqmr : ('a, 'k) session -> int -> int -> unit
-          = "c_idas_adj_spils_sptfqmr"
-        val set_precond :
-          ('a, 'b) bsession ->
-          ('c, 'd) session -> int -> 'a callbacks -> unit
+
+        (** Krylov iterative solver with the scaled preconditioned
+            GMRES method.  The arguments specify the maximum dimension
+            of the Krylov subspace and preconditioning type
+            ({!Cvode.spils_params}) and the preconditioner callback
+            functions ({!callbacks}).
+
+            @cvodes <node7#sss:lin_solv_b> IDASpgmrB
+            @cvodes <node7#SECTION00728400000000000000> IDASpilsSetPreconditionerB
+            @cvodes <node7#ss:psolve_b> IDASpilsPrecSolveFnB
+            @cvodes <node7#ss:psetup_b> IDASpilsPrecSetupFnB *)
         val spgmr :
           int option -> 'a callbacks -> ('a, 'b) bsession -> 'c -> unit
+
+        (** Krylov iterative solver with the scaled preconditioned Bi-CGStab
+            method. The arguments are the same as [Spgmr].
+
+            @cvodes <node7#sss:lin_solv_b> CVSpbcgB
+            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetPreconditionerB
+            @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB
+            @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB *)
         val spbcg :
           int option -> 'a callbacks -> ('a, 'b) bsession -> 'c -> unit
+
+        (** Krylov iterative with the scaled preconditioned TFQMR method.  The
+            arguments are the same as [Spgmr].  See also {!Spils}.
+
+            @cvodes <node7#sss:lin_solv_b> IDASptfqmrB
+            @cvodes <node7#SECTION00728400000000000000> IDASpilsSetPreconditionerB
+            @cvodes <node7#ss:psolve_b> IDASpilsPrecSolveFnB
+            @cvodes <node7#ss:psetup_b> IDASpilsPrecSetupFnB *)
         val sptfqmr :
           int option -> 'a callbacks -> ('a, 'b) bsession -> 'c -> unit
-        external set_gs_type :
+
+        (** {5:adjbwdspilsoptin Optional Input Functions} *)
+
+        (** Sets the Gram-Schmidt orthogonalization to be used with the
+            Spgmr {!linear_solver}.
+
+            @cvodes <node7#SECTION00728400000000000000> IDASpilsSetGSTypeB *)
+        val set_gs_type :
           ('a, 'k) bsession -> Spils.gramschmidt_type -> unit
-          = "c_idas_adj_spils_set_gs_type"
-        external set_eps_lin : ('a, 'k) bsession -> float -> unit
-          = "c_idas_adj_spils_set_eps_lin"
-        external c_set_maxl : ('a, 'k) bsession -> int -> unit
-          = "c_idas_adj_spils_set_maxl"
+
+        (** [set_eps_lin eplifac] sets the factor by which the Krylov linear
+            solver's convergence test constant is reduced from the Newton
+            iteration test constant. [eplifac]  must be >= 0. Passing a value of
+            0 specifies the default (which is 0.05).
+
+            @cvodes <node7#SECTION00728400000000000000> IDASpilsSetEpsLinB *)
+        val set_eps_lin : ('a, 'k) bsession -> float -> unit
+
+        (** [set_maxl maxl] resets the maximum Krylov subspace dimension for the
+            Bi-CGStab or TFQMR methods. [maxl] is the maximum dimension of the
+            Krylov subspace.  A value of [None] (or [maxl] <= 0) specifies the
+            default of 5.0.
+
+            @cvodes <node7#SECTION00728400000000000000> IDASpilsSetMaxlB *)
         val set_maxl : ('a, 'b) bsession -> int option -> unit
+
+        (** {5:adjbwdspilsoptout Optional Output Functions} *)
+
+        (** Returns the sizes of the real and integer workspaces used by the
+            linear solver.
+
+            @cvodes <node5#sss:optout_spils> IDASpilsGetWorkSpace
+            @return ([real_size], [integer_size]) *)
         val get_work_space : ('a, 'b) bsession -> int * int
+
+        (** Returns the cumulative number of linear iterations.
+
+            @cvodes <node5#sss:optout_spils> IDASpilsGetNumLinIters *)
         val get_num_lin_iters : ('a, 'b) bsession -> int
+
+        (** Returns the cumulative number of linear convergence failures.
+
+            @cvodes <node5#sss:optout_spils> IDASpilsGetNumConvFails *)
         val get_num_conv_fails : ('a, 'b) bsession -> int
+
+        (** Returns the number of preconditioner evaluations, i.e., the number
+            of calls made to psetup with jok = [false].
+
+            @cvodes <node5#sss:optout_spils> IDASpilsGetNumPrecEvals *)
         val get_num_prec_evals : ('a, 'b) bsession -> int
+
+        (** Returns the cumulative number of calls made to the preconditioner
+            solve function, psolve.
+
+            @cvodes <node5#sss:optout_spils> IDASpilsGetNumPrecSolves *)
         val get_num_prec_solves : ('a, 'b) bsession -> int
+
+        (** Returns the cumulative number of calls made to the Jacobian-vector
+            function, jtimes.
+
+          @cvodes <node5#sss:optout_spils> IDASpilsGetNumJtimesEvals *)
         val get_num_jtimes_evals : ('a, 'b) bsession -> int
+
+        (** Returns the number of calls to the user residual function
+            for finite difference Jacobian-vector product
+            approximation. This counter is only updated if the default
+            difference quotient function is used.
+
+            @cvodes <node5#sss:optout_spils> IDASpilsGetNumRhsEvals *)
         val get_num_res_evals : ('a, 'b) bsession -> int
       end
+
+    (** {4:adjbwdout Output} *)
+
+    (** Returns the real and integer workspace sizes.
+
+        @cvodes <node5#sss:optout_main> IDAGetWorkSpace
+        @cvodes <node5#sss:optout_main> IDAGetAdjIDABmem
+        @return ([real_size], [integer_size]) *)
     val get_work_space : ('a, 'b) bsession -> int * int
+
+    (** Returns the cumulative number of internal steps taken by the solver.
+
+        @cvodes <node5#sss:optout_main> CVodeGetNumSteps
+        @cvodes <node5#sss:optout_main> IDAGetAdjIDABmem
+      *)
     val get_num_steps : ('a, 'b) bsession -> int
+
+    (** Returns the number of calls to the user's residual function.
+
+        @cvodes <node5#sss:optout_main> CVodeGetNumRhsEvals
+        @cvodes <node5#sss:optout_main> IDAGetAdjIDABmem
+      *)
     val get_num_res_evals : ('a, 'b) bsession -> int
+
+    (** Returns the number of calls made to the linear solver's setup function.
+
+        @cvodes <node5#sss:optout_main> CVodeGetNumLinSolvSetups
+        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+     *)
     val get_num_lin_solv_setups : ('a, 'b) bsession -> int
+
+    (** Returns the number of local error test failures that have occurred.
+
+        @cvodes <node5#sss:optout_main> CVodeGetNumErrTestFails
+        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+     *)
     val get_num_err_test_fails : ('a, 'b) bsession -> int
+
+    (** Returns the integration method order used during the last internal step.
+
+        @cvodes <node5#sss:optout_main> CVodeGetLastOrder
+        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+     *)
     val get_last_order : ('a, 'b) bsession -> int
+
+    (** Returns the integration method order to be used on the next internal
+        step.
+
+        @cvodes <node5#sss:optout_main> CVodeGetCurrentOrder
+        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+     *)
     val get_current_order : ('a, 'b) bsession -> int
+
+    (** Returns the integration step size taken on the last internal step.
+
+        @cvodes <node5#sss:optout_main> CVodeGetLastStep
+        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+     *)
     val get_last_step : ('a, 'b) bsession -> float
+
+    (** Returns the integration step size to be attempted on the next internal
+        step.
+
+        @cvodes <node5#sss:optout_main> CVodeGetCurrentStep
+        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+     *)
     val get_current_step : ('a, 'b) bsession -> float
+
+    (** Returns the the value of the integration step size used on the first
+        step.
+
+        @cvodes <node5#sss:optout_main> CVodeGetActualInitStep
+        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+     *)
     val get_actual_init_step : ('a, 'b) bsession -> float
+
+    (** Returns the the current internal time reached by the solver.
+
+        @cvodes <node5#sss:optout_main> CVodeGetCurrentTime
+        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+     *)
     val get_current_time : ('a, 'b) bsession -> float
+
+    (** Returns a suggested factor by which the user's tolerances should be
+        scaled when too much accuracy has been requested for some internal
+        step.
+
+        @cvodes <node5#sss:optout_main> CVodeGetTolScaleFactor
+        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+     *)
     val get_tol_scale_factor : ('a, 'b) bsession -> float
+
+    (** Returns the solution error weights at the current time.
+
+        @cvodes <node5#sss:optout_main> CVodeGetErrWeights
+        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+        @cvodes <node3#ss:ivp_sol> IVP solution (W_i) *)
     val get_err_weights : ('a, 'b) bsession -> ('a, 'b) Ida.nvector -> unit
+
+    (** Returns the vector of estimated local errors.
+
+        @cvodes <node5#sss:optout_main> CVodeGetEstLocalErrors
+        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+     *)
     val get_est_local_errors :
       ('a, 'b) bsession -> ('a, 'b) Ida.nvector -> unit
+
+    (** Returns the integrator statistics as a group.
+
+        @cvodes <node5#sss:optout_main> CVodeGetIntegratorStats
+        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+     *)
     val get_integrator_stats : ('a, 'b) bsession -> Ida.integrator_stats
+
+    (** Convenience function that calls get_integrator_stats and prints the
+        results to stdout.
+
+        @cvodes <node5#sss:optout_main> CVodeGetIntegratorStats
+        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+     *)
     val print_integrator_stats : ('a, 'b) bsession -> unit
+
+    (** Returns the number of nonlinear (functional or Newton) iterations
+        performed.
+
+        @cvodes <node5#sss:optout_main> CVodeGetNumNonlinSolvIters
+        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+     *)
     val get_num_nonlin_solv_iters : ('a, 'b) bsession -> int
+
+    (** Returns the number of nonlinear convergence failures that have occurred.
+
+        @cvodes <node5#sss:optout_main> CVodeGetNumNonlinSolvConvFails
+        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+     *)
     val get_num_nonlin_solv_conv_fails : ('a, 'b) bsession -> int
+
+    (** [nniters, nncfails = get_nonlin_solv_stats s] returns both the
+        numbers of nonlinear iterations performed [nniters] and of
+        nonlinear convergence failures that have occurred [nncfails].
+
+        @cvode <node5#sss:optout_main> CVodeGetNonlinSolvStats
+        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+     *)
     val get_nonlin_solv_stats : ('a, 'b) bsession -> int * int
+
+    (** {2:adjquad Quadrature Equations} *)
+
     module Quadrature :
       sig
+
+        (** {3:adjquadinit Initialization} *)
+
+        (** These functions compute the quadrature equation right-hand side for
+            the backward problem. *)
         type 'a bquadrhsfn =
-          'a B.bquadrhsfn =
+          'a Ida_impl.B.bquadrhsfn =
             Basic of (float -> 'a -> 'a -> 'a -> 'a -> 'a -> unit)
+            (** The quadrature rhs does not depend on forward
+                sensitivities.  The function is called as
+                [f t y y' yB y'B rhsvalBQ], where
+                - [t] is the current value of the independent variable.
+                - [y] is the current value of the forward solution vector.
+                - [y'] is the current value of the forward derivative solution vector.
+                - [yB] is the current value of the backward dependent variable vector.
+                - [y'B] is the current value of the backward dependent derivative vector.
+                - [rhsvalBQ] is the output vector containing the residual for the backward quadrature equations.
+
+                This function can raise {!Sundials.RecoverableFailure} to
+                instruct the integrator to retry with a different step size.
+                Raising any other kind of exception aborts the integrator.
+
+                @idas <node7#ss:ODErhs_quad_b> IDAQuadRhsFnB *)
           | WithSens of
               (float ->
                'a -> 'a -> 'a array -> 'a array -> 'a -> 'a -> 'a -> unit)
-        external c_quad_initb :
-          ('a, 'k) session -> int -> ('a, 'k) nvector -> unit
-          = "c_idas_adjquad_initb"
-        external c_quad_initbs :
-          ('a, 'k) session -> int -> ('a, 'k) nvector -> unit
-          = "c_idas_adjquad_initbs"
+            (** The quadrature rhs depends on forward sensitivities.
+                The function is called as [f t y y' yS y'S yB y'B rhsvalQBS],
+                where
+                - [t] is the current value of the independent variable.
+                - [y] is the current value of the forward solution vector.
+                - [yS] is an array of vectors containing the sensitivities of the forward solution.
+                - [y'S] is an array of vectors containing the sensitivities of the forward derivative solution.
+                - [y'] is the current value of the forward derivative solution vector.
+                - [yB] is the current value of the backward dependent variable vector.
+                - [y'B] is the current value of the backward dependent derivative vector.
+                - [rhsvalBQ] is the output vector containing the residual for the backward quadrature equations.
+
+                This function can raise {!Sundials.RecoverableFailure} to
+                instruct the integrator to retry with a different step size.
+                Raising any other kind of exception aborts the integrator.
+
+                @idas <node7#ss:ODErhs_quad_b> IDAQuadRhsFnBS *)
+
+        (** This function, [init s fQB yQB0], activates integration of
+            quadrature equations, with or without sensitivities, where [fQB]
+            computes the right-hand side of the backward quadrature equations,
+            and [yQB0] contains the values of the quadrature variables at [tB0].
+
+            @cvodes <node6#sss:cvquadinitb> IDAQuadInitB
+            @cvodes <node6#sss:cvquadinitb> IDAQuadInitBS *)
         val init :
           ('a, 'b) bsession -> 'a bquadrhsfn -> ('a, 'b) nvector -> unit
-        external c_reinit :
-          ('a, 'k) session -> int -> ('a, 'k) nvector -> unit
-          = "c_idas_adjquad_reinit"
+
+        (** This function reinitializes the integration of quadrature equations
+            during the backward phase.
+
+            @cvodes <node6#ss:quad_sens_init> IDAQuadReInitB *)
         val reinit : ('a, 'b) bsession -> ('a, 'b) nvector -> unit
-        external c_get : ('a, 'k) session -> int -> ('a, 'k) nvector -> float
-          = "c_idas_adjquad_get"
+
+        (** {3:adjextraction Extraction function} *)
+
+        (** [tret = get s w yqs] fills [yqs] with the quadrature
+            solution vector after a successful return from
+            {!backward_normal} or {!backward_one_step}, and returns
+            the time reached by the solver.
+
+            @cvodes <node7#sss:quad_get_b> IDAGetQuadB
+         *)
         val get : ('a, 'b) bsession -> ('a, 'b) nvector -> float
+
+        (** {3:adjquadoptin Optional Input Functions} *)
+
         type ('a, 'k) tolerance =
             NoStepSizeControl
+            (** Do not use quadrature variables for step-size control
+                (default). *)
           | SStolerances of float * float
+            (** [(rel, abs)] : scalar relative and absolute tolerances. *)
           | SVtolerances of float * ('a, 'k) nvector
-        external set_err_con : ('a, 'k) session -> int -> bool -> unit
-          = "c_idas_adjquad_set_err_con"
-        external sv_tolerances :
-          ('a, 'k) session -> int -> float -> ('a, 'k) nvector -> unit
-          = "c_idas_adjquad_sv_tolerances"
-        external ss_tolerances :
-          ('a, 'k) session -> int -> float -> float -> unit
-          = "c_idas_adjquad_ss_tolerances"
+            (** [(rel, abs)] : scalar relative and vector absolute
+                tolerances. *)
+
+        (** Specify whether and how quadrature variables should be used in the
+            step size control mechanism.
+
+            @cvodes <node5#ss:quad_optional_input> IDASetQuadErrCon
+            @cvodes <node5#ss:quad_optional_input> IDAQuadSStolerances
+            @cvodes <node5#ss:quad_optional_input> IDAQuadSVtolerances *)
         val set_tolerances : ('a, 'b) bsession -> ('a, 'b) tolerance -> unit
+
+        (** {3:adjquadoptout Optional Output Functions} *)
+
+        (** Returns the number of calls to the user's quadrature right-hand side
+            function.
+
+            @cvodes <node7#sss:quad_optional_input_B> Optional input/output functions for backward quadrature integration
+            @cvodes <node5#ss:quad_optional_output> CVodeGetQuadNumRhsEvals
+            @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+         *)
         val get_num_rhs_evals : ('a, 'b) bsession -> int
+
+        (** Returns the number of local error test failures due to quadrature
+            variables.
+
+            @cvodes <node7#sss:quad_optional_input_B> Optional input/output functions for backward quadrature integration
+            @cvodes <node5#ss:quad_optional_output> CVodeGetQuadNumErrTestFails
+            @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+         *)
         val get_num_err_test_fails : ('a, 'b) bsession -> int
+
+        (** Returns the quadrature error weights at the current time.
+
+            @cvodes <node7#sss:quad_optional_input_B> Optional input/output functions for backward quadrature integration
+            @cvodes <node5#ss:quad_optional_output> CVodeGetQuadErrWeights
+            @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+         *)
         val get_err_weights : ('a, 'b) bsession -> ('a, 'b) nvector -> unit
+
+        (** [nfqevals, nqetfails = get_stats s] returns
+            - [fqevals], the number of calls to the user's quadrature function, and,
+            - [nqetfails], the number of error test failures due to quadrature variables.
+
+            @cvodes <node7#sss:quad_optional_input_B> Optional input/output functions for backward quadrature integration
+            @cvodes <node5#ss:quad_optional_output> CVodeGetQuadStats
+            @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+         *)
         val get_stats : ('a, 'b) bsession -> int * int
       end
   end

@@ -211,8 +211,7 @@ let main () =
   Quad.init mem (rhsQ data) wq;
 
   (* Set tolerances and error control for quadratures. *)
-  Quad.ss_tolerances mem rtolq atolq;
-  Quad.set_err_con mem true;
+  Quad.set_tolerances mem (Quad.SStolerances (rtolq,atolq));
 
   print_header rtol atol yy;
   (* Print initial states *)

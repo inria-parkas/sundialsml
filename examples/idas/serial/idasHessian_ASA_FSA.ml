@@ -364,8 +364,7 @@ let main () =
   (* Quadrature's setup. *)
   Quad.init ida_mem (rhsQ data) wq;
 
-  Quad.ss_tolerances ida_mem rtol atol;
-  Quad.set_err_con ida_mem true;
+  Quad.set_tolerances ida_mem (Quad.SStolerances (rtol,atol));
 
   (* Sensitivity's setup. *)
   Sens.init ida_mem Sens.EEtolerances Sens.Simultaneous
@@ -374,8 +373,7 @@ let main () =
 
   (* Setup of quadrature's sensitivities *)
   QuadSens.init ida_mem (Some (rhsQS data)) qS;
-  QuadSens.ee_tolerances ida_mem;
-  QuadSens.set_err_con ida_mem true;
+  QuadSens.set_tolerances ida_mem QuadSens.EEtolerances;
 
   (* Initialize ASA. *)
   Adjoint.init ida_mem 100 Adjoint.IHermite;
@@ -535,8 +533,7 @@ let main () =
   Ida.set_max_num_steps ida_mem 10000;
 
   Quad.init ida_mem (rhsQ data) wq;
-  Quad.ss_tolerances ida_mem rtolFD atolFD;
-  Quad.set_err_con ida_mem true;
+  Quad.set_tolerances ida_mem (Quad.SStolerances (rtolFD,atolFD));
 
   let _ = Ida.solve_normal ida_mem tf wyy wyp in
   let _ = Quad.get ida_mem wq in
