@@ -577,18 +577,7 @@ CAMLprim void c_kinsol_set_constraints(value vkin_mem, value vconstraints)
 {
     CAMLparam2(vkin_mem, vconstraints);
     int flag;
-    N_Vector constraints;
-
-    // TODO
-#if SAFETY_CHECKS && KINSOL_ML_BIGARRAYS
-    int neqs = KINSOL_NEQS_FROM_ML (vkin_mem);
-
-    if (neqs != Caml_ba_array_val(vconstraints)->dim[0])
-	caml_invalid_argument (
-	    "Kinsol.set_constraints: constraints vector has incorrect length");
-#endif
-
-    constraints = NVEC_VAL(vconstraints);
+    N_Vector constraints = NVEC_VAL(vconstraints);
     flag = KINSetConstraints(KINSOL_MEM_FROM_ML(vkin_mem), constraints);
 
     CHECK_FLAG("KINSetConstraints", flag);
@@ -647,26 +636,11 @@ CAMLprim value c_kinsol_solve(value vdata, value vu, value vlinesearch,
     CAMLlocal1(ret);
     int flag;
     enum kinsol_result_tag result;
-    N_Vector u;
-    N_Vector uscale;
-    N_Vector fscale;
 
-    // TODO
-#if SAFETY_CHECKS && KINSOL_ML_BIGARRAYS
-    int neqs = KINSOL_NEQS_FROM_ML (vdata);
+    N_Vector u = NVEC_VAL (vu);
+    N_Vector uscale = NVEC_VAL (vuscale);
+    N_Vector fscale = NVEC_VAL (vfscale);
 
-    /* This can't be checked for generic nvectors.  */
-    if (neqs != Caml_ba_array_val(vu)->dim[0])
-	caml_invalid_argument ("Kinsol.solve: u vector has incorrect length");
-    if (neqs != Caml_ba_array_val(vuscale)->dim[0])
-	caml_invalid_argument ("Kinsol.solve: uscale vector has incorrect length");
-    if (neqs != Caml_ba_array_val(vfscale)->dim[0])
-	caml_invalid_argument ("Kinsol.solve: fscale vector has incorrect length");
-#endif
-
-    u = NVEC_VAL (vu);
-    uscale = NVEC_VAL (vuscale);
-    fscale = NVEC_VAL (vfscale);
     flag = KINSol(KINSOL_MEM_FROM_ML(vdata),
 		  u,
 		  Bool_val (vlinesearch) ? KIN_LINESEARCH : KIN_NONE,
