@@ -468,10 +468,11 @@ module Spils :
           factorization on the resulting approximation.
 
           Each call to the preconditioner setup function is preceded
-          by a call to the IDAResFn user function with the same (tt,
-          yy, yp) arguments. Thus the preconditioner setup function
-          can use any auxiliary data that is computed and saved during
-          the evaluation of the DAE residual.
+          by a call to the user-supplied residual function (see
+          {!init}) with the same (tt, yy, yp) arguments. Thus the
+          preconditioner setup function can use any auxiliary data
+          that is computed and saved during the evaluation of the DAE
+          residual.
 
           This function is not called in advance of every call to the
           preconditioner solve function, but rather is called only as

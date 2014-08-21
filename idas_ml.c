@@ -191,7 +191,7 @@ void idas_ml_check_flag(const char *call, int flag)
 	caml_raise_constant(*caml_named_value("ida_SensResFuncFailure"));
 
     case IDA_REP_SRES_ERR:
-	caml_raise_constant(*caml_named_value("ida_RepSensResFuncErr"));
+	caml_raise_constant(*caml_named_value("ida_RepeatedSensResFuncErr"));
 
     case IDA_BAD_IS:
 	caml_raise_constant(*caml_named_value("ida_BadIS"));
@@ -1920,6 +1920,19 @@ CAMLprim void c_idas_adj_set_suppress_alg (value vparent, value vwhich,
     int flag = IDASetSuppressAlgB (IDA_MEM_FROM_ML (vparent), Int_val (vwhich),
 				   Bool_val (vsuppress));
     SCHECK_FLAG ("IDASetSuppressAlgB", flag);
+    CAMLreturn0;
+}
+
+/* Sundials 2.5.0 declares this function incorrectly in the headers as
+ * IDASetAdjNoSensi().  Duplicate declarations shouldn't hurt.
+ */
+SUNDIALS_EXPORT int IDAAdjSetNoSensi (void *ida_mem);
+
+CAMLprim void c_idas_adj_set_no_sensi (value vsession)
+{
+    CAMLparam1 (vsession);
+    int flag = IDAAdjSetNoSensi (IDA_MEM_FROM_ML (vsession));
+    SCHECK_FLAG ("IDAAdjSetNoSensi", flag);
     CAMLreturn0;
 }
 

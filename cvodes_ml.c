@@ -1496,9 +1496,6 @@ void cvodes_ml_check_flag(const char *call, int flag)
         case CV_FWD_FAIL:
 	    caml_raise_constant(*caml_named_value("cvodes_ForwardFailed"));
 
-        case CV_GETY_BADT:
-	    caml_raise_constant(*caml_named_value("cvodes_BadOutputTime"));
-
 	default:
 	    /* e.g. CVDIAG_MEM_NULL, CVDIAG_ILL_INPUT, CVDIAG_MEM_FAIL */
 	    snprintf(exmsg, MAX_ERRMSG_LEN, "%s: %s", call,

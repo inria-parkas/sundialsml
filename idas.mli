@@ -233,7 +233,6 @@ module Quadrature :
     exception QuadRhsFuncFailure
     exception FirstQuadRhsFuncErr
     exception RepeatedQuadRhsFuncErr
-    exception UnrecoverableQuadRhsFuncErr
     val fwdsensext : ('a, 'b) session -> ('a, 'b) fsensext
     type 'a quadrhsfn = float -> 'a -> 'a -> 'a -> unit
     external c_quad_init : ('a, 'k) session -> ('a, 'k) nvector -> unit
@@ -285,10 +284,6 @@ module Sensitivity :
       = "c_idas_sens_sv_tolerances"
     val set_tolerances : ('a, 'b) session -> ('a, 'b) tolerance -> unit
     exception SensNotInitialized
-    exception SensResFuncErr
-    exception FirstSensResFuncErr
-    exception RepeatedSensRhsFuncErr
-    exception UnrecoverableSensRhsFuncErr
     exception BadIS
     val fwdsensext : ('a, 'b) session -> ('a, 'b) fsensext
     type sens_method = Simultaneous | Staggered
@@ -457,7 +452,6 @@ module Adjoint :
     exception ForwardFailed
     exception NoBackwardProblem
     exception BadFinalTime
-    exception BadOutputTime
     type ('a, 'k) bsession = ('a, 'k) Ida_impl.bsession
     type serial_bsession = (real_array, Nvector_serial.kind) bsession
     type interpolation = IPolynomial | IHermite

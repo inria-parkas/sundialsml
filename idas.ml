@@ -134,7 +134,6 @@ module Quadrature =
     exception QuadRhsFuncFailure
     exception FirstQuadRhsFuncErr
     exception RepeatedQuadRhsFuncErr
-    exception UnrecoverableQuadRhsFuncErr
 
     let _ = List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
       [
@@ -142,7 +141,6 @@ module Quadrature =
         ("ida_QuadRhsFuncFailure",           QuadRhsFuncFailure);
         ("ida_FirstQuadRhsFuncErr",          FirstQuadRhsFuncErr);
         ("ida_RepeatedQuadRhsFuncErr",       RepeatedQuadRhsFuncErr);
-        ("ida_UnrecoverableQuadRhsFuncErr",  UnrecoverableQuadRhsFuncErr);
       ]
 
     let fwdsensext s =
@@ -243,19 +241,17 @@ module Sensitivity =
       | EEtolerances -> ee_tolerances s
 
     exception SensNotInitialized
-    exception SensResFuncErr
+    exception SensResFuncFailure
     exception FirstSensResFuncErr
-    exception RepeatedSensRhsFuncErr
-    exception UnrecoverableSensRhsFuncErr
+    exception RepeatedSensResFuncErr
     exception BadIS
 
     let _ = List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
       [
         ("ida_SensNotInitialized",           SensNotInitialized);
-        ("ida_SensResFuncErr",               SensResFuncErr);
+        ("ida_SensResFuncFailure",           SensResFuncFailure);
         ("ida_FirstSensResFuncErr",          FirstSensResFuncErr);
-        ("ida_RepeatedSensRhsFuncErr",       RepeatedSensRhsFuncErr);
-        ("ida_UnrecoverableSensRhsFuncErr",  UnrecoverableSensRhsFuncErr);
+        ("ida_RepeatedSensRheFuncErr",       RepeatedSensResFuncErr);
         ("ida_BadIS",                        BadIS);
       ]
 
@@ -412,11 +408,20 @@ module Sensitivity =
     external c_sens_calc_ic_y :
       ('a,'k) session
       -> ('a,'k) nvector option
-      -> ('a,'k) nvector option
+      -> ('a,'k) nvector array option
       -> float -> unit
       = "c_ida_sens_calc_ic_y"
 
     let calc_ic_ya_yd' session ?y ?y' ?ys ?y's id tout1 =
+      let num_sens = num_sensitivities session in
+      (match ys with
+       | Some ys when Array.length ys <> num_sens ->
+         invalid_arg "calc_ic_ya_yd': wrong number of vectors in ~ys"
+       | _ -> ());
+      (match y's with
+       | Some y's when Array.length y's <> num_sens ->
+         invalid_arg "calc_ic_ya_yd': wrong number of vectors in ~y's"
+       | _ -> ());
       c_sens_calc_ic_ya_yd' session y y' ys y's id tout1
 
     (* Note: my understanding is that CalcIC with IDA_Y_INIT corrects
@@ -424,6 +429,11 @@ module Sensitivity =
        the derivatives constant, so there's no point querying the
        values of the corrected derivatives.  *)
     let calc_ic_y session ?y ?ys tout1 =
+      let num_sens = num_sensitivities session in
+      (match ys with
+       | Some ys when Array.length ys <> num_sens ->
+         invalid_arg "calc_ic_y: wrong number of vectors in ~ys"
+       | _ -> ());
       c_sens_calc_ic_y session y ys tout1
 
     external get_num_nonlin_solv_iters : ('a, 'k) session -> int
@@ -623,6 +633,8 @@ module Adjoint =
       let parent, which = parent_and_which b in
       c_set_var_types parent which var_types
 
+    let set_id = set_var_types
+
     external c_set_suppress_alg : ('a,'k) session -> int -> bool -> unit
       = "c_idas_adj_set_suppress_alg"
 
@@ -664,6 +676,11 @@ module Adjoint =
       c_adj_get_consistent_ic parent which yb y'b
 
     let calc_ic_sens bsession ?yb ?y'b tout1 yb0 y'b0 ys0 y's0 =
+      let num_sens = num_sensitivities (tosession bsession) in
+      if Array.length ys0 <> num_sens then
+        invalid_arg "calc_ic_sens: wrong number of vectors in ys0";
+      if Array.length y's0 <> num_sens then
+        invalid_arg "calc_ic_sens: wrong number of vectors in y's0";
       let parent, which = parent_and_which bsession in
       c_adj_calc_ic_sens parent which tout1 yb0 y'b0 ys0 y's0;
       c_adj_get_consistent_ic parent which yb y'b
@@ -830,6 +847,9 @@ module Adjoint =
       c_get parent which yb ypb
 
     let get_dky bs = Ida.get_dky (tosession bs)
+
+    external set_no_sensitivity : ('a, 'k) session -> unit
+        = "c_idas_adj_set_no_sensi"
 
     external c_set_max_ord : ('a, 'k) session -> int -> int -> unit
         = "c_idas_adj_set_max_ord"
