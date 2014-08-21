@@ -103,7 +103,7 @@ nvector_parallel_ml.o: nvector_parallel_ml.c
 kinsol_ml.o: kinsol_ml.c
 	$(CC) -I $(OCAML_INCLUDE) $(KINSOL_CFLAGS) -o $@ -c $<
 
-kinsol_bbd_ml.o: kinsol_ml.c
+kinsol_bbd_ml.o: kinsol_bbd_ml.c
 	$(CC) -I $(OCAML_INCLUDE) $(KINSOL_CFLAGS) -o $@ -c $<
 
 # CVODE[S]-specific C files.

@@ -59,7 +59,7 @@ DONE 8. (Tim) Interface with Parallel NVectors
 
     Compare to the same examples in pySUNDIALS or python-sundials?
 
-13. (Tim) Parallel CVODES and KINSOL examples.
+DONE 13. (Tim) Parallel CVODES and KINSOL examples.
 
 14. (Tim) Fix, simplify, and generally tidy up all doc comments. Write the
     missing documentation and rewrite intro.doc.
@@ -94,9 +94,9 @@ MINOR PATCHES
    that raise exceptions (like get_dky... )
 
 DONE 5. Rename Carray to Realarray?
-   Rename create functions to make?
+DONE 6. Rename create functions to make?
 
-6. Using spgmr linear solver with prec_setup = None and prec_solve = Some
+7. Using spgmr linear solver with prec_setup = None and prec_solve = Some
    crashes.
 
 TO DISCUSS

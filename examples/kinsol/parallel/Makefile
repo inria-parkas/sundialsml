@@ -8,7 +8,8 @@ USELIB ?= sundials_nosensi
 
 MPIRUN = mpirun
 
-EXAMPLES = kinFoodWeb_kry_p.ml
+EXAMPLES = kinFoodWeb_kry_p.ml \
+	   kinFoodWeb_kry_bbd_p.ml
 
 ALL_EXAMPLES = $(EXAMPLES)
 
@@ -69,6 +70,16 @@ kinFoodWeb_kry_p.byte.out: kinFoodWeb_kry_p.byte
 kinFoodWeb_kry_p.opt.out: kinFoodWeb_kry_p.opt
 	$(MPIRUN) -np 4 $< > $@
 kinFoodWeb_kry_p.sundials.out: $(EXAMPLESROOT)/kinsol/parallel/kinFoodWeb_kry_p
+	$(MPIRUN) -np 4 $< > $@
+
+kinFoodWeb_kry_bbd_p.byte: kinFoodWeb_kry_bbd_p.ml
+kinFoodWeb_kry_bbd_p.opt: kinFoodWeb_kry_bbd_p.ml
+kinFoodWeb_kry_bbd_p.byte.out: kinFoodWeb_kry_bbd_p.byte
+	$(MPIRUN) -np 4 $< > $@
+kinFoodWeb_kry_bbd_p.opt.out: kinFoodWeb_kry_bbd_p.opt
+	$(MPIRUN) -np 4 $< > $@
+kinFoodWeb_kry_bbd_p.sundials.out: \
+    $(EXAMPLESROOT)/kinsol/parallel/kinFoodWeb_kry_bbd_p
 	$(MPIRUN) -np 4 $< > $@
 
 ##
