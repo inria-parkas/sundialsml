@@ -1,4 +1,4 @@
-include ../../config
+include ../../../config
 
 EXAMPLES = cchatter.byte discontinuous.byte printall.byte \
 	   upvseither.byte integr_backward.byte one_over_x.byte \
@@ -35,11 +35,11 @@ distclean: clean
 
 .ml.byte:
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
-	    $(INCLUDES) -I ../../ -dllpath ../../ \
+	    $(INCLUDES) -I ../../../ -dllpath ../../../ \
 	    bigarray.cma unix.cma sundials.cma $<
 
 .ml.opt:
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
-	    $(INCLUDES) -I ../../ \
+	    $(INCLUDES) -I ../../../ \
 	    bigarray.cmxa unix.cmxa sundials.cmxa $<
 

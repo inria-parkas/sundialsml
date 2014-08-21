@@ -69,13 +69,13 @@ M.set a 4 4 ( 5.0);
 
 printf "initially: a=@\n%a@\n" print_mat a;;
 
-let p = LintArray.make nrows;;
+let p = LintArray.create nrows;;
 Array1.fill p 0;
 M.getrf a p;
 printf "getrf: a=@\n%a@\n" print_mat a;
 printf "       p=@\n%a@\n@\n" print_p p;;
 
-let s = RealArray.make nrows;;
+let s = RealArray.create nrows;;
 s.{0} <-  5.0;
 s.{1} <- 15.0;
 s.{2} <- 31.0;

@@ -38,7 +38,7 @@ let g t y gout =
   let idx = lookup_limit y.{xpos_i} in
   gout.{under_i} <- y.{ypos_i} -. ground.(idx)
 
-let y = Sundials.RealArray.make 4
+let y = Sundials.RealArray.create 4
 let y_nvec = Nvector_serial.wrap y
 let _ = y.{xpos_i} <- 0.0;
         y.{ypos_i} <- 10.0;

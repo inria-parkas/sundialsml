@@ -3,12 +3,13 @@ include ../config
 DIRS=cvode cvodes ida idas kinsol
 SUBDIRS=serial $(if $(MPI_ENABLED), parallel)
 
-.PHONY: default tests.byte.log tests.opt.log
+.PHONY: default tests.byte.log tests.opt.log ocaml
 
 all:
 	@echo "Main targets (cvode, cvodes, ida, idas, kinsol):"
 	@echo "  tests.byte.log    run standard tests (byte code)"
 	@echo "  tests.opt.log     run standard tests (native code)"
+	@echo "  ocaml             compile the other ocaml examples"
 	@echo "Subdirectory ocaml/ has additional examples, invoked separately."
 
 tests.byte.log:
@@ -41,6 +42,9 @@ tests.opt.log:
 	    done;			\
 	done
 
+ocaml:
+	${MAKE} -C ocaml
+
 distclean: clean
 clean:
 	@for d in ${DIRS}; do			\
@@ -48,4 +52,5 @@ clean:
 		${MAKE} -C $$d/$$s clean;	\
 	    done;				\
 	done
+	@${MAKE} -C ocaml clean
 

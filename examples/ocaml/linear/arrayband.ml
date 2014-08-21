@@ -104,13 +104,13 @@ printf "scale copy x2: b=@\n%a@\n" (print_mat mu ml smu) b;;
 M.add_identity b smu;
 printf "add identity: b=@\n%a@\n" (print_mat mu ml smu) b;;
 
-let p = LintArray.make 5;;
+let p = LintArray.create 5;;
 Array1.fill p 0;
 M.gbtrf a mu ml smu p;
 printf "getrf: a=@\n%a@\n" (print_factored_mat mu ml smu) a;
 printf "       p=@\n%a@\n@\n" print_p p;;
 
-let s = RealArray.make n;;
+let s = RealArray.create n;;
 s.{0} <-  5.0;
 s.{1} <- 15.0;
 s.{2} <- 31.0;

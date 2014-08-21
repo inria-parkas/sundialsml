@@ -1,4 +1,4 @@
-include ../../../config
+include ../../../../config
 
 all: pendulum.byte pendulum.opt
 
@@ -7,13 +7,13 @@ test-pendulum: pendulum.opt
 
 pendulum.byte: showpendulum.cmo pendulum.ml
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
-	    $(INCLUDES) -I ../../../ -dllpath ../../../ \
+	    $(INCLUDES) -I ../../../../ -dllpath ../../../../ \
 	    bigarray.cma unix.cma graphics.cma \
 	    sundials.cma showpendulum.cmo pendulum.ml
 
 pendulum.opt: showpendulum.cmx pendulum.ml
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
-	    $(INCLUDES) -I ../../../ \
+	    $(INCLUDES) -I ../../../../ \
 	    bigarray.cmxa unix.cmxa graphics.cmxa \
 	    sundials.cmxa showpendulum.cmx pendulum.ml
 

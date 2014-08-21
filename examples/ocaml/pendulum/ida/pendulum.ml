@@ -74,6 +74,8 @@
 
  *)
 
+module RealArray = Sundials.RealArray
+module Nvector = Nvector_serial
 
 (* Commandline Options *)
 type constraint_form =
@@ -141,11 +143,10 @@ let args = [
 
 
 (* Setup & auxiliary functions *)
-module Ida = Ida_serial
 module Matrix = Dls.DenseMatrix
 let pi = 4. *. atan (1.)
 let degree_to_radian x = x *. pi /. 180.
-let show_nvector (a : Sundials.RealArray.t) =
+let show_nvector (a : RealArray.t) =
   let n = Bigarray.Array1.dim a in
   let str = ref "[" in
   for i = 0 to n-2 do
@@ -189,11 +190,12 @@ let neqs   = 5
 (* Number of residues should match the number of variables. *)
 let _ = assert (neqs = nvars)
 
-let vars = Sundials.RealArray.make neqs
-let vars' = Sundials.RealArray.make neqs
+let vars = RealArray.create neqs
+let vars' = RealArray.create neqs
 let var_types =
-  let d = Ida.VarTypes.Differential and a = Ida.VarTypes.Algebraic in
-  Ida.VarTypes.of_array [|d; d; d; d; a|]
+  let d = Ida.VarType.Differential and a = Ida.VarType.Algebraic in
+  Nvector.wrap (RealArray.of_list
+    (List.map Ida.VarType.to_float [d; d; d; d; a]))
 
 (* The residual function F.  *)
 let residual t vars vars' res =
@@ -379,13 +381,13 @@ let init_from_xy_vxvy vars vars' =
 let pivot = (0.5, 0.8)
 
 let check_satisfaction =
-  let res = Sundials.RealArray.make neqs in
+  let res = RealArray.create neqs in
   fun t vars vars' ->
     residual t vars vars' res;
     if !check_consistency then
       begin
         let norm =
-          Nvector_array.Bigarray.array_nvec_ops.Nvector.Mutable.nvmaxnorm res
+          Nvector_array.Bigarray.array_nvec_ops.Nvector_custom.nvmaxnorm res
         in
         if norm > 1e-5 then
           raise (Failure 
@@ -396,7 +398,7 @@ let check_satisfaction =
 
 let main () =
   Arg.parse args (fun _ -> ()) "pendulum: simulate a pendulum hitting against an oblique wall";
-  if !log then Sundials.RealArray.print_with_time 0.0 vars;
+  if !log then RealArray.print_with_time 0.0 vars;
   let t_delay = if !delay then !dt else 0. in
   if !show then Showpendulum.start (1.5 *. r) t_delay !trace pivot wall;
   let frames = int_of_float (!t_end /. !dt) in
@@ -406,18 +408,22 @@ let main () =
   vars.{vx_i} <- x'0;
   vars.{vy_i} <- y'0;
 
+  let nv_vars  = Nvector.wrap vars in
+  let nv_vars' = Nvector.wrap vars' in
+
   if !use_analytical_correction then init_from_xy_vxvy vars vars';
 
-  let solver = Ida.Dense (if !use_analytical_jac then Some jac else None) in
+  let solver = Ida.Dls.dense (if !use_analytical_jac then Some jac else None) in
   let ida = Ida.init solver (Ida.SStolerances (1e-9, 1e-9)) residual
-                     ~roots:(1, roots) vars vars' in
-  Ida.set_all_root_directions ida Ida.RootDirs.Decreasing;
+                     ~roots:(1, roots) nv_vars nv_vars'
+  in
+  Ida.set_all_root_directions ida Sundials.RootDirs.Decreasing;
   if !use_analytical_jac then Ida.Dls.set_dense_jac_fn ida jac;
 
   Ida.set_var_types ida var_types;
   Ida.set_suppress_alg ida true;
   if not !use_analytical_correction
-  then Ida.calc_ic_ya_yd' ~y:vars ~y':vars' ida var_types !dt;
+  then Ida.calc_ic_ya_yd' ~y:nv_vars ~y':nv_vars' ida var_types !dt;
 
   check_satisfaction 0. vars vars';
 
@@ -427,12 +433,12 @@ let main () =
   for i = 1 to frames do
     tnext := !t +. !dt;
     while !t < !tnext do
-      let (tret, flag) = Ida.solve_normal ida !tnext vars vars' in
+      let (tret, flag) = Ida.solve_normal ida !tnext nv_vars nv_vars' in
       t := tret;
       if !show then Showpendulum.show (vars.{x_i}, vars.{y_i});
-      if !log then Sundials.RealArray.print_with_time tret vars;
+      if !log then RealArray.print_with_time tret vars;
 
-      if flag = Ida.RootsFound then
+      if flag = Sundials.RootsFound then
         (Printf.printf "Bang!  Hit against the wall.\n";
          Printf.printf "vars  = %s\nvars' = %s\n"
            (show_nvector vars) (show_nvector vars');
@@ -441,9 +447,10 @@ let main () =
 
          if !use_analytical_correction
          then (init_from_xy_vxvy vars vars';
-               Ida.reinit ida !t vars vars')
-         else (Ida.reinit ida !t vars vars';
-               Ida.calc_ic_ya_yd' ~y:vars ~y':vars' ida var_types (!t +. !dt));
+               Ida.reinit ida !t nv_vars nv_vars')
+         else (Ida.reinit ida !t nv_vars nv_vars';
+               Ida.calc_ic_ya_yd' ~y:nv_vars ~y':nv_vars' ida
+               var_types (!t +. !dt));
 
          check_satisfaction !t vars vars';
         )

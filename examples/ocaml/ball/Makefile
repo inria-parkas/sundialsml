@@ -1,16 +1,16 @@
-include ../../config
+include ../../../config
 
 all: ball.byte ball.opt
 
 ball.byte: showball.cmo ball.ml
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
-	    $(INCLUDES) -I ../../ -dllpath ../../ \
+	    $(INCLUDES) -I ../../../ -dllpath ../../../ \
 	    bigarray.cma unix.cma graphics.cma \
 	    sundials.cma showball.cmo ball.ml
 
 ball.opt: showball.cmx ball.ml
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
-	    $(INCLUDES) -I ../../ \
+	    $(INCLUDES) -I ../../../ \
 	    bigarray.cmxa unix.cmxa graphics.cmxa \
 	    sundials.cmxa showball.cmx ball.ml
 

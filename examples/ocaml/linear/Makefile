@@ -1,4 +1,4 @@
-include ../../config
+include ../../../config
 
 EXAMPLES = arraydense.byte arraydense.opt arraydense \
 	   dense.byte dense.opt dense \
@@ -54,11 +54,11 @@ distclean: clean
 
 .ml.byte:
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
-	    $(INCLUDES) -I ../../ -dllpath ../../ \
+	    $(INCLUDES) -I ../../../ -dllpath ../../../ \
 	    bigarray.cma unix.cma sundials.cma $<
 
 .ml.opt:
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
-	    $(INCLUDES) -I ../../ \
+	    $(INCLUDES) -I ../../../ \
 	    bigarray.cmxa unix.cmxa sundials.cmxa $<
 

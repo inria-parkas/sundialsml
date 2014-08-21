@@ -1,4 +1,4 @@
-include ../../config
+include ../../../config
 
 all: sincos.byte sincos_nvec.byte
 
@@ -44,13 +44,14 @@ distclean: clean
 .SUFFIXES : .ml .byte .opt
 
 .ml.byte:
-	$(OCAMLC) $(OCAMLFLAGS) -o $@ $(INCLUDES) -I ../../ -dllpath ../../ \
+	$(OCAMLC) $(OCAMLFLAGS) -o $@ $(INCLUDES) \
+	    -I ../../../ -dllpath ../../../ \
 	    bigarray.cma unix.cma graphics.cma \
 	    sundials.cma \
 	    $<
 
 .ml.opt:
-	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ $(INCLUDES) -I ../../ \
+	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ $(INCLUDES) -I ../../../ \
 	    bigarray.cmxa unix.cmxa graphics.cmxa \
 	    sundials.cmxa \
 	    $<
