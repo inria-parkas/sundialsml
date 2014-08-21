@@ -26,6 +26,12 @@ tests.byte.log:
 		| grep '^[0-9]';	\
 	    done;			\
 	done
+	@for d in ${DIRS}; do		\
+	    for s in ${SUBDIRS}; do	\
+		cat $$d/$$s/$@		\
+		| grep '^[0-9]';	\
+	    done;			\
+	done | grep -q '^[^0]'
 
 tests.opt.log:
 	@for d in ${DIRS}; do		\
@@ -41,6 +47,12 @@ tests.opt.log:
 		| grep '^[0-9]';	\
 	    done;			\
 	done
+	@! for d in ${DIRS}; do		\
+	    for s in ${SUBDIRS}; do	\
+		cat $$d/$$s/$@		\
+		| grep '^[0-9]';	\
+	    done;			\
+	done | grep -q '^[^0]'
 
 ocaml:
 	${MAKE} -C ocaml

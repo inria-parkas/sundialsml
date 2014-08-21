@@ -45,6 +45,7 @@ tests.byte.log: $(EXAMPLES:.ml=.byte.out) $(EXAMPLES:.ml=.sundials.out)
 	done
 	$(call genlog, $(EXAMPLES:.ml=.byte.diff), $@)
 	cat $@
+	grep -q '^[^0]' $@
 
 tests.opt.log: $(EXAMPLES:.ml=.opt.out) $(EXAMPLES:.ml=.sundials.out)
 	@for f in $(EXAMPLES:.ml=); do \
@@ -52,6 +53,7 @@ tests.opt.log: $(EXAMPLES:.ml=.opt.out) $(EXAMPLES:.ml=.sundials.out)
 	done
 	$(call genlog, $(EXAMPLES:.ml=.opt.diff), $@)
 	cat $@
+	grep -q '^[^0]' $@
 
 tests.self.log: $(EXAMPLES:.ml=.byte.out) $(EXAMPLES:.ml=.opt.out)
 	@for f in $(EXAMPLES:.ml=); do \
@@ -59,6 +61,7 @@ tests.self.log: $(EXAMPLES:.ml=.byte.out) $(EXAMPLES:.ml=.opt.out)
 	done
 	$(call genlog, $(EXAMPLES:.ml=.self.diff), $@)
 	cat $@
+	grep -q '^[^0]' $@
 
 ##
 
