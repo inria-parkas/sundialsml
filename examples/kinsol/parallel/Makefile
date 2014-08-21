@@ -1,6 +1,14 @@
 include ../../../config
 
-EXAMPLES =
+# Invoke `make' with USELIB=sundials to run the tests with the
+# sensitivity-agnostic subset of CVODES.  Note that memory usage
+# statistics will differ from the versions in sundials/C, unless those
+# are recompiled to link against CVODES.
+USELIB ?= sundials_nosensi
+
+MPIRUN = mpirun
+
+EXAMPLES = kinFoodWeb_kry_p.ml
 
 ALL_EXAMPLES = $(EXAMPLES)
 
@@ -54,6 +62,15 @@ tests.self.log: $(EXAMPLES:.ml=.byte.out) $(EXAMPLES:.ml=.opt.out)
 
 ##
 
+kinFoodWeb_kry_p.byte: kinFoodWeb_kry_p.ml
+kinFoodWeb_kry_p.opt: kinFoodWeb_kry_p.ml
+kinFoodWeb_kry_p.byte.out: kinFoodWeb_kry_p.byte
+	$(MPIRUN) -np 4 $< > $@
+kinFoodWeb_kry_p.opt.out: kinFoodWeb_kry_p.opt
+	$(MPIRUN) -np 4 $< > $@
+kinFoodWeb_kry_p.sundials.out: $(EXAMPLESROOT)/kinsol/parallel/kinFoodWeb_kry_p
+	$(MPIRUN) -np 4 $< > $@
+
 ##
 
 distclean: clean
@@ -75,13 +92,14 @@ clean:
 
 .ml.byte:
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
-	    $(INCLUDES) -I ../../../ -dllpath ../../../ bigarray.cma unix.cma \
-	    sundials.cma $<
+	    $(INCLUDES) -I ../../../ -dllpath ../../../ \
+	    bigarray.cma unix.cma mpi.cma \
+	    $(USELIB).cma sundials_mpi.cma $<
 
 .ml.opt:
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
-	    $(INCLUDES) -I ../../../ bigarray.cmxa unix.cmxa \
-	    sundials.cmxa $<
+	    $(INCLUDES) -I ../../../ bigarray.cmxa unix.cmxa mpi.cmxa \
+	    $(USELIB).cmxa sundials_mpi.cmxa $<
 
 %.byte.out: %.byte
 	./$< > $@
