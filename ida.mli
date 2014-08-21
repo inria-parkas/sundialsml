@@ -20,7 +20,8 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(** Interface to the IDA solver.
+(** IDA solves DAE initial value problems using a variable-step solver with
+    zero-crossing detection (root finding).
 
  @version VERSION()
  @author Timothy Bourke (Inria)

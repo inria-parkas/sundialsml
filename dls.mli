@@ -184,7 +184,7 @@ module ArrayDenseMatrix :
   sig
     (**
      This type represents a two-dimensional matrix returned from a call to
-     {!make}, {!Sundials.Realarray2.make}, or {!Sundials.Realarray2.wrap}.
+     {!make}, {!Sundials.RealArray2.make}, or {!Sundials.RealArray2.wrap}.
 
      @cvode <node9#ss:dense> Small dense matrices
      @cvode <node9#ss:dense> newDenseMat 
@@ -463,7 +463,7 @@ module ArrayBandMatrix :
   sig
     (**
      This type represents a two-dimensional matrix returned from a call to
-     {!make}, {!Sundials.Realarray2.make}, or {!Sundials.Realarray2.wrap}.
+     {!make}, {!Sundials.RealArray2.make}, or {!Sundials.RealArray2.wrap}.
 
      @cvode <node9#ss:band> newBandMat 
      *)

@@ -20,7 +20,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(** Interface to the CVODES solver.
+(** CVODES adds sensitivity analysis (forward and adjoint) to CVODES.
 
   @version VERSION()
   @author Timothy Bourke (Inria)
@@ -190,7 +190,7 @@ module Sensitivity :
   sig
     (** A skeleton of an enhanced main program:
         + {b Initialize a session [s] per the skeleton at
-           {!Cvode.session} or {!Cvodes_serial.Quadrature.init}}
+           {!Cvode.session} or {!Quadrature.init}}
         {[...]}
         + {b Define the sensitivity problem}
         {[let p = Cvode.RealArray.make np in
@@ -1143,7 +1143,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
 
         (** Direct linear solver with banded matrix.  The arguments specify the
             width of the band ({!bandrange}) and an optional Jacobian
-            function ({!bband_jac_fn}).  If the Jacobian function is [None],
+            function ({!band_jac_fn}).  If the Jacobian function is [None],
             CVODES uses an internal implementation based on difference
             quotients. See also {!Dls}.
 
@@ -1199,7 +1199,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
           }
 
         (** Callbacks for Krylov subspace linear solvers.  Ignored if the
-            {!preconditioning_type} is set to [PrecNone].  In that case,
+            {!Spils.preconditioning_type} is set to [PrecNone].  In that case,
             you should use {!no_precond} as [callbacks].  *)
         type 'a callbacks =
           {
@@ -1230,7 +1230,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
 
         (** Krylov iterative solver with the scaled preconditioned GMRES method.
             The arguments specify the maximum dimension of the Krylov subspace
-          and preconditioning type ({!Cvode.spils_params}) and the
+          and preconditioning type ({!Spils.preconditioning_type}) and the
           preconditioner callback functions ({!callbacks}).
 
             @cvodes <node7#sss:lin_solv_b> CVSpgmrB
@@ -1258,7 +1258,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
         (** {5:adjbwdspilsoptin Optional Input Functions} *)
 
         (** This function resets the type of preconditioning to be used using a
-            value of type {!preconditioning_type}.
+            value of type {!Spils.preconditioning_type}.
 
             @cvodes <node7#SECTION00728400000000000000> CVSpilsSetPrecTypeB *)
         val set_prec_type : ('a, 'k) bsession -> preconditioning_type -> unit
@@ -1343,7 +1343,8 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
               preconditioned GMRES), but the preconditioner is set to CVODE's
               internal implementation using a banded matrix of difference
               quotients.  The arguments specify the maximum dimension of the
-              Krylov subspace and preconditioning type ({!Cvode.spils_params}),
+              Krylov subspace and preconditioning type
+              ({!Spils.preconditioning_type}),
               along with the width of the band matrix ({!bandrange}).
 
               @cvodes <node7#sss:lin_solv_b> CVSpgmrB

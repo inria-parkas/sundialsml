@@ -20,7 +20,8 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(** Interface to the CVODE solver.
+(** CVODE solves ODE initial value problems using a variable-step solver with
+    zero-crossing detection (root finding).
 
  @version VERSION()
  @author Timothy Bourke (Inria)
@@ -82,8 +83,7 @@ exception BadDky    (** invalid dky argument (CV_BAD_DKY)
                         @cvode <node5#ss:optional_dky> CVodeGetDky *)
 
 (**
-    This type represents a session with the CVODE solver using
-    {!Nvector.nvector}s.
+    This type represents a session with the CVODE solver.
 
     A skeleton of the main program:
     + {b Set vector of initial values}
@@ -380,7 +380,7 @@ module Spils :
       }
 
     (** Callbacks for Krylov subspace linear solvers.  Ignored if the
-        {!preconditioning_type} is set to [PrecNone].  In that case, you
+        {!Spils.preconditioning_type} is set to [PrecNone].  In that case, you
         should use {!no_precond} as [callbacks].  *)
     type 'a callbacks =
       {
@@ -393,7 +393,7 @@ module Spils :
             delr({i f}) / delr({i y}).
 
             - [jac_arg] supplies the basic problem data as a {!jacobian_arg}.
-            - [solve_arg] specifies the linear system as a {!prec_solve_arg}.
+            - [solve_arg] specifies the linear system as a {!solve_arg}.
             - [z] is the vector in which the result must be stored.
 
             The function may raise a {!Sundials.RecoverableFailure} exception to
@@ -548,7 +548,7 @@ module Spils :
     (** {4 Optional input functions} *)
 
     (** This function resets the type of preconditioning to be used using a
-        value of type {!preconditioning_type}.
+        value of type {!Spils.preconditioning_type}.
 
         @cvode <node5#sss:optin_spils> CVSpilsPrecSetupFn *)
     val set_prec_type : ('a, 'k) session -> preconditioning_type -> unit
@@ -696,8 +696,8 @@ module Alternate :
                  Jacobian-related data is not current, or,
 
                - during the previous Newton corrector iteration, the linear
-                 solver's {!solve} routine failed in a recoverable manner and
-                 the linear solver's setup routine indicated that its
+                 solver's {!callbacks.lsolve} routine failed in a recoverable
+                 manner and the linear solver's setup routine indicated that its
                  Jacobian-related data is not current. *)
       | FailOther
           (** Passed if the previous Newton iteration failed to converge even
@@ -715,7 +715,8 @@ module Alternate :
         lsetup : (conv_fail -> 'data -> 'data -> 'data triple_tmp -> bool)
                  option;
           (** [jcur = lsetup convfail ypred fpred tmp] prepares the linear
-              solver for subsequent calls to {!lsolve}. Its arguments are:
+              solver for subsequent calls to {!callbacks.lsolve}. Its arguments
+              are:
               - [convfail], indicating any problem that occurred during the
                  solution of the nonlinear equation on the current time step,
               - [ypred], the predicted [y] vector for the current internal

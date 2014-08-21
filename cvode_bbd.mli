@@ -77,7 +77,7 @@ type callbacks =
 val spgmr : int option -> Spils.preconditioning_type -> bandwidths
                 -> float option -> callbacks -> parallel_linear_solver
 
-(** Same as {!Cvode.spils.spbcg} but with the Parallel Band-Block-Diagonal
+(** Same as {!Cvode.Spils.spbcg} but with the Parallel Band-Block-Diagonal
     preconditioner. The arguments are the same as for [spgmr].
 
     @cvode <node5#sss:lin_solve_init> CVSpbcg
@@ -85,7 +85,7 @@ val spgmr : int option -> Spils.preconditioning_type -> bandwidths
 val spbcg : int option -> Spils.preconditioning_type -> bandwidths
                 -> float option -> callbacks -> parallel_linear_solver
 
-(** Same as {!Cvode.spils.spbcg} but with the Parallel Band-Block-Diagonal
+(** Same as {!Cvode.Spils.spbcg} but with the Parallel Band-Block-Diagonal
     preconditioner. The arguments are the same as for [spgmr].
 
     @cvode <node5#sss:lin_solve_init> CVSptfqmr

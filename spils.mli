@@ -27,7 +27,7 @@
 
 (**
  Constants representing the types of Gram-Schmidt orthogonalization possible for
- the SPGMR linear solver ({!Spils_nvector.SPGMR.solve}/{!Spils_serial.SPGMR.solve}).
+ the SPGMR linear solver ({!SPGMR.solve}/{!SPGMR.solve}).
  @cvode <node9.html#ss:spgmr> ModifiedGS/ClassicalGS
  *)
 type gramschmidt_type =
@@ -188,8 +188,7 @@ module SPGMR :
   sig
     
     (**
-     This type represents a solver instance, based on {!Nvector.nvector}s,
-     returned from a call to {!make}.
+     This type represents a solver instance returned from a call to {!make}.
     *)
     type 'a t
 
@@ -265,8 +264,7 @@ module SPBCG :
   sig
     
     (**
-     This type represents a solver instance, based on {!Nvector.nvector}s,
-     returned from a call to {!make}.
+     This type represents a solver instance returned from a call to {!make}.
     *)
     type 'a t
 
@@ -334,8 +332,7 @@ module SPTFQMR :
   sig
     
     (**
-     This type represents a solver instance, based on {!Nvector.nvector}s,
-     returned from a call to {!make}.
+     This type represents a solver instance returned from a call to {!make}.
     *)
     type 'a t
 

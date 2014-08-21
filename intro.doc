@@ -1,20 +1,20 @@
 {{:https://computation.llnl.gov/casc/sundials/main.html} Sundials} is a
 collection of five numerical solvers: CVODE,  CVODES, IDA, IDAS, KINSOL.
-This library interfaces with Sundials version {b 2.5.0}. Sundials is written
-by Radu Serban, Carol Woodward, and Alan Hindmarsh with the past
-contributions of Peter Brown, Scott Cohen, Aaron Collier, Keith Grant,
+It is written by Radu Serban, Carol Woodward, and Alan Hindmarsh with the
+past contributions of Peter Brown, Scott Cohen, Aaron Collier, Keith Grant,
 Steven Lee, Dan Reynolds, Dan Shumaker, and Allan Taylor.
+This library interfaces with Sundials version {b 2.5.0}.
+
 
 This OCaml interface was written by {{:http://www.tbrk.org} Timothy Bourke}
-({{:http://www.inria.fr} Inria}/{{:http://www.di.ens.fr/} LIENS}),
+({{:http://www.inria.fr}Inria}/{{:http://www.di.ens.fr/}ENS}),
 {{:http://www.owlnet.rice.edu/~ji2/} Jun Inoue}
-({{:http://www.inria.fr} Inria}/{{:http://www.di.ens.fr/} LIENS}),
+({{:http://www.inria.fr}Inria}/{{:http://www.di.ens.fr/}ENS}),
 and
 {{:http://www.di.ens.fr/~pouzet/} Marc Pouzet} of
-{{:http://www.di.ens.fr/} LIENS}.
+{{:http://www.di.ens.fr/}ENS}.
 
-This library provides an OCaml interface to Sundials, though {b only the
-CVODE, IDA, and KINSOL solvers with serial nvectors are currently supported}.
+This library provides a complete OCaml interface to Sundials.
 The structure and naming conventions largely follow the original libraries,
 both for ease of reading the existing documentation and for converting
 existing source code, but several changes have been made for programming
@@ -32,8 +32,7 @@ Function names have been renamed according to a regular scheme.
 The leading {e module identifier} is removed and replaced with a module
 path.
 The identifier is renamed by separating words that begin with an
-uppercase letter in CVODE/IDA by underscores, and only lowercase letters are
-used.
+uppercase letter in by underscores and using only lowercase letters.
 For instance, [CVodeSetErrHandlerFn], becomes 
 [Cvode.set_err_handler_fn], and [CVSpilsSetJacTimesVecFn] becomes 
 [Cvode.Spils.set_jac_times_vec_fn].
@@ -46,12 +45,10 @@ For instance, [PREC_NONE] becomes [Spils.PrecNone].
 Rather than try to duplicate or replace the comprehensive
 {{:https://computation.llnl.gov/casc/sundials/documentation/documentation.html}
 Sundials user manuals}, this documentation provides hyperlinks back to the original
-function descriptions and focuses instead on differences between the
-original library and the OCaml interface.
-Most of the single line descriptions of functions have, however, been taken
-directly from the original manual written by Alan C. Hindmarsh and Radu
-Serban of the {e Center for Applied Scientific Computing, 
-Lawrence Livermore National Laboratory}.
+function descriptions and instead tries just to include brief summaries.
+These summaries have usually been directly adapted from the original manual
+written by Alan C. Hindmarsh and Radu Serban of the {e Center for Applied
+Scientific Computing, Lawrence Livermore National Laboratory}.
 
 The top level {!Sundials} module provides some utility routines for dealing
 with arrays of floats and integers, and for accessing certain constants
@@ -60,154 +57,59 @@ with arrays of floats and integers, and for accessing certain constants
 {2:nvector Nvectors}
 
 Sundials defines an abstract interface for vectors and provides
-implementations for serial and parallel vectors.
-{b Parallel vectors are not currently supported in this library.}
+implementations for serial and parallel vectors. The OCaml version defines a
+generic {!Sundials.nvector} type with type arguments indicating the
+underlying data and kind (serial, parallel, or custom), and provides modules
+that instantiate it (notably {!Nvector_serial}, and {!Nvector_parallel}).
 
-There are mechanisms for defining new vector implementations using records
-of imperative ({! Nvector.Mutable}) or pure functions ({! Nvector.Immutable}).
-A vector implementation for standard OCaml arrays of floats is provided as
-an example ({! Nvector_array}).
+The data underlying serial and parallel nvectors is passed between Sundials
+and OCaml programs using Bigarrays. These vectors are manipulated within the
+solver using the original low-level vector operations (cloning, linear sums,
+adding constants, and etcetera). While direct interfaces to these operations
+are not provided, there are equivalent implementations written in OCaml for
+arrays of floats ({!Nvector_array}) and bigarrays
+({!Nvector_array.Bigarray}) of floats.
 
-Serial vectors are passed between Sundials and OCaml programs as
-Bigarrays.
-These vectors are manipulated within the solver using the original low-level
-vector operations (cloning, linear sums, adding constants, and etcetera).
-While direct interfaces to these operations are not provided, there are
-equivalent implementations written in OCaml for arrays of floats
-({! Nvector_array}) and bigarrays ({! Nvector_array.Bigarray}) of floats.
-
-Each of the solvers provides two interfaces: one using abstract nvectors and
-another specialized for serial nvectors.
-Serial nvectors have three advantages over abstract nvectors:
+There are also mechanisms for defining new vector implementations using
+records of imperative ({!Nvector_custom}) or pure functions
+({!Nvector_custom.Immutable}). A vector implementation for standard OCaml
+arrays of floats is provided as an example ({!Nvector_array}). These
+abstract nvectors may be useful for small examples, prototyping, or
+debugging, but native serial (and parallel) nvectors have two important
+advantages:
 + {e efficiency}, since the low-level vector operations are implemented
 directly in C (rather than as C stubs around OCaml callbacks) and memory
 management is simpler, and,
 + {e support} for all linear solvers, since some linear solvers do not
 support abstract nvectors,
-+ {e convenience}, since the interface is simpler and more direct.
 
-{2:cvode CVODE}
+{2:modules Modules}
 
-CVODE solves ODE initial value problems using a variable-step solver with
-zero-crossing detection (root finding).
-This library provides an interface to the entire CVODE library except for
-functions related to parallel nvectors and custom linear solvers.
+{!modules: Sundials
+	   Dls
+	   Spils
+	   Nvector_serial Nvector_parallel Nvector_custom Nvector_array
+	   Cvode Cvode_bbd
+	   Cvodes Cvodes_bbd
+	   Ida Ida_bbd
+	   Idas Idas_bbd
+	   Kinsol Kinsol_bbd}
 
-Two interfaces are provided, one for serial nvectors ({!Cvode_serial}) and
-one for abstract nvectors ({!Cvode_nvector}).
-They are mostly identical except for the type signatures, one or two small
-changes required to accomodate the polymorphic argument of the abstract
-nvector type, and the fact that some linear solvers only support serial
-nvectors.
-Both interfaces directly include the {!Cvode} module, which contains nvector
-independent types and values, which in turn includes the {!Sundials} module.
-This flattening of the module structure intends to simplify working with the
-library.
-Each program need then only begin with a single aliasing definition, either:
+{2:build Building the interface}
 
-[module Cvode = Cvode_serial]
+TODO: instructions for configuring and building the SundialsML interface.
 
-or:
+{2:compilation Compiling programs}
 
-[module Cvode = Cvode_nvector]
-
-{3:usingcvode Using CVODE}
-
-Skeletons of the main program are given under {!Cvode_serial.session} and
-{!Cvode_nvector.session}. Such a program can be compiled using the
-[-I +sundials] option and including [unix.cma] (or [.cmxa]),
-[bigarray.cma] (or [.cmxa]) and [sundials_cvode.cma] (or [.cmxa]), for example:
-{[ocamlc -o myprogram -I +sundials unix.cma bigarray.cma sundials_cvode.cma myprogram.ml]}
-or:
-{[ocamlopt -o myprogram -I +sundials unix.cmxa bigarray.cmxa sundials_cvode.cmxa myprogram.ml]}
-
-{2:cvodes CVODES}
-
-TODO: write this section.
-
-{2:ida IDA}
-
-IDA solves DAE initial value problems using a variable-step solver with
-zero-crossing detection (root finding).  The scope and usage of the IDA
-fragment of this binding are similar to that of the CVODE binding.
-This library provides an interface to the entire IDA library except for
-functions related to parallel nvectors and custom linear solvers.
-
-Two interfaces are provided, one for serial nvectors ({!Ida_serial}) and
-one for abstract nvectors ({!Ida_nvector}).
-They are mostly identical except for the type signatures, one or two small
-changes required to accomodate the polymorphic argument of the abstract
-nvector type, and the fact that some linear solvers only support serial
-nvectors.
-Both interfaces directly include the {!Ida} module, which contains nvector
-independent types and values, which in turn includes the {!Sundials} module.
-This flattening of the module structure intends to simplify working with the
-library.
-Each program need then only begin with a single aliasing definition, either:
-
-[module Ida = Ida_serial]
-
-or:
-
-[module Ida = Ida_nvector]
-
-{3:usingcvode Using IDA}
-
-Skeletons of the main program are given under {!Ida_serial.session} and
-{!Ida_nvector.session}. Such a program can be compiled using the
+TODO: Programs can be compiled using the
 [-I +sundials] option and including [unix.cma] (or [.cmxa]),
 [bigarray.cma] (or [.cmxa]) and [sundials_ida.cma] (or [.cmxa]), for example:
 {[ocamlc -o myprogram -I +sundials unix.cma bigarray.cma sundials_ida.cma myprogram.ml]}
 or:
 {[ocamlopt -o myprogram -I +sundials unix.cmxa bigarray.cmxa sundials_ida.cmxa myprogram.ml]}
 
-{2:kinsol KINSOL}
-
-KINSOL solves nonlinear systems using Newton-Krylov techniques.
-This library provides an interface to the entire KINSOL library except for
-functions related to parallel nvectors and custom linear solvers.
-
-Two interfaces are provided, one for serial nvectors ({!Kinsol_serial}) and
-one for abstract nvectors ({!Kinsol_nvector}).
-They are mostly identical except for the type signatures, one or two small
-changes required to accomodate the polymorphic argument of the abstract
-nvector type, and the fact that some linear solvers only support serial
-nvectors.
-Both interfaces directly include the {!Kinsol} module, which contains nvector
-independent types and values, which in turn includes the {!Sundials} module.
-This flattening of the module structure intends to simplify working with the
-library.
-Each program need then only begin with a single aliasing definition, either:
-
-[module Kinsol = Kinsol_serial]
-
-or:
-
-[module Kinsol = Kinsol_nvector]
-
-{3:usingkinsol Using KINSOL}
-
-Skeletons of the main program are given under {!Kinsol_serial.session} and
-{!Kinsol_nvector.session}. Such a program can be compiled using the
-[-I +sundials] option and including [unix.cma] (or [.cmxa]),
-[bigarray.cma] (or [.cmxa]) and [sundials_kinsol.cma] (or [.cmxa]), for example:
-{[ocamlc -o myprogram -I +sundials unix.cma bigarray.cma sundials_kinsol.cma myprogram.ml]}
-or:
-{[ocamlopt -o myprogram -I +sundials unix.cmxa bigarray.cmxa sundials_kinsol.cmxa myprogram.ml]}
-
-{2:modules Modules}
-
-{!modules: Sundials}
-
-{!modules: Dls}
-{!modules: Spils}
-
-{!modules: Nvector_serial Nvector_parallel Nvector_custom Nvector_array}
-{!modules: Cvode Cvode_bbd}
-{!modules: Cvodes Cvodes_bbd}
-{!modules: Ida Ida_bbd}
-{!modules: Idas Idas_bbd}
-{!modules: Kinsol Kinsol_bbd}
+TODO: compiling with and without sensitivity.
+TODO: compiling with and without mpi.
 
 {2:refs References}
 

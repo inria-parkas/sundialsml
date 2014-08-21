@@ -10,7 +10,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(** {!Nvector.nvector}s for standard arrays and one-dimensional bigarrays.
+(** Nvectors for standard arrays and one-dimensional bigarrays.
 
   @version VERSION()
   @author Timothy Bourke (Inria)
@@ -20,11 +20,11 @@
   @see <OCAML_DOC_ROOT(Bigarray.Array1)> Bigarray.Array1
  *)
 
-(** An abstract set of functions for working manipulating {!Nvector.nvector}s
+(** An abstract set of functions for working manipulating nvectors
     where the underlying data structure is an array of [float]s.  *)
 module type ARRAY_NVECTOR =
   sig
-    (** The type of array used within the {!Nvector.nvector}. *)
+    (** The type of array used within the Nvector. *)
     type t
 
     (** The set of nvector operations on an array.
@@ -36,7 +36,7 @@ let vn = vmax_norm u]}
      *)
     val array_nvec_ops  : t Nvector_custom.nvector_ops
 
-    (** [make n x] creates an {!Nvector.nvector} containing an array
+    (** [make n x] creates an nvector containing an array
         of [n] elements, each of which is equal to [x]. *)
     val make            : int -> float -> t Nvector_custom.t
 
@@ -44,10 +44,10 @@ let vn = vmax_norm u]}
     val wrap            : t -> t Nvector_custom.t
   end
 
-(** {!Nvector.nvector} on {{:OCAML_DOC_ROOT(Array)} Array}s of [float]s. *)
+(** Nvector on {{:OCAML_DOC_ROOT(Array)} Array}s of [float]s. *)
 include ARRAY_NVECTOR with type t = float array
  
-(** {!Nvector.nvector} on {{:OCAML_DOC_ROOT(Bigarray.Array1)} Bigarray}s
+(** Nvector on {{:OCAML_DOC_ROOT(Bigarray.Array1)} Bigarray}s
    of [float]s. *)
 module Bigarray :
   ARRAY_NVECTOR

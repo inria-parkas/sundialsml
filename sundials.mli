@@ -79,24 +79,21 @@ module RealArray :
         initialized to [f i]. *)
     val init : int -> (int -> float) -> t
 
-    (** Copies the contents of an {{:OCAML_DOC_ROOT(Array)} Array} into a
-       {!real_array} *)
+    (** Creates an array by copying the contents of an {{:OCAML_DOC_ROOT(Array)}
+        Array}. *)
     val of_array : float array -> t
 
-    (** Copies the contents of a {{:OCAML_DOC_ROOT(List)} List} into a
-       {!real_array} *)
+    (** Creates an array by copying the contents of a
+        {{:OCAML_DOC_ROOT(List)} List}. *)
     val of_list : float list -> t
 
-    (** Copies the contents of a {!real_array} to a new
-        {{:OCAML_DOC_ROOT(Array)} Array}.  *)
+    (** Copies into a new {{:OCAML_DOC_ROOT(Array)} Array}. *)
     val to_array : t -> float array
 
-    (** Copies the contents of a {!real_array} into an
-        {{:OCAML_DOC_ROOT(Array)} Array}.  *)
+    (** Copies into an existing {{:OCAML_DOC_ROOT(Array)} Array}. *)
     val into_array : t -> float array -> unit
 
-    (** Copies the contents of a {!real_array} into a {{:OCAML_DOC_ROOT(List)}
-        List}.  *)
+    (** Copies into a {{:OCAML_DOC_ROOT(List)} List}. *)
     val to_list : t -> float list
 
     (** Create a new array with the same contents as an existing one. *)
@@ -169,19 +166,18 @@ module RealArray2 :
         columns, [nc], in [a] *)
     val size : t -> int * int
 
-    (** [copy a] creates a copy of [a] and its underlying {!real_array2}
-        array. *)
+    (** [copy a] creates a copy of [a] and its underlying {!data} array. *)
     val copy : t -> t
 
     (** [copyinto a b] copies the contents of [a] into [b]. Both arrays
         must have the same dimensions. *)
     val copyinto : t -> t -> unit
 
-    (** Creates a new array from an existing {!real_array2}; changes to either
+    (** Creates a new array from an existing {!data} array; changes to either
         array affect the other (i.e., they share the same underlying storage). *)
     val wrap : data -> t
 
-    (** Returns an underlying {!real_array2}; changes to either array affect the
+    (** Returns the underlying {!data} array; changes to either array affect the
         other (i.e., they share the same underlying storage). *)
     val unwrap : t -> data
   end
@@ -191,10 +187,10 @@ module LintArray :
     (** A {{:OCAML_DOC_ROOT(Bigarray.Array1)} (Bigarray)} vector of integers. *)
     type t = (int, Bigarray.int_elt, Bigarray.c_layout) Bigarray.Array1.t
 
-    (** [make n v] returns a {!lint_array} with [n] elements each set to [v]. *)
+    (** [make n v] returns an new array with [n] elements each set to [v]. *)
     val make  : int -> int -> t
 
-    (** [create n] returns a {!lint_array} with [n] elements. *)
+    (** [create n] returns an uninitialized new array with [n] elements. *)
     val create  : int -> t
   end
 

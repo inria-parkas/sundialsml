@@ -20,7 +20,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(** Vector-independent types and values for the KINSOL solver.
+(** KINSOL solves nonlinear systems using Newton-Krylov techniques.
 
  @version VERSION()
  @author Timothy Bourke (Inria)
@@ -66,8 +66,7 @@ exception FirstSystemFunctionFailure
 (** @kinsol <node5#sss:kinsol> KIN_REPTD_SYSFUNC_ERR *)
 exception RepeatedSystemFunctionFailure
 
-(** This type represents a session with the KINSOL solver using
-    {!Nvector.nvector}s.
+(** This type represents a session with the KINSOL solver.
 
     A skeleton of the main program:
     + {b Set vector with initial guess}
@@ -278,7 +277,7 @@ module Spils :
       }
 
     (** Callbacks for Krylov subspace linear solvers. Ignored if the
-        {!preconditioning_type} is set to [PrecNone]. In that case, you
+        {!Spils.preconditioning_type} is set to [PrecNone]. In that case, you
         should use {!spils_no_precond} as [callbacks].  *)
     type 'a callbacks =
       {

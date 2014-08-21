@@ -24,16 +24,16 @@
  
     The Sundials solvers are written in a data-independent manner. They all
     operate on generic vectors through a set of operations defined by the
-    particular {!nvector} implementation. The OCaml interface replicates this
+    particular nvector implementation. The OCaml interface replicates this
     design choice.
 
     The OCaml interface provides two ways to define custom nvectors: either
-    through a set of (imperative) operations on an underlying {!Mutable} data
-    type, or a set of (functional) operations on an underlying {!Immutable} data
-    type. A set of {!Immutable} operations is converted into a set of {!Mutable}
-    ones, which can be used with a solver, by {!Immutable.from_immutable} which
-    introduces a reference in the underlying data type and modifies the set of
-    operations to update it in-place.
+    through a set of (imperative) operations on an underlying mutable data type
+    (default), or a set of (functional) operations on an underlying {!Immutable}
+    data type. A set of {!Immutable} operations is converted into a set of
+    mutable ones, which can be used with a solver, by
+    {!Immutable.from_immutable} which introduces a reference in the underlying
+    data type and modifies the set of operations to update it in-place.
 
     @version VERSION()
     @author Timothy Bourke (Inria)
@@ -51,7 +51,7 @@ type 'a t = ('a, kind) Sundials.nvector
 (** {2 Custom imperative nvectors} *)
 
 (**
-   The set of operations required to define an {!nvector}. Some operations
+   The set of operations required to define an nvector. Some operations
    are optional; default values are either provided by the OCaml interface
    or the Sundials library.
 
@@ -180,8 +180,7 @@ type 'a nvector_ops = {
 
 (** [make_nvector ops] takes a set of operations on the data
     type ['a] and yields a function for lifting values of type ['a]
-    into ['a] {!nvector}s which can be passed to a solver (like
-    {!Cvode_nvector}). *)
+    into ['a] nvectors which can be passed to a solver. *)
 val make  : 'a nvector_ops -> 'a -> 'a t
 
 (** [add_tracing p ops] modifies a set of {!nvector_ops} so that
@@ -323,10 +322,10 @@ sig
 
   (** [make_nvector ops] takes a set of operations on the data
       type 'a and yields a function for lifting values of type ['a ref]
-      into ['a ref] {!nvector}s which can be passed to a solver. *)
+      into ['a ref] nvectors which can be passed to a solver. *)
   val make            : 'a nvector_ops -> 'a ref -> 'a ref t
 
-  (** Extracts the data from an {!nvector}. *)
+  (** Extracts the data from an nvector. *)
   val unwrap          : 'a ref t -> 'a
 end
 

@@ -70,7 +70,7 @@ type callbacks =
     arguments specify the maximum dimension of the Krylov subspace (Pass None to
     use the default value 5), the maximum number of restarts of the iterative
     linear solver (Pass None to use the default value 0), the bandwidths
-    described under {!bandwidths}, the relative increment in components of [y]
+    described above, the relative increment in components of [y]
     used in the difference quotient approximations (pass [None] to use the
     default value [sqrt unit_roundoff]), and the callbacks described under
     {!callbacks}.
