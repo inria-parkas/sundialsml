@@ -696,8 +696,6 @@ module Alternate :
 
         @cvode <node8#s:new_linsolv> Providing Alternate Linear Solver Modules *)
 
-    (* TODO: 2. Test. *)
-
     (** A flag that indicates any problems that occured during the solution of
         the nonlinear equation on the current time step for which the linear
         solver is being used. This flag can be used to help decide whether the

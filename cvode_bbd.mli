@@ -32,12 +32,6 @@ type data = Nvector_parallel.data
 type parallel_session = (data, Nvector_parallel.kind) Cvode.session
 type parallel_linear_solver = (data, Nvector_parallel.kind) Cvode.linear_solver
 
-(** TODO:
-    4. Implement examples (cvode/parallel and cvodes/parallel).
-    5. Update the TODO file.
-  *)
-
-
 type bandwidths =
   {
     mudq    : int; (** Upper half-bandwidth to be used in the difference

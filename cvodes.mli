@@ -1505,7 +1505,6 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
 
       @cvode <node5#sss:optout_main> CVodeGetNonlinSolvStats *)
     val get_nonlin_solv_stats : ('a, 'k) bsession -> int *int
-    (* TODO: check all @cvode links *)
 
     (** {2:adjquad Quadrature Equations} *)
 

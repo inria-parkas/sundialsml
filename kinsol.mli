@@ -476,8 +476,6 @@ module Alternate :
 
         @kinsol <node8#s:new_linsolv> Providing Alternate Linear Solver Modules *)
 
-    (* TODO: 2. Test. *)
-
     type 'data callbacks =
       {
         linit   : (unit -> bool) option;

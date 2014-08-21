@@ -111,3 +111,11 @@ TO DISCUSS
   - it's not really suited to building a library with everything
   Or propose changes on the sundials-users list?
 
+TO EXPLAIN IN DOCS
+------------------
+* Possibility to 'break' Sundials by passing nvectors of an incompatible
+  size (e.g., Cvode.init with an nvector of size 10 and reinit with one of
+  size 5).
+* Check the various links (@cvode, @cvodes, @ida, @idas, etc.)
+  (automatically with a script?)
+
