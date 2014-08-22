@@ -45,15 +45,15 @@ INSTALL_CMA=sundials.cma sundials_nosensi.cma \
 
 STUBLIBS=$(foreach file,$(INSTALL_CMA:.cma=$(XS)), dllml$(file))
 
-INSTALL_FILES=			\
-    META			\
-    $(MLOBJ_MAIN:.cmo=.cmi)	\
-    $(MLOBJ_SENS:.cmo=.cmi)	\
-    $(MLOBJ_NOSENSI:.cmo=.cmi)	\
-    $(MLOBJ_MPI:.cmo=.cmi)	\
-    $(INSTALL_CMA)		\
-    $(INSTALL_CMA:.cma=.cmxa)	\
-    $(INSTALL_CMA:.cma=$(XA))	\
+INSTALL_FILES=							\
+    META							\
+    $(filter-out %_impl.cmi, $(MLOBJ_MAIN:.cmo=.cmi))		\
+    $(MLOBJ_SENS:.cmo=.cmi)					\
+    $(MLOBJ_NOSENSI:.cmo=.cmi)					\
+    $(MLOBJ_MPI:.cmo=.cmi)					\
+    $(INSTALL_CMA)						\
+    $(INSTALL_CMA:.cma=.cmxa)					\
+    $(INSTALL_CMA:.cma=$(XA))					\
     $(foreach file,$(INSTALL_CMA:.cma=$(XA)), libml$(file))
 
 ### Build rules.
