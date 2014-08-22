@@ -1270,13 +1270,15 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
         (** This function resets the type of preconditioning to be used using a
             value of type {!Spils.preconditioning_type}.
 
-            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetPrecTypeB *)
+            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetPrecTypeB
+            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
         val set_prec_type : ('a, 'k) bsession -> preconditioning_type -> unit
 
         (** Sets the Gram-Schmidt orthogonalization to be used with the
             Spgmr {!linear_solver}.
 
-            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetGSTypeB *)
+            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetGSTypeB
+            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
         val set_gs_type : ('a, 'k) bsession -> gramschmidt_type -> unit
 
         (** [set_eps_lin eplifac] sets the factor by which the Krylov linear
@@ -1284,7 +1286,8 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
             iteration test constant. [eplifac]  must be >= 0. Passing a value of
             0 specifies the default (which is 0.05).
 
-            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetEpsLinB *)
+            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetEpsLinB
+            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
         val set_eps_lin : ('a, 'k) bsession -> float -> unit
 
         (** [set_maxl maxl] resets the maximum Krylov subspace dimension for the
@@ -1292,7 +1295,8 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
             Krylov subspace.  A value of [None] (or [maxl] <= 0) specifies the
             default of 5.0.
 
-            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetMaxlB *)
+            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetMaxlB
+            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
         val set_maxl : ('a, 'k) bsession -> int option -> unit
 
         (** {5:adjbwdspilsoptout Optional Output Functions} *)
@@ -1301,35 +1305,41 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
             linear solver.
 
             @cvodes <node5#sss:optout_spils> CVSpilsGetWorkSpace
+            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
             @return ([real_size], [integer_size]) *)
         val get_work_space       : ('a, 'k) bsession -> int * int
 
         (** Returns the cumulative number of linear iterations.
 
-            @cvodes <node5#sss:optout_spils> CVSpilsGetNumLinIters *)
+            @cvodes <node5#sss:optout_spils> CVSpilsGetNumLinIters
+            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
         val get_num_lin_iters    : ('a, 'k) bsession -> int
 
         (** Returns the cumulative number of linear convergence failures.
 
-            @cvodes <node5#sss:optout_spils> CVSpilsGetNumConvFails *)
+            @cvodes <node5#sss:optout_spils> CVSpilsGetNumConvFails
+            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
         val get_num_conv_fails   : ('a, 'k) bsession -> int
 
         (** Returns the number of preconditioner evaluations, i.e., the number
             of calls made to psetup with jok = [false].
 
-            @cvodes <node5#sss:optout_spils> CVSpilsGetNumPrecEvals *)
+            @cvodes <node5#sss:optout_spils> CVSpilsGetNumPrecEvals
+            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
         val get_num_prec_evals   : ('a, 'k) bsession -> int
 
         (** Returns the cumulative number of calls made to the preconditioner
             solve function, psolve.
 
-            @cvodes <node5#sss:optout_spils> CVSpilsGetNumPrecSolves *)
+            @cvodes <node5#sss:optout_spils> CVSpilsGetNumPrecSolves
+            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
         val get_num_prec_solves  : ('a, 'k) bsession -> int
 
         (** Returns the cumulative number of calls made to the Jacobian-vector
             function, jtimes.
 
-          @cvodes <node5#sss:optout_spils> CVSpilsGetNumJtimesEvals *)
+            @cvodes <node5#sss:optout_spils> CVSpilsGetNumJtimesEvals
+            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
         val get_num_jtimes_evals : ('a, 'k) bsession -> int
 
         (** Returns the number of calls to the user right-hand side function for
@@ -1337,7 +1347,8 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
             counter is only updated if the default difference quotient function
             is used.
 
-            @cvodes <node5#sss:optout_spils> CVSpilsGetNumRhsEvals *)
+            @cvodes <node5#sss:optout_spils> CVSpilsGetNumRhsEvals
+            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
         val get_num_rhs_evals    : ('a, 'k) bsession -> int
 
       (** {4:adjbwdbandprec Banded preconditioner} *)
@@ -1386,6 +1397,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
               serial banded preconditioner module.
 
               @cvodes <node5#sss:cvbandpre> CVBandPrecGetWorkSpace
+              @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
               @return ([real_size], [integer_size]) *)
           val get_work_space : serial_bsession -> int * int
 
@@ -1393,7 +1405,8 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
               side function due to finite difference banded Jacobian approximation
               in the banded preconditioner setup function.
 
-              @cvodes <node5#sss:cvbandpre> CVBandPrecGetNumRhsEvals *)
+              @cvodes <node5#sss:cvbandpre> CVBandPrecGetNumRhsEvals
+              @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
           val get_num_rhs_evals : serial_bsession -> int
         end
 
@@ -1404,42 +1417,42 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
     (** Returns the real and integer workspace sizes.
 
         @cvodes <node5#sss:optout_main> CVodeGetWorkSpace
-        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
         @return ([real_size], [integer_size]) *)
     val get_work_space          : ('a, 'k) bsession -> int * int
 
     (** Returns the cumulative number of internal steps taken by the solver.
 
         @cvodes <node5#sss:optout_main> CVodeGetNumSteps
-        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
      *)
     val get_num_steps           : ('a, 'k) bsession -> int
 
     (** Returns the number of calls to the user's right-hand side function.
 
         @cvodes <node5#sss:optout_main> CVodeGetNumRhsEvals
-        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
      *)
     val get_num_rhs_evals       : ('a, 'k) bsession -> int
 
     (** Returns the number of calls made to the linear solver's setup function.
 
         @cvodes <node5#sss:optout_main> CVodeGetNumLinSolvSetups
-        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
      *)
     val get_num_lin_solv_setups : ('a, 'k) bsession -> int
 
     (** Returns the number of local error test failures that have occurred.
 
         @cvodes <node5#sss:optout_main> CVodeGetNumErrTestFails
-        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
      *)
     val get_num_err_test_fails  : ('a, 'k) bsession -> int
 
     (** Returns the integration method order used during the last internal step.
 
         @cvodes <node5#sss:optout_main> CVodeGetLastOrder
-        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
      *)
     val get_last_order          : ('a, 'k) bsession -> int
 
@@ -1447,14 +1460,14 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
         step.
 
         @cvodes <node5#sss:optout_main> CVodeGetCurrentOrder
-        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
      *)
     val get_current_order       : ('a, 'k) bsession -> int
 
     (** Returns the integration step size taken on the last internal step.
 
         @cvodes <node5#sss:optout_main> CVodeGetLastStep
-        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
      *)
     val get_last_step           : ('a, 'k) bsession -> float
 
@@ -1462,7 +1475,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
         step.
 
         @cvodes <node5#sss:optout_main> CVodeGetCurrentStep
-        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
      *)
     val get_current_step        : ('a, 'k) bsession -> float
 
@@ -1470,14 +1483,14 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
         step.
 
         @cvodes <node5#sss:optout_main> CVodeGetActualInitStep
-        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
      *)
     val get_actual_init_step    : ('a, 'k) bsession -> float
 
     (** Returns the the current internal time reached by the solver.
 
         @cvodes <node5#sss:optout_main> CVodeGetCurrentTime
-        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
      *)
     val get_current_time        : ('a, 'k) bsession -> float
 
@@ -1485,7 +1498,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
         limit detection algorithm.
 
         @cvodes <node5#sss:optout_main> CVodeGetNumStabLimOrderReds
-        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
         @cvodes <node3#s:bdf_stab> BDF stability limit detection
      *)
     val get_num_stab_lim_order_reds : ('a, 'k) bsession -> int
@@ -1495,28 +1508,28 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
         step.
 
         @cvodes <node5#sss:optout_main> CVodeGetTolScaleFactor
-        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
      *)
     val get_tol_scale_factor : ('a, 'k) bsession -> float
 
     (** Returns the solution error weights at the current time.
 
         @cvodes <node5#sss:optout_main> CVodeGetErrWeights
-        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
         @cvodes <node3#ss:ivp_sol> IVP solution (W_i) *)
     val get_err_weights : ('a, 'k) bsession -> ('a, 'k) nvector -> unit
 
     (** Returns the vector of estimated local errors.
 
         @cvodes <node5#sss:optout_main> CVodeGetEstLocalErrors
-        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
      *)
     val get_est_local_errors : ('a, 'k) bsession -> ('a, 'k) nvector -> unit
 
     (** Returns the integrator statistics as a group.
 
         @cvodes <node5#sss:optout_main> CVodeGetIntegratorStats
-        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
      *)
     val get_integrator_stats    : ('a, 'k) bsession -> Cvode.integrator_stats
 
@@ -1524,7 +1537,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
         results to stdout.
 
         @cvodes <node5#sss:optout_main> CVodeGetIntegratorStats
-        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
      *)
     val print_integrator_stats  : ('a, 'k) bsession -> unit
 
@@ -1532,14 +1545,14 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
         performed.
 
         @cvodes <node5#sss:optout_main> CVodeGetNumNonlinSolvIters
-        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
      *)
     val get_num_nonlin_solv_iters : ('a, 'k) bsession -> int
 
     (** Returns the number of nonlinear convergence failures that have occurred.
 
         @cvodes <node5#sss:optout_main> CVodeGetNumNonlinSolvConvFails
-        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
      *)
     val get_num_nonlin_solv_conv_fails : ('a, 'k) bsession -> int
 
@@ -1548,7 +1561,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
         nonlinear convergence failures that have occurred [nncfails].
 
         @cvode <node5#sss:optout_main> CVodeGetNonlinSolvStats
-        @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
      *)
     val get_nonlin_solv_stats : ('a, 'k) bsession -> int *int
 
@@ -1632,7 +1645,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
 
             @cvodes <node7#sss:quad_optional_input_B> Optional input/output functions for backward quadrature integration
             @cvodes <node5#ss:quad_optional_output> CVodeGetQuadNumRhsEvals
-            @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
          *)
         val get_num_rhs_evals       : ('a, 'k) bsession -> int
 
@@ -1641,7 +1654,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
 
             @cvodes <node7#sss:quad_optional_input_B> Optional input/output functions for backward quadrature integration
             @cvodes <node5#ss:quad_optional_output> CVodeGetQuadNumErrTestFails
-            @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
          *)
         val get_num_err_test_fails  : ('a, 'k) bsession -> int
 
@@ -1649,7 +1662,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
 
             @cvodes <node7#sss:quad_optional_input_B> Optional input/output functions for backward quadrature integration
             @cvodes <node5#ss:quad_optional_output> CVodeGetQuadErrWeights
-            @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
          *)
         val get_err_weights : ('a, 'k) bsession -> ('a, 'k) nvector -> unit
 
@@ -1659,7 +1672,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
 
             @cvodes <node7#sss:quad_optional_input_B> Optional input/output functions for backward quadrature integration
             @cvodes <node5#ss:quad_optional_output> CVodeGetQuadStats
-            @cvodes <node5#sss:optout_main> CVodeGetAdjCVodeBmem
+            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
          *)
         val get_stats : ('a, 'k) bsession -> int * int
       end

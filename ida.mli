@@ -409,17 +409,17 @@ module Spils :
       (** Called like [prec_solve_fn arg r z delta] to solve the
           linear system {i P}[z] = [r], where {i P} is the (left)
           preconditioner matrix.
+          - [arg] supplies the basic problem data as a {!jacobian_arg}.
+          - [r] is the right-hand side vector.
+          - [z] is the vector in which the result must be stored.
+          - [delta] is an input tolerance.
 
           If set to [None] then no preconditioning is performed, and
           [prec_setup_fn] and [jac_times_vec_fn] are ignored.
 
           {i P} should approximate, at least crudely, the system
-          Jacobian matrix {i J = dF/dy + {jac.coef} * dF/dy'} where {i
-          F} is the residual function.
-          - [arg] supplies the basic problem data as a {!jacobian_arg}.
-          - [r] is the right-hand side vector.
-          - [z] is the vector in which the result must be stored.
-          - [delta] is an input tolerance.
+          Jacobian matrix {i J = dF/dy + c * dF/dy'} where {i
+          F} is the residual function and {i c} is [arg.jac_coef].
 
           [delta] is an input tolerance to be used if an iterative method is
           employed in the solution.  In that case, the residual vector res = [r]
