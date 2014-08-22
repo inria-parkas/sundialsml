@@ -9,6 +9,7 @@ USELIB ?= sundials_nosensi
 EXAMPLES = cvAdvDiff_bnd.ml \
 	   cvRoberts_dns.ml \
 	   cvRoberts_dns_uw.ml \
+	   cvRoberts_dns_uw_alt.ml \
 	   cvDirectDemo_ls.ml \
 	   cvDiurnal_kry.ml \
 	   cvDiurnal_kry_bp.ml \
@@ -108,6 +109,9 @@ cvRoberts_dnsL.opt:  cvRoberts_dnsL.ml
 
 cvRoberts_dns_uw.byte: cvRoberts_dns_uw.ml
 cvRoberts_dns_uw.opt:  cvRoberts_dns_uw.ml
+
+cvRoberts_dns_uw_alt.byte: cvRoberts_dns_uw_alt.ml
+cvRoberts_dns_uw_alt.opt:  cvRoberts_dns_uw_alt.ml
 
 cvDirectDemo_ls.byte: cvDirectDemo_ls.ml
 cvDirectDemo_ls.opt:  cvDirectDemo_ls.ml

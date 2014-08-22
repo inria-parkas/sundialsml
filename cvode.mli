@@ -680,10 +680,9 @@ module Alternate :
 
         @cvode <node8#s:new_linsolv> Providing Alternate Linear Solver Modules *)
 
-    (** A flag that indicates any problems that occured during the solution of
-        the nonlinear equation on the current time step for which the linear
-        solver is being used. This flag can be used to help decide whether the
-        Jacobian data kept by a linear solver needs to be updated or not. *)
+    (** Indicates problems during the solution of nonlinear equation at a
+        step. Used to help decide whether to update the Jacobian data kept by a
+        linear solver. *)
     type conv_fail =
       | NoFailures
           (** Passed on the first call for a step, or if the lcoal error test
@@ -704,19 +703,21 @@ module Alternate :
               though the linear solver was using current Jacobian-related
               data. *)
 
-    type 'data callbacks =
+    type ('data, 'kind) callbacks =
       {
-        linit   : (unit -> bool) option;
+        linit   : (('data, 'kind) session -> bool) option;
           (** Complete initializations for a specific linear solver, such as
               counters and statistics. Returns [true] if successful.
 
               @cvode <node8#SECTION00810000000000000000> linit *)
 
-        lsetup : (conv_fail -> 'data -> 'data -> 'data triple_tmp -> bool)
-                 option;
-          (** [jcur = lsetup convfail ypred fpred tmp] prepares the linear
+        lsetup : (('data, 'kind) session -> conv_fail -> 'data -> 'data
+                  -> 'data triple_tmp -> bool) option;
+
+          (** [jcur = lsetup s convfail ypred fpred tmp] prepares the linear
               solver for subsequent calls to {!callbacks.lsolve}. Its arguments
               are:
+              - [s], the solver session,
               - [convfail], indicating any problem that occurred during the
                  solution of the nonlinear equation on the current time step,
               - [ypred], the predicted [y] vector for the current internal
@@ -732,8 +733,11 @@ module Alternate :
            
               @cvode <node8#SECTION00820000000000000000> lsetup *)
            
-        lsolve : 'data -> 'data -> 'data -> 'data -> unit;
-          (** [lsolve b weight ycur fcur] must solve the linear equation given:
+        lsolve : ('data, 'kind) session ->  'data -> 'data -> 'data -> 'data
+                  -> unit;
+          (** [lsolve s b weight ycur fcur] must solve the linear equation
+              given:
+              - [s], the solver session,
               - [b], is the vector into which the solution is to be calculated,
               - [weight] contains the error weights,
               - [ycur] contains the solvers current approximation to [y], and,
@@ -745,18 +749,22 @@ module Alternate :
           
               @cvode <node8#SECTION00830000000000000000> lsolve *)
 
-        lfree  : (unit -> unit) option;
+        lfree  : (('data, 'kind) session -> unit) option;
           (** This function is called once a problem has been completed and the
               linear solver is no longer needed.
 
               @cvode <node8#SECTION00840000000000000000> lfree *)
       }
 
+    (** [(gamma, gammap) = get_gamma s] returns the solver's current and
+        previous gamma values. *)
+    val get_gamma : ('data, 'kind) session -> float * float
+
     (** Create a linear solver from a function returning a set of callback
         functions *)
     val make_solver :
-          (('data, 'kind) session -> ('data, 'kind) nvector -> 'data callbacks)
-          -> ('data, 'kind) linear_solver
+          (('data, 'kind) session -> ('data, 'kind) nvector
+           -> ('data, 'kind) callbacks) -> ('data, 'kind) linear_solver
   end
 
 (** {2 Tolerances} *)

@@ -148,14 +148,6 @@ type conv_fail =
   | FailBadJ
   | FailOther
 
-type 'a alternate_linsolv =
-  {
-    linit  : (unit -> bool) option;
-    lsetup : (conv_fail -> 'a -> 'a -> 'a triple_tmp -> bool) option;
-    lsolve : 'a -> 'a -> 'a -> 'a -> unit;
-    lfree  : (unit -> unit) option;
-  }
-
 (* the session type *)
 
 type cvode_mem
@@ -170,14 +162,14 @@ type ('a, 'kind) linsolv_callbacks =
   | SpilsCallback of 'a spils_callbacks
   | BBDCallback of 'a Bbd.callbacks
 
-  | AlternateCallback of 'a alternate_linsolv
+  | AlternateCallback of ('a, 'kind) alternate_linsolv
 
   | BDenseCallback of B.dense_jac_fn
   | BBandCallback  of B.band_jac_fn
   | BSpilsCallback of 'a B.spils_callbacks
   | BBBDCallback of 'a B.Bbd.callbacks
 
-type ('a, 'kind) session = {
+and ('a, 'kind) session = {
       cvode      : cvode_mem;
       backref    : c_weak_ref;
       nroots     : int;
@@ -237,6 +229,17 @@ and ('a, 'kind) bsensext = {
     mutable bquadrhsfn    : (float -> 'a -> 'a -> 'a -> unit);
     mutable bquadrhsfn1   : (float -> 'a -> 'a array -> 'a -> 'a -> unit);
   }
+
+and ('data, 'kind) alternate_linsolv =
+  {
+    linit   : (('data, 'kind) session -> bool) option;
+    lsetup : (('data, 'kind) session -> conv_fail -> 'data -> 'data
+              -> 'data triple_tmp -> bool) option;
+    lsolve : ('data, 'kind) session ->  'data -> 'data -> 'data -> 'data
+              -> unit;
+    lfree  : (('data, 'kind) session -> unit) option;
+  }
+
 
 type ('a, 'k) bsession = Bsession of ('a, 'k) session
 let tosession = function Bsession s -> s

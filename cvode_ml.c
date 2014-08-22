@@ -496,6 +496,18 @@ static void lfree(CVodeMem cv_mem)
     CAMLreturn0;
 }
 
+CAMLprim value c_cvode_get_gamma(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+    CAMLlocal1(r);
+    CVodeMem cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
+
+    r = caml_alloc_tuple (2);
+    Store_field (r, 0, caml_copy_double(cvode_mem->cv_gamma));
+    Store_field (r, 1, caml_copy_double(cvode_mem->cv_gammap));
+    CAMLreturn(r);
+}
+
 CAMLprim void c_cvode_set_alternate (value vcvode_mem, value vhas_init,
 				     value vhas_setup, value vhas_free)
 {

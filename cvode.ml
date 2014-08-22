@@ -148,27 +148,28 @@ let call_linit session =
   let session = read_weak_ref session in
   match session.ls_callbacks with
   | AlternateCallback { linit = Some f } ->
-      adjust_retcode session false f ()
+      adjust_retcode session false f session
   | _ -> assert false
 
 let call_lsetup session convfail ypred fpred tmp =
   let session = read_weak_ref session in
   match session.ls_callbacks with
   | AlternateCallback { lsetup = Some f } ->
-      adjust_retcode_and_bool session (f convfail ypred fpred) tmp
+      adjust_retcode_and_bool session (f session convfail ypred fpred) tmp
   | _ -> assert false
 
 let call_lsolve session b weight ycur fcur =
   let session = read_weak_ref session in
   match session.ls_callbacks with
   | AlternateCallback { lsolve = f } ->
-      adjust_retcode session true (f b weight ycur) fcur
+      adjust_retcode session true (f session b weight ycur) fcur
   | _ -> assert false
 
 let call_lfree session =
   let session = read_weak_ref session in
   match session.ls_callbacks with
-  | AlternateCallback { lfree = Some f } -> adjust_retcode session false f ()
+  | AlternateCallback { lfree = Some f } ->
+      adjust_retcode session false f session
   | _ -> assert false
 
 let _ =
@@ -505,18 +506,25 @@ module Alternate =
       | FailBadJ
       | FailOther
 
-    type 'data callbacks = 'data alternate_linsolv =
+    type ('data, 'kind) callbacks = ('data, 'kind) alternate_linsolv =
       {
-        linit   : (unit -> bool) option;
-        lsetup  : (conv_fail -> 'data -> 'data -> 'data triple_tmp -> bool)
-                  option;
-        lsolve  : 'data -> 'data -> 'data -> 'data -> unit;
-        lfree   : (unit -> unit) option;
+        linit   : (('data, 'kind) session -> bool) option;
+
+        lsetup : (('data, 'kind) session -> conv_fail -> 'data -> 'data
+                  -> 'data triple_tmp -> bool) option;
+
+        lsolve : ('data, 'kind) session ->  'data -> 'data -> 'data -> 'data
+                  -> unit;
+
+        lfree  : (('data, 'kind) session -> unit) option;
       }
 
     external c_set_alternate
       : ('data, 'kind) session -> bool -> bool -> bool -> unit
       = "c_cvode_set_alternate"
+
+    external get_gamma : ('data, 'kind) session -> float * float
+      = "c_cvode_get_gamma"
 
     let make_solver f s nv =
       let { linit; lsetup; lsolve; lfree } as cb = f s nv in

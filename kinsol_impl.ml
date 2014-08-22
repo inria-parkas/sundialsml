@@ -45,14 +45,6 @@ type 'a spils_callbacks =
     jac_times_vec_fn : ('a -> 'a -> 'a -> bool -> bool) option;
   }
 
-type 'a alternate_linsolv =
-  {
-    linit  : (unit -> bool) option;
-    lsetup : (unit -> unit) option;
-    lsolve : 'a -> 'a -> float;
-    lfree  : (unit -> unit) option;
-  }
-
 (* BBD definitions *)
 module Bbd =
   struct
@@ -63,6 +55,10 @@ module Bbd =
       }
   end
 
+type kin_mem
+type kin_file
+type c_weak_ref
+
 type ('a, 'kind) linsolv_callbacks =
   | NoCallbacks
 
@@ -70,15 +66,11 @@ type ('a, 'kind) linsolv_callbacks =
   | BandCallback  of band_jac_fn
   | SpilsCallback of 'a spils_callbacks
 
-  | AlternateCallback of 'a alternate_linsolv
+  | AlternateCallback of ('a, 'kind) alternate_linsolv
 
   | BBDCallback of 'a Bbd.callbacks
 
-type kin_mem
-type kin_file
-type c_weak_ref
-
-type ('a, 'k) session = {
+and ('a, 'k) session = {
   kinsol    : kin_mem;
   backref   : c_weak_ref;
   err_file  : kin_file;
@@ -93,6 +85,15 @@ type ('a, 'k) session = {
 
   mutable ls_callbacks : ('a, 'k) linsolv_callbacks;
 }
+
+and ('data, 'kind) alternate_linsolv =
+  {
+    linit  : (('data, 'kind) session -> bool) option;
+    lsetup : (('data, 'kind) session -> unit) option;
+    lsolve : ('data, 'kind) session -> 'data -> 'data -> float;
+    lfree  : (('data, 'kind) session -> unit) option;
+  }
+
 
 type ('data, 'kind) linear_solver = ('data, 'kind) session
                                         -> ('data, 'kind) nvector option -> unit

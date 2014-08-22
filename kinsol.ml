@@ -123,27 +123,28 @@ let call_linit session =
   let session = read_weak_ref session in
   match session.ls_callbacks with
   | AlternateCallback { linit = Some f } ->
-      adjust_retcode session false f ()
+      adjust_retcode session false f session
   | _ -> assert false
 
 let call_lsetup session =
   let session = read_weak_ref session in
   match session.ls_callbacks with
   | AlternateCallback { lsetup = Some f } ->
-      adjust_retcode session true f ()
+      adjust_retcode session true f session
   | _ -> assert false
 
 let call_lsolve session x b =
   let session = read_weak_ref session in
   match session.ls_callbacks with
   | AlternateCallback { lsolve = f } ->
-      adjust_retcode_and_float session (f x) b
+      adjust_retcode_and_float session (f session x) b
   | _ -> assert false
 
 let call_lfree session =
   let session = read_weak_ref session in
   match session.ls_callbacks with
-  | AlternateCallback { lfree = Some f } -> adjust_retcode session false f ()
+  | AlternateCallback { lfree = Some f } ->
+      adjust_retcode session false f session
   | _ -> assert false
 
 let _ =
@@ -386,12 +387,12 @@ module Spils =
 module Alternate =
   struct
 
-    type 'data callbacks = 'data alternate_linsolv =
+    type ('data, 'kind) callbacks = ('data, 'kind) alternate_linsolv =
       {
-        linit  : (unit -> bool) option;
-        lsetup : (unit -> unit) option;
-        lsolve : 'data -> 'data -> float;
-        lfree  : (unit -> unit) option;
+        linit  : (('data, 'kind) session -> bool) option;
+        lsetup : (('data, 'kind) session -> unit) option;
+        lsolve : ('data, 'kind) session -> 'data -> 'data -> float;
+        lfree  : (('data, 'kind) session -> unit) option;
       }
 
     external c_set_alternate

@@ -475,15 +475,15 @@ module Alternate :
 
         @kinsol <node8#s:new_linsolv> Providing Alternate Linear Solver Modules *)
 
-    type 'data callbacks =
+    type ('data, 'kind) callbacks =
       {
-        linit   : (unit -> bool) option;
+        linit   : (('data, 'kind) session -> bool) option;
           (** Complete initializations for a specific linear solver, such as
               counters and statistics. Returns [true] if successful.
 
               @kinsol <node8#SECTION00810000000000000000> linit *)
 
-        lsetup : (unit -> unit) option;
+        lsetup : (('data, 'kind) session -> unit) option;
           (** The job of lsetup is to prepare the linear solver for subsequent
               calls to lsolve. It may recompute Jacobian-related data if it
               deems necessary.
@@ -494,7 +494,7 @@ module Alternate :
            
               @kinsol <node8#SECTION00820000000000000000> lsetup *)
            
-        lsolve : 'data -> 'data -> float;
+        lsolve : ('data, 'kind) session -> 'data -> 'data -> float;
           (** [res_norm = lsolve x b] must solve the linear equation given:
               - [x], on entry: an initial guess, on return: it should contain
                 the solution to [Jx = b].
@@ -508,7 +508,7 @@ module Alternate :
           
               @kinsol <node8#SECTION00830000000000000000> lsolve *)
 
-        lfree  : (unit -> unit) option;
+        lfree  : (('data, 'kind) session -> unit) option;
           (** This function is called once a problem has been completed and the
               linear solver is no longer needed.
 
@@ -519,7 +519,7 @@ module Alternate :
         functions *)
     val make_solver :
           (('data, 'kind) session -> ('data, 'kind) nvector option
-                                                        -> 'data callbacks)
+                                                  -> ('data, 'kind) callbacks)
           -> ('data, 'kind) linear_solver
   end
 
