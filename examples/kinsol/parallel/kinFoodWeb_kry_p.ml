@@ -185,7 +185,7 @@ let init_user_data my_pe comm =
   let data = {
       p     = Array.init mxsub (fun jx ->
                 Array.init mysub (fun jy ->
-                  Dense.make num_species num_species
+                  Dense.create num_species num_species
               ));
       pivot = Array.init mxsub (fun jx ->
                 Array.init mysub (fun jy ->

@@ -163,9 +163,15 @@ module RealArray2 =
 
     let unwrap = fst
 
-    let make nr nc =
+    let create nr nc =
       let d = Bigarray.Array2.create Bigarray.float64 Bigarray.c_layout nc nr
       in wrap d
+
+    let make nr nc v =
+      let d = Bigarray.Array2.create Bigarray.float64 Bigarray.c_layout nc nr
+      in
+      Bigarray.Array2.fill d v;
+      wrap d
 
     let size a =
       let d = unwrap a in

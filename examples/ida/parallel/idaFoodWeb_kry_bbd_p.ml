@@ -548,7 +548,7 @@ let resweb webdata tt cc cp rr =
 let init_user_data local_N system_size thispe npes comm =
   (* extracted from main() in original C code *)
   let rates = Nvector_parallel.make local_N system_size comm 0. in
-  let acoef = RealArray2.make num_species num_species in
+  let acoef = RealArray2.create num_species num_species in
 
   let jysub = thispe / npex in
   let ixsub = thispe - (jysub)*npex in

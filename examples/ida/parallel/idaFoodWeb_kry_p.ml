@@ -237,14 +237,14 @@ let alloc_init_user_data comm local_N system_size thispe npes =
   and pp =
     Array.init mxsub (fun ix ->
         Array.init mysub (fun jy ->
-            RealArray2.make num_species num_species))
+            RealArray2.create num_species num_species))
   and pivot =
     Array.init mxsub (fun ix ->
         Array.init mysub (fun jy ->
             LintArray.create num_species))
   in
 
-  let acoef = RealArray2.make num_species num_species
+  let acoef = RealArray2.create num_species num_species
   and ewt = Nvector_parallel.make local_N system_size comm 0.
   in
 

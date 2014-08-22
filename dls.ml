@@ -28,7 +28,7 @@ module DenseMatrix =
   struct
     type t
 
-    external make : int -> int -> t
+    external create : int -> int -> t
         = "c_densematrix_new_dense_mat"
 
     external size : t -> (int * int)
@@ -75,6 +75,16 @@ module DenseMatrix =
 
     external set : t -> int -> int -> float -> unit
         = "c_densematrix_set"
+
+    let make m n v =
+      let r = create m n in
+      for i = 0 to m - 1 do
+        for j = 0 to n - 1 do
+          set r i j v
+        done
+      done;
+      r
+
   end
 
 module ArrayDenseMatrix =
@@ -82,6 +92,7 @@ module ArrayDenseMatrix =
     type t = Sundials.RealArray2.t
 
     let make = Sundials.RealArray2.make
+    let create = Sundials.RealArray2.create
     let get = Sundials.RealArray2.get
     let set = Sundials.RealArray2.set
 
@@ -119,7 +130,7 @@ module BandMatrix =
   struct
     type t
 
-    external make : int -> int -> int -> int -> t
+    external create : int -> int -> int -> int -> t
         = "c_bandmatrix_new_band_mat"
 
     external size : t -> (int * int * int * int)
@@ -155,6 +166,15 @@ module BandMatrix =
     external set : t -> int -> int -> float -> unit
         = "c_bandmatrix_set"
 
+    let make n mu ml smu v =
+      let r = create n mu ml smu in
+      for i = 0 to n - 1 do
+        for j = (max 0 (i - 1)) to (min n (i + 1)) - 1 do
+          set r i j v
+        done
+      done;
+      r
+
     module Col =
       struct
         type c
@@ -175,8 +195,11 @@ module ArrayBandMatrix =
   struct
     type t = Sundials.RealArray2.t
 
-    let make n smu ml =
-      Sundials.RealArray2.make (smu + ml + 1) n
+    let make n smu ml v =
+      Sundials.RealArray2.make (smu + ml + 1) n v
+
+    let create n smu ml =
+      Sundials.RealArray2.create (smu + ml + 1) n
 
     let get a smu i j =
       Sundials.RealArray2.get a (i - j + smu) j

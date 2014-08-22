@@ -35,7 +35,7 @@ let print_p out p =
   fprintf out "@]"
 
 let nrows, ncols = 5, 5
-let a = M.make nrows ncols;;
+let a = M.create nrows ncols;;
 
 M.set a 0 0 ( 1.0);
 M.set a 0 1 ( 2.0);

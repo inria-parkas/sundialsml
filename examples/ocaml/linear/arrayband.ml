@@ -71,7 +71,7 @@ and mu = 1
 and ml = 1;;
 let smu = min (n - 1) (mu + ml);;
 
-let a = M.make n smu ml;;
+let a = M.create n smu ml;;
 Array2.fill (RealArray2.unwrap a) 0.0;;
 
 M.set a smu 0 0 ( 1.0);

@@ -149,8 +149,12 @@ module RealArray2 :
      *)
     type t
 
-    (** [make nr nc] creates an [nr] by [nc] wrapped array. *)
-    val make : int -> int -> t
+    (** [make nr nc v] creates an [nr] by [nc] wrapped array with all elements
+        set to [v]. *)
+    val make : int -> int -> float -> t
+
+    (** [create nr nc] creates an [nr] by [nc] wrapped array. *)
+    val create : int -> int -> t
 
     (** [get a i j] gives the value of the [(i, j)]th element of [a]. *)
     val get : t -> int -> int -> float

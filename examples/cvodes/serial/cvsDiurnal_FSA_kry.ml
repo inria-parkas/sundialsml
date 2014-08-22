@@ -153,7 +153,7 @@ let sqr x = x ** 2.0
 (* Allocate memory for data structure of type UserData *)
 
 let alloc_user_data () =
-  let new_dmat _ = Direct.make num_species num_species in
+  let new_dmat _ = Direct.create num_species num_species in
   let new_int1 _  = LintArray.create num_species in
   let new_z_arr elinit _ = Array.init mz elinit in
   let new_xz_arr elinit  = Array.init mx (new_z_arr elinit) in

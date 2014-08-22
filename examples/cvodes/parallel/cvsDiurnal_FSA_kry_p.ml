@@ -224,7 +224,7 @@ let process_args my_pe =
 (* Set user data. *)
 
 let init_user_data my_pe comm =
-  let new_dmat _ = Direct.make nvars nvars in
+  let new_dmat _ = Direct.create nvars nvars in
   let new_int1 _  = LintArray.create nvars in
   let new_y_arr elinit _ = Array.init mysub elinit in
   let new_xy_arr elinit  = Array.init mxsub (new_y_arr elinit) in

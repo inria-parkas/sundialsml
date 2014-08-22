@@ -138,7 +138,7 @@ let ij_vptr_idx i j = i*num_species + j*nsmx
 let p =
   Array.init mx (fun jx ->
     Array.init my (fun jy ->
-      Dense.make num_species num_species
+      Dense.create num_species num_species
     ))
 
 let pivot =

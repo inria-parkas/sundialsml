@@ -275,7 +275,7 @@ let set_groups m ng jg jig jr =
 let alloc_user_data () =
   let r =
     {
-      p          = Array.init ngrp (fun _ -> Densemat.make ns ns);
+      p          = Array.init ngrp (fun _ -> Densemat.create ns ns);
       pivot      = Array.init ngrp (fun _ -> LintArray.create ns);
 
       ns         = ns;

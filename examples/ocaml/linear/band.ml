@@ -57,7 +57,7 @@ and mu = 1
 and ml = 1;;
 let smu = min (n - 1) (mu + ml);;
 
-let a = M.make n mu ml smu;;
+let a = M.create n mu ml smu;;
 
 M.set a 0 0 ( 1.0);
 M.set a 0 1 ( 2.0);
@@ -79,7 +79,7 @@ M.set a 4 4 ( 5.0);
 
 printf "initially: a=@\n%a@\n" print_mat a;;
 
-let b = M.make n mu ml smu;;
+let b = M.create n mu ml smu;;
 M.copy a b mu ml;;
 
 M.scale 2.0 b;

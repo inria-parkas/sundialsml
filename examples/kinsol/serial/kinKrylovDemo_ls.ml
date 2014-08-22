@@ -151,7 +151,7 @@ let ij_vptr vv i j = subarray vv (ij_vptr_idx i j) num_species
 let p =
   Array.init mx (fun jx ->
     Array.init my (fun jy ->
-      Dense.make num_species num_species
+      Dense.create num_species num_species
     ))
 
 let pivot =

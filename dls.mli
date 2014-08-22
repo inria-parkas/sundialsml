@@ -47,11 +47,19 @@ module DenseMatrix :
     (** {4 Basic access} *)
 
     (**
-     [make m n] returns an [m] by [n]  dense matrix.
+     [make m n v] returns an [m] by [n] dense matrix with all elements set to
+     [v].
 
      @cvode <node9#ss:dense> NewDenseMat
      *)
-    val make  : int -> int -> t
+    val make : int -> int -> float -> t
+
+    (**
+     [create m n] returns an [m] by [n]  dense matrix.
+
+     @cvode <node9#ss:dense> NewDenseMat
+     *)
+    val create : int -> int -> t
 
     (**
      [m, n = size a] returns the number of columns, [m], and rows, [n], of the
@@ -194,11 +202,19 @@ module ArrayDenseMatrix :
     (** {4 Basic access} *)
 
     (**
-     [make m n] returns an [m] by [n] dense small matrix.
+     [make m n v] returns an [m] by [n] dense small matrix with all elements set
+     to [v].
 
      @cvode <node9#ss:dense> newDenseMat
      *)
-    val make : int -> int -> t
+    val make : int -> int -> float -> t
+
+    (**
+     [create m n] returns an [m] by [n] dense small matrix.
+
+     @cvode <node9#ss:dense> newDenseMat
+     *)
+    val create : int -> int -> t
 
     (**
      [get a i j] returns the value at row [i] and column [j] in [a].
@@ -319,18 +335,26 @@ module BandMatrix :
     (** {4 Basic access} *)
 
     (**
-     [make n mu ml smu] returns an [n] by [n] band matrix of upper
-     bandwith [mu] and lower bandwidth [ml].
-
-     [make n mu ml smu] returns an [n] by [n] band matrix of upper bandwidth
-     [mu], lower bandwidth [ml], and storage upper bandwidth [smu]. Pass [smu] =
-     [mu] if the result will not be LU factored, otherwise pass [smu] =
-     min([n]-1, [mu] + [ml]). In the latter case, the extra space is used to
-     store U after a call to {!gbtrf}.
+     [make n mu ml smu v] returns an [n] by [n] band matrix of upper bandwidth
+     [mu], lower bandwidth [ml], and storage upper bandwidth [smu] with all
+     elements set to [v]. Pass [smu] = [mu] if the result will not be LU
+     factored, otherwise pass [smu] = min([n]-1, [mu] + [ml]). In the latter
+     case, the extra space is used to store U after a call to {!gbtrf}.
 
      @cvode <node9#ss:band> NewBandMat
      *)
-    val make : int -> int -> int -> int -> t
+    val make : int -> int -> int -> int -> float -> t
+
+    (**
+     [create n mu ml smu] returns an [n] by [n] band matrix of upper bandwidth
+     [mu], lower bandwidth [ml], and storage upper bandwidth [smu]. Pass
+     [smu] = [mu] if the result will not be LU factored, otherwise pass
+     [smu] = min([n]-1, [mu] + [ml]). In the latter case, the extra space is
+     used to store U after a call to {!gbtrf}.
+
+     @cvode <node9#ss:band> NewBandMat
+     *)
+    val create : int -> int -> int -> int -> t
 
     (**
      [n, mu, ml, smu = size a] returns the size ([n]), upper bandwidth ([mu]),
@@ -472,7 +496,7 @@ module ArrayBandMatrix :
     (** {4 Basic access} *)
 
     (**
-     [make n smu ml] returns an [n] by [n] band matrix with
+     [create n smu ml] returns an [n] by [n] band matrix with
      storage upper bandwidth [smu] and lower half-bandwidth [ml].
      Pass [smu] = [mu] if the result will not be LU factored, otherwise pass
      [smu] = min([n]-1, [mu] + [ml]). In the latter case, the extra space is
@@ -480,7 +504,7 @@ module ArrayBandMatrix :
 
      @cvode <node9#ss:band> newBandMat
      *)
-    val make : int -> int -> int -> t
+    val create : int -> int -> int -> t
 
     (**
      [get a smu i j] returns the value at row [i] and column [j] in the 

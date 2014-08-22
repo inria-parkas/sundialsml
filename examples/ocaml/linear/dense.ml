@@ -36,7 +36,7 @@ let print_p out p =
 
 let nrows, ncols = 3, 3;;
 
-let a = M.make nrows ncols;;
+let a = M.create nrows ncols;;
 
 M.set a 0 0 ( 1.0);
 M.set a 0 1 ( 2.0);
@@ -52,7 +52,7 @@ M.set a 2 2 (-3.0);;
 
 printf "initially: a=@\n%a@\n" print_mat a;;
 
-let b = M.make nrows ncols;;
+let b = M.create nrows ncols;;
 M.copy a b;;
 
 M.scale 2.0 b;
