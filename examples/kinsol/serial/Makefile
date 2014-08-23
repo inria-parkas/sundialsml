@@ -1,10 +1,11 @@
 include ../../../config
 
-EXAMPLES = kinFerTron_dns.ml   \
-	   kinFoodWeb_kry.ml   \
-	   kinKrylovDemo_ls.ml \
-	   kinLaplace_bnd.ml   \
-	   kinRoboKin_dns.ml
+EXAMPLES = kinFerTron_dns.ml   		\
+	   kinFoodWeb_kry.ml   		\
+	   kinKrylovDemo_ls.ml 		\
+	   kinLaplace_bnd.ml   		\
+	   kinRoboKin_dns.ml		\
+	   kinRoboKin_dns_alt.ml 	\
 
 ALL_EXAMPLES = $(EXAMPLES) kinFoodWeb_kry_custom.ml
 
@@ -78,6 +79,11 @@ kinLaplace_bnd.opt:  kinLaplace_bnd.ml
 
 kinRoboKin_dns.byte: kinRoboKin_dns.ml
 kinRoboKin_dns.opt:  kinRoboKin_dns.ml
+
+kinRoboKin_dns_alt.byte: kinRoboKin_dns_alt.ml
+kinRoboKin_dns_alt.opt:  kinRoboKin_dns_alt.ml
+kinRoboKin_dns_alt.sundials.out: kinRoboKin_dns.sundials.out
+	cp $< $@
 
 ##
 

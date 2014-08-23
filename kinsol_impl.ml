@@ -90,7 +90,7 @@ and ('data, 'kind) alternate_linsolv =
   {
     linit  : (('data, 'kind) session -> bool) option;
     lsetup : (('data, 'kind) session -> unit) option;
-    lsolve : ('data, 'kind) session -> 'data -> 'data -> float;
+    lsolve : ('data, 'kind) session -> 'data -> 'data -> float option;
   }
 
 
@@ -113,4 +113,10 @@ let adjust_retcode_and_float = fun session f x ->
   with
   | Sundials.RecoverableFailure _ -> (0.0, 1)
   | e -> (session.exn_temp <- Some e; (0.0, -1))
+
+let adjust_retcode_and_option = fun session f x ->
+  try (f x, 0)
+  with
+  | Sundials.RecoverableFailure _ -> (None, 1)
+  | e -> (session.exn_temp <- Some e; (None, -1))
 

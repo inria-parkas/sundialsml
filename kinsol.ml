@@ -137,7 +137,7 @@ let call_lsolve session x b =
   let session = read_weak_ref session in
   match session.ls_callbacks with
   | AlternateCallback { lsolve = f } ->
-      adjust_retcode_and_float session (f session x) b
+      adjust_retcode_and_option session (f session x) b
   | _ -> assert false
 
 let _ =
@@ -383,12 +383,24 @@ module Alternate =
       {
         linit  : (('data, 'kind) session -> bool) option;
         lsetup : (('data, 'kind) session -> unit) option;
-        lsolve : ('data, 'kind) session -> 'data -> 'data -> float;
+        lsolve : ('data, 'kind) session -> 'data -> 'data -> float option;
       }
 
     external c_set_alternate
       : ('data, 'kind) session -> bool -> bool -> unit
       = "c_kinsol_set_alternate"
+
+    external get_u_uscale : ('data, 'kind) session -> 'data * 'data
+      = "c_kinsol_get_u_uscale"
+
+    external get_f_fscale  : ('data, 'kind) session -> 'data * 'data
+      = "c_kinsol_get_f_fscale"
+
+    external set_sjpnorm   : ('data, 'kind) session -> float -> unit
+      = "c_kinsol_set_sjpnorm"
+
+    external set_sfdotjp   : ('data, 'kind) session -> float -> unit
+      = "c_kinsol_set_sfdotjp"
 
     let make_solver f s nv =
       let { linit; lsetup; lsolve } as cb = f s nv in

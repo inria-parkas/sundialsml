@@ -379,7 +379,9 @@ static int lsolve(KINMem kin_mem, N_Vector x, N_Vector b, realtype *res_norm)
     args[2] = NVEC_BACKLINK(b);
 
     vr = caml_callbackN(*call_lsolve, sizeof (args) / sizeof (*args), args);
-    *res_norm = Double_val(Field(vr, 0));
+    if (Field(vr, 0) != Val_int(0)) {
+	*res_norm = Double_val(Field(Field(vr, 0), 0));
+    }
 
     CAMLreturnT(int, Int_val(Field(vr, 1)));
 }
@@ -395,6 +397,52 @@ CAMLprim void c_kinsol_set_alternate (value vkin_mem, value vhas_init,
     kin_mem->kin_setupNonNull = Bool_val(vhas_setup);
     kin_mem->kin_lsolve = lsolve;
     kin_mem->kin_lmem   = NULL;
+
+    CAMLreturn0;
+}
+
+CAMLprim value c_kinsol_get_u_uscale (value vkin_mem)
+{
+    CAMLparam1(vkin_mem);
+    CAMLlocal1(r);
+    KINMem kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
+
+    r = caml_alloc_tuple(2);
+    Store_field(r, 0, NVEC_BACKLINK(kin_mem->kin_uu));
+    Store_field(r, 1, NVEC_BACKLINK(kin_mem->kin_uscale));
+
+    CAMLreturn(r);
+}
+
+CAMLprim value c_kinsol_get_f_fscale (value vkin_mem)
+{
+    CAMLparam1(vkin_mem);
+    CAMLlocal1(r);
+    KINMem kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
+
+    r = caml_alloc_tuple(2);
+    Store_field(r, 0, NVEC_BACKLINK(kin_mem->kin_fval));
+    Store_field(r, 1, NVEC_BACKLINK(kin_mem->kin_fscale));
+
+    CAMLreturn(r);
+}
+
+CAMLprim void c_kinsol_set_sjpnorm (value vkin_mem, value vsjpnorm)
+{
+    CAMLparam2(vkin_mem, vsjpnorm);
+    KINMem kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
+
+    kin_mem->kin_sJpnorm = Double_val(vsjpnorm);
+
+    CAMLreturn0;
+}
+
+CAMLprim void c_kinsol_set_sfdotjp (value vkin_mem, value vsfdotjp)
+{
+    CAMLparam2(vkin_mem, vsfdotjp);
+    KINMem kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
+
+    kin_mem->kin_sfdotJp = Double_val(vsfdotjp);
 
     CAMLreturn0;
 }

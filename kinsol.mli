@@ -494,7 +494,7 @@ module Alternate :
            
               @kinsol <node8#SECTION00820000000000000000> lsetup *)
            
-        lsolve : ('data, 'kind) session -> 'data -> 'data -> float;
+        lsolve : ('data, 'kind) session -> 'data -> 'data -> float option;
           (** [res_norm = lsolve x b] must solve the linear equation given:
               - [x], on entry: an initial guess, on return: it should contain
                 the solution to [Jx = b].
@@ -508,6 +508,18 @@ module Alternate :
           
               @kinsol <node8#SECTION00830000000000000000> lsolve *)
       }
+
+    (** Returns the internal [u] and [uscale] values. *)
+    val get_u_uscale : ('data, 'kind) session -> 'data * 'data
+
+    (** Returns the internal [f] and [fscale] values. *)
+    val get_f_fscale  : ('data, 'kind) session -> 'data * 'data
+
+    (** Sets the internal [sJpnorm] value. *)
+    val set_sjpnorm   : ('data, 'kind) session -> float -> unit
+
+    (** Sets the internal [sfdotJp] value. *)
+    val set_sfdotjp   : ('data, 'kind) session -> float -> unit
 
     (** Create a linear solver from a function returning a set of callback
         functions *)
