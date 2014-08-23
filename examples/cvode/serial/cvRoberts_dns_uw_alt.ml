@@ -46,7 +46,6 @@ module DM = Dls.ArrayDenseMatrix
 module LintArray = Sundials.LintArray
 
 type cvdls_mem = {
-  mutable nfeDQ : int;
   mutable nstlj : int;
 
   dm : DM.t;
@@ -59,7 +58,9 @@ let alternate_dense jacfn =
   let nje = ref 0 in
   let cvd_msbj = 50 in
   let cvd_dgmax = 0.2 in
+
   let linit mem s = (nje := 0; true) in
+
   let lsetup mem s convfail ypred fpred tmp =
     (* NB: Cannot access session.gamma/gammap from OCaml *)
     let gamma, gammap = Cvode.Alternate.get_gamma s in
@@ -70,46 +71,44 @@ let alternate_dense jacfn =
              || (convfail = Cvode.Alternate.FailOther)
     in
     let jok = not jbad in
-    if jok then begin
+    if jok then
       (* If jok = TRUE, use saved copy of J *)
-      DM.copy mem.savedj mem.dm;
-      false
-    end else begin
+      DM.copy mem.savedj mem.dm
+    else begin
       (* If jok = FALSE, call jac routine for new J value *)
       incr nje;
       mem.nstlj <- nst;
       Bigarray.Array2.fill (Sundials.RealArray2.unwrap mem.dm) 0.0;
       let tn = Cvode.get_current_time s in
       jacfn tn ypred fpred mem.dm tmp;
-      DM.copy mem.dm mem.savedj;
-      true
-    end
+      DM.copy mem.dm mem.savedj
+    end;
+    DM.scale (-.gamma) mem.dm;
+    DM.add_identity mem.dm;
+    DM.getrf mem.dm mem.pivots;
+    true
   in
+
   let lsolve mem s b weight ycur fcur =
-    printf "lsolve: entry\n"; flush stdout; (* XXX *)
     let nst = Cvode.get_num_steps s in
     let gamma, gammap = Cvode.Alternate.get_gamma s in
-    printf "lsolve: gamma=%.12e gammap=%.12e\n" gamma gammap; flush stdout; (* XXX *)
     let gamrat = if nst > 0 then gamma /. gammap else 1.0 in
-    printf "lsolve: gamrat = %.12e\n" gamrat; flush stdout; (* XXX *)
     DM.getrs mem.dm mem.pivots b;
-    printf "lsolve: after getrs\n"; flush stdout; (* XXX *)
     if (*lmm = Cvode.BDF && *) gamrat <> 1.0 then
       (let s = 2.0/.(1.0 +. gamrat) in
       RealArray.map (fun v -> s *. v) b)
-    ; printf "lsolve: exit\n"; flush stdout (* XXX *)
   in
-  let lfree mem s = ()
-  in
+
+  let lfree mem s = () in
+
   let solver =
     Cvode.Alternate.make_solver (fun s nv ->
         let n = RealArray.length (Sundials.unvec nv) in
         let mem = {
-          nfeDQ  = 0;
           nstlj  = 0;
           dm     = DM.create n n;
           savedj = DM.create n n;
-          pivots = LintArray.make n 0;
+          pivots = LintArray.create n;
         }
         in
         {
@@ -119,7 +118,7 @@ let alternate_dense jacfn =
           Cvode.Alternate.lfree = Some (lfree mem);
         })
   in
-  (solver, fun () -> !nje)
+  (solver, fun () -> 0, !nje)
 
 (* Problem Constants *)
 
@@ -189,14 +188,13 @@ let print_root_info r1 r2 =
     (Roots.int_of_root_event r1)
     (Roots.int_of_root_event r2)
 
-let print_final_stats s nje =
+let print_final_stats s nfeLS nje =
   let nst = Cvode.get_num_steps s
   and nfe = Cvode.get_num_rhs_evals s
   and nsetups = Cvode.get_num_lin_solv_setups s
   and netf = Cvode.get_num_err_test_fails s
   and nni = Cvode.get_num_nonlin_solv_iters s
   and ncfn = Cvode.get_num_nonlin_solv_conv_fails s
-  and nfeLS = Cvode.Dls.get_num_rhs_evals s
   and nge = Cvode.get_num_g_evals s
   in
   printf "\nFinal Statistics:\n";
@@ -228,7 +226,7 @@ let main () =
   (* Call CVodeRootInit to specify the root function g with 2 components *)
   (* Call CVDense to specify the CVDENSE dense linear solver *)
   (* Set the Jacobian routine to Jac (user-supplied) *)
-  let altdense, get_nje = alternate_dense jac in
+  let altdense, get_stats = alternate_dense jac in
   let cvode_mem =
     Cvode.init Cvode.BDF (Cvode.Newton altdense)
       (Cvode.WFtolerances ewt) f ~roots:(nroots, g) ~t0:t0 y
@@ -261,7 +259,8 @@ let main () =
   done;
 
   (* Print some final statistics *)
-  print_final_stats cvode_mem (get_nje ())
+  let nfe, nje = get_stats () in
+  print_final_stats cvode_mem nfe nje
 
 let n =
   match Sys.argv with
