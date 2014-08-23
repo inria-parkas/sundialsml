@@ -237,9 +237,7 @@ and ('data, 'kind) alternate_linsolv =
               -> 'data triple_tmp -> bool) option;
     lsolve : ('data, 'kind) session ->  'data -> 'data -> 'data -> 'data
               -> unit;
-    lfree  : (('data, 'kind) session -> unit) option;
   }
-
 
 type ('a, 'k) bsession = Bsession of ('a, 'k) session
 let tosession = function Bsession s -> s

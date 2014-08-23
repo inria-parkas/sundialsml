@@ -140,13 +140,6 @@ let call_lsolve session x b =
       adjust_retcode_and_float session (f session x) b
   | _ -> assert false
 
-let call_lfree session =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | AlternateCallback { lfree = Some f } ->
-      adjust_retcode session false f session
-  | _ -> assert false
-
 let _ =
   Callback.register "c_kinsol_call_sysfn"        call_sysfn;
   Callback.register "c_kinsol_call_errh"         call_errh;
@@ -161,8 +154,7 @@ let _ =
 
   Callback.register "c_kinsol_call_linit"        call_linit;
   Callback.register "c_kinsol_call_lsetup"       call_lsetup;
-  Callback.register "c_kinsol_call_lsolve"       call_lsolve;
-  Callback.register "c_kinsol_call_lfree"        call_lfree
+  Callback.register "c_kinsol_call_lsolve"       call_lsolve
 
 external session_finalize : ('a, 'k) session -> unit
     = "c_kinsol_session_finalize"
@@ -392,16 +384,15 @@ module Alternate =
         linit  : (('data, 'kind) session -> bool) option;
         lsetup : (('data, 'kind) session -> unit) option;
         lsolve : ('data, 'kind) session -> 'data -> 'data -> float;
-        lfree  : (('data, 'kind) session -> unit) option;
       }
 
     external c_set_alternate
-      : ('data, 'kind) session -> bool -> bool -> bool -> unit
+      : ('data, 'kind) session -> bool -> bool -> unit
       = "c_kinsol_set_alternate"
 
     let make_solver f s nv =
-      let { linit; lsetup; lsolve; lfree } as cb = f s nv in
-      c_set_alternate s (linit <> None) (lsetup <> None) (lfree <> None);
+      let { linit; lsetup; lsolve } as cb = f s nv in
+      c_set_alternate s (linit <> None) (lsetup <> None);
       s.ls_callbacks <- AlternateCallback cb
 
   end

@@ -42,13 +42,13 @@ let set_ith v i e = v.{i - 1} <- e
 
 (* Test the Cvode.Alternate module *)
 
-module DM = Dls.ArrayDenseMatrix
+module DM = Dls.DenseMatrix
 module LintArray = Sundials.LintArray
 
 type cvdls_mem = {
   mutable nstlj : int;
 
-  dm : DM.t;
+  dm     : DM.t;
   savedj : DM.t;
 
   pivots : LintArray.t;
@@ -71,22 +71,26 @@ let alternate_dense jacfn =
              || (convfail = Cvode.Alternate.FailOther)
     in
     let jok = not jbad in
-    if jok then
-      (* If jok = TRUE, use saved copy of J *)
-      DM.copy mem.savedj mem.dm
-    else begin
-      (* If jok = FALSE, call jac routine for new J value *)
-      incr nje;
-      mem.nstlj <- nst;
-      Bigarray.Array2.fill (Sundials.RealArray2.unwrap mem.dm) 0.0;
-      let tn = Cvode.get_current_time s in
-      jacfn tn ypred fpred mem.dm tmp;
-      DM.copy mem.dm mem.savedj
-    end;
+    let jcurptr =
+      if jok then begin
+        (* If jok = TRUE, use saved copy of J *)
+        DM.copy mem.savedj mem.dm;
+        false
+      end else begin
+        (* If jok = FALSE, call jac routine for new J value *)
+        incr nje;
+        mem.nstlj <- nst;
+        DM.set_to_zero mem.dm;
+        let tn = Cvode.get_current_time s in
+        jacfn tn ypred fpred mem.dm tmp;
+        DM.copy mem.dm mem.savedj;
+        true
+      end
+    in
     DM.scale (-.gamma) mem.dm;
     DM.add_identity mem.dm;
     DM.getrf mem.dm mem.pivots;
-    true
+    jcurptr
   in
 
   let lsolve mem s b weight ycur fcur =
@@ -98,8 +102,6 @@ let alternate_dense jacfn =
       (let s = 2.0/.(1.0 +. gamrat) in
       RealArray.map (fun v -> s *. v) b)
   in
-
-  let lfree mem s = () in
 
   let solver =
     Cvode.Alternate.make_solver (fun s nv ->
@@ -115,7 +117,6 @@ let alternate_dense jacfn =
           Cvode.Alternate.linit = Some (linit mem);
           Cvode.Alternate.lsetup = Some (lsetup mem);
           Cvode.Alternate.lsolve = lsolve mem;
-          Cvode.Alternate.lfree = Some (lfree mem);
         })
   in
   (solver, fun () -> 0, !nje)

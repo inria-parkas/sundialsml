@@ -485,17 +485,6 @@ static int lsolve(CVodeMem cv_mem, N_Vector b, N_Vector weight, N_Vector ycur,
     CAMLreturnT(int, r);
 }
 
-static void lfree(CVodeMem cv_mem)
-{
-    CAMLparam0();
-    value *backref = cv_mem->cv_user_data;
-    CAML_FN (call_lfree);
-
-    caml_callback(*call_lfree, *backref);
-
-    CAMLreturn0;
-}
-
 CAMLprim value c_cvode_get_gamma(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
@@ -509,16 +498,15 @@ CAMLprim value c_cvode_get_gamma(value vcvode_mem)
 }
 
 CAMLprim void c_cvode_set_alternate (value vcvode_mem, value vhas_init,
-				     value vhas_setup, value vhas_free)
+				     value vhas_setup)
 {
-    CAMLparam4(vcvode_mem, vhas_init, vhas_setup, vhas_free);
+    CAMLparam3(vcvode_mem, vhas_init, vhas_setup);
     CVodeMem cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
 
     cvode_mem->cv_linit  = Bool_val(vhas_init)  ? linit : NULL;
     cvode_mem->cv_lsetup  = Bool_val(vhas_setup) ? lsetup : NULL;
     cvode_mem->cv_setupNonNull = Bool_val(vhas_setup);
     cvode_mem->cv_lsolve = lsolve;
-    cvode_mem->cv_lfree  = Bool_val(vhas_free)  ? lfree : NULL;
     cvode_mem->cv_lmem   = NULL;
 
     CAMLreturn0;

@@ -748,12 +748,6 @@ module Alternate :
               exception is treated as an unrecoverable error.
           
               @cvode <node8#SECTION00830000000000000000> lsolve *)
-
-        lfree  : (('data, 'kind) session -> unit) option;
-          (** This function is called once a problem has been completed and the
-              linear solver is no longer needed.
-
-              @cvode <node8#SECTION00840000000000000000> lfree *)
       }
 
     (** [(gamma, gammap) = get_gamma s] returns the solver's current and

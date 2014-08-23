@@ -507,12 +507,6 @@ module Alternate :
               treated as an unrecoverable error.
           
               @kinsol <node8#SECTION00830000000000000000> lsolve *)
-
-        lfree  : (('data, 'kind) session -> unit) option;
-          (** This function is called once a problem has been completed and the
-              linear solver is no longer needed.
-
-              @kinsol <node8#SECTION00840000000000000000> lfree *)
       }
 
     (** Create a linear solver from a function returning a set of callback

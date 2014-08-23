@@ -165,13 +165,6 @@ let call_lsolve session b weight ycur fcur =
       adjust_retcode session true (f session b weight ycur) fcur
   | _ -> assert false
 
-let call_lfree session =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | AlternateCallback { lfree = Some f } ->
-      adjust_retcode session false f session
-  | _ -> assert false
-
 let _ =
   Callback.register "c_cvode_call_rhsfn"         call_rhsfn;
 
@@ -187,8 +180,7 @@ let _ =
 
   Callback.register "c_cvode_call_linit"         call_linit;
   Callback.register "c_cvode_call_lsetup"        call_lsetup;
-  Callback.register "c_cvode_call_lsolve"        call_lsolve;
-  Callback.register "c_cvode_call_lfree"         call_lfree
+  Callback.register "c_cvode_call_lsolve"        call_lsolve
 
 external session_finalize : ('a, 'kind) session -> unit
     = "c_cvode_session_finalize"
@@ -515,20 +507,18 @@ module Alternate =
 
         lsolve : ('data, 'kind) session ->  'data -> 'data -> 'data -> 'data
                   -> unit;
-
-        lfree  : (('data, 'kind) session -> unit) option;
       }
 
     external c_set_alternate
-      : ('data, 'kind) session -> bool -> bool -> bool -> unit
+      : ('data, 'kind) session -> bool -> bool -> unit
       = "c_cvode_set_alternate"
 
     external get_gamma : ('data, 'kind) session -> float * float
       = "c_cvode_get_gamma"
 
     let make_solver f s nv =
-      let { linit; lsetup; lsolve; lfree } as cb = f s nv in
-      c_set_alternate s (linit <> None) (lsetup <> None) (lfree <> None);
+      let { linit; lsetup; lsolve } as cb = f s nv in
+      c_set_alternate s (linit <> None) (lsetup <> None);
       s.ls_callbacks <- AlternateCallback cb
 
   end

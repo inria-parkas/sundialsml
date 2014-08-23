@@ -384,28 +384,16 @@ static int lsolve(KINMem kin_mem, N_Vector x, N_Vector b, realtype *res_norm)
     CAMLreturnT(int, Int_val(Field(vr, 1)));
 }
 
-static void lfree(KINMem kin_mem)
-{
-    CAMLparam0();
-    value *backref = kin_mem->kin_user_data;
-    CAML_FN (call_lfree);
-
-    caml_callback(*call_lfree, *backref);
-
-    CAMLreturn0;
-}
-
 CAMLprim void c_kinsol_set_alternate (value vkin_mem, value vhas_init,
-				      value vhas_setup, value vhas_free)
+				      value vhas_setup)
 {
-    CAMLparam4(vkin_mem, vhas_init, vhas_setup, vhas_free);
+    CAMLparam3(vkin_mem, vhas_init, vhas_setup);
     KINMem kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
 
     kin_mem->kin_linit  = Bool_val(vhas_init)  ? linit : NULL;
     kin_mem->kin_lsetup = Bool_val(vhas_setup) ? lsetup : NULL;
     kin_mem->kin_setupNonNull = Bool_val(vhas_setup);
     kin_mem->kin_lsolve = lsolve;
-    kin_mem->kin_lfree  = Bool_val(vhas_free)  ? lfree : NULL;
     kin_mem->kin_lmem   = NULL;
 
     CAMLreturn0;
