@@ -62,7 +62,6 @@ let alternate_dense jacfn =
   let linit mem s = (nje := 0; true) in
 
   let lsetup mem s convfail ypred fpred tmp =
-    (* NB: Cannot access session.gamma/gammap from OCaml *)
     let gamma, gammap = Cvode.Alternate.get_gamma s in
     let dgamma = abs_float ((gamma/.gammap) -. 1.0) in
     let nst = Cvode.get_num_steps s in
