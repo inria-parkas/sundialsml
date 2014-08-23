@@ -15,6 +15,7 @@
     @cvode          link to Sundials CVODE documentation
     @cvodes         link to Sundials CVODES documentation
     @ida            link to Sundials IDA documentation
+    @idas           link to Sundials IDAS documentation
     @kinsol         link to Sundials KINSOL documentation
  *)
 
