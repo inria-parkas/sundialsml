@@ -88,7 +88,7 @@ support abstract nvectors,
 {!modules: Sundials
 	   Dls
 	   Spils
-	   Nvector_serial Nvector_parallel Nvector_custom Nvector_array
+	   Nvector Nvector_serial Nvector_parallel Nvector_custom Nvector_array
 	   Cvode Cvode_bbd
 	   Cvodes Cvodes_bbd
 	   Ida Ida_bbd

@@ -38,9 +38,8 @@ module Dls = Ida.Dls
 module Constraint = Ida.Constraint
 
 let printf = Printf.printf
-let vmax_norm = Nvector_array.Bigarray.array_nvec_ops.Nvector_custom.nvmaxnorm
-let vscale = Nvector_array.Bigarray.array_nvec_ops.Nvector_custom.nvscale
-
+let vmax_norm = Nvector_serial.DataOps.n_vmaxnorm
+let vscale = Nvector_serial.DataOps.n_vscale
 
 (* Problem Constants *)
 let nout = 11

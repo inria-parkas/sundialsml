@@ -44,7 +44,7 @@ module RealArray2 = Sundials.RealArray2
 module LintArray = Sundials.LintArray
 let unvec = Sundials.unvec
 module Sens = Idas.Sensitivity
-open Nvector_parallel.Ops
+open Nvector_parallel.DataOps
 
 (* As a slight deviation from the sundials/C code, we allow an extra
    argument to repeat the test, used to check that garbage collection
@@ -54,15 +54,6 @@ let argv = ref Sys.argv
 
 let fprintf = Printf.fprintf
 let printf = Printf.printf
-
-let vconst c (local,_,_) = RealArray.fill local c
-let vscale c (xlocal,_,_) (ylocal,_,_) =
-  if RealArray.length xlocal <> RealArray.length ylocal then
-    invalid_arg "vscale: length mismatch"
-  ;
-  for i = 0 to RealArray.length xlocal - 1 do
-    ylocal.{i} <- c *. xlocal.{i}
-  done
 
 let slice = Bigarray.Array1.sub
 
@@ -587,7 +578,7 @@ let set_initial_profiles data uv uvp id resid =
   let dy = data.dy in
   let l = data.l in
 
-  vconst 0. uv;
+  n_vconst 0. uv;
 
   (* Loop over grid, load uv values and id values. *)
   for jy = 0 to mysub-1 do
@@ -602,7 +593,7 @@ let set_initial_profiles data uv uvp id resid =
     done
   done;
 
-  vconst one id;
+  n_vconst one id;
 
   if jysub = 0 then begin
     for ix = 0 to mxsub-1 do
@@ -658,9 +649,9 @@ let set_initial_profiles data uv uvp id resid =
   end;
 
   (* Derivative found by calling the residual function with uvp = 0. *)
-  vconst zero uvp;
+  n_vconst zero uvp;
   res data zero uv uvp resid;
-  vscale (-.one) resid uvp
+  n_vscale (-.one) resid uvp
 
 (*
  * Print first lines of output (problem description)

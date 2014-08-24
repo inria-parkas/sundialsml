@@ -7,8 +7,8 @@ COBJ_COMMON = sundials_ml$(XO) dls_ml$(XO) nvector_ml$(XO) spils_ml$(XO)
 
 COBJ_MAIN = $(COBJ_COMMON) kinsol_ml$(XO)
 
-MLOBJ_MAIN = sundials.cmo dls.cmo spils.cmo				\
-	     nvector_serial.cmo nvector_custom.cmo nvector_array.cmo	\
+MLOBJ_MAIN = sundials.cmo dls.cmo spils.cmo nvector.cmo			\
+	     nvector_custom.cmo nvector_array.cmo nvector_serial.cmo 	\
 	     cvode_impl.cmo ida_impl.cmo kinsol_impl.cmo		\
 	     cvode.cmo kinsol.cmo ida.cmo
 

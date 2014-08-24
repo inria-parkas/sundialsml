@@ -98,7 +98,6 @@ open Bigarray
 let unvec = Sundials.unvec
 
 let printf = Printf.printf
-let array_ops = Nvector_array.Bigarray.array_nvec_ops
 let sqr x = x ** 2.0
 
 (* Constants *)
@@ -293,7 +292,7 @@ let precond wdata jacarg jok gamma =
      Here, fsave contains the base value of the rate vector and 
      r0 is a minimum increment factor for the difference quotient. *)
   
-  let fac = array_ops.Nvector_custom.nvwrmsnorm fc rewtdata in
+  let fac = Nvector_serial.DataOps.n_vwrmsnorm fc rewtdata in
   let r0 = 1000.0 *. abs_float gamma *. uround *. float neq *. fac in
   let r0 = if r0 = zero then one else r0 in
   
@@ -522,7 +521,7 @@ let gs_iter wdata gamma zd xd =
     done;
     
     (* Add increment x to z : z <- z+x *)
-    array_ops.Nvector_custom.nvlinearsum one zd one xd zd
+    Nvector_serial.DataOps.n_vlinearsum one zd one xd zd
   done
 
 (*

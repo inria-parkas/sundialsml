@@ -92,9 +92,7 @@ open Bigarray
 let unvec = Sundials.unvec
 
 let printf = Printf.printf
-let array_ops = Nvector_array.Bigarray.array_nvec_ops
 let sqr x = x ** 2.0
-
 
 (* Same as the functions in Nvector_array.Bigarray.  Redefined here
    for performance. *)

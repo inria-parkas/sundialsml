@@ -29,8 +29,8 @@ module QuadSens = Idas.Sensitivity.Quadrature
 
 let printf = Printf.printf
 
-let nvconst = Nvector_array.Bigarray.array_nvec_ops.Nvector_custom.nvconst
-let nvscale = Nvector_array.Bigarray.array_nvec_ops.Nvector_custom.nvscale
+let nvconst = Nvector_serial.DataOps.n_vconst
+let nvscale = Nvector_serial.DataOps.n_vscale
 
 let r_power_i base exponent =
   let rec go prod expt =

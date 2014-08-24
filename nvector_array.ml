@@ -12,26 +12,28 @@
 
 module type ARRAY_NVECTOR =
   sig
-    type t
+    include Nvector.NVECTOR_OPS
 
     val array_nvec_ops  : t Nvector_custom.nvector_ops
     val make            : int -> float -> t Nvector_custom.t
     val wrap            : t -> t Nvector_custom.t
   end
 
-module NvectorFn =
+module MakeOps =
   functor (A : sig
       type data
       val get       : data -> int -> float
       val set       : data -> int -> float -> unit
       val fill      : data -> float -> unit
       val make      : int -> float -> data
-      val copy      : data -> data
+      val clone     : data -> data
       val length    : data -> int
       val fold_left : ('a -> float -> 'a) -> 'a -> data -> 'a
     end) ->
   struct
     type t = A.data
+
+    let n_vclone = A.clone
 
     let lift_map f x y =
       for i = 0 to A.length x - 1 do
@@ -70,7 +72,7 @@ module NvectorFn =
       else
         lift_map (fun y x -> y +. a *. x) y x
 
-    let arr_nvlinearsum a x b y z =
+    let n_vlinearsum a x b y z =
       if b = 1.0 && z == y then
         arr_vaxpy a x y
       else if a = 1.0 && z == x then
@@ -93,9 +95,9 @@ module NvectorFn =
       else
         lift_bop (fun x y -> a *. x +. b *. y) x y z
 
-    let arr_nvconst c a = A.fill a c
+    let n_vconst c a = A.fill a c
 
-    let arr_nvscale c x z =
+    let n_vscale c x z =
       if c = 1.0 then
         lift_op (fun x -> x) x z
       else if c = -1.0 then
@@ -103,52 +105,52 @@ module NvectorFn =
       else
         lift_op (fun x -> c *. x) x z
 
-    let arr_nvaddconst x b = lift_op (fun x -> x +. b) x
+    let n_vaddconst x b = lift_op (fun x -> x +. b) x
 
-    let arr_nvmaxnorm =
+    let n_vmaxnorm =
       let f max x =
         let ax = abs_float x in
         if ax > max then ax else max
       in A.fold_left f 0.0
 
-    let arr_nvwrmsnorm x w =
+    let n_vwrmsnorm x w =
       let f a x w = a +. ((x *. w) ** 2.0) in
       sqrt ((zip_fold_left f 0.0 x w) /. float (A.length x))
 
-    let arr_nvwrmsnormmask x w id =
+    let n_vwrmsnormmask x w id =
       let f a id x w =
         if id > 0.0 then a +. ((x *. w) ** 2.0) else a
       in
       sqrt ((triple_zip_fold_left f 0.0 id x w) /. float (A.length x))
 
-    let arr_nvmin =
+    let n_vmin =
       let f min x = if x < min then x else min
       in A.fold_left f max_float
 
-    let arr_nvdotprod =
+    let n_vdotprod =
       let f a x y = a +. x *. y in
       zip_fold_left f 0.0
 
-    let arr_nvcompare c =
+    let n_vcompare c =
       lift_op (fun x -> if abs_float x >= c then 1.0 else 0.0)
 
-    let arr_nvinvtest x z =
+    let n_vinvtest x z =
       let l = A.length x in
-      let rec f i =
-        if i = l then true
-        else if (A.get x i) = 0.0 then false
-        else (A.set z i (1.0 /. (A.get x i)); f (i + 1))
-      in f 0
+      let rec f r i =
+        if i = l then r
+        else if (A.get x i) = 0.0 then f false (i + 1)
+        else (A.set z i (1.0 /. (A.get x i)); f r (i + 1))
+      in f true 0
 
-    let arr_nvwl2norm x w =
+    let n_vwl2norm x w =
       let f a x w = a +. ((x *. w) ** 2.0) in
       sqrt (zip_fold_left f 0.0 x w)
 
-    let arr_nvl1norm =
+    let n_vl1norm =
       let f a x = a +. abs_float x in
       A.fold_left f 0.0
 
-    let arr_nvconstrmask c x m =
+    let n_vconstrmask c x m =
       let test = ref true in
       let check b = if b then 0.0 else (test := false; 1.0) in
       let f c x =
@@ -163,36 +165,41 @@ module NvectorFn =
       lift_bop f c x m;
       !test
 
-    let arr_nvminquotient =
+    let n_vminquotient =
       let f m n d =
         if d = 0.0 then m
         else min m (n /. d)
       in
       zip_fold_left f Sundials.big_real
 
+    let n_vprod = lift_bop ( *. )
+    let n_vdiv  = lift_bop ( /. )
+    let n_vabs  = lift_op abs_float
+    let n_vinv  = lift_op (fun x -> 1.0 /. x)
+
     let array_nvec_ops = {
-          Nvector_custom.nvclone        = A.copy;
-          Nvector_custom.nvdestroy      = None;
-          Nvector_custom.nvspace        = None;
-          Nvector_custom.nvlinearsum    = arr_nvlinearsum;
-          Nvector_custom.nvconst        = arr_nvconst;
-          Nvector_custom.nvprod         = lift_bop ( *. );
-          Nvector_custom.nvdiv          = lift_bop ( /. );
-          Nvector_custom.nvscale        = arr_nvscale;
-          Nvector_custom.nvabs          = lift_op abs_float;
-          Nvector_custom.nvinv          = lift_op (fun x -> 1.0 /. x);
-          Nvector_custom.nvaddconst     = arr_nvaddconst;
-          Nvector_custom.nvmaxnorm      = arr_nvmaxnorm;
-          Nvector_custom.nvwrmsnorm     = arr_nvwrmsnorm;
-          Nvector_custom.nvmin          = arr_nvmin;
-          Nvector_custom.nvdotprod      = Some arr_nvdotprod;
-          Nvector_custom.nvcompare      = Some arr_nvcompare;
-          Nvector_custom.nvinvtest      = Some arr_nvinvtest;
-          Nvector_custom.nvwl2norm      = Some arr_nvwl2norm;
-          Nvector_custom.nvl1norm       = Some arr_nvl1norm;
-          Nvector_custom.nvwrmsnormmask = Some arr_nvwrmsnormmask;
-          Nvector_custom.nvconstrmask   = Some arr_nvconstrmask;
-          Nvector_custom.nvminquotient  = Some arr_nvminquotient;
+          Nvector_custom.n_vclone        = n_vclone;
+          Nvector_custom.n_vdestroy      = None;
+          Nvector_custom.n_vspace        = None;
+          Nvector_custom.n_vlinearsum    = n_vlinearsum;
+          Nvector_custom.n_vconst        = n_vconst;
+          Nvector_custom.n_vprod         = n_vprod;
+          Nvector_custom.n_vdiv          = n_vdiv;
+          Nvector_custom.n_vscale        = n_vscale;
+          Nvector_custom.n_vabs          = n_vabs;
+          Nvector_custom.n_vinv          = n_vinv;
+          Nvector_custom.n_vaddconst     = n_vaddconst;
+          Nvector_custom.n_vmaxnorm      = n_vmaxnorm;
+          Nvector_custom.n_vwrmsnorm     = n_vwrmsnorm;
+          Nvector_custom.n_vmin          = n_vmin;
+          Nvector_custom.n_vdotprod      = Some n_vdotprod;
+          Nvector_custom.n_vcompare      = Some n_vcompare;
+          Nvector_custom.n_vinvtest      = Some n_vinvtest;
+          Nvector_custom.n_vwl2norm      = Some n_vwl2norm;
+          Nvector_custom.n_vl1norm       = Some n_vl1norm;
+          Nvector_custom.n_vwrmsnormmask = Some n_vwrmsnormmask;
+          Nvector_custom.n_vconstrmask   = Some n_vconstrmask;
+          Nvector_custom.n_vminquotient  = Some n_vminquotient;
     }
 
     let make n e =
@@ -203,37 +210,12 @@ module NvectorFn =
       (* (Nvector.Mutable.add_tracing "::" array_nvec_ops) *)
   end
 
-module Array = NvectorFn (
+module Array = MakeOps (
   struct
     type data = float array
     include Array
+    let clone = Array.copy
     let fill a c = fill a 0 (length a) c
-  end)
-
-module Bigarray = NvectorFn (
-  struct
-    include Bigarray.Array1
-
-    type data = (float, Bigarray.float64_elt, Bigarray.c_layout) t
-
-    let make n d =
-      let arr = create Bigarray.float64 Bigarray.c_layout n in
-      fill arr d;
-      arr
-
-    let length = dim
-
-    let copy src =
-      let dst = create Bigarray.float64 Bigarray.c_layout (length src) in
-      blit src dst;
-      dst
-
-    let fold_left f a vs =
-      let len = length vs - 1 in
-      let a = ref a in
-      for i = 0 to len do
-        a := f !a vs.{i}
-      done; !a
   end)
 
 include Array

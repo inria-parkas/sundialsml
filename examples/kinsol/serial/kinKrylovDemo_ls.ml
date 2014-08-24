@@ -92,10 +92,7 @@ let printf = Printf.printf
 let subarray = Array1.sub
 let slice_left = Array2.slice_left
 let unwrap = Sundials.RealArray2.unwrap
-let nvwl2norm =
-  match Nvector_array.Bigarray.array_nvec_ops.Nvector_custom.nvwl2norm with
-  | Some fn -> fn
-  | None -> failwith "nvwl2norm not found!"
+let nvwl2norm = Nvector_serial.DataOps.n_vwl2norm
 
 let ith v i = v.{i - 1}
 let set_ith v i e = v.{i - 1} <- e

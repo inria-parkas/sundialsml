@@ -8,6 +8,11 @@ external wrap : Sundials.RealArray.t -> t
 let make n iv = wrap (Sundials.RealArray.make n iv)
 
 module Ops = struct
+  type t = (Sundials.RealArray.t, kind) Sundials.nvector
+
+  let n_vclone nv =
+    let data = Sundials.unvec nv in
+    wrap (Sundials.RealArray.clone data)
 
   external n_vlinearsum    : float -> t -> float -> t -> t -> unit
     = "ml_nvec_ser_n_vlinearsum"
@@ -67,4 +72,17 @@ module Ops = struct
     = "ml_nvec_ser_n_vminquotient"
 
 end
+
+module DataOps = Nvector_array.MakeOps (struct
+    type data = Sundials.RealArray.t
+
+    let get       = Bigarray.Array1.get
+    let set       = Bigarray.Array1.set
+    let fill      = Bigarray.Array1.fill
+
+    let make      = Sundials.RealArray.make
+    let length    = Sundials.RealArray.length
+    let clone     = Sundials.RealArray.clone
+    let fold_left = Sundials.RealArray.fold_left
+  end)
 

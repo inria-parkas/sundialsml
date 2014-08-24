@@ -31,10 +31,7 @@ let printf = Printf.printf
 module DM = Dls.DenseMatrix
 module LintArray = Sundials.LintArray
 
-let nvwl2norm =
-  match Nvector_array.Bigarray.array_nvec_ops.Nvector_custom.nvwl2norm with
-  | Some fn -> fn
-  | None -> failwith "nvwl2norm not found!"
+let nvwl2norm = Nvector_serial.DataOps.n_vwl2norm
 
 let nvdotprod xd yd =
   let sum = ref 0.0 in

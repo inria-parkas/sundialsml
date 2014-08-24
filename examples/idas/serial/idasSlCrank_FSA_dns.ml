@@ -35,7 +35,7 @@ module VarType = Ida.VarType
 
 let printf = Printf.printf
 
-let nvconst = Nvector_array.Bigarray.array_nvec_ops.Nvector_custom.nvconst
+let nvconst = Nvector_serial.DataOps.n_vconst
 
 (* Problem Constants *)
 

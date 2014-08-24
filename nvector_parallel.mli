@@ -29,6 +29,10 @@ exception IncorrectGlobalSize
     initialized to [iv], and communications occur on [c]. *)
 val make : int -> int -> Mpi.communicator -> float -> t
 
+(** Create an nvector with a distinct underlying array but that shares the
+    original global size and communicator. *)
+val clone : t -> t
+
 (** [unwrap nv] returns the local data [a] underlying the parallel nvector
     [nv]. *)
 val unwrap : t -> Sundials.RealArray.t
@@ -39,26 +43,18 @@ val global_length : t -> int
 (** Returns the communicator used for by the parallel nvector. *)
 val communicator : t -> Mpi.communicator
 
-module Ops : sig
-  val n_vclone        : t -> t
-  val n_vlinearsum    : float -> t -> float -> t -> t -> unit
-  val n_vconst        : float -> t -> unit
-  val n_vprod         : t -> t -> t -> unit
-  val n_vdiv          : t -> t -> t -> unit
-  val n_vscale        : float -> t -> t -> unit
-  val n_vabs          : t -> t -> unit
-  val n_vinv          : t -> t -> unit
-  val n_vaddconst     : t -> float -> t -> unit
-  val n_vdotprod      : t -> t -> float
-  val n_vmaxnorm      : t -> float
-  val n_vwrmsnorm     : t -> t -> float
-  val n_vwrmsnormmask : t -> t -> t -> float
-  val n_vmin          : t -> float
-  val n_vwl2norm      : t -> t -> float
-  val n_vl1norm       : t -> float
-  val n_vcompare      : float -> t -> t -> unit
-  val n_vinvtest      : t -> t -> bool
-  val n_vconstrmask   : t -> t -> t -> bool
-  val n_vminquotient  : t -> t -> float
-end
+module MakeOps : functor (A : sig
+      type local_data
+      val get       : local_data -> int -> float
+      val set       : local_data -> int -> float -> unit
+      val fill      : local_data -> float -> unit
+      val make      : int -> float -> local_data
+      val clone     : local_data -> local_data
+      val length    : local_data -> int
+      val fold_left : ('a -> float -> 'a) -> 'a -> local_data -> 'a
+    end) -> Nvector.NVECTOR_OPS
+            with type t = A.local_data * int * Mpi.communicator
+
+module Ops : Nvector.NVECTOR_OPS with type t = t
+module DataOps : Nvector.NVECTOR_OPS with type t = data
 

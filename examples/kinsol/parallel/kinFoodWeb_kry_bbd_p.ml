@@ -99,14 +99,7 @@ let slice = Array1.sub
 let unwrap = RealArray2.unwrap
 
 let sqr x = x *. x
-
-let nvwl2norm (xd, _, comm) (wd, _, _) =
-  let sum = ref 0.0 in
-  for i = 0 to RealArray.length xd - 1 do
-    sum := !sum +. sqr (xd.{i} *. wd.{i})
-  done;
-  sqrt (Mpi.allreduce_float !sum Mpi.Float_sum comm)
-
+let nvwl2norm = Nvector.DataOps.n_vwl2norm
 let ith v i = v.{i - 1}
 let set_ith v i e = v.{i - 1} <- e
 

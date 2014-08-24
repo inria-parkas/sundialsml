@@ -24,16 +24,9 @@
     where the underlying data structure is an array of [float]s.  *)
 module type ARRAY_NVECTOR =
   sig
-    (** The type of array used within the Nvector. *)
-    type t
+    include Nvector.NVECTOR_OPS
 
-    (** The set of nvector operations on an array.
-        
-        These operations can be called directly if necessary, for example:
-{[let vmax_norm = Nvector_array.Bigarray.array_nvec_ops.Nvector.Mutable.nvmaxnorm in
-let vn = vmax_norm u]}
-     
-     *)
+    (** The set of nvector operations on an array. *)
     val array_nvec_ops  : t Nvector_custom.nvector_ops
 
     (** [make n x] creates an nvector containing an array
@@ -44,13 +37,17 @@ let vn = vmax_norm u]}
     val wrap            : t -> t Nvector_custom.t
   end
 
+module MakeOps : functor (A : sig
+      type data
+      val get       : data -> int -> float
+      val set       : data -> int -> float -> unit
+      val fill      : data -> float -> unit
+      val make      : int -> float -> data
+      val clone     : data -> data
+      val length    : data -> int
+      val fold_left : ('a -> float -> 'a) -> 'a -> data -> 'a
+    end) -> ARRAY_NVECTOR with type t = A.data
+
 (** Nvector on {{:OCAML_DOC_ROOT(Array)} Array}s of [float]s. *)
 include ARRAY_NVECTOR with type t = float array
  
-(** Nvector on {{:OCAML_DOC_ROOT(Bigarray.Array1)} Bigarray}s
-   of [float]s. *)
-module Bigarray :
-  ARRAY_NVECTOR
-  with
-    type t = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
-

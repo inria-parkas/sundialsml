@@ -40,9 +40,9 @@ let mgrid = 10
 let neq   = mgrid*mgrid
 
 (* Shorthands *)
-let nvscale = Nvector_array.Bigarray.array_nvec_ops.Nvector_custom.nvscale
-let nvprod = Nvector_array.Bigarray.array_nvec_ops.Nvector_custom.nvprod
-let nvmaxnorm = Nvector_array.Bigarray.array_nvec_ops.Nvector_custom.nvmaxnorm
+let nvscale = Nvector_serial.DataOps.n_vscale
+let nvprod = Nvector_serial.DataOps.n_vprod
+let nvmaxnorm = Nvector_serial.DataOps.n_vmaxnorm
 let printf = Printf.printf
 
 (* User data *)

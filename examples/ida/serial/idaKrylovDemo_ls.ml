@@ -37,9 +37,9 @@
  *)
 module RealArray = Sundials.RealArray
 
-let nvscale = Nvector_array.Bigarray.array_nvec_ops.Nvector_custom.nvscale
-and nvprod = Nvector_array.Bigarray.array_nvec_ops.Nvector_custom.nvprod
-and nvmaxnorm = Nvector_array.Bigarray.array_nvec_ops.Nvector_custom.nvmaxnorm
+let nvscale = Nvector_serial.DataOps.n_vscale
+and nvprod = Nvector_serial.DataOps.n_vprod
+and nvmaxnorm = Nvector_serial.DataOps.n_vmaxnorm
 
 (* Problem Constants *)
 let nout  = 11

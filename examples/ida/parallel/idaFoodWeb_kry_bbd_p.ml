@@ -105,14 +105,8 @@ module LintArray = Sundials.LintArray
 let fprintf = Printf.fprintf
 let printf = Printf.printf
 
-let vconst c (local,_,_) = RealArray.fill local c
-let vscale c (xlocal,_,_) (ylocal,_,_) =
-  if RealArray.length xlocal <> RealArray.length ylocal then
-    invalid_arg "vscale: length mismatch"
-  ;
-  for i = 0 to RealArray.length xlocal - 1 do
-    ylocal.{i} <- c *. xlocal.{i}
-  done
+let vconst = Nvector_parallel.DataOps.n_vconst
+let vscale = Nvector_parallel.DataOps.n_vscale
 
 let slice = Bigarray.Array1.sub
 

@@ -26,19 +26,8 @@ let fprintf = Printf.fprintf
 let sqr x = x ** 2.0
 let unvec = Sundials.unvec
 
-(* TODO: replace with Nvector.Ops.n_vdotprod *)
-let n_vdotprod comm xd yd =
-  let sum = ref 0.0 in
-  for i=0 to RealArray.length xd - 1 do
-    sum := !sum +. xd.{i} *. yd.{i}
-  done;
-  Mpi.allreduce_float !sum Mpi.Float_sum comm
-
-(* TODO: replace with Nvector.Ops.n_vscale *)
-let n_vscale c x z =
-  for i = 0 to RealArray.length x - 1 do
-    z.{i} <- c *. x.{i}
-  done
+let n_vdotprod = Nvector.DataOps.n_vdotprod
+let n_vscale = Nvector.DataOps.n_vscale
 
 (*
  *------------------------------------------------------------------
@@ -749,8 +738,8 @@ let f data t y ydot =
  *------------------------------------------------------------------
  *)
 
-let fQ data t (y, _, _) (dqdata, _, _) =
-  dqdata.{0} <- (n_vdotprod data.comm y y) *. 0.5 *. data.dOmega
+let fQ data t y (dqdata, _, _) =
+  dqdata.{0} <- (n_vdotprod y y) *. 0.5 *. data.dOmega
 
 (*
  *------------------------------------------------------------------
@@ -844,8 +833,7 @@ let fB data t y yB yBdot =
  *------------------------------------------------------------------
  *)
 
-let fQB dataB t y (yB, _, _) (qBdot, _, _) =
-  n_vscale (-.dataB.dOmega) yB qBdot
+let fQB dataB t y yB qBdot = n_vscale (-.dataB.dOmega) yB qBdot
 
 (*
  *------------------------------------------------------------------
