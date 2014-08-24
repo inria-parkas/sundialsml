@@ -10,7 +10,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(** Nvectors for standard arrays and one-dimensional bigarrays.
+(** Nvectors for standard arrays.
 
   @version VERSION()
   @author Timothy Bourke (Inria)
@@ -24,7 +24,7 @@
     where the underlying data structure is an array of [float]s.  *)
 module type ARRAY_NVECTOR =
   sig
-    include Nvector.NVECTOR_OPS
+    type t
 
     (** The set of nvector operations on an array. *)
     val array_nvec_ops  : t Nvector_custom.nvector_ops
@@ -35,6 +35,9 @@ module type ARRAY_NVECTOR =
 
     (** Lifts an array to an nvector. *)
     val wrap            : t -> t Nvector_custom.t
+
+    module Ops : Nvector.NVECTOR_OPS with type t = t Nvector_custom.t
+    module DataOps : Nvector.NVECTOR_OPS with type t = t
   end
 
 module MakeOps : functor (A : sig

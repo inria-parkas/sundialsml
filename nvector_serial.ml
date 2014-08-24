@@ -73,7 +73,7 @@ module Ops = struct
 
 end
 
-module DataOps = Nvector_array.MakeOps (struct
+module ArrayOps = Nvector_array.MakeOps (struct
     type data = Sundials.RealArray.t
 
     let get       = Bigarray.Array1.get
@@ -85,4 +85,5 @@ module DataOps = Nvector_array.MakeOps (struct
     let clone     = Sundials.RealArray.clone
     let fold_left = Sundials.RealArray.fold_left
   end)
+module DataOps = ArrayOps.DataOps
 
