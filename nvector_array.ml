@@ -33,6 +33,11 @@ module NvectorFn =
   struct
     type t = A.data
 
+    let lift_map f x y =
+      for i = 0 to A.length x - 1 do
+        A.set x i (f (A.get x i) (A.get y i))
+      done
+
     let lift_bop f x y z =
       for i = 0 to A.length x - 1 do
         A.set z i (f (A.get x i) (A.get y i))
@@ -57,10 +62,46 @@ module NvectorFn =
       done;
       !a
 
-    let arr_nvlinearsum a x b y =
-      lift_bop (fun x y -> a *. x +. b *. y) x y
+    let arr_vaxpy a x y =
+      if a = 1.0 then
+        lift_map (fun y x -> y +. x) y x
+      else if a = -1.0 then
+        lift_map (fun y x -> y -. x) y x
+      else
+        lift_map (fun y x -> y +. a *. x) y x
+
+    let arr_nvlinearsum a x b y z =
+      if b = 1.0 && z == y then
+        arr_vaxpy a x y
+      else if a = 1.0 && z == x then
+        arr_vaxpy b y x
+      else if a = 1.0 && b = 1.0 then
+        lift_bop (fun x y -> x +. y) x y z
+      else if (a = 1.0 && b = -1.0) || (a = -1.0 && b == 1.0) then
+        let v1, v2 = if (a = 1.0 && b = -1.0) then y, x else x, y in
+        lift_bop (fun x y -> x -. y) v1 v2 z
+      else if a = 1.0 || b = 1.0 then
+        let c, v1, v2 = if a = 1.0 then b, y, x else a, x, y in
+        lift_bop (fun x y -> c *. x +. y) v1 v2 z
+      else if a = -1.0 || b = -1.0 then
+        let c, v1, v2 = if a = -1.0 then b, y, x else a, x, y in
+        lift_bop (fun x y -> a *. x -. y) v1 v2 z
+      else if a = b then
+        lift_bop (fun x y -> a *. (x +. y)) x y z
+      else if a = -.b then
+        lift_bop (fun x y -> a *. (x -. y)) x y z
+      else
+        lift_bop (fun x y -> a *. x +. b *. y) x y z
 
     let arr_nvconst c a = A.fill a c
+
+    let arr_nvscale c x z =
+      if c = 1.0 then
+        lift_op (fun x -> x) x z
+      else if c = -1.0 then
+        lift_op (fun x -> -. x) x z
+      else
+        lift_op (fun x -> c *. x) x z
 
     let arr_nvaddconst x b = lift_op (fun x -> x +. b) x
 
@@ -137,7 +178,7 @@ module NvectorFn =
           Nvector_custom.nvconst        = arr_nvconst;
           Nvector_custom.nvprod         = lift_bop ( *. );
           Nvector_custom.nvdiv          = lift_bop ( /. );
-          Nvector_custom.nvscale        = (fun c -> lift_op (fun x -> c *. x));
+          Nvector_custom.nvscale        = arr_nvscale;
           Nvector_custom.nvabs          = lift_op abs_float;
           Nvector_custom.nvinv          = lift_op (fun x -> 1.0 /. x);
           Nvector_custom.nvaddconst     = arr_nvaddconst;

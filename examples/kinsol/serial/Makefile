@@ -2,6 +2,7 @@ include ../../../config
 
 EXAMPLES = kinFerTron_dns.ml   		\
 	   kinFoodWeb_kry.ml   		\
+	   kinFoodWeb_kry_custom.ml     \
 	   kinKrylovDemo_ls.ml 		\
 	   kinLaplace_bnd.ml   		\
 	   kinRoboKin_dns.ml		\
@@ -70,6 +71,8 @@ kinFoodWeb_kry.opt:  kinFoodWeb_kry.ml
 
 kinFoodWeb_kry_custom.byte: kinFoodWeb_kry_custom.ml
 kinFoodWeb_kry_custom.opt:  kinFoodWeb_kry_custom.ml
+kinFoodWeb_kry_custom.sundials.out: kinFoodWeb_kry.sundials.out
+	cp $< $@
 
 kinKrylovDemo_ls.byte: kinKrylovDemo_ls.ml
 kinKrylovDemo_ls.opt:  kinKrylovDemo_ls.ml
