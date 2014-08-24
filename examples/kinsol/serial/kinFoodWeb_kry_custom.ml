@@ -87,10 +87,7 @@ let printf = Printf.printf
 let matrix_unwrap = Sundials.RealArray2.unwrap
 let wrap = Nvector_array.wrap
 let slice_left = Array2.slice_left
-let nvwl2norm =
-  match Nvector_array.array_nvec_ops.Nvector_custom.nvwl2norm with
-  | Some fn -> fn
-  | None -> failwith "nvwl2norm not found!"
+let nvwl2norm = Nvector_array.DataOps.n_vwl2norm
 
 let ith v i = v.{i - 1}
 let set_ith v i e = v.{i - 1} <- e
