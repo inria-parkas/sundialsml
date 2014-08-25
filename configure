@@ -11,6 +11,8 @@ unset docdir
 unset install_docs
 unset enable_mpi
 
+configure_command="$0 $@"
+
 for option in "$@"
 do
     name=`expr "$option" : "\([^=]*\).*"`
@@ -414,6 +416,7 @@ fi
 
 (printf "# # # THIS FILE IS GENERATED AUTOMATICALLY BY CONFIGURE # # #\n"; \
  sed -e "s#@prefix@#${prefix}#;
+	 s#@configure_command@#${configure_command}#;
 	 s#@version@#${version}#;
 	 s#@libdir@#${libdir:-${ocaml_libpath}}#;
 	 s#@stubdir@#${stubdir:-${ocaml_libpath}stublibs/}#;

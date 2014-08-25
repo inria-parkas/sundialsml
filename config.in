@@ -1,3 +1,5 @@
+# Configured with:
+# @configure_command@
 
 VERSION = @version@
 
