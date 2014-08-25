@@ -37,27 +37,21 @@ DONE 8. (Tim) Interface with Parallel NVectors
     - add BDD solver.
     - ensure consistency with recent changes cvode/cvodes.
 
-10. (Jun) Ensure that all examples are implemented.
+DONE 10. (Jun) Ensure that all examples are implemented.
     Add the missing parallel examples for cvode, cvodes, kinsol, ida, idas. 
 
 10. (Jun) Add a perf.log target (like tests.log) to each examples
     subdirectory. Run each binary (both C and opt and byte) 10 times and
     take the average wall clock time. Generate a table with three columns
     (original, .opt, .byte) and one number in each.
+    gnuplot with C time normalized.
+
+    Profile some badly performing examples.
+
+    Compare to the same examples in pySUNDIALS or python-sundials?
 
 11. (Jun) OPAM/findlib wrappers.
    - Everything properly supported in a toplevel
-
-12. (Jun) Examine performance of examples, especially:
-	sundials/cvodes/cvsFoodWeb_ASAi_kry
-	sundials/cvodes/cvsFoodWeb_ASAp_kry
-
-    Possibly with a Makefile target to generate data comparing the examples
-    executed in C and in OCaml (i.e., two wall-clock times for each example,
-    normalized so that the bar for C is equal to 1; each example executed
-    several times and an average computed).
-
-    Compare to the same examples in pySUNDIALS or python-sundials?
 
 DONE 13. (Tim) Parallel CVODES and KINSOL examples.
 
@@ -70,11 +64,14 @@ DONE 13. (Tim) Parallel CVODES and KINSOL examples.
    - Release on Opam.
    - Announce on OCaml and Sundials lists.
 
+16. Versioning scheme
+   - 2.6.0-0  where 0 is binding's version
+     (clashes with Debian patch levels)
+   - 2.6.0ml1 where 1 is binding's version
+
 MINOR PATCHES
 -------------
-1. Rename all functions *_err_* to *_error_*.
-
-2. Eliminate the Dls functions:
+2. (Tim/Jun) Add the Dls functions to Cvodes/Idas:
      set_dense_jac_fn
      clear_dense_jac_fn
      set_band_jac_fn
@@ -86,18 +83,24 @@ MINOR PATCHES
 
    and just provide a reinit function.
 
-3. CVODE/IDA: set_preconditioner should allow the setup function to be
-   optional.
-   - done for CVODE.
+   In the doc, mention that these don't reset performance counters.
+   But they're discouraged otherwise.
 
 4. Tidy up the documentation; in particular, add @raise tags for functions
    that raise exceptions (like get_dky... )
+
+   Document the ones that correspond to return values mentioned in
+   their user guide.  (Or otherwise that are deemed important.)
 
 DONE 5. Rename Carray to Realarray?
 DONE 6. Rename create functions to make?
 
 7. Using spgmr linear solver with prec_setup = None and prec_solve = Some
    crashes.
+
+8. Check that Callback.register "" are consistent with C code.
+
+9. Flatten out jacobian
 
 TO DISCUSS
 ----------
@@ -106,11 +109,11 @@ TO DISCUSS
   - To do this generically, we need a new function in nvector_*.ml to compare
     array lengths.
 
-* Pass nvectors to callbacks or to pass payload (as we do now)?
+  - C-implemented comparator as third field of nvector type.  Provide
+    NULL for custom nvectors (which will be implemented in OCaml so
+    are safe anyway).
 
-* The above patches.
-
-* Should we remove all examples except the Sundials ones?
+  - unify CHECK_MATRIX_ACCESS with SAFETY_CHECKS
 
 TO EXPLAIN IN DOCS
 ------------------
