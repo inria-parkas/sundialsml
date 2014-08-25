@@ -72,7 +72,7 @@ type callbacks =
     [None] to use the default value [sqrt unit_roundoff]), and the callbacks
     described under {!callbacks}.
 
-    @ida <node5#sss:lin_solve_init> IDASpgmr
+    @ida <node5#sss:lin_solv_init> IDASpgmr
     @ida <node5#sss:idabbdpre> IDABBDPrecInit *)
 val spgmr : int option -> bandwidths
             -> float option -> callbacks -> parallel_linear_solver
@@ -80,7 +80,7 @@ val spgmr : int option -> bandwidths
 (** Same as {!Ida.spils.spbcg} but with the Parallel Band-Block-Diagonal
     preconditioner. The arguments are the same as for [spgmr].
 
-    @ida <node5#sss:lin_solve_init> IDASpbcg
+    @ida <node5#sss:lin_solv_init> IDASpbcg
     @ida <node5#sss:idabbdpre> IDABBDPrecInit *)
 val spbcg : int option -> bandwidths
                 -> float option -> callbacks -> parallel_linear_solver
@@ -88,7 +88,7 @@ val spbcg : int option -> bandwidths
 (** Same as {!Ida.spils.spbcg} but with the Parallel Band-Block-Diagonal
     preconditioner. The arguments are the same as for [spgmr].
 
-    @ida <node5#sss:lin_solve_init> IDASptfqmr
+    @ida <node5#sss:lin_solv_init> IDASptfqmr
     @ida <node5#sss:idabbdpre> IDABBDPrecInit *)
 val sptfqmr : int option -> bandwidths
                 -> float option -> callbacks -> parallel_linear_solver

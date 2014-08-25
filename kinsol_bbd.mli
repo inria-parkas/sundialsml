@@ -75,7 +75,7 @@ type callbacks =
     default value [sqrt unit_roundoff]), and the callbacks described under
     {!callbacks}.
 
-    @kinsol <node5#sss:lin_solve_init> KINSpgmr
+    @kinsol <node5#sss:lin_solv_init> KINSpgmr
     @kinsol <node5#sss:kinbbdpre> KINBBDPrecInit *)
 val spgmr : int option -> int option -> bandwidths -> float option -> callbacks
               -> parallel_linear_solver
@@ -84,7 +84,7 @@ val spgmr : int option -> int option -> bandwidths -> float option -> callbacks
     preconditioner. The arguments are the same as for {!spgmr} except that a
     maximum number of restarts is not given.
 
-    @kinsol <node5#sss:lin_solve_init> KINSpbcg
+    @kinsol <node5#sss:lin_solv_init> KINSpbcg
     @kinsol <node5#sss:kinbbdpre> KINBBDPrecInit *)
 val spbcg : int option -> bandwidths -> float option -> callbacks
               -> parallel_linear_solver
@@ -93,7 +93,7 @@ val spbcg : int option -> bandwidths -> float option -> callbacks
     preconditioner. The arguments are the same as for {!spgmr} except that a
     maximum number of restarts is not given.
 
-    @kinsol <node5#sss:lin_solve_init> KINSptfqmr
+    @kinsol <node5#sss:lin_solv_init> KINSptfqmr
     @kinsol <node5#sss:kinbbdpre> KINBBDPrecInit *)
 val sptfqmr : int option -> bandwidths -> float option -> callbacks
                 -> parallel_linear_solver

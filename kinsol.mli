@@ -152,7 +152,7 @@ module Dls :
         needed outside of the function call, then they must be copied to
         separate physical structures.
 
-        @kinsol <node5#sss:lin_solve_init> KINDense/KINLapackDense
+        @kinsol <node5#sss:lin_solv_init> KINDense/KINLapackDense
         @kinsol <node5#sss:optin_dls> KINDlsSetDenseJacFn
         @kinsol <node5#ss:djacFn> KINDlsDenseJacFn *)
     type dense_jac_fn = (real_array double_tmp, real_array) jacobian_arg
@@ -163,16 +163,16 @@ module Dls :
         matrix (see {!dense_jac_fn} for details).  If this argument is [None],
         then KINSOL uses a default implementation based on difference quotients.
 
-        @kinsol <node5#sss:lin_solve_init> CVDense
-        @kinsol <node5#sss:optin_dls> CVDlsSetDenseJacFn
+        @kinsol <node5#sss:lin_solv_init> KINDense
+        @kinsol <node5#sss:optin_dls> KINDlsSetDenseJacFn
         @kinsol <node5#ss:djacFn> Dense Jacobian function *)
     val dense : dense_jac_fn option -> serial_linear_solver
 
     (** Direct linear solver with dense matrix, using LAPACK.  The argument is
         the same as [Dense].
 
-        @kinsol <node5#sss:lin_solve_init> CVLapackDense
-        @kinsol <node5#sss:optin_dls> CVDlsSetDenseJacFn
+        @kinsol <node5#sss:lin_solv_init> KINLapackDense
+        @kinsol <node5#sss:optin_dls> KINDlsSetDenseJacFn
         @kinsol <node5#ss:djacFn> Dense Jacobian function *)
     val lapack_dense : dense_jac_fn option -> serial_linear_solver
 
@@ -192,7 +192,7 @@ module Dls :
         this function has returned.  If their values are needed outside of the
         function call, then they must be copied to separate physical structures.
 
-        @kinsol <node5#sss:lin_solve_init> KINBand/KINLapackBand
+        @kinsol <node5#sss:lin_solv_init> KINBand/KINLapackBand
         @kinsol <node5#sss:optin_dls> KINDlsSetBandJacFn
         @kinsol <node5#ss:bjacFn> KINDlsBandJacFn *)
     type band_jac_fn = bandrange
@@ -204,16 +204,16 @@ module Dls :
         ({!band_jac_fn}).  If the Jacobian function is [None], KINSOL uses an
         internal implementation based on difference quotients.
 
-        @kinsol <node5#sss:lin_solve_init> CVBand
-        @kinsol <node5#sss:optin_dls> CVDlsSetBandJacFn
+        @kinsol <node5#sss:lin_solv_init> KINBand
+        @kinsol <node5#sss:optin_dls> KINDlsSetBandJacFn
         @kinsol <node5#ss:bjacFn> Banded Jacobian function *)
     val band : bandrange -> band_jac_fn option -> serial_linear_solver
 
     (** Direct linear solver with banded matrix using LAPACK.  The arguments
         are the same as [Band].
 
-        @kinsol <node5#sss:lin_solve_init> CVLapackBand
-        @kinsol <node5#sss:optin_dls> CVDlsSetBandJacFn
+        @kinsol <node5#sss:lin_solv_init> KINLapackBand
+        @kinsol <node5#sss:optin_dls> KINDlsSetBandJacFn
         @kinsol <node5#ss:bjacFn> Banded Jacobian function *)
     val lapack_band : bandrange -> band_jac_fn option -> serial_linear_solver
 
@@ -362,7 +362,7 @@ module Spils :
         iterative linear solver (Pass None to use the default value 0) and the
         preconditioner callback functions ({!callbacks}).
 
-        @kinsol <node5#sss:lin_solve_init> KINSpgmr
+        @kinsol <node5#sss:lin_solv_init> KINSpgmr
         @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
         @kinsol <node5#sss:optin_spils> KINSpilsSetMaxRestarts
         @kinsol <node5#ss:psolveFn> Linear preconditioning function
@@ -375,7 +375,7 @@ module Spils :
         None to use the default value 5) and the preconditioner callback
         functions ({!callbacks}).
 
-        @kinsol <node5#sss:lin_solve_init> KINSpbcg
+        @kinsol <node5#sss:lin_solv_init> KINSpbcg
         @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
         @kinsol <node5#ss:psolveFn> Linear preconditioning function
         @kinsol <node5#ss:precondFn> Jacobian preconditioning function *)
@@ -386,7 +386,7 @@ module Spils :
         None to use the default value 5) and the preconditioner callback functions
         ({!callbacks}).
 
-        @kinsol <node5#sss:lin_solve_init> KINSptfqmr
+        @kinsol <node5#sss:lin_solv_init> KINSptfqmr
         @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
         @kinsol <node5#ss:psolveFn> Linear preconditioning function
         @kinsol <node5#ss:precondFn> Jacobian preconditioning function *)
@@ -577,7 +577,7 @@ type eta_choice =
 
      @kinsol <node5#sss:kinmalloc>      KINCreate/KINInit
      @kinsol <node5#ss:sysFn>           Problem-defining function
-     @kinsol <node5#sss:lin_solve_init> Linear solver specification functions *)
+     @kinsol <node5#sss:lin_solv_init> Linear solver specification functions *)
 val init : ('a, 'kind) linear_solver -> ('a -> 'a -> unit)
                   -> ('a, 'kind) nvector -> ('a, 'kind) session
 
@@ -813,7 +813,7 @@ val set_constraints : ('a, 'k) session -> ('a, 'k) nvector -> unit
 (** Allows one to change the linear solver so as to try solve a problem using
     different tools or parameters.
 
-    @kinsol <node5#sss:lin_solve_init> Linear solver specification functions *)
+    @kinsol <node5#sss:lin_solv_init> Linear solver specification functions *)
 val set_linear_solver : ('a, 'k) session -> ('a, 'k) linear_solver -> unit
 
 (** Allows one to change the system function so as to solve several problems of

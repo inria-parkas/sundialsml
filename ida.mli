@@ -224,7 +224,7 @@ module Dls :
         disable any user-supplied Jacobian function that was
         previously active.
 
-      @ida <node5#sss:lin_solve_init> IDADense
+      @ida <node5#sss:lin_solv_init> IDADense
       @ida <node5#sss:optin_dls> IDADlsSetDenseJacFn
       @ida <node5#ss:djacFn> Dense Jacobian function
       @ida <node3#ss:ivp_soln> IVP solution  *)
@@ -233,7 +233,7 @@ module Dls :
     (** Direct linear solver with dense matrix, using LAPACK.  The
         argument is the same as [Dense].
 
-        @ida <node5#sss:lin_solve_init> IDALapackDense
+        @ida <node5#sss:lin_solv_init> IDALapackDense
         @ida <node5#sss:optin_dls> IDADlsSetDenseJacFn
         @ida <node5#ss:djacFn> Dense Jacobian function
         @ida <node3#ss:ivp_soln> IVP solution  *)
@@ -290,7 +290,7 @@ module Dls :
         is [None], IDA uses an internal implementation based on
         difference quotients.
 
-        @ida <node5#sss:lin_solve_init> IDABand
+        @ida <node5#sss:lin_solv_init> IDABand
         @ida <node5#sss:optin_dls> IDADlsSetBandJacFn
         @ida <node5#ss:bjacFn> Banded Jacobian function
         @ida <node3#ss:ivp_soln> IVP solution *)
@@ -299,7 +299,7 @@ module Dls :
     (** Direct linear solver with banded matrix using LAPACK.  The
         arguments are the same as {!band}.
 
-        @ida <node5#sss:lin_solve_init> IDALapackBand
+        @ida <node5#sss:lin_solv_init> IDALapackBand
         @ida <node5#sss:optin_dls> IDADlsSetBandJacFn
         @ida <node5#ss:bjacFn> Banded Jacobian function
         @ida <node3#ss:ivp_soln> IVP solution *)
@@ -528,7 +528,7 @@ module Spils :
     (** Krylov iterative linear solver with the scaled preconditioned GMRES
         method.  See {!callbacks} for what the argument should contain.
 
-        @ida <node5#sss:lin_solve_init> IDASpgmr
+        @ida <node5#sss:lin_solv_init> IDASpgmr
         @ida <node5#sss:optin_spils> IDASpilsSetPreconditioner
         @ida <node5#ss:psolveFn> Linear preconditioning function
         @ida <node5#ss:precondFn> Jacobian preconditioning function
@@ -539,7 +539,7 @@ module Spils :
         Bi-CGStab method.  See {!callbacks} for what the argument
         should contain.
 
-        @ida <node5#sss:lin_solve_init> IDASpbcg
+        @ida <node5#sss:lin_solv_init> IDASpbcg
         @ida <node5#sss:optin_spils> IDASpilsSetPreconditioner
         @ida <node5#ss:psolveFn> Linear preconditioning function
         @ida <node5#ss:precondFn> Jacobian preconditioning function
@@ -550,7 +550,7 @@ module Spils :
         TFQMR method.  See {!callbacks} for what the argument should
         contain.
 
-        @ida <node5#sss:lin_solve_init> IDASptfqmr
+        @ida <node5#sss:lin_solv_init> IDASptfqmr
         @ida <node5#sss:optin_spils> IDASpilsSetPreconditioner
         @ida <node5#ss:psolveFn> Linear preconditioning function
         @ida <node5#ss:precondFn> Jacobian preconditioning function

@@ -72,7 +72,7 @@ type callbacks =
     [None] to use the default value [sqrt unit_roundoff]), and the callbacks
     described under {!callbacks}.
 
-    @cvode <node5#sss:lin_solve_init> CVSpgmr
+    @cvode <node5#sss:lin_solv_init> CVSpgmr
     @cvode <node5#sss:cvbbdpre> CVBBDPrecInit *)
 val spgmr : int option -> Spils.preconditioning_type -> bandwidths
                 -> float option -> callbacks -> parallel_linear_solver
@@ -80,7 +80,7 @@ val spgmr : int option -> Spils.preconditioning_type -> bandwidths
 (** Same as {!Cvode.Spils.spbcg} but with the Parallel Band-Block-Diagonal
     preconditioner. The arguments are the same as for [spgmr].
 
-    @cvode <node5#sss:lin_solve_init> CVSpbcg
+    @cvode <node5#sss:lin_solv_init> CVSpbcg
     @cvode <node5#sss:cvbbdpre> CVBBDPrecInit *)
 val spbcg : int option -> Spils.preconditioning_type -> bandwidths
                 -> float option -> callbacks -> parallel_linear_solver
@@ -88,7 +88,7 @@ val spbcg : int option -> Spils.preconditioning_type -> bandwidths
 (** Same as {!Cvode.Spils.spbcg} but with the Parallel Band-Block-Diagonal
     preconditioner. The arguments are the same as for [spgmr].
 
-    @cvode <node5#sss:lin_solve_init> CVSptfqmr
+    @cvode <node5#sss:lin_solv_init> CVSptfqmr
     @cvode <node5#sss:cvbbdpre> CVBBDPrecInit *)
 val sptfqmr : int option -> Spils.preconditioning_type -> bandwidths
                 -> float option -> callbacks -> parallel_linear_solver

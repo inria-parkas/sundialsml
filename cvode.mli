@@ -131,7 +131,7 @@ module Diag :
   sig
     (** Diagonal approximation of the Jacobian by difference quotients.
 
-        @cvode <node5#sss:lin_solve_init> CVDiag *)
+        @cvode <node5#sss:lin_solv_init> CVDiag *)
     val solver : ('data, 'kind) linear_solver
 
     (** {4 Optional output functions} *)
@@ -210,7 +210,7 @@ module Dls :
         needed outside of the function call, then they must be copied to
         separate physical structures.
 
-        @cvode <node5#sss:lin_solve_init> CVDense
+        @cvode <node5#sss:lin_solv_init> CVDense
         @cvode <node5#sss:optin_dls> CVDlsSetDenseJacFn
         @cvode <node5#ss:djacFn> Dense Jacobian function *)
     type dense_jac_fn = (real_array triple_tmp, real_array) jacobian_arg
@@ -222,7 +222,7 @@ module Dls :
         then CVODE uses a default implementation based on difference quotients.
         See also {!Dls}.
 
-        @cvode <node5#sss:lin_solve_init> CVDense
+        @cvode <node5#sss:lin_solv_init> CVDense
         @cvode <node5#sss:optin_dls> CVDlsSetDenseJacFn
         @cvode <node5#ss:djacFn> Dense Jacobian function *)
     val dense : dense_jac_fn option -> serial_linear_solver
@@ -233,7 +233,7 @@ module Dls :
         Both Sundials and the OCaml interface must have been built to link with
         a LAPACK library.
 
-        @cvode <node5#sss:lin_solve_init> CVLapackDense
+        @cvode <node5#sss:lin_solv_init> CVLapackDense
         @cvode <node5#sss:optin_dls> CVDlsSetDenseJacFn
         @cvode <node5#ss:djacFn> Dense Jacobian function *)
     val lapack_dense : dense_jac_fn option -> serial_linear_solver
@@ -273,7 +273,7 @@ module Dls :
         ({!band_jac_fn}).  If the Jacobian function is [None], CVODE uses an
         internal implementation based on difference quotients.
 
-        @cvode <node5#sss:lin_solve_init> CVBand
+        @cvode <node5#sss:lin_solv_init> CVBand
         @cvode <node5#sss:optin_dls> CVDlsSetBandJacFn
         @cvode <node5#ss:bjacFn> Banded Jacobian function *)
     val band : bandrange -> band_jac_fn option -> serial_linear_solver
@@ -284,7 +284,7 @@ module Dls :
         Both Sundials and the OCaml interface must have been built to link with
         a LAPACK library.
 
-        @cvode <node5#sss:lin_solve_init> CVLapackBand
+        @cvode <node5#sss:lin_solv_init> CVLapackBand
         @cvode <node5#sss:optin_dls> CVDlsSetBandJacFn
         @cvode <node5#ss:bjacFn> Banded Jacobian function *)
     val lapack_band : bandrange -> band_jac_fn option -> serial_linear_solver
@@ -477,7 +477,7 @@ module Spils :
         [None] to use the default value [5].), preconditioning type, and the
         preconditioner callback functions ({!callbacks}). See also {!Spils}.
 
-        @cvode <node5#sss:lin_solve_init> CVSpgmr
+        @cvode <node5#sss:lin_solv_init> CVSpgmr
         @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
         @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
         @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
@@ -487,7 +487,7 @@ module Spils :
     (** Krylov iterative solver with the scaled preconditioned Bi-CGStab method.
         The arguments are the same as [spgmr].  See also {!Spils}.
 
-        @cvode <node5#sss:lin_solve_init> CVSpbcg
+        @cvode <node5#sss:lin_solv_init> CVSpbcg
         @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
         @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
         @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
@@ -497,7 +497,7 @@ module Spils :
     (** Krylov iterative with the scaled preconditioned TFQMR method.  The
         arguments are the same as [spgmr].  See also {!Spils}.
 
-        @cvode <node5#sss:lin_solve_init> CVSptfqmr
+        @cvode <node5#sss:lin_solv_init> CVSptfqmr
         @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
         @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
         @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
@@ -631,7 +631,7 @@ module Spils :
             default value [5].), preconditioning type, and the width of the band
             matrix ({!bandrange}).
 
-            @cvode <node5#sss:lin_solve_init> CVSpgmr
+            @cvode <node5#sss:lin_solv_init> CVSpgmr
             @cvode <node5#sss:cvbandpre> CVBandPrecInit *)
         val spgmr : int option -> preconditioning_type -> bandrange
                             -> serial_linear_solver
@@ -641,7 +641,7 @@ module Spils :
             implementation using a banded matrix of difference quotients.  The
             arguments are the same as [spgmr].
 
-            @cvode <node5#sss:lin_solve_init> CVSpbcg
+            @cvode <node5#sss:lin_solv_init> CVSpbcg
             @cvode <node5#sss:cvbandpre> CVBandPrecInit *)
         val spbcg : int option -> preconditioning_type -> bandrange
                             -> serial_linear_solver
@@ -651,7 +651,7 @@ module Spils :
             implementation using a banded matrix of difference quotients.  The
             arguments are the same as [spgmr].
 
-            @cvode <node5#sss:lin_solve_init> CVSptfqmr
+            @cvode <node5#sss:lin_solv_init> CVSptfqmr
             @cvode <node5#sss:cvbandpre> CVBandPrecInit *)
         val sptfqmr : int option -> preconditioning_type -> bandrange
                                -> serial_linear_solver
