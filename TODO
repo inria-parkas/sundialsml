@@ -100,7 +100,7 @@ DONE 6. Rename create functions to make?
 
 8. Check that Callback.register "" are consistent with C code.
 
-9. Flatten out jacobian
+9. Flatten out jacobian_arg
 
 TO DISCUSS
 ----------
