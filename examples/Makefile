@@ -1,57 +1,39 @@
-include ../config
-
-DIRS=cvode cvodes ida idas kinsol
-SUBDIRS=serial $(if $(MPI_ENABLED), parallel)
-
-.PHONY: default tests.byte.log tests.opt.log ocaml
-
-all:
+info:
 	@echo "Main targets (cvode, cvodes, ida, idas, kinsol):"
+	@echo "  all               compiles all tests without running them"
 	@echo "  tests.byte.log    run standard tests (byte code)"
 	@echo "  tests.opt.log     run standard tests (native code)"
-	@echo "  ocaml             compile the other ocaml examples"
-	@echo "Subdirectory ocaml/ has additional examples, invoked separately."
+	@echo "  ocaml             compile the other ocaml examples without running them"
 
-tests.byte.log:
-	@for d in ${DIRS}; do		\
-	    for s in ${SUBDIRS}; do	\
-		${MAKE} -C $$d/$$s $@;	\
-	    done;			\
+include ../config
+
+MODULES  = cvode cvodes ida idas kinsol
+VECTYPES = serial $(if $(MPI_ENABLED),parallel)
+
+SUBDIRS=$(foreach m,$(MODULES),$(foreach v,$(VECTYPES),$m/$v))
+
+.PHONY: default tests.byte.log tests.opt.log tests.byte tests.opt ocaml
+
+all: ocaml tests.byte tests.opt
+
+tests.opt tests.byte:
+	@for s in ${SUBDIRS}; do		\
+	    ${MAKE} -C $$s $@;			\
+	done
+
+tests.opt.log tests.byte.log:
+	@for s in ${SUBDIRS}; do		\
+	    ${MAKE} -C $$s $@;			\
 	done
 	@echo ======================================================================
 	@echo 'Summary (each should be 0):'
-	@for d in ${DIRS}; do		\
-	    for s in ${SUBDIRS}; do	\
-		cat $$d/$$s/$@		\
-		| grep '^[0-9]';	\
-	    done;			\
+	@for s in ${SUBDIRS}; do		\
+	    cat $$s/$@				\
+	    | grep '^[0-9]';			\
 	done
-	@for d in ${DIRS}; do		\
-	    for s in ${SUBDIRS}; do	\
-		cat $$d/$$s/$@		\
-		| grep '^[0-9]';	\
-	    done;			\
-	done | grep -q '^[^0]'
-
-tests.opt.log:
-	@for d in ${DIRS}; do		\
-	    for s in ${SUBDIRS}; do	\
-		${MAKE} -C $$d/$$s $@;	\
-	    done;			\
-	done
-	@echo ======================================================================
-	@echo 'Summary (each should be 0):'
-	@for d in ${DIRS}; do		\
-	    for s in ${SUBDIRS}; do	\
-		cat $$d/$$s/$@		\
-		| grep '^[0-9]';	\
-	    done;			\
-	done
-	@! for d in ${DIRS}; do		\
-	    for s in ${SUBDIRS}; do	\
-		cat $$d/$$s/$@		\
-		| grep '^[0-9]';	\
-	    done;			\
+	@! for s in ${SUBDIRS}; do		\
+	    cat $$s/$@				\
+	    | grep '^[0-9]';			\
 	done | grep -q '^[^0]'
 
 ocaml:
@@ -59,10 +41,8 @@ ocaml:
 
 distclean: clean
 clean:
-	@for d in ${DIRS}; do			\
-	    for s in ${SUBDIRS}; do		\
-		${MAKE} -C $$d/$$s clean;	\
-	    done;				\
+	@for s in ${SUBDIRS}; do		\
+		${MAKE} -C $$s clean;		\
 	done
 	@${MAKE} -C ocaml clean
 

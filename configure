@@ -317,8 +317,10 @@ fi
 
 if [ "${lapack_lib}" = "" ]; then
     lapack_info=" (without lapack)"
+    lapack_enabled=
 else
     lapack_info=" (with lapack: ${lapack_lib})"
+    lapack_enabled=1
 fi
 
 ldflags="${ldflags} ${lapack_lib}"
@@ -443,6 +445,7 @@ fi
 	 s#@bounds_checking@#${bounds_checking}#;
 	 s#@ocamlmpi_path@#${ocamlmpi_path}#;
 	 s#@ocamlmpi_enabled@#${ocamlmpi_enabled}#;
+	 s#@lapack_enabled@#${lapack_enabled}#;
 	 s#@mpicc@#${mpicc:-mpicc}#;
 	 s#@EXAMPLESROOT@#${EXAMPLESROOT}#;
 	 s#@OCAMLBIN@#${OCAMLBIN}#;
