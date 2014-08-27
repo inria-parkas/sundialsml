@@ -28,12 +28,10 @@ tests.opt.log tests.byte.log:
 	@echo ======================================================================
 	@echo 'Summary (each should be 0):'
 	@for s in ${SUBDIRS}; do		\
-	    cat $$s/$@				\
-	    | grep '^[0-9]';			\
+	    grep '^[0-9]' $$s/$@;		\
 	done
 	@! for s in ${SUBDIRS}; do		\
-	    cat $$s/$@				\
-	    | grep '^[0-9]';			\
+	    grep '^[0-9]' $$s/$@;		\
 	done | grep -q '^[^0]'
 
 ocaml:
