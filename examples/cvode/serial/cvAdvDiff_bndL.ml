@@ -237,7 +237,6 @@ let main () =
                              (Cvode.SStolerances (reltol, abstol))
                              ~t0:t0 (f data) u
   in
-  Gc.compact ();
 
   (* In loop over output points: call CVode, print results, test for errors *)
 

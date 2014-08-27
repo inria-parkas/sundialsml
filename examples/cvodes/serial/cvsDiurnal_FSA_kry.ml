@@ -544,7 +544,6 @@ let main () =
       (f data) ~t0:t0 y
   in
   Cvode.set_max_num_steps cvode_mem 2000;
-  Gc.compact ();
   printf "\n2-species diurnal advection-diffusion problem\n";
 
   (* Forward sensitivity analysis *)
@@ -610,5 +609,5 @@ let reps =
     else 1
   with _ -> 1
 let _ = for i = 1 to reps do main () done
-let _ = Gc.full_major ()
+let _ = Gc.compact ()
 

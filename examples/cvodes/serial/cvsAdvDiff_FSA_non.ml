@@ -290,5 +290,3 @@ let reps =
   with _ -> 1
 let _ = for i = 1 to reps do main () done
 let _ = Gc.compact ()
-
-let _ = at_exit Gc.full_major

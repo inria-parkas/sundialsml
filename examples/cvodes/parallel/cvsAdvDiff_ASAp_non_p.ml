@@ -419,7 +419,6 @@ let main () =
                              (Cvode.SStolerances (reltol, abstol))
                              ~t0:t0 (f data) u
   in
-  Gc.compact ();
 
   (* Allocate combined forward/backward memory *)
   Adjoint.init cvode_mem steps Adjoint.IHermite;
@@ -457,5 +456,5 @@ let main () =
   print_output data g_val uB
 
 let _ = main ()
-let _ = Gc.full_major ()
+let _ = Gc.compact ()
 

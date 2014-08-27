@@ -340,7 +340,6 @@ let main () =
       (Cvode.SStolerances (reltol, abstol))
       (f data) ~t0:t0 u
   in
-  Gc.compact ();
 
   print_intro mu ml;
 

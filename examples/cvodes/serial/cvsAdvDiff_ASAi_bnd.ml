@@ -300,7 +300,6 @@ let main () =
                              (Cvode.SStolerances (reltol, abstol))
                              ~t0:t0 (f data) u_nvec
   in
-  Gc.compact ();
 
   (* Allocate global memory *)
   printf "\nAllocate global memory\n";
@@ -338,6 +337,6 @@ let n =
   match Sys.argv with
   | [|_; n|] -> int_of_string n
   | _ -> 1
-let _ = for i = 1 to n do main (); Gc.compact () done
-let _ = Gc.full_major ()
+let _ = for i = 1 to n do main () done
+let _ = Gc.compact ()
 

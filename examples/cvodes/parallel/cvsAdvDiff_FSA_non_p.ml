@@ -377,5 +377,5 @@ let main () =
   if my_pe = 0 then print_final_stats cvode_mem (sensi <> None)
 
 let _ = main ()
-let _ = Gc.full_major ()
+let _ = Gc.compact ()
 

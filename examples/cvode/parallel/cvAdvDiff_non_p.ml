@@ -203,7 +203,6 @@ let main () =
                              (Cvode.SStolerances (reltol, abstol))
                              ~t0:t0 (f data) u
   in
-  Gc.compact ();
 
   if my_pe = 0 then print_intro npes;
 
@@ -231,5 +230,5 @@ let n =
   | _ -> 1
 let _ = for i = 1 to n do main () done
 
-let _ = Gc.full_major ()
+let _ = Gc.compact ()
 

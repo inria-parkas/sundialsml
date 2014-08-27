@@ -938,5 +938,5 @@ let n =
   | _ -> 1
 let _ = for i = 1 to n do main () done
 
-let _ = Gc.full_major ()
+let _ = Gc.compact ()
 

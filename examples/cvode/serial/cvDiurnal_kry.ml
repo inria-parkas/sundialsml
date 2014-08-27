@@ -577,7 +577,6 @@ let main () =
       (Cvode.SStolerances (reltol, abstol))
       (f data) ~t0:t0 u
   in
-  Gc.compact ();
 
   (* Set modified Gram-Schmidt orthogonalization *)
   Cvode.Spils.set_gs_type cvode_mem Spils.ModifiedGS;

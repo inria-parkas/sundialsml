@@ -472,7 +472,6 @@ let main () =
   print_bck_stats cvode_memB2;
 
   (* Free CVODES memory *)
-  Gc.compact ();
 
   (* Finite difference tests *)
   let dp = 1.0e-2 in
@@ -587,7 +586,7 @@ let n =
   match Sys.argv with
   | [|_; n|] -> int_of_string n
   | _ -> 1
-let _ = for i = 1 to n do main (); Gc.compact () done
+let _ = for i = 1 to n do main () done
 
-let _ = Gc.full_major ()
+let _ = Gc.compact ()
 

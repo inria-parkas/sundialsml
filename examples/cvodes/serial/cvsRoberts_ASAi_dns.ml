@@ -344,13 +344,13 @@ let main () =
   ignore (Adj.get cvode_memB yB);
   ignore (QuadAdj.get cvode_memB qB);
 
-  print_output tb2 yBdata qBdata
-
+  print_output tb2 yBdata qBdata;
+  printf "Free memory\n\n"
 
 let n =
   match Sys.argv with
   | [|_; n|] -> int_of_string n
   | _ -> 1
-let _ = for i = 1 to n do main (); Gc.compact () done
-let _ = printf "Free memory\n\n"; Gc.compact ()
+let _ = for i = 1 to n do main () done
+let _ = Gc.compact ()
 

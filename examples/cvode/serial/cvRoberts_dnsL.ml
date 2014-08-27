@@ -151,7 +151,6 @@ let main () =
                (Cvode.SVtolerances (rtol, (Nvector_serial.wrap abstol))) f
                ~roots:(nroots, g) ~t0:t0 y
   in
-  Gc.compact ();
 
   (* In loop, call CVode, print results, and test for error.
      Break out of loop when NOUT preset output times have been reached.  *)

@@ -465,7 +465,6 @@ let main () =
     Cvode.init Cvode.BDF Cvode.Functional
                (Cvode.SStolerances (reltol, abstol)) (f data) ~t0:t0 u
   in
-  Gc.compact ();
 
   (* START: Loop through SPGMR, SPBCG and SPTFQMR linear solver modules *)
   let run cvode_mem linsolver =

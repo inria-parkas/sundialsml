@@ -152,7 +152,6 @@ let main () =
     Cvode.init Cvode.BDF (Cvode.Newton (Cvode.Dls.dense (Some jac)))
       (Cvode.WFtolerances ewt) f ~roots:(nroots, g) ~t0:t0 y
   in
-  Gc.compact ();
 
   (* In loop, call CVode, print results, and test for error.
   Break out of loop when NOUT preset output times have been reached.  *)

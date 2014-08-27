@@ -979,5 +979,5 @@ let main () =
   end
 
 let _ = main ()
-let _ = Gc.full_major ()
+let _ = Gc.compact ()
 

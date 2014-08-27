@@ -867,7 +867,6 @@ let main () =
         (Cvode.SStolerances (reltol, abstol))
         (f wdata) ~t0:t0 c
   in
-  Gc.compact ();
   wdata.cvode_mem <- Some cvode_mem;
   Cvode.Spils.set_gs_type cvode_mem Spils.ModifiedGS;
   Cvode.Spils.set_eps_lin cvode_mem delt;

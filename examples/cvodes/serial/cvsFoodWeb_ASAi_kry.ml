@@ -1067,7 +1067,6 @@ let main () =
         (Cvode.SStolerances (reltol, abstol))
         (f wdata) ~t0:t0 c
   in
-  Gc.compact ();
   wdata.cvode_mem <- Some cvode_mem; (* Used in Precond *)
 
   (* Set-up adjoint calculations *)
@@ -1124,6 +1123,6 @@ let n =
   match Sys.argv with
   | [|_; n|] -> int_of_string n
   | _ -> 1
-let _ = for i = 1 to n do main (); Gc.compact () done
-let _ = Gc.full_major ()
+let _ = for i = 1 to n do main () done
+let _ = Gc.compact ()
 
