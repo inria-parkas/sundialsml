@@ -12,9 +12,12 @@ config
 *.out
 *.diff
 *.log
+*.time
+*.perf
+*.dat
 *.so
 *.a
 # META is generated from META.in
 META
 config.h
-
+examples/*/parallel/grad*.m
