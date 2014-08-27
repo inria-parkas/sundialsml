@@ -240,7 +240,7 @@ let main () =
 
   (* In loop over output points: call CVode, print results, test for errors *)
 
-  print_header reltol abstol (vmax_norm (unvec u));
+  print_header reltol abstol (vmax_norm u);
 
   let tout = ref t1 in
   for iout = 1 to nout do
@@ -248,7 +248,7 @@ let main () =
     in
     let nst = Cvode.get_num_steps cvode_mem in
 
-    print_output t (vmax_norm (unvec u)) nst;
+    print_output t (vmax_norm u) nst;
     tout := !tout +. dtout
   done;
 
