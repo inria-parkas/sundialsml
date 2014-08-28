@@ -108,8 +108,7 @@ and print_root_info root_f1 root_f2 =
   in
   printf "    rootsfound[] = %3d %3d\n"
     (int_of_root_event root_f1)
-    (int_of_root_event root_f2);
-;;
+    (int_of_root_event root_f2)
 
 let resrob tres y yp rr =
   rr.{0} <- -.0.04*.y.{0} +. 1.0e4*.y.{1}*.y.{2};
@@ -135,7 +134,6 @@ and grob t y y' gout =
   in
   gout.{0} <- y1 -. 0.0001;
   gout.{1} <- y3 -. 0.01
-;;
 
 let main () =
   (* Create and initialize y, y', and absolute tolerance vectors.  For
@@ -194,10 +192,21 @@ let main () =
 
   print_final_stats ida_mem
 
-let n =
-  match Sys.argv with
-  | [|_; n|] -> int_of_string n
-  | _ -> 1
-let _ = for i = 1 to n do main () done
+(* Check environment variables for extra arguments.  *)
+let reps =
+  try int_of_string (Unix.getenv "NUM_REPS")
+  with Not_found | Failure "int_of_string" -> 1
+let gc_at_end =
+  try int_of_string (Unix.getenv "GC_AT_END") <> 0
+  with Not_found | Failure "int_of_string" -> false
+let gc_each_rep =
+  try int_of_string (Unix.getenv "GC_EACH_REP") <> 0
+  with Not_found | Failure "int_of_string" -> false
 
-let _ = Gc.compact ()
+(* Entry point *)
+let _ =
+  for i = 1 to reps do
+    main ();
+    if gc_each_rep then Gc.compact ()
+  done;
+  if gc_at_end then Gc.compact ()

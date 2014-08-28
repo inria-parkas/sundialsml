@@ -717,11 +717,21 @@ let main () =
   (* Print final statistics and free memory *)  
   if my_pe = 0 then print_final_stats kmem
 
-let n =
-  match Sys.argv with
-  | [|_; n|] -> int_of_string n
-  | _ -> 1
-let _ = for i = 1 to n do main () done
+(* Check environment variables for extra arguments.  *)
+let reps =
+  try int_of_string (Unix.getenv "NUM_REPS")
+  with Not_found | Failure "int_of_string" -> 1
+let gc_at_end =
+  try int_of_string (Unix.getenv "GC_AT_END") <> 0
+  with Not_found | Failure "int_of_string" -> false
+let gc_each_rep =
+  try int_of_string (Unix.getenv "GC_EACH_REP") <> 0
+  with Not_found | Failure "int_of_string" -> false
 
-let _ = Gc.compact ()
-
+(* Entry point *)
+let _ =
+  for i = 1 to reps do
+    main ();
+    if gc_each_rep then Gc.compact ()
+  done;
+  if gc_at_end then Gc.compact ()

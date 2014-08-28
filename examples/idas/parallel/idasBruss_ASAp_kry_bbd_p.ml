@@ -72,12 +72,6 @@ let unvec = Sundials.unvec
 module Adjoint = Idas.Adjoint
 open Nvector_parallel.DataOps
 
-(* As a slight deviation from the sundials/C code, we allow an extra
-   argument to repeat the test, used to check that garbage collection
-   works properly.  argv is updated to remove that extra argument so
-   the rest of the test can exactly mirror the C code.  *)
-let argv = ref Sys.argv
-
 let fprintf = Printf.fprintf
 let printf = Printf.printf
 
@@ -1274,10 +1268,21 @@ let main () =
     print_final_stats_b indexB
 
 
-let n =
-  match Sys.argv with
-  | [|_; n|] -> int_of_string n
-  | _ -> 1
-let _ = for i = 1 to n do main () done
+(* Check environment variables for extra arguments.  *)
+let reps =
+  try int_of_string (Unix.getenv "NUM_REPS")
+  with Not_found | Failure "int_of_string" -> 1
+let gc_at_end =
+  try int_of_string (Unix.getenv "GC_AT_END") <> 0
+  with Not_found | Failure "int_of_string" -> false
+let gc_each_rep =
+  try int_of_string (Unix.getenv "GC_EACH_REP") <> 0
+  with Not_found | Failure "int_of_string" -> false
 
-let _ = Gc.compact ()
+(* Entry point *)
+let _ =
+  for i = 1 to reps do
+    main ();
+    if gc_each_rep then Gc.compact ()
+  done;
+  if gc_at_end then Gc.compact ()

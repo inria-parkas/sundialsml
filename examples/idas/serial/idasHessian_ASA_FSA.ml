@@ -615,11 +615,21 @@ let main () =
   printf "  H(2,2):  %12.4e\n" h22
 
 
-(* Check if the last argument is a repetition count.  *)
+(* Check environment variables for extra arguments.  *)
 let reps =
-  match Sys.argv with
-  | [|_; n|] -> int_of_string n
-  | _ -> 1
-let _ = for i = 1 to reps do main () done
-let _ = Gc.compact ()
+  try int_of_string (Unix.getenv "NUM_REPS")
+  with Not_found | Failure "int_of_string" -> 1
+let gc_at_end =
+  try int_of_string (Unix.getenv "GC_AT_END") <> 0
+  with Not_found | Failure "int_of_string" -> false
+let gc_each_rep =
+  try int_of_string (Unix.getenv "GC_EACH_REP") <> 0
+  with Not_found | Failure "int_of_string" -> false
 
+(* Entry point *)
+let _ =
+  for i = 1 to reps do
+    main ();
+    if gc_each_rep then Gc.compact ()
+  done;
+  if gc_at_end then Gc.compact ()

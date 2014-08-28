@@ -46,12 +46,6 @@ module Sens = Idas.Sensitivity
 let n_vclone = Nvector_parallel.Ops.n_vclone
 let n_vconst = Nvector_parallel.Ops.n_vconst
 
-(* As a slight deviation from the sundials/C code, we allow an extra
-   argument to repeat the test, used to check that garbage collection
-   works properly.  argv is updated to remove that extra argument so
-   the rest of the test can exactly mirror the C code.  *)
-let argv = ref Sys.argv
-
 let fprintf = Printf.fprintf
 let printf = Printf.printf
 
@@ -138,7 +132,7 @@ let wrong_args my_pe name =
   exit 0
 
 let process_args my_pe =
-  let argv = !argv in
+  let argv = Sys.argv in
   let argc = Array.length argv in
   if argc < 2 then wrong_args my_pe argv.(0);
 
@@ -763,17 +757,21 @@ let main () =
   if thispe = 0 then print_final_stats mem
 
 
-
-(* Check if the last argument is a repetition count.  *)
+(* Check environment variables for extra arguments.  *)
 let reps =
-  let n = Array.length !argv in
-  try
-    if n >= 2 then
-      let reps = int_of_string !argv.(n-1) in
-      argv := Array.sub !argv 0 (n-1);
-      reps
-    else 1
-  with _ -> 1
-let _ = for i = 1 to reps do main () done
-let _ = Gc.compact ()
+  try int_of_string (Unix.getenv "NUM_REPS")
+  with Not_found | Failure "int_of_string" -> 1
+let gc_at_end =
+  try int_of_string (Unix.getenv "GC_AT_END") <> 0
+  with Not_found | Failure "int_of_string" -> false
+let gc_each_rep =
+  try int_of_string (Unix.getenv "GC_EACH_REP") <> 0
+  with Not_found | Failure "int_of_string" -> false
 
+(* Entry point *)
+let _ =
+  for i = 1 to reps do
+    main ();
+    if gc_each_rep then Gc.compact ()
+  done;
+  if gc_at_end then Gc.compact ()

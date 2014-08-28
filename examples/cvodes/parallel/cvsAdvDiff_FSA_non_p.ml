@@ -58,7 +58,6 @@ let unvec = Sundials.unvec
 let printf = Printf.printf
 let eprintf = Printf.eprintf
 
-let argv = ref Sys.argv
 let vmax_norm = Nvector_parallel.Ops.n_vmaxnorm
 
 (* Problem Constants *)
@@ -109,7 +108,7 @@ let wrong_args my_pe name =
   exit 0
 
 let process_args my_pe =
-  let argv = !argv in
+  let argv = Sys.argv in
   let argc = Array.length argv in
   if argc < 2 then wrong_args my_pe argv.(0);
   
@@ -376,6 +375,21 @@ let main () =
   (* Print final statistics *)
   if my_pe = 0 then print_final_stats cvode_mem (sensi <> None)
 
-let _ = main ()
-let _ = Gc.compact ()
+(* Check environment variables for extra arguments.  *)
+let reps =
+  try int_of_string (Unix.getenv "NUM_REPS")
+  with Not_found | Failure "int_of_string" -> 1
+let gc_at_end =
+  try int_of_string (Unix.getenv "GC_AT_END") <> 0
+  with Not_found | Failure "int_of_string" -> false
+let gc_each_rep =
+  try int_of_string (Unix.getenv "GC_EACH_REP") <> 0
+  with Not_found | Failure "int_of_string" -> false
 
+(* Entry point *)
+let _ =
+  for i = 1 to reps do
+    main ();
+    if gc_each_rep then Gc.compact ()
+  done;
+  if gc_at_end then Gc.compact ()

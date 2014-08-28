@@ -47,12 +47,6 @@ module VarType = Ida.VarType
 
 let printf = Printf.printf
 
-(* As a slight deviation from the sundials/C code, we allow an extra
-   argument to repeat the test, used to check that garbage collection
-   works properly.  argv is updated to remove that extra argument so
-   the rest of the test can exactly mirror the C code.  *)
-let argv = ref Sys.argv
-
 (* Problem Constants *)
 let neq   = 3             (* number of equations  *)
 let t0    = 0.0           (* initial time *)
@@ -77,7 +71,7 @@ let wrong_args name =
 
 (* Process and verify arguments to idasfwddenx. *)
 let process_args () =
-  let argv = !argv in
+  let argv = Sys.argv in
   let argc = Array.length argv in
 
   if argc < 2 then wrong_args argv.(0);
@@ -394,15 +388,21 @@ let main () =
   print_final_stats ida_mem (sensi <> None)
 
 
-(* Check if the last argument is a repetition count.  *)
+(* Check environment variables for extra arguments.  *)
 let reps =
-  let n = Array.length !argv in
-  try
-    if n >= 2 then
-      let reps = int_of_string !argv.(n-1) in
-      argv := Array.sub !argv 0 (n-1);
-      reps
-    else 1
-  with _ -> 1
-let _ = for i = 1 to reps do main () done
-let _ = Gc.compact ()
+  try int_of_string (Unix.getenv "NUM_REPS")
+  with Not_found | Failure "int_of_string" -> 1
+let gc_at_end =
+  try int_of_string (Unix.getenv "GC_AT_END") <> 0
+  with Not_found | Failure "int_of_string" -> false
+let gc_each_rep =
+  try int_of_string (Unix.getenv "GC_EACH_REP") <> 0
+  with Not_found | Failure "int_of_string" -> false
+
+(* Entry point *)
+let _ =
+  for i = 1 to reps do
+    main ();
+    if gc_each_rep then Gc.compact ()
+  done;
+  if gc_at_end then Gc.compact ()
