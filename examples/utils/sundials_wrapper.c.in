@@ -1,0 +1,23 @@
+/* A wrapper for examples written in C in the official sundials
+ * distribution, which parses NUM_REPS and iterates the example that
+ * many times.  */
+
+#define main _main
+#include "@sundials_src_name@"
+#include <stdlib.h>
+#undef main
+int main (int argc, char *argv[])
+{
+  int ret = 0;
+  long reps = 1;
+  char *p = getenv ("NUM_REPS");
+  if (p) {
+    reps = strtol (p, &p, 10);
+    if (*p) reps = 1;
+  }
+  while (reps-- > 0) {
+    ret = _main (@main_args@);
+    if (ret) return ret;
+  }
+  return 0;
+}
