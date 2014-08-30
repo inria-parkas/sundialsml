@@ -23,4 +23,4 @@ config.h
 examples/*/parallel/grad*.m
 examples/*/*/*.sundials.c
 examples/*/*/*.sundials
-examples/utils/pref
+examples/utils/perf
