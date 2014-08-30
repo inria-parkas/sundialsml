@@ -139,9 +139,9 @@ let summarize name sundials ocaml =
   if c_reps <> ml_reps then
     Printf.fprintf stderr "Warning: NUM_REPS don't match in %s and %s"
       sundials ocaml;
-  Printf.printf "# name\treps\tOCaml time\tC time\tOCaml time / C time\n";
-  Printf.printf "%s\t%d\t%.2f\t%.2f\t%.2f\n"
-    name ml_reps ml_mean c_mean (ml_mean /. c_mean)
+  Printf.printf "# reps\tOCaml\tC\tOCaml / C\tname\n";
+  Printf.printf "%d\t%.2f\t%.2f\t%.2f\t%s\n"
+    ml_reps ml_mean c_mean (ml_mean /. c_mean) name
 
 (* Parse args. *)
 

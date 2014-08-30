@@ -17,6 +17,13 @@
 #   respectively.
 # * USELIB [optional]
 #   sundials or sundials_nosensi (no extension!).  Defaults to sundials.
+#
+# Examples that need special execution commands (e.g. mpirun) should be
+# communicated like
+# $(eval $(call EXECUTION_RULE,foo,$(MPIRUN) -np 4 $$<))
+# Caveats:
+#  - Automatic variables like $< and $@ must have two $'s.
+#  - Don't prefix $$< with ./
 
 include $(SRCROOT)/config
 
@@ -112,29 +119,31 @@ $(MPI_EXAMPLES:.ml=.opt): %.opt: %.ml $(SRCROOT)/$(USELIB).cmxa
 	    mpi.cmxa $(USELIB).cmxa sundials_mpi.cmxa $<
 
 # opam inserts opam's and the system's stublibs directory into
-# CAML_LD_LIBRARY_PATH, which has precdence over -dllpath.  Make sure
-# we run with the shared libraries in the source tree, not installed
-# ones (if any).
+# CAML_LD_LIBRARY_PATH, which has higher precdence than -dllpath.
+# Make sure we run with the shared libraries in the source tree, not
+# installed ones (if any).  Native code doesn't have this prblem
+# because it statically links in C stubs.
 CAML_LD_LIBRARY_PATH:=$(SRCROOT):$(CAML_LD_LIBRARY_PATH)
-%.byte.out: %.byte
-	CAML_LD_LIBRARY_PATH=$(CAML_LD_LIBRARY_PATH) ./$< > $@
 
 %.byte.diff: %.byte.out %.sundials.out
 	diff -u $^ > $@ || true
 
-# Native code has C stubs statically linked in, so no need to modify
-# LD_LIBRARY_PATH (which would be a platform-dependent nightmare).
-%.opt.out: %.opt
-	./$< > $@
-
 %.opt.diff: %.opt.out %.sundials.out
 	@diff -u $^ > $@ || true
 
-%.sundials.out: $(EXAMPLESROOT)/$(SUBDIR)/%
-	$< > $@
-
 %.self.diff: %.byte.out %.opt.out
 	@diff -u $^ > $@ || true
+
+# Rules for producing *.out files.  Subroutine of EXECUTION_RULE.
+define ADD_EXECUTE_RULES
+    $1.byte.out: $1.byte
+	CAML_LD_LIBRARY_PATH=$(CAML_LD_LIBRARY_PATH) $(2:$$<=./$$<) > $$@
+    $1.opt.out: $1.opt
+	$(2:$$<=./$$<) > $$@
+    $1.sundials.out: $(EXAMPLESROOT)/$(SUBDIR)/$1
+	$2 > $$@
+endef
+
 
 ## Performance measurement
 
@@ -163,23 +172,23 @@ $(PERF): perf.%.log: $(ENABLED_EXAMPLES:.ml=.%) $(ENABLED_EXAMPLES:.ml=.%.perf)
 	cat $@
 
 %.opt.perf: %.opt.time %.sundials.time $(UTILS)/perf
-	$(UTILS)/perf -s $(<:.opt.time=) $(filter-out $(UTILS)/perf,$^) > $@
+	$(UTILS)/perf -s $(SUBDIR)/$(<:.opt.time=) \
+	    $(filter-out $(UTILS)/perf,$^) > $@
 
 %.byte.perf: %.byte.time %.sundials.time
-	$(UTILS)/perf -s $(<:.byte.time=) $(filter-out $(UTILS)/perf,$^) > $@
+	$(UTILS)/perf -s $(SUBDIR)/$(<:.byte.time=) \
+	    $(filter-out $(UTILS)/perf,$^) > $@
 
-# .sundials should be run before .opt or .byte - it determines NUM_REPS.
-%.sundials.time: %.sundials $(UTILS)/perf
-	$(UTILS)/perf -m $(MIN_TIME) $(PERF_REPS) ./$< \
-	    | tee $@ 
-
-%.opt.time: %.opt %.sundials.time $(UTILS)/perf
-	$(UTILS)/perf -i $(word 2,$^) $(PERF_REPS) ./$< \
-	    | tee $@
-
-%.byte.time: %.byte %.sundials.time $(UTILS)/perf
-	$(UTILS)/perf -i $(word 2,$^) $(PERF_REPS) ./$< \
-	    | tee $@
+# Rules for producing *.time files.  Subroutine of EXECUTION_RULE.
+define ADD_TIME_RULES
+    # .sundials should be run before .opt or .byte - it determines NUM_REPS.
+    $1.sundials.time: $1.sundials $(UTILS)/perf
+	$(UTILS)/perf -m $(MIN_TIME) $(PERF_REPS) $(2:$$<=./$$<) | tee $$@
+    $1.opt.time: $1.opt $1.sundials.time $(UTILS)/perf
+	$(UTILS)/perf -i $$(word 2,$$^) $(PERF_REPS) $(2:$$<=./$$<) | tee $$@
+    $1.byte.time: $1.byte $1.sundials.time $(UTILS)/perf
+	$(UTILS)/perf -i $$(word 2,$$^) $(PERF_REPS) $(2:$$<=./$$<) | tee $$@
+endef
 
 # Compilation of C examples with environment-handling wrappers.
 
@@ -234,6 +243,15 @@ $(EXAMPLESROOT)/$(SUBDIR)/%:
 	@false
 
 ## Misc
+
+# Generate recipes for *.out, *.time, etc.
+define EXECUTION_RULE
+    $(call ADD_EXECUTE_RULES,$1,$2)
+    $(call ADD_TIME_RULES,$1,$2)
+endef
+
+# Generate a default version.
+$(eval $(call EXECUTION_RULE,%,$$<))
 
 distclean: clean
 clean:

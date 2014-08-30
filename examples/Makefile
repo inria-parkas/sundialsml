@@ -3,8 +3,8 @@ info:
 	@echo "  all               compiles all tests without running them"
 	@echo "  tests.byte.log    run standard tests (byte code)"
 	@echo "  tests.opt.log     run standard tests (native code)"
-	@echo "  perf.byte.log     time standard tests, requires GNU utils (byte code)"
-	@echo "  perf.opt.log      time standard tests, requires GNU utils (native code)"
+	@echo "  perf.byte.log     time standard tests (byte code)"
+	@echo "  perf.opt.log      time standard tests (native code)"
 	@echo "  ocaml             compile the other ocaml examples without running them"
 
 include ../config
@@ -47,62 +47,41 @@ perf.opt.log perf.byte.log:
 	    ${MAKE} -C $$s $@;			\
 	 done
 	@echo ======================================================================
-	@echo "# NB: Examples that took < $(MIN_TIME)s are omitted." > $@
-	@echo "# <name>	<OCaml time>	<C time>	<OCaml time / C time>" >> $@
-	@for s in ${SUBDIRS}; do						\
-	    $(AWK) '/^[^#]/ { if ($$3 >= $(MIN_TIME)) print $$0; }' $$s/$@;	\
+	@grep '^#' $(word 1,$(SUBDIRS))/$@ > $@
+	@for s in ${SUBDIRS}; do				\
+	    grep '^[^#]' $$s/$@ >> $@;	\
 	done >> $@
 	cat $@
 	@$(if $(findstring $@,$(MAKECMDGOALS)), \
 	   echo "Note: \"make $(@:.log=.plot)\" can plot this for you.")
 
 perf.%.dat: perf.%.log
-	@sed -e 's#/serial/#/serial/\\n#'		\
-	     -e 's#/parallel/#/parallel/\\n#'	\
-	     -e 's#\.opt##; s#\.byte##'		\
+	@sed -e 's#/serial/#/ser/#'		\
+	     -e 's#/parallel/#/par/#'	\
+	     -e 's#kinsol/#kin/#'	\
+	     -e 's#cvodes/#cvs/#'	\
+	     -e 's#cvode/#cv/#'	\
 	     $< > $@
 
-BMARGIN=0.1
-
-plot_script =						\
-    set bmargin screen $(BMARGIN);			\
-    set boxwidth 0.5;					\
-    set style fill solid;				\
-    set yrange [0:*];					\
-    set y2tics 1 nomirror;				\
-    set point 2;					\
-    plot '$1' using 4:xtic(1) with boxes lc rgb 'red'	\
-	title 'OCaml time / C time (left axis)',	\
-	'$1' using 3 with points			\
-	pointtype 5 lc rgb 'black'			\
-	title 'Absolute time for C code (right axis)'	\
-	axes x1y2
-
 perf.opt.plot: perf.opt.dat
-	@echo "NB: You might have to adjust BMARGIN to fit horizontal axis labels."
-	gnuplot -e "set title 'native code performance';\
-		    $(call plot_script,$<); pause -1"
+	TITLE='native code performance' utils/plot.sh $<
+	@utils/plot.sh --explain-vars
 
 perf.byte.plot: perf.byte.dat
-	@echo "NB: You might have to adjust BMARGIN to fit horizontal axis labels."
-	gnuplot -e "set title 'byte code performance';	\
-		    $(call plot_script,$<); pause -1"
+	TITLE='byte code performance' utils/plot.sh $<
+	@utils/plot.sh --explain-vars
 
 perf.opt.%: perf.opt.dat
-	gnuplot -e "set title 'native code performance';	\
-		    set terminal $(subst perf.opt.,,$@);	\
-		    set output '$@';				\
-		    $(call plot_script,$<)"
-	@echo "Plot saved in $@.  You might have to adjust BMARGIN to"
-	@echo "fit horizontal axis labels."
+	TITLE='native code performance' TERMINAL=$(subst perf.opt.,,$@) \
+	    OUTPUT=$@ utils/plot.sh $<
+	@printf "\nPlot saved in $@.\n"
+	@utils/plot.sh --explain-vars
 
 perf.byte.%: perf.byte.dat
-	gnuplot -e "set title 'byte code performance';		\
-		    set terminal $(subst perf.byte.,,$@);	\
-		    set output '$@';				\
-		    $(call plot_script,$<)"
-	@echo "Plot saved in $@.  You might have to adjust BMARGIN to"
-	@echo "fit horizontal axis labels."
+	TITLE='byte code performance' TERMINAL=$(subst perf.opt.,,$@) \
+	    OUTPUT=$@ utils/plot.sh $<
+	@printf "\nPlot saved in $@.\n"
+	@utils/plot.sh --explain-vars
 
 ocaml:
 	${MAKE} -C ocaml

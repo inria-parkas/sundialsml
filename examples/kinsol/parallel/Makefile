@@ -10,21 +10,7 @@ MPI_EXAMPLES = kinFoodWeb_kry_p.ml		\
 
 include ../../examples.mk
 
-MPIRUN = mpirun
-
 # Tests with MPI.
 
-kinFoodWeb_kry_p.byte.out: kinFoodWeb_kry_p.byte
-	$(MPIRUN) -np 4 $< > $@
-kinFoodWeb_kry_p.opt.out: kinFoodWeb_kry_p.opt
-	$(MPIRUN) -np 4 $< > $@
-kinFoodWeb_kry_p.sundials.out: $(EXAMPLESROOT)/kinsol/parallel/kinFoodWeb_kry_p
-	$(MPIRUN) -np 4 $< > $@
-
-kinFoodWeb_kry_bbd_p.byte.out: kinFoodWeb_kry_bbd_p.byte
-	$(MPIRUN) -np 4 $< > $@
-kinFoodWeb_kry_bbd_p.opt.out: kinFoodWeb_kry_bbd_p.opt
-	$(MPIRUN) -np 4 $< > $@
-kinFoodWeb_kry_bbd_p.sundials.out: \
-    $(EXAMPLESROOT)/kinsol/parallel/kinFoodWeb_kry_bbd_p
-	$(MPIRUN) -np 4 $< > $@
+$(eval $(call EXECUTION_RULE,kinFoodWeb_kry_p,$(MPIRUN) -np 4 $$<))
+$(eval $(call EXECUTION_RULE,kinFoodWeb_kry_bbd_p,$(MPIRUN) -np 4 $$<))
