@@ -88,7 +88,7 @@ and ('a, 'k) session = {
 
 and ('data, 'kind) alternate_linsolv =
   {
-    linit  : (('data, 'kind) session -> bool) option;
+    linit  : (('data, 'kind) session -> unit) option;
     lsetup : (('data, 'kind) session -> unit) option;
     lsolve : ('data, 'kind) session -> 'data -> 'data -> float option;
   }

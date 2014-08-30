@@ -72,7 +72,7 @@ set title font '${TITLE_FONT}';
 set xtics font '${FONT}';
 set ytics font '${FONT}';
 set key font '${FONT}';
-set key ins vert left top;
+set key ins vert right top;
 set key invert;
 set y2tics font '${FONT}';
 set bmargin screen ${BMARGIN};
@@ -81,13 +81,13 @@ set boxwidth 0.5;
 set style fill solid;
 set yrange [0:*];
 set xtics rotate by 60 right;
-set logscale y2;
 set ytics nomirror;
+set y2label 'seconds' font '${FONT}'
 set y2tics nomirror;
 plot "$1" using 4:xtic(5) with boxes lc rgb 'red' \
     title 'OCaml time / C time (left axis)', \
-    "$1" using 1 with points \
+    "$1" using (\$3/\$1) with points \
     pointtype 3 lc rgb 'black' \
-    title 'number of repetitions (right axis, log scale)' \
+    title 'C time / rep (right axis)' \
     axes x1y2; $PAUSE
 EOF

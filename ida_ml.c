@@ -400,6 +400,60 @@ static int jactimesfn(
     CAMLreturnT (int, r);
 }
 
+static int linit(IDAMem ida_mem)
+{
+    CAMLparam0();
+    int r;
+    value *backref = ida_mem->ida_user_data;
+    CAML_FN (call_linit);
+
+    r = Int_val (caml_callback(*call_linit, *backref));
+
+    CAMLreturnT(int, r);
+}
+
+static int lsetup(IDAMem ida_mem, N_Vector yyp, N_Vector ypp, N_Vector resp,
+		  N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
+{
+    CAMLparam0();
+    CAMLlocalN(args, 5);
+    CAMLlocal1(vr);
+    value *backref = ida_mem->ida_user_data;
+    CAML_FN (call_lsetup);
+
+    args[0] = *backref;
+    args[2] = NVEC_BACKLINK(ypred);
+    args[3] = NVEC_BACKLINK(fpred);
+    args[4] = make_triple_tmp(tmp1, tmp2, tmp3);
+
+    vr = caml_callbackN(*call_lsetup, sizeof (args) / sizeof (*args), args);
+    *jcurPtr = Bool_val(Field(vr, 0));
+
+    CAMLreturnT(int, Int_val(Field(vr, 1)));
+}
+
+static int lsolve(IDAMem cv_mem, N_Vector b, N_Vector weight, N_Vector ycur,
+		  N_Vector fcur)
+{
+    CAMLparam0();
+    CAMLlocalN(args, 5);
+    int r;
+    value *backref = cv_mem->cv_user_data;
+    CAML_FN (call_lsolve);
+
+    args[0] = *backref;
+    args[1] = NVEC_BACKLINK(b);
+    args[2] = NVEC_BACKLINK(weight);
+    args[3] = NVEC_BACKLINK(ycur);
+    args[4] = NVEC_BACKLINK(fcur);
+
+    r = Int_val (caml_callbackN(*call_lsolve,
+				sizeof (args) / sizeof (*args),
+				args));
+
+    CAMLreturnT(int, r);
+}
+
 
 /* Dense and Band can only be used with serial NVectors.  */
 CAMLprim void c_ida_dls_dense (value vida_mem, value vneqs, value vset_jac)

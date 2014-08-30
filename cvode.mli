@@ -683,7 +683,7 @@ module Alternate :
     (** Indicates problems during the solution of nonlinear equation at a
         step. Used to help decide whether to update the Jacobian data kept by a
         linear solver. *)
-    type conv_fail =
+    type conv_fail = Cvode_impl.conv_fail =
       | NoFailures
           (** Passed on the first call for a step, or if the lcoal error test
               failed on the previous attempt at this setup but the Newton

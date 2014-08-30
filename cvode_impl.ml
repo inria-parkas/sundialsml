@@ -232,7 +232,7 @@ and ('a, 'kind) bsensext = {
 
 and ('data, 'kind) alternate_linsolv =
   {
-    linit   : (('data, 'kind) session -> bool) option;
+    linit   : (('data, 'kind) session -> unit) option;
     lsetup : (('data, 'kind) session -> conv_fail -> 'data -> 'data
               -> 'data triple_tmp -> bool) option;
     lsolve : ('data, 'kind) session ->  'data -> 'data -> 'data -> 'data
