@@ -28,8 +28,6 @@ MLOBJ_MPI = nvector_parallel.cmo kinsol_bbd.cmo	\
 	    cvode_bbd.cmo cvodes_bbd.cmo	\
 	    ida_bbd.cmo idas_bbd.cmo
 
-MPI_LIBLINK= -lsundials_nvecparallel
-
 ### Other sets of files.
 
 # For `make clean'.  All object files, including ones that may not be

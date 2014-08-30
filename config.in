@@ -18,7 +18,10 @@ CPPFLAGS ?= -P -x c -traditional-cpp
 LAPACK_ENABLED=@lapack_enabled@
 
 MPICC = @mpicc@ $(MPI_FLAGS)
+MPIRUN = @mpirun@ $(MPI_FLAGS)
 MPI_ENABLED=@ocamlmpi_enabled@
+
+MPI_LIBLINK= -lsundials_nvecparallel
 
 LIB_PATH = @sundials_lib_path@
 CVODE_LDFLAGS = @cvode_ldflags@ $(LDFLAGS)

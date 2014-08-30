@@ -217,7 +217,8 @@ $(SERIAL_EXAMPLES:.ml=.sundials): %.sundials: %.sundials.c
 
 $(MPI_EXAMPLES:.ml=.sundials): %.sundials: %.sundials.c
 	$(MPICC) -o $@ -I $(EXAMPLESROOT)/$(SUBDIR) \
-	    $(EG_CFLAGS) $< $(LIB_PATH) $(EG_LDFLAGS) $(LAPACK_LIB)
+	    $(EG_CFLAGS) $< $(LIB_PATH) $(EG_LDFLAGS) \
+	    $(LAPACK_LIB) $(MPI_LIBLINK)
 
 ## Dependences to files living outside of the examples directory
 
