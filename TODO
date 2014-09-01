@@ -59,6 +59,7 @@ DONE 13. (Tim) Parallel CVODES and KINSOL examples.
     missing documentation and rewrite intro.doc.
 
 15. (Tim) Eventual release:
+   - Test against OCaml 3.12.x (document in intro.doc, update configure)
    - Dêpot APP.
    - Repository on Github.
    - Release on Opam.
