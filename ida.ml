@@ -432,35 +432,34 @@ module Spils =
         = "c_ida_spils_get_num_res_evals"
 
   end
-
+(*
 module Alternate =
   struct
-    type conv_fail = Ida_impl.conv_fail
+    type conv_fail = Cvode_impl.conv_fail =
+      | NoFailures
+      | FailBadJ
+      | FailOther
 
-    type ('data, 'kind) callbacks = ('data, 'kind) alternate_linsolv =
+    type 'data callbacks = 'data alternate_linsolv =
       {
-        linit   : (('data, 'kind) session -> bool) option;
-
-        lsetup : (('data, 'kind) session -> conv_fail -> 'data -> 'data
-                  -> 'data triple_tmp -> bool) option;
-
-        lsolve : ('data, 'kind) session ->  'data -> 'data -> 'data -> 'data
-                  -> unit;
+        linit   : (unit -> bool) option;
+        lsetup  : (conv_fail -> 'data -> 'data -> 'data triple_tmp -> bool)
+                  option;
+        lsolve  : 'data -> 'data -> 'data -> 'data -> unit;
+        lfree   : (unit -> unit) option;
       }
 
     external c_set_alternate
-      : ('data, 'kind) session -> bool -> bool -> unit
+      : ('data, 'kind) session -> bool -> bool -> bool -> unit
       = "c_ida_set_alternate"
 
-    external get_gamma : ('data, 'kind) session -> float * float
-      = "c_ida_get_gamma"
-
     let make_solver f s nv =
-      let { linit; lsetup; lsolve } as cb = f s nv in
-      c_set_alternate s (linit <> None) (lsetup <> None);
+      let { linit; lsetup; lsolve; lfree } as cb = f s nv in
+      c_set_alternate s (linit <> None) (lsetup <> None) (lfree <> None);
       s.ls_callbacks <- AlternateCallback cb
 
   end
+*)
 
 let set_linear_solver session solver nv nv' =
   session.ls_callbacks <- NoCallbacks;
