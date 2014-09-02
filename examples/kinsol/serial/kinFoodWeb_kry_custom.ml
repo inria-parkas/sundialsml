@@ -80,13 +80,14 @@
 
 module Dense = Dls.ArrayDenseMatrix
 module RealArray = Sundials.RealArray
+module RealArray2 = Sundials.RealArray2
 module LintArray = Sundials.LintArray
 open Bigarray
 
 let printf = Printf.printf
 let matrix_unwrap = Sundials.RealArray2.unwrap
 let wrap = Nvector_array.wrap
-let slice_left = Array2.slice_left
+let unwrap = Sundials.RealArray2.unwrap
 let nvwl2norm = Nvector_array.DataOps.n_vwl2norm
 
 let ith v i = v.{i - 1}
@@ -291,9 +292,9 @@ let prec_setup_bd { Kinsol.jac_u=cc;
         cc.(idx+j) <- csave;
         
         (* Load the j-th column of difference quotients *)
-        let pxycol = slice_left (matrix_unwrap pxy) j in
+        let pxydata = unwrap pxy in
         for i = 0 to num_species - 1 do
-          pxycol.{i} <- (perturb_rates.(i) -. rates.(idx+i)) *. fac
+          pxydata.{j, i} <- (perturb_rates.(i) -. rates.(idx+i)) *. fac
         done
       done; (* end of j loop *)
       
