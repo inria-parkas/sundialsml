@@ -48,7 +48,6 @@ module MakeOps : functor (A : sig
       val make      : int -> float -> data
       val clone     : data -> data
       val length    : data -> int
-      val fold_left : ('a -> float -> 'a) -> 'a -> data -> 'a
     end) -> ARRAY_NVECTOR with type t = A.data
 
 (** Nvector on {{:OCAML_DOC_ROOT(Array)} Array}s of [float]s. *)

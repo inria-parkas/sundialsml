@@ -51,7 +51,6 @@ module MakeOps : functor (A : sig
       val make      : int -> float -> local_data
       val clone     : local_data -> local_data
       val length    : local_data -> int
-      val fold_left : ('a -> float -> 'a) -> 'a -> local_data -> 'a
     end) -> Nvector.NVECTOR_OPS
             with type t = A.local_data * int * Mpi.communicator
 

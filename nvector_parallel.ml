@@ -318,11 +318,12 @@ module DataOps =
     let clone     = Sundials.RealArray.clone
 
     type t = Sundials.RealArray.t * int * Mpi.communicator
+    type d = Sundials.RealArray.t
 
     (* let n_vclone (d, gl, comm) = (A.clone d, gl, comm) *)
     let n_vclone (d, gl, comm) = (d, gl, comm)
 
-    let arr_vaxpy a x y =
+    let arr_vaxpy a (x : d) (y : d) =
       if a = 1.0 then
         for i = 0 to A.dim x - 1 do
           A.set y i (A.get y i +. A.get x i)
@@ -336,7 +337,7 @@ module DataOps =
           A.set y i (A.get y i +. a *. A.get x i)
         done
 
-    let n_vlinearsum a (x, _, _) b (y, _, _) (z, _, _) =
+    let n_vlinearsum a ((x : d), _, _) b ((y : d), _, _) ((z : d), _, _) =
       if b = 1.0 && z == y then
         arr_vaxpy a x y
       else if a = 1.0 && z == x then
@@ -373,9 +374,9 @@ module DataOps =
           A.set z i (a *. A.get x i +. b *. A.get y i)
         done
 
-    let n_vconst c (a, _, _) = A.fill a c
+    let n_vconst c ((a : d), _, _) = A.fill a c
 
-    let n_vscale c (x, _, _) (z, _, _) =
+    let n_vscale c ((x : d), _, _) ((z : d), _, _) =
       if c = 1.0 then
         for i = 0 to A.dim x - 1 do
           A.set z i (A.get x i)
@@ -389,12 +390,12 @@ module DataOps =
           A.set z i (c *. A.get x i)
         done
 
-    let n_vaddconst (x, _, _) b (z, _, _) =
+    let n_vaddconst ((x : d), _, _) b ((z : d), _, _) =
       for i = 0 to A.dim x - 1 do
         A.set z i (A.get x i +. b)
       done
 
-    let n_vmaxnorm (x, _, comm) =
+    let n_vmaxnorm ((x : d), _, comm) =
       let lmax = ref 0.0 in
       for i = 0 to A.dim x - 1 do
         let ax = abs_float (A.get x i) in
@@ -402,7 +403,7 @@ module DataOps =
       done;
       Mpi.allreduce_float !lmax Mpi.Float_max comm
 
-    let n_vwrmsnorm (x, n_global, comm) (w, _, _) =
+    let n_vwrmsnorm ((x : d), n_global, comm) ((w : d), _, _) =
       let lsum = ref 0.0 in
       for i = 0 to A.dim x - 1 do
         lsum := !lsum
@@ -411,7 +412,7 @@ module DataOps =
       let gsum = Mpi.allreduce_float !lsum Mpi.Float_sum comm in
       sqrt (gsum /. float n_global)
 
-    let n_vwrmsnormmask (x, n_global, comm) (w, _, _) (id, _, _) =
+    let n_vwrmsnormmask ((x : d), n_global, comm) ((w : d), _, _) ((id : d), _, _) =
       let lsum = ref 0.0 in
       for i = 0 to A.dim x - 1 do
         if A.get id i > 0.0 then
@@ -420,7 +421,7 @@ module DataOps =
       let gsum = Mpi.allreduce_float !lsum Mpi.Float_sum comm in
       sqrt (gsum /. float n_global)
 
-    let n_vmin (x, _, comm) =
+    let n_vmin ((x : d), _, comm) =
       let lmin = ref max_float in
       for i = 0 to A.dim x - 1 do
         let xv = A.get x i in
@@ -428,19 +429,19 @@ module DataOps =
       done;
       Mpi.allreduce_float !lmin Mpi.Float_min comm
 
-    let n_vdotprod (x, _, comm) (y, _, _) =
+    let n_vdotprod ((x : d), _, comm) ((y : d), _, _) =
       let lsum = ref 0.0 in
       for i = 0 to A.dim x - 1 do
         lsum := !lsum +. (A.get x i *. A.get y i)
       done;
       Mpi.allreduce_float !lsum Mpi.Float_sum comm
 
-    let n_vcompare c (x, _, _) (z, _, _) =
+    let n_vcompare c ((x : d), _, _) ((z : d), _, _) =
       for i = 0 to A.dim x - 1 do
         A.set z i (if abs_float (A.get x i) >= c then 1.0 else 0.0)
       done
 
-    let n_vinvtest (x, _, comm) (z, _, _) =
+    let n_vinvtest ((x : d), _, comm) ((z : d), _, _) =
       let lval = ref 1.0 in
       for i = 0 to A.dim x do
         if A.get x i = 0.0 then lval := 0.0
@@ -448,7 +449,7 @@ module DataOps =
       done;
       (Mpi.allreduce_float !lval Mpi.Float_min comm = 0.0)
 
-    let n_vwl2norm (x, _, comm) (w, _, _) =
+    let n_vwl2norm ((x : d), _, comm) ((w : d), _, _) =
       let lsum = ref 0.0 in
       for i = 0 to A.dim x - 1 do
         lsum := !lsum +. (A.get x i *. A.get w i *. A.get x i *. A.get w i)
@@ -456,14 +457,14 @@ module DataOps =
       let gsum = Mpi.allreduce_float !lsum Mpi.Float_sum comm in
       sqrt gsum
 
-    let n_vl1norm (x, _, comm) =
+    let n_vl1norm ((x : d), _, comm) =
       let lsum = ref 0.0 in
       for i = 0 to A.dim x - 1 do
         lsum := !lsum +. abs_float (A.get x i)
       done;
       Mpi.allreduce_float !lsum Mpi.Float_sum comm
 
-    let n_vconstrmask (c, _, _) (x, _, comm) (m, _, _) =
+    let n_vconstrmask ((c : d), _, _) ((x : d), _, comm) ((m : d), _, _) =
       let test = ref 1.0 in
       let check b = if b then 0.0 else (test := 0.0; 1.0) in
       let f c x =
@@ -480,7 +481,7 @@ module DataOps =
       done;
       (Mpi.allreduce_float !test Mpi.Float_min comm = 1.0)
 
-    let n_vminquotient (num, _, comm) (denom, _, _) =
+    let n_vminquotient ((num : d), _, comm) ((denom : d), _, _) =
       let lmin = ref Sundials.big_real in
       for i = 0 to A.dim num - 1 do
         if (A.get denom i) <> 0.0 then
@@ -488,22 +489,22 @@ module DataOps =
       done;
       Mpi.allreduce_float !lmin Mpi.Float_min comm
 
-    let n_vprod (x, _, _) (y, _, _) (z, _, _) =
+    let n_vprod ((x : d), _, _) ((y : d), _, _) ((z : d), _, _) =
       for i = 0 to A.dim x - 1 do
         A.set z i (A.get x i *. A.get y i)
       done
 
-    let n_vdiv (x, _, _) (y, _, _) (z, _, _) =
+    let n_vdiv ((x : d), _, _) ((y : d), _, _) ((z : d), _, _) =
       for i = 0 to A.dim x - 1 do
         A.set z i (A.get x i /. A.get y i)
       done
 
-    let n_vabs (x, _, _) (z, _, _) =
+    let n_vabs ((x : d), _, _) ((z : d), _, _) =
       for i = 0 to A.dim x - 1 do
         A.set z i (abs_float (A.get x i))
       done
 
-    let n_vinv (x, _, _) (z, _, _) =
+    let n_vinv ((x : d), _, _) ((z : d), _, _) =
       for i = 0 to A.dim x - 1 do
         A.set z i (1.0 /. (A.get x i))
       done
