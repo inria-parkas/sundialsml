@@ -22,17 +22,19 @@
  * -----------------------------------------------------------------
  *)
 
-module RealArray = Sundials.RealArray
-
-let printf = Printf.printf
 
 (* Test the Cvode.Alternate module *)
 
-module DM = Dls.DenseMatrix
+module DM = Dls.ArrayDenseMatrix
 module LintArray = Sundials.LintArray
+module RealArray = Sundials.RealArray
+module RealArray2 = Sundials.RealArray2
 
+let printf = Printf.printf
 let nvwl2norm = Nvector_serial.DataOps.n_vwl2norm
 let nvdotprod = Nvector_serial.DataOps.n_vdotprod
+
+let unwrap = Sundials.RealArray2.unwrap
 
 type cvdls_mem = {
   dj     : DM.t;
@@ -100,7 +102,7 @@ let two   = 2.0
 let ith v i = v.{i - 1}
 let set_ith v i e = v.{i - 1} <- e
 
-let set_ijth m i j = Dls.DenseMatrix.set m (i - 1) (j - 1)
+let set_ijth (m : RealArray2.data) i j e = m.{j - 1, i - 1} <- e
 
 (* System function *)
 let func (yd : RealArray.t) (fd : RealArray.t) =
@@ -155,7 +157,7 @@ let func (yd : RealArray.t) (fd : RealArray.t) =
   fd.{7} <- eq8; fd.{15} <- lb8; fd.{23} <- ub8
 
 (* System Jacobian *)
-let jac (yd : RealArray.t) f j =
+let jac (yd : RealArray.t) f jm =
   let x1 = yd.{0}
   and x2 = yd.{1}
   and x3 = yd.{2}
@@ -164,6 +166,8 @@ let jac (yd : RealArray.t) f j =
   and x6 = yd.{5}
   and x7 = yd.{6}
   and x8 = yd.{7} in
+
+  let j = unwrap jm in
 
   (* Nonlinear equations *)
 
