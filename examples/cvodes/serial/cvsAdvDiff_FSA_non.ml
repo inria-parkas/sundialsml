@@ -78,7 +78,7 @@ type user_data = {
 
 (* f routine. Compute f(t,u). *)
 
-let f data t u udot =
+let f data t (u : RealArray.t) (udot : RealArray.t) =
   (* Extract needed problem constants from data *)
   let dx = data.dx in
   let hordc = data.p.{0}/.(dx*.dx) in

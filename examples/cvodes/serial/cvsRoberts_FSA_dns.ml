@@ -57,8 +57,8 @@ let printf = Printf.printf
 (* Accessor macros *)
 
 (* i-th vector component i=1..NEQ *)
-let ith v i = v.{i - 1}
-let set_ith v i e = v.{i - 1} <- e
+let ith (v : RealArray.t) i = v.{i - 1}
+let set_ith (v : RealArray.t) i e = v.{i - 1} <- e
 
 (* (i,j)-th matrix component i,j=1..NEQ *)
 let ijth v i j       = Densemat.get v (i - 1) (j - 1)

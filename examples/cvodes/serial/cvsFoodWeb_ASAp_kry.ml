@@ -85,25 +85,11 @@ module Densemat = Dls.ArrayDenseMatrix
 open Bigarray
 let unvec = Sundials.unvec
 
-(* Same as the functions in Nvector_array.Bigarray.  Redefined here
-   for performance. *)
-let nvwrmsnorm (x : RealArray.t) (w : RealArray.t) =
-  let f a x w = a +. ((x *. w) ** 2.0) in
-  let rec go acc i =
-    if i < RealArray.length x
-    then go (f acc x.{i} w.{i}) (i+1)
-    else acc
-  in
-  sqrt (go 0.0 0 /. float (RealArray.length x))
-
-let nvlinearsum a (x : RealArray.t) b (y : RealArray.t) (z : RealArray.t) =
-  let lim = RealArray.length x - 1 in
-  for i = 0 to lim do
-    z.{i} <- a *. x.{i} +. b *. y.{i}
-  done
+let nvwrmsnorm = Nvector_serial.DataOps.n_vwrmsnorm
+let nvlinearsum = Nvector_serial.DataOps.n_vlinearsum
 
 let printf = Printf.printf
-let sqr x = x ** 2.0
+let sqr x = x *. x
 
 let zero  = 0.0
 let one   = 1.0
@@ -402,27 +388,33 @@ let cb_init wdata (cdata : RealArray.t) is =
  * and at time t.
  *)
 
-let web_rates wdata x y t (c : RealArray.t) (rate : RealArray.t) =
-  let ns = wdata.ns
-  and acoef = wdata.acoef
+let web_rates wdata x y ((c : RealArray.t), c_off)
+                        ((rate : RealArray.t), rate_off) =
+  let acoef = wdata.acoef
   and bcoef = wdata.bcoef
   in
-  Array1.fill rate zero;
+  for i = rate_off to rate_off + ns - 1 do
+    rate.{i} <- zero
+  done;
   for j = 0 to ns - 1 do
-    let c = c.{j} in
+    let c = c.{c_off + j} in
     for i = 0 to ns - 1 do
-      rate.{i} <- rate.{i} +. c *. acoef.(i).(j)
+      rate.{rate_off + i} <- rate.{rate_off + i} +. c *. acoef.(i).(j)
     done
   done;
 
   let fac = one +. alph *. x *. y in
   for i = 0 to ns - 1 do
-    rate.{i} <- c.{i} *. (bcoef.(i) *. fac +. rate.{i})
+    rate.{rate_off + i} <- c.{c_off + i} *. (bcoef.(i) *. fac
+                              +. rate.{rate_off + i})
   done
 
 (* This routine computes the interaction rates for the backward problem *)
 
-let web_rates_b wdata x y t (c : RealArray.t) (cB : RealArray.t) (rate : RealArray.t) (rateB : RealArray.t) =
+let web_rates_b wdata x y ((c : RealArray.t), c_off)
+                          ((cB : RealArray.t), cB_off)
+                          ((rate : RealArray.t), rate_off)
+                          ((rateB : RealArray.t), rateB_off) =
   let ns = wdata.ns
   and acoef = wdata.acoef
   and bcoef = wdata.bcoef in
@@ -430,23 +422,25 @@ let web_rates_b wdata x y t (c : RealArray.t) (cB : RealArray.t) (rate : RealArr
   let fac = one +. alph *. x *. y in
 
   for i = 0 to ns - 1 do
-    rate.{i} <- bcoef.(i) *. fac
+    rate.{rate_off + i} <- bcoef.(i) *. fac
   done;
   
   for j = 0 to ns - 1 do
     for i = 0 to ns - 1 do
-      rate.{i} <- rate.{i} +. acoef.(i).(j) *. c.{j}
+      rate.{rate_off + i} <-
+        rate.{rate_off + i} +. acoef.(i).(j) *. c.{c_off + j}
     done
   done;
 
   for i = 0 to ns - 1 do
-    rateB.{i} <- cB.{i} *. rate.{i};
-    rate.{i} <- c.{i} *. rate.{i}
+    rateB.{rateB_off + i} <- cB.{cB_off + i} *. rate.{rate_off + i};
+    rate.{rate_off + i} <- c.{c_off + i} *. rate.{rate_off + i}
   done;
 
   for j = 0 to ns - 1 do
     for i = 0 to ns - 1 do
-      rateB.{i} <- rateB.{i} +. acoef.(j).(i) *. c.{j} *. cB.{j}
+      rateB.{rateB_off + i} <- rateB.{rateB_off + i}
+                         +. acoef.(j).(i) *. c.{c_off + j} *. cB.{cB_off + j}
     done
   done
 
@@ -462,7 +456,7 @@ let fblock wdata t cdata jx jy cdotdata =
   and x = float jx *. wdata.dx
   in
   let ic = wdata.ns * iblok in
-  web_rates wdata x y t (cdata +>+ ic) cdotdata
+  web_rates wdata x y (cdata, ic) (cdotdata, 0)
 
 (*
  * This routine performs ITMAX=5 Gauss-Seidel iterations to compute an
@@ -742,7 +736,7 @@ let f wdata t cdata (cdotdata : RealArray.t) =
       let x = float jx *. dx in
       let ic = iyoff + ns * jx in
       (* Get interaction rates at one point (x,y). *)
-      web_rates wdata x y t (cdata +>+ ic) (fsave +>+ ic);
+      web_rates wdata x y (cdata, ic) (fsave, ic);
       let idxu = if jx = mx - 1 then -ns else ns in
       let idxl = if jx = 0      then -ns else ns in
       for i = 1 to ns do
@@ -782,7 +776,7 @@ let precond wdata jacarg jok gamma =
         Cvode.jac_tmp = (vtemp1, _, _)
       } = jacarg
   in
-  let f1 = vtemp1 +>+ 0 in (* shorten to ns *)
+  let f1 = vtemp1 in
   let cvode_mem =
     match wdata.cvode_mem with
     | Some c -> c | None -> assert false
@@ -912,8 +906,7 @@ let fB wdata t (cdata : RealArray.t) (cBdata : RealArray.t) (cBdotdata : RealArr
       let x  = float jx *. dx
       and ic = iyoff + ns*jx in
       (* Get interaction rates at one point (x,y). *)
-      web_rates_b wdata x y t (cdata +>+ ic) (cBdata +>+ ic)
-                              (fsave +>+ ic) (fBsave +>+ ic);
+      web_rates_b wdata x y (cdata, ic) (cBdata, ic) (fsave, ic) (fBsave, ic);
       let idxu = if jx = mx-1 then -ns else ns
       and idxl = if jx = 0 then -ns else ns
       in
@@ -943,7 +936,7 @@ let precondb wdata jacarg jok gamma =
         Adj.jac_tmp = (vtemp1, _, _)
       } = jacarg
   in
-  let f1 = vtemp1 +>+ 0 in (* shorten to ns *)
+  let f1 = vtemp1 in
   let cvode_mem =
     match wdata.cvode_memb with
     | Some c -> c | None -> assert false

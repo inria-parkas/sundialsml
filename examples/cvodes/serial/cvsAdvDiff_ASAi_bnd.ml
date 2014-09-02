@@ -49,9 +49,6 @@ let unvec = Sundials.unvec
 
 let printf = Printf.printf
 
-let ith v i = v.{i - 1}
-let set_ith v i e = v.{i - 1} <- e
-
 (* Header files with a description of contents used in cvbanx.c *)
 
 

@@ -50,11 +50,13 @@
  *)
 
 module RealArray = Sundials.RealArray
+module RealArray2 = Sundials.RealArray2
 module LintArray = Sundials.LintArray
 module Direct = Dls.ArrayDenseMatrix
 module Sens = Cvodes.Sensitivity
+open Bigarray
 let unvec = Sundials.unvec
-
+let unwrap = RealArray2.unwrap
 
 let printf = Printf.printf
 
@@ -116,13 +118,12 @@ let ns = 2
    work with matrices stored by column in a 2-dimensional array. In C,
    arrays are indexed starting at 0, not 1. *)
 
-let ijkth v i j k       = v.{i - 1 + j * num_species + k * nsmx}
-let set_ijkth v i j k e = v.{i - 1 + j * num_species + k * nsmx} <- e
-let slice_ijkth v i j k =
+let ijkth (v : RealArray.t) i j k       = v.{i - 1 + j * num_species + k * nsmx}
+let set_ijkth (v : RealArray.t) i j k e = v.{i - 1 + j * num_species + k * nsmx} <- e
+let slice_ijkth (v : RealArray.t) i j k =
   Bigarray.Array1.sub v (i - 1 + j * num_species + k * nsmx) num_species
 
-let ijth v i j       = Direct.get v (i - 1) (j - 1)
-let set_ijth v i j e = Direct.set v (i - 1) (j - 1) e
+let set_ijth (v : RealArray2.data) i j e =v.{j - 1, i - 1} <- e
 
 (* Type : UserData 
    contains preconditioner blocks, pivot arrays, and problem constants *)
@@ -143,7 +144,7 @@ type user_data = {
 
 (* Private Helper Functions *)
 
-let sqr x = x ** 2.0
+let sqr x = x *. x
 
 (* Allocate memory for data structure of type UserData *)
 
@@ -417,14 +418,14 @@ let precond data jacarg jok gamma =
         for jx = 0 to mx - 1 do
           let c1 = ijkth ydata 1 jx jz
           and c2 = ijkth ydata 2 jx jz
-          and j = jbd.(jx).(jz)
-          and a = p.(jx).(jz)
+          and j = unwrap jbd.(jx).(jz)
+          and a = unwrap p.(jx).(jz)
           in
           set_ijth j 1 1 ((-. q1 *. c3 -. q2 *. c2) +. diag);
           set_ijth j 1 2 (-. q2 *. c1 +. q4coef);
           set_ijth j 2 1 (q1 *. c3 -. q2 *. c2);
           set_ijth j 2 2 ((-. q2 *. c1 -. q4coef) +. diag);
-          Direct.copy j a
+          Array2.blit j a
         done
       done;
       true
@@ -450,7 +451,7 @@ let precond data jacarg jok gamma =
 (* Preconditioner solve routine *)
 
 let psolve data jac_arg solve_arg zdata =
-  let { Cvode.Spils.rhs = r;
+  let { Cvode.Spils.rhs = (r : RealArray.t);
         Cvode.Spils.gamma = gamma;
         Cvode.Spils.delta = delta;
         Cvode.Spils.left = lr } = solve_arg
