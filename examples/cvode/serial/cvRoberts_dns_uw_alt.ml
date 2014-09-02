@@ -34,15 +34,16 @@
 module RealArray = Sundials.RealArray
 module Roots = Sundials.Roots
 let unvec = Sundials.unvec
+let unwrap = Sundials.RealArray2.unwrap
 
 let printf = Printf.printf
 
-let ith v i = v.{i - 1}
-let set_ith v i e = v.{i - 1} <- e
+let ith (v : RealArray.t) i = v.{i - 1}
+let set_ith (v : RealArray.t) i e = v.{i - 1} <- e
 
 (* Test the Cvode.Alternate module *)
 
-module DM = Dls.DenseMatrix
+module DM = Dls.ArrayDenseMatrix
 module LintArray = Sundials.LintArray
 
 type cvdls_mem = {
@@ -158,8 +159,9 @@ let g t y gout =
   gout.{1} <- y3 -. 0.01
 
 let jac tn jac_y fpred jmat tmp =
+  let jmatdata = unwrap jmat in
   let y_ith i = jac_y.{i - 1}
-  and j_ijth (i, j) = DM.set jmat (i - 1) (j - 1)
+  and j_ijth (i, j) e = jmatdata.{j - 1, i - 1} <- e
   in
   let (y1, y2, y3) = (y_ith 1, y_ith 2, y_ith 3)
   in

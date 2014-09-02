@@ -209,21 +209,25 @@ type web_data = {
   c_1, ... ,c_ns (stored in c[0],...,c[ns-1]), at one spatial point 
   and at time t.
 *)
-let web_rates wdata x y t c rate =
+let web_rates wdata x y ((c : RealArray.t), c_off)
+                        ((rate : RealArray.t), rate_off) =
   let acoef = wdata.acoef
   and bcoef = wdata.bcoef
   in
-  Array1.fill rate zero;
-  for j = 0 to RealArray.length c - 1 do
-    let c = c.{j} in
-    for i = 0 to RealArray.length rate - 1 do
-      rate.{i} <- rate.{i} +. c *. acoef.(i).(j)
+  for i = rate_off to rate_off + ns - 1 do
+    rate.{i} <- zero
+  done;
+  for j = 0 to ns - 1 do
+    let c = c.{c_off + j} in
+    for i = 0 to ns - 1 do
+      rate.{rate_off + i} <- rate.{rate_off + i} +. c *. acoef.(i).(j)
     done
   done;
 
   let fac = one +. alph *. x *. y in
-  for i = 0 to RealArray.length rate - 1 do
-    rate.{i} <- c.{i} *. (bcoef.(i) *. fac +. rate.{i})
+  for i = 0 to ns - 1 do
+    rate.{rate_off + i} <- c.{c_off + i} *. (bcoef.(i) *. fac
+                              +. rate.{rate_off + i})
   done
 
 (*
@@ -231,19 +235,20 @@ let web_rates wdata x y t c rate =
   system, namely block (jx,jy), for use in preconditioning.
   Here jx and jy count from 0.
 *)
-let fblock wdata t cdata jx jy cdotdata =
+let fblock wdata t (cdata : RealArray.t) jx jy (cdotdata : RealArray.t) =
   let iblok = jx + jy * wdata.mx
   and y = float jy *. wdata.dy
   and x = float jx *. wdata.dx
   in
   let ic = wdata.ns * iblok in
-  web_rates wdata x y t (cdata +>+ ic) cdotdata
+  web_rates wdata x y (cdata, ic) (cdotdata, 0)
 
 (* Small Vector Kernels *)
 
-let v_sum_prods (u : RealArray.t) p (q : RealArray.t) v (w : RealArray.t) =
-  for i = 0 to RealArray.length u - 1 do
-    u.{i} <- p.(i) *. q.{i} +. v.(i) *. w.{i}
+let v_sum_prods ((u : RealArray.t), u_off) p ((q : RealArray.t), q_off) v
+                ((w : RealArray.t), w_off) =
+  for i = 0 to ns - 1 do
+    u.{u_off + i} <- p.(i) *. q.{q_off + i} +. v.(i) *. w.{w_off + i}
   done
 
 (* Functions Called By The Solver *)
@@ -263,12 +268,12 @@ let v_sum_prods (u : RealArray.t) p (q : RealArray.t) v (w : RealArray.t) =
 *) 
 let precond wdata jacarg jok gamma =
   let { Cvode.jac_t   = t;
-        Cvode.jac_y   = cdata;
+        Cvode.jac_y   = (cdata : RealArray.t);
         Cvode.jac_fy  = fc;
         Cvode.jac_tmp = (vtemp1, _, _)
       } = jacarg
   in
-  let f1 = vtemp1 +>+ 0 in (* shorten to ns *)
+  let f1 = vtemp1 in
   let cvode_mem =
     match wdata.cvode_mem with
     | Some c -> c | None -> assert false
@@ -329,17 +334,20 @@ let precond wdata jacarg jok gamma =
   Array.iteri f p;
   true
 
-let v_inc_by_prod (u : RealArray.t) v (w : RealArray.t) =
-  for i = 0 to RealArray.length u - 1 do
-    u.{i} <- u.{i} +. v.(i) *. w.{i}
+let v_inc_by_prod ((u : RealArray.t), u_off) v ((w : RealArray.t), w_off) =
+  for i = 0 to ns - 1 do
+    u.{u_off + i} <- u.{u_off + i} +. v.(i) *. w.{w_off + i}
   done
 
-let v_prod (u : RealArray.t) v (w : RealArray.t) =
-  for i = 0 to RealArray.length u - 1 do
-    u.{i} <- v.(i) *. w.{i}
+let v_prod ((u : RealArray.t), u_off) v ((w : RealArray.t), w_off) =
+  for i = 0 to ns - 1 do
+    u.{u_off + i} <- v.(i) *. w.{w_off + i}
   done
 
-let v_zero u = RealArray.fill u zero
+let v_zero ((u : RealArray.t), u_off) =
+  for i = u_off to u_off + ns - 1 do
+    u.{i} <- zero
+  done
 
 (*
   This routine performs ITMAX=5 Gauss-Seidel iterations to compute an
@@ -384,7 +392,7 @@ let gs_iter wdata gamma zd xd =
     let iyoff = mxns * jy in
     for jx = 0 to mx - 1 do
       let ic = iyoff + ns*jx in
-      v_prod (xd +>+ ic) cof1 (zd +>+ ic) (* x[ic+i] = cof1[i]z[ic+i] *)
+      v_prod (xd, ic) cof1 (zd, ic) (* x[ic+i] = cof1[i]z[ic+i] *)
     done
   done;
   Array1.fill zd zero;
@@ -408,51 +416,47 @@ let gs_iter wdata gamma zd xd =
           | 0 ->
             (* jx == 0, jy == 0 *)
             (* x[ic+i] = beta2[i]x[ic+ns+i] + gam2[i]x[ic+mxns+i] *)
-            v_sum_prods
-                (xd +>+ ic) beta2 (xd +>+ (ic + ns)) gam2 (xd +>+ (ic + mxns))
+            v_sum_prods (xd, ic) beta2 (xd, ic + ns) gam2 (xd, ic + mxns)
 
           | 1 ->
             (* 1 <= jx <= mx-2, jy == 0 *)
             (* x[ic+i] = beta[i]x[ic+ns+i] + gam2[i]x[ic+mxns+i] *)
-            v_sum_prods
-                (xd +>+ ic) beta (xd +>+ (ic + ns)) gam2 (xd +>+ (ic + mxns))
+            v_sum_prods (xd, ic) beta (xd, ic + ns) gam2 (xd, ic + mxns)
 
           | 2 ->
             (* jx == mx-1, jy == 0 *)
             (* x[ic+i] = gam2[i]x[ic+mxns+i] *)
-            v_prod (xd +>+ ic) gam2 (xd +>+ (ic + mxns))
+            v_prod (xd, ic) gam2 (xd, ic + mxns)
 
           | 3 ->
             (* jx == 0, 1 <= jy <= my-2 *)
             (* x[ic+i] = beta2[i]x[ic+ns+i] + gam[i]x[ic+mxns+i] *)
-            v_sum_prods
-                (xd +>+ ic) beta2 (xd +>+ (ic + ns)) gam (xd +>+ (ic + mxns))
+            v_sum_prods (xd, ic) beta2 (xd, ic + ns) gam (xd, ic + mxns)
 
           | 4 ->
             (* 1 <= jx <= mx-2, 1 <= jy <= my-2 *)
             (* x[ic+i] = beta[i]x[ic+ns+i] + gam[i]x[ic+mxns+i] *)
-            v_sum_prods
-                (xd +>+ ic) beta (xd +>+ (ic + ns)) gam (xd +>+ (ic + mxns))
+            v_sum_prods (xd, ic) beta (xd, ic + ns) gam (xd, ic + mxns)
 
           | 5 ->
             (* jx == mx-1, 1 <= jy <= my-2 *)
             (* x[ic+i] = gam[i]x[ic+mxns+i] *)
-            v_prod (xd +>+ ic) gam (xd +>+ (ic + mxns))
+            v_prod (xd, ic) gam (xd, ic + mxns)
 
           | 6 ->
             (* jx == 0, jy == my-1 *)
             (* x[ic+i] = beta2[i]x[ic+ns+i] *)
-            v_prod (xd +>+ ic) beta2 (xd +>+ (ic + ns))
+            v_prod (xd, ic) beta2 (xd, ic + ns)
 
           | 7 ->
             (* 1 <= jx <= mx-2, jy == my-1 *)
             (* x[ic+i] = beta[i]x[ic+ns+i] *)
-            v_prod (xd +>+ ic) beta (xd +>+ (ic + ns))
+            v_prod (xd, ic) beta (xd, ic + ns)
 
           | 8 ->
             (* jx == mx-1, jy == my-1 *)
             (* x[ic+i] = 0.0 *)
-            v_zero (xd +>+ ic)
+            v_zero (xd, ic)
 
           | _ -> assert false
         done
@@ -475,46 +479,46 @@ let gs_iter wdata gamma zd xd =
         | 1 ->
           (* 1 <= jx <= mx-2, jy == 0 *)
           (* x[ic+i] += beta[i]x[ic-ns+i] *)
-          v_inc_by_prod (xd +>+ ic) beta (xd +>+ (ic - ns))
+          v_inc_by_prod (xd, ic) beta (xd, ic - ns)
 
         | 2 ->
           (* jx == mx-1, jy == 0 *)
           (* x[ic+i] += beta2[i]x[ic-ns+i] *)
-          v_inc_by_prod (xd +>+ ic) beta2 (xd +>+ (ic - ns))
+          v_inc_by_prod (xd, ic) beta2 (xd, ic - ns)
 
         | 3 ->
           (* jx == 0, 1 <= jy <= my-2 *)
           (* x[ic+i] += gam[i]x[ic-mxns+i] *)
-          v_inc_by_prod (xd +>+ ic) gam (xd +>+ (ic - mxns))
+          v_inc_by_prod (xd, ic) gam (xd, ic - mxns)
 
         | 4 ->
           (* 1 <= jx <= mx-2, 1 <= jy <= my-2 *)
           (* x[ic+i] += beta[i]x[ic-ns+i] + gam[i]x[ic-mxns+i] *)
-          v_inc_by_prod (xd +>+ ic) beta (xd +>+ (ic - ns));
-          v_inc_by_prod (xd +>+ ic) gam (xd +>+ (ic - mxns))
+          v_inc_by_prod (xd, ic) beta (xd, ic - ns);
+          v_inc_by_prod (xd, ic) gam (xd, ic - mxns)
 
         | 5 ->
           (* jx == mx-1, 1 <= jy <= my-2 *)
           (* x[ic+i] += beta2[i]x[ic-ns+i] + gam[i]x[ic-mxns+i] *)
-          v_inc_by_prod (xd +>+ ic) beta2 (xd +>+ (ic - ns));
-          v_inc_by_prod (xd +>+ ic) gam (xd +>+ (ic - mxns))
+          v_inc_by_prod (xd, ic) beta2 (xd, ic - ns);
+          v_inc_by_prod (xd, ic) gam (xd, ic - mxns)
 
         | 6 ->
           (* jx == 0, jy == my-1 *)
           (* x[ic+i] += gam2[i]x[ic-mxns+i] *)
-          v_inc_by_prod (xd +>+ ic) gam2 (xd +>+ (ic - mxns))
+          v_inc_by_prod (xd, ic) gam2 (xd, ic - mxns)
 
         | 7 ->
           (* 1 <= jx <= mx-2, jy == my-1 *)
           (* x[ic+i] += beta[i]x[ic-ns+i] + gam2[i]x[ic-mxns+i] *)
-          v_inc_by_prod (xd +>+ ic) beta (xd +>+ (ic - ns));
-          v_inc_by_prod (xd +>+ ic) gam2 (xd +>+ (ic - mxns))
+          v_inc_by_prod (xd, ic) beta (xd, ic - ns);
+          v_inc_by_prod (xd, ic) gam2 (xd, ic - mxns)
 
         | 8 ->
           (* jx == mx-1, jy == my-1 *)
           (* x[ic+i] += beta2[i]x[ic-ns+i] + gam2[i]x[ic-mxns+i] *)
-          v_inc_by_prod (xd +>+ ic) beta2 (xd +>+ (ic - ns));
-          v_inc_by_prod (xd +>+ ic) gam2 (xd +>+ (ic - mxns))
+          v_inc_by_prod (xd, ic) beta2 (xd, ic - ns);
+          v_inc_by_prod (xd, ic) gam2 (xd, ic - mxns)
 
         | _ -> assert false
       done
@@ -594,7 +598,7 @@ let f wdata t cdata (cdotdata : RealArray.t) =
       let x = float jx *. dx in
       let ic = iyoff + ns * jx in
       (* Get interaction rates at one point (x,y). *)
-      web_rates wdata x y t (cdata +>+ ic) (fsave +>+ ic);
+      web_rates wdata x y (cdata, ic) (fsave, ic);
       let idxu = if jx = mx - 1 then -ns else ns in
       let idxl = if jx = 0      then -ns else ns in
       for i = 1 to ns do

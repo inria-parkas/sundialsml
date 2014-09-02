@@ -106,9 +106,11 @@ let neq      = (num_species * mm) (* neq = number of equations *)
    work with matrices stored by column in a 2-dimensional array. In C,
    arrays are indexed starting at 0, not 1. *)
 
-let ijkth v i j k       = v.{i - 1 + j * num_species + k * nsmx}
-let set_ijkth v i j k e = v.{i - 1 + j * num_species + k * nsmx} <- e
-let slice_ijkth v i j k =
+let ijkth (v : RealArray.t) i j k
+  = v.{i - 1 + j * num_species + k * nsmx}
+let set_ijkth (v : RealArray.t) i j k e
+  = v.{i - 1 + j * num_species + k * nsmx} <- e
+let slice_ijkth (v : RealArray.t) i j k =
   Bigarray.Array1.sub v (i - 1 + j * num_species + k * nsmx) num_species
 
 let ijth v i j       = Direct.get v (i - 1) (j - 1)

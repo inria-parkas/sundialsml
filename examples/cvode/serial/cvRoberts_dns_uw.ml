@@ -33,12 +33,13 @@
 
 module RealArray = Sundials.RealArray
 module Roots = Sundials.Roots
+open Bigarray
 let unvec = Sundials.unvec
 
 let printf = Printf.printf
 
-let ith v i = v.{i - 1}
-let set_ith v i e = v.{i - 1} <- e
+let ith (v : RealArray.t) i = v.{i - 1}
+let set_ith (v : RealArray.t) i e = v.{i - 1} <- e
 
 (* Problem Constants *)
 
@@ -56,7 +57,7 @@ let tmult  = 10.0     (* output time factor     *)
 let nout   = 12       (* number of output times *)
 let nroots = 2        (* number of root functions *)
 
-let f t y yd =
+let f t (y : RealArray.t) (yd : RealArray.t) =
   let y_ith i = y.{i - 1} in
   let yd_ith = set_ith yd
   in
@@ -69,7 +70,7 @@ let f t y yd =
   yd_ith 2 (-. yd1 -. yd3);
   yd_ith 3 yd3
 
-let g t y gout =
+let g t (y : RealArray.t) (gout : RealArray.t) =
   let y_ith i = y.{i - 1}
   in
   let (y1, y3) = (y_ith 1, y_ith 3)
@@ -78,7 +79,7 @@ let g t y gout =
   gout.{1} <- y3 -. 0.01
 
 let jac arg jmat =
-  let y_ith i = arg.Cvode.jac_y.{i - 1}
+  let y_ith i = Array1.get (arg.Cvode.jac_y : RealArray.t) (i - 1)
   and j_ijth (i, j) = Dls.DenseMatrix.set jmat (i - 1) (j - 1)
   in
   let (y1, y2, y3) = (y_ith 1, y_ith 2, y_ith 3)
