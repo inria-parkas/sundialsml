@@ -111,6 +111,18 @@ or:
 TODO: compiling with and without sensitivity.
 TODO: compiling with and without mpi.
 
+{2:performance Performance}
+
+TODO: summarise performance; always slower since we add an interface layer,
+but we exploit Bigarrays to minimise copying, OCaml is a memory managed
+language (garbage collection, bounds checking, etc.. But, the interface does
+not compare too badly:
+
+TODO: include graph, explain methodology
+
+TODO: performance tips for programs: a) type annotations for vectors; b)
+avoid slice and sub.
+
 {2:refs References}
 
 - A. C. Hindmarsh, P. N. Brown, K. E. Grant, S. L. Lee, R. Serban, D. E.
