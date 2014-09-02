@@ -22,10 +22,7 @@
 
 module RealArray = Sundials.RealArray
 let unvec = Sundials.unvec
-
 let printf = Printf.printf
-let ith v i = v.{i - 1}
-let set_ith v i e = v.{i - 1} <- e
 
 (* Problem Constants *)
 
@@ -49,11 +46,11 @@ let two  = 2.0
    The vdata array is obtained via the macro call vdata = NV_DATA_S(v),
    where v is an N_Vector. 
    The variables are ordered by the y index j, then by the x index i. *)
-let ijth v i j = v.{(j - 1) + (i - 1)*ny}
-let set_ijth v i j e = v.{(j - 1) + (i - 1)*ny} <- e
+let ijth (v : RealArray.t) i j = v.{(j - 1) + (i - 1)*ny}
+let set_ijth (v : RealArray.t) i j e = v.{(j - 1) + (i - 1)*ny} <- e
 
 (* System function *)
-let func u f =
+let func (u : RealArray.t) (f : RealArray.t) =
   let dx = one/.float (nx+1) in
   let dy = one/.float (ny+1) in
   let hdc = one/.(dx*.dx) in

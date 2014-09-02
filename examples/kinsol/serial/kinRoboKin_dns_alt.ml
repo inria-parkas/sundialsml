@@ -32,13 +32,7 @@ module DM = Dls.DenseMatrix
 module LintArray = Sundials.LintArray
 
 let nvwl2norm = Nvector_serial.DataOps.n_vwl2norm
-
-let nvdotprod xd yd =
-  let sum = ref 0.0 in
-  for i=0 to RealArray.length xd - 1 do
-    sum := !sum +. xd.{i} *. yd.{i}
-  done;
-  !sum
+let nvdotprod = Nvector_serial.DataOps.n_vdotprod
 
 type cvdls_mem = {
   dj     : DM.t;
@@ -109,7 +103,7 @@ let set_ith v i e = v.{i - 1} <- e
 let set_ijth m i j = Dls.DenseMatrix.set m (i - 1) (j - 1)
 
 (* System function *)
-let func yd fd =
+let func (yd : RealArray.t) (fd : RealArray.t) =
   let x1 = yd.{0} and l1 = yd.{ 8} and u1 = yd.{16}
   and x2 = yd.{1} and l2 = yd.{ 9} and u2 = yd.{17}
   and x3 = yd.{2} and l3 = yd.{10} and u3 = yd.{18}
@@ -161,7 +155,7 @@ let func yd fd =
   fd.{7} <- eq8; fd.{15} <- lb8; fd.{23} <- ub8
 
 (* System Jacobian *)
-let jac yd f j =
+let jac (yd : RealArray.t) f j =
   let x1 = yd.{0}
   and x2 = yd.{1}
   and x3 = yd.{2}

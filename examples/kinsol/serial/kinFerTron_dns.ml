@@ -49,8 +49,6 @@
 module RealArray = Sundials.RealArray
 
 let printf = Printf.printf
-let ith v i = v.{i - 1}
-let set_ith v i e = v.{i - 1} <- e
 
 (* Problem Constants *)
 
@@ -78,7 +76,7 @@ let set_ith v i e = v.{i - 1} <- e
 let lb = RealArray.create nvar
 let ub = RealArray.create nvar
 
-let func udata fdata =
+let func (udata : RealArray.t) (fdata : RealArray.t) =
   let x1  = udata.{0} in
   let x2  = udata.{1} in
   let l1  = udata.{2} in
