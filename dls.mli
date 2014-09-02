@@ -226,6 +226,9 @@ module ArrayDenseMatrix :
      *)
     val set : t -> int -> int -> float -> unit
 
+    (** Fills the matrix with zeros. *)
+    val set_to_zero    : t -> unit
+
     (** {4 Calculations} *)
 
     (**

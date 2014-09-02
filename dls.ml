@@ -96,6 +96,8 @@ module ArrayDenseMatrix =
     let get = Sundials.RealArray2.get
     let set = Sundials.RealArray2.set
 
+    let set_to_zero x = Bigarray.Array2.fill (Sundials.RealArray2.unwrap x) 0.0
+
     let copy = Sundials.RealArray2.copyinto
 
     external scale : float -> t -> unit
