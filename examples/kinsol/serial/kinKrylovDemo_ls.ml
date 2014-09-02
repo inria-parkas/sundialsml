@@ -224,7 +224,7 @@ let web_rate xx yy (cxy : RealArray.t) cxyoff (ratesxy : RealArray.t) ratesxyoff
 
 (* System function for predator-prey system *)
 
-let func cc fval =
+let func (cc : RealArray.t) (fval : RealArray.t) =
   let delx = dx in
   let dely = dy in
   
@@ -262,6 +262,7 @@ let func cc fval =
 
       done (* end of is loop *)
     done (* end of jx loop *)
+
   done (* end of jy loop *)
 
 let perturb_rates = Sundials.RealArray.create num_species
