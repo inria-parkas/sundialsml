@@ -79,6 +79,7 @@
  *)
 
 module RealArray = Sundials.RealArray
+module RealArray2 = Sundials.RealArray2
 module LintArray = Sundials.LintArray
 module Dense = Dls.ArrayDenseMatrix
 let unvec = Sundials.unvec
@@ -196,28 +197,30 @@ let init_user_data =
   done
 
 (* Dot product routine for realtype arrays *)
-let dot_prod size x1 x2 =
+let dot_prod size (x1 : RealArray.t) x1off (x2 : RealArray2.data) x2r =
   let temp =ref zero in
   for i = 0 to size - 1 do
-    temp := !temp +. x1.{i} *. x2.{i}
+    temp := !temp +. x1.{x1off + i} *. x2.{x2r, i}
   done;
   !temp
 
 (* Interaction rate function routine *)
 
-let web_rate xx yy cxy ratesxy =
+let web_rate xx yy (cxy : RealArray.t) cxyoff (ratesxy : RealArray.t) ratesxyoff =
   for i = 0 to num_species - 1 do
-    ratesxy.{i} <- dot_prod num_species cxy (slice_left acoef i)
+    ratesxy.{ratesxyoff + i} <- dot_prod num_species cxy cxyoff acoef i
   done;
   
   let fac = one +. alpha *. xx *. yy in
   for i = 0 to num_species - 1 do
-    ratesxy.{i} <- cxy.{i} *. (bcoef.{i} *. fac +. ratesxy.{i})
+    ratesxy.{ratesxyoff + i} <- cxy.{cxyoff + i} *. (bcoef.{i} *. fac
+                                  +. ratesxy.{ratesxyoff + i})
   done
+
 
 (* System function for predator-prey system *)
 
-let func cc fval =
+let func (cc : RealArray.t) (fval : RealArray.t) =
   let delx = dx in
   let dely = dy in
   
@@ -235,31 +238,29 @@ let func cc fval =
       (* Set left/right index shifts, special at boundaries. *)
       let idxl = if jx <>  0   then num_species else -num_species in
       let idxr = if jx <> mx-1 then num_species else -num_species in
-
-      let cxy = ij_vptr cc jx jy in
-      let cxy_ij = ij_vptr_idx jx jy in
-      let rxy = ij_vptr rates jx jy in
-      let fxy = ij_vptr fval jx jy in
+      let off = ij_vptr_idx jx jy in
 
       (* Get species interaction rate array at (xx,yy) *)
-      web_rate xx yy cxy rxy;
+      web_rate xx yy cc off rates off;
 
       for is = 0 to num_species - 1 do
         (* Differencing in x direction *)
-        let dcyli = cxy.{is} -. cc.{cxy_ij - idyl + is} in
-        let dcyui = cc.{cxy_ij + idyu + is} -. cxy.{is} in
+        let dcyli = cc.{off + is} -. cc.{off - idyl + is} in
+        let dcyui = cc.{off + idyu + is} -. cc.{off + is} in
         
         (* Differencing in y direction *)
-        let dcxli = cxy.{is} -. cc.{cxy_ij - idxl + is} in
-        let dcxri = cc.{cxy_ij + idxr+is} -. cxy.{is} in
+        let dcxli = cc.{off + is} -. cc.{off - idxl + is} in
+        let dcxri = cc.{off + idxr+is} -. cc.{off + is} in
         
         (* Compute the total rate value at (xx,yy) *)
-        fxy.{is} <- coy.{is} *. (dcyui -. dcyli)
-                    +. cox.{is} *. (dcxri -. dcxli) +. rxy.{is}
+        fval.{off + is} <- coy.{is} *. (dcyui -. dcyli)
+                    +. cox.{is} *. (dcxri -. dcxli) +. rates.{off + is}
 
       done (* end of is loop *)
     done (* end of jx loop *)
   done (* end of jy loop *)
+
+let perturb_rates = Sundials.RealArray.create num_species
 
 (* Preconditioner setup routine. Generate and preprocess P. *)
 let prec_setup_bd { Kinsol.jac_u=cc;
@@ -267,7 +268,6 @@ let prec_setup_bd { Kinsol.jac_u=cc;
                     Kinsol.jac_tmp=(vtemp1, vtemp2)}
                   { Kinsol.Spils.uscale=cscale;
                     Kinsol.Spils.fscale=fscale } =
-  let perturb_rates = Sundials.RealArray.create num_species in
   
   let delx = dx in
   let dely = dy in
@@ -283,25 +283,23 @@ let prec_setup_bd { Kinsol.jac_u=cc;
     for jx = 0 to mx - 1 do
       let xx = float(jx) *. delx in
       let pxy = p.(jx).(jy) in
-      let cxy = ij_vptr cc jx jy in
-      let scxy = ij_vptr cscale jx jy in
-      let ratesxy = ij_vptr rates jx jy in
+      let off = ij_vptr_idx jx jy in
       
       (* Compute difference quotients of interaction rate fn. *)
       for j = 0 to num_species - 1 do
-        let csave = cxy.{j} in  (* Save the j,jx,jy element of cc *)
-        let r = max (sqruround *. abs_float csave) (r0/.scxy.{j}) in
-        cxy.{j} <- cxy.{j} +. r; (* Perturb the j,jx,jy element of cc *)
+        let csave = cc.{off + j} in  (* Save the j,jx,jy element of cc *)
+        let r = max (sqruround *. abs_float csave) (r0/.cscale.{off + j}) in
+        cc.{off + j} <- cc.{off + j} +. r; (* Perturb the j,jx,jy element of cc *)
         let fac = one/.r in
-        web_rate xx yy cxy perturb_rates;
+        web_rate xx yy cc off perturb_rates 0;
         
         (* Restore j,jx,jy element of cc *)
-        cxy.{j} <- csave;
+        cc.{off + j} <- csave;
         
         (* Load the j-th column of difference quotients *)
-        let pxycol = slice_left (unwrap pxy) j in
+        let pxydata = unwrap pxy in
         for i = 0 to num_species - 1 do
-          pxycol.{i} <- (perturb_rates.{i} -. ratesxy.{i}) *. fac
+          pxydata.{j, i} <- (perturb_rates.{i} -. rates.{off + i}) *. fac
         done
       done; (* end of j loop *)
       
