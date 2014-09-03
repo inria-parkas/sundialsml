@@ -147,6 +147,7 @@ plot "perf.opt.log" using (0):(\$3/\$4):(0.5):6 with boxplot pointtype 2 lw 0.5 
 ${PAUSE}
 EOF
 else                            # if STYLE != boxplot, do a bar chart
+crunch=`echo $0 | sed -e 's#plot.sh#crunchperf#'`
 gnuplot <<EOF
 $SET_TERMINAL
 $SET_OUTPUT
@@ -173,10 +174,9 @@ set style fill solid
 
 # plot the whole set with boxplot, plot each data set's
 # median C time / reps with points
-# The grep is needed to merge multiple data sets into one.
-plot "< grep '.' $1" using 5:xtic(6) with boxes lc rgb 'red' \
+plot "< $crunch -s $1" using 4:xtic(5) with boxes lc rgb 'red' \
        title 'OCaml time / C time (left axis)', \
-     "< grep '.' $1" using (\$2/\$1) with points pointtype 3 lc rgb 'black' \
+     "< $crunch -s $1" using (\$3/\$1) with points pointtype 3 lc rgb 'black' \
        title 'C time / rep (right axis)' axes x1y2, \
      1 with lines lc rgb "#bbbbbb" notitle, \
      2 with lines lc rgb "#bbbbbb" notitle

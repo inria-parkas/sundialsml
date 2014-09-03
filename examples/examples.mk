@@ -175,10 +175,11 @@ $(UTILS)/perf: $(UTILS)/perf.ml
 $(UTILS)/crunchperf: $(UTILS)/crunchperf.ml
 	$(OCAMLOPT) -o $@ str.cmxa unix.cmxa $<
 
-perf.byte.log perf.opt.log: perf.%.log: $(ENABLED_EXAMPLES:.ml=.%.time)       \
+perf.byte.log perf.opt.log: perf.%.log: perf.%                                \
+					$(ENABLED_EXAMPLES:.ml=.%.time)       \
 					$(ENABLED_EXAMPLES:.ml=.sundials.time)\
 					$(UTILS)/crunchperf
-	@type=$(if $(findstring .opt.,$<),opt,byte);			\
+	@type=$(if $(findstring .opt.,$@),opt,byte);			\
 	 for f in $(ENABLED_EXAMPLES:.ml=); do				\
 	     $(UTILS)/crunchperf -c $$f.$$type.time $$f.sundials.time	\
 		$(SUBDIR)/$$f;						\
@@ -314,5 +315,3 @@ clean:
 	-@rm -f perf.byte.log perf.opt.log
 	-@rm -f $(foreach t,$(PLOTTYPES),perf.opt.$t)
 	-@rm -f $(foreach t,$(PLOTTYPES),perf.byte.$t)
-	-@rm -f $(foreach f,$(UTILS)/perf $(UTILS)/crunchperf,\
-		    $f $f.cmi $f.cmx $f.cmo $f.o)

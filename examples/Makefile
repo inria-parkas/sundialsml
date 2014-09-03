@@ -86,3 +86,5 @@ clean:
 	done
 	@${MAKE} -C ocaml clean
 	-@rm -f perf.byte.* perf.opt.*
+	-@rm -f $(foreach f,utils/perf utils/crunchperf,\
+		    $f $f.cmi $f.cmx $f.cmo $f.o)
