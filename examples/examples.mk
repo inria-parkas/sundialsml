@@ -295,6 +295,7 @@ clean:
 	-@rm -f $(ALL_EXAMPLES:.ml=.byte.diff) $(ALL_EXAMPLES:.ml=.opt.diff)
 	-@rm -f $(ALL_EXAMPLES:.ml=.self.diff)
 	-@rm -f $(ALL_EXAMPLES:.ml=.byte.time) $(ALL_EXAMPLES:.ml=.opt.time)
+	-@rm -f $(ALL_EXAMPLES:.ml=.byte.perf) $(ALL_EXAMPLES:.ml=.opt.perf)
 	-@rm -f $(ALL_EXAMPLES:.ml=.sundials) $(ALL_EXAMPLES:.ml=.sundials.c)
 	-@rm -f $(ALL_EXAMPLES:.ml=.sundials.time)
 	-@rm -f tests.log lapack-tests.log tests.self.log
