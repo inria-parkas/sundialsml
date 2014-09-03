@@ -9,7 +9,11 @@ let synopsis =
 
 crunchperf -s <file>
 
-     Summarize the output of a previous run of crunchperf -p.
+     Summarize the output of a previous run of crunchperf -p for humans.
+
+crunchperf -S <file>
+
+     Summarize the output of a previous run of crunchperf -p for gnuplot.
 "
 
 let abbreviate name =
@@ -114,7 +118,7 @@ type record = { reps : int;
                 mutable ml_times : float list;
                 mutable c_times : float list;
               }
-let summarize path =
+let summarize abbrev path =
   let file = open_in path in
   let records = Hashtbl.create 10 in
   let insert reps _ ml c _ name =
@@ -134,21 +138,26 @@ let summarize path =
   end;
   Printf.printf "# All numbers except reps show median values.\n";
   Printf.printf "# reps\tOCaml\tC\tOCaml/C\tname\n";
-  Hashtbl.iter (fun name record ->
+  let assocs = ref [] in
+  Hashtbl.iter (fun name record -> assocs := (name, record)::!assocs) records;
+  let assocs = List.sort compare !assocs in
+  List.iter (fun (name, record) ->
       let median ls = (analyze (Array.of_list ls)).median in
       let c  = median record.c_times in
       let ml = median record.ml_times in
       let ratio = median (List.map2 (/.) record.ml_times record.c_times) in
       Printf.printf "%d\t%.2f\t%.2f\t%.2f\t%s\n"
-        record.reps ml c ratio (expand name))
-    records
+        record.reps ml c ratio (if abbrev then name else expand name))
+    assocs
 
 let _ =
   match Array.to_list Sys.argv with
   | [_;"-c";ocaml;sundials;name] ->
     combine ocaml sundials name
   | [_;"-s";file] ->
-    summarize file
+    summarize false file
+  | [_;"-S";file] ->
+    summarize true file
   | _ ->
     print_string synopsis;
     exit 0

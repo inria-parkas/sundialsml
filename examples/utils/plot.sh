@@ -61,7 +61,7 @@ else
     SET_TMARGIN="set tmargin ${TMARGIN}"
 fi
 
-FONT=${FONT:-Arial,8}
+FONT=${FONT:-Arial,7}
 
 case x$FONT in
     x)    SET_FONT=;;
@@ -114,6 +114,7 @@ if test "x$STYLE" = xboxplot; then
 gnuplot <<EOF
 $SET_COMMON
 set key inv
+set style boxplot sorted
 
 # N = number of data sets
 stats "$1" noout
@@ -147,9 +148,10 @@ set style fill solid
 
 # plot the whole set with boxplot, plot each data set's
 # median C time / reps with points
-plot "< $crunch -s $1" using 4:xtic(5) with boxes lc rgb 'red' \
+plot "< $crunch -S $1" using 4:xtic(5) with boxes lc rgb 'red' \
        title 'OCaml time / C time (left axis)', \
-     "< $crunch -s $1" using (\$3/\$1) with points pointtype 3 lc rgb 'black' \
+     "< $crunch -S $1" using (\$3/\$1) with points pointtype 3 \
+       lc rgb 'black' \
        title 'C time / rep (right axis)' axes x1y2, \
      1 with lines lc rgb "#bbbbbb" notitle, \
      2 with lines lc rgb "#bbbbbb" notitle
