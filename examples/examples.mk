@@ -163,9 +163,6 @@ PERF=perf.opt.log perf.byte.log
 
 .PHONY: $(PERF)
 
-perf.opt: $(ENABLED_EXAMPLES:.ml=.opt) $(ENABLED_EXAMPLES:.ml=.sundials)
-perf.byte: $(ENABLED_EXAMPLES:.ml=.byte) $(ENABLED_EXAMPLES:.ml=.sundials)
-
 .SECONDARY: $(ALL_EXAMPLES:.ml=.byte.time) $(ALL_EXAMPLES:.ml=.opt.time)     \
 	    $(ALL_EXAMPLES:.ml=.sundials) $(ALL_EXAMPLES:.ml=.sundials.time)
 
@@ -175,8 +172,7 @@ $(UTILS)/perf: $(UTILS)/perf.ml
 $(UTILS)/crunchperf: $(UTILS)/crunchperf.ml
 	$(OCAMLOPT) -o $@ str.cmxa unix.cmxa $<
 
-perf.byte.log perf.opt.log: perf.%.log: perf.%                                \
-					$(ENABLED_EXAMPLES:.ml=.%.time)       \
+perf.byte.log perf.opt.log: perf.%.log: $(ENABLED_EXAMPLES:.ml=.%.time)       \
 					$(ENABLED_EXAMPLES:.ml=.sundials.time)\
 					$(UTILS)/crunchperf
 	@type=$(if $(findstring .opt.,$@),opt,byte);			\
@@ -283,17 +279,6 @@ endef
 
 # Generate a default version.
 $(eval $(call EXECUTION_RULE,%,$$<))
-
-# Generate rules for an example that just copies results from another.
-# $1 = the one that copies, $2 = the one that gets copied
-define C_ALIAS
-    $1.sundials:
-    $1.sundials.c:
-    $1.sundials.out: $2.sundials.out
-	cp $$< $$@
-    $1.sundials.time: $2.sundials.time
-	cp $$< $$@
-endef
 
 distclean: clean
 clean:
