@@ -9,8 +9,7 @@ let synopsis =
 
 crunchperf -s <file>
 
-     Summarize the output of a previous run of crunchperf -p.  The
-     result is suited for human consumption but not for plotting.
+     Summarize the output of a previous run of crunchperf -p.
 "
 
 let abbreviate name =

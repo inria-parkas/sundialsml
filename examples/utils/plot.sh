@@ -127,7 +127,7 @@ set yrange [0:${YMAX}];
 set y2range [0:${Y2MAX}];
 
 # N = number of data sets
-stats "perf.opt.log" noout
+stats "$1" noout
 N=STATS_blocks
 
 # Draw vertical lines
@@ -135,12 +135,12 @@ set grid xtics lt 0 lw 1 lc rgb "#bbbbbb"
 
 # plot the whole set with boxplot, plot each data set's
 # median C time / reps with points
-plot "perf.opt.log" using (0):(\$3/\$4):(0.5):6 with boxplot pointtype 2 lw 0.5 \
+plot "$1" using (0):(\$3/\$4):(0.5):6 with boxplot pointtype 2 lw 0.5 \
        title 'OCaml time / C time (left axis)', \
-     "perf.opt.log" index 0 using (0):(\$2/\$1) \
+     "$1" index 0 using (0):(\$2/\$1) \
        with points pointtype 3 lw 0.5 lc rgb 'black' \
        title 'C time / rep (right axis)' axes x1y2, \
-     for [IDX=1:N-1] "perf.opt.log" index IDX using (IDX):(\$2/\$1) \
+     for [IDX=1:N-1] "$1" index IDX using (IDX):(\$2/\$1) \
        with points pointtype 3 lw 0.5 lc rgb 'black' notitle axes x1y2, \
      1 with lines lc rgb '#bbbbbb' notitle, \
      2 with lines lc rgb '#bbbbbb' notitle

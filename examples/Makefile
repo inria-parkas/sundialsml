@@ -57,21 +57,23 @@ perf.opt.log perf.byte.log:
 	   echo "Note: \"make $(@:.log=.plot)\" can plot this for you.")
 
 perf.opt.plot: perf.opt.log
-	TITLE='native code performance' utils/plot.sh $<
+	TITLE='OCaml native code performance over C' utils/plot.sh $<
 	@utils/plot.sh --explain-vars
 
 perf.byte.plot: perf.byte.log
-	TITLE='byte code performance' utils/plot.sh $<
+	TITLE='OCaml byte code performance over C' utils/plot.sh $<
 	@utils/plot.sh --explain-vars
 
 perf.opt.%: perf.opt.log
-	TITLE='native code performance' TERMINAL=$(subst perf.opt.,,$@) \
+	TITLE='OCaml native code performance over C' \
+	    TERMINAL=$(subst perf.opt.,,$@) \
 	    OUTPUT=$@ utils/plot.sh $<
 	@printf "\nPlot saved in $@.\n"
 	@utils/plot.sh --explain-vars
 
 perf.byte.%: perf.byte.log
-	TITLE='byte code performance' TERMINAL=$(subst perf.opt.,,$@) \
+	TITLE='OCaml byte code performance over C' \
+	    TERMINAL=$(subst perf.opt.,,$@) \
 	    OUTPUT=$@ utils/plot.sh $<
 	@printf "\nPlot saved in $@.\n"
 	@utils/plot.sh --explain-vars
