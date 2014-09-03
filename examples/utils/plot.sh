@@ -4,6 +4,7 @@ envs() {
     echo "You might have to set these environment variables to adjust the output:"
     echo "FONT       - Font name, comma, then size, like: Arial,10"
     echo "SIZE       - Canvas size; see \"help set term size\" in gnuplot."
+    echo "MAINCOLOR  - Color of the plot; either a color name or #rrggbb."
     echo "LMARGIN    - How much space (in %) for text at the left."
     echo "RMARGIN    - How much space (in %) for text on the right."
     echo "BMARGIN    - How much space (in %) for text at the bottom."
@@ -99,6 +100,8 @@ else
     SET_POINTSIZE="set pointsize $POINTSIZE"
 fi
 
+MAINCOLOR=${MAINCOLOR:-red}
+
 Y2LABEL='C running time / repetition [seconds]'
 YLABEL='running time: OCaml / C'
 
@@ -125,7 +128,8 @@ set grid xtics lt 0 lw 1 lc rgb "#bbbbbb"
 
 # plot the whole set with boxplot, plot each data set's
 # median C time / reps with points
-plot "$1" using (0):(\$3/\$4):(0.5):6 with boxplot pointtype 2 \
+plot "$1" using (0):(\$3/\$4):(0.5):6 with boxplot lc rgb '${MAINCOLOR}' \
+       pointtype 2 \
        title 'OCaml time / C time (left axis)', \
      "$1" index 0 using (0):(\$2/\$1) \
        with points pointtype 3 lw 0.5 lc rgb 'black' \
@@ -148,7 +152,7 @@ set style fill solid
 
 # plot the whole set with boxplot, plot each data set's
 # median C time / reps with points
-plot "< $crunch -S $1" using 4:xtic(5) with boxes lc rgb 'red' \
+plot "< $crunch -S $1" using 4:xtic(5) with boxes lc rgb '${MAINCOLOR}' \
        title 'OCaml time / C time (left axis)', \
      "< $crunch -S $1" using (\$3/\$1) with points pointtype 3 \
        lc rgb 'black' \
