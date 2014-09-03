@@ -28,6 +28,7 @@ and nout = 41
 
 (* Output functions *)
 let printf = Printf.printf
+
 let print_header rtol atol y =
   printf "\nidaSlCrank_dns: Slider-Crank DAE serial example problem for IDAS\n";
   printf "Linear solver: IDADENSE, Jacobian is computed by IDAS.\n";
@@ -36,6 +37,7 @@ let print_header rtol atol y =
   printf "  t            y1          y2           y3";
   printf "      | nst  k      h\n";
   printf "-----------------------------------------------------------------------\n"
+
 let print_output mem t y =
   let kused = Ida.get_last_order mem
   and nst   = Ida.get_num_steps mem
@@ -73,7 +75,7 @@ type user_data =
     f  : float;
   }
 
-let force data y qq =
+let force data (y : RealArray.t) (qq : RealArray.t) =
   let a = data.a
   and k = data.k
   and c = data.c
@@ -130,7 +132,7 @@ let set_ic data y y' =
   y'.{4} <- qq.{1} /. m2;
   y'.{5} <- qq.{2} /. j2
 
-let ressc data tres y y' res =
+let ressc data tres y (y' : RealArray.t) (res : RealArray.t) =
   let a = data.a
   and j1 = data.j1
   and m2 = data.m2

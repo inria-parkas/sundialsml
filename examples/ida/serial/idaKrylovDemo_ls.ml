@@ -114,7 +114,7 @@ let print_output mem t u linsolver =
  *    res_i = u'_i - (central difference)_i                             
  * while for each boundary point, it is res_i = u_i.                     
  *)
-let res_heat data t u u' res =
+let res_heat data t u (u' : RealArray.t) res =
   let coeff = data.coeff
   and mm    = data.mm in
 

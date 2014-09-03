@@ -197,29 +197,32 @@ let init_user_data () =
 
 (* web_rates: Evaluate reaction rates at a given spatial point.
  * At a given (x,y), evaluate the array of ns reaction terms R. *)
-let web_rates webdata x y (cxy : RealArray.t) (ratesxy : RealArray.t) =
+let web_rates webdata x y ((cxy : RealArray.t), cxy_off)
+                          ((ratesxy : RealArray.t), ratesxy_off) =
   let acoef = webdata.acoef
   and bcoef = webdata.bcoef in
 
   for is = 0 to num_species-1 do
     (* ratesxy.{is} <- dotprod cxy (Directdensematrix.column acoef is) *)
-    ratesxy.{is} <- 0.;
+    ratesxy.{ratesxy_off + is} <- 0.;
     for j = 0 to num_species-1 do
-      ratesxy.{is} <- ratesxy.{is} +. cxy.{j} *. Matrix.get acoef j is
+      ratesxy.{ratesxy_off + is} <- ratesxy.{ratesxy_off + is}
+                                  +. cxy.{cxy_off + j} *. Matrix.get acoef j is
     done
   done;
 
   let fac = 1. +. alpha*.x*.y +. beta*.sin(fourpi*.x)*.sin(fourpi*.y) in
 
   for is = 0 to num_species-1 do
-    ratesxy.{is} <- cxy.{is}*.( bcoef.(is)*.fac +. ratesxy.{is} )
+    ratesxy.{ratesxy_off + is} <- cxy.{cxy_off + is}*.( bcoef.(is)*.fac
+                                    +. ratesxy.{ratesxy_off + is} )
   done
 
 (* fweb: Rate function for the food-web problem.                        
  * This routine computes the right-hand sides of the system equations,   
  * consisting of the diffusion term and interaction term.                
  * The interaction term is computed by the function WebRates.  *)
-let fweb webdata t c crate =
+let fweb webdata t c (crate : RealArray.t) =
   let cox = webdata.cox
   and coy = webdata.coy in
   (* Loop over grid points, evaluate interaction vector (length ns), form
@@ -233,14 +236,11 @@ let fweb webdata t c crate =
       let xx = webdata.dx *. float_of_int jx
       and idxu = if jx <> mx-1 then num_species else -num_species
       and idxl = if jx <> 0    then num_species else -num_species in
-      (* We can't use ij_v to obtain cxy in order to mimic the C code, because
-         the C code indexes cxy with negative indices.  *)
-      let cxy k = c.{index jx jy k}
-      and ratesxy = ij_v webdata.rates jx jy
-      and cratexy = ij_v crate jx jy in
+      let cxy k = c.{index jx jy k} in
       
       (* Get interaction vector at this grid point. *)
-      web_rates webdata xx yy (ij_v c jx jy) (ij_v webdata.rates jx jy);
+      web_rates webdata xx yy (c, index jx jy 0)
+                              (webdata.rates, index jx jy 0);
 
       (* Loop over species, do differencing, load crate segment. *)
       for is = 0 to num_species-1 do
@@ -251,8 +251,9 @@ let fweb webdata t c crate =
         let dcxli = cxy is -. cxy (is - idxl)
         and dcxui = cxy (is + idxu) -. cxy is in
         (* Compute the crate values at (xx,yy). *)
-        cratexy.{is} <- (coy.(is) *. (dcyui -. dcyli) +.
-                           cox.(is) *. (dcxui -. dcxli) +. ratesxy.{is})
+        crate.{index jx jy is} <- (coy.(is) *. (dcyui -. dcyli)
+                                  +. cox.(is) *. (dcxui -. dcxli)
+                                  +. webdata.rates.{index jx jy is})
       done
     done
   done

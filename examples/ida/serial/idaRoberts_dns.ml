@@ -38,8 +38,8 @@ let printf = Printf.printf
  * macros do in the original C implementation of this example.  *)
 let ijth a (i,j) = Dls.DenseMatrix.get a (i-1) (j-1)
 and set_ijth a (i,j) x = Dls.DenseMatrix.set a (i-1) (j-1) x
-and ith v i = v.{i-1}
-and set_ith v i x = v.{i-1} <- x
+and ith (v : RealArray.t) i = v.{i-1}
+and set_ith (v : RealArray.t) i x = v.{i-1} <- x
 
 
 (* Problem Constants *)
@@ -72,6 +72,7 @@ let print_header rtol avtol yy =
   printf "  t             y1           y2           y3";
   printf "      | nst  k      h\n";
   printf "-----------------------------------------------------------------------\n";
+
 and print_output ida t y =
   let kused = Ida.get_last_order ida
   and nst = Ida.get_num_steps ida
@@ -79,6 +80,7 @@ and print_output ida t y =
   in
   printf "%10.4e %12.4e %12.4e %12.4e | %3d  %1d %12.4e\n" 
     t y.{0} y.{1} y.{2} nst kused hused
+
 and print_final_stats ida =
   let nst = Ida.get_num_steps ida
   and nre = Ida.get_num_res_evals ida
@@ -97,6 +99,7 @@ and print_final_stats ida =
   printf "Number of error test failures      = %d\n" netf;
   printf "Number of nonlinear conv. failures = %d\n" ncfn;
   printf "Number of root fn. evaluations     = %d\n" nge;
+
 and print_root_info root_f1 root_f2 =
   (* For printing root_events.  Normally, string_of_root_event makes the output
    * easier to interpret, but we print them as int here in order to get the same
@@ -110,7 +113,7 @@ and print_root_info root_f1 root_f2 =
     (int_of_root_event root_f1)
     (int_of_root_event root_f2)
 
-let resrob tres y yp rr =
+let resrob tres (y : RealArray.t) (yp : RealArray.t) (rr : RealArray.t) =
   rr.{0} <- -.0.04*.y.{0} +. 1.0e4*.y.{1}*.y.{2};
   rr.{1} <- -.rr.{0} -. 3.0e7*.y.{1}*.y.{1} -. yp.{1};
   rr.{0} <-  rr.{0} -. yp.{0};
@@ -118,7 +121,11 @@ let resrob tres y yp rr =
 
 and jacrob params jj =
   match params with
-    { Ida.jac_t=tt; Ida.jac_coef=cj; Ida.jac_y=y; Ida.jac_res=resvec } ->
+    { Ida.jac_t=tt;
+      Ida.jac_coef=cj;
+      Ida.jac_y=(y : RealArray.t);
+      Ida.jac_res=resvec }
+    ->
       set_ijth jj (1,1) (-. 0.04 -. cj);
       set_ijth jj (2,1) (0.04);
       set_ijth jj (3,1) (1.);
@@ -128,7 +135,8 @@ and jacrob params jj =
       set_ijth jj (1,3) (1.0e4*.y.{1});
       set_ijth jj (2,3) (-.1.0e4*.y.{1});
       set_ijth jj (3,3) (1.)
-and grob t y y' gout =
+
+and grob t (y : RealArray.t) y' (gout : RealArray.t) =
   let y1 = y.{0}
   and y3 = y.{2}
   in
