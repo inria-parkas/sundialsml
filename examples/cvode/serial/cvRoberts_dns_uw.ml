@@ -38,9 +38,6 @@ let unvec = Sundials.unvec
 
 let printf = Printf.printf
 
-let ith (v : RealArray.t) i = v.{i - 1}
-let set_ith (v : RealArray.t) i e = v.{i - 1} <- e
-
 (* Problem Constants *)
 
 let neq    = 3        (* number of equations  *)
@@ -58,47 +55,33 @@ let nout   = 12       (* number of output times *)
 let nroots = 2        (* number of root functions *)
 
 let f t (y : RealArray.t) (yd : RealArray.t) =
-  let y_ith i = y.{i - 1} in
-  let yd_ith = set_ith yd
+  let yd1 = -0.04 *. y.{0} +. 1.0e4 *. y.{1} *. y.{2}
+  and yd3 = 3.0e7 *. y.{1} *. y.{1}
   in
-  let (y1, y2, y3) = (y_ith 1, y_ith 2, y_ith 3)
-  in
-  let yd1 = -0.04 *. y1 +. 1.0e4 *. y2 *. y3;
-  and yd3 = 3.0e7 *. y2 *. y2;
-  in
-  yd_ith 1 yd1;
-  yd_ith 2 (-. yd1 -. yd3);
-  yd_ith 3 yd3
+  yd.{0} <- yd1;
+  yd.{1} <- (-. yd1 -. yd3);
+  yd.{2} <- yd3
 
 let g t (y : RealArray.t) (gout : RealArray.t) =
-  let y_ith i = y.{i - 1}
-  in
-  let (y1, y3) = (y_ith 1, y_ith 3)
-  in
-  gout.{0} <- y1 -. 0.0001;
-  gout.{1} <- y3 -. 0.01
+  gout.{0} <- y.{0} -. 0.0001;
+  gout.{1} <- y.{2} -. 0.01
 
-let jac arg jmat =
-  let y_ith i = Array1.get (arg.Cvode.jac_y : RealArray.t) (i - 1)
-  and j_ijth (i, j) = Dls.DenseMatrix.set jmat (i - 1) (j - 1)
-  in
-  let (y1, y2, y3) = (y_ith 1, y_ith 2, y_ith 3)
-  in
-  j_ijth (1, 1) (-0.04);
-  j_ijth (1, 2) (1.0e4 *. y3);
-  j_ijth (1, 3) (1.0e4 *. y2);
-  j_ijth (2, 1) (0.04); 
-  j_ijth (2, 2) (-1.0e4 *. y3 -. 6.0e7 *. y2);
-  j_ijth (2, 3) (-1.0e4 *. y2);
-  j_ijth (3, 2) (6.0e7 *. y2)
+let jac {Cvode.jac_y = (y : RealArray.t)} jmat =
+  Dls.DenseMatrix.set jmat 0 0 (-0.04);
+  Dls.DenseMatrix.set jmat 0 1 (1.0e4 *. y.{2});
+  Dls.DenseMatrix.set jmat 0 2 (1.0e4 *. y.{1});
+  Dls.DenseMatrix.set jmat 1 0 (0.04); 
+  Dls.DenseMatrix.set jmat 1 1 (-1.0e4 *. y.{2} -. 6.0e7 *. y.{1});
+  Dls.DenseMatrix.set jmat 1 2 (-1.0e4 *. y.{1});
+  Dls.DenseMatrix.set jmat 2 1 (6.0e7 *. y.{1})
   
-let ewt y w =
-  let atol = [| atol1; atol2; atol3 |] in
-  for i = 1 to 3 do
-    let yy = ith y i in
-    let ww = rtol *. abs_float(yy) +. atol.(i - 1) in
+let atol = [| atol1; atol2; atol3 |]
+let ewt (y : RealArray.t) (w :RealArray.t) =
+  for i = 0 to 2 do
+    let yy = y.{i} in
+    let ww = rtol *. abs_float(yy) +. atol.(i) in
     if (ww <= 0.0) then raise Sundials.NonPositiveEwt;
-    set_ith w i (1.0 /. ww)
+    w.{i} <- (1.0 /. ww)
   done
 
 let print_output =
@@ -135,9 +118,9 @@ let main () =
   let r = Roots.get roots in
 
   (* Initialize y *)
-  set_ith ydata 1 y1;
-  set_ith ydata 2 y2;
-  set_ith ydata 3 y3;
+  ydata.{0} <- y1;
+  ydata.{1} <- y2;
+  ydata.{2} <- y3;
 
   printf " \n3-species kinetics problem\n\n";
 
@@ -164,7 +147,7 @@ let main () =
 
     let (t, flag) = Cvode.solve_normal cvode_mem !tout y
     in
-    print_output t (ith ydata 1) (ith ydata 2) (ith ydata 3);
+    print_output t (ydata.{0}) (ydata.{1}) (ydata.{2});
 
     match flag with
     | Sundials.RootsFound ->
