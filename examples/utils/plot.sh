@@ -102,26 +102,18 @@ fi
 Y2LABEL='C running time / repetition [seconds]'
 YLABEL='running time: OCaml / C'
 
+SET_COMMON="$SET_TERMINAL; $SET_OUTPUT; $SET_FONT; set title '$TITLE'"
+SET_COMMON="$SET_COMMON; $SET_LMARGIN; $SET_RMARGIN; $SET_BMARGIN"
+SET_COMMON="$SET_COMMON; $SET_TMARGIN; $SET_KEY_WIDTH; $SET_POINTSIZE"
+SET_COMMON="$SET_COMMON; set ytics nomirror; set y2tics nomirror"
+SET_COMMON="$SET_COMMON; set ylabel '${YLABEL}'; set y2label '${Y2LABEL}'"
+SET_COMMON="$SET_COMMON; set yrange [0:${YMAX}]; set y2range [0:${Y2MAX}]"
+SET_COMMON="$SET_COMMON; set xtics rotate by 90 right"
+
 if test "x$STYLE" = xboxplot; then
 gnuplot <<EOF
-$SET_TERMINAL
-$SET_OUTPUT
-$SET_FONT
-set title '$TITLE'
-$SET_LMARGIN
-$SET_RMARGIN
-$SET_BMARGIN
-$SET_TMARGIN
+$SET_COMMON
 set key inv
-$SET_KEY_WIDTH
-$SET_POINTSIZE
-set xtics rotate by 60 right;
-set ytics nomirror;
-set y2label '${Y2LABEL}'
-set ylabel '${YLABEL}'
-set y2tics nomirror;
-set yrange [0:${YMAX}];
-set y2range [0:${Y2MAX}];
 
 # N = number of data sets
 stats "$1" noout
@@ -146,22 +138,8 @@ EOF
 else                            # if STYLE != boxplot, do a bar chart
 crunch=`echo $0 | sed -e 's#plot\.sh#crunchperf#'`
 gnuplot <<EOF
-$SET_TERMINAL
-$SET_OUTPUT
-$SET_FONT
-set title '$TITLE'
-$SET_LMARGIN
-$SET_RMARGIN
-$SET_BMARGIN
-$SET_TMARGIN
+$SET_COMMON
 set key inv
-set xtics rotate by 60 right;
-set ytics nomirror;
-set y2label '${Y2LABEL}'
-set ylabel '${YLABEL}'
-set y2tics nomirror;
-set yrange [0:${YMAX}];
-set y2range [0:${Y2MAX}];
 
 # Bar chart-specific setup
 set boxwidth 0.5
