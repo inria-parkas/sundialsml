@@ -1,5 +1,8 @@
 include config
 
+# To compile with profiling (with gcc):
+# ./configure CFLAGS=-pg OCAMLOPTFLAGS=-p ...
+
 ### Objects shared between sundials.cma and sundials_nosensi.cma.
 
 # Common to CVODE, IDA, and KINSOL.
