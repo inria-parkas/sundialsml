@@ -332,11 +332,11 @@ ldflags="${ldflags} ${lapack_lib}"
 # Extract compilation flags from sundials-config.
 
 # CPP flags:
-cvode_cppflags="${cflags} `sundials-config -m cvode -t s -l c -s cppflags`"
-cvodes_cppflags="${cflags} `sundials-config -m cvodes -t s -l c -s cppflags`"
-ida_cppflags="${cflags} `sundials-config -m ida -t s -l c -s cppflags`"
-idas_cppflags="${cflags} `sundials-config -m idas -t s -l c -s cppflags`"
-kinsol_cppflags="${cflags} `sundials-config -m kinsol -t s -l c -s cppflags`"
+cvode_cppflags="`sundials-config -m cvode -t s -l c -s cppflags`"
+cvodes_cppflags="`sundials-config -m cvodes -t s -l c -s cppflags`"
+ida_cppflags="`sundials-config -m ida -t s -l c -s cppflags`"
+idas_cppflags="`sundials-config -m idas -t s -l c -s cppflags`"
+kinsol_cppflags="`sundials-config -m kinsol -t s -l c -s cppflags`"
 
 # Libraries: sundials-config's options are too coarse-grained, so we
 # need to parse and separate it out.  Specifically:
