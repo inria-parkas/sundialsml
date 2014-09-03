@@ -24,6 +24,10 @@
 # Caveats:
 #  - Automatic variables like $< and $@ must have two $'s.
 #  - Don't prefix $$< with ./
+#
+# OCaml examples that correspond to C examples with a different name
+# should be declared like
+# $(eval $(call C_ALIAS,cvRoberts_dns_uw_alt,cvRoberts_dns_uw))
 
 include $(SRCROOT)/config
 
@@ -62,6 +66,15 @@ endif
 TESTS=tests.opt.log tests.byte.log tests.self.log
 LAPACK_TESTS=lapack-tests.opt.log lapack-tests.byte.log lapack-tests.self.log
 .PHONY: $(TESTS) $(LAPACK_TESTS)
+
+%.byte.diff: %.byte.out %.sundials.out
+	diff -u $^ > $@ || true
+
+%.opt.diff: %.opt.out %.sundials.out
+	@diff -u $^ > $@ || true
+
+%.self.diff: %.byte.out %.opt.out
+	@diff -u $^ > $@ || true
 
 # Note: the cd ensures the output mentions the examples' directories.
 genlog =						\
@@ -125,15 +138,6 @@ $(MPI_EXAMPLES:.ml=.opt): %.opt: %.ml $(SRCROOT)/$(USELIB).cmxa
 # because it statically links in C stubs.
 CAML_LD_LIBRARY_PATH:=$(SRCROOT):$(CAML_LD_LIBRARY_PATH)
 
-%.byte.diff: %.byte.out %.sundials.out
-	diff -u $^ > $@ || true
-
-%.opt.diff: %.opt.out %.sundials.out
-	@diff -u $^ > $@ || true
-
-%.self.diff: %.byte.out %.opt.out
-	@diff -u $^ > $@ || true
-
 # Rules for producing *.out files.  Subroutine of EXECUTION_RULE.
 define ADD_EXECUTE_RULES
     $1.byte.out: $1.byte
@@ -159,25 +163,49 @@ PERF=perf.opt.log perf.byte.log
 
 .PHONY: $(PERF)
 
+perf.opt: $(ENABLED_EXAMPLES:.ml=.opt) $(ENABLED_EXAMPLES:.ml=.sundials)
+perf.byte: $(ENABLED_EXAMPLES:.ml=.byte) $(ENABLED_EXAMPLES:.ml=.sundials)
+
 .SECONDARY: $(ALL_EXAMPLES:.ml=.byte.time) $(ALL_EXAMPLES:.ml=.opt.time)     \
-	    $(ALL_EXAMPLES:.ml=.sundials) $(ALL_EXAMPLES:.ml=.sundials.time) \
-	    $(ALL_EXAMPLES:.ml=.byte.perf) $(ALL_EXAMPLES:.ml=.opt.perf)
+	    $(ALL_EXAMPLES:.ml=.sundials) $(ALL_EXAMPLES:.ml=.sundials.time)
 
 $(UTILS)/perf: $(UTILS)/perf.ml
 	$(OCAMLOPT) -o $@ unix.cmxa $<
 
-$(PERF): perf.%.log: $(ENABLED_EXAMPLES:.ml=.%) $(ENABLED_EXAMPLES:.ml=.%.perf)
-	@grep '^#' $(lastword $^) >$@
-	@sed -n '/^[^#]/ p' $(filter %.perf,$^) >> $@
-	cat $@
+$(UTILS)/crunchperf: $(UTILS)/crunchperf.ml
+	$(OCAMLOPT) -o $@ str.cmxa unix.cmxa $<
 
-%.opt.perf: %.opt.time %.sundials.time $(UTILS)/perf
-	$(UTILS)/perf -s $(SUBDIR)/$(<:.opt.time=) \
-	    $(filter-out $(UTILS)/perf,$^) > $@
+perf.byte.log perf.opt.log: perf.%.log: $(ENABLED_EXAMPLES:.ml=.%.time)       \
+					$(ENABLED_EXAMPLES:.ml=.sundials.time)\
+					$(UTILS)/crunchperf
+	@type=$(if $(findstring .opt.,$<),opt,byte);			\
+	 for f in $(ENABLED_EXAMPLES:.ml=); do				\
+	     $(UTILS)/crunchperf -c $$f.$$type.time $$f.sundials.time	\
+		$(SUBDIR)/$$f;						\
+	     test $$f = $(lastword $(ENABLED_EXAMPLES:.ml=))		\
+		|| printf "\n\n";					\
+	 done > $@
+	$(UTILS)/crunchperf -s $@
 
-%.byte.perf: %.byte.time %.sundials.time
-	$(UTILS)/perf -s $(SUBDIR)/$(<:.byte.time=) \
-	    $(filter-out $(UTILS)/perf,$^) > $@
+perf.byte.plot perf.opt.plot: perf.%.plot: perf.%.log
+	TITLE='$(if $(finstring .opt.,$<),native,byte) code performance' \
+	    $(UTILS)/plot.sh $<
+	@$(UTILS)/plot.sh --explain-vars
+
+PLOTTYPES=jpg png pdf eps
+$(foreach t,jpg png pdf eps,perf.opt.$t): perf.opt.log
+	TITLE='native code performance' \
+	    TERMINAL=$(subst perf.opt.,,$@)				  \
+	    OUTPUT=$@ $(UTILS)/plot.sh $<
+	@printf "\nPlot saved in $@.\n"
+	@$(UTILS)/plot.sh --explain-vars
+
+$(foreach t,jpg png pdf eps,perf.byte.$t): perf.byte.log
+	TITLE='byte code performance' \
+	    TERMINAL=$(subst perf.byte.,,$@)				  \
+	    OUTPUT=$@ $(UTILS)/plot.sh $<
+	@printf "\nPlot saved in $@.\n"
+	@$(UTILS)/plot.sh --explain-vars
 
 # Rules for producing *.time files.  Subroutine of EXECUTION_RULE.
 define ADD_TIME_RULES
@@ -229,6 +257,8 @@ $(MPI_EXAMPLES:.ml=.sundials): %.sundials: %.sundials.c
 	    $(EG_CFLAGS) $< $(LIB_PATH) $(EG_LDFLAGS) \
 	    $(LAPACK_LIB) $(MPI_LIBLINK)
 
+# 
+
 ## Dependences to files living outside of the examples directory
 
 # Just remind the user to recompile the library rather than actually
@@ -253,6 +283,17 @@ endef
 # Generate a default version.
 $(eval $(call EXECUTION_RULE,%,$$<))
 
+# Generate rules for an example that just copies results from another.
+# $1 = the one that copies, $2 = the one that gets copied
+define C_ALIAS
+    $1.sundials:
+    $1.sundials.c:
+    $1.sundials.out: $2.sundials.out
+	cp $$< $$@
+    $1.sundials.time: $2.sundials.time
+	cp $$< $$@
+endef
+
 distclean: clean
 clean:
 	-@rm -f $(ALL_EXAMPLES:.ml=.cmo) $(ALL_EXAMPLES:.ml=.cmx)
@@ -266,9 +307,12 @@ clean:
 	-@rm -f $(ALL_EXAMPLES:.ml=.self.diff)
 	-@rm -f $(ALL_EXAMPLES:.ml=.byte.time) $(ALL_EXAMPLES:.ml=.opt.time)
 	-@rm -f $(ALL_EXAMPLES:.ml=.sundials) $(ALL_EXAMPLES:.ml=.sundials.c)
-	-@rm -f $(ALL_EXAMPLES:.ml=.sundials.time) $(ALL_EXAMPLES:.ml=.reps)
-	-@rm -f $(ALL_EXAMPLES:.ml=.byte.perf) $(ALL_EXAMPLES:.ml=.opt.perf)
+	-@rm -f $(ALL_EXAMPLES:.ml=.sundials.time)
 	-@rm -f tests.log lapack-tests.log tests.self.log
 	-@rm -f tests.byte.log lapack-tests.byte.log
 	-@rm -f tests.opt.log lapack-tests.opt.log
 	-@rm -f perf.byte.log perf.opt.log
+	-@rm -f $(foreach t,$(PLOTTYPES),perf.opt.$t)
+	-@rm -f $(foreach t,$(PLOTTYPES),perf.byte.$t)
+	-@rm -f $(foreach f,$(UTILS)/perf $(UTILS)/crunchperf,\
+		    $f $f.cmi $f.cmx $f.cmo $f.o)

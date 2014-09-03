@@ -15,12 +15,5 @@ EXAMPLES = kinFerTron_dns.ml			\
 
 include ../../examples.mk
 
-kinRoboKin_dns_alt.sundials.out: kinRoboKin_dns.sundials.out
-	cp $< $@
-kinFoodWeb_kry_custom.sundials.out: kinFoodWeb_kry.sundials.out
-	cp $< $@
-
-kinRoboKin_dns_alt.sundials.time: kinRoboKin_dns.sundials.time
-	cp $< $@
-kinFoodWeb_kry_custom.sundials.time: kinFoodWeb_kry.sundials.time
-	cp $< $@
+$(eval $(call C_ALIAS,kinRoboKin_dns_alt,kinRoboKin_dns))
+$(eval $(call C_ALIAS,kinFoodWeb_kry_custom,kinFoodWeb_kry))

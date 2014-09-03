@@ -40,44 +40,37 @@ tests.opt.log tests.byte.log:
 # Filter out examples that take less than this to complete.
 MIN_TIME ?= 0.2
 
-AWK ?= awk
+perf.opt perf.byte: perf.%:
+	for s in $(SUBDIRS); do $(MAKE) -C $$s $@; done
 
 perf.opt.log perf.byte.log:
 	@for s in ${SUBDIRS}; do		\
 	    ${MAKE} -C $$s $@;			\
 	 done
 	@echo ======================================================================
-	@grep '^#' $(word 1,$(SUBDIRS))/$@ > $@
 	@for s in ${SUBDIRS}; do				\
-	    grep '^[^#]' $$s/$@ >> $@;	\
-	done >> $@
-	cat $@
+	    cat $$s/$@;						\
+	    test $$s = $(lastword $(SUBDIRS)) || printf "\n\n";	\
+	done > $@
+	utils/crunchperf -s $@
 	@$(if $(findstring $@,$(MAKECMDGOALS)), \
 	   echo "Note: \"make $(@:.log=.plot)\" can plot this for you.")
 
-perf.%.dat: perf.%.log
-	@sed -e 's#/serial/#/ser/#'		\
-	     -e 's#/parallel/#/par/#'	\
-	     -e 's#kinsol/#kin/#'	\
-	     -e 's#cvodes/#cvs/#'	\
-	     -e 's#cvode/#cv/#'	\
-	     $< > $@
-
-perf.opt.plot: perf.opt.dat
+perf.opt.plot: perf.opt.log
 	TITLE='native code performance' utils/plot.sh $<
 	@utils/plot.sh --explain-vars
 
-perf.byte.plot: perf.byte.dat
+perf.byte.plot: perf.byte.log
 	TITLE='byte code performance' utils/plot.sh $<
 	@utils/plot.sh --explain-vars
 
-perf.opt.%: perf.opt.dat
+perf.opt.%: perf.opt.log
 	TITLE='native code performance' TERMINAL=$(subst perf.opt.,,$@) \
 	    OUTPUT=$@ utils/plot.sh $<
 	@printf "\nPlot saved in $@.\n"
 	@utils/plot.sh --explain-vars
 
-perf.byte.%: perf.byte.dat
+perf.byte.%: perf.byte.log
 	TITLE='byte code performance' TERMINAL=$(subst perf.opt.,,$@) \
 	    OUTPUT=$@ utils/plot.sh $<
 	@printf "\nPlot saved in $@.\n"

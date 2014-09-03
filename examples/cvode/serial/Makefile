@@ -21,8 +21,4 @@ LAPACK_EXAMPLES = cvAdvDiff_bndL.ml \
 
 include ../../examples.mk
 
-cvRoberts_dns_uw_alt.sundials.out: cvRoberts_dns_uw.sundials.out
-	cp $< $@
-
-cvRoberts_dns_uw_alt.sundials.time: cvRoberts_dns_uw.sundials.time
-	cp $< $@
+$(eval $(call C_ALIAS,cvRoberts_dns_uw_alt,cvRoberts_dns_uw))
