@@ -3,7 +3,6 @@
 envs() {
     echo "You might have to set these environment variables to adjust the output:"
     echo "FONT       - Font name, comma, then size, like: Arial,10"
-    echo "TITLE_FONT - Like FONT, but only used for the title."
     echo "SIZE       - Canvas size; see \"help set term size\" in gnuplot."
     echo "LMARGIN    - How much space (in %) for text at the left."
     echo "RMARGIN    - How much space (in %) for text on the right."
@@ -35,53 +34,48 @@ YMAX=${YMAX:-*}
 Y2MAX=${Y2MAX:-*}
 
 if test "x$LMARGIN" = x; then
-    LMARGIN=0.1
+    SET_LMARGIN=
 else
     LMARGIN=`${AWK} "BEGIN { print ($LMARGIN / 100) }"`
+    SET_LMARGIN="set lmargin ${LMARGIN}"
 fi
 
 if test "x$BMARGIN" = x; then
-    BMARGIN=0.33
+    SET_BMARGIN=
 else
     BMARGIN=`${AWK} "BEGIN { print ($BMARGIN / 100) }"`
+    SET_BMARGIN="set bmargin ${BMARGIN}"
 fi
 
 if test "x$RMARGIN" = x; then
-    RMARGIN=0.93
+    SET_RMARGIN=
 else
     RMARGIN=`${AWK} "BEGIN { print (1 - $RMARGIN / 100) }"`
+    SET_RMARGIN="set rmargin ${RMARGIN}"
 fi
 
 if test "x$TMARGIN" = x; then
-    TMARGIN=0.93
+    SET_TMARGIN=
 else
     TMARGIN=`${AWK} "BEGIN { print (1 - $TMARGIN / 100) }"`
+    SET_TMARGIN="set tmargin ${TMARGIN}"
 fi
 
-TITLE_FONT=${TITLE_FONT:-Arial,8}
-FONT=${FONT:-Arial,6}
-
-case x$TITLE_FONT in
-    x)    SET_TITLE_FONT=;;
-    *)    SET_TITLE_FONT="set title font '$TITLE_FONT'"
-esac
+FONT=${FONT:-Arial,8}
 
 case x$FONT in
     x)    SET_FONT=;;
-    *)    SET_FONT="set xtics font '$FONT'; \
-                    set ytics font '$FONT'; \
-                    set y2tics font '$FONT'; \
-                    set key font '$FONT'"
+    *)    SET_FONT="set termoption font '$FONT'";;
 esac
 
 case x$TERMINAL in
     x)    SET_TERMINAL="set terminal wxt"
-          PAUSE="pause mouse";;
+          PAUSE=${PAUSE:-"pause mouse"};;
     xwxt) SET_TERMINAL="set terminal wxt"
-          PAUSE="pause mouse";;
+          PAUSE=${PAUSE:-"pause mouse"};;
     xx11) SET_TERMINAL="set terminal x11"
-          PAUSE="pause mouse";;
-    *)    SET_TERMINAL="set terminal $TERMINAL"
+          PAUSE=${PAUSE:-"pause mouse"};;
+    *)    SET_TERMINAL="set terminal $TERMINAL";;
 esac
 
 if test "x$SIZE" != x; then
@@ -105,23 +99,26 @@ else
     SET_POINTSIZE="set pointsize $POINTSIZE"
 fi
 
+Y2LABEL='C running time / repetition [seconds]'
+YLABEL='running time: OCaml / C'
+
 if test "x$STYLE" = xboxplot; then
 gnuplot <<EOF
 $SET_TERMINAL
 $SET_OUTPUT
 $SET_FONT
-$SET_TITLE_FONT
 set title '$TITLE'
-set lmargin screen ${LMARGIN};
-set rmargin screen ${RMARGIN};
-set bmargin screen ${BMARGIN};
-set tmargin screen ${TMARGIN};
+$SET_LMARGIN
+$SET_RMARGIN
+$SET_BMARGIN
+$SET_TMARGIN
 set key inv
 $SET_KEY_WIDTH
 $SET_POINTSIZE
 set xtics rotate by 60 right;
 set ytics nomirror;
-set y2label 'seconds' font '${FONT}'
+set y2label '${Y2LABEL}'
+set ylabel '${YLABEL}'
 set y2tics nomirror;
 set yrange [0:${YMAX}];
 set y2range [0:${Y2MAX}];
@@ -135,7 +132,7 @@ set grid xtics lt 0 lw 1 lc rgb "#bbbbbb"
 
 # plot the whole set with boxplot, plot each data set's
 # median C time / reps with points
-plot "$1" using (0):(\$3/\$4):(0.5):6 with boxplot pointtype 2 lw 0.5 \
+plot "$1" using (0):(\$3/\$4):(0.5):6 with boxplot pointtype 2 \
        title 'OCaml time / C time (left axis)', \
      "$1" index 0 using (0):(\$2/\$1) \
        with points pointtype 3 lw 0.5 lc rgb 'black' \
@@ -147,23 +144,21 @@ plot "$1" using (0):(\$3/\$4):(0.5):6 with boxplot pointtype 2 lw 0.5 \
 ${PAUSE}
 EOF
 else                            # if STYLE != boxplot, do a bar chart
-crunch=`echo $0 | sed -e 's#plot.sh#crunchperf#'`
+crunch=`echo $0 | sed -e 's#plot\.sh#crunchperf#'`
 gnuplot <<EOF
 $SET_TERMINAL
 $SET_OUTPUT
 $SET_FONT
-$SET_TITLE_FONT
 set title '$TITLE'
-set lmargin screen ${LMARGIN};
-set rmargin screen ${RMARGIN};
-set bmargin screen ${BMARGIN};
-set tmargin screen ${TMARGIN};
+$SET_LMARGIN
+$SET_RMARGIN
+$SET_BMARGIN
+$SET_TMARGIN
 set key inv
-# $SET_KEY_WIDTH
-# $SET_POINTSIZE
 set xtics rotate by 60 right;
 set ytics nomirror;
-set y2label 'seconds' font '${FONT}'
+set y2label '${Y2LABEL}'
+set ylabel '${YLABEL}'
 set y2tics nomirror;
 set yrange [0:${YMAX}];
 set y2range [0:${Y2MAX}];
