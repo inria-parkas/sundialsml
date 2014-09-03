@@ -64,11 +64,6 @@ let float_cell_size =
 
 let bytes x = header_and_empty_array_size + x * float_cell_size
 
-(* Drop the first i elements of a RealArray.t *)
-let real_array_drop i a = slice a i (RealArray.length a - i)
-
-
-
 (* Problem Constants *)
 let num_species = 2
 
@@ -109,8 +104,9 @@ let one =         1.0
  * species index is = 0, x-index ix = i, and y-index jy = j.
  *)
 
+let index i j = i*num_species + j*nsmxsub
 let ij_vptr (local,_,_) i j =
-  let offset = i*num_species + j*nsmxsub in
+  let offset = index i j in
   slice local offset (RealArray.length local - offset)
 
 (* Type: UserData.  Contains problem constants, preconditioner data, etc. *)
@@ -283,14 +279,14 @@ let bsend comm my_pe ixsub jysub dsizex dsizey cdata =
  * At a given (x,y), evaluate the array of ns reaction terms R.
  *)
 
-let react_rates data xx yy uvval rates =
+let react_rates data xx yy (uvval, uvval_off) rates =
   let a = data.a and b = data.b in
 
-  rates.{0} <- uvval.{0}*.uvval.{0}*.uvval.{1};
+  rates.{0} <- uvval.{uvval_off}*.uvval.{uvval_off}*.uvval.{uvval_off + 1};
   rates.{1} <- -. rates.{0};
 
-  rates.{0} <- rates.{0} +. (a-.(b+.1.0)*.uvval.{0});
-  rates.{1} <- rates.{1} +. b*.uvval.{0}
+  rates.{0} <- rates.{0} +. (a-.(b+.1.0)*.uvval.{uvval_off});
+  rates.{1} <- rates.{1} +. b*.uvval.{uvval_off}
 
 (*
  * rescomm: Communication routine in support of resweb.
@@ -338,7 +334,9 @@ let rescomm data tt uv uvp =
  * for use by the preconditioner setup routine.
  *)
 
-let reslocal data tt uv uvp rr =
+let reslocal data tt ((uv : RealArray.t), _, _)
+                     ((uvp : RealArray.t), _, _)
+                     ((rr : RealArray.t), _, _) =
   let mxsub =      data.mxsub in
   let mysub =      data.mysub in
   let npex =       data.npex in
@@ -352,7 +350,6 @@ let reslocal data tt uv uvp rr =
   let gridext =    data.gridext in
   let eps =        data.eps in
   (* Get data pointers, subgrid data, array sizes, work array cext. *)
-  let uvdata,_,_ = uv in
   let rates = RealArray.create 2 in
 
   let dx2 = dx *. dx in
@@ -363,7 +360,7 @@ let reslocal data tt uv uvp rr =
   let locce = ref (nsmxsub2 + num_species) in
   for jy = 0 to mysub-1 do
     for i = 0 to nsmxsub-1 do
-      gridext.{!locce+i} <- uvdata.{!locc+i}
+      gridext.{!locce+i} <- uv.{!locc+i}
     done;
     locc := !locc + nsmxsub;
     locce := !locce + nsmxsub2;
@@ -375,7 +372,7 @@ let reslocal data tt uv uvp rr =
   (* If jysub = 0, copy x-line 2 of uv to gridext. *)
   if jysub = 0 then
     for i = 0 to nsmxsub-1 do
-      gridext.{num_species+i} <- uvdata.{nsmxsub+i}
+      gridext.{num_species+i} <- uv.{nsmxsub+i}
     done
   ;
 
@@ -384,7 +381,7 @@ let reslocal data tt uv uvp rr =
     let locc = (mysub-2)*nsmxsub in
     let locce = (mysub+1)*nsmxsub2 + num_species in
     for i = 0 to nsmxsub-1 do
-      gridext.{locce+i} <- uvdata.{locc+i}
+      gridext.{locce+i} <- uv.{locc+i}
     done
   end;
 
@@ -395,7 +392,7 @@ let reslocal data tt uv uvp rr =
       let locc = jy*nsmxsub + num_species in
       let locce = (jy+1)*nsmxsub2 in
       for i = 0 to num_species-1 do
-        gridext.{locce+i} <- uvdata.{locc+i}
+        gridext.{locce+i} <- uv.{locc+i}
       done
     done
   end;
@@ -407,7 +404,7 @@ let reslocal data tt uv uvp rr =
       let locc = (jy+1)*nsmxsub - 2*num_species in
       let locce = (jy+2)*nsmxsub2 - num_species in
       for i = 0 to num_species-1 do
-        gridext.{locce+i} <- uvdata.{locc+i}
+        gridext.{locce+i} <- uv.{locc+i}
       done
     done
   end;
@@ -427,11 +424,9 @@ let reslocal data tt uv uvp rr =
       let locce = ylocce + (ix+1)*num_species in
       let xx = float_of_int(ix + ixsub*mxsub)*.dx in
 
-      react_rates data xx yy (real_array_drop locce gridext) rates;
+      react_rates data xx yy (gridext, locce) rates;
 
-      let resxy = ij_vptr rr ix jy in
-      let uvpxy = ij_vptr uvp ix jy in
-
+      let off = index ix jy in
       for is = 0 to num_species-1 do
         let dcyli = gridext.{locce+is}          -. gridext.{locce+is-nsmxsub2} in
         let dcyui = gridext.{locce+is+nsmxsub2} -. gridext.{locce+is} in
@@ -439,7 +434,7 @@ let reslocal data tt uv uvp rr =
         let dcxli = gridext.{locce+is}             -. gridext.{locce+is-num_species} in
         let dcxui = gridext.{locce+is+num_species} -. gridext.{locce+is} in
 
-        resxy.{is} <- uvpxy.{is}
+        rr.{off + is} <- uvp.{off + is}
                       -. eps.{is}*.( (dcxui-.dcxli)/.dx2 +. (dcyui-.dcyli)/.dy2 )
                       -. rates.{is};
       done
@@ -450,10 +445,10 @@ let reslocal data tt uv uvp rr =
   if jysub=0 then begin
     for ix = 0 to mxsub-1 do
       let locce = nsmxsub2 + num_species * (ix+1) in
-      let resxy = ij_vptr rr ix 0 in
+      let off = index ix 0 in
 
       for is = 0 to num_species-1 do
-        resxy.{is} <- gridext.{locce+is+nsmxsub2} -. gridext.{locce+is}
+        rr.{off + is} <- gridext.{locce+is+nsmxsub2} -. gridext.{locce+is}
       done
     done
   end;
@@ -461,10 +456,10 @@ let reslocal data tt uv uvp rr =
   if ixsub=npex-1 then begin
     for jy = 0 to mysub-1 do
       let locce = (jy+1)*nsmxsub2 + nsmxsub2-num_species in
-      let resxy = ij_vptr rr (mxsub-1) jy in
+      let off = index (mxsub-1) jy in
 
       for is = 0 to num_species-1 do
-        resxy.{is} <- gridext.{locce+is-num_species} -. gridext.{locce+is}
+        rr.{off + is} <- gridext.{locce+is-num_species} -. gridext.{locce+is}
       done
     done
   end;
@@ -472,10 +467,10 @@ let reslocal data tt uv uvp rr =
   if ixsub=0 then begin
     for jy = 0 to mysub-1 do
       let locce = (jy+1)*nsmxsub2 + num_species in
-      let resxy = ij_vptr rr 0 jy in
+      let off = index 0 jy in
 
       for is = 0 to num_species-1 do
-        resxy.{is} <- gridext.{locce+is-num_species} -. gridext.{locce+is}
+        rr.{off + is} <- gridext.{locce+is-num_species} -. gridext.{locce+is}
       done
     done
   end;
@@ -483,10 +478,10 @@ let reslocal data tt uv uvp rr =
   if jysub=npey-1 then begin
     for ix = 0 to mxsub-1 do
       let locce = nsmxsub2*mysub + (ix+1)*num_species in
-      let resxy = ij_vptr rr ix (mysub-1) in
+      let off = index ix (mysub-1) in
 
       for is = 0 to num_species-1 do
-        resxy.{is} <- gridext.{locce+is-nsmxsub2} -. gridext.{locce+is}
+        rr.{off + is} <- gridext.{locce+is-nsmxsub2} -. gridext.{locce+is}
       done
     done
   end
