@@ -153,7 +153,7 @@ endef
 
 # How many times to measure each example.  Each measurement repeats
 # the example several times to make it run long enough.
-PERF_REPS ?= 3
+PERF_DATA_POINTS ?= 3
 
 # At least how long each measurement should take.  If this value is
 # too low, the measurement will be unreliable.
@@ -208,11 +208,14 @@ $(foreach t,jpg png pdf eps,perf.byte.$t): perf.byte.log
 define ADD_TIME_RULES
     # .sundials should be run before .opt or .byte - it determines NUM_REPS.
     $1.sundials.time: $1.sundials $(UTILS)/perf
-	$(UTILS)/perf -m $(MIN_TIME) $(PERF_REPS) $(2:$$<=./$$<) | tee $$@
+	$(UTILS)/perf -m $(MIN_TIME) $(PERF_DATA_POINTS) \
+	    $(2:$$<=./$$<) | tee $$@
     $1.opt.time: $1.opt $1.sundials.time $(UTILS)/perf
-	$(UTILS)/perf -i $$(word 2,$$^) $(PERF_REPS) $(2:$$<=./$$<) | tee $$@
+	$(UTILS)/perf -i $$(word 2,$$^) $(PERF_DATA_POINTS) \
+	    $(2:$$<=./$$<) | tee $$@
     $1.byte.time: $1.byte $1.sundials.time $(UTILS)/perf
-	$(UTILS)/perf -i $$(word 2,$$^) $(PERF_REPS) $(2:$$<=./$$<) | tee $$@
+	$(UTILS)/perf -i $$(word 2,$$^) $(PERF_DATA_POINTS) \
+	    $(2:$$<=./$$<) | tee $$@
 endef
 
 # Compilation of C examples with environment-handling wrappers.
