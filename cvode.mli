@@ -750,9 +750,14 @@ module Alternate :
               @cvode <node8#SECTION00830000000000000000> lsolve *)
       }
 
+    type gammas = {
+      gamma : float;
+      gammap : float;
+    }
+
     (** [(gamma, gammap) = get_gamma s] returns the solver's current and
         previous gamma values. *)
-    val get_gamma : ('data, 'kind) session -> float * float
+    val get_gammas : ('data, 'kind) session -> gammas
 
     (** Create a linear solver from a function returning a set of callback
         functions *)

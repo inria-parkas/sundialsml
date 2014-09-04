@@ -33,6 +33,7 @@
 
 module RealArray = Sundials.RealArray
 module Roots = Sundials.Roots
+module Alt = Cvode.Alternate
 let unvec = Sundials.unvec
 let unwrap = Sundials.RealArray2.unwrap
 
@@ -41,7 +42,7 @@ let printf = Printf.printf
 let ith (v : RealArray.t) i = v.{i - 1}
 let set_ith (v : RealArray.t) i e = v.{i - 1} <- e
 
-(* Test the Cvode.Alternate module *)
+(* Test the Alt module *)
 
 module DM = Dls.ArrayDenseMatrix
 module LintArray = Sundials.LintArray
@@ -63,12 +64,12 @@ let alternate_dense jacfn =
   let linit mem s = (nje := 0; true) in
 
   let lsetup mem s convfail ypred fpred tmp =
-    let gamma, gammap = Cvode.Alternate.get_gamma s in
+    let { Alt.gamma = gamma; Alt.gammap = gammap} = Alt.get_gammas s in
     let dgamma = abs_float ((gamma/.gammap) -. 1.0) in
     let nst = Cvode.get_num_steps s in
     let jbad = (nst = 0) || (nst > mem.nstlj + cvd_msbj)
-             || ((convfail = Cvode.Alternate.FailBadJ) && (dgamma < cvd_dgmax))
-             || (convfail = Cvode.Alternate.FailOther)
+             || ((convfail = Alt.FailBadJ) && (dgamma < cvd_dgmax))
+             || (convfail = Alt.FailOther)
     in
     let jok = not jbad in
     let jcurptr =
@@ -95,7 +96,7 @@ let alternate_dense jacfn =
 
   let lsolve mem s b weight ycur fcur =
     let nst = Cvode.get_num_steps s in
-    let gamma, gammap = Cvode.Alternate.get_gamma s in
+    let { Alt.gamma = gamma; Alt.gammap = gammap } = Alt.get_gammas s in
     let gamrat = if nst > 0 then gamma /. gammap else 1.0 in
     DM.getrs mem.dm mem.pivots b;
     if (*lmm = Cvode.BDF && *) gamrat <> 1.0 then
@@ -104,7 +105,7 @@ let alternate_dense jacfn =
   in
 
   let solver =
-    Cvode.Alternate.make_solver (fun s nv ->
+    Alt.make_solver (fun s nv ->
         let n = RealArray.length (Sundials.unvec nv) in
         let mem = {
           nstlj  = 0;
@@ -114,9 +115,9 @@ let alternate_dense jacfn =
         }
         in
         {
-          Cvode.Alternate.linit = Some (linit mem);
-          Cvode.Alternate.lsetup = Some (lsetup mem);
-          Cvode.Alternate.lsolve = lsolve mem;
+          Alt.linit = Some (linit mem);
+          Alt.lsetup = Some (lsetup mem);
+          Alt.lsolve = lsolve mem;
         })
   in
   (solver, fun () -> 0, !nje)

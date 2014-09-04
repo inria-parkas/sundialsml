@@ -513,7 +513,12 @@ module Alternate =
       : ('data, 'kind) session -> bool -> bool -> unit
       = "c_cvode_set_alternate"
 
-    external get_gamma : ('data, 'kind) session -> float * float
+    type gammas = {
+      gamma : float;
+      gammap : float;
+    }
+
+    external get_gammas : ('data, 'kind) session -> gammas
       = "c_cvode_get_gamma"
 
     let make_solver f s nv =

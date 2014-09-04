@@ -110,8 +110,6 @@ let ijkth (v : RealArray.t) i j k
   = v.{i - 1 + j * num_species + k * nsmx}
 let set_ijkth (v : RealArray.t) i j k e
   = v.{i - 1 + j * num_species + k * nsmx} <- e
-let slice_ijkth (v : RealArray.t) i j k =
-  Bigarray.Array1.sub v (i - 1 + j * num_species + k * nsmx) num_species
 
 let ijth v i j       = Direct.get v (i - 1) (j - 1)
 let set_ijth v i j e = Direct.set v (i - 1) (j - 1) e
@@ -245,7 +243,7 @@ let print_final_stats s =
 
 (* f routine. Compute RHS function f(t,u). *)
 
-let f data t udata dudata =
+let f data t (udata : RealArray.t) (dudata : RealArray.t) =
   (* Set diurnal rate coefficients. *)
   let s = sin (data.om *. t) in
   let q3 = if s > zero then exp(-. a3 /.s) else zero in
@@ -273,8 +271,8 @@ let f data t udata dudata =
     for jx = 0 to mx - 1 do
 
       (* Extract c1 and c2, and set kinetic rate terms. *)
-      let c1 = ijkth udata 1 jx jy
-      and c2 = ijkth udata 2 jx jy
+      let c1 = udata.{0 + jx * num_species + jy * nsmx}
+      and c2 = udata.{1 + jx * num_species + jy * nsmx}
       in
       let qq1 = q1 *. c1 *. c3;
       and qq2 = q2 *. c1 *. c2;
@@ -286,10 +284,10 @@ let f data t udata dudata =
       in
 
       (* Set vertical diffusion terms. *)
-      let c1dn = ijkth udata 1 jx (jy + idn)
-      and c2dn = ijkth udata 2 jx (jy + idn)
-      and c1up = ijkth udata 1 jx (jy + iup)
-      and c2up = ijkth udata 2 jx (jy + iup)
+      let c1dn = udata.{0 + jx * num_species + (jy + idn) * nsmx}
+      and c2dn = udata.{1 + jx * num_species + (jy + idn) * nsmx}
+      and c1up = udata.{0 + jx * num_species + (jy + iup) * nsmx}
+      and c2up = udata.{1 + jx * num_species + (jy + iup) * nsmx}
       in
       let vertd1 = cyup *. (c1up -. c1) -. cydn *. (c1 -. c1dn)
       and vertd2 = cyup *. (c2up -. c2) -. cydn *. (c2 -. c2dn)
@@ -299,10 +297,10 @@ let f data t udata dudata =
       let ileft  = if jx = 0      then  1 else -1
       and iright = if jx = mx - 1 then -1 else 1
       in
-      let c1lt = ijkth udata 1 (jx + ileft) jy
-      and c2lt = ijkth udata 2 (jx + ileft) jy
-      and c1rt = ijkth udata 1 (jx + iright) jy
-      and c2rt = ijkth udata 2 (jx + iright) jy
+      let c1lt = udata.{0 + (jx + ileft) * num_species + jy * nsmx}
+      and c2lt = udata.{1 + (jx + ileft) * num_species + jy * nsmx}
+      and c1rt = udata.{0 + (jx + iright) * num_species + jy * nsmx}
+      and c2rt = udata.{1 + (jx + iright) * num_species + jy * nsmx}
       in
       let hord1 = hordco *. (c1rt -. two *. c1 +. c1lt)
       and hord2 = hordco *. (c2rt -. two *. c2 +. c2lt)
@@ -311,15 +309,17 @@ let f data t udata dudata =
       in
 
       (* Load all terms into udot. *)
-      set_ijkth dudata 1 jx jy (vertd1 +. hord1 +. horad1 +. rkin1); 
-      set_ijkth dudata 2 jx jy (vertd2 +. hord2 +. horad2 +. rkin2)
+      dudata.{0 + jx * num_species + jy * nsmx}
+                                        <- vertd1 +. hord1 +. horad1 +. rkin1; 
+      dudata.{1 + jx * num_species + jy * nsmx}
+                                        <- vertd2 +. hord2 +. horad2 +. rkin2
     done
   done
 
 (* Jacobian-times-vector routine. *)
 
-let jtv data jac_arg vdata jvdata =
-  let { Cvode.jac_t = t; Cvode.jac_y = udata; } = jac_arg in
+let jtv data jac_arg (vdata : RealArray.t) (jvdata : RealArray.t) =
+  let { Cvode.jac_t = t; Cvode.jac_y = (udata : RealArray.t); } = jac_arg in
 
   (* Set diurnal rate coefficients. *)
   let s = sin(data.om *. t) in
@@ -354,51 +354,31 @@ let jtv data jac_arg vdata jvdata =
 
       (* Extract c1 and c2 at the current location and at neighbors *)
 
-      let c1 = ijkth udata 1 jx jy
-      and c2 = ijkth udata 2 jx jy
+      let c1 = udata.{0 + jx * num_species + jy * nsmx}
+      and c2 = udata.{1 + jx * num_species + jy * nsmx}
       in
 
-      let v1 = ijkth vdata 1 jx jy
-      and v2 = ijkth vdata 2 jx jy
+      let v1 = vdata.{0 + jx * num_species + jy * nsmx}
+      and v2 = vdata.{1 + jx * num_species + jy * nsmx}
       in
 
-      (*
-      let c1dn = ijkth udata 1 jx (jy + idn)
-      and c2dn = ijkth udata 2 jx (jy + idn)
-      and c1up = ijkth udata 1 jx (jy + iup)
-      and c2up = ijkth udata 2 jx (jy + iup)
-      in
-      *)
-
-      let v1dn = ijkth vdata 1 jx (jy + idn)
-      and v2dn = ijkth vdata 2 jx (jy + idn)
-      and v1up = ijkth vdata 1 jx (jy + iup)
-      and v2up = ijkth vdata 2 jx (jy + iup)
+      let v1dn = vdata.{0 + jx * num_species + (jy + idn) * nsmx}
+      and v2dn = vdata.{1 + jx * num_species + (jy + idn) * nsmx}
+      and v1up = vdata.{0 + jx * num_species + (jy + iup) * nsmx}
+      and v2up = vdata.{1 + jx * num_species + (jy + iup) * nsmx}
       in
 
       let ileft  = (if jx = 0      then  1 else -1)
       and iright = (if jx = mx - 1 then -1 else  1)
       in
 
-      (*
-      let c1lt = ijkth udata 1 (jx + ileft) jy
-      and c2lt = ijkth udata 2 (jx + ileft) jy
-      and c1rt = ijkth udata 1 (jx + iright) jy
-      and c2rt = ijkth udata 2 (jx + iright) jy
-      in *)
-
-      let v1lt = ijkth vdata 1 (jx + ileft) jy
-      and v2lt = ijkth vdata 2 (jx + ileft) jy
-      and v1rt = ijkth vdata 1 (jx + iright) jy
-      and v2rt = ijkth vdata 2 (jx + iright) jy
+      let v1lt = vdata.{0 + (jx + ileft) * num_species + jy * nsmx}
+      and v2lt = vdata.{1 + (jx + ileft) * num_species + jy * nsmx}
+      and v1rt = vdata.{0 + (jx + iright) * num_species + jy * nsmx}
+      and v2rt = vdata.{1 + (jx + iright) * num_species + jy * nsmx}
       in
 
       (* Set kinetic rate terms. *)
-      (*
-         rkin1 = -q1 *. c3 *. c1 -. q2 *. c1 *. c2
-                 +. q4coef *. c2  +. two *. c3 *. q3
-         rkin2 =  q1 *. c3 *. c1 -. q2 *. c1 *. c2 -. q4coef *. c2
-       *)
       let jv1 = jv1 +. (-.(q1 *. c3 +. q2 *. c2) *. v1
                         +. (q4coef -. q2 *. c1) *. v2)
       and jv2 = jv2 +. ((q1 *. c3 -. q2 *. c2) *. v1
@@ -406,37 +386,20 @@ let jtv data jac_arg vdata jvdata =
       in
 
       (* Set vertical diffusion terms. *)
-      (*
-        vertd1 = -.(cyup +. cydn) *. c1 +. cyup *. c1up +. cydn *. c1dn
-        vertd2 = -.(cyup +. cydn) *. c2 +. cyup *. c2up +. cydn *. c2dn
-      *)
       let jv1 = jv1 +. (-. (cyup +. cydn) *. v1 +. cyup *. v1up +. cydn *. v1dn)
       and jv2 = jv2 +. (-. (cyup +. cydn) *. v2 +. cyup *. v2up +. cydn *. v2dn)
       in
 
       (* Set horizontal diffusion and advection terms. *)
-      (*
-        hord1 = hordco *. (c1rt -. two *. c1 +. c1lt)
-        hord2 = hordco *. (c2rt -. two *. c2 +. c2lt)
-      *)
       let jv1 = jv1 +. (hordco *. (v1rt -. two *. v1 +. v1lt))
       and jv2 = jv2 +. (hordco *. (v2rt -. two *. v2 +. v2lt))
       in
-      (*
-        horad1 = horaco *. (c1rt -. c1lt)
-        horad2 = horaco *. (c2rt -. c2lt)
-      *)
       let jv1 = jv1 +. (horaco *. (v1rt -. v1lt))
       and jv2 = jv2 +. (horaco *. (v2rt -. v2lt))
       in
       (* Load two components of J*v *)
-      (*
-      set_ijkth dudata 1 jx jy (vertd1 +. hord1 +. horad1 +. rkin1); 
-      set_ijkth dudata 2 jx jy (vertd2 +. hord2 +. horad2 +. rkin2);
-      *)
-      set_ijkth jvdata 1 jx jy jv1;
-      set_ijkth jvdata 2 jx jy jv2
-
+      jvdata.{0 + jx * num_species + jy * nsmx} <- jv1;
+      jvdata.{1 + jx * num_species + jy * nsmx} <- jv2
     done
 
   done
@@ -445,7 +408,7 @@ let jtv data jac_arg vdata jvdata =
 
 let precond data jacarg jok gamma =
   let { Cvode.jac_t   = tn;
-        Cvode.jac_y   = udata;
+        Cvode.jac_y   = (udata : RealArray.t);
         Cvode.jac_fy  = fudata;
         Cvode.jac_tmp = (vtemp1, vtemp2, vtemp)
       } = jacarg
@@ -487,8 +450,8 @@ let precond data jacarg jok gamma =
         let diag = -. (cydn +. cyup +. two *. hordco) in
 
         for jx = 0 to mx - 1 do
-          let c1 = ijkth udata 1 jx jy
-          and c2 = ijkth udata 2 jx jy
+          let c1 = udata.{0 + jx * num_species + jy * nsmx}
+          and c2 = udata.{1 + jx * num_species + jy * nsmx}
           and j = jbd.(jx).(jy)
           and a = p.(jx).(jy)
           in
@@ -521,8 +484,10 @@ let precond data jacarg jok gamma =
 
 (* Preconditioner solve routine *)
 
-let psolve data jac_arg solve_arg zdata =
-  let { Cvode.Spils.rhs = r;
+let psolve data =
+  let cache = RealArray.create num_species in
+  fun jac_arg solve_arg (zdata : RealArray.t) ->
+  let { Cvode.Spils.rhs = (r : RealArray.t);
         Cvode.Spils.gamma = gamma;
         Cvode.Spils.delta = delta;
         Cvode.Spils.left = lr } = solve_arg
@@ -539,7 +504,17 @@ let psolve data jac_arg solve_arg zdata =
      in P and pivot data in pivot, and return the solution in z. *)
   for jx = 0 to mx - 1 do
     for jy = 0 to my - 1 do
-      Direct.getrs p.(jx).(jy) pivot.(jx).(jy) (slice_ijkth zdata 1 jx jy)
+      (* faster to cache and copy in/out than to Bigarray.Array1.sub... *)
+      let off = jx * num_species + jy * nsmx in
+      for i=0 to num_species - 1 do
+        cache.{i} <- zdata.{off + i}
+      done;
+
+      Direct.getrs p.(jx).(jy) pivot.(jx).(jy) cache;
+
+      for i=0 to num_species - 1 do
+        zdata.{off + i} <- cache.{i}
+      done
     done
   done
 

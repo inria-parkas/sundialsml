@@ -123,6 +123,9 @@ TODO: include graph, explain methodology
 TODO: performance tips for programs: a) type annotations for vectors; b)
 avoid slice and sub; c) unwrap and use array access for matrices.
 
+TODO: Thanks to OCaml's optimizations for (unboxed) floats and tight loops,
+and also to the MPI and Bigarray libraries.
+
 {2:refs References}
 
 - A. C. Hindmarsh, P. N. Brown, K. E. Grant, S. L. Lee, R. Serban, D. E.

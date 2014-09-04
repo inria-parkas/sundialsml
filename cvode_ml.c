@@ -491,9 +491,9 @@ CAMLprim value c_cvode_get_gamma(value vcvode_mem)
     CAMLlocal1(r);
     CVodeMem cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
 
-    r = caml_alloc_tuple (2);
-    Store_field (r, 0, caml_copy_double(cvode_mem->cv_gamma));
-    Store_field (r, 1, caml_copy_double(cvode_mem->cv_gammap));
+    r = caml_alloc_tuple (2 * Double_wosize);
+    Store_double_field (r, 0, cvode_mem->cv_gamma);
+    Store_double_field (r, 1, cvode_mem->cv_gammap);
     CAMLreturn(r);
 }
 
