@@ -106,10 +106,8 @@ let neq      = (num_species * mm) (* neq = number of equations *)
    work with matrices stored by column in a 2-dimensional array. In C,
    arrays are indexed starting at 0, not 1. *)
 
-let ijkth v i j k       = v.{i - 1 + j * num_species + k * nsmx}
-let set_ijkth v i j k e = v.{i - 1 + j * num_species + k * nsmx} <- e
-let slice_ijkth v i j k =
-  Array1.sub v (i - 1 + j * num_species + k * nsmx) num_species
+let ijkth (v : RealArray.t) i j k       = v.{i - 1 + j * num_species + k * nsmx}
+let set_ijkth (v : RealArray.t) i j k e = v.{i - 1 + j * num_species + k * nsmx} <- e
 
 (* Type : UserData 
    contains preconditioner blocks, pivot arrays, and problem constants *)
@@ -227,7 +225,7 @@ let print_final_stats s =
 
 (* f routine. Compute RHS function f(t,u). *)
 
-let f data t udata dudata =
+let f data t (udata : RealArray.t) (dudata : RealArray.t) =
   (* Set diurnal rate coefficients. *)
   let s = sin (data.om *. t) in
   let q3 = if s > zero then exp(-. a3 /.s) else zero in
@@ -293,8 +291,10 @@ let f data t udata dudata =
       in
 
       (* Load all terms into udot. *)
-      set_ijkth dudata 1 jx jy (vertd1 +. hord1 +. horad1 +. rkin1); 
-      set_ijkth dudata 2 jx jy (vertd2 +. hord2 +. horad2 +. rkin2)
+      dudata.{0 + jx * num_species + jy * nsmx} <-
+                                          vertd1 +. hord1 +. horad1 +. rkin1;
+      dudata.{1 + jx * num_species + jy * nsmx} <-
+                                          vertd2 +. hord2 +. horad2 +. rkin2;
     done
   done
 
