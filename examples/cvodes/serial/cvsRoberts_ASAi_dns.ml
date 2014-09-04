@@ -65,8 +65,8 @@ let printf = Printf.printf
 
 (* Accessor macros *)
 
-let ith v i = v.{i - 1}
-let set_ith v i e = v.{i - 1} <- e
+let ith (v : RealArray.t) i = v.{i - 1}
+let set_ith (v : RealArray.t) i e = v.{i - 1} <- e
 
 let ijth v i j       = Densemat.get v (i - 1) (j - 1)
 let set_ijth v i j e = Densemat.set v (i - 1) (j - 1) e
@@ -102,111 +102,98 @@ type user_data = { p : float array }
 
 (* f routine. Compute f(t,y). *)
 
-let f data t y ydot =
-  let y1 = ith y 1
-  and y2 = ith y 2
-  and y3 = ith y 3
-  and p1 = data.p.(0)
+let f data t (y : RealArray.t) (ydot : RealArray.t) =
+  let p1 = data.p.(0)
   and p2 = data.p.(1)
   and p3 = data.p.(2) in
 
-  let yd1 = -.p1*.y1 +. p2*.y2*.y3 in
-  let yd3 = p3*.y2*.y2 in
-  set_ith ydot 1 yd1;
-  set_ith ydot 3 yd3; 
-  set_ith ydot 2 (-.yd1 -. yd3)
+  let yd1 = -.p1*.y.{0} +. p2*.y.{1}*.y.{2} in
+  let yd3 = p3*.y.{1}*.y.{1} in
+  ydot.{0} <- yd1;
+  ydot.{1} <- (-.yd1 -. yd3);
+  ydot.{2} <- yd3
 
 (* Jacobian routine. Compute J(t,y). *)
 
-let jac data { Cvode.jac_y = y } jmat =
-  let y2 = ith y 2
-  and y3 = ith y 3
-  and p1 = data.p.(0)
+let jac data { Cvode.jac_y = (y : RealArray.t) } jmat =
+  let p1 = data.p.(0)
   and p2 = data.p.(1)
   and p3 = data.p.(2)
   in
-  set_ijth jmat 1 1 (-.p1);
-  set_ijth jmat 1 2 (p2*.y3);
-  set_ijth jmat 1 3 (p2*.y2);
-  set_ijth jmat 2 1 ( p1);
-  set_ijth jmat 2 2 (-.p2*.y3-.2.0*.p3*.y2);
-  set_ijth jmat 2 3 (-.p2*.y2);
-  set_ijth jmat 3 2 (2.0*.p3*.y2)
+  Densemat.set jmat 0 0 (-.p1);
+  Densemat.set jmat 0 1 (p2*.y.{2});
+  Densemat.set jmat 0 2 (p2*.y.{1});
+  Densemat.set jmat 1 0 ( p1);
+  Densemat.set jmat 1 1 (-.p2*.y.{2}-.2.0*.p3*.y.{1});
+  Densemat.set jmat 1 2 (-.p2*.y.{1});
+  Densemat.set jmat 2 1 (2.0*.p3*.y.{1})
 
 (* fQ routine. Compute fQ(t,y). *)
 
-let fQ data t y qdot = set_ith qdot 1 (ith y 3)
+let fQ data t (y : RealArray.t) (qdot : RealArray.t) = qdot.{0} <- y.{2}
  
 (* EwtSet function. Computes the error weights at the current solution. *)
 
-let ewt data y w =
+let atol = Array.of_list [ atol1; atol2; atol3 ]
+let ewt data (y : RealArray.t) (w : RealArray.t) =
   let rtol = rtol;
-  and atol = Array.of_list [ atol1; atol2; atol3 ]
   in
-  for i = 1 to 3 do
-    let yy = ith y i in
-    let ww = rtol *. (abs_float yy) +. atol.(i-1) in
+  for i = 0 to 2 do
+    let ww = rtol *. (abs_float y.{i}) +. atol.(i) in
     if ww <= 0.0 then raise Sundials.NonPositiveEwt;
-    set_ith w i (1.0/.ww)
+    w.{i} <- (1.0/.ww)
   done
 
 (* fB routine. Compute fB(t,y,yB). *)
 
-let fB data t y yB yBdot =
+let fB data t (y : RealArray.t) (yB : RealArray.t) (yBdot : RealArray.t) =
   let p1 = data.p.(0) (* The p vector *)
   and p2 = data.p.(1)
   and p3 = data.p.(2)
-  and y2 = ith y 2
-  and y3 = ith y 3
-  and l1 = ith yB 1  (* The lambda vector *)
-  and l2 = ith yB 2
-  and l3 = ith yB 3
+  and l1 = yB.{0}  (* The lambda vector *)
+  and l2 = yB.{1}
+  and l3 = yB.{2}
   in
   (* Temporary variables *)
   let l21 = l2-.l1
   and l32 = l3-.l2
   in
   (* Load yBdot *)
-  set_ith yBdot 1 (-. p1*.l21);
-  set_ith yBdot 2 (p2*.y3*.l21 -. 2.0*.p3*.y2*.l32);
-  set_ith yBdot 3 (p2*.y2*.l21 -. 1.0)
+  yBdot.{0} <- -. p1*.l21;
+  yBdot.{1} <- p2*.y.{2}*.l21 -. 2.0*.p3*.y.{1}*.l32;
+  yBdot.{2} <- p2*.y.{1}*.l21 -. 1.0
 
 (* JacB routine. Compute JB(t,y,yB). *)
 
-let jacb data { Adj.jac_y = y } jbmat =
+let jacb data { Adj.jac_y = (y : RealArray.t) } jbmat =
   let p1 = data.p.(0) (* The p vector *)
   and p2 = data.p.(1)
   and p3 = data.p.(2)
-  and y2 = ith y 2
-  and y3 = ith y 3
   in
   (* Load JB *)
-  set_ijth jbmat 1 1 (p1);
-  set_ijth jbmat 1 2 (-.p1); 
-  set_ijth jbmat 2 1 (-.p2*.y3);
-  set_ijth jbmat 2 2 (p2*.y3+.2.0*.p3*.y2);
-  set_ijth jbmat 2 3 (-.2.0*.p3*.y2);
-  set_ijth jbmat 3 1 (-.p2*.y2);
-  set_ijth jbmat 3 2 (p2*.y2)
+  Densemat.set jbmat 0 0 (p1);
+  Densemat.set jbmat 0 1 (-.p1); 
+  Densemat.set jbmat 1 0 (-.p2*.y.{2});
+  Densemat.set jbmat 1 1 (p2*.y.{2}+.2.0*.p3*.y.{1});
+  Densemat.set jbmat 1 2 (-.2.0*.p3*.y.{1});
+  Densemat.set jbmat 2 0 (-.p2*.y.{1});
+  Densemat.set jbmat 2 1 (p2*.y.{1})
 
 (* fQB routine. Compute integrand for quadratures *)
 
-let fQB data t y yB qBdot =
-  let y1 = ith y 1   (* The y vector *)
-  and y2 = ith y 2
-  and y3 = ith y 3
-  and l1 = ith yB 1  (* The lambda vector *)
-  and l2 = ith yB 2
-  and l3 = ith yB 3
+let fQB data t (y : RealArray.t) (yB : RealArray.t) (qBdot : RealArray.t) =
+  let l1 = yB.{0}  (* The lambda vector *)
+  and l2 = yB.{1}
+  and l3 = yB.{2}
   in
   (* Temporary variables *)
   let l21 = l2-.l1
   and l32 = l3-.l2
-  and y23 = y2*.y3
+  and y23 = y.{1}*.y.{2}
   in
-  set_ith qBdot 1 (y1*.l21);
-  set_ith qBdot 2 (-. y23*.l21);
-  set_ith qBdot 3 (y2*.y2*.l32)
+  qBdot.{0} <- y.{0}*.l21;
+  qBdot.{1} <- -. y23*.l21;
+  qBdot.{2} <- y.{1}*.y.{1}*.l32
 
 (* Print results after backward integration *)
 

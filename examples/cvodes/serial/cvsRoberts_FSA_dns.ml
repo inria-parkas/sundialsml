@@ -92,76 +92,68 @@ type user_data = { p : float array }
 
 (* f routine. Compute f(t,y). *)
 
-let f data t y ydot =
-  let y1 = ith y 1
-  and y2 = ith y 2
-  and y3 = ith y 3
-  and p1 = data.p.(0)
+let f data t (y : RealArray.t) (ydot : RealArray.t) =
+  let p1 = data.p.(0)
   and p2 = data.p.(1)
   and p3 = data.p.(2) in
 
-  let yd1 = -.p1*.y1 +. p2*.y2*.y3 in
-  let yd3 = p3*.y2*.y2 in
-  set_ith ydot 1 yd1;
-  set_ith ydot 3 yd3; 
-  set_ith ydot 2 (-.yd1 -. yd3)
+  let yd1 = -.p1*.y.{0} +. p2*.y.{1}*.y.{2} in
+  let yd3 = p3*.y.{1}*.y.{1} in
+  ydot.{0} <- yd1;
+  ydot.{1} <- (-.yd1 -. yd3);
+  ydot.{2} <- yd3
 
 (* Jacobian routine. Compute J(t,y). *)
 
-let jac data { Cvode.jac_y = y } jmat =
-  let y2 = ith y 2
-  and y3 = ith y 3
-  and p1 = data.p.(0)
-  and p2 = data.p.(1)
-  and p3 = data.p.(2)
-  in
-  set_ijth jmat 1 1 (-.p1);
-  set_ijth jmat 1 2 (p2*.y3);
-  set_ijth jmat 1 3 (p2*.y2);
-  set_ijth jmat 2 1 ( p1);
-  set_ijth jmat 2 2 (-.p2*.y3-.2.0*.p3*.y2);
-  set_ijth jmat 2 3 (-.p2*.y2);
-  set_ijth jmat 3 2 (2.0*.p3*.y2)
- 
-(* fS routine. Compute sensitivity r.h.s. *)
-
-let fS data t y ydot iS yS ySdot tmp1 tmp2 =
+let jac data { Cvode.jac_y = (y : RealArray.t) } jmat =
   let p1 = data.p.(0)
   and p2 = data.p.(1)
   and p3 = data.p.(2)
-  and y1 = ith y 1
-  and y2 = ith y 2
-  and y3 = ith y 3
-  and s1 = ith yS 1
-  and s2 = ith yS 2
-  and s3 = ith yS 3
   in
-  let sd1 = -.p1*.s1 +. p2*.y3*.s2 +. p2*.y2*.s3 in
-  let sd3 = 2.0*.p3*.y2*.s2 in
+  Densemat.set jmat 0 0 (-.p1);
+  Densemat.set jmat 0 1 (p2*.y.{2});
+  Densemat.set jmat 0 2 (p2*.y.{1});
+  Densemat.set jmat 1 0 ( p1);
+  Densemat.set jmat 1 1 (-.p2*.y.{2}-.2.0*.p3*.y.{1});
+  Densemat.set jmat 1 2 (-.p2*.y.{1});
+  Densemat.set jmat 2 1 (2.0*.p3*.y.{1})
+ 
+(* fS routine. Compute sensitivity r.h.s. *)
+
+let fS data t (y : RealArray.t) (ydot : RealArray.t)
+              iS (yS : RealArray.t) (ySdot : RealArray.t)tmp1 tmp2 =
+  let p1 = data.p.(0)
+  and p2 = data.p.(1)
+  and p3 = data.p.(2)
+  and s1 = yS.{0}
+  and s2 = yS.{1}
+  and s3 = yS.{2}
+  in
+  let sd1 = -.p1*.s1 +. p2*.y.{2}*.s2 +. p2*.y.{1}*.s3 in
+  let sd3 = 2.0*.p3*.y.{1}*.s2 in
   let sd2 = -.sd1-.sd3
   in
   let sd1, sd2, sd3 =
     (match iS with
-     | 0 -> (sd1 -. y1, sd2 +. y1, sd3)
-     | 1 -> (sd1 +. y2*.y3, sd2 -. y2*.y3, sd3)
-     | 2 -> (sd1, sd2 -. y2*.y2, sd3 +. y2*.y2)
+     | 0 -> (sd1 -. y.{0}, sd2 +. y.{0}, sd3)
+     | 1 -> (sd1 +. y.{1}*.y.{2}, sd2 -. y.{1}*.y.{2}, sd3)
+     | 2 -> (sd1, sd2 -. y.{1}*.y.{1}, sd3 +. y.{1}*.y.{1})
      | _ -> assert false);
   in
-  set_ith ySdot 1 sd1;
-  set_ith ySdot 2 sd2;
-  set_ith ySdot 3 sd3
+  ySdot.{0} <- sd1;
+  ySdot.{1} <- sd2;
+  ySdot.{2} <- sd3
 
 (* EwtSet function. Computes the error weights at the current solution. *)
 
-let ewt data y w =
+let atol = Array.of_list [ atol1; atol2; atol3 ]
+let ewt data (y : RealArray.t) (w : RealArray.t) =
   let rtol = rtol;
-  and atol = Array.of_list [ atol1; atol2; atol3 ]
   in
-  for i = 1 to 3 do
-    let yy = ith y i in
-    let ww = rtol *. (abs_float yy) +. atol.(i-1) in
+  for i = 0 to 2 do
+    let ww = rtol *. (abs_float y.{i}) +. atol.(i) in
     if ww <= 0.0 then raise Sundials.NonPositiveEwt;
-    set_ith w i (1.0/.ww)
+    w.{i} <- (1.0/.ww)
   done
 
 (* Process and verify arguments to cvsfwddenx. *)
