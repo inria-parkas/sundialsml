@@ -121,7 +121,7 @@ not compare too badly:
 TODO: include graph, explain methodology
 
 TODO: performance tips for programs: a) type annotations for vectors; b)
-avoid slice and sub.
+avoid slice and sub; c) unwrap and use array access for matrices.
 
 {2:refs References}
 
