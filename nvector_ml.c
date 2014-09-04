@@ -43,14 +43,14 @@ N_Vector alloc_cnvec(size_t content_size, value backlink)
     }
 
     NVEC_BACKLINK(nv) = backlink;
-    caml_register_global_root(&NVEC_BACKLINK(nv));
+    caml_register_generational_global_root(&NVEC_BACKLINK(nv));
 
     return nv;
 }
 
 void free_cnvec(N_Vector nv)
 {
-    caml_remove_global_root(&NVEC_BACKLINK(nv));
+    caml_remove_generational_global_root(&NVEC_BACKLINK(nv));
     if (nv->content != NULL) free(nv->content);
     free(nv->ops);
     free(nv);
