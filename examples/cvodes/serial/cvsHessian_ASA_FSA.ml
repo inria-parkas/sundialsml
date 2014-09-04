@@ -46,8 +46,8 @@ let unvec = Sundials.unvec
 
 let printf = Printf.printf
 
-let ith v i = v.{i - 1}
-let set_ith v i e = v.{i - 1} <- e
+let ith (v : RealArray.t) i = v.{i - 1}
+let set_ith (v : RealArray.t) i e = v.{i - 1} <- e
 
 let zero = 0.0
 let one  = 1.0
@@ -63,184 +63,155 @@ type user_data = {
  *--------------------------------------------------------------------
  *)
 
-let f data t y ydot =
+let f data t (y : RealArray.t) (ydot : RealArray.t) =
   let p1 = data.p1
-  and p2 = data.p2
-  in 
-  let y1 = ith y 1 
-  and y2 = ith y 2 
-  and y3 = ith y 3
-  in
-  set_ith ydot 1 (-.p1*.y1*.y1 -. y3);
-  set_ith ydot 2 (-.y2);
-  set_ith ydot 3 (-.p2*.p2*.y2*.y3)
+  and p2 = data.p2 in 
+  ydot.{0} <- -.p1*.y.{0}*.y.{0} -. y.{2};
+  ydot.{1} <- -.y.{1};
+  ydot.{2} <- -.p2*.p2*.y.{1}*.y.{2}
 
-let fQ data t y qdot =
-  let y1 = ith y 1
-  and y2 = ith y 2 
-  and y3 = ith y 3
-  in
-  set_ith qdot 1 (0.5 *. ( y1*.y1 +. y2*.y2 +. y3*.y3))
+let fQ data t (y : RealArray.t) (qdot : RealArray.t) =
+  qdot.{0} <- 0.5 *. ( y.{0}*.y.{0} +. y.{1}*.y.{1} +. y.{2}*.y.{2})
 
-let fS data t y ydot yS ySdot tmp1 tmp2 =
+let fS data t (y : RealArray.t) (ydot : RealArray.t)
+              (yS : RealArray.t array) (ySdot : RealArray.t array) tmp1 tmp2 =
   let p1 = data.p1
-  and p2 = data.p2
-  in
-  let y1 = ith y 1
-  and y2 = ith y 2
-  and y3 = ith y 3
-  in
+  and p2 = data.p2 in
   (* 1st sensitivity RHS *)
-  let s1 = ith yS.(0) 1 in
-  let s2 = ith yS.(0) 2 in
-  let s3 = ith yS.(0) 3
-  in
-  let fys1 = -. 2.0*.p1*.y1 *. s1 -. s3
+  let s1 = yS.(0).{0} in
+  let s2 = yS.(0).{1} in
+  let s3 = yS.(0).{2} in
+  let fys1 = -. 2.0*.p1*.y.{0} *. s1 -. s3
   and fys2 = -. s2
-  and fys3 = -. p2*.p2*.y3 *. s2 -. p2*.p2*.y2 *. s3
+  and fys3 = -. p2*.p2*.y.{2} *. s2 -. p2*.p2*.y.{1} *. s3
   in
-  set_ith ySdot.(0) 1 (fys1 -. y1*.y1);
-  set_ith ySdot.(0) 2 fys2;
-  set_ith ySdot.(0) 3 fys3;
+  ySdot.(0).{0} <- (fys1 -. y.{0}*.y.{0});
+  ySdot.(0).{1} <- fys2;
+  ySdot.(0).{2} <- fys3;
 
   (* 2nd sensitivity RHS *)
-  let s1 = ith yS.(1) 1
-  and s2 = ith yS.(1) 2
-  and s3 = ith yS.(1) 3
+  let s1 = yS.(1).{0}
+  and s2 = yS.(1).{1}
+  and s3 = yS.(1).{2}
   in
-  let fys1 = -. 2.0*.p1*.y1 *. s1 -. s3
+  let fys1 = -. 2.0*.p1*.y.{0} *. s1 -. s3
   and fys2 = -. s2
-  and fys3 = -. p2*.p2*.y3 *. s2 -. p2*.p2*.y2 *. s3
+  and fys3 = -. p2*.p2*.y.{2} *. s2 -. p2*.p2*.y.{1} *. s3
   in
-  set_ith ySdot.(1) 1 fys1;
-  set_ith ySdot.(1) 2 fys2;
-  set_ith ySdot.(1) 3 (fys3 -. 2.0*.p2*.y2*.y3)
+  ySdot.(1).{0} <- fys1;
+  ySdot.(1).{1} <- fys2;
+  ySdot.(1).{2} <- (fys3 -. 2.0*.p2*.y.{1}*.y.{2})
 
-let fQS data t y yS yQdot yQSdot tmp tmpQ =
-  let y1 = ith y 1
-  and y2 = ith y 2 
-  and y3 = ith y 3
-  in
+let fQS data t (y : RealArray.t) (yS : RealArray.t array)
+               yQdot (yQSdot : RealArray.t array) tmp tmpQ =
   (* 1st sensitivity RHS *)
-  let s1 = ith yS.(0) 1
-  and s2 = ith yS.(0) 2
-  and s3 = ith yS.(0) 3
+  let s1 = yS.(0).{0}
+  and s2 = yS.(0).{1}
+  and s3 = yS.(0).{2}
   in
-  set_ith yQSdot.(0) 1 (y1*.s1 +. y2*.s2 +. y3*.s3);
+  yQSdot.(0).{0} <- y.{0}*.s1 +. y.{1}*.s2 +. y.{2}*.s3;
 
   (* 1st sensitivity RHS *)
-  let s1 = ith yS.(1) 1
-  and s2 = ith yS.(1) 2
-  and s3 = ith yS.(1) 3
+  let s1 = yS.(1).{0}
+  and s2 = yS.(1).{1}
+  and s3 = yS.(1).{2}
   in
-  set_ith yQSdot.(1) 1 (y1*.s1 +. y2*.s2 +. y3*.s3)
+  yQSdot.(1).{0} <- y.{0}*.s1 +. y.{1}*.s2 +. y.{2}*.s3
 
-let fB1 data t y yS yB yBdot =
+let fB1 data t (y : RealArray.t) (yS : RealArray.t array)
+               (yB : RealArray.t) (yBdot : RealArray.t) =
   let p1 = data.p1 
   and p2 = data.p2
   in
-  let y1 = ith y 1      (* solution *)
-  and y2 = ith y 2
-  and y3 = ith y 3
+  let s1 = yS.(0).{0} (* sensitivity 1 *)
+  and s2 = yS.(0).{1}
+  and s3 = yS.(0).{2}
   in
-  let s1 = ith yS.(0) 1 (* sensitivity 1 *)
-  and s2 = ith yS.(0) 2
-  and s3 = ith yS.(0) 3
+  let l1 = yB.{0}     (* lambda *)
+  and l2 = yB.{1}
+  and l3 = yB.{2}
   in
-  let l1 = ith yB 1     (* lambda *)
-  and l2 = ith yB 2
-  and l3 = ith yB 3
+  let m1 = yB.{3}     (* mu *)
+  and m2 = yB.{4}
+  and m3 = yB.{5}
   in
-  let m1 = ith yB 4     (* mu *)
-  and m2 = ith yB 5
-  and m3 = ith yB 6
-  in
-  set_ith yBdot 1 (2.0*.p1*.y1 *. l1      -. y1);
-  set_ith yBdot 2 (l2 +. p2*.p2*.y3 *. l3 -. y2);
-  set_ith yBdot 3 (l1 +. p2*.p2*.y2 *. l3 -. y3);
+  yBdot.{0} <- 2.0*.p1*.y.{0} *. l1      -. y.{0};
+  yBdot.{1} <- l2 +. p2*.p2*.y.{2} *. l3 -. y.{1};
+  yBdot.{2} <- l1 +. p2*.p2*.y.{1} *. l3 -. y.{2};
 
-  set_ith yBdot 4 (2.0*.p1*.y1 *. m1      +. l1 *. 2.0*.(y1 +. p1*.s1) -. s1);
-  set_ith yBdot 5 (m2 +. p2*.p2*.y3 *. m3 +. l3 *. p2*.p2*.s3         -. s2);
-  set_ith yBdot 6 (m1 +. p2*.p2*.y2 *. m3 +. l3 *. p2*.p2*.s2         -. s3)
+  yBdot.{3} <- 2.0*.p1*.y.{0} *. m1      +. l1 *. 2.0*.(y.{0} +. p1*.s1) -. s1;
+  yBdot.{4} <- m2 +. p2*.p2*.y.{2} *. m3 +. l3 *. p2*.p2*.s3             -. s2;
+  yBdot.{5} <- m1 +. p2*.p2*.y.{1} *. m3 +. l3 *. p2*.p2*.s2             -. s3
 
-let fQB1 data t y yS yB qBdot =
+let fQB1 data t (y : RealArray.t) (yS : RealArray.t array)
+                                  (yB : RealArray.t) (qBdot : RealArray.t) =
   let p2 = data.p2
   in
-  let y1 = ith y 1      (* solution *)
-  and y2 = ith y 2
-  and y3 = ith y 3
+  let s1 = yS.(0).{0} (* sensitivity 1 *)
+  and s2 = yS.(0).{1}
+  and s3 = yS.(0).{2}
   in
-  let s1 = ith yS.(0) 1 (* sensitivity 1 *)
-  and s2 = ith yS.(0) 2
-  and s3 = ith yS.(0) 3
+  let l1 = yB.{0}     (* lambda *)
+  and l3 = yB.{2}
   in
-  let l1 = ith yB 1     (* lambda *)
-  and l3 = ith yB 3
+  let m1 = yB.{3}     (* mu *)
+  and m3 = yB.{5}
   in
-  let m1 = ith yB 4     (* mu *)
-  and m3 = ith yB 6
-  in
-  set_ith qBdot 1 (-.y1*.y1 *. l1);
-  set_ith qBdot 2 (-.2.0*.p2*.y2*.y3 *. l3);
+  qBdot.{0} <- -.y.{0}*.y.{0} *. l1;
+  qBdot.{1} <- -.2.0*.p2*.y.{1}*.y.{2} *. l3;
 
-  set_ith qBdot 3 (-.y1*.y1 *. m1          -. l1 *. 2.0*.y1*.s1);
-  set_ith qBdot 4 (-.2.0*.p2*.y2*.y3 *. m3 -.
-                                          l3 *. 2.0*.(p2*.y3*.s2 +. p2*.y2*.s3))
+  qBdot.{2} <- -.y.{0}*.y.{0} *. m1          -. l1 *. 2.0*.y.{0}*.s1;
+  qBdot.{3} <- -.2.0*.p2*.y.{1}*.y.{2} *. m3 -.
+                                    l3 *. 2.0*.(p2*.y.{2}*.s2 +. p2*.y.{1}*.s3)
 
-let fB2 data t y yS yB yBdot =
+let fB2 data t (y : RealArray.t) (yS : RealArray.t array)
+               (yB : RealArray.t) (yBdot : RealArray.t) =
   let p1 = data.p1 
   and p2 = data.p2
   in
-  let y1 = ith y 1      (* solution *)
-  and y2 = ith y 2
-  and y3 = ith y 3
+  let s1 = yS.(1).{0} (* sensitivity 2 *)
+  and s2 = yS.(1).{1}
+  and s3 = yS.(1).{2}
   in
-  let s1 = ith yS.(1) 1 (* sensitivity 2 *)
-  and s2 = ith yS.(1) 2
-  and s3 = ith yS.(1) 3
+  let l1 = yB.{0}     (* lambda *)
+  and l2 = yB.{1}
+  and l3 = yB.{2}
   in
-  let l1 = ith yB 1     (* lambda *)
-  and l2 = ith yB 2
-  and l3 = ith yB 3
+  let m1 = yB.{3}     (* mu *)
+  and m2 = yB.{4}
+  and m3 = yB.{5}
   in
-  let m1 = ith yB 4     (* mu *)
-  and m2 = ith yB 5
-  and m3 = ith yB 6
-  in
-  set_ith yBdot 1 (2.0*.p1*.y1 *. l1      -. y1);
-  set_ith yBdot 2 (l2 +. p2*.p2*.y3 *. l3 -. y2);
-  set_ith yBdot 3 (l1 +. p2*.p2*.y2 *. l3 -. y3);
+  yBdot.{0} <- 2.0*.p1*.y.{0} *. l1      -. y.{0};
+  yBdot.{1} <- l2 +. p2*.p2*.y.{2} *. l3 -. y.{1};
+  yBdot.{2} <- l1 +. p2*.p2*.y.{1} *. l3 -. y.{2};
 
-  set_ith yBdot 4 (2.0*.p1*.y1 *. m1      +.
-                                       l1 *. 2.0*.p1*.s1                 -. s1);
-  set_ith yBdot 5 (m2 +. p2*.p2*.y3 *. m3 +.
-                                       l3 *. (2.0*.p2*.y3 +. p2*.p2*.s3) -. s2);
-  set_ith yBdot 6 (m1 +. p2*.p2*.y2 *. m3 +.
-                                       l3 *. (2.0*.p2*.y3 +. p2*.p2*.s2) -. s3)
+  yBdot.{3} <- 2.0*.p1*.y.{0} *. m1      +.
+                                     l1 *. 2.0*.p1*.s1                    -. s1;
+  yBdot.{4} <- m2 +. p2*.p2*.y.{2} *. m3 +.
+                                     l3 *. (2.0*.p2*.y.{2} +. p2*.p2*.s3) -. s2;
+  yBdot.{5} <- m1 +. p2*.p2*.y.{1} *. m3 +.
+                                     l3 *. (2.0*.p2*.y.{2} +. p2*.p2*.s2) -. s3
 
-let fQB2 data t y yS yB qBdot =
+let fQB2 data t (y : RealArray.t) (yS : RealArray.t array)
+                (yB : RealArray.t) (qBdot : RealArray.t) =
   let p2 = data.p2
   in
-  let y1 = ith y 1      (* solution *)
-  and y2 = ith y 2
-  and y3 = ith y 3
+  let s1 = yS.(1).{0} (* sensitivity 2 *)
+  and s2 = yS.(1).{1}
+  and s3 = yS.(1).{2}
   in
-  let s1 = ith yS.(1) 1 (* sensitivity 2 *)
-  and s2 = ith yS.(1) 2
-  and s3 = ith yS.(1) 3
+  let l1 = yB.{0}     (* lambda *)
+  and l3 = yB.{2}
   in
-  let l1 = ith yB 1     (* lambda *)
-  and l3 = ith yB 3
+  let m1 = yB.{3}     (* mu *)
+  and m3 = yB.{5}
   in
-  let m1 = ith yB 4     (* mu *)
-  and m3 = ith yB 6
-  in
-  set_ith qBdot 1 (-.y1*.y1 *. l1);
-  set_ith qBdot 2 (-.2.0*.p2*.y2*.y3 *. l3);
+  qBdot.{0} <- -.y.{0}*.y.{0} *. l1;
+  qBdot.{1} <- -.2.0*.p2*.y.{1}*.y.{2} *. l3;
 
-  set_ith qBdot 3 (-.y1*.y1 *. m1          -. l1 *. 2.0*.y1*.s1);
-  set_ith qBdot 4 (-.2.0*.p2*.y2*.y3 *. m3 -.
-                                l3 *. 2.0*.(p2*.y3*.s2 +. p2*.y2*.s3 +. y2*.y3))
+  qBdot.{2} <- -.y.{0}*.y.{0} *. m1          -. l1 *. 2.0*.y.{0}*.s1;
+  qBdot.{3} <- -.2.0*.p2*.y.{1}*.y.{2} *. m3 -.
+                    l3 *. 2.0*.(p2*.y.{2}*.s2 +. p2*.y.{1}*.s3 +. y.{1}*.y.{2})
 
 (*
  *--------------------------------------------------------------------
