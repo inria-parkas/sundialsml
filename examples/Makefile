@@ -55,7 +55,7 @@ perf.opt.log perf.byte.log: $(C_EXAMPLES)
 	@echo ======================================================================
 	@for s in ${SUBDIRS}; do				\
 	    cat $$s/$@;						\
-	    test $$s = $(lastword $(SUBDIRS)) || printf "\n\n";	\
+	    [ $$s = $(lastword $(SUBDIRS)) ] || printf "\n\n";	\
 	done > $@
 	utils/crunchperf -s $@
 	@$(if $(findstring $@,$(MAKECMDGOALS)), \

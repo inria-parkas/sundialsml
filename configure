@@ -11,10 +11,14 @@ unset docdir
 unset install_docs
 unset enable_mpi
 
-configure_command="$0 $@"
+configure_command="$0"
 
 for option in "$@"
 do
+    # Try to quote configure_command so that it can be cut-and-pasted to the
+    # command line.  Not a perfect solution, but works for common cases.
+    configure_command="${configure_command} '$option'"
+
     name=`expr "$option" : "\([^=]*\).*"`
     value=`expr "$option" : "[^=]*=\(.*\)"`
 
@@ -126,6 +130,43 @@ error=""
 
 bounds_checking=${bounds_checking:-1}
 safety_checks=${safety_checks:-1}
+
+# Check C compiler: detect gcc and add a default optimization level.
+# If not using gcc or compatible, the optimization is -O, which POSIX
+# says must be supported (for what it's worth).
+test_file=__configure_test_file__.c
+tmp_file=__configure_test_file__.c
+echo "#ifndef __GNUC__" > $test_file
+echo "#error not gcc" >> $test_file
+echo "#endif" >> $test_file
+using_gcc=false
+$CC -o $tmp_file -c $test_file && using_gcc=true
+rm -f $tmp_file $test_file
+if [ $using_gcc = true ]; then
+    c_suppress_warnings=-w
+else
+    c_suppress_warnings=
+fi
+
+if [ "x${cflags}" = x ]; then    # Don't touch CFLAGS if explicitly given.
+    if [ $using_gcc = true ]; then
+        cflags="-O2"
+    else
+        echo "<info> Your C compiler seems to be incompatible with gcc.  Make"
+        echo "<info> sure you set optimization flags explicitly with CFLAGS."
+    fi
+fi
+
+arch=`uname -m`
+case ${arch} in
+    x86_64)
+	cflags="${cflags} -fPIC"
+	;;
+    *)
+        :
+	;;
+esac
+
 
 # Check for opam
 if command -v opam >/dev/null 2>&1; then
@@ -374,16 +415,6 @@ else
     sundials_lib_path="$LIB_PATH"
 fi
 
-arch=`uname -i`
-case ${arch} in
-    x86_64)
-	cflags="${cflags} -fPIC"
-	;;
-    *)
-        :
-	;;
-esac
-
 # Sundials examples directory
 if [ "x$EXAMPLESROOT" = x ]; then
     # If not set, try to infer it from LIB_PATH.
@@ -460,6 +491,7 @@ fi
 	 s#@lapack_enabled@#${lapack_enabled}#;
 	 s#@mpicc@#${mpicc:-mpicc}#;
 	 s#@mpirun@#${mpirun:-mpirun}#;
+	 s#@c_suppress_warnings@#${c_suppress_warnings}#;
 	 s#@EXAMPLESROOT@#${EXAMPLESROOT}#;
 	 s#@OCAMLBIN@#${OCAMLBIN}#;
 	 s#@OCAMLROOT@#${OCAMLROOT}#;" config.in) > config

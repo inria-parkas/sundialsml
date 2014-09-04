@@ -10,30 +10,31 @@ IDAS_DOC_ROOT = https://computation.llnl.gov/casc/sundials/documentation/idas_gu
 KINSOL_DOC_ROOT = https://computation.llnl.gov/casc/sundials/documentation/kin_guide/
 OCAML_DOC_ROOT = http://caml.inria.fr/pub/docs/manual-ocaml/libref/
 
-CC = gcc
-CFLAGS += @cflags@ -Wall
+CC ?= gcc
+CFLAGS += @cflags@
 LDFLAGS += @ldflags@
 CPPFLAGS ?= -P -x c -traditional-cpp
+C_SUPPRESS_WARNINGS = @c_suppress_warnings@
 
 LAPACK_ENABLED=@lapack_enabled@
 
-MPICC = @mpicc@ $(MPI_FLAGS)
-MPIRUN = @mpirun@ $(MPI_FLAGS)
+MPICC = @mpicc@
+MPIRUN = @mpirun@
 MPI_ENABLED=@ocamlmpi_enabled@
 
 MPI_LIBLINK= -lsundials_nvecparallel
 
 LIB_PATH = @sundials_lib_path@
 CVODE_LDFLAGS = @cvode_ldflags@ $(LDFLAGS)
-CVODE_CFLAGS = @cvode_cppflags@ $(MPI_FLAGS) $(CFLAGS)
+CVODE_CFLAGS = @cvode_cppflags@ $(CFLAGS)
 CVODES_LDFLAGS = @cvodes_ldflags@ $(LDFLAGS)
-CVODES_CFLAGS = @cvodes_cppflags@ $(MPI_FLAGS) $(CFLAGS)
+CVODES_CFLAGS = @cvodes_cppflags@ $(CFLAGS)
 IDA_LDFLAGS = @ida_ldflags@ $(LDFLAGS)
-IDA_CFLAGS = @ida_cppflags@ $(MPI_FLAGS) $(CFLAGS)
+IDA_CFLAGS = @ida_cppflags@ $(CFLAGS)
 IDAS_LDFLAGS = @idas_ldflags@ $(LDFLAGS)
-IDAS_CFLAGS = @idas_cppflags@ $(MPI_FLAGS) $(CFLAGS)
+IDAS_CFLAGS = @idas_cppflags@ $(CFLAGS)
 KINSOL_LDFLAGS = @kinsol_ldflags@ $(LDFLAGS)
-KINSOL_CFLAGS = @kinsol_cppflags@ $(MPI_FLAGS) $(CFLAGS)
+KINSOL_CFLAGS = @kinsol_cppflags@ $(CFLAGS)
 
 OCAMLC ?= @OCAMLBIN@ocamlc
 OCAMLFLAGS = -annot @ocamlflags@
