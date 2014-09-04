@@ -213,9 +213,10 @@ CAMLprim void c_arraydensematrix_add_identity(value va)
 
     struct caml_ba_array *ba = ARRAY2_DATA(va);
     intnat m = ba->dim[1];
-    intnat n = ba->dim[0];
 
 #if CHECK_MATRIX_ACCESS == 1
+    intnat n = ba->dim[0];
+
     if (m != n)
 	caml_invalid_argument("ArrayDenseMatrix.add_identity: matrix not square.");
 #endif
@@ -252,9 +253,9 @@ CAMLprim void c_arraydensematrix_getrs(value va, value vp, value vb)
 
     struct caml_ba_array *ba = ARRAY2_DATA(va);
     intnat m = ba->dim[1];
-    intnat n = ba->dim[0];
 
 #if CHECK_MATRIX_ACCESS == 1
+    intnat n = ba->dim[0];
     if (m != n)
 	caml_invalid_argument("ArrayDenseMatrix.getrs: matrix not square.");
     if (ARRAY1_LEN(vb) < n)
@@ -273,9 +274,9 @@ CAMLprim void c_arraydensematrix_potrf(value va)
 
     struct caml_ba_array *ba = ARRAY2_DATA(va);
     intnat m = ba->dim[1];
-    intnat n = ba->dim[0];
 
 #if CHECK_MATRIX_ACCESS == 1
+    intnat n = ba->dim[0];
     if (m != n)
 	caml_invalid_argument("ArrayDenseMatrix.potrf: matrix not square");
 #endif
@@ -290,9 +291,9 @@ CAMLprim void c_arraydensematrix_potrs(value va, value vb)
 
     struct caml_ba_array *ba = ARRAY2_DATA(va);
     intnat m = ba->dim[1];
-    intnat n = ba->dim[0];
 
 #if CHECK_MATRIX_ACCESS == 1
+    intnat n = ba->dim[0];
     if (m != n)
 	caml_invalid_argument("ArrayDenseMatrix.potrs: matrix not square.");
     if (ARRAY1_LEN(vb) < m)
@@ -532,11 +533,6 @@ CAMLprim void c_arraybandmatrix_copy(value va, value vb, value vsizes)
 
     struct caml_ba_array *ba = ARRAY2_DATA(va);
     intnat am = ba->dim[0];
-    intnat an = ba->dim[1];
-
-    struct caml_ba_array *bb = ARRAY2_DATA(vb);
-    intnat bm = bb->dim[0];
-    intnat bn = bb->dim[1];
 
     int a_smu  = Long_val(Field(vsizes, 0));
     int b_smu  = Long_val(Field(vsizes, 1));
@@ -544,6 +540,12 @@ CAMLprim void c_arraybandmatrix_copy(value va, value vb, value vsizes)
     int copyml = Long_val(Field(vsizes, 3));
 
 #if CHECK_MATRIX_ACCESS == 1
+    intnat an = ba->dim[1];
+    struct caml_ba_array *bb = ARRAY2_DATA(vb);
+
+    intnat bm = bb->dim[0];
+    intnat bn = bb->dim[1];
+
     if (an < copymu + copyml + 1)
 	caml_invalid_argument("ArrayBandMatrix.copy: source matrix too small.");
     if (bn < copymu + copyml + 1)
@@ -563,13 +565,14 @@ CAMLprim void c_arraybandmatrix_scale(value vc, value va, value vsizes)
 
     struct caml_ba_array *ba = ARRAY2_DATA(va);
     intnat m = ba->dim[0];
-    intnat n = ba->dim[1];
 
     long int mu  = Long_val(Field(vsizes, 0));
     long int ml  = Long_val(Field(vsizes, 1));
     long int smu = Long_val(Field(vsizes, 2));
 
 #if CHECK_MATRIX_ACCESS == 1
+    intnat n = ba->dim[1];
+
     if (n < mu + ml + 1)
 	caml_invalid_argument("ArrayBandMatrix.scale: matrix badly sized.");
 #endif
@@ -584,10 +587,11 @@ CAMLprim void c_arraybandmatrix_add_identity(value va, value vsmu)
 
     struct caml_ba_array *ba = ARRAY2_DATA(va);
     intnat m = ba->dim[0];
-    intnat n = ba->dim[1];
     intnat smu = Long_val(vsmu);
 
 #if CHECK_MATRIX_ACCESS == 1
+    intnat n = ba->dim[1];
+
     if (n <= smu)
 	caml_invalid_argument("ArrayBandMatrix.add_identity: matrix badly sized.");
 #endif
@@ -602,13 +606,14 @@ CAMLprim void c_arraybandmatrix_gbtrf(value va, value vsizes, value vp)
 
     struct caml_ba_array *ba = ARRAY2_DATA(va);
     intnat m = ba->dim[0];
-    intnat n = ba->dim[1];
 
     long int mu  = Long_val(Field(vsizes, 0));
     long int ml  = Long_val(Field(vsizes, 1));
     long int smu = Long_val(Field(vsizes, 2));
 
 #if CHECK_MATRIX_ACCESS == 1
+    intnat n = ba->dim[1];
+
     if (n < mu + ml + 1)
 	caml_invalid_argument("ArrayBandMatrix.gbtrf: matrix badly sized.");
     if (ARRAY1_LEN(vp) < m)
@@ -625,12 +630,13 @@ CAMLprim void c_arraybandmatrix_gbtrs(value va, value vsizes, value vp, value vb
 
     struct caml_ba_array *ba = ARRAY2_DATA(va);
     intnat m = ba->dim[0];
-    intnat n = ba->dim[1];
 
     long int smu = Long_val(Field(vsizes, 0));
     long int ml  = Long_val(Field(vsizes, 1));
 
 #if CHECK_MATRIX_ACCESS == 1
+    intnat n = ba->dim[1];
+
     if (n < smu + ml + 1)
 	caml_invalid_argument("ArrayBandMatrix.gbtrf: matrix badly sized.");
     if (ARRAY1_LEN(vp) < m)
