@@ -184,7 +184,7 @@ perf.byte.log perf.opt.log: perf.%.log: $(ENABLED_EXAMPLES:.ml=.%.time)       \
 	 for f in $(ENABLED_EXAMPLES:.ml=); do				\
 	     $(UTILS)/crunchperf -c $$f.$$type.time $$f.sundials.time	\
 		$(SUBDIR)/$$f;						\
-	     test $$f = $(lastword $(ENABLED_EXAMPLES:.ml=))		\
+	     [ $$f = $(lastword $(ENABLED_EXAMPLES:.ml=)) ]		\
 		|| printf "\n\n";					\
 	 done > $@
 	$(UTILS)/crunchperf -s $@
@@ -243,6 +243,8 @@ else ifeq ($(MODULE),kinsol)
 EG_CFLAGS=$(KINSOL_CFLAGS)
 EG_LDFLAGS=$(KINSOL_LDFLAGS)
 endif
+
+EG_CFLAGS += $(C_SUPPRESS_WARNINGS)
 
 $(ALL_EXAMPLES:.ml=.sundials.c): %.sundials.c: $(C_EXAMPLES)		     \
 					       $(EXAMPLESROOT)/$(SUBDIR)/%.c \

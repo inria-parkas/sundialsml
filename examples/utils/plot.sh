@@ -9,9 +9,10 @@ envs() {
     echo "RMARGIN    - How much space (in %) for text on the right."
     echo "BMARGIN    - How much space (in %) for text at the bottom."
     echo "TMARGIN    - How much space (in %) for text on the top."
+    echo "KEYWIDTH   - Key width increment; see \"help set key\" in gnuplot."
 }
 
-if test "x$1" = x; then
+if [ "x$1" = x ]; then
     echo "$0 <data file>"
     printf "Makes a plot.  " # in lieu of echo -n
     envs
@@ -24,7 +25,7 @@ if test "x$1" = x; then
     exit 0
 fi
 
-if test "x$1" = "x--explain-vars"; then
+if [ "x$1" = "x--explain-vars" ]; then
     envs
     exit 0
 fi
@@ -34,28 +35,28 @@ AWK=${AWK:-awk}
 YMAX=${YMAX:-*}
 Y2MAX=${Y2MAX:-*}
 
-if test "x$LMARGIN" = x; then
+if [ "x$LMARGIN" = x ]; then
     SET_LMARGIN=
 else
     LMARGIN=`${AWK} "BEGIN { print ($LMARGIN / 100) }"`
     SET_LMARGIN="set lmargin ${LMARGIN}"
 fi
 
-if test "x$BMARGIN" = x; then
+if [ "x$BMARGIN" = x ]; then
     SET_BMARGIN=
 else
     BMARGIN=`${AWK} "BEGIN { print ($BMARGIN / 100) }"`
     SET_BMARGIN="set bmargin ${BMARGIN}"
 fi
 
-if test "x$RMARGIN" = x; then
+if [ "x$RMARGIN" = x ]; then
     SET_RMARGIN=
 else
     RMARGIN=`${AWK} "BEGIN { print (1 - $RMARGIN / 100) }"`
     SET_RMARGIN="set rmargin ${RMARGIN}"
 fi
 
-if test "x$TMARGIN" = x; then
+if [ "x$TMARGIN" = x ]; then
     SET_TMARGIN=
 else
     TMARGIN=`${AWK} "BEGIN { print (1 - $TMARGIN / 100) }"`
@@ -79,22 +80,22 @@ case x$TERMINAL in
     *)    SET_TERMINAL="set terminal $TERMINAL";;
 esac
 
-if test "x$SIZE" != x; then
+if [ "x$SIZE" != x ]; then
     SET_TERMINAL="$SET_TERMINAL size $SIZE"
 fi
 
 KEY_WIDTH=${KEY_WIDTH:--17}
-if test x$KEY_WIDTH != x; then
+if [ x$KEY_WIDTH != x ]; then
     SET_KEY_WIDTH="set key width $KEY_WIDTH"
 fi
 
-if test "x$OUTPUT" = x; then
+if [ "x$OUTPUT" = x ]; then
     SET_OUTPUT=
 else
     SET_OUTPUT="set output '$OUTPUT'"
 fi
 
-if test "x$POINTSIZE" = x; then
+if [ "x$POINTSIZE" = x ]; then
     SET_POINTSIZE=
 else
     SET_POINTSIZE="set pointsize $POINTSIZE"
@@ -113,7 +114,7 @@ SET_COMMON="$SET_COMMON; set ylabel '${YLABEL}'; set y2label '${Y2LABEL}'"
 SET_COMMON="$SET_COMMON; set yrange [0:${YMAX}]; set y2range [0:${Y2MAX}]"
 SET_COMMON="$SET_COMMON; set xtics rotate by 90 right"
 
-if test "x$STYLE" = xboxplot; then
+if [ "x$STYLE" = xboxplot ]; then
 gnuplot <<EOF
 $SET_COMMON
 set key inv
