@@ -9,6 +9,14 @@ info:
 
 include ../config
 
+C_EXAMPLES=$(if $(EXAMPLESROOT),,c_examples_unavailable)
+c_examples_unavailable:
+	@echo "C version of examples not found.  Try running ../configure again"
+	@echo "with EXAMPLES=/path/to/sundials/examples.  You can give the examples"
+	@echo "directory in the sundials C source tree or (if you installed the C library"
+	@echo "with --enable-examples) the one in the installation."
+	@false
+
 MODULES  = cvode cvodes ida idas kinsol
 VECTYPES = serial $(if $(MPI_ENABLED),parallel)
 
@@ -24,7 +32,7 @@ tests.opt tests.byte:
 	    ${MAKE} -C $$s $@;			\
 	done
 
-tests.opt.log tests.byte.log:
+tests.opt.log tests.byte.log: $(C_EXAMPLES)
 	@for s in ${SUBDIRS}; do		\
 	    ${MAKE} -C $$s $@;			\
 	done
@@ -40,10 +48,7 @@ tests.opt.log tests.byte.log:
 # Filter out examples that take less than this to complete.
 MIN_TIME ?= 0.2
 
-perf.opt perf.byte: perf.%:
-	for s in $(SUBDIRS); do $(MAKE) -C $$s $@; done
-
-perf.opt.log perf.byte.log:
+perf.opt.log perf.byte.log: $(C_EXAMPLES)
 	@for s in ${SUBDIRS}; do		\
 	    ${MAKE} -C $$s $@;			\
 	 done

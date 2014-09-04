@@ -31,6 +31,15 @@
 
 include $(SRCROOT)/config
 
+
+C_EXAMPLES=$(if $(EXAMPLESROOT),,c_examples_unavailable)
+c_examples_unavailable:
+	@echo "C version of examples not found.  Try running $(SRCROOT)/configure again"
+	@echo "with EXAMPLES=/path/to/sundials/examples.  You can give the examples"
+	@echo "directory in the sundials C source tree or (if you installed the C library"
+	@echo "with --enable-examples) the one in the installation."
+	@false
+
 USELIB ?= sundials
 
 ## Shorthands
@@ -144,8 +153,8 @@ define ADD_EXECUTE_RULES
 	CAML_LD_LIBRARY_PATH=$(CAML_LD_LIBRARY_PATH) $(2:$$<=./$$<) > $$@
     $1.opt.out: $1.opt
 	$(2:$$<=./$$<) > $$@
-    $1.sundials.out: $(EXAMPLESROOT)/$(SUBDIR)/$1
-	$2 > $$@
+    $1.sundials.out: $1.sundials
+	$(2:$$<=./$$<) > $$@
 endef
 
 
@@ -239,7 +248,8 @@ EG_CFLAGS=$(KINSOL_CFLAGS)
 EG_LDFLAGS=$(KINSOL_LDFLAGS)
 endif
 
-$(ALL_EXAMPLES:.ml=.sundials.c): %.sundials.c: $(EXAMPLESROOT)/$(SUBDIR)/%.c \
+$(ALL_EXAMPLES:.ml=.sundials.c): %.sundials.c: $(C_EXAMPLES)		     \
+					       $(EXAMPLESROOT)/$(SUBDIR)/%.c \
 					       $(UTILS)/sundials_wrapper.c.in
 	@if grep -q 'main *( *void *)' $< || grep -q 'main *( *)' $<;	    \
 	 then main_args=;						    \
@@ -257,9 +267,7 @@ $(MPI_EXAMPLES:.ml=.sundials): %.sundials: %.sundials.c
 	    $(EG_CFLAGS) $< $(LIB_PATH) $(EG_LDFLAGS) \
 	    $(LAPACK_LIB) $(MPI_LIBLINK)
 
-# 
-
-## Dependences to files living outside of the examples directory
+## Misc
 
 # Just remind the user to recompile the library rather than actually
 # doing the recompilation.  (Or is it better to recompile?)
@@ -267,12 +275,6 @@ $(SRCROOT)/%.cma $(SRCROOT)/%.cmxa:
 	@echo "$@ doesn't exist."
 	@echo "Maybe you forgot to compile the main library?"
 	@false
-
-$(EXAMPLESROOT)/$(SUBDIR)/%:
-	@echo "The C version of the example $@ is missing or out of date"
-	@false
-
-## Misc
 
 # Generate recipes for *.out, *.time, etc.
 define EXECUTION_RULE

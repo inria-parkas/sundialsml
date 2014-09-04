@@ -122,7 +122,6 @@ CPPFLAGS="${CPPFLAGS} `sundials-config -m cvode -t s -l c -s cppflags`"
 CC=${CC:-cc}
 CPP=${CPP:-cpp}
 LAPACKLIB=${LAPACKLIB:-"-llapack"}
-EXAMPLESROOT=${EXAMPLESROOT:-"/usr/local/examples"}
 error=""
 
 bounds_checking=${bounds_checking:-1}
@@ -365,12 +364,14 @@ idas_ldflags="`sundials-config -m idas -t s -l c -s libs \
 kinsol_ldflags="`sundials-config -m kinsol -t s -l c -s libs \
 	        | sed -e 's/^/ /; s/$/ /; s/ -L[^ ]* / /; s/^ //; s/ $//'`"
 
-# The -L flag.
+# The -L flag.  sundials_lib_path will be recorded in binaries.
+# LIB_PATH has other uses.
+LIB_PATH="`sundials-config -m cvode -t s -l c -s libs \
+	  | sed -e 's/^/ /; s/$/ /; s/^.* \(-L[^ ]*\) .*/\1/'`"
 if [ ${no_lib_path:-0} -eq 1 ]; then
     sundials_lib_path=
 else
-    sundials_lib_path="`sundials-config -m cvode -t s -l c -s libs \
-	               | sed -e 's/^/ /; s/$/ /; s/^.* \(-L[^ ]*\) .*/\1/'`"
+    sundials_lib_path="$LIB_PATH"
 fi
 
 arch=`uname -i`
@@ -383,11 +384,17 @@ case ${arch} in
 	;;
 esac
 
-# Check for Sundials examples
+# Sundials examples directory
+if [ "x$EXAMPLESROOT" = x ]; then
+    # If not set, try to infer it from LIB_PATH.
+    EXAMPLESROOT=`echo $LIB_PATH | sed -e 's#^-L##' -e 's#lib$##'`
+fi
+# Check if it's valid.
 if [ -d "$EXAMPLESROOT/cvode/serial" ]; then
     examples_info="$EXAMPLESROOT"
 else
     examples_info="NOT FOUND"
+    EXAMPLESROOT=
 fi
 
 # Show a summary
