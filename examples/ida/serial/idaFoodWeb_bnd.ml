@@ -85,6 +85,7 @@
  * -----------------------------------------------------------------
  *)
 module RealArray = Sundials.RealArray
+module RealArray2 = Sundials.RealArray2
 module Roots = Sundials.Roots
 module Matrix = Dls.ArrayDenseMatrix
 
@@ -199,7 +200,7 @@ let init_user_data () =
  * At a given (x,y), evaluate the array of ns reaction terms R. *)
 let web_rates webdata x y ((cxy : RealArray.t), cxy_off)
                           ((ratesxy : RealArray.t), ratesxy_off) =
-  let acoef = webdata.acoef
+  let acoef = RealArray2.unwrap webdata.acoef
   and bcoef = webdata.bcoef in
 
   for is = 0 to num_species-1 do
@@ -207,7 +208,7 @@ let web_rates webdata x y ((cxy : RealArray.t), cxy_off)
     ratesxy.{ratesxy_off + is} <- 0.;
     for j = 0 to num_species-1 do
       ratesxy.{ratesxy_off + is} <- ratesxy.{ratesxy_off + is}
-                                  +. cxy.{cxy_off + j} *. Matrix.get acoef j is
+                                  +. cxy.{cxy_off + j} *. acoef.{is, j}
     done
   done;
 
@@ -236,24 +237,24 @@ let fweb webdata t c (crate : RealArray.t) =
       let xx = webdata.dx *. float_of_int jx
       and idxu = if jx <> mx-1 then num_species else -num_species
       and idxl = if jx <> 0    then num_species else -num_species in
-      let cxy k = c.{index jx jy k} in
       
       (* Get interaction vector at this grid point. *)
       web_rates webdata xx yy (c, index jx jy 0)
                               (webdata.rates, index jx jy 0);
 
       (* Loop over species, do differencing, load crate segment. *)
+      let off = index jx jy 0 in
       for is = 0 to num_species-1 do
         (* Differencing in y. *)
-        let dcyli = cxy is -. cxy (is - idyl)
-        and dcyui = cxy (idyu + is) -. cxy is in
+        let dcyli = c.{off + is} -. c.{off + (is - idyl)}
+        and dcyui = c.{off + idyu + is} -. c.{off + is} in
         (* Differencing in x. *)
-        let dcxli = cxy is -. cxy (is - idxl)
-        and dcxui = cxy (is + idxu) -. cxy is in
+        let dcxli = c.{off + is} -. c.{off + (is - idxl)}
+        and dcxui = c.{off + (is + idxu)} -. c.{off + is} in
         (* Compute the crate values at (xx,yy). *)
-        crate.{index jx jy is} <- (coy.(is) *. (dcyui -. dcyli)
-                                  +. cox.(is) *. (dcxui -. dcxli)
-                                  +. webdata.rates.{index jx jy is})
+        crate.{off + is} <- (coy.(is) *. (dcyui -. dcyli)
+                            +. cox.(is) *. (dcxui -. dcxli)
+                            +. webdata.rates.{index jx jy is})
       done
     done
   done
