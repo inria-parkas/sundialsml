@@ -24,10 +24,6 @@
 # Caveats:
 #  - Automatic variables like $< and $@ must have two $'s.
 #  - Don't prefix $$< with ./
-#
-# OCaml examples that correspond to C examples with a different name
-# should be declared like
-# $(eval $(call C_ALIAS,cvRoberts_dns_uw_alt,cvRoberts_dns_uw))
 
 include $(SRCROOT)/config
 
