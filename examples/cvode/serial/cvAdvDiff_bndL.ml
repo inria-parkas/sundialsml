@@ -39,9 +39,6 @@ let unvec = Sundials.unvec
 let printf = Printf.printf
 let vmax_norm = Nvector_serial.Ops.n_vmaxnorm
 
-let ith v i = v.{i - 1}
-let set_ith v i e = v.{i - 1} <- e
-
 (* Header files with a description of contents used in cvbanx.c *)
 
 
@@ -75,7 +72,6 @@ let five  = 5.0
    where v is an N_Vector. 
    The variables are ordered by the y index j, then by the x index i. *)
 
-let ijth vdata i j = vdata.{(j-1) + (i-1)*my}
 let set_ijth vdata i j e = vdata.{(j-1) + (i-1)*my} <- e
 
 (* Type : UserData (contains grid constants) *)
@@ -90,7 +86,7 @@ type user_data = {
 
 (* f routine. Compute f(t,u). *)
 
-let f data t udata dudata =
+let f data t (udata : RealArray.t) (dudata : RealArray.t) =
   (* Extract needed constants from data *)
   let hordc = data.hdcoef
   and horac = data.hacoef
@@ -98,17 +94,15 @@ let f data t udata dudata =
   in
 
   (* Loop over all grid points. *)
-  let ijth = ijth udata in
-
   for j = 1 to my do
     for i = 1 to mx do
 
       (* Extract u at x_i, y_j and four neighboring points *)
-      let uij = ijth i j;
-      and udn = (if j = 1  then zero else ijth i (j-1))
-      and uup = (if j = my then zero else ijth i (j+1))
-      and ult = (if i = 1  then zero else ijth (i-1) j)
-      and urt = (if i = mx then zero else ijth (i+1) j)
+      let uij = udata.{j-1 + (i-1)*my};
+      and udn = (if j = 1  then zero else udata.{(j-2) + (i-1)*my})
+      and uup = (if j = my then zero else udata.{j     + (i-1)*my})
+      and ult = (if i = 1  then zero else udata.{(j-1) + (i-2)*my})
+      and urt = (if i = mx then zero else udata.{(j-1) + i*my})
       in
 
       (* Set diffusion and advection terms and load into udot *)
@@ -116,7 +110,7 @@ let f data t udata dudata =
       and hadv  = horac *. (urt -. ult)
       and vdiff = verdc *. (uup -. two *. uij +. udn)
       in
-      set_ijth dudata i j (hdiff +. hadv +. vdiff)
+      dudata.{(j-1)+(i-1)*my} <- hdiff +. hadv +. vdiff
 
     done
   done

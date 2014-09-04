@@ -64,9 +64,6 @@ let unvec = Sundials.unvec
 
 let printf = Printf.printf
 
-let ith v i = v.{i - 1}
-let set_ith v i e = v.{i - 1} <- e
-
 (* Shared Problem Constants *)
 
 let atol  = 1.0e-6
@@ -114,7 +111,7 @@ type miter =
 
 (* Private Helper Functions *)
 
-let sqr x = x ** 2.0
+let sqr x = x *. x
 
 (* Functions Called by the Solver *)
 
@@ -274,7 +271,7 @@ let print_output1 t y0 y1 qu hu =
 let print_err_output tol_factor =
   printf "\n\n Error exceeds %g * tolerance \n\n" tol_factor
 
-let f1 t y ydot =
+let f1 t (y : RealArray.t) (ydot : RealArray.t) =
   let y0 = y.{0} in
   let y1 = y.{1} in
   ydot.{0} <- y1;
@@ -361,7 +358,7 @@ let print_header2 () =
 let print_output2 t erm qu hu =
   printf "%10.3f  %12.4e   %2d   %12.4e\n" t erm qu hu
 
-let f2 t ydata dydata =
+let f2 t (ydata : RealArray.t) (dydata : RealArray.t) =
   (*
      Excluding boundaries, 
 
@@ -379,7 +376,7 @@ let f2 t ydata dydata =
     done
   done
 
-let max_error ydata t =
+let max_error (ydata : RealArray.t) t =
   if t = zero then zero
   else
     let ex = if (t <= thirty) then exp(-. two *. t) else zero in
