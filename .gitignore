@@ -24,3 +24,11 @@ examples/*/parallel/grad*.m
 examples/*/*/*.sundials.c
 examples/*/*/*.sundials
 examples/utils/perf
+examples/utils/crunchperf
+style.css
+# Emacs temporary files.
+\#*
+# vim temporary files.
+.*.swp
+TAGS
+tags
