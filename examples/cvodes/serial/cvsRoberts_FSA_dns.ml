@@ -200,23 +200,31 @@ let print_output s t udata =
   and hu  = Cvode.get_last_step s
   in
   printf "%8.3e %2d  %8.3e %5d\n" t qu hu nst;
-  printf "                  Solution       ";
+  print_string "                  Solution       ";
   printf "%12.4e %12.4e %12.4e \n" udata.{0} udata.{1} udata.{2}
 
 (* Print sensitivities. *)
 
 let print_output_s uS =
   let sdata = unvec uS.(0) in
-  printf "                  Sensitivity 1  ";
+  print_string "                  Sensitivity 1  ";
   printf "%12.4e %12.4e %12.4e \n"  sdata.{0} sdata.{1} sdata.{2};
   let sdata = unvec uS.(1) in
-  printf "                  Sensitivity 2  ";
+  print_string "                  Sensitivity 2  ";
   printf "%12.4e %12.4e %12.4e \n"  sdata.{0} sdata.{1} sdata.{2};
   let sdata = unvec uS.(2) in
-  printf "                  Sensitivity 3  ";
+  print_string "                  Sensitivity 3  ";
   printf "%12.4e %12.4e %12.4e \n"  sdata.{0} sdata.{1} sdata.{2}
 
 (* Print some final statistics from the CVODES memory. *)
+(* For high NUM_REPS, the cost of OCaml printf becomes important! *)
+
+let print_5d i =
+  if i < 10 then print_string "    "
+  else if i < 100 then print_string "   "
+  else if i < 1000 then print_string "  "
+  else if i < 10000 then print_string " ";
+  print_int i
 
 let print_final_stats s sensi =
   let nst     = Cvode.get_num_steps s
@@ -226,11 +234,20 @@ let print_final_stats s sensi =
   and nni     = Cvode.get_num_nonlin_solv_iters s
   and ncfn    = Cvode.get_num_nonlin_solv_conv_fails s
   in
-  printf "\nFinal Statistics\n\n";
-  printf "nst     = %5d\n\n" nst;
-  printf "nfe     = %5d\n" nfe;
-  printf "netf    = %5d    nsetups  = %5d\n" netf nsetups;
-  printf "nni     = %5d    ncfn     = %5d\n" nni ncfn;
+  print_string "\nFinal Statistics\n\n";
+  print_string "nst     = ";
+  print_5d nst;
+  print_string "\n\nnfe     = ";
+  print_5d nfe;
+  print_string "\nnetf    = ";
+  print_5d netf;
+  print_string "    nsetups  = ";
+  print_5d nsetups;
+  print_string "\nnni     = ";
+  print_5d nni;
+  print_string "    ncfn     = ";
+  print_5d ncfn;
+  print_newline ();
 
   if sensi then begin
     let nfSe     = Sens.get_num_rhs_evals s
@@ -239,17 +256,29 @@ let print_final_stats s sensi =
     and netfS    = Sens.get_num_err_test_fails s
     and nniS     = Sens.get_num_nonlin_solv_iters s
     and ncfnS    = Sens.get_num_nonlin_solv_conv_fails s in
-    printf "\n";
-    printf "nfSe    = %5d    nfeS     = %5d\n" nfSe nfeS;
-    printf "netfs   = %5d    nsetupsS = %5d\n" netfS nsetupsS;
-    printf "nniS    = %5d    ncfnS    = %5d\n" nniS ncfnS
+    print_string "\nnfSe    = ";
+    print_5d nfSe;
+    print_string "    nfeS     = ";
+    print_5d nfeS;
+    print_string "\nnetfs   = ";
+    print_5d netfS;
+    print_string "    nsetupsS = ";
+    print_5d nsetupsS;
+    print_string "\nnniS    = ";
+    print_5d nniS;
+    print_string "    ncfnS    = ";
+    print_5d ncfnS;
+    print_newline ()
   end;
 
   let nje   = Cvode.Dls.get_num_jac_evals s
   and nfeLS = Cvode.Dls.get_num_rhs_evals s
   in
-  printf "\n";
-  printf "nje    = %5d    nfeLS     = %5d\n"  nje  nfeLS
+  print_string "\nnje    = ";
+  print_5d nje;
+  print_string "    nfeLS     = ";
+  print_5d nfeLS;
+  print_newline ()
 
 (*
  *--------------------------------------------------------------------
@@ -274,12 +303,12 @@ let main () =
       (Cvode.WFtolerances (ewt data)) (f data) ~t0:t0 y
   in
 
-  printf "\n3-species chemical kinetics problem\n";
+  print_string "\n3-species chemical kinetics problem\n";
 
   (* Sensitivity-related settings *)
   let print_sensi =
     match sensi with
-    | None -> (printf "Sensitivity: NO "; (fun _ -> ()))
+    | None -> (print_string "Sensitivity: NO "; (fun _ -> ()))
     | Some sensi_meth -> begin
         let pbar = RealArray.of_array data.p in
 
@@ -295,34 +324,34 @@ let main () =
                          yS;
         Sens.set_err_con cvode_mem err_con;
 
-        printf "Sensitivity: YES ";
+        print_string "Sensitivity: YES ";
         (match sensi_meth with
-         | Sens.Simultaneous -> printf "( SIMULTANEOUS +"
-         | Sens.Staggered    -> printf "( STAGGERED +"
-         | Sens.Staggered1   -> printf "( STAGGERED1 +");
-        printf (if err_con then " FULL ERROR CONTROL )"
-                           else " PARTIAL ERROR CONTROL )");
+         | Sens.Simultaneous -> print_string "( SIMULTANEOUS +"
+         | Sens.Staggered    -> print_string "( STAGGERED +"
+         | Sens.Staggered1   -> print_string "( STAGGERED1 +");
+        print_string (if err_con then " FULL ERROR CONTROL )"
+                                 else " PARTIAL ERROR CONTROL )");
 
         (fun s -> (ignore (Sens.get s yS); print_output_s yS))
       end
   in
   (* In loop over output points, call CVode, print results, test for error *)
   
-  printf "\n\n";
-  printf "===========================================";
-  printf "============================\n";
-  printf "     T     Q       H      NST           y1";
-  printf "           y2           y3    \n";
-  printf "===========================================";
-  printf "============================\n";
+  print_string "\n\n\
+                ===========================================\
+                ============================\n\
+               \     T     Q       H      NST           y1\
+               \           y2           y3    \n\
+                ===========================================\
+                ============================\n";
 
   let tout = ref t1 in
   for iout = 1 to nout do
     let t, _ = Cvode.solve_normal cvode_mem !tout y in
     print_output cvode_mem t ydata;
     print_sensi cvode_mem;
-    printf "-----------------------------------------";
-    printf "------------------------------\n";
+    print_string "-----------------------------------------\
+                  ------------------------------\n";
     tout := !tout *. tmult
   done;
 
