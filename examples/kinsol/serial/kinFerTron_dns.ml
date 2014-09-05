@@ -119,31 +119,46 @@ let set_initial_guess2 udata =
 
 (* Print first lines of output (problem description) *)
 let print_header fnormtol scsteptol =
-  printf "\nFerraris and Tronconi test problem\n";
-  printf "Tolerance parameters:\n";
+  print_string "\nFerraris and Tronconi test problem\n";
+  print_string "Tolerance parameters:\n";
   printf "  fnormtol  = %10.6g\n  scsteptol = %10.6g\n" fnormtol scsteptol
 
 (* Print solution *)
-let print_output u = printf " %8.6g  %8.6g\n" (ith u 1) (ith u 2)
+let print_output u = printf " %8.6g  %8.6g\n" u.{0} u.{1}
+
+let print_5d i =
+  if i < 10 then print_string "    "
+  else if i < 100 then print_string "   "
+  else if i < 1000 then print_string "  "
+  else if i < 10000 then print_string " ";
+  print_int i
 
 (* Print final statistics contained in iopt *)
+(* For high NUM_REPS, the cost of OCaml printf becomes important! *)
 let print_final_stats kmem =
   let nni  = Kinsol.get_num_nonlin_solv_iters kmem in
   let nfe  = Kinsol.get_num_func_evals kmem in
   let nje  = Kinsol.Dls.get_num_jac_evals kmem in
   let nfeD = Kinsol.Dls.get_num_func_evals kmem in
-  printf "Final Statistics:\n";
-  printf "  nni = %5d    nfe  = %5d \n" nni nfe;
-  printf "  nje = %5d    nfeD = %5d \n" nje nfeD
+  print_string "Final Statistics:\n";
+  print_string "  nni = ";
+  print_5d nni;
+  print_string "    nfe  = ";
+  print_5d nfe;
+  print_string " \n  nje = ";
+  print_5d nje;
+  print_string "    nfeD = ";
+  print_5d nfeD;
+  print_string " \n"
 
 (* MAIN PROGRAM *)
 let solve_it kmem u s glstr mset =
-  printf("\n");
-  if mset==1 then printf "Exact Newton" else printf "Modified Newton";
-  if not glstr then printf "\n" else printf " with line search\n";
+  print_newline ();
+  print_string (if mset==1 then "Exact Newton" else "Modified Newton");
+  if not glstr then print_newline () else print_string " with line search\n";
   Kinsol.set_max_setup_calls kmem (Some mset);
   ignore (Kinsol.solve kmem u glstr s s);
-  printf "Solution:\n  [x1,x2] = ";
+  print_string "Solution:\n  [x1,x2] = ";
   print_output (Sundials.unvec u);
   print_final_stats kmem
 
@@ -185,9 +200,9 @@ let main () =
 
   (* --------------------------- *)
 
-  printf "\n------------------------------------------\n";
-  printf "\nInitial guess on lower bounds\n";
-  printf "  [x1,x2] = ";
+  print_string "\n------------------------------------------\n";
+  print_string "\nInitial guess on lower bounds\n";
+  print_string "  [x1,x2] = ";
   print_output u1;
 
   RealArray.blit u1 u;
@@ -210,9 +225,9 @@ let main () =
 
   (* --------------------------- *)
 
-  printf "\n------------------------------------------\n";
-  printf "\nInitial guess in middle of feasible region\n";
-  printf "  [x1,x2] = ";
+  print_string "\n------------------------------------------\n";
+  print_string "\nInitial guess in middle of feasible region\n";
+  print_string "  [x1,x2] = ";
   print_output u2;
 
   RealArray.blit u2 u;
