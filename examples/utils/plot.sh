@@ -138,6 +138,7 @@ plot "$1" using (0):(\$3/\$4):(0.5):6 with boxplot lc rgb '${MAINCOLOR}' \
      for [IDX=1:N-1] "$1" index IDX using (IDX):(\$2/\$1) \
        with points pointtype 3 lw 0.5 lc rgb 'black' notitle axes x1y2, \
      1 with lines lc rgb '#bbbbbb' notitle, \
+     1.5 with lines lc rgb "#bbbbbb" notitle, \
      2 with lines lc rgb '#bbbbbb' notitle
 ${PAUSE}
 EOF
