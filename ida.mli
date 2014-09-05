@@ -691,47 +691,23 @@ module Spils :
     *)
     val get_num_res_evals    : ('a, 'k) session -> int
   end
-(*
+
 module Alternate :
   sig
     (** Alternate Linear Solvers
 
-        @cvode <node8#s:new_linsolv> Providing Alternate Linear Solver Modules *)
+        @ida <node8#s:new_linsolv> Providing Alternate Linear Solver Modules *)
 
-    (** A flag that indicates any problems that occured during the solution of
-        the nonlinear equation on the current time step for which the linear
-        solver is being used. This flag can be used to help decide whether the
-        Jacobian data kept by a linear solver needs to be updated or not. *)
-    type conv_fail =
-      | NoFailures
-          (** Passed on the first call for a step, or if the lcoal error test
-              failed on the previous attempt at this setup but the Newton
-              iteration converged. *)
-      | FailBadJ
-          (**  Passed if
-               - the previous Newton corrector iteration did not converge and
-                 the linear solver's setup routine indicated that its
-                 Jacobian-related data is not current, or,
-
-               - during the previous Newton corrector iteration, the linear
-                 solver's {!solve} routine failed in a recoverable manner and
-                 the linear solver's setup routine indicated that its
-                 Jacobian-related data is not current. *)
-      | FailOther
-          (** Passed if the previous Newton iteration failed to converge even
-              though the linear solver was using current Jacobian-related
-              data. *)
-
-    type 'data callbacks =
+    type ('data, 'kind) callbacks =
       {
-        linit   : (unit -> bool) option;
+        linit   : (('data, 'kind) session -> unit) option;
           (** Complete initializations for a specific linear solver, such as
               counters and statistics. Returns [true] if successful.
 
-              @cvode <node8#SECTION00810000000000000000> linit *)
+              @ida <node8#SECTION00810000000000000000> linit *)
 
-        lsetup : (conv_fail -> 'data -> 'data -> 'data triple_tmp -> bool)
-                 option;
+        lsetup : (('data, 'kind) session -> 'data
+                  -> 'data -> 'data -> 'data triple_tmp -> unit) option;
           (** [jcur = lsetup convfail ypred fpred tmp] prepares the linear
               solver for subsequent calls to {!lsolve}. Its arguments are:
               - [convfail], indicating any problem that occurred during the
@@ -740,42 +716,45 @@ module Alternate :
                 step,
               - [fpred], the value of the right-hand side at [ypred], and,
               - [tmp], temporary variables for use by the routine.
-           
+
               This function must return [true] if the Jacobian-related data is
               current after the call, or [false] otherwise. It may raise a
               {!Sundials.RecoverableFailure} exception to indicate that a
               recoverable error has occurred. Any other exception is treated as
               an unrecoverable error.
-           
-              @cvode <node8#SECTION00820000000000000000> lsetup *)
-           
-        lsolve : 'data -> 'data -> 'data -> 'data -> unit;
-          (** [lsolve b weight ycur fcur] must solve the linear equation given:
+
+              @ida <node8#SECTION00820000000000000000> lsetup *)
+
+        lsolve : ('data, 'kind) session -> 'data -> 'data
+              -> 'data -> 'data -> 'data -> unit
+          (** [lsolve b weight ycur y'cur rescur] must solve the linear
+              equation given:
               - [b], is the vector into which the solution is to be calculated,
               - [weight] contains the error weights,
-              - [ycur] contains the solvers current approximation to [y], and,
-              - [fcur] is a vector that contains [f(tn, ycur)].
-              
+              - [ycur] contains the solver's current approximation to [y],
+              - [y'cur] contains the solver's current approximation to [y'], and
+              - [rescur] is a vector that contains the current residual value.
+
               This function may raise a {!Sundials.RecoverableFailure} exception
               to indicate that a recoverable error has occurred. Any other
               exception is treated as an unrecoverable error.
-          
-              @cvode <node8#SECTION00830000000000000000> lsolve *)
 
-        lfree  : (unit -> unit) option;
-          (** This function is called once a problem has been completed and the
-              linear solver is no longer needed.
-
-              @cvode <node8#SECTION00840000000000000000> lfree *)
+              @ida <node8#SECTION00830000000000000000> lsolve *)
       }
 
     (** Create a linear solver from a function returning a set of callback
         functions *)
     val make_solver :
-          (('data, 'kind) session -> ('data, 'kind) nvector -> 'data callbacks)
+          (('data, 'kind) session -> ('data, 'kind) nvector
+           -> ('data, 'kind) nvector -> ('data, 'kind) callbacks)
           -> ('data, 'kind) linear_solver
+
+    (** Returns the solver's current [cj] value.  *)
+    val get_cj : ('data, 'kind) session -> float
+    (** Returns the solver's current [cjratio] value.  *)
+    val get_cjratio : ('data, 'kind) session -> float
   end
-*)
+
 
 (** {2 Tolerances} *)
 

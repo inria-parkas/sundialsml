@@ -29,6 +29,7 @@
 #include <idas/idas_spgmr.h>
 #include <idas/idas_sptfqmr.h>
 #include <idas/idas_spbcgs.h>
+#include <idas/idas_impl.h>
 #include <sundials/sundials_config.h>
 
 #if SUNDIALS_BLAS_LAPACK == 1
@@ -43,6 +44,7 @@
 #include <ida/ida_spgmr.h>
 #include <ida/ida_sptfqmr.h>
 #include <ida/ida_spbcgs.h>
+#include <ida/ida_impl.h>
 #include <sundials/sundials_config.h>
 
 #if SUNDIALS_BLAS_LAPACK == 1
@@ -400,6 +402,90 @@ static int jactimesfn(
     CAMLreturnT (int, r);
 }
 
+static int linit(IDAMem ida_mem)
+{
+    CAMLparam0();
+    int r;
+    value *backref = ida_mem->ida_user_data;
+    CAML_FN (call_linit);
+
+    r = Int_val (caml_callback(*call_linit, *backref));
+
+    CAMLreturnT(int, r);
+}
+
+static int lsetup(IDAMem ida_mem, N_Vector yyp, N_Vector ypp, N_Vector resp,
+		  N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
+{
+    CAMLparam0();
+    CAMLlocalN(args, 5);
+    int r;
+    value *backref = ida_mem->ida_user_data;
+    CAML_FN (call_lsetup);
+
+    args[0] = *backref;
+    args[1] = NVEC_BACKLINK(yyp);
+    args[2] = NVEC_BACKLINK(ypp);
+    args[3] = NVEC_BACKLINK(resp);
+    args[4] = make_triple_tmp(tmp1, tmp2, tmp3);
+
+    r = Int_val (caml_callbackN(*call_lsetup, sizeof (args) / sizeof (*args),
+				args));
+
+    CAMLreturnT(int, r);
+}
+
+static int lsolve(IDAMem ida_mem, N_Vector b, N_Vector weight, N_Vector ycur,
+		  N_Vector ypcur, N_Vector rescur)
+{
+    CAMLparam0();
+    CAMLlocalN(args, 6);
+    int r;
+    value *backref = ida_mem->ida_user_data;
+    CAML_FN (call_lsolve);
+
+    args[0] = *backref;
+    args[1] = NVEC_BACKLINK(b);
+    args[2] = NVEC_BACKLINK(weight);
+    args[3] = NVEC_BACKLINK(ycur);
+    args[4] = NVEC_BACKLINK(ypcur);
+    args[5] = NVEC_BACKLINK(rescur);
+
+    r = Int_val (caml_callbackN(*call_lsolve,
+				sizeof (args) / sizeof (*args),
+				args));
+
+    CAMLreturnT(int, r);
+}
+
+CAMLprim void c_ida_set_alternate (value vida_mem, value vhas_init,
+				   value vhas_setup)
+{
+    CAMLparam3(vida_mem, vhas_init, vhas_setup);
+    IDAMem ida_mem = IDA_MEM_FROM_ML (vida_mem);
+
+    ida_mem->ida_linit   = Bool_val(vhas_init)  ? linit : NULL;
+    ida_mem->ida_lsetup  = Bool_val(vhas_setup) ? lsetup : NULL;
+    ida_mem->ida_setupNonNull = Bool_val(vhas_setup);
+    ida_mem->ida_lsolve = lsolve;
+    ida_mem->ida_lmem   = NULL;
+
+    CAMLreturn0;
+}
+
+CAMLprim value c_ida_get_cj (value vida_mem)
+{
+    CAMLparam1 (vida_mem);
+    IDAMem ida_mem = IDA_MEM_FROM_ML (vida_mem);
+    CAMLreturn (caml_copy_double (ida_mem->ida_cj));
+}
+
+CAMLprim value c_ida_get_cjratio (value vida_mem)
+{
+    CAMLparam1 (vida_mem);
+    IDAMem ida_mem = IDA_MEM_FROM_ML (vida_mem);
+    CAMLreturn (caml_copy_double (ida_mem->ida_cjratio));
+}
 
 /* Dense and Band can only be used with serial NVectors.  */
 CAMLprim void c_ida_dls_dense (value vida_mem, value vneqs, value vset_jac)

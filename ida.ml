@@ -161,34 +161,27 @@ let call_jactimesfn session jac r z =
   | SpilsCallback { jac_times_vec_fn = Some f } ->
       adjust_retcode session true (f jac r) z
   | _ -> assert false
-(*
+
 let call_linit session =
   let session = read_weak_ref session in
   match session.ls_callbacks with
   | AlternateCallback { linit = Some f } ->
-      adjust_retcode session false f ()
+      adjust_retcode session false f session
   | _ -> assert false
 
-let call_lsetup session convfail ypred fpred tmp =
+let call_lsetup session yyp ypp resp tmp =
   let session = read_weak_ref session in
   match session.ls_callbacks with
   | AlternateCallback { lsetup = Some f } ->
-      adjust_retcode_and_bool session (f convfail ypred fpred) tmp
+      adjust_retcode session true (f session yyp ypp resp) tmp
   | _ -> assert false
 
-let call_lsolve session b weight ycur fcur =
+let call_lsolve session b weight ycur y'cur rescur =
   let session = read_weak_ref session in
   match session.ls_callbacks with
   | AlternateCallback { lsolve = f } ->
-      adjust_retcode session true (f b weight ycur) fcur
+      adjust_retcode session true (f session b weight ycur y'cur) rescur
   | _ -> assert false
-
-let call_lfree session =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | AlternateCallback { lfree = Some f } -> adjust_retcode session false f ()
-  | _ -> assert false
-*)
 
 let _ =
   Callback.register "c_ida_call_resfn"         call_resfn;
@@ -199,6 +192,9 @@ let _ =
   Callback.register "c_ida_call_presetupfn"    call_precsetupfn;
   Callback.register "c_ida_call_presolvefn"    call_precsolvefn;
   Callback.register "c_ida_call_jactimesfn"    call_jactimesfn;
+  Callback.register "c_ida_call_linit"         call_linit;
+  Callback.register "c_ida_call_lsetup"        call_lsetup;
+  Callback.register "c_ida_call_lsolve"        call_lsolve
 
 external session_finalize : ('a, 'kind) session -> unit
     = "c_ida_session_finalize"
@@ -432,7 +428,7 @@ module Spils =
         = "c_ida_spils_get_num_res_evals"
 
   end
-(*
+
 module Alternate =
   struct
     type conv_fail = Cvode_impl.conv_fail =
@@ -440,26 +436,28 @@ module Alternate =
       | FailBadJ
       | FailOther
 
-    type 'data callbacks = 'data alternate_linsolv =
+    type ('data, 'kind) callbacks = ('data, 'kind) alternate_linsolv =
       {
-        linit   : (unit -> bool) option;
-        lsetup  : (conv_fail -> 'data -> 'data -> 'data triple_tmp -> bool)
-                  option;
-        lsolve  : 'data -> 'data -> 'data -> 'data -> unit;
-        lfree   : (unit -> unit) option;
+        linit  : (('data, 'kind) session -> unit) option;
+        lsetup : (('data, 'kind) session -> 'data
+                  -> 'data -> 'data -> 'data triple_tmp -> unit) option;
+        lsolve : ('data, 'kind) session -> 'data -> 'data
+          -> 'data -> 'data -> 'data -> unit;
       }
 
     external c_set_alternate
-      : ('data, 'kind) session -> bool -> bool -> bool -> unit
+      : ('data, 'kind) session -> bool -> bool -> unit
       = "c_ida_set_alternate"
 
-    let make_solver f s nv =
-      let { linit; lsetup; lsolve; lfree } as cb = f s nv in
-      c_set_alternate s (linit <> None) (lsetup <> None) (lfree <> None);
+    let make_solver f s nv nv' =
+      let { linit; lsetup; lsolve } as cb = f s nv nv' in
+      c_set_alternate s (linit <> None) (lsetup <> None);
       s.ls_callbacks <- AlternateCallback cb
 
+    external get_cj : ('data, 'kind) session -> float = "c_ida_get_cj"
+    external get_cjratio : ('data, 'kind) session -> float = "c_ida_get_cjratio"
   end
-*)
+
 
 let set_linear_solver session solver nv nv' =
   session.ls_callbacks <- NoCallbacks;

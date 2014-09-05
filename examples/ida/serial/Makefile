@@ -11,6 +11,13 @@ EXAMPLES = idaRoberts_dns.ml  \
 	   idaHeat2D_kry.ml   \
 	   idaFoodWeb_bnd.ml  \
 	   idaSlCrank_dns.ml  \
-	   idaKrylovDemo_ls.ml
+	   idaKrylovDemo_ls.ml \
+	   idaRoberts_dns_alt.ml
 
 include ../../examples.mk
+
+idaRoberts_dns_alt.sundials.out: idaRoberts_dns.sundials.out
+	cp $< $@
+
+idaRoberts_dns_alt.sundials.time: idaRoberts_dns.sundials.time
+	cp $< $@

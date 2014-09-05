@@ -32,7 +32,6 @@ type ('data, 'kind) session = ('data, 'kind) Ida.session
 type ('data, 'kind) nvector = ('data, 'kind) Sundials.nvector
 
 type real_array = Sundials.RealArray.t
-type conv_fail = Ida_impl.conv_fail = NoFailures | FailBadJ | FailOther
 
 (** {2:quad Quadrature Equations} *)
 
