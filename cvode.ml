@@ -500,7 +500,7 @@ module Alternate =
 
     type ('data, 'kind) callbacks = ('data, 'kind) alternate_linsolv =
       {
-        linit   : (('data, 'kind) session -> bool) option;
+        linit   : (('data, 'kind) session -> unit) option;
 
         lsetup : (('data, 'kind) session -> conv_fail -> 'data -> 'data
                   -> 'data triple_tmp -> bool) option;

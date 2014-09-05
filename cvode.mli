@@ -705,7 +705,7 @@ module Alternate :
 
     type ('data, 'kind) callbacks =
       {
-        linit   : (('data, 'kind) session -> bool) option;
+        linit   : (('data, 'kind) session -> unit) option;
           (** Complete initializations for a specific linear solver, such as
               counters and statistics. Returns [true] if successful.
 

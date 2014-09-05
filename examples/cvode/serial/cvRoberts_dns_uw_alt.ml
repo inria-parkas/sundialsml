@@ -57,11 +57,15 @@ type cvdls_mem = {
 }
 
 let alternate_dense jacfn =
+  (* Stats cannot be associated with a session, but with the solver
+     itself.  *)
   let nje = ref 0 in
+
+  (* Solver constants *)
   let cvd_msbj = 50 in
   let cvd_dgmax = 0.2 in
 
-  let linit mem s = (nje := 0; true) in
+  let linit mem s = (nje := 0) in
 
   let lsetup mem s convfail ypred fpred tmp =
     let { Alt.gamma = gamma; Alt.gammap = gammap} = Alt.get_gammas s in
@@ -120,7 +124,7 @@ let alternate_dense jacfn =
           Alt.lsolve = lsolve mem;
         })
   in
-  (solver, fun () -> 0, !nje)
+  (solver, fun () -> (0, !nje))
 
 (* Problem Constants *)
 
