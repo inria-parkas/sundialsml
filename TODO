@@ -36,6 +36,10 @@ TODO
    gnuplot with C time normalized.
 
    - Show CFLAGS and other relevant settings in the title?
+   - Group the parallel tests at one side? Make their columns blue?
+     Do we need to spend more time understanding their performance?
+     (i.e., how come we have a ratio ~1 without any type annotations?
+      Should we add the type annotations anyhow?)
 
 4. Performance issues/tests:
    - Try to have all examples within 2xC (with the possible exception of
