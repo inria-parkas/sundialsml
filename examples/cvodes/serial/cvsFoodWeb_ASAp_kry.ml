@@ -107,8 +107,6 @@ let alph  = one
 let np    = 3
 let ns    = (2*np)
 
-let (+>+) (arr : RealArray.t) off = Array1.sub arr off ns
-
 (* Method Constants *)
 
 let mx    = 20
