@@ -64,7 +64,7 @@ type user_data = { a : float;
                    f : float;
                  }
 
-let force data yy _Q =
+let force data (yy : RealArray.t) (_Q : RealArray.t) =
 
   let a = data.a in
   let k = data.params.{0} in
@@ -127,7 +127,8 @@ let set_ic data yy yp =
   yp.{4} <- _Q.{1}/.m2;
   yp.{5} <- _Q.{2}/.j2
 
-let ressc data tres yval ypval rval =
+let ressc data tres (yval : RealArray.t) (ypval : RealArray.t)
+                    (rval : RealArray.t) =
   let a  = data.a in
   let j1 = data.j1 in
   let m2 = data.m2 in
@@ -170,7 +171,7 @@ let ressc data tres yval ypval rval =
   rval.{8} <- a*.s1*.qd +. xd +. s2*.pd;
   rval.{9} <- -.a*.c1*.qd -. c2*.pd
 
-let rhsQ data t yy yp qdot =
+let rhsQ data t (yy : RealArray.t) (yp : RealArray.t) (qdot : RealArray.t) =
   let j1 = data.j1 in
   let m2 = data.m2 in
   let j2 = data.j2 in
@@ -181,7 +182,13 @@ let rhsQ data t yy yp qdot =
 
   qdot.{0} <- 0.5*.(j1*.v1*.v1 +. m2*.v2*.v2 +. j2*.v3*.v3)
 
-let rhsQS data t yy yp yyS ypS rrQ rhsQS tmp yptmp tmpQS =
+let rhsQS data t (yy : RealArray.t)
+                 (yp : RealArray.t)
+                 (yyS : RealArray.t array)
+                 (ypS : RealArray.t array)
+                 (rrQ : RealArray.t)
+                 (rhsQS : RealArray.t array)
+                 tmp yptmp tmpQS =
   let j1 = data.j1 in
   let m2 = data.m2 in
   let j2 = data.j2 in

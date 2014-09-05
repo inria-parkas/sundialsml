@@ -36,8 +36,6 @@ let printf = Printf.printf
 let nvconst = Nvector_serial.DataOps.n_vconst
 let nvscale = Nvector_serial.DataOps.n_vscale
 
-let ith v i = v.{i-1}
-
 (* Problem Constants *)
 let neq = 6
 let t0 = 0.0
@@ -63,14 +61,17 @@ type user_data = { k1 : float;
                    h : float; }
 
 let r_power_i base exponent =
-  let rec go prod expt =
-    if expt = 0 then prod
-    else go (prod *. base) (expt - 1)
+  let go prod expt =
+    let r = ref 1.0 in
+    for i = 0 to expt - 1 do
+      r := !r *. base
+    done;
+    !r
   in
   if exponent < 0 then 1. /.go  1.0 (- exponent)
   else go 1.0 exponent
 
-let res data t yy yd res =
+let res data t (yy : RealArray.t) (yd : RealArray.t) (res : RealArray.t) =
   let k1 = data.k1
   and k2 = data.k2
   and k3 = data.k3
@@ -119,7 +120,8 @@ let rhsQ data t yy yp qdot =
 (*
  * resB routine. Residual for adjoint system. 
  *)
-let resB data tt yy yp yyB ypB rrB =
+let resB data tt (yy : RealArray.t) yp (yyB : RealArray.t)
+                 (ypB : RealArray.t) (rrB : RealArray.t) =
   let k1 = data.k1
   and k2 = data.k2
   and k3 = data.k3

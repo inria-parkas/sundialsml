@@ -33,9 +33,12 @@ let nvconst = Nvector_serial.DataOps.n_vconst
 let nvscale = Nvector_serial.DataOps.n_vscale
 
 let r_power_i base exponent =
-  let rec go prod expt =
-    if expt = 0 then prod
-    else go (prod *. base) (expt - 1)
+  let go prod expt =
+    let r = ref 1.0 in
+    for i = 0 to expt - 1 do
+      r := !r *. base
+    done;
+    !r
   in
   if exponent < 0 then 1. /.go  1.0 (- exponent)
   else go 1.0 exponent
@@ -67,7 +70,7 @@ type user_data = { k1 : float;
                    h : float;
                  }
 
-let res data t yy yd res =
+let res data t (y : RealArray.t) (yd : RealArray.t) (res : RealArray.t) =
   let k1 = data.k1
   and k2 = data.k2
   and k3 = data.k3
@@ -77,40 +80,27 @@ let res data t yy yd res =
   and ks = data.ks
   and pCO2 = data.pCO2
   and h = data.h
-
-  and y1 = yy.{0}
-  and y2 = yy.{1}
-  and y3 = yy.{2}
-  and y4 = yy.{3}
-  and y5 = yy.{4}
-  and y6 = yy.{5}
-
-  and yd1 = yd.{0}
-  and yd2 = yd.{1}
-  and yd3 = yd.{2}
-  and yd4 = yd.{3}
-  and yd5 = yd.{4}
   in
 
-  let r1 = k1 *. (r_power_i y1 4) *. sqrt y2
-  and r2 = k2 *. y3 *. y4
-  and r3 = k2/.k *. y1 *. y5
-  and r4 = k3 *. y1 *. y4 *. y4
-  and r5 = k4 *. y6 *. y6 *. sqrt y2
-  and fin = klA *. ( pCO2/.h -. y2 )
+  let r1 = k1 *. (r_power_i y.{0} 4) *. sqrt y.{1}
+  and r2 = k2 *. y.{2} *. y.{3}
+  and r3 = k2/.k *. y.{0} *. y.{4}
+  and r4 = k3 *. y.{0} *. y.{3} *. y.{3}
+  and r5 = k4 *. y.{5} *. y.{5} *. sqrt y.{1}
+  and fin = klA *. ( pCO2/.h -. y.{1} )
   in
 
-  res.{0} <- yd1 +. 2.0*.r1 -. r2 +. r3 +. r4;
-  res.{1} <- yd2 +. 0.5*.r1 +. r4 +. 0.5*.r5 -. fin;
-  res.{2} <- yd3 -. r1 +. r2 -. r3;
-  res.{3} <- yd4 +. r2 -. r3 +. 2.0*.r4;
-  res.{4} <- yd5 -. r2 +. r3 -. r5;
-  res.{5} <- ks*.y1*.y4 -. y6
+  res.{0} <- yd.{0} +. 2.0*.r1 -. r2 +. r3 +. r4;
+  res.{1} <- yd.{1} +. 0.5*.r1 +. r4 +. 0.5*.r5 -. fin;
+  res.{2} <- yd.{2} -. r1 +. r2 -. r3;
+  res.{3} <- yd.{3} +. r2 -. r3 +. 2.0*.r4;
+  res.{4} <- yd.{4} -. r2 +. r3 -. r5;
+  res.{5} <- ks*.y.{0}*.y.{3} -. y.{5}
 
 (*
  * rhsQ routine. Computes quadrature(t,y).
  *)
-let rhsQ data t yy yp qdot =
+let rhsQ data t (yy : RealArray.t) yp (qdot : RealArray.t) =
   qdot.{0} <- yy.{0}
 
 let print_header rtol avtol y =

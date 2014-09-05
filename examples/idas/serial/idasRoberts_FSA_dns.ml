@@ -100,7 +100,7 @@ let process_args () =
     end
   else (None, false)
 
-let res data t yy yp resval =
+let res data t (yy : RealArray.t) (yp : RealArray.t) (resval : RealArray.t) =
   let p1 = data.p.{0}
   and p2 = data.p.{1}
   and p3 = data.p.{2}
@@ -148,7 +148,7 @@ let resS : user_data -> Idas.real_array Sens.sensresfn =
     resvalS.(is).{2} <- !rs3
   done
 
-let rhsQ data t y yp ypQ =
+let rhsQ data t (y : RealArray.t) (yp : RealArray.t) (ypQ : RealArray.t) =
   ypQ.{0} <- y.{2};
   ypQ.{1} <- data.coef *. (y.{0}*.y.{0}+.
                            y.{1}*.y.{1}+.

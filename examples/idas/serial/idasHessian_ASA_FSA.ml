@@ -73,7 +73,7 @@ let p3 = 3.0e7
 type user_data = { p : RealArray.t;     (* size 3 *) }
 
 (* residual for forward problem *)
-let res data tres yy yp rr =
+let res data tres (yy : RealArray.t) (yp : RealArray.t) (rr : RealArray.t) =
   let y1  = yy.{0}
   and y2  = yy.{1}
   and y3  = yy.{2}
@@ -91,7 +91,10 @@ let res data tres yy yp rr =
   rr.{0} <- rr.{0} +. yp1;
   rr.{2} <- y1+.y2+.y3-.1.0
 
-let resS data t yy yp resval yyS ypS resvalS tmp1 tmp2 tmp3 =
+let resS data t (yy : RealArray.t) (yp : RealArray.t) resval
+                (yyS : RealArray.t array) (ypS : RealArray.t array)
+                (resvalS : RealArray.t array)
+                tmp1 tmp2 tmp3 =
   let p1 = data.p.{0}
   and p2 = data.p.{1}
   and p3 = data.p.{2}
@@ -130,14 +133,20 @@ let resS data t yy yp resval yyS ypS resvalS tmp1 tmp2 tmp3 =
     resvalS.(is).{2} <- rs3
   done
 
-let rhsQ data t yy yp qdot =
+let rhsQ data t (yy : RealArray.t) (yp : RealArray.t) (qdot : RealArray.t) =
   let y1 = yy.{0}
   and y2 = yy.{1}
   and y3 = yy.{2}
   in
   qdot.{0} <- 0.5*.(y1*.y1+.y2*.y2+.y3*.y3)
 
-let rhsQS data t yy yp yyS ypS rrQ rhsQS yytmp yptmp tmpQS =
+let rhsQS data t (yy : RealArray.t)
+                 yp
+                 (yyS : RealArray.t array)
+                 (ypS : RealArray.t array)
+                 rrQ
+                 (rhsQS : RealArray.t array)
+                 yytmp yptmp tmpQS =
   let y1 = yy.{0}
   and y2 = yy.{1}
   and y3 = yy.{2}
@@ -158,7 +167,13 @@ let rhsQS data t yy yp yyS ypS rrQ rhsQS yytmp yptmp tmpQS =
   rhsQS.(1).{0} <- y1*.s1 +. y2*.s2 +. y3*.s3
 
 (* Residuals for adjoint model. *)
-let resBS1 data tt yy yp yyS ypS yyB ypB rrBS =
+let resBS1 data tt (yy : RealArray.t)
+                   yp
+                   (yyS  : RealArray.t array)
+                   (ypS  : RealArray.t array)
+                   (yyB  : RealArray.t)
+                   (ypB  : RealArray.t)
+                   (rrBS : RealArray.t) =
   (* The parameters. *)
   (* Note: constants P1,P2,P3 from the original C source have names
      that clash with these local variables, but the constants are not
@@ -205,7 +220,13 @@ let resBS1 data tt yy yp yyS ypS yyB ypB rrBS =
   rrBS.{4} <- mp2 +. p2*.y3*.m1 -. (p2*.y3+.2.0*.p3*.y2)*.m2 -. m3 +. p2*.s3*.l1 -. (2.0*.p3*.s2+.p2*.s3)*.l2 +. s2;
   rrBS.{5} <- p2*.y2*.(m1-.m2) -. m3 -. p2*.s2*.l21 +. s3
 
-let rhsQBS1 data tt yy yp yyS ypS yyB ypB rhsBQS =
+let rhsQBS1 data tt (yy : RealArray.t)
+                    (yp : RealArray.t)
+                    (yyS : RealArray.t array)
+                    (ypS : RealArray.t array)
+                    (yyB : RealArray.t)
+                    (ypB : RealArray.t)
+                    (rhsBQS : RealArray.t) =
   (* The y vector *)
   let y1 = yy.{0}
   and y2 = yy.{1}
@@ -233,7 +254,13 @@ let rhsQBS1 data tt yy yp yyS ypS yyB ypB rhsBQS =
   rhsBQS.{2} <- y1*.(m1-.m2) -. s1*.l21;
   rhsBQS.{3} <- y2*.y3*.(m2-.m1) +. (y3*.s2+.y2*.s3)*.l21
 
-let resBS2 data tt yy yp yyS ypS yyB ypB rrBS =
+let resBS2 data tt (yy : RealArray.t)
+                   (yp : RealArray.t)
+                   (yyS : RealArray.t array)
+                   (ypS : RealArray.t array)
+                   (yyB : RealArray.t)
+                   (ypB : RealArray.t)
+                   (rrBS : RealArray.t) =
   (* The parameters. *)
   let p1 = data.p.{0}
   and p2 = data.p.{1}
@@ -277,7 +304,13 @@ let resBS2 data tt yy yp yyS ypS yyB ypB rrBS =
   rrBS.{4} <- mp2 +. p2*.y3*.m1 -. (p2*.y3+.2.0*.p3*.y2)*.m2 -. m3 +. (y3+.p2*.s3)*.l1 -. (y3+.2.0*.p3*.s2+.p2*.s3)*.l2 +. s2;
   rrBS.{5} <- p2*.y2*.(m1-.m2) -. m3 -. (y2+.p2*.s2)*.l21 +. s3
 
-let rhsQBS2 data tt yy yp yyS ypS yyB ypB rhsBQS =
+let rhsQBS2 data tt (yy : RealArray.t)
+                    (yp : RealArray.t)
+                    (yyS : RealArray.t array)
+                    (ypS : RealArray.t array)
+                    (yyB : RealArray.t)
+                    (ypB : RealArray.t)
+                    (rhsBQS : RealArray.t) =
   (* The y vector *)
   let y1 = yy.{0}
   and y2 = yy.{1}
