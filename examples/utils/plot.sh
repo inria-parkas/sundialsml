@@ -159,6 +159,7 @@ plot "< $crunch -S $1" using 4:xtic(5) with boxes lc rgb '${MAINCOLOR}' \
        lc rgb 'black' \
        title 'C time / rep (right axis)' axes x1y2, \
      1 with lines lc rgb "#bbbbbb" notitle, \
+     1.5 with lines lc rgb "#bbbbbb" notitle, \
      2 with lines lc rgb "#bbbbbb" notitle
 $PAUSE
 EOF
