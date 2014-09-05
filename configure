@@ -132,8 +132,6 @@ bounds_checking=${bounds_checking:-1}
 safety_checks=${safety_checks:-1}
 
 # Check C compiler: detect gcc and add a default optimization level.
-# If not using gcc or compatible, the optimization is -O, which POSIX
-# says must be supported (for what it's worth).
 test_file=__configure_test_file__.c
 tmp_file=__configure_test_file__.c
 echo "#ifndef __GNUC__" > $test_file
@@ -152,7 +150,7 @@ if [ "x${cflags}" = x ]; then    # Don't touch CFLAGS if explicitly given.
     if [ $using_gcc = true ]; then
         cflags="-O2"
     else
-        echo "<info> Your C compiler seems to be incompatible with gcc.  Make"
+        echo "<info> Your C compiler seems to be different from gcc.  Make"
         echo "<info> sure you set optimization flags explicitly with CFLAGS."
     fi
 fi
