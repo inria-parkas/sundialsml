@@ -148,7 +148,7 @@ fi
 
 if [ "x${cflags}" = x ]; then    # Don't touch CFLAGS if explicitly given.
     if [ $using_gcc = true ]; then
-        cflags="-O2"
+        cflags="-O2 -Wall"
     else
         echo "<info> Your C compiler seems to be different from gcc.  Make"
         echo "<info> sure you set optimization flags explicitly with CFLAGS."
