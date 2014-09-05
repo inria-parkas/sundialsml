@@ -91,9 +91,6 @@ let slice_left = Array2.slice_left
 let unwrap = Sundials.RealArray2.unwrap
 let nvwl2norm = Nvector_serial.DataOps.n_vwl2norm
 
-let ith v i = v.{i - 1}
-let set_ith v i e = v.{i - 1} <- e
-
 (* Problem Constants *)
 
 let num_species =   6  (* must equal 2*(number of prey or predators)
@@ -309,22 +306,27 @@ let prec_setup_bd { Kinsol.jac_u=cc;
   done (* end of jy loop *)
   
 (* Preconditioner solve routine *)
-let prec_solve_bd { Kinsol.jac_u=cc;
-                    Kinsol.jac_fu=fval;
-                    Kinsol.jac_tmp=ftem}
-                  { Kinsol.Spils.uscale=cscale;
-                    Kinsol.Spils.fscale=fscale }
-                  vv =
+let prec_solve_bd () =
+  let cache = RealArray.create num_species in
+  fun _ _ (vv : RealArray.t) ->
   for jx = 0 to mx - 1 do
     for jy = 0 to my - 1 do
       (* For each (jx,jy), solve a linear system of size NUM_SPECIES.
          vxy is the address of the corresponding portion of the vector vv;
          Pxy is the address of the corresponding block of the matrix P;
          piv is the address of the corresponding block of the array pivot. *)
-      let vxy = ij_vptr vv jx jy in
-      let pxy = p.(jx).(jy) in
-      let piv = pivot.(jx).(jy) in
-      Dense.getrs pxy piv vxy
+
+      (* faster to cache and copy in/out than to Bigarray.Array1.sub... *)
+      let off = jx * num_species + jy * nsmx in
+      for i=0 to num_species - 1 do
+        cache.{i} <- vv.{off + i}
+      done;
+
+      Dense.getrs p.(jx).(jy) pivot.(jx).(jy) cache;
+
+      for i=0 to num_species - 1 do
+        vv.{off + i} <- cache.{i}
+      done
     done (* end of jy loop *)
   done (* end of jx loop *)
 
@@ -422,9 +424,9 @@ let main () =
      and prec_solve_bd. *)
   let kmem = Kinsol.init
               (Kinsol.Spils.spgmr (Some maxl) (Some maxlrst)
-                                {Kinsol.Spils.prec_setup_fn=Some prec_setup_bd;
-                                 Kinsol.Spils.prec_solve_fn=Some prec_solve_bd;
-                                 Kinsol.Spils.jac_times_vec_fn=None; })
+                            {Kinsol.Spils.prec_setup_fn=Some prec_setup_bd;
+                             Kinsol.Spils.prec_solve_fn=Some (prec_solve_bd ());
+                             Kinsol.Spils.jac_times_vec_fn=None; })
               func cc in
   Kinsol.set_constraints kmem (Nvector_serial.make neq two);
   Kinsol.set_func_norm_tol kmem (Some fnormtol);
