@@ -689,7 +689,7 @@ static int bquadrhsfn1(realtype t, N_Vector y, N_Vector yp,
 
 /* quadrature interface */
 
-CAMLprim void c_idas_quad_init (value vsession, value vyQ0)
+CAMLprim value c_idas_quad_init (value vsession, value vyQ0)
 {
 
     CAMLparam2 (vsession, vyQ0);
@@ -699,10 +699,10 @@ CAMLprim void c_idas_quad_init (value vsession, value vyQ0)
     flag = IDAQuadInit (IDA_MEM_FROM_ML (vsession), quadrhsfn, yQ0);
     SCHECK_FLAG ("IDAQuadInit", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_quad_reinit (value vsession, value vyQ0)
+CAMLprim value c_idas_quad_reinit (value vsession, value vyQ0)
 {
 
     CAMLparam2 (vsession, vyQ0);
@@ -712,11 +712,11 @@ CAMLprim void c_idas_quad_reinit (value vsession, value vyQ0)
     flag = IDAQuadReInit (IDA_MEM_FROM_ML (vsession), yQ0);
     SCHECK_FLAG ("IDAQuadReInit", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_quad_sv_tolerances(value vdata, value reltol,
-					value abstol)
+CAMLprim value c_idas_quad_sv_tolerances(value vdata, value reltol,
+					 value abstol)
 {
     CAMLparam3(vdata, reltol, abstol);
 
@@ -726,7 +726,7 @@ CAMLprim void c_idas_quad_sv_tolerances(value vdata, value reltol,
 				   Double_val(reltol), atol_nv);
     SCHECK_FLAG("IDAQuadSVtolerances", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_idas_quad_get(value vdata, value vyq)
@@ -741,7 +741,7 @@ CAMLprim value c_idas_quad_get(value vdata, value vyq)
     CAMLreturn(caml_copy_double(tret));
 }
 
-CAMLprim void c_idas_quad_get_dky(value vdata, value vt, value vk,
+CAMLprim value c_idas_quad_get_dky(value vdata, value vt, value vk,
 				   value vdkyq)
 {
     CAMLparam4(vdata, vt, vk, vdkyq);
@@ -752,10 +752,10 @@ CAMLprim void c_idas_quad_get_dky(value vdata, value vt, value vk,
 	    
     SCHECK_FLAG("IDAGetQuadDky", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_quad_get_err_weights(value vdata, value veqweight)
+CAMLprim value c_idas_quad_get_err_weights(value vdata, value veqweight)
 {
     CAMLparam2(vdata, veqweight);
     N_Vector eqweight = NVEC_VAL(veqweight);
@@ -763,11 +763,11 @@ CAMLprim void c_idas_quad_get_err_weights(value vdata, value veqweight)
     int flag = IDAGetQuadErrWeights(IDA_MEM_FROM_ML(vdata), eqweight);
     SCHECK_FLAG("IDAGetQuadErrWeights", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 
-CAMLprim void c_idas_quad_set_err_con(value vdata, value verrconq)
+CAMLprim value c_idas_quad_set_err_con(value vdata, value verrconq)
 {
     CAMLparam2(vdata, verrconq);
     int flag;
@@ -775,12 +775,12 @@ CAMLprim void c_idas_quad_set_err_con(value vdata, value verrconq)
     flag = IDASetQuadErrCon(IDA_MEM_FROM_ML(vdata), Bool_val(verrconq));
     SCHECK_FLAG("IDASetQuadErrCon", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_quad_ss_tolerances(value vdata,
-					  value reltol,
-					  value abstol)
+CAMLprim value c_idas_quad_ss_tolerances(value vdata,
+					 value reltol,
+					 value abstol)
 {
     CAMLparam3(vdata, reltol, abstol);
 
@@ -788,7 +788,7 @@ CAMLprim void c_idas_quad_ss_tolerances(value vdata,
 		 Double_val(reltol), Double_val(abstol));
     SCHECK_FLAG("IDAQuadSStolerances", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_idas_quad_get_num_rhs_evals(value vdata)
@@ -856,8 +856,8 @@ static int decode_sens_method(value vmethod)
 }
 
 
-CAMLprim void c_idas_sens_init(value vdata, value vmethod, value vrhsfn,
-			       value vyS0, value vypS0)
+CAMLprim value c_idas_sens_init(value vdata, value vmethod, value vrhsfn,
+				value vyS0, value vypS0)
 {
     CAMLparam5(vdata, vmethod, vrhsfn, vyS0, vypS0);
     int ns = Wosize_val (vyS0);	/* vyS0 : nvector array */
@@ -872,10 +872,11 @@ CAMLprim void c_idas_sens_init(value vdata, value vmethod, value vrhsfn,
     free_nvector_array(ypS0); 
     SCHECK_FLAG("IDASensInit", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_sens_reinit(value vdata, value vmethod, value vyS0, value vypS0)
+CAMLprim value c_idas_sens_reinit(value vdata, value vmethod, value vyS0,
+				  value vypS0)
 {
     CAMLparam4(vdata, vmethod, vyS0, vypS0);
     CAMLlocal1(r);
@@ -890,7 +891,7 @@ CAMLprim void c_idas_sens_reinit(value vdata, value vmethod, value vyS0, value v
     free_nvector_array(ypS0);
     SCHECK_FLAG("IDASensReInit", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 static void sens_calc_ic (void *ida_mem, value session, int icopt, realtype tout1,
@@ -939,10 +940,10 @@ static void sens_calc_ic (void *ida_mem, value session, int icopt, realtype tout
 	if (ys)  free_nvector_array(ys); 
 	if (yps) free_nvector_array(yps); 
     }
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_ida_sens_calc_ic_y(value vida_mem, value vy, value vys, value tout1)
+CAMLprim value c_ida_sens_calc_ic_y(value vida_mem, value vy, value vys, value tout1)
 {
     CAMLparam4 (vida_mem, vy, vys, tout1);
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
@@ -950,7 +951,7 @@ CAMLprim void c_ida_sens_calc_ic_y(value vida_mem, value vy, value vys, value to
     sens_calc_ic (ida_mem, vida_mem, IDA_Y_INIT, Double_val (tout1),
 		  vy, Val_none, vys, Val_none);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_ida_sens_calc_ic_ya_ydp(value vida_mem, value y, value yp,
@@ -991,7 +992,7 @@ CAMLprim value c_idas_sens_get(value vdata, value vys)
     CAMLreturn(caml_copy_double(tret));
 }
 
-CAMLprim void c_idas_sens_get_dky(value vdata, value vt, value vk, value vdkys)
+CAMLprim value c_idas_sens_get_dky(value vdata, value vt, value vk, value vdkys)
 {
     CAMLparam4(vdata, vt, vk, vdkys);
     N_Vector *dkys = nvector_table_to_array(vdkys);
@@ -1001,7 +1002,7 @@ CAMLprim void c_idas_sens_get_dky(value vdata, value vt, value vk, value vdkys)
     free_nvector_array(dkys);
     SCHECK_FLAG("IDAGetSensDky", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_idas_sens_get1(value vdata, value vis, value vys)
@@ -1016,8 +1017,8 @@ CAMLprim value c_idas_sens_get1(value vdata, value vis, value vys)
     CAMLreturn(caml_copy_double(tret));
 }
 
-CAMLprim void c_idas_sens_get_dky1(value vdata, value vt, value vk,
-				     value vis, value vdkys)
+CAMLprim value c_idas_sens_get_dky1(value vdata, value vt, value vk,
+				    value vis, value vdkys)
 {
     CAMLparam5(vdata, vt, vk, vis, vdkys);
     N_Vector dkys = NVEC_VAL(vdkys);
@@ -1027,10 +1028,10 @@ CAMLprim void c_idas_sens_get_dky1(value vdata, value vt, value vk,
 	    
     SCHECK_FLAG("IDAGetSensDky1", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_sens_get_err_weights(value vdata, value vesweight)
+CAMLprim value c_idas_sens_get_err_weights(value vdata, value vesweight)
 {
     CAMLparam2(vdata, vesweight);
     N_Vector *esweight = nvector_table_to_array(vesweight);
@@ -1039,10 +1040,10 @@ CAMLprim void c_idas_sens_get_err_weights(value vdata, value vesweight)
     free_nvector_array(esweight);
     SCHECK_FLAG("IDAGetSensErrWeights", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_sens_set_err_con(value vdata, value verrcons)
+CAMLprim value c_idas_sens_set_err_con(value vdata, value verrcons)
 {
     CAMLparam2(vdata, verrcons);
     int flag;
@@ -1050,12 +1051,12 @@ CAMLprim void c_idas_sens_set_err_con(value vdata, value verrcons)
     flag = IDASetSensErrCon(IDA_MEM_FROM_ML(vdata), Bool_val(verrcons));
     SCHECK_FLAG("IDASetSensErrCon", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_sens_ss_tolerances(value vdata,
-					  value reltol,
-					  value abstol)
+CAMLprim value c_idas_sens_ss_tolerances(value vdata,
+					 value reltol,
+					 value abstol)
 {
     CAMLparam3(vdata, reltol, abstol);
 
@@ -1063,11 +1064,11 @@ CAMLprim void c_idas_sens_ss_tolerances(value vdata,
 		 Double_val(reltol), REAL_ARRAY(abstol));
     SCHECK_FLAG("IDASensSStolerances", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_sens_sv_tolerances(value vdata, value reltol,
-					value abstol)
+CAMLprim value c_idas_sens_sv_tolerances(value vdata, value reltol,
+					 value abstol)
 {
     CAMLparam3(vdata, reltol, abstol);
     N_Vector *atol_nv = nvector_table_to_array(abstol);
@@ -1077,20 +1078,20 @@ CAMLprim void c_idas_sens_sv_tolerances(value vdata, value reltol,
     free_nvector_array(atol_nv);
     SCHECK_FLAG("IDASensSVtolerances", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_sens_ee_tolerances(value vdata)
+CAMLprim value c_idas_sens_ee_tolerances(value vdata)
 {
     CAMLparam1(vdata);
 
     int flag = IDASensEEtolerances(IDA_MEM_FROM_ML(vdata));
     SCHECK_FLAG("IDASensEEtolerances", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_sens_set_params(value vdata, value vparams)
+CAMLprim value c_idas_sens_set_params(value vdata, value vparams)
 {
     CAMLparam2(vdata, vparams);
     CAMLlocal3(vp, vpbar, vplist);
@@ -1121,21 +1122,21 @@ CAMLprim void c_idas_sens_set_params(value vdata, value vparams)
     if (plist != NULL) free(plist);
     SCHECK_FLAG("IDASetSensParams", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_sens_toggle_off(value vdata)
+CAMLprim value c_idas_sens_toggle_off(value vdata)
 {
     CAMLparam1(vdata);
 
     int flag = IDASensToggleOff(IDA_MEM_FROM_ML(vdata));
     SCHECK_FLAG("IDASensToggleOff", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_sens_set_dq_method(value vdata, value vdqtype,
-					  value vdqrhomax)
+CAMLprim value c_idas_sens_set_dq_method(value vdata, value vdqtype,
+					 value vdqrhomax)
 {
     CAMLparam3(vdata, vdqtype, vdqrhomax);
     int dqtype;
@@ -1157,10 +1158,10 @@ CAMLprim void c_idas_sens_set_dq_method(value vdata, value vdqtype,
 				    Double_val(vdqrhomax));
     SCHECK_FLAG("IDASetSensMaxNonlinIters", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_sens_set_max_nonlin_iters(value vdata, value vmaxcors)
+CAMLprim value c_idas_sens_set_max_nonlin_iters(value vdata, value vmaxcors)
 {
     CAMLparam2(vdata, vmaxcors);
 
@@ -1168,7 +1169,7 @@ CAMLprim void c_idas_sens_set_max_nonlin_iters(value vdata, value vmaxcors)
 	    Int_val(vmaxcors));
     SCHECK_FLAG("IDASetSensMaxNonlinIters", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_idas_sens_get_num_res_evals(value vdata)
@@ -1298,7 +1299,7 @@ CAMLprim value c_idas_sens_get_nonlin_solv_stats(value vdata)
 
 /* sensitivity/quadrature interface */
 
-CAMLprim void c_idas_quadsens_init(value vdata, value vrhsfn, value vyqs0)
+CAMLprim value c_idas_quadsens_init(value vdata, value vrhsfn, value vyqs0)
 {
     CAMLparam3(vdata, vrhsfn, vyqs0);
     N_Vector *yqs0 = nvector_table_to_array(vyqs0);
@@ -1309,10 +1310,10 @@ CAMLprim void c_idas_quadsens_init(value vdata, value vrhsfn, value vyqs0)
     free_nvector_array(yqs0); 
     SCHECK_FLAG("IDAQuadSensInit", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_quadsens_reinit(value vdata, value vyqs0)
+CAMLprim value c_idas_quadsens_reinit(value vdata, value vyqs0)
 {
     CAMLparam2(vdata, vyqs0);
     N_Vector *yqs0 = nvector_table_to_array(vyqs0);
@@ -1321,11 +1322,11 @@ CAMLprim void c_idas_quadsens_reinit(value vdata, value vyqs0)
     free_nvector_array(yqs0); 
     SCHECK_FLAG("IDAQuadSensReInit", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 
-CAMLprim void c_idas_quadsens_set_err_con(value vdata, value verrconq)
+CAMLprim value c_idas_quadsens_set_err_con(value vdata, value verrconq)
 {
     CAMLparam2(vdata, verrconq);
     int flag;
@@ -1333,12 +1334,12 @@ CAMLprim void c_idas_quadsens_set_err_con(value vdata, value verrconq)
     flag = IDASetQuadSensErrCon(IDA_MEM_FROM_ML(vdata), Bool_val(verrconq));
     SCHECK_FLAG("IDASetQuadSensErrCon", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_quadsens_ss_tolerances(value vdata,
-					      value reltol,
-					      value abstol)
+CAMLprim value c_idas_quadsens_ss_tolerances(value vdata,
+					     value reltol,
+					     value abstol)
 {
     CAMLparam3(vdata, reltol, abstol);
 
@@ -1347,10 +1348,10 @@ CAMLprim void c_idas_quadsens_ss_tolerances(value vdata,
 					 REAL_ARRAY(abstol));
     SCHECK_FLAG("IDAQuadSensSStolerances", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_quadsens_sv_tolerances(value vdata, value reltol,
+CAMLprim value c_idas_quadsens_sv_tolerances(value vdata, value reltol,
 					     value abstol)
 {
     CAMLparam3(vdata, reltol, abstol);
@@ -1361,17 +1362,17 @@ CAMLprim void c_idas_quadsens_sv_tolerances(value vdata, value reltol,
     free_nvector_array(atol_nv);
     SCHECK_FLAG("IDAQuadSensSVtolerances", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_quadsens_ee_tolerances(value vdata)
+CAMLprim value c_idas_quadsens_ee_tolerances(value vdata)
 {
     CAMLparam1(vdata);
 
     int flag = IDAQuadSensEEtolerances(IDA_MEM_FROM_ML(vdata));
     SCHECK_FLAG("IDAQuadSensEEtolerances", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_idas_quadsens_get(value vdata, value vyqs)
@@ -1400,7 +1401,7 @@ CAMLprim value c_idas_quadsens_get1(value vdata, value vis, value vyqs)
     CAMLreturn(caml_copy_double(tret));
 }
 
-CAMLprim void c_idas_quadsens_get_dky(value vdata, value vt, value vk,
+CAMLprim value c_idas_quadsens_get_dky(value vdata, value vt, value vk,
 				       value vdkyqs)
 {
     CAMLparam4(vdata, vt, vk, vdkyqs);
@@ -1411,10 +1412,10 @@ CAMLprim void c_idas_quadsens_get_dky(value vdata, value vt, value vk,
     free_nvector_array(dkyqs);
     SCHECK_FLAG("IDAGetQuadSensDky", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_quadsens_get_dky1(value vdata, value vt, value vk,
+CAMLprim value c_idas_quadsens_get_dky1(value vdata, value vt, value vk,
 					value vis, value vdkyqs)
 {
     CAMLparam5(vdata, vt, vk, vis, vdkyqs);
@@ -1424,10 +1425,10 @@ CAMLprim void c_idas_quadsens_get_dky1(value vdata, value vt, value vk,
 				    Int_val(vk), Int_val(vis), dkyqs);
     SCHECK_FLAG("IDAGetQuadSensDky1", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_quadsens_get_err_weights(value vdata, value veqweights)
+CAMLprim value c_idas_quadsens_get_err_weights(value vdata, value veqweights)
 {
     CAMLparam2(vdata, veqweights);
     N_Vector *eqweights = nvector_table_to_array(veqweights);
@@ -1436,7 +1437,7 @@ CAMLprim void c_idas_quadsens_get_err_weights(value vdata, value veqweights)
     free_nvector_array(eqweights);
     SCHECK_FLAG("IDAGetQuadSensErrWeights", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_idas_quadsens_get_num_rhs_evals(value vdata)
@@ -1488,7 +1489,7 @@ CAMLprim value c_idas_quadsens_get_stats(value vdata)
 
 /* adjoint interface */
 
-CAMLprim void c_idas_adj_init(value vdata, value vnd, value vinterptype)
+CAMLprim value c_idas_adj_init(value vdata, value vnd, value vinterptype)
 {
     CAMLparam3(vdata, vnd, vinterptype);
     int interptype;
@@ -1510,11 +1511,11 @@ CAMLprim void c_idas_adj_init(value vdata, value vnd, value vinterptype)
 			  interptype);
     SCHECK_FLAG("IDAAdjInit", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_adj_ss_tolerances(value vparent, value vwhich,
-					 value vreltol, value vabstol)
+CAMLprim value c_idas_adj_ss_tolerances(value vparent, value vwhich,
+					value vreltol, value vabstol)
 {
     CAMLparam4(vparent, vwhich, vreltol, vabstol);
 
@@ -1524,11 +1525,11 @@ CAMLprim void c_idas_adj_ss_tolerances(value vparent, value vwhich,
 				Double_val(vabstol));
     SCHECK_FLAG("IDASStolerancesB", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_adj_spils_spgmr (value vparent, value vwhich,
-				        value vmaxl)
+CAMLprim value c_idas_adj_spils_spgmr (value vparent, value vwhich,
+				       value vmaxl)
 {
     CAMLparam3 (vparent, vwhich, vmaxl);
     void *ida_mem = IDA_MEM_FROM_ML (vparent);
@@ -1537,11 +1538,11 @@ CAMLprim void c_idas_adj_spils_spgmr (value vparent, value vwhich,
 
     flag = IDASpgmrB (ida_mem, which, Int_val (vmaxl));
     SCHECK_FLAG ("IDASpgmrB", flag);
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_adj_spils_spbcg (value vparent, value vwhich,
-				        value vmaxl)
+CAMLprim value c_idas_adj_spils_spbcg (value vparent, value vwhich,
+				       value vmaxl)
 {
     CAMLparam3 (vparent, vwhich, vmaxl);
     void *ida_mem = IDA_MEM_FROM_ML (vparent);
@@ -1550,11 +1551,11 @@ CAMLprim void c_idas_adj_spils_spbcg (value vparent, value vwhich,
 
     flag = IDASpbcgB (ida_mem, which, Int_val (vmaxl));
     SCHECK_FLAG ("IDASpbcgB", flag);
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_adj_spils_sptfqmr (value vparent, value vwhich,
-					value vmaxl)
+CAMLprim value c_idas_adj_spils_sptfqmr (value vparent, value vwhich,
+					 value vmaxl)
 {
     CAMLparam3 (vparent, vwhich, vmaxl);
     void *ida_mem = IDA_MEM_FROM_ML (vparent);
@@ -1563,10 +1564,10 @@ CAMLprim void c_idas_adj_spils_sptfqmr (value vparent, value vwhich,
 
     flag = IDASptfqmrB (ida_mem, which, Int_val (vmaxl));
     SCHECK_FLAG ("IDASptfqmrB", flag);
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_adj_backward_normal(value vdata, value vtbout)
+CAMLprim value c_idas_adj_backward_normal(value vdata, value vtbout)
 {
     CAMLparam2(vdata, vtbout);
 
@@ -1574,10 +1575,10 @@ CAMLprim void c_idas_adj_backward_normal(value vdata, value vtbout)
 			 IDA_NORMAL);
     SCHECK_FLAG("IDASolveB", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_adj_backward_one_step(value vdata, value vtbout)
+CAMLprim value c_idas_adj_backward_one_step(value vdata, value vtbout)
 {
     CAMLparam2(vdata, vtbout);
 
@@ -1585,11 +1586,11 @@ CAMLprim void c_idas_adj_backward_one_step(value vdata, value vtbout)
 			 IDA_ONE_STEP);
     SCHECK_FLAG("IDASolveB", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_adj_set_max_ord(value vparent, value vwhich,
-				     value vmaxord)
+CAMLprim value c_idas_adj_set_max_ord(value vparent, value vwhich,
+				      value vmaxord)
 {
     CAMLparam3(vparent, vwhich, vmaxord);
 
@@ -1597,11 +1598,11 @@ CAMLprim void c_idas_adj_set_max_ord(value vparent, value vwhich,
 			       Int_val(vmaxord));
     SCHECK_FLAG("IDASetMaxOrdB", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_adj_set_max_num_steps(value vparent, value vwhich,
-					   value vmxsteps)
+CAMLprim value c_idas_adj_set_max_num_steps(value vparent, value vwhich,
+					    value vmxsteps)
 {
     CAMLparam3(vparent, vwhich, vmxsteps);
 
@@ -1609,10 +1610,10 @@ CAMLprim void c_idas_adj_set_max_num_steps(value vparent, value vwhich,
 				    Long_val(vmxsteps));
     SCHECK_FLAG("IDASetMaxNumStepsB", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_adj_set_init_step(value vparent, value vwhich, value vhin)
+CAMLprim value c_idas_adj_set_init_step(value vparent, value vwhich, value vhin)
 {
     CAMLparam3(vparent, vwhich, vhin);
 
@@ -1620,10 +1621,10 @@ CAMLprim void c_idas_adj_set_init_step(value vparent, value vwhich, value vhin)
 			       Double_val(vhin));
     SCHECK_FLAG("IDASetInitStepB", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_adj_set_max_step(value vparent, value vwhich, value vhmax)
+CAMLprim value c_idas_adj_set_max_step(value vparent, value vwhich, value vhmax)
 {
     CAMLparam3(vparent, vwhich, vhmax);
 
@@ -1631,11 +1632,11 @@ CAMLprim void c_idas_adj_set_max_step(value vparent, value vwhich, value vhmax)
 			      Double_val(vhmax));
     SCHECK_FLAG("IDASetMaxStepB", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_adj_spils_set_gs_type(value vparent, value vwhich,
-				             value vgstype)
+CAMLprim value c_idas_adj_spils_set_gs_type(value vparent, value vwhich,
+					    value vgstype)
 {
     CAMLparam3(vparent, vwhich, vgstype);
 
@@ -1643,11 +1644,11 @@ CAMLprim void c_idas_adj_spils_set_gs_type(value vparent, value vwhich,
 				 spils_gs_type(vgstype));
     SCHECK_FLAG("IDASpilsSetGSTypeB", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_adj_spils_set_eps_lin(value vparent, value vwhich,
-				             value eplifac)
+CAMLprim value c_idas_adj_spils_set_eps_lin(value vparent, value vwhich,
+					    value eplifac)
 {
     CAMLparam3(vparent, vwhich, eplifac);
 
@@ -1655,11 +1656,11 @@ CAMLprim void c_idas_adj_spils_set_eps_lin(value vparent, value vwhich,
 				 Double_val(eplifac));
     SCHECK_FLAG("IDASpilsSetEpsLinB", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_adj_spils_set_maxl(value vparent, value vwhich,
-					  value maxl)
+CAMLprim value c_idas_adj_spils_set_maxl(value vparent, value vwhich,
+					 value maxl)
 {
     CAMLparam3(vparent, vwhich, maxl);
 
@@ -1667,10 +1668,10 @@ CAMLprim void c_idas_adj_spils_set_maxl(value vparent, value vwhich,
 			       Int_val(maxl));
     SCHECK_FLAG("IDASpilsSetMaxlB", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_adj_bsession_finalize(value vdata)
+CAMLprim value c_idas_adj_bsession_finalize(value vdata)
 {
     if (IDA_MEM_FROM_ML(vdata) != NULL) {
 	value *backref = IDA_BACKREF_FROM_ML(vdata);
@@ -1743,8 +1744,8 @@ CAMLprim value c_idas_adj_forward_one_step(value vdata, value vtout,
     CAMLreturn(forward_solve(vdata, vtout, vy, vyp, 1));
 }
 
-CAMLprim void c_idas_adj_sv_tolerances(value vparent, value vwhich,
-				       value vreltol, value vabstol)
+CAMLprim value c_idas_adj_sv_tolerances(value vparent, value vwhich,
+					value vreltol, value vabstol)
 {
     CAMLparam4(vparent, vwhich, vreltol, vabstol);
     N_Vector atol_nv = NVEC_VAL(vabstol);
@@ -1753,13 +1754,13 @@ CAMLprim void c_idas_adj_sv_tolerances(value vparent, value vwhich,
 				Double_val(vreltol), atol_nv);
     SCHECK_FLAG("IDASStolerancesB", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_adj_spils_set_preconditioner(value vparent,
-						  value vwhich,
-						  value vset_precsetup,
-						  value vset_jac)
+CAMLprim value c_idas_adj_spils_set_preconditioner(value vparent,
+						   value vwhich,
+						   value vset_precsetup,
+						   value vset_jac)
 {
     CAMLparam4(vparent, vwhich, vset_precsetup, vset_jac);
     int flag;
@@ -1774,11 +1775,11 @@ CAMLprim void c_idas_adj_spils_set_preconditioner(value vparent,
 	SCHECK_FLAG ("IDASpilsSetJacTimesVecFnB", flag);
     }
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 /* Dense and Band can only be used with serial NVectors.  */
-CAMLprim void c_idas_adj_dls_dense(value vparent, value vwhich,
+CAMLprim value c_idas_adj_dls_dense(value vparent, value vwhich,
 				    value vnb, value vset_jac)
 {
     CAMLparam3(vparent, vwhich, vset_jac);
@@ -1793,28 +1794,28 @@ CAMLprim void c_idas_adj_dls_dense(value vparent, value vwhich,
 	flag = IDADlsSetDenseJacFnB(ida_mem, which, bjacfn);
 	SCHECK_FLAG("IDADlsSetDenseJacFnB", flag);
     }
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_adj_dls_set_dense_jac_fn(value vparent, value vwhich)
+CAMLprim value c_idas_adj_dls_set_dense_jac_fn(value vparent, value vwhich)
 {
     CAMLparam2(vparent, vwhich);
     int flag = IDADlsSetDenseJacFnB(IDA_MEM_FROM_ML(vparent), Int_val(vwhich),
 				   bjacfn);
     SCHECK_FLAG("IDADlsSetDenseJacFnB", flag);
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_adj_dls_clear_dense_jac_fn(value vparent, value vwhich)
+CAMLprim value c_idas_adj_dls_clear_dense_jac_fn(value vparent, value vwhich)
 {
     CAMLparam2(vparent, vwhich);
     int flag = IDADlsSetDenseJacFnB(IDA_MEM_FROM_ML(vparent), Int_val(vwhich),
 				   NULL);
     SCHECK_FLAG("IDADlsSetDenseJacFnB", flag);
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_adj_dls_band (value vparent_which, value vnb,
+CAMLprim value c_idas_adj_dls_band (value vparent_which, value vnb,
 				    value vmupper, value vmlower,
 				    value vset_jac)
 {
@@ -1831,25 +1832,25 @@ CAMLprim void c_idas_adj_dls_band (value vparent_which, value vnb,
 	flag = IDADlsSetBandJacFnB(ida_mem, which, bbandjacfn);
 	SCHECK_FLAG("IDADlsSetBandJacFnB", flag);
     }
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_adj_dls_set_band_jac_fn(value vparent, value vwhich)
+CAMLprim value c_idas_adj_dls_set_band_jac_fn(value vparent, value vwhich)
 {
     CAMLparam2(vparent, vwhich);
     int flag = IDADlsSetBandJacFnB(IDA_MEM_FROM_ML(vparent), Int_val(vwhich),
 				  bbandjacfn);
     SCHECK_FLAG("IDADlsSetBandJacFnB", flag);
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_adj_dls_clear_band_jac_fn(value vparent, value vwhich)
+CAMLprim value c_idas_adj_dls_clear_band_jac_fn(value vparent, value vwhich)
 {
     CAMLparam2(vparent, vwhich);
     int flag = IDADlsSetBandJacFnB(IDA_MEM_FROM_ML(vparent), Int_val(vwhich),
 				  NULL);
     SCHECK_FLAG("IDADlsSetBandJacFnB", flag);
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_idas_adj_init_backward(value vparent, value weakref,
@@ -1904,23 +1905,23 @@ CAMLprim value c_idas_adj_init_backward(value vparent, value weakref,
 
 BYTE_STUB6(c_idas_adj_init_backward)
 
-CAMLprim void c_idas_adj_set_var_types (value vparent, value vwhich, value vid)
+CAMLprim value c_idas_adj_set_var_types (value vparent, value vwhich, value vid)
 {
     CAMLparam3 (vparent, vwhich, vid);
     int flag = IDASetIdB (IDA_MEM_FROM_ML (vparent), Int_val (vwhich),
 			  NVEC_VAL (vid));
     SCHECK_FLAG ("IDASetIdB", flag);
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_adj_set_suppress_alg (value vparent, value vwhich,
-					   value vsuppress)
+CAMLprim value c_idas_adj_set_suppress_alg (value vparent, value vwhich,
+					    value vsuppress)
 {
     CAMLparam3 (vparent, vwhich, vsuppress);
     int flag = IDASetSuppressAlgB (IDA_MEM_FROM_ML (vparent), Int_val (vwhich),
 				   Bool_val (vsuppress));
     SCHECK_FLAG ("IDASetSuppressAlgB", flag);
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 /* Sundials 2.5.0 declares this function incorrectly in the headers as
@@ -1928,22 +1929,22 @@ CAMLprim void c_idas_adj_set_suppress_alg (value vparent, value vwhich,
  */
 SUNDIALS_EXPORT int IDAAdjSetNoSensi (void *ida_mem);
 
-CAMLprim void c_idas_adj_set_no_sensi (value vsession)
+CAMLprim value c_idas_adj_set_no_sensi (value vsession)
 {
     CAMLparam1 (vsession);
     int flag = IDAAdjSetNoSensi (IDA_MEM_FROM_ML (vsession));
     SCHECK_FLAG ("IDAAdjSetNoSensi", flag);
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_adj_calc_ic (value vparent, value vwhich,
-				  value vtB, value vyB0, value vypB0)
+CAMLprim value c_idas_adj_calc_ic (value vparent, value vwhich,
+				   value vtB, value vyB0, value vypB0)
 {
     CAMLparam5 (vparent, vwhich, vtB, vyB0, vypB0);
     int flag = IDACalcICB (IDA_MEM_FROM_ML (vparent), Int_val (vwhich),
 			   Double_val (vtB), NVEC_VAL (vyB0), NVEC_VAL (vypB0));
     SCHECK_FLAG ("IDACalcICB", flag);
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_idas_adj_calc_ic_sens (value vparent, value vwhich,
@@ -1987,8 +1988,8 @@ CAMLprim value c_idas_adj_get_consistent_ic (value vparent, value vwhich,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_adj_reinit(value vparent, value vwhich,
-				value vtB0, value vyB0, value vypB0)
+CAMLprim value c_idas_adj_reinit(value vparent, value vwhich,
+				 value vtB0, value vyB0, value vypB0)
 {
     CAMLparam5(vparent, vwhich, vtB0, vyB0, vypB0);
     CAMLlocal1(r);
@@ -2000,7 +2001,7 @@ CAMLprim void c_idas_adj_reinit(value vparent, value vwhich,
 		       Double_val(vtB0), yB0, ypB0);
     SCHECK_FLAG("IDAReInitB", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_idas_adj_get(value vparent, value vwhich,
@@ -2020,7 +2021,7 @@ CAMLprim value c_idas_adj_get(value vparent, value vwhich,
 
 /* adjoint/quadrature interface */
 
-CAMLprim void c_idas_adjquad_initb(value vparent, value vwhich, value vyqb0)
+CAMLprim value c_idas_adjquad_initb(value vparent, value vwhich, value vyqb0)
 {
     CAMLparam3(vparent, vwhich, vyqb0);
     CAMLlocal1(r);
@@ -2031,10 +2032,10 @@ CAMLprim void c_idas_adjquad_initb(value vparent, value vwhich, value vyqb0)
 			bquadrhsfn, yqb0);
     SCHECK_FLAG("IDAQuadInitB", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_adjquad_initbs(value vparent, value vwhich, value vyqb0)
+CAMLprim value c_idas_adjquad_initbs(value vparent, value vwhich, value vyqb0)
 {
     CAMLparam3(vparent, vwhich, vyqb0);
     CAMLlocal1(r);
@@ -2045,10 +2046,10 @@ CAMLprim void c_idas_adjquad_initbs(value vparent, value vwhich, value vyqb0)
 			 bquadrhsfn1, yqb0);
     SCHECK_FLAG("IDAQuadInitBS", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_adjquad_reinit(value vparent, value vwhich, value vyqb0)
+CAMLprim value c_idas_adjquad_reinit(value vparent, value vwhich, value vyqb0)
 {
     CAMLparam3(vparent, vwhich, vyqb0);
     CAMLlocal1(r);
@@ -2058,7 +2059,7 @@ CAMLprim void c_idas_adjquad_reinit(value vparent, value vwhich, value vyqb0)
     flag = IDAQuadReInitB(IDA_MEM_FROM_ML(vparent), Int_val(vwhich), yqb0);
     SCHECK_FLAG("IDAQuadReInitB", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_idas_adjquad_get(value vparent, value vwhich, value vyqb)
@@ -2075,7 +2076,7 @@ CAMLprim value c_idas_adjquad_get(value vparent, value vwhich, value vyqb)
     CAMLreturn(caml_copy_double(tret));
 }
 
-CAMLprim void c_idas_adjquad_sv_tolerances(value vparent, value vwhich,
+CAMLprim value c_idas_adjquad_sv_tolerances(value vparent, value vwhich,
 					    value vreltol, value vabstol)
 {
     CAMLparam4(vparent, vwhich, vreltol, vabstol);
@@ -2085,11 +2086,11 @@ CAMLprim void c_idas_adjquad_sv_tolerances(value vparent, value vwhich,
 				      Double_val(vreltol), atol_nv);
     SCHECK_FLAG("IDAQuadSVtolerancesB", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_adjquad_set_err_con(value vparent, value vwhich,
-					 value verrconq)
+CAMLprim value c_idas_adjquad_set_err_con(value vparent, value vwhich,
+					  value verrconq)
 {
     CAMLparam3(vparent, vwhich, verrconq);
     int flag;
@@ -2098,11 +2099,11 @@ CAMLprim void c_idas_adjquad_set_err_con(value vparent, value vwhich,
 			     Bool_val(verrconq));
     SCHECK_FLAG("IDASetQuadErrConB", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_adjquad_ss_tolerances(value vparent, value vwhich,
-					   value reltol, value abstol)
+CAMLprim value c_idas_adjquad_ss_tolerances(value vparent, value vwhich,
+					    value reltol, value abstol)
 {
     CAMLparam4(vparent, vwhich, reltol, abstol);
 
@@ -2111,6 +2112,6 @@ CAMLprim void c_idas_adjquad_ss_tolerances(value vparent, value vwhich,
 				    Double_val(abstol));
     SCHECK_FLAG("IDAQuadSStolerancesB", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 

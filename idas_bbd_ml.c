@@ -83,9 +83,9 @@ static int bbbdcomm(long int nlocal, realtype t,
     CAMLreturnT(int, r);
 }
 
-CAMLprim void c_idas_bbd_prec_initb (value vparentwhich, value vlocaln,
-				     value vbandwidths, value vdqrely,
-				     value vhascomm)
+CAMLprim value c_idas_bbd_prec_initb (value vparentwhich, value vlocaln,
+				      value vbandwidths, value vdqrely,
+				      value vhascomm)
 {
     CAMLparam5(vparentwhich, vlocaln, vbandwidths, vdqrely, vhascomm);
     void *ida_mem = IDA_MEM_FROM_ML (Field(vparentwhich, 0));
@@ -102,12 +102,12 @@ CAMLprim void c_idas_bbd_prec_initb (value vparentwhich, value vlocaln,
 	Bool_val(vhascomm) ? bbbdcomm : NULL);
     CHECK_FLAG ("IDABBDPrecInitB", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_idas_bbd_prec_reinitb (value vparent, value vwhich,
-				       value vmudq, value vmldq,
-				       value vdqrely)
+CAMLprim value c_idas_bbd_prec_reinitb (value vparent, value vwhich,
+					value vmudq, value vmldq,
+					value vdqrely)
 {
     CAMLparam5(vparent, vwhich, vmudq, vmldq, vdqrely);
     void *ida_mem = IDA_MEM_FROM_ML (vparent);
@@ -118,6 +118,6 @@ CAMLprim void c_idas_bbd_prec_reinitb (value vparent, value vwhich,
 			      Double_val(vdqrely));
     CHECK_FLAG ("IDABBDPrecReInitB", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 

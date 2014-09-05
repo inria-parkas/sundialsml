@@ -169,7 +169,7 @@ static int psolve_f(void *p_fn, N_Vector r, N_Vector z, int lr)
 
 #define SPGMR_SESSION(v) (*((SpgmrMem*)Data_custom_val(v)))
 
-static CAMLprim void spgmr_finalize(value vs)
+static void spgmr_finalize(value vs)
 {
     SpgmrMem s = SPGMR_SESSION(vs);
     SpgmrFree(s);
@@ -291,7 +291,7 @@ CAMLprim value c_spils_spgmr_solve(value vargs)
 
 #define SPBCG_SESSION(v) (*((SpbcgMem*)Data_custom_val(v)))
 
-static CAMLprim void spbcg_finalize(value vs)
+static void spbcg_finalize(value vs)
 {
     SpbcgMem s = SPBCG_SESSION(vs);
     SpbcgFree(s);
@@ -402,7 +402,7 @@ CAMLprim value c_spils_spbcg_solve(value vargs)
 
 #define SPTFQMR_SESSION(v) (*((SptfqmrMem*)Data_custom_val(v)))
 
-static CAMLprim void sptfqmr_finalize(value vs)
+static void sptfqmr_finalize(value vs)
 {
     SptfqmrMem s = SPTFQMR_SESSION(vs);
     SptfqmrFree(s);

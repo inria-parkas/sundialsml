@@ -68,9 +68,9 @@ static int bbdcomm(long int nlocal, N_Vector u, void *user_data)
     CAMLreturnT(int, r);
 }
 
-CAMLprim void c_kinsol_bbd_prec_init (value vkin_mem, value vlocaln,
-				      value vbandwidths, value vdqrely,
-				      value vhascomm)
+CAMLprim value c_kinsol_bbd_prec_init (value vkin_mem, value vlocaln,
+				       value vbandwidths, value vdqrely,
+				       value vhascomm)
 {
     CAMLparam5(vkin_mem, vlocaln, vbandwidths, vdqrely, vhascomm);
     void *kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
@@ -87,7 +87,7 @@ CAMLprim void c_kinsol_bbd_prec_init (value vkin_mem, value vlocaln,
 	Bool_val(vhascomm) ? bbdcomm : NULL);
     CHECK_FLAG ("KINBBDPrecInit", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_kinsol_bbd_get_work_space(value vkin_mem)

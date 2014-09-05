@@ -139,62 +139,62 @@ CAMLprim value ml_nvec_wrap_parallel(value payload)
     CAMLreturn(vnvec);
 }
 
-CAMLprim void ml_nvec_par_n_vlinearsum(value va, value vx, value vb, value vy,
-				       value vz)
+CAMLprim value ml_nvec_par_n_vlinearsum(value va, value vx, value vb, value vy,
+					value vz)
 {
     CAMLparam5(va, vx, vb, vy, vz);
     N_VLinearSum_Parallel(Double_val(va), NVEC_VAL(vx), Double_val(vb),
 			  NVEC_VAL(vy), NVEC_VAL(vz));
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void ml_nvec_par_n_vconst(value vc, value vz)
+CAMLprim value ml_nvec_par_n_vconst(value vc, value vz)
 {
     CAMLparam2(vc, vz);
     N_VConst_Parallel(Double_val(vc), NVEC_VAL(vz));
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void ml_nvec_par_n_vprod(value vx, value vy, value vz)
+CAMLprim value ml_nvec_par_n_vprod(value vx, value vy, value vz)
 {
     CAMLparam3(vx, vy, vz);
     N_VProd_Parallel(NVEC_VAL(vx), NVEC_VAL(vy), NVEC_VAL(vz));
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void ml_nvec_par_n_vdiv(value vx, value vy, value vz)
+CAMLprim value ml_nvec_par_n_vdiv(value vx, value vy, value vz)
 {
     CAMLparam3(vx, vy, vz);
     N_VDiv_Parallel(NVEC_VAL(vx), NVEC_VAL(vy), NVEC_VAL(vz));
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void ml_nvec_par_n_vscale(value vc, value vx, value vz)
+CAMLprim value ml_nvec_par_n_vscale(value vc, value vx, value vz)
 {
     CAMLparam3(vc, vx, vz);
     N_VScale_Parallel(Double_val(vc), NVEC_VAL(vx), NVEC_VAL(vz));
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void ml_nvec_par_n_vabs(value vx, value vz)
+CAMLprim value ml_nvec_par_n_vabs(value vx, value vz)
 {
     CAMLparam2(vx, vz);
     N_VAbs_Parallel(NVEC_VAL(vx), NVEC_VAL(vz));
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void ml_nvec_par_n_vinv(value vx, value vz)
+CAMLprim value ml_nvec_par_n_vinv(value vx, value vz)
 {
     CAMLparam2(vx, vz);
     N_VInv_Parallel(NVEC_VAL(vx), NVEC_VAL(vz));
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void ml_nvec_par_n_vaddconst(value vx, value vb, value vz)
+CAMLprim value ml_nvec_par_n_vaddconst(value vx, value vb, value vz)
 {
     CAMLparam3(vx, vb, vz);
     N_VAddConst_Parallel(NVEC_VAL(vx), Double_val(vb), NVEC_VAL(vz));
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value ml_nvec_par_n_vdotprod(value vx, value vy)
@@ -247,11 +247,11 @@ CAMLprim value ml_nvec_par_n_vl1norm(value vx)
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim void ml_nvec_par_n_vcompare(value vc, value vx, value vz)
+CAMLprim value ml_nvec_par_n_vcompare(value vc, value vx, value vz)
 {
     CAMLparam3(vc, vx, vz);
     N_VCompare_Parallel(Double_val(vc), NVEC_VAL(vx), NVEC_VAL(vz));
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value ml_nvec_par_n_vinvtest(value vx, value vz)

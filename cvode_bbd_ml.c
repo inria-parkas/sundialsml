@@ -90,9 +90,9 @@ static int bbdcomm(long int nlocal, realtype t, N_Vector y, void *user_data)
     CAMLreturnT(int, r);
 }
 
-CAMLprim void c_cvode_bbd_prec_init (value vcvode_mem, value vlocaln,
-				     value vbandwidths, value vdqrely,
-				     value vhascomm)
+CAMLprim value c_cvode_bbd_prec_init (value vcvode_mem, value vlocaln,
+				      value vbandwidths, value vdqrely,
+				      value vhascomm)
 {
     CAMLparam5(vcvode_mem, vlocaln, vbandwidths, vdqrely, vhascomm);
     void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
@@ -109,11 +109,11 @@ CAMLprim void c_cvode_bbd_prec_init (value vcvode_mem, value vlocaln,
 	Bool_val(vhascomm) ? bbdcomm : NULL);
     CHECK_FLAG ("CVBBDPrecInit", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void c_cvode_bbd_prec_reinit (value vcvode_mem, value vmudq,
-				       value vmldq, value vdqrely)
+CAMLprim value c_cvode_bbd_prec_reinit (value vcvode_mem, value vmudq,
+					value vmldq, value vdqrely)
 {
     CAMLparam4(vcvode_mem, vmudq, vmldq, vdqrely);
     void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
@@ -123,7 +123,7 @@ CAMLprim void c_cvode_bbd_prec_reinit (value vcvode_mem, value vmudq,
 				       Double_val(vdqrely));
     CHECK_FLAG ("CVBBDPrecReInit", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_cvode_bbd_get_work_space(value vcvode_mem)
