@@ -87,6 +87,9 @@ TODO
 
 MINOR PATCHES
 -------------
+1. dls_ml.c: c_densematrix_new_dense_mat
+   need to point at an empty matrix on return?
+
 2. (Tim/Jun) Add the Dls functions to Cvodes/Idas:
      set_dense_jac_fn
      clear_dense_jac_fn
@@ -102,16 +105,14 @@ MINOR PATCHES
    In the doc, mention that these don't reset performance counters.
    But they're discouraged otherwise.
 
-
-DONE 5. Rename Carray to Realarray?
-DONE 6. Rename create functions to make?
-
-7. Using spgmr linear solver with prec_setup = None and prec_solve = Some
+3. Using spgmr linear solver with prec_setup = None and prec_solve = Some
    crashes.
 
-8. Check that Callback.register "" are consistent with C code.
+4. Check that Callback.register "" are consistent with C code.
 
-9. Flatten out jacobian_arg
+5. Flatten out jacobian_arg
+
+6. Rename CAML_FN everywhere?
 
 TO DISCUSS
 ----------
