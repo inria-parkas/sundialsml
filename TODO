@@ -1,74 +1,76 @@
 
-Decrees
--------
+Decisions
+---------
 * Makefiles will be used for the build system; though we will try to
   simplify and improve them.
+
+* Name and version numbering: Sundials/ML 2.6.0
+  first version: Sundials/ML 2.6.0ml1
+  first patch:   Sundials/ML 2.6.0ml2
+  second patch:  Sundials/ML 2.6.0ml3
+  etc.
+  or
+  first version: Sundials/ML 2.6.0
+  first patch:   Sundials/ML 2.6.0p1
+  second patch:  Sundials/ML 2.6.0p2
+
+  Have everything working for 2.5.0 (and include a patch file for the
+  Sundials source), but make the first official release for 2.6.0.
+
 
 TODO
 ----
 
-DONE 1. (Tim) Change the copyright headers:
-   - OCaml interface to (serial) Sundials.
-   - Copyright 2014...
+1. Test under OCaml 3.12.x.
 
-DONE 2. (Tim) Tidy up and complete the linear solver interface:
-   - Spils
-   - Smoother integration with CVODE and IDA.
-   - Add tests / examples (from Sundials?)
-
-DONE 3. (Tim) Interface to KINSOL.
-   - Write the interface.
-   - Adapt examples from Sundials.
-
-DONE 4. (Tim) Doc generation to work for both OCaml 3.12 and 4.x.
-
-DONE 5. (Tim) Interface to CVODES with maximal reuse and minimal copy-paste
-
-DONE 6. (Tim) Rework the nvector interface and eliminate code duplication.
-
-DONE 7. (Tim) Interface the Alternate Linear Solver Modules
-   http://computation.llnl.gov/casc/sundials/documentation/cv_guide/node8.html
-
-DONE 8. (Tim) Interface with Parallel NVectors
-
-9. (Jun) Interface to IDAS with maximal reuse and minimal copy-paste
+2. (Jun) Interface to IDAS with maximal reuse and minimal copy-paste
     - adapt for parallel nvector changes
     - add alternate linear solver modules
     - add BDD solver.
     - ensure consistency with recent changes cvode/cvodes.
 
-DONE 10. (Jun) Ensure that all examples are implemented.
-    Add the missing parallel examples for cvode, cvodes, kinsol, ida, idas. 
+3. (Jun) Add a perf.log target (like tests.log) to each examples
+   subdirectory. Run each binary (both C and opt and byte) 10 times and
+   take the average wall clock time. Generate a table with three columns
+   (original, .opt, .byte) and one number in each.
+   gnuplot with C time normalized.
 
-10. (Jun) Add a perf.log target (like tests.log) to each examples
-    subdirectory. Run each binary (both C and opt and byte) 10 times and
-    take the average wall clock time. Generate a table with three columns
-    (original, .opt, .byte) and one number in each.
-    gnuplot with C time normalized.
+4. Performance issues/tests:
+   - Bigarray allocation in root function callbacks.
+     Try including a bigarray 'shell' (of int32s) in the session structure,
+     as per CVODES/IDAS to avoid allocating at each call.
 
-    Profile some badly performing examples.
+   - Weak pointer dereference. In a separate branch, test the effect of
+     using direct values (especially on examples that are already very fast:
+     cvode/serial/cvRoberts_dns. Evaluate the effect using kcachegrind.
 
-    Compare to the same examples in pySUNDIALS or python-sundials?
+   - Try to have all examples within 2xC (with the possible exception of
+     cvode/serial/cvRoberts_dns_uw_alt).
 
-11. (Jun) OPAM/findlib wrappers.
+5. (Jun) OPAM/findlib wrappers.
    - Everything properly supported in a toplevel
 
-DONE 13. (Tim) Parallel CVODES and KINSOL examples.
+6. (Tim) Fix, simplify, and generally tidy up all doc comments. Write the
+   missing documentation and rewrite intro.doc.
 
-14. (Tim) Fix, simplify, and generally tidy up all doc comments. Write the
-    missing documentation and rewrite intro.doc.
+   Tidy up the documentation; in particular, add @raise tags for functions
+   that raise exceptions (like get_dky... )
+   Document the ones that correspond to return values mentioned in their
+   user guide.  (Or otherwise that are deemed important.)
 
-15. (Tim) Eventual release:
+   To explain:
+   - Possibility to 'break' Sundials by passing nvectors of an incompatible
+     size (e.g., Cvode.init with an nvector of size 10 and reinit with one
+     of size 5).
+   - Check the various links (@cvode, @cvodes, @ida, @idas, etc.)
+     (automatically with a script?)
+
+7. (Tim) Eventual release:
    - Test against OCaml 3.12.x (document in intro.doc, update configure)
    - Dêpot APP.
    - Repository on Github.
    - Release on Opam.
    - Announce on OCaml and Sundials lists.
-
-16. Versioning scheme
-   - 2.6.0-0  where 0 is binding's version
-     (clashes with Debian patch levels)
-   - 2.6.0ml1 where 1 is binding's version
 
 MINOR PATCHES
 -------------
@@ -87,11 +89,6 @@ MINOR PATCHES
    In the doc, mention that these don't reset performance counters.
    But they're discouraged otherwise.
 
-4. Tidy up the documentation; in particular, add @raise tags for functions
-   that raise exceptions (like get_dky... )
-
-   Document the ones that correspond to return values mentioned in
-   their user guide.  (Or otherwise that are deemed important.)
 
 DONE 5. Rename Carray to Realarray?
 DONE 6. Rename create functions to make?
@@ -116,10 +113,3 @@ TO DISCUSS
 
   - unify CHECK_MATRIX_ACCESS with SAFETY_CHECKS
 
-TO EXPLAIN IN DOCS
-------------------
-* Possibility to 'break' Sundials by passing nvectors of an incompatible
-  size (e.g., Cvode.init with an nvector of size 10 and reinit with one of
-  size 5).
-* Check the various links (@cvode, @cvodes, @ida, @idas, etc.)
-  (automatically with a script?)
