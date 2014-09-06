@@ -219,7 +219,8 @@ let print_output_s uS =
 (* Print some final statistics from the CVODES memory. *)
 (* For high NUM_REPS, the cost of OCaml printf becomes important! *)
 
-let print_5d i =
+let print_string_5d s i =
+  print_string s;
   if i < 10 then print_string "    "
   else if i < 100 then print_string "   "
   else if i < 1000 then print_string "  "
@@ -235,18 +236,12 @@ let print_final_stats s sensi =
   and ncfn    = Cvode.get_num_nonlin_solv_conv_fails s
   in
   print_string "\nFinal Statistics\n\n";
-  print_string "nst     = ";
-  print_5d nst;
-  print_string "\n\nnfe     = ";
-  print_5d nfe;
-  print_string "\nnetf    = ";
-  print_5d netf;
-  print_string "    nsetups  = ";
-  print_5d nsetups;
-  print_string "\nnni     = ";
-  print_5d nni;
-  print_string "    ncfn     = ";
-  print_5d ncfn;
+  print_string_5d "nst     = " nst;
+  print_string_5d "\n\nnfe     = " nfe;
+  print_string_5d "\nnetf    = " netf;
+  print_string_5d "    nsetups  = " nsetups;
+  print_string_5d "\nnni     = " nni;
+  print_string_5d "    ncfn     = " ncfn;
   print_newline ();
 
   if sensi then begin
@@ -256,28 +251,20 @@ let print_final_stats s sensi =
     and netfS    = Sens.get_num_err_test_fails s
     and nniS     = Sens.get_num_nonlin_solv_iters s
     and ncfnS    = Sens.get_num_nonlin_solv_conv_fails s in
-    print_string "\nnfSe    = ";
-    print_5d nfSe;
-    print_string "    nfeS     = ";
-    print_5d nfeS;
-    print_string "\nnetfs   = ";
-    print_5d netfS;
-    print_string "    nsetupsS = ";
-    print_5d nsetupsS;
-    print_string "\nnniS    = ";
-    print_5d nniS;
-    print_string "    ncfnS    = ";
-    print_5d ncfnS;
+    print_string_5d "\nnfSe    = " nfSe;
+    print_string_5d "    nfeS     = " nfeS;
+    print_string_5d "\nnetfs   = " netfS;
+    print_string_5d "    nsetupsS = " nsetupsS;
+    print_string_5d "\nnniS    = " nniS;
+    print_string_5d "    ncfnS    = " ncfnS;
     print_newline ()
   end;
 
   let nje   = Cvode.Dls.get_num_jac_evals s
   and nfeLS = Cvode.Dls.get_num_rhs_evals s
   in
-  print_string "\nnje    = ";
-  print_5d nje;
-  print_string "    nfeLS     = ";
-  print_5d nfeLS;
+  print_string_5d "\nnje    = " nje;
+  print_string_5d "    nfeLS     = " nfeLS;
   print_newline ()
 
 (*

@@ -126,7 +126,8 @@ let print_header fnormtol scsteptol =
 (* Print solution *)
 let print_output u = printf " %8.6g  %8.6g\n" u.{0} u.{1}
 
-let print_5d i =
+let print_string_5d s i =
+  print_string s;
   if i < 10 then print_string "    "
   else if i < 100 then print_string "   "
   else if i < 1000 then print_string "  "
@@ -141,14 +142,10 @@ let print_final_stats kmem =
   let nje  = Kinsol.Dls.get_num_jac_evals kmem in
   let nfeD = Kinsol.Dls.get_num_func_evals kmem in
   print_string "Final Statistics:\n";
-  print_string "  nni = ";
-  print_5d nni;
-  print_string "    nfe  = ";
-  print_5d nfe;
-  print_string " \n  nje = ";
-  print_5d nje;
-  print_string "    nfeD = ";
-  print_5d nfeD;
+  print_string_5d "  nni = " nni;
+  print_string_5d "    nfe  = " nfe;
+  print_string_5d " \n  nje = " nje;
+  print_string_5d "    nfeD = " nfeD;
   print_string " \n"
 
 (* MAIN PROGRAM *)
