@@ -105,18 +105,12 @@ let read_weak_ref x : ('a, 'k) session =
 let adjust_retcode = fun session check_recoverable f x ->
   try f x; 0
   with
-  | Sundials.RecoverableFailure _ when check_recoverable -> 1
+  | Sundials.RecoverableFailure when check_recoverable -> 1
   | e -> (session.exn_temp <- Some e; -1)
-
-let adjust_retcode_and_float = fun session f x ->
-  try (f x, 0)
-  with
-  | Sundials.RecoverableFailure _ -> (0.0, 1)
-  | e -> (session.exn_temp <- Some e; (0.0, -1))
 
 let adjust_retcode_and_option = fun session f x ->
   try (f x, 0)
   with
-  | Sundials.RecoverableFailure _ -> (None, 1)
+  | Sundials.RecoverableFailure -> (None, 1)
   | e -> (session.exn_temp <- Some e; (None, -1))
 

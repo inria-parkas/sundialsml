@@ -248,9 +248,7 @@ static int check_exception(value session, value r)
 
     r = Extract_exception(r);
 
-    /* FIXME: check for recoverable error.  The RecoverableFailure
-     * exception need to be made into a singleton on the OCaml
-     * side.  */
+    /* FIXME: check for recoverable error.  */
 
     /* Unrecoverable error.  Save the exception and return -1.  */
     exn = caml_alloc_small (1,0);

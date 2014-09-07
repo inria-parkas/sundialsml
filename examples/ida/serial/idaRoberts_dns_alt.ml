@@ -76,7 +76,7 @@ module AltDense = struct
       jacfn tn cj yp y'p rrp mem.jj tmps;
       (* Do LU factorization of jj; return success or fail flag. *)
       try DM.getrf mem.jj mem.pivots
-      with _ -> raise (Sundials.RecoverableFailure false)
+      with _ -> raise Sundials.RecoverableFailure
     in
 
     let lsolve mem s b weight ycur y'cur rescur =

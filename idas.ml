@@ -59,14 +59,8 @@ let read_weak_bwd_ref x =
 let adjust_retcode = fun session f x ->
   try f x; 0
   with
-  | Sundials.RecoverableFailure _ -> 1
+  | Sundials.RecoverableFailure -> 1
   | e -> (session.exn_temp <- Some e; -1)
-
-let adjust_retcode_and_bool = fun session f x ->
-  try (f x, 0)
-  with
-  | Sundials.RecoverableFailure r -> (r, 1)
-  | e -> (session.exn_temp <- Some e; (false, -1))
 
 let call_quadrhsfn session t y y' rhsQ =
   let (session, fwdsensext) = read_weak_fwd_ref session in

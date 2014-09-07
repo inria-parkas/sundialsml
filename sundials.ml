@@ -45,7 +45,7 @@ external get_unit_roundoff : unit -> float
 
 let unit_roundoff = get_unit_roundoff ()
 
-exception RecoverableFailure of bool
+exception RecoverableFailure
 exception NonPositiveEwt
 
 type cnvec

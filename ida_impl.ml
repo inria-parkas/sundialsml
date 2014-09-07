@@ -297,14 +297,8 @@ let read_weak_ref x : ('a, 'kind) session =
 let adjust_retcode = fun session check_recoverable f x ->
   try f x; 0
   with
-  | Sundials.RecoverableFailure _ when check_recoverable -> 1
+  | Sundials.RecoverableFailure when check_recoverable -> 1
   | e -> (session.exn_temp <- Some e; -1)
-
-let adjust_retcode_and_bool = fun session f x ->
-  try (f x, 0)
-  with
-  | Sundials.RecoverableFailure r -> (r, 1)
-  | e -> (session.exn_temp <- Some e; (false, -1))
 
 (* Dummy callbacks.  These dummes getting called indicates a fatal
    bug.  Rather than raise an exception (which may or may not get

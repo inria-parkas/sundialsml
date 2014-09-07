@@ -68,7 +68,7 @@ type 'a psolve = 'a -> 'a -> bool -> unit
 let _ =
   List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
   [
-    ("c_spils_RecoverableFailure", Sundials.RecoverableFailure true);
+    ("c_spils_RecoverableFailure", Sundials.RecoverableFailure);
   ]
 
 external modified_gs : (('a, 'k) nvector) array

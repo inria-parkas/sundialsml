@@ -810,7 +810,7 @@ let precondbd webdata jac =
 
       (* Do LU decomposition of matrix block for grid point (ix,jy). *)
       (try Dls.ArrayDenseMatrix.getrf pxy webdata.pivot.(ix).(jy)
-       with Dls.ZeroDiagonalElement _ -> raise (Sundials.RecoverableFailure false))
+       with Dls.ZeroDiagonalElement _ -> raise Sundials.RecoverableFailure)
 
     done (* End of ix loop. *)
   done (* End of jy loop. *)

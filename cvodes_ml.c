@@ -467,7 +467,10 @@ static int bprecsetupfn(
     vr = caml_callbackN(*call_bprecsetupfn,
 			sizeof (args) / sizeof (*args),
 			args);
-    *jcurPtrB = Bool_val(Field(vr, 0));
+
+    /* Update jcurPtr; leave it unchanged if an error occurred.  */
+    if (Int_val (Field (vr, 1)) == 0)
+	*jcurPtrB = Bool_val(Field(vr, 0));
 
     CAMLreturnT(int, Int_val(Field(vr, 1)));
 }

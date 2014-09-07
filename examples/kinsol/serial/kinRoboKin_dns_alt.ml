@@ -53,7 +53,7 @@ let alternate_dense jacfn =
     let fval, _ = Kinsol.Alternate.get_f_fscale s in
     (try
       jacfn uu fval mem.dj
-     with Sundials.RecoverableFailure _ -> failwith "Cannot recover!");
+     with Sundials.RecoverableFailure -> failwith "Cannot recover!");
     DM.getrf mem.dj mem.pivots
   in
 

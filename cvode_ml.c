@@ -331,7 +331,10 @@ static int precsetupfn(
     vr = caml_callbackN(*call_precsetupfn,
 			sizeof (args) / sizeof (*args),
 			args);
-    *jcurPtr = Bool_val(Field(vr, 0));
+
+    /* Update jcurPtr; leave it unchanged if an error occurred.  */
+    if (Int_val (Field (vr, 1)) == 0)
+	*jcurPtr = Bool_val(Field(vr, 0));
 
     CAMLreturnT(int, Int_val(Field(vr, 1)));
 }
@@ -458,6 +461,9 @@ static int lsetup(CVodeMem cv_mem, int convfail,
     args[4] = make_triple_tmp(tmp1, tmp2, tmp3);
 
     vr = caml_callbackN(*call_lsetup, sizeof (args) / sizeof (*args), args);
+
+    /* Update jcurPtr; leave it unchanged if an error occurred.  */
+    if (Int_val (Field (vr, 1)) == 0)
     *jcurPtr = Bool_val(Field(vr, 0));
 
     CAMLreturnT(int, Int_val(Field(vr, 1)));

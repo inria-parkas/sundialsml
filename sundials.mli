@@ -39,7 +39,7 @@ val unit_roundoff : float
     recoverable failure. For callbacks that return a boolean, the accompanying
     value is used as the result, otherwise it is ignored. Throwing any other
     kind of exception normally indicates an unrecoverable failure. *)
-exception RecoverableFailure of bool
+exception RecoverableFailure
 
 (** This exception may be thrown from error-weight functions to
     indicate that an error weight became non-positive.  See
