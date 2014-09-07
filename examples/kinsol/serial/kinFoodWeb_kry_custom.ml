@@ -78,6 +78,8 @@
  * -----------------------------------------------------------------
  *)
 
+(* NB: compile with -unsafe ... *)
+
 module Dense = Dls.ArrayDenseMatrix
 module RealArray = Sundials.RealArray
 module RealArray2 = Sundials.RealArray2
@@ -89,9 +91,6 @@ let matrix_unwrap = Sundials.RealArray2.unwrap
 let wrap = Nvector_array.wrap
 let unwrap = Sundials.RealArray2.unwrap
 let nvwl2norm = Nvector_array.DataOps.n_vwl2norm
-
-let ith v i = v.{i - 1}
-let set_ith v i e = v.{i - 1} <- e
 
 (* Problem Constants *)
 
@@ -116,8 +115,6 @@ let ay          = 1.0    (* total range of y variable *)
 let ftol        = 1.e-7  (* ftol tolerance *)
 let stol        = 1.e-13 (* stol tolerance *)
 let thousand    = 1000.0 (* one thousand *)
-let zero        = 0.0    (* 0. *)
-let one         = 1.0    (* 1. *)
 let two         = 2.0    (* 2. *)
 let preyin      = 1.0    (* initial guess for prey concentrations. *)
 let predin      = 30000.0(* initial guess for predator concs.      *)
@@ -176,8 +173,8 @@ let init_user_data =
     for j = 0 to np - 1 do
       a1.(a1off+j) <- -.gg;
       a2.(j)       <-   ee;
-      a3.(j)       <-   zero;
-      a4.(a4off+j) <-   zero
+      a3.(j)       <-   0.0;
+      a4.(a4off+j) <-   0.0
     done;
 
     (* and then change the diagonal elements of acoef to -AA *)
@@ -194,22 +191,18 @@ let init_user_data =
     coy.(i+np) <- dpred/.dy2
   done
 
-(* Dot product routine for realtype arrays *)
-let dot_prod size (x1, x1idx) (x2, x2idx) =
-  let temp =ref zero in
-  for i = 0 to size - 1 do
-    temp := !temp +. x1.(x1idx+i) *. x2.(x2idx+i)
-  done;
-  !temp
-
 (* Interaction rate function routine *)
 
 let web_rate xx yy (cxy, cidx) (ratesxy, ridx) =
   for i = 0 to num_species - 1 do
-    ratesxy.(ridx+i) <- dot_prod num_species (cxy, cidx) (acoef.(i), 0)
+    let temp =ref 0.0 in
+    for j = 0 to num_species - 1 do
+      temp := !temp +. cxy.(cidx+j) *. acoef.(i).(j)
+    done;
+    ratesxy.(ridx+i) <- !temp
   done;
   
-  let fac = one +. alpha *. xx *. yy in
+  let fac = 1.0 +. alpha *. xx *. yy in
   for i = 0 to num_species - 1 do
     ratesxy.(ridx+i) <- cxy.(cidx+i) *. (bcoef.(i) *. fac +. ratesxy.(ridx+i))
   done
@@ -269,7 +262,7 @@ let prec_setup_bd { Kinsol.jac_u=cc;
 
   let fac = nvwl2norm fval fscale in
   let r0 = thousand *. uround *. fac *. float(neq) in
-  let r0 = if r0 = zero then one else r0 in
+  let r0 = if r0 = 0.0 then 1.0 else r0 in
   
   (* Loop over spatial points; get size NUM_SPECIES Jacobian block at each *)
   for jy = 0 to my - 1 do
@@ -285,7 +278,7 @@ let prec_setup_bd { Kinsol.jac_u=cc;
         let csave = cc.(idx+j) in  (* Save the j,jx,jy element of cc *)
         let r = max (sqruround *. abs_float csave) (r0/.cscale.(idx+j)) in
         cc.(idx+j) <- cc.(idx+j) +. r; (* Perturb the j,jx,jy element of cc *)
-        let fac = one/.r in
+        let fac = 1.0/.r in
         web_rate xx yy (cc,idx) (perturb_rates,0);
         
         (* Restore j,jx,jy element of cc *)
@@ -345,7 +338,7 @@ let set_initial_profiles cc sc =
       let idx = ij_vptr_idx jx jy in
       for i = 0 to num_species/2 - 1 do
         cc.(idx + i) <- preyin;
-        sc.(idx + i) <- one
+        sc.(idx + i) <- 1.0
       done;
       for i = num_species/2 to num_species - 1 do
         cc.(idx + i) <- predin;
