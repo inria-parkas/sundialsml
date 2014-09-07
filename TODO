@@ -7,8 +7,7 @@ Decisions
 * Name and version numbering: Sundials/ML 2.6.0
   first version: Sundials/ML 2.6.0ml1
   first patch:   Sundials/ML 2.6.0ml2
-  second patch:  Sundials/ML 2.6.0ml3
-  etc.
+  second patch:  Sundials/ML 2.6.0ml3 etc.
   or
   first version: Sundials/ML 2.6.0
   first patch:   Sundials/ML 2.6.0p1
@@ -52,6 +51,12 @@ TODO
    - Weak pointer dereference. In a separate branch, test the effect of
      using direct values (especially on examples that are already very fast:
      cvode/serial/cvRoberts_dns. Evaluate the effect using kcachegrind.
+     Possibly do callback_exns directly from C, thus eliminating the
+     intermediate function.
+
+     Q. How to handle error callbacks without adding extra code everywhere?
+     Associate two values with each session: a weak pointer (for error
+     callbacks), and a value (overwritten at each Sundials entry)?
 
    - See whether the Dls.DenseMatrix representation can be changed to allow
      an unwrap function (as for ArrayDenseMatrix), with the idea of speeding
