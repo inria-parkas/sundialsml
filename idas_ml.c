@@ -938,7 +938,7 @@ static void sens_calc_ic (void *ida_mem, value session, int icopt, realtype tout
 	if (ys)  free_nvector_array(ys); 
 	if (yps) free_nvector_array(yps); 
     }
-    CAMLreturn (Val_unit);
+    CAMLreturn0;
 }
 
 CAMLprim value c_ida_sens_calc_ic_y(value vida_mem, value vy, value vys, value tout1)
@@ -1677,6 +1677,7 @@ CAMLprim value c_idas_adj_bsession_finalize(value vdata)
 	caml_remove_generational_global_root (backref);
 	free (backref);
     }
+    return Val_unit;
 }
 
 static value forward_solve(value vdata, value vtout, value vy,

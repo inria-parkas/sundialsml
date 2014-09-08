@@ -2044,6 +2044,7 @@ CAMLprim value c_cvodes_adj_bsession_finalize(value vdata)
 	caml_remove_generational_global_root (backref);
 	free (backref);
     }
+    return Val_unit;
 }
 
 CAMLprim value c_cvodes_adj_backward_normal(value vdata, value vtbout)

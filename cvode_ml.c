@@ -108,7 +108,7 @@ static void errh(
 
     caml_callback2(*call_errh, *backref, a);
 
-    CAMLreturn (Val_unit);
+    CAMLreturn0;
 }
 
 CAMLprim value c_cvode_set_err_handler_fn(value vdata)
@@ -1031,6 +1031,8 @@ CAMLprim value c_cvode_session_finalize(value vdata)
     if (err_file != NULL) {
 	fclose(err_file);
     }
+
+    return Val_unit;
 }
 
 CAMLprim value c_cvode_ss_tolerances(value vdata, value reltol, value abstol)
