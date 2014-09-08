@@ -789,7 +789,7 @@ static value solve (value vdata, value nextt, value vy, value vyp, int onestep)
     realtype tret;
     int flag;
     N_Vector y, yp;
-    enum ida_solver_result_tag result;
+    enum ida_solver_result_tag result = -1;
 
 #if SAFETY_CHECKS && IDA_ML_BIGARRAYS
     /* This can't be checked for generic nvectors.  */

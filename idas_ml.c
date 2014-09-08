@@ -1689,7 +1689,7 @@ static value forward_solve(value vdata, value vtout, value vy,
     N_Vector yp = NVEC_VAL(vyp);
     realtype tret;
     int ncheck;
-    enum ida_solver_result_tag solver_result;
+    enum ida_solver_result_tag solver_result = -1;
 
     int flag = IDASolveF(IDA_MEM_FROM_ML(vdata), Double_val(vtout), &tret,
 			 y, yp, onestep ? IDA_ONE_STEP : IDA_NORMAL, &ncheck);

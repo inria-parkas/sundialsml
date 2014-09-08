@@ -848,7 +848,7 @@ static value solver(value vdata, value nextt, value vy, int onestep)
     realtype tret;
     int flag;
     N_Vector y;
-    enum cvode_solver_result_tag result;
+    enum cvode_solver_result_tag result = -1;
 
     y = NVEC_VAL (vy);
     // Caml_ba_data_val(y) must not be shifted by the OCaml GC during this

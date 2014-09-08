@@ -911,7 +911,7 @@ static value forward_solver(value vdata, value vtout, value vyret, int onestep)
     N_Vector yret = NVEC_VAL(vyret);
     realtype tret;
     int ncheck;
-    enum cvode_solver_result_tag solver_result;
+    enum cvode_solver_result_tag solver_result = -1;
 
     int flag = CVodeF(CVODE_MEM_FROM_ML(vdata), Double_val(vtout), yret,
 		      &tret, onestep ? CV_ONE_STEP : CV_NORMAL, &ncheck);

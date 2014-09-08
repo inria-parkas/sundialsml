@@ -514,7 +514,7 @@ int spils_precond_type(value vptype)
 {
     CAMLparam1(vptype);
 
-    int ptype;
+    int ptype = -1;
     switch (Int_val(vptype)) {
     case VARIANT_SPILS_PRECONDITIONING_TYPE_PRECNONE:
 	ptype = PREC_NONE;
@@ -540,7 +540,7 @@ int spils_gs_type(value vgstype)
 {
     CAMLparam1(vgstype);
 
-    int gstype;
+    int gstype = -1;
     switch (Int_val(vgstype)) {
     case VARIANT_SPILS_GRAMSCHMIDT_TYPE_MODIFIEDGS:
 	gstype = MODIFIED_GS;

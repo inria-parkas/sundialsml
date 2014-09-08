@@ -671,7 +671,7 @@ CAMLprim value c_kinsol_solve(value vdata, value vu, value vlinesearch,
     CAMLparam5(vdata, vu, vlinesearch, vuscale, vfscale);
     CAMLlocal1(ret);
     int flag;
-    enum kinsol_result_tag result;
+    enum kinsol_result_tag result = -1;
 
     N_Vector u = NVEC_VAL (vu);
     N_Vector uscale = NVEC_VAL (vuscale);
@@ -1079,7 +1079,7 @@ CAMLprim value c_kinsol_set_eta_form(value vkin_mem, value vetachoice)
 {
     CAMLparam2(vkin_mem, vetachoice);
 
-    int etachoice;
+    int etachoice = -1;
     if (Is_long(vetachoice)) {
 	switch (Int_val(vetachoice)) {
 	case VARIANT_KINSOL_ETA_CHOICE1:
