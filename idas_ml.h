@@ -192,19 +192,4 @@ enum idas_exn_index {
 				      IDAS_EXN_SET),		\
 			       IDAS_EXN_ ## name))
 
-
-#undef IDATYPE
-#undef DOQUOTE
-#undef QUOTE
-#undef IDATYPESTR
-#define IDATYPE(fname) c_idas_ ## fname
-#define DOQUOTE(text) #text
-#define QUOTE(val) DOQUOTE(val)
-#define IDATYPESTR(fname) QUOTE(IDATYPE(fname))
-
-#define CAML_FN(name)					\
-    static value *name;					\
-    if (name == NULL)					\
-	name = caml_named_value (IDATYPESTR (name)) /* no semicolon */
-
 #endif

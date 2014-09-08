@@ -182,20 +182,4 @@ enum cvodes_enum_index {
 					CVODES_EXN_SET),	\
 				 CVODES_EXN_ ## name))
 
-/* Callbacks */
-#undef CVTYPE
-#undef DOQUOTE
-#undef QUOTE
-#undef CVTYPESTR
-#undef CAML_FN
-#define CVTYPE(fname) c_cvodes_ ## fname
-#define DOQUOTE(text) #text
-#define QUOTE(val) DOQUOTE(val)
-#define CVTYPESTR(fname) QUOTE(CVTYPE(fname))
-
-#define CAML_FN(name)					\
-    static value *name;					\
-    if (name == NULL)					\
-	name = caml_named_value (CVTYPESTR (name));
-
 #endif

@@ -158,19 +158,6 @@ let call_lsolve session b weight ycur y'cur rescur =
       adjust_retcode session true (f session b weight ycur y'cur) rescur
   | _ -> assert false
 
-let _ =
-  Callback.register "c_ida_call_resfn"         call_resfn;
-  Callback.register "c_ida_call_errh"          call_errh;
-  Callback.register "c_ida_call_errw"          call_errw;
-  Callback.register "c_ida_call_jacfn"         call_jacfn;
-  Callback.register "c_ida_call_bandjacfn"     call_bandjacfn;
-  Callback.register "c_ida_call_presetupfn"    call_precsetupfn;
-  Callback.register "c_ida_call_presolvefn"    call_precsolvefn;
-  Callback.register "c_ida_call_jactimesfn"    call_jactimesfn;
-  Callback.register "c_ida_call_linit"         call_linit;
-  Callback.register "c_ida_call_lsetup"        call_lsetup;
-  Callback.register "c_ida_call_lsolve"        call_lsolve
-
 external session_finalize : ('a, 'kind) session -> unit
     = "c_ida_session_finalize"
 
@@ -731,11 +718,27 @@ let calc_ic_ya_yd' session ?y ?y' id tout1 =
 
 
 (* Let C code know about some of the values in this module.  *)
-external c_init_module : exn array -> unit =
+type fcn = Fcn : 'a -> fcn
+external c_init_module : fcn array -> exn array -> unit =
   "c_ida_init_module"
 
 let _ =
   c_init_module
+    (* Functions must be listed in the same order as
+       callback_index in ida_ml.c.  *)
+    [|Fcn call_resfn;
+      Fcn call_errh;
+      Fcn call_errw;
+      Fcn call_jacfn;
+      Fcn call_bandjacfn;
+      Fcn call_precsetupfn;
+      Fcn call_precsolvefn;
+      Fcn call_jactimesfn;
+      Fcn call_linit;
+      Fcn call_lsetup;
+      Fcn call_lsolve;
+    |]
+
     (* Exceptions must be listed in the same order as
        ida_exn_index.  *)
     [|IllInput;

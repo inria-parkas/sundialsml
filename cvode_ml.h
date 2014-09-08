@@ -242,17 +242,6 @@ enum cvode_bandblock_bandwidths_index {
   RECORD_CVODE_BANDBLOCK_BANDWIDTHS_SIZE
 };
 
-/* Callbacks */
-#define TYPE(fname) c_cvode_ ## fname
-#define DOQUOTE(text) #text
-#define QUOTE(val) DOQUOTE(val)
-#define TYPESTR(fname) QUOTE(TYPE(fname))
-
-#define CAML_FN(name)					\
-    static value *name;					\
-    if (name == NULL)					\
-	name = caml_named_value (TYPESTR (name)) /* no semicolon */
-
 /* This enum must list exceptions in the same order as the call to
  * c_register_exns in cvode.ml.  */
 enum cvode_exn_index {

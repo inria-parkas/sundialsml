@@ -44,10 +44,32 @@
 #include <stdio.h>
 #define MAX_ERRMSG_LEN 256
 
-CAMLprim value c_kinsol_init_module (value exns)
+/* callbacks */
+enum callback_index {
+    IX_call_sysfn = 0,
+    IX_call_errh,
+    IX_call_infoh,
+
+    IX_call_jacfn,
+    IX_call_bandjacfn,
+
+    IX_call_precsolvefn,
+    IX_call_precsetupfn,
+    IX_call_jactimesfn,
+
+    IX_call_linit,
+    IX_call_lsetup,
+    IX_call_lsolve,
+    NUM_CALLBACKS
+};
+
+static value callbacks[NUM_CALLBACKS];
+
+CAMLprim value c_kinsol_init_module (value cbs, value exns)
 {
-    CAMLparam1 (exns);
+    CAMLparam2 (cbs, exns);
     REGISTER_EXNS (KINSOL, exns);
+    REGISTER_CALLBACKS (cbs);
     CAMLreturn (Val_unit);
 }
 
@@ -63,8 +85,6 @@ static void errh(
     CAMLlocal1(a);
     value *backref = eh_data;
 
-    CAML_FN (call_errh);
-
     a = caml_alloc_tuple(RECORD_SUNDIALS_ERROR_DETAILS_SIZE);
     Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_ERROR_CODE,
                 Val_int(error_code));
@@ -75,7 +95,7 @@ static void errh(
     Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_ERROR_MESSAGE,
                 caml_copy_string(msg));
 
-    caml_callback2(*call_errh, *backref, a);
+    caml_callback2(CAML_FN(call_errh), *backref, a);
 
     CAMLreturn0;
 }
@@ -111,8 +131,6 @@ static void infoh(
     CAMLlocal1(a);
     value *backref = ih_data;
 
-    CAML_FN (call_infoh);
-
     a = caml_alloc_tuple(RECORD_SUNDIALS_ERROR_DETAILS_SIZE);
     Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_ERROR_CODE, Val_int(0));
     Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_MODULE_NAME,
@@ -122,7 +140,7 @@ static void infoh(
     Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_ERROR_MESSAGE,
                 caml_copy_string(msg));
 
-    caml_callback2(*call_infoh, *backref, a);
+    caml_callback2(CAML_FN(call_infoh), *backref, a);
 
     CAMLreturn0;
 }
@@ -154,7 +172,6 @@ static int sysfn(N_Vector uu, N_Vector val, void *user_data)
     CAMLlocal2(vuu, vval);
     int r;
     value *backref = user_data;
-    CAML_FN (call_sysfn);
 
     vuu = NVEC_BACKLINK(uu);
     vval = NVEC_BACKLINK(val);
@@ -163,7 +180,7 @@ static int sysfn(N_Vector uu, N_Vector val, void *user_data)
     // call, afterward that memory goes back to kinsol. These bigarrays must
     // not be retained by closure_rhsfn! If it wants a permanent copy, then
     // it has to make it manually.
-    r = Int_val (caml_callback3(*call_sysfn, *backref, vuu, vval));
+    r = Int_val (caml_callback3(CAML_FN(call_sysfn), *backref, vuu, vval));
 
     CAMLreturnT(int, r);
 }
@@ -220,14 +237,13 @@ static int jacfn(
     CAMLlocalN (args, 3);
     int r;
     value *backref = user_data;
-    CAML_FN (call_jacfn);
 
     args[0] = *backref;
     args[1] = make_jac_arg(u, fu, make_double_tmp(tmp1, tmp2));
     args[2] = caml_alloc_final (2, NULL, 0, 1);
     DLSMAT(args[2]) = Jac;
 
-    r = Int_val (caml_callbackN (*call_jacfn,
+    r = Int_val (caml_callbackN (CAML_FN(call_jacfn),
 				 sizeof (args) / sizeof (*args),
 				 args));
 
@@ -249,7 +265,6 @@ static int bandjacfn(
     CAMLlocalN(args, 4);
     int r;
     value *backref = user_data;
-    CAML_FN (call_bandjacfn);
 
     args[0] = *backref;
     args[1] = caml_alloc_tuple(RECORD_KINSOL_BANDRANGE_SIZE);
@@ -259,7 +274,7 @@ static int bandjacfn(
     args[3] = caml_alloc_final(2, NULL, 0, 1);
     DLSMAT(args[3]) = Jac;
 
-    r = Int_val (caml_callbackN(*call_bandjacfn,
+    r = Int_val (caml_callbackN(CAML_FN(call_bandjacfn),
                                 sizeof (args) / sizeof (*args),
                                 args));
 
@@ -280,13 +295,12 @@ static int precsetupfn(
     CAMLlocalN(args, 3);
     int retcode;
     value *backref = user_data;
-    CAML_FN (call_precsetupfn);
 
     args[0] = *backref;
     args[1] = make_jac_arg(uu, fu, make_double_tmp(tmp1, tmp2));
     args[2] = make_prec_solve_arg(uscale, fscale);
 
-    retcode = Int_val (caml_callbackN(*call_precsetupfn,
+    retcode = Int_val (caml_callbackN(CAML_FN(call_precsetupfn),
                                       sizeof (args) / sizeof (*args),
                                       args));
 
@@ -307,14 +321,13 @@ static int precsolvefn(
     CAMLlocalN(args, 4);
     int retcode;
     value *backref = user_data;
-    CAML_FN (call_precsolvefn);
 
     args[0] = *backref;
     args[1] = make_jac_arg(uu, fu, NVEC_BACKLINK(tmp));
     args[2] = make_prec_solve_arg(uscale, fscale);
     args[3] = NVEC_BACKLINK(vv);
 
-    retcode = Int_val (caml_callbackN(*call_precsolvefn,
+    retcode = Int_val (caml_callbackN(CAML_FN(call_precsolvefn),
                                       sizeof (args) / sizeof (*args),
                                       args));
 
@@ -332,7 +345,6 @@ static int jactimesfn(
     CAMLlocal1(vr);
     CAMLlocalN (args, 5);
     value *backref = user_data;
-    CAML_FN (call_jactimesfn);
     int r;
 
     args[0] = *backref;
@@ -341,7 +353,7 @@ static int jactimesfn(
     args[3] = NVEC_BACKLINK(u);
     args[4] = Val_bool(*new_uu);
 
-    vr = caml_callbackN (*call_jactimesfn,
+    vr = caml_callbackN (CAML_FN(call_jactimesfn),
 			 sizeof (args) / sizeof (*args),
 			 args);
     r = Field(vr, 1);
@@ -355,9 +367,8 @@ static int linit(KINMem kin_mem)
     CAMLparam0();
     int r;
     value *backref = kin_mem->kin_user_data;
-    CAML_FN (call_linit);
 
-    r = Int_val (caml_callback(*call_linit, *backref));
+    r = Int_val (caml_callback(CAML_FN(call_linit), *backref));
 
     CAMLreturnT(int, r);
 }
@@ -367,9 +378,8 @@ static int lsetup(KINMem kin_mem)
     CAMLparam0();
     int r;
     value *backref = kin_mem->kin_user_data;
-    CAML_FN (call_lsetup);
 
-    r = Int_val (caml_callback(*call_lsetup, *backref));
+    r = Int_val (caml_callback(CAML_FN(call_lsetup), *backref));
 
     CAMLreturnT(int, r);
 }
@@ -380,13 +390,13 @@ static int lsolve(KINMem kin_mem, N_Vector x, N_Vector b, realtype *res_norm)
     CAMLlocalN(args, 3);
     CAMLlocal1(vr);
     value *backref = kin_mem->kin_user_data;
-    CAML_FN (call_lsolve);
 
     args[0] = *backref;
     args[1] = NVEC_BACKLINK(x);
     args[2] = NVEC_BACKLINK(b);
 
-    vr = caml_callbackN(*call_lsolve, sizeof (args) / sizeof (*args), args);
+    vr = caml_callbackN(CAML_FN(call_lsolve),
+			sizeof (args) / sizeof (*args), args);
     if (Field(vr, 0) != Val_int(0)) {
 	*res_norm = Double_val(Field(Field(vr, 0), 0));
     }

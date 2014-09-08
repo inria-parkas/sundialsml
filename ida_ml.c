@@ -77,10 +77,28 @@
 #endif
 
 
-CAMLprim value c_ida_init_module (value exns)
+enum callback_index {
+    IX_call_resfn = 0,
+    IX_call_errh,
+    IX_call_errw,
+    IX_call_jacfn,
+    IX_call_bandjacfn,
+    IX_call_precsetupfn,
+    IX_call_precsolvefn,
+    IX_call_jactimesfn,
+    IX_call_linit,
+    IX_call_lsetup,
+    IX_call_lsolve,
+    NUM_CALLBACKS
+};
+
+static value callbacks[NUM_CALLBACKS];
+
+CAMLprim value c_ida_init_module (value cbs, value exns)
 {
-    CAMLparam1 (exns);
+    CAMLparam2 (cbs, exns);
     REGISTER_EXNS (IDA, exns);
+    REGISTER_CALLBACKS (cbs);
     CAMLreturn (Val_unit);
 }
 
@@ -97,8 +115,6 @@ static void errh(
     CAMLlocal1(a);
     value *backref = eh_data;
 
-    CAML_FN (call_errh);
-
     a = caml_alloc_tuple(RECORD_SUNDIALS_ERROR_DETAILS_SIZE);
     Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_ERROR_CODE,
 		Val_int(error_code));
@@ -109,7 +125,7 @@ static void errh(
     Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_ERROR_MESSAGE,
 		caml_copy_string(msg));
 
-    caml_callback2_exn (*call_errh, *backref, a);
+    caml_callback2_exn (CAML_FN(call_errh), *backref, a);
 
     CAMLreturn0;
 }
@@ -142,7 +158,6 @@ static int resfn (realtype t, N_Vector y, N_Vector yp,
     CAMLlocalN (args, 5);
     int r;
     value *backref = user_data;
-    CAML_FN (call_resfn);
 
     args[0] = *backref;
     args[1] = caml_copy_double(t);
@@ -150,7 +165,7 @@ static int resfn (realtype t, N_Vector y, N_Vector yp,
     args[3] = NVEC_BACKLINK (yp);
     args[4] = NVEC_BACKLINK (resval);
 
-    r = Int_val (caml_callbackN (*call_resfn,
+    r = Int_val (caml_callbackN (CAML_FN(call_resfn),
 				 sizeof (args) / sizeof (*args),
 				 args));
 
@@ -207,7 +222,6 @@ static int jacfn (long int neq, realtype t, realtype coef,
     CAMLlocalN (args, 3);
     int r;
     value *backref = user_data;
-    CAML_FN (call_jacfn);
 
     args[0] = *backref;
     args[1] = make_jac_arg (t, coef, y, yp, res,
@@ -215,7 +229,7 @@ static int jacfn (long int neq, realtype t, realtype coef,
     args[2] = caml_alloc_final (2, NULL, 0, 1);
     DLSMAT(args[2]) = jac;
 
-    r = Int_val (caml_callbackN (*call_jacfn,
+    r = Int_val (caml_callbackN (CAML_FN(call_jacfn),
 				 sizeof (args) / sizeof (*args),
 				 args));
 
@@ -231,7 +245,6 @@ static int bandjacfn (long int neq, long int mupper, long int mlower,
     CAMLlocalN (args, 4);
     int r;
     value *backref = user_data;
-    CAML_FN (call_bandjacfn);
 
     args[0] = *backref;
     args[1] = caml_alloc_tuple(RECORD_IDA_BANDRANGE_SIZE);
@@ -242,7 +255,7 @@ static int bandjacfn (long int neq, long int mupper, long int mlower,
     args[3] = caml_alloc_final (2, NULL, 0, 1);
     DLSMAT(args[3]) = jac;
 
-    r = Int_val (caml_callbackN (*call_bandjacfn,
+    r = Int_val (caml_callbackN (CAML_FN(call_bandjacfn),
 				 sizeof (args) / sizeof (*args),
 				 args));
 
@@ -306,20 +319,19 @@ static int errw(N_Vector y, N_Vector ewt, void *user_data)
     CAMLlocalN(args, 3);
     int r;
     value *backref = user_data;
-    CAML_FN (call_errw);
 
     args[0] = *backref;
     args[1] = NVEC_BACKLINK (y);
     args[2] = NVEC_BACKLINK (ewt);
 
-    r = Int_val (caml_callbackN (*call_errw,
+    r = Int_val (caml_callbackN (CAML_FN(call_errw),
 				 sizeof (args) / sizeof (*args),
 				 args));
 
     CAMLreturnT(int, r);
 }
 
-static int presetupfn(
+static int precsetupfn(
     realtype t,
     N_Vector y,
     N_Vector yp,
@@ -334,19 +346,18 @@ static int presetupfn(
     CAMLlocalN(args, 2);
     int r;
     value *backref = user_data;
-    CAML_FN (call_presetupfn);
 
     args[0] = *backref;
     args[1] = make_jac_arg(t, cj, y, yp, res,
 			   make_triple_tmp(tmp1, tmp2, tmp3));
-    r = Int_val (caml_callbackN (*call_presetupfn,
+    r = Int_val (caml_callbackN (CAML_FN(call_precsetupfn),
 				 sizeof (args) / sizeof (*args),
 				 args));
 
     CAMLreturnT(int, r);
 }
 
-static int presolvefn(
+static int precsolvefn(
 	realtype t,
 	N_Vector y,
 	N_Vector yp,
@@ -362,7 +373,6 @@ static int presolvefn(
     CAMLlocalN(args, 5);
     value *backref = user_data;
     int rv;
-    CAML_FN (call_presolvefn);
 
     args[0] = *backref;
     args[1] = make_jac_arg(t, cj, y, yp, res, NVEC_BACKLINK (tmp));
@@ -370,7 +380,7 @@ static int presolvefn(
     args[3] = NVEC_BACKLINK (z);
     args[4] = caml_copy_double (delta);
 
-    rv = Int_val (caml_callbackN (*call_presolvefn,
+    rv = Int_val (caml_callbackN (CAML_FN(call_precsolvefn),
 				  sizeof (args) / sizeof (*args),
 				  args));
 
@@ -392,14 +402,13 @@ static int jactimesfn(
     CAMLlocalN(args, 4);
     int r;
     value *backref = user_data;
-    CAML_FN (call_jactimesfn);
 
     args[0] = *backref;
     args[1] = make_jac_arg (t, cj, y, yp, res, make_double_tmp (tmp1, tmp2));
     args[2] = NVEC_BACKLINK (v);
     args[3] = NVEC_BACKLINK (Jv);
 
-    r = Int_val (caml_callbackN (*call_jactimesfn,
+    r = Int_val (caml_callbackN (CAML_FN(call_jactimesfn),
 				 sizeof (args) / sizeof (*args),
 				 args));
 
@@ -411,9 +420,8 @@ static int linit(IDAMem ida_mem)
     CAMLparam0();
     int r;
     value *backref = ida_mem->ida_user_data;
-    CAML_FN (call_linit);
 
-    r = Int_val (caml_callback(*call_linit, *backref));
+    r = Int_val (caml_callback(CAML_FN(call_linit), *backref));
 
     CAMLreturnT(int, r);
 }
@@ -425,7 +433,6 @@ static int lsetup(IDAMem ida_mem, N_Vector yyp, N_Vector ypp, N_Vector resp,
     CAMLlocalN(args, 5);
     int r;
     value *backref = ida_mem->ida_user_data;
-    CAML_FN (call_lsetup);
 
     args[0] = *backref;
     args[1] = NVEC_BACKLINK(yyp);
@@ -433,7 +440,8 @@ static int lsetup(IDAMem ida_mem, N_Vector yyp, N_Vector ypp, N_Vector resp,
     args[3] = NVEC_BACKLINK(resp);
     args[4] = make_triple_tmp(tmp1, tmp2, tmp3);
 
-    r = Int_val (caml_callbackN(*call_lsetup, sizeof (args) / sizeof (*args),
+    r = Int_val (caml_callbackN(CAML_FN(call_lsetup),
+				sizeof (args) / sizeof (*args),
 				args));
 
     CAMLreturnT(int, r);
@@ -446,7 +454,6 @@ static int lsolve(IDAMem ida_mem, N_Vector b, N_Vector weight, N_Vector ycur,
     CAMLlocalN(args, 6);
     int r;
     value *backref = ida_mem->ida_user_data;
-    CAML_FN (call_lsolve);
 
     args[0] = *backref;
     args[1] = NVEC_BACKLINK(b);
@@ -455,7 +462,7 @@ static int lsolve(IDAMem ida_mem, N_Vector b, N_Vector weight, N_Vector ycur,
     args[4] = NVEC_BACKLINK(ypcur);
     args[5] = NVEC_BACKLINK(rescur);
 
-    r = Int_val (caml_callbackN(*call_lsolve,
+    r = Int_val (caml_callbackN(CAML_FN(call_lsolve),
 				sizeof (args) / sizeof (*args),
 				args));
 
@@ -606,10 +613,10 @@ CAMLprim value c_ida_spils_set_preconditioner (value vsession,
 {
     CAMLparam3 (vsession, vset_presetup, vset_jac);
     void *mem = IDA_MEM_FROM_ML (vsession);
-    IDASpilsPrecSetupFn setup = Bool_val (vset_presetup) ? presetupfn : NULL;
+    IDASpilsPrecSetupFn setup = Bool_val (vset_presetup) ? precsetupfn : NULL;
     int flag;
 
-    flag = IDASpilsSetPreconditioner (mem, setup, presolvefn);
+    flag = IDASpilsSetPreconditioner (mem, setup, precsolvefn);
     CHECK_FLAG ("IDASpilsSetPreconditioner", flag);
     if (Bool_val (vset_jac)) {
 	flag = IDASpilsSetJacTimesVecFn (mem, jactimesfn);
@@ -673,7 +680,7 @@ CAMLprim value c_ida_set_preconditioner(value vdata)
 {
     CAMLparam1(vdata);
     int flag = IDASpilsSetPreconditioner(IDA_MEM_FROM_ML(vdata),
-					 presetupfn, presolvefn);
+					 precsetupfn, precsolvefn);
     CHECK_FLAG("IDASpilsSetPreconditioner", flag);
     CAMLreturn (Val_unit);
 }

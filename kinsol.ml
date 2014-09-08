@@ -120,22 +120,6 @@ let call_lsolve session x b =
       adjust_retcode_and_option session (f session x) b
   | _ -> assert false
 
-let _ =
-  Callback.register "c_kinsol_call_sysfn"        call_sysfn;
-  Callback.register "c_kinsol_call_errh"         call_errh;
-  Callback.register "c_kinsol_call_infoh"        call_infoh;
-
-  Callback.register "c_kinsol_call_jacfn"        call_jacfn;
-  Callback.register "c_kinsol_call_bandjacfn"    call_bandjacfn;
-
-  Callback.register "c_kinsol_call_precsolvefn"  call_precsolvefn;
-  Callback.register "c_kinsol_call_precsetupfn"  call_precsetupfn;
-  Callback.register "c_kinsol_call_jactimesfn"   call_jactimesfn;
-
-  Callback.register "c_kinsol_call_linit"        call_linit;
-  Callback.register "c_kinsol_call_lsetup"       call_lsetup;
-  Callback.register "c_kinsol_call_lsolve"       call_lsolve
-
 external session_finalize : ('a, 'k) session -> unit
     = "c_kinsol_session_finalize"
 
@@ -582,11 +566,30 @@ external solve : ('a, 'k) session -> ('a, 'k) nvector -> bool -> ('a, 'k) nvecto
 
 
 (* Let C code know about some of the values in this module.  *)
-external c_init_module : exn array -> unit =
+type fcn = Fcn : 'a -> fcn
+external c_init_module : fcn array -> exn array -> unit =
   "c_kinsol_init_module"
 
 let _ =
   c_init_module
+    (* Functions must be listed in the same order as
+       callback_index in kinsol_ml.c.  *)
+    [|Fcn call_sysfn;
+      Fcn call_errh;
+      Fcn call_infoh;
+
+      Fcn call_jacfn;
+      Fcn call_bandjacfn;
+
+      Fcn call_precsolvefn;
+      Fcn call_precsetupfn;
+      Fcn call_jactimesfn;
+
+      Fcn call_linit;
+      Fcn call_lsetup;
+      Fcn call_lsolve;
+    |]
+
     (* Exceptions must be listed in the same order as
        kinsol_exn_index.  *)
     [|

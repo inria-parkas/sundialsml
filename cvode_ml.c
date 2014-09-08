@@ -82,10 +82,30 @@
 #define MAX_ERRMSG_LEN 256
 
 
-CAMLprim value c_cvode_init_module (value exns)
+enum callback_index {
+    IX_call_rhsfn = 0,
+    IX_call_errw,
+    IX_call_errh,
+    IX_call_jacfn,
+    IX_call_bandjacfn,
+
+    IX_call_precsolvefn,
+    IX_call_precsetupfn,
+    IX_call_jactimesfn,
+
+    IX_call_linit,
+    IX_call_lsetup,
+    IX_call_lsolve,
+    NUM_CALLBACKS
+};
+
+static value callbacks[NUM_CALLBACKS];
+
+CAMLprim value c_cvode_init_module (value cbs, value exns)
 {
-    CAMLparam1 (exns);
+    CAMLparam2 (cbs, exns);
     REGISTER_EXNS (CVODE, exns);
+    REGISTER_CALLBACKS (cbs);
     CAMLreturn (Val_unit);
 }
 
@@ -103,7 +123,6 @@ static void errh(
     CAMLlocal1(a);
     value *backref = eh_data;
 
-    CAML_FN (call_errh);
 
     a = caml_alloc_tuple(RECORD_SUNDIALS_ERROR_DETAILS_SIZE);
     Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_ERROR_CODE,
@@ -115,7 +134,7 @@ static void errh(
     Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_ERROR_MESSAGE,
                 caml_copy_string(msg));
 
-    caml_callback2(*call_errh, *backref, a);
+    caml_callback2(CAML_FN(call_errh), *backref, a);
 
     CAMLreturn0;
 }
@@ -163,14 +182,13 @@ static int rhsfn(realtype t, N_Vector y, N_Vector ydot, void *user_data)
     CAMLlocalN(args, 4);
     int r;
     value *backref = user_data;
-    CAML_FN (call_rhsfn);
 
     args[0] = *backref;
     args[1] = caml_copy_double(t);
     args[2] = NVEC_BACKLINK(y);
     args[3] = NVEC_BACKLINK(ydot);
 
-    r = Int_val (caml_callbackN(*call_rhsfn,
+    r = Int_val (caml_callbackN(CAML_FN(call_rhsfn),
                                 sizeof (args) / sizeof (*args),
                                 args));
 
@@ -211,13 +229,12 @@ static int errw(N_Vector y, N_Vector ewt, void *user_data)
     CAMLlocalN(args, 3);
     int r;
     value *backref = user_data;
-    CAML_FN (call_errw);
 
     args[0] = *backref;
     args[1] = NVEC_BACKLINK (y);
     args[2] = NVEC_BACKLINK (ewt);
 
-    r = Int_val (caml_callbackN (*call_errw,
+    r = Int_val (caml_callbackN (CAML_FN(call_errw),
 				 sizeof (args) / sizeof (*args),
 				 args));
 
@@ -266,14 +283,13 @@ static int jacfn(
     CAMLlocalN (args, 3);
     int r;
     value *backref = user_data;
-    CAML_FN (call_jacfn);
 
     args[0] = *backref;
     args[1] = make_jac_arg (t, y, fy, make_triple_tmp (tmp1, tmp2, tmp3));
     args[2] = caml_alloc_final (2, NULL, 0, 1);
     DLSMAT(args[2]) = Jac;
 
-    r = Int_val (caml_callbackN (*call_jacfn,
+    r = Int_val (caml_callbackN (CAML_FN(call_jacfn),
 				 sizeof (args) / sizeof (*args),
 				 args));
 
@@ -297,7 +313,6 @@ static int bandjacfn(
     CAMLlocalN(args, 4);
     int r;
     value *backref = user_data;
-    CAML_FN (call_bandjacfn);
 
     args[0] = *backref;
     args[1] = caml_alloc_tuple(RECORD_CVODE_BANDRANGE_SIZE);
@@ -307,7 +322,7 @@ static int bandjacfn(
     args[3] = caml_alloc_final(2, NULL, 0, 1);
     DLSMAT(args[3]) = Jac;
 
-    r = Int_val (caml_callbackN(*call_bandjacfn,
+    r = Int_val (caml_callbackN(CAML_FN(call_bandjacfn),
                                 sizeof (args) / sizeof (*args),
                                 args));
 
@@ -330,14 +345,13 @@ static int precsetupfn(
     CAMLlocal2(session, vr);
     CAMLlocalN(args, 4);
     value *backref = user_data;
-    CAML_FN (call_precsetupfn);
 
     args[0] = *backref;
     args[1] = make_jac_arg(t, y, fy, make_triple_tmp(tmp1, tmp2, tmp3));
     args[2] = Val_bool(jok);
     args[3] = caml_copy_double(gamma);
 
-    vr = caml_callbackN(*call_precsetupfn,
+    vr = caml_callbackN(CAML_FN(call_precsetupfn),
 			sizeof (args) / sizeof (*args),
 			args);
 
@@ -387,14 +401,13 @@ static int precsolvefn(
     CAMLlocalN(args, 4);
     int retcode;
     value *backref = user_data;
-    CAML_FN (call_precsolvefn);
 
     args[0] = *backref;
     args[1] = make_jac_arg(t, y, fy, NVEC_BACKLINK(tmp));
     args[2] = make_spils_solve_arg(r, gamma, delta, lr);
     args[3] = NVEC_BACKLINK(z);
 
-    retcode = Int_val (caml_callbackN(*call_precsolvefn,
+    retcode = Int_val (caml_callbackN(CAML_FN(call_precsolvefn),
                                       sizeof (args) / sizeof (*args),
                                       args));
 
@@ -415,14 +428,13 @@ static int jactimesfn(
     CAMLlocalN(args, 4);
     int retcode;
     value *backref = user_data;
-    CAML_FN (call_jactimesfn);
 
     args[0] = *backref;
     args[1] = make_jac_arg(t, y, fy, NVEC_BACKLINK(tmp));
     args[2] = NVEC_BACKLINK(v);
     args[3] = NVEC_BACKLINK(Jv);
 
-    retcode = Int_val (caml_callbackN(*call_jactimesfn,
+    retcode = Int_val (caml_callbackN(CAML_FN(call_jactimesfn),
                                       sizeof (args) / sizeof (*args),
                                       args));
 
@@ -434,9 +446,8 @@ static int linit(CVodeMem cv_mem)
     CAMLparam0();
     int r;
     value *backref = cv_mem->cv_user_data;
-    CAML_FN (call_linit);
 
-    r = Int_val (caml_callback(*call_linit, *backref));
+    r = Int_val (caml_callback(CAML_FN(call_linit), *backref));
 
     CAMLreturnT(int, r);
 }
@@ -449,7 +460,6 @@ static int lsetup(CVodeMem cv_mem, int convfail,
     CAMLlocalN(args, 5);
     CAMLlocal1(vr);
     value *backref = cv_mem->cv_user_data;
-    CAML_FN (call_lsetup);
 
     args[0] = *backref;
     switch (convfail) {
@@ -469,7 +479,7 @@ static int lsetup(CVodeMem cv_mem, int convfail,
     args[3] = NVEC_BACKLINK(fpred);
     args[4] = make_triple_tmp(tmp1, tmp2, tmp3);
 
-    vr = caml_callbackN(*call_lsetup, sizeof (args) / sizeof (*args), args);
+    vr = caml_callbackN(CAML_FN(call_lsetup), sizeof (args) / sizeof (*args), args);
 
     /* Update jcurPtr; leave it unchanged if an error occurred.  */
     if (Int_val (Field (vr, 1)) == 0)
@@ -485,7 +495,6 @@ static int lsolve(CVodeMem cv_mem, N_Vector b, N_Vector weight, N_Vector ycur,
     CAMLlocalN(args, 5);
     int r;
     value *backref = cv_mem->cv_user_data;
-    CAML_FN (call_lsolve);
 
     args[0] = *backref;
     args[1] = NVEC_BACKLINK(b);
@@ -493,7 +502,7 @@ static int lsolve(CVodeMem cv_mem, N_Vector b, N_Vector weight, N_Vector ycur,
     args[3] = NVEC_BACKLINK(ycur);
     args[4] = NVEC_BACKLINK(fcur);
 
-    r = Int_val (caml_callbackN(*call_lsolve,
+    r = Int_val (caml_callbackN(CAML_FN(call_lsolve),
 				sizeof (args) / sizeof (*args),
 				args));
 

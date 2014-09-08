@@ -50,6 +50,24 @@
 #include "cvode_ml.h"
 #include "nvector_ml.h"
 
+
+/* Callbacks */
+
+enum callback_index {
+    IX_call_bbdlocal = 0,
+    IX_call_bbdcomm,
+    NUM_CALLBACKS
+};
+
+static value callbacks[NUM_CALLBACKS];
+
+CAMLprim value c_cvode_bbd_init_module (value cbs)
+{
+    CAMLparam1 (cbs);
+    REGISTER_CALLBACKS (cbs);
+    CAMLreturn (Val_unit);
+}
+
 static int bbdlocal(long int nlocal, realtype t, N_Vector y, N_Vector glocal,
 		    void *user_data)
 {
@@ -57,14 +75,13 @@ static int bbdlocal(long int nlocal, realtype t, N_Vector y, N_Vector glocal,
     CAMLlocalN(args, 4);
     int r;
     value *backref = user_data;
-    CAML_FN (call_bbdlocal);
 
     args[0] = *backref;
     args[1] = caml_copy_double(t);
     args[2] = NVEC_BACKLINK(y);
     args[3] = NVEC_BACKLINK(glocal);
 
-    r = Int_val (caml_callbackN(*call_bbdlocal,
+    r = Int_val (caml_callbackN(CAML_FN(call_bbdlocal),
                                 sizeof (args) / sizeof (*args),
                                 args));
 
@@ -77,13 +94,12 @@ static int bbdcomm(long int nlocal, realtype t, N_Vector y, void *user_data)
     CAMLlocalN(args, 3);
     int r;
     value *backref = user_data;
-    CAML_FN (call_bbdcomm);
 
     args[0] = *backref;
     args[1] = caml_copy_double(t);
     args[2] = NVEC_BACKLINK(y);
 
-    r = Int_val (caml_callbackN(*call_bbdcomm,
+    r = Int_val (caml_callbackN(CAML_FN(call_bbdcomm),
                                 sizeof (args) / sizeof (*args),
                                 args));
 

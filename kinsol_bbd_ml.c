@@ -31,19 +31,33 @@
 #include "spils_ml.h"
 #include "kinsol_ml.h"
 
+enum callback_index {
+    IX_call_bbdlocal = 0,
+    IX_call_bbdcomm,
+    NUM_CALLBACKS
+};
+
+static value callbacks[NUM_CALLBACKS];
+
+CAMLprim value c_kinsol_bbd_init_module (value cbs)
+{
+    CAMLparam1 (cbs);
+    REGISTER_CALLBACKS (cbs);
+    CAMLreturn (Val_unit);
+}
+
 static int bbdlocal(long int nlocal, N_Vector u, N_Vector gval, void *user_data)
 {
     CAMLparam0();
     CAMLlocalN(args, 3);
     int r;
     value *backref = user_data;
-    CAML_FN (call_bbdlocal);
 
     args[0] = *backref;
     args[1] = NVEC_BACKLINK(u);
     args[2] = NVEC_BACKLINK(gval);
 
-    r = Int_val (caml_callbackN(*call_bbdlocal,
+    r = Int_val (caml_callbackN(CAML_FN(call_bbdlocal),
                                 sizeof (args) / sizeof (*args),
                                 args));
 
@@ -56,12 +70,11 @@ static int bbdcomm(long int nlocal, N_Vector u, void *user_data)
     CAMLlocalN(args, 2);
     int r;
     value *backref = user_data;
-    CAML_FN (call_bbdcomm);
 
     args[0] = *backref;
     args[1] = NVEC_BACKLINK(u);
 
-    r = Int_val (caml_callbackN(*call_bbdcomm,
+    r = Int_val (caml_callbackN(CAML_FN(call_bbdcomm),
                                 sizeof (args) / sizeof (*args),
                                 args));
 

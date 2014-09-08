@@ -33,10 +33,6 @@ let call_bbbdcomm session t y y' yb y'b =
       adjust_retcode session true (f t y y' yb) y'b
   | _ -> assert false
 
-let _ =
-  Callback.register "c_idas_call_bbbdlocal"      call_bbbdlocal;
-  Callback.register "c_idas_call_bbbdcomm"       call_bbbdcomm
-
 type callbacks =
   {
     local_fn : float -> data -> data -> data -> data -> data -> unit;
@@ -114,3 +110,16 @@ let reinit bs mudq mldq dqrely =
 let get_work_space bs = Ida_bbd.get_work_space (tosession bs)
 let get_num_gfn_evals bs = Ida_bbd.get_num_gfn_evals (tosession bs)
 
+
+(* Let C code know about some of the values in this module.  *)
+type fcn = Fcn : 'a -> fcn
+external c_init_module : fcn array -> unit =
+  "c_idas_bbd_init_module"
+
+let _ =
+  c_init_module
+    (* Functions must be listed in the same order as
+       callback_index in idas_bbd_ml.c.  *)
+    [|Fcn call_bbbdlocal;
+      Fcn call_bbbdcomm;
+    |]

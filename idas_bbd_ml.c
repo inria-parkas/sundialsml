@@ -33,6 +33,23 @@
 #include "idas_ml.h"
 #include "nvector_ml.h"
 
+/* callbacks */
+
+enum callback_index {
+    IX_call_bbbdlocal = 0,
+    IX_call_bbbdcomm,
+    NUM_CALLBACKS
+};
+
+static value callbacks[NUM_CALLBACKS];
+
+CAMLprim value c_idas_bbd_init_module (value cbs)
+{
+    CAMLparam1 (cbs);
+    REGISTER_CALLBACKS (cbs);
+    CAMLreturn (Val_unit);
+}
+
 static int bbbdlocal(long int nlocal, realtype t, N_Vector yy, N_Vector yp,
 		     N_Vector yyB, N_Vector ypB, N_Vector glocal,
 		     void *user_data)
@@ -41,7 +58,6 @@ static int bbbdlocal(long int nlocal, realtype t, N_Vector yy, N_Vector yp,
     CAMLlocalN(args, 7);
     int r;
     value *backref = user_data;
-    CAML_FN (call_bbbdlocal);
 
     args[0] = *backref;
     args[1] = caml_copy_double(t);
@@ -51,7 +67,7 @@ static int bbbdlocal(long int nlocal, realtype t, N_Vector yy, N_Vector yp,
     args[5] = NVEC_BACKLINK(ypB);
     args[6] = NVEC_BACKLINK(glocal);
 
-    r = Int_val (caml_callbackN(*call_bbbdlocal,
+    r = Int_val (caml_callbackN(CAML_FN(call_bbbdlocal),
                                 sizeof (args) / sizeof (*args),
                                 args));
 
@@ -67,7 +83,6 @@ static int bbbdcomm(long int nlocal, realtype t,
     CAMLlocalN(args, 6);
     int r;
     value *backref = user_data;
-    CAML_FN (call_bbbdcomm);
 
     args[0] = *backref;
     args[1] = caml_copy_double(t);
@@ -76,7 +91,7 @@ static int bbbdcomm(long int nlocal, realtype t,
     args[4] = NVEC_BACKLINK(yyB);
     args[5] = NVEC_BACKLINK(ypB);
 
-    r = Int_val (caml_callbackN(*call_bbbdcomm,
+    r = Int_val (caml_callbackN(CAML_FN(call_bbbdcomm),
                                 sizeof (args) / sizeof (*args),
                                 args));
 

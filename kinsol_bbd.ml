@@ -46,10 +46,6 @@ let call_bbdcomm session u =
   | BBDCallback { Bbd.comm_fn = Some f } -> adjust_retcode session true f u
   | _ -> assert false
 
-let _ =
-  Callback.register "c_kinsol_call_bbdlocal"      call_bbdlocal;
-  Callback.register "c_kinsol_call_bbdcomm"       call_bbdcomm
-
 external c_bbd_prec_init
     : parallel_session -> int -> bandwidths -> float -> bool -> unit
     = "c_kinsol_bbd_prec_init"
@@ -114,3 +110,15 @@ external get_work_space : parallel_session -> int * int
 external get_num_gfn_evals : parallel_session -> int
     = "c_kinsol_bbd_get_num_gfn_evals"
 
+(* Let C code know about some of the values in this module.  *)
+type fcn = Fcn : 'a -> fcn
+external c_init_module : fcn array -> unit =
+  "c_kinsol_bbd_init_module"
+
+let _ =
+  c_init_module
+    (* Functions must be listed in the same order as
+       callback_index in kinsol_bbd_ml.c.  *)
+    [|Fcn call_bbdlocal;
+      Fcn call_bbdcomm;
+    |]

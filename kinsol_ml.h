@@ -135,16 +135,4 @@ enum kinsol_exn_index {
 					KINSOL_EXN_SET),	\
 				 KINSOL_EXN_ ## name))
 
-
-/* Callbacks */
-#define TYPE(fname) c_kinsol_ ## fname
-#define DOQUOTE(text) #text
-#define QUOTE(val) DOQUOTE(val)
-#define TYPESTR(fname) QUOTE(TYPE(fname))
-
-#define CAML_FN(name)					\
-    static value *name;					\
-    if (name == NULL)					\
-	name = caml_named_value (TYPESTR (name)) /* no semicolon */
-
 #endif

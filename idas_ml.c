@@ -49,11 +49,24 @@
 
 #define MAX_ERRMSG_LEN 256
 
+enum callback_index {
+    IX_call_quadrhsfn = 0,
+    IX_call_bquadrhsfn,
+    IX_call_bprecsetupfn,
+    IX_call_bprecsolvefn,
+    IX_call_bjactimesfn,
+    IX_call_bjacfn,
+    IX_call_bbandjacfn,
+    NUM_CALLBACKS
+};
 
-CAMLprim value c_idas_init_module (value exns)
+static value callbacks[NUM_CALLBACKS];
+
+CAMLprim value c_idas_init_module (value cbs, value exns)
 {
-    CAMLparam1 (exns);
+    CAMLparam2 (cbs, exns);
     REGISTER_EXNS (IDAS, exns);
+    REGISTER_CALLBACKS (cbs);
     CAMLreturn (Val_unit);
 }
 
@@ -315,7 +328,6 @@ static int quadrhsfn(realtype t, N_Vector y, N_Vector yp, N_Vector rhsQ,
     CAMLlocalN(args, 5);
     int r;
     value *backref = user_data;
-    CAML_FN (call_quadrhsfn);
 
     args[0] = *backref;
     args[1] = caml_copy_double(t);
@@ -327,7 +339,7 @@ static int quadrhsfn(realtype t, N_Vector y, N_Vector yp, N_Vector rhsQ,
     // this call, afterward that memory goes back to cvode. These bigarrays
     // must not be retained by closure_quadrhsfn! If it wants a permanent
     // copy, then it has to make it manually.
-    r = Int_val (caml_callbackN(*call_quadrhsfn,
+    r = Int_val (caml_callbackN(CAML_FN(call_quadrhsfn),
                                 sizeof (args) / sizeof (*args),
                                 args));
 
@@ -500,13 +512,12 @@ static int bprecsetupfn(realtype t, N_Vector yy, N_Vector yp,
     CAMLlocalN(args, 2);
     value *backref = user_dataB;
     int retcode;
-    CAML_FN (call_bprecsetupfn);
 
     args[0] = *backref;
     args[1] = make_adj_jac_arg(t, yy, yp, yB, ypB, resvalB, cjB,
 			       make_triple_tmp(tmp1B, tmp2B, tmp3B));
 
-    retcode = Int_val (caml_callbackN(*call_bprecsetupfn,
+    retcode = Int_val (caml_callbackN(CAML_FN(call_bprecsetupfn),
 				      sizeof (args) / sizeof (*args),
 				      args));
 
@@ -524,7 +535,6 @@ static int bprecsolvefn(realtype t, N_Vector yy, N_Vector yp,
     CAMLlocalN(args, 5);
     int retcode;
     value *backref = user_dataB;
-    CAML_FN (call_bprecsolvefn);
 
     args[0] = *backref;
     args[1] = make_adj_jac_arg(t, yy, yp, yB, ypB, resvalB, cjB,
@@ -533,7 +543,7 @@ static int bprecsolvefn(realtype t, N_Vector yy, N_Vector yp,
     args[3] = NVEC_BACKLINK (zvecB);
     args[4] = caml_copy_double (deltaB);
 
-    retcode = Int_val (caml_callbackN(*call_bprecsolvefn,
+    retcode = Int_val (caml_callbackN(CAML_FN(call_bprecsolvefn),
                                       sizeof (args) / sizeof (*args),
                                       args));
 
@@ -551,7 +561,6 @@ static int bjactimesfn(realtype t, N_Vector yy, N_Vector yp,
     CAMLlocalN(args, 4);
     int retcode;
     value *backref = user_dataB;
-    CAML_FN (call_bjactimesfn);
 
     args[0] = *backref;
     args[1] = make_adj_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
@@ -559,7 +568,7 @@ static int bjactimesfn(realtype t, N_Vector yy, N_Vector yp,
     args[2] = NVEC_BACKLINK(vB);
     args[3] = NVEC_BACKLINK(JvB);
 
-    retcode = Int_val (caml_callbackN(*call_bjactimesfn,
+    retcode = Int_val (caml_callbackN(CAML_FN(call_bjactimesfn),
                                       sizeof (args) / sizeof (*args),
                                       args));
 
@@ -577,7 +586,6 @@ static int bjacfn(long int NeqB, realtype t,
     CAMLlocalN(args, 3);
     int retcode;
     value *backref = user_dataB;
-    CAML_FN (call_bjacfn);
 
     args[0] = *backref;
     args[1] = make_adj_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
@@ -585,7 +593,7 @@ static int bjacfn(long int NeqB, realtype t,
     args[2] = caml_alloc_final (2, NULL, 0, 1);
     DLSMAT(args[2]) = JacB;
 
-    retcode = Int_val (caml_callbackN(*call_bjacfn,
+    retcode = Int_val (caml_callbackN(CAML_FN(call_bjacfn),
                                       sizeof (args) / sizeof (*args),
                                       args));
 
@@ -604,7 +612,6 @@ static int bbandjacfn(long int NeqB, long int mupperb, long int mlowerb,
     CAMLlocalN(args, 4);
     int r;
     value *backref = user_dataB;
-    CAML_FN (call_bbandjacfn);
 
     args[0] = *backref;
     args[1] = caml_alloc_tuple(RECORD_IDAS_ADJ_BANDRANGE_SIZE);
@@ -615,7 +622,7 @@ static int bbandjacfn(long int NeqB, long int mupperb, long int mlowerb,
     args[3] = caml_alloc_final(2, NULL, 0, 1);
     DLSMAT(args[3]) = JacB;
 
-    r = Int_val (caml_callbackN(*call_bbandjacfn,
+    r = Int_val (caml_callbackN(CAML_FN(call_bbandjacfn),
                                 sizeof (args) / sizeof (*args),
                                 args));
 
@@ -630,7 +637,6 @@ static int bquadrhsfn(realtype t, N_Vector y, N_Vector yp,
     CAMLlocalN(args, 7);
     int r;
     value *backref = user_data;
-    CAML_FN (call_bquadrhsfn);
 
     args[0] = *backref;
     args[1] = caml_copy_double(t);
@@ -644,7 +650,7 @@ static int bquadrhsfn(realtype t, N_Vector y, N_Vector yp,
     // afterward that memory goes back to cvode. These bigarrays must not be
     // retained by closure_quadrhsfn! If it wants a permanent copy, then it
     // has to make it manually.
-    r = Int_val (caml_callbackN(*call_bquadrhsfn,
+    r = Int_val (caml_callbackN(CAML_FN(call_bquadrhsfn),
                                 sizeof (args) / sizeof (*args),
                                 args));
 

@@ -113,15 +113,6 @@ let call_bbandjacfn session range jac m =
 
 (* fwdsensext.sensrhsfn is called directly from C *)
 
-let _ =
-  Callback.register "c_idas_call_quadrhsfn"     call_quadrhsfn;
-  Callback.register "c_idas_call_bquadrhsfn"    call_bquadrhsfn;
-  Callback.register "c_idas_call_bprecsetupfn"  call_bprecsetupfn;
-  Callback.register "c_idas_call_bprecsolvefn"  call_bprecsolvefn;
-  Callback.register "c_idas_call_bjactimesfn"   call_bjactimesfn;
-  Callback.register "c_idas_call_bjacfn"        call_bjacfn;
-  Callback.register "c_idas_call_bbandjacfn"    call_bbandjacfn
-
 module Quadrature =
   struct
     exception QuadNotInitialized
@@ -1139,11 +1130,23 @@ module Adjoint =
 
 
 (* Let C code know about some of the values in this module.  *)
-external c_init_module : exn array -> unit =
+type fcn = Fcn : 'a -> fcn
+external c_init_module : fcn array -> exn array -> unit =
   "c_idas_init_module"
 
 let _ =
   c_init_module
+    (* Functions must be listed in the same order as
+       callback_index in idas_ml.c.  *)
+    [|Fcn call_quadrhsfn;
+      Fcn call_bquadrhsfn;
+      Fcn call_bprecsetupfn;
+      Fcn call_bprecsolvefn;
+      Fcn call_bjactimesfn;
+      Fcn call_bjacfn;
+      Fcn call_bbandjacfn;
+    |]
+
     (* Exceptions must be listed in the same order as
        idas_exn_index.  *)
     [|Quadrature.QuadNotInitialized;

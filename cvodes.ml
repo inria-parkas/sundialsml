@@ -126,18 +126,6 @@ let call_bbandjacfn session range jac m =
   | BBandCallback f -> adjust_retcode session (f range jac) m
   | _ -> assert false
 
-let _ =
-  Callback.register "c_cvodes_call_quadrhsfn"     call_quadrhsfn;
-  Callback.register "c_cvodes_call_sensrhsfn1"    call_sensrhsfn1;
-
-  Callback.register "c_cvodes_call_brhsfn"        call_brhsfn;
-  Callback.register "c_cvodes_call_bquadrhsfn"    call_bquadrhsfn;
-  Callback.register "c_cvodes_call_bprecsetupfn"  call_bprecsetupfn;
-  Callback.register "c_cvodes_call_bprecsolvefn"  call_bprecsolvefn;
-  Callback.register "c_cvodes_call_bjactimesfn"   call_bjactimesfn;
-  Callback.register "c_cvodes_call_bjacfn"        call_bjacfn;
-  Callback.register "c_cvodes_call_bbandjacfn"    call_bbandjacfn
-
 module Quadrature =
   struct
     exception QuadNotInitialized
@@ -1160,11 +1148,26 @@ module Adjoint =
   end
 
 (* Let C code know about some of the values in this module.  *)
-external c_init_module : exn array -> unit =
+type fcn = Fcn : 'a -> fcn
+external c_init_module : fcn array -> exn array -> unit =
   "c_cvodes_init_module"
 
 let _ =
   c_init_module
+    (* Functions must be listed in the same order as
+       callback_index in cvodes_ml.c.  *)
+    [|Fcn call_quadrhsfn;
+      Fcn call_sensrhsfn1;
+
+      Fcn call_brhsfn;
+      Fcn call_bquadrhsfn;
+      Fcn call_bprecsetupfn;
+      Fcn call_bprecsolvefn;
+      Fcn call_bjactimesfn;
+      Fcn call_bjacfn;
+      Fcn call_bbandjacfn;
+    |]
+
     (* Exceptions must be listed in the same order as
        cvodes_exn_index.  *)
     [|Quadrature.QuadNotInitialized;

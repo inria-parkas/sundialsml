@@ -118,6 +118,28 @@ enum sundials_exn_index {
 	abort ();							\
     sundials_ml_register_exns (MODULE ## _EXN_SET, exns) /* no semicolon */
 
+/* Callback functions are passed from OCaml to C by basically the same
+ * mechanism as exceptions, but since callbacks are very frequently
+ * accessed, we register them each as a separate generational global
+ * root.
+ *
+ * Each module defines a file-local variable named callbacks, of type
+ * value[num_callbacks], and an enum type for indexing this array with
+ * prefix IX_.
+ */
+#define REGISTER_CALLBACKS(cbs)						\
+    if (Wosize_val (cbs) != NUM_CALLBACKS)				\
+	abort ();							\
+    {									\
+	int _i;								\
+	for (_i = 0; _i < NUM_CALLBACKS; ++_i) {			\
+	    callbacks[_i] = Field (Field (cbs, _i), 0);			\
+	    caml_register_generational_global_root (&callbacks[_i]);	\
+	}								\
+    }
+
+#define CAML_FN(fcn) (callbacks[IX_ ## fcn])
+
 /* Generate trampolines needed for functions with >= 6 arguments.  */
 #define COMMA ,
 #define BYTE_STUB(fcn_name, extras)				\

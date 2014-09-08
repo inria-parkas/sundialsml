@@ -33,10 +33,6 @@ let call_bbbdcomm session t y yb =
       adjust_retcode session true (f t y) yb
   | _ -> assert false
 
-let _ =
-  Callback.register "c_cvodes_call_bbbdlocal"      call_bbbdlocal;
-  Callback.register "c_cvodes_call_bbbdcomm"       call_bbbdcomm
-
 type callbacks =
   {
     local_fn : float -> data -> data -> data -> unit;
@@ -114,3 +110,16 @@ let reinit bs mudq mldq dqrely =
 let get_work_space bs = Cvode_bbd.get_work_space (tosession bs)
 let get_num_gfn_evals bs = Cvode_bbd.get_num_gfn_evals (tosession bs)
 
+
+(* Let C code know about some of the values in this module.  *)
+type fcn = Fcn : 'a -> fcn
+external c_init_module : fcn array -> unit =
+  "c_cvodes_bbd_init_module"
+
+let _ =
+  c_init_module
+    (* Functions must be listed in the same order as
+       callback_index in cvodes_bbd_ml.c.  *)
+    [|Fcn call_bbbdlocal;
+      Fcn call_bbbdcomm;
+    |]

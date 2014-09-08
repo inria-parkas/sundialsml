@@ -141,23 +141,6 @@ let call_lsolve session b weight ycur fcur =
       adjust_retcode session true (f session b weight ycur) fcur
   | _ -> assert false
 
-let _ =
-  Callback.register "c_cvode_call_rhsfn"         call_rhsfn;
-
-  Callback.register "c_cvode_call_errh"          call_errh;
-  Callback.register "c_cvode_call_errw"          call_errw;
-
-  Callback.register "c_cvode_call_jacfn"         call_jacfn;
-  Callback.register "c_cvode_call_bandjacfn"     call_bandjacfn;
-
-  Callback.register "c_cvode_call_precsolvefn"   call_precsolvefn;
-  Callback.register "c_cvode_call_precsetupfn"   call_precsetupfn;
-  Callback.register "c_cvode_call_jactimesfn"    call_jactimesfn;
-
-  Callback.register "c_cvode_call_linit"         call_linit;
-  Callback.register "c_cvode_call_lsetup"        call_lsetup;
-  Callback.register "c_cvode_call_lsolve"        call_lsolve
-
 external session_finalize : ('a, 'kind) session -> unit
     = "c_cvode_session_finalize"
 
@@ -729,11 +712,29 @@ external get_num_g_evals                : ('a, 'k) session -> int
 
 
 (* Let C code know about some of the values in this module.  *)
-external c_init_module : exn array -> unit =
+type fcn = Fcn : 'a -> fcn
+external c_init_module : fcn array -> exn array -> unit =
   "c_cvode_init_module"
 
 let _ =
   c_init_module
+    (* Functions must be listed in the same order as
+       callback_index in cvode_ml.c.  *)
+    [|Fcn call_rhsfn;
+      Fcn call_errw;
+      Fcn call_errh;
+      Fcn call_jacfn;
+      Fcn call_bandjacfn;
+
+      Fcn call_precsolvefn;
+      Fcn call_precsetupfn;
+      Fcn call_jactimesfn;
+
+      Fcn call_linit;
+      Fcn call_lsetup;
+      Fcn call_lsolve;
+    |]
+
     (* Exceptions must be listed in the same order as
        cvode_exn_index.  *)
     [|IllInput;
