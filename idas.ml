@@ -129,14 +129,6 @@ module Quadrature =
     exception FirstQuadRhsFuncErr
     exception RepeatedQuadRhsFuncErr
 
-    let _ = List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
-      [
-        ("ida_QuadNotInitialized",           QuadNotInitialized);
-        ("ida_QuadRhsFuncFailure",           QuadRhsFuncFailure);
-        ("ida_FirstQuadRhsFuncErr",          FirstQuadRhsFuncErr);
-        ("ida_RepeatedQuadRhsFuncErr",       RepeatedQuadRhsFuncErr);
-      ]
-
     let fwdsensext s =
       match s.sensext with
       | FwdSensExt se -> se
@@ -239,15 +231,6 @@ module Sensitivity =
     exception FirstSensResFuncErr
     exception RepeatedSensResFuncErr
     exception BadIS
-
-    let _ = List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
-      [
-        ("ida_SensNotInitialized",           SensNotInitialized);
-        ("ida_SensResFuncFailure",           SensResFuncFailure);
-        ("ida_FirstSensResFuncErr",          FirstSensResFuncErr);
-        ("ida_RepeatedSensRheFuncErr",       RepeatedSensResFuncErr);
-        ("ida_BadIS",                        BadIS);
-      ]
 
     let fwdsensext s =
       match s.sensext with
@@ -447,14 +430,6 @@ module Sensitivity =
       exception FirstQuadSensRhsFuncErr
       exception RepeatedQuadSensRhsFuncErr
 
-      let _ = List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
-          [
-            ("ida_QuadSensNotInitialized",     QuadSensNotInitialized);
-            ("ida_QuadSensRhsFuncFailure",     QuadSensRhsFuncFailure);
-            ("ida_FirstQuadSensRhsFuncErr",    FirstQuadSensRhsFuncErr);
-            ("ida_RepeatedQuadSensRhsFuncErr", RepeatedQuadSensRhsFuncErr);
-          ]
-
       type 'a quadsensrhsfn =
         float          (* t *)
         -> 'a          (* y *)
@@ -589,17 +564,6 @@ module Adjoint =
 
     type ('a, 'k) bsession = ('a, 'k) Ida_impl.bsession
     type serial_bsession = (real_array, Nvector_serial.kind) bsession
-
-    let _ = List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
-      [
-        ("ida_AdjointNotInitialized",         AdjointNotInitialized);
-        ("ida_NoForwardCall",                 NoForwardCall);
-        ("ida_ForwardReinitializationFailed", ForwardReinitializationFailed);
-        ("ida_ForwardFailed",                 ForwardFailed);
-        ("ida_NoBackwardProblem",             NoBackwardProblem);
-        ("ida_BadFinalTime",                  BadFinalTime);
-        ("ida_BadOutputTime",                 BadOutputTime);
-      ]
 
     let parent_and_which s =
       match (tosession s).sensext with
@@ -1173,3 +1137,36 @@ module Adjoint =
       end
   end
 
+
+(* Let C code know about some of the values in this module.  *)
+external c_init_module : exn array -> unit =
+  "c_idas_init_module"
+
+let _ =
+  c_init_module
+    (* Exceptions must be listed in the same order as
+       idas_exn_index.  *)
+    [|Quadrature.QuadNotInitialized;
+      Quadrature.QuadRhsFuncFailure;
+      Quadrature.FirstQuadRhsFuncErr;
+      Quadrature.RepeatedQuadRhsFuncErr;
+
+      Sensitivity.SensNotInitialized;
+      Sensitivity.SensResFuncFailure;
+      Sensitivity.FirstSensResFuncErr;
+      Sensitivity.RepeatedSensResFuncErr;
+      Sensitivity.BadIS;
+
+      Sensitivity.Quadrature.QuadSensNotInitialized;
+      Sensitivity.Quadrature.QuadSensRhsFuncFailure;
+      Sensitivity.Quadrature.FirstQuadSensRhsFuncErr;
+      Sensitivity.Quadrature.RepeatedQuadSensRhsFuncErr;
+
+      Adjoint.AdjointNotInitialized;
+      Adjoint.NoForwardCall;
+      Adjoint.ForwardReinitializationFailed;
+      Adjoint.ForwardFailed;
+      Adjoint.NoBackwardProblem;
+      Adjoint.BadFinalTime;
+      Adjoint.BadOutputTime;
+    |]

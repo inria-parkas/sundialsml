@@ -10,6 +10,7 @@
  *                                                                     *
  ***********************************************************************/
 
+#include "sundials_ml.h"
 #include "nvector_ml.h"
 #include "nvector_parallel_ml.h"
 
@@ -27,6 +28,14 @@
 #define Comm_val(comm) (*((MPI_Comm *) &Field(comm, 1)))
 
 /** Parallel nvectors * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+CAMLprim value c_nvector_parallel_init_module (value exns)
+{
+    CAMLparam1 (exns);
+    REGISTER_EXNS (NVECTOR_PARALLEL, exns);
+    CAMLreturn (Val_unit);
+}
+
 
 /* Adapted from sundials-2.5.0/src/nvec_par/nvector_parallel.c:
    N_VCloneEmpty_Parallel */
@@ -88,8 +97,7 @@ CAMLprim value ml_nvec_wrap_parallel(value payload)
     n = local_length;
     MPI_Allreduce(&n, &nsum, 1, PVEC_INTEGER_MPI_TYPE, MPI_SUM, comm);
     if (nsum != global_length)
-        caml_raise_constant(
-	    *caml_named_value("nvector_parallel_IncorrectGlobalSize"));
+        caml_raise_constant(NVECTOR_PARALLEL_EXN (IncorrectGlobalSize));
 
     /* Create vector */
     nv = alloc_cnvec(sizeof(struct _N_VectorContent_Parallel), payload);

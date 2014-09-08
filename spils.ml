@@ -32,19 +32,6 @@ exception PSetFailure of bool
 exception GSFailure
 exception QRSolFailure
 
-let _ =
-  List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
-  [
-    ("spils_MemoryRequestFailure",      MemoryRequestFailure);
-    ("spils_ConvFailure",               ConvFailure);
-    ("spils_QRfactFailure",             QRfactFailure);
-    ("spils_PSolveFailure",             PSolveFailure false);
-    ("spils_ATimesFailure",             ATimesFailure false);
-    ("spils_PSetFailure",               PSetFailure false);
-    ("spils_GSFailure",                 GSFailure);
-    ("spils_QRSolFailure",              QRSolFailure);
-  ]
-
 external qr_fact : int
                    -> Sundials.RealArray2.t
                    -> Sundials.RealArray.t
@@ -64,12 +51,6 @@ type ('a, 'k) nvector = ('a, 'k) Sundials.nvector
 type 'a atimes = 'a -> 'a -> unit
 
 type 'a psolve = 'a -> 'a -> bool -> unit
-
-let _ =
-  List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
-  [
-    ("c_spils_RecoverableFailure", Sundials.RecoverableFailure);
-  ]
 
 external modified_gs : (('a, 'k) nvector) array
                        -> Sundials.RealArray2.t
@@ -162,3 +143,20 @@ module SPTFQMR =
 
  end
 
+(* Let C code know about some of the values in this module.  *)
+external c_init_module : exn array -> unit =
+  "c_spils_init_module"
+
+let _ =
+  c_init_module
+    (* Exceptions must be listed in the same order as
+       spils_exn_index.  *)
+    [|MemoryRequestFailure;
+      ConvFailure;
+      QRfactFailure;
+      PSolveFailure false;
+      ATimesFailure false;
+      PSetFailure false;
+      GSFailure;
+      QRSolFailure;
+    |]

@@ -5,9 +5,6 @@ type t = (data, kind) Sundials.nvector
 
 exception IncorrectGlobalSize
 
-let _ = Callback.register_exception
-          "nvector_parallel_IncorrectGlobalSize" IncorrectGlobalSize
-
 external wrap : (Sundials.RealArray.t * int * Mpi.communicator) -> t
   = "ml_nvec_wrap_parallel"
 
@@ -510,3 +507,13 @@ module DataOps =
       done
   end
 
+
+(* Let C code know about some of the values in this module.  *)
+external c_init_module : exn array -> unit =
+  "c_nvector_parallel_init_module"
+
+let _ =
+  c_init_module
+    (* Exceptions must be listed in the same order as
+       idas_exn_index.  *)
+    [|IncorrectGlobalSize|]

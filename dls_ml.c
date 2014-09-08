@@ -30,6 +30,14 @@
 #include "sundials_ml.h"
 #include "dls_ml.h"
 
+CAMLprim value c_dls_init_module (value exns)
+{
+    CAMLparam1 (exns);
+    REGISTER_EXNS (DLS, exns);
+    CAMLreturn (Val_unit);
+}
+
+
 /* Dense matrix functions */
 
 static void finalize_dlsmat(value va)
@@ -112,7 +120,7 @@ CAMLprim value c_densematrix_getrf(value va, value vp)
     int r = DenseGETRF(DLSMAT(va), LONG_ARRAY(vp));
 
     if (r != 0) {
-	caml_raise_with_arg(*caml_named_value("dls_ZeroDiagonalElement"),
+	caml_raise_with_arg(DLS_EXN(ZeroDiagonalElement),
 			    Val_int(r));
     }
     CAMLreturn (Val_unit);
@@ -241,7 +249,7 @@ CAMLprim value c_arraydensematrix_getrf(value va, value vp)
     int r = denseGETRF(ARRAY2_ACOLS(va), m, n, LONG_ARRAY(vp));
 
     if (r != 0) {
-	caml_raise_with_arg(*caml_named_value("dls_ZeroDiagonalElement"),
+	caml_raise_with_arg(DLS_EXN(ZeroDiagonalElement),
 			    Val_int(r));
     }
     CAMLreturn (Val_unit);

@@ -67,30 +67,6 @@ type integrator_stats = {
 
 exception StopTimeReached
 
-let _ =
-  List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
-  [
-    ("cvode_StopTimeReached",         StopTimeReached);
-    ("cvode_IllInput",                IllInput);
-    ("cvode_TooClose",                TooClose);
-    ("cvode_TooMuchWork",             TooMuchWork);
-    ("cvode_TooMuchAccuracy",         TooMuchAccuracy);
-    ("cvode_ErrFailure",              ErrFailure);
-    ("cvode_ConvergenceFailure",      ConvergenceFailure);
-    ("cvode_LinearInitFailure",       LinearInitFailure);
-    ("cvode_LinearSetupFailure",      LinearSetupFailure);
-    ("cvode_LinearSolveFailure",      LinearSolveFailure);
-    ("cvode_RhsFuncFailure",          RhsFuncFailure);
-    ("cvode_FirstRhsFuncErr",         FirstRhsFuncErr);
-    ("cvode_RepeatedRhsFuncErr",      RepeatedRhsFuncErr);
-    ("cvode_UnrecoverableRhsFuncErr", UnrecoverableRhsFuncErr);
-    ("cvode_RootFuncFailure",         RootFuncFailure);
-
-    ("cvode_BadK",                    BadK);
-    ("cvode_BadT",                    BadT);
-    ("cvode_BadDky",                  BadDky);
-  ]
-
 let call_rhsfn session t y y' =
   let session = read_weak_ref session in
   adjust_retcode session true (session.rhsfn t y) y'
@@ -751,3 +727,30 @@ external get_nonlin_solv_stats          : ('a, 'k) session -> int * int
 external get_num_g_evals                : ('a, 'k) session -> int
     = "c_cvode_get_num_g_evals"
 
+
+(* Let C code know about some of the values in this module.  *)
+external c_init_module : exn array -> unit =
+  "c_cvode_init_module"
+
+let _ =
+  c_init_module
+    (* Exceptions must be listed in the same order as
+       cvode_exn_index.  *)
+    [|IllInput;
+      TooClose;
+      TooMuchWork;
+      TooMuchAccuracy;
+      ErrFailure;
+      ConvergenceFailure;
+      LinearInitFailure;
+      LinearSetupFailure;
+      LinearSolveFailure;
+      RhsFuncFailure;
+      FirstRhsFuncErr;
+      RepeatedRhsFuncErr;
+      UnrecoverableRhsFuncErr;
+      RootFuncFailure;
+      BadK;
+      BadT;
+      BadDky;
+    |]

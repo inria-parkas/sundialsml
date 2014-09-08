@@ -25,25 +25,6 @@ exception SystemFunctionFailure          (* KIN_SYSFUNC_FAIL *)
 exception FirstSystemFunctionFailure     (* KIN_FIRST_SYSFUNC_FAIL *)
 exception RepeatedSystemFunctionFailure  (* KIN_REPTD_SYSFUNC_ERR *)
 
-let _ =
-  List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
-  [
-
-    ("kinsol_IllInput",                       IllInput);
-    ("kinsol_LineSearchNonConvergence",       LineSearchNonConvergence);
-    ("kinsol_MaxIterationsReached",           MaxIterationsReached);
-    ("kinsol_MaxNewtonStepExceeded",          MaxNewtonStepExceeded);
-    ("kinsol_LineSearchBetaConditionFailure", LineSearchBetaConditionFailure);
-    ("kinsol_LinearSolverNoRecovery",         LinearSolverNoRecovery);
-    ("kinsol_LinearSolverInitFailure",        LinearSolverInitFailure);
-    ("kinsol_LinearSetupFailure",             LinearSetupFailure);
-    ("kinsol_LinearSolverFailure",            LinearSolverFailure);
-    ("kinsol_SystemFunctionFailure",          SystemFunctionFailure);
-    ("kinsol_FirstSystemFunctionFailure",     FirstSystemFunctionFailure);
-    ("kinsol_RepeatedSystemFunctionFailure",  RepeatedSystemFunctionFailure);
-  ]
-
-
 type print_level =
   | NoInformation     (* 0 *)
   | ShowScaledNorms   (* 1 *)
@@ -599,3 +580,26 @@ external solve : ('a, 'k) session -> ('a, 'k) nvector -> bool -> ('a, 'k) nvecto
                   -> ('a, 'k) nvector -> result
     = "c_kinsol_solve"
 
+
+(* Let C code know about some of the values in this module.  *)
+external c_init_module : exn array -> unit =
+  "c_kinsol_init_module"
+
+let _ =
+  c_init_module
+    (* Exceptions must be listed in the same order as
+       kinsol_exn_index.  *)
+    [|
+      IllInput;
+      LineSearchNonConvergence;
+      MaxIterationsReached;
+      MaxNewtonStepExceeded;
+      LineSearchBetaConditionFailure;
+      LinearSolverNoRecovery;
+      LinearSolverInitFailure;
+      LinearSetupFailure;
+      LinearSolverFailure;
+      SystemFunctionFailure;
+      FirstSystemFunctionFailure;
+      RepeatedSystemFunctionFailure;
+    |]

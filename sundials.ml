@@ -10,19 +10,6 @@
 (*                                                                     *)
 (***********************************************************************)
 
-external c_blas_lapack_supported : unit -> bool
-  = "sundials_ml_blas_lapack_supported"
-
-let blas_lapack_supported = c_blas_lapack_supported ()
-
-external c_sundials_ml_register_weak_get
-  : ('a Weak.t -> int -> 'a option) -> unit
-  = "sundials_ml_register_weak_get"
-
-let _ =
-  (* Give Weak.get to C in case configure couldn't detect how to link to it. *)
-  c_sundials_ml_register_weak_get Weak.get
-
 let extra_precision = ref false
 
 let print_time (s1, s2) t =
@@ -34,16 +21,6 @@ external format_float : string -> float -> string
     = "caml_format_float"
 
 let floata = format_float "%a"
-
-external get_big_real : unit -> float
-    = "sundials_ml_big_real"
-
-let big_real = get_big_real ()
-
-external get_unit_roundoff : unit -> float
-    = "sundials_ml_unit_roundoff"
-
-let unit_roundoff = get_unit_roundoff ()
 
 exception RecoverableFailure
 exception NonPositiveEwt
@@ -532,3 +509,19 @@ type error_details = {
     function_name : string;
     error_message : string;
   }
+
+
+(* Let C code know about some of the values in this module, and obtain
+   a few parameters from the C side.  *)
+
+external c_init_module :
+  ('a Weak.t -> int -> 'a option)
+  -> exn array
+  -> (bool * float * float)
+  = "c_sundials_init_module"
+
+let blas_lapack_supported, big_real, unit_roundoff =
+  c_init_module Weak.get
+    (* Exceptions must be listed in the same order as
+       sundials_exn_index.  *)
+    [|RecoverableFailure; NonPositiveEwt|]

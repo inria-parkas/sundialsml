@@ -47,6 +47,13 @@
 #include "cvodes_ml.h"
 #include "nvector_ml.h"
 
+CAMLprim value c_cvodes_init_module (value exns)
+{
+    CAMLparam1 (exns);
+    REGISTER_EXNS (CVODES, exns);
+    CAMLreturn (Val_unit);
+}
+
 /* Interface with nvectors */
 
 CAMLprim value c_cvodes_alloc_nvector_array(value vn)
@@ -1371,133 +1378,133 @@ void cvodes_ml_check_flag(const char *call, int flag)
 
     switch (flag) {
 	case CV_TOO_MUCH_WORK:
-	    caml_raise_constant(*caml_named_value("cvode_TooMuchWork"));
+	    caml_raise_constant(CVODE_EXN(TooMuchWork));
 
 	case CV_TOO_MUCH_ACC:
-	    caml_raise_constant(*caml_named_value("cvode_TooMuchAccuracy"));
+	    caml_raise_constant(CVODE_EXN(TooMuchAccuracy));
 
 	case CV_ERR_FAILURE:
-	    caml_raise_constant(*caml_named_value("cvode_ErrFailure"));
+	    caml_raise_constant(CVODE_EXN(ErrFailure));
 
 	case CV_CONV_FAILURE:
-	    caml_raise_constant(*caml_named_value("cvode_ConvergenceFailure"));
+	    caml_raise_constant(CVODE_EXN(ConvergenceFailure));
 
 	/* * */
 
 	case CV_LINIT_FAIL:
-	    caml_raise_constant(*caml_named_value("cvode_LinearInitFailure"));
+	    caml_raise_constant(CVODE_EXN(LinearInitFailure));
 
 	case CV_LSETUP_FAIL:
-	    caml_raise_constant(*caml_named_value("cvode_LinearSetupFailure"));
+	    caml_raise_constant(CVODE_EXN(LinearSetupFailure));
 
 	case CV_LSOLVE_FAIL:
-	    caml_raise_constant(*caml_named_value("cvode_LinearSolveFailure"));
+	    caml_raise_constant(CVODE_EXN(LinearSolveFailure));
 
 	case CV_RHSFUNC_FAIL:
-	    caml_raise_constant(*caml_named_value("cvode_RhsFuncFailure"));
+	    caml_raise_constant(CVODE_EXN(RhsFuncFailure));
 
 	case CV_FIRST_RHSFUNC_ERR:
-	    caml_raise_constant(*caml_named_value("cvode_FirstRhsFuncErr"));
+	    caml_raise_constant(CVODE_EXN(FirstRhsFuncErr));
 
 	case CV_REPTD_RHSFUNC_ERR:
-	    caml_raise_constant(*caml_named_value("cvode_RepeatedRhsFuncErr"));
+	    caml_raise_constant(CVODE_EXN(RepeatedRhsFuncErr));
 
 	case CV_UNREC_RHSFUNC_ERR:
-	    caml_raise_constant(*caml_named_value("cvode_UnrecoverableRhsFuncErr"));
+	    caml_raise_constant(CVODE_EXN(UnrecoverableRhsFuncErr));
 
 	case CV_RTFUNC_FAIL:
-	    caml_raise_constant(*caml_named_value("cvode_RootFuncFailure"));
+	    caml_raise_constant(CVODE_EXN(RootFuncFailure));
 
 	/* * */
 
 	case CV_ILL_INPUT:
-	    caml_raise_constant(*caml_named_value("cvode_IllInput"));
+	    caml_raise_constant(CVODE_EXN(IllInput));
 	
 	case CV_BAD_K:
-	    caml_raise_constant(*caml_named_value("cvode_BadK"));
+	    caml_raise_constant(CVODE_EXN(BadK));
 
 	case CV_BAD_T:
-	    caml_raise_constant(*caml_named_value("cvode_BadT"));
+	    caml_raise_constant(CVODE_EXN(BadT));
 
 	case CV_BAD_DKY:
-	    caml_raise_constant(*caml_named_value("cvode_BadDky"));
+	    caml_raise_constant(CVODE_EXN(BadDky));
 
 	case CV_TOO_CLOSE:
-	    caml_raise_constant(*caml_named_value("cvode_TooClose"));
+	    caml_raise_constant(CVODE_EXN(TooClose));
 
 	/* Quadrature */
 
         case CV_NO_QUAD:
-	    caml_raise_constant(*caml_named_value("cvodes_QuadNotInitialized"));
+	    caml_raise_constant(CVODES_EXN(QuadNotInitialized));
 
         case CV_QRHSFUNC_FAIL:
-	    caml_raise_constant(*caml_named_value("cvodes_QuadRhsFuncFailure"));
+	    caml_raise_constant(CVODES_EXN(QuadRhsFuncFailure));
 
         case CV_FIRST_QRHSFUNC_ERR:
-	    caml_raise_constant(*caml_named_value("cvodes_FirstQuadRhsFuncErr"));
+	    caml_raise_constant(CVODES_EXN(FirstQuadRhsFuncErr));
 
         case CV_REPTD_QRHSFUNC_ERR:
-	    caml_raise_constant(*caml_named_value("cvodes_RepeatedQuadRhsFuncErr"));
+	    caml_raise_constant(CVODES_EXN(RepeatedQuadRhsFuncErr));
 
         case CV_UNREC_QRHSFUNC_ERR:
-	    caml_raise_constant(*caml_named_value("cvodes_UnrecoverableQuadRhsFuncErr"));
+	    caml_raise_constant(CVODES_EXN(UnrecoverableQuadRhsFuncErr));
 
 	/* Sensitivity */
 
         case CV_NO_SENS:
-	    caml_raise_constant(*caml_named_value("cvodes_SensNotInitialized"));
+	    caml_raise_constant(CVODES_EXN(SensNotInitialized));
 
         case CV_SRHSFUNC_FAIL:
-	    caml_raise_constant(*caml_named_value("cvodes_SensRhsFuncFailure"));
+	    caml_raise_constant(CVODES_EXN(SensRhsFuncFailure));
 
         case CV_FIRST_SRHSFUNC_ERR:
-	    caml_raise_constant(*caml_named_value("cvodes_FirstSensRhsFuncErr"));
+	    caml_raise_constant(CVODES_EXN(FirstSensRhsFuncErr));
 
         case CV_REPTD_SRHSFUNC_ERR:
-	    caml_raise_constant(*caml_named_value("cvodes_RepeatedSensRhsFuncErr"));
+	    caml_raise_constant(CVODES_EXN(RepeatedSensRhsFuncErr));
 
         case CV_UNREC_SRHSFUNC_ERR:
-	    caml_raise_constant(*caml_named_value("cvodes_UnrecoverableSensRhsFuncErr"));
+	    caml_raise_constant(CVODES_EXN(UnrecoverableSensRhsFuncErr));
 
         case CV_BAD_IS:
-	    caml_raise_constant(*caml_named_value("cvodes_BadIS"));
+	    caml_raise_constant(CVODES_EXN(BadIS));
 
 	/* Sensitivity > Quadrature */
 
         case CV_NO_QUADSENS:
-	    caml_raise_constant(*caml_named_value("cvodes_QuadSensNotInitialized"));
+	    caml_raise_constant(CVODES_EXN(QuadSensNotInitialized));
 
         case CV_QSRHSFUNC_FAIL:
-	    caml_raise_constant(*caml_named_value("cvodes_QuadSensRhsFuncFailure"));
+	    caml_raise_constant(CVODES_EXN(QuadSensRhsFuncFailure));
 
         case CV_FIRST_QSRHSFUNC_ERR:
-	    caml_raise_constant(*caml_named_value("cvodes_FirstQuadSensRhsFuncErr"));
+	    caml_raise_constant(CVODES_EXN(FirstQuadSensRhsFuncErr));
 
         case CV_REPTD_QSRHSFUNC_ERR:
-	    caml_raise_constant(*caml_named_value("cvodes_RepeatedQuadSensRhsFuncErr"));
+	    caml_raise_constant(CVODES_EXN(RepeatedQuadSensRhsFuncErr));
 
         case CV_UNREC_QSRHSFUNC_ERR:
-	    caml_raise_constant(*caml_named_value("cvodes_UnrecoverableQuadSensRhsFuncErr"));
+	    caml_raise_constant(CVODES_EXN(UnrecoverableQuadSensRhsFuncErr));
 
 	/* Adjoint */
 
         case CV_NO_ADJ:
-	    caml_raise_constant(*caml_named_value("cvodes_AdjointNotInitialized"));
+	    caml_raise_constant(CVODES_EXN(AdjointNotInitialized));
 
         case CV_NO_FWD:
-	    caml_raise_constant(*caml_named_value("cvodes_NoForwardCall"));
+	    caml_raise_constant(CVODES_EXN(NoForwardCall));
 
         case CV_NO_BCK:
-	    caml_raise_constant(*caml_named_value("cvodes_NoBackwardProblem"));
+	    caml_raise_constant(CVODES_EXN(NoBackwardProblem));
 
         case CV_BAD_TB0:
-	    caml_raise_constant(*caml_named_value("cvodes_BadFinalTime"));
+	    caml_raise_constant(CVODES_EXN(BadFinalTime));
 
         case CV_REIFWD_FAIL:
-	    caml_raise_constant(*caml_named_value("cvodes_ForwardReinitializationFailed"));
+	    caml_raise_constant(CVODES_EXN(ForwardReinitializationFailed));
 
         case CV_FWD_FAIL:
-	    caml_raise_constant(*caml_named_value("cvodes_ForwardFailed"));
+	    caml_raise_constant(CVODES_EXN(ForwardFailed));
 
 	default:
 	    /* e.g. CVDIAG_MEM_NULL, CVDIAG_ILL_INPUT, CVDIAG_MEM_FAIL */

@@ -67,6 +67,56 @@ enum sundials_error_details_index {
   RECORD_SUNDIALS_ERROR_DETAILS_SIZE /* This has to come last. */
 };
 
+/* Exceptions are registered in one global variable,
+   sundials_ml_exn_table.  This variable conceptually has the type
+   type sundials_ml_exn_table =
+     {
+       sundials : exn array;
+       cvode : exn array;
+       cvodes : exn array;
+       ...
+     }
+   and each field holds the exceptions used in each module.  The fields
+   are all initialized to 0 by sundials_ml.c and then populated on a need-
+   basis by the initialization code of each module.
+
+   Note: C standard doesn't say 0 == (long)NULL, but this is a common
+   assumption and is adopted by OCaml's runtime.  See e.g. caml_alloc.
+ */
+extern value sundials_ml_exn_table;
+
+enum sundials_exn_set_index {
+    SUNDIALS_EXN_SET = 0,
+    CVODE_EXN_SET,
+    CVODES_EXN_SET,
+    IDA_EXN_SET,
+    IDAS_EXN_SET,
+    KINSOL_EXN_SET,
+    DLS_EXN_SET,
+    SPILS_EXN_SET,
+    NVECTOR_PARALLEL_EXN_SET,
+    SUNDIALS_NUM_EXN_SETS
+};
+
+/* Set a field in sundials_ml_exn_table */
+void sundials_ml_register_exns (enum sundials_exn_set_index index, value exns);
+
+/* This enum must list exceptions in the same order as the call to
+ * c_register_exns in sundials.ml.  */
+enum sundials_exn_index {
+  SUNDIALS_EXN_RecoverableFailure = 0,
+  SUNDIALS_EXN_NonPositiveEwt,
+  SUNDIALS_EXN_SET_SIZE
+};
+
+#define SUNDIALS_EXN(name) (Field (Field (sundials_ml_exn_table,	\
+					  SUNDIALS_EXN_SET),		\
+				   SUNDIALS_EXN_ ## name))
+
+#define REGISTER_EXNS(MODULE, exns)					\
+    if (Wosize_val (exns) != MODULE ## _EXN_SET_SIZE)			\
+	abort ();							\
+    sundials_ml_register_exns (MODULE ## _EXN_SET, exns) /* no semicolon */
 
 /* Generate trampolines needed for functions with >= 6 arguments.  */
 #define COMMA ,

@@ -163,6 +163,39 @@ enum ida_bandwidths_index {
   RECORD_IDA_BANDWIDTHS_SIZE
 };
 
+/* This enum must list exceptions in the same order as the call to
+ * c_register_exns in ida.ml.  */
+enum ida_exn_index {
+    IDA_EXN_IllInput = 0,
+    IDA_EXN_TooClose,
+    IDA_EXN_TooMuchWork,
+    IDA_EXN_TooMuchAccuracy,
+    IDA_EXN_ErrFailure,
+    IDA_EXN_ConvergenceFailure,
+    IDA_EXN_LinearInitFailure,
+    IDA_EXN_LinearSetupFailure,
+    IDA_EXN_LinearSolveFailure,
+    IDA_EXN_ResFuncFailure,
+    IDA_EXN_FirstResFuncFailure,
+    IDA_EXN_RepeatedResFuncErr,
+    IDA_EXN_RootFuncFailure,
+    IDA_EXN_ConstraintFailure,
+
+    IDA_EXN_LinesearchFailure,
+    IDA_EXN_NoRecovery,
+    IDA_EXN_BadEwt,
+
+    IDA_EXN_BadK,
+    IDA_EXN_BadT,
+    IDA_EXN_BadDky,
+    IDA_EXN_SET_SIZE,
+};
+
+#define IDA_EXN(name) (Field (Field (sundials_ml_exn_table,	\
+				     IDA_EXN_SET),		\
+			      IDA_EXN_ ## name))
+
+
 #define IDATYPE(fname) c_ida_ ## fname
 #define DOQUOTE(text) #text
 #define QUOTE(val) DOQUOTE(val)

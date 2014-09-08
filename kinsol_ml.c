@@ -44,6 +44,14 @@
 #include <stdio.h>
 #define MAX_ERRMSG_LEN 256
 
+CAMLprim value c_kinsol_init_module (value exns)
+{
+    CAMLparam1 (exns);
+    REGISTER_EXNS (KINSOL, exns);
+    CAMLreturn (Val_unit);
+}
+
+
 static void errh(
 	int error_code,
 	const char *module,
@@ -735,45 +743,40 @@ void kinsol_ml_check_flag(const char *call, int flag)
 	caml_raise_out_of_memory();
 
     case KIN_ILL_INPUT:
-        caml_raise_constant(*caml_named_value("kinsol_IllInput"));
+        caml_raise_constant(KINSOL_EXN(IllInput));
 
     case KIN_LINESEARCH_NONCONV:
-        caml_raise_constant(*caml_named_value(
-		    "kinsol_LineSearchNonConvergence"));
+        caml_raise_constant(KINSOL_EXN(LineSearchNonConvergence));
 
     case KIN_MAXITER_REACHED:
-        caml_raise_constant(*caml_named_value("kinsol_MaxIterationsReached"));
+        caml_raise_constant(KINSOL_EXN(MaxIterationsReached));
 
     case KIN_MXNEWT_5X_EXCEEDED:
-        caml_raise_constant(*caml_named_value("kinsol_MaxNewtonStepExceeded"));
+        caml_raise_constant(KINSOL_EXN(MaxNewtonStepExceeded));
 
     case KIN_LINESEARCH_BCFAIL:
-        caml_raise_constant(*caml_named_value(
-		    "kinsol_LineSearchBetaConditionFailure"));
+        caml_raise_constant(KINSOL_EXN(LineSearchBetaConditionFailure));
 
     case KIN_LINSOLV_NO_RECOVERY:
-        caml_raise_constant(*caml_named_value("kinsol_LinearSolverNoRecovery"));
+        caml_raise_constant(KINSOL_EXN(LinearSolverNoRecovery));
 
     case KIN_LINIT_FAIL:
-        caml_raise_constant(*caml_named_value(
-		    "kinsol_LinearSolverInitFailure"));
+        caml_raise_constant(KINSOL_EXN(LinearSolverInitFailure));
 
     case KIN_LSETUP_FAIL:
-        caml_raise_constant(*caml_named_value("kinsol_LinearSetupFailure"));
+        caml_raise_constant(KINSOL_EXN(LinearSetupFailure));
 
     case KIN_LSOLVE_FAIL:
-        caml_raise_constant(*caml_named_value("kinsol_LinearSolverFailure"));
+        caml_raise_constant(KINSOL_EXN(LinearSolverFailure));
 
     case KIN_SYSFUNC_FAIL:
-        caml_raise_constant(*caml_named_value("kinsol_SystemFunctionFailure"));
+        caml_raise_constant(KINSOL_EXN(SystemFunctionFailure));
 
     case KIN_FIRST_SYSFUNC_ERR:
-        caml_raise_constant(*caml_named_value(
-		    "kinsol_FirstSystemFunctionFailure"));
+        caml_raise_constant(KINSOL_EXN(FirstSystemFunctionFailure));
 
     case KIN_REPTD_SYSFUNC_ERR:
-        caml_raise_constant(*caml_named_value(
-		    "kinsol_RepeatedSystemFunctionFailure"));
+        caml_raise_constant(KINSOL_EXN(RepeatedSystemFunctionFailure));
 
     default:
 	/* KIN_MEM_NULL, KIN_NO_MALLOC */

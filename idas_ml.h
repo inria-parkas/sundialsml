@@ -159,6 +159,40 @@ enum idas_adj_solve_arg_index {
     RECORD_IDAS_ADJ_SPILS_SOLVE_ARG_SIZE
 };
 
+/* This enum must list exceptions in the same order as the call to
+ * c_register_exns in idas.ml.  */
+enum idas_exn_index {
+    IDAS_EXN_QuadNotInitialized = 0,
+    IDAS_EXN_QuadRhsFuncFailure,
+    IDAS_EXN_FirstQuadRhsFuncErr,
+    IDAS_EXN_RepeatedQuadRhsFuncErr,
+
+    IDAS_EXN_SensNotInitialized,
+    IDAS_EXN_SensResFuncFailure,
+    IDAS_EXN_FirstSensResFuncErr,
+    IDAS_EXN_RepeatedSensResFuncErr,
+    IDAS_EXN_BadIS,
+
+    IDAS_EXN_QuadSensNotInitialized,
+    IDAS_EXN_QuadSensRhsFuncFailure,
+    IDAS_EXN_FirstQuadSensRhsFuncErr,
+    IDAS_EXN_RepeatedQuadSensRhsFuncErr,
+
+    IDAS_EXN_AdjointNotInitialized,
+    IDAS_EXN_NoForwardCall,
+    IDAS_EXN_ForwardReinitializationFailed,
+    IDAS_EXN_ForwardFailed,
+    IDAS_EXN_NoBackwardProblem,
+    IDAS_EXN_BadFinalTime,
+    IDAS_EXN_BadOutputTime,
+    IDAS_EXN_SET_SIZE,
+};
+
+#define IDAS_EXN(name) (Field (Field (sundials_ml_exn_table,	\
+				      IDAS_EXN_SET),		\
+			       IDAS_EXN_ ## name))
+
+
 #undef IDATYPE
 #undef DOQUOTE
 #undef QUOTE

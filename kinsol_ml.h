@@ -113,6 +113,29 @@ enum kinsol_bandblock_bandwidths_index {
   RECORD_KINSOL_BANDBLOCK_BANDWIDTHS_SIZE
 };
 
+/* This enum must list exceptions in the same order as the call to
+ * c_register_exns in kinsol.ml.  */
+enum kinsol_exn_index {
+    KINSOL_EXN_IllInput = 0,
+    KINSOL_EXN_LineSearchNonConvergence,
+    KINSOL_EXN_MaxIterationsReached,
+    KINSOL_EXN_MaxNewtonStepExceeded,
+    KINSOL_EXN_LineSearchBetaConditionFailure,
+    KINSOL_EXN_LinearSolverNoRecovery,
+    KINSOL_EXN_LinearSolverInitFailure,
+    KINSOL_EXN_LinearSetupFailure,
+    KINSOL_EXN_LinearSolverFailure,
+    KINSOL_EXN_SystemFunctionFailure,
+    KINSOL_EXN_FirstSystemFunctionFailure,
+    KINSOL_EXN_RepeatedSystemFunctionFailure,
+    KINSOL_EXN_SET_SIZE,
+};
+
+#define KINSOL_EXN(name) (Field (Field (sundials_ml_exn_table,	\
+					KINSOL_EXN_SET),	\
+				 KINSOL_EXN_ ## name))
+
+
 /* Callbacks */
 #define TYPE(fname) c_kinsol_ ## fname
 #define DOQUOTE(text) #text

@@ -76,6 +76,16 @@
 
 #endif
 
+
+CAMLprim value c_ida_init_module (value exns)
+{
+    CAMLparam1 (exns);
+    REGISTER_EXNS (IDA, exns);
+    CAMLreturn (Val_unit);
+}
+
+/* callbacks */
+
 static void errh(
 	int error_code,
 	const char *module,
@@ -244,17 +254,11 @@ static int check_exception(value session, value r)
     CAMLparam2(session, r);
     CAMLlocal1(exn);
 
-    static value *recoverable_failure = NULL;
-    if (recoverable_failure == NULL) {
-	recoverable_failure =
-	    caml_named_value("ida_RecoverableFailure");
-    }
-
     if (!Is_exception_result(r)) return 0;
 
     r = Extract_exception(r);
 
-    if (Field(r, 0) == *recoverable_failure)
+    if (Field(r, 0) == SUNDIALS_EXN (RecoverableFailure))
 	CAMLreturnT (int, 1);
 
     /* Unrecoverable error.  Save the exception and return -1.  */
@@ -1008,55 +1012,55 @@ void ida_ml_check_flag(const char *call, int flag)
 
     switch (flag) {
     case IDA_ILL_INPUT:
-	caml_raise_constant(*caml_named_value("ida_IllInput"));
+	caml_raise_constant(IDA_EXN(IllInput));
 
     case IDA_CONV_FAIL:
-	caml_raise_constant(*caml_named_value("ida_ConvergenceFailure"));
+	caml_raise_constant(IDA_EXN(ConvergenceFailure));
 
     case IDA_TOO_MUCH_WORK:
-	caml_raise_constant(*caml_named_value("ida_TooMuchWork"));
+	caml_raise_constant(IDA_EXN(TooMuchWork));
 
     case IDA_TOO_MUCH_ACC:
-	caml_raise_constant(*caml_named_value("ida_TooMuchAccuracy"));
+	caml_raise_constant(IDA_EXN(TooMuchAccuracy));
 
     case IDA_LINIT_FAIL:
-	caml_raise_constant(*caml_named_value("ida_LinearInitFailure"));
+	caml_raise_constant(IDA_EXN(LinearInitFailure));
 
     case IDA_LSETUP_FAIL:
-	caml_raise_constant(*caml_named_value("ida_LinearSetupFailure"));
+	caml_raise_constant(IDA_EXN(LinearSetupFailure));
 
     case IDA_LSOLVE_FAIL:
-	caml_raise_constant(*caml_named_value("ida_LinearSolveFailure"));
+	caml_raise_constant(IDA_EXN(LinearSolveFailure));
 
     case IDA_BAD_EWT:
-	caml_raise_constant(*caml_named_value("ida_BadEwt"));
+	caml_raise_constant(IDA_EXN(BadEwt));
 
     case IDA_NO_RECOVERY:
-	caml_raise_constant(*caml_named_value("ida_NoRecovery"));
+	caml_raise_constant(IDA_EXN(NoRecovery));
 
     case IDA_RES_FAIL:
-	caml_raise_constant(*caml_named_value("ida_ResFuncFailure"));
+	caml_raise_constant(IDA_EXN(ResFuncFailure));
 
     case IDA_FIRST_RES_FAIL:
-	caml_raise_constant(*caml_named_value("ida_FirstResFuncFailure"));
+	caml_raise_constant(IDA_EXN(FirstResFuncFailure));
 
     case IDA_REP_RES_ERR:
-	caml_raise_constant(*caml_named_value("ida_RepeatedResFuncErr"));
+	caml_raise_constant(IDA_EXN(RepeatedResFuncErr));
 
     case IDA_RTFUNC_FAIL:
-	caml_raise_constant(*caml_named_value("ida_RootFuncFailure"));
+	caml_raise_constant(IDA_EXN(RootFuncFailure));
 
     case IDA_CONSTR_FAIL:
-	caml_raise_constant(*caml_named_value("ida_ConstraintFailure"));
+	caml_raise_constant(IDA_EXN(ConstraintFailure));
 
     case IDA_BAD_K:
-	caml_raise_constant(*caml_named_value("ida_BadK"));
+	caml_raise_constant(IDA_EXN(BadK));
 
     case IDA_BAD_T:
-	caml_raise_constant(*caml_named_value("ida_BadT"));
+	caml_raise_constant(IDA_EXN(BadT));
 
     case IDA_BAD_DKY:
-	caml_raise_constant(*caml_named_value("ida_BadDky"));
+	caml_raise_constant(IDA_EXN(BadDky));
 
     default:
 	/* e.g. IDA_MEM_NULL, IDA_MEM_FAIL */

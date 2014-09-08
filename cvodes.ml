@@ -146,15 +146,6 @@ module Quadrature =
     exception RepeatedQuadRhsFuncErr
     exception UnrecoverableQuadRhsFuncErr
 
-    let _ = List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
-      [
-        ("cvodes_QuadNotInitialized",           QuadNotInitialized);
-        ("cvodes_QuadRhsFuncFailure",           QuadRhsFuncFailure);
-        ("cvodes_FirstQuadRhsFuncErr",          FirstQuadRhsFuncErr);
-        ("cvodes_RepeatedQuadRhsFuncErr",       RepeatedQuadRhsFuncErr);
-        ("cvodes_UnrecoverableQuadRhsFuncErr",  UnrecoverableQuadRhsFuncErr);
-      ]
-
     let fwdsensext s =
       match s.sensext with
       | FwdSensExt se -> se
@@ -257,16 +248,6 @@ module Sensitivity =
     exception RepeatedSensRhsFuncErr
     exception UnrecoverableSensRhsFuncErr
     exception BadIS
-
-    let _ = List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
-      [
-        ("cvodes_SensNotInitialized",           SensNotInitialized);
-        ("cvodes_SensRhsFuncFailure",           SensRhsFuncFailure);
-        ("cvodes_FirstSensRhsFuncErr",          FirstSensRhsFuncErr);
-        ("cvodes_RepeatedSensRhsFuncErr",       RepeatedSensRhsFuncErr);
-        ("cvodes_UnrecoverableSensRhsFuncErr",  UnrecoverableSensRhsFuncErr);
-        ("cvodes_BadIS",                        BadIS);
-      ]
 
     let fwdsensext s =
       match s.sensext with
@@ -453,16 +434,6 @@ module Sensitivity =
         exception RepeatedQuadSensRhsFuncErr
         exception UnrecoverableQuadSensRhsFuncErr
 
-        let _ = List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
-          [
-            ("cvodes_QuadSensNotInitialized",     QuadSensNotInitialized);
-            ("cvodes_QuadSensRhsFuncFailure",     QuadSensRhsFuncFailure);
-            ("cvodes_FirstQuadSensRhsFuncErr",    FirstQuadSensRhsFuncErr);
-            ("cvodes_RepeatedQuadSensRhsFuncErr", RepeatedQuadSensRhsFuncErr);
-            ("cvodes_UnrecoverableQuadSensRhsFuncErr",
-                                             UnrecoverableQuadSensRhsFuncErr);
-          ]
-
         type 'a quadsensrhsfn =
            float          (* t *)
            -> 'a          (* y *)
@@ -591,17 +562,6 @@ module Adjoint =
     exception NoBackwardProblem
     exception BadFinalTime
     exception BadOutputTime
-
-    let _ = List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
-      [
-        ("cvodes_AdjointNotInitialized",         AdjointNotInitialized);
-        ("cvodes_NoForwardCall",                 NoForwardCall);
-        ("cvodes_ForwardReinitializationFailed", ForwardReinitializationFailed);
-        ("cvodes_ForwardFailed",                 ForwardFailed);
-        ("cvodes_NoBackwardProblem",             NoBackwardProblem);
-        ("cvodes_BadFinalTime",                  BadFinalTime);
-        ("cvodes_BadOutputTime",                 BadOutputTime);
-      ]
 
     let optionally f = function
       | None -> ()
@@ -1199,3 +1159,38 @@ module Adjoint =
       end
   end
 
+(* Let C code know about some of the values in this module.  *)
+external c_init_module : exn array -> unit =
+  "c_cvodes_init_module"
+
+let _ =
+  c_init_module
+    (* Exceptions must be listed in the same order as
+       cvodes_exn_index.  *)
+    [|Quadrature.QuadNotInitialized;
+      Quadrature.QuadRhsFuncFailure;
+      Quadrature.FirstQuadRhsFuncErr;
+      Quadrature.RepeatedQuadRhsFuncErr;
+      Quadrature.UnrecoverableQuadRhsFuncErr;
+
+      Sensitivity.SensNotInitialized;
+      Sensitivity.SensRhsFuncFailure;
+      Sensitivity.FirstSensRhsFuncErr;
+      Sensitivity.RepeatedSensRhsFuncErr;
+      Sensitivity.UnrecoverableSensRhsFuncErr;
+      Sensitivity.BadIS;
+
+      Sensitivity.Quadrature.QuadSensNotInitialized;
+      Sensitivity.Quadrature.QuadSensRhsFuncFailure;
+      Sensitivity.Quadrature.FirstQuadSensRhsFuncErr;
+      Sensitivity.Quadrature.RepeatedQuadSensRhsFuncErr;
+      Sensitivity.Quadrature.UnrecoverableQuadSensRhsFuncErr;
+
+      Adjoint.AdjointNotInitialized;
+      Adjoint.NoForwardCall;
+      Adjoint.ForwardReinitializationFailed;
+      Adjoint.ForwardFailed;
+      Adjoint.NoBackwardProblem;
+      Adjoint.BadFinalTime;
+      Adjoint.BadOutputTime;
+    |]

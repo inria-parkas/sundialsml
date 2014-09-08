@@ -253,5 +253,32 @@ enum cvode_bandblock_bandwidths_index {
     if (name == NULL)					\
 	name = caml_named_value (TYPESTR (name)) /* no semicolon */
 
+/* This enum must list exceptions in the same order as the call to
+ * c_register_exns in cvode.ml.  */
+enum cvode_exn_index {
+    CVODE_EXN_IllInput = 0,
+    CVODE_EXN_TooClose,
+    CVODE_EXN_TooMuchWork,
+    CVODE_EXN_TooMuchAccuracy,
+    CVODE_EXN_ErrFailure,
+    CVODE_EXN_ConvergenceFailure,
+    CVODE_EXN_LinearInitFailure,
+    CVODE_EXN_LinearSetupFailure,
+    CVODE_EXN_LinearSolveFailure,
+    CVODE_EXN_RhsFuncFailure,
+    CVODE_EXN_FirstRhsFuncErr,
+    CVODE_EXN_RepeatedRhsFuncErr,
+    CVODE_EXN_UnrecoverableRhsFuncErr,
+    CVODE_EXN_RootFuncFailure,
+    CVODE_EXN_BadK,
+    CVODE_EXN_BadT,
+    CVODE_EXN_BadDky,
+    CVODE_EXN_SET_SIZE
+};
+
+#define CVODE_EXN(name) (Field (Field (sundials_ml_exn_table,	\
+				       CVODE_EXN_SET),		\
+				CVODE_EXN_ ## name))
+
 
 #endif

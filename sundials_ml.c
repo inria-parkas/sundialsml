@@ -26,24 +26,25 @@
 
 #include "sundials_ml.h"
 
-CAMLprim value sundials_ml_blas_lapack_supported (value unit)
-{
-    CAMLparam1(unit);
-    CAMLreturn(Val_bool (SUNDIALS_BLAS_LAPACK));
-}
+value sundials_ml_exn_table = 0;
 
-CAMLprim value sundials_ml_big_real(value unit)
+void sundials_ml_register_exns(enum sundials_exn_set_index index, value exns)
 {
-    CAMLparam1(unit);
-    CAMLreturn(caml_copy_double(BIG_REAL));
+    CAMLparam1 (exns);
+    CAMLlocal1 (r);
+    if (sundials_ml_exn_table == 0) {
+	int i;
+	r = caml_alloc_small (SUNDIALS_NUM_EXN_SETS, 0);
+        for (i = 0; i < SUNDIALS_NUM_EXN_SETS; ++i)
+	    Field (r, i) = 0;
+	Field (r, index) = exns;
+	sundials_ml_exn_table = r;
+	caml_register_generational_global_root (&sundials_ml_exn_table);
+    } else {
+	Store_field (sundials_ml_exn_table, index, exns);
+    }
+    CAMLnoreturn;
 }
-
-CAMLprim value sundials_ml_unit_roundoff(value unit)
-{
-    CAMLparam1(unit);
-    CAMLreturn(caml_copy_double(UNIT_ROUNDOFF));
-}
-
 
 /* Setting up access to Weak.get */
 
@@ -51,14 +52,20 @@ CAMLprim value sundials_ml_unit_roundoff(value unit)
 static value weak_get = 0;
 #endif
 
-CAMLprim value sundials_ml_register_weak_get (value vweak_get)
+CAMLprim value c_sundials_init_module (value vweak_get, value exns)
 {
-    CAMLparam1 (vweak_get);
+    CAMLparam2 (vweak_get, exns);
+    CAMLlocal1 (r);
+    REGISTER_EXNS (SUNDIALS, exns);
 #if !HAVE_WEAK
-    caml_register_generational_global_root (&weak_get);
     weak_get = vweak_get;
+    caml_register_generational_global_root (&weak_get);
 #endif
-    CAMLreturn (Val_unit);
+    r = caml_alloc_tuple (3);
+    Store_field (r, 0, Val_bool (SUNDIALS_BLAS_LAPACK));
+    Store_field (r, 1, caml_copy_double(BIG_REAL));
+    Store_field (r, 2, caml_copy_double(UNIT_ROUNDOFF));
+    CAMLreturn (r);
 }
 
 #if !HAVE_WEAK

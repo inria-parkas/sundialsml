@@ -50,6 +50,13 @@
 #define MAX_ERRMSG_LEN 256
 
 
+CAMLprim value c_idas_init_module (value exns)
+{
+    CAMLparam1 (exns);
+    REGISTER_EXNS (IDAS, exns);
+    CAMLreturn (Val_unit);
+}
+
 /* Interface with nvectors */
 
 CAMLprim value c_idas_alloc_nvector_array(value vn)
@@ -116,118 +123,118 @@ void idas_ml_check_flag(const char *call, int flag)
 
     switch (flag) {
     case IDA_TOO_MUCH_WORK:
-	caml_raise_constant(*caml_named_value("ida_TooMuchWork"));
+	caml_raise_constant(IDA_EXN(TooMuchWork));
 
     case IDA_TOO_MUCH_ACC:
-	caml_raise_constant(*caml_named_value("ida_TooMuchAccuracy"));
+	caml_raise_constant(IDA_EXN(TooMuchAccuracy));
 
     case IDA_ERR_FAIL:
-	caml_raise_constant(*caml_named_value("ida_ErrFailure"));
+	caml_raise_constant(IDA_EXN(ErrFailure));
 
     case IDA_CONV_FAIL:
-	caml_raise_constant(*caml_named_value("ida_ConvergenceFailure"));
+	caml_raise_constant(IDA_EXN(ConvergenceFailure));
 
     case IDA_LINIT_FAIL:
-	caml_raise_constant(*caml_named_value("ida_LinearInitFailure"));
+	caml_raise_constant(IDA_EXN(LinearInitFailure));
 
     case IDA_LSETUP_FAIL:
-	caml_raise_constant(*caml_named_value("ida_LinearSetupFailure"));
+	caml_raise_constant(IDA_EXN(LinearSetupFailure));
 
     case IDA_LSOLVE_FAIL:
-	caml_raise_constant(*caml_named_value("ida_LinearSolveFailure"));
+	caml_raise_constant(IDA_EXN(LinearSolveFailure));
 
     case IDA_RES_FAIL:
-	caml_raise_constant(*caml_named_value("ida_ResFuncFailure"));
+	caml_raise_constant(IDA_EXN(ResFuncFailure));
 
     case IDA_REP_RES_ERR:
-	caml_raise_constant(*caml_named_value("ida_RepeatedResFuncErr"));
+	caml_raise_constant(IDA_EXN(RepeatedResFuncErr));
 
     case IDA_RTFUNC_FAIL:
-	caml_raise_constant(*caml_named_value("ida_RootFuncFailure"));
+	caml_raise_constant(IDA_EXN(RootFuncFailure));
 
     case IDA_CONSTR_FAIL:
-	caml_raise_constant(*caml_named_value("ida_ConstraintFailure"));
+	caml_raise_constant(IDA_EXN(ConstraintFailure));
 
     case IDA_FIRST_RES_FAIL:
-	caml_raise_constant(*caml_named_value("ida_FirstResFuncFailure"));
+	caml_raise_constant(IDA_EXN(FirstResFuncFailure));
 
     case IDA_LINESEARCH_FAIL:
-	caml_raise_constant(*caml_named_value("ida_LinesearchFail"));
+	caml_raise_constant(IDA_EXN(LinesearchFailure));
 
     case IDA_NO_RECOVERY:
-	caml_raise_constant(*caml_named_value("ida_NoRecovery"));
+	caml_raise_constant(IDA_EXN(NoRecovery));
 
     case IDA_ILL_INPUT:
-	caml_raise_constant(*caml_named_value("ida_IllInput"));
+	caml_raise_constant(IDA_EXN(IllInput));
 
     case IDA_BAD_EWT:
-	caml_raise_constant(*caml_named_value("ida_BadEwt"));
+	caml_raise_constant(IDA_EXN(BadEwt));
 
     case IDA_BAD_K:
-	caml_raise_constant(*caml_named_value("ida_BadK"));
+	caml_raise_constant(IDA_EXN(BadK));
 
     case IDA_BAD_T:
-	caml_raise_constant(*caml_named_value("ida_BadT"));
+	caml_raise_constant(IDA_EXN(BadT));
 
     case IDA_BAD_DKY:
-	caml_raise_constant(*caml_named_value("ida_BadDky"));
+	caml_raise_constant(IDA_EXN(BadDky));
 
     case IDA_NO_QUAD:
-	caml_raise_constant(*caml_named_value("ida_QuadNotInitialized"));
+	caml_raise_constant(IDAS_EXN(QuadNotInitialized));
 
     case IDA_QRHS_FAIL:
-	caml_raise_constant(*caml_named_value("ida_QuadRhsFuncFailure"));
+	caml_raise_constant(IDAS_EXN(QuadRhsFuncFailure));
 
     case IDA_FIRST_QRHS_ERR:
-	caml_raise_constant(*caml_named_value("ida_FirstQuadRhsFuncErr"));
+	caml_raise_constant(IDAS_EXN(FirstQuadRhsFuncErr));
 
     case IDA_REP_QRHS_ERR:
-	caml_raise_constant(*caml_named_value("ida_RepeatedQuadRhsErr"));
+	caml_raise_constant(IDAS_EXN(RepeatedQuadRhsFuncErr));
 
     case IDA_NO_SENS:
-	caml_raise_constant(*caml_named_value("ida_SensNotInitialized"));
+	caml_raise_constant(IDAS_EXN(SensNotInitialized));
 
     case IDA_SRES_FAIL:
-	caml_raise_constant(*caml_named_value("ida_SensResFuncFailure"));
+	caml_raise_constant(IDAS_EXN(SensResFuncFailure));
 
     case IDA_REP_SRES_ERR:
-	caml_raise_constant(*caml_named_value("ida_RepeatedSensResFuncErr"));
+	caml_raise_constant(IDAS_EXN(RepeatedSensResFuncErr));
 
     case IDA_BAD_IS:
-	caml_raise_constant(*caml_named_value("ida_BadIS"));
+	caml_raise_constant(IDAS_EXN(BadIS));
 
     case IDA_NO_QUADSENS:
-	caml_raise_constant(*caml_named_value("ida_QuadSensNotInitialized"));
+	caml_raise_constant(IDAS_EXN(QuadSensNotInitialized));
 
     case IDA_QSRHS_FAIL:
-	caml_raise_constant(*caml_named_value("ida_QuadSensRhsFuncFailure"));
+	caml_raise_constant(IDAS_EXN(QuadSensRhsFuncFailure));
 
     case IDA_FIRST_QSRHS_ERR:
-	caml_raise_constant(*caml_named_value("ida_FirstQuadSensRhsFuncErr"));
+	caml_raise_constant(IDAS_EXN(FirstQuadSensRhsFuncErr));
 
     case IDA_REP_QSRHS_ERR:
-	caml_raise_constant(*caml_named_value("ida_RepeatedQuadSensRhsFuncErr"));
+	caml_raise_constant(IDAS_EXN(RepeatedQuadSensRhsFuncErr));
 
     case IDA_NO_ADJ:
-	caml_raise_constant(*caml_named_value("ida_AdjointNotInitialized"));
+	caml_raise_constant(IDAS_EXN(AdjointNotInitialized));
 
     case IDA_NO_FWD:
-	caml_raise_constant(*caml_named_value("ida_NoForwardCall"));
+	caml_raise_constant(IDAS_EXN(NoForwardCall));
 
     case IDA_NO_BCK:
-	caml_raise_constant(*caml_named_value("ida_NoBackwardProblem"));
+	caml_raise_constant(IDAS_EXN(NoBackwardProblem));
 
     case IDA_REIFWD_FAIL:
-	caml_raise_constant(*caml_named_value("ida_ForwardReinitializationFailed"));
+	caml_raise_constant(IDAS_EXN(ForwardReinitializationFailed));
 
     case IDA_BAD_TB0:
-	caml_raise_constant(*caml_named_value("ida_BadFinalTime"));
+	caml_raise_constant(IDAS_EXN(BadFinalTime));
 
     case IDA_FWD_FAIL:
-	caml_raise_constant(*caml_named_value("ida_ForwardFailed"));
+	caml_raise_constant(IDAS_EXN(ForwardFailed));
 
     case IDA_GETY_BADT:
-	caml_raise_constant(*caml_named_value("ida_BadOutputTime"));
+	caml_raise_constant(IDAS_EXN(BadOutputTime));
 
     default:
 	/* e.g. CVDIAG_MEM_NULL, CVDIAG_ILL_INPUT, CVDIAG_MEM_FAIL */

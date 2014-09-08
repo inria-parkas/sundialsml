@@ -39,4 +39,13 @@
 // Creation functions
 value ml_nvec_wrap_parallel(value payload);
 
+enum nvector_parallel_exn_index {
+    NVECTOR_PARALLEL_EXN_IncorrectGlobalSize = 0,
+    NVECTOR_PARALLEL_EXN_SET_SIZE
+};
+
+#define NVECTOR_PARALLEL_EXN(name) (Field (Field (sundials_ml_exn_table,     \
+						  NVECTOR_PARALLEL_EXN_SET), \
+					   NVECTOR_PARALLEL_EXN_ ## name))
+
 #endif

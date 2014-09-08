@@ -36,6 +36,7 @@ exception RootFuncFailure
 exception ConstraintFailure
 
 (* Initial condition calculator exceptions *)
+exception LinesearchFailure
 exception NoRecovery
 exception BadEwt
 
@@ -82,32 +83,6 @@ module VarType =
       | Differential -> "Differential"
     let string_of_float x = string_of_var_type (of_float x)
   end
-
-let _ =
-  List.iter (fun (nm, ex) -> Callback.register_exception nm ex)
-  [
-    ("ida_StopTimeReached",         StopTimeReached);
-    ("ida_IllInput",                IllInput);
-    ("ida_TooClose",                TooClose);
-    ("ida_TooMuchWork",             TooMuchWork);
-    ("ida_TooMuchAccuracy",         TooMuchAccuracy);
-    ("ida_ErrFailure",              ErrFailure);
-    ("ida_ConvergenceFailure",      ConvergenceFailure);
-    ("ida_LinearInitFailure",       LinearInitFailure);
-    ("ida_LinearSetupFailure",      LinearSetupFailure);
-    ("ida_LinearSolveFailure",      LinearSolveFailure);
-    ("ida_ResFuncFailure",          ResFuncFailure);
-    ("ida_FirstResFuncFailure",     FirstResFuncFailure);
-    ("ida_RepeatedResFuncErr",      RepeatedResFuncErr);
-    ("ida_NoRecovery",              NoRecovery);
-    ("ida_BadEwt",                  BadEwt);
-    ("ida_RootFuncFailure",         RootFuncFailure);
-    ("ida_ConstraintFailure",       ConstraintFailure);
-
-    ("ida_BadK",                    BadK);
-    ("ida_BadT",                    BadT);
-    ("ida_BadDky",                  BadDky);
-  ]
 
 let call_resfn session t y y' res =
   let session = read_weak_ref session in
@@ -753,3 +728,36 @@ external c_calc_ic_ya_yd' :
 
 let calc_ic_ya_yd' session ?y ?y' id tout1 =
   c_calc_ic_ya_yd' session y y' id tout1
+
+
+(* Let C code know about some of the values in this module.  *)
+external c_init_module : exn array -> unit =
+  "c_ida_init_module"
+
+let _ =
+  c_init_module
+    (* Exceptions must be listed in the same order as
+       ida_exn_index.  *)
+    [|IllInput;
+      TooClose;
+      TooMuchWork;
+      TooMuchAccuracy;
+      ErrFailure;
+      ConvergenceFailure;
+      LinearInitFailure;
+      LinearSetupFailure;
+      LinearSolveFailure;
+      ResFuncFailure;
+      FirstResFuncFailure;
+      RepeatedResFuncErr;
+      RootFuncFailure;
+      ConstraintFailure;
+
+      LinesearchFailure;
+      NoRecovery;
+      BadEwt;
+
+      BadK;
+      BadT;
+      BadDky
+    |]

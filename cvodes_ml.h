@@ -148,6 +148,39 @@ enum cvodes_adj_solve_arg_index {
     RECORD_CVODES_ADJ_SPILS_SOLVE_ARG_SIZE
 };
 
+enum cvodes_enum_index {
+    CVODES_EXN_QuadNotInitialized,
+    CVODES_EXN_QuadRhsFuncFailure,
+    CVODES_EXN_FirstQuadRhsFuncErr,
+    CVODES_EXN_RepeatedQuadRhsFuncErr,
+    CVODES_EXN_UnrecoverableQuadRhsFuncErr,
+
+    CVODES_EXN_SensNotInitialized,
+    CVODES_EXN_SensRhsFuncFailure,
+    CVODES_EXN_FirstSensRhsFuncErr,
+    CVODES_EXN_RepeatedSensRhsFuncErr,
+    CVODES_EXN_UnrecoverableSensRhsFuncErr,
+    CVODES_EXN_BadIS,
+
+    CVODES_EXN_QuadSensNotInitialized,
+    CVODES_EXN_QuadSensRhsFuncFailure,
+    CVODES_EXN_FirstQuadSensRhsFuncErr,
+    CVODES_EXN_RepeatedQuadSensRhsFuncErr,
+    CVODES_EXN_UnrecoverableQuadSensRhsFuncErr,
+
+    CVODES_EXN_AdjointNotInitialized,
+    CVODES_EXN_NoForwardCall,
+    CVODES_EXN_ForwardReinitializationFailed,
+    CVODES_EXN_ForwardFailed,
+    CVODES_EXN_NoBackwardProblem,
+    CVODES_EXN_BadFinalTime,
+    CVODES_EXN_BadOutputTime,
+    CVODES_EXN_SET_SIZE
+};
+
+#define CVODES_EXN(name) (Field (Field (sundials_ml_exn_table,	\
+					CVODES_EXN_SET),	\
+				 CVODES_EXN_ ## name))
 
 /* Callbacks */
 #undef CVTYPE
