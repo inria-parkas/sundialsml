@@ -3,18 +3,25 @@
 let synopsis =
 "crunchperf -c <ocaml> <sundials> <name>
 
-     Combine two performance measurements from previous runs of
-     perf.  <ocaml> should list the OCaml code's run time, <sundials>
-     the C code's, and <name> should identify which example this is.
+     Combine timing results from previous runs of perf.  <ocaml> should
+     list time for OCaml code, <sundials> the time for C code, and <name>
+     should identify which example this is.
+
+crunchperf -m <file1> <file2> ...
+
+     Merge multiple log files into one.  Each <file*> should be the
+     output of a previous run of crunchperf -c.
 
 crunchperf -s <file>
 
-     Summarize the output of a previous run of crunchperf -p for humans.
+     Summarize the output of a previous run of crunchperf -m for humans.
 
 crunchperf -S <file>
 
-     Summarize the output of a previous run of crunchperf -p for gnuplot.
+     Summarize the output of a previous run of crunchperf -m for gnuplot.
 "
+
+(* Helpers *)
 
 let abbreviate name =
   List.fold_left
@@ -35,7 +42,36 @@ let expand name =
      ("/par/", "/parallel/");
     ]
 
-(* Helpers *)
+(* Function composition *)
+let (%) f g x = f (g x)
+let (@@) f x = f x
+
+type line = { file : string;
+              line : int;
+              str : string;             (* Includes trailing '\n'. *)
+            }
+let get_lines path =
+  let file = open_in path in
+  let ret = ref [] in
+  begin
+    try
+      while true do
+        ret := (input_line file ^ "\n")::!ret
+      done
+    with End_of_file -> ()
+  end;
+  List.mapi (fun i str -> { file = path; line = i+1; str = str })
+  @@ List.rev !ret
+
+let comment_line =
+  let pat = Str.regexp "[ \t]*\\(#[^\n]*\\)?\n" in
+  fun line -> Str.string_match pat line.str 0
+
+let scan_line fmt cont line =
+  try Scanf.sscanf line.str fmt cont
+  with Scanf.Scan_failure msg ->
+    failwith (Printf.sprintf "%s:%d: %s" line.file line.line msg)
+
 type stats = { minimum : float;
                q1 : float;
                median : float;
@@ -59,42 +95,59 @@ let analyze dataset =
   let mean = total /. float_of_int n in
   { mean=mean; minimum=minimum; q1=q1; median=median; q3=q3; maximum=maximum }
 
-(* Discard a comment or empty line.  We can't use input_line, as it
-   interferes with fscanf's buffering.  *)
-let discard_hash_line path file msg_when_fail =
-  let rec read_till_newline file =
-    if Scanf.fscanf file "%c" (fun c -> c) <> '\n'
-    then read_till_newline file
-  in
-  try Scanf.fscanf file " #" (); read_till_newline file
-  with End_of_file -> ()
-     | Scanf.Scan_failure _ ->
-       try Scanf.fscanf file " \n" ()
-       with End_of_file -> ()
-          | Scanf.Scan_failure _ ->
-            Scanf.fscanf file "%l" (fun line ->
-                failwith (Printf.sprintf "%s:%d: %s" path line msg_when_fail))
+let id_magic = "# ID\treps\tC med.\tOCaml\tC\tOCaml/C\tname\n"
+let fmt_with_id : type use. ('a, use, 'b, 'c, 'd, 'e) format6 =
+  "%d\t%d\t%.2f\t%.2f\t%.2f\t%.2f\t%s\n"
+let fmt_no_id : type use. ('a, use, 'b, 'c, 'd, 'e) format6 =
+  "%d\t%.2f\t%.2f\t%.2f\t%.2f\t%s\n"
 
-let rec scan_line path file fmt cont =
-  try Scanf.fscanf file fmt cont
-  with Scanf.Scan_failure msg ->
-    discard_hash_line path file msg;
-    scan_line path file fmt cont
+type record = { reps : int;
+                mutable ml_times : float list;
+                mutable c_times : float list;
+              }
+let load ?(records=Hashtbl.create 10) path =
+  let insert _ reps cmed ml c _ name =
+    try let r = Hashtbl.find records name in
+      if reps <> r.reps then failwith (path ^ ": inconsistent reps field");
+      r.ml_times <- ml::r.ml_times;
+      r.c_times  <- c::r.c_times;
+    with Not_found -> Hashtbl.add records name { ml_times = [ml];
+                                                 c_times = [c];
+                                                 reps = reps; }
+  in
+  let lines = get_lines path in
+  let expect_ids =
+    match lines with
+    | l::_ -> id_magic = l.str
+    | _ -> false
+  in
+  List.iter (fun line ->
+      if expect_ids
+      then scan_line fmt_with_id insert line
+      else scan_line fmt_no_id (insert (-1)) line
+    )
+    (List.filter (not % comment_line) lines);
+  records
+
+let sorted_assocs records =
+  let ls = ref [] in
+  Hashtbl.iter (fun name record -> ls := (name, record)::!ls) records;
+  List.sort compare !ls
+
+
+(* Main routines *)
 
 let combine ocaml sundials name =
   let load path =
-    let file = open_in path in
+    let lines = get_lines path in
     let reps =
-      try Scanf.fscanf file "# NUM_REPS = %d\n" (fun r -> r)
-      with End_of_file -> failwith ("Input file " ^ path ^ " contains no data")
+      try scan_line "# NUM_REPS = %d\n" (fun r -> r) (List.hd lines)
+      with End_of_file | Failure "hd" ->
+        failwith ("Input file " ^ path ^ " contains no data")
     in
     let times = ref [] in
-    begin
-      try while true do
-            scan_line path file "%.2f\n" (fun f -> times := f::!times)
-          done;
-      with End_of_file -> ()
-    end;
+    List.iter (scan_line "%.2f\n" (fun f -> times := f::!times))
+    @@ List.filter (not % comment_line) lines;
     if !times = [] then failwith ("Input file " ^ path ^ " contains no data");
     reps, Array.of_list !times
   in
@@ -108,46 +161,44 @@ let combine ocaml sundials name =
                 ocaml sundials);
   Printf.printf "# reps\tC med.\tOCaml\tC\tOCaml/C\tname\n";
   let c_median = (analyze c_times).median in
-  for i = 0 to Array.length c_times - 1 do
-    Printf.printf "%d\t%.2f\t%.2f\t%.2f\t%.2f\t%s\n"
+  for i = 0 to min (Array.length c_times) (Array.length ml_times) - 1 do
+    Printf.printf fmt_no_id
       c_reps c_median ml_times.(i) c_times.(i) (ml_times.(i) /. c_times.(i))
       (abbreviate name)
   done
 
-type record = { reps : int;
-                mutable ml_times : float list;
-                mutable c_times : float list;
-              }
-let summarize abbrev path =
-  let file = open_in path in
-  let records = Hashtbl.create 10 in
-  let insert reps _ ml c _ name =
-    try let r = Hashtbl.find records name in
-      if reps <> r.reps then failwith (path ^ ": inconsistent reps field");
-      r.ml_times <- ml::r.ml_times;
-      r.c_times  <- c::r.c_times;
-    with Not_found -> Hashtbl.add records name { ml_times = [ml];
-                                                 c_times = [c];
-                                                 reps = reps; }
-  in
-  begin
-    try while true do
-          scan_line path file "%d\t%.2f\t%.2f\t%.2f\t%.2f\t%s\n" insert
-        done;
-    with End_of_file -> ()
-  end;
+let merge paths =
+  let records = Hashtbl.create 100 in
+  List.iter (fun p -> ignore (load ~records:records p)) paths;
+  print_string id_magic;
+  let records = Array.of_list (sorted_assocs records) in
+  let n = Array.length records in
+  for id = 0 to n - 1 do
+    let name, record = records.(id) in
+    let ml = Array.of_list record.ml_times in
+    let c = Array.of_list record.c_times in
+    let c_median  = (analyze c).median in
+    for j = 0 to Array.length c - 1 do
+      Printf.printf fmt_with_id
+        id record.reps c_median ml.(j) c.(j) (ml.(j) /. c.(j)) name
+    done;
+    if id < n-1 then print_string "\n\n"
+  done
+
+let summarize gnuplot path =
+  let assocs = sorted_assocs (load path) in
   Printf.printf "# All numbers except reps show median values.\n";
-  Printf.printf "# reps\tOCaml\tC\tOCaml/C\tname\n";
-  let assocs = ref [] in
-  Hashtbl.iter (fun name record -> assocs := (name, record)::!assocs) records;
-  let assocs = List.sort compare !assocs in
-  List.iter (fun (name, record) ->
+  if gnuplot
+  then Printf.printf "# ID\treps\tOCaml\tC\tOCaml/C\tname\n"
+  else Printf.printf "# reps\tOCaml\tC\tOCaml/C\tname\n";
+  List.iteri (fun id (name, record) ->
       let median ls = (analyze (Array.of_list ls)).median in
       let c  = median record.c_times in
       let ml = median record.ml_times in
       let ratio = median (List.map2 (/.) record.ml_times record.c_times) in
+      if gnuplot then Printf.printf "%d\t" id;
       Printf.printf "%d\t%.2f\t%.2f\t%.2f\t%s\n"
-        record.reps ml c ratio (if abbrev then name else expand name))
+        record.reps ml c ratio (if gnuplot then name else expand name))
     assocs
 
 let _ =
@@ -158,6 +209,7 @@ let _ =
     summarize false file
   | [_;"-S";file] ->
     summarize true file
+  | _::"-m"::files -> merge files
   | _ ->
     print_string synopsis;
     exit 0

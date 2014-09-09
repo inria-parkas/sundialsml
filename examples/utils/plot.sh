@@ -17,11 +17,13 @@ if [ "x$1" = x ]; then
     printf "Makes a plot.  " # in lieu of echo -n
     envs
     echo "Other options:"
+    echo "STYLE    - Set this to \"boxplot\" to get a box plot."
     echo "TITLE    - The title."
     echo "TERMINAL - x11, png, jpg, pdf, etc."
     echo "OUTPUT   - Output file, if applicable."
     echo "PAUSE    - Executed at the end; defaults to \"pause mouse\" if TERMINAL=x11."
     echo "YMAX     - Top of the range of left axis."
+    echo "Y2MAX    - Top of the range of right axis."
     exit 0
 fi
 
@@ -101,7 +103,16 @@ else
     SET_POINTSIZE="set pointsize $POINTSIZE"
 fi
 
-MAINCOLOR=${MAINCOLOR:-red}
+# Colors of boxes showing time ratios.
+MAINCOLOR1=${MAINCOLOR:-red}
+MAINCOLOR2=${MAINCOLOR2:-blue}
+MAINCOLOR3=${MAINCOLOR3:-green}
+
+# Colors of dots showing C times.
+SUBCOLOR1=${SUBCOLOR:-black}
+SUBCOLOR2=${SUBCOLOR2:-black}
+SUBCOLOR3=${SUBCOLOR3:-black}
+
 
 Y2LABEL='C running time / repetition [seconds]'
 YLABEL='running time: OCaml / C'
@@ -129,14 +140,12 @@ set grid xtics lt 0 lw 1 lc rgb "#bbbbbb"
 
 # plot the whole set with boxplot, plot each data set's
 # median C time / reps with points
-plot "$1" using (0):(\$3/\$4):(0.5):6 with boxplot lc rgb '${MAINCOLOR}' \
+plot "$1" using (0):(\$4/\$5):(0.5):7 with boxplot lc rgb '${MAINCOLOR1}' \
        pointtype 2 \
        title 'OCaml time / C time (left axis)', \
-     "$1" index 0 using (0):(\$2/\$1) \
+     "$1" using 1:(\$3/\$2) \
        with points pointtype 3 lw 0.5 lc rgb 'black' \
        title 'C time / rep (right axis)' axes x1y2, \
-     for [IDX=1:N-1] "$1" index IDX using (IDX):(\$2/\$1) \
-       with points pointtype 3 lw 0.5 lc rgb 'black' notitle axes x1y2, \
      1 with lines lc rgb '#bbbbbb' notitle, \
      1.5 with lines lc rgb "#bbbbbb" notitle, \
      2 with lines lc rgb '#bbbbbb' notitle
@@ -154,9 +163,10 @@ set style fill solid
 
 # plot the whole set with boxplot, plot each data set's
 # median C time / reps with points
-plot "< $crunch -S $1" using 4:xtic(5) with boxes lc rgb '${MAINCOLOR}' \
+plot "< $crunch -S $1" using 1:5:xticlabels(6) with boxes \
+       lc rgb '${MAINCOLOR1}' \
        title 'OCaml time / C time (left axis)', \
-     "< $crunch -S $1" using (\$3/\$1) with points pointtype 3 \
+     "< $crunch -S $1" using 1:(\$4/\$2) with points pointtype 3 \
        lc rgb 'black' \
        title 'C time / rep (right axis)' axes x1y2, \
      1 with lines lc rgb "#bbbbbb" notitle, \

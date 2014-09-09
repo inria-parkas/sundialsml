@@ -177,16 +177,9 @@ $(UTILS)/perf: $(UTILS)/perf.ml
 $(UTILS)/crunchperf: $(UTILS)/crunchperf.ml
 	$(OCAMLOPT) -o $@ str.cmxa unix.cmxa $<
 
-perf.byte.log perf.opt.log: perf.%.log: $(ENABLED_EXAMPLES:.ml=.%.time)       \
-					$(ENABLED_EXAMPLES:.ml=.sundials.time)\
+perf.byte.log perf.opt.log: perf.%.log: $(ENABLED_EXAMPLES:.ml=.%.perf)       \
 					$(UTILS)/crunchperf
-	@type=$(if $(findstring .opt.,$@),opt,byte);			\
-	 for f in $(ENABLED_EXAMPLES:.ml=); do				\
-	     $(UTILS)/crunchperf -c $$f.$$type.time $$f.sundials.time	\
-		$(SUBDIR)/$$f;						\
-	     [ $$f = $(lastword $(ENABLED_EXAMPLES:.ml=)) ]		\
-		|| printf "\n\n";					\
-	 done > $@
+	$(UTILS)/crunchperf -m $(filter-out $(UTILS)/crunchperf,$^) > $@
 	$(UTILS)/crunchperf -s $@
 
 perf.byte.plot perf.opt.plot: perf.%.plot: perf.%.log
@@ -221,6 +214,12 @@ define ADD_TIME_RULES
     $1.byte.time: $1.byte $1.sundials.time $(UTILS)/perf
 	$(UTILS)/perf -i $$(word 2,$$^) $(PERF_DATA_POINTS) \
 	    $(2:$$<=./$$<) | tee $$@
+    $1.opt.perf: $1.opt.time $1.sundials.time $(UTILS)/crunchperf
+	$(UTILS)/crunchperf -c $$(word 1, $$^) $$(word 2, $$^) \
+	    $(SUBDIR)/$$(<:.opt.time=) > $$@
+    $1.byte.perf: $1.byte.time $1.sundials.time $(UTILS)/crunchperf
+	$(UTILS)/crunchperf -c $$(word 1, $$^) $$(word 2, $$^) \
+	    $(SUBDIR)/$$(<:.byte.time=) > $$@
 endef
 
 # Compilation of C examples with environment-handling wrappers.

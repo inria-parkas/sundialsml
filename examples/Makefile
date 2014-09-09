@@ -53,10 +53,7 @@ perf.opt.log perf.byte.log: $(C_EXAMPLES)
 	    ${MAKE} -C $$s $@;			\
 	 done
 	@echo ======================================================================
-	@for s in ${SUBDIRS}; do				\
-	    cat $$s/$@;						\
-	    [ $$s = $(lastword $(SUBDIRS)) ] || printf "\n\n";	\
-	done > $@
+	@utils/crunchperf -m $(foreach s,$(SUBDIRS),$s/$@) > $@
 	utils/crunchperf -s $@
 	@$(if $(findstring $@,$(MAKECMDGOALS)), \
 	   echo "Note: \"make $(@:.log=.plot)\" can plot this for you.")
