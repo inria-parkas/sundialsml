@@ -121,9 +121,10 @@ SET_COMMON="$SET_TERMINAL; $SET_OUTPUT; $SET_FONT; set title '$TITLE'"
 SET_COMMON="$SET_COMMON; $SET_LMARGIN; $SET_RMARGIN; $SET_BMARGIN"
 SET_COMMON="$SET_COMMON; $SET_TMARGIN; $SET_KEY_WIDTH; $SET_POINTSIZE"
 SET_COMMON="$SET_COMMON; set ytics nomirror; set y2tics nomirror"
-SET_COMMON="$SET_COMMON; set ylabel '${YLABEL}'; set y2label '${Y2LABEL}'"
+SET_COMMON="$SET_COMMON; set ylabel '${YLABEL}' rotate by -90"
+SET_COMMON="$SET_COMMON; set y2label '${Y2LABEL}' rotate by -90"
 SET_COMMON="$SET_COMMON; set yrange [0:${YMAX}]; set y2range [0:${Y2MAX}]"
-SET_COMMON="$SET_COMMON; set xtics rotate by 90 right"
+SET_COMMON="$SET_COMMON; set xtics rotate by -90 left"
 
 if [ "x$STYLE" = xboxplot ]; then
 gnuplot <<EOF
