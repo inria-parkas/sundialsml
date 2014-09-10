@@ -229,7 +229,7 @@ else
               notitle axes x1y2"
 fi
 
-cat <<EOF | tee log | gnuplot
+gnuplot <<EOF
 $SET_COMMON
 
 # Bar chart-specific setup
