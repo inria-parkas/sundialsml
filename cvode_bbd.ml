@@ -10,40 +10,40 @@
 (*                                                                     *)
 (***********************************************************************)
 
-open Cvode_impl
+include Cvode_impl
+include CvodeBbdTypes
 
+(* These types can't be defined in Cvode_impl because they introduce
+   dependence on Mpi.  Some duplication is unavoidable.  *)
 type data = Nvector_parallel.data
-type parallel_session = (data, Nvector_parallel.kind) Cvode.session
-type parallel_linear_solver = (data, Nvector_parallel.kind) linear_solver
+type kind = Nvector_parallel.kind
 
-type bandwidths =
-  {
-    mudq    : int;
-    mldq    : int;
-    mukeep  : int;
-    mlkeep  : int;
-  }
+type parallel_session = (data, kind) session
+type parallel_linear_solver = (data, kind) linear_solver
 
+module Impl = CvodeBbdParamTypes
+type local_fn = data Impl.local_fn
+type comm_fn = data Impl.comm_fn
 type callbacks =
   {
-    local_fn : float -> data -> data -> unit;
-    comm_fn  : (float -> data -> unit) option;
+    local_fn : local_fn;
+    comm_fn : comm_fn option;
   }
 
 let bbd_callbacks { local_fn; comm_fn } =
-  { Bbd.local_fn = local_fn; Bbd.comm_fn = comm_fn }
+  { Impl.local_fn = local_fn; Impl.comm_fn = comm_fn }
 
 let call_bbdlocal session t y glocal =
   let session = read_weak_ref session in
   match session.ls_callbacks with
-  | BBDCallback { Bbd.local_fn = f } ->
+  | BBDCallback { Impl.local_fn = f } ->
       adjust_retcode session true (f t y) glocal
   | _ -> assert false
 
 let call_bbdcomm session t y =
   let session = read_weak_ref session in
   match session.ls_callbacks with
-  | BBDCallback { Bbd.comm_fn = Some f } -> adjust_retcode session true (f t) y
+  | BBDCallback { Impl.comm_fn = Some f } -> adjust_retcode session true (f t) y
   | _ -> assert false
 
 external c_bbd_prec_init

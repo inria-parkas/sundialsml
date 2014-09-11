@@ -12,12 +12,12 @@
 
 (** Interface to Serial nvectors that are manipulated by the standard operations
     provided by Sundials.
- 
+
     @cvode <node7#ss:nvec_ser> NVECTOR_SERIAL *)
 
-type kind
-type t = (Sundials.RealArray.t, kind) Sundials.nvector
 type data = Sundials.RealArray.t
+type kind
+type t = (data, kind) Sundials.nvector
 
 (** [make n iv] creates a new serial nvector with [n] elements, each initialized
     to [iv]. *)

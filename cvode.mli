@@ -29,6 +29,8 @@
  @author Marc Pouzet (LIENS)
  *)
 
+open Sundials
+
 (** {2:exceptions Exceptions} *)
 
 (** @cvode <node5#sss:cvode> CV_ILL_INPUT *)
@@ -113,8 +115,7 @@ t := t' + 0.1]}
  *)
 type ('a, 'k) session = ('a, 'k) Cvode_impl.session
 
-type real_array = Sundials.RealArray.t
-type serial_session = (real_array, Nvector_serial.kind) session
+type serial_session = (RealArray.t, Nvector_serial.kind) session
 
 (** The type of vectors passed to the solver. *)
 type ('data, 'kind) nvector = ('data, 'kind) Sundials.nvector
@@ -125,7 +126,7 @@ type ('data, 'kind) nvector = ('data, 'kind) Sundials.nvector
 
     @cvode <node5#sss:lin_solv_init> Linear Solver Specification Functions *)
 type ('data, 'kind) linear_solver = ('data, 'kind) Cvode_impl.linear_solver
-type serial_linear_solver = (real_array, Nvector_serial.kind) linear_solver
+type serial_linear_solver = (RealArray.t, Nvector_serial.kind) linear_solver
 
 module Diag :
   sig
@@ -174,8 +175,9 @@ type ('t, 'a) jacobian_arg =
   }
 
 (** The range of nonzero entries in a band matrix.  *)
-type bandrange = { mupper : int; (** The upper half-bandwidth.  *)
-                   mlower : int; (** The lower half-bandwidth.  *) }
+type bandrange = Cvode_impl.bandrange =
+  { mupper : int; (** The upper half-bandwidth.  *)
+    mlower : int; (** The lower half-bandwidth.  *) }
 
 module Dls :
   sig
@@ -213,7 +215,7 @@ module Dls :
         @cvode <node5#sss:lin_solv_init> CVDense
         @cvode <node5#sss:optin_dls> CVDlsSetDenseJacFn
         @cvode <node5#ss:djacFn> Dense Jacobian function *)
-    type dense_jac_fn = (real_array triple_tmp, real_array) jacobian_arg
+    type dense_jac_fn = (RealArray.t triple_tmp, RealArray.t) jacobian_arg
                                                   -> Dls.DenseMatrix.t -> unit
 
     (** Direct linear solver with dense matrix.  The optional argument specifies
@@ -265,7 +267,7 @@ module Dls :
         function call, then they must be copied to separate physical
         structures. *)
     type band_jac_fn = bandrange
-                        -> (real_array triple_tmp, real_array) jacobian_arg
+                        -> (RealArray.t triple_tmp, RealArray.t) jacobian_arg
                         -> Dls.BandMatrix.t -> unit
 
     (** Direct linear solver with banded matrix.  The arguments specify the
@@ -365,7 +367,7 @@ module Spils :
         [prec_solve_fn] in {!callbacks}.
 
         @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn *)
-    type 'a solve_arg =
+    type 'a prec_solve_arg =
       {
         rhs   : 'a;         (** The right-hand side vector, {i r}, of the
                                 linear system. *)
@@ -384,7 +386,7 @@ module Spils :
         should use {!no_precond} as [callbacks].  *)
     type 'a callbacks =
       {
-        prec_solve_fn : (('a single_tmp, 'a) jacobian_arg -> 'a solve_arg
+        prec_solve_fn : (('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
                          -> 'a -> unit) option;
         (** Called like [prec_solve_fn jac_arg solve_arg z] to solve the linear
             system {i P}[z] = [solve_arg.rhs], where {i P} may be either a left or
@@ -393,7 +395,7 @@ module Spils :
             delr({i f}) / delr({i y}).
 
             - [jac_arg] supplies the basic problem data as a {!jacobian_arg}.
-            - [solve_arg] specifies the linear system as a {!solve_arg}.
+            - [prec_solve_arg] specifies the linear system as a {!prec_solve_arg}.
             - [z] is the vector in which the result must be stored.
 
             The function may raise a {!Sundials.RecoverableFailure} exception to
@@ -517,7 +519,7 @@ module Spils :
     val set_preconditioner :
       ('a, 'k) session
       -> (('a triple_tmp, 'a) jacobian_arg -> bool -> float -> bool) option
-      -> (('a single_tmp, 'a) jacobian_arg -> 'a solve_arg -> 'a -> unit)
+      -> (('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg -> 'a -> unit)
       -> unit
 
     (** Set the Jacobian-times-vector function.  It may be unsafe to use this
@@ -705,7 +707,7 @@ module Alternate :
 
     type ('data, 'kind) callbacks =
       {
-        linit   : (('data, 'kind) session -> unit) option;
+        linit  : (('data, 'kind) session -> unit) option;
           (** Complete initializations for a specific linear solver, such as
               counters and statistics. Returns [true] if successful.
 

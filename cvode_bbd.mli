@@ -29,10 +29,11 @@
     @cvode <node5#sss:cvbbdpre> Parallel band-block-diagonal preconditioner module *)
 
 type data = Nvector_parallel.data
-type parallel_session = (data, Nvector_parallel.kind) Cvode.session
-type parallel_linear_solver = (data, Nvector_parallel.kind) Cvode.linear_solver
+type kind = Nvector_parallel.kind
+type parallel_session = (data, kind) Cvode.session
+type parallel_linear_solver = (data, kind) Cvode.linear_solver
 
-type bandwidths =
+type bandwidths = Cvode_impl.CvodeBbdTypes.bandwidths =
   {
     mudq    : int; (** Upper half-bandwidth to be used in the difference
                        quotient Jacobian approximation. *)

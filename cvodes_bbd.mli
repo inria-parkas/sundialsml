@@ -28,12 +28,22 @@
     @author Marc Pouzet (LIENS)
     @cvodes <node7#SECTION00742000000000000000> Using the band-block-diagonal preconditioner CVBBDPRE
  *)
-
 type data = Nvector_parallel.data
-type parallel_bsession = (data, Nvector_parallel.kind) Cvode_impl.bsession
+type kind = Nvector_parallel.kind
+type parallel_bsession = (data, kind) Cvodes.Adjoint.bsession
+type parallel_linear_solver = (data, kind) Cvodes.Adjoint.linear_solver
 
-type parallel_linear_solver =
-    (data, Nvector_parallel.kind) Cvodes.Adjoint.linear_solver
+type bandwidths = Cvode_bbd.bandwidths =
+  {
+    mudq    : int; (** Upper half-bandwidth to be used in the difference
+                       quotient Jacobian approximation. *)
+    mldq    : int; (** Lower half-bandwidth to be used in the difference
+                       quotient Jacobian approximation. *)
+    mukeep  : int; (** Upper half-bandwidth of the retained banded approximate
+                       Jacobian block. *)
+    mlkeep  : int; (** Lower half-bandwidth of the retained banded approximate
+                       Jacobian block. *)
+  }
 
 (** User-supplied functions for the BBD preconditioner.
 
@@ -69,7 +79,7 @@ type callbacks =
 
     @cvodes <node7#sss:lin_solv_b> CVSpgmrB
     @cvodes <node7#SECTION00742100000000000000> CVBBDPrecInitB *)
-val spgmr : int option -> Spils.preconditioning_type -> Cvode_bbd.bandwidths
+val spgmr : int option -> Spils.preconditioning_type -> bandwidths
             -> float option -> callbacks -> parallel_linear_solver
 
 (** Same as {!Cvodes.Adjoint.Spils.spbcg} but with the Parallel
@@ -78,7 +88,7 @@ val spgmr : int option -> Spils.preconditioning_type -> Cvode_bbd.bandwidths
 
     @cvodes <node7#sss:lin_solv_b> CVSpbcgB
     @cvodes <node7#SECTION00742100000000000000> CVBBDPrecInitB *)
-val spbcg : int option -> Spils.preconditioning_type -> Cvode_bbd.bandwidths
+val spbcg : int option -> Spils.preconditioning_type -> bandwidths
             -> float option -> callbacks -> parallel_linear_solver
 
 (** Same as {!Cvodes.Adjoint.Spils.sptfqmr} but with the Parallel
@@ -87,7 +97,7 @@ val spbcg : int option -> Spils.preconditioning_type -> Cvode_bbd.bandwidths
 
     @cvodes <node7#sss:lin_solv_b> CVSptfqmrB
     @cvodes <node7#SECTION00742100000000000000> CVBBDPrecInitB *)
-val sptfqmr : int option -> Spils.preconditioning_type -> Cvode_bbd.bandwidths
+val sptfqmr : int option -> Spils.preconditioning_type -> bandwidths
               -> float option -> callbacks -> parallel_linear_solver
 
 (** [reinit s mudq mldq dqrely] reinitializes the BBD preconditioner

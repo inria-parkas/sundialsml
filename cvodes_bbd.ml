@@ -10,38 +10,45 @@
 (*                                                                     *)
 (***********************************************************************)
 
-open Cvode_impl
+include Cvode_impl
+include CvodesBbdTypes
 
+(* These types can't be defined in Cvode_impl because they introduce
+   dependence on Mpi.  Some duplication is unavoidable.  *)
 type data = Nvector_parallel.data
-type parallel_session = (data, Nvector_parallel.kind) Cvodes.session
-type parallel_bsession = (data, Nvector_parallel.kind) Cvodes.Adjoint.bsession
+type kind = Nvector_parallel.kind
 
-type parallel_linear_solver =
-  (data, Nvector_parallel.kind) Cvodes.Adjoint.linear_solver
+type parallel_session = Cvode_bbd.parallel_session
+type parallel_bsession = (data, kind) AdjointTypes.bsession
+type parallel_linear_solver = (data, kind) AdjointTypes.linear_solver
+
+let tosession = AdjointTypes.tosession
+
+module Impl = CvodesBbdParamTypes
+type local_fn = data Impl.local_fn
+type comm_fn = data Impl.comm_fn
+type callbacks =
+  {
+    local_fn : local_fn;
+    comm_fn : comm_fn option;
+  }
+
+let bbd_callbacks { local_fn; comm_fn } =
+  { Impl.local_fn = local_fn; Impl.comm_fn = comm_fn }
 
 let call_bbbdlocal session t y yb glocal =
   let session = read_weak_ref session in
   match session.ls_callbacks with
-  | BBBDCallback { B.Bbd.local_fn = f } ->
+  | BBBDCallback { Impl.local_fn = f } ->
       adjust_retcode session true (f t y yb) glocal
   | _ -> assert false
 
 let call_bbbdcomm session t y yb =
   let session = read_weak_ref session in
   match session.ls_callbacks with
-  | BBBDCallback { B.Bbd.comm_fn = Some f } ->
+  | BBBDCallback { Impl.comm_fn = Some f } ->
       adjust_retcode session true (f t y) yb
   | _ -> assert false
-
-type callbacks =
-  {
-    local_fn : float -> data -> data -> data -> unit;
-
-    comm_fn  : (float -> data -> data -> unit) option;
-  }
-
-let bbd_callbacks { local_fn; comm_fn } =
-  { B.Bbd.local_fn = local_fn; B.Bbd.comm_fn = comm_fn }
 
 external c_bbd_prec_initb
     : (parallel_session * int) -> int

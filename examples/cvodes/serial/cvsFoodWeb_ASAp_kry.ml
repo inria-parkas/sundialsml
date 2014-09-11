@@ -1013,7 +1013,7 @@ let psolveb wdata =
   let cache = RealArray.create ns in
   fun jac_arg solve_arg (z : RealArray.t) ->
   let { Adj.jac_tmp = vtemp; } = jac_arg
-  and { Adj.Spils.rvec = r; Adj.Spils.gamma = gamma } = solve_arg
+  and { Adj.Spils.rhs = r; Adj.Spils.gamma = gamma } = solve_arg
   in
   Array1.blit r z;
 

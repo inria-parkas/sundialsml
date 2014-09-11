@@ -11,7 +11,6 @@
 (***********************************************************************)
 
 include Cvode_impl
-type serial_session = (real_array, Nvector_serial.kind) session
 
 external c_alloc_nvector_array : int -> 'a array
     = "c_cvodes_alloc_nvector_array"
@@ -39,95 +38,10 @@ let num_sensitivities s =
   | BwdSensExt se -> se.bnum_sensitivities
   | _ -> 0
 
-let read_weak_ref x : ('a, 'kind) session =
-  match Weak.get x 0 with
-  | Some y -> y
-  | None -> raise (Failure "Internal error: weak reference is dead")
-
-let read_weak_fwd_ref x =
-  let y = read_weak_ref x in
-  match y.sensext with
-  | FwdSensExt se -> (y, se)
-  | _ -> raise (Failure "Internal error: not forward extension")
-
-let read_weak_bwd_ref x =
-  let y = read_weak_ref x in
-  match y.sensext with
-  | BwdSensExt se -> (y, se)
-  | _ -> raise (Failure "Internal error: not backward extension")
-
-let adjust_retcode = fun session f x ->
-  try f x; 0
-  with
-  | Sundials.RecoverableFailure -> 1
-  | e -> (session.exn_temp <- Some e; -1)
-
-let adjust_retcode_and_bool = fun session f x ->
-  try (f x, 0)
-  with
-  | Sundials.RecoverableFailure -> (false, 1)
-  | e -> (session.exn_temp <- Some e; (false, -1))
-
-let call_quadrhsfn session t y yqdot =
-  let (session, fwdsensext) = read_weak_fwd_ref session in
-  adjust_retcode session (fwdsensext.quadrhsfn t y) yqdot
-
-(* fwdsensext.sensrhsfn is called directly from C *)
-
-let call_sensrhsfn1 session t y ydot iS yS ySdot tmp1 tmp2 =
-  let (session, fwdsensext) = read_weak_fwd_ref session in
-  adjust_retcode session
-    (fwdsensext.sensrhsfn1 t y ydot iS yS ySdot tmp1) tmp2
-
-(* fwdsensext.quadsensrhsfn is called directly from C *)
-
-let call_brhsfn session t y yb ybdot =
-  let (session, bwdsensext) = read_weak_bwd_ref session in
-  adjust_retcode session (bwdsensext.brhsfn t y yb) ybdot
-
-(* bwdsensext.brhsfn1 is called directly from C *)
-
-let call_bquadrhsfn session t y yb qbdot =
-  let (session, bwdsensext) = read_weak_bwd_ref session in
-  adjust_retcode session (bwdsensext.bquadrhsfn t y yb) qbdot
-
-(* bwdsensext.bquadrhsfn1 is called directly from C *)
-
-let call_bprecsetupfn session jac jok gamma =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | BSpilsCallback { B.prec_setup_fn = Some f } ->
-      adjust_retcode_and_bool session (f jac jok) gamma
-  | _ -> assert false
-
-let call_bprecsolvefn session jac ps rvecB =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | BSpilsCallback { B.prec_solve_fn = Some f } ->
-      adjust_retcode session (f jac ps) rvecB
-  | _ -> assert false
-
-let call_bjactimesfn session jac vB jvB =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | BSpilsCallback { B.jac_times_vec_fn = Some f } ->
-      adjust_retcode session (f jac vB) jvB
-  | _ -> assert false
-
-let call_bjacfn session jac m =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | BDenseCallback f -> adjust_retcode session (f jac) m
-  | _ -> assert false
-
-let call_bbandjacfn session range jac m =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | BBandCallback f -> adjust_retcode session (f range jac) m
-  | _ -> assert false
-
 module Quadrature =
   struct
+    include QuadratureTypes
+
     exception QuadNotInitialized
     exception QuadRhsFuncFailure
     exception FirstQuadRhsFuncErr
@@ -138,8 +52,6 @@ module Quadrature =
       match s.sensext with
       | FwdSensExt se -> se
       | _ -> raise QuadNotInitialized
-
-    type 'a quadrhsfn = float -> 'a -> 'a -> unit
 
     external c_quad_init : ('a, 'k) session -> ('a, 'k) nvector -> unit
         = "c_cvodes_quad_init"
@@ -196,6 +108,8 @@ module Quadrature =
 
 module Sensitivity =
   struct
+    include SensitivityTypes
+
     type ('a, 'k) tolerance =
         SStolerances of float * Sundials.RealArray.t
       | SVtolerances of float * ('a, 'k) nvector array
@@ -246,12 +160,6 @@ module Sensitivity =
         Simultaneous
       | Staggered
       | Staggered1
-
-    type 'a sensrhsfn = 'a Cvode_impl.sensrhsfn =
-        AllAtOnce of
-          (float -> 'a -> 'a -> 'a array -> 'a array -> 'a -> 'a -> unit) option
-      | OneByOne of
-          (float -> 'a -> 'a -> int -> 'a -> 'a -> 'a -> 'a -> unit) option
 
     type sens_params = {
         pvals  : Sundials.RealArray.t option;
@@ -415,22 +323,13 @@ module Sensitivity =
 
     module Quadrature =
       struct
+        include QuadratureTypes
 
         exception QuadSensNotInitialized
         exception QuadSensRhsFuncFailure
         exception FirstQuadSensRhsFuncErr
         exception RepeatedQuadSensRhsFuncErr
         exception UnrecoverableQuadSensRhsFuncErr
-
-        type 'a quadsensrhsfn =
-           float          (* t *)
-           -> 'a          (* y *)
-           -> 'a array    (* yS *)
-           -> 'a          (* yQdot *)
-           -> 'a array    (* rhsvalQs *)
-           -> 'a          (* tmp1 *)
-           -> 'a          (* tmp2 *)
-           -> unit
 
         external c_quadsens_init
             : ('a, 'k) session -> bool -> ('a, 'k) nvector array -> unit
@@ -543,6 +442,8 @@ module Sensitivity =
 
 module Adjoint =
   struct
+    include AdjointTypes
+
     exception AdjointNotInitialized
     exception NoForwardCall
     exception ForwardReinitializationFailed
@@ -577,30 +478,10 @@ module Adjoint =
                                          -> float * int * Sundials.solver_result
         = "c_cvodes_adj_forward_one_step"
 
-    type 'a brhsfn = 'a B.brhsfn =
-        Basic of (float -> 'a -> 'a -> 'a -> unit)
-      | WithSens of (float -> 'a -> 'a array -> 'a -> 'a -> unit)
-
     type 'a single_tmp = 'a
     type 'a triple_tmp = 'a * 'a * 'a
 
-    type ('t, 'a) jacobian_arg = ('t, 'a) B.jacobian_arg =
-      {
-        jac_t   : float;
-        jac_y   : 'a;
-        jac_yb  : 'a;
-        jac_fyb : 'a;
-        jac_tmp : 't
-      }
-
     type bandrange = Cvode_impl.bandrange = { mupper : int; mlower : int; }
-
-    type ('a, 'k) bsession = ('a, 'k) Cvode_impl.bsession
-    type serial_bsession = (real_array, Nvector_serial.kind) bsession
-
-    type ('data, 'kind) linear_solver = ('data, 'kind) Cvode_impl.blinear_solver
-
-    type serial_linear_solver = (real_array, Nvector_serial.kind) linear_solver
 
     type ('data, 'kind) iter =
       | Newton of ('data, 'kind) linear_solver
@@ -796,12 +677,7 @@ module Adjoint =
 
     module Dls =
       struct
-        type dense_jac_fn = (real_array triple_tmp, real_array) jacobian_arg
-                                -> Dls.DenseMatrix.t -> unit
-
-        type band_jac_fn = bandrange
-                            -> (real_array triple_tmp, real_array) jacobian_arg
-                            -> Dls.BandMatrix.t -> unit
+        include DlsTypes
 
         external c_dls_dense : serial_session -> int -> int -> bool -> unit
           = "c_cvodes_adj_dls_dense"
@@ -856,35 +732,7 @@ module Adjoint =
 
     module Spils =
       struct
-        type gramschmidt_type = Spils.gramschmidt_type =
-          | ModifiedGS
-          | ClassicalGS
-
-        type preconditioning_type = Spils.preconditioning_type =
-          | PrecNone
-          | PrecLeft
-          | PrecRight
-          | PrecBoth
-
-        type 'a solve_arg = 'a B.prec_solve_arg =
-          {
-            rvec   : 'a;
-            gamma  : float;
-            delta  : float;
-            left   : bool;
-          }
-
-        type 'a callbacks = 'a B.spils_callbacks =
-          {
-            prec_solve_fn : (('a single_tmp, 'a) jacobian_arg -> 'a solve_arg
-                             -> 'a -> unit) option;
-
-            prec_setup_fn : (('a triple_tmp, 'a) jacobian_arg -> bool -> float
-                             -> bool) option;
-
-            jac_times_vec_fn : (('a single_tmp, 'a) jacobian_arg -> 'a -> 'a
-                                -> unit) option;
-          }
+        include SpilsTypes
 
         let no_precond = {
           prec_solve_fn = None;
@@ -1075,9 +923,7 @@ module Adjoint =
 
     module Quadrature =
       struct
-        type 'a bquadrhsfn = 'a B.bquadrhsfn =
-            Basic of (float -> 'a -> 'a -> 'a -> unit)
-          | WithSens of (float -> 'a -> 'a array -> 'a -> 'a -> unit)
+        include QuadratureTypes
 
         external c_quad_initb
             : ('a, 'k) session -> int -> ('a, 'k) nvector -> unit
@@ -1146,6 +992,97 @@ module Adjoint =
         let get_stats bs = Quadrature.get_stats (tosession bs)
       end
   end
+
+
+(* Callbacks *)
+
+let read_weak_ref x : ('a, 'kind) session =
+  match Weak.get x 0 with
+  | Some y -> y
+  | None -> raise (Failure "Internal error: weak reference is dead")
+
+let read_weak_fwd_ref x =
+  let y = read_weak_ref x in
+  match y.sensext with
+  | FwdSensExt se -> (y, se)
+  | _ -> raise (Failure "Internal error: not forward extension")
+
+let read_weak_bwd_ref x =
+  let y = read_weak_ref x in
+  match y.sensext with
+  | BwdSensExt se -> (y, se)
+  | _ -> raise (Failure "Internal error: not backward extension")
+
+let adjust_retcode = fun session f x ->
+  try f x; 0
+  with
+  | Sundials.RecoverableFailure -> 1
+  | e -> (session.exn_temp <- Some e; -1)
+
+let adjust_retcode_and_bool = fun session f x ->
+  try (f x, 0)
+  with
+  | Sundials.RecoverableFailure -> (false, 1)
+  | e -> (session.exn_temp <- Some e; (false, -1))
+
+let call_quadrhsfn session t y yqdot =
+  let (session, fwdsensext) = read_weak_fwd_ref session in
+  adjust_retcode session (fwdsensext.quadrhsfn t y) yqdot
+
+(* fwdsensext.sensrhsfn is called directly from C *)
+
+let call_sensrhsfn1 session t y ydot iS yS ySdot tmp1 tmp2 =
+  let (session, fwdsensext) = read_weak_fwd_ref session in
+  adjust_retcode session
+    (fwdsensext.sensrhsfn1 t y ydot iS yS ySdot tmp1) tmp2
+
+(* fwdsensext.quadsensrhsfn is called directly from C *)
+
+let call_brhsfn session t y yb ybdot =
+  let (session, bwdsensext) = read_weak_bwd_ref session in
+  adjust_retcode session (bwdsensext.brhsfn t y yb) ybdot
+
+(* bwdsensext.brhsfn1 is called directly from C *)
+
+let call_bquadrhsfn session t y yb qbdot =
+  let (session, bwdsensext) = read_weak_bwd_ref session in
+  adjust_retcode session (bwdsensext.bquadrhsfn t y yb) qbdot
+
+(* bwdsensext.bquadrhsfn1 is called directly from C *)
+
+let call_bprecsetupfn session jac jok gamma =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | BSpilsCallback { Adjoint.Spils.prec_setup_fn = Some f } ->
+      adjust_retcode_and_bool session (f jac jok) gamma
+  | _ -> assert false
+
+let call_bprecsolvefn session jac ps rvecB =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | BSpilsCallback { Adjoint.Spils.prec_solve_fn = Some f } ->
+      adjust_retcode session (f jac ps) rvecB
+  | _ -> assert false
+
+let call_bjactimesfn session jac vB jvB =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | BSpilsCallback { Adjoint.Spils.jac_times_vec_fn = Some f } ->
+      adjust_retcode session (f jac vB) jvB
+  | _ -> assert false
+
+let call_bjacfn session jac m =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | BDenseCallback f -> adjust_retcode session (f jac) m
+  | _ -> assert false
+
+let call_bbandjacfn session range jac m =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | BBandCallback f -> adjust_retcode session (f range jac) m
+  | _ -> assert false
+
 
 (* Let C code know about some of the values in this module.  *)
 type fcn = Fcn : 'a -> fcn

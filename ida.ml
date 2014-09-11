@@ -393,11 +393,6 @@ module Spils =
 
 module Alternate =
   struct
-    type conv_fail = Cvode_impl.conv_fail =
-      | NoFailures
-      | FailBadJ
-      | FailOther
-
     type ('data, 'kind) callbacks = ('data, 'kind) alternate_linsolv =
       {
         linit  : (('data, 'kind) session -> unit) option;

@@ -28,10 +28,11 @@
   @author Marc Pouzet (LIENS)
  *)
 
+open Cvode_impl
+open Sundials
+
 type ('data, 'kind) session = ('data, 'kind) Cvode.session
 type ('data, 'kind) nvector = ('data, 'kind) Sundials.nvector
-
-type real_array = Cvode.real_array
 
 (** {2:quad Quadrature Equations} *)
 
@@ -45,7 +46,7 @@ module Quadrature :
         quadrature variables.
         + {b Set vector of quadrature variables }
         {[let yQ = Cvode.RealArray.of_array [| 0.0; 0.0 |] ]}
-        The length of this vector determines the number of quadrature variables.    
+        The length of this vector determines the number of quadrature variables.
         + {b Initialize quadrature integration}
         {[init s fQ yQ]}
         + {b Specify integration tolerances (optional)}, e.g.
@@ -870,8 +871,8 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
     (** {3:adjbwd Backward Problems} *)
 
     (** Identifies a backward problem. *)
-    type ('data, 'kind) bsession = ('data, 'kind) Cvode_impl.bsession
-    type serial_bsession = (real_array, Nvector_serial.kind) bsession
+    type ('data, 'kind) bsession = ('data, 'kind) AdjointTypes.bsession
+    type serial_bsession = (RealArray.t, Nvector_serial.kind) bsession
 
     (** {4:adjbwdinit Initialization} *)
 
@@ -913,9 +914,10 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
         jac_tmp : 't            (** Workspace data,
                                     either {!single_tmp} or {!triple_tmp}. *)
       }
-      
-    type bandrange = { mupper : int; (** The upper half-bandwidth.  *)
-                       mlower : int; (** The lower half-bandwidth.  *) }
+
+    type bandrange = Cvode_impl.bandrange =
+      { mupper : int; (** The upper half-bandwidth.  *)
+        mlower : int; (** The lower half-bandwidth.  *) }
 
     (** Specify a linear solver.
 
@@ -923,8 +925,8 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
         were built to link with a LAPACK library.
 
         @cvodes <node7#sss:lin_solv_b> Linear Solver Initialization Functions *)
-    type ('data, 'kind) linear_solver = ('data, 'kind) Cvode_impl.blinear_solver
-    type serial_linear_solver = (real_array, Nvector_serial.kind) linear_solver
+    type ('data, 'kind) linear_solver = ('data, 'kind) AdjointTypes.linear_solver
+    type serial_linear_solver = (RealArray.t, Nvector_serial.kind) linear_solver
 
     type ('a, 'k) tolerance =
       | SStolerances of float * float
@@ -1121,7 +1123,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
             (or an approximation to it).
 
             @cvodes <node7#ss:densejac_b> CVDlsDenseJacFnB *)
-        type dense_jac_fn = (real_array triple_tmp, real_array) jacobian_arg
+        type dense_jac_fn = (RealArray.t triple_tmp, RealArray.t) jacobian_arg
                                 -> Dls.DenseMatrix.t -> unit
 
         (** This function computes the banded Jacobian of the backward problem
@@ -1129,7 +1131,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
 
             @cvodes <node7#ss:bandjac_b> CVDlsBandJacFnB *)
         type band_jac_fn = bandrange
-                            -> (real_array triple_tmp, real_array) jacobian_arg
+                            -> (RealArray.t triple_tmp, RealArray.t) jacobian_arg
                             -> Dls.BandMatrix.t -> unit
 
         (** Direct linear solver with dense matrix.  The optional argument
@@ -1195,9 +1197,9 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
             [prec_solve_fn] in {!callbacks}.
 
             @cvode <node7#ss:psolve_b> CVSpilsPrecSolveFnB *)
-        type 'a solve_arg =
+        type 'a prec_solve_arg = 'a AdjointTypes.SpilsTypes.prec_solve_arg =
           {
-            rvec   : 'a;       (** The right-hand side vector, {i r}, of the
+            rhs   : 'a;        (** The right-hand side vector, {i r}, of the
                                    linear system. *)
             gamma : float;     (** The scalar {i g} appearing in the Newton
                                    matrix given by M = I - {i g}J. *)
@@ -1213,7 +1215,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
             you should use {!no_precond} as [callbacks].  *)
         type 'a callbacks =
           {
-            prec_solve_fn : (('a single_tmp, 'a) jacobian_arg -> 'a solve_arg
+            prec_solve_fn : (('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
                              -> 'a -> unit) option;
             (** This function solves the preconditioning system {i Pz = r} for
                 the backward problem.

@@ -9,9 +9,7 @@
 (*  under a BSD 2-Clause License, refer to the file LICENSE.           *)
 (*                                                                     *)
 (***********************************************************************)
-
 include Cvode_impl
-type serial_session = (real_array, Nvector_serial.kind) session
 
 (*
  * NB: The order of variant constructors and record fields is important!
@@ -46,8 +44,6 @@ type lmm =
   | Adams
   | BDF
 
-type serial_linear_solver = (real_array, Nvector_serial.kind) linear_solver
-
 type ('a, 'kind) iter =
   | Newton of ('a, 'kind) linear_solver
   | Functional
@@ -66,80 +62,6 @@ type integrator_stats = {
   }
 
 exception StopTimeReached
-
-let call_rhsfn session t y y' =
-  let session = read_weak_ref session in
-  adjust_retcode session true (session.rhsfn t y) y'
-
-(* the roots function is called directly from C. *)
-
-let call_errw session y ewt =
-  let session = read_weak_ref session in
-  try session.errw y ewt; 0
-  with
-  | Sundials.NonPositiveEwt -> -1
-  | e -> (session.exn_temp <- Some e; -1)
-
-let call_errh session details =
-  let session = read_weak_ref session in
-  try session.errh details
-  with e ->
-    prerr_endline ("Warning: error handler function raised an exception.  " ^
-                   "This exception will not be propagated.")
-
-let call_jacfn session jac j =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | DenseCallback f -> adjust_retcode session true (f jac) j
-  | _ -> assert false
-
-let call_bandjacfn session range jac j =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | BandCallback f -> adjust_retcode session true (f range jac) j
-  | _ -> assert false
-
-let call_precsolvefn session jac r z =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | SpilsCallback { prec_solve_fn = Some f } ->
-      adjust_retcode session true (f jac r) z
-  | _ -> assert false
-
-let call_precsetupfn session jac jok gamma =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | SpilsCallback { prec_setup_fn = Some f } ->
-      adjust_retcode_and_bool session (f jac jok) gamma
-  | _ -> assert false
-
-let call_jactimesfn session jac v jv =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | SpilsCallback { jac_times_vec_fn = Some f } ->
-      adjust_retcode session true (f jac v) jv
-  | _ -> assert false
-
-let call_linit session =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | AlternateCallback { linit = Some f } ->
-      adjust_retcode session false f session
-  | _ -> assert false
-
-let call_lsetup session convfail ypred fpred tmp =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | AlternateCallback { lsetup = Some f } ->
-      adjust_retcode_and_bool session (f session convfail ypred fpred) tmp
-  | _ -> assert false
-
-let call_lsolve session b weight ycur fcur =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | AlternateCallback { lsolve = f } ->
-      adjust_retcode session true (f session b weight ycur) fcur
-  | _ -> assert false
 
 external session_finalize : ('a, 'kind) session -> unit
     = "c_cvode_session_finalize"
@@ -172,8 +94,7 @@ module Diag =
 
 module Dls =
   struct
-    type dense_jac_fn = (real_array triple_tmp, real_array) jacobian_arg
-                                                  -> Dls.DenseMatrix.t -> unit
+    include DlsTypes
 
     external c_dls_dense : serial_session -> int -> bool -> unit
       = "c_cvode_dls_dense"
@@ -204,10 +125,6 @@ module Dls =
                                | None -> NoCallbacks
                                | Some f -> DenseCallback f);
       c_dls_lapack_dense session neqs (jac <> None)
-
-    type band_jac_fn = bandrange
-                        -> (real_array triple_tmp, real_array) jacobian_arg
-                        -> Dls.BandMatrix.t -> unit
 
     let band p jac session nv =
       let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
@@ -264,53 +181,22 @@ module Dls =
 
 module Spils =
   struct
-    type gramschmidt_type = Spils.gramschmidt_type =
-      | ModifiedGS
-      | ClassicalGS
-
-    type preconditioning_type = Spils.preconditioning_type =
-      | PrecNone
-      | PrecLeft
-      | PrecRight
-      | PrecBoth
-
-    type 'a solve_arg = 'a prec_solve_arg =
-      {
-        rhs : 'a;
-        gamma : float;
-        delta : float;
-        left : bool;
-      }
-
-    type 'a callbacks = 'a spils_callbacks =
-      {
-        prec_solve_fn : (('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
-                         -> 'a -> unit) option;
-
-        prec_setup_fn : (('a triple_tmp, 'a) jacobian_arg -> bool
-                            -> float -> bool) option;
-
-        jac_times_vec_fn :
-          (('a single_tmp, 'a) jacobian_arg
-           -> 'a (* v *)
-           -> 'a (* Jv *)
-           -> unit) option;
-      }
+    include SpilsTypes
 
     let no_precond = { prec_solve_fn = None;
                        prec_setup_fn = None;
                        jac_times_vec_fn = None; }
 
     external c_spils_spgmr
-      : ('a, 'k) session -> int -> Spils.preconditioning_type -> unit
+      : ('a, 'k) session -> int -> preconditioning_type -> unit
       = "c_cvode_spils_spgmr"
 
     external c_spils_spbcg
-      : ('a, 'k) session -> int -> Spils.preconditioning_type -> unit
+      : ('a, 'k) session -> int -> preconditioning_type -> unit
       = "c_cvode_spils_spbcg"
 
     external c_spils_sptfqmr
-      : ('a, 'k) session -> int -> Spils.preconditioning_type -> unit
+      : ('a, 'k) session -> int -> preconditioning_type -> unit
       = "c_cvode_spils_sptfqmr"
 
     external c_spils_set_preconditioner
@@ -334,7 +220,7 @@ module Spils =
       let maxl = match maxl with None -> 0 | Some ml -> ml in
       c_spils_spgmr session maxl prec_type;
       set_precond session prec_type cb
-    
+
     let spbcg maxl prec_type cb session nv =
       let maxl = match maxl with None -> 0 | Some ml -> ml in
       c_spils_spbcg session maxl prec_type;
@@ -376,10 +262,10 @@ module Spils =
       clear_jac_times_vec_fn s
 
     external set_prec_type
-        : ('a, 'k) session -> Spils.preconditioning_type -> unit
+        : ('a, 'k) session -> preconditioning_type -> unit
         = "c_cvode_spils_set_prec_type"
 
-    external set_gs_type : ('a, 'k) session -> Spils.gramschmidt_type -> unit
+    external set_gs_type : ('a, 'k) session -> gramschmidt_type -> unit
         = "c_cvode_spils_set_gs_type"
 
     external set_eps_lin            : ('a, 'k) session -> float -> unit
@@ -413,17 +299,17 @@ module Spils =
       struct
         external c_spils_banded_spgmr
           : (serial_session * int) -> int
-                    -> int -> int -> Spils.preconditioning_type -> unit
+                    -> int -> int -> preconditioning_type -> unit
           = "c_cvode_spils_banded_spgmr"
 
         external c_spils_banded_spbcg
           : (serial_session * int) -> int
-                    -> int -> int -> Spils.preconditioning_type -> unit
+                    -> int -> int -> preconditioning_type -> unit
           = "c_cvode_spils_banded_spbcg"
 
         external c_spils_banded_sptfqmr
           : (serial_session * int) -> int
-                    -> int -> int -> Spils.preconditioning_type -> unit
+                    -> int -> int -> preconditioning_type -> unit
           = "c_cvode_spils_banded_sptfqmr"
 
         let spgmr maxl prec_type br session nv =
@@ -452,21 +338,7 @@ module Spils =
 
 module Alternate =
   struct
-    type conv_fail = Cvode_impl.conv_fail =
-      | NoFailures
-      | FailBadJ
-      | FailOther
-
-    type ('data, 'kind) callbacks = ('data, 'kind) alternate_linsolv =
-      {
-        linit   : (('data, 'kind) session -> unit) option;
-
-        lsetup : (('data, 'kind) session -> conv_fail -> 'data -> 'data
-                  -> 'data triple_tmp -> bool) option;
-
-        lsolve : ('data, 'kind) session ->  'data -> 'data -> 'data -> 'data
-                  -> unit;
-      }
+    include AlternateTypes
 
     external c_set_alternate
       : ('data, 'kind) session -> bool -> bool -> unit
@@ -710,6 +582,82 @@ external get_nonlin_solv_stats          : ('a, 'k) session -> int * int
 external get_num_g_evals                : ('a, 'k) session -> int
     = "c_cvode_get_num_g_evals"
 
+
+(* Callbacks *)
+
+let call_rhsfn session t y y' =
+  let session = read_weak_ref session in
+  adjust_retcode session true (session.rhsfn t y) y'
+
+(* the roots function is called directly from C. *)
+
+let call_errw session y ewt =
+  let session = read_weak_ref session in
+  try session.errw y ewt; 0
+  with
+  | Sundials.NonPositiveEwt -> -1
+  | e -> (session.exn_temp <- Some e; -1)
+
+let call_errh session details =
+  let session = read_weak_ref session in
+  try session.errh details
+  with e ->
+    prerr_endline ("Warning: error handler function raised an exception.  " ^
+                   "This exception will not be propagated.")
+
+let call_jacfn session jac j =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | DenseCallback f -> adjust_retcode session true (f jac) j
+  | _ -> assert false
+
+let call_bandjacfn session range jac j =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | BandCallback f -> adjust_retcode session true (f range jac) j
+  | _ -> assert false
+
+let call_precsolvefn session jac r z =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | SpilsCallback { Spils.prec_solve_fn = Some f } ->
+      adjust_retcode session true (f jac r) z
+  | _ -> assert false
+
+let call_precsetupfn session jac jok gamma =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | SpilsCallback { Spils.prec_setup_fn = Some f } ->
+      adjust_retcode_and_bool session (f jac jok) gamma
+  | _ -> assert false
+
+let call_jactimesfn session jac v jv =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | SpilsCallback { Spils.jac_times_vec_fn = Some f } ->
+      adjust_retcode session true (f jac v) jv
+  | _ -> assert false
+
+let call_linit session =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | AlternateCallback { linit = Some f } ->
+      adjust_retcode session false f session
+  | _ -> assert false
+
+let call_lsetup session convfail ypred fpred tmp =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | AlternateCallback { lsetup = Some f } ->
+      adjust_retcode_and_bool session (f session convfail ypred fpred) tmp
+  | _ -> assert false
+
+let call_lsolve session b weight ycur fcur =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | AlternateCallback { lsolve = f } ->
+      adjust_retcode session true (f session b weight ycur) fcur
+  | _ -> assert false
 
 (* Let C code know about some of the values in this module.  *)
 type fcn = Fcn : 'a -> fcn
