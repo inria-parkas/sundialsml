@@ -10,38 +10,43 @@
 (*                                                                     *)
 (***********************************************************************)
 
-open Ida_impl
+include Ida_impl
+include IdasBbdTypes
 
 type data = Nvector_parallel.data
+type kind = Nvector_parallel.kind
+
 type parallel_session = (data, Nvector_parallel.kind) Idas.session
 type parallel_bsession = (data, Nvector_parallel.kind) Idas.Adjoint.bsession
+type parallel_linear_solver = (data, kind) Idas.Adjoint.linear_solver
 
-type parallel_linear_solver =
-  (data, Nvector_parallel.kind) Idas.Adjoint.linear_solver
+let tosession = AdjointTypes.tosession
+
+module Impl = IdasBbdParamTypes
+type local_fn = data Impl.local_fn
+type comm_fn = data Impl.comm_fn
+type callbacks =
+  {
+    local_fn : local_fn;
+    comm_fn : comm_fn option;
+  }
 
 let call_bbbdlocal session t y y' yb y'b glocal =
   let session = read_weak_ref session in
   match session.ls_callbacks with
-  | BBBDCallback { B.Bbd.local_fn = f } ->
+  | BBBDCallback { Impl.local_fn = f } ->
       adjust_retcode session true (f t y y' yb y'b) glocal
   | _ -> assert false
 
 let call_bbbdcomm session t y y' yb y'b =
   let session = read_weak_ref session in
   match session.ls_callbacks with
-  | BBBDCallback { B.Bbd.comm_fn = Some f } ->
+  | BBBDCallback { Impl.comm_fn = Some f } ->
       adjust_retcode session true (f t y y' yb) y'b
   | _ -> assert false
 
-type callbacks =
-  {
-    local_fn : float -> data -> data -> data -> data -> data -> unit;
-
-    comm_fn  : (float -> data -> data -> data -> data -> unit) option;
-  }
-
 let bbd_callbacks { local_fn; comm_fn } =
-  { B.Bbd.local_fn = local_fn; B.Bbd.comm_fn = comm_fn }
+  { Impl.local_fn = local_fn; Impl.comm_fn = comm_fn }
 
 external c_bbd_prec_initb
     : (parallel_session * int) -> int

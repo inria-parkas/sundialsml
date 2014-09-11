@@ -28,12 +28,22 @@
     @author Marc Pouzet (LIENS)
     @idas <node7#SECTION00742000000000000000> Using the band-block-diagonal preconditioner IDABBDPRE
  *)
-
 type data = Nvector_parallel.data
-type parallel_bsession = (data, Nvector_parallel.kind) Ida_impl.bsession
+type kind = Nvector_parallel.kind
+type parallel_bsession = (data, kind) Idas.Adjoint.bsession
+type parallel_linear_solver = (data, kind) Idas.Adjoint.linear_solver
 
-type parallel_linear_solver =
-    (data, Nvector_parallel.kind) Idas.Adjoint.linear_solver
+type bandwidths = Ida_bbd.bandwidths =
+  {
+    mudq    : int; (** Upper half-bandwidth to be used in the difference
+                       quotient Jacobian approximation. *)
+    mldq    : int; (** Lower half-bandwidth to be used in the difference
+                       quotient Jacobian approximation. *)
+    mukeep  : int; (** Upper half-bandwidth of the retained banded approximate
+                       Jacobian block. *)
+    mlkeep  : int; (** Lower half-bandwidth of the retained banded approximate
+                       Jacobian block. *)
+  }
 
 (** User-supplied functions for the BBD preconditioner.
 

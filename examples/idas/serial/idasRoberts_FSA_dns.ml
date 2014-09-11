@@ -59,7 +59,7 @@ let ns    = 3             (* number of sensitivities computed *)
 
 type user_data =
   {
-    p : Ida.real_array;         (* problem parameters (size 3) *)
+    p : RealArray.t;         (* problem parameters (size 3) *)
     coef : float;
   }
 
@@ -115,7 +115,7 @@ let res data t (yy : RealArray.t) (yp : RealArray.t) (resval : RealArray.t) =
   resval.{1} <- yp2 -. p1*.y1 +. p2*.y2*.y3 +. p3*.y2*.y2;
   resval.{2} <- y1 +. y2 +. y3 -. 1.0
 
-let resS : user_data -> Idas.real_array Sens.sensresfn =
+let resS : user_data -> RealArray.t Sens.sensresfn =
   fun data t yy yp resval yyS ypS resvalS tmp1 tmp2 tmp3 ->
   let p1 = data.p.{0}
   and p2 = data.p.{1}

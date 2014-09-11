@@ -9,9 +9,7 @@
 (*  under a BSD 2-Clause License, refer to the file LICENSE.           *)
 (*                                                                     *)
 (***********************************************************************)
-
 include Ida_impl
-type serial_session = (real_array, Nvector_serial.kind) session
 
 (*
  * NB: The order of variant constructors and record fields is important!
@@ -46,8 +44,6 @@ exception BadT
 exception BadDky
 
 let no_roots = (0, (fun _ _ _ _ -> ()))
-
-type serial_linear_solver = (real_array, Nvector_serial.kind) linear_solver
 
 type integrator_stats = {
     num_steps : int;
@@ -84,80 +80,6 @@ module VarType =
     let string_of_float x = string_of_var_type (of_float x)
   end
 
-let call_resfn session t y y' res =
-  let session = read_weak_ref session in
-  adjust_retcode session true (session.resfn t y y') res
-
-(* the roots function is called directly from C. *)
-
-let call_errw session y ewt =
-  let session = read_weak_ref session in
-  try session.errw y ewt; 0
-  with
-  | Sundials.NonPositiveEwt -> -1
-  | e -> (session.exn_temp <- Some e; -1)
-
-let call_errh session details =
-  let session = read_weak_ref session in
-  try session.errh details
-  with e ->
-    prerr_endline ("Warning: error handler function raised an exception.  " ^
-                   "This exception will not be propagated.")
-
-let call_jacfn session jac j =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | DenseCallback f -> adjust_retcode session true (f jac) j
-  | _ -> assert false
-
-let call_bandjacfn session jac range j =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | BandCallback f -> adjust_retcode session true (f range jac) j
-  | _ -> assert false
-
-let call_precsolvefn session jac r z delta =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | SpilsCallback { prec_solve_fn = Some f } ->
-    adjust_retcode session true (f jac r z) delta
-  | _ -> assert false
-
-let call_precsetupfn session jac =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | SpilsCallback { prec_setup_fn = Some f } ->
-      adjust_retcode session true f jac
-  | _ -> assert false
-
-let call_jactimesfn session jac r z =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | SpilsCallback { jac_times_vec_fn = Some f } ->
-      adjust_retcode session true (f jac r) z
-  | _ -> assert false
-
-let call_linit session =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | AlternateCallback { linit = Some f } ->
-      adjust_retcode session false f session
-  | _ -> assert false
-
-let call_lsetup session yyp ypp resp tmp =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | AlternateCallback { lsetup = Some f } ->
-      adjust_retcode session true (f session yyp ypp resp) tmp
-  | _ -> assert false
-
-let call_lsolve session b weight ycur y'cur rescur =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | AlternateCallback { lsolve = f } ->
-      adjust_retcode session true (f session b weight ycur y'cur) rescur
-  | _ -> assert false
-
 external session_finalize : ('a, 'kind) session -> unit
     = "c_ida_session_finalize"
 
@@ -175,7 +97,7 @@ let root_init session (nroots, rootsfn) =
 
 module Dls =
   struct
-    type dense_jac_fn = Ida_impl.dense_jac_fn
+    include DlsTypes
 
     external c_dls_dense : serial_session -> int -> bool -> unit
       = "c_ida_dls_dense"
@@ -206,8 +128,6 @@ module Dls =
                                | None -> NoCallbacks
                                | Some f -> DenseCallback f);
       c_dls_lapack_dense session neqs (jac <> None)
-
-    type band_jac_fn = Ida_impl.band_jac_fn
 
     let band p jac session nv nv' =
       let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
@@ -264,26 +184,7 @@ module Dls =
 
 module Spils =
   struct
-    type gramschmidt_type = Spils.gramschmidt_type =
-      | ModifiedGS
-      | ClassicalGS
-
-    type preconditioning_type = Spils.preconditioning_type =
-      | PrecNone
-      | PrecLeft
-      | PrecRight
-      | PrecBoth
-
-    type 'a callbacks = 'a spils_callbacks =
-      {
-        prec_solve_fn : (('a single_tmp, 'a) jacobian_arg -> 'a -> 'a -> float
-                         -> unit) option;
-        prec_setup_fn : (('a triple_tmp, 'a) jacobian_arg -> unit) option;
-        jac_times_vec_fn : (('a double_tmp, 'a) jacobian_arg
-                            -> 'a           (* v *)
-                            -> 'a           (* Jv *)
-                            -> unit) option;
-      }
+    include SpilsTypes
 
     let no_precond = { prec_solve_fn = None;
                        prec_setup_fn = None;
@@ -393,14 +294,7 @@ module Spils =
 
 module Alternate =
   struct
-    type ('data, 'kind) callbacks = ('data, 'kind) alternate_linsolv =
-      {
-        linit  : (('data, 'kind) session -> unit) option;
-        lsetup : (('data, 'kind) session -> 'data
-                  -> 'data -> 'data -> 'data triple_tmp -> unit) option;
-        lsolve : ('data, 'kind) session -> 'data -> 'data
-          -> 'data -> 'data -> 'data -> unit;
-      }
+    include AlternateTypes
 
     external c_set_alternate
       : ('data, 'kind) session -> bool -> bool -> unit
@@ -711,6 +605,81 @@ external c_calc_ic_ya_yd' :
 let calc_ic_ya_yd' session ?y ?y' id tout1 =
   c_calc_ic_ya_yd' session y y' id tout1
 
+(* Callbacks *)
+
+let call_resfn session t y y' res =
+  let session = read_weak_ref session in
+  adjust_retcode session true (session.resfn t y y') res
+
+(* the roots function is called directly from C. *)
+
+let call_errw session y ewt =
+  let session = read_weak_ref session in
+  try session.errw y ewt; 0
+  with
+  | Sundials.NonPositiveEwt -> -1
+  | e -> (session.exn_temp <- Some e; -1)
+
+let call_errh session details =
+  let session = read_weak_ref session in
+  try session.errh details
+  with e ->
+    prerr_endline ("Warning: error handler function raised an exception.  " ^
+                   "This exception will not be propagated.")
+
+let call_jacfn session jac j =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | DenseCallback f -> adjust_retcode session true (f jac) j
+  | _ -> assert false
+
+let call_bandjacfn session jac range j =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | BandCallback f -> adjust_retcode session true (f range jac) j
+  | _ -> assert false
+
+let call_precsolvefn session jac r z delta =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | SpilsCallback { Spils.prec_solve_fn = Some f } ->
+    adjust_retcode session true (f jac r z) delta
+  | _ -> assert false
+
+let call_precsetupfn session jac =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | SpilsCallback { Spils.prec_setup_fn = Some f } ->
+      adjust_retcode session true f jac
+  | _ -> assert false
+
+let call_jactimesfn session jac r z =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | SpilsCallback { Spils.jac_times_vec_fn = Some f } ->
+      adjust_retcode session true (f jac r) z
+  | _ -> assert false
+
+let call_linit session =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | AlternateCallback { linit = Some f } ->
+      adjust_retcode session false f session
+  | _ -> assert false
+
+let call_lsetup session yyp ypp resp tmp =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | AlternateCallback { lsetup = Some f } ->
+      adjust_retcode session true (f session yyp ypp resp) tmp
+  | _ -> assert false
+
+let call_lsolve session b weight ycur y'cur rescur =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | AlternateCallback { lsolve = f } ->
+      adjust_retcode session true (f session b weight ycur y'cur) rescur
+  | _ -> assert false
 
 (* Let C code know about some of the values in this module.  *)
 type fcn = Fcn : 'a -> fcn
@@ -757,5 +726,5 @@ let _ =
 
       BadK;
       BadT;
-      BadDky
+      BadDky;
     |]

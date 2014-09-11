@@ -29,10 +29,11 @@
     @ida <node5#sss:idabbdpre> Parallel band-block-diagonal preconditioner module *)
 
 type data = Nvector_parallel.data
-type parallel_session = (data, Nvector_parallel.kind) Ida.session
-type parallel_linear_solver = (data, Nvector_parallel.kind) Ida.linear_solver
+type kind = Nvector_parallel.kind
+type parallel_session = (data, kind) Ida.session
+type parallel_linear_solver = (data, kind) Ida.linear_solver
 
-type bandwidths =
+type bandwidths = Ida_impl.IdaBbdTypes.bandwidths =
   {
     mudq    : int; (** Upper half-bandwidth to be used in the difference
                        quotient Jacobian approximation. *)

@@ -28,10 +28,12 @@
   @author Jun Inoue (Inria)
   @author Marc Pouzet (LIENS)
  *)
+
+open Ida_impl
+open Sundials
+
 type ('data, 'kind) session = ('data, 'kind) Ida.session
 type ('data, 'kind) nvector = ('data, 'kind) Sundials.nvector
-
-type real_array = Sundials.RealArray.t
 
 (** {2:quad Quadrature Equations} *)
 
@@ -253,7 +255,7 @@ let yS'0 = Array.init ns (fun _ -> RealArray.init neq 0.0)]}
         internal difference-quotient implementation is used.
 
         @idas <node6#s:user_fct_fwd> IDASensResFn  *)
-    type 'a sensresfn = 'a Ida_impl.sensresfn (* =
+    type 'a sensresfn =
       float                            (* t *)
       -> 'a                            (* y *)
       -> 'a                            (* y' *)
@@ -264,7 +266,7 @@ let yS'0 = Array.init ns (fun _ -> RealArray.init neq 0.0)]}
       -> 'a                            (* tmp1 *)
       -> 'a                            (* tmp2 *)
       -> 'a                            (* tmp3 *)
-      -> unit*)
+      -> unit
 
     (** Specifies a sensitivity solution method.
 
@@ -873,19 +875,32 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (Basic fB) tB0 yB0
     (** {3:adjbwd Backward Problems} *)
 
     (** Identifies a backward problem. *)
-    type ('a, 'k) bsession = ('a, 'k) Ida_impl.bsession
-    type serial_bsession = (real_array, Nvector_serial.kind) bsession
+    type ('a, 'k) bsession = ('a, 'k) AdjointTypes.bsession
+    type serial_bsession = (RealArray.t, Nvector_serial.kind) bsession
 
     (** {4:adjbwdinit Initialization} *)
 
     (** These functions evaluate the right-hand side of the backward ODE system
         with or without a dependence on forward sensitivities. *)
     type 'a bresfn =
-      'a Ida_impl.B.bresfn =
-        Basic of 'a Ida_impl.B.resfnb
+      | Basic of (float             (* t *)
+                  -> 'a             (* y *)
+                  -> 'a             (* y' *)
+                  -> 'a             (* yB *)
+                  -> 'a             (* y'B *)
+                  -> 'a             (* resvalB *)
+                  -> unit)
       (** @idas <node7#ss:ODErhs_b> IDARhsFnB
           @idas <node3#e:adj_eqns> Eq 2.19, Adjoint sensitivity analysis *)
-      | WithSens of 'a Ida_impl.B.resfnbs
+      | WithSens of (float          (* t *)
+                     -> 'a          (* y *)
+                     -> 'a          (* y' *)
+                     -> 'a array    (* yS *)
+                     -> 'a array    (* y'S *)
+                     -> 'a          (* yB *)
+                     -> 'a          (* y'B *)
+                     -> 'a          (* resvalB *)
+                     -> unit)
       (** @idas <node7#ss:ODErhs_bs> IDARhsFnBS
           @idas <node3#e:adj1_eqns> Eq 2.21, Adjoint sensitivity analysis *)
 
@@ -900,19 +915,20 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (Basic fB) tB0 yB0
         @idas <node7#ss:psolve_b> IDASpilsPrecSolveFnB
         @idas <node7#ss:psetup_b> IDASpilsPrecSetupFnB *)
     type ('t, 'a) jacobian_arg =
-      ('t, 'a) Ida_impl.B.jacobian_arg = {
-      jac_t : float;
-      jac_y : 'a;
-      jac_y' : 'a;
-      jac_yb : 'a;
-      jac_y'b : 'a;
-      jac_resb : 'a;
-      jac_coef : float;
-      jac_tmp : 't;
-    }
+      {
+        jac_t : float;
+        jac_y : 'a;
+        jac_y' : 'a;
+        jac_yb : 'a;
+        jac_y'b : 'a;
+        jac_resb : 'a;
+        jac_coef : float;
+        jac_tmp : 't;
+      }
 
-    type bandrange = { mupper : int; (** The upper half-bandwidth.  *)
-                       mlower : int; (** The lower half-bandwidth.  *) }
+    type bandrange = Ida.bandrange =
+      { mupper : int; (** The upper half-bandwidth.  *)
+        mlower : int; (** The lower half-bandwidth.  *) }
 
     (** Specify which variables are algebraic and which variables are
         differential, needed for {!set_suppress_alg}.  This function must
@@ -1054,9 +1070,9 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (Basic fB) tB0 yB0
 
         @idas <node7#sss:lin_solv_b> Linear Solver Initialization Functions *)
     type ('data, 'kind) linear_solver =
-        ('data, 'kind) Ida_impl.blinear_solver
+      ('data, 'kind) AdjointTypes.linear_solver
     type serial_linear_solver =
-        (real_array, Nvector_serial.kind) linear_solver
+      (RealArray.t, Nvector_serial.kind) linear_solver
 
     type ('a, 'k) tolerance =
         SStolerances of float * float
@@ -1209,7 +1225,7 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (Basic fB) tB0 yB0
 
             @idas <node7#ss:densejac_b> IDADlsDenseJacFnB *)
         type dense_jac_fn =
-            (real_array triple_tmp, real_array) jacobian_arg ->
+            (RealArray.t triple_tmp, RealArray.t) jacobian_arg ->
             Dls.DenseMatrix.t -> unit
 
         (** This function computes the banded Jacobian of the backward problem
@@ -1218,7 +1234,7 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (Basic fB) tB0 yB0
             @idas <node7#ss:bandjac_b> IDADlsBandJacFnB *)
         type band_jac_fn =
             bandrange ->
-            (real_array triple_tmp, real_array) jacobian_arg ->
+            (RealArray.t triple_tmp, RealArray.t) jacobian_arg ->
             Dls.BandMatrix.t -> unit
 
         (** Direct linear solver with dense matrix.  The optional argument
@@ -1230,7 +1246,7 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (Basic fB) tB0 yB0
             @idas <node7#sss:lin_solv_b> IDADenseB
             @idas <node7#SECTION00729200000000000000> IDADlsSetDenseJacFnB
             @idas <node7#ss:densejac_b> IDADlsDenseJacFnB *)
-        val dense : Ida_impl.B.dense_jac_fn option -> serial_linear_solver
+        val dense : dense_jac_fn option -> serial_linear_solver
 
         (** Direct linear solver with banded matrix.  The arguments specify the
             width of the band ({!bandrange}) and an optional Jacobian
@@ -1241,7 +1257,7 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (Basic fB) tB0 yB0
             @idas <node7#sss:lin_solv_b> IDABandB
             @idas <node7#SECTION00729300000000000000> IDADlsSetBandJacFnB
             @idas <node7#ss:bandjac_b> IDADlsBandJacFnB *)
-        val band : bandrange -> Ida_impl.B.band_jac_fn option -> serial_linear_solver
+        val band : bandrange -> band_jac_fn option -> serial_linear_solver
       end
 
     (** {4:adjbwdspils Scaled Preconditioned Iterative Linear Solvers (SPILS)} *)
@@ -1256,14 +1272,15 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (Basic fB) tB0 yB0
           Spils.gramschmidt_type =
             ModifiedGS
           | ClassicalGS
+
         type preconditioning_type =
           Spils.preconditioning_type =
             PrecNone
           | PrecLeft
           | PrecRight
           | PrecBoth
-        type 'a callbacks =
-          'a Ida_impl.B.spils_callbacks = {
+
+        type 'a callbacks = {
           prec_solve_fn :
             (('a single_tmp, 'a) jacobian_arg -> 'a -> 'a -> float -> unit)
             option;
@@ -1643,8 +1660,7 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (Basic fB) tB0 yB0
         (** These functions compute the quadrature equation right-hand side for
             the backward problem. *)
         type 'a bquadrhsfn =
-          'a Ida_impl.B.bquadrhsfn =
-            Basic of (float -> 'a -> 'a -> 'a -> 'a -> 'a -> unit)
+          | Basic of (float -> 'a -> 'a -> 'a -> 'a -> 'a -> unit)
             (** The quadrature rhs does not depend on forward
                 sensitivities.  The function is called as
                 [f t y y' yB y'B rhsvalBQ], where

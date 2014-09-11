@@ -29,6 +29,8 @@
  @author Marc Pouzet (LIENS)
  *)
 
+open Sundials
+
 (** {2:exceptions Exceptions} *)
 
 (** @ida <node5#sss:ida> IDA_ILL_INPUT *)
@@ -109,8 +111,7 @@ t := t' + 0.1]}
  *)
 type ('a, 'k) session = ('a, 'k) Ida_impl.session
 
-type real_array = Sundials.RealArray.t
-type serial_session = (real_array, Nvector_serial.kind) session
+type serial_session = (RealArray.t, Nvector_serial.kind) session
 
 (** The type of vectors passed to the solver. *)
 type ('data, 'kind) nvector = ('data, 'kind) Sundials.nvector
@@ -121,7 +122,7 @@ type ('data, 'kind) nvector = ('data, 'kind) Sundials.nvector
 
     @ida <node5#sss:lin_solv_init> Linear Solver Specification Functions *)
 type ('data, 'kind) linear_solver = ('data, 'kind) Ida_impl.linear_solver
-type serial_linear_solver = (real_array, Nvector_serial.kind) linear_solver
+type serial_linear_solver = (RealArray.t, Nvector_serial.kind) linear_solver
 
 
 type 'a single_tmp = 'a
@@ -156,8 +157,9 @@ type ('t, 'a) jacobian_arg =
 (** {3 Direct Linear Solvers (DLS)} *)
 
 (** The range of nonzero entries in a band matrix.  *)
-type bandrange = { mupper : int; (** The upper half-bandwidth.  *)
-                   mlower : int; (** The lower half-bandwidth.  *) }
+type bandrange = Ida_impl.bandrange =
+  { mupper : int; (** The upper half-bandwidth.  *)
+    mlower : int; (** The lower half-bandwidth.  *) }
 
 (** Get optional outputs for the Direct Linear Solvers that operate on dense
     and banded matrices.
@@ -213,7 +215,7 @@ module Dls :
         @ida <node5#ss:djacFn> Dense Jacobian function
         @ida <node3#ss:ivp_soln> IVP solution
     *)
-    type dense_jac_fn = (real_array triple_tmp, real_array) jacobian_arg
+    type dense_jac_fn = (RealArray.t triple_tmp, RealArray.t) jacobian_arg
                          -> Dls.DenseMatrix.t -> unit
 
     (** Direct linear solver with dense matrix.  The optional argument
@@ -281,7 +283,7 @@ module Dls :
         @ida <node3#ss:ivp_soln> IVP solution
     *)
     type band_jac_fn = bandrange
-                        -> (real_array triple_tmp, real_array) jacobian_arg
+                        -> (RealArray.t triple_tmp, RealArray.t) jacobian_arg
                         -> Dls.BandMatrix.t -> unit
 
     (** Direct linear solver with banded matrix.  The arguments
@@ -700,7 +702,7 @@ module Alternate :
 
     type ('data, 'kind) callbacks =
       {
-        linit   : (('data, 'kind) session -> unit) option;
+        linit  : (('data, 'kind) session -> unit) option;
           (** Complete initializations for a specific linear solver, such as
               counters and statistics. Returns [true] if successful.
 

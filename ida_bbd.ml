@@ -10,40 +10,37 @@
 (*                                                                     *)
 (***********************************************************************)
 
-open Ida_impl
+include Ida_impl
+include IdaBbdTypes
 
 type data = Nvector_parallel.data
+type kind = Nvector_parallel.kind
 type parallel_session = (data, Nvector_parallel.kind) Ida.session
 type parallel_linear_solver = (data, Nvector_parallel.kind) linear_solver
 
-type bandwidths =
-  {
-    mudq    : int;
-    mldq    : int;
-    mukeep  : int;
-    mlkeep  : int;
-  }
-
+module Impl = IdaBbdParamTypes
+type local_fn = data Impl.local_fn
+type comm_fn = data Impl.comm_fn
 type callbacks =
   {
-    local_fn : float -> data -> data -> data -> unit;
-    comm_fn  : (float -> data -> data -> unit) option;
+    local_fn : local_fn;
+    comm_fn : comm_fn option;
   }
 
 let bbd_callbacks { local_fn; comm_fn } =
-  { Bbd.local_fn = local_fn; Bbd.comm_fn = comm_fn }
+  { Impl.local_fn = local_fn; Impl.comm_fn = comm_fn }
 
 let call_bbdlocal session t y y' gval =
   let session = read_weak_ref session in
   match session.ls_callbacks with
-  | BBDCallback { Bbd.local_fn = f } ->
+  | BBDCallback { Impl.local_fn = f } ->
       adjust_retcode session true (f t y y') gval
   | _ -> assert false
 
 let call_bbdcomm session t y y' =
   let session = read_weak_ref session in
   match session.ls_callbacks with
-  | BBDCallback { Bbd.comm_fn = Some f } ->
+  | BBDCallback { Impl.comm_fn = Some f } ->
     adjust_retcode session true (f t y) y'
   | _ -> assert false
 
