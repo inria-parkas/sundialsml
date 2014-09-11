@@ -41,84 +41,9 @@ type eta_choice =
   | EtaChoice2 of eta_params    (* KIN_ETACHOICE2 *)
   | EtaConstant of float option (* KIN_ETACONSTANT *)
 
-type serial_session = (real_array, Nvector_serial.kind) session
 type serial_linear_solver = (real_array, Nvector_serial.kind) linear_solver
 
 (* interface *)
-
-let call_sysfn session u fval =
-  let session = read_weak_ref session in
-  adjust_retcode session true (session.sysfn u) fval
-
-let call_errh session details =
-  let session = read_weak_ref session in
-  try session.errh details
-  with e ->
-    prerr_endline ("Warning: error handler function raised an exception.  " ^
-                   "This exception will not be propagated.")
-
-let call_infoh session details =
-  let session = read_weak_ref session in
-  try session.infoh details
-  with e ->
-    prerr_endline ("Warning: error handler function raised an exception.  " ^
-                   "This exception will not be propagated.")
-
-let call_jacfn session jac j =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | DenseCallback f -> adjust_retcode session true (f jac) j
-  | _ -> assert false
-
-let call_bandjacfn session range jac j =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | BandCallback f -> adjust_retcode session true (f range jac) j
-  | _ -> assert false
-
-let call_precsolvefn session jac ps u =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | SpilsCallback { prec_solve_fn = Some f } ->
-      adjust_retcode session true (f jac ps) u
-  | _ -> assert false
-
-let call_precsetupfn session jac ps =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | SpilsCallback { prec_setup_fn = Some f } ->
-      adjust_retcode session true (f jac) ps
-  | _ -> assert false
-
-let call_jactimesfn session v jv u new_uu =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | SpilsCallback { jac_times_vec_fn = Some f } ->
-      (try (f v jv u new_uu, 0) with
-       | Sundials.RecoverableFailure -> (false, 1)
-       | e -> (session.exn_temp <- Some e; (false, -1)))
-  | _ -> assert false
-
-let call_linit session =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | AlternateCallback { linit = Some f } ->
-      adjust_retcode session false f session
-  | _ -> assert false
-
-let call_lsetup session =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | AlternateCallback { lsetup = Some f } ->
-      adjust_retcode session true f session
-  | _ -> assert false
-
-let call_lsolve session x b =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | AlternateCallback { lsolve = f } ->
-      adjust_retcode_and_option session (f session x) b
-  | _ -> assert false
 
 external session_finalize : ('a, 'k) session -> unit
     = "c_kinsol_session_finalize"
@@ -127,8 +52,7 @@ let int_default = function None -> 0 | Some v -> v
 
 module Dls =
   struct
-    type dense_jac_fn = (real_array double_tmp, real_array) jacobian_arg
-                                                -> Dls.DenseMatrix.t -> unit
+    include DlsTypes
 
     external c_dls_dense : serial_session -> bool -> unit
       = "c_kinsol_dls_dense"
@@ -159,10 +83,6 @@ module Dls =
       s.ls_callbacks <- match fo with
                         | None -> NoCallbacks
                         | Some f -> DenseCallback f
-
-    type band_jac_fn = bandrange
-                        -> (real_array double_tmp, real_array) jacobian_arg
-                        -> Dls.BandMatrix.t -> unit
 
     let band { mupper; mlower } fo s onv =
       (match onv with
@@ -226,22 +146,7 @@ module Dls =
 
 module Spils =
   struct
-    type 'a solve_arg = 'a prec_solve_arg =
-      {
-        uscale : 'a;
-        fscale : 'a;
-      }
-
-    type 'a callbacks = 'a spils_callbacks =
-      {
-        prec_solve_fn : (('a single_tmp, 'a) jacobian_arg -> 'a solve_arg
-                          -> 'a -> unit) option;
-
-        prec_setup_fn : (('a double_tmp, 'a) jacobian_arg -> 'a solve_arg
-                         -> unit) option;
-
-        jac_times_vec_fn : ('a -> 'a -> 'a -> bool -> bool) option;
-      }
+    include SpilsTypes
 
     let spils_no_precond = {
       prec_solve_fn = None;
@@ -342,13 +247,7 @@ module Spils =
 
 module Alternate =
   struct
-
-    type ('data, 'kind) callbacks = ('data, 'kind) alternate_linsolv =
-      {
-        linit  : (('data, 'kind) session -> bool) option;
-        lsetup : (('data, 'kind) session -> unit) option;
-        lsolve : ('data, 'kind) session -> 'data -> 'data -> float option;
-      }
+    include AlternateTypes
 
     external c_set_alternate
       : ('data, 'kind) session -> bool -> bool -> unit
@@ -564,6 +463,82 @@ external solve : ('a, 'k) session -> ('a, 'k) nvector -> bool -> ('a, 'k) nvecto
                   -> ('a, 'k) nvector -> result
     = "c_kinsol_solve"
 
+
+(* Callbacks *)
+
+let call_sysfn session u fval =
+  let session = read_weak_ref session in
+  adjust_retcode session true (session.sysfn u) fval
+
+let call_errh session details =
+  let session = read_weak_ref session in
+  try session.errh details
+  with e ->
+    prerr_endline ("Warning: error handler function raised an exception.  " ^
+                   "This exception will not be propagated.")
+
+let call_infoh session details =
+  let session = read_weak_ref session in
+  try session.infoh details
+  with e ->
+    prerr_endline ("Warning: error handler function raised an exception.  " ^
+                   "This exception will not be propagated.")
+
+let call_jacfn session jac j =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | DenseCallback f -> adjust_retcode session true (f jac) j
+  | _ -> assert false
+
+let call_bandjacfn session range jac j =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | BandCallback f -> adjust_retcode session true (f range jac) j
+  | _ -> assert false
+
+let call_precsolvefn session jac ps u =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | SpilsCallback { Spils.prec_solve_fn = Some f } ->
+      adjust_retcode session true (f jac ps) u
+  | _ -> assert false
+
+let call_precsetupfn session jac ps =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | SpilsCallback { Spils.prec_setup_fn = Some f } ->
+      adjust_retcode session true (f jac) ps
+  | _ -> assert false
+
+let call_jactimesfn session v jv u new_uu =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | SpilsCallback { Spils.jac_times_vec_fn = Some f } ->
+      (try (f v jv u new_uu, 0) with
+       | Sundials.RecoverableFailure -> (false, 1)
+       | e -> (session.exn_temp <- Some e; (false, -1)))
+  | _ -> assert false
+
+let call_linit session =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | AlternateCallback { linit = Some f } ->
+      adjust_retcode session false f session
+  | _ -> assert false
+
+let call_lsetup session =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | AlternateCallback { lsetup = Some f } ->
+      adjust_retcode session true f session
+  | _ -> assert false
+
+let call_lsolve session x b =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | AlternateCallback { lsolve = f } ->
+      adjust_retcode_and_option session (f session x) b
+  | _ -> assert false
 
 (* Let C code know about some of the values in this module.  *)
 type fcn = Fcn : 'a -> fcn

@@ -10,40 +10,37 @@
 (*                                                                     *)
 (***********************************************************************)
 
-open Kinsol_impl
+include Kinsol_impl
+include KinsolBbdTypes
 
 type data = Nvector_parallel.data
-type parallel_session = (data, Nvector_parallel.kind) session
-type parallel_linear_solver = (data, Nvector_parallel.kind) linear_solver
+type kind = Nvector_parallel.kind
+type parallel_session = (data, kind) session
+type parallel_linear_solver = (data, kind) linear_solver
 
-type bandwidths =
-  {
-    mudq    : int;
-    mldq    : int;
-    mukeep  : int;
-    mlkeep  : int;
-  }
-
+module Impl = KinsolBbdParamTypes
+type local_fn = data Impl.local_fn
+type comm_fn = data Impl.comm_fn
 type callbacks =
   {
-    local_fn : data -> data -> unit;
-    comm_fn  : (data -> unit) option;
+    local_fn : local_fn;
+    comm_fn  : comm_fn option;
   }
 
 let bbd_callbacks { local_fn; comm_fn } =
-  { Bbd.local_fn = local_fn; Bbd.comm_fn = comm_fn }
+  { Impl.local_fn = local_fn; Impl.comm_fn = comm_fn }
 
 let call_bbdlocal session u gval =
   let session = read_weak_ref session in
   match session.ls_callbacks with
-  | BBDCallback { Bbd.local_fn = f } ->
+  | BBDCallback { Impl.local_fn = f } ->
       adjust_retcode session true (f u) gval
   | _ -> assert false
 
 let call_bbdcomm session u =
   let session = read_weak_ref session in
   match session.ls_callbacks with
-  | BBDCallback { Bbd.comm_fn = Some f } -> adjust_retcode session true f u
+  | BBDCallback { Impl.comm_fn = Some f } -> adjust_retcode session true f u
   | _ -> assert false
 
 external c_bbd_prec_init

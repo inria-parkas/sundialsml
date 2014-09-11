@@ -10,6 +10,15 @@
 (*                                                                     *)
 (***********************************************************************)
 
+(* Types shared between Kinsol and Kinsol_bbd.  See the notes on
+   Cvode_impl about the rationale behind this module.  *)
+
+(*
+ * NB: The order of variant constructors and record fields is important!
+ *     If these types are changed or augmented, the corresponding declarations
+ *     in cvode_ml.h (and code in cvode_ml.c) must also be updated.
+ *)
+
 type ('a, 'k) nvector = ('a, 'k) Sundials.nvector
 
 type 'a single_tmp = 'a
@@ -24,53 +33,80 @@ type ('t, 'a) jacobian_arg =
 
 type real_array = Sundials.RealArray.t
 
-type dense_jac_fn = (real_array double_tmp, real_array) jacobian_arg
-                        -> Dls.DenseMatrix.t -> unit
-
 type bandrange = { mupper : int; mlower : int; }
 
-type band_jac_fn = bandrange -> (real_array double_tmp, real_array) jacobian_arg
-                        -> Dls.BandMatrix.t -> unit
+module DlsTypes = struct
+  type dense_jac_fn =
+    (real_array double_tmp, real_array) jacobian_arg
+    -> Dls.DenseMatrix.t -> unit
 
-type 'a prec_solve_arg = { uscale : 'a; fscale : 'a; }
+  type band_jac_fn =
+    bandrange
+    -> (real_array double_tmp, real_array) jacobian_arg
+    -> Dls.BandMatrix.t
+    -> unit
+end
 
-type 'a spils_callbacks =
-  {
-    prec_solve_fn : (('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
-                      -> 'a -> unit) option;
+module SpilsTypes = struct
+  type 'a solve_arg = { uscale : 'a; fscale : 'a; }
 
-    prec_setup_fn : (('a double_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
-                     -> unit) option;
+  type 'a prec_solve_fn =
+    ('a single_tmp, 'a) jacobian_arg
+    -> 'a solve_arg
+    -> 'a
+    -> unit
 
-    jac_times_vec_fn : ('a -> 'a -> 'a -> bool -> bool) option;
-  }
+  type 'a prec_setup_fn =
+    ('a double_tmp, 'a) jacobian_arg
+    -> 'a solve_arg
+    -> unit
 
-(* BBD definitions *)
-module Bbd =
-  struct
-    type 'data callbacks =
-      {
-        local_fn : 'data -> 'data -> unit;
-        comm_fn  : ('data -> unit) option;
-      }
-  end
+  type 'a jac_times_vec_fn = 'a -> 'a -> 'a -> bool -> bool
+
+  type 'a callbacks =
+    {
+      prec_solve_fn : 'a prec_solve_fn option;
+
+      prec_setup_fn : 'a prec_setup_fn option;
+
+      jac_times_vec_fn : 'a jac_times_vec_fn option;
+    }
+end
+
+module KinsolBbdParamTypes = struct
+  type 'a local_fn = 'a -> 'a -> unit
+  type 'a comm_fn = 'a -> unit
+  type 'a callbacks =
+    {
+      local_fn : 'a local_fn;
+      comm_fn  : 'a comm_fn option;
+    }
+end
+
+module KinsolBbdTypes = struct
+  type bandwidths =
+    {
+      mudq    : int;
+      mldq    : int;
+      mukeep  : int;
+      mlkeep  : int;
+    }
+end
 
 type kin_mem
 type kin_file
 type c_weak_ref
 
-type ('a, 'kind) linsolv_callbacks =
-  | NoCallbacks
+type 'a sysfn = 'a -> 'a -> unit
+type errh = Sundials.error_details -> unit
+type infoh = Sundials.error_details -> unit
 
-  | DenseCallback of dense_jac_fn
-  | BandCallback  of band_jac_fn
-  | SpilsCallback of 'a spils_callbacks
+(* Session: here comes the big blob.  These mutually recursive types
+   cannot be handed out separately to modules without menial
+   repetition, so we'll just have them all here, at the top of the
+   Types module.  *)
 
-  | AlternateCallback of ('a, 'kind) alternate_linsolv
-
-  | BBDCallback of 'a Bbd.callbacks
-
-and ('a, 'k) session = {
+type ('a, 'k) session = {
   kinsol    : kin_mem;
   backref   : c_weak_ref;
   err_file  : kin_file;
@@ -79,23 +115,57 @@ and ('a, 'k) session = {
   mutable neqs       : int;    (* only valid for 'kind = serial *)
   mutable exn_temp   : exn option;
 
-  mutable sysfn      : 'a -> 'a -> unit;
-  mutable errh       : Sundials.error_details -> unit;
-  mutable infoh      : Sundials.error_details -> unit;
+  mutable sysfn      : 'a sysfn;
+  mutable errh       : errh;
+  mutable infoh      : infoh;
 
   mutable ls_callbacks : ('a, 'k) linsolv_callbacks;
 }
 
+and ('a, 'kind) linsolv_callbacks =
+  | NoCallbacks
+
+  | DenseCallback of DlsTypes.dense_jac_fn
+  | BandCallback  of DlsTypes.band_jac_fn
+  | SpilsCallback of 'a SpilsTypes.callbacks
+
+  | AlternateCallback of ('a, 'kind) alternate_linsolv
+
+  | BBDCallback of 'a KinsolBbdParamTypes.callbacks
+
 and ('data, 'kind) alternate_linsolv =
   {
-    linit  : (('data, 'kind) session -> bool) option;
-    lsetup : (('data, 'kind) session -> unit) option;
-    lsolve : ('data, 'kind) session -> 'data -> 'data -> float option;
+    linit  : ('data, 'kind) linit' option;
+    lsetup : ('data, 'kind) lsetup' option;
+    lsolve : ('data, 'kind) lsolve';
   }
+and ('data, 'kind) linit' = ('data, 'kind) session -> bool
+and ('data, 'kind) lsetup' = ('data, 'kind) session -> unit
+and ('data, 'kind) lsolve' =
+  ('data, 'kind) session
+  -> 'data
+  -> 'data
+  -> float option
 
+(* Types that depend on session *)
+type serial_session = (Nvector_serial.data, Nvector_serial.kind) session
 
-type ('data, 'kind) linear_solver = ('data, 'kind) session
-                                        -> ('data, 'kind) nvector option -> unit
+type ('data, 'kind) linear_solver =
+  ('data, 'kind) session
+  -> ('data, 'kind) nvector option
+  -> unit
+
+module AlternateTypes = struct
+  type ('data, 'kind) callbacks = ('data, 'kind) alternate_linsolv =
+    {
+      linit  : ('data, 'kind) linit option;
+      lsetup : ('data, 'kind) lsetup option;
+      lsolve : ('data, 'kind) lsolve;
+    }
+  and ('data, 'kind) linit  = ('data, 'kind) linit'
+  and ('data, 'kind) lsetup = ('data, 'kind) lsetup'
+  and ('data, 'kind) lsolve = ('data, 'kind) lsolve'
+end
 
 let read_weak_ref x : ('a, 'k) session =
   match Weak.get x 0 with
@@ -113,4 +183,3 @@ let adjust_retcode_and_option = fun session f x ->
   with
   | Sundials.RecoverableFailure -> (None, 1)
   | e -> (session.exn_temp <- Some e; (None, -1))
-

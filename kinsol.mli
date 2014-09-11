@@ -27,6 +27,7 @@
  @author Jun Inoue (Inria)
  @author Marc Pouzet (LIENS)
  *)
+open Kinsol_impl
 
 (** {3:exceptions Exceptions} *)
 
@@ -125,8 +126,9 @@ type ('t, 'a) jacobian_arg =
   }
 
 (** The range of nonzero entries in a band matrix.  *)
-type bandrange = { mupper : int; (** The upper half-bandwidth.  *)
-                   mlower : int; (** The lower half-bandwidth.  *) }
+type bandrange = Kinsol_impl.bandrange =
+  { mupper : int; (** The upper half-bandwidth.  *)
+    mlower : int; (** The lower half-bandwidth.  *) }
 
 module Dls :
   sig
@@ -477,7 +479,7 @@ module Alternate :
 
     type ('data, 'kind) callbacks =
       {
-        linit   : (('data, 'kind) session -> bool) option;
+        linit  : (('data, 'kind) session -> bool) option;
           (** Complete initializations for a specific linear solver, such as
               counters and statistics. Returns [true] if successful.
 

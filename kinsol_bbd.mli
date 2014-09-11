@@ -29,9 +29,9 @@
     @kinsol <node5#sss:kinbbdpre> Parallel band-block-diagonal preconditioner module *)
 
 type data = Nvector_parallel.data
-type parallel_session = (data, Nvector_parallel.kind) Kinsol.session
-type parallel_linear_solver =
-                (data, Nvector_parallel.kind) Kinsol_impl.linear_solver
+type kind = Nvector_parallel.kind
+type parallel_session = (data, kind) Kinsol.session
+type parallel_linear_solver = (data, kind) Kinsol_impl.linear_solver
 
 type bandwidths =
   {
