@@ -286,7 +286,7 @@ external c_clear_err_handler_fn : ('a, 'k) session -> unit
     = "c_kinsol_clear_err_handler_fn"
 
 let clear_err_handler_fn s =
-  s.errh <- (fun _ -> ());
+  s.errh <- dummy_errh;
   c_clear_err_handler_fn s
 
 external set_info_file : ('a, 'k) session -> string -> bool -> unit
@@ -303,7 +303,7 @@ external c_clear_info_handler_fn : ('a, 'k) session -> unit
     = "c_kinsol_clear_info_handler_fn"
 
 let clear_info_handler_fn s =
-  s.infoh <- (fun _ -> ());
+  s.infoh <- dummy_infoh;
   c_clear_info_handler_fn s
 
 external set_print_level : ('a, 'k) session -> print_level -> unit
@@ -444,8 +444,8 @@ let init lsolver f u0 =
           neqs         = 0;
 
           sysfn        = f;
-          errh         = (fun _ -> ());
-          infoh        = (fun _ -> ());
+          errh         = dummy_errh;
+          infoh        = dummy_infoh;
 
           ls_callbacks = NoCallbacks
         } in

@@ -183,3 +183,16 @@ let adjust_retcode_and_option = fun session f x ->
   with
   | Sundials.RecoverableFailure -> (None, 1)
   | e -> (session.exn_temp <- Some e; (None, -1))
+
+(* Dummy callbacks.  These dummes getting called indicates a fatal
+   bug.  Rather than raise an exception (which may or may not get
+   propagated properly depending on the context), we immediately abort
+   the program. *)
+external crash : string -> unit = "sundials_crash"
+
+let dummy_sysfn _ _ =
+  crash "Internal error: dummy_sysfn called\n"
+let dummy_errh _ =
+  crash "Internal error: dummy_errh called\n"
+let dummy_infoh _ =
+  crash "Internal error: dummy_infoh called\n"

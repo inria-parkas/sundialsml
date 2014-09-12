@@ -446,21 +446,21 @@ let adjust_retcode_and_bool = fun session f x ->
    propagated properly depending on the context), we immediately abort
    the program. *)
 external crash : string -> unit = "sundials_crash"
-let dummy_resfn _ _ _ _ =
+let dummy_rhsfn _ _ _ =
   crash "Internal error: dummy_resfn called\n"
-let dummy_rootsfn _ _ _ _ =
+let dummy_rootsfn _ _ _ =
   crash "Internal error: dummy_rootsfn called\n"
 let dummy_errh _ =
   crash "Internal error: dummy_errh called\n"
 let dummy_errw _ _ =
   crash "Internal error: dummy_errw called\n"
-let dummy_resfnb _ _ _ _ _ _ =
-  crash "Internal error: dummy_resfnb called\n"
-let dummy_resfnbs _ _ _ _ _ _ _ _ =
-  crash "Internal error: dummy_resfnbs called\n"
-let dummy_bquadrhsfn _ _ _ _ _ _ =
+let dummy_brhsfn _ _ _ _ =
+  crash "Internal error: dummy_brhsfn called\n"
+let dummy_brhsfn1 _ _ _ _ _ =
+  crash "Internal error: dummy_brhsfn1 called\n"
+let dummy_bquadrhsfn _ _ _ _ =
   crash "Internal error: dummy_bquadrhsfn called\n"
-let dummy_bquadrhsfn1 _ _ _ _ _ _ _ _ =
+let dummy_bquadrhsfn1 _ _ _ _ _ =
   crash "Internal error: dummy_bquadrhsfn1 called\n"
 let dummy_quadrhsfn _ _ _ =
   crash "Internal error: dummy_quadrhsfn called\n"

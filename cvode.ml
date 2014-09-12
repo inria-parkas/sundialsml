@@ -38,7 +38,7 @@ exception BadK
 exception BadT
 exception BadDky
 
-let no_roots = (0, (fun _ _ _ -> ()))
+let no_roots = (0, dummy_rootsfn)
 
 type lmm =
   | Adams
@@ -518,7 +518,7 @@ external clear_err_handler_fn  : ('a, 'k) session -> unit
     = "c_cvode_clear_err_handler_fn"
 
 let clear_err_handler_fn s =
-  s.errh <- (fun _ -> ());
+  s.errh <- dummy_errh;
   clear_err_handler_fn s
 
 external set_max_ord            : ('a, 'k) session -> int -> unit

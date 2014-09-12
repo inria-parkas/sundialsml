@@ -556,10 +556,10 @@ module Adjoint =
 
               exn_temp     = None;
 
-              rhsfn        = (fun _ _ _ -> ());
-              rootsfn      = (fun _ _ _ -> ());
-              errh         = (fun _ -> ());
-              errw         = (fun _ _ -> ());
+              rhsfn        = dummy_rhsfn;
+              rootsfn      = dummy_rootsfn;
+              errh         = dummy_errh;
+              errw         = dummy_errw;
               ls_callbacks = NoCallbacks;
 
               sensext    = BwdSensExt {
@@ -571,14 +571,14 @@ module Adjoint =
 
                 brhsfn      = (match mf with
                                | Basic f -> f
-                               | _ -> (fun _ _ _ _ -> ()));
+                               | _ -> dummy_brhsfn);
 
                 brhsfn1     = (match mf with
                                | WithSens f -> f
-                               | _ -> (fun _ _ _ _ _ -> ()));
+                               | _ -> dummy_brhsfn1);
 
-                bquadrhsfn  = (fun _ _ _ _ -> ());
-                bquadrhsfn1 = (fun _ _ _ _ _ -> ());
+                bquadrhsfn  = dummy_bquadrhsfn;
+                bquadrhsfn1 = dummy_bquadrhsfn1;
               };
             } in
       Gc.finalise bsession_finalize (tosession bs);
