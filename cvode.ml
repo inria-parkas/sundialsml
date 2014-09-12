@@ -61,8 +61,6 @@ type integrator_stats = {
     current_time : float
   }
 
-exception StopTimeReached
-
 external session_finalize : ('a, 'kind) session -> unit
     = "c_cvode_session_finalize"
 
@@ -603,7 +601,8 @@ let call_errh session details =
   try session.errh details
   with e ->
     prerr_endline ("Warning: error handler function raised an exception.  " ^
-                   "This exception will not be propagated.")
+                   "This exception will not be propagated: " ^
+                   Printexc.to_string e)
 
 let call_jacfn session jac j =
   let session = read_weak_ref session in

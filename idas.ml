@@ -824,7 +824,8 @@ module Adjoint =
 
         let set_precond bs parent which cb =
           match cb.prec_solve_fn with
-          | None -> ()                  (* FIXME: is this right? *)
+          | None -> () (* NB: c_spils_spgmr etc. clear the callbacks,
+                          so there's nothing to do in this case. *)
           | Some solve_fn ->
             c_spils_set_preconditioner parent which
               (cb.prec_setup_fn <> None)

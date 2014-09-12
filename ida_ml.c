@@ -63,19 +63,6 @@
 #include "nvector_ml.h"
 #include "dls_ml.h"
 
-// Call with IDA_ML_BIGARRAYS to compile for the Serial NVector to
-// Bigarray interface code.
-
-#ifdef IDA_ML_BIGARRAYS
-
-#include <nvector/nvector_serial.h>
-
-#else
-
-#include <sundials/sundials_nvector.h>
-
-#endif
-
 
 enum callback_index {
     IX_call_resfn = 0,
