@@ -253,3 +253,8 @@ table.typetable td:nth-child(4) {
                                   padding-left: 0em; }
 table.typetable td:nth-child(5) code { font-size: 9pt; color: lightgray; }
 
+div.cvode { padding-top: 1.2ex;
+            font-size: 9pt; }
+div.cvode + div.cvode { padding-top: 0ex; }
+div.cvode + div.cvode > span.seesundials { color: white; }
+

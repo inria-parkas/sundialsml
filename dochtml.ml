@@ -64,31 +64,31 @@ struct
     method private html_of_cvode t =
       let (page, anchor, title) = self#split_text t in
       Printf.sprintf
-        "<div class=\"cvode\"><small>See sundials: <a href=\"%s%s.html%s\">%s</a></small></div>"
+        "<div class=\"cvode\"><span class=\"seesundials\">See sundials: </span><a href=\"%s%s.html%s\">%s</a></div>"
         !cvode_doc_root page anchor title
 
     method private html_of_cvodes t =
       let (page, anchor, title) = self#split_text t in
       Printf.sprintf
-        "<div class=\"cvodes\"><small>See sundials: <a href=\"%s%s.html%s\">%s</a></small></div>"
+        "<div class=\"cvodes\"><span class=\"seesundials\">See sundials: </span><a href=\"%s%s.html%s\">%s</a></div>"
         !cvodes_doc_root page anchor title
 
     method private html_of_ida t =
       let (page, anchor, title) = self#split_text t in
       Printf.sprintf
-        "<div class=\"ida\"><small>See sundials: <a href=\"%s%s.html%s\">%s</a></small></div>"
+        "<div class=\"ida\"><span class=\"seesundials\">See sundials: </span><a href=\"%s%s.html%s\">%s</a></div>"
         !ida_doc_root page anchor title
 
     method private html_of_idas t =
       let (page, anchor, title) = self#split_text t in
       Printf.sprintf
-        "<div class=\"idas\"><small>See sundials: <a href=\"%s%s.html%s\">%s</a></small></div>"
+        "<div class=\"idas\"><span class=\"seesundials\">See sundials: </span><a href=\"%s%s.html%s\">%s</a></div>"
         !idas_doc_root page anchor title
 
     method private html_of_kinsol t =
       let (page, anchor, title) = self#split_text t in
       Printf.sprintf
-        "<div class=\"kinsol\"><small>See sundials: <a href=\"%s%s.html%s\">%s</a></small></div>"
+        "<div class=\"kinsol\"><span class=\"seesundials\">See sundials: </span><a href=\"%s%s.html%s\">%s</a></div>"
         !kinsol_doc_root page anchor title
 
     val divrex = Str.regexp " *\\(open\\|close\\) *\\(.*\\)"
