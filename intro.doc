@@ -1,26 +1,28 @@
-{{:https://computation.llnl.gov/casc/sundials/main.html} Sundials} is a
-collection of five numerical solvers: CVODE,  CVODES, IDA, IDAS, KINSOL.
-It is written by Radu Serban, Carol Woodward, and Alan Hindmarsh with the
-past contributions of Peter Brown, Scott Cohen, Aaron Collier, Keith Grant,
-Steven Lee, Dan Reynolds, Dan Shumaker, and Allan Taylor.
-This library interfaces with Sundials version {b 2.5.0}.
+{div open id="intro"}
 
+{{:https://computation.llnl.gov/casc/sundials/main.html}Sundials} is a
+collection of five numerical solvers: CVODE,  CVODES, IDA, IDAS, and KINSOL.
+It is written by Alan Hindmarsh, Radu Serban, and Carol Woodward at the {e
+Center for Applied Scientific Computing, Lawrence Livermore National
+Laboratory} with the contributions from Peter Brown, Scott Cohen, Aaron
+Collier, Keith Grant, Steven Lee, Dan Reynolds, Dan Shumaker, and Allan
+Taylor.
 
-This OCaml interface was written by {{:http://www.tbrk.org} Timothy Bourke}
+This OCaml interface was written by {{:http://www.tbrk.org}Timothy Bourke}
 ({{:http://www.inria.fr}Inria}/{{:http://www.di.ens.fr/}ENS}),
-{{:http://www.owlnet.rice.edu/~ji2/} Jun Inoue}
+{{:http://www.owlnet.rice.edu/~ji2/}Jun Inoue}
 ({{:http://www.inria.fr}Inria}/{{:http://www.di.ens.fr/}ENS}),
 and
-{{:http://www.di.ens.fr/~pouzet/} Marc Pouzet} of
-{{:http://www.di.ens.fr/}ENS}.
+{{:http://www.di.ens.fr/~pouzet/}Marc Pouzet}
+({{:http://www.upmc.fr/}UPMC}/{{:http://www.inria.fr/}Inria}/{{:http://www.di.ens.fr/}ENS}).
+It provides a complete OCaml interface to Sundials version {b 2.5.0}.
 
-This library provides a complete OCaml interface to Sundials.
-The structure and naming conventions largely follow the original libraries,
+The structure of this interface mostly follows that of the original library,
 both for ease of reading the existing documentation and for converting
 existing source code, but several changes have been made for programming
 convenience, namely:
-- solver sessions are configured through algebraic data types rather than
-  through multiple function calls,
+- solver sessions are mostly configured through algebraic data types
+  rather than through multiple function calls,
 - error conditions are signalled by exceptions rather than return codes
   (including in user-supplied callback routines),
 - closures (partial applications of higher-order functions) are used to
@@ -28,47 +30,40 @@ convenience, namely:
 - explicit free commands are not necessary nor provided since OCaml is a
   garbage-collected language.
 
-Function names have been renamed according to a regular scheme.
-The leading {e module identifier} is removed and replaced with a module
-path.
-The identifier is renamed by separating words that begin with an
-uppercase letter in by underscores and using only lowercase letters.
-For instance, [CVodeSetErrHandlerFn], becomes 
-[Cvode.set_err_handler_fn], and [CVSpilsSetJacTimesVecFn] becomes 
-[Cvode.Spils.set_jac_times_vec_fn].
-
+Functions have been renamed according to a regular scheme. The leading {e
+module identifier} is removed and replaced with a module path, words
+beginning with an uppercase letter are separated by underscores, and only
+lowercase letters are used. For instance, [IdaSetErrHandlerFn], becomes
+{!Ida.set_err_handler_fn}, and [CVSpilsSetJacTimesVecFn] becomes
+{!Cvode.Spils.set_jac_times_vec_fn}.
 Constants have been replaced by variant types in most cases.
 They have also been renamed by converting them to {e CamlCase} and removing
 underscores.
-For instance, [PREC_NONE] becomes [Spils.PrecNone].
+For instance, [PREC_NONE] becomes {!Spils.PrecNone}.
 
 Rather than try to duplicate or replace the comprehensive
 {{:https://computation.llnl.gov/casc/sundials/documentation/documentation.html}
-Sundials user manuals}, this documentation provides hyperlinks back to the original
-function descriptions and instead tries just to include brief summaries.
-These summaries have usually been directly adapted from the original manual
-written by Alan C. Hindmarsh and Radu Serban of the {e Center for Applied
-Scientific Computing, Lawrence Livermore National Laboratory}.
-
-The top level {!Sundials} module provides some utility routines for dealing
-with arrays of floats and integers, and for accessing certain constants
-(like {!Sundials.big_real} and {!Sundials.unit_roundoff}).
+Sundials user manuals}, this documentation provides brief summaries, taken
+directly or adapted from the manual, with hyperlinks back to the original
+function descriptions.
 
 {2:nvector Nvectors}
 
 Sundials defines an abstract interface for vectors and provides
 implementations for serial and parallel vectors. The OCaml version defines a
 generic {!Sundials.nvector} type with type arguments indicating the
-underlying data and kind (serial, parallel, or custom), and provides modules
-that instantiate it (notably {!Nvector_serial}, and {!Nvector_parallel}).
+underlying data and kind ({!Nvector_serial.kind}, {!Nvector_parallel.kind},
+and {!Nvector_custom.kind}).
 
-The data underlying serial and parallel nvectors is passed between Sundials
-and OCaml programs using Bigarrays. These vectors are manipulated within the
+The data underlying serial ({!Nvector_serial.t}) and parallel
+({!Nvector_parallel.t}) nvectors is passed between Sundials
+and OCaml programs using
+{{:http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.html}Bigarrays}.
+These vectors are manipulated directly within the
 solver using the original low-level vector operations (cloning, linear sums,
-adding constants, and etcetera). While direct interfaces to these operations
-are not provided, there are equivalent implementations written in OCaml for
-arrays of floats ({!Nvector_array}) and bigarrays
-({!Nvector_array.Bigarray}) of floats.
+adding constants, and etcetera; see {!Nvector.NVECTOR_OPS}).
+There are no direct interfaces to these operations from OCaml, but
+equivalent reimplementations are provided ({!Nvector_serial.DataOps}).
 
 There are also mechanisms for defining new vector implementations using
 records of imperative ({!Nvector_custom}) or pure functions
@@ -84,6 +79,10 @@ management is simpler, and,
 support abstract nvectors,
 
 {2:modules Modules}
+
+The top level {!Sundials} module provides some utility routines for dealing
+with arrays of floats and integers, and for accessing certain constants
+(like {!Sundials.big_real} and {!Sundials.unit_roundoff}).
 
 {!modules: Sundials
 	   Dls
@@ -142,4 +141,4 @@ TODO: acknowledge Modrio for (partial) funding.
 {2:indexes Indexes}
 
 {!indexlist}
-
+{div close}

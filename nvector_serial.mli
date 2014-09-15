@@ -25,6 +25,9 @@ val make : int -> float -> t
 (** [wrap a] creates a new serial nvector over the elements of [a]. *)
 val wrap : Sundials.RealArray.t -> t
 
+(** Nvector operations on serial nvectors implemented in OCaml. *)
 module Ops : Nvector.NVECTOR_OPS with type t = t
+
+(** Nvector operations on {!Sundials.RealArray}s implemented in OCaml. *)
 module DataOps : Nvector.NVECTOR_OPS with type t = Sundials.RealArray.t
 

@@ -3,4 +3,4 @@
 # because "make doc" fails if this directory is missing), and also so that the
 # generated docs do not show up in the list of untracked files.
 
-html
+html/*.html

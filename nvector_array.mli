@@ -40,6 +40,8 @@ module type ARRAY_NVECTOR =
     module DataOps : Nvector.NVECTOR_OPS with type t = t
   end
 
+(** Produce a custom nvector from basic operations on
+    an underlying array. *)
 module MakeOps : functor (A : sig
       type data
       val get       : data -> int -> float

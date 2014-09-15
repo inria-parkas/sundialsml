@@ -91,12 +91,43 @@ struct
         "<div class=\"kinsol\"><small>See sundials: <a href=\"%s%s.html%s\">%s</a></small></div>"
         !kinsol_doc_root page anchor title
 
+    val divrex = Str.regexp " *\\(open\\|close\\) *\\(.*\\)"
+
+    method private html_of_div text =
+      let baddiv s = (Odoc_info.warning (Printf.sprintf
+            "div must be followed by 'open' or 'close', not '%s'!" s); "") in
+      match text with
+      | [Odoc_info.Raw s] ->
+          if not (Str.string_match divrex s 0) then baddiv s
+          else begin
+            match Str.matched_group 1 s with
+            | "open" ->
+                let attrs = try Str.matched_group 2 s with Not_found -> "" in
+                Printf.sprintf "<div %s>" attrs
+            | "close" -> "</div>"
+            | s -> baddiv s
+          end
+      | _ -> failwith "div must be followed by plain text!"
+
+    val mutable custom_functions =
+      ([] : (string * (Odoc_info.text_element list -> string)) list)
+
+    method private html_of_custom_text b tag text =
+      try
+        let f = List.assoc tag custom_functions in
+        Buffer.add_string b (f text)
+      with
+        Not_found ->
+          Odoc_info.warning (Odoc_messages.tag_not_handled tag)
+
     initializer
       tag_functions <- ("cvode",  self#html_of_cvode) :: tag_functions;
       tag_functions <- ("cvodes", self#html_of_cvodes) :: tag_functions;
       tag_functions <- ("ida",    self#html_of_ida) :: tag_functions;
       tag_functions <- ("idas",   self#html_of_idas) :: tag_functions;
-      tag_functions <- ("kinsol", self#html_of_kinsol) :: tag_functions
+      tag_functions <- ("kinsol", self#html_of_kinsol) :: tag_functions;
+
+      custom_functions <- ("div", self#html_of_div) :: custom_functions
 
   end
 

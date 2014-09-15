@@ -153,6 +153,9 @@ doc/html/index.html: doc/html dochtml.cmo intro.doc 			\
 		     $(MLOBJ_SENS:.cmo=.cmi) 				\
 		     $(if $(MPI_ENABLED), $(MLOBJ_MPI:.cmo=.cmi))
 	$(OCAMLDOC) -g dochtml.cmo $(INCLUDES) 			\
+	    -short-functors					\
+	    -colorize-code					\
+	    -css-style docstyle.css				\
 	    -cvode-doc-root "$(CVODE_DOC_ROOT)" 		\
 	    -cvodes-doc-root "$(CVODES_DOC_ROOT)" 		\
 	    -ida-doc-root "$(IDA_DOC_ROOT)" 			\
@@ -161,7 +164,7 @@ doc/html/index.html: doc/html dochtml.cmo intro.doc 			\
 	    -pp "$(DOCPP)"					\
 	    -d ./doc/html/					\
 	    -hide Cvode_impl,Ida_impl,Kinsol_impl		\
-	    -t "Sundials"					\
+	    -t "Sundials/ML 2.5.0"					\
 	    -intro intro.doc					\
 	    $(filter-out %_impl.mli, $(MLOBJ_MAIN:.cmo=.mli))	\
 	    $(if $(MPI_ENABLED), $(MLOBJ_MPI:.cmo=.mli))	\

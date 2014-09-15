@@ -45,7 +45,7 @@ module type NVECTOR_OPS =
     (** [n_vaddconst x b z] calculates [z = x + b]. *)
     val n_vaddconst     : t -> float -> t -> unit
 
-    (** [n_vdotprod x y] returns the dot produce of [x] and [y]. *)
+    (** [n_vdotprod x y] returns the dot product of [x] and [y]. *)
     val n_vdotprod      : t -> t -> float
 
     (** [n_vmaxnorm x] returns the maximum absolute value in x. *)
@@ -72,7 +72,10 @@ module type NVECTOR_OPS =
         [z(i) = if abs x(i) >= c then 1 else 0]. *)
     val n_vcompare      : float -> t -> t -> unit
 
-    (** [n_vinvtest x z] calculates [z(i) = 1 / x(i)]. *)
+  (** [n_vinvtest x z] calculates [z(i) = 1 / x(i)] with prior testing for
+      zero values. This routine returns [true] if all components of [x] are
+      nonzero (successful inversion) and [false] otherwise (not all elements
+      inverted). *)
     val n_vinvtest      : t -> t -> bool
 
     (** [n_vconstrmask c x m] calculates [m(i) = Pi x(i)] returning the

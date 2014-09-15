@@ -43,6 +43,8 @@ val global_length : t -> int
 (** Returns the communicator used for by the parallel nvector. *)
 val communicator : t -> Mpi.communicator
 
+(** Produce a set of parallel {!Nvector.NVECTOR_OPS} from basic operations on
+    an underlying array. *)
 module MakeOps : functor (A : sig
       type local_data
       val get       : local_data -> int -> float
@@ -54,6 +56,9 @@ module MakeOps : functor (A : sig
     end) -> Nvector.NVECTOR_OPS
             with type t = A.local_data * int * Mpi.communicator
 
+(** Nvector operations on parallel nvectors implemented in OCaml. *)
 module Ops : Nvector.NVECTOR_OPS with type t = t
+
+(** Nvector operations on {!data} implemented in OCaml. *)
 module DataOps : Nvector.NVECTOR_OPS with type t = data
 
