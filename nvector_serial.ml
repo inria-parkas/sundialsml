@@ -1,6 +1,7 @@
 
 type kind
 type t = (Sundials.RealArray.t, kind) Sundials.nvector
+type data = Sundials.RealArray.t
 
 external wrap : Sundials.RealArray.t -> t
   = "ml_nvec_wrap_serial"

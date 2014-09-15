@@ -13,6 +13,8 @@
 (** Generic vector operations.
 
     @cvode <node7> Description of the NVECTOR module. *)
+
+(** Basic operations underlying an nvector. *)
 module type NVECTOR_OPS =
   sig
     (** Vector type *)
@@ -55,18 +57,8 @@ module type NVECTOR_OPS =
         with weight vector [w]. *)
     val n_vwrmsnorm     : t -> t -> float
 
-    (** [n_vmaxnormmask x w id] returns the weighted root-mean-square norm
-        of [x] using only elements where the corresponding [id] is non-zero. *)
-    val n_vwrmsnormmask : t -> t -> t -> float
-
     (** [n_vmin x] returns the smallest element in [x]. *)
     val n_vmin          : t -> float
-
-    (** [n_vwl2norm x w] returns the weighted ([w]) Euclidean l2 norm of [x]. *)
-    val n_vwl2norm      : t -> t -> float
-
-    (** [n_vl1norm x] returns the l1 norm of [x]. *)
-    val n_vl1norm       : t -> float
 
     (** [n_vcompare c x z] calculates
         [z(i) = if abs x(i) >= c then 1 else 0]. *)
@@ -78,6 +70,16 @@ module type NVECTOR_OPS =
       inverted). *)
     val n_vinvtest      : t -> t -> bool
 
+    (** [n_vwl2norm x w] returns the weighted ([w]) Euclidean l2 norm of [x]. *)
+    val n_vwl2norm      : t -> t -> float
+
+    (** [n_vl1norm x] returns the l1 norm of [x]. *)
+    val n_vl1norm       : t -> float
+
+    (** [n_vmaxnormmask x w id] returns the weighted root-mean-square norm
+        of [x] using only elements where the corresponding [id] is non-zero. *)
+    val n_vwrmsnormmask : t -> t -> t -> float
+
     (** [n_vconstrmask c x m] calculates [m(i) = Pi x(i)] returning the
         conjunction. The value of [Pi] depends on [c(i)]: [2: x(i) > 0],
         [1: x(i) >= 0], [0: true], [-1: x(i) <= 0], and [-2: x(i) < 0]. *)
@@ -86,5 +88,16 @@ module type NVECTOR_OPS =
     (** [n_vminquotient num denom] returns the minimum of [num(i) / denom(i)].
         Zero [denom] elements are skipped. *)
     val n_vminquotient  : t -> t -> float
+  end
+
+(** Basic structure of an nvector module. *)
+module type NVECTOR =
+  sig
+    type kind
+    type data
+    type t = (data, kind) Sundials.nvector
+    val wrap : data -> t
+    module Ops : NVECTOR_OPS with type t = t
+    module DataOps : NVECTOR_OPS with type t = data
   end
 

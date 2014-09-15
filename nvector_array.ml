@@ -12,14 +12,15 @@
 
 module type ARRAY_NVECTOR =
   sig
-    type t
+    type data
+    type kind = Nvector_custom.kind
 
-    val array_nvec_ops  : t Nvector_custom.nvector_ops
-    val make            : int -> float -> t Nvector_custom.t
-    val wrap            : t -> t Nvector_custom.t
+    val array_nvec_ops  : data Nvector_custom.nvector_ops
+    val make            : int -> float -> data Nvector_custom.t
+    val wrap            : data -> data Nvector_custom.t
 
-    module Ops : Nvector.NVECTOR_OPS with type t = t Nvector_custom.t
-    module DataOps : Nvector.NVECTOR_OPS with type t = t
+    module Ops : Nvector.NVECTOR_OPS with type t = data Nvector_custom.t
+    module DataOps : Nvector.NVECTOR_OPS with type t = data
   end
 
 module MakeOps =
@@ -33,7 +34,8 @@ module MakeOps =
       val length    : data -> int
     end) ->
   struct
-    type t = A.data
+    type data = A.data
+    type kind = Nvector_custom.kind
 
     module DataOps = struct
       type t = A.data
@@ -241,9 +243,10 @@ module MakeOps =
           Nvector_custom.n_vmaxnorm      = DataOps.n_vmaxnorm;
           Nvector_custom.n_vwrmsnorm     = DataOps.n_vwrmsnorm;
           Nvector_custom.n_vmin          = DataOps.n_vmin;
-          Nvector_custom.n_vdotprod      = Some DataOps.n_vdotprod;
-          Nvector_custom.n_vcompare      = Some DataOps.n_vcompare;
-          Nvector_custom.n_vinvtest      = Some DataOps.n_vinvtest;
+          Nvector_custom.n_vdotprod      = DataOps.n_vdotprod;
+          Nvector_custom.n_vcompare      = DataOps.n_vcompare;
+          Nvector_custom.n_vinvtest      = DataOps.n_vinvtest;
+
           Nvector_custom.n_vwl2norm      = Some DataOps.n_vwl2norm;
           Nvector_custom.n_vl1norm       = Some DataOps.n_vl1norm;
           Nvector_custom.n_vwrmsnormmask = Some DataOps.n_vwrmsnormmask;
@@ -251,11 +254,9 @@ module MakeOps =
           Nvector_custom.n_vminquotient  = Some DataOps.n_vminquotient;
     }
 
-    let make n e =
-      Nvector_custom.make array_nvec_ops (A.make n e)
+    let make n e = Nvector_custom.make_wrap array_nvec_ops (A.make n e)
 
-    let wrap a =
-      Nvector_custom.make array_nvec_ops a
+    let wrap = Nvector_custom.make_wrap array_nvec_ops
       (* (Nvector.Mutable.add_tracing "::" array_nvec_ops) *)
 
     module Ops = struct
@@ -304,7 +305,8 @@ module SlowerArray = MakeOps (
 
 module Array =
   struct
-    type t = float array
+    type data = float array
+    type kind = Nvector_custom.kind
 
     module DataOps = struct
       type t = float array
@@ -514,9 +516,10 @@ module Array =
           Nvector_custom.n_vmaxnorm      = DataOps.n_vmaxnorm;
           Nvector_custom.n_vwrmsnorm     = DataOps.n_vwrmsnorm;
           Nvector_custom.n_vmin          = DataOps.n_vmin;
-          Nvector_custom.n_vdotprod      = Some DataOps.n_vdotprod;
-          Nvector_custom.n_vcompare      = Some DataOps.n_vcompare;
-          Nvector_custom.n_vinvtest      = Some DataOps.n_vinvtest;
+          Nvector_custom.n_vdotprod      = DataOps.n_vdotprod;
+          Nvector_custom.n_vcompare      = DataOps.n_vcompare;
+          Nvector_custom.n_vinvtest      = DataOps.n_vinvtest;
+
           Nvector_custom.n_vwl2norm      = Some DataOps.n_vwl2norm;
           Nvector_custom.n_vl1norm       = Some DataOps.n_vl1norm;
           Nvector_custom.n_vwrmsnormmask = Some DataOps.n_vwrmsnormmask;
@@ -525,10 +528,10 @@ module Array =
     }
 
     let make n e =
-      Nvector_custom.make array_nvec_ops (Array.make n e)
+      Nvector_custom.make_wrap array_nvec_ops (Array.make n e)
 
     let wrap a =
-      Nvector_custom.make array_nvec_ops a
+      Nvector_custom.make_wrap array_nvec_ops a
       (* (Nvector.Mutable.add_tracing "::" array_nvec_ops) *)
 
     module Ops = struct

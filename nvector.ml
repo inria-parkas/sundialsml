@@ -15,13 +15,24 @@ module type NVECTOR_OPS =
     val n_vdotprod      : t -> t -> float
     val n_vmaxnorm      : t -> float
     val n_vwrmsnorm     : t -> t -> float
-    val n_vwrmsnormmask : t -> t -> t -> float
     val n_vmin          : t -> float
-    val n_vwl2norm      : t -> t -> float
-    val n_vl1norm       : t -> float
     val n_vcompare      : float -> t -> t -> unit
     val n_vinvtest      : t -> t -> bool
+
+    val n_vwl2norm      : t -> t -> float
+    val n_vl1norm       : t -> float
+    val n_vwrmsnormmask : t -> t -> t -> float
     val n_vconstrmask   : t -> t -> t -> bool
     val n_vminquotient  : t -> t -> float
+  end
+
+module type NVECTOR =
+  sig
+    type kind
+    type data
+    type t = (data, kind) Sundials.nvector
+    val wrap : data -> t
+    module Ops : NVECTOR_OPS with type t = t
+    module DataOps : NVECTOR_OPS with type t = data
   end
 

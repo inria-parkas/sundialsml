@@ -29,9 +29,9 @@ type 'a nvector_ops = {
   n_vwrmsnorm        : 'a -> 'a -> float;
   n_vmin             : 'a -> float;
 
-  n_vdotprod         : ('a -> 'a -> float) option;
-  n_vcompare         : (float -> 'a -> 'a -> unit) option;
-  n_vinvtest         : ('a -> 'a -> bool) option;
+  n_vdotprod         : 'a -> 'a -> float;
+  n_vcompare         : float -> 'a -> 'a -> unit;
+  n_vinvtest         : 'a -> 'a -> bool;
 
   n_vwl2norm         : ('a -> 'a -> float) option;
   n_vl1norm          : ('a -> float) option;
@@ -40,7 +40,7 @@ type 'a nvector_ops = {
   n_vminquotient     : ('a -> 'a -> float) option;
 }
 
-external make : 'a nvector_ops -> 'a -> 'a t
+external make_wrap : 'a nvector_ops -> 'a -> 'a t
     = "ml_nvec_wrap_custom"
 
 let add_tracing msg ops =
@@ -88,10 +88,10 @@ let add_tracing msg ops =
   and tr_nvmaxnorm x = pr "nvmaxnorm"; n_vmaxnorm x
   and tr_nvwrmsnorm x w = pr "nvwrmsnorm"; n_vwrmsnorm x w
   and tr_nvmin x = pr "nvmin"; n_vmin x
-  and tr_nvdotprod = fo n_vdotprod (fun f -> fun x y -> pr "nvdotprod"; f x y)
-  and tr_nvcompare =
-    fo n_vcompare (fun f -> fun c x z -> pr "nvcompare"; f c x z)
-  and tr_nvinvtest = fo n_vinvtest (fun f -> fun x z -> pr "nvinvtest"; f x z)
+  and tr_nvdotprod x y = pr "nvdotprod"; n_vdotprod x y
+  and tr_nvcompare c x z = pr "nvcompare"; n_vcompare c x z
+  and tr_nvinvtest x z = pr "nvinvtest"; n_vinvtest x z
+
   and tr_nvwl2norm = fo n_vwl2norm (fun f -> fun x w -> pr "nvwl2norm"; f x w)
   and tr_nvl1norm = fo n_vl1norm (fun f -> fun x -> pr "nvl1norm"; f x)
   and tr_nvwrmsnormmask =
@@ -127,4 +127,96 @@ let add_tracing msg ops =
       n_vconstrmask      = tr_nvconstrmask;
       n_vminquotient     = tr_nvminquotient;
    }
+
+exception OperationNotSupported
+
+let uv = Sundials.unvec
+
+module MakeOps = functor (A : sig
+    type data
+    val ops : data nvector_ops
+  end) -> struct
+    type _kind = kind
+    type kind = _kind
+    type data = A.data
+    type t = (data, kind) Sundials.nvector
+
+    let wrap = make_wrap A.ops
+
+    module Ops = struct
+      type t = (data, kind) Sundials.nvector
+
+      let n_vclone n = wrap (A.ops.n_vclone (uv n))
+      let n_vlinearsum a x b y z = A.ops.n_vlinearsum a (uv x) b (uv y) (uv z)
+      let n_vconst c z = A.ops.n_vconst c (uv z)
+      let n_vprod x y z = A.ops.n_vprod (uv x) (uv y) (uv z)
+      let n_vdiv x y z = A.ops.n_vdiv (uv x) (uv y) (uv z)
+      let n_vscale c x z = A.ops.n_vscale c (uv x) (uv z)
+      let n_vabs x z = A.ops.n_vabs (uv x) (uv z)
+      let n_vinv x z = A.ops.n_vinv (uv x) (uv z)
+      let n_vaddconst x b z = A.ops.n_vaddconst (uv x) b (uv z)
+      let n_vdotprod x y = A.ops.n_vdotprod (uv x) (uv y)
+      let n_vmaxnorm x = A.ops.n_vmaxnorm (uv x)
+      let n_vwrmsnorm x w = A.ops.n_vwrmsnorm (uv x) (uv w)
+      let n_vmin x = A.ops.n_vmin (uv x)
+      let n_vcompare c x z = A.ops.n_vcompare c (uv x) (uv z)
+      let n_vinvtest x z = A.ops.n_vinvtest (uv x) (uv z)
+
+      let n_vwl2norm = match A.ops.n_vwl2norm with
+                       | None -> raise OperationNotSupported
+                       | Some f -> (fun x w -> f (uv x) (uv w))
+
+      let n_vl1norm = match A.ops.n_vl1norm with
+                      | None -> raise OperationNotSupported
+                      | Some f -> (fun x -> f (uv x))
+
+      let n_vwrmsnormmask = match A.ops.n_vwrmsnormmask with
+                            | None -> raise OperationNotSupported
+                            | Some f -> (fun x w id -> f (uv x) (uv w) (uv id))
+
+      let n_vconstrmask = match A.ops.n_vconstrmask with
+                          | None -> raise OperationNotSupported
+                          | Some f -> (fun c x m -> f (uv c) (uv x) (uv m))
+
+      let n_vminquotient = match A.ops.n_vminquotient with
+                           | None -> raise OperationNotSupported
+                           | Some f -> (fun num denom -> f (uv num) (uv denom))
+    end
+
+    module DataOps = struct
+      type t = data
+
+      let n_vclone        = A.ops.n_vclone
+      let n_vlinearsum    = A.ops.n_vlinearsum
+      let n_vconst        = A.ops.n_vconst
+      let n_vprod         = A.ops.n_vprod
+      let n_vdiv          = A.ops.n_vdiv
+      let n_vscale        = A.ops.n_vscale
+      let n_vabs          = A.ops.n_vabs
+      let n_vinv          = A.ops.n_vinv
+      let n_vaddconst     = A.ops.n_vaddconst
+      let n_vdotprod      = A.ops.n_vdotprod
+      let n_vmaxnorm      = A.ops.n_vmaxnorm
+      let n_vwrmsnorm     = A.ops.n_vwrmsnorm
+      let n_vmin          = A.ops.n_vmin
+      let n_vcompare      = A.ops.n_vcompare
+      let n_vinvtest      = A.ops.n_vinvtest
+
+      let n_vwl2norm      = match A.ops.n_vwl2norm with
+                            | None -> raise OperationNotSupported
+                            | Some f -> f
+      let n_vl1norm       = match A.ops.n_vl1norm with
+                            | None -> raise OperationNotSupported
+                            | Some f -> f
+      let n_vwrmsnormmask = match A.ops.n_vwrmsnormmask with
+                            | None -> raise OperationNotSupported
+                            | Some f -> f
+      let n_vconstrmask   = match A.ops.n_vconstrmask with
+                            | None -> raise OperationNotSupported
+                            | Some f -> f
+      let n_vminquotient  = match A.ops.n_vminquotient with
+                            | None -> raise OperationNotSupported
+                            | Some f -> f
+    end
+  end
 

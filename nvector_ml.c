@@ -266,21 +266,12 @@ CAMLprim value ml_nvec_wrap_custom(value mlops, value payload)
     ops->nvmaxnorm         = callml_vmaxnorm;
     ops->nvwrmsnorm        = callml_vwrmsnorm;
     ops->nvmin             = callml_vmin;
+    ops->nvdotprod	   = callml_vdotprod;
+    ops->nvcompare	   = callml_vcompare;
+    ops->nvinvtest	   = callml_vinvtest;
 
     ops->nvgetarraypointer = NULL;
     ops->nvsetarraypointer = NULL;
-
-    ops->nvdotprod = NULL;
-    if (HAS_OP(mlops, NVECTOR_OPS_NVDOTPROD))
-	ops->nvdotprod = callml_vdotprod;
-
-    ops->nvcompare = NULL;
-    if (HAS_OP(mlops, NVECTOR_OPS_NVCOMPARE))
-	ops->nvcompare = callml_vcompare;
-
-    ops->nvinvtest = NULL;
-    if (HAS_OP(mlops, NVECTOR_OPS_NVINVTEST))
-	ops->nvinvtest = callml_vinvtest;
 
     ops->nvwl2norm = NULL;
     if (HAS_OP(mlops, NVECTOR_OPS_NVWL2NORM))
@@ -454,7 +445,7 @@ realtype callml_vdotprod(N_Vector x, N_Vector y)
 {
     CAMLparam0();
     CAMLlocal2(mlop, r);
-    mlop = GET_SOME_OP(x, NVECTOR_OPS_NVDOTPROD);
+    mlop = GET_OP(x, NVECTOR_OPS_NVDOTPROD);
 
     r = caml_callback2(mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(y));
 
@@ -532,7 +523,7 @@ void callml_vcompare(realtype c, N_Vector x, N_Vector z)
 {
     CAMLparam0();
     CAMLlocal1(mlop);
-    mlop = GET_SOME_OP(x, NVECTOR_OPS_NVCOMPARE);
+    mlop = GET_OP(x, NVECTOR_OPS_NVCOMPARE);
 
     caml_callback3(mlop, caml_copy_double(c),
 	    NVEC_BACKLINK(x), NVEC_BACKLINK(z));
@@ -544,7 +535,7 @@ booleantype callml_vinvtest(N_Vector x, N_Vector z)
 {
     CAMLparam0();
     CAMLlocal2(mlop, r);
-    mlop = GET_SOME_OP(x, NVECTOR_OPS_NVINVTEST);
+    mlop = GET_OP(x, NVECTOR_OPS_NVINVTEST);
 
     r = caml_callback2(mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(z));
 

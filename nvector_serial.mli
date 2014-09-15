@@ -17,6 +17,7 @@
 
 type kind
 type t = (Sundials.RealArray.t, kind) Sundials.nvector
+type data = Sundials.RealArray.t
 
 (** [make n iv] creates a new serial nvector with [n] elements, each initialized
     to [iv]. *)

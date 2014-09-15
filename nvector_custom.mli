@@ -80,13 +80,13 @@ type 'a nvector_ops = {
   n_vmin             : 'a -> float;
   (** [n_vmin x] returns the smallest element in [x]. *)
 
-  n_vdotprod         : ('a -> 'a -> float) option;
+  n_vdotprod         : 'a -> 'a -> float;
   (** [n_vdotprod x y] returns the dot product of [x] and [y]. *)
 
-  n_vcompare         : (float -> 'a -> 'a -> unit) option;
+  n_vcompare         : float -> 'a -> 'a -> unit;
   (** [n_vcompare c x z] calculates [z(i) = if abs x(i) >= c then 1 else 0]. *)
 
-  n_vinvtest         : ('a -> 'a -> bool) option;
+  n_vinvtest         : 'a -> 'a -> bool;
   (** [n_vinvtest x z] calculates [z(i) = 1 / x(i)] with prior testing for
       zero values. This routine returns [true] if all components of [x] are
       nonzero (successful inversion) and [false] otherwise (not all elements
@@ -115,14 +115,24 @@ type 'a nvector_ops = {
       then {!Sundials.big_real} is returned. *)
 }
 
-(** [make_nvector ops] takes a set of operations on the data
+(** [make_wrap ops] takes a set of operations on the data
     type ['a] and yields a function for lifting values of type ['a]
     into ['a] nvectors which can be passed to a solver. *)
-val make  : 'a nvector_ops -> 'a -> 'a t
+val make_wrap  : 'a nvector_ops -> 'a -> 'a t
 
 (** [add_tracing p ops] modifies a set of {!nvector_ops} so that
     a message, prefixed by [p], is printed each time an operation
     is called. This function is intended to help debug sets of
     vector operations. *)
 val add_tracing     : string -> 'a nvector_ops -> 'a nvector_ops
+
+(** Thrown for operations not provided to {!MakeOps} *)
+exception OperationNotSupported
+
+(** Turn a set of {!nvector_ops} into an nvector module. *)
+module MakeOps : functor (A : sig
+    type data
+    val ops : data nvector_ops
+  end) -> Nvector.NVECTOR with type data = A.data
+                           and type kind = kind
 
