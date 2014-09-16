@@ -139,7 +139,7 @@ and ('data, 'kind) alternate_linsolv =
     lsetup : ('data, 'kind) lsetup' option;
     lsolve : ('data, 'kind) lsolve';
   }
-and ('data, 'kind) linit' = ('data, 'kind) session -> bool
+and ('data, 'kind) linit' = ('data, 'kind) session -> unit
 and ('data, 'kind) lsetup' = ('data, 'kind) session -> unit
 and ('data, 'kind) lsolve' =
   ('data, 'kind) session

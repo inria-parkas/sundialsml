@@ -532,7 +532,7 @@ let call_lsetup session =
   let session = read_weak_ref session in
   match session.ls_callbacks with
   | AlternateCallback { lsetup = Some f } ->
-      adjust_retcode session true f session
+      adjust_retcode session false f session
   | _ -> assert false
 
 let call_lsolve session x b =

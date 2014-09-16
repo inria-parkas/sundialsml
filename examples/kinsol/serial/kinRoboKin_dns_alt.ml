@@ -44,7 +44,7 @@ type cvdls_mem = {
 let alternate_dense jacfn =
   let nje = ref 0 in
 
-  let linit mem s = (nje := 0; true) in
+  let linit mem s = (nje := 0) in
 
   let lsetup mem s =
     incr nje;
