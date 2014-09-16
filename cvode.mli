@@ -760,6 +760,10 @@ module Alternate :
     (** Complete initializations for a specific linear solver, such as
         counters and statistics.
 
+        Raising any exception in this function (including
+        {!Sundials.RecoverableFailure}) is treated as an unrecoverable
+        error.
+
         See also {!callbacks}.
 
         @cvode <node8#SECTION00810000000000000000> linit *)
@@ -777,10 +781,11 @@ module Alternate :
         - [tmp], temporary variables for use by the routine.
 
         This function must return [true] if the Jacobian-related data
-        is current after the call, or [false] otherwise. It may raise
+        is current after the call, or [false] otherwise.  It may raise
         a {!Sundials.RecoverableFailure} exception to indicate that a
-        recoverable error has occurred. Any other exception is treated
-        as an unrecoverable error.
+        recoverable error has occurred (in which case the currency of
+        Jacobian-related data is irrelevant).  Any other exception is
+        treated as an unrecoverable error.
 
         See also {!callbacks}.
 
@@ -793,13 +798,21 @@ module Alternate :
       -> 'data triple_tmp
       -> bool
 
-    (** [lsolve s b weight ycur fcur] must solve the linear equation
-        given:
-        - [s], the solver session,
-        - [b], is the vector into which the solution is to be calculated,
-        - [weight] contains the error weights,
-        - [ycur] contains the solvers current approximation to [y], and,
-        - [fcur] is a vector that contains [f(tn, ycur)].
+    (** The type of functions that solve the linear equation $Mx = b$,
+        where $M$ is a preconditioning matrix chosen by the user, and
+        the right-hand side vector $b$ is input.  $M$ should
+        approximate $I - \gamma J$, $J = (\partial f /\partial y)(t_n,
+        y_{\text{cur}})$ (see Eq.(2.6) of CVODE user's guide).  Here
+        $\gamma$ is available through {!get_gamma}.
+
+        The function is called like [lsolve s b weight ycur fcur]
+        where:
+
+        - [s] is the solver session.
+        - [b] is the vector into which the solution is to be calculated.
+        - [weight] contains the error weights.
+        - [ycur] contains the solver's current approximation to $y(t_n)$.
+        - [fcur] is a vector that contains $f(t_n, y_{\text{cur}})$.
 
         This function may raise a {!Sundials.RecoverableFailure} exception
         to indicate that a recoverable error has occurred. Any other

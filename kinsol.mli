@@ -512,18 +512,22 @@ module Alternate :
     (** Complete initializations for a specific linear solver, such as
         counters and statistics.
 
+        Raising any exception in this function (including
+        {!Sundials.RecoverableFailure}) is treated as an unrecoverable
+        error.
+
         See also {!callbacks}.
 
         @cvode <node8#SECTION00810000000000000000> linit *)
-    and ('data, 'kind) linit = ('data, 'kind) session -> bool
+    and ('data, 'kind) linit = ('data, 'kind) session -> unit
 
     (** The job of lsetup is to prepare the linear solver for subsequent
-        calls to lsolve. It may recompute Jacobian-related data if it
+        calls to {!lsolve}. It may recompute Jacobian-related data if it
         deems necessary.
 
-        This function may raise a {!Sundials.RecoverableFailure} exception
-        to indicate that a recoverable error has occurred. Any other
-        exception is treated as an unrecoverable error.
+        Raising any exception in this function (including
+        {!Sundials.RecoverableFailure}) is treated as an unrecoverable
+        error.  Note this behavior is different from CVODE's lsetup.
 
         See also {!callbacks}.
 
@@ -536,10 +540,12 @@ module Alternate :
         - [b] is the right-hand side vector, set to [-F(u)], evaluated at
           the current iterate.
 
-        This function should return the L2 norm of the residual vector. It
-        may raise a {!Sundials.RecoverableFailure} exception to indicate
-        that a recoverable error has occurred. Any other exception is
-        treated as an unrecoverable error.
+        This function should return the L2 norm of the residual
+        vector. If an error occurs and recovery could be possible by
+        calling again the {!lsetup} function, this function may raise
+        a {!Sundials.RecoverableFailure} exception to indicate this
+        fact.  Any other exception is treated as an unrecoverable
+        error.
 
         See also {!callbacks}.
 

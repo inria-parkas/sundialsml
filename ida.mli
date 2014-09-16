@@ -736,23 +736,30 @@ module Alternate :
     (** Complete initializations for a specific linear solver, such as
         counters and statistics.
 
+        Raising any exception in this function (including
+        {!Sundials.RecoverableFailure}) is treated as an unrecoverable
+        error.
+
+        See also {!callbacks}.
+
         @ida <node8#SECTION00810000000000000000> linit *)
     and ('data, 'kind) linit = ('data, 'kind) session -> unit
 
-    (** [jcur = lsetup convfail ypred fpred tmp] prepares the linear
-        solver for subsequent calls to {!lsolve}. Its arguments are:
-        - [convfail], indicating any problem that occurred during the
-           solution of the nonlinear equation on the current time step,
-        - [ypred], the predicted [y] vector for the current internal
-          step,
-        - [fpred], the value of the right-hand side at [ypred], and,
-        - [tmp], temporary variables for use by the routine.
+    (** The job of lsetup is to prepare the linear solver for subsequent
+        calls to {!lsolve}. It may recompute Jacobian-related data if it
+        deems necessary.  It is called as [lsetup session y y' res tmp],
+        where:
 
-        This function must return [true] if the Jacobian-related data is
-        current after the call, or [false] otherwise. It may raise a
-        {!Sundials.RecoverableFailure} exception to indicate that a
-        recoverable error has occurred. Any other exception is treated as
-        an unrecoverable error.
+        - [session] is the solver session.
+        - [y]  is the predicted $y$ vector for the current IDAS internal step.
+        - [y'] is the predicted $\dot y$ vector for the current IDAS internal step.
+        - [resp] is the value of the residual function at [y] and [y'], i.e.
+                 $F(t_n, y_{\text{pred}}, \dot{y}_{\text{pred}})$.
+        - [tmp] holds temporary storage for use by the routine.
+
+        This function may raise a {!Sundials.RecoverableFailure}
+        exception to indicate that a recoverable error has occurred.
+        Any other exception is treated as an unrecoverable error.
 
         @ida <node8#SECTION00820000000000000000> lsetup *)
     and ('data, 'kind) lsetup =
@@ -763,17 +770,25 @@ module Alternate :
       -> 'data triple_tmp
       -> unit
 
-    (** [lsolve b weight ycur y'cur rescur] must solve the linear
-        equation given:
-        - [b], is the vector into which the solution is to be calculated,
-        - [weight] contains the error weights,
-        - [ycur] contains the solver's current approximation to [y],
-        - [y'cur] contains the solver's current approximation to [y'], and
+    (** The type of functions that solve the linear equation $Mx = b$,
+        where $M$ is a preconditioner matrix chosen by the user, and
+        the right-hand side vector $b$ is input.  $M$ must approximate
+        $J = \partial F/\partial y + c_j \parial F/\partial {\dot y}$
+        (see Eqn. (2.6) of IDA user's guide).  Here $c_j$ is available
+        through {!get_cj}.  This function is called like [lsolve b
+        weight ycur y'cur rescur] where:
+
+        - [b] is the right-hand side vector $b$.  The solution is to be returned in this vector as well.
+        - [weight] contains the error weights.
+        - [ycur] contains the solver's current approximation to $y(t_n)$.
+        - [y'cur] contains the solver's current approximation to $\dot y(t_n)$.
         - [rescur] is a vector that contains the current residual value.
 
         This function may raise a {!Sundials.RecoverableFailure} exception
         to indicate that a recoverable error has occurred. Any other
         exception is treated as an unrecoverable error.
+
+        See also {!callbacks}.
 
         @ida <node8#SECTION00830000000000000000> lsolve *)
     and ('data, 'kind) lsolve =
