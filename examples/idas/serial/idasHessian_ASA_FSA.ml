@@ -389,7 +389,7 @@ let main () =
     Ida.init (Ida.Dls.dense None)
       (Ida.SStolerances (rtol,atol))
       (res data)
-      ~t0:ti
+      ti
       wyy wyp
   in
   Ida.set_max_num_steps ida_mem 1500;
@@ -560,8 +560,7 @@ let main () =
     Ida.init (Ida.Dls.dense None)
       (Ida.SStolerances (rtolFD, atolFD))
       (res data)
-      ~t0:ti
-      wyy wyp
+      ti wyy wyp
   in
   Ida.set_max_num_steps ida_mem 10000;
 

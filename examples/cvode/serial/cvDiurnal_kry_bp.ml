@@ -338,7 +338,7 @@ let main () =
           (Cvode.Spils.Banded.spgmr None Spils.PrecLeft
                                     { Cvode.mupper = mu; Cvode.mlower = ml}))
       (Cvode.SStolerances (reltol, abstol))
-      (f data) ~t0:t0 u
+      (f data) t0 u
   in
 
   print_intro mu ml;

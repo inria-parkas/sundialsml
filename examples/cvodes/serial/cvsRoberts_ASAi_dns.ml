@@ -242,7 +242,7 @@ let main () =
 
   let cvode_mem =
     Cvode.init Cvode.BDF (Cvode.Newton (Cvode.Dls.dense (Some (jac data))))
-      (Cvode.WFtolerances (ewt data)) (f data) ~t0:t0 y
+      (Cvode.WFtolerances (ewt data)) (f data) t0 y
   in
 
   Quad.init cvode_mem (fQ data) q;

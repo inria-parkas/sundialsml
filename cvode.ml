@@ -388,7 +388,7 @@ let set_tolerances s tol =
   | SVtolerances (rel, abs) -> sv_tolerances s rel abs
   | WFtolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
 
-let init lmm iter tol f ?(roots=no_roots) ?(t0=0.) y0 =
+let init lmm iter tol f ?(roots=no_roots) t0 y0 =
   let (nroots, roots) = roots in
   if nroots < 0 then
     raise (Invalid_argument "number of root functions is negative");

@@ -332,7 +332,7 @@ let set_tolerances s tol =
   | SVtolerances (rel, abs) -> sv_tolerances s rel abs
   | WFtolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
 
-let init linsolv tol resfn ?(roots=no_roots) ?(t0=0.) y y' =
+let init linsolv tol resfn ?(roots=no_roots) t0 y y' =
   let (nroots, rootsfn) = roots in
   if nroots < 0 then
     raise (Invalid_argument "number of root functions is negative");

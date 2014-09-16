@@ -900,7 +900,7 @@ let main () =
   let mem =
     Ida.init linsolv (Ida.SStolerances (rtol, atol))
       (resweb webdata)
-      ~t0:t0 cc cp
+      t0 cc cp
   in
   webdata.ida_mem <- Some mem;
 

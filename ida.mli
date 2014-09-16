@@ -935,7 +935,7 @@ val init :
     -> ('a, 'kind) tolerance
     -> 'a resfn
     -> ?roots:(int * 'a rootsfn)
-    -> ?t0:float
+    -> float
     -> ('a, 'kind) nvector
     -> ('a, 'kind) nvector
     -> ('a, 'kind) session

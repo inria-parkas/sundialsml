@@ -1081,7 +1081,7 @@ let main () =
                   Cvode.Spils.prec_solve_fn = Some (psolve wdata);
                   Cvode.Spils.jac_times_vec_fn = None }))
         (Cvode.SStolerances (reltol, abstol))
-        (f wdata) ~t0:t0 c
+        (f wdata) t0 c
   in
   wdata.cvode_mem <- Some cvode_mem; (* Used in Precond *)
 

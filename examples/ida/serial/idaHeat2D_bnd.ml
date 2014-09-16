@@ -187,7 +187,7 @@ let main () =
     Ida.init (Ida.Dls.band { Ida.mupper=mu; Ida.mlower=ml } None)
              (Ida.SStolerances (rtol, atol))
              (fun t u u' r -> heatres t u u' r data)
-             ~t0:t0 wu wu'
+             t0 wu wu'
   in
   Ida.set_constraints mem (Nvector_serial.wrap constraints);
 

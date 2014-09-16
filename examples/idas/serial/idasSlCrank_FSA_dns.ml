@@ -291,7 +291,7 @@ let main () =
     Ida.init (Ida.Dls.dense None)
       (Ida.SStolerances (rtolf, atolf))
       (ressc data)
-      ~t0:tbegin
+      tbegin
       wyy wyp
   in
   Ida.set_var_types mem wid;
@@ -350,8 +350,7 @@ let main () =
     Ida.init (Ida.Dls.dense None)
       (Ida.SStolerances (rtolfd, atolfd))
       (ressc data)
-      ~t0:tbegin
-      wyy wyp
+      tbegin wyy wyp
   in
   Ida.set_var_types mem wid;
   Ida.set_suppress_alg mem true;

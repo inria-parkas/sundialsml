@@ -201,7 +201,7 @@ let main () =
 
   let cvode_mem = Cvode.init Cvode.Adams Cvode.Functional
                              (Cvode.SStolerances (reltol, abstol))
-                             ~t0:t0 (f data) u
+                             (f data) t0 u
   in
 
   if my_pe = 0 then print_intro npes;

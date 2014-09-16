@@ -304,7 +304,7 @@ let main () =
                     Cvode.Functional
                     (Cvode.SStolerances (reltol, abstol))
                     (f data)
-                    ~t0:t0
+                    t0
                     u
   in
  

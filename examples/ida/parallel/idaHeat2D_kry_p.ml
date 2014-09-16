@@ -622,7 +622,7 @@ let main () =
   let mem =
     Ida.init linsolv (Ida.SStolerances (rtol, atol))
       (res_heat data)
-      ~t0:t0 uu up
+      t0 uu up
   in
   Ida.set_var_types mem id;
   Ida.set_suppress_alg mem true;

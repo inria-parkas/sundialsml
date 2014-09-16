@@ -417,7 +417,7 @@ let main () =
   (* Allocate CVODES memory for forward integration *)
   let cvode_mem = Cvode.init Cvode.Adams Cvode.Functional
                              (Cvode.SStolerances (reltol, abstol))
-                             ~t0:t0 (f data) u
+                             (f data) t0 u
   in
 
   (* Allocate combined forward/backward memory *)

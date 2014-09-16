@@ -579,7 +579,7 @@ let main () =
                 None
                 { BBD.local_fn = (flocal data); BBD.comm_fn = None }))
       (Cvode.SStolerances (reltol, abstol))
-      (f data) ~t0:t0 u
+      (f data) t0 u
   in
     
   (* Print heading *)

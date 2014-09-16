@@ -240,7 +240,7 @@ let main () =
       }
   in
   let mem = Ida.init solver (Ida.SStolerances (rtol, atol))
-                     (res_heat data) ~t0:t0 wu wu' in
+                     (res_heat data) t0 wu wu' in
   Ida.set_constraints mem (Nvector_serial.wrap constraints);
 
   (* Print output heading. *)

@@ -1174,7 +1174,7 @@ let main () =
   let mem =
     Ida.init linsolv (Ida.SStolerances (rtol,atol))
       (res data)
-      ~t0:t0 uv uvp
+      t0 uv uvp
   in
 
   (* Initialize adjoint module. *)

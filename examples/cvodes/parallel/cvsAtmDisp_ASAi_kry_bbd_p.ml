@@ -890,7 +890,7 @@ let main () =
   let abstol, reltol = atol, rtol in
   let cvode_mem = Cvode.init Cvode.BDF (Cvode.Newton spgmr)
                     (Cvode.SStolerances (reltol, abstol))
-                    (f d) ~t0:ti y
+                    (f d) ti y
   in
   
   (* Initialize quadrature calculations *)

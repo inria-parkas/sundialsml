@@ -814,7 +814,7 @@ let main () =
                   Cvode.Spils.prec_solve_fn = Some (psolve data);
                   Cvode.Spils.jac_times_vec_fn = None }))
       (Cvode.SStolerances (reltol, abstol))
-      (f data) ~t0:t0 u
+      (f data) t0 u
   in
   Cvode.set_max_num_steps cvode_mem 2000;
     

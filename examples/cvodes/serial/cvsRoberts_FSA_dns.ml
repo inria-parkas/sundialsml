@@ -287,7 +287,7 @@ let main () =
   (* Create CVODES object *)
   let cvode_mem =
     Cvode.init Cvode.BDF (Cvode.Newton (Cvode.Dls.dense (Some (jac data))))
-      (Cvode.WFtolerances (ewt data)) (f data) ~t0:t0 y
+      (Cvode.WFtolerances (ewt data)) (f data) t0 y
   in
 
   print_string "\n3-species chemical kinetics problem\n";
