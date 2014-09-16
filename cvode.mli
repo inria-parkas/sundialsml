@@ -1190,19 +1190,20 @@ val get_num_g_evals : ('a, 'k) session -> int
 
 (** {2 Interpolated output function } *)
 
-(** [get_dky s t k dky] computes the [k]th derivative of the function y at time
-    [t], i.e. d(k)y/dt(k)(t). The function requires that tn - hu <= [t] <= tn,
-    where tn denotes the current internal time reached, and hu is the last
+(** [get_dky s t k dky] computes the [k]th derivative of the function $y$ at time
+    [t], i.e. {% \frac{d^ky(t)}{\mathit{dt}^k} %}. The function requires that
+    $t_n - hu \leq t \leq t_n$,
+    where $t_n$ denotes the current internal time reached, and $hu$ is the last
     internal step size successfully used by the solver. The user may request [k]
-    = 0, 1,..., qu, where qu is the current order.
+    = 0, 1,..., $qu$, where $qu$ is the current order.
 
     This function may only be called after a successful return from either
     {!solve_normal} or {!solve_one_step}.
 
     Values for the limits may be obtained:
-      - tn = {!get_current_time}
-      - qu = {!get_last_order}
-      - hu = {!get_last_step}
+      - $t_n$ = {!get_current_time}
+      - $qu$ = {!get_last_order}
+      - $hu$ = {!get_last_step}
 
     @cvode <node5#sss:optin_root> CVodeGetDky *)
 val get_dky : ('a, 'k) session -> float -> int -> ('a, 'k) nvector -> unit

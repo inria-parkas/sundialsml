@@ -137,6 +137,22 @@ struct
         Not_found ->
           Odoc_info.warning (Odoc_messages.tag_not_handled tag)
 
+    method init_style =
+      super#init_style;
+      (* Use MathJax: http://www.mathjax.org/ *)
+      style <- style ^
+                "<script type=\"text/x-mathjax-config\">\n" ^
+                "   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});\n" ^
+                "</script>" ^
+                "<script type=\"text/javascript\"\n" ^
+                "        src=\"https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML\">\n" ^
+                "</script>\n"
+
+    method html_of_Latex b s =
+      Buffer.add_string b "$";
+      Buffer.add_string b s;
+      Buffer.add_string b "$"
+
     initializer
       tag_functions <- ("cvode",  self#html_of_cvode) :: tag_functions;
       tag_functions <- ("cvodes", self#html_of_cvodes) :: tag_functions;
