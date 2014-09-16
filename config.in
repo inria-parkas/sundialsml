@@ -2,6 +2,7 @@
 # @configure_command@
 
 VERSION = @version@
+VERSIONP = @versionp@
 
 CVODE_DOC_ROOT = https://computation.llnl.gov/casc/sundials/documentation/cv_guide/
 CVODES_DOC_ROOT = https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/

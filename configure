@@ -1,7 +1,8 @@
 #! /bin/sh
 
-sysname='Sundials ML'
-version=0.9.1
+sysname='Sundials/ML'
+version=2.5.0
+versionp=
 contact='tim@tbrk.org'
 
 prefix=/usr/local/
@@ -45,7 +46,7 @@ do
 	bounds_checking=0;;
     -h|--help)
 	cat <<-END_HELP_TEXT
-	'configure' configures $sysname $version to adapt to many kinds of systems.
+	'configure' configures $sysname $version$versionp to adapt to many kinds of systems.
 
 	Usage: $0 [OPTION]... [VAR=VALUE]...
 
@@ -461,6 +462,7 @@ fi
  sed -e "s#@prefix@#${prefix}#;
 	 s#@configure_command@#${configure_command}#;
 	 s#@version@#${version}#;
+	 s#@versionp@#${versionp}#;
 	 s#@libdir@#${libdir:-${ocaml_libpath}}#;
 	 s#@stubdir@#${stubdir:-${ocaml_libpath}stublibs/}#;
 	 s#@docdir@#${docdir:-${prefix}share/doc/}#;

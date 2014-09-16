@@ -140,10 +140,10 @@ idas_bbd_ml.o: idas_bbd_ml.c
 
 # Docs.
 dochtml.cmo: INCLUDES += -I +ocamldoc
-dochtml.cmo: OCAMLFLAGS += -pp "cpp $(CPPFLAGS) -DOCAML_3X=$(OCAML_3X)"
+dochtml.cmo: OCAMLFLAGS += -pp "cpp $(CPPFLAGS) -DOCAML_3X=$(OCAML_3X) -DVERSION=\\\"$(VERSION)\\\""
 
 META: META.in
-	@$(ECHO) "version = \"$(VERSION)\"" > $@
+	@$(ECHO) "version = \"$(VERSION)$(VERSIONP)\"" > $@
 	@$(CAT) $< >> $@
 
 doc: doc/html/index.html
@@ -164,7 +164,7 @@ doc/html/index.html: doc/html dochtml.cmo intro.doc 			\
 	    -pp "$(DOCPP)"					\
 	    -d ./doc/html/					\
 	    -hide Cvode_impl,Ida_impl,Kinsol_impl		\
-	    -t "Sundials/ML 2.5.0"					\
+	    -t "Sundials/ML $(VERSION)$(VERSIONP)"		\
 	    -intro intro.doc					\
 	    $(filter-out %_impl.mli, $(MLOBJ_MAIN:.cmo=.mli))	\
 	    $(if $(MPI_ENABLED), $(MLOBJ_MPI:.cmo=.mli))	\
@@ -206,7 +206,7 @@ ocamlfind: $(INSTALL_CMA) $(INSTALL_CMA:.cma=.cmxa) META
 depend: .depend
 .depend:
 	$(OCAMLDEP) \
-	    -pp "cpp $(CPPFLAGS) -DOCAML_3X=$(OCAML_3X)" \
+	    -pp "cpp $(CPPFLAGS) -DOCAML_3X=$(OCAML_3X) -DVERSION=\\\"$(VERSION)\\\"" \
 	    *.mli *.ml > .depend
 	$(CC) -MM $(CFLAGS) *.c >> .depend
 

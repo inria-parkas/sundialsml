@@ -15,7 +15,7 @@ This OCaml interface was written by {{:http://www.tbrk.org}Timothy Bourke}
 and
 {{:http://www.di.ens.fr/~pouzet/}Marc Pouzet}
 ({{:http://www.upmc.fr/}UPMC}/{{:http://www.inria.fr/}Inria}/{{:http://www.di.ens.fr/}ENS}).
-It provides a complete OCaml interface to Sundials version {b 2.5.0}.
+It provides a complete OCaml interface to Sundials version {b {var version}}.
 
 The structure of this interface mostly follows that of the original library,
 both for ease of reading the existing documentation and for converting

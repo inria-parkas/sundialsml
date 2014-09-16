@@ -48,6 +48,10 @@ struct
 
     val rex = Str.regexp "<\\([^#>]*\\)\\(#[^)]*\\)?> \\(.*\\)"
 
+    val variables = [
+      ("version", VERSION)
+    ]
+
     method private split_text (t:Odoc_info.text) =
       let s = Odoc_info.text_string_of_text t in
       if not (Str.string_match rex s 0) then
@@ -107,7 +111,20 @@ struct
             | "close" -> "</div>"
             | s -> baddiv s
           end
-      | _ -> failwith "div must be followed by plain text!"
+      | _ -> (Odoc_info.warning ("div must be followed by plain text."); "")
+
+    method private html_of_var text =
+      match text with
+      | [Odoc_info.Raw s] -> begin
+          let var = Str.replace_first (Str.regexp " +$") ""
+                      (Str.replace_first (Str.regexp "^ +") "" s) in
+          try
+            List.assoc var variables
+          with Not_found ->
+            (Odoc_info.warning (Printf.sprintf "Variable '%s' is not defined." var); "")
+        end
+
+      | _ -> (Odoc_info.warning ("var must be followed by plain text."); "")
 
     val mutable custom_functions =
       ([] : (string * (Odoc_info.text_element list -> string)) list)
@@ -127,7 +144,8 @@ struct
       tag_functions <- ("idas",   self#html_of_idas) :: tag_functions;
       tag_functions <- ("kinsol", self#html_of_kinsol) :: tag_functions;
 
-      custom_functions <- ("div", self#html_of_div) :: custom_functions
+      custom_functions <- ("div", self#html_of_div) :: custom_functions;
+      custom_functions <- ("var", self#html_of_var) :: custom_functions
 
   end
 
