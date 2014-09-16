@@ -22,20 +22,22 @@ VECTYPES = serial $(if $(MPI_ENABLED),parallel)
 
 SUBDIRS=$(foreach m,$(MODULES),$(foreach v,$(VECTYPES),$m/$v))
 
+TOP_TARGETS = tests.byte.log tests.opt.log perf.byte.log perf.opt.log
+SUBDIR_TARGETS = $(foreach d,$(SUBDIRS),$(foreach t,$(TOP_TARGETS),$d/$t))
+
 .PHONY: default tests.byte.log tests.opt.log tests.byte tests.opt ocaml \
-	perf.byte.log perf.opt.log
+	perf.byte.log perf.opt.log $(SUBDIR_TARGETS)
 
 all: ocaml tests.byte tests.opt
 
-tests.opt tests.byte:
-	@for s in ${SUBDIRS}; do		\
-	    ${MAKE} -C $$s $@;			\
-	done
+$(SUBDIR_TARGETS):
+	@$(MAKE) -C `echo $@ | sed -e 's#/[^/]*$$##'` \
+		    `echo $@ | sed -e 's#.*/##'`
 
-tests.opt.log tests.byte.log: $(C_EXAMPLES)
-	@for s in ${SUBDIRS}; do		\
-	    ${MAKE} -C $$s $@;			\
-	done
+tests.opt tests.byte: tests.%: $(foreach s,$(SUBDIR),$s/tests.%)
+
+tests.opt.log tests.byte.log: tests.%.log: $(C_EXAMPLES) \
+					$(foreach s,$(SUBDIRS),$s/tests.%.log)
 	@echo ======================================================================
 	@echo 'Summary (each should be 0):'
 	@for s in ${SUBDIRS}; do		\
@@ -45,13 +47,8 @@ tests.opt.log tests.byte.log: $(C_EXAMPLES)
 	    grep '^[0-9]' $$s/$@;		\
 	done | grep -q '^[^0]'
 
-# Filter out examples that take less than this to complete.
-MIN_TIME ?= 0.2
-
-perf.opt.log perf.byte.log: $(C_EXAMPLES)
-	@for s in ${SUBDIRS}; do		\
-	    ${MAKE} -C $$s $@;			\
-	 done
+perf.opt.log perf.byte.log: perf.%.log: $(C_EXAMPLES) \
+					$(foreach s,$(SUBDIRS),$s/perf.%.log)
 	@echo ======================================================================
 	@utils/crunchperf -m $(foreach s,$(SUBDIRS),$s/$@) > $@
 	utils/crunchperf -s $@
