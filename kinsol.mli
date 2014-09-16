@@ -283,78 +283,108 @@ module Spils :
         should use {!spils_no_precond} as [callbacks].  *)
     type 'a callbacks =
       {
-        prec_solve_fn : (('a single_tmp, 'a) jacobian_arg -> 'a solve_arg
-                          -> 'a -> unit) option;
-        (**
-            This callback is invoked as [prec_solve_fn jarg sarg v] to solve
-            the preconditioning system [P z = r]. The preconditioning matrix, [P],
-            approximates the system Jacobian [J] (partial [F] / partial [u]).
-            - [jarg] supplies the basic problem data as a {!jacobian_arg}.
-            - [sarg] specifies the linear system as a {!solve_arg}.
-            - [v] is initially the right-hand side vector [r]. On completion, it
-            must contain the solution [z].
+        prec_solve_fn : 'a prec_solve_fn option;
+        (** Solves the preconditioning system {i Pz = r}.  See
+            {!prec_solve_fn} for details.  If set to [None] then no
+            preconditioning is performed, and [prec_setup_fn] and
+            [jac_times_vec_fn] are ignored.  *)
 
-            The {!Sundials.RecoverableFailure} exception can be raised to indicate a
-            recoverable failure. Any other exception indicates an unrecoverable
-            failure.
+        prec_setup_fn : 'a prec_setup_fn option;
+        (** A function that preprocesses and/or evaluates any
+            Jacobian-related data needed by {!prec_solve_fn}.  See
+            {!prec_setup_fn} for details.  When [prec_solve_fn] doesn't
+            need any such data, this field can be [None].  *)
 
-            {b NB:} The fields of [jarg], [sarg], and [z] must no longer be accessed
-            after [psolve] has returned a result, i.e. if their values are needed
-            outside of the function call, then they must be copied to separate
-            physical structures.
+        jac_times_vec_fn : 'a jac_times_vec_fn option;
+        (** Multiplies the system Jacobian to a vector.  See
+            {!jac_times_vec_fn} for details.  When this field is
+            [None], KINSOL uses a default implementation based on
+            difference quotients.  *)
 
-            @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
-            @kinsol <node5#ss:psolveFn> Linear preconditioning function
-        *)
-
-        prec_setup_fn : (('a double_tmp, 'a) jacobian_arg -> 'a solve_arg
-                         -> unit) option;
-        (** A function that preprocesses and/or evaluates any Jacobian-related data
-            needed by [prec_solve_fn] above.  When [prec_solve_fn] doesn't need any
-            such data, this field can be [None].
-
-            This callback is invoked as [prec_setup_fn jarg sarg], where
-            - [jarg] supplies the basic problem data as a {!jacobian_arg}.
-            - [sarg] specifies the linear system as a {!solve_arg}.
-            It should return whether it was successful or not.
-
-            {b NB:} The fields of [arg] must no longer be accessed after this
-            callback has returned, i.e. if their values are needed outside of the
-            function call, then they must be copied to separate physical
-            structures.
-
-            @kinsol <node5#ss:precondFn> Jacobian preconditioning function
-            @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
-         *)
-
-        jac_times_vec_fn :
-          ('a      (* v *)
-           -> 'a   (* jv *)
-           -> 'a   (* u *)
-           -> bool (* new_u *)
-           -> bool) option;
-        (** This callback is invoked as [new_u' = jac_times_vec_fn v jv u new_u],
-            to compute the Jacobian at [u] times a vector (or an approximation
-            thereof), i.e., [jv = J(u) v]. That is,
-            - [v] is the vector to multiply from the left,
-            - [jv] is where the result is to be stored,
-            - [u] is the current value of the dependent variable vector, and,
-
-            The flag [new_u] indicates whether [u] has been updated since the last
-            callback, and thus whether and saved Jacobian data should be recomputed.
-            The callback routine can return false updated value for this flag, [new_u'],
-            allowing it to reuse computed information at the next call
-            ([new_u' = false]).
-
-            {b NB:} The elements of [v], [jv], and [u] must no longer be accessed
-            after this callback has returned, i.e. if their values are needed
-            outside of the function call, then they must be copied to separate
-            physical structures.
-
-            @kinsol <node5#ss:jtimesFn> KINSpilsJacTimesVecFn
-            @kinsol <node5#sss:optin_spils> KINSpilsSetJacTimesVecFn
-         *)
       }
+
+    (** Called like [prec_solve_fn jarg sarg v] to solve the
+        preconditioning system {i P}[z] = [r] where {i P} is the
+        preconditioning matrix chosen by the user.  {i P} should
+        approximate the system Jacobian [J] (partial [F] / partial [u]).
+        - [jarg] supplies the basic problem data as a {!jacobian_arg}.
+        - [sarg] specifies the linear system as a {!solve_arg}.
+        - [v] is initially the right-hand side vector [r]. On completion, it
+        must contain the solution [z].
+
+        The {!Sundials.RecoverableFailure} exception can be raised to
+        indicate a recoverable failure. Any other exception indicates
+        an unrecoverable failure.
+
+        {b NB:} The fields of [jarg], [sarg], and [z] must no longer
+        be accessed after [psolve] has returned a result, i.e. if
+        their values are needed outside of the function call, then
+        they must be copied to separate physical structures.
+
+        See also {!callbacks}.
+
+        @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
+        @kinsol <node5#ss:psolveFn> Linear preconditioning function
+      *)
+    and 'a prec_solve_fn =
+      ('a single_tmp, 'a) jacobian_arg
+      -> 'a solve_arg
+      -> 'a
+      -> unit
+
+    (** A function that preprocesses and/or evaluates any Jacobian-related data
+        needed by [prec_solve_fn] above.  When [prec_solve_fn] doesn't need any
+        such data, this field can be [None].
+
+        This callback is invoked as [prec_setup_fn jarg sarg], where
+        - [jarg] supplies the basic problem data as a {!jacobian_arg}.
+        - [sarg] specifies the linear system as a {!solve_arg}.
+        It should return whether it was successful or not.
+
+        {b NB:} The fields of [arg] must no longer be accessed after this
+        callback has returned, i.e. if their values are needed outside of the
+        function call, then they must be copied to separate physical
+        structures.
+
+        See also {!callbacks}.
+
+        @kinsol <node5#ss:precondFn> Jacobian preconditioning function
+        @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
+     *)
+    and 'a prec_setup_fn =
+      ('a double_tmp, 'a) jacobian_arg
+      -> 'a solve_arg
+      -> unit
+
+    (** This callback is invoked as [new_u' = jac_times_vec_fn v jv u new_u],
+        to compute the Jacobian at [u] times a vector (or an approximation
+        thereof), i.e., [jv = J(u) v]. That is,
+        - [v] is the vector to multiply from the left,
+        - [jv] is where the result is to be stored,
+        - [u] is the current value of the dependent variable vector, and,
+
+        The flag [new_u] indicates whether [u] has been updated since the last
+        callback, and thus whether and saved Jacobian data should be recomputed.
+        The callback routine can return false updated value for this flag, [new_u'],
+        allowing it to reuse computed information at the next call
+        ([new_u' = false]).
+
+        {b NB:} The elements of [v], [jv], and [u] must no longer be accessed
+        after this callback has returned, i.e. if their values are needed
+        outside of the function call, then they must be copied to separate
+        physical structures.
+
+        See also {!callbacks}.
+
+        @kinsol <node5#ss:jtimesFn> KINSpilsJacTimesVecFn
+        @kinsol <node5#sss:optin_spils> KINSpilsSetJacTimesVecFn
+     *)
+    and 'a jac_times_vec_fn =
+      'a      (* v *)
+      -> 'a   (* jv *)
+      -> 'a   (* u *)
+      -> bool (* new_u *)
+      -> bool
 
     val spils_no_precond : 'a callbacks
 
@@ -404,9 +434,8 @@ module Spils :
       @kinsol <node5#ss:psolveFn> Linear preconditioning function *)
     val set_preconditioner :
       ('a, 'k) session
-      -> (('a double_tmp, 'a) jacobian_arg -> 'a solve_arg -> unit) option
-      -> (('a single_tmp, 'a) jacobian_arg -> 'a solve_arg
-            -> 'a -> unit)
+      -> 'a prec_setup_fn option
+      -> 'a prec_solve_fn
       -> unit
 
     (** Set the Jacobian-times-vector function.
@@ -415,11 +444,7 @@ module Spils :
         @kinsol <node5#ss:jtimesFn> KINSpilsJacTimesVecFn *)
     val set_jac_times_vec_fn :
       ('a, 'k) session
-      -> ('a      (* v *)
-          -> 'a   (* jv *)
-          -> 'a   (* u *)
-          -> bool (* new_u *)
-          -> bool)
+      -> 'a jac_times_vec_fn
       -> unit
 
     (** Use the default Jacobian-times-vector function.
@@ -479,37 +504,51 @@ module Alternate :
 
     type ('data, 'kind) callbacks =
       {
-        linit  : (('data, 'kind) session -> bool) option;
-          (** Complete initializations for a specific linear solver, such as
-              counters and statistics. Returns [true] if successful.
-
-              @kinsol <node8#SECTION00810000000000000000> linit *)
-
-        lsetup : (('data, 'kind) session -> unit) option;
-          (** The job of lsetup is to prepare the linear solver for subsequent
-              calls to lsolve. It may recompute Jacobian-related data if it
-              deems necessary.
-           
-              This function may raise a {!Sundials.RecoverableFailure} exception
-              to indicate that a recoverable error has occurred. Any other
-              exception is treated as an unrecoverable error.
-           
-              @kinsol <node8#SECTION00820000000000000000> lsetup *)
-           
-        lsolve : ('data, 'kind) session -> 'data -> 'data -> float option;
-          (** [res_norm = lsolve x b] must solve the linear equation given:
-              - [x], on entry: an initial guess, on return: it should contain
-                the solution to [Jx = b].
-              - [b] is the right-hand side vector, set to [-F(u)], evaluated at
-                the current iterate.
-
-              This function should return the L2 norm of the residual vector. It
-              may raise a {!Sundials.RecoverableFailure} exception to indicate
-              that a recoverable error has occurred. Any other exception is
-              treated as an unrecoverable error.
-          
-              @kinsol <node8#SECTION00830000000000000000> lsolve *)
+        linit  : ('data, 'kind) linit option;
+        lsetup : ('data, 'kind) lsetup option;
+        lsolve : ('data, 'kind) lsolve;
       }
+
+    (** Complete initializations for a specific linear solver, such as
+        counters and statistics.
+
+        See also {!callbacks}.
+
+        @cvode <node8#SECTION00810000000000000000> linit *)
+    and ('data, 'kind) linit = ('data, 'kind) session -> bool
+
+    (** The job of lsetup is to prepare the linear solver for subsequent
+        calls to lsolve. It may recompute Jacobian-related data if it
+        deems necessary.
+
+        This function may raise a {!Sundials.RecoverableFailure} exception
+        to indicate that a recoverable error has occurred. Any other
+        exception is treated as an unrecoverable error.
+
+        See also {!callbacks}.
+
+        @kinsol <node8#SECTION00820000000000000000> lsetup *)
+    and ('data, 'kind) lsetup = ('data, 'kind) session -> unit
+
+    (** [res_norm = lsolve x b] must solve the linear equation given:
+        - [x], on entry: an initial guess, on return: it should contain
+          the solution to [Jx = b].
+        - [b] is the right-hand side vector, set to [-F(u)], evaluated at
+          the current iterate.
+
+        This function should return the L2 norm of the residual vector. It
+        may raise a {!Sundials.RecoverableFailure} exception to indicate
+        that a recoverable error has occurred. Any other exception is
+        treated as an unrecoverable error.
+
+        See also {!callbacks}.
+
+        @kinsol <node8#SECTION00830000000000000000> lsolve *)
+    and ('data, 'kind) lsolve =
+      ('data, 'kind) session
+      -> 'data
+      -> 'data
+      -> float option
 
     (** Returns the internal [u] and [uscale] values. *)
     val get_u_uscale : ('data, 'kind) session -> 'data * 'data
@@ -567,6 +606,14 @@ type eta_choice =
 
 (** {2 Initialization} *)
 
+(** The system function of a nonlinear problem.
+
+    See also {!init}.
+
+    @kinsol <node5#ss:sysFn>           Problem-defining function
+  *)
+type 'a sysfn = 'a -> 'a -> unit
+
 (** [init linsolv f tmpl] creates a KINSOL session, where
      - [linsolv] specify the linear solver to attach.
      - [f]       the system function of the nonlinear problem,
@@ -577,11 +624,10 @@ type eta_choice =
      recoverable failure. Any other exception indicates an unrecoverable
      failure.
 
-     @kinsol <node5#sss:kinmalloc>      KINCreate/KINInit
-     @kinsol <node5#ss:sysFn>           Problem-defining function
+     @kinsol <node5#sss:kinmalloc>     KINCreate/KINInit
      @kinsol <node5#sss:lin_solv_init> Linear solver specification functions *)
-val init : ('a, 'kind) linear_solver -> ('a -> 'a -> unit)
-                  -> ('a, 'kind) nvector -> ('a, 'kind) session
+val init : ('a, 'kind) linear_solver -> 'a sysfn
+           -> ('a, 'kind) nvector -> ('a, 'kind) session
 
 (** {2 Solver functions } *)
 
@@ -649,12 +695,13 @@ val solve :
 
     The error file is closed if {!set_error_file} is called again, or otherwise
     when the session is garbage collected.
-     
+
     @kinsol <node5#ss:optin_main> KINSetErrFile *)
 val set_error_file : ('a, 'k) session -> string -> bool -> unit
 
-(** [set_err_handler_fn s efun] specifies a custom function [efun] for handling
-    error messages.
+(** [set_err_handler_fn s efun] specifies a custom function [efun] for
+    handling error messages.  The error handler function must not fail
+    -- any exceptions raised from it will be captured and discarded.
 
     @kinsol <node5#ss:optin_main> KINSetErrHandlerFn
     @kinsol <node5#ss:ehFn> KINErrHandlerFn *)

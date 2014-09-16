@@ -610,6 +610,7 @@ let yS'0 = Array.init ns (fun _ -> RealArray.init neq 0.0)]}
           -> 'a          (* tmp2 *)
           -> 'a          (* tmp3 *)
           -> unit
+
         (** This function, [init s fQS yQS0], activates integration of
             quadrature equations depending on sensitivities, where
             [fQS] computes the right-hand side of the
@@ -880,29 +881,51 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (Basic fB) tB0 yB0
 
     (** {4:adjbwdinit Initialization} *)
 
-    (** These functions evaluate the right-hand side of the backward ODE system
-        with or without a dependence on forward sensitivities. *)
+    (** These functions evaluate the residual function of the backward
+        DAE system with or without a dependence on forward
+        sensitivities.
+
+        @idas <node7#ss:ODErhs_b> IDAResFnB
+        @idas <node7#ss:ODErhs_bs> IDAResFnBS
+        @idas <node3#e:adj_eqns> Eq 2.19, Adjoint sensitivity analysis
+      *)
     type 'a bresfn =
-      | Basic of (float             (* t *)
-                  -> 'a             (* y *)
-                  -> 'a             (* y' *)
-                  -> 'a             (* yB *)
-                  -> 'a             (* y'B *)
-                  -> 'a             (* resvalB *)
-                  -> unit)
-      (** @idas <node7#ss:ODErhs_b> IDARhsFnB
-          @idas <node3#e:adj_eqns> Eq 2.19, Adjoint sensitivity analysis *)
-      | WithSens of (float          (* t *)
-                     -> 'a          (* y *)
-                     -> 'a          (* y' *)
-                     -> 'a array    (* yS *)
-                     -> 'a array    (* y'S *)
-                     -> 'a          (* yB *)
-                     -> 'a          (* y'B *)
-                     -> 'a          (* resvalB *)
-                     -> unit)
-      (** @idas <node7#ss:ODErhs_bs> IDARhsFnBS
-          @idas <node3#e:adj1_eqns> Eq 2.21, Adjoint sensitivity analysis *)
+      | Basic of 'a bresfn_basic
+        (** Doesn't depend on forward sensitivities.  See
+            {!bresfn_basic} for details. *)
+      | WithSens of 'a bresfn_with_sens
+        (** Depends on forward senstivites.  See {!bresfn_with_sens} for
+            details. *)
+
+    (** Backward DAE residual function that doesn't depend on forward
+        sensitivities.
+
+        @idas <node7#ss:ODErhs_b> IDAResFnB
+        @idas <node3#e:adj_eqns> Eq 2.19, Adjoint sensitivity analysis *)
+    and 'a bresfn_basic =
+      float             (* t *)
+      -> 'a             (* y *)
+      -> 'a             (* y' *)
+      -> 'a             (* yB *)
+      -> 'a             (* y'B *)
+      -> 'a             (* resvalB *)
+      -> unit
+
+    (** Backward DAE residual function that depends on forward
+        sensitivities.
+
+        @idas <node7#ss:ODErhs_bs> IDAResFnBS
+        @idas <node3#e:adj1_eqns> Eq 2.21, Adjoint sensitivity analysis *)
+    and 'a bresfn_with_sens =
+      float          (* t *)
+      -> 'a          (* y *)
+      -> 'a          (* y' *)
+      -> 'a array    (* yS *)
+      -> 'a array    (* y'S *)
+      -> 'a          (* yB *)
+      -> 'a          (* y'B *)
+      -> 'a          (* resvalB *)
+      -> unit
 
     type 'a single_tmp = 'a
     type 'a triple_tmp = 'a * 'a * 'a
@@ -910,7 +933,7 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (Basic fB) tB0 yB0
     (** Arguments common to all Jacobian callback functions.
 
         @idas <node7#ss:densejac_b> IDADlsDenseJacFnB
-        @idas <node7#ss:bandjac_b> IDADlsBandJacFnB 
+        @idas <node7#ss:bandjac_b> IDADlsBandJacFnB
         @idas <node7#ss:jactimesvec_b> IDASpilsJacTimesVecFnB
         @idas <node7#ss:psolve_b> IDASpilsPrecSolveFnB
         @idas <node7#ss:psetup_b> IDASpilsPrecSetupFnB *)
@@ -1281,102 +1304,126 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (Basic fB) tB0 yB0
           | PrecBoth
 
         type 'a callbacks = {
-          prec_solve_fn :
-            (('a single_tmp, 'a) jacobian_arg -> 'a -> 'a -> float -> unit)
-            option;
-          (** Called like [prec_solve_fn arg r z delta] to solve the
-              linear system {i P}[z] = [r], where {i P} is the (left)
-              preconditioner matrix.
-              - [arg] supplies the basic problem data as a {!jacobian_arg}.
-              - [r] is the right-hand side vector.
-              - [z] is the vector in which the result must be stored.
-              - [delta] is an input tolerance.
+          prec_solve_fn : 'a prec_solve_fn option;
+          (** Solves the preconditioning system {i Pz = r} for
+              the backward problem.  *)
 
-              If set to [None] then no preconditioning is performed, and
-              [prec_setup_fn] and [jac_times_vec_fn] are ignored.
-
-              {i P} should approximate, at least crudely, the system
-              Jacobian matrix {i J = dF/dy + c * dF/dy'} where {i
-              F} is the residual function and {i c} is [arg.jac_coef].
-
-              [delta] is an input tolerance to be used if an iterative method is
-              employed in the solution.  In that case, the residual vector res = [r]
-              - {i P} [z] of the system should be made less than [delta] in weighted
-              l2 norm, i.e. [sqrt (sum over i ((res.{i} * ewt.{i})^2)) < delta],
-              where the vector ewt can be obtained through {!get_err_weights}.
-
-              This function can raise {!Sundials.RecoverableFailure} to instruct the
-              integrator to retry with a different step size.  Raising any other
-              kind of exception aborts the integrator.
-
-              {b NB:} [r], [z], and the elements of [arg] must no longer be accessed
-                  after [prec_solve_fn] has returned, i.e. if their values are
-                  needed outside of the function call, then they must be copied
-                  to separate physical structures.
-
-              @idas <node7#SECTION00729400000000000000> IDASpilsSetPreconditionerB
-              @idas <node7#ss:psolve_b> IDASpilsPrecSolveFnB
-          *)
-
-          prec_setup_fn : (('a triple_tmp, 'a) jacobian_arg -> unit) option;
-          (** A function that preprocesses and/or evaluates any
-              Jacobian-related data needed by [prec_solve_fn] above.  When
+          prec_setup_fn : 'a prec_setup_fn option;
+          (** An optional function that preprocesses and/or evaluates
+              any Jacobian-related data needed by {!prec_solve_fn}.  See
+              the description on the type for details.  When
               [prec_solve_fn] doesn't need any such data, this field can
-              be [None].
+              be [None].  *)
 
-              The sole argument to this function specifies the basic
-              problem data as a {!jacobian_arg}.
-
-              Note that unlike in CVODES, whatever data this function
-              computes has to be recomputed every time it is called.
-
-              This function can raise {!Sundials.RecoverableFailure} to
-              instruct the integrator to retry with a different step size.
-              Raising any other kind of exception aborts the integrator.
-
-              {b NB:} The elements of [jac] must no longer be accessed
-                  after [psetup] has returned a result, i.e. if their
-                  values are needed outside of the function call, then
-                  they must be copied to a separate physical
-                  structure.
-
-              @idas <node7#SECTION00729400000000000000> IDASpilsSetPreconditionerB
-              @idas <node7#ss:psetup_b> IDASpilsPrecSetupFnB
-          *)
-
-          jac_times_vec_fn :
-            (('a single_tmp, 'a) jacobian_arg -> 'a -> 'a -> unit) option;
-          (** Specifies a Jacobian-times-vector function.  When this field is [None],
-              IDA uses a default implementation based on difference quotients.
-
-              [jac_times_vec_fn arg v jv] should compute the matrix-vector product {i
-              J}[v], where {i J} is the system Jacobian.
-              - [arg] provides the data necessary to compute the Jacobian.
-              - [v] is the vector by which the Jacobian must be multiplied.
-              - [jv] is the vector in which the result must be stored.
-
-              The Jacobian {i J} (which is not explicitly constructed)
-              has ({i i,j}) entry {i dFi/dyj + c*dFi/dy'j} where {i F}
-              is the residual function, i.e. the partial derivative of
-              the [i]-th equation with respect to the [j]-th component
-              of the non-derivative vector.  [c] is the [jac_coef]
-              field of [arg] (see {!jacobian_arg}).  See the [Dense]
-              {!linear_solver} for a more detailed explanation.
-
-              {b NB:} The elements of [jac], [v], and [Jv] must no
-                      longer be accessed after [psolve] has returned a
-                      result, i.e. if their values are needed outside
-                      of the function call, then they must be copied
-                      to separate physical structures.
-
-              Raising any kind of exception (including
-              {!Sundials.RecoverableFailure}) from this function
-              results in the integrator being aborted.
-
-              @idas <node7#SECTION00729400000000000000> IDASpilsSetJacTimesVecFnB
-              @idas <node7#ss:jactimesvec_b> IDASpilsJacTimesVecFnB
-          *)
+          jac_times_vec_fn : 'a jac_times_vec_fn option;
+          (** Multiplies the system Jacobian to a vector.  See
+              {!jac_times_vec_fn} for details.  When this field is
+              [None], IDA uses a default implementation based on
+              difference quotients.  *)
         }
+
+        (** Called like [prec_solve_fn arg r z delta] to solve the
+            linear system {i P}[z] = [r], where {i P} is the (left)
+            preconditioner matrix.
+            - [arg] supplies the basic problem data as a {!jacobian_arg}.
+            - [r] is the right-hand side vector.
+            - [z] is the vector in which the result must be stored.
+            - [delta] is an input tolerance.
+
+            If set to [None] then no preconditioning is performed, and
+            [prec_setup_fn] and [jac_times_vec_fn] are ignored.
+
+            {i P} should approximate, at least crudely, the system
+            Jacobian matrix {i J = dF/dy + c * dF/dy'} where {i F} is
+            the residual function and {i c} is [arg.jac_coef].
+
+            [delta] is an input tolerance to be used if an iterative
+            method is employed in the solution.  In that case, the
+            residual vector res = [r]
+            - {i P} [z] of the system should be made less than [delta] in weighted
+            l2 norm, i.e. [sqrt (sum over i ((res.{i} * ewt.{i})^2)) <
+            delta], where the vector ewt can be obtained through
+            {!get_err_weights}.
+
+            This function can raise {!Sundials.RecoverableFailure} to
+            instruct the integrator to retry with a different step
+            size.  Raising any other kind of exception aborts the
+            integrator.
+
+            {b NB:} [r], [z], and the elements of [arg] must no longer
+            be accessed after [prec_solve_fn] has returned, i.e. if
+            their values are needed outside of the function call, then
+            they must be copied to separate physical structures.
+
+            @idas <node7#SECTION00729400000000000000> IDASpilsSetPreconditionerB
+            @idas <node7#ss:psolve_b> IDASpilsPrecSolveFnB
+          *)
+        and 'a prec_solve_fn =
+          ('a single_tmp, 'a) jacobian_arg
+          -> 'a
+          -> 'a
+          -> float
+          -> unit
+
+        (** A function that preprocesses and/or evaluates any
+            Jacobian-related data needed by [prec_solve_fn] above.
+
+            The sole argument to this function specifies the basic
+            problem data as a {!jacobian_arg}.
+
+            Note that unlike in CVODES, whatever data this function
+            computes has to be recomputed every time it is called.
+
+            This function can raise {!Sundials.RecoverableFailure} to
+            instruct the integrator to retry with a different step
+            size.  Raising any other kind of exception aborts the
+            integrator.
+
+            {b NB:} The elements of [jac] must no longer be accessed
+            after [psetup] has returned a result, i.e. if their values
+            are needed outside of the function call, then they must be
+            copied to a separate physical structure.
+
+            @idas <node7#SECTION00729400000000000000> IDASpilsSetPreconditionerB
+            @idas <node7#ss:psetup_b> IDASpilsPrecSetupFnB
+          *)
+        and 'a prec_setup_fn = ('a triple_tmp, 'a) jacobian_arg -> unit
+
+        (** Specifies a Jacobian-times-vector function.
+            [jac_times_vec_fn arg v jv] should compute the
+            matrix-vector product {i J}[v], where {i J} is the system
+            Jacobian.
+
+            - [arg] provides the data necessary to compute the Jacobian.
+            - [v] is the vector by which the Jacobian must be multiplied.
+            - [jv] is the vector in which the result must be stored.
+
+            The Jacobian {i J} (which is not explicitly constructed)
+            has ({i i,j}) entry {i dFi/dyj + c*dFi/dy'j} where {i F}
+            is the residual function, i.e. the partial derivative of
+            the [i]-th equation with respect to the [j]-th component
+            of the non-derivative vector.  [c] is the [jac_coef]
+            field of [arg] (see {!jacobian_arg}).  See the [Dense]
+            {!linear_solver} for a more detailed explanation.
+
+            {b NB:} The elements of [jac], [v], and [Jv] must no
+            longer be accessed after [psolve] has returned a result,
+            i.e. if their values are needed outside of the function
+            call, then they must be copied to separate physical
+            structures.
+
+            Raising any kind of exception (including
+            {!Sundials.RecoverableFailure}) from this function results
+            in the integrator being aborted.
+
+            @idas <node7#SECTION00729400000000000000> IDASpilsSetJacTimesVecFnB
+            @idas <node7#ss:jactimesvec_b> IDASpilsJacTimesVecFnB
+          *)
+        and 'a jac_times_vec_fn =
+          ('a single_tmp, 'a) jacobian_arg
+          -> 'a
+          -> 'a
+          -> unit
 
         (** No preconditioning functions. *)
         val no_precond : 'a callbacks
@@ -1660,42 +1707,70 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (Basic fB) tB0 yB0
         (** These functions compute the quadrature equation right-hand side for
             the backward problem. *)
         type 'a bquadrhsfn =
-          | Basic of (float -> 'a -> 'a -> 'a -> 'a -> 'a -> unit)
-            (** The quadrature rhs does not depend on forward
-                sensitivities.  The function is called as
-                [f t y y' yB y'B rhsvalBQ], where
-                - [t] is the current value of the independent variable.
-                - [y] is the current value of the forward solution vector.
-                - [y'] is the current value of the forward derivative solution vector.
-                - [yB] is the current value of the backward dependent variable vector.
-                - [y'B] is the current value of the backward dependent derivative vector.
-                - [rhsvalBQ] is the output vector containing the residual for the backward quadrature equations.
+          | Basic of 'a bquadrhsfn_basic
+          (** Doesn't depend on forward sensitivities.  See
+              {!bquadrhsfn_basic} for details.  *)
+          | WithSens of 'a bquadrhsfn_with_sens
+          (** Depends on forward sensitivities.  See
+              {!bquadrhsfn_with_sens} for details.  *)
 
-                This function can raise {!Sundials.RecoverableFailure} to
-                instruct the integrator to retry with a different step size.
-                Raising any other kind of exception aborts the integrator.
+        (** A quadrature rhs function that does not depend on forward
+            sensitivities.  The function is called as [f t y y' yB y'B
+            rhsvalBQ], where
+            - [t] is the current value of the independent variable.
+            - [y] is the current value of the forward solution vector.
+            - [y'] is the current value of the forward derivative solution vector.
+            - [yB] is the current value of the backward dependent variable vector.
+            - [y'B] is the current value of the backward dependent derivative vector.
+            - [rhsvalBQ] is the output vector containing the residual for the backward quadrature equations.
 
-                @idas <node7#sss:rhs_quad_B> IDAQuadRhsFnB *)
-          | WithSens of
-              (float ->
-               'a -> 'a -> 'a array -> 'a array -> 'a -> 'a -> 'a -> unit)
-            (** The quadrature rhs depends on forward sensitivities.
-                The function is called as [f t y y' yS y'S yB y'B rhsvalQBS],
-                where
-                - [t] is the current value of the independent variable.
-                - [y] is the current value of the forward solution vector.
-                - [yS] is an array of vectors containing the sensitivities of the forward solution.
-                - [y'S] is an array of vectors containing the sensitivities of the forward derivative solution.
-                - [y'] is the current value of the forward derivative solution vector.
-                - [yB] is the current value of the backward dependent variable vector.
-                - [y'B] is the current value of the backward dependent derivative vector.
-                - [rhsvalBQ] is the output vector containing the residual for the backward quadrature equations.
+            This function can raise {!Sundials.RecoverableFailure} to
+            instruct the integrator to retry with a different step
+            size.  Raising any other kind of exception aborts the
+            integrator.
 
-                This function can raise {!Sundials.RecoverableFailure} to
-                instruct the integrator to retry with a different step size.
-                Raising any other kind of exception aborts the integrator.
+            See also {!bquadrhsfn}.
 
-                @idas <node7#sss:rhs_quad_sens_B> IDAQuadRhsFnBS *)
+            @idas <node7#sss:rhs_quad_B> IDAQuadRhsFnB *)
+        and 'a bquadrhsfn_basic =
+          float
+          -> 'a
+          -> 'a
+          -> 'a
+          -> 'a
+          -> 'a
+          -> unit
+
+        (** A quadrature rhs function that depends on forward
+            sensitivities.  The function is called as [f t y y' yS y'S
+            yB y'B rhsvalQBS], where
+            - [t] is the current value of the independent variable.
+            - [y] is the current value of the forward solution vector.
+            - [yS] is an array of vectors containing the sensitivities of the forward solution.
+            - [y'S] is an array of vectors containing the sensitivities of the forward derivative solution.
+            - [y'] is the current value of the forward derivative solution vector.
+            - [yB] is the current value of the backward dependent variable vector.
+            - [y'B] is the current value of the backward dependent derivative vector.
+            - [rhsvalBQ] is the output vector containing the residual for the backward quadrature equations.
+
+            This function can raise {!Sundials.RecoverableFailure} to
+            instruct the integrator to retry with a different step
+            size.  Raising any other kind of exception aborts the
+            integrator.
+
+            See also {!bquadrhsfn}.
+
+            @idas <node7#sss:rhs_quad_sens_B> IDAQuadRhsFnBS *)
+        and 'a bquadrhsfn_with_sens =
+          float
+          -> 'a
+          -> 'a
+          -> 'a array
+          -> 'a array
+          -> 'a
+          -> 'a
+          -> 'a
+          -> unit
 
         (** This function, [init s fQB yQB0], activates integration of
             quadrature equations, with or without sensitivities, where [fQB]

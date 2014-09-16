@@ -403,127 +403,157 @@ module Spils :
 
     (** Initialization parameters and callbacks for Krylov iterative
         {!linear_solver}s.  If you don't want any preconditioning, you
-        should use {!spils_no_precond}.  *)
+        should use {!spils_no_precond}.
+
+        @ida <node5#sss:optin_spils> IDASpilsSetPreconditioner
+        @ida <node5#sss:optin_spils> IDASpilsSetJacTimesVecFn
+        @ida <node5#ss:precondFn> Jacobian preconditioning function
+      *)
     type 'a callbacks = {
 
-      prec_solve_fn : (('a single_tmp, 'a) jacobian_arg -> 'a -> 'a -> float
-                       -> unit) option;
-      (** Called like [prec_solve_fn arg r z delta] to solve the
-          linear system {i P}[z] = [r], where {i P} is the (left)
-          preconditioner matrix.
-          - [arg] supplies the basic problem data as a {!jacobian_arg}.
-          - [r] is the right-hand side vector.
-          - [z] is the vector in which the result must be stored.
-          - [delta] is an input tolerance.
+      prec_solve_fn : 'a prec_solve_fn option;
+      (** Solves the preconditioning system {i Pz = r}.  See
+          {!prec_solve_fn} for details.  If set to [None] then no
+          preconditioning is performed, and [prec_setup_fn] and
+          [jac_times_vec_fn] are ignored.  *)
 
-          If set to [None] then no preconditioning is performed, and
-          [prec_setup_fn] and [jac_times_vec_fn] are ignored.
-
-          {i P} should approximate, at least crudely, the system
-          Jacobian matrix {i J = dF/dy + c * dF/dy'} where {i
-          F} is the residual function and {i c} is [arg.jac_coef].
-
-          [delta] is an input tolerance to be used if an iterative method is
-          employed in the solution.  In that case, the residual vector res = [r]
-          - {i P} [z] of the system should be made less than [delta] in weighted
-          l2 norm, i.e. [sqrt (sum over i ((res.{i} * ewt.{i})^2)) < delta],
-          where the vector ewt can be obtained through {!get_err_weights}.
-
-          This function can raise {!Sundials.RecoverableFailure} to instruct the
-          integrator to retry with a different step size.  Raising any other
-          kind of exception aborts the integrator.
-
-          {b NB:} [r], [z], and the elements of [arg] must no longer be accessed
-                  after [prec_solve_fn] has returned, i.e. if their values are
-                  needed outside of the function call, then they must be copied
-                  to separate physical structures.
-
-          @ida <node5#sss:optin_spils> IDASpilsSetPreconditioner
-          @ida <node5#ss:psolveFn> Linear preconditioning function
-          @ida <node5#ss:precondFn> Jacobian preconditioning function
-      *)
-
-      prec_setup_fn : (('a triple_tmp, 'a) jacobian_arg -> unit) option;
+      prec_setup_fn : 'a prec_setup_fn option;
       (** A function that preprocesses and/or evaluates any
-          Jacobian-related data needed by [prec_solve_fn] above.  When
-          [prec_solve_fn] doesn't need any such data, this field can
-          be [None].
+          Jacobian-related data needed by {!prec_solve_fn}.  See
+          {!prec_setup_fn} for details.  When [prec_solve_fn] doesn't
+          need any such data, this field can be [None].  *)
 
-          The sole argument to this function specifies the basic
-          problem data as a {!jacobian_arg}.
-
-          Note that unlike in CVODE, whatever data this function
-          computes has to be recomputed every time it is called.
-
-          This function can raise {!Sundials.RecoverableFailure} to
-          instruct the integrator to retry with a different step size.
-          Raising any other kind of exception aborts the integrator.
-
-          {b NB:} The elements of [jac] must no longer be accessed
-                  after [psetup] has returned a result, i.e. if their
-                  values are needed outside of the function call, then
-                  they must be copied to a separate physical
-                  structure.
-
-          The operations performed by this function might include
-          forming a crude approximate Jacobian, and performing an LU
-          factorization on the resulting approximation.
-
-          Each call to the preconditioner setup function is preceded
-          by a call to the user-supplied residual function (see
-          {!init}) with the same (tt, yy, yp) arguments. Thus the
-          preconditioner setup function can use any auxiliary data
-          that is computed and saved during the evaluation of the DAE
-          residual.
-
-          This function is not called in advance of every call to the
-          preconditioner solve function, but rather is called only as
-          often as needed to achieve convergence in the Newton
-          iteration.
-
-          If this function uses difference quotient approximations, it
-          may need to access quantities not in the argument.  These
-          include the current step size, the error weights, etc.  To
-          obtain these, use the [get_*] functions defined in this
-          module.
-
-          @ida <node5#sss:optin_spils> IDASpilsSetPreconditioner
-          @ida <node5#ss:psolveFn> Linear preconditioning function
-          @ida <node5#ss:precondFn> Jacobian preconditioning function
-      *)
-
-      jac_times_vec_fn : (('a double_tmp, 'a) jacobian_arg -> 'a -> 'a -> unit)
-          option;
-      (**
-
-         Specifies a Jacobian-times-vector function.  When this field is [None],
-         IDA uses a default implementation based on difference quotients.
-
-         [jac_times_vec_fn arg v jv] should compute the matrix-vector product {i
-         J}[v], where {i J} is the system Jacobian.
-         - [arg] provides the data necessary to compute the Jacobian.
-         - [v] is the vector by which the Jacobian must be multiplied.
-         - [jv] is the vector in which the result must be stored.
-
-         The Jacobian {i J} (which is not explicitly constructed) has ({i i,j})
-         entry {i dFi/dyj + c*dFi/dy'j} where {i F} is the residual function,
-         i.e. the partial derivative of the [i]-th equation with respect to the
-         [j]-th component of the non-derivative vector.  [c] is the [jac_coef]
-         field of [arg] (see {!jacobian_arg}).  See the [Dense] {!linear_solver}
-         for a more detailed explanation.
-
-         {b NB:} The elements of [jac], [v], and [Jv] must no longer be accessed
-                 after [psolve] has returned a result, i.e. if their values are
-                 needed outside of the function call, then they must be copied to
-                 separate physical structures.
-
-         Raising any kind of exception (including {!Sundials.RecoverableFailure})
-         from this function results in the integrator being aborted.
-
-         @ida <node5#sss:optin_spils> IDASpilsSetJacTimesVecFn
-         @ida <node5#ss:jtimesFn> Jacobian-times-vector function
-      *)
+      jac_times_vec_fn : 'a jac_times_vec_fn option;
+      (** Multiplies the system Jacobian to a vector.  See
+          {!jac_times_vec_fn} for details.  When this field is [None],
+          IDA uses a default implementation based on difference
+          quotients.  *)
     }
+
+    (** Called like [prec_solve_fn arg r z delta] to solve the
+        linear system {i P}[z] = [r], where {i P} is the (left)
+        preconditioner matrix chosen by the user.
+        - [arg] supplies the basic problem data as a {!jacobian_arg}.
+        - [r] is the right-hand side vector.
+        - [z] is the vector in which the result must be stored.
+        - [delta] is an input tolerance.
+
+        {i P} should approximate, at least crudely, the system
+        Jacobian matrix {i J = dF/dy + c * dF/dy'} where {i
+        F} is the residual function and {i c} is [arg.jac_coef].
+
+        [delta] is an input tolerance to be used if an iterative method is
+        employed in the solution.  In that case, the residual vector res = [r]
+        - {i P} [z] of the system should be made less than [delta] in weighted
+        l2 norm, i.e. [sqrt (sum over i ((res.{i} * ewt.{i})^2)) < delta],
+        where the vector ewt can be obtained through {!get_err_weights}.
+
+        This function can raise {!Sundials.RecoverableFailure} to instruct the
+        integrator to retry with a different step size.  Raising any other
+        kind of exception aborts the integrator.
+
+        See also {!callbacks}.
+
+        {b NB:} [r], [z], and the elements of [arg] must no longer be accessed
+                after [prec_solve_fn] has returned, i.e. if their values are
+                needed outside of the function call, then they must be copied
+                to separate physical structures.
+
+        See also {!Spils.callbacks}.
+
+        @ida <node5#ss:psolveFn> Linear preconditioning function
+        @ida <node5#ss:precondFn> Jacobian preconditioning function
+      *)
+    and 'a prec_solve_fn =
+      ('a single_tmp, 'a) jacobian_arg
+      -> 'a
+      -> 'a
+      -> float
+      -> unit
+
+    (** A function that preprocesses and/or evaluates any
+        Jacobian-related data needed by {!prec_solve_fn}.
+
+        The sole argument to this function specifies the basic
+        problem data as a {!jacobian_arg}.
+
+        Note that unlike in CVODE, whatever data this function
+        computes has to be recomputed every time it is called.
+
+        This function can raise {!Sundials.RecoverableFailure} to
+        instruct the integrator to retry with a different step size.
+        Raising any other kind of exception aborts the integrator.
+
+        {b NB:} The elements of [jac] must no longer be accessed
+                after [psetup] has returned a result, i.e. if their
+                values are needed outside of the function call, then
+                they must be copied to a separate physical
+                structure.
+
+        The operations performed by this function might include
+        forming a crude approximate Jacobian, and performing an LU
+        factorization on the resulting approximation.
+
+        Each call to the preconditioner setup function is preceded
+        by a call to the user-supplied residual function (see
+        {!init}) with the same (tt, yy, yp) arguments. Thus the
+        preconditioner setup function can use any auxiliary data
+        that is computed and saved during the evaluation of the DAE
+        residual.
+
+        This function is not called in advance of every call to the
+        preconditioner solve function, but rather is called only as
+        often as needed to achieve convergence in the Newton
+        iteration.
+
+        If this function uses difference quotient approximations, it
+        may need to access quantities not in the argument.  These
+        include the current step size, the error weights, etc.  To
+        obtain these, use the [get_*] functions defined in this
+        module.
+
+        See also {!callbacks}.
+
+        @ida <node5#ss:psolveFn> Linear preconditioning function
+        @ida <node5#ss:precondFn> Jacobian preconditioning function
+    *)
+    and 'a prec_setup_fn = ('a triple_tmp, 'a) jacobian_arg -> unit
+
+    (** Specifies a Jacobian-times-vector function.
+
+        [jac_times_vec_fn arg v jv] should compute the matrix-vector
+        product {i J}[v], where {i J} is the system Jacobian.
+        - [arg] provides the data necessary to compute the Jacobian.
+        - [v] is the vector by which the Jacobian must be multiplied.
+        - [jv] is the vector in which the result must be stored.
+
+        The Jacobian {i J} (which is not explicitly constructed) has
+        ({i i,j}) entry {i dFi/dyj + c*dFi/dy'j} where {i F} is the
+        residual function, i.e. the partial derivative of the [i]-th
+        equation with respect to the [j]-th component of the
+        non-derivative vector.  [c] is the [jac_coef] field of [arg]
+        (see {!jacobian_arg}).  See the [Dense] {!linear_solver} for a
+        more detailed explanation.
+
+        {b NB:} The elements of [jac], [v], and [Jv] must no longer be
+                accessed after [psolve] has returned a result, i.e. if
+                their values are needed outside of the function call,
+                then they must be copied to separate physical
+                structures.
+
+        Raising any kind of exception (including
+        {!Sundials.RecoverableFailure}) from this function results in
+        the integrator being aborted.
+
+        See also {!callbacks}.
+
+        @ida <node5#ss:jtimesFn> Jacobian-times-vector function
+    *)
+    and 'a jac_times_vec_fn =
+      ('a double_tmp, 'a) jacobian_arg
+      -> 'a
+      -> 'a
+      -> unit
 
     val no_precond : 'a callbacks
 
@@ -572,8 +602,8 @@ module Spils :
       *)
      val set_preconditioner :
        ('a,'k) session
-       -> (('a triple_tmp, 'a) jacobian_arg -> unit) option
-       -> (('a single_tmp, 'a) jacobian_arg -> 'a -> 'a -> float -> unit)
+       -> 'a prec_setup_fn option
+       -> 'a prec_solve_fn
        -> unit
 
     (** Set the Jacobian-times-vector function (see {!callbacks}).  It
@@ -586,10 +616,7 @@ module Spils :
       *)
     val set_jac_times_vec_fn :
       ('a,'k) session
-      -> (('a double_tmp, 'a) jacobian_arg
-          -> 'a (* v *)
-          -> 'a (* Jv *)
-          -> unit)
+      -> 'a jac_times_vec_fn
       -> unit
 
     (** This function disables the user-supplied Jacobian-vector function, and
@@ -702,47 +729,61 @@ module Alternate :
 
     type ('data, 'kind) callbacks =
       {
-        linit  : (('data, 'kind) session -> unit) option;
-          (** Complete initializations for a specific linear solver, such as
-              counters and statistics. Returns [true] if successful.
-
-              @ida <node8#SECTION00810000000000000000> linit *)
-
-        lsetup : (('data, 'kind) session -> 'data
-                  -> 'data -> 'data -> 'data triple_tmp -> unit) option;
-          (** [jcur = lsetup convfail ypred fpred tmp] prepares the linear
-              solver for subsequent calls to {!lsolve}. Its arguments are:
-              - [convfail], indicating any problem that occurred during the
-                 solution of the nonlinear equation on the current time step,
-              - [ypred], the predicted [y] vector for the current internal
-                step,
-              - [fpred], the value of the right-hand side at [ypred], and,
-              - [tmp], temporary variables for use by the routine.
-
-              This function must return [true] if the Jacobian-related data is
-              current after the call, or [false] otherwise. It may raise a
-              {!Sundials.RecoverableFailure} exception to indicate that a
-              recoverable error has occurred. Any other exception is treated as
-              an unrecoverable error.
-
-              @ida <node8#SECTION00820000000000000000> lsetup *)
-
-        lsolve : ('data, 'kind) session -> 'data -> 'data
-              -> 'data -> 'data -> 'data -> unit
-          (** [lsolve b weight ycur y'cur rescur] must solve the linear
-              equation given:
-              - [b], is the vector into which the solution is to be calculated,
-              - [weight] contains the error weights,
-              - [ycur] contains the solver's current approximation to [y],
-              - [y'cur] contains the solver's current approximation to [y'], and
-              - [rescur] is a vector that contains the current residual value.
-
-              This function may raise a {!Sundials.RecoverableFailure} exception
-              to indicate that a recoverable error has occurred. Any other
-              exception is treated as an unrecoverable error.
-
-              @ida <node8#SECTION00830000000000000000> lsolve *)
+        linit  : ('data, 'kind) linit option;
+        lsetup : ('data, 'kind) lsetup option;
+        lsolve : ('data, 'kind) lsolve
       }
+    (** Complete initializations for a specific linear solver, such as
+        counters and statistics.
+
+        @ida <node8#SECTION00810000000000000000> linit *)
+    and ('data, 'kind) linit = ('data, 'kind) session -> unit
+
+    (** [jcur = lsetup convfail ypred fpred tmp] prepares the linear
+        solver for subsequent calls to {!lsolve}. Its arguments are:
+        - [convfail], indicating any problem that occurred during the
+           solution of the nonlinear equation on the current time step,
+        - [ypred], the predicted [y] vector for the current internal
+          step,
+        - [fpred], the value of the right-hand side at [ypred], and,
+        - [tmp], temporary variables for use by the routine.
+
+        This function must return [true] if the Jacobian-related data is
+        current after the call, or [false] otherwise. It may raise a
+        {!Sundials.RecoverableFailure} exception to indicate that a
+        recoverable error has occurred. Any other exception is treated as
+        an unrecoverable error.
+
+        @ida <node8#SECTION00820000000000000000> lsetup *)
+    and ('data, 'kind) lsetup =
+      ('data, 'kind) session
+      -> 'data
+      -> 'data
+      -> 'data
+      -> 'data triple_tmp
+      -> unit
+
+    (** [lsolve b weight ycur y'cur rescur] must solve the linear
+        equation given:
+        - [b], is the vector into which the solution is to be calculated,
+        - [weight] contains the error weights,
+        - [ycur] contains the solver's current approximation to [y],
+        - [y'cur] contains the solver's current approximation to [y'], and
+        - [rescur] is a vector that contains the current residual value.
+
+        This function may raise a {!Sundials.RecoverableFailure} exception
+        to indicate that a recoverable error has occurred. Any other
+        exception is treated as an unrecoverable error.
+
+        @ida <node8#SECTION00830000000000000000> lsolve *)
+    and ('data, 'kind) lsolve =
+      ('data, 'kind) session
+      -> 'data
+      -> 'data
+      -> 'data
+      -> 'data
+      -> 'data
+      -> unit
 
     (** Create a linear solver from a function returning a set of callback
         functions *)
@@ -787,6 +828,57 @@ val default_tolerances : ('data, 'kind) tolerance
 
 (** {2 Initialization} *)
 
+(** The DAE's residual function.  Called by the solver like [f t y y' r],
+    where:
+    - [t] is the current value of the independent variable,
+          i.e., the simulation time.
+    - [y] is a vector of dependent-variable values, i.e. y(t).
+    - [y'] is the derivative of [y] with respect to [t], i.e. dy/dt.
+    - [r] is the output vector to fill in with the value of the system
+          residual for the given values of t, y, and y'.
+    The residual function should return normally if successful, raise
+    {!Sundials.RecoverableFailure} if a recoverable error occurred (e.g. [y] has
+    an illegal value), or raise some other exception if a nonrecoverable error
+    occurred.  If a recoverable error occurred, the integrator will attempt to
+    correct and retry.  If a nonrecoverable error occurred, the integrator will
+    halt and propagate the exception to the caller.
+
+    {b NB:} [y], [y'], and [r] must no longer be accessed after [f] has
+            returned a result, i.e. if their values are needed outside of
+            the function call, then they must be copied to separate physical
+            structures.
+
+    See also {!init} and {!reinit}.
+
+    @ida <node5#ss:resFn>          DAE residual function
+  *)
+type 'a resfn = float -> 'a -> 'a -> 'a -> unit
+
+(** A function called by the solver to calculate the values of root
+    functions (zero-crossing expressions) which are used to detect
+    significant events.  It is passed four arguments [t], [y], [y'],
+    and [gout]:
+    - [t] is the current value of the independent variable,
+          i.e., the simulation time.
+    - [y] is a vector of dependent-variable values, i.e. y(t).
+    - [y'] is the derivative of [y] with respect to [t], i.e. dy/dt.
+    - [gout] is a vector for storing the values of g(t, y, y').
+    Note that [t], [y], [y'] are the same as for {!resfn}.  If the
+    labeled argument ~roots is omitted, then no root finding is
+    performed.  If the root function raises an exception, the
+    integrator will halt immediately and propagate the exception to
+    the caller.
+
+    {b NB:} [y] and [gout] must no longer be accessed after [g] has returned
+            a result, i.e. if their values are needed outside of the function
+            call, then they must be copied to separate physical structures.
+
+    See also {!init} and {!reinit}.
+
+    @ida <node5#ss:rootFn>         Rootfinding function
+  *)
+type 'a rootsfn = float -> 'a -> 'a -> Roots.val_array -> unit
+
 (** [init linsolv tol f ~roots:(nroots, g) ~t0:t0 y0 y'0] initializes
     the IDA solver to solve the DAE f t y y' = 0 and returns a
     {!session}.
@@ -805,50 +897,17 @@ val default_tolerances : ('data, 'kind) tolerance
                 of [y] with respect to t.  This vector's size must match the
                 size of [y0].
 
+    The labeled arguments [roots] and [t0] are both optional and default to
+    {!no_roots} (i.e. no root finding is done) and [0.0], respectively.
+
     This function calls IDACreate, IDAInit, IDARootInit, an
     appropriate linear solver function, and one of IDASStolerances,
     IDASVtolerances, or IDAWFtolerances. It does everything necessary
     to initialize an IDA session; the {!solve_normal} or
     {!solve_one_step} functions can be called directly afterward.
 
-    The residual function [f] is called by the solver like [f t y y' r] to
-    compute the problem residual, where:
-    - [t] is the current value of the independent variable,
-          i.e., the simulation time.
-    - [y] is a vector of dependent-variable values, i.e. y(t).
-    - [y'] is the derivative of [y] with respect to [t], i.e. dy/dt.
-    - [r] is the output vector to fill in with the value of the residual
-          function for the given values of t, y, and y'.
-    The residual function should return normally if successful, raise
-    {!Sundials.RecoverableFailure} if a recoverable error occurred (e.g. [y] has
-    an illegal value), or raise some other exception if a nonrecoverable error
-    occurred.  If a recoverable error occurred, the integrator will attempt to
-    correct and retry.  If a nonrecoverable error occurred, the integrator will
-    halt and propagate the exception to the caller.
-
-    {b NB:} [y], [y'], and [r] must no longer be accessed after [f] has
-            returned a result, i.e. if their values are needed outside of
-            the function call, then they must be copied to separate physical
-            structures.
-
-    The roots function [g], if supplied, is called by the solver to calculate
-    the values of root functions (zero-crossing expressions) which are used to
-    detect significant events.  It is passed four arguments [t], [y], [y'], and
-    [gout]:
-    - [t], [y], [y'] are as for [f].
-    - [gout] is a vector for storing the values of g(t, y, y').
-    If the labeled argument ~roots is omitted, then no root finding is
-    performed.  If the root function raises an exception, the integrator will
-    halt immediately and propagate the exception to the caller.
-
-    {b NB:} [y] and [gout] must no longer be accessed after [g] has returned
-            a result, i.e. if their values are needed outside of the function
-            call, then they must be copied to separate physical structures.
-
     @ida <node5#sss:idainit>       IDACreate/IDAInit
-    @ida <node5#ss:resFn>          DAE residual function
     @ida <node5#ss:idarootinit>    IDARootInit
-    @ida <node5#ss:rootFn>         Rootfinding function
     @ida <node5#sss:lin_solv_init> Linear solvers
     @ida <node5#sss:idatolerances> IDASStolerances
     @ida <node5#sss:idatolerances> IDASVtolerances
@@ -858,8 +917,8 @@ val default_tolerances : ('data, 'kind) tolerance
 val init :
     ('a, 'kind) linear_solver
     -> ('a, 'kind) tolerance
-    -> (float -> 'a -> 'a -> 'a -> unit)
-    -> ?roots:(int * (float -> 'a -> 'a -> Sundials.Roots.val_array -> unit))
+    -> 'a resfn
+    -> ?roots:(int * 'a rootsfn)
     -> ?t0:float
     -> ('a, 'kind) nvector
     -> ('a, 'kind) nvector
@@ -867,7 +926,7 @@ val init :
 
 (** This is a convenience value for signalling that there are no
     roots (zero-crossings) to monitor. *)
-val no_roots : (int * (float -> 'a -> 'a -> Sundials.Roots.val_array -> unit))
+val no_roots : (int * 'a rootsfn)
 
 (** Return the number of root functions. *)
 val nroots : ('a, 'k) session -> int
@@ -1168,8 +1227,7 @@ val set_error_file : ('a, 'k) session -> string -> bool -> unit
 
 (** [set_err_handler_fn s efun] specifies a custom function [efun] for
     handling error messages.  The error handler function must not fail
-    -- any exceptions raised from it will be captured and silently
-    discarded.
+    -- any exceptions raised from it will be captured and discarded.
 
     @ida <node5#sss:optin_main> IDASetErrHandlerFn
     @ida <node5#ss:ehFn> Error message handler function
@@ -1565,7 +1623,7 @@ val get_dky : ('a, 'k) session -> float -> int -> ('a, 'k) nvector -> unit
 val reinit :
   ('a, 'k) session
   -> ?linsolv:('a, 'k) linear_solver
-  -> ?roots:(int * (float -> 'a -> 'a -> Sundials.Roots.val_array -> unit))
+  -> ?roots:(int * 'a rootsfn)
   -> float
   -> ('a, 'k) nvector
   -> ('a, 'k) nvector

@@ -364,7 +364,7 @@ module Spils :
       | PrecBoth
 
     (** Arguments passed to the preconditioner solve callback function.  See
-        [prec_solve_fn] in {!callbacks}.
+        {!prec_solve_fn}.
 
         @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn *)
     type 'a prec_solve_arg =
@@ -383,94 +383,141 @@ module Spils :
 
     (** Callbacks for Krylov subspace linear solvers.  Ignored if the
         {!Spils.preconditioning_type} is set to [PrecNone].  In that case, you
-        should use {!no_precond} as [callbacks].  *)
+        should use {!no_precond} as [callbacks].
+
+        @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
+      *)
     type 'a callbacks =
       {
-        prec_solve_fn : (('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
-                         -> 'a -> unit) option;
-        (** Called like [prec_solve_fn jac_arg solve_arg z] to solve the linear
-            system {i P}[z] = [solve_arg.rhs], where {i P} may be either a left or
-            right preconditioner matrix.  {i P} should approximate, however
-            crudely, the Newton matrix [M = I - jac.gamma * J], where {i J} =
-            delr({i f}) / delr({i y}).
+        prec_solve_fn : 'a prec_solve_fn option;
+        (** Solves the preconditioning system {i Pz = r} for the
+            backward problem.  See {!prec_solve_fn} for details.
 
-            - [jac_arg] supplies the basic problem data as a {!jacobian_arg}.
-            - [prec_solve_arg] specifies the linear system as a {!prec_solve_arg}.
-            - [z] is the vector in which the result must be stored.
+            @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
+          *)
 
-            The function may raise a {!Sundials.RecoverableFailure} exception to
-            indicate that a recoverable error has occurred. Any other exception is
-            treated as an unrecoverable error.
-
-            {b NB:} The elements of [jac], [arg], and [z] must no longer be
-            accessed after [psolve] has returned a result, i.e. if their values are
-            needed outside of the function call, then they must be copied to
-            separate physical structures.
-
-            @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
-            @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn *)
-
-        prec_setup_fn : (('a triple_tmp, 'a) jacobian_arg -> bool -> float -> bool)
-                        option;
-        (** A function that preprocesses and/or evaluates any Jacobian-related data
-            needed by [prec_solve_fn] above.  When [prec_solve_fn] doesn't need any
+        prec_setup_fn : 'a prec_setup_fn option;
+        (** An optional function that preprocesses and/or evaluates
+            any Jacobian-related data needed by {!prec_solve_fn}.  See
+            {!prec_setup_fn}.  When [prec_solve_fn] doesn't need any
             such data, this field can be [None].
 
-            This callback is invoked as [prec_setup_fn arg jok gamma], where the
-            arguments have the following meaning:
-            - [arg] supplies the basic problem data as a {!jacobian_arg}.
-            - [jok] indicates whether any saved Jacobian-related data can be
-              reused.  If [false] any such data must be recomputed from scratch,
-              otherwise, if [true], any such data saved from a previous call to the
-              function can be reused, with the current value of [gamma].  A call
-              with [jok = true] can only happen after an earlier call with [jok =
-              false].
-            - [gamma] is the scalar {i g} appearing in the Newton matrix
-              {i M = I - gJ} where {i I} is the identity and {i J} is the Jacobian.
-            This function must return [true] if the Jacobian-related data was
-            updated, or [false] otherwise, i.e. if the saved data was reused.
+            @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn
+          *)
 
-            The function may raise a {!Sundials.RecoverableFailure} exception to
-            indicate that a recoverable error has occurred. Any other exception is
-            treated as an unrecoverable error.
+        jac_times_vec_fn : 'a jac_times_vec_fn option;
+        (** Multiplies the system Jacobian to a vector.  See
+            {!jac_times_vec_fn} for details.  When this field is
+            [None], CVODE uses a default implementation based on
+            difference quotients.
 
-            {b NB:} The fields of [arg] must no longer be accessed after this
-            callback has returned, i.e. if their values are needed outside of the
-            function call, then they must be copied to a separate physical
-            structure.
-
-            @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
-            @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
-
-        jac_times_vec_fn :
-          (('a single_tmp, 'a) jacobian_arg
-           -> 'a (* v *)
-           -> 'a (* Jv *)
-           -> unit) option;
-        (** Specifies a function that computes the Jacobian times a vector.
-
-            The function is called like [jac_times_vec_fn arg v jv] and should
-            compute the matrix-vector product {i J}[v], where {i J} is the
-            system Jacobian (not explicitly constructed).
-            - [arg] is the standard {!jacobian_arg} with one work vector.
-            - [v] is the vector to multiply to the Jacobian.
-            - [jv] is the vector in which to store the result.
-            The ({i i,j}) entry of the Jacobian {i J} is {i dFi/dyj}, i.e. the
-            partial derivative of the {i i}-th equation with respect to the
-            {i j}-th variable.
-
-            The function may raise a {!Sundials.RecoverableFailure} exception to
-            indicate that a recoverable error has occurred. Any other exception is
-            treated as an unrecoverable error.
-
-            {b NB:} The elements of [arg], [v], and [jv] must no longer be
-            accessed after this callback has returned, i.e. if their values are
-            needed outside of the function call, then they must be copied to a
-            separate physical structure.
-
-            @cvode <node5#ss:jtimesfn> CVSpilsJacTimesVecFn
-            @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn *)
+            @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
+          *)
       }
+
+    (** Called like [prec_solve_fn jac_arg solve_arg z] to solve the
+        linear system {i P}[z] = [solve_arg.rhs], where {i P} may be
+        either a left or right preconditioner matrix.  {i P} should
+        approximate, however crudely, the Newton matrix [M = I -
+        jac.gamma * J], where {i J} = delr({i f}) / delr({i y}).
+
+        - [jac_arg] supplies the basic problem data as a {!jacobian_arg}.
+        - [solve_arg] specifies the linear system as a {!solve_arg}.
+        - [z] is the vector in which the result must be stored.
+
+        The function may raise a {!Sundials.RecoverableFailure}
+        exception to indicate that a recoverable error has
+        occurred. Any other exception is treated as an unrecoverable
+        error.
+
+        {b NB:} The elements of [jac], [arg], and [z] must no longer
+        be accessed after [psolve] has returned a result, i.e. if
+        their values are needed outside of the function call, then
+        they must be copied to separate physical structures.
+
+        See also {!Spils.callbacks}.
+
+        @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
+        @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
+     *)
+    and 'a prec_solve_fn =
+      ('a single_tmp, 'a) jacobian_arg
+      -> 'a prec_solve_arg
+      -> 'a
+      -> unit
+
+    (** An optional function that preprocesses and/or evaluates any
+        Jacobian-related data needed by {!prec_solve_fn}.
+
+        This callback is invoked as [prec_setup_fn arg jok gamma],
+        where the arguments have the following meaning:
+
+        - [arg] supplies the basic problem data as a {!jacobian_arg}.
+        - [jok] indicates whether any saved Jacobian-related data can be
+          reused.  If [false] any such data must be recomputed from scratch,
+          otherwise, if [true], any such data saved from a previous call to the
+          function can be reused, with the current value of [gamma].  A call
+          with [jok = true] can only happen after an earlier call with [jok =
+          false].
+        - [gamma] is the scalar {i g} appearing in the Newton matrix
+          {i M = I - gJ} where {i I} is the identity and {i J} is the Jacobian.
+
+        This function must return [true] if the Jacobian-related data
+        was updated, or [false] otherwise, i.e. if the saved data was
+        reused.
+
+        The function may raise a {!Sundials.RecoverableFailure}
+        exception to indicate that a recoverable error has
+        occurred. Any other exception is treated as an unrecoverable
+        error.
+
+        {b NB:} The fields of [arg] must no longer be accessed after
+        this callback has returned, i.e. if their values are needed
+        outside of the function call, then they must be copied to a
+        separate physical structure.
+
+        See also {!Spils.callbacks}.
+
+        @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
+        @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn
+      *)
+    and 'a prec_setup_fn =
+      ('a triple_tmp, 'a) jacobian_arg
+      -> bool
+      -> float
+      -> bool
+
+    (** Specifies a function that computes the Jacobian times a vector.
+
+        The function is called like [jac_times_vec_fn arg v jv] and should
+        compute the matrix-vector product {i J}[v], where {i J} is the
+        system Jacobian (not explicitly constructed).
+        - [arg] is the standard {!jacobian_arg} with one work vector.
+        - [v] is the vector to multiply to the Jacobian.
+        - [jv] is the vector in which to store the result.
+        The ({i i,j}) entry of the Jacobian {i J} is {i dFi/dyj}, i.e. the
+        partial derivative of the {i i}-th equation with respect to the
+        {i j}-th variable.
+
+        The function may raise a {!Sundials.RecoverableFailure} exception to
+        indicate that a recoverable error has occurred. Any other exception is
+        treated as an unrecoverable error.
+
+        {b NB:} The elements of [arg], [v], and [jv] must no longer be
+        accessed after this callback has returned, i.e. if their values are
+        needed outside of the function call, then they must be copied to a
+        separate physical structure.
+
+        See also {!callbacks}.
+
+        @cvode <node5#ss:jtimesfn> CVSpilsJacTimesVecFn
+        @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
+      *)
+    and 'a jac_times_vec_fn =
+      ('a single_tmp, 'a) jacobian_arg
+      -> 'a (* v *)
+      -> 'a (* Jv *)
+      -> unit
 
     val no_precond : 'a callbacks
 
@@ -518,8 +565,8 @@ module Spils :
         @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
     val set_preconditioner :
       ('a, 'k) session
-      -> (('a triple_tmp, 'a) jacobian_arg -> bool -> float -> bool) option
-      -> (('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg -> 'a -> unit)
+      -> 'a prec_setup_fn option
+      -> 'a prec_solve_fn
       -> unit
 
     (** Set the Jacobian-times-vector function.  It may be unsafe to use this
@@ -531,10 +578,7 @@ module Spils :
         @cvode <node5#ss:jtimesFn> Jacobian-times-vector function *)
     val set_jac_times_vec_fn :
       ('a, 'k) session
-      -> (('a single_tmp, 'a) jacobian_arg
-          -> 'a (* v *)
-          -> 'a (* Jv *)
-          -> unit)
+      -> 'a jac_times_vec_fn
       -> unit
 
     (** This function restores the default Jacobian-times-vector function. It is
@@ -705,52 +749,72 @@ module Alternate :
               though the linear solver was using current Jacobian-related
               data. *)
 
+    (** Callbacks needed to implement an alternate linear solver. *)
     type ('data, 'kind) callbacks =
       {
-        linit  : (('data, 'kind) session -> unit) option;
-          (** Complete initializations for a specific linear solver, such as
-              counters and statistics. Returns [true] if successful.
-
-              @cvode <node8#SECTION00810000000000000000> linit *)
-
-        lsetup : (('data, 'kind) session -> conv_fail -> 'data -> 'data
-                  -> 'data triple_tmp -> bool) option;
-
-          (** [jcur = lsetup s convfail ypred fpred tmp] prepares the linear
-              solver for subsequent calls to {!callbacks.lsolve}. Its arguments
-              are:
-              - [s], the solver session,
-              - [convfail], indicating any problem that occurred during the
-                 solution of the nonlinear equation on the current time step,
-              - [ypred], the predicted [y] vector for the current internal
-                step,
-              - [fpred], the value of the right-hand side at [ypred], and,
-              - [tmp], temporary variables for use by the routine.
-           
-              This function must return [true] if the Jacobian-related data is
-              current after the call, or [false] otherwise. It may raise a
-              {!Sundials.RecoverableFailure} exception to indicate that a
-              recoverable error has occurred. Any other exception is treated as
-              an unrecoverable error.
-           
-              @cvode <node8#SECTION00820000000000000000> lsetup *)
-           
-        lsolve : ('data, 'kind) session ->  'data -> 'data -> 'data -> 'data
-                  -> unit;
-          (** [lsolve s b weight ycur fcur] must solve the linear equation
-              given:
-              - [s], the solver session,
-              - [b], is the vector into which the solution is to be calculated,
-              - [weight] contains the error weights,
-              - [ycur] contains the solvers current approximation to [y], and,
-              - [fcur] is a vector that contains [f(tn, ycur)].
-              
-              This function may raise a {!Sundials.RecoverableFailure} exception
-              to indicate that a recoverable error has occurred. Any other
-              exception is treated as an unrecoverable error.
-          
-              @cvode <node8#SECTION00830000000000000000> lsolve *)
+        linit  : ('data, 'kind) linit option;
+        lsetup : ('data, 'kind) lsetup option;
+        lsolve : ('data, 'kind) lsolve;
       }
+
+    (** Complete initializations for a specific linear solver, such as
+        counters and statistics.
+
+        See also {!callbacks}.
+
+        @cvode <node8#SECTION00810000000000000000> linit *)
+    and ('data, 'kind) linit = ('data, 'kind) session -> unit
+
+    (** [jcur = lsetup s convfail ypred fpred tmp] prepares the linear
+        solver for subsequent calls to {!callbacks.lsolve}. Its arguments
+        are:
+        - [s], the solver session,
+        - [convfail], indicating any problem that occurred during the
+           solution of the nonlinear equation on the current time step,
+        - [ypred], the predicted [y] vector for the current internal
+          step,
+        - [fpred], the value of the right-hand side at [ypred], and,
+        - [tmp], temporary variables for use by the routine.
+
+        This function must return [true] if the Jacobian-related data
+        is current after the call, or [false] otherwise. It may raise
+        a {!Sundials.RecoverableFailure} exception to indicate that a
+        recoverable error has occurred. Any other exception is treated
+        as an unrecoverable error.
+
+        See also {!callbacks}.
+
+        @cvode <node8#SECTION00820000000000000000> lsetup *)
+    and ('data, 'kind) lsetup =
+      ('data, 'kind) session
+      -> conv_fail
+      -> 'data
+      -> 'data
+      -> 'data triple_tmp
+      -> bool
+
+    (** [lsolve s b weight ycur fcur] must solve the linear equation
+        given:
+        - [s], the solver session,
+        - [b], is the vector into which the solution is to be calculated,
+        - [weight] contains the error weights,
+        - [ycur] contains the solvers current approximation to [y], and,
+        - [fcur] is a vector that contains [f(tn, ycur)].
+
+        This function may raise a {!Sundials.RecoverableFailure} exception
+        to indicate that a recoverable error has occurred. Any other
+        exception is treated as an unrecoverable error.
+
+        See also {!callbacks}.
+
+        @cvode <node8#SECTION00830000000000000000> lsolve *)
+    and ('data, 'kind) lsolve =
+      ('data, 'kind) session
+      -> 'data
+      -> 'data
+      -> 'data
+      -> 'data
+      -> unit
 
     type gammas = {
       gamma : float;
@@ -815,8 +879,49 @@ type lmm =
   | Adams   (** Non-stiff systems; Adams-Moulton formulas *)
   | BDF     (** Stiff systems;     Backward Differentiation Formulas *)
 
-(**
-    [init lmm iter tol f ~roots:(nroots, g) ~t0:t0 (neqs, y0)] initializes the
+(** The type of ODE's right-hand side function, called by the solver
+    to calculate the instantaneous derivative values.  It is passed
+    three arguments: [t], [y], and [dy].
+    - [t] is the current value of the independent variable,
+          i.e., the simulation time.
+    - [y] is a vector of dependent-variable values, i.e. y(t).
+    - [dy] is a vector for storing the value of f(t, y).
+    The function may raise a {!Sundials.RecoverableFailure} exception to
+    indicate that a recoverable error has occurred. Any other exception is
+    treated as an unrecoverable error.
+
+    {b NB:} [y] and [dy] must no longer be accessed after the function
+            has returned a result.  If their values are needed outside
+            of the function call, then they must be copied to separate
+            physical structures.
+
+    See also {!init} and {!reinit}.
+
+    @cvode <node5#ss:rhsFn>          ODE right-hand side function
+  *)
+type 'a rhsfn = float -> 'a -> 'a -> unit
+
+(** The roots function [g] is called by the solver to calculate the values of
+    root functions (zero-crossing expressions) which are used to detect
+    significant events, it is passed three arguments: [t], [y], and [gout].
+    - [t] is the current value of the independent variable,
+          i.e., the simulation time.
+    - [y] is a vector of dependent-variable values, i.e. y(t).
+    - [gout] is a vector for storing the values of g(t, y).
+    Note that the [t] and [y] are the same as for {!rhsfn}.
+
+    {b NB:} [y] and [gout] must no longer be accessed after the
+            function has returned a result.  If their values are
+            needed outside of the function call, then they must be
+            copied to separate physical structures.
+
+    See also {!init} and {!reinit}.
+
+    @cvode <node5#ss:rootFn>         Rootfinding function
+ *)
+type 'a rootsfn = (float -> 'a -> Sundials.Roots.val_array -> unit)
+
+(** [init lmm iter tol f ~roots:(nroots, g) ~t0:t0 (neqs, y0)] initializes the
     CVODE solver and returns a {!session}.
     - [lmm]     specifies the linear multistep method, see {!lmm},
     - [iter]    specifies either functional iteration or Newton iteration
@@ -839,37 +944,11 @@ type lmm =
     session; the {!solve_normal} or {!solve_one_step} functions can be called
     directly afterward.
 
-    The right-hand side function [f] is called by the solver to calculate the
-    instantaneous derivative values, and is passed three arguments: [t], [y],
-    and [dy].
-    - [t] is the current value of the independent variable,
-          i.e., the simulation time.
-    - [y] is a vector of dependent-variable values, i.e. y(t).
-    - [dy] is a vector for storing the value of f(t, y).
-    The function may raise a {!Sundials.RecoverableFailure} exception to
-    indicate that a recoverable error has occurred. Any other exception is
-    treated as an unrecoverable error.
-
-    {b NB:} [y] and [dy] must no longer be accessed after [f] has returned a
-            result, i.e. if their values are needed outside of the function
-            call, then they must be copied to separate physical structures.
-
-    The roots function [g] is called by the solver to calculate the values of
-    root functions (zero-crossing expressions) which are used to detect
-    significant events, it is passed three arguments: [t], [y], and [gout].
-    - [t] and [y] are as for [f].
-    - [gout] is a vector for storing the values of g(t, y).
-    The {!no_roots} value can be passed for the [(nroots, g)] argument if
-    root functions are not required.
-
-    {b NB:} [y] and [gout] must no longer be accessed after [g] has returned
-            a result, i.e. if their values are needed outside of the function
-            call, then they must be copied to separate physical structures.
+    The {!no_roots} value can be passed for the labeled argument
+    [~roots] if no root finding is required.
 
     @cvode <node5#sss:cvodemalloc>   CVodeCreate/CVodeInit
-    @cvode <node5#ss:rhsFn>          ODE right-hand side function
     @cvode <node5#ss:cvrootinit>     CVodeRootInit
-    @cvode <node5#ss:rootFn>         Rootfinding function
     @cvode <node5#sss:lin_solv_init> Linear solvers
     @cvode <node5#sss:cvtolerances>  CVodeSStolerances
     @cvode <node5#sss:cvtolerances>  CVodeSVtolerances
@@ -879,15 +958,15 @@ val init :
     lmm
     -> ('a, 'kind) iter
     -> ('a, 'kind) tolerance
-    -> (float -> 'a -> 'a -> unit)
-    -> ?roots:(int * (float -> 'a -> Sundials.Roots.val_array -> unit))
+    -> 'a rhsfn
+    -> ?roots:(int * 'a rootsfn)
     -> ?t0:float
     -> ('a, 'kind) nvector
     -> ('a, 'kind) session
 
 (** This is a convenience value for signalling that there are no
     roots (zero-crossings) to monitor. *)
-val no_roots : (int * ('a -> 'b -> 'c -> unit))
+val no_roots : (int * 'a rootsfn)
 
 (** Return the number of root functions. *)
 val nroots : ('a, 'k) session -> int
@@ -942,12 +1021,13 @@ val set_tolerances : ('a, 'k) session -> ('a, 'k) tolerance -> unit
 
     The error file is closed if set_error_file is called again, or otherwise
     when the session is garbage collected.
-   
+
     @cvode <node5#sss:optin_main> CVodeSetErrFile *)
 val set_error_file : ('a, 'k) session -> string -> bool -> unit
 
-(** [set_err_handler_fn s efun] specifies a custom function [efun] for handling
-    error messages.
+(** [set_err_handler_fn s efun] specifies a custom function [efun] for
+    handling error messages.  The error handler function must not fail
+    -- any exceptions raised from it will be captured and discarded.
 
     @cvode <node5#sss:optin_main> CVodeSetErrHandlerFn
     @cvode <node5#ss:ehFn> Error message handler function *)
@@ -1233,7 +1313,7 @@ val get_dky : ('a, 'k) session -> float -> int -> ('a, 'k) nvector -> unit
 val reinit :
   ('a, 'kind) session
   -> ?iter_type:('a, 'kind) iter
-  -> ?roots:(int * (float -> 'a -> Sundials.Roots.val_array -> unit))
+  -> ?roots:(int * 'a rootsfn)
   -> float
   -> ('a, 'kind) nvector
   -> unit

@@ -69,12 +69,12 @@ module Quadrature :
 
     (** The quadrature right-hand side function failed in an unrecoverable
         manner.
-     
+
         @cvodes <node5#SECTION00572000000000000000> CV_QRHSFUNC_FAIL *)
     exception QuadRhsFuncFailure
 
     (** The quadrature right-hand side function failed at the first call.
-      
+
         @cvodes <node5#SECTION00572000000000000000> CV_FIRST_QRHSFUNC_ERR *)
     exception FirstQuadRhsFuncErr
 
@@ -92,7 +92,7 @@ module Quadrature :
         recovery was possible. This failure mode is rare, as it can occur only
         if the quadrature right-hand side function fails recoverably after an
         error test failed while at order one.
-      
+
         @cvodes <node5#SECTION00572000000000000000> CV_UNREC_QRHSFUNC_ERR *)
     exception UnrecoverableQuadRhsFuncErr
 
@@ -106,7 +106,7 @@ module Quadrature :
     type 'a quadrhsfn = float -> 'a -> 'a -> unit
 
     (** Activates the integration of quadrature equations.
-     
+
         @cvodes <node5#ss:quad_malloc> CVodeQuadInit *)
     val init : ('a, 'k) session -> 'a quadrhsfn -> ('a, 'k) nvector -> unit
 
@@ -233,61 +233,84 @@ let sp = { pvals = Some p; pbar = ...; plist = ... }]}
     (** {3:sensinit Initialization} *)
 
     type 'a sensrhsfn =
-        AllAtOnce of
-         (float           (* t *)
-           -> 'a          (* y *)
-           -> 'a          (* ydot *)
-           -> 'a array    (* yS *)
-           -> 'a array    (* ySdot *)
-           -> 'a          (* tmp1 *)
-           -> 'a          (* tmp2 *)
-           -> unit) option
-        (** This function, [fS t y ydot yS ySdot tmp1 tmp2], computes the
-            sensitivity right-hand side for all sensitivity equations at
-            once, given
-            - [t], the current value of the independent variable,
-            - [y], the current value of the state vector,
-            - [ydot], the current value of the right-hand side of the
-            state equations,
-            - [yS], the current values of the sensitivity vectors,
-            - [ySdot], the sensitivity right-hand side vectors must be stored
-            here,
-            - [tmp1], and [tmp2] can be used as temporary storage.
+        AllAtOnce of 'a sensrhsfn_all option
+        (** Computes the sensitivity right-hand side for all
+            sensitivity equations at once.  See {!sensrhsfn_all} for
+            details.
 
-            If a function is not given ([None]) then the default internal
-            difference quotient sensitivity right-hand side routine is used.
- 
             @cvodes <node6#ss:user_fct_fwd> CVSensRhsFn
-            @cvodes <node6#ss:sensi_malloc> CVodeSensInit *)
-      | OneByOne of
-         (float           (* t *)
-           -> 'a          (* y *)
-           -> 'a          (* ydot *)
-           -> int         (* iS *)
-           -> 'a          (* yS *)
-           -> 'a          (* ySdot *)
-           -> 'a          (* tmp1 *)
-           -> 'a          (* tmp2 *)
-           -> unit) option
-        (** This function, [fS t y ydot iS yS ySdot tmp1 tmp2], computes the
-            sensitivity right-hand side one sensitivity parameter at a time,
-            given
-            - [t], the current value of the independent variable,
-            - [y], the current value of the state vector,
-            - [ydot], the current value of the right-hand side of the
-            state equations,
-            - [iS], the index of the parameter for which the sensitivity
-            right-hand side must be computed,
-            - [yS], the current value of the [iS]th sensitivity vector,
-            - [ySdot], the [iS]th sensitivity right-hand side vector must be
-            stored here,
-            - [tmp1], and [tmp2] can be used as temporary storage.
-
-            If a function is not given ([None]) then the default internal
-            difference quotient sensitivity right-hand side routine is used.
+            @cvodes <node6#ss:sensi_malloc> CVodeSensInit
+          *)
+      | OneByOne of 'a sensrhsfn1 option
+        (** Computes the sensitivity right-hand side one sensitivity
+            parameter at a time.  See {!sensrhsfn1} for details.
 
             @cvodes <node6#ss:user_fct_fwd> CVSensRhs1Fn
-            @cvodes <node6#ss:sensi_malloc> CVodeSensInit1 *)
+            @cvodes <node6#ss:sensi_malloc> CVodeSensInit1
+          *)
+
+    (** This function, [fS t y ydot yS ySdot tmp1 tmp2], computes the
+        sensitivity right-hand side for all sensitivity equations at
+        once, given
+        - [t], the current value of the independent variable,
+        - [y], the current value of the state vector,
+        - [ydot], the current value of the right-hand side of the
+        state equations,
+        - [yS], the current values of the sensitivity vectors,
+        - [ySdot], the sensitivity right-hand side vectors must be stored
+        here,
+        - [tmp1], and [tmp2] can be used as temporary storage.
+
+        If a function is not given ([None]) then the default internal
+        difference quotient sensitivity right-hand side routine is used.
+
+        See also {!sensrhsfn}.
+
+        @cvodes <node6#ss:user_fct_fwd> CVSensRhsFn
+        @cvodes <node6#ss:sensi_malloc> CVodeSensInit
+      *)
+    and 'a sensrhsfn_all =
+      float           (* t *)
+      -> 'a          (* y *)
+      -> 'a          (* ydot *)
+      -> 'a array    (* yS *)
+      -> 'a array    (* ySdot *)
+      -> 'a          (* tmp1 *)
+      -> 'a          (* tmp2 *)
+      -> unit
+
+    (** This function, [fS t y ydot iS yS ySdot tmp1 tmp2], computes the
+        sensitivity right-hand side one sensitivity parameter at a time,
+        given
+        - [t], the current value of the independent variable,
+        - [y], the current value of the state vector,
+        - [ydot], the current value of the right-hand side of the
+        state equations,
+        - [iS], the index of the parameter for which the sensitivity
+        right-hand side must be computed,
+        - [yS], the current value of the [iS]th sensitivity vector,
+        - [ySdot], the [iS]th sensitivity right-hand side vector must be
+        stored here,
+        - [tmp1], and [tmp2] can be used as temporary storage.
+
+        If a function is not given ([None]) then the default internal
+        difference quotient sensitivity right-hand side routine is used.
+
+        See also {!sensrhsfn}.
+
+        @cvodes <node6#ss:user_fct_fwd> CVSensRhs1Fn
+        @cvodes <node6#ss:sensi_malloc> CVodeSensInit1
+      *)
+    and 'a sensrhsfn1 =
+      float           (* t *)
+      -> 'a          (* y *)
+      -> 'a          (* ydot *)
+      -> int         (* iS *)
+      -> 'a          (* yS *)
+      -> 'a          (* ySdot *)
+      -> 'a          (* tmp1 *)
+      -> 'a          (* tmp2 *)
+      -> unit
 
     (** Specifies a sensitivity solution method.
 
@@ -597,7 +620,7 @@ let sp = { pvals = Some p; pbar = ...; plist = ... }]}
             - [yQdot], the current value of the quadrature right-hand side,
             - [rhsvalQs], the right-hand side vectors must be stored here,
             - [tmp1], and [tmp2] can be used as temporary storage.
-          
+
            @cvodes <node6#ss:user_fct_quad_sens> CVodeQuadSensRhsFn *)
         type 'a quadsensrhsfn =
            float          (* t *)
@@ -876,24 +899,43 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
 
     (** {4:adjbwdinit Initialization} *)
 
+
     (** These functions evaluate the right-hand side of the backward ODE system
         with or without a dependence on forward sensitivities. *)
     type 'a brhsfn =
-        Basic of (float    (* t *)
-                  -> 'a    (* y *)
-                  -> 'a    (* yb *)
-                  -> 'a    (* ybdot *)
-                  -> unit)
-        (** @cvodes <node7#ss:ODErhs_b> CVRhsFnB
-            @cvodes <node3#e:adj_eqns> Eq 2.19, Adjoint sensitivity analysis *)
-      | WithSens of (float        (* t *)
-                     -> 'a        (* y *)
-                     -> 'a array  (* ys *)
-                     -> 'a        (* yb *)
-                     -> 'a        (* ybdot *)
-                     -> unit)
-        (** @cvodes <node7#ss:ODErhs_bs> CVRhsFnBS
-            @cvodes <node3#e:adj1_eqns> Eq 2.21, Adjoint sensitivity analysis *)
+        Basic of 'a brhsfn_basic
+        (** Doesn't depend on forward sensitivities.  See
+            {!brhsfn_basic} for details.  *)
+      | WithSens of 'a brhsfn_with_sens
+        (** Depends on forward sensitivities.  See {!brhsfn_with_sens}
+            for details.  *)
+
+    (** Backward rhs function that doesn't depend on forward sensitivities.
+
+        See also {!brhsfn}.
+
+        @cvodes <node7#ss:ODErhs_b> CVRhsFnB
+        @cvodes <node3#e:adj_eqns> Eq 2.19, Adjoint sensitivity analysis *)
+    and 'a brhsfn_basic =
+      float    (* t *)
+      -> 'a    (* y *)
+      -> 'a    (* yb *)
+      -> 'a    (* ybdot *)
+      -> unit
+
+    (** Backward rhs function that depends on forward sensitivities.
+
+        See also {!brhsfn}.
+
+        @cvodes <node7#ss:ODErhs_bs> CVRhsFnBS
+        @cvodes <node3#e:adj1_eqns> Eq 2.21, Adjoint sensitivity analysis *)
+    and 'a brhsfn_with_sens =
+      float        (* t *)
+      -> 'a        (* y *)
+      -> 'a array  (* ys *)
+      -> 'a        (* yb *)
+      -> 'a        (* ybdot *)
+      -> unit
 
     type 'a single_tmp = 'a
     type 'a triple_tmp = 'a * 'a * 'a
@@ -1193,8 +1235,8 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
           | PrecRight
           | PrecBoth
 
-        (** Arguments passed to the preconditioner solve callback function.  See
-            [prec_solve_fn] in {!callbacks}.
+        (** Arguments passed to the preconditioner solve callback
+            function.  See {!prec_solve_fn}.
 
             @cvode <node7#ss:psolve_b> CVSpilsPrecSolveFnB *)
         type 'a prec_solve_arg = 'a AdjointTypes.SpilsTypes.prec_solve_arg =
@@ -1215,27 +1257,57 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
             you should use {!no_precond} as [callbacks].  *)
         type 'a callbacks =
           {
-            prec_solve_fn : (('a single_tmp, 'a) jacobian_arg -> 'a prec_solve_arg
-                             -> 'a -> unit) option;
-            (** This function solves the preconditioning system {i Pz = r} for
-                the backward problem.
+            prec_solve_fn : 'a prec_solve_fn option;
+            (** Solves the preconditioning system {i Pz = r} for
+                the backward problem.  *)
 
-                @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB *)
+            prec_setup_fn : 'a prec_setup_fn option;
+            (** An optional function that preprocesses and/or evaluates
+                any Jacobian-related data needed by {!prec_solve_fn}.  See
+                the description on the type for details.  When
+                [prec_solve_fn] doesn't need any such data, this field can
+                be [None].  *)
 
-            prec_setup_fn : (('a triple_tmp, 'a) jacobian_arg -> bool -> float
-                             -> bool) option;
-            (** This function preprocesses and/or evaluates Jacobian-related
-                data needed by the preconditioner for the backward problem.
-
-                @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB *)
-
-            jac_times_vec_fn : (('a single_tmp, 'a) jacobian_arg -> 'a -> 'a
-                                -> unit) option;
-            (** This function computes the action of the Jacobian for the
-                backward problem on a given vector.
-
-                @cvodes <node7#ss:jtimesv_b> CVSpilsJacTimesVecFnB *)
+            jac_times_vec_fn : 'a jac_times_vec_fn option;
+            (** Multiplies the system Jacobian to a vector.  See
+                {!jac_times_vec_fn} for details.  *)
           }
+
+        (** This function solves the preconditioning system {i Pz = r} for
+            the backward problem.
+
+            See also {!callbacks}.
+
+            @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB *)
+        and 'a prec_solve_fn =
+          ('a single_tmp, 'a) jacobian_arg
+          -> 'a prec_solve_arg
+          -> 'a
+          -> unit
+
+        (** This function preprocesses and/or evaluates Jacobian-related
+            data needed by the preconditioner for the backward problem.
+
+            See also {!callbacks}.
+
+            @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB *)
+        and 'a prec_setup_fn =
+          ('a triple_tmp, 'a) jacobian_arg
+          -> bool
+          -> float
+          -> bool
+
+        (** This function computes the action of the Jacobian for the
+            backward problem on a given vector.
+
+            See also {!callbacks}.
+
+            @cvodes <node7#ss:jtimesv_b> CVSpilsJacTimesVecFnB *)
+        and 'a jac_times_vec_fn =
+          ('a single_tmp, 'a) jacobian_arg
+          -> 'a
+          -> 'a
+          -> unit
 
         (** No preconditioning functions. *)
         val no_precond : 'a callbacks
@@ -1579,19 +1651,34 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
         (** These functions compute the quadrature equation right-hand side for
             the backward problem. *)
         type 'a bquadrhsfn =
-            Basic of (float   (* t *)
-                      -> 'a   (* y *)
-                      -> 'a   (* yb *)
-                      -> 'a   (* qbdot *)
-                      -> unit)
-            (** @cvodes <node7#ss:ODErhs_quad_b> CVQuadRhsFnB *)
-          | WithSens of (float        (* t *)
-                         -> 'a        (* y *)
-                         -> 'a array  (* ys *)
-                         -> 'a        (* yb *)
-                         -> 'a        (* qbdot *)
-                         -> unit)
-            (** @cvodes <node7#ss:ODErhs_quad_sens_B> CVQuadRhsFnBS *)
+            Basic of 'a bquadrhsfn_basic
+            (** Doesn't depend on forward sensitivities.  See
+                {!bquadrhsfn_basic} for details. *)
+          | WithSens of 'a bquadrhsfn_with_sens
+            (** Depends on forward sensitivities.  See
+                {!bquadrhsfn_with_sens} for details. *)
+
+        (** Quadrature rhs that doesn't depend on forward
+            sensitivities.
+
+            See also {!bquadrhsfn}.
+
+            @cvodes <node7#ss:ODErhs_quad_b> CVQuadRhsFnB *)
+        and 'a bquadrhsfn_basic = float -> 'a -> 'a -> 'a -> unit
+
+        (** Quadrature rhs that depends on forward sensitivities.
+
+            See also {!bquadrhsfn}.
+
+            @cvodes <node7#ss:ODErhs_quad_sens_B> CVQuadRhsFnBS
+          *)
+        and 'a bquadrhsfn_with_sens =
+          float        (* t *)
+          -> 'a        (* y *)
+          -> 'a array  (* ys *)
+          -> 'a        (* yb *)
+          -> 'a        (* qbdot *)
+          -> unit
 
         (** This function, [init s fQB yQB0], activates integration of
             quadrature equations, with or without sensitivities, where [fQB]
