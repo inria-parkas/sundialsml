@@ -1191,7 +1191,7 @@ val get_num_g_evals : ('a, 'k) session -> int
 (** {2 Interpolated output function } *)
 
 (** [get_dky s t k dky] computes the [k]th derivative of the function $y$ at time
-    [t], i.e. {% \frac{d^ky(t)}{\mathit{dt}^k} %}. The function requires that
+    [t], i.e. {% $\frac{d^ky(t)}{\mathit{dt}^k}$ %}. The function requires that
     $t_n - hu \leq t \leq t_n$,
     where $t_n$ denotes the current internal time reached, and $hu$ is the last
     internal step size successfully used by the solver. The user may request [k]

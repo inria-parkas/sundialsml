@@ -137,9 +137,10 @@ struct
         Not_found ->
           Odoc_info.warning (Odoc_messages.tag_not_handled tag)
 
+    (* Import MathJax (http://www.mathjax.org/) to render mathematics in
+       function comments. *)
     method init_style =
       super#init_style;
-      (* Use MathJax: http://www.mathjax.org/ *)
       style <- style ^
                 "<script type=\"text/x-mathjax-config\">\n" ^
                 "   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});\n" ^
@@ -149,9 +150,7 @@ struct
                 "</script>\n"
 
     method html_of_Latex b s =
-      Buffer.add_string b "$";
-      Buffer.add_string b s;
-      Buffer.add_string b "$"
+      Buffer.add_string b s
 
     initializer
       tag_functions <- ("cvode",  self#html_of_cvode) :: tag_functions;

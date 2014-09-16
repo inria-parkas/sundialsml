@@ -243,6 +243,9 @@ div#intro {
   text-align: justify;
 }
 
+td.module { min-width: 8em;
+            vertical-align: text-top; }
+
 table.typetable td:nth-child(1) { }
 table.typetable td:nth-child(2) { min-width: 20em;
                                   padding-right: 1em; }

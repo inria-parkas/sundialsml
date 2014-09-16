@@ -84,15 +84,12 @@ The top level {!Sundials} module provides some utility routines for dealing
 with arrays of floats and integers, and for accessing certain constants
 (like {!Sundials.big_real} and {!Sundials.unit_roundoff}).
 
-{!modules: Sundials
-	   Dls
-	   Spils
-	   Nvector Nvector_serial Nvector_parallel Nvector_custom Nvector_array
-	   Cvode Cvode_bbd
-	   Cvodes Cvodes_bbd
-	   Ida Ida_bbd
-	   Idas Idas_bbd
-	   Kinsol Kinsol_bbd}
+{!modules: Sundials}
+{!modules: Dls Spils}
+{!modules: Nvector Nvector_serial Nvector_parallel Nvector_custom Nvector_array}
+{!modules: Cvode Cvode_bbd Cvodes Cvodes_bbd}
+{!modules: Ida Ida_bbd Idas Idas_bbd}
+{!modules: Kinsol Kinsol_bbd}
 
 {2:build Building the interface}
 
@@ -136,7 +133,11 @@ Software, 31(3), pp. 363-396, 2005.
 
 {2:acks Acknowledgements}
 
-TODO: acknowledge Modrio for (partial) funding.
+TODO: acknowledge {{:https://itea3.org/project/modrio.html}Modrio} for (partial) funding.
+
+TODO: Bigarray and mpi libraries.
+TODO: Jonathan Protzenko's {{:http://www.xulforum.org/files/ocamlcss/style.css}CSS stylesheet} for OCamldoc
+TODO: {{:http://www.mathjax.org}MathJax} for mathematics rendering.
 
 {2:indexes Indexes}
 
