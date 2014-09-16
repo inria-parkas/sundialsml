@@ -1122,7 +1122,7 @@ let main () =
             Adj.Spils.prec_solve_fn = Some (psolveb wdata);
             Adj.Spils.jac_times_vec_fn = None }))
       (Adj.SStolerances (reltolb, abstolb))
-      (Adj.Basic (fB wdata))
+      (Adj.NoSens (fB wdata))
       tout
       cB
   in

@@ -948,14 +948,14 @@ let main () =
       Cvode.BDF
       (Adj.Newton bspgmr)
       (Adj.SStolerances (reltolB, abstolB))
-      (Adj.Basic (fB d))
+      (Adj.NoSens (fB d))
       tf yB
   in
 
   (* Initialize quadrature calculations *)
   let abstolQB = atol_qb in
   let reltolQB = rtol_qb in
-  QuadAdj.init cvode_memB (QuadAdj.Basic (fQB d)) qB;
+  QuadAdj.init cvode_memB (QuadAdj.NoSens (fQB d)) qB;
   QuadAdj.set_tolerances cvode_memB (QuadAdj.SStolerances (reltolQB, abstolQB));
 
   (* Integrate backwards *)

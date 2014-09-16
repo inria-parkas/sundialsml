@@ -1243,7 +1243,7 @@ let main () =
     Adjoint.init_backward mem
       linsolv
       (Adjoint.SStolerances (rtol,atol))
-      (Adjoint.Basic (resB data))
+      (Adjoint.NoSens (resB data))
       tend uvB uvpB
   in
 

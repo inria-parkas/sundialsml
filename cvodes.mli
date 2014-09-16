@@ -903,9 +903,9 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
     (** These functions evaluate the right-hand side of the backward ODE system
         with or without a dependence on forward sensitivities. *)
     type 'a brhsfn =
-        Basic of 'a brhsfn_basic
+        NoSens of 'a brhsfn_no_sens
         (** Doesn't depend on forward sensitivities.  See
-            {!brhsfn_basic} for details.  *)
+            {!brhsfn_no_sens} for details.  *)
       | WithSens of 'a brhsfn_with_sens
         (** Depends on forward sensitivities.  See {!brhsfn_with_sens}
             for details.  *)
@@ -916,7 +916,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
 
         @cvodes <node7#ss:ODErhs_b> CVRhsFnB
         @cvodes <node3#e:adj_eqns> Eq 2.19, Adjoint sensitivity analysis *)
-    and 'a brhsfn_basic =
+    and 'a brhsfn_no_sens =
       float    (* t *)
       -> 'a    (* y *)
       -> 'a    (* yb *)
@@ -1651,9 +1651,9 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
         (** These functions compute the quadrature equation right-hand side for
             the backward problem. *)
         type 'a bquadrhsfn =
-            Basic of 'a bquadrhsfn_basic
+            NoSens of 'a bquadrhsfn_no_sens
             (** Doesn't depend on forward sensitivities.  See
-                {!bquadrhsfn_basic} for details. *)
+                {!bquadrhsfn_no_sens} for details. *)
           | WithSens of 'a bquadrhsfn_with_sens
             (** Depends on forward sensitivities.  See
                 {!bquadrhsfn_with_sens} for details. *)
@@ -1664,7 +1664,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
             See also {!bquadrhsfn}.
 
             @cvodes <node7#ss:ODErhs_quad_b> CVQuadRhsFnB *)
-        and 'a bquadrhsfn_basic = float -> 'a -> 'a -> 'a -> unit
+        and 'a bquadrhsfn_no_sens = float -> 'a -> 'a -> 'a -> unit
 
         (** Quadrature rhs that depends on forward sensitivities.
 

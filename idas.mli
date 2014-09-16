@@ -751,7 +751,7 @@ module Adjoint :
         + {b Setup the backward problem and attach a linear solver}
           {[let yB0  = RealArray.of_list [0.0; 0.0; ...]
           let yB'0 = RealArray.of_list [0.0; 0.0; ...]
-let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (Basic fB) tB0 yB0 yB'0]}
+let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB0 yB'0]}
         + {b Set optional inputs}
           {[set_max_ord bs ...]}
         + {b Initialize quadrature calculation}
@@ -890,9 +890,9 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (Basic fB) tB0 yB0
         @idas <node3#e:adj_eqns> Eq 2.19, Adjoint sensitivity analysis
       *)
     type 'a bresfn =
-      | Basic of 'a bresfn_basic
+      | NoSens of 'a bresfn_no_sens
         (** Doesn't depend on forward sensitivities.  See
-            {!bresfn_basic} for details. *)
+            {!bresfn_no_sens} for details. *)
       | WithSens of 'a bresfn_with_sens
         (** Depends on forward senstivites.  See {!bresfn_with_sens} for
             details. *)
@@ -902,7 +902,7 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (Basic fB) tB0 yB0
 
         @idas <node7#ss:ODErhs_b> IDAResFnB
         @idas <node3#e:adj_eqns> Eq 2.19, Adjoint sensitivity analysis *)
-    and 'a bresfn_basic =
+    and 'a bresfn_no_sens =
       float             (* t *)
       -> 'a             (* y *)
       -> 'a             (* y' *)
@@ -1707,9 +1707,9 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (Basic fB) tB0 yB0
         (** These functions compute the quadrature equation right-hand side for
             the backward problem. *)
         type 'a bquadrhsfn =
-          | Basic of 'a bquadrhsfn_basic
+          | NoSens of 'a bquadrhsfn_no_sens
           (** Doesn't depend on forward sensitivities.  See
-              {!bquadrhsfn_basic} for details.  *)
+              {!bquadrhsfn_no_sens} for details.  *)
           | WithSens of 'a bquadrhsfn_with_sens
           (** Depends on forward sensitivities.  See
               {!bquadrhsfn_with_sens} for details.  *)
@@ -1732,7 +1732,7 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (Basic fB) tB0 yB0
             See also {!bquadrhsfn}.
 
             @idas <node7#sss:rhs_quad_B> IDAQuadRhsFnB *)
-        and 'a bquadrhsfn_basic =
+        and 'a bquadrhsfn_no_sens =
           float
           -> 'a
           -> 'a

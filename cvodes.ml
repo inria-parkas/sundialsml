@@ -543,7 +543,7 @@ module Adjoint =
       let weakref = Weak.create 1 in
       let cvode_mem, which, backref, err_file =
         match mf with
-        | Basic _ -> c_init_backward s weakref (lmm, iter, t0, y0) false
+        | NoSens _ -> c_init_backward s weakref (lmm, iter, t0, y0) false
         | WithSens _ -> c_init_backward s weakref (lmm, iter, t0, y0) true
       in
       (* cvode_mem and backref have to be immediately captured in a session and
@@ -570,7 +570,7 @@ module Adjoint =
                 bsensarray = c_alloc_nvector_array ns;
 
                 brhsfn      = (match mf with
-                               | Basic f -> f
+                               | NoSens f -> f
                                | _ -> dummy_brhsfn);
 
                 brhsfn1     = (match mf with
@@ -936,7 +936,7 @@ module Adjoint =
           let parent, which = parent_and_which bs in
           let se = bwdsensext bs in
           match mf with
-           | Basic f -> (se.bquadrhsfn <- f;
+           | NoSens f -> (se.bquadrhsfn <- f;
                              c_quad_initb parent which y0)
            | WithSens f -> (se.bquadrhsfn1 <- f;
                                 c_quad_initbs parent which y0)

@@ -320,7 +320,7 @@ let main () =
         Cvode.BDF
         (Adjoint.Newton bsolver)
         (Adjoint.SStolerances (rtolb, atol))
-        (Adjoint.Basic (fB data)) tout uB in
+        (Adjoint.NoSens (fB data)) tout uB in
 
   (* Perform backward integration *)
   printf "\nBackward integration\n";

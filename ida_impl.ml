@@ -143,7 +143,7 @@ module SensitivityTypes = struct
 end
 
 module AdjointTypes' = struct
-  type 'a bresfn_basic =
+  type 'a bresfn_no_sens =
     float             (* t *)
     -> 'a             (* y *)
     -> 'a             (* y' *)
@@ -162,15 +162,15 @@ module AdjointTypes' = struct
     -> 'a          (* resvalB *)
     -> unit
   type 'a bresfn =
-      Basic of 'a bresfn_basic
+      NoSens of 'a bresfn_no_sens
     | WithSens of 'a bresfn_with_sens
 
   module QuadratureTypes = struct
     type 'a bquadrhsfn =
-        Basic of 'a bquadrhsfn_basic
+        NoSens of 'a bquadrhsfn_no_sens
       | WithSens of 'a bquadrhsfn_with_sens
 
-    and 'a bquadrhsfn_basic =
+    and 'a bquadrhsfn_no_sens =
       float             (* t *)
       -> 'a             (* y *)
       -> 'a             (* y' *)
@@ -328,9 +328,9 @@ and ('a, 'kind) bsensext = {
   bsensarray1           : 'a array;
   bsensarray2           : 'a array;
 
-  mutable resfnb        : 'a AdjointTypes'.bresfn_basic;
+  mutable resfnb        : 'a AdjointTypes'.bresfn_no_sens;
   mutable resfnbs       : 'a AdjointTypes'.bresfn_with_sens;
-  mutable bquadrhsfn    : 'a AdjointTypes'.QuadratureTypes.bquadrhsfn_basic;
+  mutable bquadrhsfn    : 'a AdjointTypes'.QuadratureTypes.bquadrhsfn_no_sens;
   mutable bquadrhsfn1   : 'a AdjointTypes'.QuadratureTypes.bquadrhsfn_with_sens;
 }
 

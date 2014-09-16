@@ -2,7 +2,7 @@
 # sensitivity-agnostic subset of IDAS.  Note that memory usage
 # statistics will differ from the versions in sundials/C, unless the
 # latter are recompiled to link against IDAS.
-USELIB ?= sundials_nosensi
+USELIB ?= sundials_no_sens
 SRCROOT=../../..
 SUBDIR=ida/serial
 

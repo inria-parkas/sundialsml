@@ -3,7 +3,7 @@ include config
 # To compile with profiling (with gcc):
 # ./configure CFLAGS=-pg OCAMLOPTFLAGS=-p ...
 
-### Objects shared between sundials.cma and sundials_nosensi.cma.
+### Objects shared between sundials.cma and sundials_no_sens.cma.
 
 # Common to CVODE, IDA, and KINSOL.
 COBJ_COMMON = sundials_ml$(XO) dls_ml$(XO) nvector_ml$(XO) spils_ml$(XO)
@@ -19,9 +19,9 @@ MLOBJ_MAIN = sundials.cmo dls.cmo spils.cmo nvector.cmo			\
 COBJ_SENS  = cvode_ml_s$(XO) ida_ml_s$(XO) cvodes_ml.o idas_ml.o
 MLOBJ_SENS = cvodes.cmo idas.cmo
 
-### Objects specific to sundials_nosensi.cma.
-COBJ_NOSENSI = cvode_ml$(XO) ida_ml$(XO)
-MLBJ_NOSENSI = 
+### Objects specific to sundials_no_sens.cma.
+COBJ_NO_SENS = cvode_ml$(XO) ida_ml$(XO)
+MLBJ_NO_SENS = 
 
 ### Objects specific to sundials_mpi.cma.
 COBJ_MPI = nvector_parallel_ml.o kinsol_bbd_ml.o		\
@@ -35,13 +35,13 @@ MLOBJ_MPI = nvector_parallel.cmo kinsol_bbd.cmo	\
 
 # For `make clean'.  All object files, including ones that may not be
 # built/updated under the current configuration.  Duplicates OK.
-ALL_COBJ = $(COBJ_MAIN) $(COBJ_SENS) $(COBJ_NOSENSI) $(COBJ_MPI)
-ALL_MLOBJ = $(MLOBJ_MAIN) $(MLOBJ_SENS) $(MLOBJ_NOSENSI) $(MLOBJ_MPI)
-ALL_CMA = sundials.cma sundials_nosensi.cma sundials_mpi.cma
+ALL_COBJ = $(COBJ_MAIN) $(COBJ_SENS) $(COBJ_NO_SENS) $(COBJ_MPI)
+ALL_MLOBJ = $(MLOBJ_MAIN) $(MLOBJ_SENS) $(MLOBJ_NO_SENS) $(MLOBJ_MPI)
+ALL_CMA = sundials.cma sundials_no_sens.cma sundials_mpi.cma
 
 # Installed files.
 
-INSTALL_CMA=sundials.cma sundials_nosensi.cma \
+INSTALL_CMA=sundials.cma sundials_no_sens.cma \
 	    $(if $(MPI_ENABLED), sundials_mpi.cma)
 
 STUBLIBS=$(foreach file,$(INSTALL_CMA:.cma=$(XS)), dllml$(file))
@@ -50,7 +50,7 @@ INSTALL_FILES=							\
     META							\
     $(filter-out %_impl.cmi, $(MLOBJ_MAIN:.cmo=.cmi))		\
     $(MLOBJ_SENS:.cmo=.cmi)					\
-    $(MLOBJ_NOSENSI:.cmo=.cmi)					\
+    $(MLOBJ_NO_SENS:.cmo=.cmi)					\
     $(MLOBJ_MPI:.cmo=.cmi)					\
     $(INSTALL_CMA)						\
     $(INSTALL_CMA:.cma=.cmxa)					\
@@ -73,12 +73,12 @@ sundials.cma sundials.cmxa: $(MLOBJ_MAIN) $(MLOBJ_SENS)			    \
 	    $(OCAML_IDAS_LIBLINK)		\
 	    $(OCAML_KINSOL_LIBLINK)
 
-sundials_nosensi.cma sundials_nosensi.cmxa:				  \
-			$(MLOBJ_MAIN) $(MLOBJ_NOSENSI)			  \
-			$(MLOBJ_MAIN:.cmo=.cmx) $(MLOBJ_NOSENSI:.cmo=.cmx) \
-			$(COBJ_MAIN) $(COBJ_NOSENSI)
+sundials_no_sens.cma sundials_no_sens.cmxa:				  \
+			$(MLOBJ_MAIN) $(MLOBJ_NO_SENS)			  \
+			$(MLOBJ_MAIN:.cmo=.cmx) $(MLOBJ_NO_SENS:.cmo=.cmx) \
+			$(COBJ_MAIN) $(COBJ_NO_SENS)
 	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS)			\
-	    -o sundials_nosensi -oc mlsundials_nosensi $^	\
+	    -o sundials_no_sens -oc mlsundials_no_sens $^	\
 	    $(LIB_PATH)						\
 	    $(OCAML_CVODE_LIBLINK)				\
 	    $(OCAML_IDA_LIBLINK)				\
