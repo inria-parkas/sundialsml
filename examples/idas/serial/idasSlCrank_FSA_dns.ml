@@ -245,9 +245,9 @@ let main () =
   let yp = RealArray.create neq in
   let q = RealArray.create 1 in
 
-  let yyS= Array.init np (fun _ -> Nvector_serial.wrap (RealArray.clone yy)) in
-  let ypS= Array.init np (fun _ -> Nvector_serial.wrap (RealArray.clone yp)) in
-  let qS = Array.init np (fun _ -> Nvector_serial.wrap (RealArray.clone q)) in
+  let yyS= Array.init np (fun _ -> Nvector_serial.wrap (RealArray.copy yy)) in
+  let ypS= Array.init np (fun _ -> Nvector_serial.wrap (RealArray.copy yp)) in
+  let qS = Array.init np (fun _ -> Nvector_serial.wrap (RealArray.copy q)) in
 
   let data = { a = 0.5;   (* half-length of crank *)
                j1 = 1.0;  (* crank moment of inertia *)

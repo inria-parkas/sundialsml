@@ -59,12 +59,22 @@ module RealArray =
 
     let length : t -> int = Bigarray.Array1.dim
 
-    let blit : t -> t -> unit = Bigarray.Array1.blit
+    let blit src isrc dst idst len =
+      if len < 0 || isrc < 0 || isrc + len >= length src
+         || idst < 0 || idst + len >= length dst
+      then invalid_arg "RealArray.blit";
+      for k = 0 to len - 1 do
+        dst.{idst + k} <- src.{isrc + k}
+      done
 
-    let clone src =
+    let blit_all = Bigarray.Array1.blit
+
+    let copy src =
       let dst = create (length src) in
-      blit src dst;
+      Bigarray.Array1.blit src dst;
       dst
+
+    let sub = Bigarray.Array1.sub
 
     let of_list src = of_array (Array.of_list src)
 
@@ -91,13 +101,19 @@ module RealArray =
       a
 
     let fold_left f b (v : t) =
-      let acc = ref b in
-      for i = 0 to (length v - 1) do
-        acc := f !acc v.{i}
-      done;
-      !acc
+      let n = length v in
+      let rec go acc i =
+        if i < n then go (f acc v.{i}) (i+1)
+        else acc
+      in go b 0
 
-    let app f (v : t) =
+    let fold_right f (v : t) b =
+      let rec go acc i =
+        if i >= 0 then go (f v.{i} acc) (i-1)
+        else acc
+      in go b (length v - 1)
+
+    let iter f (v : t) =
       for i = 0 to (length v - 1) do
         f v.{i}
       done
@@ -107,7 +123,7 @@ module RealArray =
         v.{i} <- f v.{i}
       done
 
-    let appi f (v : t) =
+    let iteri f (v : t) =
       for i = 0 to (length v - 1) do
         f i v.{i}
       done
@@ -120,8 +136,8 @@ module RealArray =
     let print_with_time t (v : t) =
       print_time ("", "") t;
       if !extra_precision
-      then app (Printf.printf "\t% .15e") v
-      else app (Printf.printf "\t% e") v;
+      then iter (Printf.printf "\t% .15e") v
+      else iter (Printf.printf "\t% e") v;
       print_newline ()
   end
 
@@ -400,8 +416,8 @@ module Roots =
     let set_rising a i = set a i Rising
     let set_falling a i = set a i Falling
 
-    let appi = A.iteri
-    let app = A.iter
+    let iteri = A.iteri
+    let iter = A.iter
 
     let exists a =
       let n = length a in
@@ -415,7 +431,7 @@ module Roots =
       | Falling -> "Falling"
 
     let print vs =
-      app (fun x -> Printf.printf "\t%s" (string_of_root_event x)) vs;
+      iter (fun x -> Printf.printf "\t%s" (string_of_root_event x)) vs;
       print_newline ()
 
   end

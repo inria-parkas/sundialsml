@@ -12,7 +12,7 @@ let make nl ng comm iv = wrap (Sundials.RealArray.make nl iv, ng, comm)
 
 let clone nv =
   let loc, glen, comm = Sundials.unvec nv in
-  wrap (Sundials.RealArray.clone loc, glen, comm)
+  wrap (Sundials.RealArray.copy loc, glen, comm)
 
 let unwrap nv =
   let data, _, _ = Sundials.unvec nv in
@@ -312,7 +312,7 @@ module DataOps =
     module A = Bigarray.Array1
 
     let make      = Sundials.RealArray.make
-    let clone     = Sundials.RealArray.clone
+    let clone     = Sundials.RealArray.copy
 
     type t = Sundials.RealArray.t * int * Mpi.communicator
     type d = Sundials.RealArray.t

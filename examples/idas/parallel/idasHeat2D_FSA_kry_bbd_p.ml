@@ -684,7 +684,7 @@ let main () =
          done here as an illustration only, as the default values
          for pbar, if pbar is not supplied, are anyway 1.0) *)
 
-      let pbar = RealArray.clone data.p in
+      let pbar = RealArray.copy data.p in
 
       (* Allocate sensitivity solution vectors uuS and upS and set them
          to an initial guess for the sensitivity ICs (the IC for uuS are

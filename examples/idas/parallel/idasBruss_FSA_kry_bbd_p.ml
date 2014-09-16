@@ -894,7 +894,7 @@ let main () =
   let sparams =
     {
       Sens.pvals = Some data.eps;
-      Sens.pbar  = Some (RealArray.clone data.eps);
+      Sens.pbar  = Some (RealArray.copy data.eps);
       Sens.plist = None;
     }
   in

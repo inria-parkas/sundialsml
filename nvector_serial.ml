@@ -13,7 +13,7 @@ module Ops = struct
 
   let n_vclone nv =
     let data = Sundials.unvec nv in
-    wrap (Sundials.RealArray.clone data)
+    wrap (Sundials.RealArray.copy data)
 
   external n_vlinearsum    : float -> t -> float -> t -> t -> unit
     = "ml_nvec_ser_n_vlinearsum"
@@ -95,7 +95,7 @@ module DataOps =
     module A = Bigarray.Array1
     type t = Sundials.RealArray.t
 
-    let n_vclone     = Sundials.RealArray.clone
+    let n_vclone     = Sundials.RealArray.copy
 
     let arr_vaxpy a (x : t) (y : t) =
       if a = 1.0 then

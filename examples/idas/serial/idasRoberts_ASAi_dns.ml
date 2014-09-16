@@ -315,8 +315,8 @@ let main () =
   (* Integrate till TB1 and get the solution (y, y') at that time. *)
   let _ = Adjoint.forward_normal ida_mem tb1 wyy wyp in
 
-  let yyTB1 = RealArray.clone yy
-  and ypTB1 = RealArray.clone yp
+  let yyTB1 = RealArray.copy yy
+  and ypTB1 = RealArray.copy yp
   in
   (* Save the states at t=TB1. *)
   nvscale 1.0 yy yyTB1;

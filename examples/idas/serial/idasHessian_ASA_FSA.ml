@@ -372,15 +372,15 @@ let main () =
   and wq  = Nvector_serial.wrap q
   in
 
-  let yyS = Array.init np (fun _ -> Nvector_serial.wrap (RealArray.clone yy))
-  and ypS = Array.init np (fun _ -> Nvector_serial.wrap (RealArray.clone yp))
+  let yyS = Array.init np (fun _ -> Nvector_serial.wrap (RealArray.copy yy))
+  and ypS = Array.init np (fun _ -> Nvector_serial.wrap (RealArray.copy yp))
   in
   nvconst 0.0 (Sundials.unvec yyS.(0));
   nvconst 0.0 (Sundials.unvec yyS.(1));
   nvconst 0.0 (Sundials.unvec ypS.(0));
   nvconst 0.0 (Sundials.unvec ypS.(1));
 
-  let qS = Array.init np (fun _ -> Nvector_serial.wrap (RealArray.clone q)) in
+  let qS = Array.init np (fun _ -> Nvector_serial.wrap (RealArray.copy q)) in
   nvconst 0.0 (Sundials.unvec qS.(0));
 
   (* Forward problem's setup. *)
