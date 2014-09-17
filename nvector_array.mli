@@ -16,8 +16,6 @@
   @author Timothy Bourke (Inria)
   @author Jun Inoue (Inria)
   @author Marc Pouzet (LIENS)
-  @see <OCAML_DOC_ROOT(Array)> Array
-  @see <OCAML_DOC_ROOT(Bigarray.Array1)> Bigarray.Array1
  *)
 
 (** An abstract set of functions for working manipulating nvectors

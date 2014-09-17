@@ -245,6 +245,7 @@ div#intro {
 
 td.module { min-width: 8em;
             vertical-align: text-top; }
+h2#modules + p br:nth-child(1) { display: none; }
 
 table.typetable td:nth-child(1) { }
 table.typetable td:nth-child(2) { min-width: 20em;
@@ -256,8 +257,14 @@ table.typetable td:nth-child(4) {
                                   padding-left: 0em; }
 table.typetable td:nth-child(5) code { font-size: 9pt; color: lightgray; }
 
-div.cvode { padding-top: 1.2ex;
-            font-size: 9pt; }
-div.cvode + div.cvode { padding-top: 0ex; }
-div.cvode + div.cvode > span.seesundials { color: white; }
+div.sundials { padding-top: 1.2ex;
+               font-size: 9pt; }
+div.sundials + div.sundials { padding-top: 0ex; }
+div.sundials + div.sundials > span.seesundials { color: white; }
+
+img { max-width: 50em;
+      height: auto;
+      display: block;
+      margin-left: auto;
+      margin-right: auto; }
 

@@ -809,6 +809,7 @@ module Alternate :
 
     (** Returns the solver's current [cj] value.  *)
     val get_cj : ('data, 'kind) session -> float
+
     (** Returns the solver's current [cjratio] value.  *)
     val get_cjratio : ('data, 'kind) session -> float
   end

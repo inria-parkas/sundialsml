@@ -68,74 +68,69 @@ struct
     method private html_of_cvode t =
       let (page, anchor, title) = self#split_text t in
       Printf.sprintf
-        "<div class=\"cvode\"><span class=\"seesundials\">See sundials: </span><a href=\"%s%s.html%s\">%s</a></div>"
+        "<div class=\"sundials cvode\"><span class=\"seesundials\">See sundials: </span><a href=\"%s%s.html%s\">%s</a></div>"
         !cvode_doc_root page anchor title
 
     method private html_of_cvodes t =
       let (page, anchor, title) = self#split_text t in
       Printf.sprintf
-        "<div class=\"cvodes\"><span class=\"seesundials\">See sundials: </span><a href=\"%s%s.html%s\">%s</a></div>"
+        "<div class=\"sundials cvodes\"><span class=\"seesundials\">See sundials: </span><a href=\"%s%s.html%s\">%s</a></div>"
         !cvodes_doc_root page anchor title
 
     method private html_of_ida t =
       let (page, anchor, title) = self#split_text t in
       Printf.sprintf
-        "<div class=\"ida\"><span class=\"seesundials\">See sundials: </span><a href=\"%s%s.html%s\">%s</a></div>"
+        "<div class=\"sundials ida\"><span class=\"seesundials\">See sundials: </span><a href=\"%s%s.html%s\">%s</a></div>"
         !ida_doc_root page anchor title
 
     method private html_of_idas t =
       let (page, anchor, title) = self#split_text t in
       Printf.sprintf
-        "<div class=\"idas\"><span class=\"seesundials\">See sundials: </span><a href=\"%s%s.html%s\">%s</a></div>"
+        "<div class=\"sundials idas\"><span class=\"seesundials\">See sundials: </span><a href=\"%s%s.html%s\">%s</a></div>"
         !idas_doc_root page anchor title
 
     method private html_of_kinsol t =
       let (page, anchor, title) = self#split_text t in
       Printf.sprintf
-        "<div class=\"kinsol\"><span class=\"seesundials\">See sundials: </span><a href=\"%s%s.html%s\">%s</a></div>"
+        "<div class=\"sundials kinsol\"><span class=\"seesundials\">See sundials: </span><a href=\"%s%s.html%s\">%s</a></div>"
         !kinsol_doc_root page anchor title
 
     val divrex = Str.regexp " *\\(open\\|close\\) *\\(.*\\)"
 
-    method private html_of_div text =
+    method private html_of_div s =
       let baddiv s = (Odoc_info.warning (Printf.sprintf
             "div must be followed by 'open' or 'close', not '%s'!" s); "") in
-      match text with
-      | [Odoc_info.Raw s] ->
-          if not (Str.string_match divrex s 0) then baddiv s
-          else begin
-            match Str.matched_group 1 s with
-            | "open" ->
-                let attrs = try Str.matched_group 2 s with Not_found -> "" in
-                Printf.sprintf "<div %s>" attrs
-            | "close" -> "</div>"
-            | s -> baddiv s
-          end
-      | _ -> (Odoc_info.warning ("div must be followed by plain text."); "")
+      if not (Str.string_match divrex s 0) then baddiv s
+      else
+        match Str.matched_group 1 s with
+        | "open" ->
+            let attrs = try Str.matched_group 2 s with Not_found -> "" in
+            Printf.sprintf "<div %s>" attrs
+        | "close" -> "</div>"
+        | s -> baddiv s
 
-    method private html_of_var text =
-      match text with
-      | [Odoc_info.Raw s] -> begin
-          let var = Str.replace_first (Str.regexp " +$") ""
-                      (Str.replace_first (Str.regexp "^ +") "" s) in
-          try
-            List.assoc var variables
-          with Not_found ->
-            (Odoc_info.warning (Printf.sprintf "Variable '%s' is not defined." var); "")
-        end
+    method private html_of_var s =
+      let var = Str.replace_first (Str.regexp " +$") ""
+                  (Str.replace_first (Str.regexp "^ +") "" s) in
+      try
+        List.assoc var variables
+      with Not_found ->
+        (Odoc_info.warning (Printf.sprintf "Variable '%s' is not defined." var); "")
 
-      | _ -> (Odoc_info.warning ("var must be followed by plain text."); "")
+    method private html_of_img s =
+      Printf.sprintf "<a href=\"%s\"><img src=\"%s\"></a>" s s
 
     val mutable custom_functions =
-      ([] : (string * (Odoc_info.text_element list -> string)) list)
+      ([] : (string * (string -> string)) list)
 
     method private html_of_custom_text b tag text =
       try
         let f = List.assoc tag custom_functions in
-        Buffer.add_string b (f text)
+        match text with
+        | [Odoc_info.Raw s] -> Buffer.add_string b (f s)
+        | _ -> Odoc_info.warning ("custom tags must be followed by plain text.")
       with
-        Not_found ->
-          Odoc_info.warning (Odoc_messages.tag_not_handled tag)
+        Not_found -> Odoc_info.warning (Odoc_messages.tag_not_handled tag)
 
     (* Import MathJax (http://www.mathjax.org/) to render mathematics in
        function comments. *)
@@ -160,7 +155,8 @@ struct
       tag_functions <- ("kinsol", self#html_of_kinsol) :: tag_functions;
 
       custom_functions <- ("div", self#html_of_div) :: custom_functions;
-      custom_functions <- ("var", self#html_of_var) :: custom_functions
+      custom_functions <- ("var", self#html_of_var) :: custom_functions;
+      custom_functions <- ("img", self#html_of_img) :: custom_functions
 
   end
 
@@ -183,6 +179,8 @@ let option_idas_doc_root =
 let option_kinsol_doc_root =
   ("-kinsol-doc-root", Arg.String (fun d -> kinsol_doc_root := d), 
    "<dir>  specify the root url for the Sundials KINSOL documentation.")
+
+let _  = Odoc_html.charset := "utf-8"
 
 #if OCAML_3X
 let _ =

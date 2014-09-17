@@ -21,23 +21,23 @@ The structure of this interface mostly follows that of the original library,
 both for ease of reading the existing documentation and for converting
 existing source code, but several changes have been made for programming
 convenience, namely:
-- solver sessions are mostly configured through algebraic data types
-  rather than through multiple function calls,
-- error conditions are signalled by exceptions rather than return codes
-  (including in user-supplied callback routines),
-- closures (partial applications of higher-order functions) are used to
-  share user data between callback routines, and,
-- explicit free commands are not necessary nor provided since OCaml is a
-  garbage-collected language.
+- solver sessions are mostly configured via algebraic data types
+  rather than multiple function calls;
+- error conditions are signalled by exceptions not return codes
+  (including in user-supplied callback routines);
+- closures (partial applications of functions) are used to
+  share user data between callback routines, and;
+- explicit free commands are not necessary since OCaml is a garbage-collected
+  language.
 
-Functions have been renamed according to a regular scheme. The leading {e
-module identifier} is removed and replaced with a module path, words
-beginning with an uppercase letter are separated by underscores, and only
-lowercase letters are used. For instance, [IdaSetErrHandlerFn], becomes
+Functions have been renamed according to a regular scheme. Leading {e
+module identifier} are replaced by module paths, words
+beginning with an uppercase letter are separated by underscores, and put
+into lowercase. For instance, [IdaSetErrHandlerFn], becomes
 {!Ida.set_err_handler_fn}, and [CVSpilsSetJacTimesVecFn] becomes
 {!Cvode.Spils.set_jac_times_vec_fn}.
-Constants have been replaced by variant types in most cases.
-They have also been renamed by converting them to {e CamlCase} and removing
+Constants are replaced by variant types in most cases.
+They are renamed by conversion to {e CamlCase} and the removal of
 underscores.
 For instance, [PREC_NONE] becomes {!Spils.PrecNone}.
 
@@ -45,44 +45,48 @@ Rather than try to duplicate or replace the comprehensive
 {{:https://computation.llnl.gov/casc/sundials/documentation/documentation.html}
 Sundials user manuals}, this documentation provides brief summaries, taken
 directly or adapted from the manual, with hyperlinks back to the original
-function descriptions.
+text.
 
 {2:nvector Nvectors}
 
-Sundials defines an abstract interface for vectors and provides
-implementations for serial and parallel vectors. The OCaml version defines a
-generic {!Sundials.nvector} type with type arguments indicating the
-underlying data and kind ({!Nvector_serial.kind}, {!Nvector_parallel.kind},
-and {!Nvector_custom.kind}).
+Sundials defines an abstract interface for vectors and provides default
+serial and parallel instantiations.
+The OCaml interface defines likewise a generic
+{!Sundials.nvector} type whose type arguments indicate the underlying {e
+data} and {e kind}—one of {!Nvector_serial.kind}, {!Nvector_parallel.kind},
+or {!Nvector_custom.kind}.
+The {!Sundials.unvec} function gives direct access to the underlying data.
 
-The data underlying serial ({!Nvector_serial.t}) and parallel
-({!Nvector_parallel.t}) nvectors is passed between Sundials
-and OCaml programs using
+The interface to serial nvectors, {!Nvector_serial}, is based on
 {{:http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.html}Bigarrays}.
-These vectors are manipulated directly within the
-solver using the original low-level vector operations (cloning, linear sums,
-adding constants, and etcetera; see {!Nvector.NVECTOR_OPS}).
-There are no direct interfaces to these operations from OCaml, but
-equivalent reimplementations are provided ({!Nvector_serial.DataOps}).
+These arrays are manipulated directly, that is, with no additional overhead,
+within the solver by the original low-level serial nvector operations
+(see {!Nvector.NVECTOR_OPS}).
+The same low-level operations can be called from OCaml
+({!Nvector_serial.Ops}), as can equivalent reimplementations on the
+underlying data ({!Nvector_serial.DataOps}).
 
-There are also mechanisms for defining new vector implementations using
-records of imperative ({!Nvector_custom}) or pure functions
-({!Nvector_custom.Immutable}). A vector implementation for standard OCaml
-arrays of floats is provided as an example ({!Nvector_array}). These
-abstract nvectors may be useful for small examples, prototyping, or
-debugging, but native serial (and parallel) nvectors have two important
-advantages:
-+ {e efficiency}, since the low-level vector operations are implemented
-directly in C (rather than as C stubs around OCaml callbacks) and memory
-management is simpler, and,
-+ {e support} for all linear solvers, since some linear solvers do not
-support abstract nvectors,
+The interface to parallel nvectors, {!Nvector_parallel}, is also based on
+{{:http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.html}Bigarrays}.
+It exploits the {{:https://forge.ocamlcore.org/projects/ocamlmpi/}OCaml/MPI}
+library. Parallel nvectors are only available when Sundials/ML is configured
+with the [--enable-mpi] option.
+
+Besides these two standard implementations, it is also possible to define
+new nvector implementations through {!Nvector_custom} by providing low-level
+operations on an underlying datatype. A demonstration of this feature on
+{!float array}s is provided in {!Nvector_array}. Custom nvectors suffer two
+disadvantages compared to the standard nvector implementations. First, each
+low-level operation incurs the cost of a callback into OCaml. Second, of all
+the provided linear solvers, only {!Cvode.Diag} could be used; although
+custom solvers could be implemented through {!Cvode.Alternate},
+{!Ida.Alternate}, and {!Kinsol.Alternate}.
+
+{2:linsolv Linear Solvers}
+
+TODO: write this
 
 {2:modules Modules}
-
-The top level {!Sundials} module provides some utility routines for dealing
-with arrays of floats and integers, and for accessing certain constants
-(like {!Sundials.big_real} and {!Sundials.unit_roundoff}).
 
 {!modules: Sundials}
 {!modules: Dls Spils}
@@ -114,6 +118,8 @@ but we exploit Bigarrays to minimise copying, OCaml is a memory managed
 language (garbage collection, bounds checking, etc.. But, the interface does
 not compare too badly:
 
+{img perf.opt.png}
+
 TODO: include graph, explain methodology
 
 TODO: performance tips for programs: a) type annotations for vectors; b)
@@ -126,9 +132,9 @@ TODO: profile with -O3 and CHECK_MATRIX_ACCESS, etc. = 0.
 
 {2:refs References}
 
-- A. C. Hindmarsh, P. N. Brown, K. E. Grant, S. L. Lee, R. Serban, D. E.
-Shumaker, and C. S. Woodward, "{b SUNDIALS: Suite of Nonlinear and
-Differential/Algebraic Equation Solvers}," ACM Transactions on Mathematical
+A. C. Hindmarsh, P. N. Brown, K. E. Grant, S. L. Lee, R. Serban, D. E.
+Shumaker, and C. S. Woodward, “{{:http://computation.llnl.gov/casc/nsde/pubs/toms_sundials.pdf}{b SUNDIALS: Suite of Nonlinear and
+Differential/Algebraic Equation Solvers}},” ACM Transactions on Mathematical
 Software, 31(3), pp. 363-396, 2005.
 
 {2:acks Acknowledgements}
