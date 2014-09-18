@@ -173,6 +173,20 @@ doc/html/index.html: doc/html dochtml.cmo intro.doc 			\
 doc/html:
 	mkdir $@
 
+# Testing the examples
+
+tests.opt.log: $(INSTALL_CMA:.cma=.cmxa)
+	$(MAKE) -C examples $@
+
+tests.byte.log: $(INSTALL_CMA:.cma=.cmxa)
+	$(MAKE) -C examples $@
+
+perf.opt.log: $(INSTALL_CMA:.cma=.cmxa)
+	$(MAKE) -C examples $@
+
+perf.byte.log: $(INSTALL_CMA:.cma=.cmxa)
+	$(MAKE) -C examples $@
+
 ### Install / Uninstall
 
 install: $(INSTALL_CMA) $(INSTALL_CMA:.cma=.cmxa) doc META

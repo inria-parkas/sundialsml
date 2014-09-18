@@ -70,7 +70,7 @@ The interface to parallel nvectors, {!Nvector_parallel}, is also based on
 {{:http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.html}Bigarrays}.
 It exploits the {{:https://forge.ocamlcore.org/projects/ocamlmpi/}OCaml/MPI}
 library. Parallel nvectors are only available when Sundials/ML is configured
-with the [--enable-mpi] option.
+to use MPI, as described {{:install}below}.
 
 Besides these two standard implementations, it is also possible to define
 new nvector implementations through {!Nvector_custom} by providing low-level
@@ -95,9 +95,48 @@ TODO: write this
 {!modules: Ida Ida_bbd Idas Idas_bbd}
 {!modules: Kinsol Kinsol_bbd}
 
-{2:build Building the interface}
+{2:install Dependencies and Installation}
 
-TODO: instructions for configuring and building the SundialsML interface.
+The dependencies of Sundials/ML are
+- {{:http://caml.inria.fr/ocaml/}OCaml} {b 3.12.1 or greater},
+- {{:http://computation.llnl.gov/casc/sundials/}Sundials} {b {var version}},
+- {e Optionally}:
+  {{:https://forge.ocamlcore.org/projects/ocamlmpi/}OCaml/MPI} {b 1.01}.
+
+The [configure] script detects whether Sundials was built with lapack
+support, which is required for the [lapack_dense] and [lapack_band]
+solvers (like {!Cvode.Dls.lapack_dense}).
+The {!Sundials.blas_lapack_supported} value indicates whether these
+solvers are available.
+
+Parallel nvectors and Band-Block-Diagonal (BBD) solvers are {e
+only} built if explicitly requested (via [--enable-mpi]).
+
+{3:opam Opam}
+
+Opam is the easiest way to install the library.
+
+TODO: write instructions, how to get the different features, etc.
+
+{3:build From source}
+
+Building from source is a two step process:
+{ol
+    {- run [configure] to find and check dependencies, and}
+    {- run [make install] to build and install the library.}
+}
+
+The choices made by the configure script can be influenced by arguments
+(like [--enable-mpi] and [--prefix=...]) and variables (like
+[OCAMLROOT=...]). Type [configure --help] for detailed information.
+
+OCaml reimplementations of the standard Sundials examples are provided in
+the [examples/] subdirectory.
+The library's behaviour can be tested via [make tests.opt.log] which runs the OCaml
+versions and compares their outputs against those of the original C
+versions.
+The library's performance can be analyzed via [make perf.opt.log] which
+produces the graph explained {{:#performance}below}.
 
 {2:compilation Compiling programs}
 

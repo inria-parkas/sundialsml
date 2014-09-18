@@ -418,7 +418,7 @@ fi
 if [ "x$EXAMPLESROOT" = x ]; then
     # If not set, try to infer it from LIB_PATH.
     EXAMPLESROOT=`echo $LIB_PATH | sed -e 's/^-L//' -e 's/lib$/examples/'`
-    echo "LIB_PATH=$LIB_PATH EXAMPLESROOT=$EXAMPLESROOT"
+    #echo "LIB_PATH=$LIB_PATH EXAMPLESROOT=$EXAMPLESROOT"
 fi
 # Check if it's valid.
 if [ -d "$EXAMPLESROOT/cvode/serial" ]; then
