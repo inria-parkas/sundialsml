@@ -148,11 +148,20 @@ module Spils =
   struct
     include SpilsTypes
 
-    let spils_no_precond = {
-      prec_solve_fn = None;
-      prec_setup_fn = None;
-      jac_times_vec_fn = None;
-    }
+    let prec_none = PrecNone
+    let prec_right ?setup ?jac_times_vec solve =
+      PrecRight { prec_setup_fn = setup;
+                  prec_solve_fn = solve;
+                  jac_times_vec_fn = jac_times_vec }
+
+    external c_spgmr : ('a, 'k) session -> int -> unit
+      = "c_kinsol_spils_spgmr"
+
+    external c_spbcg : ('a, 'k) session -> int -> unit
+      = "c_kinsol_spils_spbcg"
+
+    external c_sptfqmr : ('a, 'k) session -> int -> unit
+      = "c_kinsol_spils_sptfqmr"
 
     external c_set_max_restarts     : ('a, 'k) session -> int -> unit
         = "c_kinsol_spils_set_max_restarts"
@@ -160,68 +169,54 @@ module Spils =
     external c_set_preconditioner : ('a, 'k) session -> bool -> unit
         = "c_kinsol_spils_set_preconditioner"
 
-    let set_preconditioner s fprecsetupfn fprecsolvefn =
-      (match s.ls_callbacks with
-       | SpilsCallback cbs ->
-           s.ls_callbacks <- SpilsCallback { cbs with
-                               prec_setup_fn = fprecsetupfn;
-                               prec_solve_fn = Some fprecsolvefn }
-       | _ -> failwith "spils solver not in use");
-      c_set_preconditioner s (fprecsetupfn <> None)
-
-    external c_set_jac_times_vec_fn : ('a, 'k) session -> unit
+    external c_set_jac_times_vec_fn : ('a, 'k) session -> bool -> unit
         = "c_kinsol_spils_set_jac_times_vec_fn"
 
-    let set_jac_times_vec_fn s fjactimesfn =
-      (match s.ls_callbacks with
-       | SpilsCallback cbs ->
-           s.ls_callbacks <- SpilsCallback { cbs with
-                               jac_times_vec_fn = Some fjactimesfn }
-       | _ -> failwith "spils solver not in use");
-      c_set_jac_times_vec_fn s
+    let init_prec session = function
+      | PrecNone -> ()
+      | PrecRight cb ->
+        c_set_preconditioner session (cb.prec_setup_fn <> None);
+        c_set_jac_times_vec_fn session (cb.jac_times_vec_fn <> None);
+        session.ls_callbacks <- SpilsCallback cb
 
-    let set_callbacks s ({prec_solve_fn; prec_setup_fn; jac_times_vec_fn} as cb)
-      = (match (prec_solve_fn, prec_setup_fn) with
-         | None, _ -> ()
-         | Some solve, osetup -> c_set_preconditioner s (osetup <> None));
-        (match jac_times_vec_fn with
-         | None -> ()
-          | Some jtimes -> c_set_jac_times_vec_fn s);
-        s.ls_callbacks <- SpilsCallback cb
+    let spgmr ?(maxl=0) ?(max_restarts=5) prec session _ =
+      c_spgmr session maxl;
+      (* Note: we can skip set_max_restarts only when initializing a
+         fresh solver.  *)
+      if max_restarts <> 5 then
+        c_set_max_restarts session max_restarts;
+      init_prec session prec
 
-    external c_spils_spgmr : ('a, 'k) session -> int -> unit
-      = "c_kinsol_spils_spgmr"
+    let spbcg ?(maxl=0) prec session _ =
+      c_spbcg session maxl;
+      init_prec session prec
 
-    let spgmr maxl omaxrs callbacks s _ =
-      c_spils_spgmr s (int_default maxl);
-      (match omaxrs with
-       | None -> ()
-       | Some maxrs -> c_set_max_restarts s maxrs);
-      set_callbacks s callbacks
+    let sptfqmr ?(maxl=0) prec session _ =
+      c_sptfqmr session maxl;
+      init_prec session prec
 
-    external c_spils_spbcg : ('a, 'k) session -> int -> unit
-      = "c_kinsol_spils_spbcg"
+    let set_preconditioner s ?setup solve =
+      match s.ls_callbacks with
+      | SpilsCallback cbs ->
+        s.ls_callbacks <- SpilsCallback { cbs with
+                                          prec_setup_fn = setup;
+                                          prec_solve_fn = solve };
+        c_set_preconditioner s (setup <> None)
+      | _ -> failwith "spils solver not in use"
 
-    let spbcg maxl callbacks s _ =
-      c_spils_spbcg s (int_default maxl);
-      set_callbacks s callbacks
-
-    external c_spils_sptfqmr : ('a, 'k) session -> int -> unit
-      = "c_kinsol_spils_sptfqmr"
-
-    let sptfqmr maxl callbacks s _ =
-      c_spils_sptfqmr s (int_default maxl);
-      set_callbacks s callbacks
-
-    external c_clear_jac_times_vec_fn : ('a, 'k) session -> unit
-        = "c_kinsol_spils_clear_jac_times_vec_fn"
+    let set_jac_times_vec_fn s f =
+      match s.ls_callbacks with
+      | SpilsCallback cbs ->
+        s.ls_callbacks <- SpilsCallback { cbs with jac_times_vec_fn = Some f };
+        c_set_jac_times_vec_fn s true
+      | _ -> failwith "spils solver not in use"
 
     let clear_jac_times_vec_fn s =
-      (match s.ls_callbacks with
-       | SpilsCallback cbs ->
-           s.ls_callbacks <- SpilsCallback { cbs with jac_times_vec_fn = None }
-       | _ -> failwith "spils solver not in use");
-      c_clear_jac_times_vec_fn s
+      match s.ls_callbacks with
+      | SpilsCallback cbs ->
+        s.ls_callbacks <- SpilsCallback { cbs with jac_times_vec_fn = None };
+        c_set_jac_times_vec_fn s false
+      | _ -> failwith "spils solver not in use"
 
     external get_work_space       : ('a, 'k) session -> int * int
         = "c_kinsol_spils_get_work_space"
@@ -501,7 +496,7 @@ let call_bandjacfn session range jac j =
 let call_precsolvefn session jac ps u =
   let session = read_weak_ref session in
   match session.ls_callbacks with
-  | SpilsCallback { Spils.prec_solve_fn = Some f } ->
+  | SpilsCallback { Spils.prec_solve_fn = f } ->
       adjust_retcode session true (f jac ps) u
   | _ -> assert false
 

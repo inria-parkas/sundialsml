@@ -269,38 +269,13 @@ module Spils :
         @kinsol <node5#ss:precondFn> Jacobian preconditioning function *)
 
     (** Arguments passed to the preconditioner solve callback function.  See
-        [prec_solve_fn] in {!callbacks}. *)
+        {!prec_solve_fn}. *)
     type 'a solve_arg =
       {
         uscale : 'a;  (** A vector containing diagonal elements of the
                           scaling matrix for [u] *)
         fscale : 'a;  (** A vector containing diagonal elements of the
                           scaling matrix for [fval]. *)
-      }
-
-    (** Callbacks for Krylov subspace linear solvers. Ignored if the
-        {!Spils.preconditioning_type} is set to [PrecNone]. In that case, you
-        should use {!spils_no_precond} as [callbacks].  *)
-    type 'a callbacks =
-      {
-        prec_solve_fn : 'a prec_solve_fn option;
-        (** Solves the preconditioning system {i Pz = r}.  See
-            {!prec_solve_fn} for details.  If set to [None] then no
-            preconditioning is performed, and [prec_setup_fn] and
-            [jac_times_vec_fn] are ignored.  *)
-
-        prec_setup_fn : 'a prec_setup_fn option;
-        (** A function that preprocesses and/or evaluates any
-            Jacobian-related data needed by {!prec_solve_fn}.  See
-            {!prec_setup_fn} for details.  When [prec_solve_fn] doesn't
-            need any such data, this field can be [None].  *)
-
-        jac_times_vec_fn : 'a jac_times_vec_fn option;
-        (** Multiplies the system Jacobian to a vector.  See
-            {!jac_times_vec_fn} for details.  When this field is
-            [None], KINSOL uses a default implementation based on
-            difference quotients.  *)
-
       }
 
     (** Called like [prec_solve_fn jarg sarg v] to solve the
@@ -321,7 +296,7 @@ module Spils :
         their values are needed outside of the function call, then
         they must be copied to separate physical structures.
 
-        See also {!callbacks}.
+        See also {!preconditioner}.
 
         @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
         @kinsol <node5#ss:psolveFn> Linear preconditioning function
@@ -346,7 +321,7 @@ module Spils :
         function call, then they must be copied to separate physical
         structures.
 
-        See also {!callbacks}.
+        See also {!preconditioner}.
 
         @kinsol <node5#ss:precondFn> Jacobian preconditioning function
         @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
@@ -374,7 +349,7 @@ module Spils :
         outside of the function call, then they must be copied to separate
         physical structures.
 
-        See also {!callbacks}.
+        See also {!preconditioner}.
 
         @kinsol <node5#ss:jtimesFn> KINSpilsJacTimesVecFn
         @kinsol <node5#sss:optin_spils> KINSpilsSetJacTimesVecFn
@@ -386,55 +361,96 @@ module Spils :
       -> bool (* new_u *)
       -> bool
 
-    val spils_no_precond : 'a callbacks
+    (** A preconditioner, which includes the type of preconditioning
+        to be done (none or right), along with callbacks if applicable.
+        Conceptually, this type should be declared as follows (in
+        pseudo-GADT syntax):
+        {[
+          type _ preconditioner =
+            | prec_none : 'a preconditioner
+            | prec_right : ?setup:'a prec_setup_fn ->
+              ?jac_times_vec:'a jac_times_vec_fn ->
+              'a prec_solve_fn ->
+              'a preconditioner
+        ]}
+        but since OCaml's constructors don't support optional parameters,
+        we provide them as functions instead.  [prec_right] takes a set of
+        callback functions as arguments:
+        - [solve], the mandatory argument, solves the preconditioning system
+          $Pz = r$, where $P$ is a preconditioning matrix chosen by the user.
+          See {!prec_solve_fn} for details.
+        - [~setup] preprocesses and/or evaluates Jacobian-related data needed
+          by [solve].  It can be omitted if there are no such data.
+          See {!prec_setup_fn} for details.
+        - [~jac_times_vec] multiplies the system Jacobian to a given vector.
+          See {!jac_times_vec_fn} for details.  This function defaults to
+          KINSOL's internal difference-quotient implementation.
+
+        @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
+        @kinsol <node5#sss:optin_spils> KINSpilsSetJacTimesVecFn
+        @kinsol <node5#ss:psolveFn> KINSpilsPrecSolveFn
+        @kinsol <node5#ss:precondFn> KINSpilsPrecSetupFn
+        @kinsol <node5#ss:jtimesFn> KINSpilsJacTimesVecFn
+    *)
+    type 'a preconditioner
+
+    val prec_none : 'a preconditioner
+    val prec_right :
+      ?setup:'a prec_setup_fn
+      -> ?jac_times_vec:'a jac_times_vec_fn
+      -> 'a prec_solve_fn
+      -> 'a preconditioner
 
     (** Krylov iterative solver with the scaled preconditioned GMRES method.
-        The arguments specify the maximum dimension of the Krylov subspace (Pass
-        None to use the default value 5), the maximum number of restarts of the
-        iterative linear solver (Pass None to use the default value 0) and the
-        preconditioner callback functions ({!callbacks}).
+        Called like [spgmr ~maxl:maxl ~max_restarts:maxr prec], where:
+
+        - [~maxl] is the maximum dimension of the Krylov subspace.
+          Defaults to [5].
+        - [~max_restarts] is the maximum number of restarts.  Defaults
+          to [5].  Passing [0] disables restarts.
+        - [prec] is a preconditioner.  See {!preconditioner}.
 
         @kinsol <node5#sss:lin_solv_init> KINSpgmr
         @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
         @kinsol <node5#sss:optin_spils> KINSpilsSetMaxRestarts
         @kinsol <node5#ss:psolveFn> Linear preconditioning function
         @kinsol <node5#ss:precondFn> Jacobian preconditioning function *)
-    val spgmr : int option -> int option -> 'data callbacks
-                    -> ('data, 'kind) linear_solver
+    val spgmr : ?maxl:int -> ?max_restarts:int -> 'a preconditioner
+                    -> ('a, 'k) linear_solver
 
-    (** Krylov iterative solver with the scaled preconditioned Bi-CGStab method.
-        The arguments specify the maximum dimension of the Krylov subspace (Pass
-        None to use the default value 5) and the preconditioner callback
-        functions ({!callbacks}).
+    (** Krylov iterative linear solver with the scaled preconditioned
+        Bi-CGStab method.  The arguments are the same as {!spgmr},
+        except the maximum number of restarts ([~max_restarts]) cannot
+        be specified.
 
         @kinsol <node5#sss:lin_solv_init> KINSpbcg
         @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
         @kinsol <node5#ss:psolveFn> Linear preconditioning function
         @kinsol <node5#ss:precondFn> Jacobian preconditioning function *)
-    val spbcg : int option -> 'data callbacks -> ('data, 'kind) linear_solver
+    val spbcg : ?maxl:int -> 'a preconditioner -> ('a, 'k) linear_solver
 
-    (** Krylov iterative with the scaled preconditioned TFQMR method.
-        The arguments specify the maximum dimension of the Krylov subspace (Pass
-        None to use the default value 5) and the preconditioner callback functions
-        ({!callbacks}).
+    (** Krylov iterative linear solver with the scaled preconditioned
+        TFQMR method.  The arguments are the same as {!spgmr}, except
+        the maximum number of restarts ([~max_restarts]) cannot be
+        specified.
 
         @kinsol <node5#sss:lin_solv_init> KINSptfqmr
         @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
         @kinsol <node5#ss:psolveFn> Linear preconditioning function
         @kinsol <node5#ss:precondFn> Jacobian preconditioning function *)
-    val sptfqmr : int option -> 'data callbacks -> ('data, 'kind) linear_solver
+    val sptfqmr : ?maxl:int -> 'a preconditioner -> ('a, 'k) linear_solver
 
     (** {4 Low-level solver manipulation} *)
 
     (** [set_preconditioner s psetup psolve] sets the preconditioning functions
         (see {!callbacks}).
 
-      @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
-      @kinsol <node5#ss:precondFn> Jacobian preconditioning function
-      @kinsol <node5#ss:psolveFn> Linear preconditioning function *)
+        @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
+        @kinsol <node5#ss:precondFn> KINSpilsPrecSetupFn
+        @kinsol <node5#ss:psolveFn> KINSpilsPrecSolveFn *)
     val set_preconditioner :
       ('a, 'k) session
-      -> 'a prec_setup_fn option
+      -> ?setup:'a prec_setup_fn
       -> 'a prec_solve_fn
       -> unit
 

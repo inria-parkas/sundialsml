@@ -423,10 +423,8 @@ let main () =
      KINSPGMR with preconditioner routines prec_setup_bd
      and prec_solve_bd. *)
   let kmem = Kinsol.init
-              (Kinsol.Spils.spgmr (Some maxl) (Some maxlrst)
-                                {Kinsol.Spils.prec_setup_fn=Some prec_setup_bd;
-                                 Kinsol.Spils.prec_solve_fn=Some prec_solve_bd;
-                                 Kinsol.Spils.jac_times_vec_fn=None; })
+              (Kinsol.Spils.spgmr ~maxl:maxl ~max_restarts:maxlrst
+                 (Kinsol.Spils.prec_right ~setup:prec_setup_bd prec_solve_bd))
               func ccnv in
   Kinsol.set_constraints kmem (wrap (Array.create neq two));
   Kinsol.set_func_norm_tol kmem (Some fnormtol);
