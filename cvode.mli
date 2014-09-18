@@ -801,9 +801,9 @@ module Alternate :
     (** The type of functions that solve the linear equation $Mx = b$,
         where $M$ is a preconditioning matrix chosen by the user, and
         the right-hand side vector $b$ is input.  $M$ should
-        approximate $I - \gamma J$, $J = (\partial f /\partial y)(t_n,
-        y_{\text{cur}})$ (see Eq.(2.6) of CVODE user's guide).  Here
-        $\gamma$ is available through {!get_gamma}.
+        approximate $I - \gamma J$, {% $J = (\partial f /\partial
+        y)(t_n, y_{\text{cur}})$ %} (see Eq.(2.6) of CVODE user's
+        guide).  Here $\gamma$ is available through {!get_gamma}.
 
         The function is called like [lsolve s b weight ycur fcur]
         where:
@@ -812,7 +812,7 @@ module Alternate :
         - [b] is the vector into which the solution is to be calculated.
         - [weight] contains the error weights.
         - [ycur] contains the solver's current approximation to $y(t_n)$.
-        - [fcur] is a vector that contains $f(t_n, y_{\text{cur}})$.
+        - [fcur] is a vector that contains {% $f(t_n, y_{\text{cur}})$ %}.
 
         This function may raise a {!Sundials.RecoverableFailure} exception
         to indicate that a recoverable error has occurred. Any other

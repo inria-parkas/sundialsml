@@ -754,7 +754,7 @@ module Alternate :
         - [y]  is the predicted $y$ vector for the current IDAS internal step.
         - [y'] is the predicted $\dot y$ vector for the current IDAS internal step.
         - [resp] is the value of the residual function at [y] and [y'], i.e.
-                 $F(t_n, y_{\text{pred}}, \dot{y}_{\text{pred}})$.
+                 {% $F(t_n, y_{\text{pred}}, \dot{y}_{\text{pred}})$ %}.
         - [tmp] holds temporary storage for use by the routine.
 
         This function may raise a {!Sundials.RecoverableFailure}
@@ -773,7 +773,7 @@ module Alternate :
     (** The type of functions that solve the linear equation $Mx = b$,
         where $M$ is a preconditioner matrix chosen by the user, and
         the right-hand side vector $b$ is input.  $M$ must approximate
-        $J = \partial F/\partial y + c_j \parial F/\partial {\dot y}$
+        $J = \partial F/\partial y + c_j \partial F/\partial \dot y$
         (see Eqn. (2.6) of IDA user's guide).  Here $c_j$ is available
         through {!get_cj}.  This function is called like [lsolve b
         weight ycur y'cur rescur] where:
