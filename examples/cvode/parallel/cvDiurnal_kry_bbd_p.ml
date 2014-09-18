@@ -571,13 +571,11 @@ let main () =
   let cvode_mem =
     Cvode.init Cvode.BDF
       (Cvode.Newton
-        (BBD.spgmr
-                None
-                Spils.PrecLeft
-                { BBD.mudq   = mudq;   BBD.mldq = mldq;
-                  BBD.mukeep = mukeep; BBD.mlkeep = mlkeep }
-                None
-                { BBD.local_fn = (flocal data); BBD.comm_fn = None }))
+         (BBD.spgmr
+            Spils.PrecTypeLeft
+            { BBD.mudq   = mudq;   BBD.mldq = mldq;
+              BBD.mukeep = mukeep; BBD.mlkeep = mlkeep }
+            { BBD.local_fn = (flocal data); BBD.comm_fn = None }))
       (Cvode.SStolerances (reltol, abstol))
       (f data) t0 u
   in
@@ -587,11 +585,11 @@ let main () =
 
   let solve_problem jpre =
     (* On second run, re-initialize u, the integrator, CVBBDPRE, and CVSPGMR *)
-    if jpre = Spils.PrecRight then begin
+    if jpre = Spils.PrecTypeRight then begin
       set_initial_profiles data u;
       Cvode.reinit cvode_mem t0 u;
-      BBD.reinit cvode_mem mudq mldq None;
-      Cvode.Spils.set_prec_type cvode_mem Spils.PrecRight;
+      BBD.reinit cvode_mem mudq mldq;
+      Cvode.Spils.set_prec_type cvode_mem Spils.PrecTypeRight;
 
       if my_pe = 0 then begin
         printf "\n\n-------------------------------------------------------";
@@ -601,7 +599,7 @@ let main () =
 
     if my_pe = 0 then
       printf "\n\nPreconditioner type is:  jpre = %s\n\n"
-             (if jpre = Spils.PrecLeft then "PREC_LEFT" else "PREC_RIGHT");
+             (if jpre = Spils.PrecTypeLeft then "PREC_LEFT" else "PREC_RIGHT");
 
     (* In loop over output points, call CVode, print results, test for error *)
     let tout = ref twohr in
@@ -614,7 +612,7 @@ let main () =
     (* Print final statistics *)  
     if my_pe = 0 then print_final_stats cvode_mem
   in
-  List.iter solve_problem [Spils.PrecLeft; Spils.PrecRight]
+  List.iter solve_problem [Spils.PrecTypeLeft; Spils.PrecTypeRight]
 
 (* Check environment variables for extra arguments.  *)
 let reps =

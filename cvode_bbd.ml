@@ -62,27 +62,21 @@ external c_spils_sptfqmr
   : ('a, 'k) session -> int -> Cvode.Spils.preconditioning_type -> unit
   = "c_cvode_spils_sptfqmr"
 
-let spgmr maxl prec_type bws dqrely cb session nv =
-  let maxl   = match maxl with None -> 0 | Some ml -> ml in
-  let dqrely = match dqrely with None -> 0.0 | Some v -> v in
+let spgmr ?(maxl=0) prec_type bws ?(dqrely=0.0) cb session nv =
   let ba, _, _ = Sundials.unvec nv in
   let localn   = Sundials.RealArray.length ba in
   c_spils_spgmr session maxl prec_type;
   c_bbd_prec_init session localn bws dqrely (cb.comm_fn <> None);
   session.ls_callbacks <- BBDCallback (bbd_callbacks cb)
 
-let spbcg maxl prec_type bws dqrely cb session nv =
-  let maxl   = match maxl with None -> 0 | Some ml -> ml in
-  let dqrely = match dqrely with None -> 0.0 | Some v -> v in
+let spbcg ?(maxl=0) prec_type bws ?(dqrely=0.0) cb session nv =
   let ba, _, _ = Sundials.unvec nv in
   let localn   = Sundials.RealArray.length ba in
   c_spils_spbcg session maxl prec_type;
   c_bbd_prec_init session localn bws dqrely (cb.comm_fn <> None);
   session.ls_callbacks <- BBDCallback (bbd_callbacks cb)
 
-let sptfqmr maxl prec_type bws dqrely cb session nv =
-  let maxl   = match maxl with None -> 0 | Some ml -> ml in
-  let dqrely = match dqrely with None -> 0.0 | Some v -> v in
+let sptfqmr ?(maxl=0) prec_type bws ?(dqrely=0.0) cb session nv =
   let ba, _, _ = Sundials.unvec nv in
   let localn   = Sundials.RealArray.length ba in
   c_spils_sptfqmr session maxl prec_type;
@@ -93,8 +87,7 @@ external c_bbd_prec_reinit
     : parallel_session -> int -> int -> float -> unit
     = "c_cvode_bbd_prec_reinit"
 
-let reinit s mudq mldq dqrely =
-  let dqrely = match dqrely with None -> 0.0 | Some v -> v in
+let reinit s ?(dqrely=0.0) mudq mldq =
   c_bbd_prec_reinit s mudq mldq dqrely
 
 external get_work_space : parallel_session -> int * int

@@ -1293,15 +1293,15 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
 
         type gramschmidt_type =
           Spils.gramschmidt_type =
-            ModifiedGS
+          | ModifiedGS
           | ClassicalGS
 
         type preconditioning_type =
           Spils.preconditioning_type =
-            PrecNone
-          | PrecLeft
-          | PrecRight
-          | PrecBoth
+          | PrecTypeNone
+          | PrecTypeLeft
+          | PrecTypeRight
+          | PrecTypeBoth
 
         type 'a callbacks = {
           prec_solve_fn : 'a prec_solve_fn option;

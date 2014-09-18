@@ -72,10 +72,8 @@ external c_spils_sptfqmr
   : ('a, 'k) session -> int -> int -> Spils.preconditioning_type -> unit
   = "c_cvodes_adj_spils_sptfqmr"
 
-let spgmr maxl prec_type bws dqrely cb bs nv =
+let spgmr ?(maxl=0) prec_type bws ?(dqrely=0.0) cb bs nv =
   let parent, which = parent_and_which bs in
-  let maxl   = match maxl with None -> 0 | Some ml -> ml in
-  let dqrely = match dqrely with None -> 0.0 | Some v -> v in
   let ba, _, _ = Sundials.unvec nv in
   let localn   = Sundials.RealArray.length ba in
   c_spils_spgmr parent which maxl prec_type;
@@ -83,10 +81,8 @@ let spgmr maxl prec_type bws dqrely cb bs nv =
                                             (cb.comm_fn <> None);
   (tosession bs).ls_callbacks <- BBBDCallback (bbd_callbacks cb)
 
-let spbcg maxl prec_type bws dqrely cb bs nv =
+let spbcg ?(maxl=0) prec_type bws ?(dqrely=0.0) cb bs nv =
   let parent, which = parent_and_which bs in
-  let maxl   = match maxl with None -> 0 | Some ml -> ml in
-  let dqrely = match dqrely with None -> 0.0 | Some v -> v in
   let ba, _, _ = Sundials.unvec nv in
   let localn   = Sundials.RealArray.length ba in
   c_spils_spbcg parent which maxl prec_type;
@@ -94,10 +90,8 @@ let spbcg maxl prec_type bws dqrely cb bs nv =
                                             (cb.comm_fn <> None);
   (tosession bs).ls_callbacks <- BBBDCallback (bbd_callbacks cb)
 
-let sptfqmr maxl prec_type bws dqrely cb bs nv =
+let sptfqmr ?(maxl=0) prec_type bws ?(dqrely=0.0) cb bs nv =
   let parent, which = parent_and_which bs in
-  let maxl   = match maxl with None -> 0 | Some ml -> ml in
-  let dqrely = match dqrely with None -> 0.0 | Some v -> v in
   let ba, _, _ = Sundials.unvec nv in
   let localn   = Sundials.RealArray.length ba in
   c_spils_sptfqmr parent which maxl prec_type;
@@ -109,9 +103,8 @@ external c_bbd_prec_reinitb
     : parallel_session -> int -> int -> int -> float -> unit
     = "c_cvodes_bbd_prec_reinitb"
 
-let reinit bs mudq mldq dqrely =
+let reinit bs ?(dqrely=0.0) mudq mldq =
   let parent, which = parent_and_which bs in
-  let dqrely = match dqrely with None -> 0.0 | Some v -> v in
   c_bbd_prec_reinitb parent which mudq mldq dqrely
 
 let get_work_space bs = Cvode_bbd.get_work_space (tosession bs)

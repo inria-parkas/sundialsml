@@ -734,58 +734,64 @@ module Adjoint =
       struct
         include SpilsTypes
 
-        let no_precond = {
-          prec_solve_fn = None;
-          prec_setup_fn = None;
-          jac_times_vec_fn = None;
-        }
+        let prec_none = PrecNone
+        let prec_left ?setup ?jac_times_vec solve =
+          PrecLeft { prec_setup_fn = setup;
+                     prec_solve_fn = solve;
+                     jac_times_vec_fn = jac_times_vec }
+        let prec_right ?setup ?jac_times_vec solve =
+          PrecRight { prec_setup_fn = setup;
+                      prec_solve_fn = solve;
+                      jac_times_vec_fn = jac_times_vec }
+        let prec_both ?setup ?jac_times_vec solve =
+          PrecBoth { prec_setup_fn = setup;
+                     prec_solve_fn = solve;
+                     jac_times_vec_fn = jac_times_vec }
 
         external c_spils_set_preconditioner
-          : ('a, 'k) session -> int -> bool -> bool -> unit
+          : ('a, 'k) session -> int -> bool -> unit
           = "c_cvodes_adj_spils_set_preconditioner"
 
+        external c_spils_set_jac_times_vec_fn
+          : ('a, 'k) session -> int -> bool -> unit
+          = "c_cvodes_adj_spils_set_jac_times_vec_fn"
+
         external c_spils_spgmr
-          : ('a, 'k) session -> int -> int -> Spils.preconditioning_type -> unit
+          : ('a, 'k) session -> int -> int -> preconditioning_type -> unit
           = "c_cvodes_adj_spils_spgmr"
 
         external c_spils_spbcg
-          : ('a, 'k) session -> int -> int -> Spils.preconditioning_type -> unit
+          : ('a, 'k) session -> int -> int -> preconditioning_type -> unit
           = "c_cvodes_adj_spils_spbcg"
 
         external c_spils_sptfqmr
-          : ('a, 'k) session -> int -> int -> Spils.preconditioning_type -> unit
+          : ('a, 'k) session -> int -> int -> preconditioning_type -> unit
           = "c_cvodes_adj_spils_sptfqmr"
 
-        let set_precond bs parent which prec_type cb =
-          match prec_type with
-          | Spils.PrecNone -> ()
-          | Spils.PrecLeft | Spils.PrecRight | Spils.PrecBoth ->
-            match cb.prec_solve_fn with
-            | None -> invalid_arg "preconditioning type is not PrecNone, but no \
-                                   solve function given"
-            | Some solve_fn ->
-              c_spils_set_preconditioner parent which
-                (cb.prec_setup_fn <> None)
-                (cb.jac_times_vec_fn <> None);
-              (tosession bs).ls_callbacks <- BSpilsCallback cb
-
-        let spgmr maxl prec_type cb bs _ =
+        let init_spils init bs maxl prec =
           let parent, which = parent_and_which bs in
-          let maxl = match maxl with None -> 0 | Some ml -> ml in
-          c_spils_spgmr parent which maxl prec_type;
-          set_precond bs parent which prec_type cb
+          let with_prec prec_type cb =
+            init parent which maxl prec_type;
+            c_spils_set_preconditioner parent which
+              (cb.prec_setup_fn <> None);
+            c_spils_set_jac_times_vec_fn parent which
+              (cb.jac_times_vec_fn <> None);
+            (tosession bs).ls_callbacks <- BSpilsCallback cb
+          in
+          match prec with
+          | PrecNone -> init parent which maxl PrecTypeNone
+          | PrecLeft cb  -> with_prec PrecTypeLeft cb
+          | PrecRight cb -> with_prec PrecTypeRight cb
+          | PrecBoth cb  -> with_prec PrecTypeBoth cb
 
-        let spbcg maxl prec_type cb bs _ =
-          let parent, which = parent_and_which bs in
-          let maxl = match maxl with None -> 0 | Some ml -> ml in
-          c_spils_spbcg parent which maxl prec_type;
-          set_precond bs parent which prec_type cb
+        let spgmr ?(maxl=0) prec bs _ =
+          init_spils c_spils_spgmr bs maxl prec
 
-        let sptfqmr maxl prec_type cb bs _ =
-          let parent, which = parent_and_which bs in
-          let maxl = match maxl with None -> 0 | Some ml -> ml in
-          c_spils_sptfqmr parent which maxl prec_type;
-          set_precond bs parent which prec_type cb
+        let spbcg ?(maxl=0) prec bs _ =
+          init_spils c_spils_spbcg bs maxl prec
+
+        let sptfqmr ?(maxl=0) prec bs _ =
+          init_spils c_spils_sptfqmr bs maxl prec
 
         external set_prec_type
             : ('a, 'k) bsession -> Spils.preconditioning_type -> unit
@@ -842,24 +848,21 @@ module Adjoint =
                     -> int -> int -> Spils.preconditioning_type -> unit
               = "c_cvodes_adj_spils_banded_sptfqmr"
 
-            let spgmr maxl prec_type br bs nv =
+            let spgmr ?(maxl=0) prec_type br bs nv =
               let parent, which = parent_and_which bs in
               let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
-              let maxl = match maxl with None -> 0 | Some ml -> ml in
               c_spils_banded_spgmr (parent, which, neqs)
                                    br.mupper br.mlower maxl prec_type
 
-            let spbcg maxl prec_type br bs nv =
+            let spbcg ?(maxl=0) prec_type br bs nv =
               let parent, which = parent_and_which bs in
               let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
-              let maxl = match maxl with None -> 0 | Some ml -> ml in
               c_spils_banded_spbcg (parent, which, neqs)
                                    br.mupper br.mlower maxl prec_type
 
-            let sptfqmr maxl prec_type br bs nv =
+            let sptfqmr ?(maxl=0) prec_type br bs nv =
               let parent, which = parent_and_which bs in
               let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
-              let maxl = match maxl with None -> 0 | Some ml -> ml in
               c_spils_banded_sptfqmr (parent, which, neqs)
                                      br.mupper br.mlower maxl prec_type
 
@@ -1060,7 +1063,7 @@ let call_bprecsetupfn session jac jok gamma =
 let call_bprecsolvefn session jac ps rvecB =
   let session = read_weak_ref session in
   match session.ls_callbacks with
-  | BSpilsCallback { Adjoint.Spils.prec_solve_fn = Some f } ->
+  | BSpilsCallback { Adjoint.Spils.prec_solve_fn = f } ->
       adjust_retcode session (f jac ps) rvecB
   | _ -> assert false
 

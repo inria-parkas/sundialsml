@@ -712,21 +712,22 @@ CAMLprim value c_cvode_spils_banded_sptfqmr (value vcvode_mem_neqs,
 }
 
 CAMLprim value c_cvode_spils_set_preconditioner (value vsession,
-						 value vset_precsetup,
-						 value vset_jac)
+						 value vset_precsetup)
 {
-    CAMLparam3 (vsession, vset_precsetup, vset_jac);
-    int flag;
+    CAMLparam2 (vsession, vset_precsetup);
     void *mem = CVODE_MEM_FROM_ML (vsession);
     CVSpilsPrecSetupFn setup = Bool_val (vset_precsetup) ? precsetupfn : NULL;
-
-    flag = CVSpilsSetPreconditioner (mem, setup, precsolvefn);
+    int flag = CVSpilsSetPreconditioner (mem, setup, precsolvefn);
     CHECK_FLAG ("CVSpilsSetPreconditioner", flag);
-    if (Bool_val (vset_jac)) {
-	flag = CVSpilsSetJacTimesVecFn (mem, jactimesfn);
-	CHECK_FLAG ("CVSpilsSetJacTimesVecFn", flag);
-    }
+    CAMLreturn (Val_unit);
+}
 
+CAMLprim value c_cvode_spils_set_jac_times_vec_fn(value vdata, value vset_jac)
+{
+    CAMLparam2(vdata, vset_jac);
+    CVSpilsJacTimesVecFn jac = Bool_val (vset_jac) ? jactimesfn : NULL;
+    int flag = CVSpilsSetJacTimesVecFn(CVODE_MEM_FROM_ML(vdata), jac);
+    CHECK_FLAG("CVSpilsSetJacTimesVecFn", flag);
     CAMLreturn (Val_unit);
 }
 
@@ -737,22 +738,6 @@ CAMLprim value c_cvode_wf_tolerances (value vdata)
     int flag = CVodeWFtolerances(CVODE_MEM_FROM_ML(vdata), errw);
     CHECK_FLAG("CVodeWFtolerances", flag);
 
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value c_cvode_set_jac_times_vec_fn(value vdata)
-{
-    CAMLparam1(vdata);
-    int flag = CVSpilsSetJacTimesVecFn(CVODE_MEM_FROM_ML(vdata), jactimesfn);
-    CHECK_FLAG("CVSpilsSetJacTimesVecFn", flag);
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value c_cvode_clear_jac_times_vec_fn(value vdata)
-{
-    CAMLparam1(vdata);
-    int flag = CVSpilsSetJacTimesVecFn(CVODE_MEM_FROM_ML(vdata), NULL);
-    CHECK_FLAG("CVSpilsSetJacTimesVecFn", flag);
     CAMLreturn (Val_unit);
 }
 

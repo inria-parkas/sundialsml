@@ -84,10 +84,10 @@ module SpilsCommonTypes = struct
     | ClassicalGS
 
   type preconditioning_type = Spils.preconditioning_type =
-    | PrecNone
-    | PrecLeft
-    | PrecRight
-    | PrecBoth
+    | PrecTypeNone
+    | PrecTypeLeft
+    | PrecTypeRight
+    | PrecTypeBoth
 end
 
 module SpilsTypes = struct
@@ -113,10 +113,18 @@ module SpilsTypes = struct
 
   type 'a callbacks =
     {
-      prec_solve_fn : 'a prec_solve_fn option;
+      prec_solve_fn : 'a prec_solve_fn;
       prec_setup_fn : 'a prec_setup_fn option;
       jac_times_vec_fn : 'a jac_times_vec_fn option;
     }
+
+  type 'a preconditioner =
+    | PrecNone
+    | PrecLeft of 'a callbacks
+    | PrecRight of 'a callbacks
+    | PrecBoth of 'a callbacks
+
+  type serial_preconditioner = Sundials.RealArray.t preconditioner
 end
 
 module AlternateTypes' = struct
@@ -256,10 +264,16 @@ module AdjointTypes' = struct
 
     type 'a callbacks =
       {
-        prec_solve_fn : 'a prec_solve_fn option;
+        prec_solve_fn : 'a prec_solve_fn;
         prec_setup_fn : 'a prec_setup_fn option;
         jac_times_vec_fn : 'a jac_times_vec_fn option;
       }
+
+    type 'a preconditioner =
+      | PrecNone
+      | PrecLeft of 'a callbacks
+      | PrecRight of 'a callbacks
+      | PrecBoth of 'a callbacks
   end
 end
 

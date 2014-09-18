@@ -876,13 +876,11 @@ let main () =
 
   (* Attach preconditioner and linear solver modules *)
   let spgmr = Bbd.spgmr
-                None
-                Spils.PrecLeft
+                Spils.PrecTypeLeft
                 { Bbd.mudq = d.l_m.(0) + 1;
                   Bbd.mldq = d.l_m.(0) + 1;
                   Bbd.mukeep = 2;
                   Bbd.mlkeep = 2; }
-                None
                 { Bbd.local_fn = f_local d;
                   Bbd.comm_fn = None; }
   in
@@ -929,13 +927,11 @@ let main () =
 
   (* Attach preconditioner and linear solver modules *)
   let bspgmr = Adjbbd.spgmr
-                None
-                Spils.PrecLeft
+                Spils.PrecTypeLeft
                 { Bbd.mudq = d.l_m.(0) + 1;
                   Bbd.mldq = d.l_m.(0) + 1;
                   Bbd.mukeep = 2;
                   Bbd.mlkeep = 2; }
-                None
                 { Adjbbd.local_fn = fB_local d;
                   Adjbbd.comm_fn = None; }
   in

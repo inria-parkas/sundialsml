@@ -57,10 +57,10 @@ module SpilsCommonTypes = struct
     | ClassicalGS
 
   type preconditioning_type = Spils.preconditioning_type =
-    | PrecNone
-    | PrecLeft
-    | PrecRight
-    | PrecBoth
+    | PrecTypeNone
+    | PrecTypeLeft
+    | PrecTypeRight
+    | PrecTypeBoth
 end
 
 module SpilsTypes = struct

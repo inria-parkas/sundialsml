@@ -994,22 +994,27 @@ CAMLprim value c_cvodes_adj_sv_tolerances(value vparent, value vwhich,
 
 CAMLprim value c_cvodes_adj_spils_set_preconditioner(value vparent,
 						     value vwhich,
-						     value vset_precsetup,
-						     value vset_jac)
+						     value vset_precsetup)
 {
-    CAMLparam4(vparent, vwhich, vset_precsetup, vset_jac);
-    int flag;
+    CAMLparam3(vparent, vwhich, vset_precsetup);
     void *mem = CVODE_MEM_FROM_ML(vparent);
     int which = Int_val(vwhich);
     CVSpilsPrecSetupFnB bsetup = Bool_val(vset_precsetup) ? bprecsetupfn : NULL;
-
-    flag = CVSpilsSetPreconditionerB(mem, which, bsetup, bprecsolvefn);
+    int flag = CVSpilsSetPreconditionerB(mem, which, bsetup, bprecsolvefn);
     SCHECK_FLAG ("CVSpilsSetPreconditionerB", flag);
-    if (Bool_val(vset_jac)) {
-	flag = CVSpilsSetJacTimesVecFnB(mem, which, bjactimesfn);
-	SCHECK_FLAG ("CVSpilsSetJacTimesVecFnB", flag);
-    }
+    CAMLreturn (Val_unit);
+}
 
+CAMLprim value c_cvodes_adj_spils_set_jac_times_vec_fn(value vparent,
+						       value vwhich,
+						       value vset_jac)
+{
+    CAMLparam3(vparent, vwhich, vset_jac);
+    void *mem = CVODE_MEM_FROM_ML(vparent);
+    int which = Int_val(vwhich);
+    CVSpilsJacTimesVecFnB jac = Bool_val(vset_jac) ? bjactimesfn : NULL;
+    int flag = CVSpilsSetJacTimesVecFnB(mem, which, jac);
+    SCHECK_FLAG ("CVSpilsSetJacTimesVecFnB", flag);
     CAMLreturn (Val_unit);
 }
 

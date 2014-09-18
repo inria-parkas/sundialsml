@@ -509,10 +509,9 @@ let main () =
         Cvode.reinit cvode_mem t0 u
           ~iter_type:
             (Cvode.Newton
-               (Cvode.Spils.spgmr None Spils.PrecLeft
-                   { Cvode.Spils.prec_setup_fn = Some (precond data);
-                     Cvode.Spils.prec_solve_fn = Some (psolve data);
-                     Cvode.Spils.jac_times_vec_fn = None }));
+               (Cvode.Spils.spgmr
+                  (Cvode.Spils.prec_left ~setup:(precond data)
+                     (psolve data))));
 
         (* Set modified Gram-Schmidt orthogonalization, preconditioner 
            setup and solve routines Precond and PSolve, and the pointer 
@@ -532,10 +531,8 @@ let main () =
         Cvode.reinit cvode_mem t0 u
           ~iter_type:
             (Cvode.Newton
-               (Cvode.Spils.spbcg None Spils.PrecLeft
-                   { Cvode.Spils.prec_setup_fn = Some (precond data);
-                     Cvode.Spils.prec_solve_fn = Some (psolve data);
-                     Cvode.Spils.jac_times_vec_fn = None }))
+               (Cvode.Spils.spbcg
+                  (Cvode.Spils.prec_left ~setup:(precond data) (psolve data))))
       end
 
     (* (c) SPTFQMR *)
@@ -550,10 +547,8 @@ let main () =
         Cvode.reinit cvode_mem t0 u
           ~iter_type:
             (Cvode.Newton
-               (Cvode.Spils.sptfqmr None Spils.PrecLeft
-                   { Cvode.Spils.prec_setup_fn = Some (precond data);
-                     Cvode.Spils.prec_solve_fn = Some (psolve data);
-                     Cvode.Spils.jac_times_vec_fn = None }))
+               (Cvode.Spils.sptfqmr
+                  (Cvode.Spils.prec_left ~setup:(precond data) (psolve data))))
       end);
 
     (* In loop over output points, call CVode, print results, test for error *)

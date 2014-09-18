@@ -1230,10 +1230,10 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
           | ClassicalGS
 
         type preconditioning_type = Spils.preconditioning_type =
-          | PrecNone
-          | PrecLeft
-          | PrecRight
-          | PrecBoth
+          | PrecTypeNone
+          | PrecTypeLeft
+          | PrecTypeRight
+          | PrecTypeBoth
 
         (** Arguments passed to the preconditioner solve callback
             function.  See {!prec_solve_fn}.
@@ -1252,34 +1252,13 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
                                    ([true]) or the right one ([false]). *)
           }
 
-        (** Callbacks for Krylov subspace linear solvers.  Ignored if the
-            {!Spils.preconditioning_type} is set to [PrecNone].  In that case,
-            you should use {!no_precond} as [callbacks].  *)
-        type 'a callbacks =
-          {
-            prec_solve_fn : 'a prec_solve_fn option;
-            (** Solves the preconditioning system {i Pz = r} for
-                the backward problem.  *)
-
-            prec_setup_fn : 'a prec_setup_fn option;
-            (** An optional function that preprocesses and/or evaluates
-                any Jacobian-related data needed by {!prec_solve_fn}.  See
-                the description on the type for details.  When
-                [prec_solve_fn] doesn't need any such data, this field can
-                be [None].  *)
-
-            jac_times_vec_fn : 'a jac_times_vec_fn option;
-            (** Multiplies the system Jacobian to a vector.  See
-                {!jac_times_vec_fn} for details.  *)
-          }
-
         (** This function solves the preconditioning system {i Pz = r} for
             the backward problem.
 
             See also {!callbacks}.
 
             @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB *)
-        and 'a prec_solve_fn =
+        type 'a prec_solve_fn =
           ('a single_tmp, 'a) jacobian_arg
           -> 'a prec_solve_arg
           -> 'a
@@ -1291,7 +1270,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
             See also {!callbacks}.
 
             @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB *)
-        and 'a prec_setup_fn =
+        type 'a prec_setup_fn =
           ('a triple_tmp, 'a) jacobian_arg
           -> bool
           -> float
@@ -1303,26 +1282,94 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
             See also {!callbacks}.
 
             @cvodes <node7#ss:jtimesv_b> CVSpilsJacTimesVecFnB *)
-        and 'a jac_times_vec_fn =
+        type 'a jac_times_vec_fn =
           ('a single_tmp, 'a) jacobian_arg
           -> 'a
           -> 'a
           -> unit
 
-        (** No preconditioning functions. *)
-        val no_precond : 'a callbacks
+        (** A preconditioner, which includes the type of
+            preconditioning to be done (none, left, right, or both),
+            along with callbacks if applicable.  Conceptually, this
+            type should be declared as follows (in pseudo-GADT
+            syntax):
+            {[
+              type _ preconditioner =
+                | prec_none : 'a preconditioner
+                | prec_left : ?setup:'a prec_setup_fn ->
+                  ?jac_times_vec:'a jac_times_vec_fn ->
+                  'a prec_solve_fn ->
+                  'a preconditioner
+                | prec_right : ?setup:'a prec_setup_fn ->
+                  ?jac_times_vec:'a jac_times_vec_fn ->
+                  'a prec_solve_fn ->
+                  'a preconditioner
+                | prec_both : ?setup:'a prec_setup_fn ->
+                  ?jac_times_vec:'a jac_times_vec_fn ->
+                  'a prec_solve_fn ->
+                  'a preconditioner
+            ]}
+            but since OCaml's constructors don't support optional
+            parameters, we provide them as functions instead.  All
+            constructors except [prec_none] take the same set of
+            callback functions as arguments:
 
-        (** Krylov iterative solver with the scaled preconditioned GMRES method.
-            The arguments specify the maximum dimension of the Krylov subspace
-          and preconditioning type ({!Spils.preconditioning_type}) and the
-          preconditioner callback functions ({!callbacks}).
+            - [solve], the mandatory argument, solves the
+              preconditioning system $Pz = r$, where $P$ is a
+              preconditioning matrix chosen by the user.  See
+              {!prec_solve_fn} for details.
+            - [~setup] preprocesses and/or evaluates Jacobian-related
+              data needed by [solve].  It can be omitted if there are
+              no such data.  See {!prec_setup_fn} for details.
+            - [~jac_times_vec] multiplies the system Jacobian to a
+              given vector.  See {!jac_times_vec_fn} for details.
+              This function defaults to CVODE's internal
+              difference-quotient implementation.
+
+            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetPreconditionerB
+            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetJacTimesVecFnB
+            @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB
+            @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB
+            @cvodes <node7#ss:jtimesv_b> CVSpilsJacTimesVecFnB
+        *)
+        type 'a preconditioner
+
+        (** See {!preconditioner}.  *)
+        val prec_none : 'a preconditioner
+
+        (** See {!preconditioner}. *)
+        val prec_left :
+          ?setup:'a prec_setup_fn
+          -> ?jac_times_vec:'a jac_times_vec_fn
+          -> 'a prec_solve_fn
+          -> 'a preconditioner
+
+        (** See {!preconditioner}. *)
+        val prec_right :
+          ?setup:'a prec_setup_fn
+          -> ?jac_times_vec:'a jac_times_vec_fn
+          -> 'a prec_solve_fn
+          -> 'a preconditioner
+
+        (** See {!preconditioner}. *)
+        val prec_both :
+          ?setup:'a prec_setup_fn
+          -> ?jac_times_vec:'a jac_times_vec_fn
+          -> 'a prec_solve_fn
+          -> 'a preconditioner
+
+        (** Krylov iterative solver with the scaled preconditioned
+            GMRES method.  The arguments specify the maximum dimension
+            of the Krylov subspace and preconditioning type
+            ({!Spils.preconditioning_type}) and the preconditioner
+            callback functions ({!callbacks}).
 
             @cvodes <node7#sss:lin_solv_b> CVSpgmrB
             @cvodes <node7#SECTION00728400000000000000> CVSpilsSetPreconditionerB
             @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB
             @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB *)
-        val spgmr : int option -> preconditioning_type -> 'data callbacks
-                      -> ('data, 'kind) linear_solver
+        val spgmr : ?maxl:int -> 'a preconditioner
+                      -> ('a, 'k) linear_solver
 
         (** Krylov iterative solver with the scaled preconditioned Bi-CGStab
             method. The arguments are the same as [Spgmr].
@@ -1331,13 +1378,13 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
             @cvodes <node7#SECTION00728400000000000000> CVSpilsSetPreconditionerB
             @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB
             @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB *)
-        val spbcg : int option -> preconditioning_type -> 'data callbacks
-                      -> ('data, 'kind) linear_solver
+        val spbcg : ?maxl:int -> 'a preconditioner
+                      -> ('a, 'k) linear_solver
 
         (** Krylov iterative with the scaled preconditioned TFQMR method.  The
             arguments are the same as [Spgmr].  See also {!Spils}. *)
-        val sptfqmr : int option -> preconditioning_type
-                        -> 'data callbacks -> ('data, 'kind) linear_solver
+        val sptfqmr : ?maxl:int -> 'a preconditioner
+                      -> ('a, 'k) linear_solver
 
         (** {5:adjbwdspilsoptin Optional Input Functions} *)
 
@@ -1444,7 +1491,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
 
               @cvodes <node7#sss:lin_solv_b> CVSpgmrB
               @cvodes <node7#SECTION00741000000000000000> CVBandPrecInitB *)
-          val spgmr : int option -> preconditioning_type
+          val spgmr : ?maxl:int -> preconditioning_type
                               -> bandrange -> serial_linear_solver
 
           (** Same as Spbcg (the Krylov iterative solver with scaled
@@ -1454,7 +1501,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
 
               @cvodes <node7#sss:lin_solv_b> CVSpbcgB
               @cvodes <node7#SECTION00741000000000000000> CVBandPrecInitB *)
-          val spbcg : int option -> preconditioning_type
+          val spbcg : ?maxl:int -> preconditioning_type
                               -> bandrange -> serial_linear_solver
 
           (** Same as Spbcg (the Krylov iterative solver with scaled
@@ -1464,7 +1511,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
 
               @cvodes <node7#sss:lin_solv_b> CVSptfqmrB
               @cvodes <node7#SECTION00741000000000000000> CVBandPrecInitB *)
-          val sptfqmr : int option -> preconditioning_type
+          val sptfqmr : ?maxl:int -> preconditioning_type
                                -> bandrange -> serial_linear_solver
 
           (** Returns the sizes of the real and integer workspaces used by the

@@ -358,10 +358,10 @@ module Spils :
       | ClassicalGS
 
     type preconditioning_type = Spils.preconditioning_type =
-      | PrecNone
-      | PrecLeft
-      | PrecRight
-      | PrecBoth
+      | PrecTypeNone
+      | PrecTypeLeft
+      | PrecTypeRight
+      | PrecTypeBoth
 
     (** Arguments passed to the preconditioner solve callback function.  See
         {!prec_solve_fn}.
@@ -379,40 +379,6 @@ module Spils :
         left  : bool;       (** [true] if the left preconditioner
                                 is to be used and [false] if the
                                 right preconditioner is to be used. *)
-      }
-
-    (** Callbacks for Krylov subspace linear solvers.  Ignored if the
-        {!Spils.preconditioning_type} is set to [PrecNone].  In that case, you
-        should use {!no_precond} as [callbacks].
-
-        @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
-      *)
-    type 'a callbacks =
-      {
-        prec_solve_fn : 'a prec_solve_fn option;
-        (** Solves the preconditioning system {i Pz = r} for the
-            backward problem.  See {!prec_solve_fn} for details.
-
-            @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
-          *)
-
-        prec_setup_fn : 'a prec_setup_fn option;
-        (** An optional function that preprocesses and/or evaluates
-            any Jacobian-related data needed by {!prec_solve_fn}.  See
-            {!prec_setup_fn}.  When [prec_solve_fn] doesn't need any
-            such data, this field can be [None].
-
-            @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn
-          *)
-
-        jac_times_vec_fn : 'a jac_times_vec_fn option;
-        (** Multiplies the system Jacobian to a vector.  See
-            {!jac_times_vec_fn} for details.  When this field is
-            [None], CVODE uses a default implementation based on
-            difference quotients.
-
-            @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
-          *)
       }
 
     (** Called like [prec_solve_fn jac_arg solve_arg z] to solve the
@@ -435,12 +401,12 @@ module Spils :
         their values are needed outside of the function call, then
         they must be copied to separate physical structures.
 
-        See also {!Spils.callbacks}.
+        See also {!preconditioner}.
 
         @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
         @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
      *)
-    and 'a prec_solve_fn =
+    type 'a prec_solve_fn =
       ('a single_tmp, 'a) jacobian_arg
       -> 'a prec_solve_arg
       -> 'a
@@ -476,12 +442,12 @@ module Spils :
         outside of the function call, then they must be copied to a
         separate physical structure.
 
-        See also {!Spils.callbacks}.
+        See also {!preconditioner}.
 
         @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
         @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn
       *)
-    and 'a prec_setup_fn =
+    type 'a prec_setup_fn =
       ('a triple_tmp, 'a) jacobian_arg
       -> bool
       -> float
@@ -508,56 +474,119 @@ module Spils :
         needed outside of the function call, then they must be copied to a
         separate physical structure.
 
-        See also {!callbacks}.
+        See also {!preconditioner}.
 
-        @cvode <node5#ss:jtimesfn> CVSpilsJacTimesVecFn
         @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
+        @cvode <node5#ss:jtimesfn> CVSpilsJacTimesVecFn
       *)
-    and 'a jac_times_vec_fn =
+    type 'a jac_times_vec_fn =
       ('a single_tmp, 'a) jacobian_arg
       -> 'a (* v *)
       -> 'a (* Jv *)
       -> unit
 
-    val no_precond : 'a callbacks
+    (** A preconditioner, which includes the type of preconditioning
+        to be done (none, left, right, or both), along with callbacks
+        if applicable.  Conceptually, this type should be declared
+        as follows (in pseudo-GADT syntax):
+        {[
+          type _ preconditioner =
+            | prec_none : 'a preconditioner
+            | prec_left : ?setup:'a prec_setup_fn ->
+                          ?jac_times_vec:'a jac_times_vec_fn ->
+                          'a prec_solve_fn ->
+                          'a preconditioner
+            | prec_right : ?setup:'a prec_setup_fn ->
+                           ?jac_times_vec:'a jac_times_vec_fn ->
+                           'a prec_solve_fn ->
+                           'a preconditioner
+            | prec_both : ?setup:'a prec_setup_fn ->
+                          ?jac_times_vec:'a jac_times_vec_fn ->
+                          'a prec_solve_fn ->
+                          'a preconditioner
+        ]}
+        but since OCaml's constructors don't support optional parameters,
+        we provide them as functions instead.  All constructors except
+        [prec_none] take the same set of callback functions as arguments:
 
-    (** Krylov iterative solver with the scaled preconditioned GMRES method.
-        The arguments specify the maximum dimension of the Krylov subspace (Pass
-        [None] to use the default value [5].), preconditioning type, and the
-        preconditioner callback functions ({!callbacks}). See also {!Spils}.
+        - [solve], the mandatory argument, solves the preconditioning system
+          $Pz = r$, where $P$ is a preconditioning matrix chosen by the user.
+          See {!prec_solve_fn} for details.
+        - [~setup] preprocesses and/or evaluates Jacobian-related data needed
+          by [solve].  It can be omitted if there are no such data.
+          See {!prec_setup_fn} for details.
+        - [~jac_times_vec] multiplies the system Jacobian to a given vector.
+          See {!jac_times_vec_fn} for details.  This function defaults to
+          CVODE's internal difference-quotient implementation.
+
+        @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
+        @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
+        @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn
+        @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
+        @cvode <node5#ss:jtimesfn> CVSpilsJacTimesVecFn
+      *)
+    type 'a preconditioner
+
+    (** See {!preconditioner}.  *)
+    val prec_none : 'a preconditioner
+
+    (** See {!preconditioner}. *)
+    val prec_left :
+      ?setup:'a prec_setup_fn
+      -> ?jac_times_vec:'a jac_times_vec_fn
+      -> 'a prec_solve_fn
+      -> 'a preconditioner
+
+    (** See {!preconditioner}. *)
+    val prec_right :
+      ?setup:'a prec_setup_fn
+      -> ?jac_times_vec:'a jac_times_vec_fn
+      -> 'a prec_solve_fn
+      -> 'a preconditioner
+
+    (** See {!preconditioner}. *)
+    val prec_both :
+      ?setup:'a prec_setup_fn
+      -> ?jac_times_vec:'a jac_times_vec_fn
+      -> 'a prec_solve_fn
+      -> 'a preconditioner
+
+    (** Krylov iterative solver with the scaled preconditioned GMRES
+        method.  Called like [spgmr ~maxl:maxl prec], where:
+
+        - [~maxl] is the maximum dimension of the Krylov subspace.
+          Defaults to [5].
+        - [prec] is a preconditioner.  See {!preconditioner}.
 
         @cvode <node5#sss:lin_solv_init> CVSpgmr
         @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
         @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
         @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
-    val spgmr : int option -> preconditioning_type -> 'data callbacks
-                    -> ('data, 'kind) linear_solver
+    val spgmr : ?maxl:int -> 'a preconditioner -> ('a, 'k) linear_solver
 
     (** Krylov iterative solver with the scaled preconditioned Bi-CGStab method.
-        The arguments are the same as [spgmr].  See also {!Spils}.
+        The arguments are the same as [spgmr].
 
         @cvode <node5#sss:lin_solv_init> CVSpbcg
         @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
         @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
         @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
-    val spbcg : int option -> preconditioning_type -> 'data callbacks
-                    -> ('data, 'kind) linear_solver
+    val spbcg : ?maxl:int -> 'a preconditioner -> ('a, 'k) linear_solver
 
     (** Krylov iterative with the scaled preconditioned TFQMR method.  The
-        arguments are the same as [spgmr].  See also {!Spils}.
+        arguments are the same as [spgmr].
 
         @cvode <node5#sss:lin_solv_init> CVSptfqmr
         @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
         @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
         @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
-    val sptfqmr : int option -> preconditioning_type -> 'data callbacks
-                    -> ('data, 'kind) linear_solver
+    val sptfqmr : ?maxl:int -> 'a preconditioner -> ('a, 'k) linear_solver
 
     (** {4 Low-level solver manipulation} *)
 
-    (** Set preconditioning functions (see {!callbacks}).  It may be
-        unsafe to use this function without a {!reinit}.  Users are encouraged
-        to use the [iter_type] parameter of {!reinit} instead, unless they are
+    (** Set preconditioning functions.  It may be unsafe to use this
+        function without a {!reinit}.  Users are encouraged to use the
+        [iter_type] parameter of {!reinit} instead, unless they are
         desperate for performance.
 
         @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
@@ -565,14 +594,14 @@ module Spils :
         @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
     val set_preconditioner :
       ('a, 'k) session
-      -> 'a prec_setup_fn option
+      -> ?setup:'a prec_setup_fn
       -> 'a prec_solve_fn
       -> unit
 
-    (** Set the Jacobian-times-vector function.  It may be unsafe to use this
-        function without a {!reinit}.  Users are encouraged to use the
-        [iter_type] parameter of {!reinit} instead, unless they are desperate
-        for performance.
+    (** Set the Jacobian-times-vector function.  It may be unsafe to
+        use this function without a {!reinit}.  Users are encouraged
+        to use the [iter_type] parameter of {!reinit} instead, unless
+        they are desperate for performance.
 
         @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
         @cvode <node5#ss:jtimesFn> Jacobian-times-vector function *)
@@ -591,13 +620,18 @@ module Spils :
         @cvode <node5#ss:jtimesFn> Jacobian-times-vector function *)
     val clear_jac_times_vec_fn : ('a, 'k) session -> unit
 
-    (** {4 Optional input functions} *)
+    (** This function resets the type of preconditioning, without
+        changing the preconditioning callbacks.  If the
+        preconditioning type is changed from [PrecTypeNone] to
+        something else, then {!set_prec_callbacks} must be called to
+        install the necessary callbacks.  Users are encouraged to use
+        the [iter_type] parameter of {!reinit} instead, unless they
+        are desperate for performance.
 
-    (** This function resets the type of preconditioning to be used using a
-        value of type {!Spils.preconditioning_type}.
-
-        @cvode <node5#sss:optin_spils> CVSpilsPrecSetupFn *)
+        @cvode <node5#sss:optin_spils> CVSpilsSetPrecType *)
     val set_prec_type : ('a, 'k) session -> preconditioning_type -> unit
+
+    (** {4 Optional input functions} *)
 
     (** Sets the Gram-Schmidt orthogonalization to be used with the
         Spgmr {!linear_solver}.
@@ -670,36 +704,46 @@ module Spils :
 
             @cvode <node5#sss:cvbandpre> Serial banded preconditioner module *)
 
-        (** Same as Spgmr (the Krylov iterative solver with scaled preconditioned
-            GMRES), but the preconditioner is set to CVODE's internal implementation
-            using a banded matrix of difference quotients.  The arguments specify
-            the maximum dimension of the Krylov subspace (Pass [None] to use the
-            default value [5].), preconditioning type, and the width of the band
-            matrix ({!bandrange}).
+        (** Same as Spgmr (the Krylov iterative solver with scaled
+            preconditioned GMRES), but the preconditioner is set to
+            CVODE's internal implementation using a banded matrix of
+            difference quotients.  It should be called like
+            [spgmr ~maxl:maxl prec_type bandrange], where:
+
+            - [~maxl] specifies the maximum dimension of the Krylov
+              subspace.  Defaults to [5].
+            - [prec_type] specifies the preconditioning type.  It is
+              legal to specify [PrecTypeNone], though in that case
+              the cost of setting up CVODE's internal preconditioner
+              is wasted.
+            - [bandrange] specifies the width of the band matrix
+              (see {!bandrange}).
 
             @cvode <node5#sss:lin_solv_init> CVSpgmr
             @cvode <node5#sss:cvbandpre> CVBandPrecInit *)
-        val spgmr : int option -> preconditioning_type -> bandrange
+        val spgmr : ?maxl:int -> preconditioning_type -> bandrange
                             -> serial_linear_solver
 
-        (** Same as Spbcg (the Krylov iterative solver with scaled preconditioned
-            Bi-CGStab), but the preconditioner is set to CVODE's internal
-            implementation using a banded matrix of difference quotients.  The
-            arguments are the same as [spgmr].
+        (** Same as Spbcg (the Krylov iterative solver with scaled
+            preconditioned Bi-CGStab), but the preconditioner is set
+            to CVODE's internal implementation using a banded matrix
+            of difference quotients.  The arguments are the same as
+            [spgmr].
 
             @cvode <node5#sss:lin_solv_init> CVSpbcg
             @cvode <node5#sss:cvbandpre> CVBandPrecInit *)
-        val spbcg : int option -> preconditioning_type -> bandrange
+        val spbcg : ?maxl:int -> preconditioning_type -> bandrange
                             -> serial_linear_solver
 
-        (** Same as Spbcg (the Krylov iterative solver with scaled preconditioned
-            Bi-CGStab), but the preconditioner is set to CVODE's internal
-            implementation using a banded matrix of difference quotients.  The
-            arguments are the same as [spgmr].
+        (** Same as Spbcg (the Krylov iterative solver with scaled
+            preconditioned Bi-CGStab), but the preconditioner is set
+            to CVODE's internal implementation using a banded matrix
+            of difference quotients.  The arguments are the same as
+            [spgmr].
 
             @cvode <node5#sss:lin_solv_init> CVSptfqmr
             @cvode <node5#sss:cvbandpre> CVBandPrecInit *)
-        val sptfqmr : int option -> preconditioning_type -> bandrange
+        val sptfqmr : ?maxl:int -> preconditioning_type -> bandrange
                                -> serial_linear_solver
 
         (** {4 Optional output functions} *)
