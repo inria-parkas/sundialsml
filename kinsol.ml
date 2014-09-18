@@ -214,7 +214,7 @@ module Spils =
       set_callbacks s callbacks
 
     external c_clear_jac_times_vec_fn : ('a, 'k) session -> unit
-        = "c_cvode_clear_jac_times_vec_fn"
+        = "c_kinsol_spils_clear_jac_times_vec_fn"
 
     let clear_jac_times_vec_fn s =
       (match s.ls_callbacks with
