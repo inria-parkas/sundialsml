@@ -80,10 +80,15 @@ module SpilsTypes = struct
 
   type 'a callbacks =
     {
-      prec_solve_fn : 'a prec_solve_fn option;
+      prec_solve_fn : 'a prec_solve_fn;
       prec_setup_fn : 'a prec_setup_fn option;
       jac_times_vec_fn : 'a jac_times_vec_fn option;
     }
+
+  (* IDA(S) supports only left preconditioning.  *)
+  type 'a preconditioner =
+    | PrecNone
+    | PrecLeft of 'a callbacks
 end
 
 module IdaBbdParamTypes = struct
@@ -237,10 +242,15 @@ module AdjointTypes' = struct
 
     type 'a callbacks =
       {
-        prec_solve_fn : 'a prec_solve_fn option;
+        prec_solve_fn : 'a prec_solve_fn;
         prec_setup_fn : 'a prec_setup_fn option;
         jac_times_vec_fn : 'a jac_times_vec_fn option;
       }
+
+    (* IDA(S) supports only left preconditioning.  *)
+    type 'a preconditioner =
+      | PrecNone
+      | PrecLeft of 'a callbacks
   end
 end
 

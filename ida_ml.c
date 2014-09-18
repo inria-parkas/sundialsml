@@ -595,21 +595,22 @@ CAMLprim value c_ida_dls_clear_band_jac_fn(value vdata)
 }
 
 CAMLprim value c_ida_spils_set_preconditioner (value vsession,
-					       value vset_presetup,
-					       value vset_jac)
+					       value vset_presetup)
 {
-    CAMLparam3 (vsession, vset_presetup, vset_jac);
+    CAMLparam2 (vsession, vset_presetup);
     void *mem = IDA_MEM_FROM_ML (vsession);
     IDASpilsPrecSetupFn setup = Bool_val (vset_presetup) ? precsetupfn : NULL;
-    int flag;
-
-    flag = IDASpilsSetPreconditioner (mem, setup, precsolvefn);
+    int flag = IDASpilsSetPreconditioner (mem, setup, precsolvefn);
     CHECK_FLAG ("IDASpilsSetPreconditioner", flag);
-    if (Bool_val (vset_jac)) {
-	flag = IDASpilsSetJacTimesVecFn (mem, jactimesfn);
-	CHECK_FLAG ("IDASpilsSetJacTimesVecFn", flag);
-    }
+    CAMLreturn (Val_unit);
+}
 
+CAMLprim value c_ida_spils_set_jac_times_vec_fn(value vdata, value vset_jac)
+{
+    CAMLparam2(vdata, vset_jac);
+    IDASpilsJacTimesVecFn jac = Bool_val (vset_jac) ? jactimesfn : NULL;
+    int flag = IDASpilsSetJacTimesVecFn(IDA_MEM_FROM_ML(vdata), jac);
+    CHECK_FLAG("IDASpilsSetJacTimesVecFn", flag);
     CAMLreturn (Val_unit);
 }
 
@@ -656,35 +657,6 @@ CAMLprim value c_ida_wf_tolerances(value vdata)
     int flag = IDAWFtolerances(IDA_MEM_FROM_ML(vdata), errw);
     CHECK_FLAG("IDAWFtolerances", flag);
 
-    CAMLreturn (Val_unit);
-}
-
-/* This is just a minimal skin over IDASpilsSetPreconditioner, whereas
- * c_ida_spils_set_preconditioner sets up the Jacobian-times-vector
- * function as well.  FIXME: remove this in favor of
- * c_ida_spils_set_preconditioner.  */
-CAMLprim value c_ida_set_preconditioner(value vdata)
-{
-    CAMLparam1(vdata);
-    int flag = IDASpilsSetPreconditioner(IDA_MEM_FROM_ML(vdata),
-					 precsetupfn, precsolvefn);
-    CHECK_FLAG("IDASpilsSetPreconditioner", flag);
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value c_ida_set_jac_times_vec_fn(value vdata)
-{
-    CAMLparam1(vdata);
-    int flag = IDASpilsSetJacTimesVecFn(IDA_MEM_FROM_ML(vdata), jactimesfn);
-    CHECK_FLAG("IDASpilsSetJacTimesVecFn", flag);
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value c_ida_clear_jac_times_vec_fn(value vdata)
-{
-    CAMLparam1(vdata);
-    int flag = IDASpilsSetJacTimesVecFn(IDA_MEM_FROM_ML(vdata), NULL);
-    CHECK_FLAG("IDASpilsSetJacTimesVecFn", flag);
     CAMLreturn (Val_unit);
 }
 

@@ -233,11 +233,8 @@ let main () =
   (* Call IDACreate to initialize solution with SPGMR linear solver.  *)
 
   let solver =
-    Ida.Spils.spgmr (Some 5)
-      { Ida.Spils.prec_setup_fn = Some (p_setup_heat data);
-        Ida.Spils.prec_solve_fn = Some (p_solve_heat data);
-        Ida.Spils.jac_times_vec_fn = None;
-      }
+    Ida.Spils.spgmr ~maxl:5
+      (Ida.Spils.prec_left ~setup:(p_setup_heat data) (p_solve_heat data))
   in
   let mem = Ida.init solver (Ida.SStolerances (rtol, atol))
                      (res_heat data) t0 wu wu' in

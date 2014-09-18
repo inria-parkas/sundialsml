@@ -1771,22 +1771,27 @@ CAMLprim value c_idas_adj_sv_tolerances(value vparent, value vwhich,
 
 CAMLprim value c_idas_adj_spils_set_preconditioner(value vparent,
 						   value vwhich,
-						   value vset_precsetup,
-						   value vset_jac)
+						   value vset_precsetup)
 {
-    CAMLparam4(vparent, vwhich, vset_precsetup, vset_jac);
-    int flag;
+    CAMLparam3(vparent, vwhich, vset_precsetup);
     void *mem = IDA_MEM_FROM_ML(vparent);
     int which = Int_val(vwhich);
     IDASpilsPrecSetupFnB bsetup = Bool_val(vset_precsetup) ? bprecsetupfn : NULL;
-
-    flag = IDASpilsSetPreconditionerB(mem, which, bsetup, bprecsolvefn);
+    int flag = IDASpilsSetPreconditionerB(mem, which, bsetup, bprecsolvefn);
     SCHECK_FLAG ("IDASpilsSetPreconditionerB", flag);
-    if (Bool_val(vset_jac)) {
-	flag = IDASpilsSetJacTimesVecFnB(mem, which, bjactimesfn);
-	SCHECK_FLAG ("IDASpilsSetJacTimesVecFnB", flag);
-    }
+    CAMLreturn (Val_unit);
+}
 
+CAMLprim value c_idas_adj_spils_set_jac_times_vec_fn(value vparent,
+						     value vwhich,
+						     value vset_jac)
+{
+    CAMLparam3(vparent, vwhich, vset_jac);
+    void *mem = IDA_MEM_FROM_ML(vparent);
+    int which = Int_val(vwhich);
+    IDASpilsJacTimesVecFnB jac = Bool_val (vset_jac) ? bjactimesfn : NULL;
+    int flag = IDASpilsSetJacTimesVecFnB(mem, which, jac);
+    SCHECK_FLAG ("IDASpilsSetJacTimesVecFnB", flag);
     CAMLreturn (Val_unit);
 }
 

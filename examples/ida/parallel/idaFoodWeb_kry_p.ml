@@ -893,10 +893,9 @@ let main () =
      maxl (max. Krylov subspace dim.) is set to 16. *)
   let maxl = 16 in
   let linsolv =
-    Ida.Spils.spgmr (Some maxl)
-      { Ida.Spils.prec_solve_fn = Some (psolvebd webdata);
-        Ida.Spils.prec_setup_fn = Some (precondbd webdata);
-        Ida.Spils.jac_times_vec_fn = None; } in
+    Ida.Spils.spgmr ~maxl:maxl
+      (Ida.Spils.prec_left ~setup:(precondbd webdata) (psolvebd webdata))
+  in
   let mem =
     Ida.init linsolv (Ida.SStolerances (rtol, atol))
       (resweb webdata)
