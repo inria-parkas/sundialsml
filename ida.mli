@@ -565,18 +565,28 @@ module Spils :
       -> 'a prec_solve_fn
       -> 'a preconditioner
 
-    (** Krylov iterative linear solver with the scaled preconditioned GMRES
-        method.  See {!callbacks} for what the argument should contain.
+    (** Krylov iterative linear solver with the scaled preconditioned
+        GMRES method.  Called like [spgmr ~maxl:maxl
+        ~max_restarts:maxr prec], where:
+
+        - [~maxl] is the maximum dimension of the Krylov subspace.
+          Defaults to [5].
+        - [~max_restarts] is the maximum number of restarts.  Defaults
+          to [5].  Passing [0] disables restarts.
+        - [prec] is a preconditioner.  See {!preconditioner}.
+
 
         @ida <node5#sss:lin_solv_init> IDASpgmr
         @ida <node5#sss:optin_spils> IDASpilsSetPreconditioner
         @ida <node5#sss:optin_spils> IDASpilsSetJacTimesVecFn
     *)
-    val spgmr : ?maxl:int -> 'a preconditioner -> ('a, 'k) linear_solver
+    val spgmr : ?maxl:int -> ?max_restarts:int
+      -> 'a preconditioner -> ('a, 'k) linear_solver
 
     (** Krylov iterative linear solver with the scaled preconditioned
-        Bi-CGStab method.  See {!callbacks} for what the argument
-        should contain.
+        Bi-CGStab method.  The arguments are the same as {!spgmr},
+        except the maximum number of restarts ([~max_restarts]) cannot
+        be specified.
 
         @ida <node5#sss:lin_solv_init> IDASpbcg
         @ida <node5#sss:optin_spils> IDASpilsSetPreconditioner
@@ -585,8 +595,9 @@ module Spils :
     val spbcg : ?maxl:int -> 'a preconditioner -> ('a, 'k) linear_solver
 
     (** Krylov iterative linear solver with the scaled preconditioned
-        TFQMR method.  See {!callbacks} for what the argument should
-        contain.
+        TFQMR method.  The arguments are the same as {!spgmr}, except
+        the maximum number of restarts ([~max_restarts]) cannot be
+        specified.
 
         @ida <node5#sss:lin_solv_init> IDASptfqmr
         @ida <node5#sss:optin_spils> IDASpilsSetPreconditioner

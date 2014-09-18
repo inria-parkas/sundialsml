@@ -206,8 +206,11 @@ module Spils =
       : ('a, 'k) session -> bool -> unit
       = "c_ida_spils_set_preconditioner"
 
+    external c_set_max_restarts : ('a, 'k) session -> int -> unit
+      = "c_ida_spils_set_max_restarts"
+
     external c_set_jac_times_vec_fn : ('a, 'k) session -> bool -> unit
-        = "c_ida_spils_set_jac_times_vec_fn"
+      = "c_ida_spils_set_jac_times_vec_fn"
 
     let init_prec session = function
       | PrecNone -> ()
@@ -216,8 +219,10 @@ module Spils =
         c_set_jac_times_vec_fn session (cb.jac_times_vec_fn <> None);
         session.ls_callbacks <- SpilsCallback cb
 
-    let spgmr ?(maxl=0) prec session _ _ =
+    let spgmr ?(maxl=0) ?(max_restarts=5) prec session _ _ =
       c_spgmr session maxl;
+      if max_restarts <> 5 then
+        c_set_max_restarts session max_restarts;
       init_prec session prec
 
     let spbcg ?(maxl=0) prec session _ _ =
