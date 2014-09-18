@@ -152,14 +152,32 @@ TODO: compiling with and without mpi.
 
 {2:performance Performance}
 
-TODO: summarise performance; always slower since we add an interface layer,
-but we exploit Bigarrays to minimise copying, OCaml is a memory managed
-language (garbage collection, bounds checking, etc.. But, the interface does
-not compare too badly:
+An interface like Sundials/ML inevitably adds execution overhead: there is
+extra code to execute at each call. But, how significant is this cost? And,
+more broadly, how does the performance of OCaml compare to that of C for
+programs that use numerical solvers?
+
+These questions are not easy to answer. As a first attempt, the red bars in
+the following graph show the ratios of the execution times of the Sundials
+examples reimplemented in OCaml and the original versions in C, i.e., a
+value of 2 on the right-hand axis means twice as slow.
 
 {img perf.opt.png}
 
-TODO: include graph, explain methodology
+The graph suggests that the OCaml versions are rarely more than twice as
+slow as the original ones, and that they often take about the same time or
+at least less than 1.5 times. The [*_custom] examples use custom nvectors
+with low-level operations in OCaml and the [*_alt] examples use linear
+solvers implemented in OCaml.
+
+This conclusion seems reasonable as a first approximation, but several
+details of the analysis process and individual results show that the real
+situation is less clear-cut.
+
+TODO: explain run-times and the need to loop to get significant profiling
+data.
+
+TODO: discuss the parallel examples.
 
 TODO: performance tips for programs: a) type annotations for vectors; b)
 avoid slice and sub; c) unwrap and use array access for matrices.
@@ -168,6 +186,10 @@ TODO: Thanks to OCaml's optimizations for (unboxed) floats and tight loops,
 and also to the MPI and Bigarray libraries.
 
 TODO: profile with -O3 and CHECK_MATRIX_ACCESS, etc. = 0.
+
+Summarize: slower but not by too much, must factor in with the other
+advantages of using OCaml (memory management, bounds checking, etc.), easy
+to combine with symbolic code.
 
 {2:refs References}
 
