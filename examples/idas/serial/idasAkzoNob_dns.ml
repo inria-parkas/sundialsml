@@ -104,14 +104,14 @@ let rhsQ data t (yy : RealArray.t) yp (qdot : RealArray.t) =
   qdot.{0} <- yy.{0}
 
 let print_header rtol avtol y =
-  printf "\nidasAkzoNob_dns: Akzo Nobel chemical kinetics DAE serial example problem for IDAS\n";
-  printf "Linear solver: IDADENSE, Jacobian is computed by IDAS.\n";
+  print_string "\nidasAkzoNob_dns: Akzo Nobel chemical kinetics DAE serial example problem for IDAS\n";
+  print_string "Linear solver: IDADENSE, Jacobian is computed by IDAS.\n";
   printf "Tolerance parameters:  rtol = %g   atol = %g\n"
          rtol avtol;
-  printf "---------------------------------------------------------------------------------\n";
-  printf "   t        y1        y2       y3       y4       y5";
-  printf "      y6    | nst  k      h\n";
-  printf "---------------------------------------------------------------------------------\n"
+  print_string "---------------------------------------------------------------------------------\n";
+  print_string "   t        y1        y2       y3       y4       y5";
+  print_string "      y6    | nst  k      h\n";
+  print_string "---------------------------------------------------------------------------------\n"
 
 
 let print_output mem t y =
@@ -133,13 +133,14 @@ let print_final_stats mem =
   and nreLS = Ida.Dls.get_num_res_evals mem
   in
 
-  printf "\nFinal Run Statistics: \n\n";
-  printf "Number of steps                    = %d\n" nst;
-  printf "Number of residual evaluations     = %d\n" (nre+nreLS);
-  printf "Number of Jacobian evaluations     = %d\n" nje;
-  printf "Number of nonlinear iterations     = %d\n" nni;
-  printf "Number of error test failures      = %d\n" netf;
-  printf "Number of nonlinear conv. failures = %d\n" ncfn
+  print_string "\nFinal Run Statistics: \n\n";
+  print_string "Number of steps                    = ";   print_int nst;
+  print_string "\nNumber of residual evaluations     = "; print_int (nre+nreLS);
+  print_string "\nNumber of Jacobian evaluations     = "; print_int nje;
+  print_string "\nNumber of nonlinear iterations     = "; print_int nni;
+  print_string "\nNumber of error test failures      = "; print_int netf;
+  print_string "\nNumber of nonlinear conv. failures = "; print_int ncfn;
+  print_newline ()
 
 (* Main program *)
 let main () =
@@ -222,9 +223,9 @@ let main () =
 
   let _ = Quad.get mem wq in
 
-  printf "\n--------------------------------------------------------\n";
+  print_string "\n--------------------------------------------------------\n";
   printf "G:          %24.16f \n" q.{0};
-  printf "--------------------------------------------------------\n\n";
+  print_string "--------------------------------------------------------\n\n";
 
   print_final_stats mem
 
