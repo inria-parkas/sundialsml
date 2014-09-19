@@ -85,8 +85,8 @@ let five  = 5.0
    where v is an N_Vector. 
    The variables are ordered by the y index j, then by the x index i. *)
 
-let ijth vdata i j = vdata.{(j-1) + (i-1)*my}
-let set_ijth vdata i j e = vdata.{(j-1) + (i-1)*my} <- e
+let ijth (vdata : RealArray.t) i j = vdata.{(j-1) + (i-1)*my}
+let set_ijth (vdata : RealArray.t) i j e = vdata.{(j-1) + (i-1)*my} <- e
 
 (* Type : UserData (contains grid constants) *)
 

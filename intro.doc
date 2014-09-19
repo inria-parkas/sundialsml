@@ -59,7 +59,7 @@ The {!Sundials.unvec} function gives direct access to the underlying data.
 
 The interface to serial nvectors, {!Nvector_serial}, is based on
 {{:http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.html}Bigarrays}.
-These arrays are manipulated directly, that is, with no additional overhead,
+These arrays are manipulated directly, i.e., with no additional overhead,
 within the solver by the original low-level serial nvector operations
 (see {!Nvector.NVECTOR_OPS}).
 The same low-level operations can be called from OCaml
@@ -159,23 +159,33 @@ programs that use numerical solvers?
 
 These questions are not easy to answer. As a first attempt, the red bars in
 the following graph show the ratios of the execution times of the Sundials
-examples reimplemented in OCaml and the original versions in C, i.e., a
-value of 2 on the right-hand axis means twice as slow.
+examples reimplemented in OCaml to the original versions in C, i.e., a
+value of 2 against the right-hand axis means an OCaml version that is
+twice as slow. The C versions were compiled with [gcc -O3].
 
 {img perf.opt.png}
 
 The graph suggests that the OCaml versions are rarely more than twice as
-slow as the original ones, and that they often take about the same time or
-at least less than 1.5 times. The [*_custom] examples use custom nvectors
-with low-level operations in OCaml and the [*_alt] examples use linear
-solvers implemented in OCaml.
+slow as the original ones and that they are often around 50% or less slower.
+The [*_custom] examples use custom nvectors with low-level operations in
+OCaml and the [*_alt] examples use linear solvers implemented in OCaml.
 
 This conclusion seems reasonable as a first approximation, but several
 details of the analysis process and individual results show that the real
-situation is less clear-cut.
+situation is less clear-cut. For one, the running times of most of the
+examples are so short that accurate profiling is impossible (i.e.,
+{{:http://pubs.opengroup.org/onlinepubs/9699919799/utilities/time.html}time}
+and {{:https://sourceware.org/binutils/docs/gprof/}gprof} simply show 0s).
+The figures in the graph were obtained by instrumenting the examples to
+repeatedly execute their [main] functions.
+The number of repetitions varies per example since otherwise the slower
+examples take too long.
+The timings indicated by the dots and the axis at right are calculated by
+dividing the measurement made for each C version by the number of
+repetitions.
+For many of the examples with longer running times, the ratio OCaml/C is
+close to 1.
 
-TODO: explain run-times and the need to loop to get significant profiling
-data.
 
 TODO: discuss the parallel examples.
 

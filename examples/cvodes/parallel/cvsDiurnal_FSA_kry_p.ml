@@ -76,7 +76,7 @@ let slice = Array1.sub
 let printf = Printf.printf
 let eprintf = Printf.eprintf
 
-let blit buf buf_offset dst dst_offset len =
+let blit (buf : RealArray.t) buf_offset (dst : RealArray.t) dst_offset len =
   for i = 0 to len-1 do
     dst.{dst_offset + i} <- buf.{buf_offset + i}
   done
@@ -139,7 +139,6 @@ let zero =      0.0
    work with matrices stored by column in a 2-dimensional array. In C,
    arrays are indexed starting at 0, not 1. *)
 
-let ijth v i j       = Direct.get v (i - 1) (j - 1)
 let set_ijth v i j e = Direct.set v (i - 1) (j - 1) e
 
 (* Types : UserData and PreconData 

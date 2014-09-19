@@ -68,10 +68,6 @@ let two    = 2.0
 let pi     = 3.1415926
 let e      = 2.7182818
 
-(* Accessor macros *)
-let ith v i = v.{i - 1}
-let set_ith v i e = v.{i - 1} <- e
-
 (* System function for predator-prey system *)
 let lb = RealArray.create nvar
 let ub = RealArray.create nvar

@@ -173,6 +173,14 @@ doc/html/index.html: doc/html dochtml.cmo intro.doc 			\
 doc/html:
 	mkdir $@
 
+doc/html/perf.opt.png: examples/perf.opt.log
+	TITLE="OCaml native code performance over C ($(CC) $(CFLAGS))" \
+	    TERMINAL=png \
+	    FONT=FreeSans,16 \
+	    SIZE=2000,1200 \
+	    BMARGIN=1600 \
+	    OUTPUT=$@ examples/utils/plot.sh $<
+
 # Testing the examples
 
 tests.opt.log: $(INSTALL_CMA:.cma=.cmxa)

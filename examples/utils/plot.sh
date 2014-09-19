@@ -212,7 +212,7 @@ if [ "$#" -eq 1 ]; then
     BOXCMD="'< $crunch -S $1' u 1:5 w boxes \
             title 'OCaml time / C time (left axis)' \
             lc rgb word(BOXCOLORS,1)"
-    DOTCMD="'< $crunch -S $1' u 1:(\$4/\$2) w points pointtype 7 \
+    DOTCMD="'< $crunch -S $1' u 1:(\$4/\$2) w points pointsize 4 pointtype 14 \
             lc rgb word(DOTCOLORS,1) \
             title 'C time / rep (right axis)' axes x1y2"
 else

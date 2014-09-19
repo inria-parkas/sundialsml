@@ -124,7 +124,7 @@ type user_data = {
 
 (* Private Helper Functions *)
 
-let sqr x = x ** 2.0
+let sqr x = x *. x
 
 (* Load problem constants in data *)
 

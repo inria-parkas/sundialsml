@@ -25,6 +25,8 @@ examples/*/*/*.sundials.c
 examples/*/*/*.sundials
 examples/utils/perf
 examples/utils/crunchperf
+examples/perf.opt.*
+examples/perf.byte.*
 style.css
 # Emacs temporary files.
 \#*

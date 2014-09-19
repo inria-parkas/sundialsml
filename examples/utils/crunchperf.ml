@@ -29,8 +29,8 @@ let abbreviate name =
     name
     [("^cvode", "cv");
      ("^kinsol", "kin");
-     ("/serial/", "/ser/");
-     ("/parallel/", "/par/");
+     ("/serial/", "―ser―");   (* U+2015 *)
+     ("/parallel/", "―par―");
     ]
 let expand name =
   List.fold_left
@@ -38,8 +38,8 @@ let expand name =
     name
     [("^cv", "cvode");
      ("^kin", "kinsol");
-     ("/ser/", "/serial/");
-     ("/par/", "/parallel/");
+     ("―ser―", "/serial/");
+     ("―par―", "/parallel/");
     ]
 
 (* Function composition *)
