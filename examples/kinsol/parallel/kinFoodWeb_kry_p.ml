@@ -96,8 +96,6 @@ let unwrap = RealArray2.unwrap
 
 let sqr x = x *. x
 let nvwl2norm = Nvector.DataOps.n_vwl2norm
-let ith v i = v.{i - 1}
-let set_ith v i e = v.{i - 1} <- e
 
 (* Problem Constants *)
 
@@ -228,14 +226,14 @@ let init_user_data my_pe comm =
   data
 
 (* Dot product routine for realtype arrays *)
-let dot_prod size x1 x2 =
+let dot_prod size (x1 : RealArray.t) (x2 : RealArray.t) =
   let temp =ref zero in
   for i = 0 to size - 1 do
     temp := !temp +. x1.{i} *. x2.{i}
   done;
   !temp
 
-let blit buf buf_offset dst dst_offset len =
+let blit (buf : RealArray.t) buf_offset (dst : RealArray.t) dst_offset len =
   for i = 0 to len-1 do
     dst.{dst_offset + i} <- buf.{buf_offset + i}
   done
@@ -250,7 +248,7 @@ let bytes x = header_and_empty_array_size + x * float_cell_size
 
 (* Routine to send boundary data to neighboring PEs *)
 
-let bsend comm my_pe isubx isuby dsizex dsizey udata =
+let bsend comm my_pe isubx isuby dsizex dsizey (udata : RealArray.t) =
   let buf = RealArray.create (num_species*mysub) in
 
   (* If isuby > 0, send data from bottom x-line of u *)
@@ -317,7 +315,7 @@ let brecvpost comm my_pe isubx isuby dsizex dsizey =
    be manipulated between the two calls.
    2) request should have 4 entries, and should be passed in both calls also. *)
 
-let brecvwait request isubx isuby dsizex cext =
+let brecvwait request isubx isuby dsizex (cext : RealArray.t) =
   let dsizex2 = dsizex + 2*num_species in
 
   (* If isuby > 0, receive data for bottom x-line of cext *)
@@ -357,7 +355,7 @@ let brecvwait request isubx isuby dsizex cext =
 (* ccomm routine.  This routine performs all communication 
    between processors of data needed to calculate f. *)
 
-let ccomm data udata =
+let ccomm data (udata : RealArray.t) =
   let comm    = data.comm
   and my_pe   = data.my_pe
   and isubx   = data.isubx
@@ -374,7 +372,7 @@ let ccomm data udata =
   brecvwait request isubx isuby nsmxsub cext
 (* Interaction rate function routine *)
 
-let web_rate data xx yy cxy ratesxy =
+let web_rate data xx yy (cxy : RealArray.t) (ratesxy : RealArray.t) =
   let acoef = data.acoef in
   let bcoef = data.bcoef in
 
@@ -389,7 +387,7 @@ let web_rate data xx yy cxy ratesxy =
 
 (* System function for predator-prey system - calculation part *)
 
-let fcalcprpr data cdata fval =
+let fcalcprpr data (cdata : RealArray.t) (fval : RealArray.t) =
   
   (* Get subgrid indices, data sizes, extended work array cext *)
   let isubx = data.isubx in
@@ -570,7 +568,7 @@ let psolvebd data
   done (* end of jx loop *)
 
 (* Set initial conditions in cc *)
-let set_initial_profiles (cc, _, _) (sc, _, _) =
+let set_initial_profiles ((cc : RealArray.t), _, _) ((sc : RealArray.t), _, _) =
   (* Load initial profiles into cc and sc vector. *)
   for jy = 0 to mysub - 1 do
     for jx = 0 to mxsub - 1 do

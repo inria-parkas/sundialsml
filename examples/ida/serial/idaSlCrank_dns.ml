@@ -30,13 +30,13 @@ and nout = 41
 let printf = Printf.printf
 
 let print_header rtol atol y =
-  printf "\nidaSlCrank_dns: Slider-Crank DAE serial example problem for IDAS\n";
-  printf "Linear solver: IDADENSE, Jacobian is computed by IDAS.\n";
+  print_string "\nidaSlCrank_dns: Slider-Crank DAE serial example problem for IDAS\n";
+  print_string "Linear solver: IDADENSE, Jacobian is computed by IDAS.\n";
   printf "Tolerance parameters:  rtol = %g   atol = %g\n" rtol atol;
-  printf "-----------------------------------------------------------------------\n";
-  printf "  t            y1          y2           y3";
-  printf "      | nst  k      h\n";
-  printf "-----------------------------------------------------------------------\n"
+  print_string "-----------------------------------------------------------------------\n";
+  print_string "  t            y1          y2           y3";
+  print_string "      | nst  k      h\n";
+  print_string "-----------------------------------------------------------------------\n"
 
 let print_output mem t y =
   let kused = Ida.get_last_order mem
@@ -55,13 +55,14 @@ let print_final_stats mem =
   and ncfn = Ida.get_num_nonlin_solv_conv_fails mem
   and nreLS = Ida.Dls.get_num_res_evals mem in
 
-  printf "\nFinal Run Statistics: \n\n";
-  printf "Number of steps                    = %d\n" nst;
-  printf "Number of residual evaluations     = %d\n" (nre+nreLS);
-  printf "Number of Jacobian evaluations     = %d\n" nje;
-  printf "Number of nonlinear iterations     = %d\n" nni;
-  printf "Number of error test failures      = %d\n" netf;
-  printf "Number of nonlinear conv. failures = %d\n" ncfn
+  print_string "\nFinal Run Statistics: \n\n";
+  print_string "Number of steps                    = ";   print_int nst;
+  print_string "\nNumber of residual evaluations     = "; print_int (nre+nreLS);
+  print_string "\nNumber of Jacobian evaluations     = "; print_int nje;
+  print_string "\nNumber of nonlinear iterations     = "; print_int nni;
+  print_string "\nNumber of error test failures      = "; print_int netf;
+  print_string "\nNumber of nonlinear conv. failures = "; print_int ncfn;
+  print_newline ()
 
 type user_data =
   {

@@ -166,23 +166,23 @@ twice as slow. The C versions were compiled with [gcc -O3].
 {img perf.opt.png}
 
 The graph suggests that the OCaml versions are rarely more than twice as
-slow as the original ones and that they are often around 50% or less slower.
+slow as the original ones and that they are often around or less than 50%
+slower.
 The [*_custom] examples use custom nvectors with low-level operations in
 OCaml and the [*_alt] examples use linear solvers implemented in OCaml.
 
 This conclusion seems reasonable as a first approximation, but several
 details of the analysis process and individual results show that the real
 situation is less clear-cut. For one, the running times of most of the
-examples are so short that accurate profiling is impossible (i.e.,
+examples are so short that accurate profiling is not possible (i.e.,
 {{:http://pubs.opengroup.org/onlinepubs/9699919799/utilities/time.html}time}
 and {{:https://sourceware.org/binutils/docs/gprof/}gprof} simply show 0s).
 The figures in the graph were obtained by instrumenting the examples to
 repeatedly execute their [main] functions.
 The number of repetitions varies per example since otherwise the slower
 examples take too long.
-The timings indicated by the dots and the axis at right are calculated by
-dividing the measurement made for each C version by the number of
-repetitions.
+The timings indicated by the crosses and the axis at right are calculated by
+dividing the measurement made for each C version by the number of repetitions.
 For many of the examples with longer running times, the ratio OCaml/C is
 close to 1.
 

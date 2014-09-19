@@ -62,7 +62,7 @@ type user_data =
  *    res_i = u'_i - (central difference)_i                             
  * while for each boundary point, it is res_i = u_i.                     
  *)
-let res_heat data t u u' r =
+let res_heat data t (u : RealArray.t) (u' : RealArray.t) r =
   let coeff = data.coeff
   and mm    = data.mm in
   
