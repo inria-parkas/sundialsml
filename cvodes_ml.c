@@ -1417,13 +1417,13 @@ void cvodes_ml_check_flag(const char *call, int flag)
 	    caml_raise_constant(CVODE_EXN(RhsFuncFailure));
 
 	case CV_FIRST_RHSFUNC_ERR:
-	    caml_raise_constant(CVODE_EXN(FirstRhsFuncErr));
+	    caml_raise_constant(CVODE_EXN(FirstRhsFuncFailure));
 
 	case CV_REPTD_RHSFUNC_ERR:
-	    caml_raise_constant(CVODE_EXN(RepeatedRhsFuncErr));
+	    caml_raise_constant(CVODE_EXN(RepeatedRhsFuncFailure));
 
 	case CV_UNREC_RHSFUNC_ERR:
-	    caml_raise_constant(CVODE_EXN(UnrecoverableRhsFuncErr));
+	    caml_raise_constant(CVODE_EXN(UnrecoverableRhsFuncFailure));
 
 	case CV_RTFUNC_FAIL:
 	    caml_raise_constant(CVODE_EXN(RootFuncFailure));
@@ -1454,13 +1454,13 @@ void cvodes_ml_check_flag(const char *call, int flag)
 	    caml_raise_constant(CVODES_EXN(QuadRhsFuncFailure));
 
         case CV_FIRST_QRHSFUNC_ERR:
-	    caml_raise_constant(CVODES_EXN(FirstQuadRhsFuncErr));
+	    caml_raise_constant(CVODES_EXN(FirstQuadRhsFuncFailure));
 
         case CV_REPTD_QRHSFUNC_ERR:
-	    caml_raise_constant(CVODES_EXN(RepeatedQuadRhsFuncErr));
+	    caml_raise_constant(CVODES_EXN(RepeatedQuadRhsFuncFailure));
 
         case CV_UNREC_QRHSFUNC_ERR:
-	    caml_raise_constant(CVODES_EXN(UnrecoverableQuadRhsFuncErr));
+	    caml_raise_constant(CVODES_EXN(UnrecoverableQuadRhsFuncFailure));
 
 	/* Sensitivity */
 
@@ -1471,16 +1471,16 @@ void cvodes_ml_check_flag(const char *call, int flag)
 	    caml_raise_constant(CVODES_EXN(SensRhsFuncFailure));
 
         case CV_FIRST_SRHSFUNC_ERR:
-	    caml_raise_constant(CVODES_EXN(FirstSensRhsFuncErr));
+	    caml_raise_constant(CVODES_EXN(FirstSensRhsFuncFailure));
 
         case CV_REPTD_SRHSFUNC_ERR:
-	    caml_raise_constant(CVODES_EXN(RepeatedSensRhsFuncErr));
+	    caml_raise_constant(CVODES_EXN(RepeatedSensRhsFuncFailure));
 
         case CV_UNREC_SRHSFUNC_ERR:
-	    caml_raise_constant(CVODES_EXN(UnrecoverableSensRhsFuncErr));
+	    caml_raise_constant(CVODES_EXN(UnrecoverableSensRhsFuncFailure));
 
         case CV_BAD_IS:
-	    caml_raise_constant(CVODES_EXN(BadIS));
+	    caml_raise_constant(CVODES_EXN(BadSensIdentifier));
 
 	/* Sensitivity > Quadrature */
 
@@ -1491,13 +1491,13 @@ void cvodes_ml_check_flag(const char *call, int flag)
 	    caml_raise_constant(CVODES_EXN(QuadSensRhsFuncFailure));
 
         case CV_FIRST_QSRHSFUNC_ERR:
-	    caml_raise_constant(CVODES_EXN(FirstQuadSensRhsFuncErr));
+	    caml_raise_constant(CVODES_EXN(FirstQuadSensRhsFuncFailure));
 
         case CV_REPTD_QSRHSFUNC_ERR:
-	    caml_raise_constant(CVODES_EXN(RepeatedQuadSensRhsFuncErr));
+	    caml_raise_constant(CVODES_EXN(RepeatedQuadSensRhsFuncFailure));
 
         case CV_UNREC_QSRHSFUNC_ERR:
-	    caml_raise_constant(CVODES_EXN(UnrecoverableQuadSensRhsFuncErr));
+	    caml_raise_constant(CVODES_EXN(UnrecoverableQuadSensRhsFuncFailure));
 
 	/* Adjoint */
 
@@ -1514,10 +1514,10 @@ void cvodes_ml_check_flag(const char *call, int flag)
 	    caml_raise_constant(CVODES_EXN(BadFinalTime));
 
         case CV_REIFWD_FAIL:
-	    caml_raise_constant(CVODES_EXN(ForwardReinitializationFailed));
+	    caml_raise_constant(CVODES_EXN(ForwardReinitFailure));
 
         case CV_FWD_FAIL:
-	    caml_raise_constant(CVODES_EXN(ForwardFailed));
+	    caml_raise_constant(CVODES_EXN(ForwardFailure));
 
 	default:
 	    /* e.g. CVDIAG_MEM_NULL, CVDIAG_ILL_INPUT, CVDIAG_MEM_FAIL */

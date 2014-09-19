@@ -45,10 +45,10 @@ exception TooMuchWork
 (** @cvode <node5#sss:cvode> CV_TOO_MUCH_ACC *)
 exception TooMuchAccuracy
 
-(** @cvode <node5#sss:cvode> CV_ERR_FAIL *)
+(** @cvode <node5#sss:cvode> CV_ERR_FAILURE *)
 exception ErrFailure                
 
-(** @cvode <node5#sss:cvode> CV_CONV_FAIL *)
+(** @cvode <node5#sss:cvode> CV_CONV_FAILURE *)
 exception ConvergenceFailure        
 
 (** @cvode <node5#sss:cvode> CV_LINIT_FAIL *)
@@ -64,13 +64,13 @@ exception LinearSolveFailure
 exception RhsFuncFailure
 
 (** @cvode <node5#sss:cvode> CV_FIRST_RHSFUNC_ERR *)
-exception FirstRhsFuncErr
+exception FirstRhsFuncFailure
 
 (** @cvode <node5#sss:cvode> CV_REPTD_RHSFUNC_ERR *)
-exception RepeatedRhsFuncErr        
+exception RepeatedRhsFuncFailure        
 
 (** @cvode <node5#sss:cvode> CV_UNREC_RHSFUNC_ERR *)
-exception UnrecoverableRhsFuncErr   
+exception UnrecoverableRhsFuncFailure   
 
 (** @cvode <node5#sss:cvode> CV_RTFUNC_FAIL *)
 exception RootFuncFailure           

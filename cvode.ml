@@ -28,9 +28,9 @@ exception LinearInitFailure
 exception LinearSetupFailure
 exception LinearSolveFailure
 exception RhsFuncFailure
-exception FirstRhsFuncErr
-exception RepeatedRhsFuncErr
-exception UnrecoverableRhsFuncErr
+exception FirstRhsFuncFailure
+exception RepeatedRhsFuncFailure
+exception UnrecoverableRhsFuncFailure
 exception RootFuncFailure
 
 (* get_dky exceptions *)
@@ -699,9 +699,9 @@ let _ =
       LinearSetupFailure;
       LinearSolveFailure;
       RhsFuncFailure;
-      FirstRhsFuncErr;
-      RepeatedRhsFuncErr;
-      UnrecoverableRhsFuncErr;
+      FirstRhsFuncFailure;
+      RepeatedRhsFuncFailure;
+      UnrecoverableRhsFuncFailure;
       RootFuncFailure;
       BadK;
       BadT;

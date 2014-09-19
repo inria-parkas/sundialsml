@@ -1024,7 +1024,7 @@ void ida_ml_check_flag(const char *call, int flag)
 	caml_raise_constant(IDA_EXN(FirstResFuncFailure));
 
     case IDA_REP_RES_ERR:
-	caml_raise_constant(IDA_EXN(RepeatedResFuncErr));
+	caml_raise_constant(IDA_EXN(RepeatedResFuncFailure));
 
     case IDA_RTFUNC_FAIL:
 	caml_raise_constant(IDA_EXN(RootFuncFailure));

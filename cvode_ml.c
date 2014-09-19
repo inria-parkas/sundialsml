@@ -989,13 +989,13 @@ void cvode_ml_check_flag(const char *call, int flag)
 	    caml_raise_constant(CVODE_EXN(RhsFuncFailure));
 
 	case CV_FIRST_RHSFUNC_ERR:
-	    caml_raise_constant(CVODE_EXN(FirstRhsFuncErr));
+	    caml_raise_constant(CVODE_EXN(FirstRhsFuncFailure));
 
 	case CV_REPTD_RHSFUNC_ERR:
-	    caml_raise_constant(CVODE_EXN(RepeatedRhsFuncErr));
+	    caml_raise_constant(CVODE_EXN(RepeatedRhsFuncFailure));
 
 	case CV_UNREC_RHSFUNC_ERR:
-	    caml_raise_constant(CVODE_EXN(UnrecoverableRhsFuncErr));
+	    caml_raise_constant(CVODE_EXN(UnrecoverableRhsFuncFailure));
 
 	case CV_RTFUNC_FAIL:
 	    caml_raise_constant(CVODE_EXN(RootFuncFailure));

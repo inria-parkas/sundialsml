@@ -79,7 +79,7 @@ module Quadrature :
         unrecoverable manner on the first call.
 
         @idas <node5#SECTION00572000000000000000> IDA_FIRST_QRHS_ERR *)
-    exception FirstQuadRhsFuncErr
+    exception FirstQuadRhsFuncFailure
 
     (** Convergence test failures occurred too many times due to
         repeated recoverable errors in the quadrature right-hand side
@@ -89,7 +89,7 @@ module Quadrature :
         quadrature variables are included in the error tests).
 
         @idas <node5#SECTION00572000000000000000> IDA_REP_QRHS_ERR *)
-    exception RepeatedQuadRhsFuncErr
+    exception RepeatedQuadRhsFuncFailure
 
     (** {3:quadinit Initialization} *)
 
@@ -220,17 +220,18 @@ let yS'0 = Array.init ns (fun _ -> RealArray.init neq 0.0)]}
         @idas <node6#SECTION00624000000000000000> IDA_SRES_FAIL *)
     exception SensResFuncFailure
 
-    (** The sensitivity residual function failed in an unrecoverable manner.
+    (** The user's sensitivity residual function repeatedly returned a
+        recoverable error flag, but the solver was unable to recover.
 
         @idas <node6#SECTION00624000000000000000> IDA_REP_SRES_ERR *)
-    exception RepeatedSensResFuncErr
+    exception RepeatedSensResFuncFailure
 
     (** The sensitivity identifier is not valid.  This happens, for
         example, if you have [3] sensitivity variables and request the
         value of sensitivity variable number [5] in {!get_dky1}.
 
         @idas <node6#SECTION00625000000000000000> IDA_BAD_IS *)
-    exception BadIS
+    exception BadSensIdentifier
 
     (** {3:sensinit Initialization} *)
 
@@ -574,7 +575,7 @@ let yS'0 = Array.init ns (fun _ -> RealArray.init neq 0.0)]}
             the first call.
 
             @idas <node5#SECTION00642000000000000000> IDA_FIRST_QSRHS_ERR *)
-        exception FirstQuadSensRhsFuncErr
+        exception FirstQuadSensRhsFuncFailure
 
         (** The user-provided sensitivity-dependent quadrature right-
             hand side repeatedly returned a recoverable error flag,
@@ -582,7 +583,7 @@ let yS'0 = Array.init ns (fun _ -> RealArray.init neq 0.0)]}
 
             @idas <node6#SECTION00642000000000000000> IDA_REP_QSRHS_ERR
           *)
-        exception RepeatedQuadSensRhsFuncErr
+        exception RepeatedQuadSensRhsFuncFailure
 
         (** {3:quadsensinit Initialization} *)
 
@@ -779,12 +780,12 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
         (corresponding to the initial time of the forward problem).
 
         @idas <node7#sss:idasolveb> IDA_REIFWD_FAIL *)
-    exception ForwardReinitializationFailed
+    exception ForwardReinitFailure
 
     (** An error occured during the integration of the forward problem.
 
         @idas <node7#sss:idasolveb> IDA_FWD_FAIL *)
-    exception ForwardFailed
+    exception ForwardFailure
 
     (** No backward problem has been created.
 

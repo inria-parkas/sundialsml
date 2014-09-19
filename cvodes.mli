@@ -76,7 +76,7 @@ module Quadrature :
     (** The quadrature right-hand side function failed at the first call.
 
         @cvodes <node5#SECTION00572000000000000000> CV_FIRST_QRHSFUNC_ERR *)
-    exception FirstQuadRhsFuncErr
+    exception FirstQuadRhsFuncFailure
 
     (** Convergence test failures occurred too many times due to repeated
         recoverable errors in the quadrature right-hand side function. This
@@ -86,7 +86,7 @@ module Quadrature :
         tests).
 
         @cvodes <node5#SECTION00572000000000000000> CV_REPTD_QRHSFUNC_ERR *)
-    exception RepeatedQuadRhsFuncErr
+    exception RepeatedQuadRhsFuncFailure
 
     (** The quadrature right-hand function had a recoverable error, but no
         recovery was possible. This failure mode is rare, as it can occur only
@@ -94,7 +94,7 @@ module Quadrature :
         error test failed while at order one.
 
         @cvodes <node5#SECTION00572000000000000000> CV_UNREC_QRHSFUNC_ERR *)
-    exception UnrecoverableQuadRhsFuncErr
+    exception UnrecoverableQuadRhsFuncFailure
 
     (** {3:quadinit Initialization} *)
 
@@ -219,16 +219,16 @@ let sp = { pvals = Some p; pbar = ...; plist = ... }]}
     exception SensRhsFuncFailure
 
     (** @cvodes <node6#SECTION00623000000000000000> CV_FIRST_SRHSFUNC_ERR *)
-    exception FirstSensRhsFuncErr
+    exception FirstSensRhsFuncFailure
 
     (** @cvodes <node6#SECTION00623000000000000000> CV_REPTD_SRHSFUNC_ERR *)
-    exception RepeatedSensRhsFuncErr
+    exception RepeatedSensRhsFuncFailure
 
     (** @cvodes <node6#SECTION00623000000000000000> CV_UNREC_SRHSFUNC_ERR *)
-    exception UnrecoverableSensRhsFuncErr
+    exception UnrecoverableSensRhsFuncFailure
 
     (** @cvodes <node6> CV_BAD_IS *)
-    exception BadIS
+    exception BadSensIdentifier
 
     (** {3:sensinit Initialization} *)
 
@@ -602,13 +602,13 @@ let sp = { pvals = Some p; pbar = ...; plist = ... }]}
         exception QuadSensRhsFuncFailure
 
         (** @cvodes <node6#SECTION00642000000000000000> CV_FIRST_QSRHSFUNC_ERR *)
-        exception FirstQuadSensRhsFuncErr
+        exception FirstQuadSensRhsFuncFailure
 
         (** @cvodes <node6#SECTION00642000000000000000> CV_REPTD_QSRHSFUNC_ERR *)
-        exception RepeatedQuadSensRhsFuncErr
+        exception RepeatedQuadSensRhsFuncFailure
 
         (** @cvodes <node6#SECTION00642000000000000000> CV_UNREC_QSRHSFUNC_ERR *)
-        exception UnrecoverableQuadSensRhsFuncErr
+        exception UnrecoverableQuadSensRhsFuncFailure
 
         (** {3:quadsensinit Initialization} *)
 
@@ -800,12 +800,13 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
         (corresponding to the initial time of the forward problem).
 
         @cvodes <node7#sss:cvsolveb> CV_REIFWD_FAIL *)
-    exception ForwardReinitializationFailed
+    exception ForwardReinitFailure
 
-    (** An error occured during the integration of the forward problem.
+    (** An error occured when integrating the forward problem from a
+        checkpoint.
 
         @cvodes <node7#sss:cvsolveb> CV_FWD_FAIL *)
-    exception ForwardFailed
+    exception ForwardFailure
 
     (** No backward problem has been created.
 

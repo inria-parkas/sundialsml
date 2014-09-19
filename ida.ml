@@ -29,7 +29,7 @@ exception LinearSetupFailure
 exception LinearSolveFailure
 exception ResFuncFailure
 exception FirstResFuncFailure
-exception RepeatedResFuncErr
+exception RepeatedResFuncFailure
 exception RootFuncFailure
 exception ConstraintFailure
 
@@ -713,7 +713,7 @@ let _ =
       LinearSolveFailure;
       ResFuncFailure;
       FirstResFuncFailure;
-      RepeatedResFuncErr;
+      RepeatedResFuncFailure;
       RootFuncFailure;
       ConstraintFailure;
 

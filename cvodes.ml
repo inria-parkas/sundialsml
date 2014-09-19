@@ -44,9 +44,9 @@ module Quadrature =
 
     exception QuadNotInitialized
     exception QuadRhsFuncFailure
-    exception FirstQuadRhsFuncErr
-    exception RepeatedQuadRhsFuncErr
-    exception UnrecoverableQuadRhsFuncErr
+    exception FirstQuadRhsFuncFailure
+    exception RepeatedQuadRhsFuncFailure
+    exception UnrecoverableQuadRhsFuncFailure
 
     let fwdsensext s =
       match s.sensext with
@@ -146,10 +146,10 @@ module Sensitivity =
 
     exception SensNotInitialized
     exception SensRhsFuncFailure
-    exception FirstSensRhsFuncErr
-    exception RepeatedSensRhsFuncErr
-    exception UnrecoverableSensRhsFuncErr
-    exception BadIS
+    exception FirstSensRhsFuncFailure
+    exception RepeatedSensRhsFuncFailure
+    exception UnrecoverableSensRhsFuncFailure
+    exception BadSensIdentifier
 
     let fwdsensext s =
       match s.sensext with
@@ -327,9 +327,9 @@ module Sensitivity =
 
         exception QuadSensNotInitialized
         exception QuadSensRhsFuncFailure
-        exception FirstQuadSensRhsFuncErr
-        exception RepeatedQuadSensRhsFuncErr
-        exception UnrecoverableQuadSensRhsFuncErr
+        exception FirstQuadSensRhsFuncFailure
+        exception RepeatedQuadSensRhsFuncFailure
+        exception UnrecoverableQuadSensRhsFuncFailure
 
         external c_quadsens_init
             : ('a, 'k) session -> bool -> ('a, 'k) nvector array -> unit
@@ -446,8 +446,8 @@ module Adjoint =
 
     exception AdjointNotInitialized
     exception NoForwardCall
-    exception ForwardReinitializationFailed
-    exception ForwardFailed
+    exception ForwardReinitFailure
+    exception ForwardFailure
     exception NoBackwardProblem
     exception BadFinalTime
     exception BadOutputTime
@@ -1112,27 +1112,27 @@ let _ =
        cvodes_exn_index.  *)
     [|Quadrature.QuadNotInitialized;
       Quadrature.QuadRhsFuncFailure;
-      Quadrature.FirstQuadRhsFuncErr;
-      Quadrature.RepeatedQuadRhsFuncErr;
-      Quadrature.UnrecoverableQuadRhsFuncErr;
+      Quadrature.FirstQuadRhsFuncFailure;
+      Quadrature.RepeatedQuadRhsFuncFailure;
+      Quadrature.UnrecoverableQuadRhsFuncFailure;
 
       Sensitivity.SensNotInitialized;
       Sensitivity.SensRhsFuncFailure;
-      Sensitivity.FirstSensRhsFuncErr;
-      Sensitivity.RepeatedSensRhsFuncErr;
-      Sensitivity.UnrecoverableSensRhsFuncErr;
-      Sensitivity.BadIS;
+      Sensitivity.FirstSensRhsFuncFailure;
+      Sensitivity.RepeatedSensRhsFuncFailure;
+      Sensitivity.UnrecoverableSensRhsFuncFailure;
+      Sensitivity.BadSensIdentifier;
 
       Sensitivity.Quadrature.QuadSensNotInitialized;
       Sensitivity.Quadrature.QuadSensRhsFuncFailure;
-      Sensitivity.Quadrature.FirstQuadSensRhsFuncErr;
-      Sensitivity.Quadrature.RepeatedQuadSensRhsFuncErr;
-      Sensitivity.Quadrature.UnrecoverableQuadSensRhsFuncErr;
+      Sensitivity.Quadrature.FirstQuadSensRhsFuncFailure;
+      Sensitivity.Quadrature.RepeatedQuadSensRhsFuncFailure;
+      Sensitivity.Quadrature.UnrecoverableQuadSensRhsFuncFailure;
 
       Adjoint.AdjointNotInitialized;
       Adjoint.NoForwardCall;
-      Adjoint.ForwardReinitializationFailed;
-      Adjoint.ForwardFailed;
+      Adjoint.ForwardReinitFailure;
+      Adjoint.ForwardFailure;
       Adjoint.NoBackwardProblem;
       Adjoint.BadFinalTime;
       Adjoint.BadOutputTime;

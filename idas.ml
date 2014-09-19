@@ -67,8 +67,8 @@ module Quadrature =
 
     exception QuadNotInitialized
     exception QuadRhsFuncFailure
-    exception FirstQuadRhsFuncErr
-    exception RepeatedQuadRhsFuncErr
+    exception FirstQuadRhsFuncFailure
+    exception RepeatedQuadRhsFuncFailure
 
     let fwdsensext s =
       match s.sensext with
@@ -169,9 +169,9 @@ module Sensitivity =
 
     exception SensNotInitialized
     exception SensResFuncFailure
-    exception FirstSensResFuncErr
-    exception RepeatedSensResFuncErr
-    exception BadIS
+    exception FirstSensResFuncFailure
+    exception RepeatedSensResFuncFailure
+    exception BadSensIdentifier
 
     let fwdsensext s =
       match s.sensext with
@@ -367,8 +367,8 @@ module Sensitivity =
 
       exception QuadSensNotInitialized
       exception QuadSensRhsFuncFailure
-      exception FirstQuadSensRhsFuncErr
-      exception RepeatedQuadSensRhsFuncErr
+      exception FirstQuadSensRhsFuncFailure
+      exception RepeatedQuadSensRhsFuncFailure
 
       external c_quadsens_init
         : ('a, 'k) session -> bool -> ('a, 'k) nvector array -> unit
@@ -485,8 +485,8 @@ module Adjoint =
 
     exception AdjointNotInitialized
     exception NoForwardCall
-    exception ForwardReinitializationFailed
-    exception ForwardFailed
+    exception ForwardReinitFailure
+    exception ForwardFailure
     exception NoBackwardProblem
     exception BadFinalTime
     exception BadOutputTime
@@ -1076,24 +1076,24 @@ let _ =
        idas_exn_index.  *)
     [|Quadrature.QuadNotInitialized;
       Quadrature.QuadRhsFuncFailure;
-      Quadrature.FirstQuadRhsFuncErr;
-      Quadrature.RepeatedQuadRhsFuncErr;
+      Quadrature.FirstQuadRhsFuncFailure;
+      Quadrature.RepeatedQuadRhsFuncFailure;
 
       Sensitivity.SensNotInitialized;
       Sensitivity.SensResFuncFailure;
-      Sensitivity.FirstSensResFuncErr;
-      Sensitivity.RepeatedSensResFuncErr;
-      Sensitivity.BadIS;
+      Sensitivity.FirstSensResFuncFailure;
+      Sensitivity.RepeatedSensResFuncFailure;
+      Sensitivity.BadSensIdentifier;
 
       Sensitivity.Quadrature.QuadSensNotInitialized;
       Sensitivity.Quadrature.QuadSensRhsFuncFailure;
-      Sensitivity.Quadrature.FirstQuadSensRhsFuncErr;
-      Sensitivity.Quadrature.RepeatedQuadSensRhsFuncErr;
+      Sensitivity.Quadrature.FirstQuadSensRhsFuncFailure;
+      Sensitivity.Quadrature.RepeatedQuadSensRhsFuncFailure;
 
       Adjoint.AdjointNotInitialized;
       Adjoint.NoForwardCall;
-      Adjoint.ForwardReinitializationFailed;
-      Adjoint.ForwardFailed;
+      Adjoint.ForwardReinitFailure;
+      Adjoint.ForwardFailure;
       Adjoint.NoBackwardProblem;
       Adjoint.BadFinalTime;
       Adjoint.BadOutputTime;

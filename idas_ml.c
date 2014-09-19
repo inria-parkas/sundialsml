@@ -160,7 +160,7 @@ void idas_ml_check_flag(const char *call, int flag)
 	caml_raise_constant(IDA_EXN(ResFuncFailure));
 
     case IDA_REP_RES_ERR:
-	caml_raise_constant(IDA_EXN(RepeatedResFuncErr));
+	caml_raise_constant(IDA_EXN(RepeatedResFuncFailure));
 
     case IDA_RTFUNC_FAIL:
 	caml_raise_constant(IDA_EXN(RootFuncFailure));
@@ -199,10 +199,10 @@ void idas_ml_check_flag(const char *call, int flag)
 	caml_raise_constant(IDAS_EXN(QuadRhsFuncFailure));
 
     case IDA_FIRST_QRHS_ERR:
-	caml_raise_constant(IDAS_EXN(FirstQuadRhsFuncErr));
+	caml_raise_constant(IDAS_EXN(FirstQuadRhsFuncFailure));
 
     case IDA_REP_QRHS_ERR:
-	caml_raise_constant(IDAS_EXN(RepeatedQuadRhsFuncErr));
+	caml_raise_constant(IDAS_EXN(RepeatedQuadRhsFuncFailure));
 
     case IDA_NO_SENS:
 	caml_raise_constant(IDAS_EXN(SensNotInitialized));
@@ -211,10 +211,10 @@ void idas_ml_check_flag(const char *call, int flag)
 	caml_raise_constant(IDAS_EXN(SensResFuncFailure));
 
     case IDA_REP_SRES_ERR:
-	caml_raise_constant(IDAS_EXN(RepeatedSensResFuncErr));
+	caml_raise_constant(IDAS_EXN(RepeatedSensResFuncFailure));
 
     case IDA_BAD_IS:
-	caml_raise_constant(IDAS_EXN(BadIS));
+	caml_raise_constant(IDAS_EXN(BadSensIdentifier));
 
     case IDA_NO_QUADSENS:
 	caml_raise_constant(IDAS_EXN(QuadSensNotInitialized));
@@ -223,10 +223,10 @@ void idas_ml_check_flag(const char *call, int flag)
 	caml_raise_constant(IDAS_EXN(QuadSensRhsFuncFailure));
 
     case IDA_FIRST_QSRHS_ERR:
-	caml_raise_constant(IDAS_EXN(FirstQuadSensRhsFuncErr));
+	caml_raise_constant(IDAS_EXN(FirstQuadSensRhsFuncFailure));
 
     case IDA_REP_QSRHS_ERR:
-	caml_raise_constant(IDAS_EXN(RepeatedQuadSensRhsFuncErr));
+	caml_raise_constant(IDAS_EXN(RepeatedQuadSensRhsFuncFailure));
 
     case IDA_NO_ADJ:
 	caml_raise_constant(IDAS_EXN(AdjointNotInitialized));
@@ -238,13 +238,13 @@ void idas_ml_check_flag(const char *call, int flag)
 	caml_raise_constant(IDAS_EXN(NoBackwardProblem));
 
     case IDA_REIFWD_FAIL:
-	caml_raise_constant(IDAS_EXN(ForwardReinitializationFailed));
+	caml_raise_constant(IDAS_EXN(ForwardReinitFailure));
 
     case IDA_BAD_TB0:
 	caml_raise_constant(IDAS_EXN(BadFinalTime));
 
     case IDA_FWD_FAIL:
-	caml_raise_constant(IDAS_EXN(ForwardFailed));
+	caml_raise_constant(IDAS_EXN(ForwardFailure));
 
     case IDA_GETY_BADT:
 	caml_raise_constant(IDAS_EXN(BadOutputTime));
