@@ -179,6 +179,7 @@ doc/html/perf.opt.png: examples/perf.opt.log
 	    FONT=FreeSans,16 \
 	    SIZE=2000,1200 \
 	    BMARGIN=1600 \
+	    DOTSIZE=4 DOTTYPE=1 \
 	    OUTPUT=$@ examples/utils/plot.sh $<
 
 # Testing the examples

@@ -42,6 +42,15 @@ let expand name =
      ("―par―", "/parallel/");
     ]
 
+let parallel_example s      = Str.string_match (Str.regexp ".*―par―\|/parallel/.*") s 0
+let uses_alternate_solver s = Str.string_match (Str.regexp ".*_alt$") s 0
+let uses_nvector_array s    = Str.string_match (Str.regexp ".*_custom$") s 0
+let colorof name =
+  if parallel_example name then 2
+  else if uses_alternate_solver name then 3
+  else if uses_nvector_array name then 4
+  else 1
+
 (* Function composition *)
 let (%) f g x = f (g x)
 let (@@) f x = f x
@@ -95,18 +104,18 @@ let analyze dataset =
   let mean = total /. float_of_int n in
   { mean=mean; minimum=minimum; q1=q1; median=median; q3=q3; maximum=maximum }
 
-let id_magic = "# ID\treps\tC med.\tOCaml\tC\tOCaml/C\tname\n"
+let id_magic = "# ID\treps\tC med.\tOCaml\tC\tOCaml/C\tname\tcategory\n"
 let fmt_with_id : type use. ('a, use, 'b, 'c, 'd, 'e) format6 =
-  "%d\t%d\t%.2f\t%.2f\t%.2f\t%.2f\t%s\n"
+  "%d\t%d\t%.2f\t%.2f\t%.2f\t%.2f\t%s\t%d\n"
 let fmt_no_id : type use. ('a, use, 'b, 'c, 'd, 'e) format6 =
-  "%d\t%.2f\t%.2f\t%.2f\t%.2f\t%s\n"
+  "%d\t%.2f\t%.2f\t%.2f\t%.2f\t%s\t%d\n"
 
 type record = { reps : int;
                 mutable ml_times : float list;
                 mutable c_times : float list;
               }
 let load ?(records=Hashtbl.create 10) path =
-  let insert _ reps cmed ml c _ name =
+  let insert _ reps cmed ml c _ name _ =
     try let r = Hashtbl.find records name in
       if reps <> r.reps then failwith (path ^ ": inconsistent reps field");
       r.ml_times <- ml::r.ml_times;
@@ -164,7 +173,7 @@ let combine ocaml sundials name =
   for i = 0 to min (Array.length c_times) (Array.length ml_times) - 1 do
     Printf.printf fmt_no_id
       c_reps c_median ml_times.(i) c_times.(i) (ml_times.(i) /. c_times.(i))
-      (abbreviate name)
+      (abbreviate name) (colorof name)
   done
 
 let merge paths =
@@ -180,7 +189,8 @@ let merge paths =
     let c_median  = (analyze c).median in
     for j = 0 to Array.length c - 1 do
       Printf.printf fmt_with_id
-        id record.reps c_median ml.(j) c.(j) (ml.(j) /. c.(j)) name
+        id record.reps c_median ml.(j) c.(j) (ml.(j) /. c.(j))
+        name (colorof name)
     done;
     if id < n-1 then print_string "\n\n"
   done
@@ -197,8 +207,10 @@ let summarize gnuplot path =
       let ml = median record.ml_times in
       let ratio = median (List.map2 (/.) record.ml_times record.c_times) in
       if gnuplot then Printf.printf "%d\t" id;
-      Printf.printf "%d\t%.2f\t%.2f\t%.2f\t%s\n"
-        record.reps ml c ratio (if gnuplot then name else expand name))
+      Printf.printf "%d\t%.2f\t%.2f\t%.2f\t%s\t"
+        record.reps ml c ratio (if gnuplot then name else expand name);
+      if gnuplot then Printf.printf "\t%d" (colorof name);
+      Printf.printf "\n")
     assocs
 
 let _ =

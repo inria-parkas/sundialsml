@@ -157,7 +157,7 @@ SET_COMMON="$SET_COMMON; DOTSIZE='${DOTSIZE:-.3}'; DOTTYPE='${DOTTYPE:-7}'"
 
 # C median points must be plotted after boxes, but their key looks
 # better above the boxes' key.
-SET_COMMON="$SET_COMMON; set key inv"
+SET_COMMON="$SET_COMMON; set key top center inv tc variable"
 
 HORIZ_LINES=
 for y in 1 1.5 2; do
@@ -212,23 +212,24 @@ else                            # if STYLE != boxplot, do a bar chart
 
 LABELCMD="('< $crunch -S $1') u (1):xticlabels(6) linetype -3 notitle"
 if [ "$#" -eq 1 ]; then
-    BOXCMD="'< $crunch -S $1' u 1:5 w boxes \
+    BOXCMD="'< $crunch -S $1' using 1:5:(pickcolor(\$7)) with boxes \
             title 'OCaml time / C time (left axis)' \
-            lc rgb word(BOXCOLORS,1)"
-    DOTCMD="'< $crunch -S $1' u 1:(\$4/\$2) \
-	    w points pointsize DOTSIZE pointtype DOTTYPE \
+            lc rgb variable"
+            #lc rgb word(BOXCOLORS,1)"
+    DOTCMD="'< $crunch -S $1' using 1:(\$4/\$2) \
+	    with points pointsize DOTSIZE pointtype DOTTYPE \
             lc rgb word(DOTCOLORS,1) \
             title 'C time / rep (right axis)' axes x1y2"
 else
     BOXCMD="for [i=1:words(files)] \
               ('< $crunch -S '.word(files,i)) \
-              u (\$1+($x0)+(i-1)*$w):5 w boxes \
+              using (\$1+($x0)+(i-1)*$w):5 with boxes \
               title word(files,i) \
               lc rgb word(BOXCOLORS,i)"
     DOTCMD="for [i=1:words(files)] \
               ('< $crunch -S '.word(files,i)) \
-              u (\$1+($x0)+(i-1)*$w):(\$4/\$2) \
-              w points pointtype 7 \
+              using (\$1+($x0)+(i-1)*$w):(\$4/\$2) \
+	      with points pointsize DOTSIZE pointtype DOTTYPE \
               lc rgb word(DOTCOLORS,i) \
               notitle axes x1y2"
 fi
@@ -239,6 +240,11 @@ $SET_COMMON
 # Bar chart-specific setup
 set boxwidth $w
 set style fill solid
+rgb(r,g,b) = int(r)*65536 + int(g)*256 + int(b)
+pickcolor(x) = ((x == 4) ? rgb(0xA1,0xD9,0x9B) : \
+		(x == 3) ? rgb(0x31,0xA3,0x54) : \
+		(x == 2) ? rgb(0xFC,0x92,0x72) : \
+			   rgb(0xDE,0x2D,0x26))
 
 plot ${LABELCMD}, ${BOXCMD}, ${DOTCMD}, ${HORIZ_LINES}
 ${PAUSE}
