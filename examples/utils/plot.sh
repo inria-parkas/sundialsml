@@ -5,6 +5,8 @@ envs() {
     echo "FONT       - Font name, comma, then size, like: Arial,10"
     echo "SIZE       - Canvas size; see \"help set term size\" in gnuplot."
     echo "BOXCOLOR   - Color of the plot; either a color name or #rrggbb."
+    echo "DOTTYPE    - Style (\"pointtype\") of C runtime dots."
+    echo "DOTSIZE    - Style (\"pointsize\") of C runtime dots."
     echo "LMARGIN    - How much space (in %) for text at the left."
     echo "RMARGIN    - How much space (in %) for text on the right."
     echo "BMARGIN    - How much space (in %) for text at the bottom."
@@ -151,6 +153,7 @@ SET_COMMON="$SET_COMMON; set yrange [0:${YMAX}]; set y2range [0:${Y2MAX}]"
 SET_COMMON="$SET_COMMON; set xtics rotate by -90 left"
 SET_COMMON="$SET_COMMON; files='$@'"
 SET_COMMON="$SET_COMMON; BOXCOLORS='${BOXCOLORS}'; DOTCOLORS='${DOTCOLORS}'"
+SET_COMMON="$SET_COMMON; DOTSIZE='${DOTSIZE:-.3}'; DOTTYPE='${DOTTYPE:-7}'"
 
 # C median points must be plotted after boxes, but their key looks
 # better above the boxes' key.
@@ -170,7 +173,7 @@ if [ "x$STYLE" = xboxplot ]; then
 LABELCMD="('< $crunch -S $1') u (1):xticlabels(6) lt -3 notitle"
 
 if [ "$#" -eq 1 ]; then
-    BOXCMD="'$1' u (0):(\$6):(0.5):7 w boxplot \
+    BOXCMD="'$1' using (0):(\$6):(0.5):7 w boxplot \
                pointtype 2 lc rgb word(BOXCOLORS,1) \
               title 'OCaml time / C time (left axis)'"
     DOTCMD="'$1' using 1:(\$3/\$2) \
@@ -212,7 +215,8 @@ if [ "$#" -eq 1 ]; then
     BOXCMD="'< $crunch -S $1' u 1:5 w boxes \
             title 'OCaml time / C time (left axis)' \
             lc rgb word(BOXCOLORS,1)"
-    DOTCMD="'< $crunch -S $1' u 1:(\$4/\$2) w points pointsize 4 pointtype 14 \
+    DOTCMD="'< $crunch -S $1' u 1:(\$4/\$2) \
+	    w points pointsize DOTSIZE pointtype DOTTYPE \
             lc rgb word(DOTCOLORS,1) \
             title 'C time / rep (right axis)' axes x1y2"
 else
