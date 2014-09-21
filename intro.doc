@@ -157,19 +157,20 @@ extra code to execute at each call. But, how significant is this cost? And,
 more broadly, how does the performance of OCaml compare to that of C for
 programs that use numerical solvers?
 
-These questions are not easy to answer. As a first attempt, the red bars in
+These questions are not easy to answer. As a first attempt, the bars in
 the following graph show the ratios of the execution times of the Sundials
 examples reimplemented in OCaml to the original versions in C, i.e., a
 value of 2 against the right-hand axis means an OCaml version that is
-twice as slow. The C versions were compiled with [gcc -O3].
+twice as slow.
 
 {img perf.opt.png}
 
 The graph suggests that the OCaml versions are rarely more than twice as
 slow as the original ones and that they are often around or less than 50%
 slower.
-The [*_custom] examples use custom nvectors with low-level operations in
-OCaml and the [*_alt] examples use linear solvers implemented in OCaml.
+The [*_custom] example ({color #a1d99b light green}) uses custom nvectors
+with low-level operations in OCaml and the [*_alt] examples ({color #31a354
+dark green}) use linear solvers implemented in OCaml.
 
 This conclusion seems reasonable as a first approximation, but several
 details of the analysis process and individual results show that the real
@@ -186,8 +187,7 @@ dividing the measurement made for each C version by the number of repetitions.
 For many of the examples with longer running times, the ratio OCaml/C is
 close to 1.
 
-
-TODO: discuss the parallel examples.
+TODO: discuss the parallel examples ({color #fc9272 lighter red}).
 
 TODO: performance tips for programs: a) type annotations for vectors; b)
 avoid slice and sub; c) unwrap and use array access for matrices.

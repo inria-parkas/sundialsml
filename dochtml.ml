@@ -120,6 +120,15 @@ struct
     method private html_of_img s =
       Printf.sprintf "<a href=\"%s\"><img src=\"%s\"></a>" s s
 
+    method private html_of_color s =
+      let ss = Str.bounded_split (Str.regexp "[ \t\n]+") s 2 in
+      match ss with
+      | [x] ->
+          (Odoc_info.warning (Printf.sprintf "No color given ('%s')." x); x)
+      | [color; text] ->
+          Printf.sprintf "<span style=\"color: %s;\">%s</span>" color text
+      | _ -> assert false
+
     val mutable custom_functions =
       ([] : (string * (string -> string)) list)
 
@@ -156,6 +165,7 @@ struct
 
       custom_functions <- ("div", self#html_of_div) :: custom_functions;
       custom_functions <- ("var", self#html_of_var) :: custom_functions;
+      custom_functions <- ("color", self#html_of_color) :: custom_functions;
       custom_functions <- ("img", self#html_of_img) :: custom_functions
 
   end
