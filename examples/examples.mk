@@ -128,13 +128,13 @@ $(SERIAL_EXAMPLES:.ml=.opt): %.opt: %.ml $(SRCROOT)/$(USELIB).cmxa
 
 $(MPI_EXAMPLES:.ml=.byte): %.byte: %.ml $(SRCROOT)/$(USELIB).cma
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
-	    $(INCLUDES) -I $(SRCROOT) -dllpath $(SRCROOT) bigarray.cma unix.cma \
-	    mpi.cma $(USELIB).cma sundials_mpi.cma $<
+	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRCROOT) -dllpath $(SRCROOT) \
+	    bigarray.cma unix.cma mpi.cma $(USELIB).cma sundials_mpi.cma $<
 
 $(MPI_EXAMPLES:.ml=.opt): %.opt: %.ml $(SRCROOT)/$(USELIB).cmxa
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
-	    $(INCLUDES) -I $(SRCROOT) bigarray.cmxa unix.cmxa \
-	    mpi.cmxa $(USELIB).cmxa sundials_mpi.cmxa $<
+	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRCROOT) \
+	    bigarray.cmxa unix.cmxa mpi.cmxa $(USELIB).cmxa sundials_mpi.cmxa $<
 
 # opam inserts opam's and the system's stublibs directory into
 # CAML_LD_LIBRARY_PATH, which has higher precdence than -dllpath.

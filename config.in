@@ -96,8 +96,10 @@ SED    ?= sed
 UNIX = unix.cma
 UNIXX = unix.cmxa
 
-DIRECTORIES = $(if @ocamlmpi_enabled@, @ocamlmpi_path@)
+MPI_DIRECTORIES = @ocamlmpi_path@
+DIRECTORIES =
 
+MPI_INCLUDES = $(MPI_DIRECTORIES:%=-I %)
 INCLUDES = $(DIRECTORIES:%=-I %)
 
 OBJ_OPT = $(OBJ:.cmo=.cmx)
