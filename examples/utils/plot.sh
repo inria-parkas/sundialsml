@@ -157,7 +157,7 @@ SET_COMMON="$SET_COMMON; DOTSIZE='${DOTSIZE:-.3}'; DOTTYPE='${DOTTYPE:-7}'"
 
 # C median points must be plotted after boxes, but their key looks
 # better above the boxes' key.
-SET_COMMON="$SET_COMMON; set key top center inv tc variable"
+SET_COMMON="$SET_COMMON; set key top right inv tc variable"
 
 HORIZ_LINES=
 for y in 1 1.5 2; do
