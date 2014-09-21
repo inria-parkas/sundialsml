@@ -66,15 +66,16 @@ all: $(INSTALL_CMA) $(INSTALL_CMA:.cma=.cmxa)
 sundials.cma sundials.cmxa: $(MLOBJ_MAIN) $(MLOBJ_SENS)			    \
 			    $(MLOBJ_MAIN:.cmo=.cmx) $(MLOBJ_SENS:.cmo=.cmx) \
 			    $(COBJ_MAIN) $(COBJ_SENS)
-	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS)	\
-	    -o sundials -oc mlsundials $^	\
-	    $(LIB_PATH)				\
-	    $(OCAML_CVODES_LIBLINK)		\
-	    $(OCAML_IDAS_LIBLINK)		\
-	    $(OCAML_KINSOL_LIBLINK)
+	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS)			\
+	    -o sundials -oc mlsundials $^			\
+	    $(LIB_PATH)						\
+	    $(OCAML_CVODES_LIBLINK) 				\
+	    $(OCAML_IDAS_LIBLINK)	  			\
+	    $(OCAML_KINSOL_LIBLINK)				\
+	    $(OCAML_ALL_LIBLINK)
 
-sundials_nosensi.cma sundials_nosensi.cmxa:				  \
-			$(MLOBJ_MAIN) $(MLOBJ_NOSENSI)			  \
+sundials_nosensi.cma sundials_nosensi.cmxa:				   \
+			$(MLOBJ_MAIN) $(MLOBJ_NOSENSI)			   \
 			$(MLOBJ_MAIN:.cmo=.cmx) $(MLOBJ_NOSENSI:.cmo=.cmx) \
 			$(COBJ_MAIN) $(COBJ_NOSENSI)
 	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS)			\
@@ -82,7 +83,8 @@ sundials_nosensi.cma sundials_nosensi.cmxa:				  \
 	    $(LIB_PATH)						\
 	    $(OCAML_CVODE_LIBLINK)				\
 	    $(OCAML_IDA_LIBLINK)				\
-	    $(OCAML_KINSOL_LIBLINK)
+	    $(OCAML_KINSOL_LIBLINK)				\
+	    $(OCAML_ALL_LIBLINK)
 
 sundials_mpi.cma sundials_mpi.cmxa: $(MLOBJ_MPI) $(MLOBJ_MPI:.cmo=.cmx) \
 				    $(COBJ_MPI)

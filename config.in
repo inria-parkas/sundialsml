@@ -37,14 +37,26 @@ IDAS_CFLAGS = @idas_cppflags@ $(CFLAGS)
 KINSOL_LDFLAGS = @kinsol_ldflags@ $(LDFLAGS)
 KINSOL_CFLAGS = @kinsol_cppflags@ $(CFLAGS)
 
+define common
+  $(eval seen :=)					\
+  $(eval dups :=)					\
+  $(foreach _,$1,$(if $(filter $_,${seen}),		\
+      $(if $(filter $_,${dups}),,$(eval dups += $_)),	\
+      $(eval seen += $_)))				\
+  ${dups}
+endef
+
 OCAMLC ?= @OCAMLBIN@ocamlc
 OCAMLFLAGS = -annot @ocamlflags@
 OCAML_INCLUDE := $(shell $(OCAMLC) -where)
-OCAML_CVODE_LIBLINK = $(CVODE_LDFLAGS)
-OCAML_CVODES_LIBLINK = $(CVODES_LDFLAGS)
-OCAML_IDA_LIBLINK = $(IDA_LDFLAGS)
-OCAML_IDAS_LIBLINK = $(IDAS_LDFLAGS)
-OCAML_KINSOL_LIBLINK = $(KINSOL_LDFLAGS)
+OCAML_ALL_LIBLINK = $(strip $(call common, $(CVODE_LDFLAGS) $(CVODES_LDFLAGS) \
+					   $(IDA_LDFLAGS) $(IDAS_LDFLAGS)     \
+					   $(KINSOL_LDFLAGS)))
+OCAML_CVODE_LIBLINK  = $(filter-out $(OCAML_ALL_LIBLINK), $(CVODE_LDFLAGS))
+OCAML_CVODES_LIBLINK = $(filter-out $(OCAML_ALL_LIBLINK), $(CVODES_LDFLAGS))
+OCAML_IDA_LIBLINK    = $(filter-out $(OCAML_ALL_LIBLINK), $(IDA_LDFLAGS))
+OCAML_IDAS_LIBLINK   = $(filter-out $(OCAML_ALL_LIBLINK), $(IDAS_LDFLAGS))
+OCAML_KINSOL_LIBLINK = $(filter-out $(OCAML_ALL_LIBLINK), $(KINSOL_LDFLAGS))
 OCAML_MPI_LIBLINK = -lsundials_nvecparallel
 OCAML_3X = @ocaml_3x@
 
