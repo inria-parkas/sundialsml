@@ -38,11 +38,11 @@ KINSOL_LDFLAGS = @kinsol_ldflags@ $(LDFLAGS)
 KINSOL_CFLAGS = @kinsol_cppflags@ $(CFLAGS)
 
 define common
-  $(eval seen :=)					\
-  $(eval dups :=)					\
-  $(foreach _,$1,$(if $(filter $_,${seen}),		\
-      $(if $(filter $_,${dups}),,$(eval dups += $_)),	\
-      $(eval seen += $_)))				\
+  $(eval seen :=)
+  $(eval dups :=)
+  $(foreach _,$1,$(if $(filter $_,${seen}),
+      $(if $(filter $_,${dups}),,$(eval dups += $_)),
+      $(eval seen += $_)))
   ${dups}
 endef
 
