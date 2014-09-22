@@ -192,19 +192,17 @@ For instance, some examples spend a good fraction of their time in [printf],
 and we were able to lower their ratios by instead using [print_string] and
 [print_int].
 
-The parallel examples ({color #fc9272 lighter red}) all have longer runtimes
-and the results shown are obtained without iterating.
-
-For many of the examples with longer running times, the ratio OCaml/C is
-close to 1.
+The parallel examples ({color #fc9272 lighter red}) all have relatively long
+runtimes and results are obtained without iterating.
+Their OCaml/C ratios are almost all close to 1—the interface and other
+overheads are small compared to the dominating costs of parallelism and
+communication.
 
 TODO: performance tips for programs: a) type annotations for vectors; b)
 avoid slice and sub; c) unwrap and use array access for matrices.
 
 TODO: Thanks to OCaml's optimizations for (unboxed) floats and tight loops,
 and also to the MPI and Bigarray libraries.
-
-TODO: profile with -O3 and CHECK_MATRIX_ACCESS, etc. = 0.
 
 Summarize: slower but not by too much, must factor in with the other
 advantages of using OCaml (memory management, bounds checking, etc.), easy

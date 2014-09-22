@@ -90,7 +90,6 @@ let unvec = Sundials.unvec
 let printf = Printf.printf
 let eprintf = Printf.eprintf
 let subarray = Array1.sub
-let slice_left = Array2.slice_left
 let slice = Array1.sub
 let unwrap = RealArray2.unwrap
 
@@ -197,17 +196,13 @@ let init_user_data my_pe comm =
     } in
 
   (* Fill in the portion of acoef in the four quadrants, row by row *)
+  let acoef = data.acoef in
   for i = 0 to np - 1 do
-    let a1 = subarray (slice_left data.acoef i) np np in
-    let a2 = slice_left data.acoef (i + np) in
-    let a3 = slice_left data.acoef i in
-    let a4 = subarray (slice_left data.acoef (i + np)) np np in
-
     for j = 0 to np - 1 do
-      a1.{j} <- -.gg;
-      a2.{j} <-   ee;
-      a3.{j} <-   zero;
-      a4.{j} <-   zero
+      acoef.{i, j + np}      <- -.gg;   (* a1 *)
+      acoef.{i + np, j}      <-   ee;   (* a2 *)
+      acoef.{i, j}           <-   zero; (* a3 *)
+      acoef.{i + np, j + np} <-   zero  (* a4 *)
     done;
 
     (* and then change the diagonal elements of acoef to -AA *)
@@ -224,14 +219,6 @@ let init_user_data my_pe comm =
     data.coy.{i+np} <- dpred/.dy2
   done;
   data
-
-(* Dot product routine for realtype arrays *)
-let dot_prod size (x1 : RealArray.t) (x2 : RealArray.t) =
-  let temp =ref zero in
-  for i = 0 to size - 1 do
-    temp := !temp +. x1.{i} *. x2.{i}
-  done;
-  !temp
 
 let blit (buf : RealArray.t) buf_offset (dst : RealArray.t) dst_offset len =
   for i = 0 to len-1 do
@@ -372,17 +359,23 @@ let ccomm data (udata : RealArray.t) =
   brecvwait request isubx isuby nsmxsub cext
 (* Interaction rate function routine *)
 
-let web_rate data xx yy (cxy : RealArray.t) (ratesxy : RealArray.t) =
+let web_rate data xx yy ((cxy : RealArray.t), cxy_off)
+                        ((ratesxy : RealArray.t), ratesxy_off) =
   let acoef = data.acoef in
   let bcoef = data.bcoef in
 
   for i = 0 to num_species - 1 do
-    ratesxy.{i} <- dot_prod num_species cxy (slice_left acoef i)
+    ratesxy.{ratesxy_off + i} <- 0.0;
+    for j = 0 to num_species - 1 do
+      ratesxy.{ratesxy_off + i} <- ratesxy.{ratesxy_off + i}
+                                      +. cxy.{cxy_off + j} *. acoef.{i, j}
+    done
   done;
   
   let fac = one +. alpha *. xx *. yy in
   for i = 0 to num_species - 1 do
-    ratesxy.{i} <- cxy.{i} *. (bcoef.{i} *. fac +. ratesxy.{i})
+    ratesxy.{ratesxy_off + i} <- cxy.{cxy_off + i} *. (bcoef.{i}
+                                    *. fac +. ratesxy.{ratesxy_off + i})
   done
 
 (* System function for predator-prey system - calculation part *)
@@ -393,6 +386,7 @@ let fcalcprpr data (cdata : RealArray.t) (fval : RealArray.t) =
   let isubx = data.isubx in
   let isuby = data.isuby in
   let cext = data.cext in
+  let rates = data.rates in
 
   (* Copy local segment of cc vector into the working extended array cext *)
   let offsetc = ref 0 in
@@ -454,11 +448,9 @@ let fcalcprpr data (cdata : RealArray.t) (fval : RealArray.t) =
     for jx = 0 to mxsub - 1 do
       let xx = delx *. float (jx + isubx * mxsub) in
 
-      let cxy = ij_vptr cdata jx jy in
-      let rxy = ij_vptr data.rates jx jy in
-      let fxy = ij_vptr fval jx jy in
+      let off = ij_vptr_idx jx jy in
       
-      web_rate data xx yy cxy rxy;
+      web_rate data xx yy (cdata, off) (rates, off);
 
       let offsetc = (jx+1)*num_species + (jy+1)*nsmxsub2 in
       let offsetcd = offsetc - shifty in
@@ -477,8 +469,9 @@ let fcalcprpr data (cdata : RealArray.t) (fval : RealArray.t) =
         let dcxri = cext.{offsetcr+is} -. cext.{offsetc+is} in
         
         (* compute the value at xx , yy *)
-        fxy.{is} <- data.coy.{is} *. (dcyui -. dcydi) +.
-                    data.cox.{is} *. (dcxri -. dcxli) +. rxy.{is}
+        fval.{off + is} <- data.coy.{is} *. (dcyui -. dcydi)
+                           +. data.cox.{is} *. (dcxri -. dcxli)
+                           +. rates.{off + is}
       done (* end of is loop *)
     done (* end of jx loop *)
   done (* end of jy loop *)
@@ -504,6 +497,7 @@ let precondbd data
               { Kinsol.Spils.uscale=(cscale, _, _);
                 Kinsol.Spils.fscale=fscale } =
   let perturb_rates = RealArray.create num_species in
+  let rates = data.rates in
   
   let delx = dx in
   let dely = dy in
@@ -519,25 +513,23 @@ let precondbd data
     for jx = 0 to mxsub - 1 do
       let xx = float (jx + data.isubx * mxsub) *. delx in
       let pxy = data.p.(jx).(jy) in
-      let cxy = ij_vptr cc jx jy in
-      let scxy = ij_vptr cscale jx jy in
-      let ratesxy = ij_vptr data.rates jx jy in
+      let off = ij_vptr_idx jx jy in
       
       (* Compute difference quotients of interaction rate fn. *)
       for j = 0 to num_species - 1 do
-        let csave = cxy.{j} in  (* Save the j,jx,jy element of cc *)
-        let r = max (sqruround *. abs_float csave) (r0/.scxy.{j}) in
-        cxy.{j} <- cxy.{j} +. r; (* Perturb the j,jx,jy element of cc *)
+        let csave = cc.{off+j} in  (* Save the j,jx,jy element of cc *)
+        let r = max (sqruround *. abs_float csave) (r0/.cscale.{off+j}) in
+        cc.{off+j} <- cc.{off+j} +. r; (* Perturb the j,jx,jy element of cc *)
         let fac = one/.r in
-        web_rate data xx yy cxy perturb_rates;
+        web_rate data xx yy (cc, off) (perturb_rates, 0);
         
         (* Restore j,jx,jy element of cc *)
-        cxy.{j} <- csave;
+        cc.{off+j} <- csave;
         
         (* Load the j-th column of difference quotients *)
-        let pxycol = slice_left (unwrap pxy) j in
+        let pxydata = unwrap pxy in
         for i = 0 to num_species - 1 do
-          pxycol.{i} <- (perturb_rates.{i} -. ratesxy.{i}) *. fac
+          pxydata.{j, i} <- (perturb_rates.{i} -. rates.{off+i}) *. fac
         done
       done; (* end of j loop *)
       
@@ -572,15 +564,14 @@ let set_initial_profiles ((cc : RealArray.t), _, _) ((sc : RealArray.t), _, _) =
   (* Load initial profiles into cc and sc vector. *)
   for jy = 0 to mysub - 1 do
     for jx = 0 to mxsub - 1 do
-      let cloc = ij_vptr cc jx jy in
-      let sloc = ij_vptr sc jx jy in
+      let off = ij_vptr_idx jx jy in
       for i = 0 to num_species/2 - 1 do
-        cloc.{i} <- preyin;
-        sloc.{i} <- one
+        cc.{off+i} <- preyin;
+        sc.{off+i} <- one
       done;
       for i = num_species/2 to num_species - 1 do
-        cloc.{i} <- predin;
-        sloc.{i} <- 0.00001
+        cc.{off+i} <- predin;
+        sc.{off+i} <- 0.00001
       done
     done
   done

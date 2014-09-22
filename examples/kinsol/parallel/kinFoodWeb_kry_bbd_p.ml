@@ -100,8 +100,6 @@ let unwrap = RealArray2.unwrap
 
 let sqr x = x *. x
 let nvwl2norm = Nvector.DataOps.n_vwl2norm
-let ith v i = v.{i - 1}
-let set_ith v i e = v.{i - 1} <- e
 
 (* Problem Constants *)
 
@@ -219,15 +217,7 @@ let init_user_data my_pe comm =
   done;
   data
 
-(* Dot product routine for realtype arrays *)
-let dot_prod size x1 x2 =
-  let temp =ref zero in
-  for i = 0 to size - 1 do
-    temp := !temp +. x1.{i} *. x2.{i}
-  done;
-  !temp
-
-let blit buf buf_offset dst dst_offset len =
+let blit (buf : RealArray.t) buf_offset (dst : RealArray.t) dst_offset len =
   for i = 0 to len-1 do
     dst.{dst_offset + i} <- buf.{buf_offset + i}
   done
@@ -366,17 +356,23 @@ let ccomm data udata =
   brecvwait request isubx isuby nsmxsub cext
 (* Interaction rate function routine *)
 
-let web_rate data xx yy cxy ratesxy =
+let web_rate data xx yy ((cxy : RealArray.t), cxy_off)
+                        ((ratesxy : RealArray.t), ratesxy_off) =
   let acoef = data.acoef in
   let bcoef = data.bcoef in
 
   for i = 0 to num_species - 1 do
-    ratesxy.{i} <- dot_prod num_species cxy (slice_left acoef i)
+    ratesxy.{ratesxy_off + i} <- 0.0;
+    for j = 0 to num_species - 1 do
+      ratesxy.{ratesxy_off + i} <- ratesxy.{ratesxy_off + i}
+                                      +. cxy.{cxy_off + j} *. acoef.{i, j}
+    done
   done;
   
   let fac = one +. alpha *. xx *. yy in
   for i = 0 to num_species - 1 do
-    ratesxy.{i} <- cxy.{i} *. (bcoef.{i} *. fac +. ratesxy.{i})
+    ratesxy.{ratesxy_off + i} <- cxy.{cxy_off + i} *. (bcoef.{i}
+                                    *. fac +. ratesxy.{ratesxy_off + i})
   done
 
 (* System function for predator-prey system - calculation part *)
@@ -387,6 +383,7 @@ let func_local data (cdata, _, _) (fval, _, _) =
   let isubx = data.isubx in
   let isuby = data.isuby in
   let cext = data.cext in
+  let rates = data.rates in
 
   (* Copy local segment of cc vector into the working extended array cext *)
   let offsetc = ref 0 in
@@ -448,11 +445,8 @@ let func_local data (cdata, _, _) (fval, _, _) =
     for jx = 0 to mxsub - 1 do
       let xx = delx *. float (jx + isubx * mxsub) in
 
-      let cxy = ij_vptr cdata jx jy in
-      let rxy = ij_vptr data.rates jx jy in
-      let fxy = ij_vptr fval jx jy in
-      
-      web_rate data xx yy cxy rxy;
+      let off = ij_vptr_idx jx jy in
+      web_rate data xx yy (cdata, off) (rates, off);
 
       let offsetc = (jx+1)*num_species + (jy+1)*nsmxsub2 in
       let offsetcd = offsetc - shifty in
@@ -471,8 +465,9 @@ let func_local data (cdata, _, _) (fval, _, _) =
         let dcxri = cext.{offsetcr+is} -. cext.{offsetc+is} in
         
         (* compute the value at xx , yy *)
-        fxy.{is} <- data.coy.{is} *. (dcyui -. dcydi) +.
-                    data.cox.{is} *. (dcxri -. dcxli) +. rxy.{is}
+        fval.{off + is} <- data.coy.{is} *. (dcyui -. dcydi)
+                           +. data.cox.{is} *. (dcxri -. dcxli)
+                           +. rates.{off + is}
       done (* end of is loop *)
     done (* end of jx loop *)
   done (* end of jy loop *)
@@ -495,15 +490,14 @@ let set_initial_profiles (cc, _, _) (sc, _, _) =
   (* Load initial profiles into cc and sc vector. *)
   for jy = 0 to mysub - 1 do
     for jx = 0 to mxsub - 1 do
-      let cloc = ij_vptr cc jx jy in
-      let sloc = ij_vptr sc jx jy in
+      let idx = ij_vptr_idx jx jy in
       for i = 0 to num_species/2 - 1 do
-        cloc.{i} <- preyin;
-        sloc.{i} <- one
+        cc.{idx + i} <- preyin;
+        sc.{idx + i} <- one
       done;
       for i = num_species/2 to num_species - 1 do
-        cloc.{i} <- predin;
-        sloc.{i} <- 0.00001
+        cc.{idx + i} <- predin;
+        sc.{idx + i} <- 0.00001
       done
     done
   done

@@ -277,7 +277,7 @@ let init_user_data my_pe comm =
 
 let set_initial_profiles data u =
   (* Set pointer to data array in vector u *)
-  let udata, _, _ = unvec u in
+  let (udata : RealArray.t), _, _ = unvec u in
 
   (* Get mesh spacings, and subgrid indices for this PE *)
   let dx = data.dx
@@ -550,7 +550,7 @@ let fcalc data t (udata : RealArray.t) (dudata : RealArray.t) =
 let print_output s my_pe comm u t =
   let npelast = npex*npey - 1 in
   let tempu = RealArray.create 2 in
-  let udata, _, _ = unvec u in
+  let (udata : RealArray.t), _, _ = unvec u in
 
   (* Send c at top right mesh point to PE 0 *)
   if my_pe = npelast then begin
@@ -586,7 +586,7 @@ let print_output_s my_pe comm uS =
   let temps = RealArray.create 2 in
 
   let show i =
-    let sdata, _, _ = unvec uS.(i - 1) in
+    let (sdata : RealArray.t), _, _ = unvec uS.(i - 1) in
 
     (* Send sx at top right mesh point to PE 0 *)
     if my_pe = npelast then begin
@@ -661,7 +661,7 @@ let f data t ((udata : RealArray.t),_,_) ((dudata : RealArray.t),_,_) =
 
 let precond data jacarg jok gamma =
   let { Cvode.jac_t   = tn;
-        Cvode.jac_y   = (udata, _, _);
+        Cvode.jac_y   = ((udata : RealArray.t), _, _);
       } = jacarg
   in
   (* Make local copies of pointers in user_data, and of pointer to u's data *)
@@ -742,8 +742,8 @@ let precond data jacarg jok gamma =
 
 (* Preconditioner solve routine *)
 
-let psolve data jac_arg solve_arg (zdata, _, _) =
-  let { Cvode.Spils.rhs = (r, _, _);
+let psolve data jac_arg solve_arg ((zdata : RealArray.t), _, _) =
+  let { Cvode.Spils.rhs = ((r : RealArray.t), _, _);
         Cvode.Spils.gamma = gamma;
         Cvode.Spils.delta = delta;
         Cvode.Spils.left = lr } = solve_arg

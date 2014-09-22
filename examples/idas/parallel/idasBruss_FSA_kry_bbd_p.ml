@@ -114,9 +114,6 @@ let one =         1.0
  * species index is = 0, x-index ix = i, and y-index jy = j.
  *)
 let index i j = i*num_species + j*nsmxsub
-let ij_vptr (local,_,_) i j =
-  let offset = index i j in
-  slice local offset (RealArray.length local - offset)
 
 type user_data =
   {
@@ -603,6 +600,8 @@ let set_initial_profiles data uv uvp id resid =
   let dx = data.dx in
   let dy = data.dy in
   let l = data.l in
+  let uvdata,_,_ = uv in
+  let iddata,_,_ = id in
 
   n_vconst 0. uv;
 
@@ -610,12 +609,10 @@ let set_initial_profiles data uv uvp id resid =
   for jy = 0 to mysub-1 do
     let y = float_of_int(jy + jysub*mysub) *. dy in
     for ix = 0 to mxsub-1 do
-
       let x = float_of_int(ix + ixsub*mxsub) *. dx in
-      let uvxy = ij_vptr uv ix jy in
-
-      uvxy.{0} <- 1.0 -. half*.cos(pi*.y/.l);
-      uvxy.{1} <- 3.5 -. 2.5*.cos(pi*.x/.l);
+      let off = index ix jy in
+      uvdata.{off+0} <- 1.0 -. half*.cos(pi*.y/.l);
+      uvdata.{off+1} <- 3.5 -. 2.5*.cos(pi*.x/.l);
     done
   done;
 
@@ -623,54 +620,54 @@ let set_initial_profiles data uv uvp id resid =
 
   if jysub = 0 then begin
     for ix = 0 to mxsub-1 do
-      let idxy = ij_vptr id ix 0 in
-      idxy.{0} <- zero;
-      idxy.{1} <- zero;
+      let off = index ix 0 in
+      iddata.{off+0} <- zero;
+      iddata.{off+1} <- zero;
 
-      let uvxy = ij_vptr uv ix 0 in
-      let uvxy1 = ij_vptr uv ix 1 in
-      uvxy.{0} <- uvxy1.{0};
-      uvxy.{1} <- uvxy1.{1};
+      let off = index ix 0 in
+      let off1 = index ix 1 in
+      uvdata.{off+0} <- uvdata.{off1+0};
+      uvdata.{off+1} <- uvdata.{off1+1}
     done
   end;
 
   if ixsub = npex-1 then begin
     for jy = 0 to mysub-1 do
-      let idxy = ij_vptr id (mxsub-1) jy in
-      idxy.{0} <- zero;
-      idxy.{1} <- zero;
+      let off = index (mxsub-1) jy in
+      iddata.{off+0} <- zero;
+      iddata.{off+1} <- zero;
 
-      let uvxy = ij_vptr uv (mxsub-1) jy in
-      let uvxy1 = ij_vptr uv (mxsub-2) jy in
-      uvxy.{0} <- uvxy1.{0};
-      uvxy.{1} <- uvxy1.{1};
+      let off = index (mxsub-1) jy in
+      let off1 = index (mxsub-2) jy in
+      uvdata.{off+0} <- uvdata.{off1+0};
+      uvdata.{off+1} <- uvdata.{off1+1};
 
     done
   end;
 
   if ixsub = 0 then begin
     for jy = 0 to mysub-1 do
-      let idxy = ij_vptr id 0 jy in
-      idxy.{0} <- zero;
-      idxy.{1} <- zero;
+      let off = index 0 jy in
+      iddata.{off+0} <- zero;
+      iddata.{off+1} <- zero;
 
-      let uvxy = ij_vptr uv 0 jy in
-      let uvxy1 = ij_vptr uv 1 jy in
-      uvxy.{0} <- uvxy1.{0};
-      uvxy.{1} <- uvxy1.{1}
+      let off = index 0 jy in
+      let off1 = index 1 jy in
+      uvdata.{off+0} <- uvdata.{off1+0};
+      uvdata.{off+1} <- uvdata.{off1+1}
     done
   end;
 
   if jysub = npey-1 then begin
     for ix = 0 to mxsub-1 do
-      let idxy = ij_vptr id ix jysub in
-      idxy.{0} <- zero;
-      idxy.{1} <- zero;
+      let off = index ix jysub in
+      iddata.{off+0} <- zero;
+      iddata.{off+1} <- zero;
 
-      let uvxy = ij_vptr uv ix (mysub-1) in
-      let uvxy1 = ij_vptr uv ix (mysub-2) in
-      uvxy.{0} <- uvxy1.{0};
-      uvxy.{1} <- uvxy1.{1}
+      let off = index ix (mysub-1) in
+      let off1 = index ix (mysub-2) in
+      uvdata.{off+0} <- uvdata.{off1+0};
+      uvdata.{off+1} <- uvdata.{off1+1}
     done
   end;
 
@@ -764,8 +761,8 @@ let print_sol data mem uv uvp comm =
 
   for jy = 0 to mysub-1 do
     for ix = 0 to mxsub-1 do
-      let uvxy = ij_vptr uv ix jy in
-      fprintf fout "%g\n%g\n" uvxy.{0} uvxy.{1};
+      let off = index ix jy in
+      fprintf fout "%g\n%g\n" uv.{off} uv.{off+1};
     done
   done;
   close_out fout
