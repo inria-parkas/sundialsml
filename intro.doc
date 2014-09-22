@@ -160,7 +160,7 @@ programs that use numerical solvers?
 These questions are not easy to answer. As a first attempt, the bars in
 the following graph show the ratios of the execution times of the Sundials
 examples reimplemented in OCaml to the original versions in C, i.e., a
-value of 2 against the right-hand axis means an OCaml version that is
+value of 2 (on the axis at left) means an OCaml version that is
 twice as slow.
 
 {img perf.opt.png}
@@ -172,22 +172,31 @@ The [*_custom] example ({color #a1d99b light green}) uses custom nvectors
 with low-level operations in OCaml and the [*_alt] examples ({color #31a354
 dark green}) use linear solvers implemented in OCaml.
 
-This conclusion seems reasonable as a first approximation, but several
+Such a conclusion seems reasonable as a first approximation, but several
 details of the analysis process and individual results show that the real
 situation is less clear-cut. For one, the running times of most of the
 examples are so short that accurate profiling is not possible (i.e.,
 {{:http://pubs.opengroup.org/onlinepubs/9699919799/utilities/time.html}time}
-and {{:https://sourceware.org/binutils/docs/gprof/}gprof} simply show 0s).
-The figures in the graph were obtained by instrumenting the examples to
+and {{:https://sourceware.org/binutils/docs/gprof/}gprof} simply show 0
+seconds).
+The figures in the graph were obtained by modifying the examples to
 repeatedly execute their [main] functions.
 The number of repetitions varies per example since otherwise the slower
 examples take too long.
 The timings indicated by the crosses and the axis at right are calculated by
 dividing the measurement made for each C version by the number of repetitions.
+All but six of the serial examples ({color #de2d26 red}) run so fast that 
+comparisons are made based on tens, or usually hundreds of repetitions and this
+seems to amplify factors other than the interface overhead.
+For instance, some examples spend a good fraction of their time in [printf],
+and we were able to lower their ratios by instead using [print_string] and
+[print_int].
+
+The parallel examples ({color #fc9272 lighter red}) all have longer runtimes
+and the results shown are obtained without iterating.
+
 For many of the examples with longer running times, the ratio OCaml/C is
 close to 1.
-
-TODO: discuss the parallel examples ({color #fc9272 lighter red}).
 
 TODO: performance tips for programs: a) type annotations for vectors; b)
 avoid slice and sub; c) unwrap and use array access for matrices.

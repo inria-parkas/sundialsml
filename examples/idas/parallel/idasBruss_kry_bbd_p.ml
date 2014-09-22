@@ -51,7 +51,7 @@ let printf = Printf.printf
 
 let slice = Bigarray.Array1.sub
 
-let blit buf buf_offset dst dst_offset len =
+let blit (buf : RealArray.t) buf_offset (dst : RealArray.t) dst_offset len =
   for i = 0 to len-1 do
     dst.{dst_offset + i} <- buf.{buf_offset + i}
   done
@@ -231,7 +231,7 @@ let brecvwait request ixsub jysub dsizex cext =
  * This routine sends components of uv from internal subgrid boundaries
  * to the appropriate neighbor PEs.
  *)
-let bsend comm my_pe ixsub jysub dsizex dsizey cdata =
+let bsend comm my_pe ixsub jysub dsizex dsizey (cdata : RealArray.t) =
   let bufleft = RealArray.create (num_species * mysub)
   and bufright = RealArray.create (num_species * mysub)
   in
@@ -279,7 +279,8 @@ let bsend comm my_pe ixsub jysub dsizex dsizey cdata =
  * At a given (x,y), evaluate the array of ns reaction terms R.
  *)
 
-let react_rates data xx yy (uvval, uvval_off) rates =
+let react_rates data xx yy ((uvval : RealArray.t), uvval_off)
+                           (rates : RealArray.t) =
   let a = data.a and b = data.b in
 
   rates.{0} <- uvval.{uvval_off}*.uvval.{uvval_off}*.uvval.{uvval_off + 1};
@@ -298,7 +299,7 @@ let react_rates data xx yy (uvval, uvval_off) rates =
  * and receive-waiting, in routines brecvpost, bsend, brecvwait.
  *)
 let rescomm data tt uv uvp =
-  let cdata,_,_ = uv in
+  let (cdata : RealArray.t),_,_ = uv in
 
   (* Get comm, thispe, subgrid indices, data sizes, extended array cext. *)
   let comm = data.comm in

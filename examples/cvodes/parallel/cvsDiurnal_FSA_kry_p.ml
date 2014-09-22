@@ -174,7 +174,7 @@ type user_data = {
 
 (* Private Helper Functions *)
 
-let sqr x = x ** 2.0
+let sqr x = x *. x
 
 (*
  *--------------------------------------------------------------------
@@ -441,7 +441,7 @@ let ucomm data t udata =
  * between processors of data needed to calculate f has already been done,
  * and this data is in the work array uext. *)
 
-let fcalc data t udata dudata =
+let fcalc data t (udata : RealArray.t) (dudata : RealArray.t) =
   (* Get subgrid indices, data sizes, extended work array uext *)
   let isubx    = data.isubx
   and isuby    = data.isuby

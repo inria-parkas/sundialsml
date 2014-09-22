@@ -110,7 +110,7 @@ let vscale = Nvector_parallel.DataOps.n_vscale
 
 let slice = Bigarray.Array1.sub
 
-let blit buf buf_offset dst dst_offset len =
+let blit (buf : RealArray.t) buf_offset (dst : RealArray.t) dst_offset len =
   for i = 0 to len-1 do
     dst.{dst_offset + i} <- buf.{buf_offset + i}
   done
@@ -122,9 +122,6 @@ let float_cell_size =
   - header_and_empty_array_size
 
 let bytes x = header_and_empty_array_size + x * float_cell_size
-
-(* Drop the first i elements of a RealArray.t *)
-let real_array_drop i a = slice a i (RealArray.length a - i)
 
 (* Problem Constants *)
 
@@ -168,9 +165,7 @@ let tadd =        0.3    (* Increment for tout values *)
  * IJ_Vptr(vv,i,j) returns a pointer to the location in vv corresponding to 
  * species index is = 0, x-index ix = i, and y-index jy = j.                
  *)
-let ij_vptr (local, _, _) i j =
-  let offset = i*num_species + j*nsmxsub in
-  slice local offset (RealArray.length local - offset)
+let ij_index i j = i*num_species + j*nsmxsub
 
 (* Type: UserData.  Contains problem constants, preconditioner data, etc. *)
 
@@ -206,18 +201,6 @@ type user_data =
  * FUNCTIONS CALLED BY IDA & SUPPORTING FUNCTIONS
  *--------------------------------------------------------------------
  *)
-
-(*
- * dotprod: dot product routine for realtype arrays, for use by web_rates.
- *)
-
-let dotprod size (x1 : RealArray.t) (x2 : RealArray.t) =
-  let temp = ref zero in
-  for i = 0 to size-1 do
-    temp := !temp +. x1.{i} *. x2.{i}
-  done;
-  !temp
-
 
 (*
  * BSend: Send boundary data to neighboring PEs.
@@ -374,19 +357,25 @@ let rescomm webdata tt cc cp =
  * WebRates: Evaluate reaction rates at a given spatial point.
  * At a given (x,y), evaluate the array of ns reaction terms R.
  *)
-
-let web_rates webdata xx yy cxy ratesxy =
-  let acoef =    webdata.acoef in
-  let bcoef =    webdata.bcoef in
+let web_rates webdata x y ((cxy : RealArray.t), cxy_off)
+                          ((ratesxy : RealArray.t), ratesxy_off) =
+  let acoef = RealArray2.unwrap webdata.acoef
+  and bcoef = webdata.bcoef in
 
   for is = 0 to num_species-1 do
-    ratesxy.{is} <- dotprod num_species cxy (RealArray2.col acoef is)
+    (* ratesxy.{is} <- dotprod cxy (Directdensematrix.column acoef is) *)
+    ratesxy.{ratesxy_off + is} <- 0.;
+    for j = 0 to num_species-1 do
+      ratesxy.{ratesxy_off + is} <- ratesxy.{ratesxy_off + is}
+                                  +. cxy.{cxy_off + j} *. acoef.{is, j}
+    done
   done;
 
-  let fac = one +. alpha*.xx*.yy +. beta*.sin(fourpi*.xx)*.sin(fourpi*.yy) in
+  let fac = 1. +. alpha*.x*.y +. beta*.sin(fourpi*.x)*.sin(fourpi*.y) in
 
   for is = 0 to num_species-1 do
-    ratesxy.{is} <- cxy.{is}*.( bcoef.{is}*.fac +. ratesxy.{is} )
+    ratesxy.{ratesxy_off + is} <- cxy.{cxy_off + is}*.( bcoef.{is}*.fac
+                                    +. ratesxy.{ratesxy_off + is} )
   done
 
 (*
@@ -403,7 +392,8 @@ let web_rates webdata xx yy cxy ratesxy =
  * for use by the preconditioner setup routine.                          
  *)
 
-let reslocal webdata tt cc cp rr =
+let reslocal webdata tt cc ((cp : RealArray.t), _, _)
+                           ((rr : RealArray.t), _, _) =
   let mxsub =    webdata.mxsub in
   let mysub =    webdata.mysub in
   let npex =     webdata.npex in
@@ -419,11 +409,11 @@ let reslocal webdata tt cc cp rr =
   let coy =      webdata.coy in
   let rhs =      webdata.rhs in
   let cext =     webdata.cext in
-  let rates =    webdata.rates in
+  let rates, _, _ = webdata.rates in
 
   (* Get data pointers, subgrid data, array sizes, work array cext. *)
 
-  let cdata,_,_ = cc in
+  let (cdata : RealArray.t),_,_ = cc in
 
   (* Copy local segment of cc vector into the working extended array cext. *)
 
@@ -489,11 +479,12 @@ let reslocal webdata tt cc cp rr =
       let locce = ylocce + (ix+1)*num_species in
       let xx = float_of_int(ix + ixsub*mxsub)*.dx in
 
-      let ratesxy = ij_vptr rates ix jy in
-      web_rates webdata xx yy (real_array_drop locce cext) ratesxy;
+      let rates_off = ij_index ix jy in
+      web_rates webdata xx yy (cext, locce) (rates, ij_index ix jy);
+      (* web_rates webdata xx yy (cext, locce) (rates, ij_index ix jy); *)
 
-      let resxy = ij_vptr rr ix jy in
-      let cpxy = ij_vptr cp ix jy in
+      let rr_off = ij_index ix jy in
+      let cp_off = ij_index ix jy in
 
       for is = 0 to num_species-1 do
         let dcyli = cext.{locce+is}          -. cext.{locce+is-nsmxsub2} in
@@ -504,10 +495,10 @@ let reslocal webdata tt cc cp rr =
 
         rhs.{is} <- cox.{is}*.(dcxui-.dcxli)
                     +. coy.{is}*.(dcyui-.dcyli)
-                    +. ratesxy.{is};
+                    +. rates.{rates_off + is};
 
-        if is < np then resxy.{is} <- cpxy.{is} -. rhs.{is}
-        else            resxy.{is} <-           -. rhs.{is}
+        if is < np then rr.{rr_off + is} <- cp.{cp_off + is} -. rhs.{is}
+        else            rr.{rr_off + is} <-                  -. rhs.{is}
       done
     done
   done
@@ -618,7 +609,9 @@ let init_user_data local_N system_size thispe npes comm =
  * the predator cp values are set to zero.
  *)
 
-let set_initial_profiles webdata cc cp id res =
+let set_initial_profiles webdata (((ccdata : RealArray.t), _, _) as cc)
+                                 (((cpdata : RealArray.t), _, _) as cp)
+                                  ((iddata : RealArray.t), _, _) res =
   let ixsub = webdata.ixsub in
   let jysub = webdata.jysub in
   let mxsub = webdata.mxsub in
@@ -635,14 +628,14 @@ let set_initial_profiles webdata cc cp id res =
       let xyfactor = 16.*.xx*.(1. -. xx)*.yy*.(1. -. yy) in
       let xyfactor = xyfactor *. xyfactor in
 
-      let cxy = ij_vptr cc ix jy in
-      let idxy = ij_vptr id ix jy in
+      let cc_off = ij_index ix jy in
+      let id_off = ij_index ix jy in
       for is = 0 to num_species-1 do
         if is < np
-        then (cxy.{is} <- 10.0+.float_of_int(is+1)*.xyfactor;
-              idxy.{is} <- one)
-        else (cxy.{is} <- 1.0e5;
-              idxy.{is} <- zero)
+        then (ccdata.{cc_off + is} <- 10.0+.float_of_int(is+1)*.xyfactor;
+              iddata.{id_off + is} <- one)
+        else (ccdata.{cc_off + is} <- 1.0e5;
+              iddata.{id_off + is} <- zero)
       done
     done
   done;
@@ -657,9 +650,9 @@ let set_initial_profiles webdata cc cp id res =
 
   for jy = 0 to mysub-1 do
     for ix = 0 to mxsub-1 do
-      let cpxy = ij_vptr cp ix jy in
+      let cp_off = ij_index ix jy in
       for is = np to num_species-1 do
-        cpxy.{is} <- zero
+        cpdata.{cp_off + is} <- zero
       done
     done
   done

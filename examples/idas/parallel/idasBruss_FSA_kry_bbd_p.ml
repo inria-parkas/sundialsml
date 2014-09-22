@@ -61,7 +61,7 @@ let printf = Printf.printf
 
 let slice = Bigarray.Array1.sub
 
-let blit buf buf_offset dst dst_offset len =
+let blit (buf : RealArray.t) buf_offset (dst : RealArray.t) dst_offset len =
   for i = 0 to len-1 do
     dst.{dst_offset + i} <- buf.{buf_offset + i}
   done
@@ -73,9 +73,6 @@ let float_cell_size =
   - header_and_empty_array_size
 
 let bytes x = header_and_empty_array_size + x * float_cell_size
-
-(* Drop the first i elements of a RealArray.t *)
-let real_array_drop i a = slice a i (RealArray.length a - i)
 
 (* Problem Constants *)
 let num_species = 2
@@ -242,7 +239,7 @@ let brecvwait request ixsub jysub dsizex cext =
  * This routine sends components of uv from internal subgrid boundaries
  * to the appropriate neighbor PEs.
  *)
-let bsend comm my_pe ixsub jysub dsizex dsizey cdata =
+let bsend comm my_pe ixsub jysub dsizex dsizey (cdata : RealArray.t) =
   let bufleft = RealArray.create (num_species * mysub)
   and bufright = RealArray.create (num_species * mysub)
   in
