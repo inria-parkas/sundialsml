@@ -92,7 +92,8 @@ sundials_mpi.cma sundials_mpi.cmxa: $(MLOBJ_MPI) $(MLOBJ_MPI:.cmo=.cmx) \
 	    -o sundials_mpi -oc mlsundials_mpi $^	\
 	    $(LIB_PATH) $(MPI_LIBLINK)
 
-$(MLOBJ_MPI) $(MLOBJ_MPI:.cmo=.cmi) $(MLOBJ_MPI:.cmo=.cmx) : \
+$(MLOBJ_MPI) $(MLOBJ_MPI:.cmo=.cmi) $(MLOBJ_MPI:.cmo=.cmx)	\
+    	     doc/html/index.html :				\
     INCLUDES += $(MPI_INCLUDES)
 
 # The CFLAGS settings for CVODE works for modules common to CVODE and IDA.
