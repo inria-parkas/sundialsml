@@ -94,6 +94,7 @@ module RealArray = Sundials.RealArray
 module LintArray = Sundials.LintArray
 module Roots = Sundials.Roots
 module Densemat = Dls.ArrayDenseMatrix
+module Spils = Cvode.Spils
 open Bigarray
 let unvec = Sundials.unvec
 
@@ -778,7 +779,7 @@ let print_intro () =
 
 let print_header jpre gstype =
   printf "\n\nPreconditioner type is           jpre = %s\n"
-    (if jpre = Spils.PrecTypeLeft then "PREC_LEFT" else "PREC_RIGHT");
+    (if jpre = (Cvode.Spils.PrecLeft ()) then "PREC_LEFT" else "PREC_RIGHT");
   printf"\nGram-Schmidt method type is    gstype = %s\n\n\n"
     (if gstype = Spils.ModifiedGS then "MODIFIED_GS" else "CLASSICAL_GS")
 
@@ -911,10 +912,10 @@ let main () =
   in
       
   (* Loop over jpre and gstype (four cases) *)
-  run Spils.PrecTypeLeft  Spils.ModifiedGS;
-  run Spils.PrecTypeLeft  Spils.ClassicalGS;
-  run Spils.PrecTypeRight Spils.ModifiedGS;
-  run Spils.PrecTypeRight Spils.ClassicalGS
+  run (Spils.PrecLeft ())  Spils.ModifiedGS;
+  run (Spils.PrecLeft ())  Spils.ClassicalGS;
+  run (Spils.PrecRight ()) Spils.ModifiedGS;
+  run (Spils.PrecRight ()) Spils.ClassicalGS
 
 (* Check environment variables for extra arguments.  *)
 let reps =

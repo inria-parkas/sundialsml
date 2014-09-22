@@ -17,10 +17,10 @@ type gramschmidt_type =
         (** Classical Gram Schmidt orthogonalization (CLASSICAL_GS) *)
 
 type preconditioning_type =
-  | PrecTypeNone
-  | PrecTypeLeft
-  | PrecTypeRight
-  | PrecTypeBoth
+  | PrecNone
+  | PrecLeft
+  | PrecRight
+  | PrecBoth
 
 exception MemoryRequestFailure
 

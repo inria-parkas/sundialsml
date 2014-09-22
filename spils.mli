@@ -42,10 +42,10 @@ type gramschmidt_type =
  @cvode <node5#sss:lin_solv_init> CVSpgmr/CVSpbcg/CVSptfqrm
  *)
 type preconditioning_type =
-  | PrecTypeNone
-  | PrecTypeLeft
-  | PrecTypeRight
-  | PrecTypeBoth
+  | PrecNone
+  | PrecLeft
+  | PrecRight
+  | PrecBoth
 
 exception MemoryRequestFailure
 

@@ -876,7 +876,7 @@ let main () =
 
   (* Attach preconditioner and linear solver modules *)
   let spgmr = Bbd.spgmr
-                Spils.PrecTypeLeft
+                Spils.PrecLeft
                 { Bbd.mudq = d.l_m.(0) + 1;
                   Bbd.mldq = d.l_m.(0) + 1;
                   Bbd.mukeep = 2;
@@ -927,7 +927,7 @@ let main () =
 
   (* Attach preconditioner and linear solver modules *)
   let bspgmr = Adjbbd.spgmr
-                Spils.PrecTypeLeft
+                Spils.PrecLeft
                 { Bbd.mudq = d.l_m.(0) + 1;
                   Bbd.mldq = d.l_m.(0) + 1;
                   Bbd.mukeep = 2;

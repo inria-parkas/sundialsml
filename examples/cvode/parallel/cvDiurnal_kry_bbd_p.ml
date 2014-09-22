@@ -572,7 +572,7 @@ let main () =
     Cvode.init Cvode.BDF
       (Cvode.Newton
          (BBD.spgmr
-            Spils.PrecTypeLeft
+            Spils.PrecLeft
             { BBD.mudq   = mudq;   BBD.mldq = mldq;
               BBD.mukeep = mukeep; BBD.mlkeep = mlkeep }
             { BBD.local_fn = (flocal data); BBD.comm_fn = None }))
@@ -585,11 +585,11 @@ let main () =
 
   let solve_problem jpre =
     (* On second run, re-initialize u, the integrator, CVBBDPRE, and CVSPGMR *)
-    if jpre = Spils.PrecTypeRight then begin
+    if jpre = Spils.PrecRight then begin
       set_initial_profiles data u;
       Cvode.reinit cvode_mem t0 u;
       BBD.reinit cvode_mem mudq mldq;
-      Cvode.Spils.set_prec_type cvode_mem Spils.PrecTypeRight;
+      Cvode.Spils.set_prec_type cvode_mem (Cvode.Spils.PrecRight ());
 
       if my_pe = 0 then begin
         printf "\n\n-------------------------------------------------------";
@@ -599,7 +599,7 @@ let main () =
 
     if my_pe = 0 then
       printf "\n\nPreconditioner type is:  jpre = %s\n\n"
-             (if jpre = Spils.PrecTypeLeft then "PREC_LEFT" else "PREC_RIGHT");
+             (if jpre = Spils.PrecLeft then "PREC_LEFT" else "PREC_RIGHT");
 
     (* In loop over output points, call CVode, print results, test for error *)
     let tout = ref twohr in
@@ -612,7 +612,7 @@ let main () =
     (* Print final statistics *)  
     if my_pe = 0 then print_final_stats cvode_mem
   in
-  List.iter solve_problem [Spils.PrecTypeLeft; Spils.PrecTypeRight]
+  List.iter solve_problem [Spils.PrecLeft; Spils.PrecRight]
 
 (* Check environment variables for extra arguments.  *)
 let reps =

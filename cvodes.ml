@@ -736,69 +736,95 @@ module Adjoint =
 
         let prec_none = PrecNone
         let prec_left ?setup ?jac_times_vec solve =
-          PrecLeft { prec_setup_fn = setup;
-                     prec_solve_fn = solve;
-                     jac_times_vec_fn = jac_times_vec }
+          PrecLeft (User (solve, setup, jac_times_vec))
         let prec_right ?setup ?jac_times_vec solve =
-          PrecRight { prec_setup_fn = setup;
-                      prec_solve_fn = solve;
-                      jac_times_vec_fn = jac_times_vec }
+          PrecRight (User (solve, setup, jac_times_vec))
         let prec_both ?setup ?jac_times_vec solve =
-          PrecBoth { prec_setup_fn = setup;
-                     prec_solve_fn = solve;
-                     jac_times_vec_fn = jac_times_vec }
+          PrecBoth (User (solve, setup, jac_times_vec))
+        let prec_left_banded ?jac_times_vec bandrange =
+          PrecLeft (Banded (bandrange, jac_times_vec))
+        let prec_right_banded ?jac_times_vec bandrange =
+          PrecRight (Banded (bandrange, jac_times_vec))
+        let prec_both_banded ?jac_times_vec bandrange =
+          PrecBoth (Banded (bandrange, jac_times_vec))
 
-        external c_spils_set_preconditioner
+        external c_set_preconditioner
           : ('a, 'k) session -> int -> bool -> unit
           = "c_cvodes_adj_spils_set_preconditioner"
 
-        external c_spils_set_jac_times_vec_fn
+        external c_set_banded_preconditioner
+          : ('a, 'k) session -> int -> int -> int -> int -> unit
+          = "c_cvodes_adj_spils_set_preconditioner"
+
+        external c_set_jac_times_vec_fn
           : ('a, 'k) session -> int -> bool -> unit
           = "c_cvodes_adj_spils_set_jac_times_vec_fn"
 
-        external c_spils_spgmr
-          : ('a, 'k) session -> int -> int -> preconditioning_type -> unit
+        external c_spgmr
+          : ('a, 'k) session -> int -> int -> Spils.preconditioning_type -> unit
           = "c_cvodes_adj_spils_spgmr"
 
-        external c_spils_spbcg
-          : ('a, 'k) session -> int -> int -> preconditioning_type -> unit
+        external c_spbcg
+          : ('a, 'k) session -> int -> int -> Spils.preconditioning_type -> unit
           = "c_cvodes_adj_spils_spbcg"
 
-        external c_spils_sptfqmr
-          : ('a, 'k) session -> int -> int -> preconditioning_type -> unit
+        external c_sptfqmr
+          : ('a, 'k) session -> int -> int -> Spils.preconditioning_type -> unit
           = "c_cvodes_adj_spils_sptfqmr"
 
-        let init_spils init bs maxl prec =
+        let init_spils :
+          type a k. ((a, k) session -> int -> int -> Spils.preconditioning_type -> unit)
+          -> int
+          -> (a, k) preconditioner
+          -> (a, k) bsession
+          -> (a, k) nvector
+          -> unit =
+          fun init maxl prec bs nv ->
           let parent, which = parent_and_which bs in
           let with_prec prec_type cb =
             init parent which maxl prec_type;
-            c_spils_set_preconditioner parent which
-              (cb.prec_setup_fn <> None);
-            c_spils_set_jac_times_vec_fn parent which
-              (cb.jac_times_vec_fn <> None);
-            (tosession bs).ls_callbacks <- BSpilsCallback cb
+            match (cb : (a, k) callbacks) with
+            | Banded (range, jac_times_vec) ->
+              c_set_banded_preconditioner parent which
+                (RealArray.length (Sundials.unvec nv))
+                range.mupper range.mlower;
+              c_set_jac_times_vec_fn parent which (jac_times_vec <> None);
+              (tosession bs).ls_callbacks <- BSpilsBandedCallback jac_times_vec
+            | User (solve, setup, jac_times) ->
+              c_set_preconditioner parent which (setup <> None);
+              c_set_jac_times_vec_fn parent which (jac_times <> None);
+              (tosession bs).ls_callbacks <-
+                BSpilsCallback { prec_solve_fn = solve;
+                                 prec_setup_fn = setup;
+                                 jac_times_vec_fn = jac_times }
           in
           match prec with
-          | PrecNone -> init parent which maxl PrecTypeNone
-          | PrecLeft cb  -> with_prec PrecTypeLeft cb
-          | PrecRight cb -> with_prec PrecTypeRight cb
-          | PrecBoth cb  -> with_prec PrecTypeBoth cb
+          | PrecNone -> init parent which maxl Spils.PrecNone
+          | PrecLeft cb  -> with_prec Spils.PrecLeft cb
+          | PrecRight cb -> with_prec Spils.PrecRight cb
+          | PrecBoth cb  -> with_prec Spils.PrecBoth cb
 
-        let spgmr ?(maxl=0) prec bs _ =
-          init_spils c_spils_spgmr bs maxl prec
+        let spgmr ?(maxl=0) prec bs nv =
+          init_spils c_spgmr maxl prec bs nv
 
-        let spbcg ?(maxl=0) prec bs _ =
-          init_spils c_spils_spbcg bs maxl prec
+        let spbcg ?(maxl=0) prec bs nv =
+          init_spils c_spbcg maxl prec bs nv
 
-        let sptfqmr ?(maxl=0) prec bs _ =
-          init_spils c_spils_sptfqmr bs maxl prec
+        let sptfqmr ?(maxl=0) prec bs nv =
+          init_spils c_sptfqmr maxl prec bs nv
 
-        external set_prec_type
+        external c_set_prec_type
             : ('a, 'k) bsession -> Spils.preconditioning_type -> unit
             = "c_cvodes_adj_spils_set_prec_type"
 
+        let set_prec_type s = function
+          | PrecNone -> c_set_prec_type s Spils.PrecNone
+          | PrecLeft () -> c_set_prec_type s Spils.PrecLeft
+          | PrecRight () -> c_set_prec_type s Spils.PrecRight
+          | PrecBoth () -> c_set_prec_type s Spils.PrecBoth
+
         external set_gs_type
-            : ('a, 'k) bsession -> Spils.gramschmidt_type -> unit
+            : ('a, 'k) bsession -> gramschmidt_type -> unit
             = "c_cvodes_adj_spils_set_gs_type"
 
         external set_eps_lin : ('a, 'k) bsession -> float -> unit
@@ -831,47 +857,11 @@ module Adjoint =
         let get_num_rhs_evals bs =
           Cvode.Spils.get_num_rhs_evals (tosession bs)
 
-        module Banded =
-          struct
-            external c_spils_banded_spgmr
-              : (serial_session * int * int) -> int
-                      -> int -> int -> Spils.preconditioning_type -> unit
-              = "c_cvodes_adj_spils_banded_spgmr"
+        let get_banded_work_space bs =
+          Cvode.Spils.get_banded_work_space (tosession bs)
 
-            external c_spils_banded_spbcg
-              : (serial_session * int * int) -> int
-                    -> int -> int -> Spils.preconditioning_type -> unit
-              = "c_cvodes_adj_spils_banded_spbcg"
-
-            external c_spils_banded_sptfqmr
-              : (serial_session * int * int) -> int
-                    -> int -> int -> Spils.preconditioning_type -> unit
-              = "c_cvodes_adj_spils_banded_sptfqmr"
-
-            let spgmr ?(maxl=0) prec_type br bs nv =
-              let parent, which = parent_and_which bs in
-              let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
-              c_spils_banded_spgmr (parent, which, neqs)
-                                   br.mupper br.mlower maxl prec_type
-
-            let spbcg ?(maxl=0) prec_type br bs nv =
-              let parent, which = parent_and_which bs in
-              let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
-              c_spils_banded_spbcg (parent, which, neqs)
-                                   br.mupper br.mlower maxl prec_type
-
-            let sptfqmr ?(maxl=0) prec_type br bs nv =
-              let parent, which = parent_and_which bs in
-              let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
-              c_spils_banded_sptfqmr (parent, which, neqs)
-                                     br.mupper br.mlower maxl prec_type
-
-            let get_work_space bs =
-              Cvode.Spils.Banded.get_work_space (tosession bs)
-
-            let get_num_rhs_evals bs =
-              Cvode.Spils.Banded.get_num_rhs_evals (tosession bs)
-          end
+        let get_banded_num_rhs_evals bs =
+          Cvode.Spils.get_banded_num_rhs_evals (tosession bs)
       end
 
     let get_work_space bs = Cvode.get_work_space (tosession bs)

@@ -51,15 +51,15 @@ external c_bbd_prec_init
     = "c_cvode_bbd_prec_init"
 
 external c_spils_spgmr
-  : ('a, 'k) session -> int -> Cvode.Spils.preconditioning_type -> unit
+  : ('a, 'k) session -> int -> Spils.preconditioning_type -> unit
   = "c_cvode_spils_spgmr"
 
 external c_spils_spbcg
-  : ('a, 'k) session -> int -> Cvode.Spils.preconditioning_type -> unit
+  : ('a, 'k) session -> int -> Spils.preconditioning_type -> unit
   = "c_cvode_spils_spbcg"
 
 external c_spils_sptfqmr
-  : ('a, 'k) session -> int -> Cvode.Spils.preconditioning_type -> unit
+  : ('a, 'k) session -> int -> Spils.preconditioning_type -> unit
   = "c_cvode_spils_sptfqmr"
 
 let spgmr ?(maxl=0) prec_type bws ?(dqrely=0.0) cb session nv =

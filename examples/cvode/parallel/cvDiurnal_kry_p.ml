@@ -53,7 +53,6 @@
 module RealArray = Sundials.RealArray
 module Roots  = Sundials.Roots
 module Direct = Dls.ArrayDenseMatrix
-module BandedSpils = Cvode.Spils.Banded
 open Bigarray
 
 let unvec = Sundials.unvec

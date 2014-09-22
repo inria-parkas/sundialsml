@@ -55,12 +55,6 @@ module SpilsCommonTypes = struct
   type gramschmidt_type = Spils.gramschmidt_type =
     | ModifiedGS
     | ClassicalGS
-
-  type preconditioning_type = Spils.preconditioning_type =
-    | PrecTypeNone
-    | PrecTypeLeft
-    | PrecTypeRight
-    | PrecTypeBoth
 end
 
 module SpilsTypes = struct

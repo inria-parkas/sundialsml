@@ -1005,6 +1005,21 @@ CAMLprim value c_cvodes_adj_spils_set_preconditioner(value vparent,
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value c_cvodes_adj_spils_set_banded_preconditioner(value vparent,
+							    value vwhich,
+							    value vneqs,
+							    value vmupper,
+							    value vmlower)
+{
+    CAMLparam5(vparent, vwhich, vneqs, vmupper, vmlower);
+    void *mem = CVODE_MEM_FROM_ML(vparent);
+    int which = Int_val(vwhich);
+    int flag = CVBandPrecInitB(mem, which, Int_val(vneqs),
+			       Int_val(vmupper), Int_val(vmlower));
+    SCHECK_FLAG ("CVBandPrecInitB", flag);
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value c_cvodes_adj_spils_set_jac_times_vec_fn(value vparent,
 						       value vwhich,
 						       value vset_jac)
