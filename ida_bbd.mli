@@ -63,36 +63,44 @@ type callbacks =
           error, any other exception is treated as an unrecoverable error. *)
   }
 
-(** Same as {!Ida.Spils.spgmr} but with the Parallel Band-Block-Diagonal
-    preconditioner.
-    
-    The arguments specify the maximum dimension of the Krylov subspace (pass
-    [None] to use the default value [5].), the preconditioning type, the
-    bandwidths described under {!bandwidths}, the relative increment in
-    components of [y] used in the difference quotient approximations (pass
-    [None] to use the default value [sqrt unit_roundoff]), and the callbacks
-    described under {!callbacks}.
+(** Same as {!Ida.Spils.spgmr} but with the Parallel
+    Band-Block-Diagonal preconditioner.  Called like [spgmr ~maxl:maxl
+    ~max_restarts:maxr ~dqrely:dqrely bandwidths cbs], where:
+
+    - [~maxl] is the maximum dimension of the Krylov subspace.
+      Defaults to [5].
+    - [~max_restarts] is the maximum number of restarts.  Defaults to [5].
+      Passing [0] disables restarts.
+    - [~dqrely] is the relative increment in components of [y] used in
+      the difference quotient approximations.  Defaults to [sqrt
+      unit_roundoff].
+    - [bandwidths] give the bandwidths of the preconditioning matrix.
+    - [cbs] is a set of {!callbacks}.
 
     @ida <node5#sss:lin_solv_init> IDASpgmr
     @ida <node5#sss:idabbdpre> IDABBDPrecInit *)
-val spgmr : int option -> bandwidths
-            -> float option -> callbacks -> parallel_linear_solver
+val spgmr : ?maxl:int -> ?max_restarts:int -> ?dqrely:float
+            -> bandwidths -> callbacks -> parallel_linear_solver
 
-(** Same as {!Ida.spils.spbcg} but with the Parallel Band-Block-Diagonal
-    preconditioner. The arguments are the same as for [spgmr].
+(** Same as {!Ida.spils.spbcg} but with the Parallel
+    Band-Block-Diagonal preconditioner.  The arguments are the same as
+    for {!spgmr}, except the maximum number of restarts
+    ([~max_restarts]) cannot be specified.
 
     @ida <node5#sss:lin_solv_init> IDASpbcg
     @ida <node5#sss:idabbdpre> IDABBDPrecInit *)
-val spbcg : int option -> bandwidths
-                -> float option -> callbacks -> parallel_linear_solver
+val spbcg : ?maxl:int -> ?dqrely:float
+            -> bandwidths -> callbacks -> parallel_linear_solver
 
-(** Same as {!Ida.spils.spbcg} but with the Parallel Band-Block-Diagonal
-    preconditioner. The arguments are the same as for [spgmr].
+(** Same as {!Ida.spils.spbcg} but with the Parallel
+    Band-Block-Diagonal preconditioner.  The arguments are the same as
+    for {!spgmr}, except the maximum number of restarts
+    ([~max_restarts]) cannot be specified.
 
     @ida <node5#sss:lin_solv_init> IDASptfqmr
     @ida <node5#sss:idabbdpre> IDABBDPrecInit *)
-val sptfqmr : int option -> bandwidths
-                -> float option -> callbacks -> parallel_linear_solver
+val sptfqmr : ?maxl:int -> ?dqrely:float
+            -> bandwidths -> callbacks -> parallel_linear_solver
 
 (** [reinit s mudq mldq dqrely] reinitializes the BBD preconditioner
     with upper ([mudq]) and lower ([mldq]) half-bandwidths to be used in the
@@ -101,7 +109,7 @@ val sptfqmr : int option -> bandwidths
     unit_roundoff]).
 
     @ida <node5#sss:idabbdpre> IDABBDPrecReInit *)
-val reinit : parallel_session -> int -> int -> float option -> unit
+val reinit : parallel_session -> ?dqrely:float -> int -> int -> unit
 
 (** {4 Optional output functions} *)
 

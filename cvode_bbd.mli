@@ -69,37 +69,37 @@ type callbacks =
 
     - [~maxl] gives the maximum dimension of the Krylov subspace
       (defaults to [5]).
+    - [~dqrely] gives the relative increment in components of [y] used in
+      the difference quotient approximations
+      (defaults to [sqrt unit_roundoff]).
     - [prec_type] is the type of preconditioning.  It is legal to specify
       [PrecTypeNone], though in that case {!Cvode.Spils.spgmr} would work
       just as well.
     - [bandwidths] specify the bandwidths to be used in the difference
       quotient Jacobian operation.
-    - [~dqrely] gives the relative increment in components of [y] used in
-      the difference quotient approximations
-      (defaults to [sqrt unit_roundoff]).
     - [callbacks] gives the preconditioning callbacks.  See the
       {!callbacks} type.
 
     @cvode <node5#sss:lin_solv_init> CVSpgmr
     @cvode <node5#sss:cvbbdpre> CVBBDPrecInit *)
-val spgmr : ?maxl:int -> Spils.preconditioning_type -> bandwidths
-                -> ?dqrely:float -> callbacks -> parallel_linear_solver
+val spgmr : ?maxl:int-> ?dqrely:float -> Spils.preconditioning_type
+          -> bandwidths -> callbacks -> parallel_linear_solver
 
 (** Same as {!Cvode.Spils.spbcg} but with the Parallel Band-Block-Diagonal
     preconditioner. The arguments are the same as for {!spgmr}.
 
     @cvode <node5#sss:lin_solv_init> CVSpbcg
     @cvode <node5#sss:cvbbdpre> CVBBDPrecInit *)
-val spbcg : ?maxl:int -> Spils.preconditioning_type -> bandwidths
-                -> ?dqrely:float -> callbacks -> parallel_linear_solver
+val spbcg : ?maxl:int -> ?dqrely:float -> Spils.preconditioning_type
+          -> bandwidths -> callbacks -> parallel_linear_solver
 
 (** Same as {!Cvode.Spils.spbcg} but with the Parallel Band-Block-Diagonal
     preconditioner. The arguments are the same as for {!spgmr}.
 
     @cvode <node5#sss:lin_solv_init> CVSptfqmr
     @cvode <node5#sss:cvbbdpre> CVBBDPrecInit *)
-val sptfqmr : ?maxl:int -> Spils.preconditioning_type -> bandwidths
-                -> ?dqrely:float -> callbacks -> parallel_linear_solver
+val sptfqmr : ?maxl:int -> ?dqrely:float -> Spils.preconditioning_type
+            -> bandwidths -> callbacks -> parallel_linear_solver
 
 (** [reinit s mudq mldq ~dqrely:dqrely] reinitializes the BBD
     preconditioner with upper ([mudq]) and lower ([mldq])

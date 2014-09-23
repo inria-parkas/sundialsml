@@ -219,10 +219,11 @@ module Spils =
                                                 prec_setup_fn = setup;
                                                 jac_times_vec_fn = jac_times }
 
-    let spgmr ?(maxl=0) ?(max_restarts=5) prec session _ _ =
+    let spgmr ?(maxl=0) ?max_restarts prec session _ _ =
       c_spgmr session maxl;
-      if max_restarts <> 5 then
-        c_set_max_restarts session max_restarts;
+      (match max_restarts with
+       | Some m -> c_set_max_restarts session m
+       | None -> ());
       init_prec session prec
 
     let spbcg ?(maxl=0) prec session _ _ =

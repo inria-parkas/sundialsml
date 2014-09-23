@@ -575,14 +575,13 @@ let main () =
   let mlkeep = 1 in
 
   let linsolv =
-    Ida_bbd.spgmr (Some 0)
+    Ida_bbd.spgmr ~maxl:0 ~dqrely:zero
       {
         Ida_bbd.mudq = mudq;
         Ida_bbd.mldq = mldq;
         Ida_bbd.mukeep = mukeep;
         Ida_bbd.mlkeep = mlkeep;
       }
-      (Some zero)
       {
         Ida_bbd.local_fn = reslocal data;
         Ida_bbd.comm_fn = None;
@@ -633,7 +632,7 @@ let main () =
   Ida.reinit mem t0 uu up;
 
   (* Call IDABBDPrecReInit to re-initialize BBD preconditioner. *)
-  Ida_bbd.reinit mem mudq mldq (Some zero);
+  Ida_bbd.reinit mem mudq mldq ~dqrely:zero;
 
   (* Print output heading (on processor 0 only). *)
   if thispe = 0 then print_case 2 mudq mukeep;

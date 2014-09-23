@@ -62,21 +62,21 @@ external c_spils_sptfqmr
   : ('a, 'k) session -> int -> Spils.preconditioning_type -> unit
   = "c_cvode_spils_sptfqmr"
 
-let spgmr ?(maxl=0) prec_type bws ?(dqrely=0.0) cb session nv =
+let spgmr ?(maxl=0) ?(dqrely=0.0) prec_type bws cb session nv =
   let ba, _, _ = Sundials.unvec nv in
   let localn   = Sundials.RealArray.length ba in
   c_spils_spgmr session maxl prec_type;
   c_bbd_prec_init session localn bws dqrely (cb.comm_fn <> None);
   session.ls_callbacks <- BBDCallback (bbd_callbacks cb)
 
-let spbcg ?(maxl=0) prec_type bws ?(dqrely=0.0) cb session nv =
+let spbcg ?(maxl=0) ?(dqrely=0.0) prec_type bws cb session nv =
   let ba, _, _ = Sundials.unvec nv in
   let localn   = Sundials.RealArray.length ba in
   c_spils_spbcg session maxl prec_type;
   c_bbd_prec_init session localn bws dqrely (cb.comm_fn <> None);
   session.ls_callbacks <- BBDCallback (bbd_callbacks cb)
 
-let sptfqmr ?(maxl=0) prec_type bws ?(dqrely=0.0) cb session nv =
+let sptfqmr ?(maxl=0) ?(dqrely=0.0) prec_type bws cb session nv =
   let ba, _, _ = Sundials.unvec nv in
   let localn   = Sundials.RealArray.length ba in
   c_spils_sptfqmr session maxl prec_type;

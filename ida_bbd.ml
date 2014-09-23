@@ -48,42 +48,41 @@ external c_bbd_prec_init
     : parallel_session -> int -> bandwidths -> float -> bool -> unit
     = "c_ida_bbd_prec_init"
 
-external c_spils_spgmr
+external c_spgmr
   : ('a, 'k) session -> int -> unit
   = "c_ida_spils_spgmr"
 
-external c_spils_spbcg
+external c_spbcg
   : ('a, 'k) session -> int -> unit
   = "c_ida_spils_spbcg"
 
-external c_spils_sptfqmr
+external c_sptfqmr
   : ('a, 'k) session -> int -> unit
   = "c_ida_spils_sptfqmr"
 
-let spgmr maxl bws dqrely cb session nv nv' =
-  let maxl   = match maxl with None -> 0 | Some ml -> ml in
-  let dqrely = match dqrely with None -> 0.0 | Some v -> v in
+external c_set_max_restarts : ('a, 'k) session -> int -> unit
+  = "c_ida_spils_set_max_restarts"
+
+let spgmr ?(maxl=0) ?(max_restarts=5) ?(dqrely=0.0) bws cb session nv nv' =
   let ba, _, _ = Sundials.unvec nv in
   let localn   = Sundials.RealArray.length ba in
-  c_spils_spgmr session maxl;
+  if max_restarts <> 5 then
+    c_set_max_restarts session max_restarts;
+  c_spgmr session maxl;
   c_bbd_prec_init session localn bws dqrely (cb.comm_fn <> None);
   session.ls_callbacks <- BBDCallback (bbd_callbacks cb)
 
-let spbcg maxl bws dqrely cb session nv nv' =
-  let maxl   = match maxl with None -> 0 | Some ml -> ml in
-  let dqrely = match dqrely with None -> 0.0 | Some v -> v in
+let spbcg ?(maxl=0) ?(dqrely=0.0) bws cb session nv nv' =
   let ba, _, _ = Sundials.unvec nv in
   let localn   = Sundials.RealArray.length ba in
-  c_spils_spbcg session maxl;
+  c_spbcg session maxl;
   c_bbd_prec_init session localn bws dqrely (cb.comm_fn <> None);
   session.ls_callbacks <- BBDCallback (bbd_callbacks cb)
 
-let sptfqmr maxl bws dqrely cb session nv nv' =
-  let maxl   = match maxl with None -> 0 | Some ml -> ml in
-  let dqrely = match dqrely with None -> 0.0 | Some v -> v in
+let sptfqmr ?(maxl=0) ?(dqrely=0.0) bws cb session nv nv' =
   let ba, _, _ = Sundials.unvec nv in
   let localn   = Sundials.RealArray.length ba in
-  c_spils_sptfqmr session maxl;
+  c_sptfqmr session maxl;
   c_bbd_prec_init session localn bws dqrely (cb.comm_fn <> None);
   session.ls_callbacks <- BBDCallback (bbd_callbacks cb)
 
@@ -91,8 +90,7 @@ external c_bbd_prec_reinit
     : parallel_session -> int -> int -> float -> unit
     = "c_ida_bbd_prec_reinit"
 
-let reinit s mudq mldq dqrely =
-  let dqrely = match dqrely with None -> 0.0 | Some v -> v in
+let reinit s ?(dqrely=0.0) mudq mldq =
   c_bbd_prec_reinit s mudq mldq dqrely
 
 external get_work_space : parallel_session -> int * int

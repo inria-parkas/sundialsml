@@ -634,7 +634,7 @@ CAMLprim value c_ida_spils_set_max_restarts (value vida_mem, value vmaxr)
     int flag;
 
     flag = IDASpilsSetMaxRestarts (ida_mem, Int_val (vmaxr));
-    CHECK_FLAG ("IDASpgmr", flag);
+    CHECK_FLAG ("IDASpilsSetMaxRestarts", flag);
 
     CAMLreturn (Val_unit);
 }

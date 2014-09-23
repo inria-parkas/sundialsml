@@ -824,13 +824,12 @@ let main () =
   let mudq = nsmxsub and mldq = nsmxsub
   and mukeep = 2 and mlkeep = 2 in
   let linsolver =
-    Ida_bbd.spgmr (Some maxl)
+    Ida_bbd.spgmr ~maxl:maxl ~dqrely:zero
       { Ida_bbd.mudq = mudq;
         Ida_bbd.mldq = mldq;
         Ida_bbd.mukeep = mukeep;
         Ida_bbd.mlkeep = mlkeep;
       }
-      (Some zero)
       {
         Ida_bbd.local_fn = (reslocal webdata );
         Ida_bbd.comm_fn = None;

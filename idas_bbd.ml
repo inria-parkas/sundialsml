@@ -58,47 +58,46 @@ let parent_and_which s =
   | BwdSensExt se -> (se.parent, se.which)
   | _ -> failwith "Internal error: bsession invalid"
 
-external c_spils_spgmr
+external c_spgmr
   : ('a, 'k) session -> int -> int -> unit
   = "c_idas_adj_spils_spgmr"
 
-external c_spils_spbcg
+external c_spbcg
   : ('a, 'k) session -> int -> int -> unit
   = "c_idas_adj_spils_spbcg"
 
-external c_spils_sptfqmr
+external c_sptfqmr
   : ('a, 'k) session -> int -> int -> unit
   = "c_idas_adj_spils_sptfqmr"
 
-let spgmr maxl bws dqrely cb bs nv nv' =
+external c_set_max_restarts : ('a, 'k) session -> int -> int -> unit
+  = "c_idas_adj_spils_set_max_restarts"
+
+let spgmr ?(maxl=0) ?max_restarts ?(dqrely=0.0) bws cb bs nv nv' =
   let parent, which = parent_and_which bs in
-  let maxl   = match maxl with None -> 0 | Some ml -> ml in
-  let dqrely = match dqrely with None -> 0.0 | Some v -> v in
   let ba, _, _ = Sundials.unvec nv in
   let localn   = Sundials.RealArray.length ba in
-  c_spils_spgmr parent which maxl;
+  c_spgmr parent which maxl;
+  (match max_restarts with
+   | Some m -> c_set_max_restarts parent which m
+   | None -> ());
+  c_bbd_prec_initb (parent, which) localn bws dqrely (cb.comm_fn <> None);
+  (tosession bs).ls_callbacks <- BBBDCallback (bbd_callbacks cb)
+
+let spbcg ?(maxl=0) ?(dqrely=0.0) bws cb bs nv nv' =
+  let parent, which = parent_and_which bs in
+  let ba, _, _ = Sundials.unvec nv in
+  let localn   = Sundials.RealArray.length ba in
+  c_spbcg parent which maxl;
   c_bbd_prec_initb (parent, which) localn bws dqrely
                                             (cb.comm_fn <> None);
   (tosession bs).ls_callbacks <- BBBDCallback (bbd_callbacks cb)
 
-let spbcg maxl bws dqrely cb bs nv nv' =
+let sptfqmr ?(maxl=0) ?(dqrely=0.0) bws cb bs nv nv' =
   let parent, which = parent_and_which bs in
-  let maxl   = match maxl with None -> 0 | Some ml -> ml in
-  let dqrely = match dqrely with None -> 0.0 | Some v -> v in
   let ba, _, _ = Sundials.unvec nv in
   let localn   = Sundials.RealArray.length ba in
-  c_spils_spbcg parent which maxl;
-  c_bbd_prec_initb (parent, which) localn bws dqrely
-                                            (cb.comm_fn <> None);
-  (tosession bs).ls_callbacks <- BBBDCallback (bbd_callbacks cb)
-
-let sptfqmr maxl bws dqrely cb bs nv nv' =
-  let parent, which = parent_and_which bs in
-  let maxl   = match maxl with None -> 0 | Some ml -> ml in
-  let dqrely = match dqrely with None -> 0.0 | Some v -> v in
-  let ba, _, _ = Sundials.unvec nv in
-  let localn   = Sundials.RealArray.length ba in
-  c_spils_sptfqmr parent which maxl;
+  c_sptfqmr parent which maxl;
   c_bbd_prec_initb (parent, which) localn bws dqrely
                                             (cb.comm_fn <> None);
   (tosession bs).ls_callbacks <- BBBDCallback (bbd_callbacks cb)
@@ -107,9 +106,8 @@ external c_bbd_prec_reinitb
     : parallel_session -> int -> int -> int -> float -> unit
     = "c_idas_bbd_prec_reinitb"
 
-let reinit bs mudq mldq dqrely =
+let reinit bs ?(dqrely=0.0) mudq mldq =
   let parent, which = parent_and_which bs in
-  let dqrely = match dqrely with None -> 0.0 | Some v -> v in
   c_bbd_prec_reinitb parent which mudq mldq dqrely
 
 let get_work_space bs = Ida_bbd.get_work_space (tosession bs)

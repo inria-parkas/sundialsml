@@ -651,14 +651,13 @@ let main () =
   let mlkeep = 1 in
 
   let linsolv =
-    Ida_bbd.spgmr (Some 12)
+    Ida_bbd.spgmr ~maxl:12 ~dqrely:zero
       {
         Ida_bbd.mudq = mudq;
         Ida_bbd.mldq = mldq;
         Ida_bbd.mukeep = mukeep;
         Ida_bbd.mlkeep = mlkeep;
       }
-      (Some zero)
       {
         Ida_bbd.local_fn = reslocal data;
         Ida_bbd.comm_fn = None;

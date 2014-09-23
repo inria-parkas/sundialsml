@@ -1658,13 +1658,27 @@ CAMLprim value c_idas_adj_spils_set_gs_type(value vparent, value vwhich,
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value c_idas_adj_spils_set_max_restarts (value vparent, value vwhich,
+						  value vmaxr)
+{
+    CAMLparam3 (vparent, vwhich, vmaxr);
+    int flag;
+
+    flag = IDASpilsSetMaxRestartsB (IDA_MEM_FROM_ML(vparent), Int_val (vwhich),
+				    Int_val (vmaxr));
+    CHECK_FLAG ("IDASpilsSetMaxRestartsB", flag);
+
+    CAMLreturn (Val_unit);
+}
+
+
 CAMLprim value c_idas_adj_spils_set_eps_lin(value vparent, value vwhich,
 					    value eplifac)
 {
     CAMLparam3(vparent, vwhich, eplifac);
 
     int flag = IDASpilsSetEpsLinB(IDA_MEM_FROM_ML(vparent), Int_val(vwhich),
-				 Double_val(eplifac));
+				  Double_val(eplifac));
     SCHECK_FLAG("IDASpilsSetEpsLinB", flag);
 
     CAMLreturn (Val_unit);
