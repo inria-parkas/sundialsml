@@ -11,7 +11,7 @@ COBJ_COMMON = sundials_ml$(XO) dls_ml$(XO) nvector_ml$(XO) spils_ml$(XO)
 COBJ_MAIN = $(COBJ_COMMON) kinsol_ml$(XO)
 
 MLOBJ_MAIN = sundials.cmo dls.cmo spils.cmo nvector.cmo			\
-	     nvector_custom.cmo nvector_array.cmo nvector_serial.cmo 	\
+	     nvector_custom.cmo nvector_array.cmo nvector_serial.cmo	\
 	     cvode_impl.cmo ida_impl.cmo kinsol_impl.cmo		\
 	     cvode.cmo kinsol.cmo ida.cmo
 
@@ -93,7 +93,7 @@ sundials_mpi.cma sundials_mpi.cmxa: $(MLOBJ_MPI) $(MLOBJ_MPI:.cmo=.cmx) \
 	    $(LIB_PATH) $(MPI_LIBLINK)
 
 $(MLOBJ_MPI) $(MLOBJ_MPI:.cmo=.cmi) $(MLOBJ_MPI:.cmo=.cmx)	\
-    	     doc/html/index.html :				\
+	     doc/html/index.html :				\
     INCLUDES += $(MPI_INCLUDES)
 
 # The CFLAGS settings for CVODE works for modules common to CVODE and IDA.
@@ -154,19 +154,19 @@ META: META.in
 
 doc: doc/html/index.html
 
-doc/html/index.html: doc/html dochtml.cmo intro.doc 			\
+doc/html/index.html: doc/html dochtml.cmo intro.doc			\
 		     $(filter-out %_impl.cmi, $(MLOBJ_MAIN:.cmo=.cmi))	\
-		     $(MLOBJ_SENS:.cmo=.cmi) 				\
+		     $(MLOBJ_SENS:.cmo=.cmi)				\
 		     $(if $(MPI_ENABLED), $(MLOBJ_MPI:.cmo=.cmi))
-	$(OCAMLDOC) -g dochtml.cmo $(INCLUDES) 			\
+	$(OCAMLDOC) -g dochtml.cmo $(INCLUDES)			\
 	    -short-functors					\
 	    -colorize-code					\
 	    -css-style docstyle.css				\
-	    -cvode-doc-root "$(CVODE_DOC_ROOT)" 		\
-	    -cvodes-doc-root "$(CVODES_DOC_ROOT)" 		\
-	    -ida-doc-root "$(IDA_DOC_ROOT)" 			\
-	    -idas-doc-root "$(IDAS_DOC_ROOT)" 			\
-	    -kinsol-doc-root "$(KINSOL_DOC_ROOT)" 		\
+	    -cvode-doc-root "$(CVODE_DOC_ROOT)"			\
+	    -cvodes-doc-root "$(CVODES_DOC_ROOT)"		\
+	    -ida-doc-root "$(IDA_DOC_ROOT)"			\
+	    -idas-doc-root "$(IDAS_DOC_ROOT)"			\
+	    -kinsol-doc-root "$(KINSOL_DOC_ROOT)"		\
 	    -pp "$(DOCPP)"					\
 	    -d ./doc/html/					\
 	    -hide Cvode_impl,Ida_impl,Kinsol_impl		\
