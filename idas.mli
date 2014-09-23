@@ -1397,30 +1397,31 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
           -> 'a
           -> unit
 
-        (** A preconditioner, which includes the type of preconditioning
-            to be done (none or left), along with callbacks if applicable.
-            Conceptually, this type should be declared as follows (in
-            pseudo-GADT syntax):
-            {[
-              type _ preconditioner =
-                | prec_none : 'a preconditioner
-                | prec_left : ?setup:'a prec_setup_fn ->
-                  ?jac_times_vec:'a jac_times_vec_fn ->
-                  'a prec_solve_fn ->
-                  'a preconditioner
-            ]}
-            but since OCaml's constructors don't support optional parameters,
-            we provide them as functions instead.  [prec_left] take a set of
-            callback functions as arguments:
-            - [solve], the mandatory argument, solves the preconditioning system
-              $Pz = r$, where $P$ is a preconditioning matrix chosen by the user.
-              See {!prec_solve_fn} for details.
-            - [~setup] preprocesses and/or evaluates Jacobian-related data needed
-              by [solve].  It can be omitted if there are no such data.
-              See {!prec_setup_fn} for details.
-            - [~jac_times_vec] multiplies the system Jacobian to a given vector.
-              See {!jac_times_vec_fn} for details.  This function defaults to
-              IDA's internal difference-quotient implementation.
+        (** Specifies a preconditioner, including the type of
+            preconditioning to be done (none or right), and a set of
+            three callbacks if applicable:
+
+            - [solve], the main function that solves the
+              preconditioning system $Pz = r$, where $P$ is a
+              preconditioning matrix chosen by the user.  See
+              {!prec_solve_fn} for details.
+            - [setup], which preprocesses and/or evaluates
+              Jacobian-related data needed by [solve].  It can be
+              omitted if there are no such data.  See {!prec_setup_fn}
+              for details.
+            - [jac_times_vec], which multiplies the system Jacobian to
+              a given vector.  See {!jac_times_vec_fn} for details.
+              If the user doesn't give such a function, IDA uses a
+              default implementation based on difference quotients.
+
+            The following convenience functions are provided for
+            constructing values of this type concisely:
+
+            - {!prec_none} is just [PrecNone].
+            - {!prec_left} creates [PrecLeft] but takes optional
+              fields as optional arguments: e.g. [prec_left
+              ~setup:setup solve] returns [PrecLeft (solve, setup,
+              None)].
 
             @idas <node7#SECTION00729400000000000000> IDASpilsSetPreconditionerB
             @idas <node7#SECTION00729400000000000000> IDASpilsSetJacTimesVecFnB
@@ -1428,7 +1429,11 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
             @idas <node7#ss:psetup_b> IDASpilsPrecSetupFnB
             @idas <node7#ss:jactimesvec_b> IDASpilsJacTimesVecFnB
         *)
-        type 'a preconditioner
+        type 'a preconditioner =
+          | PrecNone
+          | PrecLeft of 'a prec_solve_fn
+                        * 'a prec_setup_fn option
+                        * 'a jac_times_vec_fn option
 
         (** See {!preconditioner}.  *)
         val prec_none : 'a preconditioner

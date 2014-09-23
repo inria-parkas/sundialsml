@@ -186,9 +186,7 @@ module Spils =
 
     let prec_none = PrecNone
     let prec_left ?setup ?jac_times_vec solve =
-      PrecLeft { prec_setup_fn = setup;
-                 prec_solve_fn = solve;
-                 jac_times_vec_fn = jac_times_vec }
+      PrecLeft (solve, setup, jac_times_vec)
 
     external c_spgmr
       : ('a, 'k) session -> int -> unit
@@ -214,10 +212,12 @@ module Spils =
 
     let init_prec session = function
       | PrecNone -> ()
-      | PrecLeft cb ->
-        c_set_preconditioner session (cb.prec_setup_fn <> None);
-        c_set_jac_times_vec_fn session (cb.jac_times_vec_fn <> None);
-        session.ls_callbacks <- SpilsCallback cb
+      | PrecLeft (solve, setup, jac_times) ->
+        c_set_preconditioner session (setup <> None);
+        c_set_jac_times_vec_fn session (jac_times <> None);
+        session.ls_callbacks <- SpilsCallback { prec_solve_fn = solve;
+                                                prec_setup_fn = setup;
+                                                jac_times_vec_fn = jac_times }
 
     let spgmr ?(maxl=0) ?(max_restarts=5) prec session _ _ =
       c_spgmr session maxl;

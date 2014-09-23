@@ -82,7 +82,9 @@ module SpilsTypes = struct
   (* IDA(S) supports only left preconditioning.  *)
   type 'a preconditioner =
     | PrecNone
-    | PrecLeft of 'a callbacks
+    | PrecLeft of 'a prec_solve_fn
+                  * 'a prec_setup_fn option
+                  * 'a jac_times_vec_fn option
 end
 
 module IdaBbdParamTypes = struct
@@ -244,7 +246,9 @@ module AdjointTypes' = struct
     (* IDA(S) supports only left preconditioning.  *)
     type 'a preconditioner =
       | PrecNone
-      | PrecLeft of 'a callbacks
+      | PrecLeft of 'a prec_solve_fn
+                    * 'a prec_setup_fn option
+                    * 'a jac_times_vec_fn option
   end
 end
 

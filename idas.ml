@@ -824,19 +824,20 @@ module Adjoint =
           let parent, which = parent_and_which bs in
           match prec with
           | PrecNone -> init parent which maxl
-          | PrecLeft cb ->
+          | PrecLeft (solve, setup, jac_times) ->
             init parent which maxl;
             c_set_preconditioner parent which
-              (cb.prec_setup_fn <> None);
+              (setup <> None);
             c_set_jac_times_vec_fn parent which
-              (cb.jac_times_vec_fn <> None);
-            (tosession bs).ls_callbacks <- BSpilsCallback cb
+              (jac_times <> None);
+            (tosession bs).ls_callbacks <-
+              BSpilsCallback { prec_solve_fn = solve;
+                               prec_setup_fn = setup;
+                               jac_times_vec_fn = jac_times }
 
         let prec_none = PrecNone
         let prec_left ?setup ?jac_times_vec solve =
-          PrecLeft { prec_setup_fn = setup;
-                     prec_solve_fn = solve;
-                     jac_times_vec_fn = jac_times_vec }
+          PrecLeft (solve, setup, jac_times_vec)
 
         let spgmr ?(maxl=0) prec bs _ _ =
           init_spils c_spils_spgmr bs maxl prec

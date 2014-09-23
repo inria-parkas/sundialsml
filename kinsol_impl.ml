@@ -74,7 +74,9 @@ module SpilsTypes = struct
 
   type 'a preconditioner =
     | PrecNone
-    | PrecRight of 'a callbacks
+    | PrecRight of 'a prec_solve_fn
+                   * 'a prec_setup_fn option
+                   * 'a jac_times_vec_fn option
 end
 
 module KinsolBbdParamTypes = struct
