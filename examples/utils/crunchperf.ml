@@ -42,7 +42,7 @@ let expand name =
      ("―par―", "/parallel/");
     ]
 
-let parallel_example s      = Str.string_match (Str.regexp ".*―par―\|/parallel/.*") s 0
+let parallel_example s      = Str.string_match (Str.regexp ".*―par―\\|/parallel/.*") s 0
 let uses_alternate_solver s = Str.string_match (Str.regexp ".*_alt$") s 0
 let uses_nvector_array s    = Str.string_match (Str.regexp ".*_custom$") s 0
 let colorof name =
@@ -201,17 +201,21 @@ let summarize gnuplot path =
   if gnuplot
   then Printf.printf "# ID\treps\tOCaml\tC\tOCaml/C\tname\n"
   else Printf.printf "# reps\tOCaml\tC\tOCaml/C\tname\n";
-  List.iteri (fun id (name, record) ->
-      let median ls = (analyze (Array.of_list ls)).median in
-      let c  = median record.c_times in
-      let ml = median record.ml_times in
-      let ratio = median (List.map2 (/.) record.ml_times record.c_times) in
-      if gnuplot then Printf.printf "%d\t" id;
-      Printf.printf "%d\t%.2f\t%.2f\t%.2f\t%s\t"
-        record.reps ml c ratio (if gnuplot then name else expand name);
-      if gnuplot then Printf.printf "\t%d" (colorof name);
-      Printf.printf "\n")
-    assocs
+  let num, total =
+    List.fold_left (fun (id, total) (name, record) ->
+        let median ls = (analyze (Array.of_list ls)).median in
+        let c  = median record.c_times in
+        let ml = median record.ml_times in
+        let ratio = median (List.map2 (/.) record.ml_times record.c_times) in
+        if gnuplot then Printf.printf "%d\t" id;
+        Printf.printf "%d\t%.2f\t%.2f\t%.2f\t%s\t"
+          record.reps ml c ratio (if gnuplot then name else expand name);
+        if gnuplot then Printf.printf "\t%d" (colorof name);
+        Printf.printf "\n";
+        (id + 1, total +. ratio))
+      (0, 0.0) assocs
+  in
+  if not gnuplot then Printf.printf "\t\taverage OCaml/C = %.2e\n" (total /. float num)
 
 let _ =
   match Array.to_list Sys.argv with

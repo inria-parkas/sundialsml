@@ -186,44 +186,89 @@ examples take too long.
 The timings indicated by the crosses and the axis at right are calculated by
 dividing the measurement made for each C version by the number of repetitions.
 All but six of the serial examples ({color #de2d26 red}) run so fast that 
-comparisons are made based on tens, or usually hundreds of repetitions and this
-seems to amplify factors other than the interface overhead.
-For instance, some examples spend a good fraction of their time in [printf],
-and we were able to lower their ratios by instead using [print_string] and
-[print_int].
+comparisons are made based on tens, or usually hundreds of repetitions and
+in some cases this amplifies factors other than the interface overhead.
+For instance, some OCaml version spend a greater fraction of their time in
+[printf], and we were able to lower their ratios by instead using
+[print_string] and [print_int].
 
 The parallel examples ({color #fc9272 lighter red}) all have relatively long
-runtimes and results are obtained without iterating.
+run times and results are obtained without iterating.
 Their OCaml/C ratios are almost all close to 1—the interface and other
 overheads are small compared to the dominating costs of parallelism and
 communication.
 
-TODO: performance tips for programs: a) type annotations for vectors; b)
-avoid slice and sub; c) unwrap and use array access for matrices.
+We were able to make our OCaml versions much faster (up to 4 times) by
+{ul
+    {- Adding explicit type annotations to all vector arguments.
+       For instance, rather than declare a callback with
+       {[ let f t y yd = ... ,]}
+       it is better to use
+       {[ let f t (y : Sundials.RealArray.t) (yd : Sundials.RealArray.t) = ... ,]}
+       since the OCaml compiler can then optimize according to the array
+       layout.}
+    {- Avoid functions like
+       {{:http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.Array1.html#VALsub}[Bigarray.Array1.sub]}
+       and
+       {{:http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.Array2.html#VALslice_left}[Bigarray.Array2.slice_left]}
+       whenever possible.
+       These functions must allocate a new bigarray (using [malloc]) which
+       can often be avoided by calculating and passing indices more
+       explicitly.
+       When part of an array must be passed to another function, it can be
+       faster, depending on the size, to copy into and out of a
+       statically-allocated temporary array.}
+    {- Rather than a sequence of {!Sundials.RealArray2.get} and
+       {!Sundials.RealArray2.set} operations, it is usually better to use
+       {!Sundials.RealArray2.unwrap}, and then to access the underlying array
+       directly.}
+    {- Write numerical expressions and loops according to the advice in
+	{{:#refs}\[2\]}
+       to avoid float ‘boxing’.}
+}
 
-TODO: Thanks to OCaml's optimizations for (unboxed) floats and tight loops,
-and also to the MPI and Bigarray libraries.
-
-Summarize: slower but not by too much, must factor in with the other
-advantages of using OCaml (memory management, bounds checking, etc.), easy
-to combine with symbolic code.
+In summary, OCaml code using the Sundials solvers is usually not more than
+50% slower than equivalent code written in C, provided some straightforward
+guidelines are followed. It may, however, be faster to write and debug the
+OCaml code thanks to automatic memory management, bounds checking on arrays,
+strong static type checking, higher-order functions, etcetera. The
+Sundials/ML library may be an optimal choice for code that combines symbolic
+manipulations and numerical calculations.
 
 {2:refs References}
 
-A. C. Hindmarsh, P. N. Brown, K. E. Grant, S. L. Lee, R. Serban, D. E.
-Shumaker, and C. S. Woodward, “{{:http://computation.llnl.gov/casc/nsde/pubs/toms_sundials.pdf}{b SUNDIALS: Suite of Nonlinear and
-Differential/Algebraic Equation Solvers}},” ACM Transactions on Mathematical
-Software, 31(3), pp. 363-396, 2005.
+{div open class="references"}
+{ol
+  {- A. C. Hindmarsh, P. N. Brown, K. E. Grant, S. L. Lee, R. Serban,
+     D. E. Shumaker, and C. S. Woodward,
+     “{{:http://computation.llnl.gov/casc/nsde/pubs/toms_sundials.pdf}{b
+      SUNDIALS: Suite of Nonlinear and Differential/Algebraic Equation
+      Solvers}},” ACM Transactions on Mathematical Software, 31(3),
+      pp. 363-396, 2005.}
+  {- X. Leroy,
+     “{{:http://caml.inria.fr/pub/old_caml_site/ocaml/numerical.html}{b Old
+      Objective Caml site: Writing efficient numerical code in Objective
+      Caml}},” July 2002.}
+}
+{div close}
 
 {2:acks Acknowledgements}
 
-TODO: acknowledge {{:https://itea3.org/project/modrio.html}Modrio} for (partial) funding.
+We gratefully acknowledge the support of the
+{{:https://itea3.org/project/modrio.html} ITEA 3 project 11004 MODRIO} (Model
+driven physical systems operation), {{:http://www.inria.fr/}Inria}, and
+the {{:http://www.di.ens.fr/}Departement d'Informatique de l'ENS}.
 
-TODO: Bigarray and mpi libraries.
-TODO: Jonathan Protzenko's {{:http://www.xulforum.org/files/ocamlcss/style.css}CSS stylesheet} for OCamldoc
-TODO: {{:http://www.mathjax.org}MathJax} for mathematics rendering.
+This library benefits greatly from the OCaml {{:http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.html}Bigarray} and {{:https://forge.ocamlcore.org/projects/ocamlmpi/}MPI}
+libraries, and from {{:https://ocaml.org/}OCaml}'s optimised floating-point
+representations and compilation.
+
+This documentation uses J. Protzenko's
+{{:http://www.xulforum.org/files/ocamlcss/style.css}CSS stylesheet}, and
+{{:http://www.mathjax.org}MathJax} for rendering mathematics.
 
 {2:indexes Indexes}
 
 {!indexlist}
 {div close}
+

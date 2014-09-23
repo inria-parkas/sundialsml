@@ -248,6 +248,18 @@ div#intro {
   text-align: justify;
 }
 
+ol {
+    padding-left: 2.0em;
+}
+
+ul {
+    padding-left: 1.5em;
+}
+
+li + li {
+    padding-top: 1.5ex;
+}
+
 td.module { min-width: 8em;
             vertical-align: text-top; }
 h2#modules + p br:nth-child(1) { display: none; }
@@ -272,4 +284,20 @@ img { max-width: 50em;
       display: block;
       margin-left: auto;
       margin-right: auto; }
+
+div.references ol {
+    list-style-type: none;
+    counter-reset: item;
+    padding-left: 2.5em;
+}
+div.references ol > li:before {
+    display: inline-block;
+    counter-increment: item;
+    content: '[' counter(item) '] ';
+    margin-left: -2.3em;
+    width: 2.3em;
+}
+div.references ol > li {
+    margin-right: 1.5em;
+}
 
