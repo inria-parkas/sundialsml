@@ -245,7 +245,6 @@ div#intro {
 .info {
   font-size: 11pt;
   max-width: 40em;
-  text-align: justify;
 }
 
 ol {
@@ -299,5 +298,9 @@ div.references ol > li:before {
 }
 div.references ol > li {
     margin-right: 1.5em;
+}
+
+pre.codepre {
+    margin-bottom: 1em;
 }
 
