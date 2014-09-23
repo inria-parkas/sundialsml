@@ -174,9 +174,9 @@ twice as slow.
 The graph suggests that the OCaml versions are rarely more than twice as
 slow as the original ones and that they are often around or less than 50%
 slower.
-The [*_custom] example ({color #a1d99b light green}) uses custom nvectors
-with low-level operations in OCaml and the [*_alt] examples ({color #31a354
-dark green}) use linear solvers implemented in OCaml.
+The [*_custom] example ({color #deebf7 light blue}) uses custom nvectors
+with low-level operations in OCaml and the [*_alt] examples ({color #9ecae1
+darker blue}) use linear solvers implemented in OCaml.
 
 Such a conclusion seems reasonable as a first approximation, but several
 details of the analysis process and individual results show that the real

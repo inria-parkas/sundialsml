@@ -241,8 +241,8 @@ $SET_COMMON
 set boxwidth $w
 set style fill solid
 rgb(r,g,b) = int(r)*65536 + int(g)*256 + int(b)
-pickcolor(x) = ((x == 4) ? rgb(0xA1,0xD9,0x9B) : \
-		(x == 3) ? rgb(0x31,0xA3,0x54) : \
+pickcolor(x) = ((x == 4) ? rgb(0xDE,0xEB,0xF7) : \
+		(x == 3) ? rgb(0x9E,0xCA,0xE1) : \
 		(x == 2) ? rgb(0xFC,0x92,0x72) : \
 			   rgb(0xDE,0x2D,0x26))
 
