@@ -1309,7 +1309,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
               [PrecLeft (User ...)], [PrecRight (User ...)],
               and [PrecBoth (User ...)], respectively.
             - {!prec_left_banded}, {!prec_right_banded}, {!prec_both_banded}
-              create {[PrecLeft (Banded ...)], [PrecRight (Banded ...)],
+              create [PrecLeft (Banded ...)], [PrecRight (Banded ...)],
               and [PrecBoth (Banded ...)], respectively.
 
             @cvodes <node7#SECTION00728400000000000000> CVSpilsSetPreconditionerB
@@ -1438,7 +1438,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
         val sptfqmr : ?maxl:int -> ('a, 'k) preconditioner
                       -> ('a, 'k) linear_solver
 
-        (** {5: Low-level solver manipulation} *)
+        (** {5:llsolvermanip Low-level solver manipulation} *)
 
         (** This type is used only for low-level solver manipulation.
             Information about the type of preconditioning to be done,

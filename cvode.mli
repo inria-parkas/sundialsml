@@ -504,7 +504,7 @@ module Spils :
           [PrecLeft (User ...)], [PrecRight (User ...)],
           and [PrecBoth (User ...)], respectively.
         - {!prec_left_banded}, {!prec_right_banded}, {!prec_both_banded}
-          create {[PrecLeft (Banded ...)], [PrecRight (Banded ...)],
+          create [PrecLeft (Banded ...)], [PrecRight (Banded ...)],
           and [PrecBoth (Banded ...)], respectively.
 
         @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
