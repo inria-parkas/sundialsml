@@ -215,7 +215,7 @@ let summarize gnuplot path =
         (id + 1, total +. ratio))
       (0, 0.0) assocs
   in
-  if not gnuplot then Printf.printf "\t\taverage OCaml/C = %.2e\n" (total /. float num)
+  ()
 
 let _ =
   match Array.to_list Sys.argv with
