@@ -10,6 +10,9 @@
  *                                                                     *
  ***********************************************************************/
 
+#include <errno.h>
+#include <string.h>
+
 /* Sundials IDA interface functions that do not involve NVectors. */
 
 #include <caml/mlvalues.h>
@@ -1159,7 +1162,8 @@ CAMLprim value c_ida_set_error_file(value vdata, value vpath, value vtrunc)
     char *mode = Bool_val(vtrunc) ? "w" : "a";
     err_file = fopen(String_val(vpath), mode);
     if (err_file == NULL) {
-	uerror("fopen", vpath);
+	// uerror("fopen", vpath); /* depends on unix.cma */
+	caml_failwith(strerror(errno));
     }
 
     int flag = IDASetErrFile(IDA_MEM_FROM_ML(vdata), err_file);

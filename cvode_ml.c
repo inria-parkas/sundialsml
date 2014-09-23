@@ -10,6 +10,9 @@
  *                                                                     *
  ***********************************************************************/
 
+#include <errno.h>
+#include <string.h>
+
 #include <caml/mlvalues.h>
 #include <caml/alloc.h>
 #include <caml/memory.h>
@@ -1087,7 +1090,8 @@ CAMLprim value c_cvode_set_error_file(value vdata, value vpath, value vtrunc)
     char *mode = Bool_val(vtrunc) ? "w" : "a";
     err_file = fopen(String_val(vpath), mode);
     if (err_file == NULL) {
-	uerror("fopen", vpath);
+	// uerror("fopen", vpath); /* depends on unix.cma */
+	caml_failwith(strerror(errno));
     }
 
     int flag = CVodeSetErrFile(CVODE_MEM_FROM_ML(vdata), err_file);

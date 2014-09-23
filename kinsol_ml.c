@@ -10,6 +10,9 @@
  *                                                                     *
  ***********************************************************************/
 
+#include <errno.h>
+#include <string.h>
+
 #include <kinsol/kinsol.h>
 #include <sundials/sundials_config.h>
 #include <sundials/sundials_types.h>
@@ -1005,7 +1008,8 @@ CAMLprim value c_kinsol_set_error_file(value vdata, value vpath, value vtrunc)
     char *mode = Bool_val(vtrunc) ? "w" : "a";
     err_file = fopen(String_val(vpath), mode);
     if (err_file == NULL) {
-	uerror("fopen", vpath);
+	// uerror("fopen", vpath); /* depends on unix.cma */
+	caml_failwith(strerror(errno));
     }
 
     int flag = KINSetErrFile(KINSOL_MEM_FROM_ML(vdata), err_file);
@@ -1030,7 +1034,8 @@ CAMLprim value c_kinsol_set_info_file(value vdata, value vpath, value vtrunc)
     char *mode = Bool_val(vtrunc) ? "w" : "a";
     info_file = fopen(String_val(vpath), mode);
     if (info_file == NULL) {
-	uerror("fopen", vpath);
+	// uerror("fopen", vpath); /* depends on unix.cma */
+	caml_failwith(strerror(errno));
     }
 
     int flag = KINSetInfoFile(KINSOL_MEM_FROM_ML(vdata), info_file);
