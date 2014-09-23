@@ -41,6 +41,7 @@
  *)
 
 type ('data, 'kind) nvector = ('data, 'kind) Sundials.nvector
+module RealArray = Sundials.RealArray
 
 type 'a single_tmp = 'a
 type 'a triple_tmp = 'a * 'a * 'a
@@ -57,13 +58,13 @@ type bandrange = { mupper : int; mlower : int; }
 
 module DlsTypes = struct
   type dense_jac_fn =
-    (Sundials.RealArray.t triple_tmp, Sundials.RealArray.t) jacobian_arg
+    (RealArray.t triple_tmp, RealArray.t) jacobian_arg
     -> Dls.DenseMatrix.t
     -> unit
 
   type band_jac_fn =
     bandrange
-    -> (Sundials.RealArray.t triple_tmp, Sundials.RealArray.t) jacobian_arg
+    -> (RealArray.t triple_tmp, RealArray.t) jacobian_arg
     -> Dls.BandMatrix.t
     -> unit
 end
@@ -82,12 +83,6 @@ module SpilsCommonTypes = struct
   type gramschmidt_type = Spils.gramschmidt_type =
     | ModifiedGS
     | ClassicalGS
-
-  type preconditioning_type = Spils.preconditioning_type =
-    | PrecNone
-    | PrecLeft
-    | PrecRight
-    | PrecBoth
 end
 
 module SpilsTypes = struct
@@ -111,12 +106,36 @@ module SpilsTypes = struct
     -> 'a (* Jv *)
     -> unit
 
-  type 'a callbacks =
+  type 'a user_callbacks =
     {
-      prec_solve_fn : 'a prec_solve_fn option;
+      prec_solve_fn : 'a prec_solve_fn;
       prec_setup_fn : 'a prec_setup_fn option;
       jac_times_vec_fn : 'a jac_times_vec_fn option;
     }
+
+  type (_,_) callbacks =
+    | User : 'a prec_solve_fn
+             * 'a prec_setup_fn option
+             * 'a jac_times_vec_fn option
+      -> ('a, 'k) callbacks
+    | Banded : bandrange * RealArray.t jac_times_vec_fn option ->
+      (Nvector_serial.data, Nvector_serial.kind) callbacks
+
+  type serial_callbacks =
+    (Nvector_serial.data, Nvector_serial.kind) callbacks
+
+  type 'callbacks with_preconditioning_type =
+    | PrecNone
+    | PrecLeft of 'callbacks
+    | PrecRight of 'callbacks
+    | PrecBoth of 'callbacks
+
+  type ('a, 'k) preconditioner = ('a, 'k) callbacks with_preconditioning_type
+
+  type preconditioning_type = unit with_preconditioning_type
+
+  type serial_preconditioner =
+    (Nvector_serial.data, Nvector_serial.kind) preconditioner
 end
 
 module AlternateTypes' = struct
@@ -192,18 +211,18 @@ module SensitivityTypes = struct
 end
 
 module AdjointTypes' = struct
-  type 'a brhsfn_basic = float -> 'a -> 'a -> 'a -> unit
+  type 'a brhsfn_no_sens = float -> 'a -> 'a -> 'a -> unit
   type 'a brhsfn_with_sens = float -> 'a -> 'a array -> 'a -> 'a -> unit
 
   type 'a brhsfn =
-      Basic of 'a brhsfn_basic
+      NoSens of 'a brhsfn_no_sens
     | WithSens of 'a brhsfn_with_sens
 
   module QuadratureTypes = struct
-    type 'a bquadrhsfn_basic = float -> 'a -> 'a -> 'a -> unit
+    type 'a bquadrhsfn_no_sens = float -> 'a -> 'a -> 'a -> unit
     type 'a bquadrhsfn_with_sens = float -> 'a -> 'a array -> 'a -> 'a -> unit
     type 'a bquadrhsfn =
-        Basic of 'a bquadrhsfn_basic
+        NoSens of 'a bquadrhsfn_no_sens
       | WithSens of 'a bquadrhsfn_with_sens
   end
 
@@ -221,13 +240,13 @@ module AdjointTypes' = struct
      defined.  *)
   module DlsTypes = struct
     type dense_jac_fn =
-      (Sundials.RealArray.t triple_tmp, Sundials.RealArray.t) jacobian_arg
+      (RealArray.t triple_tmp, RealArray.t) jacobian_arg
       -> Dls.DenseMatrix.t
       -> unit
 
     type band_jac_fn =
       bandrange
-      -> (Sundials.RealArray.t triple_tmp, Sundials.RealArray.t) jacobian_arg
+      -> (RealArray.t triple_tmp, RealArray.t) jacobian_arg
       -> Dls.BandMatrix.t
       -> unit
   end
@@ -254,12 +273,36 @@ module AdjointTypes' = struct
       -> 'a (* Jv *)
       -> unit
 
-    type 'a callbacks =
+    type 'a user_callbacks =
       {
-        prec_solve_fn : 'a prec_solve_fn option;
+        prec_solve_fn : 'a prec_solve_fn;
         prec_setup_fn : 'a prec_setup_fn option;
         jac_times_vec_fn : 'a jac_times_vec_fn option;
       }
+
+    type (_,_) callbacks =
+      | User : 'a prec_solve_fn
+               * 'a prec_setup_fn option
+               * 'a jac_times_vec_fn option
+        -> ('a, 'k) callbacks
+      | Banded : bandrange * RealArray.t jac_times_vec_fn option ->
+        (Nvector_serial.data, Nvector_serial.kind) callbacks
+
+    type serial_callbacks =
+      (Nvector_serial.data, Nvector_serial.kind) callbacks
+
+    type 'callbacks with_preconditioning_type =
+      | PrecNone
+      | PrecLeft of 'callbacks
+      | PrecRight of 'callbacks
+      | PrecBoth of 'callbacks
+
+    type ('a, 'k) preconditioner = ('a, 'k) callbacks with_preconditioning_type
+
+    type preconditioning_type = unit with_preconditioning_type
+
+    type serial_preconditioner =
+      (Nvector_serial.data, Nvector_serial.kind) preconditioner
   end
 end
 
@@ -306,20 +349,44 @@ type ('a, 'kind) session = {
   mutable sensext      : ('a, 'kind) sensext (* Used by Cvodes *)
 }
 
-and ('a, 'kind) linsolv_callbacks =
-  | NoCallbacks
+and (_, _) linsolv_callbacks =
+  | NoCallbacks : ('a, 'k) linsolv_callbacks
 
-  | DenseCallback of DlsTypes.dense_jac_fn
-  | BandCallback  of DlsTypes.band_jac_fn
-  | SpilsCallback of 'a SpilsTypes.callbacks
-  | BBDCallback of 'a CvodeBbdParamTypes.callbacks
+  | DenseCallback :
+      DlsTypes.dense_jac_fn
+      -> (Nvector_serial.data, Nvector_serial.kind) linsolv_callbacks
+  | BandCallback :
+      DlsTypes.band_jac_fn
+      -> (Nvector_serial.data, Nvector_serial.kind) linsolv_callbacks
+  | SpilsCallback :
+      'a SpilsTypes.user_callbacks
+      -> ('a, 'k) linsolv_callbacks
+  | SpilsBandedCallback :
+      RealArray.t SpilsTypes.jac_times_vec_fn option ->
+      (Nvector_serial.data, Nvector_serial.kind) linsolv_callbacks
+  | BBDCallback :
+      'a CvodeBbdParamTypes.callbacks
+      -> ('a, 'k) linsolv_callbacks
 
-  | AlternateCallback of ('a, 'kind) alternate_linsolv
+  | AlternateCallback :
+      ('a, 'k) alternate_linsolv
+      -> ('a, 'k) linsolv_callbacks
 
-  | BDenseCallback of AdjointTypes'.DlsTypes.dense_jac_fn
-  | BBandCallback  of AdjointTypes'.DlsTypes.band_jac_fn
-  | BSpilsCallback of 'a AdjointTypes'.SpilsTypes.callbacks
-  | BBBDCallback of 'a CvodesBbdParamTypes.callbacks
+  | BDenseCallback :
+      AdjointTypes'.DlsTypes.dense_jac_fn
+      -> (Nvector_serial.data, Nvector_serial.kind) linsolv_callbacks
+  | BBandCallback :
+      AdjointTypes'.DlsTypes.band_jac_fn
+      -> (Nvector_serial.data, Nvector_serial.kind) linsolv_callbacks
+  | BSpilsCallback :
+      'a AdjointTypes'.SpilsTypes.user_callbacks
+      -> ('a, 'k) linsolv_callbacks
+  | BSpilsBandedCallback :
+      RealArray.t AdjointTypes'.SpilsTypes.jac_times_vec_fn option
+      -> (Nvector_serial.data, Nvector_serial.kind) linsolv_callbacks
+  | BBBDCallback :
+      'a CvodesBbdParamTypes.callbacks
+      -> ('a, 'k) linsolv_callbacks
 
 and ('a, 'kind) sensext =
     NoSensExt
@@ -334,7 +401,7 @@ and ('a, 'kind) fsensext = {
   mutable num_sensitivities : int;
   mutable sensarray1        : 'a array;
   mutable sensarray2        : 'a array;
-  mutable senspvals         : Sundials.RealArray.t option;
+  mutable senspvals         : RealArray.t option;
   (* keep a reference to prevent garbage collection *)
 
   mutable sensrhsfn         : 'a SensitivityTypes.sensrhsfn_all;
@@ -356,9 +423,9 @@ and ('a, 'kind) bsensext = {
   bnum_sensitivities    : int;
   bsensarray            : 'a array;
 
-  mutable brhsfn        : 'a AdjointTypes'.brhsfn_basic;
+  mutable brhsfn        : 'a AdjointTypes'.brhsfn_no_sens;
   mutable brhsfn1       : 'a AdjointTypes'.brhsfn_with_sens;
-  mutable bquadrhsfn    : 'a AdjointTypes'.QuadratureTypes.bquadrhsfn_basic;
+  mutable bquadrhsfn    : 'a AdjointTypes'.QuadratureTypes.bquadrhsfn_no_sens;
   mutable bquadrhsfn1   : 'a AdjointTypes'.QuadratureTypes.bquadrhsfn_with_sens;
 }
 

@@ -214,7 +214,7 @@ let main () =
 
   (* IDA initialization *)
   let mem = Ida.init (Ida.Dls.dense None) (Ida.SStolerances (rtol, atol))
-                     (ressc data) ~t0:t0 wy wy' in
+                     (ressc data) t0 wy wy' in
   Ida.set_var_types mem (Nvector_serial.wrap id);
   Ida.set_suppress_alg mem true;
 

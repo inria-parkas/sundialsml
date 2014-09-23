@@ -45,10 +45,10 @@ exception TooMuchWork
 (** @cvode <node5#sss:cvode> CV_TOO_MUCH_ACC *)
 exception TooMuchAccuracy
 
-(** @cvode <node5#sss:cvode> CV_ERR_FAIL *)
+(** @cvode <node5#sss:cvode> CV_ERR_FAILURE *)
 exception ErrFailure                
 
-(** @cvode <node5#sss:cvode> CV_CONV_FAIL *)
+(** @cvode <node5#sss:cvode> CV_CONV_FAILURE *)
 exception ConvergenceFailure        
 
 (** @cvode <node5#sss:cvode> CV_LINIT_FAIL *)
@@ -64,13 +64,13 @@ exception LinearSolveFailure
 exception RhsFuncFailure
 
 (** @cvode <node5#sss:cvode> CV_FIRST_RHSFUNC_ERR *)
-exception FirstRhsFuncErr
+exception FirstRhsFuncFailure
 
 (** @cvode <node5#sss:cvode> CV_REPTD_RHSFUNC_ERR *)
-exception RepeatedRhsFuncErr        
+exception RepeatedRhsFuncFailure        
 
 (** @cvode <node5#sss:cvode> CV_UNREC_RHSFUNC_ERR *)
-exception UnrecoverableRhsFuncErr   
+exception UnrecoverableRhsFuncFailure   
 
 (** @cvode <node5#sss:cvode> CV_RTFUNC_FAIL *)
 exception RootFuncFailure           
@@ -357,12 +357,6 @@ module Spils :
       | ModifiedGS
       | ClassicalGS
 
-    type preconditioning_type = Spils.preconditioning_type =
-      | PrecNone
-      | PrecLeft
-      | PrecRight
-      | PrecBoth
-
     (** Arguments passed to the preconditioner solve callback function.  See
         {!prec_solve_fn}.
 
@@ -379,40 +373,6 @@ module Spils :
         left  : bool;       (** [true] if the left preconditioner
                                 is to be used and [false] if the
                                 right preconditioner is to be used. *)
-      }
-
-    (** Callbacks for Krylov subspace linear solvers.  Ignored if the
-        {!Spils.preconditioning_type} is set to [PrecNone].  In that case, you
-        should use {!no_precond} as [callbacks].
-
-        @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
-      *)
-    type 'a callbacks =
-      {
-        prec_solve_fn : 'a prec_solve_fn option;
-        (** Solves the preconditioning system {i Pz = r} for the
-            backward problem.  See {!prec_solve_fn} for details.
-
-            @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
-          *)
-
-        prec_setup_fn : 'a prec_setup_fn option;
-        (** An optional function that preprocesses and/or evaluates
-            any Jacobian-related data needed by {!prec_solve_fn}.  See
-            {!prec_setup_fn}.  When [prec_solve_fn] doesn't need any
-            such data, this field can be [None].
-
-            @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn
-          *)
-
-        jac_times_vec_fn : 'a jac_times_vec_fn option;
-        (** Multiplies the system Jacobian to a vector.  See
-            {!jac_times_vec_fn} for details.  When this field is
-            [None], CVODE uses a default implementation based on
-            difference quotients.
-
-            @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
-          *)
       }
 
     (** Called like [prec_solve_fn jac_arg solve_arg z] to solve the
@@ -435,12 +395,12 @@ module Spils :
         their values are needed outside of the function call, then
         they must be copied to separate physical structures.
 
-        See also {!Spils.callbacks}.
+        See also {!preconditioner}.
 
         @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
         @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
      *)
-    and 'a prec_solve_fn =
+    type 'a prec_solve_fn =
       ('a single_tmp, 'a) jacobian_arg
       -> 'a prec_solve_arg
       -> 'a
@@ -476,12 +436,12 @@ module Spils :
         outside of the function call, then they must be copied to a
         separate physical structure.
 
-        See also {!Spils.callbacks}.
+        See also {!preconditioner}.
 
         @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
         @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn
       *)
-    and 'a prec_setup_fn =
+    type 'a prec_setup_fn =
       ('a triple_tmp, 'a) jacobian_arg
       -> bool
       -> float
@@ -508,56 +468,179 @@ module Spils :
         needed outside of the function call, then they must be copied to a
         separate physical structure.
 
-        See also {!callbacks}.
+        See also {!preconditioner}.
 
-        @cvode <node5#ss:jtimesfn> CVSpilsJacTimesVecFn
         @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
+        @cvode <node5#ss:jtimesfn> CVSpilsJacTimesVecFn
       *)
-    and 'a jac_times_vec_fn =
+    type 'a jac_times_vec_fn =
       ('a single_tmp, 'a) jacobian_arg
       -> 'a (* v *)
       -> 'a (* Jv *)
       -> unit
 
-    val no_precond : 'a callbacks
+    (** Wraps an optional set of callbacks (the ['callbacks]
+        parameter) in a constructor that specifies the type of
+        preconditioning to be done, i.e. none, left, right, or both.
 
-    (** Krylov iterative solver with the scaled preconditioned GMRES method.
-        The arguments specify the maximum dimension of the Krylov subspace (Pass
-        [None] to use the default value [5].), preconditioning type, and the
-        preconditioner callback functions ({!callbacks}). See also {!Spils}.
+        See {!preconditioner} and {!preconditioning_type}.  *)
+    type 'callbacks with_preconditioning_type =
+      | PrecNone
+      | PrecLeft of 'callbacks
+      | PrecRight of 'callbacks
+      | PrecBoth of 'callbacks
+
+    (** Complete specification of a preconditioner, including the type
+        of preconditioning to be done (none, left, right, or both, as
+        specified through {!with_preconditioning_type}), and a set of
+        callbacks if applicable.
+
+        Directly creating values of this type involves heavy nesting
+        of constructors, so the following convenience functions are
+        provided for conciseness:
+
+        - {!prec_none} is just [PrecNone].
+        - {!prec_left}, {!prec_right}, {!prec_both} create
+          [PrecLeft (User ...)], [PrecRight (User ...)],
+          and [PrecBoth (User ...)], respectively.
+        - {!prec_left_banded}, {!prec_right_banded}, {!prec_both_banded}
+          create {[PrecLeft (Banded ...)], [PrecRight (Banded ...)],
+          and [PrecBoth (Banded ...)], respectively.
+
+        @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
+        @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
+        @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn
+        @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
+        @cvode <node5#ss:jtimesfn> CVSpilsJacTimesVecFn
+      *)
+    type ('a, 'k) preconditioner = ('a, 'k) callbacks with_preconditioning_type
+
+    (** A data type that specifies the three callbacks needed in
+        preconditioning:
+
+        - [solve], the main function that solves the preconditioning
+          system $Pz = r$, where $P$ is a preconditioning matrix
+          chosen by the user.  See {!prec_solve_fn} for details.
+        - [setup], which preprocesses and/or evaluates
+          Jacobian-related data needed by [solve].  It can be omitted
+          if there are no such data.  See {!prec_setup_fn} for
+          details.
+        - [jac_times_vec], which multiplies the system Jacobian to a
+          given vector.  See {!jac_times_vec_fn} for details.  If the
+          user doesn't give such a function, CVODE uses a default
+          implementation based on difference quotients.
+
+        [User] means that all callbacks are supplied by the user.
+        [solve] is mandatory, while [setup] and [jac_times_vec] are
+        optional.
+
+        [Banded] means to use CVODE's internal [solve] that uses a
+        band-diagonal preconditioning matrix.  The internal [solve]
+        needs no [setup], and the user only gives the {!bandwidths} of
+        the banded matrix, optionally with a [jac_times_vec] function.
+
+        See notes about convenience functions in {!preconditioner}.
+
+        @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
+        @cvode <node5#sss:cvbandpre> CVBandPrecInit
+      *)
+    and (_,_) callbacks =
+      | User : 'a prec_solve_fn
+               * 'a prec_setup_fn option
+               * 'a jac_times_vec_fn option
+               -> ('a, 'k) callbacks
+        (** User-defined callbacks implementing a custom
+            preconditioner.  *)
+      | Banded : bandrange * Nvector_serial.data jac_times_vec_fn option ->
+                 (Nvector_serial.data, Nvector_serial.kind) callbacks
+        (** Use callbacks supplied by CVODE that implement a banded
+            matrix of difference quotients. *)
+
+    (** {!callbacks} restricted to serial nvectors. *)
+    type serial_callbacks = (Nvector_serial.data, Nvector_serial.kind) callbacks
+
+    (** {!preconditioner} restricted to serial nvectors. *)
+    type serial_preconditioner =
+      (Nvector_serial.data, Nvector_serial.kind) preconditioner
+
+    (** See {!preconditioner}.  *)
+    val prec_none : ('a, 'k) preconditioner
+
+    (** See {!preconditioner}. *)
+    val prec_left :
+      ?setup:'a prec_setup_fn
+      -> ?jac_times_vec:'a jac_times_vec_fn
+      -> 'a prec_solve_fn
+      -> ('a, 'k) preconditioner
+
+    (** See {!preconditioner}. *)
+    val prec_right :
+      ?setup:'a prec_setup_fn
+      -> ?jac_times_vec:'a jac_times_vec_fn
+      -> 'a prec_solve_fn
+      -> ('a, 'k) preconditioner
+
+    (** See {!preconditioner}. *)
+    val prec_both :
+      ?setup:'a prec_setup_fn
+      -> ?jac_times_vec:'a jac_times_vec_fn
+      -> 'a prec_solve_fn
+      -> ('a, 'k) preconditioner
+
+    (** See {!preconditioner}.  *)
+    val prec_left_banded :
+      ?jac_times_vec:(RealArray.t jac_times_vec_fn)
+      -> bandrange
+      -> serial_preconditioner
+
+    (** See {!preconditioner}.  *)
+    val prec_right_banded :
+      ?jac_times_vec:(RealArray.t jac_times_vec_fn)
+      -> bandrange
+      -> serial_preconditioner
+
+    (** See {!preconditioner}.  *)
+    val prec_both_banded :
+      ?jac_times_vec:(RealArray.t jac_times_vec_fn)
+      -> bandrange
+      -> serial_preconditioner
+
+    (** Krylov iterative solver with the scaled preconditioned GMRES
+        method.  Called like [spgmr ~maxl:maxl prec], where:
+
+        - [~maxl] is the maximum dimension of the Krylov subspace.
+          Defaults to [5].
+        - [prec] is a preconditioner.  See {!preconditioner}.
 
         @cvode <node5#sss:lin_solv_init> CVSpgmr
         @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
         @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
         @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
-    val spgmr : int option -> preconditioning_type -> 'data callbacks
-                    -> ('data, 'kind) linear_solver
+    val spgmr : ?maxl:int -> ('a, 'k) preconditioner -> ('a, 'k) linear_solver
 
     (** Krylov iterative solver with the scaled preconditioned Bi-CGStab method.
-        The arguments are the same as [spgmr].  See also {!Spils}.
+        The arguments are the same as [spgmr].
 
         @cvode <node5#sss:lin_solv_init> CVSpbcg
         @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
         @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
         @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
-    val spbcg : int option -> preconditioning_type -> 'data callbacks
-                    -> ('data, 'kind) linear_solver
+    val spbcg : ?maxl:int -> ('a, 'k) preconditioner -> ('a, 'k) linear_solver
 
     (** Krylov iterative with the scaled preconditioned TFQMR method.  The
-        arguments are the same as [spgmr].  See also {!Spils}.
+        arguments are the same as [spgmr].
 
         @cvode <node5#sss:lin_solv_init> CVSptfqmr
         @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
         @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
         @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
-    val sptfqmr : int option -> preconditioning_type -> 'data callbacks
-                    -> ('data, 'kind) linear_solver
+    val sptfqmr : ?maxl:int -> ('a, 'k) preconditioner -> ('a, 'k) linear_solver
 
     (** {4 Low-level solver manipulation} *)
 
-    (** Set preconditioning functions (see {!callbacks}).  It may be
-        unsafe to use this function without a {!reinit}.  Users are encouraged
-        to use the [iter_type] parameter of {!reinit} instead, unless they are
+    (** Set preconditioning functions.  It may be unsafe to use this
+        function without a {!reinit}.  Users are encouraged to use the
+        [iter_type] parameter of {!reinit} instead, unless they are
         desperate for performance.
 
         @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
@@ -565,14 +648,14 @@ module Spils :
         @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
     val set_preconditioner :
       ('a, 'k) session
-      -> 'a prec_setup_fn option
+      -> ?setup:'a prec_setup_fn
       -> 'a prec_solve_fn
       -> unit
 
-    (** Set the Jacobian-times-vector function.  It may be unsafe to use this
-        function without a {!reinit}.  Users are encouraged to use the
-        [iter_type] parameter of {!reinit} instead, unless they are desperate
-        for performance.
+    (** Set the Jacobian-times-vector function.  It may be unsafe to
+        use this function without a {!reinit}.  Users are encouraged
+        to use the [iter_type] parameter of {!reinit} instead, unless
+        they are desperate for performance.
 
         @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
         @cvode <node5#ss:jtimesFn> Jacobian-times-vector function *)
@@ -591,13 +674,25 @@ module Spils :
         @cvode <node5#ss:jtimesFn> Jacobian-times-vector function *)
     val clear_jac_times_vec_fn : ('a, 'k) session -> unit
 
-    (** {4 Optional input functions} *)
+    (** This type is used only for low-level solver manipulation.
+        Information about the type of preconditioning to be done,
+        without any of the necessary callbacks to make it happen:
+        [PrecNone], [PrecLeft ()], [PrecRight ()], or [PrecBoth ()].
+      *)
+    type preconditioning_type = unit with_preconditioning_type
 
-    (** This function resets the type of preconditioning to be used using a
-        value of type {!Spils.preconditioning_type}.
+    (** This function changes the type of preconditioning without
+        affecting the preconditioning callbacks.  If the
+        preconditioning type is changed from [PrecNone] to something
+        else, then {!set_prec_callbacks} must be called to install the
+        necessary callbacks.  Users are encouraged to use the
+        [iter_type] parameter of {!reinit} instead, unless they are
+        desperate for performance.
 
-        @cvode <node5#sss:optin_spils> CVSpilsPrecSetupFn *)
+        @cvode <node5#sss:optin_spils> CVSpilsSetPrecType *)
     val set_prec_type : ('a, 'k) session -> preconditioning_type -> unit
+
+    (** {4 Optional input functions} *)
 
     (** Sets the Gram-Schmidt orthogonalization to be used with the
         Spgmr {!linear_solver}.
@@ -664,60 +759,19 @@ module Spils :
         @cvode <node5#sss:optout_spils> CVSpilsGetNumRhsEvals *)
     val get_num_rhs_evals    : ('a, 'k) session -> int
 
-    module Banded :
-      sig
-        (** Banded preconditioners
+    (** Returns the sizes of the real and integer workspaces used by the serial
+        banded preconditioner module.
 
-            @cvode <node5#sss:cvbandpre> Serial banded preconditioner module *)
+        @cvode <node5#sss:cvbandpre> CVBandPrecGetWorkSpace
+        @return ([real_size], [integer_size]) *)
+    val get_banded_work_space : serial_session -> int * int
 
-        (** Same as Spgmr (the Krylov iterative solver with scaled preconditioned
-            GMRES), but the preconditioner is set to CVODE's internal implementation
-            using a banded matrix of difference quotients.  The arguments specify
-            the maximum dimension of the Krylov subspace (Pass [None] to use the
-            default value [5].), preconditioning type, and the width of the band
-            matrix ({!bandrange}).
+    (** Returns the number of calls made to the user-supplied right-hand side
+        function due to finite difference banded Jacobian approximation in the
+        banded preconditioner setup function.
 
-            @cvode <node5#sss:lin_solv_init> CVSpgmr
-            @cvode <node5#sss:cvbandpre> CVBandPrecInit *)
-        val spgmr : int option -> preconditioning_type -> bandrange
-                            -> serial_linear_solver
-
-        (** Same as Spbcg (the Krylov iterative solver with scaled preconditioned
-            Bi-CGStab), but the preconditioner is set to CVODE's internal
-            implementation using a banded matrix of difference quotients.  The
-            arguments are the same as [spgmr].
-
-            @cvode <node5#sss:lin_solv_init> CVSpbcg
-            @cvode <node5#sss:cvbandpre> CVBandPrecInit *)
-        val spbcg : int option -> preconditioning_type -> bandrange
-                            -> serial_linear_solver
-
-        (** Same as Spbcg (the Krylov iterative solver with scaled preconditioned
-            Bi-CGStab), but the preconditioner is set to CVODE's internal
-            implementation using a banded matrix of difference quotients.  The
-            arguments are the same as [spgmr].
-
-            @cvode <node5#sss:lin_solv_init> CVSptfqmr
-            @cvode <node5#sss:cvbandpre> CVBandPrecInit *)
-        val sptfqmr : int option -> preconditioning_type -> bandrange
-                               -> serial_linear_solver
-
-        (** {4 Optional output functions} *)
-
-        (** Returns the sizes of the real and integer workspaces used by the serial
-            banded preconditioner module.
-
-            @cvode <node5#sss:cvbandpre> CVBandPrecGetWorkSpace
-            @return ([real_size], [integer_size]) *)
-        val get_work_space : serial_session -> int * int
-
-        (** Returns the number of calls made to the user-supplied right-hand side
-            function due to finite difference banded Jacobian approximation in the
-            banded preconditioner setup function.
-
-            @cvode <node5#sss:cvbandpre> CVBandPrecGetNumRhsEvals *)
-        val get_num_rhs_evals : serial_session -> int
-      end
+        @cvode <node5#sss:cvbandpre> CVBandPrecGetNumRhsEvals *)
+    val get_banded_num_rhs_evals : serial_session -> int
   end
 
 module Alternate :
@@ -973,7 +1027,7 @@ val init :
     -> ('a, 'kind) tolerance
     -> 'a rhsfn
     -> ?roots:(int * 'a rootsfn)
-    -> ?t0:float
+    -> float
     -> ('a, 'kind) nvector
     -> ('a, 'kind) session
 

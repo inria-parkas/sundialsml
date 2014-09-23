@@ -160,7 +160,7 @@ void idas_ml_check_flag(const char *call, int flag)
 	caml_raise_constant(IDA_EXN(ResFuncFailure));
 
     case IDA_REP_RES_ERR:
-	caml_raise_constant(IDA_EXN(RepeatedResFuncErr));
+	caml_raise_constant(IDA_EXN(RepeatedResFuncFailure));
 
     case IDA_RTFUNC_FAIL:
 	caml_raise_constant(IDA_EXN(RootFuncFailure));
@@ -199,10 +199,10 @@ void idas_ml_check_flag(const char *call, int flag)
 	caml_raise_constant(IDAS_EXN(QuadRhsFuncFailure));
 
     case IDA_FIRST_QRHS_ERR:
-	caml_raise_constant(IDAS_EXN(FirstQuadRhsFuncErr));
+	caml_raise_constant(IDAS_EXN(FirstQuadRhsFuncFailure));
 
     case IDA_REP_QRHS_ERR:
-	caml_raise_constant(IDAS_EXN(RepeatedQuadRhsFuncErr));
+	caml_raise_constant(IDAS_EXN(RepeatedQuadRhsFuncFailure));
 
     case IDA_NO_SENS:
 	caml_raise_constant(IDAS_EXN(SensNotInitialized));
@@ -211,10 +211,10 @@ void idas_ml_check_flag(const char *call, int flag)
 	caml_raise_constant(IDAS_EXN(SensResFuncFailure));
 
     case IDA_REP_SRES_ERR:
-	caml_raise_constant(IDAS_EXN(RepeatedSensResFuncErr));
+	caml_raise_constant(IDAS_EXN(RepeatedSensResFuncFailure));
 
     case IDA_BAD_IS:
-	caml_raise_constant(IDAS_EXN(BadIS));
+	caml_raise_constant(IDAS_EXN(BadSensIdentifier));
 
     case IDA_NO_QUADSENS:
 	caml_raise_constant(IDAS_EXN(QuadSensNotInitialized));
@@ -223,10 +223,10 @@ void idas_ml_check_flag(const char *call, int flag)
 	caml_raise_constant(IDAS_EXN(QuadSensRhsFuncFailure));
 
     case IDA_FIRST_QSRHS_ERR:
-	caml_raise_constant(IDAS_EXN(FirstQuadSensRhsFuncErr));
+	caml_raise_constant(IDAS_EXN(FirstQuadSensRhsFuncFailure));
 
     case IDA_REP_QSRHS_ERR:
-	caml_raise_constant(IDAS_EXN(RepeatedQuadSensRhsFuncErr));
+	caml_raise_constant(IDAS_EXN(RepeatedQuadSensRhsFuncFailure));
 
     case IDA_NO_ADJ:
 	caml_raise_constant(IDAS_EXN(AdjointNotInitialized));
@@ -238,13 +238,13 @@ void idas_ml_check_flag(const char *call, int flag)
 	caml_raise_constant(IDAS_EXN(NoBackwardProblem));
 
     case IDA_REIFWD_FAIL:
-	caml_raise_constant(IDAS_EXN(ForwardReinitializationFailed));
+	caml_raise_constant(IDAS_EXN(ForwardReinitFailure));
 
     case IDA_BAD_TB0:
 	caml_raise_constant(IDAS_EXN(BadFinalTime));
 
     case IDA_FWD_FAIL:
-	caml_raise_constant(IDAS_EXN(ForwardFailed));
+	caml_raise_constant(IDAS_EXN(ForwardFailure));
 
     case IDA_GETY_BADT:
 	caml_raise_constant(IDAS_EXN(BadOutputTime));
@@ -1658,13 +1658,27 @@ CAMLprim value c_idas_adj_spils_set_gs_type(value vparent, value vwhich,
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value c_idas_adj_spils_set_max_restarts (value vparent, value vwhich,
+						  value vmaxr)
+{
+    CAMLparam3 (vparent, vwhich, vmaxr);
+    int flag;
+
+    flag = IDASpilsSetMaxRestartsB (IDA_MEM_FROM_ML(vparent), Int_val (vwhich),
+				    Int_val (vmaxr));
+    CHECK_FLAG ("IDASpilsSetMaxRestartsB", flag);
+
+    CAMLreturn (Val_unit);
+}
+
+
 CAMLprim value c_idas_adj_spils_set_eps_lin(value vparent, value vwhich,
 					    value eplifac)
 {
     CAMLparam3(vparent, vwhich, eplifac);
 
     int flag = IDASpilsSetEpsLinB(IDA_MEM_FROM_ML(vparent), Int_val(vwhich),
-				 Double_val(eplifac));
+				  Double_val(eplifac));
     SCHECK_FLAG("IDASpilsSetEpsLinB", flag);
 
     CAMLreturn (Val_unit);
@@ -1771,22 +1785,27 @@ CAMLprim value c_idas_adj_sv_tolerances(value vparent, value vwhich,
 
 CAMLprim value c_idas_adj_spils_set_preconditioner(value vparent,
 						   value vwhich,
-						   value vset_precsetup,
-						   value vset_jac)
+						   value vset_precsetup)
 {
-    CAMLparam4(vparent, vwhich, vset_precsetup, vset_jac);
-    int flag;
+    CAMLparam3(vparent, vwhich, vset_precsetup);
     void *mem = IDA_MEM_FROM_ML(vparent);
     int which = Int_val(vwhich);
     IDASpilsPrecSetupFnB bsetup = Bool_val(vset_precsetup) ? bprecsetupfn : NULL;
-
-    flag = IDASpilsSetPreconditionerB(mem, which, bsetup, bprecsolvefn);
+    int flag = IDASpilsSetPreconditionerB(mem, which, bsetup, bprecsolvefn);
     SCHECK_FLAG ("IDASpilsSetPreconditionerB", flag);
-    if (Bool_val(vset_jac)) {
-	flag = IDASpilsSetJacTimesVecFnB(mem, which, bjactimesfn);
-	SCHECK_FLAG ("IDASpilsSetJacTimesVecFnB", flag);
-    }
+    CAMLreturn (Val_unit);
+}
 
+CAMLprim value c_idas_adj_spils_set_jac_times_vec_fn(value vparent,
+						     value vwhich,
+						     value vset_jac)
+{
+    CAMLparam3(vparent, vwhich, vset_jac);
+    void *mem = IDA_MEM_FROM_ML(vparent);
+    int which = Int_val(vwhich);
+    IDASpilsJacTimesVecFnB jac = Bool_val (vset_jac) ? bjactimesfn : NULL;
+    int flag = IDASpilsSetJacTimesVecFnB(mem, which, jac);
+    SCHECK_FLAG ("IDASpilsSetJacTimesVecFnB", flag);
     CAMLreturn (Val_unit);
 }
 

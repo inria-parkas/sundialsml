@@ -1160,13 +1160,12 @@ let main () =
   let mlkeep = 2 in
   let maxl = 16 in
   let linsolv =
-    Ida_bbd.spgmr (Some maxl)
+    Ida_bbd.spgmr ~maxl:maxl ~dqrely:zero
       { Ida_bbd.mudq = mudq;
         Ida_bbd.mldq = mldq;
         Ida_bbd.mukeep = mukeep;
         Ida_bbd.mlkeep = mlkeep;
       }
-      (Some zero)
       {
         Ida_bbd.local_fn = reslocal data;
         Ida_bbd.comm_fn = None;
@@ -1175,7 +1174,7 @@ let main () =
   let mem =
     Ida.init linsolv (Ida.SStolerances (rtol,atol))
       (res data)
-      ~t0:t0 uv uvp
+      t0 uv uvp
   in
 
   (* Initialize adjoint module. *)
@@ -1226,15 +1225,13 @@ let main () =
   let mukeep = 2 in
   let mlkeep = 2 in
   let linsolv =
-    Idas_bbd.spgmr
-      (Some maxl)
+    Idas_bbd.spgmr ~maxl:maxl ~dqrely:zero
       {
         Ida_bbd.mudq = mudq;
         Ida_bbd.mldq = mldq;
         Ida_bbd.mukeep = mukeep;
         Ida_bbd.mlkeep = mlkeep;
       }
-      (Some zero)
       {
         Idas_bbd.local_fn = resBlocal data;
         Idas_bbd.comm_fn = None;
@@ -1244,7 +1241,7 @@ let main () =
     Adjoint.init_backward mem
       linsolv
       (Adjoint.SStolerances (rtol,atol))
-      (Adjoint.Basic (resB data))
+      (Adjoint.NoSens (resB data))
       tend uvB uvpB
   in
 

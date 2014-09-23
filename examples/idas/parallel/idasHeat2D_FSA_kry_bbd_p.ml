@@ -651,14 +651,13 @@ let main () =
   let mlkeep = 1 in
 
   let linsolv =
-    Ida_bbd.spgmr (Some 12)
+    Ida_bbd.spgmr ~maxl:12 ~dqrely:zero
       {
         Ida_bbd.mudq = mudq;
         Ida_bbd.mldq = mldq;
         Ida_bbd.mukeep = mukeep;
         Ida_bbd.mlkeep = mlkeep;
       }
-      (Some zero)
       {
         Ida_bbd.local_fn = reslocal data;
         Ida_bbd.comm_fn = None;
@@ -666,7 +665,7 @@ let main () =
   in
   let mem =
     Ida.init linsolv (Ida.SStolerances (rtol,atol))
-      (heatres data) ~t0:t0 uu up
+      (heatres data) t0 uu up
   in
   Ida.set_var_types mem id;
   Ida.set_suppress_alg mem true;
@@ -684,7 +683,7 @@ let main () =
          done here as an illustration only, as the default values
          for pbar, if pbar is not supplied, are anyway 1.0) *)
 
-      let pbar = RealArray.clone data.p in
+      let pbar = RealArray.copy data.p in
 
       (* Allocate sensitivity solution vectors uuS and upS and set them
          to an initial guess for the sensitivity ICs (the IC for uuS are

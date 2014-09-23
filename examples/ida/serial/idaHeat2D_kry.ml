@@ -67,7 +67,7 @@ let res_heat data t (u : RealArray.t) (u' : RealArray.t) r =
   and mm    = data.mm in
   
   (* Initialize r to u, to take care of boundary equations. *)
-  RealArray.blit u r;
+  RealArray.blit_all u r;
   
   (* Loop over interior points; set res = up - (central difference).  *)
   for j = 1 to mgrid-2 do
@@ -233,14 +233,11 @@ let main () =
   (* Call IDACreate to initialize solution with SPGMR linear solver.  *)
 
   let solver =
-    Ida.Spils.spgmr (Some 5)
-      { Ida.Spils.prec_setup_fn = Some (p_setup_heat data);
-        Ida.Spils.prec_solve_fn = Some (p_solve_heat data);
-        Ida.Spils.jac_times_vec_fn = None;
-      }
+    Ida.Spils.spgmr ~maxl:5
+      (Ida.Spils.prec_left ~setup:(p_setup_heat data) (p_solve_heat data))
   in
   let mem = Ida.init solver (Ida.SStolerances (rtol, atol))
-                     (res_heat data) ~t0:t0 wu wu' in
+                     (res_heat data) t0 wu wu' in
   Ida.set_constraints mem (Nvector_serial.wrap constraints);
 
   (* Print output heading. *)

@@ -242,7 +242,7 @@ let main () =
 
   let cvode_mem =
     Cvode.init Cvode.BDF (Cvode.Newton (Cvode.Dls.dense (Some (jac data))))
-      (Cvode.WFtolerances (ewt data)) (f data) ~t0:t0 y
+      (Cvode.WFtolerances (ewt data)) (f data) t0 y
   in
 
   Quad.init cvode_mem (fQ data) q;
@@ -288,10 +288,10 @@ let main () =
     Adj.init_backward cvode_mem Cvode.BDF
                                 (Adj.Newton (Adj.Dls.dense (Some (jacb data))))
                                 (Adj.SStolerances (reltolB, abstolB))
-                                (Adj.Basic (fB data))
+                                (Adj.NoSens (fB data))
                                 tb1 yB
   in
-  QuadAdj.init cvode_memB (QuadAdj.Basic (fQB data)) qB;
+  QuadAdj.init cvode_memB (QuadAdj.NoSens (fQB data)) qB;
   QuadAdj.set_tolerances cvode_memB (QuadAdj.SStolerances (reltolB, abstolQB));
 
   (* Backward Integration *)

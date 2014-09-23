@@ -29,7 +29,7 @@ exception LinearSetupFailure
 exception LinearSolveFailure
 exception ResFuncFailure
 exception FirstResFuncFailure
-exception RepeatedResFuncErr
+exception RepeatedResFuncFailure
 exception RootFuncFailure
 exception ConstraintFailure
 
@@ -184,79 +184,78 @@ module Spils =
   struct
     include SpilsTypes
 
-    let no_precond = { prec_solve_fn = None;
-                       prec_setup_fn = None;
-                       jac_times_vec_fn = None; }
+    let prec_none = PrecNone
+    let prec_left ?setup ?jac_times_vec solve =
+      PrecLeft (solve, setup, jac_times_vec)
 
-    external c_spils_spgmr
+    external c_spgmr
       : ('a, 'k) session -> int -> unit
       = "c_ida_spils_spgmr"
 
-    external c_spils_spbcg
+    external c_spbcg
       : ('a, 'k) session -> int -> unit
       = "c_ida_spils_spbcg"
 
-    external c_spils_sptfqmr
+    external c_sptfqmr
       : ('a, 'k) session -> int -> unit
       = "c_ida_spils_sptfqmr"
 
-    external c_spils_set_preconditioner
-      : ('a, 'k) session -> bool -> bool -> unit
+    external c_set_preconditioner
+      : ('a, 'k) session -> bool -> unit
       = "c_ida_spils_set_preconditioner"
 
-    let set_precond session cb =
-      session.ls_callbacks <- SpilsCallback cb;
-      c_spils_set_preconditioner session
-        (cb.prec_setup_fn <> None)
-        (cb.jac_times_vec_fn <> None)
+    external c_set_max_restarts : ('a, 'k) session -> int -> unit
+      = "c_ida_spils_set_max_restarts"
 
-    let spgmr maxl cb session nv nv' =
-      let maxl = match maxl with None -> 0 | Some ml -> ml in
-      c_spils_spgmr session maxl;
-      set_precond session cb
+    external c_set_jac_times_vec_fn : ('a, 'k) session -> bool -> unit
+      = "c_ida_spils_set_jac_times_vec_fn"
 
-    let spbcg maxl cb session nv nv' =
-      let maxl = match maxl with None -> 0 | Some ml -> ml in
-      c_spils_spbcg session maxl;
-      set_precond session cb
+    let init_prec session = function
+      | PrecNone -> ()
+      | PrecLeft (solve, setup, jac_times) ->
+        c_set_preconditioner session (setup <> None);
+        c_set_jac_times_vec_fn session (jac_times <> None);
+        session.ls_callbacks <- SpilsCallback { prec_solve_fn = solve;
+                                                prec_setup_fn = setup;
+                                                jac_times_vec_fn = jac_times }
 
-    let sptfqmr maxl cb session nv nv' =
-      let maxl = match maxl with None -> 0 | Some ml -> ml in
-      c_spils_sptfqmr session maxl;
-      set_precond session cb
+    let spgmr ?(maxl=0) ?max_restarts prec session _ _ =
+      c_spgmr session maxl;
+      (match max_restarts with
+       | Some m -> c_set_max_restarts session m
+       | None -> ());
+      init_prec session prec
 
-    external set_preconditioner  : ('a, 'k) session -> bool -> unit
-        = "c_ida_set_preconditioner"
+    let spbcg ?(maxl=0) prec session _ _ =
+      c_spbcg session maxl;
+      init_prec session prec
 
-    let set_preconditioner s fprecsetupfn fprecsolvefn =
-      (match s.ls_callbacks with
+    let sptfqmr ?(maxl=0) prec session _ _ =
+      c_sptfqmr session maxl;
+      init_prec session prec
+
+    let set_preconditioner s ?setup solve =
+      match s.ls_callbacks with
+      | SpilsCallback cbs ->
+        s.ls_callbacks <- SpilsCallback { cbs with
+                                          prec_setup_fn = setup;
+                                          prec_solve_fn = solve };
+        c_set_preconditioner s (setup <> None)
+      | _ -> failwith "spils solver not in use"
+
+    let set_jac_times_vec_fn s f =
+      match s.ls_callbacks with
        | SpilsCallback cbs ->
-           s.ls_callbacks <- SpilsCallback { cbs with
-                               prec_setup_fn = fprecsetupfn;
-                               prec_solve_fn = Some fprecsolvefn }
-       | _ -> failwith "spils solver not in use");
-      set_preconditioner s (fprecsetupfn <> None)
-
-    external set_jac_times_vec_fn : ('a, 'k) session -> unit
-        = "c_ida_set_jac_times_vec_fn"
-
-    let set_jac_times_vec_fn s fjactimesfn =
-      (match s.ls_callbacks with
-       | SpilsCallback cbs ->
-           s.ls_callbacks <- SpilsCallback { cbs with
-                               jac_times_vec_fn = Some fjactimesfn }
-       | _ -> failwith "spils solver not in use");
-      set_jac_times_vec_fn s
-
-    external clear_jac_times_vec_fn : ('a, 'k) session -> unit
-        = "c_ida_clear_jac_times_vec_fn"
+         s.ls_callbacks <- SpilsCallback { cbs with jac_times_vec_fn=Some f };
+         c_set_jac_times_vec_fn s true
+       | _ -> failwith "spils solver not in use"
 
     let clear_jac_times_vec_fn s =
-      (match s.ls_callbacks with
-       | SpilsCallback cbs ->
-           s.ls_callbacks <- SpilsCallback { cbs with jac_times_vec_fn = None }
-       | _ -> failwith "spils solver not in use");
-      clear_jac_times_vec_fn s
+      match s.ls_callbacks with
+      | SpilsCallback cbs ->
+        s.ls_callbacks <- SpilsCallback { cbs with jac_times_vec_fn = None };
+        c_set_jac_times_vec_fn s false
+      | _ -> failwith "spils solver not in use"
 
     external set_gs_type : ('a, 'k) session -> Spils.gramschmidt_type -> unit
         = "c_ida_spils_set_gs_type"
@@ -332,7 +331,7 @@ let set_tolerances s tol =
   | SVtolerances (rel, abs) -> sv_tolerances s rel abs
   | WFtolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
 
-let init linsolv tol resfn ?(roots=no_roots) ?(t0=0.) y y' =
+let init linsolv tol resfn ?(roots=no_roots) t0 y y' =
   let (nroots, rootsfn) = roots in
   if nroots < 0 then
     raise (Invalid_argument "number of root functions is negative");
@@ -641,7 +640,7 @@ let call_bandjacfn session jac range j =
 let call_precsolvefn session jac r z delta =
   let session = read_weak_ref session in
   match session.ls_callbacks with
-  | SpilsCallback { Spils.prec_solve_fn = Some f } ->
+  | SpilsCallback { Spils.prec_solve_fn = f } ->
     adjust_retcode session true (f jac r z) delta
   | _ -> assert false
 
@@ -715,7 +714,7 @@ let _ =
       LinearSolveFailure;
       ResFuncFailure;
       FirstResFuncFailure;
-      RepeatedResFuncErr;
+      RepeatedResFuncFailure;
       RootFuncFailure;
       ConstraintFailure;
 

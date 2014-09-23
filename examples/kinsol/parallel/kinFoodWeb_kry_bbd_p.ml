@@ -610,19 +610,16 @@ let main () =
      band-block-diagonal preconditioner, and specify the local and
      communication functions func_local and gcomm=NULL (all communication
      needed for the func_local is already done in func). *)
-  let dq_rel_uu = None in
   let mudq = 2*num_species - 1 in
   let mldq = 2*num_species - 1 in
   let mukeep = num_species in
   let mlkeep = num_species in
   let kmem = Kinsol.init
-              (Bbd.spgmr
-                (Some maxl) (Some maxlrst)
+              (Bbd.spgmr ~maxl:maxl ~max_restarts:maxlrst
                 { Bbd.mudq = mudq;
                   Bbd.mldq = mldq;
                   Bbd.mukeep = mukeep;
                   Bbd.mlkeep = mlkeep; }
-                dq_rel_uu
                 { Bbd.local_fn = func_local data;
                   Bbd.comm_fn = None; })
               (func data) cc in

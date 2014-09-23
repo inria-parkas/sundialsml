@@ -229,7 +229,7 @@ let main () =
   in
   let cvode_mem = Cvode.init Cvode.BDF (Cvode.Newton solver)
                              (Cvode.SStolerances (reltol, abstol))
-                             ~t0:t0 (f data) u
+                             (f data) t0 u
   in
 
   (* In loop over output points: call CVode, print results, test for errors *)

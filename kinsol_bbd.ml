@@ -59,9 +59,7 @@ external c_spils_spbcg : ('a, 'k) session -> int -> unit
 external c_spils_sptfqmr : ('a, 'k) session -> int -> unit
   = "c_kinsol_spils_sptfqmr"
 
-let spgmr maxl omaxrs bws dqrely cb session onv =
-  let maxl   = match maxl with None -> 0 | Some ml -> ml in
-  let dqrely = match dqrely with None -> 0.0 | Some v -> v in
+let spgmr ?(maxl=0) ?max_restarts ?(dqrely=0.0) bws cb session onv =
   let localn =
     match onv with
       None -> 0
@@ -69,15 +67,13 @@ let spgmr maxl omaxrs bws dqrely cb session onv =
                  Sundials.RealArray.length ba
   in
   c_spils_spgmr session maxl;
-  (match omaxrs with
-   | None -> ()
-   | Some maxrs -> c_set_max_restarts session maxrs);
+  (match max_restarts with
+   | Some m -> c_set_max_restarts session m
+   | None -> ());
   c_bbd_prec_init session localn bws dqrely (cb.comm_fn <> None);
   session.ls_callbacks <- BBDCallback (bbd_callbacks cb)
 
-let spbcg maxl bws dqrely cb session onv =
-  let maxl   = match maxl with None -> 0 | Some ml -> ml in
-  let dqrely = match dqrely with None -> 0.0 | Some v -> v in
+let spbcg ?(maxl=0) ?(dqrely=0.0) bws cb session onv =
   let localn =
     match onv with
       None -> 0
@@ -88,9 +84,7 @@ let spbcg maxl bws dqrely cb session onv =
   c_bbd_prec_init session localn bws dqrely (cb.comm_fn <> None);
   session.ls_callbacks <- BBDCallback (bbd_callbacks cb)
 
-let sptfqmr maxl bws dqrely cb session onv =
-  let maxl   = match maxl with None -> 0 | Some ml -> ml in
-  let dqrely = match dqrely with None -> 0.0 | Some v -> v in
+let sptfqmr ?(maxl=0) ?(dqrely=0.0) bws cb session onv =
   let localn =
     match onv with
       None -> 0

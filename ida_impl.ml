@@ -55,12 +55,6 @@ module SpilsCommonTypes = struct
   type gramschmidt_type = Spils.gramschmidt_type =
     | ModifiedGS
     | ClassicalGS
-
-  type preconditioning_type = Spils.preconditioning_type =
-    | PrecNone
-    | PrecLeft
-    | PrecRight
-    | PrecBoth
 end
 
 module SpilsTypes = struct
@@ -80,10 +74,17 @@ module SpilsTypes = struct
 
   type 'a callbacks =
     {
-      prec_solve_fn : 'a prec_solve_fn option;
+      prec_solve_fn : 'a prec_solve_fn;
       prec_setup_fn : 'a prec_setup_fn option;
       jac_times_vec_fn : 'a jac_times_vec_fn option;
     }
+
+  (* IDA(S) supports only left preconditioning.  *)
+  type 'a preconditioner =
+    | PrecNone
+    | PrecLeft of 'a prec_solve_fn
+                  * 'a prec_setup_fn option
+                  * 'a jac_times_vec_fn option
 end
 
 module IdaBbdParamTypes = struct
@@ -143,7 +144,7 @@ module SensitivityTypes = struct
 end
 
 module AdjointTypes' = struct
-  type 'a bresfn_basic =
+  type 'a bresfn_no_sens =
     float             (* t *)
     -> 'a             (* y *)
     -> 'a             (* y' *)
@@ -162,15 +163,15 @@ module AdjointTypes' = struct
     -> 'a          (* resvalB *)
     -> unit
   type 'a bresfn =
-      Basic of 'a bresfn_basic
+      NoSens of 'a bresfn_no_sens
     | WithSens of 'a bresfn_with_sens
 
   module QuadratureTypes = struct
     type 'a bquadrhsfn =
-        Basic of 'a bquadrhsfn_basic
+        NoSens of 'a bquadrhsfn_no_sens
       | WithSens of 'a bquadrhsfn_with_sens
 
-    and 'a bquadrhsfn_basic =
+    and 'a bquadrhsfn_no_sens =
       float             (* t *)
       -> 'a             (* y *)
       -> 'a             (* y' *)
@@ -237,10 +238,17 @@ module AdjointTypes' = struct
 
     type 'a callbacks =
       {
-        prec_solve_fn : 'a prec_solve_fn option;
+        prec_solve_fn : 'a prec_solve_fn;
         prec_setup_fn : 'a prec_setup_fn option;
         jac_times_vec_fn : 'a jac_times_vec_fn option;
       }
+
+    (* IDA(S) supports only left preconditioning.  *)
+    type 'a preconditioner =
+      | PrecNone
+      | PrecLeft of 'a prec_solve_fn
+                    * 'a prec_setup_fn option
+                    * 'a jac_times_vec_fn option
   end
 end
 
@@ -328,9 +336,9 @@ and ('a, 'kind) bsensext = {
   bsensarray1           : 'a array;
   bsensarray2           : 'a array;
 
-  mutable resfnb        : 'a AdjointTypes'.bresfn_basic;
+  mutable resfnb        : 'a AdjointTypes'.bresfn_no_sens;
   mutable resfnbs       : 'a AdjointTypes'.bresfn_with_sens;
-  mutable bquadrhsfn    : 'a AdjointTypes'.QuadratureTypes.bquadrhsfn_basic;
+  mutable bquadrhsfn    : 'a AdjointTypes'.QuadratureTypes.bquadrhsfn_no_sens;
   mutable bquadrhsfn1   : 'a AdjointTypes'.QuadratureTypes.bquadrhsfn_with_sens;
 }
 

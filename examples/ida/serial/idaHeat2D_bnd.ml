@@ -62,7 +62,7 @@ let heatres t (u : RealArray.t) (u' : RealArray.t) resval data =
   and coeff = data.coeff
   in
   (* Initialize resval to u, to take care of boundary equations. *)
-  RealArray.blit u resval;
+  RealArray.blit_all u resval;
 
   (* Loop over interior points; set res = u' - (central difference). *)
   for j = 1 to mm-2 do
@@ -187,7 +187,7 @@ let main () =
     Ida.init (Ida.Dls.band { Ida.mupper=mu; Ida.mlower=ml } None)
              (Ida.SStolerances (rtol, atol))
              (fun t u u' r -> heatres t u u' r data)
-             ~t0:t0 wu wu'
+             t0 wu wu'
   in
   Ida.set_constraints mem (Nvector_serial.wrap constraints);
 

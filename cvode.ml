@@ -28,9 +28,9 @@ exception LinearInitFailure
 exception LinearSetupFailure
 exception LinearSolveFailure
 exception RhsFuncFailure
-exception FirstRhsFuncErr
-exception RepeatedRhsFuncErr
-exception UnrecoverableRhsFuncErr
+exception FirstRhsFuncFailure
+exception RepeatedRhsFuncFailure
+exception UnrecoverableRhsFuncFailure
 exception RootFuncFailure
 
 (* get_dky exceptions *)
@@ -181,87 +181,164 @@ module Spils =
   struct
     include SpilsTypes
 
-    let no_precond = { prec_solve_fn = None;
-                       prec_setup_fn = None;
-                       jac_times_vec_fn = None; }
+    let prec_none = PrecNone
+    let prec_left ?setup ?jac_times_vec solve =
+      PrecLeft (User (solve, setup, jac_times_vec))
+    let prec_right ?setup ?jac_times_vec solve =
+      PrecRight (User (solve, setup, jac_times_vec))
+    let prec_both ?setup ?jac_times_vec solve =
+      PrecBoth (User (solve, setup, jac_times_vec))
+    let prec_left_banded ?jac_times_vec bandrange =
+      PrecLeft (Banded (bandrange, jac_times_vec))
+    let prec_right_banded ?jac_times_vec bandrange =
+      PrecRight (Banded (bandrange, jac_times_vec))
+    let prec_both_banded ?jac_times_vec bandrange =
+      PrecBoth (Banded (bandrange, jac_times_vec))
 
-    external c_spils_spgmr
-      : ('a, 'k) session -> int -> preconditioning_type -> unit
+    external c_spgmr
+      : ('a, 'k) session -> int -> Spils.preconditioning_type -> unit
       = "c_cvode_spils_spgmr"
 
-    external c_spils_spbcg
-      : ('a, 'k) session -> int -> preconditioning_type -> unit
+    external c_spbcg
+      : ('a, 'k) session -> int -> Spils.preconditioning_type -> unit
       = "c_cvode_spils_spbcg"
 
-    external c_spils_sptfqmr
-      : ('a, 'k) session -> int -> preconditioning_type -> unit
+    external c_sptfqmr
+      : ('a, 'k) session -> int -> Spils.preconditioning_type -> unit
       = "c_cvode_spils_sptfqmr"
 
-    external c_spils_set_preconditioner
-      : ('a, 'k) session -> bool -> bool -> unit
+    external c_set_preconditioner
+      : ('a, 'k) session -> bool -> unit
       = "c_cvode_spils_set_preconditioner"
 
-    let set_precond session prec_type cb =
-      match prec_type with
-      | Spils.PrecNone -> ()
-      | Spils.PrecLeft | Spils.PrecRight | Spils.PrecBoth ->
-        match cb.prec_solve_fn with
-        | None -> invalid_arg "preconditioning type is not PrecNone, but no \
-                               solve function given"
-        | Some solve_fn ->
-            session.ls_callbacks <- SpilsCallback cb;
-            c_spils_set_preconditioner session
-              (cb.prec_setup_fn <> None)
-              (cb.jac_times_vec_fn <> None)
+    external c_set_banded_preconditioner
+      : ('a, 'k) session -> int -> int -> int -> unit
+      = "c_cvode_spils_set_banded_preconditioner"
 
-    let spgmr maxl prec_type cb session nv =
-      let maxl = match maxl with None -> 0 | Some ml -> ml in
-      c_spils_spgmr session maxl prec_type;
-      set_precond session prec_type cb
+    external c_set_jac_times_vec_fn
+      : ('a, 'k) session -> bool -> unit
+      = "c_cvode_spils_set_jac_times_vec_fn"
 
-    let spbcg maxl prec_type cb session nv =
-      let maxl = match maxl with None -> 0 | Some ml -> ml in
-      c_spils_spbcg session maxl prec_type;
-      set_precond session prec_type cb
+    let init_spils :
+      type a k. ((a, k) session -> int -> Spils.preconditioning_type -> unit)
+      -> int -> (a, k) preconditioner
+      -> (a, k) session
+      -> (a, k) nvector
+      -> unit =
+      fun init maxl prec session nv ->
+        let with_prec prec_type cb =
+          init session maxl prec_type;
+          match (cb : (a, k) callbacks) with
+          | Banded (range, jac_times_vec) ->
+            c_set_banded_preconditioner session
+              (RealArray.length (Sundials.unvec nv))
+              range.mupper range.mlower;
+            c_set_jac_times_vec_fn session (jac_times_vec <> None);
+            session.ls_callbacks <- SpilsBandedCallback jac_times_vec
+          | User (solve, setup, jac_times) ->
+            c_set_preconditioner session (setup <> None);
+            c_set_jac_times_vec_fn session (jac_times <> None);
+            session.ls_callbacks <-
+              SpilsCallback { prec_solve_fn = solve;
+                              prec_setup_fn = setup;
+                              jac_times_vec_fn = jac_times }
+        in
+        match prec with
+        | PrecNone -> init session maxl Spils.PrecNone
+        | PrecLeft cb  -> with_prec Spils.PrecLeft cb
+        | PrecRight cb -> with_prec Spils.PrecRight cb
+        | PrecBoth cb  -> with_prec Spils.PrecBoth cb
 
-    let sptfqmr maxl prec_type cb session nv =
-      let maxl = match maxl with None -> 0 | Some ml -> ml in
-      c_spils_sptfqmr session maxl prec_type;
-      set_precond session prec_type cb
+    let spgmr ?(maxl=0) prec session nv =
+      init_spils c_spgmr maxl prec session nv
 
-    let set_preconditioner s fprecsetupfn fprecsolvefn =
-      (match s.ls_callbacks with
-       | SpilsCallback cbs ->
-           s.ls_callbacks <- SpilsCallback { cbs with
-                               prec_setup_fn = fprecsetupfn;
-                               prec_solve_fn = Some fprecsolvefn }
-       | _ -> failwith "spils solver not in use");
-      c_spils_set_preconditioner s (fprecsetupfn <> None) false
+    let spbcg ?(maxl=0) prec session nv =
+      init_spils c_spbcg maxl prec session nv
 
-    external set_jac_times_vec_fn : ('a, 'k) session -> unit
-        = "c_cvode_set_jac_times_vec_fn"
+    let sptfqmr ?(maxl=0) prec session nv =
+      init_spils c_sptfqmr maxl prec session nv
 
-    let set_jac_times_vec_fn s fjactimesfn =
-      (match s.ls_callbacks with
-       | SpilsCallback cbs ->
-           s.ls_callbacks <- SpilsCallback { cbs with
-                               jac_times_vec_fn = Some fjactimesfn }
-       | _ -> failwith "spils solver not in use");
-      set_jac_times_vec_fn s
+    (* Note: set_banded_preconditioner is not exported because it's
+       apparently only designed to be called on a fresh spils solver
+       (i.e. right after CVSpgmr, CVSpbcg, or CVSptfqmr).
 
-    external clear_jac_times_vec_fn : ('a, 'k) session -> unit
-        = "c_cvode_clear_jac_times_vec_fn"
+       As of Sundials 2.5.0, calling
+
+         CVSpgmr -> CVBandPrecInit -> CVBandPrecInit,
+
+       triggers a memory leak.  Calling CVodeReInit does NOT help.
+       The only way to prevent leakage is to allocate a fresh spils
+       instance, thus:
+
+         CVSpgmr -> CVBandPrecInit -> CVSpgmr -> CVBandPrecInit.
+
+       If you call
+
+         CVSpgmr -> CVSpilsSetPreconditioner -> CVBandPrecInit,
+
+       nothing grave happens, but the memory associated with
+       CVBandPrecInit won't be freed until the spils solver is torn
+       down.  If you call BandPrecInit -> SetPreconditioner ->
+       BandPrecInit, you also get a memory leak.
+
+       (Perhaps set_preconditioner should be hidden too?  In that
+        case, we should somehow strip set_prec_type of the ability
+        to change PrecNone to anything else.)
+
+       set_jac_times_vec_fn, as well as similar functions for Dls
+       solvers, are kept because they accept NULL to remove the
+       callback.  This design clearly anticipates being called
+       multiple times on the same solver instance.  *)
+
+    let set_preconditioner :
+      type a k. (a,k) session
+      -> ?setup:a prec_setup_fn
+      -> a prec_solve_fn
+      -> unit =
+      fun s ?setup solve ->
+      match s.ls_callbacks with
+      | SpilsBandedCallback jac ->
+        s.ls_callbacks <- SpilsCallback { prec_setup_fn = setup;
+                                          prec_solve_fn = solve;
+                                          jac_times_vec_fn = jac; };
+        c_set_preconditioner s (setup <> None)
+      | SpilsCallback cbs ->
+        s.ls_callbacks <- SpilsCallback { cbs with
+                                          prec_setup_fn = setup;
+                                          prec_solve_fn = solve };
+        c_set_preconditioner s (setup <> None)
+      | _ -> failwith "spils solver not in use"
+
+    let set_jac_times_vec_fn :
+      type a k. (a,k) session
+      -> a jac_times_vec_fn
+      -> unit =
+      fun s f ->
+      match s.ls_callbacks with
+      | SpilsCallback cbs ->
+        c_set_jac_times_vec_fn s true;
+        s.ls_callbacks <- SpilsCallback { cbs with jac_times_vec_fn = Some f }
+      | SpilsBandedCallback _ ->
+        c_set_jac_times_vec_fn s true;
+        s.ls_callbacks <- SpilsBandedCallback (Some f)
+      | _ -> failwith "spils solver not in use"
 
     let clear_jac_times_vec_fn s =
-      (match s.ls_callbacks with
-       | SpilsCallback cbs ->
-           s.ls_callbacks <- SpilsCallback { cbs with jac_times_vec_fn = None }
-       | _ -> failwith "spils solver not in use");
-      clear_jac_times_vec_fn s
+      match s.ls_callbacks with
+      | SpilsCallback cbs ->
+        c_set_jac_times_vec_fn s false;
+        s.ls_callbacks <- SpilsCallback { cbs with jac_times_vec_fn = None }
+      | _ -> failwith "spils solver not in use"
 
-    external set_prec_type
-        : ('a, 'k) session -> preconditioning_type -> unit
+    external c_set_prec_type
+        : ('a, 'k) session -> Spils.preconditioning_type -> unit
         = "c_cvode_spils_set_prec_type"
+
+    let set_prec_type s = function
+      | PrecNone -> c_set_prec_type s Spils.PrecNone
+      | PrecLeft () -> c_set_prec_type s Spils.PrecLeft
+      | PrecRight () -> c_set_prec_type s Spils.PrecRight
+      | PrecBoth () -> c_set_prec_type s Spils.PrecBoth
 
     external set_gs_type : ('a, 'k) session -> gramschmidt_type -> unit
         = "c_cvode_spils_set_gs_type"
@@ -293,45 +370,11 @@ module Spils =
     external get_num_rhs_evals      : ('a, 'k) session -> int
         = "c_cvode_spils_get_num_rhs_evals"
 
-    module Banded =
-      struct
-        external c_spils_banded_spgmr
-          : (serial_session * int) -> int
-                    -> int -> int -> preconditioning_type -> unit
-          = "c_cvode_spils_banded_spgmr"
+    external get_banded_work_space : serial_session -> int * int
+        = "c_cvode_bandprec_get_work_space"
 
-        external c_spils_banded_spbcg
-          : (serial_session * int) -> int
-                    -> int -> int -> preconditioning_type -> unit
-          = "c_cvode_spils_banded_spbcg"
-
-        external c_spils_banded_sptfqmr
-          : (serial_session * int) -> int
-                    -> int -> int -> preconditioning_type -> unit
-          = "c_cvode_spils_banded_sptfqmr"
-
-        let spgmr maxl prec_type br session nv =
-          let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
-          let maxl = match maxl with None -> 0 | Some ml -> ml in
-          c_spils_banded_spgmr (session, neqs) br.mupper br.mlower maxl prec_type
-
-        let spbcg maxl prec_type br session nv =
-          let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
-          let maxl = match maxl with None -> 0 | Some ml -> ml in
-          c_spils_banded_spbcg (session, neqs) br.mupper br.mlower maxl prec_type
-
-        let sptfqmr maxl prec_type br session nv =
-          let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
-          let maxl = match maxl with None -> 0 | Some ml -> ml in
-          c_spils_banded_sptfqmr (session, neqs) br.mupper br.mlower maxl prec_type
-
-        external get_work_space : serial_session -> int * int
-            = "c_cvode_bandprec_get_work_space"
-
-        external get_num_rhs_evals : serial_session -> int
-            = "c_cvode_bandprec_get_num_rhs_evals"
-      end
-
+    external get_banded_num_rhs_evals : serial_session -> int
+        = "c_cvode_bandprec_get_num_rhs_evals"
   end
 
 module Alternate =
@@ -388,7 +431,7 @@ let set_tolerances s tol =
   | SVtolerances (rel, abs) -> sv_tolerances s rel abs
   | WFtolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
 
-let init lmm iter tol f ?(roots=no_roots) ?(t0=0.) y0 =
+let init lmm iter tol f ?(roots=no_roots) t0 y0 =
   let (nroots, roots) = roots in
   if nroots < 0 then
     raise (Invalid_argument "number of root functions is negative");
@@ -619,7 +662,7 @@ let call_bandjacfn session range jac j =
 let call_precsolvefn session jac r z =
   let session = read_weak_ref session in
   match session.ls_callbacks with
-  | SpilsCallback { Spils.prec_solve_fn = Some f } ->
+  | SpilsCallback { Spils.prec_solve_fn = f } ->
       adjust_retcode session true (f jac r) z
   | _ -> assert false
 
@@ -633,7 +676,8 @@ let call_precsetupfn session jac jok gamma =
 let call_jactimesfn session jac v jv =
   let session = read_weak_ref session in
   match session.ls_callbacks with
-  | SpilsCallback { Spils.jac_times_vec_fn = Some f } ->
+  | SpilsCallback { Spils.jac_times_vec_fn = Some f }
+  | SpilsBandedCallback (Some f) ->
       adjust_retcode session true (f jac v) jv
   | _ -> assert false
 
@@ -694,9 +738,9 @@ let _ =
       LinearSetupFailure;
       LinearSolveFailure;
       RhsFuncFailure;
-      FirstRhsFuncErr;
-      RepeatedRhsFuncErr;
-      UnrecoverableRhsFuncErr;
+      FirstRhsFuncFailure;
+      RepeatedRhsFuncFailure;
+      UnrecoverableRhsFuncFailure;
       RootFuncFailure;
       BadK;
       BadT;

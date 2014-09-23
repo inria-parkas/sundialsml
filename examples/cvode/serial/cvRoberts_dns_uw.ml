@@ -134,7 +134,7 @@ let main () =
   (* Set the Jacobian routine to Jac (user-supplied) *)
   let cvode_mem =
     Cvode.init Cvode.BDF (Cvode.Newton (Cvode.Dls.dense (Some jac)))
-      (Cvode.WFtolerances ewt) f ~roots:(nroots, g) ~t0:t0 y
+      (Cvode.WFtolerances ewt) f ~roots:(nroots, g) t0 y
   in
 
   (* In loop, call CVode, print results, and test for error.

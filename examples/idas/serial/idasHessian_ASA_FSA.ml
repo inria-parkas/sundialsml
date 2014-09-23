@@ -372,15 +372,15 @@ let main () =
   and wq  = Nvector_serial.wrap q
   in
 
-  let yyS = Array.init np (fun _ -> Nvector_serial.wrap (RealArray.clone yy))
-  and ypS = Array.init np (fun _ -> Nvector_serial.wrap (RealArray.clone yp))
+  let yyS = Array.init np (fun _ -> Nvector_serial.wrap (RealArray.copy yy))
+  and ypS = Array.init np (fun _ -> Nvector_serial.wrap (RealArray.copy yp))
   in
   nvconst 0.0 (Sundials.unvec yyS.(0));
   nvconst 0.0 (Sundials.unvec yyS.(1));
   nvconst 0.0 (Sundials.unvec ypS.(0));
   nvconst 0.0 (Sundials.unvec ypS.(1));
 
-  let qS = Array.init np (fun _ -> Nvector_serial.wrap (RealArray.clone q)) in
+  let qS = Array.init np (fun _ -> Nvector_serial.wrap (RealArray.copy q)) in
   nvconst 0.0 (Sundials.unvec qS.(0));
 
   (* Forward problem's setup. *)
@@ -389,7 +389,7 @@ let main () =
     Ida.init (Ida.Dls.dense None)
       (Ida.SStolerances (rtol,atol))
       (res data)
-      ~t0:ti
+      ti
       wyy wyp
   in
   Ida.set_max_num_steps ida_mem 1500;
@@ -560,8 +560,7 @@ let main () =
     Ida.init (Ida.Dls.dense None)
       (Ida.SStolerances (rtolFD, atolFD))
       (res data)
-      ~t0:ti
-      wyy wyp
+      ti wyy wyp
   in
   Ida.set_max_num_steps ida_mem 10000;
 

@@ -866,13 +866,12 @@ let main () =
   let mlkeep = 2 in
   let maxl = 16 in
   let linsolv =
-    Ida_bbd.spgmr (Some maxl)
+    Ida_bbd.spgmr ~maxl:maxl ~dqrely:zero
       { Ida_bbd.mudq = mudq;
         Ida_bbd.mldq = mldq;
         Ida_bbd.mukeep = mukeep;
         Ida_bbd.mlkeep = mlkeep;
       }
-      (Some zero)
       {
         Ida_bbd.local_fn = reslocal data;
         Ida_bbd.comm_fn = None;
@@ -881,14 +880,14 @@ let main () =
   let mem =
     Ida.init linsolv (Ida.SStolerances (rtol,atol))
       (res data)
-      ~t0:t0 uv uvp
+      t0 uv uvp
   in
 
   (* Enable forward sensitivity analysis. *)
   let sparams =
     {
       Sens.pvals = Some data.eps;
-      Sens.pbar  = Some (RealArray.clone data.eps);
+      Sens.pbar  = Some (RealArray.copy data.eps);
       Sens.plist = None;
     }
   in

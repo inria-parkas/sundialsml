@@ -286,7 +286,7 @@ let main () =
   and abstol = RealArray.of_array [|1.0e-8; 1.0e-14; 1.0e-6|] in
   let tol = Ida.SVtolerances (reltol, Nvector_serial.wrap abstol) in
 
-  let ida_mem = Ida.init (Ida.Dls.dense None) tol (res data) ~t0:t0 wy wyp in
+  let ida_mem = Ida.init (Ida.Dls.dense None) tol (res data) t0 wy wyp in
 
   printf "\n3-species chemical kinetics problem\n";
 
@@ -297,7 +297,7 @@ let main () =
     match sensi with
     | None -> printf "Sensitivity: NO "; (fun f -> ())
     | Some sensi_meth ->
-      let pbar = RealArray.clone data.p in
+      let pbar = RealArray.copy data.p in
       let yS = Array.init ns (fun _ -> Nvector_serial.make neq 0.0 (* FIXME: clone y then zero out *)) in
       let ypS = Array.init ns (fun _ -> Nvector_serial.make neq 0.0) in
       (*

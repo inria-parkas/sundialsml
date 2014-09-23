@@ -133,7 +133,7 @@ let main () =
   let cvode_mem =
     Cvode.init Cvode.BDF (Cvode.Newton (Cvode.Dls.dense (Some jac)))
                (Cvode.SVtolerances (rtol, (Nvector_serial.wrap abstol))) f
-               ~roots:(nroots, g) ~t0:t0 y
+               ~roots:(nroots, g) t0 y
   in
 
   (* In loop, call CVode, print results, and test for error.

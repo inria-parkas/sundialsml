@@ -63,6 +63,12 @@ val unvec : ('data, 'kind) nvector -> 'data
 
 module RealArray :
   sig
+    (** Utilities for manipulating 1-dimensional bigarrays of floats,
+        suitable for use with sundials.  Most of the functions in this
+        submodule mimic those of {{:OCAML_DOC_ROOT(Array)} (Array)},
+        with the exceptions of {!create} and {!sub}, which are modeled
+        after {{:OCAML_DOC_ROOT(Bigarray.Array1)} (Bigarray)}.  *)
+
     (** A {{:OCAML_DOC_ROOT(Bigarray.Array1)} (Bigarray)} vector of floats. *)
     type t = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
 
@@ -97,11 +103,26 @@ module RealArray :
     val to_list : t -> float list
 
     (** Create a new array with the same contents as an existing one. *)
-    val clone : t -> t
+    val copy : t -> t
 
-    (** [blit src dst] copies all elements of array [src] into array [dst]. They
-        must both have the same length. *)
-    val blit : t -> t -> unit
+    (** Extract a sub-array of the given real array.  This function
+        imitates that of Bigarray rather than Array, i.e. it doesn't
+        copy anything.  *)
+    val sub : t -> int -> int -> t
+
+    (** [blit src isrc dst idst len] copies [len] elements of [src] at
+        offset [isrc] to [dst] at offset [idst], i.e. it writes
+        [src.{isrc}], [src.{isrc+1}], ... [src.{isrc+len-1}]
+        to
+        [dst.{idst}], [dst.{idst+1}], ... [dst.{idst+len-1}].
+
+        @raise Invalid_argument "RealArray.blit" if [isrc], [idst], and
+        [len] don't specify valid subarrays of [src] and [dst].
+      *)
+    val blit : t -> int -> t -> int -> int -> unit
+
+    (** An alias of [Bigarray.Array1.blit].  *)
+    val blit_all : t -> t -> unit
 
     (** [fill a c] sets all elements of the array [a] to the constant [c]. *)
     val fill : t -> float -> unit
@@ -117,12 +138,15 @@ module RealArray :
     (** [fold_left f b a] returns [f (f (f b a.{0}) a.{1}) ...]. *)
     val fold_left : ('a -> float -> 'a) -> 'a -> t -> 'a
 
-    (** [app f a] applies [f] to the values of each element in [a]. *)
-    val app : (float -> unit) -> t -> unit
+    (** [fold_right f b a] returns [f (f (f b a.{0}) a.{1}) ...]. *)
+    val fold_right : (float -> 'a -> 'a) -> t -> 'a -> 'a
 
-    (** [app f a] applies [f] to the indexes and values of each element
+    (** [iter f a] applies [f] to the values of each element in [a]. *)
+    val iter : (float -> unit) -> t -> unit
+
+    (** [iteri f a] applies [f] to the indexes and values of each element
         in [a]. *)
-    val appi : (int -> float -> unit) -> t -> unit
+    val iteri : (int -> float -> unit) -> t -> unit
 
     (** [map f a] applies [f] to the value of each element in [a] and
         stores the result back into the same element. *)
@@ -273,9 +297,13 @@ module Roots :
     (** Returns [true] if any elements are equal to Rising or Falling. *)
     val exists : t -> bool
 
-    (** [appi f r] applies [f] to the indexes and values of each element
+    (** [iter f r] applies [f] to the values of each element in
+        [r]. *)
+    val iter : (root_event -> unit) -> t -> unit
+
+    (** [iteri f r] applies [f] to the indexes and values of each element
         in [r]. *)
-    val appi : (int -> root_event -> unit) -> t -> unit
+    val iteri : (int -> root_event -> unit) -> t -> unit
 
     (** Makes a [Roots.t] from a list of root events.  *)
     val of_list : root_event list -> t

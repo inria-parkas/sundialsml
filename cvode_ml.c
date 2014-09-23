@@ -654,79 +654,36 @@ CAMLprim value c_cvode_dls_clear_band_jac_fn(value vdata)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_spils_banded_spgmr (value vcvode_mem_neqs,
-					   value vmupper, value vmlower,
-					   value vmaxl, value vtype)
-{
-    CAMLparam5 (vcvode_mem_neqs, vmupper, vmlower, vmaxl, vtype);
-    void *cvode_mem = CVODE_MEM_FROM_ML (Field(vcvode_mem_neqs, 0));
-    long neqs = Long_val(Field(vcvode_mem_neqs, 1));
-    int flag;
-
-    flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
-    CHECK_FLAG ("CVodeSetIterType", flag);
-    flag = CVSpgmr (cvode_mem, spils_precond_type (vtype), Int_val (vmaxl));
-    CHECK_FLAG ("CVSpgmr", flag);
-    flag = CVBandPrecInit (cvode_mem, neqs,
-			   Long_val (vmupper), Long_val (vmlower));
-    CHECK_FLAG ("CVBandPrecInit", flag);
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value c_cvode_spils_banded_spbcg (value vcvode_mem_neqs,
-					   value vmupper, value vmlower,
-					   value vmaxl, value vtype)
-{
-    CAMLparam5 (vcvode_mem_neqs, vmupper, vmlower, vmaxl, vtype);
-    void *cvode_mem = CVODE_MEM_FROM_ML (Field(vcvode_mem_neqs, 0));
-    long neqs = Long_val(Field(vcvode_mem_neqs, 1));
-    int flag;
-
-    flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
-    CHECK_FLAG ("CVodeSetIterType", flag);
-    flag = CVSpbcg (cvode_mem, spils_precond_type (vtype), Int_val (vmaxl));
-    CHECK_FLAG ("CVSpbcg", flag);
-    flag = CVBandPrecInit (cvode_mem, neqs,
-			   Long_val (vmupper), Long_val (vmlower));
-    CHECK_FLAG ("CVBandPrecInit", flag);
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value c_cvode_spils_banded_sptfqmr (value vcvode_mem_neqs,
-					     value vmupper, value vmlower,
-					     value vmaxl, value vtype)
-{
-    CAMLparam5 (vcvode_mem_neqs, vmupper, vmlower, vmaxl, vtype);
-    void *cvode_mem = CVODE_MEM_FROM_ML (Field(vcvode_mem_neqs, 0));
-    long neqs = Long_val(Field(vcvode_mem_neqs, 1));
-    int flag;
-
-    flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
-    CHECK_FLAG ("CVodeSetIterType", flag);
-    flag = CVSptfqmr (cvode_mem, spils_precond_type (vtype), Int_val (vmaxl));
-    CHECK_FLAG ("CVSptfqmr", flag);
-    flag = CVBandPrecInit (cvode_mem, neqs,
-			   Long_val (vmupper), Long_val (vmlower));
-    CHECK_FLAG ("CVBandPrecInit", flag);
-    CAMLreturn (Val_unit);
-}
-
 CAMLprim value c_cvode_spils_set_preconditioner (value vsession,
-						 value vset_precsetup,
-						 value vset_jac)
+						 value vset_precsetup)
 {
-    CAMLparam3 (vsession, vset_precsetup, vset_jac);
-    int flag;
+    CAMLparam2 (vsession, vset_precsetup);
     void *mem = CVODE_MEM_FROM_ML (vsession);
     CVSpilsPrecSetupFn setup = Bool_val (vset_precsetup) ? precsetupfn : NULL;
-
-    flag = CVSpilsSetPreconditioner (mem, setup, precsolvefn);
+    int flag = CVSpilsSetPreconditioner (mem, setup, precsolvefn);
     CHECK_FLAG ("CVSpilsSetPreconditioner", flag);
-    if (Bool_val (vset_jac)) {
-	flag = CVSpilsSetJacTimesVecFn (mem, jactimesfn);
-	CHECK_FLAG ("CVSpilsSetJacTimesVecFn", flag);
-    }
+    CAMLreturn (Val_unit);
+}
 
+CAMLprim value c_cvode_spils_set_banded_preconditioner (value vsession,
+							value vneqs,
+							value vmupper,
+							value vmlower)
+{
+    CAMLparam3 (vsession, vmupper, vmlower);
+    long neqs = Long_val (vneqs);
+    int flag = CVBandPrecInit (CVODE_MEM_FROM_ML (vsession), neqs,
+			       Long_val (vmupper), Long_val (vmlower));
+    CHECK_FLAG ("CVBandPrecInit", flag);
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value c_cvode_spils_set_jac_times_vec_fn(value vdata, value vset_jac)
+{
+    CAMLparam2(vdata, vset_jac);
+    CVSpilsJacTimesVecFn jac = Bool_val (vset_jac) ? jactimesfn : NULL;
+    int flag = CVSpilsSetJacTimesVecFn(CVODE_MEM_FROM_ML(vdata), jac);
+    CHECK_FLAG("CVSpilsSetJacTimesVecFn", flag);
     CAMLreturn (Val_unit);
 }
 
@@ -737,22 +694,6 @@ CAMLprim value c_cvode_wf_tolerances (value vdata)
     int flag = CVodeWFtolerances(CVODE_MEM_FROM_ML(vdata), errw);
     CHECK_FLAG("CVodeWFtolerances", flag);
 
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value c_cvode_set_jac_times_vec_fn(value vdata)
-{
-    CAMLparam1(vdata);
-    int flag = CVSpilsSetJacTimesVecFn(CVODE_MEM_FROM_ML(vdata), jactimesfn);
-    CHECK_FLAG("CVSpilsSetJacTimesVecFn", flag);
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value c_cvode_clear_jac_times_vec_fn(value vdata)
-{
-    CAMLparam1(vdata);
-    int flag = CVSpilsSetJacTimesVecFn(CVODE_MEM_FROM_ML(vdata), NULL);
-    CHECK_FLAG("CVSpilsSetJacTimesVecFn", flag);
     CAMLreturn (Val_unit);
 }
 
@@ -1004,13 +945,13 @@ void cvode_ml_check_flag(const char *call, int flag)
 	    caml_raise_constant(CVODE_EXN(RhsFuncFailure));
 
 	case CV_FIRST_RHSFUNC_ERR:
-	    caml_raise_constant(CVODE_EXN(FirstRhsFuncErr));
+	    caml_raise_constant(CVODE_EXN(FirstRhsFuncFailure));
 
 	case CV_REPTD_RHSFUNC_ERR:
-	    caml_raise_constant(CVODE_EXN(RepeatedRhsFuncErr));
+	    caml_raise_constant(CVODE_EXN(RepeatedRhsFuncFailure));
 
 	case CV_UNREC_RHSFUNC_ERR:
-	    caml_raise_constant(CVODE_EXN(UnrecoverableRhsFuncErr));
+	    caml_raise_constant(CVODE_EXN(UnrecoverableRhsFuncFailure));
 
 	case CV_RTFUNC_FAIL:
 	    caml_raise_constant(CVODE_EXN(RootFuncFailure));

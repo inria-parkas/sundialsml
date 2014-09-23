@@ -589,18 +589,11 @@ CAMLprim value c_kinsol_spils_set_preconditioner (value vsession,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_spils_set_jac_times_vec_fn(value vdata)
+CAMLprim value c_kinsol_spils_set_jac_times_vec_fn(value vdata, value vset_jac)
 {
     CAMLparam1(vdata);
-    int flag = KINSpilsSetJacTimesVecFn(KINSOL_MEM_FROM_ML(vdata), jactimesfn);
-    CHECK_FLAG("KINSpilsSetJacTimesVecFn", flag);
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value c_kinsol_spils_clear_jac_times_vec_fn(value vdata)
-{
-    CAMLparam1(vdata);
-    int flag = KINSpilsSetJacTimesVecFn(KINSOL_MEM_FROM_ML(vdata), NULL);
+    KINSpilsJacTimesVecFn jac = Bool_val (vset_jac) ? jactimesfn : NULL;
+    int flag = KINSpilsSetJacTimesVecFn(KINSOL_MEM_FROM_ML(vdata), jac);
     CHECK_FLAG("KINSpilsSetJacTimesVecFn", flag);
     CAMLreturn (Val_unit);
 }

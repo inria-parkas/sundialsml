@@ -876,13 +876,11 @@ let main () =
 
   (* Attach preconditioner and linear solver modules *)
   let spgmr = Bbd.spgmr
-                None
                 Spils.PrecLeft
                 { Bbd.mudq = d.l_m.(0) + 1;
                   Bbd.mldq = d.l_m.(0) + 1;
                   Bbd.mukeep = 2;
                   Bbd.mlkeep = 2; }
-                None
                 { Bbd.local_fn = f_local d;
                   Bbd.comm_fn = None; }
   in
@@ -890,7 +888,7 @@ let main () =
   let abstol, reltol = atol, rtol in
   let cvode_mem = Cvode.init Cvode.BDF (Cvode.Newton spgmr)
                     (Cvode.SStolerances (reltol, abstol))
-                    (f d) ~t0:ti y
+                    (f d) ti y
   in
   
   (* Initialize quadrature calculations *)
@@ -929,13 +927,11 @@ let main () =
 
   (* Attach preconditioner and linear solver modules *)
   let bspgmr = Adjbbd.spgmr
-                None
                 Spils.PrecLeft
                 { Bbd.mudq = d.l_m.(0) + 1;
                   Bbd.mldq = d.l_m.(0) + 1;
                   Bbd.mukeep = 2;
                   Bbd.mlkeep = 2; }
-                None
                 { Adjbbd.local_fn = fB_local d;
                   Adjbbd.comm_fn = None; }
   in
@@ -948,14 +944,14 @@ let main () =
       Cvode.BDF
       (Adj.Newton bspgmr)
       (Adj.SStolerances (reltolB, abstolB))
-      (Adj.Basic (fB d))
+      (Adj.NoSens (fB d))
       tf yB
   in
 
   (* Initialize quadrature calculations *)
   let abstolQB = atol_qb in
   let reltolQB = rtol_qb in
-  QuadAdj.init cvode_memB (QuadAdj.Basic (fQB d)) qB;
+  QuadAdj.init cvode_memB (QuadAdj.NoSens (fQB d)) qB;
   QuadAdj.set_tolerances cvode_memB (QuadAdj.SStolerances (reltolQB, abstolQB));
 
   (* Integrate backwards *)

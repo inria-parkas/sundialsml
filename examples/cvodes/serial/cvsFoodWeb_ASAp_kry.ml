@@ -1080,12 +1080,10 @@ let main () =
     Cvode.init
         Cvode.BDF
         (Cvode.Newton
-            (Cvode.Spils.spgmr None Spils.PrecLeft
-                { Cvode.Spils.prec_setup_fn = Some (precond wdata);
-                  Cvode.Spils.prec_solve_fn = Some (psolve wdata);
-                  Cvode.Spils.jac_times_vec_fn = None }))
+           (Cvode.Spils.spgmr
+              (Cvode.Spils.prec_left ~setup:(precond wdata) (psolve wdata))))
         (Cvode.SStolerances (reltol, abstol))
-        (f wdata) ~t0:t0 c
+        (f wdata) t0 c
   in
   wdata.cvode_mem <- Some cvode_mem; (* Used in Precond *)
 
@@ -1117,12 +1115,11 @@ let main () =
     Adj.init_backward
       cvode_mem
       Cvode.BDF
-      (Adj.Newton (Adj.Spils.spgmr None Spils.PrecLeft
-          { Adj.Spils.prec_setup_fn = Some (precondb wdata);
-            Adj.Spils.prec_solve_fn = Some (psolveb wdata);
-            Adj.Spils.jac_times_vec_fn = None }))
+      (Adj.Newton (Adj.Spils.spgmr
+                     (Adj.Spils.prec_left ~setup:(precondb wdata)
+                        (psolveb wdata))))
       (Adj.SStolerances (reltolb, abstolb))
-      (Adj.Basic (fB wdata))
+      (Adj.NoSens (fB wdata))
       tout
       cB
   in

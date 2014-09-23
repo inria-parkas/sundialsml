@@ -65,12 +65,18 @@ module SpilsTypes = struct
 
   type 'a callbacks =
     {
-      prec_solve_fn : 'a prec_solve_fn option;
+      prec_solve_fn : 'a prec_solve_fn;
 
       prec_setup_fn : 'a prec_setup_fn option;
 
       jac_times_vec_fn : 'a jac_times_vec_fn option;
     }
+
+  type 'a preconditioner =
+    | PrecNone
+    | PrecRight of 'a prec_solve_fn
+                   * 'a prec_setup_fn option
+                   * 'a jac_times_vec_fn option
 end
 
 module KinsolBbdParamTypes = struct

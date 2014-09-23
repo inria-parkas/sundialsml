@@ -330,7 +330,7 @@ let main () =
         (Cvode.Newton (Cvode.Dls.dense None))
         (Cvode.SStolerances (reltol, abstol))
         (f data)
-        ~t0:t0
+        t0
         y
   in
   Quad.init cvode_mem (fQ data) yQ;
@@ -460,7 +460,7 @@ let main () =
         (Cvode.Newton (Cvode.Dls.dense None))
         (Cvode.SStolerances (reltol, abstol))
         (f data)
-        ~t0:t0
+        t0
         y
   in
   RealArray.fill (unvec yQ) zero;

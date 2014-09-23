@@ -94,6 +94,7 @@ module RealArray = Sundials.RealArray
 module LintArray = Sundials.LintArray
 module Roots = Sundials.Roots
 module Densemat = Dls.ArrayDenseMatrix
+module Spils = Cvode.Spils
 open Bigarray
 let unvec = Sundials.unvec
 
@@ -788,7 +789,7 @@ let print_intro () =
 
 let print_header jpre gstype =
   printf "\n\nPreconditioner type is           jpre = %s\n"
-    (if jpre = Spils.PrecLeft then "PREC_LEFT" else "PREC_RIGHT");
+    (if jpre = (Cvode.Spils.PrecLeft ()) then "PREC_LEFT" else "PREC_RIGHT");
   printf"\nGram-Schmidt method type is    gstype = %s\n\n\n"
     (if gstype = Spils.ModifiedGS then "MODIFIED_GS" else "CLASSICAL_GS")
 
@@ -873,13 +874,10 @@ let main () =
         Cvode.BDF
         (Cvode.Newton
             (Cvode.Spils.spgmr
-                (Some maxl)
-                Spils.PrecLeft
-                { Cvode.Spils.prec_setup_fn = Some (precond wdata);
-                  Cvode.Spils.prec_solve_fn = Some (psolve wdata);
-                  Cvode.Spils.jac_times_vec_fn = None }))
+                ~maxl:maxl
+                (Cvode.Spils.prec_left ~setup:(precond wdata) (psolve wdata))))
         (Cvode.SStolerances (reltol, abstol))
-        (f wdata) ~t0:t0 c
+        (f wdata) t0 c
   in
   wdata.cvode_mem <- Some cvode_mem;
   Cvode.Spils.set_gs_type cvode_mem Spils.ModifiedGS;
@@ -924,10 +922,10 @@ let main () =
   in
       
   (* Loop over jpre and gstype (four cases) *)
-  run Spils.PrecLeft  Spils.ModifiedGS;
-  run Spils.PrecLeft  Spils.ClassicalGS;
-  run Spils.PrecRight Spils.ModifiedGS;
-  run Spils.PrecRight Spils.ClassicalGS
+  run (Spils.PrecLeft ())  Spils.ModifiedGS;
+  run (Spils.PrecLeft ())  Spils.ClassicalGS;
+  run (Spils.PrecRight ()) Spils.ModifiedGS;
+  run (Spils.PrecRight ()) Spils.ClassicalGS
 
 (* Check environment variables for extra arguments.  *)
 let reps =

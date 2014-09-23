@@ -233,7 +233,7 @@ let main () =
   let ida_mem =
     Ida.init altdense
              (Ida.SVtolerances (rtol, Nvector_serial.wrap avtol))
-             resrob ~roots:(nroots, grob) ~t0:t0 wy wy'
+             resrob ~roots:(nroots, grob) t0 wy wy'
   in
   (* In loop, call IDASolve, print results, and test for error.  Break out of
    * loop when NOUT preset output times have been reached. *)

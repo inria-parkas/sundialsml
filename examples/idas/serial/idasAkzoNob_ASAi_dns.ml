@@ -246,7 +246,7 @@ let main () =
 
   (* Call IDACreate and IDAInit to initialize IDA memory *)
   let mem = Ida.init (Ida.Dls.dense None) (Ida.SStolerances (rtol,atol))
-              (res data) ~t0:t0 wyy wyp
+              (res data) t0 wyy wyp
   in
 
   (* Initialize QUADRATURE(S). *)
@@ -287,7 +287,7 @@ let main () =
 
   let indexB = Adjoint.init_backward mem (Adjoint.Dls.dense None)
                  (Adjoint.SStolerances (rtolb, atolb))
-                 (Adjoint.Basic (resB data))
+                 (Adjoint.NoSens (resB data))
                  tf wyB wypB
   in
   Adjoint.set_max_num_steps indexB 1000;

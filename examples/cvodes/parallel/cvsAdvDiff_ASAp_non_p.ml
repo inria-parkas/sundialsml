@@ -417,7 +417,7 @@ let main () =
   (* Allocate CVODES memory for forward integration *)
   let cvode_mem = Cvode.init Cvode.Adams Cvode.Functional
                              (Cvode.SStolerances (reltol, abstol))
-                             ~t0:t0 (f data) u
+                             (f data) t0 u
   in
 
   (* Allocate combined forward/backward memory *)
@@ -446,7 +446,7 @@ let main () =
         Cvode.Adams
         Adjoint.Functional
         (Adjoint.SStolerances (reltol, abstol))
-        (Adjoint.Basic (fB data)) tout uB in
+        (Adjoint.NoSens (fB data)) tout uB in
 
   (* Integrate to T0 *)
   Adjoint.backward_normal cvode_mem t0;

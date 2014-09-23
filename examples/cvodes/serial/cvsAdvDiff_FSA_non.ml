@@ -235,7 +235,7 @@ let main () =
                     Cvode.Functional
                     (Cvode.SStolerances (reltol, abstol))
                     (f data)
-                    ~t0:t0
+                    t0
                     u
   in
   print_string_3d "\n1-D advection-diffusion equation, mesh size =" mx;

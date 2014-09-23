@@ -571,15 +571,13 @@ let main () =
   let cvode_mem =
     Cvode.init Cvode.BDF
       (Cvode.Newton
-        (BBD.spgmr
-                None
-                Spils.PrecLeft
-                { BBD.mudq   = mudq;   BBD.mldq = mldq;
-                  BBD.mukeep = mukeep; BBD.mlkeep = mlkeep }
-                None
-                { BBD.local_fn = (flocal data); BBD.comm_fn = None }))
+         (BBD.spgmr
+            Spils.PrecLeft
+            { BBD.mudq   = mudq;   BBD.mldq = mldq;
+              BBD.mukeep = mukeep; BBD.mlkeep = mlkeep }
+            { BBD.local_fn = (flocal data); BBD.comm_fn = None }))
       (Cvode.SStolerances (reltol, abstol))
-      (f data) ~t0:t0 u
+      (f data) t0 u
   in
     
   (* Print heading *)
@@ -590,8 +588,8 @@ let main () =
     if jpre = Spils.PrecRight then begin
       set_initial_profiles data u;
       Cvode.reinit cvode_mem t0 u;
-      BBD.reinit cvode_mem mudq mldq None;
-      Cvode.Spils.set_prec_type cvode_mem Spils.PrecRight;
+      BBD.reinit cvode_mem mudq mldq;
+      Cvode.Spils.set_prec_type cvode_mem (Cvode.Spils.PrecRight ());
 
       if my_pe = 0 then begin
         printf "\n\n-------------------------------------------------------";

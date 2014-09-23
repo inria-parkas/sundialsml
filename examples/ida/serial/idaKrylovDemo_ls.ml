@@ -119,7 +119,7 @@ let res_heat data t u (u' : RealArray.t) res =
   and mm    = data.mm in
 
   (* Initialize res to u, to take care of boundary equations. *)
-  RealArray.blit u res;
+  RealArray.blit_all u res;
 
   (* Loop over interior points; set res = up - (central difference). *)
   for j = 1 to mgrid-2 do
@@ -253,7 +253,7 @@ let main() =
   (* Call IDACreate with dummy linear solver *)
 
   let mem = Ida.init (Ida.Dls.dense None) (Ida.SStolerances (rtol, atol))
-                     (res_heat data) ~t0:t0 wu wu' in
+                     (res_heat data) t0 wu wu' in
   Ida.set_constraints mem (Nvector_serial.wrap constraints);
 
   (* START: Loop through SPGMR, SPBCG and SPTFQMR linear solver modules *)
@@ -271,10 +271,8 @@ let main() =
       set_initial_profile data u u' res;
 
     (* Print header and reinit with a new solver module *)
-    let spils_init = { Ida.Spils.prec_setup_fn = Some (p_setup_heat data);
-                       Ida.Spils.prec_solve_fn = Some (p_solve_heat data);
-                       Ida.Spils.jac_times_vec_fn = None;
-                     }
+    let prec =
+      Ida.Spils.prec_left ~setup:(p_setup_heat data) (p_solve_heat data)
     in
     begin
       match linsolver with
@@ -282,20 +280,19 @@ let main() =
                       printf " \n| SPGMR |\n";
                       printf " -------\n";
                       flush stdout;
-                      Ida.reinit mem ~linsolv:(Ida.Spils.spgmr None spils_init)
+                      Ida.reinit mem ~linsolv:(Ida.Spils.spgmr prec)
                         t0 wu wu')
       | USE_SPBCG -> (printf " -------";
                       printf " \n| SPBCG |\n";
                       printf " -------\n";
                       flush stdout;
-                      Ida.reinit mem ~linsolv:(Ida.Spils.spbcg None spils_init)
+                      Ida.reinit mem ~linsolv:(Ida.Spils.spbcg prec)
                         t0 wu wu')
       | USE_SPTFQMR -> (printf " ---------";
                         printf " \n| SPTFQMR |\n";
                         printf " ---------\n";
                       flush stdout;
-                        Ida.reinit mem ~linsolv:(Ida.Spils.sptfqmr None
-                                                   spils_init)
+                        Ida.reinit mem ~linsolv:(Ida.Spils.sptfqmr prec)
                           t0 wu wu')
     end;
 

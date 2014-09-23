@@ -298,7 +298,7 @@ let main () =
     Ida.init (Ida.Dls.dense (Some (jac data)))
       (Ida.WFtolerances (ewt data))
       (res data)
-      ~t0:t0
+      t0
       wyy wyp
   in
 
@@ -315,8 +315,8 @@ let main () =
   (* Integrate till TB1 and get the solution (y, y') at that time. *)
   let _ = Adjoint.forward_normal ida_mem tb1 wyy wyp in
 
-  let yyTB1 = RealArray.clone yy
-  and ypTB1 = RealArray.clone yp
+  let yyTB1 = RealArray.copy yy
+  and ypTB1 = RealArray.copy yp
   in
   (* Save the states at t=TB1. *)
   nvscale 1.0 yy yyTB1;
@@ -365,7 +365,7 @@ let main () =
     Adjoint.init_backward ida_mem
       (Adjoint.Dls.dense (Some (jacB data)))
       (Adjoint.SStolerances (reltolB, abstolB))
-      (Adjoint.Basic (resB data))
+      (Adjoint.NoSens (resB data))
       tb2 wyB wypB
   in
   Adjoint.set_max_num_steps indexB 1000;
@@ -377,7 +377,7 @@ let main () =
   let wqB = Nvector_serial.wrap qB in
 
   AdjQuad.init indexB
-    (AdjQuad.Basic (rhsQB data))
+    (AdjQuad.NoSens (rhsQB data))
     wqB;
   (* Include quadratures in error control. *)
   AdjQuad.set_tolerances indexB (AdjQuad.SStolerances (reltolB, abstolQB));
@@ -418,7 +418,7 @@ let main () =
   Adjoint.reinit indexB tb1 wyB wypB;
 
   (* Also reinitialize quadratures. *)
-  AdjQuad.init indexB (AdjQuad.Basic (rhsQB data)) wqB;
+  AdjQuad.init indexB (AdjQuad.NoSens (rhsQB data)) wqB;
 
   (* Use IDACalcICB to compute consistent initial conditions 
      for this backward problem. *)

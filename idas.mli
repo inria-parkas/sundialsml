@@ -79,7 +79,7 @@ module Quadrature :
         unrecoverable manner on the first call.
 
         @idas <node5#SECTION00572000000000000000> IDA_FIRST_QRHS_ERR *)
-    exception FirstQuadRhsFuncErr
+    exception FirstQuadRhsFuncFailure
 
     (** Convergence test failures occurred too many times due to
         repeated recoverable errors in the quadrature right-hand side
@@ -89,7 +89,7 @@ module Quadrature :
         quadrature variables are included in the error tests).
 
         @idas <node5#SECTION00572000000000000000> IDA_REP_QRHS_ERR *)
-    exception RepeatedQuadRhsFuncErr
+    exception RepeatedQuadRhsFuncFailure
 
     (** {3:quadinit Initialization} *)
 
@@ -220,17 +220,18 @@ let yS'0 = Array.init ns (fun _ -> RealArray.init neq 0.0)]}
         @idas <node6#SECTION00624000000000000000> IDA_SRES_FAIL *)
     exception SensResFuncFailure
 
-    (** The sensitivity residual function failed in an unrecoverable manner.
+    (** The user's sensitivity residual function repeatedly returned a
+        recoverable error flag, but the solver was unable to recover.
 
         @idas <node6#SECTION00624000000000000000> IDA_REP_SRES_ERR *)
-    exception RepeatedSensResFuncErr
+    exception RepeatedSensResFuncFailure
 
     (** The sensitivity identifier is not valid.  This happens, for
         example, if you have [3] sensitivity variables and request the
         value of sensitivity variable number [5] in {!get_dky1}.
 
         @idas <node6#SECTION00625000000000000000> IDA_BAD_IS *)
-    exception BadIS
+    exception BadSensIdentifier
 
     (** {3:sensinit Initialization} *)
 
@@ -574,7 +575,7 @@ let yS'0 = Array.init ns (fun _ -> RealArray.init neq 0.0)]}
             the first call.
 
             @idas <node5#SECTION00642000000000000000> IDA_FIRST_QSRHS_ERR *)
-        exception FirstQuadSensRhsFuncErr
+        exception FirstQuadSensRhsFuncFailure
 
         (** The user-provided sensitivity-dependent quadrature right-
             hand side repeatedly returned a recoverable error flag,
@@ -582,7 +583,7 @@ let yS'0 = Array.init ns (fun _ -> RealArray.init neq 0.0)]}
 
             @idas <node6#SECTION00642000000000000000> IDA_REP_QSRHS_ERR
           *)
-        exception RepeatedQuadSensRhsFuncErr
+        exception RepeatedQuadSensRhsFuncFailure
 
         (** {3:quadsensinit Initialization} *)
 
@@ -751,7 +752,7 @@ module Adjoint :
         + {b Setup the backward problem and attach a linear solver}
           {[let yB0  = RealArray.of_list [0.0; 0.0; ...]
           let yB'0 = RealArray.of_list [0.0; 0.0; ...]
-let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (Basic fB) tB0 yB0 yB'0]}
+let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB0 yB'0]}
         + {b Set optional inputs}
           {[set_max_ord bs ...]}
         + {b Initialize quadrature calculation}
@@ -779,12 +780,12 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (Basic fB) tB0 yB0
         (corresponding to the initial time of the forward problem).
 
         @idas <node7#sss:idasolveb> IDA_REIFWD_FAIL *)
-    exception ForwardReinitializationFailed
+    exception ForwardReinitFailure
 
     (** An error occured during the integration of the forward problem.
 
         @idas <node7#sss:idasolveb> IDA_FWD_FAIL *)
-    exception ForwardFailed
+    exception ForwardFailure
 
     (** No backward problem has been created.
 
@@ -890,9 +891,9 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (Basic fB) tB0 yB0
         @idas <node3#e:adj_eqns> Eq 2.19, Adjoint sensitivity analysis
       *)
     type 'a bresfn =
-      | Basic of 'a bresfn_basic
+      | NoSens of 'a bresfn_no_sens
         (** Doesn't depend on forward sensitivities.  See
-            {!bresfn_basic} for details. *)
+            {!bresfn_no_sens} for details. *)
       | WithSens of 'a bresfn_with_sens
         (** Depends on forward senstivites.  See {!bresfn_with_sens} for
             details. *)
@@ -902,7 +903,7 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (Basic fB) tB0 yB0
 
         @idas <node7#ss:ODErhs_b> IDAResFnB
         @idas <node3#e:adj_eqns> Eq 2.19, Adjoint sensitivity analysis *)
-    and 'a bresfn_basic =
+    and 'a bresfn_no_sens =
       float             (* t *)
       -> 'a             (* y *)
       -> 'a             (* y' *)
@@ -1293,34 +1294,8 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (Basic fB) tB0 yB0
 
         type gramschmidt_type =
           Spils.gramschmidt_type =
-            ModifiedGS
+          | ModifiedGS
           | ClassicalGS
-
-        type preconditioning_type =
-          Spils.preconditioning_type =
-            PrecNone
-          | PrecLeft
-          | PrecRight
-          | PrecBoth
-
-        type 'a callbacks = {
-          prec_solve_fn : 'a prec_solve_fn option;
-          (** Solves the preconditioning system {i Pz = r} for
-              the backward problem.  *)
-
-          prec_setup_fn : 'a prec_setup_fn option;
-          (** An optional function that preprocesses and/or evaluates
-              any Jacobian-related data needed by {!prec_solve_fn}.  See
-              the description on the type for details.  When
-              [prec_solve_fn] doesn't need any such data, this field can
-              be [None].  *)
-
-          jac_times_vec_fn : 'a jac_times_vec_fn option;
-          (** Multiplies the system Jacobian to a vector.  See
-              {!jac_times_vec_fn} for details.  When this field is
-              [None], IDA uses a default implementation based on
-              difference quotients.  *)
-        }
 
         (** Called like [prec_solve_fn arg r z delta] to solve the
             linear system {i P}[z] = [r], where {i P} is the (left)
@@ -1355,7 +1330,6 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (Basic fB) tB0 yB0
             their values are needed outside of the function call, then
             they must be copied to separate physical structures.
 
-            @idas <node7#SECTION00729400000000000000> IDASpilsSetPreconditionerB
             @idas <node7#ss:psolve_b> IDASpilsPrecSolveFnB
           *)
         and 'a prec_solve_fn =
@@ -1384,7 +1358,6 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (Basic fB) tB0 yB0
             are needed outside of the function call, then they must be
             copied to a separate physical structure.
 
-            @idas <node7#SECTION00729400000000000000> IDASpilsSetPreconditionerB
             @idas <node7#ss:psetup_b> IDASpilsPrecSetupFnB
           *)
         and 'a prec_setup_fn = ('a triple_tmp, 'a) jacobian_arg -> unit
@@ -1416,7 +1389,6 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (Basic fB) tB0 yB0
             {!Sundials.RecoverableFailure}) from this function results
             in the integrator being aborted.
 
-            @idas <node7#SECTION00729400000000000000> IDASpilsSetJacTimesVecFnB
             @idas <node7#ss:jactimesvec_b> IDASpilsJacTimesVecFnB
           *)
         and 'a jac_times_vec_fn =
@@ -1425,8 +1397,53 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (Basic fB) tB0 yB0
           -> 'a
           -> unit
 
-        (** No preconditioning functions. *)
-        val no_precond : 'a callbacks
+        (** Specifies a preconditioner, including the type of
+            preconditioning to be done (none or right), and a set of
+            three callbacks if applicable:
+
+            - [solve], the main function that solves the
+              preconditioning system $Pz = r$, where $P$ is a
+              preconditioning matrix chosen by the user.  See
+              {!prec_solve_fn} for details.
+            - [setup], which preprocesses and/or evaluates
+              Jacobian-related data needed by [solve].  It can be
+              omitted if there are no such data.  See {!prec_setup_fn}
+              for details.
+            - [jac_times_vec], which multiplies the system Jacobian to
+              a given vector.  See {!jac_times_vec_fn} for details.
+              If the user doesn't give such a function, IDA uses a
+              default implementation based on difference quotients.
+
+            The following convenience functions are provided for
+            constructing values of this type concisely:
+
+            - {!prec_none} is just [PrecNone].
+            - {!prec_left} creates [PrecLeft] but takes optional
+              fields as optional arguments: e.g. [prec_left
+              ~setup:setup solve] returns [PrecLeft (solve, setup,
+              None)].
+
+            @idas <node7#SECTION00729400000000000000> IDASpilsSetPreconditionerB
+            @idas <node7#SECTION00729400000000000000> IDASpilsSetJacTimesVecFnB
+            @idas <node7#ss:psolve_b> IDASpilsPrecSolveFnB
+            @idas <node7#ss:psetup_b> IDASpilsPrecSetupFnB
+            @idas <node7#ss:jactimesvec_b> IDASpilsJacTimesVecFnB
+        *)
+        type 'a preconditioner =
+          | PrecNone
+          | PrecLeft of 'a prec_solve_fn
+                        * 'a prec_setup_fn option
+                        * 'a jac_times_vec_fn option
+
+        (** See {!preconditioner}.  *)
+        val prec_none : 'a preconditioner
+
+        (** See {!preconditioner}. *)
+        val prec_left :
+          ?setup:'a prec_setup_fn
+          -> ?jac_times_vec:'a jac_times_vec_fn
+          -> 'a prec_solve_fn
+          -> 'a preconditioner
 
         (** Krylov iterative solver with the scaled preconditioned
             GMRES method.  The arguments specify the maximum dimension
@@ -1440,8 +1457,7 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (Basic fB) tB0 yB0
             @idas <node7#ss:psetup_b> IDASpilsPrecSetupFnB
             @idas <node7#ss:jactimesvec_b> IDASpilsJacTimesVecFnB
          *)
-        val spgmr :
-          int option -> 'a callbacks -> ('a, 'b) bsession -> 'c -> unit
+        val spgmr : ?maxl:int -> 'a preconditioner -> ('a, 'b) linear_solver
 
         (** Krylov iterative solver with the scaled preconditioned Bi-CGStab
             method. The arguments are the same as [Spgmr].
@@ -1452,8 +1468,7 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (Basic fB) tB0 yB0
             @idas <node7#ss:psetup_b> IDASpilsPrecSetupFnB
             @idas <node7#ss:jactimesvec_b> IDASpilsJacTimesVecFnB
          *)
-        val spbcg :
-          int option -> 'a callbacks -> ('a, 'b) bsession -> 'c -> unit
+        val spbcg : ?maxl:int -> 'a preconditioner -> ('a, 'b) linear_solver
 
         (** Krylov iterative with the scaled preconditioned TFQMR method.  The
             arguments are the same as [Spgmr].  See also {!Spils}.
@@ -1464,8 +1479,7 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (Basic fB) tB0 yB0
             @idas <node7#ss:psetup_b> IDASpilsPrecSetupFnB
             @idas <node7#ss:jactimesvec_b> IDASpilsJacTimesVecFnB
          *)
-        val sptfqmr :
-          int option -> 'a callbacks -> ('a, 'b) bsession -> 'c -> unit
+        val sptfqmr : ?maxl:int -> 'a preconditioner -> ('a, 'b) linear_solver
 
         (** {5:adjbwdspilsoptin Optional Input Functions} *)
 
@@ -1707,9 +1721,9 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (Basic fB) tB0 yB0
         (** These functions compute the quadrature equation right-hand side for
             the backward problem. *)
         type 'a bquadrhsfn =
-          | Basic of 'a bquadrhsfn_basic
+          | NoSens of 'a bquadrhsfn_no_sens
           (** Doesn't depend on forward sensitivities.  See
-              {!bquadrhsfn_basic} for details.  *)
+              {!bquadrhsfn_no_sens} for details.  *)
           | WithSens of 'a bquadrhsfn_with_sens
           (** Depends on forward sensitivities.  See
               {!bquadrhsfn_with_sens} for details.  *)
@@ -1732,7 +1746,7 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (Basic fB) tB0 yB0
             See also {!bquadrhsfn}.
 
             @idas <node7#sss:rhs_quad_B> IDAQuadRhsFnB *)
-        and 'a bquadrhsfn_basic =
+        and 'a bquadrhsfn_no_sens =
           float
           -> 'a
           -> 'a

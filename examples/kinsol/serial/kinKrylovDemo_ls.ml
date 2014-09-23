@@ -433,10 +433,10 @@ let main () =
      KINSPGMR with preconditioner routines prec_setup_bd
      and prec_solve_bd. *)
   let kmem = Kinsol.init
-              (Kinsol.Spils.spgmr (Some !maxl) (Some maxlrst)
-                            {Kinsol.Spils.prec_setup_fn=Some prec_setup_bd;
-                             Kinsol.Spils.prec_solve_fn=Some prec_solve_bd;
-                             Kinsol.Spils.jac_times_vec_fn=None; })
+              (Kinsol.Spils.spgmr ~maxl:(!maxl) ~max_restarts:maxlrst
+                 (Kinsol.Spils.prec_right
+                    ~setup:prec_setup_bd
+                    prec_solve_bd))
               func cc in
   Kinsol.set_constraints kmem (Nvector_serial.make neq two);
   Kinsol.set_func_norm_tol kmem (Some fnormtol);
@@ -460,11 +460,8 @@ let main () =
            data. *)
          maxl := 15;
          Kinsol.set_linear_solver kmem
-            (Kinsol.Spils.spbcg (Some !maxl)
-                                {Kinsol.Spils.prec_setup_fn=Some prec_setup_bd;
-                                 Kinsol.Spils.prec_solve_fn=Some prec_solve_bd;
-                                 Kinsol.Spils.jac_times_vec_fn=None; })
-        
+            (Kinsol.Spils.spbcg ~maxl:(!maxl)
+               (Kinsol.Spils.prec_right ~setup:prec_setup_bd prec_solve_bd))
      | Use_Sptfqmr ->
          printf " ---------";
          printf " \n| SPTFQMR |\n";
@@ -475,10 +472,8 @@ let main () =
             the user block data. *)
          maxl := 25;
          Kinsol.set_linear_solver kmem
-            (Kinsol.Spils.sptfqmr (Some !maxl)
-                                  {Kinsol.Spils.prec_setup_fn=Some prec_setup_bd;
-                                   Kinsol.Spils.prec_solve_fn=Some prec_solve_bd;
-                                   Kinsol.Spils.jac_times_vec_fn=None; }));
+            (Kinsol.Spils.sptfqmr ~maxl:(!maxl)
+               (Kinsol.Spils.prec_right ~setup:prec_setup_bd prec_solve_bd)));
 
     (* Print out the problem size, solution parameters, initial guess. *)
     print_header globalstrategy !maxl maxlrst fnormtol scsteptol linsolver;

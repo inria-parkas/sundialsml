@@ -53,7 +53,6 @@
 module RealArray = Sundials.RealArray
 module Roots  = Sundials.Roots
 module Direct = Dls.ArrayDenseMatrix
-module BandedSpils = Cvode.Spils.Banded
 open Bigarray
 
 let unvec = Sundials.unvec
@@ -678,13 +677,9 @@ let main () =
     Cvode.init Cvode.BDF
       (Cvode.Newton
         (Cvode.Spils.spgmr
-                None
-                Spils.PrecLeft
-                { Cvode.Spils.prec_setup_fn = Some (precond data);
-                  Cvode.Spils.prec_solve_fn = Some (psolve data);
-                  Cvode.Spils.jac_times_vec_fn = None }))
+           (Cvode.Spils.prec_left ~setup:(precond data) (psolve data))))
       (Cvode.SStolerances (reltol, abstol))
-      (f data) ~t0:t0 u
+      (f data) t0 u
   in
     
   if my_pe = 0 then

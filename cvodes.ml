@@ -44,9 +44,9 @@ module Quadrature =
 
     exception QuadNotInitialized
     exception QuadRhsFuncFailure
-    exception FirstQuadRhsFuncErr
-    exception RepeatedQuadRhsFuncErr
-    exception UnrecoverableQuadRhsFuncErr
+    exception FirstQuadRhsFuncFailure
+    exception RepeatedQuadRhsFuncFailure
+    exception UnrecoverableQuadRhsFuncFailure
 
     let fwdsensext s =
       match s.sensext with
@@ -146,10 +146,10 @@ module Sensitivity =
 
     exception SensNotInitialized
     exception SensRhsFuncFailure
-    exception FirstSensRhsFuncErr
-    exception RepeatedSensRhsFuncErr
-    exception UnrecoverableSensRhsFuncErr
-    exception BadIS
+    exception FirstSensRhsFuncFailure
+    exception RepeatedSensRhsFuncFailure
+    exception UnrecoverableSensRhsFuncFailure
+    exception BadSensIdentifier
 
     let fwdsensext s =
       match s.sensext with
@@ -327,9 +327,9 @@ module Sensitivity =
 
         exception QuadSensNotInitialized
         exception QuadSensRhsFuncFailure
-        exception FirstQuadSensRhsFuncErr
-        exception RepeatedQuadSensRhsFuncErr
-        exception UnrecoverableQuadSensRhsFuncErr
+        exception FirstQuadSensRhsFuncFailure
+        exception RepeatedQuadSensRhsFuncFailure
+        exception UnrecoverableQuadSensRhsFuncFailure
 
         external c_quadsens_init
             : ('a, 'k) session -> bool -> ('a, 'k) nvector array -> unit
@@ -446,8 +446,8 @@ module Adjoint =
 
     exception AdjointNotInitialized
     exception NoForwardCall
-    exception ForwardReinitializationFailed
-    exception ForwardFailed
+    exception ForwardReinitFailure
+    exception ForwardFailure
     exception NoBackwardProblem
     exception BadFinalTime
     exception BadOutputTime
@@ -543,7 +543,7 @@ module Adjoint =
       let weakref = Weak.create 1 in
       let cvode_mem, which, backref, err_file =
         match mf with
-        | Basic _ -> c_init_backward s weakref (lmm, iter, t0, y0) false
+        | NoSens _ -> c_init_backward s weakref (lmm, iter, t0, y0) false
         | WithSens _ -> c_init_backward s weakref (lmm, iter, t0, y0) true
       in
       (* cvode_mem and backref have to be immediately captured in a session and
@@ -570,7 +570,7 @@ module Adjoint =
                 bsensarray = c_alloc_nvector_array ns;
 
                 brhsfn      = (match mf with
-                               | Basic f -> f
+                               | NoSens f -> f
                                | _ -> dummy_brhsfn);
 
                 brhsfn1     = (match mf with
@@ -734,65 +734,97 @@ module Adjoint =
       struct
         include SpilsTypes
 
-        let no_precond = {
-          prec_solve_fn = None;
-          prec_setup_fn = None;
-          jac_times_vec_fn = None;
-        }
+        let prec_none = PrecNone
+        let prec_left ?setup ?jac_times_vec solve =
+          PrecLeft (User (solve, setup, jac_times_vec))
+        let prec_right ?setup ?jac_times_vec solve =
+          PrecRight (User (solve, setup, jac_times_vec))
+        let prec_both ?setup ?jac_times_vec solve =
+          PrecBoth (User (solve, setup, jac_times_vec))
+        let prec_left_banded ?jac_times_vec bandrange =
+          PrecLeft (Banded (bandrange, jac_times_vec))
+        let prec_right_banded ?jac_times_vec bandrange =
+          PrecRight (Banded (bandrange, jac_times_vec))
+        let prec_both_banded ?jac_times_vec bandrange =
+          PrecBoth (Banded (bandrange, jac_times_vec))
 
-        external c_spils_set_preconditioner
-          : ('a, 'k) session -> int -> bool -> bool -> unit
+        external c_set_preconditioner
+          : ('a, 'k) session -> int -> bool -> unit
           = "c_cvodes_adj_spils_set_preconditioner"
 
-        external c_spils_spgmr
+        external c_set_banded_preconditioner
+          : ('a, 'k) session -> int -> int -> int -> int -> unit
+          = "c_cvodes_adj_spils_set_preconditioner"
+
+        external c_set_jac_times_vec_fn
+          : ('a, 'k) session -> int -> bool -> unit
+          = "c_cvodes_adj_spils_set_jac_times_vec_fn"
+
+        external c_spgmr
           : ('a, 'k) session -> int -> int -> Spils.preconditioning_type -> unit
           = "c_cvodes_adj_spils_spgmr"
 
-        external c_spils_spbcg
+        external c_spbcg
           : ('a, 'k) session -> int -> int -> Spils.preconditioning_type -> unit
           = "c_cvodes_adj_spils_spbcg"
 
-        external c_spils_sptfqmr
+        external c_sptfqmr
           : ('a, 'k) session -> int -> int -> Spils.preconditioning_type -> unit
           = "c_cvodes_adj_spils_sptfqmr"
 
-        let set_precond bs parent which prec_type cb =
-          match prec_type with
-          | Spils.PrecNone -> ()
-          | Spils.PrecLeft | Spils.PrecRight | Spils.PrecBoth ->
-            match cb.prec_solve_fn with
-            | None -> invalid_arg "preconditioning type is not PrecNone, but no \
-                                   solve function given"
-            | Some solve_fn ->
-              c_spils_set_preconditioner parent which
-                (cb.prec_setup_fn <> None)
-                (cb.jac_times_vec_fn <> None);
-              (tosession bs).ls_callbacks <- BSpilsCallback cb
-
-        let spgmr maxl prec_type cb bs _ =
+        let init_spils :
+          type a k. ((a, k) session -> int -> int -> Spils.preconditioning_type -> unit)
+          -> int
+          -> (a, k) preconditioner
+          -> (a, k) bsession
+          -> (a, k) nvector
+          -> unit =
+          fun init maxl prec bs nv ->
           let parent, which = parent_and_which bs in
-          let maxl = match maxl with None -> 0 | Some ml -> ml in
-          c_spils_spgmr parent which maxl prec_type;
-          set_precond bs parent which prec_type cb
+          let with_prec prec_type cb =
+            init parent which maxl prec_type;
+            match (cb : (a, k) callbacks) with
+            | Banded (range, jac_times_vec) ->
+              c_set_banded_preconditioner parent which
+                (RealArray.length (Sundials.unvec nv))
+                range.mupper range.mlower;
+              c_set_jac_times_vec_fn parent which (jac_times_vec <> None);
+              (tosession bs).ls_callbacks <- BSpilsBandedCallback jac_times_vec
+            | User (solve, setup, jac_times) ->
+              c_set_preconditioner parent which (setup <> None);
+              c_set_jac_times_vec_fn parent which (jac_times <> None);
+              (tosession bs).ls_callbacks <-
+                BSpilsCallback { prec_solve_fn = solve;
+                                 prec_setup_fn = setup;
+                                 jac_times_vec_fn = jac_times }
+          in
+          match prec with
+          | PrecNone -> init parent which maxl Spils.PrecNone
+          | PrecLeft cb  -> with_prec Spils.PrecLeft cb
+          | PrecRight cb -> with_prec Spils.PrecRight cb
+          | PrecBoth cb  -> with_prec Spils.PrecBoth cb
 
-        let spbcg maxl prec_type cb bs _ =
-          let parent, which = parent_and_which bs in
-          let maxl = match maxl with None -> 0 | Some ml -> ml in
-          c_spils_spbcg parent which maxl prec_type;
-          set_precond bs parent which prec_type cb
+        let spgmr ?(maxl=0) prec bs nv =
+          init_spils c_spgmr maxl prec bs nv
 
-        let sptfqmr maxl prec_type cb bs _ =
-          let parent, which = parent_and_which bs in
-          let maxl = match maxl with None -> 0 | Some ml -> ml in
-          c_spils_sptfqmr parent which maxl prec_type;
-          set_precond bs parent which prec_type cb
+        let spbcg ?(maxl=0) prec bs nv =
+          init_spils c_spbcg maxl prec bs nv
 
-        external set_prec_type
+        let sptfqmr ?(maxl=0) prec bs nv =
+          init_spils c_sptfqmr maxl prec bs nv
+
+        external c_set_prec_type
             : ('a, 'k) bsession -> Spils.preconditioning_type -> unit
             = "c_cvodes_adj_spils_set_prec_type"
 
+        let set_prec_type s = function
+          | PrecNone -> c_set_prec_type s Spils.PrecNone
+          | PrecLeft () -> c_set_prec_type s Spils.PrecLeft
+          | PrecRight () -> c_set_prec_type s Spils.PrecRight
+          | PrecBoth () -> c_set_prec_type s Spils.PrecBoth
+
         external set_gs_type
-            : ('a, 'k) bsession -> Spils.gramschmidt_type -> unit
+            : ('a, 'k) bsession -> gramschmidt_type -> unit
             = "c_cvodes_adj_spils_set_gs_type"
 
         external set_eps_lin : ('a, 'k) bsession -> float -> unit
@@ -825,50 +857,11 @@ module Adjoint =
         let get_num_rhs_evals bs =
           Cvode.Spils.get_num_rhs_evals (tosession bs)
 
-        module Banded =
-          struct
-            external c_spils_banded_spgmr
-              : (serial_session * int * int) -> int
-                      -> int -> int -> Spils.preconditioning_type -> unit
-              = "c_cvodes_adj_spils_banded_spgmr"
+        let get_banded_work_space bs =
+          Cvode.Spils.get_banded_work_space (tosession bs)
 
-            external c_spils_banded_spbcg
-              : (serial_session * int * int) -> int
-                    -> int -> int -> Spils.preconditioning_type -> unit
-              = "c_cvodes_adj_spils_banded_spbcg"
-
-            external c_spils_banded_sptfqmr
-              : (serial_session * int * int) -> int
-                    -> int -> int -> Spils.preconditioning_type -> unit
-              = "c_cvodes_adj_spils_banded_sptfqmr"
-
-            let spgmr maxl prec_type br bs nv =
-              let parent, which = parent_and_which bs in
-              let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
-              let maxl = match maxl with None -> 0 | Some ml -> ml in
-              c_spils_banded_spgmr (parent, which, neqs)
-                                   br.mupper br.mlower maxl prec_type
-
-            let spbcg maxl prec_type br bs nv =
-              let parent, which = parent_and_which bs in
-              let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
-              let maxl = match maxl with None -> 0 | Some ml -> ml in
-              c_spils_banded_spbcg (parent, which, neqs)
-                                   br.mupper br.mlower maxl prec_type
-
-            let sptfqmr maxl prec_type br bs nv =
-              let parent, which = parent_and_which bs in
-              let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
-              let maxl = match maxl with None -> 0 | Some ml -> ml in
-              c_spils_banded_sptfqmr (parent, which, neqs)
-                                     br.mupper br.mlower maxl prec_type
-
-            let get_work_space bs =
-              Cvode.Spils.Banded.get_work_space (tosession bs)
-
-            let get_num_rhs_evals bs =
-              Cvode.Spils.Banded.get_num_rhs_evals (tosession bs)
-          end
+        let get_banded_num_rhs_evals bs =
+          Cvode.Spils.get_banded_num_rhs_evals (tosession bs)
       end
 
     let get_work_space bs = Cvode.get_work_space (tosession bs)
@@ -936,7 +929,7 @@ module Adjoint =
           let parent, which = parent_and_which bs in
           let se = bwdsensext bs in
           match mf with
-           | Basic f -> (se.bquadrhsfn <- f;
+           | NoSens f -> (se.bquadrhsfn <- f;
                              c_quad_initb parent which y0)
            | WithSens f -> (se.bquadrhsfn1 <- f;
                                 c_quad_initbs parent which y0)
@@ -1060,7 +1053,7 @@ let call_bprecsetupfn session jac jok gamma =
 let call_bprecsolvefn session jac ps rvecB =
   let session = read_weak_ref session in
   match session.ls_callbacks with
-  | BSpilsCallback { Adjoint.Spils.prec_solve_fn = Some f } ->
+  | BSpilsCallback { Adjoint.Spils.prec_solve_fn = f } ->
       adjust_retcode session (f jac ps) rvecB
   | _ -> assert false
 
@@ -1109,27 +1102,27 @@ let _ =
        cvodes_exn_index.  *)
     [|Quadrature.QuadNotInitialized;
       Quadrature.QuadRhsFuncFailure;
-      Quadrature.FirstQuadRhsFuncErr;
-      Quadrature.RepeatedQuadRhsFuncErr;
-      Quadrature.UnrecoverableQuadRhsFuncErr;
+      Quadrature.FirstQuadRhsFuncFailure;
+      Quadrature.RepeatedQuadRhsFuncFailure;
+      Quadrature.UnrecoverableQuadRhsFuncFailure;
 
       Sensitivity.SensNotInitialized;
       Sensitivity.SensRhsFuncFailure;
-      Sensitivity.FirstSensRhsFuncErr;
-      Sensitivity.RepeatedSensRhsFuncErr;
-      Sensitivity.UnrecoverableSensRhsFuncErr;
-      Sensitivity.BadIS;
+      Sensitivity.FirstSensRhsFuncFailure;
+      Sensitivity.RepeatedSensRhsFuncFailure;
+      Sensitivity.UnrecoverableSensRhsFuncFailure;
+      Sensitivity.BadSensIdentifier;
 
       Sensitivity.Quadrature.QuadSensNotInitialized;
       Sensitivity.Quadrature.QuadSensRhsFuncFailure;
-      Sensitivity.Quadrature.FirstQuadSensRhsFuncErr;
-      Sensitivity.Quadrature.RepeatedQuadSensRhsFuncErr;
-      Sensitivity.Quadrature.UnrecoverableQuadSensRhsFuncErr;
+      Sensitivity.Quadrature.FirstQuadSensRhsFuncFailure;
+      Sensitivity.Quadrature.RepeatedQuadSensRhsFuncFailure;
+      Sensitivity.Quadrature.UnrecoverableQuadSensRhsFuncFailure;
 
       Adjoint.AdjointNotInitialized;
       Adjoint.NoForwardCall;
-      Adjoint.ForwardReinitializationFailed;
-      Adjoint.ForwardFailed;
+      Adjoint.ForwardReinitFailure;
+      Adjoint.ForwardFailure;
       Adjoint.NoBackwardProblem;
       Adjoint.BadFinalTime;
       Adjoint.BadOutputTime;

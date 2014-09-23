@@ -614,15 +614,14 @@ let main () =
   (* Call IDASpgmr to specify the linear solver. *)
 
   let linsolv =
-    Ida.Spils.spgmr (Some 0)
-      { Ida.Spils.prec_setup_fn = Some (psetup_heat data);
-        Ida.Spils.prec_solve_fn = Some (psolve_heat data);
-        Ida.Spils.jac_times_vec_fn = None; }
+    Ida.Spils.spgmr
+      (Ida.Spils.prec_left ~setup:(psetup_heat data)
+         (psolve_heat data))
   in
   let mem =
     Ida.init linsolv (Ida.SStolerances (rtol, atol))
       (res_heat data)
-      ~t0:t0 uu up
+      t0 uu up
   in
   Ida.set_var_types mem id;
   Ida.set_suppress_alg mem true;

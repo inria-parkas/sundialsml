@@ -65,7 +65,7 @@ type callbacks =
 
 (** Same as {!Kinsol.Spils.spgmr} but with the Parallel Band-Block-Diagonal
     preconditioner.
-    
+
     Krylov iterative solver with the scaled preconditioned GMRES method. The
     arguments specify the maximum dimension of the Krylov subspace (Pass None to
     use the default value 5), the maximum number of restarts of the iterative
@@ -77,8 +77,8 @@ type callbacks =
 
     @kinsol <node5#sss:lin_solv_init> KINSpgmr
     @kinsol <node5#sss:kinbbdpre> KINBBDPrecInit *)
-val spgmr : int option -> int option -> bandwidths -> float option -> callbacks
-              -> parallel_linear_solver
+val spgmr : ?maxl:int -> ?max_restarts:int -> ?dqrely:float
+          -> bandwidths -> callbacks -> parallel_linear_solver
 
 (** Same as {!Kinsol.Spils.spbcg} but with the Parallel Band-Block-Diagonal
     preconditioner. The arguments are the same as for {!spgmr} except that a
@@ -86,8 +86,8 @@ val spgmr : int option -> int option -> bandwidths -> float option -> callbacks
 
     @kinsol <node5#sss:lin_solv_init> KINSpbcg
     @kinsol <node5#sss:kinbbdpre> KINBBDPrecInit *)
-val spbcg : int option -> bandwidths -> float option -> callbacks
-              -> parallel_linear_solver
+val spbcg : ?maxl:int -> ?dqrely:float
+          -> bandwidths -> callbacks -> parallel_linear_solver
 
 (** Same as {!Kinsol.Spils.sptfqmr} but with the Parallel Band-Block-Diagonal
     preconditioner. The arguments are the same as for {!spgmr} except that a
@@ -95,8 +95,8 @@ val spbcg : int option -> bandwidths -> float option -> callbacks
 
     @kinsol <node5#sss:lin_solv_init> KINSptfqmr
     @kinsol <node5#sss:kinbbdpre> KINBBDPrecInit *)
-val sptfqmr : int option -> bandwidths -> float option -> callbacks
-                -> parallel_linear_solver
+val sptfqmr : ?maxl:int -> ?dqrely:float
+            -> bandwidths -> callbacks -> parallel_linear_solver
 
 (** {4 Optional output functions} *)
 

@@ -67,8 +67,8 @@ module Quadrature =
 
     exception QuadNotInitialized
     exception QuadRhsFuncFailure
-    exception FirstQuadRhsFuncErr
-    exception RepeatedQuadRhsFuncErr
+    exception FirstQuadRhsFuncFailure
+    exception RepeatedQuadRhsFuncFailure
 
     let fwdsensext s =
       match s.sensext with
@@ -169,9 +169,9 @@ module Sensitivity =
 
     exception SensNotInitialized
     exception SensResFuncFailure
-    exception FirstSensResFuncErr
-    exception RepeatedSensResFuncErr
-    exception BadIS
+    exception FirstSensResFuncFailure
+    exception RepeatedSensResFuncFailure
+    exception BadSensIdentifier
 
     let fwdsensext s =
       match s.sensext with
@@ -367,8 +367,8 @@ module Sensitivity =
 
       exception QuadSensNotInitialized
       exception QuadSensRhsFuncFailure
-      exception FirstQuadSensRhsFuncErr
-      exception RepeatedQuadSensRhsFuncErr
+      exception FirstQuadSensRhsFuncFailure
+      exception RepeatedQuadSensRhsFuncFailure
 
       external c_quadsens_init
         : ('a, 'k) session -> bool -> ('a, 'k) nvector array -> unit
@@ -485,8 +485,8 @@ module Adjoint =
 
     exception AdjointNotInitialized
     exception NoForwardCall
-    exception ForwardReinitializationFailed
-    exception ForwardFailed
+    exception ForwardReinitFailure
+    exception ForwardFailure
     exception NoBackwardProblem
     exception BadFinalTime
     exception BadOutputTime
@@ -634,7 +634,7 @@ module Adjoint =
       let weakref = Weak.create 1 in
       let ida_mem, which, backref, err_file =
         match mf with
-        | Basic _ -> c_init_backward s weakref t0 y0 y'0 false
+        | NoSens _ -> c_init_backward s weakref t0 y0 y'0 false
         | WithSens _ -> c_init_backward s weakref t0 y0 y'0 true
       in
       (* ida_mem and backref have to be immediately captured in a session and
@@ -664,7 +664,7 @@ module Adjoint =
                 bsensarray2 = c_alloc_nvector_array ns;
 
                 resfnb      = (match mf with
-                               | Basic f -> f
+                               | NoSens f -> f
                                | _ -> dummy_resfnb);
 
                 resfnbs     = (match mf with
@@ -800,15 +800,13 @@ module Adjoint =
       struct
         include SpilsTypes
 
-        let no_precond = {
-          prec_solve_fn = None;
-          prec_setup_fn = None;
-          jac_times_vec_fn = None;
-        }
-
-        external c_spils_set_preconditioner
-          : ('a, 'k) session -> int -> bool -> bool -> unit
+        external c_set_preconditioner
+          : ('a, 'k) session -> int -> bool -> unit
           = "c_idas_adj_spils_set_preconditioner"
+
+        external c_set_jac_times_vec_fn
+          : ('a, 'k) session -> int -> bool -> unit
+          = "c_idas_adj_spils_set_jac_times_vec_fn"
 
         external c_spils_spgmr
           : ('a, 'k) session -> int -> int -> unit
@@ -822,33 +820,33 @@ module Adjoint =
           : ('a, 'k) session -> int -> int -> unit
           = "c_idas_adj_spils_sptfqmr"
 
-        let set_precond bs parent which cb =
-          match cb.prec_solve_fn with
-          | None -> () (* NB: c_spils_spgmr etc. clear the callbacks,
-                          so there's nothing to do in this case. *)
-          | Some solve_fn ->
-            c_spils_set_preconditioner parent which
-              (cb.prec_setup_fn <> None)
-              (cb.jac_times_vec_fn <> None);
-            (tosession bs).ls_callbacks <- BSpilsCallback cb
-
-        let spgmr maxl cb bs _ =
+        let init_spils init bs maxl prec =
           let parent, which = parent_and_which bs in
-          let maxl = match maxl with None -> 0 | Some ml -> ml in
-          c_spils_spgmr parent which maxl;
-          set_precond bs parent which cb
+          match prec with
+          | PrecNone -> init parent which maxl
+          | PrecLeft (solve, setup, jac_times) ->
+            init parent which maxl;
+            c_set_preconditioner parent which
+              (setup <> None);
+            c_set_jac_times_vec_fn parent which
+              (jac_times <> None);
+            (tosession bs).ls_callbacks <-
+              BSpilsCallback { prec_solve_fn = solve;
+                               prec_setup_fn = setup;
+                               jac_times_vec_fn = jac_times }
 
-        let spbcg maxl cb bs _ =
-          let parent, which = parent_and_which bs in
-          let maxl = match maxl with None -> 0 | Some ml -> ml in
-          c_spils_spbcg parent which maxl;
-          set_precond bs parent which cb
+        let prec_none = PrecNone
+        let prec_left ?setup ?jac_times_vec solve =
+          PrecLeft (solve, setup, jac_times_vec)
 
-        let sptfqmr maxl cb bs _ =
-          let parent, which = parent_and_which bs in
-          let maxl = match maxl with None -> 0 | Some ml -> ml in
-          c_spils_sptfqmr parent which maxl;
-          set_precond bs parent which cb
+        let spgmr ?(maxl=0) prec bs _ _ =
+          init_spils c_spils_spgmr bs maxl prec
+
+        let spbcg ?(maxl=0) prec bs _ _ =
+          init_spils c_spils_spbcg bs maxl prec
+
+        let sptfqmr ?(maxl=0) prec bs _ _ =
+          init_spils c_spils_sptfqmr bs maxl prec
 
         external set_gs_type
             : ('a, 'k) bsession -> Spils.gramschmidt_type -> unit
@@ -947,7 +945,7 @@ module Adjoint =
           let parent, which = parent_and_which bs in
           let se = bwdsensext bs in
           match mf with
-           | Basic f -> (se.bquadrhsfn <- f;
+           | NoSens f -> (se.bquadrhsfn <- f;
                          c_quad_initb parent which y0)
            | WithSens f -> (se.bquadrhsfn1 <- f;
                             c_quad_initbs parent which y0)
@@ -1032,7 +1030,7 @@ let call_bprecsetupfn session jac =
 let call_bprecsolvefn session jac rvec zvec deltab =
   let session = read_weak_ref session in
   match session.ls_callbacks with
-  | BSpilsCallback { Adjoint.Spils.prec_solve_fn = Some f } ->
+  | BSpilsCallback { Adjoint.Spils.prec_solve_fn = f } ->
       adjust_retcode session (f jac rvec zvec) deltab
   | _ -> assert false
 
@@ -1079,24 +1077,24 @@ let _ =
        idas_exn_index.  *)
     [|Quadrature.QuadNotInitialized;
       Quadrature.QuadRhsFuncFailure;
-      Quadrature.FirstQuadRhsFuncErr;
-      Quadrature.RepeatedQuadRhsFuncErr;
+      Quadrature.FirstQuadRhsFuncFailure;
+      Quadrature.RepeatedQuadRhsFuncFailure;
 
       Sensitivity.SensNotInitialized;
       Sensitivity.SensResFuncFailure;
-      Sensitivity.FirstSensResFuncErr;
-      Sensitivity.RepeatedSensResFuncErr;
-      Sensitivity.BadIS;
+      Sensitivity.FirstSensResFuncFailure;
+      Sensitivity.RepeatedSensResFuncFailure;
+      Sensitivity.BadSensIdentifier;
 
       Sensitivity.Quadrature.QuadSensNotInitialized;
       Sensitivity.Quadrature.QuadSensRhsFuncFailure;
-      Sensitivity.Quadrature.FirstQuadSensRhsFuncErr;
-      Sensitivity.Quadrature.RepeatedQuadSensRhsFuncErr;
+      Sensitivity.Quadrature.FirstQuadSensRhsFuncFailure;
+      Sensitivity.Quadrature.RepeatedQuadSensRhsFuncFailure;
 
       Adjoint.AdjointNotInitialized;
       Adjoint.NoForwardCall;
-      Adjoint.ForwardReinitializationFailed;
-      Adjoint.ForwardFailed;
+      Adjoint.ForwardReinitFailure;
+      Adjoint.ForwardFailure;
       Adjoint.NoBackwardProblem;
       Adjoint.BadFinalTime;
       Adjoint.BadOutputTime;

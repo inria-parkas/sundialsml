@@ -177,7 +177,7 @@ enum ida_exn_index {
     IDA_EXN_LinearSolveFailure,
     IDA_EXN_ResFuncFailure,
     IDA_EXN_FirstResFuncFailure,
-    IDA_EXN_RepeatedResFuncErr,
+    IDA_EXN_RepeatedResFuncFailure,
     IDA_EXN_RootFuncFailure,
     IDA_EXN_ConstraintFailure,
 

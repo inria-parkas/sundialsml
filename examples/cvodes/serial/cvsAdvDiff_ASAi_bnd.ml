@@ -295,7 +295,7 @@ let main () =
   in
   let cvode_mem = Cvode.init Cvode.BDF (Cvode.Newton solver)
                              (Cvode.SStolerances (reltol, abstol))
-                             ~t0:t0 (f data) u_nvec
+                             (f data) t0 u_nvec
   in
 
   (* Allocate global memory *)
@@ -320,7 +320,7 @@ let main () =
         Cvode.BDF
         (Adjoint.Newton bsolver)
         (Adjoint.SStolerances (rtolb, atol))
-        (Adjoint.Basic (fB data)) tout uB in
+        (Adjoint.NoSens (fB data)) tout uB in
 
   (* Perform backward integration *)
   printf "\nBackward integration\n";

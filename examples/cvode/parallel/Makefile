@@ -2,7 +2,7 @@
 # sensitivity-agnostic subset of CVODES.  Note that memory usage
 # statistics will differ from the versions in sundials/C, unless those
 # are recompiled to link against CVODES.
-USELIB ?= sundials_nosensi
+USELIB ?= sundials_no_sens
 SRCROOT=../../..
 SUBDIR=cvode/parallel
 

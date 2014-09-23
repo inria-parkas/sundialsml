@@ -20,7 +20,7 @@ It provides a complete OCaml interface to Sundials version {b {var version}}.
 The structure of this interface mostly follows that of the original library,
 both for ease of reading the existing documentation and for converting
 existing source code, but several changes have been made for programming
-convenience, namely:
+convenience and preventing misuse, namely:
 - solver sessions are mostly configured via algebraic data types
   rather than multiple function calls;
 - error conditions are signalled by exceptions not return codes
@@ -36,10 +36,16 @@ beginning with an uppercase letter are separated by underscores, and put
 into lowercase. For instance, [IdaSetErrHandlerFn], becomes
 {!Ida.set_err_handler_fn}, and [CVSpilsSetJacTimesVecFn] becomes
 {!Cvode.Spils.set_jac_times_vec_fn}.
-Constants are replaced by variant types in most cases.
-They are renamed by conversion to {e CamlCase} and the removal of
-underscores.
-For instance, [PREC_NONE] becomes {!Spils.PrecNone}.
+
+Constants are converted to variant types and exceptions, generally
+named after {i CamlCase} conversions of their names in C.  However,
+for exception names, we have taken the liberty to regularize them and
+make them more descriptive.  For example, Sundials 2.5.0 declares
+[CV_FIRST_RHSFUNC_ERR] and [IDA_FIRST_RES_FAIL], with inconsistencies
+in "FUNC" and "ERR" / "FAIL".  In this binding, these error codes are
+translated to the exceptions {!Cvode.FirstRhsFuncFailure} and
+{!Ida.FirstResFuncFailure}, respectively.  For another example,
+[CV_BAD_IS] is translated to {!Cvodes.Sensitivity.BadSensIdentifier}.
 
 Rather than try to duplicate or replace the comprehensive
 {{:https://computation.llnl.gov/casc/sundials/documentation/documentation.html}
