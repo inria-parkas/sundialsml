@@ -103,7 +103,23 @@ custom solvers could be implemented through {!Cvode.Alternate},
 
 {2:linsolv Linear Solvers}
 
-TODO: write this
+Sundials provides both {e direct linear solvers (dls)} and {e scaled
+preconditioned iterative linear solvers (spils)}. In addition, callback
+hooks are provided for incorporating {e alternate} linear solver modules.
+All three are supported by the OCaml interface.
+
+Access to the generic linear solver codes is provided through the {!Dls} and
+{!Spils} modules.
+
+TODO!!: Sort out the underlying datatypes. Do we provide both
+Dls.DenseMatrix and Dls.ArrayDenseMatrix, or just the latter? If both are
+provided, how can we improve the performance of the former?
+
+TODO:
+Each solver module...
+TODO: explain that certain solvers restrict the kind of their argument.
+
+TODO: don't forget Diag (DLS) and BBD (SPILS) solvers.
 
 {2:modules Modules}
 

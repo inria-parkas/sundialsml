@@ -67,10 +67,10 @@ exception RhsFuncFailure
 exception FirstRhsFuncFailure
 
 (** @cvode <node5#sss:cvode> CV_REPTD_RHSFUNC_ERR *)
-exception RepeatedRhsFuncFailure        
+exception RepeatedRhsFuncFailure
 
 (** @cvode <node5#sss:cvode> CV_UNREC_RHSFUNC_ERR *)
-exception UnrecoverableRhsFuncFailure   
+exception UnrecoverableRhsFuncFailure
 
 (** @cvode <node5#sss:cvode> CV_RTFUNC_FAIL *)
 exception RootFuncFailure           
