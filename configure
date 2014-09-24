@@ -139,7 +139,7 @@ echo "#ifndef __GNUC__" > $test_file
 echo "#error not gcc" >> $test_file
 echo "#endif" >> $test_file
 using_gcc=false
-$CC -o $tmp_file -c $test_file && using_gcc=true
+$CC -o $tmp_file -c $test_file >/dev/null 2>&1 && using_gcc=true
 rm -f $tmp_file $test_file
 if [ $using_gcc = true ]; then
     c_suppress_warnings=-w
