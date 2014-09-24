@@ -16,29 +16,17 @@ Decisions
   Have everything working for 2.5.0 (and include a patch file for the
   Sundials source), but make the first official release for 2.6.0.
 
+Priorities
+----------
+1. Callbacks with exception checking directly from C.
+2. Access around the weak pointer where possible (through stack).
+3. What to do about Dls.DenseMatrix (replace with ArrayDenseMatrix or
+   otherwise improve its performance).
 
 TODO
 ----
 
 1. Test under OCaml 3.12.x.
-
-2. (Jun) Interface to IDAS with maximal reuse and minimal copy-paste
-    - adapt for parallel nvector changes
-    - add alternate linear solver modules
-    - add BDD solver.
-    - ensure consistency with recent changes cvode/cvodes.
-
-3. (Jun) Add a perf.log target (like tests.log) to each examples
-   subdirectory. Run each binary (both C and opt and byte) 10 times and
-   take the average wall clock time. Generate a table with three columns
-   (original, .opt, .byte) and one number in each.
-   gnuplot with C time normalized.
-
-   - Show CFLAGS and other relevant settings in the title?
-   - Group the parallel tests at one side? Make their columns blue?
-     Do we need to spend more time understanding their performance?
-     (i.e., how come we have a ratio ~1 without any type annotations?
-      Should we add the type annotations anyhow?)
 
 4. Performance issues/tests:
    - Try to have all examples within 2xC (with the possible exception of
