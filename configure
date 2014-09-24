@@ -489,6 +489,7 @@ fi
 	 s#@ocamlmpi_path@#${ocamlmpi_path}#;
 	 s#@ocamlmpi_enabled@#${ocamlmpi_enabled}#;
 	 s#@lapack_enabled@#${lapack_enabled}#;
+	 s#@cc@#${CC}#;
 	 s#@mpicc@#${mpicc:-mpicc}#;
 	 s#@mpirun@#${mpirun:-mpirun}#;
 	 s#@c_suppress_warnings@#${c_suppress_warnings}#;

@@ -11,7 +11,7 @@ IDAS_DOC_ROOT = https://computation.llnl.gov/casc/sundials/documentation/idas_gu
 KINSOL_DOC_ROOT = https://computation.llnl.gov/casc/sundials/documentation/kin_guide/
 OCAML_DOC_ROOT = http://caml.inria.fr/pub/docs/manual-ocaml/libref/
 
-CC ?= gcc
+CC = @cc@
 CFLAGS += @cflags@
 LDFLAGS += @ldflags@
 CPPFLAGS ?= -P -x c -traditional-cpp
