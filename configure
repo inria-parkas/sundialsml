@@ -76,7 +76,7 @@ do
 	  --no-safety-checks     no safety checks; implies --no-bounds-checking
 	  --no-bounds-checking   no bounds checking in matrix accesses
 
-	Some influential environment variables:
+	Optional settings:
 	  OCAMLROOT     Path to OCaml installation
 	  LAPACKLIB	Command for linking with Lapack (default: -llapack)
 		                (sometimes also: -lSimTKlapack)
@@ -85,8 +85,8 @@ do
 	  MPICC		Name of the MPI compiler (default: mpicc; implies --enable-mpi)
 	  MPIRUN	Name of MPI program launcher (default: mpirun; implies --enable-mpi)
 
-	Use these variables to override the choices made by 'configure' or to help
-	it to find libraries and programs with nonstandard names/locations.
+	Set these options by passing arguments of the form FOO=value to help
+	configure find libraries and programs with nonstandard names/locations.
 
 	Report bugs to <$contact>.
 

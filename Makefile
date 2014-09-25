@@ -51,6 +51,7 @@ INSTALL_CMI=$(filter-out %_impl.cmi, $(MLOBJ_MAIN:.cmo=.cmi))	\
 
 STUBLIBS=$(foreach file,$(INSTALL_CMA:.cma=$(XS)), dllml$(file))
 
+# Don't include $(STUBLIBS) here; they go in a different directory.
 INSTALL_FILES=							\
     META							\
     $(INSTALL_CMI)						\
@@ -151,8 +152,8 @@ dochtml.cmo: INCLUDES += -I +ocamldoc
 dochtml.cmo: OCAMLFLAGS += -pp "cpp $(CPPFLAGS) -DOCAML_3X=$(OCAML_3X) -DVERSION=\\\"$(VERSION)\\\""
 
 META: META.in
-	@$(ECHO) "version = \"$(VERSION)$(VERSIONP)\"" > $@
-	@$(CAT) $< >> $@
+	cpp $(if $(MPI_ENABLED),-DMPI_ENABLED) -DVERSION=\"$(VERSION)\" $< \
+	    | grep -v '^#' > $@
 
 doc: doc/html/index.html
 
@@ -206,31 +207,40 @@ perf.byte.log: $(INSTALL_CMA:.cma=.cmxa)
 
 ### Install / Uninstall
 
-install: $(INSTALL_CMA) $(INSTALL_CMA:.cma=.cmxa) doc META
-	$(MKDIR) $(PKGDIR)
-	$(CP) $(INSTALL_FILES) $(PKGDIR)
-	$(CP) $(STUBLIBS) $(STUBDIR)
-ifeq ($(INSTALL_DOCS), 1)
-	$(MKDIR) $(DOCDIR)/html
-	$(CP) doc/html/style.css doc/html/*.html $(DOCDIR)/html/
-endif
+install: install-sys $(if $(INSTALL_DOCS),install-doc)
 
-uninstall:
-	for f in $(STUBLIBS); do	 \
-	    $(RM) $(STUBDIR)$$f || true; \
-	done
-	for f in $(INSTALL_FILES); do	 \
-	    $(RM) $(PKGDIR)$$f || true;  \
-	done
+# Install to OCaml's system directory -- /usr/lib/ocaml on Debian derivatives.
+install-sys: $(INSTALL_CMA) $(INSTALL_CMA:.cma=.cmxa)
+	[ -d $(PKGDIR) ] || $(MKDIR) $(PKGDIR)
+	$(CP) $(INSTALL_FILES) $(PKGDIR)
+	[ -d $(STUBDIR) ] || $(MKDIR) $(STUBDIR)
+	$(CP) $(STUBLIBS) $(STUBDIR)
+
+install-doc: doc
+	[ -d $(DOCDIR) ] || $(MKDIR) $(DOCDIR)
+	[ -d $(DOCDIR)/html ] || $(MKDIR) $(DOCDIR)/html
+	$(CP) doc/html/style.css doc/html/*.html $(DOCDIR)/html/
+
+install-ocamlfind: install-findlib
+install-findlib: META $(INSTALL_CMA) $(INSTALL_CMA:.cma=.cmxa)
+	ocamlfind install sundials $(INSTALL_FILES) $(STUBLIBS)
+
+
+uninstall: uninstall-sys
+
+uninstall-sys:
+	-$(RM) $(foreach f,$(STUBLIBS),$(STUBDIR)$f)
+	-$(RM) $(foreach f,$(INSTALL_FILES),$(PKGDIR)$f)
 	-$(RMDIR) $(PKGDIR)
-ifeq ($(INSTALL_DOCS), 1)
+
+uninstall-doc:
 	-$(RM) $(DOCDIR)/html/style.css $(DOCDIR)/html/*.html
 	-$(RMDIR) $(DOCDIR)/html
 	-$(RMDIR) $(DOCDIR)
-endif
 
-ocamlfind: $(INSTALL_CMA) $(INSTALL_CMA:.cma=.cmxa) META
-	ocamlfind install sundials $(INSTALL_FILES) $(STUBLIBS)
+uninstall-ocamlfind: uninstall-findlib
+uninstall-findlib:
+	ocamlfind remove sundials
 
 ### Misc
 
