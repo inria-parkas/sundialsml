@@ -42,16 +42,18 @@ ALL_CMA = sundials.cma sundials_no_sens.cma sundials_mpi.cma
 # Installed files.
 
 INSTALL_CMA=sundials.cma sundials_no_sens.cma \
-	    $(if $(MPI_ENABLED), sundials_mpi.cma)
+	    $(if $(MPI_ENABLED),sundials_mpi.cma)
+
+INSTALL_CMI=$(filter-out %_impl.cmi, $(MLOBJ_MAIN:.cmo=.cmi))	\
+	    $(MLOBJ_SENS:.cmo=.cmi)				\
+	    $(MLOBJ_NO_SENS:.cmo=.cmi)				\
+	    $(if $(MPI_ENABLED),$(MLOBJ_MPI:.cmo=.cmi))
 
 STUBLIBS=$(foreach file,$(INSTALL_CMA:.cma=$(XS)), dllml$(file))
 
 INSTALL_FILES=							\
     META							\
-    $(filter-out %_impl.cmi, $(MLOBJ_MAIN:.cmo=.cmi))		\
-    $(MLOBJ_SENS:.cmo=.cmi)					\
-    $(MLOBJ_NO_SENS:.cmo=.cmi)					\
-    $(MLOBJ_MPI:.cmo=.cmi)					\
+    $(INSTALL_CMI)						\
     $(INSTALL_CMA)						\
     $(INSTALL_CMA:.cma=.cmxa)					\
     $(INSTALL_CMA:.cma=$(XA))					\
