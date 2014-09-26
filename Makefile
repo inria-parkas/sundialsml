@@ -1,7 +1,27 @@
 include config
 
+default: all
+
 # To compile with profiling (with gcc):
 # ./configure CFLAGS=-pg OCAMLOPTFLAGS=-p ...
+
+### Common rules
+# We can't use pattern rules here because they don't generate
+# dependencies and ocamldep doesn't generate dependencies of the form
+# foo.cm[iox]: foo.ml or foo.cmi: foo.mli
+.SUFFIXES : .mli .ml .cmi .cmo .cmx
+
+.ml.cmo:
+	$(OCAMLC) $(OCAMLFLAGS) -c $(INCLUDES) $<
+
+.mli.cmi:
+	$(OCAMLC) $(OCAMLFLAGS) -c $(INCLUDES) $<
+
+.ml.cmx:
+	$(OCAMLOPT) $(OCAMLOPTFLAGS) -c $(INCLUDES) $<
+
+%.o: %.c
+	$(CC) -I $(OCAML_INCLUDE) $(CFLAGS) -o $@ -c $<
 
 ### Objects shared between sundials.cma and sundials_no_sens.cma.
 
