@@ -36,13 +36,19 @@ exception ZeroDiagonalElement of int
 module DenseMatrix :
   sig
     (**
-    This type represents a [DlsMat] returned from a call to
-    {!make}.
+    This type represents a [DlsMat] returned from a call to {!make}.
 
      @cvode <node9#s:dls>  Type DlsMat
      @cvode <node9#ss:dense> NewDenseMat 
      *)
     type t
+
+    (** A {{:OCAML_DOC_ROOT(Bigarray.Array2)} (Bigarray)} 2D vector of floats. *)
+    type data = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
+
+    (** This exception is thrown if an operation is passed a value on which
+        {!relinquish} has been called. *)
+    exception Relinquished
 
     (** {4 Basic access} *)
 
@@ -60,6 +66,17 @@ module DenseMatrix :
      @cvode <node9#ss:dense> NewDenseMat
      *)
     val create : int -> int -> t
+
+    (** Returns the underlying {!data} array; changes to either array affect the
+        other (i.e., they share the same underlying storage). Note that this
+        array is accessed column first (unlike through {!get} and {!set}). *)
+    val unwrap : t -> data
+
+    (** Separate the underlying {!data} array (whose dimensions are set to
+        zero) from the abstract value. This low-level operation is called
+        internally when an abstract value in the underlying C library
+        ceases to exist. *)
+    val relinquish : t -> unit
 
     (**
      [m, n = size a] returns the number of columns, [m], and rows, [n], of the
@@ -335,6 +352,13 @@ module BandMatrix :
      *)
     type t
 
+    (** A {{:OCAML_DOC_ROOT(Bigarray.Array2)} (Bigarray)} 2D vector of floats. *)
+    type data = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
+
+    (** This exception is thrown if an operation is passed a value on which
+        {!relinquish} has been called. *)
+    exception Relinquished
+
     (** {4 Basic access} *)
 
     (**
@@ -358,6 +382,19 @@ module BandMatrix :
      @cvode <node9#ss:band> NewBandMat
      *)
     val create : int -> int -> int -> int -> t
+
+    (** Returns the underlying {!data} array; changes to either array affect the
+        other (i.e., they share the same underlying storage). Note that this
+        array is accessed column first (unlike through {!get} and {!set}).
+
+        TODO: note access calculations (with mu and smu... *)
+    val unwrap : t -> data
+
+    (** Separate the underlying {!data} array (whose dimensions are set to
+        zero) from the abstract value. This low-level operation is called
+        internally when an abstract value in the underlying C library
+        ceases to exist. *)
+    val relinquish : t -> unit
 
     (**
      [n, mu, ml, smu = size a] returns the size ([n]), upper bandwidth ([mu]),

@@ -37,13 +37,52 @@ CAMLprim value c_dls_init_module (value exns)
     CAMLreturn (Val_unit);
 }
 
+/* Shared matrix functions */
 
-/* Dense matrix functions */
+CAMLprim value c_dls_relinquish(value vm)
+{
+    CAMLparam1(vm);
 
+    struct caml_ba_array *ba = Caml_ba_array_val(Field(vm, 2));
+    ba->dim[0] = 0;
+    ba->dim[1] = 0;
+    ba->data = NULL;
+
+    CAMLreturn (Val_unit);
+}
+
+// TODO: test finalize and access to array afterward (in ocaml/linear/dense2.ml
 static void finalize_dlsmat(value va)
 {
+    /* TODO: is this legal ? */
+    c_dls_relinquish(Field(va, 2));
     DestroyMat(DLSMAT(va));
 }
+
+CAMLprim value c_dls_wrap(DlsMat a, int finalize)
+{
+    CAMLparam0();
+    CAMLlocal3(vv, va, vr);
+    mlsize_t approx_size = a->ldim * a->N * sizeof(realtype);
+
+    va = caml_ba_alloc_dims(BIGARRAY_FLOAT, 2, a->data, a->N, a->ldim);
+
+    /* a DlsMat is a pointer to a struct _DlsMat */
+    vv = caml_alloc_final(3, finalize ? &finalize_dlsmat : NULL,
+			  approx_size, approx_size * 20);
+    DLSMAT(vv) = a;
+
+    /* Hold onto the bigarray for relinquishment in the finalizer. */
+    Field(vv, 2) = va;
+
+    vr = caml_alloc_tuple(2);
+    Store_field(vr, 0, va);
+    Store_field(vr, 1, vv);
+
+    CAMLreturn(vr);
+}
+
+/* Dense matrix functions */
 
 CAMLprim value c_densematrix_new_dense_mat(value vm, value vn)
 {
@@ -56,13 +95,8 @@ CAMLprim value c_densematrix_new_dense_mat(value vm, value vn)
     DlsMat a = NewDenseMat(m, n);
     if (a == NULL)
 	caml_failwith("Could not create Dense Matrix.");
-    mlsize_t approx_size = m * n * sizeof(realtype);
 
-    /* a DlsMat is a pointer to a struct _DlsMat */
-    vr = caml_alloc_final(2, &finalize_dlsmat, approx_size, approx_size * 20);
-    DLSMAT(vr) = a;
-
-    CAMLreturn(vr);
+    CAMLreturn(c_dls_wrap(a, 1));
 }
 
 CAMLprim value c_densematrix_size(value va)
@@ -379,13 +413,8 @@ CAMLprim value c_bandmatrix_new_band_mat(value vn, value vmu,
     DlsMat a = NewBandMat(n, mu, ml, smu);
     if (a == NULL)
 	caml_failwith("Could not create Band Matrix.");
-    mlsize_t approx_size = n * (smu + ml + 2) * sizeof(realtype);
 
-    /* a DlsMat is a pointer to a struct _DlsMat */
-    vr = caml_alloc_final(2, &finalize_dlsmat, approx_size, approx_size * 20);
-    DLSMAT(vr) = a;
-
-    CAMLreturn(vr);
+    CAMLreturn(c_dls_wrap(a, 1));
 }
 
 CAMLprim value c_bandmatrix_size(value va)

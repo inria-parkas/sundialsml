@@ -33,15 +33,6 @@ module Roots = Sundials.Roots
 
 let printf = Printf.printf
 
-(* Auxiliary indexing functions *)
-(* Translates 1-based indexing into 0-based indexing, just like corresponding
- * macros do in the original C implementation of this example.  *)
-let ijth a (i,j) = Dls.DenseMatrix.get a (i-1) (j-1)
-and set_ijth a (i,j) x = Dls.DenseMatrix.set a (i-1) (j-1) x
-and ith (v : RealArray.t) i = v.{i-1}
-and set_ith (v : RealArray.t) i x = v.{i-1} <- x
-
-
 (* Problem Constants *)
 
 let neq    = 3        (* number of equations  *)
@@ -126,15 +117,16 @@ and jacrob params jj =
       Ida.jac_y=(y : RealArray.t);
       Ida.jac_res=resvec }
     ->
-      set_ijth jj (1,1) (-. 0.04 -. cj);
-      set_ijth jj (2,1) (0.04);
-      set_ijth jj (3,1) (1.);
-      set_ijth jj (1,2) (1.0e4*.y.{2});
-      set_ijth jj (2,2) (-. 1.0e4*.y.{2} -. 6.0e7*.y.{1} -. cj);
-      set_ijth jj (3,2) (1.);
-      set_ijth jj (1,3) (1.0e4*.y.{1});
-      set_ijth jj (2,3) (-.1.0e4*.y.{1});
-      set_ijth jj (3,3) (1.)
+  let jjd = Dls.DenseMatrix.unwrap jj in
+  jjd.{0, 0} <- (-. 0.04 -. cj);
+  jjd.{0, 1} <- (0.04);
+  jjd.{0, 2} <- (1.);
+  jjd.{1, 0} <- (1.0e4*.y.{2});
+  jjd.{1, 1} <- (-. 1.0e4*.y.{2} -. 6.0e7*.y.{1} -. cj);
+  jjd.{1, 2} <- (1.);
+  jjd.{2, 0} <- (1.0e4*.y.{1});
+  jjd.{2, 1} <- (-.1.0e4*.y.{1});
+  jjd.{2, 2} <- (1.)
 
 and grob t (y : RealArray.t) y' (gout : RealArray.t) =
   let y1 = y.{0}

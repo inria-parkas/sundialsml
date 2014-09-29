@@ -590,12 +590,12 @@ static int bjacfn(long int NeqB, realtype t,
     args[0] = *backref;
     args[1] = make_adj_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
 			       make_triple_tmp (tmp1B, tmp2B, tmp3B));
-    args[2] = caml_alloc_final (2, NULL, 0, 1);
-    DLSMAT(args[2]) = JacB;
+    args[2] = c_dls_wrap(JacB, 0); // TODO: cache for efficiency!
 
     retcode = Int_val (caml_callbackN(CAML_FN(call_bjacfn),
                                       sizeof (args) / sizeof (*args),
                                       args));
+    c_dls_relinquish(Field(args[2], 1)); // TODO: cache for efficiency!
 
     CAMLreturnT(int, retcode);
 }
@@ -619,12 +619,12 @@ static int bbandjacfn(long int NeqB, long int mupperb, long int mlowerb,
     Store_field(args[1], RECORD_IDAS_ADJ_BANDRANGE_MLOWER, Val_long(mlowerb));
     args[2] = make_adj_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
 			       make_triple_tmp(tmp1B, tmp2B, tmp3B));
-    args[3] = caml_alloc_final(2, NULL, 0, 1);
-    DLSMAT(args[3]) = JacB;
+    args[3] = c_dls_wrap(JacB, 0); // TODO: cache for efficiency!
 
     r = Int_val (caml_callbackN(CAML_FN(call_bbandjacfn),
                                 sizeof (args) / sizeof (*args),
                                 args));
+    c_dls_relinquish(Field(args[3], 1)); // TODO: cache for efficiency!
 
     CAMLreturnT(int, r);
 }

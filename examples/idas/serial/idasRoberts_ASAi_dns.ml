@@ -135,18 +135,18 @@ let jac data jac_arg j =
   and p2 = data.p.{1}
   and p3 = data.p.{2}
   in
+  let jd = Dls.DenseMatrix.unwrap j in
+  jd.{0, 0} <- (p1+.cj);
+  jd.{0, 1} <- (-.p1);
+  jd.{0, 2} <- (1.0);
 
-  Dls.DenseMatrix.set j 0 0 (p1+.cj);
-  Dls.DenseMatrix.set j 1 0 (-.p1);
-  Dls.DenseMatrix.set j 2 0 (1.0);
+  jd.{1, 0} <- (-.p2*.y3);
+  jd.{1, 1} <- (p2*.y3+.2.0*.p3*.y2+.cj); 
+  jd.{1, 2} <- (1.0);
 
-  Dls.DenseMatrix.set j 0 1 (-.p2*.y3);
-  Dls.DenseMatrix.set j 1 1 (p2*.y3+.2.0*.p3*.y2+.cj); 
-  Dls.DenseMatrix.set j 2 1 (1.0);
-
-  Dls.DenseMatrix.set j 0 2 (-.p2*.y2);
-  Dls.DenseMatrix.set j 1 2 (p2*.y2);
-  Dls.DenseMatrix.set j 2 2 (1.0)
+  jd.{2, 0} <- (-.p2*.y2);
+  jd.{2, 1} <- (p2*.y2);
+  jd.{2, 2} <- (1.0)
 
 (*
  * rhsQ routine. Compute fQ(t,y). 
@@ -204,17 +204,18 @@ let jacB data jac_arg jB =
 
   let p1 = data.p.{0} and p2 = data.p.{1} and p3 = data.p.{2} in
 
-  Dls.DenseMatrix.set jB 0 0 (-.p1+.cj);
-  Dls.DenseMatrix.set jB 0 1 (p1);
-  Dls.DenseMatrix.set jB 0 2 (-.1.0);     
+  let jBd = Dls.DenseMatrix.unwrap jB in
+  jBd.{0, 0} <- (-.p1+.cj);
+  jBd.{1, 0} <- (p1);
+  jBd.{2, 0} <- (-.1.0);     
 
-  Dls.DenseMatrix.set jB 1 0 (p2*.y3);
-  Dls.DenseMatrix.set jB 1 1 (-.(p2*.y3+.2.0*.p3*.y2)+.cj); 
-  Dls.DenseMatrix.set jB 1 2 (-.1.0);
+  jBd.{0, 1} <- (p2*.y3);
+  jBd.{1, 1} <- (-.(p2*.y3+.2.0*.p3*.y2)+.cj); 
+  jBd.{2, 1} <- (-.1.0);
                      
-  Dls.DenseMatrix.set jB 2 0 (p2*.y2);
-  Dls.DenseMatrix.set jB 2 1 (-.p2*.y2);
-  Dls.DenseMatrix.set jB 2 2 (-.1.0)
+  jBd.{0, 2} <- (p2*.y2);
+  jBd.{1, 2} <- (-.p2*.y2);
+  jBd.{2, 2} <- (-.1.0)
 
 let rhsQB data tt yy yp yyB ypB rrQB =
   (* The y vector *)

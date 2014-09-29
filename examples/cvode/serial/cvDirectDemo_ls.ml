@@ -119,9 +119,10 @@ let jac1 { Cvode.jac_y = y } j =
   let y0 = y.{0} in
   let y1 = y.{1} in
   (* previously calls to DENSE_ELEM: *)
-  Densematrix.set j 0 1 one;
-  Densematrix.set j 1 0 (-. two *. p1_eta *. y0 *. y1 -. one);
-  Densematrix.set j 1 1 (p1_eta *. (one -. sqr y0))
+  let jd = Densematrix.unwrap j in
+  jd.{1, 0} <- one;
+  jd.{0, 1} <- (-. two *. p1_eta *. y0 *. y1 -. one);
+  jd.{1, 1} <- (p1_eta *. (one -. sqr y0))
 
 let jac2 {Cvode.mupper=mu; Cvode.mlower=ml} arg jac =
   (*

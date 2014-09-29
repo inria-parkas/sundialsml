@@ -20,55 +20,127 @@ exception ZeroDiagonalElement of int
 (* note: uses DENSE_ELEM rather than the more efficient DENSE_COL. *)
 module DenseMatrix =
   struct
-    type t
+    type data = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
 
-    external create : int -> int -> t
+    type t = data * Obj.t
+
+    exception Relinquished
+    let assert_valid ba =
+      if Bigarray.Array2.dim1 ba = 0 then raise Relinquished
+
+    external c_create : int -> int -> t
         = "c_densematrix_new_dense_mat"
 
-    external size : t -> (int * int)
+    let create i j =
+      if i <= 0 || j <= 0 then failwith "Both M and N must be positive";
+      c_create i j
+
+    let unwrap = fst
+
+    external c_relinquish : Obj.t -> unit
+        = "c_dls_relinquish"
+
+    let relinquish (_, v) = c_relinquish v
+
+    external c_size : Obj.t -> (int * int)
         = "c_densematrix_size"
 
-    external print          : t -> unit
+    let size (ba, v) =
+      assert_valid ba;
+      c_size v
+
+    external c_print        : Obj.t -> unit
         = "c_densematrix_print_mat"
 
-    external set_to_zero    : t -> unit
+    let print (ba, v) =
+      assert_valid ba;
+      c_print v
+
+    external c_set_to_zero  : Obj.t -> unit
         = "c_densematrix_set_to_zero"
 
-    external add_identity   : t -> unit
+    let set_to_zero (ba, v) =
+      assert_valid ba;
+      c_set_to_zero v
+
+    external c_add_identity : Obj.t -> unit
         = "c_densematrix_add_identity"
 
-    external copy     : t -> t -> unit
+    let add_identity (ba, v) =
+      assert_valid ba;
+      c_add_identity v
+
+    external c_copy     : Obj.t -> Obj.t -> unit
         = "c_densematrix_copy"
 
-    external scale    : float -> t -> unit
+    let copy (ba1, v1) (ba2, v2) =
+      assert_valid ba1;
+      assert_valid ba2;
+      c_copy v1 v2
+
+    external c_scale  : float -> Obj.t -> unit
         = "c_densematrix_scale"
 
-    external getrf    : t -> lint_array -> unit
+    let scale a (ba, v) =
+      assert_valid ba;
+      c_scale a v
+
+    external c_getrf  : Obj.t -> lint_array -> unit
         = "c_densematrix_getrf"
 
-    external getrs    : t -> lint_array -> real_array -> unit
+    let getrf (ba, v) la =
+      assert_valid ba;
+      c_getrf v la
+
+    external c_getrs  : Obj.t -> lint_array -> real_array -> unit
         = "c_densematrix_getrs"
 
-    external potrf    : t -> unit
+    let getrs (ba, v) la ra =
+      assert_valid ba;
+      c_getrs v la ra
+
+    external c_potrf  : Obj.t -> unit
         = "c_densematrix_potrf"
 
-    external potrs    : t -> real_array -> unit
+    let potrf (ba, v) =
+      assert_valid ba;
+      c_potrf v
+
+    external c_potrs  : Obj.t -> real_array -> unit
         = "c_densematrix_potrs"
 
-    external geqrf    : t -> real_array -> real_array -> unit
+    let potrs (ba, v) ra =
+      assert_valid ba;
+      c_potrs v ra
+
+    external c_geqrf  : Obj.t -> real_array -> real_array -> unit
         = "c_densematrix_geqrf"
 
-    external ormqr'
-        : t -> (real_array * real_array * real_array * real_array) -> unit
+    let geqrf (ba, v) ra1 ra2 =
+      assert_valid ba;
+      c_geqrf v ra1 ra2
+
+    external c_ormqr
+        : Obj.t -> (real_array * real_array * real_array * real_array) -> unit
         = "c_densematrix_ormqr"
 
-    let ormqr ~a ~beta ~v ~w ~work = ormqr' a (beta, v, w, work)
+    let ormqr ~a ~beta ~v ~w ~work =
+      assert_valid (fst a);
+      c_ormqr (snd a) (beta, v, w, work)
 
-    external get : t -> int -> int -> float
+    external c_get : Obj.t -> int -> int -> float
         = "c_densematrix_get"
 
-    external set : t -> int -> int -> float -> unit
+    let get (ba, v) i j =
+      assert_valid ba;
+      c_get v i j
+
+    external c_set : Obj.t -> int -> int -> float -> unit
         = "c_densematrix_set"
+
+    let set (ba, v) i j e =
+      assert_valid ba;
+      c_set v i j e
 
     let make m n v =
       let r = create m n in
@@ -124,43 +196,101 @@ module ArrayDenseMatrix =
 
 module BandMatrix =
   struct
-    type t
+    type data = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
 
-    external create : int -> int -> int -> int -> t
+    type t = data * Obj.t
+
+    exception Relinquished
+    let assert_valid ba =
+      if Bigarray.Array2.dim1 ba = 0 then raise Relinquished
+
+    external c_create : int -> int -> int -> int -> t
         = "c_bandmatrix_new_band_mat"
 
-    external size : t -> (int * int * int * int)
+    let create i j =
+      if i <= 0 || j <= 0 then failwith "Both M and N must be positive";
+      c_create i j
+
+    let unwrap = fst
+
+    external c_relinquish : Obj.t -> unit
+        = "c_dls_relinquish"
+
+    let relinquish (_, v) = c_relinquish v
+
+    external c_size : Obj.t -> (int * int * int * int)
         = "c_bandmatrix_size"
 
-    external print          : t -> unit
+    let size (ba, v) =
+      assert_valid ba;
+      c_size v
+
+    external c_print          : Obj.t -> unit
         = "c_densematrix_print_mat"
           (* NB: same as densematrix *)
 
-    external set_to_zero    : t -> unit
+    let print (ba, v) =
+      assert_valid ba;
+      c_print v
+
+    external c_set_to_zero    : Obj.t -> unit
         = "c_densematrix_set_to_zero"
           (* NB: same as densematrix *)
 
-    external add_identity : t -> unit
+    let set_to_zero (ba, v) =
+      assert_valid ba;
+      c_set_to_zero v
+
+    external c_add_identity : Obj.t -> unit
         = "c_densematrix_add_identity"
           (* NB: same as densematrix *)
 
-    external copy : t -> t -> int -> int -> unit
+    let add_identity (ba, v) =
+      assert_valid ba;
+      c_add_identity v
+
+    external c_copy : Obj.t -> Obj.t -> int -> int -> unit
         = "c_bandmatrix_copy"
 
-    external scale : float -> t -> unit
+    let copy (ba1, v1) (ba2, v2) copymu copyml =
+      assert_valid ba1;
+      assert_valid ba2;
+      c_copy v1 v2 copymu copyml
+
+    external c_scale : float -> Obj.t -> unit
         = "c_bandmatrix_scale"
 
-    external gbtrf : t -> lint_array -> unit
+    let scale a (ba, v) =
+      assert_valid ba;
+      c_scale a v
+
+    external c_gbtrf : Obj.t -> lint_array -> unit
         = "c_bandmatrix_gbtrf"
 
-    external gbtrs : t -> lint_array -> real_array -> unit
+    let gbtrf (ba, v) la =
+      assert_valid ba;
+      c_gbtrf v la
+
+    external c_gbtrs : Obj.t -> lint_array -> real_array -> unit
         = "c_bandmatrix_gbtrs"
 
-    external get : t -> int -> int -> float
+    let gbtrs (ba, v) la ra =
+      assert_valid ba;
+      c_gbtrs v la ra
+
+    external c_get : Obj.t -> int -> int -> float
         = "c_bandmatrix_get"
 
-    external set : t -> int -> int -> float -> unit
+    let get (ba, v) i j =
+      assert_valid ba;
+      c_get v i j
+
+    external c_set : Obj.t -> int -> int -> float -> unit
         = "c_bandmatrix_set"
+
+    let set (ba, v) i j e =
+      assert_valid ba;
+      c_set v i j e
 
     let make n mu ml smu v =
       let r = create n mu ml smu in
@@ -171,12 +301,23 @@ module BandMatrix =
       done;
       r
 
+    (* TODO: rethink this... needed for:
+             cvode/parallel/cvAdvDiff_non_p
+             cvode/serial/cvAdvDiff_bnd
+             cvode/serial/cvAdvDiff_bndL
+             cvode/serial/cvDirectDemo_ls
+             cvodes/serial/cvsAdvDiff_ASAi_bnd
+       Compare with direct (and manually offsetted) access to the underlying
+       array.
+     *)
     module Col =
       struct
         type c
 
-        external get_col : t -> int -> c
+        external c_get_col : Obj.t -> int -> c
             = "c_bandmatrix_col_get_col"
+
+        let get_col (_, v) i = c_get_col v i
 
         external get : c -> int -> int -> float
             = "c_bandmatrix_col_get"
@@ -184,7 +325,6 @@ module BandMatrix =
         external set : c -> int -> int -> float -> unit
             = "c_bandmatrix_col_set"
       end
-
   end
 
 module ArrayBandMatrix =

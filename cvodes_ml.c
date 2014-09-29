@@ -540,12 +540,12 @@ static int bjacfn(
 
     args[0] = *backref;
     args[1] = make_jac_arg(t, y, yb, fyb, make_triple_tmp(tmp1b, tmp2b, tmp3b));
-    args[2] = caml_alloc_final (2, NULL, 0, 1);
-    DLSMAT(args[2]) = jacb;
+    args[2] = c_dls_wrap(jacb, 0); // TODO: cache for efficiency!
 
     retcode = Int_val (caml_callbackN(CAML_FN(call_bjacfn),
                                       sizeof (args) / sizeof (*args),
                                       args));
+    c_dls_relinquish(Field(args[2], 1)); // TODO: cache for efficiency!
 
     CAMLreturnT(int, retcode);
 }
@@ -574,12 +574,12 @@ static int bbandjacfn(
     Store_field(args[1], RECORD_CVODES_ADJ_BANDRANGE_MUPPER, Val_long(mupperb));
     Store_field(args[1], RECORD_CVODES_ADJ_BANDRANGE_MLOWER, Val_long(mlowerb));
     args[2] = make_jac_arg(t, y, yb, fyb, make_triple_tmp(tmp1b, tmp2b, tmp3b));
-    args[3] = caml_alloc_final(2, NULL, 0, 1);
-    DLSMAT(args[3]) = jacb;
+    args[3] = c_dls_wrap(jacb, 0); // TODO: cache for efficiency!
 
     r = Int_val (caml_callbackN(CAML_FN(call_bbandjacfn),
                                 sizeof (args) / sizeof (*args),
                                 args));
+    c_dls_relinquish(Field(args[3], 1)); // TODO: cache for efficiency!
 
     CAMLreturnT(int, r);
 }

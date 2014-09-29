@@ -14,6 +14,7 @@
 #define _DLS_ML_H__
 
 #include <caml/mlvalues.h>
+#include <sundials/sundials_dense.h>
 
 #define DLSMAT(v) (*(DlsMat *)Data_custom_val(v))
 
@@ -27,6 +28,9 @@ enum dls_exn_index {
 #define DLS_EXN(name) (Field (Field (sundials_ml_exn_table,	\
 				     DLS_EXN_SET),		\
 			      DLS_EXN_ ## name))
+
+CAMLprim value c_dls_relinquish(value);
+CAMLprim value c_dls_wrap(DlsMat a, int finalize);
 
 #endif
 
