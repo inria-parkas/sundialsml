@@ -57,53 +57,65 @@ and mu = 1
 and ml = 1;;
 let smu = min (n - 1) (mu + ml);;
 
-let a = M.create n mu ml smu;;
-let ad = M.unwrap a;;
+let main () =
+  let a = M.create n mu ml smu in
+  let ad = M.unwrap a in
 
-Printf.printf "> %d %d\n" (Bigarray.Array2.dim1 ad) (Bigarray.Array2.dim2 ad);
+  Printf.printf "> %d %d\n" (Bigarray.Array2.dim1 ad) (Bigarray.Array2.dim2 ad);
 
 
-ad.{0, 1} <- ( 0.0);
-ad.{1, 1} <- ( 2.0);
-ad.{2, 1} <- ( 3.0);
-ad.{3, 1} <- ( 4.0);
-ad.{4, 1} <- ( 5.0);
+  ad.{0, 1} <- ( 0.0);
+  ad.{1, 1} <- ( 2.0);
+  ad.{2, 1} <- ( 3.0);
+  ad.{3, 1} <- ( 4.0);
+  ad.{4, 1} <- ( 5.0);
 
-ad.{0, 2} <- ( 1.0);
-ad.{1, 2} <- ( 2.0);
-ad.{2, 2} <- ( 3.0);
-ad.{3, 2} <- ( 4.0);
-ad.{4, 2} <- ( 5.0);
+  ad.{0, 2} <- ( 1.0);
+  ad.{1, 2} <- ( 2.0);
+  ad.{2, 2} <- ( 3.0);
+  ad.{3, 2} <- ( 4.0);
+  ad.{4, 2} <- ( 5.0);
 
-ad.{0, 3} <- ( 2.0);
-ad.{1, 3} <- ( 3.0);
-ad.{2, 3} <- ( 4.0);
-ad.{3, 3} <- ( 5.0);
-ad.{4, 3} <- ( 0.0);
+  ad.{0, 3} <- ( 2.0);
+  ad.{1, 3} <- ( 3.0);
+  ad.{2, 3} <- ( 4.0);
+  ad.{3, 3} <- ( 5.0);
+  ad.{4, 3} <- ( 0.0);
 
-printf "initially: a=@\n%a@\n" print_mat a;;
+  printf "initially: a=@\n%a@\n" print_mat a;
 
-let b = M.create n mu ml smu;;
-M.copy a b mu ml;;
+  let b = M.create n mu ml smu in
+  M.copy a b mu ml;
 
-M.scale 2.0 b;
-printf "scale copy x2: b=@\n%a@\n" print_mat b;;
+  M.scale 2.0 b;
+  printf "scale copy x2: b=@\n%a@\n" print_mat b;
 
-M.add_identity b;
-printf "add identity: b=@\n%a@\n" print_mat b;;
+  M.add_identity b;
+  printf "add identity: b=@\n%a@\n" print_mat b;
 
-let p = LintArray.create 5;;
-Array1.fill p 0;
-M.gbtrf a p;
-printf "getrf: a=@\n%a@\n" print_factored_mat a;
-printf "       p=@\n%a@\n@\n" print_p p;;
+  let p = LintArray.create 5 in
+  Array1.fill p 0;
+  M.gbtrf a p;
+  printf "getrf: a=@\n%a@\n" print_factored_mat a;
+  printf "       p=@\n%a@\n@\n" print_p p;
 
-let s = RealArray.create n;;
-s.{0} <-  5.0;
-s.{1} <- 15.0;
-s.{2} <- 31.0;
-s.{3} <- 53.0;
-s.{4} <- 45.0;
-M.gbtrs a p s;
-printf "getrs: s=@\n%a@\n" print_vec s;;
+  let s = RealArray.create n in
+  s.{0} <-  5.0;
+  s.{1} <- 15.0;
+  s.{2} <- 31.0;
+  s.{3} <- 53.0;
+  s.{4} <- 45.0;
+  M.gbtrs a p s;
+  printf "getrs: s=@\n%a@\n" print_vec s;
+  ad
+
+let adata = main ()
+
+let _ = printf "before GC: dim1=%d dim2=%d\n"
+               (Array2.dim1 adata) (Array2.dim2 adata)
+
+let _ = Gc.compact ()
+
+let _ = printf " after GC: dim1=%d dim2=%d\n"
+               (Array2.dim1 adata) (Array2.dim2 adata)
 

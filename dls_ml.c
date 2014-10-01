@@ -51,11 +51,9 @@ CAMLprim value c_dls_relinquish(value vm)
     CAMLreturn (Val_unit);
 }
 
-// TODO: test finalize and access to array afterward (in ocaml/linear/dense2.ml
 static void finalize_dlsmat(value va)
 {
-    /* TODO: is this legal ? */
-    c_dls_relinquish(Field(va, 2));
+    c_dls_relinquish(va);
     DestroyMat(DLSMAT(va));
 }
 
