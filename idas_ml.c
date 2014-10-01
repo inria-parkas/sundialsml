@@ -590,7 +590,7 @@ static int bjacfn(long int NeqB, realtype t,
     args[0] = *backref;
     args[1] = make_adj_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
 			       make_triple_tmp (tmp1B, tmp2B, tmp3B));
-    args[2] = c_dls_wrap(JacB, 0); // TODO: cache for efficiency!
+    args[2] = c_dls_dense_wrap(JacB, 0); // TODO: cache for efficiency!
 
     retcode = Int_val (caml_callbackN(CAML_FN(call_bjacfn),
                                       sizeof (args) / sizeof (*args),
@@ -619,7 +619,7 @@ static int bbandjacfn(long int NeqB, long int mupperb, long int mlowerb,
     Store_field(args[1], RECORD_IDAS_ADJ_BANDRANGE_MLOWER, Val_long(mlowerb));
     args[2] = make_adj_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
 			       make_triple_tmp(tmp1B, tmp2B, tmp3B));
-    args[3] = c_dls_wrap(JacB, 0); // TODO: cache for efficiency!
+    args[3] = c_dls_band_wrap(JacB, 0); // TODO: cache for efficiency!
 
     r = Int_val (caml_callbackN(CAML_FN(call_bbandjacfn),
                                 sizeof (args) / sizeof (*args),

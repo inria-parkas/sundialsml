@@ -30,7 +30,8 @@ enum dls_exn_index {
 			      DLS_EXN_ ## name))
 
 CAMLprim value c_dls_relinquish(value);
-CAMLprim value c_dls_wrap(DlsMat a, int finalize);
+CAMLprim value c_dls_dense_wrap(DlsMat a, int finalize);
+CAMLprim value c_dls_band_wrap(DlsMat a, int finalize);
 
 #endif
 

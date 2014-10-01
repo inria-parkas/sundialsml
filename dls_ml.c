@@ -57,11 +57,13 @@ static void finalize_dlsmat(value va)
     DestroyMat(DLSMAT(va));
 }
 
-CAMLprim value c_dls_wrap(DlsMat a, int finalize)
+/* Dense matrix functions */
+
+CAMLprim value c_dls_dense_wrap(DlsMat a, int finalize)
 {
     CAMLparam0();
     CAMLlocal3(vv, va, vr);
-    mlsize_t approx_size = a->ldim * a->N * sizeof(realtype);
+    mlsize_t approx_size = a->ldim * a->N * sizeof(realtype) + 2;
 
     va = caml_ba_alloc_dims(BIGARRAY_FLOAT, 2, a->data, a->N, a->ldim);
 
@@ -80,8 +82,6 @@ CAMLprim value c_dls_wrap(DlsMat a, int finalize)
     CAMLreturn(vr);
 }
 
-/* Dense matrix functions */
-
 CAMLprim value c_densematrix_new_dense_mat(value vm, value vn)
 {
     CAMLparam2(vm, vn);
@@ -94,7 +94,7 @@ CAMLprim value c_densematrix_new_dense_mat(value vm, value vn)
     if (a == NULL)
 	caml_failwith("Could not create Dense Matrix.");
 
-    CAMLreturn(c_dls_wrap(a, 1));
+    CAMLreturn(c_dls_dense_wrap(a, 1));
 }
 
 CAMLprim value c_densematrix_size(value va)
@@ -397,6 +397,30 @@ CAMLprim value c_arraydensematrix_ormqr(value va, value vormqr)
 
 /* Band matrix functions */
 
+CAMLprim value c_dls_band_wrap(DlsMat a, int finalize)
+{
+    CAMLparam0();
+    CAMLlocal3(vv, va, vr);
+    mlsize_t approx_size = a->ldim * a->N * sizeof(realtype) + 3;
+
+    va = caml_ba_alloc_dims(BIGARRAY_FLOAT, 2, a->data, a->N, a->ldim);
+
+    /* a DlsMat is a pointer to a struct _DlsMat */
+    vv = caml_alloc_final(3, finalize ? &finalize_dlsmat : NULL,
+			  approx_size, approx_size * 20);
+    DLSMAT(vv) = a;
+
+    /* Hold onto the bigarray for relinquishment in the finalizer. */
+    Field(vv, 2) = va;
+
+    vr = caml_alloc_tuple(3);
+    Store_field(vr, 0, va);
+    Store_field(vr, 1, vv);
+    Store_field(vr, 2, Val_int(a->s_mu));
+
+    CAMLreturn(vr);
+}
+
 CAMLprim value c_bandmatrix_new_band_mat(value vn, value vmu,
 					 value vml, value vsmu)
 {
@@ -412,7 +436,7 @@ CAMLprim value c_bandmatrix_new_band_mat(value vn, value vmu,
     if (a == NULL)
 	caml_failwith("Could not create Band Matrix.");
 
-    CAMLreturn(c_dls_wrap(a, 1));
+    CAMLreturn(c_dls_band_wrap(a, 1));
 }
 
 CAMLprim value c_bandmatrix_size(value va)
@@ -491,73 +515,6 @@ CAMLprim value c_bandmatrix_set(value vmatrix, value vi, value vj, value v)
 
     BAND_ELEM(m, i, j) = Double_val(v);
     CAMLreturn(caml_copy_double(v));
-}
-
-CAMLprim value c_bandmatrix_col_get_col(value vmatrix, value vj)
-{
-    CAMLparam2(vmatrix, vj);
-    CAMLlocal1(r);
-
-    DlsMat m = DLSMAT(vmatrix);
-
-    int j = Long_val(vj);
-
-#if CHECK_MATRIX_ACCESS == 1
-    if (j < 0 || j >= m->N)
-	caml_invalid_argument("Bandmatrix.Col.get_col: invalid j");
-
-    r = caml_alloc(4, Abstract_tag);
-    Store_field(r, 2, Val_int(m->mu));
-    Store_field(r, 3, Val_int(m->ml));
-#else
-    r = caml_alloc(2, Abstract_tag);
-#endif
-
-    Store_field(r, 0, (value)BAND_COL(m, j));
-    Store_field(r, 1, vmatrix); /* avoid gc of underlying matrix! */
-    CAMLreturn(r);
-}
-
-CAMLprim value c_bandmatrix_col_get(value vbcol, value vi, value vj)
-{
-    CAMLparam3(vbcol, vi, vj);
-
-    realtype *bcol = (realtype *)Field(vbcol, 0);
-
-    int i = Long_val(vi);
-    int j = Long_val(vj);
-
-#if CHECK_MATRIX_ACCESS == 1
-    int mu = Long_val(Field(vbcol, 2));
-    int ml = Long_val(Field(vbcol, 3));
-
-    if (i < (j - mu) || i > (j + ml))
-	caml_invalid_argument("Bandmatrix.Col.get: invalid i");
-#endif
-
-    CAMLreturn(caml_copy_double(BAND_COL_ELEM(bcol, i, j)));
-}
-
-CAMLprim value c_bandmatrix_col_set(value vbcol, value vi, value vj, value ve)
-{
-    CAMLparam4(vbcol, vi, vj, ve);
-
-    realtype *bcol = (realtype *)Field(vbcol, 0);
-
-    int i = Long_val(vi);
-    int j = Long_val(vj);
-
-#if CHECK_MATRIX_ACCESS == 1
-    int mu = Long_val(Field(vbcol, 2));
-    int ml = Long_val(Field(vbcol, 3));
-
-    if (i < (j - mu) || i > (j + ml))
-	caml_invalid_argument("Bandmatrix.Col.set: invalid i");
-#endif
-
-    BAND_COL_ELEM(bcol, i, j) = Double_val(ve);
-
-    CAMLreturn(Val_unit);
 }
 
 /* Array Band matrix functions */

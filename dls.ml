@@ -22,6 +22,7 @@ module DenseMatrix =
   struct
     type data = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
 
+    (* (Bigarray into data, DlsMat with finalizer) *)
     type t = data * Obj.t
 
     exception Relinquished
@@ -128,19 +129,25 @@ module DenseMatrix =
       assert_valid (fst a);
       c_ormqr (snd a) (beta, v, w, work)
 
+    (*
     external c_get : Obj.t -> int -> int -> float
         = "c_densematrix_get"
 
     let get (ba, v) i j =
       assert_valid ba;
       c_get v i j
+    *)
+    let get ((ba : data), v) i j = ba.{j, i}
 
+    (*
     external c_set : Obj.t -> int -> int -> float -> unit
         = "c_densematrix_set"
 
     let set (ba, v) i j e =
       assert_valid ba;
       c_set v i j e
+    *)
+    let set ((ba : data), v) i j v = ba.{j, i} <- v
 
     let make m n v =
       let r = create m n in
@@ -198,7 +205,8 @@ module BandMatrix =
   struct
     type data = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
 
-    type t = data * Obj.t
+    (* (Bigarray into data, DlsMat with finalizer, smu) *)
+    type t = data * Obj.t * int
 
     exception Relinquished
     let assert_valid ba =
@@ -211,17 +219,17 @@ module BandMatrix =
       if i <= 0 || j <= 0 then failwith "Both M and N must be positive";
       c_create i j
 
-    let unwrap = fst
+    let unwrap (ba, _, _) = ba
 
     external c_relinquish : Obj.t -> unit
         = "c_dls_relinquish"
 
-    let relinquish (_, v) = c_relinquish v
+    let relinquish (_, v, _) = c_relinquish v
 
     external c_size : Obj.t -> (int * int * int * int)
         = "c_bandmatrix_size"
 
-    let size (ba, v) =
+    let size (ba, v, _) =
       assert_valid ba;
       c_size v
 
@@ -229,7 +237,7 @@ module BandMatrix =
         = "c_densematrix_print_mat"
           (* NB: same as densematrix *)
 
-    let print (ba, v) =
+    let print (ba, v, _) =
       assert_valid ba;
       c_print v
 
@@ -237,7 +245,7 @@ module BandMatrix =
         = "c_densematrix_set_to_zero"
           (* NB: same as densematrix *)
 
-    let set_to_zero (ba, v) =
+    let set_to_zero (ba, v, _) =
       assert_valid ba;
       c_set_to_zero v
 
@@ -245,14 +253,14 @@ module BandMatrix =
         = "c_densematrix_add_identity"
           (* NB: same as densematrix *)
 
-    let add_identity (ba, v) =
+    let add_identity (ba, v, _) =
       assert_valid ba;
       c_add_identity v
 
     external c_copy : Obj.t -> Obj.t -> int -> int -> unit
         = "c_bandmatrix_copy"
 
-    let copy (ba1, v1) (ba2, v2) copymu copyml =
+    let copy (ba1, v1, _) (ba2, v2, _) copymu copyml =
       assert_valid ba1;
       assert_valid ba2;
       c_copy v1 v2 copymu copyml
@@ -260,37 +268,43 @@ module BandMatrix =
     external c_scale : float -> Obj.t -> unit
         = "c_bandmatrix_scale"
 
-    let scale a (ba, v) =
+    let scale a (ba, v, _) =
       assert_valid ba;
       c_scale a v
 
     external c_gbtrf : Obj.t -> lint_array -> unit
         = "c_bandmatrix_gbtrf"
 
-    let gbtrf (ba, v) la =
+    let gbtrf (ba, v, _) la =
       assert_valid ba;
       c_gbtrf v la
 
     external c_gbtrs : Obj.t -> lint_array -> real_array -> unit
         = "c_bandmatrix_gbtrs"
 
-    let gbtrs (ba, v) la ra =
+    let gbtrs (ba, v, _) la ra =
       assert_valid ba;
       c_gbtrs v la ra
 
+    (*
     external c_get : Obj.t -> int -> int -> float
         = "c_bandmatrix_get"
 
-    let get (ba, v) i j =
+    let get (ba, v, _) i j =
       assert_valid ba;
       c_get v i j
+    *)
+    let get ((ba : data), _, s_mu) i j = ba.{j, i - j + s_mu}
 
+    (*
     external c_set : Obj.t -> int -> int -> float -> unit
         = "c_bandmatrix_set"
 
-    let set (ba, v) i j e =
+    let set (ba, v, _) i j e =
       assert_valid ba;
       c_set v i j e
+    *)
+    let set ((ba : data), _, s_mu) i j v = ba.{j, i - j + s_mu} <- v
 
     let make n mu ml smu v =
       let r = create n mu ml smu in
@@ -300,31 +314,6 @@ module BandMatrix =
         done
       done;
       r
-
-    (* TODO: rethink this... needed for:
-             cvode/parallel/cvAdvDiff_non_p
-             cvode/serial/cvAdvDiff_bnd
-             cvode/serial/cvAdvDiff_bndL
-             cvode/serial/cvDirectDemo_ls
-             cvodes/serial/cvsAdvDiff_ASAi_bnd
-       Compare with direct (and manually offsetted) access to the underlying
-       array.
-     *)
-    module Col =
-      struct
-        type c
-
-        external c_get_col : Obj.t -> int -> c
-            = "c_bandmatrix_col_get_col"
-
-        let get_col (_, v) i = c_get_col v i
-
-        external get : c -> int -> int -> float
-            = "c_bandmatrix_col_get"
-
-        external set : c -> int -> int -> float -> unit
-            = "c_bandmatrix_col_set"
-      end
   end
 
 module ArrayBandMatrix =

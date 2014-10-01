@@ -477,46 +477,6 @@ module BandMatrix :
      @cvode <node9#ss:band> BandGBTRS
      *)
     val gbtrs : t -> Sundials.LintArray.t -> Sundials.RealArray.t -> unit
-
-    (** {4 Column access} *)
-
-    (** Access banded matrix columns *)
-    module Col :
-      sig
-        (**
-         This type represents a bandmatrix ([DlsMat]) column.
-
-         @cvode <node9#s:dls> BAND_COL
-         *)
-        type c
-
-        (**
-         [get_col a j] returns the diagonal element of the j-th column of the n
-         by n band matrix [a], where 0 <= [j] <= n - 1.
-         The resulting column may be indexed from -mu([a]) to ml([a]).
-
-         @cvode <node9#s:dls> BAND_COL
-         *)
-        val get_col : t -> int -> c
-
-        (**
-         [get c i j] returns the ([i], [j])th entry of the band matrix from
-         which the column [c] has already been selected;
-         provided that [j] - mu(c) <= [i] <= [j] + ml(c).
-
-         @cvode <node9#s:dls> BAND_COL_ELEM
-         *)
-        val get : c -> int -> int -> float
-
-        (**
-         [set c i j v] stores the value [v] at the ([i], [j])th entry of
-         the band matrix from which the column [c] has already been selected;
-         provided that [j] - mu(c) <= [i] <= [j] + ml(c).
-
-         @cvode <node9#s:dls> BAND_COL_ELEM
-         *)
-        val set : c -> int -> int -> float -> unit
-      end
   end
 
 (** {3 Array-based banded matrices}

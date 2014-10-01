@@ -289,7 +289,7 @@ static int jacfn(
 
     args[0] = *backref;
     args[1] = make_jac_arg (t, y, fy, make_triple_tmp (tmp1, tmp2, tmp3));
-    args[2] = c_dls_wrap(Jac, 0); // TODO: cache for efficiency!
+    args[2] = c_dls_dense_wrap(Jac, 0); // TODO: cache for efficiency!
 
     r = Int_val (caml_callbackN (CAML_FN(call_jacfn),
 				 sizeof (args) / sizeof (*args),
@@ -322,7 +322,7 @@ static int bandjacfn(
     Store_field(args[1], RECORD_CVODE_BANDRANGE_MUPPER, Val_long(mupper));
     Store_field(args[1], RECORD_CVODE_BANDRANGE_MLOWER, Val_long(mlower));
     args[2] = make_jac_arg(t, y, fy, make_triple_tmp(tmp1, tmp2, tmp3));
-    args[3] = c_dls_wrap(Jac, 0); // TODO: cache for efficiency!
+    args[3] = c_dls_band_wrap(Jac, 0); // TODO: cache for efficiency!
 
     r = Int_val (caml_callbackN(CAML_FN(call_bandjacfn),
                                 sizeof (args) / sizeof (*args),

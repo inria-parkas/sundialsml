@@ -216,7 +216,7 @@ static int jacfn (long int neq, realtype t, realtype coef,
     args[0] = *backref;
     args[1] = make_jac_arg (t, coef, y, yp, res,
 			    make_triple_tmp (tmp1, tmp2, tmp3));
-    args[2] = c_dls_wrap(jac, 0); // TODO: cache for efficiency!
+    args[2] = c_dls_dense_wrap(jac, 0); // TODO: cache for efficiency!
 
     r = Int_val (caml_callbackN (CAML_FN(call_jacfn),
 				 sizeof (args) / sizeof (*args),
@@ -242,7 +242,7 @@ static int bandjacfn (long int neq, long int mupper, long int mlower,
     Store_field(args[1], RECORD_IDA_BANDRANGE_MLOWER, Val_long(mlower));
     args[2] = make_jac_arg (t, coef, y, yp, res,
 			    make_triple_tmp (tmp1, tmp2, tmp3));
-    args[3] = c_dls_wrap(jac, 0); // TODO: cache for efficiency!
+    args[3] = c_dls_band_wrap(jac, 0); // TODO: cache for efficiency!
 
     r = Int_val (caml_callbackN (CAML_FN(call_bandjacfn),
 				 sizeof (args) / sizeof (*args),
