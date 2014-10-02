@@ -201,7 +201,7 @@ let summarize gnuplot path =
   if gnuplot
   then Printf.printf "# ID\treps\tOCaml\tC\tOCaml/C\tname\n"
   else Printf.printf "# reps\tOCaml\tC\tOCaml/C\tname\n";
-  let num, total =
+  (* let num, total = *) ignore (
     List.fold_left (fun (id, total) (name, record) ->
         let median ls = (analyze (Array.of_list ls)).median in
         let c  = median record.c_times in
@@ -213,9 +213,7 @@ let summarize gnuplot path =
         if gnuplot then Printf.printf "\t%d" (colorof name);
         Printf.printf "\n";
         (id + 1, total +. ratio))
-      (0, 0.0) assocs
-  in
-  ()
+      (0, 0.0) assocs)
 
 let _ =
   match Array.to_list Sys.argv with
