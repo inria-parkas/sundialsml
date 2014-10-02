@@ -58,7 +58,6 @@ module Quad = Cvodes.Quadrature
 module Adj = Cvodes.Adjoint
 module QuadAdj = Cvodes.Adjoint.Quadrature
 module RealArray = Sundials.RealArray
-module Densemat = Dls.DenseMatrix
 let unvec = Sundials.unvec
 
 let printf = Printf.printf
@@ -117,14 +116,14 @@ let jac data { Cvode.jac_y = (y : RealArray.t) } jmat =
   and p2 = data.p.(1)
   and p3 = data.p.(2)
   in
-  let jmatd = Densemat.unwrap jmat in
-  jmatd.{0, 0} <- (-.p1);
-  jmatd.{1, 0} <- (p2*.y.{2});
-  jmatd.{2, 0} <- (p2*.y.{1});
-  jmatd.{0, 1} <- ( p1);
-  jmatd.{1, 1} <- (-.p2*.y.{2}-.2.0*.p3*.y.{1});
-  jmatd.{2, 1} <- (-.p2*.y.{1});
-  jmatd.{1, 2} <- (2.0*.p3*.y.{1})
+  let set = Dls.DenseMatrix.set jmat in
+  set 0 0 (-.p1);
+  set 0 1 (p2*.y.{2});
+  set 0 2 (p2*.y.{1});
+  set 1 0 ( p1);
+  set 1 1 (-.p2*.y.{2}-.2.0*.p3*.y.{1});
+  set 1 2 (-.p2*.y.{1});
+  set 2 1 (2.0*.p3*.y.{1})
 
 (* fQ routine. Compute fQ(t,y). *)
 
@@ -168,15 +167,15 @@ let jacb data { Adj.jac_y = (y : RealArray.t) } jbmat =
   and p2 = data.p.(1)
   and p3 = data.p.(2)
   in
-  let jbmatd = Densemat.unwrap jbmat in
+  let set = Dls.DenseMatrix.set jbmat in
   (* Load JB *)
-  jbmatd.{0, 0} <- (p1);
-  jbmatd.{1, 0} <- (-.p1); 
-  jbmatd.{0, 1} <- (-.p2*.y.{2});
-  jbmatd.{1, 1} <- (p2*.y.{2}+.2.0*.p3*.y.{1});
-  jbmatd.{2, 1} <- (-.2.0*.p3*.y.{1});
-  jbmatd.{0, 2} <- (-.p2*.y.{1});
-  jbmatd.{1, 2} <- (p2*.y.{1})
+  set 0 0 (p1);
+  set 0 1 (-.p1); 
+  set 1 0 (-.p2*.y.{2});
+  set 1 1 (p2*.y.{2}+.2.0*.p3*.y.{1});
+  set 1 2 (-.2.0*.p3*.y.{1});
+  set 2 0 (-.p2*.y.{1});
+  set 2 1 (p2*.y.{1})
 
 (* fQB routine. Compute integrand for quadratures *)
 

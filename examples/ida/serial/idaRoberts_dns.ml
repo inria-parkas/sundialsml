@@ -117,16 +117,16 @@ and jacrob params jj =
       Ida.jac_y=(y : RealArray.t);
       Ida.jac_res=resvec }
     ->
-  let jjd = Dls.DenseMatrix.unwrap jj in
-  jjd.{0, 0} <- (-. 0.04 -. cj);
-  jjd.{0, 1} <- (0.04);
-  jjd.{0, 2} <- (1.);
-  jjd.{1, 0} <- (1.0e4*.y.{2});
-  jjd.{1, 1} <- (-. 1.0e4*.y.{2} -. 6.0e7*.y.{1} -. cj);
-  jjd.{1, 2} <- (1.);
-  jjd.{2, 0} <- (1.0e4*.y.{1});
-  jjd.{2, 1} <- (-.1.0e4*.y.{1});
-  jjd.{2, 2} <- (1.)
+  let set = Dls.DenseMatrix.set jj in
+  set 0 0 (-. 0.04 -. cj);
+  set 1 0 (0.04);
+  set 2 0 (1.);
+  set 0 1 (1.0e4*.y.{2});
+  set 1 1 (-. 1.0e4*.y.{2} -. 6.0e7*.y.{1} -. cj);
+  set 2 1 (1.);
+  set 0 2 (1.0e4*.y.{1});
+  set 1 2 (-.1.0e4*.y.{1});
+  set 2 2 (1.)
 
 and grob t (y : RealArray.t) y' (gout : RealArray.t) =
   let y1 = y.{0}

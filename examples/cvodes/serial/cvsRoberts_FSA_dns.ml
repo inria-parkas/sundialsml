@@ -100,14 +100,14 @@ let jac data { Cvode.jac_y = (y : RealArray.t) } jmat =
   and p2 = data.p.(1)
   and p3 = data.p.(2)
   in
-  let jmatd = Densemat.unwrap jmat in
-  jmatd.{0, 0} <- (-.p1);
-  jmatd.{1, 0} <- (p2*.y.{2});
-  jmatd.{2, 0} <- (p2*.y.{1});
-  jmatd.{0, 1} <- ( p1);
-  jmatd.{1, 1} <- (-.p2*.y.{2}-.2.0*.p3*.y.{1});
-  jmatd.{2, 1} <- (-.p2*.y.{1});
-  jmatd.{1, 2} <- (2.0*.p3*.y.{1})
+  let set = Dls.DenseMatrix.set jmat in
+  set 0 0 (-.p1);
+  set 0 1 (p2*.y.{2});
+  set 0 2 (p2*.y.{1});
+  set 1 0 ( p1);
+  set 1 1 (-.p2*.y.{2}-.2.0*.p3*.y.{1});
+  set 1 2 (-.p2*.y.{1});
+  set 2 1 (2.0*.p3*.y.{1})
  
 (* fS routine. Compute sensitivity r.h.s. *)
 

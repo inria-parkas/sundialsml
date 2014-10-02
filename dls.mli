@@ -67,11 +67,6 @@ module DenseMatrix :
      *)
     val create : int -> int -> t
 
-    (** Returns the underlying {!data} array; changes to either array affect the
-        other (i.e., they share the same underlying storage). Note that this
-        array is accessed column first (unlike through {!get} and {!set}). *)
-    val unwrap : t -> data
-
     (** Separate the underlying {!data} array (whose dimensions are set to
         zero) from the abstract value. This low-level operation is called
         internally when an abstract value in the underlying C library
@@ -382,13 +377,6 @@ module BandMatrix :
      @cvode <node9#ss:band> NewBandMat
      *)
     val create : int -> int -> int -> int -> t
-
-    (** Returns the underlying {!data} array; changes to either array affect the
-        other (i.e., they share the same underlying storage). Note that this
-        array is accessed column first (unlike through {!get} and {!set}).
-
-        TODO: note access calculations (with mu and smu... *)
-    val unwrap : t -> data
 
     (** Separate the underlying {!data} array (whose dimensions are set to
         zero) from the abstract value. This low-level operation is called

@@ -67,14 +67,14 @@ let g t (y : RealArray.t) (gout : RealArray.t) =
   gout.{1} <- y.{2} -. 0.01
 
 let jac {Cvode.jac_y = (y : RealArray.t)} jmat =
-  let jmatd = Dls.DenseMatrix.unwrap jmat in
-  jmatd.{0, 0} <- (-0.04);
-  jmatd.{1, 0} <- (1.0e4 *. y.{2});
-  jmatd.{2, 0} <- (1.0e4 *. y.{1});
-  jmatd.{0, 1} <- (0.04); 
-  jmatd.{1, 1} <- (-1.0e4 *. y.{2} -. 6.0e7 *. y.{1});
-  jmatd.{2, 1} <- (-1.0e4 *. y.{1});
-  jmatd.{1, 2} <- (6.0e7 *. y.{1})
+  let set = Dls.DenseMatrix.set jmat in
+  set 0 0 (-0.04);
+  set 0 1 (1.0e4 *. y.{2});
+  set 0 2 (1.0e4 *. y.{1});
+  set 1 0 (0.04); 
+  set 1 1 (-1.0e4 *. y.{2} -. 6.0e7 *. y.{1});
+  set 1 2 (-1.0e4 *. y.{1});
+  set 2 1 (6.0e7 *. y.{1})
   
 let atol = [| atol1; atol2; atol3 |]
 let ewt (y : RealArray.t) (w :RealArray.t) =

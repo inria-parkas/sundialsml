@@ -38,7 +38,12 @@ module DenseMatrix =
       if i <= 0 || j <= 0 then failwith "Both M and N must be positive";
       c_create i j
 
-    let unwrap { payload } = payload (* TODO: Drop this function ? *)
+    (* Allowing direct access is not safe because the underlying data may
+       have been relinquished. Relinquishing by setting the dims of the
+       bigarray to 0 is tempting but error prone and the mechanism can
+       be circumvented using Bigarray.Array2.sub (see:
+         https://groups.google.com/d/msg/fa.caml/ROr_PifT_44/aqQ8Z0TWzH8J). *)
+    let unwrap { payload } = payload
 
     let relinquish v = v.valid <- false
 
@@ -225,7 +230,12 @@ module BandMatrix =
       if i <= 0 || j <= 0 then failwith "Both M and N must be positive";
       c_create i j
 
-    let unwrap { payload } = payload (* TODO: Drop this function ? *)
+    (* Allowing direct access is not safe because the underlying data may
+       have been relinquished. Relinquishing by setting the dims of the
+       bigarray to 0 is tempting but error prone and the mechanism can
+       be circumvented using Bigarray.Array2.sub (see:
+         https://groups.google.com/d/msg/fa.caml/ROr_PifT_44/aqQ8Z0TWzH8J). *)
+    let unwrap { payload } = payload
 
     let relinquish v = v.valid <- false
 
