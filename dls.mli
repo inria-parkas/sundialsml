@@ -287,6 +287,9 @@ module ArrayDenseMatrix :
      *)
     val getrs : t -> Sundials.LintArray.t -> Sundials.RealArray.t -> unit
 
+    (** Like {!getrs} but stores [b] starting at the given offset. *)
+    val getrs' : t -> Sundials.LintArray.t -> Sundials.RealArray.t -> int -> unit
+
     (**
      [potrf a] performs the Cholesky factorization of a real symmetric positive
      n by n matrix.

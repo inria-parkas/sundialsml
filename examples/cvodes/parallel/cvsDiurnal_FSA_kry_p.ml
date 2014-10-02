@@ -760,8 +760,7 @@ let psolve data jac_arg solve_arg ((zdata : RealArray.t), _, _) =
      in P and pivot data in pivot, and return the solution in z. *)
   for lx = 0 to mxsub - 1 do
     for ly = 0 to mysub - 1 do
-      Direct.getrs p.(lx).(ly) pivot.(lx).(ly)
-        (Array1.sub zdata (lx*nvars + ly*nvmxsub) nvars)
+      Direct.getrs' p.(lx).(ly) pivot.(lx).(ly) zdata (lx*nvars + ly*nvmxsub)
     done
   done
 

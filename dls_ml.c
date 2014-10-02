@@ -293,6 +293,30 @@ CAMLprim value c_arraydensematrix_getrs(value va, value vp, value vb)
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value c_arraydensematrix_getrs_off(value va, value vp,
+					    value vb, value vboff)
+{
+    CAMLparam4(va, vp, vb, vboff);
+
+    struct caml_ba_array *ba = ARRAY2_DATA(va);
+    intnat m = ba->dim[1];
+    intnat blen = ARRAY1_LEN(vb);
+    intnat boff = Int_val(vboff);
+
+#if CHECK_MATRIX_ACCESS == 1
+    intnat n = ba->dim[0];
+    if (m != n)
+	caml_invalid_argument("ArrayDenseMatrix.getrs: matrix not square.");
+    if (ARRAY1_LEN(vb) - boff < n)
+	caml_invalid_argument("ArrayDenseMatrix.getrs: b is too small.");
+    if (ARRAY1_LEN(vp) < n)
+	caml_invalid_argument("ArrayDenseMatrix.getrs: p is too small.");
+#endif
+
+    denseGETRS(ARRAY2_ACOLS(va), m, LONG_ARRAY(vp), REAL_ARRAY(vb) + boff);
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value c_arraydensematrix_potrf(value va)
 {
     CAMLparam1(va);

@@ -193,6 +193,9 @@ module ArrayDenseMatrix =
     external getrs : t -> lint_array -> real_array -> unit
         = "c_arraydensematrix_getrs"
 
+    external getrs' : t -> lint_array -> real_array -> int -> unit
+        = "c_arraydensematrix_getrs_off"
+
     external potrf : t -> unit
         = "c_arraydensematrix_potrf"
 
