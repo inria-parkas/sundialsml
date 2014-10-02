@@ -22,12 +22,14 @@ module DenseMatrix =
   struct
     type data = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
 
-    (* (Bigarray into data, DlsMat with finalizer) *)
-    type t = data * Obj.t
+    (* Must correspond with dls_ml.h:dls_densematrix_index *)
+    type t = {
+      payload : data;
+      dlsmat  : Obj.t;
+      mutable valid : bool;
+    }
 
     exception Relinquished
-    let assert_valid ba =
-      if Bigarray.Array2.dim1 ba = 0 then raise Relinquished
 
     external c_create : int -> int -> t
         = "c_densematrix_new_dense_mat"
@@ -36,118 +38,119 @@ module DenseMatrix =
       if i <= 0 || j <= 0 then failwith "Both M and N must be positive";
       c_create i j
 
-    let unwrap = fst
+    let unwrap { payload } = payload (* TODO: Drop this function ? *)
 
-    external c_relinquish : Obj.t -> unit
-        = "c_dls_relinquish"
-
-    let relinquish (_, v) = c_relinquish v
+    let relinquish v = v.valid <- false
 
     external c_size : Obj.t -> (int * int)
         = "c_densematrix_size"
 
-    let size (ba, v) =
-      assert_valid ba;
-      c_size v
+    let size { dlsmat; valid } =
+      if not valid then raise Relinquished;
+      c_size dlsmat
 
     external c_print        : Obj.t -> unit
         = "c_densematrix_print_mat"
 
-    let print (ba, v) =
-      assert_valid ba;
-      c_print v
+    let print { dlsmat; valid } =
+      if not valid then raise Relinquished;
+      c_print dlsmat
 
     external c_set_to_zero  : Obj.t -> unit
         = "c_densematrix_set_to_zero"
 
-    let set_to_zero (ba, v) =
-      assert_valid ba;
-      c_set_to_zero v
+    let set_to_zero { dlsmat; valid } =
+      if not valid then raise Relinquished;
+      c_set_to_zero dlsmat
 
     external c_add_identity : Obj.t -> unit
         = "c_densematrix_add_identity"
 
-    let add_identity (ba, v) =
-      assert_valid ba;
-      c_add_identity v
+    let add_identity { dlsmat; valid } =
+      if not valid then raise Relinquished;
+      c_add_identity dlsmat
 
     external c_copy     : Obj.t -> Obj.t -> unit
         = "c_densematrix_copy"
 
-    let copy (ba1, v1) (ba2, v2) =
-      assert_valid ba1;
-      assert_valid ba2;
-      c_copy v1 v2
+    let copy { dlsmat=dlsmat1; valid=valid1 }
+             { dlsmat=dlsmat2; valid=valid2 } =
+      if not (valid1 && valid2) then raise Relinquished;
+      c_copy dlsmat1 dlsmat2
 
     external c_scale  : float -> Obj.t -> unit
         = "c_densematrix_scale"
 
-    let scale a (ba, v) =
-      assert_valid ba;
-      c_scale a v
+    let scale a { dlsmat; valid } =
+      if not valid then raise Relinquished;
+      c_scale a dlsmat
 
     external c_getrf  : Obj.t -> lint_array -> unit
         = "c_densematrix_getrf"
 
-    let getrf (ba, v) la =
-      assert_valid ba;
-      c_getrf v la
+    let getrf { dlsmat; valid } la =
+      if not valid then raise Relinquished;
+      c_getrf dlsmat la
 
     external c_getrs  : Obj.t -> lint_array -> real_array -> unit
         = "c_densematrix_getrs"
 
-    let getrs (ba, v) la ra =
-      assert_valid ba;
-      c_getrs v la ra
+    let getrs { dlsmat; valid } la ra =
+      if not valid then raise Relinquished;
+      c_getrs dlsmat la ra
 
     external c_potrf  : Obj.t -> unit
         = "c_densematrix_potrf"
 
-    let potrf (ba, v) =
-      assert_valid ba;
-      c_potrf v
+    let potrf { dlsmat; valid } =
+      if not valid then raise Relinquished;
+      c_potrf dlsmat
 
     external c_potrs  : Obj.t -> real_array -> unit
         = "c_densematrix_potrs"
 
-    let potrs (ba, v) ra =
-      assert_valid ba;
-      c_potrs v ra
+    let potrs { dlsmat; valid } ra =
+      if not valid then raise Relinquished;
+      c_potrs dlsmat ra
 
     external c_geqrf  : Obj.t -> real_array -> real_array -> unit
         = "c_densematrix_geqrf"
 
-    let geqrf (ba, v) ra1 ra2 =
-      assert_valid ba;
-      c_geqrf v ra1 ra2
+    let geqrf { dlsmat; valid } ra1 ra2 =
+      if not valid then raise Relinquished;
+      c_geqrf dlsmat ra1 ra2
 
     external c_ormqr
         : Obj.t -> (real_array * real_array * real_array * real_array) -> unit
         = "c_densematrix_ormqr"
 
     let ormqr ~a ~beta ~v ~w ~work =
-      assert_valid (fst a);
-      c_ormqr (snd a) (beta, v, w, work)
+      if not a.valid then raise Relinquished;
+      c_ormqr a.dlsmat (beta, v, w, work)
 
     (*
     external c_get : Obj.t -> int -> int -> float
         = "c_densematrix_get"
 
-    let get (ba, v) i j =
-      assert_valid ba;
-      c_get v i j
+    let get { dlsmat; valid } i j =
+      if not valid then raise Relinquished;
+      c_get dlsmat i j
     *)
-    let get ((ba : data), v) i j = ba.{j, i}
+    let get { payload; valid } i j =
+      if not valid then raise Relinquished;
+      payload.{j, i}
 
     (*
     external c_set : Obj.t -> int -> int -> float -> unit
         = "c_densematrix_set"
 
-    let set (ba, v) i j e =
-      assert_valid ba;
-      c_set v i j e
+    let set { dlsmat; valid } i j e =
+      if not valid then raise Relinquished;
+      c_set dlsmat i j e
     *)
-    let set ((ba : data), v) i j v = ba.{j, i} <- v
+    let set { payload; valid } i j v =
+      if not valid then raise Relinquished;
+      payload.{j, i} <- v
 
     let make m n v =
       let r = create m n in
@@ -205,12 +208,15 @@ module BandMatrix =
   struct
     type data = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
 
-    (* (Bigarray into data, DlsMat with finalizer, smu) *)
-    type t = data * Obj.t * int
+    (* Must correspond with dls_ml.h:dls_bandmatrix_index *)
+    type t = {
+      payload : data;
+      dlsmat  : Obj.t;
+      smu     : int;
+      mutable valid : bool;
+    }
 
     exception Relinquished
-    let assert_valid ba =
-      if Bigarray.Array2.dim1 ba = 0 then raise Relinquished
 
     external c_create : int -> int -> int -> int -> t
         = "c_bandmatrix_new_band_mat"
@@ -219,92 +225,93 @@ module BandMatrix =
       if i <= 0 || j <= 0 then failwith "Both M and N must be positive";
       c_create i j
 
-    let unwrap (ba, _, _) = ba
+    let unwrap { payload } = payload (* TODO: Drop this function ? *)
 
-    external c_relinquish : Obj.t -> unit
-        = "c_dls_relinquish"
-
-    let relinquish (_, v, _) = c_relinquish v
+    let relinquish v = v.valid <- false
 
     external c_size : Obj.t -> (int * int * int * int)
         = "c_bandmatrix_size"
 
-    let size (ba, v, _) =
-      assert_valid ba;
-      c_size v
+    let size { dlsmat; valid } =
+      if not valid then raise Relinquished;
+      c_size dlsmat
 
     external c_print          : Obj.t -> unit
         = "c_densematrix_print_mat"
           (* NB: same as densematrix *)
 
-    let print (ba, v, _) =
-      assert_valid ba;
-      c_print v
+    let print { dlsmat; valid } =
+      if not valid then raise Relinquished;
+      c_print dlsmat
 
     external c_set_to_zero    : Obj.t -> unit
         = "c_densematrix_set_to_zero"
           (* NB: same as densematrix *)
 
-    let set_to_zero (ba, v, _) =
-      assert_valid ba;
-      c_set_to_zero v
+    let set_to_zero { dlsmat; valid } =
+      if not valid then raise Relinquished;
+      c_set_to_zero dlsmat
 
     external c_add_identity : Obj.t -> unit
         = "c_densematrix_add_identity"
           (* NB: same as densematrix *)
 
-    let add_identity (ba, v, _) =
-      assert_valid ba;
-      c_add_identity v
+    let add_identity { dlsmat; valid } =
+      if not valid then raise Relinquished;
+      c_add_identity dlsmat
 
     external c_copy : Obj.t -> Obj.t -> int -> int -> unit
         = "c_bandmatrix_copy"
 
-    let copy (ba1, v1, _) (ba2, v2, _) copymu copyml =
-      assert_valid ba1;
-      assert_valid ba2;
-      c_copy v1 v2 copymu copyml
+    let copy { dlsmat=dlsmat1; valid=valid1 }
+             { dlsmat=dlsmat2; valid=valid2 } copymu copyml =
+      if not (valid1 && valid2) then raise Relinquished;
+      c_copy dlsmat1 dlsmat1 copymu copyml
 
     external c_scale : float -> Obj.t -> unit
         = "c_bandmatrix_scale"
 
-    let scale a (ba, v, _) =
-      assert_valid ba;
-      c_scale a v
+    let scale a { dlsmat; valid } =
+      if not valid then raise Relinquished;
+      c_scale a dlsmat
 
     external c_gbtrf : Obj.t -> lint_array -> unit
         = "c_bandmatrix_gbtrf"
 
-    let gbtrf (ba, v, _) la =
-      assert_valid ba;
-      c_gbtrf v la
+    let gbtrf { dlsmat; valid } la =
+      if not valid then raise Relinquished;
+      c_gbtrf dlsmat la
 
     external c_gbtrs : Obj.t -> lint_array -> real_array -> unit
         = "c_bandmatrix_gbtrs"
 
-    let gbtrs (ba, v, _) la ra =
-      assert_valid ba;
-      c_gbtrs v la ra
+    let gbtrs { dlsmat; valid } la ra =
+      if not valid then raise Relinquished;
+      c_gbtrs dlsmat la ra
 
     (*
     external c_get : Obj.t -> int -> int -> float
         = "c_bandmatrix_get"
 
-    let get (ba, v, _) i j =
-      assert_valid ba;
-      c_get v i j
+    let get { dlsmat; valid } i j =
+      if not valid then raise Relinquished;
+      c_get dlsmat i j
     *)
-    let get ((ba : data), _, s_mu) i j = ba.{j, i - j + s_mu}
+    let get { payload; valid; smu } i j =
+      if not valid then raise Relinquished;
+      payload.{j, i - j + smu}
 
     (*
     external c_set : Obj.t -> int -> int -> float -> unit
         = "c_bandmatrix_set"
 
-    let set (ba, v, _) i j e =
-      assert_valid ba;
-      c_set v i j e
+    let set { dlsmat; valid } i j e =
+      if not valid then raise Relinquished;
+      c_set dlsmat i j e
     *)
-    let set ((ba : data), _, s_mu) i j v = ba.{j, i - j + s_mu} <- v
+    let set { payload; valid; smu } i j v =
+      if not valid then raise Relinquished;
+      payload.{j, i - j + smu} <- v
 
     let make n mu ml smu v =
       let r = create n mu ml smu in

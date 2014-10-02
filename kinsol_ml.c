@@ -248,7 +248,6 @@ static int jacfn(
     r = Int_val (caml_callbackN (CAML_FN(call_jacfn),
 				 sizeof (args) / sizeof (*args),
 				 args));
-    c_dls_relinquish(Field(args[2], 1)); // TODO: cache for efficiency!
 
     CAMLreturnT(int, r);
 }
@@ -279,7 +278,6 @@ static int bandjacfn(
     r = Int_val (caml_callbackN(CAML_FN(call_bandjacfn),
                                 sizeof (args) / sizeof (*args),
                                 args));
-    c_dls_relinquish(Field(args[3], 1)); // TODO: cache for efficiency!
 
     CAMLreturnT(int, r);
 }

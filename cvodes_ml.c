@@ -545,7 +545,6 @@ static int bjacfn(
     retcode = Int_val (caml_callbackN(CAML_FN(call_bjacfn),
                                       sizeof (args) / sizeof (*args),
                                       args));
-    c_dls_relinquish(Field(args[2], 1)); // TODO: cache for efficiency!
 
     CAMLreturnT(int, retcode);
 }
@@ -579,7 +578,6 @@ static int bbandjacfn(
     r = Int_val (caml_callbackN(CAML_FN(call_bbandjacfn),
                                 sizeof (args) / sizeof (*args),
                                 args));
-    c_dls_relinquish(Field(args[3], 1)); // TODO: cache for efficiency!
 
     CAMLreturnT(int, r);
 }

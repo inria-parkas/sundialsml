@@ -39,21 +39,8 @@ CAMLprim value c_dls_init_module (value exns)
 
 /* Shared matrix functions */
 
-CAMLprim value c_dls_relinquish(value vm)
-{
-    CAMLparam1(vm);
-
-    struct caml_ba_array *ba = Caml_ba_array_val(Field(vm, 2));
-    ba->dim[0] = 0;
-    ba->dim[1] = 0;
-    ba->data = NULL;
-
-    CAMLreturn (Val_unit);
-}
-
 static void finalize_dlsmat(value va)
 {
-    c_dls_relinquish(va);
     DestroyMat(DLSMAT(va));
 }
 
@@ -63,21 +50,19 @@ CAMLprim value c_dls_dense_wrap(DlsMat a, int finalize)
 {
     CAMLparam0();
     CAMLlocal3(vv, va, vr);
-    mlsize_t approx_size = a->ldim * a->N * sizeof(realtype) + 2;
+    mlsize_t approx_size = a->ldim * a->N * sizeof(realtype) + 1;
 
     va = caml_ba_alloc_dims(BIGARRAY_FLOAT, 2, a->data, a->N, a->ldim);
 
     /* a DlsMat is a pointer to a struct _DlsMat */
-    vv = caml_alloc_final(3, finalize ? &finalize_dlsmat : NULL,
+    vv = caml_alloc_final(2, finalize ? &finalize_dlsmat : NULL,
 			  approx_size, approx_size * 20);
     DLSMAT(vv) = a;
 
-    /* Hold onto the bigarray for relinquishment in the finalizer. */
-    Field(vv, 2) = va;
-
-    vr = caml_alloc_tuple(2);
-    Store_field(vr, 0, va);
-    Store_field(vr, 1, vv);
+    vr = caml_alloc_tuple(3);
+    Store_field(vr, RECORD_DLS_DENSEMATRIX_PAYLOAD, va);
+    Store_field(vr, RECORD_DLS_DENSEMATRIX_DLSMAT, vv);
+    Store_field(vr, RECORD_DLS_DENSEMATRIX_VALID, Val_bool(1));
 
     CAMLreturn(vr);
 }
@@ -401,22 +386,20 @@ CAMLprim value c_dls_band_wrap(DlsMat a, int finalize)
 {
     CAMLparam0();
     CAMLlocal3(vv, va, vr);
-    mlsize_t approx_size = a->ldim * a->N * sizeof(realtype) + 3;
+    mlsize_t approx_size = a->ldim * a->N * sizeof(realtype) + 2;
 
     va = caml_ba_alloc_dims(BIGARRAY_FLOAT, 2, a->data, a->N, a->ldim);
 
     /* a DlsMat is a pointer to a struct _DlsMat */
-    vv = caml_alloc_final(3, finalize ? &finalize_dlsmat : NULL,
+    vv = caml_alloc_final(2, finalize ? &finalize_dlsmat : NULL,
 			  approx_size, approx_size * 20);
     DLSMAT(vv) = a;
 
-    /* Hold onto the bigarray for relinquishment in the finalizer. */
-    Field(vv, 2) = va;
-
-    vr = caml_alloc_tuple(3);
-    Store_field(vr, 0, va);
-    Store_field(vr, 1, vv);
-    Store_field(vr, 2, Val_int(a->s_mu));
+    vr = caml_alloc_tuple(4);
+    Store_field(vr, RECORD_DLS_BANDMATRIX_PAYLOAD, va);
+    Store_field(vr, RECORD_DLS_BANDMATRIX_DLSMAT, vv);
+    Store_field(vr, RECORD_DLS_BANDMATRIX_SMU, Val_int(a->s_mu));
+    Store_field(vr, RECORD_DLS_BANDMATRIX_VALID, Val_bool(1));
 
     CAMLreturn(vr);
 }

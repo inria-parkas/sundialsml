@@ -53,6 +53,8 @@ value sundials_ml_weak_get (value ar, value n);
 
 #define Val_none (Val_int(0))
 #define Some_val(v) (Field((v), 0))
+#define Store_some(dest, v) { dest = caml_alloc_small(1, 0); \
+			      Field(dest, 0) = v; }
 
 #define ARRAY2_DATA(v)  (Caml_ba_array_val(Field((v), 0)))
 #define ARRAY2_ACOLS(v) ((realtype **) Data_custom_val(Field((v), 1)))
