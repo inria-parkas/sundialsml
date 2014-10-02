@@ -47,8 +47,8 @@ module DenseMatrix :
     type data = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
 
     (** This exception is thrown if an operation is passed a value on which
-        {!relinquish} has been called. *)
-    exception Relinquished
+        {!invalidate} has been called. *)
+    exception Invalidated
 
     (** {4 Basic access} *)
 
@@ -71,7 +71,7 @@ module DenseMatrix :
         zero) from the abstract value. This low-level operation is called
         internally when an abstract value in the underlying C library
         ceases to exist. *)
-    val relinquish : t -> unit
+    val invalidate : t -> unit
 
     (**
      [m, n = size a] returns the number of columns, [m], and rows, [n], of the
@@ -354,8 +354,8 @@ module BandMatrix :
     type data = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
 
     (** This exception is thrown if an operation is passed a value on which
-        {!relinquish} has been called. *)
-    exception Relinquished
+        {!invalidate} has been called. *)
+    exception Invalidated
 
     (** {4 Basic access} *)
 
@@ -385,7 +385,7 @@ module BandMatrix :
         zero) from the abstract value. This low-level operation is called
         internally when an abstract value in the underlying C library
         ceases to exist. *)
-    val relinquish : t -> unit
+    val invalidate : t -> unit
 
     (**
      [n, mu, ml, smu = size a] returns the size ([n]), upper bandwidth ([mu]),

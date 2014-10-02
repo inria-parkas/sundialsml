@@ -716,13 +716,13 @@ module Adjoint =
                                          | Some f -> BBandCallback f
          *)
         
-        let relinquish_callback (type d) (type k) (session : (d, k) session) =
+        let invalidate_callback (type d) (type k) (session : (d, k) session) =
           match session.ls_callbacks with
           | BDenseCallback ({ dmat = Some d } as cb) ->
-              Dls.DenseMatrix.relinquish d;
+              Dls.DenseMatrix.invalidate d;
               cb.dmat <- None
           | BBandCallback  ({ bmat = Some d } as cb) ->
-              Dls.BandMatrix.relinquish d;
+              Dls.BandMatrix.invalidate d;
               cb.bmat <- None
           | _ -> ()
       end
@@ -818,7 +818,7 @@ module Adjoint =
         = "c_idas_adj_bsession_finalize"
 
     let bsession_finalize s =
-      Dls.relinquish_callback s;
+      Dls.invalidate_callback s;
       c_bsession_finalize s
 
     external c_init_backward

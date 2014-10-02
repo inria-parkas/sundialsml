@@ -134,18 +134,18 @@ module Dls =
                                              { bjacfn = f; bmat = None });
       c_dls_lapack_band (session, neqs) p.mupper p.mlower (jac <> None)
 
-    let relinquish_callback (type d) (type k) (session : (d, k) session) =
+    let invalidate_callback (type d) (type k) (session : (d, k) session) =
       match session.ls_callbacks with
       | DenseCallback ({ dmat = Some d } as cb) ->
-          Dls.DenseMatrix.relinquish d;
+          Dls.DenseMatrix.invalidate d;
           cb.dmat <- None
       | BandCallback  ({ bmat = Some d } as cb) ->
-          Dls.BandMatrix.relinquish d;
+          Dls.BandMatrix.invalidate d;
           cb.bmat <- None
       | _ -> ()
 
     let set_dense_jac_fn s fjacfn =
-      relinquish_callback s;
+      invalidate_callback s;
       s.ls_callbacks <- DenseCallback { jacfn = fjacfn; dmat = None };
       set_dense_jac_fn s
 
@@ -154,7 +154,7 @@ module Dls =
 
     let clear_dense_jac_fn s =
       match s.ls_callbacks with
-      | DenseCallback _ -> (relinquish_callback s;
+      | DenseCallback _ -> (invalidate_callback s;
                             s.ls_callbacks <- NoCallbacks;
                             clear_dense_jac_fn s)
       | _ -> failwith "dense linear solver not in use"
@@ -163,7 +163,7 @@ module Dls =
         = "c_cvode_dls_set_band_jac_fn"
 
     let set_band_jac_fn s f =
-      relinquish_callback s;
+      invalidate_callback s;
       s.ls_callbacks <- BandCallback { bjacfn = f; bmat = None };
       set_band_jac_fn s
 
@@ -172,7 +172,7 @@ module Dls =
 
     let clear_band_jac_fn s =
       match s.ls_callbacks with
-      | BandCallback _ -> (relinquish_callback s;
+      | BandCallback _ -> (invalidate_callback s;
                            s.ls_callbacks <- NoCallbacks;
                            clear_band_jac_fn s)
       | _ -> failwith "banded linear solver not in use"
@@ -445,7 +445,7 @@ external c_session_finalize : ('a, 'kind) session -> unit
     = "c_cvode_session_finalize"
 
 let session_finalize s =
-  Dls.relinquish_callback s;
+  Dls.invalidate_callback s;
   c_session_finalize s
 
 external c_init
@@ -494,7 +494,7 @@ external c_reinit
     : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
     = "c_cvode_reinit"
 let reinit session ?iter_type ?roots t0 y0 =
-  Dls.relinquish_callback session;
+  Dls.invalidate_callback session;
   c_reinit session t0 y0;
   (match iter_type with
    | None -> ()
