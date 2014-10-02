@@ -38,8 +38,6 @@ module RealArray =
     let layout = Bigarray.c_layout
     type t = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
 
-    let empty : t = Bigarray.Array1.create kind layout 0
-
     let create : int -> t = Bigarray.Array1.create kind layout
     let of_array : float array -> t = Bigarray.Array1.of_array kind layout
 
@@ -393,7 +391,6 @@ module Roots =
       let length = length
     end)
 
-    let empty = create 0
     let make n x = A.make n x
     let copy = A.copy
     let fold_left = A.fold_left

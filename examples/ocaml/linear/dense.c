@@ -83,6 +83,9 @@ int main(int argc, char** argv)
     printf("getrs: s=\n");
     print_vec(s, NROWS);
 
+    DestroyMat(a);
+    DestroyMat(b);
+
     return 0;
 }
 

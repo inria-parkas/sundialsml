@@ -72,9 +72,6 @@ module RealArray :
     (** A {{:OCAML_DOC_ROOT(Bigarray.Array1)} (Bigarray)} vector of floats. *)
     type t = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
 
-    (** An array with 0 elements. *)
-    val empty : t
-
     (** [make n x] returns an array with [n] elements each initialized to x. *)
     val make : int -> float -> t
 
@@ -234,9 +231,6 @@ module Roots :
       | NoRoot      (** No root (0)       *)
       | Rising      (** Rising root (1)   *)
       | Falling     (** Falling root (-1) *)
-
-    (** An array with 0 elements. *)
-    val empty : t
 
     (** [create n] returns an array with [n] elements, each set to NoRoot. *)
     val create : int -> t
