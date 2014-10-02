@@ -290,7 +290,7 @@ static int jacfn(
     WEAK_DEREF (session, *backref);
 
     // assert(session.ls_callbacks = DenseCallback cb)
-    cb = Field(CVODE_CALLBACKS_FROM_ML(session), 0);
+    cb = Field(CVODE_LS_CALLBACKS_FROM_ML(session), 0);
     dmat = Field(cb, 1);
     if (dmat == Val_none) {
 	Store_some(dmat, c_dls_dense_wrap(Jac, 0));
@@ -325,7 +325,7 @@ static int bandjacfn(
     WEAK_DEREF (session, *backref);
 
     // assert(session.ls_callbacks = BandCallback cb)
-    cb = Field(CVODE_CALLBACKS_FROM_ML(session), 0);
+    cb = Field(CVODE_LS_CALLBACKS_FROM_ML(session), 0);
     bmat = Field(cb, 1);
     if (bmat == Val_none) {
 	Store_some(bmat, c_dls_band_wrap(Jac, 0));

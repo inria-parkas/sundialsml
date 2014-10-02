@@ -53,9 +53,6 @@ enum callback_index {
     IX_call_errh,
     IX_call_infoh,
 
-    IX_call_jacfn,
-    IX_call_bandjacfn,
-
     IX_call_precsolvefn,
     IX_call_precsetupfn,
     IX_call_jactimesfn,
@@ -76,6 +73,24 @@ CAMLprim value c_kinsol_init_module (value cbs, value exns)
     CAMLreturn (Val_unit);
 }
 
+static int check_exception(value session, value r)
+{
+    CAMLparam2(session, r);
+    CAMLlocal1(exn);
+
+    if (!Is_exception_result(r)) return 0;
+
+    r = Extract_exception(r);
+
+    if (Field(r, 0) == SUNDIALS_EXN (RecoverableFailure))
+	CAMLreturnT (int, 1);
+
+    /* Unrecoverable error.  Save the exception and return -1.  */
+    exn = caml_alloc_small (1,0);
+    Field (exn, 0) = r;
+    Store_field (session, RECORD_KINSOL_SESSION_EXN_TEMP, exn);
+    CAMLreturnT (int, -1);
+}
 
 static void errh(
 	int error_code,
@@ -237,19 +252,25 @@ static int jacfn(
 	N_Vector tmp2)
 {
     CAMLparam0();
-    CAMLlocalN (args, 3);
-    int r;
+    CAMLlocalN (args, 2);
+    CAMLlocal4(session, cb, dmat, r);
     value *backref = user_data;
+    WEAK_DEREF (session, *backref);
 
-    args[0] = *backref;
-    args[1] = make_jac_arg(u, fu, make_double_tmp(tmp1, tmp2));
-    args[2] = c_dls_dense_wrap(Jac, 0); // TODO: cache for efficiency!
+    // assert(session.ls_callbacks = DenseCallback cb)
+    cb = Field(KINSOL_LS_CALLBACKS_FROM_ML(session), 0);
+    dmat = Field(cb, 1);
+    if (dmat == Val_none) {
+	Store_some(dmat, c_dls_dense_wrap(Jac, 0));
+	Store_field(cb, 1, dmat);
+    }
 
-    r = Int_val (caml_callbackN (CAML_FN(call_jacfn),
-				 sizeof (args) / sizeof (*args),
-				 args));
+    args[0] = make_jac_arg(u, fu, make_double_tmp(tmp1, tmp2));
+    args[1] = Some_val(dmat);
 
-    CAMLreturnT(int, r);
+    r = caml_callbackN_exn (Field(cb, 0), sizeof (args) / sizeof (*args), args);
+
+    CAMLreturnT(int, check_exception(session, r));
 }
 
 static int bandjacfn(
@@ -264,22 +285,28 @@ static int bandjacfn(
 	N_Vector tmp2)
 {
     CAMLparam0();
-    CAMLlocalN(args, 4);
-    int r;
+    CAMLlocalN(args, 3);
+    CAMLlocal4(session, cb, bmat, r);
     value *backref = user_data;
+    WEAK_DEREF (session, *backref);
 
-    args[0] = *backref;
-    args[1] = caml_alloc_tuple(RECORD_KINSOL_BANDRANGE_SIZE);
-    Store_field(args[1], RECORD_KINSOL_BANDRANGE_MUPPER, Val_long(mupper));
-    Store_field(args[1], RECORD_KINSOL_BANDRANGE_MLOWER, Val_long(mlower));
-    args[2] = make_jac_arg(u, fu, make_double_tmp(tmp1, tmp2));
-    args[3] = c_dls_band_wrap(Jac, 0); // TODO: cache for efficiency!
+    // assert(session.ls_callbacks = BandCallback cb)
+    cb = Field(KINSOL_LS_CALLBACKS_FROM_ML(session), 0);
+    bmat = Field(cb, 1);
+    if (bmat == Val_none) {
+	Store_some(bmat, c_dls_band_wrap(Jac, 0));
+	Store_field(cb, 1, bmat);
+    }
 
-    r = Int_val (caml_callbackN(CAML_FN(call_bandjacfn),
-                                sizeof (args) / sizeof (*args),
-                                args));
+    args[0] = caml_alloc_tuple(RECORD_KINSOL_BANDRANGE_SIZE);
+    Store_field(args[0], RECORD_KINSOL_BANDRANGE_MUPPER, Val_long(mupper));
+    Store_field(args[0], RECORD_KINSOL_BANDRANGE_MLOWER, Val_long(mlower));
+    args[1] = make_jac_arg(u, fu, make_double_tmp(tmp1, tmp2));
+    args[2] = Some_val(bmat);
 
-    CAMLreturnT(int, r);
+    r = caml_callbackN_exn (Field(cb, 0), sizeof (args) / sizeof (*args), args);
+
+    CAMLreturnT(int, check_exception(session, r));
 }
 
 static int precsetupfn(

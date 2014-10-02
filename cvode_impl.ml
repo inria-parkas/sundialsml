@@ -258,11 +258,25 @@ module AdjointTypes' = struct
       -> Dls.DenseMatrix.t
       -> unit
 
+    (* These fields are accessed from cvodes_ml.c *)
+    type dense_jac_callback =
+      {
+        jacfn: dense_jac_fn;
+        mutable dmat : Dls.DenseMatrix.t option
+      }
+
     type band_jac_fn =
       bandrange
       -> (RealArray.t triple_tmp, RealArray.t) jacobian_arg
       -> Dls.BandMatrix.t
       -> unit
+
+    (* These fields are accessed from cvodes_ml.c *)
+    type band_jac_callback =
+      {
+        bjacfn: band_jac_fn;
+        mutable bmat : Dls.BandMatrix.t option
+      }
   end
 
   (* Ditto. *)
@@ -387,10 +401,10 @@ and (_, _) linsolv_callbacks =
       -> ('a, 'k) linsolv_callbacks
 
   | BDenseCallback :
-      AdjointTypes'.DlsTypes.dense_jac_fn
+      AdjointTypes'.DlsTypes.dense_jac_callback
       -> (Nvector_serial.data, Nvector_serial.kind) linsolv_callbacks
   | BBandCallback :
-      AdjointTypes'.DlsTypes.band_jac_fn
+      AdjointTypes'.DlsTypes.band_jac_callback
       -> (Nvector_serial.data, Nvector_serial.kind) linsolv_callbacks
   | BSpilsCallback :
       'a AdjointTypes'.SpilsTypes.user_callbacks

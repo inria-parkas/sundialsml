@@ -61,14 +61,6 @@ type integrator_stats = {
     current_time : float
   }
 
-external c_session_finalize : ('a, 'kind) session -> unit
-    = "c_cvode_session_finalize"
-
-external c_init
-    : ('a, 'k) session Weak.t -> lmm -> ('a, 'k) iter -> ('a, 'k) nvector
-      -> float -> (cvode_mem * c_weak_ref * cvode_file)
-    = "c_cvode_init"
-
 external c_root_init : ('a, 'k) session -> int -> unit
     = "c_cvode_root_init"
 
@@ -449,9 +441,17 @@ let set_tolerances s tol =
   | SVtolerances (rel, abs) -> sv_tolerances s rel abs
   | WFtolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
 
+external c_session_finalize : ('a, 'kind) session -> unit
+    = "c_cvode_session_finalize"
+
 let session_finalize s =
   Dls.relinquish_callback s;
   c_session_finalize s
+
+external c_init
+    : ('a, 'k) session Weak.t -> lmm -> ('a, 'k) iter -> ('a, 'k) nvector
+      -> float -> (cvode_mem * c_weak_ref * cvode_file)
+    = "c_cvode_init"
 
 let init lmm iter tol f ?(roots=no_roots) t0 y0 =
   let (nroots, roots) = roots in
@@ -494,6 +494,7 @@ external c_reinit
     : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
     = "c_cvode_reinit"
 let reinit session ?iter_type ?roots t0 y0 =
+  Dls.relinquish_callback session;
   c_reinit session t0 y0;
   (match iter_type with
    | None -> ()

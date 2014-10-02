@@ -527,78 +527,6 @@ module Adjoint =
         (* Iter type will be set to CV_NEWTON in the functions that
            set the linear solver.  *)
 
-    external bsession_finalize : ('a, 'k) session -> unit
-        = "c_cvodes_adj_bsession_finalize"
-
-    external c_init_backward
-        : ('a, 'k) session -> ('a, 'k) session Weak.t
-          -> (Cvode.lmm * ('a, 'k) iter * float * ('a, 'k) nvector)
-          -> bool
-          -> (cvode_mem * int * c_weak_ref * cvode_file)
-        = "c_cvodes_adj_init_backward"
-
-    let init_backward s lmm iter tol mf t0 y0 =
-      let { bsessions } as se = fwdsensext s in
-      let ns = num_sensitivities s in
-      let weakref = Weak.create 1 in
-      let cvode_mem, which, backref, err_file =
-        match mf with
-        | NoSens _ -> c_init_backward s weakref (lmm, iter, t0, y0) false
-        | WithSens _ -> c_init_backward s weakref (lmm, iter, t0, y0) true
-      in
-      (* cvode_mem and backref have to be immediately captured in a session and
-         associated with the finalizer before we do anything else.  *)
-      let bs = Bsession {
-              cvode        = cvode_mem;
-              backref      = backref;
-              nroots       = 0;
-              err_file     = err_file;
-
-              exn_temp     = None;
-
-              rhsfn        = dummy_rhsfn;
-              rootsfn      = dummy_rootsfn;
-              errh         = dummy_errh;
-              errw         = dummy_errw;
-              ls_callbacks = NoCallbacks;
-
-              sensext    = BwdSensExt {
-                parent   = s;
-                which    = which;
-
-                bnum_sensitivities = ns;
-                bsensarray = c_alloc_nvector_array ns;
-
-                brhsfn      = (match mf with
-                               | NoSens f -> f
-                               | _ -> dummy_brhsfn);
-
-                brhsfn1     = (match mf with
-                               | WithSens f -> f
-                               | _ -> dummy_brhsfn1);
-
-                bquadrhsfn  = dummy_bquadrhsfn;
-                bquadrhsfn1 = dummy_bquadrhsfn1;
-              };
-            } in
-      Gc.finalise bsession_finalize (tosession bs);
-      Weak.set weakref 0 (Some (tosession bs));
-      (* Now the session is safe to use.  If any of the following fails and
-         raises an exception, the GC will take care of freeing cvode_mem and
-         backref. *)
-      set_iter_type bs iter y0;
-      set_tolerances bs tol;
-      se.bsessions <- (tosession bs) :: bsessions;
-      bs
-
-    external c_reinit
-        : ('a, 'k) session -> int -> float -> ('a, 'k) nvector -> unit
-        = "c_cvodes_adj_reinit"
-
-    let reinit bs tb0 yb0 =
-      let parent, which = parent_and_which bs in
-      c_reinit parent which tb0 yb0
-
     external backward_normal : ('a, 'k) session -> float -> unit
         = "c_cvodes_adj_backward_normal"
 
@@ -698,17 +626,19 @@ module Adjoint =
           let parent, which = parent_and_which bs in
           let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
           c_dls_dense parent which neqs (jac <> None);
-          (tosession bs).ls_callbacks <- match jac with
-                                         | None -> NoCallbacks
-                                         | Some f -> BDenseCallback f
+          (tosession bs).ls_callbacks <-
+            match jac with
+            | None -> NoCallbacks
+            | Some f -> BDenseCallback { jacfn = f; dmat = None }
 
         let lapack_dense jac bs nv =
           let parent, which = parent_and_which bs in
           let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
           c_dls_lapack_dense parent which neqs (jac <> None);
-          (tosession bs).ls_callbacks <- match jac with
-                                         | None -> NoCallbacks
-                                         | Some f -> BDenseCallback f
+          (tosession bs).ls_callbacks <-
+            match jac with
+            | None -> NoCallbacks
+            | Some f -> BDenseCallback { jacfn = f; dmat = None }
 
         type ('data, 'kind) linear_solver =
           ('data, 'kind) bsession -> ('data, 'kind) nvector -> unit
@@ -717,17 +647,29 @@ module Adjoint =
           let parent, which = parent_and_which bs in
           let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
           c_dls_band (parent, which) neqs p.mupper p.mlower (jac <> None);
-          (tosession bs).ls_callbacks <- match jac with
-                                         | None -> NoCallbacks
-                                         | Some f -> BBandCallback f
+          (tosession bs).ls_callbacks <-
+            match jac with
+            | None -> NoCallbacks
+            | Some f -> BBandCallback { bjacfn = f; bmat = None }
 
         let lapack_band p jac bs nv =
           let parent, which = parent_and_which bs in
           let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
           c_dls_lapack_band (parent,which) neqs p.mupper p.mlower (jac <> None);
-          (tosession bs).ls_callbacks <- match jac with
-                                         | None -> NoCallbacks
-                                         | Some f -> BBandCallback f
+          (tosession bs).ls_callbacks <-
+            match jac with
+            | None -> NoCallbacks
+            | Some f -> BBandCallback { bjacfn = f; bmat = None }
+
+        let relinquish_callback (type d) (type k) (s : (d, k) session) =
+          match s.ls_callbacks with
+          | BDenseCallback ({ dmat = Some d } as cb) ->
+              Dls.DenseMatrix.relinquish d;
+              cb.dmat <- None
+          | BBandCallback  ({ bmat = Some d } as cb) ->
+              Dls.BandMatrix.relinquish d;
+              cb.bmat <- None
+          | _ -> ()
       end
 
     module Spils =
@@ -863,6 +805,83 @@ module Adjoint =
         let get_banded_num_rhs_evals bs =
           Cvode.Spils.get_banded_num_rhs_evals (tosession bs)
       end
+
+    external c_bsession_finalize : ('a, 'k) session -> unit
+        = "c_cvodes_adj_bsession_finalize"
+
+    let bsession_finalize s =
+      Dls.relinquish_callback s;
+      c_bsession_finalize s
+
+    external c_init_backward
+        : ('a, 'k) session -> ('a, 'k) session Weak.t
+          -> (Cvode.lmm * ('a, 'k) iter * float * ('a, 'k) nvector)
+          -> bool
+          -> (cvode_mem * int * c_weak_ref * cvode_file)
+        = "c_cvodes_adj_init_backward"
+
+    let init_backward s lmm iter tol mf t0 y0 =
+      let { bsessions } as se = fwdsensext s in
+      let ns = num_sensitivities s in
+      let weakref = Weak.create 1 in
+      let cvode_mem, which, backref, err_file =
+        match mf with
+        | NoSens _ -> c_init_backward s weakref (lmm, iter, t0, y0) false
+        | WithSens _ -> c_init_backward s weakref (lmm, iter, t0, y0) true
+      in
+      (* cvode_mem and backref have to be immediately captured in a session and
+         associated with the finalizer before we do anything else.  *)
+      let bs = Bsession {
+              cvode        = cvode_mem;
+              backref      = backref;
+              nroots       = 0;
+              err_file     = err_file;
+
+              exn_temp     = None;
+
+              rhsfn        = dummy_rhsfn;
+              rootsfn      = dummy_rootsfn;
+              errh         = dummy_errh;
+              errw         = dummy_errw;
+              ls_callbacks = NoCallbacks;
+
+              sensext    = BwdSensExt {
+                parent   = s;
+                which    = which;
+
+                bnum_sensitivities = ns;
+                bsensarray = c_alloc_nvector_array ns;
+
+                brhsfn      = (match mf with
+                               | NoSens f -> f
+                               | _ -> dummy_brhsfn);
+
+                brhsfn1     = (match mf with
+                               | WithSens f -> f
+                               | _ -> dummy_brhsfn1);
+
+                bquadrhsfn  = dummy_bquadrhsfn;
+                bquadrhsfn1 = dummy_bquadrhsfn1;
+              };
+            } in
+      Gc.finalise bsession_finalize (tosession bs);
+      Weak.set weakref 0 (Some (tosession bs));
+      (* Now the session is safe to use.  If any of the following fails and
+         raises an exception, the GC will take care of freeing cvode_mem and
+         backref. *)
+      set_iter_type bs iter y0;
+      set_tolerances bs tol;
+      se.bsessions <- (tosession bs) :: bsessions;
+      bs
+
+    external c_reinit
+        : ('a, 'k) session -> int -> float -> ('a, 'k) nvector -> unit
+        = "c_cvodes_adj_reinit"
+
+    let reinit bs tb0 yb0 =
+      let parent, which = parent_and_which bs in
+      c_reinit parent which tb0 yb0
+
 
     let get_work_space bs = Cvode.get_work_space (tosession bs)
 
@@ -1064,19 +1083,6 @@ let call_bjactimesfn session jac vB jvB =
       adjust_retcode session (f jac vB) jvB
   | _ -> assert false
 
-let call_bjacfn session jac m =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | BDenseCallback f -> adjust_retcode session (f jac) m
-  | _ -> assert false
-
-let call_bbandjacfn session range jac m =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | BBandCallback f -> adjust_retcode session (f range jac) m
-  | _ -> assert false
-
-
 (* Let C code know about some of the values in this module.  *)
 type fcn = Fcn : 'a -> fcn
 external c_init_module : fcn array -> exn array -> unit =
@@ -1094,8 +1100,6 @@ let _ =
       Fcn call_bprecsetupfn;
       Fcn call_bprecsolvefn;
       Fcn call_bjactimesfn;
-      Fcn call_bjacfn;
-      Fcn call_bbandjacfn;
     |]
 
     (* Exceptions must be listed in the same order as

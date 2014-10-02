@@ -78,14 +78,6 @@ module VarType =
     let string_of_float x = string_of_var_type (of_float x)
   end
 
-external session_finalize : ('a, 'kind) session -> unit
-    = "c_ida_session_finalize"
-
-external c_init
-    : ('a, 'k) session Weak.t -> float -> ('a, 'k) nvector -> ('a, 'k) nvector
-      -> (ida_mem * c_weak_ref * ida_file)
-    = "c_ida_init"
-
 external c_root_init : ('a, 'k) session -> int -> unit
     = "c_ida_root_init"
 
@@ -115,34 +107,50 @@ module Dls =
 
     let dense jac session nv nv' =
       let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
-      (session.ls_callbacks <- match jac with
-                               | None -> NoCallbacks
-                               | Some f -> DenseCallback f);
+      (session.ls_callbacks <-
+        match jac with
+        | None -> NoCallbacks
+        | Some f -> DenseCallback { jacfn = f; dmat = None });
       c_dls_dense session neqs (jac <> None)
 
     let lapack_dense jac session nv nv' =
       let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
-      (session.ls_callbacks <- match jac with
-                               | None -> NoCallbacks
-                               | Some f -> DenseCallback f);
+      (session.ls_callbacks <-
+        match jac with
+        | None -> NoCallbacks
+        | Some f -> DenseCallback { jacfn = f; dmat = None });
       c_dls_lapack_dense session neqs (jac <> None)
 
     let band p jac session nv nv' =
       let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
-      (session.ls_callbacks <- match jac with
-                              | None -> NoCallbacks
-                              | Some f -> BandCallback f);
+      (session.ls_callbacks <-
+        match jac with
+        | None -> NoCallbacks
+        | Some f -> BandCallback { bjacfn = f; bmat = None });
       c_dls_band session neqs p.mupper p.mlower (jac <> None)
 
     let lapack_band p jac session nv nv' =
       let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
-      (session.ls_callbacks <- match jac with
-                               | None -> NoCallbacks
-                               | Some f -> BandCallback f);
+      (session.ls_callbacks <-
+        match jac with
+        | None -> NoCallbacks
+        | Some f -> BandCallback { bjacfn = f; bmat = None });
       c_dls_lapack_band session neqs p.mupper p.mlower (jac <> None)
 
+
+    let relinquish_callback (type d) (type k) (session : (d, k) session) =
+      match session.ls_callbacks with
+      | DenseCallback ({ dmat = Some d } as cb) ->
+          Dls.DenseMatrix.relinquish d;
+          cb.dmat <- None
+      | BandCallback  ({ bmat = Some d } as cb) ->
+          Dls.BandMatrix.relinquish d;
+          cb.bmat <- None
+      | _ -> ()
+
     let set_dense_jac_fn s fjacfn =
-      s.ls_callbacks <- DenseCallback fjacfn;
+      relinquish_callback s;
+      s.ls_callbacks <- DenseCallback { jacfn = fjacfn; dmat = None };
       set_dense_jac_fn s
 
     external clear_dense_jac_fn : serial_session -> unit
@@ -150,7 +158,8 @@ module Dls =
 
     let clear_dense_jac_fn s =
       match s.ls_callbacks with
-      | DenseCallback _ -> (s.ls_callbacks <- NoCallbacks;
+      | DenseCallback _ -> (relinquish_callback s;
+                            s.ls_callbacks <- NoCallbacks;
                             clear_dense_jac_fn s)
       | _ -> failwith "dense linear solver not in use"
 
@@ -158,7 +167,8 @@ module Dls =
         = "c_ida_dls_set_band_jac_fn"
 
     let set_band_jac_fn s fbandjacfn =
-      s.ls_callbacks <- BandCallback fbandjacfn;
+      relinquish_callback s;
+      s.ls_callbacks <- BandCallback { bjacfn = fbandjacfn; bmat = None };
       set_band_jac_fn s
 
     external clear_band_jac_fn : serial_session -> unit
@@ -166,7 +176,8 @@ module Dls =
 
     let clear_band_jac_fn s =
       match s.ls_callbacks with
-      | BandCallback _ -> (s.ls_callbacks <- NoCallbacks;
+      | BandCallback _ -> (relinquish_callback s;
+                           s.ls_callbacks <- NoCallbacks;
                            clear_band_jac_fn s)
       | _ -> failwith "banded linear solver not in use"
 
@@ -331,6 +342,18 @@ let set_tolerances s tol =
   | SVtolerances (rel, abs) -> sv_tolerances s rel abs
   | WFtolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
 
+external c_session_finalize : ('a, 'kind) session -> unit
+    = "c_ida_session_finalize"
+
+let session_finalize s =
+  Dls.relinquish_callback s;
+  c_session_finalize s
+
+external c_init
+    : ('a, 'k) session Weak.t -> float -> ('a, 'k) nvector -> ('a, 'k) nvector
+      -> (ida_mem * c_weak_ref * ida_file)
+    = "c_ida_init"
+
 let init linsolv tol resfn ?(roots=no_roots) t0 y y' =
   let (nroots, rootsfn) = roots in
   if nroots < 0 then
@@ -371,6 +394,7 @@ external c_reinit
     : ('a, 'k) session -> float -> ('a, 'k) nvector -> ('a, 'k) nvector -> unit
     = "c_ida_reinit"
 let reinit session ?linsolv ?roots t0 y0 y'0 =
+  Dls.relinquish_callback session;
   c_reinit session t0 y0 y'0;
   (match linsolv with
    | None -> ()
@@ -625,18 +649,6 @@ let call_errh session details =
                    "This exception will not be propagated: " ^
                    Printexc.to_string e)
 
-let call_jacfn session jac j =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | DenseCallback f -> adjust_retcode session true (f jac) j
-  | _ -> assert false
-
-let call_bandjacfn session jac range j =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | BandCallback f -> adjust_retcode session true (f range jac) j
-  | _ -> assert false
-
 let call_precsolvefn session jac r z delta =
   let session = read_weak_ref session in
   match session.ls_callbacks with
@@ -691,8 +703,6 @@ let _ =
     [|Fcn call_resfn;
       Fcn call_errh;
       Fcn call_errw;
-      Fcn call_jacfn;
-      Fcn call_bandjacfn;
       Fcn call_precsetupfn;
       Fcn call_precsolvefn;
       Fcn call_jactimesfn;

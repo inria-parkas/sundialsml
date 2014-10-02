@@ -1,9 +1,9 @@
 include ../../../config
 
 EXAMPLES = arraydense.byte arraydense.opt arraydense \
-	   dense.byte dense.opt dense2.byte dense2.opt dense \
+	   dense.byte dense.opt dense \
 	   arrayband.byte arrayband.opt arrayband \
-	   band.byte band.opt band2.byte band2.opt band \
+	   band.byte band.opt band \
 	   noband.byte noband.opt \
 	   spils_nvector1.byte spils_nvector1.opt \
 	   spils_serial1.byte spils_serial1.opt
@@ -20,8 +20,6 @@ arraydense: arraydense.c
 	cc -o $@ $(CFLAGS) $< $(CVODE_LIBS)
 dense.byte: dense.ml
 dense.opt: dense.ml
-dense2.byte: dense2.ml
-dense2.opt: dense2.ml
 dense: dense.c
 	cc -o $@ $(CFLAGS) $< $(CVODE_LIBS)
 
@@ -31,8 +29,6 @@ arrayband: arrayband.c
 	cc -o $@ $(CFLAGS) $< $(CVODE_LIBS)
 band.byte: band.ml
 band.opt: band.ml
-band2.byte: band2.ml
-band2.opt: band2.ml
 band: band.c
 	cc -o $@ $(CFLAGS) $< $(CVODE_LIBS)
 
