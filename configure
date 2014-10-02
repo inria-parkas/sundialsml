@@ -76,7 +76,7 @@ do
 	  --no-safety-checks     no safety checks; implies --no-bounds-checking
 	  --no-bounds-checking   no bounds checking in matrix accesses
 
-	Some influential environment variables:
+	Optional settings:
 	  OCAMLROOT     Path to OCaml installation
 	  LAPACKLIB	Command for linking with Lapack (default: -llapack)
 		                (sometimes also: -lSimTKlapack)
@@ -85,8 +85,8 @@ do
 	  MPICC		Name of the MPI compiler (default: mpicc; implies --enable-mpi)
 	  MPIRUN	Name of MPI program launcher (default: mpirun; implies --enable-mpi)
 
-	Use these variables to override the choices made by 'configure' or to help
-	it to find libraries and programs with nonstandard names/locations.
+	Set these options by passing arguments of the form FOO=value to help
+	configure find libraries and programs with nonstandard names/locations.
 
 	Report bugs to <$contact>.
 
@@ -139,7 +139,7 @@ echo "#ifndef __GNUC__" > $test_file
 echo "#error not gcc" >> $test_file
 echo "#endif" >> $test_file
 using_gcc=false
-$CC -o $tmp_file -c $test_file && using_gcc=true
+$CC -o $tmp_file -c $test_file >/dev/null 2>&1 && using_gcc=true
 rm -f $tmp_file $test_file
 if [ $using_gcc = true ]; then
     c_suppress_warnings=-w
@@ -489,6 +489,7 @@ fi
 	 s#@ocamlmpi_path@#${ocamlmpi_path}#;
 	 s#@ocamlmpi_enabled@#${ocamlmpi_enabled}#;
 	 s#@lapack_enabled@#${lapack_enabled}#;
+	 s#@cc@#${CC}#;
 	 s#@mpicc@#${mpicc:-mpicc}#;
 	 s#@mpirun@#${mpirun:-mpirun}#;
 	 s#@c_suppress_warnings@#${c_suppress_warnings}#;

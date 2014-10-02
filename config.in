@@ -11,7 +11,7 @@ IDAS_DOC_ROOT = https://computation.llnl.gov/casc/sundials/documentation/idas_gu
 KINSOL_DOC_ROOT = https://computation.llnl.gov/casc/sundials/documentation/kin_guide/
 OCAML_DOC_ROOT = http://caml.inria.fr/pub/docs/manual-ocaml/libref/
 
-CC ?= gcc
+CC = @cc@
 CFLAGS += @cflags@
 LDFLAGS += @ldflags@
 CPPFLAGS ?= -P -x c -traditional-cpp
@@ -124,30 +124,3 @@ DOCPP = $(SED) \
 	-e 's|IDAS_DOC_ROOT(\\([^\#)]*\\)\\(\#[^)]*\\)\\?)|$(IDAS_DOC_ROOT)\\1.html\\2|g' \
 	-e 's|OCAML_DOC_ROOT(\\([^\#)]*\\)\\(\#[^)]*\\)\\?)|$(OCAML_DOC_ROOT)\\1.html\\2|g' \
 	-e 's|VERSION()|$(VERSION)|g'
-
-# Common rules
-.SUFFIXES : .mli .ml .cmi .cmo .cmx .lci .lsi .c .o .cma .cmxa
-
-.ml.cmo:
-	$(OCAMLC) $(OCAMLFLAGS) -c $(INCLUDES) $<
-
-.mli.cmi:
-	$(OCAMLC) $(OCAMLFLAGS) -c $(INCLUDES) $<
-
-.ml.cmx:
-	$(OCAMLOPT) $(OCAMLOPTFLAGS) -c $(INCLUDES) $<
-
-# Linking has to be done with different flags for CVODE and IDA.
-#
-#.cmo.cma:
-#	$(OCAMLC) -a $(OCAMLFLAGS) \
-#	    -o $@ -custom $< $(OCAML_LIBLINK)
-#
-#.cmx.cmxa:
-#	$(OCAMLOPT) -a $(OCAMLOPTFLAGS) \
-#	    -o $@ $< $(OCAML_LIBLINK)
-
-.c.o:
-	$(CC) -I $(OCAML_INCLUDE) $(CFLAGS) -o $@ -c $<
-
-default: all

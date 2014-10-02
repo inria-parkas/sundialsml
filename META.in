@@ -1,5 +1,30 @@
-description = "OCaml interface to Sundials (CVODE)"
-requires = "unix bigarray"
-directory = "+sundials"
+version = VERSION
+description = "OCaml interface to Sundials"
+requires = "bigarray"
 archive(byte) = "sundials.cma"
 archive(native) = "sundials.cmxa"
+package "no_sens" (
+  version = VERSION
+  description = "sundials without sensitivity analysis (slightly more efficient)"
+  requires = "bigarray"
+  archive(byte) = "sundials_no_sens.cma"
+  archive(native) = "sundials_no_sens.cmxa"
+#ifdef MPI_ENABLED
+  package "mpi" (
+    version = VERSION
+    requires = "sundials.no_sens mpi"
+    description = "Add MPI support to sundials.no_sens"
+    archive(byte) = "sundials_mpi.cma"
+    archive(native) = "sundials_mpi.cmxa"
+  )
+#endif
+)
+#ifdef MPI_ENABLED
+package "mpi" (
+  version = VERSION
+  description = "Add MPI support to sundials"
+  requires = "sundials mpi"
+  archive(byte) = "sundials_mpi.cma"
+  archive(native) = "sundials_mpi.cmxa"
+)
+#endif

@@ -1,7 +1,27 @@
 include config
 
+default: all
+
 # To compile with profiling (with gcc):
 # ./configure CFLAGS=-pg OCAMLOPTFLAGS=-p ...
+
+### Common rules
+# We can't use pattern rules here because they don't generate
+# dependencies and ocamldep doesn't generate dependencies of the form
+# foo.cm[iox]: foo.ml or foo.cmi: foo.mli
+.SUFFIXES : .mli .ml .cmi .cmo .cmx
+
+.ml.cmo:
+	$(OCAMLC) $(OCAMLFLAGS) -c $(INCLUDES) $<
+
+.mli.cmi:
+	$(OCAMLC) $(OCAMLFLAGS) -c $(INCLUDES) $<
+
+.ml.cmx:
+	$(OCAMLOPT) $(OCAMLOPTFLAGS) -c $(INCLUDES) $<
+
+%.o: %.c
+	$(CC) -I $(OCAML_INCLUDE) $(CFLAGS) -o $@ -c $<
 
 ### Objects shared between sundials.cma and sundials_no_sens.cma.
 
@@ -11,7 +31,7 @@ COBJ_COMMON = sundials_ml$(XO) dls_ml$(XO) nvector_ml$(XO) spils_ml$(XO)
 COBJ_MAIN = $(COBJ_COMMON) kinsol_ml$(XO)
 
 MLOBJ_MAIN = sundials.cmo dls.cmo spils.cmo nvector.cmo			\
-	     nvector_custom.cmo nvector_array.cmo nvector_serial.cmo 	\
+	     nvector_custom.cmo nvector_array.cmo nvector_serial.cmo	\
 	     cvode_impl.cmo ida_impl.cmo kinsol_impl.cmo		\
 	     cvode.cmo kinsol.cmo ida.cmo
 
@@ -42,16 +62,19 @@ ALL_CMA = sundials.cma sundials_no_sens.cma sundials_mpi.cma
 # Installed files.
 
 INSTALL_CMA=sundials.cma sundials_no_sens.cma \
-	    $(if $(MPI_ENABLED), sundials_mpi.cma)
+	    $(if $(MPI_ENABLED),sundials_mpi.cma)
+
+INSTALL_CMI=$(filter-out %_impl.cmi, $(MLOBJ_MAIN:.cmo=.cmi))	\
+	    $(MLOBJ_SENS:.cmo=.cmi)				\
+	    $(MLOBJ_NO_SENS:.cmo=.cmi)				\
+	    $(if $(MPI_ENABLED),$(MLOBJ_MPI:.cmo=.cmi))
 
 STUBLIBS=$(foreach file,$(INSTALL_CMA:.cma=$(XS)), dllml$(file))
 
+# Don't include $(STUBLIBS) here; they go in a different directory.
 INSTALL_FILES=							\
     META							\
-    $(filter-out %_impl.cmi, $(MLOBJ_MAIN:.cmo=.cmi))		\
-    $(MLOBJ_SENS:.cmo=.cmi)					\
-    $(MLOBJ_NO_SENS:.cmo=.cmi)					\
-    $(MLOBJ_MPI:.cmo=.cmi)					\
+    $(INSTALL_CMI)						\
     $(INSTALL_CMA)						\
     $(INSTALL_CMA:.cma=.cmxa)					\
     $(INSTALL_CMA:.cma=$(XA))					\
@@ -93,7 +116,7 @@ sundials_mpi.cma sundials_mpi.cmxa: $(MLOBJ_MPI) $(MLOBJ_MPI:.cmo=.cmx) \
 	    $(LIB_PATH) $(MPI_LIBLINK)
 
 $(MLOBJ_MPI) $(MLOBJ_MPI:.cmo=.cmi) $(MLOBJ_MPI:.cmo=.cmx)	\
-    	     doc/html/index.html :				\
+	     doc/html/index.html :				\
     INCLUDES += $(MPI_INCLUDES)
 
 # The CFLAGS settings for CVODE works for modules common to CVODE and IDA.
@@ -149,24 +172,24 @@ dochtml.cmo: INCLUDES += -I +ocamldoc
 dochtml.cmo: OCAMLFLAGS += -pp "cpp $(CPPFLAGS) -DOCAML_3X=$(OCAML_3X) -DVERSION=\\\"$(VERSION)\\\""
 
 META: META.in
-	@$(ECHO) "version = \"$(VERSION)$(VERSIONP)\"" > $@
-	@$(CAT) $< >> $@
+	cpp $(if $(MPI_ENABLED),-DMPI_ENABLED) -DVERSION=\"$(VERSION)\" $< \
+	    | grep -v '^#' > $@
 
 doc: doc/html/index.html
 
-doc/html/index.html: doc/html dochtml.cmo intro.doc 			\
+doc/html/index.html: doc/html dochtml.cmo intro.doc			\
 		     $(filter-out %_impl.cmi, $(MLOBJ_MAIN:.cmo=.cmi))	\
-		     $(MLOBJ_SENS:.cmo=.cmi) 				\
+		     $(MLOBJ_SENS:.cmo=.cmi)				\
 		     $(if $(MPI_ENABLED), $(MLOBJ_MPI:.cmo=.cmi))
-	$(OCAMLDOC) -g dochtml.cmo $(INCLUDES) 			\
+	$(OCAMLDOC) -g dochtml.cmo $(INCLUDES)			\
 	    -short-functors					\
 	    -colorize-code					\
 	    -css-style docstyle.css				\
-	    -cvode-doc-root "$(CVODE_DOC_ROOT)" 		\
-	    -cvodes-doc-root "$(CVODES_DOC_ROOT)" 		\
-	    -ida-doc-root "$(IDA_DOC_ROOT)" 			\
-	    -idas-doc-root "$(IDAS_DOC_ROOT)" 			\
-	    -kinsol-doc-root "$(KINSOL_DOC_ROOT)" 		\
+	    -cvode-doc-root "$(CVODE_DOC_ROOT)"			\
+	    -cvodes-doc-root "$(CVODES_DOC_ROOT)"		\
+	    -ida-doc-root "$(IDA_DOC_ROOT)"			\
+	    -idas-doc-root "$(IDAS_DOC_ROOT)"			\
+	    -kinsol-doc-root "$(KINSOL_DOC_ROOT)"		\
 	    -pp "$(DOCPP)"					\
 	    -d ./doc/html/					\
 	    -hide Cvode_impl,Ida_impl,Kinsol_impl		\
@@ -204,31 +227,40 @@ perf.byte.log: $(INSTALL_CMA:.cma=.cmxa)
 
 ### Install / Uninstall
 
-install: $(INSTALL_CMA) $(INSTALL_CMA:.cma=.cmxa) doc META
-	$(MKDIR) $(PKGDIR)
-	$(CP) $(INSTALL_FILES) $(PKGDIR)
-	$(CP) $(STUBLIBS) $(STUBDIR)
-ifeq ($(INSTALL_DOCS), 1)
-	$(MKDIR) $(DOCDIR)/html
-	$(CP) doc/html/style.css doc/html/*.html $(DOCDIR)/html/
-endif
+install: install-sys $(if $(INSTALL_DOCS),install-doc)
 
-uninstall:
-	for f in $(STUBLIBS); do	 \
-	    $(RM) $(STUBDIR)$$f || true; \
-	done
-	for f in $(INSTALL_FILES); do	 \
-	    $(RM) $(PKGDIR)$$f || true;  \
-	done
+# Install to OCaml's system directory -- /usr/lib/ocaml on Debian derivatives.
+install-sys: $(INSTALL_CMA) $(INSTALL_CMA:.cma=.cmxa)
+	[ -d $(PKGDIR) ] || $(MKDIR) $(PKGDIR)
+	$(CP) $(INSTALL_FILES) $(PKGDIR)
+	[ -d $(STUBDIR) ] || $(MKDIR) $(STUBDIR)
+	$(CP) $(STUBLIBS) $(STUBDIR)
+
+install-doc: doc
+	[ -d $(DOCDIR) ] || $(MKDIR) $(DOCDIR)
+	[ -d $(DOCDIR)/html ] || $(MKDIR) $(DOCDIR)/html
+	$(CP) doc/html/style.css doc/html/*.html $(DOCDIR)/html/
+
+install-ocamlfind: install-findlib
+install-findlib: META $(INSTALL_CMA) $(INSTALL_CMA:.cma=.cmxa)
+	ocamlfind install sundials $(INSTALL_FILES) $(STUBLIBS)
+
+
+uninstall: uninstall-sys
+
+uninstall-sys:
+	-$(RM) $(foreach f,$(STUBLIBS),$(STUBDIR)$f)
+	-$(RM) $(foreach f,$(INSTALL_FILES),$(PKGDIR)$f)
 	-$(RMDIR) $(PKGDIR)
-ifeq ($(INSTALL_DOCS), 1)
+
+uninstall-doc:
 	-$(RM) $(DOCDIR)/html/style.css $(DOCDIR)/html/*.html
 	-$(RMDIR) $(DOCDIR)/html
 	-$(RMDIR) $(DOCDIR)
-endif
 
-ocamlfind: $(INSTALL_CMA) $(INSTALL_CMA:.cma=.cmxa) META
-	ocamlfind install sundials $(INSTALL_FILES) $(STUBLIBS)
+uninstall-ocamlfind: uninstall-findlib
+uninstall-findlib:
+	ocamlfind remove sundials
 
 ### Misc
 
