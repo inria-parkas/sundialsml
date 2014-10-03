@@ -39,11 +39,9 @@ do
 	mpicc="${mpicc:-${value}}";;
     --no-lib-path)
 	no_lib_path=1;;
-    --no-safety-checks)
+    --unsafe)
 	bounds_checking=0
 	safety_checks=0;;
-    --no-bounds-checking)
-	bounds_checking=0;;
     -h|--help)
 	cat <<-END_HELP_TEXT
 	'configure' configures $sysname $version$versionp to adapt to many kinds of systems.
@@ -73,8 +71,7 @@ do
 	  --disable-doc          do not install html documentation
 	  --enable-mpi		 build with parallel features
 	  --no-lib-path          do not record paths in the OCaml library
-	  --no-safety-checks     no safety checks; implies --no-bounds-checking
-	  --no-bounds-checking   no bounds checking in matrix accesses
+	  --unsafe		 no bounds or other runtime checks.
 
 	Optional settings:
 	  OCAMLROOT     Path to OCaml installation
@@ -131,6 +128,11 @@ error=""
 
 bounds_checking=${bounds_checking:-1}
 safety_checks=${safety_checks:-1}
+
+if [ ${bounds_checking} -eq 0 ]; then
+    ocamloptflags="-unsafe ${ocamloptflags}"
+    ocamlflags="-unsafe ${ocamlflags}"
+fi
 
 # Check C compiler: detect gcc and add a default optimization level.
 test_file=__configure_test_file__.c
@@ -503,6 +505,6 @@ printf "#ifndef __SUNDIALS_CONFIG_H__\n" >> config.h
 printf "#define __SUNDIALS_CONFIG_H__\n" >> config.h
 printf "#define HAVE_WEAK ${have_weak}\n" >> config.h
 printf "#define SAFETY_CHECKS ${safety_checks}\n" >> config.h
-printf "#define CHECK_MATRIX_ACCESS ${bounds_checking}\n" >> config.h
+printf "#define SUNDIALS_ML_SAFE ${bounds_checking}\n" >> config.h
 printf "#endif /* __SUNDIALS_CONFIG_H__ */\n" >> config.h
 

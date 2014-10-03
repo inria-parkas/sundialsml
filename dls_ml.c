@@ -192,7 +192,7 @@ CAMLprim value c_densematrix_get(value vmatrix, value vi, value vj)
     int i = Long_val(vi);
     int j = Long_val(vj);
 
-#if CHECK_MATRIX_ACCESS == 1
+#if SUNDIALS_ML_SAFE == 1
     if (i < 0 || i >= m->M) caml_invalid_argument("DenseMatrix.get: invalid i.");
     if (j < 0 || j >= m->N) caml_invalid_argument("DenseMatrix.get: invalid j.");
 #endif
@@ -209,7 +209,7 @@ CAMLprim value c_densematrix_set(value vmatrix, value vi, value vj, value v)
     int i = Long_val(vi);
     int j = Long_val(vj);
 
-#if CHECK_MATRIX_ACCESS == 1
+#if SUNDIALS_ML_SAFE == 1
     if (i < 0 || i >= m->M) caml_invalid_argument("DenseMatrix.set: invalid i.");
     if (j < 0 || j >= m->N) caml_invalid_argument("DenseMatrix.set: invalid j.");
 #endif
@@ -239,7 +239,7 @@ CAMLprim value c_arraydensematrix_add_identity(value va)
     struct caml_ba_array *ba = ARRAY2_DATA(va);
     intnat m = ba->dim[1];
 
-#if CHECK_MATRIX_ACCESS == 1
+#if SUNDIALS_ML_SAFE == 1
     intnat n = ba->dim[0];
 
     if (m != n)
@@ -258,7 +258,7 @@ CAMLprim value c_arraydensematrix_getrf(value va, value vp)
     intnat m = ba->dim[1];
     intnat n = ba->dim[0];
 
-#if CHECK_MATRIX_ACCESS == 1
+#if SUNDIALS_ML_SAFE == 1
     if (ARRAY1_LEN(vp) < n)
 	caml_invalid_argument("ArrayDenseMatrix.getrf: p is too small.");
 #endif
@@ -279,7 +279,7 @@ CAMLprim value c_arraydensematrix_getrs(value va, value vp, value vb)
     struct caml_ba_array *ba = ARRAY2_DATA(va);
     intnat m = ba->dim[1];
 
-#if CHECK_MATRIX_ACCESS == 1
+#if SUNDIALS_ML_SAFE == 1
     intnat n = ba->dim[0];
     if (m != n)
 	caml_invalid_argument("ArrayDenseMatrix.getrs: matrix not square.");
@@ -300,10 +300,9 @@ CAMLprim value c_arraydensematrix_getrs_off(value va, value vp,
 
     struct caml_ba_array *ba = ARRAY2_DATA(va);
     intnat m = ba->dim[1];
-    intnat blen = ARRAY1_LEN(vb);
     intnat boff = Int_val(vboff);
 
-#if CHECK_MATRIX_ACCESS == 1
+#if SUNDIALS_ML_SAFE == 1
     intnat n = ba->dim[0];
     if (m != n)
 	caml_invalid_argument("ArrayDenseMatrix.getrs: matrix not square.");
@@ -324,7 +323,7 @@ CAMLprim value c_arraydensematrix_potrf(value va)
     struct caml_ba_array *ba = ARRAY2_DATA(va);
     intnat m = ba->dim[1];
 
-#if CHECK_MATRIX_ACCESS == 1
+#if SUNDIALS_ML_SAFE == 1
     intnat n = ba->dim[0];
     if (m != n)
 	caml_invalid_argument("ArrayDenseMatrix.potrf: matrix not square");
@@ -341,7 +340,7 @@ CAMLprim value c_arraydensematrix_potrs(value va, value vb)
     struct caml_ba_array *ba = ARRAY2_DATA(va);
     intnat m = ba->dim[1];
 
-#if CHECK_MATRIX_ACCESS == 1
+#if SUNDIALS_ML_SAFE == 1
     intnat n = ba->dim[0];
     if (m != n)
 	caml_invalid_argument("ArrayDenseMatrix.potrs: matrix not square.");
@@ -361,7 +360,7 @@ CAMLprim value c_arraydensematrix_geqrf(value va, value vbeta, value vv)
     intnat m = ba->dim[1];
     intnat n = ba->dim[0];
 
-#if CHECK_MATRIX_ACCESS == 1
+#if SUNDIALS_ML_SAFE == 1
     if (m < n)
 	caml_invalid_argument("ArrayDenseMatrix.geqrf: fewer rows than columns.");
     if (ARRAY1_LEN(vbeta) < n)
@@ -387,7 +386,7 @@ CAMLprim value c_arraydensematrix_ormqr(value va, value vormqr)
     realtype *vw   = REAL_ARRAY(Field(vormqr, 2));
     realtype *work = REAL_ARRAY(Field(vormqr, 3));
 
-#if CHECK_MATRIX_ACCESS == 1
+#if SUNDIALS_ML_SAFE == 1
     if (m < n)
 	caml_invalid_argument("ArrayDenseMatrix.ormqr: fewer rows than columns.");
     if (ARRAY1_LEN(Field(vormqr, 0)) < n)
@@ -498,7 +497,7 @@ CAMLprim value c_bandmatrix_get(value vmatrix, value vi, value vj)
     int i = Long_val(vi);
     int j = Long_val(vj);
 
-#if CHECK_MATRIX_ACCESS == 1
+#if SUNDIALS_ML_SAFE == 1
     if (i < 0 || i >= m->M) caml_invalid_argument("Bandmatrix.get: invalid i");
     if (j < 0 || j >= m->N) caml_invalid_argument("Bandmatrix.get: invalid j");
 #endif
@@ -515,7 +514,7 @@ CAMLprim value c_bandmatrix_set(value vmatrix, value vi, value vj, value v)
     int i = Long_val(vi);
     int j = Long_val(vj);
 
-#if CHECK_MATRIX_ACCESS == 1
+#if SUNDIALS_ML_SAFE == 1
     if (i < 0 || i >= m->M) caml_invalid_argument("Bandmatrix.set: invalid i");
     if (j < 0 || j >= m->N) caml_invalid_argument("Bandmatrix.set: invalid j");
 #endif
@@ -538,7 +537,7 @@ CAMLprim value c_arraybandmatrix_copy(value va, value vb, value vsizes)
     int copymu = Long_val(Field(vsizes, 2));
     int copyml = Long_val(Field(vsizes, 3));
 
-#if CHECK_MATRIX_ACCESS == 1
+#if SUNDIALS_ML_SAFE == 1
     intnat an = ba->dim[1];
     struct caml_ba_array *bb = ARRAY2_DATA(vb);
 
@@ -569,7 +568,7 @@ CAMLprim value c_arraybandmatrix_scale(value vc, value va, value vsizes)
     long int ml  = Long_val(Field(vsizes, 1));
     long int smu = Long_val(Field(vsizes, 2));
 
-#if CHECK_MATRIX_ACCESS == 1
+#if SUNDIALS_ML_SAFE == 1
     intnat n = ba->dim[1];
 
     if (n < mu + ml + 1)
@@ -588,7 +587,7 @@ CAMLprim value c_arraybandmatrix_add_identity(value va, value vsmu)
     intnat m = ba->dim[0];
     intnat smu = Long_val(vsmu);
 
-#if CHECK_MATRIX_ACCESS == 1
+#if SUNDIALS_ML_SAFE == 1
     intnat n = ba->dim[1];
 
     if (n <= smu)
@@ -610,7 +609,7 @@ CAMLprim value c_arraybandmatrix_gbtrf(value va, value vsizes, value vp)
     long int ml  = Long_val(Field(vsizes, 1));
     long int smu = Long_val(Field(vsizes, 2));
 
-#if CHECK_MATRIX_ACCESS == 1
+#if SUNDIALS_ML_SAFE == 1
     intnat n = ba->dim[1];
 
     if (n < mu + ml + 1)
@@ -633,7 +632,7 @@ CAMLprim value c_arraybandmatrix_gbtrs(value va, value vsizes, value vp, value v
     long int smu = Long_val(Field(vsizes, 0));
     long int ml  = Long_val(Field(vsizes, 1));
 
-#if CHECK_MATRIX_ACCESS == 1
+#if SUNDIALS_ML_SAFE == 1
     intnat n = ba->dim[1];
 
     if (n < smu + ml + 1)
