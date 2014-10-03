@@ -856,8 +856,6 @@ module Adjoint =
               errw         = dummy_errw;
               ls_callbacks = NoCallbacks;
 
-              safety_check_flags = 0;
-
               sensext    = BwdSensExt {
                 parent   = s;
                 which    = which;

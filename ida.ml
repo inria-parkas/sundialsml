@@ -374,7 +374,6 @@ let init linsolv tol resfn ?(roots=no_roots) t0 y y' =
                   errh       = dummy_errh;
                   errw       = dummy_errw;
                   ls_callbacks = NoCallbacks;
-                  safety_check_flags = 0;
                   sensext    = NoSensExt;
                 }
   in

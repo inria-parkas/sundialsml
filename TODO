@@ -118,5 +118,3 @@ TO DISCUSS
     NULL for custom nvectors (which will be implemented in OCaml so
     are safe anyway).
 
-  - unify SUNDIALS_ML_SAFE with SAFETY_CHECKS
-

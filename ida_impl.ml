@@ -322,9 +322,6 @@ type ('a,'kind) session = {
   mutable ls_callbacks : ('a, 'kind) linsolv_callbacks;
 
   mutable sensext      : ('a, 'kind) sensext; (* Used by IDAS *)
-
-  (* To be manipulated from the C side only.  *)
-  mutable safety_check_flags : int;
 }
 and ('a, 'kind) sensext =
     NoSensExt

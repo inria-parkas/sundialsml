@@ -923,11 +923,6 @@ static void sens_calc_ic (void *ida_mem, value session, int icopt, realtype tout
     N_Vector *ys;
     N_Vector *yps;
 
-#if SAFETY_CHECKS
-    if (IDA_SAFETY_FLAGS (session) & IDA_SAFETY_FLAG_SOLVING)
-	caml_invalid_argument ("Ida.calc_ic: called after Ida.solve_*");
-#endif
-
     flag = IDACalcIC (ida_mem, icopt, tout1);
 
     if (flag < 0) {
@@ -985,10 +980,6 @@ CAMLprim value c_ida_sens_calc_ic_ya_ydp(value vida_mem, value y, value yp,
     N_Vector id = NVEC_VAL (vid);
     flag = IDASetId (ida_mem, id);
     CHECK_FLAG ("IDASetId", flag);
-
-#if SAFETY_CHECKS
-    IDA_SET_SAFETY_FLAG (vida_mem, IDA_SAFETY_FLAG_ID_SET);
-#endif
 
     sens_calc_ic (ida_mem, vida_mem, IDA_YA_YDP_INIT, Double_val (tout1),
 		  y, yp, ys, yps);

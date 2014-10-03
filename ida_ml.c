@@ -768,10 +768,6 @@ CAMLprim value c_ida_reinit(value vdata, value t0, value y0, value yp0)
 			 y0_nv, yp0_nv);
     CHECK_FLAG("IDAReInit", flag);
 
-#if SAFETY_CHECKS
-    IDA_MASK_SAFETY_FLAGS(vdata, IDA_SAFETY_FLAG_REINIT_KEEPS);
-#endif
-
     CAMLreturn (Val_unit);
 }
 
@@ -817,10 +813,6 @@ static value solve (value vdata, value nextt, value vy, value vyp, int onestep)
 	}
 	CHECK_FLAG ("IDASolve", flag);
     }
-
-#if SAFETY_CHECKS
-    IDA_SET_SAFETY_FLAG (vdata, IDA_SAFETY_FLAG_SOLVING);
-#endif
 
     /* Hmm...should this go in the production code or not?  */
     if (Is_block (Field (vdata, RECORD_IDA_SESSION_EXN_TEMP)))
@@ -895,10 +887,6 @@ CAMLprim value c_ida_set_id (value vida_mem, value vid)
     int flag = IDASetId (IDA_MEM_FROM_ML(vida_mem), id);
     CHECK_FLAG("IDASetId", flag);
 
-#if SAFETY_CHECKS
-    IDA_SET_SAFETY_FLAG (vida_mem, IDA_SAFETY_FLAG_ID_SET);
-#endif
-
     CAMLreturn (Val_unit);
 }
 
@@ -910,11 +898,6 @@ static void calc_ic (void *ida_mem, value session, int icopt, realtype tout1,
     CAMLlocal1 (exn);
     int flag;
     N_Vector y, yp;
-
-#if SAFETY_CHECKS
-    if (IDA_SAFETY_FLAGS (session) & IDA_SAFETY_FLAG_SOLVING)
-	caml_invalid_argument ("Ida.calc_ic: called after Ida.solve_*");
-#endif
 
     flag = IDACalcIC (ida_mem, icopt, tout1);
 
@@ -962,10 +945,6 @@ CAMLprim value c_ida_calc_ic_ya_ydp(value vida_mem, value y, value yp,
     N_Vector id = NVEC_VAL (vid);
     flag = IDASetId (ida_mem, id);
     CHECK_FLAG ("IDASetId", flag);
-
-#if SAFETY_CHECKS
-    IDA_SET_SAFETY_FLAG (vida_mem, IDA_SAFETY_FLAG_ID_SET);
-#endif
 
     calc_ic (ida_mem, vida_mem, IDA_YA_YDP_INIT, Double_val (tout1), y, yp);
 
@@ -1474,11 +1453,6 @@ CAMLprim value c_ida_set_no_inactive_root_warn(value vida_mem)
 CAMLprim value c_ida_set_suppress_alg (value vida_mem, value vb)
 {
     CAMLparam2(vida_mem, vb);
-
-#if SAFETY_CHECKS
-    if (! IDA_TEST_SAFETY_FLAG (vida_mem, IDA_SAFETY_FLAG_ID_SET))
-	caml_invalid_argument ("Ida.set_suppress_alg: var types not set");
-#endif
 
     int flag = IDASetSuppressAlg(IDA_MEM_FROM_ML(vida_mem),
 				 Bool_val (vb));
