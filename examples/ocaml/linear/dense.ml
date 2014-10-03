@@ -36,48 +36,41 @@ let print_p out p =
 
 let nrows, ncols = 3, 3;;
 
-let main () =
-  let a = M.create nrows ncols in
-  Gc.finalise (fun _ -> print_endline "END of a!!\n") a;
+let a = M.create nrows ncols;;
 
-  M.set a 0 0 ( 1.0);
-  M.set a 0 1 ( 2.0);
-  M.set a 0 2 ( 3.0);
+M.set a 0 0 ( 1.0);
+M.set a 0 1 ( 2.0);
+M.set a 0 2 ( 3.0);
 
-  M.set a 1 0 ( 2.0);
-  M.set a 1 1 (-4.0);
-  M.set a 1 2 ( 6.0);
+M.set a 1 0 ( 2.0);
+M.set a 1 1 (-4.0);
+M.set a 1 2 ( 6.0);
 
-  M.set a 2 0 ( 3.0);
-  M.set a 2 1 (-9.0);
-  M.set a 2 2 (-3.0);
+M.set a 2 0 ( 3.0);
+M.set a 2 1 (-9.0);
+M.set a 2 2 (-3.0);;
 
-  printf "initially: a=@\n%a@\n" print_mat a;
+printf "initially: a=@\n%a@\n" print_mat a;;
 
-  let b = M.create nrows ncols in
-  Gc.finalise (fun _ -> print_endline "END of b!!\n") a;
-  M.copy a b;
+let b = M.create nrows ncols;;
+M.copy a b;;
 
-  M.scale 2.0 b;
-  printf "scale copy x2: b=@\n%a@\n" print_mat b;
+M.scale 2.0 b;
+printf "scale copy x2: b=@\n%a@\n" print_mat b;;
 
-  M.add_identity b;
-  printf "add identity: b=@\n%a@\n" print_mat b;
+M.add_identity b;
+printf "add identity: b=@\n%a@\n" print_mat b;;
 
-  let p = LintArray.create nrows in
-  Array1.fill p 0;
-  M.getrf a p;
-  printf "getrf: a=@\n%a@\n" print_mat a;
-  printf "       p=@\n%a@\n@\n" print_p p;
+let p = LintArray.create nrows;;
+Array1.fill p 0;
+M.getrf a p;
+printf "getrf: a=@\n%a@\n" print_mat a;
+printf "       p=@\n%a@\n@\n" print_p p;;
 
-  let s = RealArray.create nrows in
-  s.{0} <-  5.0;
-  s.{1} <- 18.0;
-  s.{2} <-  6.0;
-  M.getrs a p s;
-  printf "getrs: s=@\n%a@\n" print_vec s;
-  ();;
-
-main ();;
-Gc.compact ();;
+let s = RealArray.create nrows;;
+s.{0} <-  5.0;
+s.{1} <- 18.0;
+s.{2} <-  6.0;
+M.getrs a p s;
+printf "getrs: s=@\n%a@\n" print_vec s;;
 

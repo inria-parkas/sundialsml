@@ -44,7 +44,6 @@ spils_serial1.opt: spils_serial1.ml
 clean:
 	-@rm -f $(EXAMPLES:.byte=.cmo) $(EXAMPLES:.byte=.cmx)
 	-@rm -f $(EXAMPLES:.byte=.o) $(EXAMPLES:.byte=.cmi)
-	-@rm -f $(EXAMPLES:.byte=.annot)
 
 distclean: clean
 	-@rm -f $(EXAMPLES) $(EXAMPLES:.byte=.opt)

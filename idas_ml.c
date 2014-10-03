@@ -55,6 +55,8 @@ enum callback_index {
     IX_call_bprecsetupfn,
     IX_call_bprecsolvefn,
     IX_call_bjactimesfn,
+    IX_call_bjacfn,
+    IX_call_bbandjacfn,
     NUM_CALLBACKS
 };
 
@@ -581,26 +583,21 @@ static int bjacfn(long int NeqB, realtype t,
 		  N_Vector tmp1B, N_Vector tmp2B, N_Vector tmp3B)
 {
     CAMLparam0();
-    CAMLlocalN(args, 2);
-    CAMLlocal4(session, cb, dmat, r);
+    CAMLlocalN(args, 3);
+    int retcode;
     value *backref = user_dataB;
-    WEAK_DEREF (session, *backref);
 
-    // assert(session.ls_callbacks = BDenseCallback cb)
-    cb = Field(IDA_LS_CALLBACKS_FROM_ML(session), 0);
-    dmat = Field(cb, 1);
-    if (dmat == Val_none) {
-	Store_some(dmat, c_dls_dense_wrap(JacB, 0));
-	Store_field(cb, 1, dmat);
-    }
-
-    args[0] = make_adj_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
+    args[0] = *backref;
+    args[1] = make_adj_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
 			       make_triple_tmp (tmp1B, tmp2B, tmp3B));
-    args[1] = Some_val(dmat);
+    args[2] = caml_alloc_final (2, NULL, 0, 1);
+    DLSMAT(args[2]) = JacB;
 
-    r = caml_callbackN_exn (Field(cb, 0), sizeof (args) / sizeof (*args), args);
+    retcode = Int_val (caml_callbackN(CAML_FN(call_bjacfn),
+                                      sizeof (args) / sizeof (*args),
+                                      args));
 
-    CAMLreturnT(int, check_exception(session, r));
+    CAMLreturnT(int, retcode);
 }
 
 static int bbandjacfn(long int NeqB, long int mupperb, long int mlowerb,
@@ -612,29 +609,24 @@ static int bbandjacfn(long int NeqB, long int mupperb, long int mlowerb,
 		      N_Vector tmp1B, N_Vector tmp2B, N_Vector tmp3B)
 {
     CAMLparam0();
-    CAMLlocalN(args, 3);
-    CAMLlocal4(session, cb, bmat, r);
+    CAMLlocalN(args, 4);
+    int r;
     value *backref = user_dataB;
-    WEAK_DEREF (session, *backref);
 
-    // assert(session.ls_callbacks = BandCallback cb)
-    cb = Field(IDA_LS_CALLBACKS_FROM_ML(session), 0);
-    bmat = Field(cb, 1);
-    if (bmat == Val_none) {
-	Store_some(bmat, c_dls_band_wrap(JacB, 0));
-	Store_field(cb, 1, bmat);
-    }
-
-    args[0] = caml_alloc_tuple(RECORD_IDAS_ADJ_BANDRANGE_SIZE);
-    Store_field(args[0], RECORD_IDAS_ADJ_BANDRANGE_MUPPER, Val_long(mupperb));
-    Store_field(args[0], RECORD_IDAS_ADJ_BANDRANGE_MLOWER, Val_long(mlowerb));
-    args[1] = make_adj_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
+    args[0] = *backref;
+    args[1] = caml_alloc_tuple(RECORD_IDAS_ADJ_BANDRANGE_SIZE);
+    Store_field(args[1], RECORD_IDAS_ADJ_BANDRANGE_MUPPER, Val_long(mupperb));
+    Store_field(args[1], RECORD_IDAS_ADJ_BANDRANGE_MLOWER, Val_long(mlowerb));
+    args[2] = make_adj_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
 			       make_triple_tmp(tmp1B, tmp2B, tmp3B));
-    args[2] = Some_val(bmat);
+    args[3] = caml_alloc_final(2, NULL, 0, 1);
+    DLSMAT(args[3]) = JacB;
 
-    r = caml_callbackN_exn (Field(cb, 0), sizeof (args) / sizeof (*args), args);
+    r = Int_val (caml_callbackN(CAML_FN(call_bbandjacfn),
+                                sizeof (args) / sizeof (*args),
+                                args));
 
-    CAMLreturnT(int, check_exception(session, r));
+    CAMLreturnT(int, r);
 }
 
 static int bquadrhsfn(realtype t, N_Vector y, N_Vector yp,
@@ -923,6 +915,11 @@ static void sens_calc_ic (void *ida_mem, value session, int icopt, realtype tout
     N_Vector *ys;
     N_Vector *yps;
 
+#if SAFETY_CHECKS
+    if (IDA_SAFETY_FLAGS (session) & IDA_SAFETY_FLAG_SOLVING)
+	caml_invalid_argument ("Ida.calc_ic: called after Ida.solve_*");
+#endif
+
     flag = IDACalcIC (ida_mem, icopt, tout1);
 
     if (flag < 0) {
@@ -980,6 +977,10 @@ CAMLprim value c_ida_sens_calc_ic_ya_ydp(value vida_mem, value y, value yp,
     N_Vector id = NVEC_VAL (vid);
     flag = IDASetId (ida_mem, id);
     CHECK_FLAG ("IDASetId", flag);
+
+#if SAFETY_CHECKS
+    IDA_SET_SAFETY_FLAG (vida_mem, IDA_SAFETY_FLAG_ID_SET);
+#endif
 
     sens_calc_ic (ida_mem, vida_mem, IDA_YA_YDP_INIT, Double_val (tout1),
 		  y, yp, ys, yps);

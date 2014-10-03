@@ -43,13 +43,14 @@
 
 module Adjoint = Cvodes.Adjoint
 module RealArray = Sundials.RealArray
+module Col = Dls.BandMatrix.Col
+module Dls = Cvode.Dls
 let unvec = Sundials.unvec
 
 let printf = Printf.printf
 
 (* Header files with a description of contents used in cvbanx.c *)
 
-let set bm i j v = Dls.BandMatrix.set bm i j v
 
 (* Problem Constants *)
 
@@ -150,13 +151,17 @@ let jac data {Cvode.mupper=mupper; Cvode.mlower=mlower} arg jmat =
 
   for j = 1 to my do
     for i = 1 to mx do
-      (* set the kth column of jmat *)
+  
       let k = j - 1 + (i - 1) * my in
-      set jmat k k (-. two *. (verdc +. hordc));
-      if (i <> 1)  then set jmat (k - my) k (hordc +. horac);
-      if (i <> mx) then set jmat (k + my) k (hordc -. horac);
-      if (j <> 1)  then set jmat (k - 1)  k verdc;
-      if (j <> my) then set jmat (k + 1)  k verdc
+      let kthCol = Col.get_col jmat k in
+
+      (* set the kth column of jmat *)
+
+      Col.set kthCol k k (-. two *. (verdc +. hordc));
+      if (i <> 1)  then Col.set kthCol (k - my) k (hordc +. horac);
+      if (i <> mx) then Col.set kthCol (k + my) k (hordc -. horac);
+      if (j <> 1)  then Col.set kthCol (k - 1)  k verdc;
+      if (j <> my) then Col.set kthCol (k + 1)  k verdc
     done
   done
 
@@ -203,13 +208,15 @@ let jacb data { Adjoint.mupper = muB; Adjoint.mlower = mlB }
 
   for j=1 to my do
     for i=1 to mx do
-      (* set the kth column of J *)
       let k = j-1 + (i-1)*my in
-      set jb k k (two*.(verdc+.hordc));
-      if i != 1  then set jb (k-my) k (-. hordc +. horac);
-      if i != mx then set jb (k+my) k (-. hordc -. horac);
-      if j != 1  then set jb (k-1) k  (-. verdc);
-      if j != my then set jb (k+1) k  (-. verdc)
+      let kthCol = Col.get_col jb k in
+
+      (* set the kth column of J *)
+      Col.set kthCol k k (two*.(verdc+.hordc));
+      if i != 1  then Col.set kthCol (k-my) k (-. hordc +. horac);
+      if i != mx then Col.set kthCol (k+my) k (-. hordc -. horac);
+      if j != 1  then Col.set kthCol (k-1) k  (-. verdc);
+      if j != my then Col.set kthCol (k+1) k  (-. verdc)
     done
   done
 

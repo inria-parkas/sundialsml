@@ -68,14 +68,13 @@ let g t (y : RealArray.t) (gout : RealArray.t) =
   gout.{1} <- y.{2} -. 0.01
 
 let jac {Cvode.jac_y = (y : RealArray.t)} jmat =
-  let set = Dls.DenseMatrix.set jmat in
-  set 0 0 (-0.04);
-  set 0 1 (1.0e4 *. y.{2});
-  set 0 2 (1.0e4 *. y.{1});
-  set 1 0 (0.04); 
-  set 1 1 (-1.0e4 *. y.{2} -. 6.0e7 *. y.{1});
-  set 1 2 (-1.0e4 *. y.{1});
-  set 2 1 (6.0e7 *. y.{1})
+  Dls.DenseMatrix.set jmat 0 0 (-0.04);
+  Dls.DenseMatrix.set jmat 0 1 (1.0e4 *. y.{2});
+  Dls.DenseMatrix.set jmat 0 2 (1.0e4 *. y.{1});
+  Dls.DenseMatrix.set jmat 1 0 (0.04); 
+  Dls.DenseMatrix.set jmat 1 1 (-1.0e4 *. y.{2} -. 6.0e7 *. y.{1});
+  Dls.DenseMatrix.set jmat 1 2 (-1.0e4 *. y.{1});
+  Dls.DenseMatrix.set jmat 2 1 (6.0e7 *. y.{1})
   
 let print_output =
   printf "At t = %0.4e      y =%14.6e  %14.6e  %14.6e\n"

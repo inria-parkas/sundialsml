@@ -71,7 +71,7 @@ let blit buf buf_offset dst dst_offset len =
   done
 
 let header_and_empty_array_size =
-  Marshal.total_size (Marshal.to_string (RealArray.create 0) []) 0
+  Marshal.total_size (Marshal.to_string (RealArray.empty) []) 0
 let float_cell_size =
   Marshal.total_size (Marshal.to_string (RealArray.create 1) []) 0
   - header_and_empty_array_size

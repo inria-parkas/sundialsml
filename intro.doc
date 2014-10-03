@@ -103,39 +103,23 @@ custom solvers could be implemented through {!Cvode.Alternate},
 
 {2:linsolv Linear Solvers}
 
-Besides the nonlinear algebraic systems treated by {!Kinsol}, the use of
-Newton iteration in ODE initial value problems with {!Cvode}, and the
-treatment of DAE initial value problems in {!Ida} also involve the
-resolution of nonlinear constraints. Such systems are solved using some form
-of Newton iteration which in turn requires the solution of linear equations.
+Sundials provides both {e direct linear solvers (dls)} and {e scaled
+preconditioned iterative linear solvers (spils)}. In addition, callback
+hooks are provided for incorporating {e alternate} linear solver modules.
+All three are supported by the OCaml interface.
 
-Sundials provides four options for the solution of linear equations:
-{ul
-    {- The {e diagonal approximation} of Jacobians by difference equations (only
-    for {!Cvode});}
-    {- {e Direct Linear Solvers (DLS)} that require user-supplied callback
-    functions that explicitly compute a Jacobian;}
-    {- {e Scaled Preconditioned Iterative Linear Solvers (SPILS)} which
-    require user-supplied callback functions to setup (optional) and solve
-    linear preconditioning systems;}
-    {- {e Alternate linear solvers} which provide hooks for implementing new
-    linear solver modules (in OCaml).}
-}
+Access to the generic linear solver codes is provided through the {!Dls} and
+{!Spils} modules.
 
-The DLS routines are only available to sessions that use serial nvectors.
-Callback functions can either update the Jacobian matrix as a
-{!Dls.DenseMatrix.t} or a {!Dls.BandMatrix.t}. Versions of the underlying
-solver routines, operating directly on bigarrays, are also provided in
-{!Dls.ArrayDenseMatrix} and {!Dls.ArrayBandMatrix}.
+TODO!!: Sort out the underlying datatypes. Do we provide both
+Dls.DenseMatrix and Dls.ArrayDenseMatrix, or just the latter? If both are
+provided, how can we improve the performance of the former?
 
-The SPILS routines include the {e Scaled Preconditioned GMRES (SPGMR)}, {e
-Scaled Preconditioned Bi-CGStab (SPBCG)}, and {e Scaled Preconditioned TFQMR
-(SPTFQMR)} methods. Additionally, {!Cvode} provides banded preconditioners
-for sessions that use serial nvectors. Versions of the underlying solver
-routines, operating directly on bigarrays, are also provided in the
-submodules of {!Spils}. Parallel Band-Block-Diagonal (BBD) preconditioners
-are available to sessions that use parallel nvectors—see {!Cvode_bbd},
-{!Cvodes_bbd}, {!Ida_bbd}, {!Idas_bbd}, and {!Kinsol_bbd}.
+TODO:
+Each solver module...
+TODO: explain that certain solvers restrict the kind of their argument.
+
+TODO: don't forget Diag (DLS) and BBD (SPILS) solvers.
 
 {2:modules Modules}
 

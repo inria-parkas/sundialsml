@@ -25,45 +25,41 @@ let atimes x z =
   z.{1} <-        x.{0} +. 2.0 *. x.{1} -.        x.{2};
   z.{2} <-        x.{0} -.        x.{1} +. 2.0 *. x.{2}
 
-let main () =
-  let b = RealArray.of_array [| -1.0; 6.0; -3.0 |] in
+let b = RealArray.of_array [| -1.0; 6.0; -3.0 |]
 
-  (* SPGMR *)
+(* SPGMR *)
 
-  let s = SPGMR.make 3 (nvec b) in
+let s = SPGMR.make 3 (nvec b);;
 
-  let x = RealArray.of_array [|  0.0; 0.0;  0.0 |] in
-  let solved, res_norm, nli, nps =
-      SPGMR.solve s (nvec x) (nvec b) Spils.PrecNone Spils.ModifiedGS
-                  1.0e-4 0 None None atimes None in
+let x = RealArray.of_array [|  0.0; 0.0;  0.0 |];;
+let solved, res_norm, nli, nps =
+    SPGMR.solve s (nvec x) (nvec b) Spils.PrecNone Spils.ModifiedGS
+                1.0e-4 0 None None atimes None ;;
 
-  printf "SPGMR solution: x=@\n%a@\n" print_vec x;
-  printf "  (solved=%B res_norm=%e nli=%d nps=%d)@\n" solved res_norm nli nps;
+printf "SPGMR solution: x=@\n%a@\n" print_vec x;;
+printf "  (solved=%B res_norm=%e nli=%d nps=%d)@\n" solved res_norm nli nps;;
 
-  (* SPBCG *)
+(* SPBCG *)
 
-  let s = SPBCG.make 3 (nvec b) in
+let s = SPBCG.make 3 (nvec b);;
 
-  let x = RealArray.of_array [|  0.0; 0.0;  0.0 |] in
-  let solved, res_norm, nli, nps =
-      SPBCG.solve s (nvec x) (nvec b) Spils.PrecNone
-                  1.0e-4 None None atimes None in
+let x = RealArray.of_array [|  0.0; 0.0;  0.0 |];;
+let solved, res_norm, nli, nps =
+    SPBCG.solve s (nvec x) (nvec b) Spils.PrecNone
+                1.0e-4 None None atimes None ;;
 
-  printf "SPBCG solution: x=@\n%a@\n" print_vec x;
-  printf "  (solved=%B res_norm=%e nli=%d nps=%d)@\n" solved res_norm nli nps;
+printf "SPBCG solution: x=@\n%a@\n" print_vec x;;
+printf "  (solved=%B res_norm=%e nli=%d nps=%d)@\n" solved res_norm nli nps;;
 
-  (* SPTFQMR *)
+(* SPTFQMR *)
 
-  let s = SPTFQMR.make 3 (nvec b) in
+let s = SPTFQMR.make 3 (nvec b);;
 
-  let x = RealArray.of_array [|  0.0; 0.0;  0.0 |] in
-  let solved, res_norm, nli, nps =
-      SPTFQMR.solve s (nvec x) (nvec b) Spils.PrecNone
-                    1.0e-4 None None atimes None in
+let x = RealArray.of_array [|  0.0; 0.0;  0.0 |];;
+let solved, res_norm, nli, nps =
+    SPTFQMR.solve s (nvec x) (nvec b) Spils.PrecNone
+                  1.0e-4 None None atimes None ;;
 
-  printf "SPTFQMR solution: x=@\n%a@\n" print_vec x;
-  printf "  (solved=%B res_norm=%e nli=%d nps=%d)@\n" solved res_norm nli nps;;
-
-main ();;
-Gc.compact ();;
+printf "SPTFQMR solution: x=@\n%a@\n" print_vec x;;
+printf "  (solved=%B res_norm=%e nli=%d nps=%d)@\n" solved res_norm nli nps;;
 

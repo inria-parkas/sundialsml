@@ -446,7 +446,9 @@ let precond data jacarg jok gamma =
 
 (* Preconditioner solve routine *)
 
-let psolve data jac_arg solve_arg (zdata : RealArray.t) =
+let psolve data =
+  let cache = RealArray.create num_species in
+  fun jac_arg solve_arg (zdata : RealArray.t) ->
   let { Cvode.Spils.rhs = (r : RealArray.t);
         Cvode.Spils.gamma = gamma;
         Cvode.Spils.delta = delta;
@@ -466,7 +468,15 @@ let psolve data jac_arg solve_arg (zdata : RealArray.t) =
     for jz = 0 to mz - 1 do
       (* faster to cache and copy in/out than to Bigarray.Array1.sub... *)
       let off = jx * num_species + jz * nsmx in
-      Direct.getrs' p.(jx).(jz) pivot.(jx).(jz) zdata off
+      for i=0 to num_species - 1 do
+        cache.{i} <- zdata.{off + i}
+      done;
+
+      Direct.getrs p.(jx).(jz) pivot.(jx).(jz) cache;
+
+      for i=0 to num_species - 1 do
+        zdata.{off + i} <- cache.{i}
+      done
     done
   done
 

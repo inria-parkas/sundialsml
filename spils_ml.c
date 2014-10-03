@@ -55,7 +55,7 @@ CAMLprim value c_spils_modified_gs(value vv, value vh, value vk, value vp)
     realtype new_vk_norm;
     N_Vector* v;
 
-#if SUNDIALS_ML_SAFE == 1
+#if CHECK_MATRIX_ACCESS == 1
     struct caml_ba_array *bh = ARRAY2_DATA(vh);
     intnat hm = bh->dim[1];
     intnat hn = bh->dim[0];
@@ -98,7 +98,7 @@ CAMLprim value c_spils_classical_gs(value vargs)
     realtype new_vk_norm;
     N_Vector* v;
 
-#if SUNDIALS_ML_SAFE == 1
+#if CHECK_MATRIX_ACCESS == 1
     struct caml_ba_array *bh = ARRAY2_DATA(vh);
     intnat hm = bh->dim[1];
     intnat hn = bh->dim[0];
@@ -567,7 +567,7 @@ CAMLprim value c_spils_qr_fact(value vn, value vh, value vq, value vnewjob)
     int r;
     int n = Int_val(vn);
 
-#if SUNDIALS_ML_SAFE == 1
+#if CHECK_MATRIX_ACCESS == 1
     struct caml_ba_array *bh = ARRAY2_DATA(vh);
     intnat hm = bh->dim[1];
     intnat hn = bh->dim[0];
@@ -589,7 +589,7 @@ CAMLprim value c_spils_qr_sol(value vn, value vh, value vq, value vb)
     int r;
     int n = Int_val(vn);
 
-#if SUNDIALS_ML_SAFE == 1
+#if CHECK_MATRIX_ACCESS == 1
     struct caml_ba_array *bh = ARRAY2_DATA(vh);
     intnat hm = bh->dim[1];
     intnat hn = bh->dim[0];

@@ -27,6 +27,7 @@
 
 include $(SRCROOT)/config
 
+all: tests.byte tests.opt
 
 C_EXAMPLES=$(if $(EXAMPLESROOT),,c_examples_unavailable)
 c_examples_unavailable:
@@ -49,7 +50,6 @@ SUNDIALSLIB_DEPS=$(foreach x,$(SUNDIALSLIB),$(SRCROOT)/$x)
 UTILS=$(SRCROOT)/examples/utils
 
 ## Testing correctness
-all: $(ENABLED_EXAMPLES:.ml=.byte) $(ENABLED_EXAMPLES:.ml=.opt)
 
 tests.byte: $(ENABLED_EXAMPLES:.ml=.byte)
 tests.opt: $(ENABLED_EXAMPLES:.ml=.opt)

@@ -171,7 +171,7 @@ enum cvode_session_index {
 #define CVODE_NROOTS_FROM_ML(v) \
   Long_val(Field((v), RECORD_CVODE_SESSION_NROOTS))
 #define CVODE_ROOTSFN_FROM_ML(v)    Field((v), RECORD_CVODE_SESSION_ROOTSFN)
-#define CVODE_LS_CALLBACKS_FROM_ML(v) Field((v), RECORD_CVODE_SESSION_LS_CALLBACKS)
+#define CVODE_CALLBACKS_FROM_ML(v) Field((v), RECORD_CVODE_SESSION_LS_CALLBACKS)
 #define CVODE_SENSEXT_FROM_ML(v) Field(Field((v), RECORD_CVODE_SESSION_SENSEXT), 0)
 
 enum cvode_spils_callbacks_index {

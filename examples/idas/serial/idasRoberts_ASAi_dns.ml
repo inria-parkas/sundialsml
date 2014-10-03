@@ -135,18 +135,18 @@ let jac data jac_arg j =
   and p2 = data.p.{1}
   and p3 = data.p.{2}
   in
-  let set = Dls.DenseMatrix.set j in
-  set 0 0 (p1+.cj);
-  set 1 0 (-.p1);
-  set 2 0 (1.0);
 
-  set 0 1 (-.p2*.y3);
-  set 1 1 (p2*.y3+.2.0*.p3*.y2+.cj); 
-  set 2 1 (1.0);
+  Dls.DenseMatrix.set j 0 0 (p1+.cj);
+  Dls.DenseMatrix.set j 1 0 (-.p1);
+  Dls.DenseMatrix.set j 2 0 (1.0);
 
-  set 0 2 (-.p2*.y2);
-  set 1 2 (p2*.y2);
-  set 2 2 (1.0)
+  Dls.DenseMatrix.set j 0 1 (-.p2*.y3);
+  Dls.DenseMatrix.set j 1 1 (p2*.y3+.2.0*.p3*.y2+.cj); 
+  Dls.DenseMatrix.set j 2 1 (1.0);
+
+  Dls.DenseMatrix.set j 0 2 (-.p2*.y2);
+  Dls.DenseMatrix.set j 1 2 (p2*.y2);
+  Dls.DenseMatrix.set j 2 2 (1.0)
 
 (*
  * rhsQ routine. Compute fQ(t,y). 
@@ -204,18 +204,17 @@ let jacB data jac_arg jB =
 
   let p1 = data.p.{0} and p2 = data.p.{1} and p3 = data.p.{2} in
 
-  let set = Dls.DenseMatrix.set jB in
-  set 0 0 (-.p1+.cj);
-  set 0 1 (p1);
-  set 0 2 (-.1.0);     
+  Dls.DenseMatrix.set jB 0 0 (-.p1+.cj);
+  Dls.DenseMatrix.set jB 0 1 (p1);
+  Dls.DenseMatrix.set jB 0 2 (-.1.0);     
 
-  set 1 0 (p2*.y3);
-  set 1 1 (-.(p2*.y3+.2.0*.p3*.y2)+.cj); 
-  set 1 2 (-.1.0);
+  Dls.DenseMatrix.set jB 1 0 (p2*.y3);
+  Dls.DenseMatrix.set jB 1 1 (-.(p2*.y3+.2.0*.p3*.y2)+.cj); 
+  Dls.DenseMatrix.set jB 1 2 (-.1.0);
                      
-  set 2 0 (p2*.y2);
-  set 2 1 (-.p2*.y2);
-  set 2 2 (-.1.0)
+  Dls.DenseMatrix.set jB 2 0 (p2*.y2);
+  Dls.DenseMatrix.set jB 2 1 (-.p2*.y2);
+  Dls.DenseMatrix.set jB 2 2 (-.1.0)
 
 let rhsQB data tt yy yp yyB ypB rrQB =
   (* The y vector *)

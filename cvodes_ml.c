@@ -56,6 +56,8 @@ enum callback_index {
     IX_call_bprecsetupfn,
     IX_call_bprecsolvefn,
     IX_call_bjactimesfn,
+    IX_call_bjacfn,
+    IX_call_bbandjacfn,
     NUM_CALLBACKS
 };
 
@@ -532,25 +534,20 @@ static int bjacfn(
     N_Vector tmp3b)
 {
     CAMLparam0();
-    CAMLlocalN(args, 2);
-    CAMLlocal4(session, cb, dmat, r);
+    CAMLlocalN(args, 3);
+    int retcode;
     value *backref = user_data;
-    WEAK_DEREF (session, *backref);
 
-    // assert(session.ls_callbacks = BDenseCallback cb)
-    cb = Field(CVODE_LS_CALLBACKS_FROM_ML(session), 0);
-    dmat = Field(cb, 1);
-    if (dmat == Val_none) {
-	Store_some(dmat, c_dls_dense_wrap(jacb, 0));
-	Store_field(cb, 1, dmat);
-    }
+    args[0] = *backref;
+    args[1] = make_jac_arg(t, y, yb, fyb, make_triple_tmp(tmp1b, tmp2b, tmp3b));
+    args[2] = caml_alloc_final (2, NULL, 0, 1);
+    DLSMAT(args[2]) = jacb;
 
-    args[0] = make_jac_arg(t, y, yb, fyb, make_triple_tmp(tmp1b, tmp2b, tmp3b));
-    args[1] = Some_val(dmat);
+    retcode = Int_val (caml_callbackN(CAML_FN(call_bjacfn),
+                                      sizeof (args) / sizeof (*args),
+                                      args));
 
-    r = caml_callbackN_exn (Field(cb, 0), sizeof (args) / sizeof (*args), args);
-
-    CAMLreturnT(int, check_exception(session, r));
+    CAMLreturnT(int, retcode);
 }
 
 static int bbandjacfn(
@@ -568,28 +565,23 @@ static int bbandjacfn(
 	N_Vector tmp3b)
 {
     CAMLparam0();
-    CAMLlocalN(args, 3);
-    CAMLlocal4(session, cb, bmat, r);
+    CAMLlocalN(args, 4);
+    int r;
     value *backref = user_data;
-    WEAK_DEREF (session, *backref);
 
-    // assert(session.ls_callbacks = DenseCallback cb)
-    cb = Field(CVODE_LS_CALLBACKS_FROM_ML(session), 0);
-    bmat = Field(cb, 1);
-    if (bmat == Val_none) {
-	Store_some(bmat, c_dls_band_wrap(jacb, 0));
-	Store_field(cb, 1, bmat);
-    }
+    args[0] = *backref;
+    args[1] = caml_alloc_tuple(RECORD_CVODES_ADJ_BANDRANGE_SIZE);
+    Store_field(args[1], RECORD_CVODES_ADJ_BANDRANGE_MUPPER, Val_long(mupperb));
+    Store_field(args[1], RECORD_CVODES_ADJ_BANDRANGE_MLOWER, Val_long(mlowerb));
+    args[2] = make_jac_arg(t, y, yb, fyb, make_triple_tmp(tmp1b, tmp2b, tmp3b));
+    args[3] = caml_alloc_final(2, NULL, 0, 1);
+    DLSMAT(args[3]) = jacb;
 
-    args[0] = caml_alloc_tuple(RECORD_CVODES_ADJ_BANDRANGE_SIZE);
-    Store_field(args[0], RECORD_CVODES_ADJ_BANDRANGE_MUPPER, Val_long(mupperb));
-    Store_field(args[0], RECORD_CVODES_ADJ_BANDRANGE_MLOWER, Val_long(mlowerb));
-    args[1] = make_jac_arg(t, y, yb, fyb, make_triple_tmp(tmp1b, tmp2b, tmp3b));
-    args[2] = Some_val(bmat);
+    r = Int_val (caml_callbackN(CAML_FN(call_bbandjacfn),
+                                sizeof (args) / sizeof (*args),
+                                args));
 
-    r = caml_callbackN_exn (Field(cb, 0), sizeof (args) / sizeof (*args), args);
-
-    CAMLreturnT(int, check_exception(session, r));
+    CAMLreturnT(int, r);
 }
 
 /* quadrature interface */

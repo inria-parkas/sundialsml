@@ -71,6 +71,8 @@ enum callback_index {
     IX_call_resfn = 0,
     IX_call_errh,
     IX_call_errw,
+    IX_call_jacfn,
+    IX_call_bandjacfn,
     IX_call_precsetupfn,
     IX_call_precsolvefn,
     IX_call_jactimesfn,
@@ -88,25 +90,6 @@ CAMLprim value c_ida_init_module (value cbs, value exns)
     REGISTER_EXNS (IDA, exns);
     REGISTER_CALLBACKS (cbs);
     CAMLreturn (Val_unit);
-}
-
-static int check_exception(value session, value r)
-{
-    CAMLparam2(session, r);
-    CAMLlocal1(exn);
-
-    if (!Is_exception_result(r)) return 0;
-
-    r = Extract_exception(r);
-
-    if (Field(r, 0) == SUNDIALS_EXN (RecoverableFailure))
-	CAMLreturnT (int, 1);
-
-    /* Unrecoverable error.  Save the exception and return -1.  */
-    exn = caml_alloc_small (1,0);
-    Field (exn, 0) = r;
-    Store_field (session, RECORD_IDA_SESSION_EXN_TEMP, exn);
-    CAMLreturnT (int, -1);
 }
 
 /* callbacks */
@@ -226,26 +209,21 @@ static int jacfn (long int neq, realtype t, realtype coef,
 		  N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
 {
     CAMLparam0 ();
-    CAMLlocalN (args, 2);
-    CAMLlocal4(session, cb, dmat, r);
+    CAMLlocalN (args, 3);
+    int r;
     value *backref = user_data;
-    WEAK_DEREF (session, *backref);
 
-    // assert(session.ls_callbacks = DenseCallback cb)
-    cb = Field(IDA_LS_CALLBACKS_FROM_ML(session), 0);
-    dmat = Field(cb, 1);
-    if (dmat == Val_none) {
-	Store_some(dmat, c_dls_dense_wrap(jac, 0));
-	Store_field(cb, 1, dmat);
-    }
-
-    args[0] = make_jac_arg (t, coef, y, yp, res,
+    args[0] = *backref;
+    args[1] = make_jac_arg (t, coef, y, yp, res,
 			    make_triple_tmp (tmp1, tmp2, tmp3));
-    args[1] = Some_val(dmat);
+    args[2] = caml_alloc_final (2, NULL, 0, 1);
+    DLSMAT(args[2]) = jac;
 
-    r = caml_callbackN_exn (Field(cb, 0), sizeof (args) / sizeof (*args), args);
+    r = Int_val (caml_callbackN (CAML_FN(call_jacfn),
+				 sizeof (args) / sizeof (*args),
+				 args));
 
-    CAMLreturnT(int, check_exception(session, r));
+    CAMLreturnT (int, r);
 }
 
 static int bandjacfn (long int neq, long int mupper, long int mlower,
@@ -254,29 +232,43 @@ static int bandjacfn (long int neq, long int mupper, long int mlower,
 		      N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
 {
     CAMLparam0 ();
-    CAMLlocalN (args, 3);
-    CAMLlocal4(session, cb, bmat, r);
+    CAMLlocalN (args, 4);
+    int r;
     value *backref = user_data;
-    WEAK_DEREF (session, *backref);
 
-    // assert(session.ls_callbacks = BandCallback cb)
-    cb = Field(IDA_LS_CALLBACKS_FROM_ML(session), 0);
-    bmat = Field(cb, 1);
-    if (bmat == Val_none) {
-	Store_some(bmat, c_dls_band_wrap(jac, 0));
-	Store_field(cb, 1, bmat);
-    }
-
-    args[0] = caml_alloc_tuple(RECORD_IDA_BANDRANGE_SIZE);
-    Store_field(args[0], RECORD_IDA_BANDRANGE_MUPPER, Val_long(mupper));
-    Store_field(args[0], RECORD_IDA_BANDRANGE_MLOWER, Val_long(mlower));
-    args[1] = make_jac_arg (t, coef, y, yp, res,
+    args[0] = *backref;
+    args[1] = caml_alloc_tuple(RECORD_IDA_BANDRANGE_SIZE);
+    Store_field(args[1], RECORD_IDA_BANDRANGE_MUPPER, Val_long(mupper));
+    Store_field(args[1], RECORD_IDA_BANDRANGE_MLOWER, Val_long(mlower));
+    args[2] = make_jac_arg (t, coef, y, yp, res,
 			    make_triple_tmp (tmp1, tmp2, tmp3));
-    args[2] = Some_val(bmat);
+    args[3] = caml_alloc_final (2, NULL, 0, 1);
+    DLSMAT(args[3]) = jac;
 
-    r = caml_callbackN_exn (Field(cb, 0), sizeof (args) / sizeof (*args), args);
+    r = Int_val (caml_callbackN (CAML_FN(call_bandjacfn),
+				 sizeof (args) / sizeof (*args),
+				 args));
 
-    CAMLreturnT(int, check_exception(session, r));
+    CAMLreturnT (int, r);
+}
+
+static int check_exception(value session, value r)
+{
+    CAMLparam2(session, r);
+    CAMLlocal1(exn);
+
+    if (!Is_exception_result(r)) return 0;
+
+    r = Extract_exception(r);
+
+    if (Field(r, 0) == SUNDIALS_EXN (RecoverableFailure))
+	CAMLreturnT (int, 1);
+
+    /* Unrecoverable error.  Save the exception and return -1.  */
+    exn = caml_alloc_small (1,0);
+    Field (exn, 0) = r;
+    Store_field (session, RECORD_IDA_SESSION_EXN_TEMP, exn);
+    CAMLreturnT (int, -1);
 }
 
 static int rootsfn (realtype t, N_Vector y, N_Vector yp,
@@ -768,6 +760,10 @@ CAMLprim value c_ida_reinit(value vdata, value t0, value y0, value yp0)
 			 y0_nv, yp0_nv);
     CHECK_FLAG("IDAReInit", flag);
 
+#if SAFETY_CHECKS
+    IDA_MASK_SAFETY_FLAGS(vdata, IDA_SAFETY_FLAG_REINIT_KEEPS);
+#endif
+
     CAMLreturn (Val_unit);
 }
 
@@ -780,6 +776,14 @@ static value solve (value vdata, value nextt, value vy, value vyp, int onestep)
     int flag;
     N_Vector y, yp;
     enum ida_solver_result_tag result = -1;
+
+#if SAFETY_CHECKS && IDA_ML_BIGARRAYS
+    /* This can't be checked for generic nvectors.  */
+    if (IDA_NEQS_FROM_ML (vdata) != Caml_ba_array_val(vy)->dim[0])
+	caml_invalid_argument ("Ida.solve: y vector has incorrect length");
+    if (IDA_NEQS_FROM_ML (vdata) != Caml_ba_array_val(vyp)->dim[0])
+	caml_invalid_argument ("Ida.solve: y' vector has incorrect length");
+#endif
 
     y = NVEC_VAL (vy);
     yp = NVEC_VAL (vyp);
@@ -813,6 +817,10 @@ static value solve (value vdata, value nextt, value vy, value vyp, int onestep)
 	}
 	CHECK_FLAG ("IDASolve", flag);
     }
+
+#if SAFETY_CHECKS
+    IDA_SET_SAFETY_FLAG (vdata, IDA_SAFETY_FLAG_SOLVING);
+#endif
 
     /* Hmm...should this go in the production code or not?  */
     if (Is_block (Field (vdata, RECORD_IDA_SESSION_EXN_TEMP)))
@@ -887,6 +895,10 @@ CAMLprim value c_ida_set_id (value vida_mem, value vid)
     int flag = IDASetId (IDA_MEM_FROM_ML(vida_mem), id);
     CHECK_FLAG("IDASetId", flag);
 
+#if SAFETY_CHECKS
+    IDA_SET_SAFETY_FLAG (vida_mem, IDA_SAFETY_FLAG_ID_SET);
+#endif
+
     CAMLreturn (Val_unit);
 }
 
@@ -898,6 +910,11 @@ static void calc_ic (void *ida_mem, value session, int icopt, realtype tout1,
     CAMLlocal1 (exn);
     int flag;
     N_Vector y, yp;
+
+#if SAFETY_CHECKS
+    if (IDA_SAFETY_FLAGS (session) & IDA_SAFETY_FLAG_SOLVING)
+	caml_invalid_argument ("Ida.calc_ic: called after Ida.solve_*");
+#endif
 
     flag = IDACalcIC (ida_mem, icopt, tout1);
 
@@ -945,6 +962,10 @@ CAMLprim value c_ida_calc_ic_ya_ydp(value vida_mem, value y, value yp,
     N_Vector id = NVEC_VAL (vid);
     flag = IDASetId (ida_mem, id);
     CHECK_FLAG ("IDASetId", flag);
+
+#if SAFETY_CHECKS
+    IDA_SET_SAFETY_FLAG (vida_mem, IDA_SAFETY_FLAG_ID_SET);
+#endif
 
     calc_ic (ida_mem, vida_mem, IDA_YA_YDP_INIT, Double_val (tout1), y, yp);
 
@@ -1453,6 +1474,11 @@ CAMLprim value c_ida_set_no_inactive_root_warn(value vida_mem)
 CAMLprim value c_ida_set_suppress_alg (value vida_mem, value vb)
 {
     CAMLparam2(vida_mem, vb);
+
+#if SAFETY_CHECKS
+    if (! IDA_TEST_SAFETY_FLAG (vida_mem, IDA_SAFETY_FLAG_ID_SET))
+	caml_invalid_argument ("Ida.set_suppress_alg: var types not set");
+#endif
 
     int flag = IDASetSuppressAlg(IDA_MEM_FROM_ML(vida_mem),
 				 Bool_val (vb));

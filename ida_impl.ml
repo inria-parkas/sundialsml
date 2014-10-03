@@ -43,25 +43,11 @@ module DlsTypes = struct
     -> Dls.DenseMatrix.t
     -> unit
 
-  (* These fields are accessed from cvode_ml.c *)
-  type dense_jac_callback =
-    {
-      jacfn: dense_jac_fn;
-      mutable dmat : Dls.DenseMatrix.t option
-    }
-
   type band_jac_fn =
     bandrange
     -> (Sundials.RealArray.t triple_tmp, Sundials.RealArray.t) jacobian_arg
     -> Dls.BandMatrix.t
     -> unit
-
-  (* These fields are accessed from cvode_ml.c *)
-  type band_jac_callback =
-    {
-      bjacfn: band_jac_fn;
-      mutable bmat : Dls.BandMatrix.t option
-    }
 end
 
 module SpilsCommonTypes = struct
@@ -227,25 +213,11 @@ module AdjointTypes' = struct
       -> Dls.DenseMatrix.t
       -> unit
 
-    (* These fields are accessed from cvode_ml.c *)
-    type dense_jac_callback =
-      {
-        jacfn: dense_jac_fn;
-        mutable dmat : Dls.DenseMatrix.t option
-      }
-
     type band_jac_fn =
       bandrange
       -> (Sundials.RealArray.t triple_tmp, Sundials.RealArray.t) jacobian_arg
       -> Dls.BandMatrix.t
       -> unit
-
-    (* These fields are accessed from cvode_ml.c *)
-    type band_jac_callback =
-      {
-        bjacfn: band_jac_fn;
-        mutable bmat : Dls.BandMatrix.t option
-      }
   end
 
   (* Ditto. *)
@@ -322,6 +294,9 @@ type ('a,'kind) session = {
   mutable ls_callbacks : ('a, 'kind) linsolv_callbacks;
 
   mutable sensext      : ('a, 'kind) sensext; (* Used by IDAS *)
+
+  (* To be manipulated from the C side only.  *)
+  mutable safety_check_flags : int;
 }
 and ('a, 'kind) sensext =
     NoSensExt
@@ -370,15 +345,15 @@ and ('a, 'kind) bsensext = {
 and ('a, 'kind) linsolv_callbacks =
   | NoCallbacks
 
-  | DenseCallback of DlsTypes.dense_jac_callback
-  | BandCallback  of DlsTypes.band_jac_callback
+  | DenseCallback of DlsTypes.dense_jac_fn
+  | BandCallback  of DlsTypes.band_jac_fn
   | SpilsCallback of 'a SpilsTypes.callbacks
   | BBDCallback of 'a IdaBbdParamTypes.callbacks
 
   | AlternateCallback of ('a, 'kind) alternate_linsolv
 
-  | BDenseCallback of AdjointTypes'.DlsTypes.dense_jac_callback
-  | BBandCallback  of AdjointTypes'.DlsTypes.band_jac_callback
+  | BDenseCallback of AdjointTypes'.DlsTypes.dense_jac_fn
+  | BBandCallback  of AdjointTypes'.DlsTypes.band_jac_fn
   | BSpilsCallback of 'a AdjointTypes'.SpilsTypes.callbacks
   | BBBDCallback of 'a IdasBbdParamTypes.callbacks
 

@@ -45,6 +45,9 @@ type serial_linear_solver = (real_array, Nvector_serial.kind) linear_solver
 
 (* interface *)
 
+external session_finalize : ('a, 'k) session -> unit
+    = "c_kinsol_session_finalize"
+
 let int_default = function None -> 0 | Some v -> v
 
 module Dls =
@@ -70,7 +73,7 @@ module Dls =
       c_dls_dense s (fo <> None);
       s.ls_callbacks <- match fo with
                         | None -> NoCallbacks
-                        | Some f -> DenseCallback { jacfn = f; dmat = None }
+                        | Some f -> DenseCallback f
 
     let lapack_dense fo s onv =
       (match onv with
@@ -79,7 +82,7 @@ module Dls =
       c_dls_lapack_dense s (fo <> None);
       s.ls_callbacks <- match fo with
                         | None -> NoCallbacks
-                        | Some f -> DenseCallback { jacfn = f; dmat = None }
+                        | Some f -> DenseCallback f
 
     let band { mupper; mlower } fo s onv =
       (match onv with
@@ -88,7 +91,7 @@ module Dls =
       c_dls_band s mupper mlower (fo <> None);
       s.ls_callbacks <- match fo with
                         | None -> NoCallbacks
-                        | Some f -> BandCallback { bjacfn = f; bmat = None }
+                        | Some f -> BandCallback f
 
     let lapack_band { mupper; mlower } fo s onv =
       (match onv with
@@ -97,24 +100,13 @@ module Dls =
       c_dls_lapack_band s mupper mlower (fo <> None);
       s.ls_callbacks <- match fo with
                         | None -> NoCallbacks
-                        | Some f -> BandCallback { bjacfn = f; bmat = None }
-
-    let invalidate_callback (type d) (type k) (session : (d, k) session) =
-      match session.ls_callbacks with
-      | DenseCallback ({ dmat = Some d } as cb) ->
-          Dls.DenseMatrix.invalidate d;
-          cb.dmat <- None
-      | BandCallback  ({ bmat = Some d } as cb) ->
-          Dls.BandMatrix.invalidate d;
-          cb.bmat <- None
-      | _ -> ()
+                        | Some f -> BandCallback f
 
     external set_dense_jac_fn : serial_session -> unit
         = "c_kinsol_dls_set_dense_jac_fn"
 
     let set_dense_jac_fn s fjacfn =
-      invalidate_callback s;
-      s.ls_callbacks <- DenseCallback { jacfn = fjacfn; dmat = None };
+      s.ls_callbacks <- DenseCallback fjacfn;
       set_dense_jac_fn s
 
     external clear_dense_jac_fn : serial_session -> unit
@@ -122,8 +114,7 @@ module Dls =
 
     let clear_dense_jac_fn s =
       match s.ls_callbacks with
-      | DenseCallback _ -> (invalidate_callback s;
-                            s.ls_callbacks <- NoCallbacks;
+      | DenseCallback _ -> (s.ls_callbacks <- NoCallbacks;
                             clear_dense_jac_fn s)
       | _ -> failwith "dense linear solver not in use"
 
@@ -131,8 +122,7 @@ module Dls =
         = "c_kinsol_dls_set_band_jac_fn"
 
     let set_band_jac_fn s fbandjacfn =
-      invalidate_callback s;
-      s.ls_callbacks <- BandCallback { bjacfn = fbandjacfn; bmat = None };
+      s.ls_callbacks <- BandCallback fbandjacfn;
       set_band_jac_fn s
 
     external clear_band_jac_fn : serial_session -> unit
@@ -140,8 +130,7 @@ module Dls =
 
     let clear_band_jac_fn s =
       match s.ls_callbacks with
-      | BandCallback _ -> (invalidate_callback s;
-                           s.ls_callbacks <- NoCallbacks;
+      | BandCallback _ -> (s.ls_callbacks <- NoCallbacks;
                            clear_band_jac_fn s)
       | _ -> failwith "dense linear solver not in use"
 
@@ -435,13 +424,6 @@ external c_init
       -> (kin_mem * c_weak_ref * kin_file * kin_file)
     = "c_kinsol_init"
 
-external c_session_finalize : ('a, 'k) session -> unit
-    = "c_kinsol_session_finalize"
-
-let session_finalize s =
-  Dls.invalidate_callback s;
-  c_session_finalize s
-
 let init lsolver f u0 =
   let weakref = Weak.create 1 in
   let kin_mem, backref, err_file, info_file = c_init weakref u0
@@ -499,6 +481,18 @@ let call_infoh session details =
                    "This exception will not be propagated: " ^
                    Printexc.to_string e)
 
+let call_jacfn session jac j =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | DenseCallback f -> adjust_retcode session true (f jac) j
+  | _ -> assert false
+
+let call_bandjacfn session range jac j =
+  let session = read_weak_ref session in
+  match session.ls_callbacks with
+  | BandCallback f -> adjust_retcode session true (f range jac) j
+  | _ -> assert false
+
 let call_precsolvefn session jac ps u =
   let session = read_weak_ref session in
   match session.ls_callbacks with
@@ -555,6 +549,9 @@ let _ =
     [|Fcn call_sysfn;
       Fcn call_errh;
       Fcn call_infoh;
+
+      Fcn call_jacfn;
+      Fcn call_bandjacfn;
 
       Fcn call_precsolvefn;
       Fcn call_precsetupfn;

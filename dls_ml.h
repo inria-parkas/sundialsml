@@ -14,7 +14,6 @@
 #define _DLS_ML_H__
 
 #include <caml/mlvalues.h>
-#include <sundials/sundials_dense.h>
 
 #define DLSMAT(v) (*(DlsMat *)Data_custom_val(v))
 
@@ -28,25 +27,6 @@ enum dls_exn_index {
 #define DLS_EXN(name) (Field (Field (sundials_ml_exn_table,	\
 				     DLS_EXN_SET),		\
 			      DLS_EXN_ ## name))
-
-enum dls_densematrix_index {
-  RECORD_DLS_DENSEMATRIX_PAYLOAD    = 0,
-  RECORD_DLS_DENSEMATRIX_DLSMAT,
-  RECORD_DLS_DENSEMATRIX_VALID,
-  RECORD_DLS_DENSEMATRIX_SIZE /* This has to come last. */
-};
-
-enum dls_bandmatrix_index {
-  RECORD_DLS_BANDMATRIX_PAYLOAD    = 0,
-  RECORD_DLS_BANDMATRIX_DLSMAT,
-  RECORD_DLS_BANDMATRIX_SMU,
-  RECORD_DLS_BANDMATRIX_VALID,
-  RECORD_DLS_BANDMATRIX_SIZE /* This has to come last. */
-};
-
-CAMLprim value c_dls_invalidate(value);
-CAMLprim value c_dls_dense_wrap(DlsMat a, int finalize);
-CAMLprim value c_dls_band_wrap(DlsMat a, int finalize);
 
 #endif
 

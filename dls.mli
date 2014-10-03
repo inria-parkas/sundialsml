@@ -36,19 +36,13 @@ exception ZeroDiagonalElement of int
 module DenseMatrix :
   sig
     (**
-    This type represents a [DlsMat] returned from a call to {!make}.
+    This type represents a [DlsMat] returned from a call to
+    {!make}.
 
      @cvode <node9#s:dls>  Type DlsMat
      @cvode <node9#ss:dense> NewDenseMat 
      *)
     type t
-
-    (** A {{:OCAML_DOC_ROOT(Bigarray.Array2)} (Bigarray)} 2D vector of floats. *)
-    type data = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
-
-    (** This exception is thrown if an operation is passed a value on which
-        {!invalidate} has been called. *)
-    exception Invalidated
 
     (** {4 Basic access} *)
 
@@ -66,12 +60,6 @@ module DenseMatrix :
      @cvode <node9#ss:dense> NewDenseMat
      *)
     val create : int -> int -> t
-
-    (** Separate the underlying {!data} array (whose dimensions are set to
-        zero) from the abstract value. This low-level operation is called
-        internally when an abstract value in the underlying C library
-        ceases to exist. *)
-    val invalidate : t -> unit
 
     (**
      [m, n = size a] returns the number of columns, [m], and rows, [n], of the
@@ -287,9 +275,6 @@ module ArrayDenseMatrix :
      *)
     val getrs : t -> Sundials.LintArray.t -> Sundials.RealArray.t -> unit
 
-    (** Like {!getrs} but stores [b] starting at the given offset. *)
-    val getrs' : t -> Sundials.LintArray.t -> Sundials.RealArray.t -> int -> unit
-
     (**
      [potrf a] performs the Cholesky factorization of a real symmetric positive
      n by n matrix.
@@ -350,13 +335,6 @@ module BandMatrix :
      *)
     type t
 
-    (** A {{:OCAML_DOC_ROOT(Bigarray.Array2)} (Bigarray)} 2D vector of floats. *)
-    type data = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
-
-    (** This exception is thrown if an operation is passed a value on which
-        {!invalidate} has been called. *)
-    exception Invalidated
-
     (** {4 Basic access} *)
 
     (**
@@ -380,12 +358,6 @@ module BandMatrix :
      @cvode <node9#ss:band> NewBandMat
      *)
     val create : int -> int -> int -> int -> t
-
-    (** Separate the underlying {!data} array (whose dimensions are set to
-        zero) from the abstract value. This low-level operation is called
-        internally when an abstract value in the underlying C library
-        ceases to exist. *)
-    val invalidate : t -> unit
 
     (**
      [n, mu, ml, smu = size a] returns the size ([n]), upper bandwidth ([mu]),
@@ -468,6 +440,46 @@ module BandMatrix :
      @cvode <node9#ss:band> BandGBTRS
      *)
     val gbtrs : t -> Sundials.LintArray.t -> Sundials.RealArray.t -> unit
+
+    (** {4 Column access} *)
+
+    (** Access banded matrix columns *)
+    module Col :
+      sig
+        (**
+         This type represents a bandmatrix ([DlsMat]) column.
+
+         @cvode <node9#s:dls> BAND_COL
+         *)
+        type c
+
+        (**
+         [get_col a j] returns the diagonal element of the j-th column of the n
+         by n band matrix [a], where 0 <= [j] <= n - 1.
+         The resulting column may be indexed from -mu([a]) to ml([a]).
+
+         @cvode <node9#s:dls> BAND_COL
+         *)
+        val get_col : t -> int -> c
+
+        (**
+         [get c i j] returns the ([i], [j])th entry of the band matrix from
+         which the column [c] has already been selected;
+         provided that [j] - mu(c) <= [i] <= [j] + ml(c).
+
+         @cvode <node9#s:dls> BAND_COL_ELEM
+         *)
+        val get : c -> int -> int -> float
+
+        (**
+         [set c i j v] stores the value [v] at the ([i], [j])th entry of
+         the band matrix from which the column [c] has already been selected;
+         provided that [j] - mu(c) <= [i] <= [j] + ml(c).
+
+         @cvode <node9#s:dls> BAND_COL_ELEM
+         *)
+        val set : c -> int -> int -> float -> unit
+      end
   end
 
 (** {3 Array-based banded matrices}

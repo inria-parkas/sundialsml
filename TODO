@@ -20,6 +20,8 @@ Priorities
 ----------
 1. Callbacks with exception checking directly from C.
 2. Access around the weak pointer where possible (through stack).
+3. What to do about Dls.DenseMatrix (replace with ArrayDenseMatrix or
+   otherwise improve its performance).
 
 TODO
 ----
@@ -43,6 +45,13 @@ TODO
      Q. How to handle error callbacks without adding extra code everywhere?
      Associate two values with each session: a weak pointer (for error
      callbacks), and a value (overwritten at each Sundials entry)?
+
+   - See whether the Dls.DenseMatrix representation can be changed to allow
+     an unwrap function (as for ArrayDenseMatrix), with the idea of speeding
+     up the routines in Kinsol.Dls (and hence the example
+     kinsol/serial/kinRoboKin_dns; compare to kinRoboKin_dns_alt which has
+     the overhead of an alternate linear solver, but which makes up for it
+     by directly accessing the jacobian as a realarray).
 
 5. (Jun) OPAM/findlib wrappers.
    - Everything properly supported in a toplevel
@@ -71,6 +80,9 @@ TODO
 
 MINOR PATCHES
 -------------
+1. dls_ml.c: c_densematrix_new_dense_mat
+   need to point at an empty matrix on return?
+
 2. (Tim/Jun) Add the Dls functions to Cvodes/Idas:
      set_dense_jac_fn
      clear_dense_jac_fn
@@ -81,10 +93,15 @@ MINOR PATCHES
      set_jac_times_vec_fn
      clear_jac_times_vec_fn
 
-   or just provide a reinit function.
+   and just provide a reinit function.
 
    In the doc, mention that these don't reset performance counters.
    But they're discouraged otherwise.
+
+3. Using spgmr linear solver with prec_setup = None and prec_solve = Some
+   crashes.
+
+4. Check that Callback.register "" are consistent with C code.
 
 5. Flatten out jacobian_arg
 
@@ -100,4 +117,6 @@ TO DISCUSS
   - C-implemented comparator as third field of nvector type.  Provide
     NULL for custom nvectors (which will be implemented in OCaml so
     are safe anyway).
+
+  - unify CHECK_MATRIX_ACCESS with SAFETY_CHECKS
 

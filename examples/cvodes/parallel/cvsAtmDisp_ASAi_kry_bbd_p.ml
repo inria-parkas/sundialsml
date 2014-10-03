@@ -312,7 +312,7 @@ let set_data comm npes myId =
 
     (* Initialize Buffer field.
        Size of buffer is checked when needed *)
-    buf_send = RealArray.create 0;
+    buf_send = RealArray.empty;
     buf_size = 0;
 
     p = Nvector.make l_neq neq comm zero;

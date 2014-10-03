@@ -71,56 +71,51 @@ and mu = 1
 and ml = 1;;
 let smu = min (n - 1) (mu + ml);;
 
-let main () =
-  let a = M.create n smu ml in
-  Array2.fill (RealArray2.unwrap a) 0.0;
+let a = M.create n smu ml;;
+Array2.fill (RealArray2.unwrap a) 0.0;;
 
-  M.set a smu 0 0 ( 1.0);
-  M.set a smu 0 1 ( 2.0);
+M.set a smu 0 0 ( 1.0);
+M.set a smu 0 1 ( 2.0);
 
-  M.set a smu 1 0 ( 2.0);
-  M.set a smu 1 1 ( 2.0);
-  M.set a smu 1 2 ( 3.0);
+M.set a smu 1 0 ( 2.0);
+M.set a smu 1 1 ( 2.0);
+M.set a smu 1 2 ( 3.0);
 
-  M.set a smu 2 1 ( 3.0);
-  M.set a smu 2 2 ( 3.0);
-  M.set a smu 2 3 ( 4.0);
+M.set a smu 2 1 ( 3.0);
+M.set a smu 2 2 ( 3.0);
+M.set a smu 2 3 ( 4.0);
 
-  M.set a smu 3 2 ( 4.0);
-  M.set a smu 3 3 ( 4.0);
-  M.set a smu 3 4 ( 5.0);
+M.set a smu 3 2 ( 4.0);
+M.set a smu 3 3 ( 4.0);
+M.set a smu 3 4 ( 5.0);
 
-  M.set a smu 4 3 ( 5.0);
-  M.set a smu 4 4 ( 5.0);
+M.set a smu 4 3 ( 5.0);
+M.set a smu 4 4 ( 5.0);
 
-  printf "initially: a.data=@\n%a@\n" print_mat_data a;
+printf "initially: a.data=@\n%a@\n" print_mat_data a;;
 
-  printf "initially: a=@\n%a@\n" (print_mat mu ml smu) a;
+printf "initially: a=@\n%a@\n" (print_mat mu ml smu) a;;
 
-  let b = RealArray2.copy a in
+let b = RealArray2.copy a;;
 
-  M.scale 2.0 b mu ml smu;
-  printf "scale copy x2: b=@\n%a@\n" (print_mat mu ml smu) b;
+M.scale 2.0 b mu ml smu;
+printf "scale copy x2: b=@\n%a@\n" (print_mat mu ml smu) b;;
 
-  M.add_identity b smu;
-  printf "add identity: b=@\n%a@\n" (print_mat mu ml smu) b;
+M.add_identity b smu;
+printf "add identity: b=@\n%a@\n" (print_mat mu ml smu) b;;
 
-  let p = LintArray.create 5 in
-  Array1.fill p 0;
-  M.gbtrf a mu ml smu p;
-  printf "getrf: a=@\n%a@\n" (print_factored_mat mu ml smu) a;
-  printf "       p=@\n%a@\n@\n" print_p p;
+let p = LintArray.create 5;;
+Array1.fill p 0;
+M.gbtrf a mu ml smu p;
+printf "getrf: a=@\n%a@\n" (print_factored_mat mu ml smu) a;
+printf "       p=@\n%a@\n@\n" print_p p;;
 
-  let s = RealArray.create n in
-  s.{0} <-  5.0;
-  s.{1} <- 15.0;
-  s.{2} <- 31.0;
-  s.{3} <- 53.0;
-  s.{4} <- 45.0;
-  M.gbtrs a smu ml p s;
-  printf "getrs: s=@\n%a@\n" print_vec s;;
-
-main ();;
-Gc.compact ();;
-
+let s = RealArray.create n;;
+s.{0} <-  5.0;
+s.{1} <- 15.0;
+s.{2} <- 31.0;
+s.{3} <- 53.0;
+s.{4} <- 45.0;
+M.gbtrs a smu ml p s;
+printf "getrs: s=@\n%a@\n" print_vec s;;
 

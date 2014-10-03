@@ -20,144 +20,55 @@ exception ZeroDiagonalElement of int
 (* note: uses DENSE_ELEM rather than the more efficient DENSE_COL. *)
 module DenseMatrix =
   struct
-    type data = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
+    type t
 
-    (* Must correspond with dls_ml.h:dls_densematrix_index *)
-    type t = {
-      payload : data;
-      dlsmat  : Obj.t;
-      mutable valid : bool;
-    }
-
-    exception Invalidated
-
-    external c_create : int -> int -> t
+    external create : int -> int -> t
         = "c_densematrix_new_dense_mat"
 
-    let create i j =
-      if i <= 0 || j <= 0 then failwith "Both M and N must be positive";
-      c_create i j
-
-    (* Allowing direct access is not safe because the underlying data may
-       have been invalidated. Invalidated by setting the dims of the
-       bigarray to 0 is tempting but error prone and the mechanism can
-       be circumvented using Bigarray.Array2.sub (see:
-         https://groups.google.com/d/msg/fa.caml/ROr_PifT_44/aqQ8Z0TWzH8J). *)
-    let unwrap { payload } = payload
-
-    let invalidate v = v.valid <- false
-
-    external c_size : Obj.t -> (int * int)
+    external size : t -> (int * int)
         = "c_densematrix_size"
 
-    let size { dlsmat; valid } =
-      if not valid then raise Invalidated;
-      c_size dlsmat
-
-    external c_print        : Obj.t -> unit
+    external print          : t -> unit
         = "c_densematrix_print_mat"
 
-    let print { dlsmat; valid } =
-      if not valid then raise Invalidated;
-      c_print dlsmat
-
-    external c_set_to_zero  : Obj.t -> unit
+    external set_to_zero    : t -> unit
         = "c_densematrix_set_to_zero"
 
-    let set_to_zero { dlsmat; valid } =
-      if not valid then raise Invalidated;
-      c_set_to_zero dlsmat
-
-    external c_add_identity : Obj.t -> unit
+    external add_identity   : t -> unit
         = "c_densematrix_add_identity"
 
-    let add_identity { dlsmat; valid } =
-      if not valid then raise Invalidated;
-      c_add_identity dlsmat
-
-    external c_copy     : Obj.t -> Obj.t -> unit
+    external copy     : t -> t -> unit
         = "c_densematrix_copy"
 
-    let copy { dlsmat=dlsmat1; valid=valid1 }
-             { dlsmat=dlsmat2; valid=valid2 } =
-      if not (valid1 && valid2) then raise Invalidated;
-      c_copy dlsmat1 dlsmat2
-
-    external c_scale  : float -> Obj.t -> unit
+    external scale    : float -> t -> unit
         = "c_densematrix_scale"
 
-    let scale a { dlsmat; valid } =
-      if not valid then raise Invalidated;
-      c_scale a dlsmat
-
-    external c_getrf  : Obj.t -> lint_array -> unit
+    external getrf    : t -> lint_array -> unit
         = "c_densematrix_getrf"
 
-    let getrf { dlsmat; valid } la =
-      if not valid then raise Invalidated;
-      c_getrf dlsmat la
-
-    external c_getrs  : Obj.t -> lint_array -> real_array -> unit
+    external getrs    : t -> lint_array -> real_array -> unit
         = "c_densematrix_getrs"
 
-    let getrs { dlsmat; valid } la ra =
-      if not valid then raise Invalidated;
-      c_getrs dlsmat la ra
-
-    external c_potrf  : Obj.t -> unit
+    external potrf    : t -> unit
         = "c_densematrix_potrf"
 
-    let potrf { dlsmat; valid } =
-      if not valid then raise Invalidated;
-      c_potrf dlsmat
-
-    external c_potrs  : Obj.t -> real_array -> unit
+    external potrs    : t -> real_array -> unit
         = "c_densematrix_potrs"
 
-    let potrs { dlsmat; valid } ra =
-      if not valid then raise Invalidated;
-      c_potrs dlsmat ra
-
-    external c_geqrf  : Obj.t -> real_array -> real_array -> unit
+    external geqrf    : t -> real_array -> real_array -> unit
         = "c_densematrix_geqrf"
 
-    let geqrf { dlsmat; valid } ra1 ra2 =
-      if not valid then raise Invalidated;
-      c_geqrf dlsmat ra1 ra2
-
-    external c_ormqr
-        : Obj.t -> (real_array * real_array * real_array * real_array) -> unit
+    external ormqr'
+        : t -> (real_array * real_array * real_array * real_array) -> unit
         = "c_densematrix_ormqr"
 
-    let ormqr ~a ~beta ~v ~w ~work =
-      if not a.valid then raise Invalidated;
-      c_ormqr a.dlsmat (beta, v, w, work)
+    let ormqr ~a ~beta ~v ~w ~work = ormqr' a (beta, v, w, work)
 
-    (*
-    external c_get : Obj.t -> int -> int -> float
+    external get : t -> int -> int -> float
         = "c_densematrix_get"
 
-    let get { dlsmat; valid } i j =
-      if not valid then raise Invalidated;
-      c_get dlsmat i j
-    *)
-
-    let get { payload; valid } i j =
-      if not valid then raise Invalidated;
-      payload.{j, i}
-
-    (*
-    external c_set : Obj.t -> int -> int -> float -> unit
+    external set : t -> int -> int -> float -> unit
         = "c_densematrix_set"
-
-    let set { dlsmat; valid } i j e =
-      if not valid then raise Invalidated;
-      c_set dlsmat i j e
-    *)
-
-    let set { payload; valid } i j v =
-      if not valid then raise Invalidated;
-      payload.{j, i} <- v
 
     let make m n v =
       let r = create m n in
@@ -195,9 +106,6 @@ module ArrayDenseMatrix =
     external getrs : t -> lint_array -> real_array -> unit
         = "c_arraydensematrix_getrs"
 
-    external getrs' : t -> lint_array -> real_array -> int -> unit
-        = "c_arraydensematrix_getrs_off"
-
     external potrf : t -> unit
         = "c_arraydensematrix_potrf"
 
@@ -216,117 +124,43 @@ module ArrayDenseMatrix =
 
 module BandMatrix =
   struct
-    type data = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
+    type t
 
-    (* Must correspond with dls_ml.h:dls_bandmatrix_index *)
-    type t = {
-      payload : data;
-      dlsmat  : Obj.t;
-      smu     : int;
-      mutable valid : bool;
-    }
-
-    exception Invalidated
-
-    external c_create : int -> int -> int -> int -> t
+    external create : int -> int -> int -> int -> t
         = "c_bandmatrix_new_band_mat"
 
-    let create i j =
-      if i <= 0 || j <= 0 then failwith "Both M and N must be positive";
-      c_create i j
-
-    (* Allowing direct access is not safe because the underlying data may
-       have been invalidated. Invalidating by setting the dims of the
-       bigarray to 0 is tempting but error prone and the mechanism can
-       be circumvented using Bigarray.Array2.sub (see:
-         https://groups.google.com/d/msg/fa.caml/ROr_PifT_44/aqQ8Z0TWzH8J). *)
-    let unwrap { payload } = payload
-
-    let invalidate v = v.valid <- false
-
-    external c_size : Obj.t -> (int * int * int * int)
+    external size : t -> (int * int * int * int)
         = "c_bandmatrix_size"
 
-    let size { dlsmat; valid } =
-      if not valid then raise Invalidated;
-      c_size dlsmat
-
-    external c_print          : Obj.t -> unit
+    external print          : t -> unit
         = "c_densematrix_print_mat"
           (* NB: same as densematrix *)
 
-    let print { dlsmat; valid } =
-      if not valid then raise Invalidated;
-      c_print dlsmat
-
-    external c_set_to_zero    : Obj.t -> unit
+    external set_to_zero    : t -> unit
         = "c_densematrix_set_to_zero"
           (* NB: same as densematrix *)
 
-    let set_to_zero { dlsmat; valid } =
-      if not valid then raise Invalidated;
-      c_set_to_zero dlsmat
-
-    external c_add_identity : Obj.t -> unit
+    external add_identity : t -> unit
         = "c_densematrix_add_identity"
           (* NB: same as densematrix *)
 
-    let add_identity { dlsmat; valid } =
-      if not valid then raise Invalidated;
-      c_add_identity dlsmat
-
-    external c_copy : Obj.t -> Obj.t -> int -> int -> unit
+    external copy : t -> t -> int -> int -> unit
         = "c_bandmatrix_copy"
 
-    let copy { dlsmat=dlsmat1; valid=valid1 }
-             { dlsmat=dlsmat2; valid=valid2 } copymu copyml =
-      if not (valid1 && valid2) then raise Invalidated;
-      c_copy dlsmat1 dlsmat1 copymu copyml
-
-    external c_scale : float -> Obj.t -> unit
+    external scale : float -> t -> unit
         = "c_bandmatrix_scale"
 
-    let scale a { dlsmat; valid } =
-      if not valid then raise Invalidated;
-      c_scale a dlsmat
-
-    external c_gbtrf : Obj.t -> lint_array -> unit
+    external gbtrf : t -> lint_array -> unit
         = "c_bandmatrix_gbtrf"
 
-    let gbtrf { dlsmat; valid } la =
-      if not valid then raise Invalidated;
-      c_gbtrf dlsmat la
-
-    external c_gbtrs : Obj.t -> lint_array -> real_array -> unit
+    external gbtrs : t -> lint_array -> real_array -> unit
         = "c_bandmatrix_gbtrs"
 
-    let gbtrs { dlsmat; valid } la ra =
-      if not valid then raise Invalidated;
-      c_gbtrs dlsmat la ra
-
-    (*
-    external c_get : Obj.t -> int -> int -> float
+    external get : t -> int -> int -> float
         = "c_bandmatrix_get"
 
-    let get { dlsmat; valid } i j =
-      if not valid then raise Invalidated;
-      c_get dlsmat i j
-    *)
-    let get { payload; valid; smu } i j =
-      if not valid then raise Invalidated;
-      payload.{j, i - j + smu}
-
-    (*
-    external c_set : Obj.t -> int -> int -> float -> unit
+    external set : t -> int -> int -> float -> unit
         = "c_bandmatrix_set"
-
-    let set { dlsmat; valid } i j e =
-      if not valid then raise Invalidated;
-      c_set dlsmat i j e
-    *)
-    let set { payload; valid; smu } i j v =
-      if not valid then raise Invalidated;
-      payload.{j, i - j + smu} <- v
 
     let make n mu ml smu v =
       let r = create n mu ml smu in
@@ -336,6 +170,21 @@ module BandMatrix =
         done
       done;
       r
+
+    module Col =
+      struct
+        type c
+
+        external get_col : t -> int -> c
+            = "c_bandmatrix_col_get_col"
+
+        external get : c -> int -> int -> float
+            = "c_bandmatrix_col_get"
+
+        external set : c -> int -> int -> float -> unit
+            = "c_bandmatrix_col_set"
+      end
+
   end
 
 module ArrayBandMatrix =

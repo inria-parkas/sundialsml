@@ -40,25 +40,11 @@ module DlsTypes = struct
     (real_array double_tmp, real_array) jacobian_arg
     -> Dls.DenseMatrix.t -> unit
 
-  (* These fields are accessed from cvode_ml.c *)
-  type dense_jac_callback =
-    {
-      jacfn: dense_jac_fn;
-      mutable dmat : Dls.DenseMatrix.t option
-    }
-
   type band_jac_fn =
     bandrange
     -> (real_array double_tmp, real_array) jacobian_arg
     -> Dls.BandMatrix.t
     -> unit
-
-  (* These fields are accessed from cvode_ml.c *)
-  type band_jac_callback =
-    {
-      bjacfn: band_jac_fn;
-      mutable bmat : Dls.BandMatrix.t option
-    }
 end
 
 module SpilsTypes = struct
@@ -145,8 +131,8 @@ type ('a, 'k) session = {
 and ('a, 'kind) linsolv_callbacks =
   | NoCallbacks
 
-  | DenseCallback of DlsTypes.dense_jac_callback
-  | BandCallback  of DlsTypes.band_jac_callback
+  | DenseCallback of DlsTypes.dense_jac_fn
+  | BandCallback  of DlsTypes.band_jac_fn
   | SpilsCallback of 'a SpilsTypes.callbacks
 
   | AlternateCallback of ('a, 'kind) alternate_linsolv

@@ -41,6 +41,8 @@ let two   = 2.0
 let ith v i = v.{i - 1}
 let set_ith v i e = v.{i - 1} <- e
 
+let set_ijth m i j = Dls.DenseMatrix.set m (i - 1) (j - 1)
+
 (* System function *)
 let func (yd : RealArray.t) (fd : RealArray.t) =
   let x1 = yd.{0} and l1 = yd.{ 8} and u1 = yd.{16}
@@ -107,73 +109,72 @@ let jac { Kinsol.jac_u   = (yd : RealArray.t);
   and x8 = yd.{7} in
 
   (* Nonlinear equations *)
-  let set_ijth r c = Dls.DenseMatrix.set j (r - 1) (c - 1) in
 
   (* 
      - 0.1238*x1 + x7 - 0.001637*x2 
      - 0.9338*x4 + 0.004731*x1*x3 - 0.3578*x2*x3 - 0.3571 
   *)
-  set_ijth 1 1 (- 0.1238 +. 0.004731*.x3);
-  set_ijth 1 2 (- 0.001637 -. 0.3578*.x3);
-  set_ijth 1 3 (0.004731*.x1 -. 0.3578*.x2);
-  set_ijth 1 4 (- 0.9338);
-  set_ijth 1 7 (1.0);
+  set_ijth j 1 1 (- 0.1238 +. 0.004731*.x3);
+  set_ijth j 1 2 (- 0.001637 -. 0.3578*.x3);
+  set_ijth j 1 3 (0.004731*.x1 -. 0.3578*.x2);
+  set_ijth j 1 4 (- 0.9338);
+  set_ijth j 1 7 (1.0);
 
   (*
     0.2638*x1 - x7 - 0.07745*x2 
     - 0.6734*x4 + 0.2238*x1*x3 + 0.7623*x2*x3 - 0.6022
   *)
-  set_ijth 2 1 (0.2638 +. 0.2238*.x3);
-  set_ijth 2 2 (- 0.07745 +. 0.7623*.x3);
-  set_ijth 2 3 (0.2238*.x1 +. 0.7623*.x2);
-  set_ijth 2 4 (- 0.6734);
-  set_ijth 2 7 (-1.0);
+  set_ijth j 2 1 (0.2638 +. 0.2238*.x3);
+  set_ijth j 2 2 (- 0.07745 +. 0.7623*.x3);
+  set_ijth j 2 3 (0.2238*.x1 +. 0.7623*.x2);
+  set_ijth j 2 4 (- 0.6734);
+  set_ijth j 2 7 (-1.0);
 
   (*
     0.3578*x1 + 0.004731*x2 + x6*x8
   *)
-  set_ijth 3 1 0.3578;
-  set_ijth 3 2 0.004731;
-  set_ijth 3 6 x8;
-  set_ijth 3 8 x6;
+  set_ijth j 3 1 0.3578;
+  set_ijth j 3 2 0.004731;
+  set_ijth j 3 6 x8;
+  set_ijth j 3 8 x6;
 
   (*
     - 0.7623*x1 + 0.2238*x2 + 0.3461
   *)
-  set_ijth 4 1 (- 0.7623);
-  set_ijth 4 2 (0.2238);
+  set_ijth j 4 1 (- 0.7623);
+  set_ijth j 4 2 (0.2238);
 
   (*
     x1*x1 + x2*x2 - 1
   *)
-  set_ijth 5 1 (2.0*.x1);
-  set_ijth 5 2 (2.0*.x2);
+  set_ijth j 5 1 (2.0*.x1);
+  set_ijth j 5 2 (2.0*.x2);
 
   (*
     x3*x3 + x4*x4 - 1
   *)
-  set_ijth 6 3 (2.0*.x3);
-  set_ijth 6 4 (2.0*.x4);
+  set_ijth j 6 3 (2.0*.x3);
+  set_ijth j 6 4 (2.0*.x4);
 
   (*
     x5*x5 + x6*x6 - 1
   *)
-  set_ijth 7 5 (2.0*.x5);
-  set_ijth 7 6 (2.0*.x6);
+  set_ijth j 7 5 (2.0*.x5);
+  set_ijth j 7 6 (2.0*.x6);
 
   (*
     x7*x7 + x8*x8 - 1
   *)
-  set_ijth 8 7 (2.0*.x7);
-  set_ijth 8 8 (2.0*.x8);
+  set_ijth j 8 7 (2.0*.x7);
+  set_ijth j 8 8 (2.0*.x8);
 
   (*
     Lower bounds ( l_i = 1 + x_i >= 0)
     l_i - 1.0 - x_i
    *)
   for i=1 to 8 do
-    set_ijth (8+i) (i) (-1.0);
-    set_ijth (8+i) (8+i) (1.0)
+    set_ijth j (8+i) (i) (-1.0);
+    set_ijth j (8+i) (8+i) (1.0)
   done;
 
   (*
@@ -181,8 +182,8 @@ let jac { Kinsol.jac_u   = (yd : RealArray.t);
     u_i - 1.0 + x_i
    *)
   for i=1 to 8 do
-    set_ijth (16+i) i (1.0);
-    set_ijth (16+i) (16+i) (1.0)
+    set_ijth j (16+i) i (1.0);
+    set_ijth j (16+i) (16+i) (1.0)
   done
 
 (* Print solution *)

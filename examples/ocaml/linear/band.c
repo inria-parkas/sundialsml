@@ -111,9 +111,6 @@ int main(int argc, char** argv)
     printf("getrs: s=\n");
     print_vec(s, SIZE);
 
-    DestroyMat(a);
-    DestroyMat(b);
-
     return 0;
 }
 
