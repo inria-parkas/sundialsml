@@ -785,14 +785,6 @@ static value solve (value vdata, value nextt, value vy, value vyp, int onestep)
     N_Vector y, yp;
     enum ida_solver_result_tag result = -1;
 
-#if SAFETY_CHECKS && IDA_ML_BIGARRAYS
-    /* This can't be checked for generic nvectors.  */
-    if (IDA_NEQS_FROM_ML (vdata) != Caml_ba_array_val(vy)->dim[0])
-	caml_invalid_argument ("Ida.solve: y vector has incorrect length");
-    if (IDA_NEQS_FROM_ML (vdata) != Caml_ba_array_val(vyp)->dim[0])
-	caml_invalid_argument ("Ida.solve: y' vector has incorrect length");
-#endif
-
     y = NVEC_VAL (vy);
     yp = NVEC_VAL (vyp);
     flag = IDASolve (ida_mem, Double_val (nextt), &tret, y, yp,

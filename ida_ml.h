@@ -101,23 +101,6 @@ enum ida_safety_flags {
       IDA_SAFETY_FLAG_ID_SET
 };
 
-enum ida_linear_solver_tag {
-    /* all constructors have arguments */
-#if IDA_ML_BIGARRAYS
-    VARIANT_IDA_LINEAR_SOLVER_DENSE = 0,
-    VARIANT_IDA_LINEAR_SOLVER_LAPACKDENSE,
-    VARIANT_IDA_LINEAR_SOLVER_BAND,
-    VARIANT_IDA_LINEAR_SOLVER_LAPACKBAND,
-#endif
-    VARIANT_IDA_LINEAR_SOLVER_SPGMR
-#if !IDA_ML_BIGARRAYS
-    = 0
-#endif
-    ,
-    VARIANT_IDA_LINEAR_SOLVER_SPBCG,
-    VARIANT_IDA_LINEAR_SOLVER_SPTFQMR
-};
-
 enum ida_integrator_stats_index {
     RECORD_IDA_INTEGRATOR_STATS_STEPS = 0,
     RECORD_IDA_INTEGRATOR_STATS_RES_EVALS,
