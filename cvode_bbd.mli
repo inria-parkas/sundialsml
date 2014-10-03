@@ -31,7 +31,7 @@
 type data = Nvector_parallel.data
 type kind = Nvector_parallel.kind
 type parallel_session = (data, kind) Cvode.session
-type parallel_linear_solver = (data, kind) Cvode.linear_solver
+type parallel_preconditioner = (data, kind) Cvode.Spils.preconditioner
 
 type bandwidths = Cvode_impl.CvodeBbdTypes.bandwidths =
   {
@@ -63,43 +63,37 @@ type callbacks =
           error, any other exception is treated as an unrecoverable error. *)
   }
 
-(** Same as {!Cvode.Spils.spgmr} but with the Parallel
-    Band-Block-Diagonal preconditioner.  Called like [spgmr ~maxl:maxl
-    prec_type bandwidths ~dqrely:dqrely callbacks], where:
+(** Same as {!Cvode.Spils.prec_left} but uses the Parallel
+    Band-Block-Diagonal preconditioner included in CVODE.  Called like
+    [prec_left ~maxl:maxl bandwidths ~dqrely:dqrely callbacks], where:
 
     - [~maxl] gives the maximum dimension of the Krylov subspace
       (defaults to [5]).
     - [~dqrely] gives the relative increment in components of [y] used in
       the difference quotient approximations
       (defaults to [sqrt unit_roundoff]).
-    - [prec_type] is the type of preconditioning.  It is legal to specify
-      [PrecTypeNone], though in that case {!Cvode.Spils.spgmr} would work
-      just as well.
     - [bandwidths] specify the bandwidths to be used in the difference
       quotient Jacobian operation.
     - [callbacks] gives the preconditioning callbacks.  See the
       {!callbacks} type.
 
-    @cvode <node5#sss:lin_solv_init> CVSpgmr
+    @cvode <node5#sss:cvbbdpre> CVBBDPrecInit
+  *)
+val prec_left : ?maxl:int-> ?dqrely:float -> bandwidths -> callbacks
+              -> parallel_preconditioner
+
+(** Same as {!prec_left} but preconditions from the right.
+
     @cvode <node5#sss:cvbbdpre> CVBBDPrecInit *)
-val spgmr : ?maxl:int-> ?dqrely:float -> Spils.preconditioning_type
-          -> bandwidths -> callbacks -> parallel_linear_solver
+val prec_right : ?maxl:int -> ?dqrely:float -> bandwidths -> callbacks
+               -> parallel_preconditioner
 
-(** Same as {!Cvode.Spils.spbcg} but with the Parallel Band-Block-Diagonal
-    preconditioner. The arguments are the same as for {!spgmr}.
+(** Same as {!prec_left} but preconditions from both
+    sides.
 
-    @cvode <node5#sss:lin_solv_init> CVSpbcg
     @cvode <node5#sss:cvbbdpre> CVBBDPrecInit *)
-val spbcg : ?maxl:int -> ?dqrely:float -> Spils.preconditioning_type
-          -> bandwidths -> callbacks -> parallel_linear_solver
-
-(** Same as {!Cvode.Spils.spbcg} but with the Parallel Band-Block-Diagonal
-    preconditioner. The arguments are the same as for {!spgmr}.
-
-    @cvode <node5#sss:lin_solv_init> CVSptfqmr
-    @cvode <node5#sss:cvbbdpre> CVBBDPrecInit *)
-val sptfqmr : ?maxl:int -> ?dqrely:float -> Spils.preconditioning_type
-            -> bandwidths -> callbacks -> parallel_linear_solver
+val prec_both : ?maxl:int -> ?dqrely:float -> bandwidths -> callbacks
+              -> parallel_preconditioner
 
 (** [reinit s mudq mldq ~dqrely:dqrely] reinitializes the BBD
     preconditioner with upper ([mudq]) and lower ([mldq])

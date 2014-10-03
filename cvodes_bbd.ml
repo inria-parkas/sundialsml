@@ -20,7 +20,8 @@ type kind = Nvector_parallel.kind
 
 type parallel_session = Cvode_bbd.parallel_session
 type parallel_bsession = (data, kind) AdjointTypes.bsession
-type parallel_linear_solver = (data, kind) AdjointTypes.linear_solver
+type parallel_preconditioner =
+  (data, kind) AdjointTypes.SpilsTypes.preconditioner
 
 let tosession = AdjointTypes.tosession
 
@@ -72,40 +73,33 @@ external c_spils_sptfqmr
   : ('a, 'k) session -> int -> int -> Spils.preconditioning_type -> unit
   = "c_cvodes_adj_spils_sptfqmr"
 
-let spgmr ?(maxl=0) prec_type bws ?(dqrely=0.0) cb bs nv =
-  let parent, which = parent_and_which bs in
+let init_preconditioner maxl dqrely bandwidths callbacks bs parent which nv =
   let ba, _, _ = Sundials.unvec nv in
   let localn   = Sundials.RealArray.length ba in
-  c_spils_spgmr parent which maxl prec_type;
-  c_bbd_prec_initb (parent, which) localn bws dqrely
-                                            (cb.comm_fn <> None);
-  (tosession bs).ls_callbacks <- BBBDCallback (bbd_callbacks cb)
+  c_bbd_prec_initb (parent, which) localn bandwidths dqrely
+    (callbacks.comm_fn <> None);
+  (tosession bs).ls_callbacks <- BBBDCallback (bbd_callbacks callbacks)
 
-let spbcg ?(maxl=0) prec_type bws ?(dqrely=0.0) cb bs nv =
-  let parent, which = parent_and_which bs in
-  let ba, _, _ = Sundials.unvec nv in
-  let localn   = Sundials.RealArray.length ba in
-  c_spils_spbcg parent which maxl prec_type;
-  c_bbd_prec_initb (parent, which) localn bws dqrely
-                                            (cb.comm_fn <> None);
-  (tosession bs).ls_callbacks <- BBBDCallback (bbd_callbacks cb)
-
-let sptfqmr ?(maxl=0) prec_type bws ?(dqrely=0.0) cb bs nv =
-  let parent, which = parent_and_which bs in
-  let ba, _, _ = Sundials.unvec nv in
-  let localn   = Sundials.RealArray.length ba in
-  c_spils_sptfqmr parent which maxl prec_type;
-  c_bbd_prec_initb (parent, which) localn bws dqrely
-                                            (cb.comm_fn <> None);
-  (tosession bs).ls_callbacks <- BBBDCallback (bbd_callbacks cb)
+let prec_left ?(maxl=0) ?(dqrely=0.0) bandwidths callbacks =
+  AdjointTypes.SpilsTypes.InternalPrecLeft
+    (init_preconditioner maxl dqrely bandwidths callbacks)
+let prec_right ?(maxl=0) ?(dqrely=0.0) bandwidths callbacks =
+  AdjointTypes.SpilsTypes.InternalPrecRight
+    (init_preconditioner maxl dqrely bandwidths callbacks)
+let prec_both ?(maxl=0) ?(dqrely=0.0) bandwidths callbacks =
+  AdjointTypes.SpilsTypes.InternalPrecBoth
+    (init_preconditioner maxl dqrely bandwidths callbacks)
 
 external c_bbd_prec_reinitb
     : parallel_session -> int -> int -> int -> float -> unit
     = "c_cvodes_bbd_prec_reinitb"
 
 let reinit bs ?(dqrely=0.0) mudq mldq =
-  let parent, which = parent_and_which bs in
-  c_bbd_prec_reinitb parent which mudq mldq dqrely
+  match (tosession bs).ls_callbacks with
+  | BBBDCallback _ ->
+    let parent, which = parent_and_which bs in
+    c_bbd_prec_reinitb parent which mudq mldq dqrely
+  | _ -> invalid_arg "BBD preconditioner not in use"
 
 let get_work_space bs = Cvode_bbd.get_work_space (tosession bs)
 let get_num_gfn_evals bs = Cvode_bbd.get_num_gfn_evals (tosession bs)

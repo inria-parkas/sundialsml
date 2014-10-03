@@ -875,14 +875,14 @@ let main () =
   let q = Nvector.make 1 npes comm zero in
 
   (* Attach preconditioner and linear solver modules *)
-  let spgmr = Bbd.spgmr
-                Spils.PrecLeft
-                { Bbd.mudq = d.l_m.(0) + 1;
-                  Bbd.mldq = d.l_m.(0) + 1;
-                  Bbd.mukeep = 2;
-                  Bbd.mlkeep = 2; }
-                { Bbd.local_fn = f_local d;
-                  Bbd.comm_fn = None; }
+  let spgmr = Cvode.Spils.spgmr
+                (Bbd.prec_left
+                   { Bbd.mudq = d.l_m.(0) + 1;
+                     Bbd.mldq = d.l_m.(0) + 1;
+                     Bbd.mukeep = 2;
+                     Bbd.mlkeep = 2; }
+                   { Bbd.local_fn = f_local d;
+                     Bbd.comm_fn = None; })
   in
   (* Create CVODES object, attach user data, and allocate space *)
   let abstol, reltol = atol, rtol in
@@ -926,14 +926,14 @@ let main () =
   let qB = Nvector.make l_neq neq comm zero in
 
   (* Attach preconditioner and linear solver modules *)
-  let bspgmr = Adjbbd.spgmr
-                Spils.PrecLeft
-                { Bbd.mudq = d.l_m.(0) + 1;
-                  Bbd.mldq = d.l_m.(0) + 1;
-                  Bbd.mukeep = 2;
-                  Bbd.mlkeep = 2; }
-                { Adjbbd.local_fn = fB_local d;
-                  Adjbbd.comm_fn = None; }
+  let bspgmr = Adj.Spils.spgmr
+                (Adjbbd.prec_left
+                   { Adjbbd.mudq = d.l_m.(0) + 1;
+                     Adjbbd.mldq = d.l_m.(0) + 1;
+                     Adjbbd.mukeep = 2;
+                     Adjbbd.mlkeep = 2; }
+                   { Adjbbd.local_fn = fB_local d;
+                     Adjbbd.comm_fn = None; })
   in
 
   (* Create and allocate backward CVODE memory *)

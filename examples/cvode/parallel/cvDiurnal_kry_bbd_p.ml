@@ -571,11 +571,11 @@ let main () =
   let cvode_mem =
     Cvode.init Cvode.BDF
       (Cvode.Newton
-         (BBD.spgmr
-            Spils.PrecLeft
-            { BBD.mudq   = mudq;   BBD.mldq = mldq;
-              BBD.mukeep = mukeep; BBD.mlkeep = mlkeep }
-            { BBD.local_fn = (flocal data); BBD.comm_fn = None }))
+         (Cvode.Spils.spgmr
+            (BBD.prec_left
+               { BBD.mudq   = mudq;   BBD.mldq = mldq;
+                 BBD.mukeep = mukeep; BBD.mlkeep = mlkeep }
+               { BBD.local_fn = (flocal data); BBD.comm_fn = None })))
       (Cvode.SStolerances (reltol, abstol))
       (f data) t0 u
   in
