@@ -102,7 +102,7 @@ type user_data = { p : RealArray.t }
  * f routine. Compute f(t,y). 
 *)
 
-let res data t yy yp rval =
+let res data t (yy : RealArray.t) (yp : RealArray.t) (rval : RealArray.t) =
   let y1  = yy.{0}
   and y2  = yy.{1}
   and y3  = yy.{2}
@@ -125,7 +125,7 @@ let res data t yy yp rval =
 
 let jac data jac_arg j =
   let cj = jac_arg.Ida.jac_coef
-  and yy = jac_arg.Ida.jac_y
+  and (yy : RealArray.t) = jac_arg.Ida.jac_y
   in
 
   let y2 = yy.{1}
@@ -152,14 +152,14 @@ let jac data jac_arg j =
  * rhsQ routine. Compute fQ(t,y). 
 *)
 
-let rhsQ data t yy yp qdot =
+let rhsQ data t (yy : RealArray.t) yp (qdot : RealArray.t) =
   qdot.{0} <- yy.{2}
 
 (*
  * EwtSet function. Computes the error weights at the current solution.
  *)
 
-let ewt data y w =
+let ewt data (y : RealArray.t) (w : RealArray.t) =
   let atol = [|atol1; atol2; atol3|] in
 
   for i = 1 to 3 do
@@ -174,7 +174,11 @@ let ewt data y w =
  * resB routine.
 *)
 
-let resB data tt yy yp yyB ypB rrB =
+let resB data tt (yy : RealArray.t)
+                 (yp : RealArray.t)
+                 (yyB : RealArray.t)
+                 (ypB : RealArray.t)
+                 (rrB : RealArray.t) =
   (* The p vector *)
   let p1 = data.p.{0} and p2 = data.p.{1} and p3 = data.p.{2} in
 
@@ -198,7 +202,7 @@ let resB data tt yy yp yyB ypB rrB =
 (*Jacobian for backward problem. *)
 let jacB data jac_arg jB =
   let cj = jac_arg.Adjoint.jac_coef
-  and yy = jac_arg.Adjoint.jac_y
+  and (yy : RealArray.t) = jac_arg.Adjoint.jac_y
   in
   let y2 = yy.{1} and y3 = yy.{2} in
 
@@ -217,7 +221,11 @@ let jacB data jac_arg jB =
   set 2 1 (-.p2*.y2);
   set 2 2 (-.1.0)
 
-let rhsQB data tt yy yp yyB ypB rrQB =
+let rhsQB data tt (yy : RealArray.t)
+                  (yp : RealArray.t)
+                  (yyB : RealArray.t)
+                  (ypB : RealArray.t)
+                  (rrQB : RealArray.t) =
   (* The y vector *)
   let y1 = yy.{0} and y2 = yy.{1} and y3 = yy.{2} in
 
@@ -260,14 +268,14 @@ let print_output tfinal yB ypB qB =
 
 let main () =
   (* Print problem description *)
-  printf "\nAdjoint Sensitivity Example for Chemical Kinetics\n";
-  printf "-------------------------------------------------\n\n";
-  printf "DAE: dy1/dt + p1*y1 - p2*y2*y3 = 0\n";
-  printf "     dy2/dt - p1*y1 + p2*y2*y3 + p3*(y2)^2 = 0\n";
-  printf "               y1  +  y2  +  y3 = 0\n\n";
-  printf "Find dG/dp for\n";
-  printf "     G = int_t0^tB0 g(t,p,y) dt\n";
-  printf "     g(t,p,y) = y3\n\n\n";
+  print_string "\nAdjoint Sensitivity Example for Chemical Kinetics\n";
+  print_string "-------------------------------------------------\n\n";
+  print_string "DAE: dy1/dt + p1*y1 - p2*y2*y3 = 0\n";
+  print_string "     dy2/dt - p1*y1 + p2*y2*y3 + p3*(y2)^2 = 0\n";
+  print_string "               y1  +  y2  +  y3 = 0\n\n";
+  print_string "Find dG/dp for\n";
+  print_string "     G = int_t0^tB0 g(t,p,y) dt\n";
+  print_string "     g(t,p,y) = y3\n\n\n";
 
   (* User data structure *)
   let data = { p = RealArray.of_array [|0.04; 1.0e4; 3.0e7|] } in
@@ -293,7 +301,7 @@ let main () =
   in
 
   (* Create and allocate IDAS memory for forward run *)
-  printf "Create and allocate IDAS memory for forward runs\n";
+  print_string "Create and allocate IDAS memory for forward runs\n";
 
   let ida_mem =
     Ida.init (Ida.Dls.dense (Some (jac data)))
@@ -311,7 +319,7 @@ let main () =
   Adjoint.init ida_mem steps Adjoint.IHermite;
 
   (* Perform forward run *)
-  printf "Forward integration ... ";
+  print_string "Forward integration ... ";
 
   (* Integrate till TB1 and get the solution (y, y') at that time. *)
   let _ = Adjoint.forward_normal ida_mem tb1 wyy wyp in
@@ -332,9 +340,9 @@ let main () =
 
   let _ = Quad.get ida_mem wq in
 
-  printf "--------------------------------------------------------\n";
+  print_string "--------------------------------------------------------\n";
   printf "G:          %12.4e \n" q.{0};
-  printf "--------------------------------------------------------\n\n";
+  print_string "--------------------------------------------------------\n\n";
 
   (* Create BACKWARD problem. *)
 
@@ -356,7 +364,7 @@ let main () =
   let abstolQB = atolq in
 
   (* Create and allocate IDAS memory for backward run *)
-  printf "Create and allocate IDAS memory for backward run\n";
+  print_string "Create and allocate IDAS memory for backward run\n";
 
   let wyB  = Nvector_serial.wrap yB
   and wypB = Nvector_serial.wrap ypB
@@ -384,7 +392,7 @@ let main () =
   AdjQuad.set_tolerances indexB (AdjQuad.SStolerances (reltolB, abstolQB));
 
   (* Backward Integration *)
-  printf "Backward integration ... ";
+  print_string "Backward integration ... ";
 
   Adjoint.backward_normal ida_mem t0;
 
@@ -399,7 +407,7 @@ let main () =
 
 
   (* Reinitialize backward phase and start from a different time (TB1). *)
-  printf "Re-initialize IDAS memory for backward run\n";
+  print_string "Re-initialize IDAS memory for backward run\n";
 
   (* Both algebraic part from y and the entire y' are computed by IDACalcIC. *)
   yB.{0} <- 0.0;
@@ -438,7 +446,7 @@ let main () =
   Adjoint.set_var_types indexB (Nvector_serial.wrap id);
   Adjoint.calc_ic indexB t1b wyyTB1 wypTB1 ~yb:wyyTB1 ~y'b:wypTB1;
 
-  printf "Backward integration ... ";
+  print_string "Backward integration ... ";
 
   let _ = Adjoint.backward_normal ida_mem t0 in
 
@@ -452,7 +460,7 @@ let main () =
 
   print_output tb1 yB ypB qB;
 
-  printf "Free memory\n\n"
+  print_string "Free memory\n\n"
 
 
 (* Check environment variables for extra arguments.  *)

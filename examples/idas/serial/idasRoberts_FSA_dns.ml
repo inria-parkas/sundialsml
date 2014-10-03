@@ -116,7 +116,13 @@ let res data t (yy : RealArray.t) (yp : RealArray.t) (resval : RealArray.t) =
   resval.{2} <- y1 +. y2 +. y3 -. 1.0
 
 let resS : user_data -> RealArray.t Sens.sensresfn =
-  fun data t yy yp resval yyS ypS resvalS tmp1 tmp2 tmp3 ->
+  fun data t (yy      : RealArray.t)
+             (yp      : RealArray.t)
+             (resval  : RealArray.t)
+             (yyS     : RealArray.t array)
+             (ypS     : RealArray.t array)
+             (resvalS : RealArray.t array)
+             tmp1 tmp2 tmp3 ->
   let p1 = data.p.{0}
   and p2 = data.p.{1}
   and p3 = data.p.{2}
@@ -156,43 +162,43 @@ let rhsQ data t (y : RealArray.t) (yp : RealArray.t) (ypQ : RealArray.t) =
 
 let print_ic y yp =
   let data = y in
-  printf "\n\nConsistent IC:\n";
-  printf "\ty = ";
+  print_string "\n\nConsistent IC:\n";
+  print_string "\ty = ";
   printf "%12.4e %12.4e %12.4e \n" data.{0} data.{1} data.{2};
 
   let data = yp in
-  printf "\typ= ";
+  print_string "\typ= ";
   printf "%12.4e %12.4e %12.4e \n" data.{0} data.{1} data.{2}
 
 let print_sens_ic y yp yS ypS =
   let sdata = Nvector.unwrap yS.(0) in
 
-  printf "                  Sensitivity 1  ";
+  print_string "                  Sensitivity 1  ";
 
-  printf "\n\ts1 = ";
+  print_string "\n\ts1 = ";
   printf "%12.4e %12.4e %12.4e \n" sdata.{0} sdata.{1} sdata.{2};
 
   let sdata = Nvector.unwrap ypS.(0) in
-  printf "\ts1'= ";
+  print_string "\ts1'= ";
   printf "%12.4e %12.4e %12.4e \n" sdata.{0} sdata.{1} sdata.{2};
 
   printf "                  Sensitivity 2  ";
 
   let sdata = Nvector.unwrap yS.(1) in
-  printf "\n\ts2 = ";
+  print_string "\n\ts2 = ";
   printf "%12.4e %12.4e %12.4e \n" sdata.{0} sdata.{1} sdata.{2};
   let sdata = Nvector.unwrap ypS.(1) in
   printf "\ts2'= ";
   printf "%12.4e %12.4e %12.4e \n" sdata.{0} sdata.{1} sdata.{2};
 
 
-  printf "                  Sensitivity 3  ";
+  print_string "                  Sensitivity 3  ";
   let sdata = Nvector.unwrap yS.(2) in
-  printf "\n\ts3 = ";
+  print_string "\n\ts3 = ";
   printf "%12.4e %12.4e %12.4e \n" sdata.{0} sdata.{1} sdata.{2};
 
   let sdata = Nvector.unwrap ypS.(2) in
-  printf "\ts3'= ";
+  print_string "\ts3'= ";
   printf "%12.4e %12.4e %12.4e \n" sdata.{0} sdata.{1} sdata.{2}
 
 let print_output ida_mem t u =
@@ -203,23 +209,23 @@ let print_output ida_mem t u =
   in
   printf "%8.3e %2d  %8.3e %5d\n" t qu hu nst;
 
-  printf "                  Solution       ";
+  print_string "                  Solution       ";
 
   printf "%12.4e %12.4e %12.4e \n" udata.{0} udata.{1} udata.{2}
 
 let print_sens_output uS =
   let sdata = Nvector.unwrap uS.(0) in
-  printf "                  Sensitivity 1  ";
+  print_string "                  Sensitivity 1  ";
 
   printf "%12.4e %12.4e %12.4e \n" sdata.{0} sdata.{1} sdata.{2};
 
   let sdata = Nvector.unwrap uS.(1) in
-  printf "                  Sensitivity 2  ";
+  print_string "                  Sensitivity 2  ";
 
   printf "%12.4e %12.4e %12.4e \n" sdata.{0} sdata.{1} sdata.{2};
 
   let sdata = Nvector.unwrap uS.(2) in
-  printf "                  Sensitivity 3  ";
+  print_string "                  Sensitivity 3  ";
 
   printf "%12.4e %12.4e %12.4e \n" sdata.{0} sdata.{1} sdata.{2}
 
@@ -249,7 +255,7 @@ let print_final_stats ida_mem sensi =
   and nfeLS = Ida.Dls.get_num_res_evals ida_mem
   in
 
-  printf "\nFinal Statistics\n\n";
+  print_string "\nFinal Statistics\n\n";
   printf "nst     = %5d\n\n" nst;
   printf "nfe     = %5d\n"   nfe;
   printf "netf    = %5d    nsetups  = %5d\n" netf nsetups;
@@ -258,7 +264,7 @@ let print_final_stats ida_mem sensi =
   if sensi then
     begin
       let (nfSe, nfeS, nsetupsS, netfS, nniS, ncfnS) = Lazy.force sens_stats in
-      printf "\n";
+      print_string "\n";
       printf "nfSe    = %5d    nfeS     = %5d\n" nfSe nfeS;
       printf "netfs   = %5d    nsetupsS = %5d\n" netfS nsetupsS;
       printf "nniS    = %5d    ncfnS    = %5d\n" nniS ncfnS
