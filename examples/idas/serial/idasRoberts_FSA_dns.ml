@@ -165,33 +165,33 @@ let print_ic y yp =
   printf "%12.4e %12.4e %12.4e \n" data.{0} data.{1} data.{2}
 
 let print_sens_ic y yp yS ypS =
-  let sdata = Sundials.unvec yS.(0) in
+  let sdata = Nvector.unwrap yS.(0) in
 
   printf "                  Sensitivity 1  ";
 
   printf "\n\ts1 = ";
   printf "%12.4e %12.4e %12.4e \n" sdata.{0} sdata.{1} sdata.{2};
 
-  let sdata = Sundials.unvec ypS.(0) in
+  let sdata = Nvector.unwrap ypS.(0) in
   printf "\ts1'= ";
   printf "%12.4e %12.4e %12.4e \n" sdata.{0} sdata.{1} sdata.{2};
 
   printf "                  Sensitivity 2  ";
 
-  let sdata = Sundials.unvec yS.(1) in
+  let sdata = Nvector.unwrap yS.(1) in
   printf "\n\ts2 = ";
   printf "%12.4e %12.4e %12.4e \n" sdata.{0} sdata.{1} sdata.{2};
-  let sdata = Sundials.unvec ypS.(1) in
+  let sdata = Nvector.unwrap ypS.(1) in
   printf "\ts2'= ";
   printf "%12.4e %12.4e %12.4e \n" sdata.{0} sdata.{1} sdata.{2};
 
 
   printf "                  Sensitivity 3  ";
-  let sdata = Sundials.unvec yS.(2) in
+  let sdata = Nvector.unwrap yS.(2) in
   printf "\n\ts3 = ";
   printf "%12.4e %12.4e %12.4e \n" sdata.{0} sdata.{1} sdata.{2};
 
-  let sdata = Sundials.unvec ypS.(2) in
+  let sdata = Nvector.unwrap ypS.(2) in
   printf "\ts3'= ";
   printf "%12.4e %12.4e %12.4e \n" sdata.{0} sdata.{1} sdata.{2}
 
@@ -208,17 +208,17 @@ let print_output ida_mem t u =
   printf "%12.4e %12.4e %12.4e \n" udata.{0} udata.{1} udata.{2}
 
 let print_sens_output uS =
-  let sdata = Sundials.unvec uS.(0) in
+  let sdata = Nvector.unwrap uS.(0) in
   printf "                  Sensitivity 1  ";
 
   printf "%12.4e %12.4e %12.4e \n" sdata.{0} sdata.{1} sdata.{2};
 
-  let sdata = Sundials.unvec uS.(1) in
+  let sdata = Nvector.unwrap uS.(1) in
   printf "                  Sensitivity 2  ";
 
   printf "%12.4e %12.4e %12.4e \n" sdata.{0} sdata.{1} sdata.{2};
 
-  let sdata = Sundials.unvec uS.(2) in
+  let sdata = Nvector.unwrap uS.(2) in
   printf "                  Sensitivity 3  ";
 
   printf "%12.4e %12.4e %12.4e \n" sdata.{0} sdata.{1} sdata.{2}
@@ -380,9 +380,9 @@ let main () =
   with_yS (fun yS ypS ->
       let t = QuadSens.get ida_mem yQS in
       printf "\nSensitivities at t=%g:\n" t;
-      printf "dG/dp1: %11.4e\n" (Sundials.unvec yQS.(0)).{0};
-      printf "dG/dp1: %11.4e\n" (Sundials.unvec yQS.(1)).{0};
-      printf "dG/dp1: %11.4e\n" (Sundials.unvec yQS.(2)).{0});
+      printf "dG/dp1: %11.4e\n" (Nvector.unwrap yQS.(0)).{0};
+      printf "dG/dp1: %11.4e\n" (Nvector.unwrap yQS.(1)).{0};
+      printf "dG/dp1: %11.4e\n" (Nvector.unwrap yQS.(2)).{0});
 
   (* Print final statistics *)
   print_final_stats ida_mem (sensi <> None)

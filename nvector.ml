@@ -1,3 +1,20 @@
+(***********************************************************************)
+(*                                                                     *)
+(*                   OCaml interface to Sundials                       *)
+(*                                                                     *)
+(*  Timothy Bourke (Inria), Jun Inoue (Inria), and Marc Pouzet (LIENS) *)
+(*                                                                     *)
+(*  Copyright 2014 Institut National de Recherche en Informatique et   *)
+(*  en Automatique.  All rights reserved.  This file is distributed    *)
+(*  under a BSD 2-Clause License, refer to the file LICENSE.           *)
+(*                                                                     *)
+(***********************************************************************)
+
+type cnvec
+type ('data, 'kind) nvector = 'data * cnvec
+and ('data, 'kind) t = ('data, 'kind) nvector
+
+let unwrap (payload, _) = payload
 
 module type NVECTOR_OPS =
   sig
@@ -30,7 +47,7 @@ module type NVECTOR =
   sig
     type kind
     type data
-    type t = (data, kind) Sundials.nvector
+    type t = (data, kind) nvector
     val wrap : data -> t
     module Ops : NVECTOR_OPS with type t = t
     module DataOps : NVECTOR_OPS with type t = data

@@ -68,7 +68,7 @@ module Dls =
 
     let dense fo s onv =
       (match onv with
-       | Some nv -> s.neqs <- Sundials.RealArray.length (Sundials.unvec nv)
+       | Some nv -> s.neqs <- Sundials.RealArray.length (Nvector.unwrap nv)
        | None -> ());
       c_dls_dense s (fo <> None);
       s.ls_callbacks <- match fo with
@@ -77,7 +77,7 @@ module Dls =
 
     let lapack_dense fo s onv =
       (match onv with
-       | Some nv -> s.neqs <- Sundials.RealArray.length (Sundials.unvec nv)
+       | Some nv -> s.neqs <- Sundials.RealArray.length (Nvector.unwrap nv)
        | None -> ());
       c_dls_lapack_dense s (fo <> None);
       s.ls_callbacks <- match fo with
@@ -86,7 +86,7 @@ module Dls =
 
     let band { mupper; mlower } fo s onv =
       (match onv with
-       | Some nv -> s.neqs <- Sundials.RealArray.length (Sundials.unvec nv)
+       | Some nv -> s.neqs <- Sundials.RealArray.length (Nvector.unwrap nv)
        | None -> ());
       c_dls_band s mupper mlower (fo <> None);
       s.ls_callbacks <- match fo with
@@ -95,7 +95,7 @@ module Dls =
 
     let lapack_band { mupper; mlower } fo s onv =
       (match onv with
-       | Some nv -> s.neqs <- Sundials.RealArray.length (Sundials.unvec nv)
+       | Some nv -> s.neqs <- Sundials.RealArray.length (Nvector.unwrap nv)
        | None -> ());
       c_dls_lapack_band s mupper mlower (fo <> None);
       s.ls_callbacks <- match fo with

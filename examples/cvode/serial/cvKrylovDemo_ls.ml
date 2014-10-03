@@ -45,7 +45,7 @@ module LintArray = Sundials.LintArray
 module Roots  = Sundials.Roots
 module Densemat = Dls.ArrayDenseMatrix
 open Bigarray
-let unvec = Sundials.unvec
+let unvec = Nvector.unwrap
 let unwrap = RealArray2.unwrap
 
 let printf = Printf.printf

@@ -35,7 +35,7 @@ module RealArray = Sundials.RealArray
 module Roots = Sundials.Roots
 module Col = Dls.BandMatrix.Col
 module Dls = Cvode.Dls
-let unvec = Sundials.unvec
+let unwrap = Nvector.unwrap
 
 let printf = Printf.printf
 let vmax_norm = Nvector_serial.Ops.n_vmaxnorm
@@ -215,7 +215,7 @@ let main () =
     vdcoef = one /. (dy *. dy);
   } in
 
-  set_ic (unvec u) data;  (* Initialize u vector *)
+  set_ic (unwrap u) data;  (* Initialize u vector *)
 
   (* Call CVodeCreate to create the solver memory and specify the 
    * Backward Differentiation Formula and the use of a Newton iteration *)

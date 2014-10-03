@@ -12,7 +12,7 @@ module Ops = struct
   type t = (Sundials.RealArray.t, kind) Sundials.nvector
 
   let n_vclone nv =
-    let data = Sundials.unvec nv in
+    let data = Nvector.unwrap nv in
     wrap (Sundials.RealArray.copy data)
 
   external n_vlinearsum    : float -> t -> float -> t -> t -> unit

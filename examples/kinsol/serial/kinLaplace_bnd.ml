@@ -21,7 +21,7 @@
  *)
 
 module RealArray = Sundials.RealArray
-let unvec = Sundials.unvec
+let unwrap = Nvector.unwrap
 let printf = Printf.printf
 
 (* Problem Constants *)
@@ -189,7 +189,7 @@ let main () =
   let fnorm = Kinsol.get_func_norm kmem in
   printf "\nComputed solution (||F|| = %g):\n\n" fnorm;
 
-  print_output (unvec y);
+  print_output (unwrap y);
 
   print_final_stats kmem
 

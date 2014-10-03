@@ -34,7 +34,7 @@
 module RealArray = Sundials.RealArray
 module Roots = Sundials.Roots
 open Bigarray
-let unvec = Sundials.unvec
+let unwrap = Nvector.unwrap
 
 let printf = Printf.printf
 
@@ -114,7 +114,7 @@ let main () =
   let y = Nvector_serial.make neq 0.0
   and roots = Roots.create nroots
   in
-  let ydata = unvec y in
+  let ydata = unwrap y in
   let r = Roots.get roots in
 
   (* Initialize y *)

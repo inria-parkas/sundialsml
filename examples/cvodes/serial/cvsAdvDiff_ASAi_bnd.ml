@@ -45,7 +45,7 @@ module Adjoint = Cvodes.Adjoint
 module RealArray = Sundials.RealArray
 module Col = Dls.BandMatrix.Col
 module Dls = Cvode.Dls
-let unvec = Sundials.unvec
+let unwrap = Nvector.unwrap
 
 let printf = Printf.printf
 
@@ -327,7 +327,7 @@ let main () =
   Adjoint.backward_normal cvode_mem t0;
   let _ = Adjoint.get bcvode_mem uB in
 
-  print_output (unvec uB) data
+  print_output (unwrap uB) data
 
 
 (* Check environment variables for extra arguments.  *)

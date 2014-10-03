@@ -696,7 +696,7 @@ module Adjoint =
 
         let dense jac bs nv =
           let parent, which = parent_and_which bs in
-          let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
+          let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
           c_dls_dense parent which neqs (jac <> None);
           (tosession bs).ls_callbacks <- match jac with
                                          | None -> NoCallbacks
@@ -704,7 +704,7 @@ module Adjoint =
 
         let lapack_dense jac bs nv =
           let parent, which = parent_and_which bs in
-          let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
+          let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
           c_dls_lapack_dense parent which neqs (jac <> None);
           (tosession bs).ls_callbacks <- match jac with
                                          | None -> NoCallbacks
@@ -715,7 +715,7 @@ module Adjoint =
 
         let band p jac bs nv =
           let parent, which = parent_and_which bs in
-          let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
+          let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
           c_dls_band (parent, which) neqs p.mupper p.mlower (jac <> None);
           (tosession bs).ls_callbacks <- match jac with
                                          | None -> NoCallbacks
@@ -723,7 +723,7 @@ module Adjoint =
 
         let lapack_band p jac bs nv =
           let parent, which = parent_and_which bs in
-          let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
+          let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
           c_dls_lapack_band (parent,which) neqs p.mupper p.mlower (jac <> None);
           (tosession bs).ls_callbacks <- match jac with
                                          | None -> NoCallbacks
@@ -842,7 +842,7 @@ module Adjoint =
 
           let init_preconditioner jac_times_vec bandrange bs parent which nv =
             c_set_preconditioner parent which
-              (RealArray.length (Sundials.unvec nv))
+              (RealArray.length (Nvector.unwrap nv))
               bandrange.mupper bandrange.mlower;
             c_set_jac_times_vec_fn parent which (jac_times_vec <> None);
             (tosession bs).ls_callbacks <- BSpilsBandCallback jac_times_vec

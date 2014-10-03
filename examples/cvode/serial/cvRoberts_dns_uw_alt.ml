@@ -34,7 +34,7 @@
 module RealArray = Sundials.RealArray
 module Roots = Sundials.Roots
 module Alt = Cvode.Alternate
-let unvec = Sundials.unvec
+let unvec = Nvector.unwrap
 let unwrap = Sundials.RealArray2.unwrap
 
 let printf = Printf.printf
@@ -110,7 +110,7 @@ let alternate_dense jacfn =
 
   let solver =
     Alt.make_solver (fun s nv ->
-        let n = RealArray.length (Sundials.unvec nv) in
+        let n = RealArray.length (unvec nv) in
         let mem = {
           nstlj  = 0;
           dm     = DM.create n n;

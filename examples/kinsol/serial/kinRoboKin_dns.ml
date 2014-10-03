@@ -216,7 +216,7 @@ let main () =
 
   (* Create vectors for solution, scales, and constraints *)
   let y = Nvector_serial.make neq one in
-  let ydata = Sundials.unvec y in
+  let ydata = Nvector.unwrap y in
   for i = 1 to nvar do
     set_ith ydata i (sqrt(two) /. two)
   done;

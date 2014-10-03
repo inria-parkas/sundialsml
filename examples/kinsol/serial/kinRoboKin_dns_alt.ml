@@ -71,7 +71,7 @@ let alternate_dense jacfn =
     Kinsol.Alternate.make_solver (fun s nv ->
         let n = match nv with
                 | None -> failwith "requires initial nvector!"
-                | Some nv -> RealArray.length (Sundials.unvec nv)
+                | Some nv -> RealArray.length (Nvector.unwrap nv)
         in
         let mem = {
           dj     = DM.create n n;
@@ -275,7 +275,7 @@ let main () =
 
   (* Create vectors for solution, scales, and constraints *)
   let y = Nvector_serial.make neq one in
-  let ydata = Sundials.unvec y in
+  let ydata = Nvector.unwrap y in
   for i = 1 to nvar do
     set_ith ydata i (sqrt(two) /. two)
   done;

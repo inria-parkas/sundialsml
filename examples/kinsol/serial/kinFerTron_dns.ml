@@ -152,7 +152,7 @@ let solve_it kmem u s glstr mset =
   Kinsol.set_max_setup_calls kmem (Some mset);
   ignore (Kinsol.solve kmem u glstr s s);
   print_string "Solution:\n  [x1,x2] = ";
-  print_output (Sundials.unvec u);
+  print_output (Nvector.unwrap u);
   print_final_stats kmem
 
 let main () =

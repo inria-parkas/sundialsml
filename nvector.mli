@@ -10,6 +10,18 @@
 (*                                                                     *)
 (***********************************************************************)
 
+(** The type representing an nvector with underlying data of type ['data]. The
+    additional type argument, ['kind], is typically either [serial], [parallel],
+    or [custom]. It is needed because some linear solvers make additional
+    assumptions about the underlying vector representation.
+
+    @cvode <node7#s:nvector> N_Vector *)
+type ('data, 'kind) t
+type ('data, 'kind) nvector = ('data, 'kind) t
+
+(** [unwrap nv] returns the data underlying the nvector [nv]. *)
+val unwrap : ('data, 'kind) nvector -> 'data
+
 (** Generic vector operations.
 
     @cvode <node7> Description of the NVECTOR module. *)
@@ -90,12 +102,12 @@ module type NVECTOR_OPS =
     val n_vminquotient  : t -> t -> float
   end
 
-(** Basic structure of an nvector module. *)
+(** Basic structure of a concrete nvector implementation module. *)
 module type NVECTOR =
   sig
     type kind
     type data
-    type t = (data, kind) Sundials.nvector
+    type t = (data, kind) nvector
     val wrap : data -> t
     module Ops : NVECTOR_OPS with type t = t
     module DataOps : NVECTOR_OPS with type t = data

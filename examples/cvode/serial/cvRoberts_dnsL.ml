@@ -31,7 +31,7 @@
 
 module RealArray = Sundials.RealArray
 module Roots = Sundials.Roots
-let unvec = Sundials.unvec
+let unwrap = Nvector.unwrap
 
 let printf = Printf.printf
 
@@ -107,7 +107,7 @@ let main () =
   and abstol = RealArray.create neq
   and roots = Roots.create nroots
   in
-  let ydata = unvec y in
+  let ydata = unwrap y in
   let r = Roots.get roots in
 
   (* Initialize y *)

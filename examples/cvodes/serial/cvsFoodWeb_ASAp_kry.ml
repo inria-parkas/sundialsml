@@ -83,7 +83,7 @@ module LintArray = Sundials.LintArray
 module Adj = Cvodes.Adjoint
 module Densemat = Dls.ArrayDenseMatrix
 open Bigarray
-let unvec = Sundials.unvec
+let unwrap = Nvector.unwrap
 
 let nvwrmsnorm = Nvector_serial.DataOps.n_vwrmsnorm
 let nvlinearsum = Nvector_serial.DataOps.n_vlinearsum
@@ -778,7 +778,7 @@ let precond wdata jacarg jok gamma =
   let cvode_mem =
     match wdata.cvode_mem with
     | Some c -> c | None -> assert false
-  and rewtdata  = unvec wdata.rewt
+  and rewtdata  = unwrap wdata.rewt
   in
   Cvode.get_err_weights cvode_mem wdata.rewt;
 
@@ -950,7 +950,7 @@ let precondb wdata jacarg jok gamma =
   let cvode_mem =
     match wdata.cvode_memb with
     | Some c -> c | None -> assert false
-  and rewtdata = unvec wdata.rewt
+  and rewtdata = unwrap wdata.rewt
   in
   Adj.get_err_weights cvode_mem wdata.rewt;
 
@@ -1070,7 +1070,7 @@ let main () =
   (* Set-up forward problem *)
   (* Initializations *)
   let c = Nvector_serial.make neq 0.0 in
-  cinit wdata (unvec c);
+  cinit wdata (unwrap c);
 
   (* Call CVodeCreate/CVodeInit for forward run *)
   (* Call CVSpgmr for forward run *)
@@ -1098,14 +1098,14 @@ let main () =
   printf "\nncheck = %d\n"  ncheck;
 
   printf "\n   g = int_x int_y c%d(Tfinal,x,y) dx dy = %f \n\n"
-         ispec (double_intgr (unvec c) ispec wdata);
+         ispec (double_intgr (unwrap c) ispec wdata);
 
   (* Set-up backward problem *)
 
   (* Allocate cB *)
   (* Initialize cB = 0 *)
   let cB = Nvector_serial.make neq zero in
-  cb_init wdata (unvec cB) ispec;
+  cb_init wdata (unwrap cB) ispec;
 
   (* Create and allocate CVODES memory for backward run *)
   (* Call CVSpgmr *)
@@ -1130,7 +1130,7 @@ let main () =
   printf "\nBackward integration\n";
   Adj.backward_normal cvode_mem t0;
   let _ = Adj.get cvode_memb cB in
-  print_output wdata (unvec cB) ns mxns
+  print_output wdata (unwrap cB) ns mxns
 
 
 (* Check environment variables for extra arguments.  *)

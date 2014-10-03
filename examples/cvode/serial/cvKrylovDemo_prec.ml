@@ -96,7 +96,7 @@ module Roots = Sundials.Roots
 module Densemat = Dls.ArrayDenseMatrix
 module Spils = Cvode.Spils
 open Bigarray
-let unvec = Sundials.unvec
+let unwrap = Nvector.unwrap
 
 let printf = Printf.printf
 let sqr x = x *. x
@@ -276,7 +276,7 @@ let precond wdata jacarg jok gamma =
   let cvode_mem =
     match wdata.cvode_mem with
     | Some c -> c | None -> assert false
-  and rewtdata  = Sundials.unvec wdata.rewt
+  and rewtdata  = Nvector.unwrap wdata.rewt
   in
   Cvode.get_err_weights cvode_mem wdata.rewt;
 
@@ -866,7 +866,7 @@ let main () =
   let c = Nvector_serial.make neq 0.0 in
   let wdata = alloc_user_data () in
   init_user_data wdata;
-  cinit wdata (unvec c);
+  cinit wdata (unwrap c);
 
   (* Call CVodeInit or CVodeReInit, then CVSpgmr to set up problem *)
   let cvode_mem =
@@ -893,12 +893,12 @@ let main () =
   let firstrun = ref true in
   let run jpre gstype =
     (* Initialize c and print heading *)
-    cinit wdata (unvec c);
+    cinit wdata (unwrap c);
     print_header jpre gstype;
 
     if !firstrun then
       (* Print initial values *)
-      print_all_species (unvec c) ns mxns t0
+      print_all_species (unwrap c) ns mxns t0
     else begin
       Cvode.reinit cvode_mem t0 c;
       Cvode.Spils.set_prec_type cvode_mem jpre;
@@ -911,7 +911,7 @@ let main () =
       let (t, _) = Cvode.solve_normal cvode_mem !tout c in
       print_output cvode_mem t;
       if !firstrun && (iout mod 3 = 0)
-        then print_all_species (unvec c) ns mxns t;
+        then print_all_species (unwrap c) ns mxns t;
       tout := if !tout > 0.9 then !tout +. dtout else !tout *. tout_mult
     done;
     

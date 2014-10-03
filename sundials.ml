@@ -25,10 +25,7 @@ let floata = format_float "%a"
 exception RecoverableFailure
 exception NonPositiveEwt
 
-type cnvec
-type ('data, 'kind) nvector = 'data * cnvec
-
-let unvec (payload, _) = payload
+type ('data, 'kind) nvector = ('data, 'kind) Nvector.t
 
 (* Note the type annotations are redundant because there's already a .mli, but
    explicit annotations improve performance for bigarrays.  *)

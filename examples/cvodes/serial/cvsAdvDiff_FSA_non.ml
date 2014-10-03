@@ -47,7 +47,7 @@
 
 module Sens = Cvodes.Sensitivity
 module RealArray = Sundials.RealArray
-let unvec = Sundials.unvec
+let unwrap = Nvector.unwrap
 
 let printf = Printf.printf
 let vmax_norm = Nvector_serial.Ops.n_vmaxnorm
@@ -223,7 +223,7 @@ let main () =
 
   (* Allocate and set initial states *)
   let u = Nvector_serial.make neq 0.0 in
-  set_ic (unvec u) dx;
+  set_ic (unwrap u) dx;
 
   (* Set integration tolerances *)
   let reltol = zero in

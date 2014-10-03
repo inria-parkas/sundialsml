@@ -756,7 +756,7 @@ module Adjoint =
 
         let dense jac bs nv nv' =
           let parent, which = parent_and_which bs in
-          let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
+          let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
           c_dls_dense parent which neqs (jac <> None);
           (tosession bs).ls_callbacks <- match jac with
                                          | None -> NoCallbacks
@@ -766,7 +766,7 @@ module Adjoint =
         (*
         let lapack_dense jac bs nv =
           let parent, which = parent_and_which bs in
-          let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
+          let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
           c_dls_lapack_dense parent which neqs (jac <> None);
           (tosession bs).ls_callbacks <- match jac with
                                          | None -> NoCallbacks
@@ -778,7 +778,7 @@ module Adjoint =
 
         let band p jac bs nv nv' =
           let parent, which = parent_and_which bs in
-          let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
+          let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
           c_dls_band (parent, which) neqs p.mupper p.mlower (jac <> None);
           (tosession bs).ls_callbacks <- match jac with
                                          | None -> NoCallbacks
@@ -788,7 +788,7 @@ module Adjoint =
         (*
         let lapack_band p jac bs nv =
           let parent, which = parent_and_which bs in
-          let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
+          let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
           c_dls_lapack_band (parent,which) neqs p.mupper p.mlower (jac <> None);
           (tosession bs).ls_callbacks <- match jac with
                                          | None -> NoCallbacks

@@ -59,7 +59,7 @@ module Adj = Cvodes.Adjoint
 module QuadAdj = Cvodes.Adjoint.Quadrature
 module RealArray = Sundials.RealArray
 module Densemat = Dls.DenseMatrix
-let unvec = Sundials.unvec
+let unwrap = Nvector.unwrap
 
 let printf = Printf.printf
 

@@ -38,7 +38,7 @@ module Roots  = Sundials.Roots
 module Direct = Dls.ArrayDenseMatrix
 module Spils = Cvode.Spils
 open Bigarray
-let unvec = Sundials.unvec
+let unwrap = Nvector.unwrap
 
 let printf = Printf.printf
 
@@ -317,7 +317,7 @@ let main () =
   (* Allocate and initialize u, and set problem data and tolerances *)
   let u = Nvector_serial.make neq 0.0 in
   let data = init_user_data () in
-  set_initial_profiles (unvec u) data.dx data.dy;
+  set_initial_profiles (unwrap u) data.dx data.dy;
 
   let abstol = atol
   and reltol = rtol
@@ -352,7 +352,7 @@ let main () =
     let tout = ref twohr in
     for iout = 1 to nout do
       let (t, flag) = Cvode.solve_normal cvode_mem !tout u in
-      print_output cvode_mem (unvec u) t;
+      print_output cvode_mem (unwrap u) t;
       tout := !tout +. twohr
     done;
     
@@ -363,7 +363,7 @@ let main () =
   jrpe_loop Spils.PrecLeft  "PREC_LEFT";
 
   (* On second run, re-initialize u, the solver, and CVSPGMR *)
-  set_initial_profiles (unvec u) data.dx data.dy;
+  set_initial_profiles (unwrap u) data.dx data.dy;
   Cvode.reinit cvode_mem t0 u;
 
   (* NB: the prec type could be changed by giving a suitable ~iter_type

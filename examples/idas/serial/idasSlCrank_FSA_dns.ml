@@ -273,8 +273,8 @@ let main () =
   set_ic data yy yp;
 
   for is = 0 to np - 1 do
-    nvconst 0.0 (Sundials.unvec yyS.(is));
-    nvconst 0.0 (Sundials.unvec ypS.(is));
+    nvconst 0.0 (Nvector.unwrap yyS.(is));
+    nvconst 0.0 (Nvector.unwrap ypS.(is));
   done;
 
   (* Wrap arrays in nvectors.  Operations performed on the wrapped
@@ -312,7 +312,7 @@ let main () =
   Quad.init mem (rhsQ data) wq;
   Quad.set_tolerances mem (Quad.SStolerances (rtolq, atolq)) ;
 
-  nvconst 0.0 (Sundials.unvec qS.(0));
+  nvconst 0.0 (Nvector.unwrap qS.(0));
   QuadSens.init mem (Some (rhsQS data)) qS;
   atolS.{0} <- atolq; atolS.{1} <- atolq;
   QuadSens.set_tolerances mem (QuadSens.SStolerances (rtolq, atolS));
@@ -333,7 +333,8 @@ let main () =
 
   let _ = QuadSens.get mem qS in
   printf "-------------F O R W A R D------------------\n";
-  printf "   dG/dp:  %12.4e %12.4e\n" (Sundials.unvec qS.(0)).{0} (Sundials.unvec qS.(1)).{0};
+  printf "   dG/dp:  %12.4e %12.4e\n" (Nvector.unwrap qS.(0)).{0}
+                                      (Nvector.unwrap qS.(1)).{0};
   printf "--------------------------------------------\n\n";
 
 

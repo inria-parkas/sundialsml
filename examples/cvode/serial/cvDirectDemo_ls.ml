@@ -60,7 +60,7 @@ module RealArray = Sundials.RealArray
 module Roots = Sundials.Roots
 module Densematrix = Dls.DenseMatrix
 module Bandmatrix = Dls.BandMatrix
-let unvec = Sundials.unvec
+let unwrap = Nvector.unwrap
 
 let printf = Printf.printf
 
@@ -282,7 +282,7 @@ let snd_true (x, _) = (x, true)
 let problem1 () =
   let nerr = ref 0 in
   let y = Nvector_serial.make p1_neq 0.0 in
-  let ydata = unvec y in
+  let ydata = unwrap y in
   let init_y () = (ydata.{0} <- two; ydata.{1} <- zero) in
   print_intro1 ();
 
@@ -402,7 +402,7 @@ let max_error (ydata : RealArray.t) t =
 let problem2 () =
   let nerr = ref 0 in
   let y = Nvector_serial.make p2_neq 0.0 in
-  let ydata = unvec y in
+  let ydata = unwrap y in
   let init_y () = (RealArray.fill ydata zero; ydata.{0} <- one) in
   print_intro2 ();
 

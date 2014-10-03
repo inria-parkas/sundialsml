@@ -130,7 +130,7 @@ let add_tracing msg ops =
 
 exception OperationNotSupported
 
-let uv = Sundials.unvec
+let uv = Nvector.unwrap
 
 module MakeOps = functor (A : sig
     type data

@@ -48,16 +48,7 @@ exception NonPositiveEwt
 
 (** {2 Nvectors} *)
 
-(** The type representing an nvector with underlying data of type ['data]. The
-    additional type argument, ['kind], is typically either [serial], [parallel],
-    or [custom]. It is needed because some linear solvers make additional
-    assumptions about the underlying vector representation.
-
-    @cvode <node7#s:nvector> N_Vector *)
-type ('data, 'kind) nvector
-
-(** [unvec nv] returns the data underlying the nvector [nv]. *)
-val unvec : ('data, 'kind) nvector -> 'data
+type ('data, 'kind) nvector = ('data, 'kind) Nvector.t
 
 (** {2 Arrays} *)
 

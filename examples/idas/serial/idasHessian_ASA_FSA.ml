@@ -375,13 +375,13 @@ let main () =
   let yyS = Array.init np (fun _ -> Nvector_serial.wrap (RealArray.copy yy))
   and ypS = Array.init np (fun _ -> Nvector_serial.wrap (RealArray.copy yp))
   in
-  nvconst 0.0 (Sundials.unvec yyS.(0));
-  nvconst 0.0 (Sundials.unvec yyS.(1));
-  nvconst 0.0 (Sundials.unvec ypS.(0));
-  nvconst 0.0 (Sundials.unvec ypS.(1));
+  nvconst 0.0 (Nvector.unwrap yyS.(0));
+  nvconst 0.0 (Nvector.unwrap yyS.(1));
+  nvconst 0.0 (Nvector.unwrap ypS.(0));
+  nvconst 0.0 (Nvector.unwrap ypS.(1));
 
   let qS = Array.init np (fun _ -> Nvector_serial.wrap (RealArray.copy q)) in
-  nvconst 0.0 (Sundials.unvec qS.(0));
+  nvconst 0.0 (Nvector.unwrap qS.(0));
 
   (* Forward problem's setup. *)
   let ti = t0 in
@@ -426,8 +426,8 @@ let main () =
 
   let _ = QuadSens.get ida_mem qS in
   printf "   dG/dp:  %12.4e %12.4e\n"
-    (Sundials.unvec qS.(0)).{0}
-    (Sundials.unvec qS.(1)).{0};
+    (Nvector.unwrap qS.(0)).{0}
+    (Nvector.unwrap qS.(1)).{0};
   printf "\n";
   (******************************
   * BACKWARD PROBLEM #1
@@ -440,13 +440,13 @@ let main () =
 
   nvconst 0.0 yyB1;
   yyB1.{2} <- yy.{2};
-  yyB1.{5} <- (Sundials.unvec yyS.(0)).{2};
+  yyB1.{5} <- (Nvector.unwrap yyS.(0)).{2};
 
   nvconst 0.0 ypB1;
   ypB1.{0} <- yy.{2} -. yy.{0};
   ypB1.{1} <- yy.{2} -. yy.{1};
-  ypB1.{3} <- (Sundials.unvec yyS.(0)).{2} -. (Sundials.unvec yyS.(0)).{0};
-  ypB1.{4} <- (Sundials.unvec yyS.(0)).{2} -. (Sundials.unvec yyS.(0)).{1};
+  ypB1.{3} <- (Nvector.unwrap yyS.(0)).{2} -. (Nvector.unwrap yyS.(0)).{0};
+  ypB1.{4} <- (Nvector.unwrap yyS.(0)).{2} -. (Nvector.unwrap yyS.(0)).{1};
 
   let qB1 = RealArray.create (2*np) in
   nvconst 0.0 qB1;
@@ -476,13 +476,13 @@ let main () =
 
   nvconst 0.0 yyB2;
   yyB2.{2} <- yy.{2};
-  yyB2.{5} <- (Sundials.unvec yyS.(1)).{2};
+  yyB2.{5} <- (Nvector.unwrap yyS.(1)).{2};
 
   nvconst 0.0 ypB2;
   ypB2.{0} <- yy.{2}-.yy.{0};
   ypB2.{1} <- yy.{2}-.yy.{1};
-  ypB2.{3} <- (Sundials.unvec yyS.(1)).{2} -. (Sundials.unvec yyS.(1)).{0};
-  ypB2.{4} <- (Sundials.unvec yyS.(1)).{2} -. (Sundials.unvec yyS.(1)).{1};
+  ypB2.{3} <- (Nvector.unwrap yyS.(1)).{2} -. (Nvector.unwrap yyS.(1)).{0};
+  ypB2.{4} <- (Nvector.unwrap yyS.(1)).{2} -. (Nvector.unwrap yyS.(1)).{1};
 
   let qB2 = RealArray.create (2*np) in
   nvconst 0.0 qB2;

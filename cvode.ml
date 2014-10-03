@@ -111,28 +111,28 @@ module Dls =
         = "c_cvode_dls_set_dense_jac_fn"
 
     let dense jac session nv =
-      let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
+      let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
       (session.ls_callbacks <- match jac with
                                | None -> NoCallbacks
                                | Some f -> DenseCallback f);
       c_dls_dense session neqs (jac <> None)
 
     let lapack_dense jac session nv =
-      let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
+      let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
       (session.ls_callbacks <- match jac with
                                | None -> NoCallbacks
                                | Some f -> DenseCallback f);
       c_dls_lapack_dense session neqs (jac <> None)
 
     let band p jac session nv =
-      let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
+      let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
       (session.ls_callbacks <- match jac with
                               | None -> NoCallbacks
                               | Some f -> BandCallback f);
       c_dls_band (session, neqs) p.mupper p.mlower (jac <> None)
 
     let lapack_band p jac session nv =
-      let neqs = Sundials.RealArray.length (Sundials.unvec nv) in
+      let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
       (session.ls_callbacks <- match jac with
                                | None -> NoCallbacks
                                | Some f -> BandCallback f);
@@ -340,7 +340,7 @@ module Spils =
          multiple times on the same solver instance.  *)
 
       let init_preconditioner jac_times_vec bandrange session nv =
-        c_set_preconditioner session (RealArray.length (Sundials.unvec nv))
+        c_set_preconditioner session (RealArray.length (Nvector.unwrap nv))
           bandrange.mupper bandrange.mlower;
         c_set_jac_times_vec_fn session (jac_times_vec <> None);
         session.ls_callbacks <- SpilsBandCallback jac_times_vec

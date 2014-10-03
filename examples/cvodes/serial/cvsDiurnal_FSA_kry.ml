@@ -55,7 +55,7 @@ module LintArray = Sundials.LintArray
 module Direct = Dls.ArrayDenseMatrix
 module Sens = Cvodes.Sensitivity
 open Bigarray
-let unvec = Sundials.unvec
+let unvec = Nvector.unwrap
 let unwrap = RealArray2.unwrap
 
 let printf = Printf.printf

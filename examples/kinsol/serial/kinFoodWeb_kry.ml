@@ -82,7 +82,7 @@ module RealArray = Sundials.RealArray
 module RealArray2 = Sundials.RealArray2
 module LintArray = Sundials.LintArray
 module Dense = Dls.ArrayDenseMatrix
-let unvec = Sundials.unvec
+let unvec = Nvector.unwrap
 open Bigarray
 
 let printf = Printf.printf

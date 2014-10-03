@@ -50,7 +50,7 @@
 module Sens = Cvodes.Sensitivity
 module RealArray = Sundials.RealArray
 module Densemat = Dls.DenseMatrix
-let unvec = Sundials.unvec
+let unwrap = Nvector.unwrap
 
 let printf = Printf.printf
 
@@ -206,13 +206,13 @@ let print_output s t udata =
 (* Print sensitivities. *)
 
 let print_output_s uS =
-  let sdata = unvec uS.(0) in
+  let sdata = unwrap uS.(0) in
   print_string "                  Sensitivity 1  ";
   printf "%12.4e %12.4e %12.4e \n"  sdata.{0} sdata.{1} sdata.{2};
-  let sdata = unvec uS.(1) in
+  let sdata = unwrap uS.(1) in
   print_string "                  Sensitivity 2  ";
   printf "%12.4e %12.4e %12.4e \n"  sdata.{0} sdata.{1} sdata.{2};
-  let sdata = unvec uS.(2) in
+  let sdata = unwrap uS.(2) in
   print_string "                  Sensitivity 3  ";
   printf "%12.4e %12.4e %12.4e \n"  sdata.{0} sdata.{1} sdata.{2}
 
