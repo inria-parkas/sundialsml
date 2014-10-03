@@ -789,7 +789,7 @@ let print_intro () =
 
 let print_header jpre gstype =
   printf "\n\nPreconditioner type is           jpre = %s\n"
-    (if jpre = (Cvode.Spils.PrecLeft ()) then "PREC_LEFT" else "PREC_RIGHT");
+    (if jpre = Cvode.Spils.PrecLeft then "PREC_LEFT" else "PREC_RIGHT");
   printf"\nGram-Schmidt method type is    gstype = %s\n\n\n"
     (if gstype = Spils.ModifiedGS then "MODIFIED_GS" else "CLASSICAL_GS")
 
@@ -922,10 +922,10 @@ let main () =
   in
       
   (* Loop over jpre and gstype (four cases) *)
-  run (Spils.PrecLeft ())  Spils.ModifiedGS;
-  run (Spils.PrecLeft ())  Spils.ClassicalGS;
-  run (Spils.PrecRight ()) Spils.ModifiedGS;
-  run (Spils.PrecRight ()) Spils.ClassicalGS
+  run Spils.PrecLeft  Spils.ModifiedGS;
+  run Spils.PrecLeft  Spils.ClassicalGS;
+  run Spils.PrecRight Spils.ModifiedGS;
+  run Spils.PrecRight Spils.ClassicalGS
 
 (* Check environment variables for extra arguments.  *)
 let reps =

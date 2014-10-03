@@ -589,7 +589,7 @@ let main () =
       set_initial_profiles data u;
       Cvode.reinit cvode_mem t0 u;
       BBD.reinit cvode_mem mudq mldq;
-      Cvode.Spils.set_prec_type cvode_mem (Cvode.Spils.PrecRight ());
+      Cvode.Spils.set_prec_type cvode_mem Cvode.Spils.PrecRight;
 
       if my_pe = 0 then begin
         printf "\n\n-------------------------------------------------------";

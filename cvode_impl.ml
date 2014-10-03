@@ -83,9 +83,15 @@ module SpilsCommonTypes = struct
   type gramschmidt_type = Spils.gramschmidt_type =
     | ModifiedGS
     | ClassicalGS
+
+  type preconditioning_type =
+    | PrecNone
+    | PrecLeft
+    | PrecRight
+    | PrecBoth
 end
 
-module SpilsTypes = struct
+module SpilsTypes' = struct
   include SpilsCommonTypes
 
   type 'a prec_solve_fn =
@@ -106,36 +112,12 @@ module SpilsTypes = struct
     -> 'a (* Jv *)
     -> unit
 
-  type 'a user_callbacks =
+  type 'a callbacks =
     {
       prec_solve_fn : 'a prec_solve_fn;
       prec_setup_fn : 'a prec_setup_fn option;
       jac_times_vec_fn : 'a jac_times_vec_fn option;
     }
-
-  type (_,_) callbacks =
-    | User : 'a prec_solve_fn
-             * 'a prec_setup_fn option
-             * 'a jac_times_vec_fn option
-      -> ('a, 'k) callbacks
-    | Banded : bandrange * RealArray.t jac_times_vec_fn option ->
-      (Nvector_serial.data, Nvector_serial.kind) callbacks
-
-  type serial_callbacks =
-    (Nvector_serial.data, Nvector_serial.kind) callbacks
-
-  type 'callbacks with_preconditioning_type =
-    | PrecNone
-    | PrecLeft of 'callbacks
-    | PrecRight of 'callbacks
-    | PrecBoth of 'callbacks
-
-  type ('a, 'k) preconditioner = ('a, 'k) callbacks with_preconditioning_type
-
-  type preconditioning_type = unit with_preconditioning_type
-
-  type serial_preconditioner =
-    (Nvector_serial.data, Nvector_serial.kind) preconditioner
 end
 
 module AlternateTypes' = struct
@@ -252,7 +234,7 @@ module AdjointTypes' = struct
   end
 
   (* Ditto. *)
-  module SpilsTypes = struct
+  module SpilsTypes' = struct
     include SpilsCommonTypes
 
     type 'a prec_solve_fn =
@@ -273,36 +255,12 @@ module AdjointTypes' = struct
       -> 'a (* Jv *)
       -> unit
 
-    type 'a user_callbacks =
+    type 'a callbacks =
       {
         prec_solve_fn : 'a prec_solve_fn;
         prec_setup_fn : 'a prec_setup_fn option;
         jac_times_vec_fn : 'a jac_times_vec_fn option;
       }
-
-    type (_,_) callbacks =
-      | User : 'a prec_solve_fn
-               * 'a prec_setup_fn option
-               * 'a jac_times_vec_fn option
-        -> ('a, 'k) callbacks
-      | Banded : bandrange * RealArray.t jac_times_vec_fn option ->
-        (Nvector_serial.data, Nvector_serial.kind) callbacks
-
-    type serial_callbacks =
-      (Nvector_serial.data, Nvector_serial.kind) callbacks
-
-    type 'callbacks with_preconditioning_type =
-      | PrecNone
-      | PrecLeft of 'callbacks
-      | PrecRight of 'callbacks
-      | PrecBoth of 'callbacks
-
-    type ('a, 'k) preconditioner = ('a, 'k) callbacks with_preconditioning_type
-
-    type preconditioning_type = unit with_preconditioning_type
-
-    type serial_preconditioner =
-      (Nvector_serial.data, Nvector_serial.kind) preconditioner
   end
 end
 
@@ -349,44 +307,23 @@ type ('a, 'kind) session = {
   mutable sensext      : ('a, 'kind) sensext (* Used by Cvodes *)
 }
 
-and (_, _) linsolv_callbacks =
-  | NoCallbacks : ('a, 'k) linsolv_callbacks
+and ('a, 'kind) linsolv_callbacks =
+  | NoCallbacks
 
-  | DenseCallback :
-      DlsTypes.dense_jac_fn
-      -> (Nvector_serial.data, Nvector_serial.kind) linsolv_callbacks
-  | BandCallback :
-      DlsTypes.band_jac_fn
-      -> (Nvector_serial.data, Nvector_serial.kind) linsolv_callbacks
-  | SpilsCallback :
-      'a SpilsTypes.user_callbacks
-      -> ('a, 'k) linsolv_callbacks
-  | SpilsBandedCallback :
-      RealArray.t SpilsTypes.jac_times_vec_fn option ->
-      (Nvector_serial.data, Nvector_serial.kind) linsolv_callbacks
-  | BBDCallback :
-      'a CvodeBbdParamTypes.callbacks
-      -> ('a, 'k) linsolv_callbacks
+  | DenseCallback of DlsTypes.dense_jac_fn
+  | BandCallback  of DlsTypes.band_jac_fn
+  | SpilsCallback of 'a SpilsTypes'.callbacks
+  | SpilsBandCallback of RealArray.t SpilsTypes'.jac_times_vec_fn option
+  | BBDCallback of 'a CvodeBbdParamTypes.callbacks
 
-  | AlternateCallback :
-      ('a, 'k) alternate_linsolv
-      -> ('a, 'k) linsolv_callbacks
+  | AlternateCallback of ('a, 'kind) alternate_linsolv
 
-  | BDenseCallback :
-      AdjointTypes'.DlsTypes.dense_jac_fn
-      -> (Nvector_serial.data, Nvector_serial.kind) linsolv_callbacks
-  | BBandCallback :
-      AdjointTypes'.DlsTypes.band_jac_fn
-      -> (Nvector_serial.data, Nvector_serial.kind) linsolv_callbacks
-  | BSpilsCallback :
-      'a AdjointTypes'.SpilsTypes.user_callbacks
-      -> ('a, 'k) linsolv_callbacks
-  | BSpilsBandedCallback :
-      RealArray.t AdjointTypes'.SpilsTypes.jac_times_vec_fn option
-      -> (Nvector_serial.data, Nvector_serial.kind) linsolv_callbacks
-  | BBBDCallback :
-      'a CvodesBbdParamTypes.callbacks
-      -> ('a, 'k) linsolv_callbacks
+  | BDenseCallback of AdjointTypes'.DlsTypes.dense_jac_fn
+  | BBandCallback  of AdjointTypes'.DlsTypes.band_jac_fn
+  | BSpilsCallback of 'a AdjointTypes'.SpilsTypes'.callbacks
+  | BSpilsBandCallback of RealArray.t AdjointTypes'.SpilsTypes'.jac_times_vec_fn
+                          option
+  | BBBDCallback of 'a CvodesBbdParamTypes.callbacks
 
 and ('a, 'kind) sensext =
     NoSensExt
@@ -463,6 +400,22 @@ type ('data, 'kind) linear_solver =
 type serial_linear_solver =
   (Nvector_serial.data, Nvector_serial.kind) linear_solver
 
+module SpilsTypes = struct
+  include SpilsTypes'
+
+  type ('a, 'k) set_preconditioner =
+    ('a, 'k) session -> ('a, 'k) nvector -> unit
+
+  type ('a, 'k) preconditioner =
+    | InternalPrecNone
+    | InternalPrecLeft of ('a, 'k) set_preconditioner
+    | InternalPrecRight of ('a, 'k) set_preconditioner
+    | InternalPrecBoth of ('a, 'k) set_preconditioner
+
+  type serial_preconditioner =
+    (Nvector_serial.data, Nvector_serial.kind) preconditioner
+end
+
 module AlternateTypes = struct
   include AlternateTypes'
   type ('data, 'kind) callbacks = ('data, 'kind) alternate_linsolv =
@@ -489,6 +442,22 @@ module AdjointTypes = struct
     -> unit
   type serial_linear_solver =
     (Nvector_serial.data, Nvector_serial.kind) linear_solver
+
+  module SpilsTypes = struct
+    include SpilsTypes'
+
+    type ('a, 'k) set_preconditioner =
+      ('a, 'k) bsession -> ('a, 'k) session -> int -> ('a, 'k) nvector -> unit
+
+    type ('a, 'k) preconditioner =
+      | InternalPrecNone
+      | InternalPrecLeft of ('a, 'k) set_preconditioner
+      | InternalPrecRight of ('a, 'k) set_preconditioner
+      | InternalPrecBoth of ('a, 'k) set_preconditioner
+
+    type serial_preconditioner =
+      (Nvector_serial.data, Nvector_serial.kind) preconditioner
+  end
 end
 
 let read_weak_ref x : ('a, 'kind) session =

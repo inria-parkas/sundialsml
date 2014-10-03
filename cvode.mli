@@ -479,44 +479,12 @@ module Spils :
       -> 'a (* Jv *)
       -> unit
 
-    (** Wraps an optional set of callbacks (the ['callbacks]
-        parameter) in a constructor that specifies the type of
-        preconditioning to be done, i.e. none, left, right, or both.
+    (** A type that specifies a preconditioner, including the side
+        from which to precondition (none, left, right, or both) and
+        callbacks or other data needed to solve the preconditioning
+        system $Pz = r$.
 
-        See {!preconditioner} and {!preconditioning_type}.  *)
-    type 'callbacks with_preconditioning_type =
-      | PrecNone
-      | PrecLeft of 'callbacks
-      | PrecRight of 'callbacks
-      | PrecBoth of 'callbacks
-
-    (** Complete specification of a preconditioner, including the type
-        of preconditioning to be done (none, left, right, or both, as
-        specified through {!with_preconditioning_type}), and a set of
-        callbacks if applicable.
-
-        Directly creating values of this type involves heavy nesting
-        of constructors, so the following convenience functions are
-        provided for conciseness:
-
-        - {!prec_none} is just [PrecNone].
-        - {!prec_left}, {!prec_right}, {!prec_both} create
-          [PrecLeft (User ...)], [PrecRight (User ...)],
-          and [PrecBoth (User ...)], respectively.
-        - {!prec_left_banded}, {!prec_right_banded}, {!prec_both_banded}
-          create [PrecLeft (Banded ...)], [PrecRight (Banded ...)],
-          and [PrecBoth (Banded ...)], respectively.
-
-        @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
-        @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
-        @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn
-        @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
-        @cvode <node5#ss:jtimesfn> CVSpilsJacTimesVecFn
-      *)
-    type ('a, 'k) preconditioner = ('a, 'k) callbacks with_preconditioning_type
-
-    (** A data type that specifies the three callbacks needed in
-        preconditioning:
+        Generally, three callbacks are needed in preconditioning:
 
         - [solve], the main function that solves the preconditioning
           system $Pz = r$, where $P$ is a preconditioning matrix
@@ -530,34 +498,25 @@ module Spils :
           user doesn't give such a function, CVODE uses a default
           implementation based on difference quotients.
 
-        [User] means that all callbacks are supplied by the user.
-        [solve] is mandatory, while [setup] and [jac_times_vec] are
-        optional.
+        Like the {!linear_solver}, there are several functions which
+        construct preconditioners.  The simples is {!prec_none}, which
+        does no preconditioning.  This module also provides
+        {!prec_left}, {!prec_right}, and {!prec_both}, which take a
+        [solve] function and optionally [setup] and [jac_times_vec]
+        which together define an arbitrary, user-defined
+        preconditioner.
 
-        [Banded] means to use CVODE's internal [solve] that uses a
-        band-diagonal preconditioning matrix.  The internal [solve]
-        needs no [setup], and the user only gives the {!bandwidths} of
-        the banded matrix, optionally with a [jac_times_vec] function.
-
-        See notes about convenience functions in {!preconditioner}.
+        The {!Banded} module gives access to CVODE's banded
+        preconditioner, while {!Cvode_bbd} contains the parallel
+        band-block diagonal preconditioners.
 
         @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
-        @cvode <node5#sss:cvbandpre> CVBandPrecInit
+        @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
+        @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn
+        @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
+        @cvode <node5#ss:jtimesfn> CVSpilsJacTimesVecFn
       *)
-    and (_,_) callbacks =
-      | User : 'a prec_solve_fn
-               * 'a prec_setup_fn option
-               * 'a jac_times_vec_fn option
-               -> ('a, 'k) callbacks
-        (** User-defined callbacks implementing a custom
-            preconditioner.  *)
-      | Banded : bandrange * Nvector_serial.data jac_times_vec_fn option ->
-                 (Nvector_serial.data, Nvector_serial.kind) callbacks
-        (** Use callbacks supplied by CVODE that implement a banded
-            matrix of difference quotients. *)
-
-    (** {!callbacks} restricted to serial nvectors. *)
-    type serial_callbacks = (Nvector_serial.data, Nvector_serial.kind) callbacks
+    and ('a,'k) preconditioner = ('a,'k) Cvode_impl.SpilsTypes.preconditioner
 
     (** {!preconditioner} restricted to serial nvectors. *)
     type serial_preconditioner =
@@ -586,24 +545,6 @@ module Spils :
       -> ?jac_times_vec:'a jac_times_vec_fn
       -> 'a prec_solve_fn
       -> ('a, 'k) preconditioner
-
-    (** See {!preconditioner}.  *)
-    val prec_left_banded :
-      ?jac_times_vec:(RealArray.t jac_times_vec_fn)
-      -> bandrange
-      -> serial_preconditioner
-
-    (** See {!preconditioner}.  *)
-    val prec_right_banded :
-      ?jac_times_vec:(RealArray.t jac_times_vec_fn)
-      -> bandrange
-      -> serial_preconditioner
-
-    (** See {!preconditioner}.  *)
-    val prec_both_banded :
-      ?jac_times_vec:(RealArray.t jac_times_vec_fn)
-      -> bandrange
-      -> serial_preconditioner
 
     (** Krylov iterative solver with the scaled preconditioned GMRES
         method.  Called like [spgmr ~maxl:maxl prec], where:
@@ -676,15 +617,18 @@ module Spils :
 
     (** This type is used only for low-level solver manipulation.
         Information about the type of preconditioning to be done,
-        without any of the necessary callbacks to make it happen:
-        [PrecNone], [PrecLeft ()], [PrecRight ()], or [PrecBoth ()].
+        without any of the necessary callbacks to make it happen.
       *)
-    type preconditioning_type = unit with_preconditioning_type
+    type preconditioning_type =
+      | PrecNone
+      | PrecLeft
+      | PrecRight
+      | PrecBoth
 
     (** This function changes the type of preconditioning without
         affecting the preconditioning callbacks.  If the
         preconditioning type is changed from [PrecNone] to something
-        else, then {!set_prec_callbacks} must be called to install the
+        else, then {!set_preconditioner} must be called to install the
         necessary callbacks.  Users are encouraged to use the
         [iter_type] parameter of {!reinit} instead, unless they are
         desperate for performance.
@@ -759,19 +703,54 @@ module Spils :
         @cvode <node5#sss:optout_spils> CVSpilsGetNumRhsEvals *)
     val get_num_rhs_evals    : ('a, 'k) session -> int
 
-    (** Returns the sizes of the real and integer workspaces used by the serial
-        banded preconditioner module.
+    (** Banded preconditioner.  *)
+    module Banded : sig
 
-        @cvode <node5#sss:cvbandpre> CVBandPrecGetWorkSpace
-        @return ([real_size], [integer_size]) *)
-    val get_banded_work_space : serial_session -> int * int
+      (** Denotes CVODE's internal band matrix {!preconditioner} based
+          on difference quotients.  [prec_left br] creates a left
+          preconditioner which generates a banded approximation to the
+          Jacobian with [br.mlower] sub-diagonals and [br.mupper]
+          super-diagonals.
 
-    (** Returns the number of calls made to the user-supplied right-hand side
-        function due to finite difference banded Jacobian approximation in the
-        banded preconditioner setup function.
+          @cvode <node5#sss:cvbandpre> CVBandPrecInit
+        *)
+      val prec_left :
+        ?jac_times_vec:(RealArray.t jac_times_vec_fn)
+        -> bandrange
+        -> serial_preconditioner
 
-        @cvode <node5#sss:cvbandpre> CVBandPrecGetNumRhsEvals *)
-    val get_banded_num_rhs_evals : serial_session -> int
+      (** Like {!prec_left} but preconditions from the right.
+
+          @cvode <node5#sss:cvbandpre> CVBandPrecInit
+        *)
+      val prec_right :
+        ?jac_times_vec:(RealArray.t jac_times_vec_fn)
+        -> bandrange
+        -> serial_preconditioner
+
+      (** Like {!prec_left} but preconditions from both sides.
+
+          @cvode <node5#sss:cvbandpre> CVBandPrecInit
+        *)
+      val prec_both :
+        ?jac_times_vec:(RealArray.t jac_times_vec_fn)
+        -> bandrange
+        -> serial_preconditioner
+
+      (** Returns the sizes of the real and integer workspaces used by the serial
+          banded preconditioner module.
+
+          @cvode <node5#sss:cvbandpre> CVBandPrecGetWorkSpace
+          @return ([real_size], [integer_size]) *)
+      val get_work_space : serial_session -> int * int
+
+      (** Returns the number of calls made to the user-supplied right-hand side
+          function due to finite difference banded Jacobian approximation in the
+          banded preconditioner setup function.
+
+          @cvode <node5#sss:cvbandpre> CVBandPrecGetNumRhsEvals *)
+      val get_num_rhs_evals : serial_session -> int
+    end
   end
 
 module Alternate :

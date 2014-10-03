@@ -206,8 +206,8 @@ let print_final_stats s =
   and ncfl  = Spils.get_num_conv_fails s
   and nfeLS = Spils.get_num_rhs_evals s
   in
-  let lenrwBP, leniwBP = Spils.get_banded_work_space s in
-  let nfeBP = Spils.get_banded_num_rhs_evals s in
+  let lenrwBP, leniwBP = Spils.Banded.get_work_space s in
+  let nfeBP = Spils.Banded.get_num_rhs_evals s in
 
   printf "\nFinal Statistics.. \n\n";
   printf "lenrw   = %5d     leniw   = %5d\n"   lenrw leniw;
@@ -336,7 +336,7 @@ let main () =
     Cvode.init Cvode.BDF
       (Cvode.Newton
           (Spils.spgmr
-             (Spils.prec_left_banded { Cvode.mupper = mu; Cvode.mlower = ml})))
+             (Spils.Banded.prec_left { Cvode.mupper = mu; Cvode.mlower = ml})))
       (Cvode.SStolerances (reltol, abstol))
       (f data) t0 u
   in
@@ -360,7 +360,7 @@ let main () =
     print_final_stats cvode_mem
   in (* End of jpre loop *)
 
-  jrpe_loop (Spils.PrecLeft ())  "PREC_LEFT";
+  jrpe_loop Spils.PrecLeft  "PREC_LEFT";
 
   (* On second run, re-initialize u, the solver, and CVSPGMR *)
   set_initial_profiles (unvec u) data.dx data.dy;
@@ -371,11 +371,11 @@ let main () =
      the statistics.  The number of rhs function evaluation in sundials' C code
      is cumulative, and using set_prec_type is necessary to simulate that
      behavior.  *)
-  Spils.set_prec_type cvode_mem (Spils.PrecRight ());
+  Spils.set_prec_type cvode_mem Spils.PrecRight;
   printf "\n\n-------------------------------------------------------";
   printf "------------\n";
     
-  jrpe_loop (Spils.PrecRight ()) "PREC_RIGHT"
+  jrpe_loop Spils.PrecRight "PREC_RIGHT"
 
 (* Check environment variables for extra arguments.  *)
 let reps =
