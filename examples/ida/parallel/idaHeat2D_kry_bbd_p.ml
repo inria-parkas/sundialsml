@@ -548,8 +548,8 @@ let main () =
 
   (* Initialize the uu, up, id, and constraints profiles. *)
 
-  set_initial_profile data (Sundials.unvec uu) (Sundials.unvec up)
-    (Sundials.unvec id) (Sundials.unvec res);
+  set_initial_profile data (Nvector.unwrap uu) (Nvector.unwrap up)
+    (Nvector.unwrap id) (Nvector.unwrap res);
   Nvector_parallel.Ops.n_vconst one constraints;
 
   let t0 = zero and t1 = 0.01 in
@@ -625,8 +625,8 @@ let main () =
   let mldq = 1 in
 
   (* Re-initialize the uu and up profiles. *)
-  set_initial_profile data (Sundials.unvec uu) (Sundials.unvec up)
-    (Sundials.unvec id) (Sundials.unvec res);
+  set_initial_profile data (Nvector.unwrap uu) (Nvector.unwrap up)
+    (Nvector.unwrap id) (Nvector.unwrap res);
 
   (* Call IDAReInit to re-initialize IDA. *)
   Ida.reinit mem t0 uu up;

@@ -271,7 +271,7 @@ let alloc_init_user_data comm local_N system_size thispe npes =
     nsmxsub = nsmxsub; nsmxsub2 = nsmxsub2;
     dx = dx; dy = dy; acoef = acoef; cox = cox; coy = coy; bcoef = bcoef;
     rhs = rhs; cext = cext;
-    comm = comm; rates = Sundials.unvec rates;
+    comm = comm; rates = Nvector.unwrap rates;
     pp = pp; pivot = pivot; ewt = ewt;
     ida_mem = None;
   }
@@ -768,7 +768,7 @@ let precondbd webdata jac =
     | Some m -> m
     | None -> invalid_arg "Internal error: webdata.ida_mem not set"
   in
-  let ewt,_,_ = Sundials.unvec webdata.ewt in
+  let ewt = Nvector_parallel.unwrap webdata.ewt in
   Ida.get_err_weights mem webdata.ewt;
   let hh = Ida.get_current_step mem in
 
@@ -873,8 +873,8 @@ let main () =
   let id = Nvector_parallel.make local_N system_size comm 0. in
 
   set_initial_profiles webdata
-    (Sundials.unvec cc) (Sundials.unvec cp)
-    (Sundials.unvec id) (Sundials.unvec res);
+    (Nvector.unwrap cc) (Nvector.unwrap cp)
+    (Nvector.unwrap id) (Nvector.unwrap res);
 
   (* Set remaining inputs to IDAMalloc. *)
 
@@ -908,7 +908,7 @@ let main () =
   if thispe = 0 then
     print_header system_size maxl rtol atol
   ;
-  print_output webdata comm mem (Sundials.unvec cc) t0;
+  print_output webdata comm mem (Nvector.unwrap cc) t0;
 
   (* Loop over iout, call IDASolve (normal mode), print selected output. *)
 
@@ -916,7 +916,7 @@ let main () =
 
     let (tret, _) = Ida.solve_normal mem !tout cc cp in
 
-    print_output webdata comm mem (Sundials.unvec cc) tret;
+    print_output webdata comm mem (Nvector.unwrap cc) tret;
 
     if iout < 3 then tout := !tout *. tmult
     else             tout := !tout +. tadd;

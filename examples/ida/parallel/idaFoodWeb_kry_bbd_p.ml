@@ -596,7 +596,7 @@ let init_user_data local_N system_size thispe npes comm =
     rhs = rhs;
     cext = cext;
     comm = comm;
-    rates = Sundials.unvec rates;
+    rates = Nvector.unwrap rates;
     n_local = n_local;
   }
 
@@ -800,8 +800,8 @@ let main () =
 
   let id = Nvector_parallel.make local_N system_size comm 0. in
 
-  set_initial_profiles webdata (Sundials.unvec cc) (Sundials.unvec cp)
-    (Sundials.unvec id) (Sundials.unvec res);
+  set_initial_profiles webdata (Nvector.unwrap cc) (Nvector.unwrap cp)
+    (Nvector.unwrap id) (Nvector.unwrap res);
 
   (* Set remaining inputs to IDAMalloc. *)
 
@@ -843,7 +843,7 @@ let main () =
   if thispe = 0 then
     print_header system_size maxl mudq mldq mukeep mlkeep rtol atol
   ;
-  print_output webdata mem (Sundials.unvec cc) t0 comm;
+  print_output webdata mem (Nvector.unwrap cc) t0 comm;
 
   (* Call IDA in tout loop, normal mode, and print selected output. *)
 
@@ -851,7 +851,7 @@ let main () =
 
     let (tret, _) = Ida.solve_normal mem !tout cc cp in
 
-    print_output webdata mem (Sundials.unvec cc) tret comm;
+    print_output webdata mem (Nvector.unwrap cc) tret comm;
 
     if iout < 3 then tout := !tout *. tmult
     else             tout := !tout +. tadd

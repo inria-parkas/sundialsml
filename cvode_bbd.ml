@@ -63,7 +63,7 @@ external c_spils_sptfqmr
   = "c_cvode_spils_sptfqmr"
 
 let init_preconditioner maxl dqrely bandwidths callbacks session nv =
-  let ba, _, _ = Sundials.unvec nv in
+  let ba, _, _ = Nvector.unwrap nv in
   let localn   = Sundials.RealArray.length ba in
   c_bbd_prec_init session localn bandwidths dqrely (callbacks.comm_fn <> None);
   session.ls_callbacks <- BBDCallback (bbd_callbacks callbacks)

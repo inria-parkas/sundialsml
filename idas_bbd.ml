@@ -75,7 +75,7 @@ external c_set_max_restarts : ('a, 'k) session -> int -> int -> unit
 
 let spgmr ?(maxl=0) ?max_restarts ?(dqrely=0.0) bws cb bs nv nv' =
   let parent, which = parent_and_which bs in
-  let ba, _, _ = Sundials.unvec nv in
+  let ba, _, _ = Nvector.unwrap nv in
   let localn   = Sundials.RealArray.length ba in
   c_spgmr parent which maxl;
   (match max_restarts with
@@ -86,7 +86,7 @@ let spgmr ?(maxl=0) ?max_restarts ?(dqrely=0.0) bws cb bs nv nv' =
 
 let spbcg ?(maxl=0) ?(dqrely=0.0) bws cb bs nv nv' =
   let parent, which = parent_and_which bs in
-  let ba, _, _ = Sundials.unvec nv in
+  let ba, _, _ = Nvector.unwrap nv in
   let localn   = Sundials.RealArray.length ba in
   c_spbcg parent which maxl;
   c_bbd_prec_initb (parent, which) localn bws dqrely
@@ -95,7 +95,7 @@ let spbcg ?(maxl=0) ?(dqrely=0.0) bws cb bs nv nv' =
 
 let sptfqmr ?(maxl=0) ?(dqrely=0.0) bws cb bs nv nv' =
   let parent, which = parent_and_which bs in
-  let ba, _, _ = Sundials.unvec nv in
+  let ba, _, _ = Nvector.unwrap nv in
   let localn   = Sundials.RealArray.length ba in
   c_sptfqmr parent which maxl;
   c_bbd_prec_initb (parent, which) localn bws dqrely

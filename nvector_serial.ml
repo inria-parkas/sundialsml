@@ -6,6 +6,8 @@ type t = (data, kind) Sundials.nvector
 external wrap : Sundials.RealArray.t -> t
   = "ml_nvec_wrap_serial"
 
+let unwrap = Nvector.unwrap
+
 let make n iv = wrap (Sundials.RealArray.make n iv)
 
 module Ops = struct

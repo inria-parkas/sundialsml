@@ -592,12 +592,12 @@ let main () =
   (* An N-vector to hold preconditioner. *)
   let pp = Nvector_parallel.make local_N neq comm 0. in
 
-  let data = init_user_data thispe comm (Sundials.unvec pp) in
+  let data = init_user_data thispe comm (Nvector.unwrap pp) in
 
   (* Initialize the uu, up, id, and res profiles. *)
 
-  set_initial_profile data (Sundials.unvec uu) (Sundials.unvec up)
-    (Sundials.unvec id) (Sundials.unvec res);
+  set_initial_profile data (Nvector.unwrap uu) (Nvector.unwrap up)
+    (Nvector.unwrap id) (Nvector.unwrap res);
 
   (* Set constraints to all 1's for nonnegative solution values. *)
 

@@ -35,6 +35,9 @@ module type ARRAY_NVECTOR =
     (** Lifts an array to an nvector. *)
     val wrap            : data -> data Nvector_custom.t
 
+    (** Returns the array underlying an nvector. *)
+    val unwrap          : data Nvector_custom.t -> data
+
     module Ops : Nvector.NVECTOR_OPS with type t = data Nvector_custom.t
     module DataOps : Nvector.NVECTOR_OPS with type t = data
   end

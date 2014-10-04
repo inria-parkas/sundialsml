@@ -11,19 +11,19 @@ external wrap : (Sundials.RealArray.t * int * Mpi.communicator) -> t
 let make nl ng comm iv = wrap (Sundials.RealArray.make nl iv, ng, comm)
 
 let clone nv =
-  let loc, glen, comm = Sundials.unvec nv in
+  let loc, glen, comm = Nvector.unwrap nv in
   wrap (Sundials.RealArray.copy loc, glen, comm)
 
 let unwrap nv =
-  let data, _, _ = Sundials.unvec nv in
+  let data, _, _ = Nvector.unwrap nv in
   data
 
 let global_length nv =
-  let _, gl, _ = Sundials.unvec nv in
+  let _, gl, _ = Nvector.unwrap nv in
   gl
 
 let communicator nv =
-  let _, _, comm = Sundials.unvec nv in
+  let _, _, comm = Nvector.unwrap nv in
   comm
 
 module Ops = struct

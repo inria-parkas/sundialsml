@@ -63,7 +63,7 @@ let spgmr ?(maxl=0) ?max_restarts ?(dqrely=0.0) bws cb session onv =
   let localn =
     match onv with
       None -> 0
-    | Some nv -> let ba, _, _ = Sundials.unvec nv in
+    | Some nv -> let ba, _, _ = Nvector.unwrap nv in
                  Sundials.RealArray.length ba
   in
   c_spils_spgmr session maxl;
@@ -77,7 +77,7 @@ let spbcg ?(maxl=0) ?(dqrely=0.0) bws cb session onv =
   let localn =
     match onv with
       None -> 0
-    | Some nv -> let ba, _, _ = Sundials.unvec nv in
+    | Some nv -> let ba, _, _ = Nvector.unwrap nv in
                  Sundials.RealArray.length ba
   in
   c_spils_spbcg session maxl;
@@ -88,7 +88,7 @@ let sptfqmr ?(maxl=0) ?(dqrely=0.0) bws cb session onv =
   let localn =
     match onv with
       None -> 0
-    | Some nv -> let ba, _, _ = Sundials.unvec nv in
+    | Some nv -> let ba, _, _ = Nvector.unwrap nv in
                  Sundials.RealArray.length ba
   in
   c_spils_sptfqmr session maxl;

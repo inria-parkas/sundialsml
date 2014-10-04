@@ -24,7 +24,7 @@ let printf = Printf.printf
 let eprintf = Printf.eprintf
 let fprintf = Printf.fprintf
 let sqr x = x ** 2.0
-let unvec = Sundials.unvec
+let unwrap = Nvector_parallel.unwrap
 
 let n_vdotprod = Nvector.DataOps.n_vdotprod
 let n_vscale = Nvector.DataOps.n_vscale
@@ -205,7 +205,7 @@ let set_source d =
   let m_start = d.m_start in
   let xmin = d.xmin in
   let dx = d.dx in
-  let pdata, _, _ = unvec d.p in
+  let pdata = unwrap d.p in
 
   let ii = Array.make dim 0 in
 
@@ -548,8 +548,8 @@ let output_gradient data myId qB =
   let xmin    = data.xmin in
   let dx      = data.dx in
 
-  let qBdata, _, _ = unvec qB in
-  let pdata,_, _   = unvec data.p in
+  let qBdata = unwrap qB in
+  let pdata = unwrap data.p in
 
   (* Write matlab files with solutions from each process *)
   let i = Array.make dim 0 in
@@ -662,7 +662,7 @@ let f_local data t (ydata, _, _) (dydata, _, _) =
   let nbr_right = data.nbr_right in
 
   (* Get pointers to vector data *)
-  let pdata, _, _  = unvec data.p in
+  let pdata = unwrap data.p in
 
   (* Copy local segment of y to y_ext *)
   load_yext data ydata;
@@ -908,7 +908,7 @@ let main () =
 
   (* Extract quadratures *)
   ignore (Quad.get cvode_mem q);
-  let qdata, _, _ = unvec q in
+  let qdata = unwrap q in
   let g = Mpi.allreduce_float qdata.{0} Mpi.Float_sum comm in
   if myId = 0 then printf "  G = %e\n" g;
 

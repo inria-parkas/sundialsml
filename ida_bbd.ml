@@ -64,7 +64,7 @@ external c_set_max_restarts : ('a, 'k) session -> int -> unit
   = "c_ida_spils_set_max_restarts"
 
 let spgmr ?(maxl=0) ?(max_restarts=5) ?(dqrely=0.0) bws cb session nv nv' =
-  let ba, _, _ = Sundials.unvec nv in
+  let ba, _, _ = Nvector.unwrap nv in
   let localn   = Sundials.RealArray.length ba in
   if max_restarts <> 5 then
     c_set_max_restarts session max_restarts;
@@ -73,14 +73,14 @@ let spgmr ?(maxl=0) ?(max_restarts=5) ?(dqrely=0.0) bws cb session nv nv' =
   session.ls_callbacks <- BBDCallback (bbd_callbacks cb)
 
 let spbcg ?(maxl=0) ?(dqrely=0.0) bws cb session nv nv' =
-  let ba, _, _ = Sundials.unvec nv in
+  let ba, _, _ = Nvector.unwrap nv in
   let localn   = Sundials.RealArray.length ba in
   c_spbcg session maxl;
   c_bbd_prec_init session localn bws dqrely (cb.comm_fn <> None);
   session.ls_callbacks <- BBDCallback (bbd_callbacks cb)
 
 let sptfqmr ?(maxl=0) ?(dqrely=0.0) bws cb session nv nv' =
-  let ba, _, _ = Sundials.unvec nv in
+  let ba, _, _ = Nvector.unwrap nv in
   let localn   = Sundials.RealArray.length ba in
   c_sptfqmr session maxl;
   c_bbd_prec_init session localn bws dqrely (cb.comm_fn <> None);

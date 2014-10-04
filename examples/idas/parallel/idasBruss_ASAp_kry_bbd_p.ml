@@ -68,7 +68,7 @@
 module RealArray = Sundials.RealArray
 module RealArray2 = Sundials.RealArray2
 module LintArray = Sundials.LintArray
-let unvec = Sundials.unvec
+let unvec = Nvector.unwrap
 module Adjoint = Idas.Adjoint
 open Nvector_parallel.DataOps
 

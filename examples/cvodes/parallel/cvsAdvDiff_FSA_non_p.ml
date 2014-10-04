@@ -54,7 +54,7 @@ module Sens = Cvodes.Sensitivity
 module RealArray = Sundials.RealArray
 open Bigarray
 
-let unvec = Sundials.unvec
+let unwrap = Nvector_parallel.unwrap
 let printf = Printf.printf
 let eprintf = Printf.eprintf
 
@@ -138,7 +138,7 @@ let process_args my_pe =
 (* Set initial conditions in u vector *)
 
 let set_ic u dx my_length my_base =
-  let udata, _, _ = unvec u in
+  let udata = unwrap u in
 
   (* Load initial profile into u vector *)
   for i=1 to my_length do

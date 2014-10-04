@@ -89,7 +89,7 @@ module LintArray = Sundials.LintArray
 module Dense = Dls.ArrayDenseMatrix
 module Bbd = Kinsol_bbd
 open Bigarray
-let unvec = Sundials.unvec
+let unwrap = Nvector_parallel.unwrap
 
 let printf = Printf.printf
 let eprintf = Printf.eprintf
@@ -486,7 +486,7 @@ let func data ((cdata, _, _) as cc) ((fvdata, _, _) as fv) =
   func_local data cc fv
 
 (* Set initial conditions in cc *)
-let set_initial_profiles (cc, _, _) (sc, _, _) =
+let set_initial_profiles cc sc =
   (* Load initial profiles into cc and sc vector. *)
   for jy = 0 to mysub - 1 do
     for jx = 0 to mxsub - 1 do
@@ -528,7 +528,7 @@ let print_header globalstrategy maxl maxlrst
 (* Print sample of current cc values *)
 let print_output my_pe comm cc =
   let npelast = npex*npey - 1 in
-  let ct, _, _ = unvec cc in
+  let ct = Nvector.unwrap cc in
   let i0 = num_species*(mxsub*mysub-1) in
   
   (* Send the cc values (for all species) at the top right mesh point to PE 0 *)
@@ -598,7 +598,7 @@ let main () =
   (* Create serial vectors of length NEQ *)
   let cc = Nvector.make local_N neq comm 0.0 in
   let sc = Nvector.make local_N neq comm 0.0 in
-  set_initial_profiles (unvec cc) (unvec sc);
+  set_initial_profiles (Nvector.unwrap cc) (Nvector.unwrap sc);
 
   let fnormtol  = ftol in
   let scsteptol = stol in

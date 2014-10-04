@@ -18,6 +18,7 @@ module type ARRAY_NVECTOR =
     val array_nvec_ops  : data Nvector_custom.nvector_ops
     val make            : int -> float -> data Nvector_custom.t
     val wrap            : data -> data Nvector_custom.t
+    val unwrap          : data Nvector_custom.t -> data
 
     module Ops : Nvector.NVECTOR_OPS with type t = data Nvector_custom.t
     module DataOps : Nvector.NVECTOR_OPS with type t = data
@@ -259,37 +260,37 @@ module MakeOps =
     let wrap = Nvector_custom.make_wrap array_nvec_ops
       (* (Nvector.Mutable.add_tracing "::" array_nvec_ops) *)
 
+    let unwrap = Nvector.unwrap
+
     module Ops = struct
       type t = A.data Nvector_custom.t
 
-      let unvec = Nvector.unwrap
-
       let n_vclone x =
-        let xd = unvec x in
+        let xd = unwrap x in
         wrap (DataOps.n_vclone xd)
 
       let n_vlinearsum a x b y z
-            = DataOps.n_vlinearsum a (unvec x) b (unvec y) (unvec z)
-      let n_vconst c a = DataOps.n_vconst c (unvec a)
-      let n_vprod x y z = DataOps.n_vprod (unvec x) (unvec y) (unvec z)
-      let n_vdiv x y z = DataOps.n_vdiv (unvec x) (unvec y) (unvec z)
-      let n_vscale c x z = DataOps.n_vscale c (unvec x) (unvec z)
-      let n_vabs x z = DataOps.n_vabs (unvec x) (unvec z)
-      let n_vinv x z = DataOps.n_vinv (unvec x) (unvec z)
-      let n_vaddconst x b z = DataOps.n_vaddconst (unvec x) b (unvec z)
-      let n_vdotprod x y = DataOps.n_vdotprod (unvec x) (unvec y)
-      let n_vmaxnorm x = DataOps.n_vmaxnorm (unvec x)
-      let n_vwrmsnorm x w = DataOps.n_vwrmsnorm (unvec x) (unvec w)
+            = DataOps.n_vlinearsum a (unwrap x) b (unwrap y) (unwrap z)
+      let n_vconst c a = DataOps.n_vconst c (unwrap a)
+      let n_vprod x y z = DataOps.n_vprod (unwrap x) (unwrap y) (unwrap z)
+      let n_vdiv x y z = DataOps.n_vdiv (unwrap x) (unwrap y) (unwrap z)
+      let n_vscale c x z = DataOps.n_vscale c (unwrap x) (unwrap z)
+      let n_vabs x z = DataOps.n_vabs (unwrap x) (unwrap z)
+      let n_vinv x z = DataOps.n_vinv (unwrap x) (unwrap z)
+      let n_vaddconst x b z = DataOps.n_vaddconst (unwrap x) b (unwrap z)
+      let n_vdotprod x y = DataOps.n_vdotprod (unwrap x) (unwrap y)
+      let n_vmaxnorm x = DataOps.n_vmaxnorm (unwrap x)
+      let n_vwrmsnorm x w = DataOps.n_vwrmsnorm (unwrap x) (unwrap w)
       let n_vwrmsnormmask x w id
-            = DataOps.n_vwrmsnormmask (unvec x) (unvec w) (unvec id)
-      let n_vmin x = DataOps.n_vmin (unvec x)
-      let n_vwl2norm x w = DataOps.n_vwl2norm (unvec x) (unvec w)
-      let n_vl1norm x = DataOps.n_vl1norm (unvec x)
-      let n_vcompare c x z = DataOps.n_vcompare c (unvec x) (unvec z)
-      let n_vinvtest x z = DataOps.n_vinvtest (unvec x) (unvec z)
+            = DataOps.n_vwrmsnormmask (unwrap x) (unwrap w) (unwrap id)
+      let n_vmin x = DataOps.n_vmin (unwrap x)
+      let n_vwl2norm x w = DataOps.n_vwl2norm (unwrap x) (unwrap w)
+      let n_vl1norm x = DataOps.n_vl1norm (unwrap x)
+      let n_vcompare c x z = DataOps.n_vcompare c (unwrap x) (unwrap z)
+      let n_vinvtest x z = DataOps.n_vinvtest (unwrap x) (unwrap z)
       let n_vconstrmask c x m
-            = DataOps.n_vconstrmask (unvec c) (unvec x) (unvec m)
-      let n_vminquotient n d = DataOps.n_vminquotient (unvec n) (unvec d)
+            = DataOps.n_vconstrmask (unwrap c) (unwrap x) (unwrap m)
+      let n_vminquotient n d = DataOps.n_vminquotient (unwrap n) (unwrap d)
     end
   end
 
@@ -534,10 +535,10 @@ module Array =
       Nvector_custom.make_wrap array_nvec_ops a
       (* (Nvector.Mutable.add_tracing "::" array_nvec_ops) *)
 
+    let unwrap = Nvector.unwrap
+
     module Ops = struct
       type t = float array Nvector_custom.t
-
-      let unwrap = Nvector.unwrap
 
       let n_vclone x =
         let xd = unwrap x in

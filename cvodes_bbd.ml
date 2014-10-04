@@ -74,7 +74,7 @@ external c_spils_sptfqmr
   = "c_cvodes_adj_spils_sptfqmr"
 
 let init_preconditioner maxl dqrely bandwidths callbacks bs parent which nv =
-  let ba, _, _ = Sundials.unvec nv in
+  let ba, _, _ = Nvector.unwrap nv in
   let localn   = Sundials.RealArray.length ba in
   c_bbd_prec_initb (parent, which) localn bandwidths dqrely
     (callbacks.comm_fn <> None);
