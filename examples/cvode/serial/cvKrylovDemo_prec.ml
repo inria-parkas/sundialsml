@@ -537,9 +537,7 @@ let gs_iter wdata gamma zd xd =
   Then it computes ((I - gamma*Jr)-inverse)*z, using LU factors of the
   blocks in P, and pivot information in pivot, and returns the result in z.
 *)
-let psolve wdata =
-  let cache = RealArray.create ns in
-  fun jac_arg solve_arg z ->
+let psolve wdata jac_arg solve_arg z =
   let { Cvode.jac_tmp = vtemp; } = jac_arg
   and { Cvode.Spils.rhs = r;
         Cvode.Spils.gamma = gamma } = solve_arg
@@ -566,17 +564,7 @@ let psolve wdata =
     for jx = 0 to mx - 1 do
       let igx = jigx.(jx) in
       let ig = igx + igy * ngx in
-
-      (* faster to cache and copy in/out than to Bigarray.Array1.sub... *)
-      for i=0 to ns - 1 do
-        cache.{i} <- z.{!iv + i}
-      done;
-
-      Densemat.getrs p.(ig) pivot.(ig) cache;
-
-      for i=0 to ns - 1 do
-        z.{!iv + i} <- cache.{i}
-      done;
+      Densemat.getrs' p.(ig) pivot.(ig) z !iv;
       iv := !iv + mp
     done
   done

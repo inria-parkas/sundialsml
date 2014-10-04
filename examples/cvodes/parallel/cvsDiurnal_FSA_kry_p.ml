@@ -82,7 +82,7 @@ let blit (buf : RealArray.t) buf_offset (dst : RealArray.t) dst_offset len =
   done
 
 let header_and_empty_array_size =
-  Marshal.total_size (Marshal.to_string (RealArray.empty) []) 0
+  Marshal.total_size (Marshal.to_string (RealArray.create 0) []) 0
 let float_cell_size =
   Marshal.total_size (Marshal.to_string (RealArray.create 1) []) 0
   - header_and_empty_array_size
@@ -760,8 +760,7 @@ let psolve data jac_arg solve_arg ((zdata : RealArray.t), _, _) =
      in P and pivot data in pivot, and return the solution in z. *)
   for lx = 0 to mxsub - 1 do
     for ly = 0 to mysub - 1 do
-      Direct.getrs p.(lx).(ly) pivot.(lx).(ly)
-        (Array1.sub zdata (lx*nvars + ly*nvmxsub) nvars)
+      Direct.getrs' p.(lx).(ly) pivot.(lx).(ly) zdata (lx*nvars + ly*nvmxsub)
     done
   done
 

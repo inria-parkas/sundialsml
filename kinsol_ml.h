@@ -47,6 +47,7 @@ enum kinsol_index {
 };
 
 #define KINSOL_NEQS_FROM_ML(v)  Long_val(Field((v), RECORD_KINSOL_SESSION_NEQS))
+#define KINSOL_LS_CALLBACKS_FROM_ML(v) (Field((v), RECORD_KINSOL_SESSION_LS_CALLBACKS))
 
 enum kinsol_bandrange_index {
   RECORD_KINSOL_BANDRANGE_MUPPER = 0,

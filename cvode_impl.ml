@@ -62,11 +62,25 @@ module DlsTypes = struct
     -> Dls.DenseMatrix.t
     -> unit
 
+  (* These fields are accessed from cvode_ml.c *)
+  type dense_jac_callback =
+    {
+      jacfn: dense_jac_fn;
+      mutable dmat : Dls.DenseMatrix.t option
+    }
+
   type band_jac_fn =
     bandrange
     -> (RealArray.t triple_tmp, RealArray.t) jacobian_arg
     -> Dls.BandMatrix.t
     -> unit
+
+  (* These fields are accessed from cvode_ml.c *)
+  type band_jac_callback =
+    {
+      bjacfn: band_jac_fn;
+      mutable bmat : Dls.BandMatrix.t option
+    }
 end
 
 module SpilsCommonTypes = struct
@@ -226,11 +240,25 @@ module AdjointTypes' = struct
       -> Dls.DenseMatrix.t
       -> unit
 
+    (* These fields are accessed from cvodes_ml.c *)
+    type dense_jac_callback =
+      {
+        jacfn: dense_jac_fn;
+        mutable dmat : Dls.DenseMatrix.t option
+      }
+
     type band_jac_fn =
       bandrange
       -> (RealArray.t triple_tmp, RealArray.t) jacobian_arg
       -> Dls.BandMatrix.t
       -> unit
+
+    (* These fields are accessed from cvodes_ml.c *)
+    type band_jac_callback =
+      {
+        bjacfn: band_jac_fn;
+        mutable bmat : Dls.BandMatrix.t option
+      }
   end
 
   (* Ditto. *)
@@ -310,16 +338,16 @@ type ('a, 'kind) session = {
 and ('a, 'kind) linsolv_callbacks =
   | NoCallbacks
 
-  | DenseCallback of DlsTypes.dense_jac_fn
-  | BandCallback  of DlsTypes.band_jac_fn
+  | DenseCallback of DlsTypes.dense_jac_callback
+  | BandCallback  of DlsTypes.band_jac_callback
   | SpilsCallback of 'a SpilsTypes'.callbacks
   | SpilsBandCallback of RealArray.t SpilsTypes'.jac_times_vec_fn option
   | BBDCallback of 'a CvodeBbdParamTypes.callbacks
 
   | AlternateCallback of ('a, 'kind) alternate_linsolv
 
-  | BDenseCallback of AdjointTypes'.DlsTypes.dense_jac_fn
-  | BBandCallback  of AdjointTypes'.DlsTypes.band_jac_fn
+  | BDenseCallback of AdjointTypes'.DlsTypes.dense_jac_callback
+  | BBandCallback  of AdjointTypes'.DlsTypes.band_jac_callback
   | BSpilsCallback of 'a AdjointTypes'.SpilsTypes'.callbacks
   | BSpilsBandCallback of RealArray.t AdjointTypes'.SpilsTypes'.jac_times_vec_fn
                           option

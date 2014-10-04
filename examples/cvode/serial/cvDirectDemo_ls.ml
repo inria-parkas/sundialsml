@@ -64,6 +64,8 @@ let unwrap = Nvector.unwrap
 
 let printf = Printf.printf
 
+let bandset bm i j v = Dls.BandMatrix.set bm i j v
+
 (* Shared Problem Constants *)
 
 let atol  = 1.0e-6
@@ -119,9 +121,10 @@ let jac1 { Cvode.jac_y = y } j =
   let y0 = y.{0} in
   let y1 = y.{1} in
   (* previously calls to DENSE_ELEM: *)
-  Densematrix.set j 0 1 one;
-  Densematrix.set j 1 0 (-. two *. p1_eta *. y0 *. y1 -. one);
-  Densematrix.set j 1 1 (p1_eta *. (one -. sqr y0))
+  let set = Dls.DenseMatrix.set j in
+  set 0 1 one;
+  set 1 0 (-. two *. p1_eta *. y0 *. y1 -. one);
+  set 1 1 (p1_eta *. (one -. sqr y0))
 
 let jac2 {Cvode.mupper=mu; Cvode.mlower=ml} arg jac =
   (*
@@ -142,10 +145,9 @@ let jac2 {Cvode.mupper=mu; Cvode.mlower=ml} arg jac =
   for j = 0 to p2_meshy - 1 do
     for i = 0 to p2_meshx - 1 do
       let k = i + j * p2_meshx in
-      let kth_col = Bandmatrix.Col.get_col jac k in
-      Bandmatrix.Col.set kth_col k k (-. two);
-      if (i != p2_meshx - 1) then Bandmatrix.Col.set kth_col (k + 1) k p2_alph1;
-      if (j != p2_meshy - 1) then Bandmatrix.Col.set kth_col (k + p2_meshx) k p2_alph2
+      bandset jac k k (-. two);
+      if (i != p2_meshx - 1) then bandset jac (k + 1) k p2_alph1;
+      if (j != p2_meshy - 1) then bandset jac (k + p2_meshx) k p2_alph2
     done
   done
 

@@ -68,9 +68,6 @@ let printf = Printf.printf
 let ith (v : RealArray.t) i = v.{i - 1}
 let set_ith (v : RealArray.t) i e = v.{i - 1} <- e
 
-let ijth v i j       = Densemat.get v (i - 1) (j - 1)
-let set_ijth v i j e = Densemat.set v (i - 1) (j - 1) e
-
 (* Problem Constants *)
 
 let neq   = 3       (* number of equations                  *)
@@ -120,13 +117,14 @@ let jac data { Cvode.jac_y = (y : RealArray.t) } jmat =
   and p2 = data.p.(1)
   and p3 = data.p.(2)
   in
-  Densemat.set jmat 0 0 (-.p1);
-  Densemat.set jmat 0 1 (p2*.y.{2});
-  Densemat.set jmat 0 2 (p2*.y.{1});
-  Densemat.set jmat 1 0 ( p1);
-  Densemat.set jmat 1 1 (-.p2*.y.{2}-.2.0*.p3*.y.{1});
-  Densemat.set jmat 1 2 (-.p2*.y.{1});
-  Densemat.set jmat 2 1 (2.0*.p3*.y.{1})
+  let set = Dls.DenseMatrix.set jmat in
+  set 0 0 (-.p1);
+  set 0 1 (p2*.y.{2});
+  set 0 2 (p2*.y.{1});
+  set 1 0 ( p1);
+  set 1 1 (-.p2*.y.{2}-.2.0*.p3*.y.{1});
+  set 1 2 (-.p2*.y.{1});
+  set 2 1 (2.0*.p3*.y.{1})
 
 (* fQ routine. Compute fQ(t,y). *)
 
@@ -170,14 +168,15 @@ let jacb data { Adj.jac_y = (y : RealArray.t) } jbmat =
   and p2 = data.p.(1)
   and p3 = data.p.(2)
   in
+  let set = Dls.DenseMatrix.set jbmat in
   (* Load JB *)
-  Densemat.set jbmat 0 0 (p1);
-  Densemat.set jbmat 0 1 (-.p1); 
-  Densemat.set jbmat 1 0 (-.p2*.y.{2});
-  Densemat.set jbmat 1 1 (p2*.y.{2}+.2.0*.p3*.y.{1});
-  Densemat.set jbmat 1 2 (-.2.0*.p3*.y.{1});
-  Densemat.set jbmat 2 0 (-.p2*.y.{1});
-  Densemat.set jbmat 2 1 (p2*.y.{1})
+  set 0 0 (p1);
+  set 0 1 (-.p1); 
+  set 1 0 (-.p2*.y.{2});
+  set 1 1 (p2*.y.{2}+.2.0*.p3*.y.{1});
+  set 1 2 (-.2.0*.p3*.y.{1});
+  set 2 0 (-.p2*.y.{1});
+  set 2 1 (p2*.y.{1})
 
 (* fQB routine. Compute integrand for quadratures *)
 

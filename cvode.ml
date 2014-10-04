@@ -61,14 +61,6 @@ type integrator_stats = {
     current_time : float
   }
 
-external session_finalize : ('a, 'kind) session -> unit
-    = "c_cvode_session_finalize"
-
-external c_init
-    : ('a, 'k) session Weak.t -> lmm -> ('a, 'k) iter -> ('a, 'k) nvector
-      -> float -> (cvode_mem * c_weak_ref * cvode_file)
-    = "c_cvode_init"
-
 external c_root_init : ('a, 'k) session -> int -> unit
     = "c_cvode_root_init"
 
@@ -114,32 +106,47 @@ module Dls =
       let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
       (session.ls_callbacks <- match jac with
                                | None -> NoCallbacks
-                               | Some f -> DenseCallback f);
+                               | Some f -> DenseCallback
+                                             { jacfn = f; dmat = None });
       c_dls_dense session neqs (jac <> None)
 
     let lapack_dense jac session nv =
       let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
       (session.ls_callbacks <- match jac with
                                | None -> NoCallbacks
-                               | Some f -> DenseCallback f);
+                               | Some f -> DenseCallback
+                                             { jacfn = f; dmat = None });
       c_dls_lapack_dense session neqs (jac <> None)
 
     let band p jac session nv =
       let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
       (session.ls_callbacks <- match jac with
-                              | None -> NoCallbacks
-                              | Some f -> BandCallback f);
+                               | None -> NoCallbacks
+                               | Some f -> BandCallback
+                                             { bjacfn = f; bmat = None });
       c_dls_band (session, neqs) p.mupper p.mlower (jac <> None)
 
     let lapack_band p jac session nv =
       let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
       (session.ls_callbacks <- match jac with
                                | None -> NoCallbacks
-                               | Some f -> BandCallback f);
+                               | Some f -> BandCallback
+                                             { bjacfn = f; bmat = None });
       c_dls_lapack_band (session, neqs) p.mupper p.mlower (jac <> None)
 
+    let invalidate_callback (type d) (type k) (session : (d, k) session) =
+      match session.ls_callbacks with
+      | DenseCallback ({ dmat = Some d } as cb) ->
+          Dls.DenseMatrix.invalidate d;
+          cb.dmat <- None
+      | BandCallback  ({ bmat = Some d } as cb) ->
+          Dls.BandMatrix.invalidate d;
+          cb.bmat <- None
+      | _ -> ()
+
     let set_dense_jac_fn s fjacfn =
-      s.ls_callbacks <- DenseCallback fjacfn;
+      invalidate_callback s;
+      s.ls_callbacks <- DenseCallback { jacfn = fjacfn; dmat = None };
       set_dense_jac_fn s
 
     external clear_dense_jac_fn : serial_session -> unit
@@ -147,15 +154,17 @@ module Dls =
 
     let clear_dense_jac_fn s =
       match s.ls_callbacks with
-      | DenseCallback _ -> (s.ls_callbacks <- NoCallbacks;
+      | DenseCallback _ -> (invalidate_callback s;
+                            s.ls_callbacks <- NoCallbacks;
                             clear_dense_jac_fn s)
       | _ -> failwith "dense linear solver not in use"
 
     external set_band_jac_fn : serial_session -> unit
         = "c_cvode_dls_set_band_jac_fn"
 
-    let set_band_jac_fn s fbandjacfn =
-      s.ls_callbacks <- BandCallback fbandjacfn;
+    let set_band_jac_fn s f =
+      invalidate_callback s;
+      s.ls_callbacks <- BandCallback { bjacfn = f; bmat = None };
       set_band_jac_fn s
 
     external clear_band_jac_fn : serial_session -> unit
@@ -163,7 +172,8 @@ module Dls =
 
     let clear_band_jac_fn s =
       match s.ls_callbacks with
-      | BandCallback _ -> (s.ls_callbacks <- NoCallbacks;
+      | BandCallback _ -> (invalidate_callback s;
+                           s.ls_callbacks <- NoCallbacks;
                            clear_band_jac_fn s)
       | _ -> failwith "banded linear solver not in use"
 
@@ -431,6 +441,18 @@ let set_tolerances s tol =
   | SVtolerances (rel, abs) -> sv_tolerances s rel abs
   | WFtolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
 
+external c_session_finalize : ('a, 'kind) session -> unit
+    = "c_cvode_session_finalize"
+
+let session_finalize s =
+  Dls.invalidate_callback s;
+  c_session_finalize s
+
+external c_init
+    : ('a, 'k) session Weak.t -> lmm -> ('a, 'k) iter -> ('a, 'k) nvector
+      -> float -> (cvode_mem * c_weak_ref * cvode_file)
+    = "c_cvode_init"
+
 let init lmm iter tol f ?(roots=no_roots) t0 y0 =
   let (nroots, roots) = roots in
   if nroots < 0 then
@@ -472,6 +494,7 @@ external c_reinit
     : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
     = "c_cvode_reinit"
 let reinit session ?iter_type ?roots t0 y0 =
+  Dls.invalidate_callback session;
   c_reinit session t0 y0;
   (match iter_type with
    | None -> ()
@@ -647,18 +670,6 @@ let call_errh session details =
                    "This exception will not be propagated: " ^
                    Printexc.to_string e)
 
-let call_jacfn session jac j =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | DenseCallback f -> adjust_retcode session true (f jac) j
-  | _ -> assert false
-
-let call_bandjacfn session range jac j =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | BandCallback f -> adjust_retcode session true (f range jac) j
-  | _ -> assert false
-
 let call_precsolvefn session jac r z =
   let session = read_weak_ref session in
   match session.ls_callbacks with
@@ -714,8 +725,6 @@ let _ =
     [|Fcn call_rhsfn;
       Fcn call_errw;
       Fcn call_errh;
-      Fcn call_jacfn;
-      Fcn call_bandjacfn;
 
       Fcn call_precsolvefn;
       Fcn call_precsetupfn;

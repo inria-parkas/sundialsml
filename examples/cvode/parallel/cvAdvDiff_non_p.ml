@@ -34,8 +34,6 @@
 
 module RealArray = Sundials.RealArray
 module Roots = Sundials.Roots
-module Col = Dls.BandMatrix.Col
-module Dls = Cvode.Dls
 open Bigarray
 let unvec = Sundials.unvec
 

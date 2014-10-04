@@ -97,18 +97,15 @@ let sqr x = x *. x
 let nvwrmsnorm = Nvector_serial.DataOps.n_vwrmsnorm
 let nvlinearsum = Nvector_serial.DataOps.n_vlinearsum
 
-let zero  = 0.0
-let one   = 1.0
-
 (* Problem Specification Constants *)
 
-let aa    = one       (* aa = a *)
+let aa    = 1.0       (* aa = a *)
 let ee    = 1e4       (* ee = e *)
 let gg    = 0.5e-6    (* gg = g *)
-let bb    = one       (* bb = b *)
-let dprey = one    
+let bb    = 1.0       (* bb = b *)
+let dprey = 1.0
 let dpred = 0.5
-let alph  = one
+let alph  = 1.0
 let np    = 3
 let ns    = (2*np)
 
@@ -117,8 +114,8 @@ let ns    = (2*np)
 let mx    = 20
 let my    = 20
 let mxns  = mx*ns
-let ax    = one
-let ay    = one
+let ax    = 1.0
+let ay    = 1.0
 let dx    = ax/.float (mx-1)
 let dy    = ay/.float (my-1)
 let mp    = ns
@@ -220,7 +217,7 @@ let v_prod n (u : RealArray.t) uoffs v (w : RealArray.t) woffs =
 
 let v_zero n u offs =
   for i = 0 to n - 1 do
-    u.{offs + i} <- zero
+    u.{offs + i} <- 0.0
   done
 
 (*
@@ -379,7 +376,7 @@ let web_rates wdata x y ((c : RealArray.t), c_off)
   and bcoef = wdata.bcoef
   in
   for i = rate_off to rate_off + ns - 1 do
-    rate.{i} <- zero
+    rate.{i} <- 0.0
   done;
   for j = 0 to ns - 1 do
     let c = c.{c_off + j} in
@@ -388,7 +385,7 @@ let web_rates wdata x y ((c : RealArray.t), c_off)
     done
   done;
 
-  let fac = one +. alph *. x *. y in
+  let fac = 1.0 +. alph *. x *. y in
   for i = 0 to ns - 1 do
     rate.{rate_off + i} <- c.{c_off + i} *. (bcoef.(i) *. fac
                               +. rate.{rate_off + i})
@@ -404,7 +401,7 @@ let web_rates_b wdata x y ((c : RealArray.t), c_off)
   and acoef = wdata.acoef
   and bcoef = wdata.bcoef in
 
-  let fac = one +. alph *. x *. y in
+  let fac = 1.0 +. alph *. x *. y in
 
   for i = 0 to ns - 1 do
     rate.{rate_off + i} <- bcoef.(i) *. fac
@@ -453,7 +450,14 @@ let fblock wdata t cdata jx jy cdotdata =
  * vector kernels v_sum_prods, v_prod, v_inc_by_prod.
  *)
 
-let gs_iter wdata gamma zd xd =
+let gs_iter wdata =
+  let beta  = Array.make ns 0.0
+  and beta2 = Array.make ns 0.0
+  and cof1  = Array.make ns 0.0
+  and gam   = Array.make ns 0.0
+  and gam2  = Array.make ns 0.0
+  in
+  fun gamma zd xd ->
   let ns = wdata.ns
   and mx = wdata.mx
   and my = wdata.my
@@ -461,19 +465,11 @@ let gs_iter wdata gamma zd xd =
   and cox = wdata.cox
   and coy = wdata.coy
   in
-
-  let beta  = Array.make ns 0.0
-  and beta2 = Array.make ns 0.0
-  and cof1  = Array.make ns 0.0
-  and gam   = Array.make ns 0.0
-  and gam2  = Array.make ns 0.0
-  in
-
   (* Write matrix as P = D - L - U.
      Load local arrays beta, beta2, gam, gam2, and cof1. *)
   
   for i = 0 to ns - 1 do
-    let temp = one /. (one +. 2.0 *. gamma *. (cox.(i) +. coy.(i))) in
+    let temp = 1.0 /. (1.0 +. 2.0 *. gamma *. (cox.(i) +. coy.(i))) in
     beta.(i)  <- gamma *. cox.(i) *. temp;
     beta2.(i) <- 2.0 *. beta.(i);
     gam.(i)   <- gamma *. coy.(i) *. temp;
@@ -490,7 +486,7 @@ let gs_iter wdata gamma zd xd =
       v_prod ns xd ic cof1 zd ic (* x[ic+i] = cof1[i]z[ic+i] *)
     done
   done;
-  Array1.fill zd zero;
+  Array1.fill zd 0.0;
   
   (* Looping point for iterations. *)
   
@@ -620,17 +616,17 @@ let gs_iter wdata gamma zd xd =
     done;
     
     (* Add increment x to z : z <- z+x *)
-    nvlinearsum one zd one xd zd
+    nvlinearsum 1.0 zd 1.0 xd zd
   done
 
 (* Print maximum sensitivity of G for each species *)
 
 let print_output wdata (cdata : RealArray.t) ns mxns =
-  let x = ref zero
-  and y = ref zero in
+  let x = ref 0.0
+  and y = ref 0.0 in
 
   for i=1 to ns do
-    let cmax = ref zero in
+    let cmax = ref 0.0 in
     for jy=my-1 downto 0 do
       for jx=0 to mx - 1 do
         let cij = cdata.{(i-1) + jx*ns + jy*mxns} in
@@ -789,7 +785,7 @@ let precond wdata jacarg jok gamma =
 
   let fac = nvwrmsnorm fc rewtdata in
   let r0 = 1000.0 *. abs_float gamma *. uround *. float (neq + 1) *. fac in
-  let r0 = if r0 = zero then one else r0 in
+  let r0 = if r0 = 0.0 then 1.0 else r0 in
   
   for igy = 0 to ngy - 1 do
     let jy = jyr.(igy) in
@@ -835,9 +831,7 @@ let precond wdata jacarg jok gamma =
  * blocks in P, and pivot information in pivot, and returns the result in z.
  *)
 
-let psolve wdata =
-  let cache = RealArray.create ns in
-  fun jac_arg solve_arg (z : RealArray.t) ->
+let psolve wdata jac_arg solve_arg (z : RealArray.t) =
   let { Cvode.jac_tmp = vtemp; } = jac_arg
   and { Cvode.Spils.rhs = r; Cvode.Spils.gamma = gamma } = solve_arg
   in
@@ -863,17 +857,7 @@ let psolve wdata =
     for jx = 0 to mx - 1 do
       let igx = jigx.(jx) in
       let ig = igx + igy * ngx in
-
-      (* faster to cache and copy in/out than to Bigarray.Array1.sub... *)
-      for i=0 to ns - 1 do
-        cache.{i} <- z.{!iv + i}
-      done;
-
-      Densemat.getrs p.(ig) pivot.(ig) cache;
-
-      for i=0 to ns - 1 do
-        z.{!iv + i} <- cache.{i}
-      done;
+      Densemat.getrs' p.(ig) pivot.(ig) z !iv;
       iv := !iv + mp
     done
   done;
@@ -897,8 +881,8 @@ let fB wdata t cdata (cBdata : RealArray.t) (cBdotdata : RealArray.t) =
   and dx     = wdata.dx
   and dy     = wdata.dy in
 
-  let gu = RealArray.make ns zero in
-  gu.{ispec-1} <- one;
+  let gu = RealArray.make ns 0.0 in
+  gu.{ispec-1} <- 1.0;
 
   for jy = 0 to my - 1 do
     let y = float jy *. dy
@@ -967,7 +951,7 @@ let precondb wdata jacarg jok gamma =
 
   let fac = nvwrmsnorm fcBdata rewtdata in
   let r0 = 1000.0 *. abs_float gamma *. uround *. float neq *. fac in
-  let r0 = if r0 = zero then one else r0 in
+  let r0 = if r0 = 0.0 then 1.0 else r0 in
 
   for igy = 0 to ngy - 1 do
     let jy = jyr.(igy) in
@@ -1101,7 +1085,7 @@ let main () =
 
   (* Allocate cB *)
   (* Initialize cB = 0 *)
-  let cB = Nvector_serial.make neq zero in
+  let cB = Nvector_serial.make neq 0.0 in
 
   (* Create and allocate CVODES memory for backward run *)
   (* Call CVSpgmr *)

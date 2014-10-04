@@ -306,9 +306,7 @@ let prec_setup_bd { Kinsol.jac_u=cc;
   done (* end of jy loop *)
   
 (* Preconditioner solve routine *)
-let prec_solve_bd () =
-  let cache = RealArray.create num_species in
-  fun _ _ (vv : RealArray.t) ->
+let prec_solve_bd () _ _ (vv : RealArray.t) =
   for jx = 0 to mx - 1 do
     for jy = 0 to my - 1 do
       (* For each (jx,jy), solve a linear system of size NUM_SPECIES.
@@ -316,17 +314,8 @@ let prec_solve_bd () =
          Pxy is the address of the corresponding block of the matrix P;
          piv is the address of the corresponding block of the array pivot. *)
 
-      (* faster to cache and copy in/out than to Bigarray.Array1.sub... *)
       let off = jx * num_species + jy * nsmx in
-      for i=0 to num_species - 1 do
-        cache.{i} <- vv.{off + i}
-      done;
-
-      Dense.getrs p.(jx).(jy) pivot.(jx).(jy) cache;
-
-      for i=0 to num_species - 1 do
-        vv.{off + i} <- cache.{i}
-      done
+      Dense.getrs' p.(jx).(jy) pivot.(jx).(jy) vv off;
     done (* end of jy loop *)
   done (* end of jx loop *)
 
