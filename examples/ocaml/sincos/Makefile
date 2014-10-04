@@ -1,6 +1,6 @@
 include ../../../config
 
-all: sincos.byte sincos_nvec.byte
+all: sincos.byte sincos_nvec.byte sincos.opt sincos_nvec.opt
 
 NVECTOR=
 

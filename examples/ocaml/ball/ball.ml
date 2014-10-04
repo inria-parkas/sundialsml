@@ -56,7 +56,7 @@ let ball_event s t y =
      Cvode.reinit s t y_nvec)
 
 let s = Cvode.init Cvode.Adams Cvode.Functional Cvode.default_tolerances
-                   f ~roots:(n_roots, g) y_nvec
+                   f ~roots:(n_roots, g) 0.0 y_nvec
 
 let trace = ref false
 let log = ref false

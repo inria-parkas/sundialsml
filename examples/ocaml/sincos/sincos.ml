@@ -15,7 +15,7 @@ let y = Sundials.RealArray.of_array [| 0.0; 0.0; 0.0 |]
 let y_nvec= Nvector_serial.wrap y
 
 let s = Cvode.init Cvode.Adams Cvode.Functional Cvode.default_tolerances
-                   f ~roots:(2, g) y_nvec
+                   f 0.0 ~roots:(2, g) y_nvec
 let rootdata = Sundials.Roots.create 2
 
 (* let _ = Cvode.set_stop_time s 20.0 *)
