@@ -75,7 +75,9 @@ CAMLprim value val_cnvec(N_Vector nv, void (*finalizer)(value))
 
 CAMLprim void finalize_cnvec(value vnv)
 {
+    CAMLparam1(vnv);
     free_cnvec(NVEC_CVAL(vnv));
+    CAMLreturn0;
 }
 
 void clone_cnvec_ops(N_Vector dst, N_Vector src)
