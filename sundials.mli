@@ -20,30 +20,36 @@
 
 (** {2 Constants} *)
 
-(** [true] iff this binding is compiled with BLAS/LAPACK support.  *)
+(** Indicates whether the interface was compiled with BLAS/LAPACK support. *)
 val blas_lapack_supported : bool
 
-(** The BIG_REAL constant.
+(** The largest value representable as a real.
+
     @cvode <node5#s:types> Data Types
  *)
 val big_real : float
 
-(** The UNIT_ROUNDOFF constant.
+(** The smallest value representable as a real.
+
+    @cvode <node5#s:types> Data Types
+ *)
+val small_real : float
+
+(** The difference bewteen 1.0 and the minimum real greater than 1.0.
+
     @cvode <node5#s:types> Data Types
  *)
 val unit_roundoff : float
 
 (** {2 Exceptions} *)
 
-(** This exception may be thrown inside most callback functions to indicate a
-    recoverable failure. For callbacks that return a boolean, the accompanying
-    value is used as the result, otherwise it is ignored. Throwing any other
-    kind of exception normally indicates an unrecoverable failure. *)
+(** Indicates a recoverable failure within a callback function.
+    Any other exception normally indicates an unrecoverable failure. *)
 exception RecoverableFailure
 
-(** This exception may be thrown from error-weight functions to
-    indicate that an error weight became non-positive.  See
-    [WFtolerances] in {!Cvode.tolerance} or {!Ida.tolerance}. *)
+(** Raised by error-weight functions on non-positive error weights. See
+    {{!Cvode.tolerance}[Cvode.WFtolerances]} or
+    {{!Ida.tolerance}[Ida.WFtolerances]}. *)
 exception NonPositiveEwt
 
 (** {2 Arrays} *)
@@ -51,66 +57,62 @@ exception NonPositiveEwt
 (** Vectors of floats (1-dimensional bigarrays). *)
 module RealArray :
   sig
-    (** A {{:OCAML_DOC_ROOT(Bigarray.Array1)} (Bigarray)} vector of floats. *)
+    (** A {{:OCAML_DOC_ROOT(Bigarray.Array1)} Bigarray} vector of floats. *)
     type t = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
 
-    (** [make n x] returns an array with [n] elements each initialized to x. *)
+    (** [make n x] returns an array with [n] elements each initialized to [x]. *)
     val make : int -> float -> t
 
-    (** [create n] returns an array with [n] elements. *)
+    (** [create n] returns an uninitialized array with [n] elements. *)
     val create : int -> t
 
     (** [init n f] returns an array with [n] elements, with element [i]
         initialized to [f i]. *)
     val init : int -> (int -> float) -> t
 
-    (** Creates an array by copying the contents of an {{:OCAML_DOC_ROOT(Array)}
-        Array}. *)
+    (** Creates an array by copying the contents of a {{:OCAML_DOC_ROOT(Array)}
+        float array}. *)
     val of_array : float array -> t
 
     (** Creates an array by copying the contents of a
-        {{:OCAML_DOC_ROOT(List)} List}. *)
+        {{:OCAML_DOC_ROOT(List)} [float list]}. *)
     val of_list : float list -> t
 
-    (** Copies into a new {{:OCAML_DOC_ROOT(Array)} Array}. *)
+    (** Copies into a new {{:OCAML_DOC_ROOT(Array)} [float array]}. *)
     val to_array : t -> float array
 
-    (** Copies into an existing {{:OCAML_DOC_ROOT(Array)} Array}. *)
+    (** Copies into an existing {{:OCAML_DOC_ROOT(Array)} [float array]}. *)
     val into_array : t -> float array -> unit
 
-    (** Copies into a {{:OCAML_DOC_ROOT(List)} List}. *)
+    (** Copies into a {{:OCAML_DOC_ROOT(List)} [float list]}. *)
     val to_list : t -> float list
 
     (** Create a new array with the same contents as an existing one. *)
     val copy : t -> t
 
-    (** Extract a sub-array of the given real array.  This function
-        imitates that of Bigarray rather than Array, i.e. it doesn't
-        copy anything.  *)
+    (** Access a sub-array of the given array without copying. *)
     val sub : t -> int -> int -> t
 
     (** [blit src isrc dst idst len] copies [len] elements of [src] at
-        offset [isrc] to [dst] at offset [idst], i.e. it writes
-        [src.{isrc}], [src.{isrc+1}], ... [src.{isrc+len-1}]
-        to
-        [dst.{idst}], [dst.{idst+1}], ... [dst.{idst+len-1}].
+        offset [isrc] to [dst] at offset [idst].
 
         @raise Invalid_argument "RealArray.blit" if [isrc], [idst], and
-        [len] don't specify valid subarrays of [src] and [dst].
-      *)
+        [len] do not specify valid subarrays of [src] and [dst]. *)
     val blit : t -> int -> t -> int -> int -> unit
 
-    (** An alias of [Bigarray.Array1.blit].  *)
+    (** Copy the first array into the second one.
+        See {{:OCAML_DOC_ROOT(Bigarray.Array1#VALblit)}
+        [Bigarray.Array1.blit]} for more details. *)
     val blit_all : t -> t -> unit
 
-    (** [fill a c] sets all elements of the array [a] to the constant [c]. *)
+    (** [fill a c] sets all elements of [a] to the constant [c]. *)
     val fill : t -> float -> unit
 
     (** Returns the length of an array *)
     val length : t -> int
 
-    (** [print_with_time t a] prints a line containing the current time (see
-        {!print_time}) followed by a tab-delimited list of the values of [a],
+    (** Prints a line containing the current time (see {!print_time})
+        followed by a tab-delimited list of the values of [a],
         and then a newline. See also {!extra_precision}. *)
     val print_with_time : float -> t -> unit
 

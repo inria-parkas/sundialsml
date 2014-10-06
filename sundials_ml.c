@@ -61,10 +61,11 @@ CAMLprim value c_sundials_init_module (value vweak_get, value exns)
     weak_get = vweak_get;
     caml_register_generational_global_root (&weak_get);
 #endif
-    r = caml_alloc_tuple (3);
+    r = caml_alloc_tuple (4);
     Store_field (r, 0, Val_bool (SUNDIALS_BLAS_LAPACK));
     Store_field (r, 1, caml_copy_double(BIG_REAL));
-    Store_field (r, 2, caml_copy_double(UNIT_ROUNDOFF));
+    Store_field (r, 2, caml_copy_double(SMALL_REAL));
+    Store_field (r, 3, caml_copy_double(UNIT_ROUNDOFF));
     CAMLreturn (r);
 }
 

@@ -526,11 +526,12 @@ type error_details = {
 external c_init_module :
   ('a Weak.t -> int -> 'a option)
   -> exn array
-  -> (bool * float * float)
+  -> (bool * float * float * float)
   = "c_sundials_init_module"
 
-let blas_lapack_supported, big_real, unit_roundoff =
+let blas_lapack_supported, big_real, small_real, unit_roundoff =
   c_init_module Weak.get
     (* Exceptions must be listed in the same order as
        sundials_exn_index.  *)
     [|RecoverableFailure; NonPositiveEwt|]
+
