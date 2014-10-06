@@ -845,7 +845,7 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
       ('a, 'k) session ->
       float ->
       ('a, 'k) nvector ->
-      ('a, 'k) nvector -> float * int * Sundials.solver_result
+      ('a, 'k) nvector -> float * int * Ida.solver_result
 
     (** [tret, ncheck, sr = forward_normal s tout y y'] integrates the
         forward problem over an interval and saves checkpointing
@@ -873,7 +873,7 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
       ('a, 'k) session ->
       float ->
       ('a, 'k) nvector ->
-      ('a, 'k) nvector -> float * int * Sundials.solver_result
+      ('a, 'k) nvector -> float * int * Ida.solver_result
 
     (** {3:adjbwd Backward Problems} *)
 

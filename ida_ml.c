@@ -788,7 +788,7 @@ static value solve (value vdata, value nextt, value vy, value vyp, int onestep)
 
     switch (flag) {
     case IDA_SUCCESS:
-	result = VARIANT_IDA_SOLVER_RESULT_CONTINUE;
+	result = VARIANT_IDA_SOLVER_RESULT_SUCCESS;
 	break;
 
     case IDA_ROOT_RETURN:

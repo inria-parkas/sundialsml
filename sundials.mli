@@ -361,16 +361,6 @@ module RootDirs :
 
 (** {2 Solver results and error reporting} *)
 
-(** Result of a successful {{!Cvode.step_normal}CVODE} or
-    {{!Ida.step_normal}IDA} step. Failures are indicated by exceptions.
- 
- @cvode <node5#sss:cvode> CVode
- @ida <node5#sss:idasolve> IDASolve *)
-type solver_result =
-  | Continue            (** CV_SUCCESS / IDA_SUCCESS *)
-  | RootsFound          (** CV_ROOT_RETURN / IDA_ROOT_RETURN *)
-  | StopTimeReached     (** CV_TSTOP_RETURN / IDA_TSTOP_RETURN *)
-
 (** Information passed to registered error handler functions.
     See {!Cvode.set_err_handler_fn}, {!Ida.set_err_handler_fn}, and
     {!Kinsol.set_err_handler_fn}.
@@ -378,6 +368,7 @@ type solver_result =
  @cvode <node5#ss:ehFn> CVodeErrHandlerFn
  @ida <node5#ss:ehFn> IDAErrHandlerFn
  @kinsol <node5#ss:ehFn> KINErrHandlerFn *)
+
 type error_details = {
     error_code : int;
     module_name : string;        (** IDA, CVODE, CVSPGMR, etc. *)

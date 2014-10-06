@@ -405,14 +405,19 @@ let reinit session ?linsolv ?roots t0 y0 y'0 =
 external get_root_info  : ('a, 'k) session -> Sundials.Roots.t -> unit
     = "c_ida_get_root_info"
 
+type solver_result =
+  | Success             (** IDA_SUCCESS *)
+  | RootsFound          (** IDA_ROOT_RETURN *)
+  | StopTimeReached     (** IDA_TSTOP_RETURN *)
+
 external solve_normal : ('a, 'k) session -> float
                       -> ('a, 'k) nvector -> ('a,'k) nvector
-                      -> float * Sundials.solver_result
+                      -> float * solver_result
     = "c_ida_solve_normal"
 
 external solve_one_step : ('a, 'k) session -> float
                         -> ('a, 'k) nvector-> ('a, 'k) nvector
-                        -> float * Sundials.solver_result
+                        -> float * solver_result
     = "c_ida_solve_one_step"
 
 external get_dky

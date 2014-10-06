@@ -506,12 +506,17 @@ let reinit session ?iter_type ?roots t0 y0 =
 external get_root_info  : ('a, 'k) session -> Sundials.Roots.t -> unit
     = "c_cvode_get_root_info"
 
+type solver_result =
+  | Success             (** CV_SUCCESS *)
+  | RootsFound          (** CV_ROOT_RETURN *)
+  | StopTimeReached     (** CV_TSTOP_RETURN *)
+
 external solve_normal : ('a, 'k) session -> float -> ('a, 'k) nvector
-                              -> float * Sundials.solver_result
+                              -> float * solver_result
     = "c_cvode_solve_normal"
 
 external solve_one_step : ('a, 'k) session -> float -> ('a, 'k) nvector
-                              -> float * Sundials.solver_result
+                              -> float * solver_result
     = "c_cvode_solve_one_step"
 
 external get_dky

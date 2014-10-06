@@ -151,15 +151,15 @@ let main () =
     print_output t (ydata.{0}) (ydata.{1}) (ydata.{2});
 
     match flag with
-    | Sundials.RootsFound ->
+    | Cvode.RootsFound ->
         Cvode.get_root_info cvode_mem roots;
         print_root_info (r 0) (r 1)
 
-    | Sundials.Continue ->
+    | Cvode.Success ->
         iout := !iout + 1;
         tout := !tout *. tmult
 
-    | Sundials.StopTimeReached ->
+    | Cvode.StopTimeReached ->
         iout := nout
   done;
 

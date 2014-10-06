@@ -864,7 +864,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
       ('a, 'k) session
       -> float
       -> ('a, 'k) nvector
-      -> float * int * Sundials.solver_result
+      -> float * int * Cvode.solver_result
 
     (** [tret, ncheck, sr = forward_normal s tout yret] integrates the forward
         problem over an interval and saves checkpointing data. The function
@@ -890,7 +890,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
       ('a, 'k) session
       -> float
       -> ('a, 'k) nvector
-      -> float * int * Sundials.solver_result
+      -> float * int * Cvode.solver_result
 
     (** {3:adjbwd Backward Problems} *)
 

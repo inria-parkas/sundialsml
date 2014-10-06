@@ -1191,6 +1191,17 @@ val get_num_backtrack_ops : ('a, 'k) session -> int
 
 (** {2 Solver functions } *)
 
+(**
+ Possible values returned when a IDA solver step function succeeds.
+ Failures are indicated by exceptions.
+
+ @ida <node5#sss:ida> IDASolve
+ *)
+type solver_result =
+  | Success             (** IDA_SUCCESS *)
+  | RootsFound          (** IDA_ROOT_RETURN *)
+  | StopTimeReached     (** IDA_TSTOP_RETURN *)
+
 (** [(tret, r) = solve_normal s tout yout y'out] integrates the DAE
     over an interval in t.
 
@@ -1223,7 +1234,7 @@ val get_num_backtrack_ops : ('a, 'k) session -> int
  *)
 val solve_normal : ('a, 'k) session -> float
                    -> ('a, 'k) nvector -> ('a, 'k) nvector
-                   -> float * Sundials.solver_result
+                   -> float * solver_result
 
 (** This function is identical to {!solve_normal}, except that it
     returns after one internal solver step.
@@ -1232,7 +1243,7 @@ val solve_normal : ('a, 'k) session -> float
  *)
 val solve_one_step : ('a, 'k) session -> float
                      -> ('a, 'k) nvector -> ('a, 'k) nvector
-                     -> float * Sundials.solver_result
+                     -> float * solver_result
 
 
 (** {2 Main optional functions} *)

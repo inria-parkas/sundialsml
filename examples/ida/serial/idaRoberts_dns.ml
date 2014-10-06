@@ -178,15 +178,15 @@ let main () =
     let (t, flag) = Ida.solve_normal ida_mem !tout wy wy' in
     print_output ida_mem t y;
     match flag with
-    | Sundials.RootsFound ->
+    | Ida.RootsFound ->
         Ida.get_root_info ida_mem roots;
         print_root_info (r 0) (r 1)
 
-    | Sundials.Continue ->
+    | Ida.Success ->
         iout := !iout + 1;
         tout := !tout *. tmult
 
-    | Sundials.StopTimeReached ->
+    | Ida.StopTimeReached ->
         iout := nout
   done;
 

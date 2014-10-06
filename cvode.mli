@@ -1018,6 +1018,17 @@ val nroots : ('a, 'k) session -> int
 
 (** {2 Solver functions } *)
 
+(**
+ Possible values returned when a CVODE solver step function succeeds.
+ Failures are indicated by exceptions.
+
+ @cvode <node5#sss:cvode> CVode
+ *)
+type solver_result =
+  | Success             (** CV_SUCCESS *)
+  | RootsFound          (** CV_ROOT_RETURN *)
+  | StopTimeReached     (** CV_TSTOP_RETURN *)
+
 (** [(tret, r) = solve_normal s tout yout] integrates the ODE over an
     interval in t.
 
@@ -1038,14 +1049,14 @@ val nroots : ('a, 'k) session -> int
 
     @cvode <node5#sss:cvode> CVode (CV_NORMAL) *)
 val solve_normal : ('a, 'k) session -> float -> ('a, 'k) nvector
-                        -> float * Sundials.solver_result
+                        -> float * solver_result
 
 (** This function is identical to {!solve_normal}, except that it returns after
     one internal solver step.
 
     @cvode <node5#sss:cvode> CVode (CV_ONE_STEP) *)
 val solve_one_step : ('a, 'k) session -> float -> ('a, 'k) nvector
-                        -> float * Sundials.solver_result
+                        -> float * solver_result
 
 (** {2 Main optional functions} *)
 

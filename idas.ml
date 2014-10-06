@@ -571,12 +571,12 @@ module Adjoint =
 
     external forward_normal : ('a, 'k) session -> float
                               -> ('a, 'k) nvector -> ('a, 'k) nvector
-                              -> float * int * Sundials.solver_result
+                              -> float * int * Ida.solver_result
         = "c_idas_adj_forward_normal"
 
     external forward_one_step : ('a, 'k) session -> float
                                 -> ('a, 'k) nvector -> ('a, 'k) nvector
-                                -> float * int * Sundials.solver_result
+                                -> float * int * Ida.solver_result
         = "c_idas_adj_forward_one_step"
 
     type 'a single_tmp = 'a

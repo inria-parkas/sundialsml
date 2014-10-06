@@ -832,7 +832,7 @@ static value solver(value vdata, value nextt, value vy, int onestep)
 
     switch (flag) {
     case CV_SUCCESS:
-	result = VARIANT_CVODE_SOLVER_RESULT_CONTINUE;
+	result = VARIANT_CVODE_SOLVER_RESULT_SUCCESS;
 	break;
 
     case CV_ROOT_RETURN:

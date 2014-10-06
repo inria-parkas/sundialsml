@@ -940,7 +940,7 @@ static value forward_solver(value vdata, value vtout, value vyret, int onestep)
 		      &tret, onestep ? CV_ONE_STEP : CV_NORMAL, &ncheck);
     switch (flag) {
     case CV_SUCCESS:
-	solver_result = VARIANT_CVODE_SOLVER_RESULT_CONTINUE;
+	solver_result = VARIANT_CVODE_SOLVER_RESULT_SUCCESS;
 	break;
 
     case CV_TSTOP_RETURN:

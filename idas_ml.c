@@ -1721,7 +1721,7 @@ static value forward_solve(value vdata, value vtout, value vy,
 			 y, yp, onestep ? IDA_ONE_STEP : IDA_NORMAL, &ncheck);
     switch (flag) {
     case IDA_SUCCESS:
-	solver_result = VARIANT_IDA_SOLVER_RESULT_CONTINUE;
+	solver_result = VARIANT_IDA_SOLVER_RESULT_SUCCESS;
 	break;
 
     case IDA_TSTOP_RETURN:

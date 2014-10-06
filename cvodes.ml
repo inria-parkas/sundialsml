@@ -471,11 +471,11 @@ module Adjoint =
       | _ -> raise AdjointNotInitialized
 
     external forward_normal : ('a, 'k) session -> float -> ('a, 'k) nvector
-                                         -> float * int * Sundials.solver_result
+                                         -> float * int * Cvode.solver_result
         = "c_cvodes_adj_forward_normal"
 
     external forward_one_step : ('a, 'k) session -> float -> ('a, 'k) nvector
-                                         -> float * int * Sundials.solver_result
+                                         -> float * int * Cvode.solver_result
         = "c_cvodes_adj_forward_one_step"
 
     type 'a single_tmp = 'a
