@@ -22,7 +22,7 @@
 (** Represents an nvector manipulated by operations written in OCaml. Note that
     such operations entail the additional runtime cost of an OCaml callback. *)
 type kind
-type 'a t = ('a, kind) Sundials.nvector
+type 'a t = ('a, kind) Nvector.t
 
 (**
    The set of operations required to define an nvector. Some operations

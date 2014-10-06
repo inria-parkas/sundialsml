@@ -94,7 +94,7 @@ type real_array = Sundials.RealArray.t
 type serial_session = (real_array, Nvector_serial.kind) session
 
 (** The type of vectors passed to the solver. *)
-type ('data, 'kind) nvector = ('data, 'kind) Sundials.nvector
+type ('data, 'kind) nvector = ('data, 'kind) Nvector.t
 
 (** {2 Linear Solvers} *)
 

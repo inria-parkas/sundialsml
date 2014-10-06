@@ -46,10 +46,6 @@ exception RecoverableFailure
     [WFtolerances] in {!Cvode.tolerance} or {!Ida.tolerance}. *)
 exception NonPositiveEwt
 
-(** {2 Nvectors} *)
-
-type ('data, 'kind) nvector = ('data, 'kind) Nvector.t
-
 (** {2 Arrays} *)
 
 module RealArray :

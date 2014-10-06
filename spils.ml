@@ -46,7 +46,7 @@ external qr_sol : int
                  -> int
     = "c_spils_qr_sol"
 
-type ('a, 'k) nvector = ('a, 'k) Sundials.nvector
+type ('a, 'k) nvector = ('a, 'k) Nvector.t
 
 type 'a atimes = 'a -> 'a -> unit
 

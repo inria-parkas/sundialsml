@@ -19,7 +19,7 @@
  *     in cvode_ml.h (and code in cvode_ml.c) must also be updated.
  *)
 
-type ('a, 'k) nvector = ('a, 'k) Sundials.nvector
+type ('a, 'k) nvector = ('a, 'k) Nvector.t
 
 type 'a single_tmp = 'a
 type 'a double_tmp = 'a * 'a

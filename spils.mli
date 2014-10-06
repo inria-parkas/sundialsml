@@ -104,7 +104,7 @@ val qr_sol : int
              -> int
 
 (** The type of vectors passed to the solver. *)
-type ('a, 'k) nvector = ('a, 'k) Sundials.nvector
+type ('a, 'k) nvector = ('a, 'k) Nvector.t
 
 (**
   The type of a function [f v z] that calculates [z = A v] using an internal

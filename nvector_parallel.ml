@@ -1,7 +1,7 @@
 
 type kind
 type data = Sundials.RealArray.t * int * Mpi.communicator
-type t = (data, kind) Sundials.nvector
+type t = (data, kind) Nvector.t
 
 exception IncorrectGlobalSize
 
@@ -27,7 +27,7 @@ let communicator nv =
   comm
 
 module Ops = struct
-  type t = (data, kind) Sundials.nvector
+  type t = (data, kind) Nvector.t
 
   let n_vclone = clone
 

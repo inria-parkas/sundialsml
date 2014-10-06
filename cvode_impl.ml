@@ -40,7 +40,7 @@
  *     in cvode_ml.h (and code in cvode_ml.c) must also be updated.
  *)
 
-type ('data, 'kind) nvector = ('data, 'kind) Sundials.nvector
+type ('data, 'kind) nvector = ('data, 'kind) Nvector.t
 module RealArray = Sundials.RealArray
 
 type 'a single_tmp = 'a

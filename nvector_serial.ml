@@ -1,7 +1,7 @@
 
 type data = Sundials.RealArray.t
 type kind
-type t = (data, kind) Sundials.nvector
+type t = (data, kind) Nvector.t
 
 external wrap : Sundials.RealArray.t -> t
   = "ml_nvec_wrap_serial"
@@ -11,7 +11,7 @@ let unwrap = Nvector.unwrap
 let make n iv = wrap (Sundials.RealArray.make n iv)
 
 module Ops = struct
-  type t = (Sundials.RealArray.t, kind) Sundials.nvector
+  type t = (Sundials.RealArray.t, kind) Nvector.t
 
   let n_vclone nv =
     let data = Nvector.unwrap nv in

@@ -17,7 +17,7 @@ type kind
 
 (** (local array, global length, MPI communicator) *)
 type data = Sundials.RealArray.t * int * Mpi.communicator
-type t = (data, kind) Sundials.nvector
+type t = (data, kind) Nvector.t
 
 (** Raised by make if the given global length is not consistent with the sum of
     local lengths across all parallel instances. *)

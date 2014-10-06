@@ -11,7 +11,7 @@
 (***********************************************************************)
 
 type kind
-type 'a t = ('a, kind) Sundials.nvector
+type 'a t = ('a, kind) Nvector.t
 
 type 'a nvector_ops = {
   n_vclone           : 'a -> 'a;
@@ -139,12 +139,12 @@ module MakeOps = functor (A : sig
     type _kind = kind
     type kind = _kind
     type data = A.data
-    type t = (data, kind) Sundials.nvector
+    type t = (data, kind) Nvector.t
 
     let wrap = make_wrap A.ops
 
     module Ops = struct
-      type t = (data, kind) Sundials.nvector
+      type t = (data, kind) Nvector.t
 
       let n_vclone n = wrap (A.ops.n_vclone (uv n))
       let n_vlinearsum a x b y z = A.ops.n_vlinearsum a (uv x) b (uv y) (uv z)

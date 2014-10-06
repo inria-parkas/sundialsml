@@ -33,7 +33,7 @@ open Cvode_impl
 open Sundials
 
 type ('data, 'kind) session = ('data, 'kind) Cvode.session
-type ('data, 'kind) nvector = ('data, 'kind) Sundials.nvector
+type ('data, 'kind) nvector = ('data, 'kind) Nvector.t
 
 (** {2:quad Quadrature Equations} *)
 

@@ -118,7 +118,7 @@ type ('a, 'k) session = ('a, 'k) Cvode_impl.session
 type serial_session = (RealArray.t, Nvector_serial.kind) session
 
 (** The type of vectors passed to the solver. *)
-type ('data, 'kind) nvector = ('data, 'kind) Sundials.nvector
+type ('data, 'kind) nvector = ('data, 'kind) Nvector.t
 
 (** {2 Linear Solvers} *)
 
