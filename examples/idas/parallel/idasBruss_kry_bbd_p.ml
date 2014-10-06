@@ -676,7 +676,7 @@ let print_header system_size maxl mudq mldq mukeep mlkeep rtol atol =
 let print_output mem uv tt data comm =
   let thispe = data.thispe in
   let npelast = data.npes - 1 in
-  let cdata = Nvector_parallel.unwrap uv in
+  let cdata = Nvector_parallel.local_array uv in
   let clast = RealArray.create 2 in
 
   (* Send conc. at top right mesh point from PE npes-1 to PE 0. *)

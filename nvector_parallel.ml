@@ -14,9 +14,13 @@ let clone nv =
   let loc, glen, comm = Nvector.unwrap nv in
   wrap (Sundials.RealArray.copy loc, glen, comm)
 
-let unwrap nv =
+let unwrap = Nvector.unwrap
+
+let local_array nv =
   let data, _, _ = Nvector.unwrap nv in
   data
+
+let local_length nv = Sundials.RealArray.length (local_array nv)
 
 let global_length nv =
   let _, gl, _ = Nvector.unwrap nv in

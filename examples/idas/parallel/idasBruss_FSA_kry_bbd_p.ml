@@ -513,7 +513,7 @@ let res data tt uv uvp rr =
    grid. Then processes call MPI_REDUCE to compute sum of the local values. *)
 let integr comm uv data =
   (* compute the integral on the (local) grid *)
-  let uvdata = Nvector_parallel.unwrap uv in
+  let uvdata = Nvector_parallel.local_array uv in
   let buf = RealArray.create 2 in
 
   let intval = ref 0.0 in
@@ -708,7 +708,7 @@ let print_header system_size maxl mudq mldq mukeep mlkeep rtol atol =
 let print_output mem uv tt data comm =
   let thispe = data.thispe in
   let npelast = data.npes - 1 in
-  let cdata = Nvector_parallel.unwrap uv in
+  let cdata = Nvector_parallel.local_array uv in
   let clast = RealArray.create 2 in
 
   (* Send conc. at top right mesh point from PE npes-1 to PE 0. *)

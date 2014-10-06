@@ -35,7 +35,7 @@
 module RealArray = Sundials.RealArray
 module Roots = Sundials.Roots
 open Bigarray
-let unwrap = Nvector_parallel.unwrap
+let local_array = Nvector_parallel.local_array
 
 let printf = Printf.printf
 
@@ -76,7 +76,7 @@ type user_data = {
 
 let set_ic u dx my_length my_base =
   (* Set pointer to data array and get local length of u. *)
-  let udata = unwrap u in
+  let udata = local_array u in
   let my_length = Array1.dim udata in
 
   (* Load initial profile into u vector *)

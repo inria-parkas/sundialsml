@@ -55,7 +55,7 @@ module Roots  = Sundials.Roots
 module Direct = Dls.ArrayDenseMatrix
 open Bigarray
 
-let unwrap = Nvector_parallel.unwrap
+let local_array = Nvector_parallel.local_array
 let slice = Array1.sub
 let printf = Printf.printf
 let eprintf = Printf.eprintf
@@ -212,7 +212,7 @@ let init_user_data my_pe comm =
 
 let set_initial_profiles data u =
   (* Set pointer to data array in vector u *)
-  let udata = unwrap u in
+  let udata = local_array u in
 
   (* Get mesh spacings, and subgrid indices for this PE *)
   let dx = data.dx
@@ -247,7 +247,7 @@ let set_initial_profiles data u =
 let print_output s my_pe comm u t =
   let npelast = npex*npey - 1 in
   let tempu = RealArray.create 2 in
-  let udata = unwrap u in
+  let udata = local_array u in
 
   (* Send c1,c2 at top right mesh point to PE 0 *)
   if my_pe = npelast then begin

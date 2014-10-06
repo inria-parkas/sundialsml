@@ -48,7 +48,7 @@ module Adjoint = Cvodes.Adjoint
 module RealArray = Sundials.RealArray
 open Bigarray
 
-let unwrap = Nvector_parallel.unwrap
+let local_array = Nvector_parallel.local_array
 let printf = Printf.printf
 let eprintf = Printf.eprintf
 
@@ -108,7 +108,7 @@ type user_data = {
 
 let set_ic u dx my_length my_base =
   (* Set pointer to data array and get local length of u. *)
-  let udata = unwrap u in
+  let udata = local_array u in
   let my_length = Array1.dim udata in
 
   (* Load initial profile into u vector *)
@@ -122,7 +122,7 @@ let set_ic u dx my_length my_base =
 
 let set_ic_back uB my_base =
   (* Set pointer to data array and get local length of uB *)
-  let uBdata = unwrap uB in
+  let uBdata = local_array uB in
 
   (* Set adjoint states to 1.0 and quadrature variables to 0.0 *)
   Array1.fill uBdata (if my_base = -1 then zero else one)
@@ -159,7 +159,7 @@ let compute_g data u =
     done;
     !intgr
   end else begin             (* Compute local portion of the integral *)
-    let udata = unwrap u in
+    let udata = local_array u in
     let my_length = Array1.dim udata in
     let my_intgr = xintgr udata my_length dx in
     Mpi.send_float my_intgr npes 0 comm;
@@ -175,7 +175,7 @@ let print_output data g_val uB =
   let nperpe  = data.nperpe in
   let nrem    = data.nrem in
 
-  let uBdata = unwrap uB in
+  let uBdata = local_array uB in
 
   if my_pe = npes then begin
 

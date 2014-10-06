@@ -89,7 +89,7 @@ module LintArray = Sundials.LintArray
 module Dense = Dls.ArrayDenseMatrix
 module Bbd = Kinsol_bbd
 open Bigarray
-let unwrap = Nvector_parallel.unwrap
+let local_array = Nvector_parallel.local_array
 
 let printf = Printf.printf
 let eprintf = Printf.eprintf
@@ -528,7 +528,7 @@ let print_header globalstrategy maxl maxlrst
 (* Print sample of current cc values *)
 let print_output my_pe comm cc =
   let npelast = npex*npey - 1 in
-  let ct = Nvector.unwrap cc in
+  let ct = local_array cc in
   let i0 = num_species*(mxsub*mysub-1) in
   
   (* Send the cc values (for all species) at the top right mesh point to PE 0 *)
@@ -598,7 +598,7 @@ let main () =
   (* Create serial vectors of length NEQ *)
   let cc = Nvector.make local_N neq comm 0.0 in
   let sc = Nvector.make local_N neq comm 0.0 in
-  set_initial_profiles (Nvector.unwrap cc) (Nvector.unwrap sc);
+  set_initial_profiles (local_array cc) (local_array sc);
 
   let fnormtol  = ftol in
   let scsteptol = stol in

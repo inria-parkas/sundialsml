@@ -32,9 +32,15 @@ val make : int -> int -> Mpi.communicator -> float -> t
     original global size and communicator. *)
 val clone : t -> t
 
-(** [unwrap nv] returns the local data [a] underlying the parallel nvector
-    [nv]. *)
-val unwrap : t -> Sundials.RealArray.t
+(** Aliases {!Nvector.unwrap}. *)
+val unwrap : t -> data
+
+(** [local_array nv] returns the local array [a] underlying the parallel
+    nvector [nv]. *)
+val local_array : t -> Sundials.RealArray.t
+
+(** Returns the number of local elements for a parallel nvector. *)
+val local_length : t -> int
 
 (** Returns the number of global elements for a parallel nvector. *)
 val global_length : t -> int

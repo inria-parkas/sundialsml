@@ -768,7 +768,7 @@ let precondbd webdata jac =
     | Some m -> m
     | None -> invalid_arg "Internal error: webdata.ida_mem not set"
   in
-  let ewt = Nvector_parallel.unwrap webdata.ewt in
+  let ewt = Nvector_parallel.local_array webdata.ewt in
   Ida.get_err_weights mem webdata.ewt;
   let hh = Ida.get_current_step mem in
 
