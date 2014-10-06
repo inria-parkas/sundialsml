@@ -673,7 +673,7 @@ module Adjoint =
           : (serial_session * int) -> int -> int -> int -> bool -> unit
           = "c_idas_adj_dls_band"
 
-        let dense jac bs nv nv' =
+        let dense ?jac () bs nv nv' =
           let parent, which = parent_and_which bs in
           let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
           c_dls_dense parent which neqs (jac <> None);
@@ -696,7 +696,7 @@ module Adjoint =
         type ('data, 'kind) linear_solver =
           ('data, 'kind) bsession -> ('data, 'kind) nvector -> unit
 
-        let band p jac bs nv nv' =
+        let band ?jac p bs nv nv' =
           let parent, which = parent_and_which bs in
           let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
           c_dls_band (parent, which) neqs p.mupper p.mlower (jac <> None);

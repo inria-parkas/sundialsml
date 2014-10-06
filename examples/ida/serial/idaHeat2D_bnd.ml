@@ -184,7 +184,7 @@ let main () =
      specify the linear solver.  *)
   let mu = mgrid and ml = mgrid in
   let mem =
-    Ida.init (Ida.Dls.band { Ida.mupper=mu; Ida.mlower=ml } None)
+    Ida.init (Ida.Dls.band { Ida.mupper=mu; Ida.mlower=ml })
              (Ida.SStolerances (rtol, atol))
              (fun t u u' r -> heatres t u u' r data)
              t0 wu wu'

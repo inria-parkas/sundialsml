@@ -386,7 +386,7 @@ let main () =
   (* Forward problem's setup. *)
   let ti = t0 in
   let ida_mem =
-    Ida.init (Ida.Dls.dense None)
+    Ida.init (Ida.Dls.dense ())
       (Ida.SStolerances (rtol,atol))
       (res data)
       ti
@@ -457,7 +457,7 @@ let main () =
   in
 
   let indexB1 =
-    Adjoint.init_backward ida_mem (Adjoint.Dls.dense None)
+    Adjoint.init_backward ida_mem (Adjoint.Dls.dense ())
       (Adjoint.SStolerances (rtola, atola))
       (Adjoint.WithSens (resBS1 data))
       tf wyyB1 wypB1
@@ -493,7 +493,7 @@ let main () =
   in
 
   let indexB2 =
-    Adjoint.init_backward ida_mem (Adjoint.Dls.dense None)
+    Adjoint.init_backward ida_mem (Adjoint.Dls.dense ())
       (Adjoint.SStolerances (rtola, atola))
       (Adjoint.WithSens (resBS2 data))
       tf
@@ -557,7 +557,7 @@ let main () =
   nvconst 0.0 q;
 
   let ida_mem =
-    Ida.init (Ida.Dls.dense None)
+    Ida.init (Ida.Dls.dense ())
       (Ida.SStolerances (rtolFD, atolFD))
       (res data)
       ti wyy wyp

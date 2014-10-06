@@ -277,7 +277,7 @@ let main () =
 
   (* Create CVODES object *)
   let cvode_mem =
-    Cvode.init Cvode.BDF (Cvode.Newton (Cvode.Dls.dense (Some (jac data))))
+    Cvode.init Cvode.BDF (Cvode.Newton (Cvode.Dls.dense ~jac:(jac data) ()))
       (Cvode.WFtolerances (ewt data)) (f data) t0 y
   in
 

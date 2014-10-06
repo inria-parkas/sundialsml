@@ -622,7 +622,7 @@ module Adjoint =
           : (serial_session * int) -> int -> int -> int -> bool -> unit
           = "c_cvodes_adj_dls_lapack_band"
 
-        let dense jac bs nv =
+        let dense ?jac () bs nv =
           let parent, which = parent_and_which bs in
           let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
           c_dls_dense parent which neqs (jac <> None);
@@ -631,7 +631,7 @@ module Adjoint =
             | None -> NoCallbacks
             | Some f -> BDenseCallback { jacfn = f; dmat = None }
 
-        let lapack_dense jac bs nv =
+        let lapack_dense ?jac () bs nv =
           let parent, which = parent_and_which bs in
           let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
           c_dls_lapack_dense parent which neqs (jac <> None);
@@ -643,7 +643,7 @@ module Adjoint =
         type ('data, 'kind) linear_solver =
           ('data, 'kind) bsession -> ('data, 'kind) nvector -> unit
 
-        let band p jac bs nv =
+        let band ?jac p bs nv =
           let parent, which = parent_and_which bs in
           let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
           c_dls_band (parent, which) neqs p.mupper p.mlower (jac <> None);
@@ -652,7 +652,7 @@ module Adjoint =
             | None -> NoCallbacks
             | Some f -> BBandCallback { bjacfn = f; bmat = None }
 
-        let lapack_band p jac bs nv =
+        let lapack_band ?jac p bs nv =
           let parent, which = parent_and_which bs in
           let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
           c_dls_lapack_band (parent,which) neqs p.mupper p.mlower (jac <> None);

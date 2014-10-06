@@ -1271,7 +1271,7 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
             @idas <node7#sss:lin_solv_b> IDADenseB
             @idas <node7#SECTION00729200000000000000> IDADlsSetDenseJacFnB
             @idas <node7#ss:densejac_b> IDADlsDenseJacFnB *)
-        val dense : dense_jac_fn option -> serial_linear_solver
+        val dense : ?jac:dense_jac_fn -> unit -> serial_linear_solver
 
         (** Direct linear solver with banded matrix.  The arguments specify the
             width of the band ({!bandrange}) and an optional Jacobian
@@ -1282,7 +1282,7 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
             @idas <node7#sss:lin_solv_b> IDABandB
             @idas <node7#SECTION00729300000000000000> IDADlsSetBandJacFnB
             @idas <node7#ss:bandjac_b> IDADlsBandJacFnB *)
-        val band : bandrange -> band_jac_fn option -> serial_linear_solver
+        val band : ?jac:band_jac_fn -> bandrange -> serial_linear_solver
       end
 
     (** {4:adjbwdspils Scaled Preconditioned Iterative Linear Solvers (SPILS)} *)

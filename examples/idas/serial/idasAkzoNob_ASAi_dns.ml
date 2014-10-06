@@ -245,7 +245,7 @@ let main () =
   in
 
   (* Call IDACreate and IDAInit to initialize IDA memory *)
-  let mem = Ida.init (Ida.Dls.dense None) (Ida.SStolerances (rtol,atol))
+  let mem = Ida.init (Ida.Dls.dense ()) (Ida.SStolerances (rtol,atol))
               (res data) t0 wyy wyp
   in
 
@@ -285,7 +285,7 @@ let main () =
   and wypB = Nvector_serial.wrap ypB
   in
 
-  let indexB = Adjoint.init_backward mem (Adjoint.Dls.dense None)
+  let indexB = Adjoint.init_backward mem (Adjoint.Dls.dense ())
                  (Adjoint.SStolerances (rtolb, atolb))
                  (Adjoint.NoSens (resB data))
                  tf wyB wypB

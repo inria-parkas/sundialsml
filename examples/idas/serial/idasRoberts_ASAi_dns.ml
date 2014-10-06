@@ -304,7 +304,7 @@ let main () =
   print_string "Create and allocate IDAS memory for forward runs\n";
 
   let ida_mem =
-    Ida.init (Ida.Dls.dense (Some (jac data)))
+    Ida.init (Ida.Dls.dense ~jac:(jac data) ())
       (Ida.WFtolerances (ewt data))
       (res data)
       t0
@@ -372,7 +372,7 @@ let main () =
 
   let indexB =
     Adjoint.init_backward ida_mem
-      (Adjoint.Dls.dense (Some (jacB data)))
+      (Adjoint.Dls.dense ~jac:(jacB data) ())
       (Adjoint.SStolerances (reltolB, abstolB))
       (Adjoint.NoSens (resB data))
       tb2 wyB wypB

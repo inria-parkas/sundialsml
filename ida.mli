@@ -230,7 +230,7 @@ module Dls :
       @ida <node5#sss:optin_dls> IDADlsSetDenseJacFn
       @ida <node5#ss:djacFn> Dense Jacobian function
       @ida <node3#ss:ivp_soln> IVP solution  *)
-    val dense : dense_jac_fn option -> serial_linear_solver
+    val dense : ?jac:dense_jac_fn -> unit -> serial_linear_solver
 
     (** Direct linear solver with dense matrix, using LAPACK.  The
         argument is the same as [Dense].
@@ -239,7 +239,7 @@ module Dls :
         @ida <node5#sss:optin_dls> IDADlsSetDenseJacFn
         @ida <node5#ss:djacFn> Dense Jacobian function
         @ida <node3#ss:ivp_soln> IVP solution  *)
-    val lapack_dense : dense_jac_fn option -> serial_linear_solver
+    val lapack_dense : ?jac:dense_jac_fn -> unit -> serial_linear_solver
 
     (** The type of a user-supplied callback function that computes an
         approximation to the Jacobian matrix for the {!band} and
@@ -296,7 +296,7 @@ module Dls :
         @ida <node5#sss:optin_dls> IDADlsSetBandJacFn
         @ida <node5#ss:bjacFn> Banded Jacobian function
         @ida <node3#ss:ivp_soln> IVP solution *)
-    val band : bandrange -> band_jac_fn option -> serial_linear_solver
+    val band : ?jac:band_jac_fn -> bandrange -> serial_linear_solver
 
     (** Direct linear solver with banded matrix using LAPACK.  The
         arguments are the same as {!band}.
@@ -305,7 +305,7 @@ module Dls :
         @ida <node5#sss:optin_dls> IDADlsSetBandJacFn
         @ida <node5#ss:bjacFn> Banded Jacobian function
         @ida <node3#ss:ivp_soln> IVP solution *)
-    val lapack_band : bandrange -> band_jac_fn option -> serial_linear_solver
+    val lapack_band : ?jac:band_jac_fn -> bandrange -> serial_linear_solver
 
 
     (** {4 Low-level solver manipulation} *)

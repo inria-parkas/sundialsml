@@ -327,7 +327,7 @@ let main () =
   let cvode_mem =
     Cvode.init
         Cvode.BDF
-        (Cvode.Newton (Cvode.Dls.dense None))
+        (Cvode.Newton (Cvode.Dls.dense ()))
         (Cvode.SStolerances (reltol, abstol))
         (f data)
         t0
@@ -390,7 +390,7 @@ let main () =
   (* Create and initialize backward problems (one for each column of the Hessian) *)
   let cvode_memB1 =
     Adj.init_backward cvode_mem Cvode.BDF
-                                (Adj.Newton (Adj.Dls.dense None))
+                                (Adj.Newton (Adj.Dls.dense ()))
                                 (Adj.SStolerances (reltol, abstolB))
                                 (Adj.WithSens (fB1 data))
                                 tf yB1
@@ -400,7 +400,7 @@ let main () =
 
   let cvode_memB2 =
     Adj.init_backward cvode_mem Cvode.BDF
-                                (Adj.Newton (Adj.Dls.dense None))
+                                (Adj.Newton (Adj.Dls.dense ()))
                                 (Adj.SStolerances (reltol, abstolB))
                                 (Adj.WithSens (fB2 data))
                                 tf yB2
@@ -457,7 +457,7 @@ let main () =
   let cvode_mem =
     Cvode.init
         Cvode.BDF
-        (Cvode.Newton (Cvode.Dls.dense None))
+        (Cvode.Newton (Cvode.Dls.dense ()))
         (Cvode.SStolerances (reltol, abstol))
         (f data)
         t0

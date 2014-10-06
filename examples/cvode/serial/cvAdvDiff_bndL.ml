@@ -221,7 +221,7 @@ let main () =
   (* Call CVLapackBand to specify the CVBAND band linear solver *)
   (* Set the user-supplied Jacobian routine Jac *)
   let solver = Cvode.Dls.lapack_band {Cvode.mupper = my; Cvode.mlower = my}
-                              (Some (jac data))
+                                     ~jac:(jac data)
   in
   let cvode_mem = Cvode.init Cvode.BDF (Cvode.Newton solver)
                              (Cvode.SStolerances (reltol, abstol))

@@ -284,7 +284,7 @@ let main () =
 
   (* Call CVBand with  bandwidths ml = mu = MY, *)
   let solver = Cvode.Dls.band {Cvode.mupper = my; Cvode.mlower = my}
-                              (Some (jac data))
+                              ~jac:(jac data)
   in
   let cvode_mem = Cvode.init Cvode.BDF (Cvode.Newton solver)
                              (Cvode.SStolerances (reltol, abstol))
@@ -308,7 +308,7 @@ let main () =
   printf "\nCreate and allocate CVODES memory for backward run\n";
 
   let bsolver = Adjoint.Dls.band {Adjoint.mupper = my; Adjoint.mlower = my}
-                                 (Some (jacb data)) in
+                                 ~jac:(jacb data) in
   let bcvode_mem = Adjoint.init_backward cvode_mem
         Cvode.BDF
         (Adjoint.Newton bsolver)

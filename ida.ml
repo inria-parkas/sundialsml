@@ -105,7 +105,7 @@ module Dls =
     external set_dense_jac_fn : serial_session -> unit
         = "c_ida_dls_set_dense_jac_fn"
 
-    let dense jac session nv nv' =
+    let dense ?jac () session nv nv' =
       let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
       (session.ls_callbacks <-
         match jac with
@@ -113,7 +113,7 @@ module Dls =
         | Some f -> DenseCallback { jacfn = f; dmat = None });
       c_dls_dense session neqs (jac <> None)
 
-    let lapack_dense jac session nv nv' =
+    let lapack_dense ?jac () session nv nv' =
       let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
       (session.ls_callbacks <-
         match jac with
@@ -121,7 +121,7 @@ module Dls =
         | Some f -> DenseCallback { jacfn = f; dmat = None });
       c_dls_lapack_dense session neqs (jac <> None)
 
-    let band p jac session nv nv' =
+    let band ?jac p session nv nv' =
       let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
       (session.ls_callbacks <-
         match jac with
@@ -129,7 +129,7 @@ module Dls =
         | Some f -> BandCallback { bjacfn = f; bmat = None });
       c_dls_band session neqs p.mupper p.mlower (jac <> None)
 
-    let lapack_band p jac session nv nv' =
+    let lapack_band ?jac p session nv nv' =
       let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
       (session.ls_callbacks <-
         match jac with

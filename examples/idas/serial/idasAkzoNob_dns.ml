@@ -194,7 +194,7 @@ let main () =
   in
 
   (* Call IDACreate and IDAInit to initialize IDA memory *)
-  let mem = Ida.init (Ida.Dls.dense None) (Ida.SStolerances (rtol,atol))
+  let mem = Ida.init (Ida.Dls.dense ()) (Ida.SStolerances (rtol,atol))
                      (res data) t0 wyy wyp
   in
 

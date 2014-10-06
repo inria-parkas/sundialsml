@@ -220,14 +220,14 @@ module Dls :
 
     (** Direct linear solver with dense matrix.  The optional argument specifies
         a callback function that computes an approximation to the Jacobian
-        matrix (see {!dense_jac_fn} for details).  If this argument is [None],
+        matrix (see {!dense_jac_fn} for details).  If this argument is omitted,
         then CVODE uses a default implementation based on difference quotients.
         See also {!Dls}.
 
         @cvode <node5#sss:lin_solv_init> CVDense
         @cvode <node5#sss:optin_dls> CVDlsSetDenseJacFn
         @cvode <node5#ss:djacFn> Dense Jacobian function *)
-    val dense : dense_jac_fn option -> serial_linear_solver
+    val dense : ?jac:dense_jac_fn -> unit -> serial_linear_solver
 
     (** Direct linear solver with dense matrix, using LAPACK.  The argument is
         the same as [Dense].  See also {!Dls}.
@@ -238,7 +238,7 @@ module Dls :
         @cvode <node5#sss:lin_solv_init> CVLapackDense
         @cvode <node5#sss:optin_dls> CVDlsSetDenseJacFn
         @cvode <node5#ss:djacFn> Dense Jacobian function *)
-    val lapack_dense : dense_jac_fn option -> serial_linear_solver
+    val lapack_dense : ?jac:dense_jac_fn -> unit -> serial_linear_solver
 
     (** A user-supplied callback function that computes an approximation to
         the Jacobian matrix for the Band and Lapackband {!linear_solver}s.  If
@@ -272,13 +272,13 @@ module Dls :
 
     (** Direct linear solver with banded matrix.  The arguments specify the
         width of the band ({!bandrange}) and an optional Jacobian function
-        ({!band_jac_fn}).  If the Jacobian function is [None], CVODE uses an
+        ({!band_jac_fn}).  If the Jacobian function is omitted, CVODE uses an
         internal implementation based on difference quotients.
 
         @cvode <node5#sss:lin_solv_init> CVBand
         @cvode <node5#sss:optin_dls> CVDlsSetBandJacFn
         @cvode <node5#ss:bjacFn> Banded Jacobian function *)
-    val band : bandrange -> band_jac_fn option -> serial_linear_solver
+    val band : ?jac:band_jac_fn -> bandrange -> serial_linear_solver
 
     (** Direct linear solver with banded matrix using LAPACK.  The arguments
         are the same as [Band].
@@ -289,7 +289,7 @@ module Dls :
         @cvode <node5#sss:lin_solv_init> CVLapackBand
         @cvode <node5#sss:optin_dls> CVDlsSetBandJacFn
         @cvode <node5#ss:bjacFn> Banded Jacobian function *)
-    val lapack_band : bandrange -> band_jac_fn option -> serial_linear_solver
+    val lapack_band : ?jac:band_jac_fn -> bandrange -> serial_linear_solver
 
     (** {4 Low-level solver manipulation} *)
 
@@ -310,8 +310,7 @@ module Dls :
         It may be unsafe to use this function without a {!reinit}.  Users are
         encouraged to use the [iter_type] parameter of {!reinit} instead,
         unless they are desperate for performance.  *)
-    val set_band_jac_fn : serial_session
-                                                        -> band_jac_fn -> unit
+    val set_band_jac_fn : serial_session -> band_jac_fn -> unit
 
     (** Remove the user-supplied band Jacobian function, if any, and fall back
         to IDA's internal implementation (see [Band] in {!linear_solver}).  It

@@ -395,7 +395,7 @@ let main () =
   (* Call IDACreate and IDABand to initialize IDA including the linear
      solver. *)
   let mu = nsmx and ml = nsmx in
-  let solver = Ida.Dls.band { Ida.mupper = mu; Ida.mlower = ml } None in
+  let solver = Ida.Dls.band { Ida.mupper = mu; Ida.mlower = ml } in
   let mem = Ida.init solver (Ida.SStolerances (rtol, atol))
                      (resweb webdata) t0 wc wc' in
   let tout1 = 0.001 in

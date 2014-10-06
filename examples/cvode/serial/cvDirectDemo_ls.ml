@@ -172,13 +172,13 @@ let prepare_next_run cvode_mem lmm miter mu ml t y =
     | Dense_User -> begin
           printf "Dense, User-Supplied Jacobian\n";
           Cvode.reinit cvode_mem t y
-            ~iter_type:(Cvode.Newton (Cvode.Dls.dense (Some jac1)))
+            ~iter_type:(Cvode.Newton (Cvode.Dls.dense ~jac:jac1 ()))
         end
 
     | Dense_DQ -> begin
           printf("Dense, Difference Quotient Jacobian\n");
           Cvode.reinit cvode_mem t y
-            ~iter_type:(Cvode.Newton (Cvode.Dls.dense None))
+            ~iter_type:(Cvode.Newton (Cvode.Dls.dense ()))
         end
 
     | Diag -> begin
@@ -193,7 +193,7 @@ let prepare_next_run cvode_mem lmm miter mu ml t y =
             ~iter_type:
               (Cvode.Newton
                  (Cvode.Dls.band { Cvode.mupper = mu; Cvode.mlower = ml }
-                                 (Some jac2)))
+                                 ~jac:jac2))
         end
 
     | Band_DQ -> begin
@@ -201,7 +201,7 @@ let prepare_next_run cvode_mem lmm miter mu ml t y =
           Cvode.reinit cvode_mem t y
             ~iter_type:
               (Cvode.Newton
-                 (Cvode.Dls.band { Cvode.mupper = mu; Cvode.mlower = ml } None))
+                 (Cvode.Dls.band { Cvode.mupper = mu; Cvode.mlower = ml }))
         end
 
     | Func -> assert false

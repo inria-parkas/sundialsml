@@ -240,7 +240,7 @@ let main () =
   printf "Create and allocate CVODES memory for forward runs\n";
 
   let cvode_mem =
-    Cvode.init Cvode.BDF (Cvode.Newton (Cvode.Dls.dense (Some (jac data))))
+    Cvode.init Cvode.BDF (Cvode.Newton (Cvode.Dls.dense ~jac:(jac data) ()))
       (Cvode.WFtolerances (ewt data)) (f data) t0 y
   in
 
@@ -285,7 +285,7 @@ let main () =
 
   let cvode_memB =
     Adj.init_backward cvode_mem Cvode.BDF
-                                (Adj.Newton (Adj.Dls.dense (Some (jacb data))))
+                                (Adj.Newton (Adj.Dls.dense ~jac:(jacb data) ()))
                                 (Adj.SStolerances (reltolB, abstolB))
                                 (Adj.NoSens (fB data))
                                 tb1 yB

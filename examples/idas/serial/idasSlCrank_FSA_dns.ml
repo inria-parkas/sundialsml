@@ -288,7 +288,7 @@ let main () =
   (* IDA initialization *)
   (* Call IDADense and set up the linear solver. *)
   let mem =
-    Ida.init (Ida.Dls.dense None)
+    Ida.init (Ida.Dls.dense ())
       (Ida.SStolerances (rtolf, atolf))
       (ressc data)
       tbegin
@@ -348,7 +348,7 @@ let main () =
 
   (* Call IDADense and set up the linear solver. *)
   let mem =
-    Ida.init (Ida.Dls.dense None)
+    Ida.init (Ida.Dls.dense ())
       (Ida.SStolerances (rtolfd, atolfd))
       (ressc data)
       tbegin wyy wyp
