@@ -11,7 +11,7 @@
 (***********************************************************************)
 
 (**
-  {2 Direct Linear Solvers.}
+  {2 Direct Linear Solvers. }
 
   @version VERSION()
   @author Timothy Bourke (Inria)

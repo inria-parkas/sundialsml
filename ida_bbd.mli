@@ -20,7 +20,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(** Interface to the IDA Parallel Band-Block-Diagonal preconditioners.
+(** Parallel band-block-diagonal preconditioners for IDA (requires MPI).
 
     @version VERSION()
     @author Timothy Bourke (Inria)

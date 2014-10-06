@@ -20,7 +20,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(** Interface to the CVODES Adjoint Parallel Band-Block-Diagonal preconditioner.
+(** Parallel band-block-diagonal preconditioners for CVODES (requires MPI).
 
     @version VERSION()
     @author Timothy Bourke (Inria)

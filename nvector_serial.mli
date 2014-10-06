@@ -10,8 +10,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(** Interface to Serial nvectors that are manipulated by the standard operations
-    provided by Sundials.
+(** The standard serial nvectors of Sundials.
 
     @cvode <node7#ss:nvec_ser> NVECTOR_SERIAL *)
 

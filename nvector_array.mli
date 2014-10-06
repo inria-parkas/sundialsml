@@ -10,7 +10,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(** Nvectors for standard arrays.
+(** A custom nvector based on {!float array}s.
 
   @version VERSION()
   @author Timothy Bourke (Inria)

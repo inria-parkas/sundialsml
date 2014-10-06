@@ -10,9 +10,8 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(** Interface to Parallel NVectors manipulated by the standard operations
-    provided by Sundials. Requires MPI.
- 
+(** The standard parallel nvectors of Sundials (requires MPI). 
+
     @cvode <node7#ss:nvec_par> NVECTOR_PARALLEL *)
 type kind
 

@@ -10,7 +10,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(** Generic definitions for the Sundials suite.
+(** Generic definitions, arrays, and utility functions.
 
  @version VERSION()
  @author Timothy Bourke (Inria)

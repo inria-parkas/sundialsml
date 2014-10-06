@@ -20,7 +20,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(** Interface to the KINSOL Parallel Band-Block-Diagonal preconditioners.
+(** Parallel band-block-diagonal preconditioners for KINSOL (requires MPI).
 
     @version VERSION()
     @author Timothy Bourke (Inria)
@@ -31,7 +31,7 @@
 type data = Nvector_parallel.data
 type kind = Nvector_parallel.kind
 type parallel_session = (data, kind) Kinsol.session
-type parallel_linear_solver = (data, kind) Kinsol_impl.linear_solver
+type parallel_linear_solver = (data, kind) Kinsol.linear_solver
 
 type bandwidths =
   {

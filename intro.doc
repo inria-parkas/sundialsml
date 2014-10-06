@@ -103,11 +103,11 @@ custom solvers could be implemented through {!Cvode.Alternate},
 
 {2:linsolv Linear Solvers}
 
-Besides the nonlinear algebraic systems treated by {!Kinsol}, the use of
-Newton iteration in ODE initial value problems with {!Cvode}, and the
-treatment of DAE initial value problems in {!Ida} also involve the
-resolution of nonlinear constraints. Such systems are solved using some form
-of Newton iteration which in turn requires the solution of linear equations.
+Nonlinear algebraic systems occur optionally in the solution of ODE initial
+value problems with {!Cvode}, invariably when solving DAE initial value
+problems with {!Ida}, and directly in the problems treated by {!Kinsol}.
+Such systems are solved using some form of Newton iteration which in turn
+requires the solution of linear equations.
 
 Sundials provides four options for the solution of linear equations:
 {ul
@@ -136,6 +136,13 @@ routines, operating directly on bigarrays, are also provided in the
 submodules of {!Spils}. Parallel Band-Block-Diagonal (BBD) preconditioners
 are available to sessions that use parallel nvectors—see {!Cvode_bbd},
 {!Cvodes_bbd}, {!Ida_bbd}, {!Idas_bbd}, and {!Kinsol_bbd}.
+
+Each solver module includes a distinct type for linear solvers, e.g.,
+{!Cvode.linear_solver} or {!Cvodes.Adjoint.linear_solver}. As for nvectors,
+these types are parameterised by data and kind arguments. Values in these
+types are constructed by passing parameters to functions like
+{!Cvode.Dls.band}, {!Ida.Spils.spgmr}, or {!Kinsol_bbd.sptfqmr}. They can then
+be passed to the appopriate [init] or [reinit] functions to configure sessions.
 
 {2:modules Modules}
 

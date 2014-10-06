@@ -20,7 +20,8 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(** CVODES adds sensitivity analysis (forward and adjoint) to CVODES.
+(** Sensitivity analysis (forward and adjoint) and quadrature equations
+    for CVODE.
 
   @version VERSION()
   @author Timothy Bourke (Inria)

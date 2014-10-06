@@ -21,7 +21,8 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(** Interface to the IDAS solver.
+(** Sensitivity analysis (forward and adjoint) and quadrature equations for
+    IDA.
 
   @version VERSION()
   @author Timothy Bourke (Inria)

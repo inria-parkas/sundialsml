@@ -20,8 +20,8 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(** IDA solves DAE initial value problems using a variable-step solver with
-    zero-crossing detection (root finding).
+(** Variable-step solution of DAE initial value problems with
+    zero-crossing detection.
 
  @version VERSION()
  @author Timothy Bourke (Inria)

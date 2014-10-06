@@ -10,7 +10,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(** Create custom nvectors.
+(** An interface for creating custom nvectors in OCaml.
  
     @version VERSION()
     @author Timothy Bourke (Inria)

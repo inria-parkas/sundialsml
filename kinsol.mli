@@ -20,7 +20,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(** KINSOL solves nonlinear systems using Newton-Krylov techniques.
+(** Solves nonlinear systems using Newton-Krylov techniques.
 
  @version VERSION()
  @author Timothy Bourke (Inria)

@@ -20,7 +20,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(** Interface to the IDAS Adjoint Parallel Band-Block-Diagonal preconditioner.
+(** Parallel band-block-diagonal preconditioners for IDAS (requires MPI).
 
     @version VERSION()
     @author Timothy Bourke (Inria)
