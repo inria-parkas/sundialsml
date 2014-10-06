@@ -242,13 +242,17 @@ div#intro {
   margin: 0px auto;
 }
 
+div#intro code {
+  font-weight: normal;
+}
+
 div.info {
   font-size: 11pt;
   max-width: 40em;
   padding-bottom: .7em;
 }
 
-div.info > code {
+div.info code {
   font-weight: normal;
 }
 
