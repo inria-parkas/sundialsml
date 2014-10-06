@@ -48,14 +48,9 @@ exception NonPositiveEwt
 
 (** {2 Arrays} *)
 
+(** Vectors of floats (1-dimensional bigarrays). *)
 module RealArray :
   sig
-    (** Utilities for manipulating 1-dimensional bigarrays of floats,
-        suitable for use with sundials.  Most of the functions in this
-        submodule mimic those of {{:OCAML_DOC_ROOT(Array)} (Array)},
-        with the exceptions of {!create} and {!sub}, which are modeled
-        after {{:OCAML_DOC_ROOT(Bigarray.Array1)} (Bigarray)}.  *)
-
     (** A {{:OCAML_DOC_ROOT(Bigarray.Array1)} (Bigarray)} vector of floats. *)
     type t = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
 
@@ -141,6 +136,7 @@ module RealArray :
     val mapi : (int -> float -> float) -> t -> unit
   end
 
+(** Matrices of floats (wrappers around two-dimensional bigarrays). *)
 module RealArray2 :
   sig
     (** A {{:OCAML_DOC_ROOT(Bigarray.Array2)} (Bigarray)} 2D vector of floats. *)
@@ -194,6 +190,7 @@ module RealArray2 :
     val unwrap : t -> data
   end
 
+(** Vectors of integers (one dimensional bigarrays). *)
 module LintArray :
   sig
     (** A {{:OCAML_DOC_ROOT(Bigarray.Array1)} (Bigarray)} vector of integers. *)
@@ -212,7 +209,6 @@ module LintArray :
 module Roots :
   sig
     type t
-    type val_array = RealArray.t
 
     type root_event =
       | NoRoot      (** No root (0)       *)

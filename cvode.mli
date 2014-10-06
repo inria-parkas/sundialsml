@@ -965,7 +965,7 @@ type 'a rhsfn = float -> 'a -> 'a -> unit
 
     @cvode <node5#ss:rootFn>         Rootfinding function
  *)
-type 'a rootsfn = (float -> 'a -> Sundials.Roots.val_array -> unit)
+type 'a rootsfn = (float -> 'a -> Sundials.RealArray.t -> unit)
 
 (** [init lmm iter tol f ~roots:(nroots, g) ~t0:t0 (neqs, y0)] initializes the
     CVODE solver and returns a {!session}.

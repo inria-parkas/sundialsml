@@ -329,7 +329,6 @@ module Roots =
   struct
     open Bigarray
     type t = (int32, int32_elt, c_layout) Array1.t
-    type val_array = RealArray.t
 
     type root_event =
       | NoRoot

@@ -308,7 +308,7 @@ type cvode_file
 type c_weak_ref
 
 type 'a rhsfn = float -> 'a -> 'a -> unit
-type 'a rootsfn = float -> 'a -> Sundials.Roots.val_array -> unit
+type 'a rootsfn = float -> 'a -> Sundials.RealArray.t -> unit
 type errh = Sundials.error_details -> unit
 type 'a errw = 'a -> 'a -> unit
 

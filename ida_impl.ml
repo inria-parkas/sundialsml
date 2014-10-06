@@ -296,7 +296,7 @@ type c_weak_ref
 type ida_file
 
 type 'a resfn = float -> 'a -> 'a -> 'a -> unit
-type 'a rootsfn = float -> 'a -> 'a -> Sundials.Roots.val_array -> unit
+type 'a rootsfn = float -> 'a -> 'a -> Sundials.RealArray.t -> unit
 type errh = Sundials.error_details -> unit
 type 'a errw = 'a -> 'a -> unit
 

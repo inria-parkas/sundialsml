@@ -912,7 +912,7 @@ type 'a resfn = float -> 'a -> 'a -> 'a -> unit
 
     @ida <node5#ss:rootFn>         Rootfinding function
   *)
-type 'a rootsfn = float -> 'a -> 'a -> Roots.val_array -> unit
+type 'a rootsfn = float -> 'a -> 'a -> RealArray.t -> unit
 
 (** [init linsolv tol f ~roots:(nroots, g) ~t0:t0 y0 y'0] initializes
     the IDA solver to solve the DAE f t y y' = 0 and returns a
@@ -927,7 +927,7 @@ type 'a rootsfn = float -> 'a -> 'a -> Roots.val_array -> unit
                 defaults to 0,
     - [y0]      is a vector of initial values for the dependent-variable vector
                 [y].  This vector's size determines the number of equations
-                in the session, see {!Sundials.RealArray.t}, and,
+                in the session, see {!RealArray.t}, and,
     - [y'0]     is a vector of initial values for [y'], i.e. the derivative
                 of [y] with respect to t.  This vector's size must match the
                 size of [y0].
