@@ -256,6 +256,17 @@ div.info code {
   font-weight: normal;
 }
 
+div.info span.keyword {
+  font-weight: normal;
+}
+
+div.raisedexceptions {
+    margin-top: 1em;
+}
+div.raisedexceptions span.raises {
+    font-style: italic;
+}
+
 ol {
     padding-left: 2.0em;
 }

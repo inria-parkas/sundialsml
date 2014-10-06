@@ -34,6 +34,9 @@ let idas_doc_root =
 let kinsol_doc_root =
   ref "https://computation.llnl.gov/casc/sundials/documentation/kin_guide/"
 
+let bp = Printf.bprintf
+let bs = Buffer.add_string
+
 #if OCAML_3X == 1
 class dochtml =
   object(self)
@@ -128,6 +131,28 @@ struct
       | [color; text] ->
           Printf.sprintf "<span style=\"color: %s;\">%s</span>" color text
       | _ -> assert false
+
+    method html_of_raised_exceptions b l =
+      match l with
+        [] -> ()
+      | (s, t) :: [] ->
+          bs b "<div class=\"raisedexceptions\">";
+          bp b "<span class=\"raises\">%s</span> <code>%s</code> "
+            Odoc_messages.raises
+            s;
+          self#html_of_text b t;
+          bs b "</div>\n"
+      | _ ->
+          bs b "<div class=\"raisedexceptions\">";
+          bp b "<span class=\"raises\">%s</span><ul>" Odoc_messages.raises;
+          List.iter
+            (fun (ex, desc) ->
+              bp b "<li><code>%s</code> " ex ;
+              self#html_of_text b desc;
+              bs b "</li>\n"
+            )
+            l;
+          bs b "</ul></div>\n"
 
     val mutable custom_functions =
       ([] : (string * (string -> string)) list)
