@@ -54,20 +54,20 @@ exception NonPositiveEwt
 
 (** {2 Arrays} *)
 
-(** Vectors of floats (1-dimensional bigarrays). *)
+(** Vectors of floats (one-dimensional bigarrays). *)
 module RealArray :
   sig
-    (** A {{:OCAML_DOC_ROOT(Bigarray.Array1)} Bigarray} vector of floats. *)
+    (** A {{:OCAML_DOC_ROOT(Bigarray.Array1)} Bigarray} of floats. *)
     type t = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
 
-    (** [make n x] returns an array with [n] elements each initialized to [x]. *)
+    (** [make n x] returns an array with [n] elements each set to [x]. *)
     val make : int -> float -> t
 
     (** [create n] returns an uninitialized array with [n] elements. *)
     val create : int -> t
 
     (** [init n f] returns an array with [n] elements, with element [i]
-        initialized to [f i]. *)
+        set to [f i]. *)
     val init : int -> (int -> float) -> t
 
     (** Creates an array by copying the contents of a {{:OCAML_DOC_ROOT(Array)}
@@ -144,7 +144,7 @@ module RealArray2 :
     type data = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
 
     (** [make nr nc v] returns an array with [nr] rows and [nc] columns, and
-        with elements initialized to [v]. *)
+        with elements set to [v]. *)
     val make : int -> int -> float -> t
 
     (** [create nr nc] returns an uninitialized array with [nr] rows and [nc]
@@ -187,22 +187,22 @@ module RealArray2 :
     val unwrap : t -> data
   end
 
-(** Vectors of integers (one dimensional bigarrays). *)
+(** Vectors of integers (one-dimensional bigarrays). *)
 module LintArray :
   sig
-    (** A {{:OCAML_DOC_ROOT(Bigarray.Array1)} (Bigarray)} vector of integers. *)
+    (** A {{:OCAML_DOC_ROOT(Bigarray.Array1)} Bigarray} of integers. *)
     type t = (int, Bigarray.int_elt, Bigarray.c_layout) Bigarray.Array1.t
 
-    (** [make n v] returns an new array with [n] elements each set to [v]. *)
+    (** [make n x] returns an array with [n] elements each set to [v]. *)
     val make  : int -> int -> t
 
-    (** [create n] returns an uninitialized new array with [n] elements. *)
+    (** [create n] returns an uninitialized array with [n] elements. *)
     val create  : int -> t
   end
 
 (** {2 Arrays of roots (zero-crossings)} *)
 
-(** Utility functions for arrays of roots (zero-crossings). *)
+(** Vectors of root (zero-crossing) statuses. *)
 module Roots :
   sig
     type t
@@ -297,8 +297,7 @@ module Roots :
     val fill : t -> int -> int -> root_event -> unit
   end
 
-(** Utility functions for arrays of directions to detect on root functions
-    (increasing/decreasing/either). *)
+(** Vectors of root (zero-crossing) directions. *)
 module RootDirs :
   sig
     type t
@@ -371,40 +370,37 @@ module RootDirs :
 
 (** {2 Solver results and error reporting} *)
 
-(**
- Possible values returned when a CVODE/IDA solver step function succeeds.
- Failures are indicated by exceptions.
-
+(** Result of a successful {{!Cvode.step_normal}CVODE} or
+    {{!Ida.step_normal}IDA} step. Failures are indicated by exceptions.
+ 
  @cvode <node5#sss:cvode> CVode
- @ida <node5#sss:ida> IDASolve
- *)
+ @ida <node5#sss:idasolve> IDASolve *)
 type solver_result =
   | Continue            (** CV_SUCCESS / IDA_SUCCESS *)
   | RootsFound          (** CV_ROOT_RETURN / IDA_ROOT_RETURN *)
   | StopTimeReached     (** CV_TSTOP_RETURN / IDA_TSTOP_RETURN *)
 
-(**
- Type of values passed to a registered error handler function.
+(** Information passed to registered error handler functions.
+    See {!Cvode.set_err_handler_fn}, {!Ida.set_err_handler_fn}, and
+    {!Kinsol.set_err_handler_fn}.
 
- @cvode <node5#sss:optin_main> CVodeSetErrHandlerFn
- @ida <node5#sss:optin_main> IDASetErrHandlerFn
- *)
+ @cvode <node5#ss:ehFn> CVodeErrHandlerFn
+ @ida <node5#ss:ehFn> IDAErrHandlerFn
+ @kinsol <node5#ss:ehFn> KINErrHandlerFn *)
 type error_details = {
     error_code : int;
-    module_name : string;               (** IDA, CVODE, CVSPGMR, etc. *)
+    module_name : string;        (** IDA, CVODE, CVSPGMR, etc. *)
     function_name : string;
     error_message : string;
   }
 
 (** {2 Miscellaneous utility functions} *)
 
-(** [format_float fmt f] formats [f] according to the format string [fmt],
-    using the low-level [caml_format_float] function. *)
+(** [format_float fmt f] formats [f] according to the format string [fmt].
+    It uses the low-level [caml_format_float] function. *)
 val format_float : string -> float -> string
 
-(** Equivalent to [format_float "%a"].
-  
-    [floata f] returns the bit-level representation of [f] in
-    hexadecimal as a string. *)
+(** Returns the bit-level representation of a float in hexadecimal as a string.
+    Equivalent to [format_float "%a"]. *)
 val floata : float -> string
 

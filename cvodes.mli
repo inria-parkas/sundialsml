@@ -556,7 +556,6 @@ let sp = { pvals = Some p; pbar = ...; plist = ... }]}
 
       @cvode <node6#ss:sens_optional_output> CVodeGetStgrSensNumNonlinSolvIters *)
     val get_num_stgr_nonlin_solv_iters : ('a, 'k) session
-
                                          -> Sundials.LintArray.t -> unit
 
     (** Returns the number of nonlinear convergence failures that have occurred
