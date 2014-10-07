@@ -16,7 +16,7 @@ include IdaBbdTypes
 type data = Nvector_parallel.data
 type kind = Nvector_parallel.kind
 type parallel_session = (data, Nvector_parallel.kind) Ida.session
-type parallel_linear_solver = (data, Nvector_parallel.kind) linear_solver
+type parallel_preconditioner = (data, kind) SpilsTypes.preconditioner
 
 module Impl = IdaBbdParamTypes
 type local_fn = data Impl.local_fn
@@ -48,43 +48,15 @@ external c_bbd_prec_init
     : parallel_session -> int -> bandwidths -> float -> bool -> unit
     = "c_ida_bbd_prec_init"
 
-external c_spgmr
-  : ('a, 'k) session -> int -> unit
-  = "c_ida_spils_spgmr"
-
-external c_spbcg
-  : ('a, 'k) session -> int -> unit
-  = "c_ida_spils_spbcg"
-
-external c_sptfqmr
-  : ('a, 'k) session -> int -> unit
-  = "c_ida_spils_sptfqmr"
-
-external c_set_max_restarts : ('a, 'k) session -> int -> unit
-  = "c_ida_spils_set_max_restarts"
-
-let spgmr ?(maxl=0) ?(max_restarts=5) ?(dqrely=0.0) bws cb session nv nv' =
+let init_preconditioner dqrely bandwidths callbacks session nv nv' =
   let ba, _, _ = Nvector.unwrap nv in
   let localn   = Sundials.RealArray.length ba in
-  if max_restarts <> 5 then
-    c_set_max_restarts session max_restarts;
-  c_spgmr session maxl;
-  c_bbd_prec_init session localn bws dqrely (cb.comm_fn <> None);
-  session.ls_callbacks <- BBDCallback (bbd_callbacks cb)
+  c_bbd_prec_init session localn bandwidths dqrely (callbacks.comm_fn <> None);
+  session.ls_callbacks <- BBDCallback (bbd_callbacks callbacks)
 
-let spbcg ?(maxl=0) ?(dqrely=0.0) bws cb session nv nv' =
-  let ba, _, _ = Nvector.unwrap nv in
-  let localn   = Sundials.RealArray.length ba in
-  c_spbcg session maxl;
-  c_bbd_prec_init session localn bws dqrely (cb.comm_fn <> None);
-  session.ls_callbacks <- BBDCallback (bbd_callbacks cb)
-
-let sptfqmr ?(maxl=0) ?(dqrely=0.0) bws cb session nv nv' =
-  let ba, _, _ = Nvector.unwrap nv in
-  let localn   = Sundials.RealArray.length ba in
-  c_sptfqmr session maxl;
-  c_bbd_prec_init session localn bws dqrely (cb.comm_fn <> None);
-  session.ls_callbacks <- BBDCallback (bbd_callbacks cb)
+let prec_left ?(dqrely=0.0) bandwidths callbacks =
+  SpilsTypes.InternalPrecLeft
+    (init_preconditioner dqrely bandwidths callbacks)
 
 external c_bbd_prec_reinit
     : parallel_session -> int -> int -> float -> unit

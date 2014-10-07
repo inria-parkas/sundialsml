@@ -751,33 +751,42 @@ module Adjoint =
           : ('a, 'k) session -> int -> int -> unit
           = "c_idas_adj_spils_sptfqmr"
 
-        let init_spils init bs maxl prec =
+        external c_set_max_restarts : ('a, 'k) session -> int -> int -> unit
+          = "c_idas_adj_spils_set_max_restarts"
+
+        let init_preconditioner solve setup jac_times bs parent which nv nv' =
+          c_set_preconditioner parent which (setup <> None);
+          c_set_jac_times_vec_fn parent which (jac_times <> None);
+          (tosession bs).ls_callbacks <-
+            BSpilsCallback { prec_solve_fn = solve;
+                             prec_setup_fn = setup;
+                             jac_times_vec_fn = jac_times }
+
+        let prec_none = InternalPrecNone
+        let prec_left ?setup ?jac_times_vec solve =
+          InternalPrecLeft (init_preconditioner solve setup jac_times_vec)
+
+        let init_spils init maxl prec bs nv nv' =
           let parent, which = parent_and_which bs in
           match prec with
-          | PrecNone -> init parent which maxl
-          | PrecLeft (solve, setup, jac_times) ->
+          | InternalPrecNone -> init parent which maxl
+          | InternalPrecLeft set_prec ->
             init parent which maxl;
-            c_set_preconditioner parent which
-              (setup <> None);
-            c_set_jac_times_vec_fn parent which
-              (jac_times <> None);
-            (tosession bs).ls_callbacks <-
-              BSpilsCallback { prec_solve_fn = solve;
-                               prec_setup_fn = setup;
-                               jac_times_vec_fn = jac_times }
+            set_prec bs parent which nv nv'
 
-        let prec_none = PrecNone
-        let prec_left ?setup ?jac_times_vec solve =
-          PrecLeft (solve, setup, jac_times_vec)
+        let spgmr ?(maxl=0) ?max_restarts prec bs nv nv' =
+          init_spils c_spils_spgmr maxl prec bs nv nv';
+          (match max_restarts with
+           | Some maxr ->
+             let parent, which = parent_and_which bs in
+             c_set_max_restarts parent which maxr
+           | None -> ())
 
-        let spgmr ?(maxl=0) prec bs _ _ =
-          init_spils c_spils_spgmr bs maxl prec
+        let spbcg ?(maxl=0) prec bs nv nv' =
+          init_spils c_spils_spbcg maxl prec bs nv nv'
 
-        let spbcg ?(maxl=0) prec bs _ _ =
-          init_spils c_spils_spbcg bs maxl prec
-
-        let sptfqmr ?(maxl=0) prec bs _ _ =
-          init_spils c_spils_sptfqmr bs maxl prec
+        let sptfqmr ?(maxl=0) prec bs nv nv' =
+          init_spils c_spils_sptfqmr maxl prec bs nv nv'
 
         external set_gs_type
             : ('a, 'k) bsession -> Spils.gramschmidt_type -> unit

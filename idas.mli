@@ -1400,7 +1400,7 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
           -> unit
 
         (** Specifies a preconditioner, including the type of
-            preconditioning to be done (none or right), and a set of
+            preconditioning to be done (none or left), and a set of
             three callbacks if applicable:
 
             - [solve], the main function that solves the
@@ -1416,14 +1416,14 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
               If the user doesn't give such a function, IDA uses a
               default implementation based on difference quotients.
 
-            The following convenience functions are provided for
-            constructing values of this type concisely:
-
-            - {!prec_none} is just [PrecNone].
-            - {!prec_left} creates [PrecLeft] but takes optional
-              fields as optional arguments: e.g. [prec_left
-              ~setup:setup solve] returns [PrecLeft (solve, setup,
-              None)].
+            Like the {!linear_solver}, there are several functions
+            which construct preconditioners.  The simplest is
+            {!prec_none}, which does no preconditioning.  Arbitrary
+            user-defined preconditioners can be constructed through
+            {!prec_left}, which takes user-defined [solve], [setup],
+            and [jac_times_vec], with the last two optional.
+            {!Idas_bbd} gives access to the parallel band-block
+            diagonal preconditioners that come with IDAS.
 
             @idas <node7#SECTION00729400000000000000> IDASpilsSetPreconditionerB
             @idas <node7#SECTION00729400000000000000> IDASpilsSetJacTimesVecFnB
@@ -1431,27 +1431,28 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
             @idas <node7#ss:psetup_b> IDASpilsPrecSetupFnB
             @idas <node7#ss:jactimesvec_b> IDASpilsJacTimesVecFnB
         *)
-        type 'a preconditioner =
-          | PrecNone
-          | PrecLeft of 'a prec_solve_fn
-                        * 'a prec_setup_fn option
-                        * 'a jac_times_vec_fn option
+        type ('a, 'k) preconditioner =
+          ('a, 'k) AdjointTypes.SpilsTypes.preconditioner
 
         (** See {!preconditioner}.  *)
-        val prec_none : 'a preconditioner
+        val prec_none : ('a, 'k) preconditioner
 
         (** See {!preconditioner}. *)
         val prec_left :
           ?setup:'a prec_setup_fn
           -> ?jac_times_vec:'a jac_times_vec_fn
           -> 'a prec_solve_fn
-          -> 'a preconditioner
+          -> ('a, 'k) preconditioner
 
-        (** Krylov iterative solver with the scaled preconditioned
-            GMRES method.  The arguments specify the maximum dimension
-            of the Krylov subspace and preconditioning type
-            ({!Ida.spils_params}) and the preconditioner callback
-            functions ({!callbacks}).
+        (** Krylov iterative linear solver with the scaled
+            preconditioned GMRES method.  Called like [spgmr
+            ~maxl:maxl ~max_restarts:maxr prec], where:
+
+            - [~maxl] is the maximum dimension of the Krylov subspace.
+              Defaults to [5].
+            - [~max_restarts] is the maximum number of restarts.
+              Defaults to [5].  Passing [0] disables restarts.
+            - [prec] is a preconditioner.  See {!preconditioner}.
 
             @idas <node7#sss:lin_solv_b> IDASpgmrB
             @idas <node7#SECTION00729400000000000000> IDASpilsSetPreconditionerB
@@ -1459,10 +1460,13 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
             @idas <node7#ss:psetup_b> IDASpilsPrecSetupFnB
             @idas <node7#ss:jactimesvec_b> IDASpilsJacTimesVecFnB
          *)
-        val spgmr : ?maxl:int -> 'a preconditioner -> ('a, 'b) linear_solver
+        val spgmr : ?maxl:int -> ?max_restarts:int
+                  -> ('a, 'k) preconditioner -> ('a, 'k) linear_solver
 
-        (** Krylov iterative solver with the scaled preconditioned Bi-CGStab
-            method. The arguments are the same as [Spgmr].
+        (** Krylov iterative solver with the scaled preconditioned
+            Bi-CGStab method.  The arguments are the same as [Spgmr],
+            except the maximum number of restarts ([~max_restarts])
+            cannot be specified.
 
             @idas <node7#sss:lin_solv_b> IDASpbcgB
             @idas <node7#SECTION00729400000000000000> IDASpilsSetPreconditionerB
@@ -1470,10 +1474,13 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
             @idas <node7#ss:psetup_b> IDASpilsPrecSetupFnB
             @idas <node7#ss:jactimesvec_b> IDASpilsJacTimesVecFnB
          *)
-        val spbcg : ?maxl:int -> 'a preconditioner -> ('a, 'b) linear_solver
+        val spbcg : ?maxl:int -> ('a, 'k) preconditioner
+                  -> ('a, 'k) linear_solver
 
-        (** Krylov iterative with the scaled preconditioned TFQMR method.  The
-            arguments are the same as [Spgmr].  See also {!Spils}.
+        (** Krylov iterative with the scaled preconditioned TFQMR
+            method.  The arguments are the same as [Spgmr], except the
+            maximum number of restarts ([~max_restarts]) cannot be
+            specified.
 
             @idas <node7#sss:lin_solv_b> IDASptfqmrB
             @idas <node7#SECTION00729400000000000000> IDASpilsSetPreconditionerB
@@ -1481,7 +1488,8 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
             @idas <node7#ss:psetup_b> IDASpilsPrecSetupFnB
             @idas <node7#ss:jactimesvec_b> IDASpilsJacTimesVecFnB
          *)
-        val sptfqmr : ?maxl:int -> 'a preconditioner -> ('a, 'b) linear_solver
+        val sptfqmr : ?maxl:int -> ('a, 'k) preconditioner
+                    -> ('a, 'k) linear_solver
 
         (** {5:adjbwdspilsoptin Optional Input Functions} *)
 

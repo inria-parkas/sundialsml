@@ -195,10 +195,6 @@ module Spils =
   struct
     include SpilsTypes
 
-    let prec_none = PrecNone
-    let prec_left ?setup ?jac_times_vec solve =
-      PrecLeft (solve, setup, jac_times_vec)
-
     external c_spgmr
       : ('a, 'k) session -> int -> unit
       = "c_ida_spils_spgmr"
@@ -215,57 +211,64 @@ module Spils =
       : ('a, 'k) session -> bool -> unit
       = "c_ida_spils_set_preconditioner"
 
-    external c_set_max_restarts : ('a, 'k) session -> int -> unit
-      = "c_ida_spils_set_max_restarts"
-
     external c_set_jac_times_vec_fn : ('a, 'k) session -> bool -> unit
       = "c_ida_spils_set_jac_times_vec_fn"
 
-    let init_prec session = function
-      | PrecNone -> ()
-      | PrecLeft (solve, setup, jac_times) ->
-        c_set_preconditioner session (setup <> None);
-        c_set_jac_times_vec_fn session (jac_times <> None);
-        session.ls_callbacks <- SpilsCallback { prec_solve_fn = solve;
-                                                prec_setup_fn = setup;
-                                                jac_times_vec_fn = jac_times }
+    external c_set_max_restarts : ('a, 'k) session -> int -> unit
+      = "c_ida_spils_set_max_restarts"
 
-    let spgmr ?(maxl=0) ?max_restarts prec session _ _ =
-      c_spgmr session maxl;
+    let init_preconditioner solve setup jac_times session nv nv' =
+      c_set_preconditioner session (setup <> None);
+      c_set_jac_times_vec_fn session (jac_times <> None);
+      session.ls_callbacks <-
+        SpilsCallback { prec_solve_fn = solve;
+                        prec_setup_fn = setup;
+                        jac_times_vec_fn = jac_times }
+
+    let prec_none = InternalPrecNone
+    let prec_left ?setup ?jac_times_vec solve =
+      InternalPrecLeft (init_preconditioner solve setup jac_times_vec)
+
+    let init_spils init maxl prec session nv nv' =
+      match prec with
+      | InternalPrecNone -> init session maxl
+      | InternalPrecLeft set_prec ->
+        init session maxl;
+        set_prec session nv nv'
+
+    let spgmr ?(maxl=0) ?max_restarts prec session nv nv' =
+      init_spils c_spgmr maxl prec session nv nv';
       (match max_restarts with
        | Some m -> c_set_max_restarts session m
-       | None -> ());
-      init_prec session prec
+       | None -> ())
 
-    let spbcg ?(maxl=0) prec session _ _ =
-      c_spbcg session maxl;
-      init_prec session prec
+    let spbcg ?(maxl=0) prec session nv nv' =
+      init_spils c_spbcg maxl prec session nv nv'
 
-    let sptfqmr ?(maxl=0) prec session _ _ =
-      c_sptfqmr session maxl;
-      init_prec session prec
+    let sptfqmr ?(maxl=0) prec session nv nv' =
+      init_spils c_sptfqmr maxl prec session nv nv'
 
     let set_preconditioner s ?setup solve =
       match s.ls_callbacks with
       | SpilsCallback cbs ->
+        c_set_preconditioner s (setup <> None);
         s.ls_callbacks <- SpilsCallback { cbs with
                                           prec_setup_fn = setup;
-                                          prec_solve_fn = solve };
-        c_set_preconditioner s (setup <> None)
+                                          prec_solve_fn = solve }
       | _ -> failwith "spils solver not in use"
 
     let set_jac_times_vec_fn s f =
       match s.ls_callbacks with
-       | SpilsCallback cbs ->
-         s.ls_callbacks <- SpilsCallback { cbs with jac_times_vec_fn=Some f };
-         c_set_jac_times_vec_fn s true
-       | _ -> failwith "spils solver not in use"
+      | SpilsCallback cbs ->
+        c_set_jac_times_vec_fn s true;
+        s.ls_callbacks <- SpilsCallback { cbs with jac_times_vec_fn = Some f }
+      | _ -> failwith "spils solver not in use"
 
     let clear_jac_times_vec_fn s =
       match s.ls_callbacks with
       | SpilsCallback cbs ->
-        s.ls_callbacks <- SpilsCallback { cbs with jac_times_vec_fn = None };
-        c_set_jac_times_vec_fn s false
+        c_set_jac_times_vec_fn s false;
+        s.ls_callbacks <- SpilsCallback { cbs with jac_times_vec_fn = None }
       | _ -> failwith "spils solver not in use"
 
     external set_gs_type : ('a, 'k) session -> Spils.gramschmidt_type -> unit

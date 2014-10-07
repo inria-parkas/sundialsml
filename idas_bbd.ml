@@ -18,7 +18,8 @@ type kind = Nvector_parallel.kind
 
 type parallel_session = (data, Nvector_parallel.kind) Idas.session
 type parallel_bsession = (data, Nvector_parallel.kind) Idas.Adjoint.bsession
-type parallel_linear_solver = (data, kind) Idas.Adjoint.linear_solver
+type parallel_preconditioner =
+  (data, kind) AdjointTypes.SpilsTypes.preconditioner
 
 let tosession = AdjointTypes.tosession
 
@@ -58,49 +59,16 @@ let parent_and_which s =
   | BwdSensExt se -> (se.parent, se.which)
   | _ -> failwith "Internal error: bsession invalid"
 
-external c_spgmr
-  : ('a, 'k) session -> int -> int -> unit
-  = "c_idas_adj_spils_spgmr"
-
-external c_spbcg
-  : ('a, 'k) session -> int -> int -> unit
-  = "c_idas_adj_spils_spbcg"
-
-external c_sptfqmr
-  : ('a, 'k) session -> int -> int -> unit
-  = "c_idas_adj_spils_sptfqmr"
-
-external c_set_max_restarts : ('a, 'k) session -> int -> int -> unit
-  = "c_idas_adj_spils_set_max_restarts"
-
-let spgmr ?(maxl=0) ?max_restarts ?(dqrely=0.0) bws cb bs nv nv' =
-  let parent, which = parent_and_which bs in
+let init_preconditioner dqrely bandwidths callbacks bs parent which nv nv' =
   let ba, _, _ = Nvector.unwrap nv in
   let localn   = Sundials.RealArray.length ba in
-  c_spgmr parent which maxl;
-  (match max_restarts with
-   | Some m -> c_set_max_restarts parent which m
-   | None -> ());
-  c_bbd_prec_initb (parent, which) localn bws dqrely (cb.comm_fn <> None);
-  (tosession bs).ls_callbacks <- BBBDCallback (bbd_callbacks cb)
+  c_bbd_prec_initb (parent, which) localn bandwidths dqrely
+    (callbacks.comm_fn <> None);
+  (tosession bs).ls_callbacks <- BBBDCallback (bbd_callbacks callbacks)
 
-let spbcg ?(maxl=0) ?(dqrely=0.0) bws cb bs nv nv' =
-  let parent, which = parent_and_which bs in
-  let ba, _, _ = Nvector.unwrap nv in
-  let localn   = Sundials.RealArray.length ba in
-  c_spbcg parent which maxl;
-  c_bbd_prec_initb (parent, which) localn bws dqrely
-                                            (cb.comm_fn <> None);
-  (tosession bs).ls_callbacks <- BBBDCallback (bbd_callbacks cb)
-
-let sptfqmr ?(maxl=0) ?(dqrely=0.0) bws cb bs nv nv' =
-  let parent, which = parent_and_which bs in
-  let ba, _, _ = Nvector.unwrap nv in
-  let localn   = Sundials.RealArray.length ba in
-  c_sptfqmr parent which maxl;
-  c_bbd_prec_initb (parent, which) localn bws dqrely
-                                            (cb.comm_fn <> None);
-  (tosession bs).ls_callbacks <- BBBDCallback (bbd_callbacks cb)
+let prec_left ?(dqrely=0.0) bandwidths callbacks =
+  AdjointTypes.SpilsTypes.InternalPrecLeft
+    (init_preconditioner dqrely bandwidths callbacks)
 
 external c_bbd_prec_reinitb
     : parallel_session -> int -> int -> int -> float -> unit

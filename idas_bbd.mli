@@ -31,7 +31,7 @@
 type data = Nvector_parallel.data
 type kind = Nvector_parallel.kind
 type parallel_bsession = (data, kind) Idas.Adjoint.bsession
-type parallel_linear_solver = (data, kind) Idas.Adjoint.linear_solver
+type parallel_preconditioner = (data, kind) Idas.Adjoint.Spils.preconditioner
 
 type bandwidths = Ida_bbd.bandwidths =
   {
@@ -67,42 +67,22 @@ type callbacks =
           exception is treated as an unrecoverable error. *)
   }
 
-(** Same as {!Idas.Adjoint.Spils.spgmr} but with the Parallel
-    Band-Block-Diagonal preconditioner.  Called like [spgmr ~maxl:maxl
-    ~max_restarts:maxr ~dqrely:dqrely bandwidths cbs], where:
+(** Same as {!Idas.Adjoint.Spils.prec_left} but uses the Parallel
+    Band-Block-Diagonal preconditioner included in IDAS.  Called like
+    [prec_left ~dqrely:dqrely bandwidths callbacks], where:
 
-    - [~maxl] is the maximum dimension of the Krylov subspace.
-      Defaults to [5].
-    - [~max_restarts] is the maximum number of restarts.  Defaults to [5].
-      Passing [0] disables restarts.
-    - [~dqrely] is the relative increment in components of [y] used in
-      the difference quotient approximations.  Defaults to [sqrt
-      unit_roundoff].
-    - [bandwidths] give the bandwidths of the preconditioning matrix.
-    - [cbs] is a set of {!callbacks}.
+    - [~dqrely] gives the relative increment in components of [y] used in
+      the difference quotient approximations
+      (defaults to [sqrt unit_roundoff]).
+    - [bandwidths] specify the bandwidths to be used in the difference
+      quotient Jacobian operation.
+    - [callbacks] gives the preconditioning callbacks.  See the
+      {!callbacks} type.
 
     @idas <node7#sss:lin_solv_b> IDASpgmrB
     @idas <node7#SECTION00742100000000000000> IDABBDPrecInitB *)
-val spgmr : ?maxl:int -> ?max_restarts:int -> ?dqrely:float
-          -> Ida_bbd.bandwidths -> callbacks -> parallel_linear_solver
-
-(** Same as {!Idas.Adjoint.Spils.spbcg} but with the Parallel
-    Band-Block-Diagonal preconditioner. The arguments are the same as for
-    {!spgmr}.
-
-    @idas <node7#sss:lin_solv_b> IDASpbcgB
-    @idas <node7#SECTION00742100000000000000> IDABBDPrecInitB *)
-val spbcg : ?maxl:int -> ?dqrely:float -> Ida_bbd.bandwidths
-          -> callbacks -> parallel_linear_solver
-
-(** Same as {!Idas.Adjoint.Spils.sptfqmr} but with the Parallel
-    Band-Block-Diagonal preconditioner. The arguments are the same as for
-    {!spgmr}.
-
-    @idas <node7#sss:lin_solv_b> IDASptfqmrB
-    @idas <node7#SECTION00742100000000000000> IDABBDPrecInitB *)
-val sptfqmr : ?maxl:int -> ?dqrely:float -> Ida_bbd.bandwidths
-            -> callbacks -> parallel_linear_solver
+val prec_left : ?dqrely:float -> bandwidths -> callbacks
+              -> parallel_preconditioner
 
 (** [reinit s mudq mldq dqrely] reinitializes the BBD preconditioner
     with upper ([mudq]) and lower ([mldq]) half-bandwidths to be used in the

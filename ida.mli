@@ -523,8 +523,8 @@ module Spils :
       -> unit
 
     (** Specifies a preconditioner, including the type of
-        preconditioning to be done (none or right), and a set of
-        three callbacks if applicable:
+        preconditioning to be done (none or left), and a set of three
+        callbacks if applicable:
 
         - [solve], the main function that solves the preconditioning
           system $Pz = r$, where $P$ is a preconditioning matrix
@@ -535,16 +535,17 @@ module Spils :
           details.
         - [jac_times_vec], which multiplies the system Jacobian to a
           given vector.  See {!jac_times_vec_fn} for details.  If the
-          user doesn't give such a function, IDA uses a default
+          user doesn't give such a function, CVODE uses a default
           implementation based on difference quotients.
 
-        The following convenience functions are provided for
-        constructing values of this type concisely:
-
-        - {!prec_none} is just [PrecNone].
-        - {!prec_left} creates [PrecLeft] but takes optional fields
-          as optional arguments: e.g. [prec_left ~setup:setup solve]
-          returns [PrecLeft (solve, setup, None)].
+        Like the {!linear_solver}, there are several functions which
+        construct preconditioners.  The simples is {!prec_none}, which
+        does no preconditioning.  Arbitrary user-defined
+        preconditioners can be constructed through {!prec_left}, which
+        takes user-defined [solve], [setup], and [jac_times_vec], with
+        the last two optional.  {!Ida_bbd} gives access to the
+        parallel band-block diagonal preconditioners that come with
+        IDA.
 
         @ida <node5#sss:optin_spils> IDASpilsSetPreconditioner
         @ida <node5#sss:optin_spils> IDASpilsSetJacTimesVecFn
@@ -552,21 +553,17 @@ module Spils :
         @ida <node5#ss:precondFn> IDASpilsPrecSetupFn
         @ida <node5#ss:jtimesFn> IDASpilsJacTimesVecFn
     *)
-    type 'a preconditioner =
-      | PrecNone
-      | PrecLeft of 'a prec_solve_fn
-                    * 'a prec_setup_fn option
-                    * 'a jac_times_vec_fn option
+    type ('a, 'k) preconditioner = ('a, 'k) Ida_impl.SpilsTypes.preconditioner
 
     (** See {!preconditioner}.  *)
-    val prec_none : 'a preconditioner
+    val prec_none : ('a, 'k) preconditioner
 
     (** See {!preconditioner}. *)
     val prec_left :
       ?setup:'a prec_setup_fn
       -> ?jac_times_vec:'a jac_times_vec_fn
       -> 'a prec_solve_fn
-      -> 'a preconditioner
+      -> ('a, 'k) preconditioner
 
     (** Krylov iterative linear solver with the scaled preconditioned
         GMRES method.  Called like [spgmr ~maxl:maxl
@@ -584,7 +581,7 @@ module Spils :
         @ida <node5#sss:optin_spils> IDASpilsSetJacTimesVecFn
     *)
     val spgmr : ?maxl:int -> ?max_restarts:int
-      -> 'a preconditioner -> ('a, 'k) linear_solver
+      -> ('a, 'k) preconditioner -> ('a, 'k) linear_solver
 
     (** Krylov iterative linear solver with the scaled preconditioned
         Bi-CGStab method.  The arguments are the same as {!spgmr},
@@ -595,7 +592,7 @@ module Spils :
         @ida <node5#sss:optin_spils> IDASpilsSetPreconditioner
         @ida <node5#sss:optin_spils> IDASpilsSetJacTimesVecFn
     *)
-    val spbcg : ?maxl:int -> 'a preconditioner -> ('a, 'k) linear_solver
+    val spbcg : ?maxl:int -> ('a, 'k) preconditioner -> ('a, 'k) linear_solver
 
     (** Krylov iterative linear solver with the scaled preconditioned
         TFQMR method.  The arguments are the same as {!spgmr}, except
@@ -606,7 +603,7 @@ module Spils :
         @ida <node5#sss:optin_spils> IDASpilsSetPreconditioner
         @ida <node5#sss:optin_spils> IDASpilsSetJacTimesVecFn
     *)
-    val sptfqmr : ?maxl:int -> 'a preconditioner -> ('a, 'k) linear_solver
+    val sptfqmr : ?maxl:int -> ('a, 'k) preconditioner -> ('a, 'k) linear_solver
 
 
     (** {4 Low-level solver manipulation} *)

@@ -1160,16 +1160,17 @@ let main () =
   let mlkeep = 2 in
   let maxl = 16 in
   let linsolv =
-    Ida_bbd.spgmr ~maxl:maxl ~dqrely:zero
-      { Ida_bbd.mudq = mudq;
-        Ida_bbd.mldq = mldq;
-        Ida_bbd.mukeep = mukeep;
-        Ida_bbd.mlkeep = mlkeep;
-      }
-      {
-        Ida_bbd.local_fn = reslocal data;
-        Ida_bbd.comm_fn = None;
-      }
+    Ida.Spils.spgmr ~maxl:maxl
+      (Ida_bbd.prec_left ~dqrely:zero
+         { Ida_bbd.mudq = mudq;
+           Ida_bbd.mldq = mldq;
+           Ida_bbd.mukeep = mukeep;
+           Ida_bbd.mlkeep = mlkeep;
+         }
+         {
+           Ida_bbd.local_fn = reslocal data;
+           Ida_bbd.comm_fn = None;
+         })
   in
   let mem =
     Ida.init linsolv (Ida.SStolerances (rtol,atol))
@@ -1225,17 +1226,18 @@ let main () =
   let mukeep = 2 in
   let mlkeep = 2 in
   let linsolv =
-    Idas_bbd.spgmr ~maxl:maxl ~dqrely:zero
-      {
-        Ida_bbd.mudq = mudq;
-        Ida_bbd.mldq = mldq;
-        Ida_bbd.mukeep = mukeep;
-        Ida_bbd.mlkeep = mlkeep;
-      }
-      {
-        Idas_bbd.local_fn = resBlocal data;
-        Idas_bbd.comm_fn = None;
-      }
+    Adjoint.Spils.spgmr ~maxl:maxl
+      (Idas_bbd.prec_left ~dqrely:zero
+         {
+           Idas_bbd.mudq = mudq;
+           Idas_bbd.mldq = mldq;
+           Idas_bbd.mukeep = mukeep;
+           Idas_bbd.mlkeep = mlkeep;
+         }
+         {
+           Idas_bbd.local_fn = resBlocal data;
+           Idas_bbd.comm_fn = None;
+         })
   in
   let indexB =
     Adjoint.init_backward mem

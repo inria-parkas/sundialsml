@@ -866,16 +866,17 @@ let main () =
   let mlkeep = 2 in
   let maxl = 16 in
   let linsolv =
-    Ida_bbd.spgmr ~maxl:maxl ~dqrely:zero
-      { Ida_bbd.mudq = mudq;
-        Ida_bbd.mldq = mldq;
-        Ida_bbd.mukeep = mukeep;
-        Ida_bbd.mlkeep = mlkeep;
-      }
-      {
-        Ida_bbd.local_fn = reslocal data;
-        Ida_bbd.comm_fn = None;
-      }
+    Ida.Spils.spgmr ~maxl:maxl
+      (Ida_bbd.prec_left ~dqrely:zero
+         { Ida_bbd.mudq = mudq;
+           Ida_bbd.mldq = mldq;
+           Ida_bbd.mukeep = mukeep;
+           Ida_bbd.mlkeep = mlkeep;
+         }
+         {
+           Ida_bbd.local_fn = reslocal data;
+           Ida_bbd.comm_fn = None;
+         })
   in
   let mem =
     Ida.init linsolv (Ida.SStolerances (rtol,atol))

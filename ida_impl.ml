@@ -71,7 +71,7 @@ module SpilsCommonTypes = struct
     | ClassicalGS
 end
 
-module SpilsTypes = struct
+module SpilsTypes' = struct
   include SpilsCommonTypes
   type 'a prec_solve_fn =
     ('a single_tmp, 'a) jacobian_arg
@@ -92,13 +92,6 @@ module SpilsTypes = struct
       prec_setup_fn : 'a prec_setup_fn option;
       jac_times_vec_fn : 'a jac_times_vec_fn option;
     }
-
-  (* IDA(S) supports only left preconditioning.  *)
-  type 'a preconditioner =
-    | PrecNone
-    | PrecLeft of 'a prec_solve_fn
-                  * 'a prec_setup_fn option
-                  * 'a jac_times_vec_fn option
 end
 
 module IdaBbdParamTypes = struct
@@ -249,7 +242,7 @@ module AdjointTypes' = struct
   end
 
   (* Ditto. *)
-  module SpilsTypes = struct
+  module SpilsTypes' = struct
     include SpilsCommonTypes
     type 'a prec_solve_fn =
       ('a single_tmp, 'a) jacobian_arg
@@ -270,13 +263,6 @@ module AdjointTypes' = struct
         prec_setup_fn : 'a prec_setup_fn option;
         jac_times_vec_fn : 'a jac_times_vec_fn option;
       }
-
-    (* IDA(S) supports only left preconditioning.  *)
-    type 'a preconditioner =
-      | PrecNone
-      | PrecLeft of 'a prec_solve_fn
-                    * 'a prec_setup_fn option
-                    * 'a jac_times_vec_fn option
   end
 end
 
@@ -372,14 +358,14 @@ and ('a, 'kind) linsolv_callbacks =
 
   | DenseCallback of DlsTypes.dense_jac_callback
   | BandCallback  of DlsTypes.band_jac_callback
-  | SpilsCallback of 'a SpilsTypes.callbacks
+  | SpilsCallback of 'a SpilsTypes'.callbacks
   | BBDCallback of 'a IdaBbdParamTypes.callbacks
 
   | AlternateCallback of ('a, 'kind) alternate_linsolv
 
   | BDenseCallback of AdjointTypes'.DlsTypes.dense_jac_callback
   | BBandCallback  of AdjointTypes'.DlsTypes.band_jac_callback
-  | BSpilsCallback of 'a AdjointTypes'.SpilsTypes.callbacks
+  | BSpilsCallback of 'a AdjointTypes'.SpilsTypes'.callbacks
   | BBBDCallback of 'a IdasBbdParamTypes.callbacks
 
 and ('data, 'kind) alternate_linsolv =
@@ -421,6 +407,22 @@ type ('data, 'kind) linear_solver =
 type serial_linear_solver =
   (Nvector_serial.data, Nvector_serial.kind) linear_solver
 
+module SpilsTypes = struct
+  include SpilsTypes'
+
+  type ('a, 'k) set_preconditioner =
+    ('a, 'k) session -> ('a, 'k) nvector -> ('a, 'k) nvector -> unit
+
+  (* IDA(S) supports only left preconditioning.  *)
+  type ('a, 'k) preconditioner =
+    | InternalPrecNone
+    | InternalPrecLeft of ('a, 'k) set_preconditioner
+
+  type serial_preconditioner =
+    (Nvector_serial.data, Nvector_serial.kind) preconditioner
+
+end
+
 module AlternateTypes = struct
   type ('data, 'kind) callbacks = ('data, 'kind) alternate_linsolv =
     {
@@ -447,6 +449,23 @@ module AdjointTypes = struct
     -> unit
   type serial_linear_solver =
     (Nvector_serial.data, Nvector_serial.kind) linear_solver
+
+  module SpilsTypes = struct
+    include SpilsTypes'
+
+    type ('a, 'k) set_preconditioner =
+      ('a, 'k) bsession -> ('a, 'k) session -> int ->
+      ('a, 'k) nvector -> ('a, 'k) nvector -> unit
+
+    (* IDA(S) supports only left preconditioning.  *)
+    type ('a, 'k) preconditioner =
+      | InternalPrecNone
+      | InternalPrecLeft of ('a, 'k) set_preconditioner
+
+    type serial_preconditioner =
+      (Nvector_serial.data, Nvector_serial.kind) preconditioner
+
+  end
 end
 
 let read_weak_ref x : ('a, 'kind) session =

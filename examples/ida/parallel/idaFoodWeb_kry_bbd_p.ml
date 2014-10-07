@@ -817,16 +817,17 @@ let main () =
   let mudq = nsmxsub and mldq = nsmxsub
   and mukeep = 2 and mlkeep = 2 in
   let linsolver =
-    Ida_bbd.spgmr ~maxl:maxl ~dqrely:zero
-      { Ida_bbd.mudq = mudq;
-        Ida_bbd.mldq = mldq;
-        Ida_bbd.mukeep = mukeep;
-        Ida_bbd.mlkeep = mlkeep;
-      }
-      {
-        Ida_bbd.local_fn = (reslocal webdata );
-        Ida_bbd.comm_fn = None;
-      }
+    Ida.Spils.spgmr ~maxl:maxl
+      (Ida_bbd.prec_left ~dqrely:zero
+         { Ida_bbd.mudq = mudq;
+           Ida_bbd.mldq = mldq;
+           Ida_bbd.mukeep = mukeep;
+           Ida_bbd.mlkeep = mlkeep;
+         }
+         {
+           Ida_bbd.local_fn = (reslocal webdata );
+           Ida_bbd.comm_fn = None;
+         })
   in
   let mem =
     Ida.init linsolver (Ida.SStolerances (rtol,atol))

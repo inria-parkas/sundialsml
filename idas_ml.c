@@ -1551,6 +1551,20 @@ CAMLprim value c_idas_adj_spils_spgmr (value vparent, value vwhich,
     CAMLreturn (Val_unit);
 }
 
+/* For SPGMR only. */
+CAMLprim value c_idas_adj_spils_set_max_restarts (value vida_mem, value vwhich,
+						  value vmaxr)
+{
+    CAMLparam3 (vida_mem, vwhich, vmaxr);
+    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
+    int flag;
+
+    flag = IDASpilsSetMaxRestartsB (ida_mem, Int_val (vwhich), Int_val (vmaxr));
+    CHECK_FLAG ("IDASpilsSetMaxRestartsB", flag);
+
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value c_idas_adj_spils_spbcg (value vparent, value vwhich,
 				       value vmaxl)
 {
@@ -1653,19 +1667,6 @@ CAMLprim value c_idas_adj_spils_set_gs_type(value vparent, value vwhich,
     int flag = IDASpilsSetGSTypeB(IDA_MEM_FROM_ML(vparent), Int_val(vwhich),
 				 spils_gs_type(vgstype));
     SCHECK_FLAG("IDASpilsSetGSTypeB", flag);
-
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value c_idas_adj_spils_set_max_restarts (value vparent, value vwhich,
-						  value vmaxr)
-{
-    CAMLparam3 (vparent, vwhich, vmaxr);
-    int flag;
-
-    flag = IDASpilsSetMaxRestartsB (IDA_MEM_FROM_ML(vparent), Int_val (vwhich),
-				    Int_val (vmaxr));
-    CHECK_FLAG ("IDASpilsSetMaxRestartsB", flag);
 
     CAMLreturn (Val_unit);
 }
