@@ -1569,26 +1569,20 @@ val get_nonlin_solv_stats : ('a, 'k) session -> int *int
 
 (** {3 Input} *)
 
-(**
- Values for root directions.
- @ida <node5#sss:optin_root> IDASetRootDirection
- *)
-type root_direction = Sundials.RootDirs.root_direction
-
 (** [set_root_direction s dir] specifies the direction of
     zero-crossings to be located and returned. [dir] may contain one
     entry of type {!Ida.root_direction} for each root function.
 
     @ida <node5#sss:optin_root> IDASetRootDirection
  *)
-val set_root_direction : ('a, 'k) session -> root_direction array -> unit
+val set_root_direction : ('a, 'k) session -> Sundials.RootDirs.d array -> unit
 
 (** Like {!set_root_direction} but specifies a single direction of
     type {!Ida.root_direction} for all root functions.
 
   @ida <node5#sss:optin_root> IDASetRootDirection
  *)
-val set_all_root_directions : ('a, 'k) session -> root_direction -> unit
+val set_all_root_directions : ('a, 'k) session -> Sundials.RootDirs.d -> unit
 
 (**
   Disables issuing a warning if some root function appears to be identically

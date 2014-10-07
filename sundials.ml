@@ -177,6 +177,7 @@ module type ArrayBaseOps =
   sig
     type t
     type elt
+    val error_name : string
     val create : int -> t
     val get : t -> int -> elt
     val set : t -> int -> elt -> unit
@@ -264,22 +265,16 @@ module ArrayLike (A : ArrayBaseOps) =
 
     let to_list a = fold_right (fun x xs -> x::xs) a []
 
-    let fill a offs len x =
-      let n = length a in
-      if len < 0 || offs < 0 || n < offs+len
-      then invalid_arg "Sundials.ArrayLike.fill"
-      else
-        for i = offs to offs + len - 1 do
-          set a i x
-        done
-
-    let fill_all a x = fill a 0 (length a) x
+    let fill a x =
+      for i = 0 to length a - 1 do
+        set a i x
+      done
 
     let blit_some a oa b ob len =
       let na = length a
       and nb = length b in
       if len < 0 || oa < 0 || na < oa+len || ob < 0 || nb < ob+len
-      then invalid_arg "Sundials.ArrayLike.blit"
+      then invalid_arg (Printf.sprintf "%s.blit" error_name)
       else
         for i = 0 to len-1 do
           set b (ob + i) (get a (oa + i))
@@ -320,36 +315,35 @@ module Roots =
     open Bigarray
     type t = (int32, int32_elt, c_layout) Array1.t
 
-    type root_event =
+    type r =
       | NoRoot
       | Rising
       | Falling
 
-    let root_event_of_int32 = function
+    let root_of_int32 = function
       | 1l -> Rising
       | -1l -> Falling
       | 0l -> NoRoot
       | n ->
         failwith
           (Printf.sprintf
-             "Sundials.Roots.root_event_of_int32: invalid root event %ld" n)
+             "Sundials.Roots.root_of_int32: invalid root event %ld" n)
 
-    let root_event_of_int = function
-      | 1 -> Rising
+    let root_of_int = function
+      |  1 -> Rising
       | -1 -> Falling
-      | 0 -> NoRoot
+      |  0 -> NoRoot
       | n ->
         failwith
-          ("Sundials.Roots.root_event_of_int: invalid root event "
-           ^ string_of_int n)
+          ("Sundials.Roots.root_of_int: invalid root event " ^ string_of_int n)
 
-    let int32_of_root_event x =
+    let int32_of_root x =
       match x with
       | NoRoot -> 0l
       | Rising -> 1l
       | Falling -> -1l
 
-    let int_of_root_event x =
+    let int_of_root x =
       match x with
       | NoRoot -> 0
       | Rising -> 1
@@ -358,8 +352,8 @@ module Roots =
     let reset v = Array1.fill v 0l
 
     let detected roots i = roots.{i} <> 0l
-    let get roots i = root_event_of_int32 (roots.{i})
-    let set a i v = a.{i} <- int32_of_root_event v
+    let get roots i = root_of_int32 (roots.{i})
+    let set a i v = a.{i} <- int32_of_root v
 
     let create n =
       let a = Array1.create int32 c_layout n in
@@ -370,7 +364,8 @@ module Roots =
 
     module A = ArrayLike (struct
       type t = (int32, int32_elt, c_layout) Array1.t
-      and elt = root_event
+      and elt = r
+      let error_name = "Roots"
       let get = get
       let set = set
       let create = create
@@ -388,7 +383,6 @@ module Roots =
     let to_list = A.to_list
 
     let fill = A.fill
-    let fill_all = A.fill_all
     let blit_some = A.blit_some
     let blit = A.blit
 
@@ -406,12 +400,6 @@ module Roots =
       let n = length a in
       let rec go i = a.{i} <> 0l || (i < n-1 && go (i+1)) in
       go 0
-
-    let string_of_root_event e =
-      match e with
-      | NoRoot -> "NoRoot"
-      | Rising -> "Rising"
-      | Falling -> "Falling"
   end
 
 module RootDirs =
@@ -419,23 +407,17 @@ module RootDirs =
     open Bigarray
     type t = (int32, int32_elt, c_layout) Array1.t
 
-    type root_direction =
+    type d =
       | Increasing
       | Decreasing
       | IncreasingOrDecreasing
 
-    let string_of_root_direction d =
-      match d with
-      | Increasing -> "Increasing"
-      | Decreasing -> "Decreasing"
-      | IncreasingOrDecreasing -> "IncreasingOrDecreasing"
-
-    let int32_of_root_direction x =
+    let int32_of_rootdir x =
       match x with
       | Increasing -> 1l
       | Decreasing -> -1l
       | IncreasingOrDecreasing -> 0l
-    let root_direction_of_int32 x =
+    let rootdir_of_int32 x =
       match x with
       | 1l -> Increasing
       | -1l -> Decreasing
@@ -443,35 +425,35 @@ module RootDirs =
       | n ->
         failwith
           (Printf.sprintf
-             "Sundials.Roots.root_direction_of_int32: \
-              invalid root direction code %ld" n)
+             "Sundials.Roots.rootdir_of_int32: invalid root direction %ld" n)
 
     let make n x =
       let a = Array1.create int32 c_layout n in
-      Array1.fill a (int32_of_root_direction x);
+      Array1.fill a (int32_of_rootdir x);
       a
 
     let create n = make n IncreasingOrDecreasing
 
     let length a = Array1.dim a
 
-    let copy_n n src =
+    let copy n src =
       let nsrc = Array.length src in
       let a = Array1.create int32 c_layout n in
       if n > nsrc
-      then Array1.fill a (int32_of_root_direction IncreasingOrDecreasing);
+      then Array1.fill a (int32_of_rootdir IncreasingOrDecreasing);
       for i = 0 to min n nsrc - 1 do
-        a.{i} <- int32_of_root_direction src.(i)
+        a.{i} <- int32_of_rootdir src.(i)
       done;
       a
 
-    let set a i v = a.{i} <- int32_of_root_direction v
-    let get a i = root_direction_of_int32 a.{i}
+    let set a i v = a.{i} <- int32_of_rootdir v
+    let get a i = rootdir_of_int32 a.{i}
 
     module A = ArrayLike (
       struct
         type t = (int32, int32_elt, c_layout) Array1.t
-        and elt = root_direction
+        and elt = d
+        let error_name = "RootDirs"
         let create = create
         let set = set
         let get = get
@@ -483,7 +465,6 @@ module RootDirs =
     let to_array  = A.to_array
     let to_list   = A.to_list
     let fill      = A.fill
-    let fill_all  = A.fill_all
     let blit_some = A.blit_some
     let blit      = A.blit
 

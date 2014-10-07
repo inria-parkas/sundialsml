@@ -71,7 +71,7 @@ module RealArray :
     val init : int -> (int -> float) -> t
 
     (** Creates an array by copying the contents of a {{:OCAML_DOC_ROOT(Array)}
-        float array}. *)
+        [float array]}. *)
     val of_array : float array -> t
 
     (** Creates an array by copying the contents of a
@@ -87,7 +87,7 @@ module RealArray :
     (** Copies into a {{:OCAML_DOC_ROOT(List)} [float list]}. *)
     val to_list : t -> float list
 
-    (** Create a new array with the same contents as an existing one. *)
+    (** Creates a new array with the same contents as an existing one. *)
     val copy : t -> t
 
     (** Access a sub-array of the given array without copying. *)
@@ -205,167 +205,158 @@ module LintArray :
 (** Vectors of root (zero-crossing) statuses. *)
 module Roots :
   sig
+    (** Arrays that communicate the occurrence of zero-crossings. The
+        underlying representation is hidden to isolate compatability
+        issues related to integers. *)
     type t
 
-    type root_event =
-      | NoRoot      (** No root (0)       *)
-      | Rising      (** Rising root (1)   *)
-      | Falling     (** Falling root (-1) *)
+    (** Values indicating the status of root functions.
+        @cvode <node5#sss:optout_root> CVodeGetRootInfo
+        @ida <node5#sss:optout_root> IdaGetRootInfo *)
+    type r =
+      | NoRoot      (** No root was found on the corresponding function (0). *)
+      | Rising      (** The corresponding root function is increasing (1). *)
+      | Falling     (** The corresponding root function is decreasing (-1). *)
 
-    (** [create n] returns an array with [n] elements, each set to NoRoot. *)
+    (** [create n] returns an array with [n] elements each set to [NoRoot]. *)
     val create : int -> t
 
-    (** [make n x] returns an array with [n] elements, each set to [x]. *)
-    val make : int -> root_event -> t
+    (** [make n x] returns an array with [n] elements each set to [x]. *)
+    val make : int -> r -> t
 
-    (** Returns the length of an array *)
+    (** Returns the length of an array. *)
     val length : t -> int
 
-    (** [detected r i] returns [true] if the value of the [i]th element of [r]
-        is either Rising or Falling. *)
+    (** Returns [true] only if the specified element is either [Rising] or
+        [Falling]. *)
     val detected : t -> int -> bool
 
-    (** [rising r i] returns [true] if the value of the [i]th element of [r] is
-        Rising. *)
+    (** Returns [true] only if the specified element is [Rising]. *)
     val rising : t -> int -> bool
 
-    (** [falling r i] returns [true] if the value of the [i]th element of [r] is
-        Falling. *)
+    (** Returns [true] only if the specified element is [Falling]. *)
     val falling : t -> int -> bool
 
-    (** [get r i] returns the value of the [i]th element of [r]. *)
-    val get : t -> int -> root_event
+    (** [get r i] returns the [i]th element of [r]. *)
+    val get : t -> int -> r
 
-    (** [set r i v] sets the value of the [i]th element of [r]. *)
-    val set : t -> int -> root_event -> unit
+    (** [set r i v] sets the [i]th element of [r] to [v]. *)
+    val set : t -> int -> r -> unit
 
-    (** [copy r] creates a new array with the contents as [r]. *)
-    val copy : t -> t
-
-    (** [set_noroot r i] sets the value of the [i]th element of [r] to
-        NoRoot.  *)
+    (** [set_noroot r i] sets the [i]th element of [r] to [NoRoot]. *)
     val set_noroot : t -> int -> unit
 
-    (** [set_rising r i] sets the value of the [i]th element of [r] to
-        Rising.  *)
+    (** [set_rising r i] sets the [i]th element of [r] to [Rising]. *)
     val set_rising : t -> int -> unit
 
-    (** [set_falling r i] sets the value of the [i]th element of [r] to
-        Falling. *)
+    (** [set_falling r i] sets the [i]th element of [r] to [Falling]. *)
     val set_falling : t -> int -> unit
 
-    (** Returns 0 for NoRoot, 1 for Rising, and -1 for Falling. *)
-    val int_of_root_event : root_event -> int
+    (** [fill a x] sets all elements in [a] to [x]. *)
+    val fill : t -> r -> unit
 
-    (** Resets all elements to NoRoot. *)
+    (** Creates a new array with the same contents as an existing one. *)
+    val copy : t -> t
+
+    (** Returns [0] for [NoRoot], [1] for [Rising], and [-1] for [Falling]. *)
+    val int_of_root : r -> int
+
+    (** Resets all elements to [NoRoot]. *)
     val reset : t -> unit
 
-    (** [string_of_root_event r] returns the name of the data constructor [r]
-        of type [root_event] as a string. *)
-    val string_of_root_event : root_event -> string
-
-    (** Returns [true] if any elements are equal to Rising or Falling. *)
+    (** [true] if any elements are equal to [Rising] or [Falling]. *)
     val exists : t -> bool
 
-    (** [iter f r] applies [f] to the values of each element in
-        [r]. *)
-    val iter : (root_event -> unit) -> t -> unit
+    (** [iter f r] successively applies [f] to each element in [r]. *)
+    val iter : (r -> unit) -> t -> unit
 
-    (** [iteri f r] applies [f] to the indexes and values of each element
-        in [r]. *)
-    val iteri : (int -> root_event -> unit) -> t -> unit
+    (** [iteri f r] successively applies [f] to the indexes and
+        elements of [r]. *)
+    val iteri : (int -> r -> unit) -> t -> unit
 
-    (** Makes a [Roots.t] from a list of root events.  *)
-    val of_list : root_event list -> t
+    (** Creates an array by copying the contents of a [r list]. *)
+    val of_list : r list -> t
 
-    (** Copies the contents of an {{:OCAML_DOC_ROOT(Array)} Array} into an
-        opaque array of type [Roots.t].  *)
-    val of_array : root_event array -> t
+    (** Copies into a list. *)
+    val to_list : t -> r list
 
-    (** Copies the contents of an opaque array of type [Roots.t] into an
-        {{:OCAML_DOC_ROOT(Array)} Array}.  *)
-    val to_array : t -> root_event array
+    (** Creates a new value from the contents of an
+        {{:OCAML_DOC_ROOT(Array)} array}. *)
+    val of_array : r array -> t
 
-    (** Copies the contents of a [Roots.t] into a list.  *)
-    val to_list : t -> root_event list
-
-    (** [fill_all a x] sets the values of [a] to [x] everywhere. *)
-    val fill_all : t -> root_event -> unit
-
-    (** [fill a i len x] sets the values of [a] from [i] through [i+len-1] to
-        [x]. *)
-    val fill : t -> int -> int -> root_event -> unit
+    (** Creates a new array from the contents of a given value. *)
+    val to_array : t -> r array
   end
 
 (** Vectors of root (zero-crossing) directions. *)
 module RootDirs :
   sig
     type t
+    (** Arrays that communicate which zero-crossings are sought. The
+        underlying representation is hidden to isolate compatability
+        issues related to integers. *)
 
-    type root_direction =
-      | Increasing                      (** Monitor rising zero-crossings *)
-      | Decreasing                      (** Monitor falling zero-crossings *)
-      | IncreasingOrDecreasing          (** Monitor all zero-crossings *)
+    (** Values indicating which types of roots are sought.
 
-    (** [string_of_root_direction d] returns d as a human-readable string.  *)
-    val string_of_root_direction : root_direction -> string
+        @cvode <node5#sss:optin_root> CVodeSetRootDirection
+        @ida <node5#sss:optin_root> IdaSetRootDirection *)
+    type d =
+      | Increasing              (** Only look for rising zero-crossings. *)
+      | Decreasing              (** Only look for falling zero-crossings. *)
+      | IncreasingOrDecreasing  (** Look for any zero-crossing. *)
 
-    (** [make n] returns an array with [n] elements, each set to the specified
-        value. *)
-    val make : int -> root_direction -> t
+    (** [make n x] returns an array with [n] elements each set to [x]. *)
+    val make : int -> d -> t
 
-    (** [create n] returns an array with [n] elements, each set to
-        IncreasingOrDecreasing. *)
+    (** [create n] returns an array with [n] elements each set to
+        [IncreasingOrDecreasing]. *)
     val create : int -> t
 
-    (** [copy_n n a] returns a fresh array with [n] elements, initialized from
-        the contents of a.  If [n > Array.length a], then the extra space is
-        initialized to IncreasingOrDecreasing.  *)
-    val copy_n : int -> root_direction array -> t
+    (** [init n f] returns an array with [n] elements, with element [i] set
+        to [f i]. *)
+    val init : int -> (int -> d) -> t
+
+    (** [copy n a] returns an array with [n] elements, initialized from
+        the contents of a. If [n > Array.length a] then the extra space is
+        initialized to [IncreasingOrDecreasing]. *)
+    val copy : int -> d array -> t
 
     (** Returns the length of an array *)
     val length : t -> int
 
-    (** [get r i] returns the value of the [i]th element of [r]. *)
-    val get : t -> int -> root_direction
+    (** [get r i] returns the [i]th element of [r]. *)
+    val get : t -> int -> d
 
-    (** [set r i v] sets the value of the [i]th element of [r]. *)
-    val set : t -> int -> root_direction -> unit
-
-    (** [fill a i len x] sets the values of [a] from [i] through [i+len-1] to
-        [x]. *)
-    val fill : t -> int -> int -> root_direction -> unit
+    (** [set r i v] sets the [i]th element of [r] to [v]. *)
+    val set : t -> int -> d -> unit
 
     (** [fill_all a x] sets the values of [a] to [x] everywhere. *)
-    val fill_all : t -> root_direction -> unit
+    val fill : t -> d -> unit
 
-    (** [blit_some a oa b ob len] copies the values of [a] at indices
-        [oa, oa+1, ..., oa+len-1] to [b] at indices
-        [ob, ob+1, ..., ob+len-1]. *)
+    (** [blit_some src isrc dst idst len] copies [len] elements of [src] at
+        offset [isrc] to [dst] at offset [idst].
+
+        @raise Invalid_argument "RootDirs.blit_some" if [isrc], [idst], and
+        [len] do not specify valid subarrays of [src] and [dst]. *)
     val blit_some : t -> int -> t -> int -> int -> unit
 
-    (** [blit a b] copies the values of [a] to [b].  If
-        [length a > length b], then [b] is filled with a prefix of [a].
-        If [length a < length b], then only a prefix of [b] is modified.  *)
+    (** Copy the first array into the second one.
+        See {{:OCAML_DOC_ROOT(Bigarray.Genarray#VALblit)}
+        [Bigarray.Genarray.blit]} for more details. *)
     val blit : t -> t -> unit
 
-    (** [init n f] creates an array of length [n] and sets it to [f i] for each
-        index [i]. *)
-    val init : int -> (int -> root_direction) -> t
+    (** Creates an array by copying the contents of a [d list]. *)
+    val of_list : d list -> t
 
-    (** Makes a [RootDirs.t] from a list of root events.  *)
-    val of_list : root_direction list -> t
+    (** Copies into a list. *)
+    val to_list : t -> d list
 
-    (** Copies the contents of an {{:OCAML_DOC_ROOT(Array)} Array} into an
-        opaque array of type [RootDirs.t].  *)
-    val of_array : root_direction array -> t
+    (** Creates a new value from the contents of an
+        {{:OCAML_DOC_ROOT(Array)} array}. *)
+    val of_array : d array -> t
 
-    (** Copies the contents of an opaque array of type [RootDirs.t] into an
-        {{:OCAML_DOC_ROOT(Array)} Array}.  *)
-    val to_array : t -> root_direction array
-
-    (** Copies the contents of a [RootDirs.t] into a list.  *)
-    val to_list : t -> root_direction list
+    (** Creates a new array from the contents of a given value. *)
+    val to_array : t -> d array
   end
 
 (** {2 Solver results and error reporting} *)

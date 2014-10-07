@@ -505,13 +505,11 @@ external set_max_conv_fails     : ('a, 'k) session -> int -> unit
 external set_nonlin_conv_coef   : ('a, 'k) session -> float -> unit
     = "c_ida_set_nonlin_conv_coef"
 
-type root_direction = Sundials.RootDirs.root_direction
-
 external set_root_direction'   : ('a, 'k) session -> Sundials.RootDirs.t -> unit
     = "c_ida_set_root_direction"
 
 let set_root_direction s rda =
-  set_root_direction' s (Sundials.RootDirs.copy_n (nroots s) rda)
+  set_root_direction' s (Sundials.RootDirs.copy (nroots s) rda)
 
 let set_all_root_directions s rd =
   set_root_direction' s (Sundials.RootDirs.make (nroots s) rd)
