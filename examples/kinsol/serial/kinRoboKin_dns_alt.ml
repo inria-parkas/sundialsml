@@ -58,7 +58,7 @@ let alternate_dense jacfn =
   in
 
   let lsolve mem s x b =
-    RealArray.blit_all b x;
+    RealArray.blit b x;
     DM.getrs mem.dj mem.pivots x;
     let fval, fscale = Kinsol.Alternate.get_f_fscale s in
     Kinsol.Alternate.set_sjpnorm s (nvwl2norm b fscale);

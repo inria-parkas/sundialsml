@@ -93,97 +93,97 @@ module RealArray :
     (** Access a sub-array of the given array without copying. *)
     val sub : t -> int -> int -> t
 
-    (** [blit src isrc dst idst len] copies [len] elements of [src] at
+    (** [blit_some src isrc dst idst len] copies [len] elements of [src] at
         offset [isrc] to [dst] at offset [idst].
 
-        @raise Invalid_argument "RealArray.blit" if [isrc], [idst], and
+        @raise Invalid_argument "RealArray.blit_some" if [isrc], [idst], and
         [len] do not specify valid subarrays of [src] and [dst]. *)
-    val blit : t -> int -> t -> int -> int -> unit
+    val blit_some : t -> int -> t -> int -> int -> unit
 
     (** Copy the first array into the second one.
-        See {{:OCAML_DOC_ROOT(Bigarray.Array1#VALblit)}
-        [Bigarray.Array1.blit]} for more details. *)
-    val blit_all : t -> t -> unit
+        See {{:OCAML_DOC_ROOT(Bigarray.Genarray#VALblit)}
+        [Bigarray.Genarray.blit]} for more details. *)
+    val blit : t -> t -> unit
 
     (** [fill a c] sets all elements of [a] to the constant [c]. *)
     val fill : t -> float -> unit
 
-    (** Returns the length of an array *)
+    (** Returns the length of an array. *)
     val length : t -> int
 
-    (** [fold_left f b a] returns [f (f (f b a.{0}) a.{1}) ...]. *)
+    (** [fold_left f b a] returns [f (f (f b a.{0}) a.{1}) ...)]. *)
     val fold_left : ('a -> float -> 'a) -> 'a -> t -> 'a
 
-    (** [fold_right f b a] returns [f (f (f b a.{0}) a.{1}) ...]. *)
+    (** [fold_right f b a] returns [(f ... (f a.{n-2} (f a.{n-1} b)))]. *)
     val fold_right : (float -> 'a -> 'a) -> t -> 'a -> 'a
 
-    (** [iter f a] applies [f] to the values of each element in [a]. *)
+    (** [iter f a] successively applies [f] to the elements of [a]. *)
     val iter : (float -> unit) -> t -> unit
 
-    (** [iteri f a] applies [f] to the indexes and values of each element
-        in [a]. *)
+    (** [iteri f a] successively applies [f] to the indexes and values
+        of [a]. *)
     val iteri : (int -> float -> unit) -> t -> unit
 
-    (** [map f a] applies [f] to the value of each element in [a] and
-        stores the result back into the same element. *)
+    (** [map f a] replaces each element [a.{i}] with [f a.{i}]. *)
     val map : (float -> float) -> t -> unit
 
-    (** [map f a] applies [f] to the index and value of each element
-        in [a] and stores the result back into the same element. *)
+    (** [map f a] replaces each element [a.{i}] with [f i a.{i}]. *)
     val mapi : (int -> float -> float) -> t -> unit
   end
 
 (** Matrices of floats (wrappers around two-dimensional bigarrays). *)
 module RealArray2 :
   sig
-    (** A {{:OCAML_DOC_ROOT(Bigarray.Array2)} (Bigarray)} 2D vector of floats. *)
-    type data = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
-
-    (** [make m n] returns an [m] by [n] array. *)
-    val make_data : int -> int -> data
-
-    (** The underlying data is stored as a two-dimensional
-       {{:OCAML_DOC_ROOT(Bigarray.Array2)}Bigarray} of floats.
-       Note that, in the underlying array, Sundials stores columns
-       in the first dimension and rows in the second. So, the value
-       at row [i] and column [j] in an array [m] is [m.{j}.{i}].
-     *)
+    (** A two-dimensional matrix. The underlying data can be accessed as
+        a {{:OCAML_DOC_ROOT(Bigarray.Array2)}Bigarray} via {!unwrap},
+        but note that the first index specifies the column. *)
     type t
 
-    (** [make nr nc v] creates an [nr] by [nc] wrapped array with all elements
-        set to [v]. *)
+    (** An alias for the underlying
+        {{:OCAML_DOC_ROOT(Bigarray.Array2)}Bigarray}. *)
+    type data = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
+
+    (** [make nr nc v] returns an array with [nr] rows and [nc] columns, and
+        with elements initialized to [v]. *)
     val make : int -> int -> float -> t
 
-    (** [create nr nc] creates an [nr] by [nc] wrapped array. *)
+    (** [create nr nc] returns an uninitialized array with [nr] rows and [nc]
+        columns. *)
     val create : int -> int -> t
 
-    (** [get a i j] gives the value of the [(i, j)]th element of [a]. *)
+    (** [get a i j] returns the value at row [i] and column [j] of [a]. *)
     val get : t -> int -> int -> float
 
-    (** [col a j] slices the [j]th column of [a].  The slice shares
-        storage with [a]. *)
+    (** [col a j] returns the [j]th column of [a]. The slice shares storage
+        with [a]. *)
     val col : t -> int -> RealArray.t
 
-    (** [set a i j v] sets the value of the [(i, j)]th element of [a] to [v]. *)
+    (** [set a i j v] sets the value at row [i] and column [j] of [a] to [v]. *)
     val set : t -> int -> int -> float -> unit
 
-    (** [nr, nc = size a] gives the number of rows, [nr], and the number of
-        columns, [nc], in [a] *)
+    (** [nr, nc = size a] returns the numbers of rows [nr] and columns [nc]
+        of [a] *)
     val size : t -> int * int
 
-    (** [copy a] creates a copy of [a] and its underlying {!data} array. *)
+    (** Creates a new array with the same contents as an existing one. *)
     val copy : t -> t
 
-    (** [copyinto a b] copies the contents of [a] into [b]. Both arrays
-        must have the same dimensions. *)
-    val copyinto : t -> t -> unit
+    (** Copy the first array into the second one.
+        See {{:OCAML_DOC_ROOT(Bigarray.Genarray#VALblit)}
+        [Bigarray.Genarray.blit]} for more details. *)
+    val blit : t -> t -> unit
 
-    (** Creates a new array from an existing {!data} array; changes to either
-        array affect the other (i.e., they share the same underlying storage). *)
+    (** [make m n] returns an uninitialized [m] by [n] array. *)
+    val make_data : int -> int -> data
+
+    (** Creates a new matrix from an existing {!data} array. Changes to one
+        affect the other since they share the same underlying storage. *)
     val wrap : data -> t
 
-    (** Returns the underlying {!data} array; changes to either array affect the
-        other (i.e., they share the same underlying storage). *)
+    (** Returns the {!data} array behind a matrix. Changes to one affect the
+        other since they share the same underlying storage. Note that the
+        array is accessed column-first, that is,
+        [get a i j = (unwrap a).{j, i}]. *)
     val unwrap : t -> data
   end
 
@@ -340,15 +340,15 @@ module RootDirs :
     (** [fill_all a x] sets the values of [a] to [x] everywhere. *)
     val fill_all : t -> root_direction -> unit
 
-    (** [blit a oa b ob len] copies the values of [a] at indices
+    (** [blit_some a oa b ob len] copies the values of [a] at indices
         [oa, oa+1, ..., oa+len-1] to [b] at indices
         [ob, ob+1, ..., ob+len-1]. *)
-    val blit : t -> int -> t -> int -> int -> unit
+    val blit_some : t -> int -> t -> int -> int -> unit
 
-    (** [blit_all a b] copies the values of [a] to [b].  If
+    (** [blit a b] copies the values of [a] to [b].  If
         [length a > length b], then [b] is filled with a prefix of [a].
         If [length a < length b], then only a prefix of [b] is modified.  *)
-    val blit_all : t -> t -> unit
+    val blit : t -> t -> unit
 
     (** [init n f] creates an array of length [n] and sets it to [f i] for each
         index [i]. *)

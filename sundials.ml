@@ -24,14 +24,16 @@ type ('data, 'kind) nvector = ('data, 'kind) Nvector.t
    explicit annotations improve performance for bigarrays.  *)
 module RealArray =
   struct
-    let kind = Bigarray.float64
-    let layout = Bigarray.c_layout
-    type t = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
+    open Bigarray
 
-    let create : int -> t = Bigarray.Array1.create kind layout
-    let of_array : float array -> t = Bigarray.Array1.of_array kind layout
+    let kind = float64
+    let layout = c_layout
+    type t = (float, float64_elt, c_layout) Array1.t
 
-    let fill : t -> float -> unit = Bigarray.Array1.fill
+    let create : int -> t = Array1.create kind layout
+    let of_array : float array -> t = Array1.of_array kind layout
+
+    let fill : t -> float -> unit = Array1.fill
 
     let make size x =
       let a = create size in
@@ -45,24 +47,24 @@ module RealArray =
       done;
       a
 
-    let length : t -> int = Bigarray.Array1.dim
+    let length : t -> int = Array1.dim
 
-    let blit src isrc dst idst len =
+    let blit_some src isrc dst idst len =
       if len < 0 || isrc < 0 || isrc + len >= length src
          || idst < 0 || idst + len >= length dst
-      then invalid_arg "RealArray.blit";
+      then invalid_arg "RealArray.blit_some";
       for k = 0 to len - 1 do
-        dst.{idst + k} <- src.{isrc + k}
+        Array1.unsafe_set dst (idst + k) (Array1.unsafe_get src (isrc + k))
       done
 
-    let blit_all = Bigarray.Array1.blit
+    let blit = Array1.blit
 
     let copy src =
       let dst = create (length src) in
-      Bigarray.Array1.blit src dst;
+      Array1.blit src dst;
       dst
 
-    let sub = Bigarray.Array1.sub
+    let sub = Array1.sub
 
     let of_list src = of_array (Array.of_list src)
 
@@ -124,11 +126,11 @@ module RealArray =
 
 module RealArray2 =
   struct
-    type data =
-      (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
+    open Bigarray
 
-    let make_data =
-      Bigarray.Array2.create Bigarray.float64 Bigarray.c_layout
+    type data = (float, float64_elt, c_layout) Array2.t
+
+    let make_data = Array2.create float64 c_layout
 
     type t = data * Obj.t
 
@@ -138,34 +140,34 @@ module RealArray2 =
     let unwrap = fst
 
     let create nr nc =
-      let d = Bigarray.Array2.create Bigarray.float64 Bigarray.c_layout nc nr
+      let d = Array2.create float64 c_layout nc nr
       in wrap d
 
     let make nr nc v =
-      let d = Bigarray.Array2.create Bigarray.float64 Bigarray.c_layout nc nr
+      let d = Array2.create float64 c_layout nc nr
       in
-      Bigarray.Array2.fill d v;
+      Array2.fill d v;
       wrap d
 
     let size a =
       let d = unwrap a in
-      (Bigarray.Array2.dim1 d, Bigarray.Array2.dim2 d)
+      (Array2.dim1 d, Array2.dim2 d)
 
-    let get x i j = Bigarray.Array2.get (unwrap x) j i
-    let set x i j = Bigarray.Array2.set (unwrap x) j i
+    let get x i j = Array2.get (unwrap x) j i
+    let set x i j = Array2.set (unwrap x) j i
 
-    let col x j = Bigarray.Array2.slice_left (unwrap x) j
+    let col x j = Array2.slice_left (unwrap x) j
 
     let copy a =
       let d = unwrap a in
-      let c = Bigarray.Array2.dim1 d in
-      let r = Bigarray.Array2.dim2 d in
-      let d' = Bigarray.Array2.create Bigarray.float64 Bigarray.c_layout c r in
-      Bigarray.Array2.blit d d';
+      let c = Array2.dim1 d in
+      let r = Array2.dim2 d in
+      let d' = Array2.create float64 c_layout c r in
+      Array2.blit d d';
       wrap d'
 
-    let copyinto a1 a2 =
-      Bigarray.Array2.blit (unwrap a1) (unwrap a2)
+    let blit a1 a2 =
+      Array2.blit (unwrap a1) (unwrap a2)
   end
 
 
@@ -273,7 +275,7 @@ module ArrayLike (A : ArrayBaseOps) =
 
     let fill_all a x = fill a 0 (length a) x
 
-    let blit a oa b ob len =
+    let blit_some a oa b ob len =
       let na = length a
       and nb = length b in
       if len < 0 || oa < 0 || na < oa+len || ob < 0 || nb < ob+len
@@ -283,7 +285,7 @@ module ArrayLike (A : ArrayBaseOps) =
           set b (ob + i) (get a (oa + i))
         done
 
-    let blit_all a b =
+    let blit a b =
       for i = 0 to min (length a) (length b) - 1 do
         set b i (get a i)
       done
@@ -300,13 +302,15 @@ module ArrayLike (A : ArrayBaseOps) =
 
 module LintArray =
   struct
-    type t = (int, Bigarray.int_elt, Bigarray.c_layout) Bigarray.Array1.t
+    open Bigarray
 
-    let create = Bigarray.Array1.create Bigarray.int RealArray.layout
+    type t = (int, int_elt, c_layout) Array1.t
+
+    let create = Array1.create int RealArray.layout
 
     let make n x =
       let v = create n in
-      Bigarray.Array1.fill v x;
+      Array1.fill v x;
       v
 
   end
@@ -385,8 +389,8 @@ module Roots =
 
     let fill = A.fill
     let fill_all = A.fill_all
+    let blit_some = A.blit_some
     let blit = A.blit
-    let blit_all = A.blit_all
 
     let rising  roots i = roots.{i} = 1l
     let falling roots i = roots.{i} = -1l
@@ -466,8 +470,7 @@ module RootDirs =
 
     module A = ArrayLike (
       struct
-        type t = (int32, Bigarray.int32_elt, Bigarray.c_layout)
-                  Bigarray.Array1.t
+        type t = (int32, int32_elt, c_layout) Array1.t
         and elt = root_direction
         let create = create
         let set = set
@@ -475,14 +478,14 @@ module RootDirs =
         let length = length
       end)
 
-    let of_array = A.of_array
-    let of_list  = A.of_list
-    let to_array = A.to_array
-    let to_list  = A.to_list
-    let fill     = A.fill
-    let fill_all = A.fill_all
-    let blit     = A.blit
-    let blit_all = A.blit_all
+    let of_array  = A.of_array
+    let of_list   = A.of_list
+    let to_array  = A.to_array
+    let to_list   = A.to_list
+    let fill      = A.fill
+    let fill_all  = A.fill_all
+    let blit_some = A.blit_some
+    let blit      = A.blit
 
     let init = A.init
 

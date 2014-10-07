@@ -181,7 +181,7 @@ module ArrayDenseMatrix =
 
     let set_to_zero x = Bigarray.Array2.fill (Sundials.RealArray2.unwrap x) 0.0
 
-    let copy = Sundials.RealArray2.copyinto
+    let copy = Sundials.RealArray2.blit
 
     external scale : float -> t -> unit
         = "c_arraydensematrix_scale"

@@ -119,7 +119,7 @@ let res_heat data t u (u' : RealArray.t) res =
   and mm    = data.mm in
 
   (* Initialize res to u, to take care of boundary equations. *)
-  RealArray.blit_all u res;
+  RealArray.blit u res;
 
   (* Loop over interior points; set res = up - (central difference). *)
   for j = 1 to mgrid-2 do
