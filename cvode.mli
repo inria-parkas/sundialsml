@@ -478,12 +478,9 @@ module Spils :
       -> 'a (* Jv *)
       -> unit
 
-    (** A type that specifies a preconditioner, including the side
-        from which to precondition (none, left, right, or both) and
-        callbacks or other data needed to solve the preconditioning
-        system $Pz = r$.
-
-        Generally, three callbacks are needed in preconditioning:
+    (** Specifies a preconditioner, including the type of
+        preconditioning to be done (none, left, right, or both), and a
+        set of three callbacks if applicable:
 
         - [solve], the main function that solves the preconditioning
           system $Pz = r$, where $P$ is a preconditioning matrix
@@ -498,16 +495,16 @@ module Spils :
           implementation based on difference quotients.
 
         Like the {!linear_solver}, there are several functions which
-        construct preconditioners.  The simples is {!prec_none}, which
-        does no preconditioning.  This module also provides
-        {!prec_left}, {!prec_right}, and {!prec_both}, which take a
-        [solve] function and optionally [setup] and [jac_times_vec]
-        which together define an arbitrary, user-defined
-        preconditioner.
+        construct preconditioners.  The simplest is {!prec_none},
+        which does no preconditioning.  Arbitrary user-defined
+        preconditioners can be constructed through {!prec_left},
+        {!prec_right}, and {!prec_both}, which take user-defined
+        [solve], [setup], and [jac_times_vec], with the last two
+        optional.
 
         The {!Banded} module gives access to CVODE's banded
         preconditioner, while {!Cvode_bbd} contains the parallel
-        band-block diagonal preconditioners.
+        band-block diagonal preconditioner.
 
         @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
         @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
