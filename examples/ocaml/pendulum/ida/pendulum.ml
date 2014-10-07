@@ -144,8 +144,11 @@ let args = [
 
 (* Setup & auxiliary functions *)
 module Matrix = Dls.DenseMatrix
+
 let pi = 4. *. atan (1.)
+
 let degree_to_radian x = x *. pi /. 180.
+
 let show_nvector (a : RealArray.t) =
   let n = Bigarray.Array1.dim a in
   let str = ref "[" in
@@ -155,7 +158,13 @@ let show_nvector (a : RealArray.t) =
   if 0 <= n-1 then str := !str ^ Printf.sprintf "%g" a.{n-1};
   str := !str ^ "]";
   !str
+
 let print_nvector a = Printf.printf "%s" (show_nvector a)
+
+let print_with_time t v =
+  Printf.printf "%.15e" t;
+  Sundials.RealArray.iter (Printf.printf "\t% .15e") v;
+  print_newline ()
 
 (* Problem constants *)
 let r = 1.0                            (* length of rod [m] *)
@@ -386,9 +395,7 @@ let check_satisfaction =
     residual t vars vars' res;
     if !check_consistency then
       begin
-        let norm =
-          Nvector_array.Bigarray.array_nvec_ops.Nvector_custom.nvmaxnorm res
-        in
+        let norm = Nvector_serial.DataOps.n_vmaxnorm res in
         if norm > 1e-5 then
           raise (Failure 
                    (Printf.sprintf "initial residue too large: t = %g, ||res||=%g\nvars  = %s\nvars' = %s\nres   = %s\n"
@@ -396,9 +403,14 @@ let check_satisfaction =
                       (show_nvector vars') (show_nvector res)))
       end
 
+let print_with_time t v =
+  Printf.printf "%e" t;
+  Sundials.RealArray.iter (Printf.printf "\t% e") v;
+  print_newline ()
+
 let main () =
   Arg.parse args (fun _ -> ()) "pendulum: simulate a pendulum hitting against an oblique wall";
-  if !log then RealArray.print_with_time 0.0 vars;
+  if !log then print_with_time 0.0 vars;
   let t_delay = if !delay then !dt else 0. in
   if !show then Showpendulum.start (1.5 *. r) t_delay !trace pivot wall;
   let frames = int_of_float (!t_end /. !dt) in
@@ -415,7 +427,7 @@ let main () =
 
   let solver = Ida.Dls.dense (if !use_analytical_jac then Some jac else None) in
   let ida = Ida.init solver (Ida.SStolerances (1e-9, 1e-9)) residual
-                     ~roots:(1, roots) nv_vars nv_vars'
+                     ~roots:(1, roots) 0. nv_vars nv_vars'
   in
   Ida.set_all_root_directions ida Sundials.RootDirs.Decreasing;
   if !use_analytical_jac then Ida.Dls.set_dense_jac_fn ida jac;
@@ -436,7 +448,7 @@ let main () =
       let (tret, flag) = Ida.solve_normal ida !tnext nv_vars nv_vars' in
       t := tret;
       if !show then Showpendulum.show (vars.{x_i}, vars.{y_i});
-      if !log then RealArray.print_with_time tret vars;
+      if !log then print_with_time tret vars;
 
       if flag = Sundials.RootsFound then
         (Printf.printf "Bang!  Hit against the wall.\n";

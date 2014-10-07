@@ -10,6 +10,11 @@ let x_i = 0.0
 
 let max_sim_t = 5.0
 
+let print_with_time t v =
+  Printf.printf "%e" t;
+  Sundials.RealArray.iter (Printf.printf "\t% e") v;
+  print_newline ()
+
 (*
        der t = 1.0 init t_i
    and r = if t < thresh1 then 1.0
@@ -39,7 +44,7 @@ let y = Sundials.RealArray.of_array [| t_i; x_i |]
 let y_nvec= Nvector_serial.wrap y
 
 let s = Cvode.init Cvode.Adams Cvode.Functional Cvode.default_tolerances
-                   f ~roots:(1, g) y_nvec
+                   f ~roots:(1, g) 0. y_nvec
 let rootdata = Sundials.Roots.create 1
 
 let _ = Cvode.set_stop_time s max_sim_t
@@ -49,7 +54,7 @@ exception Done
 let _ =
   Printf.printf "time\t\t t\t\t x\n";
   Printf.printf "----------------------------------------\n";
-  Sundials.RealArray.print_with_time 0.0 y;
+  print_with_time 0.0 y;
   try
     let i = ref 0 in
     while true do
@@ -58,7 +63,7 @@ let _ =
       Printf.printf "\nstep %3d.\n" !i;
       incr i;
 
-      Sundials.RealArray.print_with_time t' y;
+      print_with_time t' y;
       Printf.printf "%e\tstep size = %e\n" t' (Cvode.get_last_step s);
         
       match result with

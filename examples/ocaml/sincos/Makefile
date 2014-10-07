@@ -46,13 +46,9 @@ distclean: clean
 .ml.byte:
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ $(INCLUDES) \
 	    -I ../../../ -dllpath ../../../ \
-	    bigarray.cma unix.cma graphics.cma \
-	    sundials.cma \
-	    $<
+	    bigarray.cma graphics.cma sundials.cma $<
 
 .ml.opt:
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ $(INCLUDES) -I ../../../ \
-	    bigarray.cmxa unix.cmxa graphics.cmxa \
-	    sundials.cmxa \
-	    $<
+	    bigarray.cmxa graphics.cmxa sundials.cmxa $<
 

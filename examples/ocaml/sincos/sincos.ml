@@ -1,4 +1,14 @@
 
+let print_with_time t v =
+  Printf.printf "%e" t;
+  Sundials.RealArray.iter (Printf.printf "\t% e") v;
+  print_newline ()
+
+let print_roots vs =
+  Sundials.Roots.iter (fun x ->
+    Printf.printf "\t%s" (Sundials.Roots.string_of_root_event x)) vs;
+  print_newline ()
+
 let f t y yd =
   yd.{0} <- cos(y.{1});
   yd.{1} <- 1.0;
@@ -21,19 +31,19 @@ let rootdata = Sundials.Roots.create 2
 (* let _ = Cvode.set_stop_time s 20.0 *)
 
 let _ =
-  Sundials.RealArray.print_with_time 0.0 y;
+  print_with_time 0.0 y;
   (* for i = 1 to 200 do *)
   let t = ref 0.1 in
   let keep_going = ref true in
   while !keep_going do
     let (t', result) = Cvode.solve_normal s !t y_nvec in
-        Sundials.RealArray.print_with_time t' y;
+        print_with_time t' y;
         t := t' +. 0.1;
         match result with
         | Sundials.RootsFound -> begin
               Cvode.get_root_info s rootdata;
-              Sundials.print_time ("R: ", "") t';
-              Sundials.Roots.print rootdata
+              Printf.printf "R: %e" t';
+              print_roots rootdata
             end
         | Sundials.StopTimeReached -> keep_going := false
         | Sundials.Continue -> ();

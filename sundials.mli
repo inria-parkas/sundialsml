@@ -111,11 +111,6 @@ module RealArray :
     (** Returns the length of an array *)
     val length : t -> int
 
-    (** Prints a line containing the current time (see {!print_time})
-        followed by a tab-delimited list of the values of [a],
-        and then a newline. See also {!extra_precision}. *)
-    val print_with_time : float -> t -> unit
-
     (** [fold_left f b a] returns [f (f (f b a.{0}) a.{1}) ...]. *)
     val fold_left : ('a -> float -> 'a) -> 'a -> t -> 'a
 
@@ -265,10 +260,6 @@ module Roots :
     (** Resets all elements to NoRoot. *)
     val reset : t -> unit
 
-    (** [print r] prints a line containing a tab-delimited list of the values of
-        [r] (by their constructor names), and then a newline. *)
-    val print : t -> unit
-
     (** [string_of_root_event r] returns the name of the data constructor [r]
         of type [root_event] as a string. *)
     val string_of_root_event : root_event -> string
@@ -406,16 +397,6 @@ type error_details = {
   }
 
 (** {2 Miscellaneous utility functions} *)
-
-(** [print_time (s1, s2) t] prints [t] with [s1] on the left and [s2] on the
-    right.  *)
-val print_time : string * string -> float -> unit
-
-(** Controls the precision of {!print_time} and {!RealArray.print_with_time}.
- 
-    If [true] the format [%.15e] is used, otherwise [%e]
-    (the default) is used. *)
-val extra_precision : bool ref
 
 (** [format_float fmt f] formats [f] according to the format string [fmt],
     using the low-level [caml_format_float] function. *)

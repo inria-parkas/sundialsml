@@ -17,6 +17,11 @@ let x_i = 1.0
 
 let max_sim_t = 5.0
 
+let print_with_time t v =
+  Printf.printf "%e" t;
+  Sundials.RealArray.iter (Printf.printf "\t% e") v;
+  print_newline ()
+
 let f t_s y yd =
   yd.{x} <- -1.0;
   Printf.printf "f(% e, [% e]) = [% e]\n" t_s y.{x} yd.{x}
@@ -31,7 +36,7 @@ let y = Sundials.RealArray.of_array [| x_i |]
 let y_nvec= Nvector_serial.wrap y
 
 let s = Cvode.init Cvode.Adams Cvode.Functional Cvode.default_tolerances
-                   f ~roots:(1, g) y_nvec
+                   f ~roots:(1, g) 0. y_nvec
 let rootdata = Sundials.Roots.create 1
 
 let _ = Cvode.set_all_root_directions s !root_dir
@@ -43,7 +48,7 @@ exception Done
 let _ =
   Printf.printf "time\t\t t\n";
   Printf.printf "------------------------------------\n";
-  Sundials.RealArray.print_with_time 0.0 y;
+  print_with_time 0.0 y;
   try
     let i = ref 0 in
     while true do
@@ -52,7 +57,7 @@ let _ =
       Printf.printf "\nstep %3d.\n" !i;
       incr i;
 
-      Sundials.RealArray.print_with_time t' y;
+      print_with_time t' y;
       Printf.printf "\t\t(step size = %e)\n" (Cvode.get_last_step s);
         
       match result with

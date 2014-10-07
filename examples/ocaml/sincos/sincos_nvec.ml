@@ -18,8 +18,13 @@ let rootdata = Sundials.Roots.create 2
 (* let _ = Cvode.set_stop_time s 10.0 *)
 
 let print_with_time t v =
-  Sundials.print_time ("", "") t;
+  Printf.printf "%e" t;
   Array.iter (Printf.printf "\t% .8f") v;
+  print_newline ()
+
+let print_roots vs =
+  Sundials.Roots.iter (fun x ->
+    Printf.printf "\t%s" (Sundials.Roots.string_of_root_event x)) vs;
   print_newline ()
 
 let _ =
@@ -34,8 +39,8 @@ let _ =
         match result with
         | Sundials.RootsFound -> begin
               Cvode.get_root_info s rootdata;
-              Sundials.print_time ("R: ", "") t';
-              Sundials.Roots.print rootdata
+              Printf.printf "R: %e" t';
+              print_roots rootdata
             end
         | Sundials.StopTimeReached -> keep_going := false
         | Sundials.Continue -> ();

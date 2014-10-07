@@ -11,6 +11,11 @@ let t_delta = ref 0.005  (* s *)
 let x_vel   = 0.8   (* m/s *)
 let x_limit = 14.0  (* m *)
 
+let print_with_time t v =
+  Printf.printf "%e" t;
+  Sundials.RealArray.iter (Printf.printf "\t% e") v;
+  print_newline ()
+
 let f t y yd =
   yd.{xpos_i} <- x_vel;
   yd.{ypos_i} <- y.{yvel_i};
@@ -76,13 +81,13 @@ let args = [
 let _ =
   Arg.parse args (fun _ -> ()) "ball: simulate a ball bouncing down steps using sundials";
   if !show then Showball.start !trace !t_delta (ground, ground_limits);
-  if !log then Sundials.RealArray.print_with_time 0.0 y;
+  if !log then print_with_time 0.0 y;
   let t = ref !t_delta in
   while (y.{xpos_i} < x_limit) do
     let (t', result) = Cvode.solve_normal s !t y_nvec in
         if (result = Sundials.RootsFound) then ball_event s t' y;
 
-        if !log then Sundials.RealArray.print_with_time t' y;
+        if !log then print_with_time t' y;
         if !show then Showball.show (y.{xpos_i}, y.{ypos_i});
 
         t := t' +. !t_delta

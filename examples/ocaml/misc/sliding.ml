@@ -1,6 +1,4 @@
 
-module Cvode = Cvode_serial
-
 let p = 1.0 (* 1.0 or 0.2 *)
 let step_inc = 0.1 (* not -1 zero-crossing if set to 100.0 *)
 
@@ -12,6 +10,16 @@ let x_i = -1.0
 and t_i = -. p
 
 let yc = ref 1.0
+
+let print_with_time t v =
+  Printf.printf "%.15e" t;
+  Sundials.RealArray.iter (Printf.printf "\t% .15e") v;
+  print_newline ()
+
+let print_roots vs =
+  Sundials.Roots.iter (fun x ->
+    Printf.printf "\t%s" (Sundials.Roots.string_of_root_event x)) vs;
+  print_newline ()
 
 let f t_s y yd =
   yd.{x} <- !yc;
@@ -31,7 +39,7 @@ let g t_s y gout =
      gout.{z_nx} gout.{z_t} *)
 
 let d t_s r ys =
-  let root = Cvode.Roots.get r in
+  let root = Sundials.Roots.detected r in
 
   if root z_x then yc := -1.0
   else if root z_nx then yc := 1.0
@@ -44,12 +52,13 @@ let d t_s r ys =
 
 (* simulation *)
 
-let y = Cvode.Carray.of_array [| x_i; t_i |]
+let y = Sundials.RealArray.of_array [| x_i; t_i |]
+let y_nvec = Nvector_serial.wrap y
 
-let s = Cvode.init Cvode.Adams Cvode.Functional f (num_roots, g) y
-let rootdata = Cvode.Roots.create num_roots
-let _ = Cvode.set_all_root_directions s Cvode.Increasing
-let _ = Cvode.extra_time_precision := true
+let s = Cvode.init Cvode.Adams Cvode.Functional Cvode.default_tolerances
+                   f ~roots:(num_roots, g) 0. y_nvec
+let rootdata = Sundials.Roots.create num_roots
+let _ = Cvode.set_all_root_directions s Sundials.RootDirs.Increasing
 
 exception Done
 
@@ -57,27 +66,27 @@ let _ =
   Printf.printf "---period=%f\n" p;
   Printf.printf "time\t\t t\n";
   Printf.printf "------------------------------------\n";
-  Cvode.Carray.print_with_time'' 0.0 y;
+  print_with_time 0.0 y;
   try
     let t = ref 0.0 in
     while true do
-      let (t', result) = Cvode.normal s (!t +. step_inc) y in
+      let (t', result) = Cvode.solve_normal s (!t +. step_inc) y_nvec in
       (* let (t', result) = Cvode.one_step s 100.0 y in *)
       t := t';
 
-      Cvode.Carray.print_with_time'' t' y;
+      print_with_time t' y;
         
       match result with
-      | Cvode.RootsFound -> begin
+      | Sundials.RootsFound -> begin
             Cvode.get_root_info s rootdata;
-            Cvode.Roots.print rootdata;
+            print_roots rootdata;
             d t' rootdata y;
             print_endline "after discrete step:";
-            Cvode.Carray.print_with_time'' t' y;
-            Cvode.reinit s t' y
+            print_with_time t' y;
+            Cvode.reinit s t' y_nvec
           end
-      | Cvode.StopTimeReached -> raise Done
-      | Cvode.Continue -> ()
+      | Sundials.StopTimeReached -> raise Done
+      | Sundials.Continue -> ()
     done
   with Done -> ()
 

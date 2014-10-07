@@ -2,7 +2,7 @@ include ../../../config
 
 EXAMPLES = cchatter.byte discontinuous.byte printall.byte \
 	   upvseither.byte integr_backward.byte one_over_x.byte \
-	   ramp.byte
+	   ramp.byte sinezero.byte sliding.byte
 
 all: $(EXAMPLES)
 opt: $(EXAMPLES:.byte=.opt)
@@ -25,6 +25,7 @@ ramp.opt: ramp.ml
 clean:
 	-@rm -f $(EXAMPLES:.byte=.cmo) $(EXAMPLES:.byte=.cmx)
 	-@rm -f $(EXAMPLES:.byte=.o) $(EXAMPLES:.byte=.cmi)
+	-@rm -f $(EXAMPLES:.byte=.annot)
 
 distclean: clean
 	-@rm -f $(EXAMPLES) $(EXAMPLES:.byte=.opt)
@@ -36,10 +37,10 @@ distclean: clean
 .ml.byte:
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
 	    $(INCLUDES) -I ../../../ -dllpath ../../../ \
-	    bigarray.cma unix.cma sundials.cma $<
+	    bigarray.cma sundials.cma $<
 
 .ml.opt:
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
 	    $(INCLUDES) -I ../../../ \
-	    bigarray.cmxa unix.cmxa sundials.cmxa $<
+	    bigarray.cmxa sundials.cmxa $<
 

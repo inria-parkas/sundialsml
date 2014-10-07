@@ -10,13 +10,6 @@
 (*                                                                     *)
 (***********************************************************************)
 
-let extra_precision = ref false
-
-let print_time (s1, s2) t =
-  if !extra_precision
-  then Printf.printf "%s%.15e%s" s1 t s2
-  else Printf.printf "%s%e%s" s1 t s2
-
 external format_float : string -> float -> string
     = "caml_format_float"
 
@@ -127,13 +120,6 @@ module RealArray =
       for i = 0 to (length v - 1) do
         v.{i} <- f i v.{i}
       done
-
-    let print_with_time t (v : t) =
-      print_time ("", "") t;
-      if !extra_precision
-      then iter (Printf.printf "\t% .15e") v
-      else iter (Printf.printf "\t% e") v;
-      print_newline ()
   end
 
 module RealArray2 =
@@ -422,11 +408,6 @@ module Roots =
       | NoRoot -> "NoRoot"
       | Rising -> "Rising"
       | Falling -> "Falling"
-
-    let print vs =
-      iter (fun x -> Printf.printf "\t%s" (string_of_root_event x)) vs;
-      print_newline ()
-
   end
 
 module RootDirs =
