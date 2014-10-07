@@ -177,8 +177,8 @@ let print_output =
 
 let print_root_info r1 r2 =
   printf "    rootsfound[] = %3d %3d\n"
-    (Roots.int_of_root_event r1)
-    (Roots.int_of_root_event r2)
+    (Roots.int_of_root r1)
+    (Roots.int_of_root r2)
 
 let print_final_stats s nfeLS nje =
   let nst = Cvode.get_num_steps s
