@@ -90,8 +90,6 @@ MINOR PATCHES
 
 6. Rename CAML_FN everywhere?
 
-7. Fix the size in the RealArray2 final alloc call... (words not bytes)
-
 TO DISCUSS
 ----------
 * Should we check consistency of vector lengths?

@@ -97,8 +97,7 @@ CAMLprim value c_sundials_realarray2_wrap(value vba)
     int nc = ba->dim[0];
     int nr = ba->dim[1];
 
-    mlsize_t table_size = nc * sizeof(realtype *);
-    vtable = caml_alloc_final(1 + nc, NULL, table_size, table_size * 20);
+    vtable = caml_alloc_final(1 + nc, NULL, nc, nc * 20);
     realtype **table = (realtype **)Data_custom_val(vtable);
 
     int j;
