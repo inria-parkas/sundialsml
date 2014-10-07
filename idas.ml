@@ -893,10 +893,12 @@ module Adjoint =
           -> unit
         = "c_idas_adj_reinit"
 
-    let reinit bs tb0 yb0 y'b0 =
+    let reinit bs ?linsolv tb0 yb0 y'b0 =
       let parent, which = parent_and_which bs in
-      c_reinit parent which tb0 yb0 y'b0
-
+      c_reinit parent which tb0 yb0 y'b0;
+      (match linsolv with
+       | Some linsolv -> set_linear_solver bs linsolv yb0 y'b0
+       | None -> ())
 
     let get_work_space bs = Ida.get_work_space (tosession bs)
 

@@ -1023,7 +1023,12 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
         @cvodes <node7#sss:cvinitb> CVodeReInitB
         @raise AdjointNotInitialized    The [init] function has not previously been called.
         @raise BadFinalTime      The final time is outside the interval over which the forward problem was solved. *)
-    val reinit : ('a, 'k) bsession -> float -> ('a, 'k) nvector -> unit
+    val reinit :
+      ('a, 'k) bsession
+      -> ?iter_type:('a, 'k) iter
+      -> float
+      -> ('a, 'k) nvector
+      -> unit
 
     (** {4:adjbwdintegration Backward Integration} *)
 

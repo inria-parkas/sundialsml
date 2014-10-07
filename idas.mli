@@ -1141,6 +1141,7 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
         @raise BadFinalTime      The final time is outside the interval over which the forward problem was solved. *)
     val reinit :
       ('a, 'b) bsession ->
+      ?linsolv:('a, 'b) linear_solver ->
       float -> ('a, 'b) nvector -> ('a, 'b) nvector -> unit
 
     (** {4:adjbwdintegration Backward Integration} *)

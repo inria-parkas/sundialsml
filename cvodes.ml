@@ -877,9 +877,12 @@ module Adjoint =
         : ('a, 'k) session -> int -> float -> ('a, 'k) nvector -> unit
         = "c_cvodes_adj_reinit"
 
-    let reinit bs tb0 yb0 =
+    let reinit bs ?iter_type tb0 yb0 =
       let parent, which = parent_and_which bs in
-      c_reinit parent which tb0 yb0
+      c_reinit parent which tb0 yb0;
+      (match iter_type with
+       | Some iter -> set_iter_type bs iter yb0
+       | None -> ())
 
 
     let get_work_space bs = Cvode.get_work_space (tosession bs)
