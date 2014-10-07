@@ -91,14 +91,14 @@ CAMLprim value sundials_ml_weak_get (value ar, value n)
 CAMLprim value c_sundials_realarray2_wrap(value vba)
 {
     CAMLparam1(vba);
-    CAMLlocal1(r);
+    CAMLlocal2(r, vtable);
 
     struct caml_ba_array *ba = Caml_ba_array_val(vba);
     int nc = ba->dim[0];
     int nr = ba->dim[1];
 
     mlsize_t table_size = nc * sizeof(realtype *);
-    value vtable = caml_alloc_final(1 + nc, NULL, table_size, table_size * 20);
+    vtable = caml_alloc_final(1 + nc, NULL, table_size, table_size * 20);
     realtype **table = (realtype **)Data_custom_val(vtable);
 
     int j;
