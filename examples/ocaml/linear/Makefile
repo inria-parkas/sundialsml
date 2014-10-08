@@ -1,5 +1,8 @@
 include ../../../config
 
+SUNDIALS_CMA = ../../../sundials.cma
+SUNDIALS_CMXA = ../../../sundials.cmxa
+
 EXAMPLES = arraydense.byte arraydense.opt arraydense \
 	   dense.byte dense.opt dense \
 	   arrayband.byte arrayband.opt arrayband \
@@ -11,7 +14,9 @@ EXAMPLES = arraydense.byte arraydense.opt arraydense \
 CVODE_LIBS := $(shell sundials-config -t s -l c -m cvode -s libs) -llapack
 CFLAGS += -Wall
 
-all: $(EXAMPLES)
+all: byte opt
+
+byte: $(EXAMPLES)
 opt: $(EXAMPLES:.byte=.opt)
 
 arraydense.byte: arraydense.ml
@@ -23,23 +28,23 @@ dense.opt: dense.ml
 dense: dense.c
 	cc -o $@ $(CFLAGS) $< $(CVODE_LIBS)
 
-arrayband.byte: arrayband.ml
-arrayband.opt: arrayband.ml
+arrayband.byte: arrayband.ml $(SUNDIALS_CMA)
+arrayband.opt: arrayband.ml $(SUNDIALS_CMXA)
 arrayband: arrayband.c
 	cc -o $@ $(CFLAGS) $< $(CVODE_LIBS)
-band.byte: band.ml
-band.opt: band.ml
+band.byte: band.ml $(SUNDIALS_CMA)
+band.opt: band.ml $(SUNDIALS_CMXA)
 band: band.c
 	cc -o $@ $(CFLAGS) $< $(CVODE_LIBS)
 
-noband.byte: noband.ml
-noband.opt: noband.ml
+noband.byte: noband.ml $(SUNDIALS_CMA)
+noband.opt: noband.ml $(SUNDIALS_CMXA)
 
-spils_nvector1.byte: spils_nvector1.ml
-spils_nvector1.opt: spils_nvector1.ml
+spils_nvector1.byte: spils_nvector1.ml $(SUNDIALS_CMA)
+spils_nvector1.opt: spils_nvector1.ml $(SUNDIALS_CMXA)
 
-spils_serial1.byte: spils_serial1.ml
-spils_serial1.opt: spils_serial1.ml
+spils_serial1.byte: spils_serial1.ml $(SUNDIALS_CMA)
+spils_serial1.opt: spils_serial1.ml $(SUNDIALS_CMXA)
 
 clean:
 	-@rm -f $(EXAMPLES:.byte=.cmo) $(EXAMPLES:.byte=.cmx)

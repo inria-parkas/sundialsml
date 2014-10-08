@@ -683,7 +683,7 @@ let precond data jacarg jok gamma =
       (* jok = TRUE: Copy Jbd to P *)
       for ly = 0 to mysub - 1 do
         for lx = 0 to mxsub - 1 do
-          Direct.copy jbd.(lx).(ly) p.(lx).(ly)
+          Direct.blit jbd.(lx).(ly) p.(lx).(ly)
         done
       done;
       false
@@ -717,7 +717,7 @@ let precond data jacarg jok gamma =
           set_ijth j 1 2 (-. q2 *. c1 +. q4coef);
           set_ijth j 2 1 (q1 *. c3 -. q2 *. c2);
           set_ijth j 2 2 ((-. q2 *. c1 -. q4coef) +. diag);
-          Direct.copy j a
+          Direct.blit j a
         done
       done;
       true

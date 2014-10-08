@@ -43,7 +43,7 @@ module DenseMatrix =
        bigarray to 0 is tempting but error prone and the mechanism can
        be circumvented using Bigarray.Array2.sub (see:
          https://groups.google.com/d/msg/fa.caml/ROr_PifT_44/aqQ8Z0TWzH8J). *)
-    let unwrap { payload } = payload
+    let unsafe_unwrap { payload } = payload
 
     let invalidate v = v.valid <- false
 
@@ -78,7 +78,7 @@ module DenseMatrix =
     external c_copy     : Obj.t -> Obj.t -> unit
         = "c_densematrix_copy"
 
-    let copy { dlsmat=dlsmat1; valid=valid1 }
+    let blit { dlsmat=dlsmat1; valid=valid1 }
              { dlsmat=dlsmat2; valid=valid2 } =
       if not (valid1 && valid2) then raise Invalidated;
       c_copy dlsmat1 dlsmat2
@@ -181,7 +181,7 @@ module ArrayDenseMatrix =
 
     let set_to_zero x = Bigarray.Array2.fill (Sundials.RealArray2.unwrap x) 0.0
 
-    let copy = Sundials.RealArray2.blit
+    let blit = Sundials.RealArray2.blit
 
     external scale : float -> t -> unit
         = "c_arraydensematrix_scale"
@@ -226,25 +226,29 @@ module BandMatrix =
       mutable valid : bool;
     }
 
+    (** Must agree with dls_bandmatrix_dims_index in dls_ml.h *)
+    type dimensions = {
+        n   : int;
+        mu  : int;
+        smu : int;
+        ml  : int;
+      }
+
     exception Invalidated
 
-    external c_create : int -> int -> int -> int -> t
+    external create : dimensions -> t
         = "c_bandmatrix_new_band_mat"
-
-    let create i j =
-      if i <= 0 || j <= 0 then failwith "Both M and N must be positive";
-      c_create i j
 
     (* Allowing direct access is not safe because the underlying data may
        have been invalidated. Invalidating by setting the dims of the
        bigarray to 0 is tempting but error prone and the mechanism can
        be circumvented using Bigarray.Array2.sub (see:
          https://groups.google.com/d/msg/fa.caml/ROr_PifT_44/aqQ8Z0TWzH8J). *)
-    let unwrap { payload } = payload
+    let unsafe_unwrap { payload } = payload
 
     let invalidate v = v.valid <- false
 
-    external c_size : Obj.t -> (int * int * int * int)
+    external c_size : Obj.t -> dimensions
         = "c_bandmatrix_size"
 
     let size { dlsmat; valid } =
@@ -278,10 +282,10 @@ module BandMatrix =
     external c_copy : Obj.t -> Obj.t -> int -> int -> unit
         = "c_bandmatrix_copy"
 
-    let copy { dlsmat=dlsmat1; valid=valid1 }
+    let blit { dlsmat=dlsmat1; valid=valid1 }
              { dlsmat=dlsmat2; valid=valid2 } copymu copyml =
       if not (valid1 && valid2) then raise Invalidated;
-      c_copy dlsmat1 dlsmat1 copymu copyml
+      c_copy dlsmat1 dlsmat2 copymu copyml
 
     external c_scale : float -> Obj.t -> unit
         = "c_bandmatrix_scale"
@@ -328,11 +332,11 @@ module BandMatrix =
       if not valid then raise Invalidated;
       payload.{j, i - j + smu} <- v
 
-    let make n mu ml smu v =
-      let r = create n mu ml smu in
+    let make ({ n; smu } as dims) v =
+      let { payload } as r = create dims in
       for i = 0 to n - 1 do
         for j = (max 0 (i - 1)) to (min n (i + 1)) - 1 do
-          set r i j v
+          Bigarray.Array2.unsafe_set payload j (i - j + smu) v
         done
       done;
       r
@@ -341,6 +345,10 @@ module BandMatrix =
 module ArrayBandMatrix =
   struct
     type t = Sundials.RealArray2.t
+
+    type smu = int
+    type mu = int
+    type ml = int
 
     let make n smu ml v =
       Sundials.RealArray2.make (smu + ml + 1) n v
@@ -357,13 +365,13 @@ module ArrayBandMatrix =
     external copy' : t -> t -> int * int * int * int -> unit
         = "c_arraybandmatrix_copy"
 
-    let copy a b a_smu b_smu copymu copyml
+    let blit a b a_smu b_smu copymu copyml
         = copy' a b (a_smu, b_smu, copymu, copyml)
 
     external scale' : float -> t -> int * int * int -> unit
         = "c_arraybandmatrix_scale"
 
-    let scale c a mu ml smu = scale' c a (mu, ml, smu)
+    let scale c a smu mu ml = scale' c a (mu, ml, smu)
 
     external add_identity : t -> int -> unit
         = "c_arraybandmatrix_add_identity"
@@ -371,7 +379,7 @@ module ArrayBandMatrix =
     external gbtrf' : t -> int * int * int -> lint_array -> unit
         = "c_arraybandmatrix_gbtrf"
 
-    let gbtrf a mu ml smu p = gbtrf' a (mu, ml, smu) p
+    let gbtrf a smu mu ml p = gbtrf' a (mu, ml, smu) p
 
     external gbtrs'
         : t -> int * int -> lint_array -> real_array -> unit

@@ -38,7 +38,6 @@ let nrows, ncols = 3, 3;;
 
 let main () =
   let a = M.create nrows ncols in
-  Gc.finalise (fun _ -> print_endline "END of a!!\n") a;
 
   M.set a 0 0 ( 1.0);
   M.set a 0 1 ( 2.0);
@@ -55,8 +54,7 @@ let main () =
   printf "initially: a=@\n%a@\n" print_mat a;
 
   let b = M.create nrows ncols in
-  Gc.finalise (fun _ -> print_endline "END of b!!\n") a;
-  M.copy a b;
+  M.blit a b;
 
   M.scale 2.0 b;
   printf "scale copy x2: b=@\n%a@\n" print_mat b;

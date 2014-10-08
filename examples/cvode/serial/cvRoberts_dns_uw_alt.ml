@@ -79,7 +79,7 @@ let alternate_dense jacfn =
     let jcurptr =
       if jok then begin
         (* If jok = TRUE, use saved copy of J *)
-        DM.copy mem.savedj mem.dm;
+        DM.blit mem.savedj mem.dm;
         false
       end else begin
         (* If jok = FALSE, call jac routine for new J value *)
@@ -88,7 +88,7 @@ let alternate_dense jacfn =
         DM.set_to_zero mem.dm;
         let tn = Cvode.get_current_time s in
         jacfn tn ypred fpred mem.dm tmp;
-        DM.copy mem.dm mem.savedj;
+        DM.blit mem.dm mem.savedj;
         true
       end
     in

@@ -7,7 +7,7 @@ let printf = Format.printf
 let fprintf = Format.fprintf
 
 let print_mat out m =
-  let (n, mu, ml, smu) = M.size m in
+  let {M.n; M.mu; M.ml; M.smu} = M.size m in
   fprintf out "@[<v>";
   for i = 0 to n - 1 do
     fprintf out "@[<h>";
@@ -21,7 +21,7 @@ let print_mat out m =
   fprintf out "@]"
 
 let print_factored_mat out m =
-  let (n, mu, ml, smu) = M.size m in
+  let {M.n; M.mu; M.ml; M.smu} = M.size m in
   fprintf out "@[<v>";
   for i = 0 to n - 1 do
     fprintf out "@[<h>";
@@ -58,7 +58,7 @@ and ml = 1;;
 let smu = min (n - 1) (mu + ml);;
 
 let main () =
-  let a = M.create n mu ml smu in
+  let a = M.create {M.n; M.mu; M.ml; M.smu} in
 
   M.set a 0 0 ( 1.0);
   M.set a 0 1 ( 2.0);
@@ -80,8 +80,8 @@ let main () =
 
   printf "initially: a=@\n%a@\n" print_mat a;
 
-  let b = M.create n mu ml smu in
-  M.copy a b mu ml;
+  let b = M.create {M.n; M.mu; M.ml; M.smu} in
+  M.blit a b mu ml;
 
   M.scale 2.0 b;
   printf "scale copy x2: b=@\n%a@\n" print_mat b;

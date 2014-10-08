@@ -138,7 +138,7 @@ CAMLprim value c_densematrix_getrf(value va, value vp)
 
     if (r != 0) {
 	caml_raise_with_arg(DLS_EXN(ZeroDiagonalElement),
-			    Val_int(r));
+			    Val_long(r));
     }
     CAMLreturn (Val_unit);
 }
@@ -267,7 +267,7 @@ CAMLprim value c_arraydensematrix_getrf(value va, value vp)
 
     if (r != 0) {
 	caml_raise_with_arg(DLS_EXN(ZeroDiagonalElement),
-			    Val_int(r));
+			    Val_long(r));
     }
     CAMLreturn (Val_unit);
 }
@@ -421,22 +421,21 @@ CAMLprim value c_dls_band_wrap(DlsMat a, int finalize)
     vr = caml_alloc_tuple(4);
     Store_field(vr, RECORD_DLS_BANDMATRIX_PAYLOAD, va);
     Store_field(vr, RECORD_DLS_BANDMATRIX_DLSMAT, vv);
-    Store_field(vr, RECORD_DLS_BANDMATRIX_SMU, Val_int(a->s_mu));
+    Store_field(vr, RECORD_DLS_BANDMATRIX_SMU, Val_long(a->s_mu));
     Store_field(vr, RECORD_DLS_BANDMATRIX_VALID, Val_bool(1));
 
     CAMLreturn(vr);
 }
 
-CAMLprim value c_bandmatrix_new_band_mat(value vn, value vmu,
-					 value vml, value vsmu)
+CAMLprim value c_bandmatrix_new_band_mat(value vdims)
 {
-    CAMLparam4(vn, vmu, vml, vsmu);
+    CAMLparam1(vdims);
     CAMLlocal1(vr);
 
-    int n   = Long_val(vn);
-    int mu  = Long_val(vmu);
-    int ml  = Long_val(vml);
-    int smu = Long_val(vsmu);
+    long int n   = Long_val(Field(vdims, RECORD_DLS_BANDMATRIX_DIMS_N));
+    long int mu  = Long_val(Field(vdims, RECORD_DLS_BANDMATRIX_DIMS_MU));
+    long int smu = Long_val(Field(vdims, RECORD_DLS_BANDMATRIX_DIMS_SMU));
+    long int ml  = Long_val(Field(vdims, RECORD_DLS_BANDMATRIX_DIMS_ML));
 
     DlsMat a = NewBandMat(n, mu, ml, smu);
     if (a == NULL)
@@ -452,10 +451,10 @@ CAMLprim value c_bandmatrix_size(value va)
 
     DlsMat ma = DLSMAT(va);
     vr = caml_alloc_tuple(3);
-    Store_field(vr, 0, Val_long(ma->N));
-    Store_field(vr, 1, Val_long(ma->mu));
-    Store_field(vr, 2, Val_long(ma->ml));
-    Store_field(vr, 3, Val_long(ma->s_mu));
+    Store_field(vr, RECORD_DLS_BANDMATRIX_DIMS_N,   Val_long(ma->N));
+    Store_field(vr, RECORD_DLS_BANDMATRIX_DIMS_MU,  Val_long(ma->mu));
+    Store_field(vr, RECORD_DLS_BANDMATRIX_DIMS_SMU, Val_long(ma->s_mu));
+    Store_field(vr, RECORD_DLS_BANDMATRIX_DIMS_ML,  Val_long(ma->ml));
 
     CAMLreturn(vr);
 }
@@ -464,7 +463,23 @@ CAMLprim value c_bandmatrix_copy(value va, value vb,
 				 value vcopymu, value vcopyml)
 {
     CAMLparam4(va, vb, vcopymu, vcopyml);
-    BandCopy(DLSMAT(va), DLSMAT(vb), Long_val(vcopymu), Long_val(vcopyml));
+
+    long int copymu = Long_val(vcopymu);
+    long int copyml = Long_val(vcopyml);
+    DlsMat ma = DLSMAT(va);
+    DlsMat mb = DLSMAT(vb);
+
+#if SUNDIALS_ML_SAFE == 1
+    long int copysize = copymu + copyml + 1;
+    long int a_bandwidth = ma->s_mu + ma->ml + 1;
+    long int b_bandwidth = mb->s_mu + mb->ml + 1;
+
+    if (copymu > ma->s_mu || copymu > mb->s_mu
+	    || copysize > a_bandwidth || copysize > b_bandwidth)
+	caml_invalid_argument("BandMatrix.blit: invalid arguments.");
+#endif
+
+    BandCopy(ma, mb, copymu, copyml);
     CAMLreturn (Val_unit);
 }
 
@@ -545,11 +560,11 @@ CAMLprim value c_arraybandmatrix_copy(value va, value vb, value vsizes)
     intnat bn = bb->dim[1];
 
     if (an < copymu + copyml + 1)
-	caml_invalid_argument("ArrayBandMatrix.copy: source matrix too small.");
+	caml_invalid_argument("ArrayBandMatrix.blit: source matrix too small.");
     if (bn < copymu + copyml + 1)
-	caml_invalid_argument("ArrayBandMatrix.copy: destination matrix too small.");
+	caml_invalid_argument("ArrayBandMatrix.blit: destination matrix too small.");
     if ((am != bm) || (bm != bn))
-	caml_invalid_argument("ArrayBandMatrix.copy: matrix sizes differ.");
+	caml_invalid_argument("ArrayBandMatrix.blit: matrix sizes differ.");
 #endif
 
     bandCopy(ARRAY2_ACOLS(va), ARRAY2_ACOLS(vb), am, a_smu, b_smu,

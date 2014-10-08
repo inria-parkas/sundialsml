@@ -99,7 +99,7 @@ let main () =
 
   let b = RealArray2.copy a in
 
-  M.scale 2.0 b mu ml smu;
+  M.scale 2.0 b smu mu ml;
   printf "scale copy x2: b=@\n%a@\n" (print_mat mu ml smu) b;
 
   M.add_identity b smu;
@@ -107,7 +107,7 @@ let main () =
 
   let p = LintArray.create 5 in
   Array1.fill p 0;
-  M.gbtrf a mu ml smu p;
+  M.gbtrf a smu mu ml p;
   printf "getrf: a=@\n%a@\n" (print_factored_mat mu ml smu) a;
   printf "       p=@\n%a@\n@\n" print_p p;
 

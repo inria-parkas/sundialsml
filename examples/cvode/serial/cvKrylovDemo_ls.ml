@@ -355,7 +355,7 @@ let precond data jacarg jok gamma =
       (* jok = TRUE: Copy Jbd to P *)
       for jy = 0 to my - 1 do
         for jx = 0 to mx - 1 do
-          Densemat.copy jbd.(jx).(jy) p.(jx).(jy)
+          Densemat.blit jbd.(jx).(jy) p.(jx).(jy)
         done
       done;
       false
