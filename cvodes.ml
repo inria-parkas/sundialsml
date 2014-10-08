@@ -855,12 +855,12 @@ module Adjoint =
                                | NoSens f -> f
                                | _ -> dummy_brhsfn);
 
-                brhsfn1     = (match mf with
+                brhsfn_sens = (match mf with
                                | WithSens f -> f
-                               | _ -> dummy_brhsfn1);
+                               | _ -> dummy_brhsfn_sens);
 
                 bquadrhsfn  = dummy_bquadrhsfn;
-                bquadrhsfn1 = dummy_bquadrhsfn1;
+                bquadrhsfn_sens = dummy_bquadrhsfn_sens;
               };
             } in
       Gc.finalise bsession_finalize (tosession bs);
@@ -952,7 +952,7 @@ module Adjoint =
           match mf with
            | NoSens f -> (se.bquadrhsfn <- f;
                              c_quad_initb parent which y0)
-           | WithSens f -> (se.bquadrhsfn1 <- f;
+           | WithSens f -> (se.bquadrhsfn_sens <- f;
                                 c_quad_initbs parent which y0)
 
         external c_reinit : ('a, 'k) session -> int -> ('a, 'k) nvector -> unit

@@ -388,10 +388,10 @@ and ('a, 'kind) bsensext = {
   bnum_sensitivities    : int;
   bsensarray            : 'a array;
 
-  mutable brhsfn        : 'a AdjointTypes'.brhsfn_no_sens;
-  mutable brhsfn1       : 'a AdjointTypes'.brhsfn_with_sens;
-  mutable bquadrhsfn    : 'a AdjointTypes'.QuadratureTypes.bquadrhsfn_no_sens;
-  mutable bquadrhsfn1   : 'a AdjointTypes'.QuadratureTypes.bquadrhsfn_with_sens;
+  mutable brhsfn          : 'a AdjointTypes'.brhsfn_no_sens;
+  mutable brhsfn_sens     : 'a AdjointTypes'.brhsfn_with_sens;
+  mutable bquadrhsfn      : 'a AdjointTypes'.QuadratureTypes.bquadrhsfn_no_sens;
+  mutable bquadrhsfn_sens : 'a AdjointTypes'.QuadratureTypes.bquadrhsfn_with_sens;
 }
 
 and ('data, 'kind) alternate_linsolv =
@@ -520,12 +520,12 @@ let dummy_errw _ _ =
   crash "Internal error: dummy_errw called\n"
 let dummy_brhsfn _ _ _ _ =
   crash "Internal error: dummy_brhsfn called\n"
-let dummy_brhsfn1 _ _ _ _ _ =
-  crash "Internal error: dummy_brhsfn1 called\n"
+let dummy_brhsfn_sens _ _ _ _ _ =
+  crash "Internal error: dummy_brhsfn_sens called\n"
 let dummy_bquadrhsfn _ _ _ _ =
   crash "Internal error: dummy_bquadrhsfn called\n"
-let dummy_bquadrhsfn1 _ _ _ _ _ =
-  crash "Internal error: dummy_bquadrhsfn1 called\n"
+let dummy_bquadrhsfn_sens _ _ _ _ _ =
+  crash "Internal error: dummy_bquadrhsfn_sens called\n"
 let dummy_quadrhsfn _ _ _ =
   crash "Internal error: dummy_quadrhsfn called\n"
 let dummy_sensrhsfn _ _ _ _ _ _ _ =

@@ -428,7 +428,7 @@ static int quadsensrhsfn(int ns, realtype t, N_Vector yy, N_Vector yp,
 }
 
 
-static int resfnb(realtype t, N_Vector y, N_Vector yp,
+static int bresfn(realtype t, N_Vector y, N_Vector yp,
 		  N_Vector yB, N_Vector ypB,
 		  N_Vector resvalB, void *user_dataB)
 {
@@ -453,17 +453,17 @@ static int resfnb(realtype t, N_Vector y, N_Vector yp,
     // afterward that memory goes back to cvode. These bigarrays must not be
     // retained by closure_quadrhsfn! If it wants a permanent copy, then it
     // has to make it manually.
-    r = caml_callbackN_exn (IDAS_RESFNB_FROM_EXT(bsensext),
+    r = caml_callbackN_exn (IDAS_BRESFN_FROM_EXT(bsensext),
 			    sizeof (args) / sizeof (*args),
 			    args);
 
     CAMLreturnT(int, check_exception (session, r));
 }
 
-static int resfnbs(realtype t, N_Vector y, N_Vector yp,
-		   N_Vector *yS, N_Vector *ypS,
-		   N_Vector yB, N_Vector ypB,
-		   N_Vector resvalB, void *user_dataB)
+static int bresfn_sens(realtype t, N_Vector y, N_Vector yp,
+		       N_Vector *yS, N_Vector *ypS,
+		       N_Vector yB, N_Vector ypB,
+		       N_Vector resvalB, void *user_dataB)
 {
     CAMLparam0();
     CAMLlocal3(session, bsensext, r);
@@ -492,7 +492,7 @@ static int resfnbs(realtype t, N_Vector y, N_Vector yp,
     // afterward that memory goes back to cvode. These bigarrays must not be
     // retained by closure_quadrhsfn! If it wants a permanent copy, then it
     // has to make it manually.
-    r = caml_callbackN_exn (IDAS_RESFNBS_FROM_EXT(bsensext),
+    r = caml_callbackN_exn (IDAS_BRESFN_SENS_FROM_EXT(bsensext),
 			    sizeof (args) / sizeof (*args),
 			    args);
 
@@ -666,10 +666,10 @@ static int bquadrhsfn(realtype t, N_Vector y, N_Vector yp,
 }
 
 /* FIXME: rename to quadrhsfnbs */
-static int bquadrhsfn1(realtype t, N_Vector y, N_Vector yp,
-		       N_Vector *yS, N_Vector *ypS,
-		       N_Vector yB, N_Vector ypB,
-		       N_Vector rhsvalBQS, void *user_data)
+static int bquadrhsfn_sens(realtype t, N_Vector y, N_Vector yp,
+			   N_Vector *yS, N_Vector *ypS,
+			   N_Vector yB, N_Vector ypB,
+			   N_Vector rhsvalBQS, void *user_data)
 {
     CAMLparam0();
     CAMLlocalN(args, 8);
@@ -698,7 +698,7 @@ static int bquadrhsfn1(realtype t, N_Vector y, N_Vector yp,
     // afterward that memory goes back to cvode. These bigarrays must not be
     // retained by closure_quadrhsfn! If it wants a permanent copy, then it
     // has to make it manually.
-    r = caml_callbackN(IDAS_BQUADRHSFN1_FROM_EXT(sensext),
+    r = caml_callbackN(IDAS_BQUADRHSFN_SENS_FROM_EXT(sensext),
                        sizeof (args) / sizeof (*args),
                        args);
 
@@ -1905,12 +1905,12 @@ CAMLprim value c_idas_adj_init_backward(value vparent, value weakref,
     }
 
     if (Bool_val(vwithsens)) {
-	flag = IDAInitBS(parent, which, resfnbs, tb0, y0, yp0);
+	flag = IDAInitBS(parent, which, bresfn_sens, tb0, y0, yp0);
 	if (flag != IDA_SUCCESS) {
 	    SCHECK_FLAG("IDAInitBS", flag);
 	}
     } else {
-	flag = IDAInitB(parent, which, resfnb, tb0, y0, yp0);
+	flag = IDAInitB(parent, which, bresfn, tb0, y0, yp0);
 	if (flag != IDA_SUCCESS) {
 	    SCHECK_FLAG("IDAInitB", flag);
 	}
@@ -2074,7 +2074,7 @@ CAMLprim value c_idas_adjquad_initbs(value vparent, value vwhich, value vyqb0)
     N_Vector yqb0 = NVEC_VAL(vyqb0);
     
     flag = IDAQuadInitBS(IDA_MEM_FROM_ML(vparent), Int_val(vwhich),
-			 bquadrhsfn1, yqb0);
+			 bquadrhsfn_sens, yqb0);
     SCHECK_FLAG("IDAQuadInitBS", flag);
 
     CAMLreturn (Val_unit);

@@ -873,16 +873,16 @@ module Adjoint =
                 bsensarray1 = c_alloc_nvector_array ns;
                 bsensarray2 = c_alloc_nvector_array ns;
 
-                resfnb      = (match mf with
+                bresfn      = (match mf with
                                | NoSens f -> f
-                               | _ -> dummy_resfnb);
+                               | _ -> dummy_bresfn);
 
-                resfnbs     = (match mf with
+                bresfn_sens = (match mf with
                                | WithSens f -> f
-                               | _ -> dummy_resfnbs);
+                               | _ -> dummy_bresfn_sens);
 
                 bquadrhsfn  = dummy_bquadrhsfn;
-                bquadrhsfn1 = dummy_bquadrhsfn1;
+                bquadrhsfn_sens = dummy_bquadrhsfn_sens;
               };
             } in
       Gc.finalise bsession_finalize (tosession bs);
@@ -973,7 +973,7 @@ module Adjoint =
           match mf with
            | NoSens f -> (se.bquadrhsfn <- f;
                          c_quad_initb parent which y0)
-           | WithSens f -> (se.bquadrhsfn1 <- f;
+           | WithSens f -> (se.bquadrhsfn_sens <- f;
                             c_quad_initbs parent which y0)
 
         external c_reinit : ('a, 'k) session -> int -> ('a, 'k) nvector -> unit

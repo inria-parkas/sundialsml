@@ -285,8 +285,8 @@ static int brhsfn(realtype t, N_Vector y, N_Vector yb, N_Vector ybdot,
     CAMLreturnT(int, r);
 }
 
-static int brhsfn1(realtype t, N_Vector y, N_Vector *ys, N_Vector yb,
-		   N_Vector ybdot, void *user_data)
+static int brhsfn_sens(realtype t, N_Vector y, N_Vector *ys, N_Vector yb,
+		       N_Vector ybdot, void *user_data)
 {
     CAMLparam0();
     CAMLlocal3(session, sensext, r);
@@ -312,7 +312,7 @@ static int brhsfn1(realtype t, N_Vector y, N_Vector *ys, N_Vector yb,
     // afterward that memory goes back to cvode. These bigarrays must not be
     // retained by closure_quadrhsfn! If it wants a permanent copy, then it
     // has to make it manually.
-    r = caml_callbackN_exn(CVODES_BRHSFN1_FROM_EXT(sensext),
+    r = caml_callbackN_exn(CVODES_BRHSFN_SENS_FROM_EXT(sensext),
                            sizeof (args) / sizeof (*args),
                            args);
 
@@ -344,8 +344,8 @@ static int bquadrhsfn(realtype t, N_Vector y, N_Vector yb, N_Vector qbdot,
     CAMLreturnT(int, r);
 }
 
-static int bquadrhsfn1(realtype t, N_Vector y, N_Vector *ys, N_Vector yb,
-		       N_Vector qbdot, void *user_data)
+static int bquadrhsfn_sens(realtype t, N_Vector y, N_Vector *ys, N_Vector yb,
+			   N_Vector qbdot, void *user_data)
 {
     CAMLparam0();
     CAMLlocalN(args, 5);
@@ -371,7 +371,7 @@ static int bquadrhsfn1(realtype t, N_Vector y, N_Vector *ys, N_Vector yb,
     // afterward that memory goes back to cvode. These bigarrays must not be
     // retained by closure_quadrhsfn! If it wants a permanent copy, then it
     // has to make it manually.
-    r = caml_callbackN(CVODES_BQUADRHSFN1_FROM_EXT(sensext),
+    r = caml_callbackN(CVODES_BQUADRHSFN_SENS_FROM_EXT(sensext),
                        sizeof (args) / sizeof (*args),
                        args);
 
@@ -1272,7 +1272,7 @@ CAMLprim value c_cvodes_adj_init_backward(value vparent, value weakref,
     }
 
     if (Bool_val(vwithsens)) {
-	flag = CVodeInitBS(parent, which, brhsfn1, tb0, initial_nv);
+	flag = CVodeInitBS(parent, which, brhsfn_sens, tb0, initial_nv);
 	if (flag != CV_SUCCESS) {
 	    SCHECK_FLAG("CVodeInitBS", flag);
 	}
@@ -1353,7 +1353,7 @@ CAMLprim value c_cvodes_adjquad_initbs(value vparent, value vwhich, value vyqb0)
     N_Vector yqb0 = NVEC_VAL(vyqb0);
     
     flag = CVodeQuadInitBS(CVODE_MEM_FROM_ML(vparent), Int_val(vwhich),
-			   bquadrhsfn1, yqb0);
+			   bquadrhsfn_sens, yqb0);
     SCHECK_FLAG("CVodeQuadInitBS", flag);
 
     CAMLreturn (Val_unit);
