@@ -341,7 +341,7 @@ let main () =
 
   let yQS = Array.init ns (fun _ -> Nvector_serial.make neq 0.0 (* FIXME: clone y then zero out *)) in
 
-  QuadSens.init ida_mem None yQS;
+  QuadSens.init ida_mem yQS;
 
   (* Call IDACalcIC to compute consistent initial conditions. If sensitivity is
      enabled, this function also try to find consistent IC for the sensitivities. *)

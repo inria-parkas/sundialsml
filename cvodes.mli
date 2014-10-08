@@ -632,16 +632,16 @@ let sp = { pvals = Some p; pbar = ...; plist = ... }]}
            -> 'a          (* tmp2 *)
            -> unit
 
-        (** This function, [init s fQS yQS0], activates integration of
-            quadrature equations depending on sensitivities, where
-            [fQS] computes the right-hand side of the
-            sensitivity-dependent quadrature equations, and [yQS0]
+        (** This function, [init s ~fQS:fQS yQS0], activates
+            integration of quadrature equations depending on
+            sensitivities, where [fQS] computes the right-hand side of
+            the sensitivity-dependent quadrature equations, and [yQS0]
             contains the initial values of sensitivity-dependent
             quadratures.  When no [fQB] is supplied, the solver uses
             an internal implementation based on difference quotients.
 
             @cvodes <node6#ss:quad_sens_init> CVodeQuadSensInit *)
-        val init : ('a, 'k) session -> 'a quadsensrhsfn option
+        val init : ('a, 'k) session -> ?fQS:'a quadsensrhsfn
                  -> ('a, 'k) nvector array -> unit
 
         (** This function reinitializes the forward sensitivity computation.

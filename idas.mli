@@ -623,8 +623,8 @@ let yS'0 = Array.init ns (fun _ -> RealArray.init neq 0.0)]}
 
             @idas <node6#ss:quad_sens_init> IDAQuadSensInit *)
         val init :
-          ('a, 'b) session ->
-          'a quadsensrhsfn option -> ('a, 'b) nvector array -> unit
+          ('a, 'b) session -> ?fQS:'a quadsensrhsfn
+          -> ('a, 'b) nvector array -> unit
 
         (** This function reinitializes the forward sensitivity computation.
 

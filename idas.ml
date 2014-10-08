@@ -374,12 +374,12 @@ module Sensitivity =
         : ('a, 'k) session -> bool -> ('a, 'k) nvector array -> unit
         = "c_idas_quadsens_init"
 
-      let init s f v0 =
+      let init s ?fQS v0 =
         let se = fwdsensext s in
         let ns = num_sensitivities s in
         if Array.length v0 <> ns
         then invalid_arg "init: wrong number of vectors";
-        match f with
+        match fQS with
         | Some f -> se.quadsensrhsfn <- f;
                     c_quadsens_init s true v0
         | None -> c_quadsens_init s false v0
