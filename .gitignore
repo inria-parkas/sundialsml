@@ -14,6 +14,7 @@ config
 *.log
 *.time
 *.perf
+*.reps
 *.dat
 *.so
 *.a

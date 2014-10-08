@@ -80,12 +80,19 @@ perf.byte.%: perf.byte.log
 ocaml:
 	${MAKE} -C ocaml
 
-distclean: clean
-clean:
+distclean: clean-utils
+	@for s in ${SUBDIRS}; do		\
+		${MAKE} -C $$s distclean;	\
+	done
+	@${MAKE} -C ocaml distclean
+
+clean: clean-utils
 	@for s in ${SUBDIRS}; do		\
 		${MAKE} -C $$s clean;		\
 	done
 	@${MAKE} -C ocaml clean
+
+clean-utils:
 	-@rm -f perf.byte.* perf.opt.*
 	-@rm -f $(foreach f,utils/perf utils/crunchperf,\
 		    $f $f.cmi $f.cmx $f.cmo $f.o)

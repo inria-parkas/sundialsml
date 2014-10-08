@@ -16,8 +16,4 @@ EXAMPLES = idaRoberts_dns.ml  \
 
 include ../../examples.mk
 
-idaRoberts_dns_alt.sundials.out: idaRoberts_dns.sundials.out
-	cp $< $@
-
-idaRoberts_dns_alt.sundials.time: idaRoberts_dns.sundials.time
-	cp $< $@
+$(eval $(call EXECUTION_RULE,idaRoberts_dns_alt,$$<,idaRoberts_dns))

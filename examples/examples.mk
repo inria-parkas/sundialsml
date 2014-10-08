@@ -24,6 +24,8 @@
 # Caveats:
 #  - Automatic variables like $< and $@ must have two $'s.
 #  - Don't prefix $$< with ./
+#  - Supply a third argument bar if foo.{out,reps,time} should be copies
+#    of bar.{out,reps,time}.
 
 include $(SRCROOT)/config
 
@@ -149,8 +151,13 @@ define ADD_EXECUTE_RULES
 	CAML_LD_LIBRARY_PATH=$(CAML_LD_LIBRARY_PATH) $(2:$$<=./$$<) > $$@
     $1.opt.out: $1.opt
 	$(2:$$<=./$$<) > $$@
+    ifeq ($3,)
     $1.sundials.out: $1.sundials
 	$(2:$$<=./$$<) > $$@
+    else
+    $1.sundials.out: $3.sundials.out
+	cp $< $@
+    endif
 endef
 
 
@@ -169,7 +176,8 @@ PERF=perf.opt.log perf.byte.log
 .PHONY: $(PERF)
 
 .SECONDARY: $(ALL_EXAMPLES:.ml=.byte.time) $(ALL_EXAMPLES:.ml=.opt.time)     \
-	    $(ALL_EXAMPLES:.ml=.sundials) $(ALL_EXAMPLES:.ml=.sundials.time)
+	    $(ALL_EXAMPLES:.ml=.sundials) $(ALL_EXAMPLES:.ml=.sundials.time) \
+	    $(ALL_EXAMPLES:.ml=.reps)
 
 $(UTILS)/perf: $(UTILS)/perf.ml
 	$(OCAMLOPT) -o $@ unix.cmxa $<
@@ -204,15 +212,26 @@ $(foreach t,jpg png pdf eps,perf.byte.$t): perf.byte.log
 
 # Rules for producing *.time files.  Subroutine of EXECUTION_RULE.
 define ADD_TIME_RULES
-    # .sundials should be run before .opt or .byte - it determines NUM_REPS.
-    $1.sundials.time: $1.sundials $(UTILS)/perf
-	$(UTILS)/perf -m $(MIN_TIME) $(PERF_DATA_POINTS) \
+    # .reps should be updated if perf.ml was modified, but not if it
+    # was just recompiled; hence perf.ml is a dependence while perf
+    # is an order-only dependence.
+    ifeq ($3,)
+    $1.reps: $(UTILS)/perf.ml $(SRCROOT)/config | $1.sundials $(UTILS)/perf
+	$(UTILS)/perf -r $(MIN_TIME) $(2:$$<=./$$(word 1,$$|)) > $$@
+    $1.sundials.time: $1.sundials $1.reps $(UTILS)/perf
+	$(UTILS)/perf -m $$(word 2,$$^) $(PERF_DATA_POINTS) \
 	    $(2:$$<=./$$<) | tee $$@
-    $1.opt.time: $1.opt $1.sundials.time $(UTILS)/perf
-	$(UTILS)/perf -i $$(word 2,$$^) $(PERF_DATA_POINTS) \
+    else
+    $1.reps: $3.reps
+	cp $$< $$@
+    $1.sundials.time: $3.sundials.time
+	cp $$< $$@
+    endif
+    $1.opt.time: $1.opt $1.reps $(UTILS)/perf
+	$(UTILS)/perf -m $$(word 2,$$^) $(PERF_DATA_POINTS) \
 	    $(2:$$<=./$$<) | tee $$@
-    $1.byte.time: $1.byte $1.sundials.time $(UTILS)/perf
-	$(UTILS)/perf -i $$(word 2,$$^) $(PERF_DATA_POINTS) \
+    $1.byte.time: $1.byte $1.reps $(UTILS)/perf
+	$(UTILS)/perf -m $$(word 2,$$^) $(PERF_DATA_POINTS) \
 	    $(2:$$<=./$$<) | tee $$@
     $1.opt.perf: $1.opt.time $1.sundials.time $(UTILS)/crunchperf
 	$(UTILS)/crunchperf -c $$(word 1, $$^) $$(word 2, $$^) \
@@ -268,21 +287,22 @@ $(MPI_EXAMPLES:.ml=.sundials): %.sundials: %.sundials.c
 
 # Just remind the user to recompile the library rather than actually
 # doing the recompilation.  (Or is it better to recompile?)
-$(SRCROOT)/%.cma $(SRCROOT)/%.cmxa:
+$(SRCROOT)/config $(SRCROOT)/%.cma $(SRCROOT)/%.cmxa:
 	@echo "$@ doesn't exist."
 	@echo "Maybe you forgot to compile the main library?"
 	@false
 
 # Generate recipes for *.out, *.time, etc.
 define EXECUTION_RULE
-    $(call ADD_EXECUTE_RULES,$1,$2)
-    $(call ADD_TIME_RULES,$1,$2)
+    $(call ADD_EXECUTE_RULES,$1,$2,$3)
+    $(call ADD_TIME_RULES,$1,$2,$3)
 endef
 
 # Generate a default version.
 $(eval $(call EXECUTION_RULE,%,$$<))
 
 distclean: clean
+	-@rm -f $(ALL_EXAMPLES:.ml=.reps)
 clean:
 	-@rm -f $(ALL_EXAMPLES:.ml=.cmo) $(ALL_EXAMPLES:.ml=.cmx)
 	-@rm -f $(ALL_EXAMPLES:.ml=.o) $(ALL_EXAMPLES:.ml=.cmi)
