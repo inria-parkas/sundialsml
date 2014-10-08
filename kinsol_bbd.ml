@@ -16,7 +16,7 @@ include KinsolBbdTypes
 type data = Nvector_parallel.data
 type kind = Nvector_parallel.kind
 type parallel_session = (data, kind) session
-type parallel_linear_solver = (data, kind) linear_solver
+type parallel_preconditioner = (data, kind) Kinsol.Spils.preconditioner
 
 module Impl = KinsolBbdParamTypes
 type local_fn = data Impl.local_fn
@@ -47,53 +47,21 @@ external c_bbd_prec_init
     : parallel_session -> int -> bandwidths -> float -> bool -> unit
     = "c_kinsol_bbd_prec_init"
 
-external c_set_max_restarts : ('a, 'k) session -> int -> unit
-    = "c_kinsol_spils_set_max_restarts"
-
-external c_spils_spgmr : ('a, 'k) session -> int -> unit
-  = "c_kinsol_spils_spgmr"
-
-external c_spils_spbcg : ('a, 'k) session -> int -> unit
-  = "c_kinsol_spils_spbcg"
-
-external c_spils_sptfqmr : ('a, 'k) session -> int -> unit
-  = "c_kinsol_spils_sptfqmr"
-
-let spgmr ?(maxl=0) ?max_restarts ?(dqrely=0.0) bws cb session onv =
+let init_preconditioner dqrely bandwidths callbacks session onv =
+  (* FIXME: is it really legitimate to pass 0?  If so, why not always
+     do that?  *)
   let localn =
     match onv with
-      None -> 0
+    | None -> 0
     | Some nv -> let ba, _, _ = Nvector.unwrap nv in
                  Sundials.RealArray.length ba
   in
-  c_spils_spgmr session maxl;
-  (match max_restarts with
-   | Some m -> c_set_max_restarts session m
-   | None -> ());
-  c_bbd_prec_init session localn bws dqrely (cb.comm_fn <> None);
-  session.ls_callbacks <- BBDCallback (bbd_callbacks cb)
+  c_bbd_prec_init session localn bandwidths dqrely (callbacks.comm_fn <> None);
+  session.ls_callbacks <- BBDCallback (bbd_callbacks callbacks)
 
-let spbcg ?(maxl=0) ?(dqrely=0.0) bws cb session onv =
-  let localn =
-    match onv with
-      None -> 0
-    | Some nv -> let ba, _, _ = Nvector.unwrap nv in
-                 Sundials.RealArray.length ba
-  in
-  c_spils_spbcg session maxl;
-  c_bbd_prec_init session localn bws dqrely (cb.comm_fn <> None);
-  session.ls_callbacks <- BBDCallback (bbd_callbacks cb)
-
-let sptfqmr ?(maxl=0) ?(dqrely=0.0) bws cb session onv =
-  let localn =
-    match onv with
-      None -> 0
-    | Some nv -> let ba, _, _ = Nvector.unwrap nv in
-                 Sundials.RealArray.length ba
-  in
-  c_spils_sptfqmr session maxl;
-  c_bbd_prec_init session localn bws dqrely (cb.comm_fn <> None);
-  session.ls_callbacks <- BBDCallback (bbd_callbacks cb)
+let prec_right ?(dqrely=0.0) bandwidths callbacks =
+  SpilsTypes.InternalPrecRight
+    (init_preconditioner dqrely bandwidths callbacks)
 
 external get_work_space : parallel_session -> int * int
     = "c_kinsol_bbd_get_work_space"

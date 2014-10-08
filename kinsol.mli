@@ -377,13 +377,14 @@ module Spils :
           user doesn't give such a function, KINSOL uses a default
           implementation based on difference quotients.
 
-        The following convenience functions are provided for
-        constructing values of this type concisely:
-
-        - {!prec_none} is just [PrecNone].
-        - {!prec_right} creates [PrecRight] but takes optional fields
-          as optional arguments: e.g. [prec_right ~setup:setup solve]
-          returns [PrecRight (solve, setup, None)].
+        Like the {!linear_solver}, there are several functions which
+        construct preconditioners.  The simplest is {!prec_none},
+        which does no preconditioning.  Arbitrary user-defined
+        preconditioners can be constructed through {!prec_right},
+        which takes user-defined [solve], [setup], and
+        [jac_times_vec], with the last two optional.  {!Kinsol_bbd}
+        gives access to the parallel band-block diagonal precondtioner
+        that comes with KINSOL.
 
         @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
         @kinsol <node5#sss:optin_spils> KINSpilsSetJacTimesVecFn
@@ -391,21 +392,17 @@ module Spils :
         @kinsol <node5#ss:precondFn> KINSpilsPrecSetupFn
         @kinsol <node5#ss:jtimesFn> KINSpilsJacTimesVecFn
     *)
-    type 'a preconditioner =
-      | PrecNone
-      | PrecRight of 'a prec_solve_fn
-                     * 'a prec_setup_fn option
-                     * 'a jac_times_vec_fn option
+    type ('a, 'k) preconditioner = ('a, 'k) SpilsTypes.preconditioner
 
     (** See {!preconditioner}.  *)
-    val prec_none : 'a preconditioner
+    val prec_none : ('a, 'k) preconditioner
 
     (** See {!preconditioner}.  *)
     val prec_right :
       ?setup:'a prec_setup_fn
       -> ?jac_times_vec:'a jac_times_vec_fn
       -> 'a prec_solve_fn
-      -> 'a preconditioner
+      -> ('a, 'k) preconditioner
 
     (** Krylov iterative solver with the scaled preconditioned GMRES method.
         Called like [spgmr ~maxl:maxl ~max_restarts:maxr prec], where:
@@ -421,7 +418,7 @@ module Spils :
         @kinsol <node5#sss:optin_spils> KINSpilsSetMaxRestarts
         @kinsol <node5#ss:psolveFn> Linear preconditioning function
         @kinsol <node5#ss:precondFn> Jacobian preconditioning function *)
-    val spgmr : ?maxl:int -> ?max_restarts:int -> 'a preconditioner
+    val spgmr : ?maxl:int -> ?max_restarts:int -> ('a, 'k) preconditioner
                     -> ('a, 'k) linear_solver
 
     (** Krylov iterative linear solver with the scaled preconditioned
@@ -433,7 +430,7 @@ module Spils :
         @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
         @kinsol <node5#ss:psolveFn> Linear preconditioning function
         @kinsol <node5#ss:precondFn> Jacobian preconditioning function *)
-    val spbcg : ?maxl:int -> 'a preconditioner -> ('a, 'k) linear_solver
+    val spbcg : ?maxl:int -> ('a, 'k) preconditioner -> ('a, 'k) linear_solver
 
     (** Krylov iterative linear solver with the scaled preconditioned
         TFQMR method.  The arguments are the same as {!spgmr}, except
@@ -444,7 +441,7 @@ module Spils :
         @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
         @kinsol <node5#ss:psolveFn> Linear preconditioning function
         @kinsol <node5#ss:precondFn> Jacobian preconditioning function *)
-    val sptfqmr : ?maxl:int -> 'a preconditioner -> ('a, 'k) linear_solver
+    val sptfqmr : ?maxl:int -> ('a,'k) preconditioner -> ('a,'k) linear_solver
 
     (** {4 Low-level solver manipulation} *)
 

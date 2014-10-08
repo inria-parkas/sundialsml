@@ -61,7 +61,7 @@ module DlsTypes = struct
     }
 end
 
-module SpilsTypes = struct
+module SpilsTypes' = struct
   type 'a solve_arg = { uscale : 'a; fscale : 'a; }
 
   type 'a prec_solve_fn =
@@ -85,12 +85,6 @@ module SpilsTypes = struct
 
       jac_times_vec_fn : 'a jac_times_vec_fn option;
     }
-
-  type 'a preconditioner =
-    | PrecNone
-    | PrecRight of 'a prec_solve_fn
-                   * 'a prec_setup_fn option
-                   * 'a jac_times_vec_fn option
 end
 
 module KinsolBbdParamTypes = struct
@@ -147,7 +141,7 @@ and ('a, 'kind) linsolv_callbacks =
 
   | DenseCallback of DlsTypes.dense_jac_callback
   | BandCallback  of DlsTypes.band_jac_callback
-  | SpilsCallback of 'a SpilsTypes.callbacks
+  | SpilsCallback of 'a SpilsTypes'.callbacks
 
   | AlternateCallback of ('a, 'kind) alternate_linsolv
 
@@ -174,6 +168,18 @@ type ('data, 'kind) linear_solver =
   ('data, 'kind) session
   -> ('data, 'kind) nvector option
   -> unit
+
+module SpilsTypes = struct
+  include SpilsTypes'
+
+  type ('a, 'k) set_preconditioner =
+    ('a, 'k) session -> ('a, 'k) nvector option -> unit
+  
+  type ('a, 'k) preconditioner =
+    | InternalPrecNone
+    | InternalPrecRight of ('a, 'k) set_preconditioner
+
+end
 
 module AlternateTypes = struct
   type ('data, 'kind) callbacks = ('data, 'kind) alternate_linsolv =

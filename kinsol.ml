@@ -159,10 +159,6 @@ module Spils =
   struct
     include SpilsTypes
 
-    let prec_none = PrecNone
-    let prec_right ?setup ?jac_times_vec solve =
-      PrecRight (solve, setup, jac_times_vec)
-
     external c_spgmr : ('a, 'k) session -> int -> unit
       = "c_kinsol_spils_spgmr"
 
@@ -181,30 +177,37 @@ module Spils =
     external c_set_jac_times_vec_fn : ('a, 'k) session -> bool -> unit
         = "c_kinsol_spils_set_jac_times_vec_fn"
 
-    let init_prec session = function
-      | PrecNone -> ()
-      | PrecRight (solve, setup, jac_times) ->
-        c_set_preconditioner session (setup <> None);
-        c_set_jac_times_vec_fn session (jac_times <> None);
-        session.ls_callbacks <- SpilsCallback { prec_solve_fn = solve;
-                                                prec_setup_fn = setup;
-                                                jac_times_vec_fn = jac_times; }
+    let init_preconditioner solve setup jac_times session nv =
+      c_set_preconditioner session (setup <> None);
+      c_set_jac_times_vec_fn session (jac_times <> None);
+      session.ls_callbacks <-
+        SpilsCallback { prec_solve_fn = solve;
+                        prec_setup_fn = setup;
+                        jac_times_vec_fn = jac_times }
 
-    let spgmr ?(maxl=0) ?(max_restarts=5) prec session _ =
-      c_spgmr session maxl;
+    let prec_none = InternalPrecNone
+    let prec_right ?setup ?jac_times_vec solve =
+      InternalPrecRight (init_preconditioner solve setup jac_times_vec)
+
+    let init_spils init maxl prec session nv =
+      match prec with
+      | InternalPrecNone -> init session maxl
+      | InternalPrecRight set_prec ->
+        init session maxl;
+        set_prec session nv
+
+    let spgmr ?(maxl=0) ?(max_restarts=5) prec session nv =
+      init_spils c_spgmr maxl prec session nv;
       (* Note: we can skip set_max_restarts only when initializing a
          fresh solver.  *)
       if max_restarts <> 5 then
-        c_set_max_restarts session max_restarts;
-      init_prec session prec
+        c_set_max_restarts session max_restarts
 
-    let spbcg ?(maxl=0) prec session _ =
-      c_spbcg session maxl;
-      init_prec session prec
+    let spbcg ?(maxl=0) prec session nv =
+      init_spils c_spbcg maxl prec session nv
 
-    let sptfqmr ?(maxl=0) prec session _ =
-      c_sptfqmr session maxl;
-      init_prec session prec
+    let sptfqmr ?(maxl=0) prec session nv =
+      init_spils c_sptfqmr maxl prec session nv
 
     let set_preconditioner s ?setup solve =
       match s.ls_callbacks with

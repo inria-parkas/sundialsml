@@ -31,7 +31,7 @@
 type data = Nvector_parallel.data
 type kind = Nvector_parallel.kind
 type parallel_session = (data, kind) Kinsol.session
-type parallel_linear_solver = (data, kind) Kinsol.linear_solver
+type parallel_preconditioner = (data, kind) Kinsol.Spils.preconditioner
 
 type bandwidths =
   {
@@ -63,40 +63,22 @@ type callbacks =
           error, any other exception is treated as an unrecoverable error. *)
   }
 
-(** Same as {!Kinsol.Spils.spgmr} but with the Parallel Band-Block-Diagonal
-    preconditioner.
+(** Same as {!Kinsol.Spils.prec_right} but sets up the Parallel
+    Band-Block-Diagonal preconditioner included in KINSOL.  Called
+    like [prec_right ~dqrely:dqrely callbacks], where:
 
-    Krylov iterative solver with the scaled preconditioned GMRES method. The
-    arguments specify the maximum dimension of the Krylov subspace (Pass None to
-    use the default value 5), the maximum number of restarts of the iterative
-    linear solver (Pass None to use the default value 0), the bandwidths
-    described above, the relative increment in components of [y]
-    used in the difference quotient approximations (pass [None] to use the
-    default value [sqrt unit_roundoff]), and the callbacks described under
-    {!callbacks}.
+    - [~dqrely] gives the relative increment in components of [y] used in
+      the difference quotient approximations
+      (defaults to [sqrt unit_roundoff]).
+    - [bandwidths] specify the bandwidths to be used in the difference
+      quotient Jacobian operation.
+    - [callbacks] gives the preconditioning callbacks.  See the
+      {!callbacks} type.
 
     @kinsol <node5#sss:lin_solv_init> KINSpgmr
     @kinsol <node5#sss:kinbbdpre> KINBBDPrecInit *)
-val spgmr : ?maxl:int -> ?max_restarts:int -> ?dqrely:float
-          -> bandwidths -> callbacks -> parallel_linear_solver
-
-(** Same as {!Kinsol.Spils.spbcg} but with the Parallel Band-Block-Diagonal
-    preconditioner. The arguments are the same as for {!spgmr} except that a
-    maximum number of restarts is not given.
-
-    @kinsol <node5#sss:lin_solv_init> KINSpbcg
-    @kinsol <node5#sss:kinbbdpre> KINBBDPrecInit *)
-val spbcg : ?maxl:int -> ?dqrely:float
-          -> bandwidths -> callbacks -> parallel_linear_solver
-
-(** Same as {!Kinsol.Spils.sptfqmr} but with the Parallel Band-Block-Diagonal
-    preconditioner. The arguments are the same as for {!spgmr} except that a
-    maximum number of restarts is not given.
-
-    @kinsol <node5#sss:lin_solv_init> KINSptfqmr
-    @kinsol <node5#sss:kinbbdpre> KINBBDPrecInit *)
-val sptfqmr : ?maxl:int -> ?dqrely:float
-            -> bandwidths -> callbacks -> parallel_linear_solver
+val prec_right : ?dqrely:float -> bandwidths -> callbacks
+               -> parallel_preconditioner
 
 (** {4 Optional output functions} *)
 
