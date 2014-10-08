@@ -47,6 +47,9 @@ tests.opt.log tests.byte.log: tests.%.log: $(C_EXAMPLES) \
 	    grep '^[0-9]' $$s/$@;		\
 	done | grep -q '^[^0]'
 
+NATIVE_TITLE='OCaml native code performance over C ($(CC) $(CFLAGS))'
+BYTE_TITLE  ='OCaml byte code performance over C ($(CC) $(CFLAGS))'
+
 perf.opt.log perf.byte.log: perf.%.log: $(C_EXAMPLES) \
 					$(foreach s,$(SUBDIRS),$s/perf.%.log)
 	@echo ======================================================================
@@ -55,27 +58,32 @@ perf.opt.log perf.byte.log: perf.%.log: $(C_EXAMPLES) \
 	@$(if $(findstring $@,$(MAKECMDGOALS)), \
 	   echo "Note: \"make $(@:.log=.plot)\" can plot this for you.")
 
+NATIVE_TITLE='OCaml native code performance over C ($(CC) $(CFLAGS))'
+BYTE_TITLE  ='OCaml byte code performance over C ($(CC) $(CFLAGS))'
+PLOTTYPES=jpg png pdf eps
+UTILS=utils
+
 perf.opt.plot: perf.opt.log
-	TITLE='OCaml native code performance over C' utils/plot.sh $<
-	@utils/plot.sh --explain-vars
+	TITLE=$(NATIVE_TITLE) utils/plot.sh $<
+	@$(UTILS)/plot.sh --explain-vars
 
 perf.byte.plot: perf.byte.log
-	TITLE='OCaml byte code performance over C' utils/plot.sh $<
-	@utils/plot.sh --explain-vars
+	TITLE=$(BYTE_TITLE) utils/plot.sh $<
+	@$(UTILS)/plot.sh --explain-vars
 
-perf.opt.%: perf.opt.log
-	TITLE='OCaml native code performance over C' \
-	    TERMINAL=$(subst perf.opt.,,$@) \
-	    OUTPUT=$@ utils/plot.sh $<
+$(foreach t,$(PLOTTYPES),perf.opt.$t): perf.opt.log
+	TITLE=$(NATIVE_TITLE) \
+	    TERMINAL=$(subst perf.opt.,,$@)				  \
+	    OUTPUT=$@ $(UTILS)/plot.sh $<
 	@printf "\nPlot saved in $@.\n"
-	@utils/plot.sh --explain-vars
+	@$(UTILS)/plot.sh --explain-vars
 
-perf.byte.%: perf.byte.log
-	TITLE='OCaml byte code performance over C' \
-	    TERMINAL=$(subst perf.opt.,,$@) \
-	    OUTPUT=$@ utils/plot.sh $<
+$(foreach t,$(PLOTTYPES),perf.byte.$t): perf.byte.log
+	TITLE=$(BYTE_TITLE) \
+	    TERMINAL=$(subst perf.byte.,,$@)				  \
+	    OUTPUT=$@ $(UTILS)/plot.sh $<
 	@printf "\nPlot saved in $@.\n"
-	@utils/plot.sh --explain-vars
+	@$(UTILS)/plot.sh --explain-vars
 
 ocaml:
 	${MAKE} -C ocaml

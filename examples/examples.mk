@@ -190,21 +190,27 @@ perf.byte.log perf.opt.log: perf.%.log: $(ENABLED_EXAMPLES:.ml=.%.perf)       \
 	$(UTILS)/crunchperf -m $(filter-out $(UTILS)/crunchperf,$^) > $@
 	$(UTILS)/crunchperf -s $@
 
-perf.byte.plot perf.opt.plot: perf.%.plot: perf.%.log
-	TITLE='$(if $(finstring .opt.,$<),native,byte) code performance' \
-	    $(UTILS)/plot.sh $<
+NATIVE_TITLE='OCaml native code performance over C ($(CC) $(CFLAGS))'
+BYTE_TITLE  ='OCaml byte code performance over C ($(CC) $(CFLAGS))'
+PLOTTYPES=jpg png pdf eps
+
+perf.opt.plot: perf.opt.log
+	TITLE=$(NATIVE_TITLE) utils/plot.sh $<
 	@$(UTILS)/plot.sh --explain-vars
 
-PLOTTYPES=jpg png pdf eps
-$(foreach t,jpg png pdf eps,perf.opt.$t): perf.opt.log
-	TITLE='native code performance' \
+perf.byte.plot: perf.byte.log
+	TITLE=$(BYTE_TITLE) utils/plot.sh $<
+	@$(UTILS)/plot.sh --explain-vars
+
+$(foreach t,$(PLOTTYPES),perf.opt.$t): perf.opt.log
+	TITLE=$(NATIVE_TITLE) \
 	    TERMINAL=$(subst perf.opt.,,$@)				  \
 	    OUTPUT=$@ $(UTILS)/plot.sh $<
 	@printf "\nPlot saved in $@.\n"
 	@$(UTILS)/plot.sh --explain-vars
 
-$(foreach t,jpg png pdf eps,perf.byte.$t): perf.byte.log
-	TITLE='byte code performance' \
+$(foreach t,$(PLOTTYPES),perf.byte.$t): perf.byte.log
+	TITLE=$(BYTE_TITLE) \
 	    TERMINAL=$(subst perf.byte.,,$@)				  \
 	    OUTPUT=$@ $(UTILS)/plot.sh $<
 	@printf "\nPlot saved in $@.\n"
