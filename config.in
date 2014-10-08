@@ -105,9 +105,6 @@ MKDIR  ?= mkdir -p
 RMDIR  ?= rmdir
 SED    ?= sed
 
-UNIX = unix.cma
-UNIXX = unix.cmxa
-
 MPI_DIRECTORIES = @ocamlmpi_path@
 DIRECTORIES =
 
