@@ -1491,6 +1491,53 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
         val sptfqmr : ?maxl:int -> ('a, 'k) preconditioner
                     -> ('a, 'k) linear_solver
 
+        (** {5:llsolvermanip Low-level solver manipulation} *)
+
+        (** Set preconditioning functions (see {!callbacks}).  It may
+            be unsafe to use this function without a {!reinit}.  Users
+            are encouraged to use the [linsolv] parameter of {!reinit}
+            instead, unless they are desperate for performance.
+
+            @idas <node7#SECTION00729400000000000000> IDASpilsSetPreconditionerB
+            @idas <node7#ss:psolve_b> IDASpilsPrecSolveFnB
+            @idas <node7#ss:psetup_b> IDASpilsPrecSetupFnB
+        *)
+        val set_preconditioner :
+          ('a,'k) bsession
+          -> ?setup:'a prec_setup_fn
+          -> 'a prec_solve_fn
+          -> unit
+
+        (** Set the Jacobian-times-vector function (see {!callbacks}).  It
+            may be unsafe to use this function without a {!reinit}.  Users
+            are encouraged to use the [linsolv] parameter of {!reinit}
+            instead, unless they are desperate for performance.
+
+            @idas <node7#SECTION00729400000000000000> IDASpilsSetJacTimesVecFnB
+            @idas <node7#ss:jactimesvec_b> IDASpilsJacTimesVecFnB
+        *)
+        val set_jac_times_vec_fn :
+          ('a,'k) bsession
+          -> 'a jac_times_vec_fn
+          -> unit
+
+        (** This function disables the user-supplied Jacobian-vector
+            function, and switches back to the default internal
+            difference quotient approximation (see {!spils_params}).
+            It is equivalent to calling [IDASpilsSetJacTimesVecFnB]
+            with an argument of [NULL].
+
+            It may be unsafe to use this function without a {!reinit}.
+            Users are encouraged to use the [iter_type] parameter of
+            {!reinit} instead, unless they are desperate for
+            performance.
+
+            @idas <node7#SECTION00729400000000000000> IDASpilsSetJacTimesVecFnB
+            @idas <node7#ss:jactimesvec_b> IDASpilsJacTimesVecFnB
+        *)
+        val clear_jac_times_vec_fn : ('a, 'k) bsession -> unit
+
+
         (** {5:adjbwdspilsoptin Optional Input Functions} *)
 
         (** Sets the Gram-Schmidt orthogonalization to be used with the

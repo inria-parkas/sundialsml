@@ -788,6 +788,35 @@ module Adjoint =
         let sptfqmr ?(maxl=0) prec bs nv nv' =
           init_spils c_spils_sptfqmr maxl prec bs nv nv'
 
+        let set_preconditioner bs ?setup solve =
+          match (tosession bs).ls_callbacks with
+          | BSpilsCallback cbs ->
+            let parent, which = parent_and_which bs in
+            c_set_preconditioner parent which (setup <> None);
+            (tosession bs).ls_callbacks <-
+              BSpilsCallback { cbs with
+                               prec_setup_fn = setup;
+                               prec_solve_fn = solve }
+          | _ -> failwith "spils solver not in use"
+
+        let set_jac_times_vec_fn bs f =
+          match (tosession bs).ls_callbacks with
+          | BSpilsCallback cbs ->
+            let parent, which = parent_and_which bs in
+            c_set_jac_times_vec_fn parent which true;
+            (tosession bs).ls_callbacks <-
+              BSpilsCallback { cbs with jac_times_vec_fn = Some f }
+          | _ -> failwith "spils solver not in use"
+
+        let clear_jac_times_vec_fn bs =
+          match (tosession bs).ls_callbacks with
+          | BSpilsCallback cbs ->
+            let parent, which = parent_and_which bs in
+            c_set_jac_times_vec_fn parent which false;
+            (tosession bs).ls_callbacks <-
+              BSpilsCallback { cbs with jac_times_vec_fn = None }
+          | _ -> failwith "spils solver not in use"
+
         external set_gs_type
             : ('a, 'k) bsession -> Spils.gramschmidt_type -> unit
             = "c_idas_adj_spils_set_gs_type"

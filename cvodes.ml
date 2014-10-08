@@ -743,6 +743,41 @@ module Adjoint =
           | PrecRight -> c_set_prec_type s Spils.PrecRight
           | PrecBoth -> c_set_prec_type s Spils.PrecBoth
 
+        let set_preconditioner bs ?setup solve =
+          match (tosession bs).ls_callbacks with
+          | BSpilsCallback cbs ->
+            let parent, which = parent_and_which bs in
+            c_set_preconditioner parent which (setup <> None);
+            (tosession bs).ls_callbacks <-
+              BSpilsCallback { cbs with
+                               prec_setup_fn = setup;
+                               prec_solve_fn = solve }
+          | BSpilsBandCallback _ ->
+            failwith "User-defined preconditioner not in use"
+          | _ -> failwith "spils solver not in use"
+
+        let set_jac_times_vec_fn bs f =
+          match (tosession bs).ls_callbacks with
+          | BSpilsCallback cbs ->
+            let parent, which = parent_and_which bs in
+            c_set_jac_times_vec_fn parent which true;
+            (tosession bs).ls_callbacks <-
+              BSpilsCallback { cbs with jac_times_vec_fn = Some f }
+          | BSpilsBandCallback _ ->
+            failwith "User-defined preconditioner not in use"
+          | _ -> failwith "spils solver not in use"
+
+        let clear_jac_times_vec_fn bs =
+          match (tosession bs).ls_callbacks with
+          | BSpilsCallback cbs ->
+            let parent, which = parent_and_which bs in
+            c_set_jac_times_vec_fn parent which false;
+            (tosession bs).ls_callbacks <-
+              BSpilsCallback { cbs with jac_times_vec_fn = None }
+          | BSpilsBandCallback _ ->
+            failwith "User-defined preconditioner not in use"
+          | _ -> failwith "spils solver not in use"
+
         external set_gs_type
             : ('a, 'k) bsession -> gramschmidt_type -> unit
             = "c_cvodes_adj_spils_set_gs_type"
@@ -796,6 +831,24 @@ module Adjoint =
             InternalPrecRight (init_preconditioner jac_times_vec bandrange)
           let prec_both ?jac_times_vec bandrange =
             InternalPrecBoth (init_preconditioner jac_times_vec bandrange)
+
+          let set_jac_times_vec_fn bs f =
+            match (tosession bs).ls_callbacks with
+            | BSpilsCallback _ -> failwith "Banded preconditioner not in use"
+            | BSpilsBandCallback _ ->
+              let parent, which = parent_and_which bs in
+              c_set_jac_times_vec_fn parent which false;
+              (tosession bs).ls_callbacks <- BSpilsBandCallback (Some f)
+            | _ -> failwith "spils solver not in use"
+
+          let clear_jac_times_vec_fn bs =
+            match (tosession bs).ls_callbacks with
+            | BSpilsCallback _ -> failwith "Banded preconditioner not in use"
+            | BSpilsBandCallback _ ->
+              let parent, which = parent_and_which bs in
+              c_set_jac_times_vec_fn parent which false;
+              (tosession bs).ls_callbacks <- BSpilsBandCallback None
+            | _ -> failwith "spils solver not in use"
 
           let get_work_space bs =
             Cvode.Spils.Banded.get_work_space (tosession bs)

@@ -1384,6 +1384,50 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
 
         (** {5:llsolvermanip Low-level solver manipulation} *)
 
+        (** Set preconditioning functions (see {!callbacks}).  It may
+            be unsafe to use this function without a {!reinit}.  Users
+            are encouraged to use the [linsolv] parameter of {!reinit}
+            instead, unless they are desperate for performance.
+
+            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetPreconditionerB
+            @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB
+            @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB
+        *)
+        val set_preconditioner :
+          ('a,'k) bsession
+          -> ?setup:'a prec_setup_fn
+          -> 'a prec_solve_fn
+          -> unit
+
+        (** Set the Jacobian-times-vector function (see {!callbacks}).  It
+            may be unsafe to use this function without a {!reinit}.  Users
+            are encouraged to use the [linsolv] parameter of {!reinit}
+            instead, unless they are desperate for performance.
+
+            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetJacTimesVecFnB
+            @cvodes <node7#ss:jtimesv_b> CVSpilsJacTimesVecFnB
+        *)
+        val set_jac_times_vec_fn :
+          ('a,'k) bsession
+          -> 'a jac_times_vec_fn
+          -> unit
+
+        (** This function disables the user-supplied Jacobian-vector
+            function, and switches back to the default internal
+            difference quotient approximation (see {!spils_params}).
+            It is equivalent to calling [IDASpilsSetJacTimesVecFnB]
+            with an argument of [NULL].
+
+            It may be unsafe to use this function without a {!reinit}.
+            Users are encouraged to use the [iter_type] parameter of
+            {!reinit} instead, unless they are desperate for
+            performance.
+
+            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetJacTimesVecFnB
+            @cvodes <node7#ss:jtimesv_b> CVSpilsJacTimesVecFnB
+        *)
+        val clear_jac_times_vec_fn : ('a, 'k) bsession -> unit
+
         (** This type is used only for low-level solver manipulation.
             Information about the type of preconditioning to be done,
             without any of the necessary callbacks to make it happen:
@@ -1533,6 +1577,38 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
               @cvodes <node5#sss:cvbandpre> CVBandPrecGetNumRhsEvals
               @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
           val get_num_rhs_evals : serial_bsession -> int
+
+          (** {5:llsolvermanip Low-level solver manipulation} *)
+
+          (** Set the Jacobian-times-vector function (see
+              {!jac_times_vec_fn}).  It may be unsafe to use this
+              function without a {!reinit}.  Users are encouraged to
+              use the [linsolv] parameter of {!reinit} instead, unless
+              they are desperate for performance.
+
+              @cvodes <node7#SECTION00728400000000000000> CVSpilsSetJacTimesVecFnB
+              @cvodes <node7#ss:jtimesv_b> CVSpilsJacTimesVecFnB
+          *)
+          val set_jac_times_vec_fn :
+            serial_bsession
+            -> RealArray.t jac_times_vec_fn
+            -> unit
+
+          (** This function disables the user-supplied Jacobian-vector
+              function, and switches back to the default internal
+              difference quotient approximation (see {!spils_params}).
+              It is equivalent to calling [IDASpilsSetJacTimesVecFnB]
+              with an argument of [NULL].
+
+              It may be unsafe to use this function without a
+              {!reinit}.  Users are encouraged to use the [iter_type]
+              parameter of {!reinit} instead, unless they are
+              desperate for performance.
+
+              @cvodes <node7#SECTION00728400000000000000> CVSpilsSetJacTimesVecFnB
+              @cvodes <node7#ss:jtimesv_b> CVSpilsJacTimesVecFnB
+          *)
+          val clear_jac_times_vec_fn : serial_bsession -> unit
         end
       end
 
