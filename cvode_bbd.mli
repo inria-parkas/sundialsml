@@ -65,10 +65,8 @@ type callbacks =
 
 (** Same as {!Cvode.Spils.prec_left} but uses the Parallel
     Band-Block-Diagonal preconditioner included in CVODE.  Called like
-    [prec_left ~maxl:maxl bandwidths ~dqrely:dqrely callbacks], where:
+    [prec_left ~dqrely:dqrely bandwidths callbacks], where:
 
-    - [~maxl] gives the maximum dimension of the Krylov subspace
-      (defaults to [5]).
     - [~dqrely] gives the relative increment in components of [y] used in
       the difference quotient approximations
       (defaults to [sqrt unit_roundoff]).
@@ -79,20 +77,20 @@ type callbacks =
 
     @cvode <node5#sss:cvbbdpre> CVBBDPrecInit
   *)
-val prec_left : ?maxl:int-> ?dqrely:float -> bandwidths -> callbacks
+val prec_left : ?dqrely:float -> bandwidths -> callbacks
               -> parallel_preconditioner
 
 (** Same as {!prec_left} but preconditions from the right.
 
     @cvode <node5#sss:cvbbdpre> CVBBDPrecInit *)
-val prec_right : ?maxl:int -> ?dqrely:float -> bandwidths -> callbacks
+val prec_right : ?dqrely:float -> bandwidths -> callbacks
                -> parallel_preconditioner
 
 (** Same as {!prec_left} but preconditions from both
     sides.
 
     @cvode <node5#sss:cvbbdpre> CVBBDPrecInit *)
-val prec_both : ?maxl:int -> ?dqrely:float -> bandwidths -> callbacks
+val prec_both : ?dqrely:float -> bandwidths -> callbacks
               -> parallel_preconditioner
 
 (** [reinit s mudq mldq ~dqrely:dqrely] reinitializes the BBD

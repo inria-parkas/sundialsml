@@ -50,33 +50,21 @@ external c_bbd_prec_init
     : parallel_session -> int -> bandwidths -> float -> bool -> unit
     = "c_cvode_bbd_prec_init"
 
-external c_spils_spgmr
-  : ('a, 'k) session -> int -> Spils.preconditioning_type -> unit
-  = "c_cvode_spils_spgmr"
-
-external c_spils_spbcg
-  : ('a, 'k) session -> int -> Spils.preconditioning_type -> unit
-  = "c_cvode_spils_spbcg"
-
-external c_spils_sptfqmr
-  : ('a, 'k) session -> int -> Spils.preconditioning_type -> unit
-  = "c_cvode_spils_sptfqmr"
-
-let init_preconditioner maxl dqrely bandwidths callbacks session nv =
+let init_preconditioner dqrely bandwidths callbacks session nv =
   let ba, _, _ = Nvector.unwrap nv in
   let localn   = Sundials.RealArray.length ba in
   c_bbd_prec_init session localn bandwidths dqrely (callbacks.comm_fn <> None);
   session.ls_callbacks <- BBDCallback (bbd_callbacks callbacks)
 
-let prec_left ?(maxl=0) ?(dqrely=0.0) bandwidths callbacks =
+let prec_left ?(dqrely=0.0) bandwidths callbacks =
   SpilsTypes.InternalPrecLeft
-    (init_preconditioner maxl dqrely bandwidths callbacks)
-let prec_right ?(maxl=0) ?(dqrely=0.0) bandwidths callbacks =
+    (init_preconditioner dqrely bandwidths callbacks)
+let prec_right ?(dqrely=0.0) bandwidths callbacks =
   SpilsTypes.InternalPrecRight
-    (init_preconditioner maxl dqrely bandwidths callbacks)
-let prec_both ?(maxl=0) ?(dqrely=0.0) bandwidths callbacks =
+    (init_preconditioner dqrely bandwidths callbacks)
+let prec_both ?(dqrely=0.0) bandwidths callbacks =
   SpilsTypes.InternalPrecBoth
-    (init_preconditioner maxl dqrely bandwidths callbacks)
+    (init_preconditioner dqrely bandwidths callbacks)
 
 external c_bbd_prec_reinit
     : parallel_session -> int -> int -> float -> unit

@@ -61,34 +61,22 @@ let parent_and_which s =
   | BwdSensExt se -> (se.parent, se.which)
   | _ -> failwith "Internal error: bsession invalid"
 
-external c_spils_spgmr
-  : ('a, 'k) session -> int -> int -> Spils.preconditioning_type -> unit
-  = "c_cvodes_adj_spils_spgmr"
-
-external c_spils_spbcg
-  : ('a, 'k) session -> int -> int -> Spils.preconditioning_type -> unit
-  = "c_cvodes_adj_spils_spbcg"
-
-external c_spils_sptfqmr
-  : ('a, 'k) session -> int -> int -> Spils.preconditioning_type -> unit
-  = "c_cvodes_adj_spils_sptfqmr"
-
-let init_preconditioner maxl dqrely bandwidths callbacks bs parent which nv =
+let init_preconditioner dqrely bandwidths callbacks bs parent which nv =
   let ba, _, _ = Nvector.unwrap nv in
   let localn   = Sundials.RealArray.length ba in
   c_bbd_prec_initb (parent, which) localn bandwidths dqrely
     (callbacks.comm_fn <> None);
   (tosession bs).ls_callbacks <- BBBDCallback (bbd_callbacks callbacks)
 
-let prec_left ?(maxl=0) ?(dqrely=0.0) bandwidths callbacks =
+let prec_left ?(dqrely=0.0) bandwidths callbacks =
   AdjointTypes.SpilsTypes.InternalPrecLeft
-    (init_preconditioner maxl dqrely bandwidths callbacks)
-let prec_right ?(maxl=0) ?(dqrely=0.0) bandwidths callbacks =
+    (init_preconditioner dqrely bandwidths callbacks)
+let prec_right ?(dqrely=0.0) bandwidths callbacks =
   AdjointTypes.SpilsTypes.InternalPrecRight
-    (init_preconditioner maxl dqrely bandwidths callbacks)
-let prec_both ?(maxl=0) ?(dqrely=0.0) bandwidths callbacks =
+    (init_preconditioner dqrely bandwidths callbacks)
+let prec_both ?(dqrely=0.0) bandwidths callbacks =
   AdjointTypes.SpilsTypes.InternalPrecBoth
-    (init_preconditioner maxl dqrely bandwidths callbacks)
+    (init_preconditioner dqrely bandwidths callbacks)
 
 external c_bbd_prec_reinitb
     : parallel_session -> int -> int -> int -> float -> unit
