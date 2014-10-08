@@ -10,16 +10,14 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(**
-  {2 Direct Linear Solvers. }
+(** Direct Linear Solvers.
 
-  @version VERSION()
-  @author Timothy Bourke (Inria)
-  @author Jun Inoue (Inria)
-  @author Marc Pouzet (LIENS)
+    @version VERSION()
+    @author Timothy Bourke (Inria)
+    @author Jun Inoue (Inria)
+    @author Marc Pouzet (LIENS)
 
-  @cvode <node9#s:dls>  The DLS Modules
- *)
+    @cvode <node9#s:dls>  The DLS Modules *)
 
 (** Raised by {!DenseMatrix.getrf} and {!ArrayDenseMatrix.getrf} on a zero
     diagonal element during factorization. The argument gives the column
@@ -28,7 +26,7 @@
     @cvode <node9#ss:dense> DenseGETRF/denseGETRF *)
 exception ZeroDiagonalElement of int
 
-(** {3 Dense matrices} *)
+(** {2 Dense matrices} *)
 
 (** Dense matrices as passed to callback functions.
     @cvode <node9#ss:dense> The DENSE Module *)
@@ -282,7 +280,7 @@ module ArrayDenseMatrix :
         -> w:Sundials.RealArray.t -> work:Sundials.RealArray.t -> unit
   end
 
-(** {3 Band matrices} *)
+(** {2 Band matrices} *)
 
 (** Band matrices as passed to callback functions.
     @cvode <node9#ss:band> The BAND Module *)

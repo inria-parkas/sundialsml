@@ -69,7 +69,7 @@ CAMLprim value c_spils_modified_gs(value vv, value vh, value vk, value vp)
     v = calloc(p + 1, sizeof(N_Vector));
 
     if (v == NULL)
-	caml_raise_constant(SPILS_EXN(MemoryRequestFailure));
+	caml_raise_out_of_memory();
     for (i = 0; i <= p; ++i) {
 	v[i] = NVEC_VAL(Field(vv, k - p + i));
     }
@@ -114,7 +114,7 @@ CAMLprim value c_spils_classical_gs(value vargs)
     v = calloc(p + 1, sizeof(N_Vector));
 
     if (v == NULL)
-	caml_raise_constant(SPILS_EXN(MemoryRequestFailure));
+	caml_raise_out_of_memory();
     for (i = 0; i <= p; ++i) {
 	v[i] = NVEC_VAL(Field(vv, k - p + i));
     }

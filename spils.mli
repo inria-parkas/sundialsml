@@ -25,37 +25,75 @@
     @author Marc Pouzet (LIENS)
     @cvode <node9#s:spils>  The SPILS Modules *)
 
-(**
- Constants representing the types of Gram-Schmidt orthogonalization possible for
- the SPGMR linear solver ({!SPGMR.solve}/{!SPGMR.solve}).
- @cvode <node9.html#ss:spgmr> ModifiedGS/ClassicalGS
- *)
+(** {2 Types} *)
+
+(** The type of Gram-Schmidt orthogonalization in SPGMR linear solvers.
+
+    @cvode <node9#ss:spgmr> ModifiedGS/ClassicalGS *)
 type gramschmidt_type =
-  | ModifiedGS
-        (** Modified Gram-Schmidt orthogonalization (MODIFIED_GS) *)
-  | ClassicalGS
-        (** Classical Gram Schmidt orthogonalization (CLASSICAL_GS) *)
+  | ModifiedGS   (** Modified Gram-Schmidt orthogonalization (MODIFIED_GS) *)
+  | ClassicalGS  (** Classical Gram Schmidt orthogonalization (CLASSICAL_GS) *)
+
+(** The type of preconditioning in Krylov solvers.
+
+    @cvode <node3#s:preconditioning> Preconditioning
+    @cvode <node5#sss:lin_solv_init> CVSpgmr/CVSpbcg/CVSptfqrm *)
+type preconditioning_type =
+  | PrecNone    (** No preconditioning *)
+  | PrecLeft    (** {% $(P^{-1}A)x = P^{-1}b$ %} *)
+  | PrecRight   (** {% $(AP^{-1})Px = b$ %} *)
+  | PrecBoth    (** {% $(P_L^{-1}AP_R^{-1})P_Rx = P_L^{-1}b)$ %} *)
 
 (**
- Type of preconditioning for Krylov solvers.
- @cvode <node3#s:preconditioning> Preconditioning
- @cvode <node5#sss:lin_solv_init> CVSpgmr/CVSpbcg/CVSptfqrm
+  The type of a function [f v z] that calculates [z = A v] using an internal
+  representation of [A]. The vector [v] must not be changed. Results are stored
+  in [z]. The {!Sundials.RecoverableFailure} exception can be raised to indicate
+  a recoverable failure. Any other exception indicates an unrecoverable failure.
  *)
-type preconditioning_type =
-  | PrecNone
-  | PrecLeft
-  | PrecRight
-  | PrecBoth
+type 'a atimes = 'a -> 'a -> unit
 
-exception MemoryRequestFailure
+(**
+  The type of a fucntion [f r z lr] that solves the preconditioner equation
+  [P z = r] for the vector [z]. If [lr] is true then [P] should be taken as the
+  left preconditioner and otherwise as the right preconditioner. The
+  {!Sundials.RecoverableFailure} exception can be raised to indicate a
+  recoverable failure. Any other exception indicates an unrecoverable failure.
+ *)
+type 'a psolve = 'a -> 'a -> bool -> unit
 
+(** {2 Exceptions} *)
+
+(** Raised when a solver fails to converge.
+    (SPGMR_/SPBCG_/SPTFQMR_CONVFAIL) *)
 exception ConvFailure
+
+(** Raised when QR factorization yields a singular matrix.
+    (SPGMR_/SPBCG_/SPTFQMR_QRFACT_FAIL) *)
 exception QRfactFailure
+
+(** Raised when a preconditioner solver fails. The argument is [true] for a
+    recoverable failure (SPGMR_/SPBCG_/SPTFQMR_PSOLVE_FAIL_REC) and [false]
+    for an unrecoverable one (SPGMR_/SPBCG_/SPTFQMR_PSOLVE_FAIL_UNREC). *)
 exception PSolveFailure of bool
+
+(** Raised when an atimes function fails. The argument is [true] for a
+    recoverable failure (SPGMR_/SPBCG_/SPTFQMR_ATIMES_FAIL_REC) and [false]
+    for an unrecoverable one (SPGMR_/SPBCG_/SPTFQMR_ATIMES_FAIL_UNREC). *)
 exception ATimesFailure of bool
+
+(** Raised when a preconditioner setup routine fails. The argument is [true]
+    for a recoverable failure (SPGMR_/SPBCG_/SPTFQMR_PSET_FAIL_REC) and
+    [false] for an unrecoverable one (SPGMR_/SPBCG_/SPTFQMR_PSET_FAIL_UNREC). *)
 exception PSetFailure of bool
+
+(** Raised when a Gram-Schmidt routine fails. (SPGMR_/SPBCG_/SPTFQMR_GS_FAIL) *)
 exception GSFailure
+
+(** Raised QR solution finds a singular result.
+    (SPGMR_/SPBCG_/SPTFQMR_QRSOL_FAIL) *)
 exception QRSolFailure
+
+(** {2 Basic routines} *)
 
 (**
   [r = qr_fact n h q newjob] performs a QR factorization of the Hessenberg
@@ -103,26 +141,6 @@ val qr_sol : int
              -> Sundials.RealArray.t
              -> int
 
-(** The type of vectors passed to the solver. *)
-type ('a, 'k) nvector = ('a, 'k) Nvector.t
-
-(**
-  The type of a function [f v z] that calculates [z = A v] using an internal
-  representation of [A]. The vector [v] must not be changed. Results are stored
-  in [z]. The {!Sundials.RecoverableFailure} exception can be raised to indicate
-  a recoverable failure. Any other exception indicates an unrecoverable failure.
- *)
-type 'a atimes = 'a -> 'a -> unit
-
-(**
-  The type of a fucntion [f r z lr] that solves the preconditioner equation
-  [P z = r] for the vector [z]. If [lr] is true then [P] should be taken as the
-  left preconditioner and otherwise as the right preconditioner. The
-  {!Sundials.RecoverableFailure} exception can be raised to indicate a
-  recoverable failure. Any other exception indicates an unrecoverable failure.
- *)
-type 'a psolve = 'a -> 'a -> bool -> unit
-
 (**
   [new_vk_norm = modified_gs v h k p new_vk_norm] performs a modified
   Gram-Schmidt orthogonalization  of [v[k]] against the [p] unit vectors at
@@ -143,7 +161,7 @@ type 'a psolve = 'a -> 'a -> bool -> unit
   not normalized and is stored over the old [v.{k}]. Once the orthogonalization
   has been performed, the Euclidean norm of [v.{k}] is stored in [new_vk_norm].                           
  *)
-val modified_gs : (('a, 'k) nvector) array
+val modified_gs : (('a, 'k) Nvector.t) array
                  -> Sundials.RealArray2.t
                  -> int
                  -> int
@@ -171,24 +189,24 @@ val modified_gs : (('a, 'k) nvector) array
   not normalized and is stored over the old [v.{k}]. Once the orthogonalization
   has been performed, the Euclidean norm of [v.{k}] is stored in [new_vk_norm].                           
  *)
-val classical_gs : (('a, 'k) nvector) array
+val classical_gs : (('a, 'k) Nvector.t) array
                   -> Sundials.RealArray2.t
                   -> int
                   -> int
-                  -> ('a, 'k) nvector
+                  -> ('a, 'k) Nvector.t
                   -> Sundials.RealArray.t
                   -> float
 
-(** {3 Scaled Preconditioned GMRES Method }
-    @cvode <node9#ss:spgmr> The SPGMR Module *)
+(** {2 Solvers} *)
 
-(** Implementation of the Scaled Preconditioned Generalized Minimum Residual
-   (GMRES) method. *)
+(** The Scaled Preconditioned Generalized Minimum Residual (GMRES) method. *)
 module SPGMR :
   sig
     
     (**
      This type represents a solver instance returned from a call to {!make}.
+
+    @cvode <node9#ss:spgmr> The SPGMR Module
     *)
     type 'a t
 
@@ -200,7 +218,7 @@ module SPGMR :
      @cvode <node9#ss:spgmr> SpgmrMalloc
      @raise MemoryRequestFailure Memory could not be allocated.
      *)
-    val make  : int -> ('a, 'k) nvector -> 'a t
+    val make  : int -> ('a, 'k) Nvector.t -> 'a t
 
     (**
      [solved, res_norm, nli, nps = solve s x b pretype gstype delta max_restarts
@@ -242,29 +260,28 @@ module SPGMR :
       @raise QRSolFailure QRsol found singular R.
      *)
     val solve : 'a t
-                -> ('a, 'k) nvector
-                -> ('a, 'k) nvector
+                -> ('a, 'k) Nvector.t
+                -> ('a, 'k) Nvector.t
                 -> preconditioning_type
                 -> gramschmidt_type 
                 -> float
                 -> int
-                -> (('a, 'k) nvector) option
-                -> (('a, 'k) nvector) option
+                -> (('a, 'k) Nvector.t) option
+                -> (('a, 'k) Nvector.t) option
                 -> 'a atimes
                 -> ('a psolve) option
                 -> bool * float * int * int
   end
 
-(** {3 Scaled Preconditioned Bi-CGStab Method }
-    @cvode <node9#ss:spgmr> The SPBCG Module *)
-
-(** Implementation of the Scaled Preconditioned Biconjugate Gradient Stabilized
-   (Bi-CGStab) method. *)
+(** The Scaled Preconditioned Biconjugate Gradient Stabilized (Bi-CGStab)
+    method. *)
 module SPBCG :
   sig
     
     (**
      This type represents a solver instance returned from a call to {!make}.
+
+      @cvode <node9#ss:spgmr> The SPBCG Module
     *)
     type 'a t
 
@@ -276,7 +293,7 @@ module SPBCG :
      @cvode <node9#ss:spbcg> SpbcgMalloc
      @raise MemoryRequestFailure Memory could not be allocated.
      *)
-    val make  : int -> ('a, 'k) nvector -> 'a t
+    val make  : int -> ('a, 'k) Nvector.t -> 'a t
 
     (**
      [solved, res_norm, nli, nps = solve s x b pretype delta sx sb atimes
@@ -311,28 +328,28 @@ module SPBCG :
       @raise PSetFailure pset failed (recoverable or not)
      *)
     val solve : 'a t
-                -> ('a, 'k) nvector
-                -> ('a, 'k) nvector
+                -> ('a, 'k) Nvector.t
+                -> ('a, 'k) Nvector.t
                 -> preconditioning_type
                 -> float
-                -> (('a, 'k) nvector) option
-                -> (('a, 'k) nvector) option
+                -> (('a, 'k) Nvector.t) option
+                -> (('a, 'k) Nvector.t) option
                 -> 'a atimes
                 -> ('a psolve) option
                 -> bool * float * int * int
 
  end
 
-(** {3 Scaled Preconditioned TFQMR Method }
-    @cvode <node9#ss:sptfqmr> The SPTFQMR Module *)
 
-(** Implementation of the Scaled Preconditioned Transpose-Free Quasi-Minimal
-    Residual (SPTFQMR) method *)
+(** The Scaled Preconditioned Transpose-Free Quasi-Minimal Residual
+    (SPTFQMR) method *)
 module SPTFQMR :
   sig
     
     (**
      This type represents a solver instance returned from a call to {!make}.
+
+     @cvode <node9#ss:sptfqmr> The SPTFQMR Module
     *)
     type 'a t
 
@@ -344,7 +361,7 @@ module SPTFQMR :
      @cvode <node9#ss:sptfqmr> SptfqmrMalloc
      @raise MemoryRequestFailure Memory could not be allocated.
      *)
-    val make  : int -> ('a, 'k) nvector -> 'a t
+    val make  : int -> ('a, 'k) Nvector.t -> 'a t
 
     (**
      [solved, res_norm, nli, nps = solve s x b pretype delta sx sb atimes
@@ -380,12 +397,12 @@ module SPTFQMR :
       @raise PSetFailure pset failed (recoverable or not)
      *)
     val solve : 'a t
-                -> ('a, 'k) nvector
-                -> ('a, 'k) nvector
+                -> ('a, 'k) Nvector.t
+                -> ('a, 'k) Nvector.t
                 -> preconditioning_type
                 -> float
-                -> (('a, 'k) nvector) option
-                -> (('a, 'k) nvector) option
+                -> (('a, 'k) Nvector.t) option
+                -> (('a, 'k) Nvector.t) option
                 -> 'a atimes
                 -> ('a psolve) option
                 -> bool * float * int * int

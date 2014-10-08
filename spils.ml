@@ -22,8 +22,6 @@ type preconditioning_type =
   | PrecRight
   | PrecBoth
 
-exception MemoryRequestFailure
-
 exception ConvFailure
 exception QRfactFailure
 exception PSolveFailure of bool
@@ -46,24 +44,22 @@ external qr_sol : int
                  -> int
     = "c_spils_qr_sol"
 
-type ('a, 'k) nvector = ('a, 'k) Nvector.t
-
 type 'a atimes = 'a -> 'a -> unit
 
 type 'a psolve = 'a -> 'a -> bool -> unit
 
-external modified_gs : (('a, 'k) nvector) array
+external modified_gs : (('a, 'k) Nvector.t) array
                        -> Sundials.RealArray2.t
                        -> int
                        -> int
                        -> float
     = "c_spils_modified_gs"
 
-external classical_gs' : (('a, 'k) nvector) array
+external classical_gs' : (('a, 'k) Nvector.t) array
                          * Sundials.RealArray2.t
                          * int
                          * int
-                         * ('a, 'k) nvector
+                         * ('a, 'k) Nvector.t
                          * Sundials.RealArray.t
                          -> float
     = "c_spils_classical_gs"
@@ -74,20 +70,20 @@ module SPGMR =
   struct
     type 'a t
 
-    external make  : int -> ('a, 'k) nvector -> 'a t
+    external make  : int -> ('a, 'k) Nvector.t -> 'a t
         = "c_spils_spgmr_make"
 
-    external solve' : 'a t                            (*  0 *)
-                      * ('a, 'k) nvector                    (*  1 *)
-                      * ('a, 'k) nvector                    (*  2 *)
-                      * preconditioning_type    (*  3 *)
-                      * gramschmidt_type        (*  4 *)
-                      * float                         (*  5 *)
-                      * int                           (*  6 *)
-                      * (('a, 'k) nvector) option           (*  7 *)
-                      * (('a, 'k) nvector) option           (*  8 *)
-                      * 'a atimes                     (*  9 *)
-                      * ('a psolve) option            (* 10 *)
+    external solve' : 'a t                          (*  0 *)
+                      * ('a, 'k) Nvector.t          (*  1 *)
+                      * ('a, 'k) Nvector.t          (*  2 *)
+                      * preconditioning_type        (*  3 *)
+                      * gramschmidt_type            (*  4 *)
+                      * float                       (*  5 *)
+                      * int                         (*  6 *)
+                      * (('a, 'k) Nvector.t) option (*  7 *)
+                      * (('a, 'k) Nvector.t) option (*  8 *)
+                      * 'a atimes                   (*  9 *)
+                      * ('a psolve) option          (* 10 *)
                       -> bool * float * int * int
         = "c_spils_spgmr_solve"
 
@@ -101,16 +97,16 @@ module SPBCG =
   struct
     type 'a t
 
-    external make  : int -> ('a, 'k) nvector -> 'a t
+    external make  : int -> ('a, 'k) Nvector.t -> 'a t
         = "c_spils_spbcg_make"
 
     external solve' : 'a t
-                      * ('a, 'k) nvector
-                      * ('a, 'k) nvector
+                      * ('a, 'k) Nvector.t
+                      * ('a, 'k) Nvector.t
                       * preconditioning_type
                       * float
-                      * (('a, 'k) nvector) option
-                      * (('a, 'k) nvector) option
+                      * (('a, 'k) Nvector.t) option
+                      * (('a, 'k) Nvector.t) option
                       * 'a atimes
                       * ('a psolve) option
                       -> bool * float * int * int
@@ -124,16 +120,16 @@ module SPTFQMR =
     
     type 'a t
 
-    external make  : int -> ('a, 'k) nvector -> 'a t
+    external make  : int -> ('a, 'k) Nvector.t -> 'a t
         = "c_spils_sptfqmr_make"
 
     external solve' : 'a t
-                      * ('a, 'k) nvector
-                      * ('a, 'k) nvector
+                      * ('a, 'k) Nvector.t
+                      * ('a, 'k) Nvector.t
                       * preconditioning_type
                       * float
-                      * (('a, 'k) nvector) option
-                      * (('a, 'k) nvector) option
+                      * (('a, 'k) Nvector.t) option
+                      * (('a, 'k) Nvector.t) option
                       * 'a atimes
                       * ('a psolve) option
                       -> bool * float * int * int
@@ -151,8 +147,7 @@ let _ =
   c_init_module
     (* Exceptions must be listed in the same order as
        spils_exn_index.  *)
-    [|MemoryRequestFailure;
-      ConvFailure;
+    [|ConvFailure;
       QRfactFailure;
       PSolveFailure false;
       ATimesFailure false;
