@@ -12,11 +12,21 @@
 
 (** The standard parallel nvectors of Sundials (requires MPI). 
 
+    @version VERSION()
+    @author Timothy Bourke (Inria)
+    @author Jun Inoue (Inria)
+    @author Marc Pouzet (LIENS)
     @cvode <node7#ss:nvec_par> NVECTOR_PARALLEL *)
+
+(** Parallel nvectors carry triples of a local
+    {{:OCAML_DOC_ROOT(Bigarray.Array1)} bigarray} of floats,
+    a global length, and an MPI communicator. *)
+type data = Sundials.RealArray.t * int * Mpi.communicator
+
+(** Represents the internal layout of a serial nvector. *)
 type kind
 
-(** (local array, global length, MPI communicator) *)
-type data = Sundials.RealArray.t * int * Mpi.communicator
+(** The type of parallel nvectors. *)
 type t = (data, kind) Nvector.t
 
 (** Raised by make if the given global length is not consistent with the sum of
@@ -28,7 +38,7 @@ exception IncorrectGlobalSize
     initialized to [iv], and communications occur on [c]. *)
 val make : int -> int -> Mpi.communicator -> float -> t
 
-(** Create an nvector with a distinct underlying array but that shares the
+(** Creates an nvector with a distinct underlying array but that shares the
     original global size and communicator. *)
 val clone : t -> t
 

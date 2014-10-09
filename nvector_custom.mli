@@ -22,6 +22,8 @@
 (** Represents an nvector manipulated by operations written in OCaml. Note that
     such operations entail the additional runtime cost of an OCaml callback. *)
 type kind
+
+(** The type scheme of custom nvectors. *)
 type 'a t = ('a, kind) Nvector.t
 
 (**
@@ -34,8 +36,8 @@ type 'a t = ('a, kind) Nvector.t
 type 'a nvector_ops = {
 
   n_vclone           : 'a -> 'a;
-  (** Create a new, distinct vector from an existing one. It need not
-      copy the contents of the original vector. *)
+  (** Creates a new, distinct vector from an existing one without
+      necessarily copying the contents of the original vector. *)
 
   n_vdestroy         : ('a -> unit) option;
   (** Destroys the N_Vector v and frees memory allocated for its internal
@@ -47,7 +49,7 @@ type 'a nvector_ops = {
       integer words . *)
 
   n_vlinearsum       : float -> 'a -> float -> 'a -> 'a -> unit;
-  (** [n_vlinearsum a x b y z] calculates [z = a*x + b*y]. *)
+  (** [n_vlinearsum a x b y z] calculates [z = ax + by]. *)
 
   n_vconst           : float -> 'a -> unit;
   (** [n_vconst c z] sets all of [z] to [c]. *)
@@ -88,17 +90,18 @@ type 'a nvector_ops = {
 
   n_vinvtest         : 'a -> 'a -> bool;
   (** [n_vinvtest x z] calculates [z(i) = 1 / x(i)] with prior testing for
-      zero values. This routine returns [true] if all components of [x] are
+      zero values. This routine must return [true] if all components of [x] are
       nonzero (successful inversion) and [false] otherwise (not all elements
       inverted). *)
 
   n_vwl2norm         : ('a -> 'a -> float) option;
   (** [m = n_vwl2norm x w] returns the weighted Euclidean l_2 norm of [x]
-      with weight vector [w]
-      [m] = sqroot( sum( sqr([x]({i i}) * w({i i})) ) ). *)
+      with weight vector [w], i.e.,
+      {% $m = \sqrt{\sum_{i=0}^{n-1}(\mathtt{x}_i\mathtt{w}_i)}$ %}. *)
 
   n_vl1norm          : ('a -> float) option;
-    (** [n_vl1norm x] returns the l1 norm of [x] (sum(|x({i i})|). *)
+    (** [n_vl1norm x] returns the l1 norm of [x], i.e.,
+         {% $\sum_{i=0}^{n-1}\lvert\mathtt{x}_i\rvert$ %}. *)
 
   n_vwrmsnormmask    : ('a -> 'a -> 'a -> float) option;
   (** [n_vmaxnormmask x w id] returns the weighted root-mean-square norm

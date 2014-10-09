@@ -10,17 +10,27 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(** The type representing an nvector with underlying data of type ['data]. The
-    additional type argument, ['kind], is typically either [serial], [parallel],
-    or [custom]. It is needed because some linear solvers make additional
+(** Generic nvector types and operations.
+
+    @version VERSION()
+    @author Timothy Bourke (Inria)
+    @author Jun Inoue (Inria)
+    @author Marc Pouzet (LIENS) *)
+
+(** Represents an nvector of kind ['kind] with underlying data of type ['data].
+    The type argument ['kind] is either {!Nvector_serial.kind},
+    {!Nvector_parallel.kind}, or {!Nvector_custom.kind}.
+    It is needed because some linear solvers make additional
     assumptions about the underlying vector representation.
 
     @cvode <node7#s:nvector> N_Vector *)
 type ('data, 'kind) t
+
+(** An alias for {!t} *)
 type ('data, 'kind) nvector = ('data, 'kind) t
 
 (** [unwrap nv] returns the data underlying the nvector [nv]. *)
-val unwrap : ('data, 'kind) nvector -> 'data
+val unwrap : ('data, 'kind) t -> 'data
 
 (** Generic vector operations.
 

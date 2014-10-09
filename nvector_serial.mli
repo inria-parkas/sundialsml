@@ -12,10 +12,20 @@
 
 (** The standard serial nvectors of Sundials.
 
+    @version VERSION()
+    @author Timothy Bourke (Inria)
+    @author Jun Inoue (Inria)
+    @author Marc Pouzet (LIENS)
     @cvode <node7#ss:nvec_ser> NVECTOR_SERIAL *)
 
+(** Serial nvectors are based on {{:OCAML_DOC_ROOT(Bigarray.Array1)} bigarrays}
+    of floats. *)
 type data = Sundials.RealArray.t
+
+(** Represents the internal layout of a serial nvector. *)
 type kind
+
+(** The type of serial nvectors. *)
 type t = (data, kind) Nvector.t
 
 (** [make n iv] creates a new serial nvector with [n] elements, each initialized
