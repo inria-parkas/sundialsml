@@ -156,7 +156,7 @@ define ADD_EXECUTE_RULES
 	$(2:$$<=./$$<) > $$@
     else
     $1.sundials.out: $3.sundials.out
-	cp $< $@
+	cp $$< $$@
     endif
 endef
 
