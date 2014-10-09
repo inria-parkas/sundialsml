@@ -62,24 +62,24 @@ do
 	For better control, use the options below.
 
 	Fine tuning of the installation directories:
-	  --libdir=DIR		 installation directory [OCAML]
-	  --stubdir=DIR		 stub installation directory [OCAML/stublibs]
+	  --libdir=DIR           installation directory [OCAML]
+	  --stubdir=DIR          stub installation directory [OCAML/stublibs]
 	  --docdir=DIR           documentation [PREFIX/share/doc]
 
 	Optional Features:
 	  --disable-doc          do not install html documentation
-	  --enable-mpi		 build with parallel features
+	  --enable-mpi           build with parallel features
 	  --no-lib-path          do not record paths in the OCaml library
-	  --unsafe		 no bounds or other runtime checks.
+	  --unsafe               no bounds or other runtime checks
 
 	Optional settings:
 	  OCAMLROOT     Path to OCaml installation
-	  LAPACKLIB	Command for linking with Lapack (default: -llapack)
-		                (sometimes also: -lSimTKlapack)
-	  EXAMPLES	Path to installed examples (for comparison with Sundials).
-	  OCAMLMPI	Path to OCamlMPI installation
-	  MPICC		Name of the MPI compiler (default: mpicc; implies --enable-mpi)
-	  MPIRUN	Name of MPI program launcher (default: mpirun; implies --enable-mpi)
+	  LAPACKLIB     Command for linking with Lapack (default: -llapack)
+	                (sometimes also: -lSimTKlapack)
+	  EXAMPLES      Path to installed examples (for comparison with Sundials).
+	  OCAMLMPI      Path to OCamlMPI installation
+	  MPICC         Name of the MPI compiler (default: mpicc; implies --enable-mpi)
+	  MPIRUN        Name of MPI program launcher (default: mpirun; implies --enable-mpi)
 
 	Set these options by passing arguments of the form FOO=value to help
 	configure find libraries and programs with nonstandard names/locations.
