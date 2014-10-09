@@ -145,8 +145,7 @@ module DenseMatrix :
         @param v       vector multiplier
         @param w       result vector
         @param work    temporary vector used in the calculation
-        @cvode <node9#ss:dense> DenseORMQR
-     *)
+        @cvode <node9#ss:dense> DenseORMQR *)
     val ormqr :
       a:t -> beta:Sundials.RealArray.t -> v:Sundials.RealArray.t
         -> w:Sundials.RealArray.t -> work:Sundials.RealArray.t -> unit
@@ -164,7 +163,8 @@ module DenseMatrix :
 
     (** Potentially unsafe access to the underlying storage. This array
         {b must} only be used when the underlying storage is valid, which
-        will be the case in callbacks. *)
+        will be the case in callbacks. The array is accessed column first
+        (unlike in {!get}). *)
     val unsafe_unwrap
       : t -> (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
   end
@@ -397,7 +397,8 @@ module BandMatrix :
 
     (** Potentially unsafe access to the underlying storage. This array
         {b must} only be used when the underlying storage is valid, which
-        will be the case in callbacks. *)
+        will be the case in callbacks. The array is accessed column first
+        (unlike in {!get}). *)
     val unsafe_unwrap
       : t -> (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
   end

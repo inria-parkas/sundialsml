@@ -22,6 +22,7 @@ type preconditioning_type =
   | PrecRight
   | PrecBoth
 
+exception ZeroDiagonalElement of int
 exception ConvFailure
 exception QRfactFailure
 exception PSolveFailure of bool
@@ -30,18 +31,16 @@ exception PSetFailure of bool
 exception GSFailure
 exception QRSolFailure
 
-external qr_fact : int
-                   -> Sundials.RealArray2.t
+external qr_fact : Sundials.RealArray2.t
                    -> Sundials.RealArray.t
                    -> bool
-                   -> int
+                   -> unit
     = "c_spils_qr_fact"
  
-external qr_sol : int
-                 -> Sundials.RealArray2.t
+external qr_sol : Sundials.RealArray2.t
                  -> Sundials.RealArray.t
                  -> Sundials.RealArray.t
-                 -> int
+                 -> unit
     = "c_spils_qr_sol"
 
 type 'a atimes = 'a -> 'a -> unit
@@ -87,10 +86,10 @@ module SPGMR =
                       -> bool * float * int * int
         = "c_spils_spgmr_solve"
 
-    let solve s x b pretype gstype delta max_restarts s1 s2 atimes psolve
-        = solve' (s, x, b, pretype, gstype, delta, max_restarts, s1, s2,
+    let solve s ~x ~b ~delta ?max_restarts:(mr=0) ?s1 ?s2 ?psolve atimes
+                pretype gstype
+        = solve' (s, x, b, pretype, gstype, delta, mr, s1, s2,
                   atimes, psolve)
-
   end
 
 module SPBCG =
@@ -111,8 +110,9 @@ module SPBCG =
                       * ('a psolve) option
                       -> bool * float * int * int
         = "c_spils_spbcg_solve"
-    let solve s x b pretype delta sx sb atimes psolve =
-      solve' (s, x, b, pretype, delta, sx, sb, atimes, psolve)
+
+    let solve s ~x ~b ~delta ?sx ?sb ?psolve atimes pretype
+        = solve' (s, x, b, pretype, delta, sx, sb, atimes, psolve)
  end
 
 module SPTFQMR =
@@ -134,8 +134,9 @@ module SPTFQMR =
                       * ('a psolve) option
                       -> bool * float * int * int
         = "c_spils_sptfqmr_solve"
-    let solve s x b pretype delta sx sb atimes psolve =
-      solve' (s, x, b, pretype, delta, sx, sb, atimes, psolve)
+
+    let solve s ~x ~b ~delta ?sx ?sb ?psolve atimes pretype
+        = solve' (s, x, b, pretype, delta, sx, sb, atimes, psolve)
 
  end
 
@@ -147,7 +148,8 @@ let _ =
   c_init_module
     (* Exceptions must be listed in the same order as
        spils_exn_index.  *)
-    [|ConvFailure;
+    [|ZeroDiagonalElement 0;
+      ConvFailure;
       QRfactFailure;
       PSolveFailure false;
       ATimesFailure false;

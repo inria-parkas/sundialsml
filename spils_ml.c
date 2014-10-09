@@ -561,49 +561,57 @@ int spils_gs_type(value vgstype)
     CAMLreturn(gstype);
 }
 
-CAMLprim value c_spils_qr_fact(value vn, value vh, value vq, value vnewjob)
+CAMLprim value c_spils_qr_fact(value vh, value vq, value vnewjob)
 {
-    CAMLparam4(vn, vh, vq, vnewjob);
+    CAMLparam3(vh, vq, vnewjob);
     int r;
-    int n = Int_val(vn);
-
-#if SUNDIALS_ML_SAFE == 1
     struct caml_ba_array *bh = ARRAY2_DATA(vh);
-    intnat hm = bh->dim[1];
     intnat hn = bh->dim[0];
 
-    if ((hm < n + 1) || (hn < n))
+#if SUNDIALS_ML_SAFE == 1
+    intnat hm = bh->dim[1];
+
+    if ((hm < hn + 1))
 	caml_invalid_argument("Spils.qr_fact: h is too small.");
-    if (ARRAY1_LEN(vq) < 2 * n)
+    if (ARRAY1_LEN(vq) < 2 * hn)
 	caml_invalid_argument("Spils.qr_fact: q is too small.");
 #endif
 
-    r = QRfact(n, ARRAY2_ACOLS(vh), REAL_ARRAY(vq), Bool_val(vnewjob));
+    r = QRfact(hn, ARRAY2_ACOLS(vh), REAL_ARRAY(vq), Bool_val(vnewjob));
 
-    CAMLreturn(Val_int(r));
+    if (r != 0) {
+	caml_raise_with_arg(SPILS_EXN(ZeroDiagonalElement),
+			    Val_long(r));
+    }
+
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_spils_qr_sol(value vn, value vh, value vq, value vb)
+CAMLprim value c_spils_qr_sol(value vh, value vq, value vb)
 {
-    CAMLparam4(vn, vh, vq, vb);
+    CAMLparam3(vh, vq, vb);
     int r;
-    int n = Int_val(vn);
-
-#if SUNDIALS_ML_SAFE == 1
     struct caml_ba_array *bh = ARRAY2_DATA(vh);
-    intnat hm = bh->dim[1];
     intnat hn = bh->dim[0];
 
-    if ((hm < n + 1) || (hn < n))
+#if SUNDIALS_ML_SAFE == 1
+    intnat hm = bh->dim[1];
+
+    if (hm < hn + 1)
 	caml_invalid_argument("Spils.qr_sol: h is too small.");
-    if (ARRAY1_LEN(vq) < 2 * n)
+    if (ARRAY1_LEN(vq) < 2 * hn)
 	caml_invalid_argument("Spils.qr_sol: q is too small.");
-    if (ARRAY1_LEN(vb) < n + 1)
+    if (ARRAY1_LEN(vb) < hn + 1)
 	caml_invalid_argument("Spils.qr_sol: b is too small.");
 #endif
 
-    r = QRsol(n, ARRAY2_ACOLS(vh), REAL_ARRAY(vq), REAL_ARRAY(vb));
+    r = QRsol(hn, ARRAY2_ACOLS(vh), REAL_ARRAY(vq), REAL_ARRAY(vb));
 
-    CAMLreturn(Val_int(r));
+    if (r != 0) {
+	caml_raise_with_arg(SPILS_EXN(ZeroDiagonalElement),
+			    Val_long(r));
+    }
+
+    CAMLreturn (Val_unit);
 }
 

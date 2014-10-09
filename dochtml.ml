@@ -123,6 +123,9 @@ struct
     method private html_of_img s =
       Printf.sprintf "<a href=\"%s\"><img src=\"%s\"></a>" s s
 
+    method private html_of_cconst s =
+      Printf.sprintf "<span class=\"cconst\">(%s)</span>" s
+
     method private html_of_color s =
       let ss = Str.bounded_split (Str.regexp "[ \t\n]+") s 2 in
       match ss with
@@ -153,6 +156,15 @@ struct
             )
             l;
           bs b "</ul></div>\n"
+
+    method html_of_author_list b l =
+      match l with
+        [] -> ()
+      | _ ->
+          bp b "<div class=\"authors\">";
+          bp b "<b>%s:</b> " Odoc_messages.authors;
+          self#html_of_text b [Odoc_info.Raw (String.concat ", " l)];
+          bs b "</div>\n"
 
     val mutable custom_functions =
       ([] : (string * (string -> string)) list)
@@ -191,7 +203,8 @@ struct
       custom_functions <- ("div", self#html_of_div) :: custom_functions;
       custom_functions <- ("var", self#html_of_var) :: custom_functions;
       custom_functions <- ("color", self#html_of_color) :: custom_functions;
-      custom_functions <- ("img", self#html_of_img) :: custom_functions
+      custom_functions <- ("img", self#html_of_img) :: custom_functions;
+      custom_functions <- ("cconst", self#html_of_cconst) :: custom_functions
 
   end
 

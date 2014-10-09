@@ -267,6 +267,19 @@ div.raisedexceptions span.raises {
     font-style: italic;
 }
 
+div.authors {
+    margin-top: 1em;
+}
+
+span.cconst {
+    font-size: smaller;
+    color: lightgray;
+}
+
+p + div.authors {
+    margin-top: 0em;
+}
+
 ol {
     padding-left: 2.0em;
 }

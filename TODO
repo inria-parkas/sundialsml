@@ -90,6 +90,10 @@ MINOR PATCHES
 
 6. Rename CAML_FN everywhere?
 
+
+7. Add tests for Spils.qr_fact/qr_sol/modified_gs/classical_gs to
+   examples/ocaml/linear.
+
 TO DISCUSS
 ----------
 * Should we check consistency of vector lengths?
