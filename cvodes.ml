@@ -1119,7 +1119,8 @@ let call_bprecsolvefn session jac ps rvecB =
 let call_bjactimesfn session jac vB jvB =
   let session = read_weak_ref session in
   match session.ls_callbacks with
-  | BSpilsCallback { Adjoint.Spils.jac_times_vec_fn = Some f } ->
+  | BSpilsCallback { Adjoint.Spils.jac_times_vec_fn = Some f }
+  | BSpilsBandCallback (Some f) ->
       adjust_retcode session (f jac vB) jvB
   | _ -> assert false
 
