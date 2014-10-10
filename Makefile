@@ -41,7 +41,7 @@ MLOBJ_SENS = cvodes.cmo idas.cmo
 
 ### Objects specific to sundials_no_sens.cma.
 COBJ_NO_SENS = cvode_ml$(XO) ida_ml$(XO)
-MLBJ_NO_SENS = 
+MLOBJ_NO_SENS = 
 
 ### Objects specific to sundials_mpi.cma.
 COBJ_MPI = nvector_parallel_ml.o kinsol_bbd_ml.o		\
