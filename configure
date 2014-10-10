@@ -11,6 +11,7 @@ unset stubdir
 unset docdir
 unset install_docs
 unset enable_mpi
+unset enable_debug
 
 configure_command="$0"
 
@@ -39,6 +40,8 @@ do
 	mpicc="${mpicc:-${value}}";;
     --no-lib-path)
 	no_lib_path=1;;
+    --enable-debug)
+	enable_debug=1;;
     --unsafe)
 	bounds_checking=0;;
     -h|--help)
@@ -70,6 +73,7 @@ do
 	  --disable-doc          do not install html documentation
 	  --enable-mpi           build with parallel features
 	  --no-lib-path          do not record paths in the OCaml library
+	  --enable-debug         enable assertions and debug symbols
 	  --unsafe               no bounds or other runtime checks
 
 	Optional settings:
@@ -154,6 +158,17 @@ if [ "x${cflags}" = x ]; then    # Don't touch CFLAGS if explicitly given.
         echo "<info> Your C compiler seems to be different from gcc.  Make"
         echo "<info> sure you set optimization flags explicitly with CFLAGS."
     fi
+fi
+
+if [ "x$enable_debug" = x1 ]; then
+    if [ $using_gcc = true ]; then
+        cflags="${cflags} -g3"
+    else
+        cflags="${cflags} -g"
+    fi
+    cppflags="${cppflags} -DDEBUG=1"
+else
+    cppflags="${cppflags} -DNDEBUG=1"
 fi
 
 arch=`uname -m`
@@ -438,6 +453,7 @@ printf "    -examples\t\t${examples_info}\n"
 printf "  OCamlMPI\t\t${ocamlmpi}\n"
 printf "\n"
 printf "  Architecture\t\t${arch}\n"
+[ "x$enable_debug" = x1 ] && printf "  Debugging\t\tENABLED\n"
 printf "\n"
 printf "Installation paths\n"
 printf "  prefix:\t\t${prefix}\n"

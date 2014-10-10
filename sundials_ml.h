@@ -22,6 +22,12 @@
 
 #include "config.h"
 
+#if (NDEBUG+0) && (DEBUG+0)
+#error "DEBUG and NDEBUG are both defined.  I'm confused."
+#endif
+
+#include <assert.h>
+
 value sundials_ml_big_real ();
 value sundials_ml_unit_roundoff();
 
