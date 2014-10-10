@@ -52,8 +52,7 @@ value sundials_ml_weak_get (value ar, value n);
 #define WEAK_DEREF(dest, ptr)                                   \
   do {                                                          \
     dest = sundials_ml_weak_get ((ptr), Val_int (0));           \
-    if (!Is_block (dest))                                       \
-      caml_failwith ("Internal error: weak reference is dead"); \
+    assert (Is_block (dest));					\
     dest = Field (dest, 0);                                     \
   } while (0)
 
@@ -122,9 +121,8 @@ enum sundials_exn_index {
 				   SUNDIALS_EXN_ ## name))
 
 #define REGISTER_EXNS(MODULE, exns)					\
-    if (Wosize_val (exns) != MODULE ## _EXN_SET_SIZE)			\
-	abort ();							\
-    sundials_ml_register_exns (MODULE ## _EXN_SET, exns) /* no semicolon */
+    (assert (Wosize_val (exns) == MODULE ## _EXN_SET_SIZE),		\
+     sundials_ml_register_exns (MODULE ## _EXN_SET, exns))
 
 /* Callback functions are passed from OCaml to C by basically the same
  * mechanism as exceptions, but since callbacks are very frequently
@@ -136,15 +134,14 @@ enum sundials_exn_index {
  * prefix IX_.
  */
 #define REGISTER_CALLBACKS(cbs)						\
-    if (Wosize_val (cbs) != NUM_CALLBACKS)				\
-	abort ();							\
-    {									\
+    do {								\
 	int _i;								\
+	assert (Wosize_val (cbs) == NUM_CALLBACKS);			\
 	for (_i = 0; _i < NUM_CALLBACKS; ++_i) {			\
 	    callbacks[_i] = Field (Field (cbs, _i), 0);			\
 	    caml_register_generational_global_root (&callbacks[_i]);	\
 	}								\
-    }
+    } while (0)
 
 #define CAML_FN(fcn) (callbacks[IX_ ## fcn])
 

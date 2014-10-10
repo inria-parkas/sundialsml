@@ -962,9 +962,7 @@ static value forward_solver(value vdata, value vtout, value vyret, int onestep)
 	SCHECK_FLAG ("CVodeF", flag);
     }
 
-    /* Hmm...should this go in the production code or not?  */
-    if (Is_block (Field (vdata, RECORD_CVODE_SESSION_EXN_TEMP)))
-	abort ();
+    assert (Field (vdata, RECORD_CVODE_SESSION_EXN_TEMP) == Val_none);
 
     ret = caml_alloc_tuple(3);
     Store_field(ret, 0, caml_copy_double(tret));

@@ -752,9 +752,7 @@ CAMLprim value c_kinsol_solve(value vdata, value vu, value vlinesearch,
 	CHECK_FLAG ("KIN", flag);
     }
 
-    /* Hmm...should this go in the production code or not?  */
-    if (Is_block (Field (vdata, RECORD_KINSOL_SESSION_EXN_TEMP)))
-	abort ();
+    assert (Field (vdata, RECORD_KINSOL_SESSION_EXN_TEMP) == Val_none);
 
     CAMLreturn (Val_int (result));
 }

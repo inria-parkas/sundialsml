@@ -814,9 +814,7 @@ static value solve (value vdata, value nextt, value vy, value vyp, int onestep)
 	CHECK_FLAG ("IDASolve", flag);
     }
 
-    /* Hmm...should this go in the production code or not?  */
-    if (Is_block (Field (vdata, RECORD_IDA_SESSION_EXN_TEMP)))
-	abort ();
+    assert (Field (vdata, RECORD_IDA_SESSION_EXN_TEMP) == Val_none);
 
     ret = caml_alloc_tuple (2);
     Store_field (ret, 0, caml_copy_double (tret));
