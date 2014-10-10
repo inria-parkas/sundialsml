@@ -56,7 +56,7 @@ struct
     val rex = Str.regexp "<\\([^#>]*\\)\\(#[^)]*\\)?> \\(.*\\)"
 
     val variables = [
-      ("version", VERSION)
+      ("version", Sundials_config.sundials_version)
     ]
 
     method private split_text (t:Odoc_info.text) =

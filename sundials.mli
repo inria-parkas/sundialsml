@@ -20,8 +20,17 @@
 
 (** {2 Constants} *)
 
+(** The version string of the Sundials/C this binding is compiled
+    against, e.g. ["2.6.0"].  *)
+val sundials_version : string
+
+(** A string showing the patch version, if any.  This disambiguates
+    between multiple versions of the binding meant for the same
+    version of Sundials/C.  *)
+val patch_version : string
+
 (** Indicates whether the interface was compiled with BLAS/LAPACK support. *)
-val blas_lapack_supported : bool
+val lapack_enabled : bool
 
 (** The largest value representable as a real.
 

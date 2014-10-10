@@ -30,18 +30,23 @@ COBJ_COMMON = sundials_ml$(XO) dls_ml$(XO) nvector_ml$(XO) spils_ml$(XO)
 
 COBJ_MAIN = $(COBJ_COMMON) kinsol_ml$(XO)
 
-MLOBJ_MAIN = sundials.cmo dls.cmo spils.cmo nvector.cmo			\
-	     nvector_custom.cmo nvector_array.cmo nvector_serial.cmo	\
-	     cvode_impl.cmo ida_impl.cmo kinsol_impl.cmo		\
-	     cvode.cmo kinsol.cmo ida.cmo
+MLOBJ_MAIN = sundials_config.cmo sundials.cmo dls.cmo spils.cmo	\
+	     nvector.cmo nvector_custom.cmo nvector_array.cmo	\
+	     nvector_serial.cmo cvode_impl.cmo ida_impl.cmo	\
+	     kinsol_impl.cmo cvode.cmo kinsol.cmo ida.cmo
+
+CMI_MAIN = $(filter-out sundials_config.cmi,$(filter_out %_impl.cmi,\
+	    $(MLOBJ_MAIN:.cmo=.cmi)))
 
 ### Objects specific to sundials.cma.
 COBJ_SENS  = cvode_ml_s$(XO) ida_ml_s$(XO) cvodes_ml.o idas_ml.o
 MLOBJ_SENS = cvodes.cmo idas.cmo
+CMI_SENS = $(MLOBJ_SENS:.cmo=.cmi)
 
 ### Objects specific to sundials_no_sens.cma.
 COBJ_NO_SENS = cvode_ml$(XO) ida_ml$(XO)
-MLOBJ_NO_SENS = 
+MLOBJ_NO_SENS =
+CMI_NO_SENS = $(MLOBJ_SENS:.cmo=.cmi)
 
 ### Objects specific to sundials_mpi.cma.
 COBJ_MPI = nvector_parallel_ml.o kinsol_bbd_ml.o		\
@@ -50,13 +55,14 @@ COBJ_MPI = nvector_parallel_ml.o kinsol_bbd_ml.o		\
 MLOBJ_MPI = nvector_parallel.cmo kinsol_bbd.cmo	\
 	    cvode_bbd.cmo cvodes_bbd.cmo	\
 	    ida_bbd.cmo idas_bbd.cmo
+CMI_MPI = $(MLOBJ_MPI:.cmo=.cmi)
 
 ### Other sets of files.
 
 # For `make clean'.  All object files, including ones that may not be
 # built/updated under the current configuration.  Duplicates OK.
 ALL_COBJ = $(COBJ_MAIN) $(COBJ_SENS) $(COBJ_NO_SENS) $(COBJ_MPI)
-ALL_MLOBJ = $(MLOBJ_MAIN) $(MLOBJ_SENS) $(MLOBJ_NO_SENS) $(MLOBJ_MPI)
+ALL_MLOBJ =dochtml.cmo $(MLOBJ_MAIN) $(MLOBJ_SENS) $(MLOBJ_NO_SENS) $(MLOBJ_MPI)
 ALL_CMA = sundials.cma sundials_no_sens.cma sundials_mpi.cma
 
 # Installed files.
@@ -64,10 +70,8 @@ ALL_CMA = sundials.cma sundials_no_sens.cma sundials_mpi.cma
 INSTALL_CMA=sundials.cma sundials_no_sens.cma \
 	    $(if $(MPI_ENABLED),sundials_mpi.cma)
 
-INSTALL_CMI=$(filter-out %_impl.cmi, $(MLOBJ_MAIN:.cmo=.cmi))	\
-	    $(MLOBJ_SENS:.cmo=.cmi)				\
-	    $(MLOBJ_NO_SENS:.cmo=.cmi)				\
-	    $(if $(MPI_ENABLED),$(MLOBJ_MPI:.cmo=.cmi))
+INSTALL_CMI=$(CMI_MAIN) $(CMI_SENS) $(CMI_NO_SENS)	\
+	    $(if $(MPI_ENABLED),$(CMI_MPI))
 
 STUBLIBS=$(foreach file,$(INSTALL_CMA:.cma=$(XS)), dllml$(file))
 
@@ -115,7 +119,7 @@ sundials_mpi.cma sundials_mpi.cmxa: $(MLOBJ_MPI) $(MLOBJ_MPI:.cmo=.cmx) \
 	    -o sundials_mpi -oc mlsundials_mpi $^	\
 	    $(LIB_PATH) $(MPI_LIBLINK)
 
-$(MLOBJ_MPI) $(MLOBJ_MPI:.cmo=.cmi) $(MLOBJ_MPI:.cmo=.cmx)	\
+$(MLOBJ_MPI) $(CMI_MPI) $(MLOBJ_MPI:.cmo=.cmx)	\
 	     doc/html/index.html :				\
     INCLUDES += $(MPI_INCLUDES)
 
@@ -168,38 +172,40 @@ idas_bbd_ml.o: idas_bbd_ml.c
 	$(CC) -I $(OCAML_INCLUDE) $(IDAS_CFLAGS) -o $@ -c $<
 
 # Docs.
+
+# FIXME: gcc-dependent
+ML_CPPFLAGS=-P -x c -traditional-cpp
+DOCHTML_PP=$(CPP) $(ML_CPPFLAGS) -DOCAML_3X=$(OCAML_3X)
 dochtml.cmo: INCLUDES += -I +ocamldoc
-dochtml.cmo: OCAMLFLAGS += -pp "cpp $(CPPFLAGS) -DOCAML_3X=$(OCAML_3X) -DVERSION=\\\"$(VERSION)\\\""
+dochtml.cmo: OCAMLFLAGS += -pp '$(DOCHTML_PP)'
 
 META: META.in
-	cpp $(if $(MPI_ENABLED),-DMPI_ENABLED) -DVERSION=\"$(VERSION)\" $< \
+	$(CPP) $(if $(MPI_ENABLED),-DMPI_ENABLED) -DVERSION=\"$(VERSION)\" $< \
 	    | grep -v '^#' > $@
 
 doc: doc/html/index.html
 
 doc/html/index.html: doc/html dochtml.cmo intro.doc			\
-		     $(filter-out %_impl.cmi, $(MLOBJ_MAIN:.cmo=.cmi))	\
-		     $(MLOBJ_SENS:.cmo=.cmi)				\
-		     $(if $(MPI_ENABLED), $(MLOBJ_MPI:.cmo=.cmi))
-	$(OCAMLDOC) -g dochtml.cmo $(INCLUDES)			\
-	    -short-functors					\
-	    -colorize-code					\
-	    -css-style docstyle.css				\
-	    -cvode-doc-root "$(CVODE_DOC_ROOT)"			\
-	    -cvodes-doc-root "$(CVODES_DOC_ROOT)"		\
-	    -ida-doc-root "$(IDA_DOC_ROOT)"			\
-	    -idas-doc-root "$(IDAS_DOC_ROOT)"			\
-	    -kinsol-doc-root "$(KINSOL_DOC_ROOT)"		\
-	    -pp "cpp $(CPPFLAGS)				\
-	    	-D'VERSION()=$(VERSION)'			\
-		-D'OCAML_DOC_ROOT(x)=$(OCAML_DOC_ROOT)/**/x'"	\
-	    -d ./doc/html/					\
-	    -hide Cvode_impl,Ida_impl,Kinsol_impl		\
-	    -t "Sundials/ML $(VERSION)$(VERSIONP)"		\
-	    -intro intro.doc					\
-	    $(filter-out %_impl.mli, $(MLOBJ_MAIN:.cmo=.mli))	\
-	    $(if $(MPI_ENABLED), $(MLOBJ_MPI:.cmo=.mli))	\
-	    $(MLOBJ_SENS:.cmo=.mli)
+		     $(filter-out %_impl.cmi, $(CMI_MAIN))		\
+		     $(CMI_SENS) $(if $(MPI_ENABLED), $(CMI_MPI))
+	$(OCAMLDOC) -g sundials_config.cmo -g dochtml.cmo $(INCLUDES)	\
+	    -short-functors						\
+	    -colorize-code						\
+	    -css-style docstyle.css					\
+	    -cvode-doc-root "$(CVODE_DOC_ROOT)"				\
+	    -cvodes-doc-root "$(CVODES_DOC_ROOT)"			\
+	    -ida-doc-root "$(IDA_DOC_ROOT)"				\
+	    -idas-doc-root "$(IDAS_DOC_ROOT)"				\
+	    -kinsol-doc-root "$(KINSOL_DOC_ROOT)"			\
+	    -pp "$(DOCHTML_PP)						\
+		-D'OCAML_DOC_ROOT(x)=$(OCAML_DOC_ROOT)/**/x'"		\
+	    -d ./doc/html/						\
+	    -hide Cvode_impl,Ida_impl,Kinsol_impl			\
+	    -t "Sundials/ML $(VERSION)$(VERSIONP)"			\
+	    -intro intro.doc						\
+	    $(filter-out %_impl.mli, $(CMI_MAIN:.cmi=.mli))		\
+	    $(if $(MPI_ENABLED), $(CMI_MPI:.cmi=.mli))			\
+	    $(CMI_SENS:.cmi=.mli)
 
 doc/html:
 	mkdir $@
@@ -268,9 +274,7 @@ uninstall-findlib:
 
 depend: .depend
 .depend:
-	$(OCAMLDEP) \
-	    -pp "cpp $(CPPFLAGS) -DOCAML_3X=$(OCAML_3X) -DVERSION=\\\"$(VERSION)\\\"" \
-	    *.mli *.ml > .depend
+	$(OCAMLDEP) -pp '$(DOCHTML_PP)' *.mli *.ml > .depend
 	$(CC) -MM $(CFLAGS) *.c >> .depend
 
 clean:
