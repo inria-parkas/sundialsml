@@ -1,8 +1,7 @@
 
 let ypos_i = 0
 let yvel_i = 1
-let yacc_i = 2
-let xpos_i = 3
+let xpos_i = 2
 
 let under_i = 0
 
@@ -19,8 +18,7 @@ let print_with_time t v =
 let f t y yd =
   yd.{xpos_i} <- x_vel;
   yd.{ypos_i} <- y.{yvel_i};
-  yd.{yvel_i} <- y.{yacc_i};
-  yd.{yacc_i} <- 0.0
+  yd.{yvel_i} <- gravity
 
 let ground =
   [|
@@ -47,8 +45,7 @@ let y = Sundials.RealArray.create 4
 let y_nvec = Nvector_serial.wrap y
 let _ = y.{xpos_i} <- 0.0;
         y.{ypos_i} <- 10.0;
-        y.{yvel_i} <- 0.0;
-        y.{yacc_i} <- gravity
+        y.{yvel_i} <- 0.0
 
 let n_roots = 1
 let rootdata = Sundials.Roots.create n_roots
@@ -85,7 +82,7 @@ let _ =
   let t = ref !t_delta in
   while (y.{xpos_i} < x_limit) do
     let (t', result) = Cvode.solve_normal s !t y_nvec in
-        if (result = Sundials.RootsFound) then ball_event s t' y;
+        if (result = Cvode.RootsFound) then ball_event s t' y;
 
         if !log then print_with_time t' y;
         if !show then Showball.show (y.{xpos_i}, y.{ypos_i});
