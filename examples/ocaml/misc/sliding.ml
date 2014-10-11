@@ -16,9 +16,15 @@ let print_with_time t v =
   Sundials.RealArray.iter (Printf.printf "\t% .15e") v;
   print_newline ()
 
+let string_of_root x =
+  match x with
+  | Sundials.Roots.Rising  -> "rising"
+  | Sundials.Roots.Falling -> "falling"
+  | Sundials.Roots.NoRoot  -> "noroot"
+
 let print_roots vs =
   Sundials.Roots.iter (fun x ->
-    Printf.printf "\t%s" (Sundials.Roots.string_of_root_event x)) vs;
+    Printf.printf "\t%s" (string_of_root x)) vs;
   print_newline ()
 
 let f t_s y yd =
@@ -77,7 +83,7 @@ let _ =
       print_with_time t' y;
         
       match result with
-      | Sundials.RootsFound -> begin
+      | Cvode.RootsFound -> begin
             Cvode.get_root_info s rootdata;
             print_roots rootdata;
             d t' rootdata y;
@@ -85,8 +91,8 @@ let _ =
             print_with_time t' y;
             Cvode.reinit s t' y_nvec
           end
-      | Sundials.StopTimeReached -> raise Done
-      | Sundials.Continue -> ()
+      | Cvode.StopTimeReached -> raise Done
+      | Cvode.Success -> ()
     done
   with Done -> ()
 

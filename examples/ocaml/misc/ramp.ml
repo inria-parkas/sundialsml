@@ -95,12 +95,12 @@ let run_experiment with_zeros with_reinit =
       pre_err_test_fails := err_test_fails;
 
       match result with
-      | Sundials.RootsFound ->
+      | Cvode.RootsFound ->
           Cvode.get_root_info s rootdata;
           handle_roots rootdata;
           if with_reinit then Cvode.reinit s t' y_nvec
-      | Sundials.StopTimeReached -> raise Done
-      | Sundials.Continue -> ()
+      | Cvode.StopTimeReached -> raise Done
+      | Cvode.Success -> ()
     done
   with Done -> ()
 

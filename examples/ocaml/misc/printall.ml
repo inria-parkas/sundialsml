@@ -48,9 +48,9 @@ let _ =
       Printf.printf "\t\t(step size = %e)\n" (Cvode.get_last_step s);
         
       match result with
-      | Sundials.RootsFound -> print_endline "** root found"
-      | Sundials.StopTimeReached -> raise Done
-      | Sundials.Continue -> ()
+      | Cvode.RootsFound -> print_endline "** root found"
+      | Cvode.StopTimeReached -> raise Done
+      | Cvode.Success -> ()
     done
   with Done -> ()
 

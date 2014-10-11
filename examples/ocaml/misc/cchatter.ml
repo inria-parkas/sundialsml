@@ -25,8 +25,8 @@ let _ =
         print_with_time t' y;
         t := t' +. 0.1;
         match result with
-        | Sundials.RootsFound -> failwith "There are no roots!"
-        | Sundials.StopTimeReached -> keep_going := false
-        | Sundials.Continue -> ();
+        | Cvode.RootsFound -> failwith "There are no roots!"
+        | Cvode.StopTimeReached -> keep_going := false
+        | Cvode.Success -> ();
   done
 

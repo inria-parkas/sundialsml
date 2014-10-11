@@ -425,7 +425,10 @@ let main () =
 
   if !use_analytical_correction then init_from_xy_vxvy vars vars';
 
-  let solver = Ida.Dls.dense (if !use_analytical_jac then Some jac else None) in
+  let solver =
+    if !use_analytical_jac then Ida.Dls.dense ~jac:jac ()
+    else Ida.Dls.dense ()
+  in
   let ida = Ida.init solver (Ida.SStolerances (1e-9, 1e-9)) residual
                      ~roots:(1, roots) 0. nv_vars nv_vars'
   in
@@ -450,7 +453,7 @@ let main () =
       if !show then Showpendulum.show (vars.{x_i}, vars.{y_i});
       if !log then print_with_time tret vars;
 
-      if flag = Sundials.RootsFound then
+      if flag = Ida.RootsFound then
         (Printf.printf "Bang!  Hit against the wall.\n";
          Printf.printf "vars  = %s\nvars' = %s\n"
            (show_nvector vars) (show_nvector vars');
