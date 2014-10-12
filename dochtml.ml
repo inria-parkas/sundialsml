@@ -37,6 +37,10 @@ let kinsol_doc_root =
 let bp = Printf.bprintf
 let bs = Buffer.add_string
 
+type custom_type =
+    Simple of (string -> string)
+  | Full of (Buffer.t -> Odoc_info.text -> unit)
+
 #if OCAML_3X == 1
 class dochtml =
   object(self)
@@ -167,14 +171,20 @@ struct
           bs b "</div>\n"
 
     val mutable custom_functions =
-      ([] : (string * (string -> string)) list)
+      ([] : (string * custom_type) list)
+
+    method private html_of_warning b t =
+      bs b "<div class=\"warningbox\">";
+      self#html_of_text b t;
+      bs b "</div>"
 
     method private html_of_custom_text b tag text =
       try
-        let f = List.assoc tag custom_functions in
-        match text with
-        | [Odoc_info.Raw s] -> Buffer.add_string b (f s)
-        | _ -> Odoc_info.warning ("custom tags must be followed by plain text.")
+        match List.assoc tag custom_functions, text with
+        | (Simple f, [Odoc_info.Raw s]) -> Buffer.add_string b (f s)
+        | (Simple f, _) ->
+            Odoc_info.warning ("custom tags must be followed by plain text.")
+        | (Full f, _) -> f b text
       with
         Not_found -> Odoc_info.warning (Odoc_messages.tag_not_handled tag)
 
@@ -200,11 +210,13 @@ struct
       tag_functions <- ("idas",   self#html_of_idas) :: tag_functions;
       tag_functions <- ("kinsol", self#html_of_kinsol) :: tag_functions;
 
-      custom_functions <- ("div", self#html_of_div) :: custom_functions;
-      custom_functions <- ("var", self#html_of_var) :: custom_functions;
-      custom_functions <- ("color", self#html_of_color) :: custom_functions;
-      custom_functions <- ("img", self#html_of_img) :: custom_functions;
-      custom_functions <- ("cconst", self#html_of_cconst) :: custom_functions
+      custom_functions <- ("div",     Simple self#html_of_div)    ::
+                          ("var",     Simple self#html_of_var)    ::
+                          ("color",   Simple self#html_of_color)  ::
+                          ("img",     Simple self#html_of_img)    ::
+                          ("cconst",  Simple self#html_of_cconst) ::
+                          ("warning", Full self#html_of_warning)  ::
+                          custom_functions
 
   end
 

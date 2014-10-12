@@ -68,7 +68,7 @@ let alternate_dense jacfn =
   in
 
   let solver =
-    Kinsol.Alternate.make_solver (fun s nv ->
+    Kinsol.Alternate.make (fun s nv ->
         let n = match nv with
                 | None -> failwith "requires initial nvector!"
                 | Some nv -> RealArray.length (Nvector.unwrap nv)

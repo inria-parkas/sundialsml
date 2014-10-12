@@ -109,7 +109,7 @@ let alternate_dense jacfn =
   in
 
   let solver =
-    Alt.make_solver (fun s nv ->
+    Alt.make (fun s nv ->
         let n = RealArray.length (unvec nv) in
         let mem = {
           nstlj  = 0;

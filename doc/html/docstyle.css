@@ -331,6 +331,12 @@ div.references ol > li {
     margin-right: 1.5em;
 }
 
+div.warningbox {
+    background: url(warning.png) no-repeat;
+    padding-left: 24px;
+    min-height: 16px;
+}
+
 @media print {
     body { font-size: 8pt; }
 }

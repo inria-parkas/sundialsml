@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="svg2390"
+   sodipodi:docname="warning.svg"
+   viewBox="0 0 80 80"
+   sodipodi:version="0.32"
+   version="1.0"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   inkscape:version="0.48.4 r9939"
+   width="100%"
+   height="100%"
+   inkscape:export-filename="/home/tbourke/projects/sundialsml/doc/html/warning.png"
+   inkscape:export-xdpi="22.24"
+   inkscape:export-ydpi="22.24">
+  <defs
+     id="defs2994" />
+  <sodipodi:namedview
+     id="base"
+     bordercolor="#666666"
+     inkscape:pageshadow="2"
+     guidetolerance="10"
+     pagecolor="#ffffff"
+     gridtolerance="10000"
+     inkscape:window-height="715"
+     inkscape:zoom="4.4702407"
+     objecttolerance="10"
+     showgrid="false"
+     borderopacity="1.0"
+     inkscape:current-layer="layer1"
+     inkscape:cx="72.905826"
+     inkscape:cy="62.58939"
+     inkscape:window-y="157"
+     inkscape:window-x="419"
+     inkscape:window-width="1171"
+     inkscape:pageopacity="0.0"
+     inkscape:document-units="px"
+     inkscape:window-maximized="0" />
+  <g
+     id="layer1"
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     transform="translate(-21.913 -16.984)">
+    <path
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccccccccccc"
+       style="fill:#6895c3;stroke:#c13939;stroke-width:3.11108779999999996;fill-opacity:1;stroke-opacity:1"
+       d="m 31.951329,79.009043 c -0.416245,0.801521 -0.906721,1.552948 -0.906721,2.431889 l 0.0041,0.368882 c 0,1.89906 1.487369,3.046693 3.196979,3.046693 h 55.250341 c 1.712341,0 3.183316,-1.420879 3.183316,-3.319939 l -0.01822,-0.368882 c 0,-0.883495 -0.432639,-1.648584 -0.906266,-2.436443 L 64.392005,29.647153 c -1.209114,-1.341547 -3.169198,-1.341547 -4.378312,0.0018 L 31.951784,79.010864 z"
+       id="path2389" />
+    <path
+       id="path2393"
+       sodipodi:rx="8.0416269"
+       sodipodi:ry="8.0416269"
+       style="fill:#c13939;fill-opacity:1"
+       sodipodi:type="arc"
+       d="m 31.962924,74.47538 c 0,4.441268 -3.600359,8.041627 -8.041627,8.041627 -4.441268,0 -8.041627,-3.600359 -8.041627,-8.041627 0,-4.441268 3.600359,-8.041627 8.041627,-8.041627 4.441268,0 8.041627,3.600359 8.041627,8.041627 z"
+       inkscape:export-ydpi="90"
+       inkscape:export-filename="/home/mgsmith/Desktop/warning.png"
+       transform="matrix(.54212 0 0 .54212 49.546 33.731)"
+       sodipodi:cy="74.47538"
+       sodipodi:cx="23.921297"
+       inkscape:export-xdpi="90" />
+    <path
+       id="path2395"
+       style="fill:#c13939;fill-opacity:1"
+       d="m62.486 43.817c1.713 0 4.371 1.365 4.371 3.06l-1.279 17.615c0 1.695-1.379 3.06-3.092 3.06s-3.091-1.365-3.091-3.06l-1.493-17.615c0-1.695 2.871-3.06 4.584-3.06z"
+       inkscape:export-ydpi="90"
+       sodipodi:nodetypes="cccsccc"
+       inkscape:export-filename="/home/mgsmith/Desktop/warning.png"
+       inkscape:export-xdpi="90" />
+  </g>
+  <metadata
+     id="metadata2992">
+    <rdf:RDF>
+      <cc:Work>
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/publicdomain/" />
+        <dc:publisher>
+          <cc:Agent
+             rdf:about="http://openclipart.org/">
+            <dc:title>Openclipart</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:title>warning icon</dc:title>
+        <dc:date>2010-03-03T13:31:08</dc:date>
+        <dc:description>A very simple warning icon that can be scaled down fairly small and still be recognizable.</dc:description>
+        <dc:source>https://openclipart.org/detail/29833/warning-icon-by-matthewgarysmith</dc:source>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>matthewgarysmith</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:subject>
+          <rdf:Bag>
+            <rdf:li>icon</rdf:li>
+            <rdf:li>sign</rdf:li>
+            <rdf:li>warning</rdf:li>
+            <rdf:li>yellow</rdf:li>
+          </rdf:Bag>
+        </dc:subject>
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/publicdomain/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+</svg>

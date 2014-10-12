@@ -706,52 +706,40 @@ module Spils :
     @cvode <node8#s:new_linsolv> Providing Alternate Linear Solver Modules *)
 module Alternate :
   sig
-    (** Indicates problems during the solution of nonlinear equation at a
-        step. Used to help decide whether to update the Jacobian data kept by a
+    (** Indicates problems during the solution of nonlinear equations at a
+        step. Helps decide whether to update the Jacobian data kept by a
         linear solver. *)
     type conv_fail =
       | NoFailures
-          (** Passed on the first call for a step, or if the lcoal error test
+          (** Either the first call for a step or the local error test
               failed on the previous attempt at this setup but the Newton
               iteration converged. *)
+
       | FailBadJ
-          (**  Passed if
-               - the previous Newton corrector iteration did not converge and
-                 the linear solver's setup routine indicated that its
-                 Jacobian-related data is not current, or,
+          (** The setup routine indicates that its Jacobian related data is not
+              current and either the previous Newton corrector iteration did not
+              converge, or, during the previous Newton corrector iteration, the
+              linear solver's {!callbacks.lsolve} routine failed in a
+              recoverable manner. *)
 
-               - during the previous Newton corrector iteration, the linear
-                 solver's {!callbacks.lsolve} routine failed in a recoverable
-                 manner and the linear solver's setup routine indicated that its
-                 Jacobian-related data is not current. *)
       | FailOther
-          (** Passed if the previous Newton iteration failed to converge even
-              though the linear solver was using current Jacobian-related
-              data. *)
+          (** The previous Newton iteration failed to converge even
+              though the linear solver was using current
+              Jacobian-related data. *)
 
-    (** Callbacks needed to implement an alternate linear solver. *)
-    type ('data, 'kind) callbacks =
-      {
-        linit  : ('data, 'kind) linit option;
-        lsetup : ('data, 'kind) lsetup option;
-        lsolve : ('data, 'kind) lsolve;
-      }
-
-    (** Complete initializations for a specific linear solver, such as
-        counters and statistics.
+    (** Initializes linear solver data, such as counters and statistics.
 
         Raising any exception in this function (including
         {!Sundials.RecoverableFailure}) is treated as an unrecoverable
         error.
 
-        See also {!callbacks}.
-
         @cvode <node8#SECTION00810000000000000000> linit *)
-    and ('data, 'kind) linit = ('data, 'kind) session -> unit
+    type ('data, 'kind) linit = ('data, 'kind) session -> unit
 
-    (** [jcur = lsetup s convfail ypred fpred tmp] prepares the linear
-        solver for subsequent calls to {!callbacks.lsolve}. Its arguments
-        are:
+    (** Prepares the linear solver for subsequent calls to
+        {!callbacks.lsolve}. The call
+        [jcur = lsetup s convfail ypred fpred tmp] has for arguments
+
         - [s], the solver session,
         - [convfail], indicating any problem that occurred during the
            solution of the nonlinear equation on the current time step,
@@ -760,17 +748,13 @@ module Alternate :
         - [fpred], the value of the right-hand side at [ypred], and,
         - [tmp], temporary variables for use by the routine.
 
-        This function must return [true] if the Jacobian-related data
-        is current after the call, or [false] otherwise.  It may raise
-        a {!Sundials.RecoverableFailure} exception to indicate that a
-        recoverable error has occurred (in which case the currency of
-        Jacobian-related data is irrelevant).  Any other exception is
-        treated as an unrecoverable error.
-
-        See also {!callbacks}.
+        This function must return [true] only if the Jacobian-related data is
+        current after the call. It may raise a {!Sundials.RecoverableFailure}
+        exception to indicate that a recoverable error has occurred. Any other
+        exception is treated as an unrecoverable error.
 
         @cvode <node8#SECTION00820000000000000000> lsetup *)
-    and ('data, 'kind) lsetup =
+    type ('data, 'kind) lsetup =
       ('data, 'kind) session
       -> conv_fail
       -> 'data
@@ -782,7 +766,7 @@ module Alternate :
         where $M$ is a preconditioning matrix chosen by the user, and
         the right-hand side vector $b$ is input.  $M$ should
         approximate $I - \gamma J$, {% $J = (\partial f /\partial
-        y)(t_n, y_{\text{cur}})$ %} (see Eq.(2.6) of CVODE user's
+        y)(t_n, y_{\text{cur}})$%} (see Eq.(2.6) of CVODE user's
         guide).  Here $\gamma$ is available through {!get_gamma}.
 
         The function is called like [lsolve s b weight ycur fcur]
@@ -792,7 +776,7 @@ module Alternate :
         - [b] is the vector into which the solution is to be calculated.
         - [weight] contains the error weights.
         - [ycur] contains the solver's current approximation to $y(t_n)$.
-        - [fcur] is a vector that contains {% $f(t_n, y_{\text{cur}})$ %}.
+        - [fcur] is a vector that contains {% $f(t_n, y_{\text{cur}})$%}.
 
         This function may raise a {!Sundials.RecoverableFailure} exception
         to indicate that a recoverable error has occurred. Any other
@@ -801,7 +785,7 @@ module Alternate :
         See also {!callbacks}.
 
         @cvode <node8#SECTION00830000000000000000> lsolve *)
-    and ('data, 'kind) lsolve =
+    type ('data, 'kind) lsolve =
       ('data, 'kind) session
       -> 'data
       -> 'data
@@ -809,20 +793,32 @@ module Alternate :
       -> 'data
       -> unit
 
-    type gammas = {
-      gamma : float;
-      gammap : float;
-    }
+    (** Callbacks needed to implement an alternate linear solver. *)
+    type ('data, 'kind) callbacks =
+      {
+        linit  : ('data, 'kind) linit option;
+        lsetup : ('data, 'kind) lsetup option;
+        lsolve : ('data, 'kind) lsolve;
+      }
 
-    (** [(gamma, gammap) = get_gamma s] returns the solver's current and
-        previous gamma values. *)
-    val get_gammas : ('data, 'kind) session -> gammas
-
-    (** Create a linear solver from a function returning a set of callback
-        functions *)
-    val make_solver :
+    (** Creates a linear solver from a function returning a set of
+        callbacks. *)
+    val make :
           (('data, 'kind) session -> ('data, 'kind) Nvector.t
            -> ('data, 'kind) callbacks) -> ('data, 'kind) linear_solver
+
+    (** {3:internals Solver internals} *)
+
+    (** Internal values used in Newton iteration.
+
+        @cvode <node3#ss:ivp_sol> IVP Solution *)
+    type gammas = {
+      gamma : float;    (** The current $\gamma$ value. *)
+      gammap : float;   (** The value of $\gamma$ at the last setup call. *)
+    }
+
+    (** Returns the current and previous gamma values. *)
+    val get_gammas : ('data, 'kind) session -> gammas
   end
 
 (** {2:tols Tolerances} *)
@@ -866,73 +862,51 @@ type lmm =
   | Adams   (** Adams-Moulton formulas (non-stiff systems). *)
   | BDF     (** Backward Differentiation Formulas (stiff systems). *)
 
-(** The type of ODE's right-hand side function, called by the solver
-    to calculate the instantaneous derivative values.  It is passed
-    three arguments: [t], [y], and [dy].
-    - [t] is the current value of the independent variable,
-          i.e., the simulation time.
-    - [y] is a vector of dependent-variable values, i.e. y(t).
-    - [dy] is a vector for storing the value of f(t, y).
-    The function may raise a {!Sundials.RecoverableFailure} exception to
-    indicate that a recoverable error has occurred. Any other exception is
-    treated as an unrecoverable error.
+(** Right-hand side function for calculating ODE derivatives. It is passed
+    three arguments:
+    - [t], the value of the independent variable, i.e., the simulation time,
+    - [y], a vector of dependent-variable values, i.e. y(t), and,
+    - [dy], a vector for storing the value of f(t, y).
 
-    {b NB:} [y] and [dy] must no longer be accessed after the function
-            has returned a result.  If their values are needed outside
-            of the function call, then they must be copied to separate
-            physical structures.
+    Within the function, raising a {!Sundials.RecoverableFailure} exception
+    indicates a recoverable error. Any other exception is treated as an
+    unrecoverable error.
 
-    See also {!init} and {!reinit}.
+    {warning [y] and [dy] should not be accessed after the function
+             has returned.}
 
-    @cvode <node5#ss:rhsFn>          ODE right-hand side function
-  *)
+    @cvode <node5#ss:rhsFn> ODE right-hand side function *)
 type 'a rhsfn = float -> 'a -> 'a -> unit
 
-(** The roots function [g] is called by the solver to calculate the values of
-    root functions (zero-crossing expressions) which are used to detect
-    significant events, it is passed three arguments: [t], [y], and [gout].
-    - [t] is the current value of the independent variable,
-          i.e., the simulation time.
-    - [y] is a vector of dependent-variable values, i.e. y(t).
-    - [gout] is a vector for storing the values of g(t, y).
-    Note that the [t] and [y] are the same as for {!rhsfn}.
+(** Called by the solver to calculate the values of root functions. These
+    ‘zero-crossings’ are used to detect significant events. The function is
+    passed three arguments:
+    - [t], the value of the independent variable, i.e., the simulation time,
+    - [y], a vector of dependent-variable values, i.e. y(t),
+    - [gout], a vector for storing the value of g(t, y).
 
-    {b NB:} [y] and [gout] must no longer be accessed after the
-            function has returned a result.  If their values are
-            needed outside of the function call, then they must be
-            copied to separate physical structures.
+    {warning [y] and [gout] should not be accessed after the function has
+             returned.}
 
-    See also {!init} and {!reinit}.
-
-    @cvode <node5#ss:rootFn>         Rootfinding function
- *)
+    @cvode <node5#ss:rootFn>         Rootfinding function *)
 type 'a rootsfn = (float -> 'a -> Sundials.RealArray.t -> unit)
 
-(** [init lmm iter tol f ~roots:(nroots, g) ~t0:t0 (neqs, y0)] initializes the
-    CVODE solver and returns a {!session}.
-    - [lmm]     specifies the linear multistep method, see {!lmm},
-    - [iter]    specifies either functional iteration or Newton iteration
-                with a specific linear solver, see {!iter},
-    - [tol]     specifies the integration tolerances,
-    - [f]       is the ODE right-hand side function,
-    - [nroots]  specifies the number of root functions (zero-crossings),
-    - [g]       calculates the values of the root functions,
-    - [t0]      is the initial value of the independent variable, and,
-    - [y0]      is a vector of initial values, the size of this vector
-                determines the number of equations in the session, see
-                {!Sundials.RealArray.t}.
+(** Creates and initializes a session with the Cvode solver. The call
+    {[init lmm iter tol f ~roots:(nroots, g) ~t0:t0 (neqs, y0)]} has
+    as arguments:
+    - [lmm],    the linear multistep method (see {!lmm}),
+    - [iter],   either functional or Newton iteration (see {!iter}),
+    - [tol],    the integration tolerances,
+    - [f],      the ODE right-hand side function,
+    - [nroots], the number of root functions,
+    - [g],      the root function ([(nroots, g)] defaults to {!no_roots}),
+    - [t0],     the initial value of the independent variable, and,
+    - [y0],     a vector of initial values that also determines the number
+                of equations.
 
-    The labeled arguments [roots] and [t0] are both optional and default to
-    {!no_roots} (i.e. no root finding is done) and [0.0], respectively.
-
-    This function calls CVodeCreate, CVodeInit, CVodeRootInit, an appropriate
-    linear solver function, and one of CVodeSStolerances, CVodeSVtolerances, or
-    CVodeWFtolerances. It does everything necessary to initialize a CVODE
-    session; the {!solve_normal} or {!solve_one_step} functions can be called
-    directly afterward.
-
-    The {!no_roots} value can be passed for the labeled argument
-    [~roots] if no root finding is required.
+    This function does everything necessary to initialize a CVODE session, i.e.,
+    it makes the calls referenced below. The {!solve_normal} and
+    {!solve_one_step} functions may be called directly.
 
     @cvode <node5#sss:cvodemalloc>   CVodeCreate/CVodeInit
     @cvode <node5#ss:cvrootinit>     CVodeRootInit
@@ -951,38 +925,28 @@ val init :
     -> ('a, 'kind) Nvector.t
     -> ('a, 'kind) session
 
-(** This is a convenience value for signalling that there are no
-    roots (zero-crossings) to monitor. *)
+(** A convenience value for signalling that there are no roots to monitor. *)
 val no_roots : (int * 'a rootsfn)
 
-(**
- Possible values returned when a CVODE solver step function succeeds.
- Failures are indicated by exceptions.
+(** Values returned by the step functions. Failures are indicated by
+    exceptions.
 
- @cvode <node5#sss:cvode> CVode
- *)
+    @cvode <node5#sss:cvode> CVode *)
 type solver_result =
-  | Success             (** CV_SUCCESS *)
-  | RootsFound          (** CV_ROOT_RETURN *)
-  | StopTimeReached     (** CV_TSTOP_RETURN *)
+  | Success             (** The solution was advanced. {cconst CV_SUCCESS} *)
+  | RootsFound          (** A root was found. See {!get_root_info}.
+                            {cconst CV_ROOT_RETURN} *)
+  | StopTimeReached     (** The stop time was reached. See {!set_stop_time}.
+                            {cconst CV_TSTOP_RETURN} *)
 
-(** [(tret, r) = solve_normal s tout yout] integrates the ODE over an
-    interval in t.
+(** Integrates the ODE over an interval. The call
+    [tret, r = solve_normal s tout yout] has as arguments
+    - [s], a solver session,
+    - [tout], the next time at which a solution is desired, and,
+    - [yout], a vector to store the computed solution.
 
-    The arguments are:
-    - [s] a session with the solver.
-    - [tout] the next time at which a computed solution is desired.
-    - [yout] a vector to store the computed solution. The same vector as was
-    passed to {!init} can be used again for this argument.
-
-    Two values are returned:
-     - [tret] the time reached by the solver, which will be equal to [tout] if
-       no errors occur.
-     - [r] indicates whether roots were found, or whether an optional stop time, set by
-      {!set_stop_time}, was reached; see {!Sundials.solver_result}.
-
-    This routine will throw one of the solver {!exceptions} if an error
-    occurs.
+    It returns [tret], the time reached by the solver, which will be equal to
+    [tout] if no errors occur, and, [r], a {!Sundials.solver_result}.
 
     @cvode <node5#sss:cvode> CVode (CV_NORMAL)
     @raise IllInput Missing or illegal solver inputs.
@@ -1003,51 +967,36 @@ type solver_result =
 val solve_normal : ('a, 'k) session -> float -> ('a, 'k) Nvector.t
                         -> float * solver_result
 
-(** This function is identical to {!solve_normal}, except that it returns after
-    one internal solver step.
+(** Like {!solve_normal} but returns after one internal solver step.
 
     @cvode <node5#sss:cvode> CVode (CV_ONE_STEP) *)
 val solve_one_step : ('a, 'k) session -> float -> ('a, 'k) Nvector.t
                         -> float * solver_result
 
-(** [get_dky s t k dky] computes the [k]th derivative of the function $y$ at time
-    [t], i.e. {% $\frac{d^ky(t)}{\mathit{dt}^k}$ %}. The function requires that
-    $t_n - h_u \leq t \leq t_n$,
-    where $t_n$ denotes the current internal time reached, and $hu$ is the last
-    internal step size successfully used by the solver. The user may request [k]
-    = 0, 1,..., $q_u$, where $q_u$ is the current order.
+(** Returns the interpolated solution or derivatives.
+    [get_dky s t k dky] computes the [k]th derivative of the function at time
+    [t], i.e., {% $\frac{d^\mathtt{k}y(\mathtt{t})}{\mathit{dt}^\mathtt{k}}$%},
+    and stores it in [dky]. The arguments must satisfy
+    {% $t_n - h_u \leq \mathtt{t} \leq t_n$%}—where $t_n$
+    denotes {!get_current_time} and $h_u$ denotes {!get_last_step},—
+    and {% $0 \leq \mathtt{k} \leq q_u$%}—where $q_u$ denotes
+    {!get_last_order}.
 
     This function may only be called after a successful return from either
     {!solve_normal} or {!solve_one_step}.
 
-    Values for the limits may be obtained:
-      - $t_n$ = {!get_current_time}
-      - $q_u$ = {!get_last_order}
-      - $h_u$ = {!get_last_step}
-
     @cvode <node5#sss:optin_root> CVodeGetDky
-    @raise BadT [t] is not in the interval {% $[t_n - h_u, t_n]$ %}.
+    @raise BadT [t] is not in the interval {% $[t_n - h_u, t_n]$%}.
     @raise BadK [k] is not in the range 0, 1, ..., $q_u$.
     @raise BadDky The [dky] argument is invalid. *)
 val get_dky : ('a, 'k) session -> float -> int -> ('a, 'k) Nvector.t -> unit
 
-(** [reinit s ~iter_type:iter_type ~roots:roots t0 y0] reinitializes the
-    solver session [s] with new values for the variables [y0].
+(** Reinitializes the solver with new parameters and state values. The
+    values of the independent variable, i.e., the simulation time, and the
+    state variables must be given.
 
-    The labeled arguments are all optional, and if omitted, their current
-    settings are kept.
-
-    [iter_type] sets the nonlinear solver iteration type.  If omitted, the
-    current iteration type will be kept.
-
-    [roots] sets the root functions; see {!init} for what each component does.
-    {!no_roots} may be specified to turn off root finding (if the session has
-    been doing root finding until now).  If omitted, the current root functions
-    or lack thereof will be kept.
-
-    [t0] sets the value of the independent variable.  If omitted, the current
-    time value will be kept.
-
+    @param iter_type the iteration method (defaults to unchanged).
+    @param roots new numbers of roots and the function that computes them (defaults to unchanged).
     @cvode <node5#sss:cvreinit> CVodeReInit *)
 val reinit :
   ('a, 'kind) session
@@ -1059,7 +1008,7 @@ val reinit :
 
 (** {2:set Modifying the solver (optional input functions)} *)
 
-(** Set the integration tolerances.
+(** Sets the integration tolerances.
 
     @cvode <node5#sss:cvtolerances> CVodeSStolerances
     @cvode <node5#sss:cvtolerances> CVodeSVtolerances
@@ -1067,27 +1016,23 @@ val reinit :
     @cvode <node5#ss:ewtsetFn> Error weight function *)
 val set_tolerances : ('a, 'k) session -> ('a, 'k) tolerance -> unit
 
-(** [set_error_file s fname trunc] opens the file named [fname] and to which all
-    messages from the default error handler are then directed. If the file
-    already exists it is either trunctated ([trunc] = [true]) or appended to
-    ([trunc] = [false]).
-
-    The error file is closed if set_error_file is called again, or otherwise
-    when the session is garbage collected.
+(** Opens the named file to receive messages from the default erro handler.
+    If the file already exists it is either truncated ([true]) or extended
+    ([false]).
+    The file is closed if the function is called again or when the session is
+    garbage collected.
 
     @cvode <node5#sss:optin_main> CVodeSetErrFile *)
 val set_error_file : ('a, 'k) session -> string -> bool -> unit
 
-(** [set_err_handler_fn s efun] specifies a custom function [efun] for
-    handling error messages.  The error handler function must not fail
-    -- any exceptions raised from it will be captured and discarded.
+(** Specifies a custom function for handling error messages.
+    This function must not fail: any exceptions are trapped and discarded.
 
     @cvode <node5#sss:optin_main> CVodeSetErrHandlerFn
     @cvode <node5#ss:ehFn> Error message handler function *)
 val set_err_handler_fn : ('a, 'k) session -> (Sundials.error_details -> unit) -> unit
 
-(** This function restores the default error handling function. It is equivalent
-    to calling CVodeSetErrHandlerFn with an argument of [NULL].
+(** Restores the default error handling function.
 
     @cvode <node5#sss:optin_main> CVodeSetErrHandlerFn *)
 val clear_err_handler_fn : ('a, 'k) session -> unit
@@ -1097,14 +1042,14 @@ val clear_err_handler_fn : ('a, 'k) session -> unit
     @cvode <node5#sss:optin_main> CVodeSetMaxOrd *)
 val set_max_ord : ('a, 'k) session -> int -> unit
 
-(** Specifies the maximum number of steps to be taken by the solver in its
-    attempt to reach the next output time.
+(** Specifies the maximum number of steps taken in attempting to reach
+    a given output time.
 
     @cvode <node5#sss:optin_main> CVodeSetMaxNumSteps *)
 val set_max_num_steps : ('a, 'k) session -> int -> unit
 
-(** Specifies the maximum number of messages issued by the solver warning that
-    t + h = t on the next internal step.
+(** Specifies the maximum number of messages warning that [t + h = t] on
+    the next internal step.
 
     @cvode <node5#sss:optin_main> CVodeSetMaxHnilWarns *)
 val set_max_hnil_warns : ('a, 'k) session -> int -> unit
@@ -1131,9 +1076,8 @@ val set_min_step : ('a, 'k) session -> float -> unit
     @cvode <node5#sss:optin_main> CVodeSetMaxStep *)
 val set_max_step : ('a, 'k) session -> float -> unit
 
-(** Specifies the value of the independent variable t past which the solution is
-    not to proceed. The default, if this routine is not called, is that no stop
-    time is imposed.
+(** Limits the value of the independent variable [t] when solving.
+    By default no stop time is imposed.
 
     @cvode <node5#sss:optin_main> CVodeSetStopTime *)
 val set_stop_time : ('a, 'k) session -> float -> unit
@@ -1175,7 +1119,7 @@ val get_work_space          : ('a, 'k) session -> int * int
     @cvode <node5#sss:optout_main> CVodeGetNumSteps *)
 val get_num_steps           : ('a, 'k) session -> int
 
-(** Returns the number of calls to the user's right-hand side function.
+(** Returns the number of calls to the right-hand side function.
 
     @cvode <node5#sss:optout_main> CVodeGetNumRhsEvals *)
 val get_num_rhs_evals       : ('a, 'k) session -> int
@@ -1246,15 +1190,25 @@ val get_est_local_errors : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
 
 type integrator_stats = {
     num_steps : int;
+      (** Cumulative number of internal solver steps. *)
     num_rhs_evals : int;
+      (** Number of calls to the right-hand side function. *)
     num_lin_solv_setups : int;
+      (** Number of setups calls to the linear solver. *)
     num_err_test_fails : int;
+      (** Number of local error test failures. *)
     last_order : int;
+      (** Integration method order used in the last internal step. *)
     current_order : int;
+      (** Integration method order to be used in the next internal step. *)
     actual_init_step : float;
+      (** Integration step sized used on the first step. *)
     last_step : float;
+      (** Integration step size of the last internal step. *)
     current_step : float;
+      (** Integration step size to attempt on the next internal step. *)
     current_time : float
+      (** Current internal time reached by the solver. *)
   }
 
 (** Returns the integrator statistics as a group.
@@ -1262,12 +1216,10 @@ type integrator_stats = {
     @cvode <node5#sss:optout_main> CVodeGetIntegratorStats *)
 val get_integrator_stats    : ('a, 'k) session -> integrator_stats
 
-(** Convenience function that calls get_integrator_stats and prints the results
-    to stdout.
+(** Prints the integrator statistics on the given channel.
 
     @cvode <node5#sss:optout_main> CVodeGetIntegratorStats *)
-val print_integrator_stats  : ('a, 'k) session -> unit
-
+val print_integrator_stats  : ('a, 'k) session -> out_channel -> unit
 
 (** Returns the number of nonlinear (functional or Newton) iterations performed.
 
@@ -1306,7 +1258,7 @@ val set_all_root_directions : ('a, 'k) session -> Sundials.RootDirs.d -> unit
     @cvode <node5#sss:optin_root> CVodeSetNoInactiveRootWarn *)
 val set_no_inactive_root_warn : ('a, 'k) session -> unit
 
-(** Return the number of root functions. *)
+(** Returns the number of root functions. *)
 val get_num_roots : ('a, 'k) session -> int
 
 (** Fills an array showing which functions were found to have a root.

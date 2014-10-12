@@ -975,8 +975,8 @@ module Adjoint =
     let get_integrator_stats bs =
       Cvode.get_integrator_stats (tosession bs)
 
-    let print_integrator_stats bs =
-      Cvode.print_integrator_stats (tosession bs)
+    let print_integrator_stats bs os =
+      Cvode.print_integrator_stats (tosession bs) os
 
     let get_num_nonlin_solv_iters bs =
       Cvode.get_num_nonlin_solv_iters (tosession bs)

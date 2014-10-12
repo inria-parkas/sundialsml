@@ -274,7 +274,7 @@ module Alternate =
     external set_sfdotjp   : ('data, 'kind) session -> float -> unit
       = "c_kinsol_set_sfdotjp"
 
-    let make_solver f s nv =
+    let make f s nv =
       let { linit; lsetup; lsolve } as cb = f s nv in
       c_set_alternate s (linit <> None) (lsetup <> None);
       s.ls_callbacks <- AlternateCallback cb

@@ -1731,13 +1731,12 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
      *)
     val get_integrator_stats    : ('a, 'k) bsession -> Cvode.integrator_stats
 
-    (** Convenience function that calls get_integrator_stats and prints the
-        results to stdout.
+    (** Prints the integrator statistics on the given channel.
 
         @cvodes <node5#sss:optout_main> CVodeGetIntegratorStats
         @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
      *)
-    val print_integrator_stats  : ('a, 'k) bsession -> unit
+    val print_integrator_stats  : ('a, 'k) bsession -> out_channel -> unit
 
     (** Returns the number of nonlinear (functional or Newton) iterations
         performed.

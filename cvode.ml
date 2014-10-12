@@ -403,7 +403,7 @@ module Alternate =
     external get_gammas : ('data, 'kind) session -> gammas
       = "c_cvode_get_gamma"
 
-    let make_solver f s nv =
+    let make f s nv =
       let { linit; lsetup; lsolve } as cb = f s nv in
       c_set_alternate s (linit <> None) (lsetup <> None);
       s.ls_callbacks <- AlternateCallback cb
@@ -561,19 +561,19 @@ external get_current_step       : ('a, 'k) session -> float
 external get_current_time       : ('a, 'k) session -> float
     = "c_cvode_get_current_time"
 
-let print_integrator_stats s =
+let print_integrator_stats s oc =
   let stats = get_integrator_stats s
   in
-    Printf.printf "num_steps = %d\n"           stats.num_steps;
-    Printf.printf "num_rhs_evals = %d\n"       stats.num_rhs_evals;
-    Printf.printf "num_lin_solv_setups = %d\n" stats.num_lin_solv_setups;
-    Printf.printf "num_err_test_fails = %d\n"  stats.num_err_test_fails;
-    Printf.printf "last_order = %d\n"          stats.last_order;
-    Printf.printf "current_order = %d\n"       stats.current_order;
-    Printf.printf "actual_init_step = %e\n"    stats.actual_init_step;
-    Printf.printf "last_step = %e\n"           stats.last_step;
-    Printf.printf "current_step = %e\n"        stats.current_step;
-    Printf.printf "current_time = %e\n"        stats.current_time;
+    Printf.fprintf oc "num_steps = %d\n"           stats.num_steps;
+    Printf.fprintf oc "num_rhs_evals = %d\n"       stats.num_rhs_evals;
+    Printf.fprintf oc "num_lin_solv_setups = %d\n" stats.num_lin_solv_setups;
+    Printf.fprintf oc "num_err_test_fails = %d\n"  stats.num_err_test_fails;
+    Printf.fprintf oc "last_order = %d\n"          stats.last_order;
+    Printf.fprintf oc "current_order = %d\n"       stats.current_order;
+    Printf.fprintf oc "actual_init_step = %e\n"    stats.actual_init_step;
+    Printf.fprintf oc "last_step = %e\n"           stats.last_step;
+    Printf.fprintf oc "current_step = %e\n"        stats.current_step;
+    Printf.fprintf oc "current_time = %e\n"        stats.current_time;
 
 external set_error_file : ('a, 'k) session -> string -> bool -> unit
     = "c_cvode_set_error_file"

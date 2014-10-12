@@ -311,7 +311,7 @@ module Alternate =
       : ('data, 'kind) session -> bool -> bool -> unit
       = "c_ida_set_alternate"
 
-    let make_solver f s nv nv' =
+    let make f s nv nv' =
       let { linit; lsetup; lsolve } as cb = f s nv nv' in
       c_set_alternate s (linit <> None) (lsetup <> None);
       s.ls_callbacks <- AlternateCallback cb

@@ -589,7 +589,7 @@ module Alternate :
 
     (** Create a linear solver from a function returning a set of callback
         functions *)
-    val make_solver :
+    val make :
           (('data, 'kind) session -> ('data, 'kind) nvector option
                                                   -> ('data, 'kind) callbacks)
           -> ('data, 'kind) linear_solver

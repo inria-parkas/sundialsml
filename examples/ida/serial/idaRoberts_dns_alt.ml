@@ -88,7 +88,7 @@ module AltDense = struct
     in
 
     let solver =
-      Alt.make_solver (fun s nv nv' ->
+      Alt.make (fun s nv nv' ->
           let n = RealArray.length (Nvector.unwrap nv) in
           let mem = { jj = DM.create n n;
                       pivots = LintArray.create n;

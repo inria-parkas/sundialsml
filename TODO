@@ -94,6 +94,9 @@ MINOR PATCHES
 7. Add tests for Spils.qr_fact/qr_sol/modified_gs/classical_gs to
    examples/ocaml/linear.
 
+8. Alternate linear solvers for Cvodes.Adjoint and Idas.Adjoint (with
+   examples)?
+
 TO DISCUSS
 ----------
 * Should we check consistency of vector lengths?
