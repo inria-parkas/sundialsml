@@ -190,7 +190,9 @@ doc/html/index.html: doc/html dochtml.cmo intro.doc			\
 	    -ida-doc-root "$(IDA_DOC_ROOT)"			\
 	    -idas-doc-root "$(IDAS_DOC_ROOT)"			\
 	    -kinsol-doc-root "$(KINSOL_DOC_ROOT)"		\
-	    -pp "$(DOCPP)"					\
+	    -pp "cpp $(CPPFLAGS)				\
+	    	-D'VERSION()=$(VERSION)'			\
+		-D'OCAML_DOC_ROOT(x)=$(OCAML_DOC_ROOT)/**/x'"	\
 	    -d ./doc/html/					\
 	    -hide Cvode_impl,Ida_impl,Kinsol_impl		\
 	    -t "Sundials/ML $(VERSION)$(VERSIONP)"		\

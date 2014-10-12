@@ -428,10 +428,12 @@ external ss_tolerances  : ('a, 'k) session -> float -> float -> unit
 external wf_tolerances  : ('a, 'k) session -> unit
     = "c_cvode_wf_tolerances"
 
+type 'data error_fun = 'data -> 'data -> unit
+
 type ('a, 'k) tolerance =
   | SStolerances of float * float
   | SVtolerances of float * ('a, 'k) nvector
-  | WFtolerances of ('a -> 'a -> unit)
+  | WFtolerances of 'a error_fun
 
 let default_tolerances = SStolerances (1.0e-4, 1.0e-8)
 
@@ -488,7 +490,7 @@ let init lmm iter tol f ?(roots=no_roots) t0 y0 =
   set_tolerances session tol;
   session
 
-let nroots { nroots } = nroots
+let get_num_roots { nroots } = nroots
 
 external c_reinit
     : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
@@ -619,10 +621,10 @@ external set_root_direction'   : ('a, 'k) session -> Sundials.RootDirs.t -> unit
     = "c_cvode_set_root_direction"
 
 let set_root_direction s rda =
-  set_root_direction' s (Sundials.RootDirs.copy (nroots s) rda)
+  set_root_direction' s (Sundials.RootDirs.copy (get_num_roots s) rda)
 
 let set_all_root_directions s rd =
-  set_root_direction' s (Sundials.RootDirs.make (nroots s) rd)
+  set_root_direction' s (Sundials.RootDirs.make (get_num_roots s) rd)
 
 external set_no_inactive_root_warn      : ('a, 'k) session -> unit
     = "c_cvode_set_no_inactive_root_warn"

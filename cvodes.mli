@@ -938,8 +938,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
       -> 'a        (* ybdot *)
       -> unit
 
-    type 'a single_tmp = 'a
-    type 'a triple_tmp = 'a * 'a * 'a
+    type 'a triple = 'a * 'a * 'a
 
     (** Arguments common to all Jacobian callback functions.
 
@@ -954,8 +953,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
         jac_y   : 'a;           (** The forward solution vector. *)
         jac_yb  : 'a;           (** The backward dependent variable vector. *)
         jac_fyb : 'a;           (** The backward right-hand side function fB. *)
-        jac_tmp : 't            (** Workspace data,
-                                    either {!single_tmp} or {!triple_tmp}. *)
+        jac_tmp : 't            (** Workspace data. *)
       }
 
     type bandrange = Cvode_impl.bandrange =
@@ -1171,7 +1169,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
             (or an approximation to it).
 
             @cvodes <node7#ss:densejac_b> CVDlsDenseJacFnB *)
-        type dense_jac_fn = (RealArray.t triple_tmp, RealArray.t) jacobian_arg
+        type dense_jac_fn = (RealArray.t triple, RealArray.t) jacobian_arg
                                 -> Dls.DenseMatrix.t -> unit
 
         (** This function computes the banded Jacobian of the backward problem
@@ -1179,7 +1177,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
 
             @cvodes <node7#ss:bandjac_b> CVDlsBandJacFnB *)
         type band_jac_fn = bandrange
-                            -> (RealArray.t triple_tmp, RealArray.t) jacobian_arg
+                            -> (RealArray.t triple, RealArray.t) jacobian_arg
                             -> Dls.BandMatrix.t -> unit
 
         (** Direct linear solver with dense matrix.  The optional argument
@@ -1258,7 +1256,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
 
             @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB *)
         type 'a prec_solve_fn =
-          ('a single_tmp, 'a) jacobian_arg
+          ('a, 'a) jacobian_arg
           -> 'a prec_solve_arg
           -> 'a
           -> unit
@@ -1270,7 +1268,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
 
             @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB *)
         type 'a prec_setup_fn =
-          ('a triple_tmp, 'a) jacobian_arg
+          ('a triple, 'a) jacobian_arg
           -> bool
           -> float
           -> bool
@@ -1282,7 +1280,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
 
             @cvodes <node7#ss:jtimesv_b> CVSpilsJacTimesVecFnB *)
         type 'a jac_times_vec_fn =
-          ('a single_tmp, 'a) jacobian_arg
+          ('a, 'a) jacobian_arg
           -> 'a
           -> 'a
           -> unit

@@ -18,8 +18,8 @@
     @author Marc Pouzet (LIENS)
     @cvode <node7#ss:nvec_ser> NVECTOR_SERIAL *)
 
-(** Serial nvectors are based on {{:OCAML_DOC_ROOT(Bigarray.Array1)} bigarrays}
-    of floats. *)
+(** Serial nvectors are based on
+    {{:OCAML_DOC_ROOT(Bigarray.Array1.html)} bigarrays} of floats. *)
 type data = Sundials.RealArray.t
 
 (** Represents the internal layout of a serial nvector. *)

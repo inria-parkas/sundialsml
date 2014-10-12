@@ -57,7 +57,7 @@ exception NonPositiveEwt
 (** Vectors of floats (one-dimensional bigarrays). *)
 module RealArray :
   sig
-    (** A {{:OCAML_DOC_ROOT(Bigarray.Array1)} Bigarray} of floats. *)
+    (** A {{:OCAML_DOC_ROOT(Bigarray.Array1.html)} Bigarray} of floats. *)
     type t = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
 
     (** [make n x] returns an array with [n] elements each set to [x]. *)
@@ -70,21 +70,22 @@ module RealArray :
         set to [f i]. *)
     val init : int -> (int -> float) -> t
 
-    (** Creates an array by copying the contents of a {{:OCAML_DOC_ROOT(Array)}
-        [float array]}. *)
+    (** Creates an array by copying the contents of a
+        {{:OCAML_DOC_ROOT(Array.html)} [float array]}. *)
     val of_array : float array -> t
 
     (** Creates an array by copying the contents of a
-        {{:OCAML_DOC_ROOT(List)} [float list]}. *)
+        {{:OCAML_DOC_ROOT(List.html)} [float list]}. *)
     val of_list : float list -> t
 
-    (** Copies into a new {{:OCAML_DOC_ROOT(Array)} [float array]}. *)
+    (** Copies into a new {{:OCAML_DOC_ROOT(Array.html)} [float array]}. *)
     val to_array : t -> float array
 
-    (** Copies into an existing {{:OCAML_DOC_ROOT(Array)} [float array]}. *)
+    (** Copies into an existing
+        {{:OCAML_DOC_ROOT(Array.html)} [float array]}. *)
     val into_array : t -> float array -> unit
 
-    (** Copies into a {{:OCAML_DOC_ROOT(List)} [float list]}. *)
+    (** Copies into a {{:OCAML_DOC_ROOT(List.html)} [float list]}. *)
     val to_list : t -> float list
 
     (** Creates a new array with the same contents as an existing one. *)
@@ -101,7 +102,7 @@ module RealArray :
     val blit_some : t -> int -> t -> int -> int -> unit
 
     (** Copy the first array into the second one.
-        See {{:OCAML_DOC_ROOT(Bigarray.Genarray#VALblit)}
+        See {{:OCAML_DOC_ROOT(Bigarray.Genarray.html#VALblit)}
         [Bigarray.Genarray.blit]} for more details. *)
     val blit : t -> t -> unit
 
@@ -135,12 +136,12 @@ module RealArray :
 module RealArray2 :
   sig
     (** A two-dimensional matrix. The underlying data can be accessed as
-        a {{:OCAML_DOC_ROOT(Bigarray.Array2)}Bigarray} via {!unwrap},
+        a {{:OCAML_DOC_ROOT(Bigarray.Array2.html)}Bigarray} via {!unwrap},
         but note that the first index specifies the column. *)
     type t
 
     (** An alias for the underlying
-        {{:OCAML_DOC_ROOT(Bigarray.Array2)}Bigarray}. *)
+        {{:OCAML_DOC_ROOT(Bigarray.Array2.html)}Bigarray}. *)
     type data = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
 
     (** [make nr nc v] returns an array with [nr] rows and [nc] columns, and
@@ -169,7 +170,7 @@ module RealArray2 :
     val copy : t -> t
 
     (** Copy the first array into the second one.
-        See {{:OCAML_DOC_ROOT(Bigarray.Genarray#VALblit)}
+        See {{:OCAML_DOC_ROOT(Bigarray.Genarray.html#VALblit)}
         [Bigarray.Genarray.blit]} for more details. *)
     val blit : t -> t -> unit
 
@@ -190,7 +191,7 @@ module RealArray2 :
 (** Vectors of integers (one-dimensional bigarrays). *)
 module LintArray :
   sig
-    (** A {{:OCAML_DOC_ROOT(Bigarray.Array1)} Bigarray} of integers. *)
+    (** A {{:OCAML_DOC_ROOT(Bigarray.Array1.html)} Bigarray} of integers. *)
     type t = (int, Bigarray.int_elt, Bigarray.c_layout) Bigarray.Array1.t
 
     (** [make n x] returns an array with [n] elements each set to [v]. *)
@@ -281,7 +282,7 @@ module Roots :
     val to_list : t -> r list
 
     (** Creates a new value from the contents of an
-        {{:OCAML_DOC_ROOT(Array)} array}. *)
+        {{:OCAML_DOC_ROOT(Array.html)} array}. *)
     val of_array : r array -> t
 
     (** Creates a new array from the contents of a given value. *)
@@ -341,7 +342,7 @@ module RootDirs :
     val blit_some : t -> int -> t -> int -> int -> unit
 
     (** Copy the first array into the second one.
-        See {{:OCAML_DOC_ROOT(Bigarray.Genarray#VALblit)}
+        See {{:OCAML_DOC_ROOT(Bigarray.Genarray.html#VALblit)}
         [Bigarray.Genarray.blit]} for more details. *)
     val blit : t -> t -> unit
 
@@ -352,7 +353,7 @@ module RootDirs :
     val to_list : t -> d list
 
     (** Creates a new value from the contents of an
-        {{:OCAML_DOC_ROOT(Array)} array}. *)
+        {{:OCAML_DOC_ROOT(Array.html)} array}. *)
     val of_array : d array -> t
 
     (** Creates a new array from the contents of a given value. *)

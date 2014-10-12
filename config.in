@@ -113,11 +113,3 @@ INCLUDES = $(DIRECTORIES:%=-I %)
 
 OBJ_OPT = $(OBJ:.cmo=.cmx)
 
-DOCPP = $(SED) \
-	-e 's|CVODE_DOC_ROOT(\\([^\#)]*\\)\\(\#[^)]*\\)\\?)|$(CVODE_DOC_ROOT)\\1.html\\2|g' \
-	-e 's|CVODES_DOC_ROOT(\\([^\#)]*\\)\\(\#[^)]*\\)\\?)|$(CVODES_DOC_ROOT)\\1.html\\2|g' \
-	-e 's|KINSOL_DOC_ROOT(\\([^\#)]*\\)\\(\#[^)]*\\)\\?)|$(KINSOL_DOC_ROOT)\\1.html\\2|g' \
-	-e 's|IDA_DOC_ROOT(\\([^\#)]*\\)\\(\#[^)]*\\)\\?)|$(IDA_DOC_ROOT)\\1.html\\2|g' \
-	-e 's|IDAS_DOC_ROOT(\\([^\#)]*\\)\\(\#[^)]*\\)\\?)|$(IDAS_DOC_ROOT)\\1.html\\2|g' \
-	-e 's|OCAML_DOC_ROOT(\\([^\#)]*\\)\\(\#[^)]*\\)\\?)|$(OCAML_DOC_ROOT)\\1.html\\2|g' \
-	-e 's|VERSION()|$(VERSION)|g'

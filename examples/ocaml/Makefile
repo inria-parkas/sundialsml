@@ -1,6 +1,6 @@
 include ../../config
 
-DIRS=ball linear misc pendulum/ida sincos
+DIRS=skeletons ball linear misc pendulum/ida sincos
 
 .PHONY: default tests.byte.log tests.opt.log
 

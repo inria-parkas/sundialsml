@@ -478,8 +478,7 @@ module Adjoint =
                                          -> float * int * Cvode.solver_result
         = "c_cvodes_adj_forward_one_step"
 
-    type 'a single_tmp = 'a
-    type 'a triple_tmp = 'a * 'a * 'a
+    type 'a triple = 'a * 'a * 'a
 
     type bandrange = Cvode_impl.bandrange = { mupper : int; mlower : int; }
 

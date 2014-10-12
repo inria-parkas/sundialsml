@@ -43,8 +43,7 @@
 type ('data, 'kind) nvector = ('data, 'kind) Nvector.t
 module RealArray = Sundials.RealArray
 
-type 'a single_tmp = 'a
-type 'a triple_tmp = 'a * 'a * 'a
+type 'a triple = 'a * 'a * 'a
 
 type ('t, 'a) jacobian_arg =
   {
@@ -58,7 +57,7 @@ type bandrange = { mupper : int; mlower : int; }
 
 module DlsTypes = struct
   type dense_jac_fn =
-    (RealArray.t triple_tmp, RealArray.t) jacobian_arg
+    (RealArray.t triple, RealArray.t) jacobian_arg
     -> Dls.DenseMatrix.t
     -> unit
 
@@ -71,7 +70,7 @@ module DlsTypes = struct
 
   type band_jac_fn =
     bandrange
-    -> (RealArray.t triple_tmp, RealArray.t) jacobian_arg
+    -> (RealArray.t triple, RealArray.t) jacobian_arg
     -> Dls.BandMatrix.t
     -> unit
 
@@ -109,19 +108,19 @@ module SpilsTypes' = struct
   include SpilsCommonTypes
 
   type 'a prec_solve_fn =
-    ('a single_tmp, 'a) jacobian_arg
+    ('a, 'a) jacobian_arg
     -> 'a prec_solve_arg
     -> 'a
     -> unit
 
   type 'a prec_setup_fn =
-    ('a triple_tmp, 'a) jacobian_arg
+    ('a triple, 'a) jacobian_arg
     -> bool
     -> float
     -> bool
 
   type 'a jac_times_vec_fn =
-    ('a single_tmp, 'a) jacobian_arg
+    ('a, 'a) jacobian_arg
     -> 'a (* v *)
     -> 'a (* Jv *)
     -> unit
@@ -236,7 +235,7 @@ module AdjointTypes' = struct
      defined.  *)
   module DlsTypes = struct
     type dense_jac_fn =
-      (RealArray.t triple_tmp, RealArray.t) jacobian_arg
+      (RealArray.t triple, RealArray.t) jacobian_arg
       -> Dls.DenseMatrix.t
       -> unit
 
@@ -249,7 +248,7 @@ module AdjointTypes' = struct
 
     type band_jac_fn =
       bandrange
-      -> (RealArray.t triple_tmp, RealArray.t) jacobian_arg
+      -> (RealArray.t triple, RealArray.t) jacobian_arg
       -> Dls.BandMatrix.t
       -> unit
 
@@ -266,19 +265,19 @@ module AdjointTypes' = struct
     include SpilsCommonTypes
 
     type 'a prec_solve_fn =
-      ('a single_tmp, 'a) jacobian_arg
+      ('a, 'a) jacobian_arg
       -> 'a prec_solve_arg
       -> 'a
       -> unit
 
     type 'a prec_setup_fn =
-      ('a triple_tmp, 'a) jacobian_arg
+      ('a triple, 'a) jacobian_arg
       -> bool
       -> float
       -> bool
 
     type 'a jac_times_vec_fn =
-      ('a single_tmp, 'a) jacobian_arg
+      ('a, 'a) jacobian_arg
       -> 'a (* v *)
       -> 'a (* Jv *)
       -> unit
@@ -406,7 +405,7 @@ and ('data, 'kind) lsetup' =
   -> AlternateTypes'.conv_fail
   -> 'data
   -> 'data
-  -> 'data triple_tmp
+  -> 'data triple
   -> bool
 and ('data, 'kind) lsolve' =
   ('data, 'kind) session

@@ -19,7 +19,7 @@
     @cvode <node7#ss:nvec_par> NVECTOR_PARALLEL *)
 
 (** Parallel nvectors carry triples of a local
-    {{:OCAML_DOC_ROOT(Bigarray.Array1)} bigarray} of floats,
+    {{:OCAML_DOC_ROOT(Bigarray.Array1.html)} bigarray} of floats,
     a global length, and an MPI communicator. *)
 type data = Sundials.RealArray.t * int * Mpi.communicator
 

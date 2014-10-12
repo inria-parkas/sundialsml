@@ -2,6 +2,8 @@
  * Based on Jonathan Protzenko's style sheet:
  * http://www.xulforum.org/files/ocamlcss/style.css
  *
+ * - All absolute font-size's have been removed.
+ *
  */
 
 a:visited {
@@ -26,14 +28,6 @@ a:active {
 
 .keywordsign {
   color: #C04600 
-}
-
-.superscript {
-  font-size: 4 
-}
-
-.subscript {
-  font-size: 4 
 }
 
 .comment {
@@ -69,11 +63,10 @@ a:active {
 }
 
 h1 {
-  font-size: 20pt; text-align: center; 
+  text-align: center; 
 }
 
 h5, h6, div.h7, div.h8, div.h9 {
-  font-size: 20pt;
   border: 1px solid #000000;
   margin-top: 5px;
   margin-bottom: 2px;
@@ -134,7 +127,6 @@ div.sig_block {
 
 h2 {
   font-family: Arial, Helvetica, sans-serif;
-  font-size: 16pt;
   font-weight: normal;
   border-bottom: 1px solid #dadada;
   border-top: 1px solid #dadada;
@@ -146,7 +138,6 @@ h2 {
 
 h3 {
   font-family: Arial, Helvetica, sans-serif;
-  font-size: 12pt;
   color: #016699;
   font-weight: bold;
   padding: 15px 0 0 0ex;
@@ -155,7 +146,6 @@ h3 {
 
 h4 {
   font-family: Arial, Helvetica, sans-serif;
-  font-size: 10pt;
   color: #016699;
   padding: 15px 0 0 0ex;
   margin: 5px 0 0 0;
@@ -165,7 +155,6 @@ h4 {
 
 body {
   font-family: Calibri, Georgia, Garamond, Baskerville, serif;
-  font-size: 12pt;
   background-color: white;
 }
 
@@ -212,7 +201,6 @@ h1, h1 a:link, h1 a:visited, h1 a {
 pre, code {
   font-family: "DejaVu Sans Mono", "Bitstream Vera Mono", "Courrier New", monospace;
   white-space: normal;
-  font-size: 9pt;
   font-weight: bold;
 }
 
@@ -222,7 +210,6 @@ pre, code {
 
 .info {
   margin-left: 1em;
-  font-size: 12pt;
 }
 
 /* Customisations for SundialsML */
@@ -231,10 +218,21 @@ body {
   font-size: 11pt;
 }
 
+h1 { font-size: 1.8em; }
+h2 { font-size: 1.5em; }
 h3 {
     padding-top: 5px;
-    font-size: 14pt;
+    font-size: 1.3em;
 }
+h4 { font-size: 0.9em; }
+h5, h6, div.h7, div.h8, div.h9 { font-size: 1.8em; }
+
+table { font-size: 100%; }
+
+pre  { font-size: .8em; }
+code { font-size: .8em; }
+pre code { font-size: 1em; }
+code code { font-size: 100%; }
 
 div#intro {
   max-width: 50em;
@@ -247,7 +245,7 @@ div#intro code {
 }
 
 div.info {
-  font-size: 11pt;
+  font-size: 1em;
   max-width: 40em;
   padding-bottom: .7em;
 }
@@ -299,17 +297,17 @@ h2#modules + p br:nth-child(1) { display: none; }
 table.typetable td:nth-child(1) { }
 table.typetable td:nth-child(2) { min-width: 20em;
                                   padding-right: 1em; }
-table.typetable td:nth-child(3) code { font-size: 9pt; color: lightgray; }
+table.typetable td:nth-child(3) code { font-size: 0.82em; color: lightgray; }
 table.typetable td:nth-child(4) { 
                                   padding-bottom: 1ex;
                                   max-width: 45em;
                                   padding-left: 0em; }
-table.typetable td:nth-child(5) code { font-size: 9pt; color: lightgray; }
+table.typetable td:nth-child(5) code { font-size: 0.82em; color: lightgray; }
 
 div.sundials { padding-top: 1.2ex;
-               font-size: 9pt; }
+               font-size: 0.82em; }
 div.sundials + div.sundials { padding-top: 0ex; }
-div.sundials + div.sundials > span.seesundials { color: white; }
+div.sundials + div.sundials > span.seesundials { visibility: hidden; }
 
 img { max-width: 50em;
       height: auto;
@@ -333,7 +331,7 @@ div.references ol > li {
     margin-right: 1.5em;
 }
 
-pre.codepre {
-    margin-bottom: 1em;
+@media print {
+    body { font-size: 8pt; }
 }
 

@@ -174,7 +174,7 @@ module DenseMatrix :
 module ArrayDenseMatrix :
   sig
     (** A dense matrix accessible directly through a
-        {{:OCAML_DOC_ROOT(Bigarray.Array2)} Bigarray}.
+        {{:OCAML_DOC_ROOT(Bigarray.Array2.html)} Bigarray}.
 
         @cvode <node9#ss:dense> Small dense matrices
         @cvode <node9#ss:dense> newDenseMat *)
@@ -408,7 +408,7 @@ module BandMatrix :
 module ArrayBandMatrix :
   sig
     (** A band matrix accessible directly through a
-        {{:OCAML_DOC_ROOT(Bigarray.Array2)} Bigarray}.
+        {{:OCAML_DOC_ROOT(Bigarray.Array2.html)} Bigarray}.
 
         The layout of these arrays are characterized by the {e storage upper
         bandwidth} [smu]. Given an array [a], the first dimension indexes

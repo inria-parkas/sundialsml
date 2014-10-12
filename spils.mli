@@ -33,8 +33,10 @@
 
     @cvode <node9#ss:spgmr> ModifiedGS/ClassicalGS *)
 type gramschmidt_type =
-  | ModifiedGS   (** Modified Gram-Schmidt orthogonalization (MODIFIED_GS) *)
-  | ClassicalGS  (** Classical Gram Schmidt orthogonalization (CLASSICAL_GS) *)
+  | ModifiedGS   (** Modified Gram-Schmidt orthogonalization
+                     {cconst MODIFIED_GS} *)
+  | ClassicalGS  (** Classical Gram Schmidt orthogonalization
+                     {cconst CLASSICAL_GS} *)
 
 (** The type of preconditioning in Krylov solvers.
 
