@@ -20,13 +20,12 @@
 
 (** {2 Constants} *)
 
-(** The version string of the Sundials/C this binding is compiled
-    against, e.g. ["2.6.0"].  *)
+(** The version of Sundials/C this binding is compiled against.
+    For example, "{var version}". *)
 val sundials_version : string
 
-(** A string showing the patch version, if any.  This disambiguates
-    between multiple versions of the binding meant for the same
-    version of Sundials/C.  *)
+(** The patch version (if any). This distinguishes different binding
+    versions against the same version of Sundials/C. *)
 val patch_version : string
 
 (** Indicates whether the interface was compiled with BLAS/LAPACK support. *)
@@ -34,20 +33,17 @@ val lapack_enabled : bool
 
 (** The largest value representable as a real.
 
-    @cvode <node5#s:types> Data Types
- *)
+    @cvode <node5#s:types> Data Types *)
 val big_real : float
 
 (** The smallest value representable as a real.
 
-    @cvode <node5#s:types> Data Types
- *)
+    @cvode <node5#s:types> Data Types *)
 val small_real : float
 
 (** The difference bewteen 1.0 and the minimum real greater than 1.0.
 
-    @cvode <node5#s:types> Data Types
- *)
+    @cvode <node5#s:types> Data Types *)
 val unit_roundoff : float
 
 (** {2 Exceptions} *)

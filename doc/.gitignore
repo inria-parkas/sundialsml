@@ -4,3 +4,4 @@
 # generated docs do not show up in the list of untracked files.
 
 html/*.html
+html/*.ml

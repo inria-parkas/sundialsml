@@ -21,6 +21,7 @@ config
 # META is generated from META.in
 META
 config.h
+sundials_config.ml
 examples/*/parallel/grad*.m
 examples/*/*/*.sundials.c
 examples/*/*/*.sundials

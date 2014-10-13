@@ -127,6 +127,11 @@ struct
     method private html_of_img s =
       Printf.sprintf "<a href=\"%s\"><img src=\"%s\"></a>" s s
 
+    method private html_of_openfile s =
+      let var = Str.replace_first (Str.regexp " +$") ""
+                  (Str.replace_first (Str.regexp "^ +") "" s) in
+      Printf.sprintf "<a href=\"%s\">%s</a>" var var
+
     method private html_of_cconst s =
       Printf.sprintf "<span class=\"cconst\">(%s)</span>" s
 
@@ -210,12 +215,13 @@ struct
       tag_functions <- ("idas",   self#html_of_idas) :: tag_functions;
       tag_functions <- ("kinsol", self#html_of_kinsol) :: tag_functions;
 
-      custom_functions <- ("div",     Simple self#html_of_div)    ::
-                          ("var",     Simple self#html_of_var)    ::
-                          ("color",   Simple self#html_of_color)  ::
-                          ("img",     Simple self#html_of_img)    ::
-                          ("cconst",  Simple self#html_of_cconst) ::
-                          ("warning", Full self#html_of_warning)  ::
+      custom_functions <- ("div",      Simple self#html_of_div)      ::
+                          ("var",      Simple self#html_of_var)      ::
+                          ("color",    Simple self#html_of_color)    ::
+                          ("img",      Simple self#html_of_img)      ::
+                          ("cconst",   Simple self#html_of_cconst)   ::
+                          ("openfile", Simple self#html_of_openfile) ::
+                          ("warning", Full self#html_of_warning)     ::
                           custom_functions
 
   end

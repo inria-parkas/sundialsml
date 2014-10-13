@@ -42,7 +42,7 @@ open Sundials
 
 (** This type represents a session with the CVODE solver.
 
-    An example session with Cvode: {[
+    An example session with Cvode ({openfile cvode_skel.ml}): {[
 #include "examples/ocaml/skeletons/cvode_skel.ml"
     ]}
 
@@ -162,10 +162,10 @@ module Dls :
         - [jac] is storage for the computed Jacobian.
 
         The callback should load the [(i,j)]th entry of [jac] with
-        {% $dy_i/dy_j$%}, i.e., the partial derivative of the [i]th equation
-        with respect to the [j]th variable, evaluated at the values of [t] and
-        [y] obtained from [jac]. Only nonzero elements need be loaded
-        into [jac].
+        {% $\partial y_i/\partial y_j$%}, i.e., the partial derivative of
+        the [i]th equation with respect to the [j]th variable, evaluated
+        at the values of [t] and [y] obtained from [jac]. Only nonzero
+        elements need be loaded into [jac].
 
         Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
         Any other exception is treated as an unrecoverable error.
@@ -898,7 +898,7 @@ val reinit :
     @cvode <node5#ss:ewtsetFn> Error weight function *)
 val set_tolerances : ('a, 'k) session -> ('a, 'k) tolerance -> unit
 
-(** Opens the named file to receive messages from the default erro handler.
+(** Opens the named file to receive messages from the default error handler.
     If the file already exists it is either truncated ([true]) or extended
     ([false]).
     The file is closed if the function is called again or when the session is

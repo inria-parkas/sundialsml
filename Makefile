@@ -35,7 +35,7 @@ MLOBJ_MAIN = sundials_config.cmo sundials.cmo dls.cmo spils.cmo	\
 	     nvector_serial.cmo cvode_impl.cmo ida_impl.cmo	\
 	     kinsol_impl.cmo cvode.cmo kinsol.cmo ida.cmo
 
-CMI_MAIN = $(filter-out sundials_config.cmi,$(filter_out %_impl.cmi,\
+CMI_MAIN = $(filter-out sundials_config.cmi,$(filter-out %_impl.cmi,\
 	    $(MLOBJ_MAIN:.cmo=.cmi)))
 
 ### Objects specific to sundials.cma.
@@ -184,6 +184,9 @@ META: META.in
 	    | grep -v '^#' > $@
 
 doc: doc/html/index.html
+	for f in cvode_skel.ml; do \
+	    cp examples/ocaml/skeletons/$$f doc/html/; \
+	done
 
 doc/html/index.html: doc/html dochtml.cmo intro.doc			\
 		     $(filter-out %_impl.cmi, $(CMI_MAIN))		\
@@ -198,7 +201,8 @@ doc/html/index.html: doc/html dochtml.cmo intro.doc			\
 	    -idas-doc-root "$(IDAS_DOC_ROOT)"				\
 	    -kinsol-doc-root "$(KINSOL_DOC_ROOT)"			\
 	    -pp "$(DOCHTML_PP)						\
-		-D'OCAML_DOC_ROOT(x)=$(OCAML_DOC_ROOT)/**/x'"		\
+		-D'OCAML_DOC_ROOT(x)=$(OCAML_DOC_ROOT)/**/x'		\
+		-D'VERSION()=$(VERSION)'"				\
 	    -d ./doc/html/						\
 	    -hide Cvode_impl,Ida_impl,Kinsol_impl			\
 	    -t "Sundials/ML $(VERSION)$(VERSIONP)"			\
