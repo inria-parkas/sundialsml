@@ -700,8 +700,11 @@ CAMLprim value c_kinsol_init(value weakref, value vtemp)
     r = caml_alloc_tuple (4);
     Store_field (r, 0, (value)kin_mem);
     Store_field (r, 1, (value)backref);
-    Store_field (r, 2, Val_long (0)); /* no err_file = NULL */
-    Store_field (r, 3, Val_long (0)); /* no info_file = NULL */
+
+    /* No file = NULL; note OCaml doesn't (seem to) support
+     * architectures where 0 != (value)(void*)NULL. */
+    Store_field (r, 2, 0);
+    Store_field (r, 3, 0);
 
     CAMLreturn(r);
 }
@@ -828,14 +831,12 @@ CAMLprim value c_kinsol_session_finalize(value vdata)
 	free (backref);
     }
 
-    FILE* err_file =
-      (FILE *)Long_val(Field(vdata, RECORD_KINSOL_SESSION_ERRFILE));
+    FILE* err_file = (FILE *)Field(vdata, RECORD_KINSOL_SESSION_ERRFILE);
     if (err_file != NULL) {
 	fclose(err_file);
     }
 
-    FILE* info_file =
-      (FILE *)Long_val(Field(vdata, RECORD_KINSOL_SESSION_INFOFILE));
+    FILE* info_file = (FILE *)Field(vdata, RECORD_KINSOL_SESSION_INFOFILE);
     if (info_file != NULL) {
 	fclose(info_file);
     }
@@ -1023,8 +1024,7 @@ CAMLprim value c_kinsol_set_error_file(value vdata, value vpath, value vtrunc)
 {
     CAMLparam3(vdata, vpath, vtrunc);
 
-    FILE* err_file =
-      (FILE *)Long_val(Field(vdata, RECORD_KINSOL_SESSION_ERRFILE));
+    FILE* err_file = (FILE *)Field(vdata, RECORD_KINSOL_SESSION_ERRFILE);
 
     if (err_file != NULL) {
 	fclose(err_file);
@@ -1036,11 +1036,16 @@ CAMLprim value c_kinsol_set_error_file(value vdata, value vpath, value vtrunc)
 	// uerror("fopen", vpath); /* depends on unix.cma */
 	caml_failwith(strerror(errno));
     }
+    if (1 & (value)err_file) {
+	fclose (err_file);
+	Store_field (vdata, RECORD_KINSOL_SESSION_ERRFILE, 0);
+	caml_failwith("FILE pointer is unaligned");
+    }
 
     int flag = KINSetErrFile(KINSOL_MEM_FROM_ML(vdata), err_file);
     CHECK_FLAG("KINSetErrFile", flag);
 
-    Store_field(vdata, RECORD_KINSOL_SESSION_ERRFILE, Val_long(err_file));
+    Store_field(vdata, RECORD_KINSOL_SESSION_ERRFILE, (value)err_file);
 
     CAMLreturn (Val_unit);
 }
@@ -1049,8 +1054,7 @@ CAMLprim value c_kinsol_set_info_file(value vdata, value vpath, value vtrunc)
 {
     CAMLparam3(vdata, vpath, vtrunc);
 
-    FILE* info_file =
-      (FILE *)Long_val(Field(vdata, RECORD_KINSOL_SESSION_INFOFILE));
+    FILE* info_file = (FILE *)Field(vdata, RECORD_KINSOL_SESSION_INFOFILE);
 
     if (info_file != NULL) {
 	fclose(info_file);
@@ -1062,11 +1066,16 @@ CAMLprim value c_kinsol_set_info_file(value vdata, value vpath, value vtrunc)
 	// uerror("fopen", vpath); /* depends on unix.cma */
 	caml_failwith(strerror(errno));
     }
+    if (1 & (value)info_file) {
+	fclose (info_file);
+	Store_field (vdata, RECORD_KINSOL_SESSION_INFOFILE, 0);
+	caml_failwith("FILE pointer is unaligned");
+    }
 
     int flag = KINSetInfoFile(KINSOL_MEM_FROM_ML(vdata), info_file);
     CHECK_FLAG("KINSetInfoFile", flag);
 
-    Store_field(vdata, RECORD_KINSOL_SESSION_INFOFILE, Val_long(info_file));
+    Store_field(vdata, RECORD_KINSOL_SESSION_INFOFILE, (value)info_file);
 
     CAMLreturn (Val_unit);
 }

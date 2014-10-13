@@ -772,7 +772,10 @@ CAMLprim value c_cvode_init(value weakref, value lmm, value iter, value initial,
     r = caml_alloc_tuple (3);
     Store_field (r, 0, (value)cvode_mem);
     Store_field (r, 1, (value)backref);
-    Store_field (r, 2, Val_long (0)); /* no err_file = NULL */
+    Store_field (r, 2, 0);   // no err_file = NULL; note OCaml doesn't
+			     // (seem to) support architectures where
+			     // 0 != (value)(void*)NULL.
+
 
     CAMLreturn(r);
 }
@@ -997,8 +1000,7 @@ CAMLprim value c_cvode_session_finalize(value vdata)
 	free (backref);
     }
 
-    FILE* err_file =
-      (FILE *)Long_val(Field(vdata, RECORD_CVODE_SESSION_ERRFILE));
+    FILE* err_file = (FILE *)Field(vdata, RECORD_CVODE_SESSION_ERRFILE);
     if (err_file != NULL) {
 	fclose(err_file);
     }
@@ -1089,8 +1091,7 @@ CAMLprim value c_cvode_set_error_file(value vdata, value vpath, value vtrunc)
 {
     CAMLparam3(vdata, vpath, vtrunc);
 
-    FILE* err_file =
-      (FILE *)Long_val(Field(vdata, RECORD_CVODE_SESSION_ERRFILE));
+    FILE* err_file = (FILE *)Field(vdata, RECORD_CVODE_SESSION_ERRFILE);
 
     if (err_file != NULL) {
 	fclose(err_file);
@@ -1102,11 +1103,16 @@ CAMLprim value c_cvode_set_error_file(value vdata, value vpath, value vtrunc)
 	// uerror("fopen", vpath); /* depends on unix.cma */
 	caml_failwith(strerror(errno));
     }
+    if (1 & (value)err_file) {
+	fclose (err_file);
+	Store_field (vdata, RECORD_CVODE_SESSION_ERRFILE, 0);
+	caml_failwith("FILE pointer is unaligned");
+    }
 
     int flag = CVodeSetErrFile(CVODE_MEM_FROM_ML(vdata), err_file);
     CHECK_FLAG("CVodeSetErrFile", flag);
 
-    Store_field(vdata, RECORD_CVODE_SESSION_ERRFILE, Val_long(err_file));
+    Store_field(vdata, RECORD_CVODE_SESSION_ERRFILE, (value)err_file);
 
     CAMLreturn (Val_unit);
 }
