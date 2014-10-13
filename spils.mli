@@ -46,7 +46,7 @@ type preconditioning_type =
   | PrecNone    (** No preconditioning *)
   | PrecLeft    (** {% $(P^{-1}A)x = P^{-1}b$ %} *)
   | PrecRight   (** {% $(AP^{-1})Px = b$ %} *)
-  | PrecBoth    (** {% $(P_L^{-1}AP_R^{-1})P_Rx = P_L^{-1}b)$ %} *)
+  | PrecBoth    (** {% $(P_L^{-1}AP_R^{-1})P_Rx = P_L^{-1}b$ %} *)
 
 (** {2 Exceptions} *)
 

@@ -277,15 +277,9 @@ module Spils =
         s.ls_callbacks <- SpilsBandCallback None
       | _ -> failwith "spils solver not in use"
 
-    external c_set_prec_type
+    external set_prec_type
         : ('a, 'k) session -> Spils.preconditioning_type -> unit
         = "c_cvode_spils_set_prec_type"
-
-    let set_prec_type s = function
-      | PrecNone -> c_set_prec_type s Spils.PrecNone
-      | PrecLeft -> c_set_prec_type s Spils.PrecLeft
-      | PrecRight -> c_set_prec_type s Spils.PrecRight
-      | PrecBoth -> c_set_prec_type s Spils.PrecBoth
 
     external set_gs_type : ('a, 'k) session -> gramschmidt_type -> unit
         = "c_cvode_spils_set_gs_type"

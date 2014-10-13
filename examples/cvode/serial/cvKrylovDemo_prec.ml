@@ -94,7 +94,6 @@ module RealArray = Sundials.RealArray
 module LintArray = Sundials.LintArray
 module Roots = Sundials.Roots
 module Densemat = Dls.ArrayDenseMatrix
-module Spils = Cvode.Spils
 open Bigarray
 let unwrap = Nvector.unwrap
 
@@ -777,7 +776,7 @@ let print_intro () =
 
 let print_header jpre gstype =
   printf "\n\nPreconditioner type is           jpre = %s\n"
-    (if jpre = Cvode.Spils.PrecLeft then "PREC_LEFT" else "PREC_RIGHT");
+    (if jpre = Spils.PrecLeft then "PREC_LEFT" else "PREC_RIGHT");
   printf"\nGram-Schmidt method type is    gstype = %s\n\n\n"
     (if gstype = Spils.ModifiedGS then "MODIFIED_GS" else "CLASSICAL_GS")
 
