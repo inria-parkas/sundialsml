@@ -484,31 +484,6 @@ module Spils :
 
           @cvode <node5#sss:cvbandpre> CVBandPrecGetNumRhsEvals *)
       val get_num_rhs_evals : serial_session -> int
-
-      (** {4 Low-level solver manipulation} *)
-
-      (** Set the Jacobian-times-vector function.  It may be unsafe to
-          use this function without a {!reinit}.  Users are encouraged
-          to use the [iter_type] parameter of {!reinit} instead,
-          unless they are desperate for performance.
-
-          @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
-          @cvode <node5#ss:jtimesFn> Jacobian-times-vector function *)
-      val set_jac_times_vec_fn :
-        serial_session
-        -> RealArray.t jac_times_vec_fn
-        -> unit
-
-      (** This function restores the default Jacobian-times-vector
-          function. It is equivalent to calling CVodeSetJacTimesVecFn
-          with an argument of [NULL].  It may be unsafe to use this
-          function without a {!reinit}.  Users are encouraged to use
-          the [iter_type] parameter of {!reinit} instead, unless they
-          are desperate for performance.
-
-          @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
-          @cvode <node5#ss:jtimesFn> Jacobian-times-vector function *)
-      val clear_jac_times_vec_fn : serial_session -> unit
     end
 
     (** {3:lsolvers Solvers} *)

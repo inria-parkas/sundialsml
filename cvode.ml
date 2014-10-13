@@ -262,7 +262,9 @@ module Spils =
       | SpilsCallback cbs ->
         c_set_jac_times_vec_fn s true;
         s.ls_callbacks <- SpilsCallback { cbs with jac_times_vec_fn = Some f }
-      | SpilsBandCallback _ -> failwith "User-defined preconditioner not in use"
+      | SpilsBandCallback _ ->
+        c_set_jac_times_vec_fn s true;
+        s.ls_callbacks <- SpilsBandCallback (Some f)
       | _ -> failwith "spils solver not in use"
 
     let clear_jac_times_vec_fn s =
@@ -270,7 +272,9 @@ module Spils =
       | SpilsCallback cbs ->
         c_set_jac_times_vec_fn s false;
         s.ls_callbacks <- SpilsCallback { cbs with jac_times_vec_fn = None }
-      | SpilsBandCallback _ -> failwith "User-defined preconditioner not in use"
+      | SpilsBandCallback _ ->
+        c_set_jac_times_vec_fn s false;
+        s.ls_callbacks <- SpilsBandCallback None
       | _ -> failwith "spils solver not in use"
 
     external c_set_prec_type
@@ -362,22 +366,6 @@ module Spils =
         InternalPrecRight (init_preconditioner jac_times_vec bandrange)
       let prec_both ?jac_times_vec bandrange =
         InternalPrecBoth (init_preconditioner jac_times_vec bandrange)
-
-      let set_jac_times_vec_fn s f =
-        match s.ls_callbacks with
-        | SpilsCallback _ -> failwith "Banded preconditioner not in use"
-        | SpilsBandCallback _ ->
-          c_set_jac_times_vec_fn s true;
-          s.ls_callbacks <- SpilsBandCallback (Some f)
-        | _ -> failwith "spils solver not in use"
-
-      let clear_jac_times_vec_fn s =
-        match s.ls_callbacks with
-        | SpilsCallback _ -> failwith "Banded preconditioner not in use"
-        | SpilsBandCallback _ ->
-          c_set_jac_times_vec_fn s false;
-          s.ls_callbacks <- SpilsBandCallback None
-        | _ -> failwith "spils solver not in use"
 
       external get_work_space : serial_session -> int * int
         = "c_cvode_bandprec_get_work_space"

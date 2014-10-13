@@ -340,7 +340,8 @@ and ('a, 'kind) linsolv_callbacks =
   | DenseCallback of DlsTypes.dense_jac_callback
   | BandCallback  of DlsTypes.band_jac_callback
   | SpilsCallback of 'a SpilsTypes'.callbacks
-  | SpilsBandCallback of RealArray.t SpilsTypes'.jac_times_vec_fn option
+  | SpilsBandCallback of 'a SpilsTypes'.jac_times_vec_fn option
+                         (* Invariant: 'a = RealArray.t *)
   | BBDCallback of 'a CvodeBbdParamTypes.callbacks
 
   | AlternateCallback of ('a, 'kind) alternate_linsolv
@@ -348,8 +349,8 @@ and ('a, 'kind) linsolv_callbacks =
   | BDenseCallback of AdjointTypes'.DlsTypes.dense_jac_callback
   | BBandCallback  of AdjointTypes'.DlsTypes.band_jac_callback
   | BSpilsCallback of 'a AdjointTypes'.SpilsTypes'.callbacks
-  | BSpilsBandCallback of RealArray.t AdjointTypes'.SpilsTypes'.jac_times_vec_fn
-                          option
+  | BSpilsBandCallback of 'a AdjointTypes'.SpilsTypes'.jac_times_vec_fn option
+                          (* Invariant: 'a = RealArray.t *)
   | BBBDCallback of 'a CvodesBbdParamTypes.callbacks
 
 and ('a, 'kind) sensext =
