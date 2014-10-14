@@ -10,16 +10,6 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(***********************************************************************)
-(* Much of the comment text is taken directly from:                    *)
-(*                                                                     *)
-(*               User Documentation for CVODE v2.6.0                   *)
-(*                Alan C. Hindmarsh and Radu Serban                    *)
-(*              Center for Applied Scientific Computing                *)
-(*              Lawrence Livermore National Laboratory                 *)
-(*                                                                     *)
-(***********************************************************************)
-
 (** Parallel band-block-diagonal preconditioners for CVODE (requires MPI).
 
     @version VERSION()
@@ -28,11 +18,11 @@
     @author Marc Pouzet (LIENS)
     @cvode <node5#sss:cvbbdpre> Parallel band-block-diagonal preconditioner module *)
 
-(** An alias for sessions based on parallel nvectors. *)
+(** Alias for sessions based on parallel nvectors. *)
 type parallel_session =
       (Nvector_parallel.data, Nvector_parallel.kind) Cvode.session
 
-(** An alias for preconditioners based on parallel nvectors. *)
+(** Alias for preconditioners based on parallel nvectors. *)
 type parallel_preconditioner =
       (Nvector_parallel.data, Nvector_parallel.kind) Cvode.Spils.preconditioner
 
@@ -70,9 +60,8 @@ type local_fn = float -> Nvector_parallel.data -> Nvector_parallel.data -> unit
 type comm_fn = float -> Nvector_parallel.data -> unit
 
 (** Left preconditioning using the Parallel Band-Block-Diagonal module.
-    In the call [prec_left ~dqrely:dqrely bandwidths callbacks], the
-    difference quotient Jacobian operation is controlled by [dqrely], which
-    gives the relative increment in components of [y], and [bandwidths].
+    The difference quotient operation is controlled by [?dqrely],
+    the relative increment in components of [y], and {!bandwidths}.
 
     @cvode <node5#sss:cvbbdpre> CVBBDPrecInit *)
 val prec_left : ?dqrely:float
@@ -81,7 +70,9 @@ val prec_left : ?dqrely:float
                 -> local_fn
                 -> parallel_preconditioner
 
-(** Same as {!prec_left} but preconditions from the right.
+(** Right preconditioning using the Parallel Band-Block-Diagonal module.
+    The difference quotient operation is controlled by [?dqrely],
+    the relative increment in components of [y], and {!bandwidths}.
 
     @cvode <node5#sss:cvbbdpre> CVBBDPrecInit *)
 val prec_right : ?dqrely:float
@@ -90,8 +81,10 @@ val prec_right : ?dqrely:float
                  -> local_fn
                  -> parallel_preconditioner
 
-(** Same as {!prec_left} but preconditions from both
-    sides.
+(** Preconditioning from both sides using the Parallel Band-Block-Diagonal
+    module.
+    The difference quotient operation is controlled by [?dqrely],
+    the relative increment in components of [y], and {!bandwidths}.
 
     @cvode <node5#sss:cvbbdpre> CVBBDPrecInit *)
 val prec_both : ?dqrely:float
@@ -100,27 +93,24 @@ val prec_both : ?dqrely:float
                  -> local_fn
                 -> parallel_preconditioner
 
-(** [reinit s mudq mldq ~dqrely:dqrely] reinitializes the BBD
-    preconditioner with upper ([mudq]) and lower ([mldq])
-    half-bandwidths to be used in the difference quotient Jacobian
-    approximation, and an optional relative increment [dqrely] in
-    components of [y].  [dqrely] defaults to [sqrt unit_roundoff].
+(** Reinitializes some BBD preconditioner parameters.
+    In the call, [reinit s ~dqrely:dqrely mudq mldq], [dqrely] is the relative
+    increment in the components of [y], and [mudq] and [mldq] are, respectively,
+    the upper-half and lower-half bandwidths of the difference quotient
+    Jacobian approximation.
 
     @cvode <node5#sss:cvbbdpre> CVBBDPrecReInit *)
 val reinit : parallel_session -> ?dqrely:float -> int -> int -> unit
 
-(** {4 Optional output functions} *)
-
 (** Returns the sizes of the real and integer workspaces used by the
-    band-block-diagonal preconditioner module.
+    BBD preconditioner.
 
     @cvode <node5#sss:cvbbdpre> CVBBDPrecGetWorkSpace
     @return ([real_size], [integer_size]) *)
 val get_work_space : parallel_session -> int * int
 
-(** Returns the number of calls made to the user-supplied right-hand
-    side function due to finite difference banded Jacobian approximation in the
-    preconditioner setup function.
+(** Returns the number of calls to the right-hand side function due to
+    finite difference banded Jacobian approximation in the setup function.
 
     @cvode <node5#sss:cvbbdpre> CVBBDPrecGetNumGfnEvals *)
 val get_num_gfn_evals : parallel_session -> int

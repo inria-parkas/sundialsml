@@ -100,7 +100,7 @@ module Diag :
         @return ([real_size], [integer_size]) *)
     val get_work_space : ('a, 'k) session -> int * int
 
-    (** Returns the number of calls made to the user-supplied right-hand side
+    (** Returns the number of calls made to the right-hand side
         function due to finite difference Jacobian approximation in the
         Diagonal linear solver.
 
@@ -418,7 +418,7 @@ module Spils :
           @return ([real_size], [integer_size]) *)
       val get_work_space : serial_session -> int * int
 
-      (** Returns the number of calls to the right-hand side function for the
+      (** Returns the number of calls to the right-hand side callback for the
           difference banded Jacobian approximation. This counter is only updated
           if the default difference quotient function is used.
 
@@ -529,7 +529,7 @@ module Spils :
         @cvode <node5#sss:optout_spils> CVSpilsGetNumJtimesEvals *)
     val get_num_jtimes_evals : ('a, 'k) session -> int
 
-    (** Returns the number of calls to the right-hand side function for
+    (** Returns the number of calls to the right-hand side callback for
         finite difference Jacobian-vector product approximation. This counter is
         only updated if the default difference quotient function is used.
 

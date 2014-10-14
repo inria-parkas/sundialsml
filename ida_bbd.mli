@@ -10,16 +10,6 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(***********************************************************************)
-(* Much of the comment text is taken directly from:                    *)
-(*                                                                     *)
-(*               User Documentation for IDA v2.7.0                     *)
-(*                Alan C. Hindmarsh and Radu Serban                    *)
-(*              Center for Applied Scientific Computing                *)
-(*              Lawrence Livermore National Laboratory                 *)
-(*                                                                     *)
-(***********************************************************************)
-
 (** Parallel band-block-diagonal preconditioners for IDA (requires MPI).
 
     @version VERSION()
@@ -28,11 +18,11 @@
     @author Marc Pouzet (LIENS)
     @ida <node5#sss:idabbdpre> Parallel band-block-diagonal preconditioner module *)
 
-(** An alias for sessions based on parallel nvectors. *)
+(** Alias for sessions based on parallel nvectors. *)
 type parallel_session =
       (Nvector_parallel.data, Nvector_parallel.kind) Ida.session
 
-(** An alias for preconditioners based on parallel nvectors. *)
+(** Alias for preconditioners based on parallel nvectors. *)
 type parallel_preconditioner =
       (Nvector_parallel.data, Nvector_parallel.kind) Ida.Spils.preconditioner
 
@@ -49,6 +39,7 @@ type bandwidths = Ida_impl.IdaBbdTypes.bandwidths =
                        approximate Jacobian block. *)
   }
 
+(* TODO: *)
 (** [gloc t y gd] computes [g(t, y)] into [gd].
     Raising {!Sundials.RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.
@@ -60,25 +51,20 @@ type local_fn = float
                 -> Nvector_parallel.data
                 -> unit
 
-(** [cfn t y] performs all interprocess communication necessary
-    for the execution of [local_fn] using the input vector [y].
+(** Functions that perform the interprocess communication necessary
+    for the execution of {!local_fn}.
+    In the call [cfn t y], [t] is the independent variable (time) and [y] is
+    the input vector.
+ 
     Raising {!Sundials.RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.
 
     @idas <node5#sss:idabbdpre> IDABBDCommFn *)
 type comm_fn = float -> Nvector_parallel.data -> Nvector_parallel.data -> unit
 
-(** Same as {!Ida.Spils.prec_left} but uses the Parallel
-    Band-Block-Diagonal preconditioner included in IDA.  Called like
-    [prec_left ~dqrely:dqrely bandwidths callbacks], where:
-
-    - [~dqrely] gives the relative increment in components of [y] used in
-      the difference quotient approximations
-      (defaults to [sqrt unit_roundoff]).
-    - [bandwidths] specify the bandwidths to be used in the difference
-      quotient Jacobian operation.
-    - [callbacks] gives the preconditioning callbacks.  See the
-      {!callbacks} type.
+(** Left preconditioning using the Parallel Band-Block-Diagonal module.
+    The difference quotient operation is controlled by [?dqrely],
+    the relative increment in components of [y], and {!bandwidths}.
 
     @ida <node5#sss:lin_solv_init> IDASpgmr
     @ida <node5#sss:idabbdpre> IDABBDPrecInit *)
@@ -88,27 +74,24 @@ val prec_left : ?dqrely:float
                 -> local_fn
                 -> parallel_preconditioner
 
-(** [reinit s mudq mldq ~dqrely:dqrely] reinitializes the BBD preconditioner
-    with upper ([mudq]) and lower ([mldq]) half-bandwidths to be used in the
-    difference quotient Jacobian approximation, and an optional relative
-    increment in components of [y] (passing [None] uses the default value [sqrt
-    unit_roundoff]).
+(** Reinitializes some BBD preconditioner parameters.
+    In the call, [reinit s ~dqrely:dqrely mudq mldq], [dqrely] is the relative
+    increment in the components of [y], and [mudq] and [mldq] are, respectively,
+    the upper-half and lower-half bandwidths of the difference quotient
+    Jacobian approximation.
 
     @ida <node5#sss:idabbdpre> IDABBDPrecReInit *)
 val reinit : parallel_session -> ?dqrely:float -> int -> int -> unit
 
-(** {4 Optional output functions} *)
-
 (** Returns the sizes of the real and integer workspaces used by the
-    band-block-diagonal preconditioner module.
+    BBD preconditioner.
 
     @ida <node5#sss:idabbdpre> IDABBDPrecGetWorkSpace
     @return ([real_size], [integer_size]) *)
 val get_work_space : parallel_session -> int * int
 
-(** Returns the number of calls made to the user-supplied right-hand
-    side function due to finite difference banded Jacobian approximation in the
-    preconditioner setup function.
+(** Returns the number of calls to the right-hand side function due to
+    finite difference banded Jacobian approximation in the setup function.
 
     @ida <node5#sss:idabbdpre> IDABBDPrecGetNumGfnEvals *)
 val get_num_gfn_evals : parallel_session -> int

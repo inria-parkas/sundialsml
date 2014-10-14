@@ -10,16 +10,6 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(***********************************************************************)
-(* Much of the comment text is taken directly from:                    *)
-(*                                                                     *)
-(*               User Documentation for CVODE v2.6.0                   *)
-(*                Alan C. Hindmarsh and Radu Serban                    *)
-(*              Center for Applied Scientific Computing                *)
-(*              Lawrence Livermore National Laboratory                 *)
-(*                                                                     *)
-(***********************************************************************)
-
 (** Parallel band-block-diagonal preconditioners for CVODES (requires MPI).
 
     @version VERSION()
@@ -29,11 +19,11 @@
     @cvodes <node7#SECTION00742000000000000000> Using the band-block-diagonal preconditioner CVBBDPRE
  *)
 
-(** An alias for sessions based on parallel nvectors. *)
+(** Alias for sessions based on parallel nvectors. *)
 type parallel_bsession =
       (Nvector_parallel.data, Nvector_parallel.kind) Cvodes.Adjoint.bsession
 
-(** An alias for preconditioners based on parallel nvectors. *)
+(** Alias for preconditioners based on parallel nvectors. *)
 type parallel_preconditioner = (Nvector_parallel.data, Nvector_parallel.kind)
                                             Cvodes.Adjoint.Spils.preconditioner
 
@@ -50,9 +40,11 @@ type bandwidths = Cvode_bbd.bandwidths =
                        approximate Jacobian block. *)
   }
 
+(* TODO: *)
 (** [gloc t y yb gb] computes [g(t, y)] into [gb] from the value of the
     independent variable [t], the current forward solution vector [y], and
     the current value of the backward dependent variable vector.
+
     Raising {!Sundials.RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.
 
@@ -63,26 +55,21 @@ type local_fn = float
                 -> Nvector_parallel.data
                 -> unit
 
-(** [cfn t y yb] performs all interprocess communication necessary for the
-    execution of [local_fn] using the forward solution vector [y] and the
-    backward dependent variable vector [yb].
+(** Functions that perform the interprocess communication necessary
+    for the execution of {!local_fn}.
+    In the call [cfn t y yb], [t] is the independent variable (time),
+    [y] is the forward solution vector, and [yb] is the backward dependent
+    variable vector.
+
     Raising {!Sundials.RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.
 
     @cvodes <node7#SECTION00742200000000000000> CVBBDCommFnB *)
 type comm_fn = float -> Nvector_parallel.data -> Nvector_parallel.data -> unit
 
-(** Same as {!Cvodes.Adjoint.Spils.prec_left} but uses the Parallel
-    Band-Block-Diagonal preconditioner included in CVODES.  Called like
-    [prec_left ~dqrely:dqrely bandwidths callbacks], where:
-
-    - [~dqrely] gives the relative increment in components of [y] used in
-      the difference quotient approximations
-      (defaults to [sqrt unit_roundoff]).
-    - [bandwidths] specify the bandwidths to be used in the difference
-      quotient Jacobian operation.
-    - [callbacks] gives the preconditioning callbacks.  See the
-      {!callbacks} type.
+(** Left preconditioning using the Parallel Band-Block-Diagonal module.
+    The difference quotient operation is controlled by [?dqrely],
+    the relative increment in components of [y], and {!bandwidths}.
 
     @cvodes <node7#SECTION00742100000000000000> CVBBDPrecInitB *)
 val prec_left : ?dqrely:float
@@ -91,7 +78,9 @@ val prec_left : ?dqrely:float
                 -> local_fn
                 -> parallel_preconditioner
 
-(** Same as {!prec_left} but preconditions from the right.
+(** Right preconditioning using the Parallel Band-Block-Diagonal module.
+    The difference quotient operation is controlled by [?dqrely],
+    the relative increment in components of [y], and {!bandwidths}.
 
     @cvodes <node7#SECTION00742100000000000000> CVBBDPrecInitB *)
 val prec_right : ?dqrely:float
@@ -100,7 +89,10 @@ val prec_right : ?dqrely:float
                  -> local_fn
                  -> parallel_preconditioner
 
-(** Same as {!prec_left} but preconditions from both sides.
+(** Preconditioning from both sides using the Parallel Band-Block-Diagonal
+    module.
+    The difference quotient operation is controlled by [?dqrely],
+    the relative increment in components of [y], and {!bandwidths}.
 
     @cvodes <node7#SECTION00742100000000000000> CVBBDPrecInitB *)
 val prec_both : ?dqrely:float
@@ -109,28 +101,24 @@ val prec_both : ?dqrely:float
                 -> local_fn
                 -> parallel_preconditioner
 
-(** [reinit s mudq mldq ~dqrely:dqrely] reinitializes the BBD
-    preconditioner with upper ([mudq]) and lower ([mldq])
-    half-bandwidths to be used in the difference quotient Jacobian
-    approximation, and an optional relative increment [dqrely] in
-    components of [y].  [dqrely] defaults to
-    [sqrt Sundials.unit_roundoff].
+(** Reinitializes some BBD preconditioner parameters.
+    In the call, [reinit s ~dqrely:dqrely mudq mldq], [dqrely] is the relative
+    increment in the components of [y], and [mudq] and [mldq] are, respectively,
+    the upper-half and lower-half bandwidths of the difference quotient
+    Jacobian approximation.
 
     @cvodes <node7#SECTION00742000000000000000> CVBBDPrecReInitB *)
 val reinit : parallel_bsession -> ?dqrely:float -> int -> int -> unit
 
-(** {4 Optional output functions} *)
-
 (** Returns the sizes of the real and integer workspaces used by the
-    band-block-diagonal preconditioner module.
+    BBD preconditioner.
 
     @cvode <node7#SECTION00742000000000000000> CVBBDPrecGetWorkSpace
     @return ([real_size], [integer_size]) *)
 val get_work_space : parallel_bsession -> int * int
 
-(** Returns the number of calls made to the user-supplied right-hand
-    side function due to finite difference banded Jacobian approximation in the
-    preconditioner setup function.
+(** Returns the number of calls to the right-hand side function due to
+    finite difference banded Jacobian approximation in the setup function.
 
     @cvode <node7#SECTION00742000000000000000> CVBBDPrecGetNumGfnEvals *)
 val get_num_gfn_evals : parallel_bsession -> int
