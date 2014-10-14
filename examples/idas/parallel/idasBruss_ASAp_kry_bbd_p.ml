@@ -1167,10 +1167,7 @@ let main () =
            Ida_bbd.mukeep = mukeep;
            Ida_bbd.mlkeep = mlkeep;
          }
-         {
-           Ida_bbd.local_fn = reslocal data;
-           Ida_bbd.comm_fn = None;
-         })
+         (reslocal data))
   in
   let mem =
     Ida.init linsolv (Ida.SStolerances (rtol,atol))
@@ -1234,10 +1231,7 @@ let main () =
            Idas_bbd.mukeep = mukeep;
            Idas_bbd.mlkeep = mlkeep;
          }
-         {
-           Idas_bbd.local_fn = resBlocal data;
-           Idas_bbd.comm_fn = None;
-         })
+         (resBlocal data))
   in
   let indexB =
     Adjoint.init_backward mem

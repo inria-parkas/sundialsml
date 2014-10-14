@@ -28,44 +28,49 @@
     @author Marc Pouzet (LIENS)
     @cvodes <node7#SECTION00742000000000000000> Using the band-block-diagonal preconditioner CVBBDPRE
  *)
-type data = Nvector_parallel.data
-type kind = Nvector_parallel.kind
-type parallel_bsession = (data, kind) Cvodes.Adjoint.bsession
-type parallel_preconditioner = (data, kind) Cvodes.Adjoint.Spils.preconditioner
 
+(** An alias for sessions based on parallel nvectors. *)
+type parallel_bsession =
+      (Nvector_parallel.data, Nvector_parallel.kind) Cvodes.Adjoint.bsession
+
+(** An alias for preconditioners based on parallel nvectors. *)
+type parallel_preconditioner = (Nvector_parallel.data, Nvector_parallel.kind)
+                                            Cvodes.Adjoint.Spils.preconditioner
+
+(** The bandwidths for the difference quotient Jacobian operation. *)
 type bandwidths = Cvode_bbd.bandwidths =
   {
-    mudq    : int; (** Upper half-bandwidth to be used in the difference
+    mudq    : int; (** Upper half-bandwidth for the difference
                        quotient Jacobian approximation. *)
-    mldq    : int; (** Lower half-bandwidth to be used in the difference
+    mldq    : int; (** Lower half-bandwidth for the difference
                        quotient Jacobian approximation. *)
-    mukeep  : int; (** Upper half-bandwidth of the retained banded approximate
-                       Jacobian block. *)
-    mlkeep  : int; (** Lower half-bandwidth of the retained banded approximate
-                       Jacobian block. *)
+    mukeep  : int; (** Upper half-bandwidth for the retained banded
+                       approximate Jacobian block. *)
+    mlkeep  : int; (** Lower half-bandwidth for the retained banded
+                       approximate Jacobian block. *)
   }
 
-(** User-supplied functions for the BBD preconditioner.
+(** [gloc t y yb gb] computes [g(t, y)] into [gb] from the value of the
+    independent variable [t], the current forward solution vector [y], and
+    the current value of the backward dependent variable vector.
+    Raising {!Sundials.RecoverableFailure} signals a recoverable error.
+    Other exceptions signal unrecoverable errors.
 
-    @cvodes <node7#SECTION00742200000000000000> CVBBDLocalFnB
+    @cvodes <node7#SECTION00742200000000000000> CVBBDLocalFnB *)
+type local_fn = float
+                -> Nvector_parallel.data
+                -> Nvector_parallel.data
+                -> Nvector_parallel.data
+                -> unit
+
+(** [cfn t y yb] performs all interprocess communication necessary for the
+    execution of [local_fn] using the forward solution vector [y] and the
+    backward dependent variable vector [yb].
+    Raising {!Sundials.RecoverableFailure} signals a recoverable error.
+    Other exceptions signal unrecoverable errors.
+
     @cvodes <node7#SECTION00742200000000000000> CVBBDCommFnB *)
-type callbacks =
-  {
-    local_fn : float -> data -> data -> data -> unit;
-      (** [gloc t y yb gb] computes [g(t, y)] into [gb] from the value of the
-          independent variable [t], the current forward solution vector [y], and
-          the current value of the backward dependent variable vector. This
-          function should raise {!Sundials.RecoverableFailure} on a recoverable
-          error, any other exception is treated as an unrecoverable error. *)
-
-    comm_fn  : (float -> data -> data -> unit) option;
-
-      (** [cfn t y yb] performs all interprocess communication necessary for the
-          execution of [local_fn] using the forward solution vector [y] and the
-          backward dependent variable vector [yb]. This function should raise
-          {!Sundials.RecoverableFailure} on a recoverable error, any other
-          exception is treated as an unrecoverable error. *)
-  }
+type comm_fn = float -> Nvector_parallel.data -> Nvector_parallel.data -> unit
 
 (** Same as {!Cvodes.Adjoint.Spils.prec_left} but uses the Parallel
     Band-Block-Diagonal preconditioner included in CVODES.  Called like
@@ -80,20 +85,29 @@ type callbacks =
       {!callbacks} type.
 
     @cvodes <node7#SECTION00742100000000000000> CVBBDPrecInitB *)
-val prec_left : ?dqrely:float -> bandwidths -> callbacks
-              -> parallel_preconditioner
+val prec_left : ?dqrely:float
+                -> bandwidths
+                -> ?comm_fn:comm_fn
+                -> local_fn
+                -> parallel_preconditioner
 
 (** Same as {!prec_left} but preconditions from the right.
 
     @cvodes <node7#SECTION00742100000000000000> CVBBDPrecInitB *)
-val prec_right : ?dqrely:float -> bandwidths -> callbacks
-               -> parallel_preconditioner
+val prec_right : ?dqrely:float
+                 -> bandwidths
+                 -> ?comm_fn:comm_fn
+                 -> local_fn
+                 -> parallel_preconditioner
 
 (** Same as {!prec_left} but preconditions from both sides.
 
     @cvodes <node7#SECTION00742100000000000000> CVBBDPrecInitB *)
-val prec_both : ?dqrely:float -> bandwidths -> callbacks
-              -> parallel_preconditioner
+val prec_both : ?dqrely:float
+                -> bandwidths
+                -> ?comm_fn:comm_fn
+                -> local_fn
+                -> parallel_preconditioner
 
 (** [reinit s mudq mldq ~dqrely:dqrely] reinitializes the BBD
     preconditioner with upper ([mudq]) and lower ([mldq])

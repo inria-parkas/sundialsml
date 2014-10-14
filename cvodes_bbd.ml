@@ -13,21 +13,17 @@
 include Cvode_impl
 include CvodesBbdTypes
 
-(* These types can't be defined in Cvode_impl because they introduce
-   dependence on Mpi.  Some duplication is unavoidable.  *)
-type data = Nvector_parallel.data
-type kind = Nvector_parallel.kind
-
 type parallel_session = Cvode_bbd.parallel_session
-type parallel_bsession = (data, kind) AdjointTypes.bsession
+type parallel_bsession =
+  (Nvector_parallel.data, Nvector_parallel.kind) AdjointTypes.bsession
 type parallel_preconditioner =
-  (data, kind) AdjointTypes.SpilsTypes.preconditioner
+  (Nvector_parallel.data, Nvector_parallel.kind) AdjointTypes.SpilsTypes.preconditioner
 
 let tosession = AdjointTypes.tosession
 
 module Impl = CvodesBbdParamTypes
-type local_fn = data Impl.local_fn
-type comm_fn = data Impl.comm_fn
+type local_fn = Nvector_parallel.data Impl.local_fn
+type comm_fn = Nvector_parallel.data Impl.comm_fn
 type callbacks =
   {
     local_fn : local_fn;
@@ -68,15 +64,17 @@ let init_preconditioner dqrely bandwidths callbacks bs parent which nv =
     (callbacks.comm_fn <> None);
   (tosession bs).ls_callbacks <- BBBDCallback (bbd_callbacks callbacks)
 
-let prec_left ?(dqrely=0.0) bandwidths callbacks =
+let prec_left ?(dqrely=0.0) bandwidths ?comm_fn local_fn =
   AdjointTypes.SpilsTypes.InternalPrecLeft
-    (init_preconditioner dqrely bandwidths callbacks)
-let prec_right ?(dqrely=0.0) bandwidths callbacks =
+    (init_preconditioner dqrely bandwidths { local_fn; comm_fn })
+
+let prec_right ?(dqrely=0.0) bandwidths ?comm_fn local_fn =
   AdjointTypes.SpilsTypes.InternalPrecRight
-    (init_preconditioner dqrely bandwidths callbacks)
-let prec_both ?(dqrely=0.0) bandwidths callbacks =
+    (init_preconditioner dqrely bandwidths { local_fn; comm_fn })
+
+let prec_both ?(dqrely=0.0) bandwidths ?comm_fn local_fn =
   AdjointTypes.SpilsTypes.InternalPrecBoth
-    (init_preconditioner dqrely bandwidths callbacks)
+    (init_preconditioner dqrely bandwidths { local_fn; comm_fn })
 
 external c_bbd_prec_reinitb
     : parallel_session -> int -> int -> int -> float -> unit

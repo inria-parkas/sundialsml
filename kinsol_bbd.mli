@@ -28,40 +28,41 @@
     @author Marc Pouzet (LIENS)
     @kinsol <node5#sss:kinbbdpre> Parallel band-block-diagonal preconditioner module *)
 
-type data = Nvector_parallel.data
-type kind = Nvector_parallel.kind
-type parallel_session = (data, kind) Kinsol.session
-type parallel_preconditioner = (data, kind) Kinsol.Spils.preconditioner
+(** An alias for sessions based on parallel nvectors. *)
+type parallel_session =
+      (Nvector_parallel.data, Nvector_parallel.kind) Kinsol.session
 
+(** An alias for preconditioners based on parallel nvectors. *)
+type parallel_preconditioner =
+      (Nvector_parallel.data, Nvector_parallel.kind) Kinsol.Spils.preconditioner
+
+(** The bandwidths for the difference quotient Jacobian operation. *)
 type bandwidths =
   {
-    mudq    : int; (** Upper half-bandwidth to be used in the difference
+    mudq    : int; (** Upper half-bandwidth for the difference
                        quotient Jacobian approximation. *)
-    mldq    : int; (** Lower half-bandwidth to be used in the difference
+    mldq    : int; (** Lower half-bandwidth for the difference
                        quotient Jacobian approximation. *)
-    mukeep  : int; (** Upper half-bandwidth of the retained banded
+    mukeep  : int; (** Upper half-bandwidth for the retained banded
                        approximate Jacobian block. *)
-    mlkeep  : int; (** Lower half-bandwidth of the retained banded
+    mlkeep  : int; (** Lower half-bandwidth for the retained banded
                        approximate Jacobian block. *)
   }
 
-(** User-supplied functions for the BBD preconditioner.
+(** [gloc u gval] computes [g(u)] into [gval].
+    Raising {!Sundials.RecoverableFailure} signals a recoverable error.
+    Other exceptions signal unrecoverable errors.
 
-    @kinsol <node5#sss:kinbbdpre> KINLocalFn
+    @kinsol <node5#sss:kinbbdpre> KINLocalFn *)
+type local_fn = Nvector_parallel.data -> Nvector_parallel.data -> unit
+
+(** [cfn u] performs all interprocess communication necessary
+    for the execution of [local_fn] using the input vector [u].
+    Raising {!Sundials.RecoverableFailure} signals a recoverable error.
+    Other exceptions signal unrecoverable errors.
+
     @kinsol <node5#sss:kinbbdpre> KINCommFn *)
-type callbacks =
-  {
-    local_fn : data -> data -> unit;
-      (** [gloc u gval] computes [g(u)] into [gval]. This function
-          should raise {!Sundials.RecoverableFailure} on a recoverable error,
-          any other exception is treated as an unrecoverable error. *)
-
-    comm_fn  : (data -> unit) option;
-      (** [cfn u] performs all interprocess communication necessary
-          for the execution of [local_fn] using the input vector [u]. This
-          function should raise {!Sundials.RecoverableFailure} on a recoverable
-          error, any other exception is treated as an unrecoverable error. *)
-  }
+type comm_fn = Nvector_parallel.data -> unit
 
 (** Same as {!Kinsol.Spils.prec_right} but sets up the Parallel
     Band-Block-Diagonal preconditioner included in KINSOL.  Called
@@ -77,8 +78,11 @@ type callbacks =
 
     @kinsol <node5#sss:lin_solv_init> KINSpgmr
     @kinsol <node5#sss:kinbbdpre> KINBBDPrecInit *)
-val prec_right : ?dqrely:float -> bandwidths -> callbacks
-               -> parallel_preconditioner
+val prec_right : ?dqrely:float
+                 -> bandwidths
+                 -> ?comm_fn:comm_fn
+                 -> local_fn
+                 -> parallel_preconditioner
 
 (** {4 Optional output functions} *)
 

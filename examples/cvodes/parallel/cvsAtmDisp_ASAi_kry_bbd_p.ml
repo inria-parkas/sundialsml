@@ -881,8 +881,7 @@ let main () =
                      Bbd.mldq = d.l_m.(0) + 1;
                      Bbd.mukeep = 2;
                      Bbd.mlkeep = 2; }
-                   { Bbd.local_fn = f_local d;
-                     Bbd.comm_fn = None; })
+                   (f_local d))
   in
   (* Create CVODES object, attach user data, and allocate space *)
   let abstol, reltol = atol, rtol in
@@ -932,8 +931,7 @@ let main () =
                      Adjbbd.mldq = d.l_m.(0) + 1;
                      Adjbbd.mukeep = 2;
                      Adjbbd.mlkeep = 2; }
-                   { Adjbbd.local_fn = fB_local d;
-                     Adjbbd.comm_fn = None; })
+                   (fB_local d))
   in
 
   (* Create and allocate backward CVODE memory *)

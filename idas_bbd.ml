@@ -13,19 +13,19 @@
 include Ida_impl
 include IdasBbdTypes
 
-type data = Nvector_parallel.data
-type kind = Nvector_parallel.kind
-
-type parallel_session = (data, Nvector_parallel.kind) Idas.session
-type parallel_bsession = (data, Nvector_parallel.kind) Idas.Adjoint.bsession
+type parallel_session =
+        (Nvector_parallel.data, Nvector_parallel.kind) Idas.session
+type parallel_bsession =
+        (Nvector_parallel.data, Nvector_parallel.kind) Idas.Adjoint.bsession
 type parallel_preconditioner =
-  (data, kind) AdjointTypes.SpilsTypes.preconditioner
+  (Nvector_parallel.data, Nvector_parallel.kind)
+                AdjointTypes.SpilsTypes.preconditioner
 
 let tosession = AdjointTypes.tosession
 
 module Impl = IdasBbdParamTypes
-type local_fn = data Impl.local_fn
-type comm_fn = data Impl.comm_fn
+type local_fn = Nvector_parallel.data Impl.local_fn
+type comm_fn = Nvector_parallel.data Impl.comm_fn
 type callbacks =
   {
     local_fn : local_fn;
@@ -66,9 +66,9 @@ let init_preconditioner dqrely bandwidths callbacks bs parent which nv nv' =
     (callbacks.comm_fn <> None);
   (tosession bs).ls_callbacks <- BBBDCallback (bbd_callbacks callbacks)
 
-let prec_left ?(dqrely=0.0) bandwidths callbacks =
+let prec_left ?(dqrely=0.0) bandwidths ?comm_fn local_fn =
   AdjointTypes.SpilsTypes.InternalPrecLeft
-    (init_preconditioner dqrely bandwidths callbacks)
+    (init_preconditioner dqrely bandwidths { local_fn; comm_fn })
 
 external c_bbd_prec_reinitb
     : parallel_session -> int -> int -> int -> float -> unit

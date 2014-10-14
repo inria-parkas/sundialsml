@@ -28,40 +28,45 @@
     @author Marc Pouzet (LIENS)
     @ida <node5#sss:idabbdpre> Parallel band-block-diagonal preconditioner module *)
 
-type data = Nvector_parallel.data
-type kind = Nvector_parallel.kind
-type parallel_session = (data, kind) Ida.session
-type parallel_preconditioner = (data, kind) Ida.Spils.preconditioner
+(** An alias for sessions based on parallel nvectors. *)
+type parallel_session =
+      (Nvector_parallel.data, Nvector_parallel.kind) Ida.session
 
+(** An alias for preconditioners based on parallel nvectors. *)
+type parallel_preconditioner =
+      (Nvector_parallel.data, Nvector_parallel.kind) Ida.Spils.preconditioner
+
+(** The bandwidths for the difference quotient Jacobian operation. *)
 type bandwidths = Ida_impl.IdaBbdTypes.bandwidths =
   {
-    mudq    : int; (** Upper half-bandwidth to be used in the difference
+    mudq    : int; (** Upper half-bandwidth for the difference
                        quotient Jacobian approximation. *)
-    mldq    : int; (** Lower half-bandwidth to be used in the difference
+    mldq    : int; (** Lower half-bandwidth for the difference
                        quotient Jacobian approximation. *)
-    mukeep  : int; (** Upper half-bandwidth of the retained banded approximate
-                       Jacobian block. *)
-    mlkeep  : int; (** Lower half-bandwidth of the retained banded approximate
-                       Jacobian block. *)
+    mukeep  : int; (** Upper half-bandwidth for the retained banded
+                       approximate Jacobian block. *)
+    mlkeep  : int; (** Lower half-bandwidth for the retained banded
+                       approximate Jacobian block. *)
   }
 
-(** User-supplied functions for the BBD preconditioner.
+(** [gloc t y gd] computes [g(t, y)] into [gd].
+    Raising {!Sundials.RecoverableFailure} signals a recoverable error.
+    Other exceptions signal unrecoverable errors.
 
-    @idas <node5#sss:idabbdpre> IDABBDLocalFn
+    @idas <node5#sss:idabbdpre> IDABBDLocalFn *)
+type local_fn = float
+                -> Nvector_parallel.data
+                -> Nvector_parallel.data
+                -> Nvector_parallel.data
+                -> unit
+
+(** [cfn t y] performs all interprocess communication necessary
+    for the execution of [local_fn] using the input vector [y].
+    Raising {!Sundials.RecoverableFailure} signals a recoverable error.
+    Other exceptions signal unrecoverable errors.
+
     @idas <node5#sss:idabbdpre> IDABBDCommFn *)
-type callbacks =
-  {
-    local_fn : float -> data -> data -> data -> unit;
-      (** [gloc t y gd] computes [g(t, y)] into [gd]. This function
-          should raise {!Sundials.RecoverableFailure} on a recoverable error,
-          any other exception is treated as an unrecoverable error. *)
-
-    comm_fn  : (float -> data -> data -> unit) option;
-      (** [cfn t y] performs all interprocess communication necessary
-          for the execution of [local_fn] using the input vector [y]. This
-          function should raise {!Sundials.RecoverableFailure} on a recoverable
-          error, any other exception is treated as an unrecoverable error. *)
-  }
+type comm_fn = float -> Nvector_parallel.data -> Nvector_parallel.data -> unit
 
 (** Same as {!Ida.Spils.prec_left} but uses the Parallel
     Band-Block-Diagonal preconditioner included in IDA.  Called like
@@ -77,8 +82,11 @@ type callbacks =
 
     @ida <node5#sss:lin_solv_init> IDASpgmr
     @ida <node5#sss:idabbdpre> IDABBDPrecInit *)
-val prec_left : ?dqrely:float -> bandwidths -> callbacks
-              -> parallel_preconditioner
+val prec_left : ?dqrely:float
+                -> bandwidths
+                -> ?comm_fn:comm_fn
+                -> local_fn
+                -> parallel_preconditioner
 
 (** [reinit s mudq mldq ~dqrely:dqrely] reinitializes the BBD preconditioner
     with upper ([mudq]) and lower ([mldq]) half-bandwidths to be used in the

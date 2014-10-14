@@ -13,14 +13,14 @@
 include Kinsol_impl
 include KinsolBbdTypes
 
-type data = Nvector_parallel.data
-type kind = Nvector_parallel.kind
-type parallel_session = (data, kind) session
-type parallel_preconditioner = (data, kind) Kinsol.Spils.preconditioner
+type parallel_session =
+      (Nvector_parallel.data, Nvector_parallel.kind) Kinsol.session
+type parallel_preconditioner =
+      (Nvector_parallel.data, Nvector_parallel.kind) Kinsol.Spils.preconditioner
 
 module Impl = KinsolBbdParamTypes
-type local_fn = data Impl.local_fn
-type comm_fn = data Impl.comm_fn
+type local_fn = Nvector_parallel.data Impl.local_fn
+type comm_fn = Nvector_parallel.data Impl.comm_fn
 type callbacks =
   {
     local_fn : local_fn;
@@ -59,9 +59,9 @@ let init_preconditioner dqrely bandwidths callbacks session onv =
   c_bbd_prec_init session localn bandwidths dqrely (callbacks.comm_fn <> None);
   session.ls_callbacks <- BBDCallback (bbd_callbacks callbacks)
 
-let prec_right ?(dqrely=0.0) bandwidths callbacks =
+let prec_right ?(dqrely=0.0) bandwidths ?comm_fn local_fn =
   SpilsTypes.InternalPrecRight
-    (init_preconditioner dqrely bandwidths callbacks)
+    (init_preconditioner dqrely bandwidths { local_fn; comm_fn })
 
 external get_work_space : parallel_session -> int * int
     = "c_kinsol_bbd_get_work_space"

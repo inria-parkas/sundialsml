@@ -621,8 +621,7 @@ let main () =
                      Bbd.mldq = mldq;
                      Bbd.mukeep = mukeep;
                      Bbd.mlkeep = mlkeep; }
-                   { Bbd.local_fn = func_local data;
-                     Bbd.comm_fn = None; }))
+                   (func_local data)))
               (func data) cc in
   Kinsol.set_constraints kmem (Nvector.make local_N neq comm 0.0);
   Kinsol.set_func_norm_tol kmem (Some fnormtol);

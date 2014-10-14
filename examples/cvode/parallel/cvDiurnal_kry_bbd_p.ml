@@ -575,7 +575,7 @@ let main () =
             (BBD.prec_left
                { BBD.mudq   = mudq;   BBD.mldq = mldq;
                  BBD.mukeep = mukeep; BBD.mlkeep = mlkeep }
-               { BBD.local_fn = (flocal data); BBD.comm_fn = None })))
+               (flocal data))))
       (Cvode.SStolerances (reltol, abstol))
       (f data) t0 u
   in

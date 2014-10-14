@@ -13,14 +13,14 @@
 include Ida_impl
 include IdaBbdTypes
 
-type data = Nvector_parallel.data
-type kind = Nvector_parallel.kind
-type parallel_session = (data, Nvector_parallel.kind) Ida.session
-type parallel_preconditioner = (data, kind) SpilsTypes.preconditioner
+type parallel_session =
+        (Nvector_parallel.data, Nvector_parallel.kind) Ida.session
+type parallel_preconditioner =
+        (Nvector_parallel.data, Nvector_parallel.kind) SpilsTypes.preconditioner
 
 module Impl = IdaBbdParamTypes
-type local_fn = data Impl.local_fn
-type comm_fn = data Impl.comm_fn
+type local_fn = Nvector_parallel.data Impl.local_fn
+type comm_fn = Nvector_parallel.data Impl.comm_fn
 type callbacks =
   {
     local_fn : local_fn;
@@ -54,9 +54,9 @@ let init_preconditioner dqrely bandwidths callbacks session nv nv' =
   c_bbd_prec_init session localn bandwidths dqrely (callbacks.comm_fn <> None);
   session.ls_callbacks <- BBDCallback (bbd_callbacks callbacks)
 
-let prec_left ?(dqrely=0.0) bandwidths callbacks =
+let prec_left ?(dqrely=0.0) bandwidths ?comm_fn local_fn =
   SpilsTypes.InternalPrecLeft
-    (init_preconditioner dqrely bandwidths callbacks)
+    (init_preconditioner dqrely bandwidths { local_fn; comm_fn })
 
 external c_bbd_prec_reinit
     : parallel_session -> int -> int -> float -> unit

@@ -56,15 +56,17 @@ let init_preconditioner dqrely bandwidths callbacks session nv =
   c_bbd_prec_init session localn bandwidths dqrely (callbacks.comm_fn <> None);
   session.ls_callbacks <- BBDCallback (bbd_callbacks callbacks)
 
-let prec_left ?(dqrely=0.0) bandwidths callbacks =
+let prec_left ?(dqrely=0.0) bandwidths ?comm_fn local_fn =
   SpilsTypes.InternalPrecLeft
-    (init_preconditioner dqrely bandwidths callbacks)
-let prec_right ?(dqrely=0.0) bandwidths callbacks =
+    (init_preconditioner dqrely bandwidths { local_fn ; comm_fn })
+
+let prec_right ?(dqrely=0.0) bandwidths ?comm_fn local_fn =
   SpilsTypes.InternalPrecRight
-    (init_preconditioner dqrely bandwidths callbacks)
-let prec_both ?(dqrely=0.0) bandwidths callbacks =
+    (init_preconditioner dqrely bandwidths { local_fn ; comm_fn })
+
+let prec_both ?(dqrely=0.0) bandwidths ?comm_fn local_fn =
   SpilsTypes.InternalPrecBoth
-    (init_preconditioner dqrely bandwidths callbacks)
+    (init_preconditioner dqrely bandwidths { local_fn ; comm_fn })
 
 external c_bbd_prec_reinit
     : parallel_session -> int -> int -> float -> unit

@@ -659,10 +659,7 @@ let main () =
            Ida_bbd.mukeep = mukeep;
            Ida_bbd.mlkeep = mlkeep;
          }
-         {
-           Ida_bbd.local_fn = reslocal data;
-           Ida_bbd.comm_fn = None;
-         })
+         (reslocal data))
   in
   let mem =
     Ida.init linsolv (Ida.SStolerances (rtol,atol))
