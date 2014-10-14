@@ -153,7 +153,11 @@ fi
 
 if [ "x${cflags}" = x ]; then    # Don't touch CFLAGS if explicitly given.
     if [ $using_gcc = true ]; then
-        cflags="-O2 -Wall"
+        if [ "x$enable_debug" = x1 ]; then
+            cflags="-O0 -Wall -g3"
+        else
+            cflags="-O2 -Wall"
+        fi
     else
         echo "<info> Your C compiler seems to be different from gcc.  Make"
         echo "<info> sure you set optimization flags explicitly with CFLAGS."
@@ -162,7 +166,8 @@ fi
 
 if [ "x$enable_debug" = x1 ]; then
     if [ $using_gcc = true ]; then
-        cflags="${cflags} -g3"
+        # This case is handled above.
+        :
     else
         cflags="${cflags} -g"
     fi
