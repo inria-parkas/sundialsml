@@ -49,17 +49,8 @@
 
 /* callbacks */
 enum callback_index {
-    IX_call_sysfn = 0,
-    IX_call_errh,
+    IX_call_errh = 0,
     IX_call_infoh,
-
-    IX_call_precsolvefn,
-    IX_call_precsetupfn,
-    IX_call_jactimesfn,
-
-    IX_call_linit,
-    IX_call_lsetup,
-    IX_call_lsolve,
     NUM_CALLBACKS
 };
 
@@ -189,20 +180,20 @@ CAMLprim value c_kinsol_clear_info_handler_fn(value vdata)
 static int sysfn(N_Vector uu, N_Vector val, void *user_data)
 {
     CAMLparam0();
-    CAMLlocal2(vuu, vval);
-    int r;
-    value *backref = user_data;
+    CAMLlocal4(vuu, vval, session, r);
 
     vuu = NVEC_BACKLINK(uu);
     vval = NVEC_BACKLINK(val);
+
+    WEAK_DEREF (session, *(value*)user_data);
 
     // The data payloads inside vuu and vval are only valid during this
     // call, afterward that memory goes back to kinsol. These bigarrays must
     // not be retained by closure_rhsfn! If it wants a permanent copy, then
     // it has to make it manually.
-    r = Int_val (caml_callback3(CAML_FN(call_sysfn), *backref, vuu, vval));
+    r = caml_callback2_exn(KINSOL_SYSFN_FROM_ML (session), vuu, vval);
 
-    CAMLreturnT(int, r);
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
 static value make_prec_solve_arg(N_Vector uscale, N_Vector fscale)
@@ -256,11 +247,11 @@ static int jacfn(
     CAMLparam0();
     CAMLlocalN (args, 2);
     CAMLlocal4(session, cb, dmat, r);
-    value *backref = user_data;
-    WEAK_DEREF (session, *backref);
 
-    // assert(session.ls_callbacks = DenseCallback cb)
-    cb = Field(KINSOL_LS_CALLBACKS_FROM_ML(session), 0);
+    WEAK_DEREF (session, *(value*)user_data);
+    cb = KINSOL_LS_CALLBACKS_FROM_ML(session);
+    cb = Field (cb, 0);
+
     dmat = Field(cb, 1);
     if (dmat == Val_none) {
 	Store_some(dmat, c_dls_dense_wrap(Jac, 0));
@@ -289,11 +280,11 @@ static int bandjacfn(
     CAMLparam0();
     CAMLlocalN(args, 3);
     CAMLlocal4(session, cb, bmat, r);
-    value *backref = user_data;
-    WEAK_DEREF (session, *backref);
 
-    // assert(session.ls_callbacks = BandCallback cb)
-    cb = Field(KINSOL_LS_CALLBACKS_FROM_ML(session), 0);
+    WEAK_DEREF (session, *(value*)user_data);
+    cb = KINSOL_LS_CALLBACKS_FROM_ML(session);
+    cb = Field (cb, 0);
+
     bmat = Field(cb, 1);
     if (bmat == Val_none) {
 	Store_some(bmat, c_dls_band_wrap(Jac, 0));
@@ -321,20 +312,21 @@ static int precsetupfn(
     N_Vector tmp2)
 {
     CAMLparam0();
-    CAMLlocal2(session, r);
-    CAMLlocalN(args, 3);
-    int retcode;
-    value *backref = user_data;
+    CAMLlocal3(session, r, cb);
+    CAMLlocalN(args, 2);
 
-    args[0] = *backref;
-    args[1] = make_jac_arg(uu, fu, make_double_tmp(tmp1, tmp2));
-    args[2] = make_prec_solve_arg(uscale, fscale);
+    args[0] = make_jac_arg(uu, fu, make_double_tmp(tmp1, tmp2));
+    args[1] = make_prec_solve_arg(uscale, fscale);
 
-    retcode = Int_val (caml_callbackN(CAML_FN(call_precsetupfn),
-                                      sizeof (args) / sizeof (*args),
-                                      args));
+    WEAK_DEREF (session, *(value*)user_data);
+    cb = KINSOL_LS_CALLBACKS_FROM_ML (session);
+    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_KINSOL_SPILS_CALLBACKS_PREC_SETUP_FN);
+    cb = Field (cb, 0);
 
-    CAMLreturnT(int, retcode);
+    r = caml_callbackN_exn(cb, sizeof (args) / sizeof (*args), args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
 static int precsolvefn(
@@ -347,21 +339,22 @@ static int precsolvefn(
 	N_Vector tmp)
 {
     CAMLparam0();
-    CAMLlocal1(rv);
-    CAMLlocalN(args, 4);
-    int retcode;
-    value *backref = user_data;
+    CAMLlocal3(session, r, cb);
+    CAMLlocalN(args, 3);
 
-    args[0] = *backref;
-    args[1] = make_jac_arg(uu, fu, NVEC_BACKLINK(tmp));
-    args[2] = make_prec_solve_arg(uscale, fscale);
-    args[3] = NVEC_BACKLINK(vv);
+    args[0] = make_jac_arg(uu, fu, NVEC_BACKLINK(tmp));
+    args[1] = make_prec_solve_arg(uscale, fscale);
+    args[2] = NVEC_BACKLINK(vv);
 
-    retcode = Int_val (caml_callbackN(CAML_FN(call_precsolvefn),
-                                      sizeof (args) / sizeof (*args),
-                                      args));
+    WEAK_DEREF (session, *(value*)user_data);
+    cb = KINSOL_LS_CALLBACKS_FROM_ML (session);
+    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_KINSOL_SPILS_CALLBACKS_PREC_SOLVE_FN);
+    cb = Field (cb, 0);
 
-    CAMLreturnT(int, retcode);
+    r = caml_callbackN_exn(cb, sizeof (args) / sizeof (*args), args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
 static int jactimesfn(
@@ -372,66 +365,85 @@ static int jactimesfn(
 	void *user_data)
 {
     CAMLparam0();
-    CAMLlocal1(vr);
-    CAMLlocalN (args, 5);
-    value *backref = user_data;
-    int r;
+    CAMLlocal3(session, r, cb);
+    CAMLlocalN (args, 4);
 
-    args[0] = *backref;
-    args[1] = NVEC_BACKLINK(v);
-    args[2] = NVEC_BACKLINK(Jv);
-    args[3] = NVEC_BACKLINK(u);
-    args[4] = Val_bool(*new_uu);
+    args[0] = NVEC_BACKLINK(v);
+    args[1] = NVEC_BACKLINK(Jv);
+    args[2] = NVEC_BACKLINK(u);
+    args[3] = Val_bool(*new_uu);
 
-    vr = caml_callbackN (CAML_FN(call_jactimesfn),
-			 sizeof (args) / sizeof (*args),
-			 args);
-    r = Field(vr, 1);
-    if (r == 0) *new_uu = Bool_val(Field(vr, 0));
+    WEAK_DEREF (session, *(value*)user_data);
+    cb = KINSOL_LS_CALLBACKS_FROM_ML (session);
+    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_KINSOL_SPILS_CALLBACKS_JAC_TIMES_VEC_FN);
+    cb = Field (cb, 0);
 
-    CAMLreturnT(int, r);
+    r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+
+    if (!Is_exception_result (r)) {
+	*new_uu = Bool_val (r);
+	CAMLreturnT (int, 0);
+    }
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
 static int linit(KINMem kin_mem)
 {
     CAMLparam0();
-    int r;
-    value *backref = kin_mem->kin_user_data;
+    CAMLlocal3 (session, r, cb);
 
-    r = Int_val (caml_callback(CAML_FN(call_linit), *backref));
+    WEAK_DEREF (session, *(value*)kin_mem->kin_user_data);
+    cb = KINSOL_LS_CALLBACKS_FROM_ML (session);
+    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_KINSOL_ALTERNATE_CALLBACKS_LINIT);
+    cb = Field (cb, 0);
 
-    CAMLreturnT(int, r);
+    r = caml_callback_exn (cb, session);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }
 
 static int lsetup(KINMem kin_mem)
 {
     CAMLparam0();
-    int r;
-    value *backref = kin_mem->kin_user_data;
+    CAMLlocal3(session, r, cb);
 
-    r = Int_val (caml_callback(CAML_FN(call_lsetup), *backref));
+    WEAK_DEREF (session, *(value*)kin_mem->kin_user_data);
+    cb = KINSOL_LS_CALLBACKS_FROM_ML (session);
+    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_KINSOL_ALTERNATE_CALLBACKS_LSETUP);
+    cb = Field (cb, 0);
 
-    CAMLreturnT(int, r);
+    r = caml_callback_exn (cb, session);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }
 
 static int lsolve(KINMem kin_mem, N_Vector x, N_Vector b, realtype *res_norm)
 {
     CAMLparam0();
     CAMLlocalN(args, 3);
-    CAMLlocal1(vr);
-    value *backref = kin_mem->kin_user_data;
+    CAMLlocal3(session, r, cb);
 
-    args[0] = *backref;
+    WEAK_DEREF (session, *(value*)kin_mem->kin_user_data);
+
+    args[0] = session;
     args[1] = NVEC_BACKLINK(x);
     args[2] = NVEC_BACKLINK(b);
 
-    vr = caml_callbackN(CAML_FN(call_lsolve),
-			sizeof (args) / sizeof (*args), args);
-    if (Field(vr, 0) != Val_int(0)) {
-	*res_norm = Double_val(Field(Field(vr, 0), 0));
+    cb = KINSOL_LS_CALLBACKS_FROM_ML (session);
+    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_KINSOL_ALTERNATE_CALLBACKS_LSOLVE);
+
+    r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+    if (!Is_exception_result (r)) {
+	if (r != Val_none) *res_norm = Double_val(Field(r, 0));
+	CAMLreturnT (int, 0);
     }
 
-    CAMLreturnT(int, Int_val(Field(vr, 1)));
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
 CAMLprim value c_kinsol_set_alternate (value vkin_mem, value vhas_init,

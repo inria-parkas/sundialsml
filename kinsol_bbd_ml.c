@@ -46,39 +46,44 @@ CAMLprim value c_kinsol_bbd_init_module (value cbs)
     CAMLreturn (Val_unit);
 }
 
+/* Sundials 2.5.0 User's Guide incorrectly states that KINLocalFn
+ * returns void.  The comment in kinsol_bbdpre.h says it should return
+ * 0 for success, non-zero otherwise.  */
 static int bbdlocal(long int nlocal, N_Vector u, N_Vector gval, void *user_data)
 {
     CAMLparam0();
-    CAMLlocalN(args, 3);
-    int r;
-    value *backref = user_data;
+    CAMLlocalN(args, 2);
+    CAMLlocal3(session, r, cb);
 
-    args[0] = *backref;
-    args[1] = NVEC_BACKLINK(u);
-    args[2] = NVEC_BACKLINK(gval);
+    args[0] = NVEC_BACKLINK(u);
+    args[1] = NVEC_BACKLINK(gval);
 
-    r = Int_val (caml_callbackN(CAML_FN(call_bbdlocal),
-                                sizeof (args) / sizeof (*args),
-                                args));
+    WEAK_DEREF (session, *(value*)user_data);
+    cb = KINSOL_LS_CALLBACKS_FROM_ML (session);
+    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_KINSOL_BBD_CALLBACKS_LOCAL_FN);
 
-    CAMLreturnT(int, r);
+    r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }
 
+/* Sundials 2.5.0 User's Guide incorrectly states that KINCommFn
+ * returns void.  The comment in kinsol_bbdpre.h says it should return
+ * 0 for success, non-zero otherwise.  */
 static int bbdcomm(long int nlocal, N_Vector u, void *user_data)
 {
     CAMLparam0();
-    CAMLlocalN(args, 2);
-    int r;
-    value *backref = user_data;
+    CAMLlocal3(session, r, cb);
 
-    args[0] = *backref;
-    args[1] = NVEC_BACKLINK(u);
+    cb = KINSOL_LS_CALLBACKS_FROM_ML (session);
+    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_KINSOL_BBD_CALLBACKS_LOCAL_FN);
+    cb = Field (cb, 0);
 
-    r = Int_val (caml_callbackN(CAML_FN(call_bbdcomm),
-                                sizeof (args) / sizeof (*args),
-                                args));
+    r = caml_callback_exn (cb, NVEC_BACKLINK(u));
 
-    CAMLreturnT(int, r);
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }
 
 CAMLprim value c_kinsol_bbd_prec_init (value vkin_mem, value vlocaln,

@@ -34,60 +34,48 @@
 
 /* Callbacks */
 
-enum callback_index {
-    IX_call_bbdlocal = 0,
-    IX_call_bbdcomm,
-    NUM_CALLBACKS
-};
-
-static value callbacks[NUM_CALLBACKS];
-
-CAMLprim value c_ida_bbd_init_module (value cbs)
-{
-    CAMLparam1 (cbs);
-    REGISTER_CALLBACKS (cbs);
-    CAMLreturn (Val_unit);
-}
-
 static int bbdlocal(long int nlocal, realtype t, N_Vector y, N_Vector yp,
 		    N_Vector gval, void *user_data)
 {
     CAMLparam0();
-    CAMLlocalN(args, 5);
-    int r;
-    value *backref = user_data;
+    CAMLlocalN(args, 4);
+    CAMLlocal3(session, r, cb);
 
-    args[0] = *backref;
-    args[1] = caml_copy_double(t);
-    args[2] = NVEC_BACKLINK(y);
-    args[3] = NVEC_BACKLINK(yp);
-    args[4] = NVEC_BACKLINK(gval);
+    args[0] = caml_copy_double(t);
+    args[1] = NVEC_BACKLINK(y);
+    args[2] = NVEC_BACKLINK(yp);
+    args[3] = NVEC_BACKLINK(gval);
 
-    r = Int_val (caml_callbackN(CAML_FN(call_bbdlocal),
-                                sizeof (args) / sizeof (*args),
-                                args));
+    WEAK_DEREF (session, *(value*)user_data);
+    cb = IDA_LS_CALLBACKS_FROM_ML (session);
+    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_IDA_BBD_CALLBACKS_LOCAL_FN);
 
-    CAMLreturnT(int, r);
+    r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
 static int bbdcomm(long int nlocal, realtype t, N_Vector y, N_Vector yp,
 		   void *user_data)
 {
     CAMLparam0();
-    CAMLlocalN(args, 4);
-    int r;
-    value *backref = user_data;
+    CAMLlocalN(args, 3);
+    CAMLlocal3(session, r, cb);
 
-    args[0] = *backref;
-    args[1] = caml_copy_double(t);
-    args[2] = NVEC_BACKLINK(y);
-    args[3] = NVEC_BACKLINK(yp);
+    args[0] = caml_copy_double(t);
+    args[1] = NVEC_BACKLINK(y);
+    args[2] = NVEC_BACKLINK(yp);
 
-    r = Int_val (caml_callbackN(CAML_FN(call_bbdcomm),
-                                sizeof (args) / sizeof (*args),
-                                args));
+    WEAK_DEREF (session, *(value*)user_data);
+    cb = IDA_LS_CALLBACKS_FROM_ML (session);
+    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_IDA_BBD_CALLBACKS_COMM_FN);
+    cb = Field (cb, 0);
 
-    CAMLreturnT(int, r);
+    r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
 CAMLprim value c_ida_bbd_prec_init (value vida_mem, value vlocaln,

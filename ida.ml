@@ -635,12 +635,6 @@ let calc_ic_ya_yd' session ?y ?y' id tout1 =
 
 (* Callbacks *)
 
-let call_resfn session t y y' res =
-  let session = read_weak_ref session in
-  adjust_retcode session true (session.resfn t y y') res
-
-(* the roots function is called directly from C. *)
-
 let call_errw session y ewt =
   let session = read_weak_ref session in
   try session.errw y ewt; 0
@@ -656,67 +650,15 @@ let call_errh session details =
                    "This exception will not be propagated: " ^
                    Printexc.to_string e)
 
-let call_precsolvefn session jac r z delta =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | SpilsCallback { Spils.prec_solve_fn = f } ->
-    adjust_retcode session true (f jac r z) delta
-  | _ -> assert false
-
-let call_precsetupfn session jac =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | SpilsCallback { Spils.prec_setup_fn = Some f } ->
-      adjust_retcode session true f jac
-  | _ -> assert false
-
-let call_jactimesfn session jac r z =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | SpilsCallback { Spils.jac_times_vec_fn = Some f } ->
-      adjust_retcode session true (f jac r) z
-  | _ -> assert false
-
-let call_linit session =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | AlternateCallback { linit = Some f } ->
-      adjust_retcode session false f session
-  | _ -> assert false
-
-let call_lsetup session yyp ypp resp tmp =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | AlternateCallback { lsetup = Some f } ->
-      adjust_retcode session true (f session yyp ypp resp) tmp
-  | _ -> assert false
-
-let call_lsolve session b weight ycur y'cur rescur =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | AlternateCallback { lsolve = f } ->
-      adjust_retcode session true (f session b weight ycur y'cur) rescur
-  | _ -> assert false
-
 (* Let C code know about some of the values in this module.  *)
-type fcn = Fcn : 'a -> fcn
-external c_init_module : fcn array -> exn array -> unit =
+external c_init_module : 'fcns -> exn array -> unit =
   "c_ida_init_module"
 
 let _ =
   c_init_module
     (* Functions must be listed in the same order as
        callback_index in ida_ml.c.  *)
-    [|Fcn call_resfn;
-      Fcn call_errh;
-      Fcn call_errw;
-      Fcn call_precsetupfn;
-      Fcn call_precsolvefn;
-      Fcn call_jactimesfn;
-      Fcn call_linit;
-      Fcn call_lsetup;
-      Fcn call_lsolve;
-    |]
+    (call_errh, call_errw)
 
     (* Exceptions must be listed in the same order as
        ida_exn_index.  *)

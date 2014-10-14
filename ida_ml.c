@@ -68,15 +68,8 @@
 
 
 enum callback_index {
-    IX_call_resfn = 0,
-    IX_call_errh,
+    IX_call_errh = 0,
     IX_call_errw,
-    IX_call_precsetupfn,
-    IX_call_precsolvefn,
-    IX_call_jactimesfn,
-    IX_call_linit,
-    IX_call_lsetup,
-    IX_call_lsolve,
     NUM_CALLBACKS
 };
 
@@ -160,21 +153,21 @@ static int resfn (realtype t, N_Vector y, N_Vector yp,
 		  N_Vector resval, void *user_data)
 {
     CAMLparam0 ();
-    CAMLlocalN (args, 5);
-    int r;
-    value *backref = user_data;
+    CAMLlocalN (args, 4);
+    CAMLlocal3 (session, r, cb);
 
-    args[0] = *backref;
-    args[1] = caml_copy_double(t);
-    args[2] = NVEC_BACKLINK (y);
-    args[3] = NVEC_BACKLINK (yp);
-    args[4] = NVEC_BACKLINK (resval);
+    args[0] = caml_copy_double(t);
+    args[1] = NVEC_BACKLINK (y);
+    args[2] = NVEC_BACKLINK (yp);
+    args[3] = NVEC_BACKLINK (resval);
 
-    r = Int_val (caml_callbackN (CAML_FN(call_resfn),
-				 sizeof (args) / sizeof (*args),
-				 args));
+    WEAK_DEREF (session, *(value*)user_data);
 
-    CAMLreturnT (int, r);
+    r = caml_callbackN_exn (IDA_RESFN_FROM_ML (session),
+			    sizeof (args) / sizeof (*args),
+			    args);
+
+    CAMLreturnT (int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
 static value make_jac_arg(realtype t, realtype coef, N_Vector y, N_Vector yp,
@@ -226,11 +219,12 @@ static int jacfn (long int neq, realtype t, realtype coef,
     CAMLparam0 ();
     CAMLlocalN (args, 2);
     CAMLlocal4(session, cb, dmat, r);
-    value *backref = user_data;
-    WEAK_DEREF (session, *backref);
 
-    // assert(session.ls_callbacks = DenseCallback cb)
-    cb = Field(IDA_LS_CALLBACKS_FROM_ML(session), 0);
+    WEAK_DEREF (session, *(value*)user_data);
+
+    cb = IDA_LS_CALLBACKS_FROM_ML(session);
+    cb = Field (cb, 0);
+
     dmat = Field(cb, 1);
     if (dmat == Val_none) {
 	Store_some(dmat, c_dls_dense_wrap(jac, 0));
@@ -254,11 +248,11 @@ static int bandjacfn (long int neq, long int mupper, long int mlower,
     CAMLparam0 ();
     CAMLlocalN (args, 3);
     CAMLlocal4(session, cb, bmat, r);
-    value *backref = user_data;
-    WEAK_DEREF (session, *backref);
 
-    // assert(session.ls_callbacks = BandCallback cb)
-    cb = Field(IDA_LS_CALLBACKS_FROM_ML(session), 0);
+    WEAK_DEREF (session, *(value*)user_data);
+    cb = IDA_LS_CALLBACKS_FROM_ML(session);
+    cb = Field (cb, 0);
+
     bmat = Field(cb, 1);
     if (bmat == Val_none) {
 	Store_some(bmat, c_dls_band_wrap(jac, 0));
@@ -283,17 +277,9 @@ static int rootsfn (realtype t, N_Vector y, N_Vector yp,
     CAMLparam0 ();
     CAMLlocal2 (session, r);
     CAMLlocalN (args, 4);
-    value *backref = (value *)user_data;
     intnat nroots;
 
-    /* The length of gout is only available at the nroots field of the session
-     * structure, so a dereference of the backref is unavoidable.  Therefore,
-     * we will do all of the setup here and directly call the user-supplied
-     * OCaml function without going through an OCaml trampoline.  */
-    session = sundials_ml_weak_get (*backref, Val_int (0));
-    if (!Is_block (session))
-	caml_failwith ("Internal error: weak reference is dead");
-    session = Field (session, 0);
+    WEAK_DEREF (session, *(value*)user_data);
 
     nroots = IDA_NROOTS_FROM_ML (session);
 
@@ -327,30 +313,29 @@ static int errw(N_Vector y, N_Vector ewt, void *user_data)
     CAMLreturnT(int, r);
 }
 
-static int precsetupfn(
-    realtype t,
-    N_Vector y,
-    N_Vector yp,
-    N_Vector res,
-    realtype cj,
-    void *user_data,
-    N_Vector tmp1,
-    N_Vector tmp2,
-    N_Vector tmp3)
+static int precsetupfn(realtype t,
+		       N_Vector y,
+		       N_Vector yp,
+		       N_Vector res,
+		       realtype cj,
+		       void *user_data,
+		       N_Vector tmp1,
+		       N_Vector tmp2,
+		       N_Vector tmp3)
 {
     CAMLparam0();
-    CAMLlocalN(args, 2);
-    int r;
-    value *backref = user_data;
+    CAMLlocal4(session, r, cb, arg);
 
-    args[0] = *backref;
-    args[1] = make_jac_arg(t, cj, y, yp, res,
-			   make_triple_tmp(tmp1, tmp2, tmp3));
-    r = Int_val (caml_callbackN (CAML_FN(call_precsetupfn),
-				 sizeof (args) / sizeof (*args),
-				 args));
+    WEAK_DEREF (session, *(value*)user_data);
+    cb = IDA_LS_CALLBACKS_FROM_ML (session);
+    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_IDA_SPILS_CALLBACKS_PREC_SETUP_FN);
+    cb = Field (cb, 0);
 
-    CAMLreturnT(int, r);
+    arg = make_jac_arg(t, cj, y, yp, res, make_triple_tmp(tmp1, tmp2, tmp3));
+    r = caml_callback_exn (cb, arg);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
 static int precsolvefn(
@@ -358,7 +343,7 @@ static int precsolvefn(
 	N_Vector y,
 	N_Vector yp,
 	N_Vector res,
-	N_Vector r,
+	N_Vector rvec,
 	N_Vector z,
 	realtype cj,
 	realtype delta,
@@ -366,21 +351,22 @@ static int precsolvefn(
 	N_Vector tmp)
 {
     CAMLparam0();
-    CAMLlocalN(args, 5);
-    value *backref = user_data;
-    int rv;
+    CAMLlocalN(args, 4);
+    CAMLlocal3(session, r, cb);
 
-    args[0] = *backref;
-    args[1] = make_jac_arg(t, cj, y, yp, res, NVEC_BACKLINK (tmp));
-    args[2] = NVEC_BACKLINK (r);
-    args[3] = NVEC_BACKLINK (z);
-    args[4] = caml_copy_double (delta);
+    args[0] = make_jac_arg(t, cj, y, yp, res, NVEC_BACKLINK (tmp));
+    args[1] = NVEC_BACKLINK (rvec);
+    args[2] = NVEC_BACKLINK (z);
+    args[3] = caml_copy_double (delta);
 
-    rv = Int_val (caml_callbackN (CAML_FN(call_precsolvefn),
-				  sizeof (args) / sizeof (*args),
-				  args));
+    WEAK_DEREF (session, *(value*)user_data);
+    cb = IDA_LS_CALLBACKS_FROM_ML (session);
+    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_IDA_SPILS_CALLBACKS_PREC_SOLVE_FN);
 
-    CAMLreturnT (int, rv);
+    r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+
+    CAMLreturnT (int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
 static int jactimesfn(
@@ -395,31 +381,36 @@ static int jactimesfn(
     N_Vector tmp1, N_Vector tmp2)
 {
     CAMLparam0();
-    CAMLlocalN(args, 4);
-    int r;
-    value *backref = user_data;
+    CAMLlocalN(args, 3);
+    CAMLlocal3(session, r, cb);
 
-    args[0] = *backref;
-    args[1] = make_jac_arg (t, cj, y, yp, res, make_double_tmp (tmp1, tmp2));
-    args[2] = NVEC_BACKLINK (v);
-    args[3] = NVEC_BACKLINK (Jv);
+    args[0] = make_jac_arg (t, cj, y, yp, res, make_double_tmp (tmp1, tmp2));
+    args[1] = NVEC_BACKLINK (v);
+    args[2] = NVEC_BACKLINK (Jv);
 
-    r = Int_val (caml_callbackN (CAML_FN(call_jactimesfn),
-				 sizeof (args) / sizeof (*args),
-				 args));
+    WEAK_DEREF (session, *(value*)user_data);
+    cb = IDA_LS_CALLBACKS_FROM_ML (session);
+    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_IDA_SPILS_CALLBACKS_JAC_TIMES_VEC_FN);
+    r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
 
-    CAMLreturnT (int, r);
+    CAMLreturnT (int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }
 
 static int linit(IDAMem ida_mem)
 {
     CAMLparam0();
-    int r;
-    value *backref = ida_mem->ida_user_data;
+    CAMLlocal3(session, r, cb);
 
-    r = Int_val (caml_callback(CAML_FN(call_linit), *backref));
+    WEAK_DEREF (session, *(value*)ida_mem->ida_user_data);
+    cb = IDA_LS_CALLBACKS_FROM_ML (session);
+    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_IDA_ALTERNATE_CALLBACKS_LINIT);
+    cb = Field (cb, 0);
 
-    CAMLreturnT(int, r);
+    r = caml_callback_exn (cb, session);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }
 
 static int lsetup(IDAMem ida_mem, N_Vector yyp, N_Vector ypp, N_Vector resp,
@@ -427,20 +418,24 @@ static int lsetup(IDAMem ida_mem, N_Vector yyp, N_Vector ypp, N_Vector resp,
 {
     CAMLparam0();
     CAMLlocalN(args, 5);
-    int r;
-    value *backref = ida_mem->ida_user_data;
+    CAMLlocal3(session, r, cb);
 
-    args[0] = *backref;
+    WEAK_DEREF (session, *(value*)ida_mem->ida_user_data);
+
+    args[0] = session;
     args[1] = NVEC_BACKLINK(yyp);
     args[2] = NVEC_BACKLINK(ypp);
     args[3] = NVEC_BACKLINK(resp);
     args[4] = make_triple_tmp(tmp1, tmp2, tmp3);
 
-    r = Int_val (caml_callbackN(CAML_FN(call_lsetup),
-				sizeof (args) / sizeof (*args),
-				args));
+    cb = IDA_LS_CALLBACKS_FROM_ML (session);
+    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_IDA_ALTERNATE_CALLBACKS_LSETUP);
+    cb = Field (cb, 0);
 
-    CAMLreturnT(int, r);
+    r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
 static int lsolve(IDAMem ida_mem, N_Vector b, N_Vector weight, N_Vector ycur,
@@ -448,21 +443,24 @@ static int lsolve(IDAMem ida_mem, N_Vector b, N_Vector weight, N_Vector ycur,
 {
     CAMLparam0();
     CAMLlocalN(args, 6);
-    int r;
-    value *backref = ida_mem->ida_user_data;
+    CAMLlocal3(session, r, cb);
 
-    args[0] = *backref;
+    WEAK_DEREF (session, *(value*)ida_mem->ida_user_data);
+
+    args[0] = session;
     args[1] = NVEC_BACKLINK(b);
     args[2] = NVEC_BACKLINK(weight);
     args[3] = NVEC_BACKLINK(ycur);
     args[4] = NVEC_BACKLINK(ypcur);
     args[5] = NVEC_BACKLINK(rescur);
 
-    r = Int_val (caml_callbackN(CAML_FN(call_lsolve),
-				sizeof (args) / sizeof (*args),
-				args));
+    cb = IDA_LS_CALLBACKS_FROM_ML (session);
+    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_IDA_ALTERNATE_CALLBACKS_LSOLVE);
 
-    CAMLreturnT(int, r);
+    r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
 CAMLprim value c_ida_set_alternate (value vida_mem, value vhas_init,

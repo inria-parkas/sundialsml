@@ -542,10 +542,6 @@ external solve : ('a, 'k) session -> ('a, 'k) nvector -> bool -> ('a, 'k) nvecto
 
 (* Callbacks *)
 
-let call_sysfn session u fval =
-  let session = read_weak_ref session in
-  adjust_retcode session true (session.sysfn u) fval
-
 let call_errh session details =
   let session = read_weak_ref session in
   try session.errh details
@@ -562,71 +558,15 @@ let call_infoh session details =
                    "This exception will not be propagated: " ^
                    Printexc.to_string e)
 
-let call_precsolvefn session jac ps u =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | SpilsCallback { Spils.prec_solve_fn = Some f } ->
-      adjust_retcode session true (f jac ps) u
-  | _ -> assert false
-
-let call_precsetupfn session jac ps =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | SpilsCallback { Spils.prec_setup_fn = Some f } ->
-      adjust_retcode session true (f jac) ps
-  | _ -> assert false
-
-let call_jactimesfn session v jv u new_uu =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | SpilsCallback { Spils.jac_times_vec_fn = Some f } ->
-      (try (f v jv u new_uu, 0) with
-       | Sundials.RecoverableFailure -> (false, 1)
-       | e -> (session.exn_temp <- Some e; (false, -1)))
-  | _ -> assert false
-
-let call_linit session =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | AlternateCallback { linit = Some f } ->
-      adjust_retcode session false f session
-  | _ -> assert false
-
-let call_lsetup session =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | AlternateCallback { lsetup = Some f } ->
-      adjust_retcode session false f session
-  | _ -> assert false
-
-let call_lsolve session x b =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | AlternateCallback { lsolve = f } ->
-      adjust_retcode_and_option session (f session x) b
-  | _ -> assert false
-
 (* Let C code know about some of the values in this module.  *)
-type fcn = Fcn : 'a -> fcn
-external c_init_module : fcn array -> exn array -> unit =
+external c_init_module : 'fcns -> exn array -> unit =
   "c_kinsol_init_module"
 
 let _ =
   c_init_module
     (* Functions must be listed in the same order as
        callback_index in kinsol_ml.c.  *)
-    [|Fcn call_sysfn;
-      Fcn call_errh;
-      Fcn call_infoh;
-
-      Fcn call_precsolvefn;
-      Fcn call_precsetupfn;
-      Fcn call_jactimesfn;
-
-      Fcn call_linit;
-      Fcn call_lsetup;
-      Fcn call_lsolve;
-    |]
+    (call_errh, call_infoh)
 
     (* Exceptions must be listed in the same order as
        kinsol_exn_index.  *)

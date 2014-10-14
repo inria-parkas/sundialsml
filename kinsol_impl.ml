@@ -198,18 +198,6 @@ let read_weak_ref x : ('a, 'k) session =
   | Some y -> y
   | None -> raise (Failure "Internal error: weak reference is dead")
 
-let adjust_retcode = fun session check_recoverable f x ->
-  try f x; 0
-  with
-  | Sundials.RecoverableFailure when check_recoverable -> 1
-  | e -> (session.exn_temp <- Some e; -1)
-
-let adjust_retcode_and_option = fun session f x ->
-  try (f x, 0)
-  with
-  | Sundials.RecoverableFailure -> (None, 1)
-  | e -> (session.exn_temp <- Some e; (None, -1))
-
 (* Dummy callbacks.  These dummes getting called indicates a fatal
    bug.  Rather than raise an exception (which may or may not get
    propagated properly depending on the context), we immediately abort

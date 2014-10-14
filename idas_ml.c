@@ -49,22 +49,10 @@
 
 #define MAX_ERRMSG_LEN 256
 
-enum callback_index {
-    IX_call_quadrhsfn = 0,
-    IX_call_bquadrhsfn,
-    IX_call_bprecsetupfn,
-    IX_call_bprecsolvefn,
-    IX_call_bjactimesfn,
-    NUM_CALLBACKS
-};
-
-static value callbacks[NUM_CALLBACKS];
-
-CAMLprim value c_idas_init_module (value cbs, value exns)
+CAMLprim value c_idas_init_module (value exns)
 {
-    CAMLparam2 (cbs, exns);
+    CAMLparam1 (exns);
     REGISTER_EXNS (IDAS, exns);
-    REGISTER_CALLBACKS (cbs);
     CAMLreturn (Val_unit);
 }
 
@@ -305,25 +293,26 @@ static int quadrhsfn(realtype t, N_Vector y, N_Vector yp, N_Vector rhsQ,
 		     void *user_data)
 {
     CAMLparam0();
-    CAMLlocalN(args, 5);
-    int r;
-    value *backref = user_data;
+    CAMLlocalN(args, 4);
+    CAMLlocal4(session, r, cb, sensext);
 
-    args[0] = *backref;
-    args[1] = caml_copy_double(t);
-    args[2] = NVEC_BACKLINK(y);
-    args[3] = NVEC_BACKLINK(yp);
-    args[4] = NVEC_BACKLINK(rhsQ);
+    args[0] = caml_copy_double(t);
+    args[1] = NVEC_BACKLINK(y);
+    args[2] = NVEC_BACKLINK(yp);
+    args[3] = NVEC_BACKLINK(rhsQ);
+
+    WEAK_DEREF (session, *(value*)user_data);
+    sensext = IDA_SENSEXT_FROM_ML (session);
 
     // the data payloads inside args[2] and args[3] are only valid during
     // this call, afterward that memory goes back to cvode. These bigarrays
     // must not be retained by closure_quadrhsfn! If it wants a permanent
     // copy, then it has to make it manually.
-    r = Int_val (caml_callbackN(CAML_FN(call_quadrhsfn),
-                                sizeof (args) / sizeof (*args),
-                                args));
+    r = caml_callbackN_exn (IDAS_QUADRHSFN_FROM_EXT (sensext),
+			    sizeof (args) / sizeof (*args),
+			    args);
 
-    CAMLreturnT(int, r);
+    CAMLreturnT (int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
 
@@ -338,8 +327,6 @@ static int sensresfn(int Ns, realtype t,
     CAMLlocalN(args, 10);
     value *backref = user_data;
 
-    /* We need to dereference on the C side, so that we can get access to
-     * the values used to pass arrays of nvectors. */
     WEAK_DEREF (session, *backref);
     sensext = IDA_SENSEXT_FROM_ML(session);
 
@@ -377,11 +364,8 @@ static int quadsensrhsfn(int ns, realtype t, N_Vector yy, N_Vector yp,
     CAMLparam0();
     CAMLlocal3(session, sensext, r);
     CAMLlocalN(args, 10);
-    value *backref = user_data;
 
-    /* We need to dereference on the C side, so that we can get access to
-     * the values used to pass arrays of nvectors. */
-    WEAK_DEREF (session, *backref);
+    WEAK_DEREF (session, *(value*)user_data);
     sensext = IDA_SENSEXT_FROM_ML(session);
 
     args[0] = caml_copy_double(t);
@@ -412,16 +396,13 @@ static int quadsensrhsfn(int ns, realtype t, N_Vector yy, N_Vector yp,
 
 static int bresfn(realtype t, N_Vector y, N_Vector yp,
 		  N_Vector yB, N_Vector ypB,
-		  N_Vector resvalB, void *user_dataB)
+		  N_Vector resvalB, void *user_data)
 {
     CAMLparam0();
     CAMLlocal3(session, bsensext, r);
     CAMLlocalN(args, 6);
-    value *backref = user_dataB;
 
-    /* We need to dereference on the C side, so that we can get access to
-     * the values used to pass arrays of nvectors. */
-    WEAK_DEREF (session, *backref);
+    WEAK_DEREF (session, *(value*)user_data);
     bsensext = IDA_SENSEXT_FROM_ML(session);
 
     args[0] = caml_copy_double (t);
@@ -445,17 +426,14 @@ static int bresfn(realtype t, N_Vector y, N_Vector yp,
 static int bresfn_sens(realtype t, N_Vector y, N_Vector yp,
 		       N_Vector *yS, N_Vector *ypS,
 		       N_Vector yB, N_Vector ypB,
-		       N_Vector resvalB, void *user_dataB)
+		       N_Vector resvalB, void *user_data)
 {
     CAMLparam0();
     CAMLlocal3(session, bsensext, r);
     CAMLlocalN(args, 8);
-    value *backref = user_dataB;
     int ns;
 
-    /* We need to dereference on the C side, so that we can get access to
-     * the values used to pass arrays of nvectors. */
-    WEAK_DEREF (session, *backref);
+    WEAK_DEREF (session, *(value*)user_data);
     bsensext = IDA_SENSEXT_FROM_ML(session);
     ns = Int_val(Field(bsensext, RECORD_IDAS_BWD_SESSION_NUMSENSITIVITIES));
 
@@ -485,23 +463,24 @@ static int bresfn_sens(realtype t, N_Vector y, N_Vector yp,
 static int bprecsetupfn(realtype t, N_Vector yy, N_Vector yp,
 			N_Vector yB, N_Vector ypB,
 			N_Vector resvalB,
-			realtype cjB, void *user_dataB,
+			realtype cjB, void *user_data,
 			N_Vector tmp1B, N_Vector tmp2B, N_Vector tmp3B)
 {
     CAMLparam0();
-    CAMLlocalN(args, 2);
-    value *backref = user_dataB;
-    int retcode;
+    CAMLlocal4(session, r, cb, arg);
 
-    args[0] = *backref;
-    args[1] = make_adj_jac_arg(t, yy, yp, yB, ypB, resvalB, cjB,
-			       make_triple_tmp(tmp1B, tmp2B, tmp3B));
+    arg = make_adj_jac_arg(t, yy, yp, yB, ypB, resvalB, cjB,
+			   make_triple_tmp(tmp1B, tmp2B, tmp3B));
 
-    retcode = Int_val (caml_callbackN(CAML_FN(call_bprecsetupfn),
-				      sizeof (args) / sizeof (*args),
-				      args));
+    WEAK_DEREF (session, *(value*)user_data);
+    cb = IDA_LS_CALLBACKS_FROM_ML (session);
+    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_IDAS_BSPILS_CALLBACKS_PREC_SETUP_FN);
+    cb = Field (cb, 0);
 
-    CAMLreturnT(int, retcode);
+    r = caml_callback_exn (cb, arg);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
 static int bprecsolvefn(realtype t, N_Vector yy, N_Vector yp,
@@ -509,67 +488,69 @@ static int bprecsolvefn(realtype t, N_Vector yy, N_Vector yp,
 			N_Vector resvalB,
 			N_Vector rvecB, N_Vector zvecB,
 			realtype cjB, realtype deltaB,
-			void *user_dataB, N_Vector tmpB)
+			void *user_data, N_Vector tmpB)
 {
     CAMLparam0();
-    CAMLlocalN(args, 5);
-    int retcode;
-    value *backref = user_dataB;
+    CAMLlocalN(args, 4);
+    CAMLlocal3(session, r, cb);
 
-    args[0] = *backref;
-    args[1] = make_adj_jac_arg(t, yy, yp, yB, ypB, resvalB, cjB,
+    args[0] = make_adj_jac_arg(t, yy, yp, yB, ypB, resvalB, cjB,
 			       NVEC_BACKLINK(tmpB));
-    args[2] = NVEC_BACKLINK (rvecB);
-    args[3] = NVEC_BACKLINK (zvecB);
-    args[4] = caml_copy_double (deltaB);
+    args[1] = NVEC_BACKLINK (rvecB);
+    args[2] = NVEC_BACKLINK (zvecB);
+    args[3] = caml_copy_double (deltaB);
 
-    retcode = Int_val (caml_callbackN(CAML_FN(call_bprecsolvefn),
-                                      sizeof (args) / sizeof (*args),
-                                      args));
+    WEAK_DEREF (session, *(value*)user_data);
+    cb = IDA_LS_CALLBACKS_FROM_ML (session);
+    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_IDAS_BSPILS_CALLBACKS_PREC_SOLVE_FN);
 
-    CAMLreturnT(int, retcode);
+    r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
 static int bjactimesfn(realtype t, N_Vector yy, N_Vector yp,
 		       N_Vector yyB, N_Vector ypB,
 		       N_Vector resvalB,
 		       N_Vector vB, N_Vector JvB,
-		       realtype cjB, void *user_dataB,
+		       realtype cjB, void *user_data,
 		       N_Vector tmp1B, N_Vector tmp2B)
 {
     CAMLparam0();
     CAMLlocalN(args, 4);
-    int retcode;
-    value *backref = user_dataB;
+    CAMLlocal3(session, r, cb);
 
-    args[0] = *backref;
-    args[1] = make_adj_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
+    args[0] = make_adj_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
 			       make_double_tmp (tmp1B, tmp2B));
-    args[2] = NVEC_BACKLINK(vB);
-    args[3] = NVEC_BACKLINK(JvB);
+    args[1] = NVEC_BACKLINK(vB);
+    args[2] = NVEC_BACKLINK(JvB);
 
-    retcode = Int_val (caml_callbackN(CAML_FN(call_bjactimesfn),
-                                      sizeof (args) / sizeof (*args),
-                                      args));
+    WEAK_DEREF (session, *(value*)user_data);
+    cb = IDA_LS_CALLBACKS_FROM_ML (session);
+    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_IDAS_BSPILS_CALLBACKS_JAC_TIMES_VEC_FN);
 
-    CAMLreturnT(int, retcode);
+    r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }
 
 static int bjacfn(long int NeqB, realtype t,
 		  realtype cjB, N_Vector yy, N_Vector yp,
 		  N_Vector yyB, N_Vector ypB,
 		  N_Vector resvalB,
-		  DlsMat JacB, void *user_dataB,
+		  DlsMat JacB, void *user_data,
 		  N_Vector tmp1B, N_Vector tmp2B, N_Vector tmp3B)
 {
     CAMLparam0();
     CAMLlocalN(args, 2);
     CAMLlocal4(session, cb, dmat, r);
-    value *backref = user_dataB;
-    WEAK_DEREF (session, *backref);
 
-    // assert(session.ls_callbacks = BDenseCallback cb)
-    cb = Field(IDA_LS_CALLBACKS_FROM_ML(session), 0);
+    WEAK_DEREF (session, *(value*)user_data);
+    cb = IDA_LS_CALLBACKS_FROM_ML(session);
+    cb = Field (cb, 0);
+
     dmat = Field(cb, 1);
     if (dmat == Val_none) {
 	Store_some(dmat, c_dls_dense_wrap(JacB, 0));
@@ -590,17 +571,17 @@ static int bbandjacfn(long int NeqB, long int mupperb, long int mlowerb,
 		      N_Vector yy, N_Vector yp,
 		      N_Vector yyB, N_Vector ypB,
 		      N_Vector resvalB, DlsMat JacB,
-		      void *user_dataB,
+		      void *user_data,
 		      N_Vector tmp1B, N_Vector tmp2B, N_Vector tmp3B)
 {
     CAMLparam0();
     CAMLlocalN(args, 3);
     CAMLlocal4(session, cb, bmat, r);
-    value *backref = user_dataB;
-    WEAK_DEREF (session, *backref);
 
-    // assert(session.ls_callbacks = BandCallback cb)
-    cb = Field(IDA_LS_CALLBACKS_FROM_ML(session), 0);
+    WEAK_DEREF (session, *(value*)user_data);
+    cb = IDA_LS_CALLBACKS_FROM_ML(session);
+    cb = Field(cb, 0);
+
     bmat = Field(cb, 1);
     if (bmat == Val_none) {
 	Store_some(bmat, c_dls_band_wrap(JacB, 0));
@@ -624,30 +605,30 @@ static int bquadrhsfn(realtype t, N_Vector y, N_Vector yp,
 		      N_Vector rhsvalBQ, void *user_data)
 {
     CAMLparam0();
-    CAMLlocalN(args, 7);
-    int r;
-    value *backref = user_data;
+    CAMLlocalN(args, 6);
+    CAMLlocal3(session, sensext, r);
 
-    args[0] = *backref;
-    args[1] = caml_copy_double(t);
-    args[2] = NVEC_BACKLINK(y);
-    args[3] = NVEC_BACKLINK(yp);
-    args[4] = NVEC_BACKLINK(yB);
-    args[5] = NVEC_BACKLINK(ypB);
-    args[6] = NVEC_BACKLINK(rhsvalBQ);
+    args[0] = caml_copy_double(t);
+    args[1] = NVEC_BACKLINK(y);
+    args[2] = NVEC_BACKLINK(yp);
+    args[3] = NVEC_BACKLINK(yB);
+    args[4] = NVEC_BACKLINK(ypB);
+    args[5] = NVEC_BACKLINK(rhsvalBQ);
+
+    WEAK_DEREF (session, *(value*)user_data);
+    sensext = IDA_SENSEXT_FROM_ML (session);
 
     // The data payloads inside args[2..4] are only valid during this call,
     // afterward that memory goes back to cvode. These bigarrays must not be
     // retained by closure_quadrhsfn! If it wants a permanent copy, then it
     // has to make it manually.
-    r = Int_val (caml_callbackN(CAML_FN(call_bquadrhsfn),
-                                sizeof (args) / sizeof (*args),
-                                args));
+    r = caml_callbackN_exn (IDAS_BQUADRHSFN_FROM_EXT (sensext),
+			    sizeof (args) / sizeof (*args),
+			    args);
 
-    CAMLreturnT(int, r);
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
-/* FIXME: rename to quadrhsfnbs */
 static int bquadrhsfn_sens(realtype t, N_Vector y, N_Vector yp,
 			   N_Vector *yS, N_Vector *ypS,
 			   N_Vector yB, N_Vector ypB,
@@ -657,11 +638,8 @@ static int bquadrhsfn_sens(realtype t, N_Vector y, N_Vector yp,
     CAMLlocalN(args, 8);
     CAMLlocal3(session, sensext, r);
     int ns;
-    value *backref = user_data;
 
-    /* We need to dereference on the C side, so that we can get access to
-     * the values used to pass arrays of nvectors. */
-    WEAK_DEREF (session, *backref);
+    WEAK_DEREF (session, *(value*)user_data);
     sensext = IDA_SENSEXT_FROM_ML(session);
     ns = Int_val(Field(sensext, RECORD_IDAS_BWD_SESSION_NUMSENSITIVITIES));
 
@@ -680,9 +658,9 @@ static int bquadrhsfn_sens(realtype t, N_Vector y, N_Vector yp,
     // afterward that memory goes back to cvode. These bigarrays must not be
     // retained by closure_quadrhsfn! If it wants a permanent copy, then it
     // has to make it manually.
-    r = caml_callbackN(IDAS_BQUADRHSFN_SENS_FROM_EXT(sensext),
-                       sizeof (args) / sizeof (*args),
-                       args);
+    r = caml_callbackN_exn(IDAS_BQUADRHSFN_SENS_FROM_EXT(sensext),
+			   sizeof (args) / sizeof (*args),
+			   args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }

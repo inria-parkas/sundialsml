@@ -138,7 +138,7 @@ enum sundials_exn_index {
 	int _i;								\
 	assert (Wosize_val (cbs) == NUM_CALLBACKS);			\
 	for (_i = 0; _i < NUM_CALLBACKS; ++_i) {			\
-	    callbacks[_i] = Field (Field (cbs, _i), 0);			\
+	    callbacks[_i] = Field (cbs, _i);				\
 	    caml_register_generational_global_root (&callbacks[_i]);	\
 	}								\
     } while (0)

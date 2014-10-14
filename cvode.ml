@@ -638,12 +638,6 @@ external get_num_g_evals                : ('a, 'k) session -> int
 
 (* Callbacks *)
 
-let call_rhsfn session t y y' =
-  let session = read_weak_ref session in
-  adjust_retcode session true (session.rhsfn t y) y'
-
-(* the roots function is called directly from C. *)
-
 let call_errw session y ewt =
   let session = read_weak_ref session in
   try session.errw y ewt; 0
@@ -659,70 +653,15 @@ let call_errh session details =
                    "This exception will not be propagated: " ^
                    Printexc.to_string e)
 
-let call_precsolvefn session jac r z =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | SpilsCallback { Spils.prec_solve_fn = f } ->
-      adjust_retcode session true (f jac r) z
-  | _ -> assert false
-
-let call_precsetupfn session jac jok gamma =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | SpilsCallback { Spils.prec_setup_fn = Some f } ->
-      adjust_retcode_and_bool session (f jac jok) gamma
-  | _ -> assert false
-
-let call_jactimesfn session jac v jv =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | SpilsCallback { Spils.jac_times_vec_fn = Some f }
-  | SpilsBandCallback (Some f) ->
-      adjust_retcode session true (f jac v) jv
-  | _ -> assert false
-
-let call_linit session =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | AlternateCallback { linit = Some f } ->
-      adjust_retcode session false f session
-  | _ -> assert false
-
-let call_lsetup session convfail ypred fpred tmp =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | AlternateCallback { lsetup = Some f } ->
-      adjust_retcode_and_bool session (f session convfail ypred fpred) tmp
-  | _ -> assert false
-
-let call_lsolve session b weight ycur fcur =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | AlternateCallback { lsolve = f } ->
-      adjust_retcode session true (f session b weight ycur) fcur
-  | _ -> assert false
-
 (* Let C code know about some of the values in this module.  *)
-type fcn = Fcn : 'a -> fcn
-external c_init_module : fcn array -> exn array -> unit =
+external c_init_module : 'fcns -> exn array -> unit =
   "c_cvode_init_module"
 
 let _ =
   c_init_module
     (* Functions must be listed in the same order as
        callback_index in cvode_ml.c.  *)
-    [|Fcn call_rhsfn;
-      Fcn call_errw;
-      Fcn call_errh;
-
-      Fcn call_precsolvefn;
-      Fcn call_precsetupfn;
-      Fcn call_jactimesfn;
-
-      Fcn call_linit;
-      Fcn call_lsetup;
-      Fcn call_lsolve;
-    |]
+    (call_errw, call_errh)
 
     (* Exceptions must be listed in the same order as
        cvode_exn_index.  *)

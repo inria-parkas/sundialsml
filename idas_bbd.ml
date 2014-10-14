@@ -32,20 +32,6 @@ type callbacks =
     comm_fn : comm_fn option;
   }
 
-let call_bbbdlocal session t y y' yb y'b glocal =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | BBBDCallback { Impl.local_fn = f } ->
-      adjust_retcode session true (f t y y' yb y'b) glocal
-  | _ -> assert false
-
-let call_bbbdcomm session t y y' yb y'b =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | BBBDCallback { Impl.comm_fn = Some f } ->
-      adjust_retcode session true (f t y y' yb) y'b
-  | _ -> assert false
-
 let bbd_callbacks { local_fn; comm_fn } =
   { Impl.local_fn = local_fn; Impl.comm_fn = comm_fn }
 
@@ -80,17 +66,3 @@ let reinit bs ?(dqrely=0.0) mudq mldq =
 
 let get_work_space bs = Ida_bbd.get_work_space (tosession bs)
 let get_num_gfn_evals bs = Ida_bbd.get_num_gfn_evals (tosession bs)
-
-
-(* Let C code know about some of the values in this module.  *)
-type fcn = Fcn : 'a -> fcn
-external c_init_module : fcn array -> unit =
-  "c_idas_bbd_init_module"
-
-let _ =
-  c_init_module
-    (* Functions must be listed in the same order as
-       callback_index in idas_bbd_ml.c.  *)
-    [|Fcn call_bbbdlocal;
-      Fcn call_bbbdcomm;
-    |]

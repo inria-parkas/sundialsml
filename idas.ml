@@ -1059,62 +1059,12 @@ module Adjoint =
       end
   end
 
-(* Callbacks *)
-
-let call_quadrhsfn session t y y' rhsQ =
-  let (session, fwdsensext) = read_weak_fwd_ref session in
-  adjust_retcode session (fwdsensext.quadrhsfn t y y') rhsQ
-
-(* fwdsensext.quadsensrhsfn is called directly from C *)
-
-(* bwdsensext.resfnb is called directly from C *)
-
-(* bwdsensext.resfnbs is called directly from C *)
-
-let call_bquadrhsfn session t y y' yb y'b rhsvalbq =
-  let (session, bwdsensext) = read_weak_bwd_ref session in
-  adjust_retcode session (bwdsensext.bquadrhsfn t y y' yb y'b) rhsvalbq
-
-(* bwdsensext.bquadrhsfn1 is called directly from C *)
-
-let call_bprecsetupfn session jac =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | BSpilsCallback { Adjoint.Spils.prec_setup_fn = Some f } ->
-      adjust_retcode session f jac
-  | _ -> assert false
-
-let call_bprecsolvefn session jac rvec zvec deltab =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | BSpilsCallback { Adjoint.Spils.prec_solve_fn = f } ->
-      adjust_retcode session (f jac rvec zvec) deltab
-  | _ -> assert false
-
-let call_bjactimesfn session jac vB jvB =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | BSpilsCallback { Adjoint.Spils.jac_times_vec_fn = Some f } ->
-      adjust_retcode session (f jac vB) jvB
-  | _ -> assert false
-
-(* fwdsensext.sensrhsfn is called directly from C *)
-
 (* Let C code know about some of the values in this module.  *)
-type fcn = Fcn : 'a -> fcn
-external c_init_module : fcn array -> exn array -> unit =
+external c_init_module : exn array -> unit =
   "c_idas_init_module"
 
 let _ =
   c_init_module
-    (* Functions must be listed in the same order as
-       callback_index in idas_ml.c.  *)
-    [|Fcn call_quadrhsfn;
-      Fcn call_bquadrhsfn;
-      Fcn call_bprecsetupfn;
-      Fcn call_bprecsolvefn;
-      Fcn call_bjactimesfn;
-    |]
 
     (* Exceptions must be listed in the same order as
        idas_exn_index.  *)

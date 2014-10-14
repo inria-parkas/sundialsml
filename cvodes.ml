@@ -1046,103 +1046,12 @@ module Adjoint =
   end
 
 
-(* Callbacks *)
-
-let read_weak_ref x : ('a, 'kind) session =
-  match Weak.get x 0 with
-  | Some y -> y
-  | None -> raise (Failure "Internal error: weak reference is dead")
-
-let read_weak_fwd_ref x =
-  let y = read_weak_ref x in
-  match y.sensext with
-  | FwdSensExt se -> (y, se)
-  | _ -> raise (Failure "Internal error: not forward extension")
-
-let read_weak_bwd_ref x =
-  let y = read_weak_ref x in
-  match y.sensext with
-  | BwdSensExt se -> (y, se)
-  | _ -> raise (Failure "Internal error: not backward extension")
-
-let adjust_retcode = fun session f x ->
-  try f x; 0
-  with
-  | Sundials.RecoverableFailure -> 1
-  | e -> (session.exn_temp <- Some e; -1)
-
-let adjust_retcode_and_bool = fun session f x ->
-  try (f x, 0)
-  with
-  | Sundials.RecoverableFailure -> (false, 1)
-  | e -> (session.exn_temp <- Some e; (false, -1))
-
-let call_quadrhsfn session t y yqdot =
-  let (session, fwdsensext) = read_weak_fwd_ref session in
-  adjust_retcode session (fwdsensext.quadrhsfn t y) yqdot
-
-(* fwdsensext.sensrhsfn is called directly from C *)
-
-let call_sensrhsfn1 session t y ydot iS yS ySdot tmp1 tmp2 =
-  let (session, fwdsensext) = read_weak_fwd_ref session in
-  adjust_retcode session
-    (fwdsensext.sensrhsfn1 t y ydot iS yS ySdot tmp1) tmp2
-
-(* fwdsensext.quadsensrhsfn is called directly from C *)
-
-let call_brhsfn session t y yb ybdot =
-  let (session, bwdsensext) = read_weak_bwd_ref session in
-  adjust_retcode session (bwdsensext.brhsfn t y yb) ybdot
-
-(* bwdsensext.brhsfn1 is called directly from C *)
-
-let call_bquadrhsfn session t y yb qbdot =
-  let (session, bwdsensext) = read_weak_bwd_ref session in
-  adjust_retcode session (bwdsensext.bquadrhsfn t y yb) qbdot
-
-(* bwdsensext.bquadrhsfn1 is called directly from C *)
-
-let call_bprecsetupfn session jac jok gamma =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | BSpilsCallback { Adjoint.Spils.prec_setup_fn = Some f } ->
-      adjust_retcode_and_bool session (f jac jok) gamma
-  | _ -> assert false
-
-let call_bprecsolvefn session jac ps rvecB =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | BSpilsCallback { Adjoint.Spils.prec_solve_fn = f } ->
-      adjust_retcode session (f jac ps) rvecB
-  | _ -> assert false
-
-let call_bjactimesfn session jac vB jvB =
-  let session = read_weak_ref session in
-  match session.ls_callbacks with
-  | BSpilsCallback { Adjoint.Spils.jac_times_vec_fn = Some f }
-  | BSpilsBandCallback (Some f) ->
-      adjust_retcode session (f jac vB) jvB
-  | _ -> assert false
-
 (* Let C code know about some of the values in this module.  *)
-type fcn = Fcn : 'a -> fcn
-external c_init_module : fcn array -> exn array -> unit =
+external c_init_module : exn array -> unit =
   "c_cvodes_init_module"
 
 let _ =
   c_init_module
-    (* Functions must be listed in the same order as
-       callback_index in cvodes_ml.c.  *)
-    [|Fcn call_quadrhsfn;
-      Fcn call_sensrhsfn1;
-
-      Fcn call_brhsfn;
-      Fcn call_bquadrhsfn;
-      Fcn call_bprecsetupfn;
-      Fcn call_bprecsolvefn;
-      Fcn call_bjactimesfn;
-    |]
-
     (* Exceptions must be listed in the same order as
        cvodes_exn_index.  *)
     [|Quadrature.QuadNotInitialized;

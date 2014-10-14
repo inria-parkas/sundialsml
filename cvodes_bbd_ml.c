@@ -35,60 +35,51 @@
 
 /* callbacks */
 
-enum callback_index {
-    IX_call_bbbdlocal = 0,
-    IX_call_bbbdcomm,
-    NUM_CALLBACKS
-};
-
-static value callbacks[NUM_CALLBACKS];
-
-CAMLprim value c_cvodes_bbd_init_module (value cbs)
-{
-    CAMLparam1 (cbs);
-    REGISTER_CALLBACKS (cbs);
-    CAMLreturn (Val_unit);
-}
-
 static int bbbdlocal(long int nlocal, realtype t, N_Vector y, N_Vector yb,
 		     N_Vector glocal, void *user_data)
 {
     CAMLparam0();
-    CAMLlocalN(args, 5);
-    int r;
-    value *backref = user_data;
+    CAMLlocalN(args, 4);
+    CAMLlocal3(session, r, cb);
 
-    args[0] = *backref;
-    args[1] = caml_copy_double(t);
-    args[2] = NVEC_BACKLINK(y);
-    args[3] = NVEC_BACKLINK(yb);
-    args[4] = NVEC_BACKLINK(glocal);
+    args[0] = caml_copy_double(t);
+    args[1] = NVEC_BACKLINK(y);
+    args[2] = NVEC_BACKLINK(yb);
+    args[3] = NVEC_BACKLINK(glocal);
 
-    r = Int_val (caml_callbackN(CAML_FN(call_bbbdlocal),
-                                sizeof (args) / sizeof (*args),
-                                args));
+    WEAK_DEREF (session, *(value*)user_data);
+    cb = CVODE_LS_CALLBACKS_FROM_ML (session);
+    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_CVODES_BBBD_CALLBACKS_LOCAL_FN);
+    assert (Tag_val (cb) == Closure_tag);
 
-    CAMLreturnT(int, r);
+
+    r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
 static int bbbdcomm(long int nlocal, realtype t, N_Vector y, N_Vector yb,
 		    void *user_data)
 {
     CAMLparam0();
-    CAMLlocalN(args, 4);
-    int r;
-    value *backref = user_data;
+    CAMLlocalN(args, 3);
+    CAMLlocal3(session, r, cb);
 
-    args[0] = *backref;
-    args[1] = caml_copy_double(t);
-    args[2] = NVEC_BACKLINK(y);
-    args[3] = NVEC_BACKLINK(yb);
+    args[0] = caml_copy_double(t);
+    args[1] = NVEC_BACKLINK(y);
+    args[2] = NVEC_BACKLINK(yb);
 
-    r = Int_val (caml_callbackN(CAML_FN(call_bbbdcomm),
-                                sizeof (args) / sizeof (*args),
-                                args));
+    WEAK_DEREF (session, *(value*)user_data);
+    cb = CVODE_LS_CALLBACKS_FROM_ML (session);
+    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_CVODES_BBBD_CALLBACKS_COMM_FN);
+    cb = Field (cb, 0);
+    assert (Tag_val (cb) == Closure_tag);
 
-    CAMLreturnT(int, r);
+    r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
 CAMLprim value c_cvodes_bbd_prec_initb (value vparentwhich, value vlocaln,

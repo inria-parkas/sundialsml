@@ -86,17 +86,8 @@
 
 
 enum callback_index {
-    IX_call_rhsfn = 0,
-    IX_call_errw,
+    IX_call_errw = 0,
     IX_call_errh,
-
-    IX_call_precsolvefn,
-    IX_call_precsetupfn,
-    IX_call_jactimesfn,
-
-    IX_call_linit,
-    IX_call_lsetup,
-    IX_call_lsolve,
     NUM_CALLBACKS
 };
 
@@ -113,12 +104,11 @@ CAMLprim value c_cvode_init_module (value cbs, value exns)
 
 /* callbacks */
 
-static void errh(
-	int error_code,
-	const char *module,
-	const char *func,
-	char *msg,
-	void *eh_data)
+static void errh(int error_code,
+		 const char *module,
+		 const char *func,
+		 char *msg,
+		 void *eh_data)
 {
     CAMLparam0();
     CAMLlocal1(a);
@@ -182,20 +172,20 @@ int cvode_translate_exception (value session, value r,
 static int rhsfn(realtype t, N_Vector y, N_Vector ydot, void *user_data)
 {
     CAMLparam0();
-    CAMLlocalN(args, 4);
-    int r;
-    value *backref = user_data;
+    CAMLlocal2(session, r);
+    CAMLlocalN(args, 3);
 
-    args[0] = *backref;
-    args[1] = caml_copy_double(t);
-    args[2] = NVEC_BACKLINK(y);
-    args[3] = NVEC_BACKLINK(ydot);
+    WEAK_DEREF (session, *(value*)user_data);
 
-    r = Int_val (caml_callbackN(CAML_FN(call_rhsfn),
-                                sizeof (args) / sizeof (*args),
-                                args));
+    args[0] = caml_copy_double(t);
+    args[1] = NVEC_BACKLINK(y);
+    args[2] = NVEC_BACKLINK(ydot);
 
-    CAMLreturnT(int, r);
+    r = caml_callbackN_exn(Field(session, RECORD_CVODE_SESSION_RHSFN),
+			   sizeof (args) / sizeof (*args),
+			   args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
 static int roots(realtype t, N_Vector y, realtype *gout, void *user_data)
@@ -207,10 +197,6 @@ static int roots(realtype t, N_Vector y, realtype *gout, void *user_data)
     value *backref = user_data;
     intnat nroots;
 
-    /* The length of gout is only available at the nroots field of the session
-     * structure, so a dereference of the backref is unavoidable.  Therefore,
-     * we do all of the setup here and directly call the user-supplied OCaml
-     * function without going through an OCaml trampoline.  */
     WEAK_DEREF (session, *backref);
 
     nroots = CVODE_NROOTS_FROM_ML (session);
@@ -219,7 +205,7 @@ static int roots(realtype t, N_Vector y, realtype *gout, void *user_data)
     args[1] = NVEC_BACKLINK (y);
     args[2] = caml_ba_alloc (BIGARRAY_FLOAT, 1, gout, &nroots);
 
-    r = caml_callbackN_exn (CVODE_ROOTSFN_FROM_ML (session),
+    r = caml_callbackN_exn (Field(session, RECORD_CVODE_SESSION_ROOTSFN),
 			    sizeof (args) / sizeof (*args),
 			    args);
 
@@ -342,37 +328,42 @@ static int bandjacfn(
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
-static int precsetupfn(
-    realtype t,
-    N_Vector y,
-    N_Vector fy,
-    booleantype jok,
-    booleantype *jcurPtr,
-    realtype gamma,
-    void *user_data,
-    N_Vector tmp1,
-    N_Vector tmp2,
-    N_Vector tmp3)
+static int precsetupfn(realtype t,
+		       N_Vector y,
+		       N_Vector fy,
+		       booleantype jok,
+		       booleantype *jcurPtr,
+		       realtype gamma,
+		       void *user_data,
+		       N_Vector tmp1,
+		       N_Vector tmp2,
+		       N_Vector tmp3)
 {
     CAMLparam0();
-    CAMLlocal2(session, vr);
-    CAMLlocalN(args, 4);
-    value *backref = user_data;
+    CAMLlocal3(session, r, cb);
+    CAMLlocalN(args, 3);
 
-    args[0] = *backref;
-    args[1] = make_jac_arg(t, y, fy, make_triple_tmp(tmp1, tmp2, tmp3));
-    args[2] = Val_bool(jok);
-    args[3] = caml_copy_double(gamma);
+    WEAK_DEREF (session, *(value*)user_data);
 
-    vr = caml_callbackN(CAML_FN(call_precsetupfn),
-			sizeof (args) / sizeof (*args),
-			args);
+    args[0] = make_jac_arg(t, y, fy, make_triple_tmp(tmp1, tmp2, tmp3));
+    args[1] = Val_bool(jok);
+    args[2] = caml_copy_double(gamma);
+
+    cb = CVODE_LS_CALLBACKS_FROM_ML (session);
+    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_CVODE_SPILS_CALLBACKS_PREC_SETUP_FN);
+    cb = Some_val (cb);
+    r = caml_callbackN_exn(cb,
+			   sizeof (args) / sizeof (*args),
+			   args);
 
     /* Update jcurPtr; leave it unchanged if an error occurred.  */
-    if (Int_val (Field (vr, 1)) == 0)
-	*jcurPtr = Bool_val(Field(vr, 0));
+    if (!Is_exception_result (r)) {
+	*jcurPtr = Bool_val (r);
+	CAMLreturnT(int, 0);
+    }
 
-    CAMLreturnT(int, Int_val(Field(vr, 1)));
+    CAMLreturnT(int, cvode_translate_exception (session, r, RECOVERABLE));
 }
 
 static value make_spils_solve_arg(
@@ -401,7 +392,7 @@ static int precsolvefn(
 	realtype t,
 	N_Vector y,
 	N_Vector fy,
-	N_Vector r,
+	N_Vector rvec,
 	N_Vector z,
 	realtype gamma,
 	realtype delta,
@@ -410,59 +401,70 @@ static int precsolvefn(
 	N_Vector tmp)
 {
     CAMLparam0();
-    CAMLlocal1(rv);
-    CAMLlocalN(args, 4);
-    int retcode;
-    value *backref = user_data;
+    CAMLlocal3(session, r, cb);
+    CAMLlocalN(args, 3);
 
-    args[0] = *backref;
-    args[1] = make_jac_arg(t, y, fy, NVEC_BACKLINK(tmp));
-    args[2] = make_spils_solve_arg(r, gamma, delta, lr);
-    args[3] = NVEC_BACKLINK(z);
+    WEAK_DEREF (session, *(value*)user_data);
 
-    retcode = Int_val (caml_callbackN(CAML_FN(call_precsolvefn),
-                                      sizeof (args) / sizeof (*args),
-                                      args));
+    args[0] = make_jac_arg(t, y, fy, NVEC_BACKLINK(tmp));
+    args[1] = make_spils_solve_arg(rvec, gamma, delta, lr);
+    args[2] = NVEC_BACKLINK(z);
 
-    CAMLreturnT(int, retcode);
+    cb = CVODE_LS_CALLBACKS_FROM_ML(session);
+    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_CVODE_SPILS_CALLBACKS_PREC_SOLVE_FN);
+
+    r = caml_callbackN_exn(cb,
+			   sizeof (args) / sizeof (*args),
+			   args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
-static int jactimesfn(
-    N_Vector v,
-    N_Vector Jv,
-    realtype t,
-    N_Vector y,
-    N_Vector fy,
-    void *user_data,
-    N_Vector tmp)
+static int jactimesfn(N_Vector v,
+		      N_Vector Jv,
+		      realtype t,
+		      N_Vector y,
+		      N_Vector fy,
+		      void *user_data,
+		      N_Vector tmp)
 {
     CAMLparam0();
-    CAMLlocal1(r);
-    CAMLlocalN(args, 4);
-    int retcode;
-    value *backref = user_data;
+    CAMLlocal3(session, r, cb);
+    CAMLlocalN(args, 3);
 
-    args[0] = *backref;
-    args[1] = make_jac_arg(t, y, fy, NVEC_BACKLINK(tmp));
-    args[2] = NVEC_BACKLINK(v);
-    args[3] = NVEC_BACKLINK(Jv);
+    WEAK_DEREF (session, *(value*)user_data);
 
-    retcode = Int_val (caml_callbackN(CAML_FN(call_jactimesfn),
-                                      sizeof (args) / sizeof (*args),
-                                      args));
+    args[0] = make_jac_arg(t, y, fy, NVEC_BACKLINK(tmp));
+    args[1] = NVEC_BACKLINK(v);
+    args[2] = NVEC_BACKLINK(Jv);
 
-    CAMLreturnT(int, retcode);
+    cb = CVODE_LS_CALLBACKS_FROM_ML(session);
+    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_CVODE_SPILS_CALLBACKS_JAC_TIMES_VEC_FN);
+    cb = Some_val (cb);
+
+    r = caml_callbackN(cb,
+		       sizeof (args) / sizeof (*args),
+		       args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
 static int linit(CVodeMem cv_mem)
 {
     CAMLparam0();
-    int r;
-    value *backref = cv_mem->cv_user_data;
+    CAMLlocal3 (session, r, cb);
 
-    r = Int_val (caml_callback(CAML_FN(call_linit), *backref));
+    WEAK_DEREF (session, *(value*)cv_mem->cv_user_data);
 
-    CAMLreturnT(int, r);
+    cb = CVODE_LS_CALLBACKS_FROM_ML (session);
+    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_CVODE_ALTERNATE_CALLBACKS_LINIT);
+    cb = Some_val(cb);
+    r = caml_callback_exn(cb, session);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }
 
 static int lsetup(CVodeMem cv_mem, int convfail,
@@ -471,10 +473,10 @@ static int lsetup(CVodeMem cv_mem, int convfail,
 {
     CAMLparam0();
     CAMLlocalN(args, 5);
-    CAMLlocal1(vr);
-    value *backref = cv_mem->cv_user_data;
+    CAMLlocal3(session, r, cb);
 
-    args[0] = *backref;
+    WEAK_DEREF (session, *(value*)cv_mem->cv_user_data);
+    args[0] = session;
     switch (convfail) {
     case CV_NO_FAILURES:
 	args[1] = Val_int(VARIANT_CVODE_ALTERNATE_NO_FAILURES);
@@ -492,13 +494,20 @@ static int lsetup(CVodeMem cv_mem, int convfail,
     args[3] = NVEC_BACKLINK(fpred);
     args[4] = make_triple_tmp(tmp1, tmp2, tmp3);
 
-    vr = caml_callbackN(CAML_FN(call_lsetup), sizeof (args) / sizeof (*args), args);
+    cb = Field (session, RECORD_CVODE_SESSION_LS_CALLBACKS);
+    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_CVODE_ALTERNATE_CALLBACKS_LSETUP);
+    cb = Some_val (cb);
+
+    r = caml_callbackN_exn(cb, sizeof (args) / sizeof (*args), args);
 
     /* Update jcurPtr; leave it unchanged if an error occurred.  */
-    if (Int_val (Field (vr, 1)) == 0)
-    *jcurPtr = Bool_val(Field(vr, 0));
+    if (!Is_exception_result (r)) {
+	*jcurPtr = Bool_val(r);
+	CAMLreturnT (int, 0);
+    }
 
-    CAMLreturnT(int, Int_val(Field(vr, 1)));
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
 static int lsolve(CVodeMem cv_mem, N_Vector b, N_Vector weight, N_Vector ycur,
@@ -506,20 +515,25 @@ static int lsolve(CVodeMem cv_mem, N_Vector b, N_Vector weight, N_Vector ycur,
 {
     CAMLparam0();
     CAMLlocalN(args, 5);
-    int r;
-    value *backref = cv_mem->cv_user_data;
+    CAMLlocal3(session, r, cb);
 
-    args[0] = *backref;
+    WEAK_DEREF (session, *(value*)cv_mem->cv_user_data);
+
+    cb = Field (session, RECORD_CVODE_SESSION_LS_CALLBACKS);
+    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_CVODE_ALTERNATE_CALLBACKS_LSOLVE);
+
+    args[0] = session;
     args[1] = NVEC_BACKLINK(b);
     args[2] = NVEC_BACKLINK(weight);
     args[3] = NVEC_BACKLINK(ycur);
     args[4] = NVEC_BACKLINK(fcur);
 
-    r = Int_val (caml_callbackN(CAML_FN(call_lsolve),
-				sizeof (args) / sizeof (*args),
-				args));
+    r = caml_callbackN_exn (cb,
+			    sizeof (args) / sizeof (*args),
+			    args);
 
-    CAMLreturnT(int, r);
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
 CAMLprim value c_cvode_get_gamma(value vcvode_mem)
