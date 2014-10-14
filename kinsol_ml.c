@@ -604,14 +604,16 @@ CAMLprim value c_kinsol_dls_clear_band_jac_fn(value vdata)
 }
 
 CAMLprim value c_kinsol_spils_set_preconditioner (value vsession,
+						  value vset_precsolve,
 						  value vset_precsetup)
 {
-    CAMLparam2 (vsession, vset_precsetup);
+    CAMLparam3 (vsession, vset_precsolve, vset_precsetup);
     int flag;
     void *mem = KINSOL_MEM_FROM_ML (vsession);
+    KINSpilsPrecSolveFn solve = Bool_val (vset_precsolve) ? precsolvefn : NULL;
     KINSpilsPrecSetupFn setup = Bool_val (vset_precsetup) ? precsetupfn : NULL;
 
-    flag = KINSpilsSetPreconditioner (mem, setup, precsolvefn);
+    flag = KINSpilsSetPreconditioner (mem, setup, solve);
     CHECK_FLAG ("KINSpilsSetPreconditioner", flag);
 
     CAMLreturn (Val_unit);

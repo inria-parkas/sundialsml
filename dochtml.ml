@@ -133,7 +133,9 @@ struct
       Printf.sprintf "<a href=\"%s\">%s</a>" var var
 
     method private html_of_cconst s =
-      Printf.sprintf "<span class=\"cconst\">(%s)</span>" s
+      let var = Str.replace_first (Str.regexp " +$") ""
+                  (Str.replace_first (Str.regexp "^ +") "" s) in
+      Printf.sprintf "<span class=\"cconst\">(%s)</span>" var
 
     method private html_of_color s =
       let ss = Str.bounded_split (Str.regexp "[ \t\n]+") s 2 in

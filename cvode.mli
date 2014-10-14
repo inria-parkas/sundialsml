@@ -40,7 +40,7 @@
 
 open Sundials
 
-(** This type represents a session with the CVODE solver.
+(** A session with the CVODE solver.
 
     An example session with Cvode ({openfile cvode_skel.ml}): {[
 #include "examples/ocaml/skeletons/cvode_skel.ml"
@@ -50,7 +50,7 @@ open Sundials
 type ('a, 'k) session = ('a, 'k) Cvode_impl.session
 
 (** An alias for sessions based on serial nvectors. *)
-type serial_session = (RealArray.t, Nvector_serial.kind) session
+type serial_session = (Nvector_serial.data, Nvector_serial.kind) session
 
 (** {2:linear Linear Solvers} *)
 
@@ -60,7 +60,8 @@ type serial_session = (RealArray.t, Nvector_serial.kind) session
 type ('data, 'kind) linear_solver = ('data, 'kind) Cvode_impl.linear_solver
 
 (** An alias for linear solvers that are restricted to serial nvectors. *)
-type serial_linear_solver = (RealArray.t, Nvector_serial.kind) linear_solver
+type serial_linear_solver =
+      (Nvector_serial.data, Nvector_serial.kind) linear_solver
 
 (** Used for workspaces with three temporary vectors. *)
 type 'a triple = 'a * 'a * 'a
@@ -78,10 +79,10 @@ type ('t, 'a) jacobian_arg =
     jac_tmp : 't            (** Workspace data. *)
   }
 
-(** The range of nonzero entries in a band matrix.  *)
+(** The range of nonzero entries in a band matrix. *)
 type bandrange = Cvode_impl.bandrange =
-  { mupper : int; (** The upper half-bandwidth.  *)
-    mlower : int; (** The lower half-bandwidth.  *) }
+  { mupper : int; (** The upper half-bandwidth. *)
+    mlower : int; (** The lower half-bandwidth. *) }
 
 (** Diagonal approximation of Jacobians by difference quotients. *)
 module Diag :
@@ -147,7 +148,7 @@ module Dls :
     val dense : ?jac:dense_jac_fn -> unit -> serial_linear_solver
 
     (** A direct linear solver on dense matrices using LAPACK. See {!Dense}.
-        Only available if {!Sundials.blas_lapack_supported}.
+        Only available if {!lapack_enabled}.
 
         @cvode <node5#sss:lin_solv_init> CVLapackDense
         @cvode <node5#sss:optin_dls> CVDlsSetDenseJacFn
@@ -190,20 +191,20 @@ module Dls :
     val band : ?jac:band_jac_fn -> bandrange -> serial_linear_solver
 
     (** A direct linear solver on banded matrices using LAPACK. See {!band}.
-        Only available if {!Sundials.blas_lapack_supported}.
+        Only available if {!lapack_enabled}.
 
         @cvode <node5#sss:lin_solv_init> CVLapackBand
         @cvode <node5#sss:optin_dls> CVDlsSetBandJacFn
         @cvode <node5#ss:bjacFn> CVDlsBandJacFn *)
     val lapack_band : ?jac:band_jac_fn -> bandrange -> serial_linear_solver
 
-    (** {4:stats Solver statistics} *)
+    (** {3:stats Solver statistics} *)
 
     (** Returns the sizes of the real and integer workspaces used by a direct
         linear solver.
 
         @cvode <node5#sss:optout_dls> CVDlsGetWorkSpace
-        @return ([real size], [integer size]) *)
+        @return ([real_size], [integer_size]) *)
     val get_work_space : serial_session -> int * int
 
     (** Returns the number of calls made by a direct linear solver to the
@@ -218,7 +219,7 @@ module Dls :
         @cvode <node5#sss:optout_dls> CVDlsGetNumRhsEvals *)
     val get_num_rhs_evals : serial_session -> int
 
-    (** {4:lowlevel Low-level solver manipulation}
+    (** {3:lowlevel Low-level solver manipulation}
 
         The {!init} and {!reinit} functions are the preferred way to set or
         change a Jacobian function. These low-level functions are provided for
@@ -414,7 +415,7 @@ module Spils :
           banded preconditioner module.
 
           @cvode <node5#sss:cvbandpre> CVBandPrecGetWorkSpace
-          @return ([real size], [integer size]) *)
+          @return ([real_size], [integer_size]) *)
       val get_work_space : serial_session -> int * int
 
       (** Returns the number of calls to the right-hand side function for the
@@ -491,13 +492,13 @@ module Spils :
         @cvode <node5#sss:optin_spils> CVSpilsSetMaxl *)
     val set_maxl : ('a, 'k) session -> int -> unit
 
-    (** {4:get Querying the solvers (optional output functions)} *)
+    (** {3:stats Solver statistics} *)
 
     (** Returns the sizes of the real and integer workspaces used by the spils
         linear solver.
 
         @cvode <node5#sss:optout_spils> CVSpilsGetWorkSpace
-        @return ([real size], [integer size]) *)
+        @return ([real_size], [integer_size]) *)
     val get_work_space       : ('a, 'k) session -> int * int
 
     (** Returns the cumulative number of linear iterations.
@@ -608,8 +609,7 @@ module Alternate :
         statistics.
 
         Raising any exception in this function (including
-        {!Sundials.RecoverableFailure}) is treated as an unrecoverable
-        error.
+        {!Sundials.RecoverableFailure}) is treated as an unrecoverable error.
 
         @cvode <node8#SECTION00810000000000000000> linit *)
     type ('data, 'kind) linit = ('data, 'kind) session -> unit
@@ -708,7 +708,7 @@ module Alternate :
 (** Functions that set the multiplicative error weights for use in the weighted
     RMS norm. The call [efun y ewt] takes the dependent variable vector [y] and
     fills the error-weight vector [ewt] with positive values or raising
-    {!Sundials.NonPositiveEwt}. Other exceptions are eventually propagated, but
+    {!NonPositiveEwt}. Other exceptions are eventually propagated, but
     should be avoided ([efun] is not allowed to abort the solver). *)
 type 'data error_fun = 'data -> 'data -> unit
 
@@ -771,7 +771,7 @@ type 'a rhsfn = float -> 'a -> 'a -> unit
              returned.}
 
     @cvode <node5#ss:rootFn>         Rootfinding function *)
-type 'a rootsfn = (float -> 'a -> Sundials.RealArray.t -> unit)
+type 'a rootsfn = (float -> 'a -> RealArray.t -> unit)
 
 (** Creates and initializes a session with the Cvode solver. The call
     {[init lmm iter tol f ~roots:(nroots, g) ~t0:t0 (neqs, y0)]} has
@@ -799,13 +799,13 @@ type 'a rootsfn = (float -> 'a -> Sundials.RealArray.t -> unit)
     @cvode <node5#ss:ewtsetFn>       Error weight function *)
 val init :
     lmm
-    -> ('a, 'kind) iter
-    -> ('a, 'kind) tolerance
-    -> 'a rhsfn
-    -> ?roots:(int * 'a rootsfn)
+    -> ('data, 'kind) iter
+    -> ('data, 'kind) tolerance
+    -> 'data rhsfn
+    -> ?roots:(int * 'data rootsfn)
     -> float
-    -> ('a, 'kind) Nvector.t
-    -> ('a, 'kind) session
+    -> ('data, 'kind) Nvector.t
+    -> ('data, 'kind) session
 
 (** A convenience value for signalling that there are no roots to monitor. *)
 val no_roots : (int * 'a rootsfn)
@@ -828,7 +828,7 @@ type solver_result =
     - [yout], a vector to store the computed solution.
 
     It returns [tret], the time reached by the solver, which will be equal to
-    [tout] if no errors occur, and, [r], a {!Sundials.solver_result}.
+    [tout] if no errors occur, and, [r], a {!solver_result}.
 
     @cvode <node5#sss:cvode> CVode (CV_NORMAL)
     @raise IllInput Missing or illegal solver inputs.
@@ -912,7 +912,7 @@ val set_error_file : ('a, 'k) session -> string -> bool -> unit
 
     @cvode <node5#sss:optin_main> CVodeSetErrHandlerFn
     @cvode <node5#ss:ehFn> Error message handler function *)
-val set_err_handler_fn : ('a, 'k) session -> (Sundials.error_details -> unit) -> unit
+val set_err_handler_fn : ('a, 'k) session -> (error_details -> unit) -> unit
 
 (** Restores the default error handling function.
 
@@ -1126,13 +1126,13 @@ val get_nonlin_solv_stats : ('a, 'k) session -> int *int
     located and returned. [dir] may contain one entry for each root function.
 
     @cvode <node5#sss:optin_root> CVodeSetRootDirection *)
-val set_root_direction : ('a, 'k) session -> Sundials.RootDirs.d array -> unit
+val set_root_direction : ('a, 'k) session -> RootDirs.d array -> unit
 
 (** Like {!set_root_direction} but specifies a single direction for all root
     functions.
 
     @cvode <node5#sss:optin_root> CVodeSetRootDirection *)
-val set_all_root_directions : ('a, 'k) session -> Sundials.RootDirs.d -> unit
+val set_all_root_directions : ('a, 'k) session -> RootDirs.d -> unit
 
 (** Disables issuing a warning if some root function appears to be identically
     zero at the beginning of the integration.
@@ -1146,7 +1146,7 @@ val get_num_roots : ('a, 'k) session -> int
 (** Fills an array showing which functions were found to have a root.
 
     @cvode <node5#sss:optout_root> CVodeGetRootInfo *)
-val get_root_info : ('a, 'k) session -> Sundials.Roots.t -> unit
+val get_root_info : ('a, 'k) session -> Roots.t -> unit
 
 (** Returns the cumulative number of calls made to the user-supplied root
     function g.

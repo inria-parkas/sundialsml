@@ -164,7 +164,7 @@ The dependencies of Sundials/ML are
 The [configure] script detects whether Sundials was built with lapack
 support, which is required for the [lapack_dense] and [lapack_band]
 solvers (like {!Cvode.Dls.lapack_dense}).
-The {!Sundials.blas_lapack_supported} value indicates whether these
+The {!Sundials.lapack_enabled} value indicates whether these
 solvers are available.
 
 Parallel nvectors and Band-Block-Diagonal (BBD) solvers are {e

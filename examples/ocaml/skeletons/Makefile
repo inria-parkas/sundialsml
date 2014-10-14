@@ -1,6 +1,7 @@
 include ../../../config
 
-EXAMPLES = cvode_skel.byte
+EXAMPLES = cvode_skel.byte \
+	   kinsol_skel.byte
 
 all: $(EXAMPLES)
 opt: $(EXAMPLES:.byte=.opt)

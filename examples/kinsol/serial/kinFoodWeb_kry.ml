@@ -306,7 +306,7 @@ let prec_setup_bd { Kinsol.jac_u=cc;
   done (* end of jy loop *)
   
 (* Preconditioner solve routine *)
-let prec_solve_bd () _ _ (vv : RealArray.t) =
+let prec_solve_bd _ _ (vv : RealArray.t) =
   for jx = 0 to mx - 1 do
     for jy = 0 to my - 1 do
       (* For each (jx,jy), solve a linear system of size NUM_SPECIES.
@@ -415,7 +415,8 @@ let main () =
               (Kinsol.Spils.spgmr ~maxl:maxl ~max_restarts:maxlrst
                  (Kinsol.Spils.prec_right
                     ~setup:prec_setup_bd
-                    (prec_solve_bd ())))
+                    ~solve:prec_solve_bd
+                    ()))
               func cc in
   Kinsol.set_constraints kmem (Nvector_serial.make neq two);
   Kinsol.set_func_norm_tol kmem (Some fnormtol);

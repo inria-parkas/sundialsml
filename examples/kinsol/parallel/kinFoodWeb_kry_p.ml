@@ -682,7 +682,7 @@ let main () =
               (Kinsol.Spils.spgmr ~maxl:maxl ~max_restarts:maxlrst
                  (Kinsol.Spils.prec_right
                     ~setup:(precondbd data)
-                    (psolvebd data)))
+                    ~solve:(psolvebd data) ()))
               (funcprpr data) cc in
   Kinsol.set_num_max_iters kmem 250;
   Kinsol.set_constraints kmem (Nvector.make local_N neq comm 0.0);

@@ -184,7 +184,7 @@ META: META.in
 	    | grep -v '^#' > $@
 
 doc: doc/html/index.html
-	for f in cvode_skel.ml; do \
+	for f in cvode_skel.ml kinsol_skel.ml; do \
 	    cp examples/ocaml/skeletons/$$f doc/html/; \
 	done
 

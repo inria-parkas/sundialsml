@@ -11,6 +11,7 @@
 (***********************************************************************)
 
 include Kinsol_impl
+open Sundials
 
 exception IllInput                       (* KIN_ILL_INPUT *)
 exception LineSearchNonConvergence       (* KIN_LINESEARCH_NONCONV *)
@@ -41,7 +42,8 @@ type eta_choice =
   | EtaChoice2 of eta_params    (* KIN_ETACHOICE2 *)
   | EtaConstant of float option (* KIN_ETACONSTANT *)
 
-type serial_linear_solver = (real_array, Nvector_serial.kind) linear_solver
+type serial_linear_solver = (RealArray.t, Nvector_serial.kind) linear_solver
+type 'a double = 'a * 'a
 
 (* interface *)
 
@@ -171,14 +173,14 @@ module Spils =
     external c_set_max_restarts     : ('a, 'k) session -> int -> unit
         = "c_kinsol_spils_set_max_restarts"
 
-    external c_set_preconditioner : ('a, 'k) session -> bool -> unit
+    external c_set_preconditioner : ('a, 'k) session -> bool -> bool -> unit
         = "c_kinsol_spils_set_preconditioner"
 
     external c_set_jac_times_vec_fn : ('a, 'k) session -> bool -> unit
         = "c_kinsol_spils_set_jac_times_vec_fn"
 
     let init_preconditioner solve setup jac_times session nv =
-      c_set_preconditioner session (setup <> None);
+      c_set_preconditioner session (solve <> None) (setup <> None);
       c_set_jac_times_vec_fn session (jac_times <> None);
       session.ls_callbacks <-
         SpilsCallback { prec_solve_fn = solve;
@@ -186,7 +188,7 @@ module Spils =
                         jac_times_vec_fn = jac_times }
 
     let prec_none = InternalPrecNone
-    let prec_right ?setup ?jac_times_vec solve =
+    let prec_right ?setup ?solve ?jac_times_vec () =
       InternalPrecRight (init_preconditioner solve setup jac_times_vec)
 
     let init_spils init maxl prec session nv =
@@ -209,13 +211,13 @@ module Spils =
     let sptfqmr ?(maxl=0) prec session nv =
       init_spils c_sptfqmr maxl prec session nv
 
-    let set_preconditioner s ?setup solve =
+    let set_preconditioner s ?setup ?solve () =
       match s.ls_callbacks with
       | SpilsCallback cbs ->
         s.ls_callbacks <- SpilsCallback { cbs with
                                           prec_setup_fn = setup;
                                           prec_solve_fn = solve };
-        c_set_preconditioner s (setup <> None)
+        c_set_preconditioner s (solve <> None) (setup <> None)
       | _ -> failwith "spils solver not in use"
 
     let set_jac_times_vec_fn s f =
@@ -368,7 +370,7 @@ let set_res_mon_const_value s omegaconst =
 external c_set_res_mon_params : ('a, 'k) session -> float -> float -> unit
     = "c_kinsol_set_res_mon_params"
 
-let set_res_mon_params s omegamin omegamax =
+let set_res_mon_params s ?omegamin ?omegamax () =
   c_set_res_mon_params s (float_default omegamin) (float_default omegamax)
 
 external set_no_min_eps : ('a, 'k) session -> bool -> unit
@@ -505,7 +507,7 @@ let call_infoh session details =
 let call_precsolvefn session jac ps u =
   let session = read_weak_ref session in
   match session.ls_callbacks with
-  | SpilsCallback { Spils.prec_solve_fn = f } ->
+  | SpilsCallback { Spils.prec_solve_fn = Some f } ->
       adjust_retcode session true (f jac ps) u
   | _ -> assert false
 

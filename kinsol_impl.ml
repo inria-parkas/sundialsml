@@ -79,7 +79,7 @@ module SpilsTypes' = struct
 
   type 'a callbacks =
     {
-      prec_solve_fn : 'a prec_solve_fn;
+      prec_solve_fn : 'a prec_solve_fn option;
 
       prec_setup_fn : 'a prec_setup_fn option;
 
