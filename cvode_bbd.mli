@@ -39,8 +39,9 @@ type bandwidths = Cvode_impl.CvodeBbdTypes.bandwidths =
                        approximate Jacobian block. *)
   }
 
-(* TODO: *)
-(** [gloc t y gd] computes [g(t, y)] into [gd].
+(** Approximates the right-hand side function using local computations only.
+    In the call [gloc t y y'], [t] is the independent variable (time), [y] is
+    the input vector, and [y'] stores the computed derivatives.
 
     Raising {!Sundials.RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.

@@ -39,9 +39,10 @@ type bandwidths =
                        approximate Jacobian block. *)
   }
 
-(* TODO: *)
-(** [gloc u gval] computes [g(u)] into [gval].
- 
+(** Approximates the system function using local computations only.
+    In the call [gloc u gval], [u] is the current estimated solution
+    and [gval] stores the computed solution.
+
     Raising {!Sundials.RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.
 

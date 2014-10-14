@@ -39,8 +39,12 @@ type bandwidths = Ida_impl.IdaBbdTypes.bandwidths =
                        approximate Jacobian block. *)
   }
 
-(* TODO: *)
-(** [gloc t y gd] computes [g(t, y)] into [gd].
+(** Approximates the right-hand side function using local computations only.
+    In the call [gloc t y y' r], [t] is the independent variable (time),
+    [y] is the vector of dependent variable values, [y'] are the derivatives
+    with respect to [y], and [r] is the output vector to fill with the
+    computed residual.
+
     Raising {!Sundials.RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.
 
