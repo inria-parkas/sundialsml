@@ -325,7 +325,8 @@ let set_linear_solver session solver nv nv' =
   session.ls_callbacks <- NoCallbacks;
   solver session nv nv'
 
-external sv_tolerances  : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
+external sv_tolerances
+    : ('a, 'k) session -> float -> ('a, 'k) Nvector.t -> unit
     = "c_ida_sv_tolerances"
 external ss_tolerances  : ('a, 'k) session -> float -> float -> unit
     = "c_ida_ss_tolerances"
@@ -334,7 +335,7 @@ external wf_tolerances  : ('a, 'k) session -> unit
 
 type ('a, 'k) tolerance =
   | SStolerances of float * float
-  | SVtolerances of float * ('a, 'k) nvector
+  | SVtolerances of float * ('a, 'k) Nvector.t
   | WFtolerances of ('a -> 'a -> unit)
 
 let default_tolerances = SStolerances (1.0e-4, 1.0e-8)
@@ -352,9 +353,9 @@ let session_finalize s =
   Dls.invalidate_callback s;
   c_session_finalize s
 
-external c_init
-    : ('a, 'k) session Weak.t -> float -> ('a, 'k) nvector -> ('a, 'k) nvector
-      -> (ida_mem * c_weak_ref * ida_file)
+external c_init : ('a, 'k) session Weak.t -> float
+                  -> ('a, 'k) Nvector.t -> ('a, 'k) Nvector.t
+                  -> (ida_mem * c_weak_ref * ida_file)
     = "c_ida_init"
 
 let init linsolv tol resfn ?(roots=no_roots) t0 y y' =
@@ -393,7 +394,8 @@ let init linsolv tol resfn ?(roots=no_roots) t0 y y' =
 let nroots { nroots } = nroots
 
 external c_reinit
-    : ('a, 'k) session -> float -> ('a, 'k) nvector -> ('a, 'k) nvector -> unit
+    : ('a, 'k) session -> float -> ('a, 'k) Nvector.t
+      -> ('a, 'k) Nvector.t -> unit
     = "c_ida_reinit"
 let reinit session ?linsolv ?roots t0 y0 y'0 =
   Dls.invalidate_callback session;
@@ -414,17 +416,17 @@ type solver_result =
   | StopTimeReached     (** IDA_TSTOP_RETURN *)
 
 external solve_normal : ('a, 'k) session -> float
-                      -> ('a, 'k) nvector -> ('a,'k) nvector
+                      -> ('a, 'k) Nvector.t -> ('a,'k) Nvector.t
                       -> float * solver_result
     = "c_ida_solve_normal"
 
 external solve_one_step : ('a, 'k) session -> float
-                        -> ('a, 'k) nvector-> ('a, 'k) nvector
+                        -> ('a, 'k) Nvector.t-> ('a, 'k) Nvector.t
                         -> float * solver_result
     = "c_ida_solve_one_step"
 
 external get_dky
-    : ('a, 'k) session -> float -> int -> ('a, 'k) nvector -> unit
+    : ('a, 'k) session -> float -> int -> ('a, 'k) Nvector.t -> unit
     = "c_ida_get_dky"
 
 external get_integrator_stats : ('a, 'k) session -> integrator_stats
@@ -535,10 +537,10 @@ external get_num_stab_lim_order_reds    : ('a, 'k) session -> int
 external get_tol_scale_factor           : ('a, 'k) session -> float
     = "c_ida_get_tol_scale_factor"
 
-external get_err_weights : ('a, 'k) session -> ('a, 'k) nvector -> unit
+external get_err_weights : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
     = "c_ida_get_err_weights"
 
-external get_est_local_errors : ('a, 'k) session -> ('a, 'k) nvector -> unit
+external get_est_local_errors : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
     = "c_ida_get_est_local_errors"
 
 external get_num_nonlin_solv_iters      : ('a, 'k) session -> int
@@ -602,10 +604,10 @@ module Constraint =
     let string_of_float x = string_of_constraint (of_float x)
   end
 
-external set_constraints : ('a,'k) session -> ('a,'k) nvector -> unit
+external set_constraints : ('a,'k) session -> ('a,'k) Nvector.t -> unit
   = "c_ida_set_constraints"
 
-external set_id : ('a,'k) session -> ('a,'k) nvector -> unit
+external set_id : ('a,'k) session -> ('a,'k) Nvector.t -> unit
   = "c_ida_set_id"
 
 let set_var_types = set_id
@@ -616,7 +618,7 @@ external set_suppress_alg : ('a,'k) session -> bool -> unit
 external get_num_backtrack_ops : ('a,'k) session -> int
   = "c_ida_get_num_backtrack_ops"
 
-external c_calc_ic_y : ('a,'k) session -> ('a,'k) nvector option
+external c_calc_ic_y : ('a,'k) session -> ('a,'k) Nvector.t option
                        -> float -> unit
   = "c_ida_calc_ic_y"
 
@@ -624,8 +626,8 @@ let calc_ic_y session ?y tout1 =
   c_calc_ic_y session y tout1
 
 external c_calc_ic_ya_yd' :
-  ('a,'k) session -> ('a,'k) nvector option -> ('a,'k) nvector option
-  -> ('a,'k) nvector -> float -> unit
+  ('a,'k) session -> ('a,'k) Nvector.t option -> ('a,'k) Nvector.t option
+  -> ('a,'k) Nvector.t -> float -> unit
   = "c_ida_calc_ic_ya_ydp"
 
 let calc_ic_ya_yd' session ?y ?y' id tout1 =

@@ -47,7 +47,7 @@ open Sundials
     @kinsol <node5#ss:skeleton_sol> Skeleton of main program *)
 type ('data, 'kind) session = ('data, 'kind) Kinsol_impl.session
 
-(** An alias for sessions based on serial nvectors. *)
+(** Alias for sessions based on serial nvectors. *)
 type serial_session = (Nvector_serial.data, Nvector_serial.kind) session
 
 (** {2:linear Linear Solvers} *)
@@ -57,11 +57,11 @@ type serial_session = (Nvector_serial.data, Nvector_serial.kind) session
     @kinsol <node5#sss:lin_solv_init> Linear Solver Specification Functions *)
 type ('data, 'kind) linear_solver = ('data, 'kind) Kinsol_impl.linear_solver
 
-(** An alias for linear solvers that are restricted to serial nvectors. *)
+(** Alias for linear solvers that are restricted to serial nvectors. *)
 type serial_linear_solver =
         (Nvector_serial.data, Nvector_serial.kind) linear_solver
 
-(** Used for workspaces with two temporary vectors. *)
+(** Workspaces with two temporary vectors. *)
 type 'a double = 'a * 'a
 
 (** Arguments common to Jacobian callback functions.    

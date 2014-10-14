@@ -34,7 +34,6 @@ open Ida_impl
 open Sundials
 
 type ('data, 'kind) session = ('data, 'kind) Ida.session
-type ('data, 'kind) nvector = ('data, 'kind) Nvector.t
 
 (** {2:quad Quadrature Equations} *)
 
@@ -104,12 +103,12 @@ module Quadrature :
     (** Activates the integration of quadrature equations.
 
         @idas <node5#ss:quad_init> IDAQuadInit *)
-    val init : ('a, 'b) session -> 'a quadrhsfn -> ('a, 'b) nvector -> unit
+    val init : ('a, 'b) session -> 'a quadrhsfn -> ('a, 'b) Nvector.t -> unit
 
     (** Reinitialize the integration of quadrature equations.
 
         @idas <node5#ss:quad_init> IDAQuadReInit *)
-    val reinit : ('a, 'k) session -> ('a, 'k) nvector -> unit
+    val reinit : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
 
     (** {3:quadtol Tolerance specification} *)
 
@@ -118,7 +117,7 @@ module Quadrature :
         (** Do not use quadrature variables for step-size control (default). *)
       | SStolerances of float * float
         (** [(rel, abs)] : scalar relative and absolute tolerances. *)
-      | SVtolerances of float * ('a, 'k) nvector
+      | SVtolerances of float * ('a, 'k) Nvector.t
         (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
 
     (** Specify whether and how quadrature variables should be used in the step
@@ -137,7 +136,7 @@ module Quadrature :
         solver.
 
         @idas <node5#ss:quad_get> IdaGetQuad *)
-    val get : ('a, 'k) session -> ('a, 'k) nvector -> float
+    val get : ('a, 'k) session -> ('a, 'k) Nvector.t -> float
 
     (** [tret = get_dky s t k dkyq] fills [dkyq] with the derivatives
         of the quadrature solution vector after a successful return
@@ -150,7 +149,7 @@ module Quadrature :
         @idas <node5#ss:quad_get> IdaGetQuadDky
         @raise BadK [k] is not in the range 0, 1, ..., [qlast].
         @raise BadT [t] is not in the allowed range. *)
-    val get_dky : ('a, 'k) session -> float -> int -> ('a, 'k) nvector -> unit
+    val get_dky : ('a, 'k) session -> float -> int -> ('a, 'k) Nvector.t -> unit
 
     (** {3:quadoptout Optional Output Functions} *)
 
@@ -169,7 +168,7 @@ module Quadrature :
     (** Returns the quadrature error weights at the current time.
 
         @idas <node5#ss:quad_optional_output> IDAGetQuadErrWeights *)
-    val get_err_weights : ('a, 'k) session -> ('a, 'k) nvector -> unit
+    val get_err_weights : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
 
     (** [nfqevals, nqetfails = get_stats s] returns
         - [fqevals], the number of calls to the user's quadrature function, and,
@@ -310,7 +309,7 @@ let yS'0 = Array.init ns (fun _ -> RealArray.init neq 0.0)]}
     type ('a, 'k) tolerance =
         SStolerances of float * Sundials.RealArray.t
         (** [(rel, abs)] : scalar relative and absolute tolerances. *)
-      | SVtolerances of float * ('a, 'k) nvector array
+      | SVtolerances of float * ('a, 'k) Nvector.t array
         (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
       | EEtolerances
         (** Calculate the integration tolerances for sensitivities
@@ -335,38 +334,42 @@ let yS'0 = Array.init ns (fun _ -> RealArray.init neq 0.0)]}
       sens_method ->
       sens_params ->
       'a sensresfn option ->
-      ('a, 'b) nvector array -> ('a, 'b) nvector array -> unit
+      ('a, 'b) Nvector.t array -> ('a, 'b) Nvector.t array -> unit
 
     (** This function reinitializes the forward sensitivity computation.
 
         @idas <node6#ss:sensi_init> IDASensReInit *)
     val reinit :
-      ('a, 'b) session ->
-      sens_method -> ('a, 'b) nvector array -> ('a, 'b) nvector array -> unit
+      ('a, 'b) session
+      -> sens_method
+      -> ('a, 'b) Nvector.t array
+      -> ('a, 'b) Nvector.t array
+      -> unit
 
     (** Like {!Ida.calc_ic_ya_yd'}, but has extra output parameters
         [ys] and [y's] for receiving corrected sensitivities.
 
         @ida <node5#ss:idacalcic> IDACalcIC
         @ida <node5#sss:optout_iccalc> IDAGetConsistentIC
-        @idas <node6#sss:sens_optout_iccalc> IDAGetSensConsistentIC
-      *)
+        @idas <node6#sss:sens_optout_iccalc> IDAGetSensConsistentIC *)
     val calc_ic_ya_yd' :
-      ('a, 'b) session ->
-      ?y:('a, 'b) nvector ->
-      ?y':('a, 'b) nvector ->
-      ?ys:('a, 'b) nvector array ->
-      ?y's:('a, 'b) nvector array -> ('a, 'b) nvector -> float -> unit
+      ('a, 'b) session
+      -> ?y:('a, 'b) Nvector.t
+      -> ?y':('a, 'b) Nvector.t
+      -> ?ys:('a, 'b) Nvector.t array
+      -> ?y's:('a, 'b) Nvector.t array
+      -> ('a, 'b) Nvector.t
+      -> float
+      -> unit
 
     (** Like {!Ida.calc_ic_y}, but has an extra output parameter [ys]
         for receiving corrected sensitivities.
         @ida <node5#ss:idacalcic> IDACalcIC
         @ida <node5#sss:optout_iccalc> IDAGetConsistentIC
-        @idas <node6#sss:sens_optout_iccalc> IDAGetSensConsistentIC
-     *)
+        @idas <node6#sss:sens_optout_iccalc> IDAGetSensConsistentIC *)
     val calc_ic_y :
       ('a, 'b) session ->
-      ?y:('a, 'b) nvector -> ?ys:('a, 'b) nvector array -> float -> unit
+      ?y:('a, 'b) Nvector.t -> ?ys:('a, 'b) Nvector.t array -> float -> unit
 
     (** Deactivates forward sensitivity calculations without deallocating
         memory. Sensitivities can be reactivated with {!reinit}.
@@ -383,7 +386,7 @@ let yS'0 = Array.init ns (fun _ -> RealArray.init neq 0.0)]}
 
         @idas <node6#ss:sensi_get> IDAGetSens
       *)
-    val get : ('a, 'b) session -> ('a, 'b) nvector array -> float
+    val get : ('a, 'b) session -> ('a, 'b) Nvector.t array -> float
 
     (** [tret = get_dky s t k dkys] fills [dkys] with the
         derivatives of the sensitivity solution vectors after a
@@ -398,7 +401,7 @@ let yS'0 = Array.init ns (fun _ -> RealArray.init neq 0.0)]}
         @raise BadT [t] is not in the allowed range.
     *)
     val get_dky :
-      ('a, 'b) session -> float -> int -> ('a, 'b) nvector array -> unit
+      ('a, 'b) session -> float -> int -> ('a, 'b) Nvector.t array -> unit
 
     (** [tret = get1 s i ys] fills [ys] with the [i]th sensitivity
         solution vector after a successful return from
@@ -407,7 +410,7 @@ let yS'0 = Array.init ns (fun _ -> RealArray.init neq 0.0)]}
 
         @idas <node6#ss:sensi_get> IDAGetSens1
         @raise BadIS The index [i] is not in the allowed range. *)
-    val get1 : ('a, 'k) session -> int -> ('a, 'k) nvector -> float
+    val get1 : ('a, 'k) session -> int -> ('a, 'k) Nvector.t -> float
 
     (** [tret = get_dky1 s t k i dkys] fills [dkys] with the
         derivatives of the [i]th sensitivity solution vector after a
@@ -423,7 +426,7 @@ let yS'0 = Array.init ns (fun _ -> RealArray.init neq 0.0)]}
         @raise BadK [k] is not in the range 0, 1, ..., [qlast].
         @raise BadT [t] is not in the allowed range.  *)
     val get_dky1 :
-      ('a, 'k) session -> float -> int -> int -> ('a, 'k) nvector -> unit
+      ('a, 'k) session -> float -> int -> int -> ('a, 'k) Nvector.t -> unit
 
     (** {3:sensoptin Optional Input Functions} *)
 
@@ -507,7 +510,7 @@ let yS'0 = Array.init ns (fun _ -> RealArray.init neq 0.0)]}
 
         @idas <node6#ss:sens_optional_output> IDAGetSensErrWeights
         @idas <node3#e:errwt> Eq. (2.7) IVP solution (W_i) *)
-    val get_err_weights : ('a, 'k) session -> ('a, 'k) nvector array -> unit
+    val get_err_weights : ('a, 'k) session -> ('a, 'k) Nvector.t array -> unit
 
     (** Returns the number of nonlinear iterations performed for sensitivity
         calculations.
@@ -624,12 +627,12 @@ let yS'0 = Array.init ns (fun _ -> RealArray.init neq 0.0)]}
             @idas <node6#ss:quad_sens_init> IDAQuadSensInit *)
         val init :
           ('a, 'b) session -> ?fQS:'a quadsensrhsfn
-          -> ('a, 'b) nvector array -> unit
+          -> ('a, 'b) Nvector.t array -> unit
 
         (** This function reinitializes the forward sensitivity computation.
 
             @idas <node6#ss:quad_sens_init> IDAQuadSensReInit *)
-        val reinit : ('a, 'b) session -> ('a, 'b) nvector array -> unit
+        val reinit : ('a, 'b) session -> ('a, 'b) Nvector.t array -> unit
 
 
         (** {3:quadsenstol Tolerance specification} *)
@@ -639,7 +642,7 @@ let yS'0 = Array.init ns (fun _ -> RealArray.init neq 0.0)]}
                 (default). *)
           | SStolerances of float * Sundials.RealArray.t
             (** [(rel, abs)] : scalar relative and absolute tolerances. *)
-          | SVtolerances of float * ('a, 'k) nvector array
+          | SVtolerances of float * ('a, 'k) Nvector.t array
             (** [(rel, abs)] : scalar relative and vector absolute
                 tolerances. *)
           | EEtolerances
@@ -664,7 +667,7 @@ let yS'0 = Array.init ns (fun _ -> RealArray.init neq 0.0)]}
             the solver.
 
             @idas <node6#ss:quad_sens_get> IDAGetQuadSens *)
-        val get : ('a, 'b) session -> ('a, 'b) nvector array -> float
+        val get : ('a, 'b) session -> ('a, 'b) Nvector.t array -> float
 
         (** [tret = get s i yqs] fills [yqs] with the [i]th quadrature
             solution vector after a successful return from
@@ -674,7 +677,7 @@ let yS'0 = Array.init ns (fun _ -> RealArray.init neq 0.0)]}
             @idas <node6#ss:quad_sens_get> IDAGetQuadSens1
             @raise BadIS The index [i] is not in the allowed range.
           *)
-        val get1 : ('a, 'k) session -> int -> ('a, 'k) nvector -> float
+        val get1 : ('a, 'k) session -> int -> ('a, 'k) Nvector.t -> float
 
         (** [tret = get_dky s t k dkyqs] fills [dkyqs] with the
             derivatives of the quadrature solution vectors after a
@@ -690,7 +693,7 @@ let yS'0 = Array.init ns (fun _ -> RealArray.init neq 0.0)]}
             @raise BadK [k] is not in the range 0, 1, ..., [qlast].
             @raise BadT [t] is not in the allowed range. *)
         val get_dky :
-          ('a, 'b) session -> float -> int -> ('a, 'b) nvector array -> unit
+          ('a, 'b) session -> float -> int -> ('a, 'b) Nvector.t array -> unit
 
         (** [tret = get_dky s t k i dkyqs] fills [dkyqs] with the derivatives of
             the [i]th quadrature solution vector after a successful return from
@@ -704,7 +707,7 @@ let yS'0 = Array.init ns (fun _ -> RealArray.init neq 0.0)]}
             @raise BadK [k] is not in the range 0, 1, ..., [qlast].
             @raise BadT [t] is not in the allowed range. *)
         val get_dky1 :
-          ('a, 'k) session -> float -> int -> int -> ('a, 'k) nvector -> unit
+          ('a, 'k) session -> float -> int -> int -> ('a, 'k) Nvector.t -> unit
 
         (** Returns the number of calls to the user's quadrature right-hand side
             function.
@@ -722,7 +725,7 @@ let yS'0 = Array.init ns (fun _ -> RealArray.init neq 0.0)]}
 
             @idas <node6#ss:quad_sens_optional_output> IDAGetQuadSensErrWeights *)
         val get_err_weights :
-          ('a, 'b) session -> ('a, 'b) nvector array -> unit
+          ('a, 'b) session -> ('a, 'b) Nvector.t array -> unit
 
         (** [nfqevals, nqetfails = get_stats s] returns
             - [fqevals], the number of calls to the user's quadrature function,
@@ -842,10 +845,11 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
         @raise Ida.LinearSolveFailure Unrecoverable failure in linear solver solve function.
         @raise AdjointNotInitialized    The [init] function has not previously been called. *)
     val forward_normal :
-      ('a, 'k) session ->
-      float ->
-      ('a, 'k) nvector ->
-      ('a, 'k) nvector -> float * int * Ida.solver_result
+      ('a, 'k) session
+      -> float
+      -> ('a, 'k) Nvector.t
+      -> ('a, 'k) Nvector.t
+      -> float * int * Ida.solver_result
 
     (** [tret, ncheck, sr = forward_normal s tout y y'] integrates the
         forward problem over an interval and saves checkpointing
@@ -870,10 +874,11 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
         @raise Ida.LinearSolveFailure Unrecoverable failure in linear solver solve function.
         @raise AdjointNotInitialized    The [init] function has not previously been called. *)
     val forward_one_step :
-      ('a, 'k) session ->
-      float ->
-      ('a, 'k) nvector ->
-      ('a, 'k) nvector -> float * int * Ida.solver_result
+      ('a, 'k) session
+      -> float
+      -> ('a, 'k) Nvector.t
+      -> ('a, 'k) Nvector.t
+      -> float * int * Ida.solver_result
 
     (** {3:adjbwd Backward Problems} *)
 
@@ -968,7 +973,7 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
 
         @idas <node7#ss:optional_input_b> IDASetIdB
     *)
-    val set_var_types : ('a, 'b) bsession -> ('a, 'b) nvector -> unit
+    val set_var_types : ('a, 'b) bsession -> ('a, 'b) Nvector.t -> unit
 
     (** An unpreferred alias for {!set_var_types}.  SUNDIALS calls
         variable types by the cryptic name "Id", and this OCaml
@@ -977,7 +982,7 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
 
         @idas <node7#ss:optional_input_b> IDASetIdB
     *)
-    val set_id : ('a, 'b) bsession -> ('a, 'b) nvector -> unit
+    val set_id : ('a, 'b) bsession -> ('a, 'b) Nvector.t -> unit
 
     (** Indicate whether or not to ignore algebraic variables in the local
         error test.  This is set to [false] by default.  Before you can
@@ -1040,10 +1045,13 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
         @idas <node7#ss:optional_output_b> IDAGetConsistentICB
       *)
     val calc_ic :
-      ('a, 'b) bsession ->
-      ?yb:('a, 'b) nvector ->
-      ?y'b:('a, 'b) nvector ->
-      float -> ('a, 'b) nvector -> ('a, 'b) nvector -> unit
+      ('a, 'b) bsession
+      -> ?yb:('a, 'b) Nvector.t
+      -> ?y'b:('a, 'b) Nvector.t
+      -> float
+      -> ('a, 'b) Nvector.t
+      -> ('a, 'b) Nvector.t
+      -> unit
 
     (** This function provides the same functionality for backward
         problems as {!Ida.calc_ic_ya_yd'} provides for forward
@@ -1083,13 +1091,15 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
         @idas <node7#ss:optional_output_b> IDAGetConsistentICB
       *)
     val calc_ic_sens :
-      ('a, 'b) bsession ->
-      ?yb:('a, 'b) nvector ->
-      ?y'b:('a, 'b) nvector ->
-      float ->
-      ('a, 'b) nvector ->
-      ('a, 'b) nvector ->
-      ('a, 'b) nvector array -> ('a, 'b) nvector array -> unit
+      ('a, 'b) bsession
+      -> ?yb:('a, 'b) Nvector.t
+      -> ?y'b:('a, 'b) Nvector.t
+      -> float
+      -> ('a, 'b) Nvector.t
+      -> ('a, 'b) Nvector.t
+      -> ('a, 'b) Nvector.t array
+      -> ('a, 'b) Nvector.t array
+      -> unit
 
     (** Specify a linear solver.
 
@@ -1102,7 +1112,7 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
     type ('a, 'k) tolerance =
         SStolerances of float * float
         (** [(rel, abs)] : scalar relative and absolute tolerances. *)
-      | SVtolerances of float * ('a, 'k) nvector
+      | SVtolerances of float * ('a, 'k) Nvector.t
         (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
 
     (** [init_backward s linsolv tol fB tB0 yB0 yB'0] adds and initializes a
@@ -1130,8 +1140,8 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
       -> ('a, 'k) tolerance
       -> 'a bresfn
       -> float
-      -> ('a, 'k) nvector
-      -> ('a, 'k) nvector
+      -> ('a, 'k) Nvector.t
+      -> ('a, 'k) Nvector.t
       -> ('a, 'k) bsession
 
     (** Reinitialize the backward problem.
@@ -1140,9 +1150,12 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
         @raise AdjointNotInitialized    The [init] function has not previously been called.
         @raise BadFinalTime      The final time is outside the interval over which the forward problem was solved. *)
     val reinit :
-      ('a, 'b) bsession ->
-      ?linsolv:('a, 'b) linear_solver ->
-      float -> ('a, 'b) nvector -> ('a, 'b) nvector -> unit
+      ('a, 'b) bsession
+      -> ?linsolv:('a, 'b) linear_solver
+      -> float
+      -> ('a, 'b) Nvector.t
+      -> ('a, 'b) Nvector.t
+      -> unit
 
     (** {4:adjbwdintegration Backward Integration} *)
 
@@ -1193,7 +1206,7 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
 
         @idas <node7#sss:idasolveb> IDAGetB *)
     val get :
-      ('a, 'b) bsession -> ('a, 'b) nvector -> ('a, 'b) nvector -> float
+      ('a, 'b) bsession -> ('a, 'b) Nvector.t -> ('a, 'b) Nvector.t -> float
 
     (** [tret = get_dky s t k dkys] fills [dkys] with the derivatives of the
         sensitivity solution vectors after a successful return from
@@ -1207,7 +1220,7 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
         @raise BadK [k] is not in the range 0, 1, ..., [qlast].
         @raise BadT [t] is not in the allowed range. *)
     val get_dky :
-      ('a, 'b) bsession -> float -> int -> ('a, 'b) Ida.nvector -> unit
+      ('a, 'b) bsession -> float -> int -> ('a, 'b) Nvector.t -> unit
 
     (** {4:adjbwdoptout Optional Output Functions} *)
 
@@ -1719,7 +1732,7 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
         @idas <node5#sss:optout_main> IDAGetErrWeights
         @idas <node7#ss:optional_output_b> IDAGetAdjIDABmem
         @idas <node3#ss:ivp_sol> IVP solution (W_i) *)
-    val get_err_weights : ('a, 'b) bsession -> ('a, 'b) Ida.nvector -> unit
+    val get_err_weights : ('a, 'b) bsession -> ('a, 'b) Nvector.t -> unit
 
     (** Returns the vector of estimated local errors.
 
@@ -1727,7 +1740,7 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
         @idas <node7#ss:optional_output_b> IDAGetAdjIDABmem
      *)
     val get_est_local_errors :
-      ('a, 'b) bsession -> ('a, 'b) Ida.nvector -> unit
+      ('a, 'b) bsession -> ('a, 'b) Nvector.t -> unit
 
     (** Returns the integrator statistics as a group.
 
@@ -1851,13 +1864,13 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
             @idas <node7#SECTION007211000000000000000> IDAQuadInitB
             @idas <node7#SECTION007211000000000000000> IDAQuadInitBS *)
         val init :
-          ('a, 'b) bsession -> 'a bquadrhsfn -> ('a, 'b) nvector -> unit
+          ('a, 'b) bsession -> 'a bquadrhsfn -> ('a, 'b) Nvector.t -> unit
 
         (** This function reinitializes the integration of quadrature equations
             during the backward phase.
 
             @idas <node7#SECTION007211000000000000000> IDAQuadReInitB *)
-        val reinit : ('a, 'b) bsession -> ('a, 'b) nvector -> unit
+        val reinit : ('a, 'b) bsession -> ('a, 'b) Nvector.t -> unit
 
         (** {3:adjextraction Extraction function} *)
 
@@ -1868,7 +1881,7 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
 
             @idas <node7#sss:quad_get_b> IDAGetQuadB
          *)
-        val get : ('a, 'b) bsession -> ('a, 'b) nvector -> float
+        val get : ('a, 'b) bsession -> ('a, 'b) Nvector.t -> float
 
         (** {3:adjquadoptin Optional Input Functions} *)
 
@@ -1878,7 +1891,7 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
                 (default). *)
           | SStolerances of float * float
             (** [(rel, abs)] : scalar relative and absolute tolerances. *)
-          | SVtolerances of float * ('a, 'k) nvector
+          | SVtolerances of float * ('a, 'k) Nvector.t
             (** [(rel, abs)] : scalar relative and vector absolute
                 tolerances. *)
 
@@ -1916,7 +1929,7 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
             @idas <node5#ss:quad_optional_output> IDAGetQuadErrWeights
             @idas <node7#ss:optional_output_b> IDAGetAdjIDABmem
          *)
-        val get_err_weights : ('a, 'b) bsession -> ('a, 'b) nvector -> unit
+        val get_err_weights : ('a, 'b) bsession -> ('a, 'b) Nvector.t -> unit
 
         (** [nfqevals, nqetfails = get_stats s] returns
             - [fqevals], the number of calls to the user's quadrature function, and,

@@ -1,6 +1,7 @@
 include ../../../config
 
-EXAMPLES = cvode_skel.byte \
+EXAMPLES = cvode_skel.byte  \
+	   ida_skel.byte    \
 	   kinsol_skel.byte
 
 all: $(EXAMPLES)
@@ -8,6 +9,12 @@ opt: $(EXAMPLES:.byte=.opt)
 
 cvode_skel.byte: cvode_skel.ml
 cvode_skel.opt: cvode_skel.ml
+
+ida_skel.byte: ida_skel.ml
+ida_skel.opt: ida_skel.ml
+
+kinsol_skel.byte: kinsol_skel.ml
+kinsol_skel.opt: kinsol_skel.ml
 
 # #
 

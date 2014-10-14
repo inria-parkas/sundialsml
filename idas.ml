@@ -75,7 +75,7 @@ module Quadrature =
       | FwdSensExt se -> se
       | _ -> raise QuadNotInitialized
 
-    external c_quad_init : ('a, 'k) session -> ('a, 'k) nvector -> unit
+    external c_quad_init : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
         = "c_idas_quad_init"
 
     let init session f yQ0 =
@@ -84,13 +84,13 @@ module Quadrature =
       s.quadrhsfn <- f;
       c_quad_init session yQ0
 
-    external reinit : ('a, 'k) session -> ('a, 'k) nvector -> unit
+    external reinit : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
       = "c_idas_quad_reinit"
 
     external set_err_con    : ('a, 'k) session -> bool -> unit
         = "c_idas_quad_set_err_con"
     external sv_tolerances
-        : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
+        : ('a, 'k) session -> float -> ('a, 'k) Nvector.t -> unit
         = "c_idas_quad_sv_tolerances"
     external ss_tolerances  : ('a, 'k) session -> float -> float -> unit
         = "c_idas_quad_ss_tolerances"
@@ -98,7 +98,7 @@ module Quadrature =
     type ('a, 'k) tolerance =
         NoStepSizeControl
       | SStolerances of float * float
-      | SVtolerances of float * ('a, 'k) nvector
+      | SVtolerances of float * ('a, 'k) Nvector.t
 
     let set_tolerances s tol =
       match tol with
@@ -108,11 +108,11 @@ module Quadrature =
       | SVtolerances (rel, abs) -> (sv_tolerances s rel abs;
                                     set_err_con s true)
 
-    external get : ('a, 'k) session -> ('a, 'k) nvector -> float
+    external get : ('a, 'k) session -> ('a, 'k) Nvector.t -> float
         = "c_idas_quad_get"
 
     external get_dky
-        : ('a, 'k) session -> float -> int -> ('a, 'k) nvector -> unit
+        : ('a, 'k) session -> float -> int -> ('a, 'k) Nvector.t -> unit
         = "c_idas_quad_get_dky"
 
     external get_num_rhs_evals       : ('a, 'k) session -> int
@@ -121,7 +121,7 @@ module Quadrature =
     external get_num_err_test_fails  : ('a, 'k) session -> int
         = "c_idas_quad_get_num_err_test_fails"
 
-    external get_err_weights : ('a, 'k) session -> ('a, 'k) nvector -> unit
+    external get_err_weights : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
         = "c_idas_quad_get_err_weights"
 
     external get_stats : ('a, 'k) session -> int * int
@@ -135,7 +135,7 @@ module Sensitivity =
 
     type ('a, 'k) tolerance =
         SStolerances of float * Sundials.RealArray.t
-      | SVtolerances of float * ('a, 'k) nvector array
+      | SVtolerances of float * ('a, 'k) Nvector.t array
       | EEtolerances
 
     external set_err_con : ('a, 'k) session -> bool -> unit
@@ -149,7 +149,7 @@ module Sensitivity =
         = "c_idas_sens_ee_tolerances"
 
     external sv_tolerances
-        : ('a, 'k) session -> float -> ('a, 'k) nvector array -> unit
+        : ('a, 'k) session -> float -> ('a, 'k) Nvector.t array -> unit
         = "c_idas_sens_sv_tolerances"
 
     let set_tolerances s tol =
@@ -191,8 +191,8 @@ module Sensitivity =
     let no_sens_params = { pvals = None; pbar = None; plist = None }
 
     external c_sens_init : ('a, 'k) session -> sens_method -> bool
-                           -> ('a, 'k) nvector array
-                           -> ('a, 'k) nvector array -> unit
+                           -> ('a, 'k) Nvector.t array
+                           -> ('a, 'k) Nvector.t array -> unit
       = "c_idas_sens_init"
 
     external c_set_params : ('a, 'k) session -> sens_params -> unit
@@ -237,7 +237,7 @@ module Sensitivity =
 
     external c_reinit
       : ('a, 'k) session -> sens_method
-        -> ('a, 'k) nvector array -> ('a, 'k) nvector array -> unit
+        -> ('a, 'k) Nvector.t array -> ('a, 'k) Nvector.t array -> unit
       = "c_idas_sens_reinit"
 
     let reinit s sm s0 =
@@ -248,7 +248,7 @@ module Sensitivity =
     external toggle_off : ('a, 'k) session -> unit
       = "c_idas_sens_toggle_off"
 
-    external c_get : ('a, 'k) session -> ('a, 'k) nvector array -> float
+    external c_get : ('a, 'k) session -> ('a, 'k) Nvector.t array -> float
       = "c_idas_sens_get"
 
     let get s ys =
@@ -257,7 +257,7 @@ module Sensitivity =
       c_get s ys
 
     external c_get_dky
-      : ('a, 'k) session -> float -> int -> ('a, 'k) nvector array -> unit
+      : ('a, 'k) session -> float -> int -> ('a, 'k) Nvector.t array -> unit
       = "c_idas_sens_get_dky"
 
     let get_dky s t k dkys =
@@ -265,11 +265,11 @@ module Sensitivity =
       then invalid_arg "get_dky: wrong number of sensitivity vectors";
       c_get_dky s t k dkys
 
-    external get1 : ('a, 'k) session -> int -> ('a, 'k) nvector -> float
+    external get1 : ('a, 'k) session -> int -> ('a, 'k) Nvector.t -> float
       = "c_idas_sens_get1"
 
     external get_dky1
-      : ('a, 'k) session -> float -> int -> int -> ('a, 'k) nvector -> unit
+      : ('a, 'k) session -> float -> int -> int -> ('a, 'k) Nvector.t -> unit
       = "c_idas_sens_get_dky1"
 
     type dq_method = DQCentered | DQForward
@@ -303,7 +303,7 @@ module Sensitivity =
       = "c_idas_sens_get_stats"
 
     external c_get_err_weights
-      : ('a, 'k) session -> ('a, 'k) nvector array -> unit
+      : ('a, 'k) session -> ('a, 'k) Nvector.t array -> unit
       = "c_idas_sens_get_err_weights"
 
     let get_err_weights s esweight =
@@ -313,18 +313,18 @@ module Sensitivity =
 
     external c_sens_calc_ic_ya_yd' :
       ('a,'k) session
-      -> ('a,'k) nvector option
-      -> ('a,'k) nvector option
-      -> ('a,'k) nvector array option
-      -> ('a,'k) nvector array option
-      -> ('a,'k) nvector -> float -> unit
+      -> ('a,'k) Nvector.t option
+      -> ('a,'k) Nvector.t option
+      -> ('a,'k) Nvector.t array option
+      -> ('a,'k) Nvector.t array option
+      -> ('a,'k) Nvector.t -> float -> unit
       = "c_ida_sens_calc_ic_ya_ydp_byte"
         "c_ida_sens_calc_ic_ya_ydp"
 
     external c_sens_calc_ic_y :
       ('a,'k) session
-      -> ('a,'k) nvector option
-      -> ('a,'k) nvector array option
+      -> ('a,'k) Nvector.t option
+      -> ('a,'k) Nvector.t array option
       -> float -> unit
       = "c_ida_sens_calc_ic_y"
 
@@ -371,7 +371,7 @@ module Sensitivity =
       exception RepeatedQuadSensRhsFuncFailure
 
       external c_quadsens_init
-        : ('a, 'k) session -> bool -> ('a, 'k) nvector array -> unit
+        : ('a, 'k) session -> bool -> ('a, 'k) Nvector.t array -> unit
         = "c_idas_quadsens_init"
 
       let init s ?fQS v0 =
@@ -384,7 +384,7 @@ module Sensitivity =
                     c_quadsens_init s true v0
         | None -> c_quadsens_init s false v0
 
-      external c_reinit : ('a, 'k) session -> ('a, 'k) nvector array -> unit
+      external c_reinit : ('a, 'k) session -> ('a, 'k) Nvector.t array -> unit
         = "c_idas_quadsens_reinit"
 
       let reinit s v =
@@ -396,7 +396,7 @@ module Sensitivity =
       type ('a, 'k) tolerance =
           NoStepSizeControl
         | SStolerances of float * Sundials.RealArray.t
-        | SVtolerances of float * ('a, 'k) nvector array
+        | SVtolerances of float * ('a, 'k) Nvector.t array
         | EEtolerances
 
       external set_err_con : ('a, 'k) session -> bool -> unit
@@ -407,7 +407,7 @@ module Sensitivity =
         = "c_idas_quadsens_ss_tolerances"
 
       external sv_tolerances
-        : ('a, 'k) session -> float -> ('a, 'k) nvector array -> unit
+        : ('a, 'k) session -> float -> ('a, 'k) Nvector.t array -> unit
         = "c_idas_quadsens_sv_tolerances"
 
       external ee_tolerances  : ('a, 'k) session -> unit
@@ -432,7 +432,7 @@ module Sensitivity =
         | EEtolerances -> (ee_tolerances s;
                            set_err_con s true)
 
-      external c_get : ('a, 'k) session -> ('a, 'k) nvector array -> float
+      external c_get : ('a, 'k) session -> ('a, 'k) Nvector.t array -> float
         = "c_idas_quadsens_get"
 
       let get s ys =
@@ -441,11 +441,11 @@ module Sensitivity =
         then invalid_arg "get: wrong number of vectors";
         c_get s ys
 
-      external get1 : ('a, 'k) session -> int -> ('a, 'k) nvector -> float
+      external get1 : ('a, 'k) session -> int -> ('a, 'k) Nvector.t -> float
         = "c_idas_quadsens_get1"
 
       external c_get_dky
-        : ('a, 'k) session -> float -> int -> ('a, 'k) nvector array -> unit
+        : ('a, 'k) session -> float -> int -> ('a, 'k) Nvector.t array -> unit
         = "c_idas_quadsens_get_dky"
 
       let get_dky s t k ys =
@@ -455,7 +455,7 @@ module Sensitivity =
         c_get_dky s t k ys
 
       external get_dky1 : ('a, 'k) session -> float -> int -> int
-        -> ('a, 'k) nvector -> unit
+        -> ('a, 'k) Nvector.t -> unit
         = "c_idas_quadsens_get_dky1"
 
       external get_num_rhs_evals       : ('a, 'k) session -> int
@@ -465,7 +465,7 @@ module Sensitivity =
         = "c_idas_quadsens_get_num_err_test_fails"
 
       external c_get_err_weights
-        : ('a, 'k) session -> ('a, 'k) nvector array -> unit
+        : ('a, 'k) session -> ('a, 'k) Nvector.t array -> unit
         = "c_idas_quadsens_get_err_weights"
 
       let get_err_weights s esweight =
@@ -510,7 +510,8 @@ module Adjoint =
       | FwdSensExt se -> se
       | _ -> raise AdjointNotInitialized
 
-    external c_set_var_types : ('a,'k) session -> int -> ('a,'k) nvector -> unit
+    external c_set_var_types
+      : ('a,'k) session -> int -> ('a,'k) Nvector.t -> unit
       = "c_idas_adj_set_var_types"
 
     let set_var_types b var_types =
@@ -530,8 +531,8 @@ module Adjoint =
       ('a,'k) session
       -> int
       -> float
-      -> ('a,'k) nvector
-      -> ('a,'k) nvector
+      -> ('a,'k) Nvector.t
+      -> ('a,'k) Nvector.t
       -> unit
       = "c_idas_adj_calc_ic"
 
@@ -539,18 +540,18 @@ module Adjoint =
       ('a,'k) session
       -> int
       -> float
-      -> ('a,'k) nvector
-      -> ('a,'k) nvector
-      -> ('a,'k) nvector array
-      -> ('a,'k) nvector array
+      -> ('a,'k) Nvector.t
+      -> ('a,'k) Nvector.t
+      -> ('a,'k) Nvector.t array
+      -> ('a,'k) Nvector.t array
       -> unit
       = "c_idas_adj_calc_ic_sens_byte"
         "c_idas_adj_calc_ic_sens"
 
     external c_adj_get_consistent_ic :
       ('a,'k) session -> int
-      -> ('a,'k) nvector option
-      -> ('a,'k) nvector option
+      -> ('a,'k) Nvector.t option
+      -> ('a,'k) Nvector.t option
       -> unit
       = "c_idas_adj_get_consistent_ic"
 
@@ -570,12 +571,12 @@ module Adjoint =
       c_adj_get_consistent_ic parent which yb y'b
 
     external forward_normal : ('a, 'k) session -> float
-                              -> ('a, 'k) nvector -> ('a, 'k) nvector
+                              -> ('a, 'k) Nvector.t -> ('a, 'k) Nvector.t
                               -> float * int * Ida.solver_result
         = "c_idas_adj_forward_normal"
 
     external forward_one_step : ('a, 'k) session -> float
-                                -> ('a, 'k) nvector -> ('a, 'k) nvector
+                                -> ('a, 'k) Nvector.t -> ('a, 'k) Nvector.t
                                 -> float * int * Ida.solver_result
         = "c_idas_adj_forward_one_step"
 
@@ -590,14 +591,14 @@ module Adjoint =
 
     type ('a, 'k) tolerance =
       | SStolerances of float * float
-      | SVtolerances of float * ('a, 'k) nvector
+      | SVtolerances of float * ('a, 'k) Nvector.t
 
     external ss_tolerances
         : ('a, 'k) session -> int -> float -> float -> unit
         = "c_idas_adj_ss_tolerances"
 
     external sv_tolerances
-        : ('a, 'k) session -> int -> float -> ('a, 'k) nvector -> unit
+        : ('a, 'k) session -> int -> float -> ('a, 'k) Nvector.t -> unit
         = "c_idas_adj_sv_tolerances"
 
     let set_tolerances bs tol =
@@ -622,7 +623,7 @@ module Adjoint =
         = "c_idas_adj_backward_one_step"
 
     external c_get : ('a, 'k) session -> int
-                     -> ('a, 'k) nvector -> ('a, 'k) nvector -> float
+                     -> ('a, 'k) Nvector.t -> ('a, 'k) Nvector.t -> float
         = "c_idas_adj_get"
 
     let get bs yb ypb =
@@ -694,7 +695,7 @@ module Adjoint =
          *)
 
         type ('data, 'kind) linear_solver =
-          ('data, 'kind) bsession -> ('data, 'kind) nvector -> unit
+          ('data, 'kind) bsession -> ('data, 'kind) Nvector.t -> unit
 
         let band ?jac p bs nv nv' =
           let parent, which = parent_and_which bs in
@@ -862,8 +863,8 @@ module Adjoint =
     external c_init_backward
         : ('a, 'k) session -> ('a, 'k) session Weak.t
           -> float
-          -> ('a, 'k) nvector
-          -> ('a, 'k) nvector
+          -> ('a, 'k) Nvector.t
+          -> ('a, 'k) Nvector.t
           -> bool
           -> (ida_mem * int * c_weak_ref * ida_file)
         = "c_idas_adj_init_backward_byte"
@@ -926,8 +927,8 @@ module Adjoint =
 
     external c_reinit
         : ('a, 'k) session -> int -> float
-          -> ('a, 'k) nvector
-          -> ('a, 'k) nvector
+          -> ('a, 'k) Nvector.t
+          -> ('a, 'k) Nvector.t
           -> unit
         = "c_idas_adj_reinit"
 
@@ -990,10 +991,10 @@ module Adjoint =
         include QuadratureTypes
 
         external c_quad_initb
-            : ('a, 'k) session -> int -> ('a, 'k) nvector -> unit
+            : ('a, 'k) session -> int -> ('a, 'k) Nvector.t -> unit
             = "c_idas_adjquad_initb"
         external c_quad_initbs
-            : ('a, 'k) session -> int -> ('a, 'k) nvector -> unit
+            : ('a, 'k) session -> int -> ('a, 'k) Nvector.t -> unit
             = "c_idas_adjquad_initbs"
 
         let init bs mf y0 =
@@ -1005,14 +1006,15 @@ module Adjoint =
            | WithSens f -> (se.bquadrhsfn_sens <- f;
                             c_quad_initbs parent which y0)
 
-        external c_reinit : ('a, 'k) session -> int -> ('a, 'k) nvector -> unit
+        external c_reinit
+            : ('a, 'k) session -> int -> ('a, 'k) Nvector.t -> unit
             = "c_idas_adjquad_reinit"
 
         let reinit bs yqb0 =
           let parent, which = parent_and_which bs in
           c_reinit parent which yqb0
 
-        external c_get : ('a, 'k) session -> int -> ('a, 'k) nvector -> float
+        external c_get : ('a, 'k) session -> int -> ('a, 'k) Nvector.t -> float
             = "c_idas_adjquad_get"
 
         let get bs yqb =
@@ -1022,13 +1024,13 @@ module Adjoint =
         type ('a, 'k) tolerance =
             NoStepSizeControl
           | SStolerances of float * float
-          | SVtolerances of float * ('a, 'k) nvector
+          | SVtolerances of float * ('a, 'k) Nvector.t
 
         external set_err_con : ('a, 'k) session -> int -> bool -> unit
             = "c_idas_adjquad_set_err_con"
 
         external sv_tolerances
-            : ('a, 'k) session -> int -> float -> ('a, 'k) nvector -> unit
+            : ('a, 'k) session -> int -> float -> ('a, 'k) Nvector.t -> unit
             = "c_idas_adjquad_sv_tolerances"
 
         external ss_tolerances

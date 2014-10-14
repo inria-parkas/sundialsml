@@ -19,11 +19,8 @@
  *     in cvode_ml.h (and code in cvode_ml.c) must also be updated.
  *)
 
-type ('data, 'kind) nvector = ('data, 'kind) Nvector.t
-
-type 'a single_tmp = 'a
-type 'a double_tmp = 'a * 'a
-type 'a triple_tmp = 'a * 'a * 'a
+type 'a double = 'a * 'a
+type 'a triple = 'a * 'a * 'a
 
 type ('t, 'a) jacobian_arg =
   {
@@ -39,7 +36,7 @@ type bandrange = { mupper : int; mlower : int; }
 
 module DlsTypes = struct
   type dense_jac_fn =
-    (Sundials.RealArray.t triple_tmp, Sundials.RealArray.t) jacobian_arg
+    (Sundials.RealArray.t triple, Sundials.RealArray.t) jacobian_arg
     -> Dls.DenseMatrix.t
     -> unit
 
@@ -52,7 +49,7 @@ module DlsTypes = struct
 
   type band_jac_fn =
     bandrange
-    -> (Sundials.RealArray.t triple_tmp, Sundials.RealArray.t) jacobian_arg
+    -> (Sundials.RealArray.t triple, Sundials.RealArray.t) jacobian_arg
     -> Dls.BandMatrix.t
     -> unit
 
@@ -74,14 +71,14 @@ end
 module SpilsTypes' = struct
   include SpilsCommonTypes
   type 'a prec_solve_fn =
-    ('a single_tmp, 'a) jacobian_arg
+    ('a, 'a) jacobian_arg
     -> 'a
     -> 'a
     -> float
     -> unit
-  type 'a prec_setup_fn = ('a triple_tmp, 'a) jacobian_arg -> unit
+  type 'a prec_setup_fn = ('a triple, 'a) jacobian_arg -> unit
   type 'a jac_times_vec_fn =
-    ('a double_tmp, 'a) jacobian_arg
+    ('a double, 'a) jacobian_arg
     -> 'a           (* v *)
     -> 'a           (* Jv *)
     -> unit
@@ -216,7 +213,7 @@ module AdjointTypes' = struct
 
   module DlsTypes = struct
     type dense_jac_fn =
-      (Sundials.RealArray.t triple_tmp, Sundials.RealArray.t) jacobian_arg
+      (Sundials.RealArray.t triple, Sundials.RealArray.t) jacobian_arg
       -> Dls.DenseMatrix.t
       -> unit
 
@@ -229,7 +226,7 @@ module AdjointTypes' = struct
 
     type band_jac_fn =
       bandrange
-      -> (Sundials.RealArray.t triple_tmp, Sundials.RealArray.t) jacobian_arg
+      -> (Sundials.RealArray.t triple, Sundials.RealArray.t) jacobian_arg
       -> Dls.BandMatrix.t
       -> unit
 
@@ -245,14 +242,14 @@ module AdjointTypes' = struct
   module SpilsTypes' = struct
     include SpilsCommonTypes
     type 'a prec_solve_fn =
-      ('a single_tmp, 'a) jacobian_arg
+      ('a, 'a) jacobian_arg
       -> 'a
       -> 'a
       -> float
       -> unit
-    type 'a prec_setup_fn = ('a triple_tmp, 'a) jacobian_arg -> unit
+    type 'a prec_setup_fn = ('a triple, 'a) jacobian_arg -> unit
     type 'a jac_times_vec_fn =
-      ('a single_tmp, 'a) jacobian_arg
+      ('a, 'a) jacobian_arg
       -> 'a
       -> 'a
       -> unit
@@ -380,7 +377,7 @@ and ('data, 'kind) lsetup' =
   -> 'data
   -> 'data
   -> 'data
-  -> 'data triple_tmp
+  -> 'data triple
   -> unit
 and ('data, 'kind) lsolve' =
   ('data, 'kind) session
@@ -400,8 +397,8 @@ type serial_session = (Nvector_serial.data, Nvector_serial.kind) session
    can be safely ignored.  It's just in case that both are given.  *)
 type ('data, 'kind) linear_solver =
   ('data, 'kind) session
-  -> ('data, 'kind) nvector (* y *)
-  -> ('data, 'kind) nvector (* y' *)
+  -> ('data, 'kind) Nvector.t (* y *)
+  -> ('data, 'kind) Nvector.t (* y' *)
   -> unit
 
 type serial_linear_solver =
@@ -411,7 +408,7 @@ module SpilsTypes = struct
   include SpilsTypes'
 
   type ('a, 'k) set_preconditioner =
-    ('a, 'k) session -> ('a, 'k) nvector -> ('a, 'k) nvector -> unit
+    ('a, 'k) session -> ('a, 'k) Nvector.t -> ('a, 'k) Nvector.t -> unit
 
   (* IDA(S) supports only left preconditioning.  *)
   type ('a, 'k) preconditioner =
@@ -444,8 +441,8 @@ module AdjointTypes = struct
 
   type ('data, 'kind) linear_solver =
     ('data, 'kind) bsession
-    -> ('data, 'kind) nvector (* y *)
-    -> ('data, 'kind) nvector (* y' *)
+    -> ('data, 'kind) Nvector.t (* y *)
+    -> ('data, 'kind) Nvector.t (* y' *)
     -> unit
   type serial_linear_solver =
     (Nvector_serial.data, Nvector_serial.kind) linear_solver
@@ -455,7 +452,7 @@ module AdjointTypes = struct
 
     type ('a, 'k) set_preconditioner =
       ('a, 'k) bsession -> ('a, 'k) session -> int ->
-      ('a, 'k) nvector -> ('a, 'k) nvector -> unit
+      ('a, 'k) Nvector.t -> ('a, 'k) Nvector.t -> unit
 
     (* IDA(S) supports only left preconditioning.  *)
     type ('a, 'k) preconditioner =

@@ -23,111 +23,53 @@
 (** Variable-step solution of DAE initial value problems with
     zero-crossing detection.
 
- @version VERSION()
- @author Timothy Bourke (Inria)
- @author Jun Inoue (Inria)
- @author Marc Pouzet (LIENS)
- *)
+    This documented interface is structured as follows.
+    {ol
+      {- {{:#linear}Linear solvers}}
+      {- {{:#tols}Tolerances}}
+      {- {{:#init}Initialization}}
+      {- {{:#solver}Solving}}
+      {- {{:#set}Modifying the solver}}
+      {- {{:#get}Querying the solver}}
+      {- {{:#roots}Additional root finding functions}}
+      {- {{:#exceptions}Exceptions}}}
+
+    @version VERSION()
+    @author Timothy Bourke (Inria)
+    @author Jun Inoue (Inria)
+    @author Marc Pouzet (LIENS) *)
 
 open Sundials
 
-(** {2:exceptions Exceptions} *)
+(** A session with the IDA solver.
 
-(** @ida <node5#sss:ida> IDA_ILL_INPUT *)
-exception IllInput
-
-(** @ida <node5#sss:ida> IDA_TOO_CLOSE *)
-exception TooClose
-
-(** @ida <node5#sss:ida> IDA_TOO_MUCH_WORK *)
-exception TooMuchWork
-
-(** @ida <node5#sss:ida> IDA_TOO_MUCH_ACC *)
-exception TooMuchAccuracy
-
-(** @ida <node5#sss:ida> IDA_ERR_FAIL *)
-exception ErrFailure                
-
-(** @ida <node5#sss:ida> IDA_CONV_FAIL *)
-exception ConvergenceFailure        
-
-(** @ida <node5#sss:ida> IDA_LINIT_FAIL *)
-exception LinearInitFailure         
-
-(** @ida <node5#sss:ida> IDA_LSETUP_FAIL *)
-exception LinearSetupFailure        
-
-(** @ida <node5#sss:ida> IDA_LSOLVE_FAIL *)
-exception LinearSolveFailure        
-
-(** @ida <node5#sss:ida> IDA_RES_FAIL *)
-exception ResFuncFailure
-
-(** @ida <node5#sss:ida> IDA_FIRST_RES_FAIL *)
-exception FirstResFuncFailure       
-
-(** @ida <node5#sss:ida> IDA_REP_RES_ERR *)
-exception RepeatedResFuncFailure
-
-(** @ida <node5#sss:ida> IDA_RTFUNC_FAIL *)
-exception RootFuncFailure           
-
-exception BadK      (** k is not in the range 0, 1, ..., q_u (IDA_BAD_K)
-                        @ida <node5#ss:optional_dky> IDAGetDky *)
-
-exception BadT      (** t is not in the interval
-                        \[t_n - h_u, t_n\] (IDA_BAD_T)
-                        @ida <node5#ss:optional_dky> IDAGetDky *)
-exception BadDky    (** invalid dky argument (IDA_BAD_DKY)
-                        @ida <node5#ss:optional_dky> IDAGetDky *)
-
-(** This type represents a session with the IDA solver.
-
-    A skeleton of the main program:
-    + {b Set vector of initial values}
-    {[let y = Nvector_array.wrap [| 0.0; 0.0; 0.0 |] ]}
-    The length of this vector determines the problem size.
-    + {b Create and initialize a solver session}
-    {[let s = Ida.init (Ida.Spgmr spils_no_precond) tols f ~roots:(2, g) (3, y)]}
-    This will initialize a specific linear solver and the root-finding
-    mechanism, if necessary.
-    + {b Specify integration tolerances (optional)}, e.g.
-    {[set_tolerances s SStolerances (reltol, abstol)]}
-    + {b Set optional inputs}, e.g.
-    {[set_stop_time s 10.0; ...]}
-    Call any of the [set_*] functions to change solver parameters from their
-    defaults.
-    + {b Advance solution in time}, e.g.
-    {[let (t', result) = Ida.solve_normal s !t y in
-...
-t := t' + 0.1]}
-    Repeatedly call either [solve_normal] or [solve_one_step] to advance the
-    simulation.
-    + {b Get optional outputs}
-    {[let stats = get_integrator_stats s in ...]}
-    Call any of the [get_*] functions to examine solver statistics.
+    An example session with Ida ({openfile ida_skel.ml}): {[
+#include "examples/ocaml/skeletons/ida_skel.ml"
+    ]}
 
     @ida <node5#ss:skeleton_sim> Skeleton of main program
  *)
 type ('a, 'k) session = ('a, 'k) Ida_impl.session
 
+(** Alias for sessions based on serial nvectors. *)
 type serial_session = (RealArray.t, Nvector_serial.kind) session
 
-(** The type of vectors passed to the solver. *)
-type ('data, 'kind) nvector = ('data, 'kind) Nvector.t
+(** {2:linear Linear Solvers} *)
 
-(** {2 Linear Solvers} *)
-
-(** Specify a linear solver.
+(** Linear solver used by Ida.
 
     @ida <node5#sss:lin_solv_init> Linear Solver Specification Functions *)
 type ('data, 'kind) linear_solver = ('data, 'kind) Ida_impl.linear_solver
-type serial_linear_solver = (RealArray.t, Nvector_serial.kind) linear_solver
 
+(** Alias for linear solvers that are restricted to serial nvectors. *)
+type serial_linear_solver =
+      (Nvector_serial.data, Nvector_serial.kind) linear_solver
 
-type 'a single_tmp = 'a
-type 'a double_tmp = 'a * 'a
-type 'a triple_tmp = 'a * 'a * 'a
+(** Workspaces with two temporary vectors. *)
+type 'a double = 'a * 'a
+
+(** Workspaces with three temporary vectors. *)
+type 'a triple = 'a * 'a * 'a
 
 (**
   Arguments common to all Jacobian callback functions.    
@@ -150,31 +92,21 @@ type ('t, 'a) jacobian_arg =
                                  where [F] is the residual function and
                                  d denotes partial differentiation.
                                  See the IVP solution section linked below.  *)
-    jac_tmp  : 't            (** Workspace data, either {!single_tmp},
-                                 {!double_tmp}, or {!triple_tmp}. *)
+    jac_tmp  : 't            (** Workspace data. *)
   }
-
-(** {3 Direct Linear Solvers (DLS)} *)
 
 (** The range of nonzero entries in a band matrix.  *)
 type bandrange = Ida_impl.bandrange =
   { mupper : int; (** The upper half-bandwidth.  *)
     mlower : int; (** The lower half-bandwidth.  *) }
 
-(** Get optional outputs for the Direct Linear Solvers that operate on dense
-    and banded matrices.
-
+(** Direct Linear Solvers operating on dense and banded matrices.
+    
     @ida <node5#sss:optin_dls> Direct linear solvers optional input functions
     @ida <node5#sss:optout_dls> Direct linear solvers optional output functions
-  *)
+    @ida <node5#ss:djacFn> Dense Jacobian function *)
 module Dls :
   sig
-    (** Direct Linear Solvers operating on dense and banded matrices.
-        
-        @ida <node5#sss:optin_dls> Direct linear solvers optional input functions
-        @ida <node5#sss:optout_dls> Direct linear solvers optional output functions
-        @ida <node5#ss:djacFn> Dense Jacobian function
-      *)
 
     (** The type of a user-supplied callback function that computes an
         approximation to the Jacobian matrix for the {!dense} and
@@ -215,7 +147,7 @@ module Dls :
         @ida <node5#ss:djacFn> Dense Jacobian function
         @ida <node3#ss:ivp_soln> IVP solution
     *)
-    type dense_jac_fn = (RealArray.t triple_tmp, RealArray.t) jacobian_arg
+    type dense_jac_fn = (RealArray.t triple, RealArray.t) jacobian_arg
                          -> Dls.DenseMatrix.t -> unit
 
     (** Direct linear solver with dense matrix.  The optional argument
@@ -283,7 +215,7 @@ module Dls :
         @ida <node3#ss:ivp_soln> IVP solution
     *)
     type band_jac_fn = bandrange
-                        -> (RealArray.t triple_tmp, RealArray.t) jacobian_arg
+                        -> (RealArray.t triple, RealArray.t) jacobian_arg
                         -> Dls.BandMatrix.t -> unit
 
     (** Direct linear solver with banded matrix.  The arguments
@@ -307,8 +239,33 @@ module Dls :
         @ida <node3#ss:ivp_soln> IVP solution *)
     val lapack_band : ?jac:band_jac_fn -> bandrange -> serial_linear_solver
 
+    (** {3:stats Solver statistics} *)
 
-    (** {4 Low-level solver manipulation} *)
+    (** Returns the sizes of the real and integer workspaces used by
+        the Dense or Band direct linear solver.
+
+        @ida <node5#sss:optout_dls> IDADlsGetWorkSpace
+        @return ([real_size], [integer_size])
+     *)
+    val get_work_space : serial_session -> int * int
+
+
+    (** Returns the number of calls made to the Dense and Band direct
+        linear solvers Jacobian approximation function.
+
+      @ida <node5#sss:optout_dls> IDADlsGetNumJacEvals
+    *)
+    val get_num_jac_evals : serial_session -> int
+
+    (** Returns the number of calls made to the user-supplied residual
+        function due to the finite difference (Dense or Band) Jacobian
+        approximation.
+
+        @ida <node5#sss:optout_dls> IDADlsGetNumResEvals
+    *)
+    val get_num_res_evals : serial_session -> int
+
+    (** {3:lowlevel Low-level solver manipulation} *)
 
     (** Change the dense Jacobian function.  It may be unsafe to use
         this function without a {!reinit}.  Users are encouraged to
@@ -354,52 +311,19 @@ module Dls :
         @ida <node5#ss:bjacFn> Banded Jacobian function
       *)
     val clear_band_jac_fn : serial_session -> unit
-
-
-    (** {4 Optional output functions} *)
-
-    (** Returns the sizes of the real and integer workspaces used by
-        the Dense or Band direct linear solver.
-
-        @ida <node5#sss:optout_dls> IDADlsGetWorkSpace
-        @return ([real_size], [integer_size])
-     *)
-    val get_work_space : serial_session -> int * int
-
-
-    (** Returns the number of calls made to the Dense and Band direct
-        linear solvers Jacobian approximation function.
-
-      @ida <node5#sss:optout_dls> IDADlsGetNumJacEvals
-    *)
-    val get_num_jac_evals : serial_session -> int
-
-    (** Returns the number of calls made to the user-supplied residual
-        function due to the finite difference (Dense or Band) Jacobian
-        approximation.
-
-        @ida <node5#sss:optout_dls> IDADlsGetNumResEvals
-    *)
-    val get_num_res_evals : serial_session -> int
   end
 
-(** {3 Scaled Preconditioned Iterative Linear Solvers (SPILS)} *)
+(** Scaled Preconditioned Iterative Linear Solvers (SPILS).
 
+    @ida <node5#sss:optin_spils> Iterative linear solvers optional input
+                                 functions.
+    @ida <node5#sss:optout_spils> Iterative linear solvers optional output
+                                  functions.
+    @ida <node5#ss:psolveFn> Linear preconditioning function
+    @ida <node5#ss:precondFn> Jacobian preconditioning function *)
 module Spils :
   sig
-    (** Scaled Preconditioned Iterative Linear Solvers (SPILS)
-
-        @ida <node5#sss:optin_spils> Iterative linear solvers optional input
-                                     functions.
-        @ida <node5#sss:optout_spils> Iterative linear solvers optional output
-                                      functions.
-        @ida <node5#ss:psolveFn> Linear preconditioning function
-        @ida <node5#ss:precondFn> Jacobian preconditioning function
-    *)
-
-    type gramschmidt_type = Spils.gramschmidt_type =
-      | ModifiedGS
-      | ClassicalGS
+    (** {3:precond Preconditioners} *)
 
     (** Called like [prec_solve_fn arg r z delta] to solve the
         linear system {i P}[z] = [r], where {i P} is the (left)
@@ -433,7 +357,7 @@ module Spils :
         @ida <node5#ss:psolveFn> IDASpilsPrecSolveFn
       *)
     type 'a prec_solve_fn =
-      ('a single_tmp, 'a) jacobian_arg
+      ('a, 'a) jacobian_arg
       -> 'a
       -> 'a
       -> float
@@ -484,7 +408,7 @@ module Spils :
 
         @ida <node5#ss:precondFn> IDASpilsPrecSetupFn
     *)
-    type 'a prec_setup_fn = ('a triple_tmp, 'a) jacobian_arg -> unit
+    type 'a prec_setup_fn = ('a triple, 'a) jacobian_arg -> unit
 
     (** Specifies a Jacobian-times-vector function.
 
@@ -517,7 +441,7 @@ module Spils :
         @ida <node5#ss:jtimesFn> IDASpilsJacTimesVecFn
     *)
     type 'a jac_times_vec_fn =
-      ('a double_tmp, 'a) jacobian_arg
+      ('a double, 'a) jacobian_arg
       -> 'a
       -> 'a
       -> unit
@@ -565,6 +489,8 @@ module Spils :
       -> 'a prec_solve_fn
       -> ('a, 'k) preconditioner
 
+    (** {3:lsolvers Solvers} *)
+
     (** Krylov iterative linear solver with the scaled preconditioned
         GMRES method.  Called like [spgmr ~maxl:maxl
         ~max_restarts:maxr prec], where:
@@ -605,52 +531,11 @@ module Spils :
     *)
     val sptfqmr : ?maxl:int -> ('a, 'k) preconditioner -> ('a, 'k) linear_solver
 
+    (** {3:set Solver parameters} *)
 
-    (** {4 Low-level solver manipulation} *)
-
-    (** Set preconditioning functions (see {!callbacks}).  It may be
-        unsafe to use this function without a {!reinit}.  Users are
-        encouraged to use the [linsolv] parameter of {!reinit}
-        instead, unless they are desperate for performance.
-
-        @ida <node5#sss:optin_spils> IDASpilsSetPreconditioner
-        @ida <node5#ss:psolveFn> Linear preconditioning function
-      *)
-     val set_preconditioner :
-       ('a,'k) session
-       -> ?setup:'a prec_setup_fn
-       -> 'a prec_solve_fn
-       -> unit
-
-    (** Set the Jacobian-times-vector function (see {!callbacks}).  It
-        may be unsafe to use this function without a {!reinit}.  Users
-        are encouraged to use the [linsolv] parameter of {!reinit}
-        instead, unless they are desperate for performance.
-
-        @ida <node5#sss:optin_spils> IDASpilsSetJacTimesVecFn
-        @ida <node5#ss:jtimesFn> IDASpilsJacTimesVecFn
-      *)
-    val set_jac_times_vec_fn :
-      ('a,'k) session
-      -> 'a jac_times_vec_fn
-      -> unit
-
-    (** This function disables the user-supplied Jacobian-vector function, and
-        switches back to the default internal difference quotient approximation
-        (see {!spils_params}).  It is equivalent to calling
-        IDASpilsSetJacTimesVecFn with an argument of [NULL].
-
-        It may be unsafe to use this function without a {!reinit}.  Users are
-        encouraged to use the [iter_type] parameter of {!reinit} instead, unless
-        they are desperate for performance.
-
-        @ida <node5#sss:optin_spils> IDASpilsSetJacTimesVecFn
-        @ida <node5#ss:jtimesFn> IDASpilsJacTimesVecFn
-    *)
-    val clear_jac_times_vec_fn : ('a, 'k) session -> unit
-
-
-    (** {4 Optional output functions} *)
+    type gramschmidt_type = Spils.gramschmidt_type =
+      | ModifiedGS
+      | ClassicalGS
 
     (** Sets the Gram-Schmidt orthogonalization to be used with the [Spgmr]
         {!linear_solver}.
@@ -678,7 +563,7 @@ module Spils :
     *)
     val set_maxl : ('a, 'k) session -> int -> unit
 
-    (** {4 Optional input functions} *)
+    (** {3:stats Solver statistics} *)
 
     (**
       Returns the sizes of the real and integer workspaces used by the SPGMR
@@ -735,13 +620,57 @@ module Spils :
       @ida <node5#sss:optout_spils> IDASpilsGetNumResEvals
     *)
     val get_num_res_evals    : ('a, 'k) session -> int
+
+    (** {3:lowlevel Low-level solver manipulation} *)
+
+    (** Set preconditioning functions (see {!callbacks}).  It may be
+        unsafe to use this function without a {!reinit}.  Users are
+        encouraged to use the [linsolv] parameter of {!reinit}
+        instead, unless they are desperate for performance.
+
+        @ida <node5#sss:optin_spils> IDASpilsSetPreconditioner
+        @ida <node5#ss:psolveFn> Linear preconditioning function
+      *)
+     val set_preconditioner :
+       ('a,'k) session
+       -> ?setup:'a prec_setup_fn
+       -> 'a prec_solve_fn
+       -> unit
+
+    (** Set the Jacobian-times-vector function (see {!callbacks}).  It
+        may be unsafe to use this function without a {!reinit}.  Users
+        are encouraged to use the [linsolv] parameter of {!reinit}
+        instead, unless they are desperate for performance.
+
+        @ida <node5#sss:optin_spils> IDASpilsSetJacTimesVecFn
+        @ida <node5#ss:jtimesFn> IDASpilsJacTimesVecFn
+      *)
+    val set_jac_times_vec_fn :
+      ('a,'k) session
+      -> 'a jac_times_vec_fn
+      -> unit
+
+    (** This function disables the user-supplied Jacobian-vector function, and
+        switches back to the default internal difference quotient approximation
+        (see {!spils_params}).  It is equivalent to calling
+        IDASpilsSetJacTimesVecFn with an argument of [NULL].
+
+        It may be unsafe to use this function without a {!reinit}.  Users are
+        encouraged to use the [iter_type] parameter of {!reinit} instead, unless
+        they are desperate for performance.
+
+        @ida <node5#sss:optin_spils> IDASpilsSetJacTimesVecFn
+        @ida <node5#ss:jtimesFn> IDASpilsJacTimesVecFn
+    *)
+    val clear_jac_times_vec_fn : ('a, 'k) session -> unit
+
   end
 
+(** Alternate Linear Solvers.
+
+    @ida <node8#s:new_linsolv> Providing Alternate Linear Solver Modules *)
 module Alternate :
   sig
-    (** Alternate Linear Solvers
-
-        @ida <node8#s:new_linsolv> Providing Alternate Linear Solver Modules *)
 
     type ('data, 'kind) callbacks =
       {
@@ -783,7 +712,7 @@ module Alternate :
       -> 'data
       -> 'data
       -> 'data
-      -> 'data triple_tmp
+      -> 'data triple
       -> unit
 
     (** The type of functions that solve the linear equation $Mx = b$,
@@ -819,9 +748,11 @@ module Alternate :
     (** Create a linear solver from a function returning a set of callback
         functions *)
     val make :
-          (('data, 'kind) session -> ('data, 'kind) nvector
-           -> ('data, 'kind) nvector -> ('data, 'kind) callbacks)
+          (('data, 'kind) session -> ('data, 'kind) Nvector.t
+           -> ('data, 'kind) Nvector.t -> ('data, 'kind) callbacks)
           -> ('data, 'kind) linear_solver
+
+    (** {3:internals Solver internals} *)
 
     (** Returns the solver's current [cj] value.  *)
     val get_cj : ('data, 'kind) session -> float
@@ -830,13 +761,12 @@ module Alternate :
     val get_cjratio : ('data, 'kind) session -> float
   end
 
-
-(** {2 Tolerances} *)
+(** {2:tols Tolerances} *)
 
 type ('data, 'kind) tolerance =
   | SStolerances of float * float
     (** [(rel, abs)] : scalar relative and absolute tolerances. *)
-  | SVtolerances of float * ('data, 'kind) nvector
+  | SVtolerances of float * ('data, 'kind) Nvector.t
     (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
   | WFtolerances of ('data -> 'data -> unit)
     (** Specifies a function [efun y ewt] that sets the multiplicative
@@ -858,7 +788,7 @@ type ('data, 'kind) tolerance =
 (** A default relative tolerance of 1.0e-4 and absolute tolerance of 1.0e-8. *)
 val default_tolerances : ('data, 'kind) tolerance
 
-(** {2 Initialization} *)
+(** {2:init Initialization} *)
 
 (** The DAE's residual function.  Called by the solver like [f t y y' r],
     where:
@@ -952,8 +882,8 @@ val init :
     -> 'a resfn
     -> ?roots:(int * 'a rootsfn)
     -> float
-    -> ('a, 'kind) nvector
-    -> ('a, 'kind) nvector
+    -> ('a, 'kind) Nvector.t
+    -> ('a, 'kind) Nvector.t
     -> ('a, 'kind) session
 
 (** This is a convenience value for signalling that there are no
@@ -1030,7 +960,7 @@ module VarType :
 
     @ida <node5#sss:optin_main> IDASetId
  *)
-val set_var_types : ('a, 'k) session -> ('a,'k) nvector -> unit
+val set_var_types : ('a, 'k) session -> ('a,'k) Nvector.t -> unit
 
 (** An unpreferred alias for {!set_var_types}.  SUNDIALS calls variable types
     by the cryptic name "Id", and this OCaml binding preserves this alternative
@@ -1038,7 +968,7 @@ val set_var_types : ('a, 'k) session -> ('a,'k) nvector -> unit
 
     @ida <node5#sss:optin_main> IDASetId
   *)
-val set_id : ('a, 'k) session -> ('a,'k) nvector -> unit
+val set_id : ('a, 'k) session -> ('a,'k) Nvector.t -> unit
 
 (** Indicate whether or not to ignore algebraic variables in the local
     error test.  This is set to [false] by default.  Before you can
@@ -1104,7 +1034,7 @@ val set_suppress_alg : ('a, 'k) session -> bool -> unit
     @ida <node5#ss:idacalcic> IDACalcIC
     @ida <node5#sss:optout_iccalc> IDAGetConsistentIC
  *)
-val calc_ic_y : ('a, 'k) session -> ?y:('a, 'k) nvector -> float -> unit
+val calc_ic_y : ('a, 'k) session -> ?y:('a, 'k) Nvector.t -> float -> unit
 
 (** [calc_ic_ya_yd' ida ~y:yvar ~y':y'var vartypes tout1] corrects the
     initial values y0 and y0' at time t0.  That is, if the {i
@@ -1174,9 +1104,9 @@ val calc_ic_y : ('a, 'k) session -> ?y:('a, 'k) nvector -> float -> unit
  *)
 val calc_ic_ya_yd' :
   ('a, 'k) session
-  -> ?y:('a, 'k) nvector
-  -> ?y':('a, 'k) nvector
-  -> ('a, 'k) nvector
+  -> ?y:('a, 'k) Nvector.t
+  -> ?y':('a, 'k) Nvector.t
+  -> ('a, 'k) Nvector.t
   -> float
   -> unit
 
@@ -1186,7 +1116,7 @@ val calc_ic_ya_yd' :
  *)
 val get_num_backtrack_ops : ('a, 'k) session -> int
 
-(** {2 Solver functions } *)
+(** {2:solver Solving} *)
 
 (**
  Possible values returned when a IDA solver step function succeeds.
@@ -1230,7 +1160,7 @@ type solver_result =
    @ida <node5#sss:idasolve> IDASolve (IDA_NORMAL)
  *)
 val solve_normal : ('a, 'k) session -> float
-                   -> ('a, 'k) nvector -> ('a, 'k) nvector
+                   -> ('a, 'k) Nvector.t -> ('a, 'k) Nvector.t
                    -> float * solver_result
 
 (** This function is identical to {!solve_normal}, except that it
@@ -1239,13 +1169,56 @@ val solve_normal : ('a, 'k) session -> float
     @ida <node5#sss:idasolve> IDASolve (IDA_ONE_STEP)
  *)
 val solve_one_step : ('a, 'k) session -> float
-                     -> ('a, 'k) nvector -> ('a, 'k) nvector
+                     -> ('a, 'k) Nvector.t -> ('a, 'k) Nvector.t
                      -> float * solver_result
 
+(**
+  [get_dky s t k dky] computes the [k]th derivative of the function y at time
+  [t], i.e. d(k)y/dt(k)(t). The function requires that tn - hu <= [t] <=
+  tn, where tn denotes the current internal time reached, and hu is the last
+  internal step size successfully used by the solver.
+  The user may request [k] = 0, 1,..., qu, where qu is the current order.
 
-(** {2 Main optional functions} *)
+  This function may only be called after a successful return from either
+  {!solve_normal} or {!solve_one_step}.
 
-(** {3 Input} *)
+  Values for the limits may be obtained:
+    - tn = {!get_current_time}
+    - qu = {!get_last_order}
+    - hu = {!get_last_step}
+
+  @ida <node5#sss:optin_root> IDAGetDky
+ *)
+val get_dky : ('a, 'k) session -> float -> int -> ('a, 'k) Nvector.t -> unit
+
+(** [reinit s ~linsolv:linsolv ~roots:(nroots, g) t0 y0 y'0]
+    reinitializes the solver session [s] with a new time [t0] and new
+    values for the variables [y0].  There are two optional arguments
+    to change the linear solver and the set of root functions.
+
+    The optional argument [linsolv] sets the linear solver.  If
+    omitted, the current linear solver will be kept.  If a session is
+    created with, say, [Dense (Some f)], and then reinitialized with
+    [Dense None], then the linear solver is reset and [f] is removed
+    from the session.  The same goes for all other optional callbacks.
+
+    The optional argument [roots] sets the root functions; see {!init}
+    for what each component does.  {!Ida.no_roots} may be passed in to
+    turn off root finding.  If omitted, the current root functions
+    will be kept.
+
+    @ida <node5#sss:cvreinit> IDAReInit
+ *)
+val reinit :
+  ('a, 'k) session
+  -> ?linsolv:('a, 'k) linear_solver
+  -> ?roots:(int * 'a rootsfn)
+  -> float
+  -> ('a, 'k) Nvector.t
+  -> ('a, 'k) Nvector.t
+  -> unit
+
+(** {2:set Modifying the solver (optional input functions)} *)
 
 (** Set the integration tolerances.
 
@@ -1405,9 +1378,9 @@ module Constraint :
 
     @ida <node5#sss:optin_main> IDASetConstraints
  *)
-val set_constraints : ('a, 'k) session -> ('a, 'k) nvector -> unit
+val set_constraints : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
 
-(** {3 Output } *)
+(** {2:get Querying the solver (optional output functions)} *)
 
 (** Returns the real and integer workspace sizes.
 
@@ -1510,13 +1483,13 @@ val get_tol_scale_factor : ('a, 'k) session -> float
     @ida <node5#sss:optout_main> IDAGetErrWeights
     @ida <node3#ss:ivp_sol> IVP solution (W_i)
  *)
-val get_err_weights : ('a, 'k) session -> ('a, 'k) nvector -> unit
+val get_err_weights : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
 
 (** Returns the vector of estimated local errors.
 
     @ida <node5#sss:optout_main> IDAGetEstLocalErrors
  *)
-val get_est_local_errors : ('a, 'k) session -> ('a, 'k) nvector -> unit
+val get_est_local_errors : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
 
 (**
  Aggregated integrator statistics.
@@ -1570,12 +1543,7 @@ val get_num_nonlin_solv_conv_fails : ('a, 'k) session -> int
     @ida <node5#sss:optout_main> IDAGetNonlinSolvStats *)
 val get_nonlin_solv_stats : ('a, 'k) session -> int *int
 
-
-
-
-(** {2 Root finding optional functions} *)
-
-(** {3 Input} *)
+(** {2:roots Additional root finding functions} *)
 
 (** [set_root_direction s dir] specifies the direction of
     zero-crossings to be located and returned. [dir] may contain one
@@ -1600,8 +1568,6 @@ val set_all_root_directions : ('a, 'k) session -> Sundials.RootDirs.d -> unit
  *)
 val set_no_inactive_root_warn : ('a, 'k) session -> unit
 
-(** {3 Output} *)
-
 (**
   Fills an array showing which functions were found to have a root.
 
@@ -1616,52 +1582,85 @@ val get_root_info : ('a, 'k) session -> Sundials.Roots.t -> unit
  *)
 val get_num_g_evals : ('a, 'k) session -> int
 
-(** {2 Interpolated output function } *)
+(** {2:exceptions Exceptions} *)
 
 (**
-  [get_dky s t k dky] computes the [k]th derivative of the function y at time
-  [t], i.e. d(k)y/dt(k)(t). The function requires that tn - hu <= [t] <=
-  tn, where tn denotes the current internal time reached, and hu is the last
-  internal step size successfully used by the solver.
-  The user may request [k] = 0, 1,..., qu, where qu is the current order.
+ 
+    @ida <node5#sss:ida> IDA_ILL_INPUT *)
+exception IllInput
 
-  This function may only be called after a successful return from either
-  {!solve_normal} or {!solve_one_step}.
+(**
 
-  Values for the limits may be obtained:
-    - tn = {!get_current_time}
-    - qu = {!get_last_order}
-    - hu = {!get_last_step}
+    @ida <node5#sss:ida> IDA_TOO_CLOSE *)
+exception TooClose
 
-  @ida <node5#sss:optin_root> IDAGetDky
- *)
-val get_dky : ('a, 'k) session -> float -> int -> ('a, 'k) nvector -> unit
+(**
 
-(** {2 Reinitialization} *)
+    @ida <node5#sss:ida> IDA_TOO_MUCH_WORK *)
+exception TooMuchWork
 
-(** [reinit s ~linsolv:linsolv ~roots:(nroots, g) t0 y0 y'0]
-    reinitializes the solver session [s] with a new time [t0] and new
-    values for the variables [y0].  There are two optional arguments
-    to change the linear solver and the set of root functions.
+(**
 
-    The optional argument [linsolv] sets the linear solver.  If
-    omitted, the current linear solver will be kept.  If a session is
-    created with, say, [Dense (Some f)], and then reinitialized with
-    [Dense None], then the linear solver is reset and [f] is removed
-    from the session.  The same goes for all other optional callbacks.
+    @ida <node5#sss:ida> IDA_TOO_MUCH_ACC *)
+exception TooMuchAccuracy
 
-    The optional argument [roots] sets the root functions; see {!init}
-    for what each component does.  {!Ida.no_roots} may be passed in to
-    turn off root finding.  If omitted, the current root functions
-    will be kept.
+(**
 
-    @ida <node5#sss:cvreinit> IDAReInit
- *)
-val reinit :
-  ('a, 'k) session
-  -> ?linsolv:('a, 'k) linear_solver
-  -> ?roots:(int * 'a rootsfn)
-  -> float
-  -> ('a, 'k) nvector
-  -> ('a, 'k) nvector
-  -> unit
+    @ida <node5#sss:ida> IDA_ERR_FAIL *)
+exception ErrFailure                
+
+(**
+
+    @ida <node5#sss:ida> IDA_CONV_FAIL *)
+exception ConvergenceFailure        
+
+(**
+
+    @ida <node5#sss:ida> IDA_LINIT_FAIL *)
+exception LinearInitFailure         
+
+(**
+
+    @ida <node5#sss:ida> IDA_LSETUP_FAIL *)
+exception LinearSetupFailure        
+
+(**
+
+    @ida <node5#sss:ida> IDA_LSOLVE_FAIL *)
+exception LinearSolveFailure        
+
+(**
+
+    @ida <node5#sss:ida> IDA_RES_FAIL *)
+exception ResFuncFailure
+
+(**
+
+    @ida <node5#sss:ida> IDA_FIRST_RES_FAIL *)
+exception FirstResFuncFailure       
+
+(**
+
+    @ida <node5#sss:ida> IDA_REP_RES_ERR *)
+exception RepeatedResFuncFailure
+
+(**
+
+    @ida <node5#sss:ida> IDA_RTFUNC_FAIL *)
+exception RootFuncFailure           
+
+(** k is not in the range 0, 1, ..., q_u (IDA_BAD_K)
+ 
+    @ida <node5#ss:optional_dky> IDAGetDky *)
+exception BadK
+
+(** t is not in the interval \[t_n - h_u, t_n\] (IDA_BAD_T)
+
+    @ida <node5#ss:optional_dky> IDAGetDky *)
+exception BadT
+
+(** invalid dky argument (IDA_BAD_DKY)
+
+    @ida <node5#ss:optional_dky> IDAGetDky *)
+exception BadDky
+

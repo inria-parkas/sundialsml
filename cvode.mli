@@ -49,7 +49,7 @@ open Sundials
     @cvode <node5#ss:skeleton_sim> Skeleton of main program *)
 type ('a, 'k) session = ('a, 'k) Cvode_impl.session
 
-(** An alias for sessions based on serial nvectors. *)
+(** Alias for sessions based on serial nvectors. *)
 type serial_session = (Nvector_serial.data, Nvector_serial.kind) session
 
 (** {2:linear Linear Solvers} *)
@@ -59,18 +59,18 @@ type serial_session = (Nvector_serial.data, Nvector_serial.kind) session
     @cvode <node5#sss:lin_solv_init> Linear Solver Specification Functions *)
 type ('data, 'kind) linear_solver = ('data, 'kind) Cvode_impl.linear_solver
 
-(** An alias for linear solvers that are restricted to serial nvectors. *)
+(** Alias for linear solvers that are restricted to serial nvectors. *)
 type serial_linear_solver =
       (Nvector_serial.data, Nvector_serial.kind) linear_solver
 
-(** Used for workspaces with three temporary vectors. *)
+(** Workspaces with three temporary vectors. *)
 type 'a triple = 'a * 'a * 'a
 
 (** Arguments common to Jacobian callback functions.    
  
     @cvode <node5#ss:jtimesFn> Jacobian-times-vector function
-    @cvode <node5#ss:psolveFn> Linear preconditioning function
-    @cvode <node5#ss:precondFn> Jacobian preconditioning function *)
+    @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
+    @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
 type ('t, 'a) jacobian_arg =
   {
     jac_t   : float;        (** The independent variable. *)
@@ -253,8 +253,8 @@ module Dls :
 
     @cvode <node5#sss:optin_spils> Iterative linear solvers optional input functions.
     @cvode <node5#sss:optout_spils> Iterative linear solvers optional output functions.
-    @cvode <node5#ss:psolveFn> Linear preconditioning function
-    @cvode <node5#ss:precondFn> Jacobian preconditioning function *)
+    @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
+    @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
 module Spils :
   sig
     (** {3:precond Preconditioners} *)
@@ -462,7 +462,7 @@ module Spils :
         @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
     val sptfqmr : ?maxl:int -> ('a, 'k) preconditioner -> ('a, 'k) linear_solver
 
-    (** {4:set Modifying the solvers (optional input functions)} *)
+    (** {3:set Solver parameters} *)
 
     (** The type of Gram-Schmidt orthogonalization.
 
