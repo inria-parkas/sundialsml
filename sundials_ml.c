@@ -43,7 +43,7 @@ void sundials_ml_register_exns(enum sundials_exn_set_index index, value exns)
     } else {
 	Store_field (sundials_ml_exn_table, index, exns);
     }
-    CAMLnoreturn;
+    CAMLreturn0;
 }
 
 /* Setting up access to Weak.get */

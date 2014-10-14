@@ -122,7 +122,7 @@ static int check_exception(value session, value r)
     CAMLparam2(session, r);
     CAMLlocal1(exn);
 
-    if (!Is_exception_result(r)) return 0;
+    if (!Is_exception_result(r)) CAMLreturnT (int, 0);
 
     r = Extract_exception(r);
 
