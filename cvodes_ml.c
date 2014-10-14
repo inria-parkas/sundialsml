@@ -117,21 +117,6 @@ static void free_nvector_array(N_Vector *nvarr)
     free(nvarr);
 }
 
-static int check_exception(value session, value r)
-{
-    CAMLparam2(session, r);
-    CAMLlocal1(exn);
-
-    if (!Is_exception_result(r)) CAMLreturnT (int, 0);
-
-    r = Extract_exception(r);
-
-    /* Unrecoverable error.  Save the exception and return -1.  */
-    exn = caml_alloc_small (1,0);
-    Field (exn, 0) = r;
-    Store_field (session, RECORD_CVODE_SESSION_EXN_TEMP, exn);
-    CAMLreturnT (int, -1);
-}
 
 /* Callbacks */
 
@@ -191,7 +176,7 @@ static int sensrhsfn(int ns, realtype t, N_Vector y, N_Vector ydot,
 			   sizeof (args) / sizeof (*args),
                            args);
 
-    CAMLreturnT(int, check_exception(session, r));
+    CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
 static int sensrhsfn1(int ns, realtype t, N_Vector y, N_Vector ydot,
@@ -257,7 +242,7 @@ static int quadsensrhsfn(int ns, realtype t, N_Vector y, N_Vector *ys,
 		           sizeof (args) / sizeof (*args),
                            args);
 
-    CAMLreturnT(int, check_exception(session, r));
+    CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
 static int brhsfn(realtype t, N_Vector y, N_Vector yb, N_Vector ybdot,
@@ -316,7 +301,7 @@ static int brhsfn_sens(realtype t, N_Vector y, N_Vector *ys, N_Vector yb,
                            sizeof (args) / sizeof (*args),
                            args);
 
-    CAMLreturnT(int, check_exception(session, r));
+    CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
 static int bquadrhsfn(realtype t, N_Vector y, N_Vector yb, N_Vector qbdot,
@@ -375,7 +360,7 @@ static int bquadrhsfn_sens(realtype t, N_Vector y, N_Vector *ys, N_Vector yb,
                        sizeof (args) / sizeof (*args),
                        args);
 
-    CAMLreturnT(int, check_exception(session, r));
+    CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
 static value make_jac_arg(realtype t, N_Vector y, N_Vector yb,
@@ -550,7 +535,7 @@ static int bjacfn(
 
     r = caml_callbackN_exn (Field(cb, 0), sizeof (args) / sizeof (*args), args);
 
-    CAMLreturnT(int, check_exception(session, r));
+    CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
 static int bbandjacfn(
@@ -589,7 +574,7 @@ static int bbandjacfn(
 
     r = caml_callbackN_exn (Field(cb, 0), sizeof (args) / sizeof (*args), args);
 
-    CAMLreturnT(int, check_exception(session, r));
+    CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
 /* quadrature interface */

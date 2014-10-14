@@ -28,6 +28,25 @@ void kinsol_ml_check_flag(const char *call, int flag);
 #define CHECK_FLAG(call, flag) if (flag != KIN_SUCCESS) \
 				 kinsol_ml_check_flag(call, flag)
 
+typedef enum {
+    UNRECOVERABLE = 0,
+    RECOVERABLE = 1
+} recoverability;
+
+int kinsol_translate_exception (value session, value exn_result,
+				recoverability recoverable);
+
+/* Check return value of a callback.  The common (no-error) case is
+ * handled without setting up a new caml frame with CAMLparam.
+ * Evaluates to:
+ *   0 if result is not an exception
+ *   1 if result is RecoverableFailure and recoverable == RECOVERABLE
+ *  -1 otherwise, and records the exception in result in the session */
+#define CHECK_EXCEPTION(session, result, recoverable)			\
+    (Is_exception_result (result)					\
+     ? kinsol_translate_exception (session, result, recoverable)	\
+     : 0)
+
 /* Indices into the Kinsol_*.session type.  This enum must be in the same order as
  * the session type's member declaration.  The session data structure is shared
  * in four parts across the OCaml and C heaps.  See cvode_ml.h for details.

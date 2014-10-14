@@ -73,7 +73,8 @@ CAMLprim value c_kinsol_init_module (value cbs, value exns)
     CAMLreturn (Val_unit);
 }
 
-static int check_exception(value session, value r)
+int kinsol_translate_exception(value session, value r,
+			       recoverability recoverable)
 {
     CAMLparam2(session, r);
     CAMLlocal1(exn);
@@ -82,7 +83,7 @@ static int check_exception(value session, value r)
 
     r = Extract_exception(r);
 
-    if (Field(r, 0) == SUNDIALS_EXN (RecoverableFailure))
+    if (recoverable && Field(r, 0) == SUNDIALS_EXN (RecoverableFailure))
 	CAMLreturnT (int, 1);
 
     /* Unrecoverable error.  Save the exception and return -1.  */
@@ -91,6 +92,7 @@ static int check_exception(value session, value r)
     Store_field (session, RECORD_KINSOL_SESSION_EXN_TEMP, exn);
     CAMLreturnT (int, -1);
 }
+
 
 static void errh(
 	int error_code,
@@ -270,7 +272,7 @@ static int jacfn(
 
     r = caml_callbackN_exn (Field(cb, 0), sizeof (args) / sizeof (*args), args);
 
-    CAMLreturnT(int, check_exception(session, r));
+    CAMLreturnT(int, CHECK_EXCEPTION(session, r, UNRECOVERABLE));
 }
 
 static int bandjacfn(
@@ -306,7 +308,7 @@ static int bandjacfn(
 
     r = caml_callbackN_exn (Field(cb, 0), sizeof (args) / sizeof (*args), args);
 
-    CAMLreturnT(int, check_exception(session, r));
+    CAMLreturnT(int, CHECK_EXCEPTION(session, r, UNRECOVERABLE));
 }
 
 static int precsetupfn(

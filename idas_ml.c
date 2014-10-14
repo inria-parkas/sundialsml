@@ -257,24 +257,6 @@ void idas_ml_check_flag(const char *call, int flag)
 
 /* Callbacks */
 
-static int check_exception(value session, value r)
-{
-    CAMLparam2(session, r);
-    CAMLlocal1(exn);
-
-    if (!Is_exception_result(r)) CAMLreturnT (int, 0);
-
-    r = Extract_exception(r);
-
-    /* FIXME: check for recoverable error.  */
-
-    /* Unrecoverable error.  Save the exception and return -1.  */
-    exn = caml_alloc_small (1,0);
-    Field (exn, 0) = r;
-    Store_field (session, RECORD_IDA_SESSION_EXN_TEMP, exn);
-    CAMLreturnT (int, -1);
-}
-
 static value make_adj_jac_arg(realtype t, N_Vector y, N_Vector yp,
 			      N_Vector yb, N_Vector ypb, N_Vector resb,
 			      realtype coef, value tmp)
@@ -383,7 +365,7 @@ static int sensresfn(int Ns, realtype t,
 			   sizeof (args) / sizeof (*args),
                            args);
 
-    CAMLreturnT(int, check_exception(session, r));
+    CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
 static int quadsensrhsfn(int ns, realtype t, N_Vector yy, N_Vector yp,
@@ -424,7 +406,7 @@ static int quadsensrhsfn(int ns, realtype t, N_Vector yy, N_Vector yp,
 		           sizeof (args) / sizeof (*args),
                            args);
 
-    CAMLreturnT(int, check_exception(session, r));
+    CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
 
@@ -457,7 +439,7 @@ static int bresfn(realtype t, N_Vector y, N_Vector yp,
 			    sizeof (args) / sizeof (*args),
 			    args);
 
-    CAMLreturnT(int, check_exception (session, r));
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
 static int bresfn_sens(realtype t, N_Vector y, N_Vector yp,
@@ -496,7 +478,7 @@ static int bresfn_sens(realtype t, N_Vector y, N_Vector yp,
 			    sizeof (args) / sizeof (*args),
 			    args);
 
-    CAMLreturnT(int, check_exception (session, r));
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
 
@@ -600,7 +582,7 @@ static int bjacfn(long int NeqB, realtype t,
 
     r = caml_callbackN_exn (Field(cb, 0), sizeof (args) / sizeof (*args), args);
 
-    CAMLreturnT(int, check_exception(session, r));
+    CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
 static int bbandjacfn(long int NeqB, long int mupperb, long int mlowerb,
@@ -634,7 +616,7 @@ static int bbandjacfn(long int NeqB, long int mupperb, long int mlowerb,
 
     r = caml_callbackN_exn (Field(cb, 0), sizeof (args) / sizeof (*args), args);
 
-    CAMLreturnT(int, check_exception(session, r));
+    CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
 static int bquadrhsfn(realtype t, N_Vector y, N_Vector yp,
@@ -702,7 +684,7 @@ static int bquadrhsfn_sens(realtype t, N_Vector y, N_Vector yp,
                        sizeof (args) / sizeof (*args),
                        args);
 
-    CAMLreturnT(int, check_exception(session, r));
+    CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
 

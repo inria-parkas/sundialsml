@@ -161,16 +161,15 @@ CAMLprim value c_cvode_clear_err_handler_fn(value vdata)
     CAMLreturn (Val_unit);
 }
 
-static int check_exception(value session, value r)
+int cvode_translate_exception (value session, value r,
+			       recoverability recoverable)
 {
     CAMLparam2(session, r);
     CAMLlocal1(exn);
 
-    if (!Is_exception_result(r)) CAMLreturnT (int, 0);
-
     r = Extract_exception(r);
 
-    if (Field(r, 0) == SUNDIALS_EXN (RecoverableFailure))
+    if (recoverable && Field(r, 0) == SUNDIALS_EXN (RecoverableFailure))
 	CAMLreturnT (int, 1);
 
     /* Unrecoverable error.  Save the exception and return -1.  */
@@ -224,7 +223,7 @@ static int roots(realtype t, N_Vector y, realtype *gout, void *user_data)
 			    sizeof (args) / sizeof (*args),
 			    args);
 
-    CAMLreturnT(int, check_exception(session, r));
+    CAMLreturnT(int, CHECK_EXCEPTION(session, r, UNRECOVERABLE));
 }
 
 static int errw(N_Vector y, N_Vector ewt, void *user_data)
@@ -302,7 +301,7 @@ static int jacfn(
 
     r = caml_callbackN_exn (Field(cb, 0), sizeof (args) / sizeof (*args), args);
 
-    CAMLreturnT(int, check_exception(session, r));
+    CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
 static int bandjacfn(
@@ -340,7 +339,7 @@ static int bandjacfn(
 
     r = caml_callbackN_exn (Field(cb, 0), sizeof (args) / sizeof (*args), args);
 
-    CAMLreturnT(int, check_exception(session, r));
+    CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
 static int precsetupfn(

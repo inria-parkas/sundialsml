@@ -21,6 +21,24 @@ void ida_ml_set_linear_solver(void *ida_mem, value ls, int n);
 #define CHECK_FLAG(call, flag) if (flag != IDA_SUCCESS) \
 				 ida_ml_check_flag(call, flag)
 
+typedef enum {
+    UNRECOVERABLE = 0,
+    RECOVERABLE = 1
+} recoverability;
+
+int ida_translate_exception (value session, value exn_result,
+			     recoverability recoverable);
+
+/* Check return value of a callback.  The common (no-error) case is
+ * handled without setting up a new caml frame with CAMLparam.
+ * Evaluates to:
+ *   0 if result is not an exception
+ *   1 if result is RecoverableFailure and recoverable == RECOVERABLE
+ *  -1 otherwise, and records the exception in result in the session */
+#define CHECK_EXCEPTION(session, result, recoverable)		\
+    (Is_exception_result (result)				\
+     ? ida_translate_exception (session, result, recoverable)	\
+     : 0)
 
 /* Indices into the Ida_*.session type.  This enum must be in the same order as
  * the session type's member declaration.  The session data structure is shared

@@ -90,16 +90,14 @@ CAMLprim value c_ida_init_module (value cbs, value exns)
     CAMLreturn (Val_unit);
 }
 
-static int check_exception(value session, value r)
+int ida_translate_exception(value session, value r, recoverability recoverable)
 {
     CAMLparam2(session, r);
     CAMLlocal1(exn);
 
-    if (!Is_exception_result(r)) CAMLreturnT (int, 0);
-
     r = Extract_exception(r);
 
-    if (Field(r, 0) == SUNDIALS_EXN (RecoverableFailure))
+    if (recoverable && Field(r, 0) == SUNDIALS_EXN (RecoverableFailure))
 	CAMLreturnT (int, 1);
 
     /* Unrecoverable error.  Save the exception and return -1.  */
@@ -157,7 +155,7 @@ CAMLprim value c_ida_clear_err_handler_fn(value vdata)
 
     CAMLreturn (Val_unit);
 }
-#include <stdio.h>
+
 static int resfn (realtype t, N_Vector y, N_Vector yp,
 		  N_Vector resval, void *user_data)
 {
@@ -245,7 +243,7 @@ static int jacfn (long int neq, realtype t, realtype coef,
 
     r = caml_callbackN_exn (Field(cb, 0), sizeof (args) / sizeof (*args), args);
 
-    CAMLreturnT(int, check_exception(session, r));
+    CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
 static int bandjacfn (long int neq, long int mupper, long int mlower,
@@ -276,7 +274,7 @@ static int bandjacfn (long int neq, long int mupper, long int mlower,
 
     r = caml_callbackN_exn (Field(cb, 0), sizeof (args) / sizeof (*args), args);
 
-    CAMLreturnT(int, check_exception(session, r));
+    CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
 static int rootsfn (realtype t, N_Vector y, N_Vector yp,
@@ -308,7 +306,7 @@ static int rootsfn (realtype t, N_Vector y, N_Vector yp,
 			    sizeof (args) / sizeof (*args),
 			    args);
 
-    CAMLreturnT (int, check_exception (session, r));
+    CAMLreturnT (int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }
 
 static int errw(N_Vector y, N_Vector ewt, void *user_data)
