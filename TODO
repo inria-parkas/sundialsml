@@ -97,6 +97,8 @@ MINOR PATCHES
 8. Alternate linear solvers for Cvodes.Adjoint and Idas.Adjoint (with
    examples)?
 
+9. Inlude MathJax code in doc folder for offline use?
+
 TO DISCUSS
 ----------
 * Should we check consistency of vector lengths?

@@ -323,11 +323,17 @@ external set_print_level : ('a, 'k) session -> print_level -> unit
 external set_num_max_iters : ('a, 'k) session -> int -> unit
     = "c_kinsol_set_num_max_iters"
 
-external set_no_init_setup : ('a, 'k) session -> bool -> unit
+external c_set_no_init_setup : ('a, 'k) session -> bool -> unit
     = "c_kinsol_set_no_init_setup"
 
-external set_no_res_mon : ('a, 'k) session -> bool -> unit
+let set_no_init_setup s = c_set_no_init_setup s true
+let set_init_setup s = c_set_no_init_setup s false
+
+external c_set_no_res_mon : ('a, 'k) session -> bool -> unit
     = "c_kinsol_set_no_res_mon"
+
+let set_no_res_mon s = c_set_no_res_mon s true
+let set_res_mon s = c_set_no_res_mon s false
 
 external c_set_max_sub_setup_calls : ('a, 'k) session -> int -> unit
     = "c_kinsol_set_max_sub_setup_calls"
@@ -373,8 +379,11 @@ external c_set_res_mon_params : ('a, 'k) session -> float -> float -> unit
 let set_res_mon_params s ?omegamin ?omegamax () =
   c_set_res_mon_params s (float_default omegamin) (float_default omegamax)
 
-external set_no_min_eps : ('a, 'k) session -> bool -> unit
+external c_set_no_min_eps : ('a, 'k) session -> bool -> unit
     = "c_kinsol_set_no_min_eps"
+
+let set_no_min_eps s = c_set_no_min_eps s true
+let set_min_eps s = c_set_no_min_eps s false
 
 external c_set_max_newton_step : ('a, 'k) session -> float -> unit
     = "c_kinsol_set_max_newton_step"

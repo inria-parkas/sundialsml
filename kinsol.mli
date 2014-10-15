@@ -610,22 +610,31 @@ val solve :
     @kinsol <node5#ss:optin_main> KINSetNumMaxIters *)
 val set_num_max_iters : ('a, 'k) session -> int -> unit
 
-(** Specifies whether an initial call to the preconditioner setup function is
-    made ([false], the default) or not made ([true]).
-
-    This function is useful when solving a sequence of problems where the final
-    preconditioner values of a problem becomes the initial value for the next
-    problem.
+(** Specifies that an initial call to the preconditioner setup function
+    should {i not} be made. This feature is useful when solving a sequence of
+    problems where the final preconditioner values of one problem become the
+    initial values for the next problem.
 
     @kinsol <node5#ss:optin_main> KINSetNoInitSetup *)
-val set_no_init_setup : ('a, 'k) session -> bool -> unit
+val set_no_init_setup : ('a, 'k) session -> unit
 
-(** Controls whether the nonlinear residual monitoring scheme is used ([false],
-    the default), or not ([true]) to control Jacobian updating. It only has an
-    effect for the Dense and Band solvers.
+(** Specifies that an initial call to the preconditioner setup function
+    should be made (the default).
+
+    @kinsol <node5#ss:optin_main> KINSetNoInitSetup *)
+val set_init_setup : ('a, 'k) session -> unit
+
+(** Disables the nonlinear residual monitoring scheme that controls Jacobian
+    updating. It only has an effect for the Dense and Band solvers.
 
     @kinsol <node5#ss:optin_main> KINSetNoResMon *)
-val set_no_res_mon : serial_session -> bool -> unit
+val set_no_res_mon : serial_session -> unit
+
+(** Enables the nonlinear residual monitoring scheme that controls Jacobian
+    updating. It only has an effect for the Dense and Band solvers.
+
+    @kinsol <node5#ss:optin_main> KINSetNoResMon *)
+val set_res_mon : serial_session -> unit
 
 (** Specifies the maximum number of nonlinear iterations between calls to the
     preconditioner setup function. Pass [None] to set the default (10).
@@ -642,7 +651,8 @@ val set_max_sub_setup_calls : serial_session -> int option -> unit
 
 (** The parameters {i gamma} and {i alpha} in the formula for the Eisenstat and
     Walker Choice 2 for {i eta}. Set either to [None] to specify its default
-    value. The legal values are 0 < [egamma] <= 1.0 and 1 < [ealpha] <= 2.0.
+    value. The legal values are
+    {% $0 < \mathtt{egamma} \leq 1.0 \wedge 1 < \mathtt{ealpha} \leq 2.0$%}.
 
     @kinsol <node3#SECTION00300900000000000000>   Stopping criteria for iterative linear solvers *)
 type eta_params = {
@@ -650,8 +660,7 @@ type eta_params = {
   ealpha : float option; (** default = 2.0 *)
 }
 
-(** The choice of {i eta} used in the stopping criteria for the linear system
-    solver.
+(** The {i eta} parameter in the stopping criteria for the linear system solver.
 
     @kinsol <node3#SECTION00300900000000000000>   Stopping criteria for iterative linear solvers *)
 type eta_choice =
@@ -668,8 +677,8 @@ type eta_choice =
 val set_eta_choice : ('a, 'k) session -> eta_choice -> unit
 
 (** Specifies the constant value of {i omega} when using residual monitoring.
-    Pass [None] to specify the default value (0.9). The legal values are 0 <
-    [omegaconst] < 1.0.
+    Pass [None] to specify the default value (0.9). The legal values are
+    {% $0 < \mathtt{omega} < 1.0 $%}.
 
     @kinsol <node5#ss:optin_main> KINSetResMonConstValue *)
 val set_res_mon_const_value : ('a, 'k) session -> float option -> unit
@@ -686,15 +695,20 @@ val set_res_mon_params : ('a, 'k) session
                          -> unit
                          -> unit
 
-(** Specifies whether or not the value of {i epsilon}, the
-    scaled linear residual tolerance, is bounded from below.
-
-    The default value for this flag is [false] meaning that a positive minimum
-    value equal to [0.01*fnormtol] is applied to {i epsilon}.
+(** Specifies that the scaled linear residual tolerance ({i epsilon})
+    is not bounded from below.
 
     @kinsol <node5#ss:optin_main> KINSetNoMinEps
     @kinsol <node5#ss:optin_main> KINSetFuncNormTol *)
-val set_no_min_eps : ('a, 'k) session -> bool -> unit
+val set_no_min_eps : ('a, 'k) session -> unit
+
+(** Specifies that the scaled linear residual tolerance ({i epsilon})
+    is bounded from below. That is, the positive minimum value
+    {% $0.01\mathtt{fnormtol}$%} is applied to {i epsilon}.
+
+    @kinsol <node5#ss:optin_main> KINSetNoMinEps
+    @kinsol <node5#ss:optin_main> KINSetFuncNormTol *)
+val set_min_eps : ('a, 'k) session -> unit
 
 (** Specifies the maximum allowable scaled length of the Newton step. Pass
     [None] to specify the default value {% $1000\lVert u_0 \rVert_{D_u}$%},
@@ -738,8 +752,7 @@ val set_scaled_step_tol : ('a, 'k) session -> float option -> unit
     This module gives symbolic names to those constants, for your
     convenience.
 
-    @kinsol <node5#ss:optin_main> KINSetConstraints
- *)
+    @kinsol <node5#ss:optin_main> KINSetConstraints *)
 module Constraint :
   sig
     (** A symbolic name for the magic floating-point constant [0.0]. *)
@@ -787,7 +800,7 @@ module Constraint :
     val string_of_float : float -> string
   end
 
-(** Specifies a vector that defines inequality constraints for each
+(** Specifies a vector defining inequality constraints for each
     component of the solution vector [u].  See {!Constraint}.
 
     @kinsol <node5#ss:optin_main> KINSetConstraints *)
