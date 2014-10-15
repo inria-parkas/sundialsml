@@ -75,7 +75,7 @@ type ('t, 'a) jacobian_arg =
   {
     jac_t   : float;        (** The independent variable. *)
     jac_y   : 'a;           (** The dependent variable vector. *)
-    jac_fy  : 'a;           (** The derivative vector (i.e., f(t, y)). *)
+    jac_fy  : 'a;           (** The derivative vector (i.e., dy/dt). *)
     jac_tmp : 't            (** Workspace data. *)
   }
 

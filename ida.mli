@@ -72,10 +72,10 @@ type 'a double = 'a * 'a
 type 'a triple = 'a * 'a * 'a
 
 (**
-  Arguments common to all Jacobian callback functions.    
+  Arguments common to Jacobian callback functions.    
  
-  @ida <node5#ss:djacFn> Dense Jacobian function
-  @ida <node5#ss:bjacFn> Banded Jacobian function
+  @ida <node5#ss:djacFn> IDADlsDenseJacFn
+  @ida <node5#ss:bjacFn> IDADlsBandJacFn
   @ida <node5#ss:jtimesFn> Jacobian-times-vector function
   @ida <node5#ss:psolveFn> Linear preconditioning function
   @ida <node5#ss:precondFn> Jacobian preconditioning function
@@ -104,7 +104,7 @@ type bandrange = Ida_impl.bandrange =
     
     @ida <node5#sss:optin_dls> Direct linear solvers optional input functions
     @ida <node5#sss:optout_dls> Direct linear solvers optional output functions
-    @ida <node5#ss:djacFn> Dense Jacobian function *)
+    @ida <node5#ss:djacFn> IDADlsDenseJacFn *)
 module Dls :
   sig
 
@@ -144,7 +144,7 @@ module Dls :
         copied to separate physical structures.
 
         @ida <node5#sss:optin_dls> IDADlsSetDenseJacFn
-        @ida <node5#ss:djacFn> Dense Jacobian function
+        @ida <node5#ss:djacFn> IDADlsDenseJacFn
         @ida <node3#ss:ivp_soln> IVP solution
     *)
     type dense_jac_fn = (RealArray.t triple, RealArray.t) jacobian_arg
@@ -160,7 +160,7 @@ module Dls :
 
       @ida <node5#sss:lin_solv_init> IDADense
       @ida <node5#sss:optin_dls> IDADlsSetDenseJacFn
-      @ida <node5#ss:djacFn> Dense Jacobian function
+      @ida <node5#ss:djacFn> IDADlsDenseJacFn
       @ida <node3#ss:ivp_soln> IVP solution  *)
     val dense : ?jac:dense_jac_fn -> unit -> serial_linear_solver
 
@@ -169,7 +169,7 @@ module Dls :
 
         @ida <node5#sss:lin_solv_init> IDALapackDense
         @ida <node5#sss:optin_dls> IDADlsSetDenseJacFn
-        @ida <node5#ss:djacFn> Dense Jacobian function
+        @ida <node5#ss:djacFn> IDADlsDenseJacFn
         @ida <node3#ss:ivp_soln> IVP solution  *)
     val lapack_dense : ?jac:dense_jac_fn -> unit -> serial_linear_solver
 
@@ -211,7 +211,7 @@ module Dls :
         copied to separate physical structures.
 
         @ida <node5#sss:optin_dls> IDADlsSetBandJacFn
-        @ida <node5#ss:bjacFn> Banded Jacobian function
+        @ida <node5#ss:bjacFn> IDADlsBandJacFn
         @ida <node3#ss:ivp_soln> IVP solution
     *)
     type band_jac_fn = bandrange
@@ -226,7 +226,7 @@ module Dls :
 
         @ida <node5#sss:lin_solv_init> IDABand
         @ida <node5#sss:optin_dls> IDADlsSetBandJacFn
-        @ida <node5#ss:bjacFn> Banded Jacobian function
+        @ida <node5#ss:bjacFn> IDADlsBandJacFn
         @ida <node3#ss:ivp_soln> IVP solution *)
     val band : ?jac:band_jac_fn -> bandrange -> serial_linear_solver
 
@@ -235,7 +235,7 @@ module Dls :
 
         @ida <node5#sss:lin_solv_init> IDALapackBand
         @ida <node5#sss:optin_dls> IDADlsSetBandJacFn
-        @ida <node5#ss:bjacFn> Banded Jacobian function
+        @ida <node5#ss:bjacFn> IDADlsBandJacFn
         @ida <node3#ss:ivp_soln> IVP solution *)
     val lapack_band : ?jac:band_jac_fn -> bandrange -> serial_linear_solver
 
@@ -273,7 +273,7 @@ module Dls :
         are desperate for performance.
 
         @ida <node5#sss:optin_dls> IDADlsSetDenseJacFn
-        @ida <node5#ss:djacFn> Dense Jacobian function
+        @ida <node5#ss:djacFn> IDADlsDenseJacFn
         @ida <node3#ss:ivp_soln> IVP solution
       *)
     val set_dense_jac_fn : serial_session -> dense_jac_fn -> unit
@@ -287,7 +287,7 @@ module Dls :
         {!reinit} instead, unless they are desperate for performance.
 
         @ida <node5#sss:optin_dls> IDADlsSetDenseJacFn
-        @ida <node5#ss:djacFn> Dense Jacobian function
+        @ida <node5#ss:djacFn> IDADlsDenseJacFn
      *)
     val clear_dense_jac_fn : serial_session -> unit
 
@@ -297,7 +297,7 @@ module Dls :
         are desperate for performance.
 
         @ida <node5#sss:optin_dls> IDADlsSetBandJacFn
-        @ida <node5#ss:bjacFn> Banded Jacobian function
+        @ida <node5#ss:bjacFn> IDADlsBandJacFn
       *)
     val set_band_jac_fn : serial_session -> band_jac_fn -> unit
 
@@ -308,7 +308,7 @@ module Dls :
         instead, unless they are desperate for performance.
 
         @ida <node5#sss:optin_dls> IDADlsSetBandJacFn
-        @ida <node5#ss:bjacFn> Banded Jacobian function
+        @ida <node5#ss:bjacFn> IDADlsBandJacFn
       *)
     val clear_band_jac_fn : serial_session -> unit
   end
