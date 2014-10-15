@@ -52,7 +52,7 @@ module AltDense = struct
     -> RealArray.t                      (* y' *)
     -> RealArray.t                      (* res *)
     -> DM.t                             (* J *)
-    -> RealArray.t Ida.triple_tmp
+    -> RealArray.t Ida.triple
     -> unit
 
   (* See IDADlsMem in ida_direct_impl.h *)
