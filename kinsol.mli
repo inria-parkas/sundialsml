@@ -731,13 +731,64 @@ val set_func_norm_tol : ('a, 'k) session -> float option -> unit
     @kinsol <node5#ss:optin_main> KINSetScaledStepTol *)
 val set_scaled_step_tol : ('a, 'k) session -> float option -> unit
 
-(** Specifies a vector that defines inequality constraints for each component of
-    the solution vector [u]. For each value:
-    -  0.0: no constraint is imposed on $u_i$,
-    -  1.0: constrain $u_i >= 0.0$,
-    - -1.0: constrain $u_i <= 0.0$,
-    -  2.0: constrain $u_i > 0.0$, and,
-    - -2.0: constrain $u_i < 0.0$.
+(** Symbolic names for inequality constraints on variables, used for
+    {!set_constraints}.  This function requires you to pass in an
+    nvector populated with magic constants specifying each variable as
+    positive, non-positive, negative, non-negative, or unconstrained.
+    This module gives symbolic names to those constants, for your
+    convenience.
+
+    @kinsol <node5#ss:optin_main> KINSetConstraints
+ *)
+module Constraint :
+  sig
+    (** A symbolic name for the magic floating-point constant [0.0]. *)
+    val unconstrained : float
+    (** A symbolic name for the magic floating-point constant [1.0]. *)
+    val non_negative : float
+    (** A symbolic name for the magic floating-point constant [-1.0]. *)
+    val non_positive : float
+    (** A symbolic name for the magic floating-point constant [2.0]. *)
+    val positive : float
+    (** A symbolic name for the magic floating-point constant [-2.0]. *)
+    val non_positive : float
+
+    (** An ADT representation of the magic constants specifying
+        constraints, useful for pattern-matching.  *)
+    type t =
+    | Unconstrained                     (** no constraints *)
+    | NonNegative                       (** >= 0 *)
+    | NonPositive                       (** <= 0 *)
+    | Positive                          (** > 0 *)
+    | Negative                          (** < 0 *)
+
+    (** Encode a constraint specifier into the corresponding magic
+        floating-point constant.  *)
+    val to_float : t -> float
+
+    (** Decode a magic float-point constant into a constraint
+        specifier.  Raises [Invalid_argument] if the given floating
+        point value is not a legal constraint specification.  *)
+    val of_float : float -> t
+
+    (** Returns strings like ["NonNegative"], ["Unconstrained"], etc. *)
+    val name_of_constraint : t -> string
+
+    (** Same as {!name_of_constraint} but translates from a magic
+        floating-point constant.  *)
+    val name_of_float : float -> string
+
+    (** Returns strings like [">= 0"], ["< 0"], etc.  [Unconstrained]
+        is mapped to ["unconstrained"].  *)
+    val string_of_constraint : t -> string
+
+    (** Same as {!string_of_constraint} but translates from a magic
+        floating-point constant.  *)
+    val string_of_float : float -> string
+  end
+
+(** Specifies a vector that defines inequality constraints for each
+    component of the solution vector [u].  See {!Constraint}.
 
     @kinsol <node5#ss:optin_main> KINSetConstraints *)
 val set_constraints : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit

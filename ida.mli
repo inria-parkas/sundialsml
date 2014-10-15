@@ -1355,7 +1355,7 @@ module Constraint :
 
     (** Decode a magic float-point constant into a constraint
         specifier.  Raises [Invalid_argument] if the given floating
-        point value is not a legal variable type specification.  *)
+        point value is not a legal constraint specification.  *)
     val of_float : float -> t
 
     (** Returns strings like ["NonNegative"], ["Unconstrained"], etc. *)
@@ -1374,7 +1374,7 @@ module Constraint :
     val string_of_float : float -> string
   end
 
-(** Set inequality constraints on variables.
+(** Set inequality constraints on variables.  See {!Constraint}.
 
     @ida <node5#sss:optin_main> IDASetConstraints
  *)
