@@ -271,11 +271,11 @@ static int jacfn(
     CAMLparam0();
     CAMLlocalN (args, 2);
     CAMLlocal4(session, cb, dmat, r);
-    value *backref = user_data;
-    WEAK_DEREF (session, *backref);
 
-    // assert(session.ls_callbacks = DenseCallback cb)
-    cb = Field(CVODE_LS_CALLBACKS_FROM_ML(session), 0);
+    WEAK_DEREF (session, *(value*)user_data);
+
+    cb = CVODE_LS_CALLBACKS_FROM_ML(session);
+    cb = Field (cb, 0);
     dmat = Field(cb, 1);
     if (dmat == Val_none) {
 	Store_some(dmat, c_dls_dense_wrap(Jac, 0));
@@ -306,11 +306,11 @@ static int bandjacfn(
     CAMLparam0();
     CAMLlocalN(args, 3);
     CAMLlocal4(session, cb, bmat, r);
-    value *backref = user_data;
-    WEAK_DEREF (session, *backref);
 
-    // assert(session.ls_callbacks = BandCallback cb)
-    cb = Field(CVODE_LS_CALLBACKS_FROM_ML(session), 0);
+    WEAK_DEREF (session, *(value*)user_data);
+    cb = CVODE_LS_CALLBACKS_FROM_ML (session);
+    cb = Field (cb, 0);
+
     bmat = Field(cb, 1);
     if (bmat == Val_none) {
 	Store_some(bmat, c_dls_band_wrap(Jac, 0));
@@ -404,12 +404,11 @@ static int precsolvefn(
     CAMLlocal3(session, r, cb);
     CAMLlocalN(args, 3);
 
-    WEAK_DEREF (session, *(value*)user_data);
-
     args[0] = make_jac_arg(t, y, fy, NVEC_BACKLINK(tmp));
     args[1] = make_spils_solve_arg(rvec, gamma, delta, lr);
     args[2] = NVEC_BACKLINK(z);
 
+    WEAK_DEREF (session, *(value*)user_data);
     cb = CVODE_LS_CALLBACKS_FROM_ML(session);
     cb = Field (cb, 0);
     cb = Field (cb, RECORD_CVODE_SPILS_CALLBACKS_PREC_SOLVE_FN);
@@ -433,12 +432,11 @@ static int jactimesfn(N_Vector v,
     CAMLlocal3(session, r, cb);
     CAMLlocalN(args, 3);
 
-    WEAK_DEREF (session, *(value*)user_data);
-
     args[0] = make_jac_arg(t, y, fy, NVEC_BACKLINK(tmp));
     args[1] = NVEC_BACKLINK(v);
     args[2] = NVEC_BACKLINK(Jv);
 
+    WEAK_DEREF (session, *(value*)user_data);
     cb = CVODE_LS_CALLBACKS_FROM_ML(session);
     cb = Field (cb, 0);
     cb = Field (cb, RECORD_CVODE_SPILS_CALLBACKS_JAC_TIMES_VEC_FN);
