@@ -235,7 +235,7 @@ static int jacfn (long int neq, realtype t, realtype coef,
 			    make_triple_tmp (tmp1, tmp2, tmp3));
     args[1] = Some_val(dmat);
 
-    r = caml_callbackN_exn (Field(cb, 0), sizeof (args) / sizeof (*args), args);
+    r = caml_callback2_exn (Field(cb, 0), args[0], args[1]);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -266,7 +266,7 @@ static int bandjacfn (long int neq, long int mupper, long int mlower,
 			    make_triple_tmp (tmp1, tmp2, tmp3));
     args[2] = Some_val(bmat);
 
-    r = caml_callbackN_exn (Field(cb, 0), sizeof (args) / sizeof (*args), args);
+    r = caml_callback3_exn (Field(cb, 0), args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -306,9 +306,8 @@ static int errw(N_Vector y, N_Vector ewt, void *user_data)
     args[1] = NVEC_BACKLINK (y);
     args[2] = NVEC_BACKLINK (ewt);
 
-    r = Int_val (caml_callbackN (CAML_FN(call_errw),
-				 sizeof (args) / sizeof (*args),
-				 args));
+    r = Int_val (caml_callback3 (CAML_FN(call_errw),
+				 args[0], args[1], args[2]));
 
     CAMLreturnT(int, r);
 }
@@ -392,7 +391,7 @@ static int jactimesfn(
     cb = IDA_LS_CALLBACKS_FROM_ML (session);
     cb = Field (cb, 0);
     cb = Field (cb, RECORD_IDA_SPILS_CALLBACKS_JAC_TIMES_VEC_FN);
-    r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+    r = caml_callback3_exn (cb, args[0], args[1], args[2]);
 
     CAMLreturnT (int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }

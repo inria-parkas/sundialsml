@@ -77,7 +77,7 @@ static int bbbdcomm(long int nlocal, realtype t, N_Vector y, N_Vector yb,
     cb = Field (cb, 0);
     assert (Tag_val (cb) == Closure_tag);
 
-    r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+    r = caml_callback3_exn (cb, args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }

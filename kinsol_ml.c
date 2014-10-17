@@ -261,7 +261,7 @@ static int jacfn(
     args[0] = make_jac_arg(u, fu, make_double_tmp(tmp1, tmp2));
     args[1] = Some_val(dmat);
 
-    r = caml_callbackN_exn (Field(cb, 0), sizeof (args) / sizeof (*args), args);
+    r = caml_callback2_exn (Field(cb, 0), args[0], args[1]);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, UNRECOVERABLE));
 }
@@ -297,7 +297,7 @@ static int bandjacfn(
     args[1] = make_jac_arg(u, fu, make_double_tmp(tmp1, tmp2));
     args[2] = Some_val(bmat);
 
-    r = caml_callbackN_exn (Field(cb, 0), sizeof (args) / sizeof (*args), args);
+    r = caml_callback3_exn (Field(cb, 0), args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, UNRECOVERABLE));
 }
@@ -324,7 +324,7 @@ static int precsetupfn(
     cb = Field (cb, RECORD_KINSOL_SPILS_CALLBACKS_PREC_SETUP_FN);
     cb = Field (cb, 0);
 
-    r = caml_callbackN_exn(cb, sizeof (args) / sizeof (*args), args);
+    r = caml_callback2_exn(cb, args[0], args[1]);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -352,7 +352,7 @@ static int precsolvefn(
     cb = Field (cb, RECORD_KINSOL_SPILS_CALLBACKS_PREC_SOLVE_FN);
     cb = Field (cb, 0);
 
-    r = caml_callbackN_exn(cb, sizeof (args) / sizeof (*args), args);
+    r = caml_callback3_exn(cb, args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -437,7 +437,7 @@ static int lsolve(KINMem kin_mem, N_Vector x, N_Vector b, realtype *res_norm)
     cb = Field (cb, 0);
     cb = Field (cb, RECORD_KINSOL_ALTERNATE_CALLBACKS_LSOLVE);
 
-    r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+    r = caml_callback3_exn (cb, args[0], args[1], args[2]);
     if (!Is_exception_result (r)) {
 	if (r != Val_none) *res_norm = Double_val(Field(r, 0));
 	CAMLreturnT (int, 0);

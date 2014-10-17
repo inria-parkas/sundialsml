@@ -518,7 +518,7 @@ static int bjactimesfn(realtype t, N_Vector yy, N_Vector yp,
 		       N_Vector tmp1B, N_Vector tmp2B)
 {
     CAMLparam0();
-    CAMLlocalN(args, 4);
+    CAMLlocalN(args, 3);
     CAMLlocal3(session, r, cb);
 
     args[0] = make_adj_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
@@ -531,7 +531,7 @@ static int bjactimesfn(realtype t, N_Vector yy, N_Vector yp,
     cb = Field (cb, 0);
     cb = Field (cb, RECORD_IDAS_BSPILS_CALLBACKS_JAC_TIMES_VEC_FN);
 
-    r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+    r = caml_callback3_exn (cb, args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }
@@ -561,7 +561,7 @@ static int bjacfn(long int NeqB, realtype t,
 			       make_triple_tmp (tmp1B, tmp2B, tmp3B));
     args[1] = Some_val(dmat);
 
-    r = caml_callbackN_exn (Field(cb, 0), sizeof (args) / sizeof (*args), args);
+    r = caml_callback2_exn (Field(cb, 0), args[0], args[1]);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -595,7 +595,7 @@ static int bbandjacfn(long int NeqB, long int mupperb, long int mlowerb,
 			       make_triple_tmp(tmp1B, tmp2B, tmp3B));
     args[2] = Some_val(bmat);
 
-    r = caml_callbackN_exn (Field(cb, 0), sizeof (args) / sizeof (*args), args);
+    r = caml_callback3_exn (Field(cb, 0), args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }

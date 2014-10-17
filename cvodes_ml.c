@@ -123,7 +123,7 @@ static int quadrhsfn(realtype t, N_Vector y, N_Vector yQdot, void *user_data)
     // this call, afterward that memory goes back to cvode. These bigarrays
     // must not be retained by closure_quadrhsfn! If it wants a permanent
     // copy, then it has to make it manually.
-    r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+    r = caml_callback3_exn (cb, args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -411,7 +411,7 @@ static int bprecsolvefn(
     cb = Field (cb, 0);
     cb = Field (cb, RECORD_CVODES_BSPILS_CALLBACKS_PREC_SOLVE_FN);
 
-    r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+    r = caml_callback3_exn (cb, args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -443,7 +443,7 @@ static int bprecsetupfn(
     cb = Field (cb, RECORD_CVODES_BSPILS_CALLBACKS_PREC_SETUP_FN);
     cb = Field (cb, 0);
 
-    r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+    r = caml_callback3_exn (cb, args[0], args[1], args[2]);
 
     /* Update jcurPtr; leave it unchanged if an error occurred.  */
     if (!Is_exception_result (r)) {
@@ -477,7 +477,7 @@ static int bjactimesfn(N_Vector vb,
     cb = Field (cb, RECORD_CVODES_BSPILS_CALLBACKS_JAC_TIMES_VEC_FN);
     cb = Field (cb, 0);
 
-    r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+    r = caml_callback3_exn (cb, args[0], args[1], args[2]);
 
     /* NB: jac_times_vec doesn't accept RecoverableFailure. */
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
@@ -512,7 +512,7 @@ static int bjacfn(
     args[0] = make_jac_arg(t, y, yb, fyb, make_triple_tmp(tmp1b, tmp2b, tmp3b));
     args[1] = Some_val(dmat);
 
-    r = caml_callbackN_exn (Field(cb, 0), sizeof (args) / sizeof (*args), args);
+    r = caml_callback2_exn (Field(cb, 0), args[0], args[1]);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -552,7 +552,7 @@ static int bbandjacfn(
     args[1] = make_jac_arg(t, y, yb, fyb, make_triple_tmp(tmp1b, tmp2b, tmp3b));
     args[2] = Some_val(bmat);
 
-    r = caml_callbackN_exn (Field(cb, 0), sizeof (args) / sizeof (*args), args);
+    r = caml_callback3_exn (Field(cb, 0), args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }

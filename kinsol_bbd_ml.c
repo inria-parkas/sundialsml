@@ -63,7 +63,7 @@ static int bbdlocal(long int nlocal, N_Vector u, N_Vector gval, void *user_data)
     cb = Field (cb, 0);
     cb = Field (cb, RECORD_KINSOL_BBD_CALLBACKS_LOCAL_FN);
 
-    r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+    r = caml_callback2_exn (cb, args[0], args[1]);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }

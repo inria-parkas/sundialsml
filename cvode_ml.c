@@ -181,9 +181,8 @@ static int rhsfn(realtype t, N_Vector y, N_Vector ydot, void *user_data)
     args[1] = NVEC_BACKLINK(y);
     args[2] = NVEC_BACKLINK(ydot);
 
-    r = caml_callbackN_exn(Field(session, RECORD_CVODE_SESSION_RHSFN),
-			   sizeof (args) / sizeof (*args),
-			   args);
+    r = caml_callback3_exn(Field(session, RECORD_CVODE_SESSION_RHSFN),
+			   args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -205,9 +204,8 @@ static int roots(realtype t, N_Vector y, realtype *gout, void *user_data)
     args[1] = NVEC_BACKLINK (y);
     args[2] = caml_ba_alloc (BIGARRAY_FLOAT, 1, gout, &nroots);
 
-    r = caml_callbackN_exn (Field(session, RECORD_CVODE_SESSION_ROOTSFN),
-			    sizeof (args) / sizeof (*args),
-			    args);
+    r = caml_callback3_exn (Field(session, RECORD_CVODE_SESSION_ROOTSFN),
+			    args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, UNRECOVERABLE));
 }
@@ -215,17 +213,11 @@ static int roots(realtype t, N_Vector y, realtype *gout, void *user_data)
 static int errw(N_Vector y, N_Vector ewt, void *user_data)
 {
     CAMLparam0();
-    CAMLlocalN(args, 3);
     int r;
     value *backref = user_data;
 
-    args[0] = *backref;
-    args[1] = NVEC_BACKLINK (y);
-    args[2] = NVEC_BACKLINK (ewt);
-
-    r = Int_val (caml_callbackN (CAML_FN(call_errw),
-				 sizeof (args) / sizeof (*args),
-				 args));
+    r = Int_val (caml_callback3_exn (CAML_FN(call_errw), *backref,
+				     NVEC_BACKLINK (y), NVEC_BACKLINK (ewt)));
 
     CAMLreturnT (int, r);
 }
@@ -285,7 +277,7 @@ static int jacfn(
     args[0] = make_jac_arg (t, y, fy, make_triple_tmp (tmp1, tmp2, tmp3));
     args[1] = Some_val(dmat);
 
-    r = caml_callbackN_exn (Field(cb, 0), sizeof (args) / sizeof (*args), args);
+    r = caml_callback2_exn (Field(cb, 0), args[0], args[1]);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -323,7 +315,7 @@ static int bandjacfn(
     args[1] = make_jac_arg(t, y, fy, make_triple_tmp(tmp1, tmp2, tmp3));
     args[2] = Some_val(bmat);
 
-    r = caml_callbackN_exn (Field(cb, 0), sizeof (args) / sizeof (*args), args);
+    r = caml_callback3_exn (Field(cb, 0), args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -353,9 +345,7 @@ static int precsetupfn(realtype t,
     cb = Field (cb, 0);
     cb = Field (cb, RECORD_CVODE_SPILS_CALLBACKS_PREC_SETUP_FN);
     cb = Some_val (cb);
-    r = caml_callbackN_exn(cb,
-			   sizeof (args) / sizeof (*args),
-			   args);
+    r = caml_callback3_exn(cb, args[0], args[1], args[2]);
 
     /* Update jcurPtr; leave it unchanged if an error occurred.  */
     if (!Is_exception_result (r)) {
@@ -413,9 +403,7 @@ static int precsolvefn(
     cb = Field (cb, 0);
     cb = Field (cb, RECORD_CVODE_SPILS_CALLBACKS_PREC_SOLVE_FN);
 
-    r = caml_callbackN_exn(cb,
-			   sizeof (args) / sizeof (*args),
-			   args);
+    r = caml_callback3_exn(cb, args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -442,9 +430,7 @@ static int jactimesfn(N_Vector v,
     cb = Field (cb, RECORD_CVODE_SPILS_CALLBACKS_JAC_TIMES_VEC_FN);
     cb = Some_val (cb);
 
-    r = caml_callbackN_exn(cb,
-			   sizeof (args) / sizeof (*args),
-			   args);
+    r = caml_callback3_exn(cb, args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }

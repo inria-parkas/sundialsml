@@ -69,7 +69,7 @@ static int bbdlocal(long int nlocal, realtype t, N_Vector y, N_Vector glocal,
     cb = Field (cb, 0);
     cb = Field (cb, RECORD_CVODE_BBD_CALLBACKS_LOCAL_FN);
 
-    r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+    r = caml_callback3_exn (cb, args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -88,7 +88,7 @@ static int bbdcomm(long int nlocal, realtype t, N_Vector y, void *user_data)
     cb = Field (cb, RECORD_CVODE_BBD_CALLBACKS_COMM_FN);
     cb = Field (cb, 0);
 
-    r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+    r = caml_callback2_exn (cb, args[0], args[1]);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
