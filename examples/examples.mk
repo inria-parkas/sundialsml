@@ -180,10 +180,10 @@ PERF=perf.opt.log perf.byte.log
 	    $(ALL_EXAMPLES:.ml=.reps)
 
 $(UTILS)/perf: $(UTILS)/perf.ml
-	$(OCAMLOPT) -o $@ unix.cmxa $<
+	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ unix.cmxa $<
 
 $(UTILS)/crunchperf: $(UTILS)/crunchperf.ml
-	$(OCAMLOPT) -o $@ str.cmxa unix.cmxa $<
+	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ str.cmxa unix.cmxa $<
 
 perf.byte.log perf.opt.log: perf.%.log: $(ENABLED_EXAMPLES:.ml=.%.perf)       \
 					$(UTILS)/crunchperf
