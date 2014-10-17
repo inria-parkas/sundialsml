@@ -128,12 +128,14 @@ $(SERIAL_EXAMPLES:.ml=.opt): %.opt: %.ml $(SRCROOT)/$(USELIB).cmxa
 	    $(INCLUDES) -I $(SRCROOT) bigarray.cmxa unix.cmxa \
 	    $(USELIB).cmxa $<
 
-$(MPI_EXAMPLES:.ml=.byte): %.byte: %.ml $(SRCROOT)/$(USELIB).cma
+$(MPI_EXAMPLES:.ml=.byte): %.byte: %.ml $(SRCROOT)/$(USELIB).cma \
+			   $(SRCROOT)/sundials_mpi.cma
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
 	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRCROOT) -dllpath $(SRCROOT) \
 	    bigarray.cma unix.cma mpi.cma $(USELIB).cma sundials_mpi.cma $<
 
-$(MPI_EXAMPLES:.ml=.opt): %.opt: %.ml $(SRCROOT)/$(USELIB).cmxa
+$(MPI_EXAMPLES:.ml=.opt): %.opt: %.ml $(SRCROOT)/$(USELIB).cmxa \
+			  $(SRCROOT)/sundials_mpi.cmxa
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
 	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRCROOT) \
 	    bigarray.cmxa unix.cmxa mpi.cmxa $(USELIB).cmxa sundials_mpi.cmxa $<
