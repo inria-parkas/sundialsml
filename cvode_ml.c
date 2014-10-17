@@ -442,9 +442,9 @@ static int jactimesfn(N_Vector v,
     cb = Field (cb, RECORD_CVODE_SPILS_CALLBACKS_JAC_TIMES_VEC_FN);
     cb = Some_val (cb);
 
-    r = caml_callbackN(cb,
-		       sizeof (args) / sizeof (*args),
-		       args);
+    r = caml_callbackN_exn(cb,
+			   sizeof (args) / sizeof (*args),
+			   args);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }

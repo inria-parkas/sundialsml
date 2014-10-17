@@ -72,7 +72,7 @@ CAMLprim value c_sundials_init_module (value vweak_get, value exns)
 CAMLprim value sundials_ml_weak_get (value ar, value n)
 {
     CAMLparam2 (ar, n);
-    CAMLreturn (caml_callback2 (weak_get, ar, n));
+    CAMLreturn (caml_callback2_exn (weak_get, ar, n));
 }
 #endif	/* !HAVE_WEAK */
 
