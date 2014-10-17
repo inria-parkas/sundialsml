@@ -55,6 +55,10 @@ TODO
    Document the ones that correspond to return values mentioned in their
    user guide.  (Or otherwise that are deemed important.)
 
+   Generated text and pdf?
+   Automatically check links?
+   Break long function types into lines?
+
    To explain:
    - Possibility to 'break' Sundials by passing nvectors of an incompatible
      size (e.g., Cvode.init with an nvector of size 10 and reinit with one

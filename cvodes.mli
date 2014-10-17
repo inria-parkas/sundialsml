@@ -26,40 +26,112 @@
   @version VERSION()
   @author Timothy Bourke (Inria)
   @author Jun Inoue (Inria)
-  @author Marc Pouzet (LIENS)
- *)
+  @author Marc Pouzet (LIENS) *)
 
 open Cvode_impl
 open Sundials
 
+(** Alias for Cvode/Cvodes sessions. *)
 type ('data, 'kind) session = ('data, 'kind) Cvode.session
-type ('data, 'kind) nvector = ('data, 'kind) Nvector.t
 
-(** {2:quad Quadrature Equations} *)
+(** Quadrature Equations.
 
+    TODO: write a better one sentence description
+
+    TODO: explain that this 'extends' standard Cvode.
+
+    An example session with Cvode using quadrature variables
+    ({openfile cvodes_quad_skel.ml}): {[
+#include "examples/ocaml/skeletons/cvodes_quad_skel.ml"
+    ]}
+
+    @cvodes <node5#SECTION00570000000000000000> Integration of pure quadrature equations *)
 module Quadrature :
   sig
-    (** A skeleton of an enhanced main program:
-        + {b Initialize a session [s] per the skeleton at
-           {!Cvode.session}}
-        {[...]}
-        The vector of initial values should not include values for the
-        quadrature variables.
-        + {b Set vector of quadrature variables }
-        {[let yQ = Cvode.RealArray.of_array [| 0.0; 0.0 |] ]}
-        The length of this vector determines the number of quadrature variables.
-        + {b Initialize quadrature integration}
-        {[init s fQ yQ]}
-        + {b Specify integration tolerances (optional)}, e.g.
-        {[set_tolerances s SStolerances (reltol, abstol)]}
-        + {b Advance the solution in time as per normal}
-        + {b Extract quadrature variables}
-        {[get s yQ]}
-        + {b Get quadrature optional outputs}
-        {[let nre = get_num_rhs_evals s in ...]}
-        Call any of the [get_*] functions to examine solver statistics.
+    (** {3:quadinit Initialization and access} *)
 
-        @cvodes <node5#SECTION00570000000000000000> Integration of pure quadrature equations *)
+    (** This function, [f_Q t y yQdot], computes the quadrature equation
+        right-hand side [yQdot] for a given value of the independent variable
+        [t] and state vector [y].
+
+        @cvodes <node5#ss:user_fct_quad> CVQuadRhsFn *)
+    type 'a quadrhsfn = float -> 'a -> 'a -> unit
+
+    (** Activates the integration of quadrature equations.
+
+        @cvodes <node5#ss:quad_malloc> CVodeQuadInit *)
+    val init : ('a, 'k) session -> 'a quadrhsfn -> ('a, 'k) Nvector.t -> unit
+
+    (** Reinitialize the integration of quadrature equations.
+
+        @cvodes <node5#ss:quad_malloc> CVodeQuadReInit *)
+    val reinit : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
+
+    (** [tret = get s yq] fills [yq] with the quadrature solution vector after a
+        successful return from {!Cvode.solve_normal} or
+        {!Cvode.solve_one_step}, and returns the time reached by the
+        solver.
+
+        @cvodes <node5#ss:quad_get> CVodeGetQuad *)
+    val get : ('a, 'k) session -> ('a, 'k) Nvector.t -> float
+
+    (** [tret = get_dky s t k dkyq] fills [dkyq] with the derivatives of the
+        quadrature solution vector after a successful return from
+        {!Cvode.solve_normal} or {!Cvode.solve_one_step}. The
+        time requested, [t], must fall within the interval defined by the last
+        successful step ({!Cvode.get_last_step}). The requested order,
+        [k], must be less than or equal to the value returned by
+        {!Cvode.get_last_order}.
+
+        @cvodes <node5#ss:quad_get> CVodeGetQuadDky
+        @raise BadK [k] is not in the range 0, 1, ..., [qlast].
+        @raise BadT [t] is not in the allowed range. *)
+    val get_dky : ('a, 'k) session -> float -> int -> ('a, 'k) Nvector.t -> unit
+
+    (** {3:quadtol Tolerances} *)
+
+    type ('a, 'k) tolerance =
+        NoStepSizeControl
+        (** Do not use quadrature variables for step-size control (default). *)
+      | SStolerances of float * float
+        (** [(rel, abs)] : scalar relative and absolute tolerances. *)
+      | SVtolerances of float * ('a, 'k) Nvector.t
+        (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
+
+    (** Specify whether and how quadrature variables should be used in the step
+        size control mechanism.
+
+        @cvodes <node5#ss:quad_optional_input> CVodeSetQuadErrCon
+        @cvodes <node5#ss:quad_optional_input> CVodeQuadSStolerances
+        @cvodes <node5#ss:quad_optional_input> CVodeQuadSVtolerances *)
+    val set_tolerances : ('a, 'k) session -> ('a, 'k) tolerance -> unit
+
+    (** {3:quadget Querying the solver (optional output functions)} *)
+
+    (** Returns the number of calls to the user's quadrature right-hand side
+        function.
+
+        @cvodes <node5#ss:quad_optional_output> CVodeGetQuadNumRhsEvals *)
+    val get_num_rhs_evals       : ('a, 'k) session -> int
+
+    (** Returns the number of local error test failures due to quadrature
+        variables.
+
+        @cvodes <node5#ss:quad_optional_output> CVodeGetQuadNumErrTestFails *)
+    val get_num_err_test_fails  : ('a, 'k) session -> int
+
+    (** Returns the quadrature error weights at the current time.
+
+        @cvodes <node5#ss:quad_optional_output> CVodeGetQuadErrWeights *)
+    val get_err_weights : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
+
+    (** [nfqevals, nqetfails = get_stats s] returns
+        - [fqevals], the number of calls to the user's quadrature function, and,
+        - [nqetfails], the number of error test failures due to quadrature
+          variables.
+
+        @cvodes <node5#ss:quad_optional_output> CVodeGetQuadStats *)
+    val get_stats : ('a, 'k) session -> int * int
 
     (** {3:quadexcept Exceptions} *)
 
@@ -96,142 +168,23 @@ module Quadrature :
 
         @cvodes <node5#SECTION00572000000000000000> CV_UNREC_QRHSFUNC_ERR *)
     exception UnrecoverableQuadRhsFuncFailure
-
-    (** {3:quadinit Initialization} *)
-
-    (** This function, [f_Q t y yQdot], computes the quadrature equation
-        right-hand side [yQdot] for a given value of the independent variable
-        [t] and state vector [y].
-
-        @cvodes <node5#ss:user_fct_quad> CVQuadRhsFn *)
-    type 'a quadrhsfn = float -> 'a -> 'a -> unit
-
-    (** Activates the integration of quadrature equations.
-
-        @cvodes <node5#ss:quad_malloc> CVodeQuadInit *)
-    val init : ('a, 'k) session -> 'a quadrhsfn -> ('a, 'k) nvector -> unit
-
-    (** Reinitialize the integration of quadrature equations.
-
-        @cvodes <node5#ss:quad_malloc> CVodeQuadReInit *)
-    val reinit : ('a, 'k) session -> ('a, 'k) nvector -> unit
-
-    (** {3:quadtol Tolerance specification} *)
-
-    type ('a, 'k) tolerance =
-        NoStepSizeControl
-        (** Do not use quadrature variables for step-size control (default). *)
-      | SStolerances of float * float
-        (** [(rel, abs)] : scalar relative and absolute tolerances. *)
-      | SVtolerances of float * ('a, 'k) nvector
-        (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
-
-    (** Specify whether and how quadrature variables should be used in the step
-        size control mechanism.
-
-        @cvodes <node5#ss:quad_optional_input> CVodeSetQuadErrCon
-        @cvodes <node5#ss:quad_optional_input> CVodeQuadSStolerances
-        @cvodes <node5#ss:quad_optional_input> CVodeQuadSVtolerances *)
-    val set_tolerances : ('a, 'k) session -> ('a, 'k) tolerance -> unit
-
-    (** {3:quadout Output Functions} *)
-
-    (** [tret = get s yq] fills [yq] with the quadrature solution vector after a
-        successful return from {!Cvode.solve_normal} or
-        {!Cvode.solve_one_step}, and returns the time reached by the
-        solver.
-
-        @cvodes <node5#ss:quad_get> CVodeGetQuad *)
-    val get : ('a, 'k) session -> ('a, 'k) nvector -> float
-
-    (** [tret = get_dky s t k dkyq] fills [dkyq] with the derivatives of the
-        quadrature solution vector after a successful return from
-        {!Cvode.solve_normal} or {!Cvode.solve_one_step}. The
-        time requested, [t], must fall within the interval defined by the last
-        successful step ({!Cvode.get_last_step}). The requested order,
-        [k], must be less than or equal to the value returned by
-        {!Cvode.get_last_order}.
-
-        @cvodes <node5#ss:quad_get> CVodeGetQuadDky
-        @raise BadK [k] is not in the range 0, 1, ..., [qlast].
-        @raise BadT [t] is not in the allowed range. *)
-    val get_dky : ('a, 'k) session -> float -> int -> ('a, 'k) nvector -> unit
-
-    (** {3:quadoptout Optional Output Functions} *)
-
-    (** Returns the number of calls to the user's quadrature right-hand side
-        function.
-
-        @cvodes <node5#ss:quad_optional_output> CVodeGetQuadNumRhsEvals *)
-    val get_num_rhs_evals       : ('a, 'k) session -> int
-
-    (** Returns the number of local error test failures due to quadrature
-        variables.
-
-        @cvodes <node5#ss:quad_optional_output> CVodeGetQuadNumErrTestFails *)
-    val get_num_err_test_fails  : ('a, 'k) session -> int
-
-    (** Returns the quadrature error weights at the current time.
-
-        @cvodes <node5#ss:quad_optional_output> CVodeGetQuadErrWeights *)
-    val get_err_weights : ('a, 'k) session -> ('a, 'k) nvector -> unit
-
-    (** [nfqevals, nqetfails = get_stats s] returns
-        - [fqevals], the number of calls to the user's quadrature function, and,
-        - [nqetfails], the number of error test failures due to quadrature
-          variables.
-
-        @cvodes <node5#ss:quad_optional_output> CVodeGetQuadStats *)
-    val get_stats : ('a, 'k) session -> int * int
-
   end
 
-(** {2:sens (Forward) Sensitivity Analysis} *)
+(** (Forward) Sensitivity Analysis.
+ 
+    TODO: write a better one sentence description
 
+    TODO: explain that this 'extends' standard Cvode.
+
+    An example session with Cvode using sensitivity analysis
+    ({openfile cvodes_sens_skel.ml}): {[
+#include "examples/ocaml/skeletons/cvodes_sens_skel.ml"
+    ]}
+
+    @cvodes <node6#ss:forward_usage> Enhanced skeleton for sensitivity analysis *)
 module Sensitivity :
   sig
-    (** A skeleton of an enhanced main program:
-        + {b Initialize a session [s] per the skeleton at
-           {!Cvode.session} or {!Quadrature.init}}
-        {[...]}
-        + {b Define the sensitivity problem}
-        {[let p = Cvode.RealArray.make np in
-let sp = { pvals = Some p; pbar = ...; plist = ... }]}
-        + {b Set sensitivity initial conditions }
-        {[let yS0 = Array.init ns (fun _ -> RealArray.init neq 0.0) in]}
-        + {b Activate sensitivity calculations}
-        {[init s (SStolerances ...) Simultaneous sp fS yS0]}
-        + {b Set optional inputs}
-        {[set_dq_method s ...]}
-        + {b Advance the solution in time as per normal}
-        + {b Extract sensitivity solution}
-        {[let t = get s yS]}
-
-        @cvodes <node6#ss:forward_usage> Enhanced skeleton for sensitivity analysis *)
-
-    (** {3:sensexcept Exceptions} *)
-
-    (** Sensitivity analysis was not initialized.
-
-        @cvodes <node5#ss:sensi_get> CV_NO_SENS *)
-    exception SensNotInitialized
-
-    (** @cvodes <node6#SECTION00623000000000000000> CV_SRHSFUNC_FAIL *)
-    exception SensRhsFuncFailure
-
-    (** @cvodes <node6#SECTION00623000000000000000> CV_FIRST_SRHSFUNC_ERR *)
-    exception FirstSensRhsFuncFailure
-
-    (** @cvodes <node6#SECTION00623000000000000000> CV_REPTD_SRHSFUNC_ERR *)
-    exception RepeatedSensRhsFuncFailure
-
-    (** @cvodes <node6#SECTION00623000000000000000> CV_UNREC_SRHSFUNC_ERR *)
-    exception UnrecoverableSensRhsFuncFailure
-
-    (** @cvodes <node6> CV_BAD_IS *)
-    exception BadSensIdentifier
-
-    (** {3:sensinit Initialization} *)
+    (** {3:init Initialization} *)
 
     type 'a sensrhsfn =
         AllAtOnce of 'a sensrhsfn_all option
@@ -356,7 +309,7 @@ let sp = { pvals = Some p; pbar = ...; plist = ... }]}
     type ('a, 'k) tolerance =
         SStolerances of float * Sundials.RealArray.t
         (** [(rel, abs)] : scalar relative and absolute tolerances. *)
-      | SVtolerances of float * ('a, 'k) nvector array
+      | SVtolerances of float * ('a, 'k) Nvector.t array
         (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
       | EEtolerances
         (** Calculate the integration tolerances for sensitivities
@@ -380,14 +333,14 @@ let sp = { pvals = Some p; pbar = ...; plist = ... }]}
                -> sens_method
                -> sens_params
                -> 'a sensrhsfn
-               -> ('a, 'k) nvector array
+               -> ('a, 'k) Nvector.t array
                -> unit
 
     (** This function reinitializes the forward sensitivity computation.
 
         @cvodes <node6#ss:sensi_malloc> CVodeSensReInit *)
     val reinit : ('a, 'k) session -> sens_method
-                      -> ('a, 'k) nvector array -> unit
+                      -> ('a, 'k) Nvector.t array -> unit
 
     (** Deactivates forward sensitivity calculations without deallocating
         memory. Sensitivities can be reactivated with {!reinit}.
@@ -402,7 +355,7 @@ let sp = { pvals = Some p; pbar = ...; plist = ... }]}
         {!Cvode.solve_one_step}, and returns the time reached by the solver.
 
         @cvodes <node6#ss:sensi_get> CVodeGetSens *)
-    val get : ('a, 'k) session -> ('a, 'k) nvector array -> float
+    val get : ('a, 'k) session -> ('a, 'k) Nvector.t array -> float
 
     (** [tret = get_dky s t k dkys] fills [dkys] with the
         derivatives of the sensitivity solution vectors after a
@@ -418,7 +371,7 @@ let sp = { pvals = Some p; pbar = ...; plist = ... }]}
         @raise BadT [t] is not in the allowed range.
     *)
     val get_dky : ('a, 'k) session -> float -> int
-                          -> ('a, 'k) nvector array -> unit
+                          -> ('a, 'k) Nvector.t array -> unit
 
     (** [tret = get1 s i ys] fills [ys] with the [i]th sensitivity
         solution vector after a successful return from
@@ -428,7 +381,7 @@ let sp = { pvals = Some p; pbar = ...; plist = ... }]}
         @cvodes <node6#ss:sensi_get> CVodeGetSens1
         @raise BadIS The index [i] is not in the allowed range.
     *)
-    val get1 : ('a, 'k) session -> int -> ('a, 'k) nvector -> float
+    val get1 : ('a, 'k) session -> int -> ('a, 'k) Nvector.t -> float
 
     (** [tret = get_dky1 s t k i dkys] fills [dkys] with the
         derivatives of the [i]th sensitivity solution vector after a
@@ -444,9 +397,9 @@ let sp = { pvals = Some p; pbar = ...; plist = ... }]}
         @raise BadK [k] is not in the range 0, 1, ..., [qlast].
         @raise BadT [t] is not in the allowed range. *)
     val get_dky1 : ('a, 'k) session -> float -> int -> int
-                          -> ('a, 'k) nvector -> unit
+                          -> ('a, 'k) Nvector.t -> unit
 
-    (** {3:sensoptin Optional Input Functions} *)
+    (** {3:set Modifying the solver (optional input functions)} *)
 
     (** Specify the integration tolerances for sensitivities.
 
@@ -484,7 +437,7 @@ let sp = { pvals = Some p; pbar = ...; plist = ... }]}
         @cvode <node5#ss:sens_optional_input> CVodeSetSensMaxNonlinIters *)
     val set_max_nonlin_iters : ('a, 'k) session -> int -> unit
 
-    (** {3:sensoptout Optional Output Functions} *)
+    (** {3:get Querying the solver (optional output functions)} *)
 
     (** Returns the number of calls to the sensitivity right-hand side function.
 
@@ -526,7 +479,7 @@ let sp = { pvals = Some p; pbar = ...; plist = ... }]}
 
         @cvode <node6#ss:sens_optional_output> CVodeGetSensErrWeights
         @cvode <node3#e:errwt> Eq. (2.7) IVP solution (W_i) *)
-    val get_err_weights : ('a, 'k) session -> ('a, 'k) nvector array -> unit
+    val get_err_weights : ('a, 'k) session -> ('a, 'k) Nvector.t array -> unit
 
     (** Returns the number of nonlinear iterations performed for sensitivity
         calculations.
@@ -570,47 +523,11 @@ let sp = { pvals = Some p; pbar = ...; plist = ... }]}
     (**
        Support for integration of quadrature equations that depends not only on
        the state variables but also on forward sensitivities.
-     *)
 
+       @cvodes <node6#SECTION00640000000000000000> Integration of quadrature equations depending on forward sensitivities *)
     module Quadrature :
       sig
-        (** A skeleton of an enhanced main program:
-            + {b Initialize a session [s] per the skeleton at {!Sensitivity.init}}
-            {[...]}
-            + {b Set initial values of quadrature variables}
-            {[let yQS = Array.init ns (fun _ -> RealArray.of_array [0.0; 0.0]) in]}
-            + {b Initialize sensitivity-dependent quadrature integration}
-            {[init s fQS yQS]}
-            + {b Set optional inputs}
-            {[set_tolerances s ...]}
-            + {b Advance the solution in time as per normal}
-            + {b Extract sensitivity-dependent quadrature variables}
-            {[let t = get s yQS]}
-            + {b Get sensitivity-dependent optional outputs}
-            {[let e, f = get_stats s]}
-
-            @cvodes <node6#SECTION00640000000000000000> Integration of quadrature equations depending on forward sensitivities *)
-
-        (** {3:quadsensexcept Exceptions} *)
-
-        (** Quadrature integration was not initialized.
-
-            @cvodes <node5#SECTION00642000000000000000> CV_NO_QUAD_SENS *)
-        exception QuadSensNotInitialized
-
-        (** @cvodes <node6#SECTION00642000000000000000> CV_QSRHSFUNC_FAIL *)
-        exception QuadSensRhsFuncFailure
-
-        (** @cvodes <node6#SECTION00642000000000000000> CV_FIRST_QSRHSFUNC_ERR *)
-        exception FirstQuadSensRhsFuncFailure
-
-        (** @cvodes <node6#SECTION00642000000000000000> CV_REPTD_QSRHSFUNC_ERR *)
-        exception RepeatedQuadSensRhsFuncFailure
-
-        (** @cvodes <node6#SECTION00642000000000000000> CV_UNREC_QSRHSFUNC_ERR *)
-        exception UnrecoverableQuadSensRhsFuncFailure
-
-        (** {3:quadsensinit Initialization} *)
+        (** {3:init Initialization} *)
 
         (** This function, [fQS t y yS yQdot rhsvalQs tmp1 tmp2], computes the
             sensitivity quadrature equation right-hand side given
@@ -642,12 +559,12 @@ let sp = { pvals = Some p; pbar = ...; plist = ... }]}
 
             @cvodes <node6#ss:quad_sens_init> CVodeQuadSensInit *)
         val init : ('a, 'k) session -> ?fQS:'a quadsensrhsfn
-                 -> ('a, 'k) nvector array -> unit
+                 -> ('a, 'k) Nvector.t array -> unit
 
         (** This function reinitializes the forward sensitivity computation.
 
             @cvodes <node6#ss:quad_sens_init> CVodeQuadSensReInit *)
-        val reinit : ('a, 'k) session -> ('a, 'k) nvector array -> unit
+        val reinit : ('a, 'k) session -> ('a, 'k) Nvector.t array -> unit
 
         (** {3:quadsenstol Tolerance specification} *)
 
@@ -657,7 +574,7 @@ let sp = { pvals = Some p; pbar = ...; plist = ... }]}
                 (default). *)
           | SStolerances of float * Sundials.RealArray.t
             (** [(rel, abs)] : scalar relative and absolute tolerances. *)
-          | SVtolerances of float * ('a, 'k) nvector array
+          | SVtolerances of float * ('a, 'k) Nvector.t array
             (** [(rel, abs)] : scalar relative and vector absolute
                 tolerances. *)
           | EEtolerances
@@ -674,7 +591,7 @@ let sp = { pvals = Some p; pbar = ...; plist = ... }]}
             @cvodes <node6#ss:quad_sens_optional_input> CVodeQuadSensEEtolerances *)
         val set_tolerances : ('a, 'k) session -> ('a, 'k) tolerance -> unit
 
-        (** {3:quadsensout Output Functions} *)
+        (** {3:mainget Accessing results} *)
 
         (** [tret = get s yqs] fills [yqs] with quadrature solution vectors
             after a successful return from {!Cvode.solve_normal} or
@@ -682,7 +599,7 @@ let sp = { pvals = Some p; pbar = ...; plist = ... }]}
             the solver.
 
             @cvodes <node6#ss:quad_sens_get> CVodeGetQuadSens *)
-        val get : ('a, 'k) session -> ('a, 'k) nvector array -> float
+        val get : ('a, 'k) session -> ('a, 'k) Nvector.t array -> float
 
         (**
           [tret = get s i yqs] fills [yqs] with the [i]th quadrature solution
@@ -692,7 +609,7 @@ let sp = { pvals = Some p; pbar = ...; plist = ... }]}
 
           @cvodes <node6#ss:quad_sens_get> CVodeGetQuadSens1
           @raise BadIS The index [i] is not in the allowed range. *)
-        val get1 : ('a, 'k) session -> int -> ('a, 'k) nvector -> float
+        val get1 : ('a, 'k) session -> int -> ('a, 'k) Nvector.t -> float
 
         (**
           [tret = get_dky s t k dkyqs] fills [dkyqs] with the derivatives of the
@@ -708,7 +625,7 @@ let sp = { pvals = Some p; pbar = ...; plist = ... }]}
           @raise BadK [k] is not in the range 0, 1, ..., [qlast].
           @raise BadT [t] is not in the allowed range. *)
         val get_dky : ('a, 'k) session -> float -> int
-                          -> ('a, 'k) nvector array -> unit
+                          -> ('a, 'k) Nvector.t array -> unit
 
         (** [tret = get_dky s t k i dkyqs] fills [dkyqs] with the derivatives of
             the [i]th quadrature solution vector after a successful return from
@@ -722,9 +639,9 @@ let sp = { pvals = Some p; pbar = ...; plist = ... }]}
             @raise BadK [k] is not in the range 0, 1, ..., [qlast].
             @raise BadT [t] is not in the allowed range. *)
         val get_dky1 : ('a, 'k) session -> float -> int -> int
-                            -> ('a, 'k) nvector -> unit
+                            -> ('a, 'k) Nvector.t -> unit
 
-        (** {3:quadsensoptout Optional Output Functions} *)
+        (** {3:optget Querying the solver} *)
 
         (** Returns the number of calls to the user's quadrature right-hand side
             function.
@@ -741,7 +658,8 @@ let sp = { pvals = Some p; pbar = ...; plist = ... }]}
         (** Returns the quadrature error weights at the current time.
 
             @cvodes <node6#ss:quad_sens_optional_output> CVodeGetQuadSensErrWeights *)
-        val get_err_weights : ('a, 'k) session -> ('a, 'k) nvector array -> unit
+        val get_err_weights
+              : ('a, 'k) session -> ('a, 'k) Nvector.t array -> unit
 
         (** [nfqevals, nqetfails = get_stats s] returns
             - [fqevals], the number of calls to the user's quadrature function,
@@ -752,76 +670,64 @@ let sp = { pvals = Some p; pbar = ...; plist = ... }]}
           @cvodes <node6#ss:quad_sens_optional_output> CVodeGetQuadSensStats *)
         val get_stats : ('a, 'k) session -> int * int
 
+        (** {3:exceptions Exceptions} *)
+
+        (** Quadrature integration was not initialized.
+
+            @cvodes <node5#SECTION00642000000000000000> CV_NO_QUAD_SENS *)
+        exception QuadSensNotInitialized
+
+        (** @cvodes <node6#SECTION00642000000000000000> CV_QSRHSFUNC_FAIL *)
+        exception QuadSensRhsFuncFailure
+
+        (** @cvodes <node6#SECTION00642000000000000000> CV_FIRST_QSRHSFUNC_ERR *)
+        exception FirstQuadSensRhsFuncFailure
+
+        (** @cvodes <node6#SECTION00642000000000000000> CV_REPTD_QSRHSFUNC_ERR *)
+        exception RepeatedQuadSensRhsFuncFailure
+
+        (** @cvodes <node6#SECTION00642000000000000000> CV_UNREC_QSRHSFUNC_ERR *)
+        exception UnrecoverableQuadSensRhsFuncFailure
       end
+
+    (** {3:exceptions Exceptions} *)
+
+    (** Sensitivity analysis was not initialized.
+
+        @cvodes <node5#ss:sensi_get> CV_NO_SENS *)
+    exception SensNotInitialized
+
+    (** @cvodes <node6#SECTION00623000000000000000> CV_SRHSFUNC_FAIL *)
+    exception SensRhsFuncFailure
+
+    (** @cvodes <node6#SECTION00623000000000000000> CV_FIRST_SRHSFUNC_ERR *)
+    exception FirstSensRhsFuncFailure
+
+    (** @cvodes <node6#SECTION00623000000000000000> CV_REPTD_SRHSFUNC_ERR *)
+    exception RepeatedSensRhsFuncFailure
+
+    (** @cvodes <node6#SECTION00623000000000000000> CV_UNREC_SRHSFUNC_ERR *)
+    exception UnrecoverableSensRhsFuncFailure
+
+    (** @cvodes <node6> CV_BAD_IS *)
+    exception BadSensIdentifier
   end
 
-(** {2:adj Adjoint Sensitivity Analysis} *)
+(** Adjoint Sensitivity Analysis.
+  
+    TODO: write a better one sentence description
 
+    TODO: explain that this 'extends' standard Cvode.
+
+    An example session with Cvode using sensitivity analysis
+    ({openfile cvodes_adj_skel.ml}): {[
+#include "examples/ocaml/skeletons/cvodes_adj_skel.ml"
+    ]}
+
+    @cvodes <node7#ss:skeleton_adj> Enhanced Skeleton for Adjoint Sensitivity Analysis *)
 module Adjoint :
   sig
-    (**
-        A skeleton of an enhanced main program:
-        + {b Initialize a session [s] per the skeleton at {!Cvode.init}}
-        {[...]}
-        Adding quadrature variables using {!Quadrature.init} if desired.
-        + {b Initialize the adjoint computation}
-        {[init s nsteps IHermite]}
-        + {b Integrate forward problem}
-        {[let t, ncheck, r = forward_normal s tout y0]}
-        + {b Setup the backward problem and attach a linear solver}
-        {[let yB0 = RealArray.of_list [0.0; 0.0; ...]
-let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
-        + {b Set optional inputs}
-        {[set_max_ord bs ...]}
-        + {b Initialize quadrature calculation}
-        {[Quadrature.init bs fQb yQB0]}
-        + {b Integrate backward problem}
-        {[backward_normal s tB]}
-        + {b Extract quadrature variables}
-        {[let t = Quadrature.get s yQS]}
-
-        @cvodes <node7#ss:skeleton_adj> Enhanced Skeleton for Adjoint Sensitivity Analysis
-    *)
-
-    (** {3:adjexcept Exceptions} *)
-
-    (** Adjoint sensitivity analysis was not initialized.
-
-        @cvodes <node7#sss:cvsolvef> CV_NO_ADJ *)
-    exception AdjointNotInitialized
-
-    (** Neither {!forward_normal} nor {!forward_one_step} has previously been
-        called.
-
-        @cvodes <node7#sss:cvsolveb> CV_NO_FWD *)
-    exception NoForwardCall
-
-    (** Reinitialization of the forward problem failed at the first checkpoint
-        (corresponding to the initial time of the forward problem).
-
-        @cvodes <node7#sss:cvsolveb> CV_REIFWD_FAIL *)
-    exception ForwardReinitFailure
-
-    (** An error occured when integrating the forward problem from a
-        checkpoint.
-
-        @cvodes <node7#sss:cvsolveb> CV_FWD_FAIL *)
-    exception ForwardFailure
-
-    (** No backward problem has been created.
-
-        @cvodes <node7#sss:cvsolveb> CV_NO_BCK *)
-    exception NoBackwardProblem
-
-    (** The final time [tB0] was outside the interval over which the forward
-        problem was solved.
-
-        @cvodes <node7#sss:cvinitb> CV_BAD_TB0 *)
-    exception BadFinalTime
-
-    (** {3:adjfwd Forward Solutions} *)
-
-    (** {4:adjfwdinit Initialization} *)
+    (** {4:fwd Forward initialization and integration} *)
 
     (** Specifies the type of interpolation.
 
@@ -836,8 +742,6 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
 
         @cvodes <node7#ss:cvadjinit> CVodeAdjInit *)
     val init : ('a, 'k) session -> int -> interpolation -> unit
-
-    (** {4:adjfwdintegration Forward Integration} *)
 
     (** [tret, ncheck, sr = forward_normal s tout yret] integrates the forward
         problem over an interval and saves checkpointing data. The function
@@ -863,7 +767,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
     val forward_normal :
       ('a, 'k) session
       -> float
-      -> ('a, 'k) nvector
+      -> ('a, 'k) Nvector.t
       -> float * int * Cvode.solver_result
 
     (** [tret, ncheck, sr = forward_normal s tout yret] integrates the forward
@@ -889,17 +793,14 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
     val forward_one_step :
       ('a, 'k) session
       -> float
-      -> ('a, 'k) nvector
+      -> ('a, 'k) Nvector.t
       -> float * int * Cvode.solver_result
 
-    (** {3:adjbwd Backward Problems} *)
+    (** {3:bwdinit Backward initialization} *)
 
     (** Identifies a backward problem. *)
     type ('data, 'kind) bsession = ('data, 'kind) AdjointTypes.bsession
-    type serial_bsession = (RealArray.t, Nvector_serial.kind) bsession
-
-    (** {4:adjbwdinit Initialization} *)
-
+    type serial_bsession = (Nvector_serial.data, Nvector_serial.kind) bsession
 
     (** These functions evaluate the right-hand side of the backward ODE system
         with or without a dependence on forward sensitivities. *)
@@ -966,13 +867,15 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
         were built to link with a LAPACK library.
 
         @cvodes <node7#sss:lin_solv_b> Linear Solver Initialization Functions *)
-    type ('data, 'kind) linear_solver = ('data, 'kind) AdjointTypes.linear_solver
-    type serial_linear_solver = (RealArray.t, Nvector_serial.kind) linear_solver
+    type ('data, 'kind) linear_solver =
+            ('data, 'kind) AdjointTypes.linear_solver
+    type serial_linear_solver =
+            (Nvector_serial.data, Nvector_serial.kind) linear_solver
 
     type ('a, 'k) tolerance =
       | SStolerances of float * float
         (** [(rel, abs)] : scalar relative and absolute tolerances. *)
-      | SVtolerances of float * ('a, 'k) nvector
+      | SVtolerances of float * ('a, 'k) Nvector.t
         (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
 
     (** Specify a solution method.
@@ -1013,7 +916,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
       -> ('a, 'k) tolerance
       -> 'a brhsfn
       -> float
-      -> ('a, 'k) nvector
+      -> ('a, 'k) Nvector.t
       -> ('a, 'k) bsession
 
     (** Reinitialize the backward problem.
@@ -1025,10 +928,10 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
       ('a, 'k) bsession
       -> ?iter_type:('a, 'k) iter
       -> float
-      -> ('a, 'k) nvector
+      -> ('a, 'k) Nvector.t
       -> unit
 
-    (** {4:adjbwdintegration Backward Integration} *)
+    (** {4:bwdsolve Backward Integration} *)
 
     (** [backward_normal s tbout] integrates the backward ODE
         problem. The function takes internal steps until it has
@@ -1075,7 +978,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
         in [yb] at time [tret].
 
         @cvodes <node7#sss:cvsolveb> CVodeGetB *)
-    val get : ('a, 'k) bsession -> ('a, 'k) nvector -> float
+    val get : ('a, 'k) bsession -> ('a, 'k) Nvector.t -> float
 
     (** [tret = get_dky s t k dkys] fills [dkys] with the derivatives of the
         sensitivity solution vectors after a successful return from
@@ -1088,9 +991,10 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
         @cvodes <node5#ss:optional_dky> CVodeGetAdjIDABmem
         @raise BadK [k] is not in the range 0, 1, ..., [qlast].
         @raise BadT [t] is not in the allowed range. *)
-    val get_dky : ('a, 'k) bsession -> float -> int -> ('a, 'k) nvector -> unit
+    val get_dky
+          : ('a, 'k) bsession -> float -> int -> ('a, 'k) Nvector.t -> unit
 
-    (** {4:adjbwdoptout Optional Output Functions} *)
+    (** {4:bwdset Modifying the solver} *)
 
     (** Instructs {!forward_normal} and {!forward_one_step} not to save
         checkpointing data for forward sensitivities anymore.
@@ -1683,14 +1587,14 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
         @cvodes <node5#sss:optout_main> CVodeGetErrWeights
         @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
         @cvodes <node3#ss:ivp_sol> IVP solution (W_i) *)
-    val get_err_weights : ('a, 'k) bsession -> ('a, 'k) nvector -> unit
+    val get_err_weights : ('a, 'k) bsession -> ('a, 'k) Nvector.t -> unit
 
     (** Returns the vector of estimated local errors.
 
         @cvodes <node5#sss:optout_main> CVodeGetEstLocalErrors
         @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
      *)
-    val get_est_local_errors : ('a, 'k) bsession -> ('a, 'k) nvector -> unit
+    val get_est_local_errors : ('a, 'k) bsession -> ('a, 'k) Nvector.t -> unit
 
     (** Returns the integrator statistics as a group.
 
@@ -1734,7 +1638,6 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
 
     (** Support for integration of backward quadrature equations that may or may
         not depend on forward sensitivities. *)
-
     module Quadrature :
       sig
         (** {3:adjquadinit Initialization} *)
@@ -1779,13 +1682,13 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
             @cvodes <node6#sss:cvquadinitb> CVodeQuadInitB
             @cvodes <node6#sss:cvquadinitb> CVodeQuadInitBS *)
         val init : ('a, 'k) bsession -> 'a bquadrhsfn
-                 -> ('a, 'k) nvector -> unit
+                 -> ('a, 'k) Nvector.t -> unit
 
         (** This function reinitializes the integration of quadrature equations
             during the backward phase.
 
             @cvodes <node6#ss:quad_sens_init> CVodeQuadReInitB *)
-        val reinit : ('a, 'k) bsession -> ('a, 'k) nvector -> unit
+        val reinit : ('a, 'k) bsession -> ('a, 'k) Nvector.t -> unit
 
         (** {3:adjextraction Extraction function} *)
 
@@ -1796,7 +1699,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
 
           @cvodes <node7#sss:quad_get_b> CVodeGetQuadB
          *)
-        val get : ('a, 'k) bsession -> ('a, 'k) nvector -> float
+        val get : ('a, 'k) bsession -> ('a, 'k) Nvector.t -> float
 
         (** {3:adjquadoptin Optional Input Functions} *)
 
@@ -1806,7 +1709,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
                 (default). *)
           | SStolerances of float * float
             (** [(rel, abs)] : scalar relative and absolute tolerances. *)
-          | SVtolerances of float * ('a, 'k) nvector
+          | SVtolerances of float * ('a, 'k) Nvector.t
             (** [(rel, abs)] : scalar relative and vector absolute
                 tolerances. *)
 
@@ -1844,7 +1747,7 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
             @cvodes <node5#ss:quad_optional_output> CVodeGetQuadErrWeights
             @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
          *)
-        val get_err_weights : ('a, 'k) bsession -> ('a, 'k) nvector -> unit
+        val get_err_weights : ('a, 'k) bsession -> ('a, 'k) Nvector.t -> unit
 
         (** [nfqevals, nqetfails = get_stats s] returns
             - [fqevals], the number of calls to the user's quadrature function, and,
@@ -1856,5 +1759,42 @@ let bs = init_backward s lmm (Newton ...) (SStolerances ...) fB tB0 yB0]}
          *)
         val get_stats : ('a, 'k) bsession -> int * int
       end
+
+    (** {3:adjexcept Exceptions} *)
+
+    (** Adjoint sensitivity analysis was not initialized.
+
+        @cvodes <node7#sss:cvsolvef> CV_NO_ADJ *)
+    exception AdjointNotInitialized
+
+    (** Neither {!forward_normal} nor {!forward_one_step} has previously been
+        called.
+
+        @cvodes <node7#sss:cvsolveb> CV_NO_FWD *)
+    exception NoForwardCall
+
+    (** Reinitialization of the forward problem failed at the first checkpoint
+        (corresponding to the initial time of the forward problem).
+
+        @cvodes <node7#sss:cvsolveb> CV_REIFWD_FAIL *)
+    exception ForwardReinitFailure
+
+    (** An error occured when integrating the forward problem from a
+        checkpoint.
+
+        @cvodes <node7#sss:cvsolveb> CV_FWD_FAIL *)
+    exception ForwardFailure
+
+    (** No backward problem has been created.
+
+        @cvodes <node7#sss:cvsolveb> CV_NO_BCK *)
+    exception NoBackwardProblem
+
+    (** The final time [tB0] was outside the interval over which the forward
+        problem was solved.
+
+        @cvodes <node7#sss:cvinitb> CV_BAD_TB0 *)
+    exception BadFinalTime
+
   end
 

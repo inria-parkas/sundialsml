@@ -33,6 +33,7 @@
 open Ida_impl
 open Sundials
 
+(** Alias for Ida/Idas sessions. *)
 type ('data, 'kind) session = ('data, 'kind) Ida.session
 
 (** {2:quad Quadrature Equations} *)
