@@ -1,7 +1,7 @@
 (* Separated from perf.ml since updating the formatting shouldn't
    require re-running performance measurements.  *)
 let synopsis =
-"crunchperf -c <ocaml> <sundials> <name>
+  "crunchperf -c <ocaml> <sundials> <name>
 
      Combine timing results from previous runs of perf.  <ocaml> should
      list time for OCaml code, <sundials> the time for C code, and <name>
@@ -19,6 +19,12 @@ crunchperf -s <file>
 crunchperf -S <file>
 
      Summarize the output of a previous run of crunchperf -m for gnuplot.
+
+crunchperf -r <file> | /bin/sh
+
+     Recover the *.reps files from the output of a previous run of
+     crunchperf -m.  Useful when you accidentally made the *.reps files
+     out of date but still have the perf.*.log file around.
 "
 
 (* Helpers *)
@@ -216,6 +222,28 @@ let summarize gnuplot path =
   in
   ()
 
+let recover_reps file =
+  let isdir s =
+    try Sys.is_directory s
+    with _ -> false
+  in
+  List.iter (fun modname ->
+      List.iter (fun nvtype ->
+          if not (isdir modname && isdir (Filename.concat modname nvtype))
+          then failwith "You don't seem to be in the examples/ directory."
+        )
+        ["serial"; "parallel"]
+    )
+    ["cvode"; "cvodes"; "ida"; "idas"; "kinsol"]
+  ;
+  List.iter
+    (fun (name, record) ->
+       Printf.printf "echo \"NUM_REPS=%d\" > %s.reps;\n"
+         record.reps
+         (expand name)
+    )
+  @@ sorted_assocs @@ load file
+
 let _ =
   match Array.to_list Sys.argv with
   | [_;"-c";ocaml;sundials;name] ->
@@ -225,6 +253,8 @@ let _ =
   | [_;"-S";file] ->
     summarize true file
   | _::"-m"::files -> merge files
+  | [_;"-r";file] ->
+    recover_reps file
   | _ ->
     print_string synopsis;
     exit 0
