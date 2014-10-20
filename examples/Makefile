@@ -22,7 +22,7 @@ VECTYPES = serial $(if $(MPI_ENABLED),parallel)
 
 SUBDIRS=$(foreach m,$(MODULES),$(foreach v,$(VECTYPES),$m/$v))
 
-TOP_TARGETS = tests.byte.log tests.opt.log perf.byte.log perf.opt.log
+TOP_TARGETS = tests.byte.log tests.opt.log perf.byte.log perf.opt.log reps
 SUBDIR_TARGETS = $(foreach d,$(SUBDIRS),$(foreach t,$(TOP_TARGETS),$d/$t))
 
 .PHONY: default tests.byte.log tests.opt.log tests.byte tests.opt ocaml \
@@ -57,6 +57,8 @@ perf.opt.log perf.byte.log: perf.%.log: $(C_EXAMPLES) \
 	utils/crunchperf -s $@
 	@$(if $(findstring $@,$(MAKECMDGOALS)), \
 	   echo "Note: \"make $(@:.log=.plot)\" can plot this for you.")
+
+reps: $(foreach s,$(SUBDIRS),$s/reps)
 
 NATIVE_TITLE='OCaml native code performance over C ($(CC) $(CFLAGS))'
 BYTE_TITLE  ='OCaml byte code performance over C ($(CC) $(CFLAGS))'

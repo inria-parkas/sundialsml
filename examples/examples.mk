@@ -224,7 +224,7 @@ define ADD_TIME_RULES
     # was just recompiled; hence perf.ml is a dependence while perf
     # is an order-only dependence.
     ifeq ($3,)
-    $1.reps: $(UTILS)/perf.ml $(SRCROOT)/config | $1.sundials $(UTILS)/perf
+    $1.reps: $(UTILS)/perf.ml | $1.sundials $(UTILS)/perf
 	$(UTILS)/perf -r $(MIN_TIME) $(2:$$<=./$$(word 1,$$|)) > $$@
     $1.sundials.time: $1.sundials $1.reps $(UTILS)/perf
 	$(UTILS)/perf -m $$(word 2,$$^) $(PERF_DATA_POINTS) \
