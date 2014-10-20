@@ -380,7 +380,7 @@ static value make_spils_solve_arg(
                 caml_copy_double(gammab));
     Store_field(v, RECORD_CVODES_ADJ_SPILS_SOLVE_ARG_DELTA,
                 caml_copy_double(deltab));
-    Store_field(v, RECORD_CVODES_ADJ_SPILS_SOLVE_ARG_LR, Val_bool(lrb=1));
+    Store_field(v, RECORD_CVODES_ADJ_SPILS_SOLVE_ARG_LR, Val_bool (lrb == 1));
 
     CAMLreturn(v);
 }
@@ -1259,7 +1259,9 @@ CAMLprim value c_cvodes_adj_init_backward(value vparent, value weakref,
     Store_field (r, 0, (value)CVodeGetAdjCVodeBmem(parent, which));
     Store_field (r, 1, Val_int(which));
     Store_field (r, 2, (value)backref);
-    Store_field (r, 3, Val_long (0)); /* no err_file = NULL */
+    Store_field (r, 3, 0); // no err_file = NULL; note OCaml doesn't
+			   // (seem to) support architectures where
+			   // 0 != (value)(void*)NULL.
 
     CAMLreturn(r);
 }

@@ -197,11 +197,11 @@ BYTE_TITLE  ='OCaml byte code performance over C ($(CC) $(CFLAGS))'
 PLOTTYPES=jpg png pdf eps
 
 perf.opt.plot: perf.opt.log
-	TITLE=$(NATIVE_TITLE) utils/plot.sh $<
+	TITLE=$(NATIVE_TITLE) $(UTILS)/plot.sh $<
 	@$(UTILS)/plot.sh --explain-vars
 
 perf.byte.plot: perf.byte.log
-	TITLE=$(BYTE_TITLE) utils/plot.sh $<
+	TITLE=$(BYTE_TITLE) $(UTILS)/plot.sh $<
 	@$(UTILS)/plot.sh --explain-vars
 
 $(foreach t,$(PLOTTYPES),perf.opt.$t): perf.opt.log

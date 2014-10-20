@@ -372,8 +372,7 @@ static value make_spils_solve_arg(
                 caml_copy_double(gamma));
     Store_field(v, RECORD_CVODE_SPILS_SOLVE_ARG_DELTA,
                 caml_copy_double(delta));
-    Store_field(v, RECORD_CVODE_SPILS_SOLVE_ARG_LEFT,
-                lr == 1 ? Val_true : Val_false);
+    Store_field(v, RECORD_CVODE_SPILS_SOLVE_ARG_LEFT, Val_bool (lr == 1));
 
     CAMLreturn(v);
 }
@@ -526,7 +525,7 @@ CAMLprim value c_cvode_get_gamma(value vcvode_mem)
     CAMLlocal1(r);
     CVodeMem cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
 
-    r = caml_alloc_tuple (2 * Double_wosize);
+    r = caml_alloc_small (2 * Double_wosize, Double_array_tag);
     Store_double_field (r, 0, cvode_mem->cv_gamma);
     Store_double_field (r, 1, cvode_mem->cv_gammap);
     CAMLreturn(r);
@@ -752,14 +751,14 @@ CAMLprim value c_cvode_init(value weakref, value lmm, value iter, value initial,
     N_Vector initial_nv = NVEC_VAL(initial);
     flag = CVodeInit(cvode_mem, rhsfn, Double_val(t0), initial_nv);
     if (flag != CV_SUCCESS) {
-	CVodeFree (cvode_mem);
+	CVodeFree (&cvode_mem);
 	CHECK_FLAG("CVodeInit", flag);
     }
 
     value *backref;
     backref = malloc (sizeof (*backref));
     if (backref == NULL) {
-	CVodeFree (cvode_mem);
+	CVodeFree (&cvode_mem);
 	caml_raise_out_of_memory();
     }
     *backref = weakref;

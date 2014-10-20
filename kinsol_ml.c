@@ -698,13 +698,17 @@ CAMLprim value c_kinsol_init(value weakref, value vtemp)
     temp = NVEC_VAL(vtemp);
     flag = KINInit(kin_mem, sysfn, temp);
     if (flag != KIN_SUCCESS) {
-	KINFree (kin_mem);
+	/* As of SUNDIALS 2.5.0, KINInit frees kin_mem upon failure,
+	 * but only if the failure is due to allocation of vectors.
+	 * IDAInit and CVodeInit never frees the mem pointer.
+	 * Confusing :( */
+	if (flag != KIN_MEM_FAIL) KINFree (&kin_mem);
 	CHECK_FLAG("KINInit", flag);
     }
 
     backref = malloc (sizeof (*backref));
     if (backref == NULL) {
-	KINFree (kin_mem);
+	KINFree (&kin_mem);
 	caml_raise_out_of_memory();
     }
     *backref = weakref;

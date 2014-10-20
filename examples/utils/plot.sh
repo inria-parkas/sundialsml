@@ -193,7 +193,7 @@ else
               notitle axes x1y2"
 fi
 
-tee /tmp/log <<EOF | gnuplot
+gnuplot
 $SET_COMMON
 
 # draw vertical lines

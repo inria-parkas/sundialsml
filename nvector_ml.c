@@ -369,10 +369,11 @@ void callml_vlinearsum(realtype a, N_Vector x, realtype b, N_Vector y, N_Vector 
 void callml_vconst(realtype c, N_Vector z)
 {
     CAMLparam0();
-    CAMLlocal1(mlop);
-    mlop = GET_OP(z, NVECTOR_OPS_NVCONST);
+    CAMLlocal1(vc);
 
-    caml_callback2(mlop, caml_copy_double(c), NVEC_BACKLINK(z));
+    vc = caml_copy_double (c);
+
+    caml_callback2(GET_OP(z, NVECTOR_OPS_NVCONST), vc, NVEC_BACKLINK(z));
 
     CAMLreturn0;
 }
@@ -402,11 +403,12 @@ void callml_vdiv(N_Vector x, N_Vector y, N_Vector z)
 void callml_vscale(realtype c, N_Vector x, N_Vector z)
 {
     CAMLparam0();
-    CAMLlocal1(mlop);
-    mlop = GET_OP(x, NVECTOR_OPS_NVSCALE);
+    CAMLlocal1(vc);
 
-    caml_callback3(mlop, caml_copy_double(c),
-	    NVEC_BACKLINK(x), NVEC_BACKLINK(z));
+    vc = caml_copy_double(c);
+
+    caml_callback3(GET_OP(x, NVECTOR_OPS_NVSCALE), vc,
+		   NVEC_BACKLINK(x), NVEC_BACKLINK(z));
 
     CAMLreturn0;
 }
@@ -436,11 +438,12 @@ void callml_vinv(N_Vector x, N_Vector z)
 void callml_vaddconst(N_Vector x, realtype b, N_Vector z)
 {
     CAMLparam0();
-    CAMLlocal1(mlop);
-    mlop = GET_OP(x, NVECTOR_OPS_NVADDCONST);
+    CAMLlocal1(vb);
 
-    caml_callback3(mlop, NVEC_BACKLINK(x), caml_copy_double(b),
-	    NVEC_BACKLINK(z));
+    vb = caml_copy_double(b);
+
+    caml_callback3(GET_OP(x, NVECTOR_OPS_NVADDCONST), NVEC_BACKLINK(x), vb,
+		   NVEC_BACKLINK(z));
 
     CAMLreturn0;
 }
@@ -526,11 +529,12 @@ realtype callml_vl1norm(N_Vector x)
 void callml_vcompare(realtype c, N_Vector x, N_Vector z)
 {
     CAMLparam0();
-    CAMLlocal1(mlop);
-    mlop = GET_OP(x, NVECTOR_OPS_NVCOMPARE);
+    CAMLlocal1(vc);
 
-    caml_callback3(mlop, caml_copy_double(c),
-	    NVEC_BACKLINK(x), NVEC_BACKLINK(z));
+    vc = caml_copy_double(c);
+
+    caml_callback3(GET_OP(x, NVECTOR_OPS_NVCOMPARE), vc,
+		   NVEC_BACKLINK(x), NVEC_BACKLINK(z));
 
     CAMLreturn0;
 }

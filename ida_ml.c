@@ -718,7 +718,7 @@ CAMLprim value c_ida_init (value weakref, value vt0, value vy, value vyp)
     yp = NVEC_VAL (vyp);
     flag = IDAInit (ida_mem, resfn, Double_val (vt0), y, yp);
     if (flag != IDA_SUCCESS) {
-	IDAFree (ida_mem);
+	IDAFree (&ida_mem);
 	CHECK_FLAG ("IDAInit", flag);
     }
 
@@ -1028,7 +1028,7 @@ CAMLprim value c_ida_session_finalize(value vdata)
 	free (backref);
     }
 
-    FILE* err_file = (FILE *)Long_val(Field(vdata, RECORD_IDA_SESSION_ERRFILE));
+    FILE* err_file = (FILE *)Field(vdata, RECORD_IDA_SESSION_ERRFILE);
     if (err_file != NULL) {
 	fclose(err_file);
     }
