@@ -173,6 +173,7 @@ if [ "x$STYLE" = xboxplot ]; then
 LABELCMD="('< $crunch -S $1') u (1):xticlabels(6) lt -3 notitle"
 
 if [ "$#" -eq 1 ]; then
+    
     BOXCMD="'$1' using (0):(\$6):(0.5):7 w boxplot \
                pointtype 2 lc rgb word(BOXCOLORS,1) \
               title 'OCaml time / C time (left axis)'"
@@ -192,14 +193,14 @@ else
               notitle axes x1y2"
 fi
 
-gnuplot <<EOF
+tee /tmp/log <<EOF | gnuplot
 $SET_COMMON
 
 # draw vertical lines
 set grid xtics lt 0 lw 1 lc rgb "#bbbbbb"
 stats '$1' noout
 N=STATS_blocks
-set xrange [-$w:STATS_blocks+$w]
+set xrange [-1+$w:STATS_blocks-$w]
 set bars $w
 
 # plot the whole set with boxplot, plot each data set's
