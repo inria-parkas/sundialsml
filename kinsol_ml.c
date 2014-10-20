@@ -1052,7 +1052,6 @@ CAMLprim value c_kinsol_set_error_file(value vdata, value vpath, value vtrunc)
     }
     if (1 & (value)err_file) {
 	fclose (err_file);
-	Store_field (vdata, RECORD_KINSOL_SESSION_ERRFILE, 0);
 	caml_failwith("FILE pointer is unaligned");
     }
 
@@ -1082,7 +1081,6 @@ CAMLprim value c_kinsol_set_info_file(value vdata, value vpath, value vtrunc)
     }
     if (1 & (value)info_file) {
 	fclose (info_file);
-	Store_field (vdata, RECORD_KINSOL_SESSION_INFOFILE, 0);
 	caml_failwith("FILE pointer is unaligned");
     }
 

@@ -1141,7 +1141,6 @@ CAMLprim value c_ida_set_error_file(value vdata, value vpath, value vtrunc)
     }
     if (1 & (value)err_file) {
 	fclose (err_file);
-	Store_field (vdata, RECORD_IDA_SESSION_ERRFILE, 0);
 	caml_failwith("FILE pointer is unaligned");
     }
 

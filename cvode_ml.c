@@ -1102,7 +1102,6 @@ CAMLprim value c_cvode_set_error_file(value vdata, value vpath, value vtrunc)
     }
     if (1 & (value)err_file) {
 	fclose (err_file);
-	Store_field (vdata, RECORD_CVODE_SESSION_ERRFILE, 0);
 	caml_failwith("FILE pointer is unaligned");
     }
 
