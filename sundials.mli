@@ -20,13 +20,12 @@
 
 (** {2 Constants} *)
 
-(** The version of Sundials/C this binding is compiled against.
-    For example, "{var version}". *)
-val sundials_version : string
-
-(** The patch version (if any). This distinguishes different binding
-    versions against the same version of Sundials/C. *)
-val patch_version : string
+(** The [major], [minor], [patch], and [binding] version numbers of
+    Sundials/ML.
+    The first three elements correspond to the underlying Sundials/C library.
+    The [binding] number distinguishes updates to the binding (restarting
+    from 0 for each increment of the other elements). *)
+val version : int * int * int * int
 
 (** Indicates whether the interface was compiled with BLAS/LAPACK support. *)
 val lapack_enabled : bool

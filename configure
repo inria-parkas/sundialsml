@@ -2,7 +2,7 @@
 
 sysname='Sundials/ML'
 version=2.5.0
-versionp=
+versionp=0
 contact='tim@tbrk.org'
 
 prefix=/usr/local/
@@ -46,7 +46,7 @@ do
 	bounds_checking=0;;
     -h|--help)
 	cat <<-END_HELP_TEXT
-	'configure' configures $sysname $version$versionp to adapt to many kinds of systems.
+	'configure' configures $sysname ${version}ml${versionp} to adapt to many kinds of systems.
 
 	Usage: $0 [OPTION]... [VAR=VALUE]...
 
@@ -530,8 +530,8 @@ echo "#endif /* __SUNDIALS_CONFIG_H__ */" >> config.h
 # Note: config.ml conflicts with a module in the standard library.
 echo "(* Automatically generated file - don't edit!  See configure.  *)"\
     > sundials_config.ml
-echo "let sundials_version = \"${version}\""\ >> sundials_config.ml
-echo "let patch_version = \"${versionp}\""\ >> sundials_config.ml
+versiondigits=`echo ${version} | sed -e 's/\\./,/g'`
+echo "let version = ${versiondigits},${versionp}"\ >> sundials_config.ml
 if [ "x${lapack_enabled}" = x ]; then
     echo "let lapack_enabled = false" >> sundials_config.ml
 else
