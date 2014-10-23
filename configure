@@ -171,7 +171,7 @@ if [ "x$enable_debug" = x1 ]; then
     else
         cflags="${cflags} -g"
     fi
-    cppflags="${cppflags} -DDEBUG=1"
+    cppflags="${cppflags}"
 else
     cppflags="${cppflags} -DNDEBUG=1"
 fi
