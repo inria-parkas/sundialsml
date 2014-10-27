@@ -11,6 +11,7 @@
  ***********************************************************************/
 
 #include "nvector_ml.h"
+#include "sundials_ml.h"
 
 #include <caml/mlvalues.h>
 #include <caml/alloc.h>
@@ -19,6 +20,9 @@
 #include <caml/custom.h>
 #include <caml/fail.h>
 #include <caml/bigarray.h>
+
+#include <math.h>		/* for nan() */
+#include <stdio.h>
 
 #include <nvector/nvector_serial.h>
 
@@ -318,10 +322,16 @@ N_Vector callml_vclone(N_Vector w)
     w_payload = NVEC_BACKLINK(w);
 
     /* Create vector */
-    v_payload = caml_callback(GET_OP(w, NVECTOR_OPS_NVCLONE), w_payload);
+    v_payload = caml_callback_exn (GET_OP(w, NVECTOR_OPS_NVCLONE), w_payload);
+    if (Is_exception_result (v_payload)) {
+	sundials_ml_warn_discarded_exn (Extract_exception (v_payload),
+					"user-defined n_vclone");
+	CAMLreturnT (N_Vector, NULL);
+    }
 
     v = alloc_cnvec(0, v_payload);
-    if (v == NULL) caml_raise_out_of_memory();
+    if (v == NULL)
+	CAMLreturnT (N_Vector, NULL);
 
     /* Create vector operation structure */
     clone_cnvec_ops(v, w);
@@ -339,10 +349,18 @@ void callml_vspace(N_Vector v, long int *lrw, long int *liw)
     CAMLlocal2(mlop, r);
     mlop = GET_SOME_OP(v, NVECTOR_OPS_NVSPACE);
 
-    r = caml_callback(mlop, NVEC_BACKLINK(v));
-
-    *lrw = Long_val(Field(r, 0));
-    *liw = Long_val(Field(r, 1)) + (nvec_rough_size / sizeof(int));
+    r = caml_callback_exn (mlop, NVEC_BACKLINK(v));
+    if (Is_exception_result (r)) {
+	sundials_ml_warn_discarded_exn (Extract_exception (r),
+					"user-defined n_vspace");
+	fputs ("Sundials/ML has no sensible values to return to Sundials/C, "
+	       "and incorrect values risk meomry corruption.  Abort.", stderr);
+	fflush (stderr);
+	abort ();
+    } else {
+	*lrw = Long_val(Field(r, 0));
+	*liw = Long_val(Field(r, 1)) + (nvec_rough_size / sizeof(int));
+    }
 
     CAMLreturn0;
 }
@@ -361,7 +379,10 @@ void callml_vlinearsum(realtype a, N_Vector x, realtype b, N_Vector y, N_Vector 
     args[3] = NVEC_BACKLINK(y);
     args[4] = NVEC_BACKLINK(z);
 
-    caml_callbackN(mlop, 5, args);
+    args[0] = caml_callbackN_exn (mlop, 5, args);
+    if (Is_exception_result (args[0]))
+	sundials_ml_warn_discarded_exn (Extract_exception (args[0]),
+					"user-defined n_vlinearsum");
 
     CAMLreturn0;
 }
@@ -373,7 +394,11 @@ void callml_vconst(realtype c, N_Vector z)
 
     vc = caml_copy_double (c);
 
-    caml_callback2(GET_OP(z, NVECTOR_OPS_NVCONST), vc, NVEC_BACKLINK(z));
+    vc = caml_callback2_exn(GET_OP(z, NVECTOR_OPS_NVCONST),
+			    vc, NVEC_BACKLINK(z));
+    if (Is_exception_result (vc))
+	sundials_ml_warn_discarded_exn (Extract_exception (vc),
+					"user-defined n_vconst");
 
     CAMLreturn0;
 }
@@ -384,7 +409,11 @@ void callml_vprod(N_Vector x, N_Vector y, N_Vector z)
     CAMLlocal1(mlop);
     mlop = GET_OP(x, NVECTOR_OPS_NVPROD);
 
-    caml_callback3(mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(y), NVEC_BACKLINK(z));
+    mlop = caml_callback3_exn (mlop, NVEC_BACKLINK(x),
+			       NVEC_BACKLINK(y), NVEC_BACKLINK(z));
+    if (Is_exception_result (mlop))
+	sundials_ml_warn_discarded_exn (Extract_exception (mlop),
+					"user-defined n_vprod");
 
     CAMLreturn0;
 }
@@ -395,7 +424,11 @@ void callml_vdiv(N_Vector x, N_Vector y, N_Vector z)
     CAMLlocal1(mlop);
     mlop = GET_OP(x, NVECTOR_OPS_NVDIV);
 
-    caml_callback3(mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(y), NVEC_BACKLINK(z));
+    mlop = caml_callback3_exn(mlop, NVEC_BACKLINK(x),
+			      NVEC_BACKLINK(y), NVEC_BACKLINK(z));
+    if (Is_exception_result (mlop))
+	sundials_ml_warn_discarded_exn (Extract_exception (mlop),
+					"user-defined n_vdiv");
 
     CAMLreturn0;
 }
@@ -407,8 +440,11 @@ void callml_vscale(realtype c, N_Vector x, N_Vector z)
 
     vc = caml_copy_double(c);
 
-    caml_callback3(GET_OP(x, NVECTOR_OPS_NVSCALE), vc,
-		   NVEC_BACKLINK(x), NVEC_BACKLINK(z));
+    vc = caml_callback3_exn(GET_OP(x, NVECTOR_OPS_NVSCALE), vc,
+			    NVEC_BACKLINK(x), NVEC_BACKLINK(z));
+    if (Is_exception_result (vc))
+	sundials_ml_warn_discarded_exn (Extract_exception (vc),
+					"user-defined n_vscale");
 
     CAMLreturn0;
 }
@@ -419,7 +455,10 @@ void callml_vabs(N_Vector x, N_Vector z)
     CAMLlocal1(mlop);
     mlop = GET_OP(x, NVECTOR_OPS_NVABS);
 
-    caml_callback2(mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(z));
+    mlop = caml_callback2_exn (mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(z));
+    if (Is_exception_result (mlop))
+	sundials_ml_warn_discarded_exn (Extract_exception (mlop),
+					"user-defined n_vabs");
 
     CAMLreturn0;
 }
@@ -430,7 +469,10 @@ void callml_vinv(N_Vector x, N_Vector z)
     CAMLlocal1(mlop);
     mlop = GET_OP(x, NVECTOR_OPS_NVINV);
 
-    caml_callback2(mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(z));
+    mlop = caml_callback2_exn(mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(z));
+    if (Is_exception_result (mlop))
+	sundials_ml_warn_discarded_exn (Extract_exception (mlop),
+					"user-defined n_vinv");
 
     CAMLreturn0;
 }
@@ -442,8 +484,11 @@ void callml_vaddconst(N_Vector x, realtype b, N_Vector z)
 
     vb = caml_copy_double(b);
 
-    caml_callback3(GET_OP(x, NVECTOR_OPS_NVADDCONST), NVEC_BACKLINK(x), vb,
-		   NVEC_BACKLINK(z));
+    vb = caml_callback3_exn (GET_OP(x, NVECTOR_OPS_NVADDCONST),
+			     NVEC_BACKLINK(x), vb, NVEC_BACKLINK(z));
+    if (Is_exception_result (vb))
+	sundials_ml_warn_discarded_exn (Extract_exception (vb),
+					"user-defined n_vaddconst");
 
     CAMLreturn0;
 }
@@ -454,7 +499,12 @@ realtype callml_vdotprod(N_Vector x, N_Vector y)
     CAMLlocal2(mlop, r);
     mlop = GET_OP(x, NVECTOR_OPS_NVDOTPROD);
 
-    r = caml_callback2(mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(y));
+    r = caml_callback2_exn (mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(y));
+    if (Is_exception_result (r)) {
+	sundials_ml_warn_discarded_exn (Extract_exception (r),
+					"user-defined n_vdotprod");
+	CAMLreturnT(realtype, nan(""));
+    }
 
     CAMLreturnT(realtype, Double_val(r));
 }
@@ -465,7 +515,12 @@ realtype callml_vmaxnorm(N_Vector x)
     CAMLlocal2(mlop, r);
     mlop = GET_OP(x, NVECTOR_OPS_NVMAXNORM);
 
-    r = caml_callback(mlop, NVEC_BACKLINK(x));
+    r = caml_callback_exn (mlop, NVEC_BACKLINK(x));
+    if (Is_exception_result (r)) {
+	sundials_ml_warn_discarded_exn (Extract_exception (r),
+					"user-defined n_vmaxnorm");
+	CAMLreturnT(realtype, nan(""));
+    }
 
     CAMLreturnT(realtype, Double_val(r));
 }
@@ -476,7 +531,12 @@ realtype callml_vwrmsnorm(N_Vector x, N_Vector w)
     CAMLlocal2(mlop, r);
     mlop = GET_OP(x, NVECTOR_OPS_NVWRMSNORM);
 
-    r = caml_callback2(mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(w));
+    r = caml_callback2_exn (mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(w));
+    if (Is_exception_result (r)) {
+	sundials_ml_warn_discarded_exn (Extract_exception (r),
+					"user-defined n_vwrmsnorm");
+	CAMLreturnT(realtype, nan(""));
+    }
 
     CAMLreturnT(realtype, Double_val(r));
 }
@@ -487,8 +547,13 @@ realtype callml_vwrmsnormmask(N_Vector x, N_Vector w, N_Vector id)
     CAMLlocal2(mlop, r);
     mlop = GET_SOME_OP(x, NVECTOR_OPS_NVWRMSNORMMASK);
 
-    r = caml_callback3(mlop, NVEC_BACKLINK(x),
-	    NVEC_BACKLINK(w), NVEC_BACKLINK(id));
+    r = caml_callback3_exn (mlop, NVEC_BACKLINK(x),
+			    NVEC_BACKLINK(w), NVEC_BACKLINK(id));
+    if (Is_exception_result (r)) {
+	sundials_ml_warn_discarded_exn (Extract_exception (r),
+					"user-defined n_vwrmsnormmask");
+	CAMLreturnT(realtype, nan(""));
+    }
 
     CAMLreturnT(realtype, Double_val(r));
 }
@@ -499,7 +564,12 @@ realtype callml_vmin(N_Vector x)
     CAMLlocal2(mlop, r);
     mlop = GET_OP(x, NVECTOR_OPS_NVMIN);
 
-    r = caml_callback(mlop, NVEC_BACKLINK(x));
+    r = caml_callback_exn (mlop, NVEC_BACKLINK(x));
+    if (Is_exception_result (r)) {
+	sundials_ml_warn_discarded_exn (Extract_exception (r),
+					"user-defined n_vmin");
+	CAMLreturnT(realtype, nan(""));
+    }
 
     CAMLreturnT(realtype, Double_val(r));
 }
@@ -510,7 +580,12 @@ realtype callml_vwl2norm(N_Vector x, N_Vector w)
     CAMLlocal2(mlop, r);
     mlop = GET_SOME_OP(x, NVECTOR_OPS_NVWL2NORM);
 
-    r = caml_callback2(mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(w));
+    r = caml_callback2_exn (mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(w));
+    if (Is_exception_result (r)) {
+	sundials_ml_warn_discarded_exn (Extract_exception (r),
+					"user-defined n_vwl2norm");
+	CAMLreturnT(realtype, nan(""));
+    }
 
     CAMLreturnT(realtype, Double_val(r));
 }
@@ -521,7 +596,12 @@ realtype callml_vl1norm(N_Vector x)
     CAMLlocal2(mlop, r);
     mlop = GET_SOME_OP(x, NVECTOR_OPS_NVL1NORM);
 
-    r = caml_callback(mlop, NVEC_BACKLINK(x));
+    r = caml_callback_exn (mlop, NVEC_BACKLINK(x));
+    if (Is_exception_result (r)) {
+	sundials_ml_warn_discarded_exn (Extract_exception (r),
+					"user-defined n_vl1norm");
+	CAMLreturnT(realtype, nan(""));
+    }
 
     CAMLreturnT(realtype, Double_val(r));
 }
@@ -533,8 +613,11 @@ void callml_vcompare(realtype c, N_Vector x, N_Vector z)
 
     vc = caml_copy_double(c);
 
-    caml_callback3(GET_OP(x, NVECTOR_OPS_NVCOMPARE), vc,
-		   NVEC_BACKLINK(x), NVEC_BACKLINK(z));
+    vc = caml_callback3_exn (GET_OP(x, NVECTOR_OPS_NVCOMPARE), vc,
+			     NVEC_BACKLINK(x), NVEC_BACKLINK(z));
+    if (Is_exception_result (vc))
+	sundials_ml_warn_discarded_exn (Extract_exception (vc),
+					"user-defined n_vcompare");
 
     CAMLreturn0;
 }
@@ -545,7 +628,12 @@ booleantype callml_vinvtest(N_Vector x, N_Vector z)
     CAMLlocal2(mlop, r);
     mlop = GET_OP(x, NVECTOR_OPS_NVINVTEST);
 
-    r = caml_callback2(mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(z));
+    r = caml_callback2_exn (mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(z));
+    if (Is_exception_result (r)) {
+	sundials_ml_warn_discarded_exn (Extract_exception (r),
+					"user-defined n_vinvtest");
+	CAMLreturnT(booleantype, FALSE);
+    }
 
     CAMLreturnT(booleantype, Bool_val(r));
 }
@@ -556,8 +644,13 @@ booleantype callml_vconstrmask(N_Vector c, N_Vector x, N_Vector m)
     CAMLlocal2(mlop, r);
     mlop = GET_SOME_OP(x, NVECTOR_OPS_NVCONSTRMASK);
 
-    r = caml_callback3(mlop, NVEC_BACKLINK(c),
-	    NVEC_BACKLINK(x), NVEC_BACKLINK(m));
+    r = caml_callback3_exn (mlop, NVEC_BACKLINK(c),
+			    NVEC_BACKLINK(x), NVEC_BACKLINK(m));
+    if (Is_exception_result (r)) {
+	sundials_ml_warn_discarded_exn (Extract_exception (r),
+					"user-defined n_vconstrmask");
+	CAMLreturnT(booleantype, FALSE);
+    }
 
     CAMLreturnT(booleantype, Bool_val(r));
 }
@@ -568,7 +661,12 @@ realtype callml_vminquotient(N_Vector num, N_Vector denom)
     CAMLlocal2(mlop, r);
     mlop = GET_SOME_OP(num, NVECTOR_OPS_NVMINQUOTIENT);
 
-    r = caml_callback2(mlop, NVEC_BACKLINK(num), NVEC_BACKLINK(denom));
+    r = caml_callback2_exn (mlop, NVEC_BACKLINK(num), NVEC_BACKLINK(denom));
+    if (Is_exception_result (r)) {
+	sundials_ml_warn_discarded_exn (Extract_exception (r),
+					"user-defined n_vminquotient");
+	CAMLreturnT(realtype, nan(""));
+    }
 
     CAMLreturnT(realtype, Double_val(r));
 }

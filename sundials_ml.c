@@ -46,13 +46,25 @@ void sundials_ml_register_exns(enum sundials_exn_set_index index, value exns)
     CAMLreturn0;
 }
 
+static value warn_discarded_exn = 0;
+
+void sundials_ml_warn_discarded_exn (value exn, const char *context)
+{
+    CAMLparam1 (exn);
+    CAMLlocal1 (vcontext);
+    vcontext = caml_copy_string (context);
+    caml_callback2_exn (warn_discarded_exn, exn, vcontext);
+    CAMLreturn0;
+}
+
 /* Setting up access to Weak.get */
 
 #if !HAVE_WEAK
 static value weak_get = 0;
 #endif
 
-CAMLprim value c_sundials_init_module (value vweak_get, value exns)
+CAMLprim value c_sundials_init_module (value vwarn_discarded_exn,
+				       value vweak_get, value exns)
 {
     CAMLparam2 (vweak_get, exns);
     CAMLlocal1 (r);
@@ -61,6 +73,9 @@ CAMLprim value c_sundials_init_module (value vweak_get, value exns)
     weak_get = vweak_get;
     caml_register_generational_global_root (&weak_get);
 #endif
+    warn_discarded_exn = vwarn_discarded_exn;
+    caml_register_generational_global_root (&warn_discarded_exn);
+
     r = caml_alloc_tuple (3);
     Store_field (r, 0, caml_copy_double(BIG_REAL));
     Store_field (r, 1, caml_copy_double(SMALL_REAL));

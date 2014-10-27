@@ -31,6 +31,13 @@ type 'a t = ('a, kind) Nvector.t
    are optional; default values are either provided by the OCaml interface
    or the Sundials library.
 
+   These operations are not allowed to exit with an uncaught
+   exception, as Sundials/C's interface makes it impossible to
+   propagate them reliably.  Exceptions will be discarded, leaving a
+   warning on stderr.  We unfortunately cannot attach a backtrace.  If
+   you need the backtrace, wrap your operation in [try...with] and use
+   [Printexc.print_backtrace] or [Printexc.get_backtrace].
+
    @cvode <node7#s:nvector> _generic_N_Vector_Ops
  *)
 type 'a nvector_ops = {

@@ -15,6 +15,14 @@ external format_float : string -> float -> string
 
 let floata = format_float "%a"
 
+(* Used when user code throws an exception in a context where the
+   underlying C library does not allow for clean handling.  *)
+let warn_discarded_exn exn context =
+  Printf.fprintf stderr
+    ("WARNING: discarding exception %s raised in %s.\n")
+    (Printexc.to_string exn) context;
+  flush stderr
+
 exception RecoverableFailure
 exception NonPositiveEwt
 
@@ -523,13 +531,14 @@ let lapack_enabled = Sundials_config.lapack_enabled
    a few parameters from the C side.  *)
 
 external c_init_module :
-  ('a Weak.t -> int -> 'a option)
+  (exn -> string -> unit)
+  -> ('a Weak.t -> int -> 'a option)
   -> exn array
   -> (float * float * float)
   = "c_sundials_init_module"
 
 let big_real, small_real, unit_roundoff =
-  c_init_module Weak.get
+  c_init_module warn_discarded_exn Weak.get
     (* Exceptions must be listed in the same order as
        sundials_exn_index.  *)
     [|RecoverableFailure; NonPositiveEwt|]
