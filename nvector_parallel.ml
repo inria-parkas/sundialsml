@@ -13,7 +13,7 @@ external c_wrap : (Sundials.RealArray.t * int * Mpi.communicator)
 let wrap ((nl, ng, comm) as v) =
   let nl_len = Sundials.RealArray.length nl in
   let check (nl', ng', comm') =
-    (nl_len = Sundials.RealArray.length nl') && (ng = ng') in
+    (nl_len <= Sundials.RealArray.length nl') && (ng <= ng') in
   c_wrap v check
 
 let make nl ng comm iv = wrap (Sundials.RealArray.make nl iv, ng, comm)

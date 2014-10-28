@@ -40,7 +40,7 @@ module MakeOps =
 
     let checkfn v1 =
       let l = A.length v1 in
-      (fun v2 -> l = A.length v2)
+      (fun v2 -> l <= A.length v2)
 
     module DataOps = struct
       type t = A.data
