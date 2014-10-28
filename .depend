@@ -45,8 +45,6 @@ dls.cmo : sundials.cmi dls.cmi
 dls.cmx : sundials.cmx dls.cmi
 dochtml.cmo : sundials_config.cmo
 dochtml.cmx : sundials_config.cmx
-dochtml3x.cmo :
-dochtml3x.cmx :
 ida.cmo : sundials.cmi spils.cmi nvector.cmi ida_impl.cmo dls.cmi ida.cmi
 ida.cmx : sundials.cmx spils.cmx nvector.cmx ida_impl.cmx dls.cmx ida.cmi
 ida_bbd.cmo : sundials.cmi nvector_parallel.cmi nvector.cmi ida_impl.cmo \
