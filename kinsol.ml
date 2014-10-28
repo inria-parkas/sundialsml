@@ -415,8 +415,12 @@ external c_set_scaled_step_tol : ('a, 'k) session -> float -> unit
 let set_scaled_step_tol s scsteptol =
   c_set_scaled_step_tol s (float_default scsteptol)
 
-external set_constraints : ('a, 'k) session -> ('a, 'k) nvector -> unit
+external c_set_constraints : ('a, 'k) session -> ('a, 'k) nvector -> unit
     = "c_kinsol_set_constraints"
+
+let set_constraints s cc =
+  s.checkfn cc;
+  c_set_constraints s cc
 
 let set_linear_solver s lin_solv = lin_solv s None
 
@@ -488,10 +492,15 @@ type result =
   | InitialGuessOK    (** KIN_INITIAL_GUESS_OK *)
   | StoppedOnStepTol  (** KIN_STEP_LT_STPTOL *)
 
-external solve : ('a, 'k) session -> ('a, 'k) nvector -> bool -> ('a, 'k) nvector
+external c_solve : ('a, 'k) session -> ('a, 'k) nvector -> bool -> ('a, 'k) nvector
                   -> ('a, 'k) nvector -> result
     = "c_kinsol_solve"
 
+let solve s u linesearch u_scale f_scale =
+  s.checkfn u;
+  s.checkfn u_scale;
+  s.checkfn f_scale;
+  c_solve s u linesearch u_scale f_scale
 
 (* Callbacks *)
 

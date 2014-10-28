@@ -346,13 +346,14 @@ let default_tolerances = SStolerances (1.0e-4, 1.0e-8)
 let set_tolerances s tol =
   match tol with
   | SStolerances (rel, abs) -> ss_tolerances s rel abs
-  | SVtolerances (rel, abs) -> sv_tolerances s rel abs
+  | SVtolerances (rel, abs) -> (s.checkfn abs; sv_tolerances s rel abs)
   | WFtolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
 
 external c_set_id : ('a,'k) session -> ('a,'k) Nvector.t -> unit
   = "c_ida_set_id"
 
 let set_id s id =
+  s.checkfn id;
   c_set_id s id;
   s.id_set <- true
 
@@ -414,7 +415,10 @@ external c_reinit
     : ('a, 'k) session -> float -> ('a, 'k) Nvector.t
       -> ('a, 'k) Nvector.t -> unit
     = "c_ida_reinit"
+
 let reinit session ?linsolv ?roots t0 y0 y'0 =
+  session.checkfn y0;
+  session.checkfn y'0;
   Dls.invalidate_callback session;
   c_reinit session t0 y0 y'0;
   (match linsolv with
@@ -432,19 +436,33 @@ type solver_result =
   | RootsFound          (** IDA_ROOT_RETURN *)
   | StopTimeReached     (** IDA_TSTOP_RETURN *)
 
-external solve_normal : ('a, 'k) session -> float
-                      -> ('a, 'k) Nvector.t -> ('a,'k) Nvector.t
-                      -> float * solver_result
+external c_solve_normal : ('a, 'k) session -> float
+                          -> ('a, 'k) Nvector.t -> ('a,'k) Nvector.t
+                          -> float * solver_result
     = "c_ida_solve_normal"
 
-external solve_one_step : ('a, 'k) session -> float
-                        -> ('a, 'k) Nvector.t-> ('a, 'k) Nvector.t
-                        -> float * solver_result
+let solve_normal s t y yp =
+  s.checkfn y;
+  s.checkfn yp;
+  c_solve_normal s t y yp
+
+external c_solve_one_step : ('a, 'k) session -> float
+                            -> ('a, 'k) Nvector.t-> ('a, 'k) Nvector.t
+                            -> float * solver_result
     = "c_ida_solve_one_step"
 
-external get_dky
+let solve_one_step s t y yp =
+  s.checkfn y;
+  s.checkfn yp;
+  c_solve_one_step s t y yp
+
+external c_get_dky
     : ('a, 'k) session -> float -> int -> ('a, 'k) Nvector.t -> unit
     = "c_ida_get_dky"
+
+let get_dky s t k y =
+  s.checkfn y;
+  c_get_dky s t k y
 
 external get_integrator_stats : ('a, 'k) session -> integrator_stats
     = "c_ida_get_integrator_stats"
@@ -554,11 +572,19 @@ external get_num_stab_lim_order_reds    : ('a, 'k) session -> int
 external get_tol_scale_factor           : ('a, 'k) session -> float
     = "c_ida_get_tol_scale_factor"
 
-external get_err_weights : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
+external c_get_err_weights : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
     = "c_ida_get_err_weights"
 
-external get_est_local_errors : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
+let get_err_weights s ew =
+  s.checkfn ew;
+  c_get_err_weights s ew
+
+external c_get_est_local_errors : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
     = "c_ida_get_est_local_errors"
+
+let get_est_local_errors s ew =
+  s.checkfn ew;
+  c_get_est_local_errors s ew
 
 external get_num_nonlin_solv_iters      : ('a, 'k) session -> int
     = "c_ida_get_num_nonlin_solv_iters"
@@ -572,8 +598,12 @@ external get_nonlin_solv_stats          : ('a, 'k) session -> int * int
 external get_num_g_evals                : ('a, 'k) session -> int
     = "c_ida_get_num_g_evals"
 
-external set_constraints : ('a,'k) session -> ('a,'k) Nvector.t -> unit
+external c_set_constraints : ('a,'k) session -> ('a,'k) Nvector.t -> unit
   = "c_ida_set_constraints"
+
+let set_constraints s nv =
+  s.checkfn nv;
+  c_set_constraints s nv
 
 external c_set_suppress_alg : ('a,'k) session -> bool -> unit
   = "c_ida_set_suppress_alg"
@@ -592,6 +622,7 @@ external c_calc_ic_y : ('a,'k) session -> ('a,'k) Nvector.t option
   = "c_ida_calc_ic_y"
 
 let calc_ic_y session ?y tout1 =
+  (match y with None -> () | Some x -> session.checkfn x);
   c_calc_ic_y session y tout1
 
 external c_calc_ic_ya_yd' :
@@ -600,6 +631,8 @@ external c_calc_ic_ya_yd' :
   = "c_ida_calc_ic_ya_ydp"
 
 let calc_ic_ya_yd' session ?y ?y' ?varid tout1 =
+  (match y with None -> () | Some x -> session.checkfn x);
+  (match y' with None -> () | Some x -> session.checkfn x);
   (match varid with
    | None -> if not session.id_set then raise IdNotSet
    | Some x -> set_id session x);
