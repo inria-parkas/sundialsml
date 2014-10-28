@@ -147,9 +147,9 @@ static N_Vector clone_serial(N_Vector w)
 
 /* Adapted from sundials-2.5.0/src/nvec_ser/nvector_serial.c:
    N_VNewEmpty_Serial */
-CAMLprim value ml_nvec_wrap_serial(value payload)
+CAMLprim value ml_nvec_wrap_serial(value payload, value checkfn)
 {
-    CAMLparam1(payload);
+    CAMLparam2(payload, checkfn);
     CAMLlocal1(vnvec);
 
     N_Vector nv;
@@ -196,9 +196,10 @@ CAMLprim value ml_nvec_wrap_serial(value payload)
     content->own_data = 0;
     content->data     = Caml_ba_data_val(payload);
 
-    vnvec = caml_alloc_tuple(2);
+    vnvec = caml_alloc_tuple(3);
     Store_field(vnvec, 0, payload);
     Store_field(vnvec, 1, val_cnvec(nv, finalize_cnvec));
+    Store_field(vnvec, 2, checkfn);
 
     CAMLreturn(vnvec);
 }
@@ -235,9 +236,9 @@ static CAMLprim void finalize_custom_cnvec(value vnv)
     callml_vdestroy(NVEC_CVAL(vnv));
 }
 
-CAMLprim value ml_nvec_wrap_custom(value mlops, value payload)
+CAMLprim value ml_nvec_wrap_custom(value mlops, value payload, value checkfn)
 {
-    CAMLparam2(mlops, payload);
+    CAMLparam3(mlops, payload, checkfn);
     CAMLlocal1(vcnvec);
 
     N_Vector nv;
@@ -299,9 +300,10 @@ CAMLprim value ml_nvec_wrap_custom(value mlops, value payload)
     nv->content = (void *)mlops;
     caml_register_generational_global_root((value *)&CNVEC_OP_TABLE(nv));
 
-    vcnvec = caml_alloc_tuple(2);
+    vcnvec = caml_alloc_tuple(3);
     Store_field(vcnvec, 0, payload);
     Store_field(vcnvec, 1, val_cnvec(nv, finalize_custom_cnvec));
+    Store_field(vcnvec, 2, checkfn);
 
     CAMLreturn(vcnvec);
 }

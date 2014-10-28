@@ -11,10 +11,16 @@
 (***********************************************************************)
 
 type cnvec
-type ('data, 'kind) nvector = 'data * cnvec
+type ('data, 'kind) nvector = 'data * cnvec * ('data -> bool)
 and ('data, 'kind) t = ('data, 'kind) nvector
 
-let unwrap (payload, _) = payload
+let unwrap (payload, _, _) = payload
+
+exception IncompatibleNvector
+
+let check (_, _, checkfn) = (function (payload, _, _) ->
+                              if not (checkfn payload) then
+                                raise IncompatibleNvector)
 
 module type NVECTOR_OPS =
   sig

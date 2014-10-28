@@ -38,6 +38,10 @@ module MakeOps =
     type data = A.data
     type kind = Nvector_custom.kind
 
+    let checkfn v1 =
+      let l = A.length v1 in
+      (fun v2 -> l = A.length v2)
+
     module DataOps = struct
       type t = A.data
 
@@ -230,6 +234,7 @@ module MakeOps =
     end
 
     let array_nvec_ops = {
+          Nvector_custom.n_vcheck        = checkfn;
           Nvector_custom.n_vclone        = DataOps.n_vclone;
           Nvector_custom.n_vdestroy      = None;
           Nvector_custom.n_vspace        = None;
@@ -308,6 +313,10 @@ module Array =
   struct
     type data = float array
     type kind = Nvector_custom.kind
+
+    let checkfn v1 =
+      let l = Array.length v1 in
+      (fun v2 -> l = Array.length v2)
 
     module DataOps = struct
       type t = float array
@@ -503,6 +512,7 @@ module Array =
     end
 
     let array_nvec_ops = {
+          Nvector_custom.n_vcheck        = checkfn;
           Nvector_custom.n_vclone        = DataOps.n_vclone;
           Nvector_custom.n_vdestroy      = None;
           Nvector_custom.n_vspace        = None;

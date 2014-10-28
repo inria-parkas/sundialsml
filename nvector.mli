@@ -32,6 +32,17 @@ type ('data, 'kind) nvector = ('data, 'kind) t
 (** [unwrap nv] returns the data underlying the nvector [nv]. *)
 val unwrap : ('data, 'kind) t -> 'data
 
+(** Raised when an nvector argument is incompatible with a session. 
+    For example, when a solver session was initialized with an nvector
+    having 10 elements, and a later call passes an nvector with only
+    9 elements. The exact details depend on the nvector instantiation. *)
+exception IncompatibleNvector
+
+(** [check v1 v2] checks [v1] and [v2] for compatibility.
+
+    @raise IncompatibleNvector The vectors are not compatible. *)
+val check : ('data, 'kind) t -> ('data, 'kind) t -> unit
+
 (** Generic vector operations.
 
     @cvode <node7> Description of the NVECTOR module. *)

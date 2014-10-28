@@ -3,8 +3,12 @@ type data = Sundials.RealArray.t
 type kind
 type t = (data, kind) Nvector.t
 
-external wrap : Sundials.RealArray.t -> t
+external c_wrap : Sundials.RealArray.t -> (Sundials.RealArray.t -> bool) -> t
   = "ml_nvec_wrap_serial"
+
+let wrap v =
+  let len = Sundials.RealArray.length v in
+  c_wrap v (fun v' -> len = Sundials.RealArray.length v')
 
 let unwrap = Nvector.unwrap
 

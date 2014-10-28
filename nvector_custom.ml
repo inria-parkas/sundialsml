@@ -14,6 +14,7 @@ type kind
 type 'a t = ('a, kind) Nvector.t
 
 type 'a nvector_ops = {
+  n_vcheck           : 'a -> 'a -> bool;
   n_vclone           : 'a -> 'a;
   n_vdestroy         : ('a -> unit) option;
   n_vspace           : ('a -> (int * int)) option;
@@ -40,12 +41,16 @@ type 'a nvector_ops = {
   n_vminquotient     : ('a -> 'a -> float) option;
 }
 
-external make_wrap : 'a nvector_ops -> 'a -> 'a t
+external c_make_wrap : 'a nvector_ops -> 'a -> ('a -> bool) -> 'a t
     = "ml_nvec_wrap_custom"
+
+let make_wrap ops v =
+  c_make_wrap ops v (ops.n_vcheck v)
 
 let add_tracing msg ops =
   let pr s = print_string msg; print_endline s in
   let {
+      n_vcheck           = n_vcheck;
       n_vclone           = n_vclone;
       n_vdestroy         = n_vdestroy;
       n_vspace           = n_vspace;
@@ -74,7 +79,13 @@ let add_tracing msg ops =
   in
   let fo f f' = match f with None -> None | Some f -> Some (f' f) in
 
-  let tr_nvclone a = pr "nvclone"; n_vclone a
+  let tr_nvcheck x =
+    pr "nvcheck-create";
+    let check = n_vcheck x in
+    function y ->
+      pr "nvcheck-check";
+      check y
+  and tr_nvclone a = pr "nvclone"; n_vclone a
   and tr_nvdestroy = fo n_vdestroy (fun f -> fun a -> (pr "nvdestroy"; f a))
   and tr_nvspace = fo n_vspace (fun f -> fun a -> (pr "nvspace"; f a))
   and tr_nvlinearsum a x b y z = pr "nvlinearsum"; n_vlinearsum a x b y z
@@ -102,6 +113,7 @@ let add_tracing msg ops =
     fo n_vminquotient (fun f -> fun n d -> pr "nvminquotient"; f n d)
   in
   {
+      n_vcheck           = tr_nvcheck;
       n_vclone           = tr_nvclone;
       n_vdestroy         = tr_nvdestroy;
       n_vspace           = tr_nvspace;

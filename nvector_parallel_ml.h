@@ -37,7 +37,7 @@
 */
 
 // Creation functions
-value ml_nvec_wrap_parallel(value payload);
+value ml_nvec_wrap_parallel(value payload, value checkfn);
 
 enum nvector_parallel_exn_index {
     NVECTOR_PARALLEL_EXN_IncorrectGlobalSize = 0,

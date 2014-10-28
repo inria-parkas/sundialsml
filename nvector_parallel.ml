@@ -5,8 +5,16 @@ type t = (data, kind) Nvector.t
 
 exception IncorrectGlobalSize
 
-external wrap : (Sundials.RealArray.t * int * Mpi.communicator) -> t
+external c_wrap : (Sundials.RealArray.t * int * Mpi.communicator)
+                  -> (Sundials.RealArray.t * int * Mpi.communicator -> bool)
+                  -> t
   = "ml_nvec_wrap_parallel"
+
+let wrap ((nl, ng, comm) as v) =
+  let nl_len = Sundials.RealArray.length nl in
+  let check (nl', ng', comm') =
+    (nl_len = Sundials.RealArray.length nl') && (ng = ng') && (comm = comm') in
+  c_wrap v check
 
 let make nl ng comm iv = wrap (Sundials.RealArray.make nl iv, ng, comm)
 

@@ -134,7 +134,8 @@
 */
 
 enum nvector_ops_tag {
-  NVECTOR_OPS_NVCLONE = 0,
+  NVECTOR_OPS_NVCHECK = 0,
+  NVECTOR_OPS_NVCLONE,
   NVECTOR_OPS_NVDESTROY,
   NVECTOR_OPS_NVSPACE,
   NVECTOR_OPS_NVLINEARSUM,
@@ -181,8 +182,8 @@ void free_cnvec(N_Vector nv);
 CAMLprim void finalize_cnvec(value vnv);
 
 // Creation functions
-value ml_nvec_wrap_serial(value payload);
-value ml_nvec_wrap_custom(value mlops, value payload);
+value ml_nvec_wrap_serial(value payload, value checkfn);
+value ml_nvec_wrap_custom(value mlops, value payload, value checkfn);
 
 // Custom operations
 N_Vector callml_vclone(N_Vector w);

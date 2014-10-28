@@ -77,9 +77,9 @@ static N_Vector clone_parallel(N_Vector w)
 
 /* Adapted from sundials-2.5.0/src/nvec_par/nvector_parallel.c:
    N_VNewEmpty_Parallel */
-CAMLprim value ml_nvec_wrap_parallel(value payload)
+CAMLprim value ml_nvec_wrap_parallel(value payload, value checkfn)
 {
-    CAMLparam1(payload);
+    CAMLparam2(payload, checkfn);
     CAMLlocal2(vnvec, vlocalba);
 
     N_Vector nv;
@@ -140,9 +140,10 @@ CAMLprim value ml_nvec_wrap_parallel(value payload)
     content->own_data      = 0;
     content->data          = Caml_ba_data_val(vlocalba);
 
-    vnvec = caml_alloc_tuple(2);
+    vnvec = caml_alloc_tuple(3);
     Store_field(vnvec, 0, payload);
     Store_field(vnvec, 1, val_cnvec(nv, finalize_cnvec));
+    Store_field(vnvec, 2, checkfn);
 
     CAMLreturn(vnvec);
 }

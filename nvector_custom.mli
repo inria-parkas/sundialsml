@@ -34,6 +34,8 @@ type 'a t = ('a, kind) Nvector.t
    @cvode <node7#s:nvector> _generic_N_Vector_Ops
  *)
 type 'a nvector_ops = {
+  n_vcheck           : 'a -> 'a ->  bool;
+  (** Returns [true] if the vectors are compatible. See {!Nvector.check}. *)
 
   n_vclone           : 'a -> 'a;
   (** Creates a new, distinct vector from an existing one without
