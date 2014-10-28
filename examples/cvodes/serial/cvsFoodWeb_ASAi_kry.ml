@@ -181,6 +181,7 @@ type web_data = {
     fbsave    : RealArray.t;
 
     rewt      : Nvector_serial.t;
+    rewtb     : Nvector_serial.t;
 
     mutable cvode_mem  : Cvode.serial_session option;
     mutable cvode_memb : Adj.serial_bsession option;
@@ -298,6 +299,14 @@ let alloc_user_data () =
       fbsave     = RealArray.create neq;
 
       rewt       = Nvector_serial.make (neq + 1) 0.0;
+
+      (* The original C code uses rewt for forward solving where the length is
+         neq + 1 and also for backward solving where the length is neq (it
+         relies on the fact that nvwrmsnorm takes the length from its first
+         argument, and not its second). This is not possible in the OCaml
+         interface which checks nvectors for compatibility, i.e., serial
+         nvectors must have the same length. *)
+      rewtb      = Nvector_serial.make neq 0.0;
 
       cvode_mem  = None;
       cvode_memb = None;
@@ -929,9 +938,9 @@ let precondb wdata jacarg jok gamma =
   let cvode_mem =
     match wdata.cvode_memb with
     | Some c -> c | None -> assert false
-  and rewtdata = unwrap wdata.rewt
+  and rewtdata = unwrap wdata.rewtb
   in
-  Adj.get_err_weights cvode_mem wdata.rewt;
+  Adj.get_err_weights cvode_mem wdata.rewtb;
 
   let uround = Sundials.unit_roundoff
   and p      = wdata.p

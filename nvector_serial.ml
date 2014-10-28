@@ -8,7 +8,7 @@ external c_wrap : Sundials.RealArray.t -> (Sundials.RealArray.t -> bool) -> t
 
 let wrap v =
   let len = Sundials.RealArray.length v in
-  c_wrap v (fun v' -> len <= Sundials.RealArray.length v')
+  c_wrap v (fun v' -> len = Sundials.RealArray.length v')
 
 let unwrap = Nvector.unwrap
 
