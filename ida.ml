@@ -370,6 +370,8 @@ external c_init : ('a, 'k) session Weak.t -> float
 
 let init linsolv tol resfn ?varid ?(roots=no_roots) t0 y y' =
   let (nroots, rootsfn) = roots in
+  let checkfn = Nvector.check y in
+  checkfn y';
   if nroots < 0 then
     raise (Invalid_argument "number of root functions is negative");
   (* FIXME: can we check y and y' have the same length, at least for
@@ -382,6 +384,7 @@ let init linsolv tol resfn ?varid ?(roots=no_roots) t0 y y' =
                   backref    = backref;
                   nroots     = nroots;
                   err_file   = err_file;
+                  checkfn    = checkfn;
                   exn_temp   = None;
                   id_set     = false;
                   resfn      = resfn;

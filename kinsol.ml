@@ -457,6 +457,7 @@ let session_finalize s =
   c_session_finalize s
 
 let init lsolver f u0 =
+  let checkfn = Nvector.check u0 in
   let weakref = Weak.create 1 in
   let kin_mem, backref, err_file, info_file = c_init weakref u0
   in
@@ -465,6 +466,7 @@ let init lsolver f u0 =
           backref      = backref;
           err_file     = err_file;
           info_file    = info_file;
+          checkfn      = checkfn;
 
           exn_temp     = None;
 

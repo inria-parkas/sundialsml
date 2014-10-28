@@ -125,6 +125,7 @@ type ('a, 'k) session = {
   backref   : c_weak_ref;
   err_file  : kin_file;
   info_file : kin_file;
+  checkfn    : (('a, 'k) Nvector.t -> unit);
 
   mutable neqs       : int;    (* only valid for 'kind = serial *)
   mutable exn_temp   : exn option;

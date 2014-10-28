@@ -439,6 +439,7 @@ external c_init
 
 let init lmm iter tol f ?(roots=no_roots) t0 y0 =
   let (nroots, roots) = roots in
+  let checkfn = Nvector.check y0 in
   if nroots < 0 then
     raise (Invalid_argument "number of root functions is negative");
   let weakref = Weak.create 1 in
@@ -450,6 +451,7 @@ let init lmm iter tol f ?(roots=no_roots) t0 y0 =
           backref      = backref;
           nroots       = nroots;
           err_file     = err_file;
+          checkfn      = checkfn;
 
           exn_temp     = None;
 

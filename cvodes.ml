@@ -860,6 +860,7 @@ module Adjoint =
     let init_backward s lmm iter tol mf t0 y0 =
       let { bsessions } as se = fwdsensext s in
       let ns = num_sensitivities s in
+      let checkfn = Nvector.check y0 in
       let weakref = Weak.create 1 in
       let cvode_mem, which, backref, err_file =
         match mf with
@@ -873,6 +874,7 @@ module Adjoint =
               backref      = backref;
               nroots       = 0;
               err_file     = err_file;
+              checkfn      = checkfn;
 
               exn_temp     = None;
 
