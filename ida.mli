@@ -884,6 +884,7 @@ val init :
     ('a, 'kind) linear_solver
     -> ('a, 'kind) tolerance
     -> 'a resfn
+    -> ?varid:('a, 'kind) Nvector.t
     -> ?roots:(int * 'a rootsfn)
     -> float
     -> ('a, 'kind) Nvector.t
@@ -914,7 +915,7 @@ val nroots : ('a, 'k) session -> int
     @ida <node5#sss:idasetid> IDASetId
     @ida <node5#sss:optin_main> IDASetSuppressAlg
  *)
-module VarType :
+module VarId :
   sig
     (** A symbolic name for the magic floating-point constant [0.0]. *)
     val algebraic : float
@@ -964,14 +965,6 @@ module VarType :
 
     @ida <node5#sss:optin_main> IDASetId
  *)
-val set_var_types : ('a, 'k) session -> ('a,'k) Nvector.t -> unit
-
-(** An unpreferred alias for {!set_var_types}.  SUNDIALS calls variable types
-    by the cryptic name "Id", and this OCaml binding preserves this alternative
-    naming to help users transition from the C interface.
-
-    @ida <node5#sss:optin_main> IDASetId
-  *)
 val set_id : ('a, 'k) session -> ('a,'k) Nvector.t -> unit
 
 (** Indicate whether or not to ignore algebraic variables in the local
@@ -999,7 +992,8 @@ val set_id : ('a, 'k) session -> ('a,'k) Nvector.t -> unit
     @ida <node5#sss:optin_main> IDASetId
     @ida <node5#sss:optin_main> IDASetSuppressAlg
  *)
-val set_suppress_alg : ('a, 'k) session -> bool -> unit
+val set_suppress_alg : ('a, 'k) session
+                       -> ?varid:('a, 'k) Nvector.t -> bool -> unit
 
 (** [calc_ic_y ida ~y:yvar tout1] corrects the initial values y0 at
     time t0, using the initial values of the derivatives y'0.  That
@@ -1110,7 +1104,7 @@ val calc_ic_ya_yd' :
   ('a, 'k) session
   -> ?y:('a, 'k) Nvector.t
   -> ?y':('a, 'k) Nvector.t
-  -> ('a, 'k) Nvector.t
+  -> ?varid:('a, 'k) Nvector.t
   -> float
   -> unit
 
@@ -1667,4 +1661,7 @@ exception BadT
 
     @ida <node5#ss:optional_dky> IDAGetDky *)
 exception BadDky
+
+(** Variable ids are required but not set. See {!set_id}. *)
+exception IdNotSet
 

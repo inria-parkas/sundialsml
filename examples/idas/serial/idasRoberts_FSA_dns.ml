@@ -43,7 +43,7 @@ module RealArray = Sundials.RealArray
 module Quad = Idas.Quadrature
 module Sens = Idas.Sensitivity
 module QuadSens = Idas.Sensitivity.Quadrature
-module VarType = Ida.VarType
+module VarId = Ida.VarId
 
 let printf = Printf.printf
 
@@ -345,12 +345,12 @@ let main () =
 
   (* Call IDACalcIC to compute consistent initial conditions. If sensitivity is
      enabled, this function also try to find consistent IC for the sensitivities. *)
-  let id = Nvector_serial.wrap (RealArray.of_array [|VarType.differential;
-                                                     VarType.differential;
-                                                     VarType.algebraic|])
+  let id = Nvector_serial.wrap (RealArray.of_array [|VarId.differential;
+                                                     VarId.differential;
+                                                     VarId.algebraic|])
   in
   if sensi = None
-  then (Ida.calc_ic_ya_yd' ~y:wy ~y':wyp ida_mem id t1;
+  then (Ida.calc_ic_ya_yd' ~y:wy ~y':wyp ida_mem ~varid:id t1;
         print_ic y yp)
   else with_yS (fun yS ypS ->
       Sens.calc_ic_ya_yd' ~y:wy ~y':wyp ~ys:yS ~y's:ypS ida_mem id t1;

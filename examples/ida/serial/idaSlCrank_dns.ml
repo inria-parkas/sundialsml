@@ -192,9 +192,9 @@ let main () =
   set_ic data y y';
 
   (* ID array *)
-  let id = RealArray.make neq Ida.VarType.differential in
+  let id = RealArray.make neq Ida.VarId.differential in
   for i = 6 to 9 do
-    id.{i} <- Ida.VarType.algebraic
+    id.{i} <- Ida.VarId.algebraic
   done;
 
   (* Tolerances *)
@@ -214,8 +214,7 @@ let main () =
 
   (* IDA initialization *)
   let mem = Ida.init (Ida.Dls.dense ()) (Ida.SStolerances (rtol, atol))
-                     (ressc data) t0 wy wy' in
-  Ida.set_var_types mem (Nvector_serial.wrap id);
+                     (ressc data) ~varid:(Nvector_serial.wrap id) t0 wy wy' in
   Ida.set_suppress_alg mem true;
 
   print_header rtol atol y;

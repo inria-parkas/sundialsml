@@ -1180,7 +1180,7 @@ let main () =
 
   (* Call IDACalcIC (with default options) to correct the initial values. *)
   let tout = ref 0.001 in
-  Ida.calc_ic_ya_yd' mem id !tout;
+  Ida.calc_ic_ya_yd' mem ~varid:id !tout;
 
   if thispe = 0 then
     printf "\nStarting integration of the FORWARD problem\n\n"

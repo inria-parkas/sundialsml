@@ -202,9 +202,9 @@ let _ = assert (neqs = nvars)
 let vars = RealArray.create neqs
 let vars' = RealArray.create neqs
 let var_types =
-  let d = Ida.VarType.Differential and a = Ida.VarType.Algebraic in
+  let d = Ida.VarId.Differential and a = Ida.VarId.Algebraic in
   Nvector.wrap (RealArray.of_list
-    (List.map Ida.VarType.to_float [d; d; d; d; a]))
+    (List.map Ida.VarId.to_float [d; d; d; d; a]))
 
 (* The residual function F.  *)
 let residual t vars vars' res =
@@ -435,10 +435,10 @@ let main () =
   Ida.set_all_root_directions ida Sundials.RootDirs.Decreasing;
   if !use_analytical_jac then Ida.Dls.set_dense_jac_fn ida jac;
 
-  Ida.set_var_types ida var_types;
+  Ida.set_id ida var_types;
   Ida.set_suppress_alg ida true;
   if not !use_analytical_correction
-  then Ida.calc_ic_ya_yd' ~y:nv_vars ~y':nv_vars' ida var_types !dt;
+  then Ida.calc_ic_ya_yd' ~y:nv_vars ~y':nv_vars' ida ~varid:var_types !dt;
 
   check_satisfaction 0. vars vars';
 
@@ -465,7 +465,7 @@ let main () =
                Ida.reinit ida !t nv_vars nv_vars')
          else (Ida.reinit ida !t nv_vars nv_vars';
                Ida.calc_ic_ya_yd' ~y:nv_vars ~y':nv_vars' ida
-               var_types (!t +. !dt));
+               ~varid:var_types (!t +. !dt));
 
          check_satisfaction !t vars vars';
         )

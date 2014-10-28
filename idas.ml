@@ -888,6 +888,7 @@ module Adjoint =
               err_file     = err_file;
 
               exn_temp     = None;
+              id_set       = false;
 
               resfn        = dummy_resfn;
               rootsfn      = dummy_rootsfn;

@@ -931,15 +931,10 @@ CAMLprim value c_ida_calc_ic_y(value vida_mem, value vy, value tout1)
 }
 
 CAMLprim value c_ida_calc_ic_ya_ydp(value vida_mem, value y, value yp,
-				    value vid, value tout1)
+				    value tout1)
 {
-    CAMLparam5 (vida_mem, y, yp, vid, tout1);
-    int flag;
+    CAMLparam4 (vida_mem, y, yp, tout1);
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
-
-    N_Vector id = NVEC_VAL (vid);
-    flag = IDASetId (ida_mem, id);
-    CHECK_FLAG ("IDASetId", flag);
 
     calc_ic (ida_mem, vida_mem, IDA_YA_YDP_INIT, Double_val (tout1), y, yp);
 

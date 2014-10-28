@@ -55,7 +55,7 @@ module Sens = Idas.Sensitivity
 module QuadSens = Idas.Sensitivity.Quadrature
 module Adjoint = Idas.Adjoint
 module AdjQuad = Adjoint.Quadrature
-module VarType = Ida.VarType
+module VarId = Ida.VarId
 
 let printf = Printf.printf
 
@@ -436,9 +436,9 @@ let main () =
   and wypTB1 = Nvector_serial.wrap ypTB1
   in
 
-  let id = RealArray.of_array [|VarType.differential;
-                                VarType.differential;
-                                VarType.algebraic|]
+  let id = RealArray.of_array [|VarId.differential;
+                                VarId.differential;
+                                VarId.algebraic|]
   in
 
   (* Specify which variables are differential (1) and which algebraic (0).*)

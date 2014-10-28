@@ -901,7 +901,7 @@ let main () =
   (* Call IDACalcIC (with default options) to correct the initial values. *)
 
   let tout = ref 0.001 in
-  Ida.calc_ic_ya_yd' mem id !tout;
+  Ida.calc_ic_ya_yd' mem ~varid:id !tout;
 
   (* On PE 0, print heading, basic parameters, initial values. *)
 

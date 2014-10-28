@@ -78,7 +78,7 @@ let heatres t (u : RealArray.t) (u' : RealArray.t) resval data =
 
 let set_initial_profile data u u' id res =
   (* Initialize id to differential. *)
-  RealArray.fill id Ida.VarType.differential;
+  RealArray.fill id Ida.VarId.differential;
 
   let mm = data.mm in
   let mm1 = mm - 1 in
@@ -111,7 +111,7 @@ let set_initial_profile data u u' id res =
       if j = 0 || j = mm1 || i = 0 || i = mm1
       then (u.{loc} <- bval;
             u'.{loc} <- 0.;
-            id.{loc} <- Ida.VarType.algebraic)
+            id.{loc} <- Ida.VarId.algebraic)
     done
   done
 
@@ -192,7 +192,7 @@ let main () =
   Ida.set_constraints mem (Nvector_serial.wrap constraints);
 
   (* Call IDASetId and IDACalcIC to correct the initial values.  *)
-  Ida.calc_ic_ya_yd' mem (Nvector_serial.wrap id) t1;
+  Ida.calc_ic_ya_yd' mem ~varid:(Nvector_serial.wrap id) t1;
 
   (* Print output heading. *)
   print_header rtol atol;

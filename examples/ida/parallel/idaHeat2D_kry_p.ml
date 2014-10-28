@@ -623,7 +623,7 @@ let main () =
       (res_heat data)
       t0 uu up
   in
-  Ida.set_var_types mem id;
+  Ida.set_id mem id;
   Ida.set_suppress_alg mem true;
   Ida.set_constraints mem constraints;
 

@@ -299,9 +299,9 @@ let set_initial_profiles webdata c c' id =
       for is = 0 to num_species-1 do
         if is < webdata.np
         then (c.{loc+is} <- 10.0 +. float_of_int (is+1) *. xyfactor;
-              id.{loc+is} <- Ida.VarType.differential)
+              id.{loc+is} <- Ida.VarId.differential)
         else (c.{loc+is} <- 1.0e5;
-              id.{loc+is} <- Ida.VarType.algebraic)
+              id.{loc+is} <- Ida.VarId.algebraic)
       done
     done
   done;
@@ -399,7 +399,7 @@ let main () =
   let mem = Ida.init solver (Ida.SStolerances (rtol, atol))
                      (resweb webdata) t0 wc wc' in
   let tout1 = 0.001 in
-  Ida.calc_ic_ya_yd' mem (Nvector_serial.wrap id) tout1;
+  Ida.calc_ic_ya_yd' mem ~varid:(Nvector_serial.wrap id) tout1;
 
   (* Print heading, basic parameters, and initial values. *)
   print_header mu ml rtol atol;

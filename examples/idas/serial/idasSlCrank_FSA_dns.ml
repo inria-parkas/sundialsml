@@ -31,7 +31,7 @@ module Sens = Idas.Sensitivity
 module QuadSens = Sens.Quadrature
 module Adjoint = Idas.Adjoint
 module AdjQuad = Adjoint.Quadrature
-module VarType = Ida.VarType
+module VarId = Ida.VarId
 
 let printf = Printf.printf
 
@@ -261,11 +261,11 @@ let main () =
              }
   in
 
-  nvconst VarType.differential id;
-  id.{9} <- VarType.algebraic;
-  id.{8} <- VarType.algebraic;
-  id.{7} <- VarType.algebraic;
-  id.{6} <- VarType.algebraic;
+  nvconst VarId.differential id;
+  id.{9} <- VarId.algebraic;
+  id.{8} <- VarId.algebraic;
+  id.{7} <- VarId.algebraic;
+  id.{6} <- VarId.algebraic;
 
   printf "\nSlider-Crank example for IDAS:\n";
 
@@ -291,10 +291,10 @@ let main () =
     Ida.init (Ida.Dls.dense ())
       (Ida.SStolerances (rtolf, atolf))
       (ressc data)
+      ~varid:wid
       tbegin
       wyy wyp
   in
-  Ida.set_var_types mem wid;
   Ida.set_suppress_alg mem true;
   Ida.set_max_num_steps mem 20000;
 
@@ -351,9 +351,9 @@ let main () =
     Ida.init (Ida.Dls.dense ())
       (Ida.SStolerances (rtolfd, atolfd))
       (ressc data)
+      ~varid:wid
       tbegin wyy wyp
   in
-  Ida.set_var_types mem wid;
   Ida.set_suppress_alg mem true;
 
   nvconst 0.0 q;

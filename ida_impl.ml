@@ -296,6 +296,8 @@ type ('a,'kind) session = {
 
   (* Temporary storage for exceptions raised within callbacks.  *)
   mutable exn_temp   : exn option;
+  (* Tracks whether IDASetId has been called. *)
+  mutable id_set     : bool;
 
   mutable resfn      : 'a resfn;
   mutable rootsfn    : 'a rootsfn;
@@ -306,6 +308,7 @@ type ('a,'kind) session = {
 
   mutable sensext      : ('a, 'kind) sensext; (* Used by IDAS *)
 }
+
 and ('a, 'kind) sensext =
     NoSensExt
   | FwdSensExt of ('a, 'kind) fsensext

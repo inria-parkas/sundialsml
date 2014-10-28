@@ -43,6 +43,9 @@ exception BadK
 exception BadT
 exception BadDky
 
+(* SetId exceptions *)
+exception IdNotSet
+
 let no_roots = (0, dummy_rootsfn)
 
 type integrator_stats = {
@@ -58,7 +61,7 @@ type integrator_stats = {
     current_time : float
   }
 
-module VarType =
+module VarId =
   struct
     let algebraic = 0.0
     let differential = 1.0
@@ -346,6 +349,13 @@ let set_tolerances s tol =
   | SVtolerances (rel, abs) -> sv_tolerances s rel abs
   | WFtolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
 
+external c_set_id : ('a,'k) session -> ('a,'k) Nvector.t -> unit
+  = "c_ida_set_id"
+
+let set_id s id =
+  c_set_id s id;
+  s.id_set <- true
+
 external c_session_finalize : ('a, 'kind) session -> unit
     = "c_ida_session_finalize"
 
@@ -358,7 +368,7 @@ external c_init : ('a, 'k) session Weak.t -> float
                   -> (ida_mem * c_weak_ref * ida_file)
     = "c_ida_init"
 
-let init linsolv tol resfn ?(roots=no_roots) t0 y y' =
+let init linsolv tol resfn ?varid ?(roots=no_roots) t0 y y' =
   let (nroots, rootsfn) = roots in
   if nroots < 0 then
     raise (Invalid_argument "number of root functions is negative");
@@ -373,6 +383,7 @@ let init linsolv tol resfn ?(roots=no_roots) t0 y y' =
                   nroots     = nroots;
                   err_file   = err_file;
                   exn_temp   = None;
+                  id_set     = false;
                   resfn      = resfn;
                   rootsfn    = rootsfn;
                   errh       = dummy_errh;
@@ -385,6 +396,9 @@ let init linsolv tol resfn ?(roots=no_roots) t0 y y' =
   Weak.set weakref 0 (Some session);
   (* Now the session is safe to use.  If any of the following fails and raises
      an exception, the GC will take care of freeing ida_mem and backref.  *)
+  (match varid with
+     None -> ()
+   | Some x -> set_id session x);
   if nroots > 0 then
     c_root_init session nroots;
   set_linear_solver session linsolv y y';
@@ -607,13 +621,14 @@ module Constraint =
 external set_constraints : ('a,'k) session -> ('a,'k) Nvector.t -> unit
   = "c_ida_set_constraints"
 
-external set_id : ('a,'k) session -> ('a,'k) Nvector.t -> unit
-  = "c_ida_set_id"
-
-let set_var_types = set_id
-
-external set_suppress_alg : ('a,'k) session -> bool -> unit
+external c_set_suppress_alg : ('a,'k) session -> bool -> unit
   = "c_ida_set_suppress_alg"
+
+let set_suppress_alg s ?varid v =
+  (match varid with
+   | None -> if v && not s.id_set then raise IdNotSet
+   | Some x -> set_id s x);
+  c_set_suppress_alg s v
 
 external get_num_backtrack_ops : ('a,'k) session -> int
   = "c_ida_get_num_backtrack_ops"
@@ -627,11 +642,14 @@ let calc_ic_y session ?y tout1 =
 
 external c_calc_ic_ya_yd' :
   ('a,'k) session -> ('a,'k) Nvector.t option -> ('a,'k) Nvector.t option
-  -> ('a,'k) Nvector.t -> float -> unit
+  -> float -> unit
   = "c_ida_calc_ic_ya_ydp"
 
-let calc_ic_ya_yd' session ?y ?y' id tout1 =
-  c_calc_ic_ya_yd' session y y' id tout1
+let calc_ic_ya_yd' session ?y ?y' ?varid tout1 =
+  (match varid with
+   | None -> if not session.id_set then raise IdNotSet
+   | Some x -> set_id session x);
+  c_calc_ic_ya_yd' session y y' tout1
 
 (* Callbacks *)
 
