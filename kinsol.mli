@@ -749,7 +749,7 @@ val set_func_norm_tol : ('a, 'k) session -> float option -> unit
 val set_scaled_step_tol : ('a, 'k) session -> float option -> unit
 
 (** Specifies a vector defining inequality constraints for each
-    component of the solution vector [u].  See {!Constraint}.
+    component of the solution vector [u].  See {!Sundials.Constraint}.
 
     @kinsol <node5#ss:optin_main> KINSetConstraints *)
 val set_constraints : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit

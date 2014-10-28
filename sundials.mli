@@ -364,7 +364,7 @@ module RootDirs :
     val to_array : t -> d array
   end
 
-(** {2:constraints Constraint constants} *)
+(** {2:constraints Constraints} *)
 
 (** Symbolic names for variable constraints. These names describe
     the constants passed to {!Ida.set_constraints} and
