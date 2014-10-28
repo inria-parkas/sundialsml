@@ -23,6 +23,10 @@
 (** Variable-step solution of DAE initial value problems with
     zero-crossing detection.
 
+    This module solves numerically problems of the form
+    {% $F(t, y, \dot{y})=0$%}, {% $y(t_0) = y_0$%},
+    {% $\dot{y}(t_0)=\dot{y}_0$%}.
+
     This documented interface is structured as follows.
     {ol
       {- {{:#linear}Linear solvers}}

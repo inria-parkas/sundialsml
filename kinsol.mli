@@ -22,6 +22,9 @@
 
 (** Solves nonlinear systems using Newton-Krylov techniques.
 
+    This module solves numerically problems of the form
+    {% $F(u) = 0$%} given an initial guess $u_0$.
+
     This documented interface is structured as follows.
     {ol
       {- {{:#linear}Linear solvers}}
@@ -44,7 +47,7 @@ open Sundials
 #include "examples/ocaml/skeletons/kinsol_skel.ml"
     ]}
 
-    @kinsol <node5#ss:skeleton_sol> Skeleton of main program *)
+    @kinsol <node5#s:skeleton_sol> Skeleton of main program *)
 type ('data, 'kind) session = ('data, 'kind) Kinsol_impl.session
 
 (** Alias for sessions based on serial nvectors. *)
@@ -73,7 +76,7 @@ type 'a double = 'a * 'a
 type ('t, 'a) jacobian_arg =
   {
     jac_u   : 'a;   (** The current unscaled iterate. *)
-    jac_fu  : 'a;   (** The current value of the vector F([u]). *)
+    jac_fu  : 'a;   (** The current value of the vector $F(u)$. *)
     jac_tmp : 't    (** Workspace data. *)
   }
 
@@ -539,7 +542,7 @@ module Alternate :
     {warning [u] and [fval] should not be accessed after the function
              returns.}
 
-    @kinsol <node5#ss:sysFn>           Problem-defining function *)
+    @kinsol <node5#ss:sysFn>           KINSysFn *)
 type 'data sysfn = 'data -> 'data -> unit
 
 (** Creates and initializes a session with the Kinsol solver. The call
@@ -570,7 +573,7 @@ type result =
     [solve s u linesearch u_scale f_scale] has arguments:
     - [s], a solver session,
     - [u], an initial guess that is replaced with an approximate solution
-           for [F(u) = 0],
+           for $F(u) = 0$,
     - [linesearch], whether to use a globalization strategy (line search),
     - [u_scale], the diagonal elements of the scaling matrix $D_u$ for
                  vector [u] chosen so that all $D_u u$ all have roughly the
@@ -726,21 +729,21 @@ val set_max_beta_fails : ('a, 'k) session -> float option -> unit
 (** Specifies the relative error in computing $F(u)$, which is used in the
     difference quotient approximation of the Jacobian-vector product. Pass
     [None] to specify the default value
-    ({% $\sqrt{\mathtt{unit_roundoff}}$%}).
+    ({% $\sqrt{\mathtt{unit\_roundoff}}$%}).
 
     @kinsol <node5#ss:optin_main> KINSetRelErrFunc *)
 val set_rel_err_func : ('a, 'k) session -> float option -> unit
 
 (** Specifies the stopping tolerance on the scaled maximum norm.
     It must be greater than zero. Pass [None] to specify the default
-    value ({% $\mathtt{unit_roundoff}^\frac{1}{3}$%}).
+    value ({% $\mathtt{unit\_roundoff}^\frac{1}{3}$%}).
 
     @kinsol <node5#ss:optin_main> KINSetFuncNormTol *)
 val set_func_norm_tol : ('a, 'k) session -> float option -> unit
 
 (** Specifies the stopping tolerance on the minimum scaled step length, which
     must be greater than zero. Pass [None] to specify the default
-    value ({% $\mathtt{unit_roundoff}^\frac{1}{3}$%}).
+    value ({% $\mathtt{unit\_roundoff}^\frac{1}{3}$%}).
 
     @kinsol <node5#ss:optin_main> KINSetScaledStepTol *)
 val set_scaled_step_tol : ('a, 'k) session -> float option -> unit
@@ -816,7 +819,7 @@ val set_linear_solver : ('a, 'k) session -> ('a, 'k) linear_solver -> unit
     same size but with different functions.
 
     @kinsol <node5#ss:optin_main> KINSetSysFunc
-    @kinsol <node5#ss:sysFn> Problem-defining function *)
+    @kinsol <node5#ss:sysFn> KINSysFn *)
 val set_sys_func : ('a, 'k) session -> ('a -> 'a -> unit) -> unit
 
 (** {3:info Logging and error handling} *)

@@ -23,6 +23,9 @@
 (** Variable-step solution of ODE initial value problems with
     zero-crossing detection.
 
+    This module solves numerically problems of the form
+    {% $\dot{y} = f(t, y)$%}, {% $y(t_0) = y_0$%}.
+
     This documented interface is structured as follows.
     {ol
       {- {{:#linear}Linear solvers}}
@@ -747,8 +750,8 @@ type lmm =
 (** Right-hand side function for calculating ODE derivatives. It is passed
     three arguments:
     - [t], the value of the independent variable, i.e., the simulation time,
-    - [y], a vector of dependent-variable values, i.e. y(t), and,
-    - [dy], a vector for storing the value of f(t, y).
+    - [y], a vector of dependent-variable values, i.e. $y(t)$, and,
+    - [dy], a vector for storing the value of $f(t, y)$.
 
     Within the function, raising a {!Sundials.RecoverableFailure} exception
     indicates a recoverable error. Any other exception is treated as an
