@@ -5,10 +5,6 @@ Decisions
   simplify and improve them.
 
 * Name and version numbering: Sundials/ML 2.6.0
-  first version: Sundials/ML 2.6.0ml1
-  first patch:   Sundials/ML 2.6.0ml2
-  second patch:  Sundials/ML 2.6.0ml3 etc.
-  or
   first version: Sundials/ML 2.6.0
   first patch:   Sundials/ML 2.6.0p1
   second patch:  Sundials/ML 2.6.0p2
@@ -18,8 +14,8 @@ Decisions
 
 Priorities
 ----------
-1. Callbacks with exception checking directly from C.
-2. Access around the weak pointer where possible (through stack).
+DONE 1. Callbacks with exception checking directly from C.
+CANCELLED 2. Access around the weak pointer where possible (through stack).
 
 TODO
 ----
@@ -39,10 +35,7 @@ TODO
      cvode/serial/cvRoberts_dns. Evaluate the effect using kcachegrind.
      Possibly do callback_exns directly from C, thus eliminating the
      intermediate function.
-
-     Q. How to handle error callbacks without adding extra code everywhere?
-     Associate two values with each session: a weak pointer (for error
-     callbacks), and a value (overwritten at each Sundials entry)?
+     RESULTS: no significant effect. Additional complexity not justified.
 
 5. (Jun) OPAM/findlib wrappers.
    - Everything properly supported in a toplevel
@@ -60,9 +53,6 @@ TODO
    Break long function types into lines?
 
    To explain:
-   - Possibility to 'break' Sundials by passing nvectors of an incompatible
-     size (e.g., Cvode.init with an nvector of size 10 and reinit with one
-     of size 5).
    - Check the various links (@cvode, @cvodes, @ida, @idas, etc.)
      (automatically with a script?)
 
@@ -94,7 +84,6 @@ MINOR PATCHES
 
 6. Rename CAML_FN everywhere?
 
-
 7. Add tests for Spils.qr_fact/qr_sol/modified_gs/classical_gs to
    examples/ocaml/linear.
 
@@ -113,4 +102,7 @@ TO DISCUSS
   - C-implemented comparator as third field of nvector type.  Provide
     NULL for custom nvectors (which will be implemented in OCaml so
     are safe anyway).
+
+  DONE for cvode, ida, and kinsol.
+  TODO: cvodes, idas (different checks for different submodules).
 
