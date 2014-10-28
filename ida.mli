@@ -11,7 +11,7 @@
 (***********************************************************************)
 
 (***********************************************************************)
-(* Much of the comment text is taken directly from:                    *)
+(* Parts of the comment text are taken directly from:                  *)
 (*                                                                     *)
 (*               User Documentation for IDA v2.7.0                     *)
 (*         Alan C. Hindmarsh, Radu Serban, and Aaron Collier           *)

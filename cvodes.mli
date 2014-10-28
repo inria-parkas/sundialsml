@@ -11,7 +11,7 @@
 (***********************************************************************)
 
 (***********************************************************************)
-(* Much of the comment text is taken directly from:                    *)
+(* Parts of the comment text are taken directly from:                  *)
 (*                                                                     *)
 (*               User Documentation for CVODES v2.7.0                  *)
 (*                Alan C. Hindmarsh and Radu Serban                    *)
