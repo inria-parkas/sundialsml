@@ -18,7 +18,7 @@
  @author Marc Pouzet (LIENS)
  *)
 
-(** {2 Constants} *)
+(** {2:consts Constants} *)
 
 (** The [major], [minor], [patch], and [binding] version numbers of
     Sundials/ML.
@@ -45,7 +45,7 @@ val small_real : float
     @cvode <node5#s:types> Data Types *)
 val unit_roundoff : float
 
-(** {2 Exceptions} *)
+(** {2:exceptions Exceptions} *)
 
 (** Indicates a recoverable failure within a callback function.
     Any other exception normally indicates an unrecoverable failure. *)
@@ -56,7 +56,7 @@ exception RecoverableFailure
     {{!Ida.tolerance}[Ida.WFtolerances]}. *)
 exception NonPositiveEwt
 
-(** {2 Arrays} *)
+(** {2:arrays Arrays} *)
 
 (** Vectors of floats (one-dimensional bigarrays). *)
 module RealArray :
@@ -205,7 +205,7 @@ module LintArray :
     val create  : int -> t
   end
 
-(** {2 Arrays of roots (zero-crossings)} *)
+(** {2:roots Arrays of roots (zero-crossings)} *)
 
 (** Vectors of root (zero-crossing) statuses. *)
 module Roots :
@@ -364,7 +364,49 @@ module RootDirs :
     val to_array : t -> d array
   end
 
-(** {2 Solver results and error reporting} *)
+(** {2:constraints Constraint constants} *)
+
+(** Symbolic names for variable constraints. These names describe
+    the constants passed to {!Ida.set_constraints} and
+    {!Kinsol.set_constraints}.
+
+    @ida <node5#sss:optin_main> IDASetConstraints
+    @kinsol <node5#ss:optin_main> KINSetConstraints *)
+module Constraint :
+  sig
+    (** The constant [0.0]. *)
+    val unconstrained : float
+
+    (** The constant [1.0]. *)
+    val geq_zero : float
+
+    (** The constant [-1.0]. *)
+    val leq_zero : float
+
+    (** The constant [2.0]. *)
+    val gt_zero : float
+
+    (** The constant [-2.0]. *)
+    val lt_zero : float
+
+    (** For pattern-matching on constraints. See {!of_float}. *)
+    type t =
+    | Unconstrained   (** [true] *)
+    | GeqZero         (** [>= 0] *)
+    | LeqZero         (** [<= 0] *)
+    | GtZero          (** [> 0]  *)
+    | LtZero          (** [< 0]  *)
+
+    (** Map constraint values to floating-point constants. *)
+    val to_float : t -> float
+
+    (** Map floating-point constants to constraint values.
+        
+        @raises Invalid_argument The given value is not a legal constraint. *)
+    val of_float : float -> t
+  end
+
+(** {2:results Solver results and error reporting} *)
 
 (** Information passed to registered error handler functions.
     See {!Cvode.set_err_handler_fn}, {!Ida.set_err_handler_fn}, and
@@ -381,7 +423,7 @@ type error_details = {
     error_message : string;
   }
 
-(** {2 Miscellaneous utility functions} *)
+(** {2:misc Miscellaneous utility functions} *)
 
 (** [format_float fmt f] formats [f] according to the format string [fmt].
     It uses the low-level [caml_format_float] function. *)

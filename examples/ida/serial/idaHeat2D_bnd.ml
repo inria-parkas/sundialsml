@@ -35,7 +35,7 @@
 module RealArray = Sundials.RealArray
 module Roots = Sundials.Roots
 module Dls = Ida.Dls
-module Constraint = Ida.Constraint
+module Constraint = Sundials.Constraint
 
 let printf = Printf.printf
 let vmax_norm = Nvector_serial.DataOps.n_vmaxnorm
@@ -165,7 +165,7 @@ let main () =
   set_initial_profile data u u' id res;
 
   (* Set constraints to all NonNegative for nonnegative solution values.  *)
-  RealArray.fill constraints Constraint.non_negative;
+  RealArray.fill constraints Constraint.geq_zero;
 
   (* Set remaining input parameters.  *)
   let t0 = 0.

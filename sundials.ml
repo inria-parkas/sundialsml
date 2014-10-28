@@ -472,6 +472,37 @@ module RootDirs =
 
   end
 
+module Constraint =
+  struct
+    let unconstrained = 0.0
+    let geq_zero =  1.0
+    let leq_zero = -1.0
+    let gt_zero  =  2.0
+    let lt_zero  = -2.0
+
+    type t =
+    | Unconstrained
+    | GeqZero
+    | LeqZero
+    | GtZero
+    | LtZero
+
+    let of_float = function
+      |  0.0 -> Unconstrained
+      |  1.0 -> GeqZero
+      | -1.0 -> LeqZero
+      |  2.0 -> GtZero
+      | -2.0 -> LtZero
+      |    f -> raise (Invalid_argument
+                      ("invalid constraint: " ^ string_of_float f))
+    let to_float = function
+      | Unconstrained -> 0.0
+      | GeqZero       -> 1.0
+      | LeqZero       -> -1.0
+      | GtZero        -> 2.0
+      | LtZero        -> -2.0
+  end
+
 type solver_result =
   | Continue
   | RootsFound

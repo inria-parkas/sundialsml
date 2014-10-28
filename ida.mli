@@ -1316,62 +1316,6 @@ val set_max_conv_fails : ('a, 'k) session -> int -> unit
  *)
 val set_nonlin_conv_coef : ('a, 'k) session -> float -> unit
 
-(** Symbolic names for inequality constraints on variables, used for
-    {!set_constraints}.  This function requires you to pass in an
-    nvector populated with magic constants specifying each variable as
-    positive, non-positive, negative, non-negative, or unconstrained.
-    This module gives symbolic names to those constants, for your
-    convenience.
-
-    @ida <node5#sss:optin_main> IDASetConstraints
- *)
-module Constraint :
-  sig
-    (** A symbolic name for the magic floating-point constant [0.0]. *)
-    val unconstrained : float
-    (** A symbolic name for the magic floating-point constant [1.0]. *)
-    val non_negative : float
-    (** A symbolic name for the magic floating-point constant [-1.0]. *)
-    val non_positive : float
-    (** A symbolic name for the magic floating-point constant [2.0]. *)
-    val positive : float
-    (** A symbolic name for the magic floating-point constant [-2.0]. *)
-    val non_positive : float
-
-    (** An ADT representation of the magic constants specifying
-        constraints, useful for pattern-matching.  *)
-    type t =
-    | Unconstrained                     (** no constraints *)
-    | NonNegative                       (** >= 0 *)
-    | NonPositive                       (** <= 0 *)
-    | Positive                          (** > 0 *)
-    | Negative                          (** < 0 *)
-
-    (** Encode a constraint specifier into the corresponding magic
-        floating-point constant.  *)
-    val to_float : t -> float
-
-    (** Decode a magic float-point constant into a constraint
-        specifier.  Raises [Invalid_argument] if the given floating
-        point value is not a legal constraint specification.  *)
-    val of_float : float -> t
-
-    (** Returns strings like ["NonNegative"], ["Unconstrained"], etc. *)
-    val name_of_constraint : t -> string
-
-    (** Same as {!name_of_constraint} but translates from a magic
-        floating-point constant.  *)
-    val name_of_float : float -> string
-
-    (** Returns strings like [">= 0"], ["< 0"], etc.  [Unconstrained]
-        is mapped to ["unconstrained"].  *)
-    val string_of_constraint : t -> string
-
-    (** Same as {!string_of_constraint} but translates from a magic
-        floating-point constant.  *)
-    val string_of_float : float -> string
-  end
-
 (** Set inequality constraints on variables.  See {!Constraint}.
 
     @ida <node5#sss:optin_main> IDASetConstraints

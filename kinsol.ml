@@ -415,55 +415,6 @@ external c_set_scaled_step_tol : ('a, 'k) session -> float -> unit
 let set_scaled_step_tol s scsteptol =
   c_set_scaled_step_tol s (float_default scsteptol)
 
-module Constraint =
-  struct
-    let unconstrained = 0.0
-    let non_negative = 1.0
-    let non_positive = -1.0
-    let positive = 2.0
-    let negative = -2.0
-
-    type t =
-    | Unconstrained
-    | NonNegative
-    | NonPositive
-    | Positive
-    | Negative
-
-    let of_float = function
-      | 0.0  -> Unconstrained
-      | 1.0  -> NonNegative
-      | -1.0 -> NonPositive
-      | 2.0  -> Positive
-      | -2.0 -> Negative
-      | f -> raise (Invalid_argument
-                      ("invalid constraint: " ^ string_of_float f))
-    let to_float = function
-      | Unconstrained -> 0.0
-      | NonNegative   -> 1.0
-      | NonPositive   -> -1.0
-      | Positive      -> 2.0
-      | Negative      -> -2.0
-
-    let name_of_constraint = function
-      | Unconstrained -> "Unconstrained"
-      | NonNegative -> "NonNegative"
-      | NonPositive -> "NonPositive"
-      | Positive -> "Positive"
-      | Negative -> "Negative"
-
-    let name_of_float x = name_of_constraint (of_float x)
-
-    let string_of_constraint = function
-      | Unconstrained -> invalid_arg "unconstrained"
-      | NonNegative -> ">= 0"
-      | NonPositive -> "<= 0"
-      | Positive -> "> 0"
-      | Negative -> "< 0"
-
-    let string_of_float x = string_of_constraint (of_float x)
-  end
-
 external set_constraints : ('a, 'k) session -> ('a, 'k) nvector -> unit
     = "c_kinsol_set_constraints"
 

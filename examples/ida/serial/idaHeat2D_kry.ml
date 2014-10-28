@@ -215,7 +215,7 @@ let main () =
   set_initial_profile data u u' res;
 
   (* Set constraints to all non-negative. *)
-  RealArray.fill constraints Ida.Constraint.non_negative;
+  RealArray.fill constraints Sundials.Constraint.geq_zero;
 
   (* Assign various parameters. *)
 
