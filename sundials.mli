@@ -402,7 +402,7 @@ module Constraint :
 
     (** Map floating-point constants to constraint values.
         
-        @raises Invalid_argument The given value is not a legal constraint. *)
+        @raise Invalid_argument The given value is not a legal constraint. *)
     val of_float : float -> t
   end
 

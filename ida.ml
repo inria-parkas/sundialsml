@@ -19,7 +19,6 @@ include Ida_impl
 
 (* Solver exceptions *)
 exception IllInput
-exception TooClose
 exception TooMuchWork
 exception TooMuchAccuracy
 exception ErrFailure
@@ -336,10 +335,12 @@ external ss_tolerances  : ('a, 'k) session -> float -> float -> unit
 external wf_tolerances  : ('a, 'k) session -> unit
     = "c_ida_wf_tolerances"
 
+type 'a error_fun = 'a -> 'a -> unit
+
 type ('a, 'k) tolerance =
   | SStolerances of float * float
   | SVtolerances of float * ('a, 'k) Nvector.t
-  | WFtolerances of ('a -> 'a -> unit)
+  | WFtolerances of 'a error_fun
 
 let default_tolerances = SStolerances (1.0e-4, 1.0e-8)
 
@@ -668,7 +669,6 @@ let _ =
     (* Exceptions must be listed in the same order as
        ida_exn_index.  *)
     [|IllInput;
-      TooClose;
       TooMuchWork;
       TooMuchAccuracy;
       ErrFailure;

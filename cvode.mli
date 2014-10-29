@@ -71,7 +71,7 @@ type 'a triple = 'a * 'a * 'a
 
 (** Arguments common to Jacobian callback functions.    
  
-    @cvode <node5#ss:jtimesFn> Jacobian-times-vector function
+    @cvode <node5#ss:jtimesfn> CVSpilsJacTimesVecFn
     @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
     @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
 type ('t, 'a) jacobian_arg =
@@ -114,8 +114,7 @@ module Diag :
 (** Direct Linear Solvers operating on dense and banded matrices.
 
     @cvode <node5#sss:optin_dls> Direct linear solvers optional input functions
-    @cvode <node5#sss:optout_dls> Direct linear solvers optional output functions
-    @cvode <node5#ss:djacFn> Dense Jacobian function *)
+    @cvode <node5#sss:optout_dls> Direct linear solvers optional output functions *)
 module Dls :
   sig
 
@@ -127,7 +126,7 @@ module Dls :
         The callback should load the [(i,j)]th entry of [jac] with
         {% $\partial y_i/\partial y_j$%}, i.e., the partial derivative of the
         [i]th equation with respect to the [j]th variable, evaluated at the
-        values of [t] and [y] obtained from [jac]. Only nonzero elements need
+        values of [t] and [y] obtained from [arg]. Only nonzero elements need
         be loaded into [jac].
 
         Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
@@ -155,7 +154,7 @@ module Dls :
 
         @cvode <node5#sss:lin_solv_init> CVLapackDense
         @cvode <node5#sss:optin_dls> CVDlsSetDenseJacFn
-        @cvode <node5#ss:djacFn> Dense Jacobian function *)
+        @cvode <node5#ss:djacFn> CVDlsDenseJacFn *)
     val lapack_dense : ?jac:dense_jac_fn -> unit -> serial_linear_solver
 
     (** Callback functions that compute banded approximations to
@@ -168,7 +167,7 @@ module Dls :
         The callback should load the [(i,j)]th entry of [jac] with
         {% $\partial y_i/\partial y_j$%}, i.e., the partial derivative of
         the [i]th equation with respect to the [j]th variable, evaluated
-        at the values of [t] and [y] obtained from [jac]. Only nonzero
+        at the values of [t] and [y] obtained from [arg]. Only nonzero
         elements need be loaded into [jac].
 
         Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
@@ -252,7 +251,7 @@ module Dls :
     val clear_band_jac_fn : serial_session -> unit
   end
 
-(** Scaled Preconditioned Iterative Linear Solvers (SPILS).
+(** Scaled Preconditioned Iterative Linear Solvers.
 
     @cvode <node5#sss:optin_spils> Iterative linear solvers optional input functions.
     @cvode <node5#sss:optout_spils> Iterative linear solvers optional output functions.
@@ -290,7 +289,6 @@ module Spils :
         {warning The elements of [jac], [arg], and [z] should not
                  be accessed after the function has returned.}
 
-        @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
         @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn *)
     type 'a prec_solve_fn =
       ('a, 'a) jacobian_arg
@@ -438,8 +436,7 @@ module Spils :
 
         @cvode <node5#sss:lin_solv_init> CVSpgmr
         @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
-        @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
-        @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
+        @cvode <node5#sss:optin_spils> CVSpilsSetMaxl *)
     val spgmr : ?maxl:int -> ('a, 'k) preconditioner -> ('a, 'k) linear_solver
 
     (** Krylov iterative solver using the scaled preconditioned biconjugate
@@ -449,8 +446,7 @@ module Spils :
 
         @cvode <node5#sss:lin_solv_init> CVSpbcg
         @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
-        @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
-        @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
+        @cvode <node5#sss:optin_spils> CVSpilsSetMaxl *)
     val spbcg : ?maxl:int -> ('a, 'k) preconditioner -> ('a, 'k) linear_solver
 
     (** Krylov iterative with the scaled preconditioned transpose-free
@@ -461,8 +457,7 @@ module Spils :
 
         @cvode <node5#sss:lin_solv_init> CVSptfqmr
         @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
-        @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
-        @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
+        @cvode <node5#sss:optin_spils> CVSpilsSetMaxl *)
     val sptfqmr : ?maxl:int -> ('a, 'k) preconditioner -> ('a, 'k) linear_solver
 
     (** {3:set Solver parameters} *)
@@ -560,7 +555,7 @@ module Spils :
     (** Change the Jacobian-times-vector function.
 
         @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
-        @cvode <node5#ss:jtimesFn> Jacobian-times-vector function *)
+        @cvode <node5#ss:jtimesfn> CVSpilsJacTimesVecFn *)
     val set_jac_times_vec_fn :
       ('a, 'k) session
       -> 'a jac_times_vec_fn
@@ -570,7 +565,7 @@ module Spils :
         implementation.
 
         @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
-        @cvode <node5#ss:jtimesFn> Jacobian-times-vector function *)
+        @cvode <node5#ss:jtimesfn> CVSpilsJacTimesVecFn *)
     val clear_jac_times_vec_fn : ('a, 'k) session -> unit
 
     (** Change the preconditioning direction without modifying
@@ -689,8 +684,10 @@ module Alternate :
         The latter indicates the problem size and can, for example, be
         cloned. *)
     val make :
-          (('data, 'kind) session -> ('data, 'kind) Nvector.t
-           -> ('data, 'kind) callbacks) -> ('data, 'kind) linear_solver
+          (('data, 'kind) session
+            -> ('data, 'kind) Nvector.t
+            -> ('data, 'kind) callbacks)
+          -> ('data, 'kind) linear_solver
 
     (** {3:internals Solver internals} *)
 
@@ -710,7 +707,7 @@ module Alternate :
 
 (** Functions that set the multiplicative error weights for use in the weighted
     RMS norm. The call [efun y ewt] takes the dependent variable vector [y] and
-    fills the error-weight vector [ewt] with positive values or raising
+    fills the error-weight vector [ewt] with positive values or raises
     {!NonPositiveEwt}. Other exceptions are eventually propagated, but
     should be avoided ([efun] is not allowed to abort the solver). *)
 type 'data error_fun = 'data -> 'data -> unit
@@ -760,7 +757,7 @@ type lmm =
     {warning [y] and [dy] should not be accessed after the function
              returns.}
 
-    @cvode <node5#ss:rhsFn> ODE right-hand side function *)
+    @cvode <node5#ss:rhsFn> CVRhsFn *)
 type 'a rhsfn = float -> 'a -> 'a -> unit
 
 (** Called by the solver to calculate the values of root functions. These
@@ -773,7 +770,7 @@ type 'a rhsfn = float -> 'a -> 'a -> unit
     {warning [y] and [gout] should not be accessed after the function has
              returned.}
 
-    @cvode <node5#ss:rootFn>         Rootfinding function *)
+    @cvode <node5#ss:rootFn> cvRootFn *)
 type 'a rootsfn = (float -> 'a -> RealArray.t -> unit)
 
 (** Creates and initializes a session with the Cvode solver. The call
@@ -799,7 +796,7 @@ type 'a rootsfn = (float -> 'a -> RealArray.t -> unit)
     @cvode <node5#sss:cvtolerances>  CVodeSStolerances
     @cvode <node5#sss:cvtolerances>  CVodeSVtolerances
     @cvode <node5#sss:cvtolerances>  CVodeWFtolerances
-    @cvode <node5#ss:ewtsetFn>       Error weight function *)
+    @cvode <node5#ss:ewtsetFn>       CVEwtFn *)
 val init :
     lmm
     -> ('data, 'kind) iter
@@ -914,7 +911,7 @@ val set_error_file : ('a, 'k) session -> string -> bool -> unit
     This function must not fail: any exceptions are trapped and discarded.
 
     @cvode <node5#sss:optin_main> CVodeSetErrHandlerFn
-    @cvode <node5#ss:ehFn> Error message handler function *)
+    @cvode <node5#ss:ehFn> CVErrHandlerFn *)
 val set_err_handler_fn : ('a, 'k) session -> (error_details -> unit) -> unit
 
 (** Restores the default error handling function.
@@ -1167,8 +1164,9 @@ val get_num_g_evals : ('a, 'k) session -> int
  @cvode <node5#sss:cvode> CV_ILL_INPUT *)
 exception IllInput
 
-(** The initial and final times are too close to each other and not initial step
-    size was specified.
+(** The initial and final times are too close to each other and an initial step
+    size was not specified.
+
     @cvode <node5#sss:cvode> CV_TOO_CLOSE *)
 exception TooClose
 
@@ -1249,6 +1247,7 @@ exception BadK
 exception BadT
 
 (** Raised by {!get_dky} on an invalid derivative vector.
+
     @cvode <node5#ss:optional_dky> CVodeGetDky (CV_BAD_DKY) *)
 exception BadDky
 

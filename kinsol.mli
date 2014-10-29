@@ -101,7 +101,7 @@ module Dls :
         The callback should load the [(i,j)]th entry of [jac] with
         {% $\partial y_i/\partial y_j$%}, i.e., the partial derivative of the
         [i]th equation with respect to the [j]th variable, evaluated at the
-        values of [t] and [y] obtained from [jac]. Only nonzero elements need
+        values of [t] and [y] obtained from [arg]. Only nonzero elements need
         be loaded into [jac].
 
         {warning Neither the elements of [arg] nor the matrix [jac] should
@@ -141,7 +141,7 @@ module Dls :
         The callback should load the [(i,j)]th entry of [jac] with
         {% $\partial y_i/\partial y_j$%}, i.e., the partial derivative of
         the [i]th equation with respect to the [j]th variable, evaluated
-        at the values of [t] and [y] obtained from [jac]. Only nonzero
+        at the values of [t] and [y] obtained from [arg]. Only nonzero
         elements need be loaded into [jac].
 
         {warning Neither the elements of [arg] nor the matrix [jac] should
@@ -351,9 +351,7 @@ module Spils :
 
         @kinsol <node5#sss:lin_solv_init> KINSpgmr
         @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
-        @kinsol <node5#sss:optin_spils> KINSpilsSetMaxRestarts
-        @kinsol <node5#ss:psolveFn> KINSpilsPrecSolveFn
-        @kinsol <node5#ss:precondFn> KINSpilsPrecSetupFn *)
+        @kinsol <node5#sss:optin_spils> KINSpilsSetMaxRestarts *)
     val spgmr : ?maxl:int -> ?max_restarts:int -> ('a, 'k) preconditioner
                     -> ('a, 'k) linear_solver
 
@@ -363,9 +361,7 @@ module Spils :
         the Krylov subspace (defaults to 5), and [prec] is a {!preconditioner}.
 
         @kinsol <node5#sss:lin_solv_init> KINSpbcg
-        @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
-        @kinsol <node5#ss:psolveFn> KINSpilsPrecSolveFn
-        @kinsol <node5#ss:precondFn> KINSpilsPrecSetupFn *)
+        @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner *)
     val spbcg : ?maxl:int -> ('a, 'k) preconditioner -> ('a, 'k) linear_solver
 
     (** Krylov iterative with the scaled preconditioned transpose-free
@@ -375,9 +371,7 @@ module Spils :
         {!preconditioner}.
 
         @kinsol <node5#sss:lin_solv_init> KINSptfqmr
-        @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
-        @kinsol <node5#ss:psolveFn> KINSpilsPrecSolveFn
-        @kinsol <node5#ss:precondFn> KINSpilsPrecSetupFn *)
+        @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner *)
     val sptfqmr : ?maxl:int -> ('a,'k) preconditioner -> ('a,'k) linear_solver
 
     (** {3:stats Solver statistics} *)

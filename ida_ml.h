@@ -142,7 +142,6 @@ enum ida_bandwidths_index {
  * c_register_exns in ida.ml.  */
 enum ida_exn_index {
     IDA_EXN_IllInput = 0,
-    IDA_EXN_TooClose,
     IDA_EXN_TooMuchWork,
     IDA_EXN_TooMuchAccuracy,
     IDA_EXN_ErrFailure,
