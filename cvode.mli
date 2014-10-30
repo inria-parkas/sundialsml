@@ -149,8 +149,8 @@ module Dls :
         @cvode <node5#ss:djacFn> CVDlsDenseJacFn *)
     val dense : ?jac:dense_jac_fn -> unit -> serial_linear_solver
 
-    (** A direct linear solver on dense matrices using LAPACK. See {!Dense}.
-        Only available if {!lapack_enabled}.
+    (** A direct linear solver on dense matrices using LAPACK. See {!dense}.
+        Only available if {!Sundials.lapack_enabled}.
 
         @cvode <node5#sss:lin_solv_init> CVLapackDense
         @cvode <node5#sss:optin_dls> CVDlsSetDenseJacFn
@@ -193,7 +193,7 @@ module Dls :
     val band : ?jac:band_jac_fn -> bandrange -> serial_linear_solver
 
     (** A direct linear solver on banded matrices using LAPACK. See {!band}.
-        Only available if {!lapack_enabled}.
+        Only available if {!Sundials.lapack_enabled}.
 
         @cvode <node5#sss:lin_solv_init> CVLapackBand
         @cvode <node5#sss:optin_dls> CVDlsSetBandJacFn
@@ -570,8 +570,9 @@ module Spils :
 
     (** Change the preconditioning direction without modifying
         callback functions. If the preconditioning type is changed from
-        {!Spils.PrecNone} then {!set_preconditioner} must be called to install
-        the necessary callbacks.
+        {{!Spils.preconditioning_type}Spils.PrecNone}
+        then {!set_preconditioner} must be called to install the necessary
+        callbacks.
 
         @cvode <node5#sss:optin_spils> CVSpilsSetPrecType *)
     val set_prec_type : ('a, 'k) session -> Spils.preconditioning_type -> unit
@@ -708,7 +709,7 @@ module Alternate :
 (** Functions that set the multiplicative error weights for use in the weighted
     RMS norm. The call [efun y ewt] takes the dependent variable vector [y] and
     fills the error-weight vector [ewt] with positive values or raises
-    {!NonPositiveEwt}. Other exceptions are eventually propagated, but
+    {!Sundials.NonPositiveEwt}. Other exceptions are eventually propagated, but
     should be avoided ([efun] is not allowed to abort the solver). *)
 type 'data error_fun = 'data -> 'data -> unit
 
@@ -744,10 +745,10 @@ type lmm =
   | Adams   (** Adams-Moulton formulas (non-stiff systems). *)
   | BDF     (** Backward Differentiation Formulas (stiff systems). *)
 
-(** Right-hand side function for calculating ODE derivatives. It is passed
+(** Right-hand side functions for calculating ODE derivatives. They are passed
     three arguments:
     - [t], the value of the independent variable, i.e., the simulation time,
-    - [y], a vector of dependent-variable values, i.e. $y(t)$, and,
+    - [y], a vector of dependent-variable values, i.e., $y(t)$, and,
     - [dy], a vector for storing the value of $f(t, y)$.
 
     Within the function, raising a {!Sundials.RecoverableFailure} exception
@@ -764,8 +765,8 @@ type 'a rhsfn = float -> 'a -> 'a -> unit
     ‘zero-crossings’ are used to detect significant events. The function is
     passed three arguments:
     - [t], the value of the independent variable, i.e., the simulation time,
-    - [y], a vector of dependent-variable values, i.e. y(t),
-    - [gout], a vector for storing the value of g(t, y).
+    - [y], a vector of dependent-variable values, i.e., $y(t)$, and,
+    - [gout], a vector for storing the value of $g(t, y)$.
 
     {warning [y] and [gout] should not be accessed after the function has
              returned.}
@@ -773,7 +774,7 @@ type 'a rhsfn = float -> 'a -> 'a -> unit
     @cvode <node5#ss:rootFn> cvRootFn *)
 type 'a rootsfn = (float -> 'a -> RealArray.t -> unit)
 
-(** Creates and initializes a session with the Cvode solver. The call
+(** Creates and initializes a session with the solver. The call
     {[init lmm iter tol f ~roots:(nroots, g) ~t0:t0 (neqs, y0)]} has
     as arguments:
     - [lmm],    the linear multistep method (see {!lmm}),
@@ -786,7 +787,7 @@ type 'a rootsfn = (float -> 'a -> RealArray.t -> unit)
     - [y0],     a vector of initial values that also determines the number
                 of equations.
 
-    This function does everything necessary to initialize a CVODE session, i.e.,
+    This function does everything necessary to initialize a session, i.e.,
     it makes the calls referenced below. The {!solve_normal} and
     {!solve_one_step} functions may be called directly.
 
@@ -821,7 +822,7 @@ type solver_result =
   | StopTimeReached     (** The stop time was reached. See {!set_stop_time}.
                             {cconst CV_TSTOP_RETURN} *)
 
-(** Integrates the ODE over an interval. The call
+(** Integrates an ODE system over an interval. The call
     [tret, r = solve_normal s tout yout] has as arguments
     - [s], a solver session,
     - [tout], the next time at which a solution is desired, and,
@@ -895,7 +896,7 @@ val reinit :
     @cvode <node5#sss:cvtolerances> CVodeSStolerances
     @cvode <node5#sss:cvtolerances> CVodeSVtolerances
     @cvode <node5#sss:cvtolerances> CVodeWFtolerances
-    @cvode <node5#ss:ewtsetFn> Error weight function *)
+    @cvode <node5#ss:ewtsetFn>       CVEwtFn *)
 val set_tolerances : ('a, 'k) session -> ('a, 'k) tolerance -> unit
 
 (** Opens the named file to receive messages from the default error handler.
@@ -1120,7 +1121,7 @@ val get_num_nonlin_solv_conv_fails : ('a, 'k) session -> int
     @cvode <node5#sss:optout_main> CVodeGetNonlinSolvStats *)
 val get_nonlin_solv_stats : ('a, 'k) session -> int *int
 
-(** {2:roots Additional root finding functions} *)
+(** {2:roots Additional root-finding functions} *)
 
 (** [set_root_direction s dir] specifies the direction of zero-crossings to be
     located and returned. [dir] may contain one entry for each root function.

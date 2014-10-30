@@ -123,8 +123,8 @@ module Dls :
         @kinsol <node5#ss:djacFn> KINDlsDenseJacFn *)
     val dense : dense_jac_fn option -> serial_linear_solver
 
-    (** A direct linear solver on dense matrices using LAPACK. See {!Dense}.
-        Only available if {!lapack_enabled}.
+    (** A direct linear solver on dense matrices using LAPACK. See {!dense}.
+        Only available if {!Sundials.lapack_enabled}.
 
         @kinsol <node5#sss:lin_solv_init> KINLapackDense
         @kinsol <node5#sss:optin_dls> KINDlsSetDenseJacFn
@@ -166,7 +166,7 @@ module Dls :
     val band : bandrange -> band_jac_fn option -> serial_linear_solver
 
     (** A direct linear solver on banded matrices using LAPACK. See {!band}.
-        Only available if {!lapack_enabled}.
+        Only available if {!Sundials.lapack_enabled}.
 
         @kinsol <node5#sss:lin_solv_init> KINLapackBand
         @kinsol <node5#sss:optin_dls> KINDlsSetBandJacFn
@@ -194,12 +194,7 @@ module Dls :
         @kinsol <node5#sss:optout_dense> KINDlsGetNumFuncEvals *)
     val get_num_func_evals : serial_session -> int
 
-    (** {3:lowlevel Low-level solver manipulation}
-
-        The {!init} and {!reinit} functions are the preferred way to set or
-        change a Jacobian function. These low-level functions are provided for
-        experts who want to avoid resetting internal counters and other
-        associated side-effects. *)
+    (** {3:lowlevel Low-level solver manipulation} *)
 
     (** Change the dense Jacobian function.
  
@@ -580,17 +575,17 @@ type result =
     listed below.
  
     @kinsol <node5#sss:kinsol> KINSol
-    @raise IllInput                     An input parameter was invalid.
-    @raise LineSearchNonConvergence     Line search could not find a suitable iterate.
-    @raise MaxIterationsReached         The maximum number of nonlinear iterations was reached.
-    @raise MaxNewtonStepExceeded        Five consecutive steps satisfied a scaled step length test.
+    @raise IllInput Missing or illegal solver inputs.
+    @raise LineSearchNonConvergence Line search could not find a suitable iterate.
+    @raise MaxIterationsReached The maximum number of nonlinear iterations was reached.
+    @raise MaxNewtonStepExceeded Five consecutive steps satisfied a scaled step length test.
     @raise LineSearchBetaConditionFailure  Line search could not satisfy the beta-condition.
-    @raise LinearSolverNoRecovery       The {!prec_solve_fn} callback raised {!Sundials.RecoverableFailure} but the preconditioner is already current.
-    @raise LinearSolverInitFailure      Linear solver initialization failed.
-    @raise LinearSetupFailure           The {!prec_setup_fn} callback failed unrecoverably.
-    @raise LinearSolverFailure          Either {!prec_solve_fn} failed unrecoverably or the linear solver encountered an error condition.
-    @raise SystemFunctionFailure        The {!sysfn} callback failed unrecoverably.
-    @raise FirstSystemFunctionFailure   The {!sysfn} callback raised {!Sundials.RecoverableFailure} when first called.
+    @raise LinearSolverNoRecovery The {!Spils.prec_solve_fn} callback raised {!Sundials.RecoverableFailure} but the preconditioner is already current.
+    @raise LinearSolverInitFailure Linear solver initialization failed.
+    @raise LinearSetupFailure Linear solver setup failed unrecoverably.
+    @raise LinearSolveFailure Linear solver solution failed unrecoverably.
+    @raise SystemFunctionFailure The {!sysfn} callback failed unrecoverably.
+    @raise FirstSystemFunctionFailure The {!sysfn} callback raised {!Sundials.RecoverableFailure} when first called.
     @raise RepeatedSystemFunctionFailure  The {!sysfn} callback raised {!Sundials.RecoverableFailure} repeatedly. *)
 val solve :
     ('a, 'k) session
@@ -794,7 +789,8 @@ val clear_err_handler_fn : ('a, 'k) session -> unit
 val set_info_file : ('a, 'k) session -> string -> bool -> unit
 
 (** Specifies a custom function for handling informational (non-error) messages.
-    The [error_code] field of {!error_details} is [0] for such messages.
+    The [error_code] field of {!Sundials.error_details} is [0] for
+    such messages.
     This function must not fail: any exceptions are trapped and discarded.
 
     @kinsol <node5#ss:optin_main> KINSetInfoHandlerFn
@@ -911,8 +907,8 @@ exception MaxNewtonStepExceeded
     @kinsol <node5#sss:kinsol> KIN_LINESEARCH_BCFAIL *)
 exception LineSearchBetaConditionFailure
 
-(** The {!prec_solve_fn} callback raised {!Sundials.RecoverableFailure} but
-    the preconditioner is already current.
+(** The {!Spils.prec_solve_fn} callback raised {!Sundials.RecoverableFailure}
+    but the preconditioner is already current.
 
     @kinsol <node5#sss:kinsol> KIN_LINSOLV_NO_RECOVERY *)
 exception LinearSolverNoRecovery
@@ -922,12 +918,12 @@ exception LinearSolverNoRecovery
     @kinsol <node5#sss:kinsol> KIN_LINIT_FAIL *)
 exception LinearSolverInitFailure
 
-(** The {!prec_setup_fn} callback failed unrecoverably.
+(** The {!Spils.prec_setup_fn} callback failed unrecoverably.
 
     @kinsol <node5#sss:kinsol> KIN_LSETUP_FAIL *)
 exception LinearSetupFailure
 
-(** Either {!prec_solve_fn} failed unrecoverably or the linear solver
+(** Either {!Spils.prec_solve_fn} failed unrecoverably or the linear solver
     encountered an error condition.
 
     @kinsol <node5#sss:kinsol> KIN_LSOLVE_FAIL *)

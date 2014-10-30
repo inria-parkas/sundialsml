@@ -66,18 +66,15 @@ module VarId =
     let differential = 1.0
 
     type t = Algebraic | Differential
+
     let of_float x =
       if x = algebraic then Algebraic
       else if x = differential then Differential
       else invalid_arg ("invalid component type: " ^ string_of_float x)
+
     let to_float = function
       | Algebraic -> algebraic
       | Differential -> differential
-
-    let string_of_var_type = function
-      | Algebraic -> "Algebraic"
-      | Differential -> "Differential"
-    let string_of_float x = string_of_var_type (of_float x)
   end
 
 external c_root_init : ('a, 'k) session -> int -> unit
@@ -410,7 +407,7 @@ let init linsolv tol resfn ?varid ?(roots=no_roots) t0 y y' =
   set_tolerances session tol;
   session
 
-let nroots { nroots } = nroots
+let get_num_roots { nroots } = nroots
 
 external c_reinit
     : ('a, 'k) session -> float -> ('a, 'k) Nvector.t
@@ -501,19 +498,19 @@ external get_current_step       : ('a, 'k) session -> float
 external get_current_time       : ('a, 'k) session -> float
     = "c_ida_get_current_time"
 
-let print_integrator_stats s =
+let print_integrator_stats s oc =
   let stats = get_integrator_stats s
   in
-    Printf.printf "num_steps = %d\n"           stats.num_steps;
-    Printf.printf "num_res_evals = %d\n"       stats.num_res_evals;
-    Printf.printf "num_lin_solv_setups = %d\n" stats.num_lin_solv_setups;
-    Printf.printf "num_err_test_fails = %d\n"  stats.num_err_test_fails;
-    Printf.printf "last_order = %d\n"          stats.last_order;
-    Printf.printf "current_order = %d\n"       stats.current_order;
-    Printf.printf "actual_init_step = %e\n"    stats.actual_init_step;
-    Printf.printf "last_step = %e\n"           stats.last_step;
-    Printf.printf "current_step = %e\n"        stats.current_step;
-    Printf.printf "current_time = %e\n"        stats.current_time;
+    Printf.fprintf oc "num_steps = %d\n"           stats.num_steps;
+    Printf.fprintf oc "num_res_evals = %d\n"       stats.num_res_evals;
+    Printf.fprintf oc "num_lin_solv_setups = %d\n" stats.num_lin_solv_setups;
+    Printf.fprintf oc "num_err_test_fails = %d\n"  stats.num_err_test_fails;
+    Printf.fprintf oc "last_order = %d\n"          stats.last_order;
+    Printf.fprintf oc "current_order = %d\n"       stats.current_order;
+    Printf.fprintf oc "actual_init_step = %e\n"    stats.actual_init_step;
+    Printf.fprintf oc "last_step = %e\n"           stats.last_step;
+    Printf.fprintf oc "current_step = %e\n"        stats.current_step;
+    Printf.fprintf oc "current_time = %e\n"        stats.current_time;
 
 external set_error_file : ('a, 'k) session -> string -> bool -> unit
     = "c_ida_set_error_file"
@@ -555,10 +552,10 @@ external set_root_direction'   : ('a, 'k) session -> Sundials.RootDirs.t -> unit
     = "c_ida_set_root_direction"
 
 let set_root_direction s rda =
-  set_root_direction' s (Sundials.RootDirs.copy (nroots s) rda)
+  set_root_direction' s (Sundials.RootDirs.copy (get_num_roots s) rda)
 
 let set_all_root_directions s rd =
-  set_root_direction' s (Sundials.RootDirs.make (nroots s) rd)
+  set_root_direction' s (Sundials.RootDirs.make (get_num_roots s) rd)
 
 external set_no_inactive_root_warn      : ('a, 'k) session -> unit
     = "c_ida_set_no_inactive_root_warn"

@@ -34,8 +34,8 @@ module DenseMatrix :
   sig
     (** An abstract dense matrix. Values of this type are typically passed
         to linear solver callback functions (like {!Cvode.Dls.dense_jac_fn}, 
-        {!Ida.Dls.dense_jac_fn}, and {!Kinsol.dense_jac_fn}), in which case
-        their lifetimes are determined by the underlying library and they
+        {!Ida.Dls.dense_jac_fn}, and {!Kinsol.Dls.dense_jac_fn}), in which
+        case their lifetimes are determined by the underlying library and they
         should only be used within the callback to avoid the
         {{!Invalidated}Invalidated} exception.
 
@@ -288,7 +288,7 @@ module BandMatrix :
   sig
     (** An abstract band matrix. Values of this type are typically passed
         to linear solver callback functions (like {!Cvode.Dls.band_jac_fn}, 
-        {!Ida.Dls.band_jac_fn}, and {!Kinsol.band_jac_fn}), in which case
+        {!Ida.Dls.band_jac_fn}, and {!Kinsol.Dls.band_jac_fn}), in which case
         their lifetimes are determined by the underlying library and they
         should only be used within the callback to avoid the
         {{!Invalidated}Invalidated} exception.

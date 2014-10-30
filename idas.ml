@@ -978,8 +978,8 @@ module Adjoint =
     let get_integrator_stats bs =
       Ida.get_integrator_stats (tosession bs)
 
-    let print_integrator_stats bs =
-      Ida.print_integrator_stats (tosession bs)
+    let print_integrator_stats bs oc =
+      Ida.print_integrator_stats (tosession bs) oc
 
     let get_num_nonlin_solv_iters bs =
       Ida.get_num_nonlin_solv_iters (tosession bs)

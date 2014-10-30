@@ -10,7 +10,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(** A custom nvector based on {!float array}s.
+(** A custom nvector based on float arrays.
 
   @version VERSION()
   @author Timothy Bourke (Inria)

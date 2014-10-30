@@ -39,9 +39,9 @@ into lowercase. For instance, [IdaSetErrHandlerFn], becomes
 
 Constants are replaced by variant types in most cases. They are renamed by
 conversion to {e CamlCase} and the removal of underscores. For instance,
-[PREC_NONE] becomes {!Spils.PrecNone}. Exception names are treated
-similarly, but we have taken the liberty to improve their consistency and to
-make them more self explanatory.
+[PREC_NONE] becomes {{!Spils.preconditioning_type}Spils.PrecNone}.
+Exception names are treated similarly, but we have taken the liberty to
+improve their consistency and to make them more self explanatory.
 For instance, the return codes [CV_FIRST_RHSFUNC_ERR] and
 [IDA_FIRST_RES_FAIL] become, respectively, the exceptions
 {!Cvode.FirstRhsFuncFailure} and {!Ida.FirstResFuncFailure}, and [CV_BAD_IS]
@@ -71,10 +71,10 @@ text.
 Sundials defines an abstract interface for vectors and provides default
 serial and parallel instantiations.
 The OCaml interface defines likewise a generic
-{!Sundials.nvector} type whose type arguments indicate the underlying {e
+{!Nvector.t} type whose type arguments indicate the underlying {e
 data} and {e kind}—one of {!Nvector_serial.kind}, {!Nvector_parallel.kind},
 or {!Nvector_custom.kind}.
-The {!Sundials.unvec} function gives direct access to the underlying data.
+The {!Nvector.unvec} function gives direct access to the underlying data.
 
 The interface to serial nvectors, {!Nvector_serial}, is based on
 {{:http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.html}Bigarrays}.
@@ -94,7 +94,7 @@ to use MPI, as described {{:install}below}.
 Besides these two standard implementations, it is also possible to define
 new nvector implementations through {!Nvector_custom} by providing low-level
 operations on an underlying datatype. A demonstration of this feature on
-{!float array}s is provided in {!Nvector_array}. Custom nvectors suffer two
+float arrays is provided in {!Nvector_array}. Custom nvectors suffer two
 disadvantages compared to the standard nvector implementations. First, each
 low-level operation incurs the cost of a callback into OCaml. Second, of all
 the provided linear solvers, only {!Cvode.Diag} could be used; although

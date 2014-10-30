@@ -32,7 +32,7 @@
       {- {{:#linear}Linear solvers}}
       {- {{:#tols}Tolerances}}
       {- {{:#init}Initialization}}
-      {- {{:#solver}Solving}}
+      {- {{:#solver}Solution}}
       {- {{:#set}Modifying the solver}}
       {- {{:#get}Querying the solver}}
       {- {{:#roots}Additional root finding functions}}
@@ -138,8 +138,8 @@ module Dls :
         @ida <node5#ss:djacFn> IDADlsDenseJacFn *)
     val dense : ?jac:dense_jac_fn -> unit -> serial_linear_solver
 
-    (** A direct linear solver on dense matrices using LAPACK. See {!Dense}.
-        Only available if {!lapack_enabled}.
+    (** A direct linear solver on dense matrices using LAPACK. See {!dense}.
+        Only available if {!Sundials.lapack_enabled}.
 
         @ida <node5#sss:lin_solv_init> IDALapackDense
         @ida <node5#sss:optin_dls> IDADlsSetDenseJacFn
@@ -183,7 +183,7 @@ module Dls :
     val band : ?jac:band_jac_fn -> bandrange -> serial_linear_solver
 
     (** A direct linear solver on banded matrices using LAPACK. See {!band}.
-        Only available if {!lapack_enabled}.
+        Only available if {!Sundials.lapack_enabled}.
 
         @ida <node5#sss:lin_solv_init> IDALapackBand
         @ida <node5#sss:optin_dls> IDADlsSetBandJacFn
@@ -590,7 +590,7 @@ module Alternate :
 (** Functions that set the multiplicative error weights for use in the weighted
     RMS norm. The call [efun y ewt] takes the dependent variable vector [y] and
     fills the error-weight vector [ewt] with positive values or raises
-    {!NonPositiveEwt}. Other exceptions are eventually propagated, but
+    {!Sundials.NonPositiveEwt}. Other exceptions are eventually propagated, but
     should be avoided ([efun] is not allowed to abort the solver). *)
 type 'data error_fun = 'data -> 'data -> unit
 
@@ -607,79 +607,56 @@ val default_tolerances : ('data, 'kind) tolerance
 
 (** {2:init Initialization} *)
 
-(** The DAE's residual function.  Called by the solver like [f t y y' r],
-    where:
-    - [t] is the current value of the independent variable,
-          i.e., the simulation time.
-    - [y] is a vector of dependent-variable values, i.e. y(t).
-    - [y'] is the derivative of [y] with respect to [t], i.e. dy/dt.
-    - [r] is the output vector to fill in with the value of the system
-          residual for the given values of t, y, and y'.
-    The residual function should return normally if successful, raise
-    {!Sundials.RecoverableFailure} if a recoverable error occurred (e.g. [y] has
-    an illegal value), or raise some other exception if a nonrecoverable error
-    occurred.  If a recoverable error occurred, the integrator will attempt to
-    correct and retry.  If a nonrecoverable error occurred, the integrator will
-    halt and propagate the exception to the caller.
+(** Residual functions that define a DAE problem. They are passed four
+ * arguments:
+    - [t], the value of the independent variable, i.e., the simulation time,
+    - [y], a vector of dependent-variable values, i.e., $y(t)$,
+    - [y'], a vector of dependent-variable derivatives, i.e.,
+            {% $\dot{y} = \frac{dy}{dt}$%}, and,
+    - [r] a vector for storing the residual value, {% $F(t, y, \dot{y})$%}.
 
-    {b NB:} [y], [y'], and [r] must no longer be accessed after [f] has
-            returned a result, i.e. if their values are needed outside of
-            the function call, then they must be copied to separate physical
-            structures.
+    Within the function, raising a {!Sundials.RecoverableFailure} exception
+    indicates a recoverable error. Any other exception is treated as an
+    unrecoverable error.
+
+    {warning [y], [y'], and [r] should not be accessed after the function
+             returns.}
 
     @ida <node5#ss:resFn> IDAResFn *)
 type 'a resfn = float -> 'a -> 'a -> 'a -> unit
 
-(** A function called by the solver to calculate the values of root
-    functions (zero-crossing expressions) which are used to detect
-    significant events.  It is passed four arguments [t], [y], [y'],
-    and [gout]:
-    - [t] is the current value of the independent variable,
-          i.e., the simulation time.
-    - [y] is a vector of dependent-variable values, i.e. y(t).
-    - [y'] is the derivative of [y] with respect to [t], i.e. dy/dt.
-    - [gout] is a vector for storing the values of g(t, y, y').
-    Note that [t], [y], [y'] are the same as for {!resfn}.  If the
-    labeled argument ~roots is omitted, then no root finding is
-    performed.  If the root function raises an exception, the
-    integrator will halt immediately and propagate the exception to
-    the caller.
+(** Called by the solver to calculate the values of root functions. These
+    ‘zero-crossings’ are used to detect significant events. The function is
+    passed four arguments:
+    - [t], the value of the independent variable, i.e., the simulation time,
+    - [y], a vector of dependent-variable values, i.e., $y(t)$,
+    - [y'], a vector of dependent-variable derivatives, i.e.,
+            {% $\dot{y} = \frac{dy}{dt}$%}, and,
+    - [gout], a vector for storing the value of {% $g(t, y, \dot{y})$%}.
 
-    {b NB:} [y] and [gout] must no longer be accessed after [g] has returned
-            a result, i.e. if their values are needed outside of the function
-            call, then they must be copied to separate physical structures.
-
-    See also {!init} and {!reinit}.
+    {warning [y], [y'], and [gout] should not be accessed after the function
+             has returned.}
 
     @ida <node5#ss:rootFn> IDARootFn *)
 type 'a rootsfn = float -> 'a -> 'a -> RealArray.t -> unit
 
-(** [init linsolv tol f ~roots:(nroots, g) ~t0:t0 y0 y'0] initializes
-    the IDA solver to solve the DAE f t y y' = 0 and returns a
-    {!session}.
+(** Creates and initializes a session with the solver. The call
+    {[init linsolv tol f ~varid:varid ~roots:(nroots, g) t0 y0 y'0]} has
+    as arguments:
+    - [linsolv], the linear solver to use,
+    - [tol],     the integration tolerances,
+    - [f],       the DAE residual function,
+    - [varid],   classifies variables as algebraic or differential,
+    - [nroots],  the number of root functions,
+    - [g],       the root function ([(nroots, g)] defaults to {!no_roots}),
+    - [t0],      the initial value of the independent variable,
+    - [y0],      a vector of initial values that also determines the number
+                 of equations, and,
+    - [y'0],     the initial values for {% $\dot{y} = \frac{dy}{dt}$%}.
 
-    - [linsolv] is the linear solver to attach to this session,
-    - [tol]     specifies the integration tolerances,
-    - [f]       is the residual function (see below),
-    - [nroots]  specifies the number of root functions (zero-crossings),
-    - [g]       calculates the values of the root functions,
-    - [t0]      is the initial value of the independent variable t, which
-                defaults to 0,
-    - [y0]      is a vector of initial values for the dependent-variable vector
-                [y].  This vector's size determines the number of equations
-                in the session, see {!RealArray.t}, and,
-    - [y'0]     is a vector of initial values for [y'], i.e. the derivative
-                of [y] with respect to t.  This vector's size must match the
-                size of [y0].
-
-    The labeled arguments [roots] and [t0] are both optional and default to
-    {!no_roots} (i.e. no root finding is done) and [0.0], respectively.
-
-    This function calls IDACreate, IDAInit, IDARootInit, an
-    appropriate linear solver function, and one of IDASStolerances,
-    IDASVtolerances, or IDAWFtolerances. It does everything necessary
-    to initialize an IDA session; the {!solve_normal} or
-    {!solve_one_step} functions can be called directly afterward.
+    This function does everything necessary to initialize a session, i.e.,
+    it makes the calls referenced below. The {!solve_normal} and
+    {!solve_one_step} functions may be called directly.
 
     @ida <node5#sss:idainit>       IDACreate/IDAInit
     @ida <node5#ss:idarootinit>    IDARootInit
@@ -687,7 +664,8 @@ type 'a rootsfn = float -> 'a -> 'a -> RealArray.t -> unit
     @ida <node5#sss:idatolerances> IDASStolerances
     @ida <node5#sss:idatolerances> IDASVtolerances
     @ida <node5#sss:idatolerances> IDAWFtolerances
-    @ida <node5#ss:ewtsetFn>       IDAEwtFn *)
+    @ida <node5#ss:ewtsetFn>       IDAEwtFn
+    @ida <node5#sss:idasetid>      IDASetId *)
 val init :
     ('a, 'kind) linear_solver
     -> ('a, 'kind) tolerance
@@ -699,210 +677,88 @@ val init :
     -> ('a, 'kind) Nvector.t
     -> ('a, 'kind) session
 
-(** This is a convenience value for signalling that there are no
-    roots (zero-crossings) to monitor. *)
+(** A convenience value for signalling that there are no roots to monitor. *)
 val no_roots : (int * 'a rootsfn)
 
-(** Return the number of root functions. *)
-val nroots : ('a, 'k) session -> int
+(** {3:calcic Initial Condition Calculation} *)
 
-(** {3 Initial Value Calculation} *)
+(** Symbolic names for constants used when calculating initial values or
+    supressing local error tests. See {!calc_ic_ya_yd'} and
+    {!set_suppress_alg}.
 
-(** Symbolic names for variable type classifications needed to
-    calculate initial values (see {!calc_ic_ya_yd'}) or to suppress
-    local error tests on some variables (see {!suppress_alg}).
-
-    Those functions require you to pass in an nvector populated with
-    magic constants specifying each variable as algebraic or
-    differential.  This module gives symbolic names to those
-    constants, for your convenience.
-
-    Note: variable type classification is called "id" in the C
-    interface, e.g. [IDASetId].
-
-    @ida <node5#sss:idasetid> IDASetId
-    @ida <node5#sss:optin_main> IDASetSuppressAlg *)
+    @ida <node5#sss:idasetid> IDASetId *)
 module VarId :
   sig
-    (** A symbolic name for the magic floating-point constant [0.0]. *)
+    (** The constant [0.0]. *)
     val algebraic : float
-    (** A symbolic name for the magic floating-point constant [1.0]. *)
+
+    (** The constant [1.0]. *)
     val differential : float
 
-    (** An ADT representation of the magic constants specifying
-        variable types, useful for pattern-matching.  *)
+    (** For pattern-matching on constraints. See {!of_float}. *)
     type t =
-    | Algebraic    (** Algebraic variable; residual function must not depend
-                       on this component's derivative.  Corresponds to
-                       numerical value 0.0.  *)
-    | Differential (** Differential variable; residual function can depend on
-                       this component's derivative.  Corresponds to numerical
-                       value 1.0.  *)
+    | Algebraic    (** Residual functions must not depend on the derivatives
+                       of algebraic variables. *)
+    | Differential (** Residual functions may depend on the derivatives of
+                       differential variables. *)
 
-    (** Encode an [Algebraic] / [Differential] into the corresponding
-        magic floating-point constant.  *)
+    (** Map id values to floating-point constants. *)
     val to_float : t -> float
 
-    (** Decode a magic float-point constant into an [Algebraic] /
-        [Differential] specification.  Raises [Invalid_argument] if
-        the given floating point value is not a legal variable type
-        specification.  *)
+    (** Map floating-point constants to id values.
+        
+        @raise Invalid_argument The given value is not a legal id. *)
     val of_float : float -> t
-
-    (** Maps [algebraic -> "Algebraic"] and [differential ->
-        "Differential"].  Raises [Invalid_argument] if the given
-        floating point value is not a legal variable type
-        specification.  *)
-    val string_of_float : float -> string
-
-    (** Returns ["Algebraic"] or ["Differential"].  *)
-    val string_of_var_type : t -> string
   end
 
-(** Specify which variables are algebraic and which variables are
-    differential, needed for {!set_suppress_alg}.  This function must
-    not be called if you already called {!calc_ic_ya_yd'}.
-
-    The SUNDIALS manual is not clear about whether it's safe to change the
-    variable types after you've already set it.
-
-    [set_var_types] corresponds to [IDASetId] in the C interface, and an alias
-    {!set_id} is also available in this binding.  We prefer the more
-    descriptive name {!set_var_types}, however.
+(** Class components of the state vector as either algebraic or differential.
+    These classifications are required by {!calc_ic_ya_yd'} and
+    {!set_suppress_alg}. See also {!VarId}.
 
     @ida <node5#sss:optin_main> IDASetId *)
 val set_id : ('a, 'k) session -> ('a,'k) Nvector.t -> unit
 
-(** Indicate whether or not to ignore algebraic variables in the local
-    error test.  This is set to [false] by default.  Before you can
-    set it to [true], you must specify which variables are algebraic
-    through {!calc_ic_ya_yd'} or {!set_var_types}, but not both.
-
-    Exactly one of these functions should be called, exactly once,
-    before the first call to {!solve_normal}, {!solve_one_step}, or
-    {!calc_ic_ya_yd'}.  Forgetting to do so will cause an
-    {!Ida.IllInput} exception.
-
-    Note: {!set_var_types} is the preferred alias to {!set_id}, which
-    corresponds to [IDASetId] in the C interface.
-
-    In general, suppressing local error tests for algebraic variables
-    is {i discouraged} when solving DAE systems of index 1, whereas it
-    is generally {i encouraged} for systems of index 2 or more.  See
-    pp. 146-147 of the following reference for more on this issue:
-
-    K. E. Brenan, S. L. Campbell, and L. R. Petzold.  Numerical
-    Solution of Initial-Value Problems in Differential-Algebraic
-    Equations.  SIAM, Philadelphia, Pa, 1996.
+(** Indicates whether or not to ignore algebraic variables in the local error
+    test. When ignoring algebraic variables ([true]), a [varid] vector must be
+    specified either in the call or by a prior call to {!init} or {!set_id}.
+    Suppressing local error tests for algebraic variables is {i discouraged}
+    for DAE systems of index 1 and {i encouraged} for systems of index 2 or
+    more. 
 
     @ida <node5#sss:optin_main> IDASetId
     @ida <node5#sss:optin_main> IDASetSuppressAlg *)
 val set_suppress_alg : ('a, 'k) session
                        -> ?varid:('a, 'k) Nvector.t -> bool -> unit
 
-(** [calc_ic_y ida ~y:yvar tout1] corrects the initial values y0 at
-    time t0, using the initial values of the derivatives y'0.  That
-    is, if the {i t0,y0,y'0} that were given to {!init} or {!reinit}
-    does not satisfy {i f(t0,y0,y'0) = 0}, where {i f} is the residual
-    function, then [calc_ic_y] will modify {i y'0} so that this
-    equation holds.  If {i f(t0,y0,y'0) = 0} is already true, a call
-    to [calc_ic_y] is unnecessary.  [calc_ic_y] must not be called
-    after any calls to {!solve_normal} or {!solve_one_step} without a
-    {!reinit} in between.
+(** Computes the initial state vector for certain index-one problems.
+    All components of $y$ are computed, using {% $\dot{y}$%}, to satisfy
+    the constraint {% $F(t_0, y_0, \dot{y}_0) = 0$%}. If given, the
+    [~y] vector is filled with the corrected values. The last argument is
+    the first vale of $t$ at which a solution will be requested.
+    A {!reinit} is required before calling this function after
+    {!solve_normal} or {!solve_one_step}.
 
-    The optional parameter [~y], if given, will receive the corrected
-    {i y} vector.  [tout1] is the first value of {i t} at which a
-    solution will be requested (using {!solve_normal} or
-    {!solve_one_step}). This value is needed here only to determine
-    the direction of integration and rough scale in the independent
-    variable {i t}.
-
-    [calc_ic_y] differs from {!calc_ic_ya_yd'} in that,
-    {!calc_ic_ya_yd'} computes parts of y and y' using parts of y as
-    input, whereas [calc_ic_y] computes all of y using all of y' as
-    input.  Here, y means the vector formed by collecting scalar
-    variables that appear in the mathematical description of the DAE
-    system, and y' is its derivative.  This is not to be confused with
-    the labeled argument whose name is [~y]: y and y' are mathematical
-    objects whereas [~y] is a programming construct.
-
-    IDA's initial value correction works for certain index-one
-    problems including a class of systems of semi-implicit form, and
-    uses Newton iteration combined with a linesearch algorithm.  See
-    Section 2.1 of the IDA User Guide and the following reference for
-    more information:
-
-    P. N. Brown, A. C. Hindmarsh, and L. R. Petzold. Consistent Initial Condition Calculation for Differential-Algebraic Systems. SIAM J. Sci. Comput., 19:1495-1512, 1998.
-
-    @ida <node5#ss:idacalcic> IDACalcIC
-    @ida <node5#sss:optout_iccalc> IDAGetConsistentIC *)
+    @ida <node5#ss:idacalcic> IDACalcIC (IDA_Y_INIT)
+    @ida <node5#sss:optout_iccalc> IDAGetConsistentIC
+    @raise IdNotSet Variable ids have not been set (see {!set_id}). *)
 val calc_ic_y : ('a, 'k) session -> ?y:('a, 'k) Nvector.t -> float -> unit
 
-(** [calc_ic_ya_yd' ida ~y:yvar ~y':y'var vartypes tout1] corrects the
-    initial values y0 and y0' at time t0.  That is, if the {i
-    t0,y0,y'0} that were given to {!init} or {!reinit} does not
-    satisfy {i f(t0,y0,y'0) = 0}, where {i f} is the residual
-    function, then [calc_ic_ya_yd'] will modify parts of {i y0} and {i
-    y'0} so that this equation holds.  If {i f(t0,y0,y'0) = 0} is
-    already true, a call to [calc_ic_ya_yd'] is unnecessary.
-    [calc_ic_ya_yd'] must not be called after any calls to
-    {!solve_normal} or {!solve_one_step} without a {!reinit} in
-    between.
+(** Computes the algebraic components of the initial state and derivative
+    vectors for certain index-one problems.
+    The elements of $y$ and {% $\dot{y}$%} marked as algebraic are computed,
+    using {% $\dot{y}$%}, to satisfy the constraint
+    {% $F(t_0, y_0, \dot{y}_0) = 0$%}.
+    The variable ids must be given in [~varid] or by a prior call to {!init} or
+    {!set_id}.
+    If given, the [~y] and [~y'] vectors are filled with the corrected values.
+    The last argument is the first vale of $t$ at which a solution will be
+    requested. A {!reinit} is required before calling this function after
+    {!solve_normal} or {!solve_one_step}.
 
-    The optional parameters [~y] and [~y'], if given, will receive the
-    corrected vectors.  [tout1] is the first value of t at which a
-    solution will be requested (using {!solve_normal} or
-    {!solve_one_step}), and is needed here only to determine the
-    direction of integration and rough scale in the independent
-    variable t.
-
-    {!calc_ic_y} differs from [calc_ic_ya_yd'] in that,
-    [calc_ic_ya_yd'] computes parts of y and y' using parts of y as
-    input, whereas {!calc_ic_y} computes all of y using all of y' as
-    input.  Here, y means the vector formed by collecting scalar
-    variables that appear in the mathematical description of the DAE
-    system, and y' means its derivative.  These are not to be confused
-    with the labeled arguments whose names are [~y] and [~y']: y and
-    y' are mathematical objects whereas [~y] and [~y'] are programming
-    constructs.
-
-    The non-optional nvector argument, named [vartypes] at the
-    beginning, specifies some components of y as algebraic (i.e. their
-    derivatives do not appear in the DAE) and others as differential
-    (i.e. their derivatives appear in the DAE).  [calc_ic_ya_yd']
-    modifies the algebraic components of y and differential components
-    of y', using the differential components of y as input.  So if we
-    let Ia be the set of indices at which [vartypes] is [Algebraic]
-    and Id be the set of indices at which [vartypes] is
-    [Differential], then y and y' are each partitioned into two
-    sub-vectors (we use OCaml's array-indexing notation to denote
-    subscripting):
-
-      - y  splits into A  = \{ y.(i)  | i in Ia \} and D  = \{ y.(i)  | i in Id \}
-      - y' splits into A' = \{ y'.(i) | i in Ia \} and D' = \{ y'.(i) | i in Id \}
-
-    The residual function must be such that it ignores all values in
-    A'.  [calc_ic_ya_yd'] computes (i.e. modifies) A and D' while
-    treating D as read-only and ignoring A'.
-
-      input:   D
-      output:  A, D'
-      ignored: A'
-
-    Note: [vartypes] is called "id" in the C interface, e.g. [IDASetId].
-
-    [calc_ic_ya_yd'] sets the variable types that {!set_suppress_alg}
-    uses, so you do not need to set it again with {!set_var_types} (or
-    its alias {!set_id}) before calling {!set_suppress_alg}.
-
-    Note: the nvector interface gives no way of checking that the [~y]
-    and [~y'] vectors have the right sizes.  Passing incorrectly sized
-    vectors leads to memory corruption, so beware!  It's a good idea
-    to always reuse the nvectors you gave to {!init} or {!reinit}.
-
-    @ida <node5#ss:idacalcic> IDACalcIC
+    @ida <node5#ss:idacalcic> IDACalcIC (IDA_YA_YDP_INIT)
     @ida <node5#sss:optin_main> IDASetId
-    @ida <node5#sss:optout_iccalc> IDAGetConsistentIC *)
+    @ida <node5#sss:optout_iccalc> IDAGetConsistentIC
+    @raise IdNotSet Variable ids have not been set (see {!set_id}). *)
 val calc_ic_ya_yd' :
   ('a, 'k) session
   -> ?y:('a, 'k) Nvector.t
@@ -911,98 +767,83 @@ val calc_ic_ya_yd' :
   -> float
   -> unit
 
-(** [get_num_backtrack_ops ida] gets the number of backtrack operations done in
-    the linesearch algorithm in {!calc_ic_ya_yd'} or {!calc_ic_y}.
+(** Returns the number of backtrack operations during {!calc_ic_ya_yd'} or
+    {!calc_ic_y}.
 
     @ida <node5#sss:optout_iccalc> IDAGetNumBcktrackOps *)
 val get_num_backtrack_ops : ('a, 'k) session -> int
 
-(** {2:solver Solving} *)
+(** {2:solver Solution} *)
 
-(** Possible values returned when a IDA solver step function succeeds.
-    Failures are indicated by exceptions.
+(** Values returned by the step functions. Failures are indicated by
+    exceptions.
 
     @ida <node5#sss:ida> IDASolve *)
 type solver_result =
-  | Success             (** IDA_SUCCESS *)
-  | RootsFound          (** IDA_ROOT_RETURN *)
-  | StopTimeReached     (** IDA_TSTOP_RETURN *)
+  | Success             (** The solution was advanced. {cconst IDA_SUCCESS} *)
+  | RootsFound          (** A root was found. See {!get_root_info}.
+                            {cconst IDA_ROOT_RETURN} *)
+  | StopTimeReached     (** The stop time was reached. See {!set_stop_time}.
+                            {cconst IDA_TSTOP_RETURN} *)
 
-(** [(tret, r) = solve_normal s tout yout y'out] integrates the DAE
-    over an interval in t.
+(** Integrates a DAE system over an interval. The call
+    [tret, r = solve_normal s tout yout y'out] has as arguments
+    - [s], a solver session,
+    - [tout] the next time at which the solution is desired,
+    - [yout], a vector to store the computed solution, and,
+    - [y'out], a vector to store the computed derivative.
 
-   The arguments are:
-   - [s] a session with the solver.
-   - [tout] the next time at which a computed solution is desired.
-   - [yout] a vector to store the computed solution. The same vector that was
-            passed to {!init} can be (but does not have to be) reused for this
-            argument.
-   - [y'out] a vector to store the computed solution's derivative.
-             The same vector that was passed to {!init} can be (but
-             does not have to be) reused for this argument.
+    It returns [tret], the time reached by the solver, which will be equal to
+    [tout] if no errors occur, and, [r], a {!solver_result}.
 
-   Two values are returned:
-    - [tret] the time reached by the solver, which will be equal to [tout] if
-      no errors occur.
-    - [r] indicates whether roots were found, or whether an optional stop time,
-          set by {!set_stop_time}, was reached; see {!Sundials.solver_result}.
-
-   This routine will throw one of the solver {!exceptions} if an error
-   occurs.
-
-   Note: the nvector interface gives no way of checking that the
-   [yout] and [y'out] vectors have the right sizes.  Passing
-   incorrectly sized vectors leads to memory corruption, so beware!
-   It's a good idea to always reuse the nvectors you gave to {!init}
-   or {!reinit}.
-
-   @ida <node5#sss:idasolve> IDASolve (IDA_NORMAL) *)
+    @ida <node5#sss:idasolve> IDASolve (IDA_NORMAL)
+    @raise IllInput Missing or illegal solver inputs.
+    @raise TooMuchWork The requested time could not be reached in [mxstep] internal steps.
+    @raise TooMuchAccuracy The requested accuracy could not be satisfied.
+    @raise ErrFailure Too many error test failures within a step or at the minimum step size.
+    @raise ConvergenceFailure Too many convergence test failures within a step or at the minimum step size.
+    @raise LinearInitFailure Linear solver initialization failed.
+    @raise LinearSetupFailure Linear solver setup failed unrecoverably.
+    @raise LinearSolveFailure Linear solver solution failed unrecoverably.
+    @raise ConstraintFailure Inequality constraints were violated and recovery is not possible.
+    @raise RepeatedResFuncFailure The residual function repeatedly returned a recoverable error but the solver could not recover.
+    @raise ResFuncFailure The residual function failed unrecoverably.
+    @raise RootFuncFailure Failure in the rootfinding function [g]. *)
 val solve_normal : ('a, 'k) session -> float
                    -> ('a, 'k) Nvector.t -> ('a, 'k) Nvector.t
                    -> float * solver_result
 
-(** This function is identical to {!solve_normal}, except that it
-    returns after one internal solver step.
+(** Like {!solve_normal} but returns after one internal solver step.
 
     @ida <node5#sss:idasolve> IDASolve (IDA_ONE_STEP) *)
 val solve_one_step : ('a, 'k) session -> float
                      -> ('a, 'k) Nvector.t -> ('a, 'k) Nvector.t
                      -> float * solver_result
 
-(**
-  [get_dky s t k dky] computes the [k]th derivative of the function y at time
-  [t], i.e. d(k)y/dt(k)(t). The function requires that tn - hu <= [t] <=
-  tn, where tn denotes the current internal time reached, and hu is the last
-  internal step size successfully used by the solver.
-  The user may request [k] = 0, 1,..., qu, where qu is the current order.
+(** Returns the interpolated solution or derivatives.
+    [get_dky s t k dky] computes the [k]th derivative of the function at time
+    [t], i.e., {% $\frac{d^\mathtt{k}y(\mathtt{t})}{\mathit{dt}^\mathtt{k}}$%},
+    and stores it in [dky]. The arguments must satisfy
+    {% $t_n - h_u \leq \mathtt{t} \leq t_n$%}—where $t_n$
+    denotes {!get_current_time} and $h_u$ denotes {!get_last_step},—
+    and {% $0 \leq \mathtt{k} \leq q_u$%}—where $q_u$ denotes
+    {!get_last_order}.
 
-  This function may only be called after a successful return from either
-  {!solve_normal} or {!solve_one_step}.
+    This function may only be called after a successful return from either
+    {!solve_normal} or {!solve_one_step}.
 
-  Values for the limits may be obtained:
-    - tn = {!get_current_time}
-    - qu = {!get_last_order}
-    - hu = {!get_last_step}
-
-  @ida <node5#sss:optin_root> IDAGetDky
- *)
+    @ida <node5#sss:optin_root> IDAGetDky
+    @raise BadT [t] is not in the interval {% $[t_n - h_u, t_n]$%}.
+    @raise BadK [k] is not in the range 0, 1, ..., $q_u$.
+    @raise BadDky The [dky] argument is invalid. *)
 val get_dky : ('a, 'k) session -> float -> int -> ('a, 'k) Nvector.t -> unit
 
-(** [reinit s ~linsolv:linsolv ~roots:(nroots, g) t0 y0 y'0]
-    reinitializes the solver session [s] with a new time [t0] and new
-    values for the variables [y0].  There are two optional arguments
-    to change the linear solver and the set of root functions.
-
-    The optional argument [linsolv] sets the linear solver.  If
-    omitted, the current linear solver will be kept.  If a session is
-    created with, say, [Dense (Some f)], and then reinitialized with
-    [Dense None], then the linear solver is reset and [f] is removed
-    from the session.  The same goes for all other optional callbacks.
-
-    The optional argument [roots] sets the root functions; see {!init}
-    for what each component does.  {!Ida.no_roots} may be passed in to
-    turn off root finding.  If omitted, the current root functions
-    will be kept.
+(** Reinitializes the solver with new parameters and state values. The
+    values of the independent variable, i.e., the simulation time, the
+    state variables, and the derivatives must be given.
+    If the argument [~linsolv] is not given, the current linear solver
+    remains unchanged. The argument [~roots] works similarly; pass
+    {!no_roots} to disable root finding.
 
     @ida <node5#sss:cvreinit> IDAReInit *)
 val reinit :
@@ -1021,31 +862,26 @@ val reinit :
     @ida <node5#sss:idatolerances> IDASStolerances
     @ida <node5#sss:idatolerances> IDASVtolerances
     @ida <node5#sss:idatolerances> IDAWFtolerances
-    @ida <node5#ss:ewtsetFn> Error weight function *)
+    @ida <node5#ss:ewtsetFn>       IDAEwtFn *)
 val set_tolerances : ('a, 'k) session -> ('a, 'k) tolerance -> unit
 
-(** [set_error_file s fname trunc] opens the file named [fname] and to
-    which all messages from the default error handler are then
-    directed.  If the file already exists it is either trunctated
-    ([trunc] = [true]) or appended to ([trunc] = [false]).
-
-    The error file is closed if set_error_file is called again, or
-    otherwise when the session is garbage collected.
+(** Opens the named file to receive messages from the default error handler.
+    If the file already exists it is either truncated ([true]) or extended
+    ([false]).
+    The file is closed if the function is called again or when the session is
+    garbage collected.
 
     @ida <node5#sss:optin_main> IDASetErrFile *)
 val set_error_file : ('a, 'k) session -> string -> bool -> unit
 
-(** [set_err_handler_fn s efun] specifies a custom function [efun] for
-    handling error messages.  The error handler function must not fail
-    -- any exceptions raised from it will be captured and discarded.
+(** Specifies a custom function for handling error messages.
+    This function must not fail: any exceptions are trapped and discarded.
 
     @ida <node5#sss:optin_main> IDASetErrHandlerFn
     @ida <node5#ss:ehFn> IDAErrHandlerFn *)
-val set_err_handler_fn : ('a, 'k) session -> (Sundials.error_details -> unit)
-                         -> unit
+val set_err_handler_fn : ('a, 'k) session -> (error_details -> unit) -> unit
 
-(** This function restores the default error handling function. It is
-    equivalent to calling IDASetErrHandlerFn with an argument of [NULL].
+(** Restores the default error handling function.
 
     @ida <node5#sss:optin_main> IDASetErrHandlerFn *)
 val clear_err_handler_fn : ('a, 'k) session -> unit
@@ -1055,8 +891,8 @@ val clear_err_handler_fn : ('a, 'k) session -> unit
     @ida <node5#sss:optin_main> IDASetMaxOrd *)
 val set_max_ord : ('a, 'k) session -> int -> unit
 
-(** Specifies the maximum number of steps to be taken by the solver in
-    its attempt to reach the next output time.
+(** Specifies the maximum number of steps taken in attempting to reach
+    a given output time.
 
     @ida <node5#sss:optin_main> IDASetMaxNumSteps *)
 val set_max_num_steps : ('a, 'k) session -> int -> unit
@@ -1071,27 +907,26 @@ val set_init_step : ('a, 'k) session -> float -> unit
     @ida <node5#sss:optin_main> IDASetMaxStep *)
 val set_max_step : ('a, 'k) session -> float -> unit
 
-(** Specifies the value of the independent variable t past which the
-    solution is not to proceed.  The default, if this routine is not
-    called, is that no stop time is imposed.
+(** Limits the value of the independent variable [t] when solving.
+    By default no stop time is imposed.
 
     @ida <node5#sss:optin_main> IDASetStopTime *)
 val set_stop_time : ('a, 'k) session -> float -> unit
 
-(** Specifies the maximum number of error test failures permitted in
-    attempting one step.
+(** Specifies the maximum number of error test failures permitted in attempting
+    one step.
 
     @ida <node5#sss:optin_main> IDASetMaxErrTestFails *)
 val set_max_err_test_fails : ('a, 'k) session -> int -> unit
 
-(** Specifies the maximum number of nonlinear solver iterations
-    permitted per step.
+(** Specifies the maximum number of nonlinear solver iterations permitted per
+    step.
 
     @ida <node5#sss:optin_main> IDASetMaxNonlinIters *)
 val set_max_nonlin_iters : ('a, 'k) session -> int -> unit
 
-(** Specifies the maximum number of nonlinear solver convergence
-    failures permitted during one step.
+(** Specifies the maximum number of nonlinear solver convergence failures
+    permitted during one step.
 
     @ida <node5#sss:optin_main> IDASetMaxConvFails *)
 val set_max_conv_fails : ('a, 'k) session -> int -> unit
@@ -1102,51 +937,46 @@ val set_max_conv_fails : ('a, 'k) session -> int -> unit
     @ida <node3#ss:ivp_sol> IVP Solution *)
 val set_nonlin_conv_coef : ('a, 'k) session -> float -> unit
 
-(** Set inequality constraints on variables.  See {!Constraint}.
+(** Specifies a vector defining inequality constraints for each
+    component of the solution vector [u].  See {!Sundials.Constraint}.
 
     @ida <node5#sss:optin_main> IDASetConstraints *)
 val set_constraints : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
 
 (** {2:get Querying the solver (optional output functions)} *)
 
-(** Returns the real and integer workspace sizes.
+(** Returns the sizes of the real and integer workspaces.
 
     @ida <node5#sss:optout_main> IDAGetWorkSpace
     @return ([real_size], [integer_size]) *)
 val get_work_space          : ('a, 'k) session -> int * int
 
-(** Returns the cumulative number of internal steps taken by the
-    solver.
+(** Returns the cumulative number of internal solver steps.
 
     @ida <node5#sss:optout_main> IDAGetNumSteps *)
 val get_num_steps           : ('a, 'k) session -> int
 
-(** Returns the number of calls to the user's right-hand side
-    function.
+(** Returns the number of calls to the residual function.
 
     @ida <node5#sss:optout_main> IDAGetNumResEvals *)
 val get_num_res_evals       : ('a, 'k) session -> int
 
-(** Returns the number of calls made to the linear solver's setup
-    function.
+(** Returns the number of calls made to the linear solver's setup function.
 
     @ida <node5#sss:optout_main> IDAGetNumLinSolvSetups *)
 val get_num_lin_solv_setups : ('a, 'k) session -> int
 
-(** Returns the number of local error test failures that have
-    occurred.
+(** Returns the number of local error test failures that have occurred.
 
     @ida <node5#sss:optout_main> IDAGetNumErrTestFails *)
 val get_num_err_test_fails  : ('a, 'k) session -> int
 
-(** Returns the integration method order used during the last internal
-    step.
+(** Returns the integration method order used during the last internal step.
 
     @ida <node5#sss:optout_main> IDAGetLastOrder *)
 val get_last_order          : ('a, 'k) session -> int
 
-(** Returns the integration method order to be used on the next
-    internal step.
+(** Returns the integration method order to be used on the next internal step.
 
     @ida <node5#sss:optout_main> IDAGetCurrentOrder *)
 val get_current_order       : ('a, 'k) session -> int
@@ -1156,14 +986,12 @@ val get_current_order       : ('a, 'k) session -> int
     @ida <node5#sss:optout_main> IDAGetLastStep *)
 val get_last_step           : ('a, 'k) session -> float
 
-(** Returns the integration step size to be attempted on the next
-    internal step.
+(** Returns the integration step size to be attempted on the next internal step.
 
     @ida <node5#sss:optout_main> IDAGetCurrentStep *)
 val get_current_step        : ('a, 'k) session -> float
 
-(** Returns the the value of the integration step size used on the
-    first step.
+(** Returns the the value of the integration step size used on the first step.
 
     @ida <node5#sss:optout_main> IDAGetActualInitStep *)
 val get_actual_init_step    : ('a, 'k) session -> float
@@ -1173,21 +1001,8 @@ val get_actual_init_step    : ('a, 'k) session -> float
     @ida <node5#sss:optout_main> IDAGetCurrentTime *)
 val get_current_time        : ('a, 'k) session -> float
 
-(* IDAGetNumStabLimOrderReds appears in the sundials 2.5.0 manual on
-   p.52 but there's no such function in the implementation.  It's
-   probably a leftover from earlier versions or something.
-
-(** Returns the number of order reductions dictated by the BDF
-    stability limit detection algorithm.
-
-    @ida <node5#sss:optout_main> IDAGetNumStabLimOrderReds
-    @ida <node3#s:bdf_stab> BDF stability limit detection *)
-val get_num_stab_lim_order_reds : session -> int
-*)
-
-(** Returns a suggested factor by which the user's tolerances should
-    be scaled when too much accuracy has been requested for some
-    internal step.
+(** Returns a suggested factor by which the user's tolerances should be scaled
+    when too much accuracy has been requested for some internal step.
 
     @ida <node5#sss:optout_main> IDAGetTolScaleFactor *)
 val get_tol_scale_factor : ('a, 'k) session -> float
@@ -1203,20 +1018,27 @@ val get_err_weights : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
     @ida <node5#sss:optout_main> IDAGetEstLocalErrors *)
 val get_est_local_errors : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
 
-(** Aggregated integrator statistics.
- *
-    @ida <node5#sss:optout_main> IDAGetIntegratorStats *)
 type integrator_stats = {
     num_steps : int;
+      (** Cumulative number of internal solver steps. *)
     num_res_evals : int;
+      (** Number of calls to the residual function. *)
     num_lin_solv_setups : int;
+      (** Number of setups calls to the linear solver. *)
     num_err_test_fails : int;
+      (** Number of local error test failures. *)
     last_order : int;
+      (** Integration method order used in the last internal step. *)
     current_order : int;
+      (** Integration method order to be used in the next internal step. *)
     actual_init_step : float;
+      (** Integration step sized used on the first step. *)
     last_step : float;
+      (** Integration step size of the last internal step. *)
     current_step : float;
+      (** Integration step size to attempt on the next internal step. *)
     current_time : float
+      (** Current internal time reached by the solver. *)
   }
 
 (** Returns the integrator statistics as a group.
@@ -1224,21 +1046,18 @@ type integrator_stats = {
     @ida <node5#sss:optout_main> IDAGetIntegratorStats *)
 val get_integrator_stats    : ('a, 'k) session -> integrator_stats
 
-(** Convenience function that calls get_integrator_stats and prints
-    the results to stdout.
+(** Prints the integrator statistics on the given channel.
 
     @ida <node5#sss:optout_main> IDAGetIntegratorStats *)
-val print_integrator_stats  : ('a, 'k) session -> unit
+val print_integrator_stats  : ('a, 'k) session -> out_channel -> unit
 
 
-(** Returns the number of nonlinear (functional or Newton) iterations
-    performed.
+(** Returns the number of nonlinear (functional or Newton) iterations performed.
 
     @ida <node5#sss:optout_main> IDAGetNumNonlinSolvIters *)
 val get_num_nonlin_solv_iters : ('a, 'k) session -> int
 
-(** Returns the number of nonlinear convergence failures that have
-    occurred.
+(** Returns the number of nonlinear convergence failures that have occurred.
 
     @ida <node5#sss:optout_main> IDAGetNumNonlinSolvConvFails *)
 val get_num_nonlin_solv_conv_fails : ('a, 'k) session -> int
@@ -1250,36 +1069,36 @@ val get_num_nonlin_solv_conv_fails : ('a, 'k) session -> int
     @ida <node5#sss:optout_main> IDAGetNonlinSolvStats *)
 val get_nonlin_solv_stats : ('a, 'k) session -> int *int
 
-(** {2:roots Additional root finding functions} *)
+(** {2:roots Additional root-finding functions} *)
 
-(** [set_root_direction s dir] specifies the direction of
-    zero-crossings to be located and returned. [dir] may contain one
-    entry of type {!Ida.root_direction} for each root function.
+(** [set_root_direction s dir] specifies the direction of zero-crossings to be
+    located and returned. [dir] may contain one entry for each root function.
 
     @ida <node5#sss:optin_root> IDASetRootDirection *)
-val set_root_direction : ('a, 'k) session -> Sundials.RootDirs.d array -> unit
+val set_root_direction : ('a, 'k) session -> RootDirs.d array -> unit
 
-(** Like {!set_root_direction} but specifies a single direction of
-    type {!Ida.root_direction} for all root functions.
+(** Like {!set_root_direction} but specifies a single direction for all root
+    functions.
 
-  @ida <node5#sss:optin_root> IDASetRootDirection *)
-val set_all_root_directions : ('a, 'k) session -> Sundials.RootDirs.d -> unit
+    @ida <node5#sss:optin_root> IDASetRootDirection *)
+val set_all_root_directions : ('a, 'k) session -> RootDirs.d -> unit
 
-(**
-  Disables issuing a warning if some root function appears to be identically
-  zero at the beginning of the integration.
+(** Disables issuing a warning if some root function appears to be identically
+    zero at the beginning of the integration.
 
-  @ida <node5#sss:optin_root> IDASetNoInactiveRootWarn *)
+    @ida <node5#sss:optin_root> IDASetNoInactiveRootWarn *)
 val set_no_inactive_root_warn : ('a, 'k) session -> unit
 
-(**
-  Fills an array showing which functions were found to have a root.
+(** Returns the number of root functions. *)
+val get_num_roots : ('a, 'k) session -> int
 
-  @ida <node5#sss:optout_root> IDAGetRootInfo *)
-val get_root_info : ('a, 'k) session -> Sundials.Roots.t -> unit
+(** Fills an array showing which functions were found to have a root.
 
-(** Returns the cumulative number of calls made to the user-supplied
-    root function g.
+    @ida <node5#sss:optout_root> IDAGetRootInfo *)
+val get_root_info : ('a, 'k) session -> Roots.t -> unit
+
+(** Returns the cumulative number of calls made to the user-supplied root
+    function g.
 
     @ida <node5#sss:optout_root> IDAGetNumGEvals *)
 val get_num_g_evals : ('a, 'k) session -> int
@@ -1305,15 +1124,13 @@ exception TooMuchWork
     @ida <node5#sss:idasolve> IDA_TOO_MUCH_ACC *)
 exception TooMuchAccuracy
 
-(** Too many error test failures within a step or at the minimum step size.
-    See {!set_max_err_test_fails} and {!set_min_step}.
+(** Too many error test failures within a step. See {!set_max_err_test_fails}.
 
     @ida <node5#sss:idasolve> IDA_ERR_FAIL *)
 exception ErrFailure                
 
-(** Too many convergence test failures within a step or at the minimum step
-    size, or Newton convergence failed.
-    See {!set_max_conv_fails} and {!set_min_step}.
+(** Too many convergence test failures within a step,
+    or Newton convergence failed. See {!set_max_conv_fails}.
 
     @ida <node5#sss:idasolve> IDA_CONV_FAIL *)
 exception ConvergenceFailure        

@@ -1756,7 +1756,7 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
         @idas <node5#sss:optout_main> IDAGetIntegratorStats
         @idas <node7#ss:optional_output_b> IDAGetAdjIDABmem
      *)
-    val print_integrator_stats : ('a, 'b) bsession -> unit
+    val print_integrator_stats : ('a, 'b) bsession -> out_channel -> unit
 
     (** Returns the number of nonlinear (functional or Newton) iterations
         performed.
