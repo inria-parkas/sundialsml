@@ -22,14 +22,15 @@ let add_fwdsensext s =
   | NoSensExt ->
       s.sensext <- FwdSensExt {
         num_sensitivities = 0;
-        sensarray1      = c_alloc_nvector_array 0;
-        sensarray2      = c_alloc_nvector_array 0;
-        quadrhsfn       = dummy_quadrhsfn;
-        senspvals       = None;
-        sensrhsfn       = dummy_sensrhsfn;
-        sensrhsfn1      = dummy_sensrhsfn1;
-        quadsensrhsfn   = dummy_quadsensrhsfn;
-        bsessions       = [];
+        sensarray1        = c_alloc_nvector_array 0;
+        sensarray2        = c_alloc_nvector_array 0;
+        quadrhsfn         = dummy_quadrhsfn;
+        checkquadvec      = (fun _ -> raise Nvector.IncompatibleNvector);
+        senspvals         = None;
+        sensrhsfn         = dummy_sensrhsfn;
+        sensrhsfn1        = dummy_sensrhsfn1;
+        quadsensrhsfn     = dummy_quadsensrhsfn;
+        bsessions         = [];
       }
 
 let num_sensitivities s =
@@ -60,16 +61,24 @@ module Quadrature =
       add_fwdsensext s;
       let se = fwdsensext s in
       se.quadrhsfn <- f;
+      se.checkquadvec <- Nvector.check v0;
       c_quad_init s v0
 
-    external reinit : ('a, 'k) session -> ('a, 'k) nvector -> unit
+    external c_reinit : ('a, 'k) session -> ('a, 'k) nvector -> unit
       = "c_cvodes_quad_reinit"
+
+    let reinit s v0 =
+      let se = fwdsensext s in
+      se.checkquadvec v0;
+      c_reinit s v0
 
     external set_err_con    : ('a, 'k) session -> bool -> unit
         = "c_cvodes_quad_set_err_con"
+
     external sv_tolerances
         : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
         = "c_cvodes_quad_sv_tolerances"
+
     external ss_tolerances  : ('a, 'k) session -> float -> float -> unit
         = "c_cvodes_quad_ss_tolerances"
 
@@ -79,19 +88,31 @@ module Quadrature =
       | SVtolerances of float * ('a, 'k) nvector
 
     let set_tolerances s tol =
+      let se = fwdsensext s in
       match tol with
       | NoStepSizeControl -> set_err_con s false
       | SStolerances (rel, abs) -> (ss_tolerances s rel abs;
                                     set_err_con s true)
-      | SVtolerances (rel, abs) -> (sv_tolerances s rel abs;
+      | SVtolerances (rel, abs) -> (se.checkquadvec abs;
+                                    sv_tolerances s rel abs;
                                     set_err_con s true)
 
-    external get : ('a, 'k) session -> ('a, 'k) nvector -> float
+    external c_get : ('a, 'k) session -> ('a, 'k) nvector -> float
         = "c_cvodes_quad_get"
 
-    external get_dky
+    let get s v =
+      let se = fwdsensext s in
+      se.checkquadvec v;
+      c_get s v
+
+    external c_get_dky
         : ('a, 'k) session -> float -> int -> ('a, 'k) nvector -> unit
         = "c_cvodes_quad_get_dky"
+
+    let get_dky s t k dky =
+      let se = fwdsensext s in
+      se.checkquadvec dky;
+      c_get_dky s t k dky
 
     external get_num_rhs_evals       : ('a, 'k) session -> int
         = "c_cvodes_quad_get_num_rhs_evals"
@@ -99,8 +120,13 @@ module Quadrature =
     external get_num_err_test_fails  : ('a, 'k) session -> int
         = "c_cvodes_quad_get_num_err_test_fails"
 
-    external get_err_weights : ('a, 'k) session -> ('a, 'k) nvector -> unit
+    external c_get_err_weights : ('a, 'k) session -> ('a, 'k) nvector -> unit
         = "c_cvodes_quad_get_err_weights"
+
+    let get_err_weights s v =
+      let se = fwdsensext s in
+      se.checkquadvec v;
+      c_get_err_weights s v
 
     external get_stats : ('a, 'k) session -> int * int
         = "c_cvodes_quad_get_stats"

@@ -361,7 +361,8 @@ and ('a, 'kind) sensext =
 
 and ('a, 'kind) fsensext = {
   (* Quadrature *)
-  mutable quadrhsfn       : 'a QuadratureTypes.quadrhsfn;
+  mutable quadrhsfn         : 'a QuadratureTypes.quadrhsfn;
+  mutable checkquadvec      : (('a, 'kind) Nvector.t -> unit);
 
   (* Sensitivity *)
   mutable num_sensitivities : int;
