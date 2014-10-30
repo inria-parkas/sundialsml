@@ -419,7 +419,7 @@ external c_set_constraints : ('a, 'k) session -> ('a, 'k) nvector -> unit
     = "c_kinsol_set_constraints"
 
 let set_constraints s cc =
-  s.checkfn cc;
+  s.checkvec cc;
   c_set_constraints s cc
 
 let set_linear_solver s lin_solv = lin_solv s None
@@ -461,7 +461,7 @@ let session_finalize s =
   c_session_finalize s
 
 let init lsolver f u0 =
-  let checkfn = Nvector.check u0 in
+  let checkvec = Nvector.check u0 in
   let weakref = Weak.create 1 in
   let kin_mem, backref, err_file, info_file = c_init weakref u0
   in
@@ -470,7 +470,7 @@ let init lsolver f u0 =
           backref      = backref;
           err_file     = err_file;
           info_file    = info_file;
-          checkfn      = checkfn;
+          checkvec     = checkvec;
 
           exn_temp     = None;
 
@@ -497,9 +497,9 @@ external c_solve : ('a, 'k) session -> ('a, 'k) nvector -> bool -> ('a, 'k) nvec
     = "c_kinsol_solve"
 
 let solve s u linesearch u_scale f_scale =
-  s.checkfn u;
-  s.checkfn u_scale;
-  s.checkfn f_scale;
+  s.checkvec u;
+  s.checkvec u_scale;
+  s.checkvec f_scale;
   c_solve s u linesearch u_scale f_scale
 
 (* Callbacks *)

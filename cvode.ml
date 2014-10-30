@@ -422,7 +422,7 @@ let default_tolerances = SStolerances (1.0e-4, 1.0e-8)
 let set_tolerances s tol =
   match tol with
   | SStolerances (rel, abs) -> ss_tolerances s rel abs
-  | SVtolerances (rel, abs) -> (s.checkfn abs; sv_tolerances s rel abs)
+  | SVtolerances (rel, abs) -> (s.checkvec abs; sv_tolerances s rel abs)
   | WFtolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
 
 external c_session_finalize : ('a, 'kind) session -> unit
@@ -439,7 +439,7 @@ external c_init
 
 let init lmm iter tol f ?(roots=no_roots) t0 y0 =
   let (nroots, roots) = roots in
-  let checkfn = Nvector.check y0 in
+  let checkvec = Nvector.check y0 in
   if nroots < 0 then
     raise (Invalid_argument "number of root functions is negative");
   let weakref = Weak.create 1 in
@@ -451,7 +451,7 @@ let init lmm iter tol f ?(roots=no_roots) t0 y0 =
           backref      = backref;
           nroots       = nroots;
           err_file     = err_file;
-          checkfn      = checkfn;
+          checkvec     = checkvec;
 
           exn_temp     = None;
 
@@ -481,7 +481,7 @@ external c_reinit
     = "c_cvode_reinit"
 
 let reinit session ?iter_type ?roots t0 y0 =
-  session.checkfn y0;
+  session.checkvec y0;
   Dls.invalidate_callback session;
   c_reinit session t0 y0;
   (match iter_type with
@@ -504,7 +504,7 @@ external c_solve_normal : ('a, 'k) session -> float -> ('a, 'k) nvector
     = "c_cvode_solve_normal"
 
 let solve_normal s t y =
-  s.checkfn y;
+  s.checkvec y;
   c_solve_normal s t y
 
 external c_solve_one_step : ('a, 'k) session -> float -> ('a, 'k) nvector
@@ -512,7 +512,7 @@ external c_solve_one_step : ('a, 'k) session -> float -> ('a, 'k) nvector
     = "c_cvode_solve_one_step"
 
 let solve_one_step s t y =
-  s.checkfn y;
+  s.checkvec y;
   c_solve_one_step s t y
 
 external c_get_dky
@@ -520,7 +520,7 @@ external c_get_dky
     = "c_cvode_get_dky"
 
 let get_dky s t k y =
-  s.checkfn y;
+  s.checkvec y;
   c_get_dky s t k y
 
 external get_integrator_stats : ('a, 'k) session -> integrator_stats
@@ -637,14 +637,14 @@ external c_get_err_weights : ('a, 'k) session -> ('a, 'k) nvector -> unit
     = "c_cvode_get_err_weights"
 
 let get_err_weights s ew =
-  s.checkfn ew;
+  s.checkvec ew;
   c_get_err_weights s ew
 
 external c_get_est_local_errors : ('a, 'k) session -> ('a, 'k) nvector -> unit
     = "c_cvode_get_est_local_errors"
 
 let get_est_local_errors s ew =
-  s.checkfn ew;
+  s.checkvec ew;
   c_get_est_local_errors s ew
 
 external get_num_nonlin_solv_iters      : ('a, 'k) session -> int

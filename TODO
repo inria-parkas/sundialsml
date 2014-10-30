@@ -51,6 +51,7 @@ TODO
    Generated text and pdf?
    Automatically check links?
    Break long function types into lines?
+   Fix the skeleton programs.
 
    To explain:
    - Check the various links (@cvode, @cvodes, @ida, @idas, etc.)

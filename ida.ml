@@ -344,14 +344,14 @@ let default_tolerances = SStolerances (1.0e-4, 1.0e-8)
 let set_tolerances s tol =
   match tol with
   | SStolerances (rel, abs) -> ss_tolerances s rel abs
-  | SVtolerances (rel, abs) -> (s.checkfn abs; sv_tolerances s rel abs)
+  | SVtolerances (rel, abs) -> (s.checkvec abs; sv_tolerances s rel abs)
   | WFtolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
 
 external c_set_id : ('a,'k) session -> ('a,'k) Nvector.t -> unit
   = "c_ida_set_id"
 
 let set_id s id =
-  s.checkfn id;
+  s.checkvec id;
   c_set_id s id;
   s.id_set <- true
 
@@ -369,8 +369,8 @@ external c_init : ('a, 'k) session Weak.t -> float
 
 let init linsolv tol resfn ?varid ?(roots=no_roots) t0 y y' =
   let (nroots, rootsfn) = roots in
-  let checkfn = Nvector.check y in
-  checkfn y';
+  let checkvec = Nvector.check y in
+  checkvec y';
   if nroots < 0 then
     raise (Invalid_argument "number of root functions is negative");
   (* FIXME: can we check y and y' have the same length, at least for
@@ -383,7 +383,7 @@ let init linsolv tol resfn ?varid ?(roots=no_roots) t0 y y' =
                   backref    = backref;
                   nroots     = nroots;
                   err_file   = err_file;
-                  checkfn    = checkfn;
+                  checkvec   = checkvec;
                   exn_temp   = None;
                   id_set     = false;
                   resfn      = resfn;
@@ -415,8 +415,8 @@ external c_reinit
     = "c_ida_reinit"
 
 let reinit session ?linsolv ?roots t0 y0 y'0 =
-  session.checkfn y0;
-  session.checkfn y'0;
+  session.checkvec y0;
+  session.checkvec y'0;
   Dls.invalidate_callback session;
   c_reinit session t0 y0 y'0;
   (match linsolv with
@@ -440,8 +440,8 @@ external c_solve_normal : ('a, 'k) session -> float
     = "c_ida_solve_normal"
 
 let solve_normal s t y yp =
-  s.checkfn y;
-  s.checkfn yp;
+  s.checkvec y;
+  s.checkvec yp;
   c_solve_normal s t y yp
 
 external c_solve_one_step : ('a, 'k) session -> float
@@ -450,8 +450,8 @@ external c_solve_one_step : ('a, 'k) session -> float
     = "c_ida_solve_one_step"
 
 let solve_one_step s t y yp =
-  s.checkfn y;
-  s.checkfn yp;
+  s.checkvec y;
+  s.checkvec yp;
   c_solve_one_step s t y yp
 
 external c_get_dky
@@ -459,7 +459,7 @@ external c_get_dky
     = "c_ida_get_dky"
 
 let get_dky s t k y =
-  s.checkfn y;
+  s.checkvec y;
   c_get_dky s t k y
 
 external get_integrator_stats : ('a, 'k) session -> integrator_stats
@@ -574,14 +574,14 @@ external c_get_err_weights : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
     = "c_ida_get_err_weights"
 
 let get_err_weights s ew =
-  s.checkfn ew;
+  s.checkvec ew;
   c_get_err_weights s ew
 
 external c_get_est_local_errors : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
     = "c_ida_get_est_local_errors"
 
 let get_est_local_errors s ew =
-  s.checkfn ew;
+  s.checkvec ew;
   c_get_est_local_errors s ew
 
 external get_num_nonlin_solv_iters      : ('a, 'k) session -> int
@@ -600,7 +600,7 @@ external c_set_constraints : ('a,'k) session -> ('a,'k) Nvector.t -> unit
   = "c_ida_set_constraints"
 
 let set_constraints s nv =
-  s.checkfn nv;
+  s.checkvec nv;
   c_set_constraints s nv
 
 external c_set_suppress_alg : ('a,'k) session -> bool -> unit
@@ -620,7 +620,7 @@ external c_calc_ic_y : ('a,'k) session -> ('a,'k) Nvector.t option
   = "c_ida_calc_ic_y"
 
 let calc_ic_y session ?y tout1 =
-  (match y with None -> () | Some x -> session.checkfn x);
+  (match y with None -> () | Some x -> session.checkvec x);
   c_calc_ic_y session y tout1
 
 external c_calc_ic_ya_yd' :
@@ -629,8 +629,8 @@ external c_calc_ic_ya_yd' :
   = "c_ida_calc_ic_ya_ydp"
 
 let calc_ic_ya_yd' session ?y ?y' ?varid tout1 =
-  (match y with None -> () | Some x -> session.checkfn x);
-  (match y' with None -> () | Some x -> session.checkfn x);
+  (match y with None -> () | Some x -> session.checkvec x);
+  (match y' with None -> () | Some x -> session.checkvec x);
   (match varid with
    | None -> if not session.id_set then raise IdNotSet
    | Some x -> set_id session x);

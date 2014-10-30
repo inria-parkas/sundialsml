@@ -321,7 +321,7 @@ type ('a, 'kind) session = {
   backref    : c_weak_ref;
   nroots     : int;
   err_file   : cvode_file;
-  checkfn    : (('a, 'kind) Nvector.t -> unit);
+  checkvec   : (('a, 'kind) Nvector.t -> unit);
 
   mutable exn_temp     : exn option;
 
