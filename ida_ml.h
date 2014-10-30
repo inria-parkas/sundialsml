@@ -161,7 +161,6 @@ enum ida_exn_index {
 
     IDA_EXN_BadK,
     IDA_EXN_BadT,
-    IDA_EXN_BadDky,
     IDA_EXN_SET_SIZE,
 };
 

@@ -36,7 +36,6 @@ exception RootFuncFailure
 (* get_dky exceptions *)
 exception BadK
 exception BadT
-exception BadDky
 
 let no_roots = (0, dummy_rootsfn)
 
@@ -705,5 +704,4 @@ let _ =
       RootFuncFailure;
       BadK;
       BadT;
-      BadDky;
     |]

@@ -974,9 +974,6 @@ void cvode_ml_check_flag(const char *call, int flag)
 	case CV_BAD_T:
 	    caml_raise_constant(CVODE_EXN(BadT));
 
-	case CV_BAD_DKY:
-	    caml_raise_constant(CVODE_EXN(BadDky));
-
 	default:
 	    /* e.g. CVDIAG_MEM_NULL, CVDIAG_ILL_INPUT, CVDIAG_MEM_FAIL */
 	    snprintf(exmsg, MAX_ERRMSG_LEN, "%s: %s", call,

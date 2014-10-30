@@ -1425,9 +1425,6 @@ void cvodes_ml_check_flag(const char *call, int flag)
 	case CV_BAD_T:
 	    caml_raise_constant(CVODE_EXN(BadT));
 
-	case CV_BAD_DKY:
-	    caml_raise_constant(CVODE_EXN(BadDky));
-
 	case CV_TOO_CLOSE:
 	    caml_raise_constant(CVODE_EXN(TooClose));
 

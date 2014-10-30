@@ -834,8 +834,7 @@ val solve_one_step : ('a, 'k) session -> float
 
     @ida <node5#sss:optin_root> IDAGetDky
     @raise BadT [t] is not in the interval {% $[t_n - h_u, t_n]$%}.
-    @raise BadK [k] is not in the range 0, 1, ..., $q_u$.
-    @raise BadDky The [dky] argument is invalid. *)
+    @raise BadK [k] is not in the range 0, 1, ..., $q_u$. *)
 val get_dky : ('a, 'k) session -> float -> int -> ('a, 'k) Nvector.t -> unit
 
 (** Reinitializes the solver with new parameters and state values. The
@@ -1202,11 +1201,6 @@ exception BadK
 
     @ida <node5#ss:optional_dky> IDAGetDky (IDA_BAD_T) *)
 exception BadT
-
-(** Raised by {!get_dky} on an invalid derivative vector.
-
-    @ida <node5#ss:optional_dky> IDAGetDky (IDA_BAD_DKY) *)
-exception BadDky
 
 (** Variable ids are required but not set. See {!set_id}. *)
 exception IdNotSet

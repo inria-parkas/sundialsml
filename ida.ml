@@ -40,7 +40,6 @@ exception BadEwt
 (* get_dky exceptions *)
 exception BadK
 exception BadT
-exception BadDky
 
 (* SetId exceptions *)
 exception IdNotSet
@@ -685,5 +684,4 @@ let _ =
 
       BadK;
       BadT;
-      BadDky;
     |]

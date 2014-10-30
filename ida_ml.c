@@ -1010,9 +1010,6 @@ void ida_ml_check_flag(const char *call, int flag)
     case IDA_BAD_T:
 	caml_raise_constant(IDA_EXN(BadT));
 
-    case IDA_BAD_DKY:
-	caml_raise_constant(IDA_EXN(BadDky));
-
     default:
 	/* e.g. IDA_MEM_NULL, IDA_MEM_FAIL */
 	snprintf(exmsg, MAX_ERRMSG_LEN, "%s: %s", call,

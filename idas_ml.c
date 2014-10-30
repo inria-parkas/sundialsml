@@ -175,9 +175,6 @@ void idas_ml_check_flag(const char *call, int flag)
     case IDA_BAD_T:
 	caml_raise_constant(IDA_EXN(BadT));
 
-    case IDA_BAD_DKY:
-	caml_raise_constant(IDA_EXN(BadDky));
-
     case IDA_NO_QUAD:
 	caml_raise_constant(IDAS_EXN(QuadNotInitialized));
 

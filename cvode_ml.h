@@ -294,7 +294,6 @@ enum cvode_exn_index {
     CVODE_EXN_RootFuncFailure,
     CVODE_EXN_BadK,
     CVODE_EXN_BadT,
-    CVODE_EXN_BadDky,
     CVODE_EXN_SET_SIZE
 };
 
