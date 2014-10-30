@@ -419,8 +419,8 @@ let main () =
                     ()))
               func cc in
   Kinsol.set_constraints kmem (Nvector_serial.make neq two);
-  Kinsol.set_func_norm_tol kmem (Some fnormtol);
-  Kinsol.set_scaled_step_tol kmem (Some scsteptol);
+  Kinsol.set_func_norm_tol kmem fnormtol;
+  Kinsol.set_scaled_step_tol kmem scsteptol;
 
   (* Print out the problem size, solution parameters, initial guess. *)
   print_header globalstrategy maxl maxlrst fnormtol scsteptol;

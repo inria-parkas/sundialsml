@@ -624,8 +624,8 @@ let main () =
                    (func_local data)))
               (func data) cc in
   Kinsol.set_constraints kmem (Nvector.make local_N neq comm 0.0);
-  Kinsol.set_func_norm_tol kmem (Some fnormtol);
-  Kinsol.set_scaled_step_tol kmem (Some scsteptol);
+  Kinsol.set_func_norm_tol kmem fnormtol;
+  Kinsol.set_scaled_step_tol kmem scsteptol;
 
   (* Print out the problem size, solution parameters, initial guess. *)
   if my_pe = 0 then print_header globalstrategy maxl maxlrst

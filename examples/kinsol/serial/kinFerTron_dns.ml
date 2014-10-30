@@ -149,7 +149,7 @@ let solve_it kmem u s glstr mset =
   print_newline ();
   print_string (if mset==1 then "Exact Newton" else "Modified Newton");
   if not glstr then print_newline () else print_string " with line search\n";
-  Kinsol.set_max_setup_calls kmem (Some mset);
+  Kinsol.set_max_setup_calls kmem mset;
   ignore (Kinsol.solve kmem u glstr s s);
   print_string "Solution:\n  [x1,x2] = ";
   print_output (Nvector.unwrap u);
@@ -185,8 +185,8 @@ let main () =
   (* Call KINDense to specify the linear solver *)
   let kmem = Kinsol.init (Kinsol.Dls.dense None) func u_nvec in
   Kinsol.set_constraints kmem c_nvec;
-  Kinsol.set_func_norm_tol kmem (Some fnormtol);
-  Kinsol.set_scaled_step_tol kmem (Some scsteptol);
+  Kinsol.set_func_norm_tol kmem fnormtol;
+  Kinsol.set_scaled_step_tol kmem scsteptol;
 
   (* Print out the problem size, solution parameters, initial guess. *)
   print_header fnormtol scsteptol;

@@ -152,18 +152,18 @@ let main () =
    * ------------------- *)
 
   (* Specify stopping tolerance based on residual *)
-  Kinsol.set_func_norm_tol kmem (Some ftol);
+  Kinsol.set_func_norm_tol kmem ftol;
 
   (* ------------------------------
    * Parameters for Modified Newton
    * ------------------------------ *)
 
   (* Force a Jacobian re-evaluation every mset iterations *)
-  Kinsol.set_max_setup_calls kmem (Some 100);
+  Kinsol.set_max_setup_calls kmem 100;
 
   (* Every msubset iterations, test if a Jacobian evaluation
      is necessary *)
-  Kinsol.set_max_sub_setup_calls kmem (Some 1);
+  Kinsol.set_max_sub_setup_calls kmem 1;
 
   (* ----------------------------
    * Call KINSol to solve problem 

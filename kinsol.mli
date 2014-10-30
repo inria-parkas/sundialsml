@@ -629,17 +629,17 @@ val set_no_res_mon : serial_session -> unit
 val set_res_mon : serial_session -> unit
 
 (** Specifies the maximum number of nonlinear iterations between calls to the
-    preconditioner setup function. Pass [None] to set the default (10).
+    preconditioner setup function. Pass 0 to set the default (10).
 
     @kinsol <node5#ss:optin_main> KINSetMaxSetupCalls *)
-val set_max_setup_calls : ('a, 'k) session -> int option -> unit
+val set_max_setup_calls : ('a, 'k) session -> int -> unit
 
 (** Specifies the maximum number of nonlinear iterations between checks by the
-    residual monitoring algorithm. Pass [None] to set the default (5). It only
+    residual monitoring algorithm. Pass 0 to set the default (5). It only
     affects the Dense and Band solvers.
 
     @kinsol <node5#ss:optin_main> KINSetMaxSubSetupCalls *)
-val set_max_sub_setup_calls : serial_session -> int option -> unit
+val set_max_sub_setup_calls : serial_session -> int -> unit
 
 (** The parameters {i gamma} and {i alpha} in the formula for the Eisenstat and
     Walker Choice 2 for {i eta}. Set either to [None] to specify its default
@@ -669,11 +669,11 @@ type eta_choice =
 val set_eta_choice : ('a, 'k) session -> eta_choice -> unit
 
 (** Specifies the constant value of {i omega} when using residual monitoring.
-    Pass [None] to specify the default value (0.9). The legal values are
+    Pass 0.0 to specify the default value (0.9). The legal values are
     {% $0 < \mathtt{omega} < 1.0 $%}.
 
     @kinsol <node5#ss:optin_main> KINSetResMonConstValue *)
-val set_res_mon_const_value : ('a, 'k) session -> float option -> unit
+val set_res_mon_const_value : ('a, 'k) session -> float -> unit
 
 (** Specifies the minimum and maximum values in the formula for {i omega}.
     The legal values are
@@ -703,39 +703,39 @@ val set_no_min_eps : ('a, 'k) session -> unit
 val set_min_eps : ('a, 'k) session -> unit
 
 (** Specifies the maximum allowable scaled length of the Newton step. Pass
-    [None] to specify the default value {% $1000\lVert u_0 \rVert_{D_u}$%},
+    0.0 to specify the default value {% $1000\lVert u_0 \rVert_{D_u}$%},
     otherwise the given value must be greater than zero.
 
     @kinsol <node5#ss:optin_main> KINSetMaxNewtonStep *)
-val set_max_newton_step : ('a, 'k) session -> float option -> unit
+val set_max_newton_step : ('a, 'k) session -> float -> unit
 
 (** Specifies the maximum number of beta-condition failures in the
-    line search algorithm. Pass [None] to specify the default (10).
+    line search algorithm. Pass 0.0 to specify the default (10).
 
     @kinsol <node5#ss:optin_main> KINSetMaxBetaFails *)
-val set_max_beta_fails : ('a, 'k) session -> float option -> unit
+val set_max_beta_fails : ('a, 'k) session -> float -> unit
 
 (** Specifies the relative error in computing $F(u)$, which is used in the
     difference quotient approximation of the Jacobian-vector product. Pass
-    [None] to specify the default value
+    0.0 to specify the default value
     ({% $\sqrt{\mathtt{unit\_roundoff}}$%}).
 
     @kinsol <node5#ss:optin_main> KINSetRelErrFunc *)
-val set_rel_err_func : ('a, 'k) session -> float option -> unit
+val set_rel_err_func : ('a, 'k) session -> float -> unit
 
 (** Specifies the stopping tolerance on the scaled maximum norm.
-    It must be greater than zero. Pass [None] to specify the default
+    It must be greater than zero. Pass 0.0 to specify the default
     value ({% $\mathtt{unit\_roundoff}^\frac{1}{3}$%}).
 
     @kinsol <node5#ss:optin_main> KINSetFuncNormTol *)
-val set_func_norm_tol : ('a, 'k) session -> float option -> unit
+val set_func_norm_tol : ('a, 'k) session -> float -> unit
 
 (** Specifies the stopping tolerance on the minimum scaled step length, which
-    must be greater than zero. Pass [None] to specify the default
+    must be greater than zero. Pass 0.0 to specify the default
     value ({% $\mathtt{unit\_roundoff}^\frac{1}{3}$%}).
 
     @kinsol <node5#ss:optin_main> KINSetScaledStepTol *)
-val set_scaled_step_tol : ('a, 'k) session -> float option -> unit
+val set_scaled_step_tol : ('a, 'k) session -> float -> unit
 
 (** Specifies a vector defining inequality constraints for each
     component of the solution vector [u].  See {!Sundials.Constraint}.

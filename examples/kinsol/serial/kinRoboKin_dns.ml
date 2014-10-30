@@ -231,11 +231,11 @@ let main () =
     set_ith constraints i one
   done;
   Kinsol.set_constraints kmem (Nvector_serial.wrap constraints);
-  Kinsol.set_func_norm_tol kmem (Some ftol);
-  Kinsol.set_scaled_step_tol kmem (Some stol);
+  Kinsol.set_func_norm_tol kmem ftol;
+  Kinsol.set_scaled_step_tol kmem stol;
 
   (* Indicate exact Newton *)
-  Kinsol.set_max_setup_calls kmem (Some 1);
+  Kinsol.set_max_setup_calls kmem 1;
 
   (* Initial guess *)
   printf "Initial guess:\n";

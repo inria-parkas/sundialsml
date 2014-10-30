@@ -335,17 +335,11 @@ external c_set_no_res_mon : ('a, 'k) session -> bool -> unit
 let set_no_res_mon s = c_set_no_res_mon s true
 let set_res_mon s = c_set_no_res_mon s false
 
-external c_set_max_sub_setup_calls : ('a, 'k) session -> int -> unit
+external set_max_sub_setup_calls : ('a, 'k) session -> int -> unit
     = "c_kinsol_set_max_sub_setup_calls"
 
-let set_max_sub_setup_calls s msbset =
-  c_set_max_sub_setup_calls s (int_default msbset)
-
-external c_set_max_setup_calls : ('a, 'k) session -> int -> unit
+external set_max_setup_calls : ('a, 'k) session -> int -> unit
     = "c_kinsol_set_max_setup_calls"
-
-let set_max_setup_calls s msbset =
-  c_set_max_setup_calls s (match msbset with None -> 0 | Some i -> i)
 
 external c_set_eta_form : ('a, 'k) session -> eta_choice -> unit
     = "c_kinsol_set_eta_form"
@@ -367,11 +361,8 @@ let set_eta_choice s etachoice =
       c_set_eta_const_value s (float_default eta);
   c_set_eta_form s etachoice
 
-external c_set_res_mon_const_value : ('a, 'k) session -> float -> unit
+external set_res_mon_const_value : ('a, 'k) session -> float -> unit
     = "c_kinsol_set_res_mon_const_value"
-
-let set_res_mon_const_value s omegaconst =
-  c_set_res_mon_const_value s (float_default omegaconst)
 
 external c_set_res_mon_params : ('a, 'k) session -> float -> float -> unit
     = "c_kinsol_set_res_mon_params"
@@ -385,35 +376,20 @@ external c_set_no_min_eps : ('a, 'k) session -> bool -> unit
 let set_no_min_eps s = c_set_no_min_eps s true
 let set_min_eps s = c_set_no_min_eps s false
 
-external c_set_max_newton_step : ('a, 'k) session -> float -> unit
+external set_max_newton_step : ('a, 'k) session -> float -> unit
     = "c_kinsol_set_max_newton_step"
 
-let set_max_newton_step s mxnewtstep =
-  c_set_max_newton_step s (float_default mxnewtstep)
-
-external c_set_max_beta_fails : ('a, 'k) session -> float -> unit
+external set_max_beta_fails : ('a, 'k) session -> float -> unit
     = "c_kinsol_set_max_beta_fails"
 
-let set_max_beta_fails s mxnbcf =
-  c_set_max_beta_fails s (float_default mxnbcf)
-
-external c_set_rel_err_func : ('a, 'k) session -> float -> unit
+external set_rel_err_func : ('a, 'k) session -> float -> unit
     = "c_kinsol_set_rel_err_func"
 
-let set_rel_err_func s relfunc =
-  c_set_rel_err_func s (float_default relfunc)
-
-external c_set_func_norm_tol : ('a, 'k) session -> float -> unit
+external set_func_norm_tol : ('a, 'k) session -> float -> unit
     = "c_kinsol_set_func_norm_tol"
 
-let set_func_norm_tol s fnormtol =
-  c_set_func_norm_tol s (float_default fnormtol)
-
-external c_set_scaled_step_tol : ('a, 'k) session -> float -> unit
+external set_scaled_step_tol : ('a, 'k) session -> float -> unit
     = "c_kinsol_set_scaled_step_tol"
-
-let set_scaled_step_tol s scsteptol =
-  c_set_scaled_step_tol s (float_default scsteptol)
 
 external c_set_constraints : ('a, 'k) session -> ('a, 'k) nvector -> unit
     = "c_kinsol_set_constraints"

@@ -439,8 +439,8 @@ let main () =
                     ~solve:prec_solve_bd ()))
               func cc in
   Kinsol.set_constraints kmem (Nvector_serial.make neq two);
-  Kinsol.set_func_norm_tol kmem (Some fnormtol);
-  Kinsol.set_scaled_step_tol kmem (Some scsteptol);
+  Kinsol.set_func_norm_tol kmem fnormtol;
+  Kinsol.set_scaled_step_tol kmem scsteptol;
 
   let go linsolver =
     if linsolver != Use_Spgmr then set_initial_profiles (unvec cc) (unvec sc);
