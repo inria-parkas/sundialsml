@@ -1221,7 +1221,7 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
         @raise BadK [k] is not in the range 0, 1, ..., [qlast].
         @raise BadT [t] is not in the allowed range. *)
     val get_dky :
-      ('a, 'b) bsession -> float -> int -> ('a, 'b) Nvector.t -> unit
+      ('a, 'b) bsession -> ('a, 'b) Nvector.t -> float -> int -> unit
 
     (** {4:adjbwdoptout Optional Output Functions} *)
 
