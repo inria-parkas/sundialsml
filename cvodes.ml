@@ -30,6 +30,7 @@ let add_fwdsensext s =
         sensrhsfn         = dummy_sensrhsfn;
         sensrhsfn1        = dummy_sensrhsfn1;
         quadsensrhsfn     = dummy_quadsensrhsfn;
+        checkquadsensvec  = (fun _ -> raise Nvector.IncompatibleNvector);
         bsessions         = [];
       }
 
@@ -136,6 +137,18 @@ module Sensitivity =
   struct
     include SensitivityTypes
 
+    exception SensNotInitialized
+    exception SensRhsFuncFailure
+    exception FirstSensRhsFuncFailure
+    exception RepeatedSensRhsFuncFailure
+    exception UnrecoverableSensRhsFuncFailure
+    exception BadSensIdentifier
+
+    let fwdsensext s =
+      match s.sensext with
+      | FwdSensExt se -> se
+      | _ -> raise SensNotInitialized
+
     type ('a, 'k) tolerance =
         SStolerances of float * Sundials.RealArray.t
       | SVtolerances of float * ('a, 'k) nvector array
@@ -166,21 +179,10 @@ module Sensitivity =
       | SVtolerances (rel, abs) -> begin
             if Array.length abs <> ns
             then invalid_arg "set_tolerances: abstol has the wrong length";
+            Array.iter s.checkvec abs;
             sv_tolerances s rel abs
           end
       | EEtolerances -> ee_tolerances s
-
-    exception SensNotInitialized
-    exception SensRhsFuncFailure
-    exception FirstSensRhsFuncFailure
-    exception RepeatedSensRhsFuncFailure
-    exception UnrecoverableSensRhsFuncFailure
-    exception BadSensIdentifier
-
-    let fwdsensext s =
-      match s.sensext with
-      | FwdSensExt se -> se
-      | _ -> raise SensNotInitialized
 
     type sens_method =
         Simultaneous
@@ -224,9 +226,11 @@ module Sensitivity =
       c_set_params s ps
 
     let init s tol fmethod sparams fm v0 =
+      Array.iter s.checkvec v0;
       add_fwdsensext s;
       let se = fwdsensext s in
       let ns = Array.length v0 in
+      if ns = 0 then invalid_arg "init: require at least one sensitivity parameter";
       (match fm with
        | AllAtOnce fo -> begin
            if fmethod = Staggered1 then
@@ -252,6 +256,7 @@ module Sensitivity =
     let reinit s sm s0 =
       if Array.length s0 <> num_sensitivities s
       then invalid_arg "reinit: wrong number of sensitivity vectors";
+      Array.iter s.checkvec s0;
       c_reinit s sm s0
 
     external toggle_off : ('a, 'k) session -> unit
@@ -263,6 +268,7 @@ module Sensitivity =
     let get s ys =
       if Array.length ys <> num_sensitivities s
       then invalid_arg "get: wrong number of sensitivity vectors";
+      Array.iter s.checkvec ys;
       c_get s ys
 
     external c_get_dky
@@ -272,14 +278,23 @@ module Sensitivity =
     let get_dky s t k dkys =
       if Array.length dkys <> num_sensitivities s
       then invalid_arg "get_dky: wrong number of sensitivity vectors";
+      Array.iter s.checkvec dkys;
       c_get_dky s t k dkys
 
-    external get1 : ('a, 'k) session -> int -> ('a, 'k) nvector -> float
+    external c_get1 : ('a, 'k) session -> int -> ('a, 'k) nvector -> float
         = "c_cvodes_sens_get1"
 
-    external get_dky1
+    let get1 s i ys =
+      s.checkvec ys;
+      c_get1 s i ys
+
+    external c_get_dky1
         : ('a, 'k) session -> float -> int -> int -> ('a, 'k) nvector -> unit
         = "c_cvodes_sens_get_dky1"
+
+    let get_dky1 s t k i dkys =
+      s.checkvec dkys;
+      c_get_dky1 s t k i dkys
 
     type dq_method = DQCentered | DQForward
 
@@ -318,6 +333,7 @@ module Sensitivity =
     let get_err_weights s esweight =
       if Array.length esweight <> num_sensitivities s
       then invalid_arg "get_err_weights: wrong number of vectors";
+      Array.iter s.checkvec esweight;
       c_get_err_weights s esweight
 
     external get_num_nonlin_solv_iters : ('a, 'k) session -> int
@@ -363,9 +379,10 @@ module Sensitivity =
 
         let init s ?fQS v0 =
           let se = fwdsensext s in
-          let ns = num_sensitivities s in
-          if Array.length v0 <> ns
+          if Array.length v0 <> se.num_sensitivities
           then invalid_arg "init: wrong number of vectors";
+          se.checkquadsensvec <- Nvector.check v0.(0);
+          Array.iter se.checkquadsensvec v0;
           match fQS with
           | Some f -> se.quadsensrhsfn <- f;
                       c_quadsens_init s true v0
@@ -375,9 +392,10 @@ module Sensitivity =
             = "c_cvodes_quadsens_reinit"
 
         let reinit s v =
-          let ns = num_sensitivities s in
-          if Array.length v <> ns
+          let se = fwdsensext s in
+          if Array.length v <> se.num_sensitivities
           then invalid_arg "reinit: wrong number of vectors";
+          Array.iter se.checkquadsensvec v;
           c_reinit s v
 
         type ('a, 'k) tolerance =
@@ -401,18 +419,19 @@ module Sensitivity =
             = "c_cvodes_quadsens_ee_tolerances"
 
         let set_tolerances s tol =
-          let ns = num_sensitivities s in
+          let se = fwdsensext s in
           match tol with
           | NoStepSizeControl -> set_err_con s false
           | SStolerances (rel, abs) -> begin
-                if Bigarray.Array1.dim abs <> ns
+                if Bigarray.Array1.dim abs <> se.num_sensitivities
                 then invalid_arg "set_tolerances: abstol has the wrong length";
                 ss_tolerances s rel abs;
                 set_err_con s true
               end
           | SVtolerances (rel, abs) -> begin
-                if Array.length abs <> ns
+                if Array.length abs <> se.num_sensitivities
                 then invalid_arg "set_tolerances: abstol has the wrong length";
+                Array.iter se.checkquadsensvec abs;
                 sv_tolerances s rel abs;
                 set_err_con s true
               end
@@ -423,27 +442,39 @@ module Sensitivity =
             = "c_cvodes_quadsens_get"
 
         let get s ys =
-          let ns = num_sensitivities s in
-          if Array.length ys <> ns
+          let se = fwdsensext s in
+          if Array.length ys <> se.num_sensitivities
           then invalid_arg "get: wrong number of vectors";
+          Array.iter se.checkquadsensvec ys;
           c_get s ys
 
-        external get1 : ('a, 'k) session -> int -> ('a, 'k) nvector -> float
+        external c_get1 : ('a, 'k) session -> int -> ('a, 'k) nvector -> float
             = "c_cvodes_quadsens_get1"
+
+        let get1 s i yqs =
+          let se = fwdsensext s in
+          se.checkquadsensvec yqs;
+          c_get1 s i yqs
 
         external c_get_dky
             : ('a, 'k) session -> float -> int -> ('a, 'k) nvector array -> unit
             = "c_cvodes_quadsens_get_dky"
 
         let get_dky s t k ys =
-          let ns = num_sensitivities s in
-          if Array.length ys <> ns
+          let se = fwdsensext s in
+          if Array.length ys <> se.num_sensitivities
           then invalid_arg "get_dky: wrong number of vectors";
+          Array.iter se.checkquadsensvec ys;
           c_get_dky s t k ys
 
-        external get_dky1 : ('a, 'k) session -> float -> int -> int
+        external c_get_dky1 : ('a, 'k) session -> float -> int -> int
                                       -> ('a, 'k) nvector -> unit
             = "c_cvodes_quadsens_get_dky1"
+
+        let get_dky1 s t k i dkyqs =
+          let se = fwdsensext s in
+          se.checkquadsensvec dkyqs;
+          c_get_dky1 s t k i dkyqs
 
         external get_num_rhs_evals       : ('a, 'k) session -> int
             = "c_cvodes_quadsens_get_num_rhs_evals"
@@ -456,9 +487,10 @@ module Sensitivity =
             = "c_cvodes_quadsens_get_err_weights"
 
         let get_err_weights s esweight =
-          let ns = num_sensitivities s in
-          if Array.length esweight <> ns
+          let se = fwdsensext s in
+          if Array.length esweight <> se.num_sensitivities
           then invalid_arg "get_err_weights: wrong number of vectors";
+          Array.iter se.checkquadsensvec esweight;
           c_get_err_weights s esweight
 
         external get_stats : ('a, 'k) session -> int * int

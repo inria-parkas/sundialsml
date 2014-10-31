@@ -374,6 +374,7 @@ and ('a, 'kind) fsensext = {
   mutable sensrhsfn         : 'a SensitivityTypes.sensrhsfn_all;
   mutable sensrhsfn1        : 'a SensitivityTypes.sensrhsfn1;
   mutable quadsensrhsfn     : 'a SensitivityTypes.QuadratureTypes.quadsensrhsfn;
+  mutable checkquadsensvec  : (('a, 'kind) Nvector.t -> unit);
 
   (* Adjoint *)
   mutable bsessions         : ('a, 'kind) session list;

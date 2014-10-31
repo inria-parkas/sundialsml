@@ -38,8 +38,9 @@ type ('data, 'kind) session = ('data, 'kind) Cvode.session
 (** Integration of pure quadrature equations.
  
     Adds an additional vector $y_Q$ of $N_Q$ quadrature variables defined by
-    {% $\frac{d y_Q}{dt} = f_Q(t, y)$%}. These variables are treated more
-    efficiently by excluding them from the nonlinear solution stage.
+    {% $\frac{d y_Q}{dt} = f_Q(t, y)$%}. The values of these variables are
+    calculated more efficiently since they are excluded from the nonlinear
+    solution stage.
 
     An example session with Cvode using quadrature variables
     ({openfile cvodes_quad_skel.ml}): {[
@@ -176,11 +177,19 @@ module Quadrature :
     exception UnrecoverableQuadRhsFuncFailure
   end
 
-(** (Forward) Sensitivity Analysis.
+(** (Forward) Sensitivity Analysis of ODEs with respect to their parameters.
  
-    TODO: write a better one sentence description
+    Formalizes the dependence of a set of ODEs on $N_P$ parameters $p$ and
+    calculates the sensitivities $s$ of the solution $y$ to a subset of
+    {% $N_S \leq N_P$%} of those parameters;
+    {% $s(t) = \frac{\partial y(t)}{\partial p}$%}.
 
-    TODO: explain that this 'extends' standard Cvode.
+    The {i solution sensitivity} with respect to a single parameter $p_i$
+    satisfies the {i (forward) sensitivity equations}
+    {% $\dot{s}_i = \frac{\partial f}{\partial y}s_i
+                                + \frac{\partial f}{\partial p_i}$%} and
+    {% $s_i(t_0) = \frac{\partial y_0(p)}{\partial p_i}$%}, where
+    $f$ and $y$ are from the $N$ equations of the original model.
 
     An example session with Cvode using sensitivity analysis
     ({openfile cvodes_sens_skel.ml}): {[
@@ -354,178 +363,6 @@ module Sensitivity :
         @cvodes <node6#ss:sensi_malloc> CVodeSensToggleOff *)
     val toggle_off : ('a, 'k) session -> unit
 
-    (** {2:sensout Output Functions} *)
-
-    (** [tret = get s ys] fills [ys] with the sensitivity solution vectors after
-        a successful return from {!Cvode.solve_normal} or
-        {!Cvode.solve_one_step}, and returns the time reached by the solver.
-
-        @cvodes <node6#ss:sensi_get> CVodeGetSens *)
-    val get : ('a, 'k) session -> ('a, 'k) Nvector.t array -> float
-
-    (** [tret = get_dky s t k dkys] fills [dkys] with the
-        derivatives of the sensitivity solution vectors after a
-        successful return from {!Cvode.solve_normal} or
-        {!Cvode.solve_one_step}. The time requested, [t], must fall
-        within the interval defined by the last successful step
-        ({!Cvode.get_last_step}). The requested order, [k], must be
-        less than or equal to the value returned by
-        {!Cvode.get_last_order}.
-
-        @cvodes <node6#ss:sensi_get> CVodeGetSensDky
-        @raise BadK [k] is not in the range 0, 1, ..., [qlast].
-        @raise BadT [t] is not in the allowed range.
-    *)
-    val get_dky : ('a, 'k) session -> float -> int
-                          -> ('a, 'k) Nvector.t array -> unit
-
-    (** [tret = get1 s i ys] fills [ys] with the [i]th sensitivity
-        solution vector after a successful return from
-        {!Cvode.solve_normal} or {!Cvode.solve_one_step}, and returns
-        the time reached by the solver.
-
-        @cvodes <node6#ss:sensi_get> CVodeGetSens1
-        @raise BadIS The index [i] is not in the allowed range.
-    *)
-    val get1 : ('a, 'k) session -> int -> ('a, 'k) Nvector.t -> float
-
-    (** [tret = get_dky1 s t k i dkys] fills [dkys] with the
-        derivatives of the [i]th sensitivity solution vector after a
-        successful return from {!Cvode.solve_normal} or
-        {!Cvode.solve_one_step}. The time requested, [t], must fall
-        within the interval defined by the last successful step
-        ({!Cvode.get_last_step}). The requested order, [k], must be
-        less than or equal to the value returned by
-        {!Cvode.get_last_order}.
-
-        @cvodes <node6#ss:sensi_get> CVodeGetSensDky1
-        @raise BadIS The index [i] is not in the allowed range.
-        @raise BadK [k] is not in the range 0, 1, ..., [qlast].
-        @raise BadT [t] is not in the allowed range. *)
-    val get_dky1 : ('a, 'k) session -> float -> int -> int
-                          -> ('a, 'k) Nvector.t -> unit
-
-    (** {2:set Modifying the solver (optional input functions)} *)
-
-    (** Specify the integration tolerances for sensitivities.
-
-        {b NB}: Unlike the other [set_tolerances] functions in
-        [Cvodes], this one does {b not} call {!set_err_con} (which
-        defaults to [false]).
-
-        @cvodes <node6#sss:cvfwdtolerances> CVodeSensSStolerances
-        @cvodes <node6#ss:cvfwdtolerances> CVodeSensSVtolerances
-        @cvodes <node6#ss:cvfwdtolerances> CVodeSensEEtolerances *)
-    val set_tolerances : ('a, 'k) session -> ('a, 'k) tolerance -> unit
-
-    (** Set whether sensitivity variables should be used in the error control
-        mechanism (the default is [false]). 
-
-        @cvodes <node5#ss:sens_optional_input> CVodeSetSensErrCon *)
-    val set_err_con : ('a, 'k) session -> bool -> unit
-
-    type dq_method = DQCentered (** CV_CENTERED *)
-                   | DQForward  (** CV_FORWARD *)
-
-    (** [set_dq_method s dqtype dqrhomax] specifies the difference quotient
-        strategy in the case in which the right-hand side of the sensitivity
-        equations is to be computed by CVODES; [dqrhomax] is used in deciding
-        the switching between simultaneous or separate approximations of the two
-        terms in the sensitivity right-hand side.
-
-        @cvodes <node6#ss:sens_optional_input> CVodeSetSensDQMethod
-        @cvodes <node3#ss:fwd_sensi> Forward Sensitivity Analysis *)
-    val set_dq_method : ('a, 'k) session -> dq_method -> float -> unit
-
-    (** Specifies the maximum number of nonlinear solver iterations for
-        sensitivity variables permitted per step.
-
-        @cvode <node5#ss:sens_optional_input> CVodeSetSensMaxNonlinIters *)
-    val set_max_nonlin_iters : ('a, 'k) session -> int -> unit
-
-    (** {2:get Querying the solver (optional output functions)} *)
-
-    (** Returns the number of calls to the sensitivity right-hand side function.
-
-        @cvode <node6#ss:sens_optional_output> CVodeGetSensNumRhsEvals *)
-    val get_num_rhs_evals       : ('a, 'k) session -> int
-
-    (** Returns the number of calls to the user's right-hand side function due
-        to the internal finite difference approximation of the sensitivity
-        right-hand sides.
-
-        @cvode <node6#ss:sens_optional_output> CVodeGetNumRhsEvalsSens *)
-    val get_num_rhs_evals_sens  : ('a, 'k) session -> int
-
-    (** Returns the number of local error test failures for the sensitivity
-        variables that have occurred.
-
-        @cvode <node6#ss:sens_optional_output> CVodeGetSensNumErrTestFails *)
-    val get_num_err_test_fails  : ('a, 'k) session -> int
-
-    (** Returns the number of calls made to the linear solver's setup function
-        due to forward sensitivity calculations.
-
-        @cvode <node6#ss:sens_optional_output> CVodeGetSensNumLinSolvSetups *)
-    val get_num_lin_solv_setups : ('a, 'k) session -> int
-
-    type sensitivity_stats = {
-        num_rhs_evals : int;
-        num_sens_evals :int;
-        num_err_test_fails : int;
-        num_lin_solv_setups :int;
-      }
-
-    (** Returns all of the sensitivity-related solver statistics as a group.
-
-        @cvode <node6#ss:sens_optional_output> CVodeGetSensStats *)
-    val get_stats : ('a, 'k) session -> sensitivity_stats
-
-    (** Returns the sensitivity error weight vectors at the current time.
-
-        @cvode <node6#ss:sens_optional_output> CVodeGetSensErrWeights
-        @cvode <node3#e:errwt> Eq. (2.7) IVP solution (W_i) *)
-    val get_err_weights : ('a, 'k) session -> ('a, 'k) Nvector.t array -> unit
-
-    (** Returns the number of nonlinear iterations performed for sensitivity
-        calculations.
-
-        @cvode <node6#ss:sens_optional_output> CVodeGetSensNumNonlinSolvIters *)
-    val get_num_nonlin_solv_iters : ('a, 'k) session -> int
-
-    (** Returns the number of nonlinear convergence failures that have occurred
-        for sensitivity calculations.
-
-        @cvode <node6#ss:sens_optional_output> CVodeGetSensNumNonlinSolvConvFails *)
-    val get_num_nonlin_solv_conv_fails : ('a, 'k) session -> int
-
-    (** [nni, ncfn = get_nonlin_solv_stats s] returns the sensitivity-related
-        nonlinear solver statistics as a group, where [nni] is the number of
-        nonlinear iterations performed for sensitivity calculations, and [ncfn]
-        is the number of nonlinear convergence failures that have occurred for
-        sensitivity calculations.
-
-        @cvode <node6#ss:sens_optional_output> CVodeGetSensNonlinSolvStats
-     *)
-    val get_nonlin_solv_stats : ('a, 'k) session -> int * int
-
-    (** Returns the number of nonlinear (functional or Newton) iterations
-        performed for each sensitivity equation separately, in the [Staggered1]
-        case.
-
-      @cvode <node6#ss:sens_optional_output> CVodeGetStgrSensNumNonlinSolvIters *)
-    val get_num_stgr_nonlin_solv_iters : ('a, 'k) session
-                                         -> Sundials.LintArray.t -> unit
-
-    (** Returns the number of nonlinear convergence failures that have occurred
-        for each sensitivity equation separately, in the [Staggered1] case.
-
-      @cvode <node6#ss:sens_optional_output> CVodeGetStgrSensNumNonlinSolvConvFails *)
-    val get_num_stgr_nonlin_solv_conv_fails : ('a, 'k) session
-                                              -> Sundials.LintArray.t -> unit
-
-    (** {2:quadsens Quadrature Equations} *)
-
     (**
        Support for integration of quadrature equations that depends not only on
        the state variables but also on forward sensitivities.
@@ -695,6 +532,177 @@ module Sensitivity :
         (** @cvodes <node6#SECTION00642000000000000000> CV_UNREC_QSRHSFUNC_ERR *)
         exception UnrecoverableQuadSensRhsFuncFailure
       end
+
+
+    (** {2:sensout Output Functions} *)
+
+    (** [tret = get s ys] fills [ys] with the sensitivity solution vectors after
+        a successful return from {!Cvode.solve_normal} or
+        {!Cvode.solve_one_step}, and returns the time reached by the solver.
+
+        @cvodes <node6#ss:sensi_get> CVodeGetSens *)
+    val get : ('a, 'k) session -> ('a, 'k) Nvector.t array -> float
+
+    (** [tret = get_dky s t k dkys] fills [dkys] with the
+        derivatives of the sensitivity solution vectors after a
+        successful return from {!Cvode.solve_normal} or
+        {!Cvode.solve_one_step}. The time requested, [t], must fall
+        within the interval defined by the last successful step
+        ({!Cvode.get_last_step}). The requested order, [k], must be
+        less than or equal to the value returned by
+        {!Cvode.get_last_order}.
+
+        @cvodes <node6#ss:sensi_get> CVodeGetSensDky
+        @raise BadK [k] is not in the range 0, 1, ..., [qlast].
+        @raise BadT [t] is not in the allowed range.
+    *)
+    val get_dky : ('a, 'k) session -> float -> int
+                          -> ('a, 'k) Nvector.t array -> unit
+
+    (** [tret = get1 s i ys] fills [ys] with the [i]th sensitivity
+        solution vector after a successful return from
+        {!Cvode.solve_normal} or {!Cvode.solve_one_step}, and returns
+        the time reached by the solver.
+
+        @cvodes <node6#ss:sensi_get> CVodeGetSens1
+        @raise BadIS The index [i] is not in the allowed range.
+    *)
+    val get1 : ('a, 'k) session -> int -> ('a, 'k) Nvector.t -> float
+
+    (** [tret = get_dky1 s t k i dkys] fills [dkys] with the
+        derivatives of the [i]th sensitivity solution vector after a
+        successful return from {!Cvode.solve_normal} or
+        {!Cvode.solve_one_step}. The time requested, [t], must fall
+        within the interval defined by the last successful step
+        ({!Cvode.get_last_step}). The requested order, [k], must be
+        less than or equal to the value returned by
+        {!Cvode.get_last_order}.
+
+        @cvodes <node6#ss:sensi_get> CVodeGetSensDky1
+        @raise BadIS The index [i] is not in the allowed range.
+        @raise BadK [k] is not in the range 0, 1, ..., [qlast].
+        @raise BadT [t] is not in the allowed range. *)
+    val get_dky1 : ('a, 'k) session -> float -> int -> int
+                          -> ('a, 'k) Nvector.t -> unit
+
+    (** {2:set Modifying the solver (optional input functions)} *)
+
+    (** Specify the integration tolerances for sensitivities.
+
+        {b NB}: Unlike the other [set_tolerances] functions in
+        [Cvodes], this one does {b not} call {!set_err_con} (which
+        defaults to [false]).
+
+        @cvodes <node6#sss:cvfwdtolerances> CVodeSensSStolerances
+        @cvodes <node6#ss:cvfwdtolerances> CVodeSensSVtolerances
+        @cvodes <node6#ss:cvfwdtolerances> CVodeSensEEtolerances *)
+    val set_tolerances : ('a, 'k) session -> ('a, 'k) tolerance -> unit
+
+    (** Set whether sensitivity variables should be used in the error control
+        mechanism (the default is [false]). 
+
+        @cvodes <node5#ss:sens_optional_input> CVodeSetSensErrCon *)
+    val set_err_con : ('a, 'k) session -> bool -> unit
+
+    type dq_method = DQCentered (** CV_CENTERED *)
+                   | DQForward  (** CV_FORWARD *)
+
+    (** [set_dq_method s dqtype dqrhomax] specifies the difference quotient
+        strategy in the case in which the right-hand side of the sensitivity
+        equations is to be computed by CVODES; [dqrhomax] is used in deciding
+        the switching between simultaneous or separate approximations of the two
+        terms in the sensitivity right-hand side.
+
+        @cvodes <node6#ss:sens_optional_input> CVodeSetSensDQMethod
+        @cvodes <node3#ss:fwd_sensi> Forward Sensitivity Analysis *)
+    val set_dq_method : ('a, 'k) session -> dq_method -> float -> unit
+
+    (** Specifies the maximum number of nonlinear solver iterations for
+        sensitivity variables permitted per step.
+
+        @cvode <node5#ss:sens_optional_input> CVodeSetSensMaxNonlinIters *)
+    val set_max_nonlin_iters : ('a, 'k) session -> int -> unit
+
+    (** {2:get Querying the solver (optional output functions)} *)
+
+    (** Returns the number of calls to the sensitivity right-hand side function.
+
+        @cvode <node6#ss:sens_optional_output> CVodeGetSensNumRhsEvals *)
+    val get_num_rhs_evals       : ('a, 'k) session -> int
+
+    (** Returns the number of calls to the user's right-hand side function due
+        to the internal finite difference approximation of the sensitivity
+        right-hand sides.
+
+        @cvode <node6#ss:sens_optional_output> CVodeGetNumRhsEvalsSens *)
+    val get_num_rhs_evals_sens  : ('a, 'k) session -> int
+
+    (** Returns the number of local error test failures for the sensitivity
+        variables that have occurred.
+
+        @cvode <node6#ss:sens_optional_output> CVodeGetSensNumErrTestFails *)
+    val get_num_err_test_fails  : ('a, 'k) session -> int
+
+    (** Returns the number of calls made to the linear solver's setup function
+        due to forward sensitivity calculations.
+
+        @cvode <node6#ss:sens_optional_output> CVodeGetSensNumLinSolvSetups *)
+    val get_num_lin_solv_setups : ('a, 'k) session -> int
+
+    type sensitivity_stats = {
+        num_rhs_evals : int;
+        num_sens_evals :int;
+        num_err_test_fails : int;
+        num_lin_solv_setups :int;
+      }
+
+    (** Returns all of the sensitivity-related solver statistics as a group.
+
+        @cvode <node6#ss:sens_optional_output> CVodeGetSensStats *)
+    val get_stats : ('a, 'k) session -> sensitivity_stats
+
+    (** Returns the sensitivity error weight vectors at the current time.
+
+        @cvode <node6#ss:sens_optional_output> CVodeGetSensErrWeights
+        @cvode <node3#e:errwt> Eq. (2.7) IVP solution (W_i) *)
+    val get_err_weights : ('a, 'k) session -> ('a, 'k) Nvector.t array -> unit
+
+    (** Returns the number of nonlinear iterations performed for sensitivity
+        calculations.
+
+        @cvode <node6#ss:sens_optional_output> CVodeGetSensNumNonlinSolvIters *)
+    val get_num_nonlin_solv_iters : ('a, 'k) session -> int
+
+    (** Returns the number of nonlinear convergence failures that have occurred
+        for sensitivity calculations.
+
+        @cvode <node6#ss:sens_optional_output> CVodeGetSensNumNonlinSolvConvFails *)
+    val get_num_nonlin_solv_conv_fails : ('a, 'k) session -> int
+
+    (** [nni, ncfn = get_nonlin_solv_stats s] returns the sensitivity-related
+        nonlinear solver statistics as a group, where [nni] is the number of
+        nonlinear iterations performed for sensitivity calculations, and [ncfn]
+        is the number of nonlinear convergence failures that have occurred for
+        sensitivity calculations.
+
+        @cvode <node6#ss:sens_optional_output> CVodeGetSensNonlinSolvStats
+     *)
+    val get_nonlin_solv_stats : ('a, 'k) session -> int * int
+
+    (** Returns the number of nonlinear (functional or Newton) iterations
+        performed for each sensitivity equation separately, in the [Staggered1]
+        case.
+
+      @cvode <node6#ss:sens_optional_output> CVodeGetStgrSensNumNonlinSolvIters *)
+    val get_num_stgr_nonlin_solv_iters : ('a, 'k) session
+                                         -> Sundials.LintArray.t -> unit
+
+    (** Returns the number of nonlinear convergence failures that have occurred
+        for each sensitivity equation separately, in the [Staggered1] case.
+
+      @cvode <node6#ss:sens_optional_output> CVodeGetStgrSensNumNonlinSolvConvFails *)
+    val get_num_stgr_nonlin_solv_conv_fails : ('a, 'k) session
+                                              -> Sundials.LintArray.t -> unit
 
     (** {2:exceptions Exceptions} *)
 
