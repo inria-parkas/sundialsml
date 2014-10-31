@@ -97,7 +97,7 @@ module Quadrature :
         @cvodes <node5#ss:quad_get> CVodeGetQuadDky
         @raise BadT [t] is not in the interval {% $[t_n - h_u, t_n]$%}.
         @raise BadK [k] is not in the range 0, 1, ..., $q_u$. *)
-    val get_dky : ('a, 'k) session -> float -> int -> ('a, 'k) Nvector.t -> unit
+    val get_dky : ('a, 'k) session -> ('a, 'k) Nvector.t -> float -> int -> unit
 
     (** {2:tols Tolerances} *)
 
@@ -201,23 +201,6 @@ module Sensitivity :
   sig
     (** {2:init Initialization} *)
 
-    type 'a sensrhsfn =
-        AllAtOnce of 'a sensrhsfn_all option
-        (** Computes the sensitivity right-hand side for all
-            sensitivity equations at once.  See {!sensrhsfn_all} for
-            details.
-
-            @cvodes <node6#ss:user_fct_fwd> CVSensRhsFn
-            @cvodes <node6#ss:sensi_malloc> CVodeSensInit
-          *)
-      | OneByOne of 'a sensrhsfn1 option
-        (** Computes the sensitivity right-hand side one sensitivity
-            parameter at a time.  See {!sensrhsfn1} for details.
-
-            @cvodes <node6#ss:user_fct_fwd> CVSensRhs1Fn
-            @cvodes <node6#ss:sensi_malloc> CVodeSensInit1
-          *)
-
     (** This function, [fS t y ydot yS ySdot tmp1 tmp2], computes the
         sensitivity right-hand side for all sensitivity equations at
         once, given
@@ -238,14 +221,14 @@ module Sensitivity :
         @cvodes <node6#ss:user_fct_fwd> CVSensRhsFn
         @cvodes <node6#ss:sensi_malloc> CVodeSensInit
       *)
-    and 'a sensrhsfn_all =
+    type 'a sensrhsfn_all =
       float           (* t *)
-      -> 'a          (* y *)
-      -> 'a          (* ydot *)
-      -> 'a array    (* yS *)
-      -> 'a array    (* ySdot *)
-      -> 'a          (* tmp1 *)
-      -> 'a          (* tmp2 *)
+      -> 'a           (* y *)
+      -> 'a           (* ydot *)
+      -> 'a array     (* yS *)
+      -> 'a array     (* ySdot *)
+      -> 'a           (* tmp1 *)
+      -> 'a           (* tmp2 *)
       -> unit
 
     (** This function, [fS t y ydot iS yS ySdot tmp1 tmp2], computes the
@@ -270,16 +253,33 @@ module Sensitivity :
         @cvodes <node6#ss:user_fct_fwd> CVSensRhs1Fn
         @cvodes <node6#ss:sensi_malloc> CVodeSensInit1
       *)
-    and 'a sensrhsfn1 =
+    type 'a sensrhsfn1 =
       float           (* t *)
-      -> 'a          (* y *)
-      -> 'a          (* ydot *)
-      -> int         (* iS *)
-      -> 'a          (* yS *)
-      -> 'a          (* ySdot *)
-      -> 'a          (* tmp1 *)
-      -> 'a          (* tmp2 *)
+      -> 'a           (* y *)
+      -> 'a           (* ydot *)
+      -> int          (* iS *)
+      -> 'a           (* yS *)
+      -> 'a           (* ySdot *)
+      -> 'a           (* tmp1 *)
+      -> 'a           (* tmp2 *)
       -> unit
+
+    type 'a sensrhsfn =
+        AllAtOnce of 'a sensrhsfn_all option
+        (** Computes the sensitivity right-hand side for all
+            sensitivity equations at once.  See {!sensrhsfn_all} for
+            details.
+
+            @cvodes <node6#ss:user_fct_fwd> CVSensRhsFn
+            @cvodes <node6#ss:sensi_malloc> CVodeSensInit
+          *)
+      | OneByOne of 'a sensrhsfn1 option
+        (** Computes the sensitivity right-hand side one sensitivity
+            parameter at a time.  See {!sensrhsfn1} for details.
+
+            @cvodes <node6#ss:user_fct_fwd> CVSensRhs1Fn
+            @cvodes <node6#ss:sensi_malloc> CVodeSensInit1
+          *)
 
     (** Specifies a sensitivity solution method.
 
@@ -363,11 +363,10 @@ module Sensitivity :
         @cvodes <node6#ss:sensi_malloc> CVodeSensToggleOff *)
     val toggle_off : ('a, 'k) session -> unit
 
-    (**
-       Support for integration of quadrature equations that depends not only on
-       the state variables but also on forward sensitivities.
+    (** Support for quadrature equations that depend not only on
+        state variables but also on forward sensitivities.
 
-       @cvodes <node6#SECTION00640000000000000000> Integration of quadrature equations depending on forward sensitivities *)
+        @cvodes <node6#SECTION00640000000000000000> Integration of quadrature equations depending on forward sensitivities *)
     module Quadrature :
       sig
         (** {2:init Initialization} *)
@@ -452,7 +451,7 @@ module Sensitivity :
 
           @cvodes <node6#ss:quad_sens_get> CVodeGetQuadSens1
           @raise BadIS The index [i] is not in the allowed range. *)
-        val get1 : ('a, 'k) session -> int -> ('a, 'k) Nvector.t -> float
+        val get1 : ('a, 'k) session -> ('a, 'k) Nvector.t -> int -> float
 
         (**
           [tret = get_dky s t k dkyqs] fills [dkyqs] with the derivatives of the
@@ -467,8 +466,8 @@ module Sensitivity :
           @raise BadIS The index is not in the allowed range.
           @raise BadK [k] is not in the range 0, 1, ..., [qlast].
           @raise BadT [t] is not in the allowed range. *)
-        val get_dky : ('a, 'k) session -> float -> int
-                          -> ('a, 'k) Nvector.t array -> unit
+        val get_dky : ('a, 'k) session -> ('a, 'k) Nvector.t array
+                        -> float -> int -> unit
 
         (** [tret = get_dky s t k i dkyqs] fills [dkyqs] with the derivatives of
             the [i]th quadrature solution vector after a successful return from
@@ -481,8 +480,8 @@ module Sensitivity :
             @cvodes <node6#ss:quad_sens_get> CVodeGetQuadSensDky1
             @raise BadK [k] is not in the range 0, 1, ..., [qlast].
             @raise BadT [t] is not in the allowed range. *)
-        val get_dky1 : ('a, 'k) session -> float -> int -> int
-                            -> ('a, 'k) Nvector.t -> unit
+        val get_dky1 : ('a, 'k) session -> ('a, 'k) Nvector.t
+                         -> float -> int -> int -> unit
 
         (** {2:get Querying the solver} *)
 
@@ -556,8 +555,8 @@ module Sensitivity :
         @raise BadK [k] is not in the range 0, 1, ..., [qlast].
         @raise BadT [t] is not in the allowed range.
     *)
-    val get_dky : ('a, 'k) session -> float -> int
-                          -> ('a, 'k) Nvector.t array -> unit
+    val get_dky : ('a, 'k) session -> ('a, 'k) Nvector.t array
+                    -> float -> int -> unit
 
     (** [tret = get1 s i ys] fills [ys] with the [i]th sensitivity
         solution vector after a successful return from
@@ -567,7 +566,7 @@ module Sensitivity :
         @cvodes <node6#ss:sensi_get> CVodeGetSens1
         @raise BadIS The index [i] is not in the allowed range.
     *)
-    val get1 : ('a, 'k) session -> int -> ('a, 'k) Nvector.t -> float
+    val get1 : ('a, 'k) session -> ('a, 'k) Nvector.t -> int -> float
 
     (** [tret = get_dky1 s t k i dkys] fills [dkys] with the
         derivatives of the [i]th sensitivity solution vector after a
@@ -582,8 +581,8 @@ module Sensitivity :
         @raise BadIS The index [i] is not in the allowed range.
         @raise BadK [k] is not in the range 0, 1, ..., [qlast].
         @raise BadT [t] is not in the allowed range. *)
-    val get_dky1 : ('a, 'k) session -> float -> int -> int
-                          -> ('a, 'k) Nvector.t -> unit
+    val get_dky1 : ('a, 'k) session -> ('a, 'k) Nvector.t
+                     -> float -> int -> int -> unit
 
     (** {2:set Modifying the solver (optional input functions)} *)
 
@@ -1006,7 +1005,7 @@ module Adjoint :
         @raise BadK [k] is not in the range 0, 1, ..., [qlast].
         @raise BadT [t] is not in the allowed range. *)
     val get_dky
-          : ('a, 'k) bsession -> float -> int -> ('a, 'k) Nvector.t -> unit
+          : ('a, 'k) bsession -> ('a, 'k) Nvector.t -> float -> int -> unit
 
     (** {2:bwdset Modifying the solver} *)
 

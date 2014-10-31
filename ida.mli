@@ -821,7 +821,7 @@ val solve_one_step : ('a, 'k) session -> float
                      -> float * solver_result
 
 (** Returns the interpolated solution or derivatives.
-    [get_dky s t k dky] computes the [k]th derivative of the function at time
+    [get_dky s dky t k] computes the [k]th derivative of the function at time
     [t], i.e., {% $\frac{d^\mathtt{k}y(\mathtt{t})}{\mathit{dt}^\mathtt{k}}$%},
     and stores it in [dky]. The arguments must satisfy
     {% $t_n - h_u \leq \mathtt{t} \leq t_n$%}—where $t_n$
@@ -835,7 +835,7 @@ val solve_one_step : ('a, 'k) session -> float
     @ida <node5#sss:optin_root> IDAGetDky
     @raise BadT [t] is not in the interval {% $[t_n - h_u, t_n]$%}.
     @raise BadK [k] is not in the range 0, 1, ..., $q_u$. *)
-val get_dky : ('a, 'k) session -> float -> int -> ('a, 'k) Nvector.t -> unit
+val get_dky : ('a, 'k) session -> ('a, 'k) Nvector.t -> float -> int -> unit
 
 (** Reinitializes the solver with new parameters and state values. The
     values of the independent variable, i.e., the simulation time, the

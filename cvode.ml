@@ -518,9 +518,9 @@ external c_get_dky
     : ('a, 'k) session -> float -> int -> ('a, 'k) nvector -> unit
     = "c_cvode_get_dky"
 
-let get_dky s t k y =
+let get_dky s y =
   s.checkvec y;
-  c_get_dky s t k y
+  fun t k -> c_get_dky s t k y
 
 external get_integrator_stats : ('a, 'k) session -> integrator_stats
     = "c_cvode_get_integrator_stats"

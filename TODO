@@ -93,12 +93,13 @@ MINOR PATCHES
 
 9. Inlude MathJax code in doc folder for offline use?
 
-10. Rearrange the Cvodes/Idas.*.get/get1/get_dky/get_dky1 functions so that
-    the array to fill is passed as the first argument, and so that they
-    they give a function as a result--this will ensure that the safety
-    checks need only be executed once even for multiple calls to these
-    functions (especially important for get_dky* which can be called within
-    zero-crossing routines).
+10. Rearrange the Cvode/Ida/Kinsol/get/get_dky,
+    Cvodes/Idas.*.get/get1/get_dky/get_dky1 functions so that the array to
+    fill is passed as the first argument, and so that they they give a
+    function as a result--this will ensure that the safety checks need only
+    be executed once even for multiple calls to these functions (especially
+    important for get_dky* which can be called within zero-crossing
+    routines). The docs must be updated simultaneously.
 
 TO DISCUSS
 ----------

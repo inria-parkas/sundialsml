@@ -110,10 +110,10 @@ module Quadrature =
         : ('a, 'k) session -> float -> int -> ('a, 'k) nvector -> unit
         = "c_cvodes_quad_get_dky"
 
-    let get_dky s t k dky =
+    let get_dky s dky =
       let se = fwdsensext s in
       se.checkquadvec dky;
-      c_get_dky s t k dky
+      fun t k -> c_get_dky s t k dky
 
     external get_num_rhs_evals       : ('a, 'k) session -> int
         = "c_cvodes_quad_get_num_rhs_evals"
@@ -275,26 +275,26 @@ module Sensitivity =
         : ('a, 'k) session -> float -> int -> ('a, 'k) nvector array -> unit
         = "c_cvodes_sens_get_dky"
 
-    let get_dky s t k dkys =
+    let get_dky s dkys =
       if Array.length dkys <> num_sensitivities s
       then invalid_arg "get_dky: wrong number of sensitivity vectors";
       Array.iter s.checkvec dkys;
-      c_get_dky s t k dkys
+      fun t k -> c_get_dky s t k dkys
 
     external c_get1 : ('a, 'k) session -> int -> ('a, 'k) nvector -> float
         = "c_cvodes_sens_get1"
 
-    let get1 s i ys =
+    let get1 s ys =
       s.checkvec ys;
-      c_get1 s i ys
+      fun i -> c_get1 s i ys
 
     external c_get_dky1
         : ('a, 'k) session -> float -> int -> int -> ('a, 'k) nvector -> unit
         = "c_cvodes_sens_get_dky1"
 
-    let get_dky1 s t k i dkys =
+    let get_dky1 s dkys =
       s.checkvec dkys;
-      c_get_dky1 s t k i dkys
+      fun t k i -> c_get_dky1 s t k i dkys
 
     type dq_method = DQCentered | DQForward
 
@@ -451,30 +451,30 @@ module Sensitivity =
         external c_get1 : ('a, 'k) session -> int -> ('a, 'k) nvector -> float
             = "c_cvodes_quadsens_get1"
 
-        let get1 s i yqs =
+        let get1 s yqs =
           let se = fwdsensext s in
           se.checkquadsensvec yqs;
-          c_get1 s i yqs
+          fun i -> c_get1 s i yqs
 
         external c_get_dky
             : ('a, 'k) session -> float -> int -> ('a, 'k) nvector array -> unit
             = "c_cvodes_quadsens_get_dky"
 
-        let get_dky s t k ys =
+        let get_dky s ys =
           let se = fwdsensext s in
           if Array.length ys <> se.num_sensitivities
           then invalid_arg "get_dky: wrong number of vectors";
           Array.iter se.checkquadsensvec ys;
-          c_get_dky s t k ys
+          fun t k -> c_get_dky s t k ys
 
         external c_get_dky1 : ('a, 'k) session -> float -> int -> int
                                       -> ('a, 'k) nvector -> unit
             = "c_cvodes_quadsens_get_dky1"
 
-        let get_dky1 s t k i dkyqs =
+        let get_dky1 s dkyqs =
           let se = fwdsensext s in
           se.checkquadsensvec dkyqs;
-          c_get_dky1 s t k i dkyqs
+          fun t k i -> c_get_dky1 s t k i dkyqs
 
         external get_num_rhs_evals       : ('a, 'k) session -> int
             = "c_cvodes_quadsens_get_num_rhs_evals"
