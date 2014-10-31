@@ -528,13 +528,21 @@ module Adjoint =
       | FwdSensExt se -> se
       | _ -> raise AdjointNotInitialized
 
-    external forward_normal : ('a, 'k) session -> float -> ('a, 'k) nvector
+    external c_forward_normal : ('a, 'k) session -> float -> ('a, 'k) nvector
                                          -> float * int * Cvode.solver_result
         = "c_cvodes_adj_forward_normal"
 
-    external forward_one_step : ('a, 'k) session -> float -> ('a, 'k) nvector
+    let forward_normal s tout yret =
+      s.checkvec yret;
+      c_forward_normal s tout yret
+
+    external c_forward_one_step : ('a, 'k) session -> float -> ('a, 'k) nvector
                                          -> float * int * Cvode.solver_result
         = "c_cvodes_adj_forward_one_step"
+
+    let forward_one_step s tout yret =
+      s.checkvec yret;
+      c_forward_one_step s tout yret
 
     type 'a triple = 'a * 'a * 'a
 
@@ -565,7 +573,8 @@ module Adjoint =
       let parent, which = parent_and_which bs in
       match tol with
       | SStolerances (rel, abs) -> ss_tolerances parent which rel abs
-      | SVtolerances (rel, abs) -> sv_tolerances parent which rel abs
+      | SVtolerances (rel, abs) -> ((tosession bs).checkvec abs;
+                                    sv_tolerances parent which rel abs)
 
     external c_set_functional : ('a, 'k) session -> int -> unit
       = "c_cvodes_adj_set_functional"
@@ -594,6 +603,7 @@ module Adjoint =
         = "c_cvodes_adj_get"
 
     let get bs yb =
+      (tosession bs).checkvec yb;
       let parent, which = parent_and_which bs in
       c_get parent which yb
 
@@ -959,6 +969,7 @@ module Adjoint =
 
                 bquadrhsfn  = dummy_bquadrhsfn;
                 bquadrhsfn_sens = dummy_bquadrhsfn_sens;
+                checkbquadvec = (fun _ -> raise Nvector.IncompatibleNvector);
               };
             } in
       Gc.finalise bsession_finalize (tosession bs);
@@ -976,6 +987,7 @@ module Adjoint =
         = "c_cvodes_adj_reinit"
 
     let reinit bs ?iter_type tb0 yb0 =
+      (tosession bs).checkvec yb0;
       let parent, which = parent_and_which bs in
       c_reinit parent which tb0 yb0;
       (match iter_type with
@@ -1015,6 +1027,7 @@ module Adjoint =
       Cvode.get_tol_scale_factor (tosession bs)
 
     let get_err_weights bs = Cvode.get_err_weights (tosession bs)
+
     let get_est_local_errors bs =
       Cvode.get_est_local_errors (tosession bs)
 
@@ -1040,6 +1053,7 @@ module Adjoint =
         external c_quad_initb
             : ('a, 'k) session -> int -> ('a, 'k) nvector -> unit
             = "c_cvodes_adjquad_initb"
+
         external c_quad_initbs
             : ('a, 'k) session -> int -> ('a, 'k) nvector -> unit
             = "c_cvodes_adjquad_initbs"
@@ -1047,17 +1061,20 @@ module Adjoint =
         let init bs mf y0 =
           let parent, which = parent_and_which bs in
           let se = bwdsensext bs in
+          se.checkbquadvec <- Nvector.check y0;
           match mf with
            | NoSens f -> (se.bquadrhsfn <- f;
-                             c_quad_initb parent which y0)
+                          c_quad_initb parent which y0)
            | WithSens f -> (se.bquadrhsfn_sens <- f;
-                                c_quad_initbs parent which y0)
+                            c_quad_initbs parent which y0)
 
         external c_reinit : ('a, 'k) session -> int -> ('a, 'k) nvector -> unit
             = "c_cvodes_adjquad_reinit"
 
         let reinit bs yqb0 =
           let parent, which = parent_and_which bs in
+          let se = bwdsensext bs in
+          se.checkbquadvec yqb0;
           c_reinit parent which yqb0
 
         external c_get : ('a, 'k) session -> int -> ('a, 'k) nvector -> float
@@ -1065,6 +1082,8 @@ module Adjoint =
 
         let get bs yqb =
           let parent, which = parent_and_which bs in
+          let se = bwdsensext bs in
+          se.checkbquadvec yqb;
           c_get parent which yqb
 
         type ('a, 'k) tolerance =
@@ -1089,7 +1108,9 @@ module Adjoint =
           | NoStepSizeControl -> set_err_con parent which false
           | SStolerances (rel, abs) -> (ss_tolerances parent which rel abs;
                                         set_err_con parent which true)
-          | SVtolerances (rel, abs) -> (sv_tolerances parent which rel abs;
+          | SVtolerances (rel, abs) -> (let se = bwdsensext bs in
+                                        se.checkbquadvec abs;
+                                        sv_tolerances parent which rel abs;
                                         set_err_con parent which true)
 
         let get_num_rhs_evals bs =

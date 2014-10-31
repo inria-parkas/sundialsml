@@ -395,6 +395,7 @@ and ('a, 'kind) bsensext = {
   mutable brhsfn_sens     : 'a AdjointTypes'.brhsfn_with_sens;
   mutable bquadrhsfn      : 'a AdjointTypes'.QuadratureTypes.bquadrhsfn_no_sens;
   mutable bquadrhsfn_sens : 'a AdjointTypes'.QuadratureTypes.bquadrhsfn_with_sens;
+  mutable checkbquadvec   : (('a, 'kind) Nvector.t -> unit);
 }
 
 and ('data, 'kind) alternate_linsolv =
