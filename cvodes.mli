@@ -83,7 +83,7 @@ module Quadrature :
     (** Returns the interpolated solution or derivatives of quadrature
         variables.
 
-        [get_dky s t k dky] computes the [k]th derivative at time [t], i.e.,
+        [get_dky s dky t k] computes the [k]th derivative at time [t], i.e.,
         {% $\frac{d^\mathtt{k}y_Q(\mathtt{t})}{\mathit{dt}^\mathtt{k}}$%},
         and stores it in [dky]. The arguments must satisfy {% $t_n - h_u \leq
         \mathtt{t} \leq t_n$%}—where $t_n$ denotes {!Cvode.get_current_time}
