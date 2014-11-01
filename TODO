@@ -12,11 +12,6 @@ Decisions
   Have everything working for 2.5.0 (and include a patch file for the
   Sundials source), but make the first official release for 2.6.0.
 
-Priorities
-----------
-DONE 1. Callbacks with exception checking directly from C.
-CANCELLED 2. Access around the weak pointer where possible (through stack).
-
 TODO
 ----
 
@@ -29,13 +24,6 @@ TODO
    - Bigarray allocation in root function callbacks.
      Try including a bigarray 'shell' (of int32s) in the session structure,
      as per CVODES/IDAS to avoid allocating at each call.
-
-   - Weak pointer dereference. In a separate branch, test the effect of
-     using direct values (especially on examples that are already very fast:
-     cvode/serial/cvRoberts_dns. Evaluate the effect using kcachegrind.
-     Possibly do callback_exns directly from C, thus eliminating the
-     intermediate function.
-     RESULTS: no significant effect. Additional complexity not justified.
 
 5. (Jun) OPAM/findlib wrappers.
    - Everything properly supported in a toplevel
@@ -92,26 +80,4 @@ MINOR PATCHES
    examples)?
 
 9. Inlude MathJax code in doc folder for offline use?
-
-10. Rearrange the Cvode/Ida/Kinsol/get/get_dky,
-    Cvodes/Idas.*.get/get1/get_dky/get_dky1 functions so that the array to
-    fill is passed as the first argument, and so that they they give a
-    function as a result--this will ensure that the safety checks need only
-    be executed once even for multiple calls to these functions (especially
-    important for get_dky* which can be called within zero-crossing
-    routines). The docs must be updated simultaneously.
-
-TO DISCUSS
-----------
-* Should we check consistency of vector lengths?
-
-  - To do this generically, we need a new function in nvector_*.ml to compare
-    array lengths.
-
-  - C-implemented comparator as third field of nvector type.  Provide
-    NULL for custom nvectors (which will be implemented in OCaml so
-    are safe anyway).
-
-  DONE for cvode, ida, and kinsol.
-  TODO: cvodes, idas (different checks for different submodules).
 

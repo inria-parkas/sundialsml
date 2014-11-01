@@ -318,6 +318,7 @@ and ('a, 'kind) sensext =
 and ('a, 'kind) fsensext = {
   (* Quadrature *)
   mutable quadrhsfn       : 'a QuadratureTypes.quadrhsfn;
+  mutable checkquadvec    : (('a, 'kind) Nvector.t -> unit);
 
   (* Sensitivity *)
   mutable num_sensitivities : int;
@@ -330,6 +331,7 @@ and ('a, 'kind) fsensext = {
   mutable sensresfn         : 'a SensitivityTypes.sensresfn;
 
   mutable quadsensrhsfn     : 'a SensitivityTypes.QuadratureTypes.quadsensrhsfn;
+  mutable checkquadsensvec  : (('a, 'kind) Nvector.t -> unit);
 
   (* Adjoint *)
   mutable bsessions         : ('a, 'kind) session list;
@@ -352,6 +354,7 @@ and ('a, 'kind) bsensext = {
   mutable bresfn_sens     : 'a AdjointTypes'.bresfn_with_sens;
   mutable bquadrhsfn      : 'a AdjointTypes'.QuadratureTypes.bquadrhsfn_no_sens;
   mutable bquadrhsfn_sens : 'a AdjointTypes'.QuadratureTypes.bquadrhsfn_with_sens;
+  mutable checkbquadvec   : (('a, 'kind) Nvector.t -> unit);
 }
 
 and ('a, 'kind) linsolv_callbacks =

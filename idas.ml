@@ -22,14 +22,16 @@ let add_fwdsensext s =
   | NoSensExt ->
       s.sensext <- FwdSensExt {
         num_sensitivities = 0;
-        sensarray1      = c_alloc_nvector_array 0;
-        sensarray2      = c_alloc_nvector_array 0;
-        sensarray3      = c_alloc_nvector_array 0;
-        quadrhsfn       = dummy_quadrhsfn;
-        senspvals       = None;
-        sensresfn       = dummy_sensresfn;
-        quadsensrhsfn   = dummy_quadsensrhsfn;
-        bsessions       = [];
+        sensarray1        = c_alloc_nvector_array 0;
+        sensarray2        = c_alloc_nvector_array 0;
+        sensarray3        = c_alloc_nvector_array 0;
+        quadrhsfn         = dummy_quadrhsfn;
+        checkquadvec      = (fun _ -> raise Nvector.IncompatibleNvector);
+        senspvals         = None;
+        sensresfn         = dummy_sensresfn;
+        quadsensrhsfn     = dummy_quadsensrhsfn;
+        checkquadsensvec  = (fun _ -> raise Nvector.IncompatibleNvector);
+        bsessions         = [];
       }
 
 let num_sensitivities s =
@@ -38,28 +40,10 @@ let num_sensitivities s =
   | BwdSensExt se -> se.bnum_sensitivities
   | _ -> 0
 
-let read_weak_ref x : ('a, 'kind) session =
-  match Weak.get x 0 with
-  | Some y -> y
-  | None -> raise (Failure "Internal error: weak reference is dead")
-
-let read_weak_fwd_ref x =
-  let y = read_weak_ref x in
-  match y.sensext with
-  | FwdSensExt se -> (y, se)
-  | _ -> raise (Failure "Internal error: not forward extension")
-
-let read_weak_bwd_ref x =
-  let y = read_weak_ref x in
-  match y.sensext with
-  | BwdSensExt se -> (y, se)
-  | _ -> raise (Failure "Internal error: not backward extension")
-
-let adjust_retcode = fun session f x ->
-  try f x; 0
-  with
-  | Sundials.RecoverableFailure -> 1
-  | e -> (session.exn_temp <- Some e; -1)
+let ocheck checkfn oy =
+  match oy with
+  | Some y -> checkfn y
+  | None -> ()
 
 module Quadrature =
   struct
@@ -82,16 +66,24 @@ module Quadrature =
       add_fwdsensext session;
       let s = fwdsensext session in
       s.quadrhsfn <- f;
+      s.checkquadvec <- Nvector.check yQ0;
       c_quad_init session yQ0
 
-    external reinit : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
+    external c_reinit : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
       = "c_idas_quad_reinit"
+
+    let reinit s v0 =
+      let se = fwdsensext s in
+      se.checkquadvec v0;
+      c_reinit s v0
 
     external set_err_con    : ('a, 'k) session -> bool -> unit
         = "c_idas_quad_set_err_con"
+
     external sv_tolerances
         : ('a, 'k) session -> float -> ('a, 'k) Nvector.t -> unit
         = "c_idas_quad_sv_tolerances"
+
     external ss_tolerances  : ('a, 'k) session -> float -> float -> unit
         = "c_idas_quad_ss_tolerances"
 
@@ -101,19 +93,31 @@ module Quadrature =
       | SVtolerances of float * ('a, 'k) Nvector.t
 
     let set_tolerances s tol =
+      let se = fwdsensext s in
       match tol with
       | NoStepSizeControl -> set_err_con s false
       | SStolerances (rel, abs) -> (ss_tolerances s rel abs;
                                     set_err_con s true)
-      | SVtolerances (rel, abs) -> (sv_tolerances s rel abs;
+      | SVtolerances (rel, abs) -> (se.checkquadvec abs;
+                                    sv_tolerances s rel abs;
                                     set_err_con s true)
 
-    external get : ('a, 'k) session -> ('a, 'k) Nvector.t -> float
+    external c_get : ('a, 'k) session -> ('a, 'k) Nvector.t -> float
         = "c_idas_quad_get"
 
-    external get_dky
+    let get s v =
+      let se = fwdsensext s in
+      se.checkquadvec v;
+      c_get s v
+
+    external c_get_dky
         : ('a, 'k) session -> float -> int -> ('a, 'k) Nvector.t -> unit
         = "c_idas_quad_get_dky"
+
+    let get_dky s dky =
+      let se = fwdsensext s in
+      se.checkquadvec dky;
+      fun t k -> c_get_dky s t k dky
 
     external get_num_rhs_evals       : ('a, 'k) session -> int
         = "c_idas_quad_get_num_rhs_evals"
@@ -121,8 +125,13 @@ module Quadrature =
     external get_num_err_test_fails  : ('a, 'k) session -> int
         = "c_idas_quad_get_num_err_test_fails"
 
-    external get_err_weights : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
+    external c_get_err_weights : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
         = "c_idas_quad_get_err_weights"
+
+    let get_err_weights s v =
+      let se = fwdsensext s in
+      se.checkquadvec v;
+      c_get_err_weights s v
 
     external get_stats : ('a, 'k) session -> int * int
         = "c_idas_quad_get_stats"
@@ -132,6 +141,17 @@ module Quadrature =
 module Sensitivity =
   struct
     include SensitivityTypes
+
+    exception SensNotInitialized
+    exception SensResFuncFailure
+    exception FirstSensResFuncFailure
+    exception RepeatedSensResFuncFailure
+    exception BadSensIdentifier
+
+    let fwdsensext s =
+      match s.sensext with
+      | FwdSensExt se -> se
+      | _ -> raise SensNotInitialized
 
     type ('a, 'k) tolerance =
         SStolerances of float * Sundials.RealArray.t
@@ -163,20 +183,10 @@ module Sensitivity =
       | SVtolerances (rel, abs) -> begin
             if Array.length abs <> ns
             then invalid_arg "set_tolerances: abstol has the wrong length";
+            Array.iter s.checkvec abs;
             sv_tolerances s rel abs
           end
       | EEtolerances -> ee_tolerances s
-
-    exception SensNotInitialized
-    exception SensResFuncFailure
-    exception FirstSensResFuncFailure
-    exception RepeatedSensResFuncFailure
-    exception BadSensIdentifier
-
-    let fwdsensext s =
-      match s.sensext with
-      | FwdSensExt se -> se
-      | _ -> raise SensNotInitialized
 
     type sens_method =
         Simultaneous
@@ -215,11 +225,13 @@ module Sensitivity =
          else Array.iter check_pi p);
       c_set_params s ps
 
-
     let init s tol fmethod sparams sensresfn y0 y'0 =
+      Array.iter s.checkvec y0;
+      Array.iter s.checkvec y'0;
       add_fwdsensext s;
       let se = fwdsensext s in
       let ns = Array.length y0 in
+      if ns = 0 then invalid_arg "init: require at least one sensitivity parameter";
       if ns <> Array.length y'0 then
         invalid_arg "init: y0 and y'0 have inconsistent lengths";
       c_sens_init s fmethod (sensresfn <> None) y0 y'0;
@@ -234,16 +246,18 @@ module Sensitivity =
       set_params s sparams;
       set_tolerances s tol
 
-
     external c_reinit
       : ('a, 'k) session -> sens_method
         -> ('a, 'k) Nvector.t array -> ('a, 'k) Nvector.t array -> unit
       = "c_idas_sens_reinit"
 
-    let reinit s sm s0 =
-      if Array.length s0 <> num_sensitivities s
+    let reinit s sm s0 s'0 =
+      let ns = num_sensitivities s in
+      if Array.length s0 <> ns || Array.length s'0 <> ns
       then invalid_arg "reinit: wrong number of sensitivity vectors";
-      c_reinit s sm s0
+      Array.iter s.checkvec s0;
+      Array.iter s.checkvec s'0;
+      c_reinit s sm s0 s'0
 
     external toggle_off : ('a, 'k) session -> unit
       = "c_idas_sens_toggle_off"
@@ -254,23 +268,33 @@ module Sensitivity =
     let get s ys =
       if Array.length ys <> num_sensitivities s
       then invalid_arg "get: wrong number of sensitivity vectors";
+      Array.iter s.checkvec ys;
       c_get s ys
 
     external c_get_dky
       : ('a, 'k) session -> float -> int -> ('a, 'k) Nvector.t array -> unit
       = "c_idas_sens_get_dky"
 
-    let get_dky s t k dkys =
+    let get_dky s dkys =
       if Array.length dkys <> num_sensitivities s
       then invalid_arg "get_dky: wrong number of sensitivity vectors";
-      c_get_dky s t k dkys
+      Array.iter s.checkvec dkys;
+      fun t k -> c_get_dky s t k dkys
 
-    external get1 : ('a, 'k) session -> int -> ('a, 'k) Nvector.t -> float
+    external c_get1 : ('a, 'k) session -> int -> ('a, 'k) Nvector.t -> float
       = "c_idas_sens_get1"
 
-    external get_dky1
+    let get1 s ys =
+      s.checkvec ys;
+      fun i -> c_get1 s i ys
+
+    external c_get_dky1
       : ('a, 'k) session -> float -> int -> int -> ('a, 'k) Nvector.t -> unit
       = "c_idas_sens_get_dky1"
+
+    let get_dky1 s dkys =
+      s.checkvec dkys;
+      fun t k i -> c_get_dky1 s t k i dkys
 
     type dq_method = DQCentered | DQForward
 
@@ -309,6 +333,7 @@ module Sensitivity =
     let get_err_weights s esweight =
       if Array.length esweight <> num_sensitivities s
       then invalid_arg "get_err_weights: wrong number of vectors";
+      Array.iter s.checkvec esweight;
       c_get_err_weights s esweight
 
     external c_sens_calc_ic_ya_yd' :
@@ -330,13 +355,19 @@ module Sensitivity =
 
     let calc_ic_ya_yd' session ?y ?y' ?ys ?y's id tout1 =
       let num_sens = num_sensitivities session in
+      ocheck session.checkvec y;
+      ocheck session.checkvec y';
       (match ys with
-       | Some ys when Array.length ys <> num_sens ->
-         invalid_arg "calc_ic_ya_yd': wrong number of vectors in ~ys"
+       | Some ys ->
+           if Array.length ys <> num_sens
+           then invalid_arg "calc_ic_ya_yd': wrong number of vectors in ~ys";
+           Array.iter session.checkvec ys
        | _ -> ());
       (match y's with
-       | Some y's when Array.length y's <> num_sens ->
-         invalid_arg "calc_ic_ya_yd': wrong number of vectors in ~y's"
+       | Some y's ->
+           if Array.length y's <> num_sens
+           then invalid_arg "calc_ic_ya_yd': wrong number of vectors in ~y's";
+           Array.iter session.checkvec y's
        | _ -> ());
       c_sens_calc_ic_ya_yd' session y y' ys y's id tout1
 
@@ -346,6 +377,7 @@ module Sensitivity =
        values of the corrected derivatives.  *)
     let calc_ic_y session ?y ?ys tout1 =
       let num_sens = num_sensitivities session in
+      ocheck session.checkvec y;
       (match ys with
        | Some ys when Array.length ys <> num_sens ->
          invalid_arg "calc_ic_y: wrong number of vectors in ~ys"
@@ -376,9 +408,10 @@ module Sensitivity =
 
       let init s ?fQS v0 =
         let se = fwdsensext s in
-        let ns = num_sensitivities s in
-        if Array.length v0 <> ns
+        if Array.length v0 <> se.num_sensitivities
         then invalid_arg "init: wrong number of vectors";
+        se.checkquadsensvec <- Nvector.check v0.(0);
+        Array.iter se.checkquadsensvec v0;
         match fQS with
         | Some f -> se.quadsensrhsfn <- f;
                     c_quadsens_init s true v0
@@ -388,9 +421,10 @@ module Sensitivity =
         = "c_idas_quadsens_reinit"
 
       let reinit s v =
-        let ns = num_sensitivities s in
-        if Array.length v <> ns
+        let se = fwdsensext s in
+        if Array.length v <> se.num_sensitivities
         then invalid_arg "reinit: wrong number of vectors";
+        Array.iter se.checkquadsensvec v;
         c_reinit s v
 
       type ('a, 'k) tolerance =
@@ -414,18 +448,19 @@ module Sensitivity =
         = "c_idas_quadsens_ee_tolerances"
 
       let set_tolerances s tol =
-        let ns = num_sensitivities s in
+        let se = fwdsensext s in
         match tol with
         | NoStepSizeControl -> set_err_con s false
         | SStolerances (rel, abs) -> begin
-            if Bigarray.Array1.dim abs <> ns
+            if Bigarray.Array1.dim abs <> se.num_sensitivities
             then invalid_arg "set_tolerances: abstol has the wrong length";
             ss_tolerances s rel abs;
             set_err_con s true
           end
         | SVtolerances (rel, abs) -> begin
-            if Array.length abs <> ns
+            if Array.length abs <> se.num_sensitivities
             then invalid_arg "set_tolerances: abstol has the wrong length";
+            Array.iter se.checkquadsensvec abs;
             sv_tolerances s rel abs;
             set_err_con s true
           end
@@ -436,27 +471,39 @@ module Sensitivity =
         = "c_idas_quadsens_get"
 
       let get s ys =
-        let ns = num_sensitivities s in
-        if Array.length ys <> ns
+        let se = fwdsensext s in
+        if Array.length ys <> se.num_sensitivities
         then invalid_arg "get: wrong number of vectors";
+        Array.iter se.checkquadsensvec ys;
         c_get s ys
 
-      external get1 : ('a, 'k) session -> int -> ('a, 'k) Nvector.t -> float
+      external c_get1 : ('a, 'k) session -> int -> ('a, 'k) Nvector.t -> float
         = "c_idas_quadsens_get1"
+
+      let get1 s yqs =
+        let se = fwdsensext s in
+        se.checkquadsensvec yqs;
+        fun i -> c_get1 s i yqs
 
       external c_get_dky
         : ('a, 'k) session -> float -> int -> ('a, 'k) Nvector.t array -> unit
         = "c_idas_quadsens_get_dky"
 
-      let get_dky s t k ys =
-        let ns = num_sensitivities s in
-        if Array.length ys <> ns
+      let get_dky s ys =
+        let se = fwdsensext s in
+        if Array.length ys <> se.num_sensitivities
         then invalid_arg "get_dky: wrong number of vectors";
-        c_get_dky s t k ys
+        Array.iter se.checkquadsensvec ys;
+        fun t k -> c_get_dky s t k ys
 
-      external get_dky1 : ('a, 'k) session -> float -> int -> int
+      external c_get_dky1 : ('a, 'k) session -> float -> int -> int
         -> ('a, 'k) Nvector.t -> unit
         = "c_idas_quadsens_get_dky1"
+
+      let get_dky1 s dkyqs =
+        let se = fwdsensext s in
+        se.checkquadsensvec dkyqs;
+        fun t k i -> c_get_dky1 s t k i dkyqs
 
       external get_num_rhs_evals       : ('a, 'k) session -> int
         = "c_idas_quadsens_get_num_rhs_evals"
@@ -469,9 +516,10 @@ module Sensitivity =
         = "c_idas_quadsens_get_err_weights"
 
       let get_err_weights s esweight =
-        let ns = num_sensitivities s in
-        if Array.length esweight <> ns
+        let se = fwdsensext s in
+        if Array.length esweight <> se.num_sensitivities
         then invalid_arg "get_err_weights: wrong number of vectors";
+        Array.iter se.checkquadsensvec esweight;
         c_get_err_weights s esweight
 
       external get_stats : ('a, 'k) session -> int * int
@@ -515,6 +563,7 @@ module Adjoint =
       = "c_idas_adj_set_var_types"
 
     let set_var_types b var_types =
+      (tosession b).checkvec var_types;
       let parent, which = parent_and_which b in
       c_set_var_types parent which var_types
 
@@ -556,29 +605,51 @@ module Adjoint =
       = "c_idas_adj_get_consistent_ic"
 
     let calc_ic bsession ?yb ?y'b tout1 yb0 y'b0 =
+      let checkvec = (tosession bsession).checkvec in
       let parent, which = parent_and_which bsession in
+      checkvec yb0;
+      checkvec y'b0;
+      ocheck checkvec yb;
+      ocheck checkvec y'b;
       c_adj_calc_ic parent which tout1 yb0 y'b0;
       c_adj_get_consistent_ic parent which yb y'b
 
     let calc_ic_sens bsession ?yb ?y'b tout1 yb0 y'b0 ys0 y's0 =
-      let num_sens = num_sensitivities (tosession bsession) in
+      let bs = tosession bsession in
+      let num_sens = num_sensitivities bs in
       if Array.length ys0 <> num_sens then
         invalid_arg "calc_ic_sens: wrong number of vectors in ys0";
       if Array.length y's0 <> num_sens then
         invalid_arg "calc_ic_sens: wrong number of vectors in y's0";
+      bs.checkvec yb0;
+      bs.checkvec y'b0;
+      Array.iter bs.checkvec ys0;
+      Array.iter bs.checkvec y's0;
+      ocheck bs.checkvec yb;
+      ocheck bs.checkvec y'b;
       let parent, which = parent_and_which bsession in
       c_adj_calc_ic_sens parent which tout1 yb0 y'b0 ys0 y's0;
       c_adj_get_consistent_ic parent which yb y'b
 
-    external forward_normal : ('a, 'k) session -> float
+    external c_forward_normal : ('a, 'k) session -> float
                               -> ('a, 'k) Nvector.t -> ('a, 'k) Nvector.t
                               -> float * int * Ida.solver_result
         = "c_idas_adj_forward_normal"
 
-    external forward_one_step : ('a, 'k) session -> float
+    let forward_normal s t y y' =
+      s.checkvec y;
+      s.checkvec y';
+      c_forward_normal s t y y'
+
+    external c_forward_one_step : ('a, 'k) session -> float
                                 -> ('a, 'k) Nvector.t -> ('a, 'k) Nvector.t
                                 -> float * int * Ida.solver_result
         = "c_idas_adj_forward_one_step"
+
+    let forward_one_step s t y y' =
+      s.checkvec y;
+      s.checkvec y';
+      c_forward_one_step s t y y'
 
     type 'a single_tmp = 'a
     type 'a triple_tmp = 'a * 'a * 'a
@@ -605,7 +676,8 @@ module Adjoint =
       let parent, which = parent_and_which bs in
       match tol with
       | SStolerances (rel, abs) -> ss_tolerances parent which rel abs
-      | SVtolerances (rel, abs) -> sv_tolerances parent which rel abs
+      | SVtolerances (rel, abs) -> ((tosession bs).checkvec abs;
+                                    sv_tolerances parent which rel abs)
 
     let bwdsensext = function (Bsession bs) ->
       match bs.sensext with
@@ -627,6 +699,9 @@ module Adjoint =
         = "c_idas_adj_get"
 
     let get bs yb ypb =
+      let checkvec = (tosession bs).checkvec in
+      checkvec yb;
+      checkvec ypb;
       let parent, which = parent_and_which bs in
       c_get parent which yb ypb
 
@@ -915,8 +990,9 @@ module Adjoint =
                                | WithSens f -> f
                                | _ -> dummy_bresfn_sens);
 
-                bquadrhsfn  = dummy_bquadrhsfn;
+                bquadrhsfn = dummy_bquadrhsfn;
                 bquadrhsfn_sens = dummy_bquadrhsfn_sens;
+                checkbquadvec = (fun _ -> raise Nvector.IncompatibleNvector);
               };
             } in
       Gc.finalise bsession_finalize (tosession bs);
@@ -937,6 +1013,9 @@ module Adjoint =
         = "c_idas_adj_reinit"
 
     let reinit bs ?linsolv tb0 yb0 y'b0 =
+      let checkvec = (tosession bs).checkvec in
+      checkvec yb0;
+      checkvec y'b0;
       let parent, which = parent_and_which bs in
       c_reinit parent which tb0 yb0 y'b0;
       (match linsolv with
@@ -972,6 +1051,7 @@ module Adjoint =
       Ida.get_tol_scale_factor (tosession bs)
 
     let get_err_weights bs = Ida.get_err_weights (tosession bs)
+
     let get_est_local_errors bs =
       Ida.get_est_local_errors (tosession bs)
 
@@ -1004,9 +1084,10 @@ module Adjoint =
         let init bs mf y0 =
           let parent, which = parent_and_which bs in
           let se = bwdsensext bs in
+          se.checkbquadvec <- Nvector.check y0;
           match mf with
            | NoSens f -> (se.bquadrhsfn <- f;
-                         c_quad_initb parent which y0)
+                          c_quad_initb parent which y0)
            | WithSens f -> (se.bquadrhsfn_sens <- f;
                             c_quad_initbs parent which y0)
 
@@ -1016,6 +1097,8 @@ module Adjoint =
 
         let reinit bs yqb0 =
           let parent, which = parent_and_which bs in
+          let se = bwdsensext bs in
+          se.checkbquadvec yqb0;
           c_reinit parent which yqb0
 
         external c_get : ('a, 'k) session -> int -> ('a, 'k) Nvector.t -> float
@@ -1023,6 +1106,8 @@ module Adjoint =
 
         let get bs yqb =
           let parent, which = parent_and_which bs in
+          let se = bwdsensext bs in
+          se.checkbquadvec yqb;
           c_get parent which yqb
 
         type ('a, 'k) tolerance =
@@ -1047,7 +1132,9 @@ module Adjoint =
           | NoStepSizeControl -> set_err_con parent which false
           | SStolerances (rel, abs) -> (ss_tolerances parent which rel abs;
                                         set_err_con parent which true)
-          | SVtolerances (rel, abs) -> (sv_tolerances parent which rel abs;
+          | SVtolerances (rel, abs) -> (let se = bwdsensext bs in
+                                        se.checkbquadvec abs;
+                                        sv_tolerances parent which rel abs;
                                         set_err_con parent which true)
 
         let get_num_rhs_evals bs =
@@ -1096,3 +1183,4 @@ let _ =
       Adjoint.BadFinalTime;
       Adjoint.BadOutputTime;
     |]
+

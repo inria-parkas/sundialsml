@@ -139,7 +139,7 @@ module Quadrature :
         @idas <node5#ss:quad_get> IdaGetQuad *)
     val get : ('a, 'k) session -> ('a, 'k) Nvector.t -> float
 
-    (** [tret = get_dky s t k dkyq] fills [dkyq] with the derivatives
+    (** [tret = get_dky s dkyq t k] fills [dkyq] with the derivatives
         of the quadrature solution vector after a successful return
         from {!Ida.solve_normal} or {!Ida.solve_one_step}. The time
         requested, [t], must fall within the interval defined by the
@@ -150,7 +150,7 @@ module Quadrature :
         @idas <node5#ss:quad_get> IdaGetQuadDky
         @raise BadK [k] is not in the range 0, 1, ..., [qlast].
         @raise BadT [t] is not in the allowed range. *)
-    val get_dky : ('a, 'k) session -> float -> int -> ('a, 'k) Nvector.t -> unit
+    val get_dky : ('a, 'k) session -> ('a, 'k) Nvector.t -> float -> int -> unit
 
     (** {3:quadoptout Optional Output Functions} *)
 
@@ -389,7 +389,7 @@ let yS'0 = Array.init ns (fun _ -> RealArray.init neq 0.0)]}
       *)
     val get : ('a, 'b) session -> ('a, 'b) Nvector.t array -> float
 
-    (** [tret = get_dky s t k dkys] fills [dkys] with the
+    (** [tret = get_dky s dkys t k] fills [dkys] with the
         derivatives of the sensitivity solution vectors after a
         successful return from {!Ida.solve_normal} or
         {!Ida.solve_one_step}. The time requested, [t], must fall
@@ -402,18 +402,18 @@ let yS'0 = Array.init ns (fun _ -> RealArray.init neq 0.0)]}
         @raise BadT [t] is not in the allowed range.
     *)
     val get_dky :
-      ('a, 'b) session -> float -> int -> ('a, 'b) Nvector.t array -> unit
+      ('a, 'b) session -> ('a, 'b) Nvector.t array -> float -> int -> unit
 
-    (** [tret = get1 s i ys] fills [ys] with the [i]th sensitivity
+    (** [tret = get1 s ys i] fills [ys] with the [i]th sensitivity
         solution vector after a successful return from
         {!Ida.solve_normal} or {!Ida.solve_one_step}, and returns
         the time reached by the solver.
 
         @idas <node6#ss:sensi_get> IDAGetSens1
         @raise BadIS The index [i] is not in the allowed range. *)
-    val get1 : ('a, 'k) session -> int -> ('a, 'k) Nvector.t -> float
+    val get1 : ('a, 'k) session -> ('a, 'k) Nvector.t -> int -> float
 
-    (** [tret = get_dky1 s t k i dkys] fills [dkys] with the
+    (** [tret = get_dky1 s dkys t k i] fills [dkys] with the
         derivatives of the [i]th sensitivity solution vector after a
         successful return from {!Ida.solve_normal} or
         {!Ida.solve_one_step}. The time requested, [t], must fall
@@ -427,7 +427,7 @@ let yS'0 = Array.init ns (fun _ -> RealArray.init neq 0.0)]}
         @raise BadK [k] is not in the range 0, 1, ..., [qlast].
         @raise BadT [t] is not in the allowed range.  *)
     val get_dky1 :
-      ('a, 'k) session -> float -> int -> int -> ('a, 'k) Nvector.t -> unit
+      ('a, 'k) session -> ('a, 'k) Nvector.t -> float -> int -> int -> unit
 
     (** {3:sensoptin Optional Input Functions} *)
 
@@ -670,17 +670,16 @@ let yS'0 = Array.init ns (fun _ -> RealArray.init neq 0.0)]}
             @idas <node6#ss:quad_sens_get> IDAGetQuadSens *)
         val get : ('a, 'b) session -> ('a, 'b) Nvector.t array -> float
 
-        (** [tret = get s i yqs] fills [yqs] with the [i]th quadrature
+        (** [tret = get s yqs i] fills [yqs] with the [i]th quadrature
             solution vector after a successful return from
             {!Ida.solve_normal} or {!Ida.solve_one_step}, and
             returns the time reached by the solver.
 
             @idas <node6#ss:quad_sens_get> IDAGetQuadSens1
-            @raise BadIS The index [i] is not in the allowed range.
-          *)
-        val get1 : ('a, 'k) session -> int -> ('a, 'k) Nvector.t -> float
+            @raise BadIS The index [i] is not in the allowed range. *)
+        val get1 : ('a, 'k) session -> ('a, 'k) Nvector.t -> int -> float
 
-        (** [tret = get_dky s t k dkyqs] fills [dkyqs] with the
+        (** [tret = get_dky s dkyqs t k] fills [dkyqs] with the
             derivatives of the quadrature solution vectors after a
             successful return from {!Ida.solve_normal} or
             {!Ida.solve_one_step}. The time requested, [t], must
@@ -694,9 +693,9 @@ let yS'0 = Array.init ns (fun _ -> RealArray.init neq 0.0)]}
             @raise BadK [k] is not in the range 0, 1, ..., [qlast].
             @raise BadT [t] is not in the allowed range. *)
         val get_dky :
-          ('a, 'b) session -> float -> int -> ('a, 'b) Nvector.t array -> unit
+          ('a, 'b) session -> ('a, 'b) Nvector.t array -> float -> int -> unit
 
-        (** [tret = get_dky s t k i dkyqs] fills [dkyqs] with the derivatives of
+        (** [tret = get_dky s dkyqs t k i] fills [dkyqs] with the derivatives of
             the [i]th quadrature solution vector after a successful return from
             {!Ida.solve_normal} or {!Ida.solve_one_step}.
             The time requested, [t], must fall within the interval defined by
@@ -708,7 +707,7 @@ let yS'0 = Array.init ns (fun _ -> RealArray.init neq 0.0)]}
             @raise BadK [k] is not in the range 0, 1, ..., [qlast].
             @raise BadT [t] is not in the allowed range. *)
         val get_dky1 :
-          ('a, 'k) session -> float -> int -> int -> ('a, 'k) Nvector.t -> unit
+          ('a, 'k) session -> ('a, 'k) Nvector.t -> float -> int -> int -> unit
 
         (** Returns the number of calls to the user's quadrature right-hand side
             function.
@@ -1209,7 +1208,7 @@ let bs = init_backward s (Spils.spgmr ...) (SStolerances ...) (NoSens fB) tB0 yB
     val get :
       ('a, 'b) bsession -> ('a, 'b) Nvector.t -> ('a, 'b) Nvector.t -> float
 
-    (** [tret = get_dky s t k dkys] fills [dkys] with the derivatives of the
+    (** [tret = get_dky s dkys t k] fills [dkys] with the derivatives of the
         sensitivity solution vectors after a successful return from
         {!backward_normal} or {!backward_one_step}. The time requested, [t],
         must fall within the interval defined by the last successful step

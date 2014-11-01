@@ -421,8 +421,8 @@ let main () =
   printf "     G:    %12.4e\n" g;
 
   (* Sensitivities are needed for IC of backward problems. *)
-  Sens.get_dky ida_mem tf 0 yyS;
-  Sens.get_dky ida_mem tf 1 ypS;
+  Sens.get_dky ida_mem yyS tf 0;
+  Sens.get_dky ida_mem ypS tf 1;
 
   let _ = QuadSens.get ida_mem qS in
   printf "   dG/dp:  %12.4e %12.4e\n"
