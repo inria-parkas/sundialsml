@@ -748,7 +748,7 @@ type lmm =
 (** Right-hand side functions for calculating ODE derivatives. They are passed
     three arguments:
     - [t], the value of the independent variable, i.e., the simulation time,
-    - [y], a vector of dependent-variable values, i.e., $y(t)$, and,
+    - [y], the vector of dependent-variable values, i.e., $y(t)$, and,
     - [dy], a vector for storing the value of $f(t, y)$.
 
     Within the function, raising a {!Sundials.RecoverableFailure} exception
@@ -765,7 +765,7 @@ type 'a rhsfn = float -> 'a -> 'a -> unit
     ‘zero-crossings’ are used to detect significant events. The function is
     passed three arguments:
     - [t], the value of the independent variable, i.e., the simulation time,
-    - [y], a vector of dependent-variable values, i.e., $y(t)$, and,
+    - [y], the vector of dependent-variable values, i.e., $y(t)$, and,
     - [gout], a vector for storing the value of $g(t, y)$.
 
     {warning [y] and [gout] should not be accessed after the function has
@@ -1113,11 +1113,11 @@ val get_num_nonlin_solv_iters : ('a, 'k) session -> int
     @cvode <node5#sss:optout_main> CVodeGetNumNonlinSolvConvFails *)
 val get_num_nonlin_solv_conv_fails : ('a, 'k) session -> int
 
-(** [nniters, nncfails = get_nonlin_solv_stats s] obtains both the numbers of
-    nonlinear iterations performed [nniters] and of nonlinear convergence
-    failures that have occurred [nncfails].
+(** Returns both the numbers of nonlinear iterations performed [nniters] and
+    nonlinear convergence failures [nncfails].
 
-    @cvode <node5#sss:optout_main> CVodeGetNonlinSolvStats *)
+    @cvode <node5#sss:optout_main> CVodeGetNonlinSolvStats
+    @return ([nniters], [nncfails]) *)
 val get_nonlin_solv_stats : ('a, 'k) session -> int *int
 
 (** {2:roots Additional root-finding functions} *)

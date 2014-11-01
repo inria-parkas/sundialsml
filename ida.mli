@@ -610,8 +610,8 @@ val default_tolerances : ('data, 'kind) tolerance
 (** Residual functions that define a DAE problem. They are passed four
  * arguments:
     - [t], the value of the independent variable, i.e., the simulation time,
-    - [y], a vector of dependent-variable values, i.e., $y(t)$,
-    - [y'], a vector of dependent-variable derivatives, i.e.,
+    - [y], the vector of dependent-variable values, i.e., $y(t)$,
+    - [y'], the vector of dependent-variable derivatives, i.e.,
             {% $\dot{y} = \frac{dy}{dt}$%}, and,
     - [r] a vector for storing the residual value, {% $F(t, y, \dot{y})$%}.
 
@@ -629,8 +629,8 @@ type 'a resfn = float -> 'a -> 'a -> 'a -> unit
     ‘zero-crossings’ are used to detect significant events. The function is
     passed four arguments:
     - [t], the value of the independent variable, i.e., the simulation time,
-    - [y], a vector of dependent-variable values, i.e., $y(t)$,
-    - [y'], a vector of dependent-variable derivatives, i.e.,
+    - [y], the vector of dependent-variable values, i.e., $y(t)$,
+    - [y'], the vector of dependent-variable derivatives, i.e.,
             {% $\dot{y} = \frac{dy}{dt}$%}, and,
     - [gout], a vector for storing the value of {% $g(t, y, \dot{y})$%}.
 
@@ -1061,11 +1061,11 @@ val get_num_nonlin_solv_iters : ('a, 'k) session -> int
     @ida <node5#sss:optout_main> IDAGetNumNonlinSolvConvFails *)
 val get_num_nonlin_solv_conv_fails : ('a, 'k) session -> int
 
-(** [nniters, nncfails = get_nonlin_solv_stats s] obtains both the numbers of
-    nonlinear iterations performed [nniters] and of nonlinear convergence
-    failures that have occurred [nncfails].
+(** Returns both the numbers of nonlinear iterations performed [nniters] and
+    nonlinear convergence failures [nncfails].
 
-    @ida <node5#sss:optout_main> IDAGetNonlinSolvStats *)
+    @ida <node5#sss:optout_main> IDAGetNonlinSolvStats
+    @return ([nniters], [nncfails]) *)
 val get_nonlin_solv_stats : ('a, 'k) session -> int *int
 
 (** {2:roots Additional root-finding functions} *)

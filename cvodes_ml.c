@@ -1768,8 +1768,8 @@ CAMLprim value c_cvodes_sens_get_stats(value vdata)
     SCHECK_FLAG("CVodeGetSensStats", flag);
 
     r = caml_alloc_tuple(RECORD_CVODES_SENS_STATS_SIZE);
-    Store_field(r, RECORD_CVODES_SENS_STATS_NUM_RHS_EVALS, Val_long(nfsevals));
-    Store_field(r, RECORD_CVODES_SENS_STATS_NUM_SENS_EVALS, Val_long(nfevalss));
+    Store_field(r, RECORD_CVODES_SENS_STATS_NUM_SENS_EVALS, Val_long(nfsevals));
+    Store_field(r, RECORD_CVODES_SENS_STATS_NUM_RHS_EVALS, Val_long(nfevalss));
     Store_field(r, RECORD_CVODES_SENS_STATS_NUM_ERR_TEST_FAILS,
 							   Val_long(nsetfails));
     Store_field(r, RECORD_CVODES_SENS_STATS_NUM_LIN_SOLV_SETUPS,

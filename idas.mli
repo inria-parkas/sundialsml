@@ -496,8 +496,8 @@ let yS'0 = Array.init ns (fun _ -> RealArray.init neq 0.0)]}
 
     (** Return type of {!get_stats}. *)
     type sensitivity_stats = {
-      num_res_evals : int;
       num_sens_evals : int;
+      num_res_evals : int;
       num_err_test_fails : int;
       num_lin_solv_setups : int;
     }

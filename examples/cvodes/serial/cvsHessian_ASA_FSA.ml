@@ -234,8 +234,8 @@ let print_fwd_stats cvode_mem =
   in
   let nni, ncfn = Cvode.get_nonlin_solv_stats cvode_mem
   and nfQe, netfQ = Quad.get_stats cvode_mem
-  and { Sens.num_rhs_evals = nfSe;
-        Sens.num_sens_evals = nfeS;
+  and { Sens.num_sens_evals = nfSe;
+        Sens.num_rhs_evals = nfeS;
         Sens.num_err_test_fails = netfS;
         Sens.num_lin_solv_setups = nsetupsS;
       } = Sens.get_stats cvode_mem

@@ -317,8 +317,8 @@ module Sensitivity =
       = "c_idas_sens_get_num_lin_solv_setups"
 
     type sensitivity_stats = {
-      num_res_evals : int;
       num_sens_evals :int;
+      num_res_evals : int;
       num_err_test_fails : int;
       num_lin_solv_setups :int;
     }

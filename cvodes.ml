@@ -234,7 +234,7 @@ module Sensitivity =
       (match fm with
        | AllAtOnce fo -> begin
            if fmethod = Staggered1 then
-             failwith "Forward.init: Cannot combine AllAtOnce and Staggered1";
+             failwith "init: Cannot combine AllAtOnce and Staggered1";
            (match fo with Some f -> se.sensrhsfn <- f | None -> ());
            c_sens_init s fmethod (fo <> None) v0
          end
@@ -317,8 +317,8 @@ module Sensitivity =
         = "c_cvodes_sens_get_num_lin_solv_setups"
 
     type sensitivity_stats = {
-        num_rhs_evals : int;
         num_sens_evals :int;
+        num_rhs_evals : int;
         num_err_test_fails : int;
         num_lin_solv_setups :int;
       }

@@ -1207,8 +1207,8 @@ CAMLprim value c_idas_sens_get_stats(value vdata)
     SCHECK_FLAG("IDAGetSensStats", flag);
 
     r = caml_alloc_tuple(RECORD_IDAS_SENS_STATS_SIZE);
-    Store_field(r, RECORD_IDAS_SENS_STATS_NUM_RES_EVALS, Val_long(nfsevals));
-    Store_field(r, RECORD_IDAS_SENS_STATS_NUM_SENS_EVALS, Val_long(nfevalss));
+    Store_field(r, RECORD_IDAS_SENS_STATS_NUM_SENS_EVALS, Val_long(nfsevals));
+    Store_field(r, RECORD_IDAS_SENS_STATS_NUM_RES_EVALS, Val_long(nfevalss));
     Store_field(r, RECORD_IDAS_SENS_STATS_NUM_ERR_TEST_FAILS,
 							   Val_long(nsetfails));
     Store_field(r, RECORD_IDAS_SENS_STATS_NUM_LIN_SOLV_SETUPS,
