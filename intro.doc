@@ -74,7 +74,7 @@ The OCaml interface defines likewise a generic
 {!Nvector.t} type whose type arguments indicate the underlying {e
 data} and {e kind}—one of {!Nvector_serial.kind}, {!Nvector_parallel.kind},
 or {!Nvector_custom.kind}.
-The {!Nvector.unvec} function gives direct access to the underlying data.
+The {!Nvector.unwrap} function gives direct access to the underlying data.
 
 The interface to serial nvectors, {!Nvector_serial}, is based on
 {{:http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.html}Bigarrays}.
@@ -141,8 +141,8 @@ Each solver module includes a distinct type for linear solvers, e.g.,
 {!Cvode.linear_solver} or {!Cvodes.Adjoint.linear_solver}. As for nvectors,
 these types are parameterised by data and kind arguments. Values in these
 types are constructed by passing parameters to functions like
-{!Cvode.Dls.band}, {!Ida.Spils.spgmr}, or {!Kinsol_bbd.sptfqmr}. They can then
-be passed to the appopriate [init] or [reinit] functions to configure sessions.
+{!Cvode.Dls.band} or {!Ida.Spils.spgmr}. They can then be passed to the
+appopriate [init] or [reinit] functions to configure sessions.
 
 {2:modules Modules}
 
