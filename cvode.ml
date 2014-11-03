@@ -133,7 +133,7 @@ module Dls =
                                              { bjacfn = f; bmat = None });
       c_dls_lapack_band (session, neqs) p.mupper p.mlower (jac <> None)
 
-    let invalidate_callback (type d) (type k) (session : (d, k) session) =
+    let invalidate_callback session =
       match session.ls_callbacks with
       | DenseCallback ({ dmat = Some d } as cb) ->
           Dls.DenseMatrix.invalidate d;
