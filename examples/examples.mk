@@ -282,11 +282,11 @@ $(ALL_EXAMPLES:.ml=.sundials.c): %.sundials.c: $(C_EXAMPLES)		     \
 	 sed -e 's#@sundials_src_name@#$<#' -e "s#@main_args@#$$main_args#" \
 	   $(UTILS)/sundials_wrapper.c.in > $@
 
-$(SERIAL_EXAMPLES:.ml=.sundials): %.sundials: %.sundials.c
+$(SERIAL_EXAMPLES:.ml=.sundials): %.sundials: %.sundials.c $(SRCROOT)/config
 	$(CC) -o $@ -I $(EXAMPLESROOT)/$(SUBDIR) \
 	    $(EG_CFLAGS) $< $(LIB_PATH) $(EG_LDFLAGS) $(LAPACK_LIB)
 
-$(MPI_EXAMPLES:.ml=.sundials): %.sundials: %.sundials.c
+$(MPI_EXAMPLES:.ml=.sundials): %.sundials: %.sundials.c $(SRCROOT)/config
 	$(MPICC) -o $@ -I $(EXAMPLESROOT)/$(SUBDIR) \
 	    $(EG_CFLAGS) $< $(LIB_PATH) $(EG_LDFLAGS) \
 	    $(LAPACK_LIB) $(MPI_LIBLINK)
