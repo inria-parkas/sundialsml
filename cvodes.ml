@@ -910,7 +910,7 @@ module Adjoint =
         module Banded = struct
           external c_set_preconditioner
             : ('a, 'k) session -> int -> int -> int -> int -> unit
-            = "c_cvodes_adj_spils_set_preconditioner"
+            = "c_cvodes_adj_spils_set_banded_preconditioner"
 
           let init_preconditioner jac_times_vec bandrange bs parent which nv =
             c_set_preconditioner parent which
