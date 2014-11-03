@@ -74,7 +74,7 @@ module Quadrature =
 
     let reinit s v0 =
       let se = fwdsensext s in
-      se.checkquadvec v0;
+      if Sundials_config.safe then se.checkquadvec v0;
       c_reinit s v0
 
     external set_err_con    : ('a, 'k) session -> bool -> unit
@@ -98,7 +98,8 @@ module Quadrature =
       | NoStepSizeControl -> set_err_con s false
       | SStolerances (rel, abs) -> (ss_tolerances s rel abs;
                                     set_err_con s true)
-      | SVtolerances (rel, abs) -> (se.checkquadvec abs;
+      | SVtolerances (rel, abs) -> (if Sundials_config.safe then
+                                      se.checkquadvec abs;
                                     sv_tolerances s rel abs;
                                     set_err_con s true)
 
@@ -107,7 +108,7 @@ module Quadrature =
 
     let get s v =
       let se = fwdsensext s in
-      se.checkquadvec v;
+      if Sundials_config.safe then se.checkquadvec v;
       c_get s v
 
     external c_get_dky
@@ -116,7 +117,7 @@ module Quadrature =
 
     let get_dky s dky =
       let se = fwdsensext s in
-      se.checkquadvec dky;
+      if Sundials_config.safe then se.checkquadvec dky;
       fun t k -> c_get_dky s t k dky
 
     external get_num_rhs_evals       : ('a, 'k) session -> int
@@ -130,7 +131,7 @@ module Quadrature =
 
     let get_err_weights s v =
       let se = fwdsensext s in
-      se.checkquadvec v;
+      if Sundials_config.safe then se.checkquadvec v;
       c_get_err_weights s v
 
     external get_stats : ('a, 'k) session -> int * int
@@ -176,14 +177,15 @@ module Sensitivity =
       let ns = num_sensitivities s in
       match tol with
       | SStolerances (rel, abs) -> begin
-            if Bigarray.Array1.dim abs <> ns
+            if Sundials_config.safe && Bigarray.Array1.dim abs <> ns
             then invalid_arg "set_tolerances: abstol has the wrong length";
             ss_tolerances s rel abs
           end
       | SVtolerances (rel, abs) -> begin
-            if Array.length abs <> ns
-            then invalid_arg "set_tolerances: abstol has the wrong length";
-            if Sundials_config.safe then Array.iter s.checkvec abs;
+            if Sundials_config.safe then
+              (if Array.length abs <> ns
+               then invalid_arg "set_tolerances: abstol has the wrong length";
+               Array.iter s.checkvec abs);
             sv_tolerances s rel abs
           end
       | EEtolerances -> ee_tolerances s
@@ -209,20 +211,26 @@ module Sensitivity =
         = "c_idas_sens_set_params"
 
     let set_params s ({pvals; pbar; plist} as ps) =
-      let ns = num_sensitivities s in
-      let np = match pvals with None -> 0 | Some p -> Bigarray.Array1.dim p in
-      let check_pi v =
-        if v < 0 || v >= np
-        then invalid_arg "set_params: plist has an invalid entry" in
-      (match pbar with
-       | None -> ()
-       | Some p -> if Bigarray.Array1.dim p <> ns
-                   then invalid_arg "set_params: pbar has the wrong length");
-      (match plist with
-       | None -> ()
-       | Some p -> if Array.length p <> ns
-         then invalid_arg "set_params: plist has the wrong length"
-         else Array.iter check_pi p);
+      if Sundials_config.safe then
+        begin
+          let ns = num_sensitivities s in
+          let np = match pvals with None -> 0
+                                  | Some p -> Bigarray.Array1.dim p in
+          let check_pi v =
+            if v < 0 || v >= np
+            then invalid_arg "set_params: plist has an invalid entry" in
+          (match pbar with
+           | None -> ()
+           | Some p ->
+             if Bigarray.Array1.dim p <> ns
+             then invalid_arg "set_params: pbar has the wrong length");
+          (match plist with
+           | None -> ()
+           | Some p ->
+             if Array.length p <> ns
+             then invalid_arg "set_params: plist has the wrong length"
+             else Array.iter check_pi p)
+        end;
       c_set_params s ps
 
     let init s tol fmethod sparams sensresfn y0 y'0 =
@@ -232,9 +240,11 @@ module Sensitivity =
       add_fwdsensext s;
       let se = fwdsensext s in
       let ns = Array.length y0 in
-      if ns = 0 then invalid_arg "init: require at least one sensitivity parameter";
-      if ns <> Array.length y'0 then
-        invalid_arg "init: y0 and y'0 have inconsistent lengths";
+      if Sundials_config.safe then
+        (if ns = 0 then
+           invalid_arg "init: require at least one sensitivity parameter";
+         if ns <> Array.length y'0 then
+           invalid_arg "init: y0 and y'0 have inconsistent lengths");
       c_sens_init s fmethod (sensresfn <> None) y0 y'0;
       (match sensresfn with
        | Some f -> se.sensresfn <- f
@@ -254,10 +264,10 @@ module Sensitivity =
 
     let reinit s sm s0 s'0 =
       let ns = num_sensitivities s in
-      if Array.length s0 <> ns || Array.length s'0 <> ns
-      then invalid_arg "reinit: wrong number of sensitivity vectors";
       if Sundials_config.safe then
-        (Array.iter s.checkvec s0;
+        (if Array.length s0 <> ns || Array.length s'0 <> ns
+         then invalid_arg "reinit: wrong number of sensitivity vectors";
+         Array.iter s.checkvec s0;
          Array.iter s.checkvec s'0);
       c_reinit s sm s0 s'0
 
@@ -268,9 +278,10 @@ module Sensitivity =
       = "c_idas_sens_get"
 
     let get s ys =
-      if Array.length ys <> num_sensitivities s
-      then invalid_arg "get: wrong number of sensitivity vectors";
-      if Sundials_config.safe then Array.iter s.checkvec ys;
+      if Sundials_config.safe then
+        (if Array.length ys <> num_sensitivities s
+         then invalid_arg "get: wrong number of sensitivity vectors";
+         Array.iter s.checkvec ys);
       c_get s ys
 
     external c_get_dky
@@ -278,9 +289,10 @@ module Sensitivity =
       = "c_idas_sens_get_dky"
 
     let get_dky s dkys =
-      if Array.length dkys <> num_sensitivities s
-      then invalid_arg "get_dky: wrong number of sensitivity vectors";
-      if Sundials_config.safe then Array.iter s.checkvec dkys;
+      if Sundials_config.safe then
+        (if Array.length dkys <> num_sensitivities s
+         then invalid_arg "get_dky: wrong number of sensitivity vectors";
+         Array.iter s.checkvec dkys);
       fun t k -> c_get_dky s t k dkys
 
     external c_get1 : ('a, 'k) session -> int -> ('a, 'k) Nvector.t -> float
@@ -333,9 +345,10 @@ module Sensitivity =
       = "c_idas_sens_get_err_weights"
 
     let get_err_weights s esweight =
-      if Array.length esweight <> num_sensitivities s
-      then invalid_arg "get_err_weights: wrong number of vectors";
-      if Sundials_config.safe then Array.iter s.checkvec esweight;
+      if Sundials_config.safe then
+        (if Array.length esweight <> num_sensitivities s
+         then invalid_arg "get_err_weights: wrong number of vectors";
+         Array.iter s.checkvec esweight);
       c_get_err_weights s esweight
 
     external c_sens_calc_ic_ya_yd' :
@@ -362,15 +375,18 @@ module Sensitivity =
          ocheck session.checkvec y');
       (match ys with
        | Some ys ->
-           if Array.length ys <> num_sens
-           then invalid_arg "calc_ic_ya_yd': wrong number of vectors in ~ys";
-           if Sundials_config.safe then Array.iter session.checkvec ys
+           if Sundials_config.safe then
+             (if Array.length ys <> num_sens
+              then invalid_arg "calc_ic_ya_yd': wrong number of vectors in ~ys";
+              Array.iter session.checkvec ys)
        | _ -> ());
       (match y's with
        | Some y's ->
-           if Array.length y's <> num_sens
-           then invalid_arg "calc_ic_ya_yd': wrong number of vectors in ~y's";
-           if Sundials_config.safe then Array.iter session.checkvec y's
+           if Sundials_config.safe then
+             (if Array.length y's <> num_sens
+              then invalid_arg
+                   "calc_ic_ya_yd': wrong number of vectors in ~y's";
+              Array.iter session.checkvec y's)
        | _ -> ());
       c_sens_calc_ic_ya_yd' session y y' ys y's id tout1
 
@@ -380,11 +396,12 @@ module Sensitivity =
        values of the corrected derivatives.  *)
     let calc_ic_y session ?y ?ys tout1 =
       let num_sens = num_sensitivities session in
-      if Sundials_config.safe then ocheck session.checkvec y;
-      (match ys with
-       | Some ys when Array.length ys <> num_sens ->
-         invalid_arg "calc_ic_y: wrong number of vectors in ~ys"
-       | _ -> ());
+      if Sundials_config.safe then
+        (ocheck session.checkvec y;
+         match ys with
+         | Some ys when Array.length ys <> num_sens ->
+           invalid_arg "calc_ic_y: wrong number of vectors in ~ys"
+         | _ -> ());
       c_sens_calc_ic_y session y ys tout1
 
     external get_num_nonlin_solv_iters : ('a, 'k) session -> int
@@ -411,10 +428,11 @@ module Sensitivity =
 
       let init s ?fQS v0 =
         let se = fwdsensext s in
-        if Array.length v0 <> se.num_sensitivities
+        if Sundials_config.safe && Array.length v0 <> se.num_sensitivities
         then invalid_arg "init: wrong number of vectors";
-        se.checkquadsensvec <- Nvector.check v0.(0);
-        Array.iter se.checkquadsensvec v0;
+        let checkquadsensvec = Nvector.check v0.(0) in
+        if Sundials_config.safe then Array.iter se.checkquadsensvec v0;
+        se.checkquadsensvec <- checkquadsensvec;
         match fQS with
         | Some f -> se.quadsensrhsfn <- f;
                     c_quadsens_init s true v0
@@ -425,9 +443,10 @@ module Sensitivity =
 
       let reinit s v =
         let se = fwdsensext s in
-        if Array.length v <> se.num_sensitivities
-        then invalid_arg "reinit: wrong number of vectors";
-        Array.iter se.checkquadsensvec v;
+        if Sundials_config.safe then
+          (if Array.length v <> se.num_sensitivities
+           then invalid_arg "reinit: wrong number of vectors";
+           Array.iter se.checkquadsensvec v);
         c_reinit s v
 
       type ('a, 'k) tolerance =
@@ -455,15 +474,17 @@ module Sensitivity =
         match tol with
         | NoStepSizeControl -> set_err_con s false
         | SStolerances (rel, abs) -> begin
-            if Bigarray.Array1.dim abs <> se.num_sensitivities
+            if Sundials_config.safe &&
+               Bigarray.Array1.dim abs <> se.num_sensitivities
             then invalid_arg "set_tolerances: abstol has the wrong length";
             ss_tolerances s rel abs;
             set_err_con s true
           end
         | SVtolerances (rel, abs) -> begin
-            if Array.length abs <> se.num_sensitivities
-            then invalid_arg "set_tolerances: abstol has the wrong length";
-            Array.iter se.checkquadsensvec abs;
+            if Sundials_config.safe then
+              (if Array.length abs <> se.num_sensitivities
+               then invalid_arg "set_tolerances: abstol has the wrong length";
+               Array.iter se.checkquadsensvec abs);
             sv_tolerances s rel abs;
             set_err_con s true
           end
@@ -475,9 +496,10 @@ module Sensitivity =
 
       let get s ys =
         let se = fwdsensext s in
-        if Array.length ys <> se.num_sensitivities
-        then invalid_arg "get: wrong number of vectors";
-        Array.iter se.checkquadsensvec ys;
+        if Sundials_config.safe then
+          (if Array.length ys <> se.num_sensitivities
+           then invalid_arg "get: wrong number of vectors";
+           Array.iter se.checkquadsensvec ys);
         c_get s ys
 
       external c_get1 : ('a, 'k) session -> int -> ('a, 'k) Nvector.t -> float
@@ -485,7 +507,7 @@ module Sensitivity =
 
       let get1 s yqs =
         let se = fwdsensext s in
-        se.checkquadsensvec yqs;
+        if Sundials_config.safe then se.checkquadsensvec yqs;
         fun i -> c_get1 s i yqs
 
       external c_get_dky
@@ -494,9 +516,10 @@ module Sensitivity =
 
       let get_dky s ys =
         let se = fwdsensext s in
-        if Array.length ys <> se.num_sensitivities
-        then invalid_arg "get_dky: wrong number of vectors";
-        Array.iter se.checkquadsensvec ys;
+        if Sundials_config.safe then
+          (if Array.length ys <> se.num_sensitivities
+           then invalid_arg "get_dky: wrong number of vectors";
+           Array.iter se.checkquadsensvec ys);
         fun t k -> c_get_dky s t k ys
 
       external c_get_dky1 : ('a, 'k) session -> float -> int -> int
@@ -505,7 +528,7 @@ module Sensitivity =
 
       let get_dky1 s dkyqs =
         let se = fwdsensext s in
-        se.checkquadsensvec dkyqs;
+        if Sundials_config.safe then se.checkquadsensvec dkyqs;
         fun t k i -> c_get_dky1 s t k i dkyqs
 
       external get_num_rhs_evals       : ('a, 'k) session -> int
@@ -520,9 +543,10 @@ module Sensitivity =
 
       let get_err_weights s esweight =
         let se = fwdsensext s in
-        if Array.length esweight <> se.num_sensitivities
-        then invalid_arg "get_err_weights: wrong number of vectors";
-        Array.iter se.checkquadsensvec esweight;
+        if Sundials_config.safe then
+          (if Array.length esweight <> se.num_sensitivities
+           then invalid_arg "get_err_weights: wrong number of vectors";
+           Array.iter se.checkquadsensvec esweight);
         c_get_err_weights s esweight
 
       external get_stats : ('a, 'k) session -> int * int
@@ -621,12 +645,12 @@ module Adjoint =
     let calc_ic_sens bsession ?yb ?y'b tout1 yb0 y'b0 ys0 y's0 =
       let bs = tosession bsession in
       let num_sens = num_sensitivities bs in
-      if Array.length ys0 <> num_sens then
-        invalid_arg "calc_ic_sens: wrong number of vectors in ys0";
-      if Array.length y's0 <> num_sens then
-        invalid_arg "calc_ic_sens: wrong number of vectors in y's0";
       if Sundials_config.safe then
-        (bs.checkvec yb0;
+        (if Array.length ys0 <> num_sens then
+           invalid_arg "calc_ic_sens: wrong number of vectors in ys0";
+         if Array.length y's0 <> num_sens then
+           invalid_arg "calc_ic_sens: wrong number of vectors in y's0";
+         bs.checkvec yb0;
          bs.checkvec y'b0;
          Array.iter bs.checkvec ys0;
          Array.iter bs.checkvec y's0;
@@ -1108,7 +1132,7 @@ module Adjoint =
         let reinit bs yqb0 =
           let parent, which = parent_and_which bs in
           let se = bwdsensext bs in
-          se.checkbquadvec yqb0;
+          if Sundials_config.safe then se.checkbquadvec yqb0;
           c_reinit parent which yqb0
 
         external c_get : ('a, 'k) session -> int -> ('a, 'k) Nvector.t -> float
@@ -1117,7 +1141,7 @@ module Adjoint =
         let get bs yqb =
           let parent, which = parent_and_which bs in
           let se = bwdsensext bs in
-          se.checkbquadvec yqb;
+          if Sundials_config.safe then se.checkbquadvec yqb;
           c_get parent which yqb
 
         type ('a, 'k) tolerance =
@@ -1143,7 +1167,8 @@ module Adjoint =
           | SStolerances (rel, abs) -> (ss_tolerances parent which rel abs;
                                         set_err_con parent which true)
           | SVtolerances (rel, abs) -> (let se = bwdsensext bs in
-                                        se.checkbquadvec abs;
+                                        if Sundials_config.safe then
+                                          se.checkbquadvec abs;
                                         sv_tolerances parent which rel abs;
                                         set_err_con parent which true)
 

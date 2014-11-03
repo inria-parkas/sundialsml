@@ -370,9 +370,9 @@ external c_init : ('a, 'k) session Weak.t -> float
 let init linsolv tol resfn ?varid ?(roots=no_roots) t0 y y' =
   let (nroots, rootsfn) = roots in
   let checkvec = Nvector.check y in
-  if Sundials_config.safe then checkvec y';
-  if nroots < 0 then
-    raise (Invalid_argument "number of root functions is negative");
+  if Sundials_config.safe then
+    (checkvec y';
+     if nroots < 0 then invalid_arg "number of root functions is negative");
   (* FIXME: can we check y and y' have the same length, at least for
      some nvector types?  *)
   let weakref = Weak.create 1 in

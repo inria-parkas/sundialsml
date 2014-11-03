@@ -58,8 +58,9 @@ module RealArray =
     let length : t -> int = Array1.dim
 
     let blit_some src isrc dst idst len =
-      if len < 0 || isrc < 0 || isrc + len >= length src
-         || idst < 0 || idst + len >= length dst
+      if Sundials_config.safe &&
+         (len < 0 || isrc < 0 || isrc + len >= length src
+          || idst < 0 || idst + len >= length dst)
       then invalid_arg "RealArray.blit_some";
       for k = 0 to len - 1 do
         Array1.unsafe_set dst (idst + k) (Array1.unsafe_get src (isrc + k))
@@ -84,8 +85,8 @@ module RealArray =
 
     let into_array (src : t) dst =
       let n = length src in
-      if n <> Array.length dst
-        then invalid_arg "into_array: array sizes do not match";
+      if Sundials_config.safe && n <> Array.length dst
+      then invalid_arg "into_array: array sizes do not match";
       for i = 1 to n-1 do
         dst.(i) <- src.{i}
       done
@@ -281,7 +282,8 @@ module ArrayLike (A : ArrayBaseOps) =
     let blit_some a oa b ob len =
       let na = length a
       and nb = length b in
-      if len < 0 || oa < 0 || na < oa+len || ob < 0 || nb < ob+len
+      if Sundials_config.safe &&
+         (len < 0 || oa < 0 || na < oa+len || ob < 0 || nb < ob+len)
       then invalid_arg (Printf.sprintf "%s.blit" error_name)
       else
         for i = 0 to len-1 do

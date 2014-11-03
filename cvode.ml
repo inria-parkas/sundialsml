@@ -440,7 +440,7 @@ external c_init
 let init lmm iter tol f ?(roots=no_roots) t0 y0 =
   let (nroots, roots) = roots in
   let checkvec = Nvector.check y0 in
-  if nroots < 0 then
+  if Sundials_config.safe && nroots < 0 then
     raise (Invalid_argument "number of root functions is negative");
   let weakref = Weak.create 1 in
   let cvode_mem, backref, err_file = c_init weakref lmm iter y0 t0 in
