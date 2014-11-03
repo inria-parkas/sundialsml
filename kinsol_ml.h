@@ -168,8 +168,9 @@ enum kinsol_exn_index {
     KINSOL_EXN_SET_SIZE,
 };
 
-#define KINSOL_EXN(name) (Field (Field (sundials_ml_exn_table,	\
-					KINSOL_EXN_SET),	\
-				 KINSOL_EXN_ ## name))
+#define KINSOL_EXN(name) (Field(Field (Field (sundials_ml_exn_table,	\
+					      KINSOL_EXN_SET),		\
+				       KINSOL_EXN_ ## name),		\
+				0))
 
 #endif

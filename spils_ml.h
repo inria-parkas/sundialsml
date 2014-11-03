@@ -45,9 +45,11 @@ enum spils_exn_index {
     SPILS_EXN_SET_SIZE
 };
 
-#define SPILS_EXN(name) (Field (Field (sundials_ml_exn_table,	\
-				       SPILS_EXN_SET),		\
-				SPILS_EXN_ ## name))
+#define SPILS_EXN(name)						\
+    (Field(Field (Field (sundials_ml_exn_table,			\
+			 SPILS_EXN_SET),			\
+		  SPILS_EXN_ ## name),				\
+	   0))
 
 #endif
 

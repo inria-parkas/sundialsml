@@ -138,7 +138,7 @@ CAMLprim value c_densematrix_getrf(value va, value vp)
 
     if (r != 0) {
 	caml_raise_with_arg(DLS_EXN(ZeroDiagonalElement),
-			    Val_long(r));
+			    Val_int(r));
     }
     CAMLreturn (Val_unit);
 }

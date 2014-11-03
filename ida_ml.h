@@ -164,8 +164,9 @@ enum ida_exn_index {
     IDA_EXN_SET_SIZE,
 };
 
-#define IDA_EXN(name) (Field (Field (sundials_ml_exn_table,	\
-				     IDA_EXN_SET),		\
-			      IDA_EXN_ ## name))
+#define IDA_EXN(name) (Field(Field (Field (sundials_ml_exn_table,	\
+					   IDA_EXN_SET),		\
+				    IDA_EXN_ ## name),			\
+			     0))
 
 #endif /* _IDA_ML_H__ */

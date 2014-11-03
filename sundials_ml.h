@@ -113,9 +113,10 @@ enum sundials_exn_index {
   SUNDIALS_EXN_SET_SIZE
 };
 
-#define SUNDIALS_EXN(name) (Field (Field (sundials_ml_exn_table,	\
+#define SUNDIALS_EXN(name) (Field(Field (Field (sundials_ml_exn_table,	\
 					  SUNDIALS_EXN_SET),		\
-				   SUNDIALS_EXN_ ## name))
+					 SUNDIALS_EXN_ ## name),	\
+				  0))
 
 #define REGISTER_EXNS(MODULE, exns)					\
     (assert (Wosize_val (exns) == MODULE ## _EXN_SET_SIZE),		\
