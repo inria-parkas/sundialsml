@@ -11,7 +11,6 @@ EXAMPLES = arraydense.byte arraydense.opt arraydense \
 	   spils_nvector1.byte spils_nvector1.opt \
 	   spils_serial1.byte spils_serial1.opt
 
-CVODE_LIBS := $(shell sundials-config -t s -l c -m cvode -s libs) -llapack
 CFLAGS += -Wall
 
 all: byte opt
@@ -22,20 +21,20 @@ opt: $(EXAMPLES:.byte=.opt)
 arraydense.byte: arraydense.ml
 arraydense.opt: arraydense.ml
 arraydense: arraydense.c
-	cc -o $@ $(CFLAGS) $< $(CVODE_LIBS)
+	cc -o $@ $(CFLAGS) $(CVODE_CFLAGS) $< $(LIB_PATH) $(CVODE_LDFLAGS)
 dense.byte: dense.ml
 dense.opt: dense.ml
 dense: dense.c
-	cc -o $@ $(CFLAGS) $< $(CVODE_LIBS)
+	cc -o $@ $(CFLAGS) $(CVODE_CFLAGS) $< $(LIB_PATH) $(CVODE_LDFLAGS)
 
 arrayband.byte: arrayband.ml $(SUNDIALS_CMA)
 arrayband.opt: arrayband.ml $(SUNDIALS_CMXA)
 arrayband: arrayband.c
-	cc -o $@ $(CFLAGS) $< $(CVODE_LIBS)
+	cc -o $@ $(CFLAGS) $(CVODE_CFLAGS) $< $(LIB_PATH) $(CVODE_LDFLAGS)
 band.byte: band.ml $(SUNDIALS_CMA)
 band.opt: band.ml $(SUNDIALS_CMXA)
 band: band.c
-	cc -o $@ $(CFLAGS) $< $(CVODE_LIBS)
+	cc -o $@ $(CFLAGS) $(CVODE_CFLAGS) $< $(LIB_PATH) $(CVODE_LDFLAGS)
 
 noband.byte: noband.ml $(SUNDIALS_CMA)
 noband.opt: noband.ml $(SUNDIALS_CMXA)
