@@ -53,7 +53,7 @@ type ('data, 'kind) session = ('data, 'kind) Kinsol_impl.session
 (** Alias for sessions based on serial nvectors. *)
 type serial_session = (Nvector_serial.data, Nvector_serial.kind) session
 
-(** {2:linear Linear Solvers} *)
+(** {2:linear Linear solvers} *)
 
 (** Linear solvers used by Kinsol.
 
@@ -219,7 +219,7 @@ module Dls :
     val clear_band_jac_fn : serial_session -> unit
   end
 
-(** Scaled Preconditioned Iterative Linear Solvers (SPILS).
+(** Scaled Preconditioned Iterative Linear Solvers.
 
     @kinsol <node5#sss:optin_spils> Iterative linear solvers optional input functions.
     @kinsol <node5#sss:optout_spils> Iterative linear solvers optional output functions.
@@ -546,6 +546,7 @@ type 'data sysfn = 'data -> 'data -> unit
 val init : ('data, 'kind) linear_solver -> 'data sysfn
            -> ('data, 'kind) Nvector.t -> ('data, 'kind) session
 
+(** Results of non-linear solution attempts. *)
 type result =
   | Success           (** The scaled norm of $F(u)$ is less than [fnormtol].
                           See {!set_func_norm_tol}. {cconst KIN_SUCCESS} *)

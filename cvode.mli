@@ -55,7 +55,7 @@ type ('a, 'k) session = ('a, 'k) Cvode_impl.session
 (** Alias for sessions based on serial nvectors. *)
 type serial_session = (Nvector_serial.data, Nvector_serial.kind) session
 
-(** {2:linear Linear Solvers} *)
+(** {2:linear Linear solvers} *)
 
 (** Linear solvers used by Cvode.
 
@@ -71,6 +71,8 @@ type 'a triple = 'a * 'a * 'a
 
 (** Arguments common to Jacobian callback functions.    
  
+    @cvode <node5#ss:djacFn> CVDlsDenseJacFn
+    @cvode <node5#ss:bjacFn> CVDlsBandJacFn
     @cvode <node5#ss:jtimesfn> CVSpilsJacTimesVecFn
     @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
     @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
@@ -713,6 +715,7 @@ module Alternate :
     should be avoided ([efun] is not allowed to abort the solver). *)
 type 'data error_fun = 'data -> 'data -> unit
 
+(** Tolerance specifications. *)
 type ('data, 'kind) tolerance =
   | SStolerances of float * float
     (** [(rel, abs)] : scalar relative and absolute tolerances. *)
@@ -1070,6 +1073,7 @@ val get_err_weights : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
     @cvode <node5#sss:optout_main> CVodeGetEstLocalErrors *)
 val get_est_local_errors : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
 
+(** Summaries of integrator statistics. *)
 type integrator_stats = {
     num_steps : int;
       (** Cumulative number of internal solver steps. *)

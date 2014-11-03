@@ -752,7 +752,7 @@ module Adjoint =
             | None -> NoCallbacks
             | Some f -> BBandCallback { bjacfn = f; bmat = None }
 
-        let invalidate_callback (type d) (type k) (s : (d, k) session) =
+        let invalidate_callback s =
           match s.ls_callbacks with
           | BDenseCallback ({ dmat = Some d } as cb) ->
               Dls.DenseMatrix.invalidate d;
@@ -761,6 +761,54 @@ module Adjoint =
               Dls.BandMatrix.invalidate d;
               cb.bmat <- None
           | _ -> ()
+
+        external set_dense_jac_fn : serial_session -> int -> unit
+            = "c_cvodes_adj_dls_set_dense_jac_fn"
+
+        let set_dense_jac_fn bs fjacfn =
+          let s = tosession bs in
+          let parent, which = parent_and_which bs in
+          invalidate_callback s;
+          s.ls_callbacks <- BDenseCallback { jacfn = fjacfn; dmat = None };
+          set_dense_jac_fn parent which
+
+        external clear_dense_jac_fn : serial_session -> int -> unit
+            = "c_cvodes_adj_dls_clear_dense_jac_fn"
+
+        let clear_dense_jac_fn bs =
+          let s = tosession bs in
+          match s.ls_callbacks with
+          | DenseCallback _ -> (invalidate_callback s;
+                                s.ls_callbacks <- NoCallbacks;
+                                let parent, which = parent_and_which bs in
+                                clear_dense_jac_fn parent which)
+          | _ -> failwith "dense linear solver not in use"
+
+        external set_band_jac_fn : serial_session -> int -> unit
+            = "c_cvodes_adj_dls_set_band_jac_fn"
+
+        let set_band_jac_fn bs f =
+          let s = tosession bs in
+          let parent, which = parent_and_which bs in
+          invalidate_callback s;
+          s.ls_callbacks <- BBandCallback { bjacfn = f; bmat = None };
+          set_band_jac_fn parent which
+
+        external clear_band_jac_fn : serial_session -> int -> unit
+            = "c_cvodes_adj_dls_clear_band_jac_fn"
+
+        let clear_band_jac_fn bs =
+          let s = tosession bs in
+          match s.ls_callbacks with
+          | BandCallback _ -> (invalidate_callback s;
+                               s.ls_callbacks <- NoCallbacks;
+                               let parent, which = parent_and_which bs in
+                               clear_band_jac_fn parent which)
+          | _ -> failwith "banded linear solver not in use"
+
+        let get_work_space bs = Cvode.Dls.get_work_space (tosession bs)
+        let get_num_jac_evals bs = Cvode.Dls.get_num_jac_evals (tosession bs)
+        let get_num_rhs_evals bs = Cvode.Dls.get_num_rhs_evals (tosession bs)
       end
 
     module Spils =
@@ -824,15 +872,9 @@ module Adjoint =
         let sptfqmr ?(maxl=0) prec bs nv =
           init_spils c_sptfqmr maxl prec bs nv
 
-        external c_set_prec_type
+        external set_prec_type
             : ('a, 'k) bsession -> Spils.preconditioning_type -> unit
             = "c_cvodes_adj_spils_set_prec_type"
-
-        let set_prec_type s = function
-          | PrecNone -> c_set_prec_type s Spils.PrecNone
-          | PrecLeft -> c_set_prec_type s Spils.PrecLeft
-          | PrecRight -> c_set_prec_type s Spils.PrecRight
-          | PrecBoth -> c_set_prec_type s Spils.PrecBoth
 
         let set_preconditioner bs ?setup solve =
           match (tosession bs).ls_callbacks with

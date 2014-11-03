@@ -415,7 +415,6 @@ module Constraint :
  @cvode <node5#ss:ehFn> CVodeErrHandlerFn
  @ida <node5#ss:ehFn> IDAErrHandlerFn
  @kinsol <node5#ss:ehFn> KINErrHandlerFn *)
-
 type error_details = {
     error_code : int;
     module_name : string;        (** IDA, CVODE, CVSPGMR, etc. *)

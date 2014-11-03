@@ -421,9 +421,10 @@ module ArrayBandMatrix :
         @cvode <node9#ss:band> newBandMat *)
     type t = Sundials.RealArray2.t
 
-    type smu = int
-    type mu = int
-    type ml = int
+    type smu = int (** Storage upper-bandwidth. *)
+
+    type mu = int  (** Upper-bandwidth. *)
+    type ml = int  (** Lower-bandwidth. *)
 
     (** {4 Basic access} *)
 

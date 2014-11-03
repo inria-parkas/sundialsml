@@ -45,9 +45,9 @@ type ('data, 'kind) session = ('data, 'kind) Cvode.session
 (** Integration of pure quadrature equations.
  
     Adds an additional vector $y_Q$ of $N_Q$ quadrature variables defined by
-    {% $\frac{d y_Q}{dt} = f_Q(t, y)$%}. The values of these variables are
-    calculated more efficiently since they are excluded from the nonlinear
-    solution stage.
+    {% $\frac{\mathrm{d} y_Q}{\mathrm{d}t} = f_Q(t, y)$%}. The values of these
+    variables are calculated more efficiently since they are excluded from
+    the nonlinear solution stage.
 
     An example session with Cvode using quadrature variables
     ({openfile cvodes_quad_skel.ml}): {[
@@ -109,6 +109,7 @@ module Quadrature :
 
     (** {2:tols Tolerances} *)
 
+    (** Tolerances for calculating quadrature variables. *)
     type ('a, 'k) tolerance =
         NoStepSizeControl
         (** Do not use quadrature variables for step-size control (default). *)
@@ -185,7 +186,7 @@ module Quadrature :
     exception UnrecoverableQuadRhsFuncFailure
   end
 
-(** (Forward) Sensitivity Analysis of ODEs with respect to their parameters.
+(** (Forward) Sensitivity analysis of ODEs with respect to their parameters.
  
     Formalizes the dependence of a set of ODEs on $N_p$ parameters $p$ and
     calculates the sensitivities $s$ of the solution $y$ to a subset of
@@ -263,6 +264,7 @@ module Sensitivity :
       -> 'a           (* tmp2 *)
       -> unit
 
+    (** Specify a sensitivity function. *)
     type 'a sensrhsfn =
         AllAtOnce of 'a sensrhsfn_all option
         (** Calculate sensitivity functions all at once. The argument [None]
@@ -325,6 +327,7 @@ module Sensitivity :
     (** Empty pvals, plist, and pbar. *)
     val no_sens_params : sens_params
 
+    (** Tolerances for calculating sensitivities. *)
     type ('a, 'k) tolerance =
         SStolerances of float * Sundials.RealArray.t
         (** [(rel, abs)] : scalar relative and absolute tolerances. *)
@@ -418,6 +421,8 @@ module Sensitivity :
 
         (** {2:tols Tolerance specification} *)
 
+        (** Tolerances for calculating sensitivity-dependent quadrature
+            variables. *)
         type ('a, 'k) tolerance =
             NoStepSizeControl
             (** Quadrature variables are not used for step-size control
@@ -624,6 +629,7 @@ module Sensitivity :
         @cvodes <node5#ss:sens_optional_input> CVodeSetSensErrCon *)
     val set_err_con : ('a, 'k) session -> bool -> unit
 
+    (** A difference quotient strategy. See {!set_dq_method}. *)
     type dq_method = DQCentered (** {cconst CV_CENTERED} *)
                    | DQForward  (** {cconst CV_FORWARD} *)
 
@@ -669,6 +675,7 @@ module Sensitivity :
         @cvodes <node6#ss:sens_optional_output> CVodeGetSensNumLinSolvSetups *)
     val get_num_lin_solv_setups : ('a, 'k) session -> int
 
+    (** Summaries of sensitivity stats. *)
     type sensitivity_stats = {
         num_sens_evals :int;
           (** Number of calls to the sensitivity function. *)
@@ -765,12 +772,27 @@ module Sensitivity :
     exception BadSensIdentifier
   end
 
-(** Adjoint Sensitivity Analysis.
+(* TODO: could this one-line description be better? *)
+(** (Adjoint) Sensitivity analysis of ODEs with respect to their parameters.
+ 
+    Provides an alternative to forward sensitivity analysis, which can become
+    prohibitively expensive. This technique does not calculate sensitivities,
+    but rather gradients with respect to the parameters of a relatively few
+    derived functionals of the solution, that is the gradient
+    {% $\frac{\mathrm{d}G}{\mathrm{d}p}$%} of
+    {% $G(p) = \int_{t_0}^T \! g(t, y, p)\,\mathrm{d}t$%}. The gradients
+    are evaluated by first calculating forward and checkpointing certain
+    intermediate state values, and then integrating backward to $t_0$.
+
+    This documented interface is structured as follows.
+    {ol
+      {- {{:#fwd}Forward solution}}
+      {- {{:#linear}Linear solvers}}
+      {- {{:#bsolve}Backward solutions} (including {{!Quadrature}Quadrature equations})}
+      {- {{:#set}Modifying the solver}}
+      {- {{:#get}Querying the solver}}
+      {- {{:#exceptions}Exceptions}}}
   
-    TODO: write a better one sentence description
-
-    TODO: explain that this 'extends' standard Cvode.
-
     An example session with Cvode using sensitivity analysis
     ({openfile cvodes_adj_skel.ml}): {[
 #include "examples/ocaml/skeletons/cvodes_adj_skel.ml"
@@ -779,33 +801,33 @@ module Sensitivity :
     @cvodes <node7#ss:skeleton_adj> Enhanced Skeleton for Adjoint Sensitivity Analysis *)
 module Adjoint :
   sig
-    (** {2:fwd Forward initialization and integration} *)
+    (** Identifies a backward problem. *)
+    type ('data, 'kind) bsession = ('data, 'kind) AdjointTypes.bsession
+    type serial_bsession = (Nvector_serial.data, Nvector_serial.kind) bsession
 
-    (** Specifies the type of interpolation.
+    (** {2:fwd Forward solution} *)
+
+    (** Specifies the type of interpolation used between checkpoints.
 
         @cvodes <node3#ss:checkpointing> Checkpointing scheme *)
-    type interpolation = IPolynomial (** CV_POLYNOMIAL *)
-                       | IHermite    (** CV_HERMITE *)
+    type interpolation = IPolynomial (** {cconst CV_POLYNOMIAL} *)
+                       | IHermite    (** {cconst CV_HERMITE} *)
 
-    (** [init s nd interp] initializes the forward-backward problem with [nd]
-        integration steps between consecutive checkpoints and variable-degree
-        interpolation according to [interp]. This function must be called before
-        either {!forward_normal} or {!forward_one_step}.
+    (** Activates the forward-backward problem. In the call [init s nd interp],
+        [nd] specifies the number of integration steps between consecutive
+        checkpoints, and [interp] the type of variable-degree interpolation.
 
-        @cvodes <node7#ss:cvadjinit> CVodeAdjInit *)
+        @cvodes <node7#sss:cvadjinit> CVodeAdjInit *)
     val init : ('a, 'k) session -> int -> interpolation -> unit
 
-    (** [tret, ncheck, sr = forward_normal s tout yret] integrates the forward
-        problem over an interval and saves checkpointing data. The function
-        takes as arguments the next time at which a solution is desired
-        ([tout]), a vector for storing the computed result ([yret]), and returns
-        the time reached by the solver ([tret]), the number of checkpoints
-        stored so far ([ncheck]), and whether the solver reached [tout] or not
-        ([sr]).
-
-        This call asks the solver to take internal steps until it has reached or
-        just passed the [tout] parameter ([CV_NORMAL]). The solver then
-        interpolates in order to return an approximate value of [y(tout)].
+    (** Integrates the forward problem over an interval and saves
+        checkpointing data. The arguments are the next time at which a solution
+        is desired ([tout]) and a vector for storing the computed result
+        ([yret]). The function returns a triple [tret, ncheck, sr]: the time
+        reached by the solver, the cumulative number of checkpoints stored, and
+        whether [tout] was reached. The solver takes internal steps until it
+        has reached or just passed the [tout] parameter {cconst CV_NORMAL},
+        it then interpolates to approximate [y(tout)].
 
         @cvodes <node7#sss:cvsolvef> CVodeF
         @raise Cvode.IllInput           One of the inputs is invalid.
@@ -822,16 +844,13 @@ module Adjoint :
       -> ('a, 'k) Nvector.t
       -> float * int * Cvode.solver_result
 
-    (** [tret, ncheck, sr = forward_normal s tout yret] integrates the forward
-        problem over an interval and saves checkpointing data. The function
-        takes as arguments the next time at which a solution is desired
-        ([tout]), a vector for storing the computed result ([yret]), and returns
-        the time reached by the solver ([tret]) and the number of checkpoints
-        stored so far ([ncheck]), and whether the solver reached [tout] or not
-        ([sr]).
-
-        This call asks the solver to take one internal step and to return the
-        solution at the point reached by that step ([CV_ONE_STEP]).
+    (** Integrates the forward problem over an interval and saves
+        checkpointing data. The arguments are the next time at which a solution
+        is desired ([tout]) and a vector for storing the computed result
+        ([yret]). The function returns a triple [tret, ncheck, sr]: the time
+        reached by the solver, the cumulative number of checkpoints stored, and
+        whether [tout] was reached. The solver takes one step
+        {cconst CV_ONE_STEP} and returns the solution reached.
 
         @cvodes <node7#sss:cvsolvef> CVodeF
         @raise Cvode.IllInput           One of the inputs is invalid.
@@ -848,52 +867,22 @@ module Adjoint :
       -> ('a, 'k) Nvector.t
       -> float * int * Cvode.solver_result
 
-    (** {2:bwdinit Backward initialization} *)
+    (** {2:linear Linear solvers} *)
 
-    (** Identifies a backward problem. *)
-    type ('data, 'kind) bsession = ('data, 'kind) AdjointTypes.bsession
-    type serial_bsession = (Nvector_serial.data, Nvector_serial.kind) bsession
+    (** Linear solvers used in backward problems.
 
-    (** These functions evaluate the right-hand side of the backward ODE system
-        with or without a dependence on forward sensitivities. *)
-    type 'a brhsfn =
-        NoSens of 'a brhsfn_no_sens
-        (** Doesn't depend on forward sensitivities.  See
-            {!brhsfn_no_sens} for details.  *)
-      | WithSens of 'a brhsfn_with_sens
-        (** Depends on forward sensitivities.  See {!brhsfn_with_sens}
-            for details.  *)
+        @cvodes <node7#sss:lin_solv_b> Linear Solver Initialization Functions *)
+    type ('data, 'kind) linear_solver =
+            ('data, 'kind) AdjointTypes.linear_solver
 
-    (** Backward rhs function that doesn't depend on forward sensitivities.
+    (** Alias for linear solvers that are restricted to serial nvectors. *)
+    type serial_linear_solver =
+            (Nvector_serial.data, Nvector_serial.kind) linear_solver
 
-        See also {!brhsfn}.
-
-        @cvodes <node7#ss:ODErhs_b> CVRhsFnB
-        @cvodes <node3#e:adj_eqns> Eq 2.19, Adjoint sensitivity analysis *)
-    and 'a brhsfn_no_sens =
-      float    (* t *)
-      -> 'a    (* y *)
-      -> 'a    (* yb *)
-      -> 'a    (* ybdot *)
-      -> unit
-
-    (** Backward rhs function that depends on forward sensitivities.
-
-        See also {!brhsfn}.
-
-        @cvodes <node7#ss:ODErhs_bs> CVRhsFnBS
-        @cvodes <node3#e:adj1_eqns> Eq 2.21, Adjoint sensitivity analysis *)
-    and 'a brhsfn_with_sens =
-      float        (* t *)
-      -> 'a        (* y *)
-      -> 'a array  (* ys *)
-      -> 'a        (* yb *)
-      -> 'a        (* ybdot *)
-      -> unit
-
+    (** Workspaces with three temporary vectors. *)
     type 'a triple = 'a * 'a * 'a
 
-    (** Arguments common to all Jacobian callback functions.
+    (** Arguments common to Jacobian callback functions.
 
         @cvodes <node7#ss:densejac_b> CVDlsDenseJacFnB
         @cvodes <node7#ss:bandjac_b> CVDlsBandJacFnB 
@@ -905,35 +894,566 @@ module Adjoint :
         jac_t   : float;        (** The independent variable. *)
         jac_y   : 'a;           (** The forward solution vector. *)
         jac_yb  : 'a;           (** The backward dependent variable vector. *)
-        jac_fyb : 'a;           (** The backward right-hand side function fB. *)
+        jac_fyb : 'a;           (** The backward right-hand side function [fB]. *)
         jac_tmp : 't            (** Workspace data. *)
       }
 
+    (** The range of nonzero entries in a band matrix. *)
     type bandrange = Cvode_impl.bandrange =
       { mupper : int; (** The upper half-bandwidth.  *)
         mlower : int; (** The lower half-bandwidth.  *) }
 
-    (** Specify a linear solver.
+    (** Diagonal approximation of Jacobians by difference quotients. *)
+    module Diag :
+      sig
+        (** A linear solver based on Jacobian approximation by difference
+            quotients.
 
-        The Lapack solvers require that both Sundials and the OCaml interface
-        were built to link with a LAPACK library.
+            @cvodes <node7#sss:lin_solv_b> CVDiagB *)
+        val solver : ('data, 'kind) linear_solver
 
-        @cvodes <node7#sss:lin_solv_b> Linear Solver Initialization Functions *)
-    type ('data, 'kind) linear_solver =
-            ('data, 'kind) AdjointTypes.linear_solver
-    type serial_linear_solver =
-            (Nvector_serial.data, Nvector_serial.kind) linear_solver
+        (** Returns the sizes of the real and integer workspaces used by the
+            Diagonal linear solver.
 
+            @cvodes <node5#sss:optout_diag> CVDiagGetWorkSpace
+            @return ([real_size], [integer_size]) *)
+        val get_work_space : ('a, 'k) bsession -> int * int
+
+        (** Returns the number of calls made to the right-hand side
+            function due to finite difference Jacobian approximation in the
+            Diagonal linear solver.
+
+            @cvodes <node5#sss:optout_diag> CVDiagGetNumRhsEvals *)
+        val get_num_rhs_evals : ('a, 'k) bsession -> int
+      end
+
+
+    (** Direct Linear Solvers operating on dense and banded matrices. *)
+    module Dls :
+      sig
+
+        (** Callback functions that compute dense approximations to a Jacobian
+            matrix. In the call [dense_jac_fn arg jac], [arg] is a
+            {!jacobian_arg} with three work vectors and the computed Jacobian
+            must be stored in [jac].
+
+            The callback should load the [(i,j)]th entry of [jac] with
+            {% $\partial y_i/\partial y_j$%}, i.e., the partial derivative of
+            the [i]th equation with respect to the [j]th variable, evaluated
+            at the values of [t] and [y] obtained from [arg]. Only nonzero
+            elements need be loaded into [jac].
+
+            Raising {!Sundials.RecoverableFailure} indicates a recoverable
+            error. Any other exception is treated as an unrecoverable error.
+
+            {warning Neither the elements of [arg] nor the matrix [jac] should
+                     be accessed after the function has returned.}
+
+            @cvodes <node7#ss:densejac_b> CVDlsDenseJacFnB *)
+        type dense_jac_fn = (RealArray.t triple, RealArray.t) jacobian_arg
+                                -> Dls.DenseMatrix.t -> unit
+
+        (** A direct linear solver on dense matrices. The optional argument
+            specifies a callback function for computing an approximation to the
+            Jacobian matrix. If this argument is omitted, then a default
+            implementation based on difference quotients is used.
+
+            @cvodes <node7#sss:lin_solv_b> CVDenseB
+            @cvodes <node7#SECTION00728200000000000000> CVDlsSetDenseJacFnB
+            @cvodes <node7#ss:densejac_b> CVDlsDenseJacFnB *)
+        val dense : ?jac:dense_jac_fn -> unit -> serial_linear_solver
+
+        (** A direct linear solver on dense matrices using LAPACK. See {!dense}.
+            Only available if {!Sundials.lapack_enabled}.
+
+            @cvodes <node7#sss:lin_solv_b> CVLapackDenseB
+            @cvodes <node7#SECTION00728200000000000000> CVDlsSetDenseJacFnB
+            @cvodes <node7#ss:densejac_b> CVDlsDenseJacFnB *)
+        val lapack_dense : ?jac:dense_jac_fn -> unit -> serial_linear_solver
+
+        (** Callback functions that compute banded approximations to
+            a Jacobian matrix. In the call
+            [band_jac_fn {mupper; mlower} arg jac],
+            - [mupper] is the upper half-bandwidth of the Jacobian,
+            - [mlower] is the lower half-bandwidth of the Jacobian,
+            - [arg] is a {!jacobian_arg} with three work vectors, and,
+            - [jac] is storage for the computed Jacobian.
+
+            The callback should load the [(i,j)]th entry of [jac] with
+            {% $\partial y_i/\partial y_j$%}, i.e., the partial derivative of
+            the [i]th equation with respect to the [j]th variable, evaluated
+            at the values of [t] and [y] obtained from [arg]. Only nonzero
+            elements need be loaded into [jac].
+
+            Raising {!Sundials.RecoverableFailure} indicates a recoverable
+            error. Any other exception is treated as an unrecoverable error.
+
+            {warning Neither the elements of [arg] nor the matrix [jac] should
+                     be accessed after the function has returned.}
+
+            @cvodes <node7#ss:bandjac_b> CVDlsBandJacFnB *)
+        type band_jac_fn = bandrange
+                            -> (RealArray.t triple, RealArray.t) jacobian_arg
+                            -> Dls.BandMatrix.t -> unit
+
+        (** A direct linear solver on banded matrices. The optional argument
+            specifies a callback function for computing an approximation to the
+            Jacobian matrix. If this argument is omitted, then a default
+            implementation based on difference quotients is used. The other
+            argument gives the width of the bandrange.
+
+            @cvodes <node7#sss:lin_solv_b> CVBandB
+            @cvodes <node7#SECTION00728300000000000000> CVDlsSetBandJacFnB
+            @cvodes <node7#ss:bandjac_b> CVDlsBandJacFnB *)
+        val band : ?jac:band_jac_fn -> bandrange -> serial_linear_solver
+
+        (** A direct linear solver on banded matrices using LAPACK. See {!band}.
+            Only available if {!Sundials.lapack_enabled}.
+
+            @cvodes <node7#sss:lin_solv_b> CVLapackBandB
+            @cvodes <node7#SECTION00728300000000000000> CVDlsSetBandJacFnB
+            @cvodes <node7#ss:bandjac_b> CVDlsBandJacFnB *)
+        val lapack_band : ?jac:band_jac_fn -> bandrange -> serial_linear_solver
+
+        (** {3:stats Solver statistics} *)
+
+        (** Returns the sizes of the real and integer workspaces used by a direct
+            linear solver.
+
+            @cvode <node5#sss:optout_dls> CVDlsGetWorkSpace
+            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
+            @return ([real_size], [integer_size]) *)
+        val get_work_space : serial_bsession -> int * int
+
+        (** Returns the number of calls made by a direct linear solver to the
+            Jacobian approximation function.
+
+            @cvode <node5#sss:optout_dls> CVDlsGetNumJacEvals
+            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+        val get_num_jac_evals : serial_bsession -> int
+
+        (** Returns the number of calls to the right-hand side callback due to
+            the finite difference Jacobian approximation.
+
+            @cvode <node5#sss:optout_dls> CVDlsGetNumRhsEvals
+            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+        val get_num_rhs_evals : serial_bsession -> int
+
+        (** {3:lowlevel Low-level solver manipulation}
+
+            The {!init} and {!reinit} functions are the preferred way to set or
+            change a Jacobian function. These low-level functions are provided for
+            experts who want to avoid resetting internal counters and other
+            associated side-effects. *)
+
+        (** Change the dense Jacobian function.
+       
+            @cvode <node5#SECTION00728200000000000000> CVDlsSetDenseJacFnB *)
+        val set_dense_jac_fn : serial_bsession -> dense_jac_fn -> unit
+
+        (** Remove a dense Jacobian function and use the default
+            implementation.
+
+            @cvode <node5#SECTION00728200000000000000> CVDlsSetDenseJacFnB *)
+        val clear_dense_jac_fn : serial_bsession -> unit
+
+        (** Change the band Jacobian function.
+
+            @cvode <node5#SECTION00728300000000000000> CVDlsSetBandJacFnB *)
+        val set_band_jac_fn : serial_bsession -> band_jac_fn -> unit
+
+        (** Remove a banded Jacobian function and use the default
+            implementation.
+
+            @cvode <node5#SECTION00728300000000000000> CVDlsSetBandJacFnB *)
+        val clear_band_jac_fn : serial_bsession -> unit
+      end
+
+    (** Scaled Preconditioned Iterative Linear Solvers.
+
+        @cvodes <node7#ss:optional_output_b> Optional output functions for the backward problem.
+        @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB
+        @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB *)
+    module Spils :
+      sig
+        (** Arguments passed to the preconditioner solver function.
+
+            @cvode <node7#ss:psolve_b> CVSpilsPrecSolveFnB *)
+        type 'a prec_solve_arg =
+          {
+            rhs   : 'a;         (** Right-hand side vector of the linear system. *)
+            gamma : float;      (** Scalar $\gamma$ in the Newton
+                                    matrix given by $M = I - \gamma J$. *)
+            delta : float;      (** Input tolerance for iterative methods. *)
+            left  : bool;       (** [true] for left preconditioning and
+                                    [false] for right preconditioning. *)
+          }
+
+        (** Callback functions that solve a linear system involving a
+            preconditioner matrix. In the call [prec_solve_fn jac arg z],
+            [jac] is a {!jacobian_arg} with one work vector, [arg] is
+            a {!prec_solve_arg} that specifies the linear system, and [z] is
+            computed to solve {% $P\mathtt{z} = \mathtt{arg.rhs}$%}.
+            $P$ is a preconditioner matrix, which approximates, however crudely,
+            the Newton matrix {% $M = I - \gamma J$%} where
+            {% $J = \frac{\partial f}{\partial y}$%}.
+
+            Raising {!Sundials.RecoverableFailure} indicates a recoverable
+            error. Any other exception is treated as an unrecoverable error.
+
+            {warning The elements of [jac], [arg], and [z] should not be
+            accessed after the function has returned.}
+
+            @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB *)
+        type 'a prec_solve_fn =
+          ('a, 'a) jacobian_arg
+          -> 'a prec_solve_arg
+          -> 'a
+          -> unit
+
+        (** Callback functions that preprocess or evaluate Jacobian-related data
+            need by {!prec_solve_fn}. In the call [prec_setup_fn jac jok gamma],
+            [jac] is a {!jacobian_arg} with one work vector, [jok] indicates
+            whether any saved Jacobian-related data can be reused with the
+            current value of [gamma], and [gamma] is the scalar $\gamma$ in the
+            Newton matrix {% $M = I - \gamma J$%} where $J$ is the Jacobian
+            matrix. A function should return [true] if Jacobian-related data was
+            updated and [false] if saved data was reused.
+
+            Raising {!Sundials.RecoverableFailure} indicates a recoverable
+            error. Any other exception is treated as an unrecoverable error.
+
+            {warning The elements of [jac] should not be accessed after the
+                     function has returned.}
+
+            @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB *)
+        type 'a prec_setup_fn =
+          ('a triple, 'a) jacobian_arg
+          -> bool
+          -> float
+          -> bool
+
+        (** Callback functions that compute the Jacobian times a vector. In the
+            call [jac_times_vec_fn arg v jv], [arg] is a {!jacobian_arg} with one
+            work vector, [v] is the vector multiplying the Jacobian, and [jv] is
+            the vector in which to store the
+            result—{% $\mathtt{jv} = J\mathtt{v}$%}.
+          
+            Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+            Any other exception is treated as an unrecoverable error.
+
+            {warning Neither the elements of [arg] nor [v] or [jv] should be
+                     accessed after the function has returned.}
+
+            @cvodes <node7#ss:jtimesv_b> CVSpilsJacTimesVecFnB *)
+        type 'a jac_times_vec_fn =
+          ('a, 'a) jacobian_arg
+          -> 'a
+          -> 'a
+          -> unit
+
+        (** Specifies a preconditioner, including the type of preconditioning
+            (none, left, right, or both) and callback functions. The following
+            functions and those in {!Banded} and {!Cvode_bbd} construct
+            preconditioners.
+
+            The {!prec_solve_fn} is usually mandatory. The {!prec_setup_fn} can
+            be omitted if not needed. If the {!jac_times_vec_fn} is omitted, a
+            default implementation based on difference quotients is used.
+
+            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetPreconditionerB
+            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetJacTimesVecFnB
+            @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB
+            @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB
+            @cvodes <node7#ss:jtimesv_b> CVSpilsJacTimesVecFnB *)
+        type ('a, 'k) preconditioner =
+          ('a, 'k) AdjointTypes.SpilsTypes.preconditioner
+
+        (** No preconditioning.  *)
+        val prec_none : ('a, 'k) preconditioner
+
+        (** Left preconditioning. {% $(P^{-1}A)x = P^{-1}b$ %}. *)
+        val prec_left :
+          ?setup:'a prec_setup_fn
+          -> ?jac_times_vec:'a jac_times_vec_fn
+          -> 'a prec_solve_fn
+          -> ('a, 'k) preconditioner
+
+        (** Right preconditioning. {% $(AP^{-1})Px = b$ %}. *)
+        val prec_right :
+          ?setup:'a prec_setup_fn
+          -> ?jac_times_vec:'a jac_times_vec_fn
+          -> 'a prec_solve_fn
+          -> ('a, 'k) preconditioner
+
+        (** Left and right preconditioning.
+            {% $(P_L^{-1}AP_R^{-1})P_Rx = P_L^{-1}b$ %} *)
+        val prec_both :
+          ?setup:'a prec_setup_fn
+          -> ?jac_times_vec:'a jac_times_vec_fn
+          -> 'a prec_solve_fn
+          -> ('a, 'k) preconditioner
+
+        (** Banded preconditioners.  *)
+        module Banded : sig
+
+          (** A band matrix {!preconditioner} based on difference quotients.
+              The call [prec_left br] instantiates a left preconditioner which
+              generates a banded approximation to the Jacobian with [br.mlower]
+              sub-diagonals and [br.mupper] super-diagonals.
+
+              @cvode <node7#SECTION00741000000000000000> CVBandPrecInitB *)
+          val prec_left :
+            ?jac_times_vec:(RealArray.t jac_times_vec_fn)
+            -> bandrange
+            -> (Nvector_serial.data, Nvector_serial.kind) preconditioner
+
+          (** Like {!prec_left} but preconditions from the right.
+
+              @cvode <node7#SECTION00741000000000000000> CVBandPrecInitB *)
+          val prec_right :
+            ?jac_times_vec:(RealArray.t jac_times_vec_fn)
+            -> bandrange
+            -> (Nvector_serial.data, Nvector_serial.kind) preconditioner
+
+          (** Like {!prec_left} but preconditions from both sides.
+
+              @cvode <node7#SECTION00741000000000000000> CVBandPrecInitB *)
+          val prec_both :
+            ?jac_times_vec:(RealArray.t jac_times_vec_fn)
+            -> bandrange
+            -> (Nvector_serial.data, Nvector_serial.kind) preconditioner
+
+          (** {4:stats Banded statistics} *)
+
+          (** Returns the sizes of the real and integer workspaces
+              used by the banded preconditioner module.
+
+              @cvodes <node5#sss:cvbandpre> CVBandPrecGetWorkSpace
+              @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
+              @return ([real_size], [integer_size]) *)
+          val get_work_space : serial_bsession -> int * int
+
+          (** Returns the number of calls to the right-hand side callback for the
+              difference banded Jacobian approximation. This counter is only updated
+              if the default difference quotient function is used.
+
+              @cvodes <node5#sss:cvbandpre> CVBandPrecGetNumRhsEvals
+              @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+          val get_num_rhs_evals : serial_bsession -> int
+        end
+
+        (** {3:lsolvers Solvers} *)
+
+        (** Krylov iterative solver using the scaled preconditioned generalized
+            minimum residual (GMRES) method. In the call
+            [spgmr ~maxl:maxl prec], [maxl] is the maximum dimension of the
+            Krylov subspace (defaults to 5), and [prec] is a {!preconditioner}.
+
+            @cvodes <node7#sss:lin_solv_b> CVSpgmrB
+            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetPreconditionerB
+            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetMaxlB *)
+        val spgmr : ?maxl:int -> ('a, 'k) preconditioner
+                      -> ('a, 'k) linear_solver
+
+        (** Krylov iterative solver using the scaled preconditioned biconjugate
+            stabilized (Bi-CGStab) method. In the call [spbcg ~maxl:maxl prec],
+            [maxl] is the maximum dimension of the Krylov subspace (defaults to
+            5), and [prec] is a {!preconditioner}.
+
+            @cvodes <node7#sss:lin_solv_b> CVSpbcgB
+            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetPreconditionerB
+            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetMaxlB *)
+        val spbcg : ?maxl:int -> ('a, 'k) preconditioner
+                      -> ('a, 'k) linear_solver
+
+        (** Krylov iterative with the scaled preconditioned transpose-free
+            quasi-minimal residual (SPTFQMR) method.
+            In the call [sptfqmr ~maxl:maxl prec], [maxl] is the maximum dimension
+            of the Krylov subspace (defaults to 5), and [prec] is a
+            {!preconditioner}.
+
+            @cvodes <node7#sss:lin_solv_b> CVSptfqmrB
+            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetPreconditionerB
+            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetMaxlB *)
+        val sptfqmr : ?maxl:int -> ('a, 'k) preconditioner
+                      -> ('a, 'k) linear_solver
+
+        (** {3:set Solver parameters} *)
+
+        (** The type of Gram-Schmidt orthogonalization.
+
+            @cvode <node9#ss:spgmr> ModifiedGS/ClassicalGS *)
+        type gramschmidt_type = Spils.gramschmidt_type =
+          | ModifiedGS   (** Modified Gram-Schmidt orthogonalization
+                             {cconst MODIFIED_GS} *)
+          | ClassicalGS  (** Classical Gram Schmidt orthogonalization
+                             {cconst CLASSICAL_GS} *)
+
+        (** Sets the Gram-Schmidt orthogonalization to be used with the
+            Spgmr {!linear_solver}.
+
+            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetGSTypeB *)
+        val set_gs_type : ('a, 'k) bsession -> gramschmidt_type -> unit
+
+        (** Sets the factor by which the Krylov linear solver's convergence test
+            constant is reduced from the Newton iteration test constant.
+            This factor must be >= 0; passing 0 specifies the default (0.05).
+
+            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetEpsLinB *)
+        val set_eps_lin : ('a, 'k) bsession -> float -> unit
+
+        (** Resets the maximum Krylov subspace dimension for the Bi-CGStab and
+            TFQMR methods. A value <= 0 specifies the default (5.0).
+
+            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetMaxlB *)
+        val set_maxl : ('a, 'k) bsession -> int option -> unit
+
+        (** {3:stats Solver statistics} *)
+
+        (** Returns the sizes of the real and integer workspaces used by the spils
+            linear solver.
+
+            @cvodes <node5#sss:optout_spils> CVSpilsGetWorkSpace
+            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
+            @return ([real_size], [integer_size]) *)
+        val get_work_space       : ('a, 'k) bsession -> int * int
+
+        (** Returns the cumulative number of linear iterations.
+
+            @cvodes <node5#sss:optout_spils> CVSpilsGetNumLinIters
+            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+        val get_num_lin_iters    : ('a, 'k) bsession -> int
+
+        (** Returns the cumulative number of linear convergence failures.
+
+            @cvodes <node5#sss:optout_spils> CVSpilsGetNumConvFails
+            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+        val get_num_conv_fails   : ('a, 'k) bsession -> int
+
+        (** Returns the cumulative number of calls to the setup function with
+            [jok=false].
+
+            @cvodes <node5#sss:optout_spils> CVSpilsGetNumPrecEvals
+            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+        val get_num_prec_evals   : ('a, 'k) bsession -> int
+
+        (** Returns the cumulative number of calls to the preconditioner solve
+            function.
+
+            @cvodes <node5#sss:optout_spils> CVSpilsGetNumPrecSolves
+            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+        val get_num_prec_solves  : ('a, 'k) bsession -> int
+
+        (** Returns the cumulative number of calls to the Jacobian-vector
+            function.
+
+            @cvodes <node5#sss:optout_spils> CVSpilsGetNumJtimesEvals
+            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+        val get_num_jtimes_evals : ('a, 'k) bsession -> int
+
+        (** Returns the number of calls to the right-hand side callback for
+            finite difference Jacobian-vector product approximation. This counter is
+            only updated if the default difference quotient function is used.
+
+            @cvodes <node5#sss:optout_spils> CVSpilsGetNumRhsEvals
+            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+        val get_num_rhs_evals    : ('a, 'k) bsession -> int
+
+        (** {3:lowlevel Low-level solver manipulation}
+
+            The {!init} and {!reinit} functions are the preferred way to set or
+            change preconditioner functions. These low-level functions are
+            provided for experts who want to avoid resetting internal counters
+            and other associated side-effects. *)
+
+        (** Change the preconditioner functions.
+
+            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetPreconditionerB
+            @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB
+            @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB *)
+        val set_preconditioner :
+          ('a,'k) bsession
+          -> ?setup:'a prec_setup_fn
+          -> 'a prec_solve_fn
+          -> unit
+
+        (** Change the Jacobian-times-vector function.
+
+            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetJacTimesVecFnB
+            @cvodes <node7#ss:jtimesv_b> CVSpilsJacTimesVecFnB *)
+        val set_jac_times_vec_fn :
+          ('a,'k) bsession
+          -> 'a jac_times_vec_fn
+          -> unit
+
+        (** Remove a Jacobian-times-vector function and use the default
+            implementation.
+
+            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetJacTimesVecFnB
+            @cvodes <node7#ss:jtimesv_b> CVSpilsJacTimesVecFnB *)
+        val clear_jac_times_vec_fn : ('a, 'k) bsession -> unit
+
+        (** Change the preconditioning direction without modifying
+            callback functions. If the preconditioning type is changed from
+            {{!Spils.preconditioning_type}Spils.PrecNone}
+            then {!set_preconditioner} must be called to install the necessary
+            callbacks.
+
+            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetPrecTypeB
+            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+        val set_prec_type : ('a, 'k) bsession
+                            -> Spils.preconditioning_type -> unit
+      end
+
+    (* TODO: Add alternate linear solvers? *)
+
+    (** {2:bsolve Backward solutions} *)
+
+    (** Backward rhs function that doesn't depend on forward sensitivities.
+
+        @cvodes <node7#ss:ODErhs_b> CVRhsFnB
+        @cvodes <node3#e:adj_eqns> Eq 2.19, Adjoint sensitivity analysis *)
+    type 'a brhsfn_no_sens =
+      float    (* t *)
+      -> 'a    (* y *)
+      -> 'a    (* yb *)
+      -> 'a    (* ybdot *)
+      -> unit
+
+    (** Backward rhs function that depends on forward sensitivities.
+
+        @cvodes <node7#ss:ODErhs_bs> CVRhsFnBS
+        @cvodes <node3#e:adj1_eqns> Eq 2.21, Adjoint sensitivity analysis *)
+    type 'a brhsfn_with_sens =
+      float        (* t *)
+      -> 'a        (* y *)
+      -> 'a array  (* ys *)
+      -> 'a        (* yb *)
+      -> 'a        (* ybdot *)
+      -> unit
+
+    (** These functions evaluate the right-hand side of the backward ODE system
+        with or without a dependence on forward sensitivities. *)
+    type 'a brhsfn =
+        NoSens of 'a brhsfn_no_sens
+        (** Doesn't depend on forward sensitivities.  See
+            {!brhsfn_no_sens} for details.  *)
+      | WithSens of 'a brhsfn_with_sens
+        (** Depends on forward sensitivities.  See {!brhsfn_with_sens}
+            for details.  *)
+
+    (** Tolerance specifications. *)
     type ('a, 'k) tolerance =
       | SStolerances of float * float
         (** [(rel, abs)] : scalar relative and absolute tolerances. *)
       | SVtolerances of float * ('a, 'k) Nvector.t
         (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
 
-    (** Specify a solution method.
+    (** Choice of method for solving non-linear systems that arise in solver
+        formulas.
 
-        @cvodes <node7#sss:cvinitb> CVodeCreateB
-     *)
+        @cvodes <node7#sss:cvinitb> CVodeCreateB *)
     type ('data, 'kind) iter =
       | Newton of ('data, 'kind) linear_solver
         (** Newton iteration with a given linear solver *)
@@ -983,7 +1503,118 @@ module Adjoint :
       -> ('a, 'k) Nvector.t
       -> unit
 
-    (** {2:bwdsolve Backward Integration} *)
+    (** Support for backward quadrature equations that may or may
+        not depend on forward sensitivities.
+
+        @cvodes <node7#SECTION007210000000000000000> Backward integration of quadrature equations *)
+    module Quadrature :
+      sig
+        (** {2:init Initialization} *)
+
+        (** Quadrature rhs that doesn't depend on forward sensitivities.
+
+            @cvodes <node7#ss:ODErhs_quad_b> CVQuadRhsFnB *)
+        type 'a bquadrhsfn_no_sens = float -> 'a -> 'a -> 'a -> unit
+
+        (** Quadrature rhs that depends on forward sensitivities.
+
+            @cvodes <node7#ss:ODErhs_quad_sens_B> CVQuadRhsFnBS *)
+        type 'a bquadrhsfn_with_sens =
+          float        (* t *)
+          -> 'a        (* y *)
+          -> 'a array  (* ys *)
+          -> 'a        (* yb *)
+          -> 'a        (* qbdot *)
+          -> unit
+
+        (** These functions compute the quadrature equation right-hand side for
+            the backward problem. *)
+        type 'a bquadrhsfn =
+            NoSens of 'a bquadrhsfn_no_sens
+            (** Doesn't depend on forward sensitivities. *)
+          | WithSens of 'a bquadrhsfn_with_sens
+            (** Depends on forward sensitivities. *)
+
+        (** This function, [init s fQB yQB0], activates integration of
+            quadrature equations, with or without sensitivities, where [fQB]
+            computes the right-hand side of the backward quadrature equations,
+            and [yQB0] contains the values of the quadrature variables at [tB0].
+
+            @cvodes <node6#sss:cvquadinitb> CVodeQuadInitB
+            @cvodes <node6#sss:cvquadinitb> CVodeQuadInitBS *)
+        val init : ('a, 'k) bsession -> 'a bquadrhsfn
+                 -> ('a, 'k) Nvector.t -> unit
+
+        (** This function reinitializes the integration of quadrature equations
+            during the backward phase.
+
+            @cvodes <node6#ss:quad_sens_init> CVodeQuadReInitB *)
+        val reinit : ('a, 'k) bsession -> ('a, 'k) Nvector.t -> unit
+
+        (** {2:tols Tolerance specification} *)
+
+        (** Tolerances for calculating backward quadrature variables. *)
+        type ('a, 'k) tolerance =
+            NoStepSizeControl
+            (** Quadrature variables are not used for step-size control
+                (the default). *)
+          | SStolerances of float * float
+            (** [(rel, abs)] : scalar relative and absolute tolerances. *)
+          | SVtolerances of float * ('a, 'k) Nvector.t
+            (** [(rel, abs)] : scalar relative and vector absolute
+                tolerances. *)
+
+        (** Specify how to use quadrature variables in step size control.
+
+            @cvodes <node5#ss:quad_optional_input> CVodeSetQuadErrCon
+            @cvodes <node5#ss:quad_optional_input> CVodeQuadSStolerances
+            @cvodes <node5#ss:quad_optional_input> CVodeQuadSVtolerances *)
+        val set_tolerances : ('a, 'k) bsession -> ('a, 'k) tolerance -> unit
+
+        (** {2:quadout Output functions} *)
+
+        (** Returns the backward quadrature solutions and time reached
+            after a successful solver step. The given vectors are filled with
+            values calculated during either {!backward_normal} or
+            {!backward_one_step} and the value of the independent variable
+            is returned.
+
+          @cvodes <node7#sss:quad_get_b> CVodeGetQuadB *)
+        val get : ('a, 'k) bsession -> ('a, 'k) Nvector.t -> float
+
+        (** {2:get Querying the solver (optional output functions)}
+
+            @cvodes <node7#sss:quad_optional_input_B> Optional input/output functions for backward quadrature integration *)
+
+        (** Returns the number of calls to the backward quadrature right-hand
+            side function.
+
+            @cvodes <node5#ss:quad_optional_output> CVodeGetQuadNumRhsEvals
+            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+        val get_num_rhs_evals       : ('a, 'k) bsession -> int
+
+        (** Returns the number of local error test failures due to quadrature
+            variables.
+
+            @cvodes <node5#ss:quad_optional_output> CVodeGetQuadNumErrTestFails
+            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+        val get_num_err_test_fails  : ('a, 'k) bsession -> int
+
+        (** Returns the quadrature error weights at the current time.
+
+            @cvodes <node5#ss:quad_optional_output> CVodeGetQuadErrWeights
+            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+        val get_err_weights : ('a, 'k) bsession -> ('a, 'k) Nvector.t -> unit
+
+        (** Returns quadrature-related statistics. These are the
+            number of calls to the quadrature function ([nfqevals]) and the
+            number of error test failures due to quadrature variables
+            ([nqetfails]).
+
+            @cvodes <node5#ss:quad_optional_output> CVodeGetQuadStats
+            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+        val get_stats : ('a, 'k) bsession -> int * int
+      end
 
     (** [backward_normal s tbout] integrates the backward ODE
         problem. The function takes internal steps until it has
@@ -1046,7 +1677,7 @@ module Adjoint :
     val get_dky
           : ('a, 'k) bsession -> ('a, 'k) Nvector.t -> float -> int -> unit
 
-    (** {2:bwdset Modifying the solver} *)
+    (** {2:set Modifying the solver (optional input functions)} *)
 
     (** Instructs {!forward_normal} and {!forward_one_step} not to save
         checkpointing data for forward sensitivities anymore.
@@ -1092,443 +1723,7 @@ module Adjoint :
         @cvode <node7#ss:optional_input_b> CVodeSetStabLimDet *)
     val set_stab_lim_det : ('a, 'k) bsession -> bool -> unit
 
-    (** {2:adjbwddiag Diagonal Approximation} *)
-
-    module Diag :
-      sig
-        (** Diagonal approximation of the Jacobian by difference quotients.
-
-            @cvodes <node7#sss:lin_solv_b> CVDiagB *)
-        val solver : ('data, 'kind) linear_solver
-
-        (** Returns the number of calls made to the user-supplied right-hand
-            side function due to finite difference Jacobian approximation in the
-            Diagonal linear solver.
-
-            @cvodes <node5#sss:optout_diag> CVDiagGetWorkSpace
-            @return ([real_size], [integer_size]) *)
-        val get_work_space : ('a, 'k) bsession -> int * int
-
-        (** Returns the number of calls made to the user-supplied right-hand
-            side function due to finite difference Jacobian approximation in the
-            Diagonal linear solver.
-
-            @cvodes <node5#sss:optout_diag> CVDiagGetNumRhsEvals *)
-        val get_num_rhs_evals : ('a, 'k) bsession -> int
-      end
-
-    (** {2:adjbwddirect Direct Linear Solver} *)
-
-    module Dls :
-      sig
-        (** This function computes the dense Jacobian of the backward problem
-            (or an approximation to it).
-
-            @cvodes <node7#ss:densejac_b> CVDlsDenseJacFnB *)
-        type dense_jac_fn = (RealArray.t triple, RealArray.t) jacobian_arg
-                                -> Dls.DenseMatrix.t -> unit
-
-        (** This function computes the banded Jacobian of the backward problem
-            (or an approximation to it).
-
-            @cvodes <node7#ss:bandjac_b> CVDlsBandJacFnB *)
-        type band_jac_fn = bandrange
-                            -> (RealArray.t triple, RealArray.t) jacobian_arg
-                            -> Dls.BandMatrix.t -> unit
-
-        (** Direct linear solver with dense matrix.  The optional argument
-            specifies a callback function that computes an approximation to the
-            Jacobian matrix (see {!dense_jac_fn} for details).  If this
-            argument is [None], then CVODE uses a default implementation based
-            on difference quotients.  See also {!Dls}.
-
-            @cvodes <node7#sss:lin_solv_b> CVDenseB
-            @cvodes <node7#SECTION00728200000000000000> CVDlsSetDenseJacFnB
-            @cvodes <node7#ss:densejac_b> CVDlsDenseJacFnB *)
-        val dense : ?jac:dense_jac_fn -> unit -> serial_linear_solver
-
-        (** Direct linear solver with dense matrix, using LAPACK.  The argument
-            is the same as [Dense].  See also {!Dls}.
-
-            @cvodes <node7#sss:lin_solv_b> CVLapackDenseB
-            @cvodes <node7#SECTION00728200000000000000> CVDlsSetDenseJacFnB
-            @cvodes <node7#ss:densejac_b> CVDlsDenseJacFnB *)
-        val lapack_dense : ?jac:dense_jac_fn -> unit -> serial_linear_solver
-
-        (** Direct linear solver with banded matrix.  The arguments specify the
-            width of the band ({!bandrange}) and an optional Jacobian
-            function ({!band_jac_fn}).  If the Jacobian function is [None],
-            CVODES uses an internal implementation based on difference
-            quotients. See also {!Dls}.
-
-            @cvodes <node7#sss:lin_solv_b> CVBandB
-            @cvodes <node7#SECTION00728300000000000000> CVDlsSetBandJacFnB
-            @cvodes <node7#ss:bandjac_b> CVDlsBandJacFnB *)
-        val band : ?jac:band_jac_fn -> bandrange -> serial_linear_solver
-
-        (** Direct linear solver with banded matrix using LAPACK.  The arguments
-            are the same as [Band].
-
-            @cvodes <node7#sss:lin_solv_b> CVLapackBandB
-            @cvodes <node7#SECTION00728300000000000000> CVDlsSetBandJacFnB
-            @cvodes <node7#ss:bandjac_b> CVDlsBandJacFnB *)
-        val lapack_band : ?jac:band_jac_fn -> bandrange -> serial_linear_solver
-
-      end
-
-    (** {2:adjbwdspils Scaled Preconditioned Iterative Linear Solvers (SPILS)} *)
-
-    module Spils :
-      sig
-        (** Scaled Preconditioned Iterative Linear Solvers (SPILS)
-
-        @cvodes <node7#ss:optional_output_b> Optional output functions for the backward problem. *)
-
-        type gramschmidt_type = Spils.gramschmidt_type =
-          | ModifiedGS
-          | ClassicalGS
-
-        (** Arguments passed to the preconditioner solve callback
-            function.  See {!prec_solve_fn}.
-
-            @cvode <node7#ss:psolve_b> CVSpilsPrecSolveFnB *)
-        type 'a prec_solve_arg = 'a AdjointTypes.SpilsTypes.prec_solve_arg =
-          {
-            rhs   : 'a;        (** The right-hand side vector, {i r}, of the
-                                   linear system. *)
-            gamma : float;     (** The scalar {i g} appearing in the Newton
-                                   matrix given by M = I - {i g}J. *)
-            delta : float;     (** Input tolerance to be used if an iterative method
-                                   is employed in the solution. *)
-
-            left  : bool;      (** Indicates whether to use the left preconditioner
-                                   ([true]) or the right one ([false]). *)
-          }
-
-        (** This function solves the preconditioning system {i Pz = r} for
-            the backward problem.
-
-            @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB *)
-        type 'a prec_solve_fn =
-          ('a, 'a) jacobian_arg
-          -> 'a prec_solve_arg
-          -> 'a
-          -> unit
-
-        (** This function preprocesses and/or evaluates Jacobian-related
-            data needed by the preconditioner for the backward problem.
-
-            @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB *)
-        type 'a prec_setup_fn =
-          ('a triple, 'a) jacobian_arg
-          -> bool
-          -> float
-          -> bool
-
-        (** This function computes the action of the Jacobian for the
-            backward problem on a given vector.
-
-            @cvodes <node7#ss:jtimesv_b> CVSpilsJacTimesVecFnB *)
-        type 'a jac_times_vec_fn =
-          ('a, 'a) jacobian_arg
-          -> 'a
-          -> 'a
-          -> unit
-
-        (** Specifies a preconditioner, including the type of
-            preconditioning to be done (none, left, right, or both),
-            and a set of three callbacks if applicable:
-
-            - [solve], the main function that solves the
-              preconditioning system $Pz = r$, where $P$ is a
-              preconditioning matrix chosen by the user.  See
-              {!prec_solve_fn} for details.
-            - [setup], which preprocesses and/or evaluates
-              Jacobian-related data needed by [solve].  It can be
-              omitted if there are no such data.  See {!prec_setup_fn}
-              for details.
-            - [jac_times_vec], which multiplies the system Jacobian to
-              a given vector.  See {!jac_times_vec_fn} for details.
-              If the user doesn't give such a function, CVODE uses a
-              default implementation based on difference quotients.
-
-            Like the {!linear_solver}, there are several functions
-            which construct preconditioners.  The simplest is
-            {!prec_none}, which does no preconditioning.  Arbitrary
-            user-defined preconditioners can be constructed through
-            {!prec_left}, {!prec_right}, and {!prec_both}, which take
-            user-defined [solve], [setup], and [jac_times_vec], with
-            the last two optional.
-
-            The {!Banded} module gives access to CVODE's banded
-            preconditioner, while {!Cvode_bbd} contains the parallel
-            band-block diagonal preconditioner.
-
-
-            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetPreconditionerB
-            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetJacTimesVecFnB
-            @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB
-            @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB
-            @cvodes <node7#ss:jtimesv_b> CVSpilsJacTimesVecFnB
-          *)
-        type ('a, 'k) preconditioner =
-          ('a, 'k) AdjointTypes.SpilsTypes.preconditioner
-
-        (** {!preconditioner} restricted to serial nvectors. *)
-        type serial_preconditioner =
-          (Nvector_serial.data, Nvector_serial.kind) preconditioner
-
-        (** See {!preconditioner}.  *)
-        val prec_none : ('a, 'k) preconditioner
-
-        (** See {!preconditioner}. *)
-        val prec_left :
-          ?setup:'a prec_setup_fn
-          -> ?jac_times_vec:'a jac_times_vec_fn
-          -> 'a prec_solve_fn
-          -> ('a, 'k) preconditioner
-
-        (** See {!preconditioner}. *)
-        val prec_right :
-          ?setup:'a prec_setup_fn
-          -> ?jac_times_vec:'a jac_times_vec_fn
-          -> 'a prec_solve_fn
-          -> ('a, 'k) preconditioner
-
-        (** See {!preconditioner}. *)
-        val prec_both :
-          ?setup:'a prec_setup_fn
-          -> ?jac_times_vec:'a jac_times_vec_fn
-          -> 'a prec_solve_fn
-          -> ('a, 'k) preconditioner
-
-        (** Krylov iterative solver with the scaled preconditioned
-            GMRES method.  The arguments specify the maximum dimension
-            of the Krylov subspace and preconditioning type
-            ({!Spils.preconditioning_type}) and the preconditioner
-            callback functions ({!callbacks}).
-
-            @cvodes <node7#sss:lin_solv_b> CVSpgmrB
-            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetPreconditionerB
-            @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB
-            @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB *)
-        val spgmr : ?maxl:int -> ('a, 'k) preconditioner
-                      -> ('a, 'k) linear_solver
-
-        (** Krylov iterative solver with the scaled preconditioned Bi-CGStab
-            method. The arguments are the same as [Spgmr].
-
-            @cvodes <node7#sss:lin_solv_b> CVSpbcgB
-            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetPreconditionerB
-            @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB
-            @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB *)
-        val spbcg : ?maxl:int -> ('a, 'k) preconditioner
-                      -> ('a, 'k) linear_solver
-
-        (** Krylov iterative with the scaled preconditioned TFQMR method.  The
-            arguments are the same as [Spgmr].  See also {!Spils}. *)
-        val sptfqmr : ?maxl:int -> ('a, 'k) preconditioner
-                      -> ('a, 'k) linear_solver
-
-        (** {3:llsolvermanip Low-level solver manipulation} *)
-
-        (** Set preconditioning functions (see {!callbacks}).  It may
-            be unsafe to use this function without a {!reinit}.  Users
-            are encouraged to use the [linsolv] parameter of {!reinit}
-            instead, unless they are desperate for performance.
-
-            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetPreconditionerB
-            @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB
-            @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB
-        *)
-        val set_preconditioner :
-          ('a,'k) bsession
-          -> ?setup:'a prec_setup_fn
-          -> 'a prec_solve_fn
-          -> unit
-
-        (** Set the Jacobian-times-vector function (see {!callbacks}).  It
-            may be unsafe to use this function without a {!reinit}.  Users
-            are encouraged to use the [linsolv] parameter of {!reinit}
-            instead, unless they are desperate for performance.
-
-            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetJacTimesVecFnB
-            @cvodes <node7#ss:jtimesv_b> CVSpilsJacTimesVecFnB
-        *)
-        val set_jac_times_vec_fn :
-          ('a,'k) bsession
-          -> 'a jac_times_vec_fn
-          -> unit
-
-        (** This function disables the user-supplied Jacobian-vector
-            function, and switches back to the default internal
-            difference quotient approximation (see {!spils_params}).
-            It is equivalent to calling [IDASpilsSetJacTimesVecFnB]
-            with an argument of [NULL].
-
-            It may be unsafe to use this function without a {!reinit}.
-            Users are encouraged to use the [iter_type] parameter of
-            {!reinit} instead, unless they are desperate for
-            performance.
-
-            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetJacTimesVecFnB
-            @cvodes <node7#ss:jtimesv_b> CVSpilsJacTimesVecFnB
-        *)
-        val clear_jac_times_vec_fn : ('a, 'k) bsession -> unit
-
-        (** This type is used only for low-level solver manipulation.
-            Information about the type of preconditioning to be done,
-            without any of the necessary callbacks to make it happen:
-            [PrecNone], [PrecLeft ()], [PrecRight ()], or [PrecBoth ()].
-        *)
-        type preconditioning_type =
-          | PrecNone
-          | PrecLeft
-          | PrecRight
-          | PrecBoth
-
-        (** This function changes the type of preconditioning without
-            affecting the preconditioning callbacks.  If the
-            preconditioning type is changed from [PrecNone] to
-            something else, then {!set_prec_callbacks} must be called
-            to install the necessary callbacks.
-
-            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetPrecTypeB
-            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
-        val set_prec_type : ('a, 'k) bsession -> preconditioning_type -> unit
-
-        (** {3:adjbwdspilsoptin Optional Input Functions} *)
-
-        (** Sets the Gram-Schmidt orthogonalization to be used with the
-            Spgmr {!linear_solver}.
-
-            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetGSTypeB
-            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
-        val set_gs_type : ('a, 'k) bsession -> gramschmidt_type -> unit
-
-        (** [set_eps_lin eplifac] sets the factor by which the Krylov linear
-            solver's convergence test constant is reduced from the Newton
-            iteration test constant. [eplifac]  must be >= 0. Passing a value of
-            0 specifies the default (which is 0.05).
-
-            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetEpsLinB
-            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
-        val set_eps_lin : ('a, 'k) bsession -> float -> unit
-
-        (** [set_maxl maxl] resets the maximum Krylov subspace dimension for the
-            Bi-CGStab or TFQMR methods. [maxl] is the maximum dimension of the
-            Krylov subspace.  A value of [None] (or [maxl] <= 0) specifies the
-            default of 5.0.
-
-            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetMaxlB
-            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
-        val set_maxl : ('a, 'k) bsession -> int option -> unit
-
-        (** {3:adjbwdspilsoptout Optional Output Functions} *)
-
-        (** Returns the sizes of the real and integer workspaces used by the
-            linear solver.
-
-            @cvodes <node5#sss:optout_spils> CVSpilsGetWorkSpace
-            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
-            @return ([real_size], [integer_size]) *)
-        val get_work_space       : ('a, 'k) bsession -> int * int
-
-        (** Returns the cumulative number of linear iterations.
-
-            @cvodes <node5#sss:optout_spils> CVSpilsGetNumLinIters
-            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
-        val get_num_lin_iters    : ('a, 'k) bsession -> int
-
-        (** Returns the cumulative number of linear convergence failures.
-
-            @cvodes <node5#sss:optout_spils> CVSpilsGetNumConvFails
-            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
-        val get_num_conv_fails   : ('a, 'k) bsession -> int
-
-        (** Returns the number of preconditioner evaluations, i.e., the number
-            of calls made to psetup with jok = [false].
-
-            @cvodes <node5#sss:optout_spils> CVSpilsGetNumPrecEvals
-            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
-        val get_num_prec_evals   : ('a, 'k) bsession -> int
-
-        (** Returns the cumulative number of calls made to the preconditioner
-            solve function, psolve.
-
-            @cvodes <node5#sss:optout_spils> CVSpilsGetNumPrecSolves
-            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
-        val get_num_prec_solves  : ('a, 'k) bsession -> int
-
-        (** Returns the cumulative number of calls made to the Jacobian-vector
-            function, jtimes.
-
-            @cvodes <node5#sss:optout_spils> CVSpilsGetNumJtimesEvals
-            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
-        val get_num_jtimes_evals : ('a, 'k) bsession -> int
-
-        (** Returns the number of calls to the user right-hand side function for
-            finite difference Jacobian-vector product approximation. This
-            counter is only updated if the default difference quotient function
-            is used.
-
-            @cvodes <node5#sss:optout_spils> CVSpilsGetNumRhsEvals
-            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
-        val get_num_rhs_evals    : ('a, 'k) bsession -> int
-
-        module Banded : sig
-
-          (** Denotes CVODE's internal band matrix {!preconditioner} based
-              on difference quotients.  [prec_left br] creates a left
-              preconditioner which generates a banded approximation to the
-              Jacobian with [br.mlower] sub-diagonals and [br.mupper]
-              super-diagonals.
-
-              @cvode <node5#sss:cvbandpre> CVBandPrecInit
-          *)
-          val prec_left :
-            ?jac_times_vec:(RealArray.t jac_times_vec_fn)
-            -> bandrange
-            -> serial_preconditioner
-
-          (** Like {!prec_left} but preconditions from the right.
-
-              @cvode <node5#sss:cvbandpre> CVBandPrecInit
-          *)
-          val prec_right :
-            ?jac_times_vec:(RealArray.t jac_times_vec_fn)
-            -> bandrange
-            -> serial_preconditioner
-
-          (** Like {!prec_left} but preconditions from both sides.
-
-              @cvode <node5#sss:cvbandpre> CVBandPrecInit
-          *)
-          val prec_both :
-            ?jac_times_vec:(RealArray.t jac_times_vec_fn)
-            -> bandrange
-            -> serial_preconditioner
-
-          (** Returns the sizes of the real and integer workspaces
-              used by the serial banded preconditioner module.
-
-              @cvodes <node5#sss:cvbandpre> CVBandPrecGetWorkSpace
-              @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
-              @return ([real_size], [integer_size]) *)
-          val get_work_space : serial_bsession -> int * int
-
-          (** Returns the number of calls made to the user-supplied
-              right-hand side function due to finite difference banded
-              Jacobian approximation in the banded preconditioner
-              setup function.
-
-              @cvodes <node5#sss:cvbandpre> CVBandPrecGetNumRhsEvals
-              @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
-          val get_num_rhs_evals : serial_bsession -> int
-        end
-      end
-
-    (** {2:adjbwdout Output} *)
+    (** {2:get Querying the solver (optional output functions)} *)
 
     (** Returns the real and integer workspace sizes.
 
@@ -1680,133 +1875,7 @@ module Adjoint :
      *)
     val get_nonlin_solv_stats : ('a, 'k) bsession -> int *int
 
-    (** {2:adjquad Quadrature Equations} *)
-
-    (** Support for integration of backward quadrature equations that may or may
-        not depend on forward sensitivities. *)
-    module Quadrature :
-      sig
-        (** {2:adjquadinit Initialization} *)
-
-        (** These functions compute the quadrature equation right-hand side for
-            the backward problem. *)
-        type 'a bquadrhsfn =
-            NoSens of 'a bquadrhsfn_no_sens
-            (** Doesn't depend on forward sensitivities.  See
-                {!bquadrhsfn_no_sens} for details. *)
-          | WithSens of 'a bquadrhsfn_with_sens
-            (** Depends on forward sensitivities.  See
-                {!bquadrhsfn_with_sens} for details. *)
-
-        (** Quadrature rhs that doesn't depend on forward
-            sensitivities.
-
-            See also {!bquadrhsfn}.
-
-            @cvodes <node7#ss:ODErhs_quad_b> CVQuadRhsFnB *)
-        and 'a bquadrhsfn_no_sens = float -> 'a -> 'a -> 'a -> unit
-
-        (** Quadrature rhs that depends on forward sensitivities.
-
-            See also {!bquadrhsfn}.
-
-            @cvodes <node7#ss:ODErhs_quad_sens_B> CVQuadRhsFnBS
-          *)
-        and 'a bquadrhsfn_with_sens =
-          float        (* t *)
-          -> 'a        (* y *)
-          -> 'a array  (* ys *)
-          -> 'a        (* yb *)
-          -> 'a        (* qbdot *)
-          -> unit
-
-        (** This function, [init s fQB yQB0], activates integration of
-            quadrature equations, with or without sensitivities, where [fQB]
-            computes the right-hand side of the backward quadrature equations,
-            and [yQB0] contains the values of the quadrature variables at [tB0].
-
-            @cvodes <node6#sss:cvquadinitb> CVodeQuadInitB
-            @cvodes <node6#sss:cvquadinitb> CVodeQuadInitBS *)
-        val init : ('a, 'k) bsession -> 'a bquadrhsfn
-                 -> ('a, 'k) Nvector.t -> unit
-
-        (** This function reinitializes the integration of quadrature equations
-            during the backward phase.
-
-            @cvodes <node6#ss:quad_sens_init> CVodeQuadReInitB *)
-        val reinit : ('a, 'k) bsession -> ('a, 'k) Nvector.t -> unit
-
-        (** {2:adjextraction Extraction function} *)
-
-        (**
-          [tret = get s w yqs] fills [yqs] with the quadrature solution vector
-          after a successful return from {!backward_normal} or
-          {!backward_one_step}, and returns the time reached by the solver.
-
-          @cvodes <node7#sss:quad_get_b> CVodeGetQuadB
-         *)
-        val get : ('a, 'k) bsession -> ('a, 'k) Nvector.t -> float
-
-        (** {2:adjquadoptin Optional Input Functions} *)
-
-        type ('a, 'k) tolerance =
-            NoStepSizeControl
-            (** Do not use quadrature variables for step-size control
-                (default). *)
-          | SStolerances of float * float
-            (** [(rel, abs)] : scalar relative and absolute tolerances. *)
-          | SVtolerances of float * ('a, 'k) Nvector.t
-            (** [(rel, abs)] : scalar relative and vector absolute
-                tolerances. *)
-
-        (** Specify whether and how quadrature variables should be used in the
-            step size control mechanism.
-
-            @cvodes <node5#ss:quad_optional_input> CVodeSetQuadErrCon
-            @cvodes <node5#ss:quad_optional_input> CVodeQuadSStolerances
-            @cvodes <node5#ss:quad_optional_input> CVodeQuadSVtolerances *)
-        val set_tolerances : ('a, 'k) bsession -> ('a, 'k) tolerance -> unit
-
-        (** {2:adjquadoptout Optional Output Functions} *)
-
-        (** Returns the number of calls to the user's quadrature right-hand side
-            function.
-
-            @cvodes <node7#sss:quad_optional_input_B> Optional input/output functions for backward quadrature integration
-            @cvodes <node5#ss:quad_optional_output> CVodeGetQuadNumRhsEvals
-            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
-         *)
-        val get_num_rhs_evals       : ('a, 'k) bsession -> int
-
-        (** Returns the number of local error test failures due to quadrature
-            variables.
-
-            @cvodes <node7#sss:quad_optional_input_B> Optional input/output functions for backward quadrature integration
-            @cvodes <node5#ss:quad_optional_output> CVodeGetQuadNumErrTestFails
-            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
-         *)
-        val get_num_err_test_fails  : ('a, 'k) bsession -> int
-
-        (** Returns the quadrature error weights at the current time.
-
-            @cvodes <node7#sss:quad_optional_input_B> Optional input/output functions for backward quadrature integration
-            @cvodes <node5#ss:quad_optional_output> CVodeGetQuadErrWeights
-            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
-         *)
-        val get_err_weights : ('a, 'k) bsession -> ('a, 'k) Nvector.t -> unit
-
-        (** [nfqevals, nqetfails = get_stats s] returns
-            - [fqevals], the number of calls to the user's quadrature function, and,
-            - [nqetfails], the number of error test failures due to quadrature variables.
-
-            @cvodes <node7#sss:quad_optional_input_B> Optional input/output functions for backward quadrature integration
-            @cvodes <node5#ss:quad_optional_output> CVodeGetQuadStats
-            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
-         *)
-        val get_stats : ('a, 'k) bsession -> int * int
-      end
-
-    (** {2:adjexcept Exceptions} *)
+    (** {2:exceptions Exceptions} *)
 
     (** Adjoint sensitivity analysis was not initialized.
 

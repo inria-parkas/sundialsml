@@ -40,6 +40,8 @@ TODO
    Automatically check links?
    Break long function types into lines?
    Fix the skeleton programs.
+   Check that there are no undescribed index entries.
+   In Cvodes, change all Cvodes.session to Cvode.session?
 
    To explain:
    - Check the various links (@cvode, @cvodes, @ida, @idas, etc.)
@@ -54,7 +56,7 @@ TODO
 
 MINOR PATCHES
 -------------
-2. (Tim/Jun) Add the Dls functions to Cvodes/Idas:
+2. (Tim/Jun) Add the Dls functions to Idas:
      set_dense_jac_fn
      clear_dense_jac_fn
      set_band_jac_fn
@@ -63,11 +65,6 @@ MINOR PATCHES
      set_preconditioner
      set_jac_times_vec_fn
      clear_jac_times_vec_fn
-
-   or just provide a reinit function.
-
-   In the doc, mention that these don't reset performance counters.
-   But they're discouraged otherwise.
 
 5. Flatten out jacobian_arg
 

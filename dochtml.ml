@@ -191,7 +191,8 @@ struct
         match List.assoc tag custom_functions, text with
         | (Simple f, [Odoc_info.Raw s]) -> Buffer.add_string b (f s)
         | (Simple f, _) ->
-            Odoc_info.warning ("custom tags must be followed by plain text.")
+            Odoc_info.warning (Printf.sprintf 
+              "custom tags (%s) must be followed by plain text." tag)
         | (Full f, _) -> f b text
       with
         Not_found -> Odoc_info.warning (Odoc_messages.tag_not_handled tag)

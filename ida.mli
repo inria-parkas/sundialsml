@@ -58,7 +58,7 @@ type ('a, 'k) session = ('a, 'k) Ida_impl.session
 (** Alias for sessions based on serial nvectors. *)
 type serial_session = (RealArray.t, Nvector_serial.kind) session
 
-(** {2:linear Linear Solvers} *)
+(** {2:linear Linear solvers} *)
 
 (** Linear solvers used by Ida.
 
@@ -594,6 +594,7 @@ module Alternate :
     should be avoided ([efun] is not allowed to abort the solver). *)
 type 'data error_fun = 'data -> 'data -> unit
 
+(** Tolerance specifications. *)
 type ('data, 'kind) tolerance =
   | SStolerances of float * float
     (** [(rel, abs)] : scalar relative and absolute tolerances. *)
@@ -612,7 +613,7 @@ val default_tolerances : ('data, 'kind) tolerance
     - [t], the value of the independent variable, i.e., the simulation time,
     - [y], the vector of dependent-variable values, i.e., $y(t)$,
     - [y'], the vector of dependent-variable derivatives, i.e.,
-            {% $\dot{y} = \frac{dy}{dt}$%}, and,
+            {% $\dot{y} = \frac{\mathrm{d}y}{\mathrm{d}t}$%}, and,
     - [r] a vector for storing the residual value, {% $F(t, y, \dot{y})$%}.
 
     Within the function, raising a {!Sundials.RecoverableFailure} exception
@@ -631,7 +632,7 @@ type 'a resfn = float -> 'a -> 'a -> 'a -> unit
     - [t], the value of the independent variable, i.e., the simulation time,
     - [y], the vector of dependent-variable values, i.e., $y(t)$,
     - [y'], the vector of dependent-variable derivatives, i.e.,
-            {% $\dot{y} = \frac{dy}{dt}$%}, and,
+            {% $\dot{y} = \frac{\mathrm{d}y}{\mathrm{d}t}$%}, and,
     - [gout], a vector for storing the value of {% $g(t, y, \dot{y})$%}.
 
     {warning [y], [y'], and [gout] should not be accessed after the function
@@ -652,7 +653,8 @@ type 'a rootsfn = float -> 'a -> 'a -> RealArray.t -> unit
     - [t0],      the initial value of the independent variable,
     - [y0],      a vector of initial values that also determines the number
                  of equations, and,
-    - [y'0],     the initial values for {% $\dot{y} = \frac{dy}{dt}$%}.
+    - [y'0],     the initial values for
+                 {% $\dot{y} = \frac{\mathrm{d}y}{\mathrm{d}t}$%}.
 
     This function does everything necessary to initialize a session, i.e.,
     it makes the calls referenced below. The {!solve_normal} and
@@ -1017,6 +1019,7 @@ val get_err_weights : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
     @ida <node5#sss:optout_main> IDAGetEstLocalErrors *)
 val get_est_local_errors : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
 
+(** Summaries of integrator statistics. *)
 type integrator_stats = {
     num_steps : int;
       (** Cumulative number of internal solver steps. *)

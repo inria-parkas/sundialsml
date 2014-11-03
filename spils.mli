@@ -17,7 +17,7 @@
 (* National Laboratory.                                                *)
 (***********************************************************************)
 
-(** Scaled Preconditioned Iterative Linear Solvers (SPILS) routines.
+(** Scaled Preconditioned Iterative Linear Solvers routines.
  
     Global constants and general purpose solver routines.
 
