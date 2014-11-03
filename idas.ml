@@ -183,7 +183,7 @@ module Sensitivity =
       | SVtolerances (rel, abs) -> begin
             if Array.length abs <> ns
             then invalid_arg "set_tolerances: abstol has the wrong length";
-            Array.iter s.checkvec abs;
+            if Sundials_config.safe then Array.iter s.checkvec abs;
             sv_tolerances s rel abs
           end
       | EEtolerances -> ee_tolerances s
@@ -226,8 +226,9 @@ module Sensitivity =
       c_set_params s ps
 
     let init s tol fmethod sparams sensresfn y0 y'0 =
-      Array.iter s.checkvec y0;
-      Array.iter s.checkvec y'0;
+      if Sundials_config.safe then
+        (Array.iter s.checkvec y0;
+         Array.iter s.checkvec y'0);
       add_fwdsensext s;
       let se = fwdsensext s in
       let ns = Array.length y0 in
@@ -255,8 +256,9 @@ module Sensitivity =
       let ns = num_sensitivities s in
       if Array.length s0 <> ns || Array.length s'0 <> ns
       then invalid_arg "reinit: wrong number of sensitivity vectors";
-      Array.iter s.checkvec s0;
-      Array.iter s.checkvec s'0;
+      if Sundials_config.safe then
+        (Array.iter s.checkvec s0;
+         Array.iter s.checkvec s'0);
       c_reinit s sm s0 s'0
 
     external toggle_off : ('a, 'k) session -> unit
@@ -268,7 +270,7 @@ module Sensitivity =
     let get s ys =
       if Array.length ys <> num_sensitivities s
       then invalid_arg "get: wrong number of sensitivity vectors";
-      Array.iter s.checkvec ys;
+      if Sundials_config.safe then Array.iter s.checkvec ys;
       c_get s ys
 
     external c_get_dky
@@ -278,14 +280,14 @@ module Sensitivity =
     let get_dky s dkys =
       if Array.length dkys <> num_sensitivities s
       then invalid_arg "get_dky: wrong number of sensitivity vectors";
-      Array.iter s.checkvec dkys;
+      if Sundials_config.safe then Array.iter s.checkvec dkys;
       fun t k -> c_get_dky s t k dkys
 
     external c_get1 : ('a, 'k) session -> int -> ('a, 'k) Nvector.t -> float
       = "c_idas_sens_get1"
 
     let get1 s ys =
-      s.checkvec ys;
+      if Sundials_config.safe then s.checkvec ys;
       fun i -> c_get1 s i ys
 
     external c_get_dky1
@@ -293,7 +295,7 @@ module Sensitivity =
       = "c_idas_sens_get_dky1"
 
     let get_dky1 s dkys =
-      s.checkvec dkys;
+      if Sundials_config.safe then s.checkvec dkys;
       fun t k i -> c_get_dky1 s t k i dkys
 
     type dq_method = DQCentered | DQForward
@@ -333,7 +335,7 @@ module Sensitivity =
     let get_err_weights s esweight =
       if Array.length esweight <> num_sensitivities s
       then invalid_arg "get_err_weights: wrong number of vectors";
-      Array.iter s.checkvec esweight;
+      if Sundials_config.safe then Array.iter s.checkvec esweight;
       c_get_err_weights s esweight
 
     external c_sens_calc_ic_ya_yd' :
@@ -355,19 +357,20 @@ module Sensitivity =
 
     let calc_ic_ya_yd' session ?y ?y' ?ys ?y's id tout1 =
       let num_sens = num_sensitivities session in
-      ocheck session.checkvec y;
-      ocheck session.checkvec y';
+      if Sundials_config.safe then
+        (ocheck session.checkvec y;
+         ocheck session.checkvec y');
       (match ys with
        | Some ys ->
            if Array.length ys <> num_sens
            then invalid_arg "calc_ic_ya_yd': wrong number of vectors in ~ys";
-           Array.iter session.checkvec ys
+           if Sundials_config.safe then Array.iter session.checkvec ys
        | _ -> ());
       (match y's with
        | Some y's ->
            if Array.length y's <> num_sens
            then invalid_arg "calc_ic_ya_yd': wrong number of vectors in ~y's";
-           Array.iter session.checkvec y's
+           if Sundials_config.safe then Array.iter session.checkvec y's
        | _ -> ());
       c_sens_calc_ic_ya_yd' session y y' ys y's id tout1
 
@@ -377,7 +380,7 @@ module Sensitivity =
        values of the corrected derivatives.  *)
     let calc_ic_y session ?y ?ys tout1 =
       let num_sens = num_sensitivities session in
-      ocheck session.checkvec y;
+      if Sundials_config.safe then ocheck session.checkvec y;
       (match ys with
        | Some ys when Array.length ys <> num_sens ->
          invalid_arg "calc_ic_y: wrong number of vectors in ~ys"
@@ -563,7 +566,7 @@ module Adjoint =
       = "c_idas_adj_set_var_types"
 
     let set_var_types b var_types =
-      (tosession b).checkvec var_types;
+      if Sundials_config.safe then (tosession b).checkvec var_types;
       let parent, which = parent_and_which b in
       c_set_var_types parent which var_types
 
@@ -607,10 +610,11 @@ module Adjoint =
     let calc_ic bsession ?yb ?y'b tout1 yb0 y'b0 =
       let checkvec = (tosession bsession).checkvec in
       let parent, which = parent_and_which bsession in
-      checkvec yb0;
-      checkvec y'b0;
-      ocheck checkvec yb;
-      ocheck checkvec y'b;
+      if Sundials_config.safe then
+        (checkvec yb0;
+         checkvec y'b0;
+         ocheck checkvec yb;
+         ocheck checkvec y'b);
       c_adj_calc_ic parent which tout1 yb0 y'b0;
       c_adj_get_consistent_ic parent which yb y'b
 
@@ -621,12 +625,13 @@ module Adjoint =
         invalid_arg "calc_ic_sens: wrong number of vectors in ys0";
       if Array.length y's0 <> num_sens then
         invalid_arg "calc_ic_sens: wrong number of vectors in y's0";
-      bs.checkvec yb0;
-      bs.checkvec y'b0;
-      Array.iter bs.checkvec ys0;
-      Array.iter bs.checkvec y's0;
-      ocheck bs.checkvec yb;
-      ocheck bs.checkvec y'b;
+      if Sundials_config.safe then
+        (bs.checkvec yb0;
+         bs.checkvec y'b0;
+         Array.iter bs.checkvec ys0;
+         Array.iter bs.checkvec y's0;
+         ocheck bs.checkvec yb;
+         ocheck bs.checkvec y'b);
       let parent, which = parent_and_which bsession in
       c_adj_calc_ic_sens parent which tout1 yb0 y'b0 ys0 y's0;
       c_adj_get_consistent_ic parent which yb y'b
@@ -637,8 +642,9 @@ module Adjoint =
         = "c_idas_adj_forward_normal"
 
     let forward_normal s t y y' =
-      s.checkvec y;
-      s.checkvec y';
+      if Sundials_config.safe then
+        (s.checkvec y;
+         s.checkvec y');
       c_forward_normal s t y y'
 
     external c_forward_one_step : ('a, 'k) session -> float
@@ -647,8 +653,9 @@ module Adjoint =
         = "c_idas_adj_forward_one_step"
 
     let forward_one_step s t y y' =
-      s.checkvec y;
-      s.checkvec y';
+      if Sundials_config.safe then
+        (s.checkvec y;
+         s.checkvec y');
       c_forward_one_step s t y y'
 
     type 'a single_tmp = 'a
@@ -676,7 +683,8 @@ module Adjoint =
       let parent, which = parent_and_which bs in
       match tol with
       | SStolerances (rel, abs) -> ss_tolerances parent which rel abs
-      | SVtolerances (rel, abs) -> ((tosession bs).checkvec abs;
+      | SVtolerances (rel, abs) -> (if Sundials_config.safe then
+                                      (tosession bs).checkvec abs;
                                     sv_tolerances parent which rel abs)
 
     let bwdsensext = function (Bsession bs) ->
@@ -699,9 +707,10 @@ module Adjoint =
         = "c_idas_adj_get"
 
     let get bs yb ypb =
-      let checkvec = (tosession bs).checkvec in
-      checkvec yb;
-      checkvec ypb;
+      if Sundials_config.safe then
+        (let checkvec = (tosession bs).checkvec in
+         checkvec yb;
+         checkvec ypb);
       let parent, which = parent_and_which bs in
       c_get parent which yb ypb
 
@@ -949,7 +958,7 @@ module Adjoint =
       let { bsessions } as se = fwdsensext s in
       let ns = num_sensitivities s in
       let checkvec = Nvector.check y0 in
-      checkvec y'0;
+      if Sundials_config.safe then checkvec y'0;
       let weakref = Weak.create 1 in
       let ida_mem, which, backref, err_file =
         match mf with
@@ -1013,9 +1022,10 @@ module Adjoint =
         = "c_idas_adj_reinit"
 
     let reinit bs ?linsolv tb0 yb0 y'b0 =
-      let checkvec = (tosession bs).checkvec in
-      checkvec yb0;
-      checkvec y'b0;
+      if Sundials_config.safe then
+        (let checkvec = (tosession bs).checkvec in
+         checkvec yb0;
+         checkvec y'b0);
       let parent, which = parent_and_which bs in
       c_reinit parent which tb0 yb0 y'b0;
       (match linsolv with

@@ -179,7 +179,7 @@ module Sensitivity =
       | SVtolerances (rel, abs) -> begin
             if Array.length abs <> ns
             then invalid_arg "set_tolerances: abstol has the wrong length";
-            Array.iter s.checkvec abs;
+            if Sundials_config.safe then Array.iter s.checkvec abs;
             sv_tolerances s rel abs
           end
       | EEtolerances -> ee_tolerances s
@@ -226,7 +226,7 @@ module Sensitivity =
       c_set_params s ps
 
     let init s tol fmethod sparams fm v0 =
-      Array.iter s.checkvec v0;
+      if Sundials_config.safe then Array.iter s.checkvec v0;
       add_fwdsensext s;
       let se = fwdsensext s in
       let ns = Array.length v0 in
@@ -256,7 +256,7 @@ module Sensitivity =
     let reinit s sm s0 =
       if Array.length s0 <> num_sensitivities s
       then invalid_arg "reinit: wrong number of sensitivity vectors";
-      Array.iter s.checkvec s0;
+      if Sundials_config.safe then Array.iter s.checkvec s0;
       c_reinit s sm s0
 
     external toggle_off : ('a, 'k) session -> unit
@@ -268,7 +268,7 @@ module Sensitivity =
     let get s ys =
       if Array.length ys <> num_sensitivities s
       then invalid_arg "get: wrong number of sensitivity vectors";
-      Array.iter s.checkvec ys;
+      if Sundials_config.safe then Array.iter s.checkvec ys;
       c_get s ys
 
     external c_get_dky
@@ -278,14 +278,14 @@ module Sensitivity =
     let get_dky s dkys =
       if Array.length dkys <> num_sensitivities s
       then invalid_arg "get_dky: wrong number of sensitivity vectors";
-      Array.iter s.checkvec dkys;
+      if Sundials_config.safe then Array.iter s.checkvec dkys;
       fun t k -> c_get_dky s t k dkys
 
     external c_get1 : ('a, 'k) session -> int -> ('a, 'k) nvector -> float
         = "c_cvodes_sens_get1"
 
     let get1 s ys =
-      s.checkvec ys;
+      if Sundials_config.safe then s.checkvec ys;
       fun i -> c_get1 s i ys
 
     external c_get_dky1
@@ -293,7 +293,7 @@ module Sensitivity =
         = "c_cvodes_sens_get_dky1"
 
     let get_dky1 s dkys =
-      s.checkvec dkys;
+      if Sundials_config.safe then s.checkvec dkys;
       fun t k i -> c_get_dky1 s t k i dkys
 
     type dq_method = DQCentered | DQForward
@@ -333,7 +333,7 @@ module Sensitivity =
     let get_err_weights s esweight =
       if Array.length esweight <> num_sensitivities s
       then invalid_arg "get_err_weights: wrong number of vectors";
-      Array.iter s.checkvec esweight;
+      if Sundials_config.safe then Array.iter s.checkvec esweight;
       c_get_err_weights s esweight
 
     external get_num_nonlin_solv_iters : ('a, 'k) session -> int
@@ -533,7 +533,7 @@ module Adjoint =
         = "c_cvodes_adj_forward_normal"
 
     let forward_normal s tout yret =
-      s.checkvec yret;
+      if Sundials_config.safe then s.checkvec yret;
       c_forward_normal s tout yret
 
     external c_forward_one_step : ('a, 'k) session -> float -> ('a, 'k) nvector
@@ -541,7 +541,7 @@ module Adjoint =
         = "c_cvodes_adj_forward_one_step"
 
     let forward_one_step s tout yret =
-      s.checkvec yret;
+      if Sundials_config.safe then s.checkvec yret;
       c_forward_one_step s tout yret
 
     type 'a triple = 'a * 'a * 'a
@@ -573,7 +573,8 @@ module Adjoint =
       let parent, which = parent_and_which bs in
       match tol with
       | SStolerances (rel, abs) -> ss_tolerances parent which rel abs
-      | SVtolerances (rel, abs) -> ((tosession bs).checkvec abs;
+      | SVtolerances (rel, abs) -> (if Sundials_config.safe then
+                                      (tosession bs).checkvec abs;
                                     sv_tolerances parent which rel abs)
 
     external c_set_functional : ('a, 'k) session -> int -> unit
@@ -603,7 +604,7 @@ module Adjoint =
         = "c_cvodes_adj_get"
 
     let get bs yb =
-      (tosession bs).checkvec yb;
+      if Sundials_config.safe then (tosession bs).checkvec yb;
       let parent, which = parent_and_which bs in
       c_get parent which yb
 
@@ -987,7 +988,7 @@ module Adjoint =
         = "c_cvodes_adj_reinit"
 
     let reinit bs ?iter_type tb0 yb0 =
-      (tosession bs).checkvec yb0;
+      if Sundials_config.safe then (tosession bs).checkvec yb0;
       let parent, which = parent_and_which bs in
       c_reinit parent which tb0 yb0;
       (match iter_type with

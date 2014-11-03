@@ -537,4 +537,9 @@ if [ "x${lapack_enabled}" = x ]; then
 else
     echo "let lapack_enabled = true" >> sundials_config.ml
 fi
+if [ "x${bounds_checking}" = x1 ]; then
+    echo "let safe = true" >> sundials_config.ml
+else
+    echo "let safe = false" >> sundials_config.ml
+fi
 
