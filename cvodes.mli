@@ -64,7 +64,7 @@ module Quadrature :
         - [t], the value of the independent variable, i.e., the simulation time,
         - [y], the vector of dependent-variable values, i.e., $y(t)$, and,
         - [dyq], a vector for storing the computed value of
-                 {% \dot{y}_Q = f_Q(t, y)$%}.
+                 {% $\dot{y}_Q = f_Q(t, y)$%}.
 
         Within the function, raising a {!Sundials.RecoverableFailure} exception
         indicates a recoverable error. Any other exception is treated as an
@@ -1563,12 +1563,50 @@ module Adjoint :
       sig
         (** {2:init Initialization} *)
 
-        (** Quadrature rhs that doesn't depend on forward sensitivities.
+        (** Functions defining backward quadrature variables without forward
+            sensitivities.
+            The call [fBQS t y yb qbdot] has arguments:
+            - [t], the value of the independent variable, i.e.,
+                   the simulation time,
+            - [y], the vector of dependent-variable values, i.e., $y(t)$,
+            - [yb], the vector of backward dependent-variable values,
+                    i.e., $y_B(t)$,
+            - [dqb], a vector for storing the computed value of
+                     {% $\dot{y}_\mathit{QB} = f_\mathit{QB}(t, y, y_B)$%}.
+
+            Within the function, raising a {!Sundials.RecoverableFailure}
+            exception indicates a recoverable error. Any other exception is
+            treated as an unrecoverable error.
+
+            {warning [y], [yb], and [dqb] should not be accessed after the
+                     function returns.}
 
             @cvodes <node7#ss:ODErhs_quad_b> CVQuadRhsFnB *)
-        type 'a bquadrhsfn_no_sens = float -> 'a -> 'a -> 'a -> unit
+        type 'a bquadrhsfn_no_sens =
+          float       (* t *)
+          -> 'a       (* y *)
+          -> 'a       (* yb *)
+          -> 'a       (* dqb *)
+          -> unit
 
-        (** Quadrature rhs that depends on forward sensitivities.
+        (** Functions defining backward quadrature variables with forward
+            sensitivities.
+            The call [fBQS t y ys yb qbdot] has arguments:
+            - [t], the value of the independent variable, i.e.,
+                   the simulation time,
+            - [y], the vector of dependent-variable values, i.e., $y(t)$,
+            - [ys], the array of forward sensitivity vectors,
+            - [yb], the vector of backward dependent-variable values,
+                    i.e., $y_B(t)$,
+            - [dqb], a vector for storing the computed value of
+                   {% $\dot{y}_\mathit{QB} = f_\mathit{QB}(t, y, y_S, y_B)$%}.
+
+            Within the function, raising a {!Sundials.RecoverableFailure}
+            exception indicates a recoverable error. Any other exception is
+            treated as an unrecoverable error.
+
+            {warning Neither [y], [yb], [dqb], nor the elements of [ys] should
+                     be accessed after the function returns.}
 
             @cvodes <node7#ss:ODErhs_quad_sens_B> CVQuadRhsFnBS *)
         type 'a bquadrhsfn_with_sens =
