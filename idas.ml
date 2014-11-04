@@ -431,8 +431,8 @@ module Sensitivity =
         if Sundials_config.safe && Array.length v0 <> se.num_sensitivities
         then invalid_arg "init: wrong number of vectors";
         let checkquadsensvec = Nvector.check v0.(0) in
-        if Sundials_config.safe then Array.iter se.checkquadsensvec v0;
         se.checkquadsensvec <- checkquadsensvec;
+        if Sundials_config.safe then Array.iter se.checkquadsensvec v0;
         match fQS with
         | Some f -> se.quadsensrhsfn <- f;
                     c_quadsens_init s true v0
