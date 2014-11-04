@@ -23,9 +23,9 @@
 (** Sensitivity analysis (forward and adjoint) and quadrature equations
     for CVODE.
 
-    These submodules extend basic state functions, {% $\dot{y} = f(y, t)$%},
+    These submodules extend basic state functions, {% $\dot{y} = f(t, y)$%},
     with parameters $p$ and quadrature variables $y_Q$. The former exposes
-    a new dependency, {% $\dot{y} = f(y, t, p)$%}, relative to which the
+    a new dependency, {% $\dot{y} = f(t, y, p)$%}, relative to which the
     sensitivity of a solution can be approximated. The latter effectively
     suppresses a dependency ($y_Q$ is disjoint from $y$),
     {% $\dot{y}_Q = f_Q(y, t, p)$%}, to reduce computation costs.
@@ -49,7 +49,7 @@ type ('data, 'kind) session = ('data, 'kind) Cvode.session
     these variables are calculated more efficiently since they are excluded
     from the nonlinear solution stage.
 
-    An example session with Cvode using quadrature variables
+    An example session with Cvodes using quadrature variables
     ({openfile cvodes_quad_skel.ml}): {[
 #include "examples/ocaml/skeletons/cvodes_quad_skel.ml"
     ]}
@@ -217,7 +217,7 @@ module Quadrature :
       {- {{:#get}Querying the solver}}
       {- {{:#exceptions}Exceptions}}}
 
-    An example session with Cvode using sensitivity analysis
+    An example session with Cvodes using sensitivity analysis
     ({openfile cvodes_sens_skel.ml}): {[
 #include "examples/ocaml/skeletons/cvodes_sens_skel.ml"
     ]}
@@ -833,7 +833,7 @@ module Sensitivity :
       {- {{:#get}Querying the solver}}
       {- {{:#exceptions}Exceptions}}}
   
-    An example session with Cvode using sensitivity analysis
+    An example session with Cvodes using sensitivity analysis
     ({openfile cvodes_adj_skel.ml}): {[
 #include "examples/ocaml/skeletons/cvodes_adj_skel.ml"
     ]}

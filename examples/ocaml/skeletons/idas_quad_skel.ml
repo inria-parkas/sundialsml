@@ -1,10 +1,10 @@
 (* TODO: write a proper and working example... *)
 
-(* Initialize a session [s] per the skeleton at {!Cvode.session}}
+(* Initialize a session [s] per the skeleton at {!Ida.session}
    The vector of initial values should not include values for the
    quadrature variables. *)
 ...
-module Quad = Cvodes.Quadrature
+module Quad = Idas.Quadrature
 
 (* Set vector of quadrature variables
    The length of this vector determines the number of quadrature variables. *)
@@ -23,5 +23,5 @@ Quad.get s yQ
 
 (* Get quadrature optional outputs
    Call any of the [get_*] functions to examine solver statistics. *)
-let nre = Quad.get_num_rhs_evals s in ...
+let nre = get_num_rhs_evals s in ...
 
