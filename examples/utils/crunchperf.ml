@@ -35,8 +35,8 @@ let abbreviate name =
     name
     [("^cvode", "cv");
      ("^kinsol", "kin");
-     ("/serial/", "―ser―");   (* U+2015 *)
-     ("/parallel/", "―par―");
+     ("/serial/", "--ser--");
+     ("/parallel/", "--par--");
     ]
 let expand name =
   List.fold_left
@@ -44,11 +44,11 @@ let expand name =
     name
     [("^cv", "cvode");
      ("^kin", "kinsol");
-     ("―ser―", "/serial/");
-     ("―par―", "/parallel/");
+     ("--ser--", "/serial/");
+     ("--par--", "/parallel/");
     ]
 
-let parallel_example s      = Str.string_match (Str.regexp ".*―par―\\|/parallel/.*") s 0
+let parallel_example s      = Str.string_match (Str.regexp ".*--par--\\|/parallel/.*") s 0
 let uses_alternate_solver s = Str.string_match (Str.regexp ".*_alt$") s 0
 let uses_nvector_array s    = Str.string_match (Str.regexp ".*_custom$") s 0
 let colorof name =

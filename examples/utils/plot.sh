@@ -75,7 +75,7 @@ case x$FONT in
 esac
 
 case x$TERMINAL in
-    x)    SET_TERMINAL="set terminal wxt"
+    x)    SET_TERMINAL="set terminal x11"
           PAUSE=${PAUSE:-"pause mouse"};;
     xwxt) SET_TERMINAL="set terminal wxt"
           PAUSE=${PAUSE:-"pause mouse"};;
@@ -136,7 +136,7 @@ fi
 
 # Colors of dots showing C times.
 if [ "x$DOTCOLORS" = x ]; then
-    DOTCOLORS="${DOTCOLOR:-${DOTCOLOR1:-black}} ${DOTCOLOR2:-palegreen} \
+    DOTCOLORS="${DOTCOLOR:-${DOTCOLOR1:-black}} ${DOTCOLOR2:-green} \
                ${DOTCOLOR3:-blue} ${DOTCOLOR4:-silver}"
 fi
 
@@ -153,7 +153,7 @@ SET_COMMON="$SET_COMMON; set yrange [0:${YMAX}]; set y2range [0:${Y2MAX}]"
 SET_COMMON="$SET_COMMON; set xtics rotate by -90 left"
 SET_COMMON="$SET_COMMON; files='$@'"
 SET_COMMON="$SET_COMMON; BOXCOLORS='${BOXCOLORS}'; DOTCOLORS='${DOTCOLORS}'"
-SET_COMMON="$SET_COMMON; DOTSIZE='${DOTSIZE:-.3}'; DOTTYPE='${DOTTYPE:-7}'"
+SET_COMMON="$SET_COMMON; DOTSIZE='${DOTSIZE:-0.7}'; DOTTYPE='${DOTTYPE:-7}'"
 
 # C median points must be plotted after boxes, but their key looks
 # better above the boxes' key.
@@ -178,7 +178,7 @@ if [ "$#" -eq 1 ]; then
                pointtype 2 lc rgb word(BOXCOLORS,1) \
               title 'OCaml time / C time (left axis)'"
     DOTCMD="'$1' using 1:(\$3/\$2) \
-               with points pointtype 7 lc rgb 'black' \
+               with points pointsize DOTSIZE pointtype DOTTYPE lc rgb 'black' \
                title 'C time / rep (right axis)' axes x1y2"
 else
     BOXCMD="for [i=1:words(files)] for [j=0:N-1] \
@@ -188,7 +188,7 @@ else
     DOTCMD="for [i=1:words(files)] \
               ('< $crunch -S '.word(files,i)) \
               u (\$1+($x0)+(i-1)*$w):(\$4/\$2) \
-              w points pointtype 7 \
+              w points pointsize DOTSIZE pointtype DOTTYPE \
               lc rgb word(DOTCOLORS,i) \
               notitle axes x1y2"
 fi
