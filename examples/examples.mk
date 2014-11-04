@@ -143,7 +143,7 @@ $(MPI_EXAMPLES:.ml=.opt): %.opt: %.ml $(SRCROOT)/$(USELIB).cmxa \
 # opam inserts opam's and the system's stublibs directory into
 # CAML_LD_LIBRARY_PATH, which has higher precdence than -dllpath.
 # Make sure we run with the shared libraries in the source tree, not
-# installed ones (if any).  Native code doesn't have this prblem
+# installed ones (if any).  Native code doesn't have this problem
 # because it statically links in C stubs.
 CAML_LD_LIBRARY_PATH:=$(SRCROOT):$(CAML_LD_LIBRARY_PATH)
 
