@@ -778,7 +778,7 @@ type 'a rhsfn = float -> 'a -> 'a -> unit
 type 'a rootsfn = (float -> 'a -> RealArray.t -> unit)
 
 (** Creates and initializes a session with the solver. The call
-    {[init lmm iter tol f ~roots:(nroots, g) ~t0:t0 (neqs, y0)]} has
+    {[init lmm iter tol f ~roots:(nroots, g) t0 y0]} has
     as arguments:
     - [lmm],    the linear multistep method (see {!lmm}),
     - [iter],   either functional or Newton iteration (see {!iter}),
@@ -878,10 +878,10 @@ val get_dky : ('a, 'k) session -> ('a, 'k) Nvector.t -> float -> int -> unit
 
 (** Reinitializes the solver with new parameters and state values. The
     values of the independent variable, i.e., the simulation time, and the
-    state variables must be given.
+    state variables must be given. If given, [iter_type] specifies a new
+    iteration method, and [roots] specifies a new root finding function;
+    both default to unchanged.
 
-    @param iter_type the iteration method (defaults to unchanged).
-    @param roots new numbers of roots and the function that computes them (defaults to unchanged).
     @cvode <node5#sss:cvreinit> CVodeReInit *)
 val reinit :
   ('a, 'kind) session

@@ -22,7 +22,10 @@
     where the underlying data structure is an array of [float]s.  *)
 module type ARRAY_NVECTOR =
   sig
+    (** Type of the underlying array. *)
     type data
+
+    (** Array nvectors are custom nvectors. *)
     type kind = Nvector_custom.kind
 
     (** The set of nvector operations on an array. *)
@@ -38,7 +41,10 @@ module type ARRAY_NVECTOR =
     (** Returns the array underlying an nvector. *)
     val unwrap          : data Nvector_custom.t -> data
 
+    (** Standard operations over array nvectors. *)
     module Ops : Nvector.NVECTOR_OPS with type t = data Nvector_custom.t
+
+    (** Standard operations over the underlying array. *)
     module DataOps : Nvector.NVECTOR_OPS with type t = data
   end
 

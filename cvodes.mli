@@ -63,7 +63,15 @@ module Quadrature :
         arguments:
         - [t], the value of the independent variable, i.e., the simulation time,
         - [y], the vector of dependent-variable values, i.e., $y(t)$, and,
-        - [yqdot], a vector for storing the computed value of $f_Q(t, y)$.
+        - [dyq], a vector for storing the computed value of
+                 {% \dot{y}_Q = f_Q(t, y)$%}.
+
+        Within the function, raising a {!Sundials.RecoverableFailure} exception
+        indicates a recoverable error. Any other exception is treated as an
+        unrecoverable error.
+
+        {warning [y] and [dyq] should not be accessed after the function
+                 returns.}
 
         @cvodes <node5#ss:user_fct_quad> CVQuadRhsFn *)
     type 'a quadrhsfn = float -> 'a -> 'a -> unit
@@ -222,20 +230,27 @@ module Sensitivity :
         sensitivity equations. They are passed the arguments:
         - [t], the value of the independent variable, i.e., the simulation time,
         - [y], the vector of dependent-variable values, i.e., $y(t)$,
-        - [ydot], the value of the right-hand side of the state
+        - [dy], the value of the right-hand side of the state
                   equations {% $\dot{y} = f(t, y)$%},
         - [ys], the array of sensitivity vectors,
-        - [ysdot], an array of vectors to be filled with the values of
+        - [dys], an array of vectors to be filled with the values of
                    {% $\dot{s}_i$%} for all $i$, and,
         - [tmp1] and [tmp2], temporary storage vectors.
+
+        Within the function, raising a {!Sundials.RecoverableFailure} exception
+        indicates a recoverable error. Any other exception is treated as an
+        unrecoverable error.
+
+        {warning Neither [y], [dys], [tmp1], [tmp2], nor the elements of [ys]
+                 and [dys] should be accessed after the function returns.}
 
         @cvodes <node6#ss:user_fct_fwd> CVSensRhsFn *)
     type 'a sensrhsfn_all =
       float           (* t *)
       -> 'a           (* y *)
-      -> 'a           (* ydot *)
+      -> 'a           (* dy *)
       -> 'a array     (* ys *)
-      -> 'a array     (* ysdot *)
+      -> 'a array     (* dys *)
       -> 'a           (* tmp1 *)
       -> 'a           (* tmp2 *)
       -> unit
@@ -244,22 +259,29 @@ module Sensitivity :
         sensitivity equation. They are passed the arguments:
         - [t], the value of the independent variable, i.e., the simulation time,
         - [y], the vector of dependent-variable values, i.e., $y(t)$,
-        - [ydot], the value of the right-hand side of the state
+        - [dy], the value of the right-hand side of the state
                   equations {% $\dot{y} = f(t, y)$%},
         - [is], the index of the sensitivity equation to compute,
         - [ys], the {i is}th sensitivity vector,
-        - [ysdot], a vector to be filled with the values of
+        - [dys], a vector to be filled with the values of
                    {% $\dot{s}_{\mathit{is}}$%}, and,
         - [tmp1] and [tmp2], temporary storage vectors.
+
+        Within the function, raising a {!Sundials.RecoverableFailure} exception
+        indicates a recoverable error. Any other exception is treated as an
+        unrecoverable error.
+
+        {warning [y], [dy], [ys], [dys], [tmp1], and [tmp2] should not be
+                 accessed after the function returns.}
 
         @cvodes <node6#ss:user_fct_fwd> CVSensRhs1Fn *)
     type 'a sensrhsfn1 =
       float           (* t *)
       -> 'a           (* y *)
-      -> 'a           (* ydot *)
+      -> 'a           (* dy *)
       -> int          (* is *)
       -> 'a           (* ys *)
-      -> 'a           (* ysdot *)
+      -> 'a           (* dys *)
       -> 'a           (* tmp1 *)
       -> 'a           (* tmp2 *)
       -> unit
@@ -387,17 +409,25 @@ module Sensitivity :
             - [t], the value of the independent variable, i.e., the simulation time,
             - [y], the vector of dependent-variable values, i.e., $y(t)$,
             - [ys], the array of sensitivity vectors,
-            - [yqdot], the quadrature right-hand side vector,
+            - [dyq], the quadrature right-hand side vector,
             - [rhsvalqs], a vector for storing the computed value of
               {% $$%}, and,
             - [tmp1] and [tmp2], temporary storage vectors.
+
+            Within the function, raising a {!Sundials.RecoverableFailure}
+            exception indicates a recoverable error. Any other exception is
+            treated as an unrecoverable error.
+
+            {warning Neither of [y], [dyq], [tmp1], [tmp1], nor the elements
+                     of [ys] or [rhsvalqs] should be accessed after the
+                     function returns.}
 
            @cvodes <node6#ss:user_fct_quad_sens> CVodeQuadSensRhsFn *)
         type 'a quadsensrhsfn =
            float          (* t *)
            -> 'a          (* y *)
            -> 'a array    (* ys *)
-           -> 'a          (* yqdot *)
+           -> 'a          (* dyq *)
            -> 'a array    (* rhsvalqs *)
            -> 'a          (* tmp1 *)
            -> 'a          (* tmp2 *)
@@ -464,7 +494,6 @@ module Sensitivity :
             @raise BadIS The index is not in the allowed range. *)
         val get1 : ('a, 'k) session -> ('a, 'k) Nvector.t -> int -> float
 
-        (* TODO: update the formula... *)
         (** Returns the interpolated solution or derivatives of the quadrature
             sensitivity solution.
 
@@ -772,7 +801,6 @@ module Sensitivity :
     exception BadSensIdentifier
   end
 
-(* TODO: could this one-line description be better? *)
 (** (Adjoint) Sensitivity analysis of ODEs with respect to their parameters.
  
     Provides an alternative to forward sensitivity analysis, which can become
@@ -801,21 +829,26 @@ module Sensitivity :
     @cvodes <node7#ss:skeleton_adj> Enhanced Skeleton for Adjoint Sensitivity Analysis *)
 module Adjoint :
   sig
-    (** Identifies a backward problem. *)
+    (** A backward session with the CVODES solver. Multiple backward sessions
+        may be associated with a single parent session.
+
+        @cvodes <node7#sss:cvinitb> Backward problem initialization functions *)
     type ('data, 'kind) bsession = ('data, 'kind) AdjointTypes.bsession
+
+    (** Alias for backward sessions based on serial nvectors. *)
     type serial_bsession = (Nvector_serial.data, Nvector_serial.kind) bsession
 
     (** {2:fwd Forward solution} *)
 
-    (** Specifies the type of interpolation used between checkpoints.
+    (** Specifies the type of interpolation to use between checkpoints.
 
         @cvodes <node3#ss:checkpointing> Checkpointing scheme *)
     type interpolation = IPolynomial (** {cconst CV_POLYNOMIAL} *)
                        | IHermite    (** {cconst CV_HERMITE} *)
 
-    (** Activates the forward-backward problem. In the call [init s nd interp],
-        [nd] specifies the number of integration steps between consecutive
-        checkpoints, and [interp] the type of variable-degree interpolation.
+    (** Activates the forward-backward problem. The arguments specify the number
+        of integration steps between consecutive checkpoints, and the type of
+        variable-degree interpolation.
 
         @cvodes <node7#sss:cvadjinit> CVodeAdjInit *)
     val init : ('a, 'k) session -> int -> interpolation -> unit
@@ -837,7 +870,7 @@ module Adjoint :
         @raise Cvode.ConvergenceFailure Too many convergence test failures.
         @raise Cvode.LinearSetupFailure Unrecoverable failure in linear solver setup function.
         @raise Cvode.LinearSolveFailure Unrecoverable failure in linear solver solve function.
-        @raise AdjointNotInitialized    The [init] function has not previously been called. *)
+        @raise AdjointNotInitialized    The {!init} function has not been called. *)
     val forward_normal :
       ('a, 'k) session
       -> float
@@ -860,7 +893,7 @@ module Adjoint :
         @raise Cvode.ConvergenceFailure Too many convergence test failures.
         @raise Cvode.LinearSetupFailure Unrecoverable failure in linear solver setup function.
         @raise Cvode.LinearSolveFailure Unrecoverable failure in linear solver solve function.
-        @raise AdjointNotInitialized    The [init] function has not previously been called. *)
+        @raise AdjointNotInitialized    The {!init} function has not been called. *)
     val forward_one_step :
       ('a, 'k) session
       -> float
@@ -1410,7 +1443,20 @@ module Adjoint :
 
     (** {2:bsolve Backward solutions} *)
 
-    (** Backward rhs function that doesn't depend on forward sensitivities.
+    (** Backward functions without forward sensitivities. They are passed
+        the arguments:
+        - [t], the value of the independent variable, i.e., the simulation time,
+        - [y], the vector of dependent-variable values, i.e., $y(t)$,
+        - [yb], the vector of backward dependent-variable values, i.e., $y_B(t)$,
+        - [dyb], a vector for storing the values
+                 {% $\dot{y}_B = f_B(t, y, y_B)$%}.
+
+        Within the function, raising a {!Sundials.RecoverableFailure} exception
+        indicates a recoverable error. Any other exception is treated as an
+        unrecoverable error.
+
+        {warning [y], [yb], and [dyb] should not be accessed after the function
+                 returns.}
 
         @cvodes <node7#ss:ODErhs_b> CVRhsFnB
         @cvodes <node3#e:adj_eqns> Eq 2.19, Adjoint sensitivity analysis *)
@@ -1418,10 +1464,25 @@ module Adjoint :
       float    (* t *)
       -> 'a    (* y *)
       -> 'a    (* yb *)
-      -> 'a    (* ybdot *)
+      -> 'a    (* dyb *)
       -> unit
 
-    (** Backward rhs function that depends on forward sensitivities.
+    (** Backward functions with forward sensitivities. They are passed the
+        arguments:
+        - [t], the value of the independent variable, i.e., the simulation time,
+        - [y], the vector of dependent-variable values, i.e., $y(t)$,
+        - [ys], the array of forward sensitivity vectors,
+        - [yb], the vector of backward dependent-variable values,
+                i.e., $y_B(t)$,
+        - [dyb], a vector for storing the values
+                 {% $\dot{y}_B = f_B(t, y, y_S, y_B)$%}.
+
+        Within the function, raising a {!Sundials.RecoverableFailure} exception
+        indicates a recoverable error. Any other exception is treated as an
+        unrecoverable error.
+
+        {warning Neither [y], [yb], [dyb], nor the elements of [ys] should be
+                 accessed after the function returns.}
 
         @cvodes <node7#ss:ODErhs_bs> CVRhsFnBS
         @cvodes <node3#e:adj1_eqns> Eq 2.21, Adjoint sensitivity analysis *)
@@ -1430,18 +1491,16 @@ module Adjoint :
       -> 'a        (* y *)
       -> 'a array  (* ys *)
       -> 'a        (* yb *)
-      -> 'a        (* ybdot *)
+      -> 'a        (* dyb *)
       -> unit
 
-    (** These functions evaluate the right-hand side of the backward ODE system
-        with or without a dependence on forward sensitivities. *)
+    (** Functions that evaluate the right-hand side of a backward ODE system
+        with or without forward sensitivities. *)
     type 'a brhsfn =
         NoSens of 'a brhsfn_no_sens
-        (** Doesn't depend on forward sensitivities.  See
-            {!brhsfn_no_sens} for details.  *)
+          (** No dependency on forward sensitivities. *)
       | WithSens of 'a brhsfn_with_sens
-        (** Depends on forward sensitivities.  See {!brhsfn_with_sens}
-            for details.  *)
+          (** Dependency on forward sensitivities. *)
 
     (** Tolerance specifications. *)
     type ('a, 'k) tolerance =
@@ -1460,27 +1519,32 @@ module Adjoint :
       | Functional
         (** Functional iteration (non-stiff systems only) *)
 
-    (** [init_backward s lmm iter tol fB tB0 yB0] adds and initializes a
-        backward problem that may or may not depend on forward sensitivities,
-        where
-        - [s] is the parent session (going forward),
-        - [lmm]     specifies the linear multistep method, see {!Cvode.lmm},
-        - [iter]    specifies either functional iteration or Newton iteration
-                    with a specific linear solver, see {!iter},
-        - [tol]     specifies the tolerances, see {!tolerance},
-        - [fB]      computes the right-hand side of the backward ODE problem,
-        - [tB0]     specifies the endpoint where final conditions are provided
-                    for the backward problem, normally equal to the endpoint of
-                    the forward integration, and,
-        - [yB0]     is the final value of the backward problem.
+    (** Creates and initializes a backward session attached to an existing
+        (forward) session. The call
+        {[init_backward s lmm iter tol fb tb0 yb0]} has as arguments:
+        - [s], the parent (forward) session,
+        - [lmm], the linear multistep method (see {!Cvode.lmm}),
+        - [iter], either functional or Newton iteration (see {!iter}),
+        - [tol], the integration tolerances,
+        - [fb], the backward right-hand side function,
+        - [tb0], specifies the endpoint where final conditions are provided
+                 for the backward problem, which is normally the endpoint of
+                 forward integration, and,
+        - [yb0], a vector of final values that also determines the number
+                 of equations.
+
+        This function does everything necessary to initialize a backward
+        session, i.e., it makes the calls referenced below. The
+        {!backward_normal} and {!backward_one_step} functions may be called
+        directly.
 
         @cvodes <node7#sss:cvinitb> CVodeCreateB
         @cvodes <node7#sss:cvinitb> CVodeInitB
         @cvodes <node7#sss:cvinitb> CVodeInitBS
         @cvodes <node7#sss:cvtolerances_b> CVodeSStolerancesB
         @cvodes <node7#sss:cvtolerances_b> CVodeSVtolerancesB 
-        @raise AdjointNotInitialized    The [init] function has not previously been called.
-        @raise BadFinalTime      The final time is outside the interval over which the forward problem was solved. *)
+        @raise AdjointNotInitialized The {!init} function has not been called.
+        @raise BadFinalTime The final time is outside the interval over which the forward problem was solved. *)
     val init_backward :
          ('a, 'k) session
       -> Cvode.lmm
@@ -1490,18 +1554,6 @@ module Adjoint :
       -> float
       -> ('a, 'k) Nvector.t
       -> ('a, 'k) bsession
-
-    (** Reinitialize the backward problem.
-
-        @cvodes <node7#sss:cvinitb> CVodeReInitB
-        @raise AdjointNotInitialized    The [init] function has not previously been called.
-        @raise BadFinalTime      The final time is outside the interval over which the forward problem was solved. *)
-    val reinit :
-      ('a, 'k) bsession
-      -> ?iter_type:('a, 'k) iter
-      -> float
-      -> ('a, 'k) Nvector.t
-      -> unit
 
     (** Support for backward quadrature equations that may or may
         not depend on forward sensitivities.
@@ -1616,16 +1668,13 @@ module Adjoint :
         val get_stats : ('a, 'k) bsession -> int * int
       end
 
-    (** [backward_normal s tbout] integrates the backward ODE
-        problem. The function takes internal steps until it has
-        reached or just passed the user-specified value [tbout]
-        ([CV_NORMAL]). The solver then interpolates in order to return
-        an approximate value of [y(tbout)] when {!get} is called.
+    (** Integrates a backward ODE system over an interval. The solver takes
+        internal steps until it has reached or just passed the specified value.
 
-        @cvodes <node7#sss:cvsolveb> CVodeB
-        @raise AdjointNotInitialized    The [init] function has not previously been called.
-        @raise NoBackwardProblem        The [init_backward] function has not previously been called.
-        @raise NoForwardCall            Neither [forward_normal] nor [forward_one_step] has previously been called.
+        @cvodes <node7#sss:cvsolveb> CVodeB (CV_NORMAL)
+        @raise AdjointNotInitialized    The {!init} function has not been called.
+        @raise NoBackwardProblem        The {!init_backward} function has not been called.
+        @raise NoForwardCall            Neither {!forward_normal} nor {!forward_one_step} has been called.
         @raise Cvode.IllInput           One of the inputs is invalid.
         @raise Cvode.TooMuchWork        Could not reach [tout] in [mxstep] steps
         @raise Cvode.TooMuchAccuracy    Could not satisfy the demanded accuracy
@@ -1638,54 +1687,60 @@ module Adjoint :
         @raise ForwardFail              An error occurred during the integration of the forward problem. *)
     val backward_normal : ('a, 'k) session -> float -> unit
 
-    (** [backward_one_step s tbout] integrates the backward ODE problem. The
-        function takes one internal step ([CV_ONE_STEP]).
+    (** Like {!backward_normal} but returns after one internal solver step.
 
-        @cvodes <node7#sss:cvsolveb> CVodeB
-        @raise AdjointNotInitialized    The [init] function has not previously been called.
-        @raise NoBackwardProblem        The [init_backward] function has not previously been called.
-        @raise NoForwardCall            Neither [forward_normal] nor [forward_one_step] has previously been called.
-        @raise Cvode.IllInput           One of the inputs is invalid.
-        @raise Cvode.TooMuchWork        Could not reach [tout] in [mxstep] steps
-        @raise Cvode.TooMuchAccuracy    Could not satisfy the demanded accuracy
-        @raise Cvode.ErrFailure         Too many error test failures.
-        @raise Cvode.ConvergenceFailure Too many convergence test failures.
-        @raise Cvode.LinearSetupFailure Unrecoverable failure in linear solver setup function.
-        @raise Cvode.LinearSolveFailure Unrecoverable failure in linear solver solve function.
-        @raise BadOutputTime            The requested output time is outside the interval over which the forward problem was solved.
-        @raise ForwardReinitializationFailed Reinitialization of the forward problem failed at the first checkpoint (corresponding to the initial time of the forward problem).
-        @raise ForwardFail              An error occurred during the integration of the forward problem. *)
+        @cvodes <node7#sss:cvsolveb> CVodeB (CV_ONE_STEP) *)
     val backward_one_step : ('a, 'k) session -> float -> unit
 
-    (** [tret = get bs yb] returns the solution of the backward ODE problem
-        in [yb] at time [tret].
+    (** Fills the given vector with the solution of the backward ODE problem at
+        the returned time, interpolating if necessary.
 
         @cvodes <node7#sss:cvsolveb> CVodeGetB *)
     val get : ('a, 'k) bsession -> ('a, 'k) Nvector.t -> float
 
-    (** [tret = get_dky s t k dkys] fills [dkys] with the derivatives of the
-        sensitivity solution vectors after a successful return from
-        {!backward_normal} or {!backward_one_step}. The time requested, [t],
-        must fall within the interval defined by the last successful step
-        ({!get_last_step}). The requested order, [k], must be less than or equal
-        to the value returned by {!get_last_order}.
+    (** Returns the interpolated solution or derivatives.
+        [get_dky s dky t k] computes the [k]th derivative of the backward
+        function at time [t], i.e.,
+        {% $\frac{d^\mathtt{k}y_B(\mathtt{t})}{\mathit{dt}^\mathtt{k}}$%},
+        and stores it in [dky]. The arguments must satisfy
+        {% $t_n - h_u \leq \mathtt{t} \leq t_n$%}—where $t_n$
+        denotes {!get_current_time} and $h_u$ denotes {!get_last_step},—
+        and {% $0 \leq \mathtt{k} \leq q_u$%}—where $q_u$ denotes
+        {!get_last_order}.
+
+        This function may only be called after a successful return from either
+        {!backward_normal} or {!backward_one_step}.
 
         @cvodes <node5#ss:optional_dky> CVodeGetDky
         @cvodes <node5#ss:optional_dky> CVodeGetAdjIDABmem
-        @raise BadK [k] is not in the range 0, 1, ..., [qlast].
-        @raise BadT [t] is not in the allowed range. *)
+        @raise BadT [t] is not in the interval {% $[t_n - h_u, t_n]$%}.
+        @raise BadK [k] is not in the range 0, 1, ..., $q_u$. *)
     val get_dky
           : ('a, 'k) bsession -> ('a, 'k) Nvector.t -> float -> int -> unit
 
+    (** Reinitializes the backward problem with new parameters and state
+        values. The values of the independent variable, i.e., the simulation
+        time, and the state variables must be given.
+
+        @cvodes <node7#sss:cvinitb> CVodeReInitB
+        @raise AdjointNotInitialized The {!init} function has not been called.
+        @raise BadFinalTime The final time is not within the forward problem solution interval. *)
+    val reinit :
+      ('a, 'k) bsession
+      -> ?iter_type:('a, 'k) iter
+      -> float
+      -> ('a, 'k) Nvector.t
+      -> unit
+
     (** {2:set Modifying the solver (optional input functions)} *)
 
-    (** Instructs {!forward_normal} and {!forward_one_step} not to save
-        checkpointing data for forward sensitivities anymore.
+    (** Cancels the storage of sensitivity checkpointing data during forward
+        solution (with {!forward_normal} or {!forward_one_step}).
 
         @cvodes <node7#SECTION00727000000000000000> CVodeAdjSetNoSensi *)
     val set_no_sensitivity : ('a, 'k) session -> unit
 
-    (** Specify the integration tolerances for the backward problem.
+    (** Sets the integration tolerances for the backward problem.
 
         @cvodes <node7#sss:cvtolerances_b> CVodeSStolerancesB
         @cvodes <node7#sss:cvtolerances_b> CVodeSVtolerancesB *)
@@ -1696,8 +1751,8 @@ module Adjoint :
         @cvodes <node7#ss:optional_input_b> CVodeSetMaxOrdB *)
     val set_max_ord : ('a, 'k) bsession -> int -> unit
 
-    (** Specifies the maximum number of steps to be taken by the solver in its
-        attempt to reach the next output time.
+    (** Specifies the maximum number of steps taken in attempting to reach
+        a given output time.
 
         @cvodes <node7#ss:optional_input_b> CVodeSetMaxNumStepsB *)
     val set_max_num_steps : ('a, 'k) bsession -> int -> unit
@@ -1735,74 +1790,64 @@ module Adjoint :
     (** Returns the cumulative number of internal steps taken by the solver.
 
         @cvodes <node5#sss:optout_main> CVodeGetNumSteps
-        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
-     *)
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
     val get_num_steps           : ('a, 'k) bsession -> int
 
-    (** Returns the number of calls to the user's right-hand side function.
+    (** Returns the number of calls to the backward right-hand side function.
 
         @cvodes <node5#sss:optout_main> CVodeGetNumRhsEvals
-        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
-     *)
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
     val get_num_rhs_evals       : ('a, 'k) bsession -> int
 
     (** Returns the number of calls made to the linear solver's setup function.
 
         @cvodes <node5#sss:optout_main> CVodeGetNumLinSolvSetups
-        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
-     *)
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
     val get_num_lin_solv_setups : ('a, 'k) bsession -> int
 
     (** Returns the number of local error test failures that have occurred.
 
         @cvodes <node5#sss:optout_main> CVodeGetNumErrTestFails
-        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
-     *)
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
     val get_num_err_test_fails  : ('a, 'k) bsession -> int
 
     (** Returns the integration method order used during the last internal step.
 
         @cvodes <node5#sss:optout_main> CVodeGetLastOrder
-        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
-     *)
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
     val get_last_order          : ('a, 'k) bsession -> int
 
     (** Returns the integration method order to be used on the next internal
         step.
 
         @cvodes <node5#sss:optout_main> CVodeGetCurrentOrder
-        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
-     *)
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
     val get_current_order       : ('a, 'k) bsession -> int
 
     (** Returns the integration step size taken on the last internal step.
 
         @cvodes <node5#sss:optout_main> CVodeGetLastStep
-        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
-     *)
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
     val get_last_step           : ('a, 'k) bsession -> float
 
     (** Returns the integration step size to be attempted on the next internal
         step.
 
         @cvodes <node5#sss:optout_main> CVodeGetCurrentStep
-        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
-     *)
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
     val get_current_step        : ('a, 'k) bsession -> float
 
     (** Returns the the value of the integration step size used on the first
         step.
 
         @cvodes <node5#sss:optout_main> CVodeGetActualInitStep
-        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
-     *)
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
     val get_actual_init_step    : ('a, 'k) bsession -> float
 
     (** Returns the the current internal time reached by the solver.
 
         @cvodes <node5#sss:optout_main> CVodeGetCurrentTime
-        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
-     *)
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
     val get_current_time        : ('a, 'k) bsession -> float
 
     (** Returns the number of order reductions dictated by the BDF stability
@@ -1810,8 +1855,7 @@ module Adjoint :
 
         @cvodes <node5#sss:optout_main> CVodeGetNumStabLimOrderReds
         @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
-        @cvodes <node3#s:bdf_stab> BDF stability limit detection
-     *)
+        @cvodes <node3#s:bdf_stab> BDF stability limit detection *)
     val get_num_stab_lim_order_reds : ('a, 'k) bsession -> int
 
     (** Returns a suggested factor by which the user's tolerances should be
@@ -1819,8 +1863,7 @@ module Adjoint :
         step.
 
         @cvodes <node5#sss:optout_main> CVodeGetTolScaleFactor
-        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
-     *)
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
     val get_tol_scale_factor : ('a, 'k) bsession -> float
 
     (** Returns the solution error weights at the current time.
@@ -1833,46 +1876,39 @@ module Adjoint :
     (** Returns the vector of estimated local errors.
 
         @cvodes <node5#sss:optout_main> CVodeGetEstLocalErrors
-        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
-     *)
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
     val get_est_local_errors : ('a, 'k) bsession -> ('a, 'k) Nvector.t -> unit
 
     (** Returns the integrator statistics as a group.
 
         @cvodes <node5#sss:optout_main> CVodeGetIntegratorStats
-        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
-     *)
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
     val get_integrator_stats    : ('a, 'k) bsession -> Cvode.integrator_stats
 
     (** Prints the integrator statistics on the given channel.
 
         @cvodes <node5#sss:optout_main> CVodeGetIntegratorStats
-        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
-     *)
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
     val print_integrator_stats  : ('a, 'k) bsession -> out_channel -> unit
 
     (** Returns the number of nonlinear (functional or Newton) iterations
         performed.
 
         @cvodes <node5#sss:optout_main> CVodeGetNumNonlinSolvIters
-        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
-     *)
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
     val get_num_nonlin_solv_iters : ('a, 'k) bsession -> int
 
     (** Returns the number of nonlinear convergence failures that have occurred.
 
         @cvodes <node5#sss:optout_main> CVodeGetNumNonlinSolvConvFails
-        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
-     *)
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
     val get_num_nonlin_solv_conv_fails : ('a, 'k) bsession -> int
 
-    (** [nniters, nncfails = get_nonlin_solv_stats s] returns both the
-        numbers of nonlinear iterations performed [nniters] and of
-        nonlinear convergence failures that have occurred [nncfails].
+    (** Returns both the numbers of nonlinear iterations performed [nniters] and
+        nonlinear convergence failures [nncfails].
 
         @cvode <node5#sss:optout_main> CVodeGetNonlinSolvStats
-        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
-     *)
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
     val get_nonlin_solv_stats : ('a, 'k) bsession -> int *int
 
     (** {2:exceptions Exceptions} *)
@@ -1905,7 +1941,7 @@ module Adjoint :
         @cvodes <node7#sss:cvsolveb> CV_NO_BCK *)
     exception NoBackwardProblem
 
-    (** The final time [tB0] was outside the interval over which the forward
+    (** The final time was outside the interval over which the forward
         problem was solved.
 
         @cvodes <node7#sss:cvinitb> CV_BAD_TB0 *)

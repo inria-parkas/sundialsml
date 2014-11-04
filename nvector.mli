@@ -26,7 +26,7 @@
     @cvode <node7#s:nvector> N_Vector *)
 type ('data, 'kind) t
 
-(** An alias for {!t} *)
+(** An alias for {!t}. *)
 type ('data, 'kind) nvector = ('data, 'kind) t
 
 (** [unwrap nv] returns the data underlying the nvector [nv]. *)
@@ -50,7 +50,7 @@ val check : ('data, 'kind) t -> ('data, 'kind) t -> unit
 (** Basic operations underlying an nvector. *)
 module type NVECTOR_OPS =
   sig
-    (** Vector type *)
+    (** The vector type. *)
     type t
 
     (** Create a new, distinct vector from an existing one. *)
@@ -126,11 +126,22 @@ module type NVECTOR_OPS =
 (** Basic structure of a concrete nvector implementation module. *)
 module type NVECTOR =
   sig
+    (** Classifies the internal structure of an nvector. *)
     type kind
+
+    (** The data wrapped within an nvector. *)
     type data
+
+    (** An alias for the nvector type. *)
     type t = (data, kind) nvector
+
+    (** Wrap data in an nvector. *)
     val wrap : data -> t
+
+    (** Standard operations over nvectors. *)
     module Ops : NVECTOR_OPS with type t = t
+
+    (** Standard operations over the underlying data. *)
     module DataOps : NVECTOR_OPS with type t = data
   end
 
