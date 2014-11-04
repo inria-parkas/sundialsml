@@ -20,19 +20,19 @@
  *)
 
 let cvode_doc_root =
-  ref "https://computation.llnl.gov/casc/sundials/documentation/cv_guide/"
+  ref "http://computation.llnl.gov/casc/sundials/documentation/cv_guide/"
 
 let cvodes_doc_root =
-  ref "https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/"
+  ref "http://computation.llnl.gov/casc/sundials/documentation/cvs_guide/"
 
 let ida_doc_root =
-  ref "https://computation.llnl.gov/casc/sundials/documentation/ida_guide/"
+  ref "http://computation.llnl.gov/casc/sundials/documentation/ida_guide/"
 
 let idas_doc_root =
-  ref "https://computation.llnl.gov/casc/sundials/documentation/idas_guide/"
+  ref "http://computation.llnl.gov/casc/sundials/documentation/idas_guide/"
 
 let kinsol_doc_root =
-  ref "https://computation.llnl.gov/casc/sundials/documentation/kin_guide/"
+  ref "http://computation.llnl.gov/casc/sundials/documentation/kin_guide/"
 
 let bp = Printf.bprintf
 let bs = Buffer.add_string
