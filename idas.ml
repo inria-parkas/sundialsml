@@ -233,7 +233,7 @@ module Sensitivity =
         end;
       c_set_params s ps
 
-    let init s tol fmethod sparams sensresfn y0 y'0 =
+    let init s tol fmethod sparams ?fS y0 y'0 =
       if Sundials_config.safe then
         (Array.iter s.checkvec y0;
          Array.iter s.checkvec y'0);
@@ -245,8 +245,8 @@ module Sensitivity =
            invalid_arg "init: require at least one sensitivity parameter";
          if ns <> Array.length y'0 then
            invalid_arg "init: y0 and y'0 have inconsistent lengths");
-      c_sens_init s fmethod (sensresfn <> None) y0 y'0;
-      (match sensresfn with
+      c_sens_init s fmethod (fS <> None) y0 y'0;
+      (match fS with
        | Some f -> se.sensresfn <- f
        | None -> ());
       se.num_sensitivities <- ns;
@@ -352,12 +352,13 @@ module Sensitivity =
       c_get_err_weights s esweight
 
     external c_sens_calc_ic_ya_yd' :
-      ('a,'k) session
+         ('a,'k) session
       -> ('a,'k) Nvector.t option
       -> ('a,'k) Nvector.t option
       -> ('a,'k) Nvector.t array option
       -> ('a,'k) Nvector.t array option
-      -> ('a,'k) Nvector.t -> float -> unit
+      -> float
+      -> unit
       = "c_ida_sens_calc_ic_ya_ydp_byte"
         "c_ida_sens_calc_ic_ya_ydp"
 
@@ -368,41 +369,44 @@ module Sensitivity =
       -> float -> unit
       = "c_ida_sens_calc_ic_y"
 
-    let calc_ic_ya_yd' session ?y ?y' ?ys ?y's id tout1 =
+    let calc_ic_ya_yd' session ?y ?y' ?s ?s' ?varid tout1 =
       let num_sens = num_sensitivities session in
       if Sundials_config.safe then
         (ocheck session.checkvec y;
          ocheck session.checkvec y');
-      (match ys with
-       | Some ys ->
+      (match s with
+       | Some s ->
            if Sundials_config.safe then
-             (if Array.length ys <> num_sens
-              then invalid_arg "calc_ic_ya_yd': wrong number of vectors in ~ys";
-              Array.iter session.checkvec ys)
+             (if Array.length s <> num_sens
+              then invalid_arg "calc_ic_ya_yd': wrong number of vectors in ~s";
+              Array.iter session.checkvec s)
        | _ -> ());
-      (match y's with
-       | Some y's ->
+      (match s' with
+       | Some s' ->
            if Sundials_config.safe then
-             (if Array.length y's <> num_sens
+             (if Array.length s' <> num_sens
               then invalid_arg
-                   "calc_ic_ya_yd': wrong number of vectors in ~y's";
-              Array.iter session.checkvec y's)
+                   "calc_ic_ya_yd': wrong number of vectors in ~s'";
+              Array.iter session.checkvec s')
        | _ -> ());
-      c_sens_calc_ic_ya_yd' session y y' ys y's id tout1
+      (match varid with
+       | None -> if not session.id_set then raise Ida.IdNotSet
+       | Some x -> Ida.set_id session x);
+      c_sens_calc_ic_ya_yd' session y y' s s' tout1
 
     (* Note: my understanding is that CalcIC with IDA_Y_INIT corrects
        the non-derivatives of the sensitivity variables while holding
        the derivatives constant, so there's no point querying the
        values of the corrected derivatives.  *)
-    let calc_ic_y session ?y ?ys tout1 =
+    let calc_ic_y session ?y ?s tout1 =
       let num_sens = num_sensitivities session in
       if Sundials_config.safe then
         (ocheck session.checkvec y;
-         match ys with
-         | Some ys when Array.length ys <> num_sens ->
-           invalid_arg "calc_ic_y: wrong number of vectors in ~ys"
+         match s with
+         | Some s when Array.length s <> num_sens ->
+           invalid_arg "calc_ic_y: wrong number of vectors in ~s"
          | _ -> ());
-      c_sens_calc_ic_y session y ys tout1
+      c_sens_calc_ic_y session y s tout1
 
     external get_num_nonlin_solv_iters : ('a, 'k) session -> int
       = "c_idas_sens_get_num_nonlin_solv_iters"
@@ -585,23 +589,26 @@ module Adjoint =
       | FwdSensExt se -> se
       | _ -> raise AdjointNotInitialized
 
-    external c_set_var_types
+    external c_set_id
       : ('a,'k) session -> int -> ('a,'k) Nvector.t -> unit
-      = "c_idas_adj_set_var_types"
+      = "c_idas_adj_set_id"
 
-    let set_var_types b var_types =
-      if Sundials_config.safe then (tosession b).checkvec var_types;
+    let set_id b ids =
+      let bs = tosession b in
+      if Sundials_config.safe then bs.checkvec ids;
       let parent, which = parent_and_which b in
-      c_set_var_types parent which var_types
-
-    let set_id = set_var_types
+      c_set_id parent which ids;
+      bs.id_set <- true
 
     external c_set_suppress_alg : ('a,'k) session -> int -> bool -> unit
       = "c_idas_adj_set_suppress_alg"
 
-    let set_suppress_alg b suppress =
+    let set_suppress_alg b ?varid v =
+      (match varid with
+       | None -> if v && not (tosession b).id_set then raise Ida.IdNotSet
+       | Some x -> set_id b x);
       let parent, which = parent_and_which b in
-      c_set_suppress_alg parent which suppress
+      c_set_suppress_alg parent which v
 
     external c_adj_calc_ic :
       ('a,'k) session
@@ -631,34 +638,37 @@ module Adjoint =
       -> unit
       = "c_idas_adj_get_consistent_ic"
 
-    let calc_ic bsession ?yb ?y'b tout1 yb0 y'b0 =
+    let calc_ic bsession ?yb ?yb' tout1 y0 y0' =
       let checkvec = (tosession bsession).checkvec in
       let parent, which = parent_and_which bsession in
       if Sundials_config.safe then
-        (checkvec yb0;
-         checkvec y'b0;
+        (checkvec y0;
+         checkvec y0';
          ocheck checkvec yb;
-         ocheck checkvec y'b);
-      c_adj_calc_ic parent which tout1 yb0 y'b0;
-      c_adj_get_consistent_ic parent which yb y'b
+         ocheck checkvec yb');
+      c_adj_calc_ic parent which tout1 y0 y0';
+      c_adj_get_consistent_ic parent which yb yb'
 
-    let calc_ic_sens bsession ?yb ?y'b tout1 yb0 y'b0 ys0 y's0 =
+    let calc_ic_sens bsession ?yb ?yb' ?varid tout1 y0 y0' ys0 ys0' =
       let bs = tosession bsession in
       let num_sens = num_sensitivities bs in
       if Sundials_config.safe then
         (if Array.length ys0 <> num_sens then
            invalid_arg "calc_ic_sens: wrong number of vectors in ys0";
-         if Array.length y's0 <> num_sens then
+         if Array.length ys0' <> num_sens then
            invalid_arg "calc_ic_sens: wrong number of vectors in y's0";
-         bs.checkvec yb0;
-         bs.checkvec y'b0;
+         bs.checkvec y0;
+         bs.checkvec y0';
          Array.iter bs.checkvec ys0;
-         Array.iter bs.checkvec y's0;
+         Array.iter bs.checkvec ys0';
          ocheck bs.checkvec yb;
-         ocheck bs.checkvec y'b);
+         ocheck bs.checkvec yb');
       let parent, which = parent_and_which bsession in
-      c_adj_calc_ic_sens parent which tout1 yb0 y'b0 ys0 y's0;
-      c_adj_get_consistent_ic parent which yb y'b
+      (match varid with
+       | None -> if not bs.id_set then raise Ida.IdNotSet
+       | Some x -> set_id bsession x);
+      c_adj_calc_ic_sens parent which tout1 y0 y0' ys0 ys0';
+      c_adj_get_consistent_ic parent which yb yb'
 
     external c_forward_normal : ('a, 'k) session -> float
                               -> ('a, 'k) Nvector.t -> ('a, 'k) Nvector.t
@@ -682,8 +692,7 @@ module Adjoint =
          s.checkvec y');
       c_forward_one_step s t y y'
 
-    type 'a single_tmp = 'a
-    type 'a triple_tmp = 'a * 'a * 'a
+    type 'a triple = 'a * 'a * 'a
 
     type bandrange = Ida.bandrange = { mupper : int; mlower : int; }
 
@@ -825,7 +834,7 @@ module Adjoint =
                                          | Some f -> BBandCallback f
          *)
 
-        let invalidate_callback (type d) (type k) (session : (d, k) session) =
+        let invalidate_callback session =
           match session.ls_callbacks with
           | BDenseCallback ({ dmat = Some d } as cb) ->
               Dls.DenseMatrix.invalidate d;
@@ -834,6 +843,54 @@ module Adjoint =
               Dls.BandMatrix.invalidate d;
               cb.bmat <- None
           | _ -> ()
+
+        external set_dense_jac_fn : serial_session -> int -> unit
+            = "c_idas_adj_dls_set_dense_jac_fn"
+
+        let set_dense_jac_fn bs fjacfn =
+          let s = tosession bs in
+          let parent, which = parent_and_which bs in
+          invalidate_callback s;
+          s.ls_callbacks <- BDenseCallback { jacfn = fjacfn; dmat = None };
+          set_dense_jac_fn parent which
+
+        external clear_dense_jac_fn : serial_session -> int -> unit
+            = "c_idas_adj_dls_clear_dense_jac_fn"
+
+        let clear_dense_jac_fn bs =
+          let s = tosession bs in
+          match s.ls_callbacks with
+          | DenseCallback _ -> (invalidate_callback s;
+                                s.ls_callbacks <- NoCallbacks;
+                                let parent, which = parent_and_which bs in
+                                clear_dense_jac_fn parent which)
+          | _ -> failwith "dense linear solver not in use"
+
+        external set_band_jac_fn : serial_session -> int -> unit
+            = "c_idas_adj_dls_set_band_jac_fn"
+
+        let set_band_jac_fn bs f =
+          let s = tosession bs in
+          let parent, which = parent_and_which bs in
+          invalidate_callback s;
+          s.ls_callbacks <- BBandCallback { bjacfn = f; bmat = None };
+          set_band_jac_fn parent which
+
+        external clear_band_jac_fn : serial_session -> int -> unit
+            = "c_idas_adj_dls_clear_band_jac_fn"
+
+        let clear_band_jac_fn bs =
+          let s = tosession bs in
+          match s.ls_callbacks with
+          | BandCallback _ -> (invalidate_callback s;
+                               s.ls_callbacks <- NoCallbacks;
+                               let parent, which = parent_and_which bs in
+                               clear_band_jac_fn parent which)
+          | _ -> failwith "banded linear solver not in use"
+
+        let get_work_space bs = Ida.Dls.get_work_space (tosession bs)
+        let get_num_jac_evals bs = Ida.Dls.get_num_jac_evals (tosession bs)
+        let get_num_res_evals bs = Ida.Dls.get_num_res_evals (tosession bs)
       end
 
     module Spils =
@@ -978,7 +1035,7 @@ module Adjoint =
         = "c_idas_adj_init_backward_byte"
           "c_idas_adj_init_backward"
 
-    let init_backward s linsolv tol mf t0 y0 y'0 =
+    let init_backward s linsolv tol mf ?varid t0 y0 y'0 =
       let { bsessions } as se = fwdsensext s in
       let ns = num_sensitivities s in
       let checkvec = Nvector.check y0 in
@@ -1033,6 +1090,9 @@ module Adjoint =
       (* Now the session is safe to use.  If any of the following fails and
          raises an exception, the GC will take care of freeing ida_mem and
          backref. *)
+      (match varid with
+         None -> ()
+       | Some x -> set_id bs x);
       set_linear_solver bs linsolv y0 y'0;
       set_tolerances bs tol;
       se.bsessions <- (tosession bs) :: bsessions;

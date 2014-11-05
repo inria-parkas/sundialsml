@@ -712,8 +712,7 @@ let main () =
           Sens.pbar = Some pbar;
           Sens.plist = None; }
       in
-      Sens.init mem Sens.EEtolerances
-        sensi_meth sens_params None uuS upS;
+      Sens.init mem Sens.EEtolerances sensi_meth sens_params uuS upS;
 
       (* Specify whether the sensitivity variables are included in the error
          test or not *)
@@ -724,7 +723,7 @@ let main () =
          only if performing SA since uu and up already contain consistent
          initial conditions for the states) *)
 
-      Sens.calc_ic_ya_yd' mem id t1;
+      Sens.calc_ic_ya_yd' mem ~varid:id t1;
       (uuS, upS)
   in
 

@@ -86,7 +86,8 @@ type ('t, 'a) jacobian_arg =
   {
     jac_t    : float;        (** The independent variable. *)
     jac_y    : 'a;           (** The dependent variable vector. *)
-    jac_y'   : 'a;           (** The derivative vector (i.e. dy/dt). *)
+    jac_y'   : 'a;           (** The derivative vector (i.e.
+                                  {% $\frac{\mathrm{d}y}{\mathrm{d}t}$%}). *)
     jac_res  : 'a;           (** The current value of the residual vector. *)
     jac_coef : float;        (** The coefficient $c_j$ in
                                  {% $J = \frac{\partial F}{\partial y} + c_j
@@ -104,7 +105,7 @@ type bandrange = Ida_impl.bandrange =
     @ida <node5#sss:optin_dls> Direct linear solvers optional input functions
     @ida <node5#sss:optout_dls> Direct linear solvers optional output functions *)
 module Dls :
-  sig
+  sig (* {{{ *)
 
     (** Callback functions that compute dense approximations to a Jacobian
         matrix. In the call [dense_jac_fn arg jac], [arg] is a {!jacobian_arg}
@@ -240,14 +241,14 @@ module Dls :
 
         @ida <node5#sss:optin_dls> IDADlsSetBandJacFn *)
     val clear_band_jac_fn : serial_session -> unit
-  end
+  end (* }}} *)
 
 (** Scaled Preconditioned Iterative Linear Solvers.
 
     @ida <node5#sss:optin_spils> Iterative linear solvers optional input functions.
     @ida <node5#sss:optout_spils> Iterative linear solvers optional output functions. *)
 module Spils :
-  sig
+  sig (* {{{ *)
     (** {3:precond Preconditioners} *)
 
     (** Callback functions that solve a linear system involving a
@@ -378,15 +379,6 @@ module Spils :
 
     (** {3:set Solver parameters} *)
 
-    (** The type of Gram-Schmidt orthogonalization.
-
-        @ida <node9#ss:spgmr> ModifiedGS/ClassicalGS *)
-    type gramschmidt_type = Spils.gramschmidt_type =
-      | ModifiedGS   (** Modified Gram-Schmidt orthogonalization
-                         {cconst MODIFIED_GS} *)
-      | ClassicalGS  (** Classical Gram Schmidt orthogonalization
-                         {cconst CLASSICAL_GS} *)
-
     (** Sets the Gram-Schmidt orthogonalization to be used with the
         Spgmr {!linear_solver}.
 
@@ -482,13 +474,13 @@ module Spils :
         @ida <node5#sss:optin_spils> IDASpilsSetJacTimesVecFn
         @ida <node5#ss:jtimesFn> IDASpilsJacTimesVecFn *)
     val clear_jac_times_vec_fn : ('a, 'k) session -> unit
-  end
+  end (* }}} *)
 
 (** Alternate Linear Solvers.
 
     @ida <node8#s:new_linsolv> Providing Alternate Linear Solver Modules *)
 module Alternate :
-  sig
+  sig (* {{{ *)
 
     (** Functions that initialize linear solver data, like counters and
         statistics.
@@ -539,7 +531,7 @@ module Alternate :
         - [b], for returning the calculated solution,
         - [weight], the error weights,
         - [ycur], the solver's current approximation to $y(t_n)$,
-        - [y'cur], the solver's current approximation to {% $\dot{y}(t_n)$%},
+        - [ycur'], the solver's current approximation to {% $\dot{y}(t_n)$%},
                    and,
         - [rescur], a vector containing the current residual value.
 
@@ -583,7 +575,7 @@ module Alternate :
 
     (** Returns the current [cjratio] value. *)
     val get_cjratio : ('data, 'kind) session -> float
-  end
+  end (* }}} *)
 
 (** {2:tols Tolerances} *)
 
@@ -647,7 +639,7 @@ type 'a rootsfn = float -> 'a -> 'a -> RealArray.t -> unit
     - [linsolv], the linear solver to use,
     - [tol],     the integration tolerances,
     - [f],       the DAE residual function,
-    - [varid],   classifies variables as algebraic or differential,
+    - [varid],   optionally classifies variables as algebraic or differential,
     - [nroots],  the number of root functions,
     - [g],       the root function ([(nroots, g)] defaults to {!no_roots}),
     - [t0],      the initial value of the independent variable,
@@ -690,7 +682,7 @@ val no_roots : (int * 'a rootsfn)
 
     @ida <node5#sss:idasetid> IDASetId *)
 module VarId :
-  sig
+  sig (* {{{ *)
     (** The constant [0.0]. *)
     val algebraic : float
 
@@ -711,7 +703,7 @@ module VarId :
         
         @raise Invalid_argument The given value is not a legal id. *)
     val of_float : float -> t
-  end
+  end (* }}} *)
 
 (** Class components of the state vector as either algebraic or differential.
     These classifications are required by {!calc_ic_ya_yd'} and

@@ -56,21 +56,21 @@ type ('data, 'kind) session = ('data, 'kind) Cvode.session
 
     @cvodes <node5#SECTION00570000000000000000> Integration of pure quadrature equations *)
 module Quadrature :
-  sig
+  sig (* {{{ *)
     (** {2:init Initialization and access} *)
 
     (** Functions defining quadrature variables. They are passed three
         arguments:
         - [t], the value of the independent variable, i.e., the simulation time,
         - [y], the vector of dependent-variable values, i.e., $y(t)$, and,
-        - [dyq], a vector for storing the computed value of
+        - [yq'], a vector for storing the computed value of
                  {% $\dot{y}_Q = f_Q(t, y)$%}.
 
         Within the function, raising a {!Sundials.RecoverableFailure} exception
         indicates a recoverable error. Any other exception is treated as an
         unrecoverable error.
 
-        {warning [y] and [dyq] should not be accessed after the function
+        {warning [y] and [yq'] should not be accessed after the function
                  returns.}
 
         @cvodes <node5#ss:user_fct_quad> CVQuadRhsFn *)
@@ -83,7 +83,7 @@ module Quadrature :
     val init : ('a, 'k) Cvode.session -> 'a quadrhsfn
                   -> ('a, 'k) Nvector.t -> unit
 
-    (** Reinitialize the integration of quadrature equations. The vector
+    (** Reinitializes the integration of quadrature equations. The vector
         gives a new value for $y_Q$.
 
         @cvodes <node5#ss:quad_malloc> CVodeQuadReInit *)
@@ -193,7 +193,7 @@ module Quadrature :
 
         @cvodes <node5#SECTION00572000000000000000> CV_UNREC_QRHSFUNC_ERR *)
     exception UnrecoverableQuadRhsFuncFailure
-  end
+  end (* }}} *)
 
 (** (Forward) Sensitivity analysis of ODEs with respect to their parameters.
  
@@ -224,17 +224,17 @@ module Quadrature :
 
     @cvodes <node6#ss:forward_usage> Enhanced skeleton for sensitivity analysis *)
 module Sensitivity :
-  sig
+  sig (* {{{ *)
     (** {2:init Initialization} *)
 
     (** Sensitivity functions that calculate the right-hand sides of all
         sensitivity equations. They are passed the arguments:
         - [t], the value of the independent variable, i.e., the simulation time,
         - [y], the vector of dependent-variable values, i.e., $y(t)$,
-        - [dy], the value of the right-hand side of the state
+        - [y'], the value of the right-hand side of the state
                   equations {% $\dot{y} = f(t, y, p)$%},
         - [s], the array of sensitivity vectors,
-        - [ds], an array of vectors to be filled with the values of
+        - [s'], an array of vectors to be filled with the values of
                    {% $\dot{s}_i$%} for all $i$, and,
         - [tmp1] and [tmp2], temporary storage vectors.
 
@@ -242,16 +242,16 @@ module Sensitivity :
         indicates a recoverable error. Any other exception is treated as an
         unrecoverable error.
 
-        {warning Neither [y], [ds], [tmp1], [tmp2], nor the elements of [s]
-                 and [dys] should be accessed after the function returns.}
+        {warning Neither [y], [y'], [tmp1], [tmp2], nor the elements of [s]
+                 or [s'] should be accessed after the function returns.}
 
         @cvodes <node6#ss:user_fct_fwd> CVSensRhsFn *)
     type 'a sensrhsfn_all =
       float           (* t *)
       -> 'a           (* y *)
-      -> 'a           (* dy *)
-      -> 'a array     (* ys *)
-      -> 'a array     (* dys *)
+      -> 'a           (* y' *)
+      -> 'a array     (* s *)
+      -> 'a array     (* s' *)
       -> 'a           (* tmp1 *)
       -> 'a           (* tmp2 *)
       -> unit
@@ -260,28 +260,28 @@ module Sensitivity :
         sensitivity equation. They are passed the arguments:
         - [t], the value of the independent variable, i.e., the simulation time,
         - [y], the vector of dependent-variable values, i.e., $y(t)$,
-        - [dy], the value of the right-hand side of the state
+        - [y'], the value of the right-hand side of the state
                   equations {% $\dot{y} = f(t, y, p)$%},
         - [i], the index of the sensitivity equation to compute,
         - [si], the {i is}th sensitivity vector,
-        - [ds], a vector to be filled with the values of {% $\dot{s}_i$%}, and,
+        - [s'i], a vector to be filled with the values of {% $\dot{s}_i$%}, and,
         - [tmp1] and [tmp2], temporary storage vectors.
 
         Within the function, raising a {!Sundials.RecoverableFailure} exception
         indicates a recoverable error. Any other exception is treated as an
         unrecoverable error.
 
-        {warning [y], [dy], [si], [ds], [tmp1], and [tmp2] should not be
+        {warning [y], [y'], [si], [s'i], [tmp1], and [tmp2] should not be
                  accessed after the function returns.}
 
         @cvodes <node6#ss:user_fct_fwd> CVSensRhs1Fn *)
     type 'a sensrhsfn1 =
       float           (* t *)
       -> 'a           (* y *)
-      -> 'a           (* dy *)
+      -> 'a           (* y' *)
       -> int          (* i *)
-      -> 'a           (* ys *)
-      -> 'a           (* dys *)
+      -> 'a           (* si *)
+      -> 'a           (* s'i *)
       -> 'a           (* tmp1 *)
       -> 'a           (* tmp2 *)
       -> unit
@@ -346,7 +346,7 @@ module Sensitivity :
             analyzed. *)
       }
 
-    (** Empty pvals, plist, and pbar. *)
+    (** Empty [pvals], [plist], and [pbar] fields. *)
     val no_sens_params : sens_params
 
     (** Tolerances for calculating sensitivities. *)
@@ -410,17 +410,17 @@ module Sensitivity :
         @cvodes <node3#SECTION00364000000000000000> Quadratures depending on forward sensitivities
         @cvodes <node6#SECTION00640000000000000000> Integration of quadrature equations depending on forward sensitivities *)
     module Quadrature :
-      sig
+      sig (* {{{ *)
         (** {2:init Initialization} *)
 
         (** Functions defining sensitivity-dependent quadrature variables.
-            The call [fQS t y ys dyq dyqs tmp1 tmp2] has arguments:
+            The call [fQS t y ys yq' yqs' tmp1 tmp2] has arguments:
             - [t], the value of the independent variable, i.e., the simulation time,
             - [y], the vector of dependent-variable values, i.e., $y(t)$,
             - [s], the array of sensitivity vectors,
-            - [dyq], the value of the quadrature right-hand side, i.e.,
+            - [yq'], the value of the quadrature right-hand side, i.e.,
                      {% $\dot{y}_Q$%},
-            - [dyqs], an array of vectors for storing the computed values of
+            - [yqs'], an array of vectors for storing the computed values of
               {% $\dot{y}_\mathit{QS} = f_\mathit{QS}(t, y, s, \dot{y}_q)$%}, and,
             - [tmp1] and [tmp2], temporary storage vectors.
 
@@ -428,8 +428,8 @@ module Sensitivity :
             exception indicates a recoverable error. Any other exception is
             treated as an unrecoverable error.
 
-            {warning Neither of [y], [dyq], [tmp1], [tmp1], nor the elements
-                     of [s] or [dyqs] should be accessed after the function
+            {warning Neither of [y], [yq'], [tmp1], [tmp2], nor the elements
+                     of [s] or [yqs'] should be accessed after the function
                      returns.}
 
            @cvodes <node6#ss:user_fct_quad_sens> CVodeQuadSensRhsFn *)
@@ -437,8 +437,8 @@ module Sensitivity :
            float          (* t *)
            -> 'a          (* y *)
            -> 'a array    (* s *)
-           -> 'a          (* dyq *)
-           -> 'a array    (* dyqs *)
+           -> 'a          (* yq' *)
+           -> 'a array    (* yqs' *)
            -> 'a          (* tmp1 *)
            -> 'a          (* tmp2 *)
            -> unit
@@ -572,33 +572,34 @@ module Sensitivity :
             @cvodes <node5#SECTION00642000000000000000> CV_NO_QUAD_SENS *)
         exception QuadSensNotInitialized
 
-        (** The quadrature function failed in an unrecoverable manner.
+        (** The sensitivity quadrature function failed in an unrecoverable
+            manner.
 
             @cvodes <node6#SECTION00642000000000000000> CV_QSRHSFUNC_FAIL *)
         exception QuadSensRhsFuncFailure
 
-        (** The quadrature function failed at the first call.
+        (** The sensitivity quadrature function failed at the first call.
 
             @cvodes <node6#SECTION00642000000000000000> CV_FIRST_QSRHSFUNC_ERR *)
         exception FirstQuadSensRhsFuncFailure
 
         (** Convergence test failures occurred too many times due to repeated
             recoverable errors in the quadrature function. Also raised if the
-            quadrature function had repeated recoverable errors during the
-            estimation of an initial step size (if quadrature variables are
-            included in error tests).
+            sensitivity quadrature function had repeated recoverable errors
+            during the estimation of an initial step size (if quadrature
+            variables are included in error tests).
           
             @cvodes <node6#SECTION00642000000000000000> CV_REPTD_QSRHSFUNC_ERR *)
         exception RepeatedQuadSensRhsFuncFailure
 
-        (** The quadrature function had a recoverable error, but no
+        (** The sensitivity quadrature function had a recoverable error, but no
             recovery was possible. This failure mode is rare, as it can occur
             only if the quadrature function fails recoverably after an error
             test failed while at order one.
           
             @cvodes <node6#SECTION00642000000000000000> CV_UNREC_QSRHSFUNC_ERR *)
         exception UnrecoverableQuadSensRhsFuncFailure
-      end
+      end (* }}} *)
 
     (** {2:sensout Output functions} *)
 
@@ -811,7 +812,7 @@ module Sensitivity :
 
         @cvodes <node6> CV_BAD_IS *)
     exception BadSensIdentifier
-  end
+  end (* }}} *)
 
 (** (Adjoint) Sensitivity analysis of ODEs with respect to their parameters.
  
@@ -840,7 +841,7 @@ module Sensitivity :
 
     @cvodes <node7#ss:skeleton_adj> Enhanced Skeleton for Adjoint Sensitivity Analysis *)
 module Adjoint :
-  sig
+  sig (* {{{ *)
     (** A backward session with the CVODES solver. Multiple backward sessions
         may be associated with a single parent session.
 
@@ -867,8 +868,8 @@ module Adjoint :
 
     (** Integrates the forward problem over an interval and saves
         checkpointing data. The arguments are the next time at which a solution
-        is desired ([tout]) and a vector for storing the computed result
-        ([yret]). The function returns a triple [tret, ncheck, sr]: the time
+        is desired ([tout]) and a vector to receive the computed result
+        ([y]). The function returns a triple [tret, ncheck, sr]: the time
         reached by the solver, the cumulative number of checkpoints stored, and
         whether [tout] was reached. The solver takes internal steps until it
         has reached or just passed the [tout] parameter {cconst CV_NORMAL},
@@ -891,7 +892,7 @@ module Adjoint :
 
     (** Integrates the forward problem over an interval and saves
         checkpointing data. The arguments are the next time at which a solution
-        is desired ([tout]) and a vector for storing the computed result
+        is desired ([tout]) and a vector to receive the computed result
         ([yret]). The function returns a triple [tret, ncheck, sr]: the time
         reached by the solver, the cumulative number of checkpoints stored, and
         whether [tout] was reached. The solver takes one step
@@ -938,9 +939,9 @@ module Adjoint :
       {
         jac_t   : float;        (** The independent variable. *)
         jac_y   : 'a;           (** The forward solution vector. *)
-        jac_yb  : 'a;           (** The backward dependent variable vector. *)
+        jac_yb  : 'a;           (** The backward solution vector. *)
         jac_fyb : 'a;           (** The backward right-hand side function [fB]. *)
-        jac_tmp : 't            (** Workspace data. *)
+        jac_tmp : 't;           (** Workspace data. *)
       }
 
     (** The range of nonzero entries in a band matrix. *)
@@ -950,7 +951,7 @@ module Adjoint :
 
     (** Diagonal approximation of Jacobians by difference quotients. *)
     module Diag :
-      sig
+      sig (* {{{ *)
         (** A linear solver based on Jacobian approximation by difference
             quotients.
 
@@ -970,12 +971,11 @@ module Adjoint :
 
             @cvodes <node5#sss:optout_diag> CVDiagGetNumRhsEvals *)
         val get_num_rhs_evals : ('a, 'k) bsession -> int
-      end
-
+      end (* }}} *)
 
     (** Direct Linear Solvers operating on dense and banded matrices. *)
     module Dls :
-      sig
+      sig (* {{{ *)
 
         (** Callback functions that compute dense approximations to a Jacobian
             matrix. In the call [dense_jac_fn arg jac], [arg] is a
@@ -1112,7 +1112,7 @@ module Adjoint :
 
             @cvode <node5#SECTION00728300000000000000> CVDlsSetBandJacFnB *)
         val clear_band_jac_fn : serial_bsession -> unit
-      end
+      end (* }}} *)
 
     (** Scaled Preconditioned Iterative Linear Solvers.
 
@@ -1120,7 +1120,7 @@ module Adjoint :
         @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB
         @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB *)
     module Spils :
-      sig
+      sig (* {{{ *)
         (** Arguments passed to the preconditioner solver function.
 
             @cvode <node7#ss:psolve_b> CVSpilsPrecSolveFnB *)
@@ -1199,7 +1199,7 @@ module Adjoint :
 
         (** Specifies a preconditioner, including the type of preconditioning
             (none, left, right, or both) and callback functions. The following
-            functions and those in {!Banded} and {!Cvode_bbd} construct
+            functions and those in {!Banded} and {!Cvodes_bbd} construct
             preconditioners.
 
             The {!prec_solve_fn} is usually mandatory. The {!prec_setup_fn} can
@@ -1326,20 +1326,11 @@ module Adjoint :
 
         (** {3:set Solver parameters} *)
 
-        (** The type of Gram-Schmidt orthogonalization.
-
-            @cvode <node9#ss:spgmr> ModifiedGS/ClassicalGS *)
-        type gramschmidt_type = Spils.gramschmidt_type =
-          | ModifiedGS   (** Modified Gram-Schmidt orthogonalization
-                             {cconst MODIFIED_GS} *)
-          | ClassicalGS  (** Classical Gram Schmidt orthogonalization
-                             {cconst CLASSICAL_GS} *)
-
         (** Sets the Gram-Schmidt orthogonalization to be used with the
             Spgmr {!linear_solver}.
 
             @cvodes <node7#SECTION00728400000000000000> CVSpilsSetGSTypeB *)
-        val set_gs_type : ('a, 'k) bsession -> gramschmidt_type -> unit
+        val set_gs_type : ('a, 'k) bsession -> Spils.gramschmidt_type -> unit
 
         (** Sets the factor by which the Krylov linear solver's convergence test
             constant is reduced from the Newton iteration test constant.
@@ -1449,7 +1440,7 @@ module Adjoint :
             @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
         val set_prec_type : ('a, 'k) bsession
                             -> Spils.preconditioning_type -> unit
-      end
+      end (* }}} *)
 
     (* TODO: Add alternate linear solvers? *)
 
@@ -1460,14 +1451,14 @@ module Adjoint :
         - [t], the value of the independent variable, i.e., the simulation time,
         - [y], the vector of dependent-variable values, i.e., $y(t)$,
         - [yb], the vector of backward dependent-variable values, i.e., $y_B(t)$,
-        - [dyb], a vector for storing the values
+        - [yb'], a vector for storing the values
                  {% $\dot{y}_B = f_B(t, y, y_B)$%}.
 
         Within the function, raising a {!Sundials.RecoverableFailure} exception
         indicates a recoverable error. Any other exception is treated as an
         unrecoverable error.
 
-        {warning [y], [yb], and [dyb] should not be accessed after the function
+        {warning [y], [yb], and [yb'] should not be accessed after the function
                  returns.}
 
         @cvodes <node7#ss:ODErhs_b> CVRhsFnB
@@ -1476,7 +1467,7 @@ module Adjoint :
       float    (* t *)
       -> 'a    (* y *)
       -> 'a    (* yb *)
-      -> 'a    (* dyb *)
+      -> 'a    (* yb' *)
       -> unit
 
     (** Backward functions with forward sensitivities. They are passed the
@@ -1486,14 +1477,14 @@ module Adjoint :
         - [s], the array of forward sensitivity vectors,
         - [yb], the vector of backward dependent-variable values,
                 i.e., $y_B(t)$,
-        - [dyb], a vector for storing the values
+        - [yb'], a vector for storing the values
                  {% $\dot{y}_B = f_B(t, y, y_S, y_B)$%}.
 
         Within the function, raising a {!Sundials.RecoverableFailure} exception
         indicates a recoverable error. Any other exception is treated as an
         unrecoverable error.
 
-        {warning Neither [y], [yb], [dyb], nor the elements of [s] should be
+        {warning Neither [y], [yb], [yb'], nor the elements of [s] should be
                  accessed after the function returns.}
 
         @cvodes <node7#ss:ODErhs_bs> CVRhsFnBS
@@ -1503,7 +1494,7 @@ module Adjoint :
       -> 'a        (* y *)
       -> 'a array  (* ys *)
       -> 'a        (* yb *)
-      -> 'a        (* dyb *)
+      -> 'a        (* yb' *)
       -> unit
 
     (** Functions that evaluate the right-hand side of a backward ODE system
@@ -1572,25 +1563,25 @@ module Adjoint :
 
         @cvodes <node7#SECTION007210000000000000000> Backward integration of quadrature equations *)
     module Quadrature :
-      sig
+      sig (* {{{ *)
         (** {2:init Initialization} *)
 
         (** Functions defining backward quadrature variables without forward
             sensitivities.
-            The call [fBQS t y yb dqb] has arguments:
+            The call [fQB t y yb qb'] has arguments:
             - [t], the value of the independent variable, i.e.,
                    the simulation time,
             - [y], the vector of dependent-variable values, i.e., $y(t)$,
             - [yb], the vector of backward dependent-variable values,
                     i.e., $y_B(t)$,
-            - [dqb], a vector for storing the computed value of
+            - [qb'], a vector for storing the computed value of
                      {% $\dot{y}_\mathit{QB} = f_\mathit{QB}(t, y, y_B)$%}.
 
             Within the function, raising a {!Sundials.RecoverableFailure}
             exception indicates a recoverable error. Any other exception is
             treated as an unrecoverable error.
 
-            {warning [y], [yb], and [dqb] should not be accessed after the
+            {warning [y], [yb], and [qb'] should not be accessed after the
                      function returns.}
 
             @cvodes <node7#ss:ODErhs_quad_b> CVQuadRhsFnB *)
@@ -1598,33 +1589,33 @@ module Adjoint :
           float       (* t *)
           -> 'a       (* y *)
           -> 'a       (* yb *)
-          -> 'a       (* dqb *)
+          -> 'a       (* qb' *)
           -> unit
 
         (** Functions defining backward quadrature variables with forward
             sensitivities.
-            The call [fBQS t y ys yb dqb] has arguments:
+            The call [fQB t y s yb qb'] has arguments:
             - [t], the value of the independent variable, i.e.,
                    the simulation time,
             - [y], the vector of dependent-variable values, i.e., $y(t)$,
             - [s], the array of forward sensitivity vectors,
             - [yb], the vector of backward dependent-variable values,
                     i.e., $y_B(t)$,
-            - [dqb], a vector for storing the computed value of
+            - [qb'], a vector for storing the computed value of
                    {% $\dot{y}_\mathit{QB} = f_\mathit{QB}(t, y, y_S, y_B)$%}.
 
             Within the function, raising a {!Sundials.RecoverableFailure}
             exception indicates a recoverable error. Any other exception is
             treated as an unrecoverable error.
 
-            {warning Neither [y], [yb], [dqb], nor the elements of [s] should
+            {warning Neither [y], [yb], [qb'], nor the elements of [s] should
                      be accessed after the function returns.}
 
             @cvodes <node7#ss:ODErhs_quad_sens_B> CVQuadRhsFnBS *)
         type 'a bquadrhsfn_with_sens =
           float        (* t *)
           -> 'a        (* y *)
-          -> 'a array  (* ys *)
+          -> 'a array  (* s *)
           -> 'a        (* yb *)
           -> 'a        (* qbdot *)
           -> unit
@@ -1633,14 +1624,14 @@ module Adjoint :
             the backward problem. *)
         type 'a bquadrhsfn =
             NoSens of 'a bquadrhsfn_no_sens
-            (** Doesn't depend on forward sensitivities. *)
+            (** Does not depend on forward sensitivities. *)
           | WithSens of 'a bquadrhsfn_with_sens
             (** Depends on forward sensitivities. *)
 
-        (** This function, [init s fQB yQB0], activates integration of
-            quadrature equations, with or without sensitivities, where [fQB]
-            computes the right-hand side of the backward quadrature equations,
-            and [yQB0] contains the values of the quadrature variables at [tB0].
+        (** This function activates the integration of quadrature equations.
+            The arguments are the function that computes the right-hand side of
+            the backward quadrature equations, and a vector giving the values
+            of the quadrature variables at [tB0].
 
             @cvodes <node6#sss:cvquadinitb> CVodeQuadInitB
             @cvodes <node6#sss:cvquadinitb> CVodeQuadInitBS *)
@@ -1714,9 +1705,10 @@ module Adjoint :
             ([nqetfails]).
 
             @cvodes <node5#ss:quad_optional_output> CVodeGetQuadStats
-            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+            @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
+            @return ([nfqevals], [nqetfails]) *)
         val get_stats : ('a, 'k) bsession -> int * int
-      end
+      end (* }}} *)
 
     (** Integrates a backward ODE system over an interval. The solver takes
         internal steps until it has reached or just passed the specified value.
@@ -1770,7 +1762,8 @@ module Adjoint :
 
     (** Reinitializes the backward problem with new parameters and state
         values. The values of the independent variable, i.e., the simulation
-        time, and the state variables must be given.
+        time, and the state variables must be given. It is also possible to
+        change the solution method (and linear solver).
 
         @cvodes <node7#sss:cvinitb> CVodeReInitB
         @raise AdjointNotInitialized The {!init} function has not been called.
@@ -1958,7 +1951,8 @@ module Adjoint :
         nonlinear convergence failures [nncfails].
 
         @cvode <node5#sss:optout_main> CVodeGetNonlinSolvStats
-        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
+        @return ([nniters], [nncfails]) *)
     val get_nonlin_solv_stats : ('a, 'k) bsession -> int *int
 
     (** {2:exceptions Exceptions} *)
@@ -1968,8 +1962,7 @@ module Adjoint :
         @cvodes <node7#sss:cvsolvef> CV_NO_ADJ *)
     exception AdjointNotInitialized
 
-    (** Neither {!forward_normal} nor {!forward_one_step} has previously been
-        called.
+    (** Neither {!forward_normal} nor {!forward_one_step} has been called.
 
         @cvodes <node7#sss:cvsolveb> CV_NO_FWD *)
     exception NoForwardCall
@@ -1997,5 +1990,5 @@ module Adjoint :
         @cvodes <node7#sss:cvinitb> CV_BAD_TB0 *)
     exception BadFinalTime
 
-  end
+  end (* }}} *)
 

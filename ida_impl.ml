@@ -201,7 +201,7 @@ module AdjointTypes' = struct
       jac_y   : 'a;
       jac_y'  : 'a;
       jac_yb  : 'a;
-      jac_y'b : 'a;
+      jac_yb' : 'a;
       jac_resb : 'a;
       jac_coef : float;
       jac_tmp : 't

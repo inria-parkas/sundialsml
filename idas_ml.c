@@ -926,17 +926,11 @@ CAMLprim value c_ida_sens_calc_ic_y(value vida_mem, value vy, value vys, value t
 }
 
 CAMLprim value c_ida_sens_calc_ic_ya_ydp(value vida_mem, value y, value yp,
-					 value ys, value yps,
-					 value vid, value tout1)
+					 value ys, value yps, value tout1)
 {
     CAMLparam5 (vida_mem, y, yp, ys, yps);
-    CAMLxparam2 (vid, tout1);
-    int flag;
+    CAMLxparam1 (tout1);
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
-
-    N_Vector id = NVEC_VAL (vid);
-    flag = IDASetId (ida_mem, id);
-    CHECK_FLAG ("IDASetId", flag);
 
     sens_calc_ic (ida_mem, vida_mem, IDA_YA_YDP_INIT, Double_val (tout1),
 		  y, yp, ys, yps);
@@ -944,7 +938,7 @@ CAMLprim value c_ida_sens_calc_ic_ya_ydp(value vida_mem, value y, value yp,
     CAMLreturn (Val_unit);
 }
 
-BYTE_STUB7(c_ida_sens_calc_ic_ya_ydp)
+BYTE_STUB6(c_ida_sens_calc_ic_ya_ydp)
 
 CAMLprim value c_idas_sens_get(value vdata, value vys)
 {
@@ -1893,7 +1887,7 @@ CAMLprim value c_idas_adj_init_backward(value vparent, value weakref,
 
 BYTE_STUB6(c_idas_adj_init_backward)
 
-CAMLprim value c_idas_adj_set_var_types (value vparent, value vwhich, value vid)
+CAMLprim value c_idas_adj_set_id (value vparent, value vwhich, value vid)
 {
     CAMLparam3 (vparent, vwhich, vid);
     int flag = IDASetIdB (IDA_MEM_FROM_ML (vparent), Int_val (vwhich),

@@ -1238,10 +1238,9 @@ let main () =
       linsolv
       (Adjoint.SStolerances (rtol,atol))
       (Adjoint.NoSens (resB data))
+      ~varid:id
       tend uvB uvpB
   in
-
-  Adjoint.set_var_types indexB id;
 
   Adjoint.backward_normal mem tbegin;
 

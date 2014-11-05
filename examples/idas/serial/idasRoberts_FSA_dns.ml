@@ -318,7 +318,7 @@ let main () =
                      Sens.plist = None }
       in
       Sens.init ida_mem Sens.EEtolerances sensi_meth params
-        (Some (resS data)) yS ypS;
+        ~fS:(resS data) yS ypS;
       Sens.set_err_con ida_mem err_con;
 
       printf "Sensitivity: YES ";
@@ -353,7 +353,7 @@ let main () =
   then (Ida.calc_ic_ya_yd' ~y:wy ~y':wyp ida_mem ~varid:id t1;
         print_ic y yp)
   else with_yS (fun yS ypS ->
-      Sens.calc_ic_ya_yd' ~y:wy ~y':wyp ~ys:yS ~y's:ypS ida_mem id t1;
+      Sens.calc_ic_ya_yd' ~y:wy ~y':wyp ~s:yS ~s':ypS ida_mem ~varid:id t1;
       print_ic y yp;
       print_sens_ic y yp yS ypS);
 

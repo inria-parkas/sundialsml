@@ -14,10 +14,12 @@ Decisions
 
 TODO
 ----
+1. Replace long lists of callback arguments with records.
+   And carefully adapt the docs.
 
-1. Test under OCaml 3.12.x.
+2. Test under OCaml 3.12.x.
 
-4. Performance issues/tests:
+3. Performance issues/tests:
    - Try to have all examples within 2xC (with the possible exception of
      cvode/serial/cvRoberts_dns_uw_alt).
 
@@ -25,10 +27,10 @@ TODO
      Try including a bigarray 'shell' (of int32s) in the session structure,
      as per CVODES/IDAS to avoid allocating at each call.
 
-5. (Jun) OPAM/findlib wrappers.
+4. (Jun) OPAM/findlib wrappers.
    - Everything properly supported in a toplevel
 
-6. (Tim) Fix, simplify, and generally tidy up all doc comments. Write the
+5. (Tim) Fix, simplify, and generally tidy up all doc comments. Write the
    missing documentation and rewrite intro.doc.
 
    Tidy up the documentation; in particular, add @raise tags for functions
@@ -47,7 +49,7 @@ TODO
    - Check the various links (@cvode, @cvodes, @ida, @idas, etc.)
      (automatically with a script?)
 
-7. (Tim) Eventual release:
+6. (Tim) Eventual release:
    - Test against OCaml 3.12.x (document in intro.doc, update configure)
    - Dêpot APP.
    - Repository on Github.
@@ -56,25 +58,15 @@ TODO
 
 MINOR PATCHES
 -------------
-2. (Tim/Jun) Add the Dls functions to Idas:
-     set_dense_jac_fn
-     clear_dense_jac_fn
-     set_band_jac_fn
-     clear_band_jac_fn
-   and the Spils functions:
-     set_preconditioner
-     set_jac_times_vec_fn
-     clear_jac_times_vec_fn
+1. Flatten out jacobian_arg
 
-5. Flatten out jacobian_arg
+2. Rename CAML_FN everywhere?
 
-6. Rename CAML_FN everywhere?
-
-7. Add tests for Spils.qr_fact/qr_sol/modified_gs/classical_gs to
+3. Add tests for Spils.qr_fact/qr_sol/modified_gs/classical_gs to
    examples/ocaml/linear.
 
-8. Alternate linear solvers for Cvodes.Adjoint and Idas.Adjoint (with
+4. Alternate linear solvers for Cvodes.Adjoint and Idas.Adjoint (with
    examples)?
 
-9. Inlude MathJax code in doc folder for offline use?
+5. Inlude MathJax code in doc folder for offline use?
 

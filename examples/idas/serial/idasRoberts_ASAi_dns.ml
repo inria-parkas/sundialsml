@@ -443,8 +443,8 @@ let main () =
 
   (* Specify which variables are differential (1) and which algebraic (0).*)
   (* Get the consistent IC found by IDAS. *)
-  Adjoint.set_var_types indexB (Nvector_serial.wrap id);
-  Adjoint.calc_ic indexB t1b wyyTB1 wypTB1 ~yb:wyyTB1 ~y'b:wypTB1;
+  Adjoint.set_id indexB (Nvector_serial.wrap id);
+  Adjoint.calc_ic indexB t1b wyyTB1 wypTB1 ~yb:wyyTB1 ~yb':wypTB1;
 
   print_string "Backward integration ... ";
 

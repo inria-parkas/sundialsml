@@ -303,7 +303,6 @@ let main () =
     { Sens.pvals = Some data.params;
       Sens.pbar = Some pbar;
       Sens.plist = None }
-    None
     yyS
     ypS;
   Sens.set_err_con mem true;

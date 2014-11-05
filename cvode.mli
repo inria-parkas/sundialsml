@@ -80,7 +80,8 @@ type ('t, 'a) jacobian_arg =
   {
     jac_t   : float;        (** The independent variable. *)
     jac_y   : 'a;           (** The dependent variable vector. *)
-    jac_fy  : 'a;           (** The derivative vector (i.e., dy/dt). *)
+    jac_fy  : 'a;           (** The derivative vector
+                            (i.e., {% $\frac{\mathrm{d}y}{\mathrm{d}t}$%}). *)
     jac_tmp : 't            (** Workspace data. *)
   }
 
@@ -464,20 +465,11 @@ module Spils :
 
     (** {3:set Solver parameters} *)
 
-    (** The type of Gram-Schmidt orthogonalization.
-
-        @cvode <node9#ss:spgmr> ModifiedGS/ClassicalGS *)
-    type gramschmidt_type = Spils.gramschmidt_type =
-      | ModifiedGS   (** Modified Gram-Schmidt orthogonalization
-                         {cconst MODIFIED_GS} *)
-      | ClassicalGS  (** Classical Gram Schmidt orthogonalization
-                         {cconst CLASSICAL_GS} *)
-
     (** Sets the Gram-Schmidt orthogonalization to be used with the
         Spgmr {!linear_solver}.
 
         @cvode <node5#sss:optin_spils> CVSpilsSetGSType *)
-    val set_gs_type : ('a, 'k) session -> gramschmidt_type -> unit
+    val set_gs_type : ('a, 'k) session -> Spils.gramschmidt_type -> unit
 
     (** Sets the factor by which the Krylov linear solver's convergence test
         constant is reduced from the Newton iteration test constant.
@@ -752,13 +744,13 @@ type lmm =
     three arguments:
     - [t], the value of the independent variable, i.e., the simulation time,
     - [y], the vector of dependent-variable values, i.e., $y(t)$, and,
-    - [dy], a vector for storing the value of $f(t, y)$.
+    - [y'], a vector for storing the value of $f(t, y)$.
 
     Within the function, raising a {!Sundials.RecoverableFailure} exception
     indicates a recoverable error. Any other exception is treated as an
     unrecoverable error.
 
-    {warning [y] and [dy] should not be accessed after the function
+    {warning [y] and [y'] should not be accessed after the function
              returns.}
 
     @cvode <node5#ss:rhsFn> CVRhsFn *)
