@@ -30,24 +30,9 @@ TODO
 4. (Jun) OPAM/findlib wrappers.
    - Everything properly supported in a toplevel
 
-5. (Tim) Fix, simplify, and generally tidy up all doc comments. Write the
-   missing documentation and rewrite intro.doc.
-
-   Tidy up the documentation; in particular, add @raise tags for functions
-   that raise exceptions (like get_dky... )
-   Document the ones that correspond to return values mentioned in their
-   user guide.  (Or otherwise that are deemed important.)
-
-   Generated text and pdf?
-   Automatically check links?
+5. (Tim) Docmentation:
    Break long function types into lines?
    Fix the skeleton programs.
-   Check that there are no undescribed index entries.
-   In Cvodes, change all Cvodes.session to Cvode.session?
-
-   To explain:
-   - Check the various links (@cvode, @cvodes, @ida, @idas, etc.)
-     (automatically with a script?)
 
 6. (Tim) Eventual release:
    - Test against OCaml 3.12.x (document in intro.doc, update configure)

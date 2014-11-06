@@ -92,7 +92,7 @@ type bandrange = Cvode_impl.bandrange =
 
 (** Diagonal approximation of Jacobians by difference quotients. *)
 module Diag :
-  sig
+  sig (* {{{ *)
     (** A linear solver based on Jacobian approximation by difference
         quotients.
 
@@ -112,14 +112,14 @@ module Diag :
 
         @cvode <node5#sss:optout_diag> CVDiagGetNumRhsEvals *)
     val get_num_rhs_evals : ('a, 'k) session -> int
-  end
+  end (* }}} *)
 
 (** Direct Linear Solvers operating on dense and banded matrices.
 
     @cvode <node5#sss:optin_dls> Direct linear solvers optional input functions
     @cvode <node5#sss:optout_dls> Direct linear solvers optional output functions *)
 module Dls :
-  sig
+  sig (* {{{ *)
 
     (** Callback functions that compute dense approximations to a Jacobian
         matrix. In the call [dense_jac_fn arg jac], [arg] is a {!jacobian_arg}
@@ -252,7 +252,7 @@ module Dls :
 
         @cvode <node5#sss:optin_dls> CVDlsSetBandJacFn *)
     val clear_band_jac_fn : serial_session -> unit
-  end
+  end (* }}} *)
 
 (** Scaled Preconditioned Iterative Linear Solvers.
 
@@ -261,7 +261,7 @@ module Dls :
     @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
     @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
 module Spils :
-  sig
+  sig (* {{{ *)
     (** {3:precond Preconditioners} *)
 
     (** Arguments passed to the preconditioner solver function.
@@ -384,7 +384,7 @@ module Spils :
       -> ('a, 'k) preconditioner
 
     (** Banded preconditioners.  *)
-    module Banded : sig
+    module Banded : sig (* {{{ *)
 
       (** A band matrix {!preconditioner} based on difference quotients.
           The call [prec_left br] instantiates a left preconditioner which
@@ -428,7 +428,7 @@ module Spils :
 
           @cvode <node5#sss:cvbandpre> CVBandPrecGetNumRhsEvals *)
       val get_num_rhs_evals : serial_session -> int
-    end
+    end (* }}} *)
 
     (** {3:lsolvers Solvers} *)
 
@@ -570,13 +570,13 @@ module Spils :
 
         @cvode <node5#sss:optin_spils> CVSpilsSetPrecType *)
     val set_prec_type : ('a, 'k) session -> Spils.preconditioning_type -> unit
-  end
+  end (* }}} *)
 
 (** Alternate Linear Solvers.
 
     @cvode <node8#s:new_linsolv> Providing Alternate Linear Solver Modules *)
 module Alternate :
-  sig
+  sig (* {{{ *)
     (** Indicates problems during the solution of nonlinear equations at a
         step. Helps decide whether to update the Jacobian data kept by a
         linear solver. *)
@@ -696,7 +696,7 @@ module Alternate :
 
     (** Returns the current and previous gamma values. *)
     val get_gammas : ('data, 'kind) session -> gammas
-  end
+  end (* }}} *)
 
 (** {2:tols Tolerances} *)
 

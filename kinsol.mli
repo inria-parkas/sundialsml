@@ -91,7 +91,7 @@ type bandrange = Kinsol_impl.bandrange =
     @kinsol <node5#sss:optout_dls> Direct linear solvers optional output functions
     @kinsol <node5#ss:djacFn> KINDlsDenseJacFn *)
 module Dls :
-  sig
+  sig (* {{{ *)
 
     (** Callback functions that compute dense approximations to a Jacobian
         matrix. In the call [dense_jac_fn arg jac], [arg] is a {!jacobian_arg}
@@ -217,7 +217,7 @@ module Dls :
 
         @kinsol <node5#sss:optin_dls> KINDlsSetBandJacFn *)
     val clear_band_jac_fn : serial_session -> unit
-  end
+  end (* }}} *)
 
 (** Scaled Preconditioned Iterative Linear Solvers.
 
@@ -226,7 +226,7 @@ module Dls :
     @kinsol <node5#ss:psolveFn> KINSpilsPrecSolveFn
     @kinsol <node5#ss:precondFn> KINSpilsPrecSetupFn *)
 module Spils :
-  sig
+  sig (* {{{ *)
     (** {3:precond Preconditioners} *)
 
     (** Arguments passed to the preconditioner solver function.
@@ -441,13 +441,13 @@ module Spils :
 
         @kinsol <node5#sss:optin_spils> KINSpilsSetJacTimesVecFn *)
     val clear_jac_times_vec_fn : ('a, 'k) session -> unit
-  end
+  end (* }}} *)
 
 (** Alternate Linear Solvers.
 
     @kinsol <node8#s:new_linsolv> Providing Alternate Linear Solver Modules *)
 module Alternate :
-  sig
+  sig (* {{{ *)
     (** Functions that initialize linear solver data, like counters and
         statistics.
 
@@ -517,7 +517,7 @@ module Alternate :
 
     (** Sets the internal [sfdotJp] value. *)
     val set_sfdotjp   : ('data, 'kind) session -> float -> unit
-  end
+  end (* }}} *)
 
 (** {2:solver Solver initialization and use} *)
 

@@ -24,7 +24,13 @@
 (** Sensitivity analysis (forward and adjoint) and quadrature equations for
     IDA.
 
-    TODO: write a summary after understanding the submodules.
+    These submodules extend basic state equations,
+    {% $F(t, y, \dot{y}) = 0$%},
+    with parameters $p$ and quadrature variables $y_Q$. The former exposes
+    a new dependency, {% $F(t, y, \dot{y}, p) = 0$%}, relative to which the
+    sensitivity of a solution can be approximated. The latter introduces
+    an efficient means to calculate a subset of variables defined by ODEs:
+    {% $\dot{y}_Q = f_Q(t, y, \dot{y}, p)$%}.
 
     @version VERSION()
     @author Timothy Bourke (Inria)
@@ -41,22 +47,21 @@ type ('data, 'kind) session = ('data, 'kind) Ida.session
 (** Integration of pure quadrature equations.
  
     Adds an additional vector $y_Q$ of $N_Q$ quadrature variables defined by
-    {% $\frac{\mathrm{d} y_Q}{\mathrm{d}t} = f_Q(t, y, \dot{y}, p)$%}.
+    {% $\frac{\mathrm{d} y_Q}{\mathrm{d}t} = f_Q(t, y, \dot{y}, p)$%}. These
+    are treated more efficiently since they are excluded from the nonlinear
+    solution stage.
 
     An example session with Idas using quadrature variables
     ({openfile idas_quad_skel.ml}): {[
 #include "examples/ocaml/skeletons/idas_quad_skel.ml"
     ]}
 
-    @idas <node5#SECTION00570000000000000000> Integration of pure quadrature equations *)
+    @idas <node5#SECTION00570000000000000000> Integration of pure quadrature equations
+    @idas <node3#s:quad> Pure quadrature integration *)
 module Quadrature :
   sig (* {{{ *)
     (** {2:init Initialization and access} *)
 
-    (** This function, [fQ t y y' rhsQ], computes the quadrature
-        equation right-hand side [rhsQ] for a given value of the
-        independent variable [t] and state vectors [y] and [y'].
-        *)
     (** Functions defining quadrature variables. They are passed four
         arguments:
         - [t], the value of the independent variable, i.e., the simulation time,
@@ -190,7 +195,18 @@ module Quadrature :
 
 (** (Forward) Sensitivity analysis of DAEs with respect to their parameters.
  
-    TODO: describe this module...
+    Formalizes the dependency of a set of DAEs on $N_p$ parameters $p$ and
+    calculates the sensitivities $s$ and their derivatives {% $\dot{s}$%}
+    of the solutions $y$ and {% $\dot{y}$%} relative to a subset of
+    {% $N_s \leq N_p$%} of those parameters such that the $i$th sensitivity
+    satisfies the {i (forward) sensitivity equations}:
+    {% $\frac{\partial F}{\partial y}s_i(t)
+          + \frac{\partial F}{\partial \dot{y}}\dot{s}_i(t)
+          + \frac{\partial F}{\partial p_i} = 0$%},
+    {% $s_i(t_0) = \frac{\partial y_0(p)}{\partial p_i}$%}, and,
+    {% $\dot{s_i}(t_0) = \frac{\partial \dot{y}_0(p)}{\partial p_i}$%}, where
+    $F$, $y$, and {% $\dot{y}$%} are from the $N$ equations of the original
+    model.
 
     This documented interface is structured as follows.
     {ol
@@ -205,7 +221,9 @@ module Quadrature :
 #include "examples/ocaml/skeletons/idas_sens_skel.ml"
     ]}
 
-    @idas <node6#SECTION00610000000000000000> Enhanced skeleton for sensitivity analysis *)
+    @idas <node6#SECTION00610000000000000000> Enhanced skeleton for sensitivity analysis
+    @idas <node6#s:forward> Using IDAS for Forward Sensitivity Analysis
+    @idas <node3#ss:adj_sensi> Adjoint sensitivity analysis *)
 module Sensitivity :
   sig (* {{{ *)
     (** {2:init Initialization} *)
@@ -292,7 +310,7 @@ module Sensitivity :
             in {{!sens_params}pbar}. *)
 
     (** Activates the calculation of forward sensitivities. The call
-        [init s tol ism ps ~fS:fS yS0 yS0'], has as arguments:
+        {[init s tol ism ps ~fS:fS yS0 yS0']}, has as arguments:
         - [s], a session created with {!Ida.init},
         - [tol], the tolerances desired,
         - [sm], the solution method,
@@ -328,33 +346,6 @@ module Sensitivity :
                  -> ('a, 'k) Nvector.t array
                  -> unit
 
-    (** Identical to {!Ida.calc_ic_ya_yd'}, but with the possibility of
-        filling [s] and [s'] with the corrected sensitivity and sensitivity
-        derivative values.
-
-        @ida <node5#ss:idacalcic> IDACalcIC
-        @ida <node5#sss:optout_iccalc> IDAGetConsistentIC
-        @idas <node6#sss:sens_optout_iccalc> IDAGetSensConsistentIC *)
-    val calc_ic_ya_yd' :
-      ('a, 'k) Ida.session
-      -> ?y :('a, 'k) Nvector.t
-      -> ?y':('a, 'k) Nvector.t
-      -> ?s :('a, 'k) Nvector.t array
-      -> ?s':('a, 'k) Nvector.t array
-      -> ?varid:('a, 'k) Nvector.t
-      -> float
-      -> unit
-
-    (** Identical to {!Ida.calc_ic_y}, but with the possibility of
-        filling [s] with the corrected sensitivity values.
-
-        @ida <node5#ss:idacalcic> IDACalcIC
-        @ida <node5#sss:optout_iccalc> IDAGetConsistentIC
-        @idas <node6#sss:sens_optout_iccalc> IDAGetSensConsistentIC *)
-    val calc_ic_y :
-      ('a, 'k) Ida.session ->
-      ?y:('a, 'k) Nvector.t -> ?s:('a, 'k) Nvector.t array -> float -> unit
-
     (** Deactivates forward sensitivity calculations without deallocating
         memory. Sensitivities can be reactivated with {!reinit}.
 
@@ -364,7 +355,14 @@ module Sensitivity :
     (** Support for quadrature equations that depend not only on
         state variables but also on forward sensitivities.
 
-        TODO: describe this module...
+        Adds an additional vector {% $y_\mathit{QS}$%} of {% $N_\mathit{QS}$%}
+        quadrature variables defined by
+        {% $\frac{\mathrm{d} y_\mathit{QS}}{\mathrm{d}t}
+                = f_{\mathit{QS}}(t, y, \dot{y}, s, \dot{s}, \dot{y}_Q, p)$%}.
+        The values of these variables are calculated more efficiently since they
+        are excluded from the nonlinear solution stage. While the sensitivities
+        of the ‘pure’ {!Idas.Quadrature} variables, $y_Q$, are not provided
+        directly, they can be calculated using this more general mechanism.
 
         @idas <node3#SECTION00354000000000000000> Quadratures depending on forward sensitivities
         @idas <node6#SECTION00640000000000000000> Integration of quadrature equations depending on forward sensitivities *)
@@ -373,24 +371,24 @@ module Sensitivity :
         (** {2:init Initialization} *)
 
         (** Functions defining sensitivity-dependent quadrature variables.
-            The call [fQS t y y' s s' rq yqs' tmp1 tmp2 tmp3] has arguments:
+            The call {[fQS t y y' s s' yq' yqs' tmp1 tmp2 tmp3]} has arguments:
             - [t], the value of the independent variable, i.e., the simulation time,
             - [y], the vector of dependent-variable values, i.e., $y(t)$,
             - [y'], the vector of dependent-variable derivatives,
                       i.e., {% $\dot{y}(t)$%},
             - [s], the array of sensitivity vectors,
             - [s'], the array of sensitivity derivative vectors,
-            - [rq], the current value of the quadrature residual,
+            - [yq'], the current value of the quadrature function,
             - [yqs'], an array of vectors for storing the computed values of
               {% $\dot{y}_\mathit{QS} =
-                  f_\mathit{QS}(t, y, \dot{y}, s, \dot{s}, \dot{y}_q)$%}, and,
+                  f_\mathit{QS}(t, y, \dot{y}, s, \dot{s}, \dot{y}_Q)$%}, and,
             - [tmp1], [tmp2], and [tmp3], temporary storage vectors.
 
             Within the function, raising a {!Sundials.RecoverableFailure}
             exception indicates a recoverable error. Any other exception is
             treated as an unrecoverable error.
 
-            {warning Neither of [y], [y'], [rq], [tmp1], [tmp2], [tmp3],
+            {warning Neither of [y], [y'], [yq'], [tmp1], [tmp2], [tmp3],
                      nor the elements of [s], [s'] or [yqs'] should be
                      accessed after the function returns.}
 
@@ -556,6 +554,35 @@ module Sensitivity :
             @idas <node6#SECTION00642000000000000000> IDA_REP_QSRHS_ERR *)
         exception RepeatedQuadSensRhsFuncFailure
       end (* }}} *)
+
+    (** {3:calcic Initial Condition Calculation} *)
+
+    (** Identical to {!Ida.calc_ic_ya_yd'}, but with the possibility of
+        filling [s] and [s'] with the corrected sensitivity and sensitivity
+        derivative values.
+
+        @ida <node5#ss:idacalcic> IDACalcIC
+        @ida <node5#sss:optout_iccalc> IDAGetConsistentIC
+        @idas <node6#sss:sens_optout_iccalc> IDAGetSensConsistentIC *)
+    val calc_ic_ya_yd' :
+      ('a, 'k) Ida.session
+      -> ?y :('a, 'k) Nvector.t
+      -> ?y':('a, 'k) Nvector.t
+      -> ?s :('a, 'k) Nvector.t array
+      -> ?s':('a, 'k) Nvector.t array
+      -> ?varid:('a, 'k) Nvector.t
+      -> float
+      -> unit
+
+    (** Identical to {!Ida.calc_ic_y}, but with the possibility of
+        filling [s] with the corrected sensitivity values.
+
+        @ida <node5#ss:idacalcic> IDACalcIC
+        @ida <node5#sss:optout_iccalc> IDAGetConsistentIC
+        @idas <node6#sss:sens_optout_iccalc> IDAGetSensConsistentIC *)
+    val calc_ic_y :
+      ('a, 'k) Ida.session ->
+      ?y:('a, 'k) Nvector.t -> ?s:('a, 'k) Nvector.t array -> float -> unit
 
     (** {2:sensout Output functions} *)
 
@@ -746,7 +773,14 @@ module Sensitivity :
 
 (** (Adjoint) Sensitivity analysis of DAEs with respect to their parameters.
 
-    TODO: describe this module...
+    Provides an alternative to forward sensitivity analysis, which can become
+    prohibitively expensive. This technique does not calculate sensitivities,
+    but rather gradients with respect to the parameters of a relatively few
+    derived functionals of the solution, that is the gradient
+    {% $\frac{\mathrm{d}G}{\mathrm{d}p}$%} of
+    {% $G(p) = \int_{t_0}^T \! g(t, y, p)\,\mathrm{d}t$%}. The gradients
+    are evaluated by first calculating forward and checkpointing certain
+    intermediate state values, and then integrating backward to $t_0$.
 
     This documented interface is structured as follows.
     {ol
@@ -762,7 +796,9 @@ module Sensitivity :
 #include "examples/ocaml/skeletons/idas_adj_skel.ml"
     ]}
  
-    @idas <node7#ss:skeleton_adj> Enhanced Skeleton for Adjoint Sensitivity Analysis *)
+    @idas <node7#ss:skeleton_adj> Enhanced Skeleton for Adjoint Sensitivity Analysis
+    @idas <node7#s:adjoint> Using IDAS for Adjoint Sensitivity Analysis
+    @idas <node3#ss:adj_sensi> Adjoint sensitivity analysis *)
 module Adjoint :
   sig (* {{{ *)
     (** A backward session with the IDAS solver. Multiple backward sessions
@@ -867,8 +903,10 @@ module Adjoint :
         jac_y' : 'a;          (** The forward derivatives vector. *)
         jac_yb : 'a;          (** The backward solution vector. *)
         jac_yb' : 'a;         (** The forward derivatives vector. *)
-        jac_resb : 'a;        (** TODO *)
-        jac_coef : float;     (** TODO *)
+        jac_resb : 'a;        (** The current residual for the backward problem. *)
+        jac_coef : float;     (** The scalar {% $c_\mathit{jB}$%} in the
+                                  system Jacobian, proportional to the inverse
+                                  of the step size. *)
         jac_tmp : 't;         (** Workspace data. *)
       }
 

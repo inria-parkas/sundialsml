@@ -28,7 +28,7 @@
     a new dependency, {% $\dot{y} = f(t, y, p)$%}, relative to which the
     sensitivity of a solution can be approximated. The latter effectively
     suppresses a dependency ($y_Q$ is disjoint from $y$),
-    {% $\dot{y}_Q = f_Q(y, t, p)$%}, to reduce computation costs.
+    {% $\dot{y}_Q = f_Q(t, y, p)$%}, to reduce computation costs.
 
     @version VERSION()
     @author Timothy Bourke (Inria)
@@ -54,7 +54,8 @@ type ('data, 'kind) session = ('data, 'kind) Cvode.session
 #include "examples/ocaml/skeletons/cvodes_quad_skel.ml"
     ]}
 
-    @cvodes <node5#SECTION00570000000000000000> Integration of pure quadrature equations *)
+    @cvodes <node5#SECTION00570000000000000000> Integration of pure quadrature equations
+    @cvodes <node3#s:quad> Pure quadrature integration *)
 module Quadrature :
   sig (* {{{ *)
     (** {2:init Initialization and access} *)
@@ -197,7 +198,7 @@ module Quadrature :
 
 (** (Forward) Sensitivity analysis of ODEs with respect to their parameters.
  
-    Formalizes the dependence of a set of ODEs on $N_p$ parameters $p$ and
+    Formalizes the dependency of a set of ODEs on $N_p$ parameters $p$ and
     calculates the sensitivities $s$ of the solution $y$ to a subset of
     {% $N_s \leq N_p$%} of those parameters;
     {% $s(t) = \frac{\partial y(t)}{\partial p}$%}.
@@ -222,7 +223,9 @@ module Quadrature :
 #include "examples/ocaml/skeletons/cvodes_sens_skel.ml"
     ]}
 
-    @cvodes <node6#ss:forward_usage> Enhanced skeleton for sensitivity analysis *)
+    @cvodes <node6#ss:forward_usage> Enhanced skeleton for sensitivity analysis
+    @cvodes <node6#s:forward> Using CVODES for Forward Sensitivity Analysis
+    @cvodes <node3#ss:fwd_sensi> Forward sensitivity analysis *)
 module Sensitivity :
   sig (* {{{ *)
     (** {2:init Initialization} *)
@@ -421,7 +424,7 @@ module Sensitivity :
             - [yq'], the value of the quadrature right-hand side, i.e.,
                      {% $\dot{y}_Q$%},
             - [yqs'], an array of vectors for storing the computed values of
-              {% $\dot{y}_\mathit{QS} = f_\mathit{QS}(t, y, s, \dot{y}_q)$%}, and,
+              {% $\dot{y}_\mathit{QS} = f_\mathit{QS}(t, y, s, \dot{y}_Q)$%}, and,
             - [tmp1] and [tmp2], temporary storage vectors.
 
             Within the function, raising a {!Sundials.RecoverableFailure}
@@ -839,7 +842,9 @@ module Sensitivity :
 #include "examples/ocaml/skeletons/cvodes_adj_skel.ml"
     ]}
 
-    @cvodes <node7#ss:skeleton_adj> Enhanced Skeleton for Adjoint Sensitivity Analysis *)
+    @cvodes <node7#ss:skeleton_adj> Enhanced Skeleton for Adjoint Sensitivity Analysis
+    @cvodes <node7#s:adjoint> Using CVODES for Adjoint Sensitivity Analysis
+    @cvodes <node3#ss:adj_sensi> Adjoint sensitivity analysis *)
 module Adjoint :
   sig (* {{{ *)
     (** A backward session with the CVODES solver. Multiple backward sessions
