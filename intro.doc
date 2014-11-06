@@ -210,8 +210,11 @@ produces the graph explained {{:#performance}below}.
 {3:compilation Compiling and linking}
 
 Programs are compiled by specifying where Sundials/ML is installed, e.g.,
-[-I +sundials], and including [bigarray.cma] and [sundials.cma], for
-example:
+{ul
+    {- [-I +sundialsml],}
+    {- or [ocamlfind ... -package sundialsml],}
+    {- or [-I `opam config var lib`/sundialsml],}}
+and including [bigarray.cma] and [sundials.cma], for example:
 {C {[ocamlc -o mysim.byte -I +sundialsml bigarray.cma sundials.cma mysim.ml]}}
 or the [.cmxa] versions:
 {C {[ocamlopt -o mysim.opt -I +sundialsml bigarray.cmxa sundials.cmxa mysim.ml]}}

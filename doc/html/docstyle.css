@@ -351,6 +351,10 @@ div.warningbox {
     min-height: 16px;
 }
 
+center {
+    padding-bottom: .4em;
+}
+
 @media print {
     body { font-size: 8pt; }
 }
