@@ -63,7 +63,7 @@ Compilation and Installation of the library
       stublibs subdirectory.)
 
      or:
-       make ocamlfindinstall
+       make install-findlib
      (This will install the library via "ocamlfind install".)
 
   The library can be uninstalled with: make uninstall
@@ -88,16 +88,17 @@ Compilation and Installation of the library
     #use "topfind";;
     #require "sundials";;
 
-    module Cvode = Cvode_serial;;
-    let f t y yd = yd.{0} <- 1.0;;
+    let f t y yd = yd.{0} <- 1.;;
     let g t y gout = gout.{0} <- y.{0};;
-    let y = Cvode.Carray.of_array [| -1.0 |];;
-    let s = Cvode.init Cvode.Adams Cvode.Functional f (1, g) y;;
-    Cvode.set_stop_time s 2.0;;
+    let y = Sundials.RealArray.of_array [| -1.0 |];;
+    let s = Cvode.init Cvode.Adams Cvode.Functional f ~roots:(1, g) 0. y;;
+    Cvode.set_stop_time s 2.;;
 
     (* repeat the commands below to advance the simulation until t = 2.0 *)
-    let (t', result) = Cvode.one_step s 2.0 y;;
-    Cvode.Carray.print_with_time t' y;;
+    let (t', result) = Cvode.one_step s 2. y;;
+    Printf.printf "%e: " t';
+    Sundials.RealArray.iter (Printf.printf "\t%e") y;
+    Printf.printf "\n";;
 
 Common problems
 ---------------

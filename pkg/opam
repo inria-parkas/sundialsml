@@ -1,0 +1,34 @@
+opam-version: "1"
+name: "sundialsml"
+maintainer: "tim@tbrk.org"
+authors: [
+    "Timothy Bourke" <tim@tbrk.org>
+    "Jun Inoue" <Jun.Lambda@gmail.com>
+    "Marc Pouzet" <Marc.Pouzet@ens.fr>
+]
+homepage: "http://"
+dev-repo: "https://github.com/.../sundialsml.git"
+url: "git:// #2.5.0p0"
+doc: "http://"
+tags: [ "numerical", "simulation" ]
+license: BSD2
+build: [
+    ["./configure" "--enable-mpi" "--prefix" prefix]
+    [make]
+    [make "install-findlib"]
+]
+build-doc: [
+    [make "doc"]
+    [make "install-doc"]
+]
+build-test: [
+    [make "tests.opt.log"]
+]
+remove: [["ocamlfind" "remove" "sundialsml"]]
+depends: [
+    "ocamlfind"
+]
+depopts: [
+    "mpi"
+]
+ocaml-version: [>= "3.12.1"]

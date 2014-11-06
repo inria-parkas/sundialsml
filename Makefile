@@ -259,7 +259,7 @@ install-doc: doc
 
 install-ocamlfind: install-findlib
 install-findlib: META $(INSTALL_CMA) $(INSTALL_CMA:.cma=.cmxa)
-	ocamlfind install sundials $(INSTALL_FILES) $(STUBLIBS)
+	ocamlfind install sundialsml $(INSTALL_FILES) $(STUBLIBS)
 
 
 uninstall: uninstall-sys
@@ -276,7 +276,7 @@ uninstall-doc:
 
 uninstall-ocamlfind: uninstall-findlib
 uninstall-findlib:
-	ocamlfind remove sundials
+	ocamlfind remove sundialsml
 
 ### Misc
 
