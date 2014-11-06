@@ -1,3 +1,25 @@
+GOAL: End november:
+* Sent for APP.
+* Available on Github.
+* Released on OPAM 
+
+Priorities: Jun
+---------------
+1. Jun: Replace long lists of callback arguments with records,
+	carefully adapting the docs.
+
+2. Jun: Fix the warning messages
+    ../../examples.mk:298: *** mixed implicit and normal rules: deprecated syntax
+    ../../examples.mk:298: *** mixed implicit and normal rules: deprecated syntax
+
+3. Jun/Tim: Write skeleton programs.
+
+Priorities: Tim
+---------------
+
+1. Tim: Docs: break long functions into lines.
+
+2. Tim: Understand/fix remaining slower examples.
 
 Decisions
 ---------
@@ -14,9 +36,6 @@ Decisions
 
 TODO
 ----
-1. Replace long lists of callback arguments with records.
-   And carefully adapt the docs.
-
 2. Test under OCaml 3.12.x.
 
 3. Performance issues/tests:
@@ -52,6 +71,4 @@ MINOR PATCHES
 
 4. Alternate linear solvers for Cvodes.Adjoint and Idas.Adjoint (with
    examples)?
-
-5. Inlude MathJax code in doc folder for offline use?
 
