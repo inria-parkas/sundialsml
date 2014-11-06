@@ -34,6 +34,9 @@ let idas_doc_root =
 let kinsol_doc_root =
   ref "http://computation.llnl.gov/casc/sundials/documentation/kin_guide/"
 
+let mathjax_url = (* Location of MathJax.js *)
+  ref "https://cdn.mathjax.org/mathjax/latest/"
+
 let bp = Printf.bprintf
 let bs = Buffer.add_string
 
@@ -206,7 +209,9 @@ struct
                 "   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});\n" ^
                 "</script>" ^
                 "<script type=\"text/javascript\"\n" ^
-                "        src=\"https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML\">\n" ^
+                Printf.sprintf
+                  "        src=\"%s/MathJax.js?config=TeX-AMS-MML_HTMLorMML\">\n"
+                  !mathjax_url ^
                 "</script>\n"
 
     method html_of_Latex b s =
@@ -252,6 +257,9 @@ let option_idas_doc_root =
 let option_kinsol_doc_root =
   ("-kinsol-doc-root", Arg.String (fun d -> kinsol_doc_root := d), 
    "<dir>  specify the root url for the Sundials KINSOL documentation.")
+let option_mathjax_url =
+  ("-mathjax", Arg.String (fun d -> mathjax_url := d), 
+   "<url>  specify the root url for MathJax.")
 
 #if OCAML_3X
 let _ =
@@ -261,6 +269,7 @@ let _ =
   Odoc_args.add_option option_ida_doc_root;
   Odoc_args.add_option option_idas_doc_root;
   Odoc_args.add_option option_kinsol_doc_root;
+  Odoc_args.add_option option_mathjax_url;
   Odoc_args.set_doc_generator
     (Some (dochtml :> Odoc_args.doc_generator))
 #else
@@ -270,6 +279,7 @@ let _ =
   Odoc_args.add_option option_ida_doc_root;
   Odoc_args.add_option option_idas_doc_root;
   Odoc_args.add_option option_kinsol_doc_root;
+  Odoc_args.add_option option_mathjax_url;
   Odoc_args.extend_html_generator (module Generator : Odoc_gen.Html_functor)
 #endif
 

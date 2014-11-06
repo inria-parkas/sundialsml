@@ -203,6 +203,7 @@ doc/html/index.html: doc/html sundials_docs.cma intro.doc		\
 	    -ida-doc-root "$(IDA_DOC_ROOT)"				\
 	    -idas-doc-root "$(IDAS_DOC_ROOT)"				\
 	    -kinsol-doc-root "$(KINSOL_DOC_ROOT)"			\
+	    -mathjax "$(MATHJAX_URL)"					\
 	    -pp "$(DOCHTML_PP)						\
 		-D'OCAML_DOC_ROOT(x)=$(OCAML_DOC_ROOT)/**/x'		\
 		-D'VERSION()=$(VERSION)'"				\

@@ -84,6 +84,8 @@ do
 	  OCAMLMPI      Path to OCamlMPI installation
 	  MPICC         Name of the MPI compiler (default: mpicc; implies --enable-mpi)
 	  MPIRUN        Name of MPI program launcher (default: mpirun; implies --enable-mpi)
+	  MATHJAX	Path where MathJax.js can be found
+	                (e.g., MATHJAX=file:///usr/share/doc/sundialsml/doc/MathJax-master)
 
 	Set these options by passing arguments of the form FOO=value to help
 	configure find libraries and programs with nonstandard names/locations.
@@ -118,6 +120,8 @@ END_HELP_TEXT
     MPIRUN)
 	mpirun="${value}"
 	enable_mpi=1;;
+    MATHJAX)
+	mathjax="${value}";;
     *)
 	printf "illegal option \"$option\".\n" 1>&2; exit 2;;
     esac
@@ -514,6 +518,7 @@ fi
 	 s#@cpp@#${CPP}#;
 	 s#@mpicc@#${mpicc:-mpicc}#;
 	 s#@mpirun@#${mpirun:-mpirun}#;
+	 s#@mathjax@#${mathjax:-https://cdn.mathjax.org/mathjax/latest}#;
 	 s#@c_suppress_warnings@#${c_suppress_warnings}#;
 	 s#@EXAMPLESROOT@#${EXAMPLESROOT}#;
 	 s#@OCAMLBIN@#${OCAMLBIN}#;
