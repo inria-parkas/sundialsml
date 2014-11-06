@@ -127,6 +127,11 @@ END_HELP_TEXT
     esac
 done
 
+if [ ! `which sundials-config` ]; then
+    echo "ERROR: Sundials is not installed (no sundials-config)." 1>&2
+    exit 1
+fi
+
 CPPFLAGS="${CPPFLAGS} `sundials-config -m cvode -t s -l c -s cppflags`"
 CC=${CC:-cc}
 CPP=${CPP:-cpp}
