@@ -24,6 +24,10 @@ Priorities: Tim
 
 3. Add Sundials_config.safe test to Dls/Spils checks.
 
+Issues/Remaining questions
+--------------------------
+* What to do about the 'tests/' subdirectory?
+
 Decisions
 ---------
 * Makefiles will be used for the build system; though we will try to
