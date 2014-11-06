@@ -200,9 +200,7 @@ module Quadrature :
     of the solutions $y$ and {% $\dot{y}$%} relative to a subset of
     {% $N_s \leq N_p$%} of those parameters such that the $i$th sensitivity
     satisfies the {i (forward) sensitivity equations}:
-    {% $\frac{\partial F}{\partial y}s_i(t)
-          + \frac{\partial F}{\partial \dot{y}}\dot{s}_i(t)
-          + \frac{\partial F}{\partial p_i} = 0$%},
+    {% $\frac{\partial F}{\partial y}s_i(t) + \frac{\partial F}{\partial \dot{y}}\dot{s}_i(t) + \frac{\partial F}{\partial p_i} = 0$%},
     {% $s_i(t_0) = \frac{\partial y_0(p)}{\partial p_i}$%}, and,
     {% $\dot{s_i}(t_0) = \frac{\partial \dot{y}_0(p)}{\partial p_i}$%}, where
     $F$, $y$, and {% $\dot{y}$%} are from the $N$ equations of the original
@@ -238,9 +236,7 @@ module Sensitivity :
         - [s], the array of sensitivity vectors,
         - [s'], the array of sensitivity derivative vectors,
         - [rs] a vector for storing the sensitivity residual values,
-               {% $\mathit{rs}_i = \frac{\partial F}{\partial y}s_i(t)
-                    + \frac{\partial F}{\partial \dot{y}}\dot{s}_i(t)
-                    + \frac{\partial F}{\partial p_i}$ %}, and,
+               {% $\mathit{rs}_i = \frac{\partial F}{\partial y}s_i(t) + \frac{\partial F}{\partial \dot{y}}\dot{s}_i(t) + \frac{\partial F}{\partial p_i}$ %}, and,
         - [tmp1], [tmp2], and [tmp3], temporary storage vectors.
 
         Within the function, raising a {!Sundials.RecoverableFailure} exception
@@ -924,11 +920,11 @@ module Adjoint :
             in [jac].
 
             The callback should load the [(i,j)]th entry of [jac] with
-            {% $\frac{\partial F_i}{\partial y_j}
-                + c_j\frac{\partial F_i}{\partial\dot{y}_j}$%}, i.e., the partial
-            derivative of the [i]th equation with respect to the [j]th variable,
-            evaluated at the values of [t], [y], and [y'] obtained from [arg].
-            Only nonzero elements need be loaded into [jac].
+            {% $\frac{\partial F_i}{\partial y_j} + c_j\frac{\partial F_i}{\partial\dot{y}_j}$%},
+            i.e., the partial derivative of the [i]th equation with respect to
+            the [j]th variable, evaluated at the values of [t], [y], and [y']
+            obtained from [arg]. Only nonzero elements need be loaded into
+            [jac].
 
             Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
             Any other exception is treated as an unrecoverable error.
@@ -959,11 +955,10 @@ module Adjoint :
             - [jac] is storage for the computed Jacobian.
 
             The callback should load the [(i,j)]th entry of [jac] with
-            {% $\frac{\partial F_i}{\partial y_j}
-                + c_j\frac{\partial F_i}{\partial\dot{y}_j}$%}, i.e., the partial
-            derivative of the [i]th equation with respect to the [j]th variable,
-            evaluated at the values of [t] and [y] obtained from [arg]. Only
-            nonzero elements need be loaded into [jac].
+            {% $\frac{\partial F_i}{\partial y_j} + c_j\frac{\partial F_i}{\partial\dot{y}_j}$%},
+            i.e., the partial derivative of the [i]th equation with respect to
+            the [j]th variable, evaluated at the values of [t] and [y] obtained
+            from [arg]. Only nonzero elements need be loaded into [jac].
 
             Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
             Any other exception is treated as an unrecoverable error.
@@ -1060,8 +1055,8 @@ module Adjoint :
             [z] is computed to solve {% $Pz = r$%},
             and [delta] is the input tolerance.
             $P$ is a preconditioner matrix, which approximates, however crudely,
-            the Jacobian matrix {% $\frac{\partial F}{\partial y}
-                      + \mathtt{arg.jac\_coef}\frac{\partial F}{\partial\dot{y}}$%}.
+            the Jacobian matrix
+            {% $\frac{\partial F}{\partial y} + \mathtt{arg.jac\_coef}\frac{\partial F}{\partial\dot{y}}$%}.
             If the solution is found via an iterative method, it must satisfy
             {% $\sqrt{\sum_i (\mathit{Res}_i \cdot \mathit{ewt}_i)^2}
                   < \mathtt{delta}$%},
@@ -1134,8 +1129,7 @@ module Adjoint :
         val prec_none : ('a, 'k) preconditioner
 
         (** Left preconditioning. {% $Pz = r$%}, where $P$ approximates, perhaps
-            crudely, {% $J = \frac{\partial F}{\partial y}
-                                + c_j\frac{\partial F}{\partial\dot{y}}$%}. *)
+            crudely, {% $J = \frac{\partial F}{\partial y} + c_j\frac{\partial F}{\partial\dot{y}}$%}. *)
         val prec_left :
           ?setup:'a prec_setup_fn
           -> ?jac_times_vec:'a jac_times_vec_fn

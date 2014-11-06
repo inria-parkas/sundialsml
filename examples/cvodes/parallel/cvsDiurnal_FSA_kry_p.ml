@@ -847,8 +847,8 @@ let main () =
            | Sens.Simultaneous -> printf "( SIMULTANEOUS +"
            | Sens.Staggered    -> printf "( STAGGERED +"
            | Sens.Staggered1   -> printf "( STAGGERED1 +");
-          printf (if err_con then " FULL ERROR CONTROL )"
-                             else " PARTIAL ERROR CONTROL )")
+          if err_con then printf " FULL ERROR CONTROL )"
+                     else printf " PARTIAL ERROR CONTROL )"
         end;
         (fun s -> (ignore (Sens.get s uS); print_output_s my_pe comm uS))
       end

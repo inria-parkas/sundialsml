@@ -24,6 +24,15 @@ Priorities: Tim
 
 3. Add Sundials_config.safe test to Dls/Spils checks.
 
+4. Opam, working at toplevel.
+
+5. Fix configure so that it finds ocamlmpi correctly even with multiple
+   ocaml versions in opam:
+
+   opam switch 3.12.1		    opam switch 4.0.1
+   ./configure --enable-mpi	    ./configure --enable-mpi
+
+
 Issues/Remaining questions
 --------------------------
 * What to do about the 'tests/' subdirectory?
@@ -41,41 +50,12 @@ Decisions
   Have everything working for 2.5.0 (and include a patch file for the
   Sundials source), but make the first official release for 2.6.0.
 
-TODO
-----
-2. Test under OCaml 3.12.x.
-
-3. Performance issues/tests:
-   - Try to have all examples within 2xC (with the possible exception of
-     cvode/serial/cvRoberts_dns_uw_alt).
-
-   - Bigarray allocation in root function callbacks.
-     Try including a bigarray 'shell' (of int32s) in the session structure,
-     as per CVODES/IDAS to avoid allocating at each call.
-
-4. (Jun) OPAM/findlib wrappers.
-   - Everything properly supported in a toplevel
-
-5. (Tim) Docmentation:
-   Break long function types into lines?
-   Fix the skeleton programs.
-
-6. (Tim) Eventual release:
-   - Test against OCaml 3.12.x (document in intro.doc, update configure)
-   - Dêpot APP.
-   - Repository on Github.
-   - Release on Opam.
-   - Announce on OCaml and Sundials lists.
-
 MINOR PATCHES
 -------------
 1. Flatten out jacobian_arg
 
 2. Rename CAML_FN everywhere?
 
-3. Add tests for Spils.qr_fact/qr_sol/modified_gs/classical_gs to
-   examples/ocaml/linear.
-
-4. Alternate linear solvers for Cvodes.Adjoint and Idas.Adjoint (with
+3. Alternate linear solvers for Cvodes.Adjoint and Idas.Adjoint (with
    examples)?
 

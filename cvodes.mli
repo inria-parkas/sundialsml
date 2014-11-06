@@ -205,9 +205,8 @@ module Quadrature :
 
     The {i solution sensitivity} with respect to a single parameter $p_i$
     satisfies the {i (forward) sensitivity equations}
-    {% $\dot{s}_i = \frac{\partial f}{\partial y}s_i
-                                + \frac{\partial f}{\partial p_i}$%} and
-    {% $s_i(t_0) = \frac{\partial y_0(p)}{\partial p_i}$%}, where
+    {% $\dot{s}_i = \frac{\partial f}{\partial y}s_i + \frac{\partial f}{\partial p_i}$%}
+    and {% $s_i(t_0) = \frac{\partial y_0(p)}{\partial p_i}$%}, where
     $f$ and $y$ are from the $N$ equations of the original model.
 
     This documented interface is structured as follows.

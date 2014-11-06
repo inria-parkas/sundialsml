@@ -90,8 +90,7 @@ type ('t, 'a) jacobian_arg =
                                   {% $\frac{\mathrm{d}y}{\mathrm{d}t}$%}). *)
     jac_res  : 'a;           (** The current value of the residual vector. *)
     jac_coef : float;        (** The coefficient $c_j$ in
-                                 {% $J = \frac{\partial F}{\partial y} + c_j
-                                     \frac{\partial F}{\partial\dot{y}}$%}. *)
+                                 {% $J = \frac{\partial F}{\partial y} + c_j \frac{\partial F}{\partial\dot{y}}$%}. *)
     jac_tmp  : 't            (** Workspace data. *)
   }
 
@@ -113,11 +112,10 @@ module Dls :
         in [jac].
 
         The callback should load the [(i,j)]th entry of [jac] with
-        {% $\frac{\partial F_i}{\partial y_j}
-            + c_j\frac{\partial F_i}{\partial\dot{y}_j}$%}, i.e., the partial
-        derivative of the [i]th equation with respect to the [j]th variable,
-        evaluated at the values of [t], [y], and [y'] obtained from [arg].
-        Only nonzero elements need be loaded into [jac].
+        {% $\frac{\partial F_i}{\partial y_j} + c_j\frac{\partial F_i}{\partial\dot{y}_j}$%},
+        i.e., the partial derivative of the [i]th equation with respect to
+        the [j]th variable, evaluated at the values of [t], [y], and [y']
+        obtained from [arg]. Only nonzero elements need be loaded into [jac].
 
         Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
         Any other exception is treated as an unrecoverable error.
@@ -155,11 +153,10 @@ module Dls :
         - [jac] is storage for the computed Jacobian.
 
         The callback should load the [(i,j)]th entry of [jac] with
-        {% $\frac{\partial F_i}{\partial y_j}
-            + c_j\frac{\partial F_i}{\partial\dot{y}_j}$%}, i.e., the partial
-        derivative of the [i]th equation with respect to the [j]th variable,
-        evaluated at the values of [t] and [y] obtained from [arg]. Only
-        nonzero elements need be loaded into [jac].
+        {% $\frac{\partial F_i}{\partial y_j} + c_j\frac{\partial F_i}{\partial\dot{y}_j}$%},
+        i.e., the partial derivative of the [i]th equation with respect to
+        the [j]th variable, evaluated at the values of [t] and [y] obtained
+        from [arg]. Only nonzero elements need be loaded into [jac].
 
         Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
         Any other exception is treated as an unrecoverable error.
@@ -259,8 +256,8 @@ module Spils :
         [z] is computed to solve {% $Pz = r$%},
         and [delta] is the input tolerance.
         $P$ is a preconditioner matrix, which approximates, however crudely,
-        the Jacobian matrix {% $\frac{\partial F}{\partial y}
-                  + \mathtt{arg.jac\_coef}\frac{\partial F}{\partial\dot{y}}$%}.
+        the Jacobian matrix
+        {% $\frac{\partial F}{\partial y} + \mathtt{arg.jac\_coef}\frac{\partial F}{\partial\dot{y}}$%}.
         If the solution is found via an iterative method, it must satisfy
         {% $\sqrt{\sum_i (\mathit{Res}_i \cdot \mathit{ewt}_i)^2}
               < \mathtt{delta}$%},
@@ -332,8 +329,8 @@ module Spils :
     val prec_none : ('a, 'k) preconditioner
 
     (** Left preconditioning. {% $Pz = r$%}, where $P$ approximates, perhaps
-        crudely, {% $J = \frac{\partial F}{\partial y}
-                            + c_j\frac{\partial F}{\partial\dot{y}}$%}. *)
+        crudely,
+        {% $J = \frac{\partial F}{\partial y} + c_j\frac{\partial F}{\partial\dot{y}}$%}. *)
     val prec_left :
       ?setup:'a prec_setup_fn
       -> ?jac_times_vec:'a jac_times_vec_fn
@@ -492,7 +489,7 @@ module Alternate :
     type ('data, 'kind) linit = ('data, 'kind) session -> unit
 
     (** Functions that prepare the linear solver for subsequent calls to
-        {!callbacks.lsolve}. The call [lsetup s y y' res tmp] has as
+        {{!callbacks}lsolve}. The call [lsetup s y y' res tmp] has as
         arguments
 
         - [s], the solver session,
@@ -522,9 +519,8 @@ module Alternate :
     (** Functions that solve the linear equation $Mx = b$.
         $M$ is a preconditioning matrix chosen by the user, and $b$ is the
         right-hand side vector calculated within the function.
-        $M$ should approximate {% $J = \frac{\partial F}{\partial y}
-            + c_j\frac{\partial F}{\partial \dot{y}}$%}, and $c_j$ is
-        available through {!get_cj}.
+        $M$ should approximate {% $J = \frac{\partial F}{\partial y} + c_j\frac{\partial F}{\partial \dot{y}}$%},
+        and $c_j$ is available through {!get_cj}.
         The call [lsolve s b weight ycur y'cur rescur] has as arguments:
 
         - [s], the solver session,

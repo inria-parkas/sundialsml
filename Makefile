@@ -63,7 +63,7 @@ CMI_MPI = $(MLOBJ_MPI:.cmo=.cmi)
 # built/updated under the current configuration.  Duplicates OK.
 ALL_COBJ = $(COBJ_MAIN) $(COBJ_SENS) $(COBJ_NO_SENS) $(COBJ_MPI)
 ALL_MLOBJ =dochtml.cmo $(MLOBJ_MAIN) $(MLOBJ_SENS) $(MLOBJ_NO_SENS) $(MLOBJ_MPI)
-ALL_CMA = sundials.cma sundials_no_sens.cma sundials_mpi.cma
+ALL_CMA = sundials.cma sundials_no_sens.cma sundials_mpi.cma sundials_docs.cma
 
 # Installed files.
 
@@ -178,6 +178,8 @@ ML_CPPFLAGS=-P -x c -traditional-cpp
 DOCHTML_PP=$(CPP) $(ML_CPPFLAGS) -DOCAML_3X=$(OCAML_3X)
 dochtml.cmo: INCLUDES += -I +ocamldoc
 dochtml.cmo: OCAMLFLAGS += -pp '$(DOCHTML_PP)'
+sundials_docs.cma: sundials_config.cmo dochtml.cmo
+	$(OCAMLC) $(OCAMLCFLAGS) -o $@ -a $^
 
 META: META.in
 	$(CPP) $(if $(MPI_ENABLED),-DMPI_ENABLED) -DVERSION=\"$(VERSION)\" $< \
@@ -188,10 +190,11 @@ doc: doc/html/index.html
 	    cp examples/ocaml/skeletons/$$f doc/html/; \
 	done
 
-doc/html/index.html: doc/html dochtml.cmo intro.doc			\
+doc/html/index.html: doc/html sundials_docs.cma intro.doc		\
 		     $(filter-out %_impl.cmi, $(CMI_MAIN))		\
 		     $(CMI_SENS) $(if $(MPI_ENABLED), $(CMI_MPI))
-	$(OCAMLDOC) -g sundials_config.cmo -g dochtml.cmo $(INCLUDES)	\
+	$(OCAMLDOC) -g sundials_docs.cma $(INCLUDES)			\
+	    -charset utf-8						\
 	    -short-functors						\
 	    -colorize-code						\
 	    -css-style docstyle.css					\
@@ -289,7 +292,6 @@ clean:
 	-@$(RM) -f $(foreach file,$(INSTALL_CMA:.cma=$(XA)),libml$(file))
 	-@$(RM) -f $(foreach file,$(INSTALL_CMA:.cma=$(XS)),dllml$(file))
 	-@$(RM) -f $(STUBLIBS)
-	-@$(RM) -f dochtml.cmi dochtml.cmo
 
 cleandoc:
 	-@$(RM) -f doc/html/*.html doc/html/style.css

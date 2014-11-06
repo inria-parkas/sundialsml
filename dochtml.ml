@@ -232,6 +232,9 @@ struct
 
 #if OCAML_3X == 0
 end
+
+let _  = Odoc_html.charset := "utf-8"
+
 #endif
 
 let option_cvode_doc_root =
@@ -249,8 +252,6 @@ let option_idas_doc_root =
 let option_kinsol_doc_root =
   ("-kinsol-doc-root", Arg.String (fun d -> kinsol_doc_root := d), 
    "<dir>  specify the root url for the Sundials KINSOL documentation.")
-
-let _  = Odoc_html.charset := "utf-8"
 
 #if OCAML_3X
 let _ =
@@ -271,3 +272,4 @@ let _ =
   Odoc_args.add_option option_kinsol_doc_root;
   Odoc_args.extend_html_generator (module Generator : Odoc_gen.Html_functor)
 #endif
+

@@ -222,7 +222,7 @@ module BandMatrix =
     type t = {
       payload : data;
       dlsmat  : Obj.t;
-      smu     : int;
+      ismu    : int;
       mutable valid : bool;
     }
 
@@ -316,9 +316,9 @@ module BandMatrix =
       if not valid then raise Invalidated;
       c_get dlsmat i j
     *)
-    let get { payload; valid; smu } i j =
+    let get { payload; valid; ismu } i j =
       if not valid then raise Invalidated;
-      payload.{j, i - j + smu}
+      payload.{j, i - j + ismu}
 
     (*
     external c_set : Obj.t -> int -> int -> float -> unit
@@ -328,9 +328,9 @@ module BandMatrix =
       if not valid then raise Invalidated;
       c_set dlsmat i j e
     *)
-    let set { payload; valid; smu } i j v =
+    let set { payload; valid; ismu } i j v =
       if not valid then raise Invalidated;
-      payload.{j, i - j + smu} <- v
+      payload.{j, i - j + ismu} <- v
 
     let make ({ n; smu } as dims) v =
       let { payload } as r = create dims in

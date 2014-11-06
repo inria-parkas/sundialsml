@@ -590,7 +590,7 @@ module Alternate :
           (** The setup routine indicates that its Jacobian related data is not
               current and either the previous Newton corrector iteration did not
               converge, or, during the previous Newton corrector iteration, the
-              linear solver's {!callbacks.lsolve} routine failed in a
+              linear solver's {{!callbacks}lsolve} routine failed in a
               recoverable manner. *)
 
       | FailOther
@@ -608,7 +608,7 @@ module Alternate :
     type ('data, 'kind) linit = ('data, 'kind) session -> unit
 
     (** Functions that prepare the linear solver for subsequent calls to
-        {!callbacks.lsolve}. The call
+        {{!callbacks}lsolve}. The call
         [jcur = lsetup s convfail ypred fpred tmp] has as arguments
 
         - [s], the solver session,
