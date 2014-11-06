@@ -18,11 +18,9 @@ Priorities: Jun
 Priorities: Tim
 ---------------
 
-1. Docs: break long functions into lines.
+1. Understand/fix remaining slower examples.
 
-2. Understand/fix remaining slower examples.
-
-3. Opam, working at toplevel.
+2. Opam, working at toplevel.
 
 Issues/Remaining questions
 --------------------------

@@ -235,6 +235,10 @@ code { font-size: .8em; }
 pre code { font-size: 1em; }
 code code { font-size: 100%; }
 
+.type br { display: block; }
+.type pre { white-space: pre; }
+code.type { white-space: pre; }
+
 div#intro {
   max-width: 50em;
   text-align: justify;
