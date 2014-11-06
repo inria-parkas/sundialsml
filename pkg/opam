@@ -14,7 +14,6 @@ tags: [ "numerical", "simulation" ]
 license: BSD2
 build: [
     ["./configure" "--enable-mpi" "--prefix" prefix]
-    [make]
     [make "install-findlib"]
 ]
 build-doc: [
@@ -26,6 +25,7 @@ build-test: [
 ]
 remove: [["ocamlfind" "remove" "sundialsml"]]
 depends: [
+    "base-bigarray"
     "ocamlfind"
 ]
 depopts: [

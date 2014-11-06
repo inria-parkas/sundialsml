@@ -46,7 +46,6 @@ CMI_SENS = $(MLOBJ_SENS:.cmo=.cmi)
 ### Objects specific to sundials_no_sens.cma.
 COBJ_NO_SENS = cvode_ml$(XO) ida_ml$(XO)
 MLOBJ_NO_SENS =
-CMI_NO_SENS = $(MLOBJ_SENS:.cmo=.cmi)
 
 ### Objects specific to sundials_mpi.cma.
 COBJ_MPI = nvector_parallel_ml.o kinsol_bbd_ml.o		\
@@ -70,8 +69,7 @@ ALL_CMA = sundials.cma sundials_no_sens.cma sundials_mpi.cma sundials_docs.cma
 INSTALL_CMA=sundials.cma sundials_no_sens.cma \
 	    $(if $(MPI_ENABLED),sundials_mpi.cma)
 
-INSTALL_CMI=$(CMI_MAIN) $(CMI_SENS) $(CMI_NO_SENS)	\
-	    $(if $(MPI_ENABLED),$(CMI_MPI))
+INSTALL_CMI=$(CMI_MAIN) $(CMI_SENS) $(if $(MPI_ENABLED),$(CMI_MPI))
 
 STUBLIBS=$(foreach file,$(INSTALL_CMA:.cma=$(XS)), dllml$(file))
 
@@ -259,7 +257,7 @@ install-doc: doc
 
 install-ocamlfind: install-findlib
 install-findlib: META $(INSTALL_CMA) $(INSTALL_CMA:.cma=.cmxa)
-	ocamlfind install sundialsml $(INSTALL_FILES) $(STUBLIBS)
+	@ocamlfind install sundialsml $(INSTALL_FILES) $(STUBLIBS)
 
 
 uninstall: uninstall-sys
@@ -276,7 +274,7 @@ uninstall-doc:
 
 uninstall-ocamlfind: uninstall-findlib
 uninstall-findlib:
-	ocamlfind remove sundialsml
+	@ocamlfind remove sundialsml
 
 ### Misc
 

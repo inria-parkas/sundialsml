@@ -5,7 +5,7 @@ archive(byte) = "sundials.cma"
 archive(native) = "sundials.cmxa"
 package "no_sens" (
   version = VERSION
-  description = "sundials without sensitivity analysis (slightly more efficient)"
+  description = "Sundials/ML without sensitivity analysis (CVODE, IDA, KINSOL)"
   requires = "bigarray"
   archive(byte) = "sundials_no_sens.cma"
   archive(native) = "sundials_no_sens.cmxa"
@@ -22,7 +22,7 @@ package "no_sens" (
 #ifdef MPI_ENABLED
 package "mpi" (
   version = VERSION
-  description = "Add MPI support to sundials"
+  description = "Add MPI support to Sundials/ML"
   requires = "sundials mpi"
   archive(byte) = "sundials_mpi.cma"
   archive(native) = "sundials_mpi.cmxa"
