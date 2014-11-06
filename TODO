@@ -24,13 +24,6 @@ Priorities: Tim
 
 3. Opam, working at toplevel.
 
-4. Fix configure so that it finds ocamlmpi correctly even with multiple
-   ocaml versions in opam:
-
-   opam switch 3.12.1		    opam switch 4.0.1
-   ./configure --enable-mpi	    ./configure --enable-mpi
-
-
 Issues/Remaining questions
 --------------------------
 * What to do about the 'tests/' subdirectory?
