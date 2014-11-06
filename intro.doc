@@ -61,7 +61,7 @@ text.
     {- {{:#linsolv}Linear Solvers}}
     {- {{:#modules}Modules}}
     {- {{:#install}Dependencies and Installation}}
-    {- {{:#compilation}Compiling and linking programs}}
+    {- {{:#running}Running programs}}
     {- {{:#performance}Performance}}
     {- {{:#refs}References}}
     {- {{:#acks}Acknowledgements}}
@@ -174,16 +174,23 @@ only} built if explicitly requested (via [--enable-mpi]).
 
 {3:opam Opam}
 
-Opam is the easiest way to install the library.
-
-TODO: write instructions, how to get the different features, etc.
+Opam is the easiest way to install the library:
+{ol
+    {- {{:http://computation.llnl.gov/casc/sundials/download/download.php}download}
+        and install Sundials,}
+    {- {i optionally} run [opam install mpi], and}
+    {- run [opam install sundialsml].}
+}
 
 {3:build From source}
 
 Building from source is a two step process:
 {ol
+    {- {{:http://computation.llnl.gov/casc/sundials/download/download.php}download}
+        and install Sundials,}
     {- run [configure] to find and check dependencies, and}
-    {- run [make install] to build and install the library.}
+    {- run [make install] or [make install-findlib] to build and
+       install the library.}
 }
 
 The choices made by the configure script can be influenced by arguments
@@ -198,14 +205,16 @@ versions.
 The library's performance can be analyzed via [make perf.opt.log] which
 produces the graph explained {{:#performance}below}.
 
-{2:compilation Compiling and linking programs}
+{2:running Running programs}
+
+{3:compilation Compiling and linking}
 
 Programs are compiled by specifying where Sundials/ML is installed, e.g.,
 [-I +sundials], and including [bigarray.cma] and [sundials.cma], for
 example:
-{C {[ocamlc -o mysim.byte -I +sundials bigarray.cma sundials.cma mysim.ml]}}
+{C {[ocamlc -o mysim.byte -I +sundialsml bigarray.cma sundials.cma mysim.ml]}}
 or the [.cmxa] versions:
-{C {[ocamlopt -o mysim.opt -I +sundials bigarray.cmxa sundials.cmxa mysim.ml]}}
+{C {[ocamlopt -o mysim.opt -I +sundialsml bigarray.cmxa sundials.cmxa mysim.ml]}}
 
 The [sundials.cma/.cmxa] files link against the libraries
 [libsundials_cvodes] and [libsundials_idas]. The code in these libraries
@@ -220,11 +229,34 @@ functionality in {!Cvodes} or {!Idas}. Both sets of files link against
 The parallel features—in the {!Nvector_parallel}, {!Cvode_bbd},
 {!Cvodes_bbd}, {!Ida_bbd}, {!Idas_bbd}, and {!Kinsol_bbd} modules—require the
 additional inclusions of [mpi.cma] and [sundials_mpi.cma]. So, for example:
-{C {[ocamlc -o mysim.byte -I +sundials bigarray.cma mpi.cma sundials.cma sundials_mpi.cma mysim.ml]}}
+{C {[ocamlc -o mysim.byte -I +sundialsml bigarray.cma mpi.cma sundials.cma sundials_mpi.cma mysim.ml]}}
 or with the [.cmxa] versions:
-{C {[ocamlopt -o mysim.opt -I +sundials bigarray.cmxa mpi.cmxa sundials.cmxa sundials_mpi.cmxa mysim.ml]}}
+{C {[ocamlopt -o mysim.opt -I +sundialsml bigarray.cmxa mpi.cmxa sundials.cmxa sundials_mpi.cmxa mysim.ml]}}
 The [sundials_mpi.cma/.cmxa] files link against the
 [libsundials_nvecparallel] library.
+
+{3:toplevel From the toplevel}
+
+Sundials/ML can also be used from the OCaml interactive loop, either by the
+invocation:
+{C {[ocaml bigarray.cma -I +sundialsml sundials.cma]}}
+or through [ocamlfind], for example: {[
+#use "topfind";;
+#require "sundialsml";;
+
+let f t y yd = yd.{0} <- 1.;;
+let g t y gout = gout.{0} <- y.{0};;
+let y = Sundials.RealArray.of_array [| -1.0 |];;
+let yvec = Nvector_serial.wrap y;;
+let s = Cvode.init Cvode.Adams Cvode.Functional Cvode.default_tolerances
+		   f ~roots:(1, g) 0. yvec;;
+Cvode.set_stop_time s 2.;;
+
+(* repeat the commands below to advance the simulation until t = 2.0 *)
+let (t', result) = Cvode.solve_normal s 2. yvec;;
+Printf.printf "%e: " t';
+Sundials.RealArray.iter (Printf.printf "\t%e") y;
+Printf.printf "\n";;]}
 
 {2:performance Performance}
 

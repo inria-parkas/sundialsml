@@ -207,7 +207,7 @@ doc/html/index.html: doc/html sundials_docs.cma intro.doc		\
 		-D'VERSION()=$(VERSION)'"				\
 	    -d ./doc/html/						\
 	    -hide Cvode_impl,Ida_impl,Kinsol_impl			\
-	    -t "Sundials/ML $(VERSION)-$(VERSIONP)"			\
+	    -t "Sundials/ML $(VERSION)p$(VERSIONP)"			\
 	    -intro intro.doc						\
 	    $(filter-out %_impl.mli, $(CMI_MAIN:.cmi=.mli))		\
 	    $(if $(MPI_ENABLED), $(CMI_MPI:.cmi=.mli))			\

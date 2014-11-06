@@ -20,11 +20,10 @@ Priorities: Tim
 
 1. Understand/fix remaining slower examples.
 
-2. Opam, working at toplevel.
-
 Issues/Remaining questions
 --------------------------
 * What to do about the 'tests/' subdirectory?
+* Include the --unsafe times in the documentation graph?
 
 Decisions
 ---------
