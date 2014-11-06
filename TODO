@@ -22,11 +22,9 @@ Priorities: Tim
 
 2. Understand/fix remaining slower examples.
 
-3. Add Sundials_config.safe test to Dls/Spils checks.
+3. Opam, working at toplevel.
 
-4. Opam, working at toplevel.
-
-5. Fix configure so that it finds ocamlmpi correctly even with multiple
+4. Fix configure so that it finds ocamlmpi correctly even with multiple
    ocaml versions in opam:
 
    opam switch 3.12.1		    opam switch 4.0.1
