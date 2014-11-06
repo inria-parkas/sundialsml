@@ -5,21 +5,24 @@ GOAL: End november:
 
 Priorities: Jun
 ---------------
-1. Jun: Replace long lists of callback arguments with records,
-	carefully adapting the docs.
 
-2. Jun: Fix the warning messages
+1.  Replace long lists of callback arguments with records, carefully
+    adapting the docs.
+
+2. Fix the warning messages
     ../../examples.mk:298: *** mixed implicit and normal rules: deprecated syntax
     ../../examples.mk:298: *** mixed implicit and normal rules: deprecated syntax
 
-3. Jun/Tim: Write skeleton programs.
+3. Write skeleton programs.
 
 Priorities: Tim
 ---------------
 
-1. Tim: Docs: break long functions into lines.
+1. Docs: break long functions into lines.
 
-2. Tim: Understand/fix remaining slower examples.
+2. Understand/fix remaining slower examples.
+
+3. Add Sundials_config.safe test to Dls/Spils checks.
 
 Decisions
 ---------
