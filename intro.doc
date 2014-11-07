@@ -14,7 +14,7 @@ This OCaml interface was written by {{:http://www.tbrk.org}Timothy Bourke}
 ({{:http://www.inria.fr}Inria}/{{:http://www.di.ens.fr/}ENS}),
 and
 {{:http://www.di.ens.fr/~pouzet/}Marc Pouzet}
-({{:http://www.upmc.fr/}UPMC}/{{:http://www.inria.fr/}Inria}/{{:http://www.di.ens.fr/}ENS}).
+({{:http://www.upmc.fr/}UPMC}/{{:http://www.di.ens.fr/}ENS}/{{:http://www.inria.fr/}Inria}).
 It provides a complete OCaml interface to Sundials version {b {var version}}.
 
 The structure of this interface mostly follows that of the original library,
@@ -268,11 +268,13 @@ extra code to execute at each call. But, how significant is this cost? And,
 more broadly, how does the performance of OCaml compare to that of C for
 programs that use numerical solvers?
 
-These questions are not easy to answer. As a first attempt, the bars in
-the following graph show the ratios of the execution times of the Sundials
-examples reimplemented in OCaml to the original versions in C, i.e., a
-value of 2 (on the axis at left) means an OCaml version that is
-twice as slow.
+These questions are not easy to answer. As a first attempt, we took the
+examples in C from the Sundials distribution, reimplemented them in
+OCaml and compared the execution times. The bars in the graph below show
+the ratios of the execution times of the OCaml code to the C code, i.e., a
+value of 2 (on the left axis) means that OCaml is twice as
+slow. The black dots indicate, against the right axis, the execution
+time of the C code.
 
 {img perf.opt.png}
 
