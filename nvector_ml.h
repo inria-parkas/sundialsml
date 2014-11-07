@@ -102,35 +102,49 @@
 
    In summary, for nvectors created from OCaml:
 
-     on creation: ml_nvec_new is invoked (it allocates memory in the C heap).
- 
+     on creation: ml_nvec_wrap_* is invoked (it allocates memory in the C heap).
+
      on deletion: finalize_nvec is invoked to free memory (it, in turn,
  		 invokes callml_vdestroy).
 
+     deleted by: finalizer during GC (when caml-nvec dies),
+                 no explicit destruction allowed.
+
     and for nvectors cloned from C (Sundials):
- 
+
       on creation: callml_vclone is invoked (it allocates memory in the C
   		   heap).
- 
+
       on deletion: callml_vdestroy is invoked to free memory.
+
+      deleted by: explicit call to nvdestroy field of N_Vector_Ops,
+                  GC never considers it dead until then (due to backlink).
 
    Serial nvectors
    ---------------
    The payload is a Bigarray of floats and, as per usual, the underlying data
    is allocated in the C heap (it will not be moved by the GC).
- 
+
    The N_Vector content->data field points to the data in the C heap which
    underlies the payload Bigarray.
- 
+
    The N_Vector ops are identical to those of a standard serial N_Vector,
    except for nvclone, nvcloneempty, and nvdestroy which are functions,
    implemented in this file, to create the arrangement described here.
- 
+
    Custom nvectors
    ---------------
    The payload is the value being wrapped. The content field is set to point
    to a Value containing the OCaml callback table, it is also registered as a
-   global root.
+   global root.  The user must ensure the callbacks do not hold referenes to
+   any particular nvector, for otherwise that nvector is never reclaimed.
+
+   Parallel nvectors
+   -----------------
+   This is almost the same as serial nvectors, except the payload is a triple
+   containing a Bigarray of floats (containing the local portion of the
+   vector), global length, and an MPI communicator.
+
 */
 
 enum nvector_ops_tag {
