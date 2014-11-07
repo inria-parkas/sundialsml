@@ -136,7 +136,6 @@
 enum nvector_ops_tag {
   NVECTOR_OPS_NVCHECK = 0,
   NVECTOR_OPS_NVCLONE,
-  NVECTOR_OPS_NVDESTROY,
   NVECTOR_OPS_NVSPACE,
   NVECTOR_OPS_NVLINEARSUM,
   NVECTOR_OPS_NVCONST,
@@ -177,9 +176,9 @@ struct cnvec {
 // Internal functions
 N_Vector alloc_cnvec(size_t content_size, value backlink);
 void clone_cnvec_ops(N_Vector dst, N_Vector src);
-CAMLprim value val_cnvec(N_Vector nv, void (*finalizer)(value));
+CAMLprim value alloc_caml_nvec(N_Vector nv, void (*finalizer)(value));
 void free_cnvec(N_Vector nv);
-CAMLprim void finalize_cnvec(value vnv);
+CAMLprim void finalize_caml_nvec(value vnv);
 
 // Creation functions
 value ml_nvec_wrap_serial(value payload, value checkfn);

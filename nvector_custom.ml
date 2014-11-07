@@ -16,7 +16,6 @@ type 'a t = ('a, kind) Nvector.t
 type 'a nvector_ops = {
   n_vcheck           : 'a -> 'a -> bool;
   n_vclone           : 'a -> 'a;
-  n_vdestroy         : ('a -> unit) option;
   n_vspace           : ('a -> (int * int)) option;
   n_vlinearsum       : float -> 'a -> float -> 'a -> 'a -> unit;
   n_vconst           : float -> 'a -> unit;
@@ -52,7 +51,6 @@ let add_tracing msg ops =
   let {
       n_vcheck           = n_vcheck;
       n_vclone           = n_vclone;
-      n_vdestroy         = n_vdestroy;
       n_vspace           = n_vspace;
       n_vlinearsum       = n_vlinearsum;
       n_vconst           = n_vconst;
@@ -86,7 +84,6 @@ let add_tracing msg ops =
       pr "nvcheck-check";
       check y
   and tr_nvclone a = pr "nvclone"; n_vclone a
-  and tr_nvdestroy = fo n_vdestroy (fun f -> fun a -> (pr "nvdestroy"; f a))
   and tr_nvspace = fo n_vspace (fun f -> fun a -> (pr "nvspace"; f a))
   and tr_nvlinearsum a x b y z = pr "nvlinearsum"; n_vlinearsum a x b y z
   and tr_nvconst c z = pr "nvconst"; n_vconst c z
@@ -115,7 +112,6 @@ let add_tracing msg ops =
   {
       n_vcheck           = tr_nvcheck;
       n_vclone           = tr_nvclone;
-      n_vdestroy         = tr_nvdestroy;
       n_vspace           = tr_nvspace;
       n_vlinearsum       = tr_nvlinearsum;
       n_vconst           = tr_nvconst;

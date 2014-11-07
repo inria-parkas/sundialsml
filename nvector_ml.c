@@ -52,21 +52,13 @@ N_Vector alloc_cnvec(size_t content_size, value backlink)
     return nv;
 }
 
-void free_cnvec(N_Vector nv)
-{
-    caml_remove_generational_global_root(&NVEC_BACKLINK(nv));
-    if (nv->content != NULL) free(nv->content);
-    free(nv->ops);
-    free(nv);
-}
-
 static mlsize_t nvec_rough_size =
     sizeof(struct _generic_N_Vector)
     + sizeof(value)
     + sizeof(struct _generic_N_Vector_Ops)
     + 4 * sizeof(void *);
 
-CAMLprim value val_cnvec(N_Vector nv, void (*finalizer)(value))
+CAMLprim value alloc_caml_nvec(N_Vector nv, void (*finalizer)(value))
 {
     CAMLparam0();
     CAMLlocal1(r);
@@ -77,11 +69,18 @@ CAMLprim value val_cnvec(N_Vector nv, void (*finalizer)(value))
     CAMLreturn(r);
 }
 
-CAMLprim void finalize_cnvec(value vnv)
+/* ml_nvec_free_cnvec xor ml_nvec_finalize_caml_nvec must be called.  */
+void free_cnvec(N_Vector nv)
 {
-    CAMLparam1(vnv);
-    free_cnvec(NVEC_CVAL(vnv));
-    CAMLreturn0;
+    caml_remove_generational_global_root(&NVEC_BACKLINK(nv));
+    if (nv->content != NULL) free(nv->content);
+    free(nv->ops);
+    free(nv);
+}
+
+void finalize_caml_nvec (value vnv)
+{
+    free_cnvec (NVEC_CVAL (vnv));
 }
 
 void clone_cnvec_ops(N_Vector dst, N_Vector src)
@@ -117,6 +116,7 @@ void clone_cnvec_ops(N_Vector dst, N_Vector src)
 
 /** Serial nvectors * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
+/* Creation from Sundials/C.  */
 /* Adapted from sundials-2.5.0/src/nvec_ser/nvector_serial.c:
    N_VCloneEmpty_Serial */
 static N_Vector clone_serial(N_Vector w)
@@ -133,9 +133,10 @@ static N_Vector clone_serial(N_Vector w)
 
     /* Create vector (we need not copy the data) */
     v_payload = caml_ba_alloc(w_ba->flags, w_ba->num_dims, NULL, w_ba->dim);
-    
+
     v = alloc_cnvec(sizeof(struct _N_VectorContent_Serial), v_payload);
     if (v == NULL) CAMLreturnT (N_Vector, NULL);
+
     content = (N_VectorContent_Serial) v->content;
 
     /* Create vector operation structure */
@@ -149,6 +150,7 @@ static N_Vector clone_serial(N_Vector w)
     CAMLreturnT(N_Vector, v);
 }
 
+/* Creation from OCaml.  */
 /* Adapted from sundials-2.5.0/src/nvec_ser/nvector_serial.c:
    N_VNewEmpty_Serial */
 CAMLprim value ml_nvec_wrap_serial(value payload, value checkfn)
@@ -170,6 +172,7 @@ CAMLprim value ml_nvec_wrap_serial(value payload, value checkfn)
     /* Create vector operation structure */
     ops->nvclone           = clone_serial;		    /* ours */
     ops->nvcloneempty      = NULL;
+    /* This is registered but only ever called for C-allocated clones. */
     ops->nvdestroy         = free_cnvec;
 
     ops->nvspace           = N_VSpace_Serial;		    /* theirs */
@@ -202,7 +205,7 @@ CAMLprim value ml_nvec_wrap_serial(value payload, value checkfn)
 
     vnvec = caml_alloc_tuple(3);
     Store_field(vnvec, 0, payload);
-    Store_field(vnvec, 1, val_cnvec(nv, finalize_cnvec));
+    Store_field(vnvec, 1, alloc_caml_nvec(nv, finalize_caml_nvec));
     Store_field(vnvec, 2, checkfn);
 
     CAMLreturn(vnvec);
@@ -218,28 +221,15 @@ CAMLprim value ml_nvec_wrap_serial(value payload, value checkfn)
 #define IS_SOME_OP(nvec, x)  (HAS_OP(CNVEC_OP_TABLE(nvec), x))
 #define GET_SOME_OP(nvec, x) (Field(Field(CNVEC_OP_TABLE(nvec), x), 0))
 
-void callml_vdestroy(N_Vector v)
+static void finalize_custom_cnvec(value vnv)
 {
-    CAMLparam0();
-    CAMLlocal1(mlop);
-
-    if (IS_SOME_OP(v, NVECTOR_OPS_NVDESTROY)) {
-	mlop = GET_SOME_OP(v, NVECTOR_OPS_NVDESTROY);
-	caml_callback(mlop, NVEC_BACKLINK(v));
-    }
-
+    N_Vector v = NVEC_CVAL(vnv);
     caml_remove_generational_global_root((value *)&CNVEC_OP_TABLE(v));
     v->content = NULL;
     free_cnvec(v);
-
-    CAMLreturn0;
 }
 
-static CAMLprim void finalize_custom_cnvec(value vnv)
-{
-    callml_vdestroy(NVEC_CVAL(vnv));
-}
-
+/* Creation from OCaml. */
 CAMLprim value ml_nvec_wrap_custom(value mlops, value payload, value checkfn)
 {
     CAMLparam3(mlops, payload, checkfn);
@@ -256,7 +246,7 @@ CAMLprim value ml_nvec_wrap_custom(value mlops, value payload, value checkfn)
     /* Create vector operation structure */
     ops->nvclone           = callml_vclone;
     ops->nvcloneempty      = NULL;
-    ops->nvdestroy         = callml_vdestroy;
+    ops->nvdestroy         = free_cnvec;
 
     ops->nvspace = NULL;
     if (HAS_OP(mlops, NVECTOR_OPS_NVSPACE))
@@ -306,12 +296,13 @@ CAMLprim value ml_nvec_wrap_custom(value mlops, value payload, value checkfn)
 
     vcnvec = caml_alloc_tuple(3);
     Store_field(vcnvec, 0, payload);
-    Store_field(vcnvec, 1, val_cnvec(nv, finalize_custom_cnvec));
+    Store_field(vcnvec, 1, alloc_caml_nvec(nv, finalize_custom_cnvec));
     Store_field(vcnvec, 2, checkfn);
 
     CAMLreturn(vcnvec);
 }
 
+/* Creation from Sundials/C. */
 N_Vector callml_vclone(N_Vector w)
 {
     CAMLparam0();
@@ -335,6 +326,7 @@ N_Vector callml_vclone(N_Vector w)
 
     /* Create vector operation structure */
     clone_cnvec_ops(v, w);
+    v->ops->nvdestroy = free_cnvec;
 
     /* Create content */
     v->content = (void *) CNVEC_OP_TABLE(w);

@@ -142,7 +142,7 @@ CAMLprim value ml_nvec_wrap_parallel(value payload, value checkfn)
 
     vnvec = caml_alloc_tuple(3);
     Store_field(vnvec, 0, payload);
-    Store_field(vnvec, 1, val_cnvec(nv, finalize_cnvec));
+    Store_field(vnvec, 1, alloc_caml_nvec(nv, finalize_caml_nvec));
     Store_field(vnvec, 2, checkfn);
 
     CAMLreturn(vnvec);

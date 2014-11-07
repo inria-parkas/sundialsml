@@ -48,10 +48,6 @@ type 'a nvector_ops = {
   (** Creates a new, distinct vector from an existing one without
       necessarily copying the contents of the original vector. *)
 
-  n_vdestroy         : ('a -> unit) option;
-  (** Destroys the N_Vector v and frees memory allocated for its internal
-      data. *)
-
   n_vspace           : ('a -> int * int) option;
   (** Returns storage requirements for one nvector [(lrw, liw)], where
       [lrw] is the number of realtype words and [liw] is the number of
