@@ -47,7 +47,7 @@ static N_Vector clone_parallel(N_Vector w)
     N_Vector v;
     N_VectorContent_Parallel content;
 
-    if (w == NULL) return(NULL);
+    if (w == NULL) CAMLreturnT (N_Vector, NULL);
     w_payload = NVEC_BACKLINK(w);
     struct caml_ba_array *w_ba = Caml_ba_array_val(Field(w_payload, 0));
 
@@ -59,7 +59,7 @@ static N_Vector clone_parallel(N_Vector w)
     Store_field(v_payload, 2, Field(w_payload, 2));
     
     v = alloc_cnvec(sizeof(struct _N_VectorContent_Parallel), v_payload);
-    if (v == NULL) caml_raise_out_of_memory();
+    if (v == NULL) CAMLreturnT (N_Vector, NULL);
     content = (N_VectorContent_Parallel) v->content;
 
     /* Create vector operation structure */
