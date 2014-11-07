@@ -40,10 +40,8 @@ Decisions
 
 MINOR PATCHES
 -------------
-1. Flatten out jacobian_arg
+1. Rename CAML_FN everywhere?
 
-2. Rename CAML_FN everywhere?
-
-3. Alternate linear solvers for Cvodes.Adjoint and Idas.Adjoint (with
+2. Alternate linear solvers for Cvodes.Adjoint and Idas.Adjoint (with
    examples)?
 
