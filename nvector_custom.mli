@@ -33,8 +33,8 @@ type 'a t = ('a, kind) Nvector.t
     {ul
       {- Catch all exceptions since they and their backtraces cannot be
          propagated reliably. Backtraces can be produced manually by
-         wrapping an operating in [try...with] and using the
-         [Printexc] module.}
+         wrapping an operating in [try...with] and using
+         {{:OCAML_DOC_ROOT(Printexc.html)} Printexc}.}
       {- Not create indirect reference loops back to the enclosing nvector. Such
          loops will not be properly garbage collected.}}
 
