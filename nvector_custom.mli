@@ -16,8 +16,7 @@
     @author Timothy Bourke (Inria)
     @author Jun Inoue (Inria)
     @author Marc Pouzet (LIENS)
-    @cvode <node7#s:nvector> The NVECTOR Module
- *)
+    @cvode <node7#s:nvector> The NVECTOR Module *)
 
 (** Represents an nvector manipulated by operations written in OCaml. Note that
     such operations entail the additional runtime cost of an OCaml callback. *)
@@ -26,26 +25,20 @@ type kind
 (** The type scheme of custom nvectors. *)
 type 'a t = ('a, kind) Nvector.t
 
-(**
-   The set of operations required to define an nvector. Some operations
-   are optional; default values are either provided by the OCaml interface
-   or the Sundials library.
+(** The set of operations required to define an nvector. Some operations
+    are optional; default values are either provided by the OCaml interface
+    or the Sundials library.
 
-   If you write your own operations, you must ensure two things:
+    Custom nvectors and their operations must
+    {ul
+      {- Catch all exceptions since they and their backtraces cannot be
+         propagated reliably. Backtraces can be produced manually by
+         wrapping an operating in [try...with] and using the
+         [Printexc] module.}
+      {- Not create indirect reference loops back to the enclosing nvector. Such
+         loops will not be properly garbage collected.}}
 
-    - No references to any custom nvectors, other than what the
-      binding passes in as arguments.  It would create a reference
-      loop that the GC cannot reclaim.
-
-    - Catch all exceptions.  Sundials/C's interface makes it
-      impossible to propagate exceptions reliably from nvector ops.
-      Exceptions will be discarded, leaving a warning on stderr.  We
-      unfortunately cannot attach a backtrace.  If you need a
-      backtrace, wrap your operation in [try...with] and use
-      [Printexc.print_backtrace] or [Printexc.get_backtrace].
-
-   @cvode <node7#s:nvector> _generic_N_Vector_Ops
- *)
+    @cvode <node7#s:nvector> _generic_N_Vector_Ops *)
 type 'a nvector_ops = {
   n_vcheck           : 'a -> 'a ->  bool;
   (** Returns [true] if the vectors are compatible. See {!Nvector.check}. *)
