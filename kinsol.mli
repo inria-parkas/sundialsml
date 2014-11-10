@@ -2,7 +2,8 @@
 (*                                                                     *)
 (*                   OCaml interface to Sundials                       *)
 (*                                                                     *)
-(*  Timothy Bourke (Inria), Jun Inoue (Inria), and Marc Pouzet (LIENS) *)
+(*             Timothy Bourke, Jun Inoue, and Marc Pouzet              *)
+(*             (Inria/ENS)     (Inria/ENS)    (UPMC/ENS/Inria)         *)
 (*                                                                     *)
 (*  Copyright 2014 Institut National de Recherche en Informatique et   *)
 (*  en Automatique.  All rights reserved.  This file is distributed    *)
@@ -34,9 +35,9 @@
       {- {{:#exceptions}Exceptions}}}
 
      @version VERSION()
-     @author Timothy Bourke (Inria)
-     @author Jun Inoue (Inria)
-     @author Marc Pouzet (LIENS) *)
+     @author Timothy Bourke (Inria/ENS)
+     @author Jun Inoue (Inria/ENS)
+     @author Marc Pouzet (UPMC/ENS/Inria) *)
 
 open Kinsol_impl
 open Sundials
