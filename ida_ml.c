@@ -84,20 +84,21 @@ CAMLprim value c_ida_init_module (value cbs, value exns)
     CAMLreturn (Val_unit);
 }
 
-int ida_translate_exception(value session, value r, recoverability recoverable)
+int ida_translate_exception(value session, value exn,
+			    recoverability recoverable)
 {
-    CAMLparam2(session, r);
-    CAMLlocal1(exn);
+    CAMLparam2(session, exn);
+    CAMLlocal1(bucket);
 
-    r = Extract_exception(r);
+    exn = Extract_exception(exn);
 
-    if (recoverable && Field(r, 0) == SUNDIALS_EXN (RecoverableFailure))
+    if (recoverable && Field(exn, 0) == SUNDIALS_EXN (RecoverableFailure))
 	CAMLreturnT (int, 1);
 
     /* Unrecoverable error.  Save the exception and return -1.  */
-    exn = caml_alloc_small (1,0);
-    Field (exn, 0) = r;
-    Store_field (session, RECORD_IDA_SESSION_EXN_TEMP, exn);
+    bucket = caml_alloc_small (1,0);
+    Field (bucket, 0) = exn;
+    Store_field (session, RECORD_IDA_SESSION_EXN_TEMP, bucket);
     CAMLreturnT (int, -1);
 }
 
@@ -155,7 +156,7 @@ static int resfn (realtype t, N_Vector y, N_Vector yp,
 {
     CAMLparam0 ();
     CAMLlocalN (args, 4);
-    CAMLlocal3 (session, r, cb);
+    CAMLlocal2 (session, cb);
 
     args[0] = caml_copy_double(t);
     args[1] = NVEC_BACKLINK (y);
@@ -164,9 +165,10 @@ static int resfn (realtype t, N_Vector y, N_Vector yp,
 
     WEAK_DEREF (session, *(value*)user_data);
 
-    r = caml_callbackN_exn (IDA_RESFN_FROM_ML (session),
-			    sizeof (args) / sizeof (*args),
-			    args);
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (IDA_RESFN_FROM_ML (session),
+				  sizeof (args) / sizeof (*args),
+				  args);
 
     CAMLreturnT (int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -219,7 +221,7 @@ static int jacfn (long int neq, realtype t, realtype coef,
 {
     CAMLparam0 ();
     CAMLlocalN (args, 2);
-    CAMLlocal4(session, cb, dmat, r);
+    CAMLlocal3(session, cb, dmat);
 
     WEAK_DEREF (session, *(value*)user_data);
 
@@ -236,7 +238,8 @@ static int jacfn (long int neq, realtype t, realtype coef,
 			    make_triple_tmp (tmp1, tmp2, tmp3));
     args[1] = Some_val(dmat);
 
-    r = caml_callback2_exn (Field(cb, 0), args[0], args[1]);
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback2_exn (Field(cb, 0), args[0], args[1]);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -248,7 +251,7 @@ static int bandjacfn (long int neq, long int mupper, long int mlower,
 {
     CAMLparam0 ();
     CAMLlocalN (args, 3);
-    CAMLlocal4(session, cb, bmat, r);
+    CAMLlocal3(session, cb, bmat);
 
     WEAK_DEREF (session, *(value*)user_data);
     cb = IDA_LS_CALLBACKS_FROM_ML(session);
@@ -267,7 +270,8 @@ static int bandjacfn (long int neq, long int mupper, long int mlower,
 			    make_triple_tmp (tmp1, tmp2, tmp3));
     args[2] = Some_val(bmat);
 
-    r = caml_callback3_exn (Field(cb, 0), args[0], args[1], args[2]);
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback3_exn (Field(cb, 0), args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -276,7 +280,7 @@ static int rootsfn (realtype t, N_Vector y, N_Vector yp,
 		    realtype *gout, void *user_data)
 {
     CAMLparam0 ();
-    CAMLlocal2 (session, r);
+    CAMLlocal1 (session);
     CAMLlocalN (args, 4);
     intnat nroots;
 
@@ -289,9 +293,10 @@ static int rootsfn (realtype t, N_Vector y, N_Vector yp,
     args[2] = NVEC_BACKLINK (yp);
     args[3] = caml_ba_alloc (BIGARRAY_FLOAT, 1, gout, &nroots);
 
-    r = caml_callbackN_exn (IDA_ROOTSFN_FROM_ML (session),
-			    sizeof (args) / sizeof (*args),
-			    args);
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (IDA_ROOTSFN_FROM_ML (session),
+				  sizeof (args) / sizeof (*args),
+				  args);
 
     CAMLreturnT (int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }
@@ -324,7 +329,7 @@ static int precsetupfn(realtype t,
 		       N_Vector tmp3)
 {
     CAMLparam0();
-    CAMLlocal4(session, r, cb, arg);
+    CAMLlocal3(session, cb, arg);
 
     WEAK_DEREF (session, *(value*)user_data);
     cb = IDA_LS_CALLBACKS_FROM_ML (session);
@@ -333,7 +338,9 @@ static int precsetupfn(realtype t,
     cb = Field (cb, 0);
 
     arg = make_jac_arg(t, cj, y, yp, res, make_triple_tmp(tmp1, tmp2, tmp3));
-    r = caml_callback_exn (cb, arg);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback_exn (cb, arg);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -352,7 +359,7 @@ static int precsolvefn(
 {
     CAMLparam0();
     CAMLlocalN(args, 4);
-    CAMLlocal3(session, r, cb);
+    CAMLlocal2(session, cb);
 
     args[0] = make_jac_arg(t, cj, y, yp, res, NVEC_BACKLINK (tmp));
     args[1] = NVEC_BACKLINK (rvec);
@@ -364,7 +371,8 @@ static int precsolvefn(
     cb = Field (cb, 0);
     cb = Field (cb, RECORD_IDA_SPILS_CALLBACKS_PREC_SOLVE_FN);
 
-    r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
 
     CAMLreturnT (int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -382,7 +390,7 @@ static int jactimesfn(
 {
     CAMLparam0();
     CAMLlocalN(args, 3);
-    CAMLlocal3(session, r, cb);
+    CAMLlocal2(session, cb);
 
     args[0] = make_jac_arg (t, cj, y, yp, res, make_double_tmp (tmp1, tmp2));
     args[1] = NVEC_BACKLINK (v);
@@ -392,7 +400,9 @@ static int jactimesfn(
     cb = IDA_LS_CALLBACKS_FROM_ML (session);
     cb = Field (cb, 0);
     cb = Field (cb, RECORD_IDA_SPILS_CALLBACKS_JAC_TIMES_VEC_FN);
-    r = caml_callback3_exn (cb, args[0], args[1], args[2]);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback3_exn (cb, args[0], args[1], args[2]);
 
     CAMLreturnT (int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }
@@ -418,7 +428,7 @@ static int lsetup(IDAMem ida_mem, N_Vector yyp, N_Vector ypp, N_Vector resp,
 {
     CAMLparam0();
     CAMLlocalN(args, 5);
-    CAMLlocal3(session, r, cb);
+    CAMLlocal2(session, cb);
 
     WEAK_DEREF (session, *(value*)ida_mem->ida_user_data);
 
@@ -433,7 +443,8 @@ static int lsetup(IDAMem ida_mem, N_Vector yyp, N_Vector ypp, N_Vector resp,
     cb = Field (cb, RECORD_IDA_ALTERNATE_CALLBACKS_LSETUP);
     cb = Field (cb, 0);
 
-    r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -443,7 +454,7 @@ static int lsolve(IDAMem ida_mem, N_Vector b, N_Vector weight, N_Vector ycur,
 {
     CAMLparam0();
     CAMLlocalN(args, 6);
-    CAMLlocal3(session, r, cb);
+    CAMLlocal2(session, cb);
 
     WEAK_DEREF (session, *(value*)ida_mem->ida_user_data);
 
@@ -458,7 +469,8 @@ static int lsolve(IDAMem ida_mem, N_Vector b, N_Vector weight, N_Vector ycur,
     cb = Field (cb, 0);
     cb = Field (cb, RECORD_IDA_ALTERNATE_CALLBACKS_LSOLVE);
 
-    r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }

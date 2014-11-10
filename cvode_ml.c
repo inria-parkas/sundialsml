@@ -152,28 +152,26 @@ CAMLprim value c_cvode_clear_err_handler_fn(value vdata)
     CAMLreturn (Val_unit);
 }
 
-int cvode_translate_exception (value session, value r,
+int cvode_translate_exception (value session, value exn,
 			       recoverability recoverable)
 {
-    CAMLparam2(session, r);
-    CAMLlocal1(exn);
+    CAMLparam2(session, exn);
+    CAMLlocal1(bucket);
 
-    r = Extract_exception(r);
-
-    if (recoverable && Field(r, 0) == SUNDIALS_EXN (RecoverableFailure))
+    if (recoverable && Field(exn, 0) == SUNDIALS_EXN (RecoverableFailure))
 	CAMLreturnT (int, 1);
 
     /* Unrecoverable error.  Save the exception and return -1.  */
-    exn = caml_alloc_small (1,0);
-    Field (exn, 0) = r;
-    Store_field (session, RECORD_CVODE_SESSION_EXN_TEMP, exn);
+    bucket = caml_alloc_small (1,0);
+    Field (bucket, 0) = exn;
+    Store_field (session, RECORD_CVODE_SESSION_EXN_TEMP, bucket);
     CAMLreturnT (int, -1);
 }
 
 static int rhsfn(realtype t, N_Vector y, N_Vector ydot, void *user_data)
 {
     CAMLparam0();
-    CAMLlocal2(session, r);
+    CAMLlocal1(session);
     CAMLlocalN(args, 3);
 
     WEAK_DEREF (session, *(value*)user_data);
@@ -182,8 +180,9 @@ static int rhsfn(realtype t, N_Vector y, N_Vector ydot, void *user_data)
     args[1] = NVEC_BACKLINK(y);
     args[2] = NVEC_BACKLINK(ydot);
 
-    r = caml_callback3_exn(Field(session, RECORD_CVODE_SESSION_RHSFN),
-			   args[0], args[1], args[2]);
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback3_exn(Field(session, RECORD_CVODE_SESSION_RHSFN),
+				 args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -191,7 +190,7 @@ static int rhsfn(realtype t, N_Vector y, N_Vector ydot, void *user_data)
 static int roots(realtype t, N_Vector y, realtype *gout, void *user_data)
 {
     CAMLparam0();
-    CAMLlocal2(session, r);
+    CAMLlocal1(session);
     CAMLlocalN(args, 3);
 
     value *backref = user_data;
@@ -205,8 +204,9 @@ static int roots(realtype t, N_Vector y, realtype *gout, void *user_data)
     args[1] = NVEC_BACKLINK (y);
     args[2] = caml_ba_alloc (BIGARRAY_FLOAT, 1, gout, &nroots);
 
-    r = caml_callback3_exn (Field(session, RECORD_CVODE_SESSION_ROOTSFN),
-			    args[0], args[1], args[2]);
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback3_exn (Field(session, RECORD_CVODE_SESSION_ROOTSFN),
+				  args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, UNRECOVERABLE));
 }
@@ -263,7 +263,7 @@ static int jacfn(
 {
     CAMLparam0();
     CAMLlocalN (args, 2);
-    CAMLlocal4(session, cb, dmat, r);
+    CAMLlocal3(session, cb, dmat);
 
     WEAK_DEREF (session, *(value*)user_data);
 
@@ -278,7 +278,8 @@ static int jacfn(
     args[0] = make_jac_arg (t, y, fy, make_triple_tmp (tmp1, tmp2, tmp3));
     args[1] = Some_val(dmat);
 
-    r = caml_callback2_exn (Field(cb, 0), args[0], args[1]);
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback2_exn (Field(cb, 0), args[0], args[1]);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -298,7 +299,7 @@ static int bandjacfn(
 {
     CAMLparam0();
     CAMLlocalN(args, 3);
-    CAMLlocal4(session, cb, bmat, r);
+    CAMLlocal3(session, cb, bmat);
 
     WEAK_DEREF (session, *(value*)user_data);
     cb = CVODE_LS_CALLBACKS_FROM_ML (session);
@@ -316,7 +317,8 @@ static int bandjacfn(
     args[1] = make_jac_arg(t, y, fy, make_triple_tmp(tmp1, tmp2, tmp3));
     args[2] = Some_val(bmat);
 
-    r = caml_callback3_exn (Field(cb, 0), args[0], args[1], args[2]);
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback3_exn (Field(cb, 0), args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -333,7 +335,7 @@ static int precsetupfn(realtype t,
 		       N_Vector tmp3)
 {
     CAMLparam0();
-    CAMLlocal3(session, r, cb);
+    CAMLlocal2(session, cb);
     CAMLlocalN(args, 3);
 
     WEAK_DEREF (session, *(value*)user_data);
@@ -346,13 +348,16 @@ static int precsetupfn(realtype t,
     cb = Field (cb, 0);
     cb = Field (cb, RECORD_CVODE_SPILS_CALLBACKS_PREC_SETUP_FN);
     cb = Some_val (cb);
-    r = caml_callback3_exn(cb, args[0], args[1], args[2]);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback3_exn(cb, args[0], args[1], args[2]);
 
     /* Update jcurPtr; leave it unchanged if an error occurred.  */
     if (!Is_exception_result (r)) {
 	*jcurPtr = Bool_val (r);
 	CAMLreturnT(int, 0);
     }
+    r = Extract_exception (r);
 
     CAMLreturnT(int, cvode_translate_exception (session, r, RECOVERABLE));
 }
@@ -391,7 +396,7 @@ static int precsolvefn(
 	N_Vector tmp)
 {
     CAMLparam0();
-    CAMLlocal3(session, r, cb);
+    CAMLlocal2(session, cb);
     CAMLlocalN(args, 3);
 
     args[0] = make_jac_arg(t, y, fy, NVEC_BACKLINK(tmp));
@@ -403,7 +408,8 @@ static int precsolvefn(
     cb = Field (cb, 0);
     cb = Field (cb, RECORD_CVODE_SPILS_CALLBACKS_PREC_SOLVE_FN);
 
-    r = caml_callback3_exn(cb, args[0], args[1], args[2]);
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback3_exn(cb, args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -417,7 +423,7 @@ static int jactimesfn(N_Vector v,
 		      N_Vector tmp)
 {
     CAMLparam0();
-    CAMLlocal3(session, r, cb);
+    CAMLlocal2(session, cb);
     CAMLlocalN(args, 3);
 
     args[0] = make_jac_arg(t, y, fy, NVEC_BACKLINK(tmp));
@@ -430,7 +436,8 @@ static int jactimesfn(N_Vector v,
     cb = Field (cb, RECORD_CVODE_SPILS_CALLBACKS_JAC_TIMES_VEC_FN);
     cb = Some_val (cb);
 
-    r = caml_callback3_exn(cb, args[0], args[1], args[2]);
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback3_exn(cb, args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -438,7 +445,7 @@ static int jactimesfn(N_Vector v,
 static int linit(CVodeMem cv_mem)
 {
     CAMLparam0();
-    CAMLlocal3 (session, r, cb);
+    CAMLlocal2 (session, cb);
 
     WEAK_DEREF (session, *(value*)cv_mem->cv_user_data);
 
@@ -446,7 +453,9 @@ static int linit(CVodeMem cv_mem)
     cb = Field (cb, 0);
     cb = Field (cb, RECORD_CVODE_ALTERNATE_CALLBACKS_LINIT);
     cb = Some_val(cb);
-    r = caml_callback_exn(cb, session);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback_exn(cb, session);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }
@@ -457,7 +466,7 @@ static int lsetup(CVodeMem cv_mem, int convfail,
 {
     CAMLparam0();
     CAMLlocalN(args, 5);
-    CAMLlocal3(session, r, cb);
+    CAMLlocal2(session, cb);
 
     WEAK_DEREF (session, *(value*)cv_mem->cv_user_data);
     args[0] = session;
@@ -483,13 +492,15 @@ static int lsetup(CVodeMem cv_mem, int convfail,
     cb = Field (cb, RECORD_CVODE_ALTERNATE_CALLBACKS_LSETUP);
     cb = Some_val (cb);
 
-    r = caml_callbackN_exn(cb, sizeof (args) / sizeof (*args), args);
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn(cb, sizeof (args) / sizeof (*args), args);
 
     /* Update jcurPtr; leave it unchanged if an error occurred.  */
     if (!Is_exception_result (r)) {
 	*jcurPtr = Bool_val(r);
 	CAMLreturnT (int, 0);
     }
+    r = Extract_exception (r);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -499,7 +510,7 @@ static int lsolve(CVodeMem cv_mem, N_Vector b, N_Vector weight, N_Vector ycur,
 {
     CAMLparam0();
     CAMLlocalN(args, 5);
-    CAMLlocal3(session, r, cb);
+    CAMLlocal2(session, cb);
 
     WEAK_DEREF (session, *(value*)cv_mem->cv_user_data);
 
@@ -513,9 +524,10 @@ static int lsolve(CVodeMem cv_mem, N_Vector b, N_Vector weight, N_Vector ycur,
     args[3] = NVEC_BACKLINK(ycur);
     args[4] = NVEC_BACKLINK(fcur);
 
-    r = caml_callbackN_exn (cb,
-			    sizeof (args) / sizeof (*args),
-			    args);
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (cb,
+				  sizeof (args) / sizeof (*args),
+				  args);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }

@@ -54,7 +54,7 @@ static int bbdlocal(long int nlocal, N_Vector u, N_Vector gval, void *user_data)
 {
     CAMLparam0();
     CAMLlocalN(args, 2);
-    CAMLlocal3(session, r, cb);
+    CAMLlocal2(session, cb);
 
     args[0] = NVEC_BACKLINK(u);
     args[1] = NVEC_BACKLINK(gval);
@@ -64,7 +64,8 @@ static int bbdlocal(long int nlocal, N_Vector u, N_Vector gval, void *user_data)
     cb = Field (cb, 0);
     cb = Field (cb, RECORD_KINSOL_BBD_CALLBACKS_LOCAL_FN);
 
-    r = caml_callback2_exn (cb, args[0], args[1]);
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback2_exn (cb, args[0], args[1]);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }
@@ -75,14 +76,15 @@ static int bbdlocal(long int nlocal, N_Vector u, N_Vector gval, void *user_data)
 static int bbdcomm(long int nlocal, N_Vector u, void *user_data)
 {
     CAMLparam0();
-    CAMLlocal3(session, r, cb);
+    CAMLlocal2(session, cb);
 
     cb = KINSOL_LS_CALLBACKS_FROM_ML (session);
     cb = Field (cb, 0);
     cb = Field (cb, RECORD_KINSOL_BBD_CALLBACKS_LOCAL_FN);
     cb = Field (cb, 0);
 
-    r = caml_callback_exn (cb, NVEC_BACKLINK(u));
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback_exn (cb, NVEC_BACKLINK(u));
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }

@@ -42,7 +42,7 @@ static int bbbdlocal(long int nlocal, realtype t, N_Vector yy, N_Vector yp,
 {
     CAMLparam0();
     CAMLlocalN(args, 6);
-    CAMLlocal3(session, r, cb);
+    CAMLlocal2(session, cb);
 
     args[0] = caml_copy_double(t);
     args[1] = NVEC_BACKLINK(yy);
@@ -56,7 +56,8 @@ static int bbbdlocal(long int nlocal, realtype t, N_Vector yy, N_Vector yp,
     cb = Field (cb, 0);
     cb = Field (cb, RECORD_IDAS_BBBD_CALLBACKS_LOCAL_FN);
 
-    r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -68,7 +69,7 @@ static int bbbdcomm(long int nlocal, realtype t,
 {
     CAMLparam0();
     CAMLlocalN(args, 5);
-    CAMLlocal3(session, r, cb);
+    CAMLlocal2(session, cb);
 
     args[0] = caml_copy_double(t);
     args[1] = NVEC_BACKLINK(yy);
@@ -82,7 +83,8 @@ static int bbbdcomm(long int nlocal, realtype t,
     cb = Field (cb, RECORD_IDAS_BBBD_CALLBACKS_COMM_FN);
     cb = Field (cb, 0);
 
-    r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }

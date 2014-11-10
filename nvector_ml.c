@@ -314,12 +314,17 @@ N_Vector callml_vclone(N_Vector w)
     w_payload = NVEC_BACKLINK(w);
 
     /* Create vector */
-    v_payload = caml_callback_exn (GET_OP(w, NVECTOR_OPS_NVCLONE), w_payload);
-    if (Is_exception_result (v_payload)) {
-	sundials_ml_warn_discarded_exn (Extract_exception (v_payload),
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback_exn (GET_OP(w, NVECTOR_OPS_NVCLONE), w_payload);
+
+    if (Is_exception_result (r)) {
+	sundials_ml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vclone");
 	CAMLreturnT (N_Vector, NULL);
     }
+    v_payload = r;
+    /* Done processing r.  Now it's OK to trigger GC.  */
 
     v = alloc_cnvec(0, v_payload);
     if (v == NULL)
@@ -339,14 +344,15 @@ N_Vector callml_vclone(N_Vector w)
 void callml_vspace(N_Vector v, long int *lrw, long int *liw)
 {
     CAMLparam0();
-    CAMLlocal2(mlop, r);
+    CAMLlocal1(mlop);
     mlop = GET_SOME_OP(v, NVECTOR_OPS_NVSPACE);
 
-    r = caml_callback_exn (mlop, NVEC_BACKLINK(v));
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback_exn (mlop, NVEC_BACKLINK(v));
     if (Is_exception_result (r)) {
 	sundials_ml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vspace");
-	fputs ("Sundials/ML has no sensible values to return to Sundials/C, "
+	fputs ("Sundials/ML has no sensible value to return to Sundials/C, "
 	       "and incorrect values risk meomry corruption.  Abort.", stderr);
 	fflush (stderr);
 	abort ();
@@ -372,10 +378,12 @@ void callml_vlinearsum(realtype a, N_Vector x, realtype b, N_Vector y, N_Vector 
     args[3] = NVEC_BACKLINK(y);
     args[4] = NVEC_BACKLINK(z);
 
-    args[0] = caml_callbackN_exn (mlop, 5, args);
-    if (Is_exception_result (args[0]))
-	sundials_ml_warn_discarded_exn (Extract_exception (args[0]),
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (mlop, 5, args);
+    if (Is_exception_result (r)) {
+	sundials_ml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vlinearsum");
+    }
 
     CAMLreturn0;
 }
@@ -387,10 +395,11 @@ void callml_vconst(realtype c, N_Vector z)
 
     vc = caml_copy_double (c);
 
-    vc = caml_callback2_exn(GET_OP(z, NVECTOR_OPS_NVCONST),
-			    vc, NVEC_BACKLINK(z));
-    if (Is_exception_result (vc))
-	sundials_ml_warn_discarded_exn (Extract_exception (vc),
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback2_exn(GET_OP(z, NVECTOR_OPS_NVCONST),
+				 vc, NVEC_BACKLINK(z));
+    if (Is_exception_result (r))
+	sundials_ml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vconst");
 
     CAMLreturn0;
@@ -402,10 +411,11 @@ void callml_vprod(N_Vector x, N_Vector y, N_Vector z)
     CAMLlocal1(mlop);
     mlop = GET_OP(x, NVECTOR_OPS_NVPROD);
 
-    mlop = caml_callback3_exn (mlop, NVEC_BACKLINK(x),
-			       NVEC_BACKLINK(y), NVEC_BACKLINK(z));
-    if (Is_exception_result (mlop))
-	sundials_ml_warn_discarded_exn (Extract_exception (mlop),
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback3_exn (mlop, NVEC_BACKLINK(x),
+				  NVEC_BACKLINK(y), NVEC_BACKLINK(z));
+    if (Is_exception_result (r))
+	sundials_ml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vprod");
 
     CAMLreturn0;
@@ -417,10 +427,11 @@ void callml_vdiv(N_Vector x, N_Vector y, N_Vector z)
     CAMLlocal1(mlop);
     mlop = GET_OP(x, NVECTOR_OPS_NVDIV);
 
-    mlop = caml_callback3_exn(mlop, NVEC_BACKLINK(x),
-			      NVEC_BACKLINK(y), NVEC_BACKLINK(z));
-    if (Is_exception_result (mlop))
-	sundials_ml_warn_discarded_exn (Extract_exception (mlop),
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback3_exn(mlop, NVEC_BACKLINK(x),
+				 NVEC_BACKLINK(y), NVEC_BACKLINK(z));
+    if (Is_exception_result (r))
+	sundials_ml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vdiv");
 
     CAMLreturn0;
@@ -433,10 +444,11 @@ void callml_vscale(realtype c, N_Vector x, N_Vector z)
 
     vc = caml_copy_double(c);
 
-    vc = caml_callback3_exn(GET_OP(x, NVECTOR_OPS_NVSCALE), vc,
-			    NVEC_BACKLINK(x), NVEC_BACKLINK(z));
-    if (Is_exception_result (vc))
-	sundials_ml_warn_discarded_exn (Extract_exception (vc),
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback3_exn(GET_OP(x, NVECTOR_OPS_NVSCALE), vc,
+				 NVEC_BACKLINK(x), NVEC_BACKLINK(z));
+    if (Is_exception_result (r))
+	sundials_ml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vscale");
 
     CAMLreturn0;
@@ -448,9 +460,10 @@ void callml_vabs(N_Vector x, N_Vector z)
     CAMLlocal1(mlop);
     mlop = GET_OP(x, NVECTOR_OPS_NVABS);
 
-    mlop = caml_callback2_exn (mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(z));
-    if (Is_exception_result (mlop))
-	sundials_ml_warn_discarded_exn (Extract_exception (mlop),
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback2_exn (mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(z));
+    if (Is_exception_result (r))
+	sundials_ml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vabs");
 
     CAMLreturn0;
@@ -462,9 +475,10 @@ void callml_vinv(N_Vector x, N_Vector z)
     CAMLlocal1(mlop);
     mlop = GET_OP(x, NVECTOR_OPS_NVINV);
 
-    mlop = caml_callback2_exn(mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(z));
-    if (Is_exception_result (mlop))
-	sundials_ml_warn_discarded_exn (Extract_exception (mlop),
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback2_exn(mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(z));
+    if (Is_exception_result (r))
+	sundials_ml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vinv");
 
     CAMLreturn0;
@@ -477,10 +491,11 @@ void callml_vaddconst(N_Vector x, realtype b, N_Vector z)
 
     vb = caml_copy_double(b);
 
-    vb = caml_callback3_exn (GET_OP(x, NVECTOR_OPS_NVADDCONST),
-			     NVEC_BACKLINK(x), vb, NVEC_BACKLINK(z));
-    if (Is_exception_result (vb))
-	sundials_ml_warn_discarded_exn (Extract_exception (vb),
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback3_exn (GET_OP(x, NVECTOR_OPS_NVADDCONST),
+				  NVEC_BACKLINK(x), vb, NVEC_BACKLINK(z));
+    if (Is_exception_result (r))
+	sundials_ml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vaddconst");
 
     CAMLreturn0;
@@ -489,10 +504,11 @@ void callml_vaddconst(N_Vector x, realtype b, N_Vector z)
 realtype callml_vdotprod(N_Vector x, N_Vector y)
 {
     CAMLparam0();
-    CAMLlocal2(mlop, r);
+    CAMLlocal1(mlop);
     mlop = GET_OP(x, NVECTOR_OPS_NVDOTPROD);
 
-    r = caml_callback2_exn (mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(y));
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback2_exn (mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(y));
     if (Is_exception_result (r)) {
 	sundials_ml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vdotprod");
@@ -505,10 +521,11 @@ realtype callml_vdotprod(N_Vector x, N_Vector y)
 realtype callml_vmaxnorm(N_Vector x)
 {
     CAMLparam0();
-    CAMLlocal2(mlop, r);
+    CAMLlocal1(mlop);
     mlop = GET_OP(x, NVECTOR_OPS_NVMAXNORM);
 
-    r = caml_callback_exn (mlop, NVEC_BACKLINK(x));
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback_exn (mlop, NVEC_BACKLINK(x));
     if (Is_exception_result (r)) {
 	sundials_ml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vmaxnorm");
@@ -521,10 +538,11 @@ realtype callml_vmaxnorm(N_Vector x)
 realtype callml_vwrmsnorm(N_Vector x, N_Vector w)
 {
     CAMLparam0();
-    CAMLlocal2(mlop, r);
+    CAMLlocal1(mlop);
     mlop = GET_OP(x, NVECTOR_OPS_NVWRMSNORM);
 
-    r = caml_callback2_exn (mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(w));
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback2_exn (mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(w));
     if (Is_exception_result (r)) {
 	sundials_ml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vwrmsnorm");
@@ -537,11 +555,12 @@ realtype callml_vwrmsnorm(N_Vector x, N_Vector w)
 realtype callml_vwrmsnormmask(N_Vector x, N_Vector w, N_Vector id)
 {
     CAMLparam0();
-    CAMLlocal2(mlop, r);
+    CAMLlocal1(mlop);
     mlop = GET_SOME_OP(x, NVECTOR_OPS_NVWRMSNORMMASK);
 
-    r = caml_callback3_exn (mlop, NVEC_BACKLINK(x),
-			    NVEC_BACKLINK(w), NVEC_BACKLINK(id));
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback3_exn (mlop, NVEC_BACKLINK(x),
+				  NVEC_BACKLINK(w), NVEC_BACKLINK(id));
     if (Is_exception_result (r)) {
 	sundials_ml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vwrmsnormmask");
@@ -554,10 +573,11 @@ realtype callml_vwrmsnormmask(N_Vector x, N_Vector w, N_Vector id)
 realtype callml_vmin(N_Vector x)
 {
     CAMLparam0();
-    CAMLlocal2(mlop, r);
+    CAMLlocal1(mlop);
     mlop = GET_OP(x, NVECTOR_OPS_NVMIN);
 
-    r = caml_callback_exn (mlop, NVEC_BACKLINK(x));
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback_exn (mlop, NVEC_BACKLINK(x));
     if (Is_exception_result (r)) {
 	sundials_ml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vmin");
@@ -570,10 +590,11 @@ realtype callml_vmin(N_Vector x)
 realtype callml_vwl2norm(N_Vector x, N_Vector w)
 {
     CAMLparam0();
-    CAMLlocal2(mlop, r);
+    CAMLlocal1(mlop);
     mlop = GET_SOME_OP(x, NVECTOR_OPS_NVWL2NORM);
 
-    r = caml_callback2_exn (mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(w));
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback2_exn (mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(w));
     if (Is_exception_result (r)) {
 	sundials_ml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vwl2norm");
@@ -586,10 +607,11 @@ realtype callml_vwl2norm(N_Vector x, N_Vector w)
 realtype callml_vl1norm(N_Vector x)
 {
     CAMLparam0();
-    CAMLlocal2(mlop, r);
+    CAMLlocal1(mlop);
     mlop = GET_SOME_OP(x, NVECTOR_OPS_NVL1NORM);
 
-    r = caml_callback_exn (mlop, NVEC_BACKLINK(x));
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback_exn (mlop, NVEC_BACKLINK(x));
     if (Is_exception_result (r)) {
 	sundials_ml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vl1norm");
@@ -606,10 +628,11 @@ void callml_vcompare(realtype c, N_Vector x, N_Vector z)
 
     vc = caml_copy_double(c);
 
-    vc = caml_callback3_exn (GET_OP(x, NVECTOR_OPS_NVCOMPARE), vc,
-			     NVEC_BACKLINK(x), NVEC_BACKLINK(z));
-    if (Is_exception_result (vc))
-	sundials_ml_warn_discarded_exn (Extract_exception (vc),
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback3_exn (GET_OP(x, NVECTOR_OPS_NVCOMPARE), vc,
+				  NVEC_BACKLINK(x), NVEC_BACKLINK(z));
+    if (Is_exception_result (r))
+	sundials_ml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vcompare");
 
     CAMLreturn0;
@@ -618,10 +641,11 @@ void callml_vcompare(realtype c, N_Vector x, N_Vector z)
 booleantype callml_vinvtest(N_Vector x, N_Vector z)
 {
     CAMLparam0();
-    CAMLlocal2(mlop, r);
+    CAMLlocal1(mlop);
     mlop = GET_OP(x, NVECTOR_OPS_NVINVTEST);
 
-    r = caml_callback2_exn (mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(z));
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback2_exn (mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(z));
     if (Is_exception_result (r)) {
 	sundials_ml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vinvtest");
@@ -634,11 +658,12 @@ booleantype callml_vinvtest(N_Vector x, N_Vector z)
 booleantype callml_vconstrmask(N_Vector c, N_Vector x, N_Vector m)
 {
     CAMLparam0();
-    CAMLlocal2(mlop, r);
+    CAMLlocal1(mlop);
     mlop = GET_SOME_OP(x, NVECTOR_OPS_NVCONSTRMASK);
 
-    r = caml_callback3_exn (mlop, NVEC_BACKLINK(c),
-			    NVEC_BACKLINK(x), NVEC_BACKLINK(m));
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback3_exn (mlop, NVEC_BACKLINK(c),
+				  NVEC_BACKLINK(x), NVEC_BACKLINK(m));
     if (Is_exception_result (r)) {
 	sundials_ml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vconstrmask");
@@ -651,10 +676,12 @@ booleantype callml_vconstrmask(N_Vector c, N_Vector x, N_Vector m)
 realtype callml_vminquotient(N_Vector num, N_Vector denom)
 {
     CAMLparam0();
-    CAMLlocal2(mlop, r);
+    CAMLlocal1(mlop);
     mlop = GET_SOME_OP(num, NVECTOR_OPS_NVMINQUOTIENT);
 
-    r = caml_callback2_exn (mlop, NVEC_BACKLINK(num), NVEC_BACKLINK(denom));
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback2_exn (mlop, NVEC_BACKLINK(num),
+				  NVEC_BACKLINK(denom));
     if (Is_exception_result (r)) {
 	sundials_ml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vminquotient");

@@ -110,7 +110,7 @@ static int quadrhsfn(realtype t, N_Vector y, N_Vector yQdot, void *user_data)
 {
     CAMLparam0();
     CAMLlocalN(args, 3);
-    CAMLlocal3(session, r, cb);
+    CAMLlocal2(session, cb);
 
     args[0] = caml_copy_double(t);
     args[1] = NVEC_BACKLINK(y);
@@ -124,7 +124,9 @@ static int quadrhsfn(realtype t, N_Vector y, N_Vector yQdot, void *user_data)
     // this call, afterward that memory goes back to cvode. These bigarrays
     // must not be retained by closure_quadrhsfn! If it wants a permanent
     // copy, then it has to make it manually.
-    r = caml_callback3_exn (cb, args[0], args[1], args[2]);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback3_exn (cb, args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -134,7 +136,7 @@ static int sensrhsfn(int ns, realtype t, N_Vector y, N_Vector ydot,
 		     N_Vector tmp1, N_Vector tmp2)
 {
     CAMLparam0();
-    CAMLlocal3(session, sensext, r);
+    CAMLlocal2(session, sensext);
     CAMLlocalN(args, 7);
 
     WEAK_DEREF (session, *(value*)user_data);
@@ -155,9 +157,11 @@ static int sensrhsfn(int ns, realtype t, N_Vector y, N_Vector ydot,
     // afterward that memory goes back to cvode. These bigarrays must not be
     // retained by closure_quadrhsfn! If it wants a permanent copy, then it
     // has to make it manually.
-    r = caml_callbackN_exn(CVODES_SENSRHSFN_FROM_EXT(sensext),
-			   sizeof (args) / sizeof (*args),
-                           args);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn(CVODES_SENSRHSFN_FROM_EXT(sensext),
+				 sizeof (args) / sizeof (*args),
+				 args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -168,7 +172,7 @@ static int sensrhsfn1(int ns, realtype t, N_Vector y, N_Vector ydot,
 {
     CAMLparam0();
     CAMLlocalN(args, 8);
-    CAMLlocal3(session, r, cb);
+    CAMLlocal2(session, cb);
 
     args[0] = caml_copy_double(t);
     args[1] = NVEC_BACKLINK(y);
@@ -187,7 +191,9 @@ static int sensrhsfn1(int ns, realtype t, N_Vector y, N_Vector ydot,
     // afterward that memory goes back to cvode. These bigarrays must not be
     // retained by closure_quadrhsfn! If it wants a permanent copy, then it
     // has to make it manually.
-    r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -197,7 +203,7 @@ static int quadsensrhsfn(int ns, realtype t, N_Vector y, N_Vector *ys,
 		         N_Vector tmp1, N_Vector tmp2)
 {
     CAMLparam0();
-    CAMLlocal3(session, sensext, r);
+    CAMLlocal2(session, sensext);
     CAMLlocalN(args, 7);
 
     WEAK_DEREF (session, *(value*)user_data);
@@ -218,9 +224,11 @@ static int quadsensrhsfn(int ns, realtype t, N_Vector y, N_Vector *ys,
     // afterward that memory goes back to cvode. These bigarrays must not be
     // retained by closure_quadrhsfn! If it wants a permanent copy, then it
     // has to make it manually.
-    r = caml_callbackN_exn(CVODES_QUADSENSRHSFN_FROM_EXT(sensext),
-		           sizeof (args) / sizeof (*args),
-                           args);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn(CVODES_QUADSENSRHSFN_FROM_EXT(sensext),
+				 sizeof (args) / sizeof (*args),
+				 args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -230,7 +238,7 @@ static int brhsfn(realtype t, N_Vector y, N_Vector yb, N_Vector ybdot,
 {
     CAMLparam0();
     CAMLlocalN(args, 4);
-    CAMLlocal3(session, r, cb);
+    CAMLlocal2(session, cb);
 
     args[0] = caml_copy_double(t);
     args[1] = NVEC_BACKLINK(y);
@@ -245,7 +253,9 @@ static int brhsfn(realtype t, N_Vector y, N_Vector yb, N_Vector ybdot,
     // call, afterward that memory goes back to cvode. These bigarrays
     // must not be retained by the callback! If it wants a permanent
     // copy, then it has to make it manually.
-    r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -254,7 +264,7 @@ static int brhsfn_sens(realtype t, N_Vector y, N_Vector *ys, N_Vector yb,
 		       N_Vector ybdot, void *user_data)
 {
     CAMLparam0();
-    CAMLlocal3(session, sensext, r);
+    CAMLlocal2(session, sensext);
     CAMLlocalN(args, 5);
     int ns;
 
@@ -274,9 +284,11 @@ static int brhsfn_sens(realtype t, N_Vector y, N_Vector *ys, N_Vector yb,
     // afterward that memory goes back to cvode. These bigarrays must not be
     // retained by closure_quadrhsfn! If it wants a permanent copy, then it
     // has to make it manually.
-    r = caml_callbackN_exn(CVODES_BRHSFN_SENS_FROM_EXT(sensext),
-                           sizeof (args) / sizeof (*args),
-                           args);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn(CVODES_BRHSFN_SENS_FROM_EXT(sensext),
+				 sizeof (args) / sizeof (*args),
+				 args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -286,7 +298,7 @@ static int bquadrhsfn(realtype t, N_Vector y, N_Vector yb, N_Vector qbdot,
 {
     CAMLparam0();
     CAMLlocalN(args, 4);
-    CAMLlocal3(session, r, cb);
+    CAMLlocal2(session, cb);
 
     args[0] = caml_copy_double(t);
     args[1] = NVEC_BACKLINK(y);
@@ -301,7 +313,9 @@ static int bquadrhsfn(realtype t, N_Vector y, N_Vector yb, N_Vector qbdot,
     // afterward that memory goes back to cvode. These bigarrays must not be
     // retained by closure_quadrhsfn! If it wants a permanent copy, then it
     // has to make it manually.
-    r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -311,7 +325,7 @@ static int bquadrhsfn_sens(realtype t, N_Vector y, N_Vector *ys, N_Vector yb,
 {
     CAMLparam0();
     CAMLlocalN(args, 5);
-    CAMLlocal3(session, sensext, r);
+    CAMLlocal2(session, sensext);
     int ns;
 
     WEAK_DEREF (session, *(value*)user_data);
@@ -330,9 +344,11 @@ static int bquadrhsfn_sens(realtype t, N_Vector y, N_Vector *ys, N_Vector yb,
     // afterward that memory goes back to cvode. These bigarrays must not be
     // retained by closure_quadrhsfn! If it wants a permanent copy, then it
     // has to make it manually.
-    r = caml_callbackN_exn (CVODES_BQUADRHSFN_SENS_FROM_EXT(sensext),
-			    sizeof (args) / sizeof (*args),
-			    args);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (CVODES_BQUADRHSFN_SENS_FROM_EXT(sensext),
+				  sizeof (args) / sizeof (*args),
+				  args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -401,7 +417,7 @@ static int bprecsolvefn(
 {
     CAMLparam0();
     CAMLlocalN(args, 3);
-    CAMLlocal3(session, r, cb);
+    CAMLlocal2(session, cb);
 
     args[0] = make_jac_arg(t, y, yb, fyb, NVEC_BACKLINK(tmpb));
     args[1] = make_spils_solve_arg(rvecb, gammab, deltab, lrb);
@@ -412,7 +428,8 @@ static int bprecsolvefn(
     cb = Field (cb, 0);
     cb = Field (cb, RECORD_CVODES_BSPILS_CALLBACKS_PREC_SOLVE_FN);
 
-    r = caml_callback3_exn (cb, args[0], args[1], args[2]);
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback3_exn (cb, args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -431,7 +448,7 @@ static int bprecsetupfn(
     N_Vector tmp3b)
 {
     CAMLparam0();
-    CAMLlocal3(session, r, cb);
+    CAMLlocal2(session, cb);
     CAMLlocalN(args, 3);
 
     args[0] = make_jac_arg(t, y, yb, fyb, make_triple_tmp(tmp1b, tmp2b, tmp3b));
@@ -444,7 +461,8 @@ static int bprecsetupfn(
     cb = Field (cb, RECORD_CVODES_BSPILS_CALLBACKS_PREC_SETUP_FN);
     cb = Field (cb, 0);
 
-    r = caml_callback3_exn (cb, args[0], args[1], args[2]);
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback3_exn (cb, args[0], args[1], args[2]);
 
     /* Update jcurPtr; leave it unchanged if an error occurred.  */
     if (!Is_exception_result (r)) {
@@ -465,7 +483,7 @@ static int bjactimesfn(N_Vector vb,
 		       N_Vector tmpb)
 {
     CAMLparam0();
-    CAMLlocal3(session, r, cb);
+    CAMLlocal2(session, cb);
     CAMLlocalN(args, 3);
 
     args[0] = make_jac_arg(t, y, yb, fyb, NVEC_BACKLINK(tmpb));
@@ -478,7 +496,8 @@ static int bjactimesfn(N_Vector vb,
     cb = Field (cb, RECORD_CVODES_BSPILS_CALLBACKS_JAC_TIMES_VEC_FN);
     cb = Field (cb, 0);
 
-    r = caml_callback3_exn (cb, args[0], args[1], args[2]);
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback3_exn (cb, args[0], args[1], args[2]);
 
     /* NB: jac_times_vec doesn't accept RecoverableFailure. */
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
@@ -498,7 +517,7 @@ static int bjacfn(
 {
     CAMLparam0();
     CAMLlocalN(args, 2);
-    CAMLlocal4(session, cb, dmat, r);
+    CAMLlocal3(session, cb, dmat);
 
     WEAK_DEREF (session, *(value*)user_data);
     cb = CVODE_LS_CALLBACKS_FROM_ML(session);
@@ -513,7 +532,8 @@ static int bjacfn(
     args[0] = make_jac_arg(t, y, yb, fyb, make_triple_tmp(tmp1b, tmp2b, tmp3b));
     args[1] = Some_val(dmat);
 
-    r = caml_callback2_exn (Field(cb, 0), args[0], args[1]);
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback2_exn (Field(cb, 0), args[0], args[1]);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -534,7 +554,7 @@ static int bbandjacfn(
 {
     CAMLparam0();
     CAMLlocalN(args, 3);
-    CAMLlocal4(session, cb, bmat, r);
+    CAMLlocal3(session, cb, bmat);
     value *backref = user_data;
     WEAK_DEREF (session, *backref);
 
@@ -553,7 +573,8 @@ static int bbandjacfn(
     args[1] = make_jac_arg(t, y, yb, fyb, make_triple_tmp(tmp1b, tmp2b, tmp3b));
     args[2] = Some_val(bmat);
 
-    r = caml_callback3_exn (Field(cb, 0), args[0], args[1], args[2]);
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback3_exn (Field(cb, 0), args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }

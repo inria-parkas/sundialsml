@@ -181,7 +181,7 @@ CAMLprim value c_kinsol_clear_info_handler_fn(value vdata)
 static int sysfn(N_Vector uu, N_Vector val, void *user_data)
 {
     CAMLparam0();
-    CAMLlocal4(vuu, vval, session, r);
+    CAMLlocal3(vuu, vval, session);
 
     vuu = NVEC_BACKLINK(uu);
     vval = NVEC_BACKLINK(val);
@@ -192,7 +192,9 @@ static int sysfn(N_Vector uu, N_Vector val, void *user_data)
     // call, afterward that memory goes back to kinsol. These bigarrays must
     // not be retained by closure_rhsfn! If it wants a permanent copy, then
     // it has to make it manually.
-    r = caml_callback2_exn(KINSOL_SYSFN_FROM_ML (session), vuu, vval);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback2_exn(KINSOL_SYSFN_FROM_ML (session), vuu, vval);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -247,7 +249,7 @@ static int jacfn(
 {
     CAMLparam0();
     CAMLlocalN (args, 2);
-    CAMLlocal4(session, cb, dmat, r);
+    CAMLlocal3(session, cb, dmat);
 
     WEAK_DEREF (session, *(value*)user_data);
     cb = KINSOL_LS_CALLBACKS_FROM_ML(session);
@@ -262,7 +264,8 @@ static int jacfn(
     args[0] = make_jac_arg(u, fu, make_double_tmp(tmp1, tmp2));
     args[1] = Some_val(dmat);
 
-    r = caml_callback2_exn (Field(cb, 0), args[0], args[1]);
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback2_exn (Field(cb, 0), args[0], args[1]);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, UNRECOVERABLE));
 }
@@ -280,7 +283,7 @@ static int bandjacfn(
 {
     CAMLparam0();
     CAMLlocalN(args, 3);
-    CAMLlocal4(session, cb, bmat, r);
+    CAMLlocal3(session, cb, bmat);
 
     WEAK_DEREF (session, *(value*)user_data);
     cb = KINSOL_LS_CALLBACKS_FROM_ML(session);
@@ -298,7 +301,8 @@ static int bandjacfn(
     args[1] = make_jac_arg(u, fu, make_double_tmp(tmp1, tmp2));
     args[2] = Some_val(bmat);
 
-    r = caml_callback3_exn (Field(cb, 0), args[0], args[1], args[2]);
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback3_exn (Field(cb, 0), args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, UNRECOVERABLE));
 }
@@ -313,7 +317,7 @@ static int precsetupfn(
     N_Vector tmp2)
 {
     CAMLparam0();
-    CAMLlocal3(session, r, cb);
+    CAMLlocal2(session, cb);
     CAMLlocalN(args, 2);
 
     args[0] = make_jac_arg(uu, fu, make_double_tmp(tmp1, tmp2));
@@ -325,7 +329,8 @@ static int precsetupfn(
     cb = Field (cb, RECORD_KINSOL_SPILS_CALLBACKS_PREC_SETUP_FN);
     cb = Field (cb, 0);
 
-    r = caml_callback2_exn(cb, args[0], args[1]);
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback2_exn(cb, args[0], args[1]);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -340,7 +345,7 @@ static int precsolvefn(
 	N_Vector tmp)
 {
     CAMLparam0();
-    CAMLlocal3(session, r, cb);
+    CAMLlocal2(session, cb);
     CAMLlocalN(args, 3);
 
     args[0] = make_jac_arg(uu, fu, NVEC_BACKLINK(tmp));
@@ -353,7 +358,8 @@ static int precsolvefn(
     cb = Field (cb, RECORD_KINSOL_SPILS_CALLBACKS_PREC_SOLVE_FN);
     cb = Field (cb, 0);
 
-    r = caml_callback3_exn(cb, args[0], args[1], args[2]);
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback3_exn(cb, args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -366,7 +372,7 @@ static int jactimesfn(
 	void *user_data)
 {
     CAMLparam0();
-    CAMLlocal3(session, r, cb);
+    CAMLlocal2(session, cb);
     CAMLlocalN (args, 4);
 
     args[0] = NVEC_BACKLINK(v);
@@ -380,7 +386,8 @@ static int jactimesfn(
     cb = Field (cb, RECORD_KINSOL_SPILS_CALLBACKS_JAC_TIMES_VEC_FN);
     cb = Field (cb, 0);
 
-    r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
 
     if (!Is_exception_result (r)) {
 	*new_uu = Bool_val (r);
@@ -393,7 +400,7 @@ static int jactimesfn(
 static int linit(KINMem kin_mem)
 {
     CAMLparam0();
-    CAMLlocal3 (session, r, cb);
+    CAMLlocal2 (session, cb);
 
     WEAK_DEREF (session, *(value*)kin_mem->kin_user_data);
     cb = KINSOL_LS_CALLBACKS_FROM_ML (session);
@@ -401,7 +408,8 @@ static int linit(KINMem kin_mem)
     cb = Field (cb, RECORD_KINSOL_ALTERNATE_CALLBACKS_LINIT);
     cb = Field (cb, 0);
 
-    r = caml_callback_exn (cb, session);
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback_exn (cb, session);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }
@@ -409,7 +417,7 @@ static int linit(KINMem kin_mem)
 static int lsetup(KINMem kin_mem)
 {
     CAMLparam0();
-    CAMLlocal3(session, r, cb);
+    CAMLlocal2(session, cb);
 
     WEAK_DEREF (session, *(value*)kin_mem->kin_user_data);
     cb = KINSOL_LS_CALLBACKS_FROM_ML (session);
@@ -417,7 +425,8 @@ static int lsetup(KINMem kin_mem)
     cb = Field (cb, RECORD_KINSOL_ALTERNATE_CALLBACKS_LSETUP);
     cb = Field (cb, 0);
 
-    r = caml_callback_exn (cb, session);
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback_exn (cb, session);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }
@@ -426,7 +435,7 @@ static int lsolve(KINMem kin_mem, N_Vector x, N_Vector b, realtype *res_norm)
 {
     CAMLparam0();
     CAMLlocalN(args, 3);
-    CAMLlocal3(session, r, cb);
+    CAMLlocal2(session, cb);
 
     WEAK_DEREF (session, *(value*)kin_mem->kin_user_data);
 
@@ -438,7 +447,8 @@ static int lsolve(KINMem kin_mem, N_Vector x, N_Vector b, realtype *res_norm)
     cb = Field (cb, 0);
     cb = Field (cb, RECORD_KINSOL_ALTERNATE_CALLBACKS_LSOLVE);
 
-    r = caml_callback3_exn (cb, args[0], args[1], args[2]);
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback3_exn (cb, args[0], args[1], args[2]);
     if (!Is_exception_result (r)) {
 	if (r != Val_none) *res_norm = Double_val(Field(r, 0));
 	CAMLreturnT (int, 0);

@@ -132,7 +132,7 @@ CAMLprim value c_spils_classical_gs(value vargs)
 static int atimes_f(void *a_fn, N_Vector v, N_Vector z)
 {
     CAMLparam0();
-    CAMLlocal3(vv, vz, res);
+    CAMLlocal2(vv, vz);
     int r = 0;
 
     vv = NVEC_BACKLINK(v);
@@ -142,7 +142,9 @@ static int atimes_f(void *a_fn, N_Vector v, N_Vector z)
     // afterward that memory goes back to Sundials. These bigarrays must not
     // be retained by a_fn! If it wants a permanent copy, then it has to
     // make it manually.
-    res = caml_callback2_exn((value)a_fn, vv, vz);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value res = caml_callback2_exn((value)a_fn, vv, vz);
     if (Is_exception_result(res)) {
 	res = Extract_exception(res);
 	r = (Field(res, 0) == SUNDIALS_EXN(RecoverableFailure))?1:-1;
@@ -154,7 +156,7 @@ static int atimes_f(void *a_fn, N_Vector v, N_Vector z)
 static int psolve_f(void *p_fn, N_Vector r, N_Vector z, int lr)
 {
     CAMLparam0();
-    CAMLlocal3(vr, vz, res);
+    CAMLlocal2(vr, vz);
     int fr = 0;
 
     vr = NVEC_BACKLINK(r);
@@ -164,7 +166,9 @@ static int psolve_f(void *p_fn, N_Vector r, N_Vector z, int lr)
     // afterward that memory goes back to Sundials. These bigarrays must not
     // be retained by a_fn! If it wants a permanent copy, then it has to
     // make it manually.
-    res = caml_callback3_exn((value)p_fn, vr, vz, Val_bool(lr == 1));
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value res = caml_callback3_exn((value)p_fn, vr, vz, Val_bool(lr == 1));
     if (Is_exception_result(res)) {
 	res = Extract_exception(res);
 	fr = (Field(res, 0) == SUNDIALS_EXN(RecoverableFailure))?1:-1;

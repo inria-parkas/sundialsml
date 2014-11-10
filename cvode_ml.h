@@ -159,9 +159,11 @@ int cvode_translate_exception (value session, value exn_result,
  *   0 if result is not an exception
  *   1 if result is RecoverableFailure and recoverable == RECOVERABLE
  *  -1 otherwise, and records the exception in result in the session */
-#define CHECK_EXCEPTION(session, result, recoverable)		\
-    (Is_exception_result (result)				\
-     ? cvode_translate_exception (session, result, recoverable)	\
+#define CHECK_EXCEPTION(session, result, recoverable)			\
+    (Is_exception_result (result)					\
+     ? cvode_translate_exception (session,				\
+				  result = Extract_exception (result),	\
+				  recoverable)				\
      : 0)
 
 value cvode_ml_big_real();
