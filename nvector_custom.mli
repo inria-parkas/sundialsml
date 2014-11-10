@@ -30,14 +30,13 @@ type 'd t = ('d, kind) Nvector.t
     are optional; default values are either provided by the OCaml interface
     or the Sundials library.
 
-    Custom nvectors and their operations must
-    {ul
-      {- Catch all exceptions since they and their backtraces cannot be
-         propagated reliably. Backtraces can be produced manually by
-         wrapping an operating in [try...with] and using
-         {{:OCAML_DOC_ROOT(Printexc.html)} Printexc}.}
-      {- Not create indirect reference loops back to the enclosing nvector. Such
-         loops will not be properly garbage collected.}}
+    Custom nvectors' payloads and operations must not hold any
+    reference that loops back to the enclosing nvector. Such loops
+    will not be properly garbage collected.
+
+    nvector operations are not allowed to throw exceptions, as they
+    cannot be propagated reliably.  Uncaught exceptions will be
+    discarded with a warning.
 
     @cvode <node7#s:nvector> _generic_N_Vector_Ops *)
 type 'd nvector_ops = {
