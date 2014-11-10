@@ -20,6 +20,11 @@ Priorities: Tim
 
 1. Understand/fix remaining slower examples.
 
+2. Include a patch file for 2.5.0
+   In the release branch:
+   - disable the function that we cannot link to without the patch.
+   - skip the examples that don't work without patching?
+
 Issues/Remaining questions
 --------------------------
 * What to do about the 'tests/' subdirectory?
