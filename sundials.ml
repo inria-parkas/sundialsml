@@ -19,8 +19,9 @@ let floata = format_float "%a"
    underlying C library does not allow for clean handling.  *)
 let warn_discarded_exn exn context =
   Printf.fprintf stderr
-    ("WARNING: discarding exception %s raised in %s.\n")
-    (Printexc.to_string exn) context;
+    ("WARNING: discarding exception %s raised in %s.\n%s")
+    (Printexc.to_string exn) context
+    (Printexc.get_backtrace ());
   flush stderr
 
 exception RecoverableFailure
