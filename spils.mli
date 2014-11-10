@@ -130,7 +130,7 @@ val qr_sol : Sundials.RealArray2.t
   The orthogonalized [v.{k}] is {b not} normalized and is stored over the old
   [v.{k}]. The function returns the Euclidean norm of the orthogonalized
   vector. *)
-val modified_gs : (('a, 'k) Nvector.t) array
+val modified_gs : (('d, 'k) Nvector.t) array
                  -> Sundials.RealArray2.t
                  -> int
                  -> int
@@ -155,11 +155,11 @@ val modified_gs : (('a, 'k) Nvector.t) array
   The orthogonalized [v.{k}] is {b not} normalized and is stored over the old
   [v.{k}]. The function returns the Euclidean norm of the orthogonalized
   vector. *)
-val classical_gs : (('a, 'k) Nvector.t) array
+val classical_gs : (('d, 'k) Nvector.t) array
                   -> Sundials.RealArray2.t
                   -> int
                   -> int
-                  -> ('a, 'k) Nvector.t
+                  -> ('d, 'k) Nvector.t
                   -> Sundials.RealArray.t
                   -> float
 
@@ -169,14 +169,14 @@ val classical_gs : (('a, 'k) Nvector.t) array
     representation of [A]. Results are stored in [z], [v] must not be changed.
     Raise {!Sundials.RecoverableFailure} to indicate a recoverable failure,
     any other exception indicates an unrecoverable failure. *)
-type 'a atimes = 'a -> 'a -> unit
+type 'd atimes = 'd -> 'd -> unit
 
 (** Functions [f r z lr] that solve the preconditioner equation [P z = r] for
     the vector [z]. If [lr = true] then [P] is used as a left preconditioner
     and otherwise as a right preconditioner.
     Raise {!Sundials.RecoverableFailure} to indicate a recoverable failure,
     any other exception indicates an unrecoverable failure. *)
-type 'a psolve = 'a -> 'a -> bool -> unit
+type 'd psolve = 'd -> 'd -> bool -> unit
 
 (** The Scaled Preconditioned Generalized Minimum Residual (GMRES) method. *)
 module SPGMR :
@@ -185,13 +185,13 @@ module SPGMR :
     (** An instance of the SPGMR solver.
 
         @cvode <node9#ss:spgmr> The SPGMR Module *)
-    type 'a t
+    type 'd t
 
     (** [make lmax temp] returns a solver session. [lmax] is the maximum
         Krylov subspace dimension to use, and [temp] sets the problem size.
 
         @cvode <node9#ss:spgmr> SpgmrMalloc *)
-    val make  : int -> ('a, 'k) Nvector.t -> 'a t
+    val make  : int -> ('d, 'k) Nvector.t -> 'd t
 
     (** Solves the linear system [Ax = b] using the SPGMR iterative method.
         The [atimes] function computes the matrix vector product [Ax], the
@@ -223,15 +223,15 @@ module SPGMR :
         @raise PSetFailure pset failed
         @raise GSFailure The Gram-Schmidt routine failed.
         @raise QRSolFailure QRsol found a singular [R]. *)
-    val solve : 'a t
-                -> x:('a, 'k) Nvector.t
-                -> b:('a, 'k) Nvector.t
+    val solve : 'd t
+                -> x:('d, 'k) Nvector.t
+                -> b:('d, 'k) Nvector.t
                 -> delta:float
                 -> ?max_restarts:int
-                -> ?s1:(('a, 'k) Nvector.t)
-                -> ?s2:(('a, 'k) Nvector.t)
-                -> ?psolve:('a psolve)
-                -> 'a atimes
+                -> ?s1:(('d, 'k) Nvector.t)
+                -> ?s2:(('d, 'k) Nvector.t)
+                -> ?psolve:('d psolve)
+                -> 'd atimes
                 -> preconditioning_type
                 -> gramschmidt_type 
                 -> bool * float * int * int
@@ -245,13 +245,13 @@ module SPBCG :
     (** An instance of the SPBCG solver.
 
         @cvode <node9#ss:spgmr> The SPBCG Module *)
-    type 'a t
+    type 'd t
 
     (** [make lmax temp] returns a solver session. [lmax] is the maximum
         Krylov subspace dimension to use, and [temp] sets the problem size.
 
         @cvode <node9#ss:spbcg> SpbcgMalloc *)
-    val make  : int -> ('a, 'k) Nvector.t -> 'a t
+    val make  : int -> ('d, 'k) Nvector.t -> 'd t
 
     (** Solves the linear system [Ax = b] using the SPBCG iterative method.
         The [atimes] function computes the matrix vector product [Ax], the
@@ -277,14 +277,14 @@ module SPBCG :
         @raise PSolveFailure The [psolve] function failed
         @raise ATimesFailure The [atimes] function failed
         @raise PSetFailure pset failed *)
-    val solve : 'a t
-                -> x:('a, 'k) Nvector.t
-                -> b:('a, 'k) Nvector.t
+    val solve : 'd t
+                -> x:('d, 'k) Nvector.t
+                -> b:('d, 'k) Nvector.t
                 -> delta:float
-                -> ?sx:(('a, 'k) Nvector.t)
-                -> ?sb:(('a, 'k) Nvector.t)
-                -> ?psolve:('a psolve)
-                -> 'a atimes
+                -> ?sx:(('d, 'k) Nvector.t)
+                -> ?sb:(('d, 'k) Nvector.t)
+                -> ?psolve:('d psolve)
+                -> 'd atimes
                 -> preconditioning_type
                 -> bool * float * int * int
 
@@ -299,13 +299,13 @@ module SPTFQMR :
     (** An instance of the SPTFQMR solver.
 
         @cvode <node9#ss:sptfqmr> The SPTFQMR Module *)
-    type 'a t
+    type 'd t
 
     (** [make lmax temp] returns a solver session. [lmax] is the maximum
         Krylov subspace dimension to use, and [temp] sets the problem size.
 
         @cvode <node9#ss:sptfqmr> SptfqmrMalloc *)
-    val make  : int -> ('a, 'k) Nvector.t -> 'a t
+    val make  : int -> ('d, 'k) Nvector.t -> 'd t
 
     (** Solves the linear system [Ax = b] using the SPTFQMR iterative method.
         The [atimes] function computes the matrix vector product [Ax], the
@@ -331,14 +331,14 @@ module SPTFQMR :
         @raise PSolveFailure The [psolve] function failed
         @raise ATimesFailure The [atimes] function failed
         @raise PSetFailure pset failed *)
-    val solve : 'a t
-                -> x:('a, 'k) Nvector.t
-                -> b:('a, 'k) Nvector.t
+    val solve : 'd t
+                -> x:('d, 'k) Nvector.t
+                -> b:('d, 'k) Nvector.t
                 -> delta:float
-                -> ?sx:(('a, 'k) Nvector.t)
-                -> ?sb:(('a, 'k) Nvector.t)
-                -> ?psolve:('a psolve)
-                -> 'a atimes
+                -> ?sx:(('d, 'k) Nvector.t)
+                -> ?sb:(('d, 'k) Nvector.t)
+                -> ?psolve:('d psolve)
+                -> 'd atimes
                 -> preconditioning_type
                 -> bool * float * int * int
 

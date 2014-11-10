@@ -66,7 +66,7 @@ type serial_linear_solver =
         (Nvector_serial.data, Nvector_serial.kind) linear_solver
 
 (** Workspaces with two temporary vectors. *)
-type 'a double = 'a * 'a
+type 'd double = 'd * 'd
 
 (** Arguments common to Jacobian callback functions.    
  
@@ -74,10 +74,10 @@ type 'a double = 'a * 'a
     @kinsol <node5#ss:bjacFn> KINDlsBandJacFn
     @kinsol <node5#ss:psolveFn> KINSpilsPrecSolveFn
     @kinsol <node5#ss:precondFn> KINSpilsPrecSetupFn *)
-type ('t, 'a) jacobian_arg =
+type ('t, 'd) jacobian_arg =
   {
-    jac_u   : 'a;   (** The current unscaled iterate. *)
-    jac_fu  : 'a;   (** The current value of the vector $F(u)$. *)
+    jac_u   : 'd;   (** The current unscaled iterate. *)
+    jac_fu  : 'd;   (** The current value of the vector $F(u)$. *)
     jac_tmp : 't    (** Workspace data. *)
   }
 
@@ -257,10 +257,10 @@ module Spils :
 
         @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
         @kinsol <node5#ss:psolveFn> KINSpilsPrecSolveFn *)
-    and 'a prec_solve_fn =
-      ('a, 'a) jacobian_arg
-      -> 'a solve_arg
-      -> 'a
+    and 'd prec_solve_fn =
+      ('d, 'd) jacobian_arg
+      -> 'd solve_arg
+      -> 'd
       -> unit
 
     (** Callback functions that preprocess or evaluate Jacobian-related data
@@ -276,9 +276,9 @@ module Spils :
         @kinsol <node5#ss:precondFn> KINSpilsPrecSetupFn
         @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
      *)
-    and 'a prec_setup_fn =
-      ('a double, 'a) jacobian_arg
-      -> 'a solve_arg
+    and 'd prec_setup_fn =
+      ('d double, 'd) jacobian_arg
+      -> 'd solve_arg
       -> unit
 
 
@@ -318,10 +318,10 @@ module Spils :
         @kinsol <node5#ss:precondFn> KINSpilsPrecSetupFn
         @kinsol <node5#ss:jtimesFn> KINSpilsJacTimesVecFn
     *)
-    type ('a, 'k) preconditioner = ('a, 'k) SpilsTypes.preconditioner
+    type ('d, 'k) preconditioner = ('d, 'k) SpilsTypes.preconditioner
 
     (** No preconditioning.  *)
-    val prec_none : ('a, 'k) preconditioner
+    val prec_none : ('d, 'k) preconditioner
 
     (** Right preconditioning. The {!prec_setup_fn} should compute
         the right preconditioner matrix $P$ which is used to form
@@ -330,11 +330,11 @@ module Spils :
         If a {!prec_solve_fn} is not given, a default implementation based on
         difference quotient approximation is used. *)
     val prec_right :
-      ?setup:'a prec_setup_fn
-      -> ?solve:'a prec_solve_fn
-      -> ?jac_times_vec:'a jac_times_vec_fn
+      ?setup:'d prec_setup_fn
+      -> ?solve:'d prec_solve_fn
+      -> ?jac_times_vec:'d jac_times_vec_fn
       -> unit
-      -> ('a, 'k) preconditioner
+      -> ('d, 'k) preconditioner
 
     (** {3:lsolvers Solvers} *)
 
@@ -348,8 +348,8 @@ module Spils :
         @kinsol <node5#sss:lin_solv_init> KINSpgmr
         @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
         @kinsol <node5#sss:optin_spils> KINSpilsSetMaxRestarts *)
-    val spgmr : ?maxl:int -> ?max_restarts:int -> ('a, 'k) preconditioner
-                    -> ('a, 'k) linear_solver
+    val spgmr : ?maxl:int -> ?max_restarts:int -> ('d, 'k) preconditioner
+                    -> ('d, 'k) linear_solver
 
     (** Krylov iterative solver using the scaled preconditioned biconjugate
         stabilized (Bi-CGStab) method.
@@ -358,7 +358,7 @@ module Spils :
 
         @kinsol <node5#sss:lin_solv_init> KINSpbcg
         @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner *)
-    val spbcg : ?maxl:int -> ('a, 'k) preconditioner -> ('a, 'k) linear_solver
+    val spbcg : ?maxl:int -> ('d, 'k) preconditioner -> ('d, 'k) linear_solver
 
     (** Krylov iterative with the scaled preconditioned transpose-free
         quasi-minimal residual (SPTFQMR) method.
@@ -368,7 +368,7 @@ module Spils :
 
         @kinsol <node5#sss:lin_solv_init> KINSptfqmr
         @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner *)
-    val sptfqmr : ?maxl:int -> ('a,'k) preconditioner -> ('a,'k) linear_solver
+    val sptfqmr : ?maxl:int -> ('d,'k) preconditioner -> ('d,'k) linear_solver
 
     (** {3:stats Solver statistics} *)
 
@@ -377,34 +377,34 @@ module Spils :
 
         @kinsol <node5#sss:optout_spils> KINSpilsGetWorkSpace
         @return ([real_size], [integer_size]) *)
-    val get_work_space       : ('a, 'k) session -> int * int
+    val get_work_space       : ('d, 'k) session -> int * int
 
     (** Returns the cumulative number of linear iterations.
 
         @kinsol <node5#sss:optout_spils> KINSpilsGetNumLinIters *)
-    val get_num_lin_iters    : ('a, 'k) session -> int
+    val get_num_lin_iters    : ('d, 'k) session -> int
 
     (** Returns the cumulative number of linear convergence failures.
 
         @kinsol <node5#sss:optout_spils> KINSpilsGetNumConvFails *)
-    val get_num_conv_fails   : ('a, 'k) session -> int
+    val get_num_conv_fails   : ('d, 'k) session -> int
 
     (** Returns the cumulative number of calls to the setup function.
 
         @kinsol <node5#sss:optout_spils> KINSpilsGetNumPrecEvals *)
-    val get_num_prec_evals   : ('a, 'k) session -> int
+    val get_num_prec_evals   : ('d, 'k) session -> int
 
     (** Returns the cumulative number of calls to the preconditioner solve
         function.
 
         @kinsol <node5#sss:optout_spils> KINSpilsGetNumPrecSolves *)
-    val get_num_prec_solves  : ('a, 'k) session -> int
+    val get_num_prec_solves  : ('d, 'k) session -> int
 
     (** Returns the cumulative number of calls to the Jacobian-vector
         function.
 
         @kinsol <node5#sss:optout_spils> KINSpilsGetNumJtimesEvals *)
-    val get_num_jtimes_evals : ('a, 'k) session -> int
+    val get_num_jtimes_evals : ('d, 'k) session -> int
 
     (** Returns the number of calls to the system function for finite
         difference quotient Jacobian-vector product approximations. This
@@ -412,7 +412,7 @@ module Spils :
         is used.
 
         @kinsol <node5#sss:optout_spils> KINSpilsGetNumFuncEvals *)
-    val get_num_func_evals    : ('a, 'k) session -> int
+    val get_num_func_evals    : ('d, 'k) session -> int
 
     (** {3:lowlevel Low-level solver manipulation} *)
 
@@ -422,9 +422,9 @@ module Spils :
         @kinsol <node5#ss:precondFn> KINSpilsPrecSetupFn
         @kinsol <node5#ss:psolveFn> KINSpilsPrecSolveFn *)
     val set_preconditioner :
-      ('a, 'k) session
-      -> ?setup:'a prec_setup_fn
-      -> ?solve:'a prec_solve_fn
+      ('d, 'k) session
+      -> ?setup:'d prec_setup_fn
+      -> ?solve:'d prec_solve_fn
       -> unit
       -> unit
 
@@ -433,15 +433,15 @@ module Spils :
         @kinsol <node5#sss:optin_spils> KINSpilsSetJacTimesVecFn
         @kinsol <node5#ss:jtimesFn> KINSpilsJacTimesVecFn *)
     val set_jac_times_vec_fn :
-      ('a, 'k) session
-      -> 'a jac_times_vec_fn
+      ('d, 'k) session
+      -> 'd jac_times_vec_fn
       -> unit
 
     (** Remove a Jacobian-times-vector function and use the default
         implementation.
 
         @kinsol <node5#sss:optin_spils> KINSpilsSetJacTimesVecFn *)
-    val clear_jac_times_vec_fn : ('a, 'k) session -> unit
+    val clear_jac_times_vec_fn : ('d, 'k) session -> unit
   end (* }}} *)
 
 (** Alternate Linear Solvers.
@@ -590,11 +590,11 @@ type result =
     @raise FirstSystemFunctionFailure The {!sysfn} callback raised {!Sundials.RecoverableFailure} when first called.
     @raise RepeatedSystemFunctionFailure  The {!sysfn} callback raised {!Sundials.RecoverableFailure} repeatedly. *)
 val solve :
-    ('a, 'k) session
-    -> ('a, 'k) Nvector.t
+    ('d, 'k) session
+    -> ('d, 'k) Nvector.t
     -> bool
-    -> ('a, 'k) Nvector.t
-    -> ('a, 'k) Nvector.t
+    -> ('d, 'k) Nvector.t
+    -> ('d, 'k) Nvector.t
     -> result
 
 (** {2:set Modifying the solver (optional input functions)} *)
@@ -602,7 +602,7 @@ val solve :
 (** Specifies the maximum number of nonlinear iterations allowed.
 
     @kinsol <node5#ss:optin_main> KINSetNumMaxIters *)
-val set_num_max_iters : ('a, 'k) session -> int -> unit
+val set_num_max_iters : ('d, 'k) session -> int -> unit
 
 (** Specifies that an initial call to the preconditioner setup function
     should {i not} be made. This feature is useful when solving a sequence of
@@ -610,13 +610,13 @@ val set_num_max_iters : ('a, 'k) session -> int -> unit
     initial values for the next problem.
 
     @kinsol <node5#ss:optin_main> KINSetNoInitSetup *)
-val set_no_init_setup : ('a, 'k) session -> unit
+val set_no_init_setup : ('d, 'k) session -> unit
 
 (** Specifies that an initial call to the preconditioner setup function
     should be made (the default).
 
     @kinsol <node5#ss:optin_main> KINSetNoInitSetup *)
-val set_init_setup : ('a, 'k) session -> unit
+val set_init_setup : ('d, 'k) session -> unit
 
 (** Disables the nonlinear residual monitoring scheme that controls Jacobian
     updating. It only has an effect for the Dense and Band solvers.
@@ -634,7 +634,7 @@ val set_res_mon : serial_session -> unit
     preconditioner setup function. Pass 0 to set the default (10).
 
     @kinsol <node5#ss:optin_main> KINSetMaxSetupCalls *)
-val set_max_setup_calls : ('a, 'k) session -> int -> unit
+val set_max_setup_calls : ('d, 'k) session -> int -> unit
 
 (** Specifies the maximum number of nonlinear iterations between checks by the
     residual monitoring algorithm. Pass 0 to set the default (5). It only
@@ -668,14 +668,14 @@ type eta_choice =
     @kinsol <node5#ss:optin_main> KINSetEtaForm
     @kinsol <node5#ss:optin_main> KINSetEtaConstValue
     @kinsol <node5#ss:optin_main> KINSetEtaParams *)
-val set_eta_choice : ('a, 'k) session -> eta_choice -> unit
+val set_eta_choice : ('d, 'k) session -> eta_choice -> unit
 
 (** Specifies the constant value of {i omega} when using residual monitoring.
     Pass 0.0 to specify the default value (0.9). The legal values are
     {% $0 < \mathtt{omega} < 1.0 $%}.
 
     @kinsol <node5#ss:optin_main> KINSetResMonConstValue *)
-val set_res_mon_const_value : ('a, 'k) session -> float -> unit
+val set_res_mon_const_value : ('d, 'k) session -> float -> unit
 
 (** Specifies the minimum and maximum values in the formula for {i omega}.
     The legal values are
@@ -683,7 +683,7 @@ val set_res_mon_const_value : ('a, 'k) session -> float -> unit
 
     @kinsol <node5#ss:optin_main> KINSetResMonParams
     @kinsol <node3#SECTION00300800000000000000> Residual monitoring for Modified Newton method *)
-val set_res_mon_params : ('a, 'k) session
+val set_res_mon_params : ('d, 'k) session
                          -> ?omegamin:float
                          -> ?omegamax:float
                          -> unit
@@ -694,7 +694,7 @@ val set_res_mon_params : ('a, 'k) session
 
     @kinsol <node5#ss:optin_main> KINSetNoMinEps
     @kinsol <node5#ss:optin_main> KINSetFuncNormTol *)
-val set_no_min_eps : ('a, 'k) session -> unit
+val set_no_min_eps : ('d, 'k) session -> unit
 
 (** Specifies that the scaled linear residual tolerance ({i epsilon})
     is bounded from below. That is, the positive minimum value
@@ -702,20 +702,20 @@ val set_no_min_eps : ('a, 'k) session -> unit
 
     @kinsol <node5#ss:optin_main> KINSetNoMinEps
     @kinsol <node5#ss:optin_main> KINSetFuncNormTol *)
-val set_min_eps : ('a, 'k) session -> unit
+val set_min_eps : ('d, 'k) session -> unit
 
 (** Specifies the maximum allowable scaled length of the Newton step. Pass
     0.0 to specify the default value {% $1000\lVert u_0 \rVert_{D_u}$%},
     otherwise the given value must be greater than zero.
 
     @kinsol <node5#ss:optin_main> KINSetMaxNewtonStep *)
-val set_max_newton_step : ('a, 'k) session -> float -> unit
+val set_max_newton_step : ('d, 'k) session -> float -> unit
 
 (** Specifies the maximum number of beta-condition failures in the
     line search algorithm. Pass 0.0 to specify the default (10).
 
     @kinsol <node5#ss:optin_main> KINSetMaxBetaFails *)
-val set_max_beta_fails : ('a, 'k) session -> float -> unit
+val set_max_beta_fails : ('d, 'k) session -> float -> unit
 
 (** Specifies the relative error in computing $F(u)$, which is used in the
     difference quotient approximation of the Jacobian-vector product. Pass
@@ -723,40 +723,40 @@ val set_max_beta_fails : ('a, 'k) session -> float -> unit
     ({% $\sqrt{\mathtt{unit\_roundoff}}$%}).
 
     @kinsol <node5#ss:optin_main> KINSetRelErrFunc *)
-val set_rel_err_func : ('a, 'k) session -> float -> unit
+val set_rel_err_func : ('d, 'k) session -> float -> unit
 
 (** Specifies the stopping tolerance on the scaled maximum norm.
     It must be greater than zero. Pass 0.0 to specify the default
     value ({% $\mathtt{unit\_roundoff}^\frac{1}{3}$%}).
 
     @kinsol <node5#ss:optin_main> KINSetFuncNormTol *)
-val set_func_norm_tol : ('a, 'k) session -> float -> unit
+val set_func_norm_tol : ('d, 'k) session -> float -> unit
 
 (** Specifies the stopping tolerance on the minimum scaled step length, which
     must be greater than zero. Pass 0.0 to specify the default
     value ({% $\mathtt{unit\_roundoff}^\frac{1}{3}$%}).
 
     @kinsol <node5#ss:optin_main> KINSetScaledStepTol *)
-val set_scaled_step_tol : ('a, 'k) session -> float -> unit
+val set_scaled_step_tol : ('d, 'k) session -> float -> unit
 
 (** Specifies a vector defining inequality constraints for each
     component of the solution vector [u].  See {!Sundials.Constraint}.
 
     @kinsol <node5#ss:optin_main> KINSetConstraints *)
-val set_constraints : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
+val set_constraints : ('d, 'k) session -> ('d, 'k) Nvector.t -> unit
 
 (** Changes the linear solver. Allows consecutive solution attempts with
     different tools or parameters.
 
     @kinsol <node5#sss:lin_solv_init> Linear solver specification functions *)
-val set_linear_solver : ('a, 'k) session -> ('a, 'k) linear_solver -> unit
+val set_linear_solver : ('d, 'k) session -> ('d, 'k) linear_solver -> unit
 
 (** Changes the system function. Allows solutions of several problems of the
     same size but with different functions.
 
     @kinsol <node5#ss:optin_main> KINSetSysFunc
     @kinsol <node5#ss:sysFn> KINSysFn *)
-val set_sys_func : ('a, 'k) session -> ('a -> 'a -> unit) -> unit
+val set_sys_func : ('d, 'k) session -> ('d -> 'd -> unit) -> unit
 
 (** {3:info Logging and error handling} *)
 
@@ -767,19 +767,19 @@ val set_sys_func : ('a, 'k) session -> ('a -> 'a -> unit) -> unit
     garbage collected.
 
     @kinsol <node5#ss:optin_main> KINSetErrFile *)
-val set_error_file : ('a, 'k) session -> string -> bool -> unit
+val set_error_file : ('d, 'k) session -> string -> bool -> unit
 
 (** Specifies a custom function for handling error messages.
     This function must not fail: any exceptions are trapped and discarded.
 
     @kinsol <node5#ss:optin_main> KINSetErrHandlerFn
     @kinsol <node5#ss:ehFn> KINErrHandlerFn *)
-val set_err_handler_fn : ('a, 'k) session -> (error_details -> unit) -> unit
+val set_err_handler_fn : ('d, 'k) session -> (error_details -> unit) -> unit
 
 (** Restores the default error handling function.
 
     @kinsol <node5#ss:optin_main> KINSetErrHandlerFn *)
-val clear_err_handler_fn : ('a, 'k) session -> unit
+val clear_err_handler_fn : ('d, 'k) session -> unit
 
 (** Opens the named file to receive informational (non-error) messages.
     If the file already exists it is either truncated ([true]) or extended
@@ -788,7 +788,7 @@ val clear_err_handler_fn : ('a, 'k) session -> unit
     is garbage collected.
    
     @kinsol <node5#ss:optin_main> KINSetInfoFile *)
-val set_info_file : ('a, 'k) session -> string -> bool -> unit
+val set_info_file : ('d, 'k) session -> string -> bool -> unit
 
 (** Specifies a custom function for handling informational (non-error) messages.
     The [error_code] field of {!Sundials.error_details} is [0] for
@@ -797,12 +797,12 @@ val set_info_file : ('a, 'k) session -> string -> bool -> unit
 
     @kinsol <node5#ss:optin_main> KINSetInfoHandlerFn
     @kinsol <node5#ss:ihFn> KINInfoHandlerFn *)
-val set_info_handler_fn : ('a, 'k) session -> (error_details -> unit) -> unit
+val set_info_handler_fn : ('d, 'k) session -> (error_details -> unit) -> unit
 
 (** Restores the default information handling function.
 
     @kinsol <node5#ss:optin_main> KINSetErrHandlerFn *)
-val clear_info_handler_fn : ('a, 'k) session -> unit
+val clear_info_handler_fn : ('d, 'k) session -> unit
 
 (** Increasing levels of verbosity for informational messages. *)
 type print_level =
@@ -824,7 +824,7 @@ type print_level =
 (** Sets the level of verbosity of informational messages.
 
     @kinsol <node5#ss:optin_main> KINSetPrintLevel *)
-val set_print_level : ('a, 'k) session -> print_level -> unit
+val set_print_level : ('d, 'k) session -> print_level -> unit
 
 (** {2:get Querying the solver (optional output functions)} *)
 
@@ -832,40 +832,40 @@ val set_print_level : ('a, 'k) session -> print_level -> unit
 
     @kinsol <node5#sss:output_main> KINGetWorkSpace
     @return ([real_size], [integer_size]) *)
-val get_work_space : ('a, 'k) session -> int * int
+val get_work_space : ('d, 'k) session -> int * int
 
 (** Returns the number of evaluations of the system function.
 
     @kinsol <node5#ss:optout_main> KINGetNumFuncEvals *)
-val get_num_func_evals : ('a, 'k) session -> int
+val get_num_func_evals : ('d, 'k) session -> int
 
 (** Returns the number of nonlinear iterations.
 
     @kinsol <node5#ss:optout_main> KINGetNumNonlinSolvIters *)
-val get_num_nonlin_solv_iters : ('a, 'k) session -> int
+val get_num_nonlin_solv_iters : ('d, 'k) session -> int
 
 (** Returns the number of beta-condition failures.
 
     @kinsol <node5#ss:optout_main> KINGetNumBetaCondFails *)
-val get_num_beta_cond_fails : ('a, 'k) session -> int
+val get_num_beta_cond_fails : ('d, 'k) session -> int
 
 (** Returns the number of backtrack operations (step length adjustments)
     performed by the line search algorithm.
 
     @kinsol <node5#ss:optout_main> KINGetNumBacktrackOps *)
-val get_num_backtrack_ops : ('a, 'k) session -> int
+val get_num_backtrack_ops : ('d, 'k) session -> int
 
 (** Returns the scaled Euclidiean {i l2} norm of the nonlinear system function
     $F(u)$ evaluated at the current iterate.
 
     @kinsol <node5#ss:optout_main> KINGetFuncNorm *)
-val get_func_norm : ('a, 'k) session -> float
+val get_func_norm : ('d, 'k) session -> float
 
 (** Returns the scaled Euclidiean {i l2} norm of the step used during the
     previous iteration.
 
     @kinsol <node5#ss:optout_main> KINGetStepLength *)
-val get_step_length : ('a, 'k) session -> float
+val get_step_length : ('d, 'k) session -> float
 
 (** {2:exceptions Exceptions} *)
 

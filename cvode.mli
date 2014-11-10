@@ -51,7 +51,7 @@ open Sundials
     ]}
 
     @cvode <node5#ss:skeleton_sim> Skeleton of main program *)
-type ('a, 'k) session = ('a, 'k) Cvode_impl.session
+type ('d, 'k) session = ('d, 'k) Cvode_impl.session
 
 (** Alias for sessions based on serial nvectors. *)
 type serial_session = (Nvector_serial.data, Nvector_serial.kind) session
@@ -68,7 +68,7 @@ type serial_linear_solver =
       (Nvector_serial.data, Nvector_serial.kind) linear_solver
 
 (** Workspaces with three temporary vectors. *)
-type 'a triple = 'a * 'a * 'a
+type 'd triple = 'd * 'd * 'd
 
 (** Arguments common to Jacobian callback functions.    
  
@@ -77,11 +77,11 @@ type 'a triple = 'a * 'a * 'a
     @cvode <node5#ss:jtimesfn> CVSpilsJacTimesVecFn
     @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
     @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
-type ('t, 'a) jacobian_arg =
+type ('t, 'd) jacobian_arg =
   {
     jac_t   : float;        (** The independent variable. *)
-    jac_y   : 'a;           (** The dependent variable vector. *)
-    jac_fy  : 'a;           (** The derivative vector
+    jac_y   : 'd;           (** The dependent variable vector. *)
+    jac_fy  : 'd;           (** The derivative vector
                             (i.e., {% $\frac{\mathrm{d}y}{\mathrm{d}t}$%}). *)
     jac_tmp : 't            (** Workspace data. *)
   }
@@ -105,14 +105,14 @@ module Diag :
 
         @cvode <node5#sss:optout_diag> CVDiagGetWorkSpace
         @return ([real_size], [integer_size]) *)
-    val get_work_space : ('a, 'k) session -> int * int
+    val get_work_space : ('d, 'k) session -> int * int
 
     (** Returns the number of calls made to the right-hand side
         function due to finite difference Jacobian approximation in the
         Diagonal linear solver.
 
         @cvode <node5#sss:optout_diag> CVDiagGetNumRhsEvals *)
-    val get_num_rhs_evals : ('a, 'k) session -> int
+    val get_num_rhs_evals : ('d, 'k) session -> int
   end (* }}} *)
 
 (** Direct Linear Solvers operating on dense and banded matrices.
@@ -268,9 +268,9 @@ module Spils :
     (** Arguments passed to the preconditioner solver function.
 
         @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn *)
-    type 'a prec_solve_arg =
+    type 'd prec_solve_arg =
       {
-        rhs   : 'a;         (** Right-hand side vector of the linear system. *)
+        rhs   : 'd;         (** Right-hand side vector of the linear system. *)
         gamma : float;      (** Scalar $\gamma$ in the Newton
                                 matrix given by $M = I - \gamma J$. *)
         delta : float;      (** Input tolerance for iterative methods. *)
@@ -294,10 +294,10 @@ module Spils :
                  be accessed after the function has returned.}
 
         @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn *)
-    type 'a prec_solve_fn =
-      ('a, 'a) jacobian_arg
-      -> 'a prec_solve_arg
-      -> 'a
+    type 'd prec_solve_fn =
+      ('d, 'd) jacobian_arg
+      -> 'd prec_solve_arg
+      -> 'd
       -> unit
 
     (** Callback functions that preprocess or evaluate Jacobian-related data
@@ -317,8 +317,8 @@ module Spils :
 
         @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
         @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
-    type 'a prec_setup_fn =
-      ('a triple, 'a) jacobian_arg
+    type 'd prec_setup_fn =
+      ('d triple, 'd) jacobian_arg
       -> bool
       -> float
       -> bool
@@ -337,10 +337,10 @@ module Spils :
 
         @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
         @cvode <node5#ss:jtimesfn> CVSpilsJacTimesVecFn *)
-    type 'a jac_times_vec_fn =
-      ('a, 'a) jacobian_arg
-      -> 'a (* v *)
-      -> 'a (* Jv *)
+    type 'd jac_times_vec_fn =
+      ('d, 'd) jacobian_arg
+      -> 'd (* v *)
+      -> 'd (* Jv *)
       -> unit
 
     (** Specifies a preconditioner, including the type of preconditioning
@@ -357,32 +357,32 @@ module Spils :
         @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn
         @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
         @cvode <node5#ss:jtimesfn> CVSpilsJacTimesVecFn *)
-    type ('a,'k) preconditioner = ('a,'k) Cvode_impl.SpilsTypes.preconditioner
+    type ('d,'k) preconditioner = ('d,'k) Cvode_impl.SpilsTypes.preconditioner
 
     (** No preconditioning.  *)
-    val prec_none : ('a, 'k) preconditioner
+    val prec_none : ('d, 'k) preconditioner
 
     (** Left preconditioning. {% $(P^{-1}A)x = P^{-1}b$ %}. *)
     val prec_left :
-      ?setup:'a prec_setup_fn
-      -> ?jac_times_vec:'a jac_times_vec_fn
-      -> 'a prec_solve_fn
-      -> ('a, 'k) preconditioner
+      ?setup:'d prec_setup_fn
+      -> ?jac_times_vec:'d jac_times_vec_fn
+      -> 'd prec_solve_fn
+      -> ('d, 'k) preconditioner
 
     (** Right preconditioning. {% $(AP^{-1})Px = b$ %}. *)
     val prec_right :
-      ?setup:'a prec_setup_fn
-      -> ?jac_times_vec:'a jac_times_vec_fn
-      -> 'a prec_solve_fn
-      -> ('a, 'k) preconditioner
+      ?setup:'d prec_setup_fn
+      -> ?jac_times_vec:'d jac_times_vec_fn
+      -> 'd prec_solve_fn
+      -> ('d, 'k) preconditioner
 
     (** Left and right preconditioning.
         {% $(P_L^{-1}AP_R^{-1})P_Rx = P_L^{-1}b$ %} *)
     val prec_both :
-      ?setup:'a prec_setup_fn
-      -> ?jac_times_vec:'a jac_times_vec_fn
-      -> 'a prec_solve_fn
-      -> ('a, 'k) preconditioner
+      ?setup:'d prec_setup_fn
+      -> ?jac_times_vec:'d jac_times_vec_fn
+      -> 'd prec_solve_fn
+      -> ('d, 'k) preconditioner
 
     (** Banded preconditioners.  *)
     module Banded : sig (* {{{ *)
@@ -441,7 +441,7 @@ module Spils :
         @cvode <node5#sss:lin_solv_init> CVSpgmr
         @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
         @cvode <node5#sss:optin_spils> CVSpilsSetMaxl *)
-    val spgmr : ?maxl:int -> ('a, 'k) preconditioner -> ('a, 'k) linear_solver
+    val spgmr : ?maxl:int -> ('d, 'k) preconditioner -> ('d, 'k) linear_solver
 
     (** Krylov iterative solver using the scaled preconditioned biconjugate
         stabilized (Bi-CGStab) method.
@@ -451,7 +451,7 @@ module Spils :
         @cvode <node5#sss:lin_solv_init> CVSpbcg
         @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
         @cvode <node5#sss:optin_spils> CVSpilsSetMaxl *)
-    val spbcg : ?maxl:int -> ('a, 'k) preconditioner -> ('a, 'k) linear_solver
+    val spbcg : ?maxl:int -> ('d, 'k) preconditioner -> ('d, 'k) linear_solver
 
     (** Krylov iterative with the scaled preconditioned transpose-free
         quasi-minimal residual (SPTFQMR) method.
@@ -462,7 +462,7 @@ module Spils :
         @cvode <node5#sss:lin_solv_init> CVSptfqmr
         @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
         @cvode <node5#sss:optin_spils> CVSpilsSetMaxl *)
-    val sptfqmr : ?maxl:int -> ('a, 'k) preconditioner -> ('a, 'k) linear_solver
+    val sptfqmr : ?maxl:int -> ('d, 'k) preconditioner -> ('d, 'k) linear_solver
 
     (** {3:set Solver parameters} *)
 
@@ -470,20 +470,20 @@ module Spils :
         Spgmr {!linear_solver}.
 
         @cvode <node5#sss:optin_spils> CVSpilsSetGSType *)
-    val set_gs_type : ('a, 'k) session -> Spils.gramschmidt_type -> unit
+    val set_gs_type : ('d, 'k) session -> Spils.gramschmidt_type -> unit
 
     (** Sets the factor by which the Krylov linear solver's convergence test
         constant is reduced from the Newton iteration test constant.
         This factor must be >= 0; passing 0 specifies the default (0.05).
 
         @cvode <node5#sss:optin_spils> CVSpilsSetEpsLin *)
-    val set_eps_lin : ('a, 'k) session -> float -> unit
+    val set_eps_lin : ('d, 'k) session -> float -> unit
 
     (** Resets the maximum Krylov subspace dimension for the Bi-CGStab and
         TFQMR methods. A value <= 0 specifies the default (5.0).
 
         @cvode <node5#sss:optin_spils> CVSpilsSetMaxl *)
-    val set_maxl : ('a, 'k) session -> int -> unit
+    val set_maxl : ('d, 'k) session -> int -> unit
 
     (** {3:stats Solver statistics} *)
 
@@ -492,42 +492,42 @@ module Spils :
 
         @cvode <node5#sss:optout_spils> CVSpilsGetWorkSpace
         @return ([real_size], [integer_size]) *)
-    val get_work_space       : ('a, 'k) session -> int * int
+    val get_work_space       : ('d, 'k) session -> int * int
 
     (** Returns the cumulative number of linear iterations.
 
         @cvode <node5#sss:optout_spils> CVSpilsGetNumLinIters *)
-    val get_num_lin_iters    : ('a, 'k) session -> int
+    val get_num_lin_iters    : ('d, 'k) session -> int
 
     (** Returns the cumulative number of linear convergence failures.
 
         @cvode <node5#sss:optout_spils> CVSpilsGetNumConvFails *)
-    val get_num_conv_fails   : ('a, 'k) session -> int
+    val get_num_conv_fails   : ('d, 'k) session -> int
 
     (** Returns the cumulative number of calls to the setup function with
         [jok=false].
 
         @cvode <node5#sss:optout_spils> CVSpilsGetNumPrecEvals *)
-    val get_num_prec_evals   : ('a, 'k) session -> int
+    val get_num_prec_evals   : ('d, 'k) session -> int
 
     (** Returns the cumulative number of calls to the preconditioner solve
         function.
 
         @cvode <node5#sss:optout_spils> CVSpilsGetNumPrecSolves *)
-    val get_num_prec_solves  : ('a, 'k) session -> int
+    val get_num_prec_solves  : ('d, 'k) session -> int
 
     (** Returns the cumulative number of calls to the Jacobian-vector
         function.
 
         @cvode <node5#sss:optout_spils> CVSpilsGetNumJtimesEvals *)
-    val get_num_jtimes_evals : ('a, 'k) session -> int
+    val get_num_jtimes_evals : ('d, 'k) session -> int
 
     (** Returns the number of calls to the right-hand side callback for
         finite difference Jacobian-vector product approximation. This counter is
         only updated if the default difference quotient function is used.
 
         @cvode <node5#sss:optout_spils> CVSpilsGetNumRhsEvals *)
-    val get_num_rhs_evals    : ('a, 'k) session -> int
+    val get_num_rhs_evals    : ('d, 'k) session -> int
 
     (** {3:lowlevel Low-level solver manipulation}
 
@@ -542,9 +542,9 @@ module Spils :
         @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
         @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
     val set_preconditioner :
-      ('a, 'k) session
-      -> ?setup:'a prec_setup_fn
-      -> 'a prec_solve_fn
+      ('d, 'k) session
+      -> ?setup:'d prec_setup_fn
+      -> 'd prec_solve_fn
       -> unit
 
     (** Change the Jacobian-times-vector function.
@@ -552,8 +552,8 @@ module Spils :
         @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
         @cvode <node5#ss:jtimesfn> CVSpilsJacTimesVecFn *)
     val set_jac_times_vec_fn :
-      ('a, 'k) session
-      -> 'a jac_times_vec_fn
+      ('d, 'k) session
+      -> 'd jac_times_vec_fn
       -> unit
 
     (** Remove a Jacobian-times-vector function and use the default
@@ -561,7 +561,7 @@ module Spils :
 
         @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
         @cvode <node5#ss:jtimesfn> CVSpilsJacTimesVecFn *)
-    val clear_jac_times_vec_fn : ('a, 'k) session -> unit
+    val clear_jac_times_vec_fn : ('d, 'k) session -> unit
 
     (** Change the preconditioning direction without modifying
         callback functions. If the preconditioning type is changed from
@@ -570,7 +570,7 @@ module Spils :
         callbacks.
 
         @cvode <node5#sss:optin_spils> CVSpilsSetPrecType *)
-    val set_prec_type : ('a, 'k) session -> Spils.preconditioning_type -> unit
+    val set_prec_type : ('d, 'k) session -> Spils.preconditioning_type -> unit
   end (* }}} *)
 
 (** Alternate Linear Solvers.
@@ -727,8 +727,8 @@ val default_tolerances : ('data, 'kind) tolerance
 
     @cvode <node3#ss:ivp_sol> IVP Solution
     @cvode <node5#sss:cvodemalloc> CVodeCreate *)
-type ('a, 'kind) iter =
-  | Newton of ('a, 'kind) linear_solver
+type ('d, 'kind) iter =
+  | Newton of ('d, 'kind) linear_solver
     (** Newton iteration with a given linear solver. *)
   | Functional
     (** Functional iteration (non-stiff systems only). *)
@@ -755,7 +755,7 @@ type lmm =
              returns.}
 
     @cvode <node5#ss:rhsFn> CVRhsFn *)
-type 'a rhsfn = float -> 'a -> 'a -> unit
+type 'd rhsfn = float -> 'd -> 'd -> unit
 
 (** Called by the solver to calculate the values of root functions. These
     ‘zero-crossings’ are used to detect significant events. The function is
@@ -768,7 +768,7 @@ type 'a rhsfn = float -> 'a -> 'a -> unit
              returned.}
 
     @cvode <node5#ss:rootFn> cvRootFn *)
-type 'a rootsfn = (float -> 'a -> RealArray.t -> unit)
+type 'd rootsfn = (float -> 'd -> RealArray.t -> unit)
 
 (** Creates and initializes a session with the solver. The call
     {[init lmm iter tol f ~roots:(nroots, g) t0 y0]} has
@@ -805,7 +805,7 @@ val init :
     -> ('data, 'kind) session
 
 (** A convenience value for signalling that there are no roots to monitor. *)
-val no_roots : (int * 'a rootsfn)
+val no_roots : (int * 'd rootsfn)
 
 (** Values returned by the step functions. Failures are indicated by
     exceptions.
@@ -843,13 +843,13 @@ type solver_result =
     @raise RepeatedRhsFuncFailure Too many convergence test failures, or unable to estimate the initial step size, due to repeated recoverable errors in the right-hand side function.
     @raise UnrecoverableRhsFuncFailure The right-hand side function had a recoverable error, but no recovery was possible. This error can only occur after an error test failure at order one.
     @raise RootFuncFailure Failure in the rootfinding function [g]. *)
-val solve_normal : ('a, 'k) session -> float -> ('a, 'k) Nvector.t
+val solve_normal : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
                         -> float * solver_result
 
 (** Like {!solve_normal} but returns after one internal solver step.
 
     @cvode <node5#sss:cvode> CVode (CV_ONE_STEP) *)
-val solve_one_step : ('a, 'k) session -> float -> ('a, 'k) Nvector.t
+val solve_one_step : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
                         -> float * solver_result
 
 (** Returns the interpolated solution or derivatives.
@@ -867,7 +867,7 @@ val solve_one_step : ('a, 'k) session -> float -> ('a, 'k) Nvector.t
     @cvode <node5#sss:optin_root> CVodeGetDky
     @raise BadT [t] is not in the interval {% $[t_n - h_u, t_n]$%}.
     @raise BadK [k] is not in the range 0, 1, ..., $q_u$. *)
-val get_dky : ('a, 'k) session -> ('a, 'k) Nvector.t -> float -> int -> unit
+val get_dky : ('d, 'k) session -> ('d, 'k) Nvector.t -> float -> int -> unit
 
 (** Reinitializes the solver with new parameters and state values. The
     values of the independent variable, i.e., the simulation time, and the
@@ -877,11 +877,11 @@ val get_dky : ('a, 'k) session -> ('a, 'k) Nvector.t -> float -> int -> unit
 
     @cvode <node5#sss:cvreinit> CVodeReInit *)
 val reinit :
-  ('a, 'kind) session
-  -> ?iter_type:('a, 'kind) iter
-  -> ?roots:(int * 'a rootsfn)
+  ('d, 'kind) session
+  -> ?iter_type:('d, 'kind) iter
+  -> ?roots:(int * 'd rootsfn)
   -> float
-  -> ('a, 'kind) Nvector.t
+  -> ('d, 'kind) Nvector.t
   -> unit
 
 (** {2:set Modifying the solver (optional input functions)} *)
@@ -892,7 +892,7 @@ val reinit :
     @cvode <node5#sss:cvtolerances> CVodeSVtolerances
     @cvode <node5#sss:cvtolerances> CVodeWFtolerances
     @cvode <node5#ss:ewtsetFn>       CVEwtFn *)
-val set_tolerances : ('a, 'k) session -> ('a, 'k) tolerance -> unit
+val set_tolerances : ('d, 'k) session -> ('d, 'k) tolerance -> unit
 
 (** Opens the named file to receive messages from the default error handler.
     If the file already exists it is either truncated ([true]) or extended
@@ -901,88 +901,88 @@ val set_tolerances : ('a, 'k) session -> ('a, 'k) tolerance -> unit
     garbage collected.
 
     @cvode <node5#sss:optin_main> CVodeSetErrFile *)
-val set_error_file : ('a, 'k) session -> string -> bool -> unit
+val set_error_file : ('d, 'k) session -> string -> bool -> unit
 
 (** Specifies a custom function for handling error messages.
     This function must not fail: any exceptions are trapped and discarded.
 
     @cvode <node5#sss:optin_main> CVodeSetErrHandlerFn
     @cvode <node5#ss:ehFn> CVErrHandlerFn *)
-val set_err_handler_fn : ('a, 'k) session -> (error_details -> unit) -> unit
+val set_err_handler_fn : ('d, 'k) session -> (error_details -> unit) -> unit
 
 (** Restores the default error handling function.
 
     @cvode <node5#sss:optin_main> CVodeSetErrHandlerFn *)
-val clear_err_handler_fn : ('a, 'k) session -> unit
+val clear_err_handler_fn : ('d, 'k) session -> unit
 
 (** Specifies the maximum order of the linear multistep method.
 
     @cvode <node5#sss:optin_main> CVodeSetMaxOrd *)
-val set_max_ord : ('a, 'k) session -> int -> unit
+val set_max_ord : ('d, 'k) session -> int -> unit
 
 (** Specifies the maximum number of steps taken in attempting to reach
     a given output time.
 
     @cvode <node5#sss:optin_main> CVodeSetMaxNumSteps *)
-val set_max_num_steps : ('a, 'k) session -> int -> unit
+val set_max_num_steps : ('d, 'k) session -> int -> unit
 
 (** Specifies the maximum number of messages warning that [t + h = t] on
     the next internal step.
 
     @cvode <node5#sss:optin_main> CVodeSetMaxHnilWarns *)
-val set_max_hnil_warns : ('a, 'k) session -> int -> unit
+val set_max_hnil_warns : ('d, 'k) session -> int -> unit
 
 (** Indicates whether the BDF stability limit detection algorithm should be
     used.
 
     @cvode <node5#sss:optin_main> CVodeSetStabLimDet
     @cvode <node3#s:bdf_stab> BDF Stability Limit Detection *)
-val set_stab_lim_det : ('a, 'k) session -> bool -> unit
+val set_stab_lim_det : ('d, 'k) session -> bool -> unit
 
 (** Specifies the initial step size.
 
     @cvode <node5#sss:optin_main> CVodeSetInitStep *)
-val set_init_step : ('a, 'k) session -> float -> unit
+val set_init_step : ('d, 'k) session -> float -> unit
 
 (** Specifies a lower bound on the magnitude of the step size.
 
     @cvode <node5#sss:optin_main> CVodeSetMinStep *)
-val set_min_step : ('a, 'k) session -> float -> unit
+val set_min_step : ('d, 'k) session -> float -> unit
 
 (** Specifies an upper bound on the magnitude of the step size.
 
     @cvode <node5#sss:optin_main> CVodeSetMaxStep *)
-val set_max_step : ('a, 'k) session -> float -> unit
+val set_max_step : ('d, 'k) session -> float -> unit
 
 (** Limits the value of the independent variable [t] when solving.
     By default no stop time is imposed.
 
     @cvode <node5#sss:optin_main> CVodeSetStopTime *)
-val set_stop_time : ('a, 'k) session -> float -> unit
+val set_stop_time : ('d, 'k) session -> float -> unit
 
 (** Specifies the maximum number of error test failures permitted in attempting
     one step.
 
     @cvode <node5#sss:optin_main> CVodeSetMaxErrTestFails *)
-val set_max_err_test_fails : ('a, 'k) session -> int -> unit
+val set_max_err_test_fails : ('d, 'k) session -> int -> unit
 
 (** Specifies the maximum number of nonlinear solver iterations permitted per
     step.
 
     @cvode <node5#sss:optin_main> CVodeSetMaxNonlinIters *)
-val set_max_nonlin_iters : ('a, 'k) session -> int -> unit
+val set_max_nonlin_iters : ('d, 'k) session -> int -> unit
 
 (** Specifies the maximum number of nonlinear solver convergence failures
     permitted during one step.
 
     @cvode <node5#sss:optin_main> CVodeSetMaxConvFails *)
-val set_max_conv_fails : ('a, 'k) session -> int -> unit
+val set_max_conv_fails : ('d, 'k) session -> int -> unit
 
 (** Specifies the safety factor used in the nonlinear convergence test.
 
     @cvode <node5#sss:optin_main> CVodeSetNonlinConvCoef
     @cvode <node3#ss:ivp_sol> IVP Solution *)
-val set_nonlin_conv_coef : ('a, 'k) session -> float -> unit
+val set_nonlin_conv_coef : ('d, 'k) session -> float -> unit
 
 (** {2:get Querying the solver (optional output functions)} *)
 
@@ -990,81 +990,81 @@ val set_nonlin_conv_coef : ('a, 'k) session -> float -> unit
 
     @cvode <node5#sss:optout_main> CVodeGetWorkSpace
     @return ([real_size], [integer_size]) *)
-val get_work_space          : ('a, 'k) session -> int * int
+val get_work_space          : ('d, 'k) session -> int * int
 
 (** Returns the cumulative number of internal steps taken by the solver.
 
     @cvode <node5#sss:optout_main> CVodeGetNumSteps *)
-val get_num_steps           : ('a, 'k) session -> int
+val get_num_steps           : ('d, 'k) session -> int
 
 (** Returns the number of calls to the right-hand side function.
 
     @cvode <node5#sss:optout_main> CVodeGetNumRhsEvals *)
-val get_num_rhs_evals       : ('a, 'k) session -> int
+val get_num_rhs_evals       : ('d, 'k) session -> int
 
 (** Returns the number of calls made to the linear solver's setup function.
 
     @cvode <node5#sss:optout_main> CVodeGetNumLinSolvSetups *)
-val get_num_lin_solv_setups : ('a, 'k) session -> int
+val get_num_lin_solv_setups : ('d, 'k) session -> int
 
 (** Returns the number of local error test failures that have occurred.
 
     @cvode <node5#sss:optout_main> CVodeGetNumErrTestFails *)
-val get_num_err_test_fails  : ('a, 'k) session -> int
+val get_num_err_test_fails  : ('d, 'k) session -> int
 
 (** Returns the integration method order used during the last internal step.
 
     @cvode <node5#sss:optout_main> CVodeGetLastOrder *)
-val get_last_order          : ('a, 'k) session -> int
+val get_last_order          : ('d, 'k) session -> int
 
 (** Returns the integration method order to be used on the next internal step.
 
     @cvode <node5#sss:optout_main> CVodeGetCurrentOrder *)
-val get_current_order       : ('a, 'k) session -> int
+val get_current_order       : ('d, 'k) session -> int
 
 (** Returns the integration step size taken on the last internal step.
 
     @cvode <node5#sss:optout_main> CVodeGetLastStep *)
-val get_last_step           : ('a, 'k) session -> float
+val get_last_step           : ('d, 'k) session -> float
 
 (** Returns the integration step size to be attempted on the next internal step.
 
     @cvode <node5#sss:optout_main> CVodeGetCurrentStep *)
-val get_current_step        : ('a, 'k) session -> float
+val get_current_step        : ('d, 'k) session -> float
 
 (** Returns the the value of the integration step size used on the first step.
 
     @cvode <node5#sss:optout_main> CVodeGetActualInitStep *)
-val get_actual_init_step    : ('a, 'k) session -> float
+val get_actual_init_step    : ('d, 'k) session -> float
 
 (** Returns the the current internal time reached by the solver.
 
     @cvode <node5#sss:optout_main> CVodeGetCurrentTime *)
-val get_current_time        : ('a, 'k) session -> float
+val get_current_time        : ('d, 'k) session -> float
 
 (** Returns the number of order reductions dictated by the BDF stability limit
     detection algorithm.
 
     @cvode <node5#sss:optout_main> CVodeGetNumStabLimOrderReds
     @cvode <node3#s:bdf_stab> BDF stability limit detection *)
-val get_num_stab_lim_order_reds : ('a, 'k) session -> int
+val get_num_stab_lim_order_reds : ('d, 'k) session -> int
 
 (** Returns a suggested factor by which the user's tolerances should be scaled
     when too much accuracy has been requested for some internal step.
 
     @cvode <node5#sss:optout_main> CVodeGetTolScaleFactor *)
-val get_tol_scale_factor : ('a, 'k) session -> float
+val get_tol_scale_factor : ('d, 'k) session -> float
 
 (** Returns the solution error weights at the current time.
 
     @cvode <node5#sss:optout_main> CVodeGetErrWeights
     @cvode <node3#ss:ivp_sol> IVP solution (W_i) *)
-val get_err_weights : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
+val get_err_weights : ('d, 'k) session -> ('d, 'k) Nvector.t -> unit
 
 (** Returns the vector of estimated local errors.
 
     @cvode <node5#sss:optout_main> CVodeGetEstLocalErrors *)
-val get_est_local_errors : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
+val get_est_local_errors : ('d, 'k) session -> ('d, 'k) Nvector.t -> unit
 
 (** Summaries of integrator statistics. *)
 type integrator_stats = {
@@ -1093,29 +1093,29 @@ type integrator_stats = {
 (** Returns the integrator statistics as a group.
 
     @cvode <node5#sss:optout_main> CVodeGetIntegratorStats *)
-val get_integrator_stats    : ('a, 'k) session -> integrator_stats
+val get_integrator_stats    : ('d, 'k) session -> integrator_stats
 
 (** Prints the integrator statistics on the given channel.
 
     @cvode <node5#sss:optout_main> CVodeGetIntegratorStats *)
-val print_integrator_stats  : ('a, 'k) session -> out_channel -> unit
+val print_integrator_stats  : ('d, 'k) session -> out_channel -> unit
 
 (** Returns the number of nonlinear (functional or Newton) iterations performed.
 
     @cvode <node5#sss:optout_main> CVodeGetNumNonlinSolvIters *)
-val get_num_nonlin_solv_iters : ('a, 'k) session -> int
+val get_num_nonlin_solv_iters : ('d, 'k) session -> int
 
 (** Returns the number of nonlinear convergence failures that have occurred.
 
     @cvode <node5#sss:optout_main> CVodeGetNumNonlinSolvConvFails *)
-val get_num_nonlin_solv_conv_fails : ('a, 'k) session -> int
+val get_num_nonlin_solv_conv_fails : ('d, 'k) session -> int
 
 (** Returns both the numbers of nonlinear iterations performed [nniters] and
     nonlinear convergence failures [nncfails].
 
     @cvode <node5#sss:optout_main> CVodeGetNonlinSolvStats
     @return ([nniters], [nncfails]) *)
-val get_nonlin_solv_stats : ('a, 'k) session -> int *int
+val get_nonlin_solv_stats : ('d, 'k) session -> int *int
 
 (** {2:roots Additional root-finding functions} *)
 
@@ -1123,33 +1123,33 @@ val get_nonlin_solv_stats : ('a, 'k) session -> int *int
     located and returned. [dir] may contain one entry for each root function.
 
     @cvode <node5#sss:optin_root> CVodeSetRootDirection *)
-val set_root_direction : ('a, 'k) session -> RootDirs.d array -> unit
+val set_root_direction : ('d, 'k) session -> RootDirs.d array -> unit
 
 (** Like {!set_root_direction} but specifies a single direction for all root
     functions.
 
     @cvode <node5#sss:optin_root> CVodeSetRootDirection *)
-val set_all_root_directions : ('a, 'k) session -> RootDirs.d -> unit
+val set_all_root_directions : ('d, 'k) session -> RootDirs.d -> unit
 
 (** Disables issuing a warning if some root function appears to be identically
     zero at the beginning of the integration.
 
     @cvode <node5#sss:optin_root> CVodeSetNoInactiveRootWarn *)
-val set_no_inactive_root_warn : ('a, 'k) session -> unit
+val set_no_inactive_root_warn : ('d, 'k) session -> unit
 
 (** Returns the number of root functions. *)
-val get_num_roots : ('a, 'k) session -> int
+val get_num_roots : ('d, 'k) session -> int
 
 (** Fills an array showing which functions were found to have a root.
 
     @cvode <node5#sss:optout_root> CVodeGetRootInfo *)
-val get_root_info : ('a, 'k) session -> Roots.t -> unit
+val get_root_info : ('d, 'k) session -> Roots.t -> unit
 
 (** Returns the cumulative number of calls made to the user-supplied root
     function g.
 
     @cvode <node5#sss:optout_root> CVodeGetNumGEvals *)
-val get_num_g_evals : ('a, 'k) session -> int
+val get_num_g_evals : ('d, 'k) session -> int
 
 (** {2:exceptions Exceptions} *)
 
