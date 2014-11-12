@@ -70,7 +70,7 @@ module MakeOps =
           for i = 0 to A.length x - 1 do
             A.set z i (A.get x i +. A.get y i)
           done
-        else if (a = 1.0 && b = -1.0) || (a = -1.0 && b == 1.0) then
+        else if (a = 1.0 && b = -1.0) || (a = -1.0 && b = 1.0) then
           let v1, v2 = if (a = 1.0 && b = -1.0) then y, x else x, y in
           for i = 0 to A.length v1 - 1 do
             A.set z i (A.get v1 i -. A.get v2 i)
@@ -348,7 +348,7 @@ module Array =
           for i = 0 to A.length x - 1 do
             A.set z i (A.get x i +. A.get y i)
           done
-        else if (a = 1.0 && b = -1.0) || (a = -1.0 && b == 1.0) then
+        else if (a = 1.0 && b = -1.0) || (a = -1.0 && b = 1.0) then
           let v1, v2 = if (a = 1.0 && b = -1.0) then y, x else x, y in
           for i = 0 to A.length v1 - 1 do
             A.set z i (A.get v1 i -. A.get v2 i)
