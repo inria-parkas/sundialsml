@@ -48,20 +48,10 @@
 #include <stdio.h>
 #define MAX_ERRMSG_LEN 256
 
-/* callbacks */
-enum callback_index {
-    IX_call_errh = 0,
-    IX_call_infoh,
-    NUM_CALLBACKS
-};
-
-static value callbacks[NUM_CALLBACKS];
-
 CAMLprim value c_kinsol_init_module (value cbs, value exns)
 {
     CAMLparam2 (cbs, exns);
     REGISTER_EXNS (KINSOL, exns);
-    REGISTER_CALLBACKS (cbs);
     CAMLreturn (Val_unit);
 }
 
@@ -94,7 +84,7 @@ static void errh(
 	void *eh_data)
 {
     CAMLparam0();
-    CAMLlocal1(a);
+    CAMLlocal2(session, a);
     value *backref = eh_data;
 
     a = caml_alloc_tuple(RECORD_SUNDIALS_ERROR_DETAILS_SIZE);
@@ -107,7 +97,13 @@ static void errh(
     Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_ERROR_MESSAGE,
                 caml_copy_string(msg));
 
-    caml_callback2(CAML_FN(call_errh), *backref, a);
+    WEAK_DEREF (session, *backref);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback_exn (Field(session, RECORD_KINSOL_SESSION_ERRH), a);
+    if (Is_exception_result (r))
+	sundials_ml_warn_discarded_exn (Extract_exception (r),
+					"user-defined error handler");
 
     CAMLreturn0;
 }
@@ -140,7 +136,7 @@ static void infoh(
 	void *ih_data)
 {
     CAMLparam0();
-    CAMLlocal1(a);
+    CAMLlocal2(session, a);
     value *backref = ih_data;
 
     a = caml_alloc_tuple(RECORD_SUNDIALS_ERROR_DETAILS_SIZE);
@@ -152,7 +148,14 @@ static void infoh(
     Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_ERROR_MESSAGE,
                 caml_copy_string(msg));
 
-    caml_callback2(CAML_FN(call_infoh), *backref, a);
+    WEAK_DEREF (session, *backref);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback_exn (Field (session, RECORD_KINSOL_SESSION_INFOH),
+				 a);
+    if (Is_exception_result (r))
+	sundials_ml_warn_discarded_exn (Extract_exception (r),
+					"user-defined info handler");
 
     CAMLreturn0;
 }

@@ -660,33 +660,12 @@ external get_num_g_evals                : ('a, 'k) session -> int
     = "c_cvode_get_num_g_evals"
 
 
-(* Callbacks *)
-
-let call_errw session y ewt =
-  let session = read_weak_ref session in
-  try session.errw y ewt; 0
-  with
-  | Sundials.NonPositiveEwt -> -1
-  | e -> (session.exn_temp <- Some e; -1)
-
-let call_errh session details =
-  let session = read_weak_ref session in
-  try session.errh details
-  with e ->
-    prerr_endline ("Warning: error handler function raised an exception.  " ^
-                   "This exception will not be propagated: " ^
-                   Printexc.to_string e)
-
 (* Let C code know about some of the values in this module.  *)
-external c_init_module : 'fcns -> exn array -> unit =
+external c_init_module : exn array -> unit =
   "c_cvode_init_module"
 
 let _ =
   c_init_module
-    (* Functions must be listed in the same order as
-       callback_index in cvode_ml.c.  *)
-    (call_errw, call_errh)
-
     (* Exceptions must be listed in the same order as
        cvode_exn_index.  *)
     [|IllInput;

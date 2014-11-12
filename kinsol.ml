@@ -479,34 +479,12 @@ let solve s u linesearch u_scale f_scale =
      s.checkvec f_scale);
   c_solve s u linesearch u_scale f_scale
 
-(* Callbacks *)
-
-let call_errh session details =
-  let session = read_weak_ref session in
-  try session.errh details
-  with e ->
-    prerr_endline ("Warning: error handler function raised an exception.  " ^
-                   "This exception will not be propagated: " ^
-                   Printexc.to_string e)
-
-let call_infoh session details =
-  let session = read_weak_ref session in
-  try session.infoh details
-  with e ->
-    prerr_endline ("Warning: info function raised an exception.  " ^
-                   "This exception will not be propagated: " ^
-                   Printexc.to_string e)
-
 (* Let C code know about some of the values in this module.  *)
 external c_init_module : 'fcns -> exn array -> unit =
   "c_kinsol_init_module"
 
 let _ =
   c_init_module
-    (* Functions must be listed in the same order as
-       callback_index in kinsol_ml.c.  *)
-    (call_errh, call_infoh)
-
     (* Exceptions must be listed in the same order as
        kinsol_exn_index.  *)
     [|

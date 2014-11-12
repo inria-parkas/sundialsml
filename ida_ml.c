@@ -68,19 +68,10 @@
 #include "dls_ml.h"
 
 
-enum callback_index {
-    IX_call_errh = 0,
-    IX_call_errw,
-    NUM_CALLBACKS
-};
-
-static value callbacks[NUM_CALLBACKS];
-
-CAMLprim value c_ida_init_module (value cbs, value exns)
+CAMLprim value c_ida_init_module (value exns)
 {
-    CAMLparam2 (cbs, exns);
+    CAMLparam1 (exns);
     REGISTER_EXNS (IDA, exns);
-    REGISTER_CALLBACKS (cbs);
     CAMLreturn (Val_unit);
 }
 
@@ -112,7 +103,7 @@ static void errh(
 	void *eh_data)
 {
     CAMLparam0();
-    CAMLlocal1(a);
+    CAMLlocal2(session, a);
     value *backref = eh_data;
 
     a = caml_alloc_tuple(RECORD_SUNDIALS_ERROR_DETAILS_SIZE);
@@ -125,7 +116,13 @@ static void errh(
     Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_ERROR_MESSAGE,
 		caml_copy_string(msg));
 
-    caml_callback2_exn (CAML_FN(call_errh), *backref, a);
+    WEAK_DEREF (session, *backref);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback_exn (Field(session, RECORD_IDA_SESSION_ERRH), a);
+    if (Is_exception_result (r))
+	sundials_ml_warn_discarded_exn (Extract_exception (r),
+					"user-defined error handler");
 
     CAMLreturn0;
 }
@@ -304,18 +301,22 @@ static int rootsfn (realtype t, N_Vector y, N_Vector yp,
 static int errw(N_Vector y, N_Vector ewt, void *user_data)
 {
     CAMLparam0();
-    CAMLlocalN(args, 3);
-    int r;
+    CAMLlocal1(session);
     value *backref = user_data;
 
-    args[0] = *backref;
-    args[1] = NVEC_BACKLINK (y);
-    args[2] = NVEC_BACKLINK (ewt);
+    WEAK_DEREF (session, *backref);
 
-    r = Int_val (caml_callback3 (CAML_FN(call_errw),
-				 args[0], args[1], args[2]));
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback2_exn (Field (session, RECORD_IDA_SESSION_ERRW),
+				  NVEC_BACKLINK (y), NVEC_BACKLINK (ewt));
+    if (Is_exception_result (r)) {
+	r = Extract_exception (r);
+	if (Field (r, 0) != SUNDIALS_EXN (NonPositiveEwt))
+	    sundials_ml_warn_discarded_exn (r, "user-defined error weight fun");
+	CAMLreturnT (int, -1);
+    }
 
-    CAMLreturnT(int, r);
+    CAMLreturnT (int, 0);
 }
 
 static int precsetupfn(realtype t,
