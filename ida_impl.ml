@@ -280,8 +280,8 @@ type ida_file
 
 type 'a resfn = float -> 'a -> 'a -> 'a -> unit
 type 'a rootsfn = float -> 'a -> 'a -> Sundials.RealArray.t -> unit
-type errh = Sundials.error_details -> unit
-type 'a errw = 'a -> 'a -> unit
+type error_handler = Sundials.error_details -> unit
+type 'a error_weight_fun = 'a -> 'a -> unit
 
 (* Session: here comes the big blob.  These mutually recursive types
    cannot be handed out separately to modules without menial
@@ -302,8 +302,8 @@ type ('a,'kind) session = {
 
   mutable resfn      : 'a resfn;
   mutable rootsfn    : 'a rootsfn;
-  mutable errh       : Sundials.error_details -> unit;
-  mutable errw       : 'a errw;
+  mutable errh       : error_handler;
+  mutable errw       : 'a error_weight_fun;
 
   mutable ls_callbacks : ('a, 'kind) linsolv_callbacks;
 

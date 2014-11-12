@@ -409,12 +409,10 @@ external ss_tolerances  : ('a, 'k) session -> float -> float -> unit
 external wf_tolerances  : ('a, 'k) session -> unit
     = "c_cvode_wf_tolerances"
 
-type 'data error_fun = 'data -> 'data -> unit
-
 type ('a, 'k) tolerance =
   | SStolerances of float * float
   | SVtolerances of float * ('a, 'k) nvector
-  | WFtolerances of 'a error_fun
+  | WFtolerances of 'a error_weight_fun
 
 let default_tolerances = SStolerances (1.0e-4, 1.0e-8)
 

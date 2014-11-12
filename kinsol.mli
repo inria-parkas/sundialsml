@@ -770,7 +770,7 @@ val set_sys_func : ('d, 'k) session -> ('d -> 'd -> unit) -> unit
 val set_error_file : ('d, 'k) session -> string -> bool -> unit
 
 (** Specifies a custom function for handling error messages.
-    This function must not fail: any exceptions are trapped and discarded.
+    The handler must not fail: any exceptions are trapped and discarded.
 
     @kinsol <node5#ss:optin_main> KINSetErrHandlerFn
     @kinsol <node5#ss:ehFn> KINErrHandlerFn *)
@@ -793,7 +793,7 @@ val set_info_file : ('d, 'k) session -> string -> bool -> unit
 (** Specifies a custom function for handling informational (non-error) messages.
     The [error_code] field of {!Sundials.error_details} is [0] for
     such messages.
-    This function must not fail: any exceptions are trapped and discarded.
+    The handler must not fail: any exceptions are trapped and discarded.
 
     @kinsol <node5#ss:optin_main> KINSetInfoHandlerFn
     @kinsol <node5#ss:ihFn> KINInfoHandlerFn *)

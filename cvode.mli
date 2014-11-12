@@ -706,7 +706,7 @@ module Alternate :
     fills the error-weight vector [ewt] with positive values or raises
     {!Sundials.NonPositiveEwt}. Other exceptions are eventually propagated, but
     should be avoided ([efun] is not allowed to abort the solver). *)
-type 'data error_fun = 'data -> 'data -> unit
+type 'data error_weight_fun = 'data -> 'data -> unit
 
 (** Tolerance specifications. *)
 type ('data, 'kind) tolerance =
@@ -714,7 +714,7 @@ type ('data, 'kind) tolerance =
     (** [(rel, abs)] : scalar relative and absolute tolerances. *)
   | SVtolerances of float * ('data, 'kind) Nvector.t
     (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
-  | WFtolerances of 'data error_fun
+  | WFtolerances of 'data error_weight_fun
     (** Set the multiplicative error weights for the weighted RMS norm. *)
 
 (** A default relative tolerance of 1.0e-4 and absolute tolerance of 1.0e-8. *)
@@ -904,7 +904,7 @@ val set_tolerances : ('d, 'k) session -> ('d, 'k) tolerance -> unit
 val set_error_file : ('d, 'k) session -> string -> bool -> unit
 
 (** Specifies a custom function for handling error messages.
-    This function must not fail: any exceptions are trapped and discarded.
+    The handler must not fail: any exceptions are trapped and discarded.
 
     @cvode <node5#sss:optin_main> CVodeSetErrHandlerFn
     @cvode <node5#ss:ehFn> CVErrHandlerFn *)
