@@ -222,12 +222,16 @@ CAMLprim value ml_nvec_wrap_serial(value payload, value checkfn)
 #define IS_SOME_OP(nvec, x)  (HAS_OP(CNVEC_OP_TABLE(nvec), x))
 #define GET_SOME_OP(nvec, x) (Field(Field(CNVEC_OP_TABLE(nvec), x), 0))
 
-static void finalize_custom_cnvec(value vnv)
+static void free_custom_cnvec(N_Vector v)
 {
-    N_Vector v = NVEC_CVAL(vnv);
     caml_remove_generational_global_root((value *)&CNVEC_OP_TABLE(v));
     v->content = NULL;
     free_cnvec(v);
+}
+
+static void finalize_custom_caml_nvec(value vnv)
+{
+    free_custom_cnvec (NVEC_CVAL(vnv));
 }
 
 /* Creation from OCaml. */
@@ -247,7 +251,7 @@ CAMLprim value ml_nvec_wrap_custom(value mlops, value payload, value checkfn)
     /* Create vector operation structure */
     ops->nvclone           = callml_vclone;
     ops->nvcloneempty      = NULL;
-    ops->nvdestroy         = free_cnvec;
+    ops->nvdestroy         = free_custom_cnvec;
 
     ops->nvspace = NULL;
     if (HAS_OP(mlops, NVECTOR_OPS_NVSPACE))
@@ -297,7 +301,7 @@ CAMLprim value ml_nvec_wrap_custom(value mlops, value payload, value checkfn)
 
     vcnvec = caml_alloc_tuple(3);
     Store_field(vcnvec, 0, payload);
-    Store_field(vcnvec, 1, alloc_caml_nvec(nv, finalize_custom_cnvec));
+    Store_field(vcnvec, 1, alloc_caml_nvec(nv, finalize_custom_caml_nvec));
     Store_field(vcnvec, 2, checkfn);
 
     CAMLreturn(vcnvec);
@@ -332,7 +336,6 @@ N_Vector callml_vclone(N_Vector w)
 
     /* Create vector operation structure */
     clone_cnvec_ops(v, w);
-    v->ops->nvdestroy = free_cnvec;
 
     /* Create content */
     v->content = (void *) CNVEC_OP_TABLE(w);
