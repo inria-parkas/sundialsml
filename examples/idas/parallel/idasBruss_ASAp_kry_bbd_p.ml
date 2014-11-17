@@ -686,7 +686,13 @@ let resBlocal data tt ((uv   : RealArray.t), _, _)
     done
   end
 
-let resB data tt yy yp yyB ypB rrB =
+let resB data args rrB =
+  let tt = args.Adjoint.t
+  and yy = args.Adjoint.y
+  and yp = args.Adjoint.y'
+  and yyB = args.Adjoint.yB
+  and ypB = args.Adjoint.yB'
+  in
   (* Call rescomm to do inter-processor communication. *)
   rescomm data tt yyB ypB;
 

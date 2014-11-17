@@ -1027,14 +1027,14 @@ module Adjoint =
 
                 brhsfn      = (match mf with
                                | NoSens f -> f
-                               | _ -> dummy_brhsfn);
+                               | _ -> dummy_brhsfn_no_sens);
 
                 brhsfn_sens = (match mf with
                                | WithSens f -> f
-                               | _ -> dummy_brhsfn_sens);
+                               | _ -> dummy_brhsfn_with_sens);
 
-                bquadrhsfn  = dummy_bquadrhsfn;
-                bquadrhsfn_sens = dummy_bquadrhsfn_sens;
+                bquadrhsfn  = dummy_bquadrhsfn_no_sens;
+                bquadrhsfn_sens = dummy_bquadrhsfn_with_sens;
                 checkbquadvec = (fun _ -> raise Nvector.IncompatibleNvector);
               };
             } in

@@ -104,6 +104,30 @@ static void free_nvector_array(N_Vector *nvarr)
 }
 
 
+static value make_triple_tmp(N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
+{
+    CAMLparam0();
+    CAMLlocal1(r);
+
+    r = caml_alloc_tuple(3);
+    Store_field(r, 0, NVEC_BACKLINK(tmp1));
+    Store_field(r, 1, NVEC_BACKLINK(tmp2));
+    Store_field(r, 2, NVEC_BACKLINK(tmp3));
+    CAMLreturn(r);
+}
+
+static value make_double_tmp(N_Vector tmp1, N_Vector tmp2)
+{
+    CAMLparam0();
+    CAMLlocal1(r);
+
+    r = caml_alloc_tuple(2);
+    Store_field(r, 0, NVEC_BACKLINK(tmp1));
+    Store_field(r, 1, NVEC_BACKLINK(tmp2));
+    CAMLreturn(r);
+}
+
+
 /* Callbacks */
 
 static int quadrhsfn(realtype t, N_Vector y, N_Vector yQdot, void *user_data)
@@ -120,11 +144,6 @@ static int quadrhsfn(realtype t, N_Vector y, N_Vector yQdot, void *user_data)
     cb = CVODE_SENSEXT_FROM_ML (session);
     cb = CVODES_QUADRHSFN_FROM_EXT (cb);
 
-    // the data payloads inside args[2] and args[3] are only valid during
-    // this call, afterward that memory goes back to cvode. These bigarrays
-    // must not be retained by closure_quadrhsfn! If it wants a permanent
-    // copy, then it has to make it manually.
-
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback3_exn (cb, args[0], args[1], args[2]);
 
@@ -136,32 +155,26 @@ static int sensrhsfn(int ns, realtype t, N_Vector y, N_Vector ydot,
 		     N_Vector tmp1, N_Vector tmp2)
 {
     CAMLparam0();
-    CAMLlocal2(session, sensext);
-    CAMLlocalN(args, 7);
+    CAMLlocal3(args, session, sensext);
 
     WEAK_DEREF (session, *(value*)user_data);
     sensext = CVODE_SENSEXT_FROM_ML(session);
 
-    args[0] = caml_copy_double(t);
-    args[1] = NVEC_BACKLINK(y);
-    args[2] = NVEC_BACKLINK(ydot);
-    args[3] = CVODES_SENSARRAY1_FROM_EXT(sensext);
-    args[4] = CVODES_SENSARRAY2_FROM_EXT(sensext);
-    args[5] = NVEC_BACKLINK(tmp1);
-    args[6] = NVEC_BACKLINK(tmp2);
+    args = caml_alloc_tuple (RECORD_CVODES_SENSRHSFN_ARGS_SIZE);
+    Store_field (args, RECORD_CVODES_SENSRHSFN_ARGS_T, caml_copy_double (t));
+    Store_field (args, RECORD_CVODES_SENSRHSFN_ARGS_Y, NVEC_BACKLINK (y));
+    Store_field (args, RECORD_CVODES_SENSRHSFN_ARGS_YP, NVEC_BACKLINK (ydot));
+    Store_field (args, RECORD_CVODES_SENSRHSFN_ARGS_TMP,
+		 make_double_tmp (tmp1, tmp2));
 
-    wrap_to_nvector_table(ns, args[3], ys);
-    wrap_to_nvector_table(ns, args[4], ysdot);
-
-    // The data payloads inside args[1..6] are only valid during this call,
-    // afterward that memory goes back to cvode. These bigarrays must not be
-    // retained by closure_quadrhsfn! If it wants a permanent copy, then it
-    // has to make it manually.
+    wrap_to_nvector_table(ns, CVODES_SENSARRAY1_FROM_EXT(sensext), ys);
+    wrap_to_nvector_table(ns, CVODES_SENSARRAY2_FROM_EXT(sensext), ysdot);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn(CVODES_SENSRHSFN_FROM_EXT(sensext),
-				 sizeof (args) / sizeof (*args),
-				 args);
+    value r = caml_callback3_exn(CVODES_SENSRHSFN_FROM_EXT(sensext),
+				 args,
+				 CVODES_SENSARRAY1_FROM_EXT(sensext),
+				 CVODES_SENSARRAY2_FROM_EXT(sensext));
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -171,29 +184,25 @@ static int sensrhsfn1(int ns, realtype t, N_Vector y, N_Vector ydot,
 		      N_Vector tmp1, N_Vector tmp2)
 {
     CAMLparam0();
-    CAMLlocalN(args, 8);
-    CAMLlocal2(session, cb);
-
-    args[0] = caml_copy_double(t);
-    args[1] = NVEC_BACKLINK(y);
-    args[2] = NVEC_BACKLINK(ydot);
-    args[3] = Val_int(is);
-    args[4] = NVEC_BACKLINK(ys);
-    args[5] = NVEC_BACKLINK(ysdot);
-    args[6] = NVEC_BACKLINK(tmp1);
-    args[7] = NVEC_BACKLINK(tmp2);
+    CAMLlocal4(args, sens, session, cb);
 
     WEAK_DEREF (session, *(value*)user_data);
+
+    args = caml_alloc_tuple (RECORD_CVODES_SENSRHSFN_ARGS_SIZE);
+    Store_field (args, RECORD_CVODES_SENSRHSFN_ARGS_T, caml_copy_double (t));
+    Store_field (args, RECORD_CVODES_SENSRHSFN_ARGS_Y, NVEC_BACKLINK (y));
+    Store_field (args, RECORD_CVODES_SENSRHSFN_ARGS_YP, NVEC_BACKLINK (ydot));
+    Store_field (args, RECORD_CVODES_SENSRHSFN_ARGS_TMP,
+		 make_double_tmp (tmp1, tmp2));
+
     cb = CVODE_SENSEXT_FROM_ML (session);
     cb = CVODES_SENSRHSFN1_FROM_EXT (cb);
 
-    // The data payloads inside args[2..3, 5..7] are only valid during this call,
-    // afterward that memory goes back to cvode. These bigarrays must not be
-    // retained by closure_quadrhsfn! If it wants a permanent copy, then it
-    // has to make it manually.
-
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+    value r = caml_callback_exn (cb, Val_int (is));
+    if (! Is_exception_result (r))
+	r = caml_callback3_exn (r, args, NVEC_BACKLINK (ys),
+				NVEC_BACKLINK (ysdot));
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -203,32 +212,28 @@ static int quadsensrhsfn(int ns, realtype t, N_Vector y, N_Vector *ys,
 		         N_Vector tmp1, N_Vector tmp2)
 {
     CAMLparam0();
-    CAMLlocal2(session, sensext);
-    CAMLlocalN(args, 7);
+    CAMLlocal3(args, session, sensext);
 
     WEAK_DEREF (session, *(value*)user_data);
     sensext = CVODE_SENSEXT_FROM_ML(session);
 
-    args[0] = caml_copy_double(t);
-    args[1] = NVEC_BACKLINK(y);
-    args[2] = CVODES_SENSARRAY1_FROM_EXT(sensext);
-    args[3] = NVEC_BACKLINK(yqdot);
-    args[4] = CVODES_SENSARRAY2_FROM_EXT(sensext);
-    args[5] = NVEC_BACKLINK(tmp1);
-    args[6] = NVEC_BACKLINK(tmp2);
+    args = caml_alloc_tuple (RECORD_CVODES_QUADSENSRHSFN_ARGS_SIZE);
+    Store_field (args, RECORD_CVODES_QUADSENSRHSFN_ARGS_T,
+		 caml_copy_double (t));
+    Store_field (args, RECORD_CVODES_QUADSENSRHSFN_ARGS_Y, NVEC_BACKLINK (y));
+    Store_field (args, RECORD_CVODES_QUADSENSRHSFN_ARGS_SENS,
+		 CVODES_SENSARRAY1_FROM_EXT(sensext));
+    Store_field (args, RECORD_CVODES_QUADSENSRHSFN_ARGS_YQP,
+		 NVEC_BACKLINK(yqdot));
+    Store_field (args, RECORD_CVODES_QUADSENSRHSFN_ARGS_TMP,
+		 make_double_tmp (tmp1, tmp2));
 
-    wrap_to_nvector_table(ns, args[2], ys);
-    wrap_to_nvector_table(ns, args[4], yqsdot);
-
-    // The data payloads inside args[2..7] are only valid during this call,
-    // afterward that memory goes back to cvode. These bigarrays must not be
-    // retained by closure_quadrhsfn! If it wants a permanent copy, then it
-    // has to make it manually.
+    wrap_to_nvector_table(ns, CVODES_SENSARRAY1_FROM_EXT(sensext), ys);
+    wrap_to_nvector_table(ns, CVODES_SENSARRAY2_FROM_EXT(sensext), yqsdot);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn(CVODES_QUADSENSRHSFN_FROM_EXT(sensext),
-				 sizeof (args) / sizeof (*args),
-				 args);
+    value r = caml_callback2_exn(CVODES_QUADSENSRHSFN_FROM_EXT(sensext), args,
+				 CVODES_SENSARRAY2_FROM_EXT(sensext));
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -237,25 +242,19 @@ static int brhsfn(realtype t, N_Vector y, N_Vector yb, N_Vector ybdot,
 		  void *user_data)
 {
     CAMLparam0();
-    CAMLlocalN(args, 4);
-    CAMLlocal2(session, cb);
+    CAMLlocal3(args, session, cb);
 
-    args[0] = caml_copy_double(t);
-    args[1] = NVEC_BACKLINK(y);
-    args[2] = NVEC_BACKLINK(yb);
-    args[3] = NVEC_BACKLINK(ybdot);
+    args = caml_alloc_tuple (RECORD_CVODES_ADJ_BRHSFN_ARGS_SIZE);
+    Store_field (args, RECORD_CVODES_ADJ_BRHSFN_ARGS_T, caml_copy_double (t));
+    Store_field (args, RECORD_CVODES_ADJ_BRHSFN_ARGS_Y, NVEC_BACKLINK (y));
+    Store_field (args, RECORD_CVODES_ADJ_BRHSFN_ARGS_YB, NVEC_BACKLINK (yb));
 
     WEAK_DEREF (session, *(value*)user_data);
     cb = CVODE_SENSEXT_FROM_ML (session);
     cb = CVODES_BRHSFN_FROM_EXT (cb);
 
-    // The data payloads inside args[2..4] are only valid during this
-    // call, afterward that memory goes back to cvode. These bigarrays
-    // must not be retained by the callback! If it wants a permanent
-    // copy, then it has to make it manually.
-
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+    value r = caml_callback2_exn (cb, args, NVEC_BACKLINK (ybdot));
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -264,31 +263,24 @@ static int brhsfn_sens(realtype t, N_Vector y, N_Vector *ys, N_Vector yb,
 		       N_Vector ybdot, void *user_data)
 {
     CAMLparam0();
-    CAMLlocal2(session, sensext);
-    CAMLlocalN(args, 5);
+    CAMLlocal3(args, session, sensext);
     int ns;
 
     WEAK_DEREF (session, *(value*)user_data);
     sensext = CVODE_SENSEXT_FROM_ML(session);
     ns = Int_val(Field(sensext, RECORD_CVODES_BWD_SESSION_NUMSENSITIVITIES));
 
-    args[0] = caml_copy_double(t);
-    args[1] = NVEC_BACKLINK(y);
-    args[2] = CVODES_BSENSARRAY_FROM_EXT(sensext);
-    args[3] = NVEC_BACKLINK(yb);
-    args[4] = NVEC_BACKLINK(ybdot);
+    args = caml_alloc_tuple (RECORD_CVODES_ADJ_BRHSFN_ARGS_SIZE);
+    Store_field (args, RECORD_CVODES_ADJ_BRHSFN_ARGS_T, caml_copy_double (t));
+    Store_field (args, RECORD_CVODES_ADJ_BRHSFN_ARGS_Y, NVEC_BACKLINK (y));
+    Store_field (args, RECORD_CVODES_ADJ_BRHSFN_ARGS_YB, NVEC_BACKLINK (yb));
 
-    wrap_to_nvector_table(ns, args[2], ys);
-
-    // The data payloads inside args[2..5] are only valid during this call,
-    // afterward that memory goes back to cvode. These bigarrays must not be
-    // retained by closure_quadrhsfn! If it wants a permanent copy, then it
-    // has to make it manually.
+    wrap_to_nvector_table(ns, CVODES_BSENSARRAY_FROM_EXT(sensext), ys);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn(CVODES_BRHSFN_SENS_FROM_EXT(sensext),
-				 sizeof (args) / sizeof (*args),
-				 args);
+    value r = caml_callback3_exn(CVODES_BRHSFN_SENS_FROM_EXT(sensext),
+				 args, CVODES_BSENSARRAY_FROM_EXT(sensext),
+				 NVEC_BACKLINK (ybdot));
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -297,25 +289,21 @@ static int bquadrhsfn(realtype t, N_Vector y, N_Vector yb, N_Vector qbdot,
 		      void *user_data)
 {
     CAMLparam0();
-    CAMLlocalN(args, 4);
-    CAMLlocal2(session, cb);
+    CAMLlocal3(args, session, cb);
 
-    args[0] = caml_copy_double(t);
-    args[1] = NVEC_BACKLINK(y);
-    args[2] = NVEC_BACKLINK(yb);
-    args[3] = NVEC_BACKLINK(qbdot);
+    args = caml_alloc_tuple (RECORD_CVODES_ADJ_BQUADRHSFN_ARGS_SIZE);
+    Store_field (args, RECORD_CVODES_ADJ_BQUADRHSFN_ARGS_T,
+		 caml_copy_double(t));
+    Store_field (args, RECORD_CVODES_ADJ_BQUADRHSFN_ARGS_Y, NVEC_BACKLINK(y));
+    Store_field (args, RECORD_CVODES_ADJ_BQUADRHSFN_ARGS_YB,
+		 NVEC_BACKLINK (yb));
 
     WEAK_DEREF (session, *(value*)user_data);
     cb = CVODE_SENSEXT_FROM_ML (session);
     cb = CVODES_BQUADRHSFN_FROM_EXT(cb);
 
-    // The data payloads inside args[2..4] are only valid during this call,
-    // afterward that memory goes back to cvode. These bigarrays must not be
-    // retained by closure_quadrhsfn! If it wants a permanent copy, then it
-    // has to make it manually.
-
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+    value r = caml_callback2_exn (cb, args, NVEC_BACKLINK(qbdot));
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -324,31 +312,27 @@ static int bquadrhsfn_sens(realtype t, N_Vector y, N_Vector *ys, N_Vector yb,
 			   N_Vector qbdot, void *user_data)
 {
     CAMLparam0();
-    CAMLlocalN(args, 5);
-    CAMLlocal2(session, sensext);
+    CAMLlocal3(args, session, sensext);
     int ns;
 
     WEAK_DEREF (session, *(value*)user_data);
     sensext = CVODE_SENSEXT_FROM_ML(session);
     ns = Int_val(Field(sensext, RECORD_CVODES_BWD_SESSION_NUMSENSITIVITIES));
 
-    args[0] = caml_copy_double(t);
-    args[1] = NVEC_BACKLINK(y);
-    args[2] = CVODES_BSENSARRAY_FROM_EXT(sensext);
-    args[3] = NVEC_BACKLINK(yb);
-    args[4] = NVEC_BACKLINK(qbdot);
+    args = caml_alloc_tuple (RECORD_CVODES_ADJ_BQUADRHSFN_ARGS_SIZE);
+    Store_field (args, RECORD_CVODES_ADJ_BQUADRHSFN_ARGS_T,
+		 caml_copy_double (t));
+    Store_field (args, RECORD_CVODES_ADJ_BQUADRHSFN_ARGS_Y,
+		 NVEC_BACKLINK (y));
+    Store_field (args, RECORD_CVODES_ADJ_BQUADRHSFN_ARGS_YB,
+		 NVEC_BACKLINK (yb));
 
-    wrap_to_nvector_table(ns, args[2], ys);
-
-    // The data payloads inside args[2..5] are only valid during this call,
-    // afterward that memory goes back to cvode. These bigarrays must not be
-    // retained by closure_quadrhsfn! If it wants a permanent copy, then it
-    // has to make it manually.
+    wrap_to_nvector_table(ns, CVODES_BSENSARRAY_FROM_EXT(sensext), ys);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (CVODES_BQUADRHSFN_SENS_FROM_EXT(sensext),
-				  sizeof (args) / sizeof (*args),
-				  args);
+    value r = caml_callback3_exn (CVODES_BQUADRHSFN_SENS_FROM_EXT(sensext),
+				  args, CVODES_BSENSARRAY_FROM_EXT(sensext),
+				  NVEC_BACKLINK (qbdot));
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -366,18 +350,6 @@ static value make_jac_arg(realtype t, N_Vector y, N_Vector yb,
     Store_field(r, RECORD_CVODES_ADJ_JACOBIAN_ARG_JAC_FYB, NVEC_BACKLINK(fyb));
     Store_field(r, RECORD_CVODES_ADJ_JACOBIAN_ARG_JAC_TMP, tmp);
 
-    CAMLreturn(r);
-}
-
-static value make_triple_tmp(N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
-{
-    CAMLparam0();
-    CAMLlocal1(r);
-
-    r = caml_alloc_tuple(3);
-    Store_field(r, 0, NVEC_BACKLINK(tmp1));
-    Store_field(r, 1, NVEC_BACKLINK(tmp2));
-    Store_field(r, 2, NVEC_BACKLINK(tmp3));
     CAMLreturn(r);
 }
 

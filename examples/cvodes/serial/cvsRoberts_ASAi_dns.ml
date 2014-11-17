@@ -144,7 +144,11 @@ let ewt data (y : RealArray.t) (w : RealArray.t) =
 
 (* fB routine. Compute fB(t,y,yB). *)
 
-let fB data t (y : RealArray.t) (yB : RealArray.t) (yBdot : RealArray.t) =
+let fB : user_data -> RealArray.t Adj.brhsfn_no_sens =
+  fun data args yBdot ->
+  let y = args.Adj.y
+  and yB = args.Adj.yB
+  in
   let p1 = data.p.(0) (* The p vector *)
   and p2 = data.p.(1)
   and p3 = data.p.(2)
@@ -180,7 +184,11 @@ let jacb data { Adj.jac_y = (y : RealArray.t) } jbmat =
 
 (* fQB routine. Compute integrand for quadratures *)
 
-let fQB data t (y : RealArray.t) (yB : RealArray.t) (qBdot : RealArray.t) =
+let fQB : user_data -> RealArray.t QuadAdj.bquadrhsfn_no_sens =
+  fun data args qBdot ->
+  let y = args.QuadAdj.y
+  and yB = args.QuadAdj.yB
+  in
   let l1 = yB.{0}  (* The lambda vector *)
   and l2 = yB.{1}
   and l3 = yB.{2}

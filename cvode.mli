@@ -67,6 +67,9 @@ type ('data, 'kind) linear_solver = ('data, 'kind) Cvode_impl.linear_solver
 type serial_linear_solver =
       (Nvector_serial.data, Nvector_serial.kind) linear_solver
 
+(** Workspaces with two temporary vectors. *)
+type 'd double = 'd * 'd
+
 (** Workspaces with three temporary vectors. *)
 type 'd triple = 'd * 'd * 'd
 
@@ -141,7 +144,7 @@ module Dls :
 
         @cvode <node5#ss:djacFn> CVDlsDenseJacFn *)
     type dense_jac_fn = (RealArray.t triple, RealArray.t) jacobian_arg
-                                                  -> Dls.DenseMatrix.t -> unit
+                      -> Dls.DenseMatrix.t -> unit
 
     (** A direct linear solver on dense matrices. The optional argument
         specifies a callback function for computing an approximation to the
@@ -608,22 +611,13 @@ module Alternate :
         @cvode <node8#SECTION00810000000000000000> linit *)
     type ('data, 'kind) linit = ('data, 'kind) session -> unit
 
-    (** Functions that prepare the linear solver for subsequent calls to
-        {{!callbacks}lsolve}. The call
-        [jcur = lsetup s convfail ypred fpred tmp] has as arguments
+    (** Functions that prepare the linear solver for subsequent calls
+        to {{!callbacks}lsolve}.  This function must return [true]
+        only if the Jacobian-related data is current after the call.
 
-        - [s], the solver session,
-        - [convfail], indicating any problem that occurred during the
-           solution of the nonlinear equation on the current time step,
-        - [ypred], the predicted [y] vector for the current internal
-          step,
-        - [fpred], the value of the right-hand side at [ypred], and,
-        - [tmp], temporary variables for use by the routine.
-
-        This function must return [true] only if the Jacobian-related data is
-        current after the call. It may raise a {!Sundials.RecoverableFailure}
-        exception to indicate that a recoverable error has occurred. Any other
-        exception is treated as an unrecoverable error.
+        This function may raise a {!Sundials.RecoverableFailure} exception to
+        indicate that a recoverable error has occurred. Any other exception is
+        treated as an unrecoverable error.
 
         {warning The vectors [ypred], [fpred], and those in [tmp] should not be
                  accessed after the function returns.}
@@ -631,11 +625,25 @@ module Alternate :
         @cvode <node8#SECTION00820000000000000000> lsetup *)
     type ('data, 'kind) lsetup =
       ('data, 'kind) session
-      -> conv_fail
-      -> 'data
-      -> 'data
-      -> 'data triple
+      -> 'data lsetup_args
       -> bool
+
+    (** Arguments to {!lsetup}. *)
+    and 'data lsetup_args =
+      {
+        (** indicates any problem that occurred during the solution of
+            the nonlinear equation on the current time step *)
+        lsetup_conv_fail : conv_fail;
+
+        (** the predicted $y$ vector for the current internal step *)
+        lsetup_y : 'data;
+
+        (** the value of the right-hand side at the predicted [y] vector *)
+        lsetup_rhs : 'data;
+
+        (** scratch space *)
+        lsetup_tmp : 'data triple;
+      }
 
     (** Functions that solve the linear equation $Mx = b$.
         $M$ is a preconditioning matrix chosen by the user, and $b$ is the
@@ -643,29 +651,38 @@ module Alternate :
         $M$ should approximate $I - \gamma J$ where
         {% $J = (\frac{\partial f}{\partial y})(t_n, y_{\text{cur}})$%},
         and $\gamma$ is available through {!get_gammas}.
-        The call [lsolve s b weight ycur fcur] has as arguments:
+        The call [lsolve s args b] has as arguments:
 
         - [s], the solver session,
-        - [b], for returning the calculated solution,
-        - [weight], the error weights,
-        - [ycur], the solver's current approximation to $y(t_n)$, and,
-        - [fcur], a vector containing {% $f(t_n, y_{\text{cur}})$%}.
+        - [args], a record summarizing current approximations to the solution,
+        - [b], for returning the calculated solution.
 
         Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
         Any other exception is treated as an unrecoverable error.
 
-        {warning The vectors [b], [weight], [ycur], and [fcur] should not be
-                 accessed after the function returns.}
+        {warning The vectors in {!lsolve_args} should not be accessed
+                 after the function returns.}
 
         @cvode <node8#SECTION00830000000000000000> lsolve
         @cvode <node3#e:Newtonmat> IVP solution (Eq. 2.5) *)
     type ('data, 'kind) lsolve =
       ('data, 'kind) session
-      -> 'data
-      -> 'data
-      -> 'data
+      -> 'data lsolve_args
       -> 'data
       -> unit
+
+    (** Arguments to {!lsolve}. *)
+    and 'data lsolve_args =
+      {
+        (** error weights *)
+        lsolve_ewt : 'data;
+
+        (** the solver's current approximation to $y(t_n)$ *)
+        lsolve_y : 'data;
+
+        (** a vector containing {% $f(t_n, y_{\text{cur}})$%} *)
+        lsolve_rhs : 'data;
+      }
 
     (** The callbacks needed to implement an alternate linear solver. *)
     type ('data, 'kind) callbacks =
@@ -768,7 +785,7 @@ type 'd rhsfn = float -> 'd -> 'd -> unit
              returned.}
 
     @cvode <node5#ss:rootFn> cvRootFn *)
-type 'd rootsfn = (float -> 'd -> RealArray.t -> unit)
+type 'd rootsfn = float -> 'd -> RealArray.t -> unit
 
 (** Creates and initializes a session with the solver. The call
     {[init lmm iter tol f ~roots:(nroots, g) t0 y0]} has

@@ -67,7 +67,12 @@ module AltDense = struct
 
     let linit mem s = (nje := 0) in
 
-    let lsetup mem s yp y'p rrp tmps =
+    let lsetup mem s args =
+      let yp = args.Alt.lsetup_y
+      and y'p = args.Alt.lsetup_y'
+      and rrp = args.Alt.lsetup_res
+      and tmps = args.Alt.lsetup_tmp
+      in
       nje := !nje + 1;
       (* Zero out jj; call Jacobian routine jac; return if it failed. *)
       DM.set_to_zero mem.jj;
@@ -79,7 +84,7 @@ module AltDense = struct
       with _ -> raise Sundials.RecoverableFailure
     in
 
-    let lsolve mem s b weight ycur y'cur rescur =
+    let lsolve mem s args b =
       DM.getrs mem.jj mem.pivots b;
 
       (* Scale the correction to account for change in cj. *)

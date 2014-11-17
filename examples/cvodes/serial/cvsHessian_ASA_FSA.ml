@@ -73,8 +73,10 @@ let f data t (y : RealArray.t) (ydot : RealArray.t) =
 let fQ data t (y : RealArray.t) (qdot : RealArray.t) =
   qdot.{0} <- 0.5 *. ( y.{0}*.y.{0} +. y.{1}*.y.{1} +. y.{2}*.y.{2})
 
-let fS data t (y : RealArray.t) (ydot : RealArray.t)
-              (yS : RealArray.t array) (ySdot : RealArray.t array) tmp1 tmp2 =
+let fS : user_data -> RealArray.t Sens.sensrhsfn_all =
+  fun data args yS ySdot ->
+  let y = args.Sens.y
+  in
   let p1 = data.p1
   and p2 = data.p2 in
   (* 1st sensitivity RHS *)
@@ -102,8 +104,11 @@ let fS data t (y : RealArray.t) (ydot : RealArray.t)
   ySdot.(1).{1} <- fys2;
   ySdot.(1).{2} <- (fys3 -. 2.0*.p2*.y.{1}*.y.{2})
 
-let fQS data t (y : RealArray.t) (yS : RealArray.t array)
-               yQdot (yQSdot : RealArray.t array) tmp tmpQ =
+let fQS : user_data -> RealArray.t QuadSens.quadsensrhsfn =
+  fun data args yQSdot ->
+  let y = args.QuadSens.y
+  and yS = args.QuadSens.yS
+  in
   (* 1st sensitivity RHS *)
   let s1 = yS.(0).{0}
   and s2 = yS.(0).{1}
@@ -118,8 +123,11 @@ let fQS data t (y : RealArray.t) (yS : RealArray.t array)
   in
   yQSdot.(1).{0} <- y.{0}*.s1 +. y.{1}*.s2 +. y.{2}*.s3
 
-let fB1 data t (y : RealArray.t) (yS : RealArray.t array)
-               (yB : RealArray.t) (yBdot : RealArray.t) =
+let fB1 : user_data -> RealArray.t Adj.brhsfn_with_sens =
+  fun data args yS yBdot ->
+  let y = args.Adj.y
+  and yB = args.Adj.yB
+  in
   let p1 = data.p1 
   and p2 = data.p2
   in
@@ -143,8 +151,11 @@ let fB1 data t (y : RealArray.t) (yS : RealArray.t array)
   yBdot.{4} <- m2 +. p2*.p2*.y.{2} *. m3 +. l3 *. p2*.p2*.s3             -. s2;
   yBdot.{5} <- m1 +. p2*.p2*.y.{1} *. m3 +. l3 *. p2*.p2*.s2             -. s3
 
-let fQB1 data t (y : RealArray.t) (yS : RealArray.t array)
-                                  (yB : RealArray.t) (qBdot : RealArray.t) =
+let fQB1 : user_data -> RealArray.t QuadAdj.bquadrhsfn_with_sens =
+  fun data args yS qBdot ->
+  let y = args.QuadAdj.y
+  and yB = args.QuadAdj.yB
+  in
   let p2 = data.p2
   in
   let s1 = yS.(0).{0} (* sensitivity 1 *)
@@ -164,8 +175,11 @@ let fQB1 data t (y : RealArray.t) (yS : RealArray.t array)
   qBdot.{3} <- -.2.0*.p2*.y.{1}*.y.{2} *. m3 -.
                                     l3 *. 2.0*.(p2*.y.{2}*.s2 +. p2*.y.{1}*.s3)
 
-let fB2 data t (y : RealArray.t) (yS : RealArray.t array)
-               (yB : RealArray.t) (yBdot : RealArray.t) =
+let fB2 : user_data -> RealArray.t Adj.brhsfn_with_sens =
+  fun data args yS yBdot ->
+  let y = args.Adj.y
+  and yB = args.Adj.yB
+  in
   let p1 = data.p1 
   and p2 = data.p2
   in
@@ -192,8 +206,11 @@ let fB2 data t (y : RealArray.t) (yS : RealArray.t array)
   yBdot.{5} <- m1 +. p2*.p2*.y.{1} *. m3 +.
                                      l3 *. (2.0*.p2*.y.{2} +. p2*.p2*.s2) -. s3
 
-let fQB2 data t (y : RealArray.t) (yS : RealArray.t array)
-                (yB : RealArray.t) (qBdot : RealArray.t) =
+let fQB2 : user_data -> RealArray.t QuadAdj.bquadrhsfn_with_sens =
+  fun data args yS qBdot ->
+  let y = args.QuadAdj.y
+  and yB = args.QuadAdj.yB
+  in
   let p2 = data.p2
   in
   let s1 = yS.(1).{0} (* sensitivity 2 *)

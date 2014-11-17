@@ -126,7 +126,7 @@ module Dls :
 
         @ida <node5#ss:djacFn> IDADlsDenseJacFn *)
     type dense_jac_fn = (RealArray.t triple, RealArray.t) jacobian_arg
-                         -> Dls.DenseMatrix.t -> unit
+                      -> Dls.DenseMatrix.t -> unit
 
     (** A direct linear solver on dense matrices. The optional argument
         specifies a callback function for computing an approximation to the
@@ -505,17 +505,31 @@ module Alternate :
         indicate that a recoverable error has occurred. Any other exception is
         treated as an unrecoverable error.
 
-        {warning The vectors [y], [y'], [res], and those in [tmp] should not
-                 be accessed after the function returns.}
+        {warning The vectors held in {!lsetup_args} should not be
+                 accessed after the function returns.}
 
         @ida <node8#SECTION00820000000000000000> lsetup *)
     type ('data, 'kind) lsetup =
       ('data, 'kind) session
-      -> 'data
-      -> 'data
-      -> 'data
-      -> 'data triple
+      -> 'data lsetup_args
       -> unit
+
+    (** Arguments to {!lsetup}.  *)
+    and 'data lsetup_args =
+      {
+        (** the predicted $y$ vector for the current internal step *)
+        lsetup_y : 'data;
+
+        (** the predicted {% $\dot{y}$%} vector for the current internal step *)
+        lsetup_y' : 'data;
+
+        (** the value of the residual function at [y] and [y'], i.e.
+            {% $F(t_n, y_{\text{pred}}, \dot{y}_{\text{pred}})$%} *)
+        lsetup_res : 'data;
+
+        (** scratch space *)
+        lsetup_tmp : 'data triple;
+      }
 
     (** Functions that solve the linear equation $Mx = b$.
         $M$ is a preconditioning matrix chosen by the user, and $b$ is the
@@ -525,12 +539,8 @@ module Alternate :
         The call [lsolve s b weight ycur y'cur rescur] has as arguments:
 
         - [s], the solver session,
+        - [args], a record summarizing current approximations to the solution,
         - [b], for returning the calculated solution,
-        - [weight], the error weights,
-        - [ycur], the solver's current approximation to $y(t_n)$,
-        - [ycur'], the solver's current approximation to {% $\dot{y}(t_n)$%},
-                   and,
-        - [rescur], a vector containing the current residual value.
 
         Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
         Any other exception is treated as an unrecoverable error.
@@ -539,12 +549,25 @@ module Alternate :
         @ida <node3#e:DAE_Jacobian> IVP solution (Eq. 2.5) *)
     type ('data, 'kind) lsolve =
       ('data, 'kind) session
-      -> 'data
-      -> 'data
-      -> 'data
-      -> 'data
+      -> 'data lsolve_args
       -> 'data
       -> unit
+
+    (** Arguments to {!lsolve}. *)
+    and 'data lsolve_args =
+      {
+        (** error weights *)
+        lsolve_ewt : 'data;
+
+        (** the solver's current approximation to $y(t_n)$ *)
+        lsolve_y : 'data;
+
+        (** the solver's current approximation to $y'(t_n)$ *)
+        lsolve_y' : 'data;
+
+        (** the current residual value *)
+        lsolve_res : 'data;
+      }
 
     (** The callbacks needed to implement an alternate linear solver. *)
     type ('data, 'kind) callbacks =

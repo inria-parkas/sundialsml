@@ -118,81 +118,71 @@ module QuadratureTypes = struct
 end
 
 module SensitivityTypes = struct
-  type 'a sensresfn =
-    float                            (* t *)
-    -> 'a                            (* y *)
-    -> 'a                            (* y' *)
-    -> 'a                            (* resval *)
-    -> 'a array                      (* yS *)
-    -> 'a array                      (* y'S *)
-    -> 'a array                      (* resvalS *)
-    -> 'a                            (* tmp1 *)
-    -> 'a                            (* tmp2 *)
-    -> 'a                            (* tmp3 *)
-    -> unit
+  type 'd sensresfn_args =
+    {
+      t : float;
+      y : 'd;
+      y' : 'd;
+      res : 'd;
+      yS : 'd array;
+      yS' : 'd array;
+      tmp : 'd triple
+    }
+
+  type 'd sensresfn = 'd sensresfn_args -> 'd array -> unit
 
   module QuadratureTypes = struct
-    type 'a quadsensrhsfn =
-      float          (* t *)
-      -> 'a          (* y *)
-      -> 'a          (* y' *)
-      -> 'a array    (* yS *)
-      -> 'a array    (* y'S *)
-      -> 'a          (* rrQ *)
-      -> 'a array    (* rhsvalQs *)
-      -> 'a          (* tmp1 *)
-      -> 'a          (* tmp2 *)
-      -> 'a          (* tmp3 *)
+    type 'd quadsensrhsfn =
+      'd quadsensrhsfn_args
+      -> 'd array
       -> unit
+
+    and 'd quadsensrhsfn_args =
+      {
+        t : float;
+        y : 'd;
+        y' : 'd;
+        yS : 'd array;
+        yS' : 'd array;
+        q : 'd;
+        tmp : 'd triple;
+      }
   end
 end
 
 module AdjointTypes' = struct
-  type 'a bresfn_no_sens =
-    float             (* t *)
-    -> 'a             (* y *)
-    -> 'a             (* y' *)
-    -> 'a             (* yB *)
-    -> 'a             (* y'B *)
-    -> 'a             (* resvalB *)
-    -> unit
-  and 'a bresfn_with_sens =
-    float          (* t *)
-    -> 'a          (* y *)
-    -> 'a          (* y' *)
-    -> 'a array    (* yS *)
-    -> 'a array    (* y'S *)
-    -> 'a          (* yB *)
-    -> 'a          (* y'B *)
-    -> 'a          (* resvalB *)
-    -> unit
+  type 'd bresfn_args =
+    {
+      t : float;
+      y : 'd;
+      y' : 'd;
+      yB : 'd;
+      yB' : 'd;
+    }
+  type 'a bresfn_no_sens = 'a bresfn_args -> 'a -> unit
+  and 'a bresfn_with_sens = 'a bresfn_args -> 'a array -> 'a array -> 'a -> unit
+
   type 'a bresfn =
       NoSens of 'a bresfn_no_sens
     | WithSens of 'a bresfn_with_sens
 
   module QuadratureTypes = struct
+    type 'd bquadrhsfn_args =
+      {
+        t : float;
+        y : 'd;
+        y' : 'd;
+        yB : 'd;
+        yB' : 'd;
+      }
+
     type 'a bquadrhsfn =
         NoSens of 'a bquadrhsfn_no_sens
       | WithSens of 'a bquadrhsfn_with_sens
 
-    and 'a bquadrhsfn_no_sens =
-      float             (* t *)
-      -> 'a             (* y *)
-      -> 'a             (* y' *)
-      -> 'a             (* yB *)
-      -> 'a             (* y'B *)
-      -> 'a             (* rhsvalBQS *)
-      -> unit
-    and 'a bquadrhsfn_with_sens =
-      float          (* t *)
-      -> 'a          (* y *)
-      -> 'a          (* y' *)
-      -> 'a array    (* yS *)
-      -> 'a array    (* y'S *)
-      -> 'a          (* yB *)
-      -> 'a          (* y'B *)
-      -> 'a          (* rhsvalBQS *)
-      -> unit
+    and 'a bquadrhsfn_no_sens = 'a bquadrhsfn_args -> 'a -> unit
+    and 'a bquadrhsfn_with_sens = 'a bquadrhsfn_args -> 'a array -> 'a array ->
+                                  'a -> unit
   end
 
   type ('t, 'a) jacobian_arg =
@@ -200,9 +190,9 @@ module AdjointTypes' = struct
       jac_t   : float;
       jac_y   : 'a;
       jac_y'  : 'a;
-      jac_yb  : 'a;
-      jac_yb' : 'a;
-      jac_resb : 'a;
+      jac_yB  : 'a;
+      jac_yB' : 'a;
+      jac_resB : 'a;
       jac_coef : float;
       jac_tmp : 't
     }
@@ -379,19 +369,27 @@ and ('data, 'kind) alternate_linsolv =
     lsolve : ('data, 'kind) lsolve';
   }
 and ('data, 'kind) linit' = ('data, 'kind) session -> unit
+and 'data alternate_lsetup_args =
+  {
+    lsetup_y : 'data;
+    lsetup_y' : 'data;
+    lsetup_res : 'data;
+    lsetup_tmp : 'data triple;
+  }
 and ('data, 'kind) lsetup' =
   ('data, 'kind) session
-  -> 'data
-  -> 'data
-  -> 'data
-  -> 'data triple
+  -> 'data alternate_lsetup_args
   -> unit
+and 'data alternate_lsolve_args =
+  {
+    lsolve_ewt : 'data;
+    lsolve_y : 'data;
+    lsolve_y' : 'data;
+    lsolve_res : 'data;
+  }
 and ('data, 'kind) lsolve' =
   ('data, 'kind) session
-  -> 'data
-  -> 'data
-  -> 'data
-  -> 'data
+  -> 'data alternate_lsolve_args
   -> 'data
   -> unit
 
@@ -437,6 +435,20 @@ module AlternateTypes = struct
   and ('data, 'kind) linit  = ('data, 'kind) linit'
   and ('data, 'kind) lsetup = ('data, 'kind) lsetup'
   and ('data, 'kind) lsolve = ('data, 'kind) lsolve'
+  and 'data lsetup_args = 'data alternate_lsetup_args =
+    {
+      lsetup_y : 'data;
+      lsetup_y' : 'data;
+      lsetup_res : 'data;
+      lsetup_tmp : 'data triple;
+    }
+  and 'data lsolve_args = 'data alternate_lsolve_args =
+    {
+      lsolve_ewt : 'data;
+      lsolve_y : 'data;
+      lsolve_y' : 'data;
+      lsolve_res : 'data;
+    }
 end
 
 module AdjointTypes = struct
@@ -490,17 +502,17 @@ let dummy_errh _ =
   crash "Internal error: dummy_errh called\n"
 let dummy_errw _ _ =
   crash "Internal error: dummy_errw called\n"
-let dummy_bresfn _ _ _ _ _ _ =
-  crash "Internal error: dummy_bresfn called\n"
-let dummy_bresfn_sens _ _ _ _ _ _ _ _ =
-  crash "Internal error: dummy_bresfn_sens called\n"
-let dummy_bquadrhsfn _ _ _ _ _ _ =
-  crash "Internal error: dummy_bquadrhsfn called\n"
-let dummy_bquadrhsfn_sens _ _ _ _ _ _ _ _ =
-  crash "Internal error: dummy_bquadrhsfn_sens called\n"
+let dummy_bresfn_no_sens _ _ =
+  crash "Internal error: dummy_bresfn_no_sens called\n"
+let dummy_bresfn_with_sens _ _ _ _ =
+  crash "Internal error: dummy_bresfn_with_sens called\n"
+let dummy_bquadrhsfn_no_sens _ _ =
+  crash "Internal error: dummy_bquadrhsfn_no_sens called\n"
+let dummy_bquadrhsfn_with_sens _ _ _ _ =
+  crash "Internal error: dummy_bquadrhsfn_with_sens called\n"
 let dummy_quadrhsfn _ _ _ _ =
   crash "Internal error: dummy_quadrhsfn called\n"
-let dummy_sensresfn _ _ _ _ _ _ _ _ _ _ =
+let dummy_sensresfn _ _ =
   crash "Internal error: dummy_sensresfn called\n"
-let dummy_quadsensrhsfn _ _ _ _ _ _ _ _ _ _ =
+let dummy_quadsensrhsfn _ _ =
   crash "Internal error: dummy_quadsensrhsfn called\n"

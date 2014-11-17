@@ -182,13 +182,11 @@ let rhsQ data t (yy : RealArray.t) (yp : RealArray.t) (qdot : RealArray.t) =
 
   qdot.{0} <- 0.5*.(j1*.v1*.v1 +. m2*.v2*.v2 +. j2*.v3*.v3)
 
-let rhsQS data t (yy : RealArray.t)
-                 (yp : RealArray.t)
-                 (yyS : RealArray.t array)
-                 (ypS : RealArray.t array)
-                 (rrQ : RealArray.t)
-                 (rhsQS : RealArray.t array)
-                 tmp yptmp tmpQS =
+let rhsQS : user_data -> RealArray.t QuadSens.quadsensrhsfn =
+  fun data args rhsQS ->
+  let yy = args.QuadSens.y
+  and yyS = args.QuadSens.yS
+  in
   let j1 = data.j1 in
   let m2 = data.m2 in
   let j2 = data.j2 in

@@ -471,35 +471,40 @@ static int lsetup(CVodeMem cv_mem, int convfail,
 		  N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
 {
     CAMLparam0();
-    CAMLlocalN(args, 5);
-    CAMLlocal2(session, cb);
+    CAMLlocal3(args, session, cb);
 
     WEAK_DEREF (session, *(value*)cv_mem->cv_user_data);
-    args[0] = session;
+
     switch (convfail) {
     case CV_NO_FAILURES:
-	args[1] = Val_int(VARIANT_CVODE_ALTERNATE_NO_FAILURES);
+	convfail = VARIANT_CVODE_ALTERNATE_NO_FAILURES;
 	break;
 
     case CV_FAIL_BAD_J:
-	args[1] = Val_int(VARIANT_CVODE_ALTERNATE_FAIL_BAD_J);
+	convfail = VARIANT_CVODE_ALTERNATE_FAIL_BAD_J;
 	break;
 
     case CV_FAIL_OTHER:
-	args[1] = Val_int(VARIANT_CVODE_ALTERNATE_FAIL_OTHER);
+	convfail = VARIANT_CVODE_ALTERNATE_FAIL_OTHER;
 	break;
     }
-    args[2] = NVEC_BACKLINK(ypred);
-    args[3] = NVEC_BACKLINK(fpred);
-    args[4] = make_triple_tmp(tmp1, tmp2, tmp3);
+    args = caml_alloc_tuple (RECORD_CVODE_ALTERNATE_LSETUP_ARGS_SIZE);
+    Store_field (args, RECORD_CVODE_ALTERNATE_LSETUP_ARGS_CONV_FAIL,
+		 Val_int (convfail));
+    Store_field (args, RECORD_CVODE_ALTERNATE_LSETUP_ARGS_Y,
+		 NVEC_BACKLINK(ypred));
+    Store_field (args, RECORD_CVODE_ALTERNATE_LSETUP_ARGS_RHS,
+		 NVEC_BACKLINK(fpred));
+    Store_field (args, RECORD_CVODE_ALTERNATE_LSETUP_ARGS_TMP,
+		 make_triple_tmp(tmp1, tmp2, tmp3));
 
-    cb = Field (session, RECORD_CVODE_SESSION_LS_CALLBACKS);
+    cb = CVODE_LS_CALLBACKS_FROM_ML (session);
     cb = Field (cb, 0);
     cb = Field (cb, RECORD_CVODE_ALTERNATE_CALLBACKS_LSETUP);
     cb = Some_val (cb);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn(cb, sizeof (args) / sizeof (*args), args);
+    value r = caml_callback2_exn(cb, session, args);
 
     /* Update jcurPtr; leave it unchanged if an error occurred.  */
     if (!Is_exception_result (r)) {
@@ -515,8 +520,15 @@ static int lsolve(CVodeMem cv_mem, N_Vector b, N_Vector weight, N_Vector ycur,
 		  N_Vector fcur)
 {
     CAMLparam0();
-    CAMLlocalN(args, 5);
-    CAMLlocal2(session, cb);
+    CAMLlocal3(args, session, cb);
+
+    args = caml_alloc_tuple (RECORD_CVODE_ALTERNATE_LSOLVE_ARGS_SIZE);
+    Store_field (args, RECORD_CVODE_ALTERNATE_LSOLVE_ARGS_Y,
+		 NVEC_BACKLINK (ycur));
+    Store_field (args, RECORD_CVODE_ALTERNATE_LSOLVE_ARGS_RHS,
+		 NVEC_BACKLINK (fcur));
+    Store_field (args, RECORD_CVODE_ALTERNATE_LSOLVE_ARGS_EWT,
+		 NVEC_BACKLINK (weight));
 
     WEAK_DEREF (session, *(value*)cv_mem->cv_user_data);
 
@@ -524,16 +536,8 @@ static int lsolve(CVodeMem cv_mem, N_Vector b, N_Vector weight, N_Vector ycur,
     cb = Field (cb, 0);
     cb = Field (cb, RECORD_CVODE_ALTERNATE_CALLBACKS_LSOLVE);
 
-    args[0] = session;
-    args[1] = NVEC_BACKLINK(b);
-    args[2] = NVEC_BACKLINK(weight);
-    args[3] = NVEC_BACKLINK(ycur);
-    args[4] = NVEC_BACKLINK(fcur);
-
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (cb,
-				  sizeof (args) / sizeof (*args),
-				  args);
+    value r = caml_callback3_exn (cb, session, args, NVEC_BACKLINK (b));
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }

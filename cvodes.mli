@@ -60,14 +60,14 @@ module Quadrature :
         arguments:
         - [t], the value of the independent variable, i.e., the simulation time,
         - [y], the vector of dependent-variable values, i.e., $y(t)$, and,
-        - [yq'], a vector for storing the computed value of
+        - [yQ'], a vector for storing the computed value of
                  {% $\dot{y}_Q = f_Q(t, y)$%}.
 
         Within the function, raising a {!Sundials.RecoverableFailure} exception
         indicates a recoverable error. Any other exception is treated as an
         unrecoverable error.
 
-        {warning [y] and [yq'] should not be accessed after the function
+        {warning [y] and [yQ'] should not be accessed after the function
                  returns.}
 
         @cvodes <node5#ss:user_fct_quad> CVQuadRhsFn *)
@@ -220,64 +220,70 @@ module Sensitivity :
   sig (* {{{ *)
     (** {2:init Initialization} *)
 
-    (** Sensitivity functions that calculate the right-hand sides of all
-        sensitivity equations. They are passed the arguments:
-        - [t], the value of the independent variable, i.e., the simulation time,
-        - [y], the vector of dependent-variable values, i.e., $y(t)$,
-        - [y'], the value of the right-hand side of the state
-                  equations {% $\dot{y} = f(t, y, p)$%},
-        - [s], the array of sensitivity vectors,
-        - [s'], an array of vectors to be filled with the values of
-                   {% $\dot{s}_i$%} for all $i$, and,
-        - [tmp1] and [tmp2], temporary storage vectors.
+    (** Common arguments to {!sensrhsfn1} and {!sensrhsfn_all}.  *)
+    type 'd sensrhsfn_args =
+      {
+        (** value of the independent variable *)
+        t : float;
+
+        (** vector of dependent-variable values $y(t)$ *)
+        y : 'd;
+
+        (** value of the right-hand side of the state
+            equations {% $\dot{y} = f(t, y, p)$%} *)
+        y' : 'd;
+
+        (** scratch space *)
+        tmp : 'd double;
+      }
+
+    (** Sensitivity functions that calculate the right-hand sides of
+        all sensitivity equations.  They are passed the arguments:
+
+        - [args], a record holding the current values of state variables
+                  (see {!sensrhsfn_args}),
+        - [yS], an array of vectors holding the current values of sensitivity
+                variables, and
+        - [yS'], an array of vectors to be filled with the derivatives
+                 of the sensitivity variables.
 
         Within the function, raising a {!Sundials.RecoverableFailure} exception
         indicates a recoverable error. Any other exception is treated as an
         unrecoverable error.
 
-        {warning Neither [y], [y'], [tmp1], [tmp2], nor the elements of [s]
-                 or [s'] should be accessed after the function returns.}
+        {warning Vectors held in this function's arguments should not
+                 be accessed after the function returns.}
 
         @cvodes <node6#ss:user_fct_fwd> CVSensRhsFn *)
-    type 'd sensrhsfn_all =
-      float           (* t *)
-      -> 'd           (* y *)
-      -> 'd           (* y' *)
-      -> 'd array     (* s *)
-      -> 'd array     (* s' *)
-      -> 'd           (* tmp1 *)
-      -> 'd           (* tmp2 *)
-      -> unit
+    type 'd sensrhsfn_all = 'd sensrhsfn_args
+                          -> 'd array
+                          -> 'd array
+                          -> unit
 
-    (** Sensitivity functions that calculate the right-hand side of a single
-        sensitivity equation. They are passed the arguments:
-        - [t], the value of the independent variable, i.e., the simulation time,
-        - [y], the vector of dependent-variable values, i.e., $y(t)$,
-        - [y'], the value of the right-hand side of the state
-                  equations {% $\dot{y} = f(t, y, p)$%},
+    (** Sensitivity functions that calculate the right-hand side of a
+        single sensitivity equation.  They are passed the arguments:
+
         - [i], the index of the sensitivity equation to compute,
-        - [si], the {i is}th sensitivity vector,
-        - [s'i], a vector to be filled with the values of {% $\dot{s}_i$%}, and,
-        - [tmp1] and [tmp2], temporary storage vectors.
+        - [args], a record holding the current values of state variables
+                  (see {!sensrhsfn_args}),
+        - [yS], a vector holding the current value of the {i i}th
+                sensitivity variable, and
+        - [yS'], a vector to be filled with the current value of the {i i}th
+                 sensitivity variable's derivative.
 
         Within the function, raising a {!Sundials.RecoverableFailure} exception
         indicates a recoverable error. Any other exception is treated as an
         unrecoverable error.
 
-        {warning [y], [y'], [si], [s'i], [tmp1], and [tmp2] should not be
-                 accessed after the function returns.}
+        {warning Vectors held in this function's arguments should not
+                 be accessed after the function returns.}
 
         @cvodes <node6#ss:user_fct_fwd> CVSensRhs1Fn *)
-    type 'd sensrhsfn1 =
-      float           (* t *)
-      -> 'd           (* y *)
-      -> 'd           (* y' *)
-      -> int          (* i *)
-      -> 'd           (* si *)
-      -> 'd           (* s'i *)
-      -> 'd           (* tmp1 *)
-      -> 'd           (* tmp2 *)
-      -> unit
+    and 'd sensrhsfn1 = int
+                      -> 'd sensrhsfn_args
+                      -> 'd
+                      -> 'd
+                      -> unit
 
     (** Specify a sensitivity function. *)
     type 'd sensrhsfn =
@@ -406,35 +412,42 @@ module Sensitivity :
       sig (* {{{ *)
         (** {2:init Initialization} *)
 
-        (** Functions defining sensitivity-dependent quadrature variables.
-            The call [fQS t y ys yq' yqs' tmp1 tmp2] has arguments:
-            - [t], the value of the independent variable, i.e., the simulation time,
-            - [y], the vector of dependent-variable values, i.e., $y(t)$,
-            - [s], the array of sensitivity vectors,
-            - [yq'], the value of the quadrature right-hand side, i.e.,
-                     {% $\dot{y}_Q$%},
-            - [yqs'], an array of vectors for storing the computed values of
-              {% $\dot{y}_\mathit{QS} = f_\mathit{QS}(t, y, s, \dot{y}_Q)$%}, and,
-            - [tmp1] and [tmp2], temporary storage vectors.
+        (** Arguments to {!quadsensrhsfn}. *)
+        type 'd quadsensrhsfn_args =
+          {
+            (** value of the independent variable *)
+            t : float;
+
+            (** vector of dependent-variable values $y(t)$ *)
+            y : 'd;
+
+            (** array of sensitivity vectors *)
+            yS : 'd array;
+
+            (** value of the quadrature-right hand side {% $\dot{y}_Q$%} *)
+            yQ' : 'd;
+
+            (** scratch space *)
+            tmp : 'd double;
+          }
+
+        (** Functions defining sensitivity-dependent quadrature
+            variables.  They are passed the arguments:
+
+            - [args], a record holding the current values of state and
+                      sensitivity variables (see {!quadsensrhsfn_args}), and
+            - [yS'], an array of vectors for storing the computed values of
+                    {% $\dot{y}_\mathit{QS} = f_\mathit{QS}(t, y, s, \dot{y}_Q)$%}.
 
             Within the function, raising a {!Sundials.RecoverableFailure}
             exception indicates a recoverable error. Any other exception is
             treated as an unrecoverable error.
 
-            {warning Neither of [y], [yq'], [tmp1], [tmp2], nor the elements
-                     of [s] or [yqs'] should be accessed after the function
-                     returns.}
+            {warning Vectors held in this function's arguments should
+                     not be accessed after the function returns.}
 
            @cvodes <node6#ss:user_fct_quad_sens> CVodeQuadSensRhsFn *)
-        type 'd quadsensrhsfn =
-           float          (* t *)
-           -> 'd          (* y *)
-           -> 'd array    (* s *)
-           -> 'd          (* yq' *)
-           -> 'd array    (* yqs' *)
-           -> 'd          (* tmp1 *)
-           -> 'd          (* tmp2 *)
-           -> unit
+        type 'd quadsensrhsfn = 'd quadsensrhsfn_args -> 'd array -> unit
 
         (** Activate the integration of quadrature equations that depend on
             sensitivities. The right-hand sides of the sensitivity-dependent
@@ -929,8 +942,8 @@ module Adjoint :
       {
         jac_t   : float;        (** The independent variable. *)
         jac_y   : 'd;           (** The forward solution vector. *)
-        jac_yb  : 'd;           (** The backward solution vector. *)
-        jac_fyb : 'd;           (** The backward right-hand side function [fB]. *)
+        jac_yB  : 'd;           (** The backward solution vector. *)
+        jac_fyB : 'd;           (** The backward right-hand side function [fB]. *)
         jac_tmp : 't;           (** Workspace data. *)
       }
 
@@ -1436,56 +1449,55 @@ module Adjoint :
 
     (** {2:bsolve Backward solutions} *)
 
+    (** Arguments common to {!brhsfn_no_sens} and {!brhsfn_with_sens}.  *)
+    type 'd brhsfn_args =
+      {
+        (** value of the independent variable *)
+        t : float;
+
+        (** vector of dependent-variable values $y(t)$ *)
+        y : 'd;
+
+        (** vector of backward dependent-variable values $y_B(t)$ *)
+        yB : 'd;
+      }
+
     (** Backward functions without forward sensitivities. They are passed
         the arguments:
-        - [t], the value of the independent variable, i.e., the simulation time,
-        - [y], the vector of dependent-variable values, i.e., $y(t)$,
-        - [yb], the vector of backward dependent-variable values, i.e., $y_B(t)$,
-        - [yb'], a vector for storing the values
+        - [args], a record summarizing the current values of forward and
+                  backward variables, and
+        - [yB'], a vector for storing the values
                  {% $\dot{y}_B = f_B(t, y, y_B)$%}.
 
         Within the function, raising a {!Sundials.RecoverableFailure} exception
         indicates a recoverable error. Any other exception is treated as an
         unrecoverable error.
 
-        {warning [y], [yb], and [yb'] should not be accessed after the function
-                 returns.}
+        {warning Vectors held in this function's arguments should not
+                 be accessed after the function returns.}
 
         @cvodes <node7#ss:ODErhs_b> CVRhsFnB
         @cvodes <node3#e:adj_eqns> Eq 2.19, Adjoint sensitivity analysis *)
-    type 'd brhsfn_no_sens =
-      float    (* t *)
-      -> 'd    (* y *)
-      -> 'd    (* yb *)
-      -> 'd    (* yb' *)
-      -> unit
+    type 'd brhsfn_no_sens = 'd brhsfn_args -> 'd -> unit
 
     (** Backward functions with forward sensitivities. They are passed the
         arguments:
-        - [t], the value of the independent variable, i.e., the simulation time,
-        - [y], the vector of dependent-variable values, i.e., $y(t)$,
-        - [s], the array of forward sensitivity vectors,
-        - [yb], the vector of backward dependent-variable values,
-                i.e., $y_B(t)$,
-        - [yb'], a vector for storing the values
+        - [args], a record summarizing the current values of state and
+                  backward sensitivity variables,
+        - [yS], an array holding the values of forward sensitivity vectors,
+        - [yB'], a vector for storing the values
                  {% $\dot{y}_B = f_B(t, y, y_S, y_B)$%}.
 
         Within the function, raising a {!Sundials.RecoverableFailure} exception
         indicates a recoverable error. Any other exception is treated as an
         unrecoverable error.
 
-        {warning Neither [y], [yb], [yb'], nor the elements of [s] should be
-                 accessed after the function returns.}
+        {warning Vectors held in this function's arguments should not
+                 be accessed after the function returns.}
 
         @cvodes <node7#ss:ODErhs_bs> CVRhsFnBS
         @cvodes <node3#e:adj1_eqns> Eq 2.21, Adjoint sensitivity analysis *)
-    type 'd brhsfn_with_sens =
-      float        (* t *)
-      -> 'd        (* y *)
-      -> 'd array  (* ys *)
-      -> 'd        (* yb *)
-      -> 'd        (* yb' *)
-      -> unit
+    type 'd brhsfn_with_sens = 'd brhsfn_args -> 'd array -> 'd -> unit
 
     (** Functions that evaluate the right-hand side of a backward ODE system
         with or without forward sensitivities. *)
@@ -1556,59 +1568,56 @@ module Adjoint :
       sig (* {{{ *)
         (** {2:init Initialization} *)
 
+        (** Arguments common to {!bquadrhsfn_no_sens} and
+           {!bquadrhsfn_with_sens}.  It represents the same set of
+           data as {!brhsfn_args}.  *)
+        type 'd bquadrhsfn_args =
+          {
+            (** value of the independent variable *)
+            t : float;
+
+            (** vector of dependent-variable values $y(t) *)
+            y : 'd;
+
+            (** vector of backward dependent-variable values $y_B(t)$ *)
+            yB : 'd;
+          }
+
         (** Functions defining backward quadrature variables without forward
-            sensitivities.
-            The call [fQB t y yb qb'] has arguments:
-            - [t], the value of the independent variable, i.e.,
-                   the simulation time,
-            - [y], the vector of dependent-variable values, i.e., $y(t)$,
-            - [yb], the vector of backward dependent-variable values,
-                    i.e., $y_B(t)$,
-            - [qb'], a vector for storing the computed value of
+            sensitivities.  These functions are passed the arguments:
+            - [args], a record summarizing the current values of forward and
+                      backward variables, and
+            - [qB'], a vector for storing the computed value of
                      {% $\dot{y}_\mathit{QB} = f_\mathit{QB}(t, y, y_B)$%}.
 
             Within the function, raising a {!Sundials.RecoverableFailure}
             exception indicates a recoverable error. Any other exception is
             treated as an unrecoverable error.
 
-            {warning [y], [yb], and [qb'] should not be accessed after the
-                     function returns.}
+            {warning Vectors held in this function's arguments should
+                     not be accessed after the function returns.}
 
             @cvodes <node7#ss:ODErhs_quad_b> CVQuadRhsFnB *)
-        type 'd bquadrhsfn_no_sens =
-          float       (* t *)
-          -> 'd       (* y *)
-          -> 'd       (* yb *)
-          -> 'd       (* qb' *)
-          -> unit
+        type 'd bquadrhsfn_no_sens = 'd bquadrhsfn_args -> 'd -> unit
 
         (** Functions defining backward quadrature variables with forward
-            sensitivities.
-            The call [fQB t y s yb qb'] has arguments:
-            - [t], the value of the independent variable, i.e.,
-                   the simulation time,
-            - [y], the vector of dependent-variable values, i.e., $y(t)$,
-            - [s], the array of forward sensitivity vectors,
-            - [yb], the vector of backward dependent-variable values,
-                    i.e., $y_B(t)$,
-            - [qb'], a vector for storing the computed value of
+            sensitivities.  These functions are passed the arguments:
+            - [args], a record summarizing the current values of forward and
+                      backward variables,
+            - [yS], an array holding the values of forward sensitivity vectors, and
+            - [qB'], a vector for storing the computed value of
                    {% $\dot{y}_\mathit{QB} = f_\mathit{QB}(t, y, y_S, y_B)$%}.
 
             Within the function, raising a {!Sundials.RecoverableFailure}
             exception indicates a recoverable error. Any other exception is
             treated as an unrecoverable error.
 
-            {warning Neither [y], [yb], [qb'], nor the elements of [s] should
-                     be accessed after the function returns.}
+            {warning Vectors held in this function's arguments should
+                     not be accessed after the function returns.}
 
             @cvodes <node7#ss:ODErhs_quad_sens_B> CVQuadRhsFnBS *)
         type 'd bquadrhsfn_with_sens =
-          float        (* t *)
-          -> 'd        (* y *)
-          -> 'd array  (* s *)
-          -> 'd        (* yb *)
-          -> 'd        (* qbdot *)
-          -> unit
+          'd bquadrhsfn_args -> 'd array -> 'd -> unit
 
         (** These functions compute the quadrature equation right-hand side for
             the backward problem. *)

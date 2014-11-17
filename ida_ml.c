@@ -428,24 +428,27 @@ static int lsetup(IDAMem ida_mem, N_Vector yyp, N_Vector ypp, N_Vector resp,
 		  N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
 {
     CAMLparam0();
-    CAMLlocalN(args, 5);
-    CAMLlocal2(session, cb);
+    CAMLlocal3(args, session, cb);
 
     WEAK_DEREF (session, *(value*)ida_mem->ida_user_data);
 
-    args[0] = session;
-    args[1] = NVEC_BACKLINK(yyp);
-    args[2] = NVEC_BACKLINK(ypp);
-    args[3] = NVEC_BACKLINK(resp);
-    args[4] = make_triple_tmp(tmp1, tmp2, tmp3);
+    args = caml_alloc_tuple (RECORD_IDA_ALTERNATE_LSETUP_ARGS_SIZE);
+    Store_field (args, RECORD_IDA_ALTERNATE_LSETUP_ARGS_Y,
+		 NVEC_BACKLINK (yyp));
+    Store_field (args, RECORD_IDA_ALTERNATE_LSETUP_ARGS_YP,
+		 NVEC_BACKLINK (ypp));
+    Store_field (args, RECORD_IDA_ALTERNATE_LSETUP_ARGS_RES,
+		 NVEC_BACKLINK (resp));
+    Store_field (args, RECORD_IDA_ALTERNATE_LSETUP_ARGS_TMP,
+		 make_triple_tmp (tmp1, tmp2, tmp3));
 
     cb = IDA_LS_CALLBACKS_FROM_ML (session);
     cb = Field (cb, 0);
     cb = Field (cb, RECORD_IDA_ALTERNATE_CALLBACKS_LSETUP);
-    cb = Field (cb, 0);
+    cb = Some_val (cb);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+    value r = caml_callback2_exn (cb, session, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -454,24 +457,26 @@ static int lsolve(IDAMem ida_mem, N_Vector b, N_Vector weight, N_Vector ycur,
 		  N_Vector ypcur, N_Vector rescur)
 {
     CAMLparam0();
-    CAMLlocalN(args, 6);
-    CAMLlocal2(session, cb);
+    CAMLlocal3(args, session, cb);
+
+    args = caml_alloc_tuple (RECORD_IDA_ALTERNATE_LSOLVE_ARGS_SIZE);
+    Store_field (args, RECORD_IDA_ALTERNATE_LSOLVE_ARGS_EWT,
+		 NVEC_BACKLINK (weight));
+    Store_field (args, RECORD_IDA_ALTERNATE_LSOLVE_ARGS_Y,
+		 NVEC_BACKLINK (ycur));
+    Store_field (args, RECORD_IDA_ALTERNATE_LSOLVE_ARGS_YP,
+		 NVEC_BACKLINK (ypcur));
+    Store_field (args, RECORD_IDA_ALTERNATE_LSOLVE_ARGS_RES,
+		 NVEC_BACKLINK (rescur));
 
     WEAK_DEREF (session, *(value*)ida_mem->ida_user_data);
-
-    args[0] = session;
-    args[1] = NVEC_BACKLINK(b);
-    args[2] = NVEC_BACKLINK(weight);
-    args[3] = NVEC_BACKLINK(ycur);
-    args[4] = NVEC_BACKLINK(ypcur);
-    args[5] = NVEC_BACKLINK(rescur);
 
     cb = IDA_LS_CALLBACKS_FROM_ML (session);
     cb = Field (cb, 0);
     cb = Field (cb, RECORD_IDA_ALTERNATE_CALLBACKS_LSOLVE);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+    value r = caml_callback3_exn (cb, session, args, NVEC_BACKLINK (b));
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }

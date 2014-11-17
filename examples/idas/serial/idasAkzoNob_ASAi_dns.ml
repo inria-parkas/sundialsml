@@ -120,8 +120,12 @@ let rhsQ data t yy yp qdot =
 (*
  * resB routine. Residual for adjoint system. 
  *)
-let resB data tt (yy : RealArray.t) yp (yyB : RealArray.t)
-                 (ypB : RealArray.t) (rrB : RealArray.t) =
+let resB : user_data -> RealArray.t Adjoint.bresfn_no_sens =
+  fun data args rrB ->
+  let yy = args.Adjoint.y
+  and yyB = args.Adjoint.yB
+  and ypB = args.Adjoint.yB'
+  in
   let k1 = data.k1
   and k2 = data.k2
   and k3 = data.k3

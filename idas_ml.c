@@ -323,36 +323,34 @@ static int sensresfn(int Ns, realtype t,
 		     N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
 {
     CAMLparam0();
-    CAMLlocal2(session, sensext);
-    CAMLlocalN(args, 10);
+    CAMLlocal4(args, session, sensext, vt);
     value *backref = user_data;
 
     WEAK_DEREF (session, *backref);
     sensext = IDA_SENSEXT_FROM_ML(session);
 
-    args[0] = caml_copy_double(t);
-    args[1] = NVEC_BACKLINK(y);
-    args[2] = NVEC_BACKLINK(yp);
-    args[3] = NVEC_BACKLINK(resval);
-    LOAD_NVECTOR_TABLE (args[4], yS, Ns,
-			IDAS_SENSARRAY1_FROM_EXT(sensext));
-    LOAD_NVECTOR_TABLE (args[5], ypS, Ns,
-			IDAS_SENSARRAY2_FROM_EXT(sensext));
-    LOAD_NVECTOR_TABLE (args[6], resvalS, Ns,
-			IDAS_SENSARRAY3_FROM_EXT(sensext));
-    args[7] = NVEC_BACKLINK(tmp1);
-    args[8] = NVEC_BACKLINK(tmp2);
-    args[9] = NVEC_BACKLINK(tmp3);
+    args = caml_alloc_tuple (RECORD_IDAS_SENSRESFN_ARGS_SIZE);
+    Store_field (args, RECORD_IDAS_SENSRESFN_ARGS_T,
+		 caml_copy_double (t));
+    Store_field (args, RECORD_IDAS_SENSRESFN_ARGS_Y,
+		 NVEC_BACKLINK(y));
+    Store_field (args, RECORD_IDAS_SENSRESFN_ARGS_YP,
+		 NVEC_BACKLINK(yp));
+    Store_field (args, RECORD_IDAS_SENSRESFN_ARGS_RES,
+		 NVEC_BACKLINK(resval));
+    Store_field (args, RECORD_IDAS_SENSRESFN_ARGS_SENS,
+	         IDAS_SENSARRAY1_FROM_EXT(sensext));
+    wrap_to_nvector_table (Ns, IDAS_SENSARRAY1_FROM_EXT(sensext), yS);
+    Store_field (args, RECORD_IDAS_SENSRESFN_ARGS_SENSP,
+	         IDAS_SENSARRAY2_FROM_EXT(sensext));
+    wrap_to_nvector_table (Ns, IDAS_SENSARRAY2_FROM_EXT(sensext), ypS);
+    Store_field (args, RECORD_IDAS_SENSRESFN_ARGS_TMP,
+		 make_triple_tmp (tmp1, tmp2, tmp3));
 
-    // The data payloads inside args[1..6] are only valid during this call,
-    // afterward that memory goes back to IDA. These bigarrays must not be
-    // retained by closure_quadrhsfn! If it wants a permanent copy, then it
-    // has to make it manually.
+    wrap_to_nvector_table (Ns, IDAS_SENSARRAY3_FROM_EXT(sensext), resvalS);
 
-    /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn(IDAS_SENSRESFN_FROM_EXT(sensext),
-				 sizeof (args) / sizeof (*args),
-				 args);
+    value r = caml_callback2_exn (IDAS_SENSRESFN_FROM_EXT(sensext), args,
+				  IDAS_SENSARRAY3_FROM_EXT(sensext));
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -364,35 +362,32 @@ static int quadsensrhsfn(int ns, realtype t, N_Vector yy, N_Vector yp,
 		         N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
 {
     CAMLparam0();
-    CAMLlocal2(session, sensext);
-    CAMLlocalN(args, 10);
+    CAMLlocal3(args, session, sensext);
 
     WEAK_DEREF (session, *(value*)user_data);
     sensext = IDA_SENSEXT_FROM_ML(session);
 
-    args[0] = caml_copy_double(t);
-    args[1] = NVEC_BACKLINK(yy);
-    args[2] = NVEC_BACKLINK(yp);
-    LOAD_NVECTOR_TABLE (args[3], yyS, ns,
-			IDAS_SENSARRAY1_FROM_EXT(sensext));
-    LOAD_NVECTOR_TABLE (args[4], ypS, ns,
-			IDAS_SENSARRAY2_FROM_EXT(sensext));
-    args[5] = NVEC_BACKLINK(rrQ);
-    LOAD_NVECTOR_TABLE (args[6], rhsvalQS, ns,
-			IDAS_SENSARRAY3_FROM_EXT(sensext));
-    args[7] = NVEC_BACKLINK(tmp1);
-    args[8] = NVEC_BACKLINK(tmp2);
-    args[9] = NVEC_BACKLINK(tmp3);
+    args = caml_alloc_tuple (RECORD_IDAS_QUADSENSRHSFN_ARGS_SIZE);
+    Store_field (args, RECORD_IDAS_QUADSENSRHSFN_ARGS_T,
+		 caml_copy_double (t));
+    Store_field (args, RECORD_IDAS_QUADSENSRHSFN_ARGS_Y,
+		 NVEC_BACKLINK (yy));
+    Store_field (args, RECORD_IDAS_QUADSENSRHSFN_ARGS_YP,
+		 NVEC_BACKLINK (yp));
+    wrap_to_nvector_table (ns, IDAS_SENSARRAY1_FROM_EXT(sensext), yyS);
+    Store_field (args, RECORD_IDAS_QUADSENSRHSFN_ARGS_SENS,
+		 IDAS_SENSARRAY1_FROM_EXT(sensext));
+    wrap_to_nvector_table (ns, IDAS_SENSARRAY2_FROM_EXT(sensext), ypS);
+    Store_field (args, RECORD_IDAS_QUADSENSRHSFN_ARGS_SENSP,
+		 IDAS_SENSARRAY2_FROM_EXT(sensext));
+    Store_field (args, RECORD_IDAS_QUADSENSRHSFN_ARGS_TMP,
+		 make_triple_tmp (tmp1, tmp2, tmp3));
 
-    // The data payloads inside args[2..7] are only valid during this call,
-    // afterward that memory goes back to IDA. These bigarrays must not be
-    // retained by closure_quadrhsfn! If it wants a permanent copy, then it
-    // has to make it manually.
+    wrap_to_nvector_table (ns, IDAS_SENSARRAY3_FROM_EXT(sensext), rhsvalQS);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn(IDAS_QUADSENSRHSFN_FROM_EXT(sensext),
-				 sizeof (args) / sizeof (*args),
-				 args);
+    value r = caml_callback2_exn(IDAS_QUADSENSRHSFN_FROM_EXT(sensext),
+				 args, IDAS_SENSARRAY3_FROM_EXT(sensext));
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -403,28 +398,21 @@ static int bresfn(realtype t, N_Vector y, N_Vector yp,
 		  N_Vector resvalB, void *user_data)
 {
     CAMLparam0();
-    CAMLlocal2(session, bsensext);
-    CAMLlocalN(args, 6);
+    CAMLlocal3(args, session, bsensext);
 
     WEAK_DEREF (session, *(value*)user_data);
     bsensext = IDA_SENSEXT_FROM_ML(session);
 
-    args[0] = caml_copy_double (t);
-    args[1] = NVEC_BACKLINK (y);
-    args[2] = NVEC_BACKLINK (yp);
-    args[3] = NVEC_BACKLINK (yB);
-    args[4] = NVEC_BACKLINK (ypB);
-    args[5] = NVEC_BACKLINK (resvalB);
-
-    // The data payloads inside args[2..4] are only valid during this call,
-    // afterward that memory goes back to cvode. These bigarrays must not be
-    // retained by closure_quadrhsfn! If it wants a permanent copy, then it
-    // has to make it manually.
+    args = caml_alloc_tuple (RECORD_IDAS_ADJ_BRESFN_ARGS_SIZE);
+    Store_field (args, RECORD_IDAS_ADJ_BRESFN_ARGS_T, caml_copy_double (t));
+    Store_field (args, RECORD_IDAS_ADJ_BRESFN_ARGS_Y, NVEC_BACKLINK (y));
+    Store_field (args, RECORD_IDAS_ADJ_BRESFN_ARGS_YP, NVEC_BACKLINK (yp));
+    Store_field (args, RECORD_IDAS_ADJ_BRESFN_ARGS_YB, NVEC_BACKLINK (yB));
+    Store_field (args, RECORD_IDAS_ADJ_BRESFN_ARGS_YBP, NVEC_BACKLINK (ypB));
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (IDAS_BRESFN_FROM_EXT(bsensext),
-				  sizeof (args) / sizeof (*args),
-				  args);
+    value r = caml_callback2_exn (IDAS_BRESFN_FROM_EXT(bsensext),
+				  args, NVEC_BACKLINK (resvalB));
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -435,34 +423,29 @@ static int bresfn_sens(realtype t, N_Vector y, N_Vector yp,
 		       N_Vector resvalB, void *user_data)
 {
     CAMLparam0();
-    CAMLlocal2(session, bsensext);
-    CAMLlocalN(args, 8);
+    CAMLlocal3(args, session, bsensext);
     int ns;
 
     WEAK_DEREF (session, *(value*)user_data);
     bsensext = IDA_SENSEXT_FROM_ML(session);
     ns = Int_val(Field(bsensext, RECORD_IDAS_BWD_SESSION_NUMSENSITIVITIES));
 
-    args[0] = caml_copy_double (t);
-    args[1] = NVEC_BACKLINK (y);
-    args[2] = NVEC_BACKLINK (yp);
-    LOAD_NVECTOR_TABLE (args[3], yS, ns,
-			IDAS_BSENSARRAY1_FROM_EXT (bsensext));
-    LOAD_NVECTOR_TABLE (args[4], ypS, ns,
-			IDAS_BSENSARRAY2_FROM_EXT (bsensext));
-    args[5] = NVEC_BACKLINK (yB);
-    args[6] = NVEC_BACKLINK (ypB);
-    args[7] = NVEC_BACKLINK (resvalB);
+    args = caml_alloc_tuple (RECORD_IDAS_ADJ_BRESFN_ARGS_SIZE);
+    Store_field (args, RECORD_IDAS_ADJ_BRESFN_ARGS_T, caml_copy_double (t));
+    Store_field (args, RECORD_IDAS_ADJ_BRESFN_ARGS_Y, NVEC_BACKLINK (y));
+    Store_field (args, RECORD_IDAS_ADJ_BRESFN_ARGS_YP, NVEC_BACKLINK (yp));
+    Store_field (args, RECORD_IDAS_ADJ_BRESFN_ARGS_YB, NVEC_BACKLINK (yB));
+    Store_field (args, RECORD_IDAS_ADJ_BRESFN_ARGS_YBP, NVEC_BACKLINK (ypB));
 
-    // The data payloads inside args[2..4] are only valid during this call,
-    // afterward that memory goes back to cvode. These bigarrays must not be
-    // retained by closure_quadrhsfn! If it wants a permanent copy, then it
-    // has to make it manually.
+    wrap_to_nvector_table (ns, IDAS_BSENSARRAY1_FROM_EXT (bsensext), yS);
+    wrap_to_nvector_table (ns, IDAS_BSENSARRAY2_FROM_EXT (bsensext), ypS);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (IDAS_BRESFN_SENS_FROM_EXT(bsensext),
-				  sizeof (args) / sizeof (*args),
-				  args);
+    value r = caml_callback_exn (IDAS_BRESFN_SENS_FROM_EXT(bsensext), args);
+    if (! Is_exception_result (r))
+	r = caml_callback3_exn (r, IDAS_BSENSARRAY1_FROM_EXT (bsensext),
+				IDAS_BSENSARRAY2_FROM_EXT (bsensext),
+				NVEC_BACKLINK (resvalB));
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -618,28 +601,21 @@ static int bquadrhsfn(realtype t, N_Vector y, N_Vector yp,
 		      N_Vector rhsvalBQ, void *user_data)
 {
     CAMLparam0();
-    CAMLlocalN(args, 6);
-    CAMLlocal2(session, sensext);
+    CAMLlocal3(args, session, sensext);
 
-    args[0] = caml_copy_double(t);
-    args[1] = NVEC_BACKLINK(y);
-    args[2] = NVEC_BACKLINK(yp);
-    args[3] = NVEC_BACKLINK(yB);
-    args[4] = NVEC_BACKLINK(ypB);
-    args[5] = NVEC_BACKLINK(rhsvalBQ);
+    args = caml_alloc_tuple (RECORD_IDAS_ADJ_BQUADRHSFN_ARGS_SIZE);
+    Store_field (args, RECORD_IDAS_ADJ_BQUADRHSFN_ARGS_T, caml_copy_double (t));
+    Store_field (args, RECORD_IDAS_ADJ_BQUADRHSFN_ARGS_Y, NVEC_BACKLINK(y));
+    Store_field (args, RECORD_IDAS_ADJ_BQUADRHSFN_ARGS_YP, NVEC_BACKLINK(yp));
+    Store_field (args, RECORD_IDAS_ADJ_BQUADRHSFN_ARGS_YB, NVEC_BACKLINK(yB));
+    Store_field (args, RECORD_IDAS_ADJ_BQUADRHSFN_ARGS_YBP, NVEC_BACKLINK(ypB));
 
     WEAK_DEREF (session, *(value*)user_data);
     sensext = IDA_SENSEXT_FROM_ML (session);
 
-    // The data payloads inside args[2..4] are only valid during this call,
-    // afterward that memory goes back to cvode. These bigarrays must not be
-    // retained by closure_quadrhsfn! If it wants a permanent copy, then it
-    // has to make it manually.
-
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (IDAS_BQUADRHSFN_FROM_EXT (sensext),
-				  sizeof (args) / sizeof (*args),
-				  args);
+    value r = caml_callback2_exn (IDAS_BQUADRHSFN_FROM_EXT (sensext),
+				  args, NVEC_BACKLINK (rhsvalBQ));
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -650,34 +626,30 @@ static int bquadrhsfn_sens(realtype t, N_Vector y, N_Vector yp,
 			   N_Vector rhsvalBQS, void *user_data)
 {
     CAMLparam0();
-    CAMLlocalN(args, 8);
-    CAMLlocal2(session, sensext);
+    CAMLlocal3(args, session, sensext);
     int ns;
 
     WEAK_DEREF (session, *(value*)user_data);
     sensext = IDA_SENSEXT_FROM_ML(session);
     ns = Int_val(Field(sensext, RECORD_IDAS_BWD_SESSION_NUMSENSITIVITIES));
 
-    args[0] = caml_copy_double(t);
-    args[1] = NVEC_BACKLINK(y);
-    args[2] = NVEC_BACKLINK(yp);
-    LOAD_NVECTOR_TABLE(args[3], yS, ns,
-		       IDAS_BSENSARRAY1_FROM_EXT (sensext));
-    LOAD_NVECTOR_TABLE(args[4], ypS, ns,
-		       IDAS_BSENSARRAY2_FROM_EXT (sensext));
-    args[5] = NVEC_BACKLINK(yB);
-    args[6] = NVEC_BACKLINK(ypB);
-    args[7] = NVEC_BACKLINK(rhsvalBQS);
+    args = caml_alloc_tuple (RECORD_IDAS_ADJ_BQUADRHSFN_ARGS_SIZE);
+    Store_field (args, RECORD_IDAS_ADJ_BQUADRHSFN_ARGS_T, caml_copy_double (t));
+    Store_field (args, RECORD_IDAS_ADJ_BQUADRHSFN_ARGS_Y, NVEC_BACKLINK (y));
+    Store_field (args, RECORD_IDAS_ADJ_BQUADRHSFN_ARGS_YP, NVEC_BACKLINK (yp));
+    Store_field (args, RECORD_IDAS_ADJ_BQUADRHSFN_ARGS_YB, NVEC_BACKLINK (yB));
+    Store_field (args, RECORD_IDAS_ADJ_BQUADRHSFN_ARGS_YBP,
+		 NVEC_BACKLINK (ypB));
 
-    // The data payloads inside args[2..5] are only valid during this call,
-    // afterward that memory goes back to cvode. These bigarrays must not be
-    // retained by closure_quadrhsfn! If it wants a permanent copy, then it
-    // has to make it manually.
+    wrap_to_nvector_table (ns, IDAS_BSENSARRAY1_FROM_EXT (sensext), yS);
+    wrap_to_nvector_table (ns, IDAS_BSENSARRAY2_FROM_EXT (sensext), ypS);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn(IDAS_BQUADRHSFN_SENS_FROM_EXT(sensext),
-				 sizeof (args) / sizeof (*args),
-				 args);
+    value r = caml_callback_exn (IDAS_BQUADRHSFN_SENS_FROM_EXT(sensext), args);
+    if (!Is_exception_result (r))
+	r = caml_callback3_exn (r, IDAS_BSENSARRAY1_FROM_EXT (sensext),
+				IDAS_BSENSARRAY2_FROM_EXT (sensext),
+				NVEC_BACKLINK (rhsvalBQS));
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }

@@ -818,7 +818,11 @@ let fB_local data t (ydata, _, _) (yBdata, _, _) (dyBdata, _, _) =
     done
   else f ()
 
-let fB data t y yB yBdot =
+let fB data args yBdot =
+  let t = args.Adj.t
+  and y = args.Adj.y
+  and yB = args.Adj.yB
+  in
   (* Do all inter-processor communication *)
   f_comm data t yB;
 
@@ -833,7 +837,7 @@ let fB data t y yB yBdot =
  *------------------------------------------------------------------
  *)
 
-let fQB dataB t y yB qBdot = n_vscale (-.dataB.dOmega) yB qBdot
+let fQB dataB args qBdot = n_vscale (-.dataB.dOmega) args.QuadAdj.yB qBdot
 
 (*
  *------------------------------------------------------------------

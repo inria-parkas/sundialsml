@@ -111,8 +111,10 @@ let jac data { Cvode.jac_y = (y : RealArray.t) } jmat =
  
 (* fS routine. Compute sensitivity r.h.s. *)
 
-let fS data t (y : RealArray.t) (ydot : RealArray.t)
-              iS (yS : RealArray.t) (ySdot : RealArray.t)tmp1 tmp2 =
+let fS : user_data -> RealArray.t Sens.sensrhsfn1 =
+  fun data iS args yS ySdot ->
+  let y = args.Sens.y
+  in
   let p1 = data.p.(0)
   and p2 = data.p.(1)
   and p3 = data.p.(2)

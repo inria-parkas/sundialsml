@@ -116,13 +116,11 @@ let res data t (yy : RealArray.t) (yp : RealArray.t) (resval : RealArray.t) =
   resval.{2} <- y1 +. y2 +. y3 -. 1.0
 
 let resS : user_data -> RealArray.t Sens.sensresfn =
-  fun data t (yy      : RealArray.t)
-             (yp      : RealArray.t)
-             (resval  : RealArray.t)
-             (yyS     : RealArray.t array)
-             (ypS     : RealArray.t array)
-             (resvalS : RealArray.t array)
-             tmp1 tmp2 tmp3 ->
+  fun data args resvalS ->
+  let yy = args.Sens.y
+  and yyS = args.Sens.yS
+  and ypS = args.Sens.yS'
+  in
   let p1 = data.p.{0}
   and p2 = data.p.{1}
   and p3 = data.p.{2}

@@ -67,7 +67,11 @@ let alternate_dense jacfn =
 
   let linit mem s = (nje := 0) in
 
-  let lsetup mem s convfail ypred fpred tmp =
+  let lsetup mem s args =
+    let convfail = args.Alt.lsetup_conv_fail
+    and ypred = args.Alt.lsetup_y
+    and fpred = args.Alt.lsetup_rhs
+    and tmp = args.Alt.lsetup_tmp in
     let { Alt.gamma = gamma; Alt.gammap = gammap} = Alt.get_gammas s in
     let dgamma = abs_float ((gamma/.gammap) -. 1.0) in
     let nst = Cvode.get_num_steps s in
@@ -98,7 +102,7 @@ let alternate_dense jacfn =
     jcurptr
   in
 
-  let lsolve mem s b weight ycur fcur =
+  let lsolve mem s args b =
     let nst = Cvode.get_num_steps s in
     let { Alt.gamma = gamma; Alt.gammap = gammap } = Alt.get_gammas s in
     let gamrat = if nst > 0 then gamma /. gammap else 1.0 in
