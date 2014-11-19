@@ -34,7 +34,7 @@ let vids = Nvector_serial.make 5 Ida.VarId.differential;;
 Ida.set_suppress_alg s ~varid:vids true;
 Ida.calc_ic_ya_yd' s ~y:v ~y':v' 0.1;;
 
-(* 6. Advance the solution in time,
+(* 7. Advance the solution in time,
       by repeatedly calling [solve_normal] or [solve_one_step]. *)
 let rec go (t, r) =
   Printf.printf "% .10e\t% .10e\t% .10e\t% .10e\t% .10e\t% .10e\n"
@@ -53,6 +53,6 @@ let rec go (t, r) =
 Printf.printf "time\tx\ty\tx'\ty'\tp\n";;
 go (0.0, Ida.Success);;
 
-(* 7. Get optional outputs,
+(* 8. Get optional outputs,
       call the [get_*] functions to examine solver statistics. *)
 let ns = Ida.get_num_steps s
