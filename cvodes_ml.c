@@ -2198,6 +2198,13 @@ CAMLprim value c_cvodes_adj_spils_set_gs_type(value vparent, value vwhich,
     CAMLreturn (Val_unit);
 }
 
+/* Sundials 2.5.0 declares this function incorrectly in the headers as
+ * CVSpilsSetEpslinB().
+ * TODO: remove this prototype when Sundials 2.6.0 fixes the bug.
+ */
+SUNDIALS_EXPORT int CVSpilsSetEpsLinB(void *cvode_mem, int which,
+				      realtype eplifacB);
+
 CAMLprim value c_cvodes_adj_spils_set_eps_lin(value vparent, value vwhich,
 					      value eplifac)
 {

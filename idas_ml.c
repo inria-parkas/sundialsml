@@ -1928,6 +1928,7 @@ CAMLprim value c_idas_adj_set_suppress_alg (value vparent, value vwhich,
 
 /* Sundials 2.5.0 declares this function incorrectly in the headers as
  * IDASetAdjNoSensi().  Duplicate declarations shouldn't hurt.
+ * TODO: remove this prototype when Sundials 2.6.0 fixes the bug.
  */
 SUNDIALS_EXPORT int IDAAdjSetNoSensi (void *ida_mem);
 
