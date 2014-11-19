@@ -5,8 +5,10 @@
 USELIB ?= sundials_no_sens
 SRCROOT=../../..
 SUBDIR=ida/parallel
-MPI_EXAMPLES = idaFoodWeb_kry_p.ml idaFoodWeb_kry_bbd_p.ml \
-	       idaHeat2D_kry_p.ml idaHeat2D_kry_bbd_p.ml
+MPI_EXAMPLES = idaFoodWeb_kry_p.ml	\
+	       idaFoodWeb_kry_bbd_p.ml	\
+	       idaHeat2D_kry_p.ml	\
+	       idaHeat2D_kry_bbd_p.ml
 
 include ../../examples.mk
 
