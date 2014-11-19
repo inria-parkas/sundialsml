@@ -295,7 +295,12 @@ $(MPI_EXAMPLES:.ml=.sundials): %.sundials: %.sundials.c $(SRCROOT)/config
 
 # Just remind the user to recompile the library rather than actually
 # doing the recompilation.  (Or is it better to recompile?)
-$(SRCROOT)/config $(SRCROOT)/%.cma $(SRCROOT)/%.cmxa:
+$(SRCROOT)/%.cma $(SRCROOT)/%.cmxa:
+	@echo "$@ doesn't exist."
+	@echo "Maybe you forgot to compile the main library?"
+	@false
+
+$(SRCROOT)/config:
 	@echo "$@ doesn't exist."
 	@echo "Maybe you forgot to compile the main library?"
 	@false

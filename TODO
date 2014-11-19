@@ -9,23 +9,12 @@ Priorities: Jun
 1.  Replace long lists of callback arguments with records, carefully
     adapting the docs.
 
-2. Fix the warning messages
-    ../../examples.mk:298: *** mixed implicit and normal rules: deprecated syntax
-    ../../examples.mk:298: *** mixed implicit and normal rules: deprecated syntax
-
 3. Write skeleton programs.
 
 Priorities: Tim
 ---------------
 
-1. Understand/fix remaining slower examples.
-
-2. Include a patch file for 2.5.0
-   In the release branch:
-   - disable the function that we cannot link to without the patch.
-   - skip the examples that don't work without patching?
-
-3. Docs:
+1. Docs:
    - Add links to download/github.
    - Where to put the docs online?
      sundialsml/current/index.html
