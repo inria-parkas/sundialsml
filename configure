@@ -553,5 +553,3 @@ else
     echo "let safe = false" >> sundials_config.ml
 fi
 
-make clean > /dev/null
-
