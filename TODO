@@ -25,6 +25,12 @@ Priorities: Tim
    - disable the function that we cannot link to without the patch.
    - skip the examples that don't work without patching?
 
+3. Docs:
+   - Add links to download/github.
+   - Where to put the docs online?
+     sundialsml/current/index.html
+     sundialsml/2.5.0p0/index.html
+
 Issues/Remaining questions
 --------------------------
 * What to do about the 'tests/' subdirectory?
