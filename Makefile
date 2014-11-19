@@ -227,17 +227,17 @@ doc/html/perf.opt.png: examples/perf.opt.log
 
 # Testing the examples
 
-tests.opt.log: $(INSTALL_CMA:.cma=.cmxa)
-	$(MAKE) -C examples $@
+examples/tests.opt.log: $(INSTALL_CMA:.cma=.cmxa)
+	$(MAKE) -C examples PERF_DATA_POINTS=10 $(subst examples/,,$@)
 
-tests.byte.log: $(INSTALL_CMA:.cma=.cmxa)
-	$(MAKE) -C examples $@
+examples/tests.byte.log: $(INSTALL_CMA:.cma=.cmxa)
+	$(MAKE) -C examples PERF_DATA_POINTS=10 $(subst examples/,,$@)
 
-perf.opt.log: $(INSTALL_CMA:.cma=.cmxa)
-	$(MAKE) -C examples $@
+examples/perf.opt.log: $(INSTALL_CMA:.cma=.cmxa)
+	$(MAKE) -C examples PERF_DATA_POINTS=10 $(subst examples/,,$@)
 
-perf.byte.log: $(INSTALL_CMA:.cma=.cmxa)
-	$(MAKE) -C examples $@
+examples/perf.byte.log: $(INSTALL_CMA:.cma=.cmxa)
+	$(MAKE) -C examples PERF_DATA_POINTS=10 $(subst examples/,,$@)
 
 ### Install / Uninstall
 
