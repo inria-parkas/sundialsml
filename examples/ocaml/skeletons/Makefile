@@ -1,5 +1,7 @@
 include ../../../config
 
+# TODO: finish the other skeletons and add them to the docs.
+
 EXAMPLES = cvode_skel.byte  \
 	   ida_skel.byte    \
 	   kinsol_skel.byte

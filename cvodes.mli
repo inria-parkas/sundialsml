@@ -50,11 +50,6 @@ type ('data, 'kind) session = ('data, 'kind) Cvode.session
     these variables are calculated more efficiently since they are excluded
     from the nonlinear solution stage.
 
-    An example session with Cvodes using quadrature variables
-    ({openfile cvodes_quad_skel.ml}): {[
-#include "examples/ocaml/skeletons/cvodes_quad_skel.ml"
-    ]}
-
     @cvodes <node5#SECTION00570000000000000000> Integration of pure quadrature equations
     @cvodes <node3#s:quad> Pure quadrature integration *)
 module Quadrature :
@@ -217,11 +212,6 @@ module Quadrature :
       {- {{:#set}Modifying the solver}}
       {- {{:#get}Querying the solver}}
       {- {{:#exceptions}Exceptions}}}
-
-    An example session with Cvodes using sensitivity analysis
-    ({openfile cvodes_sens_skel.ml}): {[
-#include "examples/ocaml/skeletons/cvodes_sens_skel.ml"
-    ]}
 
     @cvodes <node6#ss:forward_usage> Enhanced skeleton for sensitivity analysis
     @cvodes <node6#s:forward> Using CVODES for Forward Sensitivity Analysis
@@ -837,11 +827,6 @@ module Sensitivity :
       {- {{:#get}Querying the solver}}
       {- {{:#exceptions}Exceptions}}}
   
-    An example session with Cvodes using sensitivity analysis
-    ({openfile cvodes_adj_skel.ml}): {[
-#include "examples/ocaml/skeletons/cvodes_adj_skel.ml"
-    ]}
-
     @cvodes <node7#ss:skeleton_adj> Enhanced Skeleton for Adjoint Sensitivity Analysis
     @cvodes <node7#s:adjoint> Using CVODES for Adjoint Sensitivity Analysis
     @cvodes <node3#ss:adj_sensi> Adjoint sensitivity analysis *)

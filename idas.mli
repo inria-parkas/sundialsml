@@ -52,11 +52,6 @@ type ('data, 'kind) session = ('data, 'kind) Ida.session
     are treated more efficiently since they are excluded from the nonlinear
     solution stage.
 
-    An example session with Idas using quadrature variables
-    ({openfile idas_quad_skel.ml}): {[
-#include "examples/ocaml/skeletons/idas_quad_skel.ml"
-    ]}
-
     @idas <node5#SECTION00570000000000000000> Integration of pure quadrature equations
     @idas <node3#s:quad> Pure quadrature integration *)
 module Quadrature :
@@ -214,11 +209,6 @@ module Quadrature :
       {- {{:#set}Modifying the solver}}
       {- {{:#get}Querying the solver}}
       {- {{:#exceptions}Exceptions}}}
-
-    An example session with Idas using sensitivity analysis
-    ({openfile idas_sens_skel.ml}): {[
-#include "examples/ocaml/skeletons/idas_sens_skel.ml"
-    ]}
 
     @idas <node6#SECTION00610000000000000000> Enhanced skeleton for sensitivity analysis
     @idas <node6#s:forward> Using IDAS for Forward Sensitivity Analysis
@@ -788,11 +778,6 @@ module Sensitivity :
       {- {{:#get}Querying the solver}}
       {- {{:#exceptions}Exceptions}}}
   
-    An example session with Idas using sensitivity analysis
-    ({openfile idas_adj_skel.ml}): {[
-#include "examples/ocaml/skeletons/idas_adj_skel.ml"
-    ]}
- 
     @idas <node7#ss:skeleton_adj> Enhanced Skeleton for Adjoint Sensitivity Analysis
     @idas <node7#s:adjoint> Using IDAS for Adjoint Sensitivity Analysis
     @idas <node3#ss:adj_sensi> Adjoint sensitivity analysis *)
