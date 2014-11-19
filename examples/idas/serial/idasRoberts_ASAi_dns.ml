@@ -52,7 +52,6 @@
 module RealArray = Sundials.RealArray
 module Quad = Idas.Quadrature
 module Sens = Idas.Sensitivity
-module QuadSens = Idas.Sensitivity.Quadrature
 module Adjoint = Idas.Adjoint
 module AdjQuad = Adjoint.Quadrature
 module VarId = Ida.VarId
