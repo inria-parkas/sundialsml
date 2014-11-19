@@ -1,0 +1,45 @@
+diff -ru sundials-2.5.0.orig/examples/idas/serial/idasRoberts_ASAi_dns.c sundials-2.5.0/examples/idas/serial/idasRoberts_ASAi_dns.c
+--- sundials-2.5.0.orig/examples/idas/serial/idasRoberts_ASAi_dns.c	2012-04-12 02:32:34.000000000 +0200
++++ sundials-2.5.0/examples/idas/serial/idasRoberts_ASAi_dns.c	2014-11-19 11:27:08.544613819 +0100
+@@ -458,7 +458,7 @@
+ 
+   printf("Free memory\n\n");
+ 
+-  IDAFree(ida_mem);
++  IDAFree(&ida_mem);
+   N_VDestroy_Serial(yy);
+   N_VDestroy_Serial(yp);
+   N_VDestroy_Serial(q);
+diff -ru sundials-2.5.0.orig/include/cvodes/cvodes_spils.h sundials-2.5.0/include/cvodes/cvodes_spils.h
+--- sundials-2.5.0.orig/include/cvodes/cvodes_spils.h	2012-04-12 02:31:36.000000000 +0200
++++ sundials-2.5.0/include/cvodes/cvodes_spils.h	2014-11-19 10:49:04.758683636 +0100
+@@ -434,7 +434,7 @@
+ 
+ SUNDIALS_EXPORT int CVSpilsSetPrecTypeB(void *cvode_mem, int which, int pretypeB);
+ SUNDIALS_EXPORT int CVSpilsSetGSTypeB(void *cvode_mem, int which, int gstypeB);
+-SUNDIALS_EXPORT int CVSpilsSetEpslinB(void *cvode_mem, int which, realtype eplifacB);
++SUNDIALS_EXPORT int CVSpilsSetEpsLinB(void *cvode_mem, int which, realtype eplifacB);
+ SUNDIALS_EXPORT int CVSpilsSetMaxlB(void *cvode_mem, int which, int maxlB);
+ SUNDIALS_EXPORT int CVSpilsSetPreconditionerB(void *cvode_mem, int which, 
+                                               CVSpilsPrecSetupFnB psetB,
+diff -ru sundials-2.5.0.orig/src/cvodes/cvodes.c sundials-2.5.0/src/cvodes/cvodes.c
+--- sundials-2.5.0.orig/src/cvodes/cvodes.c	2012-04-12 02:31:36.000000000 +0200
++++ sundials-2.5.0/src/cvodes/cvodes.c	2014-11-19 10:49:04.758683636 +0100
+@@ -1972,7 +1972,7 @@
+     cv_mem->cv_fQSDQ = FALSE;
+     cv_mem->cv_fQS = fQS;
+ 
+-    cv_mem->cv_fS_data = cv_mem->cv_user_data;
++    cv_mem->cv_fQS_data = cv_mem->cv_user_data;
+ 
+   }
+ 
+@@ -5085,7 +5085,7 @@
+   /* Initialize local counters for convergence and error test failures */
+ 
+   ncf  = nef  = 0;
+-  nefQ = 0;
++  nefQ = nefQS = 0;
+   ncfS = nefS = 0;
+   if (do_sensi_stg1) {
+     for (is=0; is<Ns; is++) ncfS1[is] = 0;

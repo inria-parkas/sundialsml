@@ -17,6 +17,8 @@ and
 ({{:http://www.upmc.fr/}UPMC}/{{:http://www.di.ens.fr/}ENS}/{{:http://www.inria.fr/}Inria}).
 It provides a complete OCaml interface to Sundials version {b {var version}}.
 
+Feedback and bug reports are {{:mailto:tim\@tbrk.org}welcome}.
+
 The structure of this interface mostly follows that of the original library,
 both for ease of reading the existing documentation and for converting
 existing source code, but several changes have been made for programming
@@ -170,7 +172,16 @@ The {!Sundials.lapack_enabled} value indicates whether these
 solvers are available.
 
 Parallel nvectors and Band-Block-Diagonal (BBD) solvers are {e
-only} built if explicitly requested (via [--enable-mpi]).
+only} built if explicitly requested (via {i --enable-mpi}).
+
+When building Sundials manually, we recommend applying the
+[sundials-2.5.0.patch] file distributed with Sundials/ML and using
+[./configure --enable-examples --enable-shared]
+Sundials/ML will function correctly if the patch is not applied, but
+the Sundials examples will fail with incorrect results.
+Sundials must be compiled with 64-bit floats—the
+default: {i --with-precision=double}—and the C compiler must provide 32-bit
+[int]s (otherwise Sundials/ML throws an exception at runtime).
 
 {3:opam Opam}
 
@@ -194,7 +205,7 @@ Building from source is a two step process:
 }
 
 The choices made by the configure script can be influenced by arguments
-(like [--enable-mpi] and [--prefix=...]) and variables (like
+(like {i --enable-mpi} and {i --prefix=...}) and variables (like
 [OCAMLROOT=...]). Type [configure --help] for detailed information.
 
 OCaml reimplementations of the standard Sundials examples are provided in
@@ -260,6 +271,16 @@ let (t', result) = Cvode.solve_normal s 2. yvec;;
 Printf.printf "%e: " t';
 Sundials.RealArray.iter (Printf.printf "\t%e") y;
 Printf.printf "\n";;]}
+
+{3:solutions Solutions to common problems}
+
+{ol
+    {- The message
+       {[Fatal error: cannot load shared library dllmlsundials_cvode]}
+       can usually be fixed by editing [LD_LIBRARY_PATH], for example,
+       {[export LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH}]}}
+}
+
 
 {2:performance Performance}
 
