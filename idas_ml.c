@@ -7,7 +7,7 @@
  *                                                                     *
  *  Copyright 2014 Institut National de Recherche en Informatique et   *
  *  en Automatique.  All rights reserved.  This file is distributed    *
- *  under a BSD 2-Clause License, refer to the file LICENSE.           *
+ *  under a New BSD License, refer to the file LICENSE.                *
  *                                                                     *
  ***********************************************************************/
 
