@@ -11,15 +11,10 @@ Priorities: Jun
 Priorities: Tim
 ---------------
 1. Docs:
-   - Add links to download/github.
+   - Add links to download from github (.tar.gz from branch).
    - Where to put the docs online?
      sundialsml/current/index.html
      sundialsml/2.5.0p0/index.html
-
-Issues/Remaining questions
---------------------------
-* What to do about the 'tests/' subdirectory?
-* Include the --unsafe times in the documentation graph?
 
 Decisions
 ---------
