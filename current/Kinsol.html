@@ -1,0 +1,727 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Cvode.html">
+<link rel="next" href="Ida.html">
+<link rel="Up" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Dls" rel="Chapter" href="Dls.html">
+<link title="Spils" rel="Chapter" href="Spils.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html"><link title="Linear solvers" rel="Section" href="#linear">
+<link title="Solver initialization and use" rel="Section" href="#solver">
+<link title="Modifying the solver (optional input functions)" rel="Section" href="#set">
+<link title="Querying the solver (optional output functions)" rel="Section" href="#get">
+<link title="Exceptions" rel="Section" href="#exceptions">
+<link title="Logging and error handling" rel="Subsection" href="#info">
+<title>Sundials/ML 2.5.0p0 : Kinsol</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Cvode.html" title="Cvode">Previous</a>
+&nbsp;<a class="up" href="index.html" title="Index">Up</a>
+&nbsp;<a class="post" href="Ida.html" title="Ida">Next</a>
+</div>
+<h1>Module <a href="type_Kinsol.html">Kinsol</a></h1>
+
+<pre><span class="keyword">module</span> Kinsol: <code class="code"><span class="keyword">sig</span></code> <a href="Kinsol.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+Solves nonlinear systems using Newton-Krylov techniques.
+<p>
+
+    This module solves numerically problems of the form
+    $F(u) = 0$ given an initial guess $u_0$.
+<p>
+
+    This documented interface is structured as follows.
+    <OL>
+<li><a href="#linear">Linear solvers</a></li>
+<li><a href="#solver">Solver initialization and use</a></li>
+<li><a href="#set">Modifying the solver</a></li>
+<li><a href="#get">Querying the solver</a></li>
+<li><a href="#exceptions">Exceptions</a></li>
+</OL>
+<br>
+<div class="authors"><b>Author(s):</b> Timothy Bourke (Inria/ENS), Jun Inoue (Inria/ENS), Marc Pouzet (UPMC/ENS/Inria)</div>
+<b>Version:</b> 2.5.0<br>
+</div>
+<hr width="100%">
+
+<pre><span id="TYPEsession"><span class="keyword">type</span> <code class="type">('data, 'kind)</code> session</span> = <code class="type">('data, 'kind) session</code> </pre>
+<div class="info ">
+A session with the KINSOL solver.
+<p>
+
+    An example session with Kinsol (<a href="kinsol_skel.ml">kinsol_skel.ml</a>): <pre class="codepre"><code class="code"><span class="comment">(*&nbsp;1.&nbsp;Define&nbsp;a&nbsp;system&nbsp;function.&nbsp;*)</span><br>
+<span class="keyword">let</span>&nbsp;pi,&nbsp;e&nbsp;=&nbsp;4.&nbsp;*.&nbsp;atan&nbsp;1.,&nbsp;exp&nbsp;1.<br>
+<span class="keyword">let</span>&nbsp;sysf&nbsp;u&nbsp;r&nbsp;=<br>
+&nbsp;&nbsp;r.{0}&nbsp;&lt;-&nbsp;0.5&nbsp;*.&nbsp;sin(u.{0}*.u.{1})&nbsp;-.&nbsp;0.25&nbsp;*.&nbsp;u.{1}&nbsp;/.&nbsp;pi&nbsp;-.&nbsp;0.5&nbsp;*.&nbsp;u.{0};<br>
+&nbsp;&nbsp;r.{1}&nbsp;&lt;-&nbsp;(1.&nbsp;-.&nbsp;0.25/.pi)*.(exp(2.*.u.{0})-.e)&nbsp;+.&nbsp;e*.u.{1}/.pi&nbsp;-.&nbsp;2.*.e*.u.{0};<br>
+&nbsp;&nbsp;r.{2}&nbsp;&lt;-&nbsp;u.{2}&nbsp;-.&nbsp;u.{0}&nbsp;+.&nbsp;0.25;<br>
+&nbsp;&nbsp;r.{3}&nbsp;&lt;-&nbsp;u.{3}&nbsp;-.&nbsp;u.{0}&nbsp;+.&nbsp;1.0;<br>
+&nbsp;&nbsp;r.{4}&nbsp;&lt;-&nbsp;u.{4}&nbsp;-.&nbsp;u.{1}&nbsp;+.&nbsp;1.5;<br>
+&nbsp;&nbsp;r.{5}&nbsp;&lt;-&nbsp;u.{5}&nbsp;-.&nbsp;u.{1}&nbsp;+.&nbsp;2.0&nbsp;*.&nbsp;pi<br>
+<br>
+<span class="comment">(*&nbsp;2.&nbsp;Set&nbsp;vector&nbsp;with&nbsp;initial&nbsp;guess.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The&nbsp;length&nbsp;of&nbsp;this&nbsp;vector&nbsp;determines&nbsp;the&nbsp;problem&nbsp;size.&nbsp;*)</span><br>
+<span class="keyword">let</span>&nbsp;ud&nbsp;=&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.of_list&nbsp;[&nbsp;0.25;&nbsp;1.5;&nbsp;0.;&nbsp;-0.75;&nbsp;0.;&nbsp;1.5&nbsp;-.&nbsp;2.&nbsp;*.pi&nbsp;]<br>
+<span class="keyword">let</span>&nbsp;u&nbsp;=&nbsp;<span class="constructor">Nvector_serial</span>.wrap&nbsp;ud<br>
+<br>
+<span class="comment">(*&nbsp;3.&nbsp;Create&nbsp;and&nbsp;initialize&nbsp;a&nbsp;solver&nbsp;session.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This&nbsp;will&nbsp;initialize&nbsp;a&nbsp;specific&nbsp;linear&nbsp;solver.&nbsp;*)</span><br>
+<span class="keyword">let</span>&nbsp;s&nbsp;=&nbsp;<span class="constructor">Kinsol</span>.init&nbsp;(<span class="constructor">Kinsol</span>.<span class="constructor">Dls</span>.dense&nbsp;<span class="constructor">None</span>)&nbsp;sysf&nbsp;u;;<br>
+<br>
+<span class="comment">(*&nbsp;4.&nbsp;Set&nbsp;optional&nbsp;inputs,&nbsp;e.g.,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;call&nbsp;[set_*]&nbsp;functions&nbsp;to&nbsp;change&nbsp;solver&nbsp;parameters.&nbsp;*)</span><br>
+<span class="keyword">let</span>&nbsp;c&nbsp;=&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.of_list&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">Constraint</span>.unconstrained;<br>
+&nbsp;&nbsp;&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">Constraint</span>.unconstrained;<br>
+&nbsp;&nbsp;&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">Constraint</span>.geq_zero;<br>
+&nbsp;&nbsp;&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">Constraint</span>.leq_zero;<br>
+&nbsp;&nbsp;&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">Constraint</span>.geq_zero;<br>
+&nbsp;&nbsp;&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">Constraint</span>.leq_zero&nbsp;]&nbsp;<span class="keyword">in</span><br>
+<span class="constructor">Kinsol</span>.set_constraints&nbsp;s&nbsp;(<span class="constructor">Nvector_serial</span>.wrap&nbsp;c);<br>
+<span class="constructor">Kinsol</span>.set_func_norm_tol&nbsp;s&nbsp;1.0e-5;<br>
+<span class="constructor">Kinsol</span>.set_scaled_step_tol&nbsp;s&nbsp;1.0e-5;<br>
+<span class="constructor">Kinsol</span>.set_max_setup_calls&nbsp;s&nbsp;1;;<br>
+<br>
+<span class="comment">(*&nbsp;5.&nbsp;Solve&nbsp;the&nbsp;problem.&nbsp;*)</span><br>
+<span class="keyword">let</span>&nbsp;snv&nbsp;=&nbsp;<span class="constructor">Nvector_serial</span>.make&nbsp;(<span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.length&nbsp;ud)&nbsp;1.0&nbsp;<span class="keyword">in</span><br>
+ignore&nbsp;(<span class="constructor">Kinsol</span>.solve&nbsp;s&nbsp;u&nbsp;<span class="keyword">false</span>&nbsp;snv&nbsp;snv);<br>
+<br>
+<span class="constructor">Printf</span>.printf&nbsp;<span class="string">"%8.5g&nbsp;%8.6g\n"</span>&nbsp;ud.{0}&nbsp;ud.{1};;<br>
+<br>
+<span class="comment">(*&nbsp;6.&nbsp;Get&nbsp;optional&nbsp;outputs,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;call&nbsp;the&nbsp;[get_*]&nbsp;functions&nbsp;to&nbsp;examine&nbsp;solver&nbsp;statistics.&nbsp;*)</span><br>
+<span class="keyword">let</span>&nbsp;fnorm&nbsp;=&nbsp;<span class="constructor">Kinsol</span>.get_func_norm&nbsp;s;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;</code></pre><br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#s:skeleton_sol">Skeleton of main program</a></div></div>
+
+
+<pre><span id="TYPEserial_session"><span class="keyword">type</span> <code class="type"></code>serial_session</span> = <code class="type">(<a href="Nvector_serial.html#TYPEdata">Nvector_serial.data</a>, <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a>) <a href="Kinsol.html#TYPEsession">session</a></code> </pre>
+<div class="info ">
+Alias for sessions based on serial nvectors.<br>
+</div>
+
+<br>
+<h2 id="linear">Linear solvers</h2><br>
+
+<pre><span id="TYPElinear_solver"><span class="keyword">type</span> <code class="type">('data, 'kind)</code> linear_solver</span> = <code class="type">('data, 'kind) linear_solver</code> </pre>
+<div class="info ">
+Linear solvers used by Kinsol.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#sss:lin_solv_init">Linear Solver Specification Functions</a></div></div>
+
+
+<pre><span id="TYPEserial_linear_solver"><span class="keyword">type</span> <code class="type"></code>serial_linear_solver</span> = <code class="type">(<a href="Nvector_serial.html#TYPEdata">Nvector_serial.data</a>, <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a>) <a href="Kinsol.html#TYPElinear_solver">linear_solver</a></code> </pre>
+<div class="info ">
+Alias for linear solvers that are restricted to serial nvectors.<br>
+</div>
+
+
+<pre><span id="TYPEdouble"><span class="keyword">type</span> <code class="type">'d</code> double</span> = <code class="type">'d * 'd</code> </pre>
+<div class="info ">
+Workspaces with two temporary vectors.<br>
+</div>
+
+
+<pre><code><span id="TYPEjacobian_arg"><span class="keyword">type</span> <code class="type">('t, 'd)</code> jacobian_arg</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTjacobian_arg.jac_u">jac_u</span>&nbsp;: <code class="type">'d</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The current unscaled iterate.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTjacobian_arg.jac_fu">jac_fu</span>&nbsp;: <code class="type">'d</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The current value of the vector $F(u)$.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTjacobian_arg.jac_tmp">jac_tmp</span>&nbsp;: <code class="type">'t</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Workspace data.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+}
+
+<div class="info ">
+Arguments common to Jacobian callback functions.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:djacFn">KINDlsDenseJacFn</a></div><div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:bjacFn">KINDlsBandJacFn</a></div><div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:psolveFn">KINSpilsPrecSolveFn</a></div><div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:precondFn">KINSpilsPrecSetupFn</a></div></div>
+
+
+<pre><span id="TYPEbandrange"><span class="keyword">type</span> <code class="type"></code>bandrange</span> = <code class="type">bandrange</code> = {</pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTbandrange.mupper">mupper</span>&nbsp;: <code class="type">int</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The upper half-bandwidth.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTbandrange.mlower">mlower</span>&nbsp;: <code class="type">int</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The lower half-bandwidth.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+}
+
+<div class="info ">
+The range of nonzero entries in a band matrix.<br>
+</div>
+
+
+<pre><span class="keyword">module</span> <a href="Kinsol.Dls.html">Dls</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Kinsol.Dls.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+Direct Linear Solvers operating on dense and banded matrices.
+</div>
+
+<pre><span class="keyword">module</span> <a href="Kinsol.Spils.html">Spils</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Kinsol.Spils.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+Scaled Preconditioned Iterative Linear Solvers.
+</div>
+
+<pre><span class="keyword">module</span> <a href="Kinsol.Alternate.html">Alternate</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Kinsol.Alternate.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+Alternate Linear Solvers.
+</div>
+<br>
+<h2 id="solver">Solver initialization and use</h2><br>
+
+<pre><span id="TYPEsysfn"><span class="keyword">type</span> <code class="type">'data</code> sysfn</span> = <code class="type">'data -> 'data -> unit</code> </pre>
+<div class="info ">
+System function that defines nonlinear problem. The call
+    <code class="code">sysfun u fval</code> must calculate $F(u)$ into <code class="code">fval</code> using the current value
+    vector <code class="code">u</code>.
+<p>
+
+     Raising <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a> indicates a recoverable error.
+     Any other exception is treated as an unrecoverable error.
+<p>
+
+    <div class="warningbox"> <code class="code">u</code> and <code class="code">fval</code> should not be accessed after the function
+             returns.</div><br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:sysFn">          KINSysFn</a></div></div>
+
+
+<pre><span id="VALinit"><span class="keyword">val</span> init</span> : <code class="type">('data, 'kind) <a href="Kinsol.html#TYPElinear_solver">linear_solver</a> -><br>       'data <a href="Kinsol.html#TYPEsysfn">sysfn</a> -><br>       ('data, 'kind) <a href="Nvector.html#TYPEt">Nvector.t</a> -> ('data, 'kind) <a href="Kinsol.html#TYPEsession">session</a></code></pre><div class="info ">
+Creates and initializes a session with the Kinsol solver. The call
+    <code class="code">init linsolv f tmpl</code> has as arguments:<ul>
+<li><code class="code">linsolv</code>, the linear solver to use,</li>
+<li><code class="code">f</code>,       the system function of the nonlinear problem, and,</li>
+<li><code class="code">tmpl</code>     a template to initialize the session (e.g., the
+                  initial guess vector).</li>
+</ul>
+<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#sss:kinmalloc">    KINCreate/KINInit</a></div><div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#sss:lin_solv_init">Linear solver specification functions</a></div></div>
+
+<pre><code><span id="TYPEresult"><span class="keyword">type</span> <code class="type"></code>result</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTresult.Success"><span class="constructor">Success</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The scaled norm of $F(u)$ is less than <code class="code">fnormtol</code>.
+                          See <a href="Kinsol.html#VALset_func_norm_tol"><code class="code"><span class="constructor">Kinsol</span>.set_func_norm_tol</code></a>. <span class="cconst">(KIN_SUCCESS)</span><br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTresult.InitialGuessOK"><span class="constructor">InitialGuessOK</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The initial guess already satisfies the system.
+                          <span class="cconst">(KIN_INITIAL_GUESS_OK)</span><br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTresult.StoppedOnStepTol"><span class="constructor">StoppedOnStepTol</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Stopped based on scaled step length. The
+                          current iterate is an approximate solution, or the
+                          algorithm stalled near an invalid solution, or
+                          <code class="code">scsteptol</code> is too large
+                          (see <a href="Kinsol.html#VALset_scaled_step_tol"><code class="code"><span class="constructor">Kinsol</span>.set_scaled_step_tol</code></a>).
+                          <span class="cconst">(KIN_STEP_LT_STPTOL)</span><br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+Results of non-linear solution attempts.<br>
+</div>
+
+
+<pre><span id="VALsolve"><span class="keyword">val</span> solve</span> : <code class="type">('d, 'k) <a href="Kinsol.html#TYPEsession">session</a> -><br>       ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -><br>       bool -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> <a href="Kinsol.html#TYPEresult">result</a></code></pre><div class="info ">
+Computes an approximate solution to a nonlinear system. The call
+    <code class="code">solve s u linesearch u_scale f_scale</code> has arguments:<ul>
+<li><code class="code">s</code>, a solver session,</li>
+<li><code class="code">u</code>, an initial guess that is replaced with an approximate solution
+           for $F(u) = 0$,</li>
+<li><code class="code">linesearch</code>, whether to use a globalization strategy (line search),</li>
+<li><code class="code">u_scale</code>, the diagonal elements of the scaling matrix $D_u$ for
+                 vector <code class="code">u</code> chosen so that all $D_u u$ all have roughly the
+                 same magnitude when <code class="code">u</code> is close to a root of $F(u)$, and,</li>
+<li><code class="code">f_scale</code>, the diagonal elements of the scaling matrix $D_f$ for
+                 $F(u)$ chosen so that all $D_f F(u)$ have roughtly the same
+                 magnitude when <code class="code">u</code> is not near a root of $F(u)$.</li>
+</ul>
+
+    The function either returns a <a href="Kinsol.html#TYPEresult"><code class="code"><span class="constructor">Kinsol</span>.result</code></a> or raises one of the exceptions
+    listed below.<br>
+<div class="raisedexceptions"><span class="raises">Raises</span><ul><li><code>IllInput</code> Missing or illegal solver inputs.</li>
+<li><code>LineSearchNonConvergence</code> Line search could not find a suitable iterate.</li>
+<li><code>MaxIterationsReached</code> The maximum number of nonlinear iterations was reached.</li>
+<li><code>MaxNewtonStepExceeded</code> Five consecutive steps satisfied a scaled step length test.</li>
+<li><code>LineSearchBetaConditionFailure</code> Line search could not satisfy the beta-condition.</li>
+<li><code>LinearSolverNoRecovery</code> The <a href="Kinsol.Spils.html#TYPEprec_solve_fn"><code class="code"><span class="constructor">Kinsol</span>.<span class="constructor">Spils</span>.prec_solve_fn</code></a> callback raised <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a> but the preconditioner is already current.</li>
+<li><code>LinearSolverInitFailure</code> Linear solver initialization failed.</li>
+<li><code>LinearSetupFailure</code> Linear solver setup failed unrecoverably.</li>
+<li><code>LinearSolveFailure</code> Linear solver solution failed unrecoverably.</li>
+<li><code>SystemFunctionFailure</code> The <a href="Kinsol.html#TYPEsysfn"><code class="code"><span class="constructor">Kinsol</span>.sysfn</code></a> callback failed unrecoverably.</li>
+<li><code>FirstSystemFunctionFailure</code> The <a href="Kinsol.html#TYPEsysfn"><code class="code"><span class="constructor">Kinsol</span>.sysfn</code></a> callback raised <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a> when first called.</li>
+<li><code>RepeatedSystemFunctionFailure</code> The <a href="Kinsol.html#TYPEsysfn"><code class="code"><span class="constructor">Kinsol</span>.sysfn</code></a> callback raised <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a> repeatedly.</li>
+</ul></div>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#sss:kinsol">KINSol</a></div></div>
+<br>
+<h2 id="set">Modifying the solver (optional input functions)</h2><br>
+
+<pre><span id="VALset_num_max_iters"><span class="keyword">val</span> set_num_max_iters</span> : <code class="type">('d, 'k) <a href="Kinsol.html#TYPEsession">session</a> -> int -> unit</code></pre><div class="info ">
+Specifies the maximum number of nonlinear iterations allowed.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optin_main">KINSetNumMaxIters</a></div></div>
+
+<pre><span id="VALset_no_init_setup"><span class="keyword">val</span> set_no_init_setup</span> : <code class="type">('d, 'k) <a href="Kinsol.html#TYPEsession">session</a> -> unit</code></pre><div class="info ">
+Specifies that an initial call to the preconditioner setup function
+    should <i>not</i> be made. This feature is useful when solving a sequence of
+    problems where the final preconditioner values of one problem become the
+    initial values for the next problem.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optin_main">KINSetNoInitSetup</a></div></div>
+
+<pre><span id="VALset_init_setup"><span class="keyword">val</span> set_init_setup</span> : <code class="type">('d, 'k) <a href="Kinsol.html#TYPEsession">session</a> -> unit</code></pre><div class="info ">
+Specifies that an initial call to the preconditioner setup function
+    should be made (the default).<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optin_main">KINSetNoInitSetup</a></div></div>
+
+<pre><span id="VALset_no_res_mon"><span class="keyword">val</span> set_no_res_mon</span> : <code class="type"><a href="Kinsol.html#TYPEserial_session">serial_session</a> -> unit</code></pre><div class="info ">
+Disables the nonlinear residual monitoring scheme that controls Jacobian
+    updating. It only has an effect for the Dense and Band solvers.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optin_main">KINSetNoResMon</a></div></div>
+
+<pre><span id="VALset_res_mon"><span class="keyword">val</span> set_res_mon</span> : <code class="type"><a href="Kinsol.html#TYPEserial_session">serial_session</a> -> unit</code></pre><div class="info ">
+Enables the nonlinear residual monitoring scheme that controls Jacobian
+    updating. It only has an effect for the Dense and Band solvers.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optin_main">KINSetNoResMon</a></div></div>
+
+<pre><span id="VALset_max_setup_calls"><span class="keyword">val</span> set_max_setup_calls</span> : <code class="type">('d, 'k) <a href="Kinsol.html#TYPEsession">session</a> -> int -> unit</code></pre><div class="info ">
+Specifies the maximum number of nonlinear iterations between calls to the
+    preconditioner setup function. Pass 0 to set the default (10).<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optin_main">KINSetMaxSetupCalls</a></div></div>
+
+<pre><span id="VALset_max_sub_setup_calls"><span class="keyword">val</span> set_max_sub_setup_calls</span> : <code class="type"><a href="Kinsol.html#TYPEserial_session">serial_session</a> -> int -> unit</code></pre><div class="info ">
+Specifies the maximum number of nonlinear iterations between checks by the
+    residual monitoring algorithm. Pass 0 to set the default (5). It only
+    affects the Dense and Band solvers.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optin_main">KINSetMaxSubSetupCalls</a></div></div>
+
+<pre><code><span id="TYPEeta_params"><span class="keyword">type</span> <code class="type"></code>eta_params</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTeta_params.egamma">egamma</span>&nbsp;: <code class="type">float option</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+default = 0.9<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTeta_params.ealpha">ealpha</span>&nbsp;: <code class="type">float option</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+default = 2.0<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+}
+
+<div class="info ">
+The parameters <i>gamma</i> and <i>alpha</i> in the formula for the Eisenstat and
+    Walker Choice 2 for <i>eta</i>. Set either to <code class="code"><span class="constructor">None</span></code> to specify its default
+    value. The legal values are
+    $0 < \mathtt{egamma} \leq 1.0 \wedge 1 < \mathtt{ealpha} \leq 2.0$.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node3.html#SECTION00300900000000000000">  Stopping criteria for iterative linear solvers</a></div></div>
+
+
+<pre><code><span id="TYPEeta_choice"><span class="keyword">type</span> <code class="type"></code>eta_choice</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTeta_choice.EtaChoice1"><span class="constructor">EtaChoice1</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Eisenstat and Walker Choice 1<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTeta_choice.EtaChoice2"><span class="constructor">EtaChoice2</span></span> <span class="keyword">of</span> <code class="type"><a href="Kinsol.html#TYPEeta_params">eta_params</a></code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Eisenstat and Walker Choice 2<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTeta_choice.EtaConstant"><span class="constructor">EtaConstant</span></span> <span class="keyword">of</span> <code class="type">float option</code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Constant (default = 0.1)<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+The <i>eta</i> parameter in the stopping criteria for the linear system solver.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node3.html#SECTION00300900000000000000">  Stopping criteria for iterative linear solvers</a></div></div>
+
+
+<pre><span id="VALset_eta_choice"><span class="keyword">val</span> set_eta_choice</span> : <code class="type">('d, 'k) <a href="Kinsol.html#TYPEsession">session</a> -> <a href="Kinsol.html#TYPEeta_choice">eta_choice</a> -> unit</code></pre><div class="info ">
+Specifies the method for computing the value of the <i>eta</i> coefficient used
+    in the calculation of the linear solver convergence tolerance.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optin_main">KINSetEtaForm</a></div><div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optin_main">KINSetEtaConstValue</a></div><div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optin_main">KINSetEtaParams</a></div></div>
+
+<pre><span id="VALset_res_mon_const_value"><span class="keyword">val</span> set_res_mon_const_value</span> : <code class="type">('d, 'k) <a href="Kinsol.html#TYPEsession">session</a> -> float -> unit</code></pre><div class="info ">
+Specifies the constant value of <i>omega</i> when using residual monitoring.
+    Pass 0.0 to specify the default value (0.9). The legal values are
+    $0 < \mathtt{omega} < 1.0 $.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optin_main">KINSetResMonConstValue</a></div></div>
+
+<pre><span id="VALset_res_mon_params"><span class="keyword">val</span> set_res_mon_params</span> : <code class="type">('d, 'k) <a href="Kinsol.html#TYPEsession">session</a> -> ?omegamin:float -> ?omegamax:float -> unit -> unit</code></pre><div class="info ">
+Specifies the minimum and maximum values in the formula for <i>omega</i>.
+    The legal values are
+    $0 < \mathtt{omegamin} < \mathtt{omegamax} < 1.0$.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optin_main">KINSetResMonParams</a></div><div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node3.html#SECTION00300800000000000000">Residual monitoring for Modified Newton method</a></div></div>
+
+<pre><span id="VALset_no_min_eps"><span class="keyword">val</span> set_no_min_eps</span> : <code class="type">('d, 'k) <a href="Kinsol.html#TYPEsession">session</a> -> unit</code></pre><div class="info ">
+Specifies that the scaled linear residual tolerance (<i>epsilon</i>)
+    is not bounded from below.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optin_main">KINSetNoMinEps</a></div><div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optin_main">KINSetFuncNormTol</a></div></div>
+
+<pre><span id="VALset_min_eps"><span class="keyword">val</span> set_min_eps</span> : <code class="type">('d, 'k) <a href="Kinsol.html#TYPEsession">session</a> -> unit</code></pre><div class="info ">
+Specifies that the scaled linear residual tolerance (<i>epsilon</i>)
+    is bounded from below. That is, the positive minimum value
+    $0.01\mathtt{fnormtol}$ is applied to <i>epsilon</i>.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optin_main">KINSetNoMinEps</a></div><div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optin_main">KINSetFuncNormTol</a></div></div>
+
+<pre><span id="VALset_max_newton_step"><span class="keyword">val</span> set_max_newton_step</span> : <code class="type">('d, 'k) <a href="Kinsol.html#TYPEsession">session</a> -> float -> unit</code></pre><div class="info ">
+Specifies the maximum allowable scaled length of the Newton step. Pass
+    0.0 to specify the default value $1000\lVert u_0 \rVert_{D_u}$,
+    otherwise the given value must be greater than zero.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optin_main">KINSetMaxNewtonStep</a></div></div>
+
+<pre><span id="VALset_max_beta_fails"><span class="keyword">val</span> set_max_beta_fails</span> : <code class="type">('d, 'k) <a href="Kinsol.html#TYPEsession">session</a> -> float -> unit</code></pre><div class="info ">
+Specifies the maximum number of beta-condition failures in the
+    line search algorithm. Pass 0.0 to specify the default (10).<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optin_main">KINSetMaxBetaFails</a></div></div>
+
+<pre><span id="VALset_rel_err_func"><span class="keyword">val</span> set_rel_err_func</span> : <code class="type">('d, 'k) <a href="Kinsol.html#TYPEsession">session</a> -> float -> unit</code></pre><div class="info ">
+Specifies the relative error in computing $F(u)$, which is used in the
+    difference quotient approximation of the Jacobian-vector product. Pass
+    0.0 to specify the default value
+    ($\sqrt{\mathtt{unit\_roundoff}}$).<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optin_main">KINSetRelErrFunc</a></div></div>
+
+<pre><span id="VALset_func_norm_tol"><span class="keyword">val</span> set_func_norm_tol</span> : <code class="type">('d, 'k) <a href="Kinsol.html#TYPEsession">session</a> -> float -> unit</code></pre><div class="info ">
+Specifies the stopping tolerance on the scaled maximum norm.
+    It must be greater than zero. Pass 0.0 to specify the default
+    value ($\mathtt{unit\_roundoff}^\frac{1}{3}$).<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optin_main">KINSetFuncNormTol</a></div></div>
+
+<pre><span id="VALset_scaled_step_tol"><span class="keyword">val</span> set_scaled_step_tol</span> : <code class="type">('d, 'k) <a href="Kinsol.html#TYPEsession">session</a> -> float -> unit</code></pre><div class="info ">
+Specifies the stopping tolerance on the minimum scaled step length, which
+    must be greater than zero. Pass 0.0 to specify the default
+    value ($\mathtt{unit\_roundoff}^\frac{1}{3}$).<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optin_main">KINSetScaledStepTol</a></div></div>
+
+<pre><span id="VALset_constraints"><span class="keyword">val</span> set_constraints</span> : <code class="type">('d, 'k) <a href="Kinsol.html#TYPEsession">session</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> unit</code></pre><div class="info ">
+Specifies a vector defining inequality constraints for each
+    component of the solution vector <code class="code">u</code>.  See <a href="Sundials.Constraint.html"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">Constraint</span></code></a>.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optin_main">KINSetConstraints</a></div></div>
+
+<pre><span id="VALset_linear_solver"><span class="keyword">val</span> set_linear_solver</span> : <code class="type">('d, 'k) <a href="Kinsol.html#TYPEsession">session</a> -> ('d, 'k) <a href="Kinsol.html#TYPElinear_solver">linear_solver</a> -> unit</code></pre><div class="info ">
+Changes the linear solver. Allows consecutive solution attempts with
+    different tools or parameters.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#sss:lin_solv_init">Linear solver specification functions</a></div></div>
+
+<pre><span id="VALset_sys_func"><span class="keyword">val</span> set_sys_func</span> : <code class="type">('d, 'k) <a href="Kinsol.html#TYPEsession">session</a> -> ('d -> 'd -> unit) -> unit</code></pre><div class="info ">
+Changes the system function. Allows solutions of several problems of the
+    same size but with different functions.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optin_main">KINSetSysFunc</a></div><div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:sysFn">KINSysFn</a></div></div>
+<br>
+<h3 id="info">Logging and error handling</h3><br>
+
+<pre><span id="VALset_error_file"><span class="keyword">val</span> set_error_file</span> : <code class="type">('d, 'k) <a href="Kinsol.html#TYPEsession">session</a> -> string -> bool -> unit</code></pre><div class="info ">
+Opens the named file to receive messages from the default error handler.
+    If the file already exists it is either truncated (<code class="code"><span class="keyword">true</span></code>) or extended
+    (<code class="code"><span class="keyword">false</span></code>).
+    The file is closed if the function is called again or when the session is
+    garbage collected.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optin_main">KINSetErrFile</a></div></div>
+
+<pre><span id="VALset_err_handler_fn"><span class="keyword">val</span> set_err_handler_fn</span> : <code class="type">('d, 'k) <a href="Kinsol.html#TYPEsession">session</a> -> (<a href="Sundials.html#TYPEerror_details">Sundials.error_details</a> -> unit) -> unit</code></pre><div class="info ">
+Specifies a custom function for handling error messages.
+    The handler must not fail: any exceptions are trapped and discarded.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optin_main">KINSetErrHandlerFn</a></div><div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:ehFn">KINErrHandlerFn</a></div></div>
+
+<pre><span id="VALclear_err_handler_fn"><span class="keyword">val</span> clear_err_handler_fn</span> : <code class="type">('d, 'k) <a href="Kinsol.html#TYPEsession">session</a> -> unit</code></pre><div class="info ">
+Restores the default error handling function.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optin_main">KINSetErrHandlerFn</a></div></div>
+
+<pre><span id="VALset_info_file"><span class="keyword">val</span> set_info_file</span> : <code class="type">('d, 'k) <a href="Kinsol.html#TYPEsession">session</a> -> string -> bool -> unit</code></pre><div class="info ">
+Opens the named file to receive informational (non-error) messages.
+    If the file already exists it is either truncated (<code class="code"><span class="keyword">true</span></code>) or extended
+    (<code class="code"><span class="keyword">false</span></code>).
+    The file is closed if <a href="Kinsol.html#VALset_info_file"><code class="code"><span class="constructor">Kinsol</span>.set_info_file</code></a> is called again or when the session
+    is garbage collected.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optin_main">KINSetInfoFile</a></div></div>
+
+<pre><span id="VALset_info_handler_fn"><span class="keyword">val</span> set_info_handler_fn</span> : <code class="type">('d, 'k) <a href="Kinsol.html#TYPEsession">session</a> -> (<a href="Sundials.html#TYPEerror_details">Sundials.error_details</a> -> unit) -> unit</code></pre><div class="info ">
+Specifies a custom function for handling informational (non-error) messages.
+    The <code class="code">error_code</code> field of <a href="Sundials.html#TYPEerror_details"><code class="code"><span class="constructor">Sundials</span>.error_details</code></a> is <code class="code">0</code> for
+    such messages.
+    The handler must not fail: any exceptions are trapped and discarded.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optin_main">KINSetInfoHandlerFn</a></div><div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:ihFn">KINInfoHandlerFn</a></div></div>
+
+<pre><span id="VALclear_info_handler_fn"><span class="keyword">val</span> clear_info_handler_fn</span> : <code class="type">('d, 'k) <a href="Kinsol.html#TYPEsession">session</a> -> unit</code></pre><div class="info ">
+Restores the default information handling function.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optin_main">KINSetErrHandlerFn</a></div></div>
+
+<pre><code><span id="TYPEprint_level"><span class="keyword">type</span> <code class="type"></code>print_level</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTprint_level.NoInformation"><span class="constructor">NoInformation</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+No information displayed. <span class="cconst">(0)</span><br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTprint_level.ShowScaledNorms"><span class="constructor">ShowScaledNorms</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+At each nonlinear iteration, display the scaled
+                          Euclidean norm of the system function at the
+                          current iterate, the scaled norm of the Newton step
+                          (if no globalization strategy is used), and the number
+                          of function evaluations performed so far.
+                          <span class="cconst">(1)</span><br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTprint_level.ShowScaledDFNorm"><span class="constructor">ShowScaledDFNorm</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Additionally display $\lVert F(u) \rVert_{DF}$
+                          if no globalization strategy is used, and
+                          $\lVert F(u)\rVert_{DF,\infty}$, otherwise.
+                          <span class="cconst">(2)</span><br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTprint_level.ShowGlobalValues"><span class="constructor">ShowGlobalValues</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Additionally display the values used by the global
+                          strategy and statistical information for the linear
+                          solver. <span class="cconst">(3)</span><br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+Increasing levels of verbosity for informational messages.<br>
+</div>
+
+
+<pre><span id="VALset_print_level"><span class="keyword">val</span> set_print_level</span> : <code class="type">('d, 'k) <a href="Kinsol.html#TYPEsession">session</a> -> <a href="Kinsol.html#TYPEprint_level">print_level</a> -> unit</code></pre><div class="info ">
+Sets the level of verbosity of informational messages.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optin_main">KINSetPrintLevel</a></div></div>
+<br>
+<h2 id="get">Querying the solver (optional output functions)</h2><br>
+
+<pre><span id="VALget_work_space"><span class="keyword">val</span> get_work_space</span> : <code class="type">('d, 'k) <a href="Kinsol.html#TYPEsession">session</a> -> int * int</code></pre><div class="info ">
+Returns the sizes of the real and integer workspaces.<br>
+<b>Returns</b> (<code class="code">real_size</code>, <code class="code">integer_size</code>)<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#sss:output_main">KINGetWorkSpace</a></div></div>
+
+<pre><span id="VALget_num_func_evals"><span class="keyword">val</span> get_num_func_evals</span> : <code class="type">('d, 'k) <a href="Kinsol.html#TYPEsession">session</a> -> int</code></pre><div class="info ">
+Returns the number of evaluations of the system function.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optout_main">KINGetNumFuncEvals</a></div></div>
+
+<pre><span id="VALget_num_nonlin_solv_iters"><span class="keyword">val</span> get_num_nonlin_solv_iters</span> : <code class="type">('d, 'k) <a href="Kinsol.html#TYPEsession">session</a> -> int</code></pre><div class="info ">
+Returns the number of nonlinear iterations.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optout_main">KINGetNumNonlinSolvIters</a></div></div>
+
+<pre><span id="VALget_num_beta_cond_fails"><span class="keyword">val</span> get_num_beta_cond_fails</span> : <code class="type">('d, 'k) <a href="Kinsol.html#TYPEsession">session</a> -> int</code></pre><div class="info ">
+Returns the number of beta-condition failures.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optout_main">KINGetNumBetaCondFails</a></div></div>
+
+<pre><span id="VALget_num_backtrack_ops"><span class="keyword">val</span> get_num_backtrack_ops</span> : <code class="type">('d, 'k) <a href="Kinsol.html#TYPEsession">session</a> -> int</code></pre><div class="info ">
+Returns the number of backtrack operations (step length adjustments)
+    performed by the line search algorithm.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optout_main">KINGetNumBacktrackOps</a></div></div>
+
+<pre><span id="VALget_func_norm"><span class="keyword">val</span> get_func_norm</span> : <code class="type">('d, 'k) <a href="Kinsol.html#TYPEsession">session</a> -> float</code></pre><div class="info ">
+Returns the scaled Euclidiean <i>l2</i> norm of the nonlinear system function
+    $F(u)$ evaluated at the current iterate.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optout_main">KINGetFuncNorm</a></div></div>
+
+<pre><span id="VALget_step_length"><span class="keyword">val</span> get_step_length</span> : <code class="type">('d, 'k) <a href="Kinsol.html#TYPEsession">session</a> -> float</code></pre><div class="info ">
+Returns the scaled Euclidiean <i>l2</i> norm of the step used during the
+    previous iteration.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:optout_main">KINGetStepLength</a></div></div>
+<br>
+<h2 id="exceptions">Exceptions</h2><br>
+
+<pre><span id="EXCEPTIONIllInput"><span class="keyword">exception</span> IllInput</span></pre>
+<div class="info ">
+An input parameter was invalid.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#sss:kinsol">KIN_ILL_INPUT</a></div></div>
+
+<pre><span id="EXCEPTIONLineSearchNonConvergence"><span class="keyword">exception</span> LineSearchNonConvergence</span></pre>
+<div class="info ">
+Line search could not find an iterate sufficiently distinct
+    from the current one, or an iterate satisfying the sufficient decrease
+    condition. The latter could mean that the current iterate is “close” to an
+    approximate solution, but that the difference approximation of the
+    matrix-vector product is inaccurate, or that <code class="code">scsteptol</code>
+    (<a href="Kinsol.html#VALset_scaled_step_tol"><code class="code"><span class="constructor">Kinsol</span>.set_scaled_step_tol</code></a>) is too large.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#sss:kinsol">KIN_LINESEARCH_NONCONV</a></div></div>
+
+<pre><span id="EXCEPTIONMaxIterationsReached"><span class="keyword">exception</span> MaxIterationsReached</span></pre>
+<div class="info ">
+The maximum number of nonlinear iterations has been reached.
+    See <a href="Kinsol.html#VALset_num_max_iters"><code class="code"><span class="constructor">Kinsol</span>.set_num_max_iters</code></a>.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#sss:kinsol">KIN_MAXITER_REACHED</a></div></div>
+
+<pre><span id="EXCEPTIONMaxNewtonStepExceeded"><span class="keyword">exception</span> MaxNewtonStepExceeded</span></pre>
+<div class="info ">
+Five consecutive steps exceed the maximum newton step.
+    That is, the five steps satisfy the inequality
+    $\\|D_u p\\|_{L2} > 0.99 \mathtt{mxnewtstep}$,
+    where $p$ denotes the current step and <code class="code">mxnewtstep</code> is a scalar
+    upper bound on the scaled step length (see <a href="Kinsol.html#VALset_max_newton_step"><code class="code"><span class="constructor">Kinsol</span>.set_max_newton_step</code></a>).
+    It could be that $\\| D_F F(u)\\|_{L2}$ is bounded from above by
+    a positive value or that <code class="code">mxnewtstep</code> is too small.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#sss:kinsol">KIN_MXNEWT_5X_EXCEEDED</a></div></div>
+
+<pre><span id="EXCEPTIONLineSearchBetaConditionFailure"><span class="keyword">exception</span> LineSearchBetaConditionFailure</span></pre>
+<div class="info ">
+The line search algorithm could not satisfy the “beta-condition” for
+    <code class="code">mxnbcf + 1</code> nonlinear iterations. The failures need not occur in
+    consecutive iterations. They may indicate that the algorithm is making
+    poor progress.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#sss:kinsol">KIN_LINESEARCH_BCFAIL</a></div></div>
+
+<pre><span id="EXCEPTIONLinearSolverNoRecovery"><span class="keyword">exception</span> LinearSolverNoRecovery</span></pre>
+<div class="info ">
+The <a href="Kinsol.Spils.html#TYPEprec_solve_fn"><code class="code"><span class="constructor">Kinsol</span>.<span class="constructor">Spils</span>.prec_solve_fn</code></a> callback raised <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a>
+    but the preconditioner is already current.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#sss:kinsol">KIN_LINSOLV_NO_RECOVERY</a></div></div>
+
+<pre><span id="EXCEPTIONLinearSolverInitFailure"><span class="keyword">exception</span> LinearSolverInitFailure</span></pre>
+<div class="info ">
+Linear solver initialization failed.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#sss:kinsol">KIN_LINIT_FAIL</a></div></div>
+
+<pre><span id="EXCEPTIONLinearSetupFailure"><span class="keyword">exception</span> LinearSetupFailure</span></pre>
+<div class="info ">
+The <a href="Kinsol.Spils.html#TYPEprec_setup_fn"><code class="code"><span class="constructor">Kinsol</span>.<span class="constructor">Spils</span>.prec_setup_fn</code></a> callback failed unrecoverably.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#sss:kinsol">KIN_LSETUP_FAIL</a></div></div>
+
+<pre><span id="EXCEPTIONLinearSolverFailure"><span class="keyword">exception</span> LinearSolverFailure</span></pre>
+<div class="info ">
+Either <a href="Kinsol.Spils.html#TYPEprec_solve_fn"><code class="code"><span class="constructor">Kinsol</span>.<span class="constructor">Spils</span>.prec_solve_fn</code></a> failed unrecoverably or the linear solver
+    encountered an error condition.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#sss:kinsol">KIN_LSOLVE_FAIL</a></div></div>
+
+<pre><span id="EXCEPTIONSystemFunctionFailure"><span class="keyword">exception</span> SystemFunctionFailure</span></pre>
+<div class="info ">
+The <a href="Kinsol.html#TYPEsysfn"><code class="code"><span class="constructor">Kinsol</span>.sysfn</code></a> callback failed unrecoverably.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#sss:kinsol">KIN_SYSFUNC_FAIL</a></div></div>
+
+<pre><span id="EXCEPTIONFirstSystemFunctionFailure"><span class="keyword">exception</span> FirstSystemFunctionFailure</span></pre>
+<div class="info ">
+The <a href="Kinsol.html#TYPEsysfn"><code class="code"><span class="constructor">Kinsol</span>.sysfn</code></a> callback raised <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a> when
+    first called.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#sss:kinsol">KIN_FIRST_SYSFUNC_FAIL</a></div></div>
+
+<pre><span id="EXCEPTIONRepeatedSystemFunctionFailure"><span class="keyword">exception</span> RepeatedSystemFunctionFailure</span></pre>
+<div class="info ">
+The <a href="Kinsol.html#TYPEsysfn"><code class="code"><span class="constructor">Kinsol</span>.sysfn</code></a> callback raised <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a> repeatedly.
+    No recovery is possible.<br>
+<div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#sss:kinsol">KIN_REPTD_SYSFUNC_ERR</a></div></div>
+</body></html>

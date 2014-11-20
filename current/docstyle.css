@@ -1,0 +1,361 @@
+/*
+ * Based on Jonathan Protzenko's style sheet:
+ * http://www.xulforum.org/files/ocamlcss/style.css
+ *
+ * - All absolute font-size's have been removed.
+ *
+ */
+
+a:visited {
+  color: #416DFF; text-decoration: none; 
+}
+
+a:link {
+  color: #416DFF; text-decoration: none;
+}
+
+a:hover {
+  color: Red; text-decoration: none; background-color: #5FFF88
+}
+
+a:active {
+  color: Red; text-decoration: underline; 
+}
+
+.keyword {
+  font-weight: bold; color: Red 
+}
+
+.keywordsign {
+  color: #C04600 
+}
+
+.comment {
+  color: Green 
+}
+
+.constructor {
+  color: Blue 
+}
+
+.type {
+  color: #5C6585 
+}
+
+.string {
+  color: Maroon 
+}
+
+.warning {
+  color: Red; font-weight: bold 
+}
+
+.info {
+  margin-left: 3em; margin-right: 3em 
+}
+
+.param_info {
+  margin-top: 4px; margin-left: 3em; margin-right: 3em 
+}
+
+.code {
+  color: #465F91; 
+}
+
+h1 {
+  text-align: center; 
+}
+
+h5, h6, div.h7, div.h8, div.h9 {
+  border: 1px solid #000000;
+  margin-top: 5px;
+  margin-bottom: 2px;
+  text-align: center;
+  padding: 2px;
+}
+
+h5 {
+  background-color: #90FDFF;
+}
+
+h6 {
+  background-color: #016699;
+  color: white;
+}
+
+div.h7 {
+  background-color: #E0FFFF;
+}
+
+div.h8 {
+  background-color: #F0FFFF;
+}
+
+div.h9 {
+  background-color: #FFFFFF;
+}
+
+.typetable, .indextable, .paramstable {
+  border-style: hidden;
+}
+
+.paramstable {
+  padding: 5pt 5pt;
+}
+
+body {
+  background-color: white;
+}
+
+tr {
+  background-color: white;
+}
+
+td.typefieldcomment {
+  background-color: #FFFFFF;
+  font-size: smaller;
+}
+
+pre {
+  margin-bottom: 4px;
+}
+
+div.sig_block {
+  margin-left: 2em;
+}
+
+
+h2 {
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: normal;
+  border-bottom: 1px solid #dadada;
+  border-top: 1px solid #dadada;
+  color: #101010;
+  background: #eeeeff;
+  margin: 25px 0px 10px 0px;
+  padding: 1px 1px 1px 1px;
+}
+
+h3 {
+  font-family: Arial, Helvetica, sans-serif;
+  color: #016699;
+  font-weight: bold;
+  padding: 15px 0 0 0ex;
+  margin: 5px 0 0 0;
+}
+
+h4 {
+  font-family: Arial, Helvetica, sans-serif;
+  color: #016699;
+  padding: 15px 0 0 0ex;
+  margin: 5px 0 0 0;
+}
+
+/* Here starts the overwrite of default rules to give a better look */
+
+body {
+  font-family: Calibri, Georgia, Garamond, Baskerville, serif;
+  background-color: white;
+}
+
+a:link, a {
+  color: #6895c3 !important;
+}
+
+a:hover {
+  color: #2F4459 !important;
+  background-color: white;
+}
+
+hr {
+  height: 1px;
+  color: #016699;
+  background-color: #016699;
+  border-width: 0;
+}
+
+h1, h1 a:link, h1 a:visited, h1 a {
+  font-family: Cambria, Georgia, Garamond, Baskerville, serif;
+  color: #016699;
+}
+
+.navbar {
+  float: left;
+}
+
+.navbar a, .navbar a:link, .navbar a:visited {
+  color: #016699;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: bold;
+  font-size: 80%;
+}
+
+.keyword {
+  color: #c13939;
+}
+
+.constructor {
+  color: #3c8f7e;
+}
+
+pre, code {
+  font-family: "DejaVu Sans Mono", "Bitstream Vera Mono", "Courrier New", monospace;
+  white-space: normal;
+  font-weight: bold;
+}
+
+.type br {
+  display: none;
+}
+
+.info {
+  margin-left: 1em;
+}
+
+/* Customisations for SundialsML */
+
+body {
+  font-size: 11pt;
+}
+
+h1 { font-size: 1.8em; }
+h2 { font-size: 1.5em; }
+h3 {
+    padding-top: 5px;
+    font-size: 1.3em;
+}
+h4 { font-size: 0.9em; }
+h5, h6, div.h7, div.h8, div.h9 { font-size: 1.8em; }
+
+table { font-size: 100%; }
+td { vertical-align: top; }
+
+pre  { font-size: .8em; }
+code { font-size: .8em; }
+pre code { font-size: 1em; }
+code code { font-size: 100%; }
+
+.type br { display: block; }
+.type pre { white-space: pre; }
+code.type { white-space: pre; }
+
+div#intro {
+  max-width: 50em;
+  text-align: justify;
+  margin: 0px auto;
+}
+
+div#intro code {
+  font-weight: normal;
+}
+
+p {
+  max-width: 40em;
+}
+
+div#intro p {
+  max-width: inherit;
+}
+
+div.info {
+  font-size: 1em;
+  max-width: 40em;
+  padding-bottom: .7em;
+}
+
+div.info code {
+  font-weight: normal;
+}
+
+div.info span.keyword {
+  font-weight: normal;
+}
+
+div.raisedexceptions {
+    margin-top: 1em;
+}
+div.raisedexceptions span.raises {
+    font-style: italic;
+}
+
+div.authors {
+    margin-top: 1em;
+}
+
+span.cconst {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: smaller;
+    color: lightgray;
+}
+
+p + div.authors {
+    margin-top: 0em;
+}
+
+ol {
+    padding-left: 2.0em;
+}
+
+ul {
+    padding-left: 1.5em;
+}
+
+li + li {
+    padding-top: 1.5ex;
+}
+
+td.module { min-width: 8em;
+            vertical-align: text-top; }
+h2#modules + p br:nth-child(1) { display: none; }
+
+table.typetable td:nth-child(1) { }
+table.typetable td:nth-child(2) { min-width: 20em;
+                                  padding-right: 1em; }
+table.typetable td:nth-child(3) code { font-size: 0.82em; color: lightgray; }
+table.typetable td:nth-child(4) { 
+                                  padding-bottom: 1ex;
+                                  max-width: 45em;
+                                  padding-left: 0em; }
+table.typetable td:nth-child(5) code { font-size: 0.82em; color: lightgray; }
+
+div.sundials { padding-top: 1.2ex;
+               font-size: 0.82em; }
+div.sundials + div.sundials { padding-top: 0ex; }
+div.sundials + div.sundials > span.seesundials { visibility: hidden; }
+
+img { max-width: 50em;
+      height: auto;
+      display: block;
+      margin-left: auto;
+      margin-right: auto; }
+
+div.references ol {
+    list-style-type: none;
+    counter-reset: item;
+    padding-left: 2.5em;
+}
+div.references ol > li:before {
+    display: inline-block;
+    counter-increment: item;
+    content: '[' counter(item) '] ';
+    margin-left: -2.3em;
+    width: 2.3em;
+}
+div.references ol > li {
+    margin-right: 1.5em;
+}
+
+div.warningbox {
+    background: url(warning.png) no-repeat;
+    padding-left: 24px;
+    min-height: 16px;
+}
+
+center {
+    padding-bottom: .4em;
+}
+
+@media print {
+    body { font-size: 8pt; }
+}
+

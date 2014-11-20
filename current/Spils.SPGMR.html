@@ -1,0 +1,90 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="next" href="Spils.SPBCG.html">
+<link rel="Up" href="Spils.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Dls" rel="Chapter" href="Dls.html">
+<link title="Spils" rel="Chapter" href="Spils.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html"><title>Sundials/ML 2.5.0p0 : Spils.SPGMR</title>
+</head>
+<body>
+<div class="navbar">&nbsp;<a class="up" href="Spils.html" title="Spils">Up</a>
+&nbsp;<a class="post" href="Spils.SPBCG.html" title="Spils.SPBCG">Next</a>
+</div>
+<h1>Module <a href="type_Spils.SPGMR.html">Spils.SPGMR</a></h1>
+
+<pre><span class="keyword">module</span> SPGMR: <code class="code"><span class="keyword">sig</span></code> <a href="Spils.SPGMR.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+The Scaled Preconditioned Generalized Minimum Residual (GMRES) method.<br>
+</div>
+<hr width="100%">
+
+<pre><span id="TYPEt"><span class="keyword">type</span> <code class="type">'d</code> t</span> </pre>
+<div class="info ">
+An instance of the SPGMR solver.<br>
+<div class="sundials cvode"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node9.html#ss:spgmr">The SPGMR Module</a></div></div>
+
+
+<pre><span id="VALmake"><span class="keyword">val</span> make</span> : <code class="type">int -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> 'd <a href="Spils.SPGMR.html#TYPEt">t</a></code></pre><div class="info ">
+<code class="code">make lmax temp</code> returns a solver session. <code class="code">lmax</code> is the maximum
+        Krylov subspace dimension to use, and <code class="code">temp</code> sets the problem size.<br>
+<div class="sundials cvode"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node9.html#ss:spgmr">SpgmrMalloc</a></div></div>
+
+<pre><span id="VALsolve"><span class="keyword">val</span> solve</span> : <code class="type">'d <a href="Spils.SPGMR.html#TYPEt">t</a> -><br>       x:('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -><br>       b:('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -><br>       delta:float -><br>       ?max_restarts:int -><br>       ?s1:('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -><br>       ?s2:('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -><br>       ?psolve:'d <a href="Spils.html#TYPEpsolve">Spils.psolve</a> -><br>       'd <a href="Spils.html#TYPEatimes">Spils.atimes</a> -><br>       <a href="Spils.html#TYPEpreconditioning_type">Spils.preconditioning_type</a> -><br>       <a href="Spils.html#TYPEgramschmidt_type">Spils.gramschmidt_type</a> -> bool * float * int * int</code></pre><div class="info ">
+Solves the linear system <code class="code"><span class="constructor">Ax</span> = b</code> using the SPGMR iterative method.
+        The <code class="code">atimes</code> function computes the matrix vector product <code class="code"><span class="constructor">Ax</span></code>, the
+        other arguments are described below. The function returns a tuple
+        <code class="code">(solved, res_norm, nli, nps)</code> where <code class="code">solved</code> indicates whether the
+        system converged, <code class="code">res_norm</code> is the L2 norm of the scaled
+        preconditioned residual
+        $\lVert s_1 P_1^{-1} (b - Ax) \rVert_{L2}$ , and,
+        <code class="code">nli</code> and <code class="code">nps</code> count, respectively, linear iterations performed and
+        calls to <code class="code">psolve</code>. Repeated calls can be made to <code class="code">solve</code> with
+        varying input arguments, but a new session must be created if either
+        the problem size or the maximum Krylov dimension change.<br>
+<div class="raisedexceptions"><span class="raises">Raises</span><ul><li><code>ConvFailure</code> Failed to converge</li>
+<li><code>QRfactFailure</code> QRfact found a singular matrix</li>
+<li><code>PSolveFailure</code> The <code class="code">psolve</code> function failed</li>
+<li><code>ATimesFailure</code> The <code class="code">atimes</code> function failed</li>
+<li><code>PSetFailure</code> pset failed</li>
+<li><code>GSFailure</code> The Gram-Schmidt routine failed.</li>
+<li><code>QRSolFailure</code> QRsol found a singular <code class="code"><span class="constructor">R</span></code>.</li>
+</ul></div>
+<div class="sundials cvode"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node9.html#ss:spgmr">SpgmrSolve</a></div></div>
+<div class="param_info"><code class="code">x</code> : initial guess on entry; result on return</div>
+<div class="param_info"><code class="code">b</code> : right-hand side vector</div>
+<div class="param_info"><code class="code">delta</code> : tolerance of the L2 norm: <code class="code">res_norm &lt;= delta</code></div>
+<div class="param_info"><code class="code">max_restarts</code> : allowed restarts before failure (defaults to 0)</div>
+<div class="param_info"><code class="code">s1</code> : optional positive scale factors for $P_1 - b^{-1}$ ,
+                  where $P_1$  is the left preconditioner.</div>
+<div class="param_info"><code class="code">s2</code> : optional positive scale factors for $P_2 x$ ,
+                  where $P_2$  is the right preconditioner.</div>
+<div class="param_info"><code class="code">psolve</code> : optionally solves the preconditioner system.</div>
+</body></html>

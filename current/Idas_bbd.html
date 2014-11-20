@@ -1,0 +1,170 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Ida_bbd.html">
+<link rel="next" href="Cvodes.html">
+<link rel="Up" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Dls" rel="Chapter" href="Dls.html">
+<link title="Spils" rel="Chapter" href="Spils.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html"><title>Sundials/ML 2.5.0p0 : Idas_bbd</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Ida_bbd.html" title="Ida_bbd">Previous</a>
+&nbsp;<a class="up" href="index.html" title="Index">Up</a>
+&nbsp;<a class="post" href="Cvodes.html" title="Cvodes">Next</a>
+</div>
+<h1>Module <a href="type_Idas_bbd.html">Idas_bbd</a></h1>
+
+<pre><span class="keyword">module</span> Idas_bbd: <code class="code"><span class="keyword">sig</span></code> <a href="Idas_bbd.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+Parallel band-block-diagonal preconditioners for IDAS (requires MPI).<br>
+<div class="authors"><b>Author(s):</b> Timothy Bourke (Inria/ENS), Jun Inoue (Inria/ENS), Marc Pouzet (UPMC/ENS/Inria)</div>
+<b>Version:</b> 2.5.0<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#SECTION00742000000000000000">Using the band-block-diagonal preconditioner IDABBDPRE</a></div></div>
+<hr width="100%">
+
+<pre><span id="TYPEparallel_bsession"><span class="keyword">type</span> <code class="type"></code>parallel_bsession</span> = <code class="type">(<a href="Nvector_parallel.html#TYPEdata">Nvector_parallel.data</a>, <a href="Nvector_parallel.html#TYPEkind">Nvector_parallel.kind</a>) <a href="Idas.Adjoint.html#TYPEbsession">Idas.Adjoint.bsession</a></code> </pre>
+<div class="info ">
+Alias for sessions based on parallel nvectors.<br>
+</div>
+
+
+<pre><span id="TYPEparallel_preconditioner"><span class="keyword">type</span> <code class="type"></code>parallel_preconditioner</span> = <code class="type">(<a href="Nvector_parallel.html#TYPEdata">Nvector_parallel.data</a>, <a href="Nvector_parallel.html#TYPEkind">Nvector_parallel.kind</a>)<br>       <a href="Idas.Adjoint.Spils.html#TYPEpreconditioner">Idas.Adjoint.Spils.preconditioner</a></code> </pre>
+<div class="info ">
+Alias for preconditioners based on parallel nvectors.<br>
+</div>
+
+
+<pre><span id="TYPEbandwidths"><span class="keyword">type</span> <code class="type"></code>bandwidths</span> = <code class="type"><a href="Ida_bbd.html#TYPEbandwidths">Ida_bbd.bandwidths</a></code> = {</pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTbandwidths.mudq">mudq</span>&nbsp;: <code class="type">int</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Upper half-bandwidth for the difference
+                       quotient Jacobian approximation.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTbandwidths.mldq">mldq</span>&nbsp;: <code class="type">int</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Lower half-bandwidth for the difference
+                       quotient Jacobian approximation.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTbandwidths.mukeep">mukeep</span>&nbsp;: <code class="type">int</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Upper half-bandwidth for the retained banded
+                       approximate Jacobian block.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTbandwidths.mlkeep">mlkeep</span>&nbsp;: <code class="type">int</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Lower half-bandwidth for the retained banded
+                       approximate Jacobian block.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+}
+
+<div class="info ">
+The bandwidths for the difference quotient Jacobian operation.<br>
+</div>
+
+
+<pre><span id="TYPElocal_fn"><span class="keyword">type</span> <code class="type"></code>local_fn</span> = <code class="type">float -><br>       <a href="Nvector_parallel.html#TYPEdata">Nvector_parallel.data</a> -><br>       <a href="Nvector_parallel.html#TYPEdata">Nvector_parallel.data</a> -><br>       <a href="Nvector_parallel.html#TYPEdata">Nvector_parallel.data</a> -><br>       <a href="Nvector_parallel.html#TYPEdata">Nvector_parallel.data</a> -> <a href="Nvector_parallel.html#TYPEdata">Nvector_parallel.data</a> -> unit</code> </pre>
+<div class="info ">
+Approximates the right-hand side function using local computations only.
+    In the call <code class="code">gloc t y yb y' r</code>, <code class="code">t</code> is the independent variable (time),
+    <code class="code">y</code> is the forward solution vector of dependent variables,
+    <code class="code">yb</code> is the backward dependent variable vector, <code class="code">y'</code> are the derivatives
+    with respect to <code class="code">y</code>, and <code class="code">r</code> is the output vector to fill with the
+    computed residual.
+<p>
+
+    Raising <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a> signals a recoverable error.
+    Other exceptions signal unrecoverable errors.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#SECTION00742200000000000000">IDABBDLocalFnB</a></div></div>
+
+
+<pre><span id="TYPEcomm_fn"><span class="keyword">type</span> <code class="type"></code>comm_fn</span> = <code class="type">float -><br>       <a href="Nvector_parallel.html#TYPEdata">Nvector_parallel.data</a> -><br>       <a href="Nvector_parallel.html#TYPEdata">Nvector_parallel.data</a> -><br>       <a href="Nvector_parallel.html#TYPEdata">Nvector_parallel.data</a> -> <a href="Nvector_parallel.html#TYPEdata">Nvector_parallel.data</a> -> unit</code> </pre>
+<div class="info ">
+Functions that perform the interprocess communication necessary
+    for the execution of <a href="Idas_bbd.html#TYPElocal_fn"><code class="code"><span class="constructor">Idas_bbd</span>.local_fn</code></a>.
+    In the call <code class="code">cfn t y yb</code>, <code class="code">t</code> is the independent variable (time), <code class="code">y</code> is
+    the forward solution vector, and <code class="code">yb</code> is the backward dependent variable
+    vector <code class="code">yb</code>.
+<p>
+
+    Raising <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a> signals a recoverable error.
+    Other exceptions signal unrecoverable errors.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#SECTION00742200000000000000">IDABBDCommFnB</a></div></div>
+
+
+<pre><span id="VALprec_left"><span class="keyword">val</span> prec_left</span> : <code class="type">?dqrely:float -><br>       <a href="Idas_bbd.html#TYPEbandwidths">bandwidths</a> -><br>       ?comm_fn:<a href="Idas_bbd.html#TYPEcomm_fn">comm_fn</a> -><br>       <a href="Idas_bbd.html#TYPElocal_fn">local_fn</a> -> <a href="Idas_bbd.html#TYPEparallel_preconditioner">parallel_preconditioner</a></code></pre><div class="info ">
+Left preconditioning using the Parallel Band-Block-Diagonal module.
+    The difference quotient operation is controlled by <code class="code">?dqrely</code>,
+    the relative increment in components of <code class="code">y</code>, and <a href="Idas_bbd.html#TYPEbandwidths"><code class="code"><span class="constructor">Idas_bbd</span>.bandwidths</code></a>.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#sss:lin_solv_b">IDASpgmrB</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#SECTION00742100000000000000">IDABBDPrecInitB</a></div></div>
+
+<pre><span id="VALreinit"><span class="keyword">val</span> reinit</span> : <code class="type"><a href="Idas_bbd.html#TYPEparallel_bsession">parallel_bsession</a> -> ?dqrely:float -> int -> int -> unit</code></pre><div class="info ">
+Reinitializes some BBD preconditioner parameters.
+    In the call, <code class="code">reinit s ~dqrely:dqrely mudq mldq</code>, <code class="code">dqrely</code> is the relative
+    increment in the components of <code class="code">y</code>, and <code class="code">mudq</code> and <code class="code">mldq</code> are, respectively,
+    the upper-half and lower-half bandwidths of the difference quotient
+    Jacobian approximation.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#SECTION00742000000000000000">IDABBDPrecReInitB</a></div></div>
+
+<pre><span id="VALget_work_space"><span class="keyword">val</span> get_work_space</span> : <code class="type"><a href="Idas_bbd.html#TYPEparallel_bsession">parallel_bsession</a> -> int * int</code></pre><div class="info ">
+Returns the sizes of the real and integer workspaces used by the
+    BBD preconditioner.<br>
+<b>Returns</b> (<code class="code">real_size</code>, <code class="code">integer_size</code>)<br>
+<div class="sundials ida"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/ida_guide/node7.html#SECTION00742000000000000000">IDABBDPrecGetWorkSpace</a></div></div>
+
+<pre><span id="VALget_num_gfn_evals"><span class="keyword">val</span> get_num_gfn_evals</span> : <code class="type"><a href="Idas_bbd.html#TYPEparallel_bsession">parallel_bsession</a> -> int</code></pre><div class="info ">
+Returns the number of calls to the right-hand side function due to
+    finite difference banded Jacobian approximation in the setup function.<br>
+<div class="sundials ida"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/ida_guide/node7.html#SECTION00742000000000000000">IDABBDPrecGetNumGfnEvals</a></div></div>
+</body></html>

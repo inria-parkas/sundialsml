@@ -1,0 +1,610 @@
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Dls" rel="Chapter" href="Dls.html">
+<link title="Spils" rel="Chapter" href="Spils.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html"><title>Sundials/ML 2.5.0p0 : Index of exceptions</title>
+</head>
+<body>
+<div class="navbar">&nbsp;<a class="up" href="index.html" title="Index">Up</a>
+&nbsp;</div>
+<h1>Index of exceptions</h1>
+<table>
+<tr><td align="left"><br>A</td></tr>
+<tr><td><a href="Spils.html#EXCEPTIONATimesFailure">ATimesFailure</a> [<a href="Spils.html">Spils</a>]</td>
+<td><div class="info">
+Raised when an atimes function fails.
+</div>
+</td></tr>
+<tr><td><a href="Idas.Adjoint.html#EXCEPTIONAdjointNotInitialized">AdjointNotInitialized</a> [<a href="Idas.Adjoint.html">Idas.Adjoint</a>]</td>
+<td><div class="info">
+Adjoint sensitivity analysis was not initialized.
+</div>
+</td></tr>
+<tr><td><a href="Cvodes.Adjoint.html#EXCEPTIONAdjointNotInitialized">AdjointNotInitialized</a> [<a href="Cvodes.Adjoint.html">Cvodes.Adjoint</a>]</td>
+<td><div class="info">
+Adjoint sensitivity analysis was not initialized.
+</div>
+</td></tr>
+<tr><td align="left"><br>B</td></tr>
+<tr><td><a href="Ida.html#EXCEPTIONBadEwt">BadEwt</a> [<a href="Ida.html">Ida</a>]</td>
+<td><div class="info">
+A component of the error weight vector, either for the input value or a
+    corrected value, is zero.
+</div>
+</td></tr>
+<tr><td><a href="Idas.Adjoint.html#EXCEPTIONBadFinalTime">BadFinalTime</a> [<a href="Idas.Adjoint.html">Idas.Adjoint</a>]</td>
+<td><div class="info">
+The final time was outside the interval over which the forward
+        problem was solved.
+</div>
+</td></tr>
+<tr><td><a href="Cvodes.Adjoint.html#EXCEPTIONBadFinalTime">BadFinalTime</a> [<a href="Cvodes.Adjoint.html">Cvodes.Adjoint</a>]</td>
+<td><div class="info">
+The final time was outside the interval over which the forward
+        problem was solved.
+</div>
+</td></tr>
+<tr><td><a href="Ida.html#EXCEPTIONBadK">BadK</a> [<a href="Ida.html">Ida</a>]</td>
+<td><div class="info">
+Raised by <a href="Ida.html#VALget_dky"><code class="code"><span class="constructor">Ida</span>.get_dky</code></a> for invalid order values.
+</div>
+</td></tr>
+<tr><td><a href="Cvode.html#EXCEPTIONBadK">BadK</a> [<a href="Cvode.html">Cvode</a>]</td>
+<td><div class="info">
+Raised by <a href="Cvode.html#VALget_dky"><code class="code"><span class="constructor">Cvode</span>.get_dky</code></a> for invalid order values.
+</div>
+</td></tr>
+<tr><td><a href="Idas.Sensitivity.html#EXCEPTIONBadSensIdentifier">BadSensIdentifier</a> [<a href="Idas.Sensitivity.html">Idas.Sensitivity</a>]</td>
+<td><div class="info">
+The index passed to identify a particular sensitivity is invalid.
+</div>
+</td></tr>
+<tr><td><a href="Cvodes.Sensitivity.html#EXCEPTIONBadSensIdentifier">BadSensIdentifier</a> [<a href="Cvodes.Sensitivity.html">Cvodes.Sensitivity</a>]</td>
+<td><div class="info">
+The index passed to identify a particular sensitivity is invalid.
+</div>
+</td></tr>
+<tr><td><a href="Ida.html#EXCEPTIONBadT">BadT</a> [<a href="Ida.html">Ida</a>]</td>
+<td><div class="info">
+Raised by <a href="Ida.html#VALget_dky"><code class="code"><span class="constructor">Ida</span>.get_dky</code></a> for invalid time values.
+</div>
+</td></tr>
+<tr><td><a href="Cvode.html#EXCEPTIONBadT">BadT</a> [<a href="Cvode.html">Cvode</a>]</td>
+<td><div class="info">
+Raised by <a href="Cvode.html#VALget_dky"><code class="code"><span class="constructor">Cvode</span>.get_dky</code></a> for invalid time values.
+</div>
+</td></tr>
+<tr><td align="left"><br>C</td></tr>
+<tr><td><a href="Ida.html#EXCEPTIONConstraintFailure">ConstraintFailure</a> [<a href="Ida.html">Ida</a>]</td>
+<td><div class="info">
+No solution satisfying the inequality constraints could be found.
+</div>
+</td></tr>
+<tr><td><a href="Spils.html#EXCEPTIONConvFailure">ConvFailure</a> [<a href="Spils.html">Spils</a>]</td>
+<td><div class="info">
+Raised when a solver fails to converge.
+</div>
+</td></tr>
+<tr><td><a href="Ida.html#EXCEPTIONConvergenceFailure">ConvergenceFailure</a> [<a href="Ida.html">Ida</a>]</td>
+<td><div class="info">
+Too many convergence test failures within a step,
+    or Newton convergence failed.
+</div>
+</td></tr>
+<tr><td><a href="Cvode.html#EXCEPTIONConvergenceFailure">ConvergenceFailure</a> [<a href="Cvode.html">Cvode</a>]</td>
+<td><div class="info">
+Too many convergence test failures within a step or at the minimum step
+    size.
+</div>
+</td></tr>
+<tr><td align="left"><br>E</td></tr>
+<tr><td><a href="Ida.html#EXCEPTIONErrFailure">ErrFailure</a> [<a href="Ida.html">Ida</a>]</td>
+<td><div class="info">
+Too many error test failures within a step.
+</div>
+</td></tr>
+<tr><td><a href="Cvode.html#EXCEPTIONErrFailure">ErrFailure</a> [<a href="Cvode.html">Cvode</a>]</td>
+<td><div class="info">
+Too many error test failures within a step or at the minimum step size.
+</div>
+</td></tr>
+<tr><td align="left"><br>F</td></tr>
+<tr><td><a href="Idas.Quadrature.html#EXCEPTIONFirstQuadRhsFuncFailure">FirstQuadRhsFuncFailure</a> [<a href="Idas.Quadrature.html">Idas.Quadrature</a>]</td>
+<td><div class="info">
+The quadrature function failed at the first call.
+</div>
+</td></tr>
+<tr><td><a href="Cvodes.Quadrature.html#EXCEPTIONFirstQuadRhsFuncFailure">FirstQuadRhsFuncFailure</a> [<a href="Cvodes.Quadrature.html">Cvodes.Quadrature</a>]</td>
+<td><div class="info">
+The quadrature function failed at the first call.
+</div>
+</td></tr>
+<tr><td><a href="Idas.Sensitivity.Quadrature.html#EXCEPTIONFirstQuadSensRhsFuncFailure">FirstQuadSensRhsFuncFailure</a> [<a href="Idas.Sensitivity.Quadrature.html">Idas.Sensitivity.Quadrature</a>]</td>
+<td><div class="info">
+The sensitivity quadrature function failed at the first call.
+</div>
+</td></tr>
+<tr><td><a href="Cvodes.Sensitivity.Quadrature.html#EXCEPTIONFirstQuadSensRhsFuncFailure">FirstQuadSensRhsFuncFailure</a> [<a href="Cvodes.Sensitivity.Quadrature.html">Cvodes.Sensitivity.Quadrature</a>]</td>
+<td><div class="info">
+The sensitivity quadrature function failed at the first call.
+</div>
+</td></tr>
+<tr><td><a href="Ida.html#EXCEPTIONFirstResFuncFailure">FirstResFuncFailure</a> [<a href="Ida.html">Ida</a>]</td>
+<td><div class="info">
+The residual function had a recoverable error when first called.
+</div>
+</td></tr>
+<tr><td><a href="Cvode.html#EXCEPTIONFirstRhsFuncFailure">FirstRhsFuncFailure</a> [<a href="Cvode.html">Cvode</a>]</td>
+<td><div class="info">
+The right-hand side function had a recoverable error when first called.
+</div>
+</td></tr>
+<tr><td><a href="Cvodes.Sensitivity.html#EXCEPTIONFirstSensRhsFuncFailure">FirstSensRhsFuncFailure</a> [<a href="Cvodes.Sensitivity.html">Cvodes.Sensitivity</a>]</td>
+<td><div class="info">
+The sensitivity function had a recoverable error when first called.
+</div>
+</td></tr>
+<tr><td><a href="Kinsol.html#EXCEPTIONFirstSystemFunctionFailure">FirstSystemFunctionFailure</a> [<a href="Kinsol.html">Kinsol</a>]</td>
+<td><div class="info">
+The <a href="Kinsol.html#TYPEsysfn"><code class="code"><span class="constructor">Kinsol</span>.sysfn</code></a> callback raised <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a> when
+    first called.
+</div>
+</td></tr>
+<tr><td><a href="Idas.Adjoint.html#EXCEPTIONForwardFailure">ForwardFailure</a> [<a href="Idas.Adjoint.html">Idas.Adjoint</a>]</td>
+<td><div class="info">
+An error occured during the integration of the forward problem.
+</div>
+</td></tr>
+<tr><td><a href="Cvodes.Adjoint.html#EXCEPTIONForwardFailure">ForwardFailure</a> [<a href="Cvodes.Adjoint.html">Cvodes.Adjoint</a>]</td>
+<td><div class="info">
+An error occured when integrating the forward problem from a
+        checkpoint.
+</div>
+</td></tr>
+<tr><td><a href="Idas.Adjoint.html#EXCEPTIONForwardReinitFailure">ForwardReinitFailure</a> [<a href="Idas.Adjoint.html">Idas.Adjoint</a>]</td>
+<td><div class="info">
+Reinitialization of the forward problem failed at the first checkpoint
+        (corresponding to the initial time of the forward problem).
+</div>
+</td></tr>
+<tr><td><a href="Cvodes.Adjoint.html#EXCEPTIONForwardReinitFailure">ForwardReinitFailure</a> [<a href="Cvodes.Adjoint.html">Cvodes.Adjoint</a>]</td>
+<td><div class="info">
+Reinitialization of the forward problem failed at the first checkpoint
+        (corresponding to the initial time of the forward problem).
+</div>
+</td></tr>
+<tr><td align="left"><br>G</td></tr>
+<tr><td><a href="Spils.html#EXCEPTIONGSFailure">GSFailure</a> [<a href="Spils.html">Spils</a>]</td>
+<td><div class="info">
+Raised when a Gram-Schmidt routine fails.
+</div>
+</td></tr>
+<tr><td align="left"><br>I</td></tr>
+<tr><td><a href="Ida.html#EXCEPTIONIdNotSet">IdNotSet</a> [<a href="Ida.html">Ida</a>]</td>
+<td><div class="info">
+Variable ids are required but not set.
+</div>
+</td></tr>
+<tr><td><a href="Ida.html#EXCEPTIONIllInput">IllInput</a> [<a href="Ida.html">Ida</a>]</td>
+<td><div class="info">
+Raised on missing or illegal solver inputs.
+</div>
+</td></tr>
+<tr><td><a href="Kinsol.html#EXCEPTIONIllInput">IllInput</a> [<a href="Kinsol.html">Kinsol</a>]</td>
+<td><div class="info">
+An input parameter was invalid.
+</div>
+</td></tr>
+<tr><td><a href="Cvode.html#EXCEPTIONIllInput">IllInput</a> [<a href="Cvode.html">Cvode</a>]</td>
+<td><div class="info">
+Raised on missing or illegal solver inputs.
+</div>
+</td></tr>
+<tr><td><a href="Nvector.html#EXCEPTIONIncompatibleNvector">IncompatibleNvector</a> [<a href="Nvector.html">Nvector</a>]</td>
+<td><div class="info">
+Raised when an nvector argument is incompatible with a session.
+</div>
+</td></tr>
+<tr><td><a href="Nvector_parallel.html#EXCEPTIONIncorrectGlobalSize">IncorrectGlobalSize</a> [<a href="Nvector_parallel.html">Nvector_parallel</a>]</td>
+<td><div class="info">
+Raised by make if the given global length is not consistent with the sum of
+    local lengths across all parallel instances.
+</div>
+</td></tr>
+<tr><td><a href="Dls.BandMatrix.html#EXCEPTIONInvalidated">Invalidated</a> [<a href="Dls.BandMatrix.html">Dls.BandMatrix</a>]</td>
+<td><div class="info">
+Raised on an attempt to access a value that has become invalid.
+</div>
+</td></tr>
+<tr><td><a href="Dls.DenseMatrix.html#EXCEPTIONInvalidated">Invalidated</a> [<a href="Dls.DenseMatrix.html">Dls.DenseMatrix</a>]</td>
+<td><div class="info">
+Raised on an attempt to access a value that has become invalid.
+</div>
+</td></tr>
+<tr><td align="left"><br>L</td></tr>
+<tr><td><a href="Kinsol.html#EXCEPTIONLineSearchBetaConditionFailure">LineSearchBetaConditionFailure</a> [<a href="Kinsol.html">Kinsol</a>]</td>
+<td><div class="info">
+The line search algorithm could not satisfy the “beta-condition” for
+    <code class="code">mxnbcf + 1</code> nonlinear iterations.
+</div>
+</td></tr>
+<tr><td><a href="Kinsol.html#EXCEPTIONLineSearchNonConvergence">LineSearchNonConvergence</a> [<a href="Kinsol.html">Kinsol</a>]</td>
+<td><div class="info">
+Line search could not find an iterate sufficiently distinct
+    from the current one, or an iterate satisfying the sufficient decrease
+    condition.
+</div>
+</td></tr>
+<tr><td><a href="Ida.html#EXCEPTIONLinearInitFailure">LinearInitFailure</a> [<a href="Ida.html">Ida</a>]</td>
+<td><div class="info">
+Linear solver initialization failed.
+</div>
+</td></tr>
+<tr><td><a href="Cvode.html#EXCEPTIONLinearInitFailure">LinearInitFailure</a> [<a href="Cvode.html">Cvode</a>]</td>
+<td><div class="info">
+Linear solver initialization failed.
+</div>
+</td></tr>
+<tr><td><a href="Ida.html#EXCEPTIONLinearSetupFailure">LinearSetupFailure</a> [<a href="Ida.html">Ida</a>]</td>
+<td><div class="info">
+Linear solver setup failed in an unrecoverable manner.
+</div>
+</td></tr>
+<tr><td><a href="Kinsol.html#EXCEPTIONLinearSetupFailure">LinearSetupFailure</a> [<a href="Kinsol.html">Kinsol</a>]</td>
+<td><div class="info">
+The <a href="Kinsol.Spils.html#TYPEprec_setup_fn"><code class="code"><span class="constructor">Kinsol</span>.<span class="constructor">Spils</span>.prec_setup_fn</code></a> callback failed unrecoverably.
+</div>
+</td></tr>
+<tr><td><a href="Cvode.html#EXCEPTIONLinearSetupFailure">LinearSetupFailure</a> [<a href="Cvode.html">Cvode</a>]</td>
+<td><div class="info">
+Linear solver setup failed in an unrecoverable manner.
+</div>
+</td></tr>
+<tr><td><a href="Ida.html#EXCEPTIONLinearSolveFailure">LinearSolveFailure</a> [<a href="Ida.html">Ida</a>]</td>
+<td><div class="info">
+Linear solver solution failed in an unrecoverable manner.
+</div>
+</td></tr>
+<tr><td><a href="Cvode.html#EXCEPTIONLinearSolveFailure">LinearSolveFailure</a> [<a href="Cvode.html">Cvode</a>]</td>
+<td><div class="info">
+Linear solver solution failed in an unrecoverable manner.
+</div>
+</td></tr>
+<tr><td><a href="Kinsol.html#EXCEPTIONLinearSolverFailure">LinearSolverFailure</a> [<a href="Kinsol.html">Kinsol</a>]</td>
+<td><div class="info">
+Either <a href="Kinsol.Spils.html#TYPEprec_solve_fn"><code class="code"><span class="constructor">Kinsol</span>.<span class="constructor">Spils</span>.prec_solve_fn</code></a> failed unrecoverably or the linear solver
+    encountered an error condition.
+</div>
+</td></tr>
+<tr><td><a href="Kinsol.html#EXCEPTIONLinearSolverInitFailure">LinearSolverInitFailure</a> [<a href="Kinsol.html">Kinsol</a>]</td>
+<td><div class="info">
+Linear solver initialization failed.
+</div>
+</td></tr>
+<tr><td><a href="Kinsol.html#EXCEPTIONLinearSolverNoRecovery">LinearSolverNoRecovery</a> [<a href="Kinsol.html">Kinsol</a>]</td>
+<td><div class="info">
+The <a href="Kinsol.Spils.html#TYPEprec_solve_fn"><code class="code"><span class="constructor">Kinsol</span>.<span class="constructor">Spils</span>.prec_solve_fn</code></a> callback raised <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a>
+    but the preconditioner is already current.
+</div>
+</td></tr>
+<tr><td><a href="Ida.html#EXCEPTIONLinesearchFailure">LinesearchFailure</a> [<a href="Ida.html">Ida</a>]</td>
+<td><div class="info">
+Linesearch could not find a solution with a step larger than steptol in
+    weighted RMS norm.
+</div>
+</td></tr>
+<tr><td align="left"><br>M</td></tr>
+<tr><td><a href="Kinsol.html#EXCEPTIONMaxIterationsReached">MaxIterationsReached</a> [<a href="Kinsol.html">Kinsol</a>]</td>
+<td><div class="info">
+The maximum number of nonlinear iterations has been reached.
+</div>
+</td></tr>
+<tr><td><a href="Kinsol.html#EXCEPTIONMaxNewtonStepExceeded">MaxNewtonStepExceeded</a> [<a href="Kinsol.html">Kinsol</a>]</td>
+<td><div class="info">
+Five consecutive steps exceed the maximum newton step.
+</div>
+</td></tr>
+<tr><td align="left"><br>N</td></tr>
+<tr><td><a href="Idas.Adjoint.html#EXCEPTIONNoBackwardProblem">NoBackwardProblem</a> [<a href="Idas.Adjoint.html">Idas.Adjoint</a>]</td>
+<td><div class="info">
+No backward problem has been created.
+</div>
+</td></tr>
+<tr><td><a href="Cvodes.Adjoint.html#EXCEPTIONNoBackwardProblem">NoBackwardProblem</a> [<a href="Cvodes.Adjoint.html">Cvodes.Adjoint</a>]</td>
+<td><div class="info">
+No backward problem has been created.
+</div>
+</td></tr>
+<tr><td><a href="Idas.Adjoint.html#EXCEPTIONNoForwardCall">NoForwardCall</a> [<a href="Idas.Adjoint.html">Idas.Adjoint</a>]</td>
+<td><div class="info">
+Neither <a href="Idas.Adjoint.html#VALforward_normal"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.forward_normal</code></a> nor <a href="Idas.Adjoint.html#VALforward_one_step"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.forward_one_step</code></a> has been called.
+</div>
+</td></tr>
+<tr><td><a href="Cvodes.Adjoint.html#EXCEPTIONNoForwardCall">NoForwardCall</a> [<a href="Cvodes.Adjoint.html">Cvodes.Adjoint</a>]</td>
+<td><div class="info">
+Neither <a href="Cvodes.Adjoint.html#VALforward_normal"><code class="code"><span class="constructor">Cvodes</span>.<span class="constructor">Adjoint</span>.forward_normal</code></a> nor <a href="Cvodes.Adjoint.html#VALforward_one_step"><code class="code"><span class="constructor">Cvodes</span>.<span class="constructor">Adjoint</span>.forward_one_step</code></a> has been called.
+</div>
+</td></tr>
+<tr><td><a href="Ida.html#EXCEPTIONNoRecovery">NoRecovery</a> [<a href="Ida.html">Ida</a>]</td>
+<td><div class="info">
+A recoverable error occurred in a callback but no recovery was possible.
+</div>
+</td></tr>
+<tr><td><a href="Sundials.html#EXCEPTIONNonPositiveEwt">NonPositiveEwt</a> [<a href="Sundials.html">Sundials</a>]</td>
+<td><div class="info">
+Raised by error-weight functions on non-positive error weights.
+</div>
+</td></tr>
+<tr><td align="left"><br>O</td></tr>
+<tr><td><a href="Nvector_custom.html#EXCEPTIONOperationNotSupported">OperationNotSupported</a> [<a href="Nvector_custom.html">Nvector_custom</a>]</td>
+<td><div class="info">
+Thrown for operations not provided to <a href="Nvector_custom.MakeOps.html"><code class="code"><span class="constructor">Nvector_custom</span>.<span class="constructor">MakeOps</span></code></a>
+</div>
+</td></tr>
+<tr><td align="left"><br>P</td></tr>
+<tr><td><a href="Spils.html#EXCEPTIONPSetFailure">PSetFailure</a> [<a href="Spils.html">Spils</a>]</td>
+<td><div class="info">
+Raised when a preconditioner setup routine fails.
+</div>
+</td></tr>
+<tr><td><a href="Spils.html#EXCEPTIONPSolveFailure">PSolveFailure</a> [<a href="Spils.html">Spils</a>]</td>
+<td><div class="info">
+Raised when a preconditioner solver fails.
+</div>
+</td></tr>
+<tr><td align="left"><br>Q</td></tr>
+<tr><td><a href="Spils.html#EXCEPTIONQRSolFailure">QRSolFailure</a> [<a href="Spils.html">Spils</a>]</td>
+<td><div class="info">
+Raised QR solution finds a singular result.
+</div>
+</td></tr>
+<tr><td><a href="Spils.html#EXCEPTIONQRfactFailure">QRfactFailure</a> [<a href="Spils.html">Spils</a>]</td>
+<td><div class="info">
+Raised when QR factorization yields a singular matrix.
+</div>
+</td></tr>
+<tr><td><a href="Idas.Quadrature.html#EXCEPTIONQuadNotInitialized">QuadNotInitialized</a> [<a href="Idas.Quadrature.html">Idas.Quadrature</a>]</td>
+<td><div class="info">
+Quadrature integration was not initialized.
+</div>
+</td></tr>
+<tr><td><a href="Cvodes.Quadrature.html#EXCEPTIONQuadNotInitialized">QuadNotInitialized</a> [<a href="Cvodes.Quadrature.html">Cvodes.Quadrature</a>]</td>
+<td><div class="info">
+Quadrature integration was not initialized.
+</div>
+</td></tr>
+<tr><td><a href="Idas.Quadrature.html#EXCEPTIONQuadRhsFuncFailure">QuadRhsFuncFailure</a> [<a href="Idas.Quadrature.html">Idas.Quadrature</a>]</td>
+<td><div class="info">
+The quadrature function failed in an unrecoverable manner.
+</div>
+</td></tr>
+<tr><td><a href="Cvodes.Quadrature.html#EXCEPTIONQuadRhsFuncFailure">QuadRhsFuncFailure</a> [<a href="Cvodes.Quadrature.html">Cvodes.Quadrature</a>]</td>
+<td><div class="info">
+The quadrature function failed in an unrecoverable manner.
+</div>
+</td></tr>
+<tr><td><a href="Idas.Sensitivity.Quadrature.html#EXCEPTIONQuadSensNotInitialized">QuadSensNotInitialized</a> [<a href="Idas.Sensitivity.Quadrature.html">Idas.Sensitivity.Quadrature</a>]</td>
+<td><div class="info">
+Quadrature integration was not initialized.
+</div>
+</td></tr>
+<tr><td><a href="Cvodes.Sensitivity.Quadrature.html#EXCEPTIONQuadSensNotInitialized">QuadSensNotInitialized</a> [<a href="Cvodes.Sensitivity.Quadrature.html">Cvodes.Sensitivity.Quadrature</a>]</td>
+<td><div class="info">
+Quadrature integration was not initialized.
+</div>
+</td></tr>
+<tr><td><a href="Idas.Sensitivity.Quadrature.html#EXCEPTIONQuadSensRhsFuncFailure">QuadSensRhsFuncFailure</a> [<a href="Idas.Sensitivity.Quadrature.html">Idas.Sensitivity.Quadrature</a>]</td>
+<td><div class="info">
+The sensitivity quadrature function failed in an unrecoverable
+            manner.
+</div>
+</td></tr>
+<tr><td><a href="Cvodes.Sensitivity.Quadrature.html#EXCEPTIONQuadSensRhsFuncFailure">QuadSensRhsFuncFailure</a> [<a href="Cvodes.Sensitivity.Quadrature.html">Cvodes.Sensitivity.Quadrature</a>]</td>
+<td><div class="info">
+The sensitivity quadrature function failed in an unrecoverable
+            manner.
+</div>
+</td></tr>
+<tr><td align="left"><br>R</td></tr>
+<tr><td><a href="Sundials.html#EXCEPTIONRecoverableFailure">RecoverableFailure</a> [<a href="Sundials.html">Sundials</a>]</td>
+<td><div class="info">
+Indicates a recoverable failure within a callback function.
+</div>
+</td></tr>
+<tr><td><a href="Idas.Quadrature.html#EXCEPTIONRepeatedQuadRhsFuncFailure">RepeatedQuadRhsFuncFailure</a> [<a href="Idas.Quadrature.html">Idas.Quadrature</a>]</td>
+<td><div class="info">
+Convergence test failures occurred too many times due to repeated
+        recoverable errors in the quadrature function.
+</div>
+</td></tr>
+<tr><td><a href="Cvodes.Quadrature.html#EXCEPTIONRepeatedQuadRhsFuncFailure">RepeatedQuadRhsFuncFailure</a> [<a href="Cvodes.Quadrature.html">Cvodes.Quadrature</a>]</td>
+<td><div class="info">
+Convergence test failures occurred too many times due to repeated
+        recoverable errors in the quadrature function.
+</div>
+</td></tr>
+<tr><td><a href="Idas.Sensitivity.Quadrature.html#EXCEPTIONRepeatedQuadSensRhsFuncFailure">RepeatedQuadSensRhsFuncFailure</a> [<a href="Idas.Sensitivity.Quadrature.html">Idas.Sensitivity.Quadrature</a>]</td>
+<td><div class="info">
+Convergence test failures occurred too many times due to repeated
+            recoverable errors in the quadrature function.
+</div>
+</td></tr>
+<tr><td><a href="Cvodes.Sensitivity.Quadrature.html#EXCEPTIONRepeatedQuadSensRhsFuncFailure">RepeatedQuadSensRhsFuncFailure</a> [<a href="Cvodes.Sensitivity.Quadrature.html">Cvodes.Sensitivity.Quadrature</a>]</td>
+<td><div class="info">
+Convergence test failures occurred too many times due to repeated
+            recoverable errors in the quadrature function.
+</div>
+</td></tr>
+<tr><td><a href="Ida.html#EXCEPTIONRepeatedResFuncFailure">RepeatedResFuncFailure</a> [<a href="Ida.html">Ida</a>]</td>
+<td><div class="info">
+Too many convergence test failures, or unable to estimate the initial step
+    size, due to repeated recoverable errors in the residual function.
+</div>
+</td></tr>
+<tr><td><a href="Cvode.html#EXCEPTIONRepeatedRhsFuncFailure">RepeatedRhsFuncFailure</a> [<a href="Cvode.html">Cvode</a>]</td>
+<td><div class="info">
+Too many convergence test failures, or unable to estimate the initial step
+    size, due to repeated recoverable errors in the right-hand side function.
+</div>
+</td></tr>
+<tr><td><a href="Idas.Sensitivity.html#EXCEPTIONRepeatedSensResFuncFailure">RepeatedSensResFuncFailure</a> [<a href="Idas.Sensitivity.html">Idas.Sensitivity</a>]</td>
+<td><div class="info">
+Too many convergence test failures, or unable to estimate the initial
+        step size, due to repeated recoverable errors in the sensitivity
+        residual function.
+</div>
+</td></tr>
+<tr><td><a href="Cvodes.Sensitivity.html#EXCEPTIONRepeatedSensRhsFuncFailure">RepeatedSensRhsFuncFailure</a> [<a href="Cvodes.Sensitivity.html">Cvodes.Sensitivity</a>]</td>
+<td><div class="info">
+Too many convergence test failures, or unable to estimate the initial
+        step size, due to repeated recoverable errors in the sensitivity
+        function.
+</div>
+</td></tr>
+<tr><td><a href="Kinsol.html#EXCEPTIONRepeatedSystemFunctionFailure">RepeatedSystemFunctionFailure</a> [<a href="Kinsol.html">Kinsol</a>]</td>
+<td><div class="info">
+The <a href="Kinsol.html#TYPEsysfn"><code class="code"><span class="constructor">Kinsol</span>.sysfn</code></a> callback raised <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a> repeatedly.
+</div>
+</td></tr>
+<tr><td><a href="Ida.html#EXCEPTIONResFuncFailure">ResFuncFailure</a> [<a href="Ida.html">Ida</a>]</td>
+<td><div class="info">
+The residual function failed in an unrecoverable manner.
+</div>
+</td></tr>
+<tr><td><a href="Cvode.html#EXCEPTIONRhsFuncFailure">RhsFuncFailure</a> [<a href="Cvode.html">Cvode</a>]</td>
+<td><div class="info">
+The right-hand side function failed in an unrecoverable manner.
+</div>
+</td></tr>
+<tr><td><a href="Ida.html#EXCEPTIONRootFuncFailure">RootFuncFailure</a> [<a href="Ida.html">Ida</a>]</td>
+<td><div class="info">
+The rootfinding function failed.
+</div>
+</td></tr>
+<tr><td><a href="Cvode.html#EXCEPTIONRootFuncFailure">RootFuncFailure</a> [<a href="Cvode.html">Cvode</a>]</td>
+<td><div class="info">
+The rootfinding function failed.
+</div>
+</td></tr>
+<tr><td align="left"><br>S</td></tr>
+<tr><td><a href="Idas.Sensitivity.html#EXCEPTIONSensNotInitialized">SensNotInitialized</a> [<a href="Idas.Sensitivity.html">Idas.Sensitivity</a>]</td>
+<td><div class="info">
+Sensitivity analysis was not initialized.
+</div>
+</td></tr>
+<tr><td><a href="Cvodes.Sensitivity.html#EXCEPTIONSensNotInitialized">SensNotInitialized</a> [<a href="Cvodes.Sensitivity.html">Cvodes.Sensitivity</a>]</td>
+<td><div class="info">
+Sensitivity analysis was not initialized.
+</div>
+</td></tr>
+<tr><td><a href="Idas.Sensitivity.html#EXCEPTIONSensResFuncFailure">SensResFuncFailure</a> [<a href="Idas.Sensitivity.html">Idas.Sensitivity</a>]</td>
+<td><div class="info">
+The sensitivity residual function failed in an unrecoverable manner.
+</div>
+</td></tr>
+<tr><td><a href="Cvodes.Sensitivity.html#EXCEPTIONSensRhsFuncFailure">SensRhsFuncFailure</a> [<a href="Cvodes.Sensitivity.html">Cvodes.Sensitivity</a>]</td>
+<td><div class="info">
+The sensitivity function failed in an unrecoverable manner.
+</div>
+</td></tr>
+<tr><td><a href="Kinsol.html#EXCEPTIONSystemFunctionFailure">SystemFunctionFailure</a> [<a href="Kinsol.html">Kinsol</a>]</td>
+<td><div class="info">
+The <a href="Kinsol.html#TYPEsysfn"><code class="code"><span class="constructor">Kinsol</span>.sysfn</code></a> callback failed unrecoverably.
+</div>
+</td></tr>
+<tr><td align="left"><br>T</td></tr>
+<tr><td><a href="Cvode.html#EXCEPTIONTooClose">TooClose</a> [<a href="Cvode.html">Cvode</a>]</td>
+<td><div class="info">
+The initial and final times are too close to each other and an initial step
+    size was not specified.
+</div>
+</td></tr>
+<tr><td><a href="Ida.html#EXCEPTIONTooMuchAccuracy">TooMuchAccuracy</a> [<a href="Ida.html">Ida</a>]</td>
+<td><div class="info">
+The requested accuracy could not be satisfied.
+</div>
+</td></tr>
+<tr><td><a href="Cvode.html#EXCEPTIONTooMuchAccuracy">TooMuchAccuracy</a> [<a href="Cvode.html">Cvode</a>]</td>
+<td><div class="info">
+The requested accuracy could not be satisfied.
+</div>
+</td></tr>
+<tr><td><a href="Ida.html#EXCEPTIONTooMuchWork">TooMuchWork</a> [<a href="Ida.html">Ida</a>]</td>
+<td><div class="info">
+The requested time could not be reached in <code class="code">mxstep</code> internal steps.
+</div>
+</td></tr>
+<tr><td><a href="Cvode.html#EXCEPTIONTooMuchWork">TooMuchWork</a> [<a href="Cvode.html">Cvode</a>]</td>
+<td><div class="info">
+The requested time could not be reached in <code class="code">mxstep</code> internal steps.
+</div>
+</td></tr>
+<tr><td align="left"><br>U</td></tr>
+<tr><td><a href="Cvodes.Quadrature.html#EXCEPTIONUnrecoverableQuadRhsFuncFailure">UnrecoverableQuadRhsFuncFailure</a> [<a href="Cvodes.Quadrature.html">Cvodes.Quadrature</a>]</td>
+<td><div class="info">
+The quadrature function had a recoverable error, but no
+        recovery was possible.
+</div>
+</td></tr>
+<tr><td><a href="Cvodes.Sensitivity.Quadrature.html#EXCEPTIONUnrecoverableQuadSensRhsFuncFailure">UnrecoverableQuadSensRhsFuncFailure</a> [<a href="Cvodes.Sensitivity.Quadrature.html">Cvodes.Sensitivity.Quadrature</a>]</td>
+<td><div class="info">
+The sensitivity quadrature function had a recoverable error, but no
+            recovery was possible.
+</div>
+</td></tr>
+<tr><td><a href="Cvode.html#EXCEPTIONUnrecoverableRhsFuncFailure">UnrecoverableRhsFuncFailure</a> [<a href="Cvode.html">Cvode</a>]</td>
+<td><div class="info">
+The right-hand side function had a recoverable error, but no recovery was
+    possible.
+</div>
+</td></tr>
+<tr><td><a href="Cvodes.Sensitivity.html#EXCEPTIONUnrecoverableSensRhsFuncFailure">UnrecoverableSensRhsFuncFailure</a> [<a href="Cvodes.Sensitivity.html">Cvodes.Sensitivity</a>]</td>
+<td><div class="info">
+The sensitivity function had a recoverable error, but no recovery was
+        possible.
+</div>
+</td></tr>
+<tr><td align="left"><br>Z</td></tr>
+<tr><td><a href="Spils.html#EXCEPTIONZeroDiagonalElement">ZeroDiagonalElement</a> [<a href="Spils.html">Spils</a>]</td>
+<td><div class="info">
+Raised by <a href="Spils.html#VALqr_fact"><code class="code"><span class="constructor">Spils</span>.qr_fact</code></a> and <a href="Spils.html#VALqr_sol"><code class="code"><span class="constructor">Spils</span>.qr_sol</code></a> on a zero diagonal element during
+    factorization.
+</div>
+</td></tr>
+<tr><td><a href="Dls.html#EXCEPTIONZeroDiagonalElement">ZeroDiagonalElement</a> [<a href="Dls.html">Dls</a>]</td>
+<td><div class="info">
+Raised by <a href="Dls.DenseMatrix.html#VALgetrf"><code class="code"><span class="constructor">Dls</span>.<span class="constructor">DenseMatrix</span>.getrf</code></a> and <a href="Dls.ArrayDenseMatrix.html#VALgetrf"><code class="code"><span class="constructor">Dls</span>.<span class="constructor">ArrayDenseMatrix</span>.getrf</code></a> on a zero
+    diagonal element during factorization.
+</div>
+</td></tr>
+</table>
+</body>
+</html>

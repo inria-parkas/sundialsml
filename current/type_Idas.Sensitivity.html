@@ -1,0 +1,157 @@
+<html><head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Dls" rel="Chapter" href="Dls.html">
+<link title="Spils" rel="Chapter" href="Spils.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html"><title>Sundials/ML 2.5.0p0 : Idas.Sensitivity</title>
+</head>
+<body>
+<code class="code"><span class="keyword">sig</span><br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;sensresfn_args&nbsp;=&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;t&nbsp;:&nbsp;float;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;y&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;y'&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;res&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;yS&nbsp;:&nbsp;<span class="keywordsign">'</span>d&nbsp;array;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;yS'&nbsp;:&nbsp;<span class="keywordsign">'</span>d&nbsp;array;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;tmp&nbsp;:&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Ida_impl</span>.triple;<br>
+&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;sensresfn&nbsp;=&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Idas</span>.<span class="constructor">Sensitivity</span>.sensresfn_args&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;sens_method&nbsp;=&nbsp;<span class="constructor">Simultaneous</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Staggered</span><br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;sens_params&nbsp;=&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;pvals&nbsp;:&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.t&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;pbar&nbsp;:&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.t&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;plist&nbsp;:&nbsp;int&nbsp;array&nbsp;option;<br>
+&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;no_sens_params&nbsp;:&nbsp;<span class="constructor">Idas</span>.<span class="constructor">Sensitivity</span>.sens_params<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;tolerance&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">SStolerances</span>&nbsp;<span class="keyword">of</span>&nbsp;float&nbsp;*&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">SVtolerances</span>&nbsp;<span class="keyword">of</span>&nbsp;float&nbsp;*&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;array<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">EEtolerances</span><br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;init&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Idas</span>.<span class="constructor">Sensitivity</span>.tolerance&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Idas</span>.<span class="constructor">Sensitivity</span>.sens_method&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Idas</span>.<span class="constructor">Sensitivity</span>.sens_params&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?fS:<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Idas</span>.<span class="constructor">Sensitivity</span>.sensresfn&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;reinit&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Idas</span>.<span class="constructor">Sensitivity</span>.sens_method&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;toggle_off&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Quadrature</span>&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">sig</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;quadsensrhsfn_args&nbsp;=&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;t&nbsp;:&nbsp;float;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;y&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;y'&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;yS&nbsp;:&nbsp;<span class="keywordsign">'</span>d&nbsp;array;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;yS'&nbsp;:&nbsp;<span class="keywordsign">'</span>d&nbsp;array;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;q&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tmp&nbsp;:&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Ida_impl</span>.triple;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;quadsensrhsfn&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Idas</span>.<span class="constructor">Sensitivity</span>.<span class="constructor">Quadrature</span>.quadsensrhsfn_args&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">'</span>d&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;init&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?fQS:<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Idas</span>.<span class="constructor">Sensitivity</span>.<span class="constructor">Quadrature</span>.quadsensrhsfn&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;reinit&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;tolerance&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">NoStepSizeControl</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">SStolerances</span>&nbsp;<span class="keyword">of</span>&nbsp;float&nbsp;*&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">SVtolerances</span>&nbsp;<span class="keyword">of</span>&nbsp;float&nbsp;*&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;array<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">EEtolerances</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_tolerances&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Idas</span>.<span class="constructor">Sensitivity</span>.<span class="constructor">Quadrature</span>.tolerance&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get1&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_dky&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_dky1&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_rhs_evals&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_err_test_fails&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_err_weights&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_stats&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;*&nbsp;int<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">exception</span>&nbsp;<span class="constructor">QuadSensNotInitialized</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">exception</span>&nbsp;<span class="constructor">QuadSensRhsFuncFailure</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">exception</span>&nbsp;<span class="constructor">FirstQuadSensRhsFuncFailure</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">exception</span>&nbsp;<span class="constructor">RepeatedQuadSensRhsFuncFailure</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;calc_ic_ya_yd'&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?y:(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?y':(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?s:(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?s':(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?varid:(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;calc_ic_y&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?y:(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;?s:(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_dky&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get1&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_dky1&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_tolerances&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Idas</span>.<span class="constructor">Sensitivity</span>.tolerance&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_err_con&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;bool&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;dq_method&nbsp;=&nbsp;<span class="constructor">DQCentered</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">DQForward</span><br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_dq_method&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Idas</span>.<span class="constructor">Sensitivity</span>.dq_method&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_max_nonlin_iters&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_res_evals&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_res_evals_sens&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_err_test_fails&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_lin_solv_setups&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;sensitivity_stats&nbsp;=&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;num_sens_evals&nbsp;:&nbsp;int;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;num_res_evals&nbsp;:&nbsp;int;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;num_err_test_fails&nbsp;:&nbsp;int;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;num_lin_solv_setups&nbsp;:&nbsp;int;<br>
+&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_stats&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Idas</span>.<span class="constructor">Sensitivity</span>.sensitivity_stats<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_err_weights&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_nonlin_solv_iters&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_nonlin_solv_conv_fails&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_nonlin_solv_stats&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;*&nbsp;int<br>
+&nbsp;&nbsp;<span class="keyword">exception</span>&nbsp;<span class="constructor">SensNotInitialized</span><br>
+&nbsp;&nbsp;<span class="keyword">exception</span>&nbsp;<span class="constructor">SensResFuncFailure</span><br>
+&nbsp;&nbsp;<span class="keyword">exception</span>&nbsp;<span class="constructor">RepeatedSensResFuncFailure</span><br>
+&nbsp;&nbsp;<span class="keyword">exception</span>&nbsp;<span class="constructor">BadSensIdentifier</span><br>
+<span class="keyword">end</span></code></body></html>

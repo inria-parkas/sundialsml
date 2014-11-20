@@ -1,0 +1,242 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Idas.Adjoint.Dls.html">
+<link rel="next" href="Idas.Adjoint.Quadrature.html">
+<link rel="Up" href="Idas.Adjoint.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Dls" rel="Chapter" href="Dls.html">
+<link title="Spils" rel="Chapter" href="Spils.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html"><link title="Preconditioners" rel="Section" href="#precond">
+<link title="Solvers" rel="Section" href="#lsolvers">
+<link title="Solver parameters" rel="Section" href="#set">
+<link title="Solver statistics" rel="Section" href="#stats">
+<link title="Low-level solver manipulation" rel="Section" href="#lowlevel">
+<title>Sundials/ML 2.5.0p0 : Idas.Adjoint.Spils</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Idas.Adjoint.Dls.html" title="Idas.Adjoint.Dls">Previous</a>
+&nbsp;<a class="up" href="Idas.Adjoint.html" title="Idas.Adjoint">Up</a>
+&nbsp;<a class="post" href="Idas.Adjoint.Quadrature.html" title="Idas.Adjoint.Quadrature">Next</a>
+</div>
+<h1>Module <a href="type_Idas.Adjoint.Spils.html">Idas.Adjoint.Spils</a></h1>
+
+<pre><span class="keyword">module</span> Spils: <code class="code"><span class="keyword">sig</span></code> <a href="Idas.Adjoint.Spils.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+Scaled Preconditioned Iterative Linear Solvers<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_output_b">Optional output functions for the backward problem.</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:psolve_b">IDASpilsPrecSolveFnB</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:psetup_b">IDASpilsPrecSetupFnB</a></div></div>
+<hr width="100%">
+<br>
+<h3 id="precond">Preconditioners</h3><br>
+
+<pre><span id="TYPEprec_solve_fn"><span class="keyword">type</span> <code class="type">'d</code> prec_solve_fn</span> = <code class="type">('d, 'd) <a href="Idas.Adjoint.html#TYPEjacobian_arg">Idas.Adjoint.jacobian_arg</a> -> 'd -> 'd -> float -> unit</code> </pre>
+<div class="info ">
+Callback functions that solve a linear system involving a
+            preconditioner matrix.
+            In the call <code class="code">prec_solve_fn jac r z delta</code>,
+            <code class="code">jac</code> is a <a href="Idas.Adjoint.html#TYPEjacobian_arg"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.jacobian_arg</code></a> with one work vector,
+            <code class="code">r</code> is the right-hand side vector,
+            <code class="code">z</code> is computed to solve $Pz = r$,
+            and <code class="code">delta</code> is the input tolerance.
+            $P$ is a preconditioner matrix, which approximates, however crudely,
+            the Jacobian matrix
+            $\frac{\partial F}{\partial y} + \mathtt{arg.jac\_coef}\frac{\partial F}{\partial\dot{y}}$.
+            If the solution is found via an iterative method, it must satisfy
+            $\sqrt{\sum_i (\mathit{Res}_i \cdot \mathit{ewt}_i)^2}
+                  < \mathtt{delta}$,
+            where $\mathit{Res} = r - Pz$ and $\mathit{ewt}$ comes from
+            <a href="Idas.Adjoint.html#VALget_err_weights"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.get_err_weights</code></a>.
+<p>
+
+            Raising <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a> indicates a recoverable
+            error. Any other exception is treated as an unrecoverable error.
+<p>
+
+            <div class="warningbox"> The elements of <code class="code">jac</code>, <code class="code">r</code>, and <code class="code">z</code> should not
+                     be accessed after the function has returned.</div><br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:psolve_b">IDASpilsPrecSolveFnB</a></div></div>
+
+
+<pre><span id="TYPEprec_setup_fn"><span class="keyword">type</span> <code class="type">'d</code> prec_setup_fn</span> = <code class="type">('d <a href="Idas.Adjoint.html#TYPEtriple">Idas.Adjoint.triple</a>, 'd) <a href="Idas.Adjoint.html#TYPEjacobian_arg">Idas.Adjoint.jacobian_arg</a> -> unit</code> </pre>
+<div class="info ">
+Callback functions that preprocess or evaluate Jacobian-related data
+            need by <a href="Idas.Adjoint.Spils.html#TYPEprec_solve_fn"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.<span class="constructor">Spils</span>.prec_solve_fn</code></a>. The sole argument is a <a href="Idas.Adjoint.html#TYPEjacobian_arg"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.jacobian_arg</code></a>
+            with three work vectors.
+<p>
+
+            Raising <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a> indicates a recoverable
+            error. Any other exception is treated as an unrecoverable error.
+<p>
+
+            <div class="warningbox"> The elements of the argument should not be accessed after
+                     the function has returned.</div><br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:psetup_b">IDASpilsPrecSetupFnB</a></div></div>
+
+
+<pre><span id="TYPEjac_times_vec_fn"><span class="keyword">type</span> <code class="type">'d</code> jac_times_vec_fn</span> = <code class="type">('d, 'd) <a href="Idas.Adjoint.html#TYPEjacobian_arg">Idas.Adjoint.jacobian_arg</a> -> 'd -> 'd -> unit</code> </pre>
+<div class="info ">
+Callback functions that compute the Jacobian times a vector. In the
+            call <code class="code">jac_times_vec_fn arg v jv</code>, <code class="code">arg</code> is a <a href="Idas.Adjoint.html#TYPEjacobian_arg"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.jacobian_arg</code></a> with two
+            work vectors, <code class="code">v</code> is the vector multiplying the Jacobian, and <code class="code">jv</code> is
+            the vector in which to store the
+            result—$\mathtt{jv} = J\mathtt{v}$.
+<p>
+
+            Raising <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a> indicates a recoverable error.
+            Any other exception is treated as an unrecoverable error.
+<p>
+
+            <div class="warningbox"> Neither the elements of <code class="code">arg</code> nor <code class="code">v</code> or <code class="code">jv</code> should be
+                     accessed after the function has returned.</div><br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:jactimesvec_b">IDASpilsJacTimesVecFnB</a></div></div>
+
+
+<pre><span id="TYPEpreconditioner"><span class="keyword">type</span> <code class="type">('d, 'k)</code> preconditioner</span> = <code class="type">('d, 'k) AdjointTypes.SpilsTypes.preconditioner</code> </pre>
+<div class="info ">
+Specifies a preconditioner and its callback functions.
+            The following functions and those in <a href="Idas_bbd.html"><code class="code"><span class="constructor">Idas_bbd</span></code></a> construct
+            preconditioners.
+<p>
+
+            The <a href="Idas.Adjoint.Spils.html#TYPEprec_solve_fn"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.<span class="constructor">Spils</span>.prec_solve_fn</code></a> is usually mandatory. The <a href="Idas.Adjoint.Spils.html#TYPEprec_setup_fn"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.<span class="constructor">Spils</span>.prec_setup_fn</code></a> can be
+            omitted if not needed. If the <a href="Idas.Adjoint.Spils.html#TYPEjac_times_vec_fn"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.<span class="constructor">Spils</span>.jac_times_vec_fn</code></a> is omitted, a
+            default implementation based on difference quotients is used.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#SECTION00729400000000000000">IDASpilsSetPreconditionerB</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#SECTION00729400000000000000">IDASpilsSetJacTimesVecFnB</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:psolve_b">IDASpilsPrecSolveFnB</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:psetup_b">IDASpilsPrecSetupFnB</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:jactimesvec_b">IDASpilsJacTimesVecFnB</a></div></div>
+
+
+<pre><span id="VALprec_none"><span class="keyword">val</span> prec_none</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.Spils.html#TYPEpreconditioner">preconditioner</a></code></pre><div class="info ">
+No preconditioning.<br>
+</div>
+
+<pre><span id="VALprec_left"><span class="keyword">val</span> prec_left</span> : <code class="type">?setup:'d <a href="Idas.Adjoint.Spils.html#TYPEprec_setup_fn">prec_setup_fn</a> -><br>       ?jac_times_vec:'d <a href="Idas.Adjoint.Spils.html#TYPEjac_times_vec_fn">jac_times_vec_fn</a> -><br>       'd <a href="Idas.Adjoint.Spils.html#TYPEprec_solve_fn">prec_solve_fn</a> -><br>       ('d, 'k) <a href="Idas.Adjoint.Spils.html#TYPEpreconditioner">preconditioner</a></code></pre><div class="info ">
+Left preconditioning. $Pz = r$, where $P$ approximates, perhaps
+            crudely, $J = \frac{\partial F}{\partial y} + c_j\frac{\partial F}{\partial\dot{y}}$.<br>
+</div>
+<br>
+<h3 id="lsolvers">Solvers</h3><br>
+
+<pre><span id="VALspgmr"><span class="keyword">val</span> spgmr</span> : <code class="type">?maxl:int -><br>       ?max_restarts:int -><br>       ('d, 'k) <a href="Idas.Adjoint.Spils.html#TYPEpreconditioner">preconditioner</a> -><br>       ('d, 'k) <a href="Idas.Adjoint.html#TYPElinear_solver">Idas.Adjoint.linear_solver</a></code></pre><div class="info ">
+Krylov iterative solver using the scaled preconditioned generalized
+            minimum residual (GMRES) method.
+            In the call <code class="code">spgmr ~maxl:maxl ~max_restarts:maxr prec</code>,
+            <code class="code">maxl</code> is the maximum dimension of the Krylov subspace
+            (defaults to 5), <code class="code">maxr</code> is the maximum number of restarts
+            (defaults to 5), and <code class="code">prec</code> is a <a href="Idas.Adjoint.Spils.html#TYPEpreconditioner"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.<span class="constructor">Spils</span>.preconditioner</code></a>.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#sss:lin_solv_b">IDASpgmrB</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#SECTION00729400000000000000">IDASpilsSetPreconditionerB</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:psolve_b">IDASpilsPrecSolveFnB</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:psetup_b">IDASpilsPrecSetupFnB</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:jactimesvec_b">IDASpilsJacTimesVecFnB</a></div></div>
+
+<pre><span id="VALspbcg"><span class="keyword">val</span> spbcg</span> : <code class="type">?maxl:int -><br>       ('d, 'k) <a href="Idas.Adjoint.Spils.html#TYPEpreconditioner">preconditioner</a> -><br>       ('d, 'k) <a href="Idas.Adjoint.html#TYPElinear_solver">Idas.Adjoint.linear_solver</a></code></pre><div class="info ">
+Krylov iterative solver using the scaled preconditioned biconjugate
+            stabilized (Bi-CGStab) method.
+            In the call <code class="code">spbcg ~maxl:maxl prec</code>, <code class="code">maxl</code> is the maximum dimension of
+            the Krylov subspace (defaults to 5), and <code class="code">prec</code> is a <a href="Idas.Adjoint.Spils.html#TYPEpreconditioner"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.<span class="constructor">Spils</span>.preconditioner</code></a>.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#sss:lin_solv_b">IDASpbcgB</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#SECTION00729400000000000000">IDASpilsSetPreconditionerB</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:psolve_b">IDASpilsPrecSolveFnB</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:psetup_b">IDASpilsPrecSetupFnB</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:jactimesvec_b">IDASpilsJacTimesVecFnB</a></div></div>
+
+<pre><span id="VALsptfqmr"><span class="keyword">val</span> sptfqmr</span> : <code class="type">?maxl:int -><br>       ('d, 'k) <a href="Idas.Adjoint.Spils.html#TYPEpreconditioner">preconditioner</a> -><br>       ('d, 'k) <a href="Idas.Adjoint.html#TYPElinear_solver">Idas.Adjoint.linear_solver</a></code></pre><div class="info ">
+Krylov iterative with the scaled preconditioned transpose-free
+            quasi-minimal residual (SPTFQMR) method.
+            In the call <code class="code">sptfqmr ~maxl:maxl prec</code>, <code class="code">maxl</code> is the maximum dimension
+            of the Krylov subspace (defaults to 5), and <code class="code">prec</code> is a
+            <a href="Idas.Adjoint.Spils.html#TYPEpreconditioner"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.<span class="constructor">Spils</span>.preconditioner</code></a>.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#sss:lin_solv_b">IDASptfqmrB</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#SECTION00729400000000000000">IDASpilsSetPreconditionerB</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:psolve_b">IDASpilsPrecSolveFnB</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:psetup_b">IDASpilsPrecSetupFnB</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:jactimesvec_b">IDASpilsJacTimesVecFnB</a></div></div>
+<br>
+<h3 id="set">Solver parameters</h3><br>
+
+<pre><span id="VALset_gs_type"><span class="keyword">val</span> set_gs_type</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">Idas.Adjoint.bsession</a> -> <a href="Spils.html#TYPEgramschmidt_type">Spils.gramschmidt_type</a> -> unit</code></pre><div class="info ">
+Sets the Gram-Schmidt orthogonalization to be used with the
+            Spgmr <a href="Idas.Adjoint.html#TYPElinear_solver"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.linear_solver</code></a>.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#SECTION00729400000000000000">IDASpilsSetGSTypeB</a></div></div>
+
+<pre><span id="VALset_eps_lin"><span class="keyword">val</span> set_eps_lin</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">Idas.Adjoint.bsession</a> -> float -> unit</code></pre><div class="info ">
+Sets the factor by which the Krylov linear solver's convergence test
+            constant is reduced from the Newton iteration test constant.
+            This factor must be &gt;= 0; passing 0 specifies the default (0.05).<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#SECTION00729400000000000000">IDASpilsSetEpsLinB</a></div></div>
+
+<pre><span id="VALset_maxl"><span class="keyword">val</span> set_maxl</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">Idas.Adjoint.bsession</a> -> int option -> unit</code></pre><div class="info ">
+Resets the maximum Krylov subspace dimension for the Bi-CGStab and
+            TFQMR methods. A value &lt;= 0 specifies the default (5.0).<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#SECTION00729400000000000000">IDASpilsSetMaxlB</a></div></div>
+<br>
+<h3 id="stats">Solver statistics</h3><br>
+
+<pre><span id="VALget_work_space"><span class="keyword">val</span> get_work_space</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">Idas.Adjoint.bsession</a> -> int * int</code></pre><div class="info ">
+Returns the sizes of the real and integer workspaces used by the
+            linear solver.<br>
+<b>Returns</b> (<code class="code">real_size</code>, <code class="code">integer_size</code>)<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#sss:optout_spils">IDASpilsGetWorkSpace</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_output_b">IDAGetAdjIDABmem</a></div></div>
+
+<pre><span id="VALget_num_lin_iters"><span class="keyword">val</span> get_num_lin_iters</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">Idas.Adjoint.bsession</a> -> int</code></pre><div class="info ">
+Returns the cumulative number of linear iterations.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#sss:optout_spils">IDASpilsGetNumLinIters</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_output_b">IDAGetAdjIDABmem</a></div></div>
+
+<pre><span id="VALget_num_conv_fails"><span class="keyword">val</span> get_num_conv_fails</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">Idas.Adjoint.bsession</a> -> int</code></pre><div class="info ">
+Returns the cumulative number of linear convergence failures.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#sss:optout_spils">IDASpilsGetNumConvFails</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_output_b">IDAGetAdjIDABmem</a></div></div>
+
+<pre><span id="VALget_num_prec_evals"><span class="keyword">val</span> get_num_prec_evals</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">Idas.Adjoint.bsession</a> -> int</code></pre><div class="info ">
+Returns the number of calls to the setup function.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#sss:optout_spils">IDASpilsGetNumPrecEvals</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_output_b">IDAGetAdjIDABmem</a></div></div>
+
+<pre><span id="VALget_num_prec_solves"><span class="keyword">val</span> get_num_prec_solves</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">Idas.Adjoint.bsession</a> -> int</code></pre><div class="info ">
+Returns the cumulative number of calls to the preconditioner solve
+            function.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#sss:optout_spils">IDASpilsGetNumPrecSolves</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_output_b">IDAGetAdjIDABmem</a></div></div>
+
+<pre><span id="VALget_num_jtimes_evals"><span class="keyword">val</span> get_num_jtimes_evals</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">Idas.Adjoint.bsession</a> -> int</code></pre><div class="info ">
+Returns the cumulative number of calls to the Jacobian-vector
+            function.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#sss:optout_spils">IDASpilsGetNumJtimesEvals</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_output_b">IDAGetAdjIDABmem</a></div></div>
+
+<pre><span id="VALget_num_res_evals"><span class="keyword">val</span> get_num_res_evals</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">Idas.Adjoint.bsession</a> -> int</code></pre><div class="info ">
+Returns the number of calls to the residual callback for
+            finite difference Jacobian-vector product approximation. This counter is
+            only updated if the default difference quotient function is used.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#sss:optout_spils">IDASpilsGetNumRhsEvals</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_output_b">IDAGetAdjIDABmem</a></div></div>
+<br>
+<h3 id="lowlevel">Low-level solver manipulation</h3>
+<p>
+
+            The <a href="Idas.Adjoint.html#VALinit"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.init</code></a> and <a href="Idas.Adjoint.html#VALreinit"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.reinit</code></a> functions are the preferred way to set or
+            change preconditioner functions. These low-level functions are provided
+            for experts who want to avoid resetting internal counters and other
+            associated side-effects.<br>
+
+<pre><span id="VALset_preconditioner"><span class="keyword">val</span> set_preconditioner</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">Idas.Adjoint.bsession</a> -><br>       ?setup:'d <a href="Idas.Adjoint.Spils.html#TYPEprec_setup_fn">prec_setup_fn</a> -><br>       'd <a href="Idas.Adjoint.Spils.html#TYPEprec_solve_fn">prec_solve_fn</a> -> unit</code></pre><div class="info ">
+Change the preconditioner functions.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#SECTION00729400000000000000">IDASpilsSetPreconditionerB</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:psolve_b">IDASpilsPrecSolveFnB</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:psetup_b">IDASpilsPrecSetupFnB</a></div></div>
+
+<pre><span id="VALset_jac_times_vec_fn"><span class="keyword">val</span> set_jac_times_vec_fn</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">Idas.Adjoint.bsession</a> -><br>       'd <a href="Idas.Adjoint.Spils.html#TYPEjac_times_vec_fn">jac_times_vec_fn</a> -> unit</code></pre><div class="info ">
+Change the Jacobian-times-vector function.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#SECTION00729400000000000000">IDASpilsSetJacTimesVecFnB</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:jactimesvec_b">IDASpilsJacTimesVecFnB</a></div></div>
+
+<pre><span id="VALclear_jac_times_vec_fn"><span class="keyword">val</span> clear_jac_times_vec_fn</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">Idas.Adjoint.bsession</a> -> unit</code></pre><div class="info ">
+Remove a Jacobian-times-vector function and use the default
+            implementation.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#SECTION00729400000000000000">IDASpilsSetJacTimesVecFnB</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:jactimesvec_b">IDASpilsJacTimesVecFnB</a></div></div>
+</body></html>
