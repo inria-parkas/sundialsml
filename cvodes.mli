@@ -223,27 +223,26 @@ module Sensitivity :
     (** Common arguments to {!sensrhsfn1} and {!sensrhsfn_all}.  *)
     type 'd sensrhsfn_args =
       {
-        (** value of the independent variable *)
+        (** The value of the independent variable. *)
         t : float;
 
-        (** vector of dependent-variable values $y(t)$ *)
+        (** The vector of dependent-variable values $y(t)$. *)
         y : 'd;
 
-        (** value of the right-hand side of the state
-            equations {% $\dot{y} = f(t, y, p)$%} *)
+        (** The value of the right-hand side of the state
+            equations {% $\dot{y} = f(t, y, p)$%}. *)
         y' : 'd;
 
-        (** scratch space *)
+        (** Temporary storage vectors. *)
         tmp : 'd double;
       }
 
     (** Sensitivity functions that calculate the right-hand sides of
         all sensitivity equations.  They are passed the arguments:
 
-        - [args], a record holding the current values of state variables
-                  (see {!sensrhsfn_args}),
+        - [args], the current values of state variables (see {!sensrhsfn_args}),
         - [yS], an array of vectors holding the current values of sensitivity
-                variables, and
+                variables, and,
         - [yS'], an array of vectors to be filled with the derivatives
                  of the sensitivity variables.
 
@@ -251,7 +250,7 @@ module Sensitivity :
         indicates a recoverable error. Any other exception is treated as an
         unrecoverable error.
 
-        {warning Vectors held in this function's arguments should not
+        {warning The vectors in the function arguments should not
                  be accessed after the function returns.}
 
         @cvodes <node6#ss:user_fct_fwd> CVSensRhsFn *)
@@ -264,10 +263,10 @@ module Sensitivity :
         single sensitivity equation.  They are passed the arguments:
 
         - [i], the index of the sensitivity equation to compute,
-        - [args], a record holding the current values of state variables
+        - [args], holding the current values of state variables
                   (see {!sensrhsfn_args}),
         - [yS], a vector holding the current value of the {i i}th
-                sensitivity variable, and
+                sensitivity variable, and,
         - [yS'], a vector to be filled with the current value of the {i i}th
                  sensitivity variable's derivative.
 
@@ -275,7 +274,7 @@ module Sensitivity :
         indicates a recoverable error. Any other exception is treated as an
         unrecoverable error.
 
-        {warning Vectors held in this function's arguments should not
+        {warning The vectors in the function arguments should not
                  be accessed after the function returns.}
 
         @cvodes <node6#ss:user_fct_fwd> CVSensRhs1Fn *)
@@ -415,27 +414,27 @@ module Sensitivity :
         (** Arguments to {!quadsensrhsfn}. *)
         type 'd quadsensrhsfn_args =
           {
-            (** value of the independent variable *)
+            (** The value of the independent variable. *)
             t : float;
 
-            (** vector of dependent-variable values $y(t)$ *)
+            (** The vector of dependent-variable values $y(t)$. *)
             y : 'd;
 
-            (** array of sensitivity vectors *)
+            (** The array of sensitivity vectors. *)
             yS : 'd array;
 
-            (** value of the quadrature-right hand side {% $\dot{y}_Q$%} *)
+            (** The value of the quadrature-right hand side {% $\dot{y}_Q$%}. *)
             yQ' : 'd;
 
-            (** scratch space *)
+            (** Temporary storage vectors. *)
             tmp : 'd double;
           }
 
         (** Functions defining sensitivity-dependent quadrature
             variables.  They are passed the arguments:
 
-            - [args], a record holding the current values of state and
-                      sensitivity variables (see {!quadsensrhsfn_args}), and
+            - [args], the current values of state and sensitivity variables
+                      (see {!quadsensrhsfn_args}), and,
             - [yS'], an array of vectors for storing the computed values of
                     {% $\dot{y}_\mathit{QS} = f_\mathit{QS}(t, y, s, \dot{y}_Q)$%}.
 
@@ -443,8 +442,8 @@ module Sensitivity :
             exception indicates a recoverable error. Any other exception is
             treated as an unrecoverable error.
 
-            {warning Vectors held in this function's arguments should
-                     not be accessed after the function returns.}
+            {warning The vectors in the function arguments should not
+                     be accessed after the function returns.}
 
            @cvodes <node6#ss:user_fct_quad_sens> CVodeQuadSensRhsFn *)
         type 'd quadsensrhsfn = 'd quadsensrhsfn_args -> 'd array -> unit
@@ -456,7 +455,8 @@ module Sensitivity :
             quotients. An array of vectors specifies initial values for
             the quadrature equations.
 
-            @cvodes <node6#ss:quad_sens_init> CVodeQuadSensInit *)
+            @cvodes <node6#ss:quad_sens_init> CVodeQuadSensInit
+            @raise QuadNotInitialized {!Quadrature.init} has not been called. *)
         val init : ('d, 'k) Cvode.session -> ?fQS:'d quadsensrhsfn
                  -> ('d, 'k) Nvector.t array -> unit
 
@@ -944,7 +944,7 @@ module Adjoint :
         jac_y   : 'd;           (** The forward solution vector. *)
         jac_yB  : 'd;           (** The backward solution vector. *)
         jac_fyB : 'd;           (** The backward right-hand side function [fB]. *)
-        jac_tmp : 't;           (** Workspace data. *)
+        jac_tmp : 't;           (** Temporary storage vectors. *)
       }
 
     (** The range of nonzero entries in a band matrix. *)
@@ -1452,20 +1452,19 @@ module Adjoint :
     (** Arguments common to {!brhsfn_no_sens} and {!brhsfn_with_sens}.  *)
     type 'd brhsfn_args =
       {
-        (** value of the independent variable *)
+        (** The value of the independent variable. *)
         t : float;
 
-        (** vector of dependent-variable values $y(t)$ *)
+        (** The vector of dependent-variable values $y(t)$. *)
         y : 'd;
 
-        (** vector of backward dependent-variable values $y_B(t)$ *)
+        (** The vector of backward dependent-variable values $y_B(t)$. *)
         yB : 'd;
       }
 
     (** Backward functions without forward sensitivities. They are passed
         the arguments:
-        - [args], a record summarizing the current values of forward and
-                  backward variables, and
+        - [args], the current values of forward and backward variables, and,
         - [yB'], a vector for storing the values
                  {% $\dot{y}_B = f_B(t, y, y_B)$%}.
 
@@ -1473,7 +1472,7 @@ module Adjoint :
         indicates a recoverable error. Any other exception is treated as an
         unrecoverable error.
 
-        {warning Vectors held in this function's arguments should not
+        {warning The vectors in the function arguments should not
                  be accessed after the function returns.}
 
         @cvodes <node7#ss:ODErhs_b> CVRhsFnB
@@ -1482,9 +1481,9 @@ module Adjoint :
 
     (** Backward functions with forward sensitivities. They are passed the
         arguments:
-        - [args], a record summarizing the current values of state and
-                  backward sensitivity variables,
-        - [yS], an array holding the values of forward sensitivity vectors,
+        - [args], the current values of state and backward sensitivity
+                  variables,
+        - [yS], an array holding the values of forward sensitivity vectors, and,
         - [yB'], a vector for storing the values
                  {% $\dot{y}_B = f_B(t, y, y_S, y_B)$%}.
 
@@ -1492,7 +1491,7 @@ module Adjoint :
         indicates a recoverable error. Any other exception is treated as an
         unrecoverable error.
 
-        {warning Vectors held in this function's arguments should not
+        {warning The vectors in the function arguments should not
                  be accessed after the function returns.}
 
         @cvodes <node7#ss:ODErhs_bs> CVRhsFnBS
@@ -1569,24 +1568,22 @@ module Adjoint :
         (** {2:init Initialization} *)
 
         (** Arguments common to {!bquadrhsfn_no_sens} and
-           {!bquadrhsfn_with_sens}.  It represents the same set of
-           data as {!brhsfn_args}.  *)
+           {!bquadrhsfn_with_sens}. *)
         type 'd bquadrhsfn_args =
           {
-            (** value of the independent variable *)
+            (** The value of the independent variable. *)
             t : float;
 
-            (** vector of dependent-variable values $y(t) *)
+            (** The vector of dependent-variable values $y(t)$. *)
             y : 'd;
 
-            (** vector of backward dependent-variable values $y_B(t)$ *)
+            (** The vector of backward dependent-variable values $y_B(t)$. *)
             yB : 'd;
           }
 
         (** Functions defining backward quadrature variables without forward
             sensitivities.  These functions are passed the arguments:
-            - [args], a record summarizing the current values of forward and
-                      backward variables, and
+            - [args], the current values of forward and backward variables, and,
             - [qB'], a vector for storing the computed value of
                      {% $\dot{y}_\mathit{QB} = f_\mathit{QB}(t, y, y_B)$%}.
 
@@ -1594,17 +1591,17 @@ module Adjoint :
             exception indicates a recoverable error. Any other exception is
             treated as an unrecoverable error.
 
-            {warning Vectors held in this function's arguments should
-                     not be accessed after the function returns.}
+            {warning The vectors in the function arguments should not
+                     be accessed after the function returns.}
 
             @cvodes <node7#ss:ODErhs_quad_b> CVQuadRhsFnB *)
         type 'd bquadrhsfn_no_sens = 'd bquadrhsfn_args -> 'd -> unit
 
         (** Functions defining backward quadrature variables with forward
             sensitivities.  These functions are passed the arguments:
-            - [args], a record summarizing the current values of forward and
-                      backward variables,
-            - [yS], an array holding the values of forward sensitivity vectors, and
+            - [args], the current values of forward and backward variables,
+            - [yS], an array holding the values of forward sensitivity vectors,
+                    and,
             - [qB'], a vector for storing the computed value of
                    {% $\dot{y}_\mathit{QB} = f_\mathit{QB}(t, y, y_S, y_B)$%}.
 
@@ -1612,8 +1609,8 @@ module Adjoint :
             exception indicates a recoverable error. Any other exception is
             treated as an unrecoverable error.
 
-            {warning Vectors held in this function's arguments should
-                     not be accessed after the function returns.}
+            {warning The vectors in the function arguments should not
+                     be accessed after the function returns.}
 
             @cvodes <node7#ss:ODErhs_quad_sens_B> CVQuadRhsFnBS *)
         type 'd bquadrhsfn_with_sens =

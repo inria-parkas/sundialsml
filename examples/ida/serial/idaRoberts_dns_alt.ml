@@ -67,12 +67,9 @@ module AltDense = struct
 
     let linit mem s = (nje := 0) in
 
-    let lsetup mem s args =
-      let yp = args.Alt.lsetup_y
-      and y'p = args.Alt.lsetup_y'
-      and rrp = args.Alt.lsetup_res
-      and tmps = args.Alt.lsetup_tmp
-      in
+    let lsetup mem s { Alt.lsetup_y = yp;    Alt.lsetup_y' = y'p;
+                       Alt.lsetup_res = rrp; Alt.lsetup_tmp = tmps } =
+
       nje := !nje + 1;
       (* Zero out jj; call Jacobian routine jac; return if it failed. *)
       DM.set_to_zero mem.jj;

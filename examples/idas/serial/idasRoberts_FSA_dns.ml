@@ -299,7 +299,7 @@ let main () =
     | None -> printf "Sensitivity: NO "; (fun f -> ())
     | Some sensi_meth ->
       let pbar = RealArray.copy data.p in
-      let yS = Array.init ns (fun _ -> Nvector_serial.make neq 0.0 (* FIXME: clone y then zero out *)) in
+      let yS = Array.init ns (fun _ -> Nvector_serial.make neq 0.0) in
       let ypS = Array.init ns (fun _ -> Nvector_serial.make neq 0.0) in
       (*
         * Only non-zero sensitivity I.C. are ypS[0]: 
@@ -334,7 +334,7 @@ let main () =
   let wyQ = Nvector_serial.wrap yQ in
   Quad.init ida_mem (rhsQ data) wyQ;
 
-  let yQS = Array.init ns (fun _ -> Nvector_serial.make neq 0.0 (* FIXME: clone y then zero out *)) in
+  let yQS = Array.init ns (fun _ -> Nvector_serial.make 2 0.0) in
 
   QuadSens.init ida_mem yQS;
 

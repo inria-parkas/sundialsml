@@ -26,11 +26,11 @@ let add_fwdsensext s =
         sensarray2        = c_alloc_nvector_array 0;
         quadrhsfn         = dummy_quadrhsfn;
         checkquadvec      = (fun _ -> raise Nvector.IncompatibleNvector);
+        has_quad          = false;
         senspvals         = None;
         sensrhsfn         = dummy_sensrhsfn;
         sensrhsfn1        = dummy_sensrhsfn1;
         quadsensrhsfn     = dummy_quadsensrhsfn;
-        checkquadsensvec  = (fun _ -> raise Nvector.IncompatibleNvector);
         bsessions         = [];
       }
 
@@ -63,7 +63,8 @@ module Quadrature =
       let se = fwdsensext s in
       se.quadrhsfn <- f;
       se.checkquadvec <- Nvector.check v0;
-      c_quad_init s v0
+      c_quad_init s v0;
+      se.has_quad <- true
 
     external c_reinit : ('a, 'k) session -> ('a, 'k) nvector -> unit
       = "c_cvodes_quad_reinit"
@@ -393,12 +394,10 @@ module Sensitivity =
 
         let init s ?fQS v0 =
           let se = fwdsensext s in
+          if not se.has_quad then raise Quadrature.QuadNotInitialized;
           if Sundials_config.safe && Array.length v0 <> se.num_sensitivities
           then invalid_arg "init: wrong number of vectors";
-          let checkquadsensvec = Nvector.check v0.(0) in
-          if Sundials_config.safe then
-            Array.iter checkquadsensvec v0;
-          se.checkquadsensvec <- checkquadsensvec;
+          if Sundials_config.safe then Array.iter se.checkquadvec v0;
           match fQS with
           | Some f -> se.quadsensrhsfn <- f;
                       c_quadsens_init s true v0
@@ -412,7 +411,7 @@ module Sensitivity =
           if Sundials_config.safe then
             (if Array.length v <> se.num_sensitivities
              then invalid_arg "reinit: wrong number of vectors";
-             Array.iter se.checkquadsensvec v);
+             Array.iter se.checkquadvec v);
           c_reinit s v
 
         type ('a, 'k) tolerance =
@@ -451,7 +450,7 @@ module Sensitivity =
                   (if Array.length abs <> se.num_sensitivities
                    then invalid_arg
                         "set_tolerances: abstol has the wrong length";
-                   Array.iter se.checkquadsensvec abs);
+                   Array.iter se.checkquadvec abs);
                 sv_tolerances s rel abs;
                 set_err_con s true
               end
@@ -466,7 +465,7 @@ module Sensitivity =
           if Sundials_config.safe then
             (if Array.length ys <> se.num_sensitivities
              then invalid_arg "get: wrong number of vectors";
-             Array.iter se.checkquadsensvec ys);
+             Array.iter se.checkquadvec ys);
           c_get s ys
 
         external c_get1 : ('a, 'k) session -> int -> ('a, 'k) nvector -> float
@@ -474,7 +473,7 @@ module Sensitivity =
 
         let get1 s yqs =
           let se = fwdsensext s in
-          if Sundials_config.safe then se.checkquadsensvec yqs;
+          if Sundials_config.safe then se.checkquadvec yqs;
           fun i -> c_get1 s i yqs
 
         external c_get_dky
@@ -486,7 +485,7 @@ module Sensitivity =
           if Sundials_config.safe then
             (if Array.length ys <> se.num_sensitivities
              then invalid_arg "get_dky: wrong number of vectors";
-             Array.iter se.checkquadsensvec ys);
+             Array.iter se.checkquadvec ys);
           fun t k -> c_get_dky s t k ys
 
         external c_get_dky1 : ('a, 'k) session -> float -> int -> int
@@ -495,7 +494,7 @@ module Sensitivity =
 
         let get_dky1 s dkyqs =
           let se = fwdsensext s in
-          if Sundials_config.safe then se.checkquadsensvec dkyqs;
+          if Sundials_config.safe then se.checkquadvec dkyqs;
           fun t k i -> c_get_dky1 s t k i dkyqs
 
         external get_num_rhs_evals       : ('a, 'k) session -> int
@@ -513,7 +512,7 @@ module Sensitivity =
           if Sundials_config.safe then
             (if Array.length esweight <> se.num_sensitivities
              then invalid_arg "get_err_weights: wrong number of vectors";
-             Array.iter se.checkquadsensvec esweight);
+             Array.iter se.checkquadvec esweight);
           c_get_err_weights s esweight
 
         external get_stats : ('a, 'k) session -> int * int

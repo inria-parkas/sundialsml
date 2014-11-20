@@ -71,7 +71,7 @@ module Quadrature :
         indicates a recoverable error. Any other exception is treated as an
         unrecoverable error.
 
-        {warning The vectors in this function's arguments should not
+        {warning The vectors in the function arguments should not
                  be accessed after the function returns.}
 
         @idas <node5#ss:user_fct_quad> IDAQuadRhsFn *)
@@ -220,25 +220,26 @@ module Sensitivity :
     (** Arguments to {!sensresfn}. *)
     type 'd sensresfn_args =
       {
-        (** value of the independent variable *)
+        (** The value of the independent variable. *)
         t : float;
 
-        (** vector of dependent-variable values $y(t)$ *)
+        (** The vector of dependent-variable values $y(t)$. *)
         y : 'd;
 
-        (** vector of derivatives of dependent variables {% $\dot{y}(t)$%} *)
+        (** The vector of derivatives of dependent variables
+            {% $\dot{y}(t)$%}. *)
         y' : 'd;
 
-        (** current residuals *)
+        (** The vector of current residuals. *)
         res : 'd;
 
-        (** array of sensitivity vectors *)
+        (** The array of sensitivity vectors. *)
         yS : 'd array;
 
-        (** array of sensitivity vectors' derivatives *)
+        (** The array of sensitivity derivative vectors. *)
         yS' : 'd array;
 
-        (** scratch space *)
+        (** Temporary storage vectors. *)
         tmp : 'd triple
       }
 
@@ -254,7 +255,7 @@ module Sensitivity :
         indicates a recoverable error. Any other exception is treated as an
         unrecoverable error.
 
-        {warning The vectors in this function's arguments should not
+        {warning The vectors in the function arguments should not
                  be accessed after the function returns.}
 
         @idas <node6#s:user_fct_fwd> IDASensResFn *)
@@ -368,33 +369,34 @@ module Sensitivity :
         (** Arguments to {!quadsensrhsfn}.  *)
         type 'd quadsensrhsfn_args =
           {
-            (** value of the independent variable *)
+            (** The value of the independent variable. *)
             t : float;
 
-            (** vector of dependent-variable values $y(t)$ *)
+            (** The vector of dependent-variable values $y(t)$. *)
             y : 'd;
 
-            (** vector of dependent variables' derivatives {% $\dot{y}(t)$ %} *)
+            (** The vector of dependent-variable derivatives
+                {% $\dot{y}(t)$ %}. *)
             y' : 'd;
 
-            (** array of sensitivity vectors *)
+            (** The array of sensitivity vectors. *)
             yS : 'd array;
 
-            (** array of sensitivity vectors' derivatives *)
+            (** The array of sensitivity derivative vectors. *)
             yS' : 'd array;
 
-            (** current value of the quadrature right-hand side $q$ *)
+            (** The current value of the quadrature right-hand side $q$. *)
             q : 'd;
 
-            (** scratch space *)
+            (** Temporary storage vectors. *)
             tmp : 'd triple;
           }
 
         (** Functions defining sensitivity-dependent quadrature variables.
             The call {[fQS args yqs']} has arguments:
 
-            - [args], a record summarizing current values of state,
-                      sensitivity, and quadrature variables, and
+            - [args], the current values of state, sensitivity, and quadrature
+                      variables, and,
             - [yqs'], an array of vectors for storing the computead values of
               {% $\dot{y}_\mathit{QS} =
                   f_\mathit{QS}(t, y, \dot{y}, s, \dot{s}, \dot{y}_Q)$%}.
@@ -403,8 +405,8 @@ module Sensitivity :
             exception indicates a recoverable error. Any other exception is
             treated as an unrecoverable error.
 
-            {warning The vectors in this function's arguments should
-                     not be accessed after the function returns.}
+            {warning The vectors in the function arguments should not
+                     be accessed after the function returns.}
 
            @idas <node6#ss:user_fct_quad_sens> IDAQuadSensRhsFn *)
         type 'd quadsensrhsfn =
@@ -419,7 +421,8 @@ module Sensitivity :
             quotients. An array of vectors specifies initial values for
             the quadrature equations.
 
-            @idas <node6#ss:quad_sens_init> IDAQuadSensInit *)
+            @idas <node6#ss:quad_sens_init> IDAQuadSensInit
+            @raise QuadNotInitialized {!Quadrature.init} has not been called. *)
         val init : ('d, 'k) Ida.session -> ?fQS:'d quadsensrhsfn
                       -> ('d, 'k) Nvector.t array -> unit
 
@@ -1298,26 +1301,27 @@ module Adjoint :
 
     type 'd bresfn_args =
       {
-        (** value of the independent variable *)
+        (** The value of the independent variable. *)
         t : float;
 
-        (** vector of dependent-variable values $y(t)$ *)
+        (** The vector of dependent-variable values $y(t)$. *)
         y : 'd;
 
-        (** vector of dependent-variable derivatives {% $\dot{y}(t)$ %} *)
+        (** The vector of dependent-variable derivatives {% $\dot{y}(t)$ %}. *)
         y' : 'd;
 
-        (** vector of backward dependent-variable values $y_B(t)$ *)
+        (** The vector of backward dependent-variable values $y_B(t)$. *)
         yB : 'd;
 
-        (** vector of backward dependent-variable derivatives {% $\dot{y}_B(t)$ %} *)
+        (** The vector of backward dependent-variable derivatives
+            {% $\dot{y}_B(t)$ %}. *)
         yB' : 'd;
       }
 
     (** Backward functions without forward sensitivities. They are passed
         the arguments:
-        - [args], a record summarizing the current values of forward and backward
-                  state variables, and
+        - [args], the current values of forward and backward state variables,
+                  and,
         - [rb], a vector for storing the residual value
                 {% $F_B(t, y, \dot{y}, y_B, \dot{y}_B)$%}.
 
@@ -1334,10 +1338,10 @@ module Adjoint :
 
     (** Backward functions with forward sensitivities. They are passed the
         arguments:
-        - [args], a record summarizing the current values of forward and backward
-                  state variables,
+        - [args], the current values of forward and backward state variables,
+                  and,
         - [yS], the array of forward sensitivity vectors,
-        - [yS'], the array of forward sensitivity derivative vectors, and
+        - [yS'], the array of forward sensitivity derivative vectors, and,
         - [resB], a vector for storing the residual value
                 {% $F_B(t, y, \dot{y}, s, \dot{s}, y_B, \dot{y}_B)$%}.
 
@@ -1415,30 +1419,31 @@ module Adjoint :
         (** {2:init Initialization} *)
 
         (** Arguments common to {!bquadrhsfn_no_sens} and
-            {!bquadrhsfn_with_sens}.  It represents the same set of
-            data as {!bresfn_args}. *)
+            {!bquadrhsfn_with_sens}. *)
         type 'd bquadrhsfn_args =
           {
-            (** value of the independent variable *)
+            (** The value of the independent variable. *)
             t : float;
 
-            (** vector of dependent-variable values $y(t)$ *)
+            (** The vector of dependent-variable values $y(t)$. *)
             y : 'd;
 
-            (** vector of dependent-variable derivatives {% $\dot{y}(t)$ %} *)
+            (** The vector of dependent-variable derivatives
+                {% $\dot{y}(t)$ %}. *)
             y' : 'd;
 
-            (** vector of backward dependent-variable values $y_B(t)$ *)
+            (** The vector of backward dependent-variable values $y_B(t)$. *)
             yB : 'd;
 
-            (** vector of backward dependent-variable derivatives {% $\dot{y}_B(t)$ %} *)
+            (** The vector of backward dependent-variable derivatives
+                {% $\dot{y}_B(t)$ %}. *)
             yB' : 'd;
           }
 
         (** Functions defining backward quadrature variables without forward
             sensitivities.  They are passed the arguments:
-            - [args], a record summarizing the current values of forward and backward
-                      state variables, and
+            - [args], the current values of forward and backward state
+                      variables, and,
             - [qB'], a vector for storing the computed value of
                      {% $\dot{y}_\mathit{BQ} =
                          f_\mathit{BQ}(t, y, \dot{y}, y_B, \dot{y}_B)$%}.
@@ -1454,13 +1459,11 @@ module Adjoint :
         type 'd bquadrhsfn_no_sens = 'd bquadrhsfn_args -> 'd -> unit
 
         (** Functions defining backward quadrature variables that
-            depend on forward sensitivities.  They are passed the
-            arguments:
+            depend on forward sensitivities.  They are passed the arguments:
 
-            - [args], a record summarizing the current values of forward and backward
-                      state variables,
+            - [args], current values of forward and backward state variables,
             - [yS], the array of forward sensitivity vectors,
-            - [yS'], the array of forward sensitivity derivative vectors, and
+            - [yS'], the array of forward sensitivity derivative vectors, and,
             - [qB'], a vector for storing the computed value of
                  {% $\dot{y}_\mathit{BQ} =
                    f_\mathit{BQ}(t, y, \dot{y}, s, \dot{s}, y_B, \dot{y}_B)$%}.

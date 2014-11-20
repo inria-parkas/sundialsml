@@ -309,6 +309,7 @@ and ('a, 'kind) fsensext = {
   (* Quadrature *)
   mutable quadrhsfn       : 'a QuadratureTypes.quadrhsfn;
   mutable checkquadvec    : (('a, 'kind) Nvector.t -> unit);
+  mutable has_quad        : bool;
 
   (* Sensitivity *)
   mutable num_sensitivities : int;
@@ -321,7 +322,6 @@ and ('a, 'kind) fsensext = {
   mutable sensresfn         : 'a SensitivityTypes.sensresfn;
 
   mutable quadsensrhsfn     : 'a SensitivityTypes.QuadratureTypes.quadsensrhsfn;
-  mutable checkquadsensvec  : (('a, 'kind) Nvector.t -> unit);
 
   (* Adjoint *)
   mutable bsessions         : ('a, 'kind) session list;

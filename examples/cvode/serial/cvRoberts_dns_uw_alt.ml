@@ -67,11 +67,9 @@ let alternate_dense jacfn =
 
   let linit mem s = (nje := 0) in
 
-  let lsetup mem s args =
-    let convfail = args.Alt.lsetup_conv_fail
-    and ypred = args.Alt.lsetup_y
-    and fpred = args.Alt.lsetup_rhs
-    and tmp = args.Alt.lsetup_tmp in
+  let lsetup mem s { Alt.lsetup_conv_fail = convfail; Alt.lsetup_y = ypred;
+                     Alt.lsetup_rhs = fpred;          Alt.lsetup_tmp = tmp } =
+
     let { Alt.gamma = gamma; Alt.gammap = gammap} = Alt.get_gammas s in
     let dgamma = abs_float ((gamma/.gammap) -. 1.0) in
     let nst = Cvode.get_num_steps s in

@@ -505,7 +505,7 @@ module Alternate :
         indicate that a recoverable error has occurred. Any other exception is
         treated as an unrecoverable error.
 
-        {warning The vectors held in {!lsetup_args} should not be
+        {warning The vectors in {!lsetup_args} should not be
                  accessed after the function returns.}
 
         @ida <node8#SECTION00820000000000000000> lsetup *)
@@ -517,17 +517,17 @@ module Alternate :
     (** Arguments to {!lsetup}.  *)
     and 'data lsetup_args =
       {
-        (** the predicted $y$ vector for the current internal step *)
+        (** The predicted $y$ vector for the current step. *)
         lsetup_y : 'data;
 
-        (** the predicted {% $\dot{y}$%} vector for the current internal step *)
+        (** The predicted {% $\dot{y}$%} vector for the current step. *)
         lsetup_y' : 'data;
 
-        (** the value of the residual function at [y] and [y'], i.e.
-            {% $F(t_n, y_{\text{pred}}, \dot{y}_{\text{pred}})$%} *)
+        (** The value of the residual function at [y] and [y'], i.e.,
+            {% $F(t_n, y_{\text{pred}}, \dot{y}_{\text{pred}})$%}. *)
         lsetup_res : 'data;
 
-        (** scratch space *)
+        (** Temporary storage vectors. *)
         lsetup_tmp : 'data triple;
       }
 
@@ -539,7 +539,7 @@ module Alternate :
         The call [lsolve s b weight ycur y'cur rescur] has as arguments:
 
         - [s], the solver session,
-        - [args], a record summarizing current approximations to the solution,
+        - [args], the current approximation to the solution, and,
         - [b], for returning the calculated solution,
 
         Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
@@ -556,16 +556,16 @@ module Alternate :
     (** Arguments to {!lsolve}. *)
     and 'data lsolve_args =
       {
-        (** error weights *)
+        (** The error weights. *)
         lsolve_ewt : 'data;
 
-        (** the solver's current approximation to $y(t_n)$ *)
+        (** The solver's current approximation to $y(t_n)$. *)
         lsolve_y : 'data;
 
-        (** the solver's current approximation to $y'(t_n)$ *)
+        (** The solver's current approximation to $y'(t_n)$. *)
         lsolve_y' : 'data;
 
-        (** the current residual value *)
+        (** The current residual value. *)
         lsolve_res : 'data;
       }
 

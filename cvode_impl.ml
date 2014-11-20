@@ -377,6 +377,7 @@ and ('a, 'kind) fsensext = {
   (* Quadrature *)
   mutable quadrhsfn         : 'a QuadratureTypes.quadrhsfn;
   mutable checkquadvec      : (('a, 'kind) Nvector.t -> unit);
+  mutable has_quad          : bool;
 
   (* Sensitivity *)
   mutable num_sensitivities : int;
@@ -388,7 +389,6 @@ and ('a, 'kind) fsensext = {
   mutable sensrhsfn         : 'a SensitivityTypes.sensrhsfn_all;
   mutable sensrhsfn1        : 'a SensitivityTypes.sensrhsfn1;
   mutable quadsensrhsfn     : 'a SensitivityTypes.QuadratureTypes.quadsensrhsfn;
-  mutable checkquadsensvec  : (('a, 'kind) Nvector.t -> unit);
 
   (* Adjoint *)
   mutable bsessions         : ('a, 'kind) session list;
@@ -557,6 +557,6 @@ let dummy_quadrhsfn _ _ _ =
 let dummy_sensrhsfn _ _ _ =
   crash "Internal error: dummy_sensresfn called\n"
 let dummy_sensrhsfn1 _ _ _ _ =
-  crash "Internal error: dummy_sensresfn called\n"
+  crash "Internal error: dummy_sensresfn1 called\n"
 let dummy_quadsensrhsfn _ _ =
   crash "Internal error: dummy_quadsensrhsfn called\n"

@@ -631,17 +631,17 @@ module Alternate :
     (** Arguments to {!lsetup}. *)
     and 'data lsetup_args =
       {
-        (** indicates any problem that occurred during the solution of
-            the nonlinear equation on the current time step *)
+        (** Indicates that a problem occurred during the solution of
+            the nonlinear equation at the current time step. *)
         lsetup_conv_fail : conv_fail;
 
-        (** the predicted $y$ vector for the current internal step *)
+        (** The predicted $y$ vector for the current internal step. *)
         lsetup_y : 'data;
 
-        (** the value of the right-hand side at the predicted [y] vector *)
+        (** The value of the right-hand side at the predicted $y$ vector. *)
         lsetup_rhs : 'data;
 
-        (** scratch space *)
+        (** Temporary variables for use by the routine. *)
         lsetup_tmp : 'data triple;
       }
 
@@ -654,7 +654,7 @@ module Alternate :
         The call [lsolve s args b] has as arguments:
 
         - [s], the solver session,
-        - [args], a record summarizing current approximations to the solution,
+        - [args], summarizing current approximations to the solution, and
         - [b], for returning the calculated solution.
 
         Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
@@ -674,13 +674,13 @@ module Alternate :
     (** Arguments to {!lsolve}. *)
     and 'data lsolve_args =
       {
-        (** error weights *)
+        (** The error weights. *)
         lsolve_ewt : 'data;
 
-        (** the solver's current approximation to $y(t_n)$ *)
+        (** The solver's current approximation to $y(t_n)$. *)
         lsolve_y : 'data;
 
-        (** a vector containing {% $f(t_n, y_{\text{cur}})$%} *)
+        (** A vector containing {% $f(t_n, y_{\text{cur}})$%}. *)
         lsolve_rhs : 'data;
       }
 
