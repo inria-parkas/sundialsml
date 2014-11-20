@@ -6,12 +6,13 @@ authors: [
     "Jun Inoue" <Jun.Lambda@gmail.com>
     "Marc Pouzet" <Marc.Pouzet@ens.fr>
 ]
-homepage: "http://"
-dev-repo: "https://github.com/.../sundialsml.git"
-url: "git:// #2.5.0p0"
-doc: "http://"
+homepage: "http://inria-parkas.github.io/sundialsml/"
+doc: "http://inria-parkas.github.io/sundialsml/"
+dev-repo: "https://github.com/inria-parkas/sundialsml"
+url: "https://github.com/inria-parkas/sundialsml/archive/v2.5.0p0-test.zip"
+checksum: "516963bdd8c7d6bc2c960810d7859c6e"
 tags: [ "numerical", "simulation" ]
-license: BSD2
+license: "BSD3"
 build: [
     ["./configure" "--enable-mpi" "--prefix" prefix]
     [make "install-findlib"]
