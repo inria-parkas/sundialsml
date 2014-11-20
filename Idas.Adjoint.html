@@ -1,0 +1,738 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Idas.Sensitivity.html">
+<link rel="Up" href="Idas.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Dls" rel="Chapter" href="Dls.html">
+<link title="Spils" rel="Chapter" href="Spils.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html"><link title="Forward solution" rel="Section" href="#fwd">
+<link title="Linear solvers" rel="Section" href="#linear">
+<link title="Backward solutions" rel="Section" href="#bsolve">
+<link title="Modifying the solver (optional input functions)" rel="Section" href="#set">
+<link title="Querying the solver (optional output functions)" rel="Section" href="#get">
+<link title="Exceptions" rel="Section" href="#exceptions">
+<link title="Initial Condition Calculation" rel="Subsection" href="#calcic">
+<title>Sundials/ML 2.5.0p0 : Idas.Adjoint</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Idas.Sensitivity.html" title="Idas.Sensitivity">Previous</a>
+&nbsp;<a class="up" href="Idas.html" title="Idas">Up</a>
+&nbsp;</div>
+<h1>Module <a href="type_Idas.Adjoint.html">Idas.Adjoint</a></h1>
+
+<pre><span class="keyword">module</span> Adjoint: <code class="code"><span class="keyword">sig</span></code> <a href="Idas.Adjoint.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+(Adjoint) Sensitivity analysis of DAEs with respect to their parameters.
+<p>
+
+    Provides an alternative to forward sensitivity analysis, which can become
+    prohibitively expensive. This technique does not calculate sensitivities,
+    but rather gradients with respect to the parameters of a relatively few
+    derived functionals of the solution, that is the gradient
+    $\frac{\mathrm{d}G}{\mathrm{d}p}$ of
+    $G(p) = \int_{t_0}^T \! g(t, y, p)\,\mathrm{d}t$. The gradients
+    are evaluated by first calculating forward and checkpointing certain
+    intermediate state values, and then integrating backward to $t_0$.
+<p>
+
+    This documented interface is structured as follows.
+    <OL>
+<li><a href="#fwd">Forward solution</a></li>
+<li><a href="#linear">Linear solvers</a></li>
+<li><a href="#bsolve">Backward solutions</a> (including <a href="Idas.Adjoint.Quadrature.html">Quadrature equations</a>)</li>
+<li><a href="#set">Modifying the solver</a></li>
+<li><a href="#get">Querying the solver</a></li>
+<li><a href="#exceptions">Exceptions</a></li>
+</OL>
+<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:skeleton_adj">Enhanced Skeleton for Adjoint Sensitivity Analysis</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#s:adjoint">Using IDAS for Adjoint Sensitivity Analysis</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node3.html#ss:adj_sensi">Adjoint sensitivity analysis</a></div></div>
+<hr width="100%">
+
+<pre><span id="TYPEbsession"><span class="keyword">type</span> <code class="type">('d, 'k)</code> bsession</span> = <code class="type">('d, 'k) AdjointTypes.bsession</code> </pre>
+<div class="info ">
+A backward session with the IDAS solver. Multiple backward sessions
+        may be associated with a single parent session.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#sss:idainitb">Backward problem initialization functions</a></div></div>
+
+
+<pre><span id="TYPEserial_bsession"><span class="keyword">type</span> <code class="type"></code>serial_bsession</span> = <code class="type">(<a href="Sundials.RealArray.html#TYPEt">Sundials.RealArray.t</a>, <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a>) <a href="Idas.Adjoint.html#TYPEbsession">bsession</a></code> </pre>
+<div class="info ">
+Alias for backward sessions based on serial nvectors.<br>
+</div>
+
+<br>
+<h2 id="fwd">Forward solution</h2><br>
+
+<pre><code><span id="TYPEinterpolation"><span class="keyword">type</span> <code class="type"></code>interpolation</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTinterpolation.IPolynomial"><span class="constructor">IPolynomial</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<span class="cconst">(IDA_POLYNOMIAL)</span><br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTinterpolation.IHermite"><span class="constructor">IHermite</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<span class="cconst">(IDA_HERMITE)</span><br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+Specifies the type of interpolation to use between checkpoints.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node3.html#ss:checkpointing">Checkpointing scheme</a></div></div>
+
+
+<pre><span id="VALinit"><span class="keyword">val</span> init</span> : <code class="type">('d, 'k) <a href="Ida.html#TYPEsession">Ida.session</a> -> int -> <a href="Idas.Adjoint.html#TYPEinterpolation">interpolation</a> -> unit</code></pre><div class="info ">
+Activates the forward-backward problem. The arguments specify the number
+        of integration steps between consecutive checkpoints, and the type of
+        variable-degree interpolation.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#sss:idaadjinit">IDAAdjInit</a></div></div>
+
+<pre><span id="VALforward_normal"><span class="keyword">val</span> forward_normal</span> : <code class="type">('d, 'k) <a href="Ida.html#TYPEsession">Ida.session</a> -><br>       float -><br>       ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> float * int * <a href="Ida.html#TYPEsolver_result">Ida.solver_result</a></code></pre><div class="info ">
+Integrates the forward problem over an interval and saves
+        checkpointing data. The arguments are the next time at which a solution
+        is desired (<code class="code">tout</code>) and two vectors to receive the computed results
+        (<code class="code">y</code> and <code class="code">y'</code>). The function returns a triple <code class="code">tret, ncheck, sr</code>: the time
+        reached by the solver, the cumulative number of checkpoints stored, and
+        whether <code class="code">tout</code> was reached. The solver takes internal steps until it
+        has reached or just passed the <code class="code">tout</code> parameter <span class="cconst">(IDA_NORMAL)</span>,
+        it then interpolates to approximate <code class="code">y(tout)</code>.<br>
+<div class="raisedexceptions"><span class="raises">Raises</span><ul><li><code>Ida.IllInput</code> One of the inputs is invalid.</li>
+<li><code>Ida.TooMuchWork</code> Could not reach <code class="code">tout</code> in <code class="code">mxstep</code> steps</li>
+<li><code>Ida.TooMuchAccuracy</code> Could not satisfy the demanded accuracy</li>
+<li><code>Ida.ErrFailure</code> Too many error test failures.</li>
+<li><code>Ida.ConvergenceFailure</code> Too many convergence test failures.</li>
+<li><code>Ida.LinearSetupFailure</code> Unrecoverable failure in linear solver setup function.</li>
+<li><code>Ida.LinearSolveFailure</code> Unrecoverable failure in linear solver solve function.</li>
+<li><code>AdjointNotInitialized</code> The <a href="Idas.Adjoint.html#VALinit"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.init</code></a> function has not been called.</li>
+</ul></div>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#sss:idasolvef">IDASolveF</a></div></div>
+
+<pre><span id="VALforward_one_step"><span class="keyword">val</span> forward_one_step</span> : <code class="type">('d, 'k) <a href="Ida.html#TYPEsession">Ida.session</a> -><br>       float -><br>       ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> float * int * <a href="Ida.html#TYPEsolver_result">Ida.solver_result</a></code></pre><div class="info ">
+Integrates the forward problem over an interval and saves
+        checkpointing data. The arguments are the next time at which a solution
+        is desired (<code class="code">tout</code>) and two vectors to receive the computed results
+        (<code class="code">y</code> and <code class="code">y'</code>). The function returns a triple <code class="code">tret, ncheck, sr</code>: the
+        time reached by the solver, the cumulative number of checkpoints
+        stored, and whether <code class="code">tout</code> was reached. The solver takes one step
+        <span class="cconst">(IDA_ONE_STEP)</span> and returns the solution reached.<br>
+<div class="raisedexceptions"><span class="raises">Raises</span><ul><li><code>Ida.IllInput</code> One of the inputs is invalid.</li>
+<li><code>Ida.TooMuchWork</code> Could not reach <code class="code">tout</code> in <code class="code">mxstep</code> steps</li>
+<li><code>Ida.TooMuchAccuracy</code> Could not satisfy the demanded accuracy</li>
+<li><code>Ida.ErrFailure</code> Too many error test failures.</li>
+<li><code>Ida.ConvergenceFailure</code> Too many convergence test failures.</li>
+<li><code>Ida.LinearSetupFailure</code> Unrecoverable failure in linear solver setup function.</li>
+<li><code>Ida.LinearSolveFailure</code> Unrecoverable failure in linear solver solve function.</li>
+<li><code>AdjointNotInitialized</code> The <a href="Idas.Adjoint.html#VALinit"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.init</code></a> function has not been called.</li>
+</ul></div>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#sss:idasolvef">IDASolveF</a></div></div>
+<br>
+<h2 id="linear">Linear solvers</h2><br>
+
+<pre><span id="TYPElinear_solver"><span class="keyword">type</span> <code class="type">('data, 'kind)</code> linear_solver</span> = <code class="type">('data, 'kind) AdjointTypes.linear_solver</code> </pre>
+<div class="info ">
+Linear solvers used in backward problems.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#sss:lin_solv_b">Linear Solver Initialization Functions</a></div></div>
+
+
+<pre><span id="TYPEserial_linear_solver"><span class="keyword">type</span> <code class="type"></code>serial_linear_solver</span> = <code class="type">(<a href="Sundials.RealArray.html#TYPEt">Sundials.RealArray.t</a>, <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a>) <a href="Idas.Adjoint.html#TYPElinear_solver">linear_solver</a></code> </pre>
+<div class="info ">
+Alias for linear solvers that are restricted to serial nvectors.<br>
+</div>
+
+
+<pre><span id="TYPEtriple"><span class="keyword">type</span> <code class="type">'d</code> triple</span> = <code class="type">'d * 'd * 'd</code> </pre>
+<div class="info ">
+Workspaces with three temporary vectors.<br>
+</div>
+
+
+<pre><code><span id="TYPEjacobian_arg"><span class="keyword">type</span> <code class="type">('t, 'd)</code> jacobian_arg</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTjacobian_arg.jac_t">jac_t</span>&nbsp;: <code class="type">float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The independent variable.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTjacobian_arg.jac_y">jac_y</span>&nbsp;: <code class="type">'d</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The forward solution vector.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTjacobian_arg.jac_y'">jac_y'</span>&nbsp;: <code class="type">'d</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The forward derivatives vector.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTjacobian_arg.jac_yB">jac_yB</span>&nbsp;: <code class="type">'d</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The backward solution vector.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTjacobian_arg.jac_yB'">jac_yB'</span>&nbsp;: <code class="type">'d</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The forward derivatives vector.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTjacobian_arg.jac_resB">jac_resB</span>&nbsp;: <code class="type">'d</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The current residual for the backward problem.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTjacobian_arg.jac_coef">jac_coef</span>&nbsp;: <code class="type">float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The scalar $c_\mathit{jB}$ in the
+                                  system Jacobian, proportional to the inverse
+                                  of the step size.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTjacobian_arg.jac_tmp">jac_tmp</span>&nbsp;: <code class="type">'t</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Workspace data.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+}
+
+<div class="info ">
+Arguments common to Jacobian callback functions.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:densejac_b">IDADlsDenseJacFnB</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:bandjac_b">IDADlsBandJacFnB</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:jactimesvec_b">IDASpilsJacTimesVecFnB</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:psolve_b">IDASpilsPrecSolveFnB</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:psetup_b">IDASpilsPrecSetupFnB</a></div></div>
+
+
+<pre><span id="TYPEbandrange"><span class="keyword">type</span> <code class="type"></code>bandrange</span> = <code class="type"><a href="Ida.html#TYPEbandrange">Ida.bandrange</a></code> = {</pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTbandrange.mupper">mupper</span>&nbsp;: <code class="type">int</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The upper half-bandwidth.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTbandrange.mlower">mlower</span>&nbsp;: <code class="type">int</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The lower half-bandwidth.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+}
+
+<div class="info ">
+The range of nonzero entries in a band matrix.<br>
+</div>
+
+
+<pre><span class="keyword">module</span> <a href="Idas.Adjoint.Dls.html">Dls</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Idas.Adjoint.Dls.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+Direct Linear Solvers operating on dense and banded matrices.
+</div>
+
+<pre><span class="keyword">module</span> <a href="Idas.Adjoint.Spils.html">Spils</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Idas.Adjoint.Spils.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+Scaled Preconditioned Iterative Linear Solvers
+</div>
+<br>
+<h2 id="bsolve">Backward solutions</h2><br>
+
+<pre><code><span id="TYPEbresfn_args"><span class="keyword">type</span> <code class="type">'d</code> bresfn_args</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTbresfn_args.t">t</span>&nbsp;: <code class="type">float</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTbresfn_args.y">y</span>&nbsp;: <code class="type">'d</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTbresfn_args.y'">y'</span>&nbsp;: <code class="type">'d</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTbresfn_args.yB">yB</span>&nbsp;: <code class="type">'d</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTbresfn_args.yB'">yB'</span>&nbsp;: <code class="type">'d</code>;</code></td>
+
+</tr></table>
+}
+
+
+
+<pre><span id="TYPEbresfn_no_sens"><span class="keyword">type</span> <code class="type">'d</code> bresfn_no_sens</span> = <code class="type">'d <a href="Idas.Adjoint.html#TYPEbresfn_args">bresfn_args</a> -> 'd -> unit</code> </pre>
+<div class="info ">
+Backward functions without forward sensitivities. They are passed
+        the arguments:<ul>
+<li><code class="code">args</code>, the current values of forward and backward state variables,
+                  and,</li>
+<li><code class="code">rb</code>, a vector for storing the residual value
+                $F_B(t, y, \dot{y}, y_B, \dot{y}_B)$.</li>
+</ul>
+
+        Within the function, raising a <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a> exception
+        indicates a recoverable error. Any other exception is treated as an
+        unrecoverable error.
+<p>
+
+        <div class="warningbox"> Vectors held in this function's arguments should not
+                 be accessed after the function returns.</div><br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:ODErhs_b">IDAResFnB</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node3.html#e:adj_eqns">Eq 2.19, Adjoint sensitivity analysis</a></div></div>
+
+
+<pre><span id="TYPEbresfn_with_sens"><span class="keyword">type</span> <code class="type">'d</code> bresfn_with_sens</span> = <code class="type">'d <a href="Idas.Adjoint.html#TYPEbresfn_args">bresfn_args</a> -> 'd array -> 'd array -> 'd -> unit</code> </pre>
+<div class="info ">
+Backward functions with forward sensitivities. They are passed the
+        arguments:<ul>
+<li><code class="code">args</code>, the current values of forward and backward state variables,
+                  and,</li>
+<li><code class="code">yS</code>, the array of forward sensitivity vectors,</li>
+<li><code class="code">yS'</code>, the array of forward sensitivity derivative vectors, and,</li>
+<li><code class="code">resB</code>, a vector for storing the residual value
+                $F_B(t, y, \dot{y}, s, \dot{s}, y_B, \dot{y}_B)$.</li>
+</ul>
+
+        Within the function, raising a <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a> exception
+        indicates a recoverable error. Any other exception is treated as an
+        unrecoverable error.
+<p>
+
+        <div class="warningbox"> Vectors held in this function's arguments should not
+                 be accessed after the function returns.</div><br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:ODErhs_bs">IDAResFnBS</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node3.html#e:adj1_eqns">Eq 2.21, Adjoint sensitivity analysis</a></div></div>
+
+
+<pre><code><span id="TYPEbresfn"><span class="keyword">type</span> <code class="type">'d</code> bresfn</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTbresfn.NoSens"><span class="constructor">NoSens</span></span> <span class="keyword">of</span> <code class="type">'d <a href="Idas.Adjoint.html#TYPEbresfn_no_sens">bresfn_no_sens</a></code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+No dependency on forward sensitivities.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTbresfn.WithSens"><span class="constructor">WithSens</span></span> <span class="keyword">of</span> <code class="type">'d <a href="Idas.Adjoint.html#TYPEbresfn_with_sens">bresfn_with_sens</a></code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Dependency on forward sensitivities.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+Functions that evaluate the right-hand side of a backward DAE system
+        with or without forward sensitivities.<br>
+</div>
+
+
+<pre><code><span id="TYPEtolerance"><span class="keyword">type</span> <code class="type">('d, 'k)</code> tolerance</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTtolerance.SStolerances"><span class="constructor">SStolerances</span></span> <span class="keyword">of</span> <code class="type">float * float</code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<code class="code">(rel, abs)</code> : scalar relative and absolute tolerances.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTtolerance.SVtolerances"><span class="constructor">SVtolerances</span></span> <span class="keyword">of</span> <code class="type">float * ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a></code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<code class="code">(rel, abs)</code> : scalar relative and vector absolute tolerances.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+Tolerance specifications.<br>
+</div>
+
+
+<pre><span id="VALinit_backward"><span class="keyword">val</span> init_backward</span> : <code class="type">('d, 'k) <a href="Ida.html#TYPEsession">Ida.session</a> -><br>       ('d, 'k) <a href="Idas.Adjoint.html#TYPElinear_solver">linear_solver</a> -><br>       ('d, 'k) <a href="Idas.Adjoint.html#TYPEtolerance">tolerance</a> -><br>       'd <a href="Idas.Adjoint.html#TYPEbresfn">bresfn</a> -><br>       ?varid:('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -><br>       float -><br>       ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> ('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">bsession</a></code></pre><div class="info ">
+Creates and initializes a backward session attached to an existing
+        (forward) session. The call
+        <pre class="codepre"><code class="code">init_backward&nbsp;s&nbsp;linsolv&nbsp;tol&nbsp;fb&nbsp;tb0&nbsp;yb0&nbsp;yb0'</code></pre> has as arguments:<ul>
+<li><code class="code">s</code>, the parent (forward) session,</li>
+<li><code class="code">linsolv</code>, the linear solver to use,</li>
+<li><code class="code">tol</code>, the integration tolerances,</li>
+<li><code class="code">fb</code>, the backward residual function,</li>
+<li><code class="code">varid</code>, (optionally) classifies variables as algebraic or
+                   differential,</li>
+<li><code class="code">tb0</code>, specifies the endpoint where final conditions are provided
+                 for the backward problem, which is normally the endpoint of
+                 forward integration, and,</li>
+<li><code class="code">yb0</code>, the final value of the backward variables.</li>
+<li><code class="code">yb0'</code>, the final value of the backward derivatives.</li>
+</ul>
+
+        This function does everything necessary to initialize a backward
+        session, i.e., it makes the calls referenced below. The
+        <a href="Idas.Adjoint.html#VALbackward_normal"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.backward_normal</code></a> and <a href="Idas.Adjoint.html#VALbackward_one_step"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.backward_one_step</code></a> functions may be called
+        directly.<br>
+<div class="raisedexceptions"><span class="raises">Raises</span><ul><li><code>AdjointNotInitialized</code> The <a href="Idas.Adjoint.html#VALinit"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.init</code></a> function has not been called.</li>
+<li><code>BadFinalTime</code> The final time is outside the interval over which the forward problem was solved.</li>
+</ul></div>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#sss:idainitb">IDACreateB</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#sss:idainitb">IDAInitB</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#sss:idainitb">IDAInitBS</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#sss:idatolerances_b">IDASStolerancesB</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#sss:idatolerances_b">IDASVtolerancesB</a></div></div>
+
+<pre><span class="keyword">module</span> <a href="Idas.Adjoint.Quadrature.html">Quadrature</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Idas.Adjoint.Quadrature.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+Support for backward quadrature equations that may or may
+        not depend on forward sensitivities.
+</div>
+
+<pre><span id="VALbackward_normal"><span class="keyword">val</span> backward_normal</span> : <code class="type">('d, 'k) <a href="Ida.html#TYPEsession">Ida.session</a> -> float -> unit</code></pre><div class="info ">
+Integrates a backward ODE system over an interval. The solver takes
+        internal steps until it has reached or just passed the specified value.<br>
+<div class="raisedexceptions"><span class="raises">Raises</span><ul><li><code>AdjointNotInitialized</code> The <a href="Idas.Adjoint.html#VALinit"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.init</code></a> function has not been called.</li>
+<li><code>NoBackwardProblem</code> The <a href="Idas.Adjoint.html#VALinit_backward"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.init_backward</code></a> function has not been called.</li>
+<li><code>NoForwardCall</code> Neither <a href="Idas.Adjoint.html#VALforward_normal"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.forward_normal</code></a> nor <a href="Idas.Adjoint.html#VALforward_one_step"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.forward_one_step</code></a> has been called.</li>
+<li><code>Ida.IllInput</code> One of the inputs is invalid.</li>
+<li><code>Ida.TooMuchWork</code> Could not reach <code class="code">tout</code> in <code class="code">mxstep</code> steps</li>
+<li><code>Ida.TooMuchAccuracy</code> Could not satisfy the demanded accuracy</li>
+<li><code>Ida.ErrFailure</code> Too many error test failures.</li>
+<li><code>Ida.ConvergenceFailure</code> Too many convergence test failures.</li>
+<li><code>Ida.LinearSetupFailure</code> Unrecoverable failure in linear solver setup function.</li>
+<li><code>Ida.LinearSolveFailure</code> Unrecoverable failure in linear solver solve function.</li>
+<li><code>BadOutputTime</code> The requested output time is outside the interval over which the forward problem was solved.</li>
+<li><code>ForwardReinitializationFailed</code> Reinitialization of the forward problem failed at the first checkpoint (corresponding to the initial time of the forward problem).</li>
+<li><code>ForwardFail</code> An error occurred during the integration of the forward problem.</li>
+</ul></div>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#sss:idasolveb">IDASolveB (IDA_NORMAL)</a></div></div>
+
+<pre><span id="VALbackward_one_step"><span class="keyword">val</span> backward_one_step</span> : <code class="type">('d, 'k) <a href="Ida.html#TYPEsession">Ida.session</a> -> float -> unit</code></pre><div class="info ">
+Like <a href="Idas.Adjoint.html#VALbackward_normal"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.backward_normal</code></a> but returns after one internal solver step.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#sss:idasolveb">IDASolveB (IDA_ONE_STEP)</a></div></div>
+
+<pre><span id="VALget"><span class="keyword">val</span> get</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">bsession</a> -><br>       ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> float</code></pre><div class="info ">
+Fills the given vectors, <code class="code">yb</code> and <code class="code">yb'</code>, with the solution of the
+        backward DAE problem at the returned time, interpolating if necessary.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#sss:idasolveb">IDAGetB</a></div></div>
+
+<pre><span id="VALget_dky"><span class="keyword">val</span> get_dky</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">bsession</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> float -> int -> unit</code></pre><div class="info ">
+Returns the interpolated solution or derivatives.
+        <code class="code">get_dky s dky t k</code> computes the <code class="code">k</code>th derivative of the backward
+        function at time <code class="code">t</code>, i.e.,
+        $\frac{d^\mathtt{k}y_B(\mathtt{t})}{\mathit{dt}^\mathtt{k}}$,
+        and stores it in <code class="code">dky</code>. The arguments must satisfy
+        $t_n - h_u \leq \mathtt{t} \leq t_n$—where $t_n$
+        denotes <a href="Idas.Adjoint.html#VALget_current_time"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.get_current_time</code></a> and $h_u$ denotes <a href="Idas.Adjoint.html#VALget_last_step"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.get_last_step</code></a>,—
+        and $0 \leq \mathtt{k} \leq q_u$—where $q_u$ denotes
+        <a href="Idas.Adjoint.html#VALget_last_order"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.get_last_order</code></a>.
+<p>
+
+        This function may only be called after a successful return from either
+        <a href="Idas.Adjoint.html#VALbackward_normal"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.backward_normal</code></a> or <a href="Idas.Adjoint.html#VALbackward_one_step"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.backward_one_step</code></a>.<br>
+<div class="raisedexceptions"><span class="raises">Raises</span><ul><li><code>BadT</code> <code class="code">t</code> is not in the interval $[t_n - h_u, t_n]$.</li>
+<li><code>BadK</code> <code class="code">k</code> is not in the range 0, 1, ..., $q_u$.</li>
+</ul></div>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#ss:optional_dky">IDAGetDky</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_output_b">IDAGetAdjIDABmem</a></div></div>
+
+<pre><span id="VALreinit"><span class="keyword">val</span> reinit</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">bsession</a> -><br>       ?linsolv:('d, 'k) <a href="Idas.Adjoint.html#TYPElinear_solver">linear_solver</a> -><br>       float -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> unit</code></pre><div class="info ">
+Reinitializes the backward problem with new parameters and state
+        values. The values of the independent variable, i.e., the simulation
+        time, and the state variables and derivatives must be given. It is also
+        possible to change the linear solver.<br>
+<div class="raisedexceptions"><span class="raises">Raises</span><ul><li><code>AdjointNotInitialized</code> The <a href="Idas.Adjoint.html#VALinit"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.init</code></a> function has not been called.</li>
+<li><code>BadFinalTime</code> The final time is outside the interval over which the forward problem was solved.</li>
+</ul></div>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#sss:idainitb">IDAReInitB</a></div></div>
+<br>
+<h3 id="calcic">Initial Condition Calculation</h3><br>
+
+<pre><span id="VALset_id"><span class="keyword">val</span> set_id</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">bsession</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> unit</code></pre><div class="info ">
+Class components of the state vector as either algebraic or
+        differential.
+        These classifications are required by <a href="Idas.Adjoint.html#VALcalc_ic"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.calc_ic</code></a>, <a href="Idas.Adjoint.html#VALcalc_ic_sens"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.calc_ic_sens</code></a>, and
+        <a href="Idas.Adjoint.html#VALset_suppress_alg"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.set_suppress_alg</code></a>. See also <a href="Ida.VarId.html"><code class="code"><span class="constructor">Ida</span>.<span class="constructor">VarId</span></code></a>.<br>
+<div class="sundials ida"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/ida_guide/node5.html#sss:optin_main">IDASetIdB</a></div></div>
+
+<pre><span id="VALset_suppress_alg"><span class="keyword">val</span> set_suppress_alg</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">bsession</a> -> ?varid:('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> bool -> unit</code></pre><div class="info ">
+Indicates whether or not to ignore algebraic variables in the local error
+        test. When ignoring algebraic variables (<code class="code"><span class="keyword">true</span></code>), a <code class="code">varid</code> vector must be
+        specified either in the call or by a prior call to <a href="Idas.Adjoint.html#VALinit"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.init</code></a> or <a href="Idas.Adjoint.html#VALset_id"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.set_id</code></a>.
+        Suppressing local error tests for algebraic variables is <i>discouraged</i>
+        for DAE systems of index 1 and <i>encouraged</i> for systems of index 2 or
+        more.<br>
+<div class="sundials ida"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/ida_guide/node5.html#sss:optin_main">IDASetId</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_input_b">IDASetSuppressAlgB</a></div></div>
+
+<pre><span id="VALcalc_ic"><span class="keyword">val</span> calc_ic</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">bsession</a> -><br>       ?yb:('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -><br>       ?yb':('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -><br>       float -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> unit</code></pre><div class="info ">
+Computes the algebraic components of the initial state and the
+        differential components of the derivative vectors for certain
+        index-one problems.
+        The elements of $y_B$ marked algebraic and of $\dot{y}_B$ marked
+        differential are computed from the differential components of $y_B$,
+        to satisfy the constraint
+        $F(t_0, y_0, \dot{y}_0, y_\mathit{B0}, \dot{y}_\mathit{B0}) = 0$.
+        The variable ids must be given in <code class="code">~varid</code> or by a prior call to <a href="Idas.Adjoint.html#VALinit"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.init</code></a> or
+        <a href="Idas.Adjoint.html#VALset_id"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.set_id</code></a>.
+        The call <code class="code">calc_ic s ~yb ~yb' tbout0 y0 dy0</code> gives the first value
+        at which a solution will be requested <code class="code">tbout0</code>, and the vectors of
+        forward solutions <code class="code">y0</code> and forward derivatives <code class="code">dy0</code>. If given,
+        the <code class="code">~yb</code> and <code class="code">~yb'</code> vectors are filled with the corrected backward
+        states and derivatives. A <a href="Idas.Adjoint.html#VALreinit"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.reinit</code></a> is required before calling this
+        function after <a href="Idas.Adjoint.html#VALforward_normal"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.forward_normal</code></a> or <a href="Idas.Adjoint.html#VALforward_one_step"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.forward_one_step</code></a>.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#sss:idacalcicB">IDACalcICB</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_output_b">IDAGetConsistentICB</a></div></div>
+
+<pre><span id="VALcalc_ic_sens"><span class="keyword">val</span> calc_ic_sens</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">bsession</a> -><br>       ?yb:('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -><br>       ?yb':('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -><br>       ?varid:('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -><br>       float -><br>       ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -><br>       ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -><br>       ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> array -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> array -> unit</code></pre><div class="info ">
+Computes the algebraic components of the initial state and the
+        differential components of the derivative vectors for certain
+        index-one problems.
+        The elements of $y_B$ marked algebraic and of $\dot{y}_B$ marked
+        differential are computed from the differential components of $y_B$,
+        to satisfy the constraint
+        $F(t_0, y_0, \dot{y}_0, y_\mathit{B0}, \dot{y}_\mathit{B0},
+              s0, \dot{s}0) = 0$.
+        The variable ids must be given in <code class="code">~varid</code> or by a prior call to <a href="Idas.Adjoint.html#VALinit"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.init</code></a> or
+        <a href="Idas.Adjoint.html#VALset_id"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.set_id</code></a>.
+        The call <code class="code">calc_ic s ~yb ~yb' tbout0 y0 dy0 s0 ds0</code> gives the first
+        value at which a solution will be requested <code class="code">tbout0</code>, the vectors of
+        forward solutions <code class="code">y0</code> and forward derivatives <code class="code">dy0</code>, and arrays of
+        vectors of sensitivities and sensitivity derivatives.
+        If given, the <code class="code">~yb</code> and <code class="code">~yb'</code> vectors are filled with the corrected
+        backward states and derivatives. A <a href="Idas.Adjoint.html#VALreinit"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.reinit</code></a> is required before
+        calling this function after <a href="Idas.Adjoint.html#VALforward_normal"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.forward_normal</code></a> or <a href="Idas.Adjoint.html#VALforward_one_step"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.forward_one_step</code></a>.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#sss:idacalcicB">IDACalcICBS</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_output_b">IDAGetConsistentICB</a></div></div>
+<br>
+<h2 id="set">Modifying the solver (optional input functions)</h2><br>
+
+<pre><span id="VALset_no_sensitivity"><span class="keyword">val</span> set_no_sensitivity</span> : <code class="type">('d, 'k) <a href="Ida.html#TYPEsession">Ida.session</a> -> unit</code></pre><div class="info ">
+Cancels the storage of sensitivity checkpointing data during forward
+        solution (with <a href="Idas.Adjoint.html#VALforward_normal"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.forward_normal</code></a> or <a href="Idas.Adjoint.html#VALforward_one_step"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.forward_one_step</code></a>).<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#SECTION00728000000000000000">IDAAdjSetNoSensi</a></div></div>
+
+<pre><span id="VALset_max_ord"><span class="keyword">val</span> set_max_ord</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">bsession</a> -> int -> unit</code></pre><div class="info ">
+Specifies the maximum order of the linear multistep method.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_input_b">IDASetMaxOrdB</a></div></div>
+
+<pre><span id="VALset_max_num_steps"><span class="keyword">val</span> set_max_num_steps</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">bsession</a> -> int -> unit</code></pre><div class="info ">
+Specifies the maximum number of steps taken in attempting to reach
+        a given output time.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_input_b">IDASetMaxNumStepsB</a></div></div>
+
+<pre><span id="VALset_init_step"><span class="keyword">val</span> set_init_step</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">bsession</a> -> float -> unit</code></pre><div class="info ">
+Specifies the initial step size.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_input_b">IDASetInitStepB</a></div></div>
+
+<pre><span id="VALset_max_step"><span class="keyword">val</span> set_max_step</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">bsession</a> -> float -> unit</code></pre><div class="info ">
+Specifies an upper bound on the magnitude of the step size.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_input_b">IDASetMaxStepB</a></div></div>
+<br>
+<h2 id="get">Querying the solver (optional output functions)</h2><br>
+
+<pre><span id="VALget_work_space"><span class="keyword">val</span> get_work_space</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">bsession</a> -> int * int</code></pre><div class="info ">
+Returns the real and integer workspace sizes.<br>
+<b>Returns</b> (<code class="code">real_size</code>, <code class="code">integer_size</code>)<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#sss:optout_main">IDAGetWorkSpace</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_output_b">IDAGetAdjIDABmem</a></div></div>
+
+<pre><span id="VALget_num_steps"><span class="keyword">val</span> get_num_steps</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">bsession</a> -> int</code></pre><div class="info ">
+Returns the cumulative number of internal steps taken by the solver.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#sss:optout_main">IDAGetNumSteps</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_output_b">IDAGetAdjIDABmem</a></div></div>
+
+<pre><span id="VALget_num_res_evals"><span class="keyword">val</span> get_num_res_evals</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">bsession</a> -> int</code></pre><div class="info ">
+Returns the number of calls to the backward residual function.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#sss:optout_main">IDAGetNumRhsEvals</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_output_b">IDAGetAdjIDABmem</a></div></div>
+
+<pre><span id="VALget_num_lin_solv_setups"><span class="keyword">val</span> get_num_lin_solv_setups</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">bsession</a> -> int</code></pre><div class="info ">
+Returns the number of calls made to the linear solver's setup function.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#sss:optout_main">IDAGetNumLinSolvSetups</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_output_b">IDAGetAdjIDABmem</a></div></div>
+
+<pre><span id="VALget_num_err_test_fails"><span class="keyword">val</span> get_num_err_test_fails</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">bsession</a> -> int</code></pre><div class="info ">
+Returns the number of local error test failures that have occurred.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#sss:optout_main">IDAGetNumErrTestFails</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_output_b">IDAGetAdjIDABmem</a></div></div>
+
+<pre><span id="VALget_last_order"><span class="keyword">val</span> get_last_order</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">bsession</a> -> int</code></pre><div class="info ">
+Returns the integration method order used during the last internal step.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#sss:optout_main">IDAGetLastOrder</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_output_b">IDAGetAdjIDABmem</a></div></div>
+
+<pre><span id="VALget_current_order"><span class="keyword">val</span> get_current_order</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">bsession</a> -> int</code></pre><div class="info ">
+Returns the integration method order to be used on the next internal
+        step.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#sss:optout_main">IDAGetCurrentOrder</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_output_b">IDAGetAdjIDABmem</a></div></div>
+
+<pre><span id="VALget_last_step"><span class="keyword">val</span> get_last_step</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">bsession</a> -> float</code></pre><div class="info ">
+Returns the integration step size taken on the last internal step.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#sss:optout_main">IDAGetLastStep</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_output_b">IDAGetAdjIDABmem</a></div></div>
+
+<pre><span id="VALget_current_step"><span class="keyword">val</span> get_current_step</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">bsession</a> -> float</code></pre><div class="info ">
+Returns the integration step size to be attempted on the next internal
+        step.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#sss:optout_main">IDAGetCurrentStep</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_output_b">IDAGetAdjIDABmem</a></div></div>
+
+<pre><span id="VALget_actual_init_step"><span class="keyword">val</span> get_actual_init_step</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">bsession</a> -> float</code></pre><div class="info ">
+Returns the the value of the integration step size used on the first
+        step.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#sss:optout_main">IDAGetActualInitStep</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_output_b">IDAGetAdjIDABmem</a></div></div>
+
+<pre><span id="VALget_current_time"><span class="keyword">val</span> get_current_time</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">bsession</a> -> float</code></pre><div class="info ">
+Returns the the current internal time reached by the solver.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#sss:optout_main">IDAGetCurrentTime</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_output_b">IDAGetAdjIDABmem</a></div></div>
+
+<pre><span id="VALget_tol_scale_factor"><span class="keyword">val</span> get_tol_scale_factor</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">bsession</a> -> float</code></pre><div class="info ">
+Returns a suggested factor by which the user's tolerances should be
+        scaled when too much accuracy has been requested for some internal
+        step.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#sss:optout_main">IDAGetTolScaleFactor</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_output_b">IDAGetAdjIDABmem</a></div></div>
+
+<pre><span id="VALget_err_weights"><span class="keyword">val</span> get_err_weights</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">bsession</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> unit</code></pre><div class="info ">
+Returns the solution error weights at the current time.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#sss:optout_main">IDAGetErrWeights</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_output_b">IDAGetAdjIDABmem</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node3.html#ss:ivp_sol">IVP solution (W_i)</a></div></div>
+
+<pre><span id="VALget_est_local_errors"><span class="keyword">val</span> get_est_local_errors</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">bsession</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> unit</code></pre><div class="info ">
+Returns the vector of estimated local errors.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#sss:optout_main">IDAGetEstLocalErrors</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_output_b">IDAGetAdjIDABmem</a></div></div>
+
+<pre><span id="VALget_integrator_stats"><span class="keyword">val</span> get_integrator_stats</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">bsession</a> -> <a href="Ida.html#TYPEintegrator_stats">Ida.integrator_stats</a></code></pre><div class="info ">
+Returns the integrator statistics as a group.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#sss:optout_main">IDAGetIntegratorStats</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_output_b">IDAGetAdjIDABmem</a></div></div>
+
+<pre><span id="VALprint_integrator_stats"><span class="keyword">val</span> print_integrator_stats</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">bsession</a> -> Pervasives.out_channel -> unit</code></pre><div class="info ">
+Prints the integrator statistics on the given channel.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#sss:optout_main">IDAGetIntegratorStats</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_output_b">IDAGetAdjIDABmem</a></div></div>
+
+<pre><span id="VALget_num_nonlin_solv_iters"><span class="keyword">val</span> get_num_nonlin_solv_iters</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">bsession</a> -> int</code></pre><div class="info ">
+Returns the number of nonlinear (functional or Newton) iterations
+        performed.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#sss:optout_main">IDAGetNumNonlinSolvIters</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_output_b">IDAGetAdjIDABmem</a></div></div>
+
+<pre><span id="VALget_num_nonlin_solv_conv_fails"><span class="keyword">val</span> get_num_nonlin_solv_conv_fails</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">bsession</a> -> int</code></pre><div class="info ">
+Returns the number of nonlinear convergence failures that have occurred.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#sss:optout_main">IDAGetNumNonlinSolvConvFails</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_output_b">IDAGetAdjIDABmem</a></div></div>
+
+<pre><span id="VALget_nonlin_solv_stats"><span class="keyword">val</span> get_nonlin_solv_stats</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">bsession</a> -> int * int</code></pre><div class="info ">
+Returns both the numbers of nonlinear iterations performed <code class="code">nniters</code> and
+        nonlinear convergence failures <code class="code">nncfails</code>.<br>
+<b>Returns</b> (<code class="code">nniters</code>, <code class="code">nncfails</code>)<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#sss:optout_main">IDAGetNonlinSolvStats</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#ss:optional_output_b">IDAGetAdjIDABmem</a></div></div>
+<br>
+<h2 id="exceptions">Exceptions</h2><br>
+
+<pre><span id="EXCEPTIONAdjointNotInitialized"><span class="keyword">exception</span> AdjointNotInitialized</span></pre>
+<div class="info ">
+Adjoint sensitivity analysis was not initialized.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#sss:idasolvef">IDA_NO_ADJ</a></div></div>
+
+<pre><span id="EXCEPTIONNoForwardCall"><span class="keyword">exception</span> NoForwardCall</span></pre>
+<div class="info ">
+Neither <a href="Idas.Adjoint.html#VALforward_normal"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.forward_normal</code></a> nor <a href="Idas.Adjoint.html#VALforward_one_step"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.forward_one_step</code></a> has been called.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#sss:idasolveb">IDA_NO_FWD</a></div></div>
+
+<pre><span id="EXCEPTIONForwardReinitFailure"><span class="keyword">exception</span> ForwardReinitFailure</span></pre>
+<div class="info ">
+Reinitialization of the forward problem failed at the first checkpoint
+        (corresponding to the initial time of the forward problem).<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#sss:idasolveb">IDA_REIFWD_FAIL</a></div></div>
+
+<pre><span id="EXCEPTIONForwardFailure"><span class="keyword">exception</span> ForwardFailure</span></pre>
+<div class="info ">
+An error occured during the integration of the forward problem.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#sss:idasolveb">IDA_FWD_FAIL</a></div></div>
+
+<pre><span id="EXCEPTIONNoBackwardProblem"><span class="keyword">exception</span> NoBackwardProblem</span></pre>
+<div class="info ">
+No backward problem has been created.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#sss:idasolveb">IDA_NO_BCK</a></div></div>
+
+<pre><span id="EXCEPTIONBadFinalTime"><span class="keyword">exception</span> BadFinalTime</span></pre>
+<div class="info ">
+The final time was outside the interval over which the forward
+        problem was solved.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#sss:idainitb">IDA_BAD_TB0</a></div></div>
+</body></html>

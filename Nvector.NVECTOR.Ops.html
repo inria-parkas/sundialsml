@@ -1,0 +1,143 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="next" href="Nvector.NVECTOR.DataOps.html">
+<link rel="Up" href="Nvector.NVECTOR.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Dls" rel="Chapter" href="Dls.html">
+<link title="Spils" rel="Chapter" href="Spils.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html"><title>Sundials/ML 2.5.0p0 : Nvector.NVECTOR.Ops</title>
+</head>
+<body>
+<div class="navbar">&nbsp;<a class="up" href="Nvector.NVECTOR.html" title="Nvector.NVECTOR">Up</a>
+&nbsp;<a class="post" href="Nvector.NVECTOR.DataOps.html" title="Nvector.NVECTOR.DataOps">Next</a>
+</div>
+<h1>Module <a href="type_Nvector.NVECTOR.Ops.html">Nvector.NVECTOR.Ops</a></h1>
+
+<pre><span class="keyword">module</span> Ops: <code class="type"><a href="Nvector.NVECTOR_OPS.html">Nvector.NVECTOR_OPS</a></code><code class="type">  with type t = t</code></pre><div class="info module top">
+Standard operations over nvectors.<br>
+</div>
+<hr width="100%">
+
+<pre><span id="TYPEt"><span class="keyword">type</span> <code class="type"></code>t</span> </pre>
+<div class="info ">
+The vector type.<br>
+</div>
+
+
+<pre><span id="VALn_vclone"><span class="keyword">val</span> n_vclone</span> : <code class="type"><a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> <a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a></code></pre><div class="info ">
+Create a new, distinct vector from an existing one.<br>
+</div>
+
+<pre><span id="VALn_vlinearsum"><span class="keyword">val</span> n_vlinearsum</span> : <code class="type">float -><br>       <a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -><br>       float -> <a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> <a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> unit</code></pre><div class="info ">
+<code class="code">n_vlinearsum a x b y z</code> calculates <code class="code">z = a*x + b*y</code>.<br>
+</div>
+
+<pre><span id="VALn_vconst"><span class="keyword">val</span> n_vconst</span> : <code class="type">float -> <a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> unit</code></pre><div class="info ">
+<code class="code">n_vconst c z</code> sets all of <code class="code">z</code> to <code class="code">c</code>.<br>
+</div>
+
+<pre><span id="VALn_vprod"><span class="keyword">val</span> n_vprod</span> : <code class="type"><a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -><br>       <a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> <a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> unit</code></pre><div class="info ">
+<code class="code">n_vprod x y z</code> calculates <code class="code">z = x * y</code> (pointwise).<br>
+</div>
+
+<pre><span id="VALn_vdiv"><span class="keyword">val</span> n_vdiv</span> : <code class="type"><a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -><br>       <a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> <a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> unit</code></pre><div class="info ">
+<code class="code">n_vdiv x y z</code> calculates <code class="code">z = x / y</code> (pointwise).<br>
+</div>
+
+<pre><span id="VALn_vscale"><span class="keyword">val</span> n_vscale</span> : <code class="type">float -> <a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> <a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> unit</code></pre><div class="info ">
+<code class="code">n_vscale c x z</code> calculates <code class="code">z = c *. x</code>.<br>
+</div>
+
+<pre><span id="VALn_vabs"><span class="keyword">val</span> n_vabs</span> : <code class="type"><a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> <a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> unit</code></pre><div class="info ">
+<code class="code">n_vabs x z</code> calculates <code class="code">z = abs(x)</code>.<br>
+</div>
+
+<pre><span id="VALn_vinv"><span class="keyword">val</span> n_vinv</span> : <code class="type"><a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> <a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> unit</code></pre><div class="info ">
+<code class="code">n_vinv x z</code> calculates <code class="code">z = 1/x</code> (pointwise).<br>
+</div>
+
+<pre><span id="VALn_vaddconst"><span class="keyword">val</span> n_vaddconst</span> : <code class="type"><a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> float -> <a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> unit</code></pre><div class="info ">
+<code class="code">n_vaddconst x b z</code> calculates <code class="code">z = x + b</code>.<br>
+</div>
+
+<pre><span id="VALn_vdotprod"><span class="keyword">val</span> n_vdotprod</span> : <code class="type"><a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> <a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> float</code></pre><div class="info ">
+<code class="code">n_vdotprod x y</code> returns the dot product of <code class="code">x</code> and <code class="code">y</code>.<br>
+</div>
+
+<pre><span id="VALn_vmaxnorm"><span class="keyword">val</span> n_vmaxnorm</span> : <code class="type"><a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> float</code></pre><div class="info ">
+<code class="code">n_vmaxnorm x</code> returns the maximum absolute value in x.<br>
+</div>
+
+<pre><span id="VALn_vwrmsnorm"><span class="keyword">val</span> n_vwrmsnorm</span> : <code class="type"><a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> <a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> float</code></pre><div class="info ">
+<code class="code">n_vwrmsnorm x w</code> returns the weighted root-mean-square norm of <code class="code">x</code>
+        with weight vector <code class="code">w</code>.<br>
+</div>
+
+<pre><span id="VALn_vmin"><span class="keyword">val</span> n_vmin</span> : <code class="type"><a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> float</code></pre><div class="info ">
+<code class="code">n_vmin x</code> returns the smallest element in <code class="code">x</code>.<br>
+</div>
+
+<pre><span id="VALn_vcompare"><span class="keyword">val</span> n_vcompare</span> : <code class="type">float -> <a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> <a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> unit</code></pre><div class="info ">
+<code class="code">n_vcompare c x z</code> calculates
+        <code class="code">z(i) = <span class="keyword">if</span> abs x(i) &gt;= c <span class="keyword">then</span> 1 <span class="keyword">else</span> 0</code>.<br>
+</div>
+
+<pre><span id="VALn_vinvtest"><span class="keyword">val</span> n_vinvtest</span> : <code class="type"><a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> <a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> bool</code></pre><div class="info ">
+<code class="code">n_vinvtest x z</code> calculates <code class="code">z(i) = 1 / x(i)</code> with prior testing for
+      zero values. This routine returns <code class="code"><span class="keyword">true</span></code> if all components of <code class="code">x</code> are
+      nonzero (successful inversion) and <code class="code"><span class="keyword">false</span></code> otherwise (not all elements
+      inverted).<br>
+</div>
+
+<pre><span id="VALn_vwl2norm"><span class="keyword">val</span> n_vwl2norm</span> : <code class="type"><a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> <a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> float</code></pre><div class="info ">
+<code class="code">n_vwl2norm x w</code> returns the weighted (<code class="code">w</code>) Euclidean l2 norm of <code class="code">x</code>.<br>
+</div>
+
+<pre><span id="VALn_vl1norm"><span class="keyword">val</span> n_vl1norm</span> : <code class="type"><a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> float</code></pre><div class="info ">
+<code class="code">n_vl1norm x</code> returns the l1 norm of <code class="code">x</code>.<br>
+</div>
+
+<pre><span id="VALn_vwrmsnormmask"><span class="keyword">val</span> n_vwrmsnormmask</span> : <code class="type"><a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -><br>       <a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> <a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> float</code></pre><div class="info ">
+<code class="code">n_vmaxnormmask x w id</code> returns the weighted root-mean-square norm
+        of <code class="code">x</code> using only elements where the corresponding <code class="code">id</code> is non-zero.<br>
+</div>
+
+<pre><span id="VALn_vconstrmask"><span class="keyword">val</span> n_vconstrmask</span> : <code class="type"><a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -><br>       <a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> <a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> bool</code></pre><div class="info ">
+<code class="code">n_vconstrmask c x m</code> calculates <code class="code">m(i) = <span class="constructor">Pi</span> x(i)</code> returning the
+        conjunction. The value of <code class="code"><span class="constructor">Pi</span></code> depends on <code class="code">c(i)</code>: <code class="code">2: x(i) &gt; 0</code>,
+        <code class="code">1: x(i) &gt;= 0</code>, <code class="code">0: <span class="keyword">true</span></code>, <code class="code">-1: x(i) &lt;= 0</code>, and <code class="code">-2: x(i) &lt; 0</code>.<br>
+</div>
+
+<pre><span id="VALn_vminquotient"><span class="keyword">val</span> n_vminquotient</span> : <code class="type"><a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> <a href="Nvector.NVECTOR_OPS.html#TYPEt">t</a> -> float</code></pre><div class="info ">
+<code class="code">n_vminquotient num denom</code> returns the minimum of <code class="code">num(i) / denom(i)</code>.
+        Zero <code class="code">denom</code> elements are skipped.<br>
+</div>
+</body></html>

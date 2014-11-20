@@ -1,0 +1,96 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Ida.Alternate.html">
+<link rel="Up" href="Ida.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Dls" rel="Chapter" href="Dls.html">
+<link title="Spils" rel="Chapter" href="Spils.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html"><title>Sundials/ML 2.5.0p0 : Ida.VarId</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Ida.Alternate.html" title="Ida.Alternate">Previous</a>
+&nbsp;<a class="up" href="Ida.html" title="Ida">Up</a>
+&nbsp;</div>
+<h1>Module <a href="type_Ida.VarId.html">Ida.VarId</a></h1>
+
+<pre><span class="keyword">module</span> VarId: <code class="code"><span class="keyword">sig</span></code> <a href="Ida.VarId.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+Symbolic names for constants used when calculating initial values or
+    supressing local error tests. See <a href="Ida.html#VALcalc_ic_ya_yd'"><code class="code"><span class="constructor">Ida</span>.calc_ic_ya_yd'</code></a> and
+    <a href="Ida.html#VALset_suppress_alg"><code class="code"><span class="constructor">Ida</span>.set_suppress_alg</code></a>.<br>
+<div class="sundials ida"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/ida_guide/node5.html#sss:idasetid">IDASetId</a></div></div>
+<hr width="100%">
+
+<pre><span id="VALalgebraic"><span class="keyword">val</span> algebraic</span> : <code class="type">float</code></pre><div class="info ">
+The constant <code class="code">0.0</code>.<br>
+</div>
+
+<pre><span id="VALdifferential"><span class="keyword">val</span> differential</span> : <code class="type">float</code></pre><div class="info ">
+The constant <code class="code">1.0</code>.<br>
+</div>
+
+<pre><code><span id="TYPEt"><span class="keyword">type</span> <code class="type"></code>t</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.Algebraic"><span class="constructor">Algebraic</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Residual functions must not depend on the derivatives
+                       of algebraic variables.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.Differential"><span class="constructor">Differential</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Residual functions may depend on the derivatives of
+                       differential variables.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+For pattern-matching on constraints. See <a href="Ida.VarId.html#VALof_float"><code class="code"><span class="constructor">Ida</span>.<span class="constructor">VarId</span>.of_float</code></a>.<br>
+</div>
+
+
+<pre><span id="VALto_float"><span class="keyword">val</span> to_float</span> : <code class="type"><a href="Ida.VarId.html#TYPEt">t</a> -> float</code></pre><div class="info ">
+Map id values to floating-point constants.<br>
+</div>
+
+<pre><span id="VALof_float"><span class="keyword">val</span> of_float</span> : <code class="type">float -> <a href="Ida.VarId.html#TYPEt">t</a></code></pre><div class="info ">
+Map floating-point constants to id values.<br>
+<div class="raisedexceptions"><span class="raises">Raises</span> <code>Invalid_argument</code> The given value is not a legal id.</div>
+</div>
+</body></html>
