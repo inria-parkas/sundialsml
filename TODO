@@ -5,15 +5,11 @@ GOAL: End november:
 
 Priorities: Jun
 ---------------
-
 1.  Replace long lists of callback arguments with records, carefully
     adapting the docs.
 
-3. Write skeleton programs.
-
 Priorities: Tim
 ---------------
-
 1. Docs:
    - Add links to download/github.
    - Where to put the docs online?
