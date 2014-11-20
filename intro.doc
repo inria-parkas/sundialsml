@@ -17,7 +17,12 @@ and
 ({{:http://www.upmc.fr/}UPMC}/{{:http://www.di.ens.fr/}ENS}/{{:http://www.inria.fr/}Inria}).
 It provides a complete OCaml interface to Sundials version {b {var version}}.
 
-Feedback and bug reports are {{:mailto:tim\@tbrk.org}welcome}.
+The source code is available under a New BSD license at
+{{:https://github.com/inria-parkas/sundialsml}git\@github.com:inria-parkas/sundialsml.git}.
+{{:mailto:tim\@tbrk.org}Feedback},
+{{:https://github.com/inria-parkas/sundialsml/issues/new}bug reports},
+and {{:https://github.com/inria-parkas/sundialsml/compare}pull requests}
+are welcome.
 
 The structure of this interface mostly follows that of the original library,
 both for ease of reading the existing documentation and for converting
