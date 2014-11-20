@@ -837,7 +837,7 @@ let fB data args yBdot =
  *------------------------------------------------------------------
  *)
 
-let fQB dataB args qBdot = n_vscale (-.dataB.dOmega) args.QuadAdj.yB qBdot
+let fQB dataB { QuadAdj.yB = yB } qBdot = n_vscale (-.dataB.dOmega) yB qBdot
 
 (*
  *------------------------------------------------------------------

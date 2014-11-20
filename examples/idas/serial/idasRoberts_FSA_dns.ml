@@ -116,11 +116,8 @@ let res data t (yy : RealArray.t) (yp : RealArray.t) (resval : RealArray.t) =
   resval.{2} <- y1 +. y2 +. y3 -. 1.0
 
 let resS : user_data -> RealArray.t Sens.sensresfn =
-  fun data args resvalS ->
-  let yy = args.Sens.y
-  and yyS = args.Sens.yS
-  and ypS = args.Sens.yS'
-  in
+  fun data { Sens.y = yy; Sens.yS = yyS; Sens.yS' = ypS } resvalS ->
+
   let p1 = data.p.{0}
   and p2 = data.p.{1}
   and p3 = data.p.{2}
@@ -228,28 +225,28 @@ let print_sens_output uS =
   printf "%12.4e %12.4e %12.4e \n" sdata.{0} sdata.{1} sdata.{2}
 
 let print_final_stats ida_mem sensi =
-  let nst = Ida.get_num_steps ida_mem
-  and nfe = Ida.get_num_res_evals ida_mem
+  let nst     = Ida.get_num_steps ida_mem
+  and nfe     = Ida.get_num_res_evals ida_mem
   and nsetups = Ida.get_num_lin_solv_setups ida_mem
-  and netf = Ida.get_num_err_test_fails ida_mem
-  and nni = Ida.get_num_nonlin_solv_iters ida_mem
-  and ncfn = Ida.get_num_nonlin_solv_conv_fails ida_mem
+  and netf    = Ida.get_num_err_test_fails ida_mem
+  and nni     = Ida.get_num_nonlin_solv_iters ida_mem
+  and ncfn    = Ida.get_num_nonlin_solv_conv_fails ida_mem
   in
 
   let sens_stats =
     if sensi then
-      let nfSe = Sens.get_num_res_evals ida_mem
-      and nfeS = Sens.get_num_res_evals_sens ida_mem
+      let nfSe     = Sens.get_num_res_evals ida_mem
+      and nfeS     = Sens.get_num_res_evals_sens ida_mem
       and nsetupsS = Sens.get_num_lin_solv_setups ida_mem
-      and netfS = Sens.get_num_err_test_fails ida_mem
-      and nniS = Sens.get_num_nonlin_solv_iters ida_mem
-      and ncfnS = Sens.get_num_nonlin_solv_conv_fails ida_mem
+      and netfS    = Sens.get_num_err_test_fails ida_mem
+      and nniS     = Sens.get_num_nonlin_solv_iters ida_mem
+      and ncfnS    = Sens.get_num_nonlin_solv_conv_fails ida_mem
       in lazy (nfSe, nfeS, nsetupsS, netfS, nniS, ncfnS)
     else
       lazy (failwith "bug in C code transcribed to OCaml")
   in
 
-  let nje = Ida.Dls.get_num_jac_evals ida_mem
+  let nje   = Ida.Dls.get_num_jac_evals ida_mem
   and nfeLS = Ida.Dls.get_num_res_evals ida_mem
   in
 

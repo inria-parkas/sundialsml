@@ -92,12 +92,7 @@ let res data tres (yy : RealArray.t) (yp : RealArray.t) (rr : RealArray.t) =
   rr.{2} <- y1+.y2+.y3-.1.0
 
 let resS : user_data -> RealArray.t Sens.sensresfn =
-  fun data args resvalS ->
-  let yy = args.Sens.y
-  and yyS = args.Sens.yS
-  and ypS = args.Sens.yS'
-  in
-
+  fun data { Sens.y = yy; Sens.yS = yyS; Sens.yS' = ypS } resvalS ->
   let p1 = data.p.{0}
   and p2 = data.p.{1}
   and p3 = data.p.{2}
@@ -144,10 +139,7 @@ let rhsQ data t (yy : RealArray.t) (yp : RealArray.t) (qdot : RealArray.t) =
   qdot.{0} <- 0.5*.(y1*.y1+.y2*.y2+.y3*.y3)
 
 let rhsQS : user_data -> RealArray.t QuadSens.quadsensrhsfn =
-  fun data args rhsQS ->
-  let yy = args.QuadSens.y
-  and yyS = args.QuadSens.yS
-  in
+  fun data { QuadSens.y = yy; QuadSens.yS = yyS } rhsQS ->
   let y1 = yy.{0}
   and y2 = yy.{1}
   and y3 = yy.{2}
@@ -217,14 +209,13 @@ let resBS1 : user_data -> RealArray.t Adjoint.bresfn_with_sens =
   rrBS.{2} <- -.p2*.y2*.l21 -. l3 +. y3;
 
   rrBS.{3} <- mp1 +. p1*.(-.m1+.m2) -. m3 +. l21 +. s1;
-  rrBS.{4} <- mp2 +. p2*.y3*.m1 -. (p2*.y3+.2.0*.p3*.y2)*.m2 -. m3 +. p2*.s3*.l1 -. (2.0*.p3*.s2+.p2*.s3)*.l2 +. s2;
+  rrBS.{4} <- mp2 +. p2*.y3*.m1 -. (p2*.y3+.2.0*.p3*.y2)*.m2 -. m3
+                +. p2*.s3*.l1 -. (2.0*.p3*.s2+.p2*.s3)*.l2 +. s2;
   rrBS.{5} <- p2*.y2*.(m1-.m2) -. m3 -. p2*.s2*.l21 +. s3
 
 let rhsQBS1 : user_data -> RealArray.t AdjQuad.bquadrhsfn_with_sens =
-  fun data args yyS ypS rhsBQS ->
-  let yy = args.AdjQuad.y
-  and yyB = args.AdjQuad.yB
-  in
+  fun data { AdjQuad.y = yy; AdjQuad.yB = yyB } yyS ypS rhsBQS ->
+
   (* The y vector *)
   let y1 = yy.{0}
   and y2 = yy.{1}
@@ -253,11 +244,8 @@ let rhsQBS1 : user_data -> RealArray.t AdjQuad.bquadrhsfn_with_sens =
   rhsBQS.{3} <- y2*.y3*.(m2-.m1) +. (y3*.s2+.y2*.s3)*.l21
 
 let resBS2 : user_data -> RealArray.t Adjoint.bresfn_with_sens =
-  fun data args yyS ypS rrBS ->
-  let yy = args.Adjoint.y
-  and yyB = args.Adjoint.yB
-  and ypB = args.Adjoint.yB'
-  in
+  fun data { Adjoint.y = yy; Adjoint.yB = yyB; Adjoint.yB' = ypB } yyS ypS rrBS
+  ->
   (* The parameters. *)
   let p1 = data.p.{0}
   and p2 = data.p.{1}
@@ -302,10 +290,7 @@ let resBS2 : user_data -> RealArray.t Adjoint.bresfn_with_sens =
   rrBS.{5} <- p2*.y2*.(m1-.m2) -. m3 -. (y2+.p2*.s2)*.l21 +. s3
 
 let rhsQBS2 : user_data -> RealArray.t AdjQuad.bquadrhsfn_with_sens =
-  fun data args yyS ypS rhsBQS ->
-  let yy = args.AdjQuad.y
-  and yyB = args.AdjQuad.yB
-  in
+  fun data {AdjQuad.y = yy; AdjQuad.yB = yyB } yyS ypS rhsBQS ->
   (* The y vector *)
   let y1 = yy.{0}
   and y2 = yy.{1}
@@ -631,7 +616,6 @@ let main () =
   grdG_bck.{1} <- (g-.gm)/.dp2;
   grdG_cntr.{1} <- (gp-.gm)/.(2.0*.dp2);
   let h22 = (gp -. 2.0*.g +. gm) /. (dp2*.dp2) in
-
 
   printf "\n";
   printf "   dG/dp:  %12.4e  %12.4e   (fwd FD)\n"  grdG_fwd.{0}  grdG_fwd.{1};

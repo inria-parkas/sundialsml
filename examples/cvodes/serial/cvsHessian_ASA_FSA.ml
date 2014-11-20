@@ -74,9 +74,7 @@ let fQ data t (y : RealArray.t) (qdot : RealArray.t) =
   qdot.{0} <- 0.5 *. ( y.{0}*.y.{0} +. y.{1}*.y.{1} +. y.{2}*.y.{2})
 
 let fS : user_data -> RealArray.t Sens.sensrhsfn_all =
-  fun data args yS ySdot ->
-  let y = args.Sens.y
-  in
+  fun data { Sens.y = y } yS ySdot ->
   let p1 = data.p1
   and p2 = data.p2 in
   (* 1st sensitivity RHS *)
@@ -105,10 +103,7 @@ let fS : user_data -> RealArray.t Sens.sensrhsfn_all =
   ySdot.(1).{2} <- (fys3 -. 2.0*.p2*.y.{1}*.y.{2})
 
 let fQS : user_data -> RealArray.t QuadSens.quadsensrhsfn =
-  fun data args yQSdot ->
-  let y = args.QuadSens.y
-  and yS = args.QuadSens.yS
-  in
+  fun data { QuadSens.y = y; QuadSens.yS = yS } yQSdot ->
   (* 1st sensitivity RHS *)
   let s1 = yS.(0).{0}
   and s2 = yS.(0).{1}

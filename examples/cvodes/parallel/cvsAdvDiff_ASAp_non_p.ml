@@ -253,10 +253,8 @@ let f data t (udata, _, _) (dudata, _, _) =
 
 (* fB routine. Compute right hand side of backward problem *)
 
-let fB data args (duBdata, _, _) =
-  let (udata, _, _) = args.Adjoint.y
-  and (uBdata, _, _) = args.Adjoint.yB
-  in
+let fB data { Adjoint.y = (udata, _, _);
+              Adjoint.yB = (uBdata, _, _) } (duBdata, _, _) =
 
   (* Extract MPI info. from data *)
   let comm      = data.comm in

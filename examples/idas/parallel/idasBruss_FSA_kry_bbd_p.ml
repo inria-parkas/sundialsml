@@ -107,12 +107,10 @@ let one =         1.0
 
 (* User-defined vector accessor macro IJ_Vptr. *)
 
-(*
- * IJ_Vptr is defined in order to express the underlying 3-d structure of the
+(* IJ_Vptr is defined in order to express the underlying 3-d structure of the
  * dependent variable vector from its underlying 1-d storage (an N_Vector).
  * IJ_Vptr(vv,i,j) returns a pointer to the location in vv corresponding to
- * species index is = 0, x-index ix = i, and y-index jy = j.
- *)
+ * species index is = 0, x-index ix = i, and y-index jy = j. *)
 let index i j = i*num_species + j*nsmxsub
 
 type user_data =
@@ -149,9 +147,7 @@ type user_data =
  *--------------------------------------------------------------------
  *)
 
-(*
- * BRecvPost: Start receiving boundary data from neighboring PEs.
- *)
+(* BRecvPost: Start receiving boundary data from neighboring PEs. *)
 
 let brecvpost comm my_pe ixsub jysub dsizex dsizey cext =
   (* If jysub > 0, receive data for bottom x-line of cext. *)
@@ -179,13 +175,11 @@ let brecvpost comm my_pe ixsub jysub dsizex dsizey cext =
   in
   [|r0;r1;r2;r3|]
 
-(*
- * BRecvWait: Finish receiving boundary data from neighboring PEs.
+(* BRecvWait: Finish receiving boundary data from neighboring PEs.
  * (1) buffer should be able to hold 2*num_species*mysub realtype entries,
  *     should be passed to both the brecvpost and BRecvWait functions, and
  *     should not be manipulated between the two calls.
- * (2) request should have 4 entries, and is also passed in both calls.
- *)
+ * (2) request should have 4 entries, and is also passed in both calls. *)
 
 let brecvwait request ixsub jysub dsizex cext =
   let dsizex2 = dsizex + 2*num_species in
@@ -231,11 +225,9 @@ let brecvwait request ixsub jysub dsizex cext =
     done
   end
 
-(*
- * BSend: Send boundary data to neighboring PEs.
+(* BSend: Send boundary data to neighboring PEs.
  * This routine sends components of uv from internal subgrid boundaries
- * to the appropriate neighbor PEs.
- *)
+ * to the appropriate neighbor PEs. *)
 let bsend comm my_pe ixsub jysub dsizex dsizey (cdata : RealArray.t) =
   let bufleft = RealArray.create (num_species * mysub)
   and bufright = RealArray.create (num_species * mysub)
@@ -279,10 +271,8 @@ let bsend comm my_pe ixsub jysub dsizex dsizey (cdata : RealArray.t) =
     Mpi.send (slice bufright 0 dsizey) (my_pe+1) 0 comm
   end
 
-(*
- * ReactRates: Evaluate reaction rates at a given spatial point.
- * At a given (x,y), evaluate the array of ns reaction terms R.
- *)
+(* ReactRates: Evaluate reaction rates at a given spatial point.
+ * At a given (x,y), evaluate the array of ns reaction terms R. *)
 
 let react_rates data xx yy ((uvval : RealArray.t), uvval_off)
                            (rates : RealArray.t) =
@@ -294,8 +284,7 @@ let react_rates data xx yy ((uvval : RealArray.t), uvval_off)
   rates.{0} <- rates.{0} +. (a-.(b+.1.0)*.uvval.{uvval_off});
   rates.{1} <- rates.{1} +. b*.uvval.{uvval_off}
 
-(*
- * reslocal: Compute res = F(t,uv,uvp).
+(* reslocal: Compute res = F(t,uv,uvp).
  * This routine assumes that all inter-processor communication of data
  * needed to calculate F has already been done.  Components at interior
  * subgrid boundaries are assumed to be in the work array cext.
@@ -305,8 +294,7 @@ let react_rates data xx yy ((uvval : RealArray.t), uvval_off)
  * locations in cext.  Then the reaction and diffusion terms are
  * evaluated in terms of the cext array, and the residuals are formed.
  * The reaction terms are saved separately in the vector data.rates
- * for use by the preconditioner setup routine.
- *)
+ * for use by the preconditioner setup routine. *)
 
 let reslocal data tt ((uv : RealArray.t), _, _)
                      ((uvp : RealArray.t), _, _)
@@ -461,15 +449,13 @@ let reslocal data tt ((uv : RealArray.t), _, _)
     done
   end
 
-(*
- * rescomm: Communication routine in support of resweb.
+(* rescomm: Communication routine in support of resweb.
  * This routine performs all inter-processor communication of components
  * of the uv vector needed to calculate F, namely the components at all
  * interior subgrid boundaries (ghost cell data).  It loads this data
  * into a work array cext (the local portion of c, extended).
  * The message-passing uses blocking sends, non-blocking receives,
- * and receive-waiting, in routines BRecvPost, BSend, BRecvWait.
- *)
+ * and receive-waiting, in routines BRecvPost, BSend, BRecvWait. *)
 let rescomm data tt uv uvp =
   let cdata,_,_ = uv in
 
@@ -540,9 +526,7 @@ let integr comm uv data =
  *--------------------------------------------------------------------
  *)
 
-(*
- * InitUserData: Load problem constants in data (of type UserData).
- *)
+(* InitUserData: Load problem constants in data (of type UserData). *)
 let init_user_data thispe npes comm =
   let jysub = thispe / npex in
   let ixsub = thispe - (jysub)*npex in
@@ -586,9 +570,7 @@ let init_user_data thispe npes comm =
   }
 
 
-(*
- * SetInitialProfiles: Set initial conditions in uv, uvp, and id.
- *)
+(* SetInitialProfiles: Set initial conditions in uv, uvp, and id. *)
 
 let set_initial_profiles data uv uvp id resid =
   let ixsub = data.ixsub in
@@ -676,10 +658,8 @@ let set_initial_profiles data uv uvp id resid =
   res data zero uv uvp resid;
   n_vscale (-.one) resid uvp
 
-(*
- * Print first lines of output (problem description)
- * and table headerr
- *)
+(* Print first lines of output (problem description)
+ * and table headerr *)
 
 let print_header system_size maxl mudq mldq mukeep mlkeep rtol atol =
   printf "\n Brusselator PDE -  DAE parallel example problem for IDA \n\n";
@@ -699,11 +679,9 @@ let print_header system_size maxl mudq mldq mukeep mlkeep rtol atol =
   printf "    | nst  k      h\n";
   printf "-----------------------------------------------------------\n\n"
 
-(*
- * PrintOutput: Print output values at output time t = tt.
+(* PrintOutput: Print output values at output time t = tt.
  * Selected run statistics are printed.  Then values of c1 and c2
- * are printed for the bottom left and top right grid points only.
- *)
+ * are printed for the bottom left and top right grid points only. *)
 
 let print_output mem uv tt data comm =
   let thispe = data.thispe in
@@ -740,9 +718,7 @@ let print_output mem uv tt data comm =
     printf "\n"
   end
 
-(*
- * PrintSol the PE's portion of the solution to a file.
- *)
+(* PrintSol the PE's portion of the solution to a file. *)
 let print_sol data mem uv uvp comm =
   let thispe = data.thispe in
   let szFilename = Printf.sprintf "ysol%d.txt" thispe in
@@ -770,9 +746,7 @@ let print_sol data mem uv uvp comm =
 
 
 
-(*
- * PrintFinalStats: Print final run data contained in iopt.
- *)
+(* PrintFinalStats: Print final run data contained in iopt. *)
 
 let print_final_stats mem =
   let nst = Ida.get_num_steps mem in

@@ -154,9 +154,7 @@ let jac data jac_arg j =
 let rhsQ data t (yy : RealArray.t) yp (qdot : RealArray.t) =
   qdot.{0} <- yy.{2}
 
-(*
- * EwtSet function. Computes the error weights at the current solution.
- *)
+(* EwtSet function. Computes the error weights at the current solution. *)
 
 let ewt data (y : RealArray.t) (w : RealArray.t) =
   let atol = [|atol1; atol2; atol3|] in
@@ -169,16 +167,11 @@ let ewt data (y : RealArray.t) (w : RealArray.t) =
   done
 
 
-(*
- * resB routine.
-*)
+(* resB routine. *)
 
 let resB : user_data -> RealArray.t Adjoint.bresfn_no_sens =
-  fun data args rrB ->
-  let yy = args.Adjoint.y
-  and yyB = args.Adjoint.yB
-  and ypB = args.Adjoint.yB'
-  in
+  fun data { Adjoint.y = yy; Adjoint.yB = yyB; Adjoint.yB' = ypB } rrB ->
+
   (* The p vector *)
   let p1 = data.p.{0} and p2 = data.p.{1} and p3 = data.p.{2} in
 
@@ -200,10 +193,7 @@ let resB : user_data -> RealArray.t Adjoint.bresfn_no_sens =
   rrB.{2} <- -. p2*.y2*.l21 -.l3 +. 1.0
 
 (*Jacobian for backward problem. *)
-let jacB data jac_arg jB =
-  let cj = jac_arg.Adjoint.jac_coef
-  and (yy : RealArray.t) = jac_arg.Adjoint.jac_y
-  in
+let jacB data { Adjoint.jac_coef = cj; Adjoint.jac_y = (yy : RealArray.t) } jB =
   let y2 = yy.{1} and y3 = yy.{2} in
 
   let p1 = data.p.{0} and p2 = data.p.{1} and p3 = data.p.{2} in
@@ -222,10 +212,8 @@ let jacB data jac_arg jB =
   set 2 2 (-.1.0)
 
 let rhsQB : user_data -> RealArray.t AdjQuad.bquadrhsfn_no_sens =
-  fun data args rrQB ->
-  let yy = args.AdjQuad.y
-  and yyB = args.AdjQuad.yB
-  in
+  fun data { AdjQuad.y = yy; AdjQuad.yB = yyB } rrQB ->
+
   (* The y vector *)
   let y1 = yy.{0} and y2 = yy.{1} and y3 = yy.{2} in
 
@@ -246,9 +234,7 @@ let rhsQB : user_data -> RealArray.t AdjQuad.bquadrhsfn_no_sens =
  *--------------------------------------------------------------------
  *)
 
-(*
- * Print results after backward integration
- *)
+(* Print results after backward integration *)
 
 let print_output tfinal yB ypB qB =
   printf "--------------------------------------------------------\n";
