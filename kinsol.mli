@@ -285,8 +285,8 @@ module Spils :
     (** Callback functions that compute (an approximation to) the Jacobian
         times a vector. In the call [jac_times_vec_fn v jv u new_u], [v] is the
         vector multiplying the Jacobian, [jv] is the vector in which to store
-        the result—{% $\mathtt{jv} = J\mathtt{v}$%},—[u] is the current value of
-        the dependent variable vector, and [new_u=true] indicates that
+        the result—{% $\mathtt{jv} = J\mathtt{v}$%}—, [u] is the current
+        value of the dependent variable vector, and [new_u=true] indicates that
         the Jacobian data should be recomputed. Returning [false] requests an
         update of the Jacobian data at the next call.
 
