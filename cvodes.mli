@@ -241,10 +241,10 @@ module Sensitivity :
         all sensitivity equations.  They are passed the arguments:
 
         - [args], the current values of state variables (see {!sensrhsfn_args}),
-        - [yS], an array of vectors holding the current values of sensitivity
-                variables, and,
-        - [yS'], an array of vectors to be filled with the derivatives
-                 of the sensitivity variables.
+        - [s], an array of vectors holding the current values of sensitivity
+               variables, and,
+        - [s'], an array of vectors to be filled with the derivatives
+                of the sensitivity variables.
 
         Within the function, raising a {!Sundials.RecoverableFailure} exception
         indicates a recoverable error. Any other exception is treated as an
@@ -263,12 +263,12 @@ module Sensitivity :
         single sensitivity equation.  They are passed the arguments:
 
         - [i], the index of the sensitivity equation to compute,
-        - [args], holding the current values of state variables
+        - [args], the current values of state variables
                   (see {!sensrhsfn_args}),
-        - [yS], a vector holding the current value of the {i i}th
-                sensitivity variable, and,
-        - [yS'], a vector to be filled with the current value of the {i i}th
-                 sensitivity variable's derivative.
+        - [s], a vector holding the current value of the {i i}th
+               sensitivity variable, and
+        - [s'], a vector to be filled with the current value of the {i i}th
+                sensitivity variable's derivative.
 
         Within the function, raising a {!Sundials.RecoverableFailure} exception
         indicates a recoverable error. Any other exception is treated as an
@@ -421,10 +421,10 @@ module Sensitivity :
             y : 'd;
 
             (** The array of sensitivity vectors. *)
-            yS : 'd array;
+            s : 'd array;
 
             (** The value of the quadrature-right hand side {% $\dot{y}_Q$%}. *)
-            yQ' : 'd;
+            yq' : 'd;
 
             (** Temporary storage vectors. *)
             tmp : 'd double;
@@ -435,7 +435,7 @@ module Sensitivity :
 
             - [args], the current values of state and sensitivity variables
                       (see {!quadsensrhsfn_args}), and,
-            - [yS'], an array of vectors for storing the computed values of
+            - [s'], an array of vectors for storing the computed values of
                     {% $\dot{y}_\mathit{QS} = f_\mathit{QS}(t, y, s, \dot{y}_Q)$%}.
 
             Within the function, raising a {!Sundials.RecoverableFailure}
@@ -942,8 +942,8 @@ module Adjoint :
       {
         jac_t   : float;        (** The independent variable. *)
         jac_y   : 'd;           (** The forward solution vector. *)
-        jac_yB  : 'd;           (** The backward solution vector. *)
-        jac_fyB : 'd;           (** The backward right-hand side function [fB]. *)
+        jac_yb  : 'd;           (** The backward solution vector. *)
+        jac_fyb : 'd;           (** The backward right-hand side function [fB]. *)
         jac_tmp : 't;           (** Temporary storage vectors. *)
       }
 
@@ -1459,13 +1459,13 @@ module Adjoint :
         y : 'd;
 
         (** The vector of backward dependent-variable values $y_B(t)$. *)
-        yB : 'd;
+        yb : 'd;
       }
 
     (** Backward functions without forward sensitivities. They are passed
         the arguments:
         - [args], the current values of forward and backward variables, and,
-        - [yB'], a vector for storing the values
+        - [yb'], a vector for storing the values
                  {% $\dot{y}_B = f_B(t, y, y_B)$%}.
 
         Within the function, raising a {!Sundials.RecoverableFailure} exception
@@ -1481,10 +1481,9 @@ module Adjoint :
 
     (** Backward functions with forward sensitivities. They are passed the
         arguments:
-        - [args], the current values of state and backward sensitivity
-                  variables,
-        - [yS], an array holding the values of forward sensitivity vectors, and,
-        - [yB'], a vector for storing the values
+        - [args], the current values of state and backward sensitivity variables,
+        - [s], an array holding the values of forward sensitivity vectors, and,
+        - [yb'], a vector for storing the values
                  {% $\dot{y}_B = f_B(t, y, y_S, y_B)$%}.
 
         Within the function, raising a {!Sundials.RecoverableFailure} exception
@@ -1578,13 +1577,13 @@ module Adjoint :
             y : 'd;
 
             (** The vector of backward dependent-variable values $y_B(t)$. *)
-            yB : 'd;
+            yb : 'd;
           }
 
         (** Functions defining backward quadrature variables without forward
             sensitivities.  These functions are passed the arguments:
             - [args], the current values of forward and backward variables, and,
-            - [qB'], a vector for storing the computed value of
+            - [qb'], a vector for storing the computed value of
                      {% $\dot{y}_\mathit{QB} = f_\mathit{QB}(t, y, y_B)$%}.
 
             Within the function, raising a {!Sundials.RecoverableFailure}
@@ -1600,9 +1599,9 @@ module Adjoint :
         (** Functions defining backward quadrature variables with forward
             sensitivities.  These functions are passed the arguments:
             - [args], the current values of forward and backward variables,
-            - [yS], an array holding the values of forward sensitivity vectors,
-                    and,
-            - [qB'], a vector for storing the computed value of
+            - [s], an array holding the values of forward sensitivity vectors,
+                   and,
+            - [qb'], a vector for storing the computed value of
                    {% $\dot{y}_\mathit{QB} = f_\mathit{QB}(t, y, y_S, y_B)$%}.
 
             Within the function, raising a {!Sundials.RecoverableFailure}

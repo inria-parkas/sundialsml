@@ -116,7 +116,7 @@ let res data t (yy : RealArray.t) (yp : RealArray.t) (resval : RealArray.t) =
   resval.{2} <- y1 +. y2 +. y3 -. 1.0
 
 let resS : user_data -> RealArray.t Sens.sensresfn =
-  fun data { Sens.y = yy; Sens.yS = yyS; Sens.yS' = ypS } resvalS ->
+  fun data { Sens.y = yy; Sens.s = yyS; Sens.s' = ypS } resvalS ->
 
   let p1 = data.p.{0}
   and p2 = data.p.{1}
@@ -313,7 +313,7 @@ let main () =
                      Sens.plist = None }
       in
       Sens.init ida_mem Sens.EEtolerances sensi_meth params
-        ~fS:(resS data) yS ypS;
+        ~fs:(resS data) yS ypS;
       Sens.set_err_con ida_mem err_con;
 
       printf "Sensitivity: YES ";

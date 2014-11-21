@@ -147,7 +147,7 @@ let ewt data (y : RealArray.t) (w : RealArray.t) =
 let fB : user_data -> RealArray.t Adj.brhsfn_no_sens =
   fun data args yBdot ->
   let y = args.Adj.y
-  and yB = args.Adj.yB
+  and yB = args.Adj.yb
   in
   let p1 = data.p.(0) (* The p vector *)
   and p2 = data.p.(1)
@@ -187,7 +187,7 @@ let jacb data { Adj.jac_y = (y : RealArray.t) } jbmat =
 let fQB : user_data -> RealArray.t QuadAdj.bquadrhsfn_no_sens =
   fun data args qBdot ->
   let y = args.QuadAdj.y
-  and yB = args.QuadAdj.yB
+  and yB = args.QuadAdj.yb
   in
   let l1 = yB.{0}  (* The lambda vector *)
   and l2 = yB.{1}

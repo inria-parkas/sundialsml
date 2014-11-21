@@ -234,10 +234,10 @@ module Sensitivity :
         res : 'd;
 
         (** The array of sensitivity vectors. *)
-        yS : 'd array;
+        s : 'd array;
 
         (** The array of sensitivity derivative vectors. *)
-        yS' : 'd array;
+        s' : 'd array;
 
         (** Temporary storage vectors. *)
         tmp : 'd triple
@@ -306,7 +306,7 @@ module Sensitivity :
             in {{!sens_params}pbar}. *)
 
     (** Activates the calculation of forward sensitivities. The call
-        {[init s tol ism ps ~fS:fS yS0 yS0']}, has as arguments:
+        {[init s tol ism ps ~fs:fs s0 s0']}, has as arguments:
         - [s], a session created with {!Ida.init},
         - [tol], the tolerances desired,
         - [sm], the solution method,
@@ -316,7 +316,7 @@ module Sensitivity :
         - [s0'], initial values of the sensitivity derivatives for each
                  parameter.
 
-        If [~fS] is not given, the internal difference quotient sensitivity
+        If [~fs] is not given, the internal difference quotient sensitivity
         residual routine is used.
 
         @idas <node6#ss:sensi_init> IDASensInit
@@ -328,7 +328,7 @@ module Sensitivity :
                -> ('d, 'k) tolerance
                -> sens_method
                -> sens_params
-               -> ?fS:'d sensresfn
+               -> ?fs:'d sensresfn
                -> ('d, 'k) Nvector.t array
                -> ('d, 'k) Nvector.t array
                -> unit
@@ -380,10 +380,10 @@ module Sensitivity :
             y' : 'd;
 
             (** The array of sensitivity vectors. *)
-            yS : 'd array;
+            s : 'd array;
 
             (** The array of sensitivity derivative vectors. *)
-            yS' : 'd array;
+            s' : 'd array;
 
             (** The current value of the quadrature right-hand side $q$. *)
             q : 'd;
@@ -905,9 +905,9 @@ module Adjoint :
         jac_t : float;        (** The independent variable. *)
         jac_y : 'd;           (** The forward solution vector. *)
         jac_y' : 'd;          (** The forward derivatives vector. *)
-        jac_yB : 'd;          (** The backward solution vector. *)
-        jac_yB' : 'd;         (** The forward derivatives vector. *)
-        jac_resB : 'd;        (** The current residual for the backward problem. *)
+        jac_yb : 'd;          (** The backward solution vector. *)
+        jac_yb' : 'd;         (** The forward derivatives vector. *)
+        jac_resb : 'd;        (** The current residual for the backward problem. *)
         jac_coef : float;     (** The scalar {% $c_\mathit{jB}$%} in the
                                   system Jacobian, proportional to the inverse
                                   of the step size. *)
@@ -1311,11 +1311,11 @@ module Adjoint :
         y' : 'd;
 
         (** The vector of backward dependent-variable values $y_B(t)$. *)
-        yB : 'd;
+        yb : 'd;
 
         (** The vector of backward dependent-variable derivatives
             {% $\dot{y}_B(t)$ %}. *)
-        yB' : 'd;
+        yb' : 'd;
       }
 
     (** Backward functions without forward sensitivities. They are passed
@@ -1339,10 +1339,9 @@ module Adjoint :
     (** Backward functions with forward sensitivities. They are passed the
         arguments:
         - [args], the current values of forward and backward state variables,
-                  and,
-        - [yS], the array of forward sensitivity vectors,
-        - [yS'], the array of forward sensitivity derivative vectors, and,
-        - [resB], a vector for storing the residual value
+        - [s], the array of forward sensitivity vectors,
+        - [s'], the array of forward sensitivity derivative vectors, and,
+        - [resb], a vector for storing the residual value
                 {% $F_B(t, y, \dot{y}, s, \dot{s}, y_B, \dot{y}_B)$%}.
 
         Within the function, raising a {!Sundials.RecoverableFailure} exception
@@ -1433,18 +1432,18 @@ module Adjoint :
             y' : 'd;
 
             (** The vector of backward dependent-variable values $y_B(t)$. *)
-            yB : 'd;
+            yb : 'd;
 
             (** The vector of backward dependent-variable derivatives
                 {% $\dot{y}_B(t)$ %}. *)
-            yB' : 'd;
+            yb' : 'd;
           }
 
         (** Functions defining backward quadrature variables without forward
             sensitivities.  They are passed the arguments:
             - [args], the current values of forward and backward state
                       variables, and,
-            - [qB'], a vector for storing the computed value of
+            - [qb'], a vector for storing the computed value of
                      {% $\dot{y}_\mathit{BQ} =
                          f_\mathit{BQ}(t, y, \dot{y}, y_B, \dot{y}_B)$%}.
 
@@ -1462,9 +1461,9 @@ module Adjoint :
             depend on forward sensitivities.  They are passed the arguments:
 
             - [args], current values of forward and backward state variables,
-            - [yS], the array of forward sensitivity vectors,
-            - [yS'], the array of forward sensitivity derivative vectors, and,
-            - [qB'], a vector for storing the computed value of
+            - [s], the array of forward sensitivity vectors,
+            - [s'], the array of forward sensitivity derivative vectors, and,
+            - [qb'], a vector for storing the computed value of
                  {% $\dot{y}_\mathit{BQ} =
                    f_\mathit{BQ}(t, y, \dot{y}, s, \dot{s}, y_B, \dot{y}_B)$%}.
 

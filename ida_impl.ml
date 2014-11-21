@@ -124,8 +124,8 @@ module SensitivityTypes = struct
       y : 'd;
       y' : 'd;
       res : 'd;
-      yS : 'd array;
-      yS' : 'd array;
+      s : 'd array;
+      s' : 'd array;
       tmp : 'd triple
     }
 
@@ -142,8 +142,8 @@ module SensitivityTypes = struct
         t : float;
         y : 'd;
         y' : 'd;
-        yS : 'd array;
-        yS' : 'd array;
+        s : 'd array;
+        s' : 'd array;
         q : 'd;
         tmp : 'd triple;
       }
@@ -156,8 +156,8 @@ module AdjointTypes' = struct
       t : float;
       y : 'd;
       y' : 'd;
-      yB : 'd;
-      yB' : 'd;
+      yb : 'd;
+      yb' : 'd;
     }
   type 'a bresfn_no_sens = 'a bresfn_args -> 'a -> unit
   and 'a bresfn_with_sens = 'a bresfn_args -> 'a array -> 'a array -> 'a -> unit
@@ -172,8 +172,8 @@ module AdjointTypes' = struct
         t : float;
         y : 'd;
         y' : 'd;
-        yB : 'd;
-        yB' : 'd;
+        yb : 'd;
+        yb' : 'd;
       }
 
     type 'a bquadrhsfn =
@@ -190,9 +190,9 @@ module AdjointTypes' = struct
       jac_t   : float;
       jac_y   : 'a;
       jac_y'  : 'a;
-      jac_yB  : 'a;
-      jac_yB' : 'a;
-      jac_resB : 'a;
+      jac_yb  : 'a;
+      jac_yb' : 'a;
+      jac_resb : 'a;
       jac_coef : float;
       jac_tmp : 't
     }

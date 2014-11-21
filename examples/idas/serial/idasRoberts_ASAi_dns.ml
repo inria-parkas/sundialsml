@@ -170,7 +170,7 @@ let ewt data (y : RealArray.t) (w : RealArray.t) =
 (* resB routine. *)
 
 let resB : user_data -> RealArray.t Adjoint.bresfn_no_sens =
-  fun data { Adjoint.y = yy; Adjoint.yB = yyB; Adjoint.yB' = ypB } rrB ->
+  fun data { Adjoint.y = yy; Adjoint.yb = yyB; Adjoint.yb' = ypB } rrB ->
 
   (* The p vector *)
   let p1 = data.p.{0} and p2 = data.p.{1} and p3 = data.p.{2} in
@@ -212,7 +212,7 @@ let jacB data { Adjoint.jac_coef = cj; Adjoint.jac_y = (yy : RealArray.t) } jB =
   set 2 2 (-.1.0)
 
 let rhsQB : user_data -> RealArray.t AdjQuad.bquadrhsfn_no_sens =
-  fun data { AdjQuad.y = yy; AdjQuad.yB = yyB } rrQB ->
+  fun data { AdjQuad.y = yy; AdjQuad.yb = yyB } rrQB ->
 
   (* The y vector *)
   let y1 = yy.{0} and y2 = yy.{1} and y3 = yy.{2} in

@@ -163,7 +163,7 @@ let jac data {Cvode.mupper=mupper; Cvode.mlower=mlower} arg jmat =
 (* fB function. Right-hand side of backward ODE. *)
 
 let fB data args uBdot =
-  let uB = args.Adjoint.yB
+  let uB = args.Adjoint.yb
   in
   (* Extract needed constants from data *)
   let hordc = data.hdcoef in
@@ -194,8 +194,8 @@ let fB data args uBdot =
 let jacb data { Adjoint.mupper = muB; Adjoint.mlower = mlB }
               { Adjoint.jac_t = tB;
                 Adjoint.jac_y = u;
-                Adjoint.jac_yB = uB;
-                Adjoint.jac_fyB = fuB;
+                Adjoint.jac_yb = uB;
+                Adjoint.jac_fyb = fuB;
                 Adjoint.jac_tmp = (tmp1B, tmp2B, tmp3B) } jb =
 
   (* The Jacobian of the adjoint system is: JB = -J^T *)

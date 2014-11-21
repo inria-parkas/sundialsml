@@ -234,7 +234,7 @@ module Sensitivity =
         end;
       c_set_params s ps
 
-    let init s tol fmethod sparams ?fS y0 y'0 =
+    let init s tol fmethod sparams ?fs y0 y'0 =
       if Sundials_config.safe then
         (Array.iter s.checkvec y0;
          Array.iter s.checkvec y'0);
@@ -246,8 +246,8 @@ module Sensitivity =
            invalid_arg "init: require at least one sensitivity parameter";
          if ns <> Array.length y'0 then
            invalid_arg "init: y0 and y'0 have inconsistent lengths");
-      c_sens_init s fmethod (fS <> None) y0 y'0;
-      (match fS with
+      c_sens_init s fmethod (fs <> None) y0 y'0;
+      (match fs with
        | Some f -> se.sensresfn <- f
        | None -> ());
       se.num_sensitivities <- ns;

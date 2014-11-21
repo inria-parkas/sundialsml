@@ -92,7 +92,7 @@ let res data tres (yy : RealArray.t) (yp : RealArray.t) (rr : RealArray.t) =
   rr.{2} <- y1+.y2+.y3-.1.0
 
 let resS : user_data -> RealArray.t Sens.sensresfn =
-  fun data { Sens.y = yy; Sens.yS = yyS; Sens.yS' = ypS } resvalS ->
+  fun data { Sens.y = yy; Sens.s = yyS; Sens.s' = ypS } resvalS ->
   let p1 = data.p.{0}
   and p2 = data.p.{1}
   and p3 = data.p.{2}
@@ -139,7 +139,7 @@ let rhsQ data t (yy : RealArray.t) (yp : RealArray.t) (qdot : RealArray.t) =
   qdot.{0} <- 0.5*.(y1*.y1+.y2*.y2+.y3*.y3)
 
 let rhsQS : user_data -> RealArray.t QuadSens.quadsensrhsfn =
-  fun data { QuadSens.y = yy; QuadSens.yS = yyS } rhsQS ->
+  fun data { QuadSens.y = yy; QuadSens.s = yyS } rhsQS ->
   let y1 = yy.{0}
   and y2 = yy.{1}
   and y3 = yy.{2}
@@ -163,8 +163,8 @@ let rhsQS : user_data -> RealArray.t QuadSens.quadsensrhsfn =
 let resBS1 : user_data -> RealArray.t Adjoint.bresfn_with_sens =
   fun data args yyS ypS rrBS ->
   let yy = args.Adjoint.y
-  and yyB = args.Adjoint.yB
-  and ypB = args.Adjoint.yB'
+  and yyB = args.Adjoint.yb
+  and ypB = args.Adjoint.yb'
   in
   (* The parameters. *)
   (* Note: constants P1,P2,P3 from the original C source have names
@@ -214,7 +214,7 @@ let resBS1 : user_data -> RealArray.t Adjoint.bresfn_with_sens =
   rrBS.{5} <- p2*.y2*.(m1-.m2) -. m3 -. p2*.s2*.l21 +. s3
 
 let rhsQBS1 : user_data -> RealArray.t AdjQuad.bquadrhsfn_with_sens =
-  fun data { AdjQuad.y = yy; AdjQuad.yB = yyB } yyS ypS rhsBQS ->
+  fun data { AdjQuad.y = yy; AdjQuad.yb = yyB } yyS ypS rhsBQS ->
 
   (* The y vector *)
   let y1 = yy.{0}
@@ -244,7 +244,7 @@ let rhsQBS1 : user_data -> RealArray.t AdjQuad.bquadrhsfn_with_sens =
   rhsBQS.{3} <- y2*.y3*.(m2-.m1) +. (y3*.s2+.y2*.s3)*.l21
 
 let resBS2 : user_data -> RealArray.t Adjoint.bresfn_with_sens =
-  fun data { Adjoint.y = yy; Adjoint.yB = yyB; Adjoint.yB' = ypB } yyS ypS rrBS
+  fun data { Adjoint.y = yy; Adjoint.yb = yyB; Adjoint.yb' = ypB } yyS ypS rrBS
   ->
   (* The parameters. *)
   let p1 = data.p.{0}
@@ -290,7 +290,7 @@ let resBS2 : user_data -> RealArray.t Adjoint.bresfn_with_sens =
   rrBS.{5} <- p2*.y2*.(m1-.m2) -. m3 -. (y2+.p2*.s2)*.l21 +. s3
 
 let rhsQBS2 : user_data -> RealArray.t AdjQuad.bquadrhsfn_with_sens =
-  fun data {AdjQuad.y = yy; AdjQuad.yB = yyB } yyS ypS rhsBQS ->
+  fun data {AdjQuad.y = yy; AdjQuad.yb = yyB } yyS ypS rhsBQS ->
   (* The y vector *)
   let y1 = yy.{0}
   and y2 = yy.{1}
@@ -381,7 +381,7 @@ let main () =
 
   (* Sensitivity's setup. *)
   Sens.init ida_mem Sens.EEtolerances Sens.Simultaneous
-    Sens.no_sens_params ~fS:(resS data) yyS ypS;
+    Sens.no_sens_params ~fs:(resS data) yyS ypS;
   Sens.set_err_con ida_mem true;
 
   (* Setup of quadrature's sensitivities *)

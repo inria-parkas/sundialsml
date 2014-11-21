@@ -883,7 +883,7 @@ let psolve wdata jac_arg solve_arg (z : RealArray.t) =
 let fB : web_data -> RealArray.t Adj.brhsfn_no_sens =
   fun wdata args cBdotdata ->
   let cdata = args.Adj.y
-  and cBdata = args.Adj.yB
+  and cBdata = args.Adj.yb
   in
   let mxns   = wdata.mxns
   and ns     = wdata.ns
@@ -933,8 +933,8 @@ let fB : web_data -> RealArray.t Adj.brhsfn_no_sens =
 let precondb wdata jacarg jok gamma =
   let { Adj.jac_t   = t;
         Adj.jac_y   = cdata;
-        Adj.jac_yB  = cBdata;
-        Adj.jac_fyB = fcBdata;
+        Adj.jac_yb  = cBdata;
+        Adj.jac_fyb = fcBdata;
         Adj.jac_tmp = (vtemp1, _, _)
       } = jacarg
   in

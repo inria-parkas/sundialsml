@@ -103,7 +103,7 @@ let fS : user_data -> RealArray.t Sens.sensrhsfn_all =
   ySdot.(1).{2} <- (fys3 -. 2.0*.p2*.y.{1}*.y.{2})
 
 let fQS : user_data -> RealArray.t QuadSens.quadsensrhsfn =
-  fun data { QuadSens.y = y; QuadSens.yS = yS } yQSdot ->
+  fun data { QuadSens.y = y; QuadSens.s = yS } yQSdot ->
   (* 1st sensitivity RHS *)
   let s1 = yS.(0).{0}
   and s2 = yS.(0).{1}
@@ -121,7 +121,7 @@ let fQS : user_data -> RealArray.t QuadSens.quadsensrhsfn =
 let fB1 : user_data -> RealArray.t Adj.brhsfn_with_sens =
   fun data args yS yBdot ->
   let y = args.Adj.y
-  and yB = args.Adj.yB
+  and yB = args.Adj.yb
   in
   let p1 = data.p1 
   and p2 = data.p2
@@ -149,7 +149,7 @@ let fB1 : user_data -> RealArray.t Adj.brhsfn_with_sens =
 let fQB1 : user_data -> RealArray.t QuadAdj.bquadrhsfn_with_sens =
   fun data args yS qBdot ->
   let y = args.QuadAdj.y
-  and yB = args.QuadAdj.yB
+  and yB = args.QuadAdj.yb
   in
   let p2 = data.p2
   in
@@ -173,7 +173,7 @@ let fQB1 : user_data -> RealArray.t QuadAdj.bquadrhsfn_with_sens =
 let fB2 : user_data -> RealArray.t Adj.brhsfn_with_sens =
   fun data args yS yBdot ->
   let y = args.Adj.y
-  and yB = args.Adj.yB
+  and yB = args.Adj.yb
   in
   let p1 = data.p1 
   and p2 = data.p2
@@ -204,7 +204,7 @@ let fB2 : user_data -> RealArray.t Adj.brhsfn_with_sens =
 let fQB2 : user_data -> RealArray.t QuadAdj.bquadrhsfn_with_sens =
   fun data args yS qBdot ->
   let y = args.QuadAdj.y
-  and yB = args.QuadAdj.yB
+  and yB = args.QuadAdj.yb
   in
   let p2 = data.p2
   in
