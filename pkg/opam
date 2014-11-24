@@ -2,19 +2,21 @@ opam-version: "1"
 name: "sundialsml"
 maintainer: "tim@tbrk.org"
 authors: [
-    "Timothy Bourke" <tim@tbrk.org>
-    "Jun Inoue" <Jun.Lambda@gmail.com>
-    "Marc Pouzet" <Marc.Pouzet@ens.fr>
+    "Timothy Bourke <tim@tbrk.org>"
+    "Jun Inoue <Jun.Lambda@gmail.com>"
+    "Marc Pouzet <Marc.Pouzet@ens.fr>"
 ]
 homepage: "http://inria-parkas.github.io/sundialsml/"
 doc: "http://inria-parkas.github.io/sundialsml/"
-dev-repo: "https://github.com/inria-parkas/sundialsml"
-url: "https://github.com/inria-parkas/sundialsml/archive/v2.5.0p0-test.zip"
-checksum: "326e326fa6f60b9e41cf79d8ca42aa8b"
-tags: [ "numerical", "simulation" ]
+tags: [
+    "numerical"
+    "simulation"
+    "mathematics"
+    "science"
+]
 license: "BSD3"
 build: [
-    ["./configure" "--enable-mpi" "--prefix" prefix]
+    ["./configure" "--enable-mpi" "--prefix=%{prefix}%"]
     [make "install-findlib"]
 ]
 build-doc: [
