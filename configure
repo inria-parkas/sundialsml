@@ -10,7 +10,7 @@ unset libdir
 unset stubdir
 unset docdir
 unset install_docs
-unset enable_mpi
+enable_mpi=1
 unset enable_debug
 
 configure_command="$0"
@@ -35,9 +35,8 @@ do
 	docdir="${value%/}/";;
     --disable-doc)
 	install_docs=0;;
-    --enable-mpi)
-	enable_mpi=1
-	mpicc="${mpicc:-${value}}";;
+    --disable-mpi)
+	enable_mpi=0;;
     --no-lib-path)
 	no_lib_path=1;;
     --enable-debug)
@@ -71,7 +70,7 @@ do
 
 	Optional Features:
 	  --disable-doc          do not install html documentation
-	  --enable-mpi           build with parallel features
+	  --disable-mpi          build without parallel features (default: enable if possible)
 	  --no-lib-path          do not record paths in the OCaml library
 	  --enable-debug         enable assertions and debug symbols
 	  --unsafe               no bounds or other runtime checks
@@ -82,8 +81,8 @@ do
 	                (sometimes also: -lSimTKlapack)
 	  EXAMPLES      Path to installed examples (for comparison with Sundials).
 	  OCAMLMPI      Path to OCamlMPI installation
-	  MPICC         Name of the MPI compiler (default: mpicc; implies --enable-mpi)
-	  MPIRUN        Name of MPI program launcher (default: mpirun; implies --enable-mpi)
+	  MPICC         Name of the MPI compiler (default: mpicc)
+	  MPIRUN        Name of MPI program launcher (default: mpirun)
 	  MATHJAX	Path where MathJax.js can be found
 	                (e.g., MATHJAX=file:///usr/share/doc/sundialsml/doc/MathJax-master)
 
@@ -115,11 +114,9 @@ END_HELP_TEXT
     OCAMLMKLIBFLAGS)
 	ocamlmklibflags="${value}";;
     MPICC)
-	mpicc="${value}"
-	enable_mpi=1;;
+	mpicc="${value}";;
     MPIRUN)
-	mpirun="${value}"
-	enable_mpi=1;;
+	mpirun="${value}";;
     MATHJAX)
 	mathjax="${value}";;
     *)
@@ -228,30 +225,6 @@ else
     ocaml_version=" (${ocaml_version})"
 fi
 
-# Check for OCamlMPI installation
-ocamlmpi="${OCAMLMPI:-${ocaml_libpath}mpi}"
-if [ ${enable_mpi:-0} -eq 0 ]; then
-    ocamlmpi_enabled=
-    ocamlmpi='NOT ENABLED (--enable-mpi for parallel features)'
-else
-    ocamlmpi_enabled=1
-    if [ ! -e "${ocamlmpi}/mpi.cmi" ]; then
-	ocamlmpi="${ocaml_libpath}site-lib/mpi"
-	if [ ! -e "${ocamlmpi}/mpi.cmi" ]; then
-	    ocamlmpi="${opam_libpath}mpi"
-	    if [ ! -e "${ocamlmpi}/mpi.cmi" ]; then
-		ocamlmpi='NOT FOUND (no parallel features)'
-		ocamlmpi_enabled=
-	    fi
-	fi
-    fi
-fi
-if [ -z ${ocamlmpi_enabled} ]; then
-    ocamlmpi_path=''
-else
-    ocamlmpi_path="$ocamlmpi"
-    ocamlmpi="${ocamlmpi} (compiler: ${mpicc:-mpicc})"
-fi
 
 # Check for Sundials installation (and version)
 unset lapack_lib
@@ -443,6 +416,59 @@ else
     sundials_lib_path="$LIB_PATH"
 fi
 
+
+# Parallel features
+mpicc=${mpicc:-mpicc}
+mpirun=${mpirun:-mpirun}
+if [ ${enable_mpi:-1} -eq 1 ]; then
+    ocamlmpi_enabled=1
+
+    # Check for OCamlMPI installation
+    ocamlmpi="${OCAMLMPI:-${ocaml_libpath}mpi}"
+    if [ ! -e "${ocamlmpi}/mpi.cmi" ]; then
+	ocamlmpi="${ocaml_libpath}site-lib/mpi"
+	if [ ! -e "${ocamlmpi}/mpi.cmi" ]; then
+	    ocamlmpi="${opam_libpath}mpi"
+	    if [ ! -e "${ocamlmpi}/mpi.cmi" ]; then
+		ocamlmpi='NOT FOUND (OCamlMPI missing)'
+		ocamlmpi_enabled=
+	    fi
+	fi
+    fi
+
+    # Check for nvector_parallel installation
+    test_file=__configure_test_file__.c
+    tmp_file=__configure_test_file__
+    cat > $test_file <<EOF
+#include <nvector/nvector_parallel.h>
+int main (int argc, char *argv[])
+{
+  MPI_Comm dummy;
+  (void)N_VNewEmpty_Parallel (dummy, 0, 0);
+  return 0;
+}
+EOF
+    if ! $mpicc -o $tmp_file $cvode_cppflags $test_file \
+         `sundials-config -m cvode -t p -l c -s libs` \
+       >/dev/null 2>&1;
+    then
+        ocamlmpi='NOT FOUND (sundials_nvecparallel library missing)'
+        ocamlmpi_enabled=
+    fi
+    rm -f $tmp_file $test_file
+else
+    ocamlmpi_enabled=
+    ocamlmpi='DISABLED (no parallel features)'
+fi
+
+if [ "x${ocamlmpi_enabled}" = x ]; then
+    ocamlmpi_path=''
+else
+    ocamlmpi_path="$ocamlmpi"
+    ocamlmpi="${ocamlmpi} (compiler: $mpicc)"
+fi
+
+
 # Sundials examples directory
 if [ "x$EXAMPLESROOT" = x ]; then
     # If not set, try to infer it from LIB_PATH.
@@ -521,8 +547,8 @@ fi
 	 s#@lapack_enabled@#${lapack_enabled}#;
 	 s#@cc@#${CC}#;
 	 s#@cpp@#${CPP}#;
-	 s#@mpicc@#${mpicc:-mpicc}#;
-	 s#@mpirun@#${mpirun:-mpirun}#;
+	 s#@mpicc@#$mpicc#;
+	 s#@mpirun@#$mpirun#;
 	 s#@mathjax@#${mathjax:-https://cdn.mathjax.org/mathjax/latest}#;
 	 s#@c_suppress_warnings@#${c_suppress_warnings}#;
 	 s#@EXAMPLESROOT@#${EXAMPLESROOT}#;
