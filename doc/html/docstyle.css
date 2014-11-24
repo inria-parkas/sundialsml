@@ -304,6 +304,10 @@ li + li {
     padding-top: 1.5ex;
 }
 
+li ul {
+    padding-top: 1.5ex;
+}
+
 td.module { min-width: 8em;
             vertical-align: text-top; }
 h2#modules + p br:nth-child(1) { display: none; }

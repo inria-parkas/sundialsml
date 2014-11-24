@@ -194,8 +194,11 @@ default: {i --with-precision=double}—and the C compiler must provide 32-bit
 Opam is the easiest way to install the library:
 {ol
     {- {{:http://computation.llnl.gov/casc/sundials/download/download.php}Download}
-        and install Sundials (opam does this automatically on some
-	platforms).}
+        and manually install Sundials, or use a package manager:
+	{ul
+	    {- debian/ubuntu: [apt-get install libsundials-serial-dev]}
+	    {- osx: [brew install sundials] / [port install sundials]}
+	}}
     {- {i Optionally} run [opam install mpi].}
     {- Run [opam install sundialsml].}
 }
@@ -205,7 +208,11 @@ Opam is the easiest way to install the library:
 Building from source is a three step process:
 {ol
     {- {{:http://computation.llnl.gov/casc/sundials/download/download.php}Download}
-        and install Sundials.}
+        and manually install Sundials, or use a package manager:
+	{ul
+	    {- debian/ubuntu: [apt-get install libsundials-serial-dev]}
+	    {- osx: [brew install sundials] / [port install sundials]}
+	}}
     {- Run [configure] to find and check dependencies.}
     {- Run [make install] or [make install-findlib] to build and
        install the library.}
