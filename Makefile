@@ -284,6 +284,7 @@ sundials-%.tar.gz:
 	cd $(subst .tar.gz,,$@) &&\
 	    ! ./configure | grep OCamlMPI | grep -q "NOT FOUND"
 	make -C $(subst .tar.gz,,$@) doc release-clean
+	rm -rf $(subst .tar.gz,,$@)/.git
 	tar -zcf $@ $(subst .tar.gz,,$@)
 	rm -rf $(subst .tar.gz,,$@)
 
