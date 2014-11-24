@@ -124,12 +124,6 @@ END_HELP_TEXT
     esac
 done
 
-if [ ! `which sundials-config` ]; then
-    echo "ERROR: Sundials is not installed (no sundials-config)." 1>&2
-    exit 1
-fi
-
-CPPFLAGS="${CPPFLAGS} `sundials-config -m cvode -t s -l c -s cppflags`"
 CC=${CC:-cc}
 CPP=${CPP:-cpp}
 LAPACKLIB=${LAPACKLIB:-"-llapack"}
@@ -192,13 +186,76 @@ case ${arch} in
 	;;
 esac
 
-
-# Check for opam
-if command -v opam >/dev/null 2>&1; then
-    opam_libpath="$(opam config var lib)/"
-else
-    opam_libpath=''
+# Check for Sundials installation (and version)
+if [ ! `which sundials-config` ]; then
+    echo "ERROR: Sundials is not installed (no sundials-config)." 1>&2
+    exit 1
 fi
+
+# Extract compilation flags from sundials-config.
+
+# CPP flags:
+cvode_cppflags="`sundials-config -m cvode -t s -l c -s cppflags`"
+cvodes_cppflags="`sundials-config -m cvodes -t s -l c -s cppflags`"
+ida_cppflags="`sundials-config -m ida -t s -l c -s cppflags`"
+idas_cppflags="`sundials-config -m idas -t s -l c -s cppflags`"
+kinsol_cppflags="`sundials-config -m kinsol -t s -l c -s cppflags`"
+
+# Libraries: sundials-config's options are too coarse-grained, so we
+# need to parse and separate them out.  Specifically:
+#
+# (a) sundials_mpi.cma must be linked without commiting to either
+# -lsundials_cvode or -lsundials_cvodes (and likewise for ida/idas).
+#
+# (b) --no-lib-path removes the -L specification, to prevent it from
+# being recorded in the *.cm(x)a files.  This assumes the sundials
+# libraries are installed in a standard path cc searches by default.
+#
+# We assume there's only one occurrence of -L and the path contains no
+# spaces.
+
+# Flags sans -L.  The sed script sets up sentinels, erases -L, then
+# erases sentinels.
+
+cvode_ldflags="`sundials-config -m cvode -t s -l c -s libs \
+	       | sed -e 's/^/ /; s/$/ /; s/ -L[^ ]* / /; s/^ //; s/ $//'`"
+cvodes_ldflags="`sundials-config -m cvodes -t s -l c -s libs \
+	        | sed -e 's/^/ /; s/$/ /; s/ -L[^ ]* / /; s/^ //; s/ $//'`"
+ida_ldflags="`sundials-config -m ida -t s -l c -s libs \
+	     | sed -e 's/^/ /; s/$/ /; s/ -L[^ ]* / /; s/^ //; s/ $//'`"
+idas_ldflags="`sundials-config -m idas -t s -l c -s libs \
+	      | sed -e 's/^/ /; s/$/ /; s/ -L[^ ]* / /; s/^ //; s/ $//'`"
+kinsol_ldflags="`sundials-config -m kinsol -t s -l c -s libs \
+	        | sed -e 's/^/ /; s/$/ /; s/ -L[^ ]* / /; s/^ //; s/ $//'`"
+
+# The -L flag.  sundials_lib_path will be recorded in binaries.
+# LIB_PATH has other uses.
+LIB_PATH="`sundials-config -m cvode -t s -l c -s libs \
+	  | sed -e 's/^/ /; s/$/ /; s/^.* \(-L[^ ]*\) .*/\1/'`"
+if [ ${no_lib_path:-0} -eq 1 ]; then
+    sundials_lib_path=
+else
+    sundials_lib_path="$LIB_PATH"
+fi
+
+# Make sure realtype has the right size.
+test_file=__configure_test_file__.c
+tmp_file=./__configure_test_file__
+cat > $test_file <<EOF
+#include <sundials/sundials_types.h>
+int main (int argc, char *argv[])
+{
+  return sizeof (realtype) != sizeof (double);
+}
+EOF
+if $CC $cvode_cppflags -o $tmp_file $test_file >/dev/null 2>&1 && $tmp_file;
+then
+    : # OK
+else
+    error="${error}\nrealtype not defined as double.  Recompile sundials with --with-precision=double."
+fi
+rm -f $tmp_file $test_file
+
 
 # Check for OCaml installation (and version)
 ocaml_path=`${OCAMLBIN}ocamlc -where`
@@ -226,49 +283,6 @@ else
 fi
 
 
-# Check for Sundials installation (and version)
-unset lapack_lib
-query="#include \"sundials/sundials_config.h\"\nSUNDIALS_PACKAGE_VERSION,SUNDIALS_BLAS_LAPACK"
-sundials_info=`echo "${query}" | ${CPP} ${CPPFLAGS} -P | tail -1`
-if [ $? -ne 0 ]; then
-    error="${error}\n\tcould not find sundials_config.h"
-    sundials_version="UNKNOWN"
-else
-    sundials_version=`echo ${sundials_info} | sed -ne 's/"\(.*\)",./\1/p'`
-
-    case "${sundials_version}" in
-	[0-1].*.* | 2.[0-4].*)
-	    error="${error}\n\tsundials >= 2.5.0 required" ;;
-	*) ;;
-    esac
-
-    case "${sundials_info}" in
-	*,1)
-	    lapack_lib=${LAPACKLIB}
-	    ;;
-	*,0)
-	    unset lapack_lib ;;
-	*)
-	    error"${error}\n\terror interpreting sundials_config.h" ;;
-    esac
-fi
-
-test_file=__configure_test_file__.c
-tmp_file=./__configure_test_file__
-cat > $test_file <<EOF
-#include <sundials/sundials_types.h>
-int main (int argc, char *argv[])
-{
-  return sizeof (realtype) != sizeof (double);
-}
-EOF
-if $CC ${CPPFLAGS} -o $tmp_file $test_file >/dev/null 2>&1 && $tmp_file; then
-    : # OK
-else
-    error="${error}\nrealtype not defined as double.  Recompile sundials with --with-precision=double."
-fi
-rm -f $tmp_file $test_file
-
 query="#include <caml/mlvalues.h>\nSIZEOF_INT,SIZEOF_LONG,SIZEOF_PTR"
 ilp_size=`echo ${query} | ${CPP} -P | tail -1`
 int_size=`expr "$ilp_size" : "^\([^,]*\),*"`
@@ -288,6 +302,13 @@ if echo $ptr_size | grep -q '[^0-9]'; then
     printf "Failed to detect size of pointers.  This might be a problem\n"
     printf "with detecting your system's C preprocessor.\n\n"
     exit 1
+fi
+
+# Check for opam
+if command -v opam >/dev/null 2>&1; then
+    opam_libpath="$(opam config var lib)/"
+else
+    opam_libpath=''
 fi
 
 
@@ -376,6 +397,34 @@ if [ "${int_size}" -ne 4 ]; then
     error="${error}\nworkaround, albeit with a slight performance hit."
 fi
 
+
+# Check for LAPACK support
+unset lapack_lib
+query="#include \"sundials/sundials_config.h\"\nSUNDIALS_PACKAGE_VERSION,SUNDIALS_BLAS_LAPACK"
+sundials_info=`echo "${query}" | ${CPP} ${cvode_cppflags} -P | tail -1`
+if [ $? -ne 0 ]; then
+    error="${error}\n\tcould not find sundials_config.h"
+    sundials_version="UNKNOWN"
+else
+    sundials_version=`echo ${sundials_info} | sed -ne 's/"\(.*\)",./\1/p'`
+
+    case "${sundials_version}" in
+	[0-1].*.* | 2.[0-4].*)
+	    error="${error}\n\tsundials >= 2.5.0 required" ;;
+	*) ;;
+    esac
+
+    case "${sundials_info}" in
+	*,1)
+	    lapack_lib=${LAPACKLIB}
+	    ;;
+	*,0)
+	    unset lapack_lib ;;
+	*)
+	    error"${error}\n\terror interpreting sundials_config.h" ;;
+    esac
+fi
+
 if [ "${lapack_lib}" = "" ]; then
     lapack_info=" (without lapack)"
     lapack_enabled=
@@ -386,51 +435,6 @@ fi
 
 ldflags="${ldflags} ${lapack_lib}"
 
-# Extract compilation flags from sundials-config.
-
-# CPP flags:
-cvode_cppflags="`sundials-config -m cvode -t s -l c -s cppflags`"
-cvodes_cppflags="`sundials-config -m cvodes -t s -l c -s cppflags`"
-ida_cppflags="`sundials-config -m ida -t s -l c -s cppflags`"
-idas_cppflags="`sundials-config -m idas -t s -l c -s cppflags`"
-kinsol_cppflags="`sundials-config -m kinsol -t s -l c -s cppflags`"
-
-# Libraries: sundials-config's options are too coarse-grained, so we
-# need to parse and separate it out.  Specifically:
-#
-# (a) sundials_mpi.cma must be linked without commiting to either
-# -lsundials_cvode or -lsundials_cvodes (and likewise for ida/idas).
-#
-# (b) --no-lib-path removes the -L specification, to prevent it from
-# being recorded in the *.cm(x)a files.  This assumes the sundials
-# libraries are installed in a standard path cc searches by default.
-#
-# We assume there's only one occurrence of -L and the path contains no
-# spaces.
-
-# Flags sans -L.  The sed script sets up sentinels, erases -L, then
-# erases sentinels.
-
-cvode_ldflags="`sundials-config -m cvode -t s -l c -s libs \
-	       | sed -e 's/^/ /; s/$/ /; s/ -L[^ ]* / /; s/^ //; s/ $//'`"
-cvodes_ldflags="`sundials-config -m cvodes -t s -l c -s libs \
-	        | sed -e 's/^/ /; s/$/ /; s/ -L[^ ]* / /; s/^ //; s/ $//'`"
-ida_ldflags="`sundials-config -m ida -t s -l c -s libs \
-	     | sed -e 's/^/ /; s/$/ /; s/ -L[^ ]* / /; s/^ //; s/ $//'`"
-idas_ldflags="`sundials-config -m idas -t s -l c -s libs \
-	      | sed -e 's/^/ /; s/$/ /; s/ -L[^ ]* / /; s/^ //; s/ $//'`"
-kinsol_ldflags="`sundials-config -m kinsol -t s -l c -s libs \
-	        | sed -e 's/^/ /; s/$/ /; s/ -L[^ ]* / /; s/^ //; s/ $//'`"
-
-# The -L flag.  sundials_lib_path will be recorded in binaries.
-# LIB_PATH has other uses.
-LIB_PATH="`sundials-config -m cvode -t s -l c -s libs \
-	  | sed -e 's/^/ /; s/$/ /; s/^.* \(-L[^ ]*\) .*/\1/'`"
-if [ ${no_lib_path:-0} -eq 1 ]; then
-    sundials_lib_path=
-else
-    sundials_lib_path="$LIB_PATH"
-fi
 
 
 # Parallel features
