@@ -179,7 +179,7 @@ dochtml.cmo: OCAMLFLAGS += -pp '$(DOCHTML_PP)'
 sundials_docs.cma: sundials_config.cmo dochtml.cmo
 	$(OCAMLC) $(OCAMLCFLAGS) -o $@ -a $^
 
-META: META.in
+META: META.in config
 	$(CPP) $(if $(MPI_ENABLED),-DMPI_ENABLED) -DVERSION=\"$(VERSION)\" $< \
 	    | grep -v '^#' > $@
 
