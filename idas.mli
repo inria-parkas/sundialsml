@@ -1293,7 +1293,7 @@ module Adjoint :
 
     (** {2:bsolve Backward solutions} *)
 
-    type 'd bresfn_args =
+    type 'd bresfn_args = 'd Ida_impl.AdjointTypes.bresfn_args =
       {
         (** The value of the independent variable. *)
         t : float;

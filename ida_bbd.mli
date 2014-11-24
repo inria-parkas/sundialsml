@@ -66,9 +66,10 @@ type local_fn = float
     @idas <node5#sss:idabbdpre> IDABBDCommFn *)
 type comm_fn = float -> Nvector_parallel.data -> Nvector_parallel.data -> unit
 
-(** Left preconditioning using the Parallel Band-Block-Diagonal module.
-    The difference quotient operation is controlled by [?dqrely],
-    the relative increment in components of [y], and {!bandwidths}.
+(** Left preconditioning using the Parallel Band-Block-Diagonal
+    module.  The difference quotient operation is controlled by
+    [?dqrely], which specifies the relative increment in components of
+    [y], and {!bandwidths}.
 
     @ida <node5#sss:lin_solv_init> IDASpgmr
     @ida <node5#sss:idabbdpre> IDABBDPrecInit *)

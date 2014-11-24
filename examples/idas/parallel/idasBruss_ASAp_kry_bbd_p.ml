@@ -535,11 +535,12 @@ let res data tt uv uvp rr =
   (* Call reslocal to calculate the local portion of residual vector. *)
   reslocal data tt uv uvp rr
 
-let resBlocal data tt ((uv   : RealArray.t), _, _)
-                      ((uvp  : RealArray.t), _, _)
-                      ((uvB  : RealArray.t), _, _)
-                      ((uvpB : RealArray.t), _, _)
-                      ((rrB  : RealArray.t), _, _) =
+let resBlocal : user_data -> Idas_bbd.local_fn =
+  fun data { Adjoint.t = tt;
+             Adjoint.y = (uv, _, _);
+             Adjoint.y' = (uvp, _, _);
+             Adjoint.yb = (uvB, _, _);
+             Adjoint.yb' = (uvpB, _, _); } (rrB, _, _) ->
   let b = data.b in
   let mxsub =      data.mxsub in
   let mysub =      data.mysub in
@@ -693,7 +694,10 @@ let resB data { Adjoint.t = tt; Adjoint.y = yy; Adjoint.y' = yp;
   rescomm data tt yyB ypB;
 
   (* Call reslocal to calculate the local portion of residual vector. *)
-  resBlocal data tt yy yp yyB ypB rrB
+  let args = { Adjoint.t = tt; Adjoint.y = yy; Adjoint.y' = yp;
+               Adjoint.yb = yyB; Adjoint.yb' = ypB; }
+  in
+  resBlocal data args rrB
 
 (*
  *--------------------------------------------------------------------

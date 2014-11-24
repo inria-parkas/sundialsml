@@ -748,7 +748,8 @@ let fQ data t y (dqdata, _, _) =
  *------------------------------------------------------------------
  *)
 
-let fB_local data t (ydata, _, _) (yBdata, _, _) (dyBdata, _, _) =
+let fB_local data { Adj.t = t; Adj.y = (ydata, _, _); Adj.yb = (yBdata, _, _) }
+    (dyBdata, _, _) =
   (* Extract stuff from data structure *)
   let id = data.myId in
   let xmin = data.xmin in
@@ -827,7 +828,7 @@ let fB data args yBdot =
   f_comm data t yB;
 
   (* Compute right-hand side locally *)
-  fB_local data t y yB yBdot
+  fB_local data { Adj.t = t; Adj.y = y; Adj.yb = yB } yBdot
 
 (*
  *------------------------------------------------------------------

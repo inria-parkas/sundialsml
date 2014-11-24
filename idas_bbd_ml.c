@@ -41,15 +41,14 @@ static int bbbdlocal(long int nlocal, realtype t, N_Vector yy, N_Vector yp,
 		     void *user_data)
 {
     CAMLparam0();
-    CAMLlocalN(args, 6);
-    CAMLlocal2(session, cb);
+    CAMLlocal3(args, session, cb);
 
-    args[0] = caml_copy_double(t);
-    args[1] = NVEC_BACKLINK(yy);
-    args[2] = NVEC_BACKLINK(yp);
-    args[3] = NVEC_BACKLINK(yyB);
-    args[4] = NVEC_BACKLINK(ypB);
-    args[5] = NVEC_BACKLINK(glocal);
+    args = caml_alloc_tuple (RECORD_IDAS_ADJ_BRESFN_ARGS_SIZE);
+    Store_field (args, RECORD_IDAS_ADJ_BRESFN_ARGS_T, caml_copy_double (t));
+    Store_field (args, RECORD_IDAS_ADJ_BRESFN_ARGS_Y, NVEC_BACKLINK (yy));
+    Store_field (args, RECORD_IDAS_ADJ_BRESFN_ARGS_YP, NVEC_BACKLINK (yp));
+    Store_field (args, RECORD_IDAS_ADJ_BRESFN_ARGS_YB, NVEC_BACKLINK (yyB));
+    Store_field (args, RECORD_IDAS_ADJ_BRESFN_ARGS_YBP, NVEC_BACKLINK (ypB));
 
     WEAK_DEREF (session, *(value*)user_data);
     cb = IDA_LS_CALLBACKS_FROM_ML (session);
@@ -57,7 +56,7 @@ static int bbbdlocal(long int nlocal, realtype t, N_Vector yy, N_Vector yp,
     cb = Field (cb, RECORD_IDAS_BBBD_CALLBACKS_LOCAL_FN);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+    value r = caml_callback2_exn (cb, args, NVEC_BACKLINK (glocal));
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -68,14 +67,14 @@ static int bbbdcomm(long int nlocal, realtype t,
 		    void *user_data)
 {
     CAMLparam0();
-    CAMLlocalN(args, 5);
-    CAMLlocal2(session, cb);
+    CAMLlocal3(args, session, cb);
 
-    args[0] = caml_copy_double(t);
-    args[1] = NVEC_BACKLINK(yy);
-    args[2] = NVEC_BACKLINK(yp);
-    args[3] = NVEC_BACKLINK(yyB);
-    args[4] = NVEC_BACKLINK(ypB);
+    args = caml_alloc_tuple (RECORD_IDAS_ADJ_BRESFN_ARGS_SIZE);
+    Store_field (args, RECORD_IDAS_ADJ_BRESFN_ARGS_T, caml_copy_double (t));
+    Store_field (args, RECORD_IDAS_ADJ_BRESFN_ARGS_Y, NVEC_BACKLINK (yy));
+    Store_field (args, RECORD_IDAS_ADJ_BRESFN_ARGS_YP, NVEC_BACKLINK (yp));
+    Store_field (args, RECORD_IDAS_ADJ_BRESFN_ARGS_YB, NVEC_BACKLINK (yyB));
+    Store_field (args, RECORD_IDAS_ADJ_BRESFN_ARGS_YBP, NVEC_BACKLINK (ypB));
 
     WEAK_DEREF (session, *(value*)user_data);
     cb = IDA_LS_CALLBACKS_FROM_ML (session);
@@ -84,7 +83,7 @@ static int bbbdcomm(long int nlocal, realtype t,
     cb = Field (cb, 0);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+    value r = caml_callback_exn (cb, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }

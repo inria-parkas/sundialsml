@@ -254,8 +254,8 @@ module AdjointTypes' = struct
 end
 
 module IdasBbdParamTypes = struct
-  type 'a local_fn = float -> 'a -> 'a -> 'a -> 'a -> 'a -> unit
-  type 'a comm_fn = float -> 'a -> 'a -> 'a -> 'a -> unit
+  type 'a local_fn = 'a AdjointTypes'.bresfn_args -> 'a -> unit
+  type 'a comm_fn = 'a AdjointTypes'.bresfn_args -> unit
   type 'a callbacks =
     {
       local_fn : 'a local_fn;

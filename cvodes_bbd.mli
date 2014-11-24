@@ -41,33 +41,32 @@ type bandwidths = Cvode_bbd.bandwidths =
                        approximate Jacobian block. *)
   }
 
-(** Approximates the right-hand side function using local computations only.
-    In the call [gloc t y yb y'], [t] is the independent variable (time),
-    [y] is the forward dependent-variable vector,
-    [yb] is the backward dependent variable vector, and
-    [y'] stores the computed derivatives.
+(** Functions that approximate backward right-hand side functions
+    using local computations only.  They are passed the arguments:
+    - [args], the current values of forward and backward variables, and,
+    - [yb'], a vector for storing a local approximation to the backward
+             right-hand side function {% $\dot{y}_B = f_B(t, y, y_B)$%}.
+
+    The approximation is allowed to coincide with the actual backward
+    right-hand side function.
 
     Raising {!Sundials.RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.
 
     @cvodes <node7#SECTION00742200000000000000> CVBBDLocalFnB *)
-type local_fn = float
-                -> Nvector_parallel.data
-                -> Nvector_parallel.data
+type local_fn = Nvector_parallel.data Cvodes.Adjoint.brhsfn_args
                 -> Nvector_parallel.data
                 -> unit
 
 (** Functions that perform the interprocess communication necessary
-    for the execution of {!local_fn}.
-    In the call [cfn t y yb], [t] is the independent variable (time),
-    [y] is the forward dependent-variable vector,
-    and [yb] is the backward dependent variable vector.
+    for the execution of {!local_fn}.  They are passed the current
+    values of forward and backward variables.
 
     Raising {!Sundials.RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.
 
     @cvodes <node7#SECTION00742200000000000000> CVBBDCommFnB *)
-type comm_fn = float -> Nvector_parallel.data -> Nvector_parallel.data -> unit
+type comm_fn = Nvector_parallel.data Cvodes.Adjoint.brhsfn_args -> unit
 
 (** Left preconditioning using the Parallel Band-Block-Diagonal module.
     The difference quotient operation is controlled by [?dqrely],

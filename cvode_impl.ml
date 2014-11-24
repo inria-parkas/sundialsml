@@ -306,8 +306,8 @@ module AdjointTypes' = struct
 end
 
 module CvodesBbdParamTypes = struct
-  type 'a local_fn = float -> 'a -> 'a -> 'a -> unit
-  type 'a comm_fn = float -> 'a -> 'a -> unit
+  type 'a local_fn = 'a AdjointTypes'.brhsfn_args -> 'a -> unit
+  type 'a comm_fn = 'a AdjointTypes'.brhsfn_args -> unit
   type 'a callbacks =
     {
       local_fn : 'a local_fn;

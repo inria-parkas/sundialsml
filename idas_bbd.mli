@@ -42,43 +42,35 @@ type bandwidths = Ida_bbd.bandwidths =
                        approximate Jacobian block. *)
   }
 
-(** Approximates the right-hand side function using local computations only.
-    In the call [gloc t y y' yb yb' r], [t] is the independent variable (time),
-    [y] is the forward dependent-variable vector,
-    [y'] are the forward derivatives,
-    [yb] is the backward dependent-variable vector,
-    [yb'] are the backward derivatives,
-    and [r] is the output vector to fill with the computed residual.
+(** Functions that approximate backward residual functions using local
+    computations only.  They are passed the arguments:
+    - [args], the current values of forward and backward variables
+              and their derivatives, and
+    - [resb], a vector for storing a local approximation to the backward
+              residual function {% $F_B(t, y, \dot{y}, y_B, \dot{y}_B)$ %}.
+
+    The approximation is allowed to coincide with the actual backward
+    residual function.
 
     Raising {!Sundials.RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.
 
     @idas <node7#SECTION00742200000000000000> IDABBDLocalFnB *)
-type local_fn = float
-                -> Nvector_parallel.data
-                -> Nvector_parallel.data
-                -> Nvector_parallel.data
-                -> Nvector_parallel.data
+type local_fn = Nvector_parallel.data Idas.Adjoint.bresfn_args
                 -> Nvector_parallel.data
                 -> unit
 
 (** Functions that perform the interprocess communication necessary
     for the execution of {!local_fn}.
-    In the call [cfn t y y' yb yb'], [t] is the independent variable (time),
-    [y] is the forward dependent-variable vector,
-    [y'] is the forward derivative vector,
-    [yb] is the backward dependent-variable vector, and
-    [yb'] is the backward derivative vector.
+    - [args], the current values of forward and backward variables, and,
+    - [resb], a vector for storing a local approximation to the backward
+              function {% $F_B(t, y, \dot{y}, y_B, \dot{y}_B)$ %}.
 
     Raising {!Sundials.RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.
 
     @idas <node7#SECTION00742200000000000000> IDABBDCommFnB *)
-type comm_fn = float
-               -> Nvector_parallel.data
-               -> Nvector_parallel.data
-               -> Nvector_parallel.data
-               -> Nvector_parallel.data
+type comm_fn = Nvector_parallel.data Idas.Adjoint.bresfn_args
                -> unit
 
 (** Left preconditioning using the Parallel Band-Block-Diagonal module.

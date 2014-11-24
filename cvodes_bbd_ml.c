@@ -40,13 +40,12 @@ static int bbbdlocal(long int nlocal, realtype t, N_Vector y, N_Vector yb,
 		     N_Vector glocal, void *user_data)
 {
     CAMLparam0();
-    CAMLlocalN(args, 4);
-    CAMLlocal2(session, cb);
+    CAMLlocal3(args, session, cb);
 
-    args[0] = caml_copy_double(t);
-    args[1] = NVEC_BACKLINK(y);
-    args[2] = NVEC_BACKLINK(yb);
-    args[3] = NVEC_BACKLINK(glocal);
+    args = caml_alloc_tuple (RECORD_CVODES_ADJ_BRHSFN_ARGS_SIZE);
+    Store_field (args, RECORD_CVODES_ADJ_BRHSFN_ARGS_T, caml_copy_double (t));
+    Store_field (args, RECORD_CVODES_ADJ_BRHSFN_ARGS_Y, NVEC_BACKLINK (y));
+    Store_field (args, RECORD_CVODES_ADJ_BRHSFN_ARGS_YB, NVEC_BACKLINK (yb));
 
     WEAK_DEREF (session, *(value*)user_data);
     cb = CVODE_LS_CALLBACKS_FROM_ML (session);
@@ -56,7 +55,7 @@ static int bbbdlocal(long int nlocal, realtype t, N_Vector y, N_Vector yb,
 
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+    value r = caml_callback2_exn (cb, args, NVEC_BACKLINK (glocal));
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -65,12 +64,12 @@ static int bbbdcomm(long int nlocal, realtype t, N_Vector y, N_Vector yb,
 		    void *user_data)
 {
     CAMLparam0();
-    CAMLlocalN(args, 3);
-    CAMLlocal2(session, cb);
+    CAMLlocal3(args, session, cb);
 
-    args[0] = caml_copy_double(t);
-    args[1] = NVEC_BACKLINK(y);
-    args[2] = NVEC_BACKLINK(yb);
+    args = caml_alloc_tuple (RECORD_CVODES_ADJ_BRHSFN_ARGS_SIZE);
+    Store_field (args, RECORD_CVODES_ADJ_BRHSFN_ARGS_T, caml_copy_double (t));
+    Store_field (args, RECORD_CVODES_ADJ_BRHSFN_ARGS_Y, NVEC_BACKLINK (y));
+    Store_field (args, RECORD_CVODES_ADJ_BRHSFN_ARGS_YB, NVEC_BACKLINK (yb));
 
     WEAK_DEREF (session, *(value*)user_data);
     cb = CVODE_LS_CALLBACKS_FROM_ML (session);
@@ -80,7 +79,7 @@ static int bbbdcomm(long int nlocal, realtype t, N_Vector y, N_Vector yb,
     assert (Tag_val (cb) == Closure_tag);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn (cb, args[0], args[1], args[2]);
+    value r = caml_callback_exn (cb, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }

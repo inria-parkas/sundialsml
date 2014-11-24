@@ -1444,7 +1444,7 @@ module Adjoint :
     (** {2:bsolve Backward solutions} *)
 
     (** Arguments common to {!brhsfn_no_sens} and {!brhsfn_with_sens}.  *)
-    type 'd brhsfn_args =
+    type 'd brhsfn_args = 'd Cvode_impl.AdjointTypes.brhsfn_args =
       {
         (** The value of the independent variable. *)
         t : float;
