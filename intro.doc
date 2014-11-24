@@ -299,9 +299,9 @@ Printf.printf "\n";;]}
 
 Loading parallel features is more involved and requires [ocamlfind] to
 do cleanly.  First link a custom toplevel:
-{[ocamlfind ocamlmktop -o partop -package sundialsml.mpi,findlib -linkpkg]}
+{C [ocamlfind ocamlmktop -o partop -package sundialsml.mpi,findlib -linkpkg]}
 Then launch multiple terminals, each running the custom toplevel, like
-{[mpirun -np 2 xterm -e ./partop]}
+{C [mpirun -np 2 xterm -e ./partop]}
 Here, [2] is the number of processes, [xterm] is the terminal program, and
 [-e ./partop] are arguments to [xterm] telling it to execute [./partop].
 To test the setup, paste the following to all of the terminals: {[
