@@ -43,11 +43,12 @@ type bandwidths = Ida_bbd.bandwidths =
   }
 
 (** Approximates the right-hand side function using local computations only.
-    In the call [gloc t y yb y' r], [t] is the independent variable (time),
-    [y] is the forward solution vector of dependent variables,
-    [yb] is the backward dependent variable vector, [y'] are the derivatives
-    with respect to [y], and [r] is the output vector to fill with the
-    computed residual.
+    In the call [gloc t y y' yb yb' r], [t] is the independent variable (time),
+    [y] is the forward dependent-variable vector,
+    [y'] are the forward derivatives,
+    [yb] is the backward dependent-variable vector,
+    [yb'] are the backward derivatives,
+    and [r] is the output vector to fill with the computed residual.
 
     Raising {!Sundials.RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.
@@ -63,9 +64,11 @@ type local_fn = float
 
 (** Functions that perform the interprocess communication necessary
     for the execution of {!local_fn}.
-    In the call [cfn t y yb], [t] is the independent variable (time), [y] is
-    the forward solution vector, and [yb] is the backward dependent variable
-    vector [yb].
+    In the call [cfn t y y' yb yb'], [t] is the independent variable (time),
+    [y] is the forward dependent-variable vector,
+    [y'] is the forward derivative vector,
+    [yb] is the backward dependent-variable vector, and
+    [yb'] is the backward derivative vector.
 
     Raising {!Sundials.RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.

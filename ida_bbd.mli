@@ -42,9 +42,8 @@ type bandwidths = Ida_impl.IdaBbdTypes.bandwidths =
 
 (** Approximates the right-hand side function using local computations only.
     In the call [gloc t y y' r], [t] is the independent variable (time),
-    [y] is the vector of dependent variable values, [y'] are the derivatives
-    with respect to [y], and [r] is the output vector to fill with the
-    computed residual.
+    [y] is the dependent variable vector, [y'] is the derivative vector,
+    and [r] is the output vector to fill with the computed residual.
 
     Raising {!Sundials.RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.
@@ -58,8 +57,8 @@ type local_fn = float
 
 (** Functions that perform the interprocess communication necessary
     for the execution of {!local_fn}.
-    In the call [cfn t y], [t] is the independent variable (time) and [y] is
-    the input vector.
+    In the call [cfn t y y'], [t] is the independent variable (time), [y] is
+    the dependent variable vector, and [y'] is the derivative vector.
  
     Raising {!Sundials.RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.

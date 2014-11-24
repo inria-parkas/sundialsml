@@ -43,9 +43,9 @@ type bandwidths = Cvode_bbd.bandwidths =
 
 (** Approximates the right-hand side function using local computations only.
     In the call [gloc t y yb y'], [t] is the independent variable (time),
-    [y] is the current forward solution vector, [yb] is the current value
-    of the backward dependent variable vector, and [y'] stores the
-    computed derivatives.
+    [y] is the forward dependent-variable vector,
+    [yb] is the backward dependent variable vector, and
+    [y'] stores the computed derivatives.
 
     Raising {!Sundials.RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.
@@ -60,8 +60,8 @@ type local_fn = float
 (** Functions that perform the interprocess communication necessary
     for the execution of {!local_fn}.
     In the call [cfn t y yb], [t] is the independent variable (time),
-    [y] is the forward solution vector, and [yb] is the backward dependent
-    variable vector.
+    [y] is the forward dependent-variable vector,
+    and [yb] is the backward dependent variable vector.
 
     Raising {!Sundials.RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.
