@@ -187,7 +187,7 @@ Sundials/ML will function correctly if the patch is not applied, but
 the comparison of examples will fail with incorrect results.
 Sundials must be compiled with 64-bit floats—the
 default: {i --with-precision=double}—and the C compiler must provide 32-bit
-[int]s (otherwise ./configure will complain).
+[int]s ([configure] checks these constraints).
 
 {3:opam Opam}
 

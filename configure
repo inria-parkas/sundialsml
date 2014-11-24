@@ -253,6 +253,22 @@ else
     esac
 fi
 
+test_file=__configure_test_file__.c
+tmp_file=./__configure_test_file__
+cat > $test_file <<EOF
+#include <sundials/sundials_types.h>
+int main (int argc, char *argv[])
+{
+  return sizeof (realtype) != sizeof (double);
+}
+EOF
+if $CC ${CPPFLAGS} -o $tmp_file $test_file >/dev/null 2>&1 && $tmp_file; then
+    : # OK
+else
+    error="${error}\nrealtype not defined as double.  Recompile sundials with --with-precision=double."
+fi
+rm -f $tmp_file $test_file
+
 query="#include <caml/mlvalues.h>\nSIZEOF_INT,SIZEOF_LONG,SIZEOF_PTR"
 ilp_size=`echo ${query} | ${CPP} -P | tail -1`
 int_size=`expr "$ilp_size" : "^\([^,]*\),*"`
