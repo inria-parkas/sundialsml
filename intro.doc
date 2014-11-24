@@ -32,12 +32,12 @@ existing source code, but several changes have been made for programming
 convenience and to increase safety, namely:
 - solver sessions are mostly configured via algebraic data types
   rather than multiple function calls;
-- errors are signalled by exceptions not return codes
+- errors are signalled by exceptions, not return codes
   (also from user-supplied callback routines);
 - user data is shared between callback routines via closures (partial
   applications of functions);
 - vectors are checked for compatibility (using a combination
-  of static and dynamic checks), and;
+  of static and dynamic checks); and
 - explicit free commands are not necessary since OCaml is a garbage-collected
   language.
 
@@ -187,7 +187,7 @@ Sundials/ML will function correctly if the patch is not applied, but
 the comparison of examples will fail with incorrect results.
 Sundials must be compiled with 64-bit floats—the
 default: {i --with-precision=double}—and the C compiler must provide 32-bit
-[int]s (otherwise an exception it thrown at runtime).
+[int]s (otherwise ./configure will complain).
 
 {3:opam Opam}
 
@@ -237,8 +237,8 @@ produces the graph explained {{:#performance}below}.
 Programs are compiled by specifying where Sundials/ML is installed, e.g.,
 {ul
     {- [-I +sundialsml],}
-    {- or [ocamlfind ... -package sundialsml],}
-    {- or [-I `opam config var lib`/sundialsml],}}
+    {- or [-I `opam config var lib`/sundialsml],}
+    {- or [ocamlfind ... -package sundialsml],}}
 and including [bigarray.cma] and [sundials.cma], for example:
 {C {[ocamlc -o myprog.byte -I +sundialsml bigarray.cma sundials.cma myprog.ml]}}
 or the [.cmxa] versions:
@@ -263,6 +263,17 @@ or with the [.cmxa] versions:
 The [sundials_mpi.cma/.cmxa] files link against the
 [libsundials_nvecparallel] library.
 
+If you are using [ocamlfind], the sensitivity and parallel features
+are selected via subpackages.  For example, to use parallel features
+with sensitivity:
+{C {[ocamlfind ocamlopt -package sundialsml.mpi -linkpkg -o mysim.opt mysim.ml]}}
+The available packages and the features they select are as follows.
+{ul
+    {- [sundialsml]: sensitivity ON, parallel OFF}
+    {- [sundialsml.mpi]: sensitivity ON, parallel ON}
+    {- [sundialsml.no_sens]: sensitivity OFF, parallel OFF}
+    {- [sundialsml.no_sens.mpi]: sensitivity OFF, parallel ON}}
+
 {3:toplevel From the toplevel}
 
 Sundials/ML can also be used from the OCaml interactive loop, either by the
@@ -285,6 +296,31 @@ let (t', result) = Cvode.solve_normal s 2. yvec;;
 Printf.printf "%e: " t';
 Sundials.RealArray.iter (Printf.printf "\t%e") y;
 Printf.printf "\n";;]}
+
+Loading parallel features is more involved and requires [ocamlfind] to
+do cleanly.  First link a custom toplevel:
+{[ocamlfind ocamlmktop -o partop -package sundialsml.mpi,findlib -linkpkg]}
+Then launch multiple terminals, each running the custom toplevel, like
+{[mpirun -np 2 xterm -e ./partop]}
+Here, [2] is the number of processes, [xterm] is the terminal program, and
+[-e ./partop] are arguments to [xterm] telling it to execute [./partop].
+To test the setup, paste the following to all of the terminals: {[
+#use "topfind";;
+#require "sundialsml.mpi";;
+(* Make a parallel nvector with 1 scalar value per process, for
+   n processes.  *)
+let comm = Mpi.comm_world
+let n = Mpi.comm_size comm
+let my_id = Mpi.comm_rank comm
+let pv = Nvector_parallel.make 1 n comm (float_of_int (my_id+1));;
+Printf.printf "I am process %d.  My local array holds %f.\n"
+  my_id (Nvector_parallel.local_array pv).{0};;
+Printf.printf "L1 norm (i.e. total of absolute values) = %f\n"
+  (Nvector_parallel.Ops.n_vl1norm pv);;
+]}
+On non-Unix systems, you may need to find other ways to attach
+separate terminal windows to the processes.  The above instructions
+should work for Mac OS X with [xterm] installed.
 
 {3:solutions Solutions to common problems}
 
@@ -331,8 +367,8 @@ The figures in the graph were obtained by modifying the examples to
 repeatedly execute their [main] functions.
 The number of repetitions varies per example since otherwise the slower
 examples take too long.
-The timings indicated by the crosses and the axis at right are calculated by
-dividing the measurement made for each C version by the number of repetitions.
+The timings indicated by the dots and the axis at right are calculated by
+dividing the wall-clock time of each C version by the number of repetitions.
 All but six of the serial examples ({color #de2d26 red}) run so fast that 
 comparisons are made based on tens, or usually hundreds of repetitions and
 in some cases this amplifies factors other than the interface overhead.
@@ -353,8 +389,10 @@ We were able to make our OCaml versions much faster (up to 4 times) by:
        {[ let f t y yd = ... ,]}
        it is better to use
        {[ let f t (y : Sundials.RealArray.t) (yd : Sundials.RealArray.t) = ... ,]}
+       or more concisely
+       {[ let f : Sundials.RealArray.t Cvode.rhsfn = fun t y yd -> ...]}
        since then the compiler need not generate polymorphic code and
-       can optimize to the bigarray layout.}
+       can optimize according to the bigarray layout.}
     {- Avoid functions like
        {{:http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.Array1.html#VALsub}[Bigarray.Array1.sub]}
        and
