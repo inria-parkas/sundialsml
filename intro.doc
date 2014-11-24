@@ -1,10 +1,10 @@
 {div open id="intro"}
 
 {{:https://computation.llnl.gov/casc/sundials/main.html}Sundials} is a
-collection of five numerical solvers: CVODE,  CVODES, IDA, IDAS, and KINSOL.
+collection of five numeric solvers: CVODE,  CVODES, IDA, IDAS, and KINSOL.
 It is written by Alan Hindmarsh, Radu Serban, and Carol Woodward at the {e
 Center for Applied Scientific Computing, Lawrence Livermore National
-Laboratory} with the contributions from Peter Brown, Scott Cohen, Aaron
+Laboratory} with contributions from Peter Brown, Scott Cohen, Aaron
 Collier, Keith Grant, Steven Lee, Dan Reynolds, Dan Shumaker, and Allan
 Taylor.
 
@@ -23,6 +23,8 @@ The source code is available under a New BSD license at
 {{:https://github.com/inria-parkas/sundialsml/issues/new}bug reports},
 and {{:https://github.com/inria-parkas/sundialsml/compare}pull requests}
 are welcome.
+Support requests should be made to the (public)
+{{:mailto:caml-list\@inria.fr?subject=Sundials/ML:}OCaml mailing list}.
 
 The structure of this interface mostly follows that of the original library,
 both for ease of reading the existing documentation and for converting
@@ -30,18 +32,18 @@ existing source code, but several changes have been made for programming
 convenience and to increase safety, namely:
 - solver sessions are mostly configured via algebraic data types
   rather than multiple function calls;
-- error conditions are signalled by exceptions not return codes
-  (including in user-supplied callback routines);
-- closures (partial applications of functions) are used to
-  share user data between callback routines;
-- vectors are checked for compatibility with a session (using a combination
+- errors are signalled by exceptions not return codes
+  (also from user-supplied callback routines);
+- user data is shared between callback routines via closures (partial
+  applications of functions);
+- vectors are checked for compatibility (using a combination
   of static and dynamic checks), and;
 - explicit free commands are not necessary since OCaml is a garbage-collected
   language.
 
 Functions have been renamed according to a regular scheme. Leading {e
-module identifier} are replaced by module paths, words
-beginning with an uppercase letter are separated by underscores, and put
+module identifiers} are replaced by module paths, words
+beginning with an uppercase letter are separated by underscores and put
 into lowercase. For instance, [IdaSetErrHandlerFn], becomes
 {!Ida.set_err_handler_fn}, and [CVSpilsSetJacTimesVecFn] becomes
 {!Cvode.Spils.set_jac_times_vec_fn}.
@@ -49,8 +51,8 @@ into lowercase. For instance, [IdaSetErrHandlerFn], becomes
 Constants are replaced by variant types in most cases. They are renamed by
 conversion to {e CamlCase} and the removal of underscores. For instance,
 [PREC_NONE] becomes {{!Spils.preconditioning_type}Spils.PrecNone}.
-Exception names are treated similarly, but we have taken the liberty to
-improve their consistency and to make them more self explanatory.
+Exception names are sometimes renamed for consistency and to make them more
+self explanatory.
 For instance, the return codes [CV_FIRST_RHSFUNC_ERR] and
 [IDA_FIRST_RES_FAIL] become, respectively, the exceptions
 {!Cvode.FirstRhsFuncFailure} and {!Ida.FirstResFuncFailure}, and [CV_BAD_IS]
@@ -58,9 +60,8 @@ becomes {!Cvodes.Sensitivity.BadSensIdentifier}.
 
 Rather than try to duplicate or replace the comprehensive
 {{:https://computation.llnl.gov/casc/sundials/documentation/documentation.html}
-Sundials user manuals}, this documentation provides brief summaries, taken
-directly or adapted from the manual, with hyperlinks back to the original
-text.
+Sundials user manuals}, this documentation provides brief summaries,
+adapted from the manual, with hyperlinks back to the original text.
 
 {3 Overview}
 {ul
@@ -81,8 +82,8 @@ Sundials defines an abstract interface for vectors and provides default
 serial and parallel instantiations.
 The OCaml interface defines likewise a generic
 {!Nvector.t} type whose type arguments indicate the underlying {e
-data} and {e kind}—one of {!Nvector_serial.kind}, {!Nvector_parallel.kind},
-or {!Nvector_custom.kind}.
+data} and {e kind}—the latter may be {!Nvector_serial.kind},
+{!Nvector_parallel.kind}, or {!Nvector_custom.kind}.
 The {!Nvector.unwrap} function gives direct access to the underlying data.
 
 The interface to serial nvectors, {!Nvector_serial}, is based on
@@ -91,12 +92,12 @@ These arrays are manipulated directly, i.e., with no additional overhead,
 within the solver by the original low-level serial nvector operations
 (see {!Nvector.NVECTOR_OPS}).
 The same low-level operations can be called from OCaml
-({!Nvector_serial.Ops}), as can equivalent reimplementations on the
+({!Nvector_serial.Ops}), as can equivalent reimplementations in OCaml on the
 underlying data ({!Nvector_serial.DataOps}).
 
-The interface to parallel nvectors, {!Nvector_parallel}, is also based on
-{{:http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.html}Bigarrays}.
-It exploits the {{:https://forge.ocamlcore.org/projects/ocamlmpi/}OCaml/MPI}
+The interface to parallel nvectors, {!Nvector_parallel}, is based on
+{{:http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.html}Bigarrays}
+and the {{:https://forge.ocamlcore.org/projects/ocamlmpi/}OCaml/MPI}
 library. Parallel nvectors are only available when Sundials/ML is configured
 to use MPI, as described {{:install}below}.
 
@@ -106,8 +107,8 @@ operations on an underlying datatype. A demonstration of this feature on
 float arrays is provided in {!Nvector_array}. Custom nvectors suffer two
 disadvantages compared to the standard nvector implementations. First, each
 low-level operation incurs the cost of a callback into OCaml. Second, of all
-the provided linear solvers, only {!Cvode.Diag} could be used; although
-custom solvers could be implemented through {!Cvode.Alternate},
+the provided linear solvers, only {!Cvode.Diag} can be used; although
+custom solvers can be implemented via {!Cvode.Alternate},
 {!Ida.Alternate}, and {!Kinsol.Alternate}.
 
 {2:linsolv Linear Solvers}
@@ -122,36 +123,36 @@ Sundials provides four options for the solution of linear equations:
 {ul
     {- The {e diagonal approximation} of Jacobians by difference equations (only
     for {!Cvode});}
-    {- {e Direct Linear Solvers (DLS)} that require user-supplied callback
+    {- {e Direct Linear Solvers (DLS)} requiring user-supplied callback
     functions that explicitly compute a Jacobian;}
-    {- {e Scaled Preconditioned Iterative Linear Solvers (SPILS)} which
-    require user-supplied callback functions to setup (optional) and solve
+    {- {e Scaled Preconditioned Iterative Linear Solvers (SPILS)}
+    requiring user-supplied callback functions to setup and solve
     linear preconditioning systems;}
-    {- {e Alternate linear solvers} which provide hooks for implementing new
+    {- {e Alternate linear solvers} providing hooks for implementing new
     linear solver modules (in OCaml).}
 }
 
 The DLS routines are only available to sessions that use serial nvectors.
 Callback functions can either update the Jacobian matrix as a
-{!Dls.DenseMatrix.t} or a {!Dls.BandMatrix.t}. Versions of the underlying
-solver routines, operating directly on bigarrays, are also provided in
-{!Dls.ArrayDenseMatrix} and {!Dls.ArrayBandMatrix}.
+{!Dls.DenseMatrix.t} or a {!Dls.BandMatrix.t}. Access to the underlying
+solver routines on bigarrays is provided via {!Dls.ArrayDenseMatrix}
+and {!Dls.ArrayBandMatrix}.
 
 The SPILS routines include the {e Scaled Preconditioned GMRES (SPGMR)}, {e
 Scaled Preconditioned Bi-CGStab (SPBCG)}, and {e Scaled Preconditioned TFQMR
 (SPTFQMR)} methods. Additionally, {!Cvode} provides banded preconditioners
-for sessions that use serial nvectors. Versions of the underlying solver
-routines, operating directly on bigarrays, are also provided in the
-submodules of {!Spils}. Parallel Band-Block-Diagonal (BBD) preconditioners
-are available to sessions that use parallel nvectors—see {!Cvode_bbd},
-{!Cvodes_bbd}, {!Ida_bbd}, {!Idas_bbd}, and {!Kinsol_bbd}.
+for sessions that use serial nvectors. Access to the underlying solver
+routines on bigarrays is provided via the submodules of {!Spils}.
+Parallel Band-Block-Diagonal (BBD) preconditioners are available to sessions
+that use parallel nvectors—see {!Cvode_bbd}, {!Cvodes_bbd}, {!Ida_bbd},
+{!Idas_bbd}, and {!Kinsol_bbd}.
 
-Each solver module includes a distinct type for linear solvers, e.g.,
+Each solver module has a distinct linear solver type, e.g.,
 {!Cvode.linear_solver} or {!Cvodes.Adjoint.linear_solver}. As for nvectors,
 these types are parameterised by data and kind arguments. Values in these
 types are constructed by passing parameters to functions like
-{!Cvode.Dls.band} or {!Ida.Spils.spgmr}. They can then be passed to the
-appopriate [init] or [reinit] functions to configure sessions.
+{!Cvode.Dls.band} or {!Ida.Spils.spgmr}. They are then passed to the
+appropriate [init] or [reinit] functions to configure sessions.
 
 {2:modules Modules}
 
@@ -181,31 +182,32 @@ only} built if explicitly requested (via {i --enable-mpi}).
 
 When building Sundials manually, we recommend applying the
 [sundials-2.5.0.patch] file distributed with Sundials/ML and using
-[./configure --enable-examples --enable-shared]
+[./configure --enable-examples --enable-shared].
 Sundials/ML will function correctly if the patch is not applied, but
-the Sundials examples will fail with incorrect results.
+the comparison of examples will fail with incorrect results.
 Sundials must be compiled with 64-bit floats—the
 default: {i --with-precision=double}—and the C compiler must provide 32-bit
-[int]s (otherwise Sundials/ML throws an exception at runtime).
+[int]s (otherwise an exception it thrown at runtime).
 
 {3:opam Opam}
 
 Opam is the easiest way to install the library:
 {ol
-    {- {{:http://computation.llnl.gov/casc/sundials/download/download.php}download}
-        and install Sundials,}
-    {- {i optionally} run [opam install mpi], and}
-    {- run [opam install sundialsml].}
+    {- {{:http://computation.llnl.gov/casc/sundials/download/download.php}Download}
+        and install Sundials (opam does this automatically on some
+	platforms).}
+    {- {i Optionally} run [opam install mpi].}
+    {- Run [opam install sundialsml].}
 }
 
 {3:build From source}
 
-Building from source is a two step process:
+Building from source is a three step process:
 {ol
-    {- {{:http://computation.llnl.gov/casc/sundials/download/download.php}download}
-        and install Sundials,}
-    {- run [configure] to find and check dependencies, and}
-    {- run [make install] or [make install-findlib] to build and
+    {- {{:http://computation.llnl.gov/casc/sundials/download/download.php}Download}
+        and install Sundials.}
+    {- Run [configure] to find and check dependencies.}
+    {- Run [make install] or [make install-findlib] to build and
        install the library.}
 }
 
@@ -217,7 +219,7 @@ OCaml reimplementations of the standard Sundials examples are provided in
 the [examples/] subdirectory.
 The library's behaviour can be tested via [make tests.opt.log] which runs the OCaml
 versions and compares their outputs against those of the original C
-versions.
+versions: they should be identical.
 The library's performance can be analyzed via [make perf.opt.log] which
 produces the graph explained {{:#performance}below}.
 
@@ -231,9 +233,9 @@ Programs are compiled by specifying where Sundials/ML is installed, e.g.,
     {- or [ocamlfind ... -package sundialsml],}
     {- or [-I `opam config var lib`/sundialsml],}}
 and including [bigarray.cma] and [sundials.cma], for example:
-{C {[ocamlc -o mysim.byte -I +sundialsml bigarray.cma sundials.cma mysim.ml]}}
+{C {[ocamlc -o myprog.byte -I +sundialsml bigarray.cma sundials.cma myprog.ml]}}
 or the [.cmxa] versions:
-{C {[ocamlopt -o mysim.opt -I +sundialsml bigarray.cmxa sundials.cmxa mysim.ml]}}
+{C {[ocamlopt -o myprog.opt -I +sundialsml bigarray.cmxa sundials.cmxa myprog.ml]}}
 
 The [sundials.cma/.cmxa] files link against the libraries
 [libsundials_cvodes] and [libsundials_idas]. The code in these libraries
@@ -241,16 +243,16 @@ should give the same results as that in those without sensitivity analysis
 (except for the functions {!Cvode.get_work_space} and {!Ida.get_work_space}),
 even though they are compiled from distinct source files. The
 [sundials_no_sens.cma/cmxa] files, on the other hand, link against the
-libraries [libsundials_cvode] and [libsundials_ida], but do not include the
+libraries [libsundials_cvode] and [libsundials_ida] and thus do not include the
 functionality in {!Cvodes} or {!Idas}. Both sets of files link against
 [libsundials_kinsol] and [libsundials_nvecserial].
 
 The parallel features—in the {!Nvector_parallel}, {!Cvode_bbd},
 {!Cvodes_bbd}, {!Ida_bbd}, {!Idas_bbd}, and {!Kinsol_bbd} modules—require the
 additional inclusions of [mpi.cma] and [sundials_mpi.cma]. So, for example:
-{C {[ocamlc -o mysim.byte -I +sundialsml bigarray.cma mpi.cma sundials.cma sundials_mpi.cma mysim.ml]}}
+{C {[ocamlc -o myprog.byte -I +sundialsml bigarray.cma mpi.cma sundials.cma sundials_mpi.cma myprog.ml]}}
 or with the [.cmxa] versions:
-{C {[ocamlopt -o mysim.opt -I +sundialsml bigarray.cmxa mpi.cmxa sundials.cmxa sundials_mpi.cmxa mysim.ml]}}
+{C {[ocamlopt -o myprog.opt -I +sundialsml bigarray.cmxa mpi.cmxa sundials.cmxa sundials_mpi.cmxa myprog.ml]}}
 The [sundials_mpi.cma/.cmxa] files link against the
 [libsundials_nvecparallel] library.
 
@@ -282,23 +284,23 @@ Printf.printf "\n";;]}
 {ol
     {- The message
        {[Fatal error: cannot load shared library dllmlsundials_cvode]}
-       can usually be fixed by editing [LD_LIBRARY_PATH], for example,
+       can usually be fixed by updating [LD_LIBRARY_PATH], for example,
        {[export LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH}]}}
 }
 
 
 {2:performance Performance}
 
-An interface like Sundials/ML inevitably adds execution overhead: there is
+An interface like Sundials/ML inevitably adds overhead: there is
 extra code to execute at each call. But, how significant is this cost? And,
 more broadly, how does the performance of OCaml compare to that of C for
-programs that use numerical solvers?
+programs that use numeric solvers?
 
 These questions are not easy to answer. As a first attempt, we took the
 examples in C from the Sundials distribution, reimplemented them in
 OCaml and compared the execution times. The bars in the graph below show
 the ratios of the execution times of the OCaml code to the C code, i.e., a
-value of 2 (on the left axis) means that OCaml is twice as
+value of 2 on the left axis means that OCaml is twice as
 slow. The black dots indicate, against the right axis, the execution
 time of the C code.
 
@@ -311,13 +313,13 @@ The [*_custom] example ({color #deebf7 light blue}) uses custom nvectors
 with low-level operations in OCaml and the [*_alt] examples ({color #9ecae1
 darker blue}) use linear solvers implemented in OCaml.
 
-Such a conclusion seems reasonable as a first approximation, but several
+This conclusion seems reasonable as a first approximation, but several
 details of the analysis process and individual results show that the real
 situation is less clear-cut. For one, the running times of most of the
-examples are so short that accurate profiling is not possible (i.e.,
+examples are so short that accurate profiling is not possible, i.e.,
 {{:http://pubs.opengroup.org/onlinepubs/9699919799/utilities/time.html}time}
 and {{:https://sourceware.org/binutils/docs/gprof/}gprof} simply show 0
-seconds).
+seconds.
 The figures in the graph were obtained by modifying the examples to
 repeatedly execute their [main] functions.
 The number of repetitions varies per example since otherwise the slower
@@ -327,53 +329,52 @@ dividing the measurement made for each C version by the number of repetitions.
 All but six of the serial examples ({color #de2d26 red}) run so fast that 
 comparisons are made based on tens, or usually hundreds of repetitions and
 in some cases this amplifies factors other than the interface overhead.
-For instance, some OCaml version spend a greater fraction of their time in
+For instance, some OCaml versions spend a significant fraction of their time in
 [printf], and we were able to lower their ratios by instead using
 [print_string] and [print_int].
 
 The parallel examples ({color #fc9272 lighter red}) all have relatively long
 run times and results are obtained without iterating.
 Their OCaml/C ratios are almost all close to 1—the interface and other
-overheads are small compared to the dominating costs of parallelism and
+overheads are small compared to the dominating costs of parallelization and
 communication.
 
-We were able to make our OCaml versions much faster (up to 4 times) by
+We were able to make our OCaml versions much faster (up to 4 times) by:
 {ul
     {- Adding explicit type annotations to all vector arguments.
        For instance, rather than declare a callback with
        {[ let f t y yd = ... ,]}
        it is better to use
        {[ let f t (y : Sundials.RealArray.t) (yd : Sundials.RealArray.t) = ... ,]}
-       since the OCaml compiler can then optimize according to the array
-       layout.}
+       since then the compiler need not generate polymorphic code and
+       can optimize to the bigarray layout.}
     {- Avoid functions like
        {{:http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.Array1.html#VALsub}[Bigarray.Array1.sub]}
        and
-       {{:http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.Array2.html#VALslice_left}[Bigarray.Array2.slice_left]}
-       whenever possible.
-       These functions must allocate a new bigarray (using [malloc]) which
-       can often be avoided by calculating and passing indices more
-       explicitly.
+       {{:http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.Array2.html#VALslice_left}[Bigarray.Array2.slice_left]}.
+       These functions allocate a new bigarray using [malloc] and the
+       minor heap. They can often be avoided by calculating and passing indices
+       more explicitly.
        When part of an array must be passed to another function, it can be
        faster, depending on the size, to copy into and out of a
        statically-allocated temporary array.}
-    {- Rather than a sequence of {!Sundials.RealArray2.get} and
-       {!Sundials.RealArray2.set} operations, it is usually better to use
-       {!Sundials.RealArray2.unwrap}, and then to access the underlying array
-       directly.}
-    {- Write numerical expressions and loops according to the advice in
+    {- Sequences of {!Sundials.RealArray2.get} and
+       {!Sundials.RealArray2.set} operations are usually better replaced by
+       {!Sundials.RealArray2.unwrap} (projection from a tuple) and direct
+       accesses to the underlying array.}
+    {- Write numeric expressions and loops according to the advice in
 	{{:#refs}\[2\]}
        to avoid float ‘boxing’.}
 }
 
-In summary, OCaml code using the Sundials solvers should almost never be
-more than twice as slow as the equivalent code written in C, provided some
-straightforward guidelines are followed, and it may sometimes only be 50%
-slower. It may, however, be faster to write and debug the OCaml code thanks
+In summary, OCaml code using the Sundials solvers should never be
+more than twice as slow as the equivalent code written in C, provided the
+guidelines above are followed, and it may sometimes only be 50%
+slower. It is usually, however, faster to write and debug OCaml code thanks
 to automatic memory management, bounds checking on arrays, strong static
-type checking, higher-order functions, etcetera. The Sundials/ML library may
-be an optimal choice for code that combines symbolic manipulations and
-numerical calculations.
+type checking, higher-order functions, etcetera. Moreover, the Sundials/ML
+library offers a good comprise for programs combining symbolic manipulation and
+numeric calculation.
 
 {2:refs References}
 

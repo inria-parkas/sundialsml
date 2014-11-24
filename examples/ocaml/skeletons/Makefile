@@ -4,7 +4,8 @@ include ../../../config
 
 EXAMPLES = cvode_skel.byte  \
 	   ida_skel.byte    \
-	   kinsol_skel.byte
+	   kinsol_skel.byte \
+	   intro1.out
 
 all: $(EXAMPLES)
 opt: $(EXAMPLES:.byte=.opt)
@@ -17,6 +18,9 @@ ida_skel.opt: ida_skel.ml
 
 kinsol_skel.byte: kinsol_skel.ml
 kinsol_skel.opt: kinsol_skel.ml
+
+intro1.out: intro1.ml
+	$(OCAML) -stdin < $^ > $@
 
 # #
 
