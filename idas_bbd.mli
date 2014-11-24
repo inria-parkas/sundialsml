@@ -73,9 +73,10 @@ type local_fn = Nvector_parallel.data Idas.Adjoint.bresfn_args
 type comm_fn = Nvector_parallel.data Idas.Adjoint.bresfn_args
                -> unit
 
-(** Left preconditioning using the Parallel Band-Block-Diagonal module.
-    The difference quotient operation is controlled by [?dqrely],
-    the relative increment in components of [y], and {!bandwidths}.
+(** Left preconditioning using the Parallel Band-Block-Diagonal
+    module.  The difference quotient operation is controlled by
+    [?dqrely], which specifies the relative increment in components of
+    [y], and {!bandwidths}.
 
     @idas <node7#sss:lin_solv_b> IDASpgmrB
     @idas <node7#SECTION00742100000000000000> IDABBDPrecInitB *)

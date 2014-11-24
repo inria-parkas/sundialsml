@@ -60,9 +60,10 @@ type local_fn = Nvector_parallel.data -> Nvector_parallel.data -> unit
     @kinsol <node5#sss:kinbbdpre> KINCommFn *)
 type comm_fn = Nvector_parallel.data -> unit
 
-(** Right preconditioning using the Parallel Band-Block-Diagonal module.
-    The difference quotient operation is controlled by [?dqrely],
-    the relative increment in components of [y], and {!bandwidths}.
+(** Right preconditioning using the Parallel Band-Block-Diagonal
+    module.  The difference quotient operation is controlled by
+    [?dqrely], which specifies the relative increment in components of
+    [y], and {!bandwidths}.
 
     @kinsol <node5#sss:lin_solv_init> KINSpgmr
     @kinsol <node5#sss:kinbbdpre> KINBBDPrecInit *)

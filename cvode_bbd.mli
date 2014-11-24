@@ -61,9 +61,10 @@ type local_fn = float -> Nvector_parallel.data -> Nvector_parallel.data -> unit
     @cvodes <node5#sss:cvbbdpre> CVBBDCommFn *)
 type comm_fn = float -> Nvector_parallel.data -> unit
 
-(** Left preconditioning using the Parallel Band-Block-Diagonal module.
-    The difference quotient operation is controlled by [?dqrely],
-    the relative increment in components of [y], and {!bandwidths}.
+(** Left preconditioning using the Parallel Band-Block-Diagonal
+    module.  The difference quotient operation is controlled by
+    [?dqrely], which specifies the relative increment in components of
+    [y], and {!bandwidths}.
 
     @cvode <node5#sss:cvbbdpre> CVBBDPrecInit *)
 val prec_left : ?dqrely:float
@@ -72,9 +73,10 @@ val prec_left : ?dqrely:float
                 -> local_fn
                 -> parallel_preconditioner
 
-(** Right preconditioning using the Parallel Band-Block-Diagonal module.
-    The difference quotient operation is controlled by [?dqrely],
-    the relative increment in components of [y], and {!bandwidths}.
+(** Right preconditioning using the Parallel Band-Block-Diagonal
+    module.  The difference quotient operation is controlled by
+    [?dqrely], which specifies the relative increment in components of
+    [y], and {!bandwidths}.
 
     @cvode <node5#sss:cvbbdpre> CVBBDPrecInit *)
 val prec_right : ?dqrely:float
