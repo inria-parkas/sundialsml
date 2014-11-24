@@ -16,7 +16,7 @@ tags: [
 ]
 license: "BSD3"
 build: [
-    ["./configure" "--enable-mpi" "--prefix=%{prefix}%"]
+    ["./configure" "--prefix=%{prefix}%"]
     [make "install-findlib"]
 ]
 build-doc: [
