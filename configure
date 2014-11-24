@@ -147,7 +147,7 @@ fi
 
 # Check C compiler: detect gcc and add a default optimization level.
 test_file=__configure_test_file__.c
-tmp_file=__configure_test_file__.c
+tmp_file=__configure_test_file__.o
 echo "#ifndef __GNUC__" > $test_file
 echo "#error not gcc" >> $test_file
 echo "#endif" >> $test_file
