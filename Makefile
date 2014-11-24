@@ -276,6 +276,17 @@ uninstall-ocamlfind: uninstall-findlib
 uninstall-findlib:
 	@ocamlfind remove sundialsml
 
+### Preparing Releases
+
+# You need everything to do this: gcc, git, OCaml >= 4, OCamlMPI, etc.
+sundials-%.tar.gz:
+	git clone . $(subst .tar.gz,,$@)
+	cd $(subst .tar.gz,,$@) &&\
+	    ! ./configure | grep OCamlMPI | grep -q "NOT FOUND"
+	make -C $(subst .tar.gz,,$@) doc release-clean
+	tar -zcf $@ $(subst .tar.gz,,$@)
+	rm -rf $(subst .tar.gz,,$@)
+
 ### Misc
 
 depend: .depend
@@ -296,6 +307,12 @@ cleandoc:
 	-@$(RM) -f doc/html/*.html doc/html/style.css
 
 distclean: clean cleandoc
+	-@($(MAKE) -C examples distclean)
+	-@$(RM) -f META
+	-@$(RM) -f config config.h
+
+# distclean, but don't clean doc.
+release-clean: clean
 	-@($(MAKE) -C examples distclean)
 	-@$(RM) -f META
 	-@$(RM) -f config config.h
