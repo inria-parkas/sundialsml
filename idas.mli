@@ -47,7 +47,7 @@ type ('data, 'kind) session = ('data, 'kind) Ida.session
 
 (** Integration of pure quadrature equations.
  
-    Adds an additional vector $y_Q$ of $N_Q$ quadrature variables defined by
+    Adds a vector $y_Q$ of $N_Q$ quadrature variables defined by
     {% $\frac{\mathrm{d} y_Q}{\mathrm{d}t} = f_Q(t, y, \dot{y}, p)$%}. These
     are treated more efficiently since they are excluded from the nonlinear
     solution stage.
@@ -101,9 +101,9 @@ module Quadrature :
     (** Returns the interpolated solution or derivatives of quadrature
         variables.
 
-        [get_dky s dky t k] computes the [k]th derivative at time [t], i.e.,
+        [get_dky s dkyq t k] computes the [k]th derivative at time [t], i.e.,
         {% $\frac{d^\mathtt{k}y_Q(\mathtt{t})}{\mathit{dt}^\mathtt{k}}$%},
-        and stores it in [dky]. The arguments must satisfy {% $t_n - h_u \leq
+        and stores it in [dkyq]. The arguments must satisfy {% $t_n - h_u \leq
         \mathtt{t} \leq t_n$%}—where $t_n$ denotes {!Ida.get_current_time}
         and $h_u$ denotes {!Ida.get_last_step},— and
         {% $0 \leq \mathtt{k} \leq q_u$%}—where
@@ -348,17 +348,14 @@ module Sensitivity :
         @idas <node6#ss:sensi_init> IDASensToggleOff *)
     val toggle_off : ('d, 'k) Ida.session -> unit
 
-    (** Support for quadrature equations that depend not only on
-        state variables but also on forward sensitivities.
+    (** Support for quadrature sensitivity equations.
 
-        Adds an additional vector {% $y_\mathit{QS}$%} of {% $N_\mathit{QS}$%}
-        quadrature variables defined by
-        {% $\frac{\mathrm{d} y_\mathit{QS}}{\mathrm{d}t}
+        Adds a vector {% $s_\mathit{Q}$%} of {% $N_\mathit{Q}$%}
+        quadrature sensitivities
+        {% $\frac{\mathrm{d} s_\mathit{Q}}{\mathrm{d}t}
                 = f_{\mathit{QS}}(t, y, \dot{y}, s, \dot{s}, \dot{y}_Q, p)$%}.
-        The values of these variables are calculated more efficiently since they
-        are excluded from the nonlinear solution stage. While the sensitivities
-        of the ‘pure’ {!Idas.Quadrature} variables, $y_Q$, are not provided
-        directly, they can be calculated using this more general mechanism.
+        This mechanism allows, in particular, the calculation of the
+        sensitivities of the ‘pure’ {!Idas.Quadrature} variables, $y_Q$.
 
         @idas <node3#SECTION00354000000000000000> Quadratures depending on forward sensitivities
         @idas <node6#SECTION00640000000000000000> Integration of quadrature equations depending on forward sensitivities *)
@@ -392,13 +389,12 @@ module Sensitivity :
             tmp : 'd triple;
           }
 
-        (** Functions defining sensitivity-dependent quadrature variables.
-            The call {[fQS args yqs']} has arguments:
-
+        (** Functions defining quadrature sensitivities.
+            They are passed the arguments:
             - [args], the current values of state, sensitivity, and quadrature
                       variables, and,
-            - [yqs'], an array of vectors for storing the computead values of
-              {% $\dot{y}_\mathit{QS} =
+            - [sq'], an array of vectors for storing the computed values of
+              {% $\dot{s}_\mathit{Q} =
                   f_\mathit{QS}(t, y, \dot{y}, s, \dot{s}, \dot{y}_Q)$%}.
 
             Within the function, raising a {!Sundials.RecoverableFailure}
@@ -414,27 +410,25 @@ module Sensitivity :
           -> 'd array
           -> unit
 
-        (** Activate the integration of quadrature equations that depend on
-            sensitivities. The right-hand sides of the sensitivity-dependent
-            quadrature equations are computed with [~fQS] if given, and
-            otherwise using an internal implementation based on difference
-            quotients. An array of vectors specifies initial values for
-            the quadrature equations.
+        (** Activate the integration of quadrature sensitivities.
+            The right-hand sides of the quadrature sensitivities are computed
+            with [~fQS] if given, and otherwise using an internal
+            implementation based on difference quotients. An array of vectors
+            specifies initial values for the quadrature sensitivities.
 
             @idas <node6#ss:quad_sens_init> IDAQuadSensInit
             @raise QuadNotInitialized {!Quadrature.init} has not been called. *)
         val init : ('d, 'k) Ida.session -> ?fQS:'d quadsensrhsfn
                       -> ('d, 'k) Nvector.t array -> unit
 
-        (** Reinitializes the sensitivity-dependent quadrature integration.
+        (** Reinitializes the quadrature sensitivity integration.
 
             @idas <node6#ss:quad_sens_init> IDAQuadSensReInit *)
         val reinit : ('d, 'k) Ida.session -> ('d, 'k) Nvector.t array -> unit
 
         (** {2:tols Tolerance specification} *)
 
-        (** Tolerances for calculating sensitivity-dependent quadrature
-            variables. *)
+        (** Tolerances for calculating quadrature sensitivities. *)
         type ('d, 'k) tolerance =
             NoStepSizeControl
             (** Quadrature variables are not used for step-size control
@@ -446,10 +440,10 @@ module Sensitivity :
                 tolerances. *)
           | EEtolerances
             (** Calculate the integration tolerances for the
-                sensitivity-dependent quadratures from those provided for
+                quadrature sensitivities from those provided for
                 the pure quadrature variables. *)
 
-        (** Specify how to use quadrature variables in step size control.
+        (** Specify how to use quadrature sensitivities in step size control.
 
             @idas <node6#ss:quad_sens_optional_input> IDASetQuadSensErrCon
             @idas <node6#ss:quad_sens_optional_input> IDAQuadSensSStolerances
@@ -479,10 +473,10 @@ module Sensitivity :
         (** Returns the interpolated solution or derivatives of the quadrature
             sensitivity solution.
 
-            [get_dky s dkyqs t k] computes the [k]th derivative at time [t],
+            [get_dky s dksq t k] computes the [k]th derivative at time [t],
             i.e.,
-            {% $\frac{d^\mathtt{k}y_\mathit{QS}(\mathtt{t})}{\mathit{dt}^\mathtt{k}}$%},
-            and stores it in [dkyqs]. The arguments must satisfy {% $t_n - h_u
+            {% $\frac{d^\mathtt{k}s_\mathit{Q}(\mathtt{t})}{\mathit{dt}^\mathtt{k}}$%},
+            and stores it in [dksq]. The arguments must satisfy {% $t_n - h_u
             \leq \mathtt{t} \leq t_n$%}—where $t_n$ denotes
             {!Ida.get_current_time} and $h_u$ denotes
             {!Ida.get_last_step},—and
@@ -498,7 +492,7 @@ module Sensitivity :
 
         (** Returns the interpolated solution or derivatives of a single
             quadrature sensitivity solution vector.
-            [get_dky s dkys t k i] is like
+            [get_dky s dksq t k i] is like
             {!get_dky} but restricted to the [i]th sensitivity solution vector.
 
             @idas <node6#ss:quad_sens_get> IDAGetQuadSensDky1
@@ -606,9 +600,9 @@ module Sensitivity :
     (** Returns the interpolated solution or derivatives of the sensitivity
         solution vectors.
 
-        [get_dky s dkys t k] computes the [k]th derivative at time [t], i.e.,
+        [get_dky s dks t k] computes the [k]th derivative at time [t], i.e.,
         {% $\frac{d^\mathtt{k}s(\mathtt{t})}{\mathit{dt}^\mathtt{k}}$%},
-        and stores it in [dkys]. The arguments must satisfy {% $t_n - h_u \leq
+        and stores it in [dks]. The arguments must satisfy {% $t_n - h_u \leq
         \mathtt{t} \leq t_n$%}—where $t_n$ denotes {!Ida.get_current_time}
         and $h_u$ denotes {!Ida.get_last_step},— and
         {% $0 \leq \mathtt{k} \leq q_u$%}—where
@@ -634,7 +628,7 @@ module Sensitivity :
     val get1 : ('d, 'k) Ida.session -> ('d, 'k) Nvector.t -> int -> float
 
     (** Returns the interpolated solution or derivatives of a single
-        sensitivity solution vector. [get_dky s dkys t k i] is like {!get_dky}
+        sensitivity solution vector. [get_dky s dks t k i] is like {!get_dky}
         but restricted to the [i]th sensitivity solution vector.
 
         @idas <node6#ss:sensi_get> IDAGetSensDky1
@@ -1602,10 +1596,10 @@ module Adjoint :
       ('d, 'k) bsession -> ('d, 'k) Nvector.t -> ('d, 'k) Nvector.t -> float
 
     (** Returns the interpolated solution or derivatives.
-        [get_dky s dky t k] computes the [k]th derivative of the backward
+        [get_dky s dkyb t k] computes the [k]th derivative of the backward
         function at time [t], i.e.,
         {% $\frac{d^\mathtt{k}y_B(\mathtt{t})}{\mathit{dt}^\mathtt{k}}$%},
-        and stores it in [dky]. The arguments must satisfy
+        and stores it in [dkyb]. The arguments must satisfy
         {% $t_n - h_u \leq \mathtt{t} \leq t_n$%}—where $t_n$
         denotes {!get_current_time} and $h_u$ denotes {!get_last_step},—
         and {% $0 \leq \mathtt{k} \leq q_u$%}—where $q_u$ denotes
