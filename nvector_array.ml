@@ -298,7 +298,9 @@ module MakeOps =
     end
   end
 
-(* (* Too slow! *)
+(* (* The following Array module can be created like this SlowerArray,
+      albeit with significant performance hits.  It may be useful for
+      prototyping.  *)
 module SlowerArray = MakeOps (
   struct
     type data = float array
