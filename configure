@@ -45,7 +45,7 @@ do
 	bounds_checking=0;;
     -h|--help)
 	cat <<-END_HELP_TEXT
-	'configure' configures $sysname ${version}ml${versionp} to adapt to many kinds of systems.
+	'configure' configures $sysname ${version}p${versionp} to adapt to many kinds of systems.
 
 	Usage: $0 [OPTION]... [VAR=VALUE]...
 

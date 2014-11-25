@@ -14,17 +14,20 @@ Release procedure
 4. Check download links (to Sundials page, etc.)
    README.md, intro.doc, config.in
 
-5. Tag release in release branch with release notes in commit message:
+5. Check version info in configure
+   ./configure --help | head -n 1
+
+6. Tag release in release branch with release notes in commit message:
     git tag -a v2.5.0p0 --sign
     git push origin v2.5.0p0
-   
-6. OPAM:
+
+7. OPAM:
    - update package files in forked opam repository
    - test
    - submit pull request
 
-7. Github: check release text,
+8. Github: check release text,
    Add doc tarball?
 
-8. Announce on: caml-list@inria.fr, sundials-users@llnl.gov
+9. Announce on: caml-list@inria.fr, sundials-users@llnl.gov
 
