@@ -196,8 +196,8 @@ Opam is the easiest way to install the library:
     {- {{:http://computation.llnl.gov/casc/sundials/download/download.php}Download}
         and manually install Sundials, or use a package manager:
 	{ul
-	    {- debian/ubuntu: [apt-get install libsundials-serial-dev]
-				(no parallelism or examples)}
+	    {- debian/ubuntu (without parallelism):
+		    [apt-get install libsundials-serial-dev]}
 	    {- osx: [brew install sundials] / [port install sundials]}
 	}}
     {- {i Optionally} run [opam install mpi].}
