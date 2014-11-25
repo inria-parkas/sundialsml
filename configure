@@ -12,6 +12,7 @@ unset docdir
 unset install_docs
 enable_mpi=1
 unset enable_debug
+unset mathjax
 
 configure_command="$0"
 
@@ -83,8 +84,8 @@ do
 	  OCAMLMPI      Path to OCamlMPI installation
 	  MPICC         Name of the MPI compiler (default: mpicc)
 	  MPIRUN        Name of MPI program launcher (default: mpirun)
-	  MATHJAX	Path where MathJax.js can be found
-	                (e.g., MATHJAX=file:///usr/share/doc/sundialsml/doc/MathJax-master)
+	  MATHJAX	Path to directory containing local copy of MathJax.js
+	                (e.g., MATHJAX=/usr/share/javascript/mathjax)
 
 	Set these options by passing arguments of the form FOO=value to help
 	configure find libraries and programs with nonstandard names/locations.
@@ -505,6 +506,23 @@ else
     EXAMPLESROOT=
 fi
 
+
+# MathJax
+# Convert file schemes to absolute paths.
+mathjax_path=`echo "${mathjax}" | sed -e 's@^file:///*@/@'`
+# Check presence of MathJax.js if absolute path.
+if echo "${mathjax_path}" | grep -q '[a-zA-Z][-+.a-zA-Z0-9]*://'; then
+    mathjax_known_online=
+elif [ "x${mathjax_path}" = x ]; then
+    mathjax_known_online=1
+elif ! [ -r "${mathjax_path}/MathJax.js" ]; then
+    error="${error}\n\t${mathjax}/MathJax.js not found or not readable"
+else
+    mathjax_known_online=
+    mathjax="file://${mathjax_path}"
+fi
+
+
 # Show a summary
 
 printf "\nConfiguration\n-------------\n\n"
@@ -514,6 +532,10 @@ printf "  Sundials\t\t${sundials_version}${lapack_info}\n"
 printf "    -parallel\t\t${sundialsmpi_info}\n"
 printf "    -examples\t\t${examples_info}\n"
 printf "  OCamlMPI\t\t${ocamlmpi}\n"
+printf "  MathJax\t\t${mathjax}\n"
+if [ "x${mathjax_known_online}" = x1 ]; then
+    printf "         \t\t(doc requires Internet access for pretty math fonts)\n"
+fi
 printf "\n"
 printf "  Architecture\t\t${arch}\n"
 [ "x$enable_debug" = x1 ] && printf "  Debugging\t\tENABLED\n"
@@ -572,7 +594,7 @@ fi
 	 s#@cpp@#${CPP}#;
 	 s#@mpicc@#$mpicc#;
 	 s#@mpirun@#$mpirun#;
-	 s#@mathjax@#${mathjax:-https://cdn.mathjax.org/mathjax/latest}#;
+	 s#@mathjax@#${mathjax}#;
 	 s#@c_suppress_warnings@#${c_suppress_warnings}#;
 	 s#@EXAMPLESROOT@#${EXAMPLESROOT}#;
 	 s#@OCAMLBIN@#${OCAMLBIN}#;
