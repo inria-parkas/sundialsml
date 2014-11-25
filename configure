@@ -472,8 +472,10 @@ EOF
          `sundials-config -m cvode -t p -l c -s libs` \
        >/dev/null 2>&1;
     then
-        ocamlmpi='NOT FOUND (sundials_nvecparallel library missing)'
+        sundialsmpi_info='NO PARALLEL NVECTORS'
         ocamlmpi_enabled=
+    else
+        sundialsmpi_info='available'
     fi
     rm -f $tmp_file $test_file
 else
@@ -509,6 +511,7 @@ printf "\nConfiguration\n-------------\n\n"
 
 printf "  OCaml\t\t\t${ocaml_path}${ocaml_version}\n"
 printf "  Sundials\t\t${sundials_version}${lapack_info}\n"
+printf "    -parallel\t\t${sundialsmpi_info}\n"
 printf "    -examples\t\t${examples_info}\n"
 printf "  OCamlMPI\t\t${ocamlmpi}\n"
 printf "\n"
