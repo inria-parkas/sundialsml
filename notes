@@ -26,7 +26,6 @@ Release procedure
    - submit pull request
 
 8. Github: check release text,
-   Add doc tarball?
 
 9. Announce on: caml-list@inria.fr, sundials-users@llnl.gov
 
