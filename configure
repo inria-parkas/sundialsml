@@ -252,7 +252,7 @@ if $CC $cvode_cppflags -o $tmp_file $test_file >/dev/null 2>&1 && $tmp_file;
 then
     : # OK
 else
-    error="${error}\nrealtype not defined as double.  Recompile sundials with --with-precision=double."
+    error="${error}\n\trealtype not defined as double.  Recompile sundials with --with-precision=double."
 fi
 rm -f $tmp_file $test_file
 
