@@ -631,18 +631,18 @@ module Alternate :
     (** Arguments to {!lsetup}. *)
     and 'data lsetup_args =
       {
+        lsetup_conv_fail : conv_fail;
         (** Indicates that a problem occurred during the solution of
             the nonlinear equation at the current time step. *)
-        lsetup_conv_fail : conv_fail;
 
-        (** The predicted $y$ vector for the current internal step. *)
         lsetup_y : 'data;
+        (** The predicted $y$ vector for the current internal step. *)
 
-        (** The value of the right-hand side at the predicted $y$ vector. *)
         lsetup_rhs : 'data;
+        (** The value of the right-hand side at the predicted $y$ vector. *)
 
-        (** Temporary variables for use by the routine. *)
         lsetup_tmp : 'data triple;
+        (** Temporary variables for use by the routine. *)
       }
 
     (** Functions that solve the linear equation $Mx = b$.
@@ -674,14 +674,14 @@ module Alternate :
     (** Arguments to {!lsolve}. *)
     and 'data lsolve_args =
       {
-        (** The error weights. *)
         lsolve_ewt : 'data;
+        (** The error weights. *)
 
-        (** The solver's current approximation to $y(t_n)$. *)
         lsolve_y : 'data;
+        (** The solver's current approximation to $y(t_n)$. *)
 
-        (** A vector containing {% $f(t_n, y_{\text{cur}})$%}. *)
         lsolve_rhs : 'data;
+        (** A vector containing {% $f(t_n, y_{\text{cur}})$%}. *)
       }
 
     (** The callbacks needed to implement an alternate linear solver. *)

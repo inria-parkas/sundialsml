@@ -220,27 +220,27 @@ module Sensitivity :
     (** Arguments to {!sensresfn}. *)
     type 'd sensresfn_args =
       {
-        (** The value of the independent variable. *)
         t : float;
+        (** The value of the independent variable. *)
 
-        (** The vector of dependent-variable values $y(t)$. *)
         y : 'd;
+        (** The vector of dependent-variable values $y(t)$. *)
 
+        y' : 'd;
         (** The vector of derivatives of dependent variables
             {% $\dot{y}(t)$%}. *)
-        y' : 'd;
 
-        (** The vector of current residuals. *)
         res : 'd;
+        (** The vector of current residuals. *)
 
-        (** The array of sensitivity vectors. *)
         s : 'd array;
+        (** The array of sensitivity vectors. *)
 
-        (** The array of sensitivity derivative vectors. *)
         s' : 'd array;
+        (** The array of sensitivity derivative vectors. *)
 
-        (** Temporary storage vectors. *)
         tmp : 'd triple
+        (** Temporary storage vectors. *)
       }
 
     (** Sensitivity functions that calculate the residuals of all
@@ -366,27 +366,27 @@ module Sensitivity :
         (** Arguments to {!quadsensrhsfn}.  *)
         type 'd quadsensrhsfn_args =
           {
-            (** The value of the independent variable. *)
             t : float;
+            (** The value of the independent variable. *)
 
-            (** The vector of dependent-variable values $y(t)$. *)
             y : 'd;
+            (** The vector of dependent-variable values $y(t)$. *)
 
+            y' : 'd;
             (** The vector of dependent-variable derivatives
                 {% $\dot{y}(t)$ %}. *)
-            y' : 'd;
 
-            (** The array of sensitivity vectors. *)
             s : 'd array;
+            (** The array of sensitivity vectors. *)
 
-            (** The array of sensitivity derivative vectors. *)
             s' : 'd array;
+            (** The array of sensitivity derivative vectors. *)
 
-            (** The current value of the quadrature right-hand side $q$. *)
             q : 'd;
+            (** The current value of the quadrature right-hand side $q$. *)
 
-            (** Temporary storage vectors. *)
             tmp : 'd triple;
+            (** Temporary storage vectors. *)
           }
 
         (** Functions defining quadrature sensitivities.
@@ -1415,22 +1415,22 @@ module Adjoint :
             {!bquadrhsfn_with_sens}. *)
         type 'd bquadrhsfn_args =
           {
-            (** The value of the independent variable. *)
             t : float;
+            (** The value of the independent variable. *)
 
-            (** The vector of dependent-variable values $y(t)$. *)
             y : 'd;
+            (** The vector of dependent-variable values $y(t)$. *)
 
+            y' : 'd;
             (** The vector of dependent-variable derivatives
                 {% $\dot{y}(t)$ %}. *)
-            y' : 'd;
 
-            (** The vector of backward dependent-variable values $y_B(t)$. *)
             yb : 'd;
+            (** The vector of backward dependent-variable values $y_B(t)$. *)
 
+            yb' : 'd;
             (** The vector of backward dependent-variable derivatives
                 {% $\dot{y}_B(t)$ %}. *)
-            yb' : 'd;
           }
 
         (** Functions defining backward quadrature variables without forward

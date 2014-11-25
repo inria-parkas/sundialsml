@@ -517,18 +517,18 @@ module Alternate :
     (** Arguments to {!lsetup}.  *)
     and 'data lsetup_args =
       {
-        (** The predicted $y$ vector for the current step. *)
         lsetup_y : 'data;
+        (** The predicted $y$ vector for the current step. *)
 
-        (** The predicted {% $\dot{y}$%} vector for the current step. *)
         lsetup_y' : 'data;
+        (** The predicted {% $\dot{y}$%} vector for the current step. *)
 
+        lsetup_res : 'data;
         (** The value of the residual function at [y] and [y'], i.e.,
             {% $F(t_n, y_{\text{pred}}, \dot{y}_{\text{pred}})$%}. *)
-        lsetup_res : 'data;
 
-        (** Temporary storage vectors. *)
         lsetup_tmp : 'data triple;
+        (** Temporary storage vectors. *)
       }
 
     (** Functions that solve the linear equation $Mx = b$.
@@ -556,17 +556,17 @@ module Alternate :
     (** Arguments to {!lsolve}. *)
     and 'data lsolve_args =
       {
-        (** The error weights. *)
         lsolve_ewt : 'data;
+        (** The error weights. *)
 
-        (** The solver's current approximation to $y(t_n)$. *)
         lsolve_y : 'data;
+        (** The solver's current approximation to $y(t_n)$. *)
 
-        (** The solver's current approximation to $y'(t_n)$. *)
         lsolve_y' : 'data;
+        (** The solver's current approximation to $y'(t_n)$. *)
 
-        (** The current residual value. *)
         lsolve_res : 'data;
+        (** The current residual value. *)
       }
 
     (** The callbacks needed to implement an alternate linear solver. *)

@@ -223,18 +223,18 @@ module Sensitivity :
     (** Common arguments to {!sensrhsfn1} and {!sensrhsfn_all}.  *)
     type 'd sensrhsfn_args =
       {
-        (** The value of the independent variable. *)
         t : float;
+        (** The value of the independent variable. *)
 
-        (** The vector of dependent-variable values $y(t)$. *)
         y : 'd;
+        (** The vector of dependent-variable values $y(t)$. *)
 
+        y' : 'd;
         (** The value of the right-hand side of the state
             equations {% $\dot{y} = f(t, y, p)$%}. *)
-        y' : 'd;
 
-        (** Temporary storage vectors. *)
         tmp : 'd double;
+        (** Temporary storage vectors. *)
       }
 
     (** Sensitivity functions that calculate the right-hand sides of
@@ -411,20 +411,20 @@ module Sensitivity :
         (** Arguments to {!quadsensrhsfn}. *)
         type 'd quadsensrhsfn_args =
           {
-            (** The value of the independent variable. *)
             t : float;
+            (** The value of the independent variable. *)
 
-            (** The vector of dependent-variable values $y(t)$. *)
             y : 'd;
+            (** The vector of dependent-variable values $y(t)$. *)
 
-            (** The array of sensitivity vectors. *)
             s : 'd array;
+            (** The array of sensitivity vectors. *)
 
-            (** The value of the quadrature-right hand side {% $\dot{y}_Q$%}. *)
             yq' : 'd;
+            (** The value of the quadrature-right hand side {% $\dot{y}_Q$%}. *)
 
-            (** Temporary storage vectors. *)
             tmp : 'd double;
+            (** Temporary storage vectors. *)
           }
 
         (** Functions defining quadrature sensitivities.
@@ -1564,14 +1564,14 @@ module Adjoint :
            {!bquadrhsfn_with_sens}. *)
         type 'd bquadrhsfn_args =
           {
-            (** The value of the independent variable. *)
             t : float;
+            (** The value of the independent variable. *)
 
-            (** The vector of dependent-variable values $y(t)$. *)
             y : 'd;
+            (** The vector of dependent-variable values $y(t)$. *)
 
-            (** The vector of backward dependent-variable values $y_B(t)$. *)
             yb : 'd;
+            (** The vector of backward dependent-variable values $y_B(t)$. *)
           }
 
         (** Functions defining backward quadrature variables without forward
