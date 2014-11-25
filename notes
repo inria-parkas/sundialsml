@@ -5,8 +5,7 @@ Release procedure
    make doc/html/perf.opt.png
 
 2. Test, test, test!
-   make test.opt.log
-   (cd examples; make ocaml)
+   make distcheck
 
 3. Branch from trunk if necessary for major version. 
    git checkout -b 2.5.0-release

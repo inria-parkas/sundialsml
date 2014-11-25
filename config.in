@@ -1,5 +1,5 @@
 # Configured with:
-# @configure_command@
+CONFIG_COMMAND ?= @configure_command@
 
 VERSION = @version@
 VERSIONP = @versionp@
