@@ -1295,21 +1295,21 @@ module Adjoint :
 
     type 'd bresfn_args = 'd Ida_impl.AdjointTypes.bresfn_args =
       {
-        (** The value of the independent variable. *)
         t : float;
+        (** The value of the independent variable. *)
 
-        (** The vector of dependent-variable values $y(t)$. *)
         y : 'd;
+        (** The vector of dependent-variable values $y(t)$. *)
 
-        (** The vector of dependent-variable derivatives {% $\dot{y}(t)$ %}. *)
         y' : 'd;
+        (** The vector of dependent-variable derivatives {% $\dot{y}(t)$ %}. *)
 
-        (** The vector of backward dependent-variable values $y_B(t)$. *)
         yb : 'd;
+        (** The vector of backward dependent-variable values $y_B(t)$. *)
 
+        yb' : 'd;
         (** The vector of backward dependent-variable derivatives
             {% $\dot{y}_B(t)$ %}. *)
-        yb' : 'd;
       }
 
     (** Backward functions without forward sensitivities. They are passed

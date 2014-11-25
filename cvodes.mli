@@ -1446,14 +1446,14 @@ module Adjoint :
     (** Arguments common to {!brhsfn_no_sens} and {!brhsfn_with_sens}.  *)
     type 'd brhsfn_args = 'd Cvode_impl.AdjointTypes.brhsfn_args =
       {
-        (** The value of the independent variable. *)
         t : float;
+        (** The value of the independent variable. *)
 
-        (** The vector of dependent-variable values $y(t)$. *)
         y : 'd;
+        (** The vector of dependent-variable values $y(t)$. *)
 
-        (** The vector of backward dependent-variable values $y_B(t)$. *)
         yb : 'd;
+        (** The vector of backward dependent-variable values $y_B(t)$. *)
       }
 
     (** Backward functions without forward sensitivities. They are passed
