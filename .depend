@@ -41,8 +41,8 @@ cvodes_bbd.cmo : sundials.cmi nvector_parallel.cmi nvector.cmi \
     cvode_impl.cmo cvode_bbd.cmi cvodes_bbd.cmi
 cvodes_bbd.cmx : sundials.cmx nvector_parallel.cmx nvector.cmx \
     cvode_impl.cmx cvode_bbd.cmx cvodes_bbd.cmi
-dls.cmo : sundials.cmi dls.cmi
-dls.cmx : sundials.cmx dls.cmi
+dls.cmo : sundials_config.cmo sundials.cmi dls.cmi
+dls.cmx : sundials_config.cmx sundials.cmx dls.cmi
 dochtml.cmo : sundials_config.cmo
 dochtml.cmx : sundials_config.cmx
 ida.cmo : sundials_config.cmo sundials.cmi spils.cmi nvector.cmi \
