@@ -4,8 +4,7 @@ include ../../../config
 
 EXAMPLES = cvode_skel.byte  \
 	   ida_skel.byte    \
-	   kinsol_skel.byte \
-	   intro1.out
+	   kinsol_skel.byte
 
 all: $(EXAMPLES)
 opt: $(EXAMPLES:.byte=.opt)
@@ -20,14 +19,21 @@ kinsol_skel.byte: kinsol_skel.ml
 kinsol_skel.opt: kinsol_skel.ml
 
 intro1.out: intro1.ml
-	$(OCAML) -stdin < $^ > $@
+	# Requires that ../../.. is called "sundialsml"
+	OCAMLPATH=../../../.. $(OCAML) -stdin < $^ > $@
+
+intro2.out: intro2.ml
+	# Requires that sundialsml is installed
+	ocamlfind ocamlmktop -o partop -package sundialsml.mpi,findlib -linkpkg
+	OCAMLPATH=../../../.. $(OCAML) -I $(OCAMLMPI) mpi.cma -stdin < $^ > $@
 
 # #
 
 clean:
 	-@rm -f $(EXAMPLES:.byte=.cmo) $(EXAMPLES:.byte=.cmx)
 	-@rm -f $(EXAMPLES:.byte=.o) $(EXAMPLES:.byte=.cmi)
-	-@rm -f $(EXAMPLES:.byte=.annot)
+	-@rm -f $(EXAMPLES:.byte=.annot) $(EXAMPLES)
+	-@rm -f intro1.out intro2.out
 
 distclean: clean
 	-@rm -f $(EXAMPLES) $(EXAMPLES:.byte=.opt)

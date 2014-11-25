@@ -263,16 +263,15 @@ or with the [.cmxa] versions:
 The [sundials_mpi.cma/.cmxa] files link against the
 [libsundials_nvecparallel] library.
 
-If you are using [ocamlfind], the sensitivity and parallel features
-are selected via subpackages.  For example, to use parallel features
-with sensitivity:
+Under [ocamlfind], the sensitivity and parallel features
+are selected via subpackages.  For example, for both:
 {C {[ocamlfind ocamlopt -package sundialsml.mpi -linkpkg -o mysim.opt mysim.ml]}}
-The available packages and the features they select are as follows.
+The available packages and the features they select are:
 {ul
-    {- [sundialsml]: sensitivity ON, parallel OFF}
-    {- [sundialsml.mpi]: sensitivity ON, parallel ON}
-    {- [sundialsml.no_sens]: sensitivity OFF, parallel OFF}
-    {- [sundialsml.no_sens.mpi]: sensitivity OFF, parallel ON}}
+    {- [sundialsml]: sensitivity ON, parallel OFF,}
+    {- [sundialsml.mpi]: sensitivity ON, parallel ON,}
+    {- [sundialsml.no_sens]: sensitivity OFF, parallel OFF, and}
+    {- [sundialsml.no_sens.mpi]: sensitivity OFF, parallel ON.}}
 
 {3:toplevel From the toplevel}
 
@@ -297,30 +296,26 @@ Printf.printf "%e: " t';
 Sundials.RealArray.iter (Printf.printf "\t%e") y;
 Printf.printf "\n";;]}
 
-Loading parallel features is more involved and requires [ocamlfind] to
-do cleanly.  First link a custom toplevel:
+Using parallel features from a toplevel is most cleanly done with [ocamlfind]
+by first creating a custom toplevel:
 {C [ocamlfind ocamlmktop -o partop -package sundialsml.mpi,findlib -linkpkg]}
-Then launch multiple terminals, each running the custom toplevel, like
+
+and then launching it in multiple terminals:
 {C [mpirun -np 2 xterm -e ./partop]}
 Here, [2] is the number of processes, [xterm] is the terminal program, and
-[-e ./partop] are arguments to [xterm] telling it to execute [./partop].
-To test the setup, paste the following to all of the terminals: {[
+[-e ./partop] has each [xterm] execute [./partop].
+As a simple test, paste the following into all terminals: {[
 #use "topfind";;
 #require "sundialsml.mpi";;
-(* Make a parallel nvector with 1 scalar value per process, for
-   n processes.  *)
+
 let comm = Mpi.comm_world
 let n = Mpi.comm_size comm
 let my_id = Mpi.comm_rank comm
-let pv = Nvector_parallel.make 1 n comm (float_of_int (my_id+1));;
-Printf.printf "I am process %d.  My local array holds %f.\n"
-  my_id (Nvector_parallel.local_array pv).{0};;
-Printf.printf "L1 norm (i.e. total of absolute values) = %f\n"
-  (Nvector_parallel.Ops.n_vl1norm pv);;
+let pv = Nvector_parallel.make 1 n comm (float_of_int (my_id + 1));;
+
+Printf.printf "%d: local=%f.\n" my_id (Nvector_parallel.local_array pv).{0};;
+Printf.printf "Sum of abs. = %f\n" (Nvector_parallel.Ops.n_vl1norm pv);;
 ]}
-On non-Unix systems, you may need to find other ways to attach
-separate terminal windows to the processes.  The above instructions
-should work for Mac OS X with [xterm] installed.
 
 {3:solutions Solutions to common problems}
 
@@ -392,7 +387,7 @@ We were able to make our OCaml versions much faster (up to 4 times) by:
        or more concisely
        {[ let f : Sundials.RealArray.t Cvode.rhsfn = fun t y yd -> ...]}
        since then the compiler need not generate polymorphic code and
-       can optimize according to the bigarray layout.}
+       can optimize for the bigarray layout.}
     {- Avoid functions like
        {{:http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.Array1.html#VALsub}[Bigarray.Array1.sub]}
        and
