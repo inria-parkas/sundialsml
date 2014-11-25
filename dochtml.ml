@@ -19,23 +19,13 @@
     @kinsol         link to Sundials KINSOL documentation
  *)
 
-let cvode_doc_root =
-  ref "https://computation.llnl.gov/casc/sundials/documentation/cv_guide/"
+let cvode_doc_root = ref CVODE_DOC_ROOT
+let cvodes_doc_root = ref CVODES_DOC_ROOT
+let ida_doc_root = ref IDA_DOC_ROOT
+let idas_doc_root = ref IDAS_DOC_ROOT
+let kinsol_doc_root = ref KINSOL_DOC_ROOT
 
-let cvodes_doc_root =
-  ref "https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/"
-
-let ida_doc_root =
-  ref "https://computation.llnl.gov/casc/sundials/documentation/ida_guide/"
-
-let idas_doc_root =
-  ref "https://computation.llnl.gov/casc/sundials/documentation/idas_guide/"
-
-let kinsol_doc_root =
-  ref "https://computation.llnl.gov/casc/sundials/documentation/kin_guide/"
-
-let mathjax_url = (* Location of MathJax.js *)
-  ref "https://cdn.mathjax.org/mathjax/latest/"
+let mathjax_url = ref MATHJAX_URL (* directory containing MathJax.js *)
 
 let bp = Printf.bprintf
 let bs = Buffer.add_string

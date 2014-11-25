@@ -174,6 +174,12 @@ idas_bbd_ml.o: idas_bbd_ml.c
 # FIXME: gcc-dependent
 ML_CPPFLAGS=-P -x c -traditional-cpp
 DOCHTML_PP=$(CPP) $(ML_CPPFLAGS) -DOCAML_3X=$(OCAML_3X)
+dochtml.cmo: DOCHTML_PP += -DCVODE_DOC_ROOT=\"$(CVODE_DOC_ROOT_DEFAULT)\"
+dochtml.cmo: DOCHTML_PP += -DCVODES_DOC_ROOT=\"$(CVODES_DOC_ROOT_DEFAULT)\"
+dochtml.cmo: DOCHTML_PP += -DIDA_DOC_ROOT=\"$(IDA_DOC_ROOT_DEFAULT)\"
+dochtml.cmo: DOCHTML_PP += -DIDAS_DOC_ROOT=\"$(IDAS_DOC_ROOT_DEFAULT)\"
+dochtml.cmo: DOCHTML_PP += -DKINSOL_DOC_ROOT=\"$(KINSOL_DOC_ROOT_DEFAULT)\"
+dochtml.cmo: DOCHTML_PP += -DMATHJAX_URL=\"$(MATHJAX_URL_DEFAULT)\"
 dochtml.cmo: INCLUDES += -I +ocamldoc
 dochtml.cmo: OCAMLFLAGS += -pp '$(DOCHTML_PP)'
 sundials_docs.cma: sundials_config.cmo dochtml.cmo
@@ -188,29 +194,30 @@ doc: doc/html/index.html
 	    cp examples/ocaml/skeletons/$$f doc/html/; \
 	done
 
+DOC_URLS=$(if $(CVODE_DOC_ROOT),-cvode-doc-root "$(CVODE_DOC_ROOT)")	   \
+	 $(if $(CVODES_DOC_ROOT),-cvodes-doc-root "$(CVODES_DOC_ROOT)") \
+	 $(if $(IDA_DOC_ROOT),-ida-doc-root "$(IDA_DOC_ROOT)")	   \
+	 $(if $(IDAS_DOC_ROOT),-idas-doc-root "$(IDAS_DOC_ROOT)")	   \
+	 $(if $(KINSOL_DOC_ROOT),-kinsol-doc-root "$(KINSOL_DOC_ROOT)") \
+	 $(if $(MATHJAX_URL),-mathjax "$(MATHJAX_URL)")
 doc/html/index.html: doc/html sundials_docs.cma intro.doc		\
 		     $(filter-out %_impl.cmi, $(CMI_MAIN))		\
 		     $(CMI_SENS) $(if $(MPI_ENABLED), $(CMI_MPI))
-	$(OCAMLDOC) -g sundials_docs.cma $(INCLUDES)			\
-	    -charset utf-8						\
-	    -short-functors						\
-	    -colorize-code						\
-	    -css-style docstyle.css					\
-	    -cvode-doc-root "$(CVODE_DOC_ROOT)"				\
-	    -cvodes-doc-root "$(CVODES_DOC_ROOT)"			\
-	    -ida-doc-root "$(IDA_DOC_ROOT)"				\
-	    -idas-doc-root "$(IDAS_DOC_ROOT)"				\
-	    -kinsol-doc-root "$(KINSOL_DOC_ROOT)"			\
-	    -mathjax "$(MATHJAX_URL)"					\
-	    -pp "$(DOCHTML_PP)						\
-		-D'OCAML_DOC_ROOT(x)=$(OCAML_DOC_ROOT)/**/x'		\
-		-D'VERSION()=$(VERSION)'"				\
-	    -d ./doc/html/						\
-	    -hide Cvode_impl,Ida_impl,Kinsol_impl			\
-	    -t "Sundials/ML $(VERSION)p$(VERSIONP)"			\
-	    -intro intro.doc						\
-	    $(filter-out %_impl.mli, $(CMI_MAIN:.cmi=.mli))		\
-	    $(if $(MPI_ENABLED), $(CMI_MPI:.cmi=.mli))			\
+	$(OCAMLDOC) -g sundials_docs.cma $(INCLUDES)		\
+	    -charset utf-8					\
+	    -short-functors					\
+	    -colorize-code					\
+	    -css-style docstyle.css				\
+	    $(DOC_URLS)						\
+	    -pp "$(DOCHTML_PP)					\
+		-D'OCAML_DOC_ROOT(x)=$(OCAML_DOC_ROOT)/**/x'	\
+		-D'VERSION()=$(VERSION)'"			\
+	    -d ./doc/html/					\
+	    -hide Cvode_impl,Ida_impl,Kinsol_impl		\
+	    -t "Sundials/ML $(VERSION)p$(VERSIONP)"		\
+	    -intro intro.doc					\
+	    $(filter-out %_impl.mli, $(CMI_MAIN:.cmi=.mli))	\
+	    $(if $(MPI_ENABLED), $(CMI_MPI:.cmi=.mli))		\
 	    $(CMI_SENS:.cmi=.mli)
 
 doc/html:

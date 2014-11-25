@@ -4,13 +4,13 @@
 VERSION = @version@
 VERSIONP = @versionp@
 
-CVODE_DOC_ROOT  = https://computation.llnl.gov/casc/sundials/documentation/cv_guide/
-CVODES_DOC_ROOT = https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/
-IDA_DOC_ROOT    = https://computation.llnl.gov/casc/sundials/documentation/ida_guide/
-IDAS_DOC_ROOT   = https://computation.llnl.gov/casc/sundials/documentation/idas_guide/
-KINSOL_DOC_ROOT = https://computation.llnl.gov/casc/sundials/documentation/kin_guide/
-OCAML_DOC_ROOT  = http://caml.inria.fr/pub/docs/manual-ocaml/libref/
-MATHJAX_URL     = @mathjax@
+CVODE_DOC_ROOT_DEFAULT  = https://computation.llnl.gov/casc/sundials/documentation/cv_guide/
+CVODES_DOC_ROOT_DEFAULT = https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/
+IDA_DOC_ROOT_DEFAULT    = https://computation.llnl.gov/casc/sundials/documentation/ida_guide/
+IDAS_DOC_ROOT_DEFAULT   = https://computation.llnl.gov/casc/sundials/documentation/idas_guide/
+KINSOL_DOC_ROOT_DEFAULT = https://computation.llnl.gov/casc/sundials/documentation/kin_guide/
+OCAML_DOC_ROOT_DEFAULT  = http://caml.inria.fr/pub/docs/manual-ocaml/libref/
+MATHJAX_URL_DEFAULT     = @mathjax@
 
 CC = @cc@
 CPP= @cpp@
