@@ -362,7 +362,7 @@ external f : unit -> int = "f"
 let _ = exit (f ())
 EOF
 if ${OCAMLBIN}ocamlc weak_get.c weak_get_main.ml -o weak_get -custom \
-    2>&1 > /dev/null && ./weak_get; then
+    > /dev/null 2>&1 && ./weak_get; then
     have_weak=1
 else
     have_weak=0
