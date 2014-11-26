@@ -385,7 +385,7 @@ let main () =
   Sens.set_err_con ida_mem true;
 
   (* Setup of quadrature's sensitivities *)
-  QuadSens.init ida_mem ~fQS:(rhsQS data) qS;
+  QuadSens.init ida_mem ~fqs:(rhsQS data) qS;
   QuadSens.set_tolerances ida_mem QuadSens.EEtolerances;
 
   (* Initialize ASA. *)

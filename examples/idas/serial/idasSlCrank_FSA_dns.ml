@@ -308,7 +308,7 @@ let main () =
   Quad.set_tolerances mem (Quad.SStolerances (rtolq, atolq)) ;
 
   nvconst 0.0 (Nvector.unwrap qS.(0));
-  QuadSens.init mem ~fQS:(rhsQS data) qS;
+  QuadSens.init mem ~fqs:(rhsQS data) qS;
   atolS.{0} <- atolq; atolS.{1} <- atolq;
   QuadSens.set_tolerances mem (QuadSens.SStolerances (rtolq, atolS));
 

@@ -392,13 +392,13 @@ module Sensitivity =
             : ('a, 'k) session -> bool -> ('a, 'k) nvector array -> unit
             = "c_cvodes_quadsens_init"
 
-        let init s ?fQS v0 =
+        let init s ?fqs v0 =
           let se = fwdsensext s in
           if not se.has_quad then raise Quadrature.QuadNotInitialized;
           if Sundials_config.safe && Array.length v0 <> se.num_sensitivities
           then invalid_arg "init: wrong number of vectors";
           if Sundials_config.safe then Array.iter se.checkquadvec v0;
-          match fQS with
+          match fqs with
           | Some f -> se.quadsensrhsfn <- f;
                       c_quadsens_init s true v0
           | None -> c_quadsens_init s false v0

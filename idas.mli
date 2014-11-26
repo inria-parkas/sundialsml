@@ -412,13 +412,13 @@ module Sensitivity :
 
         (** Activate the integration of quadrature sensitivities.
             The right-hand sides of the quadrature sensitivities are computed
-            with [~fQS] if given, and otherwise using an internal
+            with [~fqs] if given, and otherwise using an internal
             implementation based on difference quotients. An array of vectors
             specifies initial values for the quadrature sensitivities.
 
             @idas <node6#ss:quad_sens_init> IDAQuadSensInit
             @raise QuadNotInitialized {!Quadrature.init} has not been called. *)
-        val init : ('d, 'k) Ida.session -> ?fQS:'d quadsensrhsfn
+        val init : ('d, 'k) Ida.session -> ?fqs:'d quadsensrhsfn
                       -> ('d, 'k) Nvector.t array -> unit
 
         (** Reinitializes the quadrature sensitivity integration.
