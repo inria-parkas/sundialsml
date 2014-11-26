@@ -235,6 +235,8 @@ doc/html/perf.opt.png: examples/perf.opt.log
 
 # Testing the examples
 
+tests.opt.log: examples/tests.opt.log
+
 examples/tests.opt.log: $(INSTALL_CMA:.cma=.cmxa)
 	$(MAKE) -C examples PERF_DATA_POINTS=10 $(subst examples/,,$@)
 
