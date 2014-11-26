@@ -12,7 +12,7 @@ unset docdir
 unset install_docs
 enable_mpi=1
 unset enable_debug
-mathjax=https://cdn.mathjax.org/mathjax/latest/
+unset mathjax
 
 configure_command="$0"
 
@@ -84,7 +84,7 @@ do
 	  OCAMLMPI      Path to OCamlMPI installation
 	  MPICC         Name of the MPI compiler (default: mpicc)
 	  MPIRUN        Name of MPI program launcher (default: mpirun)
-	  MATHJAX	Local or remote location of MathJax.js
+	  MATHJAX	Local or remote directory containing MathJax.js
 	                (e.g., MATHJAX=/usr/share/javascript/mathjax)
 
 	Set these options by passing arguments of the form FOO=value to help
@@ -516,21 +516,29 @@ fi
 mathjax_path=`echo "${mathjax}" | sed -e 's@^file:///*@/@'`
 # Check presence of MathJax.js if absolute path.
 if echo "${mathjax_path}" | grep -q '[a-zA-Z][-+.a-zA-Z0-9]*://'; then
-    mathjax_known_online=1
+    mathjax_known_online=
+    mathjax_known_local=
 elif [ "x${mathjax_path}" = x ]; then
     mathjax_known_online=1
+    mathjax_known_local=
+    mathjax="https://cdn.mathjax.org/mathjax/latest/"
 elif ! [ -r "${mathjax_path}/MathJax.js" ]; then
     error="${error}\n\t${mathjax}/MathJax.js not found or not readable"
 else
     mathjax_known_online=
+    mathjax_known_local=
     if [ "x${mathjax}" = "x${mathjax_path}" ] && \
         echo "${mathjax}" | grep -q '^[^/]';
     then
         warning="${warning}\n\tYour MATHJAX_PATH looks like a relative path."
         warning="${warning}\n\tIt may not work after a make install."
         # keep original ${mathjax}
+        mathjax_known_local=1
     else
         mathjax=`echo "${mathjax_path}" | sed -e 's@^/@file:///@'`
+        if echo "${mathjax}" | grep -q '^file://'; then
+            mathjax_known_local=1
+        fi
     fi
 fi
 
@@ -547,8 +555,10 @@ printf "  OCamlMPI\t\t${ocamlmpi}\n"
 printf "  MathJax (for docs)\t${mathjax}"
 if [ "x${mathjax_known_online}" = x1 ]; then
     printf " (rendering needs network)\n"
-else
+elif [ "x${mathjax_known_local}" = x1 ]; then
     printf " (offline rendering)\n"
+else
+    printf "\n"
 fi
 printf "\n"
 printf "  Architecture\t\t${arch}\n"
