@@ -182,6 +182,7 @@ dochtml.cmo: DOCHTML_PP += -DKINSOL_DOC_ROOT=\"$(KINSOL_DOC_ROOT_DEFAULT)\"
 dochtml.cmo: DOCHTML_PP += -DMATHJAX_URL=\"$(MATHJAX_URL_DEFAULT)\"
 dochtml.cmo: INCLUDES += -I +ocamldoc
 dochtml.cmo: OCAMLFLAGS += -pp '$(DOCHTML_PP)'
+dochtml.cmo: config
 sundials_docs.cma: sundials_config.cmo dochtml.cmo
 	$(OCAMLC) $(OCAMLCFLAGS) -o $@ -a $^
 

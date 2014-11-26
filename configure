@@ -12,7 +12,7 @@ unset docdir
 unset install_docs
 enable_mpi=1
 unset enable_debug
-unset mathjax
+mathjax=https://cdn.mathjax.org/mathjax/latest/
 
 configure_command="$0"
 
@@ -84,7 +84,7 @@ do
 	  OCAMLMPI      Path to OCamlMPI installation
 	  MPICC         Name of the MPI compiler (default: mpicc)
 	  MPIRUN        Name of MPI program launcher (default: mpirun)
-	  MATHJAX	Path to directory containing local copy of MathJax.js
+	  MATHJAX	Local or remote location of MathJax.js
 	                (e.g., MATHJAX=/usr/share/javascript/mathjax)
 
 	Set these options by passing arguments of the form FOO=value to help
@@ -512,7 +512,7 @@ fi
 mathjax_path=`echo "${mathjax}" | sed -e 's@^file:///*@/@'`
 # Check presence of MathJax.js if absolute path.
 if echo "${mathjax_path}" | grep -q '[a-zA-Z][-+.a-zA-Z0-9]*://'; then
-    mathjax_known_online=
+    mathjax_known_online=1
 elif [ "x${mathjax_path}" = x ]; then
     mathjax_known_online=1
 elif ! [ -r "${mathjax_path}/MathJax.js" ]; then
@@ -523,7 +523,7 @@ else
         echo "${mathjax}" | grep -q '^[^/]';
     then
         warning="${warning}\n\tYour MATHJAX_PATH looks like a relative path."
-        warning="${warning}\n\tIt may stop working after a make install."
+        warning="${warning}\n\tIt may not work after a make install."
         # keep original ${mathjax}
     else
         mathjax=`echo "${mathjax_path}" | sed -e 's@^/@file:///@'`
@@ -540,9 +540,11 @@ printf "  Sundials\t\t${sundials_version}${lapack_info}\n"
 printf "    -parallel\t\t${sundialsmpi_info}\n"
 printf "    -examples\t\t${examples_info}\n"
 printf "  OCamlMPI\t\t${ocamlmpi}\n"
-printf "  MathJax\t\t${mathjax}\n"
+printf "  MathJax (for docs)\t${mathjax}"
 if [ "x${mathjax_known_online}" = x1 ]; then
-    printf "         \t\t(doc requires Internet access for pretty math fonts)\n"
+    printf " (rendering needs network)\n"
+else
+    printf " (offline rendering)\n"
 fi
 printf "\n"
 printf "  Architecture\t\t${arch}\n"
@@ -604,7 +606,7 @@ fi
 	 s#@cpp@#${CPP}#;
 	 s#@mpicc@#$mpicc#;
 	 s#@mpirun@#$mpirun#;
-	 s#@mathjax@#${mathjax}#;
+	 s#@mathjax@#${mathjax%/}#;
 	 s#@c_suppress_warnings@#${c_suppress_warnings}#;
 	 s#@EXAMPLESROOT@#${EXAMPLESROOT}#;
 	 s#@OCAMLBIN@#${OCAMLBIN}#;
