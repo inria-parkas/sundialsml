@@ -88,16 +88,9 @@ GNUPLOT = gnuplot
 
 EXAMPLESROOT = @EXAMPLESROOT@
 
-uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
-ifneq (,$(findstring MINGW,$(uname_S)))
-XA=.lib
-XO=.obj
-XS=.dll
-else
-XA=.a
-XO=.o
-XS=.so
-endif
+XA=@XA@
+XO=@XO@
+XS=@XS@
 
 CP     ?= cp
 RM     ?= rm

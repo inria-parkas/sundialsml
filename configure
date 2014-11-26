@@ -139,15 +139,28 @@ if [ ${bounds_checking} -eq 0 ]; then
     ocamlflags="-unsafe ${ocamlflags}"
 fi
 
+# C compiler's output file names
+if uname -s | grep -q MINGW; then
+    XA=.lib
+    XO=.obj
+    XS=.dll
+    XX=.exe
+else
+    XA=.a
+    XO=.o
+    XS=.so
+    XX=
+fi
+
+
 # Check C compiler: detect gcc and add a default optimization level.
-test_file=__configure_test_file__.c
-tmp_file=__configure_test_file__.o
-echo "#ifndef __GNUC__" > $test_file
-echo "#error not gcc" >> $test_file
-echo "#endif" >> $test_file
+test_stem=__configure_test_file__
+echo "#ifndef __GNUC__" > $test_stem.c
+echo "#error not gcc" >> $test_stem.c
+echo "#endif" >> $test_stem.c
 using_gcc=false
-$CC -o $tmp_file -c $test_file >/dev/null 2>&1 && using_gcc=true
-rm -f $tmp_file $test_file
+$CC -c $test_stem.c >/dev/null 2>&1 && using_gcc=true
+rm -f ./$test_stem.*
 if [ $using_gcc = true ]; then
     c_suppress_warnings=-w
 else
@@ -242,22 +255,22 @@ else
 fi
 
 # Make sure realtype has the right size.
-test_file=__configure_test_file__.c
-tmp_file=./__configure_test_file__
-cat > $test_file <<EOF
+test_stem=__configure_test_file__
+cat > $test_stem.c <<EOF
 #include <sundials/sundials_types.h>
 int main (int argc, char *argv[])
 {
   return sizeof (realtype) != sizeof (double);
 }
 EOF
-if $CC $cvode_cppflags -o $tmp_file $test_file >/dev/null 2>&1 && $tmp_file;
+if $CC $cvode_cppflags -o $test_stem$XX $test_stem.c >/dev/null 2>&1 && \
+    ./$test_stem$XX;
 then
     : # OK
 else
     error="${error}\n\trealtype not defined as double.  Recompile sundials with --with-precision=double."
 fi
-rm -f $tmp_file $test_file
+rm -f ./$test_stem.*
 
 
 # Check for OCaml installation (and version)
@@ -320,7 +333,9 @@ fi
 # Check if we can compile a direct call to caml_weak_get from C.  Usually we
 # can, but it doesn't seem to be supported officially.  Note that a .c + .ml
 # pair is infinitely easier to compile portably than a standalone .c file.
-cat > weak_get.c <<EOF
+test_stem=__configure_test_file__
+test_ml_stem=__configure_test_ml_file__
+cat > $test_stem.c <<EOF
 /* This file tests if we can call caml_weak_get() directly from C.  */
 #include <caml/mlvalues.h>
 #include <caml/memory.h>
@@ -357,18 +372,17 @@ CAMLprim value f ()
   CAMLreturn (Val_int (0));
 }
 EOF
-cat > weak_get_main.ml <<EOF
+cat > ${test_ml_stem}.ml <<EOF
 external f : unit -> int = "f"
 let _ = exit (f ())
 EOF
-if ${OCAMLBIN}ocamlc weak_get.c weak_get_main.ml -o weak_get -custom \
-    > /dev/null 2>&1 && ./weak_get; then
+if ${OCAMLBIN}ocamlc ${test_stem}.c ${test_ml_stem}.ml -o ${test_ml_stem}$XX \
+    -custom > /dev/null 2>&1 && ./${test_ml_stem}$XX; then
     have_weak=1
 else
     have_weak=0
 fi
-rm -f weak_get.c weak_get.o \
-      weak_get_main.ml weak_get_main.cmi weak_get_main.cmo weak_get
+rm -f ./${test_stem}.* ./${test_ml_stem}.* ${test_ml_stem}
 
 if [ "${long_size}" -ne "${ptr_size}" ]; then
     error="${error}\nsizeof (long) does not match sizeof (void*)."
@@ -462,9 +476,8 @@ if [ ${enable_mpi:-1} -eq 1 ]; then
     fi
 
     # Check for nvector_parallel installation
-    test_file=__configure_test_file__.c
-    tmp_file=__configure_test_file__
-    cat > $test_file <<EOF
+    test_stem=__configure_test_file__
+    cat > $test_stem.c <<EOF
 #include <nvector/nvector_parallel.h>
 int main (int argc, char *argv[])
 {
@@ -473,7 +486,7 @@ int main (int argc, char *argv[])
   return 0;
 }
 EOF
-    if ! $mpicc -o $tmp_file $cvode_cppflags $test_file \
+    if ! $mpicc -o $test_stem$XX $cvode_cppflags $test_stem.c \
          `sundials-config -m cvode -t p -l c -s libs` \
        >/dev/null 2>&1;
     then
@@ -482,7 +495,7 @@ EOF
     else
         sundialsmpi_info='available'
     fi
-    rm -f $tmp_file $test_file
+    rm -f ./$test_stem.* ./$test_stem$XX
 else
     ocamlmpi_enabled=
     ocamlmpi='DISABLED (no parallel features)'
@@ -620,6 +633,9 @@ fi
 	 s#@mpirun@#$mpirun#;
 	 s#@mathjax@#${mathjax%/}#;
 	 s#@c_suppress_warnings@#${c_suppress_warnings}#;
+	 s#@XA@#${XA}#;
+	 s#@XO@#${XO}#;
+	 s#@XS@#${XS}#;
 	 s#@EXAMPLESROOT@#${EXAMPLESROOT}#;
 	 s#@OCAMLBIN@#${OCAMLBIN}#;
 	 s#@OCAMLROOT@#${OCAMLROOT}#;" config.in) > config
