@@ -512,22 +512,20 @@ fi
 
 
 # MathJax
-# Convert file schemes to absolute paths.
-mathjax_path=`echo "${mathjax}" | sed -e 's@^file:///*@/@'`
 # Check presence of MathJax.js if absolute path.
-if echo "${mathjax_path}" | grep -q '[a-zA-Z][-+.a-zA-Z0-9]*://'; then
+if echo "${mathjax}" | grep -q '[a-zA-Z][-+.a-zA-Z0-9]*://'; then
     mathjax_known_online=
     mathjax_known_local=
-elif [ "x${mathjax_path}" = x ]; then
+elif [ "x${mathjax}" = x ]; then
     mathjax_known_online=1
     mathjax_known_local=
-    mathjax="https://cdn.mathjax.org/mathjax/latest/"
-elif ! [ -r "${mathjax_path}/MathJax.js" ]; then
+    mathjax=https://cdn.mathjax.org/mathjax/latest/
+elif ! [ -r "${mathjax}/MathJax.js" ]; then
     error="${error}\n\t${mathjax}/MathJax.js not found or not readable"
 else
     mathjax_known_online=
     mathjax_known_local=
-    if [ "x${mathjax}" = "x${mathjax_path}" ] && \
+    if [ "x${mathjax}" = "x${mathjax}" ] && \
         echo "${mathjax}" | grep -q '^[^/]';
     then
         warning="${warning}\n\tYour MATHJAX_PATH looks like a relative path."
@@ -535,7 +533,7 @@ else
         # keep original ${mathjax}
         mathjax_known_local=1
     else
-        mathjax=`echo "${mathjax_path}" | sed -e 's@^/@file:///@'`
+        mathjax=`echo "${mathjax}" | sed -e 's@^/@file:///@'`
         if echo "${mathjax}" | grep -q '^file://'; then
             mathjax_known_local=1
         fi
