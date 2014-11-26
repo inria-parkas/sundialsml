@@ -707,12 +707,12 @@ let main () =
          (Note that we do not specify the index array plist and therefore
          IDAS will compute sensitivities w.r.t. the first NS parameters) *)
 
-      let sens_params =
+      let params =
         { Sens.pvals = Some data.p;
           Sens.pbar = Some pbar;
           Sens.plist = None; }
       in
-      Sens.init mem Sens.EEtolerances sensi_meth sens_params uuS upS;
+      Sens.init mem Sens.EEtolerances sensi_meth ~sens_params:params uuS upS;
 
       (* Specify whether the sensitivity variables are included in the error
          test or not *)

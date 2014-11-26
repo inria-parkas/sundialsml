@@ -312,7 +312,7 @@ let main () =
                      Sens.pbar = Some pbar;
                      Sens.plist = None }
       in
-      Sens.init ida_mem Sens.EEtolerances sensi_meth params
+      Sens.init ida_mem Sens.EEtolerances sensi_meth ~sens_params:params
         ~fs:(resS data) yS ypS;
       Sens.set_err_con ida_mem err_con;
 

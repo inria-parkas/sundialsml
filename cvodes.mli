@@ -326,22 +326,31 @@ module Sensitivity :
             right-hand side function is of type [OneByOne].
             {cconst CV_STAGGERED1} *)
 
-    (** Specifies problem parameter information for sensitivity calculations.
+    (** Specifies problem parameter information for sensitivity
+        calculations.  Which fields are required varies as follows:
+        - [pvals] is mandatory if {!Sensitivity.init} and/or
+          {!Sensitivity.Quadrature.init} is not given a
+          user-defined callback.  Otherwise, it is ignored.
+        - [plist] is optional if [pvals] is given.  Otherwise, it is
+          ignored.
+        - [pbar] is always meaningful and optional.
 
         @cvodes <node6#ss:sens_optional_input> CVodeSetSensParams *)
     type sens_params = {
         pvals  : Sundials.RealArray.t option;
-        (** An array of $N_p$ parameters $p$ in $f(t, y, p)$. If specified,
-            this array is updated by the solver to pass parameter values to the
-            original right-hand side and root functions. *)
+        (** An array of $N_p$ parameters $p$ in $f(t, y, p)$.  If
+            specified, this array is updated by the solver to pass
+            perturbed parameter values to the original right-hand side
+            and root functions.  Those functions must (re-)read
+            parameter values from this array on every invocation. *)
         pbar   : Sundials.RealArray.t option;
-        (** An array of $N_s$ positive scaling factors. These are only needed
+        (** An array of $N_s$ positive scaling factors. These are needed
             when estimating tolerances or using the internal difference
             quotient function. *)
         plist  : int array option;
-        (** An array of $N_s$ ($< N_p$) indices specifying the parameters
-            to analyze. If not specified, the first $N_s$ parameters are
-            analyzed. *)
+        (** An array of $N_s$ ($< N_p$) indices into [pvals]
+            specifying the parameters to analyze. If not specified,
+            the first $N_s$ parameters are analyzed. *)
       }
 
     (** Empty [pvals], [plist], and [pbar] fields. *)
@@ -362,10 +371,16 @@ module Sensitivity :
         [init s tol sm sp fs ys0], has as arguments:
         - [s], a session created with {!Cvode.init},
         - [tol], the tolerances desired,
-        - [sm], the solution method,
-        - [sp], the parameter information,
-        - [fs], the sensitivity function, and,
+        - [sens_method], the solution method,
+        - [~sens_params], the parameter information (see {!sens_params}),
+        - [~fs], the sensitivity function, and,
         - [ys0], initial values of the sensitivities for each parameter.
+
+        If [~fs] is not given, an internal difference quotient routine
+        is used.  In that case, or if the internal difference quotient
+        routine will be specified in a subsequent call to
+        {!Sensitivity.Quadrature.init}, then [sens_params] must be
+        given with [pvals] set to non-[None].
 
         @cvodes <node6#ss:sensi_malloc> CVodeSensInit
         @cvodes <node6#ss:sensi_malloc> CVodeSensInit1
@@ -376,7 +391,7 @@ module Sensitivity :
     val init : ('d, 'k) Cvode.session
                -> ('d, 'k) tolerance
                -> sens_method
-               -> sens_params
+               -> ?sens_params:sens_params
                -> 'd sensrhsfn
                -> ('d, 'k) Nvector.t array
                -> unit
@@ -444,11 +459,17 @@ module Sensitivity :
            @cvodes <node6#ss:user_fct_quad_sens> CVodeQuadSensRhsFn *)
         type 'd quadsensrhsfn = 'd quadsensrhsfn_args -> 'd array -> unit
 
-        (** Activate the integration of quadrature sensitivities.
-            The right-hand sides of the quadrature sensitivities are computed
-            with [~fqs] if given, and otherwise using an internal
-            implementation based on difference quotients. An array of vectors
-            specifies initial values for the quadrature sensitivities.
+        (** Activate the integration of quadrature sensitivities.  The
+            arguments are:
+            - [~fqs], a function that computes the right-hand sides of the
+              quadrature sensitivities, and
+            - [q0], an array of vectors specifying initial values for the
+              quadrature sensitivities.
+
+            If [~fqs] is not given, an internal difference quotient
+            routine is used.  In that case, {!Sensitivity.init} must
+            have been invoked with a [sens_params] whose [pvals] is
+            non-[None].
 
             @cvodes <node6#ss:quad_sens_init> CVodeQuadSensInit
             @raise QuadNotInitialized {!Quadrature.init} has not been called. *)

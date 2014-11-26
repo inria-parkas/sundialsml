@@ -349,7 +349,7 @@ let main () =
   Quad.set_tolerances cvode_mem (Quad.SStolerances (reltol, abstolQ));
 
   Sens.init cvode_mem Sens.EEtolerances Sens.Simultaneous
-                      Sens.no_sens_params (Sens.AllAtOnce (Some (fS data))) yS;
+                      (Sens.AllAtOnce (Some (fS data))) yS;
   Sens.set_err_con cvode_mem true;
 
   QuadSens.init cvode_mem ~fqs:(fQS data) yQS;

@@ -295,9 +295,9 @@ let main () =
         Sens.init cvode_mem
                          Sens.EEtolerances
                          sensi_meth
-                         { Sens.pvals = None;
-                           Sens.pbar = Some pbar;
-                           Sens.plist = None; }
+                         ~sens_params:{ Sens.pvals = None;
+                                        Sens.pbar = Some pbar;
+                                        Sens.plist = None; }
                          (Sens.OneByOne (Some (fS data)))
                          yS;
         Sens.set_err_con cvode_mem err_con;

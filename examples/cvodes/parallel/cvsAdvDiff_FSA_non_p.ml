@@ -332,9 +332,9 @@ let main () =
         Sens.init cvode_mem
                          Sens.EEtolerances
                          sensi_meth
-                         { Sens.pvals = Some data.p;
-                           Sens.pbar  = Some pbar;
-                           Sens.plist = Some plist; }
+                         ~sens_params:{ Sens.pvals = Some data.p;
+                                        Sens.pbar  = Some pbar;
+                                        Sens.plist = Some plist; }
                          (Sens.OneByOne None)
                          uS;
         Sens.set_err_con cvode_mem err_con;

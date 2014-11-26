@@ -381,7 +381,7 @@ let main () =
 
   (* Sensitivity's setup. *)
   Sens.init ida_mem Sens.EEtolerances Sens.Simultaneous
-    Sens.no_sens_params ~fs:(resS data) yyS ypS;
+    ~fs:(resS data) yyS ypS;
   Sens.set_err_con ida_mem true;
 
   (* Setup of quadrature's sensitivities *)

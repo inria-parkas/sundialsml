@@ -211,34 +211,38 @@ module Sensitivity =
     external c_set_params : ('a, 'k) session -> sens_params -> unit
         = "c_cvodes_sens_set_params"
 
-    let set_params s ({pvals; pbar; plist} as ps) =
-      if Sundials_config.safe then
-        begin
-          let ns = num_sensitivities s in
-          let np = match pvals with None -> 0
-                                  | Some p -> Bigarray.Array1.dim p in
-          let check_pi v =
-            if v < 0 || v >= np
-            then invalid_arg "set_params: plist has an invalid entry" in
-          (match pbar with
-           | None -> ()
-           | Some p -> if Bigarray.Array1.dim p <> ns
-             then invalid_arg "set_params: pbar has the wrong length");
-          (match plist with
-           | None -> ()
-           | Some p -> if Array.length p <> ns
-             then invalid_arg "set_params: plist has the wrong length"
-             else Array.iter check_pi p)
-        end;
-      c_set_params s ps
+    let check_sens_params ns {pvals; pbar; plist} =
+        if Sundials_config.safe then
+          begin
+            let np = match pvals with None -> 0
+                                    | Some p -> Bigarray.Array1.dim p in
+            let check_pi v =
+              if v < 0 || v >= np
+              then invalid_arg "set_params: plist has an invalid entry"
+            in
+            if 0 <> np && np < ns then
+              invalid_arg "set_params: pvals is too short";
+            (match pbar with
+             | None -> ()
+             | Some p ->
+               if Bigarray.Array1.dim p <> ns
+               then invalid_arg "set_params: pbar has the wrong length");
+            (match plist with
+             | None -> ()
+             | Some p ->
+               if Array.length p <> ns
+               then invalid_arg "set_params: plist has the wrong length"
+               else Array.iter check_pi p)
+          end
 
-    let init s tol fmethod sparams fm v0 =
+    let init s tol fmethod ?(sens_params=no_sens_params) fm v0 =
       if Sundials_config.safe then Array.iter s.checkvec v0;
       add_fwdsensext s;
       let se = fwdsensext s in
       let ns = Array.length v0 in
       if Sundials_config.safe && ns = 0 then
         invalid_arg "init: require at least one sensitivity parameter";
+      check_sens_params ns sens_params;
       (match fm with
        | AllAtOnce fo -> begin
            if fmethod = Staggered1 then
@@ -251,10 +255,10 @@ module Sensitivity =
            c_sens_init_1 s fmethod (fo <> None) v0
          end);
       se.num_sensitivities <- ns;
-      se.senspvals <- sparams.pvals;
+      c_set_params s sens_params;
+      se.senspvals <- sens_params.pvals;
       se.sensarray1 <- c_alloc_nvector_array ns;
       se.sensarray2 <- c_alloc_nvector_array ns;
-      set_params s sparams;
       set_tolerances s tol
 
     external c_reinit

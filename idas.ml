@@ -211,15 +211,17 @@ module Sensitivity =
     external c_set_params : ('a, 'k) session -> sens_params -> unit
         = "c_idas_sens_set_params"
 
-    let set_params s ({pvals; pbar; plist} as ps) =
+    let check_sens_params ns {pvals; pbar; plist} =
       if Sundials_config.safe then
         begin
-          let ns = num_sensitivities s in
           let np = match pvals with None -> 0
                                   | Some p -> Bigarray.Array1.dim p in
           let check_pi v =
             if v < 0 || v >= np
-            then invalid_arg "set_params: plist has an invalid entry" in
+            then invalid_arg "set_params: plist has an invalid entry"
+          in
+          if 0 <> np && np < ns then
+            invalid_arg "set_params: pvals is too short";
           (match pbar with
            | None -> ()
            | Some p ->
@@ -231,10 +233,9 @@ module Sensitivity =
              if Array.length p <> ns
              then invalid_arg "set_params: plist has the wrong length"
              else Array.iter check_pi p)
-        end;
-      c_set_params s ps
+        end
 
-    let init s tol fmethod sparams ?fs y0 y'0 =
+    let init s tol fmethod ?(sens_params=no_sens_params) ?fs y0 y'0 =
       if Sundials_config.safe then
         (Array.iter s.checkvec y0;
          Array.iter s.checkvec y'0);
@@ -246,16 +247,17 @@ module Sensitivity =
            invalid_arg "init: require at least one sensitivity parameter";
          if ns <> Array.length y'0 then
            invalid_arg "init: y0 and y'0 have inconsistent lengths");
+      check_sens_params ns sens_params;
       c_sens_init s fmethod (fs <> None) y0 y'0;
       (match fs with
        | Some f -> se.sensresfn <- f
        | None -> ());
       se.num_sensitivities <- ns;
-      se.senspvals <- sparams.pvals;
+      c_set_params s sens_params;
+      se.senspvals <- sens_params.pvals;
       se.sensarray1 <- c_alloc_nvector_array ns;
       se.sensarray2 <- c_alloc_nvector_array ns;
       se.sensarray3 <- c_alloc_nvector_array ns;
-      set_params s sparams;
       set_tolerances s tol
 
     external c_reinit
