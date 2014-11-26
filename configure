@@ -102,6 +102,8 @@ END_HELP_TEXT
 	LAPACKLIB="${value}";;
     EXAMPLES)
 	EXAMPLESROOT="${value}";;
+    CPPFLAGS)
+        cppflags="${value}";;
     CFLAGS)
 	cflags="${value}";;
     LDFLAGS)
@@ -284,8 +286,10 @@ else
 fi
 
 
+cppflags="${cppflags} -I ${ocaml_path}"
+
 query="#include <caml/mlvalues.h>\nSIZEOF_INT,SIZEOF_LONG,SIZEOF_PTR"
-ilp_size=`echo ${query} | ${CPP} -P | tail -1`
+ilp_size=`echo ${query} | ${CPP} ${cppflags} -P | tail -1`
 int_size=`expr "$ilp_size" : "^\([^,]*\),*"`
 long_size=`expr "$ilp_size" : "^[^,]*,\([^,]*\),*"`
 ptr_size=`expr "$ilp_size" : "^[^,]*,[^,]*,\([^,]*\)"`
@@ -402,7 +406,7 @@ fi
 # Check for LAPACK support
 unset lapack_lib
 query="#include \"sundials/sundials_config.h\"\nSUNDIALS_PACKAGE_VERSION,SUNDIALS_BLAS_LAPACK"
-sundials_info=`echo "${query}" | ${CPP} ${cvode_cppflags} -P | tail -1`
+sundials_info=`echo "${query}" | ${CPP} ${cppflags} ${cvode_cppflags} -P | tail -1`
 if [ $? -ne 0 ]; then
     error="${error}\n\tcould not find sundials_config.h"
     sundials_version="UNKNOWN"
