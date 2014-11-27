@@ -169,36 +169,36 @@ The dependencies of Sundials/ML are
 - {{:http://caml.inria.fr/ocaml/}OCaml} {b 3.12.1 or greater},
 - {{:http://computation.llnl.gov/casc/sundials/}Sundials} {b {var version}},
 - {e Optionally}:
-  {{:https://forge.ocamlcore.org/projects/ocamlmpi/}OCaml/MPI} {b 1.01}.
+  {{:https://forge.ocamlcore.org/projects/ocamlmpi/}OCamlMPI} {b 1.01}.
 
-The [configure] script detects whether Sundials was built with lapack
-support, which is required for the [lapack_dense] and [lapack_band]
-solvers (like {!Cvode.Dls.lapack_dense}).
-The {!Sundials.lapack_enabled} value indicates whether these
-solvers are available.
-
-Parallel nvectors and Band-Block-Diagonal (BBD) solvers are {e
-only} built if explicitly requested (via {i --enable-mpi}).
+Sundials must be compiled with 64-bit floats (the default: {i
+--with-precision=double}) and the C compiler must provide 32-bit
+[int]s.
 
 When building Sundials manually, we recommend applying the
 [sundials-2.5.0.patch] file distributed with Sundials/ML and using
-[./configure --enable-examples --enable-shared].
-Sundials/ML will function correctly if the patch is not applied, but
-the comparison of examples will fail with incorrect results.
-Sundials must be compiled with 64-bit floats—the
-default: {i --with-precision=double}—and the C compiler must provide 32-bit
-[int]s ([configure] checks these constraints).
+[./configure --enable-examples --enable-shared].  Sundials/ML will
+function correctly if the patch is not applied, but the comparison of
+examples will fail with incorrect results.
+
+The [configure] script detects and automatically enables optional
+features.  Lapack solvers, like {!Cvode.Dls.lapack_dense} are enabled
+if Sundials was built with lapack support.  The
+{!Sundials.lapack_enabled} value indicates whether these solvers are
+available.  Parallel nvectors and Band-Block-Diagonal (BBD) solvers
+are built if Sundials is built with them and OCamlMPI is available.
 
 {3:opam Opam}
 
 Opam is the easiest way to install the library:
 {ol
     {- {{:http://computation.llnl.gov/casc/sundials/download/download.php}Download}
-        and manually install Sundials, or use a package manager:
+        and manually install Sundials (see notes above), or use a
+        package manager:
 	{ul
-	    {- debian/ubuntu (without parallelism):
+	    {- Debian/Ubuntu (without parallelism):
 		    [apt-get install libsundials-serial-dev]}
-	    {- osx: [brew install sundials] / [port install sundials]}
+	    {- Mac OS X: [brew install sundials] / [port install sundials]}
 	}}
     {- {i Optionally} run [opam install mpi].}
     {- Run [opam install sundialsml].}
@@ -209,18 +209,20 @@ Opam is the easiest way to install the library:
 Building from source is a three step process:
 {ol
     {- {{:http://computation.llnl.gov/casc/sundials/download/download.php}Download}
-        and manually install Sundials, or use a package manager:
+        and manually install Sundials (see notes above),
+        or use a package manager:
 	{ul
-	    {- debian/ubuntu: [apt-get install libsundials-serial-dev]}
-	    {- osx: [brew install sundials] / [port install sundials]}
+	    {- Debian/Ubuntu (without parallelism):
+                    [apt-get install libsundials-serial-dev]}
+	    {- Mac OS X: [brew install sundials] / [port install sundials]}
 	}}
     {- Run [configure] to find and check dependencies.}
     {- Run [make install] or [make install-findlib] to build and
        install the library.}
 }
 
-The choices made by the configure script can be influenced by arguments
-(like {i --enable-mpi} and {i --prefix=...}) and variables (like
+The choices made by the configure script can be influenced by
+arguments (like {i --prefix=...}) and variables (like
 [OCAMLROOT=...]). Type [configure --help] for detailed information.
 
 OCaml reimplementations of the standard Sundials examples are provided in
@@ -322,9 +324,11 @@ Printf.printf "Sum of abs. = %f\n" (Nvector_parallel.Ops.n_vl1norm pv);;
 
 {ol
     {- The message
-       {[Fatal error: cannot load shared library dllmlsundials_cvode]}
+       {[Fatal error: cannot load shared library dllmlsundials]}
        can usually be fixed by updating [LD_LIBRARY_PATH], for example,
-       {[export LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH}]}}
+       {[export LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH}]}
+       If that doesn't help, you may have compiled Sundials/C without
+       [--enable-shared]; see {{:#install}above}.}
 }
 
 
