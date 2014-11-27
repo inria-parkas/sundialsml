@@ -21,8 +21,9 @@ Release procedure
     git push origin v2.5.0p0
 
 7. Update gh-pages:
-   a. current docs (root level)
-   b. add a subdirectory for the release
+   a. ensure MathJax is http://
+   b. current docs (root level)
+   c. add a subdirectory for the release
 
 8. OPAM:
    - update package files in forked opam repository
