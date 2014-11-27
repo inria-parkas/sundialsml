@@ -182,11 +182,11 @@ function correctly if the patch is not applied, but the comparison of
 examples will fail with incorrect results.
 
 The [configure] script detects and automatically enables optional
-features.  Lapack solvers, like {!Cvode.Dls.lapack_dense} are enabled
+features.  Lapack solvers, like {!Cvode.Dls.lapack_dense}, are enabled
 if Sundials was built with lapack support.  The
 {!Sundials.lapack_enabled} value indicates whether these solvers are
 available.  Parallel nvectors and Band-Block-Diagonal (BBD) solvers
-are built if Sundials is built with them and OCamlMPI is available.
+are enabled if Sundials was built with them and OCamlMPI is available.
 
 {3:opam Opam}
 
@@ -327,7 +327,7 @@ Printf.printf "Sum of abs. = %f\n" (Nvector_parallel.Ops.n_vl1norm pv);;
        {[Fatal error: cannot load shared library dllmlsundials]}
        can usually be fixed by updating [LD_LIBRARY_PATH], for example,
        {[export LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH}]}
-       If that doesn't help, you may have compiled Sundials/C without
+       Otherwise you may have compiled Sundials without
        [--enable-shared]; see {{:#install}above}.}
 }
 
