@@ -1,0 +1,23 @@
+
+Sundials/ML 2.5.0p0
+-------------------
+Sundials/ML v2.5.0p0 is an OCaml interface to v2.5.0 of the Sundials suite
+of numerical solvers (CVODE, CVODES, IDA, IDAS, KINSOL).
+
+It requires OCaml 3.12.1 or greater, Sundials 2.5.0, and optionally
+OCamlMPI 1.01.
+
+* When building Sundials manually, we recommend applying the
+  `sundials-2.5.0.patch` file and building with examples and shared library
+  support:
+
+      patch -p1 < path/to/sundials-2.5.0.patch
+      ./configure --enable-examples --enable-shared
+
+  Sundials/ML will function correctly if the patch is not applied, but some
+  examples will fail with incorrect results.
+
+* The backward preconditioner, banded and dense jacobian, and jacobian
+  times vector callbacks in Cvodes.Adjoint and Idas.Adjoint do not function
+  correctly due to an issue in the underlying C library.
+
