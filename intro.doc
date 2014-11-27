@@ -26,6 +26,20 @@ are welcome.
 Support requests should be made to the (public)
 {{:mailto:caml-list\@inria.fr?subject=Sundials/ML:}OCaml mailing list}.
 
+{3:contents Contents}
+{ul
+    {- {{:#overview}Overview}}
+    {- {{:#api}API Reference}}
+    {- {{:#install}Installation}}
+    {- {{:#running}Running programs}}
+    {- {{:#performance}Performance}}
+    {- {{:#refs}References}}
+    {- {{:#acks}Acknowledgements}}
+    {- {{:#indexes}Indexes}}
+}
+
+{2:overview Overview}
+
 The structure of this interface mostly follows that of the original library,
 both for ease of reading the existing documentation and for converting
 existing source code, but several changes have been made for programming
@@ -63,20 +77,7 @@ Rather than try to duplicate or replace the comprehensive
 Sundials user manuals}, this documentation provides brief summaries,
 adapted from the manual, with hyperlinks back to the original text.
 
-{3 Overview}
-{ul
-    {- {{:#nvector}Nvectors}}
-    {- {{:#linsolv}Linear Solvers}}
-    {- {{:#modules}Modules}}
-    {- {{:#install}Dependencies and Installation}}
-    {- {{:#running}Running programs}}
-    {- {{:#performance}Performance}}
-    {- {{:#refs}References}}
-    {- {{:#acks}Acknowledgements}}
-    {- {{:#indexes}Indexes}}
-}
-
-{2:nvector Nvectors}
+{3:nvector Nvectors}
 
 Sundials defines an abstract interface for vectors and provides default
 serial and parallel instantiations.
@@ -111,7 +112,7 @@ the provided linear solvers, only {!Cvode.Diag} can be used; although
 custom solvers can be implemented via {!Cvode.Alternate},
 {!Ida.Alternate}, and {!Kinsol.Alternate}.
 
-{2:linsolv Linear Solvers}
+{3:linsolv Linear Solvers}
 
 Nonlinear algebraic systems occur optionally in the solution of ODE initial
 value problems with {!Cvode}, invariably when solving DAE initial value
@@ -154,7 +155,7 @@ types are constructed by passing parameters to functions like
 {!Cvode.Dls.band} or {!Ida.Spils.spgmr}. They are then passed to the
 appropriate [init] or [reinit] functions to configure sessions.
 
-{2:modules Modules}
+{2:api API Reference}
 
 {!modules: Sundials}
 {!modules: Dls Spils}
@@ -163,7 +164,7 @@ appropriate [init] or [reinit] functions to configure sessions.
 {!modules: Ida Ida_bbd Idas Idas_bbd}
 {!modules: Kinsol Kinsol_bbd}
 
-{2:install Dependencies and Installation}
+{2:install Installation}
 
 The dependencies of Sundials/ML are
 - {{:http://caml.inria.fr/ocaml/}OCaml} {b 3.12.1 or greater},
