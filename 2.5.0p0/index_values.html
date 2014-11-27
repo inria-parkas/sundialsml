@@ -1964,8 +1964,7 @@ Activates the forward-backward problem.
 </td></tr>
 <tr><td><a href="Idas.Sensitivity.Quadrature.html#VALinit">init</a> [<a href="Idas.Sensitivity.Quadrature.html">Idas.Sensitivity.Quadrature</a>]</td>
 <td><div class="info">
-Activate the integration of quadrature equations that depend on
-            sensitivities.
+Activate the integration of quadrature sensitivities.
 </div>
 </td></tr>
 <tr><td><a href="Idas.Sensitivity.html#VALinit">init</a> [<a href="Idas.Sensitivity.html">Idas.Sensitivity</a>]</td>
@@ -1990,8 +1989,7 @@ Activates the forward-backward problem.
 </td></tr>
 <tr><td><a href="Cvodes.Sensitivity.Quadrature.html#VALinit">init</a> [<a href="Cvodes.Sensitivity.Quadrature.html">Cvodes.Sensitivity.Quadrature</a>]</td>
 <td><div class="info">
-Activate the integration of quadrature equations that depend on
-            sensitivities.
+Activate the integration of quadrature sensitivities.
 </div>
 </td></tr>
 <tr><td><a href="Cvodes.Sensitivity.html#VALinit">init</a> [<a href="Cvodes.Sensitivity.html">Cvodes.Sensitivity</a>]</td>
@@ -2051,7 +2049,7 @@ Returns <code class="code">0</code> for <code class="code"><span class="construc
 <tr><td><a href="Sundials.RealArray.html#VALinto_array">into_array</a> [<a href="Sundials.RealArray.html">Sundials.RealArray</a>]</td>
 <td><div class="info">
 Copies into an existing
-        <a href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/Array.html"> <code class="code">float array</code></a>.
+        <a href="Array.html"> <code class="code">float array</code></a>.
 </div>
 </td></tr>
 <tr><td><a href="Dls.BandMatrix.html#VALinvalidate">invalidate</a> [<a href="Dls.BandMatrix.html">Dls.BandMatrix</a>]</td>
@@ -2409,11 +2407,6 @@ A convenience value for signalling that there are no roots to monitor.
 A convenience value for signalling that there are no roots to monitor.
 </div>
 </td></tr>
-<tr><td><a href="Idas.Sensitivity.html#VALno_sens_params">no_sens_params</a> [<a href="Idas.Sensitivity.html">Idas.Sensitivity</a>]</td>
-<td><div class="info">
-Empty <code class="code">pvals</code>, <code class="code">plist</code>, and <code class="code">pbar</code> fields.
-</div>
-</td></tr>
 <tr><td><a href="Cvodes.Sensitivity.html#VALno_sens_params">no_sens_params</a> [<a href="Cvodes.Sensitivity.html">Cvodes.Sensitivity</a>]</td>
 <td><div class="info">
 Empty <code class="code">pvals</code>, <code class="code">plist</code>, and <code class="code">pbar</code> fields.
@@ -2423,19 +2416,19 @@ Empty <code class="code">pvals</code>, <code class="code">plist</code>, and <cod
 <tr><td><a href="Sundials.RootDirs.html#VALof_array">of_array</a> [<a href="Sundials.RootDirs.html">Sundials.RootDirs</a>]</td>
 <td><div class="info">
 Creates a new value from the contents of an
-        <a href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/Array.html"> array</a>.
+        <a href="Array.html"> array</a>.
 </div>
 </td></tr>
 <tr><td><a href="Sundials.Roots.html#VALof_array">of_array</a> [<a href="Sundials.Roots.html">Sundials.Roots</a>]</td>
 <td><div class="info">
 Creates a new value from the contents of an
-        <a href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/Array.html"> array</a>.
+        <a href="Array.html"> array</a>.
 </div>
 </td></tr>
 <tr><td><a href="Sundials.RealArray.html#VALof_array">of_array</a> [<a href="Sundials.RealArray.html">Sundials.RealArray</a>]</td>
 <td><div class="info">
 Creates an array by copying the contents of a
-        <a href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/Array.html"> <code class="code">float array</code></a>.
+        <a href="Array.html"> <code class="code">float array</code></a>.
 </div>
 </td></tr>
 <tr><td><a href="Ida.VarId.html#VALof_float">of_float</a> [<a href="Ida.VarId.html">Ida.VarId</a>]</td>
@@ -2461,7 +2454,7 @@ Creates an array by copying the contents of a <code class="code">r list</code>.
 <tr><td><a href="Sundials.RealArray.html#VALof_list">of_list</a> [<a href="Sundials.RealArray.html">Sundials.RealArray</a>]</td>
 <td><div class="info">
 Creates an array by copying the contents of a
-        <a href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/List.html"> <code class="code">float list</code></a>.
+        <a href="List.html"> <code class="code">float list</code></a>.
 </div>
 </td></tr>
 <tr><td><a href="Dls.ArrayDenseMatrix.html#VALormqr">ormqr</a> [<a href="Dls.ArrayDenseMatrix.html">Dls.ArrayDenseMatrix</a>]</td>
@@ -2546,22 +2539,26 @@ Left preconditioning.
 </td></tr>
 <tr><td><a href="Idas_bbd.html#VALprec_left">prec_left</a> [<a href="Idas_bbd.html">Idas_bbd</a>]</td>
 <td><div class="info">
-Left preconditioning using the Parallel Band-Block-Diagonal module.
+Left preconditioning using the Parallel Band-Block-Diagonal
+    module.
 </div>
 </td></tr>
 <tr><td><a href="Ida_bbd.html#VALprec_left">prec_left</a> [<a href="Ida_bbd.html">Ida_bbd</a>]</td>
 <td><div class="info">
-Left preconditioning using the Parallel Band-Block-Diagonal module.
+Left preconditioning using the Parallel Band-Block-Diagonal
+    module.
 </div>
 </td></tr>
 <tr><td><a href="Cvodes_bbd.html#VALprec_left">prec_left</a> [<a href="Cvodes_bbd.html">Cvodes_bbd</a>]</td>
 <td><div class="info">
-Left preconditioning using the Parallel Band-Block-Diagonal module.
+Left preconditioning using the Parallel Band-Block-Diagonal
+    module.
 </div>
 </td></tr>
 <tr><td><a href="Cvode_bbd.html#VALprec_left">prec_left</a> [<a href="Cvode_bbd.html">Cvode_bbd</a>]</td>
 <td><div class="info">
-Left preconditioning using the Parallel Band-Block-Diagonal module.
+Left preconditioning using the Parallel Band-Block-Diagonal
+    module.
 </div>
 </td></tr>
 <tr><td><a href="Ida.Spils.html#VALprec_left">prec_left</a> [<a href="Ida.Spils.html">Ida.Spils</a>]</td>
@@ -2616,17 +2613,20 @@ Right preconditioning.
 </td></tr>
 <tr><td><a href="Cvodes_bbd.html#VALprec_right">prec_right</a> [<a href="Cvodes_bbd.html">Cvodes_bbd</a>]</td>
 <td><div class="info">
-Right preconditioning using the Parallel Band-Block-Diagonal module.
+Right preconditioning using the Parallel Band-Block-Diagonal
+    module.
 </div>
 </td></tr>
 <tr><td><a href="Cvode_bbd.html#VALprec_right">prec_right</a> [<a href="Cvode_bbd.html">Cvode_bbd</a>]</td>
 <td><div class="info">
-Right preconditioning using the Parallel Band-Block-Diagonal module.
+Right preconditioning using the Parallel Band-Block-Diagonal
+    module.
 </div>
 </td></tr>
 <tr><td><a href="Kinsol_bbd.html#VALprec_right">prec_right</a> [<a href="Kinsol_bbd.html">Kinsol_bbd</a>]</td>
 <td><div class="info">
-Right preconditioning using the Parallel Band-Block-Diagonal module.
+Right preconditioning using the Parallel Band-Block-Diagonal
+    module.
 </div>
 </td></tr>
 <tr><td><a href="Kinsol.Spils.html#VALprec_right">prec_right</a> [<a href="Kinsol.Spils.html">Kinsol.Spils</a>]</td>
@@ -2700,7 +2700,7 @@ Reinitializes the backward problem with new parameters and state
 </td></tr>
 <tr><td><a href="Idas.Sensitivity.Quadrature.html#VALreinit">reinit</a> [<a href="Idas.Sensitivity.Quadrature.html">Idas.Sensitivity.Quadrature</a>]</td>
 <td><div class="info">
-Reinitializes the sensitivity-dependent quadrature integration.
+Reinitializes the quadrature sensitivity integration.
 </div>
 </td></tr>
 <tr><td><a href="Idas.Sensitivity.html#VALreinit">reinit</a> [<a href="Idas.Sensitivity.html">Idas.Sensitivity</a>]</td>
@@ -2727,7 +2727,7 @@ Reinitializes the backward problem with new parameters and state
 </td></tr>
 <tr><td><a href="Cvodes.Sensitivity.Quadrature.html#VALreinit">reinit</a> [<a href="Cvodes.Sensitivity.Quadrature.html">Cvodes.Sensitivity.Quadrature</a>]</td>
 <td><div class="info">
-Reinitializes the sensitivity-dependent quadrature integration.
+Reinitializes the quadrature sensitivity integration.
 </div>
 </td></tr>
 <tr><td><a href="Cvodes.Sensitivity.html#VALreinit">reinit</a> [<a href="Cvodes.Sensitivity.html">Cvodes.Sensitivity</a>]</td>
@@ -3508,7 +3508,7 @@ Specify how to use quadrature variables in step size control.
 </td></tr>
 <tr><td><a href="Idas.Sensitivity.Quadrature.html#VALset_tolerances">set_tolerances</a> [<a href="Idas.Sensitivity.Quadrature.html">Idas.Sensitivity.Quadrature</a>]</td>
 <td><div class="info">
-Specify how to use quadrature variables in step size control.
+Specify how to use quadrature sensitivities in step size control.
 </div>
 </td></tr>
 <tr><td><a href="Idas.Sensitivity.html#VALset_tolerances">set_tolerances</a> [<a href="Idas.Sensitivity.html">Idas.Sensitivity</a>]</td>
@@ -3533,7 +3533,7 @@ Sets the integration tolerances for the backward problem.
 </td></tr>
 <tr><td><a href="Cvodes.Sensitivity.Quadrature.html#VALset_tolerances">set_tolerances</a> [<a href="Cvodes.Sensitivity.Quadrature.html">Cvodes.Sensitivity.Quadrature</a>]</td>
 <td><div class="info">
-Specify how to use quadrature variables in step size control.
+Specify how to use quadrature sensitivities in step size control.
 </div>
 </td></tr>
 <tr><td><a href="Cvodes.Sensitivity.html#VALset_tolerances">set_tolerances</a> [<a href="Cvodes.Sensitivity.html">Cvodes.Sensitivity</a>]</td>
@@ -3738,7 +3738,7 @@ Creates a new array from the contents of a given value.
 </td></tr>
 <tr><td><a href="Sundials.RealArray.html#VALto_array">to_array</a> [<a href="Sundials.RealArray.html">Sundials.RealArray</a>]</td>
 <td><div class="info">
-Copies into a new <a href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/Array.html"> <code class="code">float array</code></a>.
+Copies into a new <a href="Array.html"> <code class="code">float array</code></a>.
 </div>
 </td></tr>
 <tr><td><a href="Ida.VarId.html#VALto_float">to_float</a> [<a href="Ida.VarId.html">Ida.VarId</a>]</td>
@@ -3763,7 +3763,7 @@ Copies into a list.
 </td></tr>
 <tr><td><a href="Sundials.RealArray.html#VALto_list">to_list</a> [<a href="Sundials.RealArray.html">Sundials.RealArray</a>]</td>
 <td><div class="info">
-Copies into a <a href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/List.html"> <code class="code">float list</code></a>.
+Copies into a <a href="List.html"> <code class="code">float list</code></a>.
 </div>
 </td></tr>
 <tr><td><a href="Idas.Sensitivity.html#VALtoggle_off">toggle_off</a> [<a href="Idas.Sensitivity.html">Idas.Sensitivity</a>]</td>

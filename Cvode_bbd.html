@@ -140,15 +140,17 @@ Functions that perform the interprocess communication necessary
 
 
 <pre><span id="VALprec_left"><span class="keyword">val</span> prec_left</span> : <code class="type">?dqrely:float -><br>       <a href="Cvode_bbd.html#TYPEbandwidths">bandwidths</a> -><br>       ?comm_fn:<a href="Cvode_bbd.html#TYPEcomm_fn">comm_fn</a> -><br>       <a href="Cvode_bbd.html#TYPElocal_fn">local_fn</a> -> <a href="Cvode_bbd.html#TYPEparallel_preconditioner">parallel_preconditioner</a></code></pre><div class="info ">
-Left preconditioning using the Parallel Band-Block-Diagonal module.
-    The difference quotient operation is controlled by <code class="code">?dqrely</code>,
-    the relative increment in components of <code class="code">y</code>, and <a href="Cvode_bbd.html#TYPEbandwidths"><code class="code"><span class="constructor">Cvode_bbd</span>.bandwidths</code></a>.<br>
+Left preconditioning using the Parallel Band-Block-Diagonal
+    module.  The difference quotient operation is controlled by
+    <code class="code">?dqrely</code>, which specifies the relative increment in components of
+    <code class="code">y</code>, and <a href="Cvode_bbd.html#TYPEbandwidths"><code class="code"><span class="constructor">Cvode_bbd</span>.bandwidths</code></a>.<br>
 <div class="sundials cvode"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node5.html#sss:cvbbdpre">CVBBDPrecInit</a></div></div>
 
 <pre><span id="VALprec_right"><span class="keyword">val</span> prec_right</span> : <code class="type">?dqrely:float -><br>       <a href="Cvode_bbd.html#TYPEbandwidths">bandwidths</a> -><br>       ?comm_fn:<a href="Cvode_bbd.html#TYPEcomm_fn">comm_fn</a> -><br>       <a href="Cvode_bbd.html#TYPElocal_fn">local_fn</a> -> <a href="Cvode_bbd.html#TYPEparallel_preconditioner">parallel_preconditioner</a></code></pre><div class="info ">
-Right preconditioning using the Parallel Band-Block-Diagonal module.
-    The difference quotient operation is controlled by <code class="code">?dqrely</code>,
-    the relative increment in components of <code class="code">y</code>, and <a href="Cvode_bbd.html#TYPEbandwidths"><code class="code"><span class="constructor">Cvode_bbd</span>.bandwidths</code></a>.<br>
+Right preconditioning using the Parallel Band-Block-Diagonal
+    module.  The difference quotient operation is controlled by
+    <code class="code">?dqrely</code>, which specifies the relative increment in components of
+    <code class="code">y</code>, and <a href="Cvode_bbd.html#TYPEbandwidths"><code class="code"><span class="constructor">Cvode_bbd</span>.bandwidths</code></a>.<br>
 <div class="sundials cvode"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node5.html#sss:cvbbdpre">CVBBDPrecInit</a></div></div>
 
 <pre><span id="VALprec_both"><span class="keyword">val</span> prec_both</span> : <code class="type">?dqrely:float -><br>       <a href="Cvode_bbd.html#TYPEbandwidths">bandwidths</a> -><br>       ?comm_fn:<a href="Cvode_bbd.html#TYPEcomm_fn">comm_fn</a> -><br>       <a href="Cvode_bbd.html#TYPElocal_fn">local_fn</a> -> <a href="Cvode_bbd.html#TYPEparallel_preconditioner">parallel_preconditioner</a></code></pre><div class="info ">

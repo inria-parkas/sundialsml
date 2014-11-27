@@ -54,8 +54,8 @@
 &nbsp;&nbsp;<span class="keyword">type</span>&nbsp;(<span class="keywordsign">'</span>t,&nbsp;<span class="keywordsign">'</span>d)&nbsp;jacobian_arg&nbsp;=&nbsp;{<br>
 &nbsp;&nbsp;&nbsp;&nbsp;jac_t&nbsp;:&nbsp;float;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;jac_y&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;jac_yB&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;jac_fyB&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;jac_yb&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;jac_fyb&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;jac_tmp&nbsp;:&nbsp;<span class="keywordsign">'</span>t;<br>
 &nbsp;&nbsp;}<br>
 &nbsp;&nbsp;<span class="keyword">type</span>&nbsp;bandrange&nbsp;=&nbsp;<span class="constructor">Cvode_impl</span>.bandrange&nbsp;=&nbsp;{&nbsp;mupper&nbsp;:&nbsp;int;&nbsp;mlower&nbsp;:&nbsp;int;&nbsp;}<br>
@@ -190,7 +190,12 @@
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Cvodes</span>.<span class="constructor">Adjoint</span>.bsession&nbsp;<span class="keywordsign">-&gt;</span><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Spils</span>.preconditioning_type&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br>
-&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;brhsfn_args&nbsp;=&nbsp;{&nbsp;t&nbsp;:&nbsp;float;&nbsp;y&nbsp;:&nbsp;<span class="keywordsign">'</span>d;&nbsp;yB&nbsp;:&nbsp;<span class="keywordsign">'</span>d;&nbsp;}<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;brhsfn_args&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Cvode_impl</span>.<span class="constructor">AdjointTypes</span>.brhsfn_args&nbsp;=&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;t&nbsp;:&nbsp;float;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;y&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;yb&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
+&nbsp;&nbsp;}<br>
 &nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;brhsfn_no_sens&nbsp;=&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Cvodes</span>.<span class="constructor">Adjoint</span>.brhsfn_args&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
 &nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;brhsfn_with_sens&nbsp;=<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Cvodes</span>.<span class="constructor">Adjoint</span>.brhsfn_args&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
@@ -212,7 +217,7 @@
 &nbsp;&nbsp;&nbsp;&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Cvodes</span>.<span class="constructor">Adjoint</span>.bsession<br>
 &nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Quadrature</span>&nbsp;:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">sig</span><br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;bquadrhsfn_args&nbsp;=&nbsp;{&nbsp;t&nbsp;:&nbsp;float;&nbsp;y&nbsp;:&nbsp;<span class="keywordsign">'</span>d;&nbsp;yB&nbsp;:&nbsp;<span class="keywordsign">'</span>d;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;bquadrhsfn_args&nbsp;=&nbsp;{&nbsp;t&nbsp;:&nbsp;float;&nbsp;y&nbsp;:&nbsp;<span class="keywordsign">'</span>d;&nbsp;yb&nbsp;:&nbsp;<span class="keywordsign">'</span>d;&nbsp;}<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;bquadrhsfn_no_sens&nbsp;=<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Cvodes</span>.<span class="constructor">Adjoint</span>.<span class="constructor">Quadrature</span>.bquadrhsfn_args&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;bquadrhsfn_with_sens&nbsp;=<br>

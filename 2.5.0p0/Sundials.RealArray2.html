@@ -51,7 +51,7 @@ Matrices of floats (wrappers around two-dimensional bigarrays).<br>
 <pre><span id="TYPEt"><span class="keyword">type</span> <code class="type"></code>t</span> </pre>
 <div class="info ">
 A two-dimensional matrix. The underlying data can be accessed as
-        a <a href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.Array2.html">Bigarray</a> via <a href="Sundials.RealArray2.html#VALunwrap"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RealArray2</span>.unwrap</code></a>,
+        a <a href="Bigarray.Array2.html">Bigarray</a> via <a href="Sundials.RealArray2.html#VALunwrap"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RealArray2</span>.unwrap</code></a>,
         but note that the first index specifies the column.<br>
 </div>
 
@@ -59,7 +59,7 @@ A two-dimensional matrix. The underlying data can be accessed as
 <pre><span id="TYPEdata"><span class="keyword">type</span> <code class="type"></code>data</span> = <code class="type">(float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t</code> </pre>
 <div class="info ">
 An alias for the underlying
-        <a href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.Array2.html">Bigarray</a>.<br>
+        <a href="Bigarray.Array2.html">Bigarray</a>.<br>
 </div>
 
 
@@ -97,7 +97,7 @@ Creates a new array with the same contents as an existing one.<br>
 
 <pre><span id="VALblit"><span class="keyword">val</span> blit</span> : <code class="type"><a href="Sundials.RealArray2.html#TYPEt">t</a> -> <a href="Sundials.RealArray2.html#TYPEt">t</a> -> unit</code></pre><div class="info ">
 Copy the first array into the second one.
-        See <a href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.Genarray.html#VALblit">
+        See <a href="Bigarray.Genarray.html#VALblit">
         <code class="code"><span class="constructor">Bigarray</span>.<span class="constructor">Genarray</span>.blit</code></a> for more details.<br>
 </div>
 

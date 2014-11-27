@@ -38,8 +38,8 @@
 &nbsp;&nbsp;&nbsp;&nbsp;y&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;y'&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;res&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;yS&nbsp;:&nbsp;<span class="keywordsign">'</span>d&nbsp;array;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;yS'&nbsp;:&nbsp;<span class="keywordsign">'</span>d&nbsp;array;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;:&nbsp;<span class="keywordsign">'</span>d&nbsp;array;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;s'&nbsp;:&nbsp;<span class="keywordsign">'</span>d&nbsp;array;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;tmp&nbsp;:&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Ida_impl</span>.triple;<br>
 &nbsp;&nbsp;}<br>
 &nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;sensresfn&nbsp;=&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Idas</span>.<span class="constructor">Sensitivity</span>.sensresfn_args&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
@@ -49,7 +49,6 @@
 &nbsp;&nbsp;&nbsp;&nbsp;pbar&nbsp;:&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.t&nbsp;option;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;plist&nbsp;:&nbsp;int&nbsp;array&nbsp;option;<br>
 &nbsp;&nbsp;}<br>
-&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;no_sens_params&nbsp;:&nbsp;<span class="constructor">Idas</span>.<span class="constructor">Sensitivity</span>.sens_params<br>
 &nbsp;&nbsp;<span class="keyword">type</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;tolerance&nbsp;=<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">SStolerances</span>&nbsp;<span class="keyword">of</span>&nbsp;float&nbsp;*&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.t<br>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">SVtolerances</span>&nbsp;<span class="keyword">of</span>&nbsp;float&nbsp;*&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;array<br>
@@ -58,8 +57,8 @@
 &nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span><br>
 &nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Idas</span>.<span class="constructor">Sensitivity</span>.tolerance&nbsp;<span class="keywordsign">-&gt;</span><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Idas</span>.<span class="constructor">Sensitivity</span>.sens_method&nbsp;<span class="keywordsign">-&gt;</span><br>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Idas</span>.<span class="constructor">Sensitivity</span>.sens_params&nbsp;<span class="keywordsign">-&gt;</span><br>
-&nbsp;&nbsp;&nbsp;&nbsp;?fS:<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Idas</span>.<span class="constructor">Sensitivity</span>.sensresfn&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?sens_params:<span class="constructor">Idas</span>.<span class="constructor">Sensitivity</span>.sens_params&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?fs:<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Idas</span>.<span class="constructor">Sensitivity</span>.sensresfn&nbsp;<span class="keywordsign">-&gt;</span><br>
 &nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
 &nbsp;&nbsp;<span class="keyword">val</span>&nbsp;reinit&nbsp;:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span><br>
@@ -72,8 +71,8 @@
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;t&nbsp;:&nbsp;float;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;y&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;y'&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;yS&nbsp;:&nbsp;<span class="keywordsign">'</span>d&nbsp;array;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;yS'&nbsp;:&nbsp;<span class="keywordsign">'</span>d&nbsp;array;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;:&nbsp;<span class="keywordsign">'</span>d&nbsp;array;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s'&nbsp;:&nbsp;<span class="keywordsign">'</span>d&nbsp;array;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;q&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tmp&nbsp;:&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Ida_impl</span>.triple;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
@@ -82,7 +81,7 @@
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">'</span>d&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;init&nbsp;:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span><br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?fQS:<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Idas</span>.<span class="constructor">Sensitivity</span>.<span class="constructor">Quadrature</span>.quadsensrhsfn&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?fqs:<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Idas</span>.<span class="constructor">Sensitivity</span>.<span class="constructor">Quadrature</span>.quadsensrhsfn&nbsp;<span class="keywordsign">-&gt;</span><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;reinit&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Ida</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;tolerance&nbsp;=<br>

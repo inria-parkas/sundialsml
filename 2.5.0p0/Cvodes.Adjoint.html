@@ -206,7 +206,7 @@ The forward solution vector.<br>
 <td align="left" valign="top" >
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
-<code><span id="TYPEELTjacobian_arg.jac_yB">jac_yB</span>&nbsp;: <code class="type">'d</code>;</code></td>
+<code><span id="TYPEELTjacobian_arg.jac_yb">jac_yb</span>&nbsp;: <code class="type">'d</code>;</code></td>
 <td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
 The backward solution vector.<br>
 </div>
@@ -216,7 +216,7 @@ The backward solution vector.<br>
 <td align="left" valign="top" >
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
-<code><span id="TYPEELTjacobian_arg.jac_fyB">jac_fyB</span>&nbsp;: <code class="type">'d</code>;</code></td>
+<code><span id="TYPEELTjacobian_arg.jac_fyb">jac_fyb</span>&nbsp;: <code class="type">'d</code>;</code></td>
 <td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
 The backward right-hand side function <code class="code">fB</code>.<br>
 </div>
@@ -281,27 +281,36 @@ Scaled Preconditioned Iterative Linear Solvers.
 <br>
 <h2 id="bsolve">Backward solutions</h2><br>
 
-<pre><code><span id="TYPEbrhsfn_args"><span class="keyword">type</span> <code class="type">'d</code> brhsfn_args</span> = {</code></pre><table class="typetable">
+<pre><span id="TYPEbrhsfn_args"><span class="keyword">type</span> <code class="type">'d</code> brhsfn_args</span> = <code class="type">'d AdjointTypes.brhsfn_args</code> = {</pre><table class="typetable">
 <tr>
 <td align="left" valign="top" >
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
 <code><span id="TYPEELTbrhsfn_args.t">t</span>&nbsp;: <code class="type">float</code>;</code></td>
-
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The value of the independent variable.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr>
 <tr>
 <td align="left" valign="top" >
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
 <code><span id="TYPEELTbrhsfn_args.y">y</span>&nbsp;: <code class="type">'d</code>;</code></td>
-
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The vector of dependent-variable values $y(t)$.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr>
 <tr>
 <td align="left" valign="top" >
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
-<code><span id="TYPEELTbrhsfn_args.yB">yB</span>&nbsp;: <code class="type">'d</code>;</code></td>
-
+<code><span id="TYPEELTbrhsfn_args.yb">yb</span>&nbsp;: <code class="type">'d</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The vector of backward dependent-variable values $y_B(t)$.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr></table>
 }
 
@@ -315,7 +324,7 @@ Arguments common to <a href="Cvodes.Adjoint.html#TYPEbrhsfn_no_sens"><code class
 Backward functions without forward sensitivities. They are passed
         the arguments:<ul>
 <li><code class="code">args</code>, the current values of forward and backward variables, and,</li>
-<li><code class="code">yB'</code>, a vector for storing the values
+<li><code class="code">yb'</code>, a vector for storing the values
                  $\dot{y}_B = f_B(t, y, y_B)$.</li>
 </ul>
 
@@ -333,10 +342,9 @@ Backward functions without forward sensitivities. They are passed
 <div class="info ">
 Backward functions with forward sensitivities. They are passed the
         arguments:<ul>
-<li><code class="code">args</code>, the current values of state and backward sensitivity
-                  variables,</li>
-<li><code class="code">yS</code>, an array holding the values of forward sensitivity vectors, and,</li>
-<li><code class="code">yB'</code>, a vector for storing the values
+<li><code class="code">args</code>, the current values of state and backward sensitivity variables,</li>
+<li><code class="code">s</code>, an array holding the values of forward sensitivity vectors, and,</li>
+<li><code class="code">yb'</code>, a vector for storing the values
                  $\dot{y}_B = f_B(t, y, y_S, y_B)$.</li>
 </ul>
 
@@ -493,10 +501,10 @@ Fills the given vector with the solution of the backward ODE problem at
 
 <pre><span id="VALget_dky"><span class="keyword">val</span> get_dky</span> : <code class="type">('d, 'k) <a href="Cvodes.Adjoint.html#TYPEbsession">bsession</a> -><br>       ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> float -> int -> unit</code></pre><div class="info ">
 Returns the interpolated solution or derivatives.
-        <code class="code">get_dky s dky t k</code> computes the <code class="code">k</code>th derivative of the backward
+        <code class="code">get_dky s dkyb t k</code> computes the <code class="code">k</code>th derivative of the backward
         function at time <code class="code">t</code>, i.e.,
         $\frac{d^\mathtt{k}y_B(\mathtt{t})}{\mathit{dt}^\mathtt{k}}$,
-        and stores it in <code class="code">dky</code>. The arguments must satisfy
+        and stores it in <code class="code">dkyb</code>. The arguments must satisfy
         $t_n - h_u \leq \mathtt{t} \leq t_n$—where $t_n$
         denotes <a href="Cvodes.Adjoint.html#VALget_current_time"><code class="code"><span class="constructor">Cvodes</span>.<span class="constructor">Adjoint</span>.get_current_time</code></a> and $h_u$ denotes <a href="Cvodes.Adjoint.html#VALget_last_step"><code class="code"><span class="constructor">Cvodes</span>.<span class="constructor">Adjoint</span>.get_last_step</code></a>,—
         and $0 \leq \mathtt{k} \leq q_u$—where $q_u$ denotes

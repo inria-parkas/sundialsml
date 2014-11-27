@@ -217,7 +217,7 @@ The forward derivatives vector.<br>
 <td align="left" valign="top" >
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
-<code><span id="TYPEELTjacobian_arg.jac_yB">jac_yB</span>&nbsp;: <code class="type">'d</code>;</code></td>
+<code><span id="TYPEELTjacobian_arg.jac_yb">jac_yb</span>&nbsp;: <code class="type">'d</code>;</code></td>
 <td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
 The backward solution vector.<br>
 </div>
@@ -227,7 +227,7 @@ The backward solution vector.<br>
 <td align="left" valign="top" >
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
-<code><span id="TYPEELTjacobian_arg.jac_yB'">jac_yB'</span>&nbsp;: <code class="type">'d</code>;</code></td>
+<code><span id="TYPEELTjacobian_arg.jac_yb'">jac_yb'</span>&nbsp;: <code class="type">'d</code>;</code></td>
 <td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
 The forward derivatives vector.<br>
 </div>
@@ -237,7 +237,7 @@ The forward derivatives vector.<br>
 <td align="left" valign="top" >
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
-<code><span id="TYPEELTjacobian_arg.jac_resB">jac_resB</span>&nbsp;: <code class="type">'d</code>;</code></td>
+<code><span id="TYPEELTjacobian_arg.jac_resb">jac_resb</span>&nbsp;: <code class="type">'d</code>;</code></td>
 <td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
 The current residual for the backward problem.<br>
 </div>
@@ -310,41 +310,57 @@ Scaled Preconditioned Iterative Linear Solvers
 <br>
 <h2 id="bsolve">Backward solutions</h2><br>
 
-<pre><code><span id="TYPEbresfn_args"><span class="keyword">type</span> <code class="type">'d</code> bresfn_args</span> = {</code></pre><table class="typetable">
+<pre><span id="TYPEbresfn_args"><span class="keyword">type</span> <code class="type">'d</code> bresfn_args</span> = <code class="type">'d AdjointTypes.bresfn_args</code> = {</pre><table class="typetable">
 <tr>
 <td align="left" valign="top" >
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
 <code><span id="TYPEELTbresfn_args.t">t</span>&nbsp;: <code class="type">float</code>;</code></td>
-
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The value of the independent variable.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr>
 <tr>
 <td align="left" valign="top" >
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
 <code><span id="TYPEELTbresfn_args.y">y</span>&nbsp;: <code class="type">'d</code>;</code></td>
-
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The vector of dependent-variable values $y(t)$.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr>
 <tr>
 <td align="left" valign="top" >
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
 <code><span id="TYPEELTbresfn_args.y'">y'</span>&nbsp;: <code class="type">'d</code>;</code></td>
-
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The vector of dependent-variable derivatives $\dot{y}(t)$ .<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr>
 <tr>
 <td align="left" valign="top" >
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
-<code><span id="TYPEELTbresfn_args.yB">yB</span>&nbsp;: <code class="type">'d</code>;</code></td>
-
+<code><span id="TYPEELTbresfn_args.yb">yb</span>&nbsp;: <code class="type">'d</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The vector of backward dependent-variable values $y_B(t)$.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr>
 <tr>
 <td align="left" valign="top" >
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
-<code><span id="TYPEELTbresfn_args.yB'">yB'</span>&nbsp;: <code class="type">'d</code>;</code></td>
-
+<code><span id="TYPEELTbresfn_args.yb'">yb'</span>&nbsp;: <code class="type">'d</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The vector of backward dependent-variable derivatives
+            $\dot{y}_B(t)$ .<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr></table>
 }
 
@@ -374,11 +390,10 @@ Backward functions without forward sensitivities. They are passed
 <div class="info ">
 Backward functions with forward sensitivities. They are passed the
         arguments:<ul>
-<li><code class="code">args</code>, the current values of forward and backward state variables,
-                  and,</li>
-<li><code class="code">yS</code>, the array of forward sensitivity vectors,</li>
-<li><code class="code">yS'</code>, the array of forward sensitivity derivative vectors, and,</li>
-<li><code class="code">resB</code>, a vector for storing the residual value
+<li><code class="code">args</code>, the current values of forward and backward state variables,</li>
+<li><code class="code">s</code>, the array of forward sensitivity vectors,</li>
+<li><code class="code">s'</code>, the array of forward sensitivity derivative vectors, and,</li>
+<li><code class="code">resb</code>, a vector for storing the residual value
                 $F_B(t, y, \dot{y}, s, \dot{s}, y_B, \dot{y}_B)$.</li>
 </ul>
 
@@ -508,10 +523,10 @@ Fills the given vectors, <code class="code">yb</code> and <code class="code">yb'
 
 <pre><span id="VALget_dky"><span class="keyword">val</span> get_dky</span> : <code class="type">('d, 'k) <a href="Idas.Adjoint.html#TYPEbsession">bsession</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> float -> int -> unit</code></pre><div class="info ">
 Returns the interpolated solution or derivatives.
-        <code class="code">get_dky s dky t k</code> computes the <code class="code">k</code>th derivative of the backward
+        <code class="code">get_dky s dkyb t k</code> computes the <code class="code">k</code>th derivative of the backward
         function at time <code class="code">t</code>, i.e.,
         $\frac{d^\mathtt{k}y_B(\mathtt{t})}{\mathit{dt}^\mathtt{k}}$,
-        and stores it in <code class="code">dky</code>. The arguments must satisfy
+        and stores it in <code class="code">dkyb</code>. The arguments must satisfy
         $t_n - h_u \leq \mathtt{t} \leq t_n$—where $t_n$
         denotes <a href="Idas.Adjoint.html#VALget_current_time"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.get_current_time</code></a> and $h_u$ denotes <a href="Idas.Adjoint.html#VALget_last_step"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.get_last_step</code></a>,—
         and $0 \leq \mathtt{k} \leq q_u$—where $q_u$ denotes

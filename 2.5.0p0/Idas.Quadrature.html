@@ -49,7 +49,7 @@
 Integration of pure quadrature equations.
 <p>
 
-    Adds an additional vector $y_Q$ of $N_Q$ quadrature variables defined by
+    Adds a vector $y_Q$ of $N_Q$ quadrature variables defined by
     $\frac{\mathrm{d} y_Q}{\mathrm{d}t} = f_Q(t, y, \dot{y}, p)$. These
     are treated more efficiently since they are excluded from the nonlinear
     solution stage.<br>
@@ -102,9 +102,9 @@ Returns the interpolated solution or derivatives of quadrature
         variables.
 <p>
 
-        <code class="code">get_dky s dky t k</code> computes the <code class="code">k</code>th derivative at time <code class="code">t</code>, i.e.,
+        <code class="code">get_dky s dkyq t k</code> computes the <code class="code">k</code>th derivative at time <code class="code">t</code>, i.e.,
         $\frac{d^\mathtt{k}y_Q(\mathtt{t})}{\mathit{dt}^\mathtt{k}}$,
-        and stores it in <code class="code">dky</code>. The arguments must satisfy $t_n - h_u \leq
+        and stores it in <code class="code">dkyq</code>. The arguments must satisfy $t_n - h_u \leq
         \mathtt{t} \leq t_n$—where $t_n$ denotes <a href="Ida.html#VALget_current_time"><code class="code"><span class="constructor">Ida</span>.get_current_time</code></a>
         and $h_u$ denotes <a href="Ida.html#VALget_last_step"><code class="code"><span class="constructor">Ida</span>.get_last_step</code></a>,— and
         $0 \leq \mathtt{k} \leq q_u$—where

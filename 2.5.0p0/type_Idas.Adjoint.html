@@ -58,9 +58,9 @@
 &nbsp;&nbsp;&nbsp;&nbsp;jac_t&nbsp;:&nbsp;float;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;jac_y&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;jac_y'&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;jac_yB&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;jac_yB'&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;jac_resB&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;jac_yb&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;jac_yb'&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;jac_resb&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;jac_coef&nbsp;:&nbsp;float;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;jac_tmp&nbsp;:&nbsp;<span class="keywordsign">'</span>t;<br>
 &nbsp;&nbsp;}<br>
@@ -139,7 +139,14 @@
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.<span class="constructor">Spils</span>.jac_times_vec_fn&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;clear_jac_times_vec_fn&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.bsession&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br>
-&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;bresfn_args&nbsp;=&nbsp;{&nbsp;t&nbsp;:&nbsp;float;&nbsp;y&nbsp;:&nbsp;<span class="keywordsign">'</span>d;&nbsp;y'&nbsp;:&nbsp;<span class="keywordsign">'</span>d;&nbsp;yB&nbsp;:&nbsp;<span class="keywordsign">'</span>d;&nbsp;yB'&nbsp;:&nbsp;<span class="keywordsign">'</span>d;&nbsp;}<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;bresfn_args&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Ida_impl</span>.<span class="constructor">AdjointTypes</span>.bresfn_args&nbsp;=&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;t&nbsp;:&nbsp;float;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;y&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;y'&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;yb&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;yb'&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
+&nbsp;&nbsp;}<br>
 &nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;bresfn_no_sens&nbsp;=&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.bresfn_args&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
 &nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;bresfn_with_sens&nbsp;=<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.bresfn_args&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
@@ -164,8 +171,8 @@
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;t&nbsp;:&nbsp;float;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;y&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;y'&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;yB&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;yB'&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;yb&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;yb'&nbsp;:&nbsp;<span class="keywordsign">'</span>d;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;bquadrhsfn_no_sens&nbsp;=<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Idas</span>.<span class="constructor">Adjoint</span>.<span class="constructor">Quadrature</span>.bquadrhsfn_args&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>

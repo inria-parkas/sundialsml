@@ -45,18 +45,15 @@
 <h1>Module <a href="type_Idas.Sensitivity.Quadrature.html">Idas.Sensitivity.Quadrature</a></h1>
 
 <pre><span class="keyword">module</span> Quadrature: <code class="code"><span class="keyword">sig</span></code> <a href="Idas.Sensitivity.Quadrature.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
-Support for quadrature equations that depend not only on
-        state variables but also on forward sensitivities.
+Support for quadrature sensitivity equations.
 <p>
 
-        Adds an additional vector $y_\mathit{QS}$ of $N_\mathit{QS}$
-        quadrature variables defined by
-        $\frac{\mathrm{d} y_\mathit{QS}}{\mathrm{d}t}
+        Adds a vector $s_\mathit{Q}$ of $N_\mathit{Q}$
+        quadrature sensitivities
+        $\frac{\mathrm{d} s_\mathit{Q}}{\mathrm{d}t}
                 = f_{\mathit{QS}}(t, y, \dot{y}, s, \dot{s}, \dot{y}_Q, p)$.
-        The values of these variables are calculated more efficiently since they
-        are excluded from the nonlinear solution stage. While the sensitivities
-        of the ‘pure’ <a href="Idas.Quadrature.html"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Quadrature</span></code></a> variables, $y_Q$, are not provided
-        directly, they can be calculated using this more general mechanism.<br>
+        This mechanism allows, in particular, the calculation of the
+        sensitivities of the ‘pure’ <a href="Idas.Quadrature.html"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Quadrature</span></code></a> variables, $y_Q$.<br>
 <div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node3.html#SECTION00354000000000000000">Quadratures depending on forward sensitivities</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node6.html#SECTION00640000000000000000">Integration of quadrature equations depending on forward sensitivities</a></div></div>
 <hr width="100%">
 <br>
@@ -68,49 +65,71 @@ Support for quadrature equations that depend not only on
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
 <code><span id="TYPEELTquadsensrhsfn_args.t">t</span>&nbsp;: <code class="type">float</code>;</code></td>
-
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The value of the independent variable.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr>
 <tr>
 <td align="left" valign="top" >
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
 <code><span id="TYPEELTquadsensrhsfn_args.y">y</span>&nbsp;: <code class="type">'d</code>;</code></td>
-
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The vector of dependent-variable values $y(t)$.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr>
 <tr>
 <td align="left" valign="top" >
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
 <code><span id="TYPEELTquadsensrhsfn_args.y'">y'</span>&nbsp;: <code class="type">'d</code>;</code></td>
-
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The vector of dependent-variable derivatives
+                $\dot{y}(t)$ .<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr>
 <tr>
 <td align="left" valign="top" >
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
-<code><span id="TYPEELTquadsensrhsfn_args.yS">yS</span>&nbsp;: <code class="type">'d array</code>;</code></td>
-
+<code><span id="TYPEELTquadsensrhsfn_args.s">s</span>&nbsp;: <code class="type">'d array</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The array of sensitivity vectors.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr>
 <tr>
 <td align="left" valign="top" >
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
-<code><span id="TYPEELTquadsensrhsfn_args.yS'">yS'</span>&nbsp;: <code class="type">'d array</code>;</code></td>
-
+<code><span id="TYPEELTquadsensrhsfn_args.s'">s'</span>&nbsp;: <code class="type">'d array</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The array of sensitivity derivative vectors.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr>
 <tr>
 <td align="left" valign="top" >
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
 <code><span id="TYPEELTquadsensrhsfn_args.q">q</span>&nbsp;: <code class="type">'d</code>;</code></td>
-
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The current value of the quadrature right-hand side $q$.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr>
 <tr>
 <td align="left" valign="top" >
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
 <code><span id="TYPEELTquadsensrhsfn_args.tmp">tmp</span>&nbsp;: <code class="type">'d triple</code>;</code></td>
-
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Temporary storage vectors.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr></table>
 }
 
@@ -121,14 +140,12 @@ Arguments to <a href="Idas.Sensitivity.Quadrature.html#TYPEquadsensrhsfn"><code 
 
 <pre><span id="TYPEquadsensrhsfn"><span class="keyword">type</span> <code class="type">'d</code> quadsensrhsfn</span> = <code class="type">'d <a href="Idas.Sensitivity.Quadrature.html#TYPEquadsensrhsfn_args">quadsensrhsfn_args</a> -> 'd array -> unit</code> </pre>
 <div class="info ">
-Functions defining sensitivity-dependent quadrature variables.
-            The call <pre class="codepre"><code class="code">fQS&nbsp;args&nbsp;yqs'</code></pre> has arguments:
-<p>
-<ul>
+Functions defining quadrature sensitivities.
+            They are passed the arguments:<ul>
 <li><code class="code">args</code>, the current values of state, sensitivity, and quadrature
                       variables, and,</li>
-<li><code class="code">yqs'</code>, an array of vectors for storing the computead values of
-              $\dot{y}_\mathit{QS} =
+<li><code class="code">sq'</code>, an array of vectors for storing the computed values of
+              $\dot{s}_\mathit{Q} =
                   f_\mathit{QS}(t, y, \dot{y}, s, \dot{s}, \dot{y}_Q)$.</li>
 </ul>
 
@@ -142,18 +159,24 @@ Functions defining sensitivity-dependent quadrature variables.
 <div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node6.html#ss:user_fct_quad_sens">IDAQuadSensRhsFn</a></div></div>
 
 
-<pre><span id="VALinit"><span class="keyword">val</span> init</span> : <code class="type">('d, 'k) <a href="Ida.html#TYPEsession">Ida.session</a> -><br>       ?fQS:'d <a href="Idas.Sensitivity.Quadrature.html#TYPEquadsensrhsfn">quadsensrhsfn</a> -><br>       ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> array -> unit</code></pre><div class="info ">
-Activate the integration of quadrature equations that depend on
-            sensitivities. The right-hand sides of the sensitivity-dependent
-            quadrature equations are computed with <code class="code">~fQS</code> if given, and
-            otherwise using an internal implementation based on difference
-            quotients. An array of vectors specifies initial values for
-            the quadrature equations.<br>
+<pre><span id="VALinit"><span class="keyword">val</span> init</span> : <code class="type">('d, 'k) <a href="Ida.html#TYPEsession">Ida.session</a> -><br>       ?fqs:'d <a href="Idas.Sensitivity.Quadrature.html#TYPEquadsensrhsfn">quadsensrhsfn</a> -><br>       ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> array -> unit</code></pre><div class="info ">
+Activate the integration of quadrature sensitivities.  The
+            arguments are:<ul>
+<li><code class="code">~fqs</code>, a function that computes the right-hand sides
+              of the quadrature sensitivities, and</li>
+<li><code class="code">q0</code>, an array of vectors specifying initial values for the
+              quadrature sensitivities.</li>
+</ul>
+
+            If <code class="code">~fqs</code> is not given, an internal difference quotient
+            routine is used.  In that case, <a href="Idas.Sensitivity.html#VALinit"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Sensitivity</span>.init</code></a> must
+            have been invoked with a <code class="code">sens_params</code> whose <code class="code">pvals</code> is
+            non-<code class="code"><span class="constructor">None</span></code>.<br>
 <div class="raisedexceptions"><span class="raises">Raises</span> <code>QuadNotInitialized</code> <a href="Idas.Sensitivity.Quadrature.html#VALinit"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Sensitivity</span>.<span class="constructor">Quadrature</span>.init</code></a> has not been called.</div>
 <div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node6.html#ss:quad_sens_init">IDAQuadSensInit</a></div></div>
 
 <pre><span id="VALreinit"><span class="keyword">val</span> reinit</span> : <code class="type">('d, 'k) <a href="Ida.html#TYPEsession">Ida.session</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> array -> unit</code></pre><div class="info ">
-Reinitializes the sensitivity-dependent quadrature integration.<br>
+Reinitializes the quadrature sensitivity integration.<br>
 <div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node6.html#ss:quad_sens_init">IDAQuadSensReInit</a></div></div>
 <br>
 <h2 id="tols">Tolerance specification</h2><br>
@@ -198,20 +221,19 @@ Quadrature variables are not used for step-size control
 <code><span id="TYPEELTtolerance.EEtolerances"><span class="constructor">EEtolerances</span></span></code></td>
 <td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
 Calculate the integration tolerances for the
-                sensitivity-dependent quadratures from those provided for
+                quadrature sensitivities from those provided for
                 the pure quadrature variables.<br>
 </div>
 </td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr></table>
 
 <div class="info ">
-Tolerances for calculating sensitivity-dependent quadrature
-            variables.<br>
+Tolerances for calculating quadrature sensitivities.<br>
 </div>
 
 
 <pre><span id="VALset_tolerances"><span class="keyword">val</span> set_tolerances</span> : <code class="type">('d, 'k) <a href="Ida.html#TYPEsession">Ida.session</a> -><br>       ('d, 'k) <a href="Idas.Sensitivity.Quadrature.html#TYPEtolerance">tolerance</a> -> unit</code></pre><div class="info ">
-Specify how to use quadrature variables in step size control.<br>
+Specify how to use quadrature sensitivities in step size control.<br>
 <div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node6.html#ss:quad_sens_optional_input">IDASetQuadSensErrCon</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node6.html#ss:quad_sens_optional_input">IDAQuadSensSStolerances</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node6.html#ss:quad_sens_optional_input">IDAQuadSensSVtolerances</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node6.html#ss:quad_sens_optional_input">IDAQuadSensEEtolerances</a></div></div>
 <br>
 <h2 id="quadout">Output functions</h2><br>
@@ -236,10 +258,10 @@ Returns the interpolated solution or derivatives of the quadrature
             sensitivity solution.
 <p>
 
-            <code class="code">get_dky s dkyqs t k</code> computes the <code class="code">k</code>th derivative at time <code class="code">t</code>,
+            <code class="code">get_dky s dksq t k</code> computes the <code class="code">k</code>th derivative at time <code class="code">t</code>,
             i.e.,
-            $\frac{d^\mathtt{k}y_\mathit{QS}(\mathtt{t})}{\mathit{dt}^\mathtt{k}}$,
-            and stores it in <code class="code">dkyqs</code>. The arguments must satisfy $t_n - h_u
+            $\frac{d^\mathtt{k}s_\mathit{Q}(\mathtt{t})}{\mathit{dt}^\mathtt{k}}$,
+            and stores it in <code class="code">dksq</code>. The arguments must satisfy $t_n - h_u
             \leq \mathtt{t} \leq t_n$—where $t_n$ denotes
             <a href="Ida.html#VALget_current_time"><code class="code"><span class="constructor">Ida</span>.get_current_time</code></a> and $h_u$ denotes
             <a href="Ida.html#VALget_last_step"><code class="code"><span class="constructor">Ida</span>.get_last_step</code></a>,—and
@@ -254,7 +276,7 @@ Returns the interpolated solution or derivatives of the quadrature
 <pre><span id="VALget_dky1"><span class="keyword">val</span> get_dky1</span> : <code class="type">('d, 'k) <a href="Ida.html#TYPEsession">Ida.session</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> float -> int -> int -> unit</code></pre><div class="info ">
 Returns the interpolated solution or derivatives of a single
             quadrature sensitivity solution vector.
-            <code class="code">get_dky s dkys t k i</code> is like
+            <code class="code">get_dky s dksq t k i</code> is like
             <a href="Idas.Sensitivity.Quadrature.html#VALget_dky"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Sensitivity</span>.<span class="constructor">Quadrature</span>.get_dky</code></a> but restricted to the <code class="code">i</code>th sensitivity solution vector.<br>
 <div class="raisedexceptions"><span class="raises">Raises</span><ul><li><code>BadK</code> <code class="code">k</code> is not in the range 0, 1, ..., <code class="code">qlast</code>.</li>
 <li><code>BadT</code> <code class="code">t</code> is not in the allowed range.</li>

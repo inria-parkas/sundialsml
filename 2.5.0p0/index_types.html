@@ -283,14 +283,14 @@ Values indicating which types of roots are sought.
 <tr><td><a href="Nvector_parallel.html#TYPEdata">data</a> [<a href="Nvector_parallel.html">Nvector_parallel</a>]</td>
 <td><div class="info">
 Parallel nvectors carry triples of a local
-    <a href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.Array1.html"> bigarray</a> of floats,
+    <a href="Bigarray.Array1.html"> bigarray</a> of floats,
     a global length, and an MPI communicator.
 </div>
 </td></tr>
 <tr><td><a href="Nvector_serial.html#TYPEdata">data</a> [<a href="Nvector_serial.html">Nvector_serial</a>]</td>
 <td><div class="info">
 Serial nvectors are based on
-    <a href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.Array1.html"> bigarrays</a> of floats.
+    <a href="Bigarray.Array1.html"> bigarrays</a> of floats.
 </div>
 </td></tr>
 <tr><td><a href="Nvector_array.ARRAY_NVECTOR.html#TYPEdata">data</a> [<a href="Nvector_array.ARRAY_NVECTOR.html">Nvector_array.ARRAY_NVECTOR</a>]</td>
@@ -306,7 +306,7 @@ The data wrapped within an nvector.
 <tr><td><a href="Sundials.RealArray2.html#TYPEdata">data</a> [<a href="Sundials.RealArray2.html">Sundials.RealArray2</a>]</td>
 <td><div class="info">
 An alias for the underlying
-        <a href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.Array2.html">Bigarray</a>.
+        <a href="Bigarray.Array2.html">Bigarray</a>.
 </div>
 </td></tr>
 <tr><td><a href="Idas.Adjoint.Dls.html#TYPEdense_jac_fn">dense_jac_fn</a> [<a href="Idas.Adjoint.Dls.html">Idas.Adjoint.Dls</a>]</td>
@@ -571,7 +571,8 @@ Choice of linear multistep method.
 </td></tr>
 <tr><td><a href="Idas_bbd.html#TYPElocal_fn">local_fn</a> [<a href="Idas_bbd.html">Idas_bbd</a>]</td>
 <td><div class="info">
-Approximates the right-hand side function using local computations only.
+Functions that approximate backward residual functions using local
+    computations only.
 </div>
 </td></tr>
 <tr><td><a href="Ida_bbd.html#TYPElocal_fn">local_fn</a> [<a href="Ida_bbd.html">Ida_bbd</a>]</td>
@@ -581,7 +582,8 @@ Approximates the right-hand side function using local computations only.
 </td></tr>
 <tr><td><a href="Cvodes_bbd.html#TYPElocal_fn">local_fn</a> [<a href="Cvodes_bbd.html">Cvodes_bbd</a>]</td>
 <td><div class="info">
-Approximates the right-hand side function using local computations only.
+Functions that approximate backward right-hand side functions
+    using local computations only.
 </div>
 </td></tr>
 <tr><td><a href="Cvode_bbd.html#TYPElocal_fn">local_fn</a> [<a href="Cvode_bbd.html">Cvode_bbd</a>]</td>
@@ -847,13 +849,12 @@ Functions defining quadrature variables.
 </td></tr>
 <tr><td><a href="Idas.Sensitivity.Quadrature.html#TYPEquadsensrhsfn">quadsensrhsfn</a> [<a href="Idas.Sensitivity.Quadrature.html">Idas.Sensitivity.Quadrature</a>]</td>
 <td><div class="info">
-Functions defining sensitivity-dependent quadrature variables.
+Functions defining quadrature sensitivities.
 </div>
 </td></tr>
 <tr><td><a href="Cvodes.Sensitivity.Quadrature.html#TYPEquadsensrhsfn">quadsensrhsfn</a> [<a href="Cvodes.Sensitivity.Quadrature.html">Cvodes.Sensitivity.Quadrature</a>]</td>
 <td><div class="info">
-Functions defining sensitivity-dependent quadrature
-            variables.
+Functions defining quadrature sensitivities.
 </div>
 </td></tr>
 <tr><td><a href="Idas.Sensitivity.Quadrature.html#TYPEquadsensrhsfn_args">quadsensrhsfn_args</a> [<a href="Idas.Sensitivity.Quadrature.html">Idas.Sensitivity.Quadrature</a>]</td>
@@ -910,12 +911,14 @@ Specifies a sensitivity solution method.
 </td></tr>
 <tr><td><a href="Idas.Sensitivity.html#TYPEsens_params">sens_params</a> [<a href="Idas.Sensitivity.html">Idas.Sensitivity</a>]</td>
 <td><div class="info">
-Specifies problem parameter information for sensitivity calculations.
+Specifies problem parameter information for sensitivity
+        calculations.
 </div>
 </td></tr>
 <tr><td><a href="Cvodes.Sensitivity.html#TYPEsens_params">sens_params</a> [<a href="Cvodes.Sensitivity.html">Cvodes.Sensitivity</a>]</td>
 <td><div class="info">
-Specifies problem parameter information for sensitivity calculations.
+Specifies problem parameter information for sensitivity
+        calculations.
 </div>
 </td></tr>
 <tr><td><a href="Idas.Sensitivity.html#TYPEsensitivity_stats">sensitivity_stats</a> [<a href="Idas.Sensitivity.html">Idas.Sensitivity</a>]</td>
@@ -1115,7 +1118,7 @@ An instance of the SPGMR solver.
 <tr><td><a href="Dls.ArrayBandMatrix.html#TYPEt">t</a> [<a href="Dls.ArrayBandMatrix.html">Dls.ArrayBandMatrix</a>]</td>
 <td><div class="info">
 A band matrix accessible directly through a
-        <a href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.Array2.html"> Bigarray</a>.
+        <a href="Bigarray.Array2.html"> Bigarray</a>.
 </div>
 </td></tr>
 <tr><td><a href="Dls.BandMatrix.html#TYPEt">t</a> [<a href="Dls.BandMatrix.html">Dls.BandMatrix</a>]</td>
@@ -1126,7 +1129,7 @@ An abstract band matrix.
 <tr><td><a href="Dls.ArrayDenseMatrix.html#TYPEt">t</a> [<a href="Dls.ArrayDenseMatrix.html">Dls.ArrayDenseMatrix</a>]</td>
 <td><div class="info">
 A dense matrix accessible directly through a
-        <a href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.Array2.html"> Bigarray</a>.
+        <a href="Bigarray.Array2.html"> Bigarray</a>.
 </div>
 </td></tr>
 <tr><td><a href="Dls.DenseMatrix.html#TYPEt">t</a> [<a href="Dls.DenseMatrix.html">Dls.DenseMatrix</a>]</td>
@@ -1151,7 +1154,7 @@ Arrays that communicate the occurrence of zero-crossings.
 </td></tr>
 <tr><td><a href="Sundials.LintArray.html#TYPEt">t</a> [<a href="Sundials.LintArray.html">Sundials.LintArray</a>]</td>
 <td><div class="info">
-A <a href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.Array1.html"> Bigarray</a> of integers.
+A <a href="Bigarray.Array1.html"> Bigarray</a> of integers.
 </div>
 </td></tr>
 <tr><td><a href="Sundials.RealArray2.html#TYPEt">t</a> [<a href="Sundials.RealArray2.html">Sundials.RealArray2</a>]</td>
@@ -1161,7 +1164,7 @@ A two-dimensional matrix.
 </td></tr>
 <tr><td><a href="Sundials.RealArray.html#TYPEt">t</a> [<a href="Sundials.RealArray.html">Sundials.RealArray</a>]</td>
 <td><div class="info">
-A <a href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.Array1.html"> Bigarray</a> of floats.
+A <a href="Bigarray.Array1.html"> Bigarray</a> of floats.
 </div>
 </td></tr>
 <tr><td><a href="Idas.Adjoint.Quadrature.html#TYPEtolerance">tolerance</a> [<a href="Idas.Adjoint.Quadrature.html">Idas.Adjoint.Quadrature</a>]</td>
@@ -1176,8 +1179,7 @@ Tolerance specifications.
 </td></tr>
 <tr><td><a href="Idas.Sensitivity.Quadrature.html#TYPEtolerance">tolerance</a> [<a href="Idas.Sensitivity.Quadrature.html">Idas.Sensitivity.Quadrature</a>]</td>
 <td><div class="info">
-Tolerances for calculating sensitivity-dependent quadrature
-            variables.
+Tolerances for calculating quadrature sensitivities.
 </div>
 </td></tr>
 <tr><td><a href="Idas.Sensitivity.html#TYPEtolerance">tolerance</a> [<a href="Idas.Sensitivity.html">Idas.Sensitivity</a>]</td>
@@ -1202,8 +1204,7 @@ Tolerance specifications.
 </td></tr>
 <tr><td><a href="Cvodes.Sensitivity.Quadrature.html#TYPEtolerance">tolerance</a> [<a href="Cvodes.Sensitivity.Quadrature.html">Cvodes.Sensitivity.Quadrature</a>]</td>
 <td><div class="info">
-Tolerances for calculating sensitivity-dependent quadrature
-            variables.
+Tolerances for calculating quadrature sensitivities.
 </div>
 </td></tr>
 <tr><td><a href="Cvodes.Sensitivity.html#TYPEtolerance">tolerance</a> [<a href="Cvodes.Sensitivity.html">Cvodes.Sensitivity</a>]</td>

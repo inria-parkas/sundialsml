@@ -114,14 +114,18 @@ The bandwidths for the difference quotient Jacobian operation.<br>
 </div>
 
 
-<pre><span id="TYPElocal_fn"><span class="keyword">type</span> <code class="type"></code>local_fn</span> = <code class="type">float -><br>       <a href="Nvector_parallel.html#TYPEdata">Nvector_parallel.data</a> -><br>       <a href="Nvector_parallel.html#TYPEdata">Nvector_parallel.data</a> -><br>       <a href="Nvector_parallel.html#TYPEdata">Nvector_parallel.data</a> -><br>       <a href="Nvector_parallel.html#TYPEdata">Nvector_parallel.data</a> -> <a href="Nvector_parallel.html#TYPEdata">Nvector_parallel.data</a> -> unit</code> </pre>
+<pre><span id="TYPElocal_fn"><span class="keyword">type</span> <code class="type"></code>local_fn</span> = <code class="type"><a href="Nvector_parallel.html#TYPEdata">Nvector_parallel.data</a> <a href="Idas.Adjoint.html#TYPEbresfn_args">Idas.Adjoint.bresfn_args</a> -><br>       <a href="Nvector_parallel.html#TYPEdata">Nvector_parallel.data</a> -> unit</code> </pre>
 <div class="info ">
-Approximates the right-hand side function using local computations only.
-    In the call <code class="code">gloc t y yb y' r</code>, <code class="code">t</code> is the independent variable (time),
-    <code class="code">y</code> is the forward solution vector of dependent variables,
-    <code class="code">yb</code> is the backward dependent variable vector, <code class="code">y'</code> are the derivatives
-    with respect to <code class="code">y</code>, and <code class="code">r</code> is the output vector to fill with the
-    computed residual.
+Functions that approximate backward residual functions using local
+    computations only.  They are passed the arguments:<ul>
+<li><code class="code">args</code>, the current values of forward and backward variables
+              and their derivatives, and</li>
+<li><code class="code">resb</code>, a vector for storing a local approximation to the backward
+              residual function $F_B(t, y, \dot{y}, y_B, \dot{y}_B)$ .</li>
+</ul>
+
+    The approximation is allowed to coincide with the actual backward
+    residual function.
 <p>
 
     Raising <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a> signals a recoverable error.
@@ -129,14 +133,14 @@ Approximates the right-hand side function using local computations only.
 <div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#SECTION00742200000000000000">IDABBDLocalFnB</a></div></div>
 
 
-<pre><span id="TYPEcomm_fn"><span class="keyword">type</span> <code class="type"></code>comm_fn</span> = <code class="type">float -><br>       <a href="Nvector_parallel.html#TYPEdata">Nvector_parallel.data</a> -><br>       <a href="Nvector_parallel.html#TYPEdata">Nvector_parallel.data</a> -><br>       <a href="Nvector_parallel.html#TYPEdata">Nvector_parallel.data</a> -> <a href="Nvector_parallel.html#TYPEdata">Nvector_parallel.data</a> -> unit</code> </pre>
+<pre><span id="TYPEcomm_fn"><span class="keyword">type</span> <code class="type"></code>comm_fn</span> = <code class="type"><a href="Nvector_parallel.html#TYPEdata">Nvector_parallel.data</a> <a href="Idas.Adjoint.html#TYPEbresfn_args">Idas.Adjoint.bresfn_args</a> -> unit</code> </pre>
 <div class="info ">
 Functions that perform the interprocess communication necessary
-    for the execution of <a href="Idas_bbd.html#TYPElocal_fn"><code class="code"><span class="constructor">Idas_bbd</span>.local_fn</code></a>.
-    In the call <code class="code">cfn t y yb</code>, <code class="code">t</code> is the independent variable (time), <code class="code">y</code> is
-    the forward solution vector, and <code class="code">yb</code> is the backward dependent variable
-    vector <code class="code">yb</code>.
-<p>
+    for the execution of <a href="Idas_bbd.html#TYPElocal_fn"><code class="code"><span class="constructor">Idas_bbd</span>.local_fn</code></a>.<ul>
+<li><code class="code">args</code>, the current values of forward and backward variables, and,</li>
+<li><code class="code">resb</code>, a vector for storing a local approximation to the backward
+              function $F_B(t, y, \dot{y}, y_B, \dot{y}_B)$ .</li>
+</ul>
 
     Raising <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a> signals a recoverable error.
     Other exceptions signal unrecoverable errors.<br>
@@ -144,9 +148,10 @@ Functions that perform the interprocess communication necessary
 
 
 <pre><span id="VALprec_left"><span class="keyword">val</span> prec_left</span> : <code class="type">?dqrely:float -><br>       <a href="Idas_bbd.html#TYPEbandwidths">bandwidths</a> -><br>       ?comm_fn:<a href="Idas_bbd.html#TYPEcomm_fn">comm_fn</a> -><br>       <a href="Idas_bbd.html#TYPElocal_fn">local_fn</a> -> <a href="Idas_bbd.html#TYPEparallel_preconditioner">parallel_preconditioner</a></code></pre><div class="info ">
-Left preconditioning using the Parallel Band-Block-Diagonal module.
-    The difference quotient operation is controlled by <code class="code">?dqrely</code>,
-    the relative increment in components of <code class="code">y</code>, and <a href="Idas_bbd.html#TYPEbandwidths"><code class="code"><span class="constructor">Idas_bbd</span>.bandwidths</code></a>.<br>
+Left preconditioning using the Parallel Band-Block-Diagonal
+    module.  The difference quotient operation is controlled by
+    <code class="code">?dqrely</code>, which specifies the relative increment in components of
+    <code class="code">y</code>, and <a href="Idas_bbd.html#TYPEbandwidths"><code class="code"><span class="constructor">Idas_bbd</span>.bandwidths</code></a>.<br>
 <div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#sss:lin_solv_b">IDASpgmrB</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node7.html#SECTION00742100000000000000">IDABBDPrecInitB</a></div></div>
 
 <pre><span id="VALreinit"><span class="keyword">val</span> reinit</span> : <code class="type"><a href="Idas_bbd.html#TYPEparallel_bsession">parallel_bsession</a> -> ?dqrely:float -> int -> int -> unit</code></pre><div class="info ">

@@ -85,28 +85,41 @@
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
 <code><span id="TYPEELTsensrhsfn_args.t">t</span>&nbsp;: <code class="type">float</code>;</code></td>
-
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The value of the independent variable.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr>
 <tr>
 <td align="left" valign="top" >
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
 <code><span id="TYPEELTsensrhsfn_args.y">y</span>&nbsp;: <code class="type">'d</code>;</code></td>
-
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The vector of dependent-variable values $y(t)$.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr>
 <tr>
 <td align="left" valign="top" >
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
 <code><span id="TYPEELTsensrhsfn_args.y'">y'</span>&nbsp;: <code class="type">'d</code>;</code></td>
-
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The value of the right-hand side of the state
+            equations $\dot{y} = f(t, y, p)$.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr>
 <tr>
 <td align="left" valign="top" >
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
 <code><span id="TYPEELTsensrhsfn_args.tmp">tmp</span>&nbsp;: <code class="type">'d double</code>;</code></td>
-
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Temporary storage vectors.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr></table>
 }
 
@@ -122,10 +135,10 @@ Sensitivity functions that calculate the right-hand sides of
 <p>
 <ul>
 <li><code class="code">args</code>, the current values of state variables (see <a href="Cvodes.Sensitivity.html#TYPEsensrhsfn_args"><code class="code"><span class="constructor">Cvodes</span>.<span class="constructor">Sensitivity</span>.sensrhsfn_args</code></a>),</li>
-<li><code class="code">yS</code>, an array of vectors holding the current values of sensitivity
-                variables, and,</li>
-<li><code class="code">yS'</code>, an array of vectors to be filled with the derivatives
-                 of the sensitivity variables.</li>
+<li><code class="code">s</code>, an array of vectors holding the current values of sensitivity
+               variables, and,</li>
+<li><code class="code">s'</code>, an array of vectors to be filled with the derivatives
+                of the sensitivity variables.</li>
 </ul>
 
         Within the function, raising a <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a> exception
@@ -145,12 +158,12 @@ Sensitivity functions that calculate the right-hand side of a
 <p>
 <ul>
 <li><code class="code">i</code>, the index of the sensitivity equation to compute,</li>
-<li><code class="code">args</code>, holding the current values of state variables
+<li><code class="code">args</code>, the current values of state variables
                   (see <a href="Cvodes.Sensitivity.html#TYPEsensrhsfn_args"><code class="code"><span class="constructor">Cvodes</span>.<span class="constructor">Sensitivity</span>.sensrhsfn_args</code></a>),</li>
-<li><code class="code">yS</code>, a vector holding the current value of the <i>i</i>th
-                sensitivity variable, and,</li>
-<li><code class="code">yS'</code>, a vector to be filled with the current value of the <i>i</i>th
-                 sensitivity variable's derivative.</li>
+<li><code class="code">s</code>, a vector holding the current value of the <i>i</i>th
+               sensitivity variable, and</li>
+<li><code class="code">s'</code>, a vector to be filled with the current value of the <i>i</i>th
+                sensitivity variable's derivative.</li>
 </ul>
 
         Within the function, raising a <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a> exception
@@ -250,9 +263,11 @@ Specifies a sensitivity solution method.<br>
 <td align="left" valign="top" >
 <code><span id="TYPEELTsens_params.pvals">pvals</span>&nbsp;: <code class="type"><a href="Sundials.RealArray.html#TYPEt">Sundials.RealArray.t</a> option</code>;</code></td>
 <td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
-An array of $N_p$ parameters $p$ in $f(t, y, p)$. If specified,
-            this array is updated by the solver to pass parameter values to the
-            original right-hand side and root functions.<br>
+An array of $N_p$ parameters $p$ in $f(t, y, p)$.  If
+            specified, this array is updated by the solver to pass
+            perturbed parameter values to the original right-hand side
+            and root functions.  Those functions must (re-)read
+            parameter values from this array on every invocation.<br>
 </div>
 </td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr>
@@ -262,7 +277,7 @@ An array of $N_p$ parameters $p$ in $f(t, y, p)$. If specified,
 <td align="left" valign="top" >
 <code><span id="TYPEELTsens_params.pbar">pbar</span>&nbsp;: <code class="type"><a href="Sundials.RealArray.html#TYPEt">Sundials.RealArray.t</a> option</code>;</code></td>
 <td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
-An array of $N_s$ positive scaling factors. These are only needed
+An array of $N_s$ positive scaling factors. These are needed
             when estimating tolerances or using the internal difference
             quotient function.<br>
 </div>
@@ -274,16 +289,25 @@ An array of $N_s$ positive scaling factors. These are only needed
 <td align="left" valign="top" >
 <code><span id="TYPEELTsens_params.plist">plist</span>&nbsp;: <code class="type">int array option</code>;</code></td>
 <td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
-An array of $N_s$ ($&lt; N_p$) indices specifying the parameters
-            to analyze. If not specified, the first $N_s$ parameters are
-            analyzed.<br>
+An array of $N_s$ ($&lt; N_p$) indices into <code class="code">pvals</code>
+            specifying the parameters to analyze. If not specified,
+            the first $N_s$ parameters are analyzed.<br>
 </div>
 </td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr></table>
 }
 
 <div class="info ">
-Specifies problem parameter information for sensitivity calculations.<br>
+Specifies problem parameter information for sensitivity
+        calculations.  Which fields are required varies as follows:<ul>
+<li><code class="code">pvals</code> is mandatory if <a href="Cvodes.Sensitivity.html#VALinit"><code class="code"><span class="constructor">Cvodes</span>.<span class="constructor">Sensitivity</span>.init</code></a> and/or
+          <a href="Cvodes.Sensitivity.Quadrature.html#VALinit"><code class="code"><span class="constructor">Cvodes</span>.<span class="constructor">Sensitivity</span>.<span class="constructor">Quadrature</span>.init</code></a> is not given a
+          user-defined callback.  Otherwise, it is ignored.</li>
+<li><code class="code">plist</code> is optional if <code class="code">pvals</code> is given.  Otherwise, it is
+          ignored.</li>
+<li><code class="code">pbar</code> is always meaningful and optional.</li>
+</ul>
+<br>
 <div class="sundials cvodes"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/node6.html#ss:sens_optional_input">CVodeSetSensParams</a></div></div>
 
 
@@ -330,17 +354,22 @@ Tolerances for calculating sensitivities.<br>
 </div>
 
 
-<pre><span id="VALinit"><span class="keyword">val</span> init</span> : <code class="type">('d, 'k) <a href="Cvode.html#TYPEsession">Cvode.session</a> -><br>       ('d, 'k) <a href="Cvodes.Sensitivity.html#TYPEtolerance">tolerance</a> -><br>       <a href="Cvodes.Sensitivity.html#TYPEsens_method">sens_method</a> -><br>       <a href="Cvodes.Sensitivity.html#TYPEsens_params">sens_params</a> -><br>       'd <a href="Cvodes.Sensitivity.html#TYPEsensrhsfn">sensrhsfn</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> array -> unit</code></pre><div class="info ">
+<pre><span id="VALinit"><span class="keyword">val</span> init</span> : <code class="type">('d, 'k) <a href="Cvode.html#TYPEsession">Cvode.session</a> -><br>       ('d, 'k) <a href="Cvodes.Sensitivity.html#TYPEtolerance">tolerance</a> -><br>       <a href="Cvodes.Sensitivity.html#TYPEsens_method">sens_method</a> -><br>       ?sens_params:<a href="Cvodes.Sensitivity.html#TYPEsens_params">sens_params</a> -><br>       'd <a href="Cvodes.Sensitivity.html#TYPEsensrhsfn">sensrhsfn</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> array -> unit</code></pre><div class="info ">
 Activates the calculation of forward sensitivities. The call
         <code class="code">init s tol sm sp fs ys0</code>, has as arguments:<ul>
 <li><code class="code">s</code>, a session created with <a href="Cvode.html#VALinit"><code class="code"><span class="constructor">Cvode</span>.init</code></a>,</li>
 <li><code class="code">tol</code>, the tolerances desired,</li>
-<li><code class="code">sm</code>, the solution method,</li>
-<li><code class="code">sp</code>, the parameter information,</li>
-<li><code class="code">fs</code>, the sensitivity function, and,</li>
+<li><code class="code">sens_method</code>, the solution method,</li>
+<li><code class="code">~sens_params</code>, the parameter information (see <a href="Cvodes.Sensitivity.html#TYPEsens_params"><code class="code"><span class="constructor">Cvodes</span>.<span class="constructor">Sensitivity</span>.sens_params</code></a>),</li>
+<li><code class="code">~fs</code>, the sensitivity function, and,</li>
 <li><code class="code">ys0</code>, initial values of the sensitivities for each parameter.</li>
 </ul>
-<br>
+
+        If <code class="code">~fs</code> is not given, an internal difference quotient routine
+        is used.  In that case, or if the internal difference quotient
+        routine will be specified in a subsequent call to
+        <a href="Cvodes.Sensitivity.Quadrature.html#VALinit"><code class="code"><span class="constructor">Cvodes</span>.<span class="constructor">Sensitivity</span>.<span class="constructor">Quadrature</span>.init</code></a>, then <code class="code">sens_params</code> must be
+        given with <code class="code">pvals</code> set to non-<code class="code"><span class="constructor">None</span></code>.<br>
 <div class="sundials cvodes"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/node6.html#ss:sensi_malloc">CVodeSensInit</a></div><div class="sundials cvodes"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/node6.html#ss:sensi_malloc">CVodeSensInit1</a></div><div class="sundials cvodes"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/node6.html#ss:sens_optional_input">CVodeSetSensParams</a></div><div class="sundials cvodes"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/node6.html#sss:cvfwdtolerances">CVodeSensSStolerances</a></div><div class="sundials cvodes"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/node6.html#sss:cvfwdtolerances">CVodeSensSVtolerances</a></div><div class="sundials cvodes"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/node6.html#sss:cvfwdtolerances">CVodeSensEEtolerances</a></div></div>
 
 <pre><span id="VALreinit"><span class="keyword">val</span> reinit</span> : <code class="type">('d, 'k) <a href="Cvode.html#TYPEsession">Cvode.session</a> -><br>       <a href="Cvodes.Sensitivity.html#TYPEsens_method">sens_method</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> array -> unit</code></pre><div class="info ">
@@ -353,8 +382,7 @@ Deactivates forward sensitivity calculations without deallocating
 <div class="sundials cvodes"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/node6.html#ss:sensi_malloc">CVodeSensToggleOff</a></div></div>
 
 <pre><span class="keyword">module</span> <a href="Cvodes.Sensitivity.Quadrature.html">Quadrature</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Cvodes.Sensitivity.Quadrature.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
-Support for quadrature equations that depend not only on
-        state variables but also on forward sensitivities.
+Support for quadrature sensitivity equations.
 </div>
 <br>
 <h2 id="sensout">Output functions</h2><br>
@@ -371,9 +399,9 @@ Returns the interpolated solution or derivatives of the sensitivity
         solution vectors.
 <p>
 
-        <code class="code">get_dky s dkys t k</code> computes the <code class="code">k</code>th derivative at time <code class="code">t</code>, i.e.,
+        <code class="code">get_dky s dks t k</code> computes the <code class="code">k</code>th derivative at time <code class="code">t</code>, i.e.,
         $\frac{d^\mathtt{k}s(\mathtt{t})}{\mathit{dt}^\mathtt{k}}$,
-        and stores it in <code class="code">dkys</code>. The arguments must satisfy $t_n - h_u \leq
+        and stores it in <code class="code">dks</code>. The arguments must satisfy $t_n - h_u \leq
         \mathtt{t} \leq t_n$—where $t_n$ denotes <a href="Cvode.html#VALget_current_time"><code class="code"><span class="constructor">Cvode</span>.get_current_time</code></a>
         and $h_u$ denotes <a href="Cvode.html#VALget_last_step"><code class="code"><span class="constructor">Cvode</span>.get_last_step</code></a>,— and
         $0 \leq \mathtt{k} \leq q_u$—where
@@ -398,7 +426,7 @@ Returns a single sensitivity solution vector after a successful solver
 
 <pre><span id="VALget_dky1"><span class="keyword">val</span> get_dky1</span> : <code class="type">('d, 'k) <a href="Cvode.html#TYPEsession">Cvode.session</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> float -> int -> int -> unit</code></pre><div class="info ">
 Returns the interpolated solution or derivatives of a single
-        sensitivity solution vector. <code class="code">get_dky s dkys t k i</code> is like <a href="Cvodes.Sensitivity.html#VALget_dky"><code class="code"><span class="constructor">Cvodes</span>.<span class="constructor">Sensitivity</span>.get_dky</code></a>
+        sensitivity solution vector. <code class="code">get_dky s dks t k i</code> is like <a href="Cvodes.Sensitivity.html#VALget_dky"><code class="code"><span class="constructor">Cvodes</span>.<span class="constructor">Sensitivity</span>.get_dky</code></a>
         but restricted to the <code class="code">i</code>th sensitivity solution vector.<br>
 <div class="raisedexceptions"><span class="raises">Raises</span><ul><li><code>BadIS</code> The index <code class="code">i</code> is not in the allowed range.</li>
 <li><code>BadK</code> <code class="code">k</code> is not in the range 0, 1, ..., <code class="code">qlast</code>.</li>

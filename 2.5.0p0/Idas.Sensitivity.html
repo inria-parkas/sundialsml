@@ -85,49 +85,71 @@
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
 <code><span id="TYPEELTsensresfn_args.t">t</span>&nbsp;: <code class="type">float</code>;</code></td>
-
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The value of the independent variable.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr>
 <tr>
 <td align="left" valign="top" >
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
 <code><span id="TYPEELTsensresfn_args.y">y</span>&nbsp;: <code class="type">'d</code>;</code></td>
-
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The vector of dependent-variable values $y(t)$.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr>
 <tr>
 <td align="left" valign="top" >
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
 <code><span id="TYPEELTsensresfn_args.y'">y'</span>&nbsp;: <code class="type">'d</code>;</code></td>
-
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The vector of derivatives of dependent variables
+            $\dot{y}(t)$.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr>
 <tr>
 <td align="left" valign="top" >
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
 <code><span id="TYPEELTsensresfn_args.res">res</span>&nbsp;: <code class="type">'d</code>;</code></td>
-
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The vector of current residuals.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr>
 <tr>
 <td align="left" valign="top" >
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
-<code><span id="TYPEELTsensresfn_args.yS">yS</span>&nbsp;: <code class="type">'d array</code>;</code></td>
-
+<code><span id="TYPEELTsensresfn_args.s">s</span>&nbsp;: <code class="type">'d array</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The array of sensitivity vectors.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr>
 <tr>
 <td align="left" valign="top" >
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
-<code><span id="TYPEELTsensresfn_args.yS'">yS'</span>&nbsp;: <code class="type">'d array</code>;</code></td>
-
+<code><span id="TYPEELTsensresfn_args.s'">s'</span>&nbsp;: <code class="type">'d array</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The array of sensitivity derivative vectors.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr>
 <tr>
 <td align="left" valign="top" >
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
 <code><span id="TYPEELTsensresfn_args.tmp">tmp</span>&nbsp;: <code class="type">'d triple</code>;</code></td>
-
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Temporary storage vectors.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr></table>
 }
 
@@ -195,9 +217,12 @@ Specifies a sensitivity solution method.<br>
 <td align="left" valign="top" >
 <code><span id="TYPEELTsens_params.pvals">pvals</span>&nbsp;: <code class="type"><a href="Sundials.RealArray.html#TYPEt">Sundials.RealArray.t</a> option</code>;</code></td>
 <td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
-An array of $N_p$ parameters $p$ in $F(t, y, \dot{y}, p)$. If
-            specified, this array is updated by the solver to pass parameter
-            values to the original right-hand side and root functions.<br>
+An array of $N_p$ parameters $p$ in $F(t, y, \dot{y},
+            p)$.  If specified, this array is updated by the solver
+            to pass perturbed parameter values to the original
+            residual and root functions.  Those functions must
+            (re-)read parameter values from this array on every
+            invocation.<br>
 </div>
 </td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr>
@@ -207,7 +232,7 @@ An array of $N_p$ parameters $p$ in $F(t, y, \dot{y}, p)$. If
 <td align="left" valign="top" >
 <code><span id="TYPEELTsens_params.pbar">pbar</span>&nbsp;: <code class="type"><a href="Sundials.RealArray.html#TYPEt">Sundials.RealArray.t</a> option</code>;</code></td>
 <td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
-An array of $N_s$ positive scaling factors. These are only needed
+An array of $N_s$ positive scaling factors. These are needed
             when estimating tolerances or using the internal difference
             quotient function.<br>
 </div>
@@ -228,13 +253,18 @@ An array of $N_s$ ($&lt; N_p$) indices specifying the parameters
 }
 
 <div class="info ">
-Specifies problem parameter information for sensitivity calculations.<br>
+Specifies problem parameter information for sensitivity
+        calculations.  Which fields are required varies as follows:<ul>
+<li><code class="code">pvals</code> is mandatory if <a href="Idas.Sensitivity.html#VALinit"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Sensitivity</span>.init</code></a> and/or
+          <a href="Idas.Sensitivity.Quadrature.html#VALinit"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Sensitivity</span>.<span class="constructor">Quadrature</span>.init</code></a> is not given a
+          user-defined callback.  Otherwise, it is ignored.</li>
+<li><code class="code">plist</code> is optional if <code class="code">pvals</code> is given.  Otherwise, it is
+          ignored.</li>
+<li><code class="code">pbar</code> is always meaningful and optional.</li>
+</ul>
+<br>
 <div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node6.html#ss:sens_optional_input">IDASetSensParams</a></div></div>
 
-
-<pre><span id="VALno_sens_params"><span class="keyword">val</span> no_sens_params</span> : <code class="type"><a href="Idas.Sensitivity.html#TYPEsens_params">sens_params</a></code></pre><div class="info ">
-Empty <code class="code">pvals</code>, <code class="code">plist</code>, and <code class="code">pbar</code> fields.<br>
-</div>
 
 <pre><code><span id="TYPEtolerance"><span class="keyword">type</span> <code class="type">('d, 'k)</code> tolerance</span> = </code></pre><table class="typetable">
 <tr>
@@ -275,21 +305,24 @@ Tolerances for calculating sensitivities.<br>
 </div>
 
 
-<pre><span id="VALinit"><span class="keyword">val</span> init</span> : <code class="type">('d, 'k) <a href="Ida.html#TYPEsession">Ida.session</a> -><br>       ('d, 'k) <a href="Idas.Sensitivity.html#TYPEtolerance">tolerance</a> -><br>       <a href="Idas.Sensitivity.html#TYPEsens_method">sens_method</a> -><br>       <a href="Idas.Sensitivity.html#TYPEsens_params">sens_params</a> -><br>       ?fS:'d <a href="Idas.Sensitivity.html#TYPEsensresfn">sensresfn</a> -><br>       ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> array -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> array -> unit</code></pre><div class="info ">
+<pre><span id="VALinit"><span class="keyword">val</span> init</span> : <code class="type">('d, 'k) <a href="Ida.html#TYPEsession">Ida.session</a> -><br>       ('d, 'k) <a href="Idas.Sensitivity.html#TYPEtolerance">tolerance</a> -><br>       <a href="Idas.Sensitivity.html#TYPEsens_method">sens_method</a> -><br>       ?sens_params:<a href="Idas.Sensitivity.html#TYPEsens_params">sens_params</a> -><br>       ?fs:'d <a href="Idas.Sensitivity.html#TYPEsensresfn">sensresfn</a> -><br>       ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> array -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> array -> unit</code></pre><div class="info ">
 Activates the calculation of forward sensitivities. The call
-        <pre class="codepre"><code class="code">init&nbsp;s&nbsp;tol&nbsp;ism&nbsp;ps&nbsp;~fS:fS&nbsp;yS0&nbsp;yS0'</code></pre>, has as arguments:<ul>
+        <pre class="codepre"><code class="code">init&nbsp;s&nbsp;tol&nbsp;ism&nbsp;ps&nbsp;~fs:fs&nbsp;s0&nbsp;s0'</code></pre> has as arguments:<ul>
 <li><code class="code">s</code>, a session created with <a href="Ida.html#VALinit"><code class="code"><span class="constructor">Ida</span>.init</code></a>,</li>
 <li><code class="code">tol</code>, the tolerances desired,</li>
 <li><code class="code">sm</code>, the solution method,</li>
-<li><code class="code">sp</code>, the parameter information,</li>
-<li><code class="code">fs</code>, the sensitivity function,</li>
+<li><code class="code">~sens_params</code>, the parameter information (see <a href="Idas.Sensitivity.html#TYPEsens_params"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Sensitivity</span>.sens_params</code></a>),</li>
+<li><code class="code">~fs</code>, the sensitivity function,</li>
 <li><code class="code">s0</code>, initial values of the sensitivities for each parameter, and,</li>
 <li><code class="code">s0'</code>, initial values of the sensitivity derivatives for each
                  parameter.</li>
 </ul>
 
-        If <code class="code">~fS</code> is not given, the internal difference quotient sensitivity
-        residual routine is used.<br>
+        If <code class="code">~fs</code> is not given, an internal difference quotient routine
+        is used.  In that case, or if the internal difference quotient
+        routine will be specified in a subsequent call to
+        <a href="Idas.Sensitivity.Quadrature.html#VALinit"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Sensitivity</span>.<span class="constructor">Quadrature</span>.init</code></a>, then <code class="code">sens_params</code> must be
+        given with <code class="code">pvals</code> set to non-<code class="code"><span class="constructor">None</span></code>.<br>
 <div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node6.html#ss:sensi_init">IDASensInit</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node6.html#sss:idafwdtolerances">IDASetSensParams</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node6.html#sss:idafwdtolerances">IDASensSStolerances</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node6.html#sss:idafwdtolerances">IDASensSVtolerances</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node6.html#sss:idafwdtolerances">IDASensEEtolerances</a></div></div>
 
 <pre><span id="VALreinit"><span class="keyword">val</span> reinit</span> : <code class="type">('d, 'k) <a href="Ida.html#TYPEsession">Ida.session</a> -><br>       <a href="Idas.Sensitivity.html#TYPEsens_method">sens_method</a> -><br>       ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> array -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> array -> unit</code></pre><div class="info ">
@@ -302,8 +335,7 @@ Deactivates forward sensitivity calculations without deallocating
 <div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node6.html#ss:sensi_init">IDASensToggleOff</a></div></div>
 
 <pre><span class="keyword">module</span> <a href="Idas.Sensitivity.Quadrature.html">Quadrature</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Idas.Sensitivity.Quadrature.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
-Support for quadrature equations that depend not only on
-        state variables but also on forward sensitivities.
+Support for quadrature sensitivity equations.
 </div>
 <br>
 <h3 id="calcic">Initial Condition Calculation</h3><br>
@@ -333,9 +365,9 @@ Returns the interpolated solution or derivatives of the sensitivity
         solution vectors.
 <p>
 
-        <code class="code">get_dky s dkys t k</code> computes the <code class="code">k</code>th derivative at time <code class="code">t</code>, i.e.,
+        <code class="code">get_dky s dks t k</code> computes the <code class="code">k</code>th derivative at time <code class="code">t</code>, i.e.,
         $\frac{d^\mathtt{k}s(\mathtt{t})}{\mathit{dt}^\mathtt{k}}$,
-        and stores it in <code class="code">dkys</code>. The arguments must satisfy $t_n - h_u \leq
+        and stores it in <code class="code">dks</code>. The arguments must satisfy $t_n - h_u \leq
         \mathtt{t} \leq t_n$—where $t_n$ denotes <a href="Ida.html#VALget_current_time"><code class="code"><span class="constructor">Ida</span>.get_current_time</code></a>
         and $h_u$ denotes <a href="Ida.html#VALget_last_step"><code class="code"><span class="constructor">Ida</span>.get_last_step</code></a>,— and
         $0 \leq \mathtt{k} \leq q_u$—where
@@ -360,7 +392,7 @@ Returns a single sensitivity solution vector after a successful solver
 
 <pre><span id="VALget_dky1"><span class="keyword">val</span> get_dky1</span> : <code class="type">('d, 'k) <a href="Ida.html#TYPEsession">Ida.session</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> float -> int -> int -> unit</code></pre><div class="info ">
 Returns the interpolated solution or derivatives of a single
-        sensitivity solution vector. <code class="code">get_dky s dkys t k i</code> is like <a href="Idas.Sensitivity.html#VALget_dky"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Sensitivity</span>.get_dky</code></a>
+        sensitivity solution vector. <code class="code">get_dky s dks t k i</code> is like <a href="Idas.Sensitivity.html#VALget_dky"><code class="code"><span class="constructor">Idas</span>.<span class="constructor">Sensitivity</span>.get_dky</code></a>
         but restricted to the <code class="code">i</code>th sensitivity solution vector.<br>
 <div class="raisedexceptions"><span class="raises">Raises</span><ul><li><code>BadIS</code> The index <code class="code">i</code> is not in the allowed range.</li>
 <li><code>BadK</code> <code class="code">k</code> is not in the range 0, 1, ..., <code class="code">qlast</code>.</li>

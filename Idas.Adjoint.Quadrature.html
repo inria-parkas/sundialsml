@@ -59,35 +59,52 @@ Support for backward quadrature equations that may or may
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
 <code><span id="TYPEELTbquadrhsfn_args.t">t</span>&nbsp;: <code class="type">float</code>;</code></td>
-
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The value of the independent variable.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr>
 <tr>
 <td align="left" valign="top" >
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
 <code><span id="TYPEELTbquadrhsfn_args.y">y</span>&nbsp;: <code class="type">'d</code>;</code></td>
-
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The vector of dependent-variable values $y(t)$.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr>
 <tr>
 <td align="left" valign="top" >
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
 <code><span id="TYPEELTbquadrhsfn_args.y'">y'</span>&nbsp;: <code class="type">'d</code>;</code></td>
-
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The vector of dependent-variable derivatives
+                $\dot{y}(t)$ .<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr>
 <tr>
 <td align="left" valign="top" >
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
-<code><span id="TYPEELTbquadrhsfn_args.yB">yB</span>&nbsp;: <code class="type">'d</code>;</code></td>
-
+<code><span id="TYPEELTbquadrhsfn_args.yb">yb</span>&nbsp;: <code class="type">'d</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The vector of backward dependent-variable values $y_B(t)$.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr>
 <tr>
 <td align="left" valign="top" >
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
-<code><span id="TYPEELTbquadrhsfn_args.yB'">yB'</span>&nbsp;: <code class="type">'d</code>;</code></td>
-
+<code><span id="TYPEELTbquadrhsfn_args.yb'">yb'</span>&nbsp;: <code class="type">'d</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The vector of backward dependent-variable derivatives
+                $\dot{y}_B(t)$ .<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr></table>
 }
 
@@ -103,7 +120,7 @@ Functions defining backward quadrature variables without forward
             sensitivities.  They are passed the arguments:<ul>
 <li><code class="code">args</code>, the current values of forward and backward state
                       variables, and,</li>
-<li><code class="code">qB'</code>, a vector for storing the computed value of
+<li><code class="code">qb'</code>, a vector for storing the computed value of
                      $\dot{y}_\mathit{BQ} =
                          f_\mathit{BQ}(t, y, \dot{y}, y_B, \dot{y}_B)$.</li>
 </ul>
@@ -125,9 +142,9 @@ Functions defining backward quadrature variables that
 <p>
 <ul>
 <li><code class="code">args</code>, current values of forward and backward state variables,</li>
-<li><code class="code">yS</code>, the array of forward sensitivity vectors,</li>
-<li><code class="code">yS'</code>, the array of forward sensitivity derivative vectors, and,</li>
-<li><code class="code">qB'</code>, a vector for storing the computed value of
+<li><code class="code">s</code>, the array of forward sensitivity vectors,</li>
+<li><code class="code">s'</code>, the array of forward sensitivity derivative vectors, and,</li>
+<li><code class="code">qb'</code>, a vector for storing the computed value of
                  $\dot{y}_\mathit{BQ} =
                    f_\mathit{BQ}(t, y, \dot{y}, s, \dot{s}, y_B, \dot{y}_B)$.</li>
 </ul>

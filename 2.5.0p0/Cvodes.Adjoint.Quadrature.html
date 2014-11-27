@@ -59,21 +59,30 @@ Support for backward quadrature equations that may or may
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
 <code><span id="TYPEELTbquadrhsfn_args.t">t</span>&nbsp;: <code class="type">float</code>;</code></td>
-
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The value of the independent variable.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr>
 <tr>
 <td align="left" valign="top" >
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
 <code><span id="TYPEELTbquadrhsfn_args.y">y</span>&nbsp;: <code class="type">'d</code>;</code></td>
-
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The vector of dependent-variable values $y(t)$.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr>
 <tr>
 <td align="left" valign="top" >
 <code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
-<code><span id="TYPEELTbquadrhsfn_args.yB">yB</span>&nbsp;: <code class="type">'d</code>;</code></td>
-
+<code><span id="TYPEELTbquadrhsfn_args.yb">yb</span>&nbsp;: <code class="type">'d</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The vector of backward dependent-variable values $y_B(t)$.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr></table>
 }
 
@@ -88,7 +97,7 @@ Arguments common to <a href="Cvodes.Adjoint.Quadrature.html#TYPEbquadrhsfn_no_se
 Functions defining backward quadrature variables without forward
             sensitivities.  These functions are passed the arguments:<ul>
 <li><code class="code">args</code>, the current values of forward and backward variables, and,</li>
-<li><code class="code">qB'</code>, a vector for storing the computed value of
+<li><code class="code">qb'</code>, a vector for storing the computed value of
                      $\dot{y}_\mathit{QB} = f_\mathit{QB}(t, y, y_B)$.</li>
 </ul>
 
@@ -107,9 +116,9 @@ Functions defining backward quadrature variables without forward
 Functions defining backward quadrature variables with forward
             sensitivities.  These functions are passed the arguments:<ul>
 <li><code class="code">args</code>, the current values of forward and backward variables,</li>
-<li><code class="code">yS</code>, an array holding the values of forward sensitivity vectors,
-                    and,</li>
-<li><code class="code">qB'</code>, a vector for storing the computed value of
+<li><code class="code">s</code>, an array holding the values of forward sensitivity vectors,
+                   and,</li>
+<li><code class="code">qb'</code>, a vector for storing the computed value of
                    $\dot{y}_\mathit{QB} = f_\mathit{QB}(t, y, y_S, y_B)$.</li>
 </ul>
 
