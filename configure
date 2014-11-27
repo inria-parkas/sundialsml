@@ -417,6 +417,35 @@ if [ "${int_size}" -ne 4 ]; then
 fi
 
 
+# Check for shared library support in Sundials/C
+enable_shared=1
+
+test_stem=__configure_test_file__
+test_c_stem=__configure_test_c_file__
+echo 'void CVode(); void dummy () { CVode (); }' > $test_c_stem.c
+echo 'external dummy : unit -> unit = "dummy" let _ = dummy ()' > $test_stem.ml
+if ! $CC ${cflags} ${cvode_cppflags} -o $test_c_stem$XO -c $test_c_stem.c \
+    >$test_stem.log 2>&1 || ! ${OCAMLBIN}ocamlc -c $test_stem.ml \
+    >> $test_stem.log 2>&1
+then
+    echo 1>&2 "Panic!  Dummy library failed to compile.  Please report"
+    echo 1>&2 "this with ${test_stem}.log attached."
+    exit 1
+fi
+
+if ! ${OCAMLBIN}ocamlmklib $test_c_stem$XO $test_stem.cmo \
+    -o $test_stem -oc $test_stem \
+    ${sundials_lib_path} ${cvode_ldflags} > $test_stem.log 2>&1
+then
+    warning="${warning}\n\tSundials/C seems to be compiled without --enable-shared."
+    warning="${warning}\n\tSundials/ML may not work in the toplevel."
+    enable_shared=
+fi
+
+rm -f ./lib${test_stem}.* ./dll${test_stem}.* \
+    ./${test_stem}.* ./${test_c_stem}.*
+
+
 # Check for LAPACK support
 unset lapack_lib
 query="#include \"sundials/sundials_config.h\"\nSUNDIALS_PACKAGE_VERSION,SUNDIALS_BLAS_LAPACK"
@@ -626,6 +655,7 @@ fi
 	 s#@bounds_checking@#${bounds_checking}#;
 	 s#@ocamlmpi_path@#${ocamlmpi_path}#;
 	 s#@ocamlmpi_enabled@#${ocamlmpi_enabled}#;
+	 s#@enable_shared@#${enable_shared}#;
 	 s#@lapack_enabled@#${lapack_enabled}#;
 	 s#@cc@#${CC}#;
 	 s#@cpp@#${CPP}#;

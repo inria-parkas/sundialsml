@@ -84,6 +84,8 @@ OCAMLDOC ?= @OCAMLBIN@ocamldoc
 OCAMLMKLIB ?= @OCAMLBIN@ocamlmklib -ocamlc "$(OCAMLC) $(OCAMLFLAGS)" -ocamlopt "$(OCAMLOPT) $(OCAMLOPTFLAGS)"
 OCAMLMKLIBFLAGS ?= @ocamlmklibflags@ -verbose
 
+ENABLE_SHARED = @enable_shared@
+
 GNUPLOT = gnuplot
 
 EXAMPLESROOT = @EXAMPLESROOT@

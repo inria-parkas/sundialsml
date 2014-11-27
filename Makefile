@@ -92,6 +92,7 @@ sundials.cma sundials.cmxa: $(MLOBJ_MAIN) $(MLOBJ_SENS)			    \
 			    $(MLOBJ_MAIN:.cmo=.cmx) $(MLOBJ_SENS:.cmo=.cmx) \
 			    $(COBJ_MAIN) $(COBJ_SENS)
 	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS)	\
+	    $(if $(ENABLE_SHARED),,-custom)	\
 	    -o sundials -oc mlsundials $^	\
 	    $(LIB_PATH)				\
 	    $(OCAML_CVODES_LIBLINK)		\
@@ -104,6 +105,7 @@ sundials_no_sens.cma sundials_no_sens.cmxa:				  \
 			$(MLOBJ_MAIN:.cmo=.cmx) $(MLOBJ_NO_SENS:.cmo=.cmx) \
 			$(COBJ_MAIN) $(COBJ_NO_SENS)
 	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS)			\
+	    $(if $(ENABLE_SHARED),,-custom)			\
 	    -o sundials_no_sens -oc mlsundials_no_sens $^	\
 	    $(LIB_PATH)						\
 	    $(OCAML_CVODE_LIBLINK)				\
@@ -114,6 +116,7 @@ sundials_no_sens.cma sundials_no_sens.cmxa:				  \
 sundials_mpi.cma sundials_mpi.cmxa: $(MLOBJ_MPI) $(MLOBJ_MPI:.cmo=.cmx) \
 				    $(COBJ_MPI)
 	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS)		\
+	    $(if $(ENABLE_SHARED),,-custom)		\
 	    -o sundials_mpi -oc mlsundials_mpi $^	\
 	    $(LIB_PATH) $(MPI_LIBLINK)
 
@@ -257,8 +260,8 @@ install: install-sys $(if $(INSTALL_DOCS),install-doc)
 install-sys: $(INSTALL_CMA) $(INSTALL_CMA:.cma=.cmxa)
 	[ -d $(PKGDIR) ] || $(MKDIR) $(PKGDIR)
 	$(CP) $(INSTALL_FILES) $(PKGDIR)
-	[ -d $(STUBDIR) ] || $(MKDIR) $(STUBDIR)
-	$(CP) $(STUBLIBS) $(STUBDIR)
+	$(if $(ENABLE_SHARED),[ -d $(STUBDIR) ] || $(MKDIR) $(STUBDIR))
+	$(if $(ENABLE_SHARED),$(CP) $(STUBLIBS) $(STUBDIR))
 
 install-doc: doc
 	[ -d $(DOCDIR) ] || $(MKDIR) $(DOCDIR)
@@ -267,14 +270,14 @@ install-doc: doc
 
 install-ocamlfind: install-findlib
 install-findlib: META $(INSTALL_CMA) $(INSTALL_CMA:.cma=.cmxa)
-	@ocamlfind install sundialsml $(INSTALL_FILES) $(STUBLIBS)
+	@ocamlfind install sundialsml $(INSTALL_FILES) -optional $(STUBLIBS)
 
 
 uninstall: uninstall-sys
 
 uninstall-sys:
-	-$(RM) $(foreach f,$(STUBLIBS),$(STUBDIR)$f)
-	-$(RM) $(foreach f,$(INSTALL_FILES),$(PKGDIR)$f)
+	-$(RM) -f $(foreach f,$(STUBLIBS),$(STUBDIR)$f)
+	-$(RM) -f $(foreach f,$(INSTALL_FILES),$(PKGDIR)$f)
 	-$(RMDIR) $(PKGDIR)
 
 uninstall-doc:
