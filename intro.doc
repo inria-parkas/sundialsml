@@ -375,7 +375,8 @@ comparisons are made based on tens, or usually hundreds of repetitions and
 in some cases this amplifies factors other than the interface overhead.
 For instance, some OCaml versions spend a significant fraction of their time in
 [printf], and we were able to lower their ratios by instead using
-[print_string] and [print_int].
+[print_string] and [print_int].  This effect is much smaller in OCaml
+4.02 and later, however.
 
 The parallel examples ({color #fc9272 lighter red}) all have relatively long
 run times and results are obtained without iterating.
