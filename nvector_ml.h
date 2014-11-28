@@ -101,25 +101,20 @@
        which replace the data field with a pointer to their own memory. This is
        not supported by the OCaml library!
 
-   In summary, for nvectors created from OCaml:
+   In summary, nvectors created from OCaml are:
 
-     on creation: ml_nvec_wrap_* is invoked (it allocates memory in the C heap).
+     created by: ml_nvec_wrap_* (it allocates both caml-nvec and c-nvec).
 
-     on deletion: finalize_nvec is invoked to free memory (it, in turn,
- 		 invokes callml_vdestroy).
+     deleted by: finalizer during GC (when caml-nvec dies), no explicit
+                 destruction allowed.
 
-     deleted by: finalizer during GC (when caml-nvec dies),
-                 no explicit destruction allowed.
+    and nvectors cloned from C (Sundials) are:
 
-    and for nvectors cloned from C (Sundials):
-
-      on creation: callml_vclone is invoked (it allocates memory in the C
-  		   heap).
-
-      on deletion: callml_vdestroy is invoked to free memory.
+      created by: callml_vclone (it allocates just the c-nvec).
 
       deleted by: explicit call to nvdestroy field of N_Vector_Ops,
-                  GC never considers it dead until then (due to backlink).
+                  GC never initiates destruction of any part of the structure.
+
 
    Serial nvectors
    ---------------
