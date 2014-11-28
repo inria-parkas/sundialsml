@@ -98,7 +98,7 @@ underlying data ({!Nvector_serial.DataOps}).
 
 The interface to parallel nvectors, {!Nvector_parallel}, is based on
 {{:http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.html}Bigarrays}
-and the {{:https://forge.ocamlcore.org/projects/ocamlmpi/}OCaml/MPI}
+and the {{:https://forge.ocamlcore.org/projects/ocamlmpi/}OCamlMPI}
 library. Parallel nvectors are only available when Sundials/ML is configured
 to use MPI, as described {{:install}below}.
 
