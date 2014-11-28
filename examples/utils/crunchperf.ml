@@ -57,9 +57,20 @@ let colorof name =
   else if uses_nvector_array name then 4
   else 1
 
-(* Function composition *)
-let (%) f g x = f (g x)
+let (%) f g x = f (g x)                 (* Function composition *)
 let (@@) f x = f x
+
+(* Functions backported from OCaml 4x *)
+let mapi f xs =
+  let rec go i = function
+    | [] -> []
+    | x::xs -> f i x :: go (i+1) xs
+  in go 0 xs
+let iteri f xs =
+  let rec go i = function
+    | [] -> []
+    | x::xs -> f i x; go (i+1) xs
+  in go 0 xs
 
 type line = { file : string;
               line : int;
@@ -75,7 +86,7 @@ let get_lines path =
       done
     with End_of_file -> ()
   end;
-  List.mapi (fun i str -> { file = path; line = i+1; str = str })
+  mapi (fun i str -> { file = path; line = i+1; str = str })
   @@ List.rev !ret
 
 let comment_line =
@@ -111,10 +122,12 @@ let analyze dataset =
   { mean=mean; minimum=minimum; q1=q1; median=median; q3=q3; maximum=maximum }
 
 let id_magic = "# ID\treps\tC med.\tOCaml\tC\tOCaml/C\tname\tcategory\n"
-let fmt_with_id : type use. ('a, use, 'b, 'c, 'd, 'e) format6 =
-  "%d\t%d\t%.2f\t%.2f\t%.2f\t%.2f\t%s\t%d\n"
-let fmt_no_id : type use. ('a, use, 'b, 'c, 'd, 'e) format6 =
-  "%d\t%.2f\t%.2f\t%.2f\t%.2f\t%s\t%d\n"
+let fmt_with_id =
+  ("%d\t%d\t%f\t%f\t%f\t%f\t%s\t%d\n"
+   : ('a, 'use, 'b, 'c, 'd, 'e) format6)
+let fmt_no_id =
+  ("%d\t%f\t%f\t%f\t%f\t%s\t%d\n"
+   : ('a, 'use, 'b, 'c, 'd, 'e) format6)
 
 type record = { reps : int;
                 mutable ml_times : float list;
@@ -161,7 +174,7 @@ let combine ocaml sundials name =
         failwith ("Input file " ^ path ^ " contains no data")
     in
     let times = ref [] in
-    List.iter (scan_line "%.2f\n" (fun f -> times := f::!times))
+    List.iter (scan_line "%f\n" (fun f -> times := f::!times))
     @@ List.filter (not % comment_line) lines;
     if !times = [] then failwith ("Input file " ^ path ^ " contains no data");
     reps, Array.of_list !times
@@ -208,13 +221,13 @@ let summarize gnuplot path =
   then Printf.printf "# ID\treps\tOCaml\tC\tOCaml/C\tname\n"
   else Printf.printf "# reps\tOCaml\tC\tOCaml/C\tname\n";
   let _ =
-    List.iteri (fun id (name, record) ->
+    iteri (fun id (name, record) ->
         let median ls = (analyze (Array.of_list ls)).median in
         let c  = median record.c_times in
         let ml = median record.ml_times in
         let ratio = median (List.map2 (/.) record.ml_times record.c_times) in
         if gnuplot then Printf.printf "%d\t" id;
-        Printf.printf "%d\t%.2f\t%.2f\t%.2f\t%s\t"
+        Printf.printf "%d\t%f\t%f\t%f\t%s\t"
           record.reps ml c ratio (if gnuplot then name else expand name);
         if gnuplot then Printf.printf "\t%d" (colorof name);
         Printf.printf "\n")

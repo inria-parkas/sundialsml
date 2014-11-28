@@ -12,7 +12,7 @@ perf -m <reps file> <n> <command>
      <command> with NUM_REPS set to the value recorded in <reps file>.
      <reps file> should contain the output of a previous run of perf -r.
 "
-
+let (@@) f x = f x
 let init_stop_watch executable args =
   let dev_null =
     try Unix.openfile "/dev/null" [Unix.O_RDWR; Unix.O_TRUNC] 0
