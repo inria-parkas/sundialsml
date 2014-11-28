@@ -94,11 +94,13 @@ CAMLprim value ml_nvec_wrap_parallel(value payload, value checkfn)
     global_length = Long_val(Field(payload, 1));
     comm          = Comm_val(Field(payload, 2));
 
+#if SUNDIALS_ML_SAFE
     /* Compute global length as sum of local lengths */
     n = local_length;
     MPI_Allreduce(&n, &nsum, 1, PVEC_INTEGER_MPI_TYPE, MPI_SUM, comm);
     if (nsum != global_length)
         caml_raise_constant(NVECTOR_PARALLEL_EXN (IncorrectGlobalSize));
+#endif
 
     /* Create vector */
     nv = alloc_cnvec(sizeof(struct _N_VectorContent_Parallel), payload);
