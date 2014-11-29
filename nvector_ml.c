@@ -70,7 +70,6 @@ CAMLprim value alloc_caml_nvec(N_Vector nv, void (*finalizer)(value))
     CAMLreturn(r);
 }
 
-/* ml_nvec_free_cnvec xor finalize_caml_nvec must be called.  */
 void free_cnvec(N_Vector nv)
 {
     caml_remove_generational_global_root(&NVEC_BACKLINK(nv));
