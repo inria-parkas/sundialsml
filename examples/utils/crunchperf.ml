@@ -121,14 +121,36 @@ let analyze dataset =
   let mean = total /. float_of_int n in
   { mean=mean; minimum=minimum; q1=q1; median=median; q3=q3; maximum=maximum }
 
-let id_magic = "# ID\treps\tC med.\tOCaml\tC\tOCaml/C\tname\tcategory\n"
-let fmt_with_id =
+(* Input/Output Formats *)
+(* OCaml 3.12 allows %.2f in printf but not scanf.  We need two
+   essentially identical format strings :-(  *)
+let header_with_id = "# ID\treps\tC med.\tOCaml\tC\tOCaml/C\tname\tcategory\n"
+let print_fmt_with_id =
+  ("%d\t%d\t%.2f\t%.2f\t%.2f\t%.2f\t%s\t%d\n"
+   : ('a, 'use, 'b, 'c, 'd, 'e) format6)
+let scan_fmt_with_id =
   ("%d\t%d\t%f\t%f\t%f\t%f\t%s\t%d\n"
    : ('a, 'use, 'b, 'c, 'd, 'e) format6)
-let fmt_no_id =
+
+let header_no_id = "# reps\tC med.\tOCaml\tC\tOCaml/C\tname\tcategory\n"
+let print_fmt_no_id =
+  ("%d\t%.2f\t%.2f\t%.2f\t%.2f\t%s\t%d\n"
+   : ('a, 'use, 'b, 'c, 'd, 'e) format6)
+let scan_fmt_no_id =
   ("%d\t%f\t%f\t%f\t%f\t%s\t%d\n"
    : ('a, 'use, 'b, 'c, 'd, 'e) format6)
 
+let header_for_gnuplot = "# ID\treps\tOCaml\tC\tOCaml/C\tname\tcategory\n"
+let print_fmt_for_gnuplot =
+  ("%d\t%d\t%.2f\t%.2f\t%.2f\t%s\t%d\n"
+   : ('a, 'use, 'b, 'c, 'd, 'e) format6)
+
+let header_for_humans = "# reps\tOCaml\tC\tOCaml/C\tname\n"
+let print_fmt_for_humans =
+  ("%d\t%.2f\t%.2f\t%.2f\t%s\n"
+   : ('a, 'use, 'b, 'c, 'd, 'e) format6)
+
+(* Statistical Analysis *)
 type record = { reps : int;
                 mutable ml_times : float list;
                 mutable c_times : float list;
@@ -146,13 +168,13 @@ let load ?(records=Hashtbl.create 10) path =
   let lines = get_lines path in
   let expect_ids =
     match lines with
-    | l::_ -> id_magic = l.str
+    | l::_ -> header_with_id = l.str
     | _ -> false
   in
   List.iter (fun line ->
       if expect_ids
-      then scan_line fmt_with_id insert line
-      else scan_line fmt_no_id (insert (-1)) line
+      then scan_line scan_fmt_with_id insert line
+      else scan_line scan_fmt_no_id (insert (-1)) line
     )
     (List.filter (not % comment_line) lines);
   records
@@ -187,10 +209,10 @@ let combine ocaml sundials name =
   if Array.length c_times <> Array.length ml_times then
     failwith (Printf.sprintf "different numbers of data points in %s and %s"
                 ocaml sundials);
-  Printf.printf "# reps\tC med.\tOCaml\tC\tOCaml/C\tname\n";
+  print_string header_no_id;
   let c_median = (analyze c_times).median in
   for i = 0 to min (Array.length c_times) (Array.length ml_times) - 1 do
-    Printf.printf fmt_no_id
+    Printf.printf print_fmt_no_id
       c_reps c_median ml_times.(i) c_times.(i) (ml_times.(i) /. c_times.(i))
       (abbreviate name) (colorof name)
   done
@@ -198,7 +220,7 @@ let combine ocaml sundials name =
 let merge paths =
   let records = Hashtbl.create 100 in
   List.iter (fun p -> ignore (load ~records:records p)) paths;
-  print_string id_magic;
+  print_string header_with_id;
   let records = Array.of_list (sorted_assocs records) in
   let n = Array.length records in
   for id = 0 to n - 1 do
@@ -207,7 +229,7 @@ let merge paths =
     let c = Array.of_list record.c_times in
     let c_median  = (analyze c).median in
     for j = 0 to Array.length c - 1 do
-      Printf.printf fmt_with_id
+      Printf.printf print_fmt_with_id
         id record.reps c_median ml.(j) c.(j) (ml.(j) /. c.(j))
         name (colorof name)
     done;
@@ -218,19 +240,19 @@ let summarize gnuplot path =
   let assocs = sorted_assocs (load path) in
   Printf.printf "# All numbers except reps show median values.\n";
   if gnuplot
-  then Printf.printf "# ID\treps\tOCaml\tC\tOCaml/C\tname\n"
-  else Printf.printf "# reps\tOCaml\tC\tOCaml/C\tname\n";
+  then print_string header_with_id
+  else print_string header_for_humans;
   let _ =
     iteri (fun id (name, record) ->
         let median ls = (analyze (Array.of_list ls)).median in
         let c  = median record.c_times in
         let ml = median record.ml_times in
         let ratio = median (List.map2 (/.) record.ml_times record.c_times) in
-        if gnuplot then Printf.printf "%d\t" id;
-        Printf.printf "%d\t%f\t%f\t%f\t%s\t"
-          record.reps ml c ratio (if gnuplot then name else expand name);
-        if gnuplot then Printf.printf "\t%d" (colorof name);
-        Printf.printf "\n")
+        if gnuplot
+        then Printf.printf print_fmt_for_gnuplot
+               id record.reps ml c ratio name (colorof name)
+        else Printf.printf print_fmt_for_humans
+               record.reps ml c ratio name)
       assocs
   in
   ()
