@@ -500,7 +500,7 @@ if [ ${enable_mpi:-1} -eq 1 ]; then
 	if [ ! -e "${ocamlmpi}/mpi.cmi" ]; then
 	    ocamlmpi="${opam_libpath}mpi"
 	    if [ ! -e "${ocamlmpi}/mpi.cmi" ]; then
-		ocamlmpi='NOT FOUND (OCamlMPI missing)'
+		ocamlmpi='NOT FOUND'
 		ocamlmpi_enabled=
 	    fi
 	fi
