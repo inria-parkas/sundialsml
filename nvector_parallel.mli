@@ -24,7 +24,7 @@
     a global length, and an MPI communicator. *)
 type data = Sundials.RealArray.t * int * Mpi.communicator
 
-(** Represents the internal layout of a serial nvector. *)
+(** Represents the internal layout of a parallel nvector. *)
 type kind
 
 (** The type of parallel nvectors. *)
@@ -56,7 +56,7 @@ val local_length : t -> int
 (** Returns the number of global elements for a parallel nvector. *)
 val global_length : t -> int
 
-(** Returns the communicator used for by the parallel nvector. *)
+(** Returns the communicator used for the parallel nvector. *)
 val communicator : t -> Mpi.communicator
 
 (** Produce a set of parallel {!Nvector.NVECTOR_OPS} from basic operations on
