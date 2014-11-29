@@ -399,11 +399,11 @@ We were able to make our OCaml versions much faster (up to 4 times) by:
        {{:http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.Array1.html#VALsub}[Bigarray.Array1.sub]}
        and
        {{:http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.Array2.html#VALslice_left}[Bigarray.Array2.slice_left]}.
-       These functions allocate a new bigarray using [malloc] and the
-       minor heap. They can often be avoided by calculating and passing indices
-       more explicitly.
-       When part of an array must be passed to another function, it can be
-       faster, depending on the size, to copy into and out of a
+       These functions allocate new bigarrays, all placed on the major
+       heap, and increases the frequency of major GC. They can often be
+       avoided by calculating and passing indices more explicitly.
+       When part of an array must be passed to another function, it
+       can be faster, depending on the size, to copy into and out of a
        statically-allocated temporary array.}
     {- Sequences of {!Sundials.RealArray2.get} and
        {!Sundials.RealArray2.set} operations are usually better replaced by
