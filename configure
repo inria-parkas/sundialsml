@@ -123,7 +123,7 @@ END_HELP_TEXT
     MATHJAX)
 	mathjax="${value}";;
     *)
-	printf "illegal option \"$option\".\n" 1>&2; exit 2;;
+	printf "illegal option \"%s\".\n" "$option" 1>&2; exit 2;;
     esac
 done
 
@@ -621,10 +621,10 @@ fi
 printf "\n"
 
 if [ -n "${error}" ]; then
-    printf "Some errors occurred during configuration:${error}\n\n"
+    printf "Some errors occurred during configuration:%s\n\n" "${error}"
     exit 1
 elif [ -n "${warning}" ]; then
-    printf "Warnings:${warning}\n\n"
+    printf "Warnings:%s\n\n" "${warning}"
 fi
 
 (printf "# # # THIS FILE IS GENERATED AUTOMATICALLY BY CONFIGURE # # #\n"; \

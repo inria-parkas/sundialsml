@@ -208,14 +208,14 @@ $(foreach t,$(PLOTTYPES),perf.opt.$t): perf.opt.log
 	TITLE=$(NATIVE_TITLE) \
 	    TERMINAL=$(subst perf.opt.,,$@)				  \
 	    OUTPUT=$@ $(UTILS)/plot.sh $<
-	@printf "\nPlot saved in $@.\n"
+	@printf "\nPlot saved in %s.\n" "$@"
 	@$(UTILS)/plot.sh --explain-vars
 
 $(foreach t,$(PLOTTYPES),perf.byte.$t): perf.byte.log
 	TITLE=$(BYTE_TITLE) \
 	    TERMINAL=$(subst perf.byte.,,$@)				  \
 	    OUTPUT=$@ $(UTILS)/plot.sh $<
-	@printf "\nPlot saved in $@.\n"
+	@printf "\nPlot saved in %s.\n" "$@"
 	@$(UTILS)/plot.sh --explain-vars
 
 # Rules for producing *.time files.  Subroutine of EXECUTION_RULE.
