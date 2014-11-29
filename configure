@@ -301,8 +301,9 @@ fi
 
 cppflags="${cppflags} -I ${ocaml_path}"
 
-query="#include <caml/mlvalues.h>\nSIZEOF_INT,SIZEOF_LONG,SIZEOF_PTR"
-ilp_size=`echo ${query} | ${CPP} ${cppflags} -P | tail -1`
+include="<caml/mlvalues.h>"
+query="SIZEOF_INT,SIZEOF_LONG,SIZEOF_PTR"
+ilp_size=`printf "#include %s\n%s" "${include}" "${query}" | ${CPP} ${cppflags} -P | tail -1`
 int_size=`expr "$ilp_size" : "^\([^,]*\),*"`
 long_size=`expr "$ilp_size" : "^[^,]*,\([^,]*\),*"`
 ptr_size=`expr "$ilp_size" : "^[^,]*,[^,]*,\([^,]*\)"`
@@ -448,8 +449,9 @@ rm -f ./lib${test_stem}.* ./dll${test_stem}.* \
 
 # Check for LAPACK support
 unset lapack_lib
-query="#include \"sundials/sundials_config.h\"\nSUNDIALS_PACKAGE_VERSION,SUNDIALS_BLAS_LAPACK"
-sundials_info=`echo "${query}" | ${CPP} ${cppflags} ${cvode_cppflags} -P | tail -1`
+include="\"sundials/sundials_config.h\""
+query="SUNDIALS_PACKAGE_VERSION,SUNDIALS_BLAS_LAPACK"
+sundials_info=`printf "#include %s\n%s" "${include}" "${query}" | ${CPP} ${cppflags} ${cvode_cppflags} -P | tail -1`
 if [ $? -ne 0 ]; then
     error="${error}\n\tcould not find sundials_config.h"
     sundials_version="UNKNOWN"
@@ -469,7 +471,7 @@ else
 	*,0)
 	    unset lapack_lib ;;
 	*)
-	    error"${error}\n\terror interpreting sundials_config.h" ;;
+	    error="${error}\n\terror interpreting sundials_config.h" ;;
     esac
 fi
 
