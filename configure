@@ -2,7 +2,7 @@
 
 sysname='Sundials/ML'
 version=2.5.0
-versionp=0
+versionp=1
 contact='tim@tbrk.org'
 
 prefix=/usr/local/
@@ -587,7 +587,7 @@ fi
 
 # Show a summary
 
-printf "\nConfiguration\n-------------\n\n"
+printf "\nConfiguration (${version}p${versionp})\n-----------------------\n"
 
 printf "  OCaml\t\t\t${ocaml_path}${ocaml_version}\n"
 printf "  Sundials\t\t${sundials_version}${lapack_info}\n"
