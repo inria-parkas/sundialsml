@@ -1,0 +1,147 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Dls.BandMatrix.html">
+<link rel="Up" href="Dls.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Dls" rel="Chapter" href="Dls.html">
+<link title="Spils" rel="Chapter" href="Spils.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html"><link title="Basic access" rel="Section" href="#4_Basicaccess">
+<link title="Calculations" rel="Section" href="#4_Calculations">
+<title>Sundials/ML 2.5.0p0 : Dls.ArrayBandMatrix</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Dls.BandMatrix.html" title="Dls.BandMatrix">Previous</a>
+&nbsp;<a class="up" href="Dls.html" title="Dls">Up</a>
+&nbsp;</div>
+<h1>Module <a href="type_Dls.ArrayBandMatrix.html">Dls.ArrayBandMatrix</a></h1>
+
+<pre><span class="keyword">module</span> ArrayBandMatrix: <code class="code"><span class="keyword">sig</span></code> <a href="Dls.ArrayBandMatrix.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+General-purpose band matrix operations on arrays.<br>
+<div class="sundials cvode"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node9.html#ss:band">The BAND Module</a></div></div>
+<hr width="100%">
+
+<pre><span id="TYPEt"><span class="keyword">type</span> <code class="type"></code>t</span> = <code class="type"><a href="Sundials.RealArray2.html#TYPEt">Sundials.RealArray2.t</a></code> </pre>
+<div class="info ">
+A band matrix accessible directly through a
+        <a href="Bigarray.Array2.html"> Bigarray</a>.
+<p>
+
+        The layout of these arrays are characterized by the <em>storage upper
+        bandwidth</em> <code class="code">smu</code>. Given an array <code class="code">a</code>, the first dimension indexes
+        the diagonals, with the main diagonal ($i = j$ ) at <code class="code">a.{smu, _}</code>.
+        The value in the <code class="code">i</code>th row and <code class="code">j</code>th column provided
+        $\mathtt{i} \leq \mathtt{j} + \mathtt{ml}$  and
+        $\mathtt{j} \leq \mathtt{i} + \mathtt{smu}$  is at
+        <code class="code">a.{i - j + smu, j}</code>.<br>
+<div class="sundials cvode"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node9.html#ss:band">newBandMat</a></div></div>
+
+
+<pre><span id="TYPEsmu"><span class="keyword">type</span> <code class="type"></code>smu</span> = <code class="type">int</code> </pre>
+<div class="info ">
+Storage upper-bandwidth.<br>
+</div>
+
+
+<pre><span id="TYPEmu"><span class="keyword">type</span> <code class="type"></code>mu</span> = <code class="type">int</code> </pre>
+<div class="info ">
+Upper-bandwidth.<br>
+</div>
+
+
+<pre><span id="TYPEml"><span class="keyword">type</span> <code class="type"></code>ml</span> = <code class="type">int</code> </pre>
+<div class="info ">
+Lower-bandwidth.<br>
+</div>
+
+<br>
+<h4 id="4_Basicaccess">Basic access</h4><br>
+
+<pre><span id="VALcreate"><span class="keyword">val</span> create</span> : <code class="type">int -><br>       <a href="Dls.ArrayBandMatrix.html#TYPEsmu">smu</a> -> <a href="Dls.ArrayBandMatrix.html#TYPEml">ml</a> -> <a href="Dls.ArrayBandMatrix.html#TYPEt">t</a></code></pre><div class="info ">
+<code class="code">create n smu ml</code> returns an <code class="code">n</code> by <code class="code">n</code> band matrix with
+        storage upper bandwidth <code class="code">smu</code> and lower half-bandwidth <code class="code">ml</code>.
+        If the result will not be LU factored then
+        $\mathtt{smu} = \mathtt{mu}$ , otherwise
+        $\mathtt{smu} = \min(\mathtt{n}-1, \mathtt{mu} + \mathtt{ml})$ .
+        The extra space is used to store U after a call to <a href="Dls.ArrayBandMatrix.html#VALgbtrf"><code class="code"><span class="constructor">Dls</span>.<span class="constructor">ArrayBandMatrix</span>.gbtrf</code></a>.<br>
+<div class="sundials cvode"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node9.html#ss:band">newBandMat</a></div></div>
+
+<pre><span id="VALget"><span class="keyword">val</span> get</span> : <code class="type"><a href="Dls.ArrayBandMatrix.html#TYPEt">t</a> -> <a href="Dls.ArrayBandMatrix.html#TYPEsmu">smu</a> -> int -> int -> float</code></pre><div class="info ">
+<code class="code">get a smu i j</code> returns the value at row <code class="code">i</code> and column <code class="code">j</code> of <code class="code">a</code>.
+        <code class="code">smu</code> is the storage upper bandwidth. Only rows and columns
+        satisfying $\mathtt{i} \leq \mathtt{j} + \mathtt{ml}$  and
+        $\mathtt{j} \leq \mathtt{i} + \mathtt{smu}$  are valid.<br>
+</div>
+
+<pre><span id="VALset"><span class="keyword">val</span> set</span> : <code class="type"><a href="Dls.ArrayBandMatrix.html#TYPEt">t</a> -><br>       <a href="Dls.ArrayBandMatrix.html#TYPEsmu">smu</a> -> int -> int -> float -> unit</code></pre><div class="info ">
+<code class="code">set a smu i j v</code> sets the value at row <code class="code">i</code> and column <code class="code">j</code> of <code class="code">a</code>
+        to <code class="code">v</code>. <code class="code">smu</code> is the storage upper bandwidth. Only rows and columns
+        satisfying $\mathtt{i} \leq \mathtt{j} + \mathtt{ml}$  and
+        $\mathtt{j} \leq \mathtt{i} + \mathtt{smu}$  are valid.<br>
+</div>
+<br>
+<h4 id="4_Calculations">Calculations</h4><br>
+
+<pre><span id="VALadd_identity"><span class="keyword">val</span> add_identity</span> : <code class="type"><a href="Dls.ArrayBandMatrix.html#TYPEt">t</a> -> <a href="Dls.ArrayBandMatrix.html#TYPEsmu">smu</a> -> unit</code></pre><div class="info ">
+Increment a square matrix by the identity matrix.<br>
+<div class="sundials cvode"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node9.html#ss:band">bandAddIdentity</a></div></div>
+
+<pre><span id="VALblit"><span class="keyword">val</span> blit</span> : <code class="type"><a href="Dls.ArrayBandMatrix.html#TYPEt">t</a> -><br>       <a href="Dls.ArrayBandMatrix.html#TYPEt">t</a> -><br>       <a href="Dls.ArrayBandMatrix.html#TYPEsmu">smu</a> -> <a href="Dls.ArrayBandMatrix.html#TYPEsmu">smu</a> -> int -> int -> unit</code></pre><div class="info ">
+<code class="code">blit src dst src_smu dst_smu copy_mu copy_ml</code> copies the contents
+        of <code class="code">src</code> into <code class="code">dst</code>. The storage upper bandwidths of <code class="code">src</code> and <code class="code">dst</code>
+        are, respectively, <code class="code">src_smu</code> and <code class="code">dst_smu</code>. The bandwidth to copy is
+        given by <code class="code">copy_mu</code> and <code class="code">copy_ml</code>. Both matrices must have the
+        same size.<br>
+<div class="sundials cvode"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node9.html#ss:band">bandCopy</a></div></div>
+
+<pre><span id="VALscale"><span class="keyword">val</span> scale</span> : <code class="type">float -><br>       <a href="Dls.ArrayBandMatrix.html#TYPEt">t</a> -><br>       <a href="Dls.ArrayBandMatrix.html#TYPEsmu">smu</a> -><br>       <a href="Dls.ArrayBandMatrix.html#TYPEmu">mu</a> -> <a href="Dls.ArrayBandMatrix.html#TYPEml">ml</a> -> unit</code></pre><div class="info ">
+<code class="code">scale c a smu mu ml</code> multiplies each element of the band matrix
+        <code class="code">a</code> by <code class="code">c</code>.
+        The parameters <code class="code">smu</code>, <code class="code">mu</code>, and <code class="code">ml</code> give, respectively,
+        the storage upper, upper, and lower bandwidths.<br>
+<div class="sundials cvode"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node9.html#ss:band">bandScale</a></div></div>
+
+<pre><span id="VALgbtrf"><span class="keyword">val</span> gbtrf</span> : <code class="type"><a href="Dls.ArrayBandMatrix.html#TYPEt">t</a> -><br>       <a href="Dls.ArrayBandMatrix.html#TYPEsmu">smu</a> -><br>       <a href="Dls.ArrayBandMatrix.html#TYPEmu">mu</a> -><br>       <a href="Dls.ArrayBandMatrix.html#TYPEml">ml</a> -> <a href="Sundials.LintArray.html#TYPEt">Sundials.LintArray.t</a> -> unit</code></pre><div class="info ">
+<code class="code">gbtrf a smu mu ml p</code> performs the LU factorization of <code class="code">a</code> with
+        partial pivoting according to <code class="code">p</code>. The parameters <code class="code">smu</code>, <code class="code">mu</code>, and
+        <code class="code">ml</code> give, respectively, the storage upper, upper, and lower
+        bandwidths. The values in <code class="code">a</code> are overwritten with those of the
+        calculated L and U matrices. The diagonal belongs to U. The diagonal
+        of L is all 1s. U may occupy elements up to bandwidth <code class="code">smu</code>
+        (rather than to <code class="code">mu</code>).<br>
+<div class="sundials cvode"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node9.html#ss:band">bandGBTRF</a></div></div>
+
+<pre><span id="VALgbtrs"><span class="keyword">val</span> gbtrs</span> : <code class="type"><a href="Dls.ArrayBandMatrix.html#TYPEt">t</a> -><br>       <a href="Dls.ArrayBandMatrix.html#TYPEsmu">smu</a> -><br>       <a href="Dls.ArrayBandMatrix.html#TYPEml">ml</a> -><br>       <a href="Sundials.LintArray.html#TYPEt">Sundials.LintArray.t</a> -> <a href="Sundials.RealArray.html#TYPEt">Sundials.RealArray.t</a> -> unit</code></pre><div class="info ">
+<code class="code">gbtrs a smu ml p b</code> finds the solution of <code class="code">ax = b</code> using LU
+        factorization. The parameters <code class="code">smu</code> and <code class="code">ml</code> give, respectively, the
+        storage upper and lower bandwidths. Both <code class="code">p</code> and <code class="code">b</code> must have the same
+        number of rows as <code class="code">a</code>.<br>
+<div class="sundials cvode"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node9.html#ss:band">bandGBTRS</a></div></div>
+</body></html>

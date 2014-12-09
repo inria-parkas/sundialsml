@@ -1,0 +1,347 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Nvector.html">
+<link rel="next" href="Nvector_array.html">
+<link rel="Up" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Dls" rel="Chapter" href="Dls.html">
+<link title="Spils" rel="Chapter" href="Spils.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html"><title>Sundials/ML 2.5.0p0 : Nvector_custom</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Nvector.html" title="Nvector">Previous</a>
+&nbsp;<a class="up" href="index.html" title="Index">Up</a>
+&nbsp;<a class="post" href="Nvector_array.html" title="Nvector_array">Next</a>
+</div>
+<h1>Module <a href="type_Nvector_custom.html">Nvector_custom</a></h1>
+
+<pre><span class="keyword">module</span> Nvector_custom: <code class="code"><span class="keyword">sig</span></code> <a href="Nvector_custom.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+An interface for creating custom nvectors in OCaml.<br>
+<div class="authors"><b>Author(s):</b> Timothy Bourke (Inria/ENS), Jun Inoue (Inria/ENS), Marc Pouzet (UPMC/ENS/Inria)</div>
+<b>Version:</b> 2.5.0<br>
+<div class="sundials cvode"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node7.html#s:nvector">The NVECTOR Module</a></div></div>
+<hr width="100%">
+
+<pre><span id="TYPEkind"><span class="keyword">type</span> <code class="type"></code>kind</span> </pre>
+<div class="info ">
+Represents an nvector manipulated by operations written in OCaml. Note that
+    such operations entail the additional runtime cost of an OCaml callback.<br>
+</div>
+
+
+<pre><span id="TYPEt"><span class="keyword">type</span> <code class="type">'d</code> t</span> = <code class="type">('d, <a href="Nvector_custom.html#TYPEkind">kind</a>) <a href="Nvector.html#TYPEt">Nvector.t</a></code> </pre>
+<div class="info ">
+The type scheme of custom nvectors.<br>
+</div>
+
+
+<pre><code><span id="TYPEnvector_ops"><span class="keyword">type</span> <code class="type">'d</code> nvector_ops</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTnvector_ops.n_vcheck">n_vcheck</span>&nbsp;: <code class="type">'d -> 'd -> bool</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Returns <code class="code"><span class="keyword">true</span></code> if the vectors are compatible. See <a href="Nvector.html#VALcheck"><code class="code"><span class="constructor">Nvector</span>.check</code></a>.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTnvector_ops.n_vclone">n_vclone</span>&nbsp;: <code class="type">'d -> 'd</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Creates a new, distinct vector from an existing one without
+      necessarily copying the contents of the original vector.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTnvector_ops.n_vspace">n_vspace</span>&nbsp;: <code class="type">('d -> int * int) option</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Returns storage requirements for one nvector <code class="code">(lrw, liw)</code>, where
+      <code class="code">lrw</code> is the number of realtype words and <code class="code">liw</code> is the number of
+      integer words .<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTnvector_ops.n_vlinearsum">n_vlinearsum</span>&nbsp;: <code class="type">float -> 'd -> float -> 'd -> 'd -> unit</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<code class="code">n_vlinearsum a x b y z</code> calculates <code class="code">z = ax + by</code>.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTnvector_ops.n_vconst">n_vconst</span>&nbsp;: <code class="type">float -> 'd -> unit</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<code class="code">n_vconst c z</code> sets all of <code class="code">z</code> to <code class="code">c</code>.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTnvector_ops.n_vprod">n_vprod</span>&nbsp;: <code class="type">'d -> 'd -> 'd -> unit</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<code class="code">n_vprod x y z</code> calculates <code class="code">z = x * y</code> (pointwise).<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTnvector_ops.n_vdiv">n_vdiv</span>&nbsp;: <code class="type">'d -> 'd -> 'd -> unit</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<code class="code">n_vdiv x y z</code> calculates <code class="code">z = x / y</code> (pointwise).<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTnvector_ops.n_vscale">n_vscale</span>&nbsp;: <code class="type">float -> 'd -> 'd -> unit</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<code class="code">n_vscale c x z</code> calculates <code class="code">z = c *. x</code>.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTnvector_ops.n_vabs">n_vabs</span>&nbsp;: <code class="type">'d -> 'd -> unit</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<code class="code">n_vabs x z</code> calculates <code class="code">z = abs(x)</code>.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTnvector_ops.n_vinv">n_vinv</span>&nbsp;: <code class="type">'d -> 'd -> unit</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<code class="code">n_vinv x z</code> calculates <code class="code">z = 1/x</code> (pointwise).<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTnvector_ops.n_vaddconst">n_vaddconst</span>&nbsp;: <code class="type">'d -> float -> 'd -> unit</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<code class="code">n_vaddconst x b z</code> calculates <code class="code">z = x + b</code>.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTnvector_ops.n_vmaxnorm">n_vmaxnorm</span>&nbsp;: <code class="type">'d -> float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<code class="code">n_vmaxnorm x</code> returns the maximum absolute value in x.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTnvector_ops.n_vwrmsnorm">n_vwrmsnorm</span>&nbsp;: <code class="type">'d -> 'd -> float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<code class="code">n_vwrmsnorm x w</code> returns the weighted root-mean-square norm of <code class="code">x</code>
+      with weight vector <code class="code">w</code>.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTnvector_ops.n_vmin">n_vmin</span>&nbsp;: <code class="type">'d -> float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<code class="code">n_vmin x</code> returns the smallest element in <code class="code">x</code>.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTnvector_ops.n_vdotprod">n_vdotprod</span>&nbsp;: <code class="type">'d -> 'd -> float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<code class="code">n_vdotprod x y</code> returns the dot product of <code class="code">x</code> and <code class="code">y</code>.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTnvector_ops.n_vcompare">n_vcompare</span>&nbsp;: <code class="type">float -> 'd -> 'd -> unit</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<code class="code">n_vcompare c x z</code> calculates <code class="code">z(i) = <span class="keyword">if</span> abs x(i) &gt;= c <span class="keyword">then</span> 1 <span class="keyword">else</span> 0</code>.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTnvector_ops.n_vinvtest">n_vinvtest</span>&nbsp;: <code class="type">'d -> 'd -> bool</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<code class="code">n_vinvtest x z</code> calculates <code class="code">z(i) = 1 / x(i)</code> with prior testing for
+      zero values. This routine must return <code class="code"><span class="keyword">true</span></code> if all components of <code class="code">x</code> are
+      nonzero (successful inversion) and <code class="code"><span class="keyword">false</span></code> otherwise (not all elements
+      inverted).<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTnvector_ops.n_vwl2norm">n_vwl2norm</span>&nbsp;: <code class="type">('d -> 'd -> float) option</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<code class="code">m = n_vwl2norm x w</code> returns the weighted Euclidean l_2 norm of <code class="code">x</code>
+      with weight vector <code class="code">w</code>, i.e.,
+      $m = \sqrt{\sum_{i=0}^{n-1}(\mathtt{x}_i\mathtt{w}_i)}$ .<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTnvector_ops.n_vl1norm">n_vl1norm</span>&nbsp;: <code class="type">('d -> float) option</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<code class="code">n_vl1norm x</code> returns the l1 norm of <code class="code">x</code>, i.e.,
+         $\sum_{i=0}^{n-1}\lvert\mathtt{x}_i\rvert$ .<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTnvector_ops.n_vwrmsnormmask">n_vwrmsnormmask</span>&nbsp;: <code class="type">('d -> 'd -> 'd -> float) option</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<code class="code">n_vmaxnormmask x w id</code> returns the weighted root-mean-square norm
+      of <code class="code">x</code> using only elements where the corresponding <code class="code">id</code> is non-zero.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTnvector_ops.n_vconstrmask">n_vconstrmask</span>&nbsp;: <code class="type">('d -> 'd -> 'd -> bool) option</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<code class="code">n_vconstrmask c x m</code> calculates <code class="code">m(i) = <span class="constructor">Pi</span> x(i)</code> returning the
+      conjunction. The value of <code class="code"><span class="constructor">Pi</span></code> depends on <code class="code">c(i)</code>: <code class="code">2: x(i) &gt; 0</code>,
+      <code class="code">1: x(i) &gt;= 0</code>, <code class="code">0: <span class="keyword">true</span></code>, <code class="code">-1: x(i) &lt;= 0</code>, and <code class="code">-2: x(i) &lt; 0</code>.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTnvector_ops.n_vminquotient">n_vminquotient</span>&nbsp;: <code class="type">('d -> 'd -> float) option</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<code class="code">n_vminquotient num denom</code> returns the minimum of <code class="code">num(i) / denom(i)</code>.
+      Zero <code class="code">denom</code> elements are skipped. If no such quotients are found,
+      then <a href="Sundials.html#VALbig_real"><code class="code"><span class="constructor">Sundials</span>.big_real</code></a> is returned.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+}
+
+<div class="info ">
+The set of operations required to define an nvector. Some operations
+    are optional; default values are either provided by the OCaml interface
+    or the Sundials library.
+<p>
+
+    Custom nvectors' payloads and operations must not hold any
+    reference that loops back to the enclosing nvector. Such loops
+    will not be properly garbage collected.
+<p>
+
+    nvector operations are not allowed to throw exceptions, as they
+    cannot be propagated reliably.  Uncaught exceptions will be
+    discarded with a warning.<br>
+<div class="sundials cvode"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node7.html#s:nvector">_generic_N_Vector_Ops</a></div></div>
+
+
+<pre><span id="VALmake_wrap"><span class="keyword">val</span> make_wrap</span> : <code class="type">'d <a href="Nvector_custom.html#TYPEnvector_ops">nvector_ops</a> -> 'd -> 'd <a href="Nvector_custom.html#TYPEt">t</a></code></pre><div class="info ">
+<code class="code">make_wrap ops</code> takes a set of operations on the data
+    type <code class="code"><span class="keywordsign">'</span>d</code> and yields a function for lifting values of type <code class="code"><span class="keywordsign">'</span>d</code>
+    into <code class="code"><span class="keywordsign">'</span>d</code> nvectors which can be passed to a solver.<br>
+</div>
+
+<pre><span id="VALadd_tracing"><span class="keyword">val</span> add_tracing</span> : <code class="type">string -> 'd <a href="Nvector_custom.html#TYPEnvector_ops">nvector_ops</a> -> 'd <a href="Nvector_custom.html#TYPEnvector_ops">nvector_ops</a></code></pre><div class="info ">
+<code class="code">add_tracing p ops</code> modifies a set of <a href="Nvector_custom.html#TYPEnvector_ops"><code class="code"><span class="constructor">Nvector_custom</span>.nvector_ops</code></a> so that
+    a message, prefixed by <code class="code">p</code>, is printed each time an operation
+    is called. This function is intended to help debug sets of
+    vector operations.<br>
+</div>
+
+<pre><span id="EXCEPTIONOperationNotSupported"><span class="keyword">exception</span> OperationNotSupported</span></pre>
+<div class="info ">
+Thrown for operations not provided to <a href="Nvector_custom.MakeOps.html"><code class="code"><span class="constructor">Nvector_custom</span>.<span class="constructor">MakeOps</span></code></a><br>
+</div>
+
+<pre><span class="keyword">module</span> <a href="Nvector_custom.MakeOps.html">MakeOps</a> <code class="code">(</code><code class="code"><span class="constructor">A</span></code><code class="code"> : </code><code class="code"><span class="keyword">sig</span></code><div class="sig_block">
+<pre><span id="TYPEdata"><span class="keyword">type</span> <code class="type"></code>data</span> </pre>
+
+
+<pre><span id="VALops"><span class="keyword">val</span> ops</span> : <code class="type">data <a href="Nvector_custom.html#TYPEnvector_ops">Nvector_custom.nvector_ops</a></code></pre></div><code class="code"><span class="keyword">end</span></code><code class="code">) </code>: <code class="type"><a href="Nvector.NVECTOR.html">Nvector.NVECTOR</a></code><code class="type">  with type data = A.data
+                           and type kind = kind</code></pre><div class="info">
+Turn a set of <a href="Nvector_custom.html#TYPEnvector_ops"><code class="code"><span class="constructor">Nvector_custom</span>.nvector_ops</code></a> into an nvector module.
+</div>
+</body></html>

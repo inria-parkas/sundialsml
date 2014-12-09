@@ -1,0 +1,186 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Sundials.LintArray.html">
+<link rel="next" href="Sundials.RootDirs.html">
+<link rel="Up" href="Sundials.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Dls" rel="Chapter" href="Dls.html">
+<link title="Spils" rel="Chapter" href="Spils.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html"><title>Sundials/ML 2.5.0p0 : Sundials.Roots</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Sundials.LintArray.html" title="Sundials.LintArray">Previous</a>
+&nbsp;<a class="up" href="Sundials.html" title="Sundials">Up</a>
+&nbsp;<a class="post" href="Sundials.RootDirs.html" title="Sundials.RootDirs">Next</a>
+</div>
+<h1>Module <a href="type_Sundials.Roots.html">Sundials.Roots</a></h1>
+
+<pre><span class="keyword">module</span> Roots: <code class="code"><span class="keyword">sig</span></code> <a href="Sundials.Roots.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+Vectors of root (zero-crossing) statuses.<br>
+</div>
+<hr width="100%">
+
+<pre><span id="TYPEt"><span class="keyword">type</span> <code class="type"></code>t</span> </pre>
+<div class="info ">
+Arrays that communicate the occurrence of zero-crossings. The
+        underlying representation is hidden to isolate compatability
+        issues related to integers.<br>
+</div>
+
+
+<pre><code><span id="TYPEr"><span class="keyword">type</span> <code class="type"></code>r</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTr.NoRoot"><span class="constructor">NoRoot</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+No root was found on the corresponding function (0).<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTr.Rising"><span class="constructor">Rising</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The corresponding root function is increasing (1).<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTr.Falling"><span class="constructor">Falling</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The corresponding root function is decreasing (-1).<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+Values indicating the status of root functions.<br>
+<div class="sundials cvode"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node5.html#sss:optout_root">CVodeGetRootInfo</a></div><div class="sundials ida"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/ida_guide/node5.html#sss:optout_root">IdaGetRootInfo</a></div></div>
+
+
+<pre><span id="VALcreate"><span class="keyword">val</span> create</span> : <code class="type">int -> <a href="Sundials.Roots.html#TYPEt">t</a></code></pre><div class="info ">
+<code class="code">create n</code> returns an array with <code class="code">n</code> elements each set to <code class="code"><span class="constructor">NoRoot</span></code>.<br>
+</div>
+
+<pre><span id="VALmake"><span class="keyword">val</span> make</span> : <code class="type">int -> <a href="Sundials.Roots.html#TYPEr">r</a> -> <a href="Sundials.Roots.html#TYPEt">t</a></code></pre><div class="info ">
+<code class="code">make n x</code> returns an array with <code class="code">n</code> elements each set to <code class="code">x</code>.<br>
+</div>
+
+<pre><span id="VALlength"><span class="keyword">val</span> length</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> int</code></pre><div class="info ">
+Returns the length of an array.<br>
+</div>
+
+<pre><span id="VALdetected"><span class="keyword">val</span> detected</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> int -> bool</code></pre><div class="info ">
+Returns <code class="code"><span class="keyword">true</span></code> only if the specified element is either <code class="code"><span class="constructor">Rising</span></code> or
+        <code class="code"><span class="constructor">Falling</span></code>.<br>
+</div>
+
+<pre><span id="VALrising"><span class="keyword">val</span> rising</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> int -> bool</code></pre><div class="info ">
+Returns <code class="code"><span class="keyword">true</span></code> only if the specified element is <code class="code"><span class="constructor">Rising</span></code>.<br>
+</div>
+
+<pre><span id="VALfalling"><span class="keyword">val</span> falling</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> int -> bool</code></pre><div class="info ">
+Returns <code class="code"><span class="keyword">true</span></code> only if the specified element is <code class="code"><span class="constructor">Falling</span></code>.<br>
+</div>
+
+<pre><span id="VALget"><span class="keyword">val</span> get</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> int -> <a href="Sundials.Roots.html#TYPEr">r</a></code></pre><div class="info ">
+<code class="code">get r i</code> returns the <code class="code">i</code>th element of <code class="code">r</code>.<br>
+</div>
+
+<pre><span id="VALset"><span class="keyword">val</span> set</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> int -> <a href="Sundials.Roots.html#TYPEr">r</a> -> unit</code></pre><div class="info ">
+<code class="code">set r i v</code> sets the <code class="code">i</code>th element of <code class="code">r</code> to <code class="code">v</code>.<br>
+</div>
+
+<pre><span id="VALset_noroot"><span class="keyword">val</span> set_noroot</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> int -> unit</code></pre><div class="info ">
+<code class="code">set_noroot r i</code> sets the <code class="code">i</code>th element of <code class="code">r</code> to <code class="code"><span class="constructor">NoRoot</span></code>.<br>
+</div>
+
+<pre><span id="VALset_rising"><span class="keyword">val</span> set_rising</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> int -> unit</code></pre><div class="info ">
+<code class="code">set_rising r i</code> sets the <code class="code">i</code>th element of <code class="code">r</code> to <code class="code"><span class="constructor">Rising</span></code>.<br>
+</div>
+
+<pre><span id="VALset_falling"><span class="keyword">val</span> set_falling</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> int -> unit</code></pre><div class="info ">
+<code class="code">set_falling r i</code> sets the <code class="code">i</code>th element of <code class="code">r</code> to <code class="code"><span class="constructor">Falling</span></code>.<br>
+</div>
+
+<pre><span id="VALfill"><span class="keyword">val</span> fill</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> <a href="Sundials.Roots.html#TYPEr">r</a> -> unit</code></pre><div class="info ">
+<code class="code">fill a x</code> sets all elements in <code class="code">a</code> to <code class="code">x</code>.<br>
+</div>
+
+<pre><span id="VALcopy"><span class="keyword">val</span> copy</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> <a href="Sundials.Roots.html#TYPEt">t</a></code></pre><div class="info ">
+Creates a new array with the same contents as an existing one.<br>
+</div>
+
+<pre><span id="VALint_of_root"><span class="keyword">val</span> int_of_root</span> : <code class="type"><a href="Sundials.Roots.html#TYPEr">r</a> -> int</code></pre><div class="info ">
+Returns <code class="code">0</code> for <code class="code"><span class="constructor">NoRoot</span></code>, <code class="code">1</code> for <code class="code"><span class="constructor">Rising</span></code>, and <code class="code">-1</code> for <code class="code"><span class="constructor">Falling</span></code>.<br>
+</div>
+
+<pre><span id="VALreset"><span class="keyword">val</span> reset</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> unit</code></pre><div class="info ">
+Resets all elements to <code class="code"><span class="constructor">NoRoot</span></code>.<br>
+</div>
+
+<pre><span id="VALexists"><span class="keyword">val</span> exists</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> bool</code></pre><div class="info ">
+<code class="code"><span class="keyword">true</span></code> if any elements are equal to <code class="code"><span class="constructor">Rising</span></code> or <code class="code"><span class="constructor">Falling</span></code>.<br>
+</div>
+
+<pre><span id="VALiter"><span class="keyword">val</span> iter</span> : <code class="type">(<a href="Sundials.Roots.html#TYPEr">r</a> -> unit) -> <a href="Sundials.Roots.html#TYPEt">t</a> -> unit</code></pre><div class="info ">
+<code class="code">iter f r</code> successively applies <code class="code">f</code> to each element in <code class="code">r</code>.<br>
+</div>
+
+<pre><span id="VALiteri"><span class="keyword">val</span> iteri</span> : <code class="type">(int -> <a href="Sundials.Roots.html#TYPEr">r</a> -> unit) -> <a href="Sundials.Roots.html#TYPEt">t</a> -> unit</code></pre><div class="info ">
+<code class="code">iteri f r</code> successively applies <code class="code">f</code> to the indexes and
+        elements of <code class="code">r</code>.<br>
+</div>
+
+<pre><span id="VALof_list"><span class="keyword">val</span> of_list</span> : <code class="type"><a href="Sundials.Roots.html#TYPEr">r</a> list -> <a href="Sundials.Roots.html#TYPEt">t</a></code></pre><div class="info ">
+Creates an array by copying the contents of a <code class="code">r list</code>.<br>
+</div>
+
+<pre><span id="VALto_list"><span class="keyword">val</span> to_list</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> <a href="Sundials.Roots.html#TYPEr">r</a> list</code></pre><div class="info ">
+Copies into a list.<br>
+</div>
+
+<pre><span id="VALof_array"><span class="keyword">val</span> of_array</span> : <code class="type"><a href="Sundials.Roots.html#TYPEr">r</a> array -> <a href="Sundials.Roots.html#TYPEt">t</a></code></pre><div class="info ">
+Creates a new value from the contents of an
+        <a href="Array.html"> array</a>.<br>
+</div>
+
+<pre><span id="VALto_array"><span class="keyword">val</span> to_array</span> : <code class="type"><a href="Sundials.Roots.html#TYPEt">t</a> -> <a href="Sundials.Roots.html#TYPEr">r</a> array</code></pre><div class="info ">
+Creates a new array from the contents of a given value.<br>
+</div>
+</body></html>

@@ -1,0 +1,322 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="Up" href="Cvodes.Sensitivity.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Dls" rel="Chapter" href="Dls.html">
+<link title="Spils" rel="Chapter" href="Spils.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html"><link title="Initialization" rel="Section" href="#init">
+<link title="Tolerance specification" rel="Section" href="#tols">
+<link title="Output functions" rel="Section" href="#quadout">
+<link title="Querying the solver (optional output functions)" rel="Section" href="#get">
+<link title="Exceptions" rel="Section" href="#exceptions">
+<title>Sundials/ML 2.5.0p0 : Cvodes.Sensitivity.Quadrature</title>
+</head>
+<body>
+<div class="navbar">&nbsp;<a class="up" href="Cvodes.Sensitivity.html" title="Cvodes.Sensitivity">Up</a>
+&nbsp;</div>
+<h1>Module <a href="type_Cvodes.Sensitivity.Quadrature.html">Cvodes.Sensitivity.Quadrature</a></h1>
+
+<pre><span class="keyword">module</span> Quadrature: <code class="code"><span class="keyword">sig</span></code> <a href="Cvodes.Sensitivity.Quadrature.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+Support for quadrature sensitivity equations.
+<p>
+
+        Adds an additional vector $s_\mathit{Q}$ of $N_\mathit{Q}$
+        quadrature sensitivities
+        $\frac{\mathrm{d} s_\mathit{Q}}{\mathrm{d}t}
+                = f_{\mathit{QS}}(t, y, s, \dot{y}_Q, p)$.
+        This mechanism allows, in particular, the calculation of the
+        sensitivities of the ‘pure’ <a href="Cvodes.Quadrature.html"><code class="code"><span class="constructor">Cvodes</span>.<span class="constructor">Quadrature</span></code></a> variables, $y_Q$.<br>
+<div class="sundials cvodes"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/node3.html#SECTION00364000000000000000">Quadratures depending on forward sensitivities</a></div><div class="sundials cvodes"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/node6.html#SECTION00640000000000000000">Integration of quadrature equations depending on forward sensitivities</a></div></div>
+<hr width="100%">
+<br>
+<h2 id="init">Initialization</h2><br>
+
+<pre><code><span id="TYPEquadsensrhsfn_args"><span class="keyword">type</span> <code class="type">'d</code> quadsensrhsfn_args</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTquadsensrhsfn_args.t">t</span>&nbsp;: <code class="type">float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The value of the independent variable.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTquadsensrhsfn_args.y">y</span>&nbsp;: <code class="type">'d</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The vector of dependent-variable values $y(t)$.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTquadsensrhsfn_args.s">s</span>&nbsp;: <code class="type">'d array</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The array of sensitivity vectors.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTquadsensrhsfn_args.yq'">yq'</span>&nbsp;: <code class="type">'d</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The value of the quadrature-right hand side $\dot{y}_Q$.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTquadsensrhsfn_args.tmp">tmp</span>&nbsp;: <code class="type">'d double</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Temporary storage vectors.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+}
+
+<div class="info ">
+Arguments to <a href="Cvodes.Sensitivity.Quadrature.html#TYPEquadsensrhsfn"><code class="code"><span class="constructor">Cvodes</span>.<span class="constructor">Sensitivity</span>.<span class="constructor">Quadrature</span>.quadsensrhsfn</code></a>.<br>
+</div>
+
+
+<pre><span id="TYPEquadsensrhsfn"><span class="keyword">type</span> <code class="type">'d</code> quadsensrhsfn</span> = <code class="type">'d <a href="Cvodes.Sensitivity.Quadrature.html#TYPEquadsensrhsfn_args">quadsensrhsfn_args</a> -> 'd array -> unit</code> </pre>
+<div class="info ">
+Functions defining quadrature sensitivities.
+            They are passed the arguments:<ul>
+<li><code class="code">args</code>, the current values of state and sensitivity variables,
+                      and,</li>
+<li><code class="code">sq'</code>, an array of vectors for storing the computed values of
+                    $\dot{s}_\mathit{Q} = f_\mathit{QS}(t, y, s, \dot{y}_Q)$.</li>
+</ul>
+
+            Within the function, raising a <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a>
+            exception indicates a recoverable error. Any other exception is
+            treated as an unrecoverable error.
+<p>
+
+            <div class="warningbox"> The vectors in the function arguments should not
+                     be accessed after the function returns.</div><br>
+<div class="sundials cvodes"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/node6.html#ss:user_fct_quad_sens">CVodeQuadSensRhsFn</a></div></div>
+
+
+<pre><span id="VALinit"><span class="keyword">val</span> init</span> : <code class="type">('d, 'k) <a href="Cvode.html#TYPEsession">Cvode.session</a> -><br>       ?fqs:'d <a href="Cvodes.Sensitivity.Quadrature.html#TYPEquadsensrhsfn">quadsensrhsfn</a> -><br>       ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> array -> unit</code></pre><div class="info ">
+Activate the integration of quadrature sensitivities.  The
+            arguments are:<ul>
+<li><code class="code">~fqs</code>, a function that computes the right-hand sides of the
+              quadrature sensitivities, and</li>
+<li><code class="code">q0</code>, an array of vectors specifying initial values for the
+              quadrature sensitivities.</li>
+</ul>
+
+            If <code class="code">~fqs</code> is not given, an internal difference quotient
+            routine is used.  In that case, <a href="Cvodes.Sensitivity.html#VALinit"><code class="code"><span class="constructor">Cvodes</span>.<span class="constructor">Sensitivity</span>.init</code></a> must
+            have been invoked with a <code class="code">sens_params</code> whose <code class="code">pvals</code> is
+            non-<code class="code"><span class="constructor">None</span></code>.<br>
+<div class="raisedexceptions"><span class="raises">Raises</span> <code>QuadNotInitialized</code> <a href="Cvodes.Sensitivity.Quadrature.html#VALinit"><code class="code"><span class="constructor">Cvodes</span>.<span class="constructor">Sensitivity</span>.<span class="constructor">Quadrature</span>.init</code></a> has not been called.</div>
+<div class="sundials cvodes"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/node6.html#ss:quad_sens_init">CVodeQuadSensInit</a></div></div>
+
+<pre><span id="VALreinit"><span class="keyword">val</span> reinit</span> : <code class="type">('d, 'k) <a href="Cvode.html#TYPEsession">Cvode.session</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> array -> unit</code></pre><div class="info ">
+Reinitializes the quadrature sensitivity integration.<br>
+<div class="sundials cvodes"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/node6.html#ss:quad_sens_init">CVodeQuadSensReInit</a></div></div>
+<br>
+<h2 id="tols">Tolerance specification</h2><br>
+
+<pre><code><span id="TYPEtolerance"><span class="keyword">type</span> <code class="type">('d, 'k)</code> tolerance</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTtolerance.NoStepSizeControl"><span class="constructor">NoStepSizeControl</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Quadrature variables are not used for step-size control
+                (the default).<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTtolerance.SStolerances"><span class="constructor">SStolerances</span></span> <span class="keyword">of</span> <code class="type">float * <a href="Sundials.RealArray.html#TYPEt">Sundials.RealArray.t</a></code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<code class="code">(rel, abs)</code> : scalar relative and absolute tolerances.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTtolerance.SVtolerances"><span class="constructor">SVtolerances</span></span> <span class="keyword">of</span> <code class="type">float * ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> array</code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<code class="code">(rel, abs)</code> : scalar relative and vector absolute
+                tolerances.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTtolerance.EEtolerances"><span class="constructor">EEtolerances</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Calculate the integration tolerances for the
+                quadrature sensitivities from those provided for
+                the pure quadrature variables.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+Tolerances for calculating quadrature sensitivities.<br>
+</div>
+
+
+<pre><span id="VALset_tolerances"><span class="keyword">val</span> set_tolerances</span> : <code class="type">('d, 'k) <a href="Cvode.html#TYPEsession">Cvode.session</a> -><br>       ('d, 'k) <a href="Cvodes.Sensitivity.Quadrature.html#TYPEtolerance">tolerance</a> -> unit</code></pre><div class="info ">
+Specify how to use quadrature sensitivities in step size control.<br>
+<div class="sundials cvodes"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/node6.html#ss:quad_sens_optional_input">CVodeSetQuadSensErrCon</a></div><div class="sundials cvodes"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/node6.html#ss:quad_sens_optional_input">CVodeQuadSensSStolerances</a></div><div class="sundials cvodes"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/node6.html#ss:quad_sens_optional_input">CVodeQuadSensSVtolerances</a></div><div class="sundials cvodes"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/node6.html#ss:quad_sens_optional_input">CVodeQuadSensEEtolerances</a></div></div>
+<br>
+<h2 id="quadout">Output functions</h2><br>
+
+<pre><span id="VALget"><span class="keyword">val</span> get</span> : <code class="type">('d, 'k) <a href="Cvode.html#TYPEsession">Cvode.session</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> array -> float</code></pre><div class="info ">
+Returns the quadrature sensitivity solutions and time reached
+            after a successful solver step. The given vectors are filled with
+            values calculated during either <a href="Cvode.html#VALsolve_normal"><code class="code"><span class="constructor">Cvode</span>.solve_normal</code></a> or
+            <a href="Cvode.html#VALsolve_one_step"><code class="code"><span class="constructor">Cvode</span>.solve_one_step</code></a> and the value of the independent variable
+            is returned.<br>
+<div class="sundials cvodes"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/node6.html#ss:quad_sens_get">CVodeGetQuadSens</a></div></div>
+
+<pre><span id="VALget1"><span class="keyword">val</span> get1</span> : <code class="type">('d, 'k) <a href="Cvode.html#TYPEsession">Cvode.session</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> int -> float</code></pre><div class="info ">
+Returns a single quadrature sensitivity vector after a successful
+            solver step. Like <a href="Cvodes.Sensitivity.Quadrature.html#VALget"><code class="code"><span class="constructor">Cvodes</span>.<span class="constructor">Sensitivity</span>.<span class="constructor">Quadrature</span>.get</code></a>, but the argument <code class="code">i</code> specifies a specific
+            vector to return.<br>
+<div class="raisedexceptions"><span class="raises">Raises</span> <code>BadIS</code> The index is not in the allowed range.</div>
+<div class="sundials cvodes"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/node6.html#ss:quad_sens_get">CVodeGetQuadSens1</a></div></div>
+
+<pre><span id="VALget_dky"><span class="keyword">val</span> get_dky</span> : <code class="type">('d, 'k) <a href="Cvode.html#TYPEsession">Cvode.session</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> array -> float -> int -> unit</code></pre><div class="info ">
+Returns the interpolated solution or derivatives of the quadrature
+            sensitivity solution.
+<p>
+
+            <code class="code">get_dky s dksq t k</code> computes the <code class="code">k</code>th derivative at time <code class="code">t</code>,
+            i.e.,
+            $\frac{d^\mathtt{k}s_\mathit{Q}(\mathtt{t})}{\mathit{dt}^\mathtt{k}}$,
+            and stores it in <code class="code">dksq</code>. The arguments must satisfy $t_n - h_u
+            \leq \mathtt{t} \leq t_n$—where $t_n$ denotes
+            <a href="Cvode.html#VALget_current_time"><code class="code"><span class="constructor">Cvode</span>.get_current_time</code></a> and $h_u$ denotes
+            <a href="Cvode.html#VALget_last_step"><code class="code"><span class="constructor">Cvode</span>.get_last_step</code></a>,—and
+            $0 \leq \mathtt{k} \leq q_u$—where $q_u$ denotes
+            <a href="Cvode.html#VALget_last_order"><code class="code"><span class="constructor">Cvode</span>.get_last_order</code></a>.<br>
+<div class="raisedexceptions"><span class="raises">Raises</span><ul><li><code>BadIS</code> The index is not in the allowed range.</li>
+<li><code>BadK</code> <code class="code">k</code> is not in the range 0, 1, ..., <code class="code">qlast</code>.</li>
+<li><code>BadT</code> <code class="code">t</code> is not in the allowed range.</li>
+</ul></div>
+<div class="sundials cvodes"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/node6.html#ss:quad_sens_get">CVodeGetQuadSensDky</a></div></div>
+
+<pre><span id="VALget_dky1"><span class="keyword">val</span> get_dky1</span> : <code class="type">('d, 'k) <a href="Cvode.html#TYPEsession">Cvode.session</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> float -> int -> int -> unit</code></pre><div class="info ">
+Returns the interpolated solution or derivatives of a single
+            quadrature sensitivity solution vector.
+            <code class="code">get_dky s dksq t k i</code> is like
+            <a href="Cvodes.Sensitivity.Quadrature.html#VALget_dky"><code class="code"><span class="constructor">Cvodes</span>.<span class="constructor">Sensitivity</span>.<span class="constructor">Quadrature</span>.get_dky</code></a> but restricted to the <code class="code">i</code>th sensitivity solution vector.<br>
+<div class="raisedexceptions"><span class="raises">Raises</span><ul><li><code>BadK</code> <code class="code">k</code> is not in the range 0, 1, ..., <code class="code">qlast</code>.</li>
+<li><code>BadT</code> <code class="code">t</code> is not in the allowed range.</li>
+</ul></div>
+<div class="sundials cvodes"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/node6.html#ss:quad_sens_get">CVodeGetQuadSensDky1</a></div></div>
+<br>
+<h2 id="get">Querying the solver (optional output functions)</h2><br>
+
+<pre><span id="VALget_num_rhs_evals"><span class="keyword">val</span> get_num_rhs_evals</span> : <code class="type">('d, 'k) <a href="Cvode.html#TYPEsession">Cvode.session</a> -> int</code></pre><div class="info ">
+Returns the number of calls to the quadrature right-hand side
+            function.<br>
+<div class="sundials cvodes"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/node6.html#ss:quad_sens_optional_output">CVodeGetQuadSensNumRhsEvals</a></div></div>
+
+<pre><span id="VALget_num_err_test_fails"><span class="keyword">val</span> get_num_err_test_fails</span> : <code class="type">('d, 'k) <a href="Cvode.html#TYPEsession">Cvode.session</a> -> int</code></pre><div class="info ">
+Returns the number of local error test failures due to quadrature
+            variables.<br>
+<div class="sundials cvodes"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/node6.html#ss:quad_sens_optional_output">CVodeGetQuadSensNumErrTestFails</a></div></div>
+
+<pre><span id="VALget_err_weights"><span class="keyword">val</span> get_err_weights</span> : <code class="type">('d, 'k) <a href="Cvode.html#TYPEsession">Cvode.session</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> array -> unit</code></pre><div class="info ">
+Returns the quadrature error weights at the current time.<br>
+<div class="sundials cvodes"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/node6.html#ss:quad_sens_optional_output">CVodeGetQuadSensErrWeights</a></div></div>
+
+<pre><span id="VALget_stats"><span class="keyword">val</span> get_stats</span> : <code class="type">('d, 'k) <a href="Cvode.html#TYPEsession">Cvode.session</a> -> int * int</code></pre><div class="info ">
+Returns quadrature-related statistics. These are the
+            number of calls to the quadrature function (<code class="code">nfqevals</code>) and the
+            number of error test failures due to quadrature variables
+            (<code class="code">nqetfails</code>).<br>
+<b>Returns</b> (<code class="code">nfqevals</code>, <code class="code">nqetfails</code>)<br>
+<div class="sundials cvodes"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/node6.html#ss:quad_sens_optional_output">CVodeGetQuadSensStats</a></div></div>
+<br>
+<h2 id="exceptions">Exceptions</h2><br>
+
+<pre><span id="EXCEPTIONQuadSensNotInitialized"><span class="keyword">exception</span> QuadSensNotInitialized</span></pre>
+<div class="info ">
+Quadrature integration was not initialized.<br>
+<div class="sundials cvodes"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/node5.html#SECTION00642000000000000000">CV_NO_QUAD_SENS</a></div></div>
+
+<pre><span id="EXCEPTIONQuadSensRhsFuncFailure"><span class="keyword">exception</span> QuadSensRhsFuncFailure</span></pre>
+<div class="info ">
+The sensitivity quadrature function failed in an unrecoverable
+            manner.<br>
+<div class="sundials cvodes"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/node6.html#SECTION00642000000000000000">CV_QSRHSFUNC_FAIL</a></div></div>
+
+<pre><span id="EXCEPTIONFirstQuadSensRhsFuncFailure"><span class="keyword">exception</span> FirstQuadSensRhsFuncFailure</span></pre>
+<div class="info ">
+The sensitivity quadrature function failed at the first call.<br>
+<div class="sundials cvodes"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/node6.html#SECTION00642000000000000000">CV_FIRST_QSRHSFUNC_ERR</a></div></div>
+
+<pre><span id="EXCEPTIONRepeatedQuadSensRhsFuncFailure"><span class="keyword">exception</span> RepeatedQuadSensRhsFuncFailure</span></pre>
+<div class="info ">
+Convergence test failures occurred too many times due to repeated
+            recoverable errors in the quadrature function. Also raised if the
+            sensitivity quadrature function had repeated recoverable errors
+            during the estimation of an initial step size (if quadrature
+            variables are included in error tests).<br>
+<div class="sundials cvodes"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/node6.html#SECTION00642000000000000000">CV_REPTD_QSRHSFUNC_ERR</a></div></div>
+
+<pre><span id="EXCEPTIONUnrecoverableQuadSensRhsFuncFailure"><span class="keyword">exception</span> UnrecoverableQuadSensRhsFuncFailure</span></pre>
+<div class="info ">
+The sensitivity quadrature function had a recoverable error, but no
+            recovery was possible. This failure mode is rare, as it can occur
+            only if the quadrature function fails recoverably after an error
+            test failed while at order one.<br>
+<div class="sundials cvodes"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/node6.html#SECTION00642000000000000000">CV_UNREC_QSRHSFUNC_ERR</a></div></div>
+</body></html>

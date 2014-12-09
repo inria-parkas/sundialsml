@@ -1,0 +1,211 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="next" href="Idas.Sensitivity.html">
+<link rel="Up" href="Idas.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Dls" rel="Chapter" href="Dls.html">
+<link title="Spils" rel="Chapter" href="Spils.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html"><link title="Initialization and access" rel="Section" href="#init">
+<link title="Tolerances" rel="Section" href="#tols">
+<link title="Querying the solver (optional output functions)" rel="Section" href="#get">
+<link title="Exceptions" rel="Section" href="#exceptions">
+<title>Sundials/ML 2.5.0p0 : Idas.Quadrature</title>
+</head>
+<body>
+<div class="navbar">&nbsp;<a class="up" href="Idas.html" title="Idas">Up</a>
+&nbsp;<a class="post" href="Idas.Sensitivity.html" title="Idas.Sensitivity">Next</a>
+</div>
+<h1>Module <a href="type_Idas.Quadrature.html">Idas.Quadrature</a></h1>
+
+<pre><span class="keyword">module</span> Quadrature: <code class="code"><span class="keyword">sig</span></code> <a href="Idas.Quadrature.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+Integration of pure quadrature equations.
+<p>
+
+    Adds a vector $y_Q$ of $N_Q$ quadrature variables defined by
+    $\frac{\mathrm{d} y_Q}{\mathrm{d}t} = f_Q(t, y, \dot{y}, p)$. These
+    are treated more efficiently since they are excluded from the nonlinear
+    solution stage.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#SECTION00570000000000000000">Integration of pure quadrature equations</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node3.html#s:quad">Pure quadrature integration</a></div></div>
+<hr width="100%">
+<br>
+<h2 id="init">Initialization and access</h2><br>
+
+<pre><span id="TYPEquadrhsfn"><span class="keyword">type</span> <code class="type">'d</code> quadrhsfn</span> = <code class="type">float -> 'd -> 'd -> 'd -> unit</code> </pre>
+<div class="info ">
+Functions defining quadrature variables. They are passed four
+        arguments:<ul>
+<li><code class="code">t</code>, the value of the independent variable, i.e., the simulation time,</li>
+<li><code class="code">y</code>, the vector of dependent-variable values, i.e., $y(t)$,</li>
+<li><code class="code">y'</code>, the vector of dependent-variable derivatives,
+                  i.e., $\dot{y}(t)$ and,</li>
+<li><code class="code">yq'</code>, a vector for storing the computed value of
+                 $\dot{y}_Q = f_Q(t, y, \dot{y}, p)$.</li>
+</ul>
+
+        Within the function, raising a <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a> exception
+        indicates a recoverable error. Any other exception is treated as an
+        unrecoverable error.
+<p>
+
+        <div class="warningbox"> The vectors in the function arguments should not
+                 be accessed after the function returns.</div><br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#ss:user_fct_quad">IDAQuadRhsFn</a></div></div>
+
+
+<pre><span id="VALinit"><span class="keyword">val</span> init</span> : <code class="type">('d, 'k) <a href="Ida.html#TYPEsession">Ida.session</a> -><br>       'd <a href="Idas.Quadrature.html#TYPEquadrhsfn">quadrhsfn</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> unit</code></pre><div class="info ">
+Activates the integration of quadrature equations. The vector
+        gives the initial value of $y_Q$.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#ss:quad_init">IDAQuadInit</a></div></div>
+
+<pre><span id="VALreinit"><span class="keyword">val</span> reinit</span> : <code class="type">('d, 'k) <a href="Ida.html#TYPEsession">Ida.session</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> unit</code></pre><div class="info ">
+Reinitializes the integration of quadrature equations. The vector
+        gives a new value for $y_Q$.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#ss:quad_init">IDAQuadReInit</a></div></div>
+
+<pre><span id="VALget"><span class="keyword">val</span> get</span> : <code class="type">('d, 'k) <a href="Ida.html#TYPEsession">Ida.session</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> float</code></pre><div class="info ">
+Returns the quadrature solutions and time reached after a successful
+        solver step. The given vector is filled with values calculated during
+        either <a href="Ida.html#VALsolve_normal"><code class="code"><span class="constructor">Ida</span>.solve_normal</code></a> or <a href="Ida.html#VALsolve_one_step"><code class="code"><span class="constructor">Ida</span>.solve_one_step</code></a> and the
+        value of the independent variable is returned.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#ss:quad_get">IdaGetQuad</a></div></div>
+
+<pre><span id="VALget_dky"><span class="keyword">val</span> get_dky</span> : <code class="type">('d, 'k) <a href="Ida.html#TYPEsession">Ida.session</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> float -> int -> unit</code></pre><div class="info ">
+Returns the interpolated solution or derivatives of quadrature
+        variables.
+<p>
+
+        <code class="code">get_dky s dkyq t k</code> computes the <code class="code">k</code>th derivative at time <code class="code">t</code>, i.e.,
+        $\frac{d^\mathtt{k}y_Q(\mathtt{t})}{\mathit{dt}^\mathtt{k}}$,
+        and stores it in <code class="code">dkyq</code>. The arguments must satisfy $t_n - h_u \leq
+        \mathtt{t} \leq t_n$—where $t_n$ denotes <a href="Ida.html#VALget_current_time"><code class="code"><span class="constructor">Ida</span>.get_current_time</code></a>
+        and $h_u$ denotes <a href="Ida.html#VALget_last_step"><code class="code"><span class="constructor">Ida</span>.get_last_step</code></a>,— and
+        $0 \leq \mathtt{k} \leq q_u$—where
+        $q_u$ denotes <a href="Ida.html#VALget_last_order"><code class="code"><span class="constructor">Ida</span>.get_last_order</code></a>.
+<p>
+
+        This function may only be called after a successful return from either
+        <a href="Ida.html#VALsolve_normal"><code class="code"><span class="constructor">Ida</span>.solve_normal</code></a> or <a href="Ida.html#VALsolve_one_step"><code class="code"><span class="constructor">Ida</span>.solve_one_step</code></a>.<br>
+<div class="raisedexceptions"><span class="raises">Raises</span><ul><li><code>BadT</code> <code class="code">t</code> is not in the interval $[t_n - h_u, t_n]$.</li>
+<li><code>BadK</code> <code class="code">k</code> is not in the range 0, 1, ..., $q_u$.</li>
+</ul></div>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#ss:quad_get">IdaGetQuadDky</a></div></div>
+<br>
+<h2 id="tols">Tolerances</h2><br>
+
+<pre><code><span id="TYPEtolerance"><span class="keyword">type</span> <code class="type">('d, 'k)</code> tolerance</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTtolerance.NoStepSizeControl"><span class="constructor">NoStepSizeControl</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Do not use quadrature variables for step-size control (default).<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTtolerance.SStolerances"><span class="constructor">SStolerances</span></span> <span class="keyword">of</span> <code class="type">float * float</code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<code class="code">(rel, abs)</code> : scalar relative and absolute tolerances.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTtolerance.SVtolerances"><span class="constructor">SVtolerances</span></span> <span class="keyword">of</span> <code class="type">float * ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a></code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<code class="code">(rel, abs)</code> : scalar relative and vector absolute tolerances.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+Tolerances for calculating quadrature variables.<br>
+</div>
+
+
+<pre><span id="VALset_tolerances"><span class="keyword">val</span> set_tolerances</span> : <code class="type">('d, 'k) <a href="Ida.html#TYPEsession">Ida.session</a> -> ('d, 'k) <a href="Idas.Quadrature.html#TYPEtolerance">tolerance</a> -> unit</code></pre><div class="info ">
+Specify how to use quadrature variables in step size control.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#ss:quad_optional_input">IDASetQuadErrCon</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#ss:quad_optional_input">IDAQuadSStolerances</a></div><div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#ss:quad_optional_input">IDAQuadSVtolerances</a></div></div>
+<br>
+<h2 id="get">Querying the solver (optional output functions)</h2><br>
+
+<pre><span id="VALget_num_rhs_evals"><span class="keyword">val</span> get_num_rhs_evals</span> : <code class="type">('d, 'k) <a href="Ida.html#TYPEsession">Ida.session</a> -> int</code></pre><div class="info ">
+Returns the number of calls to the quadrature function.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#ss:quad_optional_output">IDAGetQuadNumRhsEvals</a></div></div>
+
+<pre><span id="VALget_num_err_test_fails"><span class="keyword">val</span> get_num_err_test_fails</span> : <code class="type">('d, 'k) <a href="Ida.html#TYPEsession">Ida.session</a> -> int</code></pre><div class="info ">
+Returns the number of local error test failures that have occurred
+        due to quadrature variables.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#ss:quad_optional_output">IDAGetQuadNumErrTestFails</a></div></div>
+
+<pre><span id="VALget_err_weights"><span class="keyword">val</span> get_err_weights</span> : <code class="type">('d, 'k) <a href="Ida.html#TYPEsession">Ida.session</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> unit</code></pre><div class="info ">
+Returns the quadrature error weights at the current time.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#ss:quad_optional_output">IDAGetQuadErrWeights</a></div></div>
+
+<pre><span id="VALget_stats"><span class="keyword">val</span> get_stats</span> : <code class="type">('d, 'k) <a href="Ida.html#TYPEsession">Ida.session</a> -> int * int</code></pre><div class="info ">
+Returns quadrature-related statistics. These are the
+        number of calls to the quadrature function (<code class="code">nfqevals</code>) and the number
+        of error test failures due to quadrature variables (<code class="code">nqetfails</code>).<br>
+<b>Returns</b> (<code class="code">nfqevals</code>, <code class="code">nqetfails</code>)<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#ss:quad_optional_output">IDAGetQuadStats</a></div></div>
+<br>
+<h2 id="exceptions">Exceptions</h2><br>
+
+<pre><span id="EXCEPTIONQuadNotInitialized"><span class="keyword">exception</span> QuadNotInitialized</span></pre>
+<div class="info ">
+Quadrature integration was not initialized.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#ss:quad_get">IDA_NO_QUAD</a></div></div>
+
+<pre><span id="EXCEPTIONQuadRhsFuncFailure"><span class="keyword">exception</span> QuadRhsFuncFailure</span></pre>
+<div class="info ">
+The quadrature function failed in an unrecoverable manner.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#SECTION00572000000000000000">IDA_QRHS_FAIL</a></div></div>
+
+<pre><span id="EXCEPTIONFirstQuadRhsFuncFailure"><span class="keyword">exception</span> FirstQuadRhsFuncFailure</span></pre>
+<div class="info ">
+The quadrature function failed at the first call.<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#SECTION00572000000000000000">IDA_FIRST_QRHS_ERR</a></div></div>
+
+<pre><span id="EXCEPTIONRepeatedQuadRhsFuncFailure"><span class="keyword">exception</span> RepeatedQuadRhsFuncFailure</span></pre>
+<div class="info ">
+Convergence test failures occurred too many times due to repeated
+        recoverable errors in the quadrature function. Also raised if the
+        quadrature function had repeated recoverable errors during the
+        estimation of an initial step size (if quadrature variables are
+        included in error tests).<br>
+<div class="sundials idas"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/idas_guide/node5.html#SECTION00572000000000000000">IDA_REP_QRHS_ERR</a></div></div>
+</body></html>

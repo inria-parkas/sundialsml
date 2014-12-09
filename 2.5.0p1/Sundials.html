@@ -1,0 +1,183 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="next" href="Dls.html">
+<link rel="Up" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Dls" rel="Chapter" href="Dls.html">
+<link title="Spils" rel="Chapter" href="Spils.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html"><link title="Constants" rel="Section" href="#consts">
+<link title="Exceptions" rel="Section" href="#exceptions">
+<link title="Arrays" rel="Section" href="#arrays">
+<link title="Arrays of roots (zero-crossings)" rel="Section" href="#roots">
+<link title="Constraints" rel="Section" href="#constraints">
+<link title="Solver results and error reporting" rel="Section" href="#results">
+<link title="Miscellaneous utility functions" rel="Section" href="#misc">
+<title>Sundials/ML 2.5.0p0 : Sundials</title>
+</head>
+<body>
+<div class="navbar">&nbsp;<a class="up" href="index.html" title="Index">Up</a>
+&nbsp;<a class="post" href="Dls.html" title="Dls">Next</a>
+</div>
+<h1>Module <a href="type_Sundials.html">Sundials</a></h1>
+
+<pre><span class="keyword">module</span> Sundials: <code class="code"><span class="keyword">sig</span></code> <a href="Sundials.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+Generic definitions, arrays, and utility functions.<br>
+<div class="authors"><b>Author(s):</b> Timothy Bourke (Inria/ENS), Jun Inoue (Inria/ENS), Marc Pouzet (UPMC/ENS/Inria)</div>
+<b>Version:</b> 2.5.0<br>
+</div>
+<hr width="100%">
+<br>
+<h2 id="consts">Constants</h2><br>
+
+<pre><span id="VALversion"><span class="keyword">val</span> version</span> : <code class="type">int * int * int * int</code></pre><div class="info ">
+The <code class="code">major</code>, <code class="code">minor</code>, <code class="code">patch</code>, and <code class="code">binding</code> version numbers of
+    Sundials/ML.
+    The first three elements correspond to the underlying Sundials/C library.
+    The <code class="code">binding</code> number distinguishes updates to the binding (restarting
+    from 0 for each increment of the other elements).<br>
+</div>
+
+<pre><span id="VALlapack_enabled"><span class="keyword">val</span> lapack_enabled</span> : <code class="type">bool</code></pre><div class="info ">
+Indicates whether the interface was compiled with BLAS/LAPACK support.<br>
+</div>
+
+<pre><span id="VALbig_real"><span class="keyword">val</span> big_real</span> : <code class="type">float</code></pre><div class="info ">
+The largest value representable as a real.<br>
+<div class="sundials cvode"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node5.html#s:types">Data Types</a></div></div>
+
+<pre><span id="VALsmall_real"><span class="keyword">val</span> small_real</span> : <code class="type">float</code></pre><div class="info ">
+The smallest value representable as a real.<br>
+<div class="sundials cvode"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node5.html#s:types">Data Types</a></div></div>
+
+<pre><span id="VALunit_roundoff"><span class="keyword">val</span> unit_roundoff</span> : <code class="type">float</code></pre><div class="info ">
+The difference bewteen 1.0 and the minimum real greater than 1.0.<br>
+<div class="sundials cvode"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node5.html#s:types">Data Types</a></div></div>
+<br>
+<h2 id="exceptions">Exceptions</h2><br>
+
+<pre><span id="EXCEPTIONRecoverableFailure"><span class="keyword">exception</span> RecoverableFailure</span></pre>
+<div class="info ">
+Indicates a recoverable failure within a callback function.
+    Any other exception normally indicates an unrecoverable failure.<br>
+</div>
+
+<pre><span id="EXCEPTIONNonPositiveEwt"><span class="keyword">exception</span> NonPositiveEwt</span></pre>
+<div class="info ">
+Raised by error-weight functions on non-positive error weights. See
+    <a href="Cvode.html#TYPEtolerance"><code class="code"><span class="constructor">Cvode</span>.<span class="constructor">WFtolerances</span></code></a> or
+    <a href="Ida.html#TYPEtolerance"><code class="code"><span class="constructor">Ida</span>.<span class="constructor">WFtolerances</span></code></a>.<br>
+</div>
+<br>
+<h2 id="arrays">Arrays</h2><br>
+
+<pre><span class="keyword">module</span> <a href="Sundials.RealArray.html">RealArray</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Sundials.RealArray.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+Vectors of floats (one-dimensional bigarrays).
+</div>
+
+<pre><span class="keyword">module</span> <a href="Sundials.RealArray2.html">RealArray2</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Sundials.RealArray2.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+Matrices of floats (wrappers around two-dimensional bigarrays).
+</div>
+
+<pre><span class="keyword">module</span> <a href="Sundials.LintArray.html">LintArray</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Sundials.LintArray.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+Vectors of integers (one-dimensional bigarrays).
+</div>
+<br>
+<h2 id="roots">Arrays of roots (zero-crossings)</h2><br>
+
+<pre><span class="keyword">module</span> <a href="Sundials.Roots.html">Roots</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Sundials.Roots.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+Vectors of root (zero-crossing) statuses.
+</div>
+
+<pre><span class="keyword">module</span> <a href="Sundials.RootDirs.html">RootDirs</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Sundials.RootDirs.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+Vectors of root (zero-crossing) directions.
+</div>
+<br>
+<h2 id="constraints">Constraints</h2><br>
+
+<pre><span class="keyword">module</span> <a href="Sundials.Constraint.html">Constraint</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Sundials.Constraint.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+Symbolic names for variable constraints.
+</div>
+<br>
+<h2 id="results">Solver results and error reporting</h2><br>
+
+<pre><code><span id="TYPEerror_details"><span class="keyword">type</span> <code class="type"></code>error_details</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTerror_details.error_code">error_code</span>&nbsp;: <code class="type">int</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTerror_details.module_name">module_name</span>&nbsp;: <code class="type">string</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+IDA, CVODE, CVSPGMR, etc.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTerror_details.function_name">function_name</span>&nbsp;: <code class="type">string</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTerror_details.error_message">error_message</span>&nbsp;: <code class="type">string</code>;</code></td>
+
+</tr></table>
+}
+
+<div class="info ">
+Information passed to registered error handler functions.
+    See <a href="Cvode.html#VALset_err_handler_fn"><code class="code"><span class="constructor">Cvode</span>.set_err_handler_fn</code></a>, <a href="Ida.html#VALset_err_handler_fn"><code class="code"><span class="constructor">Ida</span>.set_err_handler_fn</code></a>, and
+    <a href="Kinsol.html#VALset_err_handler_fn"><code class="code"><span class="constructor">Kinsol</span>.set_err_handler_fn</code></a>.<br>
+<div class="sundials cvode"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/cv_guide/node5.html#ss:ehFn">CVodeErrHandlerFn</a></div><div class="sundials ida"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/ida_guide/node5.html#ss:ehFn">IDAErrHandlerFn</a></div><div class="sundials kinsol"><span class="seesundials">See sundials: </span><a href="https://computation.llnl.gov/casc/sundials/documentation/kin_guide/node5.html#ss:ehFn">KINErrHandlerFn</a></div></div>
+
+<br>
+<h2 id="misc">Miscellaneous utility functions</h2><br>
+
+<pre><span id="VALformat_float"><span class="keyword">val</span> format_float</span> : <code class="type">string -> float -> string</code></pre><div class="info ">
+<code class="code">format_float fmt f</code> formats <code class="code">f</code> according to the format string <code class="code">fmt</code>.
+    It uses the low-level <code class="code">caml_format_float</code> function.<br>
+</div>
+
+<pre><span id="VALfloata"><span class="keyword">val</span> floata</span> : <code class="type">float -> string</code></pre><div class="info ">
+Returns the bit-level representation of a float in hexadecimal as a string.
+    Equivalent to <code class="code">format_float <span class="string">"%a"</span></code>.<br>
+</div>
+</body></html>
