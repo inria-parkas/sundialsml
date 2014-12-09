@@ -373,10 +373,9 @@ dividing the wall-clock time of each C version by the number of repetitions.
 All but six of the serial examples ({color #de2d26 red}) run so fast that 
 comparisons are made based on tens, or usually hundreds of repetitions and
 in some cases this amplifies factors other than the interface overhead.
-For instance, some OCaml versions spend a significant fraction of their time in
-[printf], and we were able to lower their ratios by instead using
-[print_string] and [print_int].  This effect is much smaller in OCaml
-4.02 and later, however.
+For instance, OCaml versions (more so for versions before 4.02) spend a
+significant fraction of their time in [printf], and we were able to lower
+their ratios by instead using [print_string] and [print_int].
 
 The parallel examples ({color #fc9272 lighter red}) all have relatively long
 run times and results are obtained without iterating.
@@ -399,8 +398,8 @@ We were able to make our OCaml versions much faster (up to 4 times) by:
        {{:http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.Array1.html#VALsub}[Bigarray.Array1.sub]}
        and
        {{:http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.Array2.html#VALslice_left}[Bigarray.Array2.slice_left]}.
-       These functions allocate new bigarrays, all placed on the major
-       heap, and increases the frequency of major GC. They can often be
+       These functions allocate new bigarrays on the major
+       heap, which increases the frequency of major GCs. They can often be
        avoided by calculating and passing indices more explicitly.
        When part of an array must be passed to another function, it
        can be faster, depending on the size, to copy into and out of a
@@ -447,18 +446,18 @@ We gratefully acknowledge the support of the
 driven physical systems operation), {{:http://www.inria.fr/}Inria}, and
 the {{:http://www.di.ens.fr/}Departement d'Informatique de l'ENS}.
 
-We thank direct contributions to this library from:
-{ul
-    {- Gabriel Scherer}
-}
-
 This library benefits greatly from the OCaml {{:http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.html}Bigarray} and {{:https://forge.ocamlcore.org/projects/ocamlmpi/}MPI}
 libraries, and from {{:https://ocaml.org/}OCaml}'s optimised floating-point
 representations and compilation.
 
-This documentation uses J. Protzenko's
+This documentation uses {{:http://www.xulforum.org}J. Protzenko}'s
 {{:http://www.xulforum.org/files/ocamlcss/style.css}CSS stylesheet}, and
 {{:http://www.mathjax.org}MathJax} for rendering mathematics.
+
+We are grateful for direct contributions to this library from
+{ul
+    {- {{:http://gallium.inria.fr/~scherer/}G. Scherer}}
+}
 
 {2:indexes Indexes}
 
