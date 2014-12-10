@@ -299,25 +299,26 @@ else
 fi
 
 
-cppflags="${cppflags} -I ${ocaml_path}"
+cppflags="${cppflags} -I${ocaml_path}"
 
 include="<caml/mlvalues.h>"
 query="SIZEOF_INT,SIZEOF_LONG,SIZEOF_PTR"
-ilp_size=`printf "#include %s\n%s" "${include}" "${query}" | ${CPP} ${cppflags} -P | tail -1`
+ilp_size=`printf "#include %s\n%s" "${include}" "${query}" | ${CPP} ${cppflags} -P 2>/dev/null | tail -1`
 int_size=`expr "$ilp_size" : "^\([^,]*\),*"`
 long_size=`expr "$ilp_size" : "^[^,]*,\([^,]*\),*"`
 ptr_size=`expr "$ilp_size" : "^[^,]*,[^,]*,\([^,]*\)"`
-if echo $int_size | grep -q '[^0-9]'; then
+
+if echo ${int_size:-not_found} | grep -q '[^0-9]'; then
     printf "Failed to detect size of \`int'.  This might be a problem\n"
     printf "with detecting your system's C preprocessor.\n\n"
     exit 1
 fi
-if echo $long_size | grep -q '[^0-9]'; then
+if echo ${long_size:-not_found} | grep -q '[^0-9]'; then
     printf "Failed to detect size of \`long'.  This might be a problem\n"
     printf "with detecting your system's C preprocessor.\n\n"
     exit 1
 fi
-if echo $ptr_size | grep -q '[^0-9]'; then
+if echo ${ptr_size:-not found} | grep -q '[^0-9]'; then
     printf "Failed to detect size of pointers.  This might be a problem\n"
     printf "with detecting your system's C preprocessor.\n\n"
     exit 1
