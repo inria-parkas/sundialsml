@@ -2,7 +2,7 @@
 
 sysname='Sundials/ML'
 version=2.5.0
-versionp=1
+versionp=2
 contact='tim@tbrk.org'
 
 prefix=/usr/local/
