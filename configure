@@ -299,28 +299,61 @@ else
 fi
 
 
-cppflags="${cppflags} -I ${ocaml_path}"
+cppflags="${cppflags} -I${ocaml_path}"
 
 include="<caml/mlvalues.h>"
 query="SIZEOF_INT,SIZEOF_LONG,SIZEOF_PTR"
-ilp_size=`printf "#include %s\n%s" "${include}" "${query}" | ${CPP} ${cppflags} -P | tail -1`
+ilp_size=`printf "#include %s\n%s" "${include}" "${query}" | ${CPP} ${cppflags} -P 2>/dev/null | tail -1`
 int_size=`expr "$ilp_size" : "^\([^,]*\),*"`
 long_size=`expr "$ilp_size" : "^[^,]*,\([^,]*\),*"`
 ptr_size=`expr "$ilp_size" : "^[^,]*,[^,]*,\([^,]*\)"`
-if echo $int_size | grep -q '[^0-9]'; then
+
+if echo ${int_size:-not_found} | grep -q '[^0-9]'; then
     printf "Failed to detect size of \`int'.  This might be a problem\n"
     printf "with detecting your system's C preprocessor.\n\n"
     exit 1
 fi
-if echo $long_size | grep -q '[^0-9]'; then
+if echo ${long_size:-not_found} | grep -q '[^0-9]'; then
     printf "Failed to detect size of \`long'.  This might be a problem\n"
     printf "with detecting your system's C preprocessor.\n\n"
     exit 1
 fi
-if echo $ptr_size | grep -q '[^0-9]'; then
+if echo ${ptr_size:-not found} | grep -q '[^0-9]'; then
     printf "Failed to detect size of pointers.  This might be a problem\n"
     printf "with detecting your system's C preprocessor.\n\n"
     exit 1
+fi
+
+if [ "${long_size}" -ne "${ptr_size}" ]; then
+    error="${error}\nsizeof (long) does not match sizeof (void*)."
+    error="${error}\nStarting with SUNDIALS version 2.5.0, DenseGETRF() and"
+    error="${error}\nsimilar functions require arrays of longs as input,"
+    error="${error}\nso this binding needs to map C's long * type to some OCaml"
+    error="${error}\ntype.  We chose to map it to bigarray with int entries,"
+    error="${error}\nwhich gives an overhead-free mapping and a convenient API"
+    error="${error}\nfor the user.  As a downside, this requires C's long type"
+    error="${error}\nto have the same size as OCaml values, i.e. the same size"
+    error="${error}\nas pointers.  The only platform known to violate this"
+    error="${error}\nrequirement is Microsoft Visual C on 64-bit Windows"
+    error="${error}\n(Win64).  If you must use this binding on 64-bit Windows,"
+    error="${error}\ntry compiling SUNDIALS and the binding with Cygwin.  If"
+    error="${error}\nusing Cygwin is not an option, write to us and we may"
+    error="${error}\nbe able to hack together a workaround for Win64, albeit"
+    error="${error}\nwith a slight performance hit."
+fi
+if [ "${int_size}" -ne 4 ]; then
+    error="${error}\nint is not 32 bits on this platform."
+    error="${error}\nSome SUNDIALS functions require arrays of ints as input,"
+    error="${error}\nso this binding needs to map C's int * type to some OCaml"
+    error="${error}\ntype.  We chose to map it to bigarray with int32 entries"
+    error="${error}\nwhich gives an overhead-free mapping and a convenient API"
+    error="${error}\nfor the user, provided that C's int type is 32 bits.  This"
+    error="${error}\nis the case with most, if not all, 32-bit and 64-bit"
+    error="${error}\nsystems, and we were not aware of any platforms that are "
+    error="${error}\nstill in use which violate this requirement.  However, it"
+    error="${error}\nlooks like you have such a platform.  Please inform us"
+    error="${error}\nabout your platform and we may be able to hack together a"
+    error="${error}\nworkaround, albeit with a slight performance hit."
 fi
 
 # Check for opam
@@ -384,38 +417,6 @@ else
     have_weak=0
 fi
 rm -f ./${test_stem}.* ./${test_ml_stem}.* ${test_ml_stem}
-
-if [ "${long_size}" -ne "${ptr_size}" ]; then
-    error="${error}\nsizeof (long) does not match sizeof (void*)."
-    error="${error}\nStarting with SUNDIALS version 2.5.0, DenseGETRF() and"
-    error="${error}\nsimilar functions require arrays of longs as input,"
-    error="${error}\nso this binding needs to map C's long * type to some OCaml"
-    error="${error}\ntype.  We chose to map it to bigarray with int entries,"
-    error="${error}\nwhich gives an overhead-free mapping and a convenient API"
-    error="${error}\nfor the user.  As a downside, this requires C's long type"
-    error="${error}\nto have the same size as OCaml values, i.e. the same size"
-    error="${error}\nas pointers.  The only platform known to violate this"
-    error="${error}\nrequirement is Microsoft Visual C on 64-bit Windows"
-    error="${error}\n(Win64).  If you must use this binding on 64-bit Windows,"
-    error="${error}\ntry compiling SUNDIALS and the binding with Cygwin.  If"
-    error="${error}\nusing Cygwin is not an option, write to us and we may"
-    error="${error}\nbe able to hack together a workaround for Win64, albeit"
-    error="${error}\nwith a slight performance hit."
-fi
-if [ "${int_size}" -ne 4 ]; then
-    error="${error}\nint is not 32 bits on this platform."
-    error="${error}\nSome SUNDIALS functions require arrays of ints as input,"
-    error="${error}\nso this binding needs to map C's int * type to some OCaml"
-    error="${error}\ntype.  We chose to map it to bigarray with int32 entries"
-    error="${error}\nwhich gives an overhead-free mapping and a convenient API"
-    error="${error}\nfor the user, provided that C's int type is 32 bits.  This"
-    error="${error}\nis the case with most, if not all, 32-bit and 64-bit"
-    error="${error}\nsystems, and we were not aware of any platforms that are "
-    error="${error}\nstill in use which violate this requirement.  However, it"
-    error="${error}\nlooks like you have such a platform.  Please inform us"
-    error="${error}\nabout your platform and we may be able to hack together a"
-    error="${error}\nworkaround, albeit with a slight performance hit."
-fi
 
 
 # Check for shared library support in Sundials/C
@@ -621,10 +622,10 @@ fi
 printf "\n"
 
 if [ -n "${error}" ]; then
-    printf "Some errors occurred during configuration:%s\n\n" "${error}"
+    printf "Some errors occurred during configuration:${error}\n\n"
     exit 1
 elif [ -n "${warning}" ]; then
-    printf "Warnings:%s\n\n" "${warning}"
+    printf "Warnings:${warning}\n\n"
 fi
 
 (printf "# # # THIS FILE IS GENERATED AUTOMATICALLY BY CONFIGURE # # #\n"; \
