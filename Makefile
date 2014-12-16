@@ -174,8 +174,6 @@ idas_bbd_ml.o: idas_bbd_ml.c
 
 # Docs.
 
-# FIXME: gcc-dependent
-ML_CPPFLAGS=-P -x c -traditional-cpp
 DOCHTML_PP=$(CPP) $(ML_CPPFLAGS) -DOCAML_3X=$(OCAML_3X)
 dochtml.cmo: DOCHTML_PP += -DCVODE_DOC_ROOT=\"$(CVODE_DOC_ROOT_DEFAULT)\"
 dochtml.cmo: DOCHTML_PP += -DCVODES_DOC_ROOT=\"$(CVODES_DOC_ROOT_DEFAULT)\"

@@ -202,6 +202,16 @@ case ${arch} in
 	;;
 esac
 
+ml_cppflags="-P -traditional-cpp"
+case `uname -s` in
+    Darwin*)
+	ml_cppflags="${ml_cppflags} -Wno-invalid-pp-token"
+	;;
+    *)
+	ml_cppflags="${ml_cppflags} -x c"
+	;;
+esac
+
 # Check for Sundials installation (and version)
 if [ ! `which sundials-config` ]; then
     echo "ERROR: Sundials is not installed (no sundials-config)." 1>&2
@@ -639,6 +649,7 @@ fi
 	 s#@install_docs@#${install_docs:-1}#;
 	 s#@cflags@#${cflags}#;
 	 s#@cppflags@#${cppflags}#;
+	 s#@ml_cppflags@#${ml_cppflags}#;
 	 s#@ldflags@#${ldflags}#;
 	 s#@cvode_cppflags@#${cvode_cppflags}#;
 	 s#@cvodes_cppflags@#${cvodes_cppflags}#;
