@@ -2,7 +2,7 @@ include ../../../config
 
 EXAMPLES = cchatter.byte discontinuous.byte printall.byte \
 	   upvseither.byte integr_backward.byte one_over_x.byte \
-	   ramp.byte sinezero.byte sliding.byte
+	   ramp.byte sinezero.byte sliding.byte ls_badmem.byte
 
 all: $(EXAMPLES)
 opt: $(EXAMPLES:.byte=.opt)
