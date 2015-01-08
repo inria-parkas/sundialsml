@@ -296,6 +296,7 @@ type ('a,'kind) session = {
   mutable errw       : 'a error_weight_fun;
 
   mutable ls_callbacks : ('a, 'kind) linsolv_callbacks;
+  mutable ls_class     : linsolv_class;
 
   mutable sensext      : ('a, 'kind) sensext; (* Used by IDAS *)
 }
@@ -346,6 +347,16 @@ and ('a, 'kind) bsensext = {
   mutable bquadrhsfn_sens : 'a AdjointTypes'.QuadratureTypes.bquadrhsfn_with_sens;
   mutable checkbquadvec   : (('a, 'kind) Nvector.t -> unit);
 }
+
+and linsolv_class =
+  | NoClass
+  | DlsClass
+  | SpilsClass of linsolv_prec_class
+  | AltClass
+
+and linsolv_prec_class =
+  | PrecNoClass
+  | PrecBBDClass
 
 and ('a, 'kind) linsolv_callbacks =
   | NoCallbacks

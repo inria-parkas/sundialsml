@@ -38,21 +38,36 @@ let init_preconditioner dqrely bandwidths callbacks session nv nv' =
   let ba, _, _ = Nvector.unwrap nv in
   let localn   = Sundials.RealArray.length ba in
   c_bbd_prec_init session localn bandwidths dqrely (callbacks.comm_fn <> None);
-  session.ls_callbacks <- BBDCallback (bbd_callbacks callbacks)
+  session.ls_callbacks <- BBDCallback (bbd_callbacks callbacks);
+  session.ls_class <- SpilsClass PrecBBDClass
 
 let prec_left ?(dqrely=0.0) bandwidths ?comm_fn local_fn =
   SpilsTypes.InternalPrecLeft
     (init_preconditioner dqrely bandwidths { local_fn; comm_fn })
+
+let ls_check_spils_bbd session =
+  if Sundials_config.safe && session.ls_class <> SpilsClass PrecBBDClass then
+    raise Sundials.InvalidLinearSolver
 
 external c_bbd_prec_reinit
     : parallel_session -> int -> int -> float -> unit
     = "c_ida_bbd_prec_reinit"
 
 let reinit s ?(dqrely=0.0) mudq mldq =
+  ls_check_spils_bbd s;
   c_bbd_prec_reinit s mudq mldq dqrely
 
 external get_work_space : parallel_session -> int * int
     = "c_ida_bbd_get_work_space"
 
+let get_work_space s =
+  ls_check_spils_bbd s;
+  get_work_space s
+
 external get_num_gfn_evals : parallel_session -> int
     = "c_ida_bbd_get_num_gfn_evals"
+
+let get_num_gfn_evals s =
+  ls_check_spils_bbd s;
+  get_num_gfn_evals s
+

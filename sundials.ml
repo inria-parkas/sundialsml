@@ -26,6 +26,7 @@ let warn_discarded_exn exn context =
 
 exception RecoverableFailure
 exception NonPositiveEwt
+exception InvalidLinearSolver
 
 type ('data, 'kind) nvector = ('data, 'kind) Nvector.t
 

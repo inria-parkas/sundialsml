@@ -135,6 +135,7 @@ type ('a, 'k) session = {
   mutable infoh      : infoh;
 
   mutable ls_callbacks : ('a, 'k) linsolv_callbacks;
+  mutable ls_class     : linsolv_class;
 }
 
 and ('a, 'kind) linsolv_callbacks =
@@ -147,6 +148,16 @@ and ('a, 'kind) linsolv_callbacks =
   | AlternateCallback of ('a, 'kind) alternate_linsolv
 
   | BBDCallback of 'a KinsolBbdParamTypes.callbacks
+
+and linsolv_class =
+  | NoClass
+  | DlsClass
+  | SpilsClass of linsolv_prec_class
+  | AltClass
+
+and linsolv_prec_class =
+  | PrecNoClass
+  | PrecBBDClass
 
 and ('data, 'kind) alternate_linsolv =
   {

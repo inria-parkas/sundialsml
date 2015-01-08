@@ -83,6 +83,16 @@ let root_init session (nroots, rootsfn) =
   c_root_init session nroots;
   session.rootsfn <- rootsfn
 
+let ls_check session expected =
+  if Sundials_config.safe && session.ls_class <> expected then
+    raise Sundials.InvalidLinearSolver
+
+let ls_check_spils session =
+  if Sundials_config.safe then
+    match session.ls_class with
+    | SpilsClass _ -> ()
+    | _ -> raise Sundials.InvalidLinearSolver
+
 module Dls =
   struct
     include DlsTypes
@@ -105,36 +115,43 @@ module Dls =
 
     let dense ?jac () session nv nv' =
       let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
+      session.ls_class <- NoClass;
       (session.ls_callbacks <-
         match jac with
         | None -> NoCallbacks
         | Some f -> DenseCallback { jacfn = f; dmat = None });
-      c_dls_dense session neqs (jac <> None)
+      c_dls_dense session neqs (jac <> None);
+      session.ls_class <- DlsClass
 
     let lapack_dense ?jac () session nv nv' =
       let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
+      session.ls_class <- NoClass;
       (session.ls_callbacks <-
         match jac with
         | None -> NoCallbacks
         | Some f -> DenseCallback { jacfn = f; dmat = None });
-      c_dls_lapack_dense session neqs (jac <> None)
+      c_dls_lapack_dense session neqs (jac <> None);
+      session.ls_class <- DlsClass
 
     let band ?jac p session nv nv' =
       let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
+      session.ls_class <- NoClass;
       (session.ls_callbacks <-
         match jac with
         | None -> NoCallbacks
         | Some f -> BandCallback { bjacfn = f; bmat = None });
-      c_dls_band session neqs p.mupper p.mlower (jac <> None)
+      c_dls_band session neqs p.mupper p.mlower (jac <> None);
+      session.ls_class <- DlsClass
 
     let lapack_band ?jac p session nv nv' =
       let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
+      session.ls_class <- NoClass;
       (session.ls_callbacks <-
         match jac with
         | None -> NoCallbacks
         | Some f -> BandCallback { bjacfn = f; bmat = None });
-      c_dls_lapack_band session neqs p.mupper p.mlower (jac <> None)
-
+      c_dls_lapack_band session neqs p.mupper p.mlower (jac <> None);
+      session.ls_class <- DlsClass
 
     let invalidate_callback session =
       match session.ls_callbacks with
@@ -147,6 +164,7 @@ module Dls =
       | _ -> ()
 
     let set_dense_jac_fn s fjacfn =
+      ls_check s DlsClass;
       invalidate_callback s;
       s.ls_callbacks <- DenseCallback { jacfn = fjacfn; dmat = None };
       set_dense_jac_fn s
@@ -155,6 +173,7 @@ module Dls =
         = "c_ida_dls_clear_dense_jac_fn"
 
     let clear_dense_jac_fn s =
+      ls_check s DlsClass;
       match s.ls_callbacks with
       | DenseCallback _ -> (invalidate_callback s;
                             s.ls_callbacks <- NoCallbacks;
@@ -165,6 +184,7 @@ module Dls =
         = "c_ida_dls_set_band_jac_fn"
 
     let set_band_jac_fn s fbandjacfn =
+      ls_check s DlsClass;
       invalidate_callback s;
       s.ls_callbacks <- BandCallback { bjacfn = fbandjacfn; bmat = None };
       set_band_jac_fn s
@@ -173,6 +193,7 @@ module Dls =
         = "c_ida_dls_clear_band_jac_fn"
 
     let clear_band_jac_fn s =
+      ls_check s DlsClass;
       match s.ls_callbacks with
       | BandCallback _ -> (invalidate_callback s;
                            s.ls_callbacks <- NoCallbacks;
@@ -182,11 +203,23 @@ module Dls =
     external get_work_space : serial_session -> int * int
         = "c_ida_dls_get_work_space"
 
+    let get_work_space s =
+      ls_check s DlsClass;
+      get_work_space s
+
     external get_num_jac_evals : serial_session -> int
         = "c_ida_dls_get_num_jac_evals"
 
+    let get_num_jac_evals s =
+      ls_check s DlsClass;
+      get_num_jac_evals s
+
     external get_num_res_evals : serial_session -> int
         = "c_ida_dls_get_num_res_evals"
+
+    let get_num_res_evals s =
+      ls_check s DlsClass;
+      get_num_res_evals s
   end
 
 module Spils =
@@ -221,18 +254,23 @@ module Spils =
       session.ls_callbacks <-
         SpilsCallback { prec_solve_fn = solve;
                         prec_setup_fn = setup;
-                        jac_times_vec_fn = jac_times }
+                        jac_times_vec_fn = jac_times };
+      session.ls_class <- SpilsClass PrecNoClass
 
     let prec_none = InternalPrecNone
     let prec_left ?setup ?jac_times_vec solve =
       InternalPrecLeft (init_preconditioner solve setup jac_times_vec)
 
     let init_spils init maxl prec session nv nv' =
+      session.ls_class <- NoClass;
       match prec with
-      | InternalPrecNone -> init session maxl
+      | InternalPrecNone ->
+          init session maxl;
+          session.ls_class <- SpilsClass PrecNoClass
       | InternalPrecLeft set_prec ->
-        init session maxl;
-        set_prec session nv nv'
+          init session maxl;
+          set_prec session nv nv'
+          (* the preconditioner must set ls_class *)
 
     let spgmr ?(maxl=0) ?max_restarts prec session nv nv' =
       init_spils c_spgmr maxl prec session nv nv';
@@ -247,6 +285,7 @@ module Spils =
       init_spils c_sptfqmr maxl prec session nv nv'
 
     let set_preconditioner s ?setup solve =
+      ls_check_spils s;
       match s.ls_callbacks with
       | SpilsCallback cbs ->
         c_set_preconditioner s (setup <> None);
@@ -256,6 +295,7 @@ module Spils =
       | _ -> failwith "spils solver not in use"
 
     let set_jac_times_vec_fn s f =
+      ls_check_spils s;
       match s.ls_callbacks with
       | SpilsCallback cbs ->
         c_set_jac_times_vec_fn s true;
@@ -263,6 +303,7 @@ module Spils =
       | _ -> failwith "spils solver not in use"
 
     let clear_jac_times_vec_fn s =
+      ls_check_spils s;
       match s.ls_callbacks with
       | SpilsCallback cbs ->
         c_set_jac_times_vec_fn s false;
@@ -272,32 +313,72 @@ module Spils =
     external set_gs_type : ('a, 'k) session -> Spils.gramschmidt_type -> unit
         = "c_ida_spils_set_gs_type"
 
+    let set_gs_type s t =
+      ls_check_spils s;
+      set_gs_type s t
+
     external set_eps_lin            : ('a, 'k) session -> float -> unit
         = "c_ida_spils_set_eps_lin"
+
+    let set_eps_lin s epsl =
+      ls_check_spils s;
+      set_eps_lin s epsl
 
     external set_maxl               : ('a, 'k) session -> int -> unit
         = "c_ida_spils_set_maxl"
 
+    let set_maxl s maxl =
+      ls_check_spils s;
+      set_maxl s maxl
+
     external get_num_lin_iters      : ('a, 'k) session -> int
         = "c_ida_spils_get_num_lin_iters"
+
+    let get_num_lin_iters s =
+      ls_check_spils s;
+      get_num_lin_iters s
 
     external get_num_conv_fails     : ('a, 'k) session -> int
         = "c_ida_spils_get_num_conv_fails"
 
+    let get_num_conv_fails s =
+      ls_check_spils s;
+      get_num_conv_fails s
+
     external get_work_space         : ('a, 'k) session -> int * int
         = "c_ida_spils_get_work_space"
+
+    let get_work_space s =
+      ls_check_spils s;
+      get_work_space s
 
     external get_num_prec_evals     : ('a, 'k) session -> int
         = "c_ida_spils_get_num_prec_evals"
 
+    let get_num_prec_evals s =
+      ls_check_spils s;
+      get_num_prec_evals s
+
     external get_num_prec_solves    : ('a, 'k) session -> int
         = "c_ida_spils_get_num_prec_solves"
+
+    let get_num_prec_solves s =
+      ls_check_spils s;
+      get_num_prec_solves s
 
     external get_num_jtimes_evals   : ('a, 'k) session -> int
         = "c_ida_spils_get_num_jtimes_evals"
 
+    let get_num_jtimes_evals s =
+      ls_check_spils s;
+      get_num_jtimes_evals s
+
     external get_num_res_evals      : ('a, 'k) session -> int
         = "c_ida_spils_get_num_res_evals"
+
+    let get_num_res_evals s =
+      ls_check_spils s;
+      get_num_res_evals s
 
   end
 
@@ -310,9 +391,11 @@ module Alternate =
       = "c_ida_set_alternate"
 
     let make f s nv nv' =
+      s.ls_class <- NoClass;
       let { linit; lsetup; lsolve } as cb = f s nv nv' in
       c_set_alternate s (linit <> None) (lsetup <> None);
-      s.ls_callbacks <- AlternateCallback cb
+      s.ls_callbacks <- AlternateCallback cb;
+      s.ls_class <- AltClass
 
     external get_cj : ('data, 'kind) session -> float = "c_ida_get_cj"
     external get_cjratio : ('data, 'kind) session -> float = "c_ida_get_cjratio"
@@ -391,6 +474,7 @@ let init linsolv tol resfn ?varid ?(roots=no_roots) t0 y y' =
                   errh       = dummy_errh;
                   errw       = dummy_errw;
                   ls_callbacks = NoCallbacks;
+                  ls_class     = NoClass;
                   sensext    = NoSensExt;
                 }
   in

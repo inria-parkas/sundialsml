@@ -681,6 +681,16 @@ module Adjoint =
       let parent, which = parent_and_which bs in
       c_set_stab_lim_det parent which stldetb
 
+    let ls_check session expected =
+      if Sundials_config.safe && session.ls_class <> expected then
+        raise Sundials.InvalidLinearSolver
+
+    let ls_check_spils bs =
+      if Sundials_config.safe then
+        match (tosession bs).ls_class with
+        | SpilsClass _ -> ()
+        | _ -> raise Sundials.InvalidLinearSolver
+
     module Diag =
       struct
         external c_diag : ('a, 'k) session -> int -> unit
@@ -688,7 +698,9 @@ module Adjoint =
 
         let solver bs _ =
           let parent, which = parent_and_which bs in
-          c_diag parent which
+          (tosession bs).ls_class <- NoClass;
+          c_diag parent which;
+          (tosession bs).ls_class <- DiagClass
 
         let get_work_space bs =
           Cvode.Diag.get_work_space (tosession bs)
@@ -719,20 +731,24 @@ module Adjoint =
         let dense ?jac () bs nv =
           let parent, which = parent_and_which bs in
           let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
+          (tosession bs).ls_class <- NoClass;
           c_dls_dense parent which neqs (jac <> None);
-          (tosession bs).ls_callbacks <-
+          ((tosession bs).ls_callbacks <-
             match jac with
             | None -> NoCallbacks
-            | Some f -> BDenseCallback { jacfn = f; dmat = None }
+            | Some f -> BDenseCallback { jacfn = f; dmat = None });
+          (tosession bs).ls_class <- DlsClass
 
         let lapack_dense ?jac () bs nv =
           let parent, which = parent_and_which bs in
           let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
+          (tosession bs).ls_class <- NoClass;
           c_dls_lapack_dense parent which neqs (jac <> None);
-          (tosession bs).ls_callbacks <-
+          ((tosession bs).ls_callbacks <-
             match jac with
             | None -> NoCallbacks
-            | Some f -> BDenseCallback { jacfn = f; dmat = None }
+            | Some f -> BDenseCallback { jacfn = f; dmat = None });
+          (tosession bs).ls_class <- DlsClass
 
         type ('data, 'kind) linear_solver =
           ('data, 'kind) bsession -> ('data, 'kind) nvector -> unit
@@ -740,20 +756,24 @@ module Adjoint =
         let band ?jac p bs nv =
           let parent, which = parent_and_which bs in
           let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
+          (tosession bs).ls_class <- NoClass;
           c_dls_band (parent, which) neqs p.mupper p.mlower (jac <> None);
-          (tosession bs).ls_callbacks <-
+          ((tosession bs).ls_callbacks <-
             match jac with
             | None -> NoCallbacks
-            | Some f -> BBandCallback { bjacfn = f; bmat = None }
+            | Some f -> BBandCallback { bjacfn = f; bmat = None });
+          (tosession bs).ls_class <- DlsClass
 
         let lapack_band ?jac p bs nv =
           let parent, which = parent_and_which bs in
           let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
+          (tosession bs).ls_class <- NoClass;
           c_dls_lapack_band (parent,which) neqs p.mupper p.mlower (jac <> None);
-          (tosession bs).ls_callbacks <-
+          ((tosession bs).ls_callbacks <-
             match jac with
             | None -> NoCallbacks
-            | Some f -> BBandCallback { bjacfn = f; bmat = None }
+            | Some f -> BBandCallback { bjacfn = f; bmat = None });
+          (tosession bs).ls_class <- DlsClass
 
         let invalidate_callback s =
           match s.ls_callbacks with
@@ -770,6 +790,7 @@ module Adjoint =
 
         let set_dense_jac_fn bs fjacfn =
           let s = tosession bs in
+          ls_check s DlsClass;
           let parent, which = parent_and_which bs in
           invalidate_callback s;
           s.ls_callbacks <- BDenseCallback { jacfn = fjacfn; dmat = None };
@@ -780,6 +801,7 @@ module Adjoint =
 
         let clear_dense_jac_fn bs =
           let s = tosession bs in
+          ls_check s DlsClass;
           match s.ls_callbacks with
           | DenseCallback _ -> (invalidate_callback s;
                                 s.ls_callbacks <- NoCallbacks;
@@ -792,6 +814,7 @@ module Adjoint =
 
         let set_band_jac_fn bs f =
           let s = tosession bs in
+          ls_check s DlsClass;
           let parent, which = parent_and_which bs in
           invalidate_callback s;
           s.ls_callbacks <- BBandCallback { bjacfn = f; bmat = None };
@@ -802,6 +825,7 @@ module Adjoint =
 
         let clear_band_jac_fn bs =
           let s = tosession bs in
+          ls_check s DlsClass;
           match s.ls_callbacks with
           | BandCallback _ -> (invalidate_callback s;
                                s.ls_callbacks <- NoCallbacks;
@@ -844,7 +868,8 @@ module Adjoint =
           (tosession bs).ls_callbacks <-
             BSpilsCallback { prec_solve_fn = solve;
                              prec_setup_fn = setup;
-                             jac_times_vec_fn = jac_times }
+                             jac_times_vec_fn = jac_times };
+          (tosession bs).ls_class <- SpilsClass PrecNoClass
 
         let prec_none = InternalPrecNone
         let prec_left ?setup ?jac_times_vec solve =
@@ -859,9 +884,13 @@ module Adjoint =
           let with_prec prec_type set_prec =
             init parent which maxl prec_type;
             set_prec bs parent which nv
+            (* the preconditioner must set ls_class *)
           in
+          (tosession bs).ls_class <- NoClass;
           match prec with
-          | InternalPrecNone -> init parent which maxl Spils.PrecNone
+          | InternalPrecNone ->
+              init parent which maxl Spils.PrecNone;
+              (tosession bs).ls_class <- SpilsClass PrecNoClass
           | InternalPrecLeft set_prec  -> with_prec Spils.PrecLeft set_prec
           | InternalPrecRight set_prec -> with_prec Spils.PrecRight set_prec
           | InternalPrecBoth set_prec  -> with_prec Spils.PrecBoth set_prec
@@ -880,6 +909,7 @@ module Adjoint =
             = "c_cvodes_adj_spils_set_prec_type"
 
         let set_preconditioner bs ?setup solve =
+          ls_check_spils bs;
           match (tosession bs).ls_callbacks with
           | BSpilsCallback cbs ->
             let parent, which = parent_and_which bs in
@@ -893,6 +923,7 @@ module Adjoint =
           | _ -> failwith "spils solver not in use"
 
         let set_jac_times_vec_fn bs f =
+          ls_check_spils bs;
           match (tosession bs).ls_callbacks with
           | BSpilsCallback cbs ->
             let parent, which = parent_and_which bs in
@@ -906,6 +937,7 @@ module Adjoint =
           | _ -> failwith "spils solver not in use"
 
         let clear_jac_times_vec_fn bs =
+          ls_check_spils bs;
           match (tosession bs).ls_callbacks with
           | BSpilsCallback cbs ->
             let parent, which = parent_and_which bs in
@@ -922,13 +954,22 @@ module Adjoint =
             : ('a, 'k) bsession -> gramschmidt_type -> unit
             = "c_cvodes_adj_spils_set_gs_type"
 
+        let set_gs_type bs t =
+          ls_check_spils bs;
+          set_gs_type bs t
+
         external set_eps_lin : ('a, 'k) bsession -> float -> unit
             = "c_cvodes_adj_spils_set_eps_lin"
+
+        let set_eps_lin bs epsl =
+          ls_check_spils bs;
+          set_eps_lin bs epsl
 
         external c_set_maxl : ('a, 'k) bsession -> int -> unit
             = "c_cvodes_adj_spils_set_maxl"
 
         let set_maxl bs omaxl =
+          ls_check_spils bs;
           c_set_maxl bs (match omaxl with None -> 0 | Some x -> x)
 
         let get_work_space bs =
@@ -962,7 +1003,8 @@ module Adjoint =
               (RealArray.length (Nvector.unwrap nv))
               bandrange.mupper bandrange.mlower;
             c_set_jac_times_vec_fn parent which (jac_times_vec <> None);
-            (tosession bs).ls_callbacks <- BSpilsBandCallback jac_times_vec
+            (tosession bs).ls_callbacks <- BSpilsBandCallback jac_times_vec;
+            (tosession bs).ls_class <- SpilsClass PrecBandClass
 
           let prec_none = InternalPrecNone
           let prec_left ?jac_times_vec bandrange =
@@ -1020,6 +1062,7 @@ module Adjoint =
               errh         = dummy_errh;
               errw         = dummy_errw;
               ls_callbacks = NoCallbacks;
+              ls_class     = NoClass;
 
               sensext    = BwdSensExt {
                 parent   = s;
@@ -1062,7 +1105,6 @@ module Adjoint =
       (match iter_type with
        | Some iter -> set_iter_type bs iter yb0
        | None -> ())
-
 
     let get_work_space bs = Cvode.get_work_space (tosession bs)
 

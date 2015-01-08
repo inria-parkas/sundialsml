@@ -345,6 +345,7 @@ type ('a, 'kind) session = {
   mutable errw         : 'a error_weight_fun;
 
   mutable ls_callbacks : ('a, 'kind) linsolv_callbacks;
+  mutable ls_class     : linsolv_class;
 
   mutable sensext      : ('a, 'kind) sensext (* Used by Cvodes *)
 }
@@ -367,6 +368,18 @@ and ('a, 'kind) linsolv_callbacks =
   | BSpilsBandCallback of 'a AdjointTypes'.SpilsTypes'.jac_times_vec_fn option
                           (* Invariant: 'a = RealArray.t *)
   | BBBDCallback of 'a CvodesBbdParamTypes.callbacks
+
+and linsolv_class =
+  | NoClass
+  | DiagClass
+  | DlsClass
+  | SpilsClass of linsolv_prec_class
+  | AltClass
+
+and linsolv_prec_class =
+  | PrecNoClass
+  | PrecBandClass
+  | PrecBBDClass
 
 and ('a, 'kind) sensext =
     NoSensExt

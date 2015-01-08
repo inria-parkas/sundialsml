@@ -57,6 +57,12 @@ exception RecoverableFailure
     {{!Ida.tolerance}[Ida.WFtolerances]}. *)
 exception NonPositiveEwt
 
+(** Raised on invalid use of linear solver functions. For instance,
+    initializing a session with {!Cvode.Diag} and then calling
+    {!Cvode.Spils.get_num_lin_iters}, which rather requires a
+    linear solver from {!Cvode.Spils}. *)
+exception InvalidLinearSolver
+
 (** {2:arrays Arrays} *)
 
 (** Vectors of floats (one-dimensional bigarrays). *)

@@ -48,7 +48,8 @@ let init_preconditioner dqrely bandwidths callbacks bs parent which nv =
   let localn   = Sundials.RealArray.length ba in
   c_bbd_prec_initb (parent, which) localn bandwidths dqrely
     (callbacks.comm_fn <> None);
-  (tosession bs).ls_callbacks <- BBBDCallback (bbd_callbacks callbacks)
+  (tosession bs).ls_callbacks <- BBBDCallback (bbd_callbacks callbacks);
+  (tosession bs).ls_class <- SpilsClass PrecBBDClass
 
 let prec_left ?(dqrely=0.0) bandwidths ?comm_fn local_fn =
   AdjointTypes.SpilsTypes.InternalPrecLeft
@@ -62,11 +63,16 @@ let prec_both ?(dqrely=0.0) bandwidths ?comm_fn local_fn =
   AdjointTypes.SpilsTypes.InternalPrecBoth
     (init_preconditioner dqrely bandwidths { local_fn; comm_fn })
 
+let ls_check_spils_bbd session =
+  if Sundials_config.safe && session.ls_class <> SpilsClass PrecBBDClass then
+    raise Sundials.InvalidLinearSolver
+
 external c_bbd_prec_reinitb
     : parallel_session -> int -> int -> int -> float -> unit
     = "c_cvodes_bbd_prec_reinitb"
 
 let reinit bs ?(dqrely=0.0) mudq mldq =
+  ls_check_spils_bbd (tosession bs);
   match (tosession bs).ls_callbacks with
   | BBBDCallback _ ->
     let parent, which = parent_and_which bs in
@@ -75,3 +81,4 @@ let reinit bs ?(dqrely=0.0) mudq mldq =
 
 let get_work_space bs = Cvode_bbd.get_work_space (tosession bs)
 let get_num_gfn_evals bs = Cvode_bbd.get_num_gfn_evals (tosession bs)
+
