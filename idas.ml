@@ -882,10 +882,10 @@ module Adjoint =
           let s = tosession bs in
           ls_check s DlsClass;
           match s.ls_callbacks with
-          | DenseCallback _ -> (invalidate_callback s;
-                                s.ls_callbacks <- NoCallbacks;
-                                let parent, which = parent_and_which bs in
-                                clear_dense_jac_fn parent which)
+          | BDenseCallback _ -> (invalidate_callback s;
+                                 s.ls_callbacks <- NoCallbacks;
+                                 let parent, which = parent_and_which bs in
+                                 clear_dense_jac_fn parent which)
           | _ -> failwith "dense linear solver not in use"
 
         external set_band_jac_fn : serial_session -> int -> unit
@@ -906,10 +906,10 @@ module Adjoint =
           let s = tosession bs in
           ls_check s DlsClass;
           match s.ls_callbacks with
-          | BandCallback _ -> (invalidate_callback s;
-                               s.ls_callbacks <- NoCallbacks;
-                               let parent, which = parent_and_which bs in
-                               clear_band_jac_fn parent which)
+          | BBandCallback _ -> (invalidate_callback s;
+                                s.ls_callbacks <- NoCallbacks;
+                                let parent, which = parent_and_which bs in
+                                clear_band_jac_fn parent which)
           | _ -> failwith "banded linear solver not in use"
 
         let get_work_space bs = Ida.Dls.get_work_space (tosession bs)
