@@ -50,16 +50,11 @@ let init_preconditioner dqrely bandwidths callbacks bs parent which nv nv' =
   let localn   = Sundials.RealArray.length ba in
   c_bbd_prec_initb (parent, which) localn bandwidths dqrely
     (callbacks.comm_fn <> None);
-  (tosession bs).ls_callbacks <- BBBDCallback (bbd_callbacks callbacks);
-  (tosession bs).ls_class <- SpilsClass PrecBBDClass
+  (tosession bs).ls_callbacks <- BSpilsBBDCallback (bbd_callbacks callbacks)
 
 let prec_left ?(dqrely=0.0) bandwidths ?comm_fn local_fn =
   AdjointTypes.SpilsTypes.InternalPrecLeft
     (init_preconditioner dqrely bandwidths { local_fn; comm_fn })
-
-let ls_check_spils_bbd session =
-  if Sundials_config.safe && session.ls_class <> SpilsClass PrecBBDClass then
-    raise Sundials.InvalidLinearSolver
 
 external c_bbd_prec_reinitb
     : parallel_session -> int -> int -> int -> float -> unit

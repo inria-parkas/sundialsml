@@ -145,11 +145,11 @@ let pivot =
     ))
 
 let acoef = Array.make_matrix num_species num_species 0.0
-let bcoef = Array.create num_species 0.0
-let cox = Array.create num_species 0.0
-let coy = Array.create num_species 0.0
+let bcoef = Array.make num_species 0.0
+let cox = Array.make num_species 0.0
+let coy = Array.make num_species 0.0
 
-let rates = Array.create neq 0.0
+let rates = Array.make neq 0.0
 
 (* Load problem constants in data *)
 
@@ -255,7 +255,7 @@ let prec_setup_bd { Kinsol.jac_u=cc;
                     Kinsol.jac_tmp=(vtemp1, vtemp2)}
                   { Kinsol.Spils.uscale=cscale;
                     Kinsol.Spils.fscale=fscale } =
-  let perturb_rates = Array.create num_species 0.0 in
+  let perturb_rates = Array.make num_species 0.0 in
   
   let delx = dx in
   let dely = dy in
@@ -408,8 +408,8 @@ let main () =
   let globalstrategy = false in
 
   (* Create serial vectors of length NEQ *)
-  let cc = Array.create neq 0.0 in
-  let sc = Array.create neq 0.0 in
+  let cc = Array.make neq 0.0 in
+  let sc = Array.make neq 0.0 in
   let ccnv, scnv = wrap cc, wrap sc in
   set_initial_profiles cc sc;
 
@@ -427,7 +427,7 @@ let main () =
                  (Kinsol.Spils.prec_right ~setup:prec_setup_bd
                                           ~solve:prec_solve_bd ()))
               func ccnv in
-  Kinsol.set_constraints kmem (wrap (Array.create neq two));
+  Kinsol.set_constraints kmem (wrap (Array.make neq two));
   Kinsol.set_func_norm_tol kmem fnormtol;
   Kinsol.set_scaled_step_tol kmem scsteptol;
 
