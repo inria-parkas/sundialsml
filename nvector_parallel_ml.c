@@ -87,7 +87,7 @@ CAMLprim value ml_nvec_wrap_parallel(value payload, value checkfn)
     N_Vector_Ops ops;
     N_VectorContent_Parallel content;
     MPI_Comm comm;
-    long int n, nsum, local_length, global_length;
+    long int local_length, global_length;
 
     vlocalba      = Field(payload, 0);
     local_length  = (Caml_ba_array_val(vlocalba))->dim[0];
@@ -95,11 +95,14 @@ CAMLprim value ml_nvec_wrap_parallel(value payload, value checkfn)
     comm          = Comm_val(Field(payload, 2));
 
 #if SUNDIALS_ML_SAFE
+    {
     /* Compute global length as sum of local lengths */
-    n = local_length;
+    long int nsum;
+    long int n = local_length;
     MPI_Allreduce(&n, &nsum, 1, PVEC_INTEGER_MPI_TYPE, MPI_SUM, comm);
     if (nsum != global_length)
         caml_raise_constant(NVECTOR_PARALLEL_EXN (IncorrectGlobalSize));
+    }
 #endif
 
     /* Create vector */
