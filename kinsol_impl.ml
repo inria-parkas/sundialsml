@@ -19,6 +19,12 @@
  *     in cvode_ml.h (and code in cvode_ml.c) must also be updated.
  *)
 
+(* Dummy callbacks.  These dummes getting called indicates a fatal
+   bug.  Rather than raise an exception (which may or may not get
+   propagated properly depending on the context), we immediately abort
+   the program. *)
+external crash : string -> unit = "sundials_crash"
+
 type ('a, 'k) nvector = ('a, 'k) Nvector.t
 
 type 'a single_tmp = 'a
@@ -47,6 +53,11 @@ module DlsTypes = struct
       mutable dmat : Dls.DenseMatrix.t option
     }
 
+  let no_dense_callback = {
+      jacfn = (fun _ _ -> crash "no dense callback");
+      dmat = None;
+    }
+
   type band_jac_fn =
     bandrange
     -> (real_array double_tmp, real_array) jacobian_arg
@@ -58,6 +69,11 @@ module DlsTypes = struct
     {
       bjacfn: band_jac_fn;
       mutable bmat : Dls.BandMatrix.t option
+    }
+
+  let no_band_callback = {
+      bjacfn = (fun _ _ _ -> crash "no band callback");
+      bmat = None;
     }
 end
 
@@ -84,6 +100,12 @@ module SpilsTypes' = struct
       prec_setup_fn : 'a prec_setup_fn option;
 
       jac_times_vec_fn : 'a jac_times_vec_fn option;
+    }
+
+  let no_prec_callbacks = {
+      prec_solve_fn = None;
+      prec_setup_fn = None;
+      jac_times_vec_fn = None;
     }
 end
 
@@ -135,29 +157,18 @@ type ('a, 'k) session = {
   mutable infoh      : infoh;
 
   mutable ls_callbacks : ('a, 'k) linsolv_callbacks;
-  mutable ls_class     : linsolv_class;
 }
 
 and ('a, 'kind) linsolv_callbacks =
   | NoCallbacks
 
-  | DenseCallback of DlsTypes.dense_jac_callback
-  | BandCallback  of DlsTypes.band_jac_callback
+  | DlsDenseCallback of DlsTypes.dense_jac_callback
+  | DlsBandCallback  of DlsTypes.band_jac_callback
+
   | SpilsCallback of 'a SpilsTypes'.callbacks
+  | SpilsBBDCallback of 'a KinsolBbdParamTypes.callbacks
 
   | AlternateCallback of ('a, 'kind) alternate_linsolv
-
-  | BBDCallback of 'a KinsolBbdParamTypes.callbacks
-
-and linsolv_class =
-  | NoClass
-  | DlsClass
-  | SpilsClass of linsolv_prec_class
-  | AltClass
-
-and linsolv_prec_class =
-  | PrecNoClass
-  | PrecBBDClass
 
 and ('data, 'kind) alternate_linsolv =
   {
@@ -172,6 +183,26 @@ and ('data, 'kind) lsolve' =
   -> 'data
   -> 'data
   -> float option
+
+(* Linear solver check functions *)
+
+let ls_check_dls session =
+  if Sundials_config.safe then
+    match session.ls_callbacks with
+    | DlsDenseCallback _ | DlsBandCallback _ -> ()
+    | _ -> raise Sundials.InvalidLinearSolver
+
+let ls_check_spils session =
+  if Sundials_config.safe then
+    match session.ls_callbacks with
+    | SpilsCallback _ | SpilsBBDCallback _ -> ()
+    | _ -> raise Sundials.InvalidLinearSolver
+
+let ls_check_spils_bbd session =
+  if Sundials_config.safe then
+    match session.ls_callbacks with
+    | SpilsBBDCallback _ -> ()
+    | _ -> raise Sundials.InvalidLinearSolver
 
 (* Types that depend on session *)
 type serial_session = (Nvector_serial.data, Nvector_serial.kind) session
@@ -188,7 +219,7 @@ module SpilsTypes = struct
     ('a, 'k) session -> ('a, 'k) nvector option -> unit
   
   type ('a, 'k) preconditioner =
-    | InternalPrecNone
+    | InternalPrecNone of ('a, 'k) set_preconditioner
     | InternalPrecRight of ('a, 'k) set_preconditioner
 
 end
@@ -209,12 +240,6 @@ let read_weak_ref x : ('a, 'k) session =
   match Weak.get x 0 with
   | Some y -> y
   | None -> raise (Failure "Internal error: weak reference is dead")
-
-(* Dummy callbacks.  These dummes getting called indicates a fatal
-   bug.  Rather than raise an exception (which may or may not get
-   propagated properly depending on the context), we immediately abort
-   the program. *)
-external crash : string -> unit = "sundials_crash"
 
 let dummy_sysfn _ _ =
   crash "Internal error: dummy_sysfn called\n"

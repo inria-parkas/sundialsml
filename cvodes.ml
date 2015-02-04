@@ -681,16 +681,6 @@ module Adjoint =
       let parent, which = parent_and_which bs in
       c_set_stab_lim_det parent which stldetb
 
-    let ls_check session expected =
-      if Sundials_config.safe && session.ls_class <> expected then
-        raise Sundials.InvalidLinearSolver
-
-    let ls_check_spils bs =
-      if Sundials_config.safe then
-        match (tosession bs).ls_class with
-        | SpilsClass _ -> ()
-        | _ -> raise Sundials.InvalidLinearSolver
-
     module Diag =
       struct
         external c_diag : ('a, 'k) session -> int -> unit
@@ -698,9 +688,8 @@ module Adjoint =
 
         let solver bs _ =
           let parent, which = parent_and_which bs in
-          (tosession bs).ls_class <- NoClass;
           c_diag parent which;
-          (tosession bs).ls_class <- DiagClass
+          (tosession bs).ls_callbacks <- DiagNoCallbacks
 
         let get_work_space bs =
           Cvode.Diag.get_work_space (tosession bs)
@@ -731,24 +720,20 @@ module Adjoint =
         let dense ?jac () bs nv =
           let parent, which = parent_and_which bs in
           let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
-          (tosession bs).ls_class <- NoClass;
           c_dls_dense parent which neqs (jac <> None);
-          ((tosession bs).ls_callbacks <-
+          (tosession bs).ls_callbacks <-
             match jac with
-            | None -> NoCallbacks
-            | Some f -> BDenseCallback { jacfn = f; dmat = None });
-          (tosession bs).ls_class <- DlsClass
+            | None   -> BDlsDenseCallback no_dense_callback
+            | Some f -> BDlsDenseCallback { jacfn = f; dmat = None }
 
         let lapack_dense ?jac () bs nv =
           let parent, which = parent_and_which bs in
           let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
-          (tosession bs).ls_class <- NoClass;
           c_dls_lapack_dense parent which neqs (jac <> None);
-          ((tosession bs).ls_callbacks <-
+          (tosession bs).ls_callbacks <-
             match jac with
-            | None -> NoCallbacks
-            | Some f -> BDenseCallback { jacfn = f; dmat = None });
-          (tosession bs).ls_class <- DlsClass
+            | None   -> BDlsDenseCallback no_dense_callback
+            | Some f -> BDlsDenseCallback { jacfn = f; dmat = None }
 
         type ('data, 'kind) linear_solver =
           ('data, 'kind) bsession -> ('data, 'kind) nvector -> unit
@@ -756,31 +741,27 @@ module Adjoint =
         let band ?jac p bs nv =
           let parent, which = parent_and_which bs in
           let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
-          (tosession bs).ls_class <- NoClass;
           c_dls_band (parent, which) neqs p.mupper p.mlower (jac <> None);
-          ((tosession bs).ls_callbacks <-
+          (tosession bs).ls_callbacks <-
             match jac with
-            | None -> NoCallbacks
-            | Some f -> BBandCallback { bjacfn = f; bmat = None });
-          (tosession bs).ls_class <- DlsClass
+            | None   -> BDlsBandCallback no_band_callback
+            | Some f -> BDlsBandCallback { bjacfn = f; bmat = None }
 
         let lapack_band ?jac p bs nv =
           let parent, which = parent_and_which bs in
           let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
-          (tosession bs).ls_class <- NoClass;
           c_dls_lapack_band (parent,which) neqs p.mupper p.mlower (jac <> None);
-          ((tosession bs).ls_callbacks <-
+          (tosession bs).ls_callbacks <-
             match jac with
-            | None -> NoCallbacks
-            | Some f -> BBandCallback { bjacfn = f; bmat = None });
-          (tosession bs).ls_class <- DlsClass
+            | None   -> BDlsBandCallback no_band_callback
+            | Some f -> BDlsBandCallback { bjacfn = f; bmat = None }
 
         let invalidate_callback s =
           match s.ls_callbacks with
-          | BDenseCallback ({ dmat = Some d } as cb) ->
+          | BDlsDenseCallback ({ dmat = Some d } as cb) ->
               Dls.DenseMatrix.invalidate d;
               cb.dmat <- None
-          | BBandCallback  ({ bmat = Some d } as cb) ->
+          | BDlsBandCallback  ({ bmat = Some d } as cb) ->
               Dls.BandMatrix.invalidate d;
               cb.bmat <- None
           | _ -> ()
@@ -790,48 +771,52 @@ module Adjoint =
 
         let set_dense_jac_fn bs fjacfn =
           let s = tosession bs in
-          ls_check s DlsClass;
           let parent, which = parent_and_which bs in
-          invalidate_callback s;
-          s.ls_callbacks <- BDenseCallback { jacfn = fjacfn; dmat = None };
-          set_dense_jac_fn parent which
+          match s.ls_callbacks with
+          | BDlsDenseCallback _ ->
+              invalidate_callback s;
+              s.ls_callbacks <- BDlsDenseCallback { jacfn = fjacfn; dmat = None };
+              set_dense_jac_fn parent which
+          | _ -> raise Sundials.InvalidLinearSolver
 
         external clear_dense_jac_fn : serial_session -> int -> unit
             = "c_cvodes_adj_dls_clear_dense_jac_fn"
 
         let clear_dense_jac_fn bs =
           let s = tosession bs in
-          ls_check s DlsClass;
           match s.ls_callbacks with
-          | BDenseCallback _ -> (invalidate_callback s;
-                                 s.ls_callbacks <- NoCallbacks;
-                                 let parent, which = parent_and_which bs in
-                                 clear_dense_jac_fn parent which)
-          | _ -> failwith "dense linear solver not in use"
+          | BDlsDenseCallback _ ->
+              invalidate_callback s;
+              s.ls_callbacks <- BDlsDenseCallback no_dense_callback;
+              let parent, which = parent_and_which bs in
+              clear_dense_jac_fn parent which
+          | _ -> raise Sundials.InvalidLinearSolver
 
         external set_band_jac_fn : serial_session -> int -> unit
             = "c_cvodes_adj_dls_set_band_jac_fn"
 
         let set_band_jac_fn bs f =
           let s = tosession bs in
-          ls_check s DlsClass;
           let parent, which = parent_and_which bs in
-          invalidate_callback s;
-          s.ls_callbacks <- BBandCallback { bjacfn = f; bmat = None };
-          set_band_jac_fn parent which
+          match s.ls_callbacks with
+          | BDlsBandCallback _ ->
+              invalidate_callback s;
+              s.ls_callbacks <- BDlsBandCallback { bjacfn = f; bmat = None };
+              set_band_jac_fn parent which
+          | _ -> raise Sundials.InvalidLinearSolver
 
         external clear_band_jac_fn : serial_session -> int -> unit
             = "c_cvodes_adj_dls_clear_band_jac_fn"
 
         let clear_band_jac_fn bs =
           let s = tosession bs in
-          ls_check s DlsClass;
           match s.ls_callbacks with
-          | BBandCallback _ -> (invalidate_callback s;
-                                s.ls_callbacks <- NoCallbacks;
-                                let parent, which = parent_and_which bs in
-                                clear_band_jac_fn parent which)
-          | _ -> failwith "banded linear solver not in use"
+          | BDlsBandCallback _ ->
+              invalidate_callback s;
+              s.ls_callbacks <- BDlsBandCallback no_band_callback;
+              let parent, which = parent_and_which bs in
+              clear_band_jac_fn parent which
+          | _ -> raise Sundials.InvalidLinearSolver
 
         let get_work_space bs = Cvode.Dls.get_work_space (tosession bs)
         let get_num_jac_evals bs = Cvode.Dls.get_num_jac_evals (tosession bs)
@@ -868,10 +853,10 @@ module Adjoint =
           (tosession bs).ls_callbacks <-
             BSpilsCallback { prec_solve_fn = solve;
                              prec_setup_fn = setup;
-                             jac_times_vec_fn = jac_times };
-          (tosession bs).ls_class <- SpilsClass PrecNoClass
+                             jac_times_vec_fn = jac_times }
 
-        let prec_none = InternalPrecNone
+        let prec_none = InternalPrecNone (fun bs _ _ _ ->
+            (tosession bs).ls_callbacks <- BSpilsCallback no_prec_callbacks)
         let prec_left ?setup ?jac_times_vec solve =
           InternalPrecLeft (init_preconditioner solve setup jac_times_vec)
         let prec_right ?setup ?jac_times_vec solve =
@@ -886,11 +871,8 @@ module Adjoint =
             set_prec bs parent which nv
             (* the preconditioner must set ls_class *)
           in
-          (tosession bs).ls_class <- NoClass;
           match prec with
-          | InternalPrecNone ->
-              init parent which maxl Spils.PrecNone;
-              (tosession bs).ls_class <- SpilsClass PrecNoClass
+          | InternalPrecNone set_prec  -> with_prec Spils.PrecNone set_prec
           | InternalPrecLeft set_prec  -> with_prec Spils.PrecLeft set_prec
           | InternalPrecRight set_prec -> with_prec Spils.PrecRight set_prec
           | InternalPrecBoth set_prec  -> with_prec Spils.PrecBoth set_prec
@@ -909,67 +891,62 @@ module Adjoint =
             = "c_cvodes_adj_spils_set_prec_type"
 
         let set_preconditioner bs ?setup solve =
-          ls_check_spils bs;
           match (tosession bs).ls_callbacks with
           | BSpilsCallback cbs ->
-            let parent, which = parent_and_which bs in
-            c_set_preconditioner parent which (setup <> None);
-            (tosession bs).ls_callbacks <-
-              BSpilsCallback { cbs with
-                               prec_setup_fn = setup;
-                               prec_solve_fn = solve }
-          | BSpilsBandCallback _ ->
-            failwith "User-defined preconditioner not in use"
-          | _ -> failwith "spils solver not in use"
+              let parent, which = parent_and_which bs in
+              c_set_preconditioner parent which (setup <> None);
+              (tosession bs).ls_callbacks <-
+                BSpilsCallback { cbs with
+                                 prec_setup_fn = setup;
+                                 prec_solve_fn = solve }
+          | _ -> raise Sundials.InvalidLinearSolver
 
         let set_jac_times_vec_fn bs f =
-          ls_check_spils bs;
           match (tosession bs).ls_callbacks with
           | BSpilsCallback cbs ->
-            let parent, which = parent_and_which bs in
-            c_set_jac_times_vec_fn parent which true;
-            (tosession bs).ls_callbacks <-
-              BSpilsCallback { cbs with jac_times_vec_fn = Some f }
+              let parent, which = parent_and_which bs in
+              c_set_jac_times_vec_fn parent which true;
+              (tosession bs).ls_callbacks <-
+                BSpilsCallback { cbs with jac_times_vec_fn = Some f }
           | BSpilsBandCallback _ ->
-            let parent, which = parent_and_which bs in
-            c_set_jac_times_vec_fn parent which false;
-            (tosession bs).ls_callbacks <- BSpilsBandCallback (Some f)
-          | _ -> failwith "spils solver not in use"
+              let parent, which = parent_and_which bs in
+              c_set_jac_times_vec_fn parent which false;
+              (tosession bs).ls_callbacks <- BSpilsBandCallback (Some f)
+          | _ -> raise Sundials.InvalidLinearSolver
 
         let clear_jac_times_vec_fn bs =
-          ls_check_spils bs;
           match (tosession bs).ls_callbacks with
           | BSpilsCallback cbs ->
-            let parent, which = parent_and_which bs in
-            c_set_jac_times_vec_fn parent which false;
-            (tosession bs).ls_callbacks <-
-              BSpilsCallback { cbs with jac_times_vec_fn = None }
+              let parent, which = parent_and_which bs in
+              c_set_jac_times_vec_fn parent which false;
+              (tosession bs).ls_callbacks <-
+                BSpilsCallback { cbs with jac_times_vec_fn = None }
           | BSpilsBandCallback _ ->
-            let parent, which = parent_and_which bs in
-            c_set_jac_times_vec_fn parent which false;
-            (tosession bs).ls_callbacks <- BSpilsBandCallback None
-          | _ -> failwith "spils solver not in use"
+              let parent, which = parent_and_which bs in
+              c_set_jac_times_vec_fn parent which false;
+              (tosession bs).ls_callbacks <- BSpilsBandCallback None
+          | _ -> raise Sundials.InvalidLinearSolver
 
         external set_gs_type
             : ('a, 'k) bsession -> gramschmidt_type -> unit
             = "c_cvodes_adj_spils_set_gs_type"
 
         let set_gs_type bs t =
-          ls_check_spils bs;
+          ls_check_spils (tosession bs);
           set_gs_type bs t
 
         external set_eps_lin : ('a, 'k) bsession -> float -> unit
             = "c_cvodes_adj_spils_set_eps_lin"
 
         let set_eps_lin bs epsl =
-          ls_check_spils bs;
+          ls_check_spils (tosession bs);
           set_eps_lin bs epsl
 
         external c_set_maxl : ('a, 'k) bsession -> int -> unit
             = "c_cvodes_adj_spils_set_maxl"
 
         let set_maxl bs omaxl =
-          ls_check_spils bs;
+          ls_check_spils (tosession bs);
           c_set_maxl bs (match omaxl with None -> 0 | Some x -> x)
 
         let get_work_space bs =
@@ -1003,10 +980,10 @@ module Adjoint =
               (RealArray.length (Nvector.unwrap nv))
               bandrange.mupper bandrange.mlower;
             c_set_jac_times_vec_fn parent which (jac_times_vec <> None);
-            (tosession bs).ls_callbacks <- BSpilsBandCallback jac_times_vec;
-            (tosession bs).ls_class <- SpilsClass PrecBandClass
+            (tosession bs).ls_callbacks <- BSpilsBandCallback jac_times_vec
 
-          let prec_none = InternalPrecNone
+          let prec_none = InternalPrecNone (fun bs _ _ _ ->
+              (tosession bs).ls_callbacks <- BSpilsBandCallback None)
           let prec_left ?jac_times_vec bandrange =
             InternalPrecLeft (init_preconditioner jac_times_vec bandrange)
           let prec_right ?jac_times_vec bandrange =
@@ -1062,7 +1039,6 @@ module Adjoint =
               errh         = dummy_errh;
               errw         = dummy_errw;
               ls_callbacks = NoCallbacks;
-              ls_class     = NoClass;
 
               sensext    = BwdSensExt {
                 parent   = s;

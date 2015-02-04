@@ -39,6 +39,7 @@
  *     If these types are changed or augmented, the corresponding declarations
  *     in cvode_ml.h (and code in cvode_ml.c) must also be updated.
  *)
+external crash : string -> unit = "sundials_crash"
 
 type ('data, 'kind) nvector = ('data, 'kind) Nvector.t
 module RealArray = Sundials.RealArray
@@ -69,6 +70,11 @@ module DlsTypes = struct
       mutable dmat : Dls.DenseMatrix.t option
     }
 
+  let no_dense_callback = {
+      jacfn = (fun _ _ -> crash "no dense callback");
+      dmat = None;
+    }
+
   type band_jac_fn =
     bandrange
     -> (RealArray.t triple, RealArray.t) jacobian_arg
@@ -80,6 +86,11 @@ module DlsTypes = struct
     {
       bjacfn: band_jac_fn;
       mutable bmat : Dls.BandMatrix.t option
+    }
+
+  let no_band_callback = {
+      bjacfn = (fun _ _ _ -> crash "no band callback");
+      bmat = None;
     }
 end
 
@@ -131,6 +142,12 @@ module SpilsTypes' = struct
       prec_solve_fn : 'a prec_solve_fn;
       prec_setup_fn : 'a prec_setup_fn option;
       jac_times_vec_fn : 'a jac_times_vec_fn option;
+    }
+
+  let no_prec_callbacks = {
+      prec_solve_fn = (fun _ _ _ -> crash "no prec solve callback");
+      prec_setup_fn = None;
+      jac_times_vec_fn = None;
     }
 end
 
@@ -260,6 +277,11 @@ module AdjointTypes' = struct
         mutable dmat : Dls.DenseMatrix.t option
       }
 
+    let no_dense_callback = {
+        jacfn = (fun _ _ -> crash "no dense callback");
+        dmat = None;
+      }
+
     type band_jac_fn =
       bandrange
       -> (RealArray.t triple, RealArray.t) jacobian_arg
@@ -271,6 +293,11 @@ module AdjointTypes' = struct
       {
         bjacfn: band_jac_fn;
         mutable bmat : Dls.BandMatrix.t option
+      }
+
+    let no_band_callback = {
+        bjacfn = (fun _ _ _ -> crash "no band callback");
+        bmat = None;
       }
   end
 
@@ -301,6 +328,12 @@ module AdjointTypes' = struct
         prec_solve_fn : 'a prec_solve_fn;
         prec_setup_fn : 'a prec_setup_fn option;
         jac_times_vec_fn : 'a jac_times_vec_fn option;
+      }
+
+    let no_prec_callbacks = {
+        prec_solve_fn = (fun _ _ _ -> crash "no prec solve callback");
+        prec_setup_fn = None;
+        jac_times_vec_fn = None;
       }
   end
 end
@@ -345,7 +378,6 @@ type ('a, 'kind) session = {
   mutable errw         : 'a error_weight_fun;
 
   mutable ls_callbacks : ('a, 'kind) linsolv_callbacks;
-  mutable ls_class     : linsolv_class;
 
   mutable sensext      : ('a, 'kind) sensext (* Used by Cvodes *)
 }
@@ -353,33 +385,29 @@ type ('a, 'kind) session = {
 and ('a, 'kind) linsolv_callbacks =
   | NoCallbacks
 
-  | DenseCallback of DlsTypes.dense_jac_callback
-  | BandCallback  of DlsTypes.band_jac_callback
+  (* Diagonal *)
+  | DiagNoCallbacks
+
+  (* Dls *)
+  | DlsDenseCallback of DlsTypes.dense_jac_callback
+  | DlsBandCallback  of DlsTypes.band_jac_callback
+
+  | BDlsDenseCallback of AdjointTypes'.DlsTypes.dense_jac_callback
+  | BDlsBandCallback  of AdjointTypes'.DlsTypes.band_jac_callback
+
+  (* Spils *)
   | SpilsCallback of 'a SpilsTypes'.callbacks
   | SpilsBandCallback of 'a SpilsTypes'.jac_times_vec_fn option
                          (* Invariant: 'a = RealArray.t *)
-  | BBDCallback of 'a CvodeBbdParamTypes.callbacks
+  | SpilsBBDCallback of 'a CvodeBbdParamTypes.callbacks
 
-  | AlternateCallback of ('a, 'kind) alternate_linsolv
-
-  | BDenseCallback of AdjointTypes'.DlsTypes.dense_jac_callback
-  | BBandCallback  of AdjointTypes'.DlsTypes.band_jac_callback
   | BSpilsCallback of 'a AdjointTypes'.SpilsTypes'.callbacks
   | BSpilsBandCallback of 'a AdjointTypes'.SpilsTypes'.jac_times_vec_fn option
                           (* Invariant: 'a = RealArray.t *)
-  | BBBDCallback of 'a CvodesBbdParamTypes.callbacks
+  | BSpilsBBDCallback of 'a CvodesBbdParamTypes.callbacks
 
-and linsolv_class =
-  | NoClass
-  | DiagClass
-  | DlsClass
-  | SpilsClass of linsolv_prec_class
-  | AltClass
-
-and linsolv_prec_class =
-  | PrecNoClass
-  | PrecBandClass
-  | PrecBBDClass
+  (* Alternate *)
+  | AlternateCallback of ('a, 'kind) alternate_linsolv
 
 and ('a, 'kind) sensext =
     NoSensExt
@@ -455,6 +483,38 @@ and ('data, 'kind) lsolve' =
   -> 'data
   -> unit
 
+(* Linear solver check functions *)
+
+let ls_check_diag session =
+  if Sundials_config.safe && session.ls_callbacks <> DiagNoCallbacks then
+    raise Sundials.InvalidLinearSolver
+
+let ls_check_dls session =
+  if Sundials_config.safe then
+    match session.ls_callbacks with
+    | DlsDenseCallback _ | DlsBandCallback _
+    | BDlsDenseCallback _ | BDlsBandCallback _ -> ()
+    | _ -> raise Sundials.InvalidLinearSolver
+
+let ls_check_spils session =
+  if Sundials_config.safe then
+    match session.ls_callbacks with
+    | SpilsCallback _ | SpilsBandCallback _ | SpilsBBDCallback _
+    | BSpilsCallback _ | BSpilsBandCallback _ | BSpilsBBDCallback _ -> ()
+    | _ -> raise Sundials.InvalidLinearSolver
+
+let ls_check_spils_band session =
+  if Sundials_config.safe then
+    match session.ls_callbacks with
+    | SpilsBandCallback _ | BSpilsBandCallback _ -> ()
+    | _ -> raise Sundials.InvalidLinearSolver
+
+let ls_check_spils_bbd session =
+  if Sundials_config.safe then
+    match session.ls_callbacks with
+    | SpilsBBDCallback _ | BSpilsBBDCallback _ -> ()
+    | _ -> raise Sundials.InvalidLinearSolver
+
 (* Types that depend on session *)
 
 type serial_session = (Nvector_serial.data, Nvector_serial.kind) session
@@ -474,7 +534,7 @@ module SpilsTypes = struct
     ('a, 'k) session -> ('a, 'k) nvector -> unit
 
   type ('a, 'k) preconditioner =
-    | InternalPrecNone
+    | InternalPrecNone of ('a, 'k) set_preconditioner
     | InternalPrecLeft of ('a, 'k) set_preconditioner
     | InternalPrecRight of ('a, 'k) set_preconditioner
     | InternalPrecBoth of ('a, 'k) set_preconditioner
@@ -529,7 +589,7 @@ module AdjointTypes = struct
       ('a, 'k) bsession -> ('a, 'k) session -> int -> ('a, 'k) nvector -> unit
 
     type ('a, 'k) preconditioner =
-      | InternalPrecNone
+      | InternalPrecNone of ('a, 'k) set_preconditioner
       | InternalPrecLeft of ('a, 'k) set_preconditioner
       | InternalPrecRight of ('a, 'k) set_preconditioner
       | InternalPrecBoth of ('a, 'k) set_preconditioner
@@ -548,7 +608,6 @@ let read_weak_ref x : ('a, 'kind) session =
    bug.  Rather than raise an exception (which may or may not get
    propagated properly depending on the context), we immediately abort
    the program. *)
-external crash : string -> unit = "sundials_crash"
 let dummy_rhsfn _ _ _ =
   crash "Internal error: dummy_resfn called\n"
 let dummy_rootsfn _ _ _ =

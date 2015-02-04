@@ -49,16 +49,6 @@ type 'a double = 'a * 'a
 
 let int_default = function None -> 0 | Some v -> v
 
-let ls_check session expected =
-  if Sundials_config.safe && session.ls_class <> expected then
-    raise Sundials.InvalidLinearSolver
-
-let ls_check_spils session =
-  if Sundials_config.safe then
-    match session.ls_class with
-    | SpilsClass _ -> ()
-    | _ -> raise Sundials.InvalidLinearSolver
-
 module Dls =
   struct
     include DlsTypes
@@ -79,52 +69,44 @@ module Dls =
       (match onv with
        | Some nv -> s.neqs <- Sundials.RealArray.length (Nvector.unwrap nv)
        | None -> ());
-      s.ls_class <- NoClass;
       c_dls_dense s (fo <> None);
-      (s.ls_callbacks <- match fo with
-                        | None -> NoCallbacks
-                        | Some f -> DenseCallback { jacfn = f; dmat = None });
-      s.ls_class <- DlsClass
+      s.ls_callbacks <- match fo with
+                        | None   -> DlsDenseCallback no_dense_callback
+                        | Some f -> DlsDenseCallback { jacfn = f; dmat = None }
 
     let lapack_dense fo s onv =
       (match onv with
        | Some nv -> s.neqs <- Sundials.RealArray.length (Nvector.unwrap nv)
        | None -> ());
-      s.ls_class <- NoClass;
       c_dls_lapack_dense s (fo <> None);
-      (s.ls_callbacks <- match fo with
-                        | None -> NoCallbacks
-                        | Some f -> DenseCallback { jacfn = f; dmat = None });
-      s.ls_class <- DlsClass
+      s.ls_callbacks <- match fo with
+                        | None   -> DlsDenseCallback no_dense_callback
+                        | Some f -> DlsDenseCallback { jacfn = f; dmat = None }
 
     let band { mupper; mlower } fo s onv =
       (match onv with
        | Some nv -> s.neqs <- Sundials.RealArray.length (Nvector.unwrap nv)
        | None -> ());
-      s.ls_class <- NoClass;
       c_dls_band s mupper mlower (fo <> None);
-      (s.ls_callbacks <- match fo with
-                        | None -> NoCallbacks
-                        | Some f -> BandCallback { bjacfn = f; bmat = None });
-      s.ls_class <- DlsClass
+      s.ls_callbacks <- match fo with
+                        | None   -> DlsBandCallback no_band_callback
+                        | Some f -> DlsBandCallback { bjacfn = f; bmat = None }
 
     let lapack_band { mupper; mlower } fo s onv =
       (match onv with
        | Some nv -> s.neqs <- Sundials.RealArray.length (Nvector.unwrap nv)
        | None -> ());
-      s.ls_class <- NoClass;
       c_dls_lapack_band s mupper mlower (fo <> None);
-      (s.ls_callbacks <- match fo with
-                        | None -> NoCallbacks
-                        | Some f -> BandCallback { bjacfn = f; bmat = None });
-      s.ls_class <- DlsClass
+      s.ls_callbacks <- match fo with
+                        | None   -> DlsBandCallback no_band_callback
+                        | Some f -> DlsBandCallback { bjacfn = f; bmat = None }
 
     let invalidate_callback session =
       match session.ls_callbacks with
-      | DenseCallback ({ dmat = Some d } as cb) ->
+      | DlsDenseCallback ({ dmat = Some d } as cb) ->
           Dls.DenseMatrix.invalidate d;
           cb.dmat <- None
-      | BandCallback  ({ bmat = Some d } as cb) ->
+      | DlsBandCallback  ({ bmat = Some d } as cb) ->
           Dls.BandMatrix.invalidate d;
           cb.bmat <- None
       | _ -> ()
@@ -133,61 +115,66 @@ module Dls =
         = "c_kinsol_dls_set_dense_jac_fn"
 
     let set_dense_jac_fn s fjacfn =
-      ls_check s DlsClass;
-      invalidate_callback s;
-      s.ls_callbacks <- DenseCallback { jacfn = fjacfn; dmat = None };
-      set_dense_jac_fn s
+      match s.ls_callbacks with
+      | DlsDenseCallback _ ->
+          invalidate_callback s;
+          s.ls_callbacks <- DlsDenseCallback { jacfn = fjacfn; dmat = None };
+          set_dense_jac_fn s
+      | _ -> raise Sundials.InvalidLinearSolver
 
     external clear_dense_jac_fn : serial_session -> unit
         = "c_kinsol_dls_clear_dense_jac_fn"
 
     let clear_dense_jac_fn s =
-      ls_check s DlsClass;
       match s.ls_callbacks with
-      | DenseCallback _ -> (invalidate_callback s;
-                            s.ls_callbacks <- NoCallbacks;
-                            clear_dense_jac_fn s)
-      | _ -> failwith "dense linear solver not in use"
+      | DlsDenseCallback _ ->
+          invalidate_callback s;
+          s.ls_callbacks <- DlsDenseCallback no_dense_callback;
+          clear_dense_jac_fn s
+      | _ -> raise Sundials.InvalidLinearSolver
 
     external set_band_jac_fn : serial_session -> unit
         = "c_kinsol_dls_set_band_jac_fn"
 
     let set_band_jac_fn s fbandjacfn =
-      ls_check s DlsClass;
-      invalidate_callback s;
-      s.ls_callbacks <- BandCallback { bjacfn = fbandjacfn; bmat = None };
-      set_band_jac_fn s
+      match s.ls_callbacks with
+      | DlsBandCallback _ ->
+          invalidate_callback s;
+          s.ls_callbacks <-
+            DlsBandCallback { bjacfn = fbandjacfn; bmat = None };
+          set_band_jac_fn s
+      | _ -> raise Sundials.InvalidLinearSolver
 
     external clear_band_jac_fn : serial_session -> unit
         = "c_kinsol_dls_clear_band_jac_fn"
 
     let clear_band_jac_fn s =
-      ls_check s DlsClass;
       match s.ls_callbacks with
-      | BandCallback _ -> (invalidate_callback s;
-                           s.ls_callbacks <- NoCallbacks;
-                           clear_band_jac_fn s)
-      | _ -> failwith "dense linear solver not in use"
+      | DlsBandCallback _ ->
+          invalidate_callback s;
+          s.ls_callbacks <- DlsBandCallback no_band_callback;
+          clear_band_jac_fn s
+      | _ -> raise Sundials.InvalidLinearSolver
 
     external get_work_space : serial_session -> int * int
         = "c_kinsol_dls_get_work_space"
 
     let get_work_space s =
-      ls_check s DlsClass;
+      ls_check_dls s;
       get_work_space s
 
     external get_num_jac_evals : serial_session -> int
         = "c_kinsol_dls_get_num_jac_evals"
 
     let get_num_jac_evals s =
-      ls_check s DlsClass;
+      ls_check_dls s;
       get_num_jac_evals s
 
     external get_num_func_evals : serial_session -> int
         = "c_kinsol_dls_get_num_func_evals"
 
     let get_num_func_evals s =
-      ls_check s DlsClass;
+      ls_check_dls s;
       get_num_func_evals s
   end
 
@@ -219,23 +206,18 @@ module Spils =
       session.ls_callbacks <-
         SpilsCallback { prec_solve_fn = solve;
                         prec_setup_fn = setup;
-                        jac_times_vec_fn = jac_times };
-      session.ls_class <- SpilsClass PrecNoClass
+                        jac_times_vec_fn = jac_times }
 
-    let prec_none = InternalPrecNone
+    let prec_none = InternalPrecNone (fun session nv ->
+        session.ls_callbacks <- SpilsCallback no_prec_callbacks)
     let prec_right ?setup ?solve ?jac_times_vec () =
       InternalPrecRight (init_preconditioner solve setup jac_times_vec)
 
     let init_spils init maxl prec session nv =
-      session.ls_class <- NoClass;
+      init session maxl;
       match prec with
-      | InternalPrecNone ->
-          init session maxl;
-          session.ls_class <- SpilsClass PrecNoClass
-      | InternalPrecRight set_prec ->
-        init session maxl;
-        set_prec session nv
-        (* the preconditioner must set ls_class *)
+      | InternalPrecNone set_prec  -> set_prec session nv
+      | InternalPrecRight set_prec -> set_prec session nv
 
     let spgmr ?(maxl=0) ?(max_restarts=5) prec session nv =
       init_spils c_spgmr maxl prec session nv;
@@ -251,30 +233,28 @@ module Spils =
       init_spils c_sptfqmr maxl prec session nv
 
     let set_preconditioner s ?setup ?solve () =
-      ls_check_spils s;
       match s.ls_callbacks with
       | SpilsCallback cbs ->
-        s.ls_callbacks <- SpilsCallback { cbs with
-                                          prec_setup_fn = setup;
-                                          prec_solve_fn = solve };
-        c_set_preconditioner s (solve <> None) (setup <> None)
-      | _ -> failwith "spils solver not in use"
+          s.ls_callbacks <- SpilsCallback { cbs with
+                                            prec_setup_fn = setup;
+                                            prec_solve_fn = solve };
+          c_set_preconditioner s (solve <> None) (setup <> None)
+      | _ -> raise Sundials.InvalidLinearSolver
 
     let set_jac_times_vec_fn s f =
-      ls_check_spils s;
       match s.ls_callbacks with
       | SpilsCallback cbs ->
-        s.ls_callbacks <- SpilsCallback { cbs with jac_times_vec_fn = Some f };
-        c_set_jac_times_vec_fn s true
-      | _ -> failwith "spils solver not in use"
+          s.ls_callbacks <-
+            SpilsCallback { cbs with jac_times_vec_fn = Some f };
+          c_set_jac_times_vec_fn s true
+      | _ -> raise Sundials.InvalidLinearSolver
 
     let clear_jac_times_vec_fn s =
-      ls_check_spils s;
       match s.ls_callbacks with
       | SpilsCallback cbs ->
-        s.ls_callbacks <- SpilsCallback { cbs with jac_times_vec_fn = None };
-        c_set_jac_times_vec_fn s false
-      | _ -> failwith "spils solver not in use"
+          s.ls_callbacks <- SpilsCallback { cbs with jac_times_vec_fn = None };
+          c_set_jac_times_vec_fn s false
+      | _ -> raise Sundials.InvalidLinearSolver
 
     external get_work_space       : ('a, 'k) session -> int * int
         = "c_kinsol_spils_get_work_space"
@@ -347,11 +327,9 @@ module Alternate =
       = "c_kinsol_set_sfdotjp"
 
     let make f s nv =
-      s.ls_class <- NoClass;
       let { linit; lsetup; lsolve } as cb = f s nv in
       c_set_alternate s (linit <> None) (lsetup <> None);
-      s.ls_callbacks <- AlternateCallback cb;
-      s.ls_class <- AltClass
+      s.ls_callbacks <- AlternateCallback cb
 
   end
 
@@ -529,7 +507,6 @@ let init lsolver f u0 =
           infoh        = dummy_infoh;
 
           ls_callbacks = NoCallbacks;
-          ls_class     = NoClass;
         } in
   Gc.finalise session_finalize session;
   Weak.set weakref 0 (Some session);
