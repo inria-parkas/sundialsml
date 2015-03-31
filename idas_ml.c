@@ -13,8 +13,8 @@
 
 /* Interface functions that do not involve NVectors. */
 
+#include "config.h"
 #include <idas/idas.h>
-#include <sundials/sundials_config.h>
 #include <sundials/sundials_types.h>
 #include <sundials/sundials_band.h>
 #include <sundials/sundials_nvector.h>
@@ -37,7 +37,7 @@
 #include <idas/idas_sptfqmr.h>
 #include <idas/idas_spils.h>
 
-#if SUNDIALS_BLAS_LAPACK == 1
+#ifdef SUNDIALS_ML_LAPACK
 #include <idas/idas_lapack.h>
 #endif
 

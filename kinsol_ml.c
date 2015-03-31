@@ -11,11 +11,11 @@
  *                                                                     *
  ***********************************************************************/
 
+#include "config.h"
 #include <errno.h>
 #include <string.h>
 
 #include <kinsol/kinsol.h>
-#include <sundials/sundials_config.h>
 #include <sundials/sundials_types.h>
 #include <sundials/sundials_band.h>
 
@@ -37,7 +37,7 @@
 #include <kinsol/kinsol_spils.h>
 #include <kinsol/kinsol_impl.h>
 
-#if SUNDIALS_BLAS_LAPACK == 1
+#ifdef SUNDIALS_ML_LAPACK
 #include <kinsol/kinsol_lapack.h>
 #endif
 
@@ -516,7 +516,11 @@ CAMLprim value c_kinsol_set_sfdotjp (value vkin_mem, value vsfdotjp)
     CAMLparam2(vkin_mem, vsfdotjp);
     KINMem kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
 
+#if SUNDIALS_LIB_VERSION >= 260
+    kin_mem->kin_sFdotJp = Double_val(vsfdotjp);
+#else
     kin_mem->kin_sfdotJp = Double_val(vsfdotjp);
+#endif
 
     CAMLreturn (Val_unit);
 }
@@ -541,7 +545,7 @@ CAMLprim value c_kinsol_dls_dense (value vkin_mem, value vset_jac)
 CAMLprim value c_kinsol_dls_lapack_dense (value vkin_mem, value vset_jac)
 {
     CAMLparam2 (vkin_mem, vset_jac);
-#if SUNDIALS_BLAS_LAPACK
+#ifdef SUNDIALS_ML_LAPACK
     void *kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
     long neqs = KINSOL_NEQS_FROM_ML (vkin_mem);
     int flag;
@@ -597,7 +601,7 @@ CAMLprim value c_kinsol_dls_lapack_band (value vkin_mem, value vmupper,
 					 value vmlower, value vset_jac)
 {
     CAMLparam4(vkin_mem, vmupper, vmlower, vset_jac);
-#if SUNDIALS_BLAS_LAPACK
+#ifdef SUNDIALS_ML_LAPACK
     void *kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
     long neqs = KINSOL_NEQS_FROM_ML (vkin_mem);
     int flag;

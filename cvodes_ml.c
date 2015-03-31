@@ -11,8 +11,8 @@
  *                                                                     *
  ***********************************************************************/
 
+#include "config.h"
 #include <cvodes/cvodes.h>
-#include <sundials/sundials_config.h>
 #include <sundials/sundials_types.h>
 #include <sundials/sundials_band.h>
 #include <sundials/sundials_nvector.h>
@@ -37,7 +37,7 @@
 #include <cvodes/cvodes_bandpre.h>
 #include <cvodes/cvodes_spils.h>
 
-#if SUNDIALS_BLAS_LAPACK == 1
+#ifdef SUNDIALS_ML_LAPACK
 #include <cvodes/cvodes_lapack.h>
 #endif
 
@@ -1023,7 +1023,7 @@ CAMLprim value c_cvodes_adj_dls_lapack_dense(value vparent, value vwhich,
 					     value vnb, value vset_jac)
 {
     CAMLparam3 (vparent, vwhich, vset_jac);
-#if SUNDIALS_BLAS_LAPACK
+#ifdef SUNDIALS_ML_LAPACK
     void *cvode_mem = CVODE_MEM_FROM_ML (vparent);
     long nbeqs = Long_val(vnb);
     int which = Int_val(vwhich);
@@ -1088,7 +1088,7 @@ CAMLprim value c_cvodes_adj_dls_lapack_band (value vparent_which, value vnb,
 					     value vset_jac)
 {
     CAMLparam5(vparent_which, vnb, vmupper, vmlower, vset_jac);
-#if SUNDIALS_BLAS_LAPACK
+#ifdef SUNDIALS_ML_LAPACK
     void *cvode_mem = CVODE_MEM_FROM_ML (Field(vparent_which, 0));
     long nbeqs = Long_val(vnb);
     int which = Int_val(Field(vparent_which, 1));

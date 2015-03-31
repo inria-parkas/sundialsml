@@ -16,6 +16,14 @@ unset mathjax
 
 configure_command="$0"
 
+case `uname -s` in
+    Darwin)
+	# OS X does not search /usr/local by default.
+	sundials_lib_path=-L/usr/local/lib
+	sundials_inc_path=-I/usr/local/include
+	;;
+esac
+
 for option in "$@"
 do
     # Try to quote configure_command so that it can be cut-and-pasted to the
@@ -38,8 +46,6 @@ do
 	install_docs=0;;
     --disable-mpi)
 	enable_mpi=0;;
-    --no-lib-path)
-	no_lib_path=1;;
     --enable-debug)
 	enable_debug=1;;
     --unsafe)
@@ -77,15 +83,17 @@ do
 	  --unsafe               no bounds or other runtime checks
 
 	Optional settings:
-	  OCAMLROOT     Path to OCaml installation
-	  LAPACKLIB     Command for linking with Lapack (default: -llapack)
-	                (sometimes also: -lSimTKlapack)
-	  EXAMPLES      Path to installed examples (for comparison with Sundials).
-	  OCAMLMPI      Path to OCamlMPI installation
-	  MPICC         Name of the MPI compiler (default: mpicc)
-	  MPIRUN        Name of MPI program launcher (default: mpirun)
-	  MATHJAX	Local or remote directory containing MathJax.js
-	                (e.g., MATHJAX=/usr/share/javascript/mathjax)
+	  OCAMLROOT		Path to OCaml installation
+	  SUNDIALS_LIB_PATH	Path to Sundials libraries (for linking)
+	  SUNDIALS_INC_PATH	Path to Sundials header files (for compiling)
+	  LAPACKLIB		Command for linking with Lapack (default: -llapack)
+	                        (sometimes also: -lSimTKlapack)
+	  EXAMPLES		Path to installed examples (for comparison with Sundials).
+	  OCAMLMPI		Path to OCamlMPI installation
+	  MPICC			Name of the MPI compiler (default: mpicc)
+	  MPIRUN		Name of MPI program launcher (default: mpirun)
+	  MATHJAX		Local or remote directory containing MathJax.js
+	                        (e.g., MATHJAX=/usr/share/javascript/mathjax)
 
 	Set these options by passing arguments of the form FOO=value to help
 	configure find libraries and programs with nonstandard names/locations.
@@ -98,6 +106,10 @@ END_HELP_TEXT
     OCAMLROOT)
 	OCAMLROOT="${value%/}/"
 	OCAMLBIN="${OCAMLROOT}bin/";;
+    SUNDIALS_LIB_PATH)
+	sundials_lib_path="-L${value%/}";;
+    SUNDIALS_INC_PATH)
+	sundials_inc_path="-I${value%/}";;
     LAPACKLIB)
 	LAPACKLIB="${value}";;
     EXAMPLES)
@@ -213,75 +225,41 @@ case `uname -s` in
 esac
 
 # Check for Sundials installation (and version)
-if [ ! `which sundials-config` ]; then
-    echo "ERROR: Sundials is not installed (no sundials-config)." 1>&2
-    exit 1
-fi
-
-# Extract compilation flags from sundials-config.
-
-# CPP flags:
-cvode_cppflags="`sundials-config -m cvode -t s -l c -s cppflags`"
-cvodes_cppflags="`sundials-config -m cvodes -t s -l c -s cppflags`"
-ida_cppflags="`sundials-config -m ida -t s -l c -s cppflags`"
-idas_cppflags="`sundials-config -m idas -t s -l c -s cppflags`"
-kinsol_cppflags="`sundials-config -m kinsol -t s -l c -s cppflags`"
-
-# Libraries: sundials-config's options are too coarse-grained, so we
-# need to parse and separate them out.  Specifically:
-#
-# (a) sundials_mpi.cma must be linked without commiting to either
-# -lsundials_cvode or -lsundials_cvodes (and likewise for ida/idas).
-#
-# (b) --no-lib-path removes the -L specification, to prevent it from
-# being recorded in the *.cm(x)a files.  This assumes the sundials
-# libraries are installed in a standard path cc searches by default.
-#
-# We assume there's only one occurrence of -L and the path contains no
-# spaces.
-
-# Flags sans -L.  The sed script sets up sentinels, erases -L, then
-# erases sentinels.
-
-cvode_ldflags="`sundials-config -m cvode -t s -l c -s libs \
-	       | sed -e 's/^/ /; s/$/ /; s/ -L[^ ]* / /; s/^ //; s/ $//'`"
-cvodes_ldflags="`sundials-config -m cvodes -t s -l c -s libs \
-	        | sed -e 's/^/ /; s/$/ /; s/ -L[^ ]* / /; s/^ //; s/ $//'`"
-ida_ldflags="`sundials-config -m ida -t s -l c -s libs \
-	     | sed -e 's/^/ /; s/$/ /; s/ -L[^ ]* / /; s/^ //; s/ $//'`"
-idas_ldflags="`sundials-config -m idas -t s -l c -s libs \
-	      | sed -e 's/^/ /; s/$/ /; s/ -L[^ ]* / /; s/^ //; s/ $//'`"
-kinsol_ldflags="`sundials-config -m kinsol -t s -l c -s libs \
-	        | sed -e 's/^/ /; s/$/ /; s/ -L[^ ]* / /; s/^ //; s/ $//'`"
-
-# The -L flag.  sundials_lib_path will be recorded in binaries.
-# LIB_PATH has other uses.
-LIB_PATH="`sundials-config -m cvode -t s -l c -s libs \
-	  | sed -e 's/^/ /; s/$/ /; s/^.* \(-L[^ ]*\) .*/\1/'`"
-if [ ${no_lib_path:-0} -eq 1 ]; then
-    sundials_lib_path=
+include="\"sundials/sundials_config.h\""
+query="SUNDIALS_PACKAGE_VERSION"
+sundials_version=`printf "#include %s\n%s" "${include}" "${query}" \
+		    | ${CPP} ${cppflags} ${sundials_inc_path} -P 2>/dev/null \
+		    | tail -1 | sed -e 's/ //g' -e 's/"//g'`
+if [ "${sundials_version}" = "SUNDIALS_PACKAGE_VERSION" ]; then
+    error="${error}\n\tcould not find sundials_config.h"
+    sundials=0
+    sundials_version="UNKNOWN"
 else
-    sundials_lib_path="$LIB_PATH"
-fi
+    case "${sundials_version}" in
+	[0-1].*.* | 2.[0-4].*)
+	    error="${error}\n\tsundials >= 2.5.0 required" ;;
+	2.5.*) sundials=250;;
+	*) sundials=260;;
+    esac
 
-# Make sure realtype has the right size.
-test_stem=__configure_test_file__
-cat > $test_stem.c <<EOF
+    # Make sure realtype has the right size.
+    test_stem=__configure_test_file__
+    cat > $test_stem.c <<EOF
 #include <sundials/sundials_types.h>
 int main (int argc, char *argv[])
 {
   return sizeof (realtype) != sizeof (double);
 }
 EOF
-if $CC $cvode_cppflags -o $test_stem$XX $test_stem.c >/dev/null 2>&1 && \
-    ./$test_stem$XX;
-then
-    : # OK
-else
-    error="${error}\n\trealtype not defined as double.  Recompile sundials with --with-precision=double."
+    if $CC ${sundials_inc_path} -o $test_stem$XX $test_stem.c >/dev/null 2>&1 && \
+	./$test_stem$XX;
+    then
+	: # OK
+    else
+	error="${error}\n\trealtype not defined as double.  Recompile sundials with --with-precision=double."
+    fi
+    rm -f ./$test_stem.*
 fi
-rm -f ./$test_stem.*
-
 
 # Check for OCaml installation (and version)
 ocaml_path=`${OCAMLBIN}ocamlc -where`
@@ -436,7 +414,7 @@ test_stem=__configure_test_file__
 test_c_stem=__configure_test_c_file__
 echo 'void CVode(); void dummy () { CVode (); }' > $test_c_stem.c
 echo 'external dummy : unit -> unit = "dummy" let _ = dummy ()' > $test_stem.ml
-if ! $CC ${cflags} ${cvode_cppflags} -o $test_c_stem$XO -c $test_c_stem.c \
+if ! $CC ${cflags} ${sundials_inc_path} -o $test_c_stem$XO -c $test_c_stem.c \
     >$test_stem.log 2>&1 || ! ${OCAMLBIN}ocamlc -c $test_stem.ml \
     >> $test_stem.log 2>&1
 then
@@ -447,7 +425,8 @@ fi
 
 if ! ${OCAMLBIN}ocamlmklib $test_c_stem$XO $test_stem.cmo \
     -o $test_stem -oc $test_stem \
-    ${sundials_lib_path} ${cvode_ldflags} > $test_stem.log 2>&1
+    ${sundials_lib_path} -lsundials_cvode -lsundials_nvecserial -lm \
+    > $test_stem.log 2>&1
 then
     warning="${warning}\n\tSundials/C seems to be compiled without --enable-shared."
     warning="${warning}\n\tSundials/ML may not work in the toplevel."
@@ -457,32 +436,22 @@ fi
 rm -f ./lib${test_stem}.* ./dll${test_stem}.* \
     ./${test_stem}.* ./${test_c_stem}.*
 
-
 # Check for LAPACK support
 unset lapack_lib
-include="\"sundials/sundials_config.h\""
-query="SUNDIALS_PACKAGE_VERSION,SUNDIALS_BLAS_LAPACK"
-sundials_info=`printf "#include %s\n%s" "${include}" "${query}" | ${CPP} ${cppflags} ${cvode_cppflags} -P | tail -1`
-if [ $? -ne 0 ]; then
-    error="${error}\n\tcould not find sundials_config.h"
-    sundials_version="UNKNOWN"
-else
-    sundials_version=`echo ${sundials_info} | sed -ne 's/"\(.*\)",./\1/p'`
-
-    case "${sundials_version}" in
-	[0-1].*.* | 2.[0-4].*)
-	    error="${error}\n\tsundials >= 2.5.0 required" ;;
-	*) ;;
-    esac
-
+if [ $sundials -gt 0 ]; then
+    include="\"sundials/sundials_config.h\""
+    if [ $sundials -ge 260 ]; then
+	query="#ifdef SUNDIALS_BLAS_LAPACK\n1\n#else\n0\n#endif\n"
+    else
+	query="SUNDIALS_BLAS_LAPACK"
+    fi
+    sundials_info=`printf "#include %s\n%b" "${include}" "${query}" \
+			| ${CPP} ${cppflags} ${sundials_inc_path} -P 2>/dev/null \
+			| grep -v ^$`
     case "${sundials_info}" in
-	*,1)
-	    lapack_lib=${LAPACKLIB}
-	    ;;
-	*,0)
-	    unset lapack_lib ;;
-	*)
-	    error="${error}\n\terror interpreting sundials_config.h" ;;
+	1) lapack_lib=${LAPACKLIB} ;;
+	0) unset lapack_lib ;;
+	*) error="${error}\n\terror interpreting sundials_config.h" ;;
     esac
 fi
 
@@ -494,9 +463,33 @@ else
     lapack_enabled=1
 fi
 
+# Check for SUPERLUMT and KLU
+klu_enabled=
+klu_info="not available"
+superlumt_enabled=
+superlumt_info="not available"
+if [ $sundials -ge 260 ]; then
+    include="\"sundials/sundials_config.h\""
+    q1="#ifdef SUNDIALS_KLU\n:KLU:\n#endif\n"
+    q2="#ifdef SUNDIALS_SUPERLUMT\n:SUPERLUMT:\n#endif\n"
+    sundials_info=`printf "#include %s\n%b%b" "${include}" "${q1}" "${q2}" \
+		    | ${CPP} ${cppflags} ${sundials_inc_path} -P 2>/dev/null \
+		    | grep -v ^$`
+    case "${sundials_info}" in
+	*:KLU:*) klu_enabled=1
+		 klu_info="installed" ;;
+	*)       klu_info="not installed" ;;
+    esac
+    case "${sundials_info}" in
+	*:SUPERLUMT:*) superlumt_enabled=1
+		       superlumt_info="installed" ;;
+	*)	       superlumt_info="not installed" ;;
+    esac
+fi
+
+# Combine all ldflags
+
 ldflags="${ldflags} ${lapack_lib}"
-
-
 
 # Parallel features
 mpicc=${mpicc:-mpicc}
@@ -528,14 +521,14 @@ int main (int argc, char *argv[])
   return 0;
 }
 EOF
-    if ! $mpicc -o $test_stem$XX $cvode_cppflags $test_stem.c \
-         `sundials-config -m cvode -t p -l c -s libs` \
+    if ! $mpicc -o $test_stem$XX ${sundials_inc_path} $test_stem.c \
+	 ${sundials_lib_path} -lsundials_cvode -lsundials_nvecparallel -lm \
        >/dev/null 2>&1;
     then
         sundialsmpi_info='NO PARALLEL NVECTORS'
         ocamlmpi_enabled=
     else
-        sundialsmpi_info='available'
+        sundialsmpi_info='installed'
     fi
     rm -f ./$test_stem.* ./$test_stem$XX
 else
@@ -551,11 +544,63 @@ else
 fi
 
 
+# Check for nvector_pthread installation
+nvecpthreads_info='not available'
+nvecpthreads_enabled=
+if [ $sundials -ge 260 ]; then
+    test_stem=__configure_test_file__
+    cat > $test_stem.c <<EOF
+#include <nvector/nvector_pthreads.h>
+int main (int argc, char *argv[])
+{
+  (void)N_VNew_Pthreads (1000, 10);
+  return 0;
+}
+EOF
+    if ! $CC -o $test_stem$XX ${sundials_inc_path} $test_stem.c \
+	 ${sundials_lib_path} -lsundials_nvecpthreads \
+       >/dev/null 2>&1;
+    then
+	nvecpthreads_info='not installed'
+    else
+	nvecpthreads_info='installed'
+	nvecpthreads_enabled=1
+    fi
+    rm -f ./$test_stem.* ./$test_stem$XX
+fi
+
+
+# Check for nvector_openmp installation
+nvecopenmp_info='not available'
+nvecopenmp_enabled=
+if [ $sundials -ge 260 ]; then
+    test_stem=__configure_test_file__
+    cat > $test_stem.c <<EOF
+#include <nvector/nvector_openmp.h>
+int main (int argc, char *argv[])
+{
+  (void)N_VNew_OpenMP (1000, 10);
+  return 0;
+}
+EOF
+    if ! $CC -o $test_stem$XX ${sundials_inc_path} $test_stem.c \
+	 ${sundials_lib_path} -lsundials_nvecopenmp \
+       >/dev/null 2>&1;
+    then
+	nvecopenmp_info='not installed'
+    else
+	nvecopenmp_info='installed'
+	nvecopenmp_enabled=1
+    fi
+    rm -f ./$test_stem.* ./$test_stem$XX
+fi
+
+
 # Sundials examples directory
 if [ "x$EXAMPLESROOT" = x ]; then
     # If not set, try to infer it from LIB_PATH.
-    EXAMPLESROOT=`echo $LIB_PATH | sed -e 's/^-L//' -e 's/lib$/examples/'`
-    #echo "LIB_PATH=$LIB_PATH EXAMPLESROOT=$EXAMPLESROOT"
+    EXAMPLESROOT=`echo ${sundials_lib_path} \
+	| sed -e 's/^-L//' -e 's/lib$/examples/'`
 fi
 # Check if it's valid.
 if [ -d "$EXAMPLESROOT/cvode/serial" ]; then
@@ -603,6 +648,10 @@ printf "\nConfiguration (${version}p${versionp})\n-----------------------\n"
 printf "  OCaml\t\t\t${ocaml_path}${ocaml_version}\n"
 printf "  Sundials\t\t${sundials_version}${lapack_info}\n"
 printf "    -parallel\t\t${sundialsmpi_info}\n"
+printf "    -nvector: pthreads\t${nvecpthreads_info}\n"
+printf "    -nvector: openmp\t${nvecopenmp_info}\n"
+printf "    -SuperLU_MT\t\t${superlumt_info}\n"
+printf "    -KLU\t\t${klu_info}\n"
 printf "    -examples\t\t${examples_info}\n"
 printf "  OCamlMPI\t\t${ocamlmpi}\n"
 printf "  MathJax (for docs)\t${mathjax}"
@@ -623,11 +672,6 @@ printf "  libdir:\t\t${libdir:-${ocaml_libpath}}\n"
 printf "  stubdir:\t\t${stubdir:-${ocaml_libpath}stublibs/}\n"
 if [ ${install_docs:-1} -eq 1 ]; then
     printf "  docdir:\t\t${docdir:-${prefix}share/doc/}\n"
-fi
-if [ ${no_lib_path:-0} -eq 1 ]; then
-    printf "\n"
-    printf "Other options\n"
-    printf "  --no-lib-path given.  Make sure you know what you're doing!\n"
 fi
 printf "\n"
 
@@ -651,17 +695,8 @@ fi
 	 s#@cppflags@#${cppflags}#;
 	 s#@ml_cppflags@#${ml_cppflags}#;
 	 s#@ldflags@#${ldflags}#;
-	 s#@cvode_cppflags@#${cvode_cppflags}#;
-	 s#@cvodes_cppflags@#${cvodes_cppflags}#;
-	 s#@ida_cppflags@#${ida_cppflags}#;
-	 s#@idas_cppflags@#${idas_cppflags}#;
-	 s#@cvode_ldflags@#${cvode_ldflags}#;
-	 s#@cvodes_ldflags@#${cvodes_ldflags}#;
-	 s#@ida_ldflags@#${ida_ldflags}#;
-	 s#@idas_ldflags@#${idas_ldflags}#;
-	 s#@kinsol_cppflags@#${kinsol_cppflags}#;
-	 s#@kinsol_ldflags@#${kinsol_ldflags}#;
 	 s#@sundials_lib_path@#${sundials_lib_path}#;
+	 s#@sundials_inc_path@#${sundials_inc_path}#;
 	 s#@ocamlflags@#${ocamlflags}#;
 	 s#@ocamloptflags@#${ocamloptflags}#;
 	 s#@ocaml_3x@#${ocaml_3x}#;
@@ -690,6 +725,10 @@ echo "#ifndef __SUNDIALS_CONFIG_H__" >> config.h
 echo "#define __SUNDIALS_CONFIG_H__" >> config.h
 echo "#define HAVE_WEAK ${have_weak}" >> config.h
 echo "#define SUNDIALS_ML_SAFE ${bounds_checking}" >> config.h
+if [ "x${lapack_enabled}" = x1 ]; then
+echo "#define SUNDIALS_ML_LAPACK" >> config.h
+fi
+echo "#define SUNDIALS_LIB_VERSION ${sundials}" >> config.h
 echo "#endif /* __SUNDIALS_CONFIG_H__ */" >> config.h
 
 # Note: config.ml conflicts with a module in the standard library.

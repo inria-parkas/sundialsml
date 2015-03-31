@@ -11,6 +11,7 @@
  *                                                                     *
  ***********************************************************************/
 
+#include "config.h"
 #include <errno.h>
 #include <string.h>
 
@@ -23,7 +24,6 @@
 #include <caml/unixsupport.h>
 #include <caml/bigarray.h>
 
-#include <sundials/sundials_config.h>
 #include <sundials/sundials_types.h>
 #include <sundials/sundials_nvector.h>
 
@@ -51,7 +51,7 @@
 #include <cvodes/cvodes_bandpre.h>
 #include <cvodes/cvodes_impl.h>
 
-#if SUNDIALS_BLAS_LAPACK == 1
+#ifdef SUNDIALS_ML_LAPACK
 #include <cvodes/cvodes_lapack.h>
 #endif
 
@@ -70,7 +70,7 @@
 #include <cvode/cvode_bandpre.h>
 #include <cvode/cvode_impl.h>
 
-#if SUNDIALS_BLAS_LAPACK == 1
+#ifdef SUNDIALS_ML_LAPACK
 #include <cvode/cvode_lapack.h>
 #endif
 
@@ -592,7 +592,7 @@ CAMLprim value c_cvode_dls_lapack_dense (value vcvode_mem, value vneqs,
 					 value vset_jac)
 {
     CAMLparam3 (vcvode_mem, vneqs, vset_jac);
-#if SUNDIALS_BLAS_LAPACK
+#ifdef SUNDIALS_ML_LAPACK
     void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
     long neqs = Long_val (vneqs);
     int flag;
@@ -651,7 +651,7 @@ CAMLprim value c_cvode_dls_lapack_band (value vcvode_mem_neqs, value vmupper,
 					value vmlower, value vset_jac)
 {
     CAMLparam4(vcvode_mem_neqs, vmupper, vmlower, vset_jac);
-#if SUNDIALS_BLAS_LAPACK
+#ifdef SUNDIALS_ML_LAPACK
     void *cvode_mem = CVODE_MEM_FROM_ML (Field(vcvode_mem_neqs, 0));
     long neqs = Long_val(Field(vcvode_mem_neqs, 1));
     int flag;

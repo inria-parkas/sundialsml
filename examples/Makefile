@@ -41,11 +41,11 @@ tests.opt.log tests.byte.log: tests.%.log: $(C_EXAMPLES) \
 	@echo ======================================================================
 	@echo 'Summary (each should be 0):'
 	@for s in ${SUBDIRS}; do		\
-	    grep '^[0-9]' $$s/$@;		\
+	    grep "^ *[0-9]* $$s" $$s/$@;	\
 	done
 	@! for s in ${SUBDIRS}; do		\
-	    grep '^[0-9]' $$s/$@;		\
-	done | grep -q '^[^0]'
+	    grep "^ *[0-9]* $$s" $$s/$@;	\
+	done | grep -vq '^ *0'
 
 NATIVE_TITLE='OCaml native code performance over C ($(CC) $(CFLAGS))'
 BYTE_TITLE  ='OCaml byte code performance over C ($(CC) $(CFLAGS))'

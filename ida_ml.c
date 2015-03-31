@@ -11,6 +11,7 @@
  *                                                                     *
  ***********************************************************************/
 
+#include "config.h"
 #include <errno.h>
 #include <string.h>
 
@@ -34,9 +35,8 @@
 #include <idas/idas_sptfqmr.h>
 #include <idas/idas_spbcgs.h>
 #include <idas/idas_impl.h>
-#include <sundials/sundials_config.h>
 
-#if SUNDIALS_BLAS_LAPACK == 1
+#ifdef SUNDIALS_ML_LAPACK
 #include <idas/idas_lapack.h>
 #endif
 
@@ -49,9 +49,8 @@
 #include <ida/ida_sptfqmr.h>
 #include <ida/ida_spbcgs.h>
 #include <ida/ida_impl.h>
-#include <sundials/sundials_config.h>
 
-#if SUNDIALS_BLAS_LAPACK == 1
+#ifdef SUNDIALS_ML_LAPACK
 #include <ida/ida_lapack.h>
 #endif
 
@@ -531,7 +530,7 @@ CAMLprim value c_ida_dls_lapack_dense (value vida_mem, value vneqs,
 				       value vset_jac)
 {
     CAMLparam3 (vida_mem, vneqs, vset_jac);
-#if SUNDIALS_BLAS_LAPACK
+#ifdef SUNDIALS_ML_LAPACK
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
     long neqs = Long_val (vneqs);
     int flag;
@@ -586,7 +585,7 @@ CAMLprim value c_ida_dls_lapack_band (value vida_mem, value vneqs,
 				      value vset_jac)
 {
     CAMLparam5(vida_mem, vneqs, mupper, mlower, vset_jac);
-#if SUNDIALS_BLAS_LAPACK
+#ifdef SUNDIALS_ML_LAPACK
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
     long neqs = Long_val (vneqs);
     int flag;

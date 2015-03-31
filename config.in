@@ -31,16 +31,17 @@ MPI_ENABLED=@ocamlmpi_enabled@
 MPI_LIBLINK= -lsundials_nvecparallel
 
 LIB_PATH = @sundials_lib_path@
-CVODE_LDFLAGS = @cvode_ldflags@ $(LDFLAGS)
-CVODE_CFLAGS = @cvode_cppflags@ $(CFLAGS)
-CVODES_LDFLAGS = @cvodes_ldflags@ $(LDFLAGS)
-CVODES_CFLAGS = @cvodes_cppflags@ $(CFLAGS)
-IDA_LDFLAGS = @ida_ldflags@ $(LDFLAGS)
-IDA_CFLAGS = @ida_cppflags@ $(CFLAGS)
-IDAS_LDFLAGS = @idas_ldflags@ $(LDFLAGS)
-IDAS_CFLAGS = @idas_cppflags@ $(CFLAGS)
-KINSOL_LDFLAGS = @kinsol_ldflags@ $(LDFLAGS)
-KINSOL_CFLAGS = @kinsol_cppflags@ $(CFLAGS)
+INC_PATH = @sundials_inc_path@
+CVODE_LDFLAGS = -lsundials_cvode -lsundials_nvecserial -lm $(LDFLAGS)
+CVODE_CFLAGS = $(INC_PATH) $(CFLAGS)
+CVODES_LDFLAGS = -lsundials_cvodes -lsundials_nvecserial -lm $(LDFLAGS)
+CVODES_CFLAGS = $(INC_PATH) $(CFLAGS)
+IDA_LDFLAGS = -lsundials_ida -lsundials_nvecserial -lm $(LDFLAGS)
+IDA_CFLAGS = $(INC_PATH) $(CFLAGS)
+IDAS_LDFLAGS = -lsundials_idas -lsundials_nvecserial -lm $(LDFLAGS)
+IDAS_CFLAGS = $(INC_PATH) $(CFLAGS)
+KINSOL_LDFLAGS = -lsundials_kinsol -lsundials_nvecserial -lm $(LDFLAGS)
+KINSOL_CFLAGS = $(INC_PATH) $(CFLAGS)
 
 define common
   $(eval seen :=)
