@@ -598,9 +598,22 @@ fi
 
 # Sundials examples directory
 if [ "x$EXAMPLESROOT" = x ]; then
-    # If not set, try to infer it from LIB_PATH.
-    EXAMPLESROOT=`echo ${sundials_lib_path} \
-	| sed -e 's/^-L//' -e 's/lib$/examples/'`
+    # Try to infer it from the include path.
+    include="\"sundials/sundials_config.h\""
+    prefix_info=`printf "#include %s\n" "${include}" \
+	| ${CPP} ${cppflags} ${sundials_inc_path} -E 2>/dev/null \
+	| sed -ne "s/^.*\"\(.*\)\/include\/sundials\/sundials_config.h\".*$/\1/p" \
+	| head -n 1`
+
+    if [ "x${prefix_info}" != x ]; then
+	EXAMPLESROOT="${prefix_info}/examples"
+    elif [ "x${sundials_lib_path}" = x ]; then
+	EXAMPLESROOT=/usr/local/examples
+    else
+	# Try to infer it from LIB_PATH.
+	EXAMPLESROOT=`echo ${sundials_lib_path} \
+	    | sed -e 's/^-L//' -e 's/lib$/examples/'`
+    fi
 fi
 # Check if it's valid.
 if [ -d "$EXAMPLESROOT/cvode/serial" ]; then
