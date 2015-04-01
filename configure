@@ -525,7 +525,7 @@ EOF
 	 ${sundials_lib_path} -lsundials_cvode -lsundials_nvecparallel -lm \
        >/dev/null 2>&1;
     then
-        sundialsmpi_info='NO PARALLEL NVECTORS'
+        sundialsmpi_info='not installed'
         ocamlmpi_enabled=
     else
         sundialsmpi_info='installed'
