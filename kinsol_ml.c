@@ -434,7 +434,12 @@ static int lsetup(KINMem kin_mem)
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }
 
+#if SUNDIALS_LIB_VERSION >= 260
+static int lsolve(KINMem kin_mem, N_Vector x, N_Vector b, realtype *res_norm,
+		  realtype *sFdotJp)
+#else
 static int lsolve(KINMem kin_mem, N_Vector x, N_Vector b, realtype *res_norm)
+#endif
 {
     CAMLparam0();
     CAMLlocalN(args, 3);
