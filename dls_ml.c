@@ -247,8 +247,8 @@ CAMLprim value c_densematrix_get(value vmatrix, value vi, value vj)
     int j = Long_val(vj);
 
 #if SUNDIALS_ML_SAFE == 1
-    if (i < 0 || i >= m->M) caml_invalid_argument("DenseMatrix.get: invalid i.");
-    if (j < 0 || j >= m->N) caml_invalid_argument("DenseMatrix.get: invalid j.");
+    if (i < 0 || i >= m->M) caml_invalid_argument("invalid i.");
+    if (j < 0 || j >= m->N) caml_invalid_argument("invalid j.");
 #endif
 
     realtype v = DENSE_ELEM(m, i, j);
@@ -264,8 +264,8 @@ CAMLprim value c_densematrix_set(value vmatrix, value vi, value vj, value v)
     int j = Long_val(vj);
 
 #if SUNDIALS_ML_SAFE == 1
-    if (i < 0 || i >= m->M) caml_invalid_argument("DenseMatrix.set: invalid i.");
-    if (j < 0 || j >= m->N) caml_invalid_argument("DenseMatrix.set: invalid j.");
+    if (i < 0 || i >= m->M) caml_invalid_argument("invalid i.");
+    if (j < 0 || j >= m->N) caml_invalid_argument("invalid j.");
 #endif
 
     DENSE_ELEM(m, i, j) = Double_val(v);
@@ -297,7 +297,7 @@ CAMLprim value c_arraydensematrix_add_identity(value va)
     intnat n = ba->dim[0];
 
     if (m != n)
-	caml_invalid_argument("ArrayDenseMatrix.add_identity: matrix not square.");
+	caml_invalid_argument("matrix not square.");
 #endif
 
     denseAddIdentity(ARRAY2_ACOLS(va), m);
@@ -314,7 +314,7 @@ CAMLprim value c_arraydensematrix_getrf(value va, value vp)
 
 #if SUNDIALS_ML_SAFE == 1
     if (ARRAY1_LEN(vp) < n)
-	caml_invalid_argument("ArrayDenseMatrix.getrf: p is too small.");
+	caml_invalid_argument("pivot array too small.");
 #endif
 
     int r = denseGETRF(ARRAY2_ACOLS(va), m, n, LONG_ARRAY(vp));
@@ -336,11 +336,11 @@ CAMLprim value c_arraydensematrix_getrs(value va, value vp, value vb)
 #if SUNDIALS_ML_SAFE == 1
     intnat n = ba->dim[0];
     if (m != n)
-	caml_invalid_argument("ArrayDenseMatrix.getrs: matrix not square.");
+	caml_invalid_argument("matrix not square.");
     if (ARRAY1_LEN(vb) < n)
-	caml_invalid_argument("ArrayDenseMatrix.getrs: b is too small.");
+	caml_invalid_argument("solution vector too small.");
     if (ARRAY1_LEN(vp) < n)
-	caml_invalid_argument("ArrayDenseMatrix.getrs: p is too small.");
+	caml_invalid_argument("pivot array too small.");
 #endif
 
     denseGETRS(ARRAY2_ACOLS(va), m, LONG_ARRAY(vp), REAL_ARRAY(vb));
@@ -359,11 +359,11 @@ CAMLprim value c_arraydensematrix_getrs_off(value va, value vp,
 #if SUNDIALS_ML_SAFE == 1
     intnat n = ba->dim[0];
     if (m != n)
-	caml_invalid_argument("ArrayDenseMatrix.getrs: matrix not square.");
+	caml_invalid_argument("matrix not square.");
     if (ARRAY1_LEN(vb) - boff < n)
-	caml_invalid_argument("ArrayDenseMatrix.getrs: b is too small.");
+	caml_invalid_argument("b is too small.");
     if (ARRAY1_LEN(vp) < n)
-	caml_invalid_argument("ArrayDenseMatrix.getrs: p is too small.");
+	caml_invalid_argument("p is too small.");
 #endif
 
     denseGETRS(ARRAY2_ACOLS(va), m, LONG_ARRAY(vp), REAL_ARRAY(vb) + boff);
@@ -380,7 +380,7 @@ CAMLprim value c_arraydensematrix_potrf(value va)
 #if SUNDIALS_ML_SAFE == 1
     intnat n = ba->dim[0];
     if (m != n)
-	caml_invalid_argument("ArrayDenseMatrix.potrf: matrix not square");
+	caml_invalid_argument("matrix not square");
 #endif
 
     densePOTRF(ARRAY2_ACOLS(va), m);
@@ -397,9 +397,9 @@ CAMLprim value c_arraydensematrix_potrs(value va, value vb)
 #if SUNDIALS_ML_SAFE == 1
     intnat n = ba->dim[0];
     if (m != n)
-	caml_invalid_argument("ArrayDenseMatrix.potrs: matrix not square.");
+	caml_invalid_argument("matrix not square.");
     if (ARRAY1_LEN(vb) < m)
-	caml_invalid_argument("ArrayDenseMatrix.potrs: b is too small.");
+	caml_invalid_argument("b is too small.");
 #endif
 
     densePOTRS(ARRAY2_ACOLS(va), m, REAL_ARRAY(vb));
@@ -416,11 +416,11 @@ CAMLprim value c_arraydensematrix_geqrf(value va, value vbeta, value vv)
 
 #if SUNDIALS_ML_SAFE == 1
     if (m < n)
-	caml_invalid_argument("ArrayDenseMatrix.geqrf: fewer rows than columns.");
+	caml_invalid_argument("fewer rows than columns.");
     if (ARRAY1_LEN(vbeta) < n)
-	caml_invalid_argument("ArrayDenseMatrix.geqrf: beta is too small.");
+	caml_invalid_argument("beta is too small.");
     if (ARRAY1_LEN(vv) < m)
-	caml_invalid_argument("ArrayDenseMatrix.geqrf: work is too small.");
+	caml_invalid_argument("work is too small.");
 #endif
 
     denseGEQRF(ARRAY2_ACOLS(va), m, n, REAL_ARRAY(vbeta), REAL_ARRAY(vv));
@@ -442,15 +442,15 @@ CAMLprim value c_arraydensematrix_ormqr(value va, value vormqr)
 
 #if SUNDIALS_ML_SAFE == 1
     if (m < n)
-	caml_invalid_argument("ArrayDenseMatrix.ormqr: fewer rows than columns.");
+	caml_invalid_argument("fewer rows than columns.");
     if (ARRAY1_LEN(Field(vormqr, 0)) < n)
-	caml_invalid_argument("ArrayDenseMatrix.ormqr: beta is too small.");
+	caml_invalid_argument("beta is too small.");
     if (ARRAY1_LEN(Field(vormqr, 1)) < n)
-	caml_invalid_argument("ArrayDenseMatrix.ormqr: v is too small.");
+	caml_invalid_argument("v is too small.");
     if (ARRAY1_LEN(Field(vormqr, 2)) < m)
-	caml_invalid_argument("ArrayDenseMatrix.ormqr: w is too small.");
+	caml_invalid_argument("w is too small.");
     if (ARRAY1_LEN(Field(vormqr, 3)) < m)
-	caml_invalid_argument("ArrayDenseMatrix.ormqr: work is too small.");
+	caml_invalid_argument("work is too small.");
 #endif
 
     denseORMQR(ARRAY2_ACOLS(va), m, n, beta, vv, vw, work);
@@ -529,7 +529,7 @@ CAMLprim value c_bandmatrix_copy(value va, value vb,
 
     if (copymu > ma->s_mu || copymu > mb->s_mu
 	    || copysize > a_bandwidth || copysize > b_bandwidth)
-	caml_invalid_argument("BandMatrix.blit: invalid arguments.");
+	caml_invalid_argument("invalid arguments.");
 #endif
 
     BandCopy(ma, mb, copymu, copyml);
@@ -566,8 +566,8 @@ CAMLprim value c_bandmatrix_get(value vmatrix, value vi, value vj)
     int j = Long_val(vj);
 
 #if SUNDIALS_ML_SAFE == 1
-    if (i < 0 || i >= m->M) caml_invalid_argument("Bandmatrix.get: invalid i");
-    if (j < 0 || j >= m->N) caml_invalid_argument("Bandmatrix.get: invalid j");
+    if (i < 0 || i >= m->M) caml_invalid_argument("invalid i");
+    if (j < 0 || j >= m->N) caml_invalid_argument("invalid j");
 #endif
 
     realtype v = BAND_ELEM(m, i, j);
@@ -583,8 +583,8 @@ CAMLprim value c_bandmatrix_set(value vmatrix, value vi, value vj, value v)
     int j = Long_val(vj);
 
 #if SUNDIALS_ML_SAFE == 1
-    if (i < 0 || i >= m->M) caml_invalid_argument("Bandmatrix.set: invalid i");
-    if (j < 0 || j >= m->N) caml_invalid_argument("Bandmatrix.set: invalid j");
+    if (i < 0 || i >= m->M) caml_invalid_argument("invalid i");
+    if (j < 0 || j >= m->N) caml_invalid_argument("invalid j");
 #endif
 
     BAND_ELEM(m, i, j) = Double_val(v);
@@ -613,11 +613,11 @@ CAMLprim value c_arraybandmatrix_copy(value va, value vb, value vsizes)
     intnat bn = bb->dim[1];
 
     if (an < copymu + copyml + 1)
-	caml_invalid_argument("ArrayBandMatrix.blit: source matrix too small.");
+	caml_invalid_argument("source matrix too small.");
     if (bn < copymu + copyml + 1)
-	caml_invalid_argument("ArrayBandMatrix.blit: destination matrix too small.");
+	caml_invalid_argument("destination matrix too small.");
     if ((am != bm) || (bm != bn))
-	caml_invalid_argument("ArrayBandMatrix.blit: matrix sizes differ.");
+	caml_invalid_argument("matrix sizes differ.");
 #endif
 
     bandCopy(ARRAY2_ACOLS(va), ARRAY2_ACOLS(vb), am, a_smu, b_smu,
@@ -640,7 +640,7 @@ CAMLprim value c_arraybandmatrix_scale(value vc, value va, value vsizes)
     intnat n = ba->dim[1];
 
     if (n < mu + ml + 1)
-	caml_invalid_argument("ArrayBandMatrix.scale: matrix badly sized.");
+	caml_invalid_argument("matrix badly sized.");
 #endif
 
     bandScale(Double_val(vc), ARRAY2_ACOLS(va), m, mu, ml, smu);
@@ -659,7 +659,7 @@ CAMLprim value c_arraybandmatrix_add_identity(value va, value vsmu)
     intnat n = ba->dim[1];
 
     if (n <= smu)
-	caml_invalid_argument("ArrayBandMatrix.add_identity: matrix badly sized.");
+	caml_invalid_argument("matrix badly sized.");
 #endif
 
     bandAddIdentity(ARRAY2_ACOLS(va), m, smu);
@@ -681,9 +681,9 @@ CAMLprim value c_arraybandmatrix_gbtrf(value va, value vsizes, value vp)
     intnat n = ba->dim[1];
 
     if (n < mu + ml + 1)
-	caml_invalid_argument("ArrayBandMatrix.gbtrf: matrix badly sized.");
+	caml_invalid_argument("matrix badly sized.");
     if (ARRAY1_LEN(vp) < m)
-	caml_invalid_argument("ArrayBandMatrix.gbtrf: p is too small.");
+	caml_invalid_argument("p is too small.");
 #endif
 
     bandGBTRF(ARRAY2_ACOLS(va), m, mu, ml, smu, LONG_ARRAY(vp));
@@ -704,11 +704,11 @@ CAMLprim value c_arraybandmatrix_gbtrs(value va, value vsizes, value vp, value v
     intnat n = ba->dim[1];
 
     if (n < smu + ml + 1)
-	caml_invalid_argument("ArrayBandMatrix.gbtrf: matrix badly sized.");
+	caml_invalid_argument("matrix badly sized.");
     if (ARRAY1_LEN(vp) < m)
-	caml_invalid_argument("ArrayBandMatrix.gbtrf: p is too small.");
+	caml_invalid_argument("p is too small.");
     if (ARRAY1_LEN(vb) < m)
-	caml_invalid_argument("ArrayBandMatrix.gbtrf: b is too small.");
+	caml_invalid_argument("b is too small.");
 #endif
 
     bandGBTRS(ARRAY2_ACOLS(va), m, smu, ml, LONG_ARRAY(vp), REAL_ARRAY(vb));
