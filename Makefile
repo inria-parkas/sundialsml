@@ -255,7 +255,7 @@ examples/perf.byte.log: $(INSTALL_CMA:.cma=.cmxa)
 install: install-sys $(if $(INSTALL_DOCS),install-doc)
 
 # Install to OCaml's system directory -- /usr/lib/ocaml on Debian derivatives.
-install-sys: $(INSTALL_CMA) $(INSTALL_CMA:.cma=.cmxa)
+install-sys: META $(INSTALL_CMA) $(INSTALL_CMA:.cma=.cmxa)
 	[ -d $(PKGDIR) ] || $(MKDIR) $(PKGDIR)
 	$(CP) $(INSTALL_FILES) $(PKGDIR)
 	$(if $(ENABLE_SHARED),[ -d $(STUBDIR) ] || $(MKDIR) $(STUBDIR))
