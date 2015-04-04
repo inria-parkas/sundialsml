@@ -41,7 +41,7 @@ module DenseMatrix :
         {{!Invalidated}Invalidated} exception.
 
         @cvode <node9#s:dls>  Type DlsMat *)
-    type t
+    type t = Dls_impl.DenseTypes.t
 
     (** {4 Basic access} *)
 
@@ -295,7 +295,7 @@ module BandMatrix :
         {{!Invalidated}Invalidated} exception.
 
         @cvode <node9#s:dls>  Type DlsMat *)
-    type t
+    type t = Dls_impl.BandTypes.t
 
     (** Band matrix dimensions. If the result will not be LU factored then
         {% $\mathtt{smu} = \mathtt{mu}$ %}, otherwise

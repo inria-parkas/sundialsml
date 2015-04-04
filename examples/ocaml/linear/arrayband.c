@@ -82,6 +82,8 @@ int main(int argc, char** argv)
     long int p[SIZE] = { 0.0 };
     realtype s[SIZE] = { 5.0, 15.0, 31.0, 53.0, 45.0 };
 
+    a[0][0] = 0.0;
+    a[0][1] = 0.0;
     BANDELEM(a,SMU,0,0) = 1.0;
     BANDELEM(a,SMU,0,1) = 2.0;
 
@@ -100,11 +102,11 @@ int main(int argc, char** argv)
     BANDELEM(a,SMU,4,3) = 5.0;
     BANDELEM(a,SMU,4,4) = 5.0;
 
-    printf("initially a.data=\n");
+    printf("initially: a.data=\n");
     print_mat_data(a, SIZE, SMU + ML + 1);
     printf("\n");
 
-    printf("initially a=\n");
+    printf("initially: a=\n");
     print_mat(a, SIZE, MU, ML, SMU);
     printf("\n");
 

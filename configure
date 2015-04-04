@@ -230,6 +230,8 @@ query="SUNDIALS_PACKAGE_VERSION"
 sundials_version=`printf "#include %s\n%s" "${include}" "${query}" \
 		    | ${CPP} ${cppflags} ${sundials_inc_path} -P 2>/dev/null \
 		    | tail -1 | sed -e 's/ //g' -e 's/"//g'`
+sls_ml_xo=
+sls_cmo=
 if [ "${sundials_version}" = "SUNDIALS_PACKAGE_VERSION" ]; then
     error="${error}\n\tcould not find sundials_config.h"
     sundials=0
@@ -239,7 +241,10 @@ else
 	[0-1].*.* | 2.[0-4].*)
 	    error="${error}\n\tsundials >= 2.5.0 required" ;;
 	2.5.*) sundials=250;;
-	*) sundials=260;;
+	*)  sundials=260
+	    sls_ml_xo=sls_ml${XO}
+	    sls_cmo=sls.cmo
+	    ;;
     esac
 
     # Make sure realtype has the right size.
@@ -719,6 +724,8 @@ fi
 	 s#@ocamlmpi_enabled@#${ocamlmpi_enabled}#;
 	 s#@enable_shared@#${enable_shared}#;
 	 s#@lapack_enabled@#${lapack_enabled}#;
+	 s#@sls_ml_xo@#${sls_ml_xo}#;
+	 s#@sls_cmo@#${sls_cmo}#;
 	 s#@cc@#${CC}#;
 	 s#@cpp@#${CPP}#;
 	 s#@mpicc@#$mpicc#;

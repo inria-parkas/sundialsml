@@ -85,7 +85,7 @@ int main(int argc, char** argv)
     BAND_ELEM(a,4,3) = 5.0;
     BAND_ELEM(a,4,4) = 5.0;
 
-    printf("initially a=\n");
+    printf("initially: a=\n");
     print_mat(a);
     printf("\n");
 

@@ -20,14 +20,7 @@ exception ZeroDiagonalElement of int
 (* note: uses DENSE_ELEM rather than the more efficient DENSE_COL. *)
 module DenseMatrix =
   struct
-    type data = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
-
-    (* Must correspond with dls_ml.h:dls_densematrix_index *)
-    type t = {
-      payload : data;
-      dlsmat  : Obj.t;
-      mutable valid : bool;
-    }
+    include Dls_impl.DenseTypes
 
     exception Invalidated
 
@@ -217,15 +210,7 @@ module ArrayDenseMatrix =
 
 module BandMatrix =
   struct
-    type data = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
-
-    (* Must correspond with dls_ml.h:dls_bandmatrix_index *)
-    type t = {
-      payload : data;
-      dlsmat  : Obj.t;
-      ismu    : int;
-      mutable valid : bool;
-    }
+    include Dls_impl.BandTypes
 
     (** Must agree with dls_bandmatrix_dims_index in dls_ml.h *)
     type dimensions = {

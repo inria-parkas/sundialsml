@@ -43,6 +43,9 @@ IDAS_CFLAGS = $(INC_PATH) $(CFLAGS)
 KINSOL_LDFLAGS = -lsundials_kinsol -lsundials_nvecserial -lm $(LDFLAGS)
 KINSOL_CFLAGS = $(INC_PATH) $(CFLAGS)
 
+SLS_ML_XO = @sls_ml_xo@
+SLS_CMO = @sls_cmo@
+
 define common
   $(eval seen :=)
   $(eval dups :=)

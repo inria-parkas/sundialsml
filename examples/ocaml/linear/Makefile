@@ -3,38 +3,47 @@ include ../../../config
 SUNDIALS_CMA = ../../../sundials.cma
 SUNDIALS_CMXA = ../../../sundials.cmxa
 
-EXAMPLES = arraydense.byte arraydense.opt arraydense \
-	   dense.byte dense.opt dense \
-	   arrayband.byte arrayband.opt arrayband \
-	   band.byte band.opt band \
-	   noband.byte noband.opt \
-	   spils_nvector1.byte spils_nvector1.opt \
+EXAMPLES = arraydense.byte arraydense.opt 		\
+	   dense.byte dense.opt				\
+	   sparse.byte sparse.opt			\
+	   arrayband.byte arrayband.opt 		\
+	   band.byte band.opt				\
+	   noband.byte noband.opt			\
+	   spils_nvector1.byte spils_nvector1.opt	\
 	   spils_serial1.byte spils_serial1.opt
+CEXAMPLES = arraydense.exe dense.exe arrayband.exe band.exe sparse.exe
 
 CFLAGS += -Wall
 
-all: byte opt
+all: byte opt exe diff
 
 byte: $(EXAMPLES)
 opt: $(EXAMPLES:.byte=.opt)
+exe: $(CEXAMPLES)
+log: $(EXAMPLES:.byte=.byte.log) \
+     $(EXAMPLES:.opt=.opt.log)   \
+     $(CEXAMPLES:.exe=.exe.log)
+diff: $(CEXAMPLES:.exe=.byte.diff) $(CEXAMPLES:.exe=.opt.diff)
+	@echo ======================================================================
+	@echo 'Summary (each should be 0):'
+	@wc -l $^
 
-arraydense.byte: arraydense.ml
-arraydense.opt: arraydense.ml
-arraydense: arraydense.c
-	cc -o $@ $(CFLAGS) $(CVODE_CFLAGS) $< $(LIB_PATH) $(CVODE_LDFLAGS)
-dense.byte: dense.ml
-dense.opt: dense.ml
-dense: dense.c
-	cc -o $@ $(CFLAGS) $(CVODE_CFLAGS) $< $(LIB_PATH) $(CVODE_LDFLAGS)
+arraydense.byte.diff: arraydense.byte.log
+arraydense.opt.diff: arraydense.opt.log
+dense.byte.diff: dense.byte.log
+dense.opt.diff: dense.opt.log
+arrayband.byte.diff: arrayband.byte.log
+arrayband.opt.diff: arrayband.opt.log
+band.byte.diff: band.byte.log
+band.opt.diff: band.opt.log
+sparse.byte.diff: sparse.byte.log
+sparse.opt.diff: sparse.opt.log
 
 arrayband.byte: arrayband.ml $(SUNDIALS_CMA)
 arrayband.opt: arrayband.ml $(SUNDIALS_CMXA)
-arrayband: arrayband.c
-	cc -o $@ $(CFLAGS) $(CVODE_CFLAGS) $< $(LIB_PATH) $(CVODE_LDFLAGS)
+
 band.byte: band.ml $(SUNDIALS_CMA)
 band.opt: band.ml $(SUNDIALS_CMXA)
-band: band.c
-	cc -o $@ $(CFLAGS) $(CVODE_CFLAGS) $< $(LIB_PATH) $(CVODE_LDFLAGS)
 
 noband.byte: noband.ml $(SUNDIALS_CMA)
 noband.opt: noband.ml $(SUNDIALS_CMXA)
@@ -49,13 +58,20 @@ clean:
 	-@rm -f $(EXAMPLES:.byte=.cmo) $(EXAMPLES:.byte=.cmx)
 	-@rm -f $(EXAMPLES:.byte=.o) $(EXAMPLES:.byte=.cmi)
 	-@rm -f $(EXAMPLES:.byte=.annot)
+	-@rm -f $(EXAMPLES:.byte=.byte.log) $(CEXAMPLES:.exe=.byte.diff)
+	-@rm -f $(EXAMPLES:.byte=.opt.log) $(CEXAMPLES:.exe=.opt.diff)
+	-@rm -f $(CEXAMPLES:.exe=.exe.log)
 
 distclean: clean
-	-@rm -f $(EXAMPLES) $(EXAMPLES:.byte=.opt)
+	-@rm -f $(EXAMPLES) $(EXAMPLES:.byte=.opt) $(CEXAMPLES)
 
 # #
 
-.SUFFIXES : .ml .byte .opt
+.SUFFIXES : .ml .byte .opt .c .exe .byte.log .opt.log .exe.log \
+    	    .byte.diff .opt.diff
+
+.c.exe:
+	cc -o $@ $(CFLAGS) $(CVODE_CFLAGS) $< $(LIB_PATH) $(CVODE_LDFLAGS)
 
 .ml.byte:
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
@@ -66,4 +82,17 @@ distclean: clean
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
 	    $(INCLUDES) -I ../../../ \
 	    bigarray.cmxa unix.cmxa sundials.cmxa $<
+
+.byte.byte.log:
+	./$< > $@
+.opt.opt.log:
+	./$< > $@
+.exe.exe.log:
+	./$< > $@
+
+.exe.log.byte.diff:
+	diff -u $< $(<:.exe.log=.byte.log) > $@ || true
+
+.exe.log.opt.diff:
+	diff -u $< $(<:.exe.log=.opt.log) > $@ || true
 

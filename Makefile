@@ -26,11 +26,13 @@ default: all
 ### Objects shared between sundials.cma and sundials_no_sens.cma.
 
 # Common to CVODE, IDA, and KINSOL.
-COBJ_COMMON = sundials_ml$(XO) dls_ml$(XO) nvector_ml$(XO) spils_ml$(XO)
+COBJ_COMMON = sundials_ml$(XO) dls_ml$(XO) $(SLS_ML_XO) nvector_ml$(XO) \
+	      spils_ml$(XO)
 
 COBJ_MAIN = $(COBJ_COMMON) kinsol_ml$(XO)
 
-MLOBJ_MAIN = sundials_config.cmo sundials.cmo dls.cmo spils.cmo	\
+MLOBJ_MAIN = sundials_config.cmo sundials.cmo			\
+	     dls_impl.cmo dls.cmo $(SLS_CMO) spils.cmo		\
 	     nvector.cmo nvector_custom.cmo nvector_array.cmo	\
 	     nvector_serial.cmo cvode_impl.cmo ida_impl.cmo	\
 	     kinsol_impl.cmo cvode.cmo kinsol.cmo ida.cmo

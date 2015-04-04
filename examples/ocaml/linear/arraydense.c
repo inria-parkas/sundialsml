@@ -56,7 +56,7 @@ int main(int argc, char** argv)
 	}
     }
 
-    printf("initially a=\n");
+    printf("initially: a=\n");
     print_mat(a, NROWS, NCOLS);
     printf("\n");
 
