@@ -11,7 +11,6 @@
  *                                                                     *
  ***********************************************************************/
 
-#include <sundials/sundials_config.h>
 #include <sundials/sundials_types.h>
 #include <sundials/sundials_band.h>
 
@@ -60,7 +59,7 @@ CAMLprim value c_dls_dense_wrap(DlsMat a, int finalize)
 			  approx_size, approx_size * 20);
     DLSMAT(vv) = a;
 
-    vr = caml_alloc_tuple(3);
+    vr = caml_alloc_tuple(RECORD_DLS_DENSEMATRIX_SIZE);
     Store_field(vr, RECORD_DLS_DENSEMATRIX_PAYLOAD, va);
     Store_field(vr, RECORD_DLS_DENSEMATRIX_DLSMAT, vv);
     Store_field(vr, RECORD_DLS_DENSEMATRIX_VALID, Val_bool(1));
@@ -71,14 +70,13 @@ CAMLprim value c_dls_dense_wrap(DlsMat a, int finalize)
 CAMLprim value c_densematrix_new_dense_mat(value vm, value vn)
 {
     CAMLparam2(vm, vn);
-    CAMLlocal1(vr);
 
     int m = Long_val(vm);
     int n = Long_val(vn);
 
     DlsMat a = NewDenseMat(m, n);
     if (a == NULL)
-	caml_failwith("Could not create Dense Matrix.");
+	caml_raise_out_of_memory();
 
     CAMLreturn(c_dls_dense_wrap(a, 1));
 }
@@ -121,7 +119,16 @@ CAMLprim value c_densematrix_add_identity(value va)
 CAMLprim value c_densematrix_copy(value va, value vb)
 {
     CAMLparam2(va, vb);
-    DenseCopy(DLSMAT(va), DLSMAT(vb));
+
+    DlsMat a = DLSMAT(va);
+    DlsMat b = DLSMAT(vb);
+
+#if SUNDIALS_ML_SAFE == 1
+    if ((a->M != b->M) || (a->N != b->N))
+	caml_invalid_argument("incompatible matrix sizes.");
+#endif
+
+    DenseCopy(a, b);
     CAMLreturn (Val_unit);
 }
 
@@ -135,19 +142,35 @@ CAMLprim value c_densematrix_scale(value vc, value va)
 CAMLprim value c_densematrix_getrf(value va, value vp)
 {
     CAMLparam2(va, vp);
-    int r = DenseGETRF(DLSMAT(va), LONG_ARRAY(vp));
 
-    if (r != 0) {
-	caml_raise_with_arg(DLS_EXN(ZeroDiagonalElement),
-			    Val_int(r));
-    }
+    DlsMat a = DLSMAT(va);
+
+#if SUNDIALS_ML_SAFE == 1
+    if (ARRAY1_LEN(vp) < a->N)
+	caml_invalid_argument("pivot array too small.");
+#endif
+    int r = DenseGETRF(a, LONG_ARRAY(vp));
+
+    if (r != 0)
+	caml_raise_with_arg(DLS_EXN(ZeroDiagonalElement), Val_int(r));
+
     CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_densematrix_getrs(value va, value vp, value vb)
 {
     CAMLparam3(va, vp, vb);
-    DenseGETRS(DLSMAT(va), LONG_ARRAY(vp), REAL_ARRAY(vb));
+
+    DlsMat a = DLSMAT(va);
+#if SUNDIALS_ML_SAFE == 1
+    if (a->M != a->N)
+	caml_invalid_argument("matrix not square.");
+    if (ARRAY1_LEN(vp) < a->N)
+	caml_invalid_argument("pivot array too small.");
+    if (ARRAY1_LEN(vb) < a->N)
+	caml_invalid_argument("solution vector too small.");
+#endif
+    DenseGETRS(a, LONG_ARRAY(vp), REAL_ARRAY(vb));
     CAMLreturn (Val_unit);
 }
 
@@ -161,27 +184,57 @@ CAMLprim value c_densematrix_potrf(value va)
 CAMLprim value c_densematrix_potrs(value va, value vb)
 {
     CAMLparam2(va, vb);
-    DensePOTRS(DLSMAT(va), REAL_ARRAY(vb));
+
+    DlsMat a = DLSMAT(va);
+#if SUNDIALS_ML_SAFE == 1
+    if (a->M != a->N)
+	caml_invalid_argument("matrix not square.");
+    if (ARRAY1_LEN(vb) < a->N)
+	caml_invalid_argument("solution vector too small.");
+#endif
+    DensePOTRS(a, REAL_ARRAY(vb));
     CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_densematrix_geqrf(value va, value vbeta, value vwork)
 {
     CAMLparam3(va, vbeta, vwork);
-    DenseGEQRF(DLSMAT(va), REAL_ARRAY(vbeta), REAL_ARRAY(vwork));
+
+    DlsMat a = DLSMAT(va);
+#if SUNDIALS_ML_SAFE == 1
+    if (a->M < a->N)
+	caml_invalid_argument("bad matrix size (m < n).");
+    if (ARRAY1_LEN(vbeta) < a->N)
+	caml_invalid_argument("beta vector too small.");
+    if (ARRAY1_LEN(vwork) < a->M)
+	caml_invalid_argument("work vector too small.");
+#endif
+    DenseGEQRF(a, REAL_ARRAY(vbeta), REAL_ARRAY(vwork));
     CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_densematrix_ormqr(value va, value vormqr)
 {
     CAMLparam2(va, vormqr);
+    CAMLlocal4(vbeta, vv, vw, vwork);
+    vbeta = Field(vormqr, 0);
+    vv    = Field(vormqr, 1);
+    vw    = Field(vormqr, 2);
+    vwork = Field(vormqr, 3);
+    DlsMat a = DLSMAT(va);
 
-    realtype *beta = REAL_ARRAY(Field(vormqr, 0));
-    realtype *vv   = REAL_ARRAY(Field(vormqr, 1));
-    realtype *vw   = REAL_ARRAY(Field(vormqr, 2));
-    realtype *work = REAL_ARRAY(Field(vormqr, 3));
-
-    DenseORMQR(DLSMAT(va), beta, vv, vw, work);
+#if SUNDIALS_ML_SAFE == 1
+    if (ARRAY1_LEN(vbeta) < a->N)
+	caml_invalid_argument("beta vector too small.");
+    if (ARRAY1_LEN(vwork) < a->M)
+	caml_invalid_argument("work vector too small.");
+    if (ARRAY1_LEN(vv) < a->N)
+	caml_invalid_argument("multiplier vector too small.");
+    if (ARRAY1_LEN(vw) < a->M)
+	caml_invalid_argument("result vector too small.");
+#endif
+    DenseORMQR(a, REAL_ARRAY(vbeta), REAL_ARRAY(vv), REAL_ARRAY(vw),
+		  REAL_ARRAY(vwork));
     CAMLreturn (Val_unit);
 }
  
@@ -419,7 +472,7 @@ CAMLprim value c_dls_band_wrap(DlsMat a, int finalize)
 			  approx_size, approx_size * 20);
     DLSMAT(vv) = a;
 
-    vr = caml_alloc_tuple(4);
+    vr = caml_alloc_tuple(RECORD_DLS_BANDMATRIX_SIZE);
     Store_field(vr, RECORD_DLS_BANDMATRIX_PAYLOAD, va);
     Store_field(vr, RECORD_DLS_BANDMATRIX_DLSMAT, vv);
     Store_field(vr, RECORD_DLS_BANDMATRIX_SMU, Val_long(a->s_mu));
@@ -431,7 +484,6 @@ CAMLprim value c_dls_band_wrap(DlsMat a, int finalize)
 CAMLprim value c_bandmatrix_new_band_mat(value vdims)
 {
     CAMLparam1(vdims);
-    CAMLlocal1(vr);
 
     long int n   = Long_val(Field(vdims, RECORD_DLS_BANDMATRIX_DIMS_N));
     long int mu  = Long_val(Field(vdims, RECORD_DLS_BANDMATRIX_DIMS_MU));
@@ -440,7 +492,7 @@ CAMLprim value c_bandmatrix_new_band_mat(value vdims)
 
     DlsMat a = NewBandMat(n, mu, ml, smu);
     if (a == NULL)
-	caml_failwith("Could not create Band Matrix.");
+	caml_raise_out_of_memory();
 
     CAMLreturn(c_dls_band_wrap(a, 1));
 }
@@ -451,7 +503,7 @@ CAMLprim value c_bandmatrix_size(value va)
     CAMLlocal1(vr);
 
     DlsMat ma = DLSMAT(va);
-    vr = caml_alloc_tuple(3);
+    vr = caml_alloc_tuple(RECORD_DLS_BANDMATRIX_DIMS_SIZE);
     Store_field(vr, RECORD_DLS_BANDMATRIX_DIMS_N,   Val_long(ma->N));
     Store_field(vr, RECORD_DLS_BANDMATRIX_DIMS_MU,  Val_long(ma->mu));
     Store_field(vr, RECORD_DLS_BANDMATRIX_DIMS_SMU, Val_long(ma->s_mu));
