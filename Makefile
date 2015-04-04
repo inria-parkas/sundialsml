@@ -264,7 +264,7 @@ install-sys: $(INSTALL_CMA) $(INSTALL_CMA:.cma=.cmxa)
 install-doc: doc
 	[ -d $(DOCDIR) ] || $(MKDIR) $(DOCDIR)
 	[ -d $(DOCDIR)/html ] || $(MKDIR) $(DOCDIR)/html
-	$(CP) doc/html/style.css doc/html/*.html $(DOCDIR)/html/
+	$(CP) doc/html/docstyle.css doc/html/*.html $(DOCDIR)/html/
 
 install-ocamlfind: install-findlib
 install-findlib: META $(INSTALL_CMA) $(INSTALL_CMA:.cma=.cmxa)
@@ -279,7 +279,7 @@ uninstall-sys:
 	-$(RMDIR) $(PKGDIR)
 
 uninstall-doc:
-	-$(RM) $(DOCDIR)/html/style.css $(DOCDIR)/html/*.html
+	-$(RM) $(DOCDIR)/html/docstyle.css $(DOCDIR)/html/*.html
 	-$(RMDIR) $(DOCDIR)/html
 	-$(RMDIR) $(DOCDIR)
 
@@ -328,7 +328,7 @@ clean:
 	-@$(RM) -f $(STUBLIBS)
 
 cleandoc:
-	-@$(RM) -f doc/html/*.html doc/html/style.css
+	-@$(RM) -f doc/html/*.html doc/html/docstyle.css
 
 distclean: clean cleandoc
 	-@($(MAKE) -C examples distclean)
