@@ -318,7 +318,7 @@ distcheck:
 depend: .depend
 .depend:
 	$(OCAMLDEP) -pp '$(DOCHTML_PP)' *.mli *.ml > .depend
-	$(CC) -MM $(CFLAGS) *.c >> .depend
+	$(CC) -MM $(CPPFLAGS) *.c >> .depend
 
 clean:
 	-@($(MAKE) -C examples clean)

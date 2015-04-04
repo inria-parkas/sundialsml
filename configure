@@ -19,8 +19,11 @@ configure_command="$0"
 case `uname -s` in
     Darwin)
 	# OS X does not search /usr/local by default.
-	sundials_lib_path=-L/usr/local/lib
-	sundials_inc_path=-I/usr/local/include
+	sundials_lib_path=/usr/local/lib
+	Lsundials_lib_path=-L${sundials_lib_path}
+	sundials_inc_path=/usr/local/include
+	Isundials_inc_path=-I${sundials_inc_path}
+	idirafter_sundials_inc_path="-idirafter ${sundials_inc_path}"
 	;;
 esac
 
@@ -107,9 +110,12 @@ END_HELP_TEXT
 	OCAMLROOT="${value%/}/"
 	OCAMLBIN="${OCAMLROOT}bin/";;
     SUNDIALS_LIB_PATH)
-	sundials_lib_path="-L${value%/}";;
+	sundials_lib_path="${value%/}"
+	Lsundials_lib_path="-L${sundials_lib_path}";;
     SUNDIALS_INC_PATH)
-	sundials_inc_path="-I${value%/}";;
+	sundials_inc_path="${value%/}"
+	Isundials_inc_path="-I${sundials_inc_path}"
+	idirafter_sundials_inc_path="-idirafter ${sundials_inc_path}";;
     LAPACKLIB)
 	LAPACKLIB="${value}";;
     EXAMPLES)
@@ -201,6 +207,7 @@ if [ "x$enable_debug" = x1 ]; then
     fi
     cppflags="${cppflags}"
 else
+    cflags="${cflags} -DNDEBUG=1"
     cppflags="${cppflags} -DNDEBUG=1"
 fi
 
@@ -228,7 +235,7 @@ esac
 include="\"sundials/sundials_config.h\""
 query="SUNDIALS_PACKAGE_VERSION"
 sundials_version=`printf "#include %s\n%s" "${include}" "${query}" \
-		    | ${CPP} ${cppflags} ${sundials_inc_path} -P 2>/dev/null \
+		    | ${CPP} ${cppflags} ${Isundials_inc_path} -P 2>/dev/null \
 		    | tail -1 | sed -e 's/ //g' -e 's/"//g'`
 sls_ml_xo=
 sls_cmo=
@@ -256,7 +263,7 @@ int main (int argc, char *argv[])
   return sizeof (realtype) != sizeof (double);
 }
 EOF
-    if $CC ${sundials_inc_path} -o $test_stem$XX $test_stem.c >/dev/null 2>&1 && \
+    if $CC ${Isundials_inc_path} -o $test_stem$XX $test_stem.c >/dev/null 2>&1 && \
 	./$test_stem$XX;
     then
 	: # OK
@@ -292,7 +299,8 @@ else
 fi
 
 
-cppflags="${cppflags} -I${ocaml_path}"
+cppflags="${cppflags} ${idirafter_sundials_inc_path} -idirafter ${ocaml_path}"
+cflags="${cflags} -I${ocaml_path}"
 
 include="<caml/mlvalues.h>"
 query="SIZEOF_INT,SIZEOF_LONG,SIZEOF_PTR"
@@ -419,7 +427,7 @@ test_stem=__configure_test_file__
 test_c_stem=__configure_test_c_file__
 echo 'void CVode(); void dummy () { CVode (); }' > $test_c_stem.c
 echo 'external dummy : unit -> unit = "dummy" let _ = dummy ()' > $test_stem.ml
-if ! $CC ${cflags} ${sundials_inc_path} -o $test_c_stem$XO -c $test_c_stem.c \
+if ! $CC ${cflags} ${Isundials_inc_path} -o $test_c_stem$XO -c $test_c_stem.c \
     >$test_stem.log 2>&1 || ! ${OCAMLBIN}ocamlc -c $test_stem.ml \
     >> $test_stem.log 2>&1
 then
@@ -430,7 +438,7 @@ fi
 
 if ! ${OCAMLBIN}ocamlmklib $test_c_stem$XO $test_stem.cmo \
     -o $test_stem -oc $test_stem \
-    ${sundials_lib_path} -lsundials_cvode -lsundials_nvecserial -lm \
+    ${Lsundials_lib_path} -lsundials_cvode -lsundials_nvecserial -lm \
     > $test_stem.log 2>&1
 then
     warning="${warning}\n\tSundials/C seems to be compiled without --enable-shared."
@@ -451,7 +459,7 @@ if [ $sundials -gt 0 ]; then
 	query="SUNDIALS_BLAS_LAPACK"
     fi
     sundials_info=`printf "#include %s\n%b" "${include}" "${query}" \
-			| ${CPP} ${cppflags} ${sundials_inc_path} -P 2>/dev/null \
+			| ${CPP} ${cppflags} ${Isundials_inc_path} -P 2>/dev/null \
 			| grep -v ^$`
     case "${sundials_info}" in
 	1) lapack_lib=${LAPACKLIB} ;;
@@ -478,7 +486,7 @@ if [ $sundials -ge 260 ]; then
     q1="#ifdef SUNDIALS_KLU\n:KLU:\n#endif\n"
     q2="#ifdef SUNDIALS_SUPERLUMT\n:SUPERLUMT:\n#endif\n"
     sundials_info=`printf "#include %s\n%b%b" "${include}" "${q1}" "${q2}" \
-		    | ${CPP} ${cppflags} ${sundials_inc_path} -P 2>/dev/null \
+		    | ${CPP} ${cppflags} ${Isundials_inc_path} -P 2>/dev/null \
 		    | grep -v ^$`
     case "${sundials_info}" in
 	*:KLU:*) klu_enabled=1
@@ -526,8 +534,8 @@ int main (int argc, char *argv[])
   return 0;
 }
 EOF
-    if ! $mpicc -o $test_stem$XX ${sundials_inc_path} $test_stem.c \
-	 ${sundials_lib_path} -lsundials_cvode -lsundials_nvecparallel -lm \
+    if ! $mpicc -o $test_stem$XX ${Isundials_inc_path} $test_stem.c \
+	 ${Lsundials_lib_path} -lsundials_cvode -lsundials_nvecparallel -lm \
        >/dev/null 2>&1;
     then
         sundialsmpi_info='not installed'
@@ -562,8 +570,8 @@ int main (int argc, char *argv[])
   return 0;
 }
 EOF
-    if ! $CC -o $test_stem$XX ${sundials_inc_path} $test_stem.c \
-	 ${sundials_lib_path} -lsundials_nvecpthreads \
+    if ! $CC -o $test_stem$XX ${Isundials_inc_path} $test_stem.c \
+	 ${Lsundials_lib_path} -lsundials_nvecpthreads \
        >/dev/null 2>&1;
     then
 	nvecpthreads_info='not installed'
@@ -588,8 +596,8 @@ int main (int argc, char *argv[])
   return 0;
 }
 EOF
-    if ! $CC -o $test_stem$XX ${sundials_inc_path} $test_stem.c \
-	 ${sundials_lib_path} -lsundials_nvecopenmp \
+    if ! $CC -o $test_stem$XX ${Isundials_inc_path} $test_stem.c \
+	 ${Lsundials_lib_path} -lsundials_nvecopenmp \
        >/dev/null 2>&1;
     then
 	nvecopenmp_info='not installed'
@@ -606,7 +614,7 @@ if [ "x$EXAMPLESROOT" = x ]; then
     # Try to infer it from the include path.
     include="\"sundials/sundials_config.h\""
     prefix_info=`printf "#include %s\n" "${include}" \
-	| ${CPP} ${cppflags} ${sundials_inc_path} -E 2>/dev/null \
+	| ${CPP} ${cppflags} ${Isundials_inc_path} -E 2>/dev/null \
 	| sed -ne "s/^.*\"\(.*\)\/include\/sundials\/sundials_config.h\".*$/\1/p" \
 	| head -n 1`
 
@@ -616,8 +624,7 @@ if [ "x$EXAMPLESROOT" = x ]; then
 	EXAMPLESROOT=/usr/local/examples
     else
 	# Try to infer it from LIB_PATH.
-	EXAMPLESROOT=`echo ${sundials_lib_path} \
-	    | sed -e 's/^-L//' -e 's/lib$/examples/'`
+	EXAMPLESROOT=`echo ${sundials_lib_path} | sed -e 's/lib$/examples/'`
     fi
 fi
 # Check if it's valid.
@@ -713,8 +720,8 @@ fi
 	 s#@cppflags@#${cppflags}#;
 	 s#@ml_cppflags@#${ml_cppflags}#;
 	 s#@ldflags@#${ldflags}#;
-	 s#@sundials_lib_path@#${sundials_lib_path}#;
-	 s#@sundials_inc_path@#${sundials_inc_path}#;
+	 s#@sundials_lib_path@#${Lsundials_lib_path}#;
+	 s#@sundials_inc_path@#${Isundials_inc_path}#;
 	 s#@ocamlflags@#${ocamlflags}#;
 	 s#@ocamloptflags@#${ocamloptflags}#;
 	 s#@ocaml_3x@#${ocaml_3x}#;
