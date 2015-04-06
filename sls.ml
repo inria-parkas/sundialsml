@@ -69,6 +69,13 @@ module SparseMatrix =
       if Sundials_config.safe && not valid then raise Invalidated;
       c_set_to_zero slsmat
 
+    external c_realloc      : t -> int -> unit
+        = "c_sparsematrix_realloc"
+
+    let realloc ({ valid } as d) =
+      if Sundials_config.safe && not valid then raise Invalidated;
+      c_realloc d
+
     external c_convert_dls : Obj.t -> t
         = "c_sparsematrix_convert_dls"
 

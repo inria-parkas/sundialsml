@@ -68,7 +68,7 @@ CAMLprim value c_sls_sparse_wrap(SlsMat a, int finalize)
     CAMLreturn(vr);
 }
 
-CAMLprim value c_sparsematrix_realloc(value vma)
+CAMLprim value c_sparsematrix_realloc(value vma, value vnnz)
 {
     CAMLparam1(vma);
     CAMLlocal2(vrowvals, vdata);
@@ -82,7 +82,16 @@ CAMLprim value c_sparsematrix_realloc(value vma)
     struct caml_ba_array *ba_data =
 	Caml_ba_array_val(Field(vma, RECORD_SLS_SPARSEMATRIX_DATA));
 
-    ba_colptrs->data = a->colptrs;
+    int nnz = Int_val(vnnz);
+    if (nnz > 0) {
+	a->rowvals = realloc(a->rowvals, nnz*sizeof(int));
+	a->data = realloc(a->data, nnz*sizeof(realtype));
+	if (a->rowvals == NULL || a->data == NULL)
+	    caml_raise_out_of_memory();
+	a->NNZ = nnz;
+    } else {
+	ba_colptrs->data = a->colptrs;
+    }
 
     ba_rowvals->data = a->rowvals;
     ba_rowvals->dim[0] = a->NNZ;
@@ -153,7 +162,7 @@ CAMLprim value c_sparsematrix_add_identity(value vma)
     CAMLparam1(vma);
 
     AddIdentitySparseMat(SLSMAT(Field(vma, RECORD_SLS_SPARSEMATRIX_SLSMAT)));
-    c_sparsematrix_realloc(vma);
+    c_sparsematrix_realloc(vma, Val_int(0));
 
     CAMLreturn (Val_unit);
 }
@@ -164,7 +173,7 @@ CAMLprim value c_sparsematrix_copy(value va, value vmb)
 
     CopySparseMat(SLSMAT(va),
 		  SLSMAT(Field(vmb, RECORD_SLS_SPARSEMATRIX_SLSMAT)));
-    c_sparsematrix_realloc(vmb);
+    c_sparsematrix_realloc(vmb, Val_int(0));
 
     CAMLreturn (Val_unit);
 }
@@ -181,7 +190,7 @@ CAMLprim value c_sparsematrix_add(value vma, value vb)
     CAMLparam2(vma, vb);
 
     SlsAddMat(SLSMAT(Field(vma, RECORD_SLS_SPARSEMATRIX_SLSMAT)), SLSMAT(vb));
-    c_sparsematrix_realloc(vma);
+    c_sparsematrix_realloc(vma, Val_int(0));
 
     CAMLreturn (Val_unit);
 }

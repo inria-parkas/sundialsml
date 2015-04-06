@@ -65,7 +65,8 @@ let main () =
   printf "scale copy x2: b=@\n%a@\n" print_mat b;
 
   S.set_to_zero b;
-  printf "set to zero: b=@\n%a@\n" print_mat b;
+  S.realloc b 9;
+  printf "set to zero (NNZ=9): b=@\n%a@\n" print_mat b;
 
   S.set_col b 0 0;
   S.set_col b 1 0;

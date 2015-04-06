@@ -85,7 +85,10 @@ int main(int argc, char** argv)
     printf("\n");
 
     SlsSetToZero(b);
-    printf("set to zero: b=\n");
+    b->NNZ = 9;
+    b->rowvals = realloc(b->rowvals, b->NNZ*sizeof(int));
+    b->data    = realloc(b->data, b->NNZ*sizeof(realtype));
+    printf("set to zero (NNZ=9): b=\n");
     print_mat(b);
     printf("\n");
 

@@ -85,6 +85,9 @@ module SparseMatrix :
         @nocvode <node9#ss:sparse> SlsSetToZero *)
     val set_to_zero    : t -> unit
 
+    (** Reallocates enoughs space for the given number of non-zero values. *)
+    val realloc        : t -> int -> unit
+
     (** {4 Calculations} *)
 
     (** Increments a square matrix by the identity matrix.
