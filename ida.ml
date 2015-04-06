@@ -675,6 +675,24 @@ let set_suppress_alg s ?varid v =
    | Some x -> set_id s x);
   c_set_suppress_alg s v
 
+external set_nonlin_conv_coef_ic : ('d, 'k) session -> float -> unit
+  = "c_ida_set_nonlin_conv_coef_ic"
+
+external set_max_num_steps_ic : ('d, 'k) session -> int -> unit
+  = "c_ida_set_max_num_steps_ic"
+
+external set_max_num_jacs_ic : ('d, 'k) session -> int -> unit
+  = "c_ida_set_max_num_jacs_ic"
+
+external set_max_num_iters_ic : ('d, 'k) session -> int -> unit
+  = "c_ida_set_max_num_iters_ic"
+
+external set_line_search_ic : ('d, 'k) session -> bool -> unit
+  = "c_ida_set_line_search_ic"
+
+external set_step_tolerance_ic : ('d, 'k) session -> float -> unit
+  = "c_ida_set_step_tolerance_ic"
+
 external get_num_backtrack_ops : ('a,'k) session -> int
   = "c_ida_get_num_backtrack_ops"
 

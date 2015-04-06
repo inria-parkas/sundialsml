@@ -781,10 +781,53 @@ val calc_ic_ya_yd' :
   -> float
   -> unit
 
+(** Specifies the positive constant in the nonlinear convergence test
+    of the initial condition calculation.
+
+    @noida <node5#sss:initoptin> IDASetNonlinConvCoefIC
+    @ida <node5#ss:idacalcic> IDACalcIC *)
+val set_nonlin_conv_coef_ic : ('d, 'k) session -> float -> unit
+
+(** Specifies the maximum number of steps taken in attempting to reach
+    a given output time in the initial condition calculation.
+
+    @noida <node5#sss:initoptin> IDASetMaxNumStepsIC
+    @ida <node5#ss:idacalcic> IDACalcIC (IDA_YA_YDP_INIT) *)
+val set_max_num_steps_ic : ('d, 'k) session -> int -> unit
+
+(** Specifies the maximum number of approximate Jacobian or preconditioner
+    evaluations allowed when the Newton iteration appears to be slowly
+    converging.
+
+    @noida <node5#sss:initoptin> IDASetMaxNumJacsIC
+    @ida <node5#ss:idacalcic> IDACalcIC *)
+val set_max_num_jacs_ic : ('d, 'k) session -> int -> unit
+
+(** Specifies the maximum number of Newton iterations allowed in any one
+    attempt to calculate initial conditions.
+
+    @noida <node5#sss:initoptin> IDASetMaxNumItersIC
+    @ida <node5#ss:idacalcic> IDACalcIC *)
+val set_max_num_iters_ic : ('d, 'k) session -> int -> unit
+
+(** Enables ([true]) or disables ([false]) the linesearch algorithm
+    in the initial condition calculation.
+
+    @noida <node5#sss:initoptin> IDASetLineSearchOffIC
+    @ida <node5#ss:idacalcic> IDACalcIC *)
+val set_line_search_ic : ('d, 'k) session -> bool -> unit
+
+(** Specifies a positive lower bound on the Newton step in the initial condition
+    calculation.
+
+    @noida <node5#sss:initoptin> IDASetStepToleranceIC
+    @ida <node5#ss:idacalcic> IDACalcIC *)
+val set_step_tolerance_ic : ('d, 'k) session -> float -> unit
+
 (** Returns the number of backtrack operations during {!calc_ic_ya_yd'} or
     {!calc_ic_y}.
 
-    @ida <node5#sss:optout_iccalc> IDAGetNumBcktrackOps *)
+    @ida <node5#sss:optout_iccalc> IDAGetNumBacktrackOps *)
 val get_num_backtrack_ops : ('d, 'k) session -> int
 
 (** {2:solver Solution} *)

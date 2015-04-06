@@ -1339,6 +1339,68 @@ CAMLprim value c_ida_get_current_time(value vida_mem)
     CAMLreturn(caml_copy_double(v));
 }
 
+CAMLprim value c_ida_set_nonlin_conv_coef_ic(value vida_mem, value vcoef)
+{
+    CAMLparam2(vida_mem, vcoef);
+
+    int flag = IDASetNonlinConvCoefIC(IDA_MEM_FROM_ML(vida_mem),
+				      Double_val(vcoef));
+    CHECK_FLAG("IDASetNonlinConvCoefIC", flag);
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value c_ida_set_max_num_steps_ic(value vida_mem, value vmaxnh)
+{
+    CAMLparam2(vida_mem, vmaxnh);
+
+    int flag = IDASetMaxNumStepsIC(IDA_MEM_FROM_ML(vida_mem), Int_val(vmaxnh));
+    CHECK_FLAG("IDASetMaxNumStepsIC", flag);
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value c_ida_set_max_num_jacs_ic(value vida_mem, value vmaxnj)
+{
+    CAMLparam2(vida_mem, vmaxnj);
+
+    int flag = IDASetMaxNumJacsIC(IDA_MEM_FROM_ML(vida_mem), Int_val(vmaxnj));
+    CHECK_FLAG("IDASetMaxNumJacsIC", flag);
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value c_ida_set_max_num_iters_ic(value vida_mem, value vmaxnit)
+{
+    CAMLparam2(vida_mem, vmaxnit);
+
+    int flag = IDASetMaxNumItersIC(IDA_MEM_FROM_ML(vida_mem), Int_val(vmaxnit));
+    CHECK_FLAG("IDASetMaxNumItersIC", flag);
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value c_ida_set_line_search_ic(value vida_mem, value vls)
+{
+    CAMLparam2(vida_mem, vls);
+
+    int flag = IDASetLineSearchOffIC(IDA_MEM_FROM_ML(vida_mem), !Bool_val(vls));
+    CHECK_FLAG("IDASetLineSearchOffIC", flag);
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value c_ida_set_step_tolerance_ic(value vida_mem, value vsteptol)
+{
+    CAMLparam2(vida_mem, vsteptol);
+
+    int flag = IDASetStepToleranceIC(IDA_MEM_FROM_ML(vida_mem),
+				     Double_val(vsteptol));
+    CHECK_FLAG("IDASetStepToleranceIC", flag);
+
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value c_ida_get_num_backtrack_ops (value vida_mem)
 {
     CAMLparam1 (vida_mem);
