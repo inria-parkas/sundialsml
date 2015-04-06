@@ -14,7 +14,7 @@ MATHJAX_URL_DEFAULT     = @mathjax@
 
 CC = @cc@
 CPP= @cpp@
-CFLAGS += @cflags@
+CFLAGS += -Werror @cflags@
 LDFLAGS += @ldflags@
 CPPFLAGS += @cppflags@
 C_SUPPRESS_WARNINGS = @c_suppress_warnings@
