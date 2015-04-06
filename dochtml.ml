@@ -66,6 +66,12 @@ struct
         in
       (page, anchor, title)
 
+    method private html_of_missing t =
+      let (page, anchor, title) = self#split_text t in
+      Printf.sprintf
+        "<div class=\"sundials\"><span class=\"seesundials\">See sundials: </span>%s</div>"
+        title
+
     method private html_of_cvode t =
       let (page, anchor, title) = self#split_text t in
       Printf.sprintf
@@ -208,11 +214,16 @@ struct
       Buffer.add_string b s
 
     initializer
-      tag_functions <- ("cvode",  self#html_of_cvode) :: tag_functions;
-      tag_functions <- ("cvodes", self#html_of_cvodes) :: tag_functions;
-      tag_functions <- ("ida",    self#html_of_ida) :: tag_functions;
-      tag_functions <- ("idas",   self#html_of_idas) :: tag_functions;
-      tag_functions <- ("kinsol", self#html_of_kinsol) :: tag_functions;
+      tag_functions <- ("cvode",    self#html_of_cvode) :: tag_functions;
+      tag_functions <- ("nocvode",  self#html_of_missing) :: tag_functions;
+      tag_functions <- ("cvodes",   self#html_of_cvodes) :: tag_functions;
+      tag_functions <- ("nocvodes", self#html_of_missing) :: tag_functions;
+      tag_functions <- ("ida",      self#html_of_ida) :: tag_functions;
+      tag_functions <- ("noida",    self#html_of_missing) :: tag_functions;
+      tag_functions <- ("idas",     self#html_of_idas) :: tag_functions;
+      tag_functions <- ("noidas",   self#html_of_missing) :: tag_functions;
+      tag_functions <- ("kinsol",   self#html_of_kinsol) :: tag_functions;
+      tag_functions <- ("nokinsol", self#html_of_missing) :: tag_functions;
 
       custom_functions <- ("div",      Simple self#html_of_div)      ::
                           ("var",      Simple self#html_of_var)      ::
