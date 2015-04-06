@@ -751,6 +751,14 @@ module Adjoint =
 
     let get_dky bs = Ida.get_dky (tosession bs)
 
+    external c_get_y : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
+                        -> ('d, 'k) Nvector.t -> unit
+        = "c_idas_adj_get_y"
+
+    let get_y s y yp =
+      if Sundials_config.safe then (s.checkvec y; s.checkvec yp);
+      fun t -> c_get_y s t y yp
+
     external set_no_sensitivity : ('a, 'k) session -> unit
         = "c_idas_adj_set_no_sensi"
 

@@ -636,6 +636,13 @@ module Adjoint =
 
     let get_dky bs = Cvode.get_dky (tosession bs)
 
+    external c_get_y : ('d, 'k) session -> float -> ('d, 'k) Nvector.t -> unit
+        = "c_cvodes_adj_get_y"
+
+    let get_y s y =
+      if Sundials_config.safe then s.checkvec y;
+      fun t -> c_get_y s t y
+
     external set_no_sensitivity : ('a, 'k) session -> unit
         = "c_cvodes_adj_set_no_sensitivity"
 

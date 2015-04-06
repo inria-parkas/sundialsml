@@ -1288,6 +1288,18 @@ CAMLprim value c_cvodes_adj_get(value vparent, value vwhich, value vyb)
     CAMLreturn(caml_copy_double(tret));
 }
 
+CAMLprim value c_cvodes_adj_get_y(value vdata, value vt, value vy)
+{
+    CAMLparam3(vdata, vt, vy);
+
+    N_Vector y_nv = NVEC_VAL(vy);
+
+    int flag = CVodeGetAdjY(CVODE_MEM_FROM_ML(vdata), Double_val(vt), y_nv);
+    SCHECK_FLAG("CVodeGetAdjY", flag);
+
+    CAMLreturn (Val_unit);
+}
+
 /* adjoint/quadrature interface */
 
 CAMLprim value c_cvodes_adjquad_initb(value vparent, value vwhich, value vyqb0)

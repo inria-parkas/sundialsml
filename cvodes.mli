@@ -1770,6 +1770,12 @@ module Adjoint :
     val get_dky
           : ('d, 'k) bsession -> ('d, 'k) Nvector.t -> float -> int -> unit
 
+    (** Fills the vector with the interpolated forward solution at the
+        given time during a backward simulation.
+
+        @nocvodes <node5#ss:get_adjy> CVodeGetAdjY *)
+    val get_y : ('d, 'k) Cvode.session -> ('d, 'k) Nvector.t  -> float -> unit
+
     (** Reinitializes the backward problem with new parameters and state
         values. The values of the independent variable, i.e., the simulation
         time, and the state variables must be given. It is also possible to

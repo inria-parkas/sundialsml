@@ -1993,6 +1993,20 @@ CAMLprim value c_idas_adj_get(value vparent, value vwhich,
     CAMLreturn(caml_copy_double(tret));
 }
 
+CAMLprim value c_idas_adj_get_y(value vdata, value vt, value vy, value vyp)
+{
+    CAMLparam4(vdata, vt, vy, vyp);
+
+    N_Vector y_nv = NVEC_VAL(vy);
+    N_Vector yp_nv = NVEC_VAL(vyp);
+
+    int flag = IDAGetAdjY(IDA_MEM_FROM_ML(vdata), Double_val(vt), y_nv, yp_nv);
+    SCHECK_FLAG("IdaGetAdjY", flag);
+
+    CAMLreturn (Val_unit);
+}
+
+
 /* adjoint/quadrature interface */
 
 CAMLprim value c_idas_adjquad_initb(value vparent, value vwhich, value vyqb0)

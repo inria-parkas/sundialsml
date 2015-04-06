@@ -1631,6 +1631,13 @@ module Adjoint :
     val get_dky :
       ('d, 'k) bsession -> ('d, 'k) Nvector.t -> float -> int -> unit
 
+    (** Fills the vector with the interpolated forward solution and its
+        derivative at the given time during a backward simulation.
+
+        @noidas <node5#ss:get_adjy> IdaGetAdjY *)
+    val get_y : ('d, 'k) Ida.session -> ('d, 'k) Nvector.t
+                  -> ('d, 'k) Nvector.t  -> float -> unit
+
     (** Reinitializes the backward problem with new parameters and state
         values. The values of the independent variable, i.e., the simulation
         time, and the state variables and derivatives must be given. It is also
