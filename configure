@@ -213,9 +213,9 @@ if [ "x${cflags}" = x ]; then    # Don't touch CFLAGS if explicitly given.
 	fi
 
         if [ "x$enable_debug" = x1 ]; then
-            cflags="-O0 -Wall -g3"
+            cflags="-O0 -Wall -Werror -g3"
         else
-            cflags="$optflags -Wall"
+            cflags="$optflags -Wall -Werror "
         fi
     else
         echo "<info> Your C compiler seems to be different from gcc.  Make"
