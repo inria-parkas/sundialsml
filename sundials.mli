@@ -31,6 +31,18 @@ val version : int * int * int * int
 (** Indicates whether the interface was compiled with BLAS/LAPACK support. *)
 val lapack_enabled : bool
 
+(** Indicates whether the KLU sparse linear solver is available. *)
+val klu_enabled : bool
+
+(** Indicates whether the SuperLU_MT sparse linear solver is available. *)
+val superlumt_enabled : bool
+
+(** Indicates whether pthreads-based nvectors are available. *)
+val nvecpthreads_enabled : bool
+
+(** Indicates whether openmp-based nvectors are available. *)
+val nvecopenmp_enabled : bool
+
 (** The largest value representable as a real.
 
     @cvode <node5#s:types> Data Types *)
