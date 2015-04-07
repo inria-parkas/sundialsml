@@ -20,11 +20,12 @@ type real_array = Sundials.RealArray.t
 module SparseMatrix =
   struct
     (* Must correspond with sls_ml.h:sls_sparsematrix_index *)
+    type slsmat
     type t = {
       colptrs : int_array;
       rowvals : int_array;
       data    : real_array;
-      slsmat  : Obj.t;
+      slsmat  : slsmat;
       mutable valid : bool;
     }
 
@@ -48,21 +49,21 @@ module SparseMatrix =
 
     let invalidate v = v.valid <- false
 
-    external c_size : Obj.t -> (int * int * int)
+    external c_size : slsmat -> (int * int * int)
         = "c_sparsematrix_size"
 
     let size { slsmat; valid } =
       if Sundials_config.safe && not valid then raise Invalidated;
       c_size slsmat
 
-    external c_print        : Obj.t -> unit
+    external c_print        : slsmat -> unit
         = "c_sparsematrix_print_mat"
 
     let print { slsmat; valid } =
       if Sundials_config.safe && not valid then raise Invalidated;
       c_print slsmat
 
-    external c_set_to_zero  : Obj.t -> unit
+    external c_set_to_zero  : slsmat -> unit
         = "c_sparsematrix_set_to_zero"
 
     let set_to_zero { slsmat; valid } =
@@ -76,7 +77,7 @@ module SparseMatrix =
       if Sundials_config.safe && not valid then raise Invalidated;
       c_realloc d
 
-    external c_convert_dls : Obj.t -> t
+    external c_convert_dls : Dls_impl.dlsmat -> t
         = "c_sparsematrix_convert_dls"
 
     let from_dense { Dls_impl.DenseTypes.valid = valid;
@@ -113,7 +114,7 @@ module SparseMatrix =
       if Sundials_config.safe && not valid then raise Invalidated;
       c_add_identity d
 
-    external c_copy : Obj.t -> t -> unit
+    external c_copy : slsmat -> t -> unit
         = "c_sparsematrix_copy"
 
     let blit ({ slsmat=a; valid=valid1 })
@@ -121,21 +122,21 @@ module SparseMatrix =
       if Sundials_config.safe && not (valid1 && valid2) then raise Invalidated;
       c_copy a bm
 
-    external c_scale  : float -> Obj.t -> unit
+    external c_scale  : float -> slsmat -> unit
         = "c_sparsematrix_scale"
 
     let scale a { slsmat; valid } =
       if Sundials_config.safe && not valid then raise Invalidated;
       c_scale a slsmat
 
-    external c_add  : t -> Obj.t -> unit
+    external c_add  : t -> slsmat -> unit
         = "c_sparsematrix_add"
 
     let add ({ valid=valid1 } as am) ({ slsmat=b; valid=valid2 }) =
       if Sundials_config.safe && not (valid1 && valid2) then raise Invalidated;
       c_add am b
 
-    external c_matvec  : Obj.t -> real_array -> real_array -> unit
+    external c_matvec  : slsmat -> real_array -> real_array -> unit
         = "c_sparsematrix_matvec"
 
     let matvec ({ slsmat; valid }) x y =

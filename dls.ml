@@ -20,6 +20,7 @@ exception ZeroDiagonalElement of int
 (* note: uses DENSE_ELEM rather than the more efficient DENSE_COL. *)
 module DenseMatrix =
   struct
+    type dlsmat = Dls_impl.dlsmat
     include Dls_impl.DenseTypes
 
     exception Invalidated
@@ -41,35 +42,35 @@ module DenseMatrix =
 
     let invalidate v = v.valid <- false
 
-    external c_size : Obj.t -> (int * int)
+    external c_size : dlsmat -> (int * int)
         = "c_densematrix_size"
 
     let size { dlsmat; valid } =
       if Sundials_config.safe && not valid then raise Invalidated;
       c_size dlsmat
 
-    external c_print        : Obj.t -> unit
+    external c_print        : dlsmat -> unit
         = "c_densematrix_print_mat"
 
     let print { dlsmat; valid } =
       if Sundials_config.safe && not valid then raise Invalidated;
       c_print dlsmat
 
-    external c_set_to_zero  : Obj.t -> unit
+    external c_set_to_zero  : dlsmat -> unit
         = "c_densematrix_set_to_zero"
 
     let set_to_zero { dlsmat; valid } =
       if Sundials_config.safe && not valid then raise Invalidated;
       c_set_to_zero dlsmat
 
-    external c_add_identity : Obj.t -> unit
+    external c_add_identity : dlsmat -> unit
         = "c_densematrix_add_identity"
 
     let add_identity { dlsmat; valid } =
       if Sundials_config.safe && not valid then raise Invalidated;
       c_add_identity dlsmat
 
-    external c_copy     : Obj.t -> Obj.t -> unit
+    external c_copy     : dlsmat -> dlsmat -> unit
         = "c_densematrix_copy"
 
     let blit { dlsmat=dlsmat1; valid=valid1 }
@@ -77,42 +78,42 @@ module DenseMatrix =
       if Sundials_config.safe && not (valid1 && valid2) then raise Invalidated;
       c_copy dlsmat1 dlsmat2
 
-    external c_scale  : float -> Obj.t -> unit
+    external c_scale  : float -> dlsmat -> unit
         = "c_densematrix_scale"
 
     let scale a { dlsmat; valid } =
       if Sundials_config.safe && not valid then raise Invalidated;
       c_scale a dlsmat
 
-    external c_getrf  : Obj.t -> lint_array -> unit
+    external c_getrf  : dlsmat -> lint_array -> unit
         = "c_densematrix_getrf"
 
     let getrf { dlsmat; valid } la =
       if Sundials_config.safe && not valid then raise Invalidated;
       c_getrf dlsmat la
 
-    external c_getrs  : Obj.t -> lint_array -> real_array -> unit
+    external c_getrs  : dlsmat -> lint_array -> real_array -> unit
         = "c_densematrix_getrs"
 
     let getrs { dlsmat; valid } la ra =
       if Sundials_config.safe && not valid then raise Invalidated;
       c_getrs dlsmat la ra
 
-    external c_potrf  : Obj.t -> unit
+    external c_potrf  : dlsmat -> unit
         = "c_densematrix_potrf"
 
     let potrf { dlsmat; valid } =
       if Sundials_config.safe && not valid then raise Invalidated;
       c_potrf dlsmat
 
-    external c_potrs  : Obj.t -> real_array -> unit
+    external c_potrs  : dlsmat -> real_array -> unit
         = "c_densematrix_potrs"
 
     let potrs { dlsmat; valid } ra =
       if Sundials_config.safe && not valid then raise Invalidated;
       c_potrs dlsmat ra
 
-    external c_geqrf  : Obj.t -> real_array -> real_array -> unit
+    external c_geqrf  : dlsmat -> real_array -> real_array -> unit
         = "c_densematrix_geqrf"
 
     let geqrf { dlsmat; valid } ra1 ra2 =
@@ -120,7 +121,7 @@ module DenseMatrix =
       c_geqrf dlsmat ra1 ra2
 
     external c_ormqr
-        : Obj.t -> (real_array * real_array * real_array * real_array) -> unit
+        : dlsmat -> (real_array * real_array * real_array * real_array) -> unit
         = "c_densematrix_ormqr"
 
     let ormqr ~a ~beta ~v ~w ~work =
@@ -128,7 +129,7 @@ module DenseMatrix =
       c_ormqr a.dlsmat (beta, v, w, work)
 
     (*
-    external c_get : Obj.t -> int -> int -> float
+    external c_get : dlsmat -> int -> int -> float
         = "c_densematrix_get"
 
     let get { dlsmat; valid } i j =
@@ -141,7 +142,7 @@ module DenseMatrix =
       payload.{j, i}
 
     (*
-    external c_set : Obj.t -> int -> int -> float -> unit
+    external c_set : dlsmat -> int -> int -> float -> unit
         = "c_densematrix_set"
 
     let set { dlsmat; valid } i j e =
@@ -210,6 +211,7 @@ module ArrayDenseMatrix =
 
 module BandMatrix =
   struct
+    type dlsmat = Dls_impl.dlsmat
     include Dls_impl.BandTypes
 
     (** Must agree with dls_bandmatrix_dims_index in dls_ml.h *)
@@ -234,14 +236,14 @@ module BandMatrix =
 
     let invalidate v = v.valid <- false
 
-    external c_size : Obj.t -> dimensions
+    external c_size : dlsmat -> dimensions
         = "c_bandmatrix_size"
 
     let size { dlsmat; valid } =
       if Sundials_config.safe && not valid then raise Invalidated;
       c_size dlsmat
 
-    external c_print          : Obj.t -> unit
+    external c_print          : dlsmat -> unit
         = "c_densematrix_print_mat"
           (* NB: same as densematrix *)
 
@@ -249,7 +251,7 @@ module BandMatrix =
       if Sundials_config.safe && not valid then raise Invalidated;
       c_print dlsmat
 
-    external c_set_to_zero    : Obj.t -> unit
+    external c_set_to_zero    : dlsmat -> unit
         = "c_densematrix_set_to_zero"
           (* NB: same as densematrix *)
 
@@ -257,7 +259,7 @@ module BandMatrix =
       if Sundials_config.safe && not valid then raise Invalidated;
       c_set_to_zero dlsmat
 
-    external c_add_identity : Obj.t -> unit
+    external c_add_identity : dlsmat -> unit
         = "c_densematrix_add_identity"
           (* NB: same as densematrix *)
 
@@ -265,7 +267,7 @@ module BandMatrix =
       if Sundials_config.safe && not valid then raise Invalidated;
       c_add_identity dlsmat
 
-    external c_copy : Obj.t -> Obj.t -> int -> int -> unit
+    external c_copy : dlsmat -> dlsmat -> int -> int -> unit
         = "c_bandmatrix_copy"
 
     let blit { dlsmat=dlsmat1; valid=valid1 }
@@ -273,21 +275,21 @@ module BandMatrix =
       if Sundials_config.safe && not (valid1 && valid2) then raise Invalidated;
       c_copy dlsmat1 dlsmat2 copymu copyml
 
-    external c_scale : float -> Obj.t -> unit
+    external c_scale : float -> dlsmat -> unit
         = "c_bandmatrix_scale"
 
     let scale a { dlsmat; valid } =
       if Sundials_config.safe && not valid then raise Invalidated;
       c_scale a dlsmat
 
-    external c_gbtrf : Obj.t -> lint_array -> unit
+    external c_gbtrf : dlsmat -> lint_array -> unit
         = "c_bandmatrix_gbtrf"
 
     let gbtrf { dlsmat; valid } la =
       if Sundials_config.safe && not valid then raise Invalidated;
       c_gbtrf dlsmat la
 
-    external c_gbtrs : Obj.t -> lint_array -> real_array -> unit
+    external c_gbtrs : dlsmat -> lint_array -> real_array -> unit
         = "c_bandmatrix_gbtrs"
 
     let gbtrs { dlsmat; valid } la ra =
@@ -295,7 +297,7 @@ module BandMatrix =
       c_gbtrs dlsmat la ra
 
     (*
-    external c_get : Obj.t -> int -> int -> float
+    external c_get : dlsmat -> int -> int -> float
         = "c_bandmatrix_get"
 
     let get { dlsmat; valid } i j =
@@ -307,7 +309,7 @@ module BandMatrix =
       payload.{j, i - j + ismu}
 
     (*
-    external c_set : Obj.t -> int -> int -> float -> unit
+    external c_set : dlsmat -> int -> int -> float -> unit
         = "c_bandmatrix_set"
 
     let set { dlsmat; valid } i j e =

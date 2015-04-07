@@ -22,13 +22,15 @@
    implementation details.
  *)
 
+type dlsmat
+
 module DenseTypes = struct
   type data = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
 
   (* Must correspond with dls_ml.h:dls_densematrix_index *)
   type t = {
     payload : data;
-    dlsmat  : Obj.t;
+    dlsmat  : dlsmat;
     mutable valid : bool;
   }
 end
@@ -39,7 +41,7 @@ module BandTypes = struct
   (* Must correspond with dls_ml.h:dls_bandmatrix_index *)
   type t = {
     payload : data;
-    dlsmat  : Obj.t;
+    dlsmat  : dlsmat;
     ismu    : int;
     mutable valid : bool;
   }
