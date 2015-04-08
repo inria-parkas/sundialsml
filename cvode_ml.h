@@ -315,6 +315,10 @@ enum cvode_exn_index {
     CVODE_EXN_SET_SIZE
 };
 
+/* Used by the Klu and Superlumt solvers */
+value c_cvode_make_jac_arg(realtype t, N_Vector y, N_Vector fy, value tmp);
+value c_cvode_make_triple_tmp(N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
+
 #define CVODE_EXN(name) (Field(Field (Field (sundials_ml_exn_table,	\
 					     CVODE_EXN_SET),		\
 				      CVODE_EXN_ ## name),		\

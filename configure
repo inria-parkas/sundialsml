@@ -49,6 +49,10 @@ do
 	install_docs=0;;
     --disable-mpi)
 	enable_mpi=0;;
+    --disable-klu)
+	enable_klu=0;;
+    --disable-superlumt)
+	enable_superlumt=0;;
     --enable-debug)
 	enable_debug=1;;
     --unsafe)
@@ -80,7 +84,9 @@ do
 
 	Optional Features:
 	  --disable-doc          do not install html documentation
-	  --disable-mpi          build without parallel features (default: enable if possible)
+	  --disable-mpi          build without parallel features
+	  --disable-klu		 disable the KLU features
+	  --disable-superlumt	 disable the SuperLU_MT features
 	  --no-lib-path          do not record paths in the OCaml library
 	  --enable-debug         enable assertions and debug symbols
 	  --unsafe               no bounds or other runtime checks
@@ -479,6 +485,9 @@ fi
 # Check for SUPERLUMT and KLU
 klu_enabled=
 klu_info="not available"
+klu_cobj_main=
+klu_mlobj_main=
+
 superlumt_enabled=
 superlumt_info="not available"
 if [ $sundials -ge 260 ]; then
@@ -488,15 +497,31 @@ if [ $sundials -ge 260 ]; then
     sundials_info=`printf "#include %s\n%b%b" "${include}" "${q1}" "${q2}" \
 		    | ${CPP} ${cppflags} ${Isundials_inc_path} -P 2>/dev/null \
 		    | grep -v ^$`
+
     case "${sundials_info}" in
-	*:KLU:*) klu_enabled=1
-		 klu_info="installed" ;;
-	*)       klu_info="not installed" ;;
+	*:KLU:*)
+	    if [ ${enable_klu:-1} -eq 1 ]; then
+		klu_enabled=1
+		klu_info="installed"
+		klu_cobj_main=cvode_klu_ml${XO}
+		klu_mlobj_main=cvode_klu.cmo
+	    else
+		klu_info='disabled'
+	    fi;;
+	*)  klu_info="not installed" ;;
     esac
+
     case "${sundials_info}" in
-	*:SUPERLUMT:*) superlumt_enabled=1
-		       superlumt_info="installed" ;;
-	*)	       superlumt_info="not installed" ;;
+	*:SUPERLUMT:*)
+	    if [ ${enable_superlumt:-1} -eq 1 ]; then
+		superlumt_enabled=1
+	        superlumt_info="installed"
+		superlumt_cobj_main=cvode_superlumt_ml${XO}
+		superlumt_mlobj_main=cvode_superlumt.cmo
+	    else
+		superlumt_info='disabled'
+	    fi;;
+	*)  superlumt_info="not installed" ;;
     esac
 fi
 
@@ -733,6 +758,10 @@ fi
 	 s#@lapack_enabled@#${lapack_enabled}#;
 	 s#@sls_ml_xo@#${sls_ml_xo}#;
 	 s#@sls_cmo@#${sls_cmo}#;
+	 s#@klu_cobj_main@#${klu_cobj_main}#;
+	 s#@klu_mlobj_main@#${klu_mlobj_main}#;
+	 s#@superlumt_cobj_main@#${superlumt_cobj_main}#;
+	 s#@superlumt_mlobj_main@#${superlumt_mlobj_main}#;
 	 s#@cc@#${CC}#;
 	 s#@cpp@#${CPP}#;
 	 s#@mpicc@#$mpicc#;

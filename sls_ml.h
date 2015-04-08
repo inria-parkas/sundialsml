@@ -30,6 +30,7 @@ enum sls_densematrix_index {
 
 CAMLprim value c_sls_invalidate(value);
 CAMLprim value c_sls_sparse_wrap(SlsMat a, int finalize);
+CAMLprim value c_sparsematrix_realloc(value vma, value vnnz);
 
 #endif
 

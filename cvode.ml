@@ -151,6 +151,12 @@ module Dls =
       | DlsBandCallback  ({ bmat = Some d } as cb) ->
           Dls.BandMatrix.invalidate d;
           cb.bmat <- None
+      | SlsKluCallback ({ SlsTypes.smat = Some d } as cb) ->
+          Sls_impl.invalidate d;
+          cb.SlsTypes.smat <- None
+      | SlsSuperlumtCallback ({ SlsTypes.smat = Some d } as cb) ->
+          Sls_impl.invalidate d;
+          cb.SlsTypes.smat <- None
       | _ -> ()
 
     let set_dense_jac_fn s fjacfn =

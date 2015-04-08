@@ -229,7 +229,7 @@ static int errw(N_Vector y, N_Vector ewt, void *user_data)
     CAMLreturnT (int, 0);
 }
 
-static value make_jac_arg(realtype t, N_Vector y, N_Vector fy, value tmp)
+value c_cvode_make_jac_arg(realtype t, N_Vector y, N_Vector fy, value tmp)
 {
     CAMLparam1(tmp);
     CAMLlocal1(r);
@@ -243,7 +243,7 @@ static value make_jac_arg(realtype t, N_Vector y, N_Vector fy, value tmp)
     CAMLreturn(r);
 }
 
-static value make_triple_tmp(N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
+value c_cvode_make_triple_tmp(N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
 {
     CAMLparam0();
     CAMLlocal1(r);
@@ -281,7 +281,8 @@ static int jacfn(
 	Store_field(cb, 1, dmat);
     }
 
-    args[0] = make_jac_arg (t, y, fy, make_triple_tmp (tmp1, tmp2, tmp3));
+    args[0] = c_cvode_make_jac_arg (t, y, fy,
+				    c_cvode_make_triple_tmp (tmp1, tmp2, tmp3));
     args[1] = Some_val(dmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -320,7 +321,8 @@ static int bandjacfn(
     args[0] = caml_alloc_tuple(RECORD_CVODE_BANDRANGE_SIZE);
     Store_field(args[0], RECORD_CVODE_BANDRANGE_MUPPER, Val_long(mupper));
     Store_field(args[0], RECORD_CVODE_BANDRANGE_MLOWER, Val_long(mlower));
-    args[1] = make_jac_arg(t, y, fy, make_triple_tmp(tmp1, tmp2, tmp3));
+    args[1] = c_cvode_make_jac_arg(t, y, fy,
+				   c_cvode_make_triple_tmp(tmp1, tmp2, tmp3));
     args[2] = Some_val(bmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -346,7 +348,8 @@ static int precsetupfn(realtype t,
 
     WEAK_DEREF (session, *(value*)user_data);
 
-    args[0] = make_jac_arg(t, y, fy, make_triple_tmp(tmp1, tmp2, tmp3));
+    args[0] = c_cvode_make_jac_arg(t, y, fy,
+				   c_cvode_make_triple_tmp(tmp1, tmp2, tmp3));
     args[1] = Val_bool(jok);
     args[2] = caml_copy_double(gamma);
 
@@ -405,7 +408,7 @@ static int precsolvefn(
     CAMLlocal2(session, cb);
     CAMLlocalN(args, 3);
 
-    args[0] = make_jac_arg(t, y, fy, NVEC_BACKLINK(tmp));
+    args[0] = c_cvode_make_jac_arg(t, y, fy, NVEC_BACKLINK(tmp));
     args[1] = make_spils_solve_arg(rvec, gamma, delta, lr);
     args[2] = NVEC_BACKLINK(z);
 
@@ -432,7 +435,7 @@ static int jactimesfn(N_Vector v,
     CAMLlocal2(session, cb);
     CAMLlocalN(args, 3);
 
-    args[0] = make_jac_arg(t, y, fy, NVEC_BACKLINK(tmp));
+    args[0] = c_cvode_make_jac_arg(t, y, fy, NVEC_BACKLINK(tmp));
     args[1] = NVEC_BACKLINK(v);
     args[2] = NVEC_BACKLINK(Jv);
 
@@ -496,7 +499,7 @@ static int lsetup(CVodeMem cv_mem, int convfail,
     Store_field (args, RECORD_CVODE_ALTERNATE_LSETUP_ARGS_RHS,
 		 NVEC_BACKLINK(fpred));
     Store_field (args, RECORD_CVODE_ALTERNATE_LSETUP_ARGS_TMP,
-		 make_triple_tmp(tmp1, tmp2, tmp3));
+		 c_cvode_make_triple_tmp(tmp1, tmp2, tmp3));
 
     cb = CVODE_LS_CALLBACKS_FROM_ML (session);
     cb = Field (cb, 0);

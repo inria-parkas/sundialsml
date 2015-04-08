@@ -10,24 +10,13 @@
 (*                                                                     *)
 (***********************************************************************)
 
-type int_array =
-  (int32, Bigarray.int32_elt, Bigarray.c_layout) Bigarray.Array1.t
-type real_array = Sundials.RealArray.t
-
 (* sparse linear solvers functions *)
 
 (* note: uses DENSE_ELEM rather than the more efficient DENSE_COL. *)
 module SparseMatrix =
   struct
     (* Must correspond with sls_ml.h:sls_sparsematrix_index *)
-    type slsmat
-    type t = {
-      colptrs : int_array;
-      rowvals : int_array;
-      data    : real_array;
-      slsmat  : slsmat;
-      mutable valid : bool;
-    }
+    include Sls_impl
 
     exception Invalidated
 
@@ -46,8 +35,6 @@ module SparseMatrix =
          https://groups.google.com/d/msg/fa.caml/ROr_PifT_44/aqQ8Z0TWzH8J).
        Worse, the underlying arrays may be reallocated by calls to
        add_identity, blit, or add. *)
-
-    let invalidate v = v.valid <- false
 
     external c_size : slsmat -> (int * int * int)
         = "c_sparsematrix_size"

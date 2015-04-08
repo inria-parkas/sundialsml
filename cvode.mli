@@ -80,7 +80,7 @@ type 'd triple = 'd * 'd * 'd
     @cvode <node5#ss:jtimesfn> CVSpilsJacTimesVecFn
     @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
     @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
-type ('t, 'd) jacobian_arg =
+type ('t, 'd) jacobian_arg = ('t, 'd) Cvode_impl.jacobian_arg =
   {
     jac_t   : float;        (** The independent variable. *)
     jac_y   : 'd;           (** The dependent variable vector. *)

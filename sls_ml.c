@@ -15,10 +15,7 @@
 
 #include <sundials/sundials_types.h>
 #include <sundials/sundials_direct.h>
-
-#if SUNDIALS_LIB_VERSION >= 260
 #include <sundials/sundials_sparse.h>
-#endif
 
 #include <caml/mlvalues.h>
 #include <caml/alloc.h>

@@ -29,13 +29,15 @@ default: all
 COBJ_COMMON = sundials_ml$(XO) dls_ml$(XO) $(SLS_ML_XO) nvector_ml$(XO) \
 	      spils_ml$(XO)
 
-COBJ_MAIN = $(COBJ_COMMON) kinsol_ml$(XO)
+COBJ_MAIN = $(COBJ_COMMON) kinsol_ml$(XO)				\
+	    $(KLU_COBJ_MAIN) $(SUPERLUMT_COBJ_MAIN)
 
-MLOBJ_MAIN = sundials_config.cmo sundials.cmo			\
-	     dls_impl.cmo dls.cmo $(SLS_CMO) spils.cmo		\
-	     nvector.cmo nvector_custom.cmo nvector_array.cmo	\
-	     nvector_serial.cmo cvode_impl.cmo ida_impl.cmo	\
-	     kinsol_impl.cmo cvode.cmo kinsol.cmo ida.cmo
+MLOBJ_MAIN = sundials_config.cmo sundials.cmo				\
+	     dls_impl.cmo dls.cmo sls_impl.cmo $(SLS_CMO) spils.cmo	\
+	     nvector.cmo nvector_custom.cmo nvector_array.cmo		\
+	     nvector_serial.cmo cvode_impl.cmo ida_impl.cmo		\
+	     kinsol_impl.cmo cvode.cmo kinsol.cmo ida.cmo		\
+	     $(KLU_MLOBJ_MAIN) $(SUPERLUMT_MLOBJ_MAIN)
 
 CMI_MAIN = $(filter-out sundials_config.cmi,$(filter-out %_impl.cmi,\
 	    $(MLOBJ_MAIN:.cmo=.cmi)))
@@ -153,6 +155,12 @@ cvodes_ml.o: cvodes_ml.c
 
 cvode_bbd_ml.o: cvode_bbd_ml.c
 	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
+
+cvode_klu_ml.o: cvode_klu_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(CVODES_CFLAGS) -o $@ -c $<
+
+cvode_superlumt_ml.o: cvode_superlumt_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(CVODES_CFLAGS) -o $@ -c $<
 
 cvodes_bbd_ml.o: cvodes_bbd_ml.c
 	$(CC) -I $(OCAML_INCLUDE) $(CVODES_CFLAGS) -o $@ -c $<

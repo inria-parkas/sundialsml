@@ -94,6 +94,21 @@ module DlsTypes = struct
     }
 end
 
+module SlsTypes = struct
+
+  type sparse_jac_fn =
+    (RealArray.t triple, RealArray.t) jacobian_arg
+    -> Sls.SparseMatrix.t
+    -> unit
+
+  type sparse_jac_callback =
+    {
+      jacfn: sparse_jac_fn;
+      mutable smat : Sls_impl.t option
+    }
+
+end
+
 module SpilsCommonTypes = struct
   (* Types that don't depend on jacobian_arg.  *)
 
@@ -406,6 +421,10 @@ and ('a, 'kind) linsolv_callbacks =
                           (* Invariant: 'a = RealArray.t *)
   | BSpilsBBDCallback of 'a CvodesBbdParamTypes.callbacks
 
+  (* Sls *)
+  | SlsKluCallback of SlsTypes.sparse_jac_callback
+  | SlsSuperlumtCallback of SlsTypes.sparse_jac_callback
+
   (* Alternate *)
   | AlternateCallback of ('a, 'kind) alternate_linsolv
 
@@ -494,6 +513,18 @@ let ls_check_dls session =
     match session.ls_callbacks with
     | DlsDenseCallback _ | DlsBandCallback _
     | BDlsDenseCallback _ | BDlsBandCallback _ -> ()
+    | _ -> raise Sundials.InvalidLinearSolver
+
+let ls_check_klu session =
+  if Sundials_config.safe then
+    match session.ls_callbacks with
+    | SlsKluCallback _ -> ()
+    | _ -> raise Sundials.InvalidLinearSolver
+
+let ls_check_superlumt session =
+  if Sundials_config.safe then
+    match session.ls_callbacks with
+    | SlsSuperlumtCallback _ -> ()
     | _ -> raise Sundials.InvalidLinearSolver
 
 let ls_check_spils session =
