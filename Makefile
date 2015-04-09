@@ -1,3 +1,7 @@
+
+ifeq ($(wildcard config),)
+$(error Please run ./configure first)
+endif
 include config
 
 default: all
