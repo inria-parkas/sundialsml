@@ -338,7 +338,7 @@ clean:
 	-@$(RM) -f $(STUBLIBS)
 
 cleandoc:
-	-@$(RM) -f doc/html/*.html doc/html/docstyle.css
+	-@$(RM) -f doc/html/*.html
 
 distclean: clean cleandoc
 	-@($(MAKE) -C examples distclean)
