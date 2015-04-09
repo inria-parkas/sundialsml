@@ -11,9 +11,21 @@
  *                                                                     *
  ***********************************************************************/
 
+#ifdef SUNDIALSML_WITHSENS
+/* CVODES (with sensitivity) */
+
+#include <cvodes/cvode.h>
+#include <cvodes/cvode_sparse.h>
+#include <cvodes/cvode_superlumt.h>
+
+#else
+/* CVODE (without sensitivity) */
+
 #include <cvode/cvode.h>
 #include <cvode/cvode_sparse.h>
 #include <cvode/cvode_superlumt.h>
+
+#endif
 
 #include <caml/mlvalues.h>
 #include <caml/alloc.h>
@@ -95,5 +107,16 @@ CAMLprim value c_cvode_superlumt_set_ordering (value vcvode_mem, value vorder)
     CHECK_FLAG ("CVSuperLUMTSetOrdering", flag);
 
     CAMLreturn (Val_unit);
+}
+
+CAMLprim value c_cvode_superlumt_get_num_jac_evals(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+
+    long int r;
+    int flag = CVSlsGetNumJacEvals(CVODE_MEM_FROM_ML(vcvode_mem), &r);
+    CHECK_FLAG("CVSlsGetNumJacEvals", flag);
+
+    CAMLreturn(Val_long(r));
 }
 

@@ -36,3 +36,10 @@ let set_ordering session ordering =
   ls_check_superlumt session;
   c_set_ordering session ordering
 
+external c_get_num_jac_evals : serial_session -> int
+  = "c_cvode_superlumt_get_num_jac_evals"
+
+let get_num_jac_evals session =
+  ls_check_superlumt session;
+  c_get_num_jac_evals session
+

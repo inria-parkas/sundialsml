@@ -72,3 +72,9 @@ val set_ordering : Cvode.serial_session -> ordering -> unit
     @nocvode <node5#ss:sls_optin> CVKLUReInit *)
 val reinit : Cvode.serial_session -> int -> int -> bool -> unit
 
+(** Returns the number of calls made by a sparse linear solver to the
+    Jacobian approximation function.
+
+    @nocvode <node5#sss:optout_sls> CVSlsGetNumJacEvals *)
+val get_num_jac_evals : Cvode.serial_session -> int
+

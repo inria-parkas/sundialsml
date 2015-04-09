@@ -487,9 +487,16 @@ klu_enabled=
 klu_info="not available"
 klu_cobj_main=
 klu_mlobj_main=
+klu_cobj_sens=
+klu_mlobj_sens=
 
 superlumt_enabled=
 superlumt_info="not available"
+superlumt_cobj_main=
+superlumt_mlobj_main=
+superlumt_cobj_sens=
+superlumt_mlobj_sens=
+
 if [ $sundials -ge 260 ]; then
     include="\"sundials/sundials_config.h\""
     q1="#ifdef SUNDIALS_KLU\n:KLU:\n#endif\n"
@@ -505,6 +512,8 @@ if [ $sundials -ge 260 ]; then
 		klu_info="installed"
 		klu_cobj_main=cvode_klu_ml${XO}
 		klu_mlobj_main=cvode_klu.cmo
+		klu_cobj_sens=cvodes_klu_ml${XO}
+		klu_mlobj_sens=cvodes_klu.cmo
 	    else
 		klu_info='disabled'
 	    fi;;
@@ -518,6 +527,8 @@ if [ $sundials -ge 260 ]; then
 	        superlumt_info="installed"
 		superlumt_cobj_main=cvode_superlumt_ml${XO}
 		superlumt_mlobj_main=cvode_superlumt.cmo
+		superlumt_cobj_sens=cvodes_superlumt_ml${XO}
+		superlumt_mlobj_sens=cvodes_superlumt.cmo
 	    else
 		superlumt_info='disabled'
 	    fi;;
@@ -760,8 +771,12 @@ fi
 	 s#@sls_cmo@#${sls_cmo}#;
 	 s#@klu_cobj_main@#${klu_cobj_main}#;
 	 s#@klu_mlobj_main@#${klu_mlobj_main}#;
+	 s#@klu_cobj_sens@#${klu_cobj_sens}#;
+	 s#@klu_mlobj_sens@#${klu_mlobj_sens}#;
 	 s#@superlumt_cobj_main@#${superlumt_cobj_main}#;
 	 s#@superlumt_mlobj_main@#${superlumt_mlobj_main}#;
+	 s#@superlumt_cobj_sens@#${superlumt_cobj_sens}#;
+	 s#@superlumt_mlobj_sens@#${superlumt_mlobj_sens}#;
 	 s#@cc@#${CC}#;
 	 s#@cpp@#${CPP}#;
 	 s#@mpicc@#$mpicc#;

@@ -11,9 +11,21 @@
  *                                                                     *
  ***********************************************************************/
 
+#ifdef SUNDIALSML_WITHSENS
+/* CVODES (with sensitivity) */
+
+#include <cvodes/cvode.h>
+#include <cvodes/cvode_sparse.h>
+#include <cvodes/cvode_klu.h>
+
+#else
+/* CVODE (without sensitivity) */
+
 #include <cvode/cvode.h>
 #include <cvode/cvode_sparse.h>
 #include <cvode/cvode_klu.h>
+
+#endif
 
 #include <caml/mlvalues.h>
 #include <caml/alloc.h>
@@ -111,5 +123,16 @@ CAMLprim value c_cvode_klu_reinit (value vcvode_mem, value vn, value vnnz,
     CHECK_FLAG ("CVKLUReInit", flag);
 
     CAMLreturn (Val_unit);
+}
+
+CAMLprim value c_cvode_klu_get_num_jac_evals(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+
+    long int r;
+    int flag = CVSlsGetNumJacEvals(CVODE_MEM_FROM_ML(vcvode_mem), &r);
+    CHECK_FLAG("CVSlsGetNumJacEvals", flag);
+
+    CAMLreturn(Val_long(r));
 }
 

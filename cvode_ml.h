@@ -21,6 +21,10 @@
 #ifndef _CVODE_ML_H__
 #define _CVODE_ML_H__
 
+#include <sundials/sundials_types.h>
+#include <sundials/sundials_nvector.h>
+#include <caml/mlvalues.h>
+
 /*
  * The session data structure is shared in four parts across the OCaml and C
  * heaps:
@@ -315,7 +319,6 @@ enum cvode_exn_index {
     CVODE_EXN_SET_SIZE
 };
 
-/* Used by the Klu and Superlumt solvers */
 value c_cvode_make_jac_arg(realtype t, N_Vector y, N_Vector fy, value tmp);
 value c_cvode_make_triple_tmp(N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
 

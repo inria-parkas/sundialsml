@@ -14,6 +14,10 @@
 #ifndef _CVODES_ML_H__
 #define _CVODES_ML_H__
 
+#include <sundials/sundials_types.h>
+#include <sundials/sundials_nvector.h>
+#include <caml/mlvalues.h>
+
 /* The sessions of CVODES work almost exactly as described in cvode_ml.h.
  *
  * 1. Standard (quadrature, sensitivity, sensitivity/quadrature,
@@ -229,6 +233,10 @@ enum cvodes_enum_index {
     CVODES_EXN_BadOutputTime,
     CVODES_EXN_SET_SIZE
 };
+
+value c_cvodes_make_jac_arg(realtype t, N_Vector y, N_Vector yb,
+			    N_Vector fyb, value tmp);
+void c_cvodes_wrap_to_nvector_table(int n, value vy, N_Vector *y);
 
 #define CVODES_EXN(name) (Field(Field (Field (sundials_ml_exn_table,	\
 					      CVODES_EXN_SET),		\

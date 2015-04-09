@@ -578,11 +578,6 @@ module Adjoint =
       | Newton of ('data, 'kind) linear_solver
       | Functional
 
-    let parent_and_which s =
-      match (tosession s).sensext with
-      | BwdSensExt se -> (se.parent, se.which)
-      | _ -> failwith "Internal error: bsession invalid"
-
     type ('a, 'k) tolerance =
       | SStolerances of float * float
       | SVtolerances of float * ('a, 'k) nvector

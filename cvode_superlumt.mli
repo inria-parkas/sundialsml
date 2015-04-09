@@ -66,3 +66,9 @@ type ordering =
     @nocvode <node5#ss:sls_optin> CVSuperLUMTSetOrdering *)
 val set_ordering : Cvode.serial_session -> ordering -> unit
 
+(** Returns the number of calls made by a sparse linear solver to the
+    Jacobian approximation function.
+
+    @nocvode <node5#sss:optout_sls> CVSlsGetNumJacEvals *)
+val get_num_jac_evals : Cvode.serial_session -> int
+

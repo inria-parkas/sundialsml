@@ -47,8 +47,10 @@ CMI_MAIN = $(filter-out sundials_config.cmi,$(filter-out %_impl.cmi,\
 	    $(MLOBJ_MAIN:.cmo=.cmi)))
 
 ### Objects specific to sundials.cma.
-COBJ_SENS  = cvode_ml_s$(XO) ida_ml_s$(XO) cvodes_ml.o idas_ml.o
-MLOBJ_SENS = cvodes.cmo idas.cmo
+COBJ_SENS  = cvode_ml_s$(XO) ida_ml_s$(XO) cvodes_ml.o idas_ml.o \
+	     $(KLU_COBJ_SENS) $(SUPERLUMT_COBJ_SENS)
+MLOBJ_SENS = cvodes.cmo idas.cmo \
+	     $(KLU_MLOBJ_SENS) $(SUPERLUMT_MLOBJ_SENS)
 CMI_SENS = $(MLOBJ_SENS:.cmo=.cmi)
 
 ### Objects specific to sundials_no_sens.cma.

@@ -42,3 +42,10 @@ let reinit session n nnz realloc =
   ls_check_klu session;
   c_reinit session n nnz realloc
 
+external c_get_num_jac_evals : serial_session -> int
+  = "c_cvode_klu_get_num_jac_evals"
+
+let get_num_jac_evals session =
+  ls_check_klu session;
+  c_get_num_jac_evals session
+

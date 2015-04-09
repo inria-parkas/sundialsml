@@ -15,7 +15,6 @@
 #include <errno.h>
 #include <string.h>
 
-#include <caml/mlvalues.h>
 #include <caml/alloc.h>
 #include <caml/memory.h>
 #include <caml/callback.h>
@@ -23,9 +22,6 @@
 #include <caml/fail.h>
 #include <caml/unixsupport.h>
 #include <caml/bigarray.h>
-
-#include <sundials/sundials_types.h>
-#include <sundials/sundials_nvector.h>
 
 // When we compile with sensitivity (CVODES), we are obliged to use the
 // cvodes/cvodes_* header files. In fact, nearly everything functions

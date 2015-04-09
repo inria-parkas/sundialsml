@@ -953,7 +953,7 @@ module Adjoint :
         @cvodes <node7#ss:jtimesv_b> CVSpilsJacTimesVecFnB
         @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB
         @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB *)
-    type ('t, 'd) jacobian_arg =
+    type ('t, 'd) jacobian_arg = ('t, 'd) Cvode_impl.AdjointTypes.jacobian_arg =
       {
         jac_t   : float;        (** The independent variable. *)
         jac_y   : 'd;           (** The forward solution vector. *)
