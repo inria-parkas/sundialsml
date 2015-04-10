@@ -161,9 +161,7 @@ static int resfn (realtype t, N_Vector y, N_Vector yp,
     WEAK_DEREF (session, *(value*)user_data);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (IDA_RESFN_FROM_ML (session),
-				  sizeof (args) / sizeof (*args),
-				  args);
+    value r = caml_callbackN_exn (IDA_RESFN_FROM_ML (session), 4, args);
 
     CAMLreturnT (int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -234,7 +232,7 @@ static int jacfn (long int neq, realtype t, realtype coef,
     args[1] = Some_val(dmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback2_exn (Field(cb, 0), args[0], args[1]);
+    value r = caml_callbackN_exn (Field(cb, 0), 2, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -266,7 +264,7 @@ static int bandjacfn (long int neq, long int mupper, long int mlower,
     args[2] = Some_val(bmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn (Field(cb, 0), args[0], args[1], args[2]);
+    value r = caml_callbackN_exn (Field(cb, 0), 3, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -289,9 +287,7 @@ static int rootsfn (realtype t, N_Vector y, N_Vector yp,
     args[3] = caml_ba_alloc (BIGARRAY_FLOAT, 1, gout, &nroots);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (IDA_ROOTSFN_FROM_ML (session),
-				  sizeof (args) / sizeof (*args),
-				  args);
+    value r = caml_callbackN_exn (IDA_ROOTSFN_FROM_ML (session), 4, args);
 
     CAMLreturnT (int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }
@@ -372,7 +368,7 @@ static int precsolvefn(
     cb = Field (cb, RECORD_IDA_SPILS_CALLBACKS_PREC_SOLVE_FN);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+    value r = caml_callbackN_exn (cb, 4, args);
 
     CAMLreturnT (int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -403,7 +399,7 @@ static int jactimesfn(
     cb = Field (cb, RECORD_IDA_SPILS_CALLBACKS_JAC_TIMES_VEC_FN);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn (cb, args[0], args[1], args[2]);
+    value r = caml_callbackN_exn (cb, 3, args);
 
     CAMLreturnT (int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }

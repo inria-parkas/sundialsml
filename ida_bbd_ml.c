@@ -53,7 +53,7 @@ static int bbdlocal(long int nlocal, realtype t, N_Vector y, N_Vector yp,
     cb = Field (cb, RECORD_IDA_BBD_CALLBACKS_LOCAL_FN);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+    value r = caml_callbackN_exn (cb, 4, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -76,7 +76,7 @@ static int bbdcomm(long int nlocal, realtype t, N_Vector y, N_Vector yp,
     cb = Field (cb, 0);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn (cb, args[0], args[1], args[2]);
+    value r = caml_callbackN_exn (cb, 3, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }

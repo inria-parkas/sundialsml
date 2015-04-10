@@ -268,7 +268,7 @@ static int jacfn(
     args[1] = Some_val(dmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback2_exn (Field(cb, 0), args[0], args[1]);
+    value r = caml_callbackN_exn (Field(cb, 0), 2, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, UNRECOVERABLE));
 }
@@ -305,7 +305,7 @@ static int bandjacfn(
     args[2] = Some_val(bmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn (Field(cb, 0), args[0], args[1], args[2]);
+    value r = caml_callbackN_exn (Field(cb, 0), 3, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, UNRECOVERABLE));
 }
@@ -333,7 +333,7 @@ static int precsetupfn(
     cb = Field (cb, 0);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback2_exn(cb, args[0], args[1]);
+    value r = caml_callbackN_exn(cb, 2, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -362,7 +362,7 @@ static int precsolvefn(
     cb = Field (cb, 0);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn(cb, args[0], args[1], args[2]);
+    value r = caml_callbackN_exn(cb, 3, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -390,7 +390,7 @@ static int jactimesfn(
     cb = Field (cb, 0);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+    value r = caml_callbackN_exn (cb, 4, args);
 
     if (!Is_exception_result (r)) {
 	*new_uu = Bool_val (r);
@@ -456,7 +456,7 @@ static int lsolve(KINMem kin_mem, N_Vector x, N_Vector b, realtype *res_norm)
     cb = Field (cb, RECORD_KINSOL_ALTERNATE_CALLBACKS_LSOLVE);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn (cb, args[0], args[1], args[2]);
+    value r = caml_callbackN_exn (cb, 3, args);
     if (!Is_exception_result (r)) {
 	if (r != Val_none) *res_norm = Double_val(Field(r, 0));
 	CAMLreturnT (int, 0);

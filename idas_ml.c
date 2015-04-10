@@ -275,9 +275,7 @@ static int quadrhsfn(realtype t, N_Vector y, N_Vector yp, N_Vector rhsQ,
     // copy, then it has to make it manually.
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (IDAS_QUADRHSFN_FROM_EXT (sensext),
-				  sizeof (args) / sizeof (*args),
-				  args);
+    value r = caml_callbackN_exn (IDAS_QUADRHSFN_FROM_EXT (sensext), 4, args);
 
     CAMLreturnT (int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -466,7 +464,7 @@ static int bprecsolvefn(realtype t, N_Vector yy, N_Vector yp,
     cb = Field (cb, RECORD_IDAS_BSPILS_CALLBACKS_PREC_SOLVE_FN);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (cb, sizeof (args) / sizeof (*args), args);
+    value r = caml_callbackN_exn (cb, 4, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -493,7 +491,7 @@ static int bjactimesfn(realtype t, N_Vector yy, N_Vector yp,
     cb = Field (cb, RECORD_IDAS_BSPILS_CALLBACKS_JAC_TIMES_VEC_FN);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn (cb, args[0], args[1], args[2]);
+    value r = caml_callbackN_exn (cb, 3, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }
@@ -524,7 +522,7 @@ static int bjacfn(long int NeqB, realtype t,
     args[1] = Some_val(dmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback2_exn (Field(cb, 0), args[0], args[1]);
+    value r = caml_callbackN_exn (Field(cb, 0), 2, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -559,7 +557,7 @@ static int bbandjacfn(long int NeqB, long int mupperb, long int mlowerb,
     args[2] = Some_val(bmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn (Field(cb, 0), args[0], args[1], args[2]);
+    value r = caml_callbackN_exn (Field(cb, 0), 3, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
