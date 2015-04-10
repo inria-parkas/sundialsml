@@ -23,8 +23,11 @@
 
 #include "sundials_ml.h"
 #include "nvector_ml.h"
+#include <caml/mlvalues.h>
 
 void kinsol_ml_check_flag(const char *call, int flag);
+value kinsol_make_jac_arg(N_Vector u, N_Vector fu, value tmp);
+value kinsol_make_double_tmp(N_Vector tmp1, N_Vector tmp2);
 
 #define CHECK_FLAG(call, flag) if (flag != KIN_SUCCESS) \
 				 kinsol_ml_check_flag(call, flag)

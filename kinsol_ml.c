@@ -19,7 +19,6 @@
 #include <sundials/sundials_types.h>
 #include <sundials/sundials_band.h>
 
-#include <caml/mlvalues.h>
 #include <caml/alloc.h>
 #include <caml/memory.h>
 #include <caml/callback.h>
@@ -216,7 +215,7 @@ static value make_prec_solve_arg(N_Vector uscale, N_Vector fscale)
     CAMLreturn(r);
 }
 
-static value make_jac_arg(N_Vector u, N_Vector fu, value tmp)
+value kinsol_make_jac_arg(N_Vector u, N_Vector fu, value tmp)
 {
     CAMLparam1(tmp);
     CAMLlocal1(r);
@@ -229,7 +228,7 @@ static value make_jac_arg(N_Vector u, N_Vector fu, value tmp)
     CAMLreturn(r);
 }
 
-static value make_double_tmp(N_Vector tmp1, N_Vector tmp2)
+value kinsol_make_double_tmp(N_Vector tmp1, N_Vector tmp2)
 {
     CAMLparam0();
     CAMLlocal1(r);
@@ -264,7 +263,7 @@ static int jacfn(
 	Store_field(cb, 1, dmat);
     }
 
-    args[0] = make_jac_arg(u, fu, make_double_tmp(tmp1, tmp2));
+    args[0] = kinsol_make_jac_arg(u, fu, kinsol_make_double_tmp(tmp1, tmp2));
     args[1] = Some_val(dmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -301,7 +300,7 @@ static int bandjacfn(
     args[0] = caml_alloc_tuple(RECORD_KINSOL_BANDRANGE_SIZE);
     Store_field(args[0], RECORD_KINSOL_BANDRANGE_MUPPER, Val_long(mupper));
     Store_field(args[0], RECORD_KINSOL_BANDRANGE_MLOWER, Val_long(mlower));
-    args[1] = make_jac_arg(u, fu, make_double_tmp(tmp1, tmp2));
+    args[1] = kinsol_make_jac_arg(u, fu, kinsol_make_double_tmp(tmp1, tmp2));
     args[2] = Some_val(bmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -323,7 +322,7 @@ static int precsetupfn(
     CAMLlocal2(session, cb);
     CAMLlocalN(args, 2);
 
-    args[0] = make_jac_arg(uu, fu, make_double_tmp(tmp1, tmp2));
+    args[0] = kinsol_make_jac_arg(uu, fu, kinsol_make_double_tmp(tmp1, tmp2));
     args[1] = make_prec_solve_arg(uscale, fscale);
 
     WEAK_DEREF (session, *(value*)user_data);
@@ -351,7 +350,7 @@ static int precsolvefn(
     CAMLlocal2(session, cb);
     CAMLlocalN(args, 3);
 
-    args[0] = make_jac_arg(uu, fu, NVEC_BACKLINK(tmp));
+    args[0] = kinsol_make_jac_arg(uu, fu, NVEC_BACKLINK(tmp));
     args[1] = make_prec_solve_arg(uscale, fscale);
     args[2] = NVEC_BACKLINK(vv);
 

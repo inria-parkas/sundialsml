@@ -74,7 +74,7 @@ type 'd double = 'd * 'd
     @kinsol <node5#ss:bjacFn> KINDlsBandJacFn
     @kinsol <node5#ss:psolveFn> KINSpilsPrecSolveFn
     @kinsol <node5#ss:precondFn> KINSpilsPrecSetupFn *)
-type ('t, 'd) jacobian_arg =
+type ('t, 'd) jacobian_arg = ('t, 'd) Kinsol_impl.jacobian_arg =
   {
     jac_u   : 'd;   (** The current unscaled iterate. *)
     jac_fu  : 'd;   (** The current value of the vector $F(u)$. *)

@@ -148,6 +148,12 @@ kinsol_ml.o: kinsol_ml.c
 kinsol_bbd_ml.o: kinsol_bbd_ml.c
 	$(CC) -I $(OCAML_INCLUDE) $(KINSOL_CFLAGS) -o $@ -c $<
 
+kinsol_klu_ml.o: kinsol_klu_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(KINSOL_CFLAGS) -o $@ -c $<
+
+kinsol_superlumt_ml.o: kinsol_superlumt_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(KINSOL_CFLAGS) -o $@ -c $<
+
 # CVODE[S]-specific C files.
 cvode_ml.o: cvode_ml.c
 	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
