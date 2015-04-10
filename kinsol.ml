@@ -65,37 +65,29 @@ module Dls =
     external c_dls_lapack_band : serial_session -> int -> int -> bool -> unit
       = "c_kinsol_dls_lapack_band"
 
-    let dense fo s onv =
-      (match onv with
-       | Some nv -> s.neqs <- Sundials.RealArray.length (Nvector.unwrap nv)
-       | None -> ());
+    let dense fo s nv =
+      s.neqs <- Sundials.RealArray.length (Nvector.unwrap nv);
       c_dls_dense s (fo <> None);
       s.ls_callbacks <- match fo with
                         | None   -> DlsDenseCallback no_dense_callback
                         | Some f -> DlsDenseCallback { jacfn = f; dmat = None }
 
-    let lapack_dense fo s onv =
-      (match onv with
-       | Some nv -> s.neqs <- Sundials.RealArray.length (Nvector.unwrap nv)
-       | None -> ());
+    let lapack_dense fo s nv =
+      s.neqs <- Sundials.RealArray.length (Nvector.unwrap nv);
       c_dls_lapack_dense s (fo <> None);
       s.ls_callbacks <- match fo with
                         | None   -> DlsDenseCallback no_dense_callback
                         | Some f -> DlsDenseCallback { jacfn = f; dmat = None }
 
-    let band { mupper; mlower } fo s onv =
-      (match onv with
-       | Some nv -> s.neqs <- Sundials.RealArray.length (Nvector.unwrap nv)
-       | None -> ());
+    let band { mupper; mlower } fo s nv =
+      s.neqs <- Sundials.RealArray.length (Nvector.unwrap nv);
       c_dls_band s mupper mlower (fo <> None);
       s.ls_callbacks <- match fo with
                         | None   -> DlsBandCallback no_band_callback
                         | Some f -> DlsBandCallback { bjacfn = f; bmat = None }
 
-    let lapack_band { mupper; mlower } fo s onv =
-      (match onv with
-       | Some nv -> s.neqs <- Sundials.RealArray.length (Nvector.unwrap nv)
-       | None -> ());
+    let lapack_band { mupper; mlower } fo s nv =
+      s.neqs <- Sundials.RealArray.length (Nvector.unwrap nv);
       c_dls_lapack_band s mupper mlower (fo <> None);
       s.ls_callbacks <- match fo with
                         | None   -> DlsBandCallback no_band_callback
@@ -448,7 +440,7 @@ let set_constraints s cc =
   if Sundials_config.safe then s.checkvec cc;
   c_set_constraints s cc
 
-let set_linear_solver s lin_solv = lin_solv s None
+let set_linear_solver s lin_solv = lin_solv s s.initvec
 
 let set_sys_func s fsys =
   s.sysfn <- fsys
@@ -496,6 +488,7 @@ let init lsolver f u0 =
           backref      = backref;
           err_file     = err_file;
           info_file    = info_file;
+          initvec      = u0;
           checkvec     = checkvec;
 
           exn_temp     = None;
@@ -510,7 +503,7 @@ let init lsolver f u0 =
         } in
   Gc.finalise session_finalize session;
   Weak.set weakref 0 (Some session);
-  lsolver session (Some u0);
+  lsolver session u0;
   session
 
 type result =

@@ -69,10 +69,7 @@ let alternate_dense jacfn =
 
   let solver =
     Kinsol.Alternate.make (fun s nv ->
-        let n = match nv with
-                | None -> failwith "requires initial nvector!"
-                | Some nv -> RealArray.length (Nvector.unwrap nv)
-        in
+        let n = RealArray.length (Nvector.unwrap nv) in
         let mem = {
           dj     = DM.create n n;
           pivots = LintArray.create n;

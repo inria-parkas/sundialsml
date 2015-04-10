@@ -501,7 +501,7 @@ module Alternate :
         The latter indicates the problem size and can, for example, be
         cloned. *)
     val make :
-          (('data, 'kind) session -> ('data, 'kind) Nvector.t option
+          (('data, 'kind) session -> ('data, 'kind) Nvector.t
                                                   -> ('data, 'kind) callbacks)
           -> ('data, 'kind) linear_solver
 

@@ -35,15 +35,9 @@ external c_bbd_prec_init
     : parallel_session -> int -> bandwidths -> float -> bool -> unit
     = "c_kinsol_bbd_prec_init"
 
-let init_preconditioner dqrely bandwidths callbacks session onv =
-  (* FIXME: is it really legitimate to pass 0?  If so, why not always
-     do that?  *)
-  let localn =
-    match onv with
-    | None -> 0
-    | Some nv -> let ba, _, _ = Nvector.unwrap nv in
-                 Sundials.RealArray.length ba
-  in
+let init_preconditioner dqrely bandwidths callbacks session nv =
+  let localn = let ba, _, _ = Nvector.unwrap nv in
+               Sundials.RealArray.length ba in
   c_bbd_prec_init session localn bandwidths dqrely (callbacks.comm_fn <> None);
   session.ls_callbacks <- SpilsBBDCallback (bbd_callbacks callbacks)
 

@@ -147,6 +147,7 @@ type ('a, 'k) session = {
   backref   : c_weak_ref;
   err_file  : kin_file;
   info_file : kin_file;
+  initvec   : ('a, 'k) Nvector.t;   (* for the set_linear_solver call. *)
   checkvec  : (('a, 'k) Nvector.t -> unit);
 
   mutable neqs       : int;    (* only valid for 'kind = serial *)
@@ -209,14 +210,14 @@ type serial_session = (Nvector_serial.data, Nvector_serial.kind) session
 
 type ('data, 'kind) linear_solver =
   ('data, 'kind) session
-  -> ('data, 'kind) nvector option
+  -> ('data, 'kind) nvector
   -> unit
 
 module SpilsTypes = struct
   include SpilsTypes'
 
   type ('a, 'k) set_preconditioner =
-    ('a, 'k) session -> ('a, 'k) nvector option -> unit
+    ('a, 'k) session -> ('a, 'k) nvector -> unit
   
   type ('a, 'k) preconditioner =
     | InternalPrecNone of ('a, 'k) set_preconditioner
