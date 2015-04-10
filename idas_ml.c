@@ -15,11 +15,8 @@
 
 #include "config.h"
 #include <idas/idas.h>
-#include <sundials/sundials_types.h>
 #include <sundials/sundials_band.h>
-#include <sundials/sundials_nvector.h>
 
-#include <caml/mlvalues.h>
 #include <caml/alloc.h>
 #include <caml/memory.h>
 #include <caml/callback.h>
@@ -78,19 +75,13 @@ CAMLprim value c_idas_alloc_nvector_array(value vn)
 // after we are finished using them (so as not to block the GC), but we
 // instead make the assumption that these elements come from 'within'
 // Sundials and thus that they would anyway not be GC-ed.
-static void wrap_to_nvector_table(int n, value vy, N_Vector *y)
+void idas_wrap_to_nvector_table(int n, value vy, N_Vector *y)
 {
     int i;
     for (i = 0; i < n; ++i) {
 	Store_field(vy, i, NVEC_BACKLINK(y[i]));
     }
 }
-
-#define LOAD_NVECTOR_TABLE(to, from, size, cache) \
-    do {					  \
-	to = cache;				  \
-	wrap_to_nvector_table (size, to, from);	  \
-    } while (0)
 
 static N_Vector *nvector_table_to_array(value vtable)
 {
@@ -243,9 +234,9 @@ void idas_ml_check_flag(const char *call, int flag)
 
 /* Callbacks */
 
-static value make_adj_jac_arg(realtype t, N_Vector y, N_Vector yp,
-			      N_Vector yb, N_Vector ypb, N_Vector resb,
-			      realtype coef, value tmp)
+value idas_make_jac_arg(realtype t, N_Vector y, N_Vector yp,
+			N_Vector yb, N_Vector ypb, N_Vector resb,
+			realtype coef, value tmp)
 {
     CAMLparam1(tmp);
     CAMLlocal1(r);
@@ -262,30 +253,6 @@ static value make_adj_jac_arg(realtype t, N_Vector y, N_Vector yp,
 
     CAMLreturn(r);
 }
-
-static value make_triple_tmp(N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
-{
-    CAMLparam0();
-    CAMLlocal1(r);
-
-    r = caml_alloc_tuple(3);
-    Store_field(r, 0, NVEC_BACKLINK(tmp1));
-    Store_field(r, 1, NVEC_BACKLINK(tmp2));
-    Store_field(r, 2, NVEC_BACKLINK(tmp3));
-    CAMLreturn(r);
-}
-
-static value make_double_tmp(N_Vector tmp1, N_Vector tmp2)
-{
-    CAMLparam0();
-    CAMLlocal1(r);
-
-    r = caml_alloc_tuple(2);
-    Store_field(r, 0, NVEC_BACKLINK(tmp1));
-    Store_field(r, 1, NVEC_BACKLINK(tmp2));
-    CAMLreturn(r);
-}
-
 
 static int quadrhsfn(realtype t, N_Vector y, N_Vector yp, N_Vector rhsQ,
 		     void *user_data)
@@ -340,14 +307,14 @@ static int sensresfn(int Ns, realtype t,
 		 NVEC_BACKLINK(resval));
     Store_field (args, RECORD_IDAS_SENSRESFN_ARGS_SENS,
 	         IDAS_SENSARRAY1_FROM_EXT(sensext));
-    wrap_to_nvector_table (Ns, IDAS_SENSARRAY1_FROM_EXT(sensext), yS);
+    idas_wrap_to_nvector_table (Ns, IDAS_SENSARRAY1_FROM_EXT(sensext), yS);
     Store_field (args, RECORD_IDAS_SENSRESFN_ARGS_SENSP,
 	         IDAS_SENSARRAY2_FROM_EXT(sensext));
-    wrap_to_nvector_table (Ns, IDAS_SENSARRAY2_FROM_EXT(sensext), ypS);
+    idas_wrap_to_nvector_table (Ns, IDAS_SENSARRAY2_FROM_EXT(sensext), ypS);
     Store_field (args, RECORD_IDAS_SENSRESFN_ARGS_TMP,
-		 make_triple_tmp (tmp1, tmp2, tmp3));
+		 ida_make_triple_tmp (tmp1, tmp2, tmp3));
 
-    wrap_to_nvector_table (Ns, IDAS_SENSARRAY3_FROM_EXT(sensext), resvalS);
+    idas_wrap_to_nvector_table (Ns, IDAS_SENSARRAY3_FROM_EXT(sensext), resvalS);
 
     value r = caml_callback2_exn (IDAS_SENSRESFN_FROM_EXT(sensext), args,
 				  IDAS_SENSARRAY3_FROM_EXT(sensext));
@@ -374,16 +341,17 @@ static int quadsensrhsfn(int ns, realtype t, N_Vector yy, N_Vector yp,
 		 NVEC_BACKLINK (yy));
     Store_field (args, RECORD_IDAS_QUADSENSRHSFN_ARGS_YP,
 		 NVEC_BACKLINK (yp));
-    wrap_to_nvector_table (ns, IDAS_SENSARRAY1_FROM_EXT(sensext), yyS);
+    idas_wrap_to_nvector_table (ns, IDAS_SENSARRAY1_FROM_EXT(sensext), yyS);
     Store_field (args, RECORD_IDAS_QUADSENSRHSFN_ARGS_SENS,
 		 IDAS_SENSARRAY1_FROM_EXT(sensext));
-    wrap_to_nvector_table (ns, IDAS_SENSARRAY2_FROM_EXT(sensext), ypS);
+    idas_wrap_to_nvector_table (ns, IDAS_SENSARRAY2_FROM_EXT(sensext), ypS);
     Store_field (args, RECORD_IDAS_QUADSENSRHSFN_ARGS_SENSP,
 		 IDAS_SENSARRAY2_FROM_EXT(sensext));
     Store_field (args, RECORD_IDAS_QUADSENSRHSFN_ARGS_TMP,
-		 make_triple_tmp (tmp1, tmp2, tmp3));
+		 ida_make_triple_tmp (tmp1, tmp2, tmp3));
 
-    wrap_to_nvector_table (ns, IDAS_SENSARRAY3_FROM_EXT(sensext), rhsvalQS);
+    idas_wrap_to_nvector_table (ns,
+	    IDAS_SENSARRAY3_FROM_EXT(sensext), rhsvalQS);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback2_exn(IDAS_QUADSENSRHSFN_FROM_EXT(sensext),
@@ -437,8 +405,8 @@ static int bresfn_sens(realtype t, N_Vector y, N_Vector yp,
     Store_field (args, RECORD_IDAS_ADJ_BRESFN_ARGS_YB, NVEC_BACKLINK (yB));
     Store_field (args, RECORD_IDAS_ADJ_BRESFN_ARGS_YBP, NVEC_BACKLINK (ypB));
 
-    wrap_to_nvector_table (ns, IDAS_BSENSARRAY1_FROM_EXT (bsensext), yS);
-    wrap_to_nvector_table (ns, IDAS_BSENSARRAY2_FROM_EXT (bsensext), ypS);
+    idas_wrap_to_nvector_table (ns, IDAS_BSENSARRAY1_FROM_EXT (bsensext), yS);
+    idas_wrap_to_nvector_table (ns, IDAS_BSENSARRAY2_FROM_EXT (bsensext), ypS);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback_exn (IDAS_BRESFN_SENS_FROM_EXT(bsensext), args);
@@ -460,8 +428,8 @@ static int bprecsetupfn(realtype t, N_Vector yy, N_Vector yp,
     CAMLparam0();
     CAMLlocal3(session, cb, arg);
 
-    arg = make_adj_jac_arg(t, yy, yp, yB, ypB, resvalB, cjB,
-			   make_triple_tmp(tmp1B, tmp2B, tmp3B));
+    arg = idas_make_jac_arg(t, yy, yp, yB, ypB, resvalB, cjB,
+			    ida_make_triple_tmp(tmp1B, tmp2B, tmp3B));
 
     WEAK_DEREF (session, *(value*)user_data);
     cb = IDA_LS_CALLBACKS_FROM_ML (session);
@@ -486,8 +454,8 @@ static int bprecsolvefn(realtype t, N_Vector yy, N_Vector yp,
     CAMLlocalN(args, 4);
     CAMLlocal2(session, cb);
 
-    args[0] = make_adj_jac_arg(t, yy, yp, yB, ypB, resvalB, cjB,
-			       NVEC_BACKLINK(tmpB));
+    args[0] = idas_make_jac_arg(t, yy, yp, yB, ypB, resvalB, cjB,
+			        NVEC_BACKLINK(tmpB));
     args[1] = NVEC_BACKLINK (rvecB);
     args[2] = NVEC_BACKLINK (zvecB);
     args[3] = caml_copy_double (deltaB);
@@ -514,8 +482,8 @@ static int bjactimesfn(realtype t, N_Vector yy, N_Vector yp,
     CAMLlocalN(args, 3);
     CAMLlocal2(session, cb);
 
-    args[0] = make_adj_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
-			       make_double_tmp (tmp1B, tmp2B));
+    args[0] = idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
+			        ida_make_double_tmp (tmp1B, tmp2B));
     args[1] = NVEC_BACKLINK(vB);
     args[2] = NVEC_BACKLINK(JvB);
 
@@ -551,8 +519,8 @@ static int bjacfn(long int NeqB, realtype t,
 	Store_field(cb, 1, dmat);
     }
 
-    args[0] = make_adj_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
-			       make_triple_tmp (tmp1B, tmp2B, tmp3B));
+    args[0] = idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
+			        ida_make_triple_tmp (tmp1B, tmp2B, tmp3B));
     args[1] = Some_val(dmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -586,8 +554,8 @@ static int bbandjacfn(long int NeqB, long int mupperb, long int mlowerb,
     args[0] = caml_alloc_tuple(RECORD_IDAS_ADJ_BANDRANGE_SIZE);
     Store_field(args[0], RECORD_IDAS_ADJ_BANDRANGE_MUPPER, Val_long(mupperb));
     Store_field(args[0], RECORD_IDAS_ADJ_BANDRANGE_MLOWER, Val_long(mlowerb));
-    args[1] = make_adj_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
-			       make_triple_tmp(tmp1B, tmp2B, tmp3B));
+    args[1] = idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
+			        ida_make_triple_tmp(tmp1B, tmp2B, tmp3B));
     args[2] = Some_val(bmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -641,8 +609,8 @@ static int bquadrhsfn_sens(realtype t, N_Vector y, N_Vector yp,
     Store_field (args, RECORD_IDAS_ADJ_BQUADRHSFN_ARGS_YBP,
 		 NVEC_BACKLINK (ypB));
 
-    wrap_to_nvector_table (ns, IDAS_BSENSARRAY1_FROM_EXT (sensext), yS);
-    wrap_to_nvector_table (ns, IDAS_BSENSARRAY2_FROM_EXT (sensext), ypS);
+    idas_wrap_to_nvector_table (ns, IDAS_BSENSARRAY1_FROM_EXT (sensext), yS);
+    idas_wrap_to_nvector_table (ns, IDAS_BSENSARRAY2_FROM_EXT (sensext), ypS);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback_exn (IDAS_BQUADRHSFN_SENS_FROM_EXT(sensext), args);

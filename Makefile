@@ -33,8 +33,7 @@ default: all
 COBJ_COMMON = sundials_ml$(XO) dls_ml$(XO) $(SLS_ML_XO) nvector_ml$(XO) \
 	      spils_ml$(XO)
 
-COBJ_MAIN = $(COBJ_COMMON) kinsol_ml$(XO)				\
-	    $(KLU_COBJ_MAIN) $(SUPERLUMT_COBJ_MAIN)
+COBJ_MAIN = $(COBJ_COMMON) kinsol_ml$(XO)
 
 MLOBJ_MAIN = sundials_config.cmo sundials.cmo				\
 	     dls_impl.cmo dls.cmo sls_impl.cmo $(SLS_CMO) spils.cmo	\
@@ -54,7 +53,8 @@ MLOBJ_SENS = cvodes.cmo idas.cmo \
 CMI_SENS = $(MLOBJ_SENS:.cmo=.cmi)
 
 ### Objects specific to sundials_no_sens.cma.
-COBJ_NO_SENS = cvode_ml$(XO) ida_ml$(XO)
+COBJ_NO_SENS = cvode_ml$(XO) ida_ml$(XO)			\
+	       $(KLU_COBJ_NO_SENS) $(SUPERLUMT_COBJ_NO_SENS)
 MLOBJ_NO_SENS =
 
 ### Objects specific to sundials_mpi.cma.
@@ -162,13 +162,27 @@ cvodes_ml.o: cvodes_ml.c
 cvode_bbd_ml.o: cvode_bbd_ml.c
 	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
 
+cvodes_bbd_ml.o: cvodes_bbd_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(CVODES_CFLAGS) -o $@ -c $<
+
 cvode_klu_ml.o: cvode_klu_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
+
+cvode_klu_ml_s.o: cvode_klu_ml.c
+	$(CC) -DSUNDIALSML_WITHSENS -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) \
+	    -o $@ -c $<
+
+cvodes_klu_ml.o: cvodes_klu_ml.c
 	$(CC) -I $(OCAML_INCLUDE) $(CVODES_CFLAGS) -o $@ -c $<
 
 cvode_superlumt_ml.o: cvode_superlumt_ml.c
-	$(CC) -I $(OCAML_INCLUDE) $(CVODES_CFLAGS) -o $@ -c $<
+	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
 
-cvodes_bbd_ml.o: cvodes_bbd_ml.c
+cvode_superlumt_ml_s.o: cvode_superlumt_ml.c
+	$(CC) -DSUNDIALSML_WITHSENS -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) \
+	    -o $@ -c $<
+
+cvodes_superlumt_ml.o: cvodes_superlumt_ml.c
 	$(CC) -I $(OCAML_INCLUDE) $(CVODES_CFLAGS) -o $@ -c $<
 
 # IDA[S]-specific C files.
@@ -186,6 +200,26 @@ ida_bbd_ml.o: ida_bbd_ml.c
 	$(CC) -I $(OCAML_INCLUDE) $(IDA_CFLAGS) -o $@ -c $<
 
 idas_bbd_ml.o: idas_bbd_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(IDAS_CFLAGS) -o $@ -c $<
+
+ida_klu_ml.o: ida_klu_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(IDA_CFLAGS) -o $@ -c $<
+
+ida_klu_ml_s.o: ida_klu_ml.c
+	$(CC) -DSUNDIALSML_WITHSENS -I $(OCAML_INCLUDE) $(IDA_CFLAGS) \
+	    -o $@ -c $<
+
+idas_klu_ml.o: idas_klu_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(IDAS_CFLAGS) -o $@ -c $<
+
+ida_superlumt_ml.o: ida_superlumt_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(IDA_CFLAGS) -o $@ -c $<
+
+ida_superlumt_ml_s.o: ida_superlumt_ml.c
+	$(CC) -DSUNDIALSML_WITHSENS -I $(OCAML_INCLUDE) $(IDA_CFLAGS) \
+	    -o $@ -c $<
+
+idas_superlumt_ml.o: idas_superlumt_ml.c
 	$(CC) -I $(OCAML_INCLUDE) $(IDAS_CFLAGS) -o $@ -c $<
 
 # Docs.

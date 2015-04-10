@@ -77,6 +77,22 @@ module DlsTypes = struct
     }
 end
 
+module SlsTypes = struct
+
+  type sparse_jac_fn =
+    (Sundials.RealArray.t triple, Sundials.RealArray.t) jacobian_arg
+    -> Sls.SparseMatrix.t
+    -> unit
+
+  (* These fields are accessed from ida_ml.c *)
+  type sparse_jac_callback =
+    {
+      jacfn: sparse_jac_fn;
+      mutable smat : Sls_impl.t option
+    }
+
+end
+
 module SpilsCommonTypes = struct
   (* Types that don't depend on jacobian_arg.  *)
   type gramschmidt_type = Spils.gramschmidt_type =
@@ -260,6 +276,36 @@ module AdjointTypes' = struct
       }
   end
 
+  module SlsTypes = struct
+
+    type sparse_jac_fn_no_sens =
+      (Sundials.RealArray.t triple, Sundials.RealArray.t) jacobian_arg
+      -> Sls.SparseMatrix.t
+      -> unit
+
+    type sparse_jac_fn_with_sens =
+      (Sundials.RealArray.t triple, Sundials.RealArray.t) jacobian_arg
+      -> Sundials.RealArray.t array
+      -> Sundials.RealArray.t array
+      -> Sls.SparseMatrix.t
+      -> unit
+
+    (* These fields are accessed from idas_ml.c *)
+    type sparse_jac_callback_no_sens =
+      {
+        jacfn: sparse_jac_fn_no_sens;
+        mutable smat : Sls_impl.t option
+      }
+
+    (* These fields are accessed from idas_ml.c *)
+    type sparse_jac_callback_with_sens =
+      {
+        jacfn: sparse_jac_fn_with_sens;
+        mutable smat : Sls_impl.t option
+      }
+
+  end
+
   (* Ditto. *)
   module SpilsTypes' = struct
     include SpilsCommonTypes
@@ -395,6 +441,16 @@ and ('a, 'kind) linsolv_callbacks =
   | BDlsDenseCallback of AdjointTypes'.DlsTypes.dense_jac_callback
   | BDlsBandCallback  of AdjointTypes'.DlsTypes.band_jac_callback
 
+  (* Sls *)
+  | SlsKluCallback of SlsTypes.sparse_jac_callback
+  | BSlsKluCallback of AdjointTypes'.SlsTypes.sparse_jac_callback_no_sens
+  | BSlsKluCallbackSens of AdjointTypes'.SlsTypes.sparse_jac_callback_with_sens
+
+  | SlsSuperlumtCallback of SlsTypes.sparse_jac_callback
+  | BSlsSuperlumtCallback of AdjointTypes'.SlsTypes.sparse_jac_callback_no_sens
+  | BSlsSuperlumtCallbackSens
+      of AdjointTypes'.SlsTypes.sparse_jac_callback_with_sens
+
   (* Spils *)
 
   | SpilsCallback of 'a SpilsTypes'.callbacks
@@ -444,6 +500,19 @@ let ls_check_dls session =
     match session.ls_callbacks with
     | DlsDenseCallback _ | DlsBandCallback _
     | BDlsDenseCallback _ | BDlsBandCallback _ -> ()
+    | _ -> raise Sundials.InvalidLinearSolver
+
+let ls_check_klu session =
+  if Sundials_config.safe then
+    match session.ls_callbacks with
+    | SlsKluCallback _ | BSlsKluCallback _ | BSlsKluCallbackSens _ -> ()
+    | _ -> raise Sundials.InvalidLinearSolver
+
+let ls_check_superlumt session =
+  if Sundials_config.safe then
+    match session.ls_callbacks with
+    | SlsSuperlumtCallback _ | BSlsSuperlumtCallback _
+    | BSlsSuperlumtCallbackSens _ -> ()
     | _ -> raise Sundials.InvalidLinearSolver
 
 let ls_check_spils session =
@@ -523,6 +592,10 @@ module AdjointTypes = struct
   type ('a, 'k) bsession = Bsession of ('a, 'k) session
   type serial_bsession = (Nvector_serial.data, Nvector_serial.kind) bsession
   let tosession (Bsession s) = s
+  let parent_and_which s =
+    match (tosession s).sensext with
+    | BwdSensExt se -> (se.parent, se.which)
+    | _ -> failwith "Internal error: bsession invalid"
 
   type ('data, 'kind) linear_solver =
     ('data, 'kind) bsession

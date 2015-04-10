@@ -12,18 +12,18 @@
  ***********************************************************************/
 
 #ifdef SUNDIALSML_WITHSENS
-/* CVODES (with sensitivity) */
+/* IDAS (with sensitivity) */
 
-#include <cvodes/cvodes.h>
-#include <cvodes/cvodes_sparse.h>
-#include <cvodes/cvodes_klu.h>
+#include <idas/idas.h>
+#include <idas/idas_sparse.h>
+#include <idas/idas_klu.h>
 
 #else
-/* CVODE (without sensitivity) */
+/* IDA (without sensitivity) */
 
-#include <cvode/cvode.h>
-#include <cvode/cvode_sparse.h>
-#include <cvode/cvode_klu.h>
+#include <ida/ida.h>
+#include <ida/ida_sparse.h>
+#include <ida/ida_klu.h>
 
 #endif
 
@@ -35,38 +35,34 @@
 #include <caml/fail.h>
 
 #include "sundials_ml.h"
-#include "cvode_ml.h"
+#include "ida_ml.h"
 #include "sls_ml.h"
 
-enum cvode_klu_ordering_tag {
-  VARIANT_CVODE_KLU_AMD     = 0,
-  VARIANT_CVODE_KLU_COLAMD  = 1,
-  VARIANT_CVODE_KLU_NATURAL = 2,
+enum ida_klu_ordering_tag {
+  VARIANT_IDA_KLU_AMD     = 0,
+  VARIANT_IDA_KLU_COLAMD  = 1,
+  VARIANT_IDA_KLU_NATURAL = 2,
 };
 
-static int jacfn(
-	realtype t,
-	N_Vector y,
-	N_Vector fy,
-	SlsMat Jac,
-	void *user_data,
-	N_Vector tmp1,
-	N_Vector tmp2,
-	N_Vector tmp3)
+static int jacfn (realtype t, realtype coef,
+		  N_Vector y, N_Vector yp, N_Vector res,
+		  SlsMat jac, void *user_data,
+		  N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
 {
-    CAMLparam0();
+    CAMLparam0 ();
     CAMLlocalN (args, 2);
     CAMLlocal3(session, cb, smat);
 
     WEAK_DEREF (session, *(value*)user_data);
-    args[0] = cvode_make_jac_arg (t, y, fy,
-				  cvode_make_triple_tmp (tmp1, tmp2, tmp3));
+    args[0] = ida_make_jac_arg (t, coef, y, yp, res,
+				ida_make_triple_tmp (tmp1, tmp2, tmp3));
 
-    cb = CVODE_LS_CALLBACKS_FROM_ML(session);
+    cb = IDA_LS_CALLBACKS_FROM_ML(session);
     cb = Field (cb, 0);
     smat = Field(cb, 1);
+
     if (smat == Val_none) {
-	Store_some(smat, c_sls_sparse_wrap(Jac, 0));
+	Store_some(smat, c_sls_sparse_wrap(jac, 0));
 	Store_field(cb, 1, smat);
 
 	args[1] = Some_val(smat);
@@ -81,36 +77,36 @@ static int jacfn(
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
-CAMLprim value c_cvode_klu_init (value vcvode_mem, value vneqs, value vnnz)
+CAMLprim value c_ida_klu_init (value vida_mem, value vneqs, value vnnz)
 {
-    CAMLparam3(vcvode_mem, vneqs, vnnz);
-    void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
+    CAMLparam3(vida_mem, vneqs, vnnz);
+    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
     int flag;
 
-    flag = CVKLU (cvode_mem, Int_val(vneqs), Int_val(vnnz));
-    CHECK_FLAG ("CVKLU", flag);
-    flag = CVSlsSetSparseJacFn(cvode_mem, jacfn);
-    CHECK_FLAG("CVSlsSetSparseJacFn", flag);
+    flag = IDAKLU (ida_mem, Int_val(vneqs), Int_val(vnnz));
+    CHECK_FLAG ("IDAKLU", flag);
+    flag = IDASlsSetSparseJacFn(ida_mem, jacfn);
+    CHECK_FLAG("IDASlsSetSparseJacFn", flag);
 
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_klu_set_ordering (value vcvode_mem, value vordering)
+CAMLprim value c_ida_klu_set_ordering (value vida_mem, value vordering)
 {
-    CAMLparam2(vcvode_mem, vordering);
-    void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
+    CAMLparam2(vida_mem, vordering);
+    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
 
-    int flag = CVKLUSetOrdering (cvode_mem, Int_val(vordering));
-    CHECK_FLAG ("CVKLUSetOrdering", flag);
+    int flag = IDAKLUSetOrdering (ida_mem, Int_val(vordering));
+    CHECK_FLAG ("IDAKLUSetOrdering", flag);
 
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_klu_reinit (value vcvode_mem, value vn, value vnnz,
+CAMLprim value c_ida_klu_reinit (value vida_mem, value vn, value vnnz,
 				   value vrealloc)
 {
-    CAMLparam4(vcvode_mem, vn, vnnz, vrealloc);
-    void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
+    CAMLparam4(vida_mem, vn, vnnz, vrealloc);
+    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
 
     int reinit_type;
     if (Bool_val(vrealloc)) {
@@ -119,20 +115,19 @@ CAMLprim value c_cvode_klu_reinit (value vcvode_mem, value vn, value vnnz,
 	reinit_type = 2;
     }
 
-    int flag = CVKLUReInit (cvode_mem, Int_val(vn), Int_val(vnnz), reinit_type);
-    CHECK_FLAG ("CVKLUReInit", flag);
+    int flag = IDAKLUReInit (ida_mem, Int_val(vn), Int_val(vnnz), reinit_type);
+    CHECK_FLAG ("IDAKLUReInit", flag);
 
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_klu_get_num_jac_evals(value vcvode_mem)
+CAMLprim value c_ida_klu_get_num_jac_evals(value vida_mem)
 {
-    CAMLparam1(vcvode_mem);
-    void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
+    CAMLparam1(vida_mem);
 
     long int r;
-    int flag = CVSlsGetNumJacEvals(cvode_mem, &r);
-    CHECK_FLAG("CVSlsGetNumJacEvals", flag);
+    int flag = IDASlsGetNumJacEvals(IDA_MEM_FROM_ML(vida_mem), &r);
+    CHECK_FLAG("IDASlsGetNumJacEvals", flag);
 
     CAMLreturn(Val_long(r));
 }

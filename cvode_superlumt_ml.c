@@ -14,9 +14,9 @@
 #ifdef SUNDIALSML_WITHSENS
 /* CVODES (with sensitivity) */
 
-#include <cvodes/cvode.h>
-#include <cvodes/cvode_sparse.h>
-#include <cvodes/cvode_superlumt.h>
+#include <cvodes/cvodes.h>
+#include <cvodes/cvodes_sparse.h>
+#include <cvodes/cvodes_superlumt.h>
 
 #else
 /* CVODE (without sensitivity) */
@@ -38,7 +38,7 @@
 #include "cvode_ml.h"
 #include "sls_ml.h"
 
-enum cvode_klu_ordering_tag {
+enum cvode_superlumt_ordering_tag {
   VARIANT_CVODE_SUPERLUMT_NATURAL    = 0,
   VARIANT_CVODE_SUPERLUMT_MINDEGPROD = 1,
   VARIANT_CVODE_SUPERLUMT_MINDEGSUM  = 2,
@@ -60,8 +60,8 @@ static int jacfn(
     CAMLlocal3(session, cb, smat);
 
     WEAK_DEREF (session, *(value*)user_data);
-    args[0] = c_cvode_make_jac_arg (t, y, fy,
-				    c_cvode_make_triple_tmp (tmp1, tmp2, tmp3));
+    args[0] = cvode_make_jac_arg (t, y, fy,
+				  cvode_make_triple_tmp (tmp1, tmp2, tmp3));
 
     cb = CVODE_LS_CALLBACKS_FROM_ML(session);
     cb = Field (cb, 0);
@@ -77,7 +77,7 @@ static int jacfn(
     }
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback2_exn (Field(cb, 0), args[0], args[1]);
+    value r = caml_callbackN_exn (Field(cb, 0), 2, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -92,7 +92,7 @@ CAMLprim value c_cvode_superlumt_init (value vcvode_mem, value vneqs,
     flag = CVSuperLUMT (cvode_mem, Int_val(vnthreads), Int_val(vneqs),
 			Int_val(vnnz));
     CHECK_FLAG ("CVSuperLUMT", flag);
-    flag = CVSlsSetSparseJacFn(CVODE_MEM_FROM_ML(vcvode_mem), jacfn);
+    flag = CVSlsSetSparseJacFn(cvode_mem, jacfn);
     CHECK_FLAG("CVSlsSetSparseJacFn", flag);
 
     CAMLreturn (Val_unit);
@@ -112,9 +112,10 @@ CAMLprim value c_cvode_superlumt_set_ordering (value vcvode_mem, value vorder)
 CAMLprim value c_cvode_superlumt_get_num_jac_evals(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
+    void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
 
     long int r;
-    int flag = CVSlsGetNumJacEvals(CVODE_MEM_FROM_ML(vcvode_mem), &r);
+    int flag = CVSlsGetNumJacEvals(cvode_mem, &r);
     CHECK_FLAG("CVSlsGetNumJacEvals", flag);
 
     CAMLreturn(Val_long(r));

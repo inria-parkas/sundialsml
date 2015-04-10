@@ -17,7 +17,6 @@
 
 /* Sundials IDA interface functions that do not involve NVectors. */
 
-#include <caml/mlvalues.h>
 #include <caml/memory.h>
 #include <caml/fail.h>
 #include <caml/alloc.h>
@@ -169,8 +168,8 @@ static int resfn (realtype t, N_Vector y, N_Vector yp,
     CAMLreturnT (int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
-static value make_jac_arg(realtype t, realtype coef, N_Vector y, N_Vector yp,
-			  N_Vector res, value tmp)
+value ida_make_jac_arg(realtype t, realtype coef, N_Vector y, N_Vector yp,
+		       N_Vector res, value tmp)
 {
     CAMLparam1(tmp);
     CAMLlocal1(r);
@@ -186,7 +185,7 @@ static value make_jac_arg(realtype t, realtype coef, N_Vector y, N_Vector yp,
     CAMLreturn(r);
 }
 
-static value make_triple_tmp(N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
+value ida_make_triple_tmp(N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
 {
     CAMLparam0();
     CAMLlocal1(r);
@@ -198,7 +197,7 @@ static value make_triple_tmp(N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
     CAMLreturn(r);
 }
 
-static value make_double_tmp(N_Vector tmp1, N_Vector tmp2)
+value ida_make_double_tmp(N_Vector tmp1, N_Vector tmp2)
 {
     CAMLparam0();
     CAMLlocal1(r);
@@ -230,8 +229,8 @@ static int jacfn (long int neq, realtype t, realtype coef,
 	Store_field(cb, 1, dmat);
     }
 
-    args[0] = make_jac_arg (t, coef, y, yp, res,
-			    make_triple_tmp (tmp1, tmp2, tmp3));
+    args[0] = ida_make_jac_arg (t, coef, y, yp, res,
+				ida_make_triple_tmp (tmp1, tmp2, tmp3));
     args[1] = Some_val(dmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -262,8 +261,8 @@ static int bandjacfn (long int neq, long int mupper, long int mlower,
     args[0] = caml_alloc_tuple(RECORD_IDA_BANDRANGE_SIZE);
     Store_field(args[0], RECORD_IDA_BANDRANGE_MUPPER, Val_long(mupper));
     Store_field(args[0], RECORD_IDA_BANDRANGE_MLOWER, Val_long(mlower));
-    args[1] = make_jac_arg (t, coef, y, yp, res,
-			    make_triple_tmp (tmp1, tmp2, tmp3));
+    args[1] = ida_make_jac_arg (t, coef, y, yp, res,
+				ida_make_triple_tmp (tmp1, tmp2, tmp3));
     args[2] = Some_val(bmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -337,7 +336,8 @@ static int precsetupfn(realtype t,
     cb = Field (cb, RECORD_IDA_SPILS_CALLBACKS_PREC_SETUP_FN);
     cb = Field (cb, 0);
 
-    arg = make_jac_arg(t, cj, y, yp, res, make_triple_tmp(tmp1, tmp2, tmp3));
+    arg = ida_make_jac_arg(t, cj, y, yp, res,
+			   ida_make_triple_tmp(tmp1, tmp2, tmp3));
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback_exn (cb, arg);
@@ -361,7 +361,7 @@ static int precsolvefn(
     CAMLlocalN(args, 4);
     CAMLlocal2(session, cb);
 
-    args[0] = make_jac_arg(t, cj, y, yp, res, NVEC_BACKLINK (tmp));
+    args[0] = ida_make_jac_arg(t, cj, y, yp, res, NVEC_BACKLINK (tmp));
     args[1] = NVEC_BACKLINK (rvec);
     args[2] = NVEC_BACKLINK (z);
     args[3] = caml_copy_double (delta);
@@ -392,7 +392,8 @@ static int jactimesfn(
     CAMLlocalN(args, 3);
     CAMLlocal2(session, cb);
 
-    args[0] = make_jac_arg (t, cj, y, yp, res, make_double_tmp (tmp1, tmp2));
+    args[0] = ida_make_jac_arg (t, cj, y, yp, res,
+				ida_make_double_tmp (tmp1, tmp2));
     args[1] = NVEC_BACKLINK (v);
     args[2] = NVEC_BACKLINK (Jv);
 
@@ -439,7 +440,7 @@ static int lsetup(IDAMem ida_mem, N_Vector yyp, N_Vector ypp, N_Vector resp,
     Store_field (args, RECORD_IDA_ALTERNATE_LSETUP_ARGS_RES,
 		 NVEC_BACKLINK (resp));
     Store_field (args, RECORD_IDA_ALTERNATE_LSETUP_ARGS_TMP,
-		 make_triple_tmp (tmp1, tmp2, tmp3));
+		 ida_make_triple_tmp (tmp1, tmp2, tmp3));
 
     cb = IDA_LS_CALLBACKS_FROM_ML (session);
     cb = Field (cb, 0);

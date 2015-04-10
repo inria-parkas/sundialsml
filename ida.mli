@@ -83,7 +83,7 @@ type 'd triple = 'd * 'd * 'd
     @ida <node5#ss:jtimesFn> IDASpilsJacTimesVecFn
     @ida <node5#ss:psolveFn> IDASpilsPrecSolveFn
     @ida <node5#ss:precondFn> IDASpilsPrecSetupFn *)
-type ('t, 'd) jacobian_arg =
+type ('t, 'd) jacobian_arg = ('t, 'd) Ida_impl.jacobian_arg =
   {
     jac_t    : float;        (** The independent variable. *)
     jac_y    : 'd;           (** The dependent variable vector. *)

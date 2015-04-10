@@ -14,10 +14,19 @@
 #ifndef _IDA_ML_H__
 #define _IDA_ML_H__
 
+#include <sundials/sundials_types.h>
+#include <sundials/sundials_nvector.h>
+#include <caml/mlvalues.h>
+
 #include "sundials_ml.h"
 
 void ida_ml_check_flag(const char *call, int flag);
 void ida_ml_set_linear_solver(void *ida_mem, value ls, int n);
+
+value ida_make_jac_arg(realtype t, realtype coef, N_Vector y, N_Vector yp,
+		       N_Vector res, value tmp);
+value ida_make_triple_tmp(N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
+value ida_make_double_tmp(N_Vector tmp1, N_Vector tmp2);
 
 #define CHECK_FLAG(call, flag) if (flag != IDA_SUCCESS) \
 				 ida_ml_check_flag(call, flag)

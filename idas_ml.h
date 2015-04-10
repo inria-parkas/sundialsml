@@ -14,6 +14,12 @@
 #ifndef _IDAS_ML_H__
 #define _IDAS_ML_H__
 
+#include <sundials/sundials_types.h>
+#include <sundials/sundials_nvector.h>
+#include <caml/mlvalues.h>
+
+#include "sundials_ml.h"
+
 /* The sessions of IDAS work almost exactly as described in ida_ml.h.
  *
  * 1. Standard (quadrature, sensitivity, sensitivity/quadrature,
@@ -53,6 +59,11 @@
  */
 
 void idas_ml_check_flag(const char *call, int flag);
+
+void idas_wrap_to_nvector_table(int n, value vy, N_Vector *y);
+value idas_make_jac_arg(realtype t, N_Vector y, N_Vector yp,
+                        N_Vector yb, N_Vector ypb, N_Vector resb,
+                        realtype coef, value tmp);
 
 // NB: overrides CHECK_FLAG macro in ida_ml.h
 #define SCHECK_FLAG(call, flag) if (flag != IDA_SUCCESS) \

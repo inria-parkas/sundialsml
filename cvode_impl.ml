@@ -442,11 +442,10 @@ and ('a, 'kind) linsolv_callbacks =
 
   (* Sls *)
   | SlsKluCallback of SlsTypes.sparse_jac_callback
-  | SlsSuperlumtCallback of SlsTypes.sparse_jac_callback
-
   | BSlsKluCallback of AdjointTypes'.SlsTypes.sparse_jac_callback_no_sens
   | BSlsKluCallbackSens of AdjointTypes'.SlsTypes.sparse_jac_callback_with_sens
 
+  | SlsSuperlumtCallback of SlsTypes.sparse_jac_callback
   | BSlsSuperlumtCallback of AdjointTypes'.SlsTypes.sparse_jac_callback_no_sens
   | BSlsSuperlumtCallbackSens
       of AdjointTypes'.SlsTypes.sparse_jac_callback_with_sens

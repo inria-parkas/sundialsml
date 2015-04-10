@@ -485,16 +485,16 @@ fi
 # Check for SUPERLUMT and KLU
 klu_enabled=
 klu_info="not available"
-klu_cobj_main=
-klu_mlobj_main=
 klu_cobj_sens=
+klu_cobj_no_sens=
+klu_mlobj_main=
 klu_mlobj_sens=
 
 superlumt_enabled=
 superlumt_info="not available"
-superlumt_cobj_main=
-superlumt_mlobj_main=
 superlumt_cobj_sens=
+superlumt_cobj_no_sens=
+superlumt_mlobj_main=
 superlumt_mlobj_sens=
 
 if [ $sundials -ge 260 ]; then
@@ -510,10 +510,20 @@ if [ $sundials -ge 260 ]; then
 	    if [ ${enable_klu:-1} -eq 1 ]; then
 		klu_enabled=1
 		klu_info="installed"
-		klu_cobj_main=cvode_klu_ml${XO}
-		klu_mlobj_main=cvode_klu.cmo
-		klu_cobj_sens=cvodes_klu_ml${XO}
-		klu_mlobj_sens=cvodes_klu.cmo
+
+		klu_cobj_sens="$klu_cobj_sens cvode_klu_ml_s${XO}"
+		klu_cobj_sens="$klu_cobj_sens cvodes_klu_ml${XO}"
+		klu_cobj_sens="$klu_cobj_sens ida_klu_ml_s${XO}"
+		klu_cobj_sens="$klu_cobj_sens idas_klu_ml${XO}"
+
+		klu_cobj_no_sens="$klu_cobj_no_sens cvode_klu_ml${XO}"
+		klu_cobj_no_sens="$klu_cobj_no_sens ida_klu_ml${XO}"
+
+		klu_mlobj_main="$klu_mlobj_main cvode_klu.cmo"
+		klu_mlobj_main="$klu_mlobj_main ida_klu.cmo"
+
+		klu_mlobj_sens="$klu_mlobj_sens cvodes_klu.cmo"
+		klu_mlobj_sens="$klu_mlobj_sens idas_klu.cmo"
 	    else
 		klu_info='disabled'
 	    fi;;
@@ -525,10 +535,20 @@ if [ $sundials -ge 260 ]; then
 	    if [ ${enable_superlumt:-1} -eq 1 ]; then
 		superlumt_enabled=1
 	        superlumt_info="installed"
-		superlumt_cobj_main=cvode_superlumt_ml${XO}
-		superlumt_mlobj_main=cvode_superlumt.cmo
-		superlumt_cobj_sens=cvodes_superlumt_ml${XO}
-		superlumt_mlobj_sens=cvodes_superlumt.cmo
+
+		superlumt_cobj_sens="$superlumt_cobj_sens cvode_superlumt_ml_s${XO}"
+		superlumt_cobj_sens="$superlumt_cobj_sens cvodes_superlumt_ml${XO}"
+		superlumt_cobj_sens="$superlumt_cobj_sens ida_superlumt_ml_s${XO}"
+		superlumt_cobj_sens="$superlumt_cobj_sens idas_superlumt_ml${XO}"
+
+		superlumt_cobj_no_sens="$superlumt_cobj_no_sens cvode_superlumt_ml${XO}"
+		superlumt_cobj_no_sens="$superlumt_cobj_no_sens ida_superlumt_ml${XO}"
+
+		superlumt_mlobj_main="$superlumt_mlobj_main cvode_superlumt.cmo"
+		superlumt_mlobj_main="$superlumt_mlobj_main ida_superlumt.cmo"
+
+		superlumt_mlobj_sens="$superlumt_mlobj_sens cvodes_superlumt.cmo"
+		superlumt_mlobj_sens="$superlumt_mlobj_sens idas_superlumt.cmo"
 	    else
 		superlumt_info='disabled'
 	    fi;;
@@ -769,13 +789,13 @@ fi
 	 s#@lapack_enabled@#${lapack_enabled}#;
 	 s#@sls_ml_xo@#${sls_ml_xo}#;
 	 s#@sls_cmo@#${sls_cmo}#;
-	 s#@klu_cobj_main@#${klu_cobj_main}#;
-	 s#@klu_mlobj_main@#${klu_mlobj_main}#;
 	 s#@klu_cobj_sens@#${klu_cobj_sens}#;
+	 s#@klu_cobj_no_sens@#${klu_cobj_no_sens}#;
+	 s#@klu_mlobj_main@#${klu_mlobj_main}#;
 	 s#@klu_mlobj_sens@#${klu_mlobj_sens}#;
-	 s#@superlumt_cobj_main@#${superlumt_cobj_main}#;
-	 s#@superlumt_mlobj_main@#${superlumt_mlobj_main}#;
 	 s#@superlumt_cobj_sens@#${superlumt_cobj_sens}#;
+	 s#@superlumt_cobj_no_sens@#${superlumt_cobj_no_sens}#;
+	 s#@superlumt_mlobj_main@#${superlumt_mlobj_main}#;
 	 s#@superlumt_mlobj_sens@#${superlumt_mlobj_sens}#;
 	 s#@cc@#${CC}#;
 	 s#@cpp@#${CPP}#;

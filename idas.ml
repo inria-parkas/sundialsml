@@ -572,11 +572,6 @@ module Adjoint =
     exception BadFinalTime
     exception BadOutputTime
 
-    let parent_and_which s =
-      match (tosession s).sensext with
-      | BwdSensExt se -> (se.parent, se.which)
-      | _ -> failwith "Internal error: bsession invalid"
-
     type interpolation = IPolynomial | IHermite
 
     external c_init : ('a, 'k) session -> int -> interpolation -> unit

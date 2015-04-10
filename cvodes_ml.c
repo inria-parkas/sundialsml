@@ -73,7 +73,7 @@ CAMLprim value c_cvodes_alloc_nvector_array(value vn)
 // after we are finished using them (so as not to block the GC), but we
 // instead make the assumption that these elements come from 'within'
 // Sundials and thus that they would anyway not be GC-ed.
-void c_cvodes_wrap_to_nvector_table(int n, value vy, N_Vector *y)
+void cvodes_wrap_to_nvector_table(int n, value vy, N_Vector *y)
 {
     int i;
     for (i = 0; i < n; ++i) {
@@ -151,9 +151,8 @@ static int sensrhsfn(int ns, realtype t, N_Vector y, N_Vector ydot,
     Store_field (args, RECORD_CVODES_SENSRHSFN_ARGS_TMP,
 		 make_double_tmp (tmp1, tmp2));
 
-    c_cvodes_wrap_to_nvector_table(ns,
-	    CVODES_SENSARRAY1_FROM_EXT(sensext), ys);
-    c_cvodes_wrap_to_nvector_table(ns,
+    cvodes_wrap_to_nvector_table(ns, CVODES_SENSARRAY1_FROM_EXT(sensext), ys);
+    cvodes_wrap_to_nvector_table(ns,
 	    CVODES_SENSARRAY2_FROM_EXT(sensext), ysdot);
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -214,9 +213,8 @@ static int quadsensrhsfn(int ns, realtype t, N_Vector y, N_Vector *ys,
     Store_field (args, RECORD_CVODES_QUADSENSRHSFN_ARGS_TMP,
 		 make_double_tmp (tmp1, tmp2));
 
-    c_cvodes_wrap_to_nvector_table(ns,
-	    CVODES_SENSARRAY1_FROM_EXT(sensext), ys);
-    c_cvodes_wrap_to_nvector_table(ns,
+    cvodes_wrap_to_nvector_table(ns, CVODES_SENSARRAY1_FROM_EXT(sensext), ys);
+    cvodes_wrap_to_nvector_table(ns,
 	    CVODES_SENSARRAY2_FROM_EXT(sensext), yqsdot);
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -263,8 +261,7 @@ static int brhsfn_sens(realtype t, N_Vector y, N_Vector *ys, N_Vector yb,
     Store_field (args, RECORD_CVODES_ADJ_BRHSFN_ARGS_Y, NVEC_BACKLINK (y));
     Store_field (args, RECORD_CVODES_ADJ_BRHSFN_ARGS_YB, NVEC_BACKLINK (yb));
 
-    c_cvodes_wrap_to_nvector_table(ns,
-	    CVODES_BSENSARRAY_FROM_EXT(sensext), ys);
+    cvodes_wrap_to_nvector_table(ns, CVODES_BSENSARRAY_FROM_EXT(sensext), ys);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback3_exn(CVODES_BRHSFN_SENS_FROM_EXT(sensext),
@@ -316,8 +313,7 @@ static int bquadrhsfn_sens(realtype t, N_Vector y, N_Vector *ys, N_Vector yb,
     Store_field (args, RECORD_CVODES_ADJ_BQUADRHSFN_ARGS_YB,
 		 NVEC_BACKLINK (yb));
 
-    c_cvodes_wrap_to_nvector_table(ns,
-	    CVODES_BSENSARRAY_FROM_EXT(sensext), ys);
+    cvodes_wrap_to_nvector_table(ns, CVODES_BSENSARRAY_FROM_EXT(sensext), ys);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback3_exn (CVODES_BQUADRHSFN_SENS_FROM_EXT(sensext),
@@ -327,8 +323,8 @@ static int bquadrhsfn_sens(realtype t, N_Vector y, N_Vector *ys, N_Vector yb,
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
-value c_cvodes_make_jac_arg(realtype t, N_Vector y, N_Vector yb,
-			    N_Vector fyb, value tmp)
+value cvodes_make_jac_arg(realtype t, N_Vector y, N_Vector yb,
+			  N_Vector fyb, value tmp)
 {
     CAMLparam1(tmp);
     CAMLlocal1(r);
@@ -381,7 +377,7 @@ static int bprecsolvefn(
     CAMLlocalN(args, 3);
     CAMLlocal2(session, cb);
 
-    args[0] = c_cvodes_make_jac_arg(t, y, yb, fyb, NVEC_BACKLINK(tmpb));
+    args[0] = cvodes_make_jac_arg(t, y, yb, fyb, NVEC_BACKLINK(tmpb));
     args[1] = make_spils_solve_arg(rvecb, gammab, deltab, lrb);
     args[2] = NVEC_BACKLINK(zvecb);
 
@@ -413,8 +409,8 @@ static int bprecsetupfn(
     CAMLlocal2(session, cb);
     CAMLlocalN(args, 3);
 
-    args[0] = c_cvodes_make_jac_arg(t, y, yb, fyb,
-		c_cvode_make_triple_tmp(tmp1b, tmp2b, tmp3b));
+    args[0] = cvodes_make_jac_arg(t, y, yb, fyb,
+		cvode_make_triple_tmp(tmp1b, tmp2b, tmp3b));
     args[1] = Val_bool(jokb);
     args[2] = caml_copy_double(gammab);
 
@@ -449,7 +445,7 @@ static int bjactimesfn(N_Vector vb,
     CAMLlocal2(session, cb);
     CAMLlocalN(args, 3);
 
-    args[0] = c_cvodes_make_jac_arg(t, y, yb, fyb, NVEC_BACKLINK(tmpb));
+    args[0] = cvodes_make_jac_arg(t, y, yb, fyb, NVEC_BACKLINK(tmpb));
     args[1] = NVEC_BACKLINK(vb);
     args[2] = NVEC_BACKLINK(Jvb);
 
@@ -492,8 +488,8 @@ static int bjacfn(
 	Store_field(cb, 1, dmat);
     }
 
-    args[0] = c_cvodes_make_jac_arg(t, y, yb, fyb,
-		c_cvode_make_triple_tmp(tmp1b, tmp2b, tmp3b));
+    args[0] = cvodes_make_jac_arg(t, y, yb, fyb,
+		cvode_make_triple_tmp(tmp1b, tmp2b, tmp3b));
     args[1] = Some_val(dmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -534,8 +530,8 @@ static int bbandjacfn(
     args[0] = caml_alloc_tuple(RECORD_CVODES_ADJ_BANDRANGE_SIZE);
     Store_field(args[0], RECORD_CVODES_ADJ_BANDRANGE_MUPPER, Val_long(mupperb));
     Store_field(args[0], RECORD_CVODES_ADJ_BANDRANGE_MLOWER, Val_long(mlowerb));
-    args[1] = c_cvodes_make_jac_arg(t, y, yb, fyb,
-		c_cvode_make_triple_tmp(tmp1b, tmp2b, tmp3b));
+    args[1] = cvodes_make_jac_arg(t, y, yb, fyb,
+		cvode_make_triple_tmp(tmp1b, tmp2b, tmp3b));
     args[2] = Some_val(bmat);
 
     /* NB: Don't trigger GC while processing this return value!  */

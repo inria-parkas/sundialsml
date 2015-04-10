@@ -910,7 +910,7 @@ module Adjoint :
         @idas <node7#ss:jactimesvec_b> IDASpilsJacTimesVecFnB
         @idas <node7#ss:psolve_b> IDASpilsPrecSolveFnB
         @idas <node7#ss:psetup_b> IDASpilsPrecSetupFnB *)
-    type ('t, 'd) jacobian_arg =
+    type ('t, 'd) jacobian_arg = ('t, 'd) Ida_impl.AdjointTypes.jacobian_arg =
       {
         jac_t : float;        (** The independent variable. *)
         jac_y : 'd;           (** The forward solution vector. *)
