@@ -23,10 +23,13 @@ idas_superlumt.cmi : sundials.cmi sls.cmi idas.cmi ida_superlumt.cmi ida.cmi
 kinsol.cmi : sundials.cmi nvector_serial.cmi nvector.cmi kinsol_impl.cmo \
     dls.cmi
 kinsol_bbd.cmi : nvector_parallel.cmi kinsol.cmi
+kinsol_klu.cmi : sundials.cmi sls.cmi kinsol.cmi
 nvector.cmi :
 nvector_array.cmi : nvector_custom.cmi nvector.cmi
 nvector_custom.cmi : nvector.cmi
+nvector_openmp.cmi : sundials.cmi nvector_serial.cmi nvector.cmi
 nvector_parallel.cmi : sundials.cmi nvector.cmi
+nvector_pthreads.cmi : sundials.cmi nvector_serial.cmi nvector.cmi
 nvector_serial.cmi : sundials.cmi nvector.cmi
 sls.cmi : sundials.cmi dls.cmi
 spils.cmi : sundials.cmi nvector.cmi
@@ -111,10 +114,12 @@ kinsol_bbd.cmo : sundials.cmi nvector_parallel.cmi nvector.cmi \
     kinsol_impl.cmo kinsol.cmi kinsol_bbd.cmi
 kinsol_bbd.cmx : sundials.cmx nvector_parallel.cmx nvector.cmx \
     kinsol_impl.cmx kinsol.cmx kinsol_bbd.cmi
-kinsol_impl.cmo : sundials_config.cmo sundials.cmi nvector_serial.cmi \
-    nvector.cmi dls.cmi
-kinsol_impl.cmx : sundials_config.cmx sundials.cmx nvector_serial.cmx \
-    nvector.cmx dls.cmx
+kinsol_impl.cmo : sundials_config.cmo sundials.cmi sls_impl.cmo sls.cmi \
+    nvector_serial.cmi nvector.cmi dls.cmi
+kinsol_impl.cmx : sundials_config.cmx sundials.cmx sls_impl.cmx sls.cmx \
+    nvector_serial.cmx nvector.cmx dls.cmx
+kinsol_klu.cmo : sundials.cmi nvector.cmi kinsol_impl.cmo kinsol_klu.cmi
+kinsol_klu.cmx : sundials.cmx nvector.cmx kinsol_impl.cmx kinsol_klu.cmi
 nvector.cmo : nvector.cmi
 nvector.cmx : nvector.cmi
 nvector_array.cmo : sundials.cmi nvector_custom.cmi nvector.cmi \
@@ -123,8 +128,16 @@ nvector_array.cmx : sundials.cmx nvector_custom.cmx nvector.cmx \
     nvector_array.cmi
 nvector_custom.cmo : nvector.cmi nvector_custom.cmi
 nvector_custom.cmx : nvector.cmx nvector_custom.cmi
+nvector_openmp.cmo : sundials.cmi nvector_serial.cmi nvector.cmi \
+    nvector_openmp.cmi
+nvector_openmp.cmx : sundials.cmx nvector_serial.cmx nvector.cmx \
+    nvector_openmp.cmi
 nvector_parallel.cmo : sundials.cmi nvector.cmi nvector_parallel.cmi
 nvector_parallel.cmx : sundials.cmx nvector.cmx nvector_parallel.cmi
+nvector_pthreads.cmo : sundials.cmi nvector_serial.cmi nvector.cmi \
+    nvector_pthreads.cmi
+nvector_pthreads.cmx : sundials.cmx nvector_serial.cmx nvector.cmx \
+    nvector_pthreads.cmi
 nvector_serial.cmo : sundials.cmi nvector.cmi nvector_serial.cmi
 nvector_serial.cmx : sundials.cmx nvector.cmx nvector_serial.cmi
 sls.cmo : sundials_config.cmo sls_impl.cmo dls_impl.cmo sls.cmi
@@ -169,11 +182,18 @@ idas_superlumt_ml.o: idas_superlumt_ml.c sundials_ml.h config.h ida_ml.h \
  idas_ml.h sls_ml.h
 kinsol_bbd_ml.o: kinsol_bbd_ml.c dls_ml.h spils_ml.h kinsol_ml.h \
  sundials_ml.h config.h nvector_ml.h
+kinsol_klu_ml.o: kinsol_klu_ml.c sundials_ml.h config.h kinsol_ml.h \
+ nvector_ml.h sls_ml.h
 kinsol_ml.o: kinsol_ml.c config.h dls_ml.h spils_ml.h kinsol_ml.h \
  sundials_ml.h nvector_ml.h
 nvector_ml.o: nvector_ml.c nvector_ml.h sundials_ml.h config.h
+nvector_openmp_ml.o: nvector_openmp_ml.c sundials_ml.h config.h \
+ nvector_ml.h nvector_openmp_ml.h
 nvector_parallel_ml.o: nvector_parallel_ml.c sundials_ml.h config.h \
  nvector_ml.h nvector_parallel_ml.h
+nvector_pthreads_ml.o: nvector_pthreads_ml.c sundials_ml.h config.h \
+ nvector_ml.h nvector_pthreads_ml.h
 sls_ml.o: sls_ml.c config.h sundials_ml.h sls_ml.h dls_ml.h
 spils_ml.o: spils_ml.c sundials_ml.h config.h spils_ml.h nvector_ml.h
 sundials_ml.o: sundials_ml.c sundials_ml.h config.h
+test.o: test.c

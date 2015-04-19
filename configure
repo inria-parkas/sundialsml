@@ -425,6 +425,20 @@ else
 fi
 rm -f ./${test_stem}.* ./${test_ml_stem}.* ${test_ml_stem}
 
+# Check whether using generic math library (-lm) or not
+libm=-lm
+if [ $sundials -ge 260 ]; then
+    include="\"sundials/sundials_config.h\""
+    query="#ifdef SUNDIALS_USE_GENERIC_MATH\n1\n#else\n0\n#endif\n"
+    sundials_info=`printf "#include %s\n%b" "${include}" "${query}" \
+			| ${CPP} ${cppflags} ${Isundials_inc_path} -P 2>/dev/null \
+			| grep -v ^$`
+    case "${sundials_info}" in
+	1) ;;
+	0) unset libm ;;
+	*) error="${error}\n\terror interpreting sundials_config.h" ;;
+    esac
+fi
 
 # Check for shared library support in Sundials/C
 enable_shared=1
@@ -444,7 +458,7 @@ fi
 
 if ! ${OCAMLBIN}ocamlmklib $test_c_stem$XO $test_stem.cmo \
     -o $test_stem -oc $test_stem \
-    ${Lsundials_lib_path} -lsundials_cvode -lsundials_nvecserial -lm \
+    ${Lsundials_lib_path} -lsundials_cvode -lsundials_nvecserial ${libm} \
     > $test_stem.log 2>&1
 then
     warning="${warning}\n\tSundials/C seems to be compiled without --enable-shared."
@@ -593,8 +607,8 @@ int main (int argc, char *argv[])
 }
 EOF
     if ! $mpicc -o $test_stem$XX ${Isundials_inc_path} $test_stem.c \
-	 ${Lsundials_lib_path} -lsundials_cvode -lsundials_nvecparallel -lm \
-       >/dev/null 2>&1;
+	 ${Lsundials_lib_path} -lsundials_cvode -lsundials_nvecparallel \
+	 ${libm} >/dev/null 2>&1;
     then
         sundialsmpi_info='not installed'
         ocamlmpi_enabled=
@@ -618,6 +632,8 @@ fi
 # Check for nvector_pthread installation
 nvecpthreads_info='not available'
 nvecpthreads_enabled=
+nvecpthreads_ml_xo=
+nvecpthreads_cmo=
 if [ $sundials -ge 260 ]; then
     test_stem=__configure_test_file__
     cat > $test_stem.c <<EOF
@@ -629,13 +645,15 @@ int main (int argc, char *argv[])
 }
 EOF
     if ! $CC -o $test_stem$XX ${Isundials_inc_path} $test_stem.c \
-	 ${Lsundials_lib_path} -lsundials_nvecpthreads \
+	 ${Lsundials_lib_path} -lsundials_nvecpthreads -lpthread ${libm} \
        >/dev/null 2>&1;
     then
 	nvecpthreads_info='not installed'
     else
 	nvecpthreads_info='installed'
 	nvecpthreads_enabled=1
+	nvecpthreads_ml_xo=nvector_pthreads_ml${XO}
+	nvecpthreads_cmo=nvector_pthreads.cmo
     fi
     rm -f ./$test_stem.* ./$test_stem$XX
 fi
@@ -644,6 +662,9 @@ fi
 # Check for nvector_openmp installation
 nvecopenmp_info='not available'
 nvecopenmp_enabled=
+nvecopenmp_ml_xo=
+nvecopenmp_cmo=
+echo sundials=$sundials # XXX
 if [ $sundials -ge 260 ]; then
     test_stem=__configure_test_file__
     cat > $test_stem.c <<EOF
@@ -655,13 +676,15 @@ int main (int argc, char *argv[])
 }
 EOF
     if ! $CC -o $test_stem$XX ${Isundials_inc_path} $test_stem.c \
-	 ${Lsundials_lib_path} -lsundials_nvecopenmp \
+	 ${Lsundials_lib_path} -lsundials_nvecopenmp ${libm} \
        >/dev/null 2>&1;
     then
 	nvecopenmp_info='not installed'
     else
 	nvecopenmp_info='installed'
 	nvecopenmp_enabled=1
+	nvecopenmp_ml_xo=nvector_openmp_ml${XO}
+	nvecopenmp_cmo=nvector_openmp.cmo
     fi
     rm -f ./$test_stem.* ./$test_stem$XX
 fi
@@ -791,6 +814,10 @@ fi
 	 s#@lapack_enabled@#${lapack_enabled}#;
 	 s#@sls_ml_xo@#${sls_ml_xo}#;
 	 s#@sls_cmo@#${sls_cmo}#;
+	 s#@nvecpthreads_ml_xo@#${nvecpthreads_ml_xo}#;
+	 s#@nvecpthreads_cmo@#${nvecpthreads_cmo}#;
+	 s#@nvecopenmp_ml_xo@#${nvecopenmp_ml_xo}#;
+	 s#@nvecopenmp_cmo@#${nvecopenmp_cmo}#;
 	 s#@klu_cobj_sens@#${klu_cobj_sens}#;
 	 s#@klu_cobj_no_sens@#${klu_cobj_no_sens}#;
 	 s#@klu_mlobj_main@#${klu_mlobj_main}#;

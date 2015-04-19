@@ -1,3 +1,5 @@
+# vim: ft=make
+
 # Configured with:
 CONFIG_COMMAND ?= @configure_command@
 
@@ -45,6 +47,12 @@ KINSOL_CFLAGS = $(INC_PATH) $(CFLAGS)
 
 SLS_ML_XO = @sls_ml_xo@
 SLS_CMO = @sls_cmo@
+
+NVECPTHREADS_ML_XO = @nvecpthreads_ml_xo@
+NVECPTHREADS_CMO = @nvecpthreads_cmo@
+
+NVECOPENMP_ML_XO = @nvecopenmp_ml_xo@
+NVECOPENMP_CMO = @nvecopenmp_cmo@
 
 KLU_COBJ_SENS = @klu_cobj_sens@
 KLU_COBJ_NO_SENS = @klu_cobj_no_sens@
