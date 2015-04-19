@@ -891,6 +891,8 @@ echo "(* Automatically generated file - don't edit!  See configure.  *)"\
     > sundials_config.ml
 versiondigits=`echo ${version} | sed -e 's/\\./,/g'`
 echo "let version = ${versiondigits},${versionp}"\ >> sundials_config.ml
+sundials_versiondigits=`echo ${sundials_version} | sed -e 's/\\./,/g'`
+echo "let sundials_version = ${sundials_versiondigits}"\ >> sundials_config.ml
 if [ "x${lapack_enabled}" = x ]; then
     echo "let lapack_enabled = false" >> sundials_config.ml
 else

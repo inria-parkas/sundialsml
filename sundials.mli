@@ -23,10 +23,16 @@
 
 (** The [major], [minor], [patch], and [binding] version numbers of
     Sundials/ML.
-    The first three elements correspond to the underlying Sundials/C library.
+    The first three elements correspond to the maximume supported version
+    of the underlying Sundials/C library.
     The [binding] number distinguishes updates to the binding (restarting
     from 0 for each increment of the other elements). *)
 val version : int * int * int * int
+
+(** The [major], [minor], and [patch] version numbers of the underlying
+    Sundials/C library. The OCaml interface may have been built against
+    an older version of Sundials. *)
+val sundials_version : int * int * int
 
 (** Indicates whether the interface was compiled with BLAS/LAPACK support. *)
 val lapack_enabled : bool
