@@ -193,10 +193,29 @@ fi
 
 if [ "x${cflags}" = x ]; then    # Don't touch CFLAGS if explicitly given.
     if [ $using_gcc = true ]; then
+	optflags="-O2"
+
+	# Compiling with -O2 and clang-602.0.49 (Apple LLVM version 6.1.0)
+	# Results in a segfault in examples like
+	#   cvode/serial/cvKrylovDemo_proc (in denseAddIdentity)
+	# due to a miscompilation of sundials_ml.c:c_sundials_realarray2_wrap
+	# (The code generated for the loop:
+	#      table[0] = (realtype *)(ba->data);
+	#      for (j = 1; j < nc; ++j) {
+	#	  table[j] = table[j - 1] + nr;
+	#      }
+	#  is incorrect. To see, add this loop afterward:
+	#      for (j = 0; j < nc; ++j)
+	#         printf("table[%d] = %p\n", j, table[j]);
+	#  TPB was unable to extract a minimum example.)
+	if $CC -v 2>&1 | grep -q 'LLVM version 6.1'; then
+	    optflags="-O1"
+	fi
+
         if [ "x$enable_debug" = x1 ]; then
             cflags="-O0 -Wall -g3"
         else
-            cflags="-O2 -Wall"
+            cflags="$optflags -Wall"
         fi
     else
         echo "<info> Your C compiler seems to be different from gcc.  Make"
