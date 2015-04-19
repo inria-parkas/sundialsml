@@ -23,12 +23,10 @@ type ordering =
 external c_klu : serial_session -> int -> int -> unit
   = "c_kin_klu_init"
 
-let klu f nnz session onv =
-  (match onv with
-   | Some nv -> session.neqs <- Sundials.RealArray.length (Nvector.unwrap nv)
-   | None -> ());
+let klu f nnz session nv =
+  session.neqs <- Sundials.RealArray.length (Nvector.unwrap nv);
   session.ls_callbacks <- SlsKluCallback { jacfn = f; smat = None };
-  c_klu session neqs nnz
+  c_klu session session.neqs nnz
 
 external c_set_ordering : serial_session -> ordering -> unit
   = "c_kin_klu_set_ordering"

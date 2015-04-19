@@ -33,7 +33,6 @@ enum kinsol_klu_ordering_tag {
 };
 
 static int jacfn(
-	long int n,
 	N_Vector u,
 	N_Vector fu,	     
 	SlsMat Jac,
