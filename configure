@@ -628,6 +628,7 @@ else
     ocamlmpi="${ocamlmpi} (compiler: $mpicc)"
 fi
 
+serial_nvec_libs=-lsundials_nvecserial
 
 # Check for nvector_pthread installation
 nvecpthreads_info='not available'
@@ -654,6 +655,7 @@ EOF
 	nvecpthreads_enabled=1
 	nvecpthreads_ml_xo=nvector_pthreads_ml${XO}
 	nvecpthreads_cmo=nvector_pthreads.cmo
+	serial_nvec_libs="$serial_nvec_libs -lsundials_nvecpthreads"
     fi
     rm -f ./$test_stem.* ./$test_stem$XX
 fi
@@ -685,6 +687,7 @@ EOF
 	nvecopenmp_enabled=1
 	nvecopenmp_ml_xo=nvector_openmp_ml${XO}
 	nvecopenmp_cmo=nvector_openmp.cmo
+	serial_nvec_libs="$serial_nvec_libs -lsundials_nvecopenmp"
     fi
     rm -f ./$test_stem.* ./$test_stem$XX
 fi
@@ -818,6 +821,7 @@ fi
 	 s#@nvecpthreads_cmo@#${nvecpthreads_cmo}#;
 	 s#@nvecopenmp_ml_xo@#${nvecopenmp_ml_xo}#;
 	 s#@nvecopenmp_cmo@#${nvecopenmp_cmo}#;
+	 s#@serial_nvec_libs@#${serial_nvec_libs}#;
 	 s#@klu_cobj_sens@#${klu_cobj_sens}#;
 	 s#@klu_cobj_no_sens@#${klu_cobj_no_sens}#;
 	 s#@klu_mlobj_main@#${klu_mlobj_main}#;
