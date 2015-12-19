@@ -491,7 +491,7 @@ static int bjactimesfn(realtype t, N_Vector yy, N_Vector yp,
     cb = Field (cb, RECORD_IDAS_BSPILS_CALLBACKS_JAC_TIMES_VEC_FN);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (cb, 3, args);
+    value r = caml_callback3_exn (cb, args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }
@@ -522,7 +522,7 @@ static int bjacfn(long int NeqB, realtype t,
     args[1] = Some_val(dmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (Field(cb, 0), 2, args);
+    value r = caml_callback2_exn (Field(cb, 0), args[0], args[1]);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -557,7 +557,7 @@ static int bbandjacfn(long int NeqB, long int mupperb, long int mlowerb,
     args[2] = Some_val(bmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (Field(cb, 0), 3, args);
+    value r = caml_callback3_exn (Field(cb, 0), args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }

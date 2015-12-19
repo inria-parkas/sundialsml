@@ -129,7 +129,7 @@ static int quadrhsfn(realtype t, N_Vector y, N_Vector yQdot, void *user_data)
     cb = CVODES_QUADRHSFN_FROM_EXT (cb);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (cb, 3, args);
+    value r = caml_callback3_exn (cb, args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -387,7 +387,7 @@ static int bprecsolvefn(
     cb = Field (cb, RECORD_CVODES_BSPILS_CALLBACKS_PREC_SOLVE_FN);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (cb, 3, args);
+    value r = caml_callback3_exn (cb, args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -421,7 +421,7 @@ static int bprecsetupfn(
     cb = Field (cb, 0);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (cb, 3, args);
+    value r = caml_callback3_exn (cb, args[0], args[1], args[2]);
 
     /* Update jcurPtr; leave it unchanged if an error occurred.  */
     if (!Is_exception_result (r)) {
@@ -456,7 +456,7 @@ static int bjactimesfn(N_Vector vb,
     cb = Field (cb, 0);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (cb, 3, args);
+    value r = caml_callback3_exn (cb, args[0], args[1], args[2]);
 
     /* NB: jac_times_vec doesn't accept RecoverableFailure. */
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
@@ -493,7 +493,7 @@ static int bjacfn(
     args[1] = Some_val(dmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (Field(cb, 0), 2, args);
+    value r = caml_callback2_exn (Field(cb, 0), args[0], args[1]);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -535,7 +535,7 @@ static int bbandjacfn(
     args[2] = Some_val(bmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (Field(cb, 0), 3, args);
+    value r = caml_callback3_exn (Field(cb, 0), args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }

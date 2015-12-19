@@ -65,7 +65,7 @@ static int bbdlocal(long int nlocal, N_Vector u, N_Vector gval, void *user_data)
     cb = Field (cb, RECORD_KINSOL_BBD_CALLBACKS_LOCAL_FN);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (cb, 2, args);
+    value r = caml_callback2_exn (cb, args[0], args[1]);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }

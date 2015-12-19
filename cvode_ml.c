@@ -174,8 +174,8 @@ static int rhsfn(realtype t, N_Vector y, N_Vector ydot, void *user_data)
     args[2] = NVEC_BACKLINK(ydot);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn(Field(session, RECORD_CVODE_SESSION_RHSFN),
-				 3, args);
+    value r = caml_callback3_exn(Field(session, RECORD_CVODE_SESSION_RHSFN),
+				 args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -198,8 +198,8 @@ static int roots(realtype t, N_Vector y, realtype *gout, void *user_data)
     args[2] = caml_ba_alloc (BIGARRAY_FLOAT, 1, gout, &nroots);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (Field(session, RECORD_CVODE_SESSION_ROOTSFN),
-				  3, args);
+    value r = caml_callback3_exn (Field(session, RECORD_CVODE_SESSION_ROOTSFN),
+				  args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, UNRECOVERABLE));
 }
@@ -282,7 +282,7 @@ static int jacfn(
     args[1] = Some_val(dmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (Field(cb, 0), 2, args);
+    value r = caml_callback2_exn (Field(cb, 0), args[0], args[1]);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -322,7 +322,7 @@ static int bandjacfn(
     args[2] = Some_val(bmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (Field(cb, 0), 3, args);
+    value r = caml_callback3_exn (Field(cb, 0), args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -355,7 +355,7 @@ static int precsetupfn(realtype t,
     cb = Some_val (cb);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn(cb, 3, args);
+    value r = caml_callback3_exn(cb, args[0], args[1], args[2]);
 
     /* Update jcurPtr; leave it unchanged if an error occurred.  */
     if (!Is_exception_result (r)) {
@@ -414,7 +414,7 @@ static int precsolvefn(
     cb = Field (cb, RECORD_CVODE_SPILS_CALLBACKS_PREC_SOLVE_FN);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn(cb, 3, args);
+    value r = caml_callback3_exn(cb, args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -442,7 +442,7 @@ static int jactimesfn(N_Vector v,
     cb = Some_val (cb);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn(cb, 3, args);
+    value r = caml_callback3_exn(cb, args[0], args[1], args[2]);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
