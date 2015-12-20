@@ -27,6 +27,7 @@ let warn_discarded_exn exn context =
 exception RecoverableFailure
 exception NonPositiveEwt
 exception InvalidLinearSolver
+exception NotImplementedBySundialsVersion
 
 type ('data, 'kind) nvector = ('data, 'kind) Nvector.t
 
@@ -550,5 +551,5 @@ let big_real, small_real, unit_roundoff =
   c_init_module warn_discarded_exn Weak.get
     (* Exceptions must be listed in the same order as
        sundials_exn_index.  *)
-    [|RecoverableFailure; NonPositiveEwt|]
+    [|RecoverableFailure; NonPositiveEwt; NotImplementedBySundialsVersion|]
 

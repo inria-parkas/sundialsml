@@ -107,10 +107,11 @@ enum sundials_exn_set_index {
 void sundials_ml_register_exns (enum sundials_exn_set_index index, value exns);
 
 /* This enum must list exceptions in the same order as the call to
- * c_register_exns in sundials.ml.  */
+ * c_init_module in sundials.ml.  */
 enum sundials_exn_index {
   SUNDIALS_EXN_RecoverableFailure = 0,
   SUNDIALS_EXN_NonPositiveEwt,
+  SUNDIALS_EXN_NotImplementedBySundialsVersion,
   SUNDIALS_EXN_SET_SIZE
 };
 

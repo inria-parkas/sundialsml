@@ -81,6 +81,10 @@ exception NonPositiveEwt
     linear solver from {!Cvode.Spils}. *)
 exception InvalidLinearSolver
 
+(** Raised for features that are not available in the installed version of
+    the underlying sundials library. See {sundials_version}. *)
+exception NotImplementedBySundialsVersion
+
 (** {2:arrays Arrays} *)
 
 (** Vectors of floats (one-dimensional bigarrays). *)
