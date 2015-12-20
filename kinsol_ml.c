@@ -31,6 +31,9 @@
 #include <kinsol/kinsol_dense.h>
 #include <kinsol/kinsol_band.h>
 #include <kinsol/kinsol_spgmr.h>
+#if SUNDIALS_LIB_VERSION >= 260
+#include <kinsol/kinsol_spfgmr.h>
+#endif
 #include <kinsol/kinsol_spbcgs.h>
 #include <kinsol/kinsol_sptfqmr.h>
 #include <kinsol/kinsol_spils.h>
@@ -897,6 +900,25 @@ CAMLprim value c_kinsol_spils_spgmr(value vkin_mem, value vmaxl)
 
     CAMLreturn (Val_unit);
 }
+
+#if SUNDIALS_LIB_VERSION >= 260
+CAMLprim value c_kinsol_spils_spfgmr(value vkin_mem, value vmaxl)
+{
+    CAMLparam2(vkin_mem, vmaxl);
+    void *kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
+    int flag;
+
+    flag = KINSpfgmr (kin_mem, Int_val (vmaxl));
+    CHECK_FLAG ("KINSpfgmr", flag);
+
+    CAMLreturn (Val_unit);
+}
+#else
+CAMLprim value c_kinsol_spils_spfgmr(value vkin_mem, value vmaxl)
+{
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+}
+#endif
 
 CAMLprim value c_kinsol_spils_spbcg(value vkin_mem, value vmaxl)
 {

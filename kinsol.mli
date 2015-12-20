@@ -351,6 +351,19 @@ module Spils :
     val spgmr : ?maxl:int -> ?max_restarts:int -> ('d, 'k) preconditioner
                     -> ('d, 'k) linear_solver
 
+    (** Krylov iterative solver using the scaled preconditioned flexible
+        generalized minimum residual (GMRES) method.
+        In the call [spfgmr ~maxl:maxl ~max_restarts:maxr prec],
+        [maxl] is the maximum dimension of the Krylov subspace (defaults to 5),
+        [maxr] is the maximum number of restarts (defaults to 5; set to 0 to
+        disable restarts), and [prec] is a {!preconditioner}.
+
+        @nokinsol <node5#sss:lin_solv_init> KINSpfgmr
+        @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
+        @kinsol <node5#sss:optin_spils> KINSpilsSetMaxRestarts *)
+    val spfgmr : ?maxl:int -> ?max_restarts:int -> ('d, 'k) preconditioner
+                    -> ('d, 'k) linear_solver
+
     (** Krylov iterative solver using the scaled preconditioned biconjugate
         stabilized (Bi-CGStab) method.
         In the call [spbcg ~maxl:maxl prec], [maxl] is the maximum dimension of

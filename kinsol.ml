@@ -177,6 +177,9 @@ module Spils =
     external c_spgmr : ('a, 'k) session -> int -> unit
       = "c_kinsol_spils_spgmr"
 
+    external c_spfgmr : ('a, 'k) session -> int -> unit
+      = "c_kinsol_spils_spfgmr"
+
     external c_spbcg : ('a, 'k) session -> int -> unit
       = "c_kinsol_spils_spbcg"
 
@@ -213,6 +216,13 @@ module Spils =
 
     let spgmr ?(maxl=0) ?(max_restarts=5) prec session nv =
       init_spils c_spgmr maxl prec session nv;
+      (* Note: we can skip set_max_restarts only when initializing a
+         fresh solver.  *)
+      if max_restarts <> 5 then
+        c_set_max_restarts session max_restarts
+
+    let spfgmr ?(maxl=0) ?(max_restarts=5) prec session nv =
+      init_spils c_spfgmr maxl prec session nv;
       (* Note: we can skip set_max_restarts only when initializing a
          fresh solver.  *)
       if max_restarts <> 5 then
