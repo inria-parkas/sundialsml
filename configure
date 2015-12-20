@@ -307,6 +307,7 @@ if [ $? -ne 0 ]; then
     ocaml_version=''
     ocaml_libpath=''
     ocaml_3x=''
+    ocaml_has_version_h=''
 else
     case "${ocaml_version}" in
 	[0-2].*.* | 3.0* | 3.[2-9].* | 3.10.* | 3.11.*)
@@ -317,6 +318,12 @@ else
     case "${ocaml_version}" in
 	3.*) ocaml_3x=1 ;;
 	*) ocaml_3x=0 ;;
+    esac
+
+    case "${ocaml_version}" in
+	3.*) ocaml_has_version_h=0 ;;
+	4.01.*) ocaml_has_version_h=0 ;;
+	*) ocaml_has_version_h=1 ;;
     esac
 
     ocaml_libpath="${ocaml_path%/}/"
@@ -685,7 +692,6 @@ nvecopenmp_info='not available'
 nvecopenmp_enabled=
 nvecopenmp_ml_xo=
 nvecopenmp_cmo=
-echo sundials=$sundials # XXX
 if [ $sundials -ge 260 ]; then
     test_stem=__configure_test_file__
     cat > $test_stem.c <<EOF
@@ -866,6 +872,13 @@ echo "/* Automatically generated file - don't edit!  See configure.  */"\
      > config.h
 echo "#ifndef __SUNDIALS_CONFIG_H__" >> config.h
 echo "#define __SUNDIALS_CONFIG_H__" >> config.h
+if [ "x${ocaml_has_version_h}" = x1 ]; then
+    echo "#include <caml/version.h>" >> config.h
+elif [ "x${ocaml_3x}" = x1 ]; then
+    echo "#define OCAML_VERSION 31201" >> config.h
+else
+    echo "#define OCAML_VERSION 40100" >> config.h
+fi
 echo "#define HAVE_WEAK ${have_weak}" >> config.h
 echo "#define SUNDIALS_ML_SAFE ${bounds_checking}" >> config.h
 if [ "x${lapack_enabled}" = x1 ]; then
