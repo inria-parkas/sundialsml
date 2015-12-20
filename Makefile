@@ -35,9 +35,9 @@ COBJ_COMMON = sundials_ml$(XO) dls_ml$(XO) $(SLS_ML_XO) nvector_ml$(XO) \
 
 COBJ_MAIN = $(COBJ_COMMON) kinsol_ml$(XO)
 
-MLOBJ_MAIN = sundials_config.cmo sundials.cmo				\
+MLOBJ_MAIN = sundials_config.cmo sundials.cmo nvector.cmo		\
 	     dls_impl.cmo dls.cmo sls_impl.cmo $(SLS_CMO) spils.cmo	\
-	     nvector.cmo nvector_custom.cmo nvector_array.cmo		\
+	     nvector_custom.cmo nvector_array.cmo			\
 	     nvector_serial.cmo $(NVECPTHREADS_CMO) $(NVECOPENMP_CMO) 	\
 	     cvode_impl.cmo ida_impl.cmo kinsol_impl.cmo		\
 	     cvode.cmo kinsol.cmo ida.cmo				\
