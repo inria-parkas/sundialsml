@@ -107,6 +107,7 @@ sundials.cma sundials.cmxa: $(MLOBJ_MAIN) $(MLOBJ_SENS)			    \
 	    -o sundials -oc mlsundials $^	\
 	    $(LIB_PATH)				\
 	    $(OCAML_CVODES_LIBLINK)		\
+	    $(OCAML_ARKODE_LIBLINK)		\
 	    $(OCAML_IDAS_LIBLINK)		\
 	    $(OCAML_KINSOL_LIBLINK)		\
 	    $(OCAML_ALL_LIBLINK)
@@ -120,6 +121,7 @@ sundials_no_sens.cma sundials_no_sens.cmxa:				  \
 	    -o sundials_no_sens -oc mlsundials_no_sens $^	\
 	    $(LIB_PATH)						\
 	    $(OCAML_CVODE_LIBLINK)				\
+	    $(OCAML_ARKODE_LIBLINK)				\
 	    $(OCAML_IDA_LIBLINK)				\
 	    $(OCAML_KINSOL_LIBLINK)				\
 	    $(OCAML_ALL_LIBLINK)

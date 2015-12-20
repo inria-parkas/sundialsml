@@ -264,6 +264,7 @@ sundials_version=`printf "#include %s\n%s" "${include}" "${query}" \
 		    | tail -1 | sed -e 's/ //g' -e 's/"//g'`
 sls_ml_xo=
 sls_cmo=
+Lsundials_arkode=
 if [ "${sundials_version}" = "SUNDIALS_PACKAGE_VERSION" ]; then
     error="${error}\n\tcould not find sundials_config.h"
     sundials=0
@@ -276,6 +277,7 @@ else
 	*)  sundials=260
 	    sls_ml_xo=sls_ml${XO}
 	    sls_cmo=sls.cmo
+	    Lsundials_arkode=-lsundials_arkode
 	    ;;
     esac
 
@@ -831,6 +833,7 @@ fi
 	 s#@ldflags@#${ldflags}#;
 	 s#@sundials_lib_path@#${Lsundials_lib_path}#;
 	 s#@sundials_inc_path@#${Isundials_inc_path}#;
+	 s#@link_sundials_arkode@#${Lsundials_arkode}#;
 	 s#@ocamlflags@#${ocamlflags}#;
 	 s#@ocamloptflags@#${ocamloptflags}#;
 	 s#@ocaml_3x@#${ocaml_3x}#;

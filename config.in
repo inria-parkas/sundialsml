@@ -39,6 +39,8 @@ CVODE_LDFLAGS = -lsundials_cvode @serial_nvec_libs@ -lm $(LDFLAGS)
 CVODE_CFLAGS = $(INC_PATH) $(CFLAGS)
 CVODES_LDFLAGS = -lsundials_cvodes @serial_nvec_libs@ -lm $(LDFLAGS)
 CVODES_CFLAGS = $(INC_PATH) $(CFLAGS)
+ARKODE_LDFLAGS = @link_sundials_arkode@ @serial_nvec_libs@ -lm $(LDFLAGS)
+ARKODE_CFLAGS = $(INC_PATH) $(CFLAGS)
 IDA_LDFLAGS = -lsundials_ida @serial_nvec_libs@ -lm $(LDFLAGS)
 IDA_CFLAGS = $(INC_PATH) $(CFLAGS)
 IDAS_LDFLAGS = -lsundials_idas @serial_nvec_libs@ -lm $(LDFLAGS)
@@ -78,10 +80,12 @@ OCAMLC ?= @OCAMLBIN@ocamlc
 OCAMLFLAGS = -annot @ocamlflags@
 OCAML_INCLUDE := $(shell $(OCAMLC) -where)
 OCAML_ALL_LIBLINK = $(strip $(call common, $(CVODE_LDFLAGS) $(CVODES_LDFLAGS) \
+		    			   $(ARKODE_LDFLAGS)		      \
 					   $(IDA_LDFLAGS) $(IDAS_LDFLAGS)     \
 					   $(KINSOL_LDFLAGS)))
 OCAML_CVODE_LIBLINK  = $(filter-out $(OCAML_ALL_LIBLINK), $(CVODE_LDFLAGS))
 OCAML_CVODES_LIBLINK = $(filter-out $(OCAML_ALL_LIBLINK), $(CVODES_LDFLAGS))
+OCAML_ARKODE_LIBLINK = $(filter-out $(OCAML_ALL_LIBLINK), $(ARKODE_LDFLAGS))
 OCAML_IDA_LIBLINK    = $(filter-out $(OCAML_ALL_LIBLINK), $(IDA_LDFLAGS))
 OCAML_IDAS_LIBLINK   = $(filter-out $(OCAML_ALL_LIBLINK), $(IDAS_LDFLAGS))
 OCAML_KINSOL_LIBLINK = $(filter-out $(OCAML_ALL_LIBLINK), $(KINSOL_LDFLAGS))
