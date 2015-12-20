@@ -185,13 +185,13 @@ module SPGMR :
     (** An instance of the SPGMR solver.
 
         @cvode <node9#ss:spgmr> The SPGMR Module *)
-    type 'd t
+    type ('d, 'k) t
 
     (** [make lmax temp] returns a solver session. [lmax] is the maximum
         Krylov subspace dimension to use, and [temp] sets the problem size.
 
         @cvode <node9#ss:spgmr> SpgmrMalloc *)
-    val make  : int -> ('d, 'k) Nvector.t -> 'd t
+    val make  : int -> ('d, 'k) Nvector.t -> ('d, 'k) t
 
     (** Solves the linear system [Ax = b] using the SPGMR iterative method.
         The [atimes] function computes the matrix vector product [Ax], the
@@ -223,7 +223,7 @@ module SPGMR :
         @raise PSetFailure pset failed
         @raise GSFailure The Gram-Schmidt routine failed.
         @raise QRSolFailure QRsol found a singular [R]. *)
-    val solve : 'd t
+    val solve : ('d, 'k) t
                 -> x:('d, 'k) Nvector.t
                 -> b:('d, 'k) Nvector.t
                 -> delta:float
@@ -246,13 +246,13 @@ module SPFGMR :
 
         @nocvode <node9#ss:spfgmr> The SPFGMR Module
         @since 2.6.0 *)
-    type 'd t
+    type ('d, 'k) t
 
     (** [make lmax temp] returns a solver session. [lmax] is the maximum
         Krylov subspace dimension to use, and [temp] sets the problem size.
 
         @nocvode <node9#ss:spfgmr> SpfgmrMalloc *)
-    val make  : int -> ('d, 'k) Nvector.t -> 'd t
+    val make  : int -> ('d, 'k) Nvector.t -> ('d, 'k) t
 
     (** Solves the linear system [Ax = b] using the SPFGMR iterative method.
         The [atimes] function computes the matrix vector product [Ax], the
@@ -285,7 +285,7 @@ module SPFGMR :
         @raise PSetFailure pset failed
         @raise GSFailure The Gram-Schmidt routine failed.
         @raise QRSolFailure QRsol found a singular [R]. *)
-    val solve : 'd t
+    val solve : ('d, 'k) t
                 -> x:('d, 'k) Nvector.t
                 -> b:('d, 'k) Nvector.t
                 -> delta:float
@@ -308,13 +308,13 @@ module SPBCG :
     (** An instance of the SPBCG solver.
 
         @cvode <node9#ss:spgmr> The SPBCG Module *)
-    type 'd t
+    type ('d, 'k) t
 
     (** [make lmax temp] returns a solver session. [lmax] is the maximum
         Krylov subspace dimension to use, and [temp] sets the problem size.
 
         @cvode <node9#ss:spbcg> SpbcgMalloc *)
-    val make  : int -> ('d, 'k) Nvector.t -> 'd t
+    val make  : int -> ('d, 'k) Nvector.t -> ('d, 'k) t
 
     (** Solves the linear system [Ax = b] using the SPBCG iterative method.
         The [atimes] function computes the matrix vector product [Ax], the
@@ -340,7 +340,7 @@ module SPBCG :
         @raise PSolveFailure The [psolve] function failed
         @raise ATimesFailure The [atimes] function failed
         @raise PSetFailure pset failed *)
-    val solve : 'd t
+    val solve : ('d, 'k) t
                 -> x:('d, 'k) Nvector.t
                 -> b:('d, 'k) Nvector.t
                 -> delta:float
@@ -362,13 +362,13 @@ module SPTFQMR :
     (** An instance of the SPTFQMR solver.
 
         @cvode <node9#ss:sptfqmr> The SPTFQMR Module *)
-    type 'd t
+    type ('d, 'k) t
 
     (** [make lmax temp] returns a solver session. [lmax] is the maximum
         Krylov subspace dimension to use, and [temp] sets the problem size.
 
         @cvode <node9#ss:sptfqmr> SptfqmrMalloc *)
-    val make  : int -> ('d, 'k) Nvector.t -> 'd t
+    val make  : int -> ('d, 'k) Nvector.t -> ('d, 'k) t
 
     (** Solves the linear system [Ax = b] using the SPTFQMR iterative method.
         The [atimes] function computes the matrix vector product [Ax], the
@@ -394,7 +394,7 @@ module SPTFQMR :
         @raise PSolveFailure The [psolve] function failed
         @raise ATimesFailure The [atimes] function failed
         @raise PSetFailure pset failed *)
-    val solve : 'd t
+    val solve : ('d, 'k) t
                 -> x:('d, 'k) Nvector.t
                 -> b:('d, 'k) Nvector.t
                 -> delta:float
@@ -415,13 +415,13 @@ module PCG :
 
         @noarkode <node9#ss:pcg> The PCG Module
         @since 2.6.0 *)
-    type 'd t
+    type ('d, 'k) t
 
     (** [make lmax temp] returns a solver session. [lmax] is the maximum
         Krylov subspace dimension to use, and [temp] sets the problem size.
 
         @noarkode <node9#ss:pcg> PcgMalloc *)
-    val make  : int -> ('d, 'k) Nvector.t -> 'd t
+    val make  : int -> ('d, 'k) Nvector.t -> ('d, 'k) t
 
     (** Solves the linear system [Ax = b] using the PCG iterative method.
         The [atimes] function computes the matrix vector product [Ax], the
@@ -446,7 +446,7 @@ module PCG :
         @raise PSolveFailure The [psolve] function failed
         @raise ATimesFailure The [atimes] function failed
         @raise PSetFailure pset failed *)
-    val solve : 'd t
+    val solve : ('d, 'k) t
                 -> x:('d, 'k) Nvector.t
                 -> b:('d, 'k) Nvector.t
                 -> delta:float

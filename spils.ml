@@ -67,127 +67,169 @@ let classical_gs v h k p temp s = classical_gs' (v, h, k, p, temp, s)
 
 module SPGMR =
   struct
-    type 'a t
+    type ('d, 'k) memrec
+    type ('d, 'k) t = ('d, 'k) memrec * (('d, 'k) Nvector.t -> unit)
 
-    external make  : int -> ('a, 'k) Nvector.t -> 'a t
+    external make' : int -> ('d, 'k) Nvector.t -> ('d, 'k) memrec
         = "c_spils_spgmr_make"
 
-    external solve' : 'a t                          (*  0 *)
-                      * ('a, 'k) Nvector.t          (*  1 *)
-                      * ('a, 'k) Nvector.t          (*  2 *)
+    let make lmax temp = (make' lmax temp, Nvector.check temp)
+
+    external solve' : ('d, 'k) memrec               (*  0 *)
+                      * ('d, 'k) Nvector.t          (*  1 *)
+                      * ('d, 'k) Nvector.t          (*  2 *)
                       * preconditioning_type        (*  3 *)
                       * gramschmidt_type            (*  4 *)
                       * float                       (*  5 *)
                       * int                         (*  6 *)
-                      * (('a, 'k) Nvector.t) option (*  7 *)
-                      * (('a, 'k) Nvector.t) option (*  8 *)
-                      * 'a atimes                   (*  9 *)
-                      * ('a psolve) option          (* 10 *)
+                      * (('d, 'k) Nvector.t) option (*  7 *)
+                      * (('d, 'k) Nvector.t) option (*  8 *)
+                      * 'd atimes                   (*  9 *)
+                      * ('d psolve) option          (* 10 *)
                       -> bool * float * int * int
         = "c_spils_spgmr_solve"
 
-    let solve s ~x ~b ~delta ?max_restarts:(mr=0) ?s1 ?s2 ?psolve atimes
-                pretype gstype
-        = solve' (s, x, b, pretype, gstype, delta, mr, s1, s2,
+    let solve (s, checkvec) ~x ~b ~delta ?max_restarts:(mr=0) ?s1 ?s2
+                ?psolve atimes pretype gstype
+        = if Sundials_config.safe then begin
+            checkvec x;
+            checkvec b;
+            (match s1 with None -> () | Some v -> checkvec v);
+            (match s2 with None -> () | Some v -> checkvec v)
+          end;
+          solve' (s, x, b, pretype, gstype, delta, mr, s1, s2,
                   atimes, psolve)
   end
 
 module SPFGMR =
   struct
-    type 'a t
+    type ('d, 'k) memrec
+    type ('d, 'k) t = ('d, 'k) memrec * (('d, 'k) Nvector.t -> unit)
 
-    external make  : int -> ('a, 'k) Nvector.t -> 'a t
+    external make' : int -> ('d, 'k) Nvector.t -> ('d, 'k) memrec
         = "c_spils_spfgmr_make"
 
-    external solve' : 'a t                          (*  0 *)
-                      * ('a, 'k) Nvector.t          (*  1 *)
-                      * ('a, 'k) Nvector.t          (*  2 *)
+    let make lmax temp = (make' lmax temp, Nvector.check temp)
+
+    external solve' : ('d, 'k) memrec               (*  0 *)
+                      * ('d, 'k) Nvector.t          (*  1 *)
+                      * ('d, 'k) Nvector.t          (*  2 *)
                       * preconditioning_type        (*  3 *)
                       * gramschmidt_type            (*  4 *)
                       * float                       (*  5 *)
                       * int                         (*  6 *)
-                      * (('a, 'k) Nvector.t) option (*  7 *)
-                      * (('a, 'k) Nvector.t) option (*  8 *)
-                      * 'a atimes                   (*  9 *)
-                      * ('a psolve) option          (* 10 *)
+                      * (('d, 'k) Nvector.t) option (*  7 *)
+                      * (('d, 'k) Nvector.t) option (*  8 *)
+                      * 'd atimes                   (*  9 *)
+                      * ('d psolve) option          (* 10 *)
                       * int                         (* 11 *)
                       -> bool * float * int * int
         = "c_spils_spfgmr_solve"
 
-    let solve s ~x ~b ~delta ?max_restarts:(mr=0) ?max_iters:(mi=max_int)
-                ?s1 ?s2 ?psolve atimes pretype gstype
-        = solve' (s, x, b, pretype, gstype, delta, mr, s1, s2,
+    let solve (s, checkvec) ~x ~b ~delta ?max_restarts:(mr=0)
+                ?max_iters:(mi=max_int) ?s1 ?s2 ?psolve atimes pretype gstype
+        = if Sundials_config.safe then begin
+            checkvec x;
+            checkvec b;
+            (match s1 with None -> () | Some v -> checkvec v);
+            (match s2 with None -> () | Some v -> checkvec v)
+          end;
+          solve' (s, x, b, pretype, gstype, delta, mr, s1, s2,
                   atimes, psolve, mi)
   end
 
 module SPBCG =
   struct
-    type 'a t
+    type ('d, 'k) memrec
+    type ('d, 'k) t = ('d, 'k) memrec * (('d, 'k) Nvector.t -> unit)
 
-    external make  : int -> ('a, 'k) Nvector.t -> 'a t
+    external make'  : int -> ('d, 'k) Nvector.t -> ('d, 'k) memrec
         = "c_spils_spbcg_make"
 
-    external solve' : 'a t
-                      * ('a, 'k) Nvector.t
-                      * ('a, 'k) Nvector.t
+    let make lmax temp = (make' lmax temp, Nvector.check temp)
+
+    external solve' : ('d, 'k) memrec
+                      * ('d, 'k) Nvector.t
+                      * ('d, 'k) Nvector.t
                       * preconditioning_type
                       * float
-                      * (('a, 'k) Nvector.t) option
-                      * (('a, 'k) Nvector.t) option
-                      * 'a atimes
-                      * ('a psolve) option
+                      * (('d, 'k) Nvector.t) option
+                      * (('d, 'k) Nvector.t) option
+                      * 'd atimes
+                      * ('d psolve) option
                       -> bool * float * int * int
         = "c_spils_spbcg_solve"
 
-    let solve s ~x ~b ~delta ?sx ?sb ?psolve atimes pretype
-        = solve' (s, x, b, pretype, delta, sx, sb, atimes, psolve)
+    let solve (s, checkvec) ~x ~b ~delta ?sx ?sb ?psolve atimes pretype
+        = if Sundials_config.safe then begin
+            checkvec x;
+            checkvec b;
+            (match sx with None -> () | Some v -> checkvec v);
+            (match sb with None -> () | Some v -> checkvec v)
+          end;
+          solve' (s, x, b, pretype, delta, sx, sb, atimes, psolve)
  end
 
 module SPTFQMR =
   struct
-    
-    type 'a t
+    type ('d, 'k) memrec
+    type ('d, 'k) t = ('d, 'k) memrec * (('d, 'k) Nvector.t -> unit)
 
-    external make  : int -> ('a, 'k) Nvector.t -> 'a t
+    external make'  : int -> ('d, 'k) Nvector.t -> ('d, 'k) memrec
         = "c_spils_sptfqmr_make"
 
-    external solve' : 'a t
-                      * ('a, 'k) Nvector.t
-                      * ('a, 'k) Nvector.t
+    let make lmax temp = (make' lmax temp, Nvector.check temp)
+
+    external solve' : ('d, 'k) memrec
+                      * ('d, 'k) Nvector.t
+                      * ('d, 'k) Nvector.t
                       * preconditioning_type
                       * float
-                      * (('a, 'k) Nvector.t) option
-                      * (('a, 'k) Nvector.t) option
-                      * 'a atimes
-                      * ('a psolve) option
+                      * (('d, 'k) Nvector.t) option
+                      * (('d, 'k) Nvector.t) option
+                      * 'd atimes
+                      * ('d psolve) option
                       -> bool * float * int * int
         = "c_spils_sptfqmr_solve"
 
-    let solve s ~x ~b ~delta ?sx ?sb ?psolve atimes pretype
-        = solve' (s, x, b, pretype, delta, sx, sb, atimes, psolve)
-
+    let solve (s, checkvec) ~x ~b ~delta ?sx ?sb ?psolve atimes pretype
+        = if Sundials_config.safe then begin
+            checkvec x;
+            checkvec b;
+            (match sx with None -> () | Some v -> checkvec v);
+            (match sb with None -> () | Some v -> checkvec v)
+          end;
+          solve' (s, x, b, pretype, delta, sx, sb, atimes, psolve)
  end
 
 module PCG =
   struct
-    type 'a t
+    type ('d, 'k) memrec
+    type ('d, 'k) t = ('d, 'k) memrec * (('d, 'k) Nvector.t -> unit)
 
-    external make  : int -> ('a, 'k) Nvector.t -> 'a t
+    external make'  : int -> ('d, 'k) Nvector.t -> ('d, 'k) memrec
         = "c_spils_pcg_make"
 
-    external solve' : 'a t                          (*  0 *)
-                      * ('a, 'k) Nvector.t          (*  1 *)
-                      * ('a, 'k) Nvector.t          (*  2 *)
-                      * ('a, 'k) Nvector.t          (*  3 *)
+    let make lmax temp = (make' lmax temp, Nvector.check temp)
+
+    external solve' : ('d, 'k) memrec               (*  0 *)
+                      * ('d, 'k) Nvector.t          (*  1 *)
+                      * ('d, 'k) Nvector.t          (*  2 *)
+                      * ('d, 'k) Nvector.t          (*  3 *)
                       * preconditioning_type        (*  4 *)
                       * float                       (*  5 *)
-                      * 'a atimes                   (*  6 *)
-                      * ('a psolve) option          (*  7 *)
+                      * 'd atimes                   (*  6 *)
+                      * ('d psolve) option          (*  7 *)
                       -> bool * float * int * int
         = "c_spils_pcg_solve"
 
-    let solve s ~x ~b ~delta ~w ?psolve atimes pretype
-        = solve' (s, x, b, w, pretype, delta, atimes, psolve)
+    let solve (s, checkvec) ~x ~b ~delta ~w ?psolve atimes pretype
+        = if Sundials_config.safe then begin
+            checkvec x;
+            checkvec b;
+            checkvec w
+          end;
+          solve' (s, x, b, w, pretype, delta, atimes, psolve)
   end
 
 (* Let C code know about some of the values in this module.  *)
