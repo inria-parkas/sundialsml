@@ -168,6 +168,28 @@ module SPTFQMR =
 
  end
 
+module PCG =
+  struct
+    type 'a t
+
+    external make  : int -> ('a, 'k) Nvector.t -> 'a t
+        = "c_spils_pcg_make"
+
+    external solve' : 'a t                          (*  0 *)
+                      * ('a, 'k) Nvector.t          (*  1 *)
+                      * ('a, 'k) Nvector.t          (*  2 *)
+                      * ('a, 'k) Nvector.t          (*  3 *)
+                      * preconditioning_type        (*  4 *)
+                      * float                       (*  5 *)
+                      * 'a atimes                   (*  6 *)
+                      * ('a psolve) option          (*  7 *)
+                      -> bool * float * int * int
+        = "c_spils_pcg_solve"
+
+    let solve s ~x ~b ~delta ~w ?psolve atimes pretype
+        = solve' (s, x, b, w, pretype, delta, atimes, psolve)
+  end
+
 (* Let C code know about some of the values in this module.  *)
 external c_init_module : exn array -> unit =
   "c_spils_init_module"

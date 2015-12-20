@@ -18,6 +18,7 @@
 #include <sundials/sundials_spgmr.h>
 #if SUNDIALS_LIB_VERSION >= 260
 #include <sundials/sundials_spfgmr.h>
+#include <sundials/sundials_pcg.h>
 #endif
 #include <sundials/sundials_spbcgs.h>
 #include <sundials/sundials_sptfqmr.h>
@@ -663,6 +664,123 @@ CAMLprim value c_spils_sptfqmr_solve(value vargs)
     CAMLreturn(vr);
 }
 
+/* PCG */
+
+#if SUNDIALS_LIB_VERSION >= 260
+
+#define PCG_SESSION(v) (*((PcgMem*)Data_custom_val(v)))
+
+static void pcg_finalize(value vs)
+{
+    PcgMem s = PCG_SESSION(vs);
+    PcgFree(s);
+}
+
+CAMLprim value c_spils_pcg_make(value vl_max, value vvec_tmpl)
+{
+    CAMLparam2(vl_max, vvec_tmpl);
+    CAMLlocal1(vs);
+    PcgMem s;
+    N_Vector vec_tmpl;
+    mlsize_t approx_size = sizeof(PcgMemRec)
+	+ (Int_val(vl_max) + 3) * NVECTOR_APPROXSIZE(vvec_tmpl);
+
+    vec_tmpl = NVEC_VAL(vvec_tmpl);
+    s = PcgMalloc(Int_val(vl_max), vec_tmpl);
+
+    if (s == NULL) caml_raise_out_of_memory();
+    vs = caml_alloc_final(2, &pcg_finalize, approx_size, approx_size * 20);
+    PCG_SESSION(vs) = s;
+
+    CAMLreturn(vs);
+}
+
+CAMLprim value c_spils_pcg_solve(value vargs)
+{
+    CAMLparam1(vargs);
+    CAMLlocal2(vr, vpsolve);
+    int flag;
+    int success;
+    N_Vector x = NVEC_VAL(Field(vargs, 1));
+    N_Vector b = NVEC_VAL(Field(vargs, 2));
+    N_Vector w = NVEC_VAL(Field(vargs, 3));
+    realtype res_norm = 0.0;
+    int nli = 0;
+    int nps = 0;
+    void *p_data = NULL;
+
+    vpsolve = Field(vargs, 7);
+    if (vpsolve != Val_none) p_data = (void *)Field(vpsolve, 0);
+
+    flag = PcgSolve(PCG_SESSION(Field(vargs, 0)),
+		    (void *)Field(vargs, 6), // adata = user atimes
+		    x,
+		    b,
+		    spils_precond_type(Field(vargs, 4)), // pretype
+		    Double_val(Field(vargs, 5)),         // delta
+		    p_data,				 // p_data = user psolve
+		    w,
+		    atimes_f,			         // atimes wrapper
+		    psolve_f,                            // psolve wrapper
+		    &res_norm,
+		    &nli,
+		    &nps);
+
+    switch(flag) {
+      case PCG_SUCCESS:
+	  success = 1;
+          break;
+
+      case PCG_RES_REDUCED:
+	  success = 0;
+	  break;
+
+      case PCG_CONV_FAIL:
+	caml_raise_constant(SPILS_EXN(ConvFailure));
+
+      case PCG_PSOLVE_FAIL_REC:
+	  caml_raise_with_arg(SPILS_EXN_TAG(PSolveFailure), Val_bool(1));
+
+      case PCG_PSOLVE_FAIL_UNREC:
+	  caml_raise_with_arg(SPILS_EXN_TAG(PSolveFailure), Val_bool(0));
+
+      case PCG_ATIMES_FAIL_REC:
+	  caml_raise_with_arg(SPILS_EXN_TAG(ATimesFailure), Val_bool(1));
+
+      case PCG_ATIMES_FAIL_UNREC:
+	  caml_raise_with_arg(SPILS_EXN_TAG(ATimesFailure), Val_bool(0));
+
+      case PCG_PSET_FAIL_REC:
+	  caml_raise_with_arg(SPILS_EXN_TAG(PSetFailure), Val_bool(1));
+
+      case PCG_PSET_FAIL_UNREC:
+	  caml_raise_with_arg(SPILS_EXN_TAG(PSetFailure), Val_bool(0));
+
+      default:
+	caml_failwith("pcg_solve: unexpected failure");
+    }
+
+    vr = caml_alloc_tuple(4);
+    Store_field(vr, 0, Val_bool(success));
+    Store_field(vr, 1, caml_copy_double(res_norm));
+    Store_field(vr, 2, Val_int(nli));
+    Store_field(vr, 3, Val_int(nps));
+
+    CAMLreturn(vr);
+}
+
+#else
+CAMLprim value c_spils_pcg_make(value vl_max, value vvec_tmpl)
+{
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+}
+
+CAMLprim value c_spils_pcg_solve(value vargs)
+{
+    // Never called anyway since it is not possible to make an PCG.t.
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+}
+#endif
 
 int spils_precond_type(value vptype)
 {

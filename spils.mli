@@ -407,3 +407,53 @@ module SPTFQMR :
 
  end
 
+(** The Preconditioned Conjugate-Gradient (PCG) method. *)
+module PCG :
+  sig
+    
+    (** An instance of the PCG solver.
+
+        @noarkode <node9#ss:pcg> The PCG Module
+        @since 2.6.0 *)
+    type 'd t
+
+    (** [make lmax temp] returns a solver session. [lmax] is the maximum
+        Krylov subspace dimension to use, and [temp] sets the problem size.
+
+        @noarkode <node9#ss:pcg> PcgMalloc *)
+    val make  : int -> ('d, 'k) Nvector.t -> 'd t
+
+    (** Solves the linear system [Ax = b] using the PCG iterative method.
+        The [atimes] function computes the matrix vector product [Ax], the
+        other arguments are described below. The function returns a tuple
+        [(solved, res_norm, nli, nps)] where [solved] indicates whether the
+        system converged, [res_norm] is the L2 norm of the scaled
+        preconditioned residual
+        {% $\lVert b - Ax \rVert_{L2}$ %}, and,
+        [nli] and [nps] count, respectively, linear iterations performed and
+        calls to [psolve]. Repeated calls can be made to [solve] with
+        varying input arguments, but a new session must be created if either
+        the problem size or the maximum Krylov dimension change.
+
+        @arkode <node9#ss:pcg> PcgSolve
+        @param x initial guess on entry; result on return
+        @param b right-hand side vector
+        @param delta tolerance of the L2 norm: [res_norm <= delta]
+        @param w used in computing the residual norm for stopping solver
+        @param psolve optionally solves the preconditioner system.
+
+        @raise ConvFailure Failed to converge
+        @raise PSolveFailure The [psolve] function failed
+        @raise ATimesFailure The [atimes] function failed
+        @raise PSetFailure pset failed *)
+    val solve : 'd t
+                -> x:('d, 'k) Nvector.t
+                -> b:('d, 'k) Nvector.t
+                -> delta:float
+                -> w:('d, 'k) Nvector.t
+                -> ?psolve:('d psolve)
+                -> 'd atimes
+                -> preconditioning_type
+                -> bool * float * int * int
+  end
+
