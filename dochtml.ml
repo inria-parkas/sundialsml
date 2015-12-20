@@ -14,6 +14,7 @@
  Custom tags for the ocamldoc comments:
     @cvode          link to Sundials CVODE documentation
     @cvodes         link to Sundials CVODES documentation
+    @arkode         link to Sundials ARKODE documentation
     @ida            link to Sundials IDA documentation
     @idas           link to Sundials IDAS documentation
     @kinsol         link to Sundials KINSOL documentation
@@ -21,6 +22,7 @@
 
 let cvode_doc_root = ref CVODE_DOC_ROOT
 let cvodes_doc_root = ref CVODES_DOC_ROOT
+let arkode_doc_root = ref ARKODE_DOC_ROOT
 let ida_doc_root = ref IDA_DOC_ROOT
 let idas_doc_root = ref IDAS_DOC_ROOT
 let kinsol_doc_root = ref KINSOL_DOC_ROOT
@@ -83,6 +85,12 @@ struct
       Printf.sprintf
         "<div class=\"sundials cvodes\"><span class=\"seesundials\">See sundials: </span><a href=\"%s%s.html%s\">%s</a></div>"
         !cvodes_doc_root page anchor title
+
+    method private html_of_arkode t =
+      let (page, anchor, title) = self#split_text t in
+      Printf.sprintf
+        "<div class=\"sundials arkode\"><span class=\"seesundials\">See sundials: </span><a href=\"%s%s.html%s\">%s</a></div>"
+        !arkode_doc_root page anchor title
 
     method private html_of_ida t =
       let (page, anchor, title) = self#split_text t in
@@ -218,6 +226,8 @@ struct
       tag_functions <- ("nocvode",  self#html_of_missing) :: tag_functions;
       tag_functions <- ("cvodes",   self#html_of_cvodes) :: tag_functions;
       tag_functions <- ("nocvodes", self#html_of_missing) :: tag_functions;
+      tag_functions <- ("arkode",   self#html_of_arkode) :: tag_functions;
+      tag_functions <- ("noarkode", self#html_of_missing) :: tag_functions;
       tag_functions <- ("ida",      self#html_of_ida) :: tag_functions;
       tag_functions <- ("noida",    self#html_of_missing) :: tag_functions;
       tag_functions <- ("idas",     self#html_of_idas) :: tag_functions;
@@ -249,6 +259,9 @@ let option_cvode_doc_root =
 let option_cvodes_doc_root =
   ("-cvodes-doc-root", Arg.String (fun d -> cvodes_doc_root := d), 
    "<dir>  specify the root url for the Sundials CVODES documentation.")
+let option_arkode_doc_root =
+  ("-arkode-doc-root", Arg.String (fun d -> arkode_doc_root := d), 
+   "<dir>  specify the root url for the Sundials ARKODE documentation.")
 let option_ida_doc_root =
   ("-ida-doc-root", Arg.String (fun d -> ida_doc_root := d), 
    "<dir>  specify the root url for the Sundials IDA documentation.")
@@ -267,6 +280,7 @@ let _ =
   let dochtml = new dochtml in
   Odoc_args.add_option option_cvode_doc_root;
   Odoc_args.add_option option_cvodes_doc_root;
+  Odoc_args.add_option option_arkode_doc_root;
   Odoc_args.add_option option_ida_doc_root;
   Odoc_args.add_option option_idas_doc_root;
   Odoc_args.add_option option_kinsol_doc_root;
@@ -277,6 +291,7 @@ let _ =
 let _ =
   Odoc_args.add_option option_cvode_doc_root;
   Odoc_args.add_option option_cvodes_doc_root;
+  Odoc_args.add_option option_arkode_doc_root;
   Odoc_args.add_option option_ida_doc_root;
   Odoc_args.add_option option_idas_doc_root;
   Odoc_args.add_option option_kinsol_doc_root;

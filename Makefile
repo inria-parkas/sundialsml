@@ -234,6 +234,7 @@ idas_superlumt_ml.o: idas_superlumt_ml.c
 DOCHTML_PP=$(CPP) $(ML_CPPFLAGS) -DOCAML_3X=$(OCAML_3X)
 dochtml.cmo: DOCHTML_PP += -DCVODE_DOC_ROOT=\"$(CVODE_DOC_ROOT_DEFAULT)\"
 dochtml.cmo: DOCHTML_PP += -DCVODES_DOC_ROOT=\"$(CVODES_DOC_ROOT_DEFAULT)\"
+dochtml.cmo: DOCHTML_PP += -DARKODE_DOC_ROOT=\"$(ARKODE_DOC_ROOT_DEFAULT)\"
 dochtml.cmo: DOCHTML_PP += -DIDA_DOC_ROOT=\"$(IDA_DOC_ROOT_DEFAULT)\"
 dochtml.cmo: DOCHTML_PP += -DIDAS_DOC_ROOT=\"$(IDAS_DOC_ROOT_DEFAULT)\"
 dochtml.cmo: DOCHTML_PP += -DKINSOL_DOC_ROOT=\"$(KINSOL_DOC_ROOT_DEFAULT)\"
@@ -254,10 +255,11 @@ doc: doc/html/index.html
 	done
 
 DOC_URLS=$(if $(CVODE_DOC_ROOT),-cvode-doc-root "$(CVODE_DOC_ROOT)")	   \
-	 $(if $(CVODES_DOC_ROOT),-cvodes-doc-root "$(CVODES_DOC_ROOT)") \
-	 $(if $(IDA_DOC_ROOT),-ida-doc-root "$(IDA_DOC_ROOT)")	   \
+	 $(if $(CVODES_DOC_ROOT),-cvodes-doc-root "$(CVODES_DOC_ROOT)")    \
+	 $(if $(ARKODE_DOC_ROOT),-arkode-doc-root "$(ARKODE_DOC_ROOT)")    \
+	 $(if $(IDA_DOC_ROOT),-ida-doc-root "$(IDA_DOC_ROOT)")	           \
 	 $(if $(IDAS_DOC_ROOT),-idas-doc-root "$(IDAS_DOC_ROOT)")	   \
-	 $(if $(KINSOL_DOC_ROOT),-kinsol-doc-root "$(KINSOL_DOC_ROOT)") \
+	 $(if $(KINSOL_DOC_ROOT),-kinsol-doc-root "$(KINSOL_DOC_ROOT)")    \
 	 $(if $(MATHJAX_URL),-mathjax "$(MATHJAX_URL)")
 doc/html/index.html: doc/html sundials_docs.cma intro.doc		\
 		     $(filter-out %_impl.cmi, $(CMI_MAIN))		\
