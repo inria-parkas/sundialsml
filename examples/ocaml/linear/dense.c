@@ -3,6 +3,7 @@
 #include <sundials/sundials_types.h>
 #include <sundials/sundials_direct.h>
 #include <sundials/sundials_dense.h>
+#include "../../../config.h"
 
 #define NROWS 3
 #define NCOLS 3
@@ -59,6 +60,17 @@ int main(int argc, char** argv)
     printf("initially: a=\n");
     print_mat(a, NROWS, NCOLS);
     printf("\n");
+
+#if SUNDIALS_LIB_VERSION >= 260
+    {
+	realtype x[NCOLS] = { 1.0,  2.0, 3.0 };
+	realtype y[NROWS] = { 0.0 };
+	printf("matvec: y=\n");
+	DenseMatvec(a, x, y);
+	print_vec(y, NROWS);
+	printf("\n");
+    }
+#endif
 
     DenseCopy(a, b);
 

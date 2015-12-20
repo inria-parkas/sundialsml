@@ -87,6 +87,12 @@ module DenseMatrix :
         @cvode <node9#ss:dense> AddIdentity *)
     val add_identity   : t -> unit
 
+    (** Compute the matrix-vector product $y = Ax$.
+    
+        @nocvode <node9#ss:dense> DenseMatvec
+        @since 2.6.0 *)
+    val matvec : t -> x:Sundials.RealArray.t -> y:Sundials.RealArray.t -> unit
+
     (** [blit src dst] copies the contents of [src] into [dst]. Both
         must have the same size.
 
@@ -211,6 +217,12 @@ module ArrayDenseMatrix :
 
         @cvode <node9#ss:dense> denseAddIdentity *)
     val add_identity : t -> unit
+
+    (** Compute the matrix-vector product $y = Ax$.
+    
+        @nocvode <node9#ss:dense> denseMatvec
+        @since 2.6.0 *)
+    val matvec : t -> x:Sundials.RealArray.t -> y:Sundials.RealArray.t -> unit
 
     (** [blit src dst] copies the contents of [src] into [dst]. Both
         must have the same size.
@@ -357,6 +369,12 @@ module BandMatrix :
         @cvode <node9#ss:band> AddIdentity *)
     val add_identity   : t -> unit
 
+    (** Compute the matrix-vector product $y = Ax$.
+    
+        @nocvode <node9#ss:band> BandMatvec
+        @since 2.6.0 *)
+    val matvec : t -> x:Sundials.RealArray.t -> y:Sundials.RealArray.t -> unit
+
     (** [blit src dst copymu copyml] copies the contents of [src] into [dst].
         The bandwidth to copy is given by [copy_mu] and [copy_ml]. Both
         matrices must have the same size.
@@ -458,6 +476,12 @@ module ArrayBandMatrix :
         @cvode <node9#ss:band> bandAddIdentity *)
     val add_identity : t -> smu -> unit
 
+    (** Compute the matrix-vector product $y = Ax$.
+    
+        @nocvode <node9#ss:band> bandMatvec
+        @since 2.6.0 *)
+    val matvec : t -> smu -> mu -> ml
+                  -> x:Sundials.RealArray.t -> y:Sundials.RealArray.t -> unit
 
     (** [blit src dst src_smu dst_smu copy_mu copy_ml] copies the contents
         of [src] into [dst]. The storage upper bandwidths of [src] and [dst]

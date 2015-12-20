@@ -3,6 +3,7 @@
 #include <sundials/sundials_types.h>
 #include <sundials/sundials_direct.h>
 #include <sundials/sundials_band.h>
+#include "../../../config.h"
 
 #define SIZE 5
 
@@ -109,6 +110,17 @@ int main(int argc, char** argv)
     printf("initially: a=\n");
     print_mat(a, SIZE, MU, ML, SMU);
     printf("\n");
+
+#if SUNDIALS_LIB_VERSION >= 260
+    {
+	realtype x[SIZE] = { 1.0,  2.0, 3.0, 4.0, 5.0 };
+	realtype y[SIZE] = { 0.0 };
+	printf("matvec: y=\n");
+	bandMatvec(a, x, y, SIZE, MU, ML, SMU);
+	print_vec(y, SIZE);
+	printf("\n");
+    }
+#endif
 
     bandCopy(a, b, SIZE, SMU, SMU, MU, ML);
     bandScale(2.0, b, SIZE, MU, ML, SMU);

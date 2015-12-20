@@ -70,6 +70,13 @@ module DenseMatrix =
       if Sundials_config.safe && not valid then raise Invalidated;
       c_add_identity dlsmat
 
+    external c_matvec : dlsmat -> real_array -> real_array -> unit
+        = "c_densematrix_matvec"
+
+    let matvec { dlsmat; valid } ~x ~y =
+      if Sundials_config.safe && not valid then raise Invalidated;
+      c_matvec dlsmat x y
+
     external c_copy     : dlsmat -> dlsmat -> unit
         = "c_densematrix_copy"
 
@@ -184,6 +191,11 @@ module ArrayDenseMatrix =
     external add_identity : t -> unit
         = "c_arraydensematrix_add_identity"
 
+    external matvec' : t -> real_array -> real_array -> unit
+        = "c_arraydensematrix_matvec"
+
+    let matvec a ~x ~y = matvec' a x y
+
     external getrf : t -> lint_array -> unit
         = "c_arraydensematrix_getrf"
 
@@ -266,6 +278,13 @@ module BandMatrix =
     let add_identity { dlsmat; valid } =
       if Sundials_config.safe && not valid then raise Invalidated;
       c_add_identity dlsmat
+
+    external c_matvec : dlsmat -> real_array -> real_array -> unit
+        = "c_bandmatrix_matvec"
+
+    let matvec { dlsmat; valid } ~x ~y =
+      if Sundials_config.safe && not valid then raise Invalidated;
+      c_matvec dlsmat x y
 
     external c_copy : dlsmat -> dlsmat -> int -> int -> unit
         = "c_bandmatrix_copy"
@@ -363,6 +382,11 @@ module ArrayBandMatrix =
 
     external add_identity : t -> int -> unit
         = "c_arraybandmatrix_add_identity"
+
+    external matvec' : t -> int * int * int -> real_array -> real_array -> unit
+        = "c_arraybandmatrix_matvec"
+
+    let matvec a smu mu ml ~x ~y = matvec' a (mu, ml, smu) x y
 
     external gbtrf' : t -> int * int * int -> lint_array -> unit
         = "c_arraybandmatrix_gbtrf"

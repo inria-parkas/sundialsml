@@ -53,6 +53,13 @@ let main () =
 
   printf "initially: a=@\n%a@\n" print_mat a;
 
+  (try
+    let x = RealArray.of_array [| 1.0; 2.0; 3.0 |] in
+    let y = RealArray.create nrows in
+    M.matvec a x y;
+    printf "matvec: y=@\n%a@\n\n" print_vec y
+  with NotImplementedBySundialsVersion -> ());
+
   let b = M.create nrows ncols in
   M.blit a b;
 

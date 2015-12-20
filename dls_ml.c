@@ -116,6 +116,28 @@ CAMLprim value c_densematrix_add_identity(value va)
     CAMLreturn (Val_unit);
 }
 
+#if SUNDIALS_LIB_VERSION >= 260
+CAMLprim value c_densematrix_matvec(value va, value vx, value vy)
+{
+    CAMLparam3(va, vx, vy);
+    DlsMat a = DLSMAT(va);
+
+#if SUNDIALS_ML_SAFE == 1
+    if (ARRAY1_LEN(vx) < a->N)
+	caml_invalid_argument("x array too small.");
+    if (ARRAY1_LEN(vy) < a->M)
+	caml_invalid_argument("y array too small.");
+#endif
+    DenseMatvec(a, REAL_ARRAY(vx), REAL_ARRAY(vy));
+    CAMLreturn (Val_unit);
+}
+#else
+CAMLprim value c_densematrix_matvec(value va, value vx, value vy)
+{
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+}
+#endif
+
 CAMLprim value c_densematrix_copy(value va, value vb)
 {
     CAMLparam2(va, vb);
@@ -303,6 +325,30 @@ CAMLprim value c_arraydensematrix_add_identity(value va)
     denseAddIdentity(ARRAY2_ACOLS(va), m);
     CAMLreturn (Val_unit);
 }
+
+#if SUNDIALS_LIB_VERSION >= 260
+CAMLprim value c_arraydensematrix_matvec(value va, value vx, value vy)
+{
+    CAMLparam3(va, vx, vy);
+    struct caml_ba_array *ba = ARRAY2_DATA(va);
+    intnat m = ba->dim[1];
+    intnat n = ba->dim[0];
+
+#if SUNDIALS_ML_SAFE == 1
+    if (ARRAY1_LEN(vx) < n)
+	caml_invalid_argument("x array too small.");
+    if (ARRAY1_LEN(vy) < m)
+	caml_invalid_argument("y array too small.");
+#endif
+    denseMatvec(ARRAY2_ACOLS(va), REAL_ARRAY(vx), REAL_ARRAY(vy), m, n);
+    CAMLreturn (Val_unit);
+}
+#else
+CAMLprim value c_arraydensematrix_matvec(value va, value vx, value vy)
+{
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+}
+#endif
 
 CAMLprim value c_arraydensematrix_getrf(value va, value vp)
 {
@@ -536,6 +582,28 @@ CAMLprim value c_bandmatrix_copy(value va, value vb,
     CAMLreturn (Val_unit);
 }
 
+#if SUNDIALS_LIB_VERSION >= 260
+CAMLprim value c_bandmatrix_matvec(value va, value vx, value vy)
+{
+    CAMLparam3(va, vx, vy);
+    DlsMat a = DLSMAT(va);
+
+#if SUNDIALS_ML_SAFE == 1
+    if (ARRAY1_LEN(vx) < a->N)
+	caml_invalid_argument("x array too small.");
+    if (ARRAY1_LEN(vy) < a->M)
+	caml_invalid_argument("y array too small.");
+#endif
+    BandMatvec(a, REAL_ARRAY(vx), REAL_ARRAY(vy));
+    CAMLreturn (Val_unit);
+}
+#else
+CAMLprim value c_bandmatrix_matvec(value va, value vx, value vy)
+{
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+}
+#endif
+
 CAMLprim value c_bandmatrix_scale(value vc, value va)
 {
     CAMLparam2(vc, va);
@@ -665,6 +733,42 @@ CAMLprim value c_arraybandmatrix_add_identity(value va, value vsmu)
     bandAddIdentity(ARRAY2_ACOLS(va), m, smu);
     CAMLreturn (Val_unit);
 }
+
+#if SUNDIALS_LIB_VERSION >= 260
+CAMLprim value c_arraybandmatrix_matvec(value va, value vsizes,
+					value vx, value vy)
+{
+    CAMLparam4(va, vsizes, vx, vy);
+
+    struct caml_ba_array *ba = ARRAY2_DATA(va);
+    intnat m = ba->dim[0];
+
+    long int mu  = Long_val(Field(vsizes, 0));
+    long int ml  = Long_val(Field(vsizes, 1));
+    long int smu = Long_val(Field(vsizes, 2));
+
+#if SUNDIALS_ML_SAFE == 1
+    intnat n = ba->dim[1];
+
+    if (n < mu + ml + 1)
+	caml_invalid_argument("matrix badly sized.");
+
+    if (ARRAY1_LEN(vx) < n)
+	caml_invalid_argument("x array too small.");
+    if (ARRAY1_LEN(vy) < m)
+	caml_invalid_argument("y array too small.");
+#endif
+    bandMatvec(ARRAY2_ACOLS(va), REAL_ARRAY(vx), REAL_ARRAY(vy),
+	       m, mu, ml, smu);
+    CAMLreturn (Val_unit);
+}
+#else
+CAMLprim value c_arraybandmatrix_matvec(value va, value vx, value vy,
+					value vsizes)
+{
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+}
+#endif
 
 CAMLprim value c_arraybandmatrix_gbtrf(value va, value vsizes, value vp)
 {

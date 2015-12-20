@@ -80,6 +80,13 @@ let main () =
 
   printf "initially: a=@\n%a@\n" print_mat a;
 
+  (try
+    let x = RealArray.of_array [| 1.0; 2.0; 3.0; 4.0; 5.0 |] in
+    let y = RealArray.create n in
+    M.matvec a x y;
+    printf "matvec: y=@\n%a@\n\n" print_vec y
+  with NotImplementedBySundialsVersion -> ());
+
   let b = M.create {M.n; M.mu; M.ml; M.smu} in
   M.blit a b mu ml;
 
