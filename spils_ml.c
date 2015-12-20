@@ -147,7 +147,7 @@ static int atimes_f(void *a_fn, N_Vector v, N_Vector z)
     value res = caml_callback2_exn((value)a_fn, vv, vz);
     if (Is_exception_result(res)) {
 	res = Extract_exception(res);
-	r = (Field(res, 0) == SUNDIALS_EXN(RecoverableFailure))?1:-1;
+	r = (Field(res, 0) == SUNDIALS_EXN_TAG(RecoverableFailure))?1:-1;
     }
 
     CAMLreturnT(int, r);
@@ -171,7 +171,7 @@ static int psolve_f(void *p_fn, N_Vector r, N_Vector z, int lr)
     value res = caml_callback3_exn((value)p_fn, vr, vz, Val_bool(lr == 1));
     if (Is_exception_result(res)) {
 	res = Extract_exception(res);
-	fr = (Field(res, 0) == SUNDIALS_EXN(RecoverableFailure))?1:-1;
+	fr = (Field(res, 0) == SUNDIALS_EXN_TAG(RecoverableFailure))?1:-1;
     }
 
     CAMLreturnT(int, fr);
@@ -263,22 +263,22 @@ CAMLprim value c_spils_spgmr_solve(value vargs)
 	caml_raise_constant(SPILS_EXN(QRfactFailure));
 
       case SPGMR_PSOLVE_FAIL_REC:
-	  caml_raise_with_arg(SPILS_EXN(PSolveFailure), Val_bool(1));
+	  caml_raise_with_arg(SPILS_EXN_TAG(PSolveFailure), Val_bool(1));
 
       case SPGMR_PSOLVE_FAIL_UNREC:
-	  caml_raise_with_arg(SPILS_EXN(PSolveFailure), Val_bool(0));
+	  caml_raise_with_arg(SPILS_EXN_TAG(PSolveFailure), Val_bool(0));
 
       case SPGMR_ATIMES_FAIL_REC:
-	  caml_raise_with_arg(SPILS_EXN(ATimesFailure), Val_bool(1));
+	  caml_raise_with_arg(SPILS_EXN_TAG(ATimesFailure), Val_bool(1));
 
       case SPGMR_ATIMES_FAIL_UNREC:
-	  caml_raise_with_arg(SPILS_EXN(ATimesFailure), Val_bool(0));
+	  caml_raise_with_arg(SPILS_EXN_TAG(ATimesFailure), Val_bool(0));
 
       case SPGMR_PSET_FAIL_REC:
-	  caml_raise_with_arg(SPILS_EXN(PSetFailure), Val_bool(1));
+	  caml_raise_with_arg(SPILS_EXN_TAG(PSetFailure), Val_bool(1));
 
       case SPGMR_PSET_FAIL_UNREC:
-	  caml_raise_with_arg(SPILS_EXN(PSetFailure), Val_bool(0));
+	  caml_raise_with_arg(SPILS_EXN_TAG(PSetFailure), Val_bool(0));
 
       case SPGMR_GS_FAIL:
 	caml_raise_constant(SPILS_EXN(GSFailure));
@@ -380,22 +380,22 @@ CAMLprim value c_spils_spbcg_solve(value vargs)
 	caml_raise_constant(SPILS_EXN(ConvFailure));
 
       case SPBCG_PSOLVE_FAIL_REC:
-	  caml_raise_with_arg(SPILS_EXN(PSolveFailure), Val_bool(1));
+	  caml_raise_with_arg(SPILS_EXN_TAG(PSolveFailure), Val_bool(1));
 
       case SPBCG_PSOLVE_FAIL_UNREC:
-	  caml_raise_with_arg(SPILS_EXN(PSolveFailure), Val_bool(0));
+	  caml_raise_with_arg(SPILS_EXN_TAG(PSolveFailure), Val_bool(0));
 
       case SPBCG_ATIMES_FAIL_REC:
-	  caml_raise_with_arg(SPILS_EXN(ATimesFailure), Val_bool(1));
+	  caml_raise_with_arg(SPILS_EXN_TAG(ATimesFailure), Val_bool(1));
 
       case SPBCG_ATIMES_FAIL_UNREC:
-	  caml_raise_with_arg(SPILS_EXN(ATimesFailure), Val_bool(0));
+	  caml_raise_with_arg(SPILS_EXN_TAG(ATimesFailure), Val_bool(0));
 
       case SPBCG_PSET_FAIL_REC:
-	  caml_raise_with_arg(SPILS_EXN(PSetFailure), Val_bool(1));
+	  caml_raise_with_arg(SPILS_EXN_TAG(PSetFailure), Val_bool(1));
 
       case SPBCG_PSET_FAIL_UNREC:
-	  caml_raise_with_arg(SPILS_EXN(PSetFailure), Val_bool(0));
+	  caml_raise_with_arg(SPILS_EXN_TAG(PSetFailure), Val_bool(0));
 
       default:
 	caml_failwith("spmgr_solve: unexpected failure");
@@ -488,25 +488,25 @@ CAMLprim value c_spils_sptfqmr_solve(value vargs)
 	  break;
 
       case SPTFQMR_CONV_FAIL:
-	caml_raise_constant(SPILS_EXN(ConvFailure));
+	  caml_raise_constant(SPILS_EXN(ConvFailure));
 
       case SPTFQMR_PSOLVE_FAIL_REC:
-	  caml_raise_with_arg(SPILS_EXN(PSolveFailure), Val_bool(1));
+	  caml_raise_with_arg(SPILS_EXN_TAG(PSolveFailure), Val_bool(1));
 
       case SPTFQMR_PSOLVE_FAIL_UNREC:
-	  caml_raise_with_arg(SPILS_EXN(PSolveFailure), Val_bool(0));
+	  caml_raise_with_arg(SPILS_EXN_TAG(PSolveFailure), Val_bool(0));
 
       case SPTFQMR_ATIMES_FAIL_REC:
-	  caml_raise_with_arg(SPILS_EXN(ATimesFailure), Val_bool(1));
+	  caml_raise_with_arg(SPILS_EXN_TAG(ATimesFailure), Val_bool(1));
 
       case SPTFQMR_ATIMES_FAIL_UNREC:
-	  caml_raise_with_arg(SPILS_EXN(ATimesFailure), Val_bool(0));
+	  caml_raise_with_arg(SPILS_EXN_TAG(ATimesFailure), Val_bool(0));
 
       case SPTFQMR_PSET_FAIL_REC:
-	  caml_raise_with_arg(SPILS_EXN(PSetFailure), Val_bool(1));
+	  caml_raise_with_arg(SPILS_EXN_TAG(PSetFailure), Val_bool(1));
 
       case SPTFQMR_PSET_FAIL_UNREC:
-	  caml_raise_with_arg(SPILS_EXN(PSetFailure), Val_bool(0));
+	  caml_raise_with_arg(SPILS_EXN_TAG(PSetFailure), Val_bool(0));
 
       default:
 	caml_failwith("spmgr_solve: unexpected failure");
@@ -585,7 +585,7 @@ CAMLprim value c_spils_qr_fact(value vh, value vq, value vnewjob)
     r = QRfact(hn, ARRAY2_ACOLS(vh), REAL_ARRAY(vq), Bool_val(vnewjob));
 
     if (r != 0) {
-	caml_raise_with_arg(SPILS_EXN(ZeroDiagonalElement),
+	caml_raise_with_arg(SPILS_EXN_TAG(ZeroDiagonalElement),
 			    Val_long(r));
     }
 
@@ -613,7 +613,7 @@ CAMLprim value c_spils_qr_sol(value vh, value vq, value vb)
     r = QRsol(hn, ARRAY2_ACOLS(vh), REAL_ARRAY(vq), REAL_ARRAY(vb));
 
     if (r != 0) {
-	caml_raise_with_arg(SPILS_EXN(ZeroDiagonalElement),
+	caml_raise_with_arg(SPILS_EXN_TAG(ZeroDiagonalElement),
 			    Val_long(r));
     }
 

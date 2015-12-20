@@ -46,11 +46,18 @@ enum spils_exn_index {
     SPILS_EXN_SET_SIZE
 };
 
-#define SPILS_EXN(name)						\
+#define SPILS_EXN_TAG(name)					\
     (Field(Field (Field (sundials_ml_exn_table,			\
 			 SPILS_EXN_SET),			\
 		  SPILS_EXN_ ## name),				\
 	   0))
+#if OCAML_VERSION < 40200
+#define SPILS_EXN(name) SPILS_EXN_TAG(name)
+#else
+#define SPILS_EXN(name)						\
+    (Field (Field (sundials_ml_exn_table, SPILS_EXN_SET),	\
+	    SPILS_EXN_ ## name))
+#endif
 
 #endif
 

@@ -81,7 +81,7 @@ int ida_translate_exception(value session, value exn,
 
     exn = Extract_exception(exn);
 
-    if (recoverable && Field(exn, 0) == SUNDIALS_EXN (RecoverableFailure))
+    if (recoverable && Field(exn, 0) == SUNDIALS_EXN_TAG (RecoverableFailure))
 	CAMLreturnT (int, 1);
 
     /* Unrecoverable error.  Save the exception and return -1.  */
@@ -305,7 +305,7 @@ static int errw(N_Vector y, N_Vector ewt, void *user_data)
 				  NVEC_BACKLINK (y), NVEC_BACKLINK (ewt));
     if (Is_exception_result (r)) {
 	r = Extract_exception (r);
-	if (Field (r, 0) != SUNDIALS_EXN (NonPositiveEwt))
+	if (Field (r, 0) != SUNDIALS_EXN_TAG (NonPositiveEwt))
 	    sundials_ml_warn_discarded_exn (r, "user-defined error weight fun");
 	CAMLreturnT (int, -1);
     }

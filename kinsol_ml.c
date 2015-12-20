@@ -64,7 +64,7 @@ int kinsol_translate_exception(value session, value r,
 
     r = Extract_exception(r);
 
-    if (recoverable && Field(r, 0) == SUNDIALS_EXN (RecoverableFailure))
+    if (recoverable && Field(r, 0) == SUNDIALS_EXN_TAG (RecoverableFailure))
 	CAMLreturnT (int, 1);
 
     /* Unrecoverable error.  Save the exception and return -1.  */

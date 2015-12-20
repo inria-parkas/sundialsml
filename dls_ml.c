@@ -152,7 +152,7 @@ CAMLprim value c_densematrix_getrf(value va, value vp)
     int r = DenseGETRF(a, LONG_ARRAY(vp));
 
     if (r != 0)
-	caml_raise_with_arg(DLS_EXN(ZeroDiagonalElement), Val_int(r));
+	caml_raise_with_arg(DLS_EXN_TAG(ZeroDiagonalElement), Val_int(r));
 
     CAMLreturn (Val_unit);
 }
@@ -320,7 +320,7 @@ CAMLprim value c_arraydensematrix_getrf(value va, value vp)
     int r = denseGETRF(ARRAY2_ACOLS(va), m, n, LONG_ARRAY(vp));
 
     if (r != 0) {
-	caml_raise_with_arg(DLS_EXN(ZeroDiagonalElement),
+	caml_raise_with_arg(DLS_EXN_TAG(ZeroDiagonalElement),
 			    Val_long(r));
     }
     CAMLreturn (Val_unit);
