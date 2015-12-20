@@ -92,6 +92,34 @@ module SPGMR =
                   atimes, psolve)
   end
 
+module SPFGMR =
+  struct
+    type 'a t
+
+    external make  : int -> ('a, 'k) Nvector.t -> 'a t
+        = "c_spils_spfgmr_make"
+
+    external solve' : 'a t                          (*  0 *)
+                      * ('a, 'k) Nvector.t          (*  1 *)
+                      * ('a, 'k) Nvector.t          (*  2 *)
+                      * preconditioning_type        (*  3 *)
+                      * gramschmidt_type            (*  4 *)
+                      * float                       (*  5 *)
+                      * int                         (*  6 *)
+                      * (('a, 'k) Nvector.t) option (*  7 *)
+                      * (('a, 'k) Nvector.t) option (*  8 *)
+                      * 'a atimes                   (*  9 *)
+                      * ('a psolve) option          (* 10 *)
+                      * int                         (* 11 *)
+                      -> bool * float * int * int
+        = "c_spils_spfgmr_solve"
+
+    let solve s ~x ~b ~delta ?max_restarts:(mr=0) ?max_iters:(mi=max_int)
+                ?s1 ?s2 ?psolve atimes pretype gstype
+        = solve' (s, x, b, pretype, gstype, delta, mr, s1, s2,
+                  atimes, psolve, mi)
+  end
+
 module SPBCG =
   struct
     type 'a t

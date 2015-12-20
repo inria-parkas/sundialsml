@@ -11,9 +11,14 @@
  *                                                                     *
  ***********************************************************************/
 
+#include "sundials_ml.h"
+
 #include <sundials/sundials_config.h>
 #include <sundials/sundials_iterative.h>
 #include <sundials/sundials_spgmr.h>
+#if SUNDIALS_LIB_VERSION >= 260
+#include <sundials/sundials_spfgmr.h>
+#endif
 #include <sundials/sundials_spbcgs.h>
 #include <sundials/sundials_sptfqmr.h>
 #include <sundials/sundials_nvector.h>
@@ -27,7 +32,6 @@
 #include <caml/unixsupport.h>
 #include <caml/bigarray.h>
 
-#include "sundials_ml.h"
 #include "spils_ml.h"
 #include "nvector_ml.h"
 
@@ -298,6 +302,144 @@ CAMLprim value c_spils_spgmr_solve(value vargs)
 
     CAMLreturn(vr);
 }
+
+/* SPFGMR */
+
+#if SUNDIALS_LIB_VERSION >= 260
+
+#define SPFGMR_SESSION(v) (*((SpfgmrMem*)Data_custom_val(v)))
+
+static void spfgmr_finalize(value vs)
+{
+    SpfgmrMem s = SPFGMR_SESSION(vs);
+    SpfgmrFree(s);
+}
+
+CAMLprim value c_spils_spfgmr_make(value vl_max, value vvec_tmpl)
+{
+    CAMLparam2(vl_max, vvec_tmpl);
+    CAMLlocal1(vs);
+    SpfgmrMem s;
+    N_Vector vec_tmpl;
+    mlsize_t approx_size = sizeof(SpfgmrMemRec)
+	+ (Int_val(vl_max) + 3) * NVECTOR_APPROXSIZE(vvec_tmpl);
+
+    vec_tmpl = NVEC_VAL(vvec_tmpl);
+    s = SpfgmrMalloc(Int_val(vl_max), vec_tmpl);
+
+    if (s == NULL) caml_raise_out_of_memory();
+    vs = caml_alloc_final(2, &spfgmr_finalize, approx_size, approx_size * 20);
+    SPFGMR_SESSION(vs) = s;
+
+    CAMLreturn(vs);
+}
+
+CAMLprim value c_spils_spfgmr_solve(value vargs)
+{
+    CAMLparam1(vargs);
+    CAMLlocal4(vr, vpsolve, vs1, vs2);
+    int flag;
+    int success;
+    N_Vector x = NVEC_VAL(Field(vargs, 1));
+    N_Vector b = NVEC_VAL(Field(vargs, 2));
+    N_Vector s1 = NULL;
+    N_Vector s2 = NULL;
+    realtype res_norm = 0.0;
+    int nli = 0;
+    int nps = 0;
+    void *p_data = NULL;
+
+    vpsolve = Field(vargs, 10);
+    if (vpsolve != Val_none) p_data = (void *)Field(vpsolve, 0);
+
+    vs1 = Field(vargs, 7);
+    if (vs1 != Val_none) s1 = NVEC_VAL(Field(vs1, 0));
+
+    vs2 = Field(vargs, 8);
+    if (vs2 != Val_none) s2 = NVEC_VAL(Field(vs2, 0));
+
+    flag = SpfgmrSolve(SPFGMR_SESSION(Field(vargs, 0)),
+		       (void *)Field(vargs, 9), // adata = user atimes
+		       x,
+		       b,
+		       spils_precond_type(Field(vargs, 3)), // pretype
+		       spils_gs_type(Field(vargs, 4)),	    // gstype
+		       Double_val(Field(vargs, 5)),         // delta
+		       Int_val(Field(vargs, 6)),            // max_restarts
+		       Int_val(Field(vargs, 11)),	    // maxit
+		       p_data,				    // p_data = user psolve
+		       s1,
+		       s2,
+		       atimes_f,			    // atimes wrapper
+		       psolve_f,                            // psolve wrapper
+		       &res_norm,
+		       &nli,
+		       &nps);
+
+    switch(flag) {
+      case SPFGMR_SUCCESS:
+	  success = 1;
+          break;
+
+      case SPFGMR_RES_REDUCED:
+	  success = 0;
+	  break;
+
+      case SPFGMR_CONV_FAIL:
+	caml_raise_constant(SPILS_EXN(ConvFailure));
+
+      case SPFGMR_QRFACT_FAIL:
+	caml_raise_constant(SPILS_EXN(QRfactFailure));
+
+      case SPFGMR_PSOLVE_FAIL_REC:
+	  caml_raise_with_arg(SPILS_EXN_TAG(PSolveFailure), Val_bool(1));
+
+      case SPFGMR_PSOLVE_FAIL_UNREC:
+	  caml_raise_with_arg(SPILS_EXN_TAG(PSolveFailure), Val_bool(0));
+
+      case SPFGMR_ATIMES_FAIL_REC:
+	  caml_raise_with_arg(SPILS_EXN_TAG(ATimesFailure), Val_bool(1));
+
+      case SPFGMR_ATIMES_FAIL_UNREC:
+	  caml_raise_with_arg(SPILS_EXN_TAG(ATimesFailure), Val_bool(0));
+
+      case SPFGMR_PSET_FAIL_REC:
+	  caml_raise_with_arg(SPILS_EXN_TAG(PSetFailure), Val_bool(1));
+
+      case SPFGMR_PSET_FAIL_UNREC:
+	  caml_raise_with_arg(SPILS_EXN_TAG(PSetFailure), Val_bool(0));
+
+      case SPFGMR_GS_FAIL:
+	caml_raise_constant(SPILS_EXN(GSFailure));
+
+      case SPFGMR_QRSOL_FAIL:
+	caml_raise_constant(SPILS_EXN(QRSolFailure));
+
+      default:
+	caml_failwith("spfmgr_solve: unexpected failure");
+    }
+
+    vr = caml_alloc_tuple(4);
+    Store_field(vr, 0, Val_bool(success));
+    Store_field(vr, 1, caml_copy_double(res_norm));
+    Store_field(vr, 2, Val_int(nli));
+    Store_field(vr, 3, Val_int(nps));
+
+    CAMLreturn(vr);
+}
+
+#else
+CAMLprim value c_spils_spfgmr_make(value vl_max, value vvec_tmpl)
+{
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+}
+
+CAMLprim value c_spils_spfgmr_solve(value vargs)
+{
+    // Never called anyway since it is not possible to make an SPFGMR.t.
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+}
+#endif
 
 /* SPBCG */
 

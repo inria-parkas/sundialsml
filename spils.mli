@@ -237,6 +237,69 @@ module SPGMR :
                 -> bool * float * int * int
   end
 
+(** The Scaled Preconditioned Flexible Generalized Minimum Residual (GMRES)
+    method. *)
+module SPFGMR :
+  sig
+    
+    (** An instance of the SPFGMR solver.
+
+        @nocvode <node9#ss:spfgmr> The SPFGMR Module
+        @since 2.6.0 *)
+    type 'd t
+
+    (** [make lmax temp] returns a solver session. [lmax] is the maximum
+        Krylov subspace dimension to use, and [temp] sets the problem size.
+
+        @nocvode <node9#ss:spfgmr> SpfgmrMalloc *)
+    val make  : int -> ('d, 'k) Nvector.t -> 'd t
+
+    (** Solves the linear system [Ax = b] using the SPFGMR iterative method.
+        The [atimes] function computes the matrix vector product [Ax], the
+        other arguments are described below. The function returns a tuple
+        [(solved, res_norm, nli, nps)] where [solved] indicates whether the
+        system converged, [res_norm] is the L2 norm of the scaled
+        preconditioned residual
+        {% $\lVert s_1 P_1^{-1} (b - Ax) \rVert_{L2}$ %}, and,
+        [nli] and [nps] count, respectively, linear iterations performed and
+        calls to [psolve]. Repeated calls can be made to [solve] with
+        varying input arguments, but a new session must be created if either
+        the problem size or the maximum Krylov dimension change.
+
+        @nocvode <node9#ss:spgmr> SpfgmrSolve
+        @param x initial guess on entry; result on return
+        @param b right-hand side vector
+        @param delta tolerance of the L2 norm: [res_norm <= delta]
+        @param max_restarts allowed restarts before failure (defaults to 0)
+        @param max_iters maximum number of iterations (defaults to [lmax]).
+        @param s1 optional positive scale factors for {% $P_1 - b^{-1}$ %},
+                  where {% $P_1$ %} is the left preconditioner.
+        @param s2 optional positive scale factors for {% $P_2 x$ %},
+                  where {% $P_2$ %} is the right preconditioner.
+        @param psolve optionally solves the preconditioner system.
+
+        @raise ConvFailure Failed to converge
+        @raise QRfactFailure QRfact found a singular matrix
+        @raise PSolveFailure The [psolve] function failed
+        @raise ATimesFailure The [atimes] function failed
+        @raise PSetFailure pset failed
+        @raise GSFailure The Gram-Schmidt routine failed.
+        @raise QRSolFailure QRsol found a singular [R]. *)
+    val solve : 'd t
+                -> x:('d, 'k) Nvector.t
+                -> b:('d, 'k) Nvector.t
+                -> delta:float
+                -> ?max_restarts:int
+                -> ?max_iters:int
+                -> ?s1:(('d, 'k) Nvector.t)
+                -> ?s2:(('d, 'k) Nvector.t)
+                -> ?psolve:('d psolve)
+                -> 'd atimes
+                -> preconditioning_type
+                -> gramschmidt_type 
+                -> bool * float * int * int
+  end
+
 (** The Scaled Preconditioned Biconjugate Gradient Stabilized (Bi-CGStab)
     method. *)
 module SPBCG :
