@@ -463,9 +463,11 @@ static int lsolve(KINMem kin_mem, N_Vector x, N_Vector b, realtype *res_norm)
 	value rf = Field(r, 0);
 	if (rf != Val_none) *res_norm = Double_val(Field(rf, 0));
 
-#if SUNDIALS_LIB_VERSION >= 260
 	rf = Field(r, 1);
+#if SUNDIALS_LIB_VERSION >= 260
 	if (rf != Val_none) *sFdotJp = Double_val(Field(rf, 0));
+#else
+	if (rf != Val_none) kin_mem->kin_sfdotJp = Double_val(Field(rf, 0));
 #endif
 	CAMLreturnT (int, 0);
     }
