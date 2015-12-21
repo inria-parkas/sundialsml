@@ -357,7 +357,7 @@ let print_header globalstrategy maxl maxlrst fnormtol scsteptol linsolver =
   printf "Number of species = %d\n" num_species;
   printf "Total system size = %d\n\n" neq;
   printf "Flag globalstrategy = %d (0 = None, 1 = Linesearch)\n"
-         (if globalstrategy then 1 else 0);
+         (if globalstrategy = Kinsol.LineSearch then 1 else 0);
   (match linsolver with
    | Use_Spgmr ->
      printf "Linear solver is SPGMR with maxl = %d, maxlrst = %d\n"
@@ -416,7 +416,7 @@ let print_final_stats kmem linsolver =
 
 (* MAIN PROGRAM *)
 let main () =
-  let globalstrategy = false in
+  let globalstrategy = Kinsol.Newton in
 
   (* Create serial vectors of length NEQ *)
   let cc = Nvector_serial.make neq 0.0 in
@@ -483,7 +483,7 @@ let main () =
     (* Call KINSol and print output concentration profile *)
     ignore (Kinsol.solve kmem           (* KINSol memory block *)
                    cc             (* initial guess on input; solution vector *)
-                   globalstrategy (* global stragegy choice *)
+                   globalstrategy (* global strategy choice *)
                    sc             (* scaling vector, for the variable cc *)
                    sc);           (* scaling vector for function values fval *)
 

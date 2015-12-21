@@ -64,7 +64,7 @@ let alternate_dense jacfn =
     Kinsol.Alternate.set_sjpnorm s (nvwl2norm b fscale);
     RealArray.mapi (fun i v -> v *. fscale.{i} *. fscale.{i}) b;
     Kinsol.Alternate.set_sfdotjp s (nvdotprod fval b);
-    None
+    None, None
   in
 
   let solver =
@@ -301,11 +301,11 @@ let main () =
 
   (* Call KINSol to solve problem *)
   ignore (Kinsol.solve
-            kmem    (* KINSol memory block *)
-            y       (* initial guess on input; solution vector *)
-            true    (* global stragegy choice *)
-            scale   (* scaling vector, for the variable cc *)
-            scale); (* scaling vector for function values fval *)
+            kmem              (* KINSol memory block *)
+            y                 (* initial guess on input; solution vector *)
+            Kinsol.LineSearch (* global strategy choice *)
+            scale             (* scaling vector, for the variable cc *)
+            scale);           (* scaling vector for function values fval *)
 
   printf "\nComputed solution:\n";
   print_output ydata;

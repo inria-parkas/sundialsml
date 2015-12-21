@@ -460,7 +460,13 @@ static int lsolve(KINMem kin_mem, N_Vector x, N_Vector b, realtype *res_norm)
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback3_exn (cb, args[0], args[1], args[2]);
     if (!Is_exception_result (r)) {
-	if (r != Val_none) *res_norm = Double_val(Field(r, 0));
+	value rf = Field(r, 0);
+	if (rf != Val_none) *res_norm = Double_val(Field(rf, 0));
+
+#if SUNDIALS_LIB_VERSION >= 260
+	rf = Field(r, 1);
+	if (rf != Val_none) *sFdotJp = Double_val(Field(rf, 0));
+#endif
 	CAMLreturnT (int, 0);
     }
 

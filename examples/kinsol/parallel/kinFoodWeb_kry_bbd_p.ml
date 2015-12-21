@@ -512,7 +512,7 @@ let print_header globalstrategy maxl maxlrst
   printf "Subgrid dimensions = %d X %d\n" mxsub mysub;
   printf "Processor array is %d X %d\n\n" npex npey;
   printf "Flag globalstrategy = %d (0 = None, 1 = Linesearch)\n"
-         (if globalstrategy then 1 else 0);
+         (if globalstrategy = Kinsol.LineSearch then 1 else 0);
   printf "Linear solver is SPGMR with maxl = %d, maxlrst = %d\n" maxl maxlrst;
   printf "Preconditioning uses band-block-diagonal matrix from KINBBDPRE\n";
   printf "  Difference quotient half-bandwidths: mudq = %d, mldq = %d\n"
@@ -574,7 +574,7 @@ let print_final_stats kmem =
 
 (* MAIN PROGRAM *)
 let main () =
-  let globalstrategy = false in
+  let globalstrategy = Kinsol.Newton in
 
   let comm    = Mpi.comm_world in
   let my_pe   = Mpi.comm_rank comm in

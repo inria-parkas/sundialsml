@@ -344,7 +344,7 @@ let print_header globalstrategy maxl maxlrst fnormtol scsteptol =
   printf "Number of species = %d\n" num_species;
   printf "Total system size = %d\n\n" neq;
   printf "Flag globalstrategy = %d (0 = None, 1 = Linesearch)\n"
-         (if globalstrategy then 1 else 0);
+         (if globalstrategy = Kinsol.LineSearch then 1 else 0);
   printf "Linear solver is SPGMR with maxl = %d, maxlrst = %d\n" maxl maxlrst;
   printf "Preconditioning uses interaction-only block-diagonal matrix\n";
   printf "Positivity constraints imposed on all components \n";
@@ -395,7 +395,7 @@ let print_final_stats kmem =
 
 (* MAIN PROGRAM *)
 let main () =
-  let globalstrategy = false in
+  let globalstrategy = Kinsol.Newton in
 
   (* Create serial vectors of length NEQ *)
   let cc = Nvector_serial.make neq 0.0 in
@@ -428,7 +428,7 @@ let main () =
   (* Call KINSol and print output concentration profile *)
   ignore (Kinsol.solve kmem           (* KINSol memory block *)
                  cc             (* initial guess on input; solution vector *)
-                 globalstrategy (* global stragegy choice *)
+                 globalstrategy (* global strategy choice *)
                  sc             (* scaling vector, for the variable cc *)
                  sc);           (* scaling vector for function values fval *)
 

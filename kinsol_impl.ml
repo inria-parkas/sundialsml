@@ -202,7 +202,7 @@ and ('data, 'kind) lsolve' =
   ('data, 'kind) session
   -> 'data
   -> 'data
-  -> float option
+  -> float option * float option
 
 (* Linear solver check functions *)
 

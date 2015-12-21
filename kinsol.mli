@@ -484,8 +484,9 @@ module Alternate :
         [res_norm = lsolve x b], [x] is an initial guess on entry, on return
         it must contain the computed solution, and [b] is the right-hand
         side vector, set to $-F(u)$, at the current iterate.
-        This function returns the {i L2} norm of the residual
-        vector.
+        This function optionally returns the {i L2}-norm of the product $Jp$
+        ($\lVert D_F J p \rVert_2$) and the dot product of the scaled $F$
+        vector and the scaled vector $Jp$ ($(D_F F)\cdot(D_F J p)$).
         
         Raising {!Sundials.RecoverableFailure} indicates an error where
         recovery may be possible by calling the {!lsetup} function again.
@@ -499,7 +500,7 @@ module Alternate :
       ('data, 'kind) session
       -> 'data
       -> 'data
-      -> float option
+      -> float option * float option
 
     (** The callbacks needed to implement an alternate linear solver. *)
     type ('data, 'kind) callbacks =
