@@ -752,10 +752,10 @@ CAMLprim value c_kinsol_init(value weakref, value vtemp)
     CAMLreturn(r);
 }
 
-CAMLprim value c_kinsol_solve(value vdata, value vu, value vlinesearch,
+CAMLprim value c_kinsol_solve(value vdata, value vu, value vstrategy,
 	 		      value vuscale, value vfscale)
 {
-    CAMLparam5(vdata, vu, vlinesearch, vuscale, vfscale);
+    CAMLparam5(vdata, vu, vstrategy, vuscale, vfscale);
     CAMLlocal1(ret);
     int flag;
     enum kinsol_result_tag result = -1;
@@ -764,12 +764,34 @@ CAMLprim value c_kinsol_solve(value vdata, value vu, value vlinesearch,
     N_Vector uscale = NVEC_VAL (vuscale);
     N_Vector fscale = NVEC_VAL (vfscale);
 
-    flag = KINSol(KINSOL_MEM_FROM_ML(vdata),
-		  u,
-		  Bool_val (vlinesearch) ? KIN_LINESEARCH : KIN_NONE,
-		  uscale,
-		  fscale);
+    int strategy = KIN_NONE;
+    switch (Tag_val(vstrategy)) {
+    case VARIANT_KINSOL_STRATEGY_NEWTON:
+	strategy = KIN_NONE;
+	break;
 
+    case VARIANT_KINSOL_STRATEGY_LINESEARCH:
+	strategy = KIN_LINESEARCH;
+	break;
+
+    case VARIANT_KINSOL_STRATEGY_PICARD:
+#if SUNDIALS_LIB_VERSION >= 260
+	strategy = KIN_PICARD;
+#else
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+	break;
+
+    case VARIANT_KINSOL_STRATEGY_FIXEDPOINT:
+#if SUNDIALS_LIB_VERSION >= 260
+	strategy = KIN_FP;
+#else
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+	break;
+    }
+
+    flag = KINSol(KINSOL_MEM_FROM_ML(vdata), u, strategy, uscale, fscale);
     CHECK_FLAG("KINSol", flag);
 
     switch (flag) {
@@ -1159,6 +1181,23 @@ CAMLprim value c_kinsol_set_num_max_iters(value vkin_mem, value vmxiter)
 
     CAMLreturn (Val_unit);
 }
+
+#if SUNDIALS_LIB_VERSION >= 260
+CAMLprim value c_kinsol_set_maa(value vkin_mem, value vmaa)
+{
+    CAMLparam2(vkin_mem, vmaa);
+
+    int flag = KINSetMAA(KINSOL_MEM_FROM_ML(vkin_mem), Long_val(vmaa));
+    CHECK_FLAG("KINSetMAA", flag);
+
+    CAMLreturn (Val_unit);
+}
+#else
+CAMLprim value c_kinsol_set_maa(value vkin_mem, value vmaa)
+{
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+}
+#endif
 
 CAMLprim value c_kinsol_set_no_init_setup(value vkin_mem, value vnoinitsetup)
 {

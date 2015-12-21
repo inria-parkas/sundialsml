@@ -560,6 +560,16 @@ type 'data sysfn = 'data -> 'data -> unit
 val init : ('data, 'kind) linear_solver -> 'data sysfn
            -> ('data, 'kind) Nvector.t -> ('data, 'kind) session
 
+(** Strategy used to solve the non-linear system. *)
+type strategy =
+  | Newton            (** Basic Newton iteration. {cconst KIN_NONE} *)
+  | LineSearch        (** Newton iteration with globalization.
+                          {cconst KIN_LINESEARCH} *)
+  | Picard            (** Picard iteration with Anderson Acceleration.
+                          {cconst KIN_PICARD} *)
+  | FixedPoint        (** Fixed-point iteration with Anderson Acceleration.
+                          {cconst KIN_FP} *)
+
 (** Results of non-linear solution attempts. *)
 type result =
   | Success           (** The scaled norm of $F(u)$ is less than [fnormtol].
@@ -574,11 +584,11 @@ type result =
                           {cconst KIN_STEP_LT_STPTOL} *)
 
 (** Computes an approximate solution to a nonlinear system. The call
-    [solve s u linesearch u_scale f_scale] has arguments:
+    [solve s u strategy u_scale f_scale] has arguments:
     - [s], a solver session,
     - [u], an initial guess that is replaced with an approximate solution
            for $F(u) = 0$,
-    - [linesearch], whether to use a globalization strategy (line search),
+    - [strategy], strategy used to solve the non-linear system,
     - [u_scale], the diagonal elements of the scaling matrix $D_u$ for
                  vector [u] chosen so that all $D_u u$ all have roughly the
                  same magnitude when [u] is close to a root of $F(u)$, and,
@@ -605,7 +615,7 @@ type result =
 val solve :
     ('d, 'k) session
     -> ('d, 'k) Nvector.t
-    -> bool
+    -> strategy
     -> ('d, 'k) Nvector.t
     -> ('d, 'k) Nvector.t
     -> result
@@ -616,6 +626,14 @@ val solve :
 
     @kinsol <node5#ss:optin_main> KINSetNumMaxIters *)
 val set_num_max_iters : ('d, 'k) session -> int -> unit
+
+(** Specifies the size of the subspace to use with Anderson acceleration.
+    Used in conjuncation with the strategies {!Picard} and {!FixedPoint}.
+    A value of zero means no acceleration. Call after {!set_num_max_iters}
+    and always give a smaller value.
+
+    @nokinsol <node5#ss:optin_main> KINSetMAA *)
+val set_maa : ('d, 'k) session -> int -> unit
 
 (** Specifies that an initial call to the preconditioner setup function
     should {i not} be made. This feature is useful when solving a sequence of

@@ -375,6 +375,9 @@ external set_print_level : ('a, 'k) session -> print_level -> unit
 external set_num_max_iters : ('a, 'k) session -> int -> unit
     = "c_kinsol_set_num_max_iters"
 
+external set_maa : ('a, 'k) session -> int -> unit
+    = "c_kinsol_set_maa"
+
 external c_set_no_init_setup : ('a, 'k) session -> bool -> unit
     = "c_kinsol_set_no_init_setup"
 
@@ -516,21 +519,27 @@ let init lsolver f u0 =
   lsolver session u0;
   session
 
+type strategy =
+  | Newton            (** KIN_NONE *)
+  | LineSearch        (** KIN_LINESEARCH *)
+  | Picard            (** KIN_PICARD *)
+  | FixedPoint        (** KIN_FP *)
+
 type result =
   | Success           (** KIN_SUCCESS *)
   | InitialGuessOK    (** KIN_INITIAL_GUESS_OK *)
   | StoppedOnStepTol  (** KIN_STEP_LT_STPTOL *)
 
-external c_solve : ('a, 'k) session -> ('a, 'k) nvector -> bool -> ('a, 'k) nvector
-                  -> ('a, 'k) nvector -> result
+external c_solve : ('a, 'k) session -> ('a, 'k) nvector -> strategy
+                  -> ('a, 'k) nvector -> ('a, 'k) nvector -> result
     = "c_kinsol_solve"
 
-let solve s u linesearch u_scale f_scale =
+let solve s u strategy u_scale f_scale =
   if Sundials_config.safe then
     (s.checkvec u;
      s.checkvec u_scale;
      s.checkvec f_scale);
-  c_solve s u linesearch u_scale f_scale
+  c_solve s u strategy u_scale f_scale
 
 (* Let C code know about some of the values in this module.  *)
 external c_init_module : 'fcns -> exn array -> unit =
