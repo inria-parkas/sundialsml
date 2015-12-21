@@ -1175,10 +1175,11 @@ module Adjoint :
           -> unit
 
         (** Callback functions that preprocess or evaluate Jacobian-related data
-            need by {!prec_solve_fn}. In the call [prec_setup_fn jac jok gamma],
-            [jac] is a {!jacobian_arg} with one work vector, [jok] indicates
-            whether any saved Jacobian-related data can be reused with the
-            current value of [gamma], and [gamma] is the scalar $\gamma$ in the
+            needed by {!prec_solve_fn}. In the call
+            [prec_setup_fn jac jok gamma], [jac] is a {!jacobian_arg} with
+            three work vector, [jok] indicates whether any saved
+            Jacobian-related data can be reused with the current value of
+            [gamma], and [gamma] is the scalar $\gamma$ in the
             Newton matrix {% $M = I - \gamma J$%} where $J$ is the Jacobian
             matrix. A function should return [true] if Jacobian-related data was
             updated and [false] if saved data was reused.
