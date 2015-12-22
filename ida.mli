@@ -315,7 +315,7 @@ module Spils :
         The following functions and those in {!Ida_bbd} construct
         preconditioners.
 
-        The {!prec_solve_fn} is usually mandatory. The {!prec_setup_fn} can be
+        The {!prec_solve_fn} is mandatory. The {!prec_setup_fn} can be
         omitted if not needed. If the {!jac_times_vec_fn} is omitted, a
         default implementation based on difference quotients is used.
 

@@ -1221,7 +1221,7 @@ module Adjoint :
             functions and those in {!Banded} and {!Cvodes_bbd} construct
             preconditioners.
 
-            The {!prec_solve_fn} is usually mandatory. The {!prec_setup_fn} can
+            The {!prec_solve_fn} is mandatory. The {!prec_setup_fn} can
             be omitted if not needed. If the {!jac_times_vec_fn} is omitted, a
             default implementation based on difference quotients is used.
 
