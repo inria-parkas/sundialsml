@@ -298,22 +298,10 @@ module Dls :
             @noarkode <node> ARKDlsSetDenseMassFn *)
         val set_dense_fn : serial_session -> dense_fn -> unit
 
-        (** Remove a dense mass matrix function and use the default
-            implementation.
-
-            @noarkode <node> ARKDlsSetDenseMassFn *)
-        val clear_dense_fn : serial_session -> unit
-
         (** Change the band mass matrix function.
 
             @noarkode <node> ARKDlsSetBandMassFn *)
         val set_band_fn : serial_session -> band_fn -> unit
-
-        (** Remove a banded mass matrix function and use the default
-            implementation.
-
-            @noarkode <node> ARKDlsSetBandMassFn *)
-        val clear_band_fn : serial_session -> unit
       end (* }}} *)
 
     (** {3:stats Solver statistics} *)
@@ -637,7 +625,7 @@ module Spils :
             @noarkode <node> ARKSpilsMassPrecSolveFn
             @noarkode <node> ARKSpilsMassTimesVecFn *)
         type ('d, 'k) preconditioner =
-          ('d, 'k) Arkode_impl.SpilsTypes.Mass.preconditioner
+          ('d, 'k) Arkode_impl.SpilsTypes.MassTypes.preconditioner
 
         (** No preconditioning.  *)
         val prec_none : ('d, 'k) preconditioner
@@ -794,7 +782,7 @@ module Spils :
             function.
 
             @noarkode <node> ARKSpilsGetNumMtimesEvals *)
-        val get_num_jtimes_evals : ('d, 'k) session -> int
+        val get_num_mtimes_evals : ('d, 'k) session -> int
 
         (** {3:lowlevel Low-level solver manipulation}
 
@@ -1125,7 +1113,7 @@ module Alternate :
     module Mass :
       sig (* {{{ *)
 
-        (** Functions that initialize linear solver data, like counters and
+        (** Functions that initialize mass matrix solver data, like counters and
             statistics.
 
             Raising any exception in this function (including
@@ -1135,7 +1123,7 @@ module Alternate :
             @noarkode <node> minit *)
         type ('data, 'kind) minit = ('data, 'kind) session -> unit
 
-        (** Functions that prepare the linear solver for subsequent calls
+        (** Functions that prepare the mass matrix solver for subsequent calls
             to {{!callbacks}lsolve}.
 
             This function may raise a {!Sundials.RecoverableFailure} exception
@@ -1145,8 +1133,8 @@ module Alternate :
             {warning The vectors [ypred], [fpred], and those in [tmp] should
                      not be accessed after the function returns.}
 
-            @noarkode <node> lsetup *)
-        type ('data, 'kind) lsetup =
+            @noarkode <node> msetup *)
+        type ('data, 'kind) msetup =
           ('data, 'kind) session
           -> 'data triple
           -> unit
@@ -1337,10 +1325,14 @@ val no_roots : (int * 'd rootsfn)
     @noarkode <node> ARKodeSStolerances
     @noarkode <node> ARKodeSVtolerances
     @noarkode <node> ARKodeWFtolerances
+    @noarkode <node> ARKodeResStolerance
+    @noarkode <node> ARKodeResVtolerance
+    @noarkode <node> ARKodeResFtolerance
     @noarkode <node> ARKodeSetOrder *)
 val init :
     ('data, 'kind) problem
     -> ('data, 'kind) tolerance
+    -> ?restol:(('data, 'kind) res_tolerance)
     -> ?order:int
     -> ?mass:('data, 'kind) mass_solver
     -> ?roots:(int * 'data rootsfn)
@@ -1442,10 +1434,10 @@ val reinit :
              has returned.}
 
     @noarkode <node> ARKVecResizeFn *)
-type 'd resizefn = 'd -> 'd -> unit
+type 'd resize_fn = 'd -> 'd -> unit
 
 (** Change the number of equations and unknowns between integrator steps.
-    The call [resize s ~resizenvec:rfn ~linearsolver:ls tol hscale ynew t0]
+    The call [resize s ~resize_nvec:rfn ~linear_solver:ls tol hscale ynew t0]
     has as arguments:
     - [s], the solver session to resize,
     - [rfn], a resize function that transforms nvectors in place-otherwise
@@ -1463,12 +1455,13 @@ type 'd resizefn = 'd -> 'd -> unit
     @noarkode <node> ARKodeResize *)
 val resize :
   ('d, 'kind) session
-  -> ?resizenvec:('d resizefn)
-  -> ?linearsolver:(('d, 'kind) linear_solver)
-  -> ('data, 'kind) tolerance
+  -> ?resize_nvec:('d resize_fn)
+  -> ?linear_solver:(('d, 'kind) linear_solver)
+  -> ('d, 'kind) tolerance
   -> float
   -> ('d, 'kind) Nvector.t
   -> float
+  -> unit
 
 (** {2:set Modifying the solver (optional input functions)} *)
 
@@ -1730,7 +1723,7 @@ val set_irk_table_num : ('d, 'k) session -> irk_table -> unit
 
 (** {3:setadap Optional inputs for time step adaptivity} *)
 
-type adapt_args = {
+type adaptivity_args = {
     h1 : float;  (** the current step size, {% $t_m - t_{m-1}$%}. *)
     h2 : float;  (** the previous step size, {% $t_{m-1} - t_{m-2}$%}. *)
     h3 : float;  (** the step size {% $t_{m-2} - t_{m-3}$%}. *)
@@ -1751,47 +1744,47 @@ type adapt_args = {
     exception if it cannot set the next step size. The step size should be the
     maximum value where the error estimates remain below 1.
 
-    @noarkode <node> ARKAdaptFn *)
-type 'd adapt_fn = float -> 'd -> adapt_args -> float
+    This function should focus on accuracy-based time step estimation; for
+    stability based time steps, {!set_stability_fn} should be used.
 
-(** Sets a custom time-step adaptivity function. This function should focus on
-    accuracy-based time step estimation; for stability based time steps,
-    {!set_stability_fn} should be used.
- 
-    @noarkode <node> ARKodeSetAdaptivityFn *)
-val set_adaptivity_fn : ('d, 'k) session -> 'd adapt_fn -> unit
+    @noarkode <node> ARKAdaptFn *)
+type 'd adaptivity_fn = float -> 'd -> adaptivity_args -> float
+
+(** Parameters for the standard adaptivity algorithms.
+    There are two:
+    - [adaptivity_ks], the [k1], [k2], and [k3] parameters, or [None] to use
+      the defaults, and
+    - [adaptivity_method_order], [true] specifies the method order of
+      accuracy $q$ and [false] specifies the embedding order of accuracy $p$. *)
+type adaptivity_params = {
+    adaptivity_ks : (float * float * float) option;
+    adaptivity_method_order : bool;
+  }
 
 (** Asymptotic error control algorithms.
  
     @noarkode <node> Asymptotic error control *)
-type adapt_method =
-  | PIDcontroller      (** The default time adaptivity controller. *)
-  | PIcontroller       (** Uses the two most recent step sizes. *)
-  | Icontroller        (** Standard time adaptivity control algorithm. *)
-  | ExplicitGustafsson (** Primarily used with explicit RK methods. *)
-  | ImplicitGustafsson (** Primarily used with implicit RK methods. *)
-  | ImExGustafsson     (** An ImEx version of the two preceding controllers. *)
-
+type 'd adaptivity_method =
+  | PIDcontroller of adaptivity_params
+        (** The default time adaptivity controller. *)
+  | PIcontroller of adaptivity_params
+        (** Uses the two most recent step sizes. *)
+  | Icontroller of adaptivity_params
+        (** Standard time adaptivity control algorithm. *)
+  | ExplicitGustafsson of adaptivity_params
+        (** Primarily used with explicit RK methods. *)
+  | ImplicitGustafsson of adaptivity_params
+        (** Primarily used with implicit RK methods. *)
+  | ImExGustafsson of adaptivity_params
+        (** An ImEx version of the two preceding controllers. *)
+  | AdaptivityFn of 'd adaptivity_fn (** A custom time-step adaptivity function. *)
+ 
 (** Specifies the method and associated parameters used for time step
-    adaptivity. The call
-    [set_adaptivity_method s m ~adapt_params:(k1, k2, k3) methodorder]
-    has as arguments
-    - [s], the session,
-    - [m], the accuracy-based adaptivity method choice,
-    - the [k1] parameter within accuracy-based adaptivity algorithms,
-    - the [k2] parameter within accuracy-based adaptivity algorithms,
-    - the [k3] parameter within accuracy-based adaptivity algorithms, and
-    - [methodorder], if [false] use the embedding order of accuracy $p$,
-      if [true] use the method order of accuarcy $q$.
-    If explicit [adapt_params] are not given, default parameters are used.
+    adaptivity.
 
-    @noarkode <node> ARKodeSetAdaptivityMethod *)
-val set_adaptivity_method :
-  ('d, 'k) session
-  -> adapt_method 
-  -> ?adapt_params:(float * float * float)
-  -> bool
-  -> unit
+    @noarkode <node> ARKodeSetAdaptivityMethod
+    @noarkode <node> ARKodeSetAdaptivityFn *)
+val set_adaptivity_method : ('d, 'k) session -> 'd adaptivity_method -> unit
 
 (** Specifies the fraction of the estimated explicitly stable step to use. Any
     non-positive argument resets to the default value (0.5).
@@ -1871,6 +1864,12 @@ type 'd stability_fn = float -> 'd -> float
 
     @noarkode <node> ARKodeSetStabilityFn *)
 val set_stability_fn : ('d, 'k) session -> 'd stability_fn -> unit
+
+(** Clears the problem-dependent function that estimates a stable time step
+    size for the explicit portion of the ODE system.
+
+    @noarkode <node> ARKodeSetStabilityFn *)
+val clear_stability_fn : ('d, 'k) session -> unit
 
 (** {3:setimplicit Optional inputs for implicit stage solves} *)
 

@@ -1,3 +1,5 @@
+arkode.cmi : sundials.cmi spils.cmi nvector_serial.cmi nvector.cmi dls.cmi \
+    arkode_impl.cmo
 cvode.cmi : sundials.cmi spils.cmi nvector_serial.cmi nvector.cmi dls.cmi \
     cvode_impl.cmo
 cvode_bbd.cmi : nvector_parallel.cmi cvode_impl.cmo cvode.cmi
@@ -34,6 +36,14 @@ nvector_serial.cmi : sundials.cmi nvector.cmi
 sls.cmi : sundials.cmi dls.cmi
 spils.cmi : sundials.cmi nvector.cmi
 sundials.cmi :
+arkode.cmo : sundials_config.cmo sundials.cmi spils.cmi sls_impl.cmo \
+    nvector.cmi dls.cmi arkode_impl.cmo arkode.cmi
+arkode.cmx : sundials_config.cmx sundials.cmx spils.cmx sls_impl.cmx \
+    nvector.cmx dls.cmx arkode_impl.cmx arkode.cmi
+arkode_impl.cmo : sundials_config.cmo sundials.cmi spils.cmi sls_impl.cmo \
+    sls.cmi nvector_serial.cmi nvector.cmi dls.cmi
+arkode_impl.cmx : sundials_config.cmx sundials.cmx spils.cmx sls_impl.cmx \
+    sls.cmx nvector_serial.cmx nvector.cmx dls.cmx
 cvode.cmo : sundials_config.cmo sundials.cmi spils.cmi sls_impl.cmo \
     nvector.cmi dls.cmi cvode_impl.cmo cvode.cmi
 cvode.cmx : sundials_config.cmx sundials.cmx spils.cmx sls_impl.cmx \
@@ -144,8 +154,8 @@ sls.cmo : sundials_config.cmo sls_impl.cmo dls_impl.cmo sls.cmi
 sls.cmx : sundials_config.cmx sls_impl.cmx dls_impl.cmx sls.cmi
 sls_impl.cmo : sundials.cmi
 sls_impl.cmx : sundials.cmx
-spils.cmo : sundials.cmi nvector.cmi spils.cmi
-spils.cmx : sundials.cmx nvector.cmx spils.cmi
+spils.cmo : sundials_config.cmo sundials.cmi nvector.cmi spils.cmi
+spils.cmx : sundials_config.cmx sundials.cmx nvector.cmx spils.cmi
 sundials.cmo : sundials_config.cmo nvector.cmi sundials.cmi
 sundials.cmx : sundials_config.cmx nvector.cmx sundials.cmi
 sundials_config.cmo :
@@ -196,4 +206,3 @@ nvector_pthreads_ml.o: nvector_pthreads_ml.c sundials_ml.h config.h \
 sls_ml.o: sls_ml.c config.h sundials_ml.h sls_ml.h dls_ml.h
 spils_ml.o: spils_ml.c sundials_ml.h config.h spils_ml.h nvector_ml.h
 sundials_ml.o: sundials_ml.c sundials_ml.h config.h
-test.o: test.c

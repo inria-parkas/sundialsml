@@ -265,6 +265,8 @@ sundials_version=`printf "#include %s\n%s" "${include}" "${query}" \
 sls_ml_xo=
 sls_cmo=
 Lsundials_arkode=
+arkode_mlobj_main=
+arkode_cobj_main=
 if [ "${sundials_version}" = "SUNDIALS_PACKAGE_VERSION" ]; then
     error="${error}\n\tcould not find sundials_config.h"
     sundials=0
@@ -278,6 +280,8 @@ else
 	    sls_ml_xo=sls_ml${XO}
 	    sls_cmo=sls.cmo
 	    Lsundials_arkode=-lsundials_arkode
+	    arkode_mlobj_main='arkode_impl.cmo arkode.cmo'
+	    arkode_cobj_main=arkode_ml${XO}
 	    ;;
     esac
 
@@ -834,6 +838,8 @@ fi
 	 s#@sundials_lib_path@#${Lsundials_lib_path}#;
 	 s#@sundials_inc_path@#${Isundials_inc_path}#;
 	 s#@link_sundials_arkode@#${Lsundials_arkode}#;
+	 s#@arkode_mlobj_main@#${arkode_mlobj_main}#;
+	 s#@arkode_cobj_main@#${arkode_cobj_main}#;
 	 s#@ocamlflags@#${ocamlflags}#;
 	 s#@ocamloptflags@#${ocamloptflags}#;
 	 s#@ocaml_3x@#${ocaml_3x}#;

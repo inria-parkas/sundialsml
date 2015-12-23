@@ -48,6 +48,9 @@ IDAS_CFLAGS = $(INC_PATH) $(CFLAGS)
 KINSOL_LDFLAGS = -lsundials_kinsol @serial_nvec_libs@ -lm $(LDFLAGS)
 KINSOL_CFLAGS = $(INC_PATH) $(CFLAGS)
 
+ARKODE_MLOBJ_MAIN = @arkode_mlobj_main@
+ARKODE_COBJ_MAIN = @arkode_cobj_main@
+
 SLS_ML_XO = @sls_ml_xo@
 SLS_CMO = @sls_cmo@
 

@@ -29,18 +29,18 @@ default: all
 
 ### Objects shared between sundials.cma and sundials_no_sens.cma.
 
-# Common to CVODE, IDA, and KINSOL.
+# Common to CVODE, IDA, KINSOL, and ARKODE.
 COBJ_COMMON = sundials_ml$(XO) dls_ml$(XO) $(SLS_ML_XO) nvector_ml$(XO) \
 	      spils_ml$(XO) $(NVECPTHREADS_ML_XO) $(NVECOPENMP_ML_XO)
 
-COBJ_MAIN = $(COBJ_COMMON) kinsol_ml$(XO)
+COBJ_MAIN = $(COBJ_COMMON) kinsol_ml$(XO) $(ARKODE_COBJ_MAIN)
 
 MLOBJ_MAIN = sundials_config.cmo sundials.cmo nvector.cmo		\
 	     dls_impl.cmo dls.cmo sls_impl.cmo $(SLS_CMO) spils.cmo	\
 	     nvector_custom.cmo nvector_array.cmo			\
 	     nvector_serial.cmo $(NVECPTHREADS_CMO) $(NVECOPENMP_CMO) 	\
 	     cvode_impl.cmo ida_impl.cmo kinsol_impl.cmo		\
-	     cvode.cmo kinsol.cmo ida.cmo				\
+	     cvode.cmo kinsol.cmo ida.cmo $(ARKODE_MLOBJ_MAIN)		\
 	     $(KLU_MLOBJ_MAIN) $(SUPERLUMT_MLOBJ_MAIN)
 
 CMI_MAIN = $(filter-out sundials_config.cmi,$(filter-out %_impl.cmi,\
@@ -276,7 +276,7 @@ doc/html/index.html: doc/html sundials_docs.cma intro.doc		\
 		-D'OCAML_DOC_ROOT(x)=$(OCAML_DOC_ROOT)/**/x'	\
 		-D'VERSION()=$(VERSION)'"			\
 	    -d ./doc/html/					\
-	    -hide Cvode_impl,Ida_impl,Kinsol_impl		\
+	    -hide Cvode_impl,Ida_impl,Kinsol_impl,Arkode_impl	\
 	    -t "Sundials/ML $(VERSION)p$(VERSIONP)"		\
 	    -intro intro.doc					\
 	    $(filter-out %_impl.mli, $(CMI_MAIN:.cmi=.mli))	\
