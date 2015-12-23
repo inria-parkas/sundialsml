@@ -408,9 +408,9 @@ let default_tolerances = SStolerances (1.0e-4, 1.0e-8)
 
 let set_tolerances s tol =
   match tol with
-  | SStolerances (rel, abs) -> ss_tolerances s rel abs
+  | SStolerances (rel, abs) -> (s.errw <- dummy_errw; ss_tolerances s rel abs)
   | SVtolerances (rel, abs) -> (if Sundials_config.safe then s.checkvec abs;
-                                sv_tolerances s rel abs)
+                                s.errw <- dummy_errw; sv_tolerances s rel abs)
   | WFtolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
 
 external c_set_id : ('a,'k) session -> ('a,'k) Nvector.t -> unit
