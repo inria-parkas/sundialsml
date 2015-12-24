@@ -201,9 +201,8 @@ module Dls :
       sig (* {{{ *)
 
         (** Callback functions that compute dense approximations to a mass
-            matrix. In the call [dense_fn t y work m],
+            matrix. In the call [dense_fn t work m],
             - [t] is the independent variable,
-            - [y] is the dependent variable vector,
             - [work] is workspace data, and
             - [m] is the output dense mass matrix.
 
@@ -214,12 +213,11 @@ module Dls :
             Raising {!Sundials.RecoverableFailure} indicates a recoverable
             error. Any other exception is treated as an unrecoverable error.
 
-            {warning Neither the elements of [y], [work] nor the matrix [m]
+            {warning Neither the elements of [work] nor the matrix [m]
                      should be accessed after the function has returned.}
 
             @noarkode <node> ARKDlsDenseMassFn *)
-        type dense_fn = float -> RealArray.t -> RealArray.t triple
-                          -> Dls.DenseMatrix.t -> unit
+        type dense_fn = float -> RealArray.t triple -> Dls.DenseMatrix.t -> unit
 
         (** A direct linear solver for mass matrix linear systems.
 
@@ -235,11 +233,10 @@ module Dls :
         val lapack_dense : dense_fn -> serial_mass_solver
 
         (** Callback functions that compute banded approximations to a mass
-            matrix. In the call [band_fn {mupper; mlower} t y work m],
+            matrix. In the call [band_fn {mupper; mlower} t work m],
             - [mupper] is the upper half-bandwidth of the mass matrix,
             - [mlower] is the lower half-bandwidth of the mass matrix,
             - [t] is the independent variable,
-            - [y] is the dependent variable vector,
             - [work] is workspace data, and
             - [m] is the output banded mass matrix.
 
@@ -250,11 +247,11 @@ module Dls :
             Raising {!Sundials.RecoverableFailure} indicates a recoverable
             error. Any other exception is treated as an unrecoverable error.
 
-            {warning Neither the elements of [y], [work] nor the matrix [m]
+            {warning Neither the elements of [work] nor the matrix [m]
                      should be accessed after the function has returned.}
 
             @noarkode <node> ARKDlsBandMassFn *)
-        type band_fn = bandrange -> float -> RealArray.t -> RealArray.t triple
+        type band_fn = bandrange -> float -> RealArray.t triple
                           -> Dls.BandMatrix.t -> unit
 
         (** A direct linear solver for mass matrix linear systems on banded
@@ -548,59 +545,55 @@ module Spils :
           }
 
         (** Callback functions that solve a linear mass matrix system involving
-            a preconditioner matrix. In the call [prec_solve_fn t y arg z], [t]
-            is the independent variable, [y] is the dependent variable vector,
-            [arg] is a {!prec_solve_arg} that specifies the linear system, and
-            [z] is computed to solve {% $P\mathtt{z} = \mathtt{arg.rhs}$%}.
-            {% $P$%} is a left or right preconditioning matrix, if
-            preconditioning is done on both sides, the product of the two
-            preconditioner matrices should approximate {% $M$%}.
+            a preconditioner matrix. In the call [prec_solve_fn t arg z], [t]
+            is the independent variable, [arg] is a {!prec_solve_arg} that
+            specifies the linear system, and [z] is computed to solve
+            {% $P\mathtt{z} = \mathtt{arg.rhs}$%}. {% $P$%} is a left or right
+            preconditioning matrix, if preconditioning is done on both sides,
+            the product of the two preconditioner matrices should approximate
+            {% $M$%}.
 
             Raising {!Sundials.RecoverableFailure} indicates a recoverable
             error. Any other exception is treated as an unrecoverable error.
 
-            {warning The elements of [y], [arg], and [z] should not
+            {warning The elements of [arg] and [z] should not
                      be accessed after the function has returned.}
 
             @noarkode <node> ARKSpilsMassPrecSolveFn *)
         type 'd prec_solve_fn =
              float
-          -> 'd
           -> 'd prec_solve_arg
           -> 'd
           -> unit
 
         (** Callback functions that preprocess or evaluate mass matrix-related
             data needed by {!prec_solve_fn}. In the call
-            [prec_setup_fn t y tmp], [t] is the independent variable, [y] is the
-            dependent variable vector, and [tmp] is workspace data.
+            [prec_setup_fn t tmp], [t] is the independent variable, and [tmp]
+            is workspace data.
 
             Raising {!Sundials.RecoverableFailure} indicates a recoverable
             error. Any other exception is treated as an unrecoverable error.
 
-            {warning The elements of [y] and [tmp] should not be accessed after
+            {warning The elements of [tmp] should not be accessed after
                      the function has returned.}
 
             @noarkode <node> ARKSpilsMassPrecSetupFn *)
         type 'd prec_setup_fn =
              float
-          -> 'd
           -> 'd triple
           -> unit
 
         (** Callback functions that compute the mass matrix times a vector. In
-            the call [times_vec_fn t v mv y tmp],
+            the call [times_vec_fn t v mv],
             - [t] is the independent variable,
-            - [v] is the vector to multiply,
+            - [v] is the vector to multiply, and
             - [mv] is the computed output
-                   vector—{% $\mathtt{mv} = M\mathtt{v}$%},
-            - [y] is the dependent variable vector, and
-            - [tmp] is workspace data.
+                   vector—{% $\mathtt{mv} = M\mathtt{v}$%}.
             
             Raising {!Sundials.RecoverableFailure} indicates a recoverable
             error. Any other exception is treated as an unrecoverable error.
 
-            {warning Neither the elements of [v], [mv], [y], nor [tmp] should be
+            {warning Neither the elements of [v] nor [mv] should be
                      accessed after the function has returned.}
 
             @noarkode <node> ARKSpilsMassTimesVecFn *)
@@ -608,8 +601,6 @@ module Spils :
              float (* t *)
           -> 'd    (* v *)
           -> 'd    (* Mv *)
-          -> 'd    (* y *)
-          -> 'd    (* tmp *)
           -> unit
 
         (** Specifies a preconditioner, including the type of preconditioning
@@ -777,12 +768,6 @@ module Spils :
 
             @noarkode <node> ARKSpilsGetNumMassPrecSolves *)
         val get_num_prec_solves  : ('d, 'k) session -> int
-
-        (** Returns the cumulative number of calls to the mass matrix-vector
-            function.
-
-            @noarkode <node> ARKSpilsGetNumMtimesEvals *)
-        val get_num_mtimes_evals : ('d, 'k) session -> int
 
         (** {3:lowlevel Low-level solver manipulation}
 
@@ -1634,20 +1619,20 @@ val set_ark_tables
             [rkm.stages * rkm.stages] in row-major order).
  
     @raise IllInput If $f_E$ is not already specified.
-    @noarkode <node> ARKodeSetERKTables
+    @noarkode <node> ARKodeSetERKTable
     @noarkode <node> ARKodeSetExplicit *)
-val set_erk_tables : ('d, 'k) session -> rk_method -> RealArray.t -> unit
+val set_erk_table : ('d, 'k) session -> rk_method -> RealArray.t -> unit
 
 (** Specifies a customized Butcher table pair for the implicit portion of the
-    system. The call [set_irk_tables rkm ai] specifies:
+    system. The call [set_irk_table rkm ai] specifies:
     - [rkm], the RK method parameters, and
     - [ai], the coefficients defining the implicit RK stages (of length
             [rkm.stages * rkm.stages] in row-major order).
  
     @raise IllInput If $f_I$ is not already specified.
-    @noarkode <node> ARKodeSetIRKTables
+    @noarkode <node> ARKodeSetIRKTable
     @noarkode <node> ARKodeSetImplicit *)
-val set_irk_tables : ('d, 'k) session -> rk_method -> RealArray.t -> unit
+val set_irk_table : ('d, 'k) session -> rk_method -> RealArray.t -> unit
 
 (** Explicit Butcher tables
 
@@ -2027,7 +2012,7 @@ val get_actual_init_step    : ('d, 'k) session -> float
 val get_current_time        : ('d, 'k) session -> float
 
 (** Returns the explicit and implicit Butcher tables in use by the solver.
-    In the call [(rkm, ai, ae) = get_current_butcher_tables s],
+    In the call [(ai, ae, rkm) = get_current_butcher_tables s],
     - [ai] gives the coefficients of the DIRK method,
     - [ae] gives the coefficients of the ERK method, and
     - [rkm] gives the other parameters.

@@ -88,7 +88,6 @@ module DlsTypes = struct
   module MassTypes = struct
     type dense_fn =
       float
-      -> RealArray.t
       -> RealArray.t triple
       -> Dls.DenseMatrix.t
       -> unit
@@ -101,14 +100,13 @@ module DlsTypes = struct
       }
 
     let no_dense_callback = {
-        massfn = (fun _ _ _ _ -> crash "no dense mass callback");
+        massfn = (fun _ _ _ -> crash "no dense mass callback");
         dmat = None;
       }
 
     type band_fn =
       bandrange
       -> float
-      -> RealArray.t
       -> RealArray.t triple
       -> Dls.BandMatrix.t
       -> unit
@@ -121,7 +119,7 @@ module DlsTypes = struct
       }
 
     let no_band_callback = {
-        bmassfn = (fun _ _ _ _ _ -> crash "no band mass callback");
+        bmassfn = (fun _ _ _ _ -> crash "no band mass callback");
         bmat = None;
       }
   end
@@ -225,21 +223,17 @@ module SpilsTypes' = struct
 
     type 'd prec_solve_fn =
          float
-      -> 'd
       -> 'd prec_solve_arg
       -> 'd
       -> unit
 
     type 'd prec_setup_fn =
          float
-      -> 'd
       -> 'd triple
       -> unit
 
     type 'd times_vec_fn =
          float
-      -> 'd
-      -> 'd
       -> 'd
       -> 'd
       -> unit
@@ -252,7 +246,7 @@ module SpilsTypes' = struct
       }
 
     let no_prec_callbacks times = {
-        prec_solve_fn = (fun _ _ _ _ -> crash "no prec solve callback");
+        prec_solve_fn = (fun _ _ _ -> crash "no prec solve callback");
         prec_setup_fn = None;
         times_vec_fn = times;
       }

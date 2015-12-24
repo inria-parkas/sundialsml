@@ -62,18 +62,18 @@ type ('d, 'k) problem =
   | ImEx of ('d, 'k) imex
 
 type integrator_stats = {
-    num_steps : int;
-    exp_steps : int;
-    acc_steps : int;
-    step_attempts : int;
-    num_nfe_evals : int;
-    num_nfi_evals : int;
+    num_steps           : int;
+    exp_steps           : int;
+    acc_steps           : int;
+    step_attempts       : int;
+    num_nfe_evals       : int;
+    num_nfi_evals       : int;
     num_lin_solv_setups : int;
-    num_err_test_fails : int;
-    actual_init_step : float;
-    last_step : float;
-    current_step : float;
-    current_time : float
+    num_err_test_fails  : int;
+    actual_init_step    : float;
+    last_step           : float;
+    current_step        : float;
+    current_time        : float
   }
 
 external c_root_init : ('a, 'k) session -> int -> unit
@@ -284,14 +284,14 @@ module Dls =
         | _ -> raise Sundials.InvalidLinearSolver
 
       external get_work_space : serial_session -> int * int
-          = "c_arkode_dls_mass_get_work_space"
+          = "c_arkode_dls_get_mass_work_space"
 
       let get_work_space s =
         mass_check_dls s;
         get_work_space s
 
       external get_num_evals : serial_session -> int
-          = "c_arkode_dls_mass_get_num_evals"
+          = "c_arkode_dls_get_num_mass_evals"
 
       let get_num_evals s =
         mass_check_dls s;
@@ -663,7 +663,7 @@ module Spils =
         set_maxl s maxl
 
       external get_num_lin_iters      : ('a, 'k) session -> int
-          = "c_arkode_spils_get_num_mass_lin_iters"
+          = "c_arkode_spils_get_num_mass_iters"
 
       let get_num_lin_iters s =
         mass_check_spils s;
@@ -696,13 +696,6 @@ module Spils =
       let get_num_prec_solves s =
         mass_check_spils s;
         get_num_prec_solves s
-
-      external get_num_mtimes_evals   : ('a, 'k) session -> int
-          = "c_arkode_spils_get_num_mtimes_evals"
-
-      let get_num_mtimes_evals s =
-        mass_check_spils s;
-        get_num_jtimes_evals s
     end
   end
 
@@ -900,7 +893,7 @@ let reinit session prob ?order ?roots t0 y0 =
 
 external c_resize
     : ('a, 'k) session -> bool -> float -> float -> ('a, 'k) nvector -> unit
-    = "c_arkode_reinit"
+    = "c_arkode_resize"
 
 let resize session ?resize_nvec ?linear_solver tol hscale ynew t0 =
   if Sundials_config.safe then session.checkvec ynew;
@@ -1055,25 +1048,25 @@ external c_set_ark_tables
   : ('d, 'k) session -> rk_method -> RealArray.t -> RealArray.t -> unit
     = "c_arkode_set_ark_tables"
 
-external c_set_erk_tables
+external c_set_erk_table
   : ('d, 'k) session -> rk_method -> RealArray.t -> unit
-    = "c_arkode_set_erk_tables"
+    = "c_arkode_set_erk_table"
 
-external c_set_irk_tables
+external c_set_irk_table
   : ('d, 'k) session -> rk_method -> RealArray.t -> unit
-    = "c_arkode_set_irk_tables"
+    = "c_arkode_set_irk_table"
 
 let set_ark_tables s rkm ai ae =
   (if s.irhsfn == dummy_irhsfn || s.erhsfn == dummy_erhsfn then raise IllInput);
   c_set_ark_tables s rkm ai ae
 
-let set_erk_tables s rkm ae =
+let set_erk_table s rkm ae =
   (if s.erhsfn == dummy_erhsfn then raise IllInput);
-  c_set_erk_tables s rkm ae
+  c_set_erk_table s rkm ae
 
-let set_irk_tables s rkm ai =
+let set_irk_table s rkm ai =
   (if s.irhsfn == dummy_irhsfn then raise IllInput);
-  c_set_irk_tables s rkm ai
+  c_set_irk_table s rkm ai
 
 type erk_table =
   | HeunEuler_2_1_2
@@ -1107,12 +1100,51 @@ type ark_table =
   | ARK_6_3_4
   | ARK_8_4_5
 
-external set_ark_table_num      : ('d, 'k) session -> ark_table -> unit
-    = "c_arkode_set_ark_table_num"
-external set_erk_table_num      : ('d, 'k) session -> erk_table -> unit
+let int_of_erk_table v =
+  match v with
+  | HeunEuler_2_1_2       -> 0
+  | BogackiShampine_4_2_3 -> 1
+  | ARK_4_2_3_Explicit    -> 2
+  | Zonneveld_5_3_4       -> 3
+  | ARK_6_3_4_Explicit    -> 4
+  | SayfyAburub_6_3_4     -> 5
+  | CashKarp_6_4_5        -> 6
+  | Fehlberg_6_4_5        -> 7
+  | DormandPrince_7_4_5   -> 8
+  | ARK_8_4_5_Explicit    -> 9
+  | Verner_8_5_6          -> 10
+
+let int_of_irk_table v =
+  match v with
+  | SDIRK_2_1_2        -> 11
+  | Billington_3_2_3   -> 12
+  | TRBDF2_3_2_3       -> 13
+  | Kvaerno_4_2_3      -> 14
+  | ARK_4_2_3_Implicit -> 15
+  | Cash_5_2_4         -> 16
+  | Cash_5_3_4         -> 17
+  | SDIRK_5_3_4        -> 18
+  | Kvaerno_5_3_4      -> 19
+  | ARK_6_3_4_Implicit -> 20
+  | Kvaerno_7_4_5      -> 21
+  | ARK_8_4_5_Implicit -> 22
+
+let ints_of_ark_table v =
+  match v with
+  | ARK_4_2_3 -> (15, 2)
+  | ARK_6_3_4 -> (20, 4)
+  | ARK_8_4_5 -> (22, 9)
+
+external c_set_erk_table_num      : ('d, 'k) session -> int -> unit
     = "c_arkode_set_erk_table_num"
-external set_irk_table_num      : ('d, 'k) session -> irk_table -> unit
+external c_set_irk_table_num      : ('d, 'k) session -> int -> unit
     = "c_arkode_set_irk_table_num"
+external c_set_ark_table_num      : ('d, 'k) session -> int * int -> unit
+    = "c_arkode_set_ark_table_num"
+
+let set_erk_table_num s v = c_set_erk_table_num s (int_of_erk_table v)
+let set_irk_table_num s v = c_set_irk_table_num s (int_of_irk_table v)
+let set_ark_table_num s v = c_set_ark_table_num s (ints_of_ark_table v)
 
 type adaptivity_params = {
     adaptivity_ks : (float * float * float) option;
