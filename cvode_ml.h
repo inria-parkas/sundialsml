@@ -11,13 +11,6 @@
  *                                                                     *
  ***********************************************************************/
 
-/*
- * This module defines all constants and functions which do not depend on
- * the representation of continuous state vectors, i.e., those that are
- * shared between the bigarray and nvector versions of cvode_ml_nvec.
- *
- */
-
 #ifndef _CVODE_ML_H__
 #define _CVODE_ML_H__
 

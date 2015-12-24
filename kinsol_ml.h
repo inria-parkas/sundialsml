@@ -11,13 +11,6 @@
  *                                                                     *
  ***********************************************************************/
 
-/*
- * This module defines all constants and functions which do not depend on
- * the representation of continuous state vectors, i.e., those that are
- * shared between the bigarray and nvector versions of ida_ml_nvec.
- *
- */
-
 #ifndef _KINSOL_ML_H__
 #define _KINSOL_ML_H__
 
