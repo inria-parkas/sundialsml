@@ -166,8 +166,6 @@ int cvode_translate_exception (value session, value exn_result,
 				  recoverable)				\
      : 0)
 
-value cvode_ml_big_real();
-
 /* Interface with OCaml types */
 
 /* Indices into the Cvode_*.session type.  This enum must be in the same order

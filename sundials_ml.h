@@ -24,9 +24,6 @@
 #include "config.h"
 #include <assert.h>
 
-value sundials_ml_big_real ();
-value sundials_ml_unit_roundoff();
-
 void sundials_ml_warn_discarded_exn (value exn, const char *context);
 
 /* Interfacing with OCaml's bigarray infrastructure.  */
