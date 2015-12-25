@@ -591,9 +591,11 @@ if [ $sundials -ge 260 ]; then
 
 		superlumt_cobj_no_sens="$superlumt_cobj_no_sens cvode_superlumt_ml${XO}"
 		superlumt_cobj_no_sens="$superlumt_cobj_no_sens ida_superlumt_ml${XO}"
+		superlumt_cobj_no_sens="$superlumt_cobj_no_sens kinsol_superlumt_ml${XO}"
 
 		superlumt_mlobj_main="$superlumt_mlobj_main cvode_superlumt.cmo"
 		superlumt_mlobj_main="$superlumt_mlobj_main ida_superlumt.cmo"
+		superlumt_mlobj_main="$superlumt_mlobj_main kinsol_superlumt.cmo"
 
 		superlumt_mlobj_sens="$superlumt_mlobj_sens cvodes_superlumt.cmo"
 		superlumt_mlobj_sens="$superlumt_mlobj_sens idas_superlumt.cmo"

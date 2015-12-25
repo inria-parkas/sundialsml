@@ -26,6 +26,7 @@ kinsol.cmi : sundials.cmi nvector_serial.cmi nvector.cmi kinsol_impl.cmo \
     dls.cmi
 kinsol_bbd.cmi : nvector_parallel.cmi kinsol.cmi
 kinsol_klu.cmi : sundials.cmi sls.cmi kinsol.cmi
+kinsol_superlumt.cmi : sundials.cmi sls.cmi kinsol.cmi
 nvector.cmi :
 nvector_array.cmi : nvector_custom.cmi nvector.cmi
 nvector_custom.cmi : nvector.cmi
@@ -130,6 +131,10 @@ kinsol_impl.cmx : sundials_config.cmx sundials.cmx sls_impl.cmx sls.cmx \
     nvector_serial.cmx nvector.cmx dls.cmx
 kinsol_klu.cmo : sundials.cmi nvector.cmi kinsol_impl.cmo kinsol_klu.cmi
 kinsol_klu.cmx : sundials.cmx nvector.cmx kinsol_impl.cmx kinsol_klu.cmi
+kinsol_superlumt.cmo : sundials.cmi nvector.cmi kinsol_impl.cmo \
+    kinsol_superlumt.cmi
+kinsol_superlumt.cmx : sundials.cmx nvector.cmx kinsol_impl.cmx \
+    kinsol_superlumt.cmi
 nvector.cmo : nvector.cmi
 nvector.cmx : nvector.cmi
 nvector_array.cmo : sundials.cmi nvector_custom.cmi nvector.cmi \
@@ -160,6 +165,8 @@ sundials.cmo : sundials_config.cmo nvector.cmi sundials.cmi
 sundials.cmx : sundials_config.cmx nvector.cmx sundials.cmi
 sundials_config.cmo :
 sundials_config.cmx :
+arkode_ml.o: arkode_ml.c config.h dls_ml.h spils_ml.h sundials_ml.h \
+  arkode_ml.h nvector_ml.h
 cvode_bbd_ml.o: cvode_bbd_ml.c sundials_ml.h config.h cvode_ml.h \
  nvector_ml.h
 cvode_klu_ml.o: cvode_klu_ml.c sundials_ml.h config.h cvode_ml.h sls_ml.h
@@ -195,7 +202,9 @@ kinsol_bbd_ml.o: kinsol_bbd_ml.c dls_ml.h spils_ml.h kinsol_ml.h \
 kinsol_klu_ml.o: kinsol_klu_ml.c sundials_ml.h config.h kinsol_ml.h \
  nvector_ml.h sls_ml.h
 kinsol_ml.o: kinsol_ml.c config.h dls_ml.h spils_ml.h kinsol_ml.h \
- sundials_ml.h nvector_ml.h
+  sundials_ml.h nvector_ml.h
+kinsol_superlumt_ml.o: kinsol_superlumt_ml.c sundials_ml.h config.h \
+  kinsol_ml.h nvector_ml.h sls_ml.h
 nvector_ml.o: nvector_ml.c nvector_ml.h sundials_ml.h config.h
 nvector_openmp_ml.o: nvector_openmp_ml.c sundials_ml.h config.h \
  nvector_ml.h nvector_openmp_ml.h

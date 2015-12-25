@@ -11,13 +11,14 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(** KLU sparse-direct linear solver module for KINSOL (requires KLU).
+(** SuperLU_MT sparse-direct linear solver module for KINSOL
+    (requires SuperLU_MT).
 
     @version VERSION()
     @author Timothy Bourke (Inria/ENS)
     @author Jun Inoue (Inria/ENS)
     @author Marc Pouzet (UPMC/ENS/Inria)
-    @nokinsol <node5#sss:KINklu> The KLU Solver *)
+    @nokinsol <node5#sss:kinsuperlumt> The SuperLUMT Solver *)
 
 (** Callback functions that compute sparse approximations to a Jacobian
     matrix. In the call [sparse_jac_fn arg jac], [arg] is a {!jacobian_arg}
@@ -42,35 +43,28 @@ type sparse_jac_fn =
   -> Sls.SparseMatrix.t -> unit
 
 (** A direct linear solver on sparse matrices. In the call,
-    [klu jfn nnz], [jfn] is a callback function that computes an
-    approximation to the Jacobian matrix and [nnz] is the maximum number
-    of nonzero entries in that matrix.
+    [superlumt jfn nnz nthreads], [jfn] is a callback function that computes
+    an approximation to the Jacobian matrix, [nnz] is the maximum number of
+    nonzero entries in that matrix, and [nthreads] is the number of threads
+    to use when factorizing/solving.
 
-    @nokinsol <node5#sss:lin_solv_init> KINKLU
+    @nokinsol <node5#sss:lin_solv_init> KINSuperLUMT
     @nokinsol <node5#sss:optin_sls> KINSlsSetSparseJacFn
     @nokinsol <node5#ss:sjacFn> KINSlsSparseJacFn *)
-val klu : sparse_jac_fn -> int -> Kinsol.serial_linear_solver
+val superlumt
+      : sparse_jac_fn -> nnz:int -> nthreads:int -> Kinsol.serial_linear_solver
 
 (** The ordering algorithm used for reducing fill. *)
 type ordering =
-     Amd      (** Approximate minimum degree permutation. *)
-   | ColAmd   (** Column approximate minimum degree permutation. *)
-   | Natural  (** Natural ordering. *)
+     Natural       (** Natural ordering. *)
+   | MinDegreeProd (** Minimal degree ordering on $J^T J$. *)
+   | MinDegreeSum  (** Minimal degree ordering on $J^T + J$. *)
+   | ColAmd        (** Column approximate minimum degree permutation. *)
 
 (** Sets the ordering algorithm used to minimize fill-in.
 
-    @nokinsol <node5#ss:sls_optin> KINKLUSetOrdering *)
+    @nokinsol <node5#ss:sls_optin> KINSuperLUMTSetOrdering *)
 val set_ordering : Kinsol.serial_session -> ordering -> unit
-
-(** Reinitializes the Jacobian matrix memory and flags.
-    In the call, [reinit s n nnz realloc], [n] is the number of system state
-    variables, and [nnz] is the number of non-zeroes in the Jacobian matrix.
-    New symbolic and numeric factorizations will be completed at the next solver
-    step. If [realloc] is true, the Jacobian matrix will be reallocated based on
-    [nnz].
-
-    @nokinsol <node5#ss:sls_optin> KINKLUReInit *)
-val reinit : Kinsol.serial_session -> int -> int -> bool -> unit
 
 (** Returns the number of calls made by a sparse linear solver to the
     Jacobian approximation function.
