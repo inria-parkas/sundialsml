@@ -164,6 +164,9 @@ arkode_ml.o: arkode_ml.c
 arkode_bbd_ml.o: arkode_bbd_ml.c
 	$(CC) -I $(OCAML_INCLUDE) $(ARKODE_CFLAGS) -o $@ -c $<
 
+arkode_klu_ml.o: arkode_klu_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(ARKODE_CFLAGS) -o $@ -c $<
+
 # CVODE[S]-specific C files.
 cvode_ml.o: cvode_ml.c
 	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
