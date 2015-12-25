@@ -792,9 +792,17 @@ module Adjoint =
         external c_dls_dense : serial_session -> int -> int -> bool -> unit
           = "c_idas_adj_dls_dense"
 
+        external c_dls_lapack_dense
+          : serial_session -> int -> int -> bool -> unit
+          = "c_idas_adj_dls_lapack_dense"
+
         external c_dls_band
           : (serial_session * int) -> int -> int -> int -> bool -> unit
           = "c_idas_adj_dls_band"
+
+        external c_dls_lapack_band
+          : (serial_session * int) -> int -> int -> int -> bool -> unit
+          = "c_idas_adj_dls_lapack_band"
 
         let dense ?jac () bs nv nv' =
           let parent, which = parent_and_which bs in
@@ -805,17 +813,14 @@ module Adjoint =
             | None   -> BDlsDenseCallback no_dense_callback
             | Some f -> BDlsDenseCallback { jacfn = f; dmat = None }
 
-        (* Sundials 2.5.0 doesn't support Lapack for IDA adjoint.  *)
-        (*
-        let lapack_dense jac bs nv =
+        let lapack_dense ?jac () bs nv nv' =
           let parent, which = parent_and_which bs in
           let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
           c_dls_lapack_dense parent which neqs (jac <> None);
-          ((tosession bs).ls_callbacks <-
+          (tosession bs).ls_callbacks <-
             match jac with
             | None   -> BDlsDenseCallback no_dense_callback
-            | Some f -> BDlsDenseCallback f)
-         *)
+            | Some f -> BDlsDenseCallback { jacfn = f; dmat = None }
 
         type ('data, 'kind) linear_solver =
           ('data, 'kind) bsession -> ('data, 'kind) Nvector.t -> unit
@@ -829,17 +834,15 @@ module Adjoint =
             | None   -> BDlsBandCallback no_band_callback
             | Some f -> BDlsBandCallback { bjacfn = f; bmat = None }
 
-        (* Sundials 2.5.0 doesn't support Lapack for IDA adjoint.  *)
-        (*
-        let lapack_band p jac bs nv =
+        let lapack_band ?jac p bs nv nv' =
           let parent, which = parent_and_which bs in
           let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
-          c_dls_lapack_band (parent,which) neqs p.mupper p.mlower (jac <> None);
-          ((tosession bs).ls_callbacks <-
+          c_dls_lapack_band (parent, which) neqs
+                            p.mupper p.mlower (jac <> None);
+          (tosession bs).ls_callbacks <-
             match jac with
             | None   -> BDlsBandCallback no_band_callback
-            | Some f -> BDlsBandCallback f)
-         *)
+            | Some f -> BDlsBandCallback { bjacfn = f; bmat = None }
 
         let invalidate_callback session =
           match session.ls_callbacks with

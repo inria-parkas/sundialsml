@@ -1027,7 +1027,7 @@ CAMLprim value c_cvodes_adj_dls_lapack_dense(value vparent, value vwhich,
 	SCHECK_FLAG("CVDlsSetDenseJacFnB", flag);
     }
 #else
-    caml_failwith("Lapack solvers are not available.");
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn (Val_unit);
 }
@@ -1093,7 +1093,7 @@ CAMLprim value c_cvodes_adj_dls_lapack_band (value vparent_which, value vnb,
 	SCHECK_FLAG("CVDlsSetBandJacFnB", flag);
     }
 #else
-    caml_failwith("Lapack solvers are not available.");
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn (Val_unit);
 }

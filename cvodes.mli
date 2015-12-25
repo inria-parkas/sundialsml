@@ -1029,6 +1029,7 @@ module Adjoint :
         (** A direct linear solver on dense matrices using LAPACK. See {!dense}.
             Only available if {!Sundials.lapack_enabled}.
 
+            @raise Sundials.NotImplementedBySundialsVersion Solver not available.
             @cvodes <node7#sss:lin_solv_b> CVLapackDenseB
             @cvodes <node7#SECTION00728200000000000000> CVDlsSetDenseJacFnB
             @cvodes <node7#ss:densejac_b> CVDlsDenseJacFnB *)
@@ -1073,6 +1074,7 @@ module Adjoint :
         (** A direct linear solver on banded matrices using LAPACK. See {!band}.
             Only available if {!Sundials.lapack_enabled}.
 
+            @raise Sundials.NotImplementedBySundialsVersion Solver not available.
             @cvodes <node7#sss:lin_solv_b> CVLapackBandB
             @cvodes <node7#SECTION00728300000000000000> CVDlsSetBandJacFnB
             @cvodes <node7#ss:bandjac_b> CVDlsBandJacFnB *)

@@ -688,7 +688,7 @@ CAMLprim value c_arkode_dls_lapack_dense (value varkode_mem, value vneqs,
 	CHECK_FLAG("ARKDlsSetDenseJacFn", flag);
     }
 #else
-    caml_failwith("Lapack solvers are not available.");
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn (Val_unit);
 }
@@ -744,7 +744,7 @@ CAMLprim value c_arkode_dls_lapack_band (value varkode_mem_neqs, value vmupper,
 	CHECK_FLAG("ARKDlsSetBandJacFn", flag);
     }
 #else
-    caml_failwith("Lapack solvers are not available.");
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn (Val_unit);
 }

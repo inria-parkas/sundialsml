@@ -539,7 +539,7 @@ CAMLprim value c_ida_dls_lapack_dense (value vida_mem, value vneqs,
 	CHECK_FLAG("IDADlsSetDenseJacFn", flag);
     }
 #else
-    caml_failwith("Lapack solvers are not available.");
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn (Val_unit);
 }
@@ -594,7 +594,7 @@ CAMLprim value c_ida_dls_lapack_band (value vida_mem, value vneqs,
 	CHECK_FLAG("IDADlsSetBandJacFn", flag);
     }
 #else
-    caml_failwith("Lapack solvers are not available.");
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn (Val_unit);
 }

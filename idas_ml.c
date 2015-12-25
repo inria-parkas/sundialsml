@@ -1735,6 +1735,28 @@ CAMLprim value c_idas_adj_dls_dense(value vparent, value vwhich,
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value c_idas_adj_dls_lapack_dense(value vparent, value vwhich,
+					   value vnb, value vset_jac)
+{
+    CAMLparam3(vparent, vwhich, vset_jac);
+#if defined(SUNDIALS_ML_LAPACK) && (SUNDIALS_LIB_VERSION >= 260)
+    void *ida_mem = IDA_MEM_FROM_ML (vparent);
+    long nbeqs = Long_val(vnb);
+    int which = Int_val(vwhich);
+    int flag;
+
+    flag = IDALapackDenseB (ida_mem, which, nbeqs);
+    SCHECK_FLAG ("IDALapackDenseB", flag);
+    if (Bool_val (vset_jac)) {
+	flag = IDADlsSetDenseJacFnB(ida_mem, which, bjacfn);
+	SCHECK_FLAG("IDADlsSetDenseJacFnB", flag);
+    }
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value c_idas_adj_dls_set_dense_jac_fn(value vparent, value vwhich)
 {
     CAMLparam2(vparent, vwhich);
@@ -1770,6 +1792,30 @@ CAMLprim value c_idas_adj_dls_band (value vparent_which, value vnb,
 	flag = IDADlsSetBandJacFnB(ida_mem, which, bbandjacfn);
 	SCHECK_FLAG("IDADlsSetBandJacFnB", flag);
     }
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value c_idas_adj_dls_lapack_band (value vparent_which, value vnb,
+					   value vmupper, value vmlower,
+					   value vset_jac)
+{
+    CAMLparam5(vparent_which, vnb, vmupper, vmlower, vset_jac);
+#if defined(SUNDIALS_ML_LAPACK) && (SUNDIALS_LIB_VERSION >= 260)
+    void *ida_mem = IDA_MEM_FROM_ML (Field(vparent_which, 0));
+    long nbeqs = Long_val(vnb);
+    int which = Int_val(Field(vparent_which, 1));
+    int flag;
+
+    flag = IDALapackBandB (ida_mem, which, nbeqs,
+			   Long_val (vmupper), Long_val (vmlower));
+    SCHECK_FLAG ("IDALapackBandB", flag);
+    if (Bool_val (vset_jac)) {
+	flag = IDADlsSetBandJacFnB(ida_mem, which, bbandjacfn);
+	SCHECK_FLAG("IDADlsSetBandJacFnB", flag);
+    }
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 

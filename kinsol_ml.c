@@ -572,7 +572,7 @@ CAMLprim value c_kinsol_dls_lapack_dense (value vkin_mem, value vset_jac)
 	CHECK_FLAG("KINDlsSetDenseJacFn", flag);
     }
 #else
-    caml_failwith("Lapack solvers are not available.");
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn (Val_unit);
 }
@@ -629,7 +629,7 @@ CAMLprim value c_kinsol_dls_lapack_band (value vkin_mem, value vmupper,
 	CHECK_FLAG("KINDlsSetBandJacFn", flag);
     }
 #else
-    caml_failwith("Lapack solvers are not available.");
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn (Val_unit);
 }

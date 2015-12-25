@@ -141,6 +141,7 @@ module Dls :
     (** A direct linear solver on dense matrices using LAPACK. See {!dense}.
         Only available if {!Sundials.lapack_enabled}.
 
+        @raise Sundials.NotImplementedBySundialsVersion Solver not available.
         @ida <node5#sss:lin_solv_init> IDALapackDense
         @ida <node5#sss:optin_dls> IDADlsSetDenseJacFn
         @ida <node5#ss:djacFn> IDADlsDenseJacFn *)
@@ -184,6 +185,7 @@ module Dls :
     (** A direct linear solver on banded matrices using LAPACK. See {!band}.
         Only available if {!Sundials.lapack_enabled}.
 
+        @raise Sundials.NotImplementedBySundialsVersion Solver not available.
         @ida <node5#sss:lin_solv_init> IDALapackBand
         @ida <node5#sss:optin_dls> IDADlsSetBandJacFn
         @ida <node5#ss:bjacFn> IDADlsBandJacFn *)

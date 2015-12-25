@@ -148,6 +148,7 @@ module Dls :
     (** A direct linear solver on dense matrices using LAPACK. See {!dense}.
         Only available if {!Sundials.lapack_enabled}.
 
+        @raise Sundials.NotImplementedBySundialsVersion Solver not available.
         @noarkode <node> ARKLapackDense
         @noarkode <node> ARKDlsSetDenseJacFn
         @noarkode <node> ARKDlsDenseJacFn *)
@@ -191,6 +192,7 @@ module Dls :
     (** A direct linear solver on banded matrices using LAPACK. See {!band}.
         Only available if {!Sundials.lapack_enabled}.
 
+        @raise Sundials.NotImplementedBySundialsVersion Solver not available.
         @noarkode <node> ARKLapackBand
         @noarkode <node> ARKDlsSetBandJacFn
         @noarkode <node> ARKDlsBandJacFn *)

@@ -127,6 +127,7 @@ module Dls :
     (** A direct linear solver on dense matrices using LAPACK. See {!dense}.
         Only available if {!Sundials.lapack_enabled}.
 
+        @raise Sundials.NotImplementedBySundialsVersion Solver not available.
         @kinsol <node5#sss:lin_solv_init> KINLapackDense
         @kinsol <node5#sss:optin_dls> KINDlsSetDenseJacFn
         @kinsol <node5#ss:djacFn> KINDlsDenseJacFn *)
@@ -169,6 +170,7 @@ module Dls :
     (** A direct linear solver on banded matrices using LAPACK. See {!band}.
         Only available if {!Sundials.lapack_enabled}.
 
+        @raise Sundials.NotImplementedBySundialsVersion Solver not available.
         @kinsol <node5#sss:lin_solv_init> KINLapackBand
         @kinsol <node5#sss:optin_dls> KINDlsSetBandJacFn
         @kinsol <node5#ss:bjacFn> KINDlsBandJacFn *)
