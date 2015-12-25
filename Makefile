@@ -59,11 +59,11 @@ COBJ_NO_SENS = cvode_ml$(XO) ida_ml$(XO)			\
 MLOBJ_NO_SENS =
 
 ### Objects specific to sundials_mpi.cma.
-COBJ_MPI = nvector_parallel_ml.o kinsol_bbd_ml.o		\
-	   cvode_bbd_ml.o cvodes_bbd_ml.o			\
+COBJ_MPI = nvector_parallel_ml.o kinsol_bbd_ml.o arkode_bbd_ml.o	\
+	   cvode_bbd_ml.o cvodes_bbd_ml.o				\
 	   ida_bbd_ml.o idas_bbd_ml.o
-MLOBJ_MPI = nvector_parallel.cmo kinsol_bbd.cmo	\
-	    cvode_bbd.cmo cvodes_bbd.cmo	\
+MLOBJ_MPI = nvector_parallel.cmo kinsol_bbd.cmo arkode_bbd.cmo		\
+	    cvode_bbd.cmo cvodes_bbd.cmo				\
 	    ida_bbd.cmo idas_bbd.cmo
 CMI_MPI = $(MLOBJ_MPI:.cmo=.cmi)
 
@@ -159,6 +159,9 @@ kinsol_superlumt_ml.o: kinsol_superlumt_ml.c
 
 # ARKODE-specific C files.
 arkode_ml.o: arkode_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(ARKODE_CFLAGS) -o $@ -c $<
+
+arkode_bbd_ml.o: arkode_bbd_ml.c
 	$(CC) -I $(OCAML_INCLUDE) $(ARKODE_CFLAGS) -o $@ -c $<
 
 # CVODE[S]-specific C files.
