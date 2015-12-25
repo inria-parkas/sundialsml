@@ -17,7 +17,7 @@
     @author Timothy Bourke (Inria/ENS)
     @author Jun Inoue (Inria/ENS)
     @author Marc Pouzet (UPMC/ENS/Inria)
-    @noarkode <node5#sss:cvklu> The KLU Solver *)
+    @noarkode <node> Linear solver specification functions *)
 
 (** Callback functions that compute sparse approximations to a Jacobian
     matrix. In the call [sparse_jac_fn arg jac], [arg] is a {!jacobian_arg}
