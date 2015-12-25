@@ -1739,7 +1739,7 @@ CAMLprim value c_idas_adj_dls_lapack_dense(value vparent, value vwhich,
 					   value vnb, value vset_jac)
 {
     CAMLparam3(vparent, vwhich, vset_jac);
-#if defined(SUNDIALS_ML_LAPACK) && (SUNDIALS_LIB_VERSION >= 260)
+#if defined(SUNDIALS_ML_LAPACK) && (SUNDIALS_LIB_VERSION >= 262)
     void *ida_mem = IDA_MEM_FROM_ML (vparent);
     long nbeqs = Long_val(vnb);
     int which = Int_val(vwhich);
@@ -1800,7 +1800,7 @@ CAMLprim value c_idas_adj_dls_lapack_band (value vparent_which, value vnb,
 					   value vset_jac)
 {
     CAMLparam5(vparent_which, vnb, vmupper, vmlower, vset_jac);
-#if defined(SUNDIALS_ML_LAPACK) && (SUNDIALS_LIB_VERSION >= 260)
+#if defined(SUNDIALS_ML_LAPACK) && (SUNDIALS_LIB_VERSION >= 262)
     void *ida_mem = IDA_MEM_FROM_ML (Field(vparent_which, 0));
     long nbeqs = Long_val(vnb);
     int which = Int_val(Field(vparent_which, 1));

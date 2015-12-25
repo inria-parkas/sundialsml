@@ -284,6 +284,12 @@ else
 	    arkode_cobj_main=arkode_ml${XO}
 	    ;;
     esac
+    case "${sundials_version}" in
+	2.6.0) sundials=260 ;;
+	2.6.1) sundials=261 ;;
+	2.6.2) sundials=262 ;;
+	*) ;;
+    esac
 
     # Make sure realtype has the right size.
     test_stem=__configure_test_file__
