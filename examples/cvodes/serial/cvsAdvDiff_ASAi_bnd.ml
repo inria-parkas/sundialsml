@@ -310,7 +310,7 @@ let main () =
   printf "\nCreate and allocate CVODES memory for backward run\n";
 
   let bsolver = Adjoint.Dls.band {Adjoint.mupper = my; Adjoint.mlower = my}
-                                 ~jac:(jacb data) in
+                                 ~jac:(Adjoint.Dls.BandNoSens (jacb data)) in
   let bcvode_mem = Adjoint.init_backward cvode_mem
         Cvode.BDF
         (Adjoint.Newton bsolver)

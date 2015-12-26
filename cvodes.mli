@@ -996,9 +996,9 @@ module Adjoint :
       sig (* {{{ *)
 
         (** Callback functions that compute dense approximations to a Jacobian
-            matrix. In the call [dense_jac_fn arg jac], [arg] is a
-            {!jacobian_arg} with three work vectors and the computed Jacobian
-            must be stored in [jac].
+            matrix without forward sensitivities. In the call
+            [dense_jac_fn arg jac], [arg] is a {!jacobian_arg} with three work
+            vectors and the computed Jacobian must be stored in [jac].
 
             The callback should load the [(i,j)]th entry of [jac] with
             {% $\partial y_i/\partial y_j$%}, i.e., the partial derivative of
@@ -1013,8 +1013,46 @@ module Adjoint :
                      be accessed after the function has returned.}
 
             @cvodes <node7#ss:densejac_b> CVDlsDenseJacFnB *)
-        type dense_jac_fn = (RealArray.t triple, RealArray.t) jacobian_arg
-                                -> Dls.DenseMatrix.t -> unit
+        type dense_jac_fn_no_sens
+          = (RealArray.t triple, RealArray.t) jacobian_arg
+            -> Dls.DenseMatrix.t
+            -> unit
+
+        (** Callback functions that compute dense approximations to a Jacobian
+            matrix with forward sensitivities. In the call
+            [dense_jac_fn arg s jac], [arg] is a {!jacobian_arg} with three work
+            vectors, [s] is an array of forward sensitivity vectors, and the
+            computed Jacobian must be stored in [jac].
+
+            The callback should load the [(i,j)]th entry of [jac] with
+            {% $\partial y_i/\partial y_j$%}, i.e., the partial derivative of
+            the [i]th equation with respect to the [j]th variable, evaluated
+            at the values of [t] and [y] obtained from [arg]. Only nonzero
+            elements need be loaded into [jac].
+
+            Raising {!Sundials.RecoverableFailure} indicates a recoverable
+            error. Any other exception is treated as an unrecoverable error.
+
+            {warning Neither the elements of [arg] nor the matrix [jac] should
+                     be accessed after the function has returned.}
+
+            @nocvodes <node7#ss:densejac_bs> CVDlsDenseJacFnBS *)
+        type dense_jac_fn_with_sens
+          = (RealArray.t triple, RealArray.t) jacobian_arg
+            -> RealArray.t array
+            -> Dls.DenseMatrix.t
+            -> unit
+
+        (** Callback functions that compute dense approximations to a Jacobian
+            matrix.
+
+            @cvodes <node5#ss:sjacFnB> CVDlsDenseJacFnB
+            @nocvodes <node5#ss:sjacFnBS> CVDlsDenseJacFnBS *)
+        type dense_jac_fn =
+            DenseNoSens of dense_jac_fn_no_sens
+            (** Does not depend on forward sensitivities. *)
+          | DenseWithSens of dense_jac_fn_with_sens
+            (** Depends on forward sensitivities. *)
 
         (** A direct linear solver on dense matrices. The optional argument
             specifies a callback function for computing an approximation to the
@@ -1023,7 +1061,9 @@ module Adjoint :
 
             @cvodes <node7#sss:lin_solv_b> CVDenseB
             @cvodes <node7#SECTION00728200000000000000> CVDlsSetDenseJacFnB
-            @cvodes <node7#ss:densejac_b> CVDlsDenseJacFnB *)
+            @nocvodes <node7#SECTION00728200000000000000> CVDlsSetDenseJacFnBS
+            @cvodes <node7#ss:densejac_b> CVDlsDenseJacFnB
+            @nocvodes <node7#ss:densejac_bs> CVDlsDenseJacFnBS *)
         val dense : ?jac:dense_jac_fn -> unit -> serial_linear_solver
 
         (** A direct linear solver on dense matrices using LAPACK. See {!dense}.
@@ -1036,7 +1076,7 @@ module Adjoint :
         val lapack_dense : ?jac:dense_jac_fn -> unit -> serial_linear_solver
 
         (** Callback functions that compute banded approximations to
-            a Jacobian matrix. In the call
+            a Jacobian matrix without forward sensitivities. In the call
             [band_jac_fn {mupper; mlower} arg jac],
             - [mupper] is the upper half-bandwidth of the Jacobian,
             - [mlower] is the lower half-bandwidth of the Jacobian,
@@ -1056,9 +1096,51 @@ module Adjoint :
                      be accessed after the function has returned.}
 
             @cvodes <node7#ss:bandjac_b> CVDlsBandJacFnB *)
-        type band_jac_fn = bandrange
-                            -> (RealArray.t triple, RealArray.t) jacobian_arg
-                            -> Dls.BandMatrix.t -> unit
+        type band_jac_fn_no_sens
+          = bandrange
+            -> (RealArray.t triple, RealArray.t) jacobian_arg
+            -> Dls.BandMatrix.t
+            -> unit
+
+        (** Callback functions that compute banded approximations to
+            a Jacobian matrix with forward sensitivities. In the call
+            [band_jac_fn {mupper; mlower} arg s jac],
+            - [mupper] is the upper half-bandwidth of the Jacobian,
+            - [mlower] is the lower half-bandwidth of the Jacobian,
+            - [arg] is a {!jacobian_arg} with three work vectors,
+            - [s] is an array of forward sensitivity vectors, and
+            - [jac] is storage for the computed Jacobian.
+
+            The callback should load the [(i,j)]th entry of [jac] with
+            {% $\partial y_i/\partial y_j$%}, i.e., the partial derivative of
+            the [i]th equation with respect to the [j]th variable, evaluated
+            at the values of [t] and [y] obtained from [arg]. Only nonzero
+            elements need be loaded into [jac].
+
+            Raising {!Sundials.RecoverableFailure} indicates a recoverable
+            error. Any other exception is treated as an unrecoverable error.
+
+            {warning Neither the elements of [arg], [s], nor the matrix [jac]
+                     should be accessed after the function has returned.}
+
+            @nocvodes <node7#ss:bandjac_bs> CVDlsBandJacFnBS *)
+        type band_jac_fn_with_sens
+          = bandrange
+            -> (RealArray.t triple, RealArray.t) jacobian_arg
+            -> RealArray.t array
+            -> Dls.BandMatrix.t
+            -> unit
+
+        (** Callback functions that compute banded approximations to a Jacobian
+            matrix.
+
+            @cvodes <node5#ss:bandjac_b> CVDlsBandJacFnB
+            @nocvodes <node5#ss:bandjac_bs> CVDlsBandJacFnBS *)
+        type band_jac_fn =
+            BandNoSens of band_jac_fn_no_sens
+            (** Does not depend on forward sensitivities. *)
+          | BandWithSens of band_jac_fn_with_sens
+            (** Depends on forward sensitivities. *)
 
         (** A direct linear solver on banded matrices. The optional argument
             specifies a callback function for computing an approximation to the

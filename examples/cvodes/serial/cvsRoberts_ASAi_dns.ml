@@ -292,11 +292,13 @@ let main () =
   printf "Create and allocate CVODES memory for backward run\n";
 
   let cvode_memB =
-    Adj.init_backward cvode_mem Cvode.BDF
-                                (Adj.Newton (Adj.Dls.dense ~jac:(jacb data) ()))
-                                (Adj.SStolerances (reltolB, abstolB))
-                                (Adj.NoSens (fB data))
-                                tb1 yB
+    Adj.init_backward
+      cvode_mem Cvode.BDF
+                (Adj.Newton (Adj.Dls.dense
+                               ~jac:(Adj.Dls.DenseNoSens (jacb data)) ()))
+                (Adj.SStolerances (reltolB, abstolB))
+                (Adj.NoSens (fB data))
+                tb1 yB
   in
   QuadAdj.init cvode_memB (QuadAdj.NoSens (fQB data)) qB;
   QuadAdj.set_tolerances cvode_memB (QuadAdj.SStolerances (reltolB, abstolQB));

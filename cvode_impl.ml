@@ -281,15 +281,25 @@ module AdjointTypes' = struct
      refers to a different jacobian_arg, the one that was just
      defined.  *)
   module DlsTypes = struct
+    type dense_jac_fn_no_sens
+      = (RealArray.t triple, RealArray.t) jacobian_arg
+        -> Dls.DenseMatrix.t
+        -> unit
+
+    type dense_jac_fn_with_sens
+      = (RealArray.t triple, RealArray.t) jacobian_arg
+        -> RealArray.t array
+        -> Dls.DenseMatrix.t
+        -> unit
+
     type dense_jac_fn =
-      (RealArray.t triple, RealArray.t) jacobian_arg
-      -> Dls.DenseMatrix.t
-      -> unit
+      DenseNoSens of dense_jac_fn_no_sens
+    | DenseWithSens of dense_jac_fn_with_sens
 
     (* These fields are accessed from cvodes_ml.c *)
-    type dense_jac_callback =
+    type dense_jac_callback_no_sens =
       {
-        jacfn: dense_jac_fn;
+        jacfn: dense_jac_fn_no_sens;
         mutable dmat : Dls.DenseMatrix.t option
       }
 
@@ -298,22 +308,47 @@ module AdjointTypes' = struct
         dmat = None;
       }
 
+    (* These fields are accessed from cvodes_ml.c *)
+    type dense_jac_callback_with_sens =
+      {
+        jacfn: dense_jac_fn_with_sens;
+        mutable dmat : Dls.DenseMatrix.t option
+      }
+
+    type band_jac_fn_no_sens
+      = bandrange
+        -> (RealArray.t triple, RealArray.t) jacobian_arg
+        -> Dls.BandMatrix.t
+        -> unit
+
+    type band_jac_fn_with_sens
+      = bandrange
+        -> (RealArray.t triple, RealArray.t) jacobian_arg
+        -> RealArray.t array
+        -> Dls.BandMatrix.t
+        -> unit
+
     type band_jac_fn =
-      bandrange
-      -> (RealArray.t triple, RealArray.t) jacobian_arg
-      -> Dls.BandMatrix.t
-      -> unit
+      BandNoSens of band_jac_fn_no_sens
+    | BandWithSens of band_jac_fn_with_sens
 
     (* These fields are accessed from cvodes_ml.c *)
-    type band_jac_callback =
+    type band_jac_callback_no_sens =
       {
-        bjacfn: band_jac_fn;
+        bjacfn: band_jac_fn_no_sens;
         mutable bmat : Dls.BandMatrix.t option
       }
 
     let no_band_callback = {
         bjacfn = (fun _ _ _ -> crash "no band callback");
         bmat = None;
+      }
+
+    (* These fields are accessed from cvodes_ml.c *)
+    type band_jac_callback_with_sens =
+      {
+        bjacfn: band_jac_fn_with_sens;
+        mutable bmat : Dls.BandMatrix.t option
       }
   end
 
@@ -437,8 +472,10 @@ and ('a, 'kind) linsolv_callbacks =
   | DlsDenseCallback of DlsTypes.dense_jac_callback
   | DlsBandCallback  of DlsTypes.band_jac_callback
 
-  | BDlsDenseCallback of AdjointTypes'.DlsTypes.dense_jac_callback
-  | BDlsBandCallback  of AdjointTypes'.DlsTypes.band_jac_callback
+  | BDlsDenseCallback of AdjointTypes'.DlsTypes.dense_jac_callback_no_sens
+  | BDlsDenseCallbackSens of AdjointTypes'.DlsTypes.dense_jac_callback_with_sens
+  | BDlsBandCallback  of AdjointTypes'.DlsTypes.band_jac_callback_no_sens
+  | BDlsBandCallbackSens  of AdjointTypes'.DlsTypes.band_jac_callback_with_sens
 
   (* Sls *)
   | SlsKluCallback of SlsTypes.sparse_jac_callback
@@ -548,7 +585,8 @@ let ls_check_dls session =
   if Sundials_config.safe then
     match session.ls_callbacks with
     | DlsDenseCallback _ | DlsBandCallback _
-    | BDlsDenseCallback _ | BDlsBandCallback _ -> ()
+    | BDlsDenseCallback _ | BDlsDenseCallbackSens _
+    | BDlsBandCallback _ | BDlsBandCallbackSens _ -> ()
     | _ -> raise Sundials.InvalidLinearSolver
 
 let ls_check_klu session =

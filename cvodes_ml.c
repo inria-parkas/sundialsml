@@ -462,7 +462,7 @@ static int bjactimesfn(N_Vector vb,
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }
 
-static int bjacfn(
+static int bjacfn_nosens(
     long int neqb,
     realtype t,
     N_Vector y,
@@ -498,7 +498,52 @@ static int bjacfn(
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
-static int bbandjacfn(
+static int bjacfn_withsens(
+    long int neqb,
+    realtype t,
+    N_Vector y,
+    N_Vector *ys,
+    N_Vector yb,
+    N_Vector fyb,
+    DlsMat jacb,
+    void *user_data,
+    N_Vector tmp1b,
+    N_Vector tmp2b,
+    N_Vector tmp3b)
+{
+    CAMLparam0();
+    CAMLlocalN(args, 3);
+    CAMLlocal4(session, bsensext, cb, dmat);
+    int ns;
+
+    WEAK_DEREF (session, *(value*)user_data);
+    bsensext = CVODE_SENSEXT_FROM_ML(session);
+
+    cb = CVODE_LS_CALLBACKS_FROM_ML(session);
+    cb = Field (cb, 0);
+
+    dmat = Field(cb, 1);
+    if (dmat == Val_none) {
+	Store_some(dmat, c_dls_dense_wrap(jacb, 0));
+	Store_field(cb, 1, dmat);
+    }
+
+    args[0] = cvodes_make_jac_arg(t, y, yb, fyb,
+		cvode_make_triple_tmp(tmp1b, tmp2b, tmp3b));
+
+    ns = Int_val(Field(bsensext, RECORD_CVODES_BWD_SESSION_NUMSENSITIVITIES));
+    args[1] = CVODES_BSENSARRAY_FROM_EXT(bsensext);
+    cvodes_wrap_to_nvector_table(ns, args[1], ys);
+
+    args[2] = Some_val(dmat);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback3_exn (Field(cb, 0), args[0], args[1], args[2]);
+
+    CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
+}
+
+static int bbandjacfn_nosens(
 	long int nb,
 	long int mupperb,
 	long int mlowerb,
@@ -536,6 +581,57 @@ static int bbandjacfn(
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback3_exn (Field(cb, 0), args[0], args[1], args[2]);
+
+    CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
+}
+
+static int bbandjacfn_withsens(
+	long int nb,
+	long int mupperb,
+	long int mlowerb,
+	realtype t,
+	N_Vector y,
+	N_Vector *ys,
+	N_Vector yb,
+	N_Vector fyb,
+	DlsMat jacb,
+	void *user_data, 	 
+	N_Vector tmp1b,
+	N_Vector tmp2b,
+	N_Vector tmp3b)
+{
+    CAMLparam0();
+    CAMLlocalN(args, 4);
+    CAMLlocal4(session, bsensext, cb, bmat);
+    value *backref = user_data;
+    int ns;
+
+    WEAK_DEREF (session, *backref);
+    bsensext = CVODE_SENSEXT_FROM_ML(session);
+
+    cb = CVODE_LS_CALLBACKS_FROM_ML(session);
+    cb = Field (cb, 0);
+
+    bmat = Field(cb, 1);
+    if (bmat == Val_none) {
+	Store_some(bmat, c_dls_band_wrap(jacb, 0));
+	Store_field(cb, 1, bmat);
+    }
+
+    args[0] = caml_alloc_tuple(RECORD_CVODES_ADJ_BANDRANGE_SIZE);
+    Store_field(args[0], RECORD_CVODES_ADJ_BANDRANGE_MUPPER, Val_long(mupperb));
+    Store_field(args[0], RECORD_CVODES_ADJ_BANDRANGE_MLOWER, Val_long(mlowerb));
+    args[1] = cvodes_make_jac_arg(t, y, yb, fyb,
+		cvode_make_triple_tmp(tmp1b, tmp2b, tmp3b));
+
+    ns = Int_val(Field(bsensext, RECORD_CVODES_BWD_SESSION_NUMSENSITIVITIES));
+    args[2] = CVODES_BSENSARRAY_FROM_EXT(bsensext);
+    cvodes_wrap_to_nvector_table(ns, args[2], ys);
+
+    args[3] = Some_val(bmat);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (Field(cb, 0), 4, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -989,9 +1085,9 @@ CAMLprim value c_cvodes_adj_spils_set_jac_times_vec_fn(value vparent,
 
 /* Dense and Band can only be used with serial NVectors.  */
 CAMLprim value c_cvodes_adj_dls_dense(value vparent, value vwhich,
-				      value vnb, value vset_jac)
+				      value vnb, value vset_jac, value vusesens)
 {
-    CAMLparam3(vparent, vwhich, vset_jac);
+    CAMLparam4(vparent, vwhich, vset_jac, vusesens);
     void *cvode_mem = CVODE_MEM_FROM_ML (vparent);
     long nbeqs = Long_val(vnb);
     int which = Int_val(vwhich);
@@ -1001,15 +1097,26 @@ CAMLprim value c_cvodes_adj_dls_dense(value vparent, value vwhich,
     SCHECK_FLAG ("CVodeSetIterTypeB", flag);
     flag = CVDenseB (cvode_mem, which, nbeqs);
     SCHECK_FLAG ("CVDenseB", flag);
+
     if (Bool_val (vset_jac)) {
-	flag = CVDlsSetDenseJacFnB(cvode_mem, which, bjacfn);
-	SCHECK_FLAG("CVDlsSetDenseJacFnB", flag);
+	if (Bool_val(vusesens)) {
+#if SUNDIALS_LIB_VERSION >= 260
+	    flag = CVDlsSetDenseJacFnBS(cvode_mem, which, bjacfn_withsens);
+	    SCHECK_FLAG("CVDlsSetDenseJacFnBS", flag);
+#else
+	    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+	} else {
+	    flag = CVDlsSetDenseJacFnB(cvode_mem, which, bjacfn_nosens);
+	    SCHECK_FLAG("CVDlsSetDenseJacFnB", flag);
+	}
     }
     CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_cvodes_adj_dls_lapack_dense(value vparent, value vwhich,
-					     value vnb, value vset_jac)
+					     value vnb, value vset_jac,
+					     value vusesens)
 {
     CAMLparam3 (vparent, vwhich, vset_jac);
 #ifdef SUNDIALS_ML_LAPACK
@@ -1022,9 +1129,19 @@ CAMLprim value c_cvodes_adj_dls_lapack_dense(value vparent, value vwhich,
     SCHECK_FLAG ("CVodeSetIterTypeB", flag);
     flag = CVLapackDenseB (cvode_mem, which, nbeqs);
     SCHECK_FLAG ("CVLapackDenseB", flag);
+
     if (Bool_val (vset_jac)) {
-	flag = CVDlsSetDenseJacFnB (cvode_mem, which, bjacfn);
-	SCHECK_FLAG("CVDlsSetDenseJacFnB", flag);
+	if (Bool_val(vusesens)) {
+#if SUNDIALS_LIB_VERSION >= 260
+	    flag = CVDlsSetDenseJacFnBS(cvode_mem, which, bjacfn_withsens);
+	    SCHECK_FLAG("CVDlsSetDenseJacFnBS", flag);
+#else
+	    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+	} else {
+	    flag = CVDlsSetDenseJacFnB(cvode_mem, which, bjacfn_nosens);
+	    SCHECK_FLAG("CVDlsSetDenseJacFnB", flag);
+	}
     }
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -1032,12 +1149,26 @@ CAMLprim value c_cvodes_adj_dls_lapack_dense(value vparent, value vwhich,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adj_dls_set_dense_jac_fn(value vparent, value vwhich)
+CAMLprim value c_cvodes_adj_dls_set_dense_jac_fn(value vparent, value vwhich,
+						 value vusesens)
 {
-    CAMLparam2(vparent, vwhich);
-    int flag = CVDlsSetDenseJacFnB(CVODE_MEM_FROM_ML(vparent), Int_val(vwhich),
-				   bjacfn);
-    SCHECK_FLAG("CVDlsSetDenseJacFnB", flag);
+    CAMLparam3(vparent, vwhich, vusesens);
+    int flag;
+
+    if (Bool_val(vusesens)) {
+#if SUNDIALS_LIB_VERSION >= 260
+	flag = CVDlsSetDenseJacFnBS(CVODE_MEM_FROM_ML(vparent), Int_val(vwhich),
+				    bjacfn_withsens);
+	SCHECK_FLAG("CVDlsSetDenseJacFnBS", flag);
+#else
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    } else {
+	flag = CVDlsSetDenseJacFnB(CVODE_MEM_FROM_ML(vparent), Int_val(vwhich),
+				   bjacfn_nosens);
+	SCHECK_FLAG("CVDlsSetDenseJacFnB", flag);
+    }
+
     CAMLreturn (Val_unit);
 }
 
@@ -1051,10 +1182,10 @@ CAMLprim value c_cvodes_adj_dls_clear_dense_jac_fn(value vparent, value vwhich)
 }
 
 CAMLprim value c_cvodes_adj_dls_band (value vparent_which, value vnb,
-				      value vmupper, value vmlower,
-				      value vset_jac)
+				      value vbandrange,
+				      value vset_jac, value vusesens)
 {
-    CAMLparam5(vparent_which, vnb, vmupper, vmlower, vset_jac);
+    CAMLparam5(vparent_which, vnb, vbandrange, vset_jac, vusesens);
     void *cvode_mem = CVODE_MEM_FROM_ML (Field(vparent_which, 0));
     long nbeqs = Long_val(vnb);
     int which = Int_val(Field(vparent_which, 1));
@@ -1063,20 +1194,33 @@ CAMLprim value c_cvodes_adj_dls_band (value vparent_which, value vnb,
     flag = CVodeSetIterTypeB (cvode_mem, which, CV_NEWTON);
     SCHECK_FLAG ("CVodeSetIterTypeB", flag);
     flag = CVBandB (cvode_mem, which, nbeqs,
-		    Long_val (vmupper), Long_val (vmlower));
+		    Long_val (Field(vbandrange,
+				    RECORD_CVODES_ADJ_BANDRANGE_MUPPER)),
+		    Long_val (Field(vbandrange,
+				    RECORD_CVODES_ADJ_BANDRANGE_MLOWER)));
     SCHECK_FLAG ("CVBandB", flag);
+
     if (Bool_val (vset_jac)) {
-	flag = CVDlsSetBandJacFnB(cvode_mem, which, bbandjacfn);
-	SCHECK_FLAG("CVDlsSetBandJacFnB", flag);
+	if (Bool_val(vusesens)) {
+#if SUNDIALS_LIB_VERSION >= 260
+	    flag = CVDlsSetBandJacFnBS(cvode_mem, which, bbandjacfn_withsens);
+	    SCHECK_FLAG("CVDlsSetBandJacFnBS", flag);
+#else
+	    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+	} else {
+	    flag = CVDlsSetBandJacFnB(cvode_mem, which, bbandjacfn_nosens);
+	    SCHECK_FLAG("CVDlsSetBandJacFnB", flag);
+	}
     }
     CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_cvodes_adj_dls_lapack_band (value vparent_which, value vnb,
-					     value vmupper, value vmlower,
-					     value vset_jac)
+					     value vbandrange,
+					     value vset_jac, value vusesens)
 {
-    CAMLparam5(vparent_which, vnb, vmupper, vmlower, vset_jac);
+    CAMLparam5(vparent_which, vnb, vbandrange, vset_jac, vusesens);
 #ifdef SUNDIALS_ML_LAPACK
     void *cvode_mem = CVODE_MEM_FROM_ML (Field(vparent_which, 0));
     long nbeqs = Long_val(vnb);
@@ -1086,11 +1230,24 @@ CAMLprim value c_cvodes_adj_dls_lapack_band (value vparent_which, value vnb,
     flag = CVodeSetIterTypeB (cvode_mem, which, CV_NEWTON);
     SCHECK_FLAG ("CVodeSetIterTypeB", flag);
     flag = CVLapackBandB (cvode_mem, which, nbeqs,
-			  Long_val (vmupper), Long_val (vmlower));
+			  Long_val (Field(vbandrange,
+					  RECORD_CVODES_ADJ_BANDRANGE_MUPPER)),
+			  Long_val (Field(vbandrange,
+					  RECORD_CVODES_ADJ_BANDRANGE_MLOWER)));
     SCHECK_FLAG ("CVLapackBandB", flag);
+
     if (Bool_val (vset_jac)) {
-	flag = CVDlsSetBandJacFnB(cvode_mem, which, bbandjacfn);
-	SCHECK_FLAG("CVDlsSetBandJacFnB", flag);
+	if (Bool_val(vusesens)) {
+#if SUNDIALS_LIB_VERSION >= 260
+	    flag = CVDlsSetBandJacFnBS(cvode_mem, which, bbandjacfn_withsens);
+	    SCHECK_FLAG("CVDlsSetBandJacFnBS", flag);
+#else
+	    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+	} else {
+	    flag = CVDlsSetBandJacFnB(cvode_mem, which, bbandjacfn_nosens);
+	    SCHECK_FLAG("CVDlsSetBandJacFnB", flag);
+	}
     }
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -1098,12 +1255,25 @@ CAMLprim value c_cvodes_adj_dls_lapack_band (value vparent_which, value vnb,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adj_dls_set_band_jac_fn(value vparent, value vwhich)
+CAMLprim value c_cvodes_adj_dls_set_band_jac_fn(value vparent, value vwhich,
+						value vusesens)
 {
-    CAMLparam2(vparent, vwhich);
-    int flag = CVDlsSetBandJacFnB(CVODE_MEM_FROM_ML(vparent), Int_val(vwhich),
-				  bbandjacfn);
-    SCHECK_FLAG("CVDlsSetBandJacFnB", flag);
+    CAMLparam3(vparent, vwhich, vusesens);
+    int flag;
+
+    if (Bool_val(vusesens)) {
+#if SUNDIALS_LIB_VERSION >= 260
+	flag = CVDlsSetBandJacFnBS(CVODE_MEM_FROM_ML(vparent), Int_val(vwhich),
+				   bbandjacfn_withsens);
+	SCHECK_FLAG("CVDlsSetBandJacFnBS", flag);
+#else
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    } else {
+	flag = CVDlsSetBandJacFnB(CVODE_MEM_FROM_ML(vparent), Int_val(vwhich),
+				  bbandjacfn_nosens);
+	SCHECK_FLAG("CVDlsSetBandJacFnB", flag);
+    }
     CAMLreturn (Val_unit);
 }
 
