@@ -822,14 +822,17 @@ module Adjoint =
               invalidate_callback s;
               let usesens =
                 match fjacfn with
-                | DenseNoSens f ->
-                    (s.ls_callbacks
-                      <- BDlsDenseCallback { jacfn = f; dmat = None }; false)
-                | DenseWithSens f ->
-                    (s.ls_callbacks
-                      <- BDlsDenseCallbackSens { jacfn = f; dmat = None }; true)
+                | DenseNoSens _ -> false
+                | DenseWithSens _ -> true
               in
-              set_dense_jac_fn parent which usesens
+              set_dense_jac_fn parent which usesens;
+              (match fjacfn with
+               | DenseNoSens f ->
+                   s.ls_callbacks <- BDlsDenseCallback { jacfn = f;
+                                                         dmat = None }
+               | DenseWithSens f ->
+                   s.ls_callbacks <- BDlsDenseCallbackSens { jacfn = f;
+                                                             dmat = None })
           | _ -> raise Sundials.InvalidLinearSolver
 
         external clear_dense_jac_fn : serial_session -> int -> unit
@@ -856,14 +859,17 @@ module Adjoint =
               invalidate_callback s;
               let usesens =
                 match f with
-                | BandNoSens f ->
-                    (s.ls_callbacks
-                      <- BDlsBandCallback { bjacfn = f; bmat = None }; false)
-                | BandWithSens f ->
-                    (s.ls_callbacks
-                      <- BDlsBandCallbackSens { bjacfn = f; bmat = None }; true)
+                | BandNoSens f -> false
+                | BandWithSens f -> true
               in
-              set_band_jac_fn parent which usesens
+              set_band_jac_fn parent which usesens;
+              (match f with
+               | BandNoSens f ->
+                   s.ls_callbacks <- BDlsBandCallback { bjacfn = f;
+                                                        bmat = None }
+               | BandWithSens f ->
+                   s.ls_callbacks <- BDlsBandCallbackSens { bjacfn = f;
+                                                            bmat = None })
           | _ -> raise Sundials.InvalidLinearSolver
 
         external clear_band_jac_fn : serial_session -> int -> unit

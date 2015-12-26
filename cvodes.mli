@@ -1195,24 +1195,28 @@ module Adjoint :
 
         (** Change the dense Jacobian function.
        
-            @cvode <node5#SECTION00728200000000000000> CVDlsSetDenseJacFnB *)
+            @cvode <node5#SECTION00728200000000000000> CVDlsSetDenseJacFnB
+            @nocvode <node5#SECTION00728200000000000000> CVDlsSetDenseJacFnBS *)
         val set_dense_jac_fn : serial_bsession -> dense_jac_fn -> unit
 
         (** Remove a dense Jacobian function and use the default
             implementation.
 
-            @cvode <node5#SECTION00728200000000000000> CVDlsSetDenseJacFnB *)
+            @cvode <node5#SECTION00728200000000000000> CVDlsSetDenseJacFnB
+            @nocvode <node5#SECTION00728200000000000000> CVDlsSetDenseJacFnBS *)
         val clear_dense_jac_fn : serial_bsession -> unit
 
         (** Change the band Jacobian function.
 
-            @cvode <node5#SECTION00728300000000000000> CVDlsSetBandJacFnB *)
+            @cvode <node5#SECTION00728300000000000000> CVDlsSetBandJacFnB
+            @nocvode <node5#SECTION00728300000000000000> CVDlsSetBandJacFnBS *)
         val set_band_jac_fn : serial_bsession -> band_jac_fn -> unit
 
         (** Remove a banded Jacobian function and use the default
             implementation.
 
-            @cvode <node5#SECTION00728300000000000000> CVDlsSetBandJacFnB *)
+            @cvode <node5#SECTION00728300000000000000> CVDlsSetBandJacFnB
+            @nocvode <node5#SECTION00728300000000000000> CVDlsSetBandJacFnBS *)
         val clear_band_jac_fn : serial_bsession -> unit
       end (* }}} *)
 
