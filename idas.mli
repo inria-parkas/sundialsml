@@ -933,9 +933,9 @@ module Adjoint :
     module Dls :
       sig (* {{{ *)
         (** Callback functions that compute dense approximations to a Jacobian
-            matrix. In the call [dense_jac_fn arg jac], [arg] is a {!jacobian_arg}
-            with three work vectors and the computed Jacobian must be stored
-            in [jac].
+            matrix without forward sensitivities. In the call
+            [dense_jac_fn arg jac], [arg] is a {!jacobian_arg} with three work
+            vectors and the computed Jacobian must be stored in [jac].
 
             The callback should load the [(i,j)]th entry of [jac] with
             {% $\frac{\partial F_i}{\partial y_j} + c_j\frac{\partial F_i}{\partial\dot{y}_j}$%},
@@ -951,9 +951,48 @@ module Adjoint :
                      be accessed after the function has returned.}
 
             @idas <node7#ss:densejac_b> IDADlsDenseJacFnB *)
-        type dense_jac_fn =
+        type dense_jac_fn_no_sens =
             (RealArray.t triple, RealArray.t) jacobian_arg ->
             Dls.DenseMatrix.t -> unit
+
+        (** Callback functions that compute dense approximations to a Jacobian
+            matrix with forward sensitivities. In the call
+            [dense_jac_fn arg ys yps jac], [arg] is a {!jacobian_arg} with
+            three work vectors, [ys] contains the sensitivities of the forward
+            solution, [yps] contains the derivatives of the forward solution
+            sensitivities, and the computed Jacobian must be stored in [jac].
+
+            The callback should load the [(i,j)]th entry of [jac] with
+            {% $\frac{\partial F_i}{\partial y_j} + c_j\frac{\partial F_i}{\partial\dot{y}_j}$%},
+            i.e., the partial derivative of the [i]th equation with respect to
+            the [j]th variable, evaluated at the values of [t], [y], and [y']
+            obtained from [arg]. Only nonzero elements need be loaded into
+            [jac].
+
+            Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+            Any other exception is treated as an unrecoverable error.
+
+            {warning Neither the elements of [arg] nor the matrix [jac] should
+                     be accessed after the function has returned.}
+
+            @noidas <node7#ss:densejac_bs> IDADlsDenseJacFnBS *)
+        type dense_jac_fn_with_sens =
+            (RealArray.t triple, RealArray.t) jacobian_arg
+            -> RealArray.t array
+            -> RealArray.t array
+            -> Dls.DenseMatrix.t
+            -> unit
+
+        (** Callback functions that compute dense approximations to a Jacobian
+            matrix.
+
+            @noidas <node7#ss:densejac_b> IDADlsDenseJacFnB
+            @noidas <node7#ss:densejac_bs> IDADlsDenseJacFnBS *)
+        type dense_jac_fn =
+            DenseNoSens of dense_jac_fn_no_sens
+            (** Does not depend on forward sensitivities. *)
+          | DenseWithSens of dense_jac_fn_with_sens
+            (** Depends on forward sensitivities. *)
 
         (** A direct linear solver on dense matrices. The optional argument
             specifies a callback function for computing an approximation to the
@@ -976,7 +1015,8 @@ module Adjoint :
         val lapack_dense : ?jac:dense_jac_fn -> unit -> serial_linear_solver
 
         (** Callback functions that compute banded approximations to
-            a Jacobian matrix. In the call [band_jac_fn {mupper; mlower} arg jac],
+            a Jacobian matrix without forward sensitivities. In the call
+            [band_jac_fn {mupper; mlower} arg jac],
             - [mupper] is the upper half-bandwidth of the Jacobian,
             - [mlower] is the lower half-bandwidth of the Jacobian,
             - [arg] is a {!jacobian_arg} with three work vectors, and,
@@ -995,10 +1035,53 @@ module Adjoint :
                      be accessed after the function has returned.}
 
             @idas <node7#ss:bandjac_b> IDADlsBandJacFnB *)
-        type band_jac_fn =
+        type band_jac_fn_no_sens =
             bandrange ->
             (RealArray.t triple, RealArray.t) jacobian_arg ->
             Dls.BandMatrix.t -> unit
+
+        (** Callback functions that compute banded approximations to
+            a Jacobian matrix with forward sensitivities. In the call
+            [band_jac_fn {mupper; mlower} arg ys yps jac],
+            - [mupper] is the upper half-bandwidth of the Jacobian,
+            - [mlower] is the lower half-bandwidth of the Jacobian,
+            - [arg] is a {!jacobian_arg} with three work vectors,
+            - [ys] contains the sensitivities of the forward solution,
+            - [yps] contains the derivatives of the forward solution
+                    sensitivities, and
+            - [jac] is storage for the computed Jacobian.
+
+            The callback should load the [(i,j)]th entry of [jac] with
+            {% $\frac{\partial F_i}{\partial y_j} + c_j\frac{\partial F_i}{\partial\dot{y}_j}$%},
+            i.e., the partial derivative of the [i]th equation with respect to
+            the [j]th variable, evaluated at the values of [t] and [y] obtained
+            from [arg]. Only nonzero elements need be loaded into [jac].
+
+            Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+            Any other exception is treated as an unrecoverable error.
+
+            {warning Neither the elements of [arg] nor the matrix [jac] should
+                     be accessed after the function has returned.}
+
+            @noidas <node7#ss:bandjac_bs> IDADlsBandJacFnBS *)
+        type band_jac_fn_with_sens =
+            bandrange
+            -> (RealArray.t triple, RealArray.t) jacobian_arg
+            -> RealArray.t array
+            -> RealArray.t array
+            -> Dls.BandMatrix.t
+            -> unit
+
+        (** Callback functions that compute banded approximations to a Jacobian
+            matrix.
+
+            @idas <node7#ss:bandjac_b> IDADlsBandJacFnB
+            @noidas <node7#ss:bandjac_bs> IDADlsBandJacFnBS *)
+        type band_jac_fn =
+            BandNoSens of band_jac_fn_no_sens
+            (** Does not depend on forward sensitivities. *)
+          | BandWithSens of band_jac_fn_with_sens
+            (** Depends on forward sensitivities. *)
 
         (** A direct linear solver on banded matrices. The optional argument
             specifies a callback function for computing an approximation to the
@@ -1031,7 +1114,6 @@ module Adjoint :
             @return ([real_size], [integer_size]) *)
         val get_work_space : serial_bsession -> int * int
 
-
         (** Returns the number of calls made by a direct linear solver to the
             Jacobian approximation function.
 
@@ -1055,24 +1137,28 @@ module Adjoint :
 
         (** Change the dense Jacobian function.
 
-            @ida <node7#SECTION00729200000000000000> IDADlsSetDenseJacFnB *)
+            @ida <node7#SECTION00729200000000000000> IDADlsSetDenseJacFnB
+            @ida <node7#SECTION00729200000000000000> IDADlsSetDenseJacFnBS *)
         val set_dense_jac_fn : serial_bsession -> dense_jac_fn -> unit
 
         (** Remove a dense Jacobian function and use the default
             implementation.
 
-            @ida <node7#SECTION00729200000000000000> IDADlsSetDenseJacFnB *)
+            @ida <node7#SECTION00729200000000000000> IDADlsSetDenseJacFnB
+            @noida <node7#SECTION00729200000000000000> IDADlsSetDenseJacFnBS *)
         val clear_dense_jac_fn : serial_bsession -> unit
 
         (** Change the band Jacobian function.
         
-            @ida <node7#SECTION00729300000000000000> IDADlsSetBandJacFnB *)
+            @ida <node7#SECTION00729300000000000000> IDADlsSetBandJacFnB
+            @noida <node7#SECTION00729300000000000000> IDADlsSetBandJacFnBS *)
         val set_band_jac_fn : serial_bsession -> band_jac_fn -> unit
 
         (** Remove a banded Jacobian function and use the default
             implementation.
 
-            @ida <node7#SECTION00729300000000000000> IDADlsSetBandJacFnB *)
+            @ida <node7#SECTION00729300000000000000> IDADlsSetBandJacFnB
+            @noida <node7#SECTION00729300000000000000> IDADlsSetBandJacFnBS *)
         val clear_band_jac_fn : serial_bsession -> unit
       end (* }}} *)
 

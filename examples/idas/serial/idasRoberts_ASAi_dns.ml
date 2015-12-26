@@ -358,7 +358,7 @@ let main () =
 
   let indexB =
     Adjoint.init_backward ida_mem
-      (Adjoint.Dls.dense ~jac:(jacB data) ())
+      (Adjoint.Dls.dense ~jac:(Adjoint.Dls.DenseNoSens (jacB data)) ())
       (Adjoint.SStolerances (reltolB, abstolB))
       (Adjoint.NoSens (resB data))
       tb2 wyB wypB

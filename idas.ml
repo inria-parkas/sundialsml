@@ -789,83 +789,132 @@ module Adjoint =
       struct
         include DlsTypes
 
-        external c_dls_dense : serial_session -> int -> int -> bool -> unit
+        external c_dls_dense
+          : serial_session -> int -> int -> bool -> bool -> unit
           = "c_idas_adj_dls_dense"
 
         external c_dls_lapack_dense
-          : serial_session -> int -> int -> bool -> unit
+          : serial_session -> int -> int -> bool -> bool -> unit
           = "c_idas_adj_dls_lapack_dense"
 
         external c_dls_band
-          : (serial_session * int) -> int -> int -> int -> bool -> unit
+          : (serial_session * int) -> int -> bandrange -> bool -> bool -> unit
           = "c_idas_adj_dls_band"
 
         external c_dls_lapack_band
-          : (serial_session * int) -> int -> int -> int -> bool -> unit
+          : (serial_session * int) -> int -> bandrange -> bool -> bool -> unit
           = "c_idas_adj_dls_lapack_band"
 
         let dense ?jac () bs nv nv' =
-          let parent, which = parent_and_which bs in
           let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
-          c_dls_dense parent which neqs (jac <> None);
-          (tosession bs).ls_callbacks <-
-            match jac with
-            | None   -> BDlsDenseCallback no_dense_callback
-            | Some f -> BDlsDenseCallback { jacfn = f; dmat = None }
+          let session = tosession bs in
+          let parent, which = parent_and_which bs in
+          let use_sens =
+            match jac with Some (DenseWithSens _) -> true | _ -> false
+          in
+          c_dls_dense parent which neqs (jac <> None) use_sens;
+          match jac with
+          | None ->
+              session.ls_callbacks <- BDlsDenseCallback no_dense_callback
+          | Some (DenseNoSens fns) ->
+              session.ls_callbacks <- BDlsDenseCallback { jacfn = fns;
+                                                          dmat = None }
+          | Some (DenseWithSens fbs) ->
+              session.ls_callbacks <- BDlsDenseCallbackSens { jacfn = fbs;
+                                                              dmat = None }
 
         let lapack_dense ?jac () bs nv nv' =
-          let parent, which = parent_and_which bs in
           let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
-          c_dls_lapack_dense parent which neqs (jac <> None);
-          (tosession bs).ls_callbacks <-
-            match jac with
-            | None   -> BDlsDenseCallback no_dense_callback
-            | Some f -> BDlsDenseCallback { jacfn = f; dmat = None }
+          let session = tosession bs in
+          let parent, which = parent_and_which bs in
+          let use_sens =
+            match jac with Some (DenseWithSens _) -> true | _ -> false
+          in
+          c_dls_lapack_dense parent which neqs (jac <> None) use_sens;
+          match jac with
+          | None ->
+              session.ls_callbacks <- BDlsDenseCallback no_dense_callback
+          | Some (DenseNoSens fns) ->
+              session.ls_callbacks <- BDlsDenseCallback { jacfn = fns;
+                                                          dmat = None }
+          | Some (DenseWithSens fbs) ->
+              session.ls_callbacks <- BDlsDenseCallbackSens { jacfn = fbs;
+                                                              dmat = None }
 
         type ('data, 'kind) linear_solver =
           ('data, 'kind) bsession -> ('data, 'kind) Nvector.t -> unit
 
         let band ?jac p bs nv nv' =
-          let parent, which = parent_and_which bs in
           let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
-          c_dls_band (parent, which) neqs p.mupper p.mlower (jac <> None);
-          (tosession bs).ls_callbacks <-
-            match jac with
-            | None   -> BDlsBandCallback no_band_callback
-            | Some f -> BDlsBandCallback { bjacfn = f; bmat = None }
+          let session = tosession bs in
+          let parent, which = parent_and_which bs in
+          let use_sens =
+            match jac with Some (BandWithSens _) -> true | _ -> false
+          in
+          c_dls_band (parent, which) neqs p (jac <> None) use_sens;
+          match jac with
+          | None ->
+              session.ls_callbacks <- BDlsBandCallback no_band_callback
+          | Some (BandNoSens fns) ->
+              session.ls_callbacks <- BDlsBandCallback { bjacfn = fns;
+                                                         bmat = None }
+          | Some (BandWithSens fbs) ->
+              session.ls_callbacks <- BDlsBandCallbackSens { bjacfn = fbs;
+                                                             bmat = None }
 
         let lapack_band ?jac p bs nv nv' =
-          let parent, which = parent_and_which bs in
           let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
-          c_dls_lapack_band (parent, which) neqs
-                            p.mupper p.mlower (jac <> None);
-          (tosession bs).ls_callbacks <-
-            match jac with
-            | None   -> BDlsBandCallback no_band_callback
-            | Some f -> BDlsBandCallback { bjacfn = f; bmat = None }
+          let session = tosession bs in
+          let parent, which = parent_and_which bs in
+          let use_sens =
+            match jac with Some (BandWithSens _) -> true | _ -> false
+          in
+          c_dls_lapack_band (parent, which) neqs p (jac <> None) use_sens;
+          match jac with
+          | None ->
+              session.ls_callbacks <- BDlsBandCallback no_band_callback
+          | Some (BandNoSens fns) ->
+              session.ls_callbacks <- BDlsBandCallback { bjacfn = fns;
+                                                         bmat = None }
+          | Some (BandWithSens fbs) ->
+              session.ls_callbacks <- BDlsBandCallbackSens { bjacfn = fbs;
+                                                             bmat = None }
 
         let invalidate_callback session =
           match session.ls_callbacks with
           | BDlsDenseCallback ({ dmat = Some d } as cb) ->
               Dls.DenseMatrix.invalidate d;
               cb.dmat <- None
-          | BDlsBandCallback  ({ bmat = Some d } as cb) ->
+          | BDlsDenseCallbackSens ({ dmat = Some d } as cb) ->
+              Dls.DenseMatrix.invalidate d;
+              cb.dmat <- None
+          | BDlsBandCallback ({ bmat = Some d } as cb) ->
+              Dls.BandMatrix.invalidate d;
+              cb.bmat <- None
+          | BDlsBandCallbackSens ({ bmat = Some d } as cb) ->
               Dls.BandMatrix.invalidate d;
               cb.bmat <- None
           | _ -> ()
 
-        external set_dense_jac_fn : serial_session -> int -> unit
+        external set_dense_jac_fn : serial_session -> int -> bool -> unit
             = "c_idas_adj_dls_set_dense_jac_fn"
 
         let set_dense_jac_fn bs fjacfn =
           let s = tosession bs in
           let parent, which = parent_and_which bs in
           match s.ls_callbacks with
-          | BDlsDenseCallback _ ->
+          | BDlsDenseCallback _ | BDlsDenseCallbackSens _ ->
               invalidate_callback s;
-              s.ls_callbacks <-
-                BDlsDenseCallback { jacfn = fjacfn; dmat = None };
-              set_dense_jac_fn parent which
+              let usesens =
+                match fjacfn with
+                | DenseNoSens f ->
+                    (s.ls_callbacks
+                      <- BDlsDenseCallback { jacfn = f; dmat = None }; false)
+                | DenseWithSens f ->
+                    (s.ls_callbacks
+                      <- BDlsDenseCallbackSens { jacfn = f; dmat = None }; true)
+              in
+              set_dense_jac_fn parent which usesens
           | _ -> raise Sundials.InvalidLinearSolver
 
         external clear_dense_jac_fn : serial_session -> int -> unit
@@ -874,24 +923,35 @@ module Adjoint =
         let clear_dense_jac_fn bs =
           let s = tosession bs in
           match s.ls_callbacks with
-          | BDlsDenseCallback _ ->
+          | BDlsDenseCallback _ | BDlsDenseCallbackSens _ ->
               invalidate_callback s;
               s.ls_callbacks <- BDlsDenseCallback no_dense_callback;
               let parent, which = parent_and_which bs in
               clear_dense_jac_fn parent which
           | _ -> raise Sundials.InvalidLinearSolver
 
-        external set_band_jac_fn : serial_session -> int -> unit
+        external set_band_jac_fn : serial_session -> int -> bool -> unit
             = "c_idas_adj_dls_set_band_jac_fn"
 
         let set_band_jac_fn bs f =
           let s = tosession bs in
           let parent, which = parent_and_which bs in
           match s.ls_callbacks with
-          | BDlsBandCallback _ ->
+          | BDlsBandCallback _ | BDlsBandCallbackSens _ ->
               invalidate_callback s;
-              s.ls_callbacks <- BDlsBandCallback { bjacfn = f; bmat = None };
-              set_band_jac_fn parent which
+              let usesens =
+                match f with
+                | BandNoSens f -> false
+                | BandWithSens f -> true
+              in
+              set_band_jac_fn parent which usesens;
+              (match f with
+               | BandNoSens f ->
+                   s.ls_callbacks <- BDlsBandCallback { bjacfn = f;
+                                                        bmat = None }
+               | BandWithSens f ->
+                   s.ls_callbacks <- BDlsBandCallbackSens { bjacfn = f;
+                                                            bmat = None })
           | _ -> raise Sundials.InvalidLinearSolver
 
         external clear_band_jac_fn : serial_session -> int -> unit
@@ -900,7 +960,7 @@ module Adjoint =
         let clear_band_jac_fn bs =
           let s = tosession bs in
           match s.ls_callbacks with
-          | BDlsBandCallback _ ->
+          | BDlsBandCallback _ | BDlsBandCallbackSens _ ->
               invalidate_callback s;
               s.ls_callbacks <- BDlsBandCallback no_band_callback;
               let parent, which = parent_and_which bs in
