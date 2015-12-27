@@ -354,14 +354,11 @@ module Spils :
         construct preconditioners.
 
         The {!prec_solve_fn} is mandatory. The {!prec_setup_fn} can be
-        omitted if not needed. If the {!jac_times_vec_fn} is omitted, a
-        default implementation based on difference quotients is used.
+        omitted if not needed.
 
         @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
-        @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
         @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn
-        @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
-        @cvode <node5#ss:jtimesfn> CVSpilsJacTimesVecFn *)
+        @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn *)
     type ('d,'k) preconditioner = ('d,'k) Cvode_impl.SpilsTypes.preconditioner
 
     (** No preconditioning.  *)
@@ -370,14 +367,12 @@ module Spils :
     (** Left preconditioning. {% $(P^{-1}A)x = P^{-1}b$ %}. *)
     val prec_left :
       ?setup:'d prec_setup_fn
-      -> ?jac_times_vec:'d jac_times_vec_fn
       -> 'd prec_solve_fn
       -> ('d, 'k) preconditioner
 
     (** Right preconditioning. {% $(AP^{-1})Px = b$ %}. *)
     val prec_right :
       ?setup:'d prec_setup_fn
-      -> ?jac_times_vec:'d jac_times_vec_fn
       -> 'd prec_solve_fn
       -> ('d, 'k) preconditioner
 
@@ -385,7 +380,6 @@ module Spils :
         {% $(P_L^{-1}AP_R^{-1})P_Rx = P_L^{-1}b$ %} *)
     val prec_both :
       ?setup:'d prec_setup_fn
-      -> ?jac_times_vec:'d jac_times_vec_fn
       -> 'd prec_solve_fn
       -> ('d, 'k) preconditioner
 
@@ -399,24 +393,21 @@ module Spils :
 
           @cvode <node5#sss:cvbandpre> CVBandPrecInit *)
       val prec_left :
-        ?jac_times_vec:(RealArray.t jac_times_vec_fn)
-        -> bandrange
+           bandrange
         -> (Nvector_serial.data, Nvector_serial.kind) preconditioner
 
       (** Like {!prec_left} but preconditions from the right.
 
           @cvode <node5#sss:cvbandpre> CVBandPrecInit *)
       val prec_right :
-        ?jac_times_vec:(RealArray.t jac_times_vec_fn)
-        -> bandrange
+           bandrange
         -> (Nvector_serial.data, Nvector_serial.kind) preconditioner
 
       (** Like {!prec_left} but preconditions from both sides.
 
           @cvode <node5#sss:cvbandpre> CVBandPrecInit *)
       val prec_both :
-        ?jac_times_vec:(RealArray.t jac_times_vec_fn)
-        -> bandrange
+           bandrange
         -> (Nvector_serial.data, Nvector_serial.kind) preconditioner
 
       (** {4:stats Banded statistics} *)
@@ -440,34 +431,72 @@ module Spils :
 
     (** Krylov iterative solver using the scaled preconditioned generalized
         minimum residual (GMRES) method.
-        In the call [spgmr ~maxl:maxl prec], [maxl] is the maximum dimension of
-        the Krylov subspace (defaults to 5), and [prec] is a {!preconditioner}.
+        In the call [spgmr ~maxl:maxl ~jac_times_vec:jtv prec],
+        - [maxl] is the maximum dimension of the Krylov subspace
+                 (defaults to 5),
+        - [jtv] computes an approximation to the product between the Jacobian
+                matrix and a vector, and
+        - [prec] is a {!preconditioner}.
+        
+        If the {!jac_times_vec_fn} is omitted, a default implementation based on
+        difference quotients is used.
 
         @cvode <node5#sss:lin_solv_init> CVSpgmr
         @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
-        @cvode <node5#sss:optin_spils> CVSpilsSetMaxl *)
-    val spgmr : ?maxl:int -> ('d, 'k) preconditioner -> ('d, 'k) linear_solver
+        @cvode <node5#sss:optin_spils> CVSpilsSetMaxl
+        @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
+        @cvode <node5#ss:jtimesfn> CVSpilsJacTimesVecFn *)
+    val spgmr :
+      ?maxl:int
+      -> ?jac_times_vec:'d jac_times_vec_fn
+      -> ('d, 'k) preconditioner
+      -> ('d, 'k) linear_solver
 
     (** Krylov iterative solver using the scaled preconditioned biconjugate
         stabilized (Bi-CGStab) method.
-        In the call [spbcg ~maxl:maxl prec], [maxl] is the maximum dimension of
-        the Krylov subspace (defaults to 5), and [prec] is a {!preconditioner}.
+        In the call [spbcg ~maxl:maxl ~jac_times_vec:jtv prec],
+        - [maxl] is the maximum dimension of the Krylov subspace
+                 (defaults to 5),
+        - [jtv] computes an approximation to the product between the Jacobian
+                matrix and a vector, and
+        - [prec] is a {!preconditioner}.
+
+        If the {!jac_times_vec_fn} is omitted, a default implementation based on
+        difference quotients is used.
 
         @cvode <node5#sss:lin_solv_init> CVSpbcg
         @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
-        @cvode <node5#sss:optin_spils> CVSpilsSetMaxl *)
-    val spbcg : ?maxl:int -> ('d, 'k) preconditioner -> ('d, 'k) linear_solver
+        @cvode <node5#sss:optin_spils> CVSpilsSetMaxl
+        @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
+        @cvode <node5#ss:jtimesfn> CVSpilsJacTimesVecFn *)
+    val spbcg :
+      ?maxl:int
+      -> ?jac_times_vec:'d jac_times_vec_fn
+      -> ('d, 'k) preconditioner
+      -> ('d, 'k) linear_solver
 
     (** Krylov iterative with the scaled preconditioned transpose-free
         quasi-minimal residual (SPTFQMR) method.
-        In the call [sptfqmr ~maxl:maxl prec], [maxl] is the maximum dimension
-        of the Krylov subspace (defaults to 5), and [prec] is a
-        {!preconditioner}.
+        In the call [sptfqmr ~maxl:maxl ~jac_times_vec:jtv prec],
+        - [maxl] is the maximum dimension of the Krylov subspace
+                 (defaults to 5),
+        - [jtv] computes an approximation to the product between the Jacobian
+                matrix and a vector, and
+        - [prec] is a {!preconditioner}.
+
+        If the {!jac_times_vec_fn} is omitted, a default implementation based on
+        difference quotients is used.
 
         @cvode <node5#sss:lin_solv_init> CVSptfqmr
         @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
-        @cvode <node5#sss:optin_spils> CVSpilsSetMaxl *)
-    val sptfqmr : ?maxl:int -> ('d, 'k) preconditioner -> ('d, 'k) linear_solver
+        @cvode <node5#sss:optin_spils> CVSpilsSetMaxl
+        @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
+        @cvode <node5#ss:jtimesfn> CVSpilsJacTimesVecFn *)
+    val sptfqmr :
+      ?maxl:int
+      -> ?jac_times_vec:'d jac_times_vec_fn
+      -> ('d, 'k) preconditioner
+      -> ('d, 'k) linear_solver
 
     (** {3:set Solver parameters} *)
 

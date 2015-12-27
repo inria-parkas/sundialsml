@@ -246,51 +246,21 @@ module Spils =
       : ('a, 'k) session -> bool -> unit
       = "c_cvode_spils_set_jac_times_vec_fn"
 
-    let init_preconditioner solve setup jac_times session nv =
+    let init_preconditioner solve setup session nv =
       c_set_preconditioner session (setup <> None);
-      c_set_jac_times_vec_fn session (jac_times <> None);
       session.ls_callbacks <-
         SpilsCallback { prec_solve_fn = solve;
                         prec_setup_fn = setup;
-                        jac_times_vec_fn = jac_times }
+                        jac_times_vec_fn = None }
 
     let prec_none = InternalPrecNone (fun session nv ->
         session.ls_callbacks <- SpilsCallback no_prec_callbacks)
-    let prec_left ?setup ?jac_times_vec solve =
-      InternalPrecLeft (init_preconditioner solve setup jac_times_vec)
-    let prec_right ?setup ?jac_times_vec solve =
-      InternalPrecRight (init_preconditioner solve setup jac_times_vec)
-    let prec_both ?setup ?jac_times_vec solve =
-      InternalPrecBoth (init_preconditioner solve setup jac_times_vec)
-
-    let init_spils init maxl prec session nv =
-      let with_prec prec_type set_prec =
-        init session maxl prec_type;
-        set_prec session nv
-      in
-      match prec with
-      | InternalPrecNone set_prec  -> with_prec Spils.PrecNone set_prec;
-      | InternalPrecLeft set_prec  -> with_prec Spils.PrecLeft set_prec
-      | InternalPrecRight set_prec -> with_prec Spils.PrecRight set_prec
-      | InternalPrecBoth set_prec  -> with_prec Spils.PrecBoth set_prec
-
-    let spgmr ?(maxl=0) prec session nv =
-      init_spils c_spgmr maxl prec session nv
-
-    let spbcg ?(maxl=0) prec session nv =
-      init_spils c_spbcg maxl prec session nv
-
-    let sptfqmr ?(maxl=0) prec session nv =
-      init_spils c_sptfqmr maxl prec session nv
-
-    let set_preconditioner s ?setup solve =
-      match s.ls_callbacks with
-      | SpilsCallback cbs ->
-          c_set_preconditioner s (setup <> None);
-          s.ls_callbacks <- SpilsCallback { cbs with
-                                            prec_setup_fn = setup;
-                                            prec_solve_fn = solve }
-      | _ -> raise Sundials.InvalidLinearSolver
+    let prec_left ?setup solve =
+      InternalPrecLeft (init_preconditioner solve setup)
+    let prec_right ?setup solve =
+      InternalPrecRight (init_preconditioner solve setup)
+    let prec_both ?setup solve =
+      InternalPrecBoth (init_preconditioner solve setup)
 
     let set_jac_times_vec_fn s f =
       match s.ls_callbacks with
@@ -300,6 +270,38 @@ module Spils =
       | SpilsBandCallback _ ->
           c_set_jac_times_vec_fn s true;
           s.ls_callbacks <- SpilsBandCallback (Some f)
+      | _ -> raise Sundials.InvalidLinearSolver
+
+    let init_spils init maxl jac_times_vec prec session nv =
+      let with_prec prec_type set_prec =
+        init session maxl prec_type;
+        set_prec session nv;
+        match jac_times_vec with
+        | None -> ()
+        | Some jtv -> set_jac_times_vec_fn session jtv
+      in
+      match prec with
+      | InternalPrecNone set_prec  -> with_prec Spils.PrecNone set_prec;
+      | InternalPrecLeft set_prec  -> with_prec Spils.PrecLeft set_prec
+      | InternalPrecRight set_prec -> with_prec Spils.PrecRight set_prec
+      | InternalPrecBoth set_prec  -> with_prec Spils.PrecBoth set_prec
+
+    let spgmr ?(maxl=0) ?jac_times_vec prec session nv =
+      init_spils c_spgmr maxl jac_times_vec prec session nv
+
+    let spbcg ?(maxl=0) ?jac_times_vec prec session nv =
+      init_spils c_spbcg maxl jac_times_vec prec session nv
+
+    let sptfqmr ?(maxl=0) ?jac_times_vec prec session nv =
+      init_spils c_sptfqmr maxl jac_times_vec prec session nv
+
+    let set_preconditioner s ?setup solve =
+      match s.ls_callbacks with
+      | SpilsCallback cbs ->
+          c_set_preconditioner s (setup <> None);
+          s.ls_callbacks <- SpilsCallback { cbs with
+                                            prec_setup_fn = setup;
+                                            prec_solve_fn = solve }
       | _ -> raise Sundials.InvalidLinearSolver
 
     let clear_jac_times_vec_fn s =
@@ -426,20 +428,19 @@ module Spils =
          callback.  This design clearly anticipates being called
          multiple times on the same solver instance.  *)
 
-      let init_preconditioner jac_times_vec bandrange session nv =
+      let init_preconditioner bandrange session nv =
         c_set_preconditioner session (RealArray.length (Nvector.unwrap nv))
           bandrange.mupper bandrange.mlower;
-        c_set_jac_times_vec_fn session (jac_times_vec <> None);
-        session.ls_callbacks <- SpilsBandCallback jac_times_vec
+        session.ls_callbacks <- SpilsBandCallback None
 
       let prec_none = InternalPrecNone (fun session nv ->
           session.ls_callbacks <- SpilsBandCallback None)
-      let prec_left ?jac_times_vec bandrange =
-        InternalPrecLeft (init_preconditioner jac_times_vec bandrange)
-      let prec_right ?jac_times_vec bandrange =
-        InternalPrecRight (init_preconditioner jac_times_vec bandrange)
-      let prec_both ?jac_times_vec bandrange =
-        InternalPrecBoth (init_preconditioner jac_times_vec bandrange)
+      let prec_left bandrange =
+        InternalPrecLeft (init_preconditioner bandrange)
+      let prec_right bandrange =
+        InternalPrecRight (init_preconditioner bandrange)
+      let prec_both bandrange =
+        InternalPrecBoth (init_preconditioner bandrange)
 
       external get_work_space : serial_session -> int * int
         = "c_cvode_bandprec_get_work_space"

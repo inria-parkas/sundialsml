@@ -447,14 +447,11 @@ module Spils :
         construct preconditioners.
 
         The {!prec_solve_fn} is usually mandatory. The {!prec_setup_fn} can be
-        omitted if not needed. If the {!jac_times_vec_fn} is omitted, a
-        default implementation based on difference quotients is used.
+        omitted if not needed.
 
         @noarkode <node> ARKSpilsSetPreconditioner
-        @noarkode <node> ARKSpilsSetJacTimesVecFn
         @noarkode <node> ARKSpilsPrecSetupFn
-        @noarkode <node> ARKSpilsPrecSolveFn
-        @noarkode <node> ARKSpilsJacTimesVecFn *)
+        @noarkode <node> ARKSpilsPrecSolveFn *)
     type ('d,'k) preconditioner = ('d,'k) Arkode_impl.SpilsTypes.preconditioner
 
     (** No preconditioning.  *)
@@ -463,14 +460,12 @@ module Spils :
     (** Left preconditioning. {% $(P^{-1}A)x = P^{-1}b$ %}. *)
     val prec_left :
       ?setup:'d prec_setup_fn
-      -> ?jac_times_vec:'d jac_times_vec_fn
       -> 'd prec_solve_fn
       -> ('d, 'k) preconditioner
 
     (** Right preconditioning. {% $(AP^{-1})Px = b$ %}. *)
     val prec_right :
       ?setup:'d prec_setup_fn
-      -> ?jac_times_vec:'d jac_times_vec_fn
       -> 'd prec_solve_fn
       -> ('d, 'k) preconditioner
 
@@ -478,7 +473,6 @@ module Spils :
         {% $(P_L^{-1}AP_R^{-1})P_Rx = P_L^{-1}b$ %} *)
     val prec_both :
       ?setup:'d prec_setup_fn
-      -> ?jac_times_vec:'d jac_times_vec_fn
       -> 'd prec_solve_fn
       -> ('d, 'k) preconditioner
 
@@ -492,24 +486,21 @@ module Spils :
 
           @noarkode <node> ARKBandPrecInit *)
       val prec_left :
-        ?jac_times_vec:(RealArray.t jac_times_vec_fn)
-        -> bandrange
+           bandrange
         -> (Nvector_serial.data, Nvector_serial.kind) preconditioner
 
       (** Like {!prec_left} but preconditions from the right.
 
           @noarkode <node> ARKBandPrecInit *)
       val prec_right :
-        ?jac_times_vec:(RealArray.t jac_times_vec_fn)
-        -> bandrange
+           bandrange
         -> (Nvector_serial.data, Nvector_serial.kind) preconditioner
 
       (** Like {!prec_left} but preconditions from both sides.
 
           @noarkode <node> ARKBandPrecInit *)
       val prec_both :
-        ?jac_times_vec:(RealArray.t jac_times_vec_fn)
-        -> bandrange
+           bandrange
         -> (Nvector_serial.data, Nvector_serial.kind) preconditioner
 
       (** {4:stats Banded statistics} *)
@@ -646,77 +637,82 @@ module Spils :
 
         (** Krylov iterative solver using the scaled preconditioned generalized
             minimum residual (GMRES) method.
-            In the call [spgmr ~maxl:maxl prec mtimes], [maxl] is the maximum
-            dimension of the Krylov subspace (defaults to 5), [prec] is a
-            {!preconditioner}, and [mtimes] is the mass-matrix-vector product
-            function.
+            In the call [spgmr ~maxl:maxl mtv prec],
+            - [maxl] is the maximum dimension of the Krylov subspace
+                     (defaults to 5),
+            - [mtv] is the mass-matrix-vector product function, and
+            - [prec] is a {!preconditioner},
 
             @noarkode <node> ARKMassSpgmr
             @noarkode <node> ARKSpilsSetMassPreconditioner *)
         val spgmr :
           ?maxl:int
-          -> ('d, 'k) preconditioner
           -> 'd times_vec_fn
+          -> ('d, 'k) preconditioner
           -> ('d, 'k) linear_solver
 
         (** Krylov iterative solver using the scaled preconditioned biconjugate
             stabilized (Bi-CGStab) method.
-            In the call [spbcg ~maxl:maxl prec mtimes], [maxl] is the maximum
-            dimension of the Krylov subspace (defaults to 5), [prec] is a
-            {!preconditioner}, and [mtimes] is the mass-matrix-vector product
-            function.
+            In the call [spbcg ~maxl:maxl mtv prec],
+            - [maxl] is the maximum dimension of the Krylov subspace
+                     (defaults to 5),
+            - [mtv] is the mass-matrix-vector product function, and
+            - [prec] is a {!preconditioner},
 
             @noarkode <node> ARKMassSpbcg
             @noarkode <node> ARKSpilsSetMassPreconditioner *)
         val spbcg :
           ?maxl:int
-          -> ('d, 'k) preconditioner
           -> 'd times_vec_fn
+          -> ('d, 'k) preconditioner
           -> ('d, 'k) linear_solver
 
         (** Krylov iterative with the scaled preconditioned transpose-free
             quasi-minimal residual (SPTFQMR) method.
-            In the call [sptfqmr ~maxl:maxl prec mtimes], [maxl] is the maximum
-            dimension of the Krylov subspace (defaults to 5), [prec] is a
-            {!preconditioner}, and [mtimes] is the mass-matrix-vector product
-            function.
+            In the call [sptfqmr ~maxl:maxl mtv prec],
+            - [maxl] is the maximum dimension of the Krylov subspace
+                     (defaults to 5),
+            - [mtv] is the mass-matrix-vector product function, and
+            - [prec] is a {!preconditioner},
 
             @noarkode <node> ARKMassSptfqmr
             @noarkode <node> ARKSpilsSetMassPreconditioner *)
         val sptfqmr :
           ?maxl:int
-          -> ('d, 'k) preconditioner
           -> 'd times_vec_fn
+          -> ('d, 'k) preconditioner
           -> ('d, 'k) linear_solver
 
         (** Krylov iterative solver using the scaled preconditioned flexible
             generalized minimum residual (GMRES) method.
-            In the call [spfgmr ~maxl:maxl prec mtimes], [maxl] is the maximum
-            dimension of the Krylov subspace (defaults to 5), [prec] is a
-            {!preconditioner}, and [mtimes] is the mass-matrix-vector product
-            function.
+            In the call [spfgmr ~maxl:maxl mtv prec],
+            - [maxl] is the maximum dimension of the Krylov subspace
+                     (defaults to 5),
+            - [mtv] is the mass-matrix-vector product function, and
+            - [prec] is a {!preconditioner},
 
             @noarkode <node> ARKMassSpfgmr
             @noarkode <node> ARKSpilsSetMassPreconditioner *)
         val spfgmr :
           ?maxl:int
-          -> ('d, 'k) preconditioner
           -> 'd times_vec_fn
+          -> ('d, 'k) preconditioner
           -> ('d, 'k) linear_solver
 
         (** Krylov iterative solver using the preconditioned conjugate gradient
             (PCG) method.
-            In the call [pcg ~maxl:maxl prec mtimes], [maxl] is the maximum
-            dimension of the Krylov subspace (defaults to 5), [prec] is a
-            {!preconditioner}, and [mtimes] is the mass-matrix-vector product
-            function.
+            In the call [pcg ~maxl:maxl mtv prec],
+            - [maxl] is the maximum dimension of the Krylov subspace
+                     (defaults to 5),
+            - [mtv] is the mass-matrix-vector product function, and
+            - [prec] is a {!preconditioner},
 
             @noarkode <node> ARKMassPcg
             @noarkode <node> ARKSpilsSetMassPreconditioner *)
         val pcg :
           ?maxl:int
-          -> ('d, 'k) preconditioner
           -> 'd times_vec_fn
+          -> ('d, 'k) preconditioner
           -> ('d, 'k) linear_solver
 
         (** {3:set Solver parameters} *)
@@ -813,54 +809,118 @@ module Spils :
 
     (** Krylov iterative solver using the scaled preconditioned generalized
         minimum residual (GMRES) method.
-        In the call [spgmr ~maxl:maxl prec], [maxl] is the maximum dimension of
-        the Krylov subspace (defaults to 5), and [prec] is a {!preconditioner}.
+        In the call [spgmr ~maxl:maxl ~jac_times_vec:jtv prec],
+        - [maxl] is the maximum dimension of the Krylov subspace
+                 (defaults to 5),
+        - [jtv] computes an approximation to the product between the Jacobian
+                matrix and a vector, and
+        - [prec] is a {!preconditioner}.
+
+        If the {!jac_times_vec_fn} is omitted, a
+        default implementation based on difference quotients is used.
 
         @noarkode <node> ARKSpgmr
         @noarkode <node> ARKSpilsSetPreconditioner
-        @noarkode <node> ARKSpilsSetMaxl *)
-    val spgmr : ?maxl:int -> ('d, 'k) preconditioner -> ('d, 'k) linear_solver
+        @noarkode <node> ARKSpilsSetMaxl
+        @noarkode <node> ARKSpilsSetJacTimesVecFn
+        @noarkode <node> ARKSpilsJacTimesVecFn *)
+    val spgmr :
+      ?maxl:int
+      -> ?jac_times_vec:'d jac_times_vec_fn
+      -> ('d, 'k) preconditioner
+      -> ('d, 'k) linear_solver
 
     (** Krylov iterative solver using the scaled preconditioned biconjugate
         stabilized (Bi-CGStab) method.
-        In the call [spbcg ~maxl:maxl prec], [maxl] is the maximum dimension of
-        the Krylov subspace (defaults to 5), and [prec] is a {!preconditioner}.
+        In the call [spbcg ~maxl:maxl ~jac_times_vec:jtv prec],
+        - [maxl] is the maximum dimension of the Krylov subspace
+                 (defaults to 5),
+        - [jtv] computes an approximation to the product between the Jacobian
+                matrix and a vector, and
+        - [prec] is a {!preconditioner}.
+
+        If the {!jac_times_vec_fn} is omitted, a
+        default implementation based on difference quotients is used.
 
         @noarkode <node> ARKSpbcg
         @noarkode <node> ARKSpilsSetPreconditioner
-        @noarkode <node> ARKSpilsSetMaxl *)
-    val spbcg : ?maxl:int -> ('d, 'k) preconditioner -> ('d, 'k) linear_solver
+        @noarkode <node> ARKSpilsSetMaxl
+        @noarkode <node> ARKSpilsSetJacTimesVecFn
+        @noarkode <node> ARKSpilsJacTimesVecFn *)
+    val spbcg :
+      ?maxl:int
+      -> ?jac_times_vec:'d jac_times_vec_fn
+      -> ('d, 'k) preconditioner
+      -> ('d, 'k) linear_solver
 
     (** Krylov iterative with the scaled preconditioned transpose-free
         quasi-minimal residual (SPTFQMR) method.
-        In the call [sptfqmr ~maxl:maxl prec], [maxl] is the maximum dimension
-        of the Krylov subspace (defaults to 5), and [prec] is a
-        {!preconditioner}.
+        In the call [sptfqmr ~maxl:maxl ~jac_times_vec:jtv prec],
+        - [maxl] is the maximum dimension of the Krylov subspace
+                 (defaults to 5),
+        - [jtv] computes an approximation to the product between the Jacobian
+                matrix and a vector, and
+        - [prec] is a {!preconditioner}.
+
+        If the {!jac_times_vec_fn} is omitted, a
+        default implementation based on difference quotients is used.
 
         @noarkode <node> ARKSptfqmr
         @noarkode <node> ARKSpilsSetPreconditioner
-        @noarkode <node> ARKSpilsSetMaxl *)
-    val sptfqmr : ?maxl:int -> ('d, 'k) preconditioner -> ('d, 'k) linear_solver
+        @noarkode <node> ARKSpilsSetMaxl
+        @noarkode <node> ARKSpilsSetJacTimesVecFn
+        @noarkode <node> ARKSpilsJacTimesVecFn *)
+    val sptfqmr :
+      ?maxl:int
+      -> ?jac_times_vec:'d jac_times_vec_fn
+      -> ('d, 'k) preconditioner
+      -> ('d, 'k) linear_solver
 
     (** Krylov iterative solver using the scaled preconditioned flexible
         generalized minimum residual (GMRES) method.
-        In the call [spfgmr ~maxl:maxl prec], [maxl] is the maximum dimension of
-        the Krylov subspace (defaults to 5), and [prec] is a {!preconditioner}.
+        In the call [spfgmr ~maxl:maxl ~jac_times_vec:jtv prec],
+        - [maxl] is the maximum dimension of the Krylov subspace
+                 (defaults to 5),
+        - [jtv] computes an approximation to the product between the Jacobian
+                matrix and a vector, and
+        - [prec] is a {!preconditioner}.
+
+        If the {!jac_times_vec_fn} is omitted, a
+        default implementation based on difference quotients is used.
 
         @noarkode <node> ARKSpfgmr
         @noarkode <node> ARKSpilsSetPreconditioner
-        @noarkode <node> ARKSpilsSetMaxl *)
-    val spfgmr : ?maxl:int -> ('d, 'k) preconditioner -> ('d, 'k) linear_solver
+        @noarkode <node> ARKSpilsSetMaxl
+        @noarkode <node> ARKSpilsSetJacTimesVecFn
+        @noarkode <node> ARKSpilsJacTimesVecFn *)
+    val spfgmr :
+      ?maxl:int
+      -> ?jac_times_vec:'d jac_times_vec_fn
+      -> ('d, 'k) preconditioner
+      -> ('d, 'k) linear_solver
 
     (** Krylov iterative solver using the preconditioned conjugate gradient
         (PCG) method.
-        In the call [pcg ~maxl:maxl prec], [maxl] is the maximum dimension of
-        the Krylov subspace (defaults to 5), and [prec] is a {!preconditioner}.
+        In the call [pcg ~maxl:maxl ~jac_times_vec:jtv prec],
+        - [maxl] is the maximum dimension of the Krylov subspace
+                 (defaults to 5),
+        - [jtv] computes an approximation to the product between the Jacobian
+                matrix and a vector, and
+        - [prec] is a {!preconditioner}.
+
+        If the {!jac_times_vec_fn} is omitted, a
+        default implementation based on difference quotients is used.
 
         @noarkode <node> ARKPcg
         @noarkode <node> ARKSpilsSetPreconditioner
-        @noarkode <node> ARKSpilsSetMaxl *)
-    val pcg : ?maxl:int -> ('d, 'k) preconditioner -> ('d, 'k) linear_solver
+        @noarkode <node> ARKSpilsSetMaxl
+        @noarkode <node> ARKSpilsSetJacTimesVecFn
+        @noarkode <node> ARKSpilsJacTimesVecFn *)
+    val pcg :
+      ?maxl:int
+      -> ?jac_times_vec:'d jac_times_vec_fn
+      -> ('d, 'k) preconditioner
+      -> ('d, 'k) linear_solver
 
     (** {3:set Solver parameters} *)
 

@@ -999,39 +999,50 @@ module Adjoint =
         external c_set_max_restarts : ('a, 'k) session -> int -> int -> unit
           = "c_idas_adj_spils_set_max_restarts"
 
-        let init_preconditioner solve setup jac_times bs parent which nv nv' =
+        let init_preconditioner solve setup bs parent which nv nv' =
           c_set_preconditioner parent which (setup <> None);
-          c_set_jac_times_vec_fn parent which (jac_times <> None);
           (tosession bs).ls_callbacks <-
             BSpilsCallback { prec_solve_fn = solve;
                              prec_setup_fn = setup;
-                             jac_times_vec_fn = jac_times }
+                             jac_times_vec_fn = None }
 
         let prec_none = InternalPrecNone (fun bs _ _ _ _ ->
             (tosession bs).ls_callbacks <- BSpilsCallback no_prec_callbacks)
-        let prec_left ?setup ?jac_times_vec solve =
-          InternalPrecLeft (init_preconditioner solve setup jac_times_vec)
+        let prec_left ?setup solve =
+          InternalPrecLeft (init_preconditioner solve setup)
 
-        let init_spils init maxl prec bs nv nv' =
+        let set_jac_times_vec_fn bs f =
+          match (tosession bs).ls_callbacks with
+          | BSpilsCallback cbs ->
+              let parent, which = parent_and_which bs in
+              c_set_jac_times_vec_fn parent which true;
+              (tosession bs).ls_callbacks <-
+                BSpilsCallback { cbs with jac_times_vec_fn = Some f }
+          | _ -> raise Sundials.InvalidLinearSolver
+
+        let init_spils init maxl jac_times_vec prec bs nv nv' =
           let parent, which = parent_and_which bs in
           init parent which maxl;
-          match prec with
-          | InternalPrecNone set_prec -> set_prec bs parent which nv nv'
-          | InternalPrecLeft set_prec -> set_prec bs parent which nv nv'
+          (match prec with
+           | InternalPrecNone set_prec -> set_prec bs parent which nv nv'
+           | InternalPrecLeft set_prec -> set_prec bs parent which nv nv');
+          (match jac_times_vec with
+           | None -> ()
+           | Some jtv -> set_jac_times_vec_fn bs jtv)
 
-        let spgmr ?(maxl=0) ?max_restarts prec bs nv nv' =
-          init_spils c_spils_spgmr maxl prec bs nv nv';
+        let spgmr ?(maxl=0) ?max_restarts ?jac_times_vec prec bs nv nv' =
+          init_spils c_spils_spgmr maxl jac_times_vec prec bs nv nv';
           (match max_restarts with
            | Some maxr ->
              let parent, which = parent_and_which bs in
              c_set_max_restarts parent which maxr
            | None -> ())
 
-        let spbcg ?(maxl=0) prec bs nv nv' =
-          init_spils c_spils_spbcg maxl prec bs nv nv'
+        let spbcg ?(maxl=0) ?jac_times_vec prec bs nv nv' =
+          init_spils c_spils_spbcg maxl jac_times_vec prec bs nv nv'
 
-        let sptfqmr ?(maxl=0) prec bs nv nv' =
-          init_spils c_spils_sptfqmr maxl prec bs nv nv'
+        let sptfqmr ?(maxl=0) ?jac_times_vec prec bs nv nv' =
+          init_spils c_spils_sptfqmr maxl jac_times_vec prec bs nv nv'
 
         let set_preconditioner bs ?setup solve =
           match (tosession bs).ls_callbacks with
@@ -1042,15 +1053,6 @@ module Adjoint =
                 BSpilsCallback { cbs with
                                  prec_setup_fn = setup;
                                  prec_solve_fn = solve }
-          | _ -> raise Sundials.InvalidLinearSolver
-
-        let set_jac_times_vec_fn bs f =
-          match (tosession bs).ls_callbacks with
-          | BSpilsCallback cbs ->
-              let parent, which = parent_and_which bs in
-              c_set_jac_times_vec_fn parent which true;
-              (tosession bs).ls_callbacks <-
-                BSpilsCallback { cbs with jac_times_vec_fn = Some f }
           | _ -> raise Sundials.InvalidLinearSolver
 
         let clear_jac_times_vec_fn bs =

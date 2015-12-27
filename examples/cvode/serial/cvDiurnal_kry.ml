@@ -535,9 +535,9 @@ let main () =
     Cvode.init Cvode.BDF
       (Cvode.Newton
           (Cvode.Spils.spgmr
+             ~jac_times_vec:(jtv data)
              (Cvode.Spils.prec_left
                 ~setup:(precond data)
-                ~jac_times_vec:(jtv data)
                 (psolve data))))
       (Cvode.SStolerances (reltol, abstol))
       (f data) t0 u

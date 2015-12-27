@@ -245,10 +245,10 @@ module SpilsTypes' = struct
         times_vec_fn : 'a times_vec_fn;
       }
 
-    let no_prec_callbacks times = {
+    let no_prec_callbacks = {
         prec_solve_fn = (fun _ _ _ -> crash "no prec solve callback");
         prec_setup_fn = None;
-        times_vec_fn = times;
+        times_vec_fn = (fun _ _ _ -> crash "no mtimes callback");
       }
   end
 end
@@ -534,7 +534,7 @@ module SpilsTypes = struct
     include SpilsTypes'.MassTypes'
 
     type ('a, 'k) set_preconditioner =
-      'a times_vec_fn -> ('a, 'k) session -> ('a, 'k) nvector -> unit
+      ('a, 'k) session -> ('a, 'k) nvector -> unit
 
     type ('a, 'k) preconditioner =
       | InternalPrecNone  of ('a, 'k) set_preconditioner

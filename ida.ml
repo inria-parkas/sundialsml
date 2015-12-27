@@ -241,36 +241,45 @@ module Spils =
     external c_set_max_restarts : ('a, 'k) session -> int -> unit
       = "c_ida_spils_set_max_restarts"
 
-    let init_preconditioner solve setup jac_times session nv nv' =
+    let init_preconditioner solve setup session nv nv' =
       c_set_preconditioner session (setup <> None);
-      c_set_jac_times_vec_fn session (jac_times <> None);
       session.ls_callbacks <-
         SpilsCallback { prec_solve_fn = solve;
                         prec_setup_fn = setup;
-                        jac_times_vec_fn = jac_times }
+                        jac_times_vec_fn = None }
 
     let prec_none = InternalPrecNone (fun session nv nv' ->
         session.ls_callbacks <- SpilsCallback no_prec_callbacks)
-    let prec_left ?setup ?jac_times_vec solve =
-      InternalPrecLeft (init_preconditioner solve setup jac_times_vec)
+    let prec_left ?setup solve =
+      InternalPrecLeft (init_preconditioner solve setup)
 
-    let init_spils init maxl prec session nv nv' =
+    let set_jac_times_vec_fn s f =
+      match s.ls_callbacks with
+      | SpilsCallback cbs ->
+          c_set_jac_times_vec_fn s true;
+          s.ls_callbacks <- SpilsCallback { cbs with jac_times_vec_fn = Some f }
+      | _ -> raise Sundials.InvalidLinearSolver
+
+    let init_spils init maxl jac_times_vec prec session nv nv' =
       init session maxl;
-      match prec with
-      | InternalPrecNone set_prec -> set_prec session nv nv'
-      | InternalPrecLeft set_prec -> set_prec session nv nv'
+      (match prec with
+       | InternalPrecNone set_prec -> set_prec session nv nv'
+       | InternalPrecLeft set_prec -> set_prec session nv nv');
+      (match jac_times_vec with
+       | None -> ()
+       | Some jtv -> set_jac_times_vec_fn session jtv)
 
-    let spgmr ?(maxl=0) ?max_restarts prec session nv nv' =
-      init_spils c_spgmr maxl prec session nv nv';
+    let spgmr ?(maxl=0) ?max_restarts ?jac_times_vec prec session nv nv' =
+      init_spils c_spgmr maxl jac_times_vec prec session nv nv';
       (match max_restarts with
        | Some m -> c_set_max_restarts session m
        | None -> ())
 
-    let spbcg ?(maxl=0) prec session nv nv' =
-      init_spils c_spbcg maxl prec session nv nv'
+    let spbcg ?(maxl=0) ?jac_times_vec prec session nv nv' =
+      init_spils c_spbcg maxl jac_times_vec prec session nv nv'
 
-    let sptfqmr ?(maxl=0) prec session nv nv' =
-      init_spils c_sptfqmr maxl prec session nv nv'
+    let sptfqmr ?(maxl=0) ?jac_times_vec prec session nv nv' =
+      init_spils c_sptfqmr maxl jac_times_vec prec session nv nv'
 
     let set_preconditioner s ?setup solve =
       match s.ls_callbacks with
@@ -279,13 +288,6 @@ module Spils =
           s.ls_callbacks <- SpilsCallback { cbs with
                                             prec_setup_fn = setup;
                                             prec_solve_fn = solve }
-      | _ -> raise Sundials.InvalidLinearSolver
-
-    let set_jac_times_vec_fn s f =
-      match s.ls_callbacks with
-      | SpilsCallback cbs ->
-          c_set_jac_times_vec_fn s true;
-          s.ls_callbacks <- SpilsCallback { cbs with jac_times_vec_fn = Some f }
       | _ -> raise Sundials.InvalidLinearSolver
 
     let clear_jac_times_vec_fn s =

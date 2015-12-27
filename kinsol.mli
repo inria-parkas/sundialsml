@@ -283,7 +283,6 @@ module Spils :
       -> 'd solve_arg
       -> unit
 
-
     (** Callback functions that compute (an approximation to) the Jacobian
         times a vector. In the call [jac_times_vec_fn v jv u new_u], [v] is the
         vector multiplying the Jacobian, [jv] is the vector in which to store
@@ -311,15 +310,11 @@ module Spils :
         preconditioners.
 
         The {!prec_solve_fn} is usually mandatory. The {!prec_setup_fn} can be
-        omitted if not needed. If the {!jac_times_vec_fn} is omitted, a
-        default implementation based on difference quotients is used.
+        omitted if not needed.
 
         @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
-        @kinsol <node5#sss:optin_spils> KINSpilsSetJacTimesVecFn
         @kinsol <node5#ss:psolveFn> KINSpilsPrecSolveFn
-        @kinsol <node5#ss:precondFn> KINSpilsPrecSetupFn
-        @kinsol <node5#ss:jtimesFn> KINSpilsJacTimesVecFn
-    *)
+        @kinsol <node5#ss:precondFn> KINSpilsPrecSetupFn *)
     type ('d, 'k) preconditioner = ('d, 'k) SpilsTypes.preconditioner
 
     (** No preconditioning.  *)
@@ -334,7 +329,6 @@ module Spils :
     val prec_right :
       ?setup:'d prec_setup_fn
       -> ?solve:'d prec_solve_fn
-      -> ?jac_times_vec:'d jac_times_vec_fn
       -> unit
       -> ('d, 'k) preconditioner
 
@@ -347,43 +341,90 @@ module Spils :
         [maxr] is the maximum number of restarts (defaults to 5; set to 0 to
         disable restarts), and [prec] is a {!preconditioner}.
 
+        If the {!jac_times_vec_fn} is omitted, a default implementation based on
+        difference quotients is used.
+
         @kinsol <node5#sss:lin_solv_init> KINSpgmr
         @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
+        @kinsol <node5#sss:optin_spils> KINSpilsSetJacTimesVecFn
+        @kinsol <node5#ss:jtimesFn> KINSpilsJacTimesVecFn
         @kinsol <node5#sss:optin_spils> KINSpilsSetMaxRestarts *)
-    val spgmr : ?maxl:int -> ?max_restarts:int -> ('d, 'k) preconditioner
-                    -> ('d, 'k) linear_solver
+    val spgmr :
+      ?maxl:int
+      -> ?max_restarts:int
+      -> ?jac_times_vec:'d jac_times_vec_fn
+      -> ('d, 'k) preconditioner
+      -> ('d, 'k) linear_solver
 
     (** Krylov iterative solver using the scaled preconditioned flexible
         generalized minimum residual (GMRES) method.
-        In the call [spfgmr ~maxl:maxl ~max_restarts:maxr prec],
-        [maxl] is the maximum dimension of the Krylov subspace (defaults to 5),
-        [maxr] is the maximum number of restarts (defaults to 5; set to 0 to
-        disable restarts), and [prec] is a {!preconditioner}.
+        In the call [spfgmr ~maxl:maxl ~max_restarts:maxr ~jac_times_vec:jtv prec],
+        - [maxl] is the maximum dimension of the Krylov subspace
+                 (defaults to 5),
+        - [maxr] is the maximum number of restarts (defaults to 5; set to 0 to
+                 disable restarts), and
+        - [jtv] computes an approximation to the product between the Jacobian
+                matrix and a vector, and
+        - [prec] is a {!preconditioner}.
+
+        If the {!jac_times_vec_fn} is omitted, a default implementation based on
+        difference quotients is used.
 
         @nokinsol <node5#sss:lin_solv_init> KINSpfgmr
         @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
+        @kinsol <node5#sss:optin_spils> KINSpilsSetJacTimesVecFn
+        @kinsol <node5#ss:jtimesFn> KINSpilsJacTimesVecFn
         @kinsol <node5#sss:optin_spils> KINSpilsSetMaxRestarts *)
-    val spfgmr : ?maxl:int -> ?max_restarts:int -> ('d, 'k) preconditioner
-                    -> ('d, 'k) linear_solver
+    val spfgmr :
+      ?maxl:int
+      -> ?max_restarts:int
+      -> ?jac_times_vec:'d jac_times_vec_fn
+      -> ('d, 'k) preconditioner
+      -> ('d, 'k) linear_solver
 
     (** Krylov iterative solver using the scaled preconditioned biconjugate
         stabilized (Bi-CGStab) method.
-        In the call [spbcg ~maxl:maxl prec], [maxl] is the maximum dimension of
-        the Krylov subspace (defaults to 5), and [prec] is a {!preconditioner}.
+        In the call [spbcg ~maxl:maxl ~jac_times_vec:jtv prec],
+        - [maxl] is the maximum dimension of the Krylov subspace
+                 (defaults to 5),
+        - [jtv] computes an approximation to the product between the Jacobian
+                matrix and a vector, and
+        - [prec] is a {!preconditioner}.
+
+        If the {!jac_times_vec_fn} is omitted, a default implementation based on
+        difference quotients is used.
 
         @kinsol <node5#sss:lin_solv_init> KINSpbcg
-        @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner *)
-    val spbcg : ?maxl:int -> ('d, 'k) preconditioner -> ('d, 'k) linear_solver
+        @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
+        @kinsol <node5#sss:optin_spils> KINSpilsSetJacTimesVecFn
+        @kinsol <node5#ss:jtimesFn> KINSpilsJacTimesVecFn *)
+    val spbcg :
+      ?maxl:int
+      -> ?jac_times_vec:'d jac_times_vec_fn
+      -> ('d, 'k) preconditioner
+      -> ('d, 'k) linear_solver
 
     (** Krylov iterative with the scaled preconditioned transpose-free
         quasi-minimal residual (SPTFQMR) method.
-        In the call [sptfqmr ~maxl:maxl prec], [maxl] is the maximum dimension
-        of the Krylov subspace (defaults to 5), and [prec] is a
-        {!preconditioner}.
+        In the call [sptfqmr ~maxl:maxl ~jac_times_vec:jtv prec],
+        - [maxl] is the maximum dimension of the Krylov subspace
+                 (defaults to 5),
+        - [jtv] computes an approximation to the product between the Jacobian
+                matrix and a vector, and
+        - [prec] is a {!preconditioner}.
+
+        If the {!jac_times_vec_fn} is omitted, a default implementation based on
+        difference quotients is used.
 
         @kinsol <node5#sss:lin_solv_init> KINSptfqmr
-        @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner *)
-    val sptfqmr : ?maxl:int -> ('d,'k) preconditioner -> ('d,'k) linear_solver
+        @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
+        @kinsol <node5#sss:optin_spils> KINSpilsSetJacTimesVecFn
+        @kinsol <node5#ss:jtimesFn> KINSpilsJacTimesVecFn *)
+    val sptfqmr :
+      ?maxl:int
+      -> ?jac_times_vec:'d jac_times_vec_fn
+      -> ('d,'k) preconditioner
+      -> ('d,'k) linear_solver
 
     (** {3:stats Solver statistics} *)
 

@@ -914,29 +914,44 @@ module Adjoint =
           : ('a, 'k) session -> int -> int -> Spils.preconditioning_type -> unit
           = "c_cvodes_adj_spils_sptfqmr"
 
-        let init_preconditioner solve setup jac_times bs parent which nv =
+        let init_preconditioner solve setup bs parent which nv =
           c_set_preconditioner parent which (setup <> None);
-          c_set_jac_times_vec_fn parent which (jac_times <> None);
           (tosession bs).ls_callbacks <-
             BSpilsCallback { prec_solve_fn = solve;
                              prec_setup_fn = setup;
-                             jac_times_vec_fn = jac_times }
+                             jac_times_vec_fn = None }
 
         let prec_none = InternalPrecNone (fun bs _ _ _ ->
             (tosession bs).ls_callbacks <- BSpilsCallback no_prec_callbacks)
-        let prec_left ?setup ?jac_times_vec solve =
-          InternalPrecLeft (init_preconditioner solve setup jac_times_vec)
-        let prec_right ?setup ?jac_times_vec solve =
-          InternalPrecRight (init_preconditioner solve setup jac_times_vec)
-        let prec_both ?setup ?jac_times_vec solve =
-          InternalPrecBoth (init_preconditioner solve setup jac_times_vec)
+        let prec_left ?setup solve =
+          InternalPrecLeft (init_preconditioner solve setup)
+        let prec_right ?setup solve =
+          InternalPrecRight (init_preconditioner solve setup)
+        let prec_both ?setup solve =
+          InternalPrecBoth (init_preconditioner solve setup)
 
-        let init_spils init maxl prec bs nv =
+        let set_jac_times_vec_fn bs f =
+          match (tosession bs).ls_callbacks with
+          | BSpilsCallback cbs ->
+              let parent, which = parent_and_which bs in
+              c_set_jac_times_vec_fn parent which true;
+              (tosession bs).ls_callbacks <-
+                BSpilsCallback { cbs with jac_times_vec_fn = Some f }
+          | BSpilsBandCallback _ ->
+              let parent, which = parent_and_which bs in
+              c_set_jac_times_vec_fn parent which false;
+              (tosession bs).ls_callbacks <- BSpilsBandCallback (Some f)
+          | _ -> raise Sundials.InvalidLinearSolver
+
+        let init_spils init maxl jac_times_vec prec bs nv =
           let parent, which = parent_and_which bs in
           let with_prec prec_type set_prec =
             init parent which maxl prec_type;
-            set_prec bs parent which nv
+            set_prec bs parent which nv;
             (* the preconditioner must set ls_class *)
+            match jac_times_vec with
+            | None -> ()
+            | Some jtv -> set_jac_times_vec_fn bs jtv
           in
           match prec with
           | InternalPrecNone set_prec  -> with_prec Spils.PrecNone set_prec
@@ -944,14 +959,14 @@ module Adjoint =
           | InternalPrecRight set_prec -> with_prec Spils.PrecRight set_prec
           | InternalPrecBoth set_prec  -> with_prec Spils.PrecBoth set_prec
 
-        let spgmr ?(maxl=0) prec bs nv =
-          init_spils c_spgmr maxl prec bs nv
+        let spgmr ?(maxl=0) ?jac_times_vec prec bs nv =
+          init_spils c_spgmr maxl jac_times_vec prec bs nv
 
-        let spbcg ?(maxl=0) prec bs nv =
-          init_spils c_spbcg maxl prec bs nv
+        let spbcg ?(maxl=0) ?jac_times_vec prec bs nv =
+          init_spils c_spbcg maxl jac_times_vec prec bs nv
 
-        let sptfqmr ?(maxl=0) prec bs nv =
-          init_spils c_sptfqmr maxl prec bs nv
+        let sptfqmr ?(maxl=0) ?jac_times_vec prec bs nv =
+          init_spils c_sptfqmr maxl jac_times_vec prec bs nv
 
         external set_prec_type
             : ('a, 'k) bsession -> Spils.preconditioning_type -> unit
@@ -966,19 +981,6 @@ module Adjoint =
                 BSpilsCallback { cbs with
                                  prec_setup_fn = setup;
                                  prec_solve_fn = solve }
-          | _ -> raise Sundials.InvalidLinearSolver
-
-        let set_jac_times_vec_fn bs f =
-          match (tosession bs).ls_callbacks with
-          | BSpilsCallback cbs ->
-              let parent, which = parent_and_which bs in
-              c_set_jac_times_vec_fn parent which true;
-              (tosession bs).ls_callbacks <-
-                BSpilsCallback { cbs with jac_times_vec_fn = Some f }
-          | BSpilsBandCallback _ ->
-              let parent, which = parent_and_which bs in
-              c_set_jac_times_vec_fn parent which false;
-              (tosession bs).ls_callbacks <- BSpilsBandCallback (Some f)
           | _ -> raise Sundials.InvalidLinearSolver
 
         let clear_jac_times_vec_fn bs =
@@ -1042,21 +1044,20 @@ module Adjoint =
             : ('a, 'k) session -> int -> int -> int -> int -> unit
             = "c_cvodes_adj_spils_set_banded_preconditioner"
 
-          let init_preconditioner jac_times_vec bandrange bs parent which nv =
+          let init_preconditioner bandrange bs parent which nv =
             c_set_preconditioner parent which
               (RealArray.length (Nvector.unwrap nv))
               bandrange.mupper bandrange.mlower;
-            c_set_jac_times_vec_fn parent which (jac_times_vec <> None);
-            (tosession bs).ls_callbacks <- BSpilsBandCallback jac_times_vec
+            (tosession bs).ls_callbacks <- BSpilsBandCallback None
 
           let prec_none = InternalPrecNone (fun bs _ _ _ ->
               (tosession bs).ls_callbacks <- BSpilsBandCallback None)
-          let prec_left ?jac_times_vec bandrange =
-            InternalPrecLeft (init_preconditioner jac_times_vec bandrange)
-          let prec_right ?jac_times_vec bandrange =
-            InternalPrecRight (init_preconditioner jac_times_vec bandrange)
-          let prec_both ?jac_times_vec bandrange =
-            InternalPrecBoth (init_preconditioner jac_times_vec bandrange)
+          let prec_left bandrange =
+            InternalPrecLeft (init_preconditioner bandrange)
+          let prec_right bandrange =
+            InternalPrecRight (init_preconditioner bandrange)
+          let prec_both bandrange =
+            InternalPrecBoth (init_preconditioner bandrange)
 
           let get_work_space bs =
             Cvode.Spils.Banded.get_work_space (tosession bs)

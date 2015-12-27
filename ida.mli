@@ -318,14 +318,11 @@ module Spils :
         preconditioners.
 
         The {!prec_solve_fn} is mandatory. The {!prec_setup_fn} can be
-        omitted if not needed. If the {!jac_times_vec_fn} is omitted, a
-        default implementation based on difference quotients is used.
+        omitted if not needed.
 
         @ida <node5#sss:optin_spils> IDASpilsSetPreconditioner
-        @ida <node5#sss:optin_spils> IDASpilsSetJacTimesVecFn
         @ida <node5#ss:psolveFn> IDASpilsPrecSolveFn
-        @ida <node5#ss:precondFn> IDASpilsPrecSetupFn
-        @ida <node5#ss:jtimesFn> IDASpilsJacTimesVecFn *)
+        @ida <node5#ss:precondFn> IDASpilsPrecSetupFn *)
     type ('d, 'k) preconditioner = ('d, 'k) Ida_impl.SpilsTypes.preconditioner
 
     (** No preconditioning.  *)
@@ -336,7 +333,6 @@ module Spils :
         {% $J = \frac{\partial F}{\partial y} + c_j\frac{\partial F}{\partial\dot{y}}$%}. *)
     val prec_left :
       ?setup:'d prec_setup_fn
-      -> ?jac_times_vec:'d jac_times_vec_fn
       -> 'd prec_solve_fn
       -> ('d, 'k) preconditioner
 
@@ -344,38 +340,75 @@ module Spils :
 
     (** Krylov iterative solver using the scaled preconditioned generalized
         minimum residual (GMRES) method.
-        In the call [spgmr ~maxl:maxl ~max_restarts:maxr prec],
-        [maxl] is the maximum dimension of the Krylov subspace (defaults to 5),
-        [maxr] is the maximum number of restarts (defaults to 5),
-        and [prec] is a {!preconditioner}.
+        In the call [spgmr ~maxl:maxl ~max_restarts:maxr ~jac_times_vec:jtv prec],
+        - [maxl] is the maximum dimension of the Krylov subspace
+                 (defaults to 5),
+        - [maxr] is the maximum number of restarts (defaults to 5),
+        - [jtv] computes an approximation to the product between the Jacobian
+                matrix and a vector, and
+        - [prec] is a {!preconditioner}.
+
+        If the {!jac_times_vec_fn} is omitted, a default implementation based on
+        difference quotients is used.
 
         @ida <node5#sss:lin_solv_init> IDASpgmr
         @ida <node5#sss:optin_spils> IDASpilsSetPreconditioner
         @ida <node5#sss:optin_spils> IDASpilsSetMaxl
+        @ida <node5#sss:optin_spils> IDASpilsSetJacTimesVecFn
+        @ida <node5#ss:jtimesFn> IDASpilsJacTimesVecFn
         @ida <node5#sss:optin_spils> IDASpilsSetMaxRestarts *)
-    val spgmr : ?maxl:int -> ?max_restarts:int
-      -> ('d, 'k) preconditioner -> ('d, 'k) linear_solver
+    val spgmr :
+      ?maxl:int
+      -> ?max_restarts:int
+      -> ?jac_times_vec:'d jac_times_vec_fn
+      -> ('d, 'k) preconditioner
+      -> ('d, 'k) linear_solver
 
     (** Krylov iterative solver using the scaled preconditioned biconjugate
         stabilized (Bi-CGStab) method.
-        In the call [spbcg ~maxl:maxl prec], [maxl] is the maximum dimension of
-        the Krylov subspace (defaults to 5), and [prec] is a {!preconditioner}.
+        In the call [spbcg ~maxl:maxl ~jac_times_vec:jtv prec],
+        - [maxl] is the maximum dimension of the Krylov subspace
+                 (defaults to 5),
+        - [jtv] computes an approximation to the product between the Jacobian
+                matrix and a vector, and
+        - [prec] is a {!preconditioner}.
+
+        If the {!jac_times_vec_fn} is omitted, a default implementation based on
+        difference quotients is used.
 
         @ida <node5#sss:lin_solv_init> IDASpbcg
         @ida <node5#sss:optin_spils> IDASpilsSetPreconditioner
+        @ida <node5#sss:optin_spils> IDASpilsSetJacTimesVecFn
+        @ida <node5#ss:jtimesFn> IDASpilsJacTimesVecFn
         @ida <node5#sss:optin_spils> IDASpilsSetMaxl *)
-    val spbcg : ?maxl:int -> ('d, 'k) preconditioner -> ('d, 'k) linear_solver
+    val spbcg :
+      ?maxl:int
+      -> ?jac_times_vec:'d jac_times_vec_fn
+      -> ('d, 'k) preconditioner
+      -> ('d, 'k) linear_solver
 
     (** Krylov iterative with the scaled preconditioned transpose-free
         quasi-minimal residual (SPTFQMR) method.
-        In the call [sptfqmr ~maxl:maxl prec], [maxl] is the maximum dimension
-        of the Krylov subspace (defaults to 5), and [prec] is a
-        {!preconditioner}.
+        In the call [sptfqmr ~maxl:maxl ~jac_times_vec:jtv prec],
+        - [maxl] is the maximum dimension of the Krylov subspace
+                 (defaults to 5),
+        - [jtv] computes an approximation to the product between the Jacobian
+                matrix and a vector, and
+        - [prec] is a {!preconditioner}.
+
+        If the {!jac_times_vec_fn} is omitted, a default implementation based on
+        difference quotients is used.
 
         @ida <node5#sss:lin_solv_init> IDASptfqmr
         @ida <node5#sss:optin_spils> IDASpilsSetPreconditioner
+        @ida <node5#sss:optin_spils> IDASpilsSetJacTimesVecFn
+        @ida <node5#ss:jtimesFn> IDASpilsJacTimesVecFn
         @ida <node5#sss:optin_spils> IDASpilsSetMaxl *)
-    val sptfqmr : ?maxl:int -> ('d, 'k) preconditioner -> ('d, 'k) linear_solver
+    val sptfqmr :
+      ?maxl:int
+      -> ?jac_times_vec:'d jac_times_vec_fn
+      -> ('d, 'k) preconditioner
+      -> ('d, 'k) linear_solver
 
     (** {3:set Solver parameters} *)
 
