@@ -86,6 +86,7 @@ static int bbdcomm(long int nlocal, realtype t, N_Vector y, void *user_data)
     args[1] = NVEC_BACKLINK(y);
 
     WEAK_DEREF (session, *(value*)user_data);
+    cb = CVODE_LS_PRECFNS_FROM_ML (session);
     cb = Field (cb, 0);
     cb = Field (cb, RECORD_CVODE_BBD_CALLBACKS_COMM_FN);
     cb = Field (cb, 0);
