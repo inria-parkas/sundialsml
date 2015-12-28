@@ -67,6 +67,7 @@ enum ida_index {
     RECORD_IDA_SESSION_ERRH,
     RECORD_IDA_SESSION_ERRW,
     RECORD_IDA_SESSION_LS_CALLBACKS,
+    RECORD_IDA_SESSION_LS_PRECFNS,
     RECORD_IDA_SESSION_SENSEXT,
     RECORD_IDA_SESSION_SIZE	/* This has to come last. */
 };
@@ -81,13 +82,13 @@ enum ida_index {
 #define IDA_ERRH_FROM_ML(v)    (Field((v), RECORD_IDA_SESSION_ERRH))
 #define IDA_ERRW_FROM_ML(v)    (Field((v), RECORD_IDA_SESSION_ERRW))
 #define IDA_LS_CALLBACKS_FROM_ML(v)     (Field((v), RECORD_IDA_SESSION_LS_CALLBACKS))
+#define IDA_LS_PRECFNS_FROM_ML(v)     (Field((v), RECORD_IDA_SESSION_LS_PRECFNS))
 #define IDA_SENSEXT_FROM_ML(v)     (Field(Field((v), RECORD_IDA_SESSION_SENSEXT), 0))
 
-enum ida_spils_callbacks_index {
-    RECORD_IDA_SPILS_CALLBACKS_PREC_SOLVE_FN = 0,
-    RECORD_IDA_SPILS_CALLBACKS_PREC_SETUP_FN,
-    RECORD_IDA_SPILS_CALLBACKS_JAC_TIMES_VEC_FN,
-    RECORD_IDA_SPILS_CALLBACKS_SIZE
+enum ida_spils_precfns_index {
+    RECORD_IDA_SPILS_PRECFNS_PREC_SOLVE_FN = 0,
+    RECORD_IDA_SPILS_PRECFNS_PREC_SETUP_FN,
+    RECORD_IDA_SPILS_PRECFNS_SIZE
 };
 
 enum ida_alternate_callbacks_index {
@@ -113,10 +114,10 @@ enum ida_alternate_lsolve_args_index {
     RECORD_IDA_ALTERNATE_LSOLVE_ARGS_SIZE
 };
 
-enum ida_bbd_callbacks_index {
-  RECORD_IDA_BBD_CALLBACKS_LOCAL_FN = 0,
-  RECORD_IDA_BBD_CALLBACKS_COMM_FN,
-  RECORD_IDA_BBD_CALLBACKS_SIZE
+enum ida_bbd_precfns_index {
+  RECORD_IDA_BBD_PRECFNS_LOCAL_FN = 0,
+  RECORD_IDA_BBD_PRECFNS_COMM_FN,
+  RECORD_IDA_BBD_PRECFNS_SIZE
 };
 
 enum ida_integrator_stats_index {

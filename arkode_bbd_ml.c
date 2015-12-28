@@ -46,9 +46,9 @@ static int bbdlocal(long int nlocal, realtype t, N_Vector y, N_Vector glocal,
     args[2] = NVEC_BACKLINK(glocal);
 
     WEAK_DEREF (session, *(value*)user_data);
-    cb = ARKODE_LS_CALLBACKS_FROM_ML (session);
+    cb = ARKODE_LS_PRECFNS_FROM_ML (session);
     cb = Field (cb, 0);
-    cb = Field (cb, RECORD_ARKODE_BBD_CALLBACKS_LOCAL_FN);
+    cb = Field (cb, RECORD_ARKODE_BBD_PRECFNS_LOCAL_FN);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback3_exn (cb, args[0], args[1], args[2]);
@@ -66,9 +66,10 @@ static int bbdcomm(long int nlocal, realtype t, N_Vector y, void *user_data)
     args[1] = NVEC_BACKLINK(y);
 
     WEAK_DEREF (session, *(value*)user_data);
+    cb = ARKODE_LS_PRECFNS_FROM_ML (session);
     cb = Field (cb, 0);
-    cb = Field (cb, RECORD_ARKODE_BBD_CALLBACKS_COMM_FN);
-    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_ARKODE_BBD_PRECFNS_COMM_FN);
+    cb = Some_val (cb);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback2_exn (cb, args[0], args[1]);

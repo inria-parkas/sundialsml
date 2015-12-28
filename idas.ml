@@ -724,6 +724,7 @@ module Adjoint =
 
     let set_linear_solver bs solver nv nv' =
       (tosession bs).ls_callbacks <- NoCallbacks;
+      (tosession bs).ls_precfns <- NoPrecFns;
       solver bs nv nv'
 
     external backward_normal : ('a, 'k) session -> float -> unit
@@ -813,6 +814,7 @@ module Adjoint =
             match jac with Some (DenseWithSens _) -> true | _ -> false
           in
           c_dls_dense parent which neqs (jac <> None) use_sens;
+          session.ls_precfns <- NoPrecFns;
           match jac with
           | None ->
               session.ls_callbacks <- BDlsDenseCallback no_dense_callback
@@ -831,6 +833,7 @@ module Adjoint =
             match jac with Some (DenseWithSens _) -> true | _ -> false
           in
           c_dls_lapack_dense parent which neqs (jac <> None) use_sens;
+          session.ls_precfns <- NoPrecFns;
           match jac with
           | None ->
               session.ls_callbacks <- BDlsDenseCallback no_dense_callback
@@ -852,6 +855,7 @@ module Adjoint =
             match jac with Some (BandWithSens _) -> true | _ -> false
           in
           c_dls_band (parent, which) neqs p (jac <> None) use_sens;
+          session.ls_precfns <- NoPrecFns;
           match jac with
           | None ->
               session.ls_callbacks <- BDlsBandCallback no_band_callback
@@ -870,6 +874,7 @@ module Adjoint =
             match jac with Some (BandWithSens _) -> true | _ -> false
           in
           c_dls_lapack_band (parent, which) neqs p (jac <> None) use_sens;
+          session.ls_precfns <- NoPrecFns;
           match jac with
           | None ->
               session.ls_callbacks <- BDlsBandCallback no_band_callback
@@ -1001,23 +1006,20 @@ module Adjoint =
 
         let init_preconditioner solve setup bs parent which nv nv' =
           c_set_preconditioner parent which (setup <> None);
-          (tosession bs).ls_callbacks <-
-            BSpilsCallback { prec_solve_fn = solve;
-                             prec_setup_fn = setup;
-                             jac_times_vec_fn = None }
+          (tosession bs).ls_precfns <- BPrecFns { prec_solve_fn = solve;
+                                                  prec_setup_fn = setup }
 
         let prec_none = InternalPrecNone (fun bs _ _ _ _ ->
-            (tosession bs).ls_callbacks <- BSpilsCallback no_prec_callbacks)
+            (tosession bs).ls_precfns <- NoPrecFns)
         let prec_left ?setup solve =
           InternalPrecLeft (init_preconditioner solve setup)
 
         let set_jac_times_vec_fn bs f =
           match (tosession bs).ls_callbacks with
-          | BSpilsCallback cbs ->
+          | BSpilsCallback _ ->
               let parent, which = parent_and_which bs in
               c_set_jac_times_vec_fn parent which true;
-              (tosession bs).ls_callbacks <-
-                BSpilsCallback { cbs with jac_times_vec_fn = Some f }
+              (tosession bs).ls_callbacks <- BSpilsCallback (Some f)
           | _ -> raise Sundials.InvalidLinearSolver
 
         let init_spils init maxl jac_times_vec prec bs nv nv' =
@@ -1026,6 +1028,7 @@ module Adjoint =
           (match prec with
            | InternalPrecNone set_prec -> set_prec bs parent which nv nv'
            | InternalPrecLeft set_prec -> set_prec bs parent which nv nv');
+          (tosession bs).ls_callbacks <- BSpilsCallback jac_times_vec;
           (match jac_times_vec with
            | None -> ()
            | Some jtv -> set_jac_times_vec_fn bs jtv)
@@ -1046,22 +1049,19 @@ module Adjoint =
 
         let set_preconditioner bs ?setup solve =
           match (tosession bs).ls_callbacks with
-          | BSpilsCallback cbs ->
+          | BSpilsCallback _ ->
               let parent, which = parent_and_which bs in
               c_set_preconditioner parent which (setup <> None);
-              (tosession bs).ls_callbacks <-
-                BSpilsCallback { cbs with
-                                 prec_setup_fn = setup;
-                                 prec_solve_fn = solve }
+              (tosession bs).ls_precfns <- BPrecFns { prec_setup_fn = setup;
+                                                      prec_solve_fn = solve }
           | _ -> raise Sundials.InvalidLinearSolver
 
         let clear_jac_times_vec_fn bs =
           match (tosession bs).ls_callbacks with
-          | BSpilsCallback cbs ->
+          | BSpilsCallback _ ->
               let parent, which = parent_and_which bs in
               c_set_jac_times_vec_fn parent which false;
-              (tosession bs).ls_callbacks <-
-                BSpilsCallback { cbs with jac_times_vec_fn = None }
+              (tosession bs).ls_callbacks <- BSpilsCallback None
           | _ -> raise Sundials.InvalidLinearSolver
 
         external set_gs_type
@@ -1153,6 +1153,7 @@ module Adjoint =
               errh         = dummy_errh;
               errw         = dummy_errw;
               ls_callbacks = NoCallbacks;
+              ls_precfns   = NoPrecFns;
 
               sensext    = BwdSensExt {
                 parent   = s;

@@ -27,6 +27,7 @@ external c_superlumt : serial_session -> int -> int -> int -> unit
 let superlumt f ~nnz ~nthreads session nv =
   let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
   session.ls_callbacks <- SlsSuperlumtCallback { jacfn = f; smat = None };
+  session.ls_precfns <- NoPrecFns;
   c_superlumt session neqs nnz nthreads
 
 external c_set_ordering : serial_session -> ordering -> unit
@@ -53,6 +54,7 @@ module Mass = struct
     let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
     session.mass_callbacks
       <- SlsSuperlumtMassCallback { massfn = f; smat = None };
+    session.mass_precfns <- NoMassPrecFns;
     c_superlumt session neqs nnz nthreads
 
   external c_set_ordering : serial_session -> ordering -> unit

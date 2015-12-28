@@ -327,9 +327,9 @@ static int precsetupfn(realtype t,
     CAMLlocal3(session, cb, arg);
 
     WEAK_DEREF (session, *(value*)user_data);
-    cb = IDA_LS_CALLBACKS_FROM_ML (session);
+    cb = IDA_LS_PRECFNS_FROM_ML (session);
     cb = Field (cb, 0);
-    cb = Field (cb, RECORD_IDA_SPILS_CALLBACKS_PREC_SETUP_FN);
+    cb = Field (cb, RECORD_IDA_SPILS_PRECFNS_PREC_SETUP_FN);
     cb = Field (cb, 0);
 
     arg = ida_make_jac_arg(t, cj, y, yp, res,
@@ -363,9 +363,9 @@ static int precsolvefn(
     args[3] = caml_copy_double (delta);
 
     WEAK_DEREF (session, *(value*)user_data);
-    cb = IDA_LS_CALLBACKS_FROM_ML (session);
+    cb = IDA_LS_PRECFNS_FROM_ML (session);
     cb = Field (cb, 0);
-    cb = Field (cb, RECORD_IDA_SPILS_CALLBACKS_PREC_SOLVE_FN);
+    cb = Field (cb, RECORD_IDA_SPILS_PRECFNS_PREC_SOLVE_FN);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callbackN_exn (cb, 4, args);
@@ -396,7 +396,7 @@ static int jactimesfn(
     WEAK_DEREF (session, *(value*)user_data);
     cb = IDA_LS_CALLBACKS_FROM_ML (session);
     cb = Field (cb, 0);
-    cb = Field (cb, RECORD_IDA_SPILS_CALLBACKS_JAC_TIMES_VEC_FN);
+    cb = Some_val (cb);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback3_exn (cb, args[0], args[1], args[2]);

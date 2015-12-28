@@ -42,6 +42,7 @@ let klu f nnz bs nv =
             BSlsKluCallbackSens { jacfn = fbs; smat = None };
          true)
   in
+  session.ls_precfns <- NoPrecFns;
   c_klub parent which neqs nnz use_sens
 
 let set_ordering bs = Cvode_klu.set_ordering (tosession bs)

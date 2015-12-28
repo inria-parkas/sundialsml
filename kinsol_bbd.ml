@@ -22,24 +22,24 @@ type parallel_preconditioner =
 module Impl = KinsolBbdParamTypes
 type local_fn = Nvector_parallel.data Impl.local_fn
 type comm_fn = Nvector_parallel.data Impl.comm_fn
-type callbacks =
+type precfns =
   {
     local_fn : local_fn;
     comm_fn  : comm_fn option;
   }
 
-let bbd_callbacks { local_fn; comm_fn } =
+let bbd_precfns { local_fn; comm_fn } =
   { Impl.local_fn = local_fn; Impl.comm_fn = comm_fn }
 
 external c_bbd_prec_init
     : parallel_session -> int -> bandwidths -> float -> bool -> unit
     = "c_kinsol_bbd_prec_init"
 
-let init_preconditioner dqrely bandwidths callbacks session nv =
+let init_preconditioner dqrely bandwidths precfns session nv =
   let localn = let ba, _, _ = Nvector.unwrap nv in
                Sundials.RealArray.length ba in
-  c_bbd_prec_init session localn bandwidths dqrely (callbacks.comm_fn <> None);
-  session.ls_callbacks <- SpilsBBDCallback (bbd_callbacks callbacks)
+  c_bbd_prec_init session localn bandwidths dqrely (precfns.comm_fn <> None);
+  session.ls_precfns <- BBDPrecFns (bbd_precfns precfns)
 
 let prec_right ?(dqrely=0.0) bandwidths ?comm_fn local_fn =
   SpilsTypes.InternalPrecRight

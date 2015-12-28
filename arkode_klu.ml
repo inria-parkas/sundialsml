@@ -26,6 +26,7 @@ external c_klu : serial_session -> int -> int -> unit
 let klu f nnz session nv =
   let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
   session.ls_callbacks <- SlsKluCallback { jacfn = f; smat = None };
+  session.ls_precfns <- NoPrecFns;
   c_klu session neqs nnz
 
 external c_set_ordering : serial_session -> ordering -> unit
@@ -58,6 +59,7 @@ module Mass = struct
   let klu f nnz session nv =
     let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
     session.mass_callbacks <- SlsKluMassCallback { massfn = f; smat = None };
+    session.mass_precfns <- NoMassPrecFns;
     c_klu session neqs nnz
 
   external c_set_ordering : serial_session -> ordering -> unit

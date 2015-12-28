@@ -25,24 +25,24 @@ type parallel_preconditioner = (data, kind) Arkode.Spils.preconditioner
 module Impl = ArkodeBbdParamTypes
 type local_fn = data Impl.local_fn
 type comm_fn = data Impl.comm_fn
-type callbacks =
+type precfns =
   {
     local_fn : local_fn;
     comm_fn : comm_fn option;
   }
 
-let bbd_callbacks { local_fn; comm_fn } =
+let bbd_precfns { local_fn; comm_fn } =
   { Impl.local_fn = local_fn; Impl.comm_fn = comm_fn }
 
 external c_bbd_prec_init
     : parallel_session -> int -> bandwidths -> float -> bool -> unit
     = "c_arkode_bbd_prec_init"
 
-let init_preconditioner dqrely bandwidths callbacks session nv =
+let init_preconditioner dqrely bandwidths precfns session nv =
   let ba, _, _ = Nvector.unwrap nv in
   let localn   = Sundials.RealArray.length ba in
-  c_bbd_prec_init session localn bandwidths dqrely (callbacks.comm_fn <> None);
-  session.ls_callbacks <- SpilsBBDCallback (bbd_callbacks callbacks)
+  c_bbd_prec_init session localn bandwidths dqrely (precfns.comm_fn <> None);
+  session.ls_precfns <- BBDPrecFns (bbd_precfns precfns)
 
 let prec_left ?(dqrely=0.0) bandwidths ?comm_fn local_fn =
   SpilsTypes.InternalPrecLeft
@@ -62,8 +62,8 @@ external c_bbd_prec_reinit
 
 let reinit s ?(dqrely=0.0) mudq mldq =
   ls_check_spils_bbd s;
-  match s.ls_callbacks with
-  | SpilsBBDCallback _ -> c_bbd_prec_reinit s mudq mldq dqrely
+  match s.ls_precfns with
+  | BandedPrecFns -> c_bbd_prec_reinit s mudq mldq dqrely
   | _ -> raise Sundials.InvalidLinearSolver
 
 external get_work_space : parallel_session -> int * int

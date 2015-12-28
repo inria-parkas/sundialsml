@@ -48,9 +48,9 @@ static int bbbdlocal(long int nlocal, realtype t, N_Vector y, N_Vector yb,
     Store_field (args, RECORD_CVODES_ADJ_BRHSFN_ARGS_YB, NVEC_BACKLINK (yb));
 
     WEAK_DEREF (session, *(value*)user_data);
-    cb = CVODE_LS_CALLBACKS_FROM_ML (session);
+    cb = CVODE_LS_PRECFNS_FROM_ML (session);
     cb = Field (cb, 0);
-    cb = Field (cb, RECORD_CVODES_BBBD_CALLBACKS_LOCAL_FN);
+    cb = Field (cb, RECORD_CVODES_BBBD_PRECFNS_LOCAL_FN);
     assert (Tag_val (cb) == Closure_tag);
 
 
@@ -72,10 +72,10 @@ static int bbbdcomm(long int nlocal, realtype t, N_Vector y, N_Vector yb,
     Store_field (args, RECORD_CVODES_ADJ_BRHSFN_ARGS_YB, NVEC_BACKLINK (yb));
 
     WEAK_DEREF (session, *(value*)user_data);
-    cb = CVODE_LS_CALLBACKS_FROM_ML (session);
+    cb = CVODE_LS_PRECFNS_FROM_ML (session);
     cb = Field (cb, 0);
-    cb = Field (cb, RECORD_CVODES_BBBD_CALLBACKS_COMM_FN);
-    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_CVODES_BBBD_PRECFNS_COMM_FN);
+    cb = Some_val (cb);
     assert (Tag_val (cb) == Closure_tag);
 
     /* NB: Don't trigger GC while processing this return value!  */

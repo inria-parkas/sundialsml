@@ -51,9 +51,9 @@ static int bbbdlocal(long int nlocal, realtype t, N_Vector yy, N_Vector yp,
     Store_field (args, RECORD_IDAS_ADJ_BRESFN_ARGS_YBP, NVEC_BACKLINK (ypB));
 
     WEAK_DEREF (session, *(value*)user_data);
-    cb = IDA_LS_CALLBACKS_FROM_ML (session);
+    cb = IDA_LS_PRECFNS_FROM_ML (session);
     cb = Field (cb, 0);
-    cb = Field (cb, RECORD_IDAS_BBBD_CALLBACKS_LOCAL_FN);
+    cb = Field (cb, RECORD_IDAS_BBBD_PRECFNS_LOCAL_FN);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback2_exn (cb, args, NVEC_BACKLINK (glocal));
@@ -77,10 +77,10 @@ static int bbbdcomm(long int nlocal, realtype t,
     Store_field (args, RECORD_IDAS_ADJ_BRESFN_ARGS_YBP, NVEC_BACKLINK (ypB));
 
     WEAK_DEREF (session, *(value*)user_data);
-    cb = IDA_LS_CALLBACKS_FROM_ML (session);
+    cb = IDA_LS_PRECFNS_FROM_ML (session);
     cb = Field (cb, 0);
-    cb = Field (cb, RECORD_IDAS_BBBD_CALLBACKS_COMM_FN);
-    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_IDAS_BBBD_PRECFNS_COMM_FN);
+    cb = Some_val (cb);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback_exn (cb, args);

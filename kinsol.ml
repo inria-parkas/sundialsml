@@ -68,6 +68,7 @@ module Dls =
     let dense fo s nv =
       s.neqs <- Sundials.RealArray.length (Nvector.unwrap nv);
       c_dls_dense s (fo <> None);
+      s.ls_precfns <- NoPrecFns;
       s.ls_callbacks <- match fo with
                         | None   -> DlsDenseCallback no_dense_callback
                         | Some f -> DlsDenseCallback { jacfn = f; dmat = None }
@@ -75,6 +76,7 @@ module Dls =
     let lapack_dense fo s nv =
       s.neqs <- Sundials.RealArray.length (Nvector.unwrap nv);
       c_dls_lapack_dense s (fo <> None);
+      s.ls_precfns <- NoPrecFns;
       s.ls_callbacks <- match fo with
                         | None   -> DlsDenseCallback no_dense_callback
                         | Some f -> DlsDenseCallback { jacfn = f; dmat = None }
@@ -82,6 +84,7 @@ module Dls =
     let band { mupper; mlower } fo s nv =
       s.neqs <- Sundials.RealArray.length (Nvector.unwrap nv);
       c_dls_band s mupper mlower (fo <> None);
+      s.ls_precfns <- NoPrecFns;
       s.ls_callbacks <- match fo with
                         | None   -> DlsBandCallback no_band_callback
                         | Some f -> DlsBandCallback { bjacfn = f; bmat = None }
@@ -89,6 +92,7 @@ module Dls =
     let lapack_band { mupper; mlower } fo s nv =
       s.neqs <- Sundials.RealArray.length (Nvector.unwrap nv);
       c_dls_lapack_band s mupper mlower (fo <> None);
+      s.ls_precfns <- NoPrecFns;
       s.ls_callbacks <- match fo with
                         | None   -> DlsBandCallback no_band_callback
                         | Some f -> DlsBandCallback { bjacfn = f; bmat = None }
@@ -197,21 +201,18 @@ module Spils =
 
     let init_preconditioner solve setup session nv =
       c_set_preconditioner session (solve <> None) (setup <> None);
-      session.ls_callbacks <-
-        SpilsCallback { prec_solve_fn = solve;
-                        prec_setup_fn = setup;
-                        jac_times_vec_fn = None }
+      session.ls_precfns <- PrecFns { prec_solve_fn = solve;
+                                      prec_setup_fn = setup }
 
     let prec_none = InternalPrecNone (fun session nv ->
-        session.ls_callbacks <- SpilsCallback no_prec_callbacks)
+        session.ls_precfns <- NoPrecFns)
     let prec_right ?setup ?solve () =
       InternalPrecRight (init_preconditioner solve setup)
 
     let set_jac_times_vec_fn s f =
       match s.ls_callbacks with
-      | SpilsCallback cbs ->
-          s.ls_callbacks <-
-            SpilsCallback { cbs with jac_times_vec_fn = Some f };
+      | SpilsCallback _ ->
+          s.ls_callbacks <- SpilsCallback (Some f);
           c_set_jac_times_vec_fn s true
       | _ -> raise Sundials.InvalidLinearSolver
 
@@ -220,6 +221,7 @@ module Spils =
       (match prec with
        | InternalPrecNone set_prec  -> set_prec session nv
        | InternalPrecRight set_prec -> set_prec session nv);
+      session.ls_callbacks <- SpilsCallback jac_times_vec;
       (match jac_times_vec with
        | None -> ()
        | Some jtv -> set_jac_times_vec_fn session jtv)
@@ -246,18 +248,17 @@ module Spils =
 
     let set_preconditioner s ?setup ?solve () =
       match s.ls_callbacks with
-      | SpilsCallback cbs ->
-          s.ls_callbacks <- SpilsCallback { cbs with
-                                            prec_setup_fn = setup;
-                                            prec_solve_fn = solve };
-          c_set_preconditioner s (solve <> None) (setup <> None)
+      | SpilsCallback _ ->
+          c_set_preconditioner s (solve <> None) (setup <> None);
+          s.ls_precfns <- PrecFns { prec_setup_fn = setup;
+                                    prec_solve_fn = solve }
       | _ -> raise Sundials.InvalidLinearSolver
 
     let clear_jac_times_vec_fn s =
       match s.ls_callbacks with
       | SpilsCallback cbs ->
-          s.ls_callbacks <- SpilsCallback { cbs with jac_times_vec_fn = None };
-          c_set_jac_times_vec_fn s false
+          c_set_jac_times_vec_fn s false;
+          s.ls_callbacks <- SpilsCallback None
       | _ -> raise Sundials.InvalidLinearSolver
 
     external get_work_space       : ('a, 'k) session -> int * int
@@ -333,6 +334,7 @@ module Alternate =
     let make f s nv =
       let { linit; lsetup; lsolve } as cb = f s nv in
       c_set_alternate s (linit <> None) (lsetup <> None);
+      s.ls_precfns <- NoPrecFns;
       s.ls_callbacks <- AlternateCallback cb
 
   end
@@ -515,6 +517,7 @@ let init lsolver f u0 =
           infoh        = dummy_infoh;
 
           ls_callbacks = NoCallbacks;
+          ls_precfns   = NoPrecFns;
         } in
   Gc.finalise session_finalize session;
   Weak.set weakref 0 (Some session);

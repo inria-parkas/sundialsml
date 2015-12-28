@@ -199,17 +199,10 @@ module SpilsTypes' = struct
     -> 'a (* Jv *)
     -> unit
 
-  type 'a callbacks =
+  type 'a precfns =
     {
       prec_solve_fn : 'a prec_solve_fn;
       prec_setup_fn : 'a prec_setup_fn option;
-      jac_times_vec_fn : 'a jac_times_vec_fn option;
-    }
-
-  let no_prec_callbacks = {
-      prec_solve_fn = (fun _ _ _ -> crash "no prec solve callback");
-      prec_setup_fn = None;
-      jac_times_vec_fn = None;
     }
 
   module MassTypes' = struct
@@ -238,17 +231,10 @@ module SpilsTypes' = struct
       -> 'd
       -> unit
 
-    type 'a callbacks =
+    type 'a precfns =
       {
         prec_solve_fn : 'a prec_solve_fn;
         prec_setup_fn : 'a prec_setup_fn option;
-        times_vec_fn : 'a times_vec_fn;
-      }
-
-    let no_prec_callbacks = {
-        prec_solve_fn = (fun _ _ _ -> crash "no prec solve callback");
-        prec_setup_fn = None;
-        times_vec_fn = (fun _ _ _ -> crash "no mtimes callback");
       }
   end
 end
@@ -263,7 +249,7 @@ end
 module ArkodeBbdParamTypes = struct
   type 'a local_fn = float -> 'a -> 'a -> unit
   type 'a comm_fn = float -> 'a -> unit
-  type 'a callbacks =
+  type 'a precfns =
     {
       local_fn : 'a local_fn;
       comm_fn  : 'a comm_fn option;
@@ -333,7 +319,9 @@ type ('a, 'kind) session = {
 
   mutable linsolver      : ('a, 'kind) linear_solver option;
   mutable ls_callbacks   : ('a, 'kind) linsolv_callbacks;
+  mutable ls_precfns     : 'a linsolv_precfns;
   mutable mass_callbacks : ('a, 'kind) mass_callbacks;
+  mutable mass_precfns   : 'a mass_precfns;
 }
 
 and ('data, 'kind) linear_solver =
@@ -353,13 +341,16 @@ and ('a, 'kind) linsolv_callbacks =
   | SlsSuperlumtCallback of SlsTypes.sparse_jac_callback
 
   (* Spils *)
-  | SpilsCallback of 'a SpilsTypes'.callbacks
-  | SpilsBandCallback of 'a SpilsTypes'.jac_times_vec_fn option
-                         (* Invariant: 'a = RealArray.t *)
-  | SpilsBBDCallback of 'a ArkodeBbdParamTypes.callbacks
+  | SpilsCallback of 'a SpilsTypes'.jac_times_vec_fn option
 
   (* Alternate *)
   | AlternateCallback of ('a, 'kind) alternate_linsolv
+
+and 'a linsolv_precfns =
+  | NoPrecFns
+  | PrecFns of 'a SpilsTypes'.precfns
+  | BandedPrecFns
+  | BBDPrecFns of 'a ArkodeBbdParamTypes.precfns
 
 and ('data, 'kind) alternate_linsolv =
   {
@@ -403,13 +394,16 @@ and ('a, 'kind) mass_callbacks =
   | SlsSuperlumtMassCallback of SlsTypes.MassTypes.sparse_callback
 
   (* Spils *)
-  | SpilsMassCallback of 'a SpilsTypes'.MassTypes'.callbacks
-  | SpilsBandMassCallback of 'a SpilsTypes'.MassTypes'.times_vec_fn
-                             (* Invariant: 'a = RealArray.t *)
-  | SpilsBBDMassCallback of 'a ArkodeBbdParamTypes.callbacks
+  | SpilsMassCallback of 'a SpilsTypes'.MassTypes'.times_vec_fn
 
   (* Alternate *)
   | AlternateMassCallback of ('a, 'kind) alternate_mass
+
+and 'a mass_precfns =
+  | NoMassPrecFns
+  | MassPrecFns of 'a SpilsTypes'.MassTypes'.precfns
+  | BandedMassPrecFns
+  | BBDMassPrecFns of 'a ArkodeBbdParamTypes.precfns
 
 and ('data, 'kind) alternate_mass =
   {
@@ -451,20 +445,19 @@ let ls_check_superlumt session =
 let ls_check_spils session =
   if Sundials_config.safe then
     match session.ls_callbacks with
-    | SpilsCallback _ | SpilsBandCallback _
-    | SpilsBBDCallback _ -> ()
+    | SpilsCallback _ -> ()
     | _ -> raise Sundials.InvalidLinearSolver
 
 let ls_check_spils_band session =
   if Sundials_config.safe then
-    match session.ls_callbacks with
-    | SpilsBandCallback _ -> ()
+    match session.ls_precfns with
+    | BandedPrecFns -> ()
     | _ -> raise Sundials.InvalidLinearSolver
 
 let ls_check_spils_bbd session =
   if Sundials_config.safe then
-    match session.ls_callbacks with
-    | SpilsBBDCallback _ -> ()
+    match session.ls_precfns with
+    | BBDPrecFns _ -> ()
     | _ -> raise Sundials.InvalidLinearSolver
 
 (* Mass solver check functions *)
@@ -490,14 +483,13 @@ let mass_check_superlumt session =
 let mass_check_spils session =
   if Sundials_config.safe then
     match session.mass_callbacks with
-    | SpilsMassCallback _ | SpilsBandMassCallback _
-    | SpilsBBDMassCallback _ -> ()
+    | SpilsMassCallback _ -> ()
     | _ -> raise Sundials.InvalidLinearSolver
 
 let mass_check_spils_band session =
   if Sundials_config.safe then
-    match session.mass_callbacks with
-    | SpilsBandMassCallback _ -> ()
+    match session.mass_precfns with
+    | BandedMassPrecFns -> ()
     | _ -> raise Sundials.InvalidLinearSolver
 
 (* Types that depend on session *)

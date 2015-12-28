@@ -109,26 +109,17 @@ module SpilsTypes' = struct
 
   type 'a jac_times_vec_fn = 'a -> 'a -> 'a -> bool -> bool
 
-  type 'a callbacks =
+  type 'a precfns =
     {
       prec_solve_fn : 'a prec_solve_fn option;
-
       prec_setup_fn : 'a prec_setup_fn option;
-
-      jac_times_vec_fn : 'a jac_times_vec_fn option;
-    }
-
-  let no_prec_callbacks = {
-      prec_solve_fn = None;
-      prec_setup_fn = None;
-      jac_times_vec_fn = None;
     }
 end
 
 module KinsolBbdParamTypes = struct
   type 'a local_fn = 'a -> 'a -> unit
   type 'a comm_fn = 'a -> unit
-  type 'a callbacks =
+  type 'a precfns =
     {
       local_fn : 'a local_fn;
       comm_fn  : 'a comm_fn option;
@@ -174,6 +165,7 @@ type ('a, 'k) session = {
   mutable infoh      : infoh;
 
   mutable ls_callbacks : ('a, 'k) linsolv_callbacks;
+  mutable ls_precfns : 'a linsolv_precfns;
 }
 
 and ('a, 'kind) linsolv_callbacks =
@@ -185,10 +177,14 @@ and ('a, 'kind) linsolv_callbacks =
   | SlsKluCallback of SlsTypes.sparse_jac_callback
   | SlsSuperlumtCallback of SlsTypes.sparse_jac_callback
 
-  | SpilsCallback of 'a SpilsTypes'.callbacks
-  | SpilsBBDCallback of 'a KinsolBbdParamTypes.callbacks
+  | SpilsCallback of 'a SpilsTypes'.jac_times_vec_fn option
 
   | AlternateCallback of ('a, 'kind) alternate_linsolv
+
+and 'a linsolv_precfns =
+  | NoPrecFns
+  | PrecFns of 'a SpilsTypes'.precfns
+  | BBDPrecFns of 'a KinsolBbdParamTypes.precfns
 
 and ('data, 'kind) alternate_linsolv =
   {
@@ -227,13 +223,13 @@ let ls_check_superlumt session =
 let ls_check_spils session =
   if Sundials_config.safe then
     match session.ls_callbacks with
-    | SpilsCallback _ | SpilsBBDCallback _ -> ()
+    | SpilsCallback _ -> ()
     | _ -> raise Sundials.InvalidLinearSolver
 
 let ls_check_spils_bbd session =
   if Sundials_config.safe then
-    match session.ls_callbacks with
-    | SpilsBBDCallback _ -> ()
+    match session.ls_precfns with
+    | BBDPrecFns _ -> ()
     | _ -> raise Sundials.InvalidLinearSolver
 
 (* Types that depend on session *)

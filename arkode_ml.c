@@ -437,9 +437,9 @@ static int precsetupfn(realtype t,
     args[1] = Val_bool(jok);
     args[2] = caml_copy_double(gamma);
 
-    cb = ARKODE_LS_CALLBACKS_FROM_ML (session);
+    cb = ARKODE_LS_PRECFNS_FROM_ML (session);
     cb = Field (cb, 0);
-    cb = Field (cb, RECORD_ARKODE_SPILS_CALLBACKS_PREC_SETUP_FN);
+    cb = Field (cb, RECORD_ARKODE_SPILS_PRECFNS_PREC_SETUP_FN);
     cb = Some_val (cb);
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -494,9 +494,9 @@ static int precsolvefn(realtype t,
     args[2] = NVEC_BACKLINK(z);
 
     WEAK_DEREF (session, *(value*)user_data);
-    cb = ARKODE_LS_CALLBACKS_FROM_ML(session);
+    cb = ARKODE_LS_PRECFNS_FROM_ML(session);
     cb = Field (cb, 0);
-    cb = Field (cb, RECORD_ARKODE_SPILS_CALLBACKS_PREC_SOLVE_FN);
+    cb = Field (cb, RECORD_ARKODE_SPILS_PRECFNS_PREC_SOLVE_FN);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback3_exn(cb, args[0], args[1], args[2]);
@@ -523,7 +523,6 @@ static int jactimesfn(N_Vector v,
     WEAK_DEREF (session, *(value*)user_data);
     cb = ARKODE_LS_CALLBACKS_FROM_ML(session);
     cb = Field (cb, 0);
-    cb = Field (cb, RECORD_ARKODE_SPILS_CALLBACKS_JAC_TIMES_VEC_FN);
     cb = Some_val (cb);
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -895,7 +894,6 @@ static int masstimesfn(N_Vector v,
     WEAK_DEREF (session, *(value*)user_data);
     cb = ARKODE_LS_CALLBACKS_FROM_ML(session);
     cb = Field (cb, 0);
-    cb = Field (cb, RECORD_ARKODE_SPILS_MASS_CALLBACKS_TIMES_VEC_FN);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback3_exn(cb, args[0], args[1], args[2]);
@@ -918,9 +916,9 @@ static int massprecsetupfn(realtype t,
     args[0] = caml_copy_double(t);
     args[1] = arkode_make_triple_tmp(tmp1, tmp2, tmp3);
 
-    cb = ARKODE_MASS_CALLBACKS_FROM_ML (session);
+    cb = ARKODE_MASS_PRECFNS_FROM_ML (session);
     cb = Field (cb, 0);
-    cb = Field (cb, RECORD_ARKODE_SPILS_MASS_CALLBACKS_PREC_SETUP_FN);
+    cb = Field (cb, RECORD_ARKODE_SPILS_MASS_PRECFNS_PREC_SETUP_FN);
     cb = Some_val (cb);
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -970,9 +968,9 @@ static int massprecsolvefn(realtype t,
     args[2] = NVEC_BACKLINK(z);
 
     WEAK_DEREF (session, *(value*)user_data);
-    cb = ARKODE_MASS_CALLBACKS_FROM_ML(session);
+    cb = ARKODE_MASS_PRECFNS_FROM_ML(session);
     cb = Field (cb, 0);
-    cb = Field (cb, RECORD_ARKODE_SPILS_MASS_CALLBACKS_PREC_SOLVE_FN);
+    cb = Field (cb, RECORD_ARKODE_SPILS_MASS_PRECFNS_PREC_SOLVE_FN);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback3_exn(cb, args[0], args[1], args[2]);

@@ -74,6 +74,7 @@ module Diag =
 
     let solver session nv =
       c_cvode_diag session;
+      session.ls_precfns <- NoPrecFns;
       session.ls_callbacks <- DiagNoCallbacks
 
     external get_work_space       : ('a, 'k) session -> int * int
@@ -117,6 +118,7 @@ module Dls =
         match jac with
         | None   -> DlsDenseCallback no_dense_callback
         | Some f -> DlsDenseCallback { jacfn = f; dmat = None });
+      session.ls_precfns <- NoPrecFns;
       c_dls_dense session neqs (jac <> None)
 
     let lapack_dense ?jac () session nv =
@@ -125,6 +127,7 @@ module Dls =
         match jac with
         | None   -> DlsDenseCallback no_dense_callback
         | Some f -> DlsDenseCallback { jacfn = f; dmat = None });
+      session.ls_precfns <- NoPrecFns;
       c_dls_lapack_dense session neqs (jac <> None)
 
     let band ?jac p session nv =
@@ -133,6 +136,7 @@ module Dls =
         match jac with
         | None   -> DlsBandCallback no_band_callback
         | Some f -> DlsBandCallback { bjacfn = f; bmat = None });
+      session.ls_precfns <- NoPrecFns;
       c_dls_band (session, neqs) p.mupper p.mlower (jac <> None)
 
     let lapack_band ?jac p session nv =
@@ -141,6 +145,7 @@ module Dls =
         match jac with
         | None   -> DlsBandCallback no_band_callback
         | Some f -> DlsBandCallback { bjacfn = f; bmat = None });
+      session.ls_precfns <- NoPrecFns;
       c_dls_lapack_band (session, neqs) p.mupper p.mlower (jac <> None)
 
     let invalidate_callback session =
@@ -248,13 +253,11 @@ module Spils =
 
     let init_preconditioner solve setup session nv =
       c_set_preconditioner session (setup <> None);
-      session.ls_callbacks <-
-        SpilsCallback { prec_solve_fn = solve;
-                        prec_setup_fn = setup;
-                        jac_times_vec_fn = None }
+      session.ls_precfns <- PrecFns { prec_solve_fn = solve;
+                                      prec_setup_fn = setup }
 
     let prec_none = InternalPrecNone (fun session nv ->
-        session.ls_callbacks <- SpilsCallback no_prec_callbacks)
+        session.ls_precfns <- NoPrecFns)
     let prec_left ?setup solve =
       InternalPrecLeft (init_preconditioner solve setup)
     let prec_right ?setup solve =
@@ -264,18 +267,16 @@ module Spils =
 
     let set_jac_times_vec_fn s f =
       match s.ls_callbacks with
-      | SpilsCallback cbs ->
+      | SpilsCallback _ ->
           c_set_jac_times_vec_fn s true;
-          s.ls_callbacks <- SpilsCallback { cbs with jac_times_vec_fn = Some f }
-      | SpilsBandCallback _ ->
-          c_set_jac_times_vec_fn s true;
-          s.ls_callbacks <- SpilsBandCallback (Some f)
+          s.ls_callbacks <- SpilsCallback (Some f)
       | _ -> raise Sundials.InvalidLinearSolver
 
     let init_spils init maxl jac_times_vec prec session nv =
       let with_prec prec_type set_prec =
         init session maxl prec_type;
         set_prec session nv;
+        session.ls_callbacks <- SpilsCallback jac_times_vec;
         match jac_times_vec with
         | None -> ()
         | Some jtv -> set_jac_times_vec_fn session jtv
@@ -297,21 +298,17 @@ module Spils =
 
     let set_preconditioner s ?setup solve =
       match s.ls_callbacks with
-      | SpilsCallback cbs ->
+      | SpilsCallback _ ->
           c_set_preconditioner s (setup <> None);
-          s.ls_callbacks <- SpilsCallback { cbs with
-                                            prec_setup_fn = setup;
-                                            prec_solve_fn = solve }
+          s.ls_precfns <- PrecFns { prec_setup_fn = setup;
+                                    prec_solve_fn = solve }
       | _ -> raise Sundials.InvalidLinearSolver
 
     let clear_jac_times_vec_fn s =
       match s.ls_callbacks with
-      | SpilsCallback cbs ->
+      | SpilsCallback _ ->
           c_set_jac_times_vec_fn s false;
-          s.ls_callbacks <- SpilsCallback { cbs with jac_times_vec_fn = None }
-      | SpilsBandCallback _ ->
-          c_set_jac_times_vec_fn s false;
-          s.ls_callbacks <- SpilsBandCallback None
+          s.ls_callbacks <- SpilsCallback None
       | _ -> raise Sundials.InvalidLinearSolver
 
     external set_prec_type
@@ -431,10 +428,10 @@ module Spils =
       let init_preconditioner bandrange session nv =
         c_set_preconditioner session (RealArray.length (Nvector.unwrap nv))
           bandrange.mupper bandrange.mlower;
-        session.ls_callbacks <- SpilsBandCallback None
+        session.ls_precfns <- BandedPrecFns
 
       let prec_none = InternalPrecNone (fun session nv ->
-          session.ls_callbacks <- SpilsBandCallback None)
+          session.ls_precfns <- BandedPrecFns)
       let prec_left bandrange =
         InternalPrecLeft (init_preconditioner bandrange)
       let prec_right bandrange =
@@ -477,6 +474,7 @@ module Alternate =
     let make f s nv =
       let { linit; lsetup; lsolve } as cb = f s nv in
       c_set_alternate s (linit <> None) (lsetup <> None);
+      s.ls_precfns <- NoPrecFns;
       s.ls_callbacks <- AlternateCallback cb
 
   end
@@ -486,6 +484,7 @@ external c_set_functional : ('a, 'k) session -> unit
 
 let set_iter_type session nv iter =
   session.ls_callbacks <- NoCallbacks;
+  session.ls_precfns <- NoPrecFns;
   match iter with
   | Functional -> c_set_functional session
   | Newton linsolv -> linsolv session nv
@@ -549,6 +548,7 @@ let init lmm iter tol f ?(roots=no_roots) t0 y0 =
           errw         = dummy_errw;
 
           ls_callbacks = NoCallbacks;
+          ls_precfns   = NoPrecFns;
 
           sensext      = NoSensExt;
         } in

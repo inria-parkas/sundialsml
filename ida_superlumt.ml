@@ -26,6 +26,7 @@ external c_superlumt : serial_session -> int -> int -> int -> unit
 
 let superlumt f ~nnz ~nthreads session nv nv' =
   let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
+  session.ls_precfns <- NoPrecFns;
   session.ls_callbacks <- SlsSuperlumtCallback { jacfn = f; smat = None };
   c_superlumt session neqs nnz nthreads
 

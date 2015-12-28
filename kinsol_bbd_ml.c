@@ -60,9 +60,9 @@ static int bbdlocal(long int nlocal, N_Vector u, N_Vector gval, void *user_data)
     args[1] = NVEC_BACKLINK(gval);
 
     WEAK_DEREF (session, *(value*)user_data);
-    cb = KINSOL_LS_CALLBACKS_FROM_ML (session);
+    cb = KINSOL_LS_PRECFNS_FROM_ML (session);
     cb = Field (cb, 0);
-    cb = Field (cb, RECORD_KINSOL_BBD_CALLBACKS_LOCAL_FN);
+    cb = Field (cb, RECORD_KINSOL_BBD_PRECFNS_LOCAL_FN);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback2_exn (cb, args[0], args[1]);
@@ -78,10 +78,10 @@ static int bbdcomm(long int nlocal, N_Vector u, void *user_data)
     CAMLparam0();
     CAMLlocal2(session, cb);
 
-    cb = KINSOL_LS_CALLBACKS_FROM_ML (session);
+    cb = KINSOL_LS_PRECFNS_FROM_ML (session);
     cb = Field (cb, 0);
-    cb = Field (cb, RECORD_KINSOL_BBD_CALLBACKS_LOCAL_FN);
-    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_KINSOL_BBD_PRECFNS_LOCAL_FN);
+    cb = Some_val (cb);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback_exn (cb, NVEC_BACKLINK(u));

@@ -115,24 +115,17 @@ module SpilsTypes' = struct
     -> 'a           (* Jv *)
     -> unit
 
-  type 'a callbacks =
+  type 'a precfns =
     {
       prec_solve_fn : 'a prec_solve_fn;
       prec_setup_fn : 'a prec_setup_fn option;
-      jac_times_vec_fn : 'a jac_times_vec_fn option;
-    }
-
-  let no_prec_callbacks = {
-      prec_solve_fn = (fun _ _ _ _ -> crash "no prec solve callback");
-      prec_setup_fn = None;
-      jac_times_vec_fn = None;
     }
 end
 
 module IdaBbdParamTypes = struct
   type 'a local_fn = float -> 'a -> 'a -> 'a  -> unit
   type 'a comm_fn = float -> 'a -> 'a -> unit
-  type 'a callbacks =
+  type 'a precfns =
     {
       local_fn : 'a local_fn;
       comm_fn  : 'a comm_fn option;
@@ -358,17 +351,10 @@ module AdjointTypes' = struct
       -> 'a
       -> unit
 
-    type 'a callbacks =
+    type 'a precfns =
       {
         prec_solve_fn : 'a prec_solve_fn;
         prec_setup_fn : 'a prec_setup_fn option;
-        jac_times_vec_fn : 'a jac_times_vec_fn option;
-      }
-
-    let no_prec_callbacks = {
-        prec_solve_fn = (fun _ _ _ _ -> crash "no prec solve callback");
-        prec_setup_fn = None;
-        jac_times_vec_fn = None;
       }
   end
 end
@@ -376,7 +362,7 @@ end
 module IdasBbdParamTypes = struct
   type 'a local_fn = 'a AdjointTypes'.bresfn_args -> 'a -> unit
   type 'a comm_fn = 'a AdjointTypes'.bresfn_args -> unit
-  type 'a callbacks =
+  type 'a precfns =
     {
       local_fn : 'a local_fn;
       comm_fn  : 'a comm_fn option;
@@ -416,6 +402,7 @@ type ('a,'kind) session = {
   mutable errw       : 'a error_weight_fun;
 
   mutable ls_callbacks : ('a, 'kind) linsolv_callbacks;
+  mutable ls_precfns   : 'a linsolv_precfns;
 
   mutable sensext      : ('a, 'kind) sensext; (* Used by IDAS *)
 }
@@ -490,15 +477,22 @@ and ('a, 'kind) linsolv_callbacks =
       of AdjointTypes'.SlsTypes.sparse_jac_callback_with_sens
 
   (* Spils *)
-
-  | SpilsCallback of 'a SpilsTypes'.callbacks
-  | SpilsBBDCallback of 'a IdaBbdParamTypes.callbacks
-
-  | BSpilsCallback of 'a AdjointTypes'.SpilsTypes'.callbacks
-  | BSpilsBBDCallback of 'a IdasBbdParamTypes.callbacks
+  | SpilsCallback of 'a SpilsTypes'.jac_times_vec_fn option
+  | BSpilsCallback of 'a AdjointTypes'.SpilsTypes'.jac_times_vec_fn option
 
   (* Alternate *)
   | AlternateCallback of ('a, 'kind) alternate_linsolv
+
+and 'a linsolv_precfns =
+  | NoPrecFns
+
+  | PrecFns of 'a SpilsTypes'.precfns
+  | BPrecFns of 'a AdjointTypes'.SpilsTypes'.precfns
+
+  | BandedPrecFns
+
+  | BBDPrecFns of 'a IdaBbdParamTypes.precfns
+  | BBBDPrecFns of 'a IdasBbdParamTypes.precfns
 
 and ('data, 'kind) alternate_linsolv =
   {
@@ -557,14 +551,13 @@ let ls_check_superlumt session =
 let ls_check_spils session =
   if Sundials_config.safe then
     match session.ls_callbacks with
-    | SpilsCallback _ | SpilsBBDCallback _
-    | BSpilsCallback _ | BSpilsBBDCallback _ -> ()
+    | SpilsCallback _ | BSpilsCallback _ -> ()
     | _ -> raise Sundials.InvalidLinearSolver
 
 let ls_check_spils_bbd session =
   if Sundials_config.safe then
-    match session.ls_callbacks with
-    | SpilsBBDCallback _ | BSpilsBBDCallback _ -> ()
+    match session.ls_precfns with
+    | BBDPrecFns _ | BBBDPrecFns _ -> ()
     | _ -> raise Sundials.InvalidLinearSolver
 
 (* Types that depend on session *)

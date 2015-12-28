@@ -382,9 +382,9 @@ static int bprecsolvefn(
     args[2] = NVEC_BACKLINK(zvecb);
 
     WEAK_DEREF (session, *(value*)user_data);
-    cb = CVODE_LS_CALLBACKS_FROM_ML (session);
+    cb = CVODE_LS_PRECFNS_FROM_ML (session);
     cb = Field (cb, 0);
-    cb = Field (cb, RECORD_CVODES_BSPILS_CALLBACKS_PREC_SOLVE_FN);
+    cb = Field (cb, RECORD_CVODES_BSPILS_PRECFNS_PREC_SOLVE_FN);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback3_exn (cb, args[0], args[1], args[2]);
@@ -415,9 +415,9 @@ static int bprecsetupfn(
     args[2] = caml_copy_double(gammab);
 
     WEAK_DEREF (session, *(value*)user_data);
-    cb = CVODE_LS_CALLBACKS_FROM_ML (session);
+    cb = CVODE_LS_PRECFNS_FROM_ML (session);
     cb = Field (cb, 0);
-    cb = Field (cb, RECORD_CVODES_BSPILS_CALLBACKS_PREC_SETUP_FN);
+    cb = Field (cb, RECORD_CVODES_BSPILS_PRECFNS_PREC_SETUP_FN);
     cb = Field (cb, 0);
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -452,8 +452,7 @@ static int bjactimesfn(N_Vector vb,
     WEAK_DEREF (session, *(value*)user_data);
     cb = CVODE_LS_CALLBACKS_FROM_ML (session);
     cb = Field (cb, 0);
-    cb = Field (cb, RECORD_CVODES_BSPILS_CALLBACKS_JAC_TIMES_VEC_FN);
-    cb = Field (cb, 0);
+    cb = Some_val (cb);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback3_exn (cb, args[0], args[1], args[2]);

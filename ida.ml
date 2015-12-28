@@ -109,6 +109,7 @@ module Dls =
         match jac with
         | None   -> DlsDenseCallback no_dense_callback
         | Some f -> DlsDenseCallback { jacfn = f; dmat = None });
+      session.ls_precfns <- NoPrecFns;
       c_dls_dense session neqs (jac <> None)
 
     let lapack_dense ?jac () session nv nv' =
@@ -117,6 +118,7 @@ module Dls =
         match jac with
         | None   -> DlsDenseCallback no_dense_callback
         | Some f -> DlsDenseCallback { jacfn = f; dmat = None });
+      session.ls_precfns <- NoPrecFns;
       c_dls_lapack_dense session neqs (jac <> None)
 
     let band ?jac p session nv nv' =
@@ -125,6 +127,7 @@ module Dls =
         match jac with
         | None   -> DlsBandCallback no_band_callback
         | Some f -> DlsBandCallback { bjacfn = f; bmat = None });
+      session.ls_precfns <- NoPrecFns;
       c_dls_band session neqs p.mupper p.mlower (jac <> None)
 
     let lapack_band ?jac p session nv nv' =
@@ -133,6 +136,7 @@ module Dls =
         match jac with
         | None   -> DlsBandCallback no_band_callback
         | Some f -> DlsBandCallback { bjacfn = f; bmat = None });
+      session.ls_precfns <- NoPrecFns;
       c_dls_lapack_band session neqs p.mupper p.mlower (jac <> None)
 
     let invalidate_callback session =
@@ -243,21 +247,19 @@ module Spils =
 
     let init_preconditioner solve setup session nv nv' =
       c_set_preconditioner session (setup <> None);
-      session.ls_callbacks <-
-        SpilsCallback { prec_solve_fn = solve;
-                        prec_setup_fn = setup;
-                        jac_times_vec_fn = None }
+      session.ls_precfns <- PrecFns { prec_solve_fn = solve;
+                                      prec_setup_fn = setup }
 
     let prec_none = InternalPrecNone (fun session nv nv' ->
-        session.ls_callbacks <- SpilsCallback no_prec_callbacks)
+        session.ls_precfns <- NoPrecFns)
     let prec_left ?setup solve =
       InternalPrecLeft (init_preconditioner solve setup)
 
     let set_jac_times_vec_fn s f =
       match s.ls_callbacks with
-      | SpilsCallback cbs ->
+      | SpilsCallback _ ->
           c_set_jac_times_vec_fn s true;
-          s.ls_callbacks <- SpilsCallback { cbs with jac_times_vec_fn = Some f }
+          s.ls_callbacks <- SpilsCallback (Some f)
       | _ -> raise Sundials.InvalidLinearSolver
 
     let init_spils init maxl jac_times_vec prec session nv nv' =
@@ -265,6 +267,7 @@ module Spils =
       (match prec with
        | InternalPrecNone set_prec -> set_prec session nv nv'
        | InternalPrecLeft set_prec -> set_prec session nv nv');
+      session.ls_callbacks <- SpilsCallback jac_times_vec;
       (match jac_times_vec with
        | None -> ()
        | Some jtv -> set_jac_times_vec_fn session jtv)
@@ -283,18 +286,17 @@ module Spils =
 
     let set_preconditioner s ?setup solve =
       match s.ls_callbacks with
-      | SpilsCallback cbs ->
+      | SpilsCallback _ ->
           c_set_preconditioner s (setup <> None);
-          s.ls_callbacks <- SpilsCallback { cbs with
-                                            prec_setup_fn = setup;
-                                            prec_solve_fn = solve }
+          s.ls_precfns <- PrecFns { prec_setup_fn = setup;
+                                    prec_solve_fn = solve }
       | _ -> raise Sundials.InvalidLinearSolver
 
     let clear_jac_times_vec_fn s =
       match s.ls_callbacks with
-      | SpilsCallback cbs ->
+      | SpilsCallback _ ->
           c_set_jac_times_vec_fn s false;
-          s.ls_callbacks <- SpilsCallback { cbs with jac_times_vec_fn = None }
+          s.ls_callbacks <- SpilsCallback None
       | _ -> raise Sundials.InvalidLinearSolver
 
     external set_gs_type : ('a, 'k) session -> Spils.gramschmidt_type -> unit
@@ -380,6 +382,7 @@ module Alternate =
     let make f s nv nv' =
       let { linit; lsetup; lsolve } as cb = f s nv nv' in
       c_set_alternate s (linit <> None) (lsetup <> None);
+      s.ls_precfns <- NoPrecFns;
       s.ls_callbacks <- AlternateCallback cb
 
     external get_cj : ('data, 'kind) session -> float = "c_ida_get_cj"
@@ -389,6 +392,7 @@ module Alternate =
 
 let set_linear_solver session solver nv nv' =
   session.ls_callbacks <- NoCallbacks;
+  session.ls_precfns <- NoPrecFns;
   solver session nv nv'
 
 external sv_tolerances
@@ -459,6 +463,7 @@ let init linsolv tol resfn ?varid ?(roots=no_roots) t0 y y' =
                   errh       = dummy_errh;
                   errw       = dummy_errw;
                   ls_callbacks = NoCallbacks;
+                  ls_precfns = NoPrecFns;
                   sensext    = NoSensExt;
                 }
   in

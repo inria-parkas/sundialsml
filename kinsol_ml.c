@@ -329,10 +329,10 @@ static int precsetupfn(
     args[1] = make_prec_solve_arg(uscale, fscale);
 
     WEAK_DEREF (session, *(value*)user_data);
-    cb = KINSOL_LS_CALLBACKS_FROM_ML (session);
+    cb = KINSOL_LS_PRECFNS_FROM_ML (session);
     cb = Field (cb, 0);
-    cb = Field (cb, RECORD_KINSOL_SPILS_CALLBACKS_PREC_SETUP_FN);
-    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_KINSOL_SPILS_PRECFNS_PREC_SETUP_FN);
+    cb = Some_val (cb);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback2_exn(cb, args[0], args[1]);
@@ -358,10 +358,10 @@ static int precsolvefn(
     args[2] = NVEC_BACKLINK(vv);
 
     WEAK_DEREF (session, *(value*)user_data);
-    cb = KINSOL_LS_CALLBACKS_FROM_ML (session);
+    cb = KINSOL_LS_PRECFNS_FROM_ML (session);
     cb = Field (cb, 0);
-    cb = Field (cb, RECORD_KINSOL_SPILS_CALLBACKS_PREC_SOLVE_FN);
-    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_KINSOL_SPILS_PRECFNS_PREC_SOLVE_FN);
+    cb = Some_val (cb);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback3_exn(cb, args[0], args[1], args[2]);
@@ -388,8 +388,7 @@ static int jactimesfn(
     WEAK_DEREF (session, *(value*)user_data);
     cb = KINSOL_LS_CALLBACKS_FROM_ML (session);
     cb = Field (cb, 0);
-    cb = Field (cb, RECORD_KINSOL_SPILS_CALLBACKS_JAC_TIMES_VEC_FN);
-    cb = Field (cb, 0);
+    cb = Some_val (cb);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callbackN_exn (cb, 4, args);

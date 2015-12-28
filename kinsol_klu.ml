@@ -26,6 +26,7 @@ external c_klu : serial_session -> int -> int -> unit
 let klu f nnz session nv =
   session.neqs <- Sundials.RealArray.length (Nvector.unwrap nv);
   session.ls_callbacks <- SlsKluCallback { jacfn = f; smat = None };
+  session.ls_precfns <- NoPrecFns;
   c_klu session session.neqs nnz
 
 external c_set_ordering : serial_session -> ordering -> unit

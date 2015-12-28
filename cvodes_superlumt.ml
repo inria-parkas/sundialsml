@@ -43,6 +43,7 @@ let superlumt f ~nnz ~nthreads bs nv =
             BSlsSuperlumtCallbackSens { jacfn = fbs; smat = None };
          true)
   in
+  session.ls_precfns <- NoPrecFns;
   c_superlumtb (AdjointTypes.parent_and_which bs) neqs nnz nthreads use_sens
 
 let set_ordering bs = Cvode_superlumt.set_ordering (tosession bs)

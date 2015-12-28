@@ -25,13 +25,13 @@ let tosession = AdjointTypes.tosession
 module Impl = CvodesBbdParamTypes
 type local_fn = Nvector_parallel.data Impl.local_fn
 type comm_fn = Nvector_parallel.data Impl.comm_fn
-type callbacks =
+type precfns =
   {
     local_fn : local_fn;
     comm_fn : comm_fn option;
   }
 
-let bbd_callbacks { local_fn; comm_fn } =
+let bbd_precfns { local_fn; comm_fn } =
   { Impl.local_fn = local_fn; Impl.comm_fn = comm_fn }
 
 external c_bbd_prec_initb
@@ -44,12 +44,12 @@ let parent_and_which s =
   | BwdSensExt se -> (se.parent, se.which)
   | _ -> failwith "Internal error: bsession invalid"
 
-let init_preconditioner dqrely bandwidths callbacks bs parent which nv =
+let init_preconditioner dqrely bandwidths precfns bs parent which nv =
   let ba, _, _ = Nvector.unwrap nv in
   let localn   = Sundials.RealArray.length ba in
   c_bbd_prec_initb (parent, which) localn bandwidths dqrely
-    (callbacks.comm_fn <> None);
-  (tosession bs).ls_callbacks <- BSpilsBBDCallback (bbd_callbacks callbacks)
+    (precfns.comm_fn <> None);
+  (tosession bs).ls_precfns <- BBBDPrecFns (bbd_precfns precfns)
 
 let prec_left ?(dqrely=0.0) bandwidths ?comm_fn local_fn =
   AdjointTypes.SpilsTypes.InternalPrecLeft
@@ -69,8 +69,8 @@ external c_bbd_prec_reinitb
 
 let reinit bs ?(dqrely=0.0) mudq mldq =
   ls_check_spils_bbd (tosession bs);
-  match (tosession bs).ls_callbacks with
-  | BSpilsBBDCallback _ ->
+  match (tosession bs).ls_precfns with
+  | BBBDPrecFns _ ->
     let parent, which = parent_and_which bs in
     c_bbd_prec_reinitb parent which mudq mldq dqrely
   | _ -> raise Sundials.InvalidLinearSolver
