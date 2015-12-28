@@ -773,7 +773,7 @@ CAMLprim value c_kinsol_solve(value vdata, value vu, value vstrategy,
     N_Vector fscale = NVEC_VAL (vfscale);
 
     int strategy = KIN_NONE;
-    switch (Tag_val(vstrategy)) {
+    switch (Int_val(vstrategy)) {
     case VARIANT_KINSOL_STRATEGY_NEWTON:
 	strategy = KIN_NONE;
 	break;
