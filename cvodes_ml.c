@@ -392,6 +392,47 @@ static int bprecsolvefn(
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
+static int bprecsolvefn_withsens(
+	realtype t,
+	N_Vector y,
+	N_Vector *yS,
+	N_Vector yb,
+	N_Vector fyb,
+	N_Vector rvecb,
+	N_Vector zvecb,
+	realtype gammab,
+	realtype deltab,
+	int lrb,
+	void *user_data,
+	N_Vector tmpb)
+{
+    CAMLparam0();
+    CAMLlocalN(args, 4);
+    CAMLlocal3(session, bsensext, cb);
+    int ns;
+
+    WEAK_DEREF (session, *(value*)user_data);
+    bsensext = CVODE_SENSEXT_FROM_ML(session);
+
+    args[0] = cvodes_make_jac_arg(t, y, yb, fyb, NVEC_BACKLINK(tmpb));
+    args[1] = make_spils_solve_arg(rvecb, gammab, deltab, lrb);
+
+    ns = Int_val(Field(bsensext, RECORD_CVODES_BWD_SESSION_NUMSENSITIVITIES));
+    args[2] = CVODES_BSENSARRAY_FROM_EXT(bsensext);
+    cvodes_wrap_to_nvector_table(ns, args[2], yS);
+
+    args[3] = NVEC_BACKLINK(zvecb);
+
+    cb = CVODE_LS_PRECFNS_FROM_ML (session);
+    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_CVODES_BSPILS_PRECFNS_PREC_SOLVE_FN);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (cb, 4, args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
+}
+
 static int bprecsetupfn(
     realtype t,
     N_Vector y,
@@ -418,7 +459,7 @@ static int bprecsetupfn(
     cb = CVODE_LS_PRECFNS_FROM_ML (session);
     cb = Field (cb, 0);
     cb = Field (cb, RECORD_CVODES_BSPILS_PRECFNS_PREC_SETUP_FN);
-    cb = Field (cb, 0);
+    cb = Some_val (cb);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback3_exn (cb, args[0], args[1], args[2]);
@@ -432,14 +473,64 @@ static int bprecsetupfn(
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
-static int bjactimesfn(N_Vector vb,
-		       N_Vector Jvb,
-		       realtype t,
-		       N_Vector y,
-		       N_Vector yb,
-		       N_Vector fyb,
-		       void *user_data,
-		       N_Vector tmpb)
+static int bprecsetupfn_withsens(
+    realtype t,
+    N_Vector y,
+    N_Vector *yS,
+    N_Vector yb,
+    N_Vector fyb,
+    booleantype jokb,
+    booleantype *jcurPtrB,
+    realtype gammab,
+    void *user_data,
+    N_Vector tmp1b,
+    N_Vector tmp2b,
+    N_Vector tmp3b)
+{
+    CAMLparam0();
+    CAMLlocal3(session, bsensext, cb);
+    CAMLlocalN(args, 4);
+    int ns;
+
+    WEAK_DEREF (session, *(value*)user_data);
+    bsensext = CVODE_SENSEXT_FROM_ML(session);
+
+    args[0] = cvodes_make_jac_arg(t, y, yb, fyb,
+		cvode_make_triple_tmp(tmp1b, tmp2b, tmp3b));
+
+    ns = Int_val(Field(bsensext, RECORD_CVODES_BWD_SESSION_NUMSENSITIVITIES));
+    args[1] = CVODES_BSENSARRAY_FROM_EXT(bsensext);
+    cvodes_wrap_to_nvector_table(ns, args[1], yS);
+
+    args[2] = Val_bool(jokb);
+    args[3] = caml_copy_double(gammab);
+
+    cb = CVODE_LS_PRECFNS_FROM_ML (session);
+    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_CVODES_BSPILS_PRECFNS_PREC_SETUP_FN);
+    cb = Some_val (cb);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (cb, 4, args);
+
+    /* Update jcurPtr; leave it unchanged if an error occurred.  */
+    if (!Is_exception_result (r)) {
+	*jcurPtrB = Bool_val (r);
+	CAMLreturnT (int, 0);
+    }
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
+}
+
+static int bjactimesfn(
+    N_Vector vb,
+    N_Vector Jvb,
+    realtype t,
+    N_Vector y,
+    N_Vector yb,
+    N_Vector fyb,
+    void *user_data,
+    N_Vector tmpb)
 {
     CAMLparam0();
     CAMLlocal2(session, cb);
@@ -456,6 +547,45 @@ static int bjactimesfn(N_Vector vb,
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback3_exn (cb, args[0], args[1], args[2]);
+
+    /* NB: jac_times_vec doesn't accept RecoverableFailure. */
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
+}
+
+static int bjactimesfn_withsens(
+    N_Vector vb,
+    N_Vector Jvb,
+    realtype t,
+    N_Vector y,
+    N_Vector *yS,
+    N_Vector yb,
+    N_Vector fyb,
+    void *user_data,
+    N_Vector tmpb)
+{
+    CAMLparam0();
+    CAMLlocal3(session, bsensext, cb);
+    CAMLlocalN(args, 4);
+    int ns;
+
+    WEAK_DEREF (session, *(value*)user_data);
+    bsensext = CVODE_SENSEXT_FROM_ML(session);
+
+    args[0] = cvodes_make_jac_arg(t, y, yb, fyb, NVEC_BACKLINK(tmpb));
+
+    ns = Int_val(Field(bsensext, RECORD_CVODES_BWD_SESSION_NUMSENSITIVITIES));
+    args[1] = CVODES_BSENSARRAY_FROM_EXT(bsensext);
+    cvodes_wrap_to_nvector_table(ns, args[1], yS);
+
+    args[2] = NVEC_BACKLINK(vb);
+    args[3] = NVEC_BACKLINK(Jvb);
+
+    cb = CVODE_LS_CALLBACKS_FROM_ML (session);
+    cb = Field (cb, 0);
+    cb = Some_val (cb);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (cb, 4, args);
 
     /* NB: jac_times_vec doesn't accept RecoverableFailure. */
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
@@ -1043,14 +1173,34 @@ CAMLprim value c_cvodes_adj_sv_tolerances(value vparent, value vwhich,
 
 CAMLprim value c_cvodes_adj_spils_set_preconditioner(value vparent,
 						     value vwhich,
-						     value vset_precsetup)
+						     value vset_precsetup,
+						     value vusesens)
 {
-    CAMLparam3(vparent, vwhich, vset_precsetup);
+    CAMLparam4(vparent, vwhich, vset_precsetup, vusesens);
     void *mem = CVODE_MEM_FROM_ML(vparent);
     int which = Int_val(vwhich);
-    CVSpilsPrecSetupFnB bsetup = Bool_val(vset_precsetup) ? bprecsetupfn : NULL;
-    int flag = CVSpilsSetPreconditionerB(mem, which, bsetup, bprecsolvefn);
-    SCHECK_FLAG ("CVSpilsSetPreconditionerB", flag);
+    int flag;
+
+    if (Bool_val(vusesens)) {
+#if SUNDIALS_LIB_VERSION >= 260
+	flag = CVSpilsSetPreconditionerBS(
+		    mem,
+		    which,
+		    Bool_val(vset_precsetup) ? bprecsetupfn_withsens : NULL,
+		    bprecsolvefn_withsens);
+	SCHECK_FLAG ("CVSpilsSetPreconditionerBS", flag);
+#else
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    } else {
+	flag = CVSpilsSetPreconditionerB(
+		    mem,
+		    which,
+		    Bool_val(vset_precsetup) ? bprecsetupfn : NULL,
+		    bprecsolvefn);
+	SCHECK_FLAG ("CVSpilsSetPreconditionerB", flag);
+    }
+
     CAMLreturn (Val_unit);
 }
 
@@ -1071,14 +1221,28 @@ CAMLprim value c_cvodes_adj_spils_set_banded_preconditioner(value vparent,
 
 CAMLprim value c_cvodes_adj_spils_set_jac_times_vec_fn(value vparent,
 						       value vwhich,
-						       value vset_jac)
+						       value vset_jac,
+						       value vusesens)
 {
-    CAMLparam3(vparent, vwhich, vset_jac);
+    CAMLparam4(vparent, vwhich, vset_jac, vusesens);
     void *mem = CVODE_MEM_FROM_ML(vparent);
     int which = Int_val(vwhich);
-    CVSpilsJacTimesVecFnB jac = Bool_val(vset_jac) ? bjactimesfn : NULL;
-    int flag = CVSpilsSetJacTimesVecFnB(mem, which, jac);
-    SCHECK_FLAG ("CVSpilsSetJacTimesVecFnB", flag);
+    int flag;
+
+    if (Bool_val(vusesens)) {
+#if SUNDIALS_LIB_VERSION >= 260
+	flag = CVSpilsSetJacTimesVecFnBS(mem, which,
+			Bool_val(vset_jac) ? bjactimesfn_withsens : NULL);
+	SCHECK_FLAG ("CVSpilsSetJacTimesVecFnB", flag);
+#else
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    } else {
+	flag = CVSpilsSetJacTimesVecFnB(mem, which,
+			Bool_val(vset_jac) ? bjactimesfn : NULL);
+	SCHECK_FLAG ("CVSpilsSetJacTimesVecFnB", flag);
+    }
+
     CAMLreturn (Val_unit);
 }
 

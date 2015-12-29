@@ -1033,8 +1033,8 @@ module Adjoint :
             Raising {!Sundials.RecoverableFailure} indicates a recoverable
             error. Any other exception is treated as an unrecoverable error.
 
-            {warning Neither the elements of [arg] nor the matrix [jac] should
-                     be accessed after the function has returned.}
+            {warning Neither the elements of [arg], [s] nor the matrix [jac]
+                     should be accessed after the function has returned.}
 
             @nocvodes <node7#ss:densejac_bs> CVDlsDenseJacFnBS *)
         type dense_jac_fn_with_sens
@@ -1241,10 +1241,11 @@ module Adjoint :
           }
 
         (** Callback functions that solve a linear system involving a
-            preconditioner matrix. In the call [prec_solve_fn jac arg z],
-            [jac] is a {!jacobian_arg} with one work vector, [arg] is
-            a {!prec_solve_arg} that specifies the linear system, and [z] is
-            computed to solve {% $P\mathtt{z} = \mathtt{arg.rhs}$%}.
+            preconditioner matrix without forward sensitivities.
+            In the call [prec_solve_fn jac arg z],
+            - [jac] is a {!jacobian_arg} with one work vector,
+            - [arg] is {!prec_solve_arg} that specifies the linear system, and
+            - [z] is computed to solve {% $P\mathtt{z} = \mathtt{arg.rhs}$%}.
             $P$ is a preconditioner matrix, which approximates, however crudely,
             the Newton matrix {% $M = I - \gamma J$%} where
             {% $J = \frac{\partial f}{\partial y}$%}.
@@ -1262,14 +1263,41 @@ module Adjoint :
           -> 'd
           -> unit
 
+        (** Callback functions that solve a linear system involving a
+            preconditioner matrix with forward sensitivities.
+            In the call [prec_solve_fn jac arg s z],
+            - [jac] is a {!jacobian_arg} with one work vector,
+            - [arg] is {!prec_solve_arg} that specifies the linear system,
+            - [s] is an array of forward sensitivity vectors, and
+            - [z] is computed to solve {% $P\mathtt{z} = \mathtt{arg.rhs}$%}.
+            $P$ is a preconditioner matrix, which approximates, however crudely,
+            the Newton matrix {% $M = I - \gamma J$%} where
+            {% $J = \frac{\partial f}{\partial y}$%}.
+
+            Raising {!Sundials.RecoverableFailure} indicates a recoverable
+            error. Any other exception is treated as an unrecoverable error.
+
+            {warning The elements of [jac], [arg], [s], and [z] should not be
+                     accessed after the function has returned.}
+
+            @nocvodes <node7#ss:psolve_bs> CVSpilsPrecSolveFnBS *)
+        type 'd prec_solve_fn_with_sens =
+          ('d, 'd) jacobian_arg
+          -> 'd prec_solve_arg
+          -> 'd array
+          -> 'd
+          -> unit
+
         (** Callback functions that preprocess or evaluate Jacobian-related data
-            needed by {!prec_solve_fn}. In the call
-            [prec_setup_fn jac jok gamma], [jac] is a {!jacobian_arg} with
-            three work vector, [jok] indicates whether any saved
-            Jacobian-related data can be reused with the current value of
-            [gamma], and [gamma] is the scalar $\gamma$ in the
-            Newton matrix {% $M = I - \gamma J$%} where $J$ is the Jacobian
-            matrix. A function should return [true] if Jacobian-related data was
+            needed by {!prec_solve_fn} without forward sensitivities.
+            In the call [prec_setup_fn jac s jok gamma],
+            - [jac] is a {!jacobian_arg} with three work vectors,
+            - [jok] indicates whether any saved Jacobian-related data can be
+                    reused with the current value of [gamma], and
+            - [gamma] is the scalar $\gamma$ in the Newton matrix
+                      {% $M = I - \gamma J$%} where $J$ is the Jacobian
+                      matrix.
+            A function should return [true] if Jacobian-related data was
             updated and [false] if saved data was reused.
 
             Raising {!Sundials.RecoverableFailure} indicates a recoverable
@@ -1285,12 +1313,41 @@ module Adjoint :
           -> float
           -> bool
 
-        (** Callback functions that compute the Jacobian times a vector. In the
-            call [jac_times_vec_fn arg v jv], [arg] is a {!jacobian_arg} with one
-            work vector, [v] is the vector multiplying the Jacobian, and [jv] is
-            the vector in which to store the
-            result—{% $\mathtt{jv} = J\mathtt{v}$%}.
-          
+        (** Callback functions that preprocess or evaluate Jacobian-related data
+            needed by {!prec_solve_fn} with forward sensitivities.
+            In the call [prec_setup_fn jac s jok gamma],
+            - [jac] is a {!jacobian_arg} with three work vectors,
+            - [s] is an array of forward sensitivity vectors,
+            - [jok] indicates whether any saved Jacobian-related data can be
+                    reused with the current value of [gamma], and
+            - [gamma] is the scalar $\gamma$ in the Newton matrix
+                      {% $M = I - \gamma J$%} where $J$ is the Jacobian
+                      matrix.
+            A function should return [true] if Jacobian-related data was
+            updated and [false] if saved data was reused.
+
+            Raising {!Sundials.RecoverableFailure} indicates a recoverable
+            error. Any other exception is treated as an unrecoverable error.
+
+            {warning The elements of [jac] should not be accessed after the
+                     function has returned.}
+
+            @nocvodes <node7#ss:psetup_bs> CVSpilsPrecSetupFnBS *)
+        type 'd prec_setup_fn_with_sens =
+          ('d triple, 'd) jacobian_arg
+          -> 'd array
+          -> bool
+          -> float
+          -> bool
+
+        (** Callback functions that compute the Jacobian times a vector without
+            forward sensitivities.
+            In the call [jac_times_vec_fn arg v jv],
+            - [arg] is a {!jacobian_arg} with one work vector,
+            - [v] is the vector multiplying the Jacobian, and
+            - [jv] is the vector in which to store the
+                   result—{% $\mathtt{jv} = J\mathtt{v}$%}.
+
             Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
             Any other exception is treated as an unrecoverable error.
 
@@ -1298,11 +1355,44 @@ module Adjoint :
                      accessed after the function has returned.}
 
             @cvodes <node7#ss:jtimesv_b> CVSpilsJacTimesVecFnB *)
-        type 'd jac_times_vec_fn =
+        type 'd jac_times_vec_fn_no_sens =
           ('d, 'd) jacobian_arg
           -> 'd
           -> 'd
           -> unit
+
+        (** Callback functions that compute the Jacobian times a vector with
+            forward sensitivities.
+            In the call [jac_times_vec_fn arg s v jv],
+            - [arg] is a {!jacobian_arg} with one work vector,
+            - [s] is an array of forward sensitivity vectors,
+            - [v] is the vector multiplying the Jacobian, and
+            - [jv] is the vector in which to store the
+                   result—{% $\mathtt{jv} = J\mathtt{v}$%}.
+
+            Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+            Any other exception is treated as an unrecoverable error.
+
+            {warning Neither the elements of [arg], [s], [v], nor [jv] should be
+                     accessed after the function has returned.}
+
+            @nocvodes <node7#ss:jtimesv_bs> CVSpilsJacTimesVecFnBS *)
+        type 'd jac_times_vec_fn_with_sens =
+          ('d, 'd) jacobian_arg
+          -> 'd array
+          -> 'd
+          -> 'd
+          -> unit
+
+        (** Callback functions that compute the Jacobian times a vector.
+
+            @cvodes <node7#ss:jtimesv_b> CVSpilsJacTimesVecFnB
+            @nocvodes <node7#ss:jtimesv_bs> CVSpilsJacTimesVecFnBS *)
+        type 'd jac_times_vec_fn =
+          | NoSens of 'd jac_times_vec_fn_no_sens
+            (** Does not depend on forward sensitivities. *)
+          | WithSens of 'd jac_times_vec_fn_with_sens
+            (** Depends on forward sensitivities. *)
 
         (** Specifies a preconditioner, including the type of preconditioning
             (none, left, right, or both) and callback functions. The following
@@ -1314,30 +1404,55 @@ module Adjoint :
 
             @cvodes <node7#SECTION00728400000000000000> CVSpilsSetPreconditionerB
             @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB
-            @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB *)
+            @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB
+            @nocvodes <node7#ss:psolve_bs> CVSpilsPrecSolveFnBS
+            @nocvodes <node7#ss:psetup_bs> CVSpilsPrecSetupFnBS *)
         type ('d, 'k) preconditioner =
           ('d, 'k) AdjointTypes.SpilsTypes.preconditioner
 
         (** No preconditioning.  *)
         val prec_none : ('d, 'k) preconditioner
 
-        (** Left preconditioning. {% $(P^{-1}A)x = P^{-1}b$ %}. *)
+        (** Left preconditioning without forward sensitivities.
+            {% $(P^{-1}A)x = P^{-1}b$ %}. *)
         val prec_left :
           ?setup:'d prec_setup_fn
           -> 'd prec_solve_fn
           -> ('d, 'k) preconditioner
 
-        (** Right preconditioning. {% $(AP^{-1})Px = b$ %}. *)
+        (** Left preconditioning with forward sensitiviites.
+            {% $(P^{-1}A)x = P^{-1}b$ %}. *)
+        val prec_left_with_sens :
+          ?setup:'d prec_setup_fn_with_sens
+          -> 'd prec_solve_fn_with_sens
+          -> ('d, 'k) preconditioner
+
+        (** Right preconditioning with sensitivities.
+            {% $(AP^{-1})Px = b$ %}. *)
         val prec_right :
           ?setup:'d prec_setup_fn
           -> 'd prec_solve_fn
           -> ('d, 'k) preconditioner
 
-        (** Left and right preconditioning.
+        (** Right preconditioning without sensitivities.
+            {% $(AP^{-1})Px = b$ %}. *)
+        val prec_right_with_sens :
+          ?setup:'d prec_setup_fn_with_sens
+          -> 'd prec_solve_fn_with_sens
+          -> ('d, 'k) preconditioner
+
+        (** Left and right preconditioning with sensitivities.
             {% $(P_L^{-1}AP_R^{-1})P_Rx = P_L^{-1}b$ %} *)
         val prec_both :
           ?setup:'d prec_setup_fn
           -> 'd prec_solve_fn
+          -> ('d, 'k) preconditioner
+
+        (** Left and right preconditioning without sensitivities.
+            {% $(P_L^{-1}AP_R^{-1})P_Rx = P_L^{-1}b$ %} *)
+        val prec_both_with_sens :
+          ?setup:'d prec_setup_fn_with_sens
+          -> 'd prec_solve_fn_with_sens
           -> ('d, 'k) preconditioner
 
         (** Banded preconditioners.  *)
@@ -1402,9 +1517,10 @@ module Adjoint :
 
             @cvodes <node7#sss:lin_solv_b> CVSpgmrB
             @cvodes <node7#SECTION00728400000000000000> CVSpilsSetPreconditionerB
+            @nocvodes <node7> CVSpilsSetPreconditionerBS
             @cvodes <node7#SECTION00728400000000000000> CVSpilsSetMaxlB
-            @cvodes <node7#ss:jtimesv_b> CVSpilsJacTimesVecFnB
-            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetJacTimesVecFnB *)
+            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetJacTimesVecFnB
+            @nocvodes <node7> CVSpilsSetJacTimesVecFnBS *)
         val spgmr :
           ?maxl:int
           -> ?jac_times_vec:'d jac_times_vec_fn
@@ -1425,9 +1541,11 @@ module Adjoint :
 
             @cvodes <node7#sss:lin_solv_b> CVSpbcgB
             @cvodes <node7#SECTION00728400000000000000> CVSpilsSetPreconditionerB
+            @nocvodes <node7> CVSpilsSetPreconditionerBS
             @cvodes <node7#SECTION00728400000000000000> CVSpilsSetMaxlB
             @cvodes <node7#ss:jtimesv_b> CVSpilsJacTimesVecFnB
-            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetJacTimesVecFnB *)
+            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetJacTimesVecFnB
+            @nocvodes <node7> CVSpilsSetJacTimesVecFnBS *)
         val spbcg :
           ?maxl:int
           -> ?jac_times_vec:'d jac_times_vec_fn
@@ -1448,9 +1566,11 @@ module Adjoint :
 
             @cvodes <node7#sss:lin_solv_b> CVSptfqmrB
             @cvodes <node7#SECTION00728400000000000000> CVSpilsSetPreconditionerB
+            @nocvodes <node7> CVSpilsSetPreconditionerBS
             @cvodes <node7#SECTION00728400000000000000> CVSpilsSetMaxlB
             @cvodes <node7#ss:jtimesv_b> CVSpilsJacTimesVecFnB
-            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetJacTimesVecFnB *)
+            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetJacTimesVecFnB
+            @nocvodes <node7> CVSpilsSetJacTimesVecFnBS *)
         val sptfqmr :
           ?maxl:int
           -> ?jac_times_vec:'d jac_times_vec_fn
@@ -1536,7 +1656,8 @@ module Adjoint :
             provided for experts who want to avoid resetting internal counters
             and other associated side-effects. *)
 
-        (** Change the preconditioner functions.
+        (** Change the preconditioner functions without using forward
+            sensitivities.
 
             @cvodes <node7#SECTION00728400000000000000> CVSpilsSetPreconditionerB
             @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB
@@ -1547,10 +1668,23 @@ module Adjoint :
           -> 'd prec_solve_fn
           -> unit
 
+        (** Change the preconditioner functions using forward sensitivities.
+
+            @nocvodes <node7> CVSpilsSetPreconditionerBS
+            @nocvodes <node7#ss:psolve_bs> CVSpilsPrecSolveFnBS
+            @nocvodes <node7#ss:psetup_bs> CVSpilsPrecSetupFnBS *)
+        val set_preconditioner_with_sens :
+          ('d,'k) bsession
+          -> ?setup:'d prec_setup_fn_with_sens
+          -> 'd prec_solve_fn_with_sens
+          -> unit
+
         (** Change the Jacobian-times-vector function.
 
             @cvodes <node7#SECTION00728400000000000000> CVSpilsSetJacTimesVecFnB
-            @cvodes <node7#ss:jtimesv_b> CVSpilsJacTimesVecFnB *)
+            @nocvodes <node7> CVSpilsSetJacTimesVecFnBS
+            @cvodes <node7#ss:jtimesv_b> CVSpilsJacTimesVecFnB
+            @nocvodes <node7#ss:jtimesv_bs> CVSpilsJacTimesVecFnBS *)
         val set_jac_times_vec_fn :
           ('d,'k) bsession
           -> 'd jac_times_vec_fn
@@ -1559,8 +1693,7 @@ module Adjoint :
         (** Remove a Jacobian-times-vector function and use the default
             implementation.
 
-            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetJacTimesVecFnB
-            @cvodes <node7#ss:jtimesv_b> CVSpilsJacTimesVecFnB *)
+            @cvodes <node7#SECTION00728400000000000000> CVSpilsSetJacTimesVecFnB *)
         val clear_jac_times_vec_fn : ('d, 'k) bsession -> unit
 
         (** Change the preconditioning direction without modifying

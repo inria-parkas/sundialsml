@@ -390,17 +390,46 @@ module AdjointTypes' = struct
       -> float
       -> bool
 
-    type 'a jac_times_vec_fn =
+    type 'a precfns_no_sens =
+      {
+        prec_solve_fn : 'a prec_solve_fn;
+        prec_setup_fn : 'a prec_setup_fn option;
+      }
+
+    type 'a jac_times_vec_fn_no_sens =
       ('a, 'a) jacobian_arg
       -> 'a (* v *)
       -> 'a (* Jv *)
       -> unit
 
-    type 'a precfns =
+    (* versions with forward sensitivities *)
+
+    type 'd prec_solve_fn_with_sens =
+      ('d, 'd) jacobian_arg
+      -> 'd prec_solve_arg
+      -> 'd array
+      -> 'd
+      -> unit
+
+    type 'd prec_setup_fn_with_sens =
+      ('d triple, 'd) jacobian_arg
+      -> 'd array
+      -> bool
+      -> float
+      -> bool
+
+    type 'a precfns_with_sens =
       {
-        prec_solve_fn : 'a prec_solve_fn;
-        prec_setup_fn : 'a prec_setup_fn option;
+        prec_solve_fn : 'a prec_solve_fn_with_sens;
+        prec_setup_fn : 'a prec_setup_fn_with_sens option;
       }
+
+    type 'd jac_times_vec_fn_with_sens =
+      ('d, 'd) jacobian_arg
+      -> 'd array
+      -> 'd
+      -> 'd
+      -> unit
   end
 end
 
@@ -476,7 +505,10 @@ and ('a, 'kind) linsolv_callbacks =
 
   (* Spils *)
   | SpilsCallback of 'a SpilsTypes'.jac_times_vec_fn option
-  | BSpilsCallback of 'a AdjointTypes'.SpilsTypes'.jac_times_vec_fn option
+  | BSpilsCallback
+      of 'a AdjointTypes'.SpilsTypes'.jac_times_vec_fn_no_sens option
+  | BSpilsCallbackSens
+      of 'a AdjointTypes'.SpilsTypes'.jac_times_vec_fn_with_sens option
 
   (* Alternate *)
   | AlternateCallback of ('a, 'kind) alternate_linsolv
@@ -485,7 +517,8 @@ and 'a linsolv_precfns =
   | NoPrecFns
 
   | PrecFns of 'a SpilsTypes'.precfns
-  | BPrecFns of 'a AdjointTypes'.SpilsTypes'.precfns
+  | BPrecFns of 'a AdjointTypes'.SpilsTypes'.precfns_no_sens
+  | BPrecFnsSens of 'a AdjointTypes'.SpilsTypes'.precfns_with_sens
 
   | BandedPrecFns
 
@@ -596,7 +629,7 @@ let ls_check_superlumt session =
 let ls_check_spils session =
   if Sundials_config.safe then
     match session.ls_callbacks with
-    | SpilsCallback _ | BSpilsCallback _ -> ()
+    | SpilsCallback _ | BSpilsCallback _ | BSpilsCallbackSens _ -> ()
     | _ -> raise Sundials.InvalidLinearSolver
 
 let ls_check_spils_band session =
