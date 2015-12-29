@@ -21,9 +21,9 @@
     @nokinsol <node5#sss:kinsuperlumt> The SuperLUMT Solver *)
 
 (** Callback functions that compute sparse approximations to a Jacobian
-    matrix. In the call [sparse_jac_fn arg jac], [arg] is a {!jacobian_arg}
-    with two work vectors and the computed Jacobian must be stored
-    in [jac].
+    matrix. In the call [sparse_jac_fn arg jac], [arg] is a
+    {!Kinsol.jacobian_arg} with two work vectors and the computed Jacobian
+    must be stored in [jac].
 
     The callback should load the [(i,j)]th entry of [jac] with
     {% $\partial y_i/\partial y_j$%}, i.e., the partial derivative of the

@@ -1,16 +1,17 @@
 {div open id="intro"}
 
 {{:https://computation.llnl.gov/casc/sundials/main.html}Sundials} is a
-collection of five numeric solvers: CVODE,  CVODES, IDA, IDAS, and KINSOL.
-It is written by Alan Hindmarsh, Radu Serban, and Carol Woodward at the {e
-Center for Applied Scientific Computing, Lawrence Livermore National
-Laboratory} with contributions from Peter Brown, Scott Cohen, Aaron
-Collier, Keith Grant, Steven Lee, Dan Reynolds, Dan Shumaker, and Allan
-Taylor.
+collection of six numeric solvers: CVODE,  CVODES, IDA, IDAS, ARKODE,
+and KINSOL.
+It is written by Carol S. Woodward, Daniel R. Reynolds, Alan C. Hindmarsh,
+and Lawrence E. Banks at the {e Center for Applied Scientific Computing,
+Lawrence Livermore National Laboratory} with significant contributions from
+Radu Serban, and contributions from Peter N. Brown, Scott Cohen, Aaron Collier,
+Keith E. Grant, Steven L. Lee, Cosmin Petra, Dan Shumaker, and Allan G. Taylor.
 
 This OCaml interface was written by {{:http://www.tbrk.org}Timothy Bourke}
 ({{:http://www.inria.fr}Inria}/{{:http://www.di.ens.fr/}ENS}),
-{{:http://www.owlnet.rice.edu/~ji2/}Jun Inoue}
+{{:https://sites.google.com/site/juninoueprofessional/}Jun Inoue}
 ({{:http://www.inria.fr}Inria}/{{:http://www.di.ens.fr/}ENS}),
 and
 {{:http://www.di.ens.fr/~pouzet/}Marc Pouzet}
@@ -75,12 +76,13 @@ becomes {!Cvodes.Sensitivity.BadSensIdentifier}.
 Rather than try to duplicate or replace the comprehensive
 {{:https://computation.llnl.gov/casc/sundials/documentation/documentation.html}
 Sundials user manuals}, this documentation provides brief summaries,
-adapted from the manual, with hyperlinks back to the original text.
+adapted from the manual, with hyperlinks back to the original text whenever
+possible (the original HTML documentation is not currently being updated).
 
 {3:nvector Nvectors}
 
 Sundials defines an abstract interface for vectors and provides default
-serial and parallel instantiations.
+serial, parallel, pthreads, and openmp instantiations.
 The OCaml interface defines likewise a generic
 {!Nvector.t} type whose type arguments indicate the underlying {e
 data} and {e kind}—the latter may be {!Nvector_serial.kind},
@@ -102,7 +104,11 @@ and the {{:https://forge.ocamlcore.org/projects/ocamlmpi/}OCamlMPI}
 library. Parallel nvectors are only available when Sundials/ML is configured
 to use MPI, as described {{:install}below}.
 
-Besides these two standard implementations, it is also possible to define
+Pthreads nvectors, {!Nvector_pthreads}, and openmp nvectors, {!Nvector_openmp},
+are essentially serial nvectors whose underlying operations are executed by
+multiple threads.
+
+Besides these four standard implementations, it is also possible to define
 new nvector implementations through {!Nvector_custom} by providing low-level
 operations on an underlying datatype. A demonstration of this feature on
 float arrays is provided in {!Nvector_array}. Custom nvectors suffer two
@@ -116,11 +122,12 @@ custom solvers can be implemented via {!Cvode.Alternate},
 
 Nonlinear algebraic systems occur optionally in the solution of ODE initial
 value problems with {!Cvode}, invariably when solving DAE initial value
-problems with {!Ida}, and directly in the problems treated by {!Kinsol}.
-Such systems are solved using some form of Newton iteration which in turn
-requires the solution of linear equations.
+problems with {!Ida}, and when solving implicit problems or problems
+involving a mass matrix with {!Arkode}, and directly in the problems treated
+by {!Kinsol}. Such systems are solved using some form of Newton iteration
+which in turn requires the solution of linear equations.
 
-Sundials provides four options for the solution of linear equations:
+Sundials provides six options for the solution of linear equations:
 {ul
     {- The {e diagonal approximation} of Jacobians by difference equations (only
     for {!Cvode});}
@@ -129,6 +136,10 @@ Sundials provides four options for the solution of linear equations:
     {- {e Scaled Preconditioned Iterative Linear Solvers (SPILS)}
     requiring user-supplied callback functions to setup and solve
     linear preconditioning systems;}
+    {- {e The SuperLU_MT sparse-direct linear solver} requiring a
+    user-supplied callback function that computes a sparse Jacobian;}
+    {- {e The KLU sparse-direct linear solver} also requiring a
+    user-supplied callback function that computes a sparse Jacobian;}
     {- {e Alternate linear solvers} providing hooks for implementing new
     linear solver modules (in OCaml).}
 }
@@ -140,13 +151,19 @@ solver routines on bigarrays is provided via {!Dls.ArrayDenseMatrix}
 and {!Dls.ArrayBandMatrix}.
 
 The SPILS routines include the {e Scaled Preconditioned GMRES (SPGMR)}, {e
-Scaled Preconditioned Bi-CGStab (SPBCG)}, and {e Scaled Preconditioned TFQMR
-(SPTFQMR)} methods. Additionally, {!Cvode} provides banded preconditioners
+Scaled Preconditioned Bi-CGStab (SPBCG)}, {e Scaled Preconditioned TFQMR
+(SPTFQMR)}, {e Scaled Preconditioned Flexible GMRES (SPFMGR)}, and
+{e Preconditioned Conjugate Gradient (PCG)} methods.
+Additionally, {!Cvode} provides banded preconditioners
 for sessions that use serial nvectors. Access to the underlying solver
 routines on bigarrays is provided via the submodules of {!Spils}.
 Parallel Band-Block-Diagonal (BBD) preconditioners are available to sessions
 that use parallel nvectors—see {!Cvode_bbd}, {!Cvodes_bbd}, {!Ida_bbd},
 {!Idas_bbd}, and {!Kinsol_bbd}.
+
+The SuperLU_MT and KLU routines are only available to sessions that use
+serial nvectors.
+Callback functions update the Jacobian matrix as an {!Sls.SparseMatrix.t}.
 
 Each solver module has a distinct linear solver type, e.g.,
 {!Cvode.linear_solver} or {!Cvodes.Adjoint.linear_solver}. As for nvectors,
@@ -158,11 +175,16 @@ appropriate [init] or [reinit] functions to configure sessions.
 {2:api API Reference}
 
 {!modules: Sundials}
-{!modules: Dls Spils}
-{!modules: Nvector Nvector_serial Nvector_parallel Nvector_custom Nvector_array}
-{!modules: Cvode Cvode_bbd Cvodes Cvodes_bbd}
-{!modules: Ida Ida_bbd Idas Idas_bbd}
-{!modules: Kinsol Kinsol_bbd}
+{!modules: Dls Spils Sls}
+{!modules: Nvector Nvector_serial Nvector_parallel
+	   Nvector_pthreads Nvector_openmp
+	   Nvector_custom Nvector_array}
+{!modules: Cvode Cvode_bbd Cvode_klu Cvode_superlumt
+	   Cvodes Cvodes_bbd Cvodes_klu Cvodes_superlumt}
+{!modules: Ida Ida_bbd Ida_klu Ida_superlumt
+	   Idas Idas_bbd Idas_klu Idas_superlumt}
+{!modules: Arkode Arkode_bbd Arkode_klu Arkode_superlumt}
+{!modules: Kinsol Kinsol_bbd Kinsol_klu Kinsol_superlumt}
 
 {2:install Installation}
 
@@ -184,9 +206,12 @@ examples will fail with incorrect results.
 
 The [configure] script detects and automatically enables optional
 features.  Lapack solvers, like {!Cvode.Dls.lapack_dense}, are enabled
-if Sundials was built with lapack support.  The
-{!Sundials.lapack_enabled} value indicates whether these solvers are
-available.  Parallel nvectors and Band-Block-Diagonal (BBD) solvers
+if Sundials was built with lapack support.
+The {!Sundials.lapack_enabled} value indicates whether these solvers are
+available.
+The KLU and SuperLU_MT solvers, and the pthreads and openmp nvectors are
+enabled if Sundials was built with them.
+Parallel nvectors and Band-Block-Diagonal (BBD) solvers
 are enabled if Sundials was built with them and OCamlMPI is available.
 
 {3:opam Opam}

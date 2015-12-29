@@ -20,9 +20,9 @@
     @noarkode <node> Linear solver specification functions *)
 
 (** Callback functions that compute sparse approximations to a Jacobian
-    matrix. In the call [sparse_jac_fn arg jac], [arg] is a {!jacobian_arg}
-    with three work vectors and the computed Jacobian must be stored
-    in [jac].
+    matrix. In the call [sparse_jac_fn arg jac], [arg] is a
+    {!Arkode.jacobian_arg} with three work vectors and the computed Jacobian
+    must be stored in [jac].
 
     The callback should load the [(i,j)]th entry of [jac] with
     {% $\partial f_i/\partial y_j$%}, i.e., the partial derivative of the

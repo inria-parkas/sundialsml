@@ -82,7 +82,7 @@ exception NonPositiveEwt
 exception InvalidLinearSolver
 
 (** Raised for features that are not available in the installed version of
-    the underlying sundials library. See {sundials_version}. *)
+    the underlying sundials library. See {!sundials_version}. *)
 exception NotImplementedBySundialsVersion
 
 (** {2:arrays Arrays} *)
@@ -441,9 +441,9 @@ module Constraint :
     See {!Cvode.set_err_handler_fn}, {!Ida.set_err_handler_fn}, and
     {!Kinsol.set_err_handler_fn}.
 
- @cvode <node5#ss:ehFn> CVodeErrHandlerFn
- @ida <node5#ss:ehFn> IDAErrHandlerFn
- @kinsol <node5#ss:ehFn> KINErrHandlerFn *)
+    @cvode <node5#ss:ehFn> CVodeErrHandlerFn
+    @ida <node5#ss:ehFn> IDAErrHandlerFn
+    @kinsol <node5#ss:ehFn> KINErrHandlerFn *)
 type error_details = {
     error_code : int;
     module_name : string;        (** IDA, CVODE, CVSPGMR, etc. *)

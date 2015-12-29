@@ -672,7 +672,8 @@ val solve :
 val set_num_max_iters : ('d, 'k) session -> int -> unit
 
 (** Specifies the size of the subspace to use with Anderson acceleration.
-    Used in conjuncation with the strategies {!Picard} and {!FixedPoint}.
+    Used in conjuncation with the strategies {{!strategy}Picard} and
+    {{!strategy}FixedPoint}.
     A value of zero means no acceleration. Call after {!set_num_max_iters}
     and always give a smaller value.
 

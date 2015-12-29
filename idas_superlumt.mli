@@ -22,8 +22,8 @@
 
 (** Callback functions that compute sparse approximations to a Jacobian
     matrix without forward sensitivites. In the call [sparse_jac_fn arg jac],
-    [arg] is a {!jacobian_arg} with three work vectors and the computed
-    Jacobian must be stored in [jac].
+    [arg] is a {!Idas.Adjoint.jacobian_arg} with three work vectors and the
+    computed Jacobian must be stored in [jac].
 
     The callback should load the [(i,j)]th entry of [jac] with
     {% $\frac{\partial F_i}{\partial y_j} + c_j\frac{\partial F_i}{\partial\dot{y}_j}$%},
@@ -45,9 +45,10 @@ type sparse_jac_fn_no_sens =
 
 (** Callback functions that compute sparse approximations to a Jacobian
     matrix with forward sensitivities. In the call [sparse_jac_fn arg s s' jac],
-    [arg] is a {!jacobian_arg} with three work vectors, [s] is an array
-    of forward sensitivity vectors, [s'] is an array of forward sensitivity
-    derivative vectors and the computed Jacobian must be stored in [jac].
+    [arg] is a {!Idas.Adjoint.jacobian_arg} with three work vectors, [s] is an
+    array of forward sensitivity vectors, [s'] is an array of forward
+    sensitivity derivative vectors and the computed Jacobian must be stored in
+    [jac].
 
     The callback should load the [(i,j)]th entry of [jac] with
     {% $\frac{\partial F_i}{\partial y_j} + c_j\frac{\partial F_i}{\partial\dot{y}_j}$%},

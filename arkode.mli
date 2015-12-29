@@ -198,7 +198,7 @@ module Dls :
         @noarkode <node> ARKDlsBandJacFn *)
     val lapack_band : ?jac:band_jac_fn -> bandrange -> serial_linear_solver
 
-    (** {3:dlsmass Mass matrix solvers *)
+    (** {3:dlsmass Mass matrix solvers} *)
     module Mass :
       sig (* {{{ *)
 
@@ -520,7 +520,7 @@ module Spils :
       val get_num_rhs_evals : serial_session -> int
     end (* }}} *)
 
-    (** {3:spilsmass Mass matrix solvers *)
+    (** {3:spilsmass Mass matrix solvers} *)
     module Mass :
       sig (* {{{ *)
         (** {3:precond Preconditioners} *)
@@ -1156,7 +1156,7 @@ module Alternate :
             -> ('data, 'kind) callbacks)
           -> ('data, 'kind) linear_solver
 
-    (** {3:altmass Mass matrix solvers *)
+    (** {3:altmass Mass matrix solvers} *)
     module Mass :
       sig (* {{{ *)
 
@@ -1448,7 +1448,7 @@ val solve_one_step : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
 
     @noarkode <node> ARKodeGetDky
     @raise BadT [t] is not in the interval {% $[t_n - h_n, t_n]$%}.
-    @raise BadK [k] is not in the range {0, 1, 2, 3}. *)
+    @raise BadK [k] is not in the range \{0, 1, 2, 3\}. *)
 val get_dky : ('d, 'k) session -> ('d, 'k) Nvector.t -> float -> int -> unit
 
 (** Reinitializes the solver with new parameters and state values. The
@@ -1855,15 +1855,15 @@ val set_error_bias : ('d, 'k) session -> float -> unit
 val set_fixed_step_bounds : ('d, 'k) session -> float -> float -> unit
 
 (** Specifies the maximum step size growth factor upon a convergence failure on
-    a stage solve within a step. Any value outside the interval $(0, 1]$ resets
-    to the default value.
+    a stage solve within a step. Any value outside the interval {% $(0, 1]$%}
+    resets to the default value.
 
     @noarkode <node> ARKodeSetMaxCFailGrowth *)
 val set_max_cfail_growth : ('d, 'k) session -> float -> unit
 
 (** Specifies the maximum step size growth factor upon multiple successive
     accuracy-based error failures in the solver. Any value outside the interval
-    $(0, 1]$ resets to the default value.
+    {% $(0, 1]$%} resets to the default value.
 
     @noarkode <node> ARKodeSetMaxEFailGrowth *)
 val set_max_efail_growth : ('d, 'k) session -> float -> unit

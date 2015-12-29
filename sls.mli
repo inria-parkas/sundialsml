@@ -25,8 +25,7 @@
 module SparseMatrix :
   sig
     (** A sparse matrix. Values of this type are passed
-        to linear solver callback functions (like {!Cvode.Sls.sparse_jac_fn},
-        {!Ida.Dls.sparse_jac_fn}, and {!Kinsol.Dls.sparse_jac_fn}), in which
+        to linear solver callback functions, in which
         case their lifetimes are determined by the underlying library and they
         should only be used within the callback to avoid the
         {{!Invalidated}Invalidated} exception.
