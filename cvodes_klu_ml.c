@@ -113,6 +113,12 @@ static int jacfn_withsens( /* CVSlsSparseJacFnBS */
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
+
+#if SUNDIALS_LIB_VERSION < 262
+// Work around a bug in Sundials 2.6.0 and 2.6.1
+SUNDIALS_EXPORT int CVKLUB(void *, int, int, int);
+#endif
+
 CAMLprim value c_cvodes_klub_init (value vparent, value vwhich,
 				   value vneqs, value vnnz, value vusesens)
 {
@@ -121,7 +127,6 @@ CAMLprim value c_cvodes_klub_init (value vparent, value vwhich,
     int which = Int_val(vwhich);
     int flag;
 
-#if SUNDIALS_LIB_VERSION >= 262
     flag = CVKLUB (mem, which, Int_val(vneqs), Int_val(vnnz));
     CHECK_FLAG ("CVKLUB", flag);
     if (Bool_val(vusesens)) {
@@ -131,9 +136,6 @@ CAMLprim value c_cvodes_klub_init (value vparent, value vwhich,
 	flag = CVSlsSetSparseJacFnB (mem, which, jacfn_nosens);
 	CHECK_FLAG("CVSlsSetSparseJacFnB", flag);
     }
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
 
     CAMLreturn (Val_unit);
 }
