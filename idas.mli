@@ -809,7 +809,7 @@ module Sensitivity :
       {- {{:#set}Modifying the solver}}
       {- {{:#get}Querying the solver}}
       {- {{:#exceptions}Exceptions}}}
-  
+
     @idas <node7#ss:skeleton_adj> Enhanced Skeleton for Adjoint Sensitivity Analysis
     @idas <node7#s:adjoint> Using IDAS for Adjoint Sensitivity Analysis
     @idas <node3#ss:adj_sensi> Adjoint sensitivity analysis *)
@@ -1149,7 +1149,7 @@ module Adjoint :
         val clear_dense_jac_fn : serial_bsession -> unit
 
         (** Change the band Jacobian function.
-        
+
             @ida <node7#SECTION00729300000000000000> IDADlsSetBandJacFnB
             @noida <node7#SECTION00729300000000000000> IDADlsSetBandJacFnBS *)
         val set_band_jac_fn : serial_bsession -> band_jac_fn -> unit
@@ -1172,12 +1172,12 @@ module Adjoint :
         (** {3:precond Preconditioners} *)
 
         (** Callback functions that solve a linear system involving a
-            preconditioner matrix.
+            preconditioner matrix without forward sensitivities.
             In the call [prec_solve_fn jac r z delta],
-            [jac] is a {!jacobian_arg} with one work vector,
-            [r] is the right-hand side vector,
-            [z] is computed to solve {% $Pz = r$%},
-            and [delta] is the input tolerance.
+            - [jac] is a {!jacobian_arg} with one work vector,
+            - [r] is the right-hand side vector,
+            - [z] is computed to solve {% $Pz = r$%}, and
+            - [delta] is the input tolerance.
             $P$ is a preconditioner matrix, which approximates, however crudely,
             the Jacobian matrix
             {% $\frac{\partial F}{\partial y} + \mathtt{arg.jac\_coef}\frac{\partial F}{\partial\dot{y}}$%}.
@@ -1201,9 +1201,44 @@ module Adjoint :
           -> float
           -> unit
 
+        (** Callback functions that solve a linear system involving a
+            preconditioner matrix with forward sensitivities.
+            In the call [prec_solve_fn jac ys yps r z delta],
+            - [jac] is a {!jacobian_arg} with one work vector,
+            - [ys] contains the sensitivities of the forward solution,
+            - [yps] contains the derivatives of the forward solution
+                    sensitivities,
+            - [r] is the right-hand side vector,
+            - [z] is computed to solve {% $Pz = r$%}, and
+            - [delta] is the input tolerance.
+            $P$ is a preconditioner matrix, which approximates, however crudely,
+            the Jacobian matrix
+            {% $\frac{\partial F}{\partial y} + \mathtt{arg.jac\_coef}\frac{\partial F}{\partial\dot{y}}$%}.
+            If the solution is found via an iterative method, it must satisfy
+            {% $\sqrt{\sum_i (\mathit{Res}_i \cdot \mathit{ewt}_i)^2}
+                  < \mathtt{delta}$%},
+            where {% $\mathit{Res} = r - Pz$%} and {% $\mathit{ewt}$%} comes from
+            {!get_err_weights}.
+
+            Raising {!Sundials.RecoverableFailure} indicates a recoverable
+            error. Any other exception is treated as an unrecoverable error.
+
+            {warning The elements of [jac], [ys], [yps], [r], and [z] should not
+                     be accessed after the function has returned.}
+
+            @noidas <node7#ss:psolve_bs> IDASpilsPrecSolveFnBS *)
+        type 'd prec_solve_fn_with_sens =
+          ('d, 'd) jacobian_arg
+          -> 'd array
+          -> 'd array
+          -> 'd
+          -> 'd
+          -> float
+          -> unit
+
         (** Callback functions that preprocess or evaluate Jacobian-related data
-            need by {!prec_solve_fn}. The sole argument is a {!jacobian_arg}
-            with three work vectors.
+            need by {!prec_solve_fn} without forward sensitivities.
+            The only argument is a {!jacobian_arg} with three work vectors.
 
             Raising {!Sundials.RecoverableFailure} indicates a recoverable
             error. Any other exception is treated as an unrecoverable error.
@@ -1212,14 +1247,39 @@ module Adjoint :
                      the function has returned.}
 
             @idas <node7#ss:psetup_b> IDASpilsPrecSetupFnB *)
-        type 'd prec_setup_fn = ('d triple, 'd) jacobian_arg -> unit
+        type 'd prec_setup_fn =
+          ('d triple, 'd) jacobian_arg
+          -> unit
 
-        (** Callback functions that compute the Jacobian times a vector. In the
-            call [jac_times_vec_fn arg v jv], [arg] is a {!jacobian_arg} with two
-            work vectors, [v] is the vector multiplying the Jacobian, and [jv] is
-            the vector in which to store the
-            result—{% $\mathtt{jv} = J\mathtt{v}$%}.
-          
+        (** Callback functions that preprocess or evaluate Jacobian-related data
+            need by {!prec_solve_fn} with forward sensitivities.
+            In the call [prec_setup_fn jac ys yps],
+            - [jac] is a {!jacobian_arg} with three work vectors,
+            - [ys] contains the sensitivities of the forward solution, and
+            - [yps] contains the derivatives of the forward solution
+                    sensitivities.
+
+            Raising {!Sundials.RecoverableFailure} indicates a recoverable
+            error. Any other exception is treated as an unrecoverable error.
+
+            {warning The elements of the arguments should not be accessed after
+                     the function has returned.}
+
+            @noidas <node7#ss:psetup_bs> IDASpilsPrecSetupFnBS *)
+        type 'd prec_setup_fn_with_sens =
+          ('d triple, 'd) jacobian_arg
+          -> 'd array
+          -> 'd array
+          -> unit
+
+        (** Callback functions that compute the Jacobian times a vector without
+            forward sensitivities.
+            In the call [jac_times_vec_fn arg v jv],
+            - [arg] is a {!jacobian_arg} with two work vectors,
+            - [v] is the vector multiplying the Jacobian, and
+            - [jv] is the vector in which to store the
+                   result—{% $\mathtt{jv} = J\mathtt{v}$%}.
+
             Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
             Any other exception is treated as an unrecoverable error.
 
@@ -1227,11 +1287,47 @@ module Adjoint :
                      accessed after the function has returned.}
 
             @idas <node7#ss:jactimesvec_b> IDASpilsJacTimesVecFnB *)
-        type 'd jac_times_vec_fn =
+        type 'd jac_times_vec_fn_no_sens =
           ('d, 'd) jacobian_arg
           -> 'd
           -> 'd
           -> unit
+
+        (** Callback functions that compute the Jacobian times a vector with
+            forward sensitivities.
+            In the call [jac_times_vec_fn arg ys yps v jv],
+            - [arg] is a {!jacobian_arg} with two work vectors,
+            - [ys] contains the sensitivities of the forward solution,
+            - [yps] contains the derivatives of the forward solution
+                    sensitivities.
+            - [v] is the vector multiplying the Jacobian, and
+            - [jv] is the vector in which to store the
+                   result—{% $\mathtt{jv} = J\mathtt{v}$%}.
+
+            Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+            Any other exception is treated as an unrecoverable error.
+
+            {warning Neither the elements of [arg], [ys], [yps], [v] nor [jv]
+                     should be accessed after the function has returned.}
+
+            @noidas <node7#ss:jactimesvec_bs> IDASpilsJacTimesVecFnBS *)
+        type 'd jac_times_vec_fn_with_sens =
+          ('d, 'd) jacobian_arg
+          -> 'd array
+          -> 'd array
+          -> 'd
+          -> 'd
+          -> unit
+
+        (** Callback functions that compute the Jacobian times a vector.
+
+            @idas <node7#ss:jactimesvec_b> IDASpilsJacTimesVecFnB
+            @noidas <node7#ss:jactimesvec_bs> IDASpilsJacTimesVecFnBS *)
+        type 'd jac_times_vec_fn =
+          | NoSens of 'd jac_times_vec_fn_no_sens
+            (** Does not depend on forward sensitivities. *)
+          | WithSens of 'd jac_times_vec_fn_with_sens
+            (** Depends on forward sensitivities. *)
 
         (** Specifies a preconditioner and its callback functions.
             The following functions and those in {!Idas_bbd} construct
@@ -1241,19 +1337,31 @@ module Adjoint :
             omitted if not needed.
 
             @idas <node7#SECTION00729400000000000000> IDASpilsSetPreconditionerB
+            @noidas <node7> IDASpilsSetPreconditionerBS
             @idas <node7#ss:psolve_b> IDASpilsPrecSolveFnB
-            @idas <node7#ss:psetup_b> IDASpilsPrecSetupFnB *)
+            @idas <node7#ss:psetup_b> IDASpilsPrecSetupFnB
+            @noidas <node7#ss:psolve_bs> IDASpilsPrecSolveFnBS
+            @noidas <node7#ss:psetup_bs> IDASpilsPrecSetupFnBS *)
         type ('d, 'k) preconditioner =
           ('d, 'k) AdjointTypes.SpilsTypes.preconditioner
 
         (** No preconditioning.  *)
         val prec_none : ('d, 'k) preconditioner
 
-        (** Left preconditioning. {% $Pz = r$%}, where $P$ approximates, perhaps
-            crudely, {% $J = \frac{\partial F}{\partial y} + c_j\frac{\partial F}{\partial\dot{y}}$%}. *)
+        (** Left preconditioning without forward sensitivities.
+            {% $Pz = r$%}, where $P$ approximates, perhaps crudely,
+            {% $J = \frac{\partial F}{\partial y} + c_j\frac{\partial F}{\partial\dot{y}}$%}. *)
         val prec_left :
           ?setup:'d prec_setup_fn
           -> 'd prec_solve_fn
+          -> ('d, 'k) preconditioner
+
+        (** Left preconditioning with forward sensitivities.
+            {% $Pz = r$%}, where $P$ approximates, perhaps crudely,
+            {% $J = \frac{\partial F}{\partial y} + c_j\frac{\partial F}{\partial\dot{y}}$%}. *)
+        val prec_left_with_sens :
+          ?setup:'d prec_setup_fn_with_sens
+          -> 'd prec_solve_fn_with_sens
           -> ('d, 'k) preconditioner
 
         (** {3:lsolvers Solvers} *)
@@ -1273,10 +1381,11 @@ module Adjoint :
 
             @idas <node7#sss:lin_solv_b> IDASpgmrB
             @idas <node7#SECTION00729400000000000000> IDASpilsSetPreconditionerB
-            @idas <node7#ss:psolve_b> IDASpilsPrecSolveFnB
-            @idas <node7#ss:psetup_b> IDASpilsPrecSetupFnB
+            @noidas <node7> IDASpilsSetPreconditionerBS
             @idas <node7#SECTION00729400000000000000> IDASpilsSetJacTimesVecFnB
-            @idas <node7#ss:jactimesvec_b> IDASpilsJacTimesVecFnB *)
+            @noidas <node7> IDASpilsSetJacTimesVecFnBS
+            @idas <node7#ss:jactimesvec_b> IDASpilsJacTimesVecFnB
+            @noidas <node7#ss:jactimesvec_bs> IDASpilsJacTimesVecFnBS *)
         val spgmr :
           ?maxl:int
           -> ?max_restarts:int
@@ -1299,10 +1408,11 @@ module Adjoint :
 
             @idas <node7#sss:lin_solv_b> IDASpbcgB
             @idas <node7#SECTION00729400000000000000> IDASpilsSetPreconditionerB
-            @idas <node7#ss:psolve_b> IDASpilsPrecSolveFnB
-            @idas <node7#ss:psetup_b> IDASpilsPrecSetupFnB
+            @noidas <node7> IDASpilsSetPreconditionerBS
             @idas <node7#SECTION00729400000000000000> IDASpilsSetJacTimesVecFnB
-            @idas <node7#ss:jactimesvec_b> IDASpilsJacTimesVecFnB *)
+            @noidas <node7> IDASpilsSetJacTimesVecFnBS
+            @idas <node7#ss:jactimesvec_b> IDASpilsJacTimesVecFnB
+            @noidas <node7#ss:jactimesvec_bs> IDASpilsJacTimesVecFnBS *)
         val spbcg :
           ?maxl:int
           -> ?jac_times_vec:'d jac_times_vec_fn
@@ -1324,10 +1434,11 @@ module Adjoint :
 
             @idas <node7#sss:lin_solv_b> IDASptfqmrB
             @idas <node7#SECTION00729400000000000000> IDASpilsSetPreconditionerB
-            @idas <node7#ss:psolve_b> IDASpilsPrecSolveFnB
-            @idas <node7#ss:psetup_b> IDASpilsPrecSetupFnB
+            @noidas <node7> IDASpilsSetPreconditionerBS
             @idas <node7#SECTION00729400000000000000> IDASpilsSetJacTimesVecFnB
-            @idas <node7#ss:jactimesvec_b> IDASpilsJacTimesVecFnB *)
+            @noidas <node7> IDASpilsSetJacTimesVecFnBS
+            @idas <node7#ss:jactimesvec_b> IDASpilsJacTimesVecFnB
+            @noidas <node7#ss:jactimesvec_bs> IDASpilsJacTimesVecFnBS *)
         val sptfqmr :
           ?maxl:int
           -> ?jac_times_vec:'d jac_times_vec_fn
@@ -1413,7 +1524,8 @@ module Adjoint :
             for experts who want to avoid resetting internal counters and other
             associated side-effects. *)
 
-        (** Change the preconditioner functions.
+        (** Change the preconditioner functions without using forward
+            sensitivities.
 
             @idas <node7#SECTION00729400000000000000> IDASpilsSetPreconditionerB
             @idas <node7#ss:psolve_b> IDASpilsPrecSolveFnB
@@ -1424,10 +1536,23 @@ module Adjoint :
           -> 'd prec_solve_fn
           -> unit
 
+        (** Change the preconditioner functions using forward sensitivities.
+
+            @noidas <node7> IDASpilsSetPreconditionerBS
+            @noidas <node7#ss:psolve_bs> IDASpilsPrecSolveFnBS
+            @noidas <node7#ss:psetup_bs> IDASpilsPrecSetupFnBS *)
+        val set_preconditioner_with_sens :
+          ('d,'k) bsession
+          -> ?setup:'d prec_setup_fn_with_sens
+          -> 'd prec_solve_fn_with_sens
+          -> unit
+
         (** Change the Jacobian-times-vector function.
 
             @idas <node7#SECTION00729400000000000000> IDASpilsSetJacTimesVecFnB
-            @idas <node7#ss:jactimesvec_b> IDASpilsJacTimesVecFnB *)
+            @noidas <node7> IDASpilsSetJacTimesVecFnBS
+            @idas <node7#ss:jactimesvec_b> IDASpilsJacTimesVecFnB
+            @noidas <node7#ss:jactimesvec_bs> IDASpilsJacTimesVecFnBS *)
         val set_jac_times_vec_fn :
           ('d,'k) bsession
           -> 'd jac_times_vec_fn
@@ -1436,8 +1561,7 @@ module Adjoint :
         (** Remove a Jacobian-times-vector function and use the default
             implementation.
 
-            @idas <node7#SECTION00729400000000000000> IDASpilsSetJacTimesVecFnB
-            @idas <node7#ss:jactimesvec_b> IDASpilsJacTimesVecFnB *)
+            @idas <node7#SECTION00729400000000000000> IDASpilsSetJacTimesVecFnB *)
         val clear_jac_times_vec_fn : ('d, 'k) bsession -> unit
       end (* }}} *)
 
@@ -1541,7 +1665,7 @@ module Adjoint :
         @idas <node7#sss:idainitb> IDAInitB
         @idas <node7#sss:idainitb> IDAInitBS
         @idas <node7#sss:idatolerances_b> IDASStolerancesB
-        @idas <node7#sss:idatolerances_b> IDASVtolerancesB 
+        @idas <node7#sss:idatolerances_b> IDASVtolerancesB
         @raise AdjointNotInitialized The {!init} function has not been called.
         @raise BadFinalTime      The final time is outside the interval over which the forward problem was solved. *)
     val init_backward :
@@ -1805,7 +1929,7 @@ module Adjoint :
         specified either in the call or by a prior call to {!init} or {!set_id}.
         Suppressing local error tests for algebraic variables is {i discouraged}
         for DAE systems of index 1 and {i encouraged} for systems of index 2 or
-        more. 
+        more.
 
         @ida <node5#sss:optin_main> IDASetId
         @idas <node7#ss:optional_input_b> IDASetSuppressAlgB *)

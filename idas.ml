@@ -982,11 +982,11 @@ module Adjoint =
         include SpilsTypes
 
         external c_set_preconditioner
-          : ('a, 'k) session -> int -> bool -> unit
+          : ('a, 'k) session -> int -> bool -> bool -> unit
           = "c_idas_adj_spils_set_preconditioner"
 
         external c_set_jac_times_vec_fn
-          : ('a, 'k) session -> int -> bool -> unit
+          : ('a, 'k) session -> int -> bool -> bool -> unit
           = "c_idas_adj_spils_set_jac_times_vec_fn"
 
         external c_spils_spgmr
@@ -1005,7 +1005,7 @@ module Adjoint =
           = "c_idas_adj_spils_set_max_restarts"
 
         let init_preconditioner solve setup bs parent which nv nv' =
-          c_set_preconditioner parent which (setup <> None);
+          c_set_preconditioner parent which (setup <> None) false;
           (tosession bs).ls_precfns <- BPrecFns { prec_solve_fn = solve;
                                                   prec_setup_fn = setup }
 
@@ -1014,12 +1014,29 @@ module Adjoint =
         let prec_left ?setup solve =
           InternalPrecLeft (init_preconditioner solve setup)
 
-        let set_jac_times_vec_fn bs f =
+        let init_preconditioner_with_sens solve setup bs parent which nv nv' =
+          c_set_preconditioner parent which (setup <> None) true;
+          (tosession bs).ls_precfns <- BPrecFnsSens { prec_solve_fn = solve;
+                                                      prec_setup_fn = setup }
+
+        let prec_left_with_sens ?setup solve =
+          InternalPrecLeft (init_preconditioner_with_sens solve setup)
+
+        type 'd jac_times_vec_fn =
+          | NoSens of 'd jac_times_vec_fn_no_sens
+          | WithSens of 'd jac_times_vec_fn_with_sens
+
+        let set_jac_times_vec_fn bs jtv =
           match (tosession bs).ls_callbacks with
-          | BSpilsCallback _ ->
+          | BSpilsCallback _ | BSpilsCallbackSens _ ->
               let parent, which = parent_and_which bs in
-              c_set_jac_times_vec_fn parent which true;
-              (tosession bs).ls_callbacks <- BSpilsCallback (Some f)
+              (match jtv with
+               | NoSens f ->
+                 c_set_jac_times_vec_fn parent which true false;
+                 (tosession bs).ls_callbacks <- BSpilsCallback (Some f)
+               | WithSens f ->
+                 c_set_jac_times_vec_fn parent which true true;
+                 (tosession bs).ls_callbacks <- BSpilsCallbackSens (Some f))
           | _ -> raise Sundials.InvalidLinearSolver
 
         let init_spils init maxl jac_times_vec prec bs nv nv' =
@@ -1028,7 +1045,7 @@ module Adjoint =
           (match prec with
            | InternalPrecNone set_prec -> set_prec bs parent which nv nv'
            | InternalPrecLeft set_prec -> set_prec bs parent which nv nv');
-          (tosession bs).ls_callbacks <- BSpilsCallback jac_times_vec;
+          (tosession bs).ls_callbacks <- BSpilsCallback None;
           (match jac_times_vec with
            | None -> ()
            | Some jtv -> set_jac_times_vec_fn bs jtv)
@@ -1049,18 +1066,27 @@ module Adjoint =
 
         let set_preconditioner bs ?setup solve =
           match (tosession bs).ls_callbacks with
-          | BSpilsCallback _ ->
+          | BSpilsCallback _ | BSpilsCallbackSens _ ->
               let parent, which = parent_and_which bs in
-              c_set_preconditioner parent which (setup <> None);
-              (tosession bs).ls_precfns <- BPrecFns { prec_setup_fn = setup;
-                                                      prec_solve_fn = solve }
+              c_set_preconditioner parent which (setup <> None) false;
+              (tosession bs).ls_precfns
+                <- BPrecFns { prec_setup_fn = setup; prec_solve_fn = solve }
+          | _ -> raise Sundials.InvalidLinearSolver
+
+        let set_preconditioner_with_sens bs ?setup solve =
+          match (tosession bs).ls_callbacks with
+          | BSpilsCallback _ | BSpilsCallbackSens _ ->
+              let parent, which = parent_and_which bs in
+              c_set_preconditioner parent which (setup <> None) true;
+              (tosession bs).ls_precfns
+                <- BPrecFnsSens { prec_setup_fn = setup; prec_solve_fn = solve }
           | _ -> raise Sundials.InvalidLinearSolver
 
         let clear_jac_times_vec_fn bs =
           match (tosession bs).ls_callbacks with
-          | BSpilsCallback _ ->
+          | BSpilsCallback _ | BSpilsCallbackSens _ ->
               let parent, which = parent_and_which bs in
-              c_set_jac_times_vec_fn parent which false;
+              c_set_jac_times_vec_fn parent which false false;
               (tosession bs).ls_callbacks <- BSpilsCallback None
           | _ -> raise Sundials.InvalidLinearSolver
 

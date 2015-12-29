@@ -416,12 +416,12 @@ static int bresfn_sens(realtype t, N_Vector y, N_Vector yp,
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
-
-static int bprecsetupfn(realtype t, N_Vector yy, N_Vector yp,
-			N_Vector yB, N_Vector ypB,
-			N_Vector resvalB,
-			realtype cjB, void *user_data,
-			N_Vector tmp1B, N_Vector tmp2B, N_Vector tmp3B)
+static int bprecsetupfn(
+    realtype t,
+    N_Vector yy, N_Vector yp,
+    N_Vector yB, N_Vector ypB, N_Vector resvalB,
+    realtype cjB, void *user_data,
+    N_Vector tmp1B, N_Vector tmp2B, N_Vector tmp3B)
 {
     CAMLparam0();
     CAMLlocal3(session, cb, arg);
@@ -441,12 +441,48 @@ static int bprecsetupfn(realtype t, N_Vector yy, N_Vector yp,
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
-static int bprecsolvefn(realtype t, N_Vector yy, N_Vector yp,
-			N_Vector yB, N_Vector ypB,
-			N_Vector resvalB,
-			N_Vector rvecB, N_Vector zvecB,
-			realtype cjB, realtype deltaB,
-			void *user_data, N_Vector tmpB)
+static int bprecsetupfn_sens(
+    realtype t,
+    N_Vector yy, N_Vector yp,
+    N_Vector *yyS, N_Vector *ypS,
+    N_Vector yB, N_Vector ypB, N_Vector resvalB,
+    realtype cjB, void *user_data,
+    N_Vector tmp1B, N_Vector tmp2B, N_Vector tmp3B)
+{
+    CAMLparam0();
+    CAMLlocal3(session, cb, bsensext);
+    CAMLlocalN(args, 3);
+    int ns;
+
+    WEAK_DEREF (session, *(value*)user_data);
+    bsensext = IDA_SENSEXT_FROM_ML(session);
+    ns = Int_val(Field(bsensext, RECORD_IDAS_BWD_SESSION_NUMSENSITIVITIES));
+
+    args[0] = idas_make_jac_arg(t, yy, yp, yB, ypB, resvalB, cjB,
+			        ida_make_triple_tmp(tmp1B, tmp2B, tmp3B));
+    args[1] = IDAS_BSENSARRAY1_FROM_EXT (bsensext);
+    args[2] = IDAS_BSENSARRAY2_FROM_EXT (bsensext);
+    idas_wrap_to_nvector_table (ns, args[1], yyS);
+    idas_wrap_to_nvector_table (ns, args[2], ypS);
+
+    cb = IDA_LS_PRECFNS_FROM_ML (session);
+    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_IDAS_BSPILS_PRECFNS_PREC_SETUP_FN);
+    cb = Some_val (cb);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback3_exn (cb, args[0], args[1], args[2]);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
+}
+
+static int bprecsolvefn(
+    realtype t,
+    N_Vector yy, N_Vector yp,
+    N_Vector yB, N_Vector ypB, N_Vector resvalB,
+    N_Vector rvecB, N_Vector zvecB,
+    realtype cjB, realtype deltaB,
+    void *user_data, N_Vector tmpB)
 {
     CAMLparam0();
     CAMLlocalN(args, 4);
@@ -469,12 +505,53 @@ static int bprecsolvefn(realtype t, N_Vector yy, N_Vector yp,
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
-static int bjactimesfn(realtype t, N_Vector yy, N_Vector yp,
-		       N_Vector yyB, N_Vector ypB,
-		       N_Vector resvalB,
-		       N_Vector vB, N_Vector JvB,
-		       realtype cjB, void *user_data,
-		       N_Vector tmp1B, N_Vector tmp2B)
+static int bprecsolvefn_sens(
+    realtype t,
+    N_Vector yy, N_Vector yp,
+    N_Vector *yyS, N_Vector *ypS,
+    N_Vector yB, N_Vector ypB, N_Vector resvalB,
+    N_Vector rvecB, N_Vector zvecB,
+    realtype cjB, realtype deltaB,
+    void *user_data, N_Vector tmpB)
+{
+    CAMLparam0();
+    CAMLlocalN(args, 6);
+    CAMLlocal3(session, bsensext, cb);
+    int ns;
+
+    WEAK_DEREF (session, *(value*)user_data);
+    bsensext = IDA_SENSEXT_FROM_ML(session);
+
+    args[0] = idas_make_jac_arg(t, yy, yp, yB, ypB, resvalB, cjB,
+			        NVEC_BACKLINK(tmpB));
+
+    ns = Int_val(Field(bsensext, RECORD_IDAS_BWD_SESSION_NUMSENSITIVITIES));
+    args[1] = IDAS_BSENSARRAY1_FROM_EXT (bsensext);
+    args[2] = IDAS_BSENSARRAY2_FROM_EXT (bsensext);
+    idas_wrap_to_nvector_table (ns, args[1], yyS);
+    idas_wrap_to_nvector_table (ns, args[2], ypS);
+
+    args[3] = NVEC_BACKLINK (rvecB);
+    args[4] = NVEC_BACKLINK (zvecB);
+    args[5] = caml_copy_double (deltaB);
+
+    cb = IDA_LS_PRECFNS_FROM_ML (session);
+    cb = Field (cb, 0);
+    cb = Field (cb, RECORD_IDAS_BSPILS_PRECFNS_PREC_SOLVE_FN);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (cb, 6, args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
+}
+
+static int bjactimesfn(
+    realtype t,
+    N_Vector yy, N_Vector yp,
+    N_Vector yyB, N_Vector ypB, N_Vector resvalB,
+    N_Vector vB, N_Vector JvB,
+    realtype cjB, void *user_data,
+    N_Vector tmp1B, N_Vector tmp2B)
 {
     CAMLparam0();
     CAMLlocalN(args, 3);
@@ -492,6 +569,45 @@ static int bjactimesfn(realtype t, N_Vector yy, N_Vector yp,
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback3_exn (cb, args[0], args[1], args[2]);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
+}
+
+static int bjactimesfn_sens(
+    realtype t,
+    N_Vector yy, N_Vector yp,
+    N_Vector *yyS, N_Vector *ypS,
+    N_Vector yyB, N_Vector ypB, N_Vector resvalB,
+    N_Vector vB, N_Vector JvB,
+    realtype cjB, void *user_data,
+    N_Vector tmp1B, N_Vector tmp2B)
+{
+    CAMLparam0();
+    CAMLlocalN(args, 5);
+    CAMLlocal3(session, bsensext, cb);
+    int ns;
+
+    WEAK_DEREF (session, *(value*)user_data);
+    bsensext = IDA_SENSEXT_FROM_ML(session);
+
+    args[0] = idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
+			        ida_make_double_tmp (tmp1B, tmp2B));
+
+    ns = Int_val(Field(bsensext, RECORD_IDAS_BWD_SESSION_NUMSENSITIVITIES));
+    args[1] = IDAS_BSENSARRAY1_FROM_EXT (bsensext);
+    args[2] = IDAS_BSENSARRAY2_FROM_EXT (bsensext);
+    idas_wrap_to_nvector_table (ns, args[1], yyS);
+    idas_wrap_to_nvector_table (ns, args[2], ypS);
+
+    args[3] = NVEC_BACKLINK(vB);
+    args[4] = NVEC_BACKLINK(JvB);
+
+    cb = IDA_LS_CALLBACKS_FROM_ML (session);
+    cb = Field (cb, 0);
+    cb = Some_val (cb);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (cb, 5, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }
@@ -528,12 +644,12 @@ static int bjacfn_nosens(long int NeqB, realtype t,
 }
 
 static int bjacfn_withsens(long int NeqB, realtype t,
-			 realtype cjB, N_Vector yy, N_Vector yp,
-			 N_Vector *yS, N_Vector *ypS,
-			 N_Vector yyB, N_Vector ypB,
-			 N_Vector resvalB,
-			 DlsMat JacB, void *user_data,
-			 N_Vector tmp1B, N_Vector tmp2B, N_Vector tmp3B)
+			   realtype cjB, N_Vector yy, N_Vector yp,
+			   N_Vector *yS, N_Vector *ypS,
+			   N_Vector yyB, N_Vector ypB,
+			   N_Vector resvalB,
+			   DlsMat JacB, void *user_data,
+			   N_Vector tmp1B, N_Vector tmp2B, N_Vector tmp3B)
 {
     CAMLparam0();
     CAMLlocalN(args, 4);
@@ -1782,27 +1898,60 @@ CAMLprim value c_idas_adj_sv_tolerances(value vparent, value vwhich,
 
 CAMLprim value c_idas_adj_spils_set_preconditioner(value vparent,
 						   value vwhich,
-						   value vset_precsetup)
+						   value vset_precsetup,
+						   value vusesens)
 {
-    CAMLparam3(vparent, vwhich, vset_precsetup);
+    CAMLparam4(vparent, vwhich, vset_precsetup, vusesens);
     void *mem = IDA_MEM_FROM_ML(vparent);
     int which = Int_val(vwhich);
-    IDASpilsPrecSetupFnB bsetup = Bool_val(vset_precsetup) ? bprecsetupfn : NULL;
-    int flag = IDASpilsSetPreconditionerB(mem, which, bsetup, bprecsolvefn);
-    SCHECK_FLAG ("IDASpilsSetPreconditionerB", flag);
+    int flag;
+
+    if (Bool_val(vusesens)) {
+#if SUNDIALS_LIB_VERSION >= 260
+	flag = IDASpilsSetPreconditionerBS(
+		    mem,
+		    which,
+		    Bool_val(vset_precsetup) ? bprecsetupfn_sens : NULL,
+		    bprecsolvefn_sens);
+	SCHECK_FLAG ("IDASpilsSetPreconditionerBS", flag);
+#else
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    } else {
+	flag = IDASpilsSetPreconditionerB(
+		    mem,
+		    which,
+		    Bool_val(vset_precsetup) ? bprecsetupfn : NULL,
+		    bprecsolvefn);
+	SCHECK_FLAG ("IDASpilsSetPreconditionerB", flag);
+    }
     CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_idas_adj_spils_set_jac_times_vec_fn(value vparent,
 						     value vwhich,
-						     value vset_jac)
+						     value vset_jac,
+						     value vusesens)
 {
-    CAMLparam3(vparent, vwhich, vset_jac);
+    CAMLparam4(vparent, vwhich, vset_jac, vusesens);
     void *mem = IDA_MEM_FROM_ML(vparent);
     int which = Int_val(vwhich);
-    IDASpilsJacTimesVecFnB jac = Bool_val (vset_jac) ? bjactimesfn : NULL;
-    int flag = IDASpilsSetJacTimesVecFnB(mem, which, jac);
-    SCHECK_FLAG ("IDASpilsSetJacTimesVecFnB", flag);
+    int flag;
+
+    if (Bool_val(vusesens)) {
+#if SUNDIALS_LIB_VERSION >= 260
+	flag = IDASpilsSetJacTimesVecFnBS(mem, which,
+			Bool_val (vset_jac) ? bjactimesfn_sens : NULL);
+	SCHECK_FLAG ("IDASpilsSetJacTimesVecFnBS", flag);
+#else
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    } else {
+	flag = IDASpilsSetJacTimesVecFnB(mem, which,
+			Bool_val (vset_jac) ? bjactimesfn : NULL);
+	SCHECK_FLAG ("IDASpilsSetJacTimesVecFnB", flag);
+    }
+
     CAMLreturn (Val_unit);
 }
 
