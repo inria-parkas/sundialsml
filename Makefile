@@ -16,55 +16,91 @@ default: all
 .SUFFIXES : .mli .ml .cmi .cmo .cmx
 
 .ml.cmo:
-	$(OCAMLC) $(OCAMLFLAGS) -c $(INCLUDES) $<
+	$(OCAMLC) $(OCAMLFLAGS) $(SUBDIRS:%=-I %) -c $(INCLUDES) $<
 
 .mli.cmi:
-	$(OCAMLC) $(OCAMLFLAGS) -c $(INCLUDES) $<
+	$(OCAMLC) $(OCAMLFLAGS) $(SUBDIRS:%=-I %) -c $(INCLUDES) $<
 
 .ml.cmx:
-	$(OCAMLOPT) $(OCAMLOPTFLAGS) -c $(INCLUDES) $<
+	$(OCAMLOPT) $(OCAMLOPTFLAGS) $(SUBDIRS:%=-I %) -c $(INCLUDES) $<
 
 %.o: %.c
-	$(CC) -I $(OCAML_INCLUDE) $(CFLAGS) -o $@ -c $<
+	$(CC) -I $(OCAML_INCLUDE) $(CFLAGS) $(CSUBDIRS) -o $@ -c $<
 
 ### Objects shared between sundials.cma and sundials_no_sens.cma.
 
 # Common to CVODE, IDA, KINSOL, and ARKODE.
-COBJ_COMMON = sundials_ml$(XO) dls_ml$(XO) $(SLS_ML_XO) nvector_ml$(XO) \
-	      spils_ml$(XO) $(NVECPTHREADS_ML_XO) $(NVECOPENMP_ML_XO)
+COBJ_COMMON = sundials_ml$(XO)		\
+	      lsolvers/dls_ml$(XO)	\
+	      $(SLS_ML_XO)		\
+	      nvectors/nvector_ml$(XO)	\
+	      lsolvers/spils_ml$(XO)	\
+	      $(NVECPTHREADS_ML_XO)	\
+	      $(NVECOPENMP_ML_XO)
 
-COBJ_MAIN = $(COBJ_COMMON) kinsol_ml$(XO) $(ARKODE_COBJ_MAIN)
+COBJ_MAIN = $(COBJ_COMMON) kinsol/kinsol_ml$(XO) $(ARKODE_COBJ_MAIN)
 
-MLOBJ_MAIN = sundials_config.cmo sundials.cmo nvector.cmo		\
-	     dls_impl.cmo dls.cmo sls_impl.cmo $(SLS_CMO) spils.cmo	\
-	     nvector_custom.cmo nvector_array.cmo			\
-	     nvector_serial.cmo $(NVECPTHREADS_CMO) $(NVECOPENMP_CMO) 	\
-	     cvode_impl.cmo ida_impl.cmo kinsol_impl.cmo		\
-	     cvode.cmo kinsol.cmo ida.cmo $(ARKODE_MLOBJ_MAIN)		\
-	     $(KLU_MLOBJ_MAIN) $(SUPERLUMT_MLOBJ_MAIN)
+MLOBJ_MAIN =	sundials_config.cmo		\
+		sundials.cmo			\
+		nvectors/nvector.cmo		\
+		lsolvers/dls_impl.cmo		\
+		lsolvers/dls.cmo		\
+		lsolvers/sls_impl.cmo		\
+		$(SLS_CMO)			\
+		lsolvers/spils.cmo		\
+		nvectors/nvector_custom.cmo	\
+		nvectors/nvector_array.cmo	\
+		nvectors/nvector_serial.cmo	\
+		$(NVECPTHREADS_CMO)		\
+		$(NVECOPENMP_CMO) 		\
+		cvode/cvode_impl.cmo		\
+		ida/ida_impl.cmo		\
+		kinsol/kinsol_impl.cmo		\
+		cvode/cvode.cmo			\
+		kinsol/kinsol.cmo		\
+		ida/ida.cmo			\
+		$(ARKODE_MLOBJ_MAIN)		\
+		$(KLU_MLOBJ_MAIN)		\
+		$(SUPERLUMT_MLOBJ_MAIN)
 
 CMI_MAIN = $(filter-out sundials_config.cmi,$(filter-out %_impl.cmi,\
 	    $(MLOBJ_MAIN:.cmo=.cmi)))
 
 ### Objects specific to sundials.cma.
-COBJ_SENS  = cvode_ml_s$(XO) ida_ml_s$(XO) cvodes_ml.o idas_ml.o \
-	     $(KLU_COBJ_SENS) $(SUPERLUMT_COBJ_SENS)
-MLOBJ_SENS = cvodes.cmo idas.cmo \
-	     $(KLU_MLOBJ_SENS) $(SUPERLUMT_MLOBJ_SENS)
+COBJ_SENS  =	cvodes/cvode_ml_s$(XO)		\
+		idas/ida_ml_s$(XO)		\
+		cvodes/cvodes_ml.o		\
+		idas/idas_ml.o			\
+	     	$(KLU_COBJ_SENS)		\
+		$(SUPERLUMT_COBJ_SENS)
+MLOBJ_SENS =	cvodes/cvodes.cmo		\
+		idas/idas.cmo			\
+	     	$(KLU_MLOBJ_SENS)		\
+		$(SUPERLUMT_MLOBJ_SENS)
 CMI_SENS = $(MLOBJ_SENS:.cmo=.cmi)
 
 ### Objects specific to sundials_no_sens.cma.
-COBJ_NO_SENS = cvode_ml$(XO) ida_ml$(XO)			\
-	       $(KLU_COBJ_NO_SENS) $(SUPERLUMT_COBJ_NO_SENS)
+COBJ_NO_SENS =	cvode/cvode_ml$(XO)		\
+		ida/ida_ml$(XO)			\
+		$(KLU_COBJ_NO_SENS)		\
+		$(SUPERLUMT_COBJ_NO_SENS)
 MLOBJ_NO_SENS =
 
 ### Objects specific to sundials_mpi.cma.
-COBJ_MPI = nvector_parallel_ml.o kinsol_bbd_ml.o arkode_bbd_ml.o	\
-	   cvode_bbd_ml.o cvodes_bbd_ml.o				\
-	   ida_bbd_ml.o idas_bbd_ml.o
-MLOBJ_MPI = nvector_parallel.cmo kinsol_bbd.cmo arkode_bbd.cmo		\
-	    cvode_bbd.cmo cvodes_bbd.cmo				\
-	    ida_bbd.cmo idas_bbd.cmo
+COBJ_MPI =	nvectors/nvector_parallel_ml.o	\
+		kinsol/kinsol_bbd_ml.o		\
+		arkode/arkode_bbd_ml.o		\
+	   	cvode/cvode_bbd_ml.o		\
+		cvodes/cvodes_bbd_ml.o		\
+	   	ida/ida_bbd_ml.o		\
+		idas/idas_bbd_ml.o
+MLOBJ_MPI =	nvectors/nvector_parallel.cmo	\
+		kinsol/kinsol_bbd.cmo		\
+		arkode/arkode_bbd.cmo		\
+		cvode/cvode_bbd.cmo		\
+		cvodes/cvodes_bbd.cmo		\
+		ida/ida_bbd.cmo			\
+		idas/idas_bbd.cmo
 CMI_MPI = $(MLOBJ_MPI:.cmo=.cmi)
 
 ### Other sets of files.
@@ -139,110 +175,114 @@ $(MLOBJ_MPI) $(CMI_MPI) $(MLOBJ_MPI:.cmo=.cmx)	\
 
 # The CFLAGS settings for CVODE works for modules common to CVODE and IDA.
 $(COBJ_COMMON): %.o: %.c
-	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
+	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) $(CSUBDIRS) -o $@ -c $<
 
-nvector_parallel_ml.o: nvector_parallel_ml.c
-	$(MPICC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
+nvectors/nvector_parallel_ml.o: nvectors/nvector_parallel_ml.c
+	$(MPICC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) $(CSUBDIRS) -o $@ -c $<
 
 # KINSOL-specific C files.
-kinsol_ml.o: kinsol_ml.c
-	$(CC) -I $(OCAML_INCLUDE) $(KINSOL_CFLAGS) -o $@ -c $<
+kinsol/kinsol_ml.o: kinsol/kinsol_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(KINSOL_CFLAGS) $(CSUBDIRS) -o $@ -c $<
 
-kinsol_bbd_ml.o: kinsol_bbd_ml.c
-	$(CC) -I $(OCAML_INCLUDE) $(KINSOL_CFLAGS) -o $@ -c $<
+kinsol/kinsol_bbd_ml.o: kinsol/kinsol_bbd_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(KINSOL_CFLAGS) $(CSUBDIRS) -o $@ -c $<
 
-kinsol_klu_ml.o: kinsol_klu_ml.c
-	$(CC) -I $(OCAML_INCLUDE) $(KINSOL_CFLAGS) -o $@ -c $<
+kinsol/kinsol_klu_ml.o: kinsol/kinsol_klu_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(KINSOL_CFLAGS) $(CSUBDIRS) -o $@ -c $<
 
-kinsol_superlumt_ml.o: kinsol_superlumt_ml.c
-	$(CC) -I $(OCAML_INCLUDE) $(KINSOL_CFLAGS) -o $@ -c $<
+kinsol/kinsol_superlumt_ml.o: kinsol/kinsol_superlumt_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(KINSOL_CFLAGS) $(CSUBDIRS) -o $@ -c $<
 
 # ARKODE-specific C files.
-arkode_ml.o: arkode_ml.c
-	$(CC) -I $(OCAML_INCLUDE) $(ARKODE_CFLAGS) -o $@ -c $<
+arkode/arkode_ml.o: arkode/arkode_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(ARKODE_CFLAGS) $(CSUBDIRS) -o $@ -c $<
 
-arkode_bbd_ml.o: arkode_bbd_ml.c
-	$(CC) -I $(OCAML_INCLUDE) $(ARKODE_CFLAGS) -o $@ -c $<
+arkode/arkode_bbd_ml.o: arkode/arkode_bbd_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(ARKODE_CFLAGS) $(CSUBDIRS) -o $@ -c $<
 
-arkode_klu_ml.o: arkode_klu_ml.c
-	$(CC) -I $(OCAML_INCLUDE) $(ARKODE_CFLAGS) -o $@ -c $<
+arkode/arkode_klu_ml.o: arkode/arkode_klu_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(ARKODE_CFLAGS) $(CSUBDIRS) -o $@ -c $<
 
-arkode_superlumt_ml.o: arkode_superlumt_ml.c
-	$(CC) -I $(OCAML_INCLUDE) $(ARKODE_CFLAGS) -o $@ -c $<
+arkode/arkode_superlumt_ml.o: arkode/arkode_superlumt_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(ARKODE_CFLAGS) $(CSUBDIRS) -o $@ -c $<
 
 # CVODE[S]-specific C files.
-cvode_ml.o: cvode_ml.c
-	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
+cvode/cvode_ml.o: cvode/cvode_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) $(CSUBDIRS) -o $@ -c $<
 
-cvode_ml_s.o: cvode_ml.c
-	$(CC) -DSUNDIALSML_WITHSENS -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) \
-	    -o $@ -c $<
+cvodes/cvode_ml_s.o: cvode/cvode_ml.c
+	$(CC) -DSUNDIALSML_WITHSENS -I $(OCAML_INCLUDE) \
+	    $(CVODE_CFLAGS) $(CSUBDIRS) -o $@ -c $<
 
-cvodes_ml.o: cvodes_ml.c
-	$(CC) -I $(OCAML_INCLUDE) $(CVODES_CFLAGS) -o $@ -c $<
+cvodes/cvodes_ml.o: cvodes/cvodes_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(CVODES_CFLAGS) \
+	    $(CSUBDIRS) -Icvode -o $@ -c $<
 
-cvode_bbd_ml.o: cvode_bbd_ml.c
-	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
+cvode/cvode_bbd_ml.o: cvode/cvode_bbd_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) $(CSUBDIRS) -o $@ -c $<
 
-cvodes_bbd_ml.o: cvodes_bbd_ml.c
-	$(CC) -I $(OCAML_INCLUDE) $(CVODES_CFLAGS) -o $@ -c $<
+cvodes/cvodes_bbd_ml.o: cvodes/cvodes_bbd_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(CVODES_CFLAGS) \
+	    $(CSUBDIRS) -Icvode -o $@ -c $<
 
-cvode_klu_ml.o: cvode_klu_ml.c
-	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
+cvode/cvode_klu_ml.o: cvode/cvode_klu_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) $(CSUBDIRS) -o $@ -c $<
 
-cvode_klu_ml_s.o: cvode_klu_ml.c
-	$(CC) -DSUNDIALSML_WITHSENS -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) \
-	    -o $@ -c $<
+cvodes/cvode_klu_ml_s.o: cvode/cvode_klu_ml.c
+	$(CC) -DSUNDIALSML_WITHSENS -I $(OCAML_INCLUDE) \
+	    $(CVODE_CFLAGS) $(CSUBDIRS) -o $@ -c $<
 
-cvodes_klu_ml.o: cvodes_klu_ml.c
-	$(CC) -I $(OCAML_INCLUDE) $(CVODES_CFLAGS) -o $@ -c $<
+cvodes/cvodes_klu_ml.o: cvodes/cvodes_klu_ml.c
+	$(CC) -I $(OCAML_INCLUDE) \
+	    $(CVODES_CFLAGS) $(CSUBDIRS) -Icvode -o $@ -c $<
 
-cvode_superlumt_ml.o: cvode_superlumt_ml.c
-	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
+cvode/cvode_superlumt_ml.o: cvode/cvode_superlumt_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) $(CSUBDIRS) -o $@ -c $<
 
-cvode_superlumt_ml_s.o: cvode_superlumt_ml.c
-	$(CC) -DSUNDIALSML_WITHSENS -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) \
-	    -o $@ -c $<
+cvodes/cvode_superlumt_ml_s.o: cvode/cvode_superlumt_ml.c
+	$(CC) -DSUNDIALSML_WITHSENS -I $(OCAML_INCLUDE) \
+	    $(CVODE_CFLAGS) $(CSUBDIRS) -o $@ -c $<
 
-cvodes_superlumt_ml.o: cvodes_superlumt_ml.c
-	$(CC) -I $(OCAML_INCLUDE) $(CVODES_CFLAGS) -o $@ -c $<
+cvodes/cvodes_superlumt_ml.o: cvodes/cvodes_superlumt_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(CVODES_CFLAGS) \
+	    $(CSUBDIRS) -Icvode -o $@ -c $<
 
 # IDA[S]-specific C files.
-ida_ml.o: ida_ml.c
-	$(CC) -I $(OCAML_INCLUDE) $(IDA_CFLAGS) -o $@ -c $<
+ida/ida_ml.o: ida/ida_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(IDA_CFLAGS) $(CSUBDIRS) -o $@ -c $<
 
-ida_ml_s.o: ida_ml.c
-	$(CC) -DSUNDIALSML_WITHSENS -I $(OCAML_INCLUDE) $(IDA_CFLAGS) \
-	    -o $@ -c $<
+idas/ida_ml_s.o: ida/ida_ml.c
+	$(CC) -DSUNDIALSML_WITHSENS -I $(OCAML_INCLUDE) \
+	    $(IDA_CFLAGS) $(CSUBDIRS) -o $@ -c $<
 
-idas_ml.o: idas_ml.c
-	$(CC) -I $(OCAML_INCLUDE) $(IDAS_CFLAGS) -o $@ -c $<
+idas/idas_ml.o: idas/idas_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(IDAS_CFLAGS) $(CSUBDIRS) -Iida -o $@ -c $<
 
-ida_bbd_ml.o: ida_bbd_ml.c
-	$(CC) -I $(OCAML_INCLUDE) $(IDA_CFLAGS) -o $@ -c $<
+ida/ida_bbd_ml.o: ida/ida_bbd_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(IDA_CFLAGS) $(CSUBDIRS) -o $@ -c $<
 
-idas_bbd_ml.o: idas_bbd_ml.c
-	$(CC) -I $(OCAML_INCLUDE) $(IDAS_CFLAGS) -o $@ -c $<
+idas/idas_bbd_ml.o: idas/idas_bbd_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(IDAS_CFLAGS) $(CSUBDIRS) -Iida -o $@ -c $<
 
-ida_klu_ml.o: ida_klu_ml.c
-	$(CC) -I $(OCAML_INCLUDE) $(IDA_CFLAGS) -o $@ -c $<
+ida/ida_klu_ml.o: ida/ida_klu_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(IDA_CFLAGS) $(CSUBDIRS) -o $@ -c $<
 
-ida_klu_ml_s.o: ida_klu_ml.c
-	$(CC) -DSUNDIALSML_WITHSENS -I $(OCAML_INCLUDE) $(IDA_CFLAGS) \
-	    -o $@ -c $<
+idas/ida_klu_ml_s.o: ida/ida_klu_ml.c
+	$(CC) -DSUNDIALSML_WITHSENS -I $(OCAML_INCLUDE) \
+	    $(IDA_CFLAGS) $(CSUBDIRS) -o $@ -c $<
 
-idas_klu_ml.o: idas_klu_ml.c
-	$(CC) -I $(OCAML_INCLUDE) $(IDAS_CFLAGS) -o $@ -c $<
+idas/idas_klu_ml.o: idas/idas_klu_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(IDAS_CFLAGS) $(CSUBDIRS) -Iida -o $@ -c $<
 
-ida_superlumt_ml.o: ida_superlumt_ml.c
-	$(CC) -I $(OCAML_INCLUDE) $(IDA_CFLAGS) -o $@ -c $<
+ida/ida_superlumt_ml.o: ida/ida_superlumt_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(IDA_CFLAGS) $(CSUBDIRS) -o $@ -c $<
 
-ida_superlumt_ml_s.o: ida_superlumt_ml.c
-	$(CC) -DSUNDIALSML_WITHSENS -I $(OCAML_INCLUDE) $(IDA_CFLAGS) \
-	    -o $@ -c $<
+idas/ida_superlumt_ml_s.o: ida/ida_superlumt_ml.c
+	$(CC) -DSUNDIALSML_WITHSENS -I $(OCAML_INCLUDE) \
+	    $(IDA_CFLAGS) $(CSUBDIRS) -o $@ -c $<
 
-idas_superlumt_ml.o: idas_superlumt_ml.c
-	$(CC) -I $(OCAML_INCLUDE) $(IDAS_CFLAGS) -o $@ -c $<
+idas/idas_superlumt_ml.o: idas/idas_superlumt_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(IDAS_CFLAGS) $(CSUBDIRS) -Iida -o $@ -c $<
 
 # Docs.
 
@@ -389,7 +429,7 @@ distcheck:
 
 depend: .depend
 .depend:
-	$(OCAMLDEP) -pp '$(DOCHTML_PP)' *.mli *.ml > .depend
+	$(OCAMLDEP) -pp '$(DOCHTML_PP)' *.mli *.ml */*.mli */*.ml > .depend
 	$(CC) -MM $(CPPFLAGS) *.c >> .depend
 
 clean:

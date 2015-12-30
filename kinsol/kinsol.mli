@@ -45,7 +45,7 @@ open Sundials
 (** A session with the KINSOL solver.
  
     An example session with Kinsol ({openfile kinsol_skel.ml}): {[
-#include "examples/ocaml/skeletons/kinsol_skel.ml"
+#include "../examples/ocaml/skeletons/kinsol_skel.ml"
     ]}
 
     @kinsol <node5#s:skeleton_sol> Skeleton of main program *)

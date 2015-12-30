@@ -277,11 +277,11 @@ else
 	    error="${error}\n\tsundials >= 2.5.0 required" ;;
 	2.5.*) sundials=250;;
 	*)  sundials=260
-	    sls_ml_xo=sls_ml${XO}
-	    sls_cmo=sls.cmo
+	    sls_ml_xo=lsolvers/sls_ml${XO}
+	    sls_cmo=lsolvers/sls.cmo
 	    Lsundials_arkode=-lsundials_arkode
-	    arkode_mlobj_main='arkode_impl.cmo arkode.cmo'
-	    arkode_cobj_main=arkode_ml${XO}
+	    arkode_mlobj_main='arkode/arkode_impl.cmo arkode/arkode.cmo'
+	    arkode_cobj_main=arkode/arkode_ml${XO}
 	    ;;
     esac
     case "${sundials_version}" in
@@ -563,23 +563,23 @@ if [ $sundials -ge 260 ]; then
 		klu_enabled=1
 		klu_info="installed"
 
-		klu_cobj_sens="$klu_cobj_sens cvode_klu_ml_s${XO}"
-		klu_cobj_sens="$klu_cobj_sens cvodes_klu_ml${XO}"
-		klu_cobj_sens="$klu_cobj_sens ida_klu_ml_s${XO}"
-		klu_cobj_sens="$klu_cobj_sens idas_klu_ml${XO}"
+		klu_cobj_sens="$klu_cobj_sens cvodes/cvode_klu_ml_s${XO}"
+		klu_cobj_sens="$klu_cobj_sens cvodes/cvodes_klu_ml${XO}"
+		klu_cobj_sens="$klu_cobj_sens idas/ida_klu_ml_s${XO}"
+		klu_cobj_sens="$klu_cobj_sens idas/idas_klu_ml${XO}"
 
-		klu_cobj_no_sens="$klu_cobj_no_sens cvode_klu_ml${XO}"
-		klu_cobj_no_sens="$klu_cobj_no_sens ida_klu_ml${XO}"
-		klu_cobj_no_sens="$klu_cobj_no_sens kinsol_klu_ml${XO}"
-		klu_cobj_no_sens="$klu_cobj_no_sens arkode_klu_ml${XO}"
+		klu_cobj_no_sens="$klu_cobj_no_sens cvode/cvode_klu_ml${XO}"
+		klu_cobj_no_sens="$klu_cobj_no_sens ida/ida_klu_ml${XO}"
+		klu_cobj_no_sens="$klu_cobj_no_sens kinsol/kinsol_klu_ml${XO}"
+		klu_cobj_no_sens="$klu_cobj_no_sens arkode/arkode_klu_ml${XO}"
 
-		klu_mlobj_main="$klu_mlobj_main cvode_klu.cmo"
-		klu_mlobj_main="$klu_mlobj_main ida_klu.cmo"
-		klu_mlobj_main="$klu_mlobj_main kinsol_klu.cmo"
-		klu_mlobj_main="$klu_mlobj_main arkode_klu.cmo"
+		klu_mlobj_main="$klu_mlobj_main cvode/cvode_klu.cmo"
+		klu_mlobj_main="$klu_mlobj_main ida/ida_klu.cmo"
+		klu_mlobj_main="$klu_mlobj_main kinsol/kinsol_klu.cmo"
+		klu_mlobj_main="$klu_mlobj_main arkode/arkode_klu.cmo"
 
-		klu_mlobj_sens="$klu_mlobj_sens cvodes_klu.cmo"
-		klu_mlobj_sens="$klu_mlobj_sens idas_klu.cmo"
+		klu_mlobj_sens="$klu_mlobj_sens cvodes/cvodes_klu.cmo"
+		klu_mlobj_sens="$klu_mlobj_sens idas/idas_klu.cmo"
 	    else
 		klu_info='disabled'
 	    fi;;
@@ -592,23 +592,24 @@ if [ $sundials -ge 260 ]; then
 		superlumt_enabled=1
 	        superlumt_info="installed"
 
-		superlumt_cobj_sens="$superlumt_cobj_sens cvode_superlumt_ml_s${XO}"
-		superlumt_cobj_sens="$superlumt_cobj_sens cvodes_superlumt_ml${XO}"
-		superlumt_cobj_sens="$superlumt_cobj_sens ida_superlumt_ml_s${XO}"
-		superlumt_cobj_sens="$superlumt_cobj_sens idas_superlumt_ml${XO}"
+superlumt_cobj_sens="$superlumt_cobj_sens cvodes/cvode_superlumt_ml_s${XO}"
+superlumt_cobj_sens="$superlumt_cobj_sens cvodes/cvodes_superlumt_ml${XO}"
+superlumt_cobj_sens="$superlumt_cobj_sens idas/ida_superlumt_ml_s${XO}"
+superlumt_cobj_sens="$superlumt_cobj_sens idas/idas_superlumt_ml${XO}"
 
-		superlumt_cobj_no_sens="$superlumt_cobj_no_sens cvode_superlumt_ml${XO}"
-		superlumt_cobj_no_sens="$superlumt_cobj_no_sens ida_superlumt_ml${XO}"
-		superlumt_cobj_no_sens="$superlumt_cobj_no_sens kinsol_superlumt_ml${XO}"
-		superlumt_cobj_no_sens="$superlumt_cobj_no_sens arkode_superlumt_ml${XO}"
+superlumt_cobj_no_sens="$superlumt_cobj_no_sens cvode/cvode_superlumt_ml${XO}"
+superlumt_cobj_no_sens="$superlumt_cobj_no_sens ida/ida_superlumt_ml${XO}"
+superlumt_cobj_no_sens="$superlumt_cobj_no_sens kinsol/kinsol_superlumt_ml${XO}"
+superlumt_cobj_no_sens="$superlumt_cobj_no_sens arkode/arkode_superlumt_ml${XO}"
 
-		superlumt_mlobj_main="$superlumt_mlobj_main cvode_superlumt.cmo"
-		superlumt_mlobj_main="$superlumt_mlobj_main ida_superlumt.cmo"
-		superlumt_mlobj_main="$superlumt_mlobj_main kinsol_superlumt.cmo"
-		superlumt_mlobj_main="$superlumt_mlobj_main arkode_superlumt.cmo"
+superlumt_mlobj_main="$superlumt_mlobj_main cvode/cvode_superlumt.cmo"
+superlumt_mlobj_main="$superlumt_mlobj_main ida/ida_superlumt.cmo"
+superlumt_mlobj_main="$superlumt_mlobj_main kinsol/kinsol_superlumt.cmo"
+superlumt_mlobj_main="$superlumt_mlobj_main arkode/arkode_superlumt.cmo"
 
-		superlumt_mlobj_sens="$superlumt_mlobj_sens cvodes_superlumt.cmo"
-		superlumt_mlobj_sens="$superlumt_mlobj_sens idas_superlumt.cmo"
+superlumt_mlobj_sens="$superlumt_mlobj_sens cvodes/cvodes_superlumt.cmo"
+superlumt_mlobj_sens="$superlumt_mlobj_sens idas/idas_superlumt.cmo"
+
 	    else
 		superlumt_info='disabled'
 	    fi;;
@@ -697,8 +698,8 @@ EOF
     else
 	nvecpthreads_info='installed'
 	nvecpthreads_enabled=1
-	nvecpthreads_ml_xo=nvector_pthreads_ml${XO}
-	nvecpthreads_cmo=nvector_pthreads.cmo
+	nvecpthreads_ml_xo=nvectors/nvector_pthreads_ml${XO}
+	nvecpthreads_cmo=nvectors/nvector_pthreads.cmo
 	serial_nvec_libs="$serial_nvec_libs -lsundials_nvecpthreads"
     fi
     rm -f ./$test_stem.* ./$test_stem$XX
@@ -728,8 +729,8 @@ EOF
     else
 	nvecopenmp_info='installed'
 	nvecopenmp_enabled=1
-	nvecopenmp_ml_xo=nvector_openmp_ml${XO}
-	nvecopenmp_cmo=nvector_openmp.cmo
+	nvecopenmp_ml_xo=nvectors/nvector_openmp_ml${XO}
+	nvecopenmp_cmo=nvectors/nvector_openmp.cmo
 	serial_nvec_libs="$serial_nvec_libs -lsundials_nvecopenmp"
     fi
     rm -f ./$test_stem.* ./$test_stem$XX
