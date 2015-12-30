@@ -144,7 +144,7 @@ let fB1 : user_data -> RealArray.t Adj.brhsfn_with_sens =
 
   yBdot.{3} <- 2.0*.p1*.y.{0} *. m1      +. l1 *. 2.0*.(y.{0} +. p1*.s1) -. s1;
   yBdot.{4} <- m2 +. p2*.p2*.y.{2} *. m3 +. l3 *. p2*.p2*.s3             -. s2;
-  yBdot.{5} <- m1 +. p2*.p2*.y.{1} *. m3 +. l3 *. p2*.p2*.s2             -. s3
+  yBdot.{5} <- m1 +. p2*.p2*.y.{1} *. m3 +. l3 *. p2*.p2*.s2 -. s3
 
 let fQB1 : user_data -> RealArray.t QuadAdj.bquadrhsfn_with_sens =
   fun data args yS qBdot ->
@@ -198,8 +198,11 @@ let fB2 : user_data -> RealArray.t Adj.brhsfn_with_sens =
                                      l1 *. 2.0*.p1*.s1                    -. s1;
   yBdot.{4} <- m2 +. p2*.p2*.y.{2} *. m3 +.
                                      l3 *. (2.0*.p2*.y.{2} +. p2*.p2*.s3) -. s2;
-  yBdot.{5} <- m1 +. p2*.p2*.y.{1} *. m3 +.
+  match Sundials.sundials_version with
+  | 2,5,_ -> yBdot.{5} <- m1 +. p2*.p2*.y.{1} *. m3 +.
                                      l3 *. (2.0*.p2*.y.{2} +. p2*.p2*.s2) -. s3
+  | _     -> yBdot.{5} <- m1 +. p2*.p2*.y.{1} *. m3 +.
+                                     l3 *. (2.0*.p2*.y.{1} +. p2*.p2*.s2) -. s3
 
 let fQB2 : user_data -> RealArray.t QuadAdj.bquadrhsfn_with_sens =
   fun data args yS qBdot ->

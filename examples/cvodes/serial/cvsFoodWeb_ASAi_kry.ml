@@ -1066,7 +1066,9 @@ let main () =
 
   (* Call CVodeCreate/CVodeInit for forward run *)
   (* Call CVSpgmr for forward run *)
-  printf "\nCreate and allocate CVODE memory for forward run\n";
+  (match Sundials.sundials_version with
+   | 2,5,_ -> printf "\nCreate and allocate CVODE memory for forward run\n"
+   | _     -> printf "\nCreate and allocate CVODES memory for forward run\n");
   flush stdout;
 
   let cvode_mem =

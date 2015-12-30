@@ -86,6 +86,7 @@ let tout  = 4.0e7   (* final time                           *)
 
 let tb1   = 4.0e7   (* starting point for adjoint problem   *)
 let tb2   = 50.0    (* starting point for adjoint problem   *)
+let tBout1= 40.0    (* intermediate t for adjoint problem   *)
 
 let steps = 150     (* number of steps between check points *)
 
@@ -202,15 +203,39 @@ let fQB : user_data -> RealArray.t QuadAdj.bquadrhsfn_no_sens =
   qBdot.{1} <- -. y23*.l21;
   qBdot.{2} <- y.{1}*.y.{1}*.l32
 
+(* Print intermediate results during backward integration *)
+
+let print_output1 time t y yB =
+  printf "--------------------------------------------------------\n";
+  printf "returned t: %12.4e\n" time;
+  printf "tout:       %12.4e\n" t;
+  printf "lambda(t):  %12.4e %12.4e %12.4e\n" (ith yB 1) (ith yB 2) (ith yB 3);
+  printf "y(t):       %12.4e %12.4e %12.4e\n" (ith y 1) (ith y 2) (ith y 3);
+  printf "--------------------------------------------------------\n\n"
+
 (* Print results after backward integration *)
 
-let print_output tfinal yB qB =
+let print_output tfinal y yB qB =
   printf "--------------------------------------------------------\n";
-  printf "tB0:        %12.4e\n" tfinal;
-  printf "dG/dp:      %12.4e %12.4e %12.4e\n"
-                                  (-.(ith qB 1)) (-.(ith qB 2)) (-.(ith qB 3));
-  printf "lambda(t0): %12.4e %12.4e %12.4e\n" (ith yB 1) (ith yB 2) (ith yB 3);
+  (match Sundials.sundials_version with
+   | 2,5,_ ->
+       printf "tB0:        %12.4e\n" tfinal;
+       printf "dG/dp:      %12.4e %12.4e %12.4e\n"
+                                   (-.(ith qB 1)) (-.(ith qB 2)) (-.(ith qB 3));
+       printf "lambda(t0): %12.4e %12.4e %12.4e\n"
+                                   (ith yB 1) (ith yB 2) (ith yB 3)
+   | _ ->
+       printf "returned t: %12.4e\n" tfinal;
+       printf "lambda(t0): %12.4e %12.4e %12.4e\n"
+                                 (ith yB 1) (ith yB 2) (ith yB 3);
+       printf "y(t0):      %12.4e %12.4e %12.4e\n"
+                                 (ith y 1) (ith y 2) (ith y 3);
+       printf "dG/dp:      %12.4e %12.4e %12.4e\n"
+                                 (-.(ith qB 1)) (-.(ith qB 2)) (-.(ith qB 3)));
   printf "--------------------------------------------------------\n\n"
+
+let print_head tB0 =
+  printf "Backward integration from tB0 = %12.4e\n\n" tB0
 
 (*
  *--------------------------------------------------------------------
@@ -304,16 +329,33 @@ let main () =
   QuadAdj.set_tolerances cvode_memB (QuadAdj.SStolerances (reltolB, abstolQB));
 
   (* Backward Integration *)
-  printf "Backward integration ... ";
+
+  (* First get results at t = tBout1 *)
+  (match Sundials.sundials_version with
+   | 2,6,_ ->
+      print_head tb1;
+      Adj.backward_normal cvode_mem tBout1;
+      let time = Adj.get cvode_memB yB in
+      Adj.get_y cvode_mem y tBout1;
+      print_output1 time tBout1 ydata yBdata
+    | _ -> printf "Backward integration ... ");
+
+  (* Then at t = T0 *)
+
   Adj.backward_normal cvode_mem t0;
   let nstB = Adj.get_num_steps cvode_memB in
 
-  printf "done ( nst = %d )\n"  nstB;
+  (match Sundials.sundials_version with
+   | 2,6,_ -> printf "Done ( nst = %d )\n"  nstB
+   | _     -> printf "done ( nst = %d )\n"  nstB);
 
   ignore (Adj.get cvode_memB yB);
-  ignore (QuadAdj.get cvode_memB qB);
+  let time = QuadAdj.get cvode_memB qB in
+  Adj.get_y cvode_mem y t0;
 
-  print_output tb1 yBdata qBdata;
+  (match Sundials.sundials_version with
+   | 2,6,_ -> print_output time ydata yBdata qBdata
+   | _     -> print_output tb1 ydata yBdata qBdata);
 
   (* Reinitialize backward phase (new tB0) *)
 
@@ -330,17 +372,33 @@ let main () =
   Adj.reinit cvode_memB tb2 yB;
   QuadAdj.reinit cvode_memB qB;
 
-  printf "Backward integration ... ";
+  (* First get results at t = tBout1 *)
+  (match Sundials.sundials_version with
+   | 2,6,_ ->
+      print_head tb2;
+      Adj.backward_normal cvode_mem tBout1;
+      let time = Adj.get cvode_memB yB in
+      Adj.get_y cvode_mem y tBout1;
+      print_output1 time tBout1 ydata yBdata
+    | _ -> printf "Backward integration ... ");
+
+  (* Then at t = T0 *)
 
   Adj.backward_normal cvode_mem t0;
   let nstB = Adj.get_num_steps cvode_memB in
 
-  printf "done ( nst = %d )\n"  nstB;
+  (match Sundials.sundials_version with
+   | 2,6,_ -> printf "Done ( nst = %d )\n"  nstB
+   | _     -> printf "done ( nst = %d )\n"  nstB);
 
   ignore (Adj.get cvode_memB yB);
-  ignore (QuadAdj.get cvode_memB qB);
+  let time = QuadAdj.get cvode_memB qB in
+  Adj.get_y cvode_mem y t0;
 
-  print_output tb2 yBdata qBdata;
+  (match Sundials.sundials_version with
+   | 2,6,_ -> print_output time ydata yBdata qBdata
+   | _     -> print_output tb1 ydata yBdata qBdata);
+
   printf "Free memory\n\n"
 
 (* Check environment variables for extra arguments.  *)

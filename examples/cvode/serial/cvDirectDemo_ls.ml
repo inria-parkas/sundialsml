@@ -352,8 +352,8 @@ let print_intro2 () =
   printf "triangular matrix derived from 2-D advection PDE\n\n";
   printf " neq = %d, ml = %d, mu = %d\n" p2_neq p2_ml p2_mu;
   printf " itol = %s, reltol = %.2g, abstol = %.2g" "CV_SS" rtol atol;
-  match Sundials.version with
-  | 2,5,_,_ -> printf "\n      t        max.err      qu     hu \n"
+  match Sundials.sundials_version with
+  | 2,5,_ -> printf "\n      t        max.err      qu     hu \n"
   | _ -> ()
 
 let print_header2 () =

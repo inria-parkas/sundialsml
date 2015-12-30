@@ -75,7 +75,9 @@ let g_min =     1.0e-5
 let diff_coef = 1.0
 let v_max =     1.0
 let l =         (ymax-.ymin)/.2.0
-let v_coeff =   v_max/.(ymax-.ymin)/.2.0/.(ymax-.ymin)/.2.0
+let v_coeff =   match Sundials.sundials_version with
+                | 2,5,_ -> v_max/.(ymax-.ymin)/.2.0/.(ymax-.ymin)/.2.0
+                | _ -> v_max/.l/.l
 
 (* Initial and final times *)
 
