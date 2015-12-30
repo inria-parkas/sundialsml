@@ -19,6 +19,9 @@ EXAMPLES = cvAdvDiff_bnd.ml \
 LAPACK_EXAMPLES = cvAdvDiff_bndL.ml \
 		  cvRoberts_dnsL.ml
 
+KLU_EXAMPLES = cvRoberts_klu.ml
+SUPERLUMT_EXAMPLES = cvRoberts_sps.ml
+
 include ../../examples.mk
 
 $(eval $(call EXECUTION_RULE,cvRoberts_dns_uw_alt,$$<,cvRoberts_dns_uw))

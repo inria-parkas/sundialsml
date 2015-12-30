@@ -8,7 +8,8 @@ SUBDIR=cvode/parallel
 
 MPI_EXAMPLES = cvDiurnal_kry_p.ml \
 	       cvDiurnal_kry_bbd_p.ml \
-	       cvAdvDiff_non_p.ml
+	       cvAdvDiff_non_p.ml \
+	       cvAdvDiff_diag_p.ml
 
 include ../../examples.mk
 
