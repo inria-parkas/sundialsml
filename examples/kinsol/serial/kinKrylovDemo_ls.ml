@@ -10,7 +10,7 @@
  * -----------------------------------------------------------------
  *
  * This example loops through the available iterative linear solvers:
- * SPGMR, SPBCG and SPTFQMR.
+ * SPGMR, SPBCG, SPTFQMR and SPFGMR.
  *
  * Example (serial):
  *
@@ -132,6 +132,7 @@ type linear_solver =
   | Use_Spgmr     (* 0 *)
   | Use_Spbcg     (* 1 *)
   | Use_Sptfqmr   (* 2 *)
+  | Use_Spfgmr    (* 3 *)
 
 (* User-defined vector access macro: IJ_Vptr *)
 
@@ -364,6 +365,9 @@ let print_header globalstrategy maxl maxlrst fnormtol scsteptol linsolver =
             maxl maxlrst
    | Use_Spbcg -> printf "Linear solver is SPBCG with maxl = %d\n" maxl
    | Use_Sptfqmr -> printf "Linear solver is SPTFQMR with maxl = %d\n" maxl
+   | Use_Spfgmr ->
+     printf "Linear solver is SPFGMR with maxl = %d, maxlrst = %d\n"
+            maxl maxlrst
   );
   printf "Preconditioning uses interaction-only block-diagonal matrix\n";
   printf "Positivity constraints imposed on all components \n";
@@ -411,8 +415,12 @@ let print_final_stats kmem linsolver =
   printf "nni    = %5d    nli   = %5d\n" nni nli;
   printf "nfe    = %5d    nfeSG = %5d\n" nfe nfeSG;
   printf "nps    = %5d    npe   = %5d     ncfl  = %5d\n" nps npe ncfl;
-  if linsolver <> Use_Sptfqmr then
+  match Sundials.sundials_version with
+  | 2,5,_ when linsolver <> Use_Sptfqmr ->
     printf "\n=========================================================\n\n"
+  | _ when linsolver <> Use_Spfgmr ->
+    printf "\n=========================================================\n\n"
+  | _ -> ()
 
 (* MAIN PROGRAM *)
 let main () =
@@ -427,13 +435,13 @@ let main () =
   let scsteptol = stol in
 
   let maxl = ref 15 in
-  let maxlrst = 2 in
+  let maxlrst = ref 2 in
 
   (* Call KINCreate/KINInit to initialize KINSOL using the linear solver
      KINSPGMR with preconditioner routines prec_setup_bd
      and prec_solve_bd. *)
   let kmem = Kinsol.init
-              (Kinsol.Spils.spgmr ~maxl:(!maxl) ~max_restarts:maxlrst
+              (Kinsol.Spils.spgmr ~maxl:(!maxl) ~max_restarts:(!maxlrst)
                  (Kinsol.Spils.prec_right
                     ~setup:prec_setup_bd
                     ~solve:prec_solve_bd ()))
@@ -475,13 +483,28 @@ let main () =
          Kinsol.set_linear_solver kmem
             (Kinsol.Spils.sptfqmr ~maxl:(!maxl)
                (Kinsol.Spils.prec_right ~setup:prec_setup_bd
+                                        ~solve:prec_solve_bd ()))
+
+     | Use_Spfgmr ->
+         printf " -------";
+         printf " \n| SPFGMR |\n";
+         printf " -------\n";
+
+         (* Call KINSptfqmr to specify the linear solver KINSPFGMR with
+            preconditioner routines PrecSetupBD and PrecSolveBD, and the pointer to
+            the user block data. *)
+         maxl := 15;
+         maxlrst := 2;
+         Kinsol.set_linear_solver kmem
+            (Kinsol.Spils.spfgmr ~maxl:(!maxl) ~max_restarts:(!maxlrst)
+               (Kinsol.Spils.prec_right ~setup:prec_setup_bd
                                         ~solve:prec_solve_bd ())));
 
     (* Print out the problem size, solution parameters, initial guess. *)
-    print_header globalstrategy !maxl maxlrst fnormtol scsteptol linsolver;
+    print_header globalstrategy !maxl !maxlrst fnormtol scsteptol linsolver;
 
     (* Call KINSol and print output concentration profile *)
-    ignore (Kinsol.solve kmem           (* KINSol memory block *)
+    ignore (Kinsol.solve kmem     (* KINSol memory block *)
                    cc             (* initial guess on input; solution vector *)
                    globalstrategy (* global strategy choice *)
                    sc             (* scaling vector, for the variable cc *)
@@ -493,7 +516,9 @@ let main () =
     (* Print final statistics and free memory *)  
     print_final_stats kmem linsolver
   in
-  List.iter go [ Use_Spgmr; Use_Spbcg; Use_Sptfqmr ]
+  match Sundials.sundials_version with
+  | 2,5,_ -> List.iter go [ Use_Spgmr; Use_Spbcg; Use_Sptfqmr ]
+  | _     -> List.iter go [ Use_Spgmr; Use_Spbcg; Use_Sptfqmr; Use_Spfgmr ]
 
 (* Check environment variables for extra arguments.  *)
 let reps =
