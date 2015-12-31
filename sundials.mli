@@ -29,16 +29,10 @@
     from 0 for each increment of the other elements). *)
 val version : int * int * int * int
 
-(** A single integer calculated from {!version}. *)
-val version_number : int
-
 (** The [major], [minor], and [patch] version numbers of the underlying
     Sundials/C library. The OCaml interface may have been built against
     an older version of Sundials. *)
 val sundials_version : int * int * int
-
-(** A single integer calculated from {!sundials_version}. *)
-val sundials_version_number : int
 
 (** Indicates whether the interface was compiled with BLAS/LAPACK support. *)
 val lapack_enabled : bool
