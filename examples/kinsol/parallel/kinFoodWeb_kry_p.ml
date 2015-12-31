@@ -678,13 +678,12 @@ let main () =
   (* Call KINCreate/KINInit to initialize KINSOL using the linear solver
      KINSPGMR with preconditioner routines precondbd
      and psolvebd. *)
-  let kmem = Kinsol.init
+  let kmem = Kinsol.init ~max_iters:250
               (Kinsol.Spils.spgmr ~maxl:maxl ~max_restarts:maxlrst
                  (Kinsol.Spils.prec_right
                     ~setup:(precondbd data)
                     ~solve:(psolvebd data) ()))
               (funcprpr data) cc in
-  Kinsol.set_num_max_iters kmem 250;
   Kinsol.set_constraints kmem (Nvector.make local_N neq comm 0.0);
   Kinsol.set_func_norm_tol kmem fnormtol;
   Kinsol.set_scaled_step_tol kmem scsteptol;

@@ -484,7 +484,7 @@ external get_step_length : ('a, 'k) session -> float
     = "c_kinsol_get_step_length"
 
 external c_init
-    : ('a, 'k) session Weak.t -> ('a, 'k) nvector
+    : ('a, 'k) session Weak.t -> ('a, 'k) nvector -> int option -> int option
       -> (kin_mem * c_weak_ref * kin_file * kin_file)
     = "c_kinsol_init"
 
@@ -495,10 +495,11 @@ let session_finalize s =
   Dls.invalidate_callback s;
   c_session_finalize s
 
-let init lsolver f u0 =
+let init ?max_iters ?maa lsolver f u0 =
   let checkvec = Nvector.check u0 in
   let weakref = Weak.create 1 in
-  let kin_mem, backref, err_file, info_file = c_init weakref u0
+  let kin_mem, backref, err_file, info_file
+        = c_init weakref u0 max_iters maa
   in
   let session = {
           kinsol       = kin_mem;

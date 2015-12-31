@@ -593,16 +593,26 @@ module Alternate :
 type 'data sysfn = 'data -> 'data -> unit
 
 (** Creates and initializes a session with the Kinsol solver. The call
-    [init linsolv f tmpl] has as arguments:
+    [init ~max_lin_iters:mli ~maa:maa linsolv f tmpl] has as arguments:
+     - [mli], the maximum number of nonlinear iterations allowed,
+     - [maa], the size of the Anderson acceleration subspace for the
+              {{!strategy}Picard} and {{!strategy}FixedPoint} strategies,
      - [linsolv], the linear solver to use,
      - [f],       the system function of the nonlinear problem, and,
      - [tmpl]     a template to initialize the session (e.g., the
                   initial guess vector).
 
      @kinsol <node5#sss:kinmalloc>     KINCreate/KINInit
+     @kinsol <node5#ss:optin_main> KINSetNumMaxIters
+     @nokinsol <node5#ss:optin_main> KINSetMAA
      @kinsol <node5#sss:lin_solv_init> Linear solver specification functions *)
-val init : ('data, 'kind) linear_solver -> 'data sysfn
-           -> ('data, 'kind) Nvector.t -> ('data, 'kind) session
+val init :
+  ?max_iters:int
+  -> ?maa:int
+  -> ('data, 'kind) linear_solver
+  -> 'data sysfn
+  -> ('data, 'kind) Nvector.t
+  -> ('data, 'kind) session
 
 (** Strategy used to solve the non-linear system. *)
 type strategy =
@@ -665,20 +675,6 @@ val solve :
     -> result
 
 (** {2:set Modifying the solver (optional input functions)} *)
-
-(** Specifies the maximum number of nonlinear iterations allowed.
-
-    @kinsol <node5#ss:optin_main> KINSetNumMaxIters *)
-val set_num_max_iters : ('d, 'k) session -> int -> unit
-
-(** Specifies the size of the subspace to use with Anderson acceleration.
-    Used in conjuncation with the strategies {{!strategy}Picard} and
-    {{!strategy}FixedPoint}.
-    A value of zero means no acceleration. Call after {!set_num_max_iters}
-    and always give a smaller value.
-
-    @nokinsol <node5#ss:optin_main> KINSetMAA *)
-val set_maa : ('d, 'k) session -> int -> unit
 
 (** Specifies that an initial call to the preconditioner setup function
     should {i not} be made. This feature is useful when solving a sequence of

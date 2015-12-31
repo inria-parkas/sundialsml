@@ -711,9 +711,10 @@ CAMLprim value c_kinsol_set_constraints(value vkin_mem, value vconstraints)
 /* basic interface */
 
 /* KINCreate() + KINInit().  */
-CAMLprim value c_kinsol_init(value weakref, value vtemp)
+CAMLprim value c_kinsol_init(value weakref, value vtemp,
+			     value vomaxiters, value vomaa)
 {
-    CAMLparam2(weakref, vtemp);
+    CAMLparam4(weakref, vtemp, vomaxiters, vomaa);
     CAMLlocal1(r);
     int flag;
     value *backref;
@@ -727,6 +728,19 @@ CAMLprim value c_kinsol_init(value weakref, value vtemp)
     kin_mem = KINCreate();
     if (kin_mem == NULL)
 	caml_failwith("KINCreate returned NULL");
+
+    if (vomaxiters != Val_none) {
+	flag = KINSetNumMaxIters(kin_mem, Long_val(Some_val(vomaxiters)));
+	CHECK_FLAG("KINSetNumMaxIters", flag);
+    }
+
+#if SUNDIALS_LIB_VERSION >= 260
+    if (vomaa != Val_none) {
+	flag = KINSetMAA(kin_mem, Long_val(Some_val(vomaa)));
+	CHECK_FLAG("KINSetMAA", flag);
+    }
+#endif
+
     temp = NVEC_VAL(vtemp);
     flag = KINInit(kin_mem, sysfn, temp);
     if (flag != KIN_SUCCESS) {
