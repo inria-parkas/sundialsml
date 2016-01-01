@@ -811,12 +811,12 @@ let init prob tol ?restol ?order ?mass ?(roots=no_roots) t0 y0 =
   if Sundials_config.safe && nroots < 0 then
     raise (Invalid_argument "number of root functions is negative");
   let weakref = Weak.create 1 in
-  let fi, fe, iter, lin =
+  let problem, fi, fe, iter, lin =
     match prob with
-    | Implicit (fi, i, l)   -> Some fi, None,    Some i, Some l
-    | Explicit fe           -> None,    Some fe, None,   None
-    | ImEx { implicit=(fi, i, l);
-             explicit=fe }  -> Some fi, Some fe, Some i, Some l
+    | Implicit (fi,i,l) -> ImplicitOnly, Some fi, None,    Some i, Some l
+    | Explicit fe       -> ExplicitOnly, None,    Some fe, None,   None
+    | ImEx { implicit=(fi, i, l); explicit=fe }
+                        -> ImplicitAndExplicit, Some fi, Some fe, Some i, Some l
   in
   let arkode_mem, backref, no_file
         = c_init weakref (fi <> None) (fe <> None) y0 t0 in
@@ -832,8 +832,10 @@ let init prob tol ?restol ?order ?mass ?(roots=no_roots) t0 y0 =
 
           exn_temp     = None;
 
+          problem      = problem;
           irhsfn       = (match fi with Some f -> f | None -> dummy_irhsfn);
           erhsfn       = (match fe with Some f -> f | None -> dummy_erhsfn);
+
           rootsfn      = roots;
           errh         = dummy_errh;
           errw         = dummy_errw;
@@ -872,22 +874,27 @@ let init prob tol ?restol ?order ?mass ?(roots=no_roots) t0 y0 =
 let get_num_roots { nroots } = nroots
 
 external c_reinit
-    : ('a, 'k) session -> bool -> bool -> float -> ('a, 'k) nvector -> unit
+    : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
     = "c_arkode_reinit"
 
-let reinit session prob ?order ?roots t0 y0 =
+let reinit session ?problem ?order ?roots t0 y0 =
   if Sundials_config.safe then session.checkvec y0;
   Dls.invalidate_callback session;
-  let fi, fe =
-    match prob with
-    | Implicit (fi, _, _)   -> Some fi, None
-    | Explicit fe           -> None,    Some fe
-    | ImEx { implicit=(fi, _, _);
-             explicit=fe }  -> Some fi, Some fe
-  in
-  c_reinit session (fi <> None) (fe <> None) t0 y0;
-  session.irhsfn <- (match fi with Some f -> f | None -> dummy_irhsfn);
-  session.erhsfn <- (match fe with Some f -> f | None -> dummy_erhsfn);
+  (match problem with
+   | None -> ()
+   | Some (Implicit (fi, _, _)) ->
+       (session.problem <- ImplicitOnly;
+        session.irhsfn <- fi;
+        session.erhsfn <- dummy_erhsfn)
+   | Some (Explicit fe) ->
+       (session.problem <- ExplicitOnly;
+        session.irhsfn <- dummy_irhsfn;
+        session.erhsfn <- fe)
+   | Some (ImEx { implicit=(fi, _, _); explicit=fe }) ->
+       (session.problem <- ImplicitAndExplicit;
+        session.irhsfn <- fi;
+        session.erhsfn <- fe));
+  c_reinit session t0 y0;
   (match order with Some o -> c_set_order session o | None -> ());
   (match roots with
    | None -> ()

@@ -306,8 +306,10 @@ type ('a, 'kind) session = {
 
   mutable exn_temp     : exn option;
 
+  mutable problem      : problem_type;
   mutable irhsfn       : 'a rhsfn;
   mutable erhsfn       : 'a rhsfn;
+
   mutable rootsfn      : 'a rootsfn;
   mutable errh         : error_handler;
   mutable errw         : 'a error_weight_fun;
@@ -323,6 +325,11 @@ type ('a, 'kind) session = {
   mutable mass_callbacks : ('a, 'kind) mass_callbacks;
   mutable mass_precfns   : 'a mass_precfns;
 }
+
+and problem_type =
+  | ImplicitOnly
+  | ExplicitOnly
+  | ImplicitAndExplicit
 
 and ('data, 'kind) linear_solver =
   ('data, 'kind) session

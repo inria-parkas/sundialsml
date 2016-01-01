@@ -1203,15 +1203,30 @@ CAMLprim value c_arkode_sv_tolerances(value vdata, value reltol, value abstol)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_reinit(value vdata, value hasfi, value hasfe,
-			       value t0, value y0)
+CAMLprim value c_arkode_reinit(value vdata, value t0, value y0)
 {
-    CAMLparam5(vdata, hasfi, hasfe, t0, y0);
+    CAMLparam3(vdata, t0, y0);
+
+    ARKRhsFn fe = NULL;
+    ARKRhsFn fi = NULL;
+
+    switch (ARKODE_PROBLEM(vdata)) {
+    case VARIANT_ARKODE_PROBLEM_TYPE_IMPLICIT_ONLY:
+	fi = irhsfn;
+	break;
+    case VARIANT_ARKODE_PROBLEM_TYPE_EXPLICIT_ONLY:
+	fe = erhsfn;
+	break;
+    case VARIANT_ARKODE_PROBLEM_TYPE_IMPLICIT_AND_EXPLICIT:
+	fe = erhsfn;
+	fi = irhsfn;
+	break;
+    }
 
     N_Vector y0_nv = NVEC_VAL(y0);
     int flag = ARKodeReInit(ARKODE_MEM_FROM_ML(vdata),
-			    Bool_val(hasfe) ? erhsfn : NULL,
-			    Bool_val(hasfi) ? irhsfn : NULL,
+			    fe,
+			    fi,
 			    Double_val(t0),
 			    y0_nv);
     CHECK_FLAG("ARKodeReInit", flag);

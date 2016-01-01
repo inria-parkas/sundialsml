@@ -1467,7 +1467,7 @@ val get_dky : ('d, 'k) session -> ('d, 'k) Nvector.t -> float -> int -> unit
     @noarkode <node> ARKodeSetOrder *)
 val reinit :
   ('d, 'kind) session
-  -> ('d, 'kind) problem
+  -> ?problem:('d, 'kind) problem
   -> ?order:int
   -> ?roots:(int * 'd rootsfn)
   -> float
