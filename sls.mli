@@ -116,6 +116,18 @@ module SparseMatrix :
 
     (** {4 Low-level details} *)
 
+    (** [set_rowval a idx i] sets the [idx]th row to [i]. *)
+    val set_rowval : t -> int -> int -> unit
+
+    (** [r = get_rowval a idx] returns the row [r] at the [idx]th position. *)
+    val get_rowval : t -> int -> int
+
+    (** [set_data a idx v] sets the value of the [idx]th row [v]. *)
+    val set_data : t -> int -> float -> unit
+
+    (** [v = get_data a idx] returns the value [v] at the [idx]th position. *)
+    val get_data : t -> int -> float
+
     (** Raised on an attempt to access a value that has become invalid. Such
         values refer to matrices that no longer exist in the underlying
         library. *)
