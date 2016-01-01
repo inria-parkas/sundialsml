@@ -959,7 +959,6 @@ exception IllInput
 exception LineSearchNonConvergence
 
 (** The maximum number of nonlinear iterations has been reached.
-    See {!set_num_max_iters}.
 
     @kinsol <node5#sss:kinsol> KIN_MAXITER_REACHED *)
 exception MaxIterationsReached
