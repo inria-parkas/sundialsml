@@ -25,6 +25,7 @@ exception LinearSolverFailure            (* KIN_LSOLVE_FAIL *)
 exception SystemFunctionFailure          (* KIN_SYSFUNC_FAIL *)
 exception FirstSystemFunctionFailure     (* KIN_FIRST_SYSFUNC_FAIL *)
 exception RepeatedSystemFunctionFailure  (* KIN_REPTD_SYSFUNC_ERR *)
+exception MissingLinearSolver
 
 type print_level =
   | NoInformation     (* 0 *)
@@ -495,7 +496,7 @@ let session_finalize s =
   Dls.invalidate_callback s;
   c_session_finalize s
 
-let init ?max_iters ?maa lsolver f u0 =
+let init ?max_iters ?maa ?linsolv f u0 =
   let checkvec = Nvector.check u0 in
   let weakref = Weak.create 1 in
   let kin_mem, backref, err_file, info_file
@@ -522,7 +523,7 @@ let init ?max_iters ?maa lsolver f u0 =
         } in
   Gc.finalise session_finalize session;
   Weak.set weakref 0 (Some session);
-  lsolver session u0;
+  (match linsolv with Some lsolver -> lsolver session u0 | None -> ());
   session
 
 type strategy =
@@ -545,7 +546,9 @@ let solve s u strategy u_scale f_scale =
     (s.checkvec u;
      s.checkvec u_scale;
      s.checkvec f_scale);
-  c_solve s u strategy u_scale f_scale
+  if strategy <> FixedPoint && s.ls_callbacks = NoCallbacks
+  then raise MissingLinearSolver
+  else c_solve s u strategy u_scale f_scale
 
 (* Let C code know about some of the values in this module.  *)
 external c_init_module : 'fcns -> exn array -> unit =

@@ -281,7 +281,7 @@ let main () =
   (* Initialize and allocate memory for KINSOL *)
   (* Attach dense linear solver *)
   let altdense, get_stats = alternate_dense jac in
-  let kmem = Kinsol.init altdense func y in
+  let kmem = Kinsol.init ~linsolv:altdense func y in
 
   (* Set optional inputs *)
   let constraints = RealArray.make neq zero in

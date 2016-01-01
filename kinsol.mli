@@ -593,11 +593,12 @@ module Alternate :
 type 'data sysfn = 'data -> 'data -> unit
 
 (** Creates and initializes a session with the Kinsol solver. The call
-    [init ~max_lin_iters:mli ~maa:maa linsolv f tmpl] has as arguments:
+    [init ~max_lin_iters:mli ~maa:maa ~linsolv:ls f tmpl] has as arguments:
      - [mli], the maximum number of nonlinear iterations allowed,
      - [maa], the size of the Anderson acceleration subspace for the
               {{!strategy}Picard} and {{!strategy}FixedPoint} strategies,
-     - [linsolv], the linear solver to use,
+     - [ls], the linear solver to use (required for the {{!strategy}Newton},
+             {{!strategy}LineSearch}, and {{!strategy}Picard} strategies),
      - [f],       the system function of the nonlinear problem, and,
      - [tmpl]     a template to initialize the session (e.g., the
                   initial guess vector).
@@ -609,7 +610,7 @@ type 'data sysfn = 'data -> 'data -> unit
 val init :
   ?max_iters:int
   -> ?maa:int
-  -> ('data, 'kind) linear_solver
+  -> ?linsolv:('data, 'kind) linear_solver
   -> 'data sysfn
   -> ('data, 'kind) Nvector.t
   -> ('data, 'kind) session
@@ -654,6 +655,7 @@ type result =
     listed below.
  
     @kinsol <node5#sss:kinsol> KINSol
+    @raise MissingLinearSolver A linear solver is required but was not given.
     @raise IllInput Missing or illegal solver inputs.
     @raise LineSearchNonConvergence Line search could not find a suitable iterate.
     @raise MaxIterationsReached The maximum number of nonlinear iterations was reached.
@@ -1019,4 +1021,7 @@ exception FirstSystemFunctionFailure
 
     @kinsol <node5#sss:kinsol> KIN_REPTD_SYSFUNC_ERR *)
 exception RepeatedSystemFunctionFailure
+
+(** A linear solver is required but was not specified. *)
+exception MissingLinearSolver
 

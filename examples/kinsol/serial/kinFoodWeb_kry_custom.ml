@@ -423,9 +423,9 @@ let main () =
      KINSPGMR with preconditioner routines prec_setup_bd
      and prec_solve_bd. *)
   let kmem = Kinsol.init
-              (Kinsol.Spils.spgmr ~maxl:maxl ~max_restarts:maxlrst
-                 (Kinsol.Spils.prec_right ~setup:prec_setup_bd
-                                          ~solve:prec_solve_bd ()))
+              ~linsolv:(Kinsol.Spils.spgmr ~maxl:maxl ~max_restarts:maxlrst
+                         (Kinsol.Spils.prec_right ~setup:prec_setup_bd
+                                                  ~solve:prec_solve_bd ()))
               func ccnv in
   Kinsol.set_constraints kmem (wrap (Array.make neq two));
   Kinsol.set_func_norm_tol kmem fnormtol;

@@ -223,7 +223,7 @@ let main () =
 
   (* Initialize and allocate memory for KINSOL *)
   (* Attach dense linear solver *)
-  let kmem = Kinsol.init (Kinsol.Dls.dense ~jac:jac ()) func y in
+  let kmem = Kinsol.init ~linsolv:(Kinsol.Dls.dense ~jac:jac ()) func y in
 
   (* Set optional inputs *)
   let constraints = RealArray.make neq zero in

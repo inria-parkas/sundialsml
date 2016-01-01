@@ -615,13 +615,13 @@ let main () =
   let mukeep = num_species in
   let mlkeep = num_species in
   let kmem = Kinsol.init
-              (Kinsol.Spils.spgmr ~maxl:maxl ~max_restarts:maxlrst
-                (Kinsol_bbd.prec_right
-                   { Bbd.mudq = mudq;
-                     Bbd.mldq = mldq;
-                     Bbd.mukeep = mukeep;
-                     Bbd.mlkeep = mlkeep; }
-                   (func_local data)))
+              ~linsolv:(Kinsol.Spils.spgmr ~maxl:maxl ~max_restarts:maxlrst
+                          (Kinsol_bbd.prec_right
+                             { Bbd.mudq = mudq;
+                               Bbd.mldq = mldq;
+                               Bbd.mukeep = mukeep;
+                               Bbd.mlkeep = mlkeep; }
+                             (func_local data)))
               (func data) cc in
   Kinsol.set_constraints kmem (Nvector.make local_N neq comm 0.0);
   Kinsol.set_func_norm_tol kmem fnormtol;

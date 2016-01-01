@@ -679,10 +679,10 @@ let main () =
      KINSPGMR with preconditioner routines precondbd
      and psolvebd. *)
   let kmem = Kinsol.init ~max_iters:250
-              (Kinsol.Spils.spgmr ~maxl:maxl ~max_restarts:maxlrst
-                 (Kinsol.Spils.prec_right
-                    ~setup:(precondbd data)
-                    ~solve:(psolvebd data) ()))
+              ~linsolv:(Kinsol.Spils.spgmr ~maxl:maxl ~max_restarts:maxlrst
+                         (Kinsol.Spils.prec_right
+                            ~setup:(precondbd data)
+                            ~solve:(psolvebd data) ()))
               (funcprpr data) cc in
   Kinsol.set_constraints kmem (Nvector.make local_N neq comm 0.0);
   Kinsol.set_func_norm_tol kmem fnormtol;

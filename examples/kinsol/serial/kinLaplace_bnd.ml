@@ -144,7 +144,7 @@ let main () =
    * Attach band linear solver 
    * ----------------------------------------- *)
   let kmem = Kinsol.init
-                (Kinsol.Dls.band {Kinsol.mupper=ny; Kinsol.mlower=ny})
+                ~linsolv:(Kinsol.Dls.band {Kinsol.mupper=ny; Kinsol.mlower=ny})
                 func y
   in
   (* -------------------
