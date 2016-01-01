@@ -65,35 +65,35 @@ module Dls =
     external c_dls_lapack_band : serial_session -> int -> int -> bool -> unit
       = "c_kinsol_dls_lapack_band"
 
-    let dense fo s nv =
+    let dense ?jac () s nv =
       s.neqs <- Sundials.RealArray.length (Nvector.unwrap nv);
-      c_dls_dense s (fo <> None);
+      c_dls_dense s (jac <> None);
       s.ls_precfns <- NoPrecFns;
-      s.ls_callbacks <- match fo with
+      s.ls_callbacks <- match jac with
                         | None   -> DlsDenseCallback no_dense_callback
                         | Some f -> DlsDenseCallback { jacfn = f; dmat = None }
 
-    let lapack_dense fo s nv =
+    let lapack_dense ?jac () s nv =
       s.neqs <- Sundials.RealArray.length (Nvector.unwrap nv);
-      c_dls_lapack_dense s (fo <> None);
+      c_dls_lapack_dense s (jac <> None);
       s.ls_precfns <- NoPrecFns;
-      s.ls_callbacks <- match fo with
+      s.ls_callbacks <- match jac with
                         | None   -> DlsDenseCallback no_dense_callback
                         | Some f -> DlsDenseCallback { jacfn = f; dmat = None }
 
-    let band { mupper; mlower } fo s nv =
+    let band ?jac { mupper; mlower } s nv =
       s.neqs <- Sundials.RealArray.length (Nvector.unwrap nv);
-      c_dls_band s mupper mlower (fo <> None);
+      c_dls_band s mupper mlower (jac <> None);
       s.ls_precfns <- NoPrecFns;
-      s.ls_callbacks <- match fo with
+      s.ls_callbacks <- match jac with
                         | None   -> DlsBandCallback no_band_callback
                         | Some f -> DlsBandCallback { bjacfn = f; bmat = None }
 
-    let lapack_band { mupper; mlower } fo s nv =
+    let lapack_band ?jac { mupper; mlower } s nv =
       s.neqs <- Sundials.RealArray.length (Nvector.unwrap nv);
-      c_dls_lapack_band s mupper mlower (fo <> None);
+      c_dls_lapack_band s mupper mlower (jac <> None);
       s.ls_precfns <- NoPrecFns;
-      s.ls_callbacks <- match fo with
+      s.ls_callbacks <- match jac with
                         | None   -> DlsBandCallback no_band_callback
                         | Some f -> DlsBandCallback { bjacfn = f; bmat = None }
 

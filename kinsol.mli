@@ -114,7 +114,7 @@ module Dls :
     type dense_jac_fn = (RealArray.t double, RealArray.t) jacobian_arg
                                                 -> Dls.DenseMatrix.t -> unit
 
-    (** A direct linear solver on dense matrices. The optional argument
+    (** A direct linear solver on dense matrices. The optional [jac] argument
         specifies a callback function for computing an approximation to the
         Jacobian matrix. If this argument is omitted, then a default
         implementation based on difference quotients is used.
@@ -122,7 +122,7 @@ module Dls :
         @kinsol <node5#sss:lin_solv_init> KINDense
         @kinsol <node5#sss:optin_dls> KINDlsSetDenseJacFn
         @kinsol <node5#ss:djacFn> KINDlsDenseJacFn *)
-    val dense : dense_jac_fn option -> serial_linear_solver
+    val dense : ?jac:dense_jac_fn -> unit -> serial_linear_solver
 
     (** A direct linear solver on dense matrices using LAPACK. See {!dense}.
         Only available if {!Sundials.lapack_enabled}.
@@ -131,7 +131,7 @@ module Dls :
         @kinsol <node5#sss:lin_solv_init> KINLapackDense
         @kinsol <node5#sss:optin_dls> KINDlsSetDenseJacFn
         @kinsol <node5#ss:djacFn> KINDlsDenseJacFn *)
-    val lapack_dense : dense_jac_fn option -> serial_linear_solver
+    val lapack_dense : ?jac:dense_jac_fn -> unit -> serial_linear_solver
 
     (** Callback functions that compute banded approximations to
         a Jacobian matrix. In the call [band_jac_fn {mupper; mlower} arg jac],
@@ -156,7 +156,7 @@ module Dls :
                         -> (RealArray.t double, RealArray.t) jacobian_arg
                         -> Dls.BandMatrix.t -> unit
 
-    (** A direct linear solver on banded matrices. The optional argument
+    (** A direct linear solver on banded matrices. The optional [jac] argument
         specifies a callback function for computing an approximation to the
         Jacobian matrix. If this argument is omitted, then a default
         implementation based on difference quotients is used. The other
@@ -165,7 +165,7 @@ module Dls :
         @kinsol <node5#sss:lin_solv_init> KINBand
         @kinsol <node5#sss:optin_dls> KINDlsSetBandJacFn
         @kinsol <node5#ss:bjacFn> KINDlsBandJacFn *)
-    val band : bandrange -> band_jac_fn option -> serial_linear_solver
+    val band : ?jac:band_jac_fn -> bandrange -> serial_linear_solver
 
     (** A direct linear solver on banded matrices using LAPACK. See {!band}.
         Only available if {!Sundials.lapack_enabled}.
@@ -174,7 +174,7 @@ module Dls :
         @kinsol <node5#sss:lin_solv_init> KINLapackBand
         @kinsol <node5#sss:optin_dls> KINDlsSetBandJacFn
         @kinsol <node5#ss:bjacFn> KINDlsBandJacFn *)
-    val lapack_band : bandrange -> band_jac_fn option -> serial_linear_solver
+    val lapack_band : ?jac:band_jac_fn -> bandrange -> serial_linear_solver
 
     (** {3:stats Solver statistics} *)
 
