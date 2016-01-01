@@ -1484,7 +1484,7 @@ val reinit :
 type 'd resize_fn = 'd -> 'd -> unit
 
 (** Change the number of equations and unknowns between integrator steps.
-    The call [resize s ~resize_nvec:rfn ~linear_solver:ls tol hscale ynew t0]
+    The call [resize s ~resize_nvec:rfn ~linsolv:ls tol hscale ynew t0]
     has as arguments:
     - [s], the solver session to resize,
     - [rfn], a resize function that transforms nvectors in place-otherwise
@@ -1503,7 +1503,7 @@ type 'd resize_fn = 'd -> 'd -> unit
 val resize :
   ('d, 'kind) session
   -> ?resize_nvec:('d resize_fn)
-  -> ?linear_solver:(('d, 'kind) linear_solver)
+  -> ?linsolv:(('d, 'kind) linear_solver)
   -> ('d, 'kind) tolerance
   -> float
   -> ('d, 'kind) Nvector.t
