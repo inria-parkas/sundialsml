@@ -69,11 +69,7 @@ let f { n; dx; k } t y ydot =
   ydot.{isource} <- ydot.{isource} +. 0.01/.dx (* source term *)
 
 (* Jacobian routine to compute J(t,y) = df/dy. *)
-let jac { n; dx; k }
-        { Arkode.jac_t   = t;
-          Arkode.jac_y   = y;
-          Arkode.jac_fy  = fy;
-          Arkode.jac_tmp = tmp } v jv =
+let jac { n; dx; k } _ v jv =
   (* iterate over domain, computing all Jacobian-vector products *)
   let c1 = k/.dx/.dx in
   let c2 = -2.0*.k/.dx/.dx in
