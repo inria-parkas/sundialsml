@@ -6,7 +6,8 @@ USELIB ?= sundials_no_sens
 SRCROOT=../../..
 SUBDIR=arkode/serial
 
-EXAMPLES = ark_KrylovDemo_prec.ml
+EXAMPLES = ark_KrylovDemo_prec.ml \
+	   ark_heat1D.ml
 
 LAPACK_EXAMPLES =
 

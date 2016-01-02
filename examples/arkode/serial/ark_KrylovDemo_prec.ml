@@ -1,7 +1,7 @@
 (*-----------------------------------------------------------------
  * Programmer(s): Daniel R. Reynolds @ SMU
  *---------------------------------------------------------------
- * OCaml port: Timothy Bourke, Inria, Feb 2011.
+ * OCaml port: Timothy Bourke, Inria, Jan 2016.
  * --------------------------------------------------------------------
  * Copyright (c) 2015, Southern Methodist University and 
  * Lawrence Livermore National Security
