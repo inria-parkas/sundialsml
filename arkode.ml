@@ -1034,14 +1034,17 @@ external c_set_implicit         : ('a, 'k) session -> unit
 
 let set_imex s =
   (if s.irhsfn == dummy_irhsfn || s.erhsfn == dummy_erhsfn then raise IllInput);
+  s.problem <- ImplicitAndExplicit;
   c_set_imex s
 
 let set_explicit s =
   (if s.erhsfn == dummy_erhsfn then raise IllInput);
+  s.problem <- ExplicitOnly;
   c_set_explicit s
 
 let set_implicit s =
   (if s.irhsfn == dummy_irhsfn then raise IllInput);
+  s.problem <- ImplicitOnly;
   c_set_implicit s
 
 type rk_method = {
