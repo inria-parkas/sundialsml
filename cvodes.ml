@@ -737,8 +737,8 @@ module Adjoint =
               session.ls_callbacks <- BDlsDenseCallback { jacfn = fns;
                                                           dmat = None }
           | Some (DenseWithSens fbs) ->
-              session.ls_callbacks <- BDlsDenseCallbackSens { jacfn = fbs;
-                                                              dmat = None }
+              session.ls_callbacks <- BDlsDenseCallbackSens { jacfn_sens = fbs;
+                                                              dmat_sens = None }
 
         let lapack_dense ?jac () bs nv =
           let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
@@ -756,8 +756,8 @@ module Adjoint =
               session.ls_callbacks <- BDlsDenseCallback { jacfn = fns;
                                                           dmat = None }
           | Some (DenseWithSens fbs) ->
-              session.ls_callbacks <- BDlsDenseCallbackSens { jacfn = fbs;
-                                                              dmat = None }
+              session.ls_callbacks <- BDlsDenseCallbackSens { jacfn_sens = fbs;
+                                                              dmat_sens = None }
 
         type ('data, 'kind) linear_solver =
           ('data, 'kind) bsession -> ('data, 'kind) nvector -> unit
@@ -778,8 +778,8 @@ module Adjoint =
               session.ls_callbacks <- BDlsBandCallback { bjacfn = fns;
                                                          bmat = None }
           | Some (BandWithSens fbs) ->
-              session.ls_callbacks <- BDlsBandCallbackSens { bjacfn = fbs;
-                                                             bmat = None }
+              session.ls_callbacks <- BDlsBandCallbackSens { bjacfn_sens = fbs;
+                                                             bmat_sens = None }
 
         let lapack_band ?jac p bs nv =
           let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
@@ -797,23 +797,23 @@ module Adjoint =
               session.ls_callbacks <- BDlsBandCallback { bjacfn = fns;
                                                          bmat = None }
           | Some (BandWithSens fbs) ->
-              session.ls_callbacks <- BDlsBandCallbackSens { bjacfn = fbs;
-                                                             bmat = None }
+              session.ls_callbacks <- BDlsBandCallbackSens { bjacfn_sens = fbs;
+                                                             bmat_sens = None }
 
         let invalidate_callback s =
           match s.ls_callbacks with
           | BDlsDenseCallback ({ dmat = Some d } as cb) ->
               Dls.DenseMatrix.invalidate d;
               cb.dmat <- None
-          | BDlsDenseCallbackSens ({ dmat = Some d } as cb) ->
+          | BDlsDenseCallbackSens ({ dmat_sens = Some d } as cb) ->
               Dls.DenseMatrix.invalidate d;
-              cb.dmat <- None
+              cb.dmat_sens <- None
           | BDlsBandCallback  ({ bmat = Some d } as cb) ->
               Dls.BandMatrix.invalidate d;
               cb.bmat <- None
-          | BDlsBandCallbackSens  ({ bmat = Some d } as cb) ->
+          | BDlsBandCallbackSens  ({ bmat_sens = Some d } as cb) ->
               Dls.BandMatrix.invalidate d;
-              cb.bmat <- None
+              cb.bmat_sens <- None
           | _ -> ()
 
         external set_dense_jac_fn : serial_session -> int -> bool -> unit
@@ -836,8 +836,8 @@ module Adjoint =
                    s.ls_callbacks <- BDlsDenseCallback { jacfn = f;
                                                          dmat = None }
                | DenseWithSens f ->
-                   s.ls_callbacks <- BDlsDenseCallbackSens { jacfn = f;
-                                                             dmat = None })
+                   s.ls_callbacks <- BDlsDenseCallbackSens { jacfn_sens = f;
+                                                             dmat_sens = None })
           | _ -> raise Sundials.InvalidLinearSolver
 
         external clear_dense_jac_fn : serial_session -> int -> unit
@@ -873,8 +873,8 @@ module Adjoint =
                    s.ls_callbacks <- BDlsBandCallback { bjacfn = f;
                                                         bmat = None }
                | BandWithSens f ->
-                   s.ls_callbacks <- BDlsBandCallbackSens { bjacfn = f;
-                                                            bmat = None })
+                   s.ls_callbacks <- BDlsBandCallbackSens { bjacfn_sens = f;
+                                                            bmat_sens = None })
           | _ -> raise Sundials.InvalidLinearSolver
 
         external clear_band_jac_fn : serial_session -> int -> unit
@@ -935,8 +935,9 @@ module Adjoint =
 
         let init_preconditioner_with_sens solve setup bs parent which nv =
           c_set_preconditioner parent which (setup <> None) true;
-          (tosession bs).ls_precfns <- BPrecFnsSens { prec_solve_fn = solve;
-                                                      prec_setup_fn = setup }
+          (tosession bs).ls_precfns <-
+            BPrecFnsSens { prec_solve_fn_sens = solve;
+                           prec_setup_fn_sens = setup }
 
         let prec_left_with_sens ?setup solve =
           InternalPrecLeft (init_preconditioner_with_sens solve setup)
@@ -1007,7 +1008,8 @@ module Adjoint =
               let parent, which = parent_and_which bs in
               c_set_preconditioner parent which (setup <> None) true;
               (tosession bs).ls_precfns
-                <- BPrecFnsSens { prec_setup_fn = setup; prec_solve_fn = solve }
+                <- BPrecFnsSens { prec_setup_fn_sens = setup;
+                                  prec_solve_fn_sens = solve }
           | _ -> raise Sundials.InvalidLinearSolver
 
         let clear_jac_times_vec_fn bs =
