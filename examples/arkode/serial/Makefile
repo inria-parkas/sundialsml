@@ -9,6 +9,7 @@ SUBDIR=arkode/serial
 EXAMPLES = ark_KrylovDemo_prec.ml \
 	   ark_analytic.ml \
 	   ark_brusselator.ml \
+	   ark_brusselator_fp.ml \
 	   ark_brusselator1D.ml \
 	   ark_heat1D.ml
 
