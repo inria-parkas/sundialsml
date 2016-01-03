@@ -10,6 +10,8 @@ EXAMPLES = kinFerTron_dns.ml			\
 	   kinFoodWeb_kry_custom.ml		\
 	   kinKrylovDemo_ls.ml			\
 	   kinLaplace_bnd.ml			\
+	   kinLaplace_picard_bnd.ml		\
+	   kinRoberts_fp.ml			\
 	   kinRoboKin_dns.ml			\
 	   kinRoboKin_dns_alt.ml
 
