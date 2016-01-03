@@ -359,13 +359,14 @@ let print_output mem c t =
  *)
 
 let print_final_stats mem =
-  let nst = Ida.get_num_steps mem
-  and nni = Ida.get_num_nonlin_solv_iters mem
-  and nre = Ida.get_num_res_evals mem
-  and netf = Ida.get_num_err_test_fails mem
-  and ncfn = Ida.get_num_nonlin_solv_conv_fails mem
-  and nje = Ida.Dls.get_num_jac_evals mem
-  and nreLS = Ida.Dls.get_num_res_evals mem in
+  let open Ida in
+  let nst   = get_num_steps mem
+  and nni   = get_num_nonlin_solv_iters mem
+  and nre   = get_num_res_evals mem
+  and netf  = get_num_err_test_fails mem
+  and ncfn  = get_num_nonlin_solv_conv_fails mem
+  and nje   = Dls.get_num_jac_evals mem
+  and nreLS = Dls.get_num_res_evals mem in
 
   printf "-----------------------------------------------------------\n";
   printf "Final run statistics: \n\n";

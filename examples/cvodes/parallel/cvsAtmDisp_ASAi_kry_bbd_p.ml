@@ -482,20 +482,21 @@ let print_header () =
  *)
 
 let print_final_stats s =
-  let lenrw, leniw = Cvode.get_work_space s
-  and nst          = Cvode.get_num_steps s
-  and nfe          = Cvode.get_num_rhs_evals s
-  and nsetups      = Cvode.get_num_lin_solv_setups s
-  and netf         = Cvode.get_num_err_test_fails s
-  and nni          = Cvode.get_num_nonlin_solv_iters s
-  and ncfn         = Cvode.get_num_nonlin_solv_conv_fails s
+  let open Cvode in
+  let lenrw, leniw = get_work_space s
+  and nst          = get_num_steps s
+  and nfe          = get_num_rhs_evals s
+  and nsetups      = get_num_lin_solv_setups s
+  and netf         = get_num_err_test_fails s
+  and nni          = get_num_nonlin_solv_iters s
+  and ncfn         = get_num_nonlin_solv_conv_fails s
   in
-  let lenrwSPGMR, leniwSPGMR = Cvode.Spils.get_work_space s
-  and nli      = Cvode.Spils.get_num_lin_iters s
-  and npe      = Cvode.Spils.get_num_prec_evals s
-  and nps      = Cvode.Spils.get_num_prec_solves s
-  and ncfl     = Cvode.Spils.get_num_conv_fails s
-  and nfeSPGMR = Cvode.Spils.get_num_rhs_evals s
+  let lenrwSPGMR, leniwSPGMR = Spils.get_work_space s
+  and nli      = Spils.get_num_lin_iters s
+  and npe      = Spils.get_num_prec_evals s
+  and nps      = Spils.get_num_prec_solves s
+  and ncfl     = Spils.get_num_conv_fails s
+  and nfeSPGMR = Spils.get_num_rhs_evals s
   in
   printf "\nFinal Statistics.. \n\n";
   printf "lenrw   = %6d     leniw = %6d\n"   lenrw leniw;
@@ -508,20 +509,21 @@ let print_final_stats s =
   printf "ncfn    = %6d     ncfl  = %6d\n\n" ncfn ncfl
 
 let print_final_statsB s =
-  let lenrw, leniw = Adj.get_work_space s
-  and nst          = Adj.get_num_steps s
-  and nfe          = Adj.get_num_rhs_evals s
-  and nsetups      = Adj.get_num_lin_solv_setups s
-  and netf         = Adj.get_num_err_test_fails s
-  and nni          = Adj.get_num_nonlin_solv_iters s
-  and ncfn         = Adj.get_num_nonlin_solv_conv_fails s
+  let open Adj in
+  let lenrw, leniw = get_work_space s
+  and nst          = get_num_steps s
+  and nfe          = get_num_rhs_evals s
+  and nsetups      = get_num_lin_solv_setups s
+  and netf         = get_num_err_test_fails s
+  and nni          = get_num_nonlin_solv_iters s
+  and ncfn         = get_num_nonlin_solv_conv_fails s
   in
-  let lenrwSPGMR, leniwSPGMR = Adj.Spils.get_work_space s
-  and nli      = Adj.Spils.get_num_lin_iters s
-  and npe      = Adj.Spils.get_num_prec_evals s
-  and nps      = Adj.Spils.get_num_prec_solves s
-  and ncfl     = Adj.Spils.get_num_conv_fails s
-  and nfeSPGMR = Adj.Spils.get_num_rhs_evals s
+  let lenrwSPGMR, leniwSPGMR = Spils.get_work_space s
+  and nli      = Spils.get_num_lin_iters s
+  and npe      = Spils.get_num_prec_evals s
+  and nps      = Spils.get_num_prec_solves s
+  and ncfl     = Spils.get_num_conv_fails s
+  and nfeSPGMR = Spils.get_num_rhs_evals s
   in
   printf "\nFinal Statistics.. \n\n";
   printf "lenrw   = %6d     leniw = %6d\n"   lenrw leniw;
@@ -822,15 +824,16 @@ let fB_local data { Adj.t = t; Adj.y = (ydata, _, _); Adj.yb = (yBdata, _, _) }
   else f ()
 
 let fB data args yBdot =
-  let t = args.Adj.t
-  and y = args.Adj.y
-  and yB = args.Adj.yb
+  let open Adj in
+  let t = args.t
+  and y = args.y
+  and yb = args.yb
   in
   (* Do all inter-processor communication *)
-  f_comm data t yB;
+  f_comm data t yb;
 
   (* Compute right-hand side locally *)
-  fB_local data { Adj.t = t; Adj.y = y; Adj.yb = yB } yBdot
+  fB_local data { t; y; yb } yBdot
 
 (*
  *------------------------------------------------------------------
@@ -883,18 +886,17 @@ let main () =
 
   (* Attach preconditioner and linear solver modules *)
   let spgmr = Cvode.Spils.spgmr
-                (Bbd.prec_left
-                   { Bbd.mudq = d.l_m.(0) + 1;
-                     Bbd.mldq = d.l_m.(0) + 1;
-                     Bbd.mukeep = 2;
-                     Bbd.mlkeep = 2; }
-                   (f_local d))
+                Bbd.(prec_left { mudq = d.l_m.(0) + 1;
+                                 mldq = d.l_m.(0) + 1;
+                                 mukeep = 2;
+                                 mlkeep = 2; }
+                               (f_local d))
   in
   (* Create CVODES object, attach user data, and allocate space *)
   let abstol, reltol = atol, rtol in
-  let cvode_mem = Cvode.init Cvode.BDF (Cvode.Newton spgmr)
-                    (Cvode.SStolerances (reltol, abstol))
-                    (f d) ti y
+  let cvode_mem = Cvode.(init BDF (Newton spgmr)
+                              (SStolerances (reltol, abstol))
+                              (f d) ti y)
   in
   
   (* Initialize quadrature calculations *)
@@ -902,10 +904,10 @@ let main () =
   let reltolQ = rtol_q in
 
   Quad.init cvode_mem (fQ d) q;
-  Quad.set_tolerances cvode_mem (Quad.SStolerances (reltolQ, abstolQ));
+  Quad.(set_tolerances cvode_mem (SStolerances (reltolQ, abstolQ)));
 
   (* Allocate space for the adjoint calculation *)
-  Adj.init cvode_mem steps Adj.IHermite;
+  Adj.(init cvode_mem steps IHermite);
 
   (* Integrate forward in time while storing check points *)
   if  myId = 0 then printf "Begin forward integration... ";
@@ -933,31 +935,30 @@ let main () =
 
   (* Attach preconditioner and linear solver modules *)
   let bspgmr = Adj.Spils.spgmr
-                (Adjbbd.prec_left
-                   { Adjbbd.mudq = d.l_m.(0) + 1;
-                     Adjbbd.mldq = d.l_m.(0) + 1;
-                     Adjbbd.mukeep = 2;
-                     Adjbbd.mlkeep = 2; }
-                   (fB_local d))
+                Adjbbd.(prec_left { mudq = d.l_m.(0) + 1;
+                                    mldq = d.l_m.(0) + 1;
+                                    mukeep = 2;
+                                    mlkeep = 2; }
+                                   (fB_local d))
   in
 
   (* Create and allocate backward CVODE memory *)
   let abstolB = atol_b in
   let reltolB = rtol_b in
   let cvode_memB =
-    Adj.init_backward cvode_mem
-      Cvode.BDF
-      (Adj.Newton bspgmr)
-      (Adj.SStolerances (reltolB, abstolB))
-      (Adj.NoSens (fB d))
-      tf yB
+    Adj.(init_backward cvode_mem
+                       Cvode.BDF
+                       (Newton bspgmr)
+                       (SStolerances (reltolB, abstolB))
+                       (NoSens (fB d))
+                       tf yB)
   in
 
   (* Initialize quadrature calculations *)
   let abstolQB = atol_qb in
   let reltolQB = rtol_qb in
-  QuadAdj.init cvode_memB (QuadAdj.NoSens (fQB d)) qB;
-  QuadAdj.set_tolerances cvode_memB (QuadAdj.SStolerances (reltolQB, abstolQB));
+  QuadAdj.(init cvode_memB (NoSens (fQB d)) qB);
+  QuadAdj.(set_tolerances cvode_memB (SStolerances (reltolQB, abstolQB)));
 
   (* Integrate backwards *)
   if myId = 0 then printf "Begin backward integration... ";

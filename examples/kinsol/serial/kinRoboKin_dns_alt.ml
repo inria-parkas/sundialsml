@@ -68,7 +68,7 @@ let alternate_dense jacfn =
   in
 
   let solver =
-    Kinsol.Alternate.make (fun s nv ->
+    Kinsol.Alternate.(make (fun s nv ->
         let n = RealArray.length (Nvector.unwrap nv) in
         let mem = {
           dj     = DM.create n n;
@@ -76,10 +76,10 @@ let alternate_dense jacfn =
         }
         in
         {
-          Kinsol.Alternate.linit = Some (linit mem);
-          Kinsol.Alternate.lsetup = Some (lsetup mem);
-          Kinsol.Alternate.lsolve = lsolve mem;
-        })
+          linit = Some (linit mem);
+          lsetup = Some (lsetup mem);
+          lsolve = lsolve mem;
+        }))
   in
   (solver, fun () -> 0, !nje)
 
@@ -300,12 +300,12 @@ let main () =
   print_output ydata;
 
   (* Call KINSol to solve problem *)
-  ignore (Kinsol.solve
-            kmem              (* KINSol memory block *)
-            y                 (* initial guess on input; solution vector *)
-            Kinsol.LineSearch (* global strategy choice *)
-            scale             (* scaling vector, for the variable cc *)
-            scale);           (* scaling vector for function values fval *)
+  ignore Kinsol.(solve
+                    kmem       (* KINSol memory block *)
+                    y          (* initial guess on input; solution vector *)
+                    LineSearch (* global strategy choice *)
+                    scale      (* scaling vector, for the variable cc *)
+                    scale);    (* scaling vector for function values fval *)
 
   printf "\nComputed solution:\n";
   print_output ydata;

@@ -139,16 +139,17 @@ let print_output u =
 
 (* Print final statistics *)
 let print_final_stats kmem =
+  let open Kinsol in
   (* Main solver statistics *)
-  let nni = Kinsol.get_num_nonlin_solv_iters kmem in
-  let nfe = Kinsol.get_num_func_evals kmem in
+  let nni = get_num_nonlin_solv_iters kmem in
+  let nfe = get_num_func_evals kmem in
 
   (* Band linear solver statistics *)
-  let nje = Kinsol.Dls.get_num_jac_evals kmem in
-  let nfeD = Kinsol.Dls.get_num_func_evals kmem in
+  let nje  = Dls.get_num_jac_evals kmem in
+  let nfeD = Dls.get_num_func_evals kmem in
 
   (* Band linear solver workspace size *)
-  let lenrwB, leniwB = Kinsol.Dls.get_work_space kmem in
+  let lenrwB, leniwB = Dls.get_work_space kmem in
 
   printf "\nFinal Statistics.. \n\n";
   printf "nni      = %6d    nfe     = %6d \n" nni nfe;
@@ -180,10 +181,9 @@ let main () =
    * Attach band linear solver 
    * Use acceleration with up to 3 prior residuals
    * ----------------------------------------- *)
-  let kmem = Kinsol.init ~maa:3
-                ~linsolv:(Kinsol.Dls.band ~jac:jac
-                            {Kinsol.mupper=ny; Kinsol.mlower=ny})
-                func y
+  let kmem = Kinsol.(init ~maa:3
+                ~linsolv:(Dls.band ~jac:jac {mupper=ny; mlower=ny})
+                func y)
   in
 
   (* -------------------

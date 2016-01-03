@@ -273,15 +273,15 @@ let main () =
   printf "Create and allocate CVODES memory for forward runs\n";
 
   let cvode_mem =
-    Cvode.init Cvode.BDF (Cvode.Newton (Cvode.Dls.dense ~jac:(jac data) ()))
-      (Cvode.WFtolerances (ewt data)) (f data) t0 y
+    Cvode.(init BDF (Newton (Dls.dense ~jac:(jac data) ()))
+                (WFtolerances (ewt data)) (f data) t0 y)
   in
 
   Quad.init cvode_mem (fQ data) q;
-  Quad.set_tolerances cvode_mem (Quad.SStolerances (reltolQ, abstolQ));
+  Quad.(set_tolerances cvode_mem (SStolerances (reltolQ, abstolQ)));
 
   (* Allocate global memory *)
-  Adj.init cvode_mem steps Adj.IHermite (* Adj.IPolynomial *);
+  Adj.(init cvode_mem steps IHermite) (* IPolynomial *);
 
   (* Perform forward run *)
   printf "Forward integration ... ";
@@ -317,16 +317,15 @@ let main () =
   printf "Create and allocate CVODES memory for backward run\n";
 
   let cvode_memB =
-    Adj.init_backward
-      cvode_mem Cvode.BDF
-                (Adj.Newton (Adj.Dls.dense
-                               ~jac:(Adj.Dls.DenseNoSens (jacb data)) ()))
-                (Adj.SStolerances (reltolB, abstolB))
-                (Adj.NoSens (fB data))
-                tb1 yB
+    Adj.(init_backward
+          cvode_mem Cvode.BDF
+                    (Newton Dls.(dense ~jac:(DenseNoSens (jacb data)) ()))
+                    (SStolerances (reltolB, abstolB))
+                    (NoSens (fB data))
+                    tb1 yB)
   in
-  QuadAdj.init cvode_memB (QuadAdj.NoSens (fQB data)) qB;
-  QuadAdj.set_tolerances cvode_memB (QuadAdj.SStolerances (reltolB, abstolQB));
+  QuadAdj.(init cvode_memB (NoSens (fQB data)) qB);
+  QuadAdj.(set_tolerances cvode_memB (SStolerances (reltolB, abstolQB)));
 
   (* Backward Integration *)
 

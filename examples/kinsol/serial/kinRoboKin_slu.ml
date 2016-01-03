@@ -299,12 +299,12 @@ let main () =
   print_output ydata;
 
   (* Call KINSol to solve problem *)
-  ignore (Kinsol.solve
-            kmem               (* KINSol memory block *)
-            y                  (* initial guess on input; solution vector *)
-            Kinsol.LineSearch  (* global strategy choice *)
-            scale              (* scaling vector, for the variable cc *)
-            scale);            (* scaling vector for function values fval *)
+  ignore Kinsol.(solve
+                    kmem        (* KINSol memory block *)
+                    y           (* initial guess on input; solution vector *)
+                    LineSearch  (* global strategy choice *)
+                    scale       (* scaling vector, for the variable cc *)
+                    scale);     (* scaling vector for function values fval *)
 
   printf "\nComputed solution:\n";
   print_output ydata;

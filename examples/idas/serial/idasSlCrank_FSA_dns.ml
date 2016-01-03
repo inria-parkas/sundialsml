@@ -34,6 +34,8 @@ module AdjQuad = Adjoint.Quadrature
 module VarId = Ida.VarId
 
 let printf = Printf.printf
+let unwrap = Nvector.unwrap
+let wrap = Nvector_serial.wrap
 
 let nvconst = Nvector_serial.DataOps.n_vconst
 
@@ -207,13 +209,14 @@ let rhsQS : user_data -> RealArray.t QuadSens.quadsensrhsfn =
   rhsQS.(1).{0} <- j1*.v1*.s1 +. m2*.v2*.s2 +. j2*.v3*.s3
 
 let print_final_stats mem =
-  let nst = Ida.get_num_steps mem in
-  let nre = Ida.get_num_res_evals mem in
-  let nje = Ida.Dls.get_num_jac_evals mem in
-  let nni = Ida.get_num_nonlin_solv_iters mem in
-  let netf = Ida.get_num_err_test_fails mem in
-  let ncfn = Ida.get_num_nonlin_solv_conv_fails mem in
-  let nreLS = Ida.Dls.get_num_res_evals mem in
+  let open Ida in
+  let nst   = get_num_steps mem in
+  let nre   = get_num_res_evals mem in
+  let nje   = Dls.get_num_jac_evals mem in
+  let nni   = get_num_nonlin_solv_iters mem in
+  let netf  = get_num_err_test_fails mem in
+  let ncfn  = get_num_nonlin_solv_conv_fails mem in
+  let nreLS = Dls.get_num_res_evals mem in
 
   printf "\nFinal Run Statistics: \n\n";
   printf "Number of steps                    = %d\n" nst;
@@ -230,20 +233,20 @@ let print_final_stats mem =
  *)
 
 let main () =
-  let pbar = RealArray.create 2
-  and gm = RealArray.create 2
-  and gp = RealArray.create 2
+  let pbar  = RealArray.create 2
+  and gm    = RealArray.create 2
+  and gp    = RealArray.create 2
   and atolS = RealArray.create np
   in
 
-  let id = RealArray.create neq in
-  let yy = RealArray.create neq in
-  let yp = RealArray.create neq in
-  let q = RealArray.create 1 in
+  let id    = RealArray.create neq in
+  let yy    = RealArray.create neq in
+  let yp    = RealArray.create neq in
+  let q     = RealArray.create 1 in
 
-  let yyS= Array.init np (fun _ -> Nvector_serial.wrap (RealArray.copy yy)) in
-  let ypS= Array.init np (fun _ -> Nvector_serial.wrap (RealArray.copy yp)) in
-  let qS = Array.init np (fun _ -> Nvector_serial.wrap (RealArray.copy q)) in
+  let yyS= Array.init np (fun _ -> wrap (RealArray.copy yy)) in
+  let ypS= Array.init np (fun _ -> wrap (RealArray.copy yp)) in
+  let qS = Array.init np (fun _ -> wrap (RealArray.copy q)) in
 
   let data = { a = 0.5;   (* half-length of crank *)
                j1 = 1.0;  (* crank moment of inertia *)
@@ -269,48 +272,48 @@ let main () =
   set_ic data yy yp;
 
   for is = 0 to np - 1 do
-    nvconst 0.0 (Nvector.unwrap yyS.(is));
-    nvconst 0.0 (Nvector.unwrap ypS.(is));
+    nvconst 0.0 (unwrap yyS.(is));
+    nvconst 0.0 (unwrap ypS.(is));
   done;
 
   (* Wrap arrays in nvectors.  Operations performed on the wrapped
      representation affect the original bigarrays.  *)
-  let wyy = Nvector_serial.wrap yy
-  and wyp = Nvector_serial.wrap yp
-  and wid = Nvector_serial.wrap id
-  and wq  = Nvector_serial.wrap q
+  let wyy = wrap yy
+  and wyp = wrap yp
+  and wid = wrap id
+  and wq  = wrap q
   in
 
   (* IDA initialization *)
   (* Call IDADense and set up the linear solver. *)
   let mem =
-    Ida.init (Ida.Dls.dense ())
-      (Ida.SStolerances (rtolf, atolf))
-      (ressc data)
-      ~varid:wid
-      tbegin
-      wyy wyp
+    Ida.(init (Dls.dense ())
+              (SStolerances (rtolf, atolf))
+              (ressc data)
+              ~varid:wid
+              tbegin
+              wyy wyp)
   in
   Ida.set_suppress_alg mem true;
   Ida.set_max_num_steps mem 20000;
 
   pbar.{0} <- data.params.{0}; pbar.{1} <- data.params.{1};
-  Sens.init mem Sens.EEtolerances Sens.Simultaneous
-    ~sens_params:{ Sens.pvals = Some data.params;
-                   Sens.pbar = Some pbar;
-                   Sens.plist = None }
-    yyS
-    ypS;
+  Sens.(init mem EEtolerances Simultaneous
+                 ~sens_params:{ pvals = Some data.params;
+                                pbar = Some pbar;
+                                plist = None }
+                 yyS
+                 ypS);
   Sens.set_err_con mem true;
 
   nvconst 0.0 q;
   Quad.init mem (rhsQ data) wq;
-  Quad.set_tolerances mem (Quad.SStolerances (rtolq, atolq)) ;
+  Quad.(set_tolerances mem (SStolerances (rtolq, atolq)));
 
-  nvconst 0.0 (Nvector.unwrap qS.(0));
+  nvconst 0.0 (unwrap qS.(0));
   QuadSens.init mem ~fqs:(rhsQS data) qS;
   atolS.{0} <- atolq; atolS.{1} <- atolq;
-  QuadSens.set_tolerances mem (QuadSens.SStolerances (rtolq, atolS));
+  QuadSens.(set_tolerances mem (SStolerances (rtolq, atolS)));
 
   (* Perform forward run *)
   printf "\nForward integration ... ";
@@ -328,8 +331,8 @@ let main () =
 
   let _ = QuadSens.get mem qS in
   printf "-------------F O R W A R D------------------\n";
-  printf "   dG/dp:  %12.4e %12.4e\n" (Nvector.unwrap qS.(0)).{0}
-                                      (Nvector.unwrap qS.(1)).{0};
+  printf "   dG/dp:  %12.4e %12.4e\n" (unwrap qS.(0)).{0}
+                                      (unwrap qS.(1)).{0};
   printf "--------------------------------------------\n\n";
 
 
@@ -343,17 +346,17 @@ let main () =
 
   (* Call IDADense and set up the linear solver. *)
   let mem =
-    Ida.init (Ida.Dls.dense ())
-      (Ida.SStolerances (rtolfd, atolfd))
-      (ressc data)
-      ~varid:wid
-      tbegin wyy wyp
+    Ida.(init (Dls.dense ())
+              (SStolerances (rtolfd, atolfd))
+              (ressc data)
+              ~varid:wid
+              tbegin wyy wyp)
   in
   Ida.set_suppress_alg mem true;
 
   nvconst 0.0 q;
   Quad.init mem (rhsQ data) wq;
-  Quad.set_tolerances mem (Quad.SStolerances (rtolq, atolq));
+  Quad.(set_tolerances mem (SStolerances (rtolq, atolq)));
 
   let _ = Ida.solve_normal mem tend wyy wyp in
 

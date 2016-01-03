@@ -61,6 +61,9 @@ let printf = Printf.printf
 let nvconst = Nvector_serial.DataOps.n_vconst
 let nvscale = Nvector_serial.DataOps.n_vscale
 
+let unwrap = Nvector.unwrap
+let wrap = Nvector_serial.wrap
+
 (* Problem Constants *)
 
 let neq =      3             (* number of equations                  *)
@@ -276,9 +279,9 @@ let main () =
   let q = RealArray.of_array [|0.0|] in
 
   (* Wrap arrays into nvectors. *)
-  let wyy = Nvector_serial.wrap yy
-  and wyp = Nvector_serial.wrap yp
-  and wq  = Nvector_serial.wrap q
+  let wyy = wrap yy
+  and wyp = wrap yp
+  and wq  = wrap q
   in
 
   (* Set the scalar realtive and absolute tolerances reltolQ and abstolQ *)
@@ -290,19 +293,19 @@ let main () =
   print_string "Create and allocate IDAS memory for forward runs\n";
 
   let ida_mem =
-    Ida.init (Ida.Dls.dense ~jac:(jac data) ())
-      (Ida.WFtolerances (ewt data))
-      (res data)
-      t0
-      wyy wyp
+    Ida.(init (Dls.dense ~jac:(jac data) ())
+              (WFtolerances (ewt data))
+              (res data)
+              t0
+              wyy wyp)
   in
 
   Quad.init ida_mem (rhsQ data) wq;
-  Quad.set_tolerances ida_mem (Quad.SStolerances (reltolQ,abstolQ));
+  Quad.(set_tolerances ida_mem (SStolerances (reltolQ,abstolQ)));
 
   (* Allocate global memory *)
 
-  Adjoint.init ida_mem steps Adjoint.IHermite;
+  Adjoint.(init ida_mem steps IHermite);
 
   (* Perform forward run *)
   print_string "Forward integration ... ";
@@ -352,16 +355,16 @@ let main () =
   (* Create and allocate IDAS memory for backward run *)
   print_string "Create and allocate IDAS memory for backward run\n";
 
-  let wyB  = Nvector_serial.wrap yB
-  and wypB = Nvector_serial.wrap ypB
+  let wyB  = wrap yB
+  and wypB = wrap ypB
   in
 
   let indexB =
-    Adjoint.init_backward ida_mem
-      (Adjoint.Dls.dense ~jac:(Adjoint.Dls.DenseNoSens (jacB data)) ())
-      (Adjoint.SStolerances (reltolB, abstolB))
-      (Adjoint.NoSens (resB data))
-      tb2 wyB wypB
+    Adjoint.(init_backward ida_mem
+                           (Dls.dense ~jac:(Dls.DenseNoSens (jacB data)) ())
+                           (SStolerances (reltolB, abstolB))
+                           (NoSens (resB data))
+                           tb2 wyB wypB)
   in
   Adjoint.set_max_num_steps indexB 1000;
 
@@ -369,13 +372,11 @@ let main () =
  
   (* Initialize qB *)
   let qB = RealArray.of_array [|0.0; 0.0; 0.0|] in
-  let wqB = Nvector_serial.wrap qB in
+  let wqB = wrap qB in
 
-  AdjQuad.init indexB
-    (AdjQuad.NoSens (rhsQB data))
-    wqB;
+  AdjQuad.(init indexB (NoSens (rhsQB data)) wqB);
   (* Include quadratures in error control. *)
-  AdjQuad.set_tolerances indexB (AdjQuad.SStolerances (reltolB, abstolQB));
+  AdjQuad.(set_tolerances indexB (SStolerances (reltolB, abstolQB)));
 
   (* Backward Integration *)
   print_string "Backward integration ... ";
@@ -413,13 +414,13 @@ let main () =
   Adjoint.reinit indexB tb1 wyB wypB;
 
   (* Also reinitialize quadratures. *)
-  AdjQuad.init indexB (AdjQuad.NoSens (rhsQB data)) wqB;
+  AdjQuad.(init indexB (NoSens (rhsQB data)) wqB);
 
   (* Use IDACalcICB to compute consistent initial conditions 
      for this backward problem. *)
 
-  let wyyTB1 = Nvector_serial.wrap yyTB1
-  and wypTB1 = Nvector_serial.wrap ypTB1
+  let wyyTB1 = wrap yyTB1
+  and wypTB1 = wrap ypTB1
   in
 
   let id = RealArray.of_array [|VarId.differential;
@@ -429,7 +430,7 @@ let main () =
 
   (* Specify which variables are differential (1) and which algebraic (0).*)
   (* Get the consistent IC found by IDAS. *)
-  Adjoint.set_id indexB (Nvector_serial.wrap id);
+  Adjoint.set_id indexB (wrap id);
   Adjoint.calc_ic indexB t1b wyyTB1 wypTB1 ~yb:wyyTB1 ~yb':wypTB1;
 
   print_string "Backward integration ... ";

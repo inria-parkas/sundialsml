@@ -190,23 +190,24 @@ let print_output s udata t =
 (* Get and print final statistics *)
 
 let print_final_stats s =
-  let lenrw, leniw = Cvode.get_work_space s
-  and nst = Cvode.get_num_steps s
-  and nfe = Cvode.get_num_rhs_evals s
-  and nsetups = Cvode.get_num_lin_solv_setups s
-  and netf = Cvode.get_num_err_test_fails s
-  and nni = Cvode.get_num_nonlin_solv_iters s
-  and ncfn = Cvode.get_num_nonlin_solv_conv_fails s
+  let open Cvode in
+  let lenrw, leniw = get_work_space s
+  and nst          = get_num_steps s
+  and nfe          = get_num_rhs_evals s
+  and nsetups      = get_num_lin_solv_setups s
+  and netf         = get_num_err_test_fails s
+  and nni          = get_num_nonlin_solv_iters s
+  and ncfn         = get_num_nonlin_solv_conv_fails s
   in
-  let lenrwLS, leniwLS = Cvode.Spils.get_work_space s
-  and nli   = Cvode.Spils.get_num_lin_iters s
-  and npe   = Cvode.Spils.get_num_prec_evals s
-  and nps   = Cvode.Spils.get_num_prec_solves s
-  and ncfl  = Cvode.Spils.get_num_conv_fails s
-  and nfeLS = Cvode.Spils.get_num_rhs_evals s
+  let lenrwLS, leniwLS = Spils.get_work_space s
+  and nli   = Spils.get_num_lin_iters s
+  and npe   = Spils.get_num_prec_evals s
+  and nps   = Spils.get_num_prec_solves s
+  and ncfl  = Spils.get_num_conv_fails s
+  and nfeLS = Spils.get_num_rhs_evals s
   in
-  let lenrwBP, leniwBP = Cvode.Spils.Banded.get_work_space s in
-  let nfeBP = Cvode.Spils.Banded.get_num_rhs_evals s in
+  let lenrwBP, leniwBP = Spils.Banded.get_work_space s in
+  let nfeBP = Spils.Banded.get_num_rhs_evals s in
 
   printf "\nFinal Statistics.. \n\n";
   printf "lenrw   = %5d     leniw   = %5d\n"   lenrw leniw;
@@ -331,15 +332,12 @@ let main () =
   let mu = 2
   and ml = 2
   in
-  let cvode_mem =
-    Cvode.init Cvode.BDF
-      (Cvode.Newton
-          (Cvode.Spils.spgmr
-             (Cvode.Spils.Banded.prec_left
-                { Cvode.mupper = mu; Cvode.mlower = ml})))
-      (Cvode.SStolerances (reltol, abstol))
+  let cvode_mem = Cvode.(
+    init BDF
+      (Newton Spils.(spgmr (Banded.prec_left { mupper = mu; mlower = ml})))
+      (SStolerances (reltol, abstol))
       (f data) t0 u
-  in
+  ) in
 
   print_intro mu ml;
 

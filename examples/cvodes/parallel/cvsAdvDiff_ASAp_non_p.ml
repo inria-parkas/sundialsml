@@ -416,13 +416,13 @@ let main () =
   set_ic u dx local_n my_base;
 
   (* Allocate CVODES memory for forward integration *)
-  let cvode_mem = Cvode.init Cvode.Adams Cvode.Functional
-                             (Cvode.SStolerances (reltol, abstol))
-                             (f data) t0 u
+  let cvode_mem = Cvode.(init Adams Functional
+                              (SStolerances (reltol, abstol))
+                              (f data) t0 u)
   in
 
   (* Allocate combined forward/backward memory *)
-  Adjoint.init cvode_mem steps Adjoint.IHermite;
+  Adjoint.(init cvode_mem steps IHermite);
 
   (* Integrate to TOUT and collect check point information *)
   let _ = Adjoint.forward_normal cvode_mem tout u in
@@ -443,11 +443,11 @@ let main () =
   set_ic_back uB my_base;
 
   (* Allocate CVODES memory for the backward integration *)
-  let bcvode_mem = Adjoint.init_backward cvode_mem
-        Cvode.Adams
-        Adjoint.Functional
-        (Adjoint.SStolerances (reltol, abstol))
-        (Adjoint.NoSens (fB data)) tout uB in
+  let bcvode_mem = Adjoint.(init_backward cvode_mem
+                              Cvode.Adams
+                              Functional
+                              (SStolerances (reltol, abstol))
+                              (NoSens (fB data)) tout uB) in
 
   (* Integrate to T0 *)
   Adjoint.backward_normal cvode_mem t0;

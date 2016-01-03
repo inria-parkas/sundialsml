@@ -76,16 +76,13 @@ let main () =
      hand-side side function in y'=f(t,y), the inital time t0, and
      the initial dependent variable vector y.  Note: since this
      problem is fully implicit, we set f_E to NULL and f_I to f. *)
-  let arkode_mem =
-    Arkode.init
-      (Arkode.Implicit
-        (f lamda,
-         Arkode.Newton (Arkode.Dls.dense ~jac:(jac lamda) ()),
-         Arkode.Linear false))
-      (Arkode.SStolerances (reltol, abstol))
+  let arkode_mem = Arkode.(
+    init
+      (Implicit (f lamda, Newton (Dls.dense ~jac:(jac lamda) ()), Linear false))
+      (SStolerances (reltol, abstol))
       t0
       y
-  in
+  ) in
   (* Open output stream for results, output comment line *)
   let ufid = open_out "solution.txt" in
   fprintf ufid "# t u\n";
@@ -115,15 +112,16 @@ let main () =
   close_out ufid;
 
   (* Get/print some final statistics on how the solve progressed *)
-  let nst      = Arkode.get_num_steps arkode_mem in
-  let nst_a    = Arkode.get_num_step_attempts arkode_mem in
-  let nfe, nfi = Arkode.get_num_rhs_evals arkode_mem in
-  let nsetups  = Arkode.get_num_lin_solv_setups arkode_mem in
-  let netf     = Arkode.get_num_err_test_fails arkode_mem in
-  let nni      = Arkode.get_num_nonlin_solv_iters arkode_mem in
-  let ncfn     = Arkode.get_num_nonlin_solv_conv_fails arkode_mem in
-  let nje      = Arkode.Dls.get_num_jac_evals arkode_mem in
-  let nfeLS    = Arkode.Dls.get_num_rhs_evals arkode_mem in
+  let open Arkode in
+  let nst      = get_num_steps arkode_mem in
+  let nst_a    = get_num_step_attempts arkode_mem in
+  let nfe, nfi = get_num_rhs_evals arkode_mem in
+  let nsetups  = get_num_lin_solv_setups arkode_mem in
+  let netf     = get_num_err_test_fails arkode_mem in
+  let nni      = get_num_nonlin_solv_iters arkode_mem in
+  let ncfn     = get_num_nonlin_solv_conv_fails arkode_mem in
+  let nje      = Dls.get_num_jac_evals arkode_mem in
+  let nfeLS    = Dls.get_num_rhs_evals arkode_mem in
 
   printf "\nFinal Solver Statistics:\n";
   printf "   Internal solver steps = %d (attempted = %d)\n" nst nst_a;

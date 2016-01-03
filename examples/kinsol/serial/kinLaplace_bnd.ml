@@ -96,20 +96,21 @@ let print_output u =
 
 (* Print final statistics *)
 let print_final_stats kmem =
+  let open Kinsol in
   (* Main solver statistics *)
-  let nni = Kinsol.get_num_nonlin_solv_iters kmem in
-  let nfe = Kinsol.get_num_func_evals kmem in
+  let nni = get_num_nonlin_solv_iters kmem in
+  let nfe = get_num_func_evals kmem in
 
   (* Linesearch statistics *)
-  let nbcfails = Kinsol.get_num_beta_cond_fails kmem in
-  let nbacktr = Kinsol.get_num_backtrack_ops kmem in
+  let nbcfails = get_num_beta_cond_fails kmem in
+  let nbacktr  = get_num_backtrack_ops kmem in
 
   (* Main solver workspace size *)
-  let lenrw, leniw = Kinsol.get_work_space kmem in
+  let lenrw, leniw = get_work_space kmem in
 
   (* Band linear solver statistics *)
-  let nje = Kinsol.Dls.get_num_jac_evals kmem in
-  let nfeD = Kinsol.Dls.get_num_func_evals kmem in
+  let nje  = Dls.get_num_jac_evals kmem in
+  let nfeD = Dls.get_num_func_evals kmem in
 
   (* Band linear solver workspace size *)
   let lenrwB, leniwB = Kinsol.Dls.get_work_space kmem in
@@ -143,10 +144,7 @@ let main () =
    * y is used as a template
    * Attach band linear solver 
    * ----------------------------------------- *)
-  let kmem = Kinsol.init
-                ~linsolv:(Kinsol.Dls.band {Kinsol.mupper=ny; Kinsol.mlower=ny})
-                func y
-  in
+  let kmem = Kinsol.(init ~linsolv:(Dls.band {mupper=ny; mlower=ny}) func y) in
   (* -------------------
    * Set optional inputs 
    * ------------------- *)
@@ -173,12 +171,12 @@ let main () =
   let scale = Nvector_serial.make neq one in
 
   (* Call main solver *)
-  ignore (Kinsol.solve
-            kmem              (* KINSol memory block *)
-            y                 (* initial guess on input; solution vector *)
-            Kinsol.LineSearch (* global strategy choice *)
-            scale             (* scaling vector, for the variable cc *)
-            scale);           (* scaling vector for function values fval *)
+  ignore Kinsol.(solve
+                    kmem        (* KINSol memory block *)
+                    y           (* initial guess on input; solution vector *)
+                    LineSearch  (* global strategy choice *)
+                    scale       (* scaling vector, for the variable cc *)
+                    scale);     (* scaling vector for function values fval *)
 
 
   (* ------------------------------------

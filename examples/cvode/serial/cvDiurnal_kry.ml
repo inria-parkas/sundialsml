@@ -214,20 +214,21 @@ let print_output s udata t =
 (* Get and print final statistics *)
 
 let print_final_stats s =
-  let lenrw, leniw = Cvode.get_work_space s
-  and nst          = Cvode.get_num_steps s
-  and nfe          = Cvode.get_num_rhs_evals s
-  and nsetups      = Cvode.get_num_lin_solv_setups s
-  and netf         = Cvode.get_num_err_test_fails s
-  and nni          = Cvode.get_num_nonlin_solv_iters s
-  and ncfn         = Cvode.get_num_nonlin_solv_conv_fails s
+  let open Cvode in
+  let lenrw, leniw = get_work_space s
+  and nst          = get_num_steps s
+  and nfe          = get_num_rhs_evals s
+  and nsetups      = get_num_lin_solv_setups s
+  and netf         = get_num_err_test_fails s
+  and nni          = get_num_nonlin_solv_iters s
+  and ncfn         = get_num_nonlin_solv_conv_fails s
   in
-  let lenrwLS, leniwLS = Cvode.Spils.get_work_space s
-  and nli   = Cvode.Spils.get_num_lin_iters s
-  and npe   = Cvode.Spils.get_num_prec_evals s
-  and nps   = Cvode.Spils.get_num_prec_solves s
-  and ncfl  = Cvode.Spils.get_num_conv_fails s
-  and nfeLS = Cvode.Spils.get_num_rhs_evals s
+  let lenrwLS, leniwLS = Spils.get_work_space s
+  and nli   = Spils.get_num_lin_iters s
+  and npe   = Spils.get_num_prec_evals s
+  and nps   = Spils.get_num_prec_solves s
+  and ncfl  = Spils.get_num_conv_fails s
+  and nfeLS = Spils.get_num_rhs_evals s
   in
   printf "\nFinal Statistics.. \n\n";
   printf "lenrw   = %5d     leniw   = %5d\n"   lenrw leniw;
@@ -319,7 +320,8 @@ let f data t (udata : RealArray.t) (dudata : RealArray.t) =
 (* Jacobian-times-vector routine. *)
 
 let jtv data jac_arg (vdata : RealArray.t) (jvdata : RealArray.t) =
-  let { Cvode.jac_t = t; Cvode.jac_y = (udata : RealArray.t); } = jac_arg in
+  let open Cvode in
+  let { jac_t = t; jac_y = (udata : RealArray.t); } = jac_arg in
 
   (* Set diurnal rate coefficients. *)
   let s = sin(data.om *. t) in
@@ -407,10 +409,11 @@ let jtv data jac_arg (vdata : RealArray.t) (jvdata : RealArray.t) =
 (* Preconditioner setup routine. Generate and preprocess P. *)
 
 let precond data jacarg jok gamma =
-  let { Cvode.jac_t   = tn;
-        Cvode.jac_y   = (udata : RealArray.t);
-        Cvode.jac_fy  = fudata;
-        Cvode.jac_tmp = (vtemp1, vtemp2, vtemp)
+  let open Cvode in
+  let { jac_t   = tn;
+        jac_y   = (udata : RealArray.t);
+        jac_fy  = fudata;
+        jac_tmp = (vtemp1, vtemp2, vtemp)
       } = jacarg
   in
 
@@ -485,10 +488,11 @@ let precond data jacarg jok gamma =
 (* Preconditioner solve routine *)
 
 let psolve data jac_arg solve_arg (zdata : RealArray.t) =
-  let { Cvode.Spils.rhs = (r : RealArray.t);
-        Cvode.Spils.gamma = gamma;
-        Cvode.Spils.delta = delta;
-        Cvode.Spils.left = lr } = solve_arg
+  let open Cvode.Spils in
+  let { rhs = (r : RealArray.t);
+        gamma = gamma;
+        delta = delta;
+        left = lr } = solve_arg
   in
 
   (* Extract the P and pivot arrays from user_data. *)
@@ -531,17 +535,14 @@ let main () =
    * with left preconditioning and the maximum Krylov dimension maxl *)
   (* set the Jacobian-times-vector function *)
   (* Set the preconditioner solve and setup functions *)
-  let cvode_mem =
-    Cvode.init Cvode.BDF
-      (Cvode.Newton
-          (Cvode.Spils.spgmr
-             ~jac_times_vec:(jtv data)
-             (Cvode.Spils.prec_left
-                ~setup:(precond data)
-                (psolve data))))
-      (Cvode.SStolerances (reltol, abstol))
+  let cvode_mem = Cvode.(
+    init BDF
+      (Newton
+          Spils.(spgmr ~jac_times_vec:(jtv data)
+                      (prec_left ~setup:(precond data) (psolve data))))
+      (SStolerances (reltol, abstol))
       (f data) t0 u
-  in
+  ) in
 
   (* Set modified Gram-Schmidt orthogonalization *)
   Cvode.Spils.set_gs_type cvode_mem Spils.ModifiedGS;

@@ -113,19 +113,16 @@ let main () =
      hand-side side function in y'=f(t,y), the inital time t0, and
      the initial dependent variable vector y.  Note: since this
      problem is fully implicit, we set f_E to NULL and f_I to f. *)
-  let arkode_mem =
-    Arkode.init
-      (Arkode.Implicit (f udata,
-                        Arkode.Newton
-                          (Arkode.Spils.pcg
-                            ~maxl:mesh_n
-                            ~jac_times_vec:(jac udata)
-                            Arkode.Spils.prec_none),
-                        Arkode.Linear true))
-      (Arkode.SStolerances (rtol, atol))
+  let arkode_mem = Arkode.(
+    init
+      (Implicit
+        (f udata,
+         Newton Spils.(pcg ~maxl:mesh_n ~jac_times_vec:(jac udata) prec_none),
+         Linear true))
+      (SStolerances (rtol, atol))
       t0
       y
-  in
+  ) in
   (* Set routines *)
   Arkode.set_max_num_steps arkode_mem 10000;   (* Increase max num steps  *)
 
@@ -176,16 +173,17 @@ let main () =
   close_out ufid;
 
   (* Print some final statistics *)
-  let nst      = Arkode.get_num_steps arkode_mem in
-  let nst_a    = Arkode.get_num_step_attempts arkode_mem in
-  let nfe, nfi = Arkode.get_num_rhs_evals arkode_mem in
-  let nsetups  = Arkode.get_num_lin_solv_setups arkode_mem in
-  let netf     = Arkode.get_num_err_test_fails arkode_mem in
-  let nni      = Arkode.get_num_nonlin_solv_iters arkode_mem in
-  let ncfn     = Arkode.get_num_nonlin_solv_conv_fails arkode_mem in
-  let nli      = Arkode.Spils.get_num_lin_iters arkode_mem in
-  let nJv      = Arkode.Spils.get_num_jtimes_evals arkode_mem in
-  let nlcf     = Arkode.Spils.get_num_conv_fails arkode_mem in
+  let open Arkode in
+  let nst      = get_num_steps arkode_mem in
+  let nst_a    = get_num_step_attempts arkode_mem in
+  let nfe, nfi = get_num_rhs_evals arkode_mem in
+  let nsetups  = get_num_lin_solv_setups arkode_mem in
+  let netf     = get_num_err_test_fails arkode_mem in
+  let nni      = get_num_nonlin_solv_iters arkode_mem in
+  let ncfn     = get_num_nonlin_solv_conv_fails arkode_mem in
+  let nli      = Spils.get_num_lin_iters arkode_mem in
+  let nJv      = Spils.get_num_jtimes_evals arkode_mem in
+  let nlcf     = Spils.get_num_conv_fails arkode_mem in
 
   printf "\nFinal Solver Statistics:\n";
   printf "   Internal solver steps = %d (attempted = %d)\n" nst nst_a;

@@ -219,12 +219,13 @@ let print_string_5d s i =
   print_int i
 
 let print_final_stats s sensi =
-  let nst     = Cvode.get_num_steps s
-  and nfe     = Cvode.get_num_rhs_evals s
-  and nsetups = Cvode.get_num_lin_solv_setups s
-  and netf    = Cvode.get_num_err_test_fails s
-  and nni     = Cvode.get_num_nonlin_solv_iters s
-  and ncfn    = Cvode.get_num_nonlin_solv_conv_fails s
+  let open Cvode in
+  let nst     = get_num_steps s
+  and nfe     = get_num_rhs_evals s
+  and nsetups = get_num_lin_solv_setups s
+  and netf    = get_num_err_test_fails s
+  and nni     = get_num_nonlin_solv_iters s
+  and ncfn    = get_num_nonlin_solv_conv_fails s
   in
   print_string "\nFinal Statistics\n\n";
   print_string_5d "nst     = " nst;
@@ -236,12 +237,13 @@ let print_final_stats s sensi =
   print_newline ();
 
   if sensi then begin
-    let nfSe     = Sens.get_num_rhs_evals s
-    and nfeS     = Sens.get_num_rhs_evals_sens s
-    and nsetupsS = Sens.get_num_lin_solv_setups s
-    and netfS    = Sens.get_num_err_test_fails s
-    and nniS     = Sens.get_num_nonlin_solv_iters s
-    and ncfnS    = Sens.get_num_nonlin_solv_conv_fails s in
+    let open Sens in
+    let nfSe     = get_num_rhs_evals s
+    and nfeS     = get_num_rhs_evals_sens s
+    and nsetupsS = get_num_lin_solv_setups s
+    and netfS    = get_num_err_test_fails s
+    and nniS     = get_num_nonlin_solv_iters s
+    and ncfnS    = get_num_nonlin_solv_conv_fails s in
     print_string_5d "\nnfSe    = " nfSe;
     print_string_5d "    nfeS     = " nfeS;
     print_string_5d "\nnetfs   = " netfS;
@@ -251,8 +253,8 @@ let print_final_stats s sensi =
     print_newline ()
   end;
 
-  let nje   = Cvode.Dls.get_num_jac_evals s
-  and nfeLS = Cvode.Dls.get_num_rhs_evals s
+  let nje   = Dls.get_num_jac_evals s
+  and nfeLS = Dls.get_num_rhs_evals s
   in
   print_string_5d "\nnje    = " nje;
   print_string_5d "    nfeLS     = " nfeLS;
@@ -277,8 +279,8 @@ let main () =
 
   (* Create CVODES object *)
   let cvode_mem =
-    Cvode.init Cvode.BDF (Cvode.Newton (Cvode.Dls.dense ~jac:(jac data) ()))
-      (Cvode.WFtolerances (ewt data)) (f data) t0 y
+    Cvode.(init BDF (Newton (Dls.dense ~jac:(jac data) ()))
+                (WFtolerances (ewt data)) (f data) t0 y)
   in
 
   print_string "\n3-species chemical kinetics problem\n";
@@ -292,14 +294,14 @@ let main () =
 
         let yS = Array.init ns (fun _ -> Nvector_serial.make neq 0.0) in
 
-        Sens.init cvode_mem
-                         Sens.EEtolerances
+        Sens.(init cvode_mem
+                         EEtolerances
                          sensi_meth
-                         ~sens_params:{ Sens.pvals = None;
-                                        Sens.pbar = Some pbar;
-                                        Sens.plist = None; }
-                         (Sens.OneByOne (Some (fS data)))
-                         yS;
+                         ~sens_params:{ pvals = None;
+                                        pbar = Some pbar;
+                                        plist = None; }
+                         (OneByOne (Some (fS data)))
+                         yS);
         Sens.set_err_con cvode_mem err_con;
 
         print_string "Sensitivity: YES ";

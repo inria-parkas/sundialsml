@@ -89,18 +89,19 @@ let print_header rtol atol linsolver =
  *)
 
 let print_output mem t u linsolver =
-  let umax = nvmaxnorm u
+  let umax = nvmaxnorm u in
 
-  and kused = Ida.get_last_order mem
-  and nst = Ida.get_num_steps mem
-  and nni = Ida.get_num_nonlin_solv_iters mem
-  and nre = Ida.get_num_res_evals mem
-  and hused = Ida.get_last_step mem
+  let open Ida in
+  let kused = get_last_order mem
+  and nst   = get_num_steps mem
+  and nni   = get_num_nonlin_solv_iters mem
+  and nre   = get_num_res_evals mem
+  and hused = get_last_step mem
 
-  and nje = Ida.Spils.get_num_jtimes_evals mem
-  and nreLS = Ida.Spils.get_num_res_evals mem
-  and npe = Ida.Spils.get_num_prec_evals mem
-  and nps = Ida.Spils.get_num_prec_solves mem in
+  and nje   = Spils.get_num_jtimes_evals mem
+  and nreLS = Spils.get_num_res_evals mem
+  and npe   = Spils.get_num_prec_evals mem
+  and nps   = Spils.get_num_prec_solves mem in
 
   printf " %5.2f %13.5e  %d  %3d  %3d  %3d  %4d  %4d  %9.2e  %3d %3d\n"
          t umax kused nst nni nje nre nreLS hused npe nps
@@ -252,8 +253,8 @@ let main() =
 
   (* Call IDACreate with dummy linear solver *)
 
-  let mem = Ida.init (Ida.Dls.dense ()) (Ida.SStolerances (rtol, atol))
-                     (res_heat data) t0 wu wu' in
+  let mem = Ida.(init (Dls.dense ()) (SStolerances (rtol, atol))
+                      (res_heat data) t0 wu wu') in
   Ida.set_constraints mem (Nvector_serial.wrap constraints);
 
   (* START: Loop through SPGMR, SPBCG and SPTFQMR linear solver modules *)

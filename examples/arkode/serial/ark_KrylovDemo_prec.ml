@@ -802,29 +802,30 @@ let print_all_species (cdata : RealArray.t) ns mxns t =
   done
 
 let print_output s t =
-  let nst = Arkode.get_num_steps s
+  let nst     = Arkode.get_num_steps s
   and nfe,nfi = Arkode.get_num_rhs_evals s
-  and nni = Arkode.get_num_nonlin_solv_iters s
-  and hu  = Arkode.get_last_step s
+  and nni     = Arkode.get_num_nonlin_solv_iters s
+  and hu      = Arkode.get_last_step s
   in
   printf "t = %10.2e  nst = %d  nfe = %d  nfi = %d  nfi = %d" t nst nfe nfi nni;
   printf "  hu = %11.2e\n\n" hu
 
 let print_final_stats s =
-  let lenrw, leniw = Arkode.get_work_space s
-  and nst = Arkode.get_num_steps s
-  and nfe, nfi = Arkode.get_num_rhs_evals s
-  and nsetups = Arkode.get_num_lin_solv_setups s
-  and netf = Arkode.get_num_err_test_fails s
-  and nni = Arkode.get_num_nonlin_solv_iters s
-  and ncfn = Arkode.get_num_nonlin_solv_conv_fails s
+  let open Arkode in
+  let lenrw, leniw = get_work_space s
+  and nst          = get_num_steps s
+  and nfe, nfi     = get_num_rhs_evals s
+  and nsetups      = get_num_lin_solv_setups s
+  and netf         = get_num_err_test_fails s
+  and nni          = get_num_nonlin_solv_iters s
+  and ncfn         = get_num_nonlin_solv_conv_fails s
   in
-  let lenrwLS, leniwLS = Arkode.Spils.get_work_space s
-  and nli   = Arkode.Spils.get_num_lin_iters s
-  and npe   = Arkode.Spils.get_num_prec_evals s
-  and nps   = Arkode.Spils.get_num_prec_solves s
-  and ncfl  = Arkode.Spils.get_num_conv_fails s
-  and nfeLS = Arkode.Spils.get_num_rhs_evals s
+  let lenrwLS, leniwLS = Spils.get_work_space s
+  and nli   = Spils.get_num_lin_iters s
+  and npe   = Spils.get_num_prec_evals s
+  and nps   = Spils.get_num_prec_solves s
+  and ncfl  = Spils.get_num_conv_fails s
+  and nfeLS = Spils.get_num_rhs_evals s
   in
 
   printf "\n\n Final statistics for this run:\n\n";
@@ -863,19 +864,17 @@ let main () =
   cinit wdata (unwrap c);
 
   (* Call ARKodeInit or ARKodeReInit, then ARKSpgmr to set up problem *)
-  let arkode_mem =
-    Arkode.init
-      (Arkode.Implicit
+  let arkode_mem = Arkode.(
+    init
+      (Implicit
         (f wdata,
-         Arkode.Newton
-           (Arkode.Spils.spgmr
-              ~maxl:maxl
-              (Arkode.Spils.prec_left ~setup:(precond wdata) (psolve wdata))),
-         Arkode.Nonlinear))
-      (Arkode.SStolerances (reltol, abstol))
+         Newton Spils.(spgmr ~maxl:maxl
+                             (prec_left ~setup:(precond wdata) (psolve wdata))),
+         Nonlinear))
+      (SStolerances (reltol, abstol))
       t0
       c
-  in
+  ) in
   wdata.arkode_mem <- Some arkode_mem;
   Arkode.set_max_num_steps arkode_mem 1000;
   Arkode.set_nonlin_conv_coef arkode_mem 1.0e-3;
@@ -921,10 +920,11 @@ let main () =
   in
       
   (* Loop over jpre and gstype (four cases) *)
-  run Spils.PrecLeft  Spils.ModifiedGS;
-  run Spils.PrecLeft  Spils.ClassicalGS;
-  run Spils.PrecRight Spils.ModifiedGS;
-  run Spils.PrecRight Spils.ClassicalGS
+  let open Spils in
+  run PrecLeft  ModifiedGS;
+  run PrecLeft  ClassicalGS;
+  run PrecRight ModifiedGS;
+  run PrecRight ClassicalGS
 
 (* Check environment variables for extra arguments.  *)
 let reps =

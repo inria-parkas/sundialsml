@@ -162,8 +162,8 @@ let pivot =
 
 let acoef = Sundials.RealArray2.make_data num_species num_species
 let bcoef = RealArray.create num_species
-let cox = RealArray.create num_species
-let coy = RealArray.create num_species
+let cox   = RealArray.create num_species
+let coy   = RealArray.create num_species
 
 let rates = RealArray.create neq
 
@@ -404,13 +404,14 @@ let print_output cc =
 
 (* Print final statistics contained in iopt *)
 let print_final_stats kmem linsolver =
-  let nni = Kinsol.get_num_nonlin_solv_iters kmem in
-  let nfe = Kinsol.get_num_func_evals kmem in
-  let nli = Kinsol.Spils.get_num_lin_iters kmem in
-  let npe = Kinsol.Spils.get_num_prec_evals kmem in
-  let nps = Kinsol.Spils.get_num_prec_solves kmem in
-  let ncfl = Kinsol.Spils.get_num_conv_fails kmem in
-  let nfeSG = Kinsol.Spils.get_num_func_evals kmem in
+  let open Kinsol in
+  let nni   = get_num_nonlin_solv_iters kmem in
+  let nfe   = get_num_func_evals kmem in
+  let nli   = Spils.get_num_lin_iters kmem in
+  let npe   = Spils.get_num_prec_evals kmem in
+  let nps   = Spils.get_num_prec_solves kmem in
+  let ncfl  = Spils.get_num_conv_fails kmem in
+  let nfeSG = Spils.get_num_func_evals kmem in
   printf "Final Statistics.. \n";
   printf "nni    = %5d    nli   = %5d\n" nni nli;
   printf "nfe    = %5d    nfeSG = %5d\n" nfe nfeSG;
@@ -440,12 +441,11 @@ let main () =
   (* Call KINCreate/KINInit to initialize KINSOL using the linear solver
      KINSPGMR with preconditioner routines prec_setup_bd
      and prec_solve_bd. *)
-  let kmem = Kinsol.init
-              ~linsolv:(Kinsol.Spils.spgmr ~maxl:!maxl ~max_restarts:!maxlrst
-                         (Kinsol.Spils.prec_right
-                            ~setup:prec_setup_bd
-                            ~solve:prec_solve_bd ()))
-              func cc in
+  let kmem = Kinsol.(init
+              ~linsolv:Spils.(spgmr ~maxl:!maxl ~max_restarts:!maxlrst
+                               (prec_right ~setup:prec_setup_bd
+                                           ~solve:prec_solve_bd ()))
+              func cc) in
   Kinsol.set_constraints kmem (Nvector_serial.make neq two);
   Kinsol.set_func_norm_tol kmem fnormtol;
   Kinsol.set_scaled_step_tol kmem scsteptol;
@@ -467,10 +467,10 @@ let main () =
            routines PrecSetupBD and PrecSolveBD, and the pointer to the user block
            data. *)
          maxl := 15;
-         Kinsol.set_linear_solver kmem
-            (Kinsol.Spils.spbcg ~maxl:(!maxl)
-               (Kinsol.Spils.prec_right ~setup:prec_setup_bd
-                                        ~solve:prec_solve_bd ()))
+         Kinsol.(set_linear_solver kmem
+                    Spils.(spbcg ~maxl:(!maxl)
+                             (prec_right ~setup:prec_setup_bd
+                                         ~solve:prec_solve_bd ())))
      | Use_Sptfqmr ->
          printf " ---------";
          printf " \n| SPTFQMR |\n";
@@ -480,10 +480,10 @@ let main () =
             preconditioner routines PrecSetupBD and PrecSolveBD, and the pointer to
             the user block data. *)
          maxl := 25;
-         Kinsol.set_linear_solver kmem
-            (Kinsol.Spils.sptfqmr ~maxl:(!maxl)
-               (Kinsol.Spils.prec_right ~setup:prec_setup_bd
-                                        ~solve:prec_solve_bd ()))
+         Kinsol.(set_linear_solver kmem
+                    Spils.(sptfqmr ~maxl:(!maxl)
+                             (prec_right ~setup:prec_setup_bd
+                                         ~solve:prec_solve_bd ())))
 
      | Use_Spfgmr ->
          printf " -------";
@@ -495,10 +495,10 @@ let main () =
             the user block data. *)
          maxl := 15;
          maxlrst := 2;
-         Kinsol.set_linear_solver kmem
-            (Kinsol.Spils.spfgmr ~maxl:(!maxl) ~max_restarts:(!maxlrst)
-               (Kinsol.Spils.prec_right ~setup:prec_setup_bd
-                                        ~solve:prec_solve_bd ())));
+         Kinsol.(set_linear_solver kmem
+            Spils.(spfgmr ~maxl:(!maxl) ~max_restarts:(!maxlrst)
+                          (prec_right ~setup:prec_setup_bd
+                                      ~solve:prec_solve_bd ()))));
 
     (* Print out the problem size, solution parameters, initial guess. *)
     print_header globalstrategy !maxl !maxlrst fnormtol scsteptol linsolver;

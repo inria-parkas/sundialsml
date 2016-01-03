@@ -111,12 +111,12 @@ let main () =
   (* Call KINSol to solve problem *)
 
   (* Call main solver *)
-  ignore (Kinsol.solve
-            kmem              (* KINSol memory block *)
-            y                 (* initial guess on input; solution vector *)
-            Kinsol.FixedPoint (* global strategy choice *)
-            scale             (* scaling vector, for the variable cc *)
-            scale);           (* scaling vector for function values fval *)
+  ignore Kinsol.(solve
+                    kmem       (* KINSol memory block *)
+                    y          (* initial guess on input; solution vector *)
+                    FixedPoint (* global strategy choice *)
+                    scale      (* scaling vector, for the variable cc *)
+                    scale);    (* scaling vector for function values fval *)
 
   (* Print solution and solver statistics *)
 

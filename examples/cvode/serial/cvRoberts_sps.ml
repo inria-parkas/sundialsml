@@ -96,14 +96,15 @@ let print_root_info r1 r2 =
     (Roots.int_of_root r2)
 
 let print_final_stats s =
-  let nst = Cvode.get_num_steps s
-  and nfe = Cvode.get_num_rhs_evals s
-  and nsetups = Cvode.get_num_lin_solv_setups s
-  and netf = Cvode.get_num_err_test_fails s
-  and nni = Cvode.get_num_nonlin_solv_iters s
-  and ncfn = Cvode.get_num_nonlin_solv_conv_fails s
-  and nje = Cvode_superlumt.get_num_jac_evals s
-  and nge = Cvode.get_num_g_evals s
+  let open Cvode in
+  let nst     = get_num_steps s
+  and nfe     = get_num_rhs_evals s
+  and nsetups = get_num_lin_solv_setups s
+  and netf    = get_num_err_test_fails s
+  and nni     = get_num_nonlin_solv_iters s
+  and ncfn    = get_num_nonlin_solv_conv_fails s
+  and nje     = Cvode_superlumt.get_num_jac_evals s
+  and nge     = get_num_g_evals s
   in
   printf "\nFinal Statistics:\n";
   printf "nst = %-6d nfe  = %-6d nsetups = %-6d nje = %d\n"
@@ -142,10 +143,9 @@ let main () =
   (* Call CVDense to specify the CVDENSE dense linear solver *)
   (* Set the Jacobian routine to Jac (user-supplied) *)
   let cvode_mem =
-    Cvode.init Cvode.BDF (Cvode.Newton
-                            (Cvode_superlumt.superlumt jac ~nnz ~nthreads:1))
-               (Cvode.SVtolerances (rtol, (Nvector_serial.wrap abstol))) f
-               ~roots:(nroots, g) t0 y
+    Cvode.(init BDF (Newton (Cvode_superlumt.superlumt jac ~nnz ~nthreads:1))
+                (SVtolerances (rtol, (Nvector_serial.wrap abstol))) f
+                ~roots:(nroots, g) t0 y)
   in
 
   (* In loop, call CVode, print results, and test for error.

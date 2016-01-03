@@ -100,11 +100,12 @@ let print_data t umax nst =
 (* Print some final statistics located in the iopt array *)
 
 let print_final_stats s =
-  let nst = Cvode.get_num_steps s
-  and nfe = Cvode.get_num_rhs_evals s
-  and netf = Cvode.get_num_err_test_fails s
-  and nni = Cvode.get_num_nonlin_solv_iters s
-  and ncfn = Cvode.get_num_nonlin_solv_conv_fails s
+  let open Cvode in
+  let nst  = get_num_steps s
+  and nfe  = get_num_rhs_evals s
+  and netf = get_num_err_test_fails s
+  and nni  = get_num_nonlin_solv_iters s
+  and ncfn = get_num_nonlin_solv_conv_fails s
   in
   printf "\nFinal Statistics: \n\n";
   printf "nst = %-6d  nfe  = %-6d  " nst nfe;
@@ -197,9 +198,9 @@ let main () =
   in
   set_ic u dx local_N my_base;  (* Initialize u vector *)
 
-  let cvode_mem = Cvode.init Cvode.Adams Cvode.Functional
-                             (Cvode.SStolerances (reltol, abstol))
-                             (f data) t0 u
+  let cvode_mem = Cvode.(init Adams Functional
+                              (SStolerances (reltol, abstol))
+                              (f data) t0 u)
   in
 
   if my_pe = 0 then print_intro npes;

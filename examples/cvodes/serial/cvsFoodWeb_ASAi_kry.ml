@@ -931,11 +931,12 @@ let fB : web_data -> RealArray.t Adj.brhsfn_no_sens =
 (* Preconditioner setup function for the backward problem *)
 
 let precondb wdata jacarg jok gamma =
-  let { Adj.jac_t   = t;
-        Adj.jac_y   = cdata;
-        Adj.jac_yb  = cBdata;
-        Adj.jac_fyb = fcBdata;
-        Adj.jac_tmp = (vtemp1, _, _)
+  let open Adj in
+  let { jac_t   = t;
+        jac_y   = cdata;
+        jac_yb  = cBdata;
+        jac_fyb = fcBdata;
+        jac_tmp = (vtemp1, _, _)
       } = jacarg
   in
   let f1 = vtemp1 in
@@ -1072,13 +1073,11 @@ let main () =
   flush stdout;
 
   let cvode_mem =
-    Cvode.init
-        Cvode.BDF
-        (Cvode.Newton
-            (Cvode.Spils.spgmr
-               (Cvode.Spils.prec_left ~setup:(precond wdata) (psolve wdata))))
-        (Cvode.SStolerances (reltol, abstol))
-        (f wdata) t0 c
+    Cvode.(init
+        BDF
+        (Newton Spils.(spgmr (prec_left ~setup:(precond wdata) (psolve wdata))))
+        (SStolerances (reltol, abstol))
+        (f wdata) t0 c)
   in
   wdata.cvode_mem <- Some cvode_mem; (* Used in Precond *)
 
@@ -1108,16 +1107,15 @@ let main () =
   flush stdout;
 
   let cvode_memb =
-    Adj.init_backward
+    Adj.(init_backward
       cvode_mem
       Cvode.BDF
-      (Adj.Newton (Adj.Spils.spgmr
-                     (Adj.Spils.prec_left ~setup:(precondb wdata)
-                        (psolveb wdata))))
-      (Adj.SStolerances (reltolb, abstolb))
-      (Adj.NoSens (fB wdata))
+      (Newton Spils.(spgmr (prec_left ~setup:(precondb wdata)
+                                      (psolveb wdata))))
+      (SStolerances (reltolb, abstolb))
+      (NoSens (fB wdata))
       tout
-      cB
+      cB)
   in
   Adj.set_max_num_steps cvode_memb 1000;
   wdata.cvode_memb <- Some cvode_memb;

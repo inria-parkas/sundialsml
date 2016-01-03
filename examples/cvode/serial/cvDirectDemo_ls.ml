@@ -171,50 +171,46 @@ let prepare_next_run cvode_mem lmm miter mu ml t y =
     match miter with
     | Dense_User -> begin
           printf "Dense, User-Supplied Jacobian\n";
-          Cvode.reinit cvode_mem t y
-            ~iter_type:(Cvode.Newton (Cvode.Dls.dense ~jac:jac1 ()))
+          Cvode.(reinit cvode_mem t y
+                        ~iter_type:(Newton (Dls.dense ~jac:jac1 ())))
         end
 
     | Dense_DQ -> begin
           printf("Dense, Difference Quotient Jacobian\n");
-          Cvode.reinit cvode_mem t y
-            ~iter_type:(Cvode.Newton (Cvode.Dls.dense ()))
+          Cvode.(reinit cvode_mem t y
+                        ~iter_type:(Newton (Dls.dense ())))
         end
 
     | Diag -> begin
           printf("Diagonal Jacobian\n");
-          Cvode.reinit cvode_mem t y
-                         ~iter_type:(Cvode.Newton Cvode.Diag.solver)
+          Cvode.(reinit cvode_mem t y ~iter_type:(Newton Diag.solver))
         end
 
     | Band_User -> begin
           printf("Band, User-Supplied Jacobian\n");
-          Cvode.reinit cvode_mem t y
+          Cvode.(reinit cvode_mem t y
             ~iter_type:
-              (Cvode.Newton
-                 (Cvode.Dls.band { Cvode.mupper = mu; Cvode.mlower = ml }
-                                 ~jac:jac2))
+              (Newton (Dls.band { mupper = mu; mlower = ml } ~jac:jac2)))
         end
 
     | Band_DQ -> begin
           printf("Band, Difference Quotient Jacobian\n");
-          Cvode.reinit cvode_mem t y
-            ~iter_type:
-              (Cvode.Newton
-                 (Cvode.Dls.band { Cvode.mupper = mu; Cvode.mlower = ml }))
+          Cvode.(reinit cvode_mem t y
+            ~iter_type:(Newton (Dls.band { mupper = mu; mlower = ml })))
         end
 
     | Func -> assert false
   end
 
 let print_final_stats cvode_mem miter ero =
-  let (lenrw, leniw) = Cvode.get_work_space cvode_mem
-  and nst = Cvode.get_num_steps cvode_mem
-  and nfe = Cvode.get_num_rhs_evals cvode_mem
-  and nsetups = Cvode.get_num_lin_solv_setups cvode_mem
-  and netf = Cvode.get_num_err_test_fails cvode_mem
-  and nni = Cvode.get_num_nonlin_solv_iters cvode_mem
-  and ncfn = Cvode.get_num_nonlin_solv_conv_fails cvode_mem
+  let open Cvode in
+  let (lenrw, leniw) = get_work_space cvode_mem
+  and nst            = get_num_steps cvode_mem
+  and nfe            = get_num_rhs_evals cvode_mem
+  and nsetups        = get_num_lin_solv_setups cvode_mem
+  and netf           = get_num_err_test_fails cvode_mem
+  and nni            = get_num_nonlin_solv_iters cvode_mem
+  and ncfn           = get_num_nonlin_solv_conv_fails cvode_mem
   in
   printf "\n Final statistics for this run:\n\n";
   printf " CVode real workspace length              = %4d \n"   lenrw;
@@ -230,19 +226,19 @@ let print_final_stats cvode_mem miter ero =
     let nje, nfeLS, (lenrwLS, leniwLS) =
       match miter with
       | Dense_User | Dense_DQ ->
-          Cvode.Dls.get_num_jac_evals cvode_mem,
-          Cvode.Dls.get_num_rhs_evals cvode_mem,
-          Cvode.Dls.get_work_space    cvode_mem
+          Dls.get_num_jac_evals cvode_mem,
+          Dls.get_num_rhs_evals cvode_mem,
+          Dls.get_work_space    cvode_mem
 
       | Band_User | Band_DQ ->
-          Cvode.Dls.get_num_jac_evals cvode_mem,
-          Cvode.Dls.get_num_rhs_evals cvode_mem,
-          Cvode.Dls.get_work_space    cvode_mem
+          Dls.get_num_jac_evals cvode_mem,
+          Dls.get_num_rhs_evals cvode_mem,
+          Dls.get_work_space    cvode_mem
 
       | Diag ->
           nsetups,
-          Cvode.Diag.get_num_rhs_evals cvode_mem,
-          Cvode.Diag.get_work_space cvode_mem
+          Diag.get_num_rhs_evals cvode_mem,
+          Diag.get_work_space cvode_mem
 
       | Func -> assert false
     in
@@ -334,8 +330,8 @@ let problem1 () =
 
   let run_tests lmm =
     init_y ();
-    let cvode_mem = Cvode.init lmm Cvode.Functional
-                           (Cvode.SStolerances (rtol, atol)) f1 p1_t0 y
+    let cvode_mem = Cvode.(init lmm Functional
+                                (SStolerances (rtol, atol)) f1 p1_t0 y)
     in
     List.iter (run cvode_mem lmm) [ Func; Dense_User; Dense_DQ; Diag]
   in
@@ -455,8 +451,8 @@ let problem2 () =
 
   let run_tests lmm =
     init_y ();
-    let cvode_mem = Cvode.init lmm Cvode.Functional
-                           (Cvode.SStolerances (rtol, atol)) f2 p2_t0 y
+    let cvode_mem = Cvode.(init lmm Functional
+                                (SStolerances (rtol, atol)) f2 p2_t0 y)
     in
     List.iter (run cvode_mem lmm) [ Func; Diag; Band_User; Band_DQ]
   in
