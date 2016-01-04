@@ -99,12 +99,12 @@ genlog =						\
 $(TESTS): tests.%.log: $(ENABLED_EXAMPLES:.ml=.%.diff)
 	$(call genlog, $^, $@)
 	cat $@
-	#@! grep '^[0-9]' $@ | grep -q '^[^0]'
+	@! grep '^[0-9]' $@ | grep -q '^[^0]'
 
 $(LAPACK_TESTS): lapack-tests.%.log: $(LAPACK_EXAMPLES:.ml=.%.diff)
 	$(call genlog, $^, $@)
 	cat $@
-	#@! grep '^[0-9]' $@ | grep -q '^[^0]'
+	@! grep '^[0-9]' $@ | grep -q '^[^0]'
 
 # Build / execution rules
 
