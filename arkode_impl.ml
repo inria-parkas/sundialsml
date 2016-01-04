@@ -302,7 +302,7 @@ type ('a, 'kind) session = {
   nroots     : int;
   err_file   : arkode_file;
   diag_file  : arkode_file;
-  checkvec   : (('a, 'kind) Nvector.t -> unit);
+  mutable checkvec     : (('a, 'kind) Nvector.t -> unit);
 
   mutable exn_temp     : exn option;
 

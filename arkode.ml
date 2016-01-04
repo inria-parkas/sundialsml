@@ -905,12 +905,12 @@ external c_resize
     = "c_arkode_resize"
 
 let resize session ?resize_nvec ?linsolv tol hscale ynew t0 =
-  if Sundials_config.safe then session.checkvec ynew;
+  session.checkvec <- Nvector.check ynew;
   (match linsolv with None -> () | ls -> session.linsolver <- ls);
   (match resize_nvec with None -> () | Some f -> session.resizefn <- f);
   c_resize session (resize_nvec <> None) hscale t0 ynew;
   session.resizefn <- dummy_resizefn;
-  set_tolerances session tol;
+  (* set_tolerances session tol; TODO: disabled pending an ARKode bug. *)
   (match session.linsolver with Some ls -> ls session ynew | None -> ())
 
 external get_root_info  : ('a, 'k) session -> Sundials.Roots.t -> unit
