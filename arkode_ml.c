@@ -1792,8 +1792,9 @@ CAMLprim value c_arkode_set_adaptivity_method(value varkode_mem, value vmeth)
     } else {
 	realtype adapt_params[3] = { 0 };
 
-	vks = Field(vmeth, RECORD_ARKODE_ADAPTIVITY_PARAMS_KS);
-	vorder = Field(vmeth, RECORD_ARKODE_ADAPTIVITY_PARAMS_METHOD_ORDER);
+	vks = Field(Field(vmeth, 0), RECORD_ARKODE_ADAPTIVITY_PARAMS_KS);
+	vorder = Field(Field(vmeth, 0),
+			RECORD_ARKODE_ADAPTIVITY_PARAMS_METHOD_ORDER);
 
 	if (vks != Val_none) {
 	    adapt_params[0] = Double_val(Field(Some_val(vks), 0));
