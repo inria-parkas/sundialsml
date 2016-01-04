@@ -1159,8 +1159,8 @@ let set_irk_table_num s v = c_set_irk_table_num s (int_of_irk_table v)
 let set_ark_table_num s v = c_set_ark_table_num s (ints_of_ark_table v)
 
 type adaptivity_params = {
-    adaptivity_ks : (float * float * float) option;
-    adaptivity_method_order : bool;
+    ks : (float * float * float) option;
+    method_order : bool;
   }
 
 type 'd adaptivity_method =

@@ -1804,8 +1804,8 @@ type 'd adaptivity_fn = float -> 'd -> adaptivity_args -> float
     - [adaptivity_method_order], [true] specifies the method order of
       accuracy $q$ and [false] specifies the embedding order of accuracy $p$. *)
 type adaptivity_params = {
-    adaptivity_ks : (float * float * float) option;
-    adaptivity_method_order : bool;
+    ks : (float * float * float) option;
+    method_order : bool;
   }
 
 (** Asymptotic error control algorithms.
