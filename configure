@@ -346,6 +346,40 @@ else
     ocaml_version=" (${ocaml_version})"
 fi
 
+# Check if .opt variants are available.
+if test -x ${OCAMLBIN}ocamlc.opt \
+        || which ${OCAMLBIN}ocamlc.opt > /dev/null 2>&1
+then
+    ocamlc="${OCAMLBIN}ocamlc.opt"
+else
+    ocamlc="${OCAMLBIN}ocamlc"
+fi
+
+if test -x ${OCAMLBIN}ocamlopt.opt \
+        || which ${OCAMLBIN}ocamlopt.opt > /dev/null 2>&1
+then
+    ocamlopt="${OCAMLBIN}ocamlopt.opt"
+else
+    ocamlopt="${OCAMLBIN}ocamlopt"
+fi
+
+if test -x ${OCAMLBIN}ocamldoc.opt \
+        || which ${OCAMLBIN}ocamldoc.opt > /dev/null 2>&1
+then
+    ocamldoc="${OCAMLBIN}ocamldoc.opt"
+else
+    ocamldoc="${OCAMLBIN}ocamldoc"
+fi
+
+if test -x ${OCAMLBIN}ocamldep.opt \
+        || which ${OCAMLBIN}ocamldep.opt > /dev/null 2>&1
+then
+    ocamldep="${OCAMLBIN}ocamldep.opt"
+else
+    ocamldep="${OCAMLBIN}ocamldep"
+fi
+
+
 
 cppflags="${cppflags} ${idirafter_sundials_inc_path} -idirafter ${ocaml_path}"
 cflags="${cflags} -I${ocaml_path}"
@@ -459,7 +493,7 @@ cat > ${test_ml_stem}.ml <<EOF
 external f : unit -> int = "f"
 let _ = exit (f ())
 EOF
-if ${OCAMLBIN}ocamlc ${test_stem}.c ${test_ml_stem}.ml -o ${test_ml_stem}$XX \
+if ${ocamlc} ${test_stem}.c ${test_ml_stem}.ml -o ${test_ml_stem}$XX \
     -custom > /dev/null 2>&1 && ./${test_ml_stem}$XX; then
     have_weak=1
 else
@@ -490,7 +524,7 @@ test_c_stem=__configure_test_c_file__
 echo 'void CVode(); void dummy () { CVode (); }' > $test_c_stem.c
 echo 'external dummy : unit -> unit = "dummy" let _ = dummy ()' > $test_stem.ml
 if ! $CC ${cflags} ${Isundials_inc_path} -o $test_c_stem$XO -c $test_c_stem.c \
-    >$test_stem.log 2>&1 || ! ${OCAMLBIN}ocamlc -c $test_stem.ml \
+    >$test_stem.log 2>&1 || ! ${ocamlc} -c $test_stem.ml \
     >> $test_stem.log 2>&1
 then
     echo 1>&2 "Panic!  Dummy library failed to compile.  Please report"
@@ -861,6 +895,10 @@ fi
 	 s#@ocaml_3x@#${ocaml_3x}#;
 	 s#@ocamlmklibflags@#${ocamlmklibflags}#;
 	 s#@bounds_checking@#${bounds_checking}#;
+	 s#@ocamlc@#${ocamlc}#;
+	 s#@ocamlopt@#${ocamlopt}#;
+	 s#@ocamldoc@#${ocamldoc}#;
+	 s#@ocamldep@#${ocamldep}#;
 	 s#@ocamlmpi_path@#${ocamlmpi_path}#;
 	 s#@ocamlmpi_enabled@#${ocamlmpi_enabled}#;
 	 s#@enable_shared@#${enable_shared}#;
