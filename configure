@@ -292,7 +292,7 @@ else
     esac
 
     # Make sure realtype has the right size.
-    test_stem=__configure_test_file__
+    test_stem=__configure_test_file__realtype
     cat > $test_stem.c <<EOF
 #include <sundials/sundials_types.h>
 int main (int argc, char *argv[])
@@ -300,14 +300,18 @@ int main (int argc, char *argv[])
   return sizeof (realtype) != sizeof (double);
 }
 EOF
-    if $CC ${Isundials_inc_path} -o $test_stem$XX $test_stem.c >/dev/null 2>&1 && \
-	./$test_stem$XX;
+    if ! $CC ${Isundials_inc_path} -o $test_stem$XX $test_stem.c >/dev/null 2>&1
     then
-	: # OK
+        error="${error}\n\tCan't link C code to sundials.  Is sundials installed properly?"
+        error="${error}\n\tSaved test code as ${test_stem}.c"
+        error="${error}\n\tCompilation command was:"
+        error="${error}\n\t$CC ${Isundials_inc_path} -o ${test_stem}${XX} ${test_stem}.c"
+    elif ! ./$test_stem$XX
+    then
+        error="${error}\n\trealtype not defined as double.  Recompile sundials with -DSUNDIALS_PRECISION=double."
     else
-	error="${error}\n\trealtype not defined as double.  Recompile sundials with --with-precision=double."
+        rm -f ./$test_stem*
     fi
-    rm -f ./$test_stem.*
 fi
 
 # Check for OCaml installation (and version)
