@@ -276,6 +276,7 @@ DOC_URLS=$(if $(CVODE_DOC_ROOT),-cvode-doc-root "$(CVODE_DOC_ROOT)")	   \
 	 $(if $(IDAS_DOC_ROOT),-idas-doc-root "$(IDAS_DOC_ROOT)")	   \
 	 $(if $(KINSOL_DOC_ROOT),-kinsol-doc-root "$(KINSOL_DOC_ROOT)")    \
 	 $(if $(MATHJAX_URL),-mathjax "$(MATHJAX_URL)")
+doc/html/index.html: OCAML_DOC_ROOT="$(OCAML_DOC_ROOT_DEFAULT)"
 doc/html/index.html: doc/html sundials_docs.cma intro.doc		\
 		     $(filter-out %_impl.cmi, $(CMI_MAIN))		\
 		     $(CMI_SENS) $(if $(MPI_ENABLED), $(CMI_MPI))
@@ -286,7 +287,7 @@ doc/html/index.html: doc/html sundials_docs.cma intro.doc		\
 	    -css-style docstyle.css				\
 	    $(DOC_URLS)						\
 	    -pp "$(DOCHTML_PP)					\
-		-D'OCAML_DOC_ROOT(x)=$(OCAML_DOC_ROOT)/**/x'	\
+		-D'OCAML_DOC_ROOT(x)=$(OCAML_DOC_ROOT)x'	\
 		-D'VERSION()=$(VERSION)'"			\
 	    -d ./doc/html/					\
 	    -hide Cvode_impl,Ida_impl,Kinsol_impl,Arkode_impl	\
