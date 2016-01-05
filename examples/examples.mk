@@ -9,6 +9,9 @@
 # * SUBDIR
 #   Which subdirectory's Makefile included this examples.mk file.
 #   cvode/serial, ida/parallel, etc.  No / allowed at the end.
+# * C_SUBDIR
+#   Which subdirectory of sundials' examples directory contains
+#   the corresponding examples, if different from SUBDIR.
 # * EXAMPLES, LAPACK_EXAMPLES, MPI_EXAMPLES
 #   List of .ml files in $(SUBDIR) that:
 #     - don't use lapack or MPI
@@ -40,6 +43,7 @@ c_examples_unavailable:
 	@false
 
 USELIB ?= sundials
+C_SUBDIR ?= $(SUBDIR)
 
 ## Shorthands
 DIVIDER = "----------------------------------------------------------------------"
@@ -268,12 +272,15 @@ EG_LDFLAGS=$(IDAS_LDFLAGS)
 else ifeq ($(MODULE),kinsol)
 EG_CFLAGS=$(KINSOL_CFLAGS)
 EG_LDFLAGS=$(KINSOL_LDFLAGS)
+else ifeq ($(MODULE),arkode)
+EG_CFLAGS=$(ARKODE_CFLAGS)
+EG_LDFLAGS=$(ARKODE_LDFLAGS)
 endif
 
 EG_CFLAGS += $(C_SUPPRESS_WARNINGS)
 
 $(ALL_EXAMPLES:.ml=.sundials.c): %.sundials.c: $(C_EXAMPLES)		     \
-					       $(EXAMPLESROOT)/$(SUBDIR)/%.c \
+					       $(EXAMPLESROOT)/$(C_SUBDIR)/%.c\
 					       $(UTILS)/sundials_wrapper.c.in
 	@if grep -q 'main *( *void *)' $< || grep -q 'main *( *)' $<;	    \
 	 then main_args=;						    \
@@ -283,11 +290,11 @@ $(ALL_EXAMPLES:.ml=.sundials.c): %.sundials.c: $(C_EXAMPLES)		     \
 	   $(UTILS)/sundials_wrapper.c.in > $@
 
 $(SERIAL_EXAMPLES:.ml=.sundials): %.sundials: %.sundials.c $(SRCROOT)/config
-	$(CC) -o $@ -I $(EXAMPLESROOT)/$(SUBDIR) \
+	$(CC) -o $@ -I $(EXAMPLESROOT)/$(C_SUBDIR) \
 	    $(EG_CFLAGS) $< $(LIB_PATH) $(EG_LDFLAGS) $(LAPACK_LIB)
 
 $(MPI_EXAMPLES:.ml=.sundials): %.sundials: %.sundials.c $(SRCROOT)/config
-	$(MPICC) -o $@ -I $(EXAMPLESROOT)/$(SUBDIR) \
+	$(MPICC) -o $@ -I $(EXAMPLESROOT)/$(C_SUBDIR) \
 	    $(EG_CFLAGS) $< $(LIB_PATH) $(EG_LDFLAGS) \
 	    $(LAPACK_LIB) $(MPI_LIBLINK)
 

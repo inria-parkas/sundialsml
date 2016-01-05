@@ -5,6 +5,7 @@
 USELIB ?= sundials_no_sens
 SRCROOT=../../..
 SUBDIR=arkode/serial
+C_SUBDIR=arkode/C_serial
 
 EXAMPLES = ark_KrylovDemo_prec.ml \
 	   ark_analytic.ml \
