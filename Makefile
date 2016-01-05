@@ -307,7 +307,7 @@ dochtml.cmx: config
 SUNDIALS_DOCS=sundials_docs$(OCAMLDOC_PLUGIN)
 
 sundials_docs.cma: sundials_config.cmo dochtml.cmo
-	$(OCAMLC) $(OCAMLCFLAGS) -o $@ -a $^
+	$(OCAMLC) $(OCAMLFLAGS) -o $@ -a $^
 
 sundials_docs.cmxs: sundials_config.cmx dochtml.cmx
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -shared -o $@ $^

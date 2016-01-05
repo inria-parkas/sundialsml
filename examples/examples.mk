@@ -38,8 +38,8 @@ C_EXAMPLES=$(if $(EXAMPLESROOT),,c_examples_unavailable)
 c_examples_unavailable:
 	@echo "C version of examples not found.  Try running $(SRCROOT)/configure again"
 	@echo "with EXAMPLES=/path/to/sundials/examples.  You can give the examples"
-	@echo "directory in the sundials C source tree or (if you installed the C library"
-	@echo "with --enable-examples) the one in the installation."
+	@echo "directory in the sundials C source tree or (if you installed the C library's"
+	@echo "examples) the one in the installation."
 	@false
 
 USELIB ?= sundials
