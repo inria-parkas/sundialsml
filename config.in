@@ -111,8 +111,9 @@ INSTALL_DOCS = @install_docs@
 OCAMLOPT ?= @ocamlopt@
 OCAMLOPTFLAGS = @ocamloptflags@
 
-OCAMLDEP ?= @OCAMLBIN@ocamldep
+OCAMLDEP ?= @ocamldep@
 OCAMLDOC ?= @ocamldoc@
+OCAMLDOC_PLUGIN ?= @ocamldoc_plugin@
 
 OCAMLMKLIB ?= @OCAMLBIN@ocamlmklib -ocamlc "$(OCAMLC) $(OCAMLFLAGS)" -ocamlopt "$(OCAMLOPT) $(OCAMLOPTFLAGS)"
 OCAMLMKLIBFLAGS ?= @ocamlmklibflags@ -verbose

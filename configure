@@ -13,6 +13,7 @@ unset install_docs
 enable_mpi=1
 unset enable_debug
 unset mathjax
+opt_compiler=1
 
 configure_command="$0"
 
@@ -57,6 +58,8 @@ do
 	enable_debug=1;;
     --unsafe)
 	bounds_checking=0;;
+    --no-opt-compiler) # not meant for users (under normal circumstances)
+	opt_compiler=0;;
     -h|--help)
 	cat <<-END_HELP_TEXT
 	'configure' configures $sysname ${version}p${versionp} to adapt to many kinds of systems.
@@ -347,38 +350,43 @@ else
 fi
 
 # Check if .opt variants are available.
-if test -x ${OCAMLBIN}ocamlc.opt \
-        || which ${OCAMLBIN}ocamlc.opt > /dev/null 2>&1
+if [ "x$opt_compiler" = x1 ] && \
+       ([ -x ${OCAMLBIN}ocamlc.opt ] \
+        || which ${OCAMLBIN}ocamlc.opt > /dev/null 2>&1)
 then
     ocamlc="${OCAMLBIN}ocamlc.opt"
 else
     ocamlc="${OCAMLBIN}ocamlc"
 fi
 
-if test -x ${OCAMLBIN}ocamlopt.opt \
-        || which ${OCAMLBIN}ocamlopt.opt > /dev/null 2>&1
+if [ "x$opt_compiler" = x1 ] && \
+       ([ -x ${OCAMLBIN}ocamlopt.opt ] \
+        || which ${OCAMLBIN}ocamlopt.opt > /dev/null 2>&1)
 then
     ocamlopt="${OCAMLBIN}ocamlopt.opt"
 else
     ocamlopt="${OCAMLBIN}ocamlopt"
 fi
 
-if test -x ${OCAMLBIN}ocamldoc.opt \
-        || which ${OCAMLBIN}ocamldoc.opt > /dev/null 2>&1
+if [ "x$opt_compiler" = x1 ] && \
+       ([ -x ${OCAMLBIN}ocamldoc.opt ] \
+        || which ${OCAMLBIN}ocamldoc.opt > /dev/null 2>&1)
 then
     ocamldoc="${OCAMLBIN}ocamldoc.opt"
+    ocamldoc_plugin=".cmxs"
 else
     ocamldoc="${OCAMLBIN}ocamldoc"
+    ocamldoc_plugin=".cma"
 fi
 
-if test -x ${OCAMLBIN}ocamldep.opt \
-        || which ${OCAMLBIN}ocamldep.opt > /dev/null 2>&1
+if [ "x$opt_compiler" = x1 ] && \
+       ([ -x ${OCAMLBIN}ocamldep.opt ] \
+        || which ${OCAMLBIN}ocamldep.opt > /dev/null 2>&1)
 then
     ocamldep="${OCAMLBIN}ocamldep.opt"
 else
     ocamldep="${OCAMLBIN}ocamldep"
 fi
-
 
 
 cppflags="${cppflags} ${idirafter_sundials_inc_path} -idirafter ${ocaml_path}"
@@ -898,6 +906,7 @@ fi
 	 s#@ocamlc@#${ocamlc}#;
 	 s#@ocamlopt@#${ocamlopt}#;
 	 s#@ocamldoc@#${ocamldoc}#;
+	 s#@ocamldoc_plugin@#${ocamldoc_plugin}#;
 	 s#@ocamldep@#${ocamldep}#;
 	 s#@ocamlmpi_path@#${ocamlmpi_path}#;
 	 s#@ocamlmpi_enabled@#${ocamlmpi_enabled}#;
