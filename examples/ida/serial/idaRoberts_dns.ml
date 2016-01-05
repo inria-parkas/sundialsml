@@ -73,14 +73,15 @@ and print_output ida t y =
     t y.{0} y.{1} y.{2} nst kused hused
 
 and print_final_stats ida =
-  let nst = Ida.get_num_steps ida
-  and nre = Ida.get_num_res_evals ida
-  and nje = Ida.Dls.get_num_jac_evals ida
-  and nni = Ida.get_num_nonlin_solv_iters ida
-  and netf = Ida.get_num_err_test_fails ida
-  and ncfn = Ida.get_num_nonlin_solv_conv_fails ida
-  and nreLS = Ida.Dls.get_num_res_evals ida
-  and nge = Ida.get_num_g_evals ida
+  let open Ida in
+  let nst   = get_num_steps ida
+  and nre   = get_num_res_evals ida
+  and nje   = Dls.get_num_jac_evals ida
+  and nni   = get_num_nonlin_solv_iters ida
+  and netf  = get_num_err_test_fails ida
+  and ncfn  = get_num_nonlin_solv_conv_fails ida
+  and nreLS = Dls.get_num_res_evals ida
+  and nge   = get_num_g_evals ida
   in
   printf "\nFinal Run Statistics: \n\n";
   printf "Number of steps                    = %d\n" nst;
@@ -161,9 +162,9 @@ let main () =
   (* Call IDACreate, IDAInit, and IDARootInit to initialize IDA memory with
    * a 2-component root function and the dense direct linear solver.  *)
   let ida_mem =
-    Ida.init (Ida.Dls.dense ~jac:jacrob ())
-             (Ida.SVtolerances (rtol, Nvector_serial.wrap avtol))
-             resrob ~roots:(nroots, grob) t0 wy wy'
+    Ida.(init (Dls.dense ~jac:jacrob ())
+              (SVtolerances (rtol, Nvector_serial.wrap avtol))
+              resrob ~roots:(nroots, grob) t0 wy wy')
   in
   (* In loop, call IDASolve, print results, and test for error.  Break out of
    * loop when NOUT preset output times have been reached. *)

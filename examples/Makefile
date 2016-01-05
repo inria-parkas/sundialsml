@@ -13,8 +13,8 @@ C_EXAMPLES=$(if $(EXAMPLESROOT),,c_examples_unavailable)
 c_examples_unavailable:
 	@echo "C version of examples not found.  Try running ../configure again"
 	@echo "with EXAMPLES=/path/to/sundials/examples.  You can give the examples"
-	@echo "directory in the sundials C source tree or (if you installed the C library"
-	@echo "with --enable-examples) the one in the installation."
+	@echo "directory in the sundials C source tree or (if you installed the C library's"
+	@echo "examples) the one in the installation."
 	@false
 
 MODULES  = cvode cvodes ida idas kinsol
@@ -31,8 +31,20 @@ SUBDIR_TARGETS = $(foreach d,$(SUBDIRS),$(foreach t,$(TOP_TARGETS),$d/$t))
 all: ocaml tests.byte tests.opt
 
 $(SUBDIR_TARGETS):
+	echo $(foreach t,$(SUBDIR_TARGETS),$(findstring $t,$(MAKECMDGOALS)))
 	@$(MAKE) -C `echo $@ | sed -e 's#/[^/]*$$##'` \
 		    `echo $@ | sed -e 's#.*/##'`
+
+# For each subdirectory foo (for example, foo=cvode/serial), don't
+# give up immediately if foo/tests.opt.log fails, provided
+# foo/tests.opt.log is not one of the targets specified on the command
+# line.
+define ADD_IGNORE_RULE
+    ifeq (,$(findstring $1,$(MAKECMDGOALS)))
+    .IGNORE: $1
+    endif
+endef
+$(foreach t,$(SUBDIR_TARGETS),$(eval $(call ADD_IGNORE_RULE,$t)))
 
 tests.opt tests.byte: tests.%: $(foreach s,$(SUBDIR),$s/tests.%)
 

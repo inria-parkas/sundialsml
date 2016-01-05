@@ -51,6 +51,9 @@ let printf = Printf.printf
 let nvconst = Nvector_serial.DataOps.n_vconst
 let nvscale = Nvector_serial.DataOps.n_vscale
 
+let wrap = Nvector_serial.wrap
+let unwrap = Nvector.unwrap
+
 (* Problem Constants *)
 let neq =      3             (* number of equations                  *)
 let np =       2             (* number of sensitivities              *)
@@ -352,44 +355,43 @@ let main () =
   and wq  = Nvector_serial.wrap q
   in
 
-  let yyS = Array.init np (fun _ -> Nvector_serial.wrap (RealArray.copy yy))
-  and ypS = Array.init np (fun _ -> Nvector_serial.wrap (RealArray.copy yp))
+  let yyS = Array.init np (fun _ -> wrap (RealArray.copy yy))
+  and ypS = Array.init np (fun _ -> wrap (RealArray.copy yp))
   in
-  nvconst 0.0 (Nvector.unwrap yyS.(0));
-  nvconst 0.0 (Nvector.unwrap yyS.(1));
-  nvconst 0.0 (Nvector.unwrap ypS.(0));
-  nvconst 0.0 (Nvector.unwrap ypS.(1));
+  nvconst 0.0 (unwrap yyS.(0));
+  nvconst 0.0 (unwrap yyS.(1));
+  nvconst 0.0 (unwrap ypS.(0));
+  nvconst 0.0 (unwrap ypS.(1));
 
-  let qS = Array.init np (fun _ -> Nvector_serial.wrap (RealArray.copy q)) in
-  nvconst 0.0 (Nvector.unwrap qS.(0));
+  let qS = Array.init np (fun _ -> wrap (RealArray.copy q)) in
+  nvconst 0.0 (unwrap qS.(0));
 
   (* Forward problem's setup. *)
   let ti = t0 in
   let ida_mem =
-    Ida.init (Ida.Dls.dense ())
-      (Ida.SStolerances (rtol,atol))
-      (res data)
-      ti
-      wyy wyp
+    Ida.(init (Dls.dense ())
+              (SStolerances (rtol,atol))
+              (res data)
+              ti
+              wyy wyp)
   in
   Ida.set_max_num_steps ida_mem 1500;
 
   (* Quadrature's setup. *)
   Quad.init ida_mem (rhsQ data) wq;
 
-  Quad.set_tolerances ida_mem (Quad.SStolerances (rtol,atol));
+  Quad.(set_tolerances ida_mem (SStolerances (rtol,atol)));
 
   (* Sensitivity's setup. *)
-  Sens.init ida_mem Sens.EEtolerances Sens.Simultaneous
-    ~fs:(resS data) yyS ypS;
+  Sens.(init ida_mem EEtolerances Simultaneous ~fs:(resS data) yyS ypS);
   Sens.set_err_con ida_mem true;
 
   (* Setup of quadrature's sensitivities *)
   QuadSens.init ida_mem ~fqs:(rhsQS data) qS;
-  QuadSens.set_tolerances ida_mem QuadSens.EEtolerances;
+  QuadSens.(set_tolerances ida_mem EEtolerances);
 
   (* Initialize ASA. *)
-  Adjoint.init ida_mem 100 Adjoint.IHermite;
+  Adjoint.(init ida_mem 100 IHermite);
 
   printf "---------------------------------------------------------\n";
   printf "Forward integration\n";
@@ -406,8 +408,8 @@ let main () =
 
   let _ = QuadSens.get ida_mem qS in
   printf "   dG/dp:  %12.4e %12.4e\n"
-    (Nvector.unwrap qS.(0)).{0}
-    (Nvector.unwrap qS.(1)).{0};
+    (unwrap qS.(0)).{0}
+    (unwrap qS.(1)).{0};
   printf "\n";
   (******************************
   * BACKWARD PROBLEM #1
@@ -420,30 +422,30 @@ let main () =
 
   nvconst 0.0 yyB1;
   yyB1.{2} <- yy.{2};
-  yyB1.{5} <- (Nvector.unwrap yyS.(0)).{2};
+  yyB1.{5} <- (unwrap yyS.(0)).{2};
 
   nvconst 0.0 ypB1;
   ypB1.{0} <- yy.{2} -. yy.{0};
   ypB1.{1} <- yy.{2} -. yy.{1};
-  ypB1.{3} <- (Nvector.unwrap yyS.(0)).{2} -. (Nvector.unwrap yyS.(0)).{0};
-  ypB1.{4} <- (Nvector.unwrap yyS.(0)).{2} -. (Nvector.unwrap yyS.(0)).{1};
+  ypB1.{3} <- (unwrap yyS.(0)).{2} -. (unwrap yyS.(0)).{0};
+  ypB1.{4} <- (unwrap yyS.(0)).{2} -. (unwrap yyS.(0)).{1};
 
   let qB1 = RealArray.create (2*np) in
   nvconst 0.0 qB1;
 
-  let wyyB1 = Nvector_serial.wrap yyB1
-  and wypB1 = Nvector_serial.wrap ypB1
-  and wqB1  = Nvector_serial.wrap qB1
+  let wyyB1 = wrap yyB1
+  and wypB1 = wrap ypB1
+  and wqB1  = wrap qB1
   in
 
   let indexB1 =
-    Adjoint.init_backward ida_mem (Adjoint.Dls.dense ())
-      (Adjoint.SStolerances (rtola, atola))
-      (Adjoint.WithSens (resBS1 data))
-      tf wyyB1 wypB1
+    Adjoint.(init_backward ida_mem (Dls.dense ())
+                           (SStolerances (rtola, atola))
+                           (WithSens (resBS1 data))
+                           tf wyyB1 wypB1)
   in
   Adjoint.set_max_num_steps indexB1 5000;
-  AdjQuad.init indexB1 (AdjQuad.WithSens (rhsQBS1 data)) wqB1;
+  AdjQuad.(init indexB1 (WithSens (rhsQBS1 data)) wqB1);
 
   (******************************
   * BACKWARD PROBLEM #2  
@@ -456,32 +458,32 @@ let main () =
 
   nvconst 0.0 yyB2;
   yyB2.{2} <- yy.{2};
-  yyB2.{5} <- (Nvector.unwrap yyS.(1)).{2};
+  yyB2.{5} <- (unwrap yyS.(1)).{2};
 
   nvconst 0.0 ypB2;
   ypB2.{0} <- yy.{2}-.yy.{0};
   ypB2.{1} <- yy.{2}-.yy.{1};
-  ypB2.{3} <- (Nvector.unwrap yyS.(1)).{2} -. (Nvector.unwrap yyS.(1)).{0};
-  ypB2.{4} <- (Nvector.unwrap yyS.(1)).{2} -. (Nvector.unwrap yyS.(1)).{1};
+  ypB2.{3} <- (unwrap yyS.(1)).{2} -. (unwrap yyS.(1)).{0};
+  ypB2.{4} <- (unwrap yyS.(1)).{2} -. (unwrap yyS.(1)).{1};
 
   let qB2 = RealArray.create (2*np) in
   nvconst 0.0 qB2;
 
-  let wyyB2 = Nvector_serial.wrap yyB2
-  and wypB2 = Nvector_serial.wrap ypB2
-  and wqB2  = Nvector_serial.wrap qB2
+  let wyyB2 = wrap yyB2
+  and wypB2 = wrap ypB2
+  and wqB2  = wrap qB2
   in
 
   let indexB2 =
-    Adjoint.init_backward ida_mem (Adjoint.Dls.dense ())
-      (Adjoint.SStolerances (rtola, atola))
-      (Adjoint.WithSens (resBS2 data))
-      tf
-      wyyB2
-      wypB2
+    Adjoint.(init_backward ida_mem (Dls.dense ())
+                           (SStolerances (rtola, atola))
+                           (WithSens (resBS2 data))
+                           tf
+                           wyyB2
+                           wypB2)
   in
   Adjoint.set_max_num_steps indexB2 2500;
-  AdjQuad.init indexB2 (AdjQuad.WithSens (rhsQBS2 data)) wqB2;
+  AdjQuad.(init indexB2 (WithSens (rhsQBS2 data)) wqB2);
 
   (* Integrate backward problems. *)
   printf "---------------------------------------------------------\n";
@@ -537,15 +539,15 @@ let main () =
   nvconst 0.0 q;
 
   let ida_mem =
-    Ida.init (Ida.Dls.dense ())
-      (Ida.SStolerances (rtolFD, atolFD))
-      (res data)
-      ti wyy wyp
+    Ida.(init (Dls.dense ())
+              (SStolerances (rtolFD, atolFD))
+              (res data)
+              ti wyy wyp)
   in
   Ida.set_max_num_steps ida_mem 10000;
 
   Quad.init ida_mem (rhsQ data) wq;
-  Quad.set_tolerances ida_mem (Quad.SStolerances (rtolFD,atolFD));
+  Quad.(set_tolerances ida_mem (SStolerances (rtolFD,atolFD)));
 
   let _ = Ida.solve_normal ida_mem tf wyy wyp in
   let _ = Quad.get ida_mem wq in

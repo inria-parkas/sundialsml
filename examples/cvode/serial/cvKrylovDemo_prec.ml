@@ -265,10 +265,11 @@ let v_sum_prods ((u : RealArray.t), u_off) p ((q : RealArray.t), q_off) v
  there are ngrp=ngx*ngy blocks computed in the block-grouping scheme.
 *) 
 let precond wdata jacarg jok gamma =
-  let { Cvode.jac_t   = t;
-        Cvode.jac_y   = (cdata : RealArray.t);
-        Cvode.jac_fy  = fc;
-        Cvode.jac_tmp = (vtemp1, _, _)
+  let open Cvode in
+  let { jac_t   = t;
+        jac_y   = (cdata : RealArray.t);
+        jac_fy  = fc;
+        jac_tmp = (vtemp1, _, _)
       } = jacarg
   in
   let f1 = vtemp1 in
@@ -795,30 +796,32 @@ let print_all_species (cdata : RealArray.t) ns mxns t =
   done
 
 let print_output s t =
-  let nst = Cvode.get_num_steps s
-  and nfe = Cvode.get_num_rhs_evals s
-  and nni = Cvode.get_num_nonlin_solv_iters s
-  and qu  = Cvode.get_last_order s
-  and hu  = Cvode.get_last_step s
+  let open Cvode in
+  let nst = get_num_steps s
+  and nfe = get_num_rhs_evals s
+  and nni = get_num_nonlin_solv_iters s
+  and qu  = get_last_order s
+  and hu  = get_last_step s
   in
   printf "t = %10.2e  nst = %d  nfe = %d  nni = %d" t nst nfe nni;
   printf "  qu = %d  hu = %11.2e\n\n" qu hu
 
 let print_final_stats s =
-  let lenrw, leniw = Cvode.get_work_space s
-  and nst = Cvode.get_num_steps s
-  and nfe = Cvode.get_num_rhs_evals s
-  and nsetups = Cvode.get_num_lin_solv_setups s
-  and netf = Cvode.get_num_err_test_fails s
-  and nni = Cvode.get_num_nonlin_solv_iters s
-  and ncfn = Cvode.get_num_nonlin_solv_conv_fails s
+  let open Cvode in
+  let lenrw, leniw = get_work_space s
+  and nst          = get_num_steps s
+  and nfe          = get_num_rhs_evals s
+  and nsetups      = get_num_lin_solv_setups s
+  and netf         = get_num_err_test_fails s
+  and nni          = get_num_nonlin_solv_iters s
+  and ncfn         = get_num_nonlin_solv_conv_fails s
   in
-  let lenrwLS, leniwLS = Cvode.Spils.get_work_space s
-  and nli   = Cvode.Spils.get_num_lin_iters s
-  and npe   = Cvode.Spils.get_num_prec_evals s
-  and nps   = Cvode.Spils.get_num_prec_solves s
-  and ncfl  = Cvode.Spils.get_num_conv_fails s
-  and nfeLS = Cvode.Spils.get_num_rhs_evals s
+  let lenrwLS, leniwLS = Spils.get_work_space s
+  and nli   = Spils.get_num_lin_iters s
+  and npe   = Spils.get_num_prec_evals s
+  and nps   = Spils.get_num_prec_solves s
+  and ncfl  = Spils.get_num_conv_fails s
+  and nfeLS = Spils.get_num_rhs_evals s
   in
 
   printf "\n\n Final statistics for this run:\n\n";
@@ -857,14 +860,13 @@ let main () =
 
   (* Call CVodeInit or CVodeReInit, then CVSpgmr to set up problem *)
   let cvode_mem =
-    Cvode.init
-        Cvode.BDF
-        (Cvode.Newton
-            (Cvode.Spils.spgmr
-                ~maxl:maxl
-                (Cvode.Spils.prec_left ~setup:(precond wdata) (psolve wdata))))
-        (Cvode.SStolerances (reltol, abstol))
-        (f wdata) t0 c
+    Cvode.(init
+        BDF
+        (Newton
+            Spils.(spgmr ~maxl:maxl
+                         (prec_left ~setup:(precond wdata) (psolve wdata))))
+        (SStolerances (reltol, abstol))
+        (f wdata) t0 c)
   in
   wdata.cvode_mem <- Some cvode_mem;
   Cvode.Spils.set_gs_type cvode_mem Spils.ModifiedGS;
@@ -909,10 +911,11 @@ let main () =
   in
       
   (* Loop over jpre and gstype (four cases) *)
-  run Spils.PrecLeft  Spils.ModifiedGS;
-  run Spils.PrecLeft  Spils.ClassicalGS;
-  run Spils.PrecRight Spils.ModifiedGS;
-  run Spils.PrecRight Spils.ClassicalGS
+  let open Spils in
+  run PrecLeft  ModifiedGS;
+  run PrecLeft  ClassicalGS;
+  run PrecRight ModifiedGS;
+  run PrecRight ClassicalGS
 
 (* Check environment variables for extra arguments.  *)
 let reps =

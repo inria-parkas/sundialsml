@@ -1467,7 +1467,7 @@ val get_dky : ('d, 'k) session -> ('d, 'k) Nvector.t -> float -> int -> unit
     @noarkode <node> ARKodeSetOrder *)
 val reinit :
   ('d, 'kind) session
-  -> ('d, 'kind) problem
+  -> ?problem:('d, 'kind) problem
   -> ?order:int
   -> ?roots:(int * 'd rootsfn)
   -> float
@@ -1484,7 +1484,7 @@ val reinit :
 type 'd resize_fn = 'd -> 'd -> unit
 
 (** Change the number of equations and unknowns between integrator steps.
-    The call [resize s ~resize_nvec:rfn ~linear_solver:ls tol hscale ynew t0]
+    The call [resize s ~resize_nvec:rfn ~linsolv:ls tol hscale ynew t0]
     has as arguments:
     - [s], the solver session to resize,
     - [rfn], a resize function that transforms nvectors in place-otherwise
@@ -1503,7 +1503,7 @@ type 'd resize_fn = 'd -> 'd -> unit
 val resize :
   ('d, 'kind) session
   -> ?resize_nvec:('d resize_fn)
-  -> ?linear_solver:(('d, 'kind) linear_solver)
+  -> ?linsolv:(('d, 'kind) linear_solver)
   -> ('d, 'kind) tolerance
   -> float
   -> ('d, 'kind) Nvector.t
@@ -1804,8 +1804,8 @@ type 'd adaptivity_fn = float -> 'd -> adaptivity_args -> float
     - [adaptivity_method_order], [true] specifies the method order of
       accuracy $q$ and [false] specifies the embedding order of accuracy $p$. *)
 type adaptivity_params = {
-    adaptivity_ks : (float * float * float) option;
-    adaptivity_method_order : bool;
+    ks : (float * float * float) option;
+    method_order : bool;
   }
 
 (** Asymptotic error control algorithms.

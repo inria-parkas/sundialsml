@@ -560,13 +560,14 @@ let print_output my_pe comm cc =
 
 (* Print final statistics contained in iopt *)
 let print_final_stats kmem =
-  let nni = Kinsol.get_num_nonlin_solv_iters kmem in
-  let nfe = Kinsol.get_num_func_evals kmem in
-  let nli = Kinsol.Spils.get_num_lin_iters kmem in
-  let npe = Kinsol.Spils.get_num_prec_evals kmem in
-  let nps = Kinsol.Spils.get_num_prec_solves kmem in
-  let ncfl = Kinsol.Spils.get_num_conv_fails kmem in
-  let nfeSG = Kinsol.Spils.get_num_func_evals kmem in
+  let open Kinsol in
+  let nni   = get_num_nonlin_solv_iters kmem in
+  let nfe   = get_num_func_evals kmem in
+  let nli   = Spils.get_num_lin_iters kmem in
+  let npe   = Spils.get_num_prec_evals kmem in
+  let nps   = Spils.get_num_prec_solves kmem in
+  let ncfl  = Spils.get_num_conv_fails kmem in
+  let nfeSG = Spils.get_num_func_evals kmem in
   printf "Final Statistics.. \n";
   printf "nni    = %5d    nli   = %5d\n" nni nli;
   printf "nfe    = %5d    nfeSG = %5d\n" nfe nfeSG;
@@ -614,15 +615,13 @@ let main () =
   let mldq = 2*num_species - 1 in
   let mukeep = num_species in
   let mlkeep = num_species in
-  let kmem = Kinsol.init
-              (Kinsol.Spils.spgmr ~maxl:maxl ~max_restarts:maxlrst
-                (Kinsol_bbd.prec_right
-                   { Bbd.mudq = mudq;
-                     Bbd.mldq = mldq;
-                     Bbd.mukeep = mukeep;
-                     Bbd.mlkeep = mlkeep; }
-                   (func_local data)))
-              (func data) cc in
+  let kmem =
+    Kinsol.(init
+        ~linsolv:(Spils.spgmr ~maxl:maxl ~max_restarts:maxlrst
+                              (Kinsol_bbd.prec_right
+                                  Bbd.({ mudq; mldq; mukeep; mlkeep; })
+                                  (func_local data)))
+        (func data) cc) in
   Kinsol.set_constraints kmem (Nvector.make local_N neq comm 0.0);
   Kinsol.set_func_norm_tol kmem fnormtol;
   Kinsol.set_scaled_step_tol kmem scsteptol;

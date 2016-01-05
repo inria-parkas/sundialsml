@@ -346,17 +346,18 @@ let print_output webdata comm mem ((cdata : RealArray.t),_,_) tt =
  *)
 
 let print_final_stats mem =
-  let nst = Ida.get_num_steps mem in
-  let nre = Ida.get_num_res_evals mem in
-  let netf = Ida.get_num_err_test_fails mem in
-  let ncfn = Ida.get_num_nonlin_solv_conv_fails mem in
-  let nni = Ida.get_num_nonlin_solv_iters mem in
+  let open Ida in
+  let nst  = get_num_steps mem in
+  let nre  = get_num_res_evals mem in
+  let netf = get_num_err_test_fails mem in
+  let ncfn = get_num_nonlin_solv_conv_fails mem in
+  let nni  = get_num_nonlin_solv_iters mem in
 
-  let ncfl = Ida.Spils.get_num_conv_fails mem in
-  let nli = Ida.Spils.get_num_lin_iters mem in
-  let npe = Ida.Spils.get_num_prec_evals mem in
-  let nps = Ida.Spils.get_num_prec_solves mem in
-  let nreLS = Ida.Spils.get_num_res_evals mem in
+  let ncfl  = Spils.get_num_conv_fails mem in
+  let nli   = Spils.get_num_lin_iters mem in
+  let npe   = Spils.get_num_prec_evals mem in
+  let nps   = Spils.get_num_prec_solves mem in
+  let nreLS = Spils.get_num_res_evals mem in
 
   printf "-----------------------------------------------------------\n";
   printf "\nFinal statistics: \n\n";
@@ -888,8 +889,8 @@ let main () =
      maxl (max. Krylov subspace dim.) is set to 16. *)
   let maxl = 16 in
   let linsolv =
-    Ida.Spils.spgmr ~maxl:maxl
-      (Ida.Spils.prec_left ~setup:(precondbd webdata) (psolvebd webdata))
+    Ida.Spils.(spgmr ~maxl:maxl
+                  (prec_left ~setup:(precondbd webdata) (psolvebd webdata)))
   in
   let mem =
     Ida.init linsolv (Ida.SStolerances (rtol, atol))

@@ -75,6 +75,12 @@ module DenseMatrix :
         @cvode <node9#s:dls> DENSE_ELEM *)
     val set : t -> int -> int -> float -> unit
 
+    (** [update a i j f] sets the value at row [i] and column [j] of [a]
+        to [f v].
+
+        @cvode <node9#s:dls> DENSE_ELEM *)
+    val update : t -> int -> int -> (float -> float) -> unit
+
     (** Fills a matrix with zeros.
 
         @cvode <node9#ss:dense> SetToZero *)
@@ -205,6 +211,10 @@ module ArrayDenseMatrix :
 
     (** [set a i j v] sets the value at row [i] and column [j] of [a] to [v]. *)
     val set : t -> int -> int -> float -> unit
+
+    (** [update a i j f] sets the value at row [i] and column [j] of [a]
+        to [f v]. *)
+    val update : t -> int -> int -> (float -> float) -> unit
 
     (** Fills the matrix with zeros.
      
@@ -357,6 +367,14 @@ module BandMatrix :
         @cvode <node9#s:dls> BAND_ELEM *)
     val set : t -> int -> int -> float -> unit
 
+    (** [update a i j f] sets the value at row [i] and column [j] of [a]
+        to [f v]. Only rows and columns satisfying
+        {% $\mathtt{i} \leq \mathtt{j} + \mathtt{ml}$ %} and
+        {% $\mathtt{j} \leq \mathtt{i} + \mathtt{smu}$ %} are valid.
+
+        @cvode <node9#s:dls> DENSE_ELEM *)
+    val update : t -> int -> int -> (float -> float) -> unit
+
     (** {4 Calculations} *)
 
     (** Fills a matrix with zeros.
@@ -468,6 +486,12 @@ module ArrayBandMatrix :
         satisfying {% $\mathtt{i} \leq \mathtt{j} + \mathtt{ml}$ %} and
         {% $\mathtt{j} \leq \mathtt{i} + \mathtt{smu}$ %} are valid. *)
     val set : t -> smu -> int -> int -> float -> unit
+
+    (** [update a smu i j f] sets the value at row [i] and column [j] of [a]
+        to [f v]. [smu] is the storage upper bandwidth. Only rows and columns
+        satisfying {% $\mathtt{i} \leq \mathtt{j} + \mathtt{ml}$ %} and
+        {% $\mathtt{j} \leq \mathtt{i} + \mathtt{smu}$ %} are valid. *)
+    val update : t -> smu -> int -> int -> (float -> float) -> unit
 
     (** {4 Calculations} *)
 

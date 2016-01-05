@@ -728,17 +728,18 @@ let print_output webdata mem cc tt comm =
  *)
 
 let print_final_stats mem =
-  let nst = Ida.get_num_steps mem in
-  let nre = Ida.get_num_res_evals mem in
-  let netf = Ida.get_num_err_test_fails mem in
-  let ncfn = Ida.get_num_nonlin_solv_conv_fails mem in
-  let nni = Ida.get_num_nonlin_solv_iters mem in
+  let open Ida in
+  let nst  = get_num_steps mem in
+  let nre  = get_num_res_evals mem in
+  let netf = get_num_err_test_fails mem in
+  let ncfn = get_num_nonlin_solv_conv_fails mem in
+  let nni  = get_num_nonlin_solv_iters mem in
 
-  let ncfl = Ida.Spils.get_num_conv_fails mem in
-  let nli = Ida.Spils.get_num_lin_iters mem in
-  let npe = Ida.Spils.get_num_prec_evals mem in
-  let nps = Ida.Spils.get_num_prec_solves mem in
-  let nreLS = Ida.Spils.get_num_res_evals mem in
+  let ncfl  = Spils.get_num_conv_fails mem in
+  let nli   = Spils.get_num_lin_iters mem in
+  let npe   = Spils.get_num_prec_evals mem in
+  let nps   = Spils.get_num_prec_solves mem in
+  let nreLS = Spils.get_num_res_evals mem in
 
   let nge = Ida_bbd.get_num_gfn_evals mem in
 
@@ -818,12 +819,7 @@ let main () =
   and mukeep = 2 and mlkeep = 2 in
   let linsolver =
     Ida.Spils.spgmr ~maxl:maxl
-      (Ida_bbd.prec_left ~dqrely:zero
-         { Ida_bbd.mudq = mudq;
-           Ida_bbd.mldq = mldq;
-           Ida_bbd.mukeep = mukeep;
-           Ida_bbd.mlkeep = mlkeep;
-         }
+      Ida_bbd.(prec_left ~dqrely:zero { mudq; mldq; mukeep; mlkeep; }
          (reslocal webdata ))
   in
   let mem =

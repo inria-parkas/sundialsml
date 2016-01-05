@@ -965,7 +965,7 @@ let print_output mem uv tt data comm =
     end;
 
     let kused = Ida.get_last_order mem in
-    let nst = Ida.get_num_steps mem in
+    let nst   = Ida.get_num_steps mem in
     let hused = Ida.get_last_step mem in
 
     printf "%8.2e %12.4e %12.4e   | %3d  %1d %12.4e\n"
@@ -1046,17 +1046,18 @@ let print_adj_sol uvB uvpB data =
  *)
 
 let print_final_stats mem =
-  let nst = Ida.get_num_steps mem in
-  let nre = Ida.get_num_res_evals mem in
-  let netf = Ida.get_num_err_test_fails mem in
-  let ncfn = Ida.get_num_nonlin_solv_conv_fails mem in
-  let nni = Ida.get_num_nonlin_solv_iters mem in
+  let open Ida in
+  let nst  = get_num_steps mem in
+  let nre  = get_num_res_evals mem in
+  let netf = get_num_err_test_fails mem in
+  let ncfn = get_num_nonlin_solv_conv_fails mem in
+  let nni  = get_num_nonlin_solv_iters mem in
 
-  let ncfl = Ida.Spils.get_num_conv_fails mem in
-  let nli = Ida.Spils.get_num_lin_iters mem in
-  let npe = Ida.Spils.get_num_prec_evals mem in
-  let nps = Ida.Spils.get_num_prec_solves mem in
-  let nreLS = Ida.Spils.get_num_res_evals mem in
+  let ncfl  = Spils.get_num_conv_fails mem in
+  let nli   = Spils.get_num_lin_iters mem in
+  let npe   = Spils.get_num_prec_evals mem in
+  let nps   = Spils.get_num_prec_solves mem in
+  let nreLS = Spils.get_num_res_evals mem in
 
   let nge = Ida_bbd.get_num_gfn_evals mem in
 
@@ -1077,17 +1078,18 @@ let print_final_stats mem =
   printf "Number of local residual evals.    = %d\n" nge
 
 let print_final_stats_b mem =
-  let nst = Adjoint.get_num_steps mem in
-  let nre = Adjoint.get_num_res_evals mem in
-  let netf = Adjoint.get_num_err_test_fails mem in
-  let ncfn = Adjoint.get_num_nonlin_solv_conv_fails mem in
-  let nni = Adjoint.get_num_nonlin_solv_iters mem in
+  let open Adjoint in
+  let nst  = get_num_steps mem in
+  let nre  = get_num_res_evals mem in
+  let netf = get_num_err_test_fails mem in
+  let ncfn = get_num_nonlin_solv_conv_fails mem in
+  let nni  = get_num_nonlin_solv_iters mem in
 
-  let ncfl = Adjoint.Spils.get_num_conv_fails mem in
-  let nli = Adjoint.Spils.get_num_lin_iters mem in
-  let npe = Adjoint.Spils.get_num_prec_evals mem in
-  let nps = Adjoint.Spils.get_num_prec_solves mem in
-  let nreLS = Adjoint.Spils.get_num_res_evals mem in
+  let ncfl  = Spils.get_num_conv_fails mem in
+  let nli   = Spils.get_num_lin_iters mem in
+  let npe   = Spils.get_num_prec_evals mem in
+  let nps   = Spils.get_num_prec_solves mem in
+  let nreLS = Spils.get_num_res_evals mem in
 
   let nge = Idas_bbd.get_num_gfn_evals mem in
 
@@ -1139,13 +1141,11 @@ let main () =
   (* Create needed vectors, and load initial values.
      The vector resid is used temporarily only.        *)
 
-  let uv = Nvector_parallel.make local_N system_size comm 0. in
-
-  let uvp = Nvector_parallel.make local_N system_size comm 0. in
-
-  let resid = Nvector_parallel.make local_N system_size comm 0. in
-
-  let id = Nvector_parallel.make local_N system_size comm 0. in
+  let open Nvector_parallel in
+  let uv    = make local_N system_size comm 0. in
+  let uvp   = make local_N system_size comm 0. in
+  let resid = make local_N system_size comm 0. in
+  let id    = make local_N system_size comm 0. in
 
   set_initial_profiles data (unvec uv) (unvec uvp)
     (unvec id) (unvec resid);
@@ -1167,22 +1167,14 @@ let main () =
   let maxl = 16 in
   let linsolv =
     Ida.Spils.spgmr ~maxl:maxl
-      (Ida_bbd.prec_left ~dqrely:zero
-         { Ida_bbd.mudq = mudq;
-           Ida_bbd.mldq = mldq;
-           Ida_bbd.mukeep = mukeep;
-           Ida_bbd.mlkeep = mlkeep;
-         }
-         (reslocal data))
+      Ida_bbd.(prec_left ~dqrely:zero { mudq; mldq; mukeep; mlkeep; }
+                         (reslocal data))
   in
-  let mem =
-    Ida.init linsolv (Ida.SStolerances (rtol,atol))
-      (res data)
-      t0 uv uvp
+  let mem = Ida.(init linsolv (SStolerances (rtol,atol)) (res data) t0 uv uvp)
   in
 
   (* Initialize adjoint module. *)
-  Adjoint.init mem steps Adjoint.IPolynomial;
+  Adjoint.(init mem steps IPolynomial);
 
   (* Call IDACalcIC (with default options) to correct the initial values. *)
   let tout = ref 0.001 in
@@ -1214,9 +1206,9 @@ let main () =
   if thispe = 0 then
     printf "\n\t\t BACKWARD problem\n";
 
-  let uvB = Nvector_parallel.make local_N system_size comm 0. in
-  let uvpB = Nvector_parallel.make local_N system_size comm 0. in
-  let residB = Nvector_parallel.make local_N system_size comm 0. in
+  let uvB    = make local_N system_size comm 0. in
+  let uvpB   = make local_N system_size comm 0. in
+  let residB = make local_N system_size comm 0. in
 
   (*Get consistent IC *)
   set_initial_profiles_b (unvec uv) (unvec uvp)
@@ -1230,22 +1222,16 @@ let main () =
   let mlkeep = 2 in
   let linsolv =
     Adjoint.Spils.spgmr ~maxl:maxl
-      (Idas_bbd.prec_left ~dqrely:zero
-         {
-           Idas_bbd.mudq = mudq;
-           Idas_bbd.mldq = mldq;
-           Idas_bbd.mukeep = mukeep;
-           Idas_bbd.mlkeep = mlkeep;
-         }
-         (resBlocal data))
+      Idas_bbd.(prec_left ~dqrely:zero { mudq; mldq; mukeep; mlkeep; }
+                          (resBlocal data))
   in
   let indexB =
-    Adjoint.init_backward mem
-      linsolv
-      (Adjoint.SStolerances (rtol,atol))
-      (Adjoint.NoSens (resB data))
-      ~varid:id
-      tend uvB uvpB
+    Adjoint.(init_backward mem
+                           linsolv
+                           (SStolerances (rtol,atol))
+                           (NoSens (resB data))
+                           ~varid:id
+                           tend uvB uvpB)
   in
 
   Adjoint.backward_normal mem tbegin;

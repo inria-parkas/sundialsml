@@ -304,8 +304,8 @@ module AdjointTypes' = struct
     (* These fields are accessed from cvodes_ml.c *)
     type dense_jac_callback_with_sens =
       {
-        jacfn: dense_jac_fn_with_sens;
-        mutable dmat : Dls.DenseMatrix.t option
+        jacfn_sens : dense_jac_fn_with_sens;
+        mutable dmat_sens : Dls.DenseMatrix.t option
       }
 
     type band_jac_fn_no_sens
@@ -340,8 +340,8 @@ module AdjointTypes' = struct
     (* These fields are accessed from cvodes_ml.c *)
     type band_jac_callback_with_sens =
       {
-        bjacfn: band_jac_fn_with_sens;
-        mutable bmat : Dls.BandMatrix.t option
+        bjacfn_sens: band_jac_fn_with_sens;
+        mutable bmat_sens : Dls.BandMatrix.t option
       }
   end
 
@@ -368,8 +368,8 @@ module AdjointTypes' = struct
     (* These fields are accessed from cvodes_ml.c *)
     type sparse_jac_callback_with_sens =
       {
-        jacfn: sparse_jac_fn_with_sens;
-        mutable smat : Sls_impl.t option
+        jacfn_sens: sparse_jac_fn_with_sens;
+        mutable smat_sens : Sls_impl.t option
       }
 
   end
@@ -420,8 +420,8 @@ module AdjointTypes' = struct
 
     type 'a precfns_with_sens =
       {
-        prec_solve_fn : 'a prec_solve_fn_with_sens;
-        prec_setup_fn : 'a prec_setup_fn_with_sens option;
+        prec_solve_fn_sens : 'a prec_solve_fn_with_sens;
+        prec_setup_fn_sens : 'a prec_setup_fn_with_sens option;
       }
 
     type 'd jac_times_vec_fn_with_sens =

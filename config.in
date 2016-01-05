@@ -17,7 +17,7 @@ MATHJAX_URL_DEFAULT     = @mathjax@
 
 CC = @cc@
 CPP= @cpp@
-CFLAGS += -Werror @cflags@
+CFLAGS += @cflags@
 LDFLAGS += @ldflags@
 CPPFLAGS += @cppflags@
 C_SUPPRESS_WARNINGS = @c_suppress_warnings@
@@ -79,7 +79,7 @@ define common
   ${dups}
 endef
 
-OCAMLC ?= @OCAMLBIN@ocamlc
+OCAMLC ?= @ocamlc@
 OCAMLFLAGS = -annot @ocamlflags@
 OCAML_INCLUDE := $(shell $(OCAMLC) -where)
 OCAML_ALL_LIBLINK = $(strip $(call common, $(CVODE_LDFLAGS) $(CVODES_LDFLAGS) \
@@ -108,11 +108,12 @@ STUBDIR= @stubdir@
 DOCDIR = @docdir@sundials_ml
 INSTALL_DOCS = @install_docs@
 
-OCAMLOPT ?= @OCAMLBIN@ocamlopt.opt
+OCAMLOPT ?= @ocamlopt@
 OCAMLOPTFLAGS = @ocamloptflags@
 
-OCAMLDEP ?= @OCAMLBIN@ocamldep
-OCAMLDOC ?= @OCAMLBIN@ocamldoc
+OCAMLDEP ?= @ocamldep@
+OCAMLDOC ?= @ocamldoc@
+OCAMLDOC_PLUGIN ?= @ocamldoc_plugin@
 
 OCAMLMKLIB ?= @OCAMLBIN@ocamlmklib -ocamlc "$(OCAMLC) $(OCAMLFLAGS)" -ocamlopt "$(OCAMLOPT) $(OCAMLOPTFLAGS)"
 OCAMLMKLIBFLAGS ?= @ocamlmklibflags@ -verbose

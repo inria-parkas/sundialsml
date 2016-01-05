@@ -133,10 +133,11 @@ let print_string_5d s i =
 (* Print final statistics contained in iopt *)
 (* For high NUM_REPS, the cost of OCaml printf becomes important! *)
 let print_final_stats kmem =
-  let nni  = Kinsol.get_num_nonlin_solv_iters kmem in
-  let nfe  = Kinsol.get_num_func_evals kmem in
-  let nje  = Kinsol.Dls.get_num_jac_evals kmem in
-  let nfeD = Kinsol.Dls.get_num_func_evals kmem in
+  let open Kinsol in
+  let nni  = get_num_nonlin_solv_iters kmem in
+  let nfe  = get_num_func_evals kmem in
+  let nje  = Dls.get_num_jac_evals kmem in
+  let nfeD = Dls.get_num_func_evals kmem in
   print_string "Final Statistics:\n";
   print_string_5d "  nni = " nni;
   print_string_5d "    nfe  = " nfe;
@@ -150,8 +151,7 @@ let solve_it kmem u s glstr mset =
   print_string (if mset==1 then "Exact Newton" else "Modified Newton");
   if not glstr then print_newline () else print_string " with line search\n";
   Kinsol.set_max_setup_calls kmem mset;
-  ignore (Kinsol.solve kmem u
-            (if glstr then Kinsol.Newton else Kinsol.LineSearch) s s);
+  ignore Kinsol.(solve kmem u (if glstr then Newton else LineSearch) s s);
   print_string "Solution:\n  [x1,x2] = ";
   print_output (Nvector.unwrap u);
   print_final_stats kmem
@@ -184,7 +184,7 @@ let main () =
   let scsteptol = stol in
 
   (* Call KINDense to specify the linear solver *)
-  let kmem = Kinsol.init (Kinsol.Dls.dense None) func u_nvec in
+  let kmem = Kinsol.init ~linsolv:(Kinsol.Dls.dense ()) func u_nvec in
   Kinsol.set_constraints kmem c_nvec;
   Kinsol.set_func_norm_tol kmem fnormtol;
   Kinsol.set_scaled_step_tol kmem scsteptol;

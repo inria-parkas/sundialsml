@@ -116,7 +116,7 @@ let print_header rtol avtol y =
 
 let print_output mem t y =
   let kused = Ida.get_last_order mem
-  and nst = Ida.get_num_steps mem
+  and nst   = Ida.get_num_steps mem
   and hused = Ida.get_last_step mem
   in
   printf "%8.2e %8.2e %8.2e %8.2e %8.2e %8.2e %8.2e | %3d  %1d %8.2e\n"
@@ -124,13 +124,14 @@ let print_output mem t y =
 
 
 let print_final_stats mem =
-  let nst = Ida.get_num_steps mem
-  and nre = Ida.get_num_res_evals mem
-  and nje = Ida.Dls.get_num_jac_evals mem
-  and nni = Ida.get_num_nonlin_solv_iters mem
-  and netf = Ida.get_num_err_test_fails mem
-  and ncfn = Ida.get_num_nonlin_solv_conv_fails mem
-  and nreLS = Ida.Dls.get_num_res_evals mem
+  let open Ida in
+  let nst   = get_num_steps mem
+  and nre   = get_num_res_evals mem
+  and nje   = Dls.get_num_jac_evals mem
+  and nni   = get_num_nonlin_solv_iters mem
+  and netf  = get_num_err_test_fails mem
+  and ncfn  = get_num_nonlin_solv_conv_fails mem
+  and nreLS = Dls.get_num_res_evals mem
   in
 
   print_string "\nFinal Run Statistics: \n\n";
@@ -194,15 +195,15 @@ let main () =
   in
 
   (* Call IDACreate and IDAInit to initialize IDA memory *)
-  let mem = Ida.init (Ida.Dls.dense ()) (Ida.SStolerances (rtol,atol))
-                     (res data) t0 wyy wyp
+  let mem = Ida.(init (Dls.dense ()) (SStolerances (rtol,atol))
+                      (res data) t0 wyy wyp)
   in
 
   (* Initialize QUADRATURE(S). *)
   Quad.init mem (rhsQ data) wq;
 
   (* Set tolerances and error control for quadratures. *)
-  Quad.set_tolerances mem (Quad.SStolerances (rtolq,atolq));
+  Quad.(set_tolerances mem (SStolerances (rtolq,atolq)));
 
   print_header rtol atol yy;
   (* Print initial states *)

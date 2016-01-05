@@ -768,10 +768,11 @@ let f wdata t cdata (cdotdata : RealArray.t) =
  *)
  
 let precond wdata jacarg jok gamma =
-  let { Cvode.jac_t   = t;
-        Cvode.jac_y   = cdata;
-        Cvode.jac_fy  = fc;
-        Cvode.jac_tmp = (vtemp1, _, _)
+  let open Cvode in
+  let { jac_t   = t;
+        jac_y   = cdata;
+        jac_fy  = fc;
+        jac_tmp = (vtemp1, _, _)
       } = jacarg
   in
   let f1 = vtemp1 in
@@ -931,11 +932,12 @@ let fB : web_data -> RealArray.t Adj.brhsfn_no_sens =
 (* Preconditioner setup function for the backward problem *)
 
 let precondb wdata jacarg jok gamma =
-  let { Adj.jac_t   = t;
-        Adj.jac_y   = cdata;
-        Adj.jac_yb  = cBdata;
-        Adj.jac_fyb = fcBdata;
-        Adj.jac_tmp = (vtemp1, _, _)
+  let open Adj in
+  let { jac_t   = t;
+        jac_y   = cdata;
+        jac_yb  = cBdata;
+        jac_fyb = fcBdata;
+        jac_tmp = (vtemp1, _, _)
       } = jacarg
   in
   let f1 = vtemp1 in
@@ -1057,13 +1059,11 @@ let main () =
   printf "\nCreate and allocate CVODES memory for forward run\n";
 
   let cvode_mem =
-    Cvode.init
-        Cvode.BDF
-        (Cvode.Newton
-           (Cvode.Spils.spgmr
-              (Cvode.Spils.prec_left ~setup:(precond wdata) (psolve wdata))))
-        (Cvode.SStolerances (reltol, abstol))
-        (f wdata) t0 c
+    Cvode.(init
+        BDF
+        (Newton Spils.(spgmr (prec_left ~setup:(precond wdata) (psolve wdata))))
+        (SStolerances (reltol, abstol))
+        (f wdata) t0 c)
   in
   wdata.cvode_mem <- Some cvode_mem; (* Used in Precond *)
 
@@ -1092,16 +1092,15 @@ let main () =
   printf "\nCreate and allocate CVODES memory for backward run\n";
 
   let cvode_memb =
-    Adj.init_backward
+    Adj.(init_backward
       cvode_mem
       Cvode.BDF
-      (Adj.Newton (Adj.Spils.spgmr
-                     (Adj.Spils.prec_left ~setup:(precondb wdata)
-                        (psolveb wdata))))
-      (Adj.SStolerances (reltolb, abstolb))
-      (Adj.NoSens (fB wdata))
+      (Newton Spils.(spgmr (prec_left ~setup:(precondb wdata)
+                                      (psolveb wdata))))
+      (SStolerances (reltolb, abstolb))
+      (NoSens (fB wdata))
       tout
-      cB
+      cB)
   in
   wdata.cvode_memb <- Some cvode_memb;
 

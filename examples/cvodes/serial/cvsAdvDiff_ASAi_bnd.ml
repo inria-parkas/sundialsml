@@ -288,9 +288,9 @@ let main () =
   let solver = Cvode.Dls.band {Cvode.mupper = my; Cvode.mlower = my}
                               ~jac:(jac data)
   in
-  let cvode_mem = Cvode.init Cvode.BDF (Cvode.Newton solver)
-                             (Cvode.SStolerances (reltol, abstol))
-                             (f data) t0 u_nvec
+  let cvode_mem = Cvode.(init BDF (Newton solver)
+                              (SStolerances (reltol, abstol))
+                              (f data) t0 u_nvec)
   in
 
   (* Allocate global memory *)
@@ -309,13 +309,14 @@ let main () =
   (* Create and allocate CVODES memory for backward run *)
   printf "\nCreate and allocate CVODES memory for backward run\n";
 
-  let bsolver = Adjoint.Dls.band {Adjoint.mupper = my; Adjoint.mlower = my}
-                                 ~jac:(Adjoint.Dls.BandNoSens (jacb data)) in
-  let bcvode_mem = Adjoint.init_backward cvode_mem
-        Cvode.BDF
-        (Adjoint.Newton bsolver)
-        (Adjoint.SStolerances (rtolb, atol))
-        (Adjoint.NoSens (fB data)) tout uB in
+  let bsolver = Adjoint.(Dls.band {mupper = my; mlower = my}
+                                 ~jac:(Dls.BandNoSens (jacb data))) in
+  let bcvode_mem =
+    Adjoint.(init_backward cvode_mem
+              Cvode.BDF
+              (Newton bsolver)
+              (SStolerances (rtolb, atol))
+              (NoSens (fB data)) tout uB) in
 
   (* Perform backward integration *)
   printf "\nBackward integration\n";

@@ -178,12 +178,13 @@ let print_string_3d s i =
   print_int i
 
 let print_final_stats cvode_mem sensi =
-  let nst = Cvode.get_num_steps cvode_mem
-  and nfe = Cvode.get_num_rhs_evals cvode_mem
-  and nsetups = Cvode.get_num_lin_solv_setups cvode_mem
-  and netf = Cvode.get_num_err_test_fails cvode_mem
-  and nni = Cvode.get_num_nonlin_solv_iters cvode_mem
-  and ncfn = Cvode.get_num_nonlin_solv_conv_fails cvode_mem in
+  let open Cvode in
+  let nst     = get_num_steps cvode_mem
+  and nfe     = get_num_rhs_evals cvode_mem
+  and nsetups = get_num_lin_solv_setups cvode_mem
+  and netf    = get_num_err_test_fails cvode_mem
+  and nni     = get_num_nonlin_solv_iters cvode_mem
+  and ncfn    = get_num_nonlin_solv_conv_fails cvode_mem in
   print_string "\nFinal Statistics\n\n";
   print_string_5d "nst     = " nst;
   print_string_5d "\n\nnfe     = " nfe;
@@ -194,12 +195,13 @@ let print_final_stats cvode_mem sensi =
   print_newline ();
 
   if sensi then begin
-    let nfSe = Sens.get_num_rhs_evals cvode_mem
-    and nfeS = Sens.get_num_rhs_evals_sens cvode_mem
-    and nsetupsS = Sens.get_num_lin_solv_setups cvode_mem
-    and netfS = Sens.get_num_err_test_fails cvode_mem
-    and nniS = Sens.get_num_nonlin_solv_iters cvode_mem
-    and ncfnS = Sens.get_num_nonlin_solv_conv_fails cvode_mem in
+    let open Sens in
+    let nfSe     = get_num_rhs_evals cvode_mem
+    and nfeS     = get_num_rhs_evals_sens cvode_mem
+    and nsetupsS = get_num_lin_solv_setups cvode_mem
+    and netfS    = get_num_err_test_fails cvode_mem
+    and nniS     = get_num_nonlin_solv_iters cvode_mem
+    and ncfnS    = get_num_nonlin_solv_conv_fails cvode_mem in
     print_newline ();
     print_string_5d "nfSe    = " nfSe;
     print_string_5d "    nfeS     = " nfeS;
@@ -230,13 +232,13 @@ let main () =
   let abstol = atol in
 
   (* Create CVODES object *)
-  let cvode_mem = Cvode.init
-                    Cvode.Adams
-                    Cvode.Functional
-                    (Cvode.SStolerances (reltol, abstol))
-                    (f data)
-                    t0
-                    u
+  let cvode_mem = Cvode.(init
+                           Adams
+                           Functional
+                           (SStolerances (reltol, abstol))
+                           (f data)
+                           t0
+                           u)
   in
   print_string_3d "\n1-D advection-diffusion equation, mesh size =" mx;
   print_newline ();
@@ -252,14 +254,14 @@ let main () =
 
         let uS = Array.init ns (fun _ -> Nvector_serial.make neq 0.0) in
 
-        Sens.init cvode_mem
-                         Sens.EEtolerances
-                         sensi_meth
-                         ~sens_params:{ Sens.pvals = Some data.p;
-                                        Sens.pbar = Some pbar;
-                                        Sens.plist = Some plist; }
-                         (Sens.OneByOne None)
-                         uS;
+        Sens.(init cvode_mem
+                   EEtolerances
+                   sensi_meth
+                   ~sens_params:{ pvals = Some data.p;
+                                  pbar = Some pbar;
+                                  plist = Some plist; }
+                   (OneByOne None)
+                   uS);
         Sens.set_err_con cvode_mem err_con;
         Sens.set_dq_method cvode_mem Sens.DQCentered 0.0;
 

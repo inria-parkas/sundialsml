@@ -114,7 +114,7 @@ module Dls :
     type dense_jac_fn = (RealArray.t double, RealArray.t) jacobian_arg
                                                 -> Dls.DenseMatrix.t -> unit
 
-    (** A direct linear solver on dense matrices. The optional argument
+    (** A direct linear solver on dense matrices. The optional [jac] argument
         specifies a callback function for computing an approximation to the
         Jacobian matrix. If this argument is omitted, then a default
         implementation based on difference quotients is used.
@@ -122,7 +122,7 @@ module Dls :
         @kinsol <node5#sss:lin_solv_init> KINDense
         @kinsol <node5#sss:optin_dls> KINDlsSetDenseJacFn
         @kinsol <node5#ss:djacFn> KINDlsDenseJacFn *)
-    val dense : dense_jac_fn option -> serial_linear_solver
+    val dense : ?jac:dense_jac_fn -> unit -> serial_linear_solver
 
     (** A direct linear solver on dense matrices using LAPACK. See {!dense}.
         Only available if {!Sundials.lapack_enabled}.
@@ -131,7 +131,7 @@ module Dls :
         @kinsol <node5#sss:lin_solv_init> KINLapackDense
         @kinsol <node5#sss:optin_dls> KINDlsSetDenseJacFn
         @kinsol <node5#ss:djacFn> KINDlsDenseJacFn *)
-    val lapack_dense : dense_jac_fn option -> serial_linear_solver
+    val lapack_dense : ?jac:dense_jac_fn -> unit -> serial_linear_solver
 
     (** Callback functions that compute banded approximations to
         a Jacobian matrix. In the call [band_jac_fn {mupper; mlower} arg jac],
@@ -156,7 +156,7 @@ module Dls :
                         -> (RealArray.t double, RealArray.t) jacobian_arg
                         -> Dls.BandMatrix.t -> unit
 
-    (** A direct linear solver on banded matrices. The optional argument
+    (** A direct linear solver on banded matrices. The optional [jac] argument
         specifies a callback function for computing an approximation to the
         Jacobian matrix. If this argument is omitted, then a default
         implementation based on difference quotients is used. The other
@@ -165,7 +165,7 @@ module Dls :
         @kinsol <node5#sss:lin_solv_init> KINBand
         @kinsol <node5#sss:optin_dls> KINDlsSetBandJacFn
         @kinsol <node5#ss:bjacFn> KINDlsBandJacFn *)
-    val band : bandrange -> band_jac_fn option -> serial_linear_solver
+    val band : ?jac:band_jac_fn -> bandrange -> serial_linear_solver
 
     (** A direct linear solver on banded matrices using LAPACK. See {!band}.
         Only available if {!Sundials.lapack_enabled}.
@@ -174,7 +174,7 @@ module Dls :
         @kinsol <node5#sss:lin_solv_init> KINLapackBand
         @kinsol <node5#sss:optin_dls> KINDlsSetBandJacFn
         @kinsol <node5#ss:bjacFn> KINDlsBandJacFn *)
-    val lapack_band : bandrange -> band_jac_fn option -> serial_linear_solver
+    val lapack_band : ?jac:band_jac_fn -> bandrange -> serial_linear_solver
 
     (** {3:stats Solver statistics} *)
 
@@ -593,16 +593,27 @@ module Alternate :
 type 'data sysfn = 'data -> 'data -> unit
 
 (** Creates and initializes a session with the Kinsol solver. The call
-    [init linsolv f tmpl] has as arguments:
-     - [linsolv], the linear solver to use,
+    [init ~max_lin_iters:mli ~maa:maa ~linsolv:ls f tmpl] has as arguments:
+     - [mli], the maximum number of nonlinear iterations allowed,
+     - [maa], the size of the Anderson acceleration subspace for the
+              {{!strategy}Picard} and {{!strategy}FixedPoint} strategies,
+     - [ls], the linear solver to use (required for the {{!strategy}Newton},
+             {{!strategy}LineSearch}, and {{!strategy}Picard} strategies),
      - [f],       the system function of the nonlinear problem, and,
      - [tmpl]     a template to initialize the session (e.g., the
                   initial guess vector).
 
      @kinsol <node5#sss:kinmalloc>     KINCreate/KINInit
+     @kinsol <node5#ss:optin_main> KINSetNumMaxIters
+     @nokinsol <node5#ss:optin_main> KINSetMAA
      @kinsol <node5#sss:lin_solv_init> Linear solver specification functions *)
-val init : ('data, 'kind) linear_solver -> 'data sysfn
-           -> ('data, 'kind) Nvector.t -> ('data, 'kind) session
+val init :
+  ?max_iters:int
+  -> ?maa:int
+  -> ?linsolv:('data, 'kind) linear_solver
+  -> 'data sysfn
+  -> ('data, 'kind) Nvector.t
+  -> ('data, 'kind) session
 
 (** Strategy used to solve the non-linear system. *)
 type strategy =
@@ -644,6 +655,7 @@ type result =
     listed below.
  
     @kinsol <node5#sss:kinsol> KINSol
+    @raise MissingLinearSolver A linear solver is required but was not given.
     @raise IllInput Missing or illegal solver inputs.
     @raise LineSearchNonConvergence Line search could not find a suitable iterate.
     @raise MaxIterationsReached The maximum number of nonlinear iterations was reached.
@@ -665,20 +677,6 @@ val solve :
     -> result
 
 (** {2:set Modifying the solver (optional input functions)} *)
-
-(** Specifies the maximum number of nonlinear iterations allowed.
-
-    @kinsol <node5#ss:optin_main> KINSetNumMaxIters *)
-val set_num_max_iters : ('d, 'k) session -> int -> unit
-
-(** Specifies the size of the subspace to use with Anderson acceleration.
-    Used in conjuncation with the strategies {{!strategy}Picard} and
-    {{!strategy}FixedPoint}.
-    A value of zero means no acceleration. Call after {!set_num_max_iters}
-    and always give a smaller value.
-
-    @nokinsol <node5#ss:optin_main> KINSetMAA *)
-val set_maa : ('d, 'k) session -> int -> unit
 
 (** Specifies that an initial call to the preconditioner setup function
     should {i not} be made. This feature is useful when solving a sequence of
@@ -961,7 +959,6 @@ exception IllInput
 exception LineSearchNonConvergence
 
 (** The maximum number of nonlinear iterations has been reached.
-    See {!set_num_max_iters}.
 
     @kinsol <node5#sss:kinsol> KIN_MAXITER_REACHED *)
 exception MaxIterationsReached
@@ -1023,4 +1020,7 @@ exception FirstSystemFunctionFailure
 
     @kinsol <node5#sss:kinsol> KIN_REPTD_SYSFUNC_ERR *)
 exception RepeatedSystemFunctionFailure
+
+(** A linear solver is required but was not specified. *)
+exception MissingLinearSolver
 

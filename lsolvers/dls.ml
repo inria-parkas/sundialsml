@@ -161,6 +161,10 @@ module DenseMatrix =
       if Sundials_config.safe && not valid then raise Invalidated;
       payload.{j, i} <- v
 
+    let update { payload; valid } i j f =
+      if Sundials_config.safe && not valid then raise Invalidated;
+      payload.{j, i} <- f payload.{j, i}
+
     let make m n v =
       let r = create m n in
       for i = 0 to m - 1 do
@@ -180,6 +184,8 @@ module ArrayDenseMatrix =
     let create = Sundials.RealArray2.create
     let get = Sundials.RealArray2.get
     let set = Sundials.RealArray2.set
+
+    let update a i j f = set a i j (f (get a i j))
 
     let set_to_zero x = Bigarray.Array2.fill (Sundials.RealArray2.unwrap x) 0.0
 
@@ -339,6 +345,11 @@ module BandMatrix =
       if Sundials_config.safe && not valid then raise Invalidated;
       payload.{j, i - j + ismu} <- v
 
+    let update { payload; valid; ismu } i j f =
+      if Sundials_config.safe && not valid then raise Invalidated;
+      let k = i - j + ismu in
+      payload.{j, k} <- f payload.{j, k}
+
     let make ({ n; smu } as dims) v =
       let { payload } as r = create dims in
       for i = 0 to n - 1 do
@@ -368,6 +379,10 @@ module ArrayBandMatrix =
 
     let set a smu i j v =
       Sundials.RealArray2.set a (i - j + smu) j v
+
+    let update a smu i j f =
+      let k = i - j + smu in
+      Sundials.RealArray2.set a k j (f (Sundials.RealArray2.get a k j))
 
     external copy' : t -> t -> int * int * int * int -> unit
         = "c_arraybandmatrix_copy"

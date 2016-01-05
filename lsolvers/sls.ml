@@ -90,9 +90,25 @@ module SparseMatrix =
       rowvals.{idx} <- Int32.of_int i;
       data.{idx} <- v
 
+    let set_data { data; valid } idx v =
+      if Sundials_config.safe && not valid then raise Invalidated;
+      data.{idx} <- v
+
+    let set_rowval { rowvals; valid } idx i =
+      if Sundials_config.safe && not valid then raise Invalidated;
+      rowvals.{idx} <- Int32.of_int i
+
     let get { rowvals; data; valid } idx =
       if Sundials_config.safe && not valid then raise Invalidated;
       Int32.to_int rowvals.{idx}, data.{idx}
+
+    let get_rowval { rowvals; valid } idx =
+      if Sundials_config.safe && not valid then raise Invalidated;
+      Int32.to_int rowvals.{idx}
+
+    let get_data { data; valid } idx =
+      if Sundials_config.safe && not valid then raise Invalidated;
+      data.{idx}
 
     external c_add_identity : t -> unit
         = "c_sparsematrix_add_identity"

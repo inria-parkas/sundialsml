@@ -182,16 +182,17 @@ let print_header rtol atol =
  * print_output: print max norm of solution and current solver statistics
  *)
 let print_output mem t u =
+  let open Ida in
   let umax = nvmaxnorm u;
-  and kused = Ida.get_last_order mem
-  and nst = Ida.get_num_steps mem
-  and nni = Ida.get_num_nonlin_solv_iters mem
-  and nre = Ida.get_num_res_evals mem
-  and hused = Ida.get_last_step mem
-  and nje = Ida.Spils.get_num_jtimes_evals mem
-  and nreLS = Ida.Spils.get_num_res_evals mem
-  and npe = Ida.Spils.get_num_prec_evals mem
-  and nps = Ida.Spils.get_num_prec_solves mem in
+  and kused = get_last_order mem
+  and nst   = get_num_steps mem
+  and nni   = get_num_nonlin_solv_iters mem
+  and nre   = get_num_res_evals mem
+  and hused = get_last_step mem
+  and nje   = Spils.get_num_jtimes_evals mem
+  and nreLS = Spils.get_num_res_evals mem
+  and npe   = Spils.get_num_prec_evals mem
+  and nps   = Spils.get_num_prec_solves mem in
   printf " %5.2f %13.5e  %d  %3d  %3d  %3d  %4d  %4d  %9.2e  %3d %3d\n"
          t umax kused nst nni nje nre nreLS hused npe nps
 
@@ -233,8 +234,8 @@ let main () =
   (* Call IDACreate to initialize solution with SPGMR linear solver.  *)
 
   let solver =
-    Ida.Spils.spgmr ~maxl:5
-      (Ida.Spils.prec_left ~setup:(p_setup_heat data) (p_solve_heat data))
+    Ida.Spils.(spgmr ~maxl:5
+                (prec_left ~setup:(p_setup_heat data) (p_solve_heat data)))
   in
   let mem = Ida.init solver (Ida.SStolerances (rtol, atol))
                      (res_heat data) t0 wu wu' in

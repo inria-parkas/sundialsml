@@ -742,17 +742,18 @@ let print_sol data mem uv uvp comm =
  *)
 
 let print_final_stats mem =
-  let nst = Ida.get_num_steps mem in
-  let nre = Ida.get_num_res_evals mem in
-  let netf = Ida.get_num_err_test_fails mem in
-  let ncfn = Ida.get_num_nonlin_solv_conv_fails mem in
-  let nni = Ida.get_num_nonlin_solv_iters mem in
+  let open Ida in
+  let nst  = get_num_steps mem in
+  let nre  = get_num_res_evals mem in
+  let netf = get_num_err_test_fails mem in
+  let ncfn = get_num_nonlin_solv_conv_fails mem in
+  let nni  = get_num_nonlin_solv_iters mem in
 
-  let ncfl = Ida.Spils.get_num_conv_fails mem in
-  let nli = Ida.Spils.get_num_lin_iters mem in
-  let npe = Ida.Spils.get_num_prec_evals mem in
-  let nps = Ida.Spils.get_num_prec_solves mem in
-  let nreLS = Ida.Spils.get_num_res_evals mem in
+  let ncfl  = Spils.get_num_conv_fails mem in
+  let nli   = Spils.get_num_lin_iters mem in
+  let npe   = Spils.get_num_prec_evals mem in
+  let nps   = Spils.get_num_prec_solves mem in
+  let nreLS = Spils.get_num_res_evals mem in
 
   let nge = Ida_bbd.get_num_gfn_evals mem in
 
@@ -804,13 +805,11 @@ let main () =
   (* Create needed vectors, and load initial values.
      The vector resid is used temporarily only.        *)
 
-  let uv = Nvector_parallel.make local_N system_size comm 0. in
-
-  let uvp = Nvector_parallel.make local_N system_size comm 0. in
-
-  let resid = Nvector_parallel.make local_N system_size comm 0. in
-
-  let id = Nvector_parallel.make local_N system_size comm 0. in
+  let open Nvector_parallel in
+  let uv    = make local_N system_size comm 0. in
+  let uvp   = make local_N system_size comm 0. in
+  let resid = make local_N system_size comm 0. in
+  let id    = make local_N system_size comm 0. in
 
   set_initial_profiles data (unvec uv) (unvec uvp)
     (unvec id) (unvec resid);
@@ -830,18 +829,10 @@ let main () =
   let maxl = 16 in
   let linsolv =
     Ida.Spils.spgmr ~maxl:maxl
-      (Ida_bbd.prec_left ~dqrely:zero
-         { Ida_bbd.mudq = mudq;
-           Ida_bbd.mldq = mldq;
-           Ida_bbd.mukeep = mukeep;
-           Ida_bbd.mlkeep = mlkeep;
-         }
-         (reslocal data))
+      Ida_bbd.(prec_left ~dqrely:zero { mudq; mldq; mukeep; mlkeep; }
+                         (reslocal data))
   in
-  let mem =
-    Ida.init linsolv (Ida.SStolerances (rtol,atol))
-      (res data)
-      t0 uv uvp
+  let mem = Ida.(init linsolv (SStolerances (rtol,atol)) (res data) t0 uv uvp)
   in
 
   (* Call IDACalcIC (with default options) to correct the initial values. *)

@@ -13,6 +13,7 @@ unset install_docs
 enable_mpi=1
 unset enable_debug
 unset mathjax
+opt_compiler=1
 
 configure_command="$0"
 
@@ -57,6 +58,8 @@ do
 	enable_debug=1;;
     --unsafe)
 	bounds_checking=0;;
+    --no-opt-compiler) # not meant for users (under normal circumstances)
+	opt_compiler=0;;
     -h|--help)
 	cat <<-END_HELP_TEXT
 	'configure' configures $sysname ${version}p${versionp} to adapt to many kinds of systems.
@@ -213,9 +216,9 @@ if [ "x${cflags}" = x ]; then    # Don't touch CFLAGS if explicitly given.
 	fi
 
         if [ "x$enable_debug" = x1 ]; then
-            cflags="-O0 -Wall -g3"
+            cflags="-O0 -Wall -Werror -g3"
         else
-            cflags="$optflags -Wall"
+            cflags="$optflags -Wall -Werror "
         fi
     else
         echo "<info> Your C compiler seems to be different from gcc.  Make"
@@ -292,7 +295,7 @@ else
     esac
 
     # Make sure realtype has the right size.
-    test_stem=__configure_test_file__
+    test_stem=__configure_test_file__realtype
     cat > $test_stem.c <<EOF
 #include <sundials/sundials_types.h>
 int main (int argc, char *argv[])
@@ -300,14 +303,18 @@ int main (int argc, char *argv[])
   return sizeof (realtype) != sizeof (double);
 }
 EOF
-    if $CC ${Isundials_inc_path} -o $test_stem$XX $test_stem.c >/dev/null 2>&1 && \
-	./$test_stem$XX;
+    if ! $CC ${Isundials_inc_path} -o $test_stem$XX $test_stem.c >/dev/null 2>&1
     then
-	: # OK
+        error="${error}\n\tCan't link C code to sundials.  Is sundials installed properly?"
+        error="${error}\n\tSaved test code as ${test_stem}.c"
+        error="${error}\n\tCompilation command was:"
+        error="${error}\n\t$CC ${Isundials_inc_path} -o ${test_stem}${XX} ${test_stem}.c"
+    elif ! ./$test_stem$XX
+    then
+        error="${error}\n\trealtype not defined as double.  Recompile sundials with -DSUNDIALS_PRECISION=double."
     else
-	error="${error}\n\trealtype not defined as double.  Recompile sundials with --with-precision=double."
+        rm -f ./$test_stem*
     fi
-    rm -f ./$test_stem.*
 fi
 
 # Check for OCaml installation (and version)
@@ -340,6 +347,45 @@ else
 
     ocaml_libpath="${ocaml_path%/}/"
     ocaml_version=" (${ocaml_version})"
+fi
+
+# Check if .opt variants are available.
+if [ "x$opt_compiler" = x1 ] && \
+       ([ -x ${OCAMLBIN}ocamlc.opt ] \
+        || which ${OCAMLBIN}ocamlc.opt > /dev/null 2>&1)
+then
+    ocamlc="${OCAMLBIN}ocamlc.opt"
+else
+    ocamlc="${OCAMLBIN}ocamlc"
+fi
+
+if [ "x$opt_compiler" = x1 ] && \
+       ([ -x ${OCAMLBIN}ocamlopt.opt ] \
+        || which ${OCAMLBIN}ocamlopt.opt > /dev/null 2>&1)
+then
+    ocamlopt="${OCAMLBIN}ocamlopt.opt"
+else
+    ocamlopt="${OCAMLBIN}ocamlopt"
+fi
+
+if [ "x$opt_compiler" = x1 ] && \
+       ([ -x ${OCAMLBIN}ocamldoc.opt ] \
+        || which ${OCAMLBIN}ocamldoc.opt > /dev/null 2>&1)
+then
+    ocamldoc="${OCAMLBIN}ocamldoc.opt"
+    ocamldoc_plugin=".cmxs"
+else
+    ocamldoc="${OCAMLBIN}ocamldoc"
+    ocamldoc_plugin=".cma"
+fi
+
+if [ "x$opt_compiler" = x1 ] && \
+       ([ -x ${OCAMLBIN}ocamldep.opt ] \
+        || which ${OCAMLBIN}ocamldep.opt > /dev/null 2>&1)
+then
+    ocamldep="${OCAMLBIN}ocamldep.opt"
+else
+    ocamldep="${OCAMLBIN}ocamldep"
 fi
 
 
@@ -455,7 +501,7 @@ cat > ${test_ml_stem}.ml <<EOF
 external f : unit -> int = "f"
 let _ = exit (f ())
 EOF
-if ${OCAMLBIN}ocamlc ${test_stem}.c ${test_ml_stem}.ml -o ${test_ml_stem}$XX \
+if ${ocamlc} ${test_stem}.c ${test_ml_stem}.ml -o ${test_ml_stem}$XX \
     -custom > /dev/null 2>&1 && ./${test_ml_stem}$XX; then
     have_weak=1
 else
@@ -486,7 +532,7 @@ test_c_stem=__configure_test_c_file__
 echo 'void CVode(); void dummy () { CVode (); }' > $test_c_stem.c
 echo 'external dummy : unit -> unit = "dummy" let _ = dummy ()' > $test_stem.ml
 if ! $CC ${cflags} ${Isundials_inc_path} -o $test_c_stem$XO -c $test_c_stem.c \
-    >$test_stem.log 2>&1 || ! ${OCAMLBIN}ocamlc -c $test_stem.ml \
+    >$test_stem.log 2>&1 || ! ${ocamlc} -c $test_stem.ml \
     >> $test_stem.log 2>&1
 then
     echo 1>&2 "Panic!  Dummy library failed to compile.  Please report"
@@ -858,6 +904,11 @@ fi
 	 s#@ocaml_3x@#${ocaml_3x}#;
 	 s#@ocamlmklibflags@#${ocamlmklibflags}#;
 	 s#@bounds_checking@#${bounds_checking}#;
+	 s#@ocamlc@#${ocamlc}#;
+	 s#@ocamlopt@#${ocamlopt}#;
+	 s#@ocamldoc@#${ocamldoc}#;
+	 s#@ocamldoc_plugin@#${ocamldoc_plugin}#;
+	 s#@ocamldep@#${ocamldep}#;
 	 s#@ocamlmpi_path@#${ocamlmpi_path}#;
 	 s#@ocamlmpi_enabled@#${ocamlmpi_enabled}#;
 	 s#@enable_shared@#${enable_shared}#;

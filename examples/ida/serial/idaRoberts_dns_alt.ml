@@ -146,19 +146,20 @@ let print_header rtol avtol yy =
 
 and print_output ida t y =
   let kused = Ida.get_last_order ida
-  and nst = Ida.get_num_steps ida
+  and nst   = Ida.get_num_steps ida
   and hused = Ida.get_last_step ida
   in
   printf "%10.4e %12.4e %12.4e %12.4e | %3d  %1d %12.4e\n" 
     t y.{0} y.{1} y.{2} nst kused hused
 
 and print_final_stats ida nreLS nje =
-  let nst = Ida.get_num_steps ida
-  and nre = Ida.get_num_res_evals ida
-  and nni = Ida.get_num_nonlin_solv_iters ida
-  and netf = Ida.get_num_err_test_fails ida
-  and ncfn = Ida.get_num_nonlin_solv_conv_fails ida
-  and nge = Ida.get_num_g_evals ida
+  let open Ida in
+  let nst  = get_num_steps ida
+  and nre  = get_num_res_evals ida
+  and nni  = get_num_nonlin_solv_iters ida
+  and netf = get_num_err_test_fails ida
+  and ncfn = get_num_nonlin_solv_conv_fails ida
+  and nge  = get_num_g_evals ida
   in
   printf "\nFinal Run Statistics: \n\n";
   printf "Number of steps                    = %d\n" nst;

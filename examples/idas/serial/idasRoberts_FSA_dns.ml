@@ -46,6 +46,8 @@ module QuadSens = Idas.Sensitivity.Quadrature
 module VarId = Ida.VarId
 
 let printf = Printf.printf
+let unwrap = Nvector.unwrap
+let wrap = Nvector_serial.wrap
 
 (* Problem Constants *)
 let neq   = 3             (* number of equations  *)
@@ -166,41 +168,41 @@ let print_ic y yp =
   printf "%12.4e %12.4e %12.4e \n" data.{0} data.{1} data.{2}
 
 let print_sens_ic y yp yS ypS =
-  let sdata = Nvector.unwrap yS.(0) in
+  let sdata = unwrap yS.(0) in
 
   print_string "                  Sensitivity 1  ";
 
   print_string "\n\ts1 = ";
   printf "%12.4e %12.4e %12.4e \n" sdata.{0} sdata.{1} sdata.{2};
 
-  let sdata = Nvector.unwrap ypS.(0) in
+  let sdata = unwrap ypS.(0) in
   print_string "\ts1'= ";
   printf "%12.4e %12.4e %12.4e \n" sdata.{0} sdata.{1} sdata.{2};
 
   printf "                  Sensitivity 2  ";
 
-  let sdata = Nvector.unwrap yS.(1) in
+  let sdata = unwrap yS.(1) in
   print_string "\n\ts2 = ";
   printf "%12.4e %12.4e %12.4e \n" sdata.{0} sdata.{1} sdata.{2};
-  let sdata = Nvector.unwrap ypS.(1) in
+  let sdata = unwrap ypS.(1) in
   printf "\ts2'= ";
   printf "%12.4e %12.4e %12.4e \n" sdata.{0} sdata.{1} sdata.{2};
 
 
   print_string "                  Sensitivity 3  ";
-  let sdata = Nvector.unwrap yS.(2) in
+  let sdata = unwrap yS.(2) in
   print_string "\n\ts3 = ";
   printf "%12.4e %12.4e %12.4e \n" sdata.{0} sdata.{1} sdata.{2};
 
-  let sdata = Nvector.unwrap ypS.(2) in
+  let sdata = unwrap ypS.(2) in
   print_string "\ts3'= ";
   printf "%12.4e %12.4e %12.4e \n" sdata.{0} sdata.{1} sdata.{2}
 
 let print_output ida_mem t u =
   let udata = u in
   let nst = Ida.get_num_steps ida_mem
-  and qu = Ida.get_last_order ida_mem
-  and hu = Ida.get_last_step ida_mem
+  and qu  = Ida.get_last_order ida_mem
+  and hu  = Ida.get_last_step ida_mem
   in
   printf "%8.3e %2d  %8.3e %5d\n" t qu hu nst;
 
@@ -209,45 +211,47 @@ let print_output ida_mem t u =
   printf "%12.4e %12.4e %12.4e \n" udata.{0} udata.{1} udata.{2}
 
 let print_sens_output uS =
-  let sdata = Nvector.unwrap uS.(0) in
+  let sdata = unwrap uS.(0) in
   print_string "                  Sensitivity 1  ";
 
   printf "%12.4e %12.4e %12.4e \n" sdata.{0} sdata.{1} sdata.{2};
 
-  let sdata = Nvector.unwrap uS.(1) in
+  let sdata = unwrap uS.(1) in
   print_string "                  Sensitivity 2  ";
 
   printf "%12.4e %12.4e %12.4e \n" sdata.{0} sdata.{1} sdata.{2};
 
-  let sdata = Nvector.unwrap uS.(2) in
+  let sdata = unwrap uS.(2) in
   print_string "                  Sensitivity 3  ";
 
   printf "%12.4e %12.4e %12.4e \n" sdata.{0} sdata.{1} sdata.{2}
 
 let print_final_stats ida_mem sensi =
-  let nst     = Ida.get_num_steps ida_mem
-  and nfe     = Ida.get_num_res_evals ida_mem
-  and nsetups = Ida.get_num_lin_solv_setups ida_mem
-  and netf    = Ida.get_num_err_test_fails ida_mem
-  and nni     = Ida.get_num_nonlin_solv_iters ida_mem
-  and ncfn    = Ida.get_num_nonlin_solv_conv_fails ida_mem
+  let open Ida in
+  let nst     = get_num_steps ida_mem
+  and nfe     = get_num_res_evals ida_mem
+  and nsetups = get_num_lin_solv_setups ida_mem
+  and netf    = get_num_err_test_fails ida_mem
+  and nni     = get_num_nonlin_solv_iters ida_mem
+  and ncfn    = get_num_nonlin_solv_conv_fails ida_mem
   in
 
   let sens_stats =
     if sensi then
-      let nfSe     = Sens.get_num_res_evals ida_mem
-      and nfeS     = Sens.get_num_res_evals_sens ida_mem
-      and nsetupsS = Sens.get_num_lin_solv_setups ida_mem
-      and netfS    = Sens.get_num_err_test_fails ida_mem
-      and nniS     = Sens.get_num_nonlin_solv_iters ida_mem
-      and ncfnS    = Sens.get_num_nonlin_solv_conv_fails ida_mem
+      let open Sens in
+      let nfSe     = get_num_res_evals ida_mem
+      and nfeS     = get_num_res_evals_sens ida_mem
+      and nsetupsS = get_num_lin_solv_setups ida_mem
+      and netfS    = get_num_err_test_fails ida_mem
+      and nniS     = get_num_nonlin_solv_iters ida_mem
+      and ncfnS    = get_num_nonlin_solv_conv_fails ida_mem
       in lazy (nfSe, nfeS, nsetupsS, netfS, nniS, ncfnS)
     else
       lazy (failwith "bug in C code transcribed to OCaml")
   in
 
-  let nje   = Ida.Dls.get_num_jac_evals ida_mem
-  and nfeLS = Ida.Dls.get_num_res_evals ida_mem
+  let nje   = Dls.get_num_jac_evals ida_mem
+  and nfeLS = Dls.get_num_res_evals ida_mem
   in
 
   print_string "\nFinal Statistics\n\n";
@@ -280,14 +284,14 @@ let main () =
 
   (* Wrap y and yp in nvectors.  Operations performed on the wrapped
      representation affect the originals y and yp.  *)
-  let wy  = Nvector_serial.wrap y
-  and wyp = Nvector_serial.wrap yp in
+  let wy  = wrap y
+  and wyp = wrap yp in
 
   let reltol = 1.0e-6
   and abstol = RealArray.of_array [|1.0e-8; 1.0e-14; 1.0e-6|] in
-  let tol = Ida.SVtolerances (reltol, Nvector_serial.wrap abstol) in
+  let tol = Ida.SVtolerances (reltol, wrap abstol) in
 
-  let ida_mem = Ida.init (Ida.Dls.dense ()) tol (res data) t0 wy wyp in
+  let ida_mem = Ida.(init (Dls.dense ()) tol (res data) t0 wy wyp) in
 
   printf "\n3-species chemical kinetics problem\n";
 
@@ -312,8 +316,8 @@ let main () =
                      Sens.pbar = Some pbar;
                      Sens.plist = None }
       in
-      Sens.init ida_mem Sens.EEtolerances sensi_meth ~sens_params:params
-        ~fs:(resS data) yS ypS;
+      Sens.(init ida_mem EEtolerances sensi_meth ~sens_params:params
+                  ~fs:(resS data) yS ypS);
       Sens.set_err_con ida_mem err_con;
 
       printf "Sensitivity: YES ";
@@ -331,7 +335,7 @@ let main () =
    *               Q U A D R A T U R E S
    * ---------------------------------------------------------*)
   let yQ = RealArray.of_array [|0.; 0.|] in
-  let wyQ = Nvector_serial.wrap yQ in
+  let wyQ = wrap yQ in
   Quad.init ida_mem (rhsQ data) wyQ;
 
   let yQS = Array.init ns (fun _ -> Nvector_serial.make 2 0.0) in
@@ -340,9 +344,9 @@ let main () =
 
   (* Call IDACalcIC to compute consistent initial conditions. If sensitivity is
      enabled, this function also try to find consistent IC for the sensitivities. *)
-  let id = Nvector_serial.wrap (RealArray.of_array [|VarId.differential;
-                                                     VarId.differential;
-                                                     VarId.algebraic|])
+  let id = wrap (RealArray.of_array [|VarId.differential;
+                                      VarId.differential;
+                                      VarId.algebraic|])
   in
   if sensi = None
   then (Ida.calc_ic_ya_yd' ~y:wy ~y':wyp ida_mem ~varid:id t1;
@@ -381,9 +385,9 @@ let main () =
   with_yS (fun yS ypS ->
       let t = QuadSens.get ida_mem yQS in
       printf "\nSensitivities at t=%g:\n" t;
-      printf "dG/dp1: %11.4e\n" (Nvector.unwrap yQS.(0)).{0};
-      printf "dG/dp1: %11.4e\n" (Nvector.unwrap yQS.(1)).{0};
-      printf "dG/dp1: %11.4e\n" (Nvector.unwrap yQS.(2)).{0});
+      printf "dG/dp1: %11.4e\n" (unwrap yQS.(0)).{0};
+      printf "dG/dp1: %11.4e\n" (unwrap yQS.(1)).{0};
+      printf "dG/dp1: %11.4e\n" (unwrap yQS.(2)).{0});
 
   (* Print final statistics *)
   print_final_stats ida_mem (sensi <> None)

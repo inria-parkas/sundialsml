@@ -178,14 +178,15 @@ let print_header reltol abstol umax =
 let print_output = printf "At t = %4.2f   max.norm(u) =%14.6e   nst = %4d\n"
 
 let print_final_stats s =
-  let nst = Cvode.get_num_steps s
-  and nfe = Cvode.get_num_rhs_evals s
-  and nsetups = Cvode.get_num_lin_solv_setups s
-  and netf = Cvode.get_num_err_test_fails s
-  and nni = Cvode.get_num_nonlin_solv_iters s
-  and ncfn = Cvode.get_num_nonlin_solv_conv_fails s
-  and nje = Cvode.Dls.get_num_jac_evals s
-  and nfeLS = Cvode.Dls.get_num_rhs_evals s
+  let open Cvode in
+  let nst     = get_num_steps s
+  and nfe     = get_num_rhs_evals s
+  and nsetups = get_num_lin_solv_setups s
+  and netf    = get_num_err_test_fails s
+  and nni     = get_num_nonlin_solv_iters s
+  and ncfn    = get_num_nonlin_solv_conv_fails s
+  and nje     = Dls.get_num_jac_evals s
+  and nfeLS   = Dls.get_num_rhs_evals s
   in
   printf "\nFinal Statistics:\n";
   printf "nst = %-6d nfe  = %-6d nsetups = %-6d nfeLS = %-6d nje = %d\n"
@@ -220,12 +221,10 @@ let main () =
    * the initial dependent variable vector u. *)
   (* Call CVBand to specify the CVBAND band linear solver *)
   (* Set the user-supplied Jacobian routine Jac *)
-  let solver = Cvode.Dls.band {Cvode.mupper = my; Cvode.mlower = my}
-                              ~jac:(jac data)
-  in
-  let cvode_mem = Cvode.init Cvode.BDF (Cvode.Newton solver)
-                             (Cvode.SStolerances (reltol, abstol))
-                             (f data) t0 u
+  let solver = Cvode.(Dls.band {mupper = my; mlower = my} ~jac:(jac data)) in
+  let cvode_mem = Cvode.(init BDF (Newton solver)
+                             (SStolerances (reltol, abstol))
+                             (f data) t0 u)
   in
 
   (* In loop over output points: call CVode, print results, test for errors *)

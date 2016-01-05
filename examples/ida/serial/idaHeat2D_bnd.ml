@@ -134,13 +134,14 @@ let print_header rtol atol =
 
 let print_output mem t u =
   let umax = vmax_norm u in
-  let kused = Ida.get_last_order mem
-  and nst = Ida.get_num_steps mem
-  and nni = Ida.get_num_nonlin_solv_iters mem
-  and nre = Ida.get_num_res_evals mem
-  and hused = Ida.get_last_step mem
-  and nje = Ida.Dls.get_num_jac_evals mem
-  and nreLS = Ida.Dls.get_num_res_evals mem in
+  let open Ida in
+  let kused = get_last_order mem
+  and nst   = get_num_steps mem
+  and nni   = get_num_nonlin_solv_iters mem
+  and nre   = get_num_res_evals mem
+  and hused = get_last_step mem
+  and nje   = Dls.get_num_jac_evals mem
+  and nreLS = Dls.get_num_res_evals mem in
   
   printf " %5.2f %13.5e  %d  %3d  %3d  %3d  %4d  %4d  %9.2e \n"
          t umax kused nst nni nje nre nreLS hused
@@ -184,10 +185,10 @@ let main () =
      specify the linear solver.  *)
   let mu = mgrid and ml = mgrid in
   let mem =
-    Ida.init (Ida.Dls.band { Ida.mupper=mu; Ida.mlower=ml })
-             (Ida.SStolerances (rtol, atol))
-             (fun t u u' r -> heatres t u u' r data)
-             t0 wu wu'
+    Ida.(init (Dls.band { mupper=mu; mlower=ml })
+              (SStolerances (rtol, atol))
+              (fun t u u' r -> heatres t u u' r data)
+              t0 wu wu')
   in
   Ida.set_constraints mem (Nvector_serial.wrap constraints);
 

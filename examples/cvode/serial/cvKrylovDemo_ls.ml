@@ -225,20 +225,21 @@ let print_output s udata t =
 (* Get and print final statistics *)
 
 let print_final_stats s linsolver =
-  let lenrw, leniw = Cvode.get_work_space s
-  and nst = Cvode.get_num_steps s
-  and nfe = Cvode.get_num_rhs_evals s
-  and nsetups = Cvode.get_num_lin_solv_setups s
-  and netf = Cvode.get_num_err_test_fails s
-  and nni = Cvode.get_num_nonlin_solv_iters s
-  and ncfn = Cvode.get_num_nonlin_solv_conv_fails s
+  let open Cvode in
+  let lenrw, leniw = get_work_space s
+  and nst          = get_num_steps s
+  and nfe          = get_num_rhs_evals s
+  and nsetups      = get_num_lin_solv_setups s
+  and netf         = get_num_err_test_fails s
+  and nni          = get_num_nonlin_solv_iters s
+  and ncfn         = get_num_nonlin_solv_conv_fails s
   in
-  let lenrwLS, leniwLS = Cvode.Spils.get_work_space s
-  and nli   = Cvode.Spils.get_num_lin_iters s
-  and npe   = Cvode.Spils.get_num_prec_evals s
-  and nps   = Cvode.Spils.get_num_prec_solves s
-  and ncfl  = Cvode.Spils.get_num_conv_fails s
-  and nfeLS = Cvode.Spils.get_num_rhs_evals s
+  let lenrwLS, leniwLS = Spils.get_work_space s
+  and nli   = Spils.get_num_lin_iters s
+  and npe   = Spils.get_num_prec_evals s
+  and nps   = Spils.get_num_prec_solves s
+  and ncfl  = Spils.get_num_conv_fails s
+  and nfeLS = Spils.get_num_rhs_evals s
   in
   printf "\nFinal Statistics.. \n\n";
   printf "lenrw   = %5d     leniw   = %5d\n"   lenrw leniw;
@@ -337,10 +338,11 @@ let f data t (udata : RealArray.t) (dudata : RealArray.t) =
 (* Preconditioner setup routine. Generate and preprocess P. *)
 
 let precond data jacarg jok gamma =
-  let { Cvode.jac_t   = tn;
-        Cvode.jac_y   = (udata : RealArray.t);
-        Cvode.jac_fy  = fudata;
-        Cvode.jac_tmp = (vtemp1, vtemp2, vtemp)
+  let open Cvode in
+  let { jac_t   = tn;
+        jac_y   = (udata : RealArray.t);
+        jac_fy  = fudata;
+        jac_tmp = (vtemp1, vtemp2, vtemp)
       } = jacarg
   in
 
@@ -415,10 +417,11 @@ let precond data jacarg jok gamma =
 (* Preconditioner solve routine *)
 
 let psolve data jac_arg solve_arg (zdata : RealArray.t) =
-  let { Cvode.Spils.rhs = (r : RealArray.t);
-        Cvode.Spils.gamma = gamma;
-        Cvode.Spils.delta = delta;
-        Cvode.Spils.left = lr } = solve_arg
+  let open Cvode.Spils in
+  let { rhs = (r : RealArray.t);
+        gamma = gamma;
+        delta = delta;
+        left = lr } = solve_arg
   in
 
   (* Extract the P and pivot arrays from user_data. *)
@@ -464,8 +467,7 @@ let main () =
    * user's right hand side function in u'=f(t,u), the inital time T0, and
    * the initial dependent variable vector u. *)
   let cvode_mem =
-    Cvode.init Cvode.BDF Cvode.Functional
-               (Cvode.SStolerances (reltol, abstol)) (f data) t0 u
+    Cvode.(init BDF Functional (SStolerances (reltol, abstol)) (f data) t0 u)
   in
 
   (* START: Loop through SPGMR, SPBCG and SPTFQMR linear solver modules *)
@@ -495,12 +497,10 @@ let main () =
 
         (* Call CVSpgmr to specify the linear solver CVSPGMR 
            with left preconditioning and the maximum Krylov dimension maxl *)
-        Cvode.reinit cvode_mem t0 u
+        Cvode.(reinit cvode_mem t0 u
           ~iter_type:
-            (Cvode.Newton
-               (Cvode.Spils.spgmr
-                  (Cvode.Spils.prec_left ~setup:(precond data)
-                     (psolve data))));
+            (Newton
+               Spils.(spgmr (prec_left ~setup:(precond data) (psolve data)))));
 
         (* Set modified Gram-Schmidt orthogonalization, preconditioner 
            setup and solve routines Precond and PSolve, and the pointer 
@@ -517,11 +517,10 @@ let main () =
 
         (* Call CVSpbcg to specify the linear solver CVSPBCG 
            with left preconditioning and the maximum Krylov dimension maxl *)
-        Cvode.reinit cvode_mem t0 u
+        Cvode.(reinit cvode_mem t0 u
           ~iter_type:
-            (Cvode.Newton
-               (Cvode.Spils.spbcg
-                  (Cvode.Spils.prec_left ~setup:(precond data) (psolve data))))
+            (Newton
+               Spils.(spbcg (prec_left ~setup:(precond data) (psolve data)))))
       end
 
     (* (c) SPTFQMR *)
@@ -533,11 +532,10 @@ let main () =
 
         (* Call CVSptfqmr to specify the linear solver CVSPTFQMR
            with left preconditioning and the maximum Krylov dimension maxl *)
-        Cvode.reinit cvode_mem t0 u
+        Cvode.(reinit cvode_mem t0 u
           ~iter_type:
-            (Cvode.Newton
-               (Cvode.Spils.sptfqmr
-                  (Cvode.Spils.prec_left ~setup:(precond data) (psolve data))))
+            (Newton
+               Spils.(sptfqmr (prec_left ~setup:(precond data) (psolve data)))))
       end);
 
     (* In loop over output points, call CVode, print results, test for error *)

@@ -119,7 +119,8 @@ let ns = 2
    arrays are indexed starting at 0, not 1. *)
 
 let ijkth (v : RealArray.t) i j k       = v.{i - 1 + j * num_species + k * nsmx}
-let set_ijkth (v : RealArray.t) i j k e = v.{i - 1 + j * num_species + k * nsmx} <- e
+let set_ijkth (v : RealArray.t) i j k e
+        = v.{i - 1 + j * num_species + k * nsmx} <- e
 
 (* Type : UserData 
    contains preconditioner blocks, pivot arrays, and problem constants *)
@@ -248,17 +249,18 @@ let print_output_s uS =
 (* Get and print final statistics *)
 
 let print_final_stats s sensi =
-  let nst     = Cvode.get_num_steps s
-  and nfe     = Cvode.get_num_rhs_evals s
-  and nsetups = Cvode.get_num_lin_solv_setups s
-  and netf    = Cvode.get_num_err_test_fails s
-  and nni     = Cvode.get_num_nonlin_solv_iters s
-  and ncfn    = Cvode.get_num_nonlin_solv_conv_fails s
+  let open Cvode in
+  let nst     = get_num_steps s
+  and nfe     = get_num_rhs_evals s
+  and nsetups = get_num_lin_solv_setups s
+  and netf    = get_num_err_test_fails s
+  and nni     = get_num_nonlin_solv_iters s
+  and ncfn    = get_num_nonlin_solv_conv_fails s
   in
-  let nli   = Cvode.Spils.get_num_lin_iters s
-  and ncfl  = Cvode.Spils.get_num_conv_fails s
-  and npe   = Cvode.Spils.get_num_prec_evals s
-  and nps   = Cvode.Spils.get_num_prec_solves s
+  let nli   = Spils.get_num_lin_iters s
+  and ncfl  = Spils.get_num_conv_fails s
+  and npe   = Spils.get_num_prec_evals s
+  and nps   = Spils.get_num_prec_solves s
   in
   printf "\nFinal Statistics\n\n";
   printf "nst     = %5d\n\n" nst;
@@ -267,12 +269,13 @@ let print_final_stats s sensi =
   printf "nni     = %5d    ncfn     = %5d\n" nni ncfn;
 
   if sensi then begin
-    let nfSe     = Sens.get_num_rhs_evals s
-    and nfeS     = Sens.get_num_rhs_evals_sens s
-    and nsetupsS = Sens.get_num_lin_solv_setups s
-    and netfS    = Sens.get_num_err_test_fails s
-    and nniS     = Sens.get_num_nonlin_solv_iters s
-    and ncfnS    = Sens.get_num_nonlin_solv_conv_fails s in
+    let open Sens in
+    let nfSe     = get_num_rhs_evals s
+    and nfeS     = get_num_rhs_evals_sens s
+    and nsetupsS = get_num_lin_solv_setups s
+    and netfS    = get_num_err_test_fails s
+    and nniS     = get_num_nonlin_solv_iters s
+    and ncfnS    = get_num_nonlin_solv_conv_fails s in
     printf "\n";
     printf "nfSe    = %5d    nfeS     = %5d\n" nfSe nfeS;
     printf "netfs   = %5d    nsetupsS = %5d\n" netfS nsetupsS;
@@ -447,10 +450,11 @@ let precond data jacarg jok gamma =
 (* Preconditioner solve routine *)
 
 let psolve data jac_arg solve_arg (zdata : RealArray.t) =
-  let { Cvode.Spils.rhs = (r : RealArray.t);
-        Cvode.Spils.gamma = gamma;
-        Cvode.Spils.delta = delta;
-        Cvode.Spils.left = lr } = solve_arg
+  let open Cvode.Spils in
+  let { rhs = (r : RealArray.t);
+        gamma = gamma;
+        delta = delta;
+        left = lr } = solve_arg
   in
 
   (* Extract the P and pivot arrays from user_data. *)
@@ -528,12 +532,10 @@ let main () =
 
   (* Create CVODES object *)
   let cvode_mem =
-    Cvode.init Cvode.BDF
-      (Cvode.Newton
-          (Cvode.Spils.spgmr
-             (Cvode.Spils.prec_left ~setup:(precond data) (psolve data))))
-      (Cvode.SStolerances (reltol, abstol))
-      (f data) t0 y
+    Cvode.(init BDF
+      (Newton Spils.(spgmr (prec_left ~setup:(precond data) (psolve data))))
+      (SStolerances (reltol, abstol))
+      (f data) t0 y)
   in
   Cvode.set_max_num_steps cvode_mem 2000;
   printf "\n2-species diurnal advection-diffusion problem\n";
@@ -549,14 +551,14 @@ let main () =
 
         let uS = Array.init ns (fun _ -> Nvector_serial.make neq 0.0) in
 
-        Sens.init cvode_mem
-                         Sens.EEtolerances
-                         sensi_meth
-                         ~sens_params:{ Sens.pvals = Some data.params;
-                                        Sens.pbar = Some pbar;
-                                        Sens.plist = Some plist; }
-                         (Sens.OneByOne None)
-                         uS;
+        Sens.(init cvode_mem
+                   EEtolerances
+                   sensi_meth
+                   ~sens_params:{ pvals = Some data.params;
+                                  pbar = Some pbar;
+                                  plist = Some plist; }
+                   (OneByOne None)
+                   uS);
         Sens.set_err_con cvode_mem err_con;
         Sens.set_dq_method cvode_mem Sens.DQCentered 0.0;
 

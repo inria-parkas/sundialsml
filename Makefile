@@ -109,7 +109,8 @@ CMI_MPI = $(MLOBJ_MPI:.cmo=.cmi)
 # built/updated under the current configuration.  Duplicates OK.
 ALL_COBJ = $(COBJ_MAIN) $(COBJ_SENS) $(COBJ_NO_SENS) $(COBJ_MPI)
 ALL_MLOBJ =dochtml.cmo $(MLOBJ_MAIN) $(MLOBJ_SENS) $(MLOBJ_NO_SENS) $(MLOBJ_MPI)
-ALL_CMA = sundials.cma sundials_no_sens.cma sundials_mpi.cma sundials_docs.cma
+ALL_CMA = sundials.cma sundials_no_sens.cma sundials_mpi.cma \
+          sundials_docs.cma sundials_docs.cmxs
 
 # Installed files.
 
@@ -287,18 +288,30 @@ idas/idas_superlumt_ml.o: idas/idas_superlumt_ml.c
 # Docs.
 
 DOCHTML_PP=$(CPP) $(ML_CPPFLAGS) -DOCAML_3X=$(OCAML_3X)
-dochtml.cmo: DOCHTML_PP += -DCVODE_DOC_ROOT=\"$(CVODE_DOC_ROOT_DEFAULT)\"
-dochtml.cmo: DOCHTML_PP += -DCVODES_DOC_ROOT=\"$(CVODES_DOC_ROOT_DEFAULT)\"
-dochtml.cmo: DOCHTML_PP += -DARKODE_DOC_ROOT=\"$(ARKODE_DOC_ROOT_DEFAULT)\"
-dochtml.cmo: DOCHTML_PP += -DIDA_DOC_ROOT=\"$(IDA_DOC_ROOT_DEFAULT)\"
-dochtml.cmo: DOCHTML_PP += -DIDAS_DOC_ROOT=\"$(IDAS_DOC_ROOT_DEFAULT)\"
-dochtml.cmo: DOCHTML_PP += -DKINSOL_DOC_ROOT=\"$(KINSOL_DOC_ROOT_DEFAULT)\"
-dochtml.cmo: DOCHTML_PP += -DMATHJAX_URL=\"$(MATHJAX_URL_DEFAULT)\"
+DOCHTML_PLUGIN_PP=$(DOCHTML_PP)					\
+                  -DCVODE_DOC_ROOT=\"$(CVODE_DOC_ROOT_DEFAULT)\"	\
+                  -DCVODES_DOC_ROOT=\"$(CVODES_DOC_ROOT_DEFAULT)\"	\
+                  -DARKODE_DOC_ROOT=\"$(ARKODE_DOC_ROOT_DEFAULT)\"	\
+                  -DIDA_DOC_ROOT=\"$(IDA_DOC_ROOT_DEFAULT)\"	\
+                  -DIDAS_DOC_ROOT=\"$(IDAS_DOC_ROOT_DEFAULT)\"	\
+                  -DKINSOL_DOC_ROOT=\"$(KINSOL_DOC_ROOT_DEFAULT)\"	\
+                  -DMATHJAX_URL=\"$(MATHJAX_URL_DEFAULT)\"
 dochtml.cmo: INCLUDES += -I +ocamldoc
-dochtml.cmo: OCAMLFLAGS += -pp '$(DOCHTML_PP)'
+dochtml.cmo: OCAMLFLAGS += -pp '$(DOCHTML_PLUGIN_PP)'
 dochtml.cmo: config
+
+dochtml.cmx: INCLUDES += -I +ocamldoc
+dochtml.cmx: OCAMLOPTFLAGS += -pp '$(DOCHTML_PLUGIN_PP)'
+dochtml.cmx: config
+
+SUNDIALS_DOCS=sundials_docs$(OCAMLDOC_PLUGIN)
+
 sundials_docs.cma: sundials_config.cmo dochtml.cmo
 	$(OCAMLC) $(OCAMLCFLAGS) -o $@ -a $^
+
+sundials_docs.cmxs: sundials_config.cmx dochtml.cmx
+	$(OCAMLOPT) $(OCAMLOPTFLAGS) -shared -o $@ $^
+
 
 META: META.in config
 	$(CPP) $(if $(MPI_ENABLED),-DMPI_ENABLED) -DVERSION=\"$(VERSION)\" $< \
@@ -316,17 +329,18 @@ DOC_URLS=$(if $(CVODE_DOC_ROOT),-cvode-doc-root "$(CVODE_DOC_ROOT)")	   \
 	 $(if $(IDAS_DOC_ROOT),-idas-doc-root "$(IDAS_DOC_ROOT)")	   \
 	 $(if $(KINSOL_DOC_ROOT),-kinsol-doc-root "$(KINSOL_DOC_ROOT)")    \
 	 $(if $(MATHJAX_URL),-mathjax "$(MATHJAX_URL)")
-doc/html/index.html: doc/html sundials_docs.cma intro.doc		\
+doc/html/index.html: OCAML_DOC_ROOT="$(OCAML_DOC_ROOT_DEFAULT)"
+doc/html/index.html: doc/html $(SUNDIALS_DOCS) intro.doc		\
 		     $(filter-out %_impl.cmi, $(CMI_MAIN))		\
 		     $(CMI_SENS) $(if $(MPI_ENABLED), $(CMI_MPI))
-	$(OCAMLDOC) -g sundials_docs.cma $(INCLUDES)		\
+	$(OCAMLDOC) -g $(SUNDIALS_DOCS) $(INCLUDES)		\
 	    -charset utf-8					\
 	    -short-functors					\
 	    -colorize-code					\
 	    -css-style docstyle.css				\
 	    $(DOC_URLS)						\
 	    -pp "$(DOCHTML_PP)					\
-		-D'OCAML_DOC_ROOT(x)=$(OCAML_DOC_ROOT)/**/x'	\
+		-D'OCAML_DOC_ROOT(x)=$(OCAML_DOC_ROOT)x'	\
 		-D'VERSION()=$(VERSION)'"			\
 	    -d ./doc/html/					\
 	    -hide Cvode_impl,Ida_impl,Kinsol_impl,Arkode_impl	\

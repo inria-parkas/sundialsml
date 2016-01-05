@@ -48,6 +48,7 @@ let vscale = Nvector_parallel.DataOps.n_vscale
 let vprod = Nvector_parallel.DataOps.n_vprod
 
 let slice = Bigarray.Array1.sub
+let unwrap = Nvector.unwrap
 
 let blit buf buf_offset dst dst_offset len =
   for i = 0 to len-1 do
@@ -523,15 +524,16 @@ let print_output id mem t uu =
 
   if id = 0 then begin
 
-    let kused = Ida.get_last_order mem in
-    let nst = Ida.get_num_steps mem in
-    let nni = Ida.get_num_nonlin_solv_iters mem in
-    let nre = Ida.get_num_res_evals mem in
-    let hused = Ida.get_last_step mem in
-    let nje = Ida.Spils.get_num_jtimes_evals mem in
-    let nreLS = Ida.Spils.get_num_res_evals mem in
-    let npe = Ida.Spils.get_num_prec_evals mem in
-    let nps = Ida.Spils.get_num_prec_solves mem in
+    let open Ida in
+    let kused = get_last_order mem in
+    let nst   = get_num_steps mem in
+    let nni   = get_num_nonlin_solv_iters mem in
+    let nre   = get_num_res_evals mem in
+    let hused = get_last_step mem in
+    let nje   = Spils.get_num_jtimes_evals mem in
+    let nreLS = Spils.get_num_res_evals mem in
+    let npe   = Spils.get_num_prec_evals mem in
+    let nps   = Spils.get_num_prec_solves mem in
     printf " %5.2f %13.5e  %d  %3d  %3d  %3d  %4d  %4d  %9.2e  %3d %3d\n"
            t umax kused nst nni nje nre nreLS hused npe nps
 
@@ -578,30 +580,25 @@ let main () =
   let neq = mx * my in
 
   (* Allocate and initialize the data structure and N-vectors. *)
-
-  let uu = Nvector_parallel.make local_N neq comm 0. in
-
-  let up = Nvector_parallel.make local_N neq comm 0. in
-
-  let res = Nvector_parallel.make local_N neq comm 0. in
-
-  let constraints = Nvector_parallel.make local_N neq comm 0. in
-
-  let id = Nvector_parallel.make local_N neq comm 0. in
+  let open Nvector_parallel in
+  let uu          = make local_N neq comm 0. in
+  let up          = make local_N neq comm 0. in
+  let res         = make local_N neq comm 0. in
+  let constraints = make local_N neq comm 0. in
+  let id          = make local_N neq comm 0. in
 
   (* An N-vector to hold preconditioner. *)
-  let pp = Nvector_parallel.make local_N neq comm 0. in
+  let pp = make local_N neq comm 0. in
 
-  let data = init_user_data thispe comm (Nvector.unwrap pp) in
+  let data = init_user_data thispe comm (unwrap pp) in
 
   (* Initialize the uu, up, id, and res profiles. *)
 
-  set_initial_profile data (Nvector.unwrap uu) (Nvector.unwrap up)
-    (Nvector.unwrap id) (Nvector.unwrap res);
+  set_initial_profile data (unwrap uu) (unwrap up) (unwrap id) (unwrap res);
 
   (* Set constraints to all 1's for nonnegative solution values. *)
 
-  Nvector_parallel.Ops.n_vconst one constraints;
+  Ops.n_vconst one constraints;
 
   let t0 = zero and t1 = 0.01 in
 
@@ -614,9 +611,7 @@ let main () =
   (* Call IDASpgmr to specify the linear solver. *)
 
   let linsolv =
-    Ida.Spils.spgmr
-      (Ida.Spils.prec_left ~setup:(psetup_heat data)
-         (psolve_heat data))
+    Ida.Spils.(spgmr (prec_left ~setup:(psetup_heat data) (psolve_heat data)))
   in
   let mem =
     Ida.init linsolv (Ida.SStolerances (rtol, atol))

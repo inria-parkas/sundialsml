@@ -199,10 +199,11 @@ let print_output y =
 
 (* Print final statistics *)
 let print_final_stats kmem =
-  let nni = Kinsol.get_num_nonlin_solv_iters kmem in
-  let nfe = Kinsol.get_num_func_evals kmem in
-  let nje = Kinsol.Dls.get_num_jac_evals kmem in
-  let nfeD = Kinsol.Dls.get_num_func_evals kmem in
+  let open Kinsol in
+  let nni  = get_num_nonlin_solv_iters kmem in
+  let nfe  = get_num_func_evals kmem in
+  let nje  = Dls.get_num_jac_evals kmem in
+  let nfeD = Dls.get_num_func_evals kmem in
   printf "\nFinal Statistics.. \n";
   printf "nni    = %5d    nfe   = %5d \n" nni nfe;
   printf "nje    = %5d    nfeD  = %5d \n" nje nfeD
@@ -223,7 +224,7 @@ let main () =
 
   (* Initialize and allocate memory for KINSOL *)
   (* Attach dense linear solver *)
-  let kmem = Kinsol.init (Kinsol.Dls.dense (Some jac)) func y in
+  let kmem = Kinsol.(init ~linsolv:(Dls.dense ~jac:jac ()) func y) in
 
   (* Set optional inputs *)
   let constraints = RealArray.make neq zero in
@@ -242,12 +243,12 @@ let main () =
   print_output ydata;
 
   (* Call KINSol to solve problem *)
-  ignore (Kinsol.solve
-            kmem               (* KINSol memory block *)
-            y                  (* initial guess on input; solution vector *)
-            Kinsol.LineSearch  (* global strategy choice *)
-            scale              (* scaling vector, for the variable cc *)
-            scale);            (* scaling vector for function values fval *)
+  ignore Kinsol.(solve
+                    kmem        (* KINSol memory block *)
+                    y           (* initial guess on input; solution vector *)
+                    LineSearch  (* global strategy choice *)
+                    scale       (* scaling vector, for the variable cc *)
+                    scale);     (* scaling vector for function values fval *)
 
   printf "\nComputed solution:\n";
   print_output ydata;

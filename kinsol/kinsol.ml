@@ -25,6 +25,7 @@ exception LinearSolverFailure            (* KIN_LSOLVE_FAIL *)
 exception SystemFunctionFailure          (* KIN_SYSFUNC_FAIL *)
 exception FirstSystemFunctionFailure     (* KIN_FIRST_SYSFUNC_FAIL *)
 exception RepeatedSystemFunctionFailure  (* KIN_REPTD_SYSFUNC_ERR *)
+exception MissingLinearSolver
 
 type print_level =
   | NoInformation     (* 0 *)
@@ -65,35 +66,35 @@ module Dls =
     external c_dls_lapack_band : serial_session -> int -> int -> bool -> unit
       = "c_kinsol_dls_lapack_band"
 
-    let dense fo s nv =
+    let dense ?jac () s nv =
       s.neqs <- Sundials.RealArray.length (Nvector.unwrap nv);
-      c_dls_dense s (fo <> None);
+      c_dls_dense s (jac <> None);
       s.ls_precfns <- NoPrecFns;
-      s.ls_callbacks <- match fo with
+      s.ls_callbacks <- match jac with
                         | None   -> DlsDenseCallback no_dense_callback
                         | Some f -> DlsDenseCallback { jacfn = f; dmat = None }
 
-    let lapack_dense fo s nv =
+    let lapack_dense ?jac () s nv =
       s.neqs <- Sundials.RealArray.length (Nvector.unwrap nv);
-      c_dls_lapack_dense s (fo <> None);
+      c_dls_lapack_dense s (jac <> None);
       s.ls_precfns <- NoPrecFns;
-      s.ls_callbacks <- match fo with
+      s.ls_callbacks <- match jac with
                         | None   -> DlsDenseCallback no_dense_callback
                         | Some f -> DlsDenseCallback { jacfn = f; dmat = None }
 
-    let band { mupper; mlower } fo s nv =
+    let band ?jac { mupper; mlower } s nv =
       s.neqs <- Sundials.RealArray.length (Nvector.unwrap nv);
-      c_dls_band s mupper mlower (fo <> None);
+      c_dls_band s mupper mlower (jac <> None);
       s.ls_precfns <- NoPrecFns;
-      s.ls_callbacks <- match fo with
+      s.ls_callbacks <- match jac with
                         | None   -> DlsBandCallback no_band_callback
                         | Some f -> DlsBandCallback { bjacfn = f; bmat = None }
 
-    let lapack_band { mupper; mlower } fo s nv =
+    let lapack_band ?jac { mupper; mlower } s nv =
       s.neqs <- Sundials.RealArray.length (Nvector.unwrap nv);
-      c_dls_lapack_band s mupper mlower (fo <> None);
+      c_dls_lapack_band s mupper mlower (jac <> None);
       s.ls_precfns <- NoPrecFns;
-      s.ls_callbacks <- match fo with
+      s.ls_callbacks <- match jac with
                         | None   -> DlsBandCallback no_band_callback
                         | Some f -> DlsBandCallback { bjacfn = f; bmat = None }
 
@@ -484,7 +485,7 @@ external get_step_length : ('a, 'k) session -> float
     = "c_kinsol_get_step_length"
 
 external c_init
-    : ('a, 'k) session Weak.t -> ('a, 'k) nvector
+    : ('a, 'k) session Weak.t -> ('a, 'k) nvector -> int option -> int option
       -> (kin_mem * c_weak_ref * kin_file * kin_file)
     = "c_kinsol_init"
 
@@ -495,10 +496,11 @@ let session_finalize s =
   Dls.invalidate_callback s;
   c_session_finalize s
 
-let init lsolver f u0 =
+let init ?max_iters ?maa ?linsolv f u0 =
   let checkvec = Nvector.check u0 in
   let weakref = Weak.create 1 in
-  let kin_mem, backref, err_file, info_file = c_init weakref u0
+  let kin_mem, backref, err_file, info_file
+        = c_init weakref u0 max_iters maa
   in
   let session = {
           kinsol       = kin_mem;
@@ -521,7 +523,7 @@ let init lsolver f u0 =
         } in
   Gc.finalise session_finalize session;
   Weak.set weakref 0 (Some session);
-  lsolver session u0;
+  (match linsolv with Some lsolver -> lsolver session u0 | None -> ());
   session
 
 type strategy =
@@ -544,7 +546,9 @@ let solve s u strategy u_scale f_scale =
     (s.checkvec u;
      s.checkvec u_scale;
      s.checkvec f_scale);
-  c_solve s u strategy u_scale f_scale
+  if strategy <> FixedPoint && s.ls_callbacks = NoCallbacks
+  then raise MissingLinearSolver
+  else c_solve s u strategy u_scale f_scale
 
 (* Let C code know about some of the values in this module.  *)
 external c_init_module : 'fcns -> exn array -> unit =

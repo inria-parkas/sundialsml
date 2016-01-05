@@ -278,20 +278,21 @@ let print_output s my_pe comm u t =
 (* Print final statistics contained in iopt *)
 
 let print_final_stats s =
-  let lenrw, leniw = Cvode.get_work_space s
-  and nst          = Cvode.get_num_steps s
-  and nfe          = Cvode.get_num_rhs_evals s
-  and nsetups      = Cvode.get_num_lin_solv_setups s
-  and netf         = Cvode.get_num_err_test_fails s
-  and nni          = Cvode.get_num_nonlin_solv_iters s
-  and ncfn         = Cvode.get_num_nonlin_solv_conv_fails s
+  let open Cvode in
+  let lenrw, leniw = get_work_space s
+  and nst          = get_num_steps s
+  and nfe          = get_num_rhs_evals s
+  and nsetups      = get_num_lin_solv_setups s
+  and netf         = get_num_err_test_fails s
+  and nni          = get_num_nonlin_solv_iters s
+  and ncfn         = get_num_nonlin_solv_conv_fails s
   in
-  let lenrwLS, leniwLS = Cvode.Spils.get_work_space s
-  and nli   = Cvode.Spils.get_num_lin_iters s
-  and npe   = Cvode.Spils.get_num_prec_evals s
-  and nps   = Cvode.Spils.get_num_prec_solves s
-  and ncfl  = Cvode.Spils.get_num_conv_fails s
-  and nfeLS = Cvode.Spils.get_num_rhs_evals s
+  let lenrwLS, leniwLS = Spils.get_work_space s
+  and nli   = Spils.get_num_lin_iters s
+  and npe   = Spils.get_num_prec_evals s
+  and nps   = Spils.get_num_prec_solves s
+  and ncfl  = Spils.get_num_conv_fails s
+  and nfeLS = Spils.get_num_rhs_evals s
   in
   printf "\nFinal Statistics: \n\n";
   printf "lenrw   = %5d     leniw   = %5d\n"   lenrw leniw;
@@ -673,12 +674,10 @@ let main () =
   (* Call CVodeCreate to create the solver memory and specify the 
    * Backward Differentiation Formula and the use of a Newton iteration *)
   let cvode_mem =
-    Cvode.init Cvode.BDF
-      (Cvode.Newton
-        (Cvode.Spils.spgmr
-           (Cvode.Spils.prec_left ~setup:(precond data) (psolve data))))
-      (Cvode.SStolerances (reltol, abstol))
-      (f data) t0 u
+    Cvode.(init BDF
+      (Newton Spils.(spgmr (prec_left ~setup:(precond data) (psolve data))))
+      (SStolerances (reltol, abstol))
+      (f data) t0 u)
   in
     
   if my_pe = 0 then

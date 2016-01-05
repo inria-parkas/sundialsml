@@ -707,7 +707,7 @@ let print_output mem uv tt data comm =
     end;
 
     let kused = Ida.get_last_order mem in
-    let nst = Ida.get_num_steps mem in
+    let nst   = Ida.get_num_steps mem in
     let hused = Ida.get_last_step mem in
 
     printf "%8.2e %12.4e %12.4e   | %3d  %1d %12.4e\n"
@@ -749,17 +749,18 @@ let print_sol data mem uv uvp comm =
 (* PrintFinalStats: Print final run data contained in iopt. *)
 
 let print_final_stats mem =
-  let nst = Ida.get_num_steps mem in
-  let nre = Ida.get_num_res_evals mem in
-  let netf = Ida.get_num_err_test_fails mem in
-  let ncfn = Ida.get_num_nonlin_solv_conv_fails mem in
-  let nni = Ida.get_num_nonlin_solv_iters mem in
+  let open Ida in
+  let nst  = get_num_steps mem in
+  let nre  = get_num_res_evals mem in
+  let netf = get_num_err_test_fails mem in
+  let ncfn = get_num_nonlin_solv_conv_fails mem in
+  let nni  = get_num_nonlin_solv_iters mem in
 
-  let ncfl = Ida.Spils.get_num_conv_fails mem in
-  let nli = Ida.Spils.get_num_lin_iters mem in
-  let npe = Ida.Spils.get_num_prec_evals mem in
-  let nps = Ida.Spils.get_num_prec_solves mem in
-  let nreLS = Ida.Spils.get_num_res_evals mem in
+  let ncfl  = Spils.get_num_conv_fails mem in
+  let nli   = Spils.get_num_lin_iters mem in
+  let npe   = Spils.get_num_prec_evals mem in
+  let nps   = Spils.get_num_prec_solves mem in
+  let nreLS = Spils.get_num_res_evals mem in
 
   let nge = Ida_bbd.get_num_gfn_evals mem in
 
@@ -788,9 +789,9 @@ let print_final_stats mem =
 let main () =
 
   (* Set communicator, and get processor number and total number of PE's. *)
-  let comm = Mpi.comm_world in
+  let comm   = Mpi.comm_world in
   let thispe = Mpi.comm_rank comm in
-  let npes = Mpi.comm_size comm in
+  let npes   = Mpi.comm_size comm in
 
   if npes <> npex*npey then begin
     if thispe = 0 then
@@ -811,13 +812,11 @@ let main () =
   (* Create needed vectors, and load initial values.
      The vector resid is used temporarily only.        *)
 
-  let uv = Nvector_parallel.make local_N system_size comm 0. in
-
-  let uvp = Nvector_parallel.make local_N system_size comm 0. in
-
-  let resid = Nvector_parallel.make local_N system_size comm 0. in
-
-  let id = Nvector_parallel.make local_N system_size comm 0. in
+  let open Nvector_parallel in
+  let uv    = make local_N system_size comm 0. in
+  let uvp   = make local_N system_size comm 0. in
+  let resid = make local_N system_size comm 0. in
+  let id    = make local_N system_size comm 0. in
 
   let uvS = Array.init num_sens (fun _ -> Nvector_parallel.clone uv) in
 
@@ -841,18 +840,10 @@ let main () =
   let maxl = 16 in
   let linsolv =
     Ida.Spils.spgmr ~maxl:maxl
-      (Ida_bbd.prec_left ~dqrely:zero
-         { Ida_bbd.mudq = mudq;
-           Ida_bbd.mldq = mldq;
-           Ida_bbd.mukeep = mukeep;
-           Ida_bbd.mlkeep = mlkeep;
-         }
-         (reslocal data))
+      Ida_bbd.(prec_left ~dqrely:zero { mudq; mldq; mukeep; mlkeep; }
+                         (reslocal data))
   in
-  let mem =
-    Ida.init linsolv (Ida.SStolerances (rtol,atol))
-      (res data)
-      t0 uv uvp
+  let mem = Ida.(init linsolv (SStolerances (rtol,atol)) (res data) t0 uv uvp)
   in
 
   (* Enable forward sensitivity analysis. *)
@@ -863,8 +854,7 @@ let main () =
       Sens.plist = None;
     }
   in
-  Sens.init mem Sens.EEtolerances Sens.Simultaneous ~sens_params:sparams
-    uvS uvpS;
+  Sens.(init mem EEtolerances Simultaneous ~sens_params:sparams uvS uvpS);
   Sens.set_err_con mem true;
 
   (* Call IDACalcIC (with default options) to correct the initial values. *)

@@ -245,18 +245,18 @@ let main () =
   in
 
   (* Call IDACreate and IDAInit to initialize IDA memory *)
-  let mem = Ida.init (Ida.Dls.dense ()) (Ida.SStolerances (rtol,atol))
-              (res data) t0 wyy wyp
+  let mem = Ida.(init (Dls.dense ()) (SStolerances (rtol,atol))
+                      (res data) t0 wyy wyp)
   in
 
   (* Initialize QUADRATURE(S). *)
   Quad.init mem (rhsQ data) wq;
 
   (* Set tolerances and error control for quadratures. *)
-  Quad.set_tolerances mem (Quad.SStolerances (rtolq,atolq));
+  Quad.(set_tolerances mem (SStolerances (rtolq,atolq)));
 
   (* Prepare ADJOINT. *)
-  Adjoint.init mem steps Adjoint.IHermite;
+  Adjoint.(init mem steps IHermite);
 
   (* FORWARD run. *)
   printf "Forward integration ... ";
@@ -285,10 +285,10 @@ let main () =
   and wypB = Nvector_serial.wrap ypB
   in
 
-  let indexB = Adjoint.init_backward mem (Adjoint.Dls.dense ())
-                 (Adjoint.SStolerances (rtolb, atolb))
-                 (Adjoint.NoSens (resB data))
-                 tf wyB wypB
+  let indexB = Adjoint.(init_backward mem (Dls.dense ())
+                                      (SStolerances (rtolb, atolb))
+                                      (NoSens (resB data))
+                                      tf wyB wypB)
   in
   Adjoint.set_max_num_steps indexB 1000;
 

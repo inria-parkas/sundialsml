@@ -144,7 +144,7 @@ let fB1 : user_data -> RealArray.t Adj.brhsfn_with_sens =
 
   yBdot.{3} <- 2.0*.p1*.y.{0} *. m1      +. l1 *. 2.0*.(y.{0} +. p1*.s1) -. s1;
   yBdot.{4} <- m2 +. p2*.p2*.y.{2} *. m3 +. l3 *. p2*.p2*.s3             -. s2;
-  yBdot.{5} <- m1 +. p2*.p2*.y.{1} *. m3 +. l3 *. p2*.p2*.s2             -. s3
+  yBdot.{5} <- m1 +. p2*.p2*.y.{1} *. m3 +. l3 *. p2*.p2*.s2 -. s3
 
 let fQB1 : user_data -> RealArray.t QuadAdj.bquadrhsfn_with_sens =
   fun data args yS qBdot ->
@@ -198,8 +198,11 @@ let fB2 : user_data -> RealArray.t Adj.brhsfn_with_sens =
                                      l1 *. 2.0*.p1*.s1                    -. s1;
   yBdot.{4} <- m2 +. p2*.p2*.y.{2} *. m3 +.
                                      l3 *. (2.0*.p2*.y.{2} +. p2*.p2*.s3) -. s2;
-  yBdot.{5} <- m1 +. p2*.p2*.y.{1} *. m3 +.
+  match Sundials.sundials_version with
+  | 2,5,_ -> yBdot.{5} <- m1 +. p2*.p2*.y.{1} *. m3 +.
                                      l3 *. (2.0*.p2*.y.{2} +. p2*.p2*.s2) -. s3
+  | _     -> yBdot.{5} <- m1 +. p2*.p2*.y.{1} *. m3 +.
+                                     l3 *. (2.0*.p2*.y.{1} +. p2*.p2*.s2) -. s3
 
 let fQB2 : user_data -> RealArray.t QuadAdj.bquadrhsfn_with_sens =
   fun data args yS qBdot ->
@@ -232,19 +235,20 @@ let fQB2 : user_data -> RealArray.t QuadAdj.bquadrhsfn_with_sens =
  *)
 
 let print_fwd_stats cvode_mem =
-  let { Cvode.num_steps = nst;
-        Cvode.num_rhs_evals = nfe;
-        Cvode.num_lin_solv_setups = nsetups;
-        Cvode.num_err_test_fails = netf;
-        Cvode.last_order = qlast;
-        Cvode.current_order = qcur;
-        Cvode.actual_init_step = h0u;
-        Cvode.last_step = hlast;
-        Cvode.current_step = hcur;
-        Cvode.current_time = tcur;
-    } = Cvode.get_integrator_stats cvode_mem
+  let open Cvode in
+  let { num_steps = nst;
+        num_rhs_evals = nfe;
+        num_lin_solv_setups = nsetups;
+        num_err_test_fails = netf;
+        last_order = qlast;
+        current_order = qcur;
+        actual_init_step = h0u;
+        last_step = hlast;
+        current_step = hcur;
+        current_time = tcur;
+    } = get_integrator_stats cvode_mem
   in
-  let nni, ncfn = Cvode.get_nonlin_solv_stats cvode_mem
+  let nni, ncfn = get_nonlin_solv_stats cvode_mem
   and nfQe, netfQ = Quad.get_stats cvode_mem
   and { Sens.num_sens_evals = nfSe;
         Sens.num_rhs_evals = nfeS;
@@ -270,16 +274,17 @@ let print_fwd_stats cvode_mem =
   printf "\n"
 
 let print_bck_stats cvode_mem =
-  let { Cvode.num_steps = nst;
-        Cvode.num_rhs_evals = nfe;
-        Cvode.num_lin_solv_setups = nsetups;
-        Cvode.num_err_test_fails = netf;
-        Cvode.last_order = qlast;
-        Cvode.current_order = qcur;
-        Cvode.actual_init_step = h0u;
-        Cvode.last_step = hlast;
-        Cvode.current_step = hcur;
-        Cvode.current_time = tcur;
+  let open Cvode in
+  let { num_steps = nst;
+        num_rhs_evals = nfe;
+        num_lin_solv_setups = nsetups;
+        num_err_test_fails = netf;
+        last_order = qlast;
+        current_order = qcur;
+        actual_init_step = h0u;
+        last_step = hlast;
+        current_step = hcur;
+        current_time = tcur;
     } = Adj.get_integrator_stats cvode_mem
   in
   let nni, ncfn = Adj.get_nonlin_solv_stats cvode_mem
@@ -337,19 +342,18 @@ let main () =
 
   (* Create and initialize forward problem *)
   let cvode_mem =
-    Cvode.init
-        Cvode.BDF
-        (Cvode.Newton (Cvode.Dls.dense ()))
-        (Cvode.SStolerances (reltol, abstol))
-        (f data)
-        t0
-        y
+    Cvode.(init BDF
+                (Newton (Dls.dense ()))
+                (SStolerances (reltol, abstol))
+                (f data)
+                t0
+                y)
   in
   Quad.init cvode_mem (fQ data) yQ;
   Quad.set_tolerances cvode_mem (Quad.SStolerances (reltol, abstolQ));
 
-  Sens.init cvode_mem Sens.EEtolerances Sens.Simultaneous
-                      (Sens.AllAtOnce (Some (fS data))) yS;
+  Sens.(init cvode_mem EEtolerances Simultaneous
+                       (AllAtOnce (Some (fS data))) yS);
   Sens.set_err_con cvode_mem true;
 
   QuadSens.init cvode_mem ~fqs:(fQS data) yQS;
@@ -394,31 +398,32 @@ let main () =
   print_fwd_stats cvode_mem;
 
   (* Initializations for backward problems *)
-  let yB1  = Nvector_serial.make (2 * neq) zero in
-  let yQB1 = Nvector_serial.make np2 zero in
-  let yB2  = Nvector_serial.make (2 * neq) zero in
-  let yQB2 = Nvector_serial.make np2 zero in
+  let open Nvector_serial in
+  let yB1  = make (2 * neq) zero in
+  let yQB1 = make np2 zero in
+  let yB2  = make (2 * neq) zero in
+  let yQB2 = make np2 zero in
 
   (* Create and initialize backward problems (one for each column of the Hessian) *)
   let cvode_memB1 =
-    Adj.init_backward cvode_mem Cvode.BDF
-                                (Adj.Newton (Adj.Dls.dense ()))
-                                (Adj.SStolerances (reltol, abstolB))
-                                (Adj.WithSens (fB1 data))
-                                tf yB1
+    Adj.(init_backward cvode_mem Cvode.BDF
+                                 (Newton (Dls.dense ()))
+                                 (SStolerances (reltol, abstolB))
+                                 (WithSens (fB1 data))
+                                 tf yB1)
   in
-  QuadAdj.init cvode_memB1 (QuadAdj.WithSens (fQB1 data)) yQB1;
-  QuadAdj.set_tolerances cvode_memB1 (QuadAdj.SStolerances (reltol, abstolQB));
+  QuadAdj.(init cvode_memB1 (WithSens (fQB1 data)) yQB1);
+  QuadAdj.(set_tolerances cvode_memB1 (SStolerances (reltol, abstolQB)));
 
   let cvode_memB2 =
-    Adj.init_backward cvode_mem Cvode.BDF
-                                (Adj.Newton (Adj.Dls.dense ()))
-                                (Adj.SStolerances (reltol, abstolB))
-                                (Adj.WithSens (fB2 data))
-                                tf yB2
+    Adj.(init_backward cvode_mem Cvode.BDF
+                                 (Newton (Dls.dense ()))
+                                 (SStolerances (reltol, abstolB))
+                                 (WithSens (fB2 data))
+                                 tf yB2)
   in
-  QuadAdj.init cvode_memB2 (QuadAdj.WithSens (fQB2 data)) yQB2;
-  QuadAdj.set_tolerances cvode_memB2 (QuadAdj.SStolerances (reltol, abstolB));
+  QuadAdj.(init cvode_memB2 (WithSens (fQB2 data)) yQB2);
+  QuadAdj.(set_tolerances cvode_memB2 (SStolerances (reltol, abstolB)));
 
   (* Backward integration *)
   printf "---------------------------------------------\n";
@@ -467,17 +472,16 @@ let main () =
 
   RealArray.fill (unwrap y) one;
   let cvode_mem =
-    Cvode.init
-        Cvode.BDF
-        (Cvode.Newton (Cvode.Dls.dense ()))
-        (Cvode.SStolerances (reltol, abstol))
-        (f data)
-        t0
-        y
+    Cvode.(init BDF
+                (Newton (Dls.dense ()))
+                (SStolerances (reltol, abstol))
+                (f data)
+                t0
+                y)
   in
   RealArray.fill (unwrap yQ) zero;
   Quad.init cvode_mem (fQ data) yQ;
-  Quad.set_tolerances cvode_mem (Quad.SStolerances (reltol, abstolQ));
+  Quad.(set_tolerances cvode_mem (SStolerances (reltol, abstolQ)));
 
   data.p1 <- data.p1 +. dp;
 

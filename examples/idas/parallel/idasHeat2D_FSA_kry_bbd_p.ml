@@ -539,16 +539,17 @@ let print_output id mem t uu sensi uuS =
 
   if id = 0 then begin
 
-    let kused = Ida.get_last_order mem in
-    let nst = Ida.get_num_steps mem in
-    let nni = Ida.get_num_nonlin_solv_iters mem in
-    let nre = Ida.get_num_res_evals mem in
-    let hused = Ida.get_last_step mem in
-    let nli = Ida.Spils.get_num_lin_iters mem in
-    let nreLS = Ida.Spils.get_num_res_evals mem in
-    let nge = Ida_bbd.get_num_gfn_evals mem in
-    let npe = Ida.Spils.get_num_prec_evals mem in
-    let nps = Ida.Spils.get_num_prec_solves mem in
+    let open Ida in
+    let kused = get_last_order mem in
+    let nst   = get_num_steps mem in
+    let nni   = get_num_nonlin_solv_iters mem in
+    let nre   = get_num_res_evals mem in
+    let hused = get_last_step mem in
+    let nli   = Spils.get_num_lin_iters mem in
+    let nreLS = Spils.get_num_res_evals mem in
+    let nge   = Ida_bbd.get_num_gfn_evals mem in
+    let npe   = Spils.get_num_prec_evals mem in
+    let nps   = Spils.get_num_prec_solves mem in
 
     printf " %5.2f %13.5e  %d  %3d  %3d  %3d  %4d %4d %4d %9.2e  %3d %3d\n"
            t umax kused nst nni nli nre nreLS nge hused npe nps;
@@ -609,15 +610,12 @@ let main () =
 
   (* Allocate N-vectors. *)
 
-  let uu = Nvector_parallel.make local_N neq comm 0. in
-
-  let up = Nvector_parallel.make local_N neq comm 0. in
-
-  let res = Nvector_parallel.make local_N neq comm 0. in
-
-  let constraints = Nvector_parallel.make local_N neq comm 0. in
-
-  let id = Nvector_parallel.make local_N neq comm 0. in
+  let open Nvector_parallel in
+  let uu          = make local_N neq comm 0. in
+  let up          = make local_N neq comm 0. in
+  let res         = make local_N neq comm 0. in
+  let constraints = make local_N neq comm 0. in
+  let id          = make local_N neq comm 0. in
 
   (* Allocate and initialize the data structure. *)
 
@@ -626,7 +624,7 @@ let main () =
   (* Initialize the uu, up, id, and constraints profiles. *)
 
   set_initial_profile data (unvec uu) (unvec up) (unvec id) (unvec res);
-  Nvector_parallel.Ops.n_vconst one constraints;
+  Ops.n_vconst one constraints;
 
   let t0 = zero and t1 = 0.01 in
 
@@ -652,18 +650,11 @@ let main () =
 
   let linsolv =
     Ida.Spils.spgmr ~maxl:12
-      (Ida_bbd.prec_left ~dqrely:zero
-         {
-           Ida_bbd.mudq = mudq;
-           Ida_bbd.mldq = mldq;
-           Ida_bbd.mukeep = mukeep;
-           Ida_bbd.mlkeep = mlkeep;
-         }
-         (reslocal data))
+      Ida_bbd.(prec_left ~dqrely:zero { mudq; mldq; mukeep; mlkeep; }
+                         (reslocal data))
   in
-  let mem =
-    Ida.init linsolv (Ida.SStolerances (rtol,atol))
-      (heatres data) ~varid:id t0 uu up
+  let mem = Ida.(init linsolv (SStolerances (rtol,atol))
+                      (heatres data) ~varid:id t0 uu up)
   in
   Ida.set_suppress_alg mem true;
   Ida.set_constraints mem constraints;
@@ -712,7 +703,7 @@ let main () =
           Sens.pbar = Some pbar;
           Sens.plist = None; }
       in
-      Sens.init mem Sens.EEtolerances sensi_meth ~sens_params:params uuS upS;
+      Sens.(init mem EEtolerances sensi_meth ~sens_params:params uuS upS);
 
       (* Specify whether the sensitivity variables are included in the error
          test or not *)

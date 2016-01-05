@@ -811,12 +811,12 @@ let init prob tol ?restol ?order ?mass ?(roots=no_roots) t0 y0 =
   if Sundials_config.safe && nroots < 0 then
     raise (Invalid_argument "number of root functions is negative");
   let weakref = Weak.create 1 in
-  let fi, fe, iter, lin =
+  let problem, fi, fe, iter, lin =
     match prob with
-    | Implicit (fi, i, l)   -> Some fi, None,    Some i, Some l
-    | Explicit fe           -> None,    Some fe, None,   None
-    | ImEx { implicit=(fi, i, l);
-             explicit=fe }  -> Some fi, Some fe, Some i, Some l
+    | Implicit (fi,i,l) -> ImplicitOnly, Some fi, None,    Some i, Some l
+    | Explicit fe       -> ExplicitOnly, None,    Some fe, None,   None
+    | ImEx { implicit=(fi, i, l); explicit=fe }
+                        -> ImplicitAndExplicit, Some fi, Some fe, Some i, Some l
   in
   let arkode_mem, backref, no_file
         = c_init weakref (fi <> None) (fe <> None) y0 t0 in
@@ -832,8 +832,10 @@ let init prob tol ?restol ?order ?mass ?(roots=no_roots) t0 y0 =
 
           exn_temp     = None;
 
+          problem      = problem;
           irhsfn       = (match fi with Some f -> f | None -> dummy_irhsfn);
           erhsfn       = (match fe with Some f -> f | None -> dummy_erhsfn);
+
           rootsfn      = roots;
           errh         = dummy_errh;
           errw         = dummy_errw;
@@ -872,22 +874,27 @@ let init prob tol ?restol ?order ?mass ?(roots=no_roots) t0 y0 =
 let get_num_roots { nroots } = nroots
 
 external c_reinit
-    : ('a, 'k) session -> bool -> bool -> float -> ('a, 'k) nvector -> unit
+    : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
     = "c_arkode_reinit"
 
-let reinit session prob ?order ?roots t0 y0 =
+let reinit session ?problem ?order ?roots t0 y0 =
   if Sundials_config.safe then session.checkvec y0;
   Dls.invalidate_callback session;
-  let fi, fe =
-    match prob with
-    | Implicit (fi, _, _)   -> Some fi, None
-    | Explicit fe           -> None,    Some fe
-    | ImEx { implicit=(fi, _, _);
-             explicit=fe }  -> Some fi, Some fe
-  in
-  c_reinit session (fi <> None) (fe <> None) t0 y0;
-  session.irhsfn <- (match fi with Some f -> f | None -> dummy_irhsfn);
-  session.erhsfn <- (match fe with Some f -> f | None -> dummy_erhsfn);
+  (match problem with
+   | None -> ()
+   | Some (Implicit (fi, _, _)) ->
+       (session.problem <- ImplicitOnly;
+        session.irhsfn <- fi;
+        session.erhsfn <- dummy_erhsfn)
+   | Some (Explicit fe) ->
+       (session.problem <- ExplicitOnly;
+        session.irhsfn <- dummy_irhsfn;
+        session.erhsfn <- fe)
+   | Some (ImEx { implicit=(fi, _, _); explicit=fe }) ->
+       (session.problem <- ImplicitAndExplicit;
+        session.irhsfn <- fi;
+        session.erhsfn <- fe));
+  c_reinit session t0 y0;
   (match order with Some o -> c_set_order session o | None -> ());
   (match roots with
    | None -> ()
@@ -897,13 +904,13 @@ external c_resize
     : ('a, 'k) session -> bool -> float -> float -> ('a, 'k) nvector -> unit
     = "c_arkode_resize"
 
-let resize session ?resize_nvec ?linear_solver tol hscale ynew t0 =
-  if Sundials_config.safe then session.checkvec ynew;
-  (match linear_solver with None -> () | ls -> session.linsolver <- ls);
+let resize session ?resize_nvec ?linsolv tol hscale ynew t0 =
+  session.checkvec <- Nvector.check ynew;
+  (match linsolv with None -> () | ls -> session.linsolver <- ls);
   (match resize_nvec with None -> () | Some f -> session.resizefn <- f);
   c_resize session (resize_nvec <> None) hscale t0 ynew;
   session.resizefn <- dummy_resizefn;
-  set_tolerances session tol;
+  (* set_tolerances session tol; TODO: disabled pending an ARKode bug. *)
   (match session.linsolver with Some ls -> ls session ynew | None -> ())
 
 external get_root_info  : ('a, 'k) session -> Sundials.Roots.t -> unit
@@ -1027,14 +1034,17 @@ external c_set_implicit         : ('a, 'k) session -> unit
 
 let set_imex s =
   (if s.irhsfn == dummy_irhsfn || s.erhsfn == dummy_erhsfn then raise IllInput);
+  s.problem <- ImplicitAndExplicit;
   c_set_imex s
 
 let set_explicit s =
   (if s.erhsfn == dummy_erhsfn then raise IllInput);
+  s.problem <- ExplicitOnly;
   c_set_explicit s
 
 let set_implicit s =
   (if s.irhsfn == dummy_irhsfn then raise IllInput);
+  s.problem <- ImplicitOnly;
   c_set_implicit s
 
 type rk_method = {
@@ -1149,8 +1159,8 @@ let set_irk_table_num s v = c_set_irk_table_num s (int_of_irk_table v)
 let set_ark_table_num s v = c_set_ark_table_num s (ints_of_ark_table v)
 
 type adaptivity_params = {
-    adaptivity_ks : (float * float * float) option;
-    adaptivity_method_order : bool;
+    ks : (float * float * float) option;
+    method_order : bool;
   }
 
 type 'd adaptivity_method =
