@@ -7,7 +7,7 @@ info:
 	@echo "  perf.opt.log      time standard tests (native code)"
 	@echo "  ocaml             compile the other ocaml examples without running them"
 
-include ../config
+include ../src/config
 
 C_EXAMPLES=$(if $(EXAMPLESROOT),,c_examples_unavailable)
 c_examples_unavailable:

@@ -53,7 +53,7 @@ open Sundials
 (** A session with the ARKODE solver.
 
     An example session with Arkode ({openfile arkode_skel.ml}): {[
-#include "../examples/ocaml/skeletons/arkode_skel.ml"
+#include "../../examples/ocaml/skeletons/arkode_skel.ml"
     ]}
 
     @noarkode <node> Skeleton of main program *)

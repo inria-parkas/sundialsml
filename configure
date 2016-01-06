@@ -939,74 +939,74 @@ fi
 	 s#@XS@#${XS}#;
 	 s#@EXAMPLESROOT@#${EXAMPLESROOT}#;
 	 s#@OCAMLBIN@#${OCAMLBIN}#;
-	 s#@OCAMLROOT@#${OCAMLROOT}#;" config.in) > config
+	 s#@OCAMLROOT@#${OCAMLROOT}#;" src/config.in) > src/config
 
 echo "/* Automatically generated file - don't edit!  See configure.  */"\
-     > config.h
-echo "#ifndef __SUNDIALS_CONFIG_H__" >> config.h
-echo "#define __SUNDIALS_CONFIG_H__" >> config.h
+     > src/config.h
+echo "#ifndef __SUNDIALS_CONFIG_H__" >> src/config.h
+echo "#define __SUNDIALS_CONFIG_H__" >> src/config.h
 if [ "x${ocaml_has_version_h}" = x1 ]; then
-    echo "#include <caml/version.h>" >> config.h
+    echo "#include <caml/version.h>" >> src/config.h
 elif [ "x${ocaml_3x}" = x1 ]; then
-    echo "#define OCAML_VERSION 31201" >> config.h
+    echo "#define OCAML_VERSION 31201" >> src/config.h
 else
-    echo "#define OCAML_VERSION 40100" >> config.h
+    echo "#define OCAML_VERSION 40100" >> src/config.h
 fi
-echo "#define HAVE_WEAK ${have_weak}" >> config.h
-echo "#define SUNDIALS_ML_SAFE ${bounds_checking}" >> config.h
+echo "#define HAVE_WEAK ${have_weak}" >> src/config.h
+echo "#define SUNDIALS_ML_SAFE ${bounds_checking}" >> src/config.h
 if [ "x${lapack_enabled}" = x1 ]; then
-echo "#define SUNDIALS_ML_LAPACK" >> config.h
+echo "#define SUNDIALS_ML_LAPACK" >> src/config.h
 fi
 if [ "x${klu_enabled}" = x1 ]; then
-echo "#define SUNDIALS_ML_KLU" >> config.h
+echo "#define SUNDIALS_ML_KLU" >> src/config.h
 fi
 if [ "x${superlumt_enabled}" = x1 ]; then
-echo "#define SUNDIALS_ML_SUPERLUMT" >> config.h
+echo "#define SUNDIALS_ML_SUPERLUMT" >> src/config.h
 fi
 if [ "x${nvecpthreads_enabled}" = x1 ]; then
-echo "#define SUNDIALS_ML_PTHREADS" >> config.h
+echo "#define SUNDIALS_ML_PTHREADS" >> src/config.h
 fi
 if [ "x${nvecopenmp_enabled}" = x1 ]; then
-echo "#define SUNDIALS_ML_OPENMP" >> config.h
+echo "#define SUNDIALS_ML_OPENMP" >> src/config.h
 fi
-echo "#define SUNDIALS_LIB_VERSION ${sundials}" >> config.h
-echo "#endif /* __SUNDIALS_CONFIG_H__ */" >> config.h
+echo "#define SUNDIALS_LIB_VERSION ${sundials}" >> src/config.h
+echo "#endif /* __SUNDIALS_CONFIG_H__ */" >> src/config.h
 
 # Note: config.ml conflicts with a module in the standard library.
 echo "(* Automatically generated file - don't edit!  See configure.  *)"\
-    > core/sundials_config.ml
+    > src/sundials/sundials_config.ml
 versiondigits=`echo ${version} | sed -e 's/\\./,/g'`
-echo "let version = ${versiondigits},${versionp}"\ >> core/sundials_config.ml
+echo "let version = ${versiondigits},${versionp}"\ >> src/sundials/sundials_config.ml
 sundials_versiondigits=`echo ${sundials_version} | sed -e 's/\\./,/g'`
-echo "let sundials_version = ${sundials_versiondigits}"\ >> core/sundials_config.ml
+echo "let sundials_version = ${sundials_versiondigits}"\ >> src/sundials/sundials_config.ml
 if [ "x${lapack_enabled}" = x ]; then
-    echo "let lapack_enabled = false" >> core/sundials_config.ml
+    echo "let lapack_enabled = false" >> src/sundials/sundials_config.ml
 else
-    echo "let lapack_enabled = true"  >> core/sundials_config.ml
+    echo "let lapack_enabled = true"  >> src/sundials/sundials_config.ml
 fi
 if [ "x${klu_enabled}" = x ]; then
-    echo "let klu_enabled = false" >> core/sundials_config.ml
+    echo "let klu_enabled = false" >> src/sundials/sundials_config.ml
 else
-    echo "let klu_enabled = true"  >> core/sundials_config.ml
+    echo "let klu_enabled = true"  >> src/sundials/sundials_config.ml
 fi
 if [ "x${superlumt_enabled}" = x ]; then
-    echo "let superlumt_enabled = false" >> core/sundials_config.ml
+    echo "let superlumt_enabled = false" >> src/sundials/sundials_config.ml
 else
-    echo "let superlumt_enabled = true"  >> core/sundials_config.ml
+    echo "let superlumt_enabled = true"  >> src/sundials/sundials_config.ml
 fi
 if [ "x${nvecpthreads_enabled}" = x ]; then
-    echo "let nvecpthreads_enabled = false" >> core/sundials_config.ml
+    echo "let nvecpthreads_enabled = false" >> src/sundials/sundials_config.ml
 else
-    echo "let nvecpthreads_enabled = true"  >> core/sundials_config.ml
+    echo "let nvecpthreads_enabled = true"  >> src/sundials/sundials_config.ml
 fi
 if [ "x${nvecopenmp_enabled}" = x ]; then
-    echo "let nvecopenmp_enabled = false" >> core/sundials_config.ml
+    echo "let nvecopenmp_enabled = false" >> src/sundials/sundials_config.ml
 else
-    echo "let nvecopenmp_enabled = true"  >> core/sundials_config.ml
+    echo "let nvecopenmp_enabled = true"  >> src/sundials/sundials_config.ml
 fi
 if [ "x${bounds_checking}" = x ]; then
-    echo "let safe = false" >> core/sundials_config.ml
+    echo "let safe = false" >> src/sundials/sundials_config.ml
 else
-    echo "let safe = true"  >> core/sundials_config.ml
+    echo "let safe = true"  >> src/sundials/sundials_config.ml
 fi
 

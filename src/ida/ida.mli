@@ -49,7 +49,7 @@ open Sundials
 (** A session with the IDA solver.
 
     An example session with Ida ({openfile ida_skel.ml}): {[
-#include "../examples/ocaml/skeletons/ida_skel.ml"
+#include "../../examples/ocaml/skeletons/ida_skel.ml"
     ]}
 
     @ida <node5#ss:skeleton_sim> Skeleton of main program

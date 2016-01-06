@@ -47,7 +47,7 @@ open Sundials
 (** A session with the CVODE solver.
 
     An example session with Cvode ({openfile cvode_skel.ml}): {[
-#include "../examples/ocaml/skeletons/cvode_skel.ml"
+#include "../../examples/ocaml/skeletons/cvode_skel.ml"
     ]}
 
     @cvode <node5#ss:skeleton_sim> Skeleton of main program *)
