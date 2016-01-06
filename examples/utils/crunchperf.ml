@@ -35,7 +35,9 @@ let abbreviate name =
     name
     [("^cvode", "cv");
      ("^kinsol", "kin");
+     ("^arkode", "ark");
      ("/serial/", "--ser--");
+     ("/C_serial/", "--Cser--");
      ("/parallel/", "--par--");
     ]
 let expand name =
@@ -44,7 +46,9 @@ let expand name =
     name
     [("^cv", "cvode");
      ("^kin", "kinsol");
+     ("^ark", "arkode");
      ("--ser--", "/serial/");
+     ("--Cser--", "/C_serial/");
      ("--par--", "/parallel/");
     ]
 

@@ -20,7 +20,9 @@ c_examples_unavailable:
 MODULES  = cvode cvodes ida idas kinsol
 VECTYPES = serial $(if $(MPI_ENABLED),parallel)
 
-SUBDIRS=$(foreach m,$(MODULES),$(foreach v,$(VECTYPES),$m/$v))
+SUBDIRS=$(foreach m,cvode cvodes ida idas kinsol,	\
+	  $(foreach v,serial parallel,$m/$v))		\
+	arkode/C_serial
 
 TOP_TARGETS = tests.byte.log tests.opt.log perf.byte.log perf.opt.log reps
 SUBDIR_TARGETS = $(foreach d,$(SUBDIRS),$(foreach t,$(TOP_TARGETS),$d/$t))
@@ -62,7 +64,7 @@ tests.opt.log tests.byte.log: tests.%.log: $(C_EXAMPLES) \
 NATIVE_TITLE='OCaml native code performance over C ($(CC) $(CFLAGS))'
 BYTE_TITLE  ='OCaml byte code performance over C ($(CC) $(CFLAGS))'
 
-perf.opt.log perf.byte.log: perf.%.log: $(C_EXAMPLES) \
+perf.opt.log perf.byte.log: perf.%.log: $(C_EXAMPLES) utils/crunchperf \
 					$(foreach s,$(SUBDIRS),$s/perf.%.log)
 	@echo ======================================================================
 	@utils/crunchperf -m $(foreach s,$(SUBDIRS),$s/$@) > $@
