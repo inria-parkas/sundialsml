@@ -11,7 +11,7 @@
  *                                                                     *
  ***********************************************************************/
 
-#include "config.h"
+#include "../config.h"
 #include <cvodes/cvodes.h>
 #include <sundials/sundials_band.h>
 

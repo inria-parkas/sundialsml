@@ -13,7 +13,7 @@
 
 /* Interface functions that do not involve NVectors. */
 
-#include "config.h"
+#include "../config.h"
 #include <idas/idas.h>
 #include <sundials/sundials_band.h>
 

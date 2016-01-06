@@ -30,7 +30,7 @@ default: all
 ### Objects shared between sundials.cma and sundials_no_sens.cma.
 
 # Common to CVODE, IDA, KINSOL, and ARKODE.
-COBJ_COMMON = sundials_ml$(XO)		\
+COBJ_COMMON = core/sundials_ml$(XO)	\
 	      lsolvers/dls_ml$(XO)	\
 	      $(SLS_ML_XO)		\
 	      nvectors/nvector_ml$(XO)	\
@@ -40,8 +40,8 @@ COBJ_COMMON = sundials_ml$(XO)		\
 
 COBJ_MAIN = $(COBJ_COMMON) kinsol/kinsol_ml$(XO) $(ARKODE_COBJ_MAIN)
 
-MLOBJ_MAIN =	sundials_config.cmo		\
-		sundials.cmo			\
+MLOBJ_MAIN =	core/sundials_config.cmo	\
+		core/sundials.cmo		\
 		nvectors/nvector.cmo		\
 		lsolvers/dls_impl.cmo		\
 		lsolvers/dls.cmo		\
@@ -63,7 +63,7 @@ MLOBJ_MAIN =	sundials_config.cmo		\
 		$(KLU_MLOBJ_MAIN)		\
 		$(SUPERLUMT_MLOBJ_MAIN)
 
-CMI_MAIN = $(filter-out sundials_config.cmi,$(filter-out %_impl.cmi,\
+CMI_MAIN = $(filter-out core/sundials_config.cmi,$(filter-out %_impl.cmi,\
 	    $(MLOBJ_MAIN:.cmo=.cmi)))
 
 ### Objects specific to sundials.cma.
@@ -108,7 +108,8 @@ CMI_MPI = $(MLOBJ_MPI:.cmo=.cmi)
 # For `make clean'.  All object files, including ones that may not be
 # built/updated under the current configuration.  Duplicates OK.
 ALL_COBJ = $(COBJ_MAIN) $(COBJ_SENS) $(COBJ_NO_SENS) $(COBJ_MPI)
-ALL_MLOBJ =dochtml.cmo $(MLOBJ_MAIN) $(MLOBJ_SENS) $(MLOBJ_NO_SENS) $(MLOBJ_MPI)
+ALL_MLOBJ =doc/dochtml.cmo $(MLOBJ_MAIN) \
+	   $(MLOBJ_SENS) $(MLOBJ_NO_SENS) $(MLOBJ_MPI)
 ALL_CMA = sundials.cma sundials_no_sens.cma sundials_mpi.cma \
           sundials_docs.cma sundials_docs.cmxs
 
@@ -296,20 +297,20 @@ DOCHTML_PLUGIN_PP=$(DOCHTML_PP)					\
                   -DIDAS_DOC_ROOT=\"$(IDAS_DOC_ROOT_DEFAULT)\"	\
                   -DKINSOL_DOC_ROOT=\"$(KINSOL_DOC_ROOT_DEFAULT)\"	\
                   -DMATHJAX_URL=\"$(MATHJAX_URL_DEFAULT)\"
-dochtml.cmo: INCLUDES += -I +ocamldoc
-dochtml.cmo: OCAMLFLAGS += -pp '$(DOCHTML_PLUGIN_PP)'
-dochtml.cmo: config
+doc/dochtml.cmo: INCLUDES += -I +ocamldoc
+doc/dochtml.cmo: OCAMLFLAGS += -pp '$(DOCHTML_PLUGIN_PP)'
+doc/dochtml.cmo: config
 
-dochtml.cmx: INCLUDES += -I +ocamldoc
-dochtml.cmx: OCAMLOPTFLAGS += -pp '$(DOCHTML_PLUGIN_PP)'
-dochtml.cmx: config
+doc/dochtml.cmx: INCLUDES += -I +ocamldoc
+doc/dochtml.cmx: OCAMLOPTFLAGS += -pp '$(DOCHTML_PLUGIN_PP)'
+doc/dochtml.cmx: config
 
 SUNDIALS_DOCS=sundials_docs$(OCAMLDOC_PLUGIN)
 
-sundials_docs.cma: sundials_config.cmo dochtml.cmo
+sundials_docs.cma: core/sundials_config.cmo doc/dochtml.cmo
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ -a $^
 
-sundials_docs.cmxs: sundials_config.cmx dochtml.cmx
+sundials_docs.cmxs: core/sundials_config.cmx doc/dochtml.cmx
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -shared -o $@ $^
 
 
@@ -444,7 +445,7 @@ distcheck:
 depend: .depend
 .depend:
 	$(OCAMLDEP) -pp '$(DOCHTML_PP)' *.mli *.ml */*.mli */*.ml > .depend
-	$(CC) -MM $(CPPFLAGS) *.c >> .depend
+	$(CC) -MM $(CPPFLAGS) $(SUBDIRS:%=-I %) */*.c >> .depend
 
 clean:
 	-@($(MAKE) -C examples clean)

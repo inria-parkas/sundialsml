@@ -21,7 +21,7 @@
 
 #include <caml/mlvalues.h>
 
-#include "config.h"
+#include "../config.h"
 #include <assert.h>
 
 void sundials_ml_warn_discarded_exn (value exn, const char *context);

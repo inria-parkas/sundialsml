@@ -11,7 +11,7 @@
  *                                                                     *
  ***********************************************************************/
 
-#include "config.h"
+#include "../config.h"
 
 #include <sundials/sundials_types.h>
 #include <sundials/sundials_direct.h>
