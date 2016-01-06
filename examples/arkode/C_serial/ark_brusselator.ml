@@ -181,18 +181,18 @@ let main () =
   let tout =ref (t0 +. dTout) in
   printf "        t           u           v           w\n";
   printf "   -------------------------------------------\n";
-  try
-    for iout=0 to nt-1 do
-      (* call integrator *)
-      let t, _ = Arkode.solve_normal arkode_mem !tout y in
-      (* access/print solution *)
-      printf "  %10.6f  %10.6f  %10.6f  %10.6f\n" t data.{0} data.{1} data.{2};
-      fprintf ufid " %.16e %.16e %.16e %.16e\n" t data.{0} data.{1} data.{2};  
-      (* successful solve: update time *)
-      tout := min (!tout +. dTout) tf
-    done
-  with _ -> (* unsuccessful solve: break *)
-            fprintf stderr "Solver failure, stopping integration\n";
+  (try
+     for iout=0 to nt-1 do
+       (* call integrator *)
+       let t, _ = Arkode.solve_normal arkode_mem !tout y in
+       (* access/print solution *)
+       printf "  %10.6f  %10.6f  %10.6f  %10.6f\n" t data.{0} data.{1} data.{2};
+       fprintf ufid " %.16e %.16e %.16e %.16e\n" t data.{0} data.{1} data.{2};  
+       (* successful solve: update time *)
+       tout := min (!tout +. dTout) tf
+     done
+   with _ -> (* unsuccessful solve: break *)
+             fprintf stderr "Solver failure, stopping integration\n");
   printf "   -------------------------------------------\n";
   close_out ufid;
 

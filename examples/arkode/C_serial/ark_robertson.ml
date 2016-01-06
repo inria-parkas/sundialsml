@@ -123,19 +123,19 @@ let main () =
   printf "        t           u           v           w\n";
   printf "   --------------------------------------------------\n";
   printf "  %10.3e  %12.5e  %12.5e  %12.5e\n" t0 y.{0} y.{1} y.{2};
-  try
-    for iout=0 to nt-1 do
-      (* call integrator *)
-      let t, _ = Arkode.solve_normal arkode_mem !tout y_nv in
-
-      (* access/print solution *)
-      printf "  %10.3e  %12.5e  %12.5e  %12.5e\n" t y.{0} y.{1} y.{2};
-      fprintf ufid " %.16e %.16e %.16e %.16e\n" t y.{0} y.{1} y.{2};
-      (* successful solve: update time *)
-      tout := min (!tout +. dTout) tf
-    done
-  with _ -> (* unsuccessful solve: break *)
-            fprintf stderr "Solver failure, stopping integration\n";
+  (try
+     for iout=0 to nt-1 do
+       (* call integrator *)
+       let t, _ = Arkode.solve_normal arkode_mem !tout y_nv in
+ 
+       (* access/print solution *)
+       printf "  %10.3e  %12.5e  %12.5e  %12.5e\n" t y.{0} y.{1} y.{2};
+       fprintf ufid " %.16e %.16e %.16e %.16e\n" t y.{0} y.{1} y.{2};
+       (* successful solve: update time *)
+       tout := min (!tout +. dTout) tf
+     done
+   with _ -> (* unsuccessful solve: break *)
+             fprintf stderr "Solver failure, stopping integration\n");
   printf("   --------------------------------------------------\n");
   close_out ufid;
 
@@ -158,7 +158,7 @@ let main () =
   printf "   Total RHS evals for setting up the linear system = %d\n" nfeLS;
   printf "   Total number of Jacobian evaluations = %d\n" nje;
   printf "   Total number of Newton iterations = %d\n" nni;
-  printf "   Total number of linear solver convergence failures = %d\n" ncfn;
+  printf "   Total number of nonlinear solver convergence failures = %d\n" ncfn;
   printf "   Total number of error test failures = %d\n" netf
 
 (* Check environment variables for extra arguments.  *)

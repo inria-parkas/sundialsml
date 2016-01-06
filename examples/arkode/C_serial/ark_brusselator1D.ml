@@ -263,35 +263,35 @@ let main () =
   let tout = ref (t0+.dTout) in
   printf "        t      ||u||_rms   ||v||_rms   ||w||_rms\n";
   printf "   ----------------------------------------------\n";
-  try
-    for iout=0 to nt-1 do
-      (* call integrator *)
-      let t, _ = Arkode.solve_normal arkode_mem !tout y in
-
-      (* access/print solution statistics *)
-      let u = n_vwl2norm y umask in
-      let u = sqrt(u*.u/. float n_mesh) in
-      let v = n_vwl2norm y vmask in
-      let v = sqrt(v*.v/. float n_mesh) in
-      let w = n_vwl2norm y wmask in
-      let w = sqrt(w*.w/. float n_mesh) in
-      printf "  %10.6f  %10.6f  %10.6f  %10.6f\n" t u v w;
-      (* successful solve: update output time *)
-      tout := min (!tout +. dTout) tf;
-
-      (* output results to disk *)
-      for i=0 to n_mesh-1 do
-        fprintf ufid " %.16e" data.{idx i 0};
-        fprintf vfid " %.16e" data.{idx i 1};
-        fprintf wfid " %.16e" data.{idx i 2}
-      done;
-      fprintf ufid "\n";
-      fprintf vfid "\n";
-      fprintf wfid "\n"
-    done
-  with _ ->
-    (* unsuccessful solve: break *)
-    fprintf stderr "Solver failure, stopping integration\n";
+  (try
+     for iout=0 to nt-1 do
+       (* call integrator *)
+       let t, _ = Arkode.solve_normal arkode_mem !tout y in
+ 
+       (* access/print solution statistics *)
+       let u = n_vwl2norm y umask in
+       let u = sqrt(u*.u/. float n_mesh) in
+       let v = n_vwl2norm y vmask in
+       let v = sqrt(v*.v/. float n_mesh) in
+       let w = n_vwl2norm y wmask in
+       let w = sqrt(w*.w/. float n_mesh) in
+       printf "  %10.6f  %10.6f  %10.6f  %10.6f\n" t u v w;
+       (* successful solve: update output time *)
+       tout := min (!tout +. dTout) tf;
+ 
+       (* output results to disk *)
+       for i=0 to n_mesh-1 do
+         fprintf ufid " %.16e" data.{idx i 0};
+         fprintf vfid " %.16e" data.{idx i 1};
+         fprintf wfid " %.16e" data.{idx i 2}
+       done;
+       fprintf ufid "\n";
+       fprintf vfid "\n";
+       fprintf wfid "\n"
+     done
+   with _ ->
+     (* unsuccessful solve: break *)
+     fprintf stderr "Solver failure, stopping integration\n");
   printf "   ----------------------------------------------\n";
   close_out ufid;
   close_out vfid;
@@ -316,7 +316,7 @@ let main () =
   printf "   Total RHS evals for setting up the linear system = %d\n" nfeLS;
   printf "   Total number of Jacobian evaluations = %d\n" nje;
   printf "   Total number of Newton iterations = %d\n" nni;
-  printf "   Total number of linear solver convergence failures = %d\n" ncfn;
+  printf "   Total number of nonlinear solver convergence failures = %d\n" ncfn;
   printf "   Total number of error test failures = %d\n\n" netf
 
 (* Check environment variables for extra arguments.  *)

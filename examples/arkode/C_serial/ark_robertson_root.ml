@@ -132,30 +132,30 @@ let main () =
 
   (* Main time-stepping loop: calls ARKode to perform the integration, then
      prints results.  Stops when the final time has been reached *)
-  printf "        t           u           v           w\n";
-  printf "   --------------------------------------------------\n";
+  printf "        t             u             v             w\n";
+  printf "   -----------------------------------------------------\n";
   printf "  %12.5e  %12.5e  %12.5e  %12.5e\n" t0 y.{0} y.{1} y.{2};
   let tout = ref t1 in
   let rootsfound = Roots.create 2 in
   let root i = Roots.int_of_root (Roots.get rootsfound i) in
-  try
-    for iout=0 to nt-1 do
-      (* call integrator *)
-      let t, flag = Arkode.solve_normal arkode_mem !tout y_nv in
-
-      (* access/print solution *)
-      printf "  %12.5e  %12.5e  %12.5e  %12.5e\n" t y.{0} y.{1} y.{2};
-      fprintf ufid " %.16e %.16e %.16e %.16e\n" t y.{0} y.{1} y.{2};
-
-      if flag = Arkode.RootsFound then begin
-        Arkode.get_root_info arkode_mem rootsfound;
-        printf "      rootsfound[] = %3d %3d\n" (root 0) (root 1)
-      end;
-      tout := !tout *. tmult
-    done
-  with _ -> (* unsuccessful solve: break *)
-            fprintf stderr "Solver failure, stopping integration\n";
-  printf("   --------------------------------------------------\n");
+  (try
+     for iout=0 to nt-1 do
+       (* call integrator *)
+       let t, flag = Arkode.solve_normal arkode_mem !tout y_nv in
+ 
+       (* access/print solution *)
+       printf "  %12.5e  %12.5e  %12.5e  %12.5e\n" t y.{0} y.{1} y.{2};
+       fprintf ufid " %.16e %.16e %.16e %.16e\n" t y.{0} y.{1} y.{2};
+ 
+       if flag = Arkode.RootsFound then begin
+         Arkode.get_root_info arkode_mem rootsfound;
+         printf "      rootsfound[] = %3d %3d\n" (root 0) (root 1)
+       end;
+       tout := !tout *. tmult
+     done
+   with _ -> (* unsuccessful solve: break *)
+             fprintf stderr "Solver failure, stopping integration\n");
+  printf("   -----------------------------------------------------\n");
   close_out ufid;
 
   (* Print some final statistics *)
@@ -179,7 +179,7 @@ let main () =
   printf "   Total number of Jacobian evaluations = %d\n" nje;
   printf "   Total number of Newton iterations = %d\n" nni;
   printf "   Total root-function g evals = %d\n" nge;
-  printf "   Total number of linear solver convergence failures = %d\n" ncfn;
+  printf "   Total number of nonlinear solver convergence failures = %d\n" ncfn;
   printf "   Total number of error test failures = %d\n" netf
 
 (* Check environment variables for extra arguments.  *)

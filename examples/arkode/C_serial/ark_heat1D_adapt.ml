@@ -137,13 +137,13 @@ let project nold (xold : RealArray.t) (yold : RealArray.t)
   let iv= ref 0 in
   for i=0 to nnew - 1 do
     (* find old interval, start with previous value since sorted *)
-    try
-      for j=(!iv) to nold-1-1 do
-        if xnew.{i} >= xold.{j} && xnew.{i} <= xold.{j+1} then
-          (iv := j; raise Exit);
-      done;
-      iv := nold-1     (* just in case it wasn't found above *)
-    with Exit -> ();
+    (try
+       for j=(!iv) to nold-1-1 do
+         if xnew.{i} >= xold.{j} && xnew.{i} <= xold.{j+1} then
+           (iv := j; raise Exit);
+       done;
+       iv := nold-1     (* just in case it wasn't found above *)
+     with Exit -> ());
 
     (* perform interpolation *) 
     ynew.{i} <-

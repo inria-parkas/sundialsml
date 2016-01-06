@@ -807,7 +807,7 @@ let print_output s t =
   and nni     = Arkode.get_num_nonlin_solv_iters s
   and hu      = Arkode.get_last_step s
   in
-  printf "t = %10.2e  nst = %d  nfe = %d  nfi = %d  nfi = %d" t nst nfe nfi nni;
+  printf "t = %10.2e  nst = %d  nfe = %d  nfi = %d  nni = %d" t nst nfe nfi nni;
   printf "  hu = %11.2e\n\n" hu
 
 let print_final_stats s =
@@ -829,10 +829,10 @@ let print_final_stats s =
   in
 
   printf "\n\n Final statistics for this run:\n\n";
-  printf " ARKode real workspace length          = %4d \n" lenrw;
-  printf " ARKode integer workspace length       = %4d \n" leniw;
-  printf " ARKSPGMR real workspace length        = %4d \n" lenrwLS;
-  printf " ARKSPGMR integer workspace length     = %4d \n" leniwLS;
+  printf " ARKode real workspace length           = %4d \n" lenrw;
+  printf " ARKode integer workspace length        = %4d \n" leniw;
+  printf " ARKSPGMR real workspace length         = %4d \n" lenrwLS;
+  printf " ARKSPGMR integer workspace length      = %4d \n" leniwLS;
   printf " Number of steps                       = %4d \n" nst;
   printf " Number of f-s (explicit)              = %4d \n" nfe;
   printf " Number of f-s (implicit)              = %4d \n" nfi;

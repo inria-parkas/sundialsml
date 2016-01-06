@@ -149,26 +149,26 @@ let main () =
   printf "        t      ||u||_rms\n";
   printf "   -------------------------\n";
   printf "  %10.6f  %10.6f\n" t0 (sqrt((n_vdotprod y y)/.float mesh_n));
-  try
-    for iout=0 to nt-1 do
+  (try
+     for iout=0 to nt-1 do
+ 
+       (* call integrator *)
+       let t, _ = Arkode.solve_normal arkode_mem !tout y in
+       (* print solution stats *)
+       printf "  %10.6f  %10.6f\n" t (sqrt((n_vdotprod y y)/.float mesh_n));
+       (* successful solve: update output time *)
+       tout := !tout +. dTout;
+       if !tout > tf then tout := tf;
 
-      (* call integrator *)
-      let t, _ = Arkode.solve_normal arkode_mem !tout y in
-      (* print solution stats *)
-      printf "  %10.6f  %10.6f\n" t (sqrt((n_vdotprod y y)/.float mesh_n));
-      (* successful solve: update output time *)
-      tout := !tout +. dTout;
-      if !tout > tf then tout := tf;
-
-      (* output results to disk *)
-      for i=0 to mesh_n-1 do
-        fprintf ufid " %.16e" data.{i}
-      done;
-      fprintf ufid "\n"
-    done
-  with _ ->
-    (* unsuccessful solve: break *)
-    fprintf stderr "Solver failure, stopping integration\n";
+       (* output results to disk *)
+       for i=0 to mesh_n-1 do
+         fprintf ufid " %.16e" data.{i}
+       done;
+       fprintf ufid "\n"
+     done
+   with _ ->
+     (* unsuccessful solve: break *)
+     fprintf stderr "Solver failure, stopping integration\n");
   printf "   -------------------------\n";
   close_out ufid;
 
