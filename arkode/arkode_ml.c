@@ -1806,7 +1806,7 @@ CAMLprim value c_arkode_set_adaptivity_method(value varkode_mem, value vmeth)
 					 Tag_val(vmeth), 
 					 vks == Val_none,
 					 Bool_val(vorder),
-					 adapt_params);
+					 vks != Val_none ? adapt_params : NULL);
 	CHECK_FLAG("ARKodeSetAdaptivityMethod", flag);
     }
 
