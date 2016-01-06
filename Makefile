@@ -333,21 +333,21 @@ doc/html/index.html: OCAML_DOC_ROOT="$(OCAML_DOC_ROOT_DEFAULT)"
 doc/html/index.html: doc/html $(SUNDIALS_DOCS) intro.doc		\
 		     $(filter-out %_impl.cmi, $(CMI_MAIN))		\
 		     $(CMI_SENS) $(if $(MPI_ENABLED), $(CMI_MPI))
-	$(OCAMLDOC) -g $(SUNDIALS_DOCS) $(INCLUDES)		\
-	    -charset utf-8					\
-	    -short-functors					\
-	    -colorize-code					\
-	    -css-style docstyle.css				\
-	    $(DOC_URLS)						\
-	    -pp "$(DOCHTML_PP)					\
-		-D'OCAML_DOC_ROOT(x)=$(OCAML_DOC_ROOT)x'	\
-		-D'VERSION()=$(VERSION)'"			\
-	    -d ./doc/html/					\
-	    -hide Cvode_impl,Ida_impl,Kinsol_impl,Arkode_impl	\
-	    -t "Sundials/ML $(VERSION)p$(VERSIONP)"		\
-	    -intro intro.doc					\
-	    $(filter-out %_impl.mli, $(CMI_MAIN:.cmi=.mli))	\
-	    $(if $(MPI_ENABLED), $(CMI_MPI:.cmi=.mli))		\
+	$(OCAMLDOC) -g $(SUNDIALS_DOCS) $(INCLUDES) $(SUBDIRS:%=-I %)	\
+	    -charset utf-8						\
+	    -short-functors						\
+	    -colorize-code						\
+	    -css-style docstyle.css					\
+	    $(DOC_URLS)							\
+	    -pp "$(DOCHTML_PP)						\
+		-D'OCAML_DOC_ROOT(x)=$(OCAML_DOC_ROOT)x'		\
+		-D'VERSION()=$(VERSION)'"				\
+	    -d ./doc/html/						\
+	    -hide Cvode_impl,Ida_impl,Kinsol_impl,Arkode_impl		\
+	    -t "Sundials/ML $(VERSION)p$(VERSIONP)"			\
+	    -intro intro.doc						\
+	    $(filter-out %_impl.mli, $(CMI_MAIN:.cmi=.mli))		\
+	    $(if $(MPI_ENABLED), $(CMI_MPI:.cmi=.mli))			\
 	    $(CMI_SENS:.cmi=.mli)
 
 doc/html:
