@@ -78,4 +78,5 @@ html/perf.opt.png: ../examples/perf.opt.log
 	    OUTPUT=$@ ../examples/utils/plot.sh $<
 
 distclean clean:
-	-@$(RM) -f html/*.html
+	-@$(RM) -f html/*.html sundials_doc.cmxs
+	-@$(RM) -f dochtml.cmo dochtml.cmx dochtml.cmi dochtml.o

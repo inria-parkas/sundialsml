@@ -240,6 +240,6 @@ clean:
 
 distclean: clean
 	-@$(RM) -f META
-	-@$(RM) -f config.h
+	-@$(RM) -f config.h sundials/sundials_config.ml
 
 -include .depend
