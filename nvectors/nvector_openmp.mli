@@ -43,3 +43,6 @@ val unwrap : t -> Sundials.RealArray.t
 (** Returns the number of threads used within an OpenMP nvector. *)
 val num_threads : t -> int
 
+(** Underlying nvector operations on OpenMP nvectors. *)
+module Ops : Nvector.NVECTOR_OPS with type t = t
+

@@ -43,3 +43,6 @@ val unwrap : t -> Sundials.RealArray.t
 (** Returns the number of threads used within a Pthreads nvector. *)
 val num_threads : t -> int
 
+(** Underlyling nvector operations on Pthreads nvectors. *)
+module Ops : Nvector.NVECTOR_OPS with type t = t
+

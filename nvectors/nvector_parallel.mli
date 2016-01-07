@@ -72,7 +72,7 @@ module MakeOps : functor (A : sig
     end) -> Nvector.NVECTOR_OPS
             with type t = A.local_data * int * Mpi.communicator
 
-(** Nvector operations on parallel nvectors implemented in OCaml. *)
+(** Underlying nvector operations on parallel nvectors. *)
 module Ops : Nvector.NVECTOR_OPS with type t = t
 
 (** Nvector operations on {!data} implemented in OCaml. *)
