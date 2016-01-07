@@ -5,6 +5,8 @@ MPI_EXAMPLES = cvsAdvDiff_ASAp_non_p.ml		\
 	       cvsDiurnal_FSA_kry_p.ml		\
 	       cvsAtmDisp_ASAi_kry_bbd_p.ml
 
+FILES_TO_CLEAN = grad.m grad000.m grad001.m grad002.m grad003.m
+
 include ../../examples.mk
 
 # Tests with MPI and command-line arguments (make same choice as Sundials distrib)

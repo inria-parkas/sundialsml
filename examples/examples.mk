@@ -18,6 +18,9 @@
 #     - use lapack
 #     - use MPI
 #   respectively.
+# * FILES_TO_CLEAN
+#   Space-separated names of files (relative to current path) that should
+#   be deleted upon `make clean'.
 # * USELIB [optional]
 #   sundials or sundials_nosensi (no extension!).  Defaults to sundials.
 #
@@ -348,4 +351,4 @@ clean:
 	-@rm -f tests.opt.log lapack-tests.opt.log
 	-@rm -f perf.byte.log perf.opt.log
 	-@rm -f $(foreach t,$(PLOTTYPES),perf.opt.$t)
-	-@rm -f $(foreach t,$(PLOTTYPES),perf.byte.$t)
+	-@rm -f $(foreach t,$(PLOTTYPES),perf.byte.$t) $(FILES_TO_CLEAN)
