@@ -28,9 +28,9 @@
 
 #include <stdio.h>
 
-#include "sundials_ml.h"
-#include "sls_ml.h"
-#include "dls_ml.h"
+#include "../sundials/sundials_ml.h"
+#include "../lsolvers/sls_ml.h"
+#include "../lsolvers/dls_ml.h"
 
 static void finalize_slsmat(value va)
 {

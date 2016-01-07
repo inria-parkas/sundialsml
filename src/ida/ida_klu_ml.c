@@ -34,9 +34,9 @@
 #include <caml/custom.h>
 #include <caml/fail.h>
 
-#include "sundials_ml.h"
+#include "../sundials/sundials_ml.h"
 #include "ida_ml.h"
-#include "sls_ml.h"
+#include "../lsolvers/sls_ml.h"
 
 enum ida_klu_ordering_tag {
   VARIANT_IDA_KLU_AMD     = 0,

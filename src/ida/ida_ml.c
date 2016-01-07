@@ -56,14 +56,14 @@
 #endif
 
 #include <stdio.h>
-#include "spils_ml.h"
+#include "../lsolvers/spils_ml.h"
 #include "ida_ml.h"
 
 #define MAX_ERRMSG_LEN 256
 
 #include "ida_ml.h"
-#include "nvector_ml.h"
-#include "dls_ml.h"
+#include "../nvectors/nvector_ml.h"
+#include "../lsolvers/dls_ml.h"
 
 
 CAMLprim value c_ida_init_module (value exns)

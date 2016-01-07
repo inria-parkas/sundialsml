@@ -14,8 +14,8 @@
 #ifndef _KINSOL_ML_H__
 #define _KINSOL_ML_H__
 
-#include "sundials_ml.h"
-#include "nvector_ml.h"
+#include "../sundials/sundials_ml.h"
+#include "../nvectors/nvector_ml.h"
 #include <caml/mlvalues.h>
 
 void kinsol_ml_check_flag(const char *call, int flag);

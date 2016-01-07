@@ -34,9 +34,9 @@
 #include <caml/custom.h>
 #include <caml/fail.h>
 
-#include "sundials_ml.h"
+#include "../sundials/sundials_ml.h"
 #include "ida_ml.h"
-#include "sls_ml.h"
+#include "../lsolvers/sls_ml.h"
 
 enum ida_superlumt_ordering_tag {
   VARIANT_IDA_SUPERLUMT_NATURAL    = 0,

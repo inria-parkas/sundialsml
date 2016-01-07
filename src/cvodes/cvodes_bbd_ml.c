@@ -27,12 +27,12 @@
 #include <caml/unixsupport.h>
 #include <caml/bigarray.h>
 
-#include "dls_ml.h"
-#include "spils_ml.h"
-#include "sundials_ml.h"
-#include "cvode_ml.h"
+#include "../lsolvers/dls_ml.h"
+#include "../lsolvers/spils_ml.h"
+#include "../sundials/sundials_ml.h"
+#include "../cvode/cvode_ml.h"
 #include "cvodes_ml.h"
-#include "nvector_ml.h"
+#include "../nvectors/nvector_ml.h"
 
 /* callbacks */
 

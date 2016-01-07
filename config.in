@@ -125,7 +125,6 @@ GNUPLOT = gnuplot
 EXAMPLESROOT = @EXAMPLESROOT@
 
 SUBDIRS = sundials nvectors lsolvers cvode cvodes ida idas arkode kinsol
-CSUBDIRS = -I. -Isundials -Ilsolvers -Invectors
 
 XA=@XA@
 XO=@XO@

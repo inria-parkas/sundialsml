@@ -29,9 +29,9 @@
 #include <idas/idas.h>
 #include <idas/idas_bbdpre.h>
 
-#include "sundials_ml.h"
+#include "../sundials/sundials_ml.h"
 #include "ida_ml.h"
-#include "nvector_ml.h"
+#include "../nvectors/nvector_ml.h"
 
 /* Callbacks */
 

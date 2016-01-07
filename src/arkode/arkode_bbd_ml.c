@@ -27,9 +27,9 @@
 #include <arkode/arkode.h>
 #include <arkode/arkode_bbdpre.h>
 
-#include "sundials_ml.h"
+#include "../sundials/sundials_ml.h"
 #include "arkode_ml.h"
-#include "nvector_ml.h"
+#include "../nvectors/nvector_ml.h"
 
 
 /* Callbacks */

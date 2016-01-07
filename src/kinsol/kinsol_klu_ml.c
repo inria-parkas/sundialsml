@@ -22,9 +22,9 @@
 #include <caml/custom.h>
 #include <caml/fail.h>
 
-#include "sundials_ml.h"
+#include "../sundials/sundials_ml.h"
 #include "kinsol_ml.h"
-#include "sls_ml.h"
+#include "../lsolvers/sls_ml.h"
 
 enum kinsol_klu_ordering_tag {
   VARIANT_CVODE_KLU_AMD     = 0,

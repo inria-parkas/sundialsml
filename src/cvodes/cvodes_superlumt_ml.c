@@ -22,10 +22,10 @@
 #include <caml/custom.h>
 #include <caml/fail.h>
 
-#include "sundials_ml.h"
-#include "cvode_ml.h"
+#include "../sundials/sundials_ml.h"
+#include "../cvode/cvode_ml.h"
 #include "cvodes_ml.h"
-#include "sls_ml.h"
+#include "../lsolvers/sls_ml.h"
 
 static int jacfn_nosens( /* CVSlsSparseJacFnB */
     realtype t,

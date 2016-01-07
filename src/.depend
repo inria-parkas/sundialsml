@@ -117,3 +117,110 @@ sundials/sundials.cmo : sundials/sundials.cmi
 sundials/sundials.cmx : sundials/sundials.cmi
 sundials/sundials_config.cmo :
 sundials/sundials_config.cmx :
+arkode_bbd_ml.o: arkode/arkode_bbd_ml.c arkode/../sundials/sundials_ml.h \
+ arkode/../sundials/../config.h arkode/arkode_ml.h \
+ arkode/../nvectors/nvector_ml.h
+arkode_klu_ml.o: arkode/arkode_klu_ml.c arkode/../sundials/sundials_ml.h \
+ arkode/../sundials/../config.h arkode/arkode_ml.h \
+ arkode/../lsolvers/sls_ml.h
+arkode_ml.o: arkode/arkode_ml.c arkode/../config.h \
+ arkode/../lsolvers/dls_ml.h arkode/../lsolvers/spils_ml.h \
+ arkode/../sundials/sundials_ml.h arkode/../sundials/../config.h \
+ arkode/arkode_ml.h arkode/../nvectors/nvector_ml.h
+arkode_superlumt_ml.o: arkode/arkode_superlumt_ml.c \
+ arkode/../sundials/sundials_ml.h arkode/../sundials/../config.h \
+ arkode/arkode_ml.h arkode/../lsolvers/sls_ml.h
+cvode_bbd_ml.o: cvode/cvode_bbd_ml.c cvode/../sundials/sundials_ml.h \
+ cvode/../sundials/../config.h cvode/cvode_ml.h \
+ cvode/../nvectors/nvector_ml.h
+cvode_klu_ml.o: cvode/cvode_klu_ml.c cvode/../sundials/sundials_ml.h \
+ cvode/../sundials/../config.h cvode/cvode_ml.h \
+ cvode/../lsolvers/sls_ml.h
+cvode_ml.o: cvode/cvode_ml.c cvode/../config.h cvode/../lsolvers/dls_ml.h \
+ cvode/../lsolvers/spils_ml.h cvode/../sundials/sundials_ml.h \
+ cvode/../sundials/../config.h cvode/cvode_ml.h \
+ cvode/../nvectors/nvector_ml.h
+cvode_superlumt_ml.o: cvode/cvode_superlumt_ml.c \
+ cvode/../sundials/sundials_ml.h cvode/../sundials/../config.h \
+ cvode/cvode_ml.h cvode/../lsolvers/sls_ml.h
+cvodes_bbd_ml.o: cvodes/cvodes_bbd_ml.c cvodes/../lsolvers/dls_ml.h \
+ cvodes/../lsolvers/spils_ml.h cvodes/../sundials/sundials_ml.h \
+ cvodes/../sundials/../config.h cvodes/../cvode/cvode_ml.h \
+ cvodes/cvodes_ml.h cvodes/../nvectors/nvector_ml.h
+cvodes_klu_ml.o: cvodes/cvodes_klu_ml.c cvodes/../sundials/sundials_ml.h \
+ cvodes/../sundials/../config.h cvodes/../cvode/cvode_ml.h \
+ cvodes/cvodes_ml.h cvodes/../lsolvers/sls_ml.h
+cvodes_ml.o: cvodes/cvodes_ml.c cvodes/../config.h \
+ cvodes/../lsolvers/dls_ml.h cvodes/../lsolvers/spils_ml.h \
+ cvodes/../sundials/sundials_ml.h cvodes/../sundials/../config.h \
+ cvodes/../cvode/cvode_ml.h cvodes/cvodes_ml.h \
+ cvodes/../nvectors/nvector_ml.h
+cvodes_superlumt_ml.o: cvodes/cvodes_superlumt_ml.c \
+ cvodes/../sundials/sundials_ml.h cvodes/../sundials/../config.h \
+ cvodes/../cvode/cvode_ml.h cvodes/cvodes_ml.h \
+ cvodes/../lsolvers/sls_ml.h
+ida_bbd_ml.o: ida/ida_bbd_ml.c ida/../sundials/sundials_ml.h \
+ ida/../sundials/../config.h ida/ida_ml.h ida/../nvectors/nvector_ml.h
+ida_klu_ml.o: ida/ida_klu_ml.c ida/../sundials/sundials_ml.h \
+ ida/../sundials/../config.h ida/ida_ml.h ida/../lsolvers/sls_ml.h
+ida_ml.o: ida/ida_ml.c ida/../config.h ida/../lsolvers/spils_ml.h \
+ ida/ida_ml.h ida/../sundials/sundials_ml.h ida/../sundials/../config.h \
+ ida/../nvectors/nvector_ml.h ida/../lsolvers/dls_ml.h
+ida_superlumt_ml.o: ida/ida_superlumt_ml.c ida/../sundials/sundials_ml.h \
+ ida/../sundials/../config.h ida/ida_ml.h ida/../lsolvers/sls_ml.h
+idas_bbd_ml.o: idas/idas_bbd_ml.c idas/../lsolvers/dls_ml.h \
+ idas/../lsolvers/spils_ml.h idas/../sundials/sundials_ml.h \
+ idas/../sundials/../config.h idas/../ida/ida_ml.h \
+ idas/../ida/../sundials/sundials_ml.h idas/idas_ml.h \
+ idas/../nvectors/nvector_ml.h
+idas_klu_ml.o: idas/idas_klu_ml.c idas/../sundials/sundials_ml.h \
+ idas/../sundials/../config.h idas/../ida/ida_ml.h \
+ idas/../ida/../sundials/sundials_ml.h idas/idas_ml.h \
+ idas/../lsolvers/sls_ml.h
+idas_ml.o: idas/idas_ml.c idas/../config.h idas/../lsolvers/spils_ml.h \
+ idas/../ida/ida_ml.h idas/../ida/../sundials/sundials_ml.h \
+ idas/../ida/../sundials/../config.h idas/idas_ml.h \
+ idas/../sundials/sundials_ml.h idas/../nvectors/nvector_ml.h \
+ idas/../lsolvers/dls_ml.h
+idas_superlumt_ml.o: idas/idas_superlumt_ml.c \
+ idas/../sundials/sundials_ml.h idas/../sundials/../config.h \
+ idas/../ida/ida_ml.h idas/../ida/../sundials/sundials_ml.h \
+ idas/idas_ml.h idas/../lsolvers/sls_ml.h
+kinsol_bbd_ml.o: kinsol/kinsol_bbd_ml.c kinsol/../lsolvers/dls_ml.h \
+ kinsol/../lsolvers/spils_ml.h kinsol/kinsol_ml.h \
+ kinsol/../sundials/sundials_ml.h kinsol/../sundials/../config.h \
+ kinsol/../nvectors/nvector_ml.h
+kinsol_klu_ml.o: kinsol/kinsol_klu_ml.c kinsol/../sundials/sundials_ml.h \
+ kinsol/../sundials/../config.h kinsol/kinsol_ml.h \
+ kinsol/../nvectors/nvector_ml.h kinsol/../lsolvers/sls_ml.h
+kinsol_ml.o: kinsol/kinsol_ml.c kinsol/../config.h \
+ kinsol/../lsolvers/dls_ml.h kinsol/../lsolvers/spils_ml.h \
+ kinsol/kinsol_ml.h kinsol/../sundials/sundials_ml.h \
+ kinsol/../sundials/../config.h kinsol/../nvectors/nvector_ml.h
+kinsol_superlumt_ml.o: kinsol/kinsol_superlumt_ml.c \
+ kinsol/../sundials/sundials_ml.h kinsol/../sundials/../config.h \
+ kinsol/kinsol_ml.h kinsol/../nvectors/nvector_ml.h \
+ kinsol/../lsolvers/sls_ml.h
+dls_ml.o: lsolvers/dls_ml.c lsolvers/../sundials/sundials_ml.h \
+ lsolvers/../sundials/../config.h lsolvers/../lsolvers/dls_ml.h
+sls_ml.o: lsolvers/sls_ml.c lsolvers/../config.h \
+ lsolvers/../sundials/sundials_ml.h lsolvers/../sundials/../config.h \
+ lsolvers/../lsolvers/sls_ml.h lsolvers/../lsolvers/dls_ml.h
+spils_ml.o: lsolvers/spils_ml.c lsolvers/../sundials/sundials_ml.h \
+ lsolvers/../sundials/../config.h lsolvers/../lsolvers/spils_ml.h \
+ lsolvers/../nvectors/nvector_ml.h
+nvector_ml.o: nvectors/nvector_ml.c nvectors/../nvectors/nvector_ml.h \
+ nvectors/../sundials/sundials_ml.h nvectors/../sundials/../config.h
+nvector_openmp_ml.o: nvectors/nvector_openmp_ml.c \
+ nvectors/../sundials/sundials_ml.h nvectors/../sundials/../config.h \
+ nvectors/../nvectors/nvector_ml.h \
+ nvectors/../nvectors/nvector_openmp_ml.h
+nvector_parallel_ml.o: nvectors/nvector_parallel_ml.c \
+ nvectors/../sundials/sundials_ml.h nvectors/../sundials/../config.h \
+ nvectors/../nvectors/nvector_ml.h \
+ nvectors/../nvectors/nvector_parallel_ml.h
+nvector_pthreads_ml.o: nvectors/nvector_pthreads_ml.c \
+ nvectors/../sundials/sundials_ml.h nvectors/../sundials/../config.h \
+ nvectors/nvector_ml.h nvectors/nvector_pthreads_ml.h
+sundials_ml.o: sundials/sundials_ml.c sundials/sundials_ml.h \
+ sundials/../config.h

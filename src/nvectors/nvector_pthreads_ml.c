@@ -11,7 +11,7 @@
  *                                                                     *
  ***********************************************************************/
 
-#include "sundials_ml.h"
+#include "../sundials/sundials_ml.h"
 #include "nvector_ml.h"
 #include "nvector_pthreads_ml.h"
 

@@ -27,8 +27,8 @@
 
 #include <stdio.h>
 
-#include "sundials_ml.h"
-#include "dls_ml.h"
+#include "../sundials/sundials_ml.h"
+#include "../lsolvers/dls_ml.h"
 
 CAMLprim value c_dls_init_module (value exns)
 {

@@ -18,7 +18,7 @@
 #include <sundials/sundials_nvector.h>
 #include <caml/mlvalues.h>
 
-#include "sundials_ml.h"
+#include "../sundials/sundials_ml.h"
 
 void ida_ml_check_flag(const char *call, int flag);
 void ida_ml_set_linear_solver(void *ida_mem, value ls, int n);

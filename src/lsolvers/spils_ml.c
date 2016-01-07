@@ -11,7 +11,7 @@
  *                                                                     *
  ***********************************************************************/
 
-#include "sundials_ml.h"
+#include "../sundials/sundials_ml.h"
 
 #include <sundials/sundials_config.h>
 #include <sundials/sundials_iterative.h>
@@ -33,8 +33,8 @@
 #include <caml/unixsupport.h>
 #include <caml/bigarray.h>
 
-#include "spils_ml.h"
-#include "nvector_ml.h"
+#include "../lsolvers/spils_ml.h"
+#include "../nvectors/nvector_ml.h"
 
 // we only use the size in caml_alloc_final
 #define NVECTOR_APPROXSIZE(v) (1)

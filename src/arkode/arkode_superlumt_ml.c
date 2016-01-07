@@ -22,9 +22,9 @@
 #include <caml/custom.h>
 #include <caml/fail.h>
 
-#include "sundials_ml.h"
+#include "../sundials/sundials_ml.h"
 #include "arkode_ml.h"
-#include "sls_ml.h"
+#include "../lsolvers/sls_ml.h"
 
 enum arkode_superlumt_ordering_tag {
   VARIANT_ARKODE_SUPERLUMT_NATURAL    = 0,

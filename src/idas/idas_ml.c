@@ -38,12 +38,12 @@
 #include <idas/idas_lapack.h>
 #endif
 
-#include "spils_ml.h"
-#include "ida_ml.h"
+#include "../lsolvers/spils_ml.h"
+#include "../ida/ida_ml.h"
 #include "idas_ml.h"
-#include "sundials_ml.h"
-#include "nvector_ml.h"
-#include "dls_ml.h"
+#include "../sundials/sundials_ml.h"
+#include "../nvectors/nvector_ml.h"
+#include "../lsolvers/dls_ml.h"
 
 #define MAX_ERRMSG_LEN 256
 

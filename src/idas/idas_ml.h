@@ -18,7 +18,7 @@
 #include <sundials/sundials_nvector.h>
 #include <caml/mlvalues.h>
 
-#include "sundials_ml.h"
+#include "../sundials/sundials_ml.h"
 
 /* The sessions of IDAS work almost exactly as described in ida_ml.h.
  *

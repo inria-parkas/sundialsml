@@ -11,9 +11,9 @@
  *                                                                     *
  ***********************************************************************/
 
-#include "sundials_ml.h"
-#include "nvector_ml.h"
-#include "nvector_parallel_ml.h"
+#include "../sundials/sundials_ml.h"
+#include "../nvectors/nvector_ml.h"
+#include "../nvectors/nvector_parallel_ml.h"
 
 #include <caml/mlvalues.h>
 #include <caml/alloc.h>
