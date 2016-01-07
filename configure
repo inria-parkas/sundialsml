@@ -939,7 +939,7 @@ fi
 	 s#@XS@#${XS}#;
 	 s#@EXAMPLESROOT@#${EXAMPLESROOT}#;
 	 s#@OCAMLBIN@#${OCAMLBIN}#;
-	 s#@OCAMLROOT@#${OCAMLROOT}#;" src/config.in) > src/config
+	 s#@OCAMLROOT@#${OCAMLROOT}#;" config.in) > config
 
 echo "/* Automatically generated file - don't edit!  See configure.  */"\
      > src/config.h

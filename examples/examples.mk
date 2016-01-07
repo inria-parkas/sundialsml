@@ -31,7 +31,7 @@
 #    of bar.{out,reps,time}.
 
 SRC=$(SRCROOT)/src
-include $(SRC)/config
+include $(SRCROOT)/config
 
 all: tests.byte tests.opt
 
@@ -295,11 +295,11 @@ $(ALL_EXAMPLES:.ml=.sundials.c): %.sundials.c: $(C_EXAMPLES)		     \
 	 sed -e 's#@sundials_src_name@#$<#' -e "s#@main_args@#$$main_args#" \
 	   $(UTILS)/sundials_wrapper.c.in > $@
 
-$(SERIAL_EXAMPLES:.ml=.sundials): %.sundials: %.sundials.c $(SRC)/config
+$(SERIAL_EXAMPLES:.ml=.sundials): %.sundials: %.sundials.c $(SRCROOT)/config
 	$(CC) -o $@ -I $(EXAMPLESROOT)/$(C_SUBDIR) \
 	    $(EG_CFLAGS) $< $(LIB_PATH) $(EG_LDFLAGS) $(LAPACK_LIB)
 
-$(MPI_EXAMPLES:.ml=.sundials): %.sundials: %.sundials.c $(SRC)/config
+$(MPI_EXAMPLES:.ml=.sundials): %.sundials: %.sundials.c $(SRCROOT)/config
 	$(MPICC) -o $@ -I $(EXAMPLESROOT)/$(C_SUBDIR) \
 	    $(EG_CFLAGS) $< $(LIB_PATH) $(EG_LDFLAGS) \
 	    $(LAPACK_LIB) $(MPI_LIBLINK)
@@ -313,7 +313,7 @@ $(SRC)/%.cma $(SRC)/%.cmxa:
 	@echo "Maybe you forgot to compile the main library?"
 	@false
 
-$(SRC)/config:
+$(SRCROOT)/config:
 	@echo "$@ doesn't exist."
 	@echo "Maybe you forgot to compile the main library?"
 	@false

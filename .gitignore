@@ -1,6 +1,7 @@
 config
 *.cmo
 *.cmx
+*.cmxs
 *.cmi
 *.cma
 *.cmxa
