@@ -288,11 +288,13 @@ let print_final_stats s =
   and nsetups      = get_num_lin_solv_setups s
   and netf         = get_num_err_test_fails s
   and nni          = get_num_nonlin_solv_iters s
+  and ncfn         = get_num_nonlin_solv_conv_fails s
   in
   let lenrwLS, leniwLS = Spils.get_work_space s
   and nli   = Spils.get_num_lin_iters s
   and npe   = Spils.get_num_prec_evals s
   and nps   = Spils.get_num_prec_solves s
+  and ncfl  = Spils.get_num_conv_fails s
   and nfeLS = Spils.get_num_rhs_evals s
   in
   printf "\nFinal Statistics: \n\n";
@@ -302,7 +304,8 @@ let print_final_stats s =
   printf "nfi     = %5d     nfels   = %5d\n" nfi nfeLS;
   printf "nni     = %5d     nli     = %5d\n" nni nli;
   printf "nsetups = %5d     netf    = %5d\n" nsetups netf;
-  printf "npe     = %5d     nps     = %5d\n" npe nps
+  printf "npe     = %5d     nps     = %5d\n" npe nps;
+  printf "ncfn    = %5d     ncfl    = %5d\n\n" ncfn ncfl 
  
 (* Routine to send boundary data to neighboring PEs *)
 
@@ -682,6 +685,7 @@ let main () =
       t0
       u)
   in
+  Arkode.set_max_num_steps arkode_mem 10000;
     
   if my_pe = 0 then
     printf "\n2-species diurnal advection-diffusion problem\n\n";
