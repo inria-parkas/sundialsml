@@ -6,8 +6,10 @@ USELIB ?= sundials_no_sens
 SRCROOT=../../..
 SUBDIR=arkode/C_parallel
 
-EXAMPLES = ark_diurnal_kry_p.ml
+MPI_EXAMPLES = ark_diurnal_kry_p.ml \
+	       ark_diurnal_kry_bbd_p.ml
 
 include ../../examples.mk
 
 $(eval $(call EXECUTION_RULE,ark_diurnal_kry_p,$(MPIRUN) -np 4 $$<))
+$(eval $(call EXECUTION_RULE,ark_diurnal_kry_bbd_p,$(MPIRUN) -np 4 $$<))

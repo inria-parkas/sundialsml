@@ -1,6 +1,6 @@
 (*-----------------------------------------------------------------
  * Programmer(s): Daniel R. Reynolds @ SMU
- *-----------------------------------------------------------------
+ *---------------------------------------------------------------
  * OCaml port: Timothy Bourke, Inria, Jan 2016.
  *---------------------------------------------------------------
  * Copyright (c) 2015, Southern Methodist University and 
@@ -36,30 +36,33 @@
  * The problem is solved by ARKODE on NPE processors, treated
  * as a rectangular process grid of size NPEX by NPEY, with
  * NPE = NPEX*NPEY. Each processor contains a subgrid of size MXSUB
- * by MYSUB of the (x,y) mesh.  Thus the actual mesh sizes are
+ * by MYSUB of the (x,y) mesh. Thus the actual mesh sizes are
  * MX = MXSUB*NPEX and MY = MYSUB*NPEY, and the ODE system size is
  * neq = 2*MX*MY.
  *
  * The solution is done with the DIRK/GMRES method (i.e. using the
- * ARKSPGMR linear solver) and the block-diagonal part of the
- * Newton matrix as a left preconditioner. A copy of the
- * block-diagonal part of the Jacobian is saved and conditionally
+ * ARKSPGMR linear solver) and a block-diagonal matrix with banded
+ * blocks as a preconditioner, using the ARKBBDPRE module.
+ * Each block is generated using difference quotients, with
+ * half-bandwidths mudq = mldq = 2*MXSUB, but the retained banded
+ * blocks have half-bandwidths mukeep = mlkeep = 2.
+ * A copy of the approximate Jacobian is saved and conditionally
  * reused within the preconditioner routine.
+ *
+ * The problem is solved twice -- with left and right preconditioning.
  *
  * Performance data and sampled solution values are printed at
  * selected output times, and all performance counters are printed
  * on completion.
  *
  * This version uses MPI for user routines.
- * 
- * Execution: mpiexec -n N ark_diurnal_kry_p   with N = NPEX*NPEY
- * (see constants below).
- * -----------------------------------------------------------------
+ * Execute with number of processors = NPEX*NPEY (see constants below).
+ *-----------------------------------------------------------------
  *)
 
 module RealArray = Sundials.RealArray
 module Roots  = Sundials.Roots
-module Direct = Dls.ArrayDenseMatrix
+module BBD = Arkode_bbd
 open Bigarray
 
 let local_array = Nvector_parallel.local_array
@@ -122,22 +125,10 @@ let floor =    100.0        (* value of C1 or C2 at which tolerances *)
                             (* change from relative to absolute      *)
 let atol =     rtol*.floor  (* scalar absolute tolerance *)
 
-(* User-defined matrix accessor macro: IJth
-
-   IJth is defined in order to write code which indexes into dense
-   matrices with a (row,column) pair, where 1 <= row,column <= NVARS.   
-
-   IJth(a,i,j) references the (i,j)th entry of the small matrix realtype **a,
-   where 1 <= i,j <= NVARS. The small matrix routines in sundials_dense.h
-   work with matrices stored by column in a 2-dimensional array. In C,
-   arrays are indexed starting at 0, not 1. *)
-let ijth v i j       = Direct.get v (i - 1) (j - 1)
-let set_ijth v i j e = Direct.set v (i - 1) (j - 1) e
-
 (* Type : UserData 
-   contains problem constants, preconditioner blocks, pivot arrays, 
-   grid constants, and processor indices, as well as data needed
-   for the preconditiner *)
+   contains problem constants, extended dependent variable array,
+   grid constants, processor indices, MPI communicator *)
+
 type user_data = {
 
         mutable q4 : float;
@@ -159,11 +150,6 @@ type user_data = {
 
         comm       : Mpi.communicator;
 
-        (* For preconditioner *)
-        p          : Direct.t array array;
-        jbd        : Direct.t array array;
-        pivot      : Sundials.LintArray.t array array;
-
     }
 
 (*********************** Private Helper Functions ************************)
@@ -173,15 +159,9 @@ type user_data = {
 let sqr x = x ** 2.0
 
 let init_user_data my_pe comm =
-  let new_dmat _ = Direct.create nvars nvars in
-  let new_int1 _  = Sundials.LintArray.create nvars in
-  let new_y_arr elinit _ = Array.init mysub elinit in
-  let new_xy_arr elinit  = Array.init mxsub (new_y_arr elinit) in
-
   let dx    = (xmax-.xmin)/.(float (mx-1)) in
   let dy    = (ymax-.ymin)/.(float (my-1)) in
   let isuby = my_pe/npex in
-
   {
     q4       = 0.0; (* set later *)
 
@@ -206,11 +186,6 @@ let init_user_data my_pe comm =
     (* Set the sizes of a boundary x-line in u and uext *)
     nvmxsub  = nvars*mxsub;
     nvmxsub2 = nvars*(mxsub+2);
-
-    (* Preconditioner-related fields *)
-    p     = new_xy_arr new_dmat;
-    jbd   = new_xy_arr new_dmat;
-    pivot = new_xy_arr new_int1;
   }
 
 (* Set initial conditions in u *)
@@ -246,6 +221,17 @@ let set_initial_profiles data u =
       offset := !offset + 2
     done
   done
+
+(* Print problem introduction *)
+
+let print_intro npes mudq mldq mukeep mlkeep =
+  printf "\n2-species diurnal advection-diffusion problem\n";
+  printf "  %d by %d mesh on %d processors\n" mx my npes;
+  printf "  Using ARKBBDPRE preconditioner module\n";
+  printf "    Difference-quotient half-bandwidths are";
+  printf " mudq = %d,  mldq = %d\n" mudq mldq;
+  printf "    Retained band block half-bandwidths are";
+  printf " mukeep = %d,  mlkeep = %d" mukeep mlkeep
 
 (* Print current t, step count, order, stepsize, and sampled c1,c2 values *)
 
@@ -288,21 +274,30 @@ let print_final_stats s =
   and nsetups      = get_num_lin_solv_setups s
   and netf         = get_num_err_test_fails s
   and nni          = get_num_nonlin_solv_iters s
+  and ncfn         = get_num_nonlin_solv_conv_fails s
   in
   let lenrwLS, leniwLS = Spils.get_work_space s
   and nli   = Spils.get_num_lin_iters s
   and npe   = Spils.get_num_prec_evals s
   and nps   = Spils.get_num_prec_solves s
+  and ncfl  = Spils.get_num_conv_fails s
   and nfeLS = Spils.get_num_rhs_evals s
   in
   printf "\nFinal Statistics: \n\n";
-  printf "lenrw   = %5d     leniw   = %5d\n" lenrw leniw;
-  printf "lenrwls = %5d     leniwls = %5d\n" lenrwLS leniwLS;
-  printf "nst     = %5d     nfe     = %5d\n" nst nfe;
-  printf "nfi     = %5d     nfels   = %5d\n" nfi nfeLS;
-  printf "nni     = %5d     nli     = %5d\n" nni nli;
-  printf "nsetups = %5d     netf    = %5d\n" nsetups netf;
-  printf "npe     = %5d     nps     = %5d\n" npe nps
+  printf "lenrw   = %5d     leniw   = %5d\n"   lenrw leniw;
+  printf "lenrwls = %5d     leniwls = %5d\n"   lenrwLS leniwLS;
+  printf "nst     = %5d     nfe     = %5d\n"   nst nfe;
+  printf "nfe     = %5d     nfels   = %5d\n"   nfi nfeLS;
+  printf "nni     = %5d     nli     = %5d\n"   nni nli;
+  printf "nsetups = %5d     netf    = %5d\n"   nsetups netf;
+  printf "npe     = %5d     nps     = %5d\n"   npe nps;
+  printf "ncfn    = %5d     ncfl    = %5d\n\n" ncfn ncfl;
+
+  let lenrwBBDP, leniwBBDP = BBD.get_work_space s in
+  let ngevalsBBDP = BBD.get_num_gfn_evals s in
+  printf "In ARKBBDPRE: real/integer local work space sizes = %d, %d\n"
+                                                          lenrwBBDP leniwBBDP;  
+  printf "             no. flocal evals. = %d\n" ngevalsBBDP
  
 (* Routine to send boundary data to neighboring PEs *)
 
@@ -410,10 +405,10 @@ let brecvwait request isubx isuby dsizex uext =
     done
   end
 
-(* ucomm routine.  This routine performs all communication 
-   between processors of data needed to calculate f. *)
+(* fucomm routine. This routine performs all inter-processor
+   communication of data in u needed to calculate f.         *)
 
-let ucomm data t udata =
+let fucomm data t ((udata : RealArray.t),_,_) =
   let comm    = data.comm
   and my_pe   = data.my_pe
   and isubx   = data.isubx
@@ -435,7 +430,7 @@ let ucomm data t udata =
    between processors of data needed to calculate f has already been done,
    and this data is in the work array uext. *)
 
-let fcalc data t udata dudata =
+let flocal data t ((udata : RealArray.t),_,_) ((dudata : RealArray.t),_,_) =
   (* Get subgrid indices, data sizes, extended work array uext *)
   let isubx    = data.isubx
   and isuby    = data.isuby
@@ -532,114 +527,14 @@ let fcalc data t udata dudata =
 
 (***************** Functions Called by the Solver *************************)
 
-(* f routine.  Evaluate f(t,y).  First call ucomm to do communication of 
-   subgrid boundary data into uext.  Then calculate f by a call to fcalc. *)
+(* f routine.  Evaluate f(t,y).  First call fucomm to do communication of 
+   subgrid boundary data into uext.  Then calculate f by a call to flocal. *)
 
-let f data t ((udata : RealArray.t),_,_) ((dudata : RealArray.t),_,_) =
-  (* Call ucomm to do inter-processor communication *)
-  ucomm data t udata;
+let f data t u du =
+  (* Call fucomm to do inter-processor communication *)
+  fucomm data t u;
   (* Call fcalc to calculate all right-hand sides *)
-  fcalc data t udata dudata
-
-(* Preconditioner setup routine. Generate and preprocess P. *)
-let precond data jacarg jok gamma =
-  let { Arkode.jac_t   = tn;
-        Arkode.jac_y   = (udata, _, _);
-      } = jacarg
-  in
-  (* Make local copies of pointers in user_data, and of pointer to u's data *)
-  let p       = data.p
-  and jbd     = data.jbd
-  and pivot   = data.pivot
-  and isuby   = data.isuby
-  and nvmxsub = data.nvmxsub
-  in
-
-  let r =
-    if jok then begin
-      (* jok = TRUE: Copy Jbd to P *)
-      for ly = 0 to mysub - 1 do
-        for lx = 0 to mxsub - 1 do
-          Direct.blit jbd.(lx).(ly) p.(lx).(ly)
-        done
-      done;
-      false
-    end
-    else begin
-      (* jok = FALSE: Generate Jbd from scratch and copy to P *)
-      (* Make local copies of problem variables, for efficiency. *)
-      let q4coef = data.q4
-      and dely   = data.dy
-      and verdco = data.vdco
-      and hordco = data.hdco
-      in
-      (* Compute 2x2 diagonal Jacobian blocks (using q4 values 
-         computed on the last f call).  Load into P. *)
-      for ly = 0 to mysub - 1 do
-        let jy  = ly + isuby*mysub in
-        let ydn = ymin +. (float jy -. 0.5) *. dely in
-        let yup = ydn +. dely in
-        let cydn = verdco *. exp(0.2 *. ydn)
-        and cyup = verdco *. exp(0.2 *. yup)
-        in
-        let diag = -. (cydn +. cyup +. 2.0 *. hordco) in
-
-        for lx = 0 to mxsub - 1 do
-          let offset = lx*nvars + ly*nvmxsub in
-          let c1     = udata.{offset} in
-          let c2     = udata.{offset+1} in
-          let j      = jbd.(lx).(ly) in
-          let a      = p.(lx).(ly) in
-          set_ijth j 1 1 ((-. q1 *. c3 -. q2 *. c2) +. diag);
-          set_ijth j 1 2 (-. q2 *. c1 +. q4coef);
-          set_ijth j 2 1 (q1 *. c3 -. q2 *. c2);
-          set_ijth j 2 2 ((-. q2 *. c1 -. q4coef) +. diag);
-          Direct.blit j a
-        done
-      done;
-      true
-    end
-  in
-
-  (* Scale by -gamma *)
-  for ly = 0 to mysub - 1 do
-    for lx = 0 to mxsub - 1 do
-      Direct.scale (-. gamma) p.(lx).(ly)
-    done
-  done;
-  
-  (* Add identity matrix and do LU decompositions on blocks in place. *)
-  for lx = 0 to mxsub - 1 do
-    for ly = 0 to mysub - 1 do
-      Direct.add_identity p.(lx).(ly);
-      Direct.getrf p.(lx).(ly) pivot.(lx).(ly)
-    done
-  done;
-  r
-
-(* Preconditioner solve routine *)
-
-let psolve data jac_arg solve_arg (zdata, _, _) =
-  let { Arkode.Spils.rhs = (r, _, _);
-        Arkode.Spils.gamma = gamma;
-        Arkode.Spils.delta = delta;
-        Arkode.Spils.left = lr } = solve_arg
-  in
-  (* Extract the P and pivot arrays from user_data. *)
-  let p       = data.p
-  and pivot   = data.pivot
-  and nvmxsub = data.nvmxsub
-  in
-
-  Bigarray.Array1.blit r zdata;
-
-  (* Solve the block-diagonal system Px = r using LU factors stored
-     in P and pivot data in pivot, and return the solution in z. *)
-  for lx = 0 to mxsub - 1 do
-    for ly = 0 to mysub - 1 do
-      Direct.getrs' p.(lx).(ly) pivot.(lx).(ly) zdata (lx*nvars + ly*nvmxsub)
-    done
-  done
+  flocal data t u du
 
 (***************************** Main Program ******************************)
 
@@ -662,7 +557,7 @@ let main () =
   (* Set local length *)
   let local_N = nvars*mxsub*mysub in
 
-  (* Allocate and load user data block; allocate preconditioner block *)
+  (* Allocate and load user data block *)
   let data = init_user_data my_pe comm in
 
   (* Allocate u, and set initial values and tolerances *) 
@@ -672,30 +567,58 @@ let main () =
   and reltol = rtol
   in
   (* Call ARKodeCreate to create the solver memory *)
+  let mudq   = nvars * mxsub in
+  let mldq   = mudq in
+  let mukeep = nvars in
+  let mlkeep = mukeep in
   let arkode_mem = Arkode.(
     init
       (Implicit (f data,
-                 Newton Spils.(spgmr (prec_left ~setup:(precond data)
-                                                (psolve data))),
+                 Newton (Spils.spgmr BBD.(prec_left
+                            { mudq   = mudq;   mldq = mldq;
+                              mukeep = mukeep; mlkeep = mlkeep }
+                            (flocal data))),
                  Nonlinear))
       (SStolerances (reltol, abstol))
       t0
-      u)
-  in
+      u
+  ) in
+  Arkode.set_max_num_steps arkode_mem 10000;
     
-  if my_pe = 0 then
-    printf "\n2-species diurnal advection-diffusion problem\n\n";
+  (* Print heading *)
+  if my_pe = 0 then print_intro npes mudq mldq mukeep mlkeep;
 
-  (* In loop over output points, call Arkode, print results, test for error *)
-  let tout = ref twohr in
-  for iout=1 to nout do
-    let (t, flag) = Arkode.solve_normal arkode_mem !tout u in
-    print_output arkode_mem my_pe comm u t;
-    tout := !tout +. twohr
-  done;
+  let solve_problem jpre =
+    (* On second run, re-initialize u, the integrator, ARKBBDPRE,
+       and ARKSPGMR *)
+    if jpre = Spils.PrecRight then begin
+      set_initial_profiles data u;
+      Arkode.reinit arkode_mem t0 u;
+      BBD.reinit arkode_mem mudq mldq;
+      Arkode.Spils.set_prec_type arkode_mem Spils.PrecRight;
 
-  (* Print final statistics *)  
-  if my_pe = 0 then print_final_stats arkode_mem
+      if my_pe = 0 then begin
+        printf "\n\n-------------------------------------------------------";
+        printf "------------\n"
+      end
+    end;
+
+    if my_pe = 0 then
+      printf "\n\nPreconditioner type is:  jpre = %s\n\n"
+             (if jpre = Spils.PrecLeft then "PREC_LEFT" else "PREC_RIGHT");
+
+    (* In loop over output points, call ARKode, print results, test for error *)
+    let tout = ref twohr in
+    for iout=1 to nout do
+      let (t, flag) = Arkode.solve_normal arkode_mem !tout u in
+      print_output arkode_mem my_pe comm u t;
+      tout := !tout +. twohr
+    done;
+
+    (* Print final statistics *)  
+    if my_pe = 0 then print_final_stats arkode_mem
+  in
+  List.iter solve_problem [Spils.PrecLeft; Spils.PrecRight]
 
 (* Check environment variables for extra arguments.  *)
 let reps =
