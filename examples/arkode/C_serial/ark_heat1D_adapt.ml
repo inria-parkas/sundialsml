@@ -165,11 +165,18 @@ let f { n; k; x } t (y : RealArray.t) (ydot : RealArray.t) =
   ydot.{n-1} <- 0.0;         (* right boundary condition *)
 
   (* source term *)
-  RealArray.mapi (fun i ydot ->
-    ydot +. 2.0 *. exp(-200.0 *. (x.{i} -. 0.25) *. (x.{i} -. 0.25))
-                -. exp(-400.0 *. (x.{i} -. 0.70) *. (x.{i} -. 0.70))
-                +. exp(-500.0 *. (x.{i} -. 0.40) *. (x.{i} -. 0.40))
-         -. 2.0 *. exp(-600.0 *. (x.{i} -. 0.55) *. (x.{i} -. 0.55))) ydot
+  (* RealArray.mapi (fun i ydot ->
+    ydot +. (2.0 *. exp(-200.0 *. (x.{i} -. 0.25) *. (x.{i} -. 0.25))
+                 -. exp(-400.0 *. (x.{i} -. 0.70) *. (x.{i} -. 0.70))
+                 +. exp(-500.0 *. (x.{i} -. 0.40) *. (x.{i} -. 0.40))
+          -. 2.0 *. exp(-600.0 *. (x.{i} -. 0.55) *. (x.{i} -. 0.55)))) ydot *)
+  for i=0 to n-1-1 do
+    ydot.{i} <- ydot.{i} +.
+            (2.0 *. exp(-200.0 *. (x.{i} -. 0.25) *. (x.{i} -. 0.25))
+                 -. exp(-400.0 *. (x.{i} -. 0.7 ) *. (x.{i} -. 0.7 ))
+                 +. exp(-500.0 *. (x.{i} -. 0.4 ) *. (x.{i} -. 0.4 ))
+          -. 2.0 *. exp(-600.0 *. (x.{i} -. 0.55) *. (x.{i} -. 0.55)))
+  done
 
 (* Jacobian routine to compute J(t,y) = df/dy. *)
 let jac { n; k; x } _ (v : RealArray.t) (jv : RealArray.t) =
