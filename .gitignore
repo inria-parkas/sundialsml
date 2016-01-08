@@ -4,6 +4,7 @@ config
 *.cmi
 *.cma
 *.cmxa
+*.cmxs
 *.o
 *.annot
 *.byte
