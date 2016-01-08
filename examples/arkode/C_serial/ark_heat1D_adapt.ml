@@ -217,9 +217,7 @@ let main () =
   let xfid = open_out "heat_mesh.txt" in
 
   (* output initial mesh to disk *)
-  for i=0 to n_mesh-1 do
-    fprintf xfid " %.16e" udata.x.{i}
-  done;
+  RealArray.iter (fun d -> fprintf xfid " %.16e" d) udata.x;
   fprintf xfid "\n";
 
   (* Open output stream for results, access data array *)
