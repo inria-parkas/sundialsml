@@ -63,7 +63,7 @@ external c_bbd_prec_reinit
 let reinit s ?(dqrely=0.0) mudq mldq =
   ls_check_spils_bbd s;
   match s.ls_precfns with
-  | BandedPrecFns -> c_bbd_prec_reinit s mudq mldq dqrely
+  | BBDPrecFns _ -> c_bbd_prec_reinit s mudq mldq dqrely
   | _ -> raise Sundials.InvalidLinearSolver
 
 external get_work_space : parallel_session -> int * int
