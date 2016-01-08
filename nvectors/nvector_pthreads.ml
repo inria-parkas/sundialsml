@@ -1,6 +1,6 @@
 
 type data = Sundials.RealArray.t
-type kind = Nvector_serial.kind
+type kind
 type t = (data, kind) Nvector.t
 
 external c_wrap : int -> Sundials.RealArray.t
@@ -14,6 +14,9 @@ let wrap nthreads v =
 let unwrap = Nvector.unwrap
 
 let make nthreads n iv = wrap nthreads (Sundials.RealArray.make n iv)
+
+let as_serial =
+  (Obj.magic : (data, kind) Nvector.t -> (data, Nvector_serial.kind) Nvector.t)
 
 external num_threads : t -> int
   = "ml_nvec_pthreads_num_threads"

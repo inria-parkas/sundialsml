@@ -23,8 +23,8 @@
     {{:OCAML_DOC_ROOT(Bigarray.Array1.html)} bigarrays} of floats. *)
 type data = Sundials.RealArray.t
 
-(** Pthreads nvectors can be used wherever Serial nvectors can. *)
-type kind = Nvector_serial.kind
+(** Represents the internal layout of a Pthreads nvector. *)
+type kind
 
 (** The type of Pthreads nvectors. *)
 type t = (data, kind) Nvector.t
@@ -39,6 +39,9 @@ val wrap : int -> Sundials.RealArray.t -> t
 
 (** Aliases {!Nvector.unwrap}. *)
 val unwrap : t -> Sundials.RealArray.t
+
+(** Pthreads nvectors can be used wherever Serial nvectors can. *)
+val as_serial : t -> (data, Nvector_serial.kind) Nvector.t
 
 (** Returns the number of threads used within a Pthreads nvector. *)
 val num_threads : t -> int
