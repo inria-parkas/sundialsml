@@ -45,8 +45,7 @@ sundials_mpi.cma sundials_mpi.cmxa: $(MLOBJ_MPI) $(MLOBJ_MPI:.cmo=.cmx) \
 	    -o sundials_mpi -oc mlsundials_mpi $^	\
 	    $(LIB_PATH) $(MPI_LIBLINK)
 
-$(MLOBJ_MPI) $(CMI_MPI) $(MLOBJ_MPI:.cmo=.cmx)	\
-	     doc/html/index.html :		\
+$(MLOBJ_MPI) $(CMI_MPI) $(MLOBJ_MPI:.cmo=.cmx):		\
     INCLUDES += $(MPI_INCLUDES)
 
 # The CFLAGS settings for CVODE works for modules common to CVODE and IDA.
@@ -156,8 +155,6 @@ idas/ida_superlumt_ml_s.o: ida/ida_superlumt_ml.c
 idas/idas_superlumt_ml.o: idas/idas_superlumt_ml.c
 	$(CC) -I $(OCAML_INCLUDE) $(IDAS_CFLAGS) -o $@ -c $<
 
-# Docs.
-
 ### Install / Uninstall
 
 install: install-sys $(if $(INSTALL_DOCS),install-doc)
@@ -168,11 +165,6 @@ install-sys: META $(INSTALL_CMA) $(INSTALL_CMA:.cma=.cmxa)
 	$(CP) $(INSTALL_FILES) $(PKGDIR)
 	$(if $(ENABLE_SHARED),[ -d $(STUBDIR) ] || $(MKDIR) $(STUBDIR))
 	$(if $(ENABLE_SHARED),$(CP) $(STUBLIBS) $(STUBDIR))
-
-install-doc: ../doc
-	[ -d $(DOCDIR) ] || $(MKDIR) $(DOCDIR)
-	[ -d $(DOCDIR)/html ] || $(MKDIR) $(DOCDIR)/html
-	$(CP) ../doc/html/docstyle.css ../doc/html/*.html $(DOCDIR)/html/
 
 install-ocamlfind: install-findlib
 install-findlib: META $(INSTALL_CMA) $(INSTALL_CMA:.cma=.cmxa)
@@ -223,7 +215,7 @@ distcheck:
 
 depend: .depend
 .depend:
-	$(OCAMLDEP) -pp '$(DOCHTML_PP)' *.mli *.ml */*.mli */*.ml > .depend
+	$(OCAMLDEP) *.mli *.ml */*.mli */*.ml > .depend
 	$(CC) -MM $(CPPFLAGS) */*.c >> .depend
 
 clean:

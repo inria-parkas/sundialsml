@@ -49,6 +49,7 @@ DOC_URLS=$(if $(CVODE_DOC_ROOT),-cvode-doc-root "$(CVODE_DOC_ROOT)")	\
 DOC_SOURCES=$(filter-out %_impl.cmi, $(CMI_MAIN))		\
 	    $(CMI_SENS) $(if $(MPI_ENABLED), $(CMI_MPI))
 html/index.html: OCAML_DOC_ROOT="$(OCAML_DOC_ROOT_DEFAULT)"
+html/index.html: INCLUDES += $(MPI_INCLUDES)
 html/index.html: html $(SUNDIALS_DOCS) intro.doc
 	$(OCAMLDOC) -g $(SUNDIALS_DOCS) $(INCLUDES) $(SUBDIRS:%=-I ../src/%) \
 	    -charset utf-8						     \
@@ -77,6 +78,17 @@ html/perf.opt.png: ../examples/perf.opt.log
 	    DOTSIZE=2.5 DOTTYPE=7 \
 	    OUTPUT=$@ ../examples/utils/plot.sh $<
 
+install: html/index.html
+	[ -d $(DOCDIR) ] || $(MKDIR) $(DOCDIR)
+	[ -d $(DOCDIR)/html ] || $(MKDIR) $(DOCDIR)/html
+	$(CP) ../doc/html/docstyle.css ../doc/html/*.html $(DOCDIR)/html/
+
 distclean clean:
-	-@$(RM) -f html/*.html sundials_doc.cmxs
+	-@$(RM) -f html/*.html sundials_doc.cmxs sundials_doc.cma
 	-@$(RM) -f dochtml.cmo dochtml.cmx dochtml.cmi dochtml.o
+
+depend: .depend
+.depend:
+	$(OCAMLDEP) -pp '$(DOCHTML_PP)' $(SUBDIRS:%=-I ../src/%) > .depend
+
+-include .depend
