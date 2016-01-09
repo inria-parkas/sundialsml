@@ -3,82 +3,96 @@ type data = Sundials.RealArray.t
 type kind
 type t = (data, kind) Nvector.t
 
-external c_wrap : Sundials.RealArray.t -> (Sundials.RealArray.t -> bool) -> t
-  = "ml_nvec_wrap_serial"
+module Raw =struct
+  type serial_kind = kind
+  type data = Sundials.RealArray.t
+  type kind
+  type t = (data, kind) Nvector.t
 
-let wrap v =
-  let len = Sundials.RealArray.length v in
-  c_wrap v (fun v' -> len = Sundials.RealArray.length v')
+  external c_wrap : Sundials.RealArray.t -> (Sundials.RealArray.t -> bool) -> t
+    = "ml_nvec_wrap_serial"
 
-let unwrap = Nvector.unwrap
+  let wrap v = 
+    let len = Sundials.RealArray.length v in
+    c_wrap v (fun v' -> len = Sundials.RealArray.length v')
 
-let make n iv = wrap (Sundials.RealArray.make n iv)
+  let make n iv = wrap (Sundials.RealArray.make n iv)
 
-module Ops = struct
-  type t = (Sundials.RealArray.t, kind) Nvector.t
+  let unwrap = Nvector.unwrap
 
-  let n_vclone nv =
-    let data = Nvector.unwrap nv in
-    wrap (Sundials.RealArray.copy data)
+  let as_serial =
+    (Obj.magic : (data, kind) Nvector.t -> (data, serial_kind) Nvector.t)
 
-  external n_vlinearsum    : float -> t -> float -> t -> t -> unit
-    = "ml_nvec_ser_n_vlinearsum"
+  module Ops = struct
+    type t = (Sundials.RealArray.t, kind) Nvector.t
 
-  external n_vconst        : float -> t -> unit
-    = "ml_nvec_ser_n_vconst"
+    let n_vclone nv =
+      let data = Nvector.unwrap nv in
+      wrap (Sundials.RealArray.copy data)
 
-  external n_vprod         : t -> t -> t -> unit
-    = "ml_nvec_ser_n_vprod"
+    external n_vlinearsum    : float -> t -> float -> t -> t -> unit
+      = "ml_nvec_ser_n_vlinearsum"
 
-  external n_vdiv          : t -> t -> t -> unit
-    = "ml_nvec_ser_n_vdiv"
+    external n_vconst        : float -> t -> unit
+      = "ml_nvec_ser_n_vconst"
 
-  external n_vscale        : float -> t -> t -> unit
-    = "ml_nvec_ser_n_vscale"
+    external n_vprod         : t -> t -> t -> unit
+      = "ml_nvec_ser_n_vprod"
 
-  external n_vabs          : t -> t -> unit
-    = "ml_nvec_ser_n_vabs"
+    external n_vdiv          : t -> t -> t -> unit
+      = "ml_nvec_ser_n_vdiv"
 
-  external n_vinv          : t -> t -> unit
-    = "ml_nvec_ser_n_vinv"
+    external n_vscale        : float -> t -> t -> unit
+      = "ml_nvec_ser_n_vscale"
 
-  external n_vaddconst     : t -> float -> t -> unit
-    = "ml_nvec_ser_n_vaddconst"
+    external n_vabs          : t -> t -> unit
+      = "ml_nvec_ser_n_vabs"
 
-  external n_vdotprod      : t -> t -> float
-    = "ml_nvec_ser_n_vdotprod"
+    external n_vinv          : t -> t -> unit
+      = "ml_nvec_ser_n_vinv"
 
-  external n_vmaxnorm      : t -> float
-    = "ml_nvec_ser_n_vmaxnorm"
+    external n_vaddconst     : t -> float -> t -> unit
+      = "ml_nvec_ser_n_vaddconst"
 
-  external n_vwrmsnorm     : t -> t -> float
-    = "ml_nvec_ser_n_vwrmsnorm"
+    external n_vdotprod      : t -> t -> float
+      = "ml_nvec_ser_n_vdotprod"
 
-  external n_vwrmsnormmask : t -> t -> t -> float
-    = "ml_nvec_ser_n_vwrmsnormmask"
+    external n_vmaxnorm      : t -> float
+      = "ml_nvec_ser_n_vmaxnorm"
 
-  external n_vmin          : t -> float
-    = "ml_nvec_ser_n_vmin"
+    external n_vwrmsnorm     : t -> t -> float
+      = "ml_nvec_ser_n_vwrmsnorm"
 
-  external n_vwl2norm      : t -> t -> float
-    = "ml_nvec_ser_n_vwl2norm"
+    external n_vwrmsnormmask : t -> t -> t -> float
+      = "ml_nvec_ser_n_vwrmsnormmask"
 
-  external n_vl1norm       : t -> float
-    = "ml_nvec_ser_n_vl1norm"
+    external n_vmin          : t -> float
+      = "ml_nvec_ser_n_vmin"
 
-  external n_vcompare      : float -> t -> t -> unit
-    = "ml_nvec_ser_n_vcompare"
+    external n_vwl2norm      : t -> t -> float
+      = "ml_nvec_ser_n_vwl2norm"
 
-  external n_vinvtest      : t -> t -> bool
-    = "ml_nvec_ser_n_vinvtest"
+    external n_vl1norm       : t -> float
+      = "ml_nvec_ser_n_vl1norm"
 
-  external n_vconstrmask   : t -> t -> t -> bool
-    = "ml_nvec_ser_n_vconstrmask"
+    external n_vcompare      : float -> t -> t -> unit
+      = "ml_nvec_ser_n_vcompare"
 
-  external n_vminquotient  : t -> t -> float
-    = "ml_nvec_ser_n_vminquotient"
+    external n_vinvtest      : t -> t -> bool
+      = "ml_nvec_ser_n_vinvtest"
 
+    external n_vconstrmask   : t -> t -> t -> bool
+      = "ml_nvec_ser_n_vconstrmask"
+
+    external n_vminquotient  : t -> t -> float
+      = "ml_nvec_ser_n_vminquotient"
+
+  end
 end
+
+let wrap v = Raw.as_serial (Raw.wrap v)
+let unwrap = Nvector.unwrap
+let make n iv = wrap (Sundials.RealArray.make n iv)
 
 (* (* Too slow! *)
 module ArrayOps = Nvector_array.MakeOps (struct

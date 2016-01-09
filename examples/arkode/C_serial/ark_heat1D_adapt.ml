@@ -43,7 +43,8 @@ module RealArray = Sundials.RealArray
 module LintArray = Sundials.LintArray
 let printf = Printf.printf
 let fprintf = Printf.fprintf
-let n_vdotprod = Nvector_serial.Ops.n_vdotprod
+let n_vdotprod = Nvector_serial.Raw.Ops.n_vdotprod
+let as_serial = Nvector_serial.Raw.as_serial
 
 exception IllegalMeshCreated
 
@@ -218,7 +219,7 @@ let main () =
 
   (* Create initial serial vector for solution *)
   (* Set initial conditions *)
-  let y = Nvector_serial.make n_mesh 0.0 in
+  let y = Nvector_serial.Raw.make n_mesh 0.0 in
 
   (* output mesh to disk *)
   let xfid = open_out "heat_mesh.txt" in
@@ -244,7 +245,7 @@ let main () =
                  Nonlinear))
       (SStolerances (rtol, atol))
       t0
-      y
+      (as_serial y)
   ) in
   Arkode.set_max_num_steps arkode_mem 10000;      (* Increase max num steps  *)
   Arkode.(set_adaptivity_method arkode_mem
@@ -266,7 +267,7 @@ let main () =
       Arkode.set_init_step arkode_mem newdt;
 
       (* call integrator *)
-      let t, _ = Arkode.solve_one_step arkode_mem tf y in
+      let t, _ = Arkode.solve_one_step arkode_mem tf (as_serial y) in
 
       (* "get" routines *)
       let olddt = Arkode.get_last_step arkode_mem in
@@ -276,7 +277,8 @@ let main () =
 
       (* print current solution stats *)
       printf " %4d  %19.15e  %19.15e  %19.15e  %d   %2d  %3d\n"
-             (iout + 1) olddt newdt (sqrt(n_vdotprod y y /. float udata.n))
+             (iout + 1) olddt newdt
+             (sqrt(n_vdotprod y y /. float udata.n))
              udata.n (nni-nni_cur) nli;
 
       (* output results and current mesh to disk *)
@@ -290,7 +292,7 @@ let main () =
       let nnew, xnew = adapt_mesh udata data in
 
       (* create N_Vector of new length *)
-      let y2 = Nvector_serial.make nnew 0.0 in
+      let y2 = Nvector_serial.Raw.make nnew 0.0 in
       
       (* project solution onto new mesh *)
       project udata.n udata.x data nnew xnew (Nvector.unwrap y2);
@@ -303,7 +305,7 @@ let main () =
       Arkode.(resize arkode_mem
         ~linsolv:(Spils.(pcg ~maxl:nnew ~jac_times_vec:jac prec_none))
         (SStolerances (rtol, atol))
-        hscale y2 t);
+        hscale (as_serial y2) t);
 
       loop t newdt y2 (iout + 1) nni nni (nli_tot + nli)
     end

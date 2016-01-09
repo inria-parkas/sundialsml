@@ -36,7 +36,7 @@ module Roots = Sundials.Roots
 let unwrap = Nvector.unwrap
 
 let printf = Printf.printf
-let vmax_norm = Nvector_serial.Ops.n_vmaxnorm
+let vmax_norm = Nvector_serial.Raw.Ops.n_vmaxnorm
 
 (* Header files with a description of contents used in cvbanx.c *)
 
@@ -196,7 +196,8 @@ let print_final_stats s =
 
 let main () =
   (* Create a serial vector *)
-  let u = Nvector_serial.make neq 0.0 in (* Allocate u vector *)
+  let u_raw = Nvector_serial.Raw.make neq 0.0 in (* Allocate u vector *)
+  let u     = Nvector_serial.Raw.as_serial u_raw in
 
   let reltol = zero  (* Set the tolerances *)
   and abstol = atol
@@ -229,7 +230,7 @@ let main () =
 
   (* In loop over output points: call CVode, print results, test for errors *)
 
-  print_header reltol abstol (vmax_norm u);
+  print_header reltol abstol (vmax_norm u_raw);
 
   let tout = ref t1 in
   for iout = 1 to nout do
@@ -237,7 +238,7 @@ let main () =
     in
     let nst = Cvode.get_num_steps cvode_mem in
 
-    print_output t (vmax_norm u) nst;
+    print_output t (vmax_norm u_raw) nst;
     tout := !tout +. dtout
   done;
 
