@@ -12,9 +12,9 @@ let y = Nvector_serial.wrap yd
 (* 4. Create and initialize a solver session.
       This will initialize a specific linear solver and the root-finding
       mechanism, if necessary. *)
-let s = Cvode.init Cvode.Adams Cvode.Functional
-                   (Cvode.SStolerances (1e-4, 1e-8))
-                   f ~roots:(1, g) 0.0 y;;
+let s = Cvode.(init Adams Functional
+                    (SStolerances (1e-4, 1e-8))
+                    f ~roots:(1, g) 0.0 y);;
 
 (* 5. Set optional inputs, e.g.,
       call [set_*] functions to change solver parameters. *)

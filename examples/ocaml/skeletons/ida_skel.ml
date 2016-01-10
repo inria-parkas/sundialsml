@@ -18,9 +18,9 @@ let v' = Nvector_serial.make 5 0.0
 (* 4. Create and initialize a solver session.
       This will initialize a specific linear solver and the root-finding
       mechanism, if necessary. *)
-let s = Ida.init (Ida.Dls.dense ())
-                 (Ida.SStolerances (1e-9, 1e-9))
-                 resf ~roots:(1, g) 0.0 v v';;
+let s = Ida.(init (Dls.dense ())
+                  (SStolerances (1e-9, 1e-9))
+                  resf ~roots:(1, g) 0.0 v v');;
 
 (* 5. Set optional inputs, e.g.,
       call [set_*] functions to change solver parameters. *)

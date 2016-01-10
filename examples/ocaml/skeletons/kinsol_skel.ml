@@ -15,17 +15,17 @@ let u = Nvector_serial.wrap ud
 
 (* 3. Create and initialize a solver session.
       This will initialize a specific linear solver. *)
-let s = Kinsol.init (Kinsol.Dls.dense None) sysf u;;
+let s = Kinsol.(init ~linsolv:(Dls.dense ()) sysf u);;
 
 (* 4. Set optional inputs, e.g.,
       call [set_*] functions to change solver parameters. *)
-let c = Sundials.RealArray.of_list [
-   Sundials.Constraint.unconstrained;
-   Sundials.Constraint.unconstrained;
-   Sundials.Constraint.geq_zero;
-   Sundials.Constraint.leq_zero;
-   Sundials.Constraint.geq_zero;
-   Sundials.Constraint.leq_zero ] in
+let c = Sundials.(RealArray.of_list [
+   Constraint.unconstrained;
+   Constraint.unconstrained;
+   Constraint.geq_zero;
+   Constraint.leq_zero;
+   Constraint.geq_zero;
+   Constraint.leq_zero ]) in
 Kinsol.set_constraints s (Nvector_serial.wrap c);
 Kinsol.set_func_norm_tol s 1.0e-5;
 Kinsol.set_scaled_step_tol s 1.0e-5;
@@ -33,7 +33,7 @@ Kinsol.set_max_setup_calls s 1;;
 
 (* 5. Solve the problem. *)
 let snv = Nvector_serial.make (Sundials.RealArray.length ud) 1.0 in
-ignore (Kinsol.solve s u false snv snv);
+ignore (Kinsol.(solve s u Newton snv snv));
 
 Printf.printf "%8.5g %8.6g\n" ud.{0} ud.{1};;
 
