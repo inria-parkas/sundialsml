@@ -1,5 +1,7 @@
 include ../../../config
 
+SRCROOT = ../../../
+
 all: sincos.byte sincos_nvec.byte sincos.opt sincos_nvec.opt
 
 NVECTOR=
@@ -45,10 +47,11 @@ distclean: clean
 
 .ml.byte:
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ $(INCLUDES) \
-	    -I ../../../ -dllpath ../../../ \
+	    -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) -dllpath $(SRCROOT) \
 	    bigarray.cma graphics.cma sundials.cma $<
 
 .ml.opt:
-	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ $(INCLUDES) -I ../../../ \
+	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ $(INCLUDES) \
+	    -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) \
 	    bigarray.cmxa graphics.cmxa sundials.cmxa $<
 

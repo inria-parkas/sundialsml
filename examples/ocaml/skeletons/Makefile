@@ -46,12 +46,13 @@ distclean: clean
 .SUFFIXES : .ml .byte .opt
 
 .ml.byte:
-	$(OCAMLC) $(OCAMLFLAGS) -o $@ -dllpath $(SRCROOT) \
+	$(OCAMLC) $(OCAMLFLAGS) -o $@ -dllpath $(SRCROOT) $(INCLUDES) \
+	    -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) -dllpath $(SRCROOT) \
 	    $(INCLUDES) -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) \
 	    bigarray.cma sundials.cma $<
 
 .ml.opt:
-	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ -dllpath $(SRCROOT) \
-	    $(INCLUDES) -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) \
+	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ $(INCLUDES) \
+	    -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) \
 	    bigarray.cmxa sundials.cmxa $<
 

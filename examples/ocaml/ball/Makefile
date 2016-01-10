@@ -1,16 +1,18 @@
 include ../../../config
 
+SRCROOT = ../../..
+
 all: ball.byte ball.opt
 
 ball.byte: showball.cmi showball.cmo ball.ml
-	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
-	    $(INCLUDES) -I ../../../ -dllpath ../../../ \
+	$(OCAMLC) $(OCAMLFLAGS) -o $@ $(INCLUDES) \
+	    -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) -dllpath $(SRCROOT) \
 	    unix.cma bigarray.cma graphics.cma \
 	    sundials.cma showball.cmo ball.ml
 
 ball.opt: showball.cmi showball.cmx ball.ml
-	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
-	    $(INCLUDES) -I ../../../ \
+	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ $(INCLUDES) \
+	    -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) \
 	    unix.cmxa bigarray.cmxa graphics.cmxa \
 	    sundials.cmxa showball.cmx ball.ml
 

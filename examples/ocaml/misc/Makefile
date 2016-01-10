@@ -1,5 +1,7 @@
 include ../../../config
 
+SRCROOT = ../../../
+
 EXAMPLES = cchatter.byte discontinuous.byte printall.byte \
 	   upvseither.byte integr_backward.byte one_over_x.byte \
 	   ramp.byte sinezero.byte sliding.byte ls_badmem.byte
@@ -35,12 +37,12 @@ distclean: clean
 .SUFFIXES : .ml .byte .opt
 
 .ml.byte:
-	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
-	    $(INCLUDES) -I ../../../ -dllpath ../../../ \
+	$(OCAMLC) $(OCAMLFLAGS) -o $@ $(INCLUDES) \
+	    -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) -dllpath $(SRCROOT) \
 	    bigarray.cma sundials.cma $<
 
 .ml.opt:
-	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
-	    $(INCLUDES) -I ../../../ \
+	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ $(INCLUDES) \
+	    -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) \
 	    bigarray.cmxa sundials.cmxa $<
 

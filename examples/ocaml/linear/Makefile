@@ -1,5 +1,7 @@
 include ../../../config
 
+SRCROOT = ../../../
+
 SUNDIALS_CMA = ../../../sundials.cma
 SUNDIALS_CMXA = ../../../sundials.cmxa
 
@@ -74,13 +76,13 @@ distclean: clean
 	cc -o $@ $(CFLAGS) $(CVODE_CFLAGS) $< $(LIB_PATH) $(CVODE_LDFLAGS)
 
 .ml.byte:
-	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
-	    $(INCLUDES) -I ../../../ -dllpath ../../../ \
+	$(OCAMLC) $(OCAMLFLAGS) -o $@ $(INCLUDES) \
+	    -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) -dllpath $(SRCROOT) \
 	    bigarray.cma unix.cma sundials.cma $<
 
 .ml.opt:
-	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
-	    $(INCLUDES) -I ../../../ \
+	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ $(INCLUDES) \
+	    -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) \
 	    bigarray.cmxa unix.cmxa sundials.cmxa $<
 
 .byte.byte.log:
