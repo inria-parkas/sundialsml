@@ -581,6 +581,8 @@ else
 fi
 
 # Check for SUPERLUMT and KLU
+sparse_libs=
+
 klu_enabled=
 klu_info="not available"
 klu_cobj_sens=
@@ -626,6 +628,9 @@ if [ $sundials -ge 260 ]; then
 
 		klu_mlobj_sens="$klu_mlobj_sens cvodes/cvodes_klu.cmo"
 		klu_mlobj_sens="$klu_mlobj_sens idas/idas_klu.cmo"
+
+		sparse_libs="$sparse_libs -lklu -lamd -lcolamd -lbtf"
+		sparse_libs="$sparse_libs -lsuitesparseconfig"
 	    else
 		klu_info='disabled'
 	    fi;;
@@ -656,6 +661,8 @@ superlumt_mlobj_main="$superlumt_mlobj_main arkode/arkode_superlumt.cmo"
 superlumt_mlobj_sens="$superlumt_mlobj_sens cvodes/cvodes_superlumt.cmo"
 superlumt_mlobj_sens="$superlumt_mlobj_sens idas/idas_superlumt.cmo"
 
+#sparse_libs="$sparse_libs -lsuperlu_mt_PTHREAD"
+#sparse_libs="$sparse_libs -lsuperlu_mt_OPENMP"
 	    else
 		superlumt_info='disabled'
 	    fi;;
@@ -920,6 +927,7 @@ fi
 	 s#@nvecopenmp_ml_xo@#${nvecopenmp_ml_xo}#;
 	 s#@nvecopenmp_cmo@#${nvecopenmp_cmo}#;
 	 s#@serial_nvec_libs@#${serial_nvec_libs}#;
+	 s#@sparse_libs@#${sparse_libs}#;
 	 s#@klu_cobj_sens@#${klu_cobj_sens}#;
 	 s#@klu_cobj_no_sens@#${klu_cobj_no_sens}#;
 	 s#@klu_mlobj_main@#${klu_mlobj_main}#;

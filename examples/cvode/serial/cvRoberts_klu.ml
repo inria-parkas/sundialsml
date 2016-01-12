@@ -109,7 +109,7 @@ let print_final_stats s =
   printf "\nFinal Statistics:\n";
   printf "nst = %-6d nfe  = %-6d nsetups = %-6d nje = %d\n"
     nst nfe nsetups nje;
-  printf "nni = %-6d ncfn = %-6d netf = %-6d nge = %d\n \n"
+  printf "nni = %-6d ncfn = %-6d netf = %-6d    nge = %d\n \n"
     nni ncfn netf nge
 
 let main () =

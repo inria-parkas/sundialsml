@@ -19,8 +19,8 @@ EXAMPLES = ark_KrylovDemo_prec.ml \
 
 LAPACK_EXAMPLES =
 
-KLU_EXAMPLES =
-SUPERLUMT_EXAMPLES =
+KLU_EXAMPLES = ark_brusselator1D_klu.ml
+SUPERLUMT_EXAMPLES = ark_brusselator1D_FEM_slu.ml
 
 include ../../examples.mk
 

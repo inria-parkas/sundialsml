@@ -35,17 +35,17 @@ MPI_LIBLINK= -lsundials_nvecparallel
 
 LIB_PATH = @sundials_lib_path@
 INC_PATH = @sundials_inc_path@
-CVODE_LDFLAGS = -lsundials_cvode @serial_nvec_libs@ -lm $(LDFLAGS)
+CVODE_LDFLAGS = -lsundials_cvode @serial_nvec_libs@ @sparse_libs@ -lm $(LDFLAGS)
 CVODE_CFLAGS = $(INC_PATH) $(CFLAGS)
-CVODES_LDFLAGS = -lsundials_cvodes @serial_nvec_libs@ -lm $(LDFLAGS)
+CVODES_LDFLAGS = -lsundials_cvodes @serial_nvec_libs@ @sparse_libs@ -lm $(LDFLAGS)
 CVODES_CFLAGS = $(INC_PATH) $(CFLAGS)
-ARKODE_LDFLAGS = @link_sundials_arkode@ @serial_nvec_libs@ -lm $(LDFLAGS)
+ARKODE_LDFLAGS = @link_sundials_arkode@ @serial_nvec_libs@ @sparse_libs@ -lm $(LDFLAGS)
 ARKODE_CFLAGS = $(INC_PATH) $(CFLAGS)
-IDA_LDFLAGS = -lsundials_ida @serial_nvec_libs@ -lm $(LDFLAGS)
+IDA_LDFLAGS = -lsundials_ida @serial_nvec_libs@ @sparse_libs@ -lm $(LDFLAGS)
 IDA_CFLAGS = $(INC_PATH) $(CFLAGS)
-IDAS_LDFLAGS = -lsundials_idas @serial_nvec_libs@ -lm $(LDFLAGS)
+IDAS_LDFLAGS = -lsundials_idas @serial_nvec_libs@ @sparse_libs@ -lm $(LDFLAGS)
 IDAS_CFLAGS = $(INC_PATH) $(CFLAGS)
-KINSOL_LDFLAGS = -lsundials_kinsol @serial_nvec_libs@ -lm $(LDFLAGS)
+KINSOL_LDFLAGS = -lsundials_kinsol @serial_nvec_libs@ @sparse_libs@ -lm $(LDFLAGS)
 KINSOL_CFLAGS = $(INC_PATH) $(CFLAGS)
 
 ARKODE_MLOBJ_MAIN = @arkode_mlobj_main@

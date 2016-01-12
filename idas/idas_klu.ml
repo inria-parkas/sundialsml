@@ -39,7 +39,7 @@ let klu f nnz bs nv nv' =
          false)
     | WithSens fbs ->
         (session.ls_callbacks <-
-            BSlsKluCallbackSens { jacfn = fbs; smat = None };
+            BSlsKluCallbackSens { jacfn_sens = fbs; smat_sens = None };
          true)
   in
   session.ls_precfns <- NoPrecFns;

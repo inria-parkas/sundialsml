@@ -50,7 +50,7 @@ let nroots = 2        (* number of root functions *)
 let print_header rtol avtol yy =
   let open Printf in
   printf "\nidaRoberts_klu: Robertson kinetics DAE serial example problem for IDA.\n";
-  printf "         Three equation chemical kinetics problem.\n\n";
+  printf "               Three equation chemical kinetics problem.\n\n";
   printf "Linear solver: IDAKLU, with user-supplied Jacobian.\n";
 
   printf "Tolerance parameters:  rtol = %g   atol = %g %g %g \n"
