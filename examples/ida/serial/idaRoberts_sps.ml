@@ -50,7 +50,7 @@ let nroots = 2        (* number of root functions *)
 let print_header rtol avtol yy =
   let open Printf in
   printf "\nidaRoberts_sps: Robertson kinetics DAE serial example problem for IDA.\n";
-  printf "         Three equation chemical kinetics problem.\n\n";
+  printf "               Three equation chemical kinetics problem.\n\n";
   printf "Linear solver: IDASUPERLUMT, with user-supplied Jacobian.\n";
 
   printf "Tolerance parameters:  rtol = %g   atol = %g %g %g \n"
@@ -76,7 +76,7 @@ and print_final_stats ida =
   let open Ida in
   let nst  = get_num_steps ida
   and nre  = get_num_res_evals ida
-  and nje  = Dls.get_num_jac_evals ida
+  and nje  = Ida_superlumt.get_num_jac_evals ida
   and nni  = get_num_nonlin_solv_iters ida
   and netf = get_num_err_test_fails ida
   and ncfn = get_num_nonlin_solv_conv_fails ida

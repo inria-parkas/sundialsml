@@ -40,7 +40,7 @@ let superlumt f ~nnz ~nthreads bs nv nv' =
          false)
     | WithSens fbs ->
         (session.ls_callbacks <-
-            BSlsSuperlumtCallbackSens { jacfn = fbs; smat = None };
+            BSlsSuperlumtCallbackSens { jacfn_sens = fbs; smat_sens = None };
          true)
   in
   session.ls_precfns <- NoPrecFns;

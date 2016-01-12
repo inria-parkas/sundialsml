@@ -661,7 +661,8 @@ superlumt_mlobj_main="$superlumt_mlobj_main arkode/arkode_superlumt.cmo"
 superlumt_mlobj_sens="$superlumt_mlobj_sens cvodes/cvodes_superlumt.cmo"
 superlumt_mlobj_sens="$superlumt_mlobj_sens idas/idas_superlumt.cmo"
 
-#sparse_libs="$sparse_libs -lsuperlu_mt_PTHREAD"
+# TODO: detect which to install (how to do this?)
+sparse_libs="$sparse_libs -lsuperlu_mt_PTHREAD"
 #sparse_libs="$sparse_libs -lsuperlu_mt_OPENMP"
 	    else
 		superlumt_info='disabled'

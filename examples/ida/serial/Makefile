@@ -12,8 +12,6 @@ EXAMPLES = idaRoberts_dns.ml  \
 	   idaFoodWeb_bnd.ml  \
 	   idaSlCrank_dns.ml  \
 	   idaKrylovDemo_ls.ml \
-	   idaHeat2D_klu.ml \
-	   idaRoberts_klu.ml \
 	   idaRoberts_dns_alt.ml
 
 KLU_EXAMPLES = idaHeat2D_klu.ml \
