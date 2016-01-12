@@ -105,7 +105,7 @@ CAMLprim value c_sparsematrix_new_sparse_mat(value vm, value vn, value vnnz)
 
     int m = Int_val(vm);
     int n = Int_val(vn);
-    int nnz = Int_val(vn);
+    int nnz = Int_val(vnnz);
 
     SlsMat a = NewSparseMat(m, n, nnz);
     if (a == NULL)
