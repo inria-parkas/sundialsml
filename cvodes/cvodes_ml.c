@@ -392,6 +392,7 @@ static int bprecsolvefn(
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
+#if SUNDIALS_LIB_VERSION >= 260
 static int bprecsolvefn_withsens(
 	realtype t,
 	N_Vector y,
@@ -432,6 +433,7 @@ static int bprecsolvefn_withsens(
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
+#endif
 
 static int bprecsetupfn(
     realtype t,
@@ -473,6 +475,7 @@ static int bprecsetupfn(
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
+#if SUNDIALS_LIB_VERSION >= 260
 static int bprecsetupfn_withsens(
     realtype t,
     N_Vector y,
@@ -521,6 +524,7 @@ static int bprecsetupfn_withsens(
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
+#endif
 
 static int bjactimesfn(
     N_Vector vb,
@@ -552,6 +556,7 @@ static int bjactimesfn(
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }
 
+#if SUNDIALS_LIB_VERSION >= 260
 static int bjactimesfn_withsens(
     N_Vector vb,
     N_Vector Jvb,
@@ -590,6 +595,7 @@ static int bjactimesfn_withsens(
     /* NB: jac_times_vec doesn't accept RecoverableFailure. */
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }
+#endif
 
 static int bjacfn_nosens(
     long int neqb,
@@ -627,6 +633,7 @@ static int bjacfn_nosens(
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
+#if SUNDIALS_LIB_VERSION >= 260
 static int bjacfn_withsens(
     long int neqb,
     realtype t,
@@ -671,6 +678,7 @@ static int bjacfn_withsens(
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
+#endif
 
 static int bbandjacfn_nosens(
 	long int nb,
@@ -714,6 +722,7 @@ static int bbandjacfn_nosens(
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
+#if SUNDIALS_LIB_VERSION >= 260
 static int bbandjacfn_withsens(
 	long int nb,
 	long int mupperb,
@@ -764,6 +773,7 @@ static int bbandjacfn_withsens(
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
+#endif
 
 /* quadrature interface */
 

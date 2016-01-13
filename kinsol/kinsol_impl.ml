@@ -81,7 +81,7 @@ module SlsTypes = struct
 
   type sparse_jac_fn =
     (real_array double_tmp, real_array) jacobian_arg
-    -> Sls.SparseMatrix.t
+    -> Sls_impl.t
     -> unit
 
   (* These fields are accessed from kinsol_ml.c *)

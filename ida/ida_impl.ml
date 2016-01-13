@@ -81,7 +81,7 @@ module SlsTypes = struct
 
   type sparse_jac_fn =
     (Sundials.RealArray.t triple, Sundials.RealArray.t) jacobian_arg
-    -> Sls.SparseMatrix.t
+    -> Sls_impl.t
     -> unit
 
   (* These fields are accessed from ida_ml.c *)
@@ -309,14 +309,14 @@ module AdjointTypes' = struct
 
     type sparse_jac_fn_no_sens =
       (Sundials.RealArray.t triple, Sundials.RealArray.t) jacobian_arg
-      -> Sls.SparseMatrix.t
+      -> Sls_impl.t
       -> unit
 
     type sparse_jac_fn_with_sens =
       (Sundials.RealArray.t triple, Sundials.RealArray.t) jacobian_arg
       -> Sundials.RealArray.t array
       -> Sundials.RealArray.t array
-      -> Sls.SparseMatrix.t
+      -> Sls_impl.t
       -> unit
 
     (* These fields are accessed from idas_ml.c *)

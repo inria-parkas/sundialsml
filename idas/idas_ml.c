@@ -441,6 +441,7 @@ static int bprecsetupfn(
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
+#if SUNDIALS_LIB_VERSION >= 260
 static int bprecsetupfn_sens(
     realtype t,
     N_Vector yy, N_Vector yp,
@@ -475,6 +476,7 @@ static int bprecsetupfn_sens(
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
+#endif
 
 static int bprecsolvefn(
     realtype t,
@@ -505,6 +507,7 @@ static int bprecsolvefn(
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
+#if SUNDIALS_LIB_VERSION >= 260
 static int bprecsolvefn_sens(
     realtype t,
     N_Vector yy, N_Vector yp,
@@ -544,6 +547,7 @@ static int bprecsolvefn_sens(
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
+#endif
 
 static int bjactimesfn(
     realtype t,
@@ -573,6 +577,7 @@ static int bjactimesfn(
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }
 
+#if SUNDIALS_LIB_VERSION >= 260
 static int bjactimesfn_sens(
     realtype t,
     N_Vector yy, N_Vector yp,
@@ -611,6 +616,7 @@ static int bjactimesfn_sens(
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }
+#endif
 
 static int bjacfn_nosens(long int NeqB, realtype t,
 			 realtype cjB, N_Vector yy, N_Vector yp,
@@ -643,6 +649,7 @@ static int bjacfn_nosens(long int NeqB, realtype t,
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
+#if SUNDIALS_LIB_VERSION >= 260
 static int bjacfn_withsens(long int NeqB, realtype t,
 			   realtype cjB, N_Vector yy, N_Vector yp,
 			   N_Vector *yS, N_Vector *ypS,
@@ -684,6 +691,7 @@ static int bjacfn_withsens(long int NeqB, realtype t,
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
+#endif
 
 static int bbandjacfn_nosens(long int NeqB, long int mupperb, long int mlowerb,
 			     realtype t, realtype cjB,
@@ -720,6 +728,7 @@ static int bbandjacfn_nosens(long int NeqB, long int mupperb, long int mlowerb,
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
+#if SUNDIALS_LIB_VERSION >= 260
 static int bbandjacfn_withsens(long int NeqB,
 			       long int mupperb, long int mlowerb,
 			       realtype t, realtype cjB,
@@ -767,6 +776,7 @@ static int bbandjacfn_withsens(long int NeqB,
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
+#endif
 
 static int bquadrhsfn(realtype t, N_Vector y, N_Vector yp,
 		      N_Vector yB, N_Vector ypB,

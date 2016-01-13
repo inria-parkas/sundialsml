@@ -98,7 +98,7 @@ module SlsTypes = struct
 
   type sparse_jac_fn =
     (RealArray.t triple, RealArray.t) jacobian_arg
-    -> Sls.SparseMatrix.t
+    -> Sls_impl.t
     -> unit
 
   (* These fields are accessed from cvode_ml.c *)
@@ -349,13 +349,13 @@ module AdjointTypes' = struct
 
     type sparse_jac_fn_no_sens =
       (RealArray.t triple, RealArray.t) jacobian_arg
-      -> Sls.SparseMatrix.t
+      -> Sls_impl.t
       -> unit
 
     type sparse_jac_fn_with_sens =
       (RealArray.t triple, RealArray.t) jacobian_arg
       -> RealArray.t array
-      -> Sls.SparseMatrix.t
+      -> Sls_impl.t
       -> unit
 
     (* These fields are accessed from cvodes_ml.c *)
