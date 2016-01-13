@@ -64,11 +64,20 @@ tests.opt.log tests.byte.log: tests.%.log: $(C_EXAMPLES) \
 NATIVE_TITLE='OCaml native code performance over C ($(CC) $(CFLAGS))'
 BYTE_TITLE  ='OCaml byte code performance over C ($(CC) $(CFLAGS))'
 
-perf.opt.log perf.byte.log: perf.%.log: $(C_EXAMPLES) utils/crunchperf \
+UTILS=utils
+
+$(UTILS)/perf: $(UTILS)/perf.ml
+	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ unix.cmxa $<
+
+$(UTILS)/crunchperf: $(UTILS)/crunchperf.ml
+	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ str.cmxa unix.cmxa $<
+
+perf.opt.log perf.byte.log: perf.%.log: $(C_EXAMPLES)			      \
+					$(UTILS)/perf $(UTILS)/crunchperf     \
 					$(foreach s,$(SUBDIRS),$s/perf.%.log)
 	@echo ======================================================================
-	@utils/crunchperf -m $(foreach s,$(SUBDIRS),$s/$@) > $@
-	utils/crunchperf -s $@
+	@$(UTILS)/crunchperf -m $(foreach s,$(SUBDIRS),$s/$@) > $@
+	$(UTILS)/crunchperf -s $@
 	@$(if $(findstring $@,$(MAKECMDGOALS)), \
 	   echo "Note: \"make $(@:.log=.plot)\" can plot this for you.")
 
@@ -77,7 +86,6 @@ reps: $(foreach s,$(SUBDIRS),$s/reps)
 NATIVE_TITLE='OCaml native code performance over C ($(CC) $(CFLAGS))'
 BYTE_TITLE  ='OCaml byte code performance over C ($(CC) $(CFLAGS))'
 PLOTTYPES=jpg png pdf eps
-UTILS=utils
 
 perf.opt.plot: perf.opt.log
 	TITLE=$(NATIVE_TITLE) utils/plot.sh $<

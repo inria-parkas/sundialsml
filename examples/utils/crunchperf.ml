@@ -37,8 +37,10 @@ let abbreviate name =
      ("^kinsol", "kin");
      ("^arkode", "ark");
      ("/serial/", "--ser--");
-     ("/C_serial/", "--Cser--");
+     ("/C_serial/", "--C_ser--");
      ("/parallel/", "--par--");
+     ("/C_parallel/", "--C_par--");
+     ("/C_openmp/", "--C_omp--");
     ]
 let expand name =
   List.fold_left
@@ -48,8 +50,10 @@ let expand name =
      ("^kin", "kinsol");
      ("^ark", "arkode");
      ("--ser--", "/serial/");
-     ("--Cser--", "/C_serial/");
+     ("--C_ser--", "/C_serial/");
      ("--par--", "/parallel/");
+     ("--C_par--", "/C_parallel/");
+     ("--C_omp--", "/C_openmp/");
     ]
 
 let parallel_example s      = Str.string_match (Str.regexp ".*--par--\\|/parallel/.*") s 0
