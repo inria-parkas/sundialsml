@@ -69,8 +69,8 @@ CMI_MAIN = $(filter-out sundials_config.cmi,$(filter-out %_impl.cmi,\
 ### Objects specific to sundials.cma.
 COBJ_SENS  =	cvodes/cvode_ml_s$(XO)		\
 		idas/ida_ml_s$(XO)		\
-		cvodes/cvodes_ml.o		\
-		idas/idas_ml.o			\
+		cvodes/cvodes_ml$(XO)		\
+		idas/idas_ml$(XO)		\
 	     	$(KLU_COBJ_SENS)		\
 		$(SUPERLUMT_COBJ_SENS)
 MLOBJ_SENS =	cvodes/cvodes.cmo		\
@@ -87,13 +87,13 @@ COBJ_NO_SENS =	cvode/cvode_ml$(XO)		\
 MLOBJ_NO_SENS =
 
 ### Objects specific to sundials_mpi.cma.
-COBJ_MPI =	nvectors/nvector_parallel_ml.o	\
-		kinsol/kinsol_bbd_ml.o		\
-		arkode/arkode_bbd_ml.o		\
-	   	cvode/cvode_bbd_ml.o		\
-		cvodes/cvodes_bbd_ml.o		\
-	   	ida/ida_bbd_ml.o		\
-		idas/idas_bbd_ml.o
+COBJ_MPI =	nvectors/nvector_parallel_ml$(XO)	\
+		kinsol/kinsol_bbd_ml$(XO)		\
+		arkode/arkode_bbd_ml$(XO)		\
+	   	cvode/cvode_bbd_ml$(XO)			\
+		cvodes/cvodes_bbd_ml$(XO)		\
+	   	ida/ida_bbd_ml$(XO)			\
+		idas/idas_bbd_ml$(XO)
 MLOBJ_MPI =	nvectors/nvector_parallel.cmo	\
 		kinsol/kinsol_bbd.cmo		\
 		arkode/arkode_bbd.cmo		\
@@ -448,7 +448,7 @@ depend: .depend
 
 clean:
 	-@($(MAKE) -C examples clean)
-	-@$(RM) -f $(ALL_MLOBJ) $(ALL_MLOBJ:.cmo=.cmx) $(ALL_MLOBJ:.cmo=.o)
+	-@$(RM) -f $(ALL_MLOBJ) $(ALL_MLOBJ:.cmo=.cmx) $(ALL_MLOBJ:.cmo=$(XO))
 	-@$(RM) -f $(ALL_MLOBJ:.cmo=.cmi) $(ALL_MLOBJ:.cmo=.annot) $(ALL_COBJ)
 	-@$(RM) -f $(ALL_CMA) $(ALL_CMA:.cma=.cmxa) $(ALL_CMA:.cma=.a)
 	-@$(RM) -f $(foreach file,$(INSTALL_CMA:.cma=$(XA)),libml$(file))
