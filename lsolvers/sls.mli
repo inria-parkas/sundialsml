@@ -31,7 +31,7 @@ module SparseMatrix :
         {{!Invalidated}Invalidated} exception.
 
         @nocvode <node9#s:sls>  Type SlsMat *)
-    type t
+    type t = Sls_impl.t
 
     (** {4 Basic access} *)
 
