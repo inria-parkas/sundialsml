@@ -33,7 +33,7 @@ MPI_ENABLED=@ocamlmpi_enabled@
 
 MPI_LIBLINK= -lsundials_nvecparallel
 
-LIB_PATH = @sundials_lib_path@
+LIB_PATH = @sundials_lib_path@ @superlumt_lib_path@
 INC_PATH = @sundials_inc_path@
 CVODE_LDFLAGS = -lsundials_cvode @serial_nvec_libs@ @sparse_libs@ -lm $(LDFLAGS)
 CVODE_CFLAGS = $(INC_PATH) $(CFLAGS)

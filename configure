@@ -98,6 +98,7 @@ do
 	  OCAMLROOT		Path to OCaml installation
 	  SUNDIALS_LIB_PATH	Path to Sundials libraries (for linking)
 	  SUNDIALS_INC_PATH	Path to Sundials header files (for compiling)
+	  SUPERLUMT_LIB_PATH	Path to SuperLU_MT libraries
 	  LAPACKLIB		Command for linking with Lapack (default: -llapack)
 	                        (sometimes also: -lSimTKlapack)
 	  EXAMPLES		Path to installed examples (for comparison with Sundials).
@@ -125,6 +126,9 @@ END_HELP_TEXT
 	sundials_inc_path="${value%/}"
 	Isundials_inc_path="-I${sundials_inc_path}"
 	idirafter_sundials_inc_path="-idirafter ${sundials_inc_path}";;
+    SUPERLUMT_LIB_PATH)
+	superlumt_lib_path="${value%/}"
+	Lsuperlumt_lib_path="-L${superlumt_lib_path}";;
     LAPACKLIB)
 	LAPACKLIB="${value}";;
     EXAMPLES)
@@ -668,8 +672,8 @@ superlumt_mlobj_sens="$superlumt_mlobj_sens cvodes/cvodes_superlumt.cmo"
 superlumt_mlobj_sens="$superlumt_mlobj_sens idas/idas_superlumt.cmo"
 
 # TODO: detect which to install (how to do this?)
-sparse_libs="$sparse_libs -lsuperlu_mt_PTHREAD"
-#sparse_libs="$sparse_libs -lsuperlu_mt_OPENMP"
+sparse_libs="$sparse_libs -lsuperlu_mt_PTHREAD -lblas -lpthread"
+#sparse_libs="$sparse_libs -lsuperlu_mt_OPENMP -lblas -lopenmp"
 	    else
 		superlumt_info='disabled'
 	    fi;;
@@ -679,7 +683,7 @@ fi
 
 # Combine all ldflags
 
-ldflags="${ldflags} ${lapack_lib}"
+ldflags="${ldflags} ${sparse_libs} ${lapack_lib}"
 
 # Parallel features
 mpicc=${mpicc:-mpicc}
@@ -910,6 +914,7 @@ fi
 	 s#@ldflags@#${ldflags}#;
 	 s#@sundials_lib_path@#${Lsundials_lib_path}#;
 	 s#@sundials_inc_path@#${Isundials_inc_path}#;
+	 s#@superlumt_lib_path@#${Lsuperlumt_lib_path}#;
 	 s#@link_sundials_arkode@#${Lsundials_arkode}#;
 	 s#@arkode_mlobj_main@#${arkode_mlobj_main}#;
 	 s#@arkode_cobj_main@#${arkode_cobj_main}#;
