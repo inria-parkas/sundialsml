@@ -270,6 +270,9 @@ sls_cmo=
 Lsundials_arkode=
 arkode_mlobj_main=
 arkode_cobj_main=
+arkode_mlobj_bbd=
+arkode_cobj_bbd=
+arkode_subdir=
 if [ "${sundials_version}" = "SUNDIALS_PACKAGE_VERSION" ]; then
     error="${error}\n\tcould not find sundials_config.h"
     sundials=0
@@ -285,6 +288,9 @@ else
 	    Lsundials_arkode=-lsundials_arkode
 	    arkode_mlobj_main='arkode/arkode_impl.cmo arkode/arkode.cmo'
 	    arkode_cobj_main=arkode/arkode_ml${XO}
+	    arkode_mlobj_bbd=arkode/arkode_bbd.cmo
+	    arkode_cobj_bbd=arkode/arkode_bbd_ml${XO}
+	    arkode_subdir=arkode
 	    ;;
     esac
     case "${sundials_version}" in
@@ -907,6 +913,9 @@ fi
 	 s#@link_sundials_arkode@#${Lsundials_arkode}#;
 	 s#@arkode_mlobj_main@#${arkode_mlobj_main}#;
 	 s#@arkode_cobj_main@#${arkode_cobj_main}#;
+	 s#@arkode_mlobj_bbd@#${arkode_mlobj_bbd}#;
+	 s#@arkode_cobj_bbd@#${arkode_cobj_bbd}#;
+	 s#@arkode_subdir@#${arkode_subdir}#;
 	 s#@ocamlflags@#${ocamlflags}#;
 	 s#@ocamloptflags@#${ocamloptflags}#;
 	 s#@ocaml_3x@#${ocaml_3x}#;

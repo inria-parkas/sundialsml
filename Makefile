@@ -89,14 +89,14 @@ MLOBJ_NO_SENS =
 ### Objects specific to sundials_mpi.cma.
 COBJ_MPI =	nvectors/nvector_parallel_ml$(XO)	\
 		kinsol/kinsol_bbd_ml$(XO)		\
-		arkode/arkode_bbd_ml$(XO)		\
+		$(ARKODE_COBJ_BBD)		\
 	   	cvode/cvode_bbd_ml$(XO)			\
 		cvodes/cvodes_bbd_ml$(XO)		\
 	   	ida/ida_bbd_ml$(XO)			\
 		idas/idas_bbd_ml$(XO)
 MLOBJ_MPI =	nvectors/nvector_parallel.cmo	\
 		kinsol/kinsol_bbd.cmo		\
-		arkode/arkode_bbd.cmo		\
+		$(ARKODE_MLOBJ_BBD)		\
 		cvode/cvode_bbd.cmo		\
 		cvodes/cvodes_bbd.cmo		\
 		ida/ida_bbd.cmo			\
