@@ -1,6 +1,7 @@
 config
 *.cmo
 *.cmx
+*.cmxs
 *.cmi
 *.cma
 *.cmxa
@@ -23,6 +24,7 @@ META
 config.h
 sundials_config.ml
 examples/*/parallel/grad*.m
+examples/arkode/C_serial/*.txt
 examples/*/*/*.sundials.c
 examples/*/*/*.sundials
 examples/utils/perf

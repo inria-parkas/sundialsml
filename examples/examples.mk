@@ -18,6 +18,9 @@
 #     - use lapack
 #     - use MPI
 #   respectively.
+# * FILES_TO_CLEAN
+#   Space-separated names of files (relative to current path) that should
+#   be deleted upon `make clean'.
 # * USELIB [optional]
 #   sundials or sundials_nosensi (no extension!).  Defaults to sundials.
 #
@@ -30,13 +33,14 @@
 #  - Supply a third argument bar if foo.{out,reps,time} should be copies
 #    of bar.{out,reps,time}.
 
+SRC=$(SRCROOT)/src
 include $(SRCROOT)/config
 
 all: tests.byte tests.opt
 
 C_EXAMPLES=$(if $(EXAMPLESROOT),,c_examples_unavailable)
 c_examples_unavailable:
-	@echo "C version of examples not found.  Try running $(SRCROOT)/configure again"
+	@echo "C version of examples not found.  Try running configure again"
 	@echo "with EXAMPLES=/path/to/sundials/examples.  You can give the examples"
 	@echo "directory in the sundials C source tree or (if you installed the C library's"
 	@echo "examples) the one in the installation."
@@ -51,7 +55,7 @@ ALL_EXAMPLES=$(EXAMPLES) $(LAPACK_EXAMPLES) $(MPI_EXAMPLES)
 ENABLED_EXAMPLES=$(EXAMPLES) $(if $(LAPACK_ENABLED),$(LAPACK_EXAMPLES)) \
 	         $(if $(MPI_ENABLED),$(MPI_EXAMPLES))
 SERIAL_EXAMPLES=$(EXAMPLES) $(LAPACK_EXAMPLES)
-SUNDIALSLIB_DEPS=$(foreach x,$(SUNDIALSLIB),$(SRCROOT)/$x)
+SUNDIALSLIB_DEPS=$(foreach x,$(SUNDIALSLIB),$(SRC)/$x)
 
 UTILS=$(SRCROOT)/examples/utils
 
@@ -122,31 +126,31 @@ $(LAPACK_TESTS): lapack-tests.%.log: $(LAPACK_EXAMPLES:.ml=.%.diff)
 # if you modify the binding but forget to recompile it.  Is there a
 # way to protect against the latter without being too invasive?
 
-$(SERIAL_EXAMPLES:.ml=.byte): %.byte: %.ml $(SRCROOT)/$(USELIB).cma
+$(SERIAL_EXAMPLES:.ml=.byte): %.byte: %.ml $(SRC)/$(USELIB).cma
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
-	    $(INCLUDES) -I $(SRCROOT) -dllpath $(SRCROOT) \
-	    $(SUBDIRS:%=-I $(SRCROOT)/%) \
+	    $(INCLUDES) -I $(SRC) -dllpath $(SRC) \
+	    $(SUBDIRS:%=-I $(SRC)/%) \
 	    bigarray.cma unix.cma \
 	    $(USELIB).cma $<
 
-$(SERIAL_EXAMPLES:.ml=.opt): %.opt: %.ml $(SRCROOT)/$(USELIB).cmxa
+$(SERIAL_EXAMPLES:.ml=.opt): %.opt: %.ml $(SRC)/$(USELIB).cmxa
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
-	    $(INCLUDES) -I $(SRCROOT) bigarray.cmxa unix.cmxa \
-	    $(SUBDIRS:%=-I $(SRCROOT)/%) \
+	    $(INCLUDES) -I $(SRC) bigarray.cmxa unix.cmxa \
+	    $(SUBDIRS:%=-I $(SRC)/%) \
 	    $(USELIB).cmxa $<
 
-$(MPI_EXAMPLES:.ml=.byte): %.byte: %.ml $(SRCROOT)/$(USELIB).cma \
-			   $(SRCROOT)/sundials_mpi.cma
+$(MPI_EXAMPLES:.ml=.byte): %.byte: %.ml $(SRC)/$(USELIB).cma \
+			   $(SRC)/sundials_mpi.cma
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
-	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRCROOT) -dllpath $(SRCROOT) \
-	    $(SUBDIRS:%=-I $(SRCROOT)/%) \
+	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC) -dllpath $(SRC) \
+	    $(SUBDIRS:%=-I $(SRC)/%) \
 	    bigarray.cma unix.cma mpi.cma $(USELIB).cma sundials_mpi.cma $<
 
-$(MPI_EXAMPLES:.ml=.opt): %.opt: %.ml $(SRCROOT)/$(USELIB).cmxa \
-			  $(SRCROOT)/sundials_mpi.cmxa
+$(MPI_EXAMPLES:.ml=.opt): %.opt: %.ml $(SRC)/$(USELIB).cmxa \
+			  $(SRC)/sundials_mpi.cmxa
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
-	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRCROOT) \
-	    $(SUBDIRS:%=-I $(SRCROOT)/%) \
+	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC) \
+	    $(SUBDIRS:%=-I $(SRC)/%) \
 	    bigarray.cmxa unix.cmxa mpi.cmxa $(USELIB).cmxa sundials_mpi.cmxa $<
 
 # opam inserts opam's and the system's stublibs directory into
@@ -154,7 +158,7 @@ $(MPI_EXAMPLES:.ml=.opt): %.opt: %.ml $(SRCROOT)/$(USELIB).cmxa \
 # Make sure we run with the shared libraries in the source tree, not
 # installed ones (if any).  Native code doesn't have this problem
 # because it statically links in C stubs.
-CAML_LD_LIBRARY_PATH:=$(SRCROOT):$(CAML_LD_LIBRARY_PATH)
+CAML_LD_LIBRARY_PATH:=$(SRC):$(CAML_LD_LIBRARY_PATH)
 
 # Rules for producing *.out files.  Subroutine of EXECUTION_RULE.
 define ADD_EXECUTE_RULES
@@ -307,7 +311,7 @@ $(MPI_EXAMPLES:.ml=.sundials): %.sundials: %.sundials.c $(SRCROOT)/config
 
 # Just remind the user to recompile the library rather than actually
 # doing the recompilation.  (Or is it better to recompile?)
-$(SRCROOT)/%.cma $(SRCROOT)/%.cmxa:
+$(SRC)/%.cma $(SRC)/%.cmxa:
 	@echo "$@ doesn't exist."
 	@echo "Maybe you forgot to compile the main library?"
 	@false
@@ -347,4 +351,4 @@ clean:
 	-@rm -f tests.opt.log lapack-tests.opt.log
 	-@rm -f perf.byte.log perf.opt.log
 	-@rm -f $(foreach t,$(PLOTTYPES),perf.opt.$t)
-	-@rm -f $(foreach t,$(PLOTTYPES),perf.byte.$t)
+	-@rm -f $(foreach t,$(PLOTTYPES),perf.byte.$t) $(FILES_TO_CLEAN)

@@ -22,6 +22,9 @@ LAPACK_EXAMPLES =
 KLU_EXAMPLES = ark_brusselator1D_klu.ml
 SUPERLUMT_EXAMPLES = ark_brusselator1D_FEM_slu.ml
 
+FILES_TO_CLEAN = bruss_mesh.txt bruss_u.txt bruss_v.txt bruss_w.txt \
+		 heat1D.txt heat_mesh.txt solution.txt
+
 include ../../examples.mk
 
 #TODO:
