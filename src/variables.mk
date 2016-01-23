@@ -78,16 +78,16 @@ COBJ_NO_SENS =	cvode/cvode_ml$(XO)		\
 MLOBJ_NO_SENS =
 
 ### Objects specific to sundials_mpi.cma.
-COBJ_MPI =	nvectors/nvector_parallel_ml.o	\
-		kinsol/kinsol_bbd_ml.o		\
-		arkode/arkode_bbd_ml.o		\
-		cvode/cvode_bbd_ml.o		\
-		cvodes/cvodes_bbd_ml.o		\
-		ida/ida_bbd_ml.o		\
-		idas/idas_bbd_ml.o
+COBJ_MPI =	nvectors/nvector_parallel_ml$(XO)	\
+		kinsol/kinsol_bbd_ml$(XO)		\
+		$(ARKODE_COBJ_BBD)			\
+		cvode/cvode_bbd_ml$(XO)			\
+		cvodes/cvodes_bbd_ml$(XO)		\
+		ida/ida_bbd_ml$(XO)			\
+		idas/idas_bbd_ml$(XO)
 MLOBJ_MPI =	nvectors/nvector_parallel.cmo	\
 		kinsol/kinsol_bbd.cmo		\
-		arkode/arkode_bbd.cmo		\
+		$(ARKODE_MLOBJ_BBD)		\
 		cvode/cvode_bbd.cmo		\
 		cvodes/cvodes_bbd.cmo		\
 		ida/ida_bbd.cmo			\

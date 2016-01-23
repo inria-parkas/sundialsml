@@ -396,7 +396,7 @@ let main () =
 
   (match Sundials.sundials_version with
    | 2,6,_ -> print_output time ydata yBdata qBdata
-   | _     -> print_output tb1 ydata yBdata qBdata);
+   | _     -> print_output tb2 ydata yBdata qBdata);
 
   printf "Free memory\n\n"
 

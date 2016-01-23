@@ -50,7 +50,7 @@ KINSOL_CFLAGS = $(INC_PATH) $(CFLAGS)
 
 ARKODE_MLOBJ_MAIN = @arkode_mlobj_main@
 ARKODE_COBJ_MAIN = @arkode_cobj_main@
-ARKPDE_MLOBJ_BBD = @arkode_mlobj_bbd@
+ARKODE_MLOBJ_BBD = @arkode_mlobj_bbd@
 ARKODE_COBJ_BBD = @arkode_cobj_bbd@
 
 SLS_ML_XO = @sls_ml_xo@
