@@ -860,44 +860,49 @@ fi
 
 # Show a summary
 
-printf "\nConfiguration (${version}p${versionp})\n-----------------------\n"
+LOG=config.log
 
-printf "  OCaml\t\t\t${ocaml_path}${ocaml_version}\n"
-printf "  Sundials\t\t${sundials_version}${lapack_info}\n"
-printf "    -parallel\t\t${sundialsmpi_info}\n"
-printf "    -nvector: pthreads\t${nvecpthreads_info}\n"
-printf "    -nvector: openmp\t${nvecopenmp_info}\n"
-printf "    -SuperLU_MT\t\t${superlumt_info}\n"
-printf "    -KLU\t\t${klu_info}\n"
-printf "    -examples\t\t${examples_info}\n"
-printf "  OCamlMPI\t\t${ocamlmpi}\n"
-printf "  MathJax (for docs)\t${mathjax}"
+printf "\nConfiguration (${version}p${versionp})\n-----------------------\n" \
+                                                                       > ${LOG}
+
+printf "  OCaml\t\t\t${ocaml_path}${ocaml_version}\n"	              >> ${LOG}
+printf "  Sundials\t\t${sundials_version}${lapack_info}\n"            >> ${LOG}
+printf "    -parallel\t\t${sundialsmpi_info}\n"	                      >> ${LOG}
+printf "    -nvector: pthreads\t${nvecpthreads_info}\n"	              >> ${LOG}
+printf "    -nvector: openmp\t${nvecopenmp_info}\n"                   >> ${LOG}
+printf "    -SuperLU_MT\t\t${superlumt_info}\n"	                      >> ${LOG}
+printf "    -KLU\t\t${klu_info}\n"                                    >> ${LOG}
+printf "    -examples\t\t${examples_info}\n"                          >> ${LOG}
+printf "  OCamlMPI\t\t${ocamlmpi}\n"                                  >> ${LOG}
+printf "  MathJax (for docs)\t${mathjax}"                             >> ${LOG}
 if [ "x${mathjax_known_online}" = x1 ]; then
-    printf " (rendering needs network)\n"
+    printf " (rendering needs network)\n"                             >> ${LOG}
 elif [ "x${mathjax_known_local}" = x1 ]; then
-    printf " (offline rendering)\n"
+    printf " (offline rendering)\n"                                   >> ${LOG}
 else
-    printf "\n"
+    printf "\n"	                                                      >> ${LOG}
 fi
-printf "\n"
-printf "  Architecture\t\t${arch}\n"
-[ "x$enable_debug" = x1 ] && printf "  Debugging\t\tENABLED\n"
-printf "\n"
-printf "Installation paths\n"
-printf "  prefix:\t\t${prefix}\n"
-printf "  libdir:\t\t${libdir:-${ocaml_libpath}}\n"
-printf "  stubdir:\t\t${stubdir:-${ocaml_libpath}stublibs/}\n"
+printf "\n"                                                           >> ${LOG}
+printf "  Architecture\t\t${arch}\n"                                  >> ${LOG}
+[ "x$enable_debug" = x1 ] && printf "  Debugging\t\tENABLED\n"        >> ${LOG}
+printf "\n"                                                           >> ${LOG}
+printf "Installation paths\n"                                         >> ${LOG}
+printf "  prefix:\t\t${prefix}\n"                                     >> ${LOG}
+printf "  libdir:\t\t${libdir:-${ocaml_libpath}}\n"                   >> ${LOG}
+printf "  stubdir:\t\t${stubdir:-${ocaml_libpath}stublibs/}\n"        >> ${LOG}
 if [ ${install_docs:-1} -eq 1 ]; then
-    printf "  docdir:\t\t${docdir:-${prefix}share/doc/}\n"
+    printf "  docdir:\t\t${docdir:-${prefix}share/doc/}\n"            >> ${LOG}
 fi
-printf "\n"
+printf "\n"                                                           >> ${LOG}
 
 if [ -n "${error}" ]; then
-    printf "Some errors occurred during configuration:${error}\n\n"
+    printf "Some errors occurred during configuration:${error}\n\n"   >> ${LOG}
     exit 1
 elif [ -n "${warning}" ]; then
-    printf "Warnings:${warning}\n\n"
+    printf "Warnings:${warning}\n\n"                                  >> ${LOG}
 fi
+
+cat ${LOG}
 
 (printf "# # # THIS FILE IS GENERATED AUTOMATICALLY BY CONFIGURE # # #\n"; \
  sed -e "s#@prefix@#${prefix}#;

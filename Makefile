@@ -35,7 +35,7 @@ distclean:
 	$(MAKE) -C doc $@
 	$(MAKE) -C src $@
 	$(MAKE) -C examples $@
-	-@$(RM) -f config
+	-@$(RM) -f config config.log
 
 cleandoc:
 	$(MAKE) -C doc clean
