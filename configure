@@ -674,6 +674,24 @@ superlumt_mlobj_sens="$superlumt_mlobj_sens idas/idas_superlumt.cmo"
 # TODO: detect which to install (how to do this?)
 sparse_libs="$sparse_libs -lsuperlu_mt_PTHREAD -lblas -lpthread"
 #sparse_libs="$sparse_libs -lsuperlu_mt_OPENMP -lblas -lopenmp"
+		test_stem=__configure_test_c_file__
+		cat > $test_stem.c <<EOF
+int main ()
+{
+  void dCreate_Dense_Matrix ();
+  dCreate_Dense_Matrix ();
+  return 0;
+}
+EOF
+		if ! $CC $test_stem.c ${sparse_libs} ${Lsuperlumt_lib_path} \
+                     -o ${test_stem}${XX} >/dev/null 2>&1
+                then
+                    error="${error}\n\tCan't link to SuperLU_MT.  You may have to specify SUPERLUMT_LIB_PATH."
+                    error="${error}\n\tSaved test code as ${test_stem}.c"
+                    error="${error}\n\tCompilation command was: ${CC} ${test_stem}.c ${sparse_libs} ${Lsuperlumt_lib_path} -o ${test_stem}${XX}"
+                else
+                    rm -f ${test_stem} ${test_stem}.*
+                fi
 	    else
 		superlumt_info='disabled'
 	    fi;;
