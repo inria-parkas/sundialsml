@@ -313,12 +313,13 @@ int main (int argc, char *argv[])
   return sizeof (realtype) != sizeof (double);
 }
 EOF
-    if ! $CC ${Isundials_inc_path} -o $test_stem$XX $test_stem.c >/dev/null 2>&1
+    compile_cmd="$CC ${Isundials_inc_path} -o ${test_stem}${XX} $test_stem.c"
+    if ! eval "${compile_cmd}" >/dev/null 2>&1
     then
         error="${error}\n\tCan't link C code to sundials.  Is sundials installed properly?"
         error="${error}\n\tSaved test code as ${test_stem}.c"
         error="${error}\n\tCompilation command was:"
-        error="${error}\n\t$CC ${Isundials_inc_path} -o ${test_stem}${XX} ${test_stem}.c"
+        error="${error}\n\t${compile_cmd}"
     elif ! ./$test_stem$XX
     then
         error="${error}\n\trealtype not defined as double.  Recompile sundials with -DSUNDIALS_PRECISION=double."
@@ -555,7 +556,7 @@ if ! ${OCAMLBIN}ocamlmklib $test_c_stem$XO $test_stem.cmo \
     ${Lsundials_lib_path} -lsundials_cvode -lsundials_nvecserial ${libm} \
     > $test_stem.log 2>&1
 then
-    warning="${warning}\n\tSundials/C seems to be compiled without --enable-shared."
+    warning="${warning}\n\tSundials/C seems to be compiled without shared. library support"
     warning="${warning}\n\tSundials/ML may not work in the toplevel."
     enable_shared=
 fi
@@ -683,12 +684,12 @@ int main ()
   return 0;
 }
 EOF
-		if ! $CC $test_stem.c ${sparse_libs} ${Lsuperlumt_lib_path} \
-                     -o ${test_stem}${XX} >/dev/null 2>&1
+		compile_cmd="$CC $test_stem.c ${sparse_libs} ${Lsuperlumt_lib_path} -o ${test_stem}${XX}"
+		if ! eval "${compile_cmd}" >/dev/null 2>&1
                 then
                     error="${error}\n\tCan't link to SuperLU_MT.  You may have to specify SUPERLUMT_LIB_PATH."
                     error="${error}\n\tSaved test code as ${test_stem}.c"
-                    error="${error}\n\tCompilation command was: ${CC} ${test_stem}.c ${sparse_libs} ${Lsuperlumt_lib_path} -o ${test_stem}${XX}"
+                    error="${error}\n\tCompilation command was: ${compile_cmd}"
                 else
                     rm -f ${test_stem} ${test_stem}.*
                 fi
