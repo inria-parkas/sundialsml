@@ -33,7 +33,6 @@ SUBDIR_TARGETS = $(foreach d,$(SUBDIRS),$(foreach t,$(TOP_TARGETS),$d/$t))
 all: ocaml tests.byte tests.opt
 
 $(SUBDIR_TARGETS):
-	echo $(foreach t,$(SUBDIR_TARGETS),$(findstring $t,$(MAKECMDGOALS)))
 	@$(MAKE) -C `echo $@ | sed -e 's#/[^/]*$$##'` \
 		    `echo $@ | sed -e 's#.*/##'`
 
