@@ -63,6 +63,7 @@ NVECPTHREADS_CMO = @nvecpthreads_cmo@
 OPENMP_ENABLED = @nvecopenmp_enabled@
 NVECOPENMP_ML_XO = @nvecopenmp_ml_xo@
 NVECOPENMP_CMO = @nvecopenmp_cmo@
+CFLAGS_OPENMP = @cflags_openmp@
 
 KLU_COBJ_SENS = @klu_cobj_sens@
 KLU_COBJ_NO_SENS = @klu_cobj_no_sens@

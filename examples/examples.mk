@@ -131,6 +131,7 @@ $(LAPACK_TESTS): lapack-tests.%.log: $(LAPACK_EXAMPLES:.ml=.%.diff)
 # if you modify the binding but forget to recompile it.  Is there a
 # way to protect against the latter without being too invasive?
 
+# Serial
 $(SERIAL_EXAMPLES:.ml=.byte): %.byte: %.ml $(SRC)/$(USELIB).cma
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
 	    $(INCLUDES) -I $(SRC) -dllpath $(SRC) \
@@ -144,6 +145,7 @@ $(SERIAL_EXAMPLES:.ml=.opt): %.opt: %.ml $(SRC)/$(USELIB).cmxa
 	    $(SUBDIRS:%=-I $(SRC)/%) \
 	    $(USELIB).cmxa $<
 
+# MPI
 $(MPI_EXAMPLES:.ml=.byte): %.byte: %.ml $(SRC)/$(USELIB).cma \
 			   $(SRC)/sundials_mpi.cma
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
@@ -152,40 +154,41 @@ $(MPI_EXAMPLES:.ml=.byte): %.byte: %.ml $(SRC)/$(USELIB).cma \
 	    bigarray.cma unix.cma mpi.cma $(USELIB).cma sundials_mpi.cma $<
 
 $(MPI_EXAMPLES:.ml=.opt): %.opt: %.ml $(SRC)/$(USELIB).cmxa \
-$(OPENMP_EXAMPLES:.ml=.byte): %.byte: %.ml $(SRC)/$(USELIB).cma \
-			      $(SRC)/sundials_mpi.cma
-	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
-	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC) -dllpath $(SRC) \
-	    $(SUBDIRS:%=-I $(SRC)/%) \
-	    bigarray.cma unix.cma mpi.cma $(USELIB).cma sundials_mpi.cma $<
-
-$(OPENMP_EXAMPLES:.ml=.byte): %.byte: %.ml $(SRC)/$(USELIB).cma \
-			   $(SRC)/sundials_mpi.cma
-	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
-	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC) -dllpath $(SRC) \
-	    $(SUBDIRS:%=-I $(SRC)/%) \
-	    bigarray.cma unix.cma mpi.cma $(USELIB).cma sundials_mpi.cma $<
-
-$(OPENMP_EXAMPLES:.ml=.opt): %.opt: %.ml $(SRC)/$(USELIB).cmxa \
 			  $(SRC)/sundials_mpi.cmxa
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
 	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC) \
 	    $(SUBDIRS:%=-I $(SRC)/%) \
 	    bigarray.cmxa unix.cmxa mpi.cmxa $(USELIB).cmxa sundials_mpi.cmxa $<
 
+# OpenMP
+$(OPENMP_EXAMPLES:.ml=.byte): %.byte: %.ml $(SRC)/$(USELIB).cma \
+			   $(SRC)/sundials.cma
+	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
+	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC) -dllpath $(SRC) \
+	    $(SUBDIRS:%=-I $(SRC)/%) \
+	    bigarray.cma unix.cma $(USELIB).cma $<
+
+$(OPENMP_EXAMPLES:.ml=.opt): %.opt: %.ml $(SRC)/$(USELIB).cmxa \
+			  $(SRC)/sundials.cmxa
+	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
+	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC) \
+	    $(SUBDIRS:%=-I $(SRC)/%) \
+	    bigarray.cmxa unix.cmxa $(USELIB).cmxa sundials.cmxa $<
+
+# pthreads
 $(PTHREADS_EXAMPLES:.ml=.byte): %.byte: %.ml $(SRC)/$(USELIB).cma \
 			        $(SRC)/sundials_mpi.cma
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
 	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC) -dllpath $(SRC) \
 	    $(SUBDIRS:%=-I $(SRC)/%) \
-	    bigarray.cma unix.cma mpi.cma $(USELIB).cma sundials_mpi.cma $<
+	    bigarray.cma unix.cma mpi.cma $(USELIB).cma $<
 
 $(PTHREADS_EXAMPLES:.ml=.opt): %.opt: %.ml $(SRC)/$(USELIB).cmxa \
 			  $(SRC)/sundials_mpi.cmxa
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
 	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC) \
 	    $(SUBDIRS:%=-I $(SRC)/%) \
-	    bigarray.cmxa unix.cmxa mpi.cmxa $(USELIB).cmxa sundials_mpi.cmxa $<
+	    bigarray.cmxa unix.cmxa mpi.cmxa $(USELIB).cmxa $<
 
 # opam inserts opam's and the system's stublibs directory into
 # CAML_LD_LIBRARY_PATH, which has higher precdence than -dllpath.
@@ -340,6 +343,16 @@ $(MPI_EXAMPLES:.ml=.sundials): %.sundials: %.sundials.c $(SRCROOT)/config
 	$(MPICC) -o $@ -I $(EXAMPLESROOT)/$(C_SUBDIR) \
 	    $(EG_CFLAGS) $< $(LIB_PATH) $(EG_LDFLAGS) \
 	    $(LAPACK_LIB) $(MPI_LIBLINK)
+
+$(OPENMP_EXAMPLES:.ml=.sundials): %.sundials: %.sundials.c $(SRCROOT)/config
+	$(CC) $(CFLAGS_OPENMP) -o $@ -I $(EXAMPLESROOT)/$(C_SUBDIR) \
+	    $(EG_CFLAGS) $< $(LIB_PATH) $(EG_LDFLAGS) \
+	    $(LAPACK_LIB) $(OPENMP_LIBLINK)
+
+$(PTHREAD_EXAMPLES:.ml=.sundials): %.sundials: %.sundials.c $(SRCROOT)/config
+	$(CC) -o $@ -I $(EXAMPLESROOT)/$(C_SUBDIR) \
+	    $(EG_CFLAGS) $< $(LIB_PATH) $(EG_LDFLAGS) \
+	    $(LAPACK_LIB) $(PTHREAD_LIBLINK)
 
 ## Misc
 

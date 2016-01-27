@@ -14,6 +14,7 @@ enable_mpi=1
 unset enable_debug
 unset mathjax
 opt_compiler=1
+cflags_openmp=
 
 configure_command="$0"
 
@@ -129,6 +130,8 @@ END_HELP_TEXT
     SUPERLUMT_LIB_PATH)
 	superlumt_lib_path="${value%/}"
 	Lsuperlumt_lib_path="-L${superlumt_lib_path}";;
+    CFLAGS_OPENMP)
+        cflags_openmp="${value}";;
     LAPACKLIB)
 	LAPACKLIB="${value}";;
     EXAMPLES)
@@ -675,7 +678,7 @@ superlumt_mlobj_sens="$superlumt_mlobj_sens idas/idas_superlumt.cmo"
 # TODO: detect which to install (how to do this?)
 sparse_libs="$sparse_libs -lsuperlu_mt_PTHREAD -lblas -lpthread"
 #sparse_libs="$sparse_libs -lsuperlu_mt_OPENMP -lblas -lopenmp"
-		test_stem=__configure_test_c_file__
+		test_stem=__configure_test_c_file__superlumt
 		cat > $test_stem.c <<EOF
 int main ()
 {
@@ -815,10 +818,39 @@ EOF
 	nvecopenmp_ml_xo=nvectors/nvector_openmp_ml${XO}
 	nvecopenmp_cmo=nvectors/nvector_openmp.cmo
 	serial_nvec_libs="$serial_nvec_libs -lsundials_nvecopenmp"
+
+        # Determine the C compiler flag for enabling OpenMP.
+        if [ "x$cflags_openmp" = x ]; then
+            cat > $test_stem.c <<EOF
+void omp_set_num_threads (int);
+int main (int argc, char *argv[])
+{
+  omp_set_num_threads(argc);
+  #pragma omp for
+  for (int i = 0; i <= argc; ++i)
+    printf ("Making extra sure omp_set_num_threads() isn't optimized away");
+  return 0;
+}
+EOF
+            # Credit: List of known flags borrowed from ax_openmp.m4
+            for flag in -fopenmp -openmp -mp -xopenmp -omp -qsmp=omp
+            do
+                if $CC $CFLAGS $flag $test_stem.c -o $test_stem$XX \
+                       >/dev/null 2>&1
+                then
+                    cflags_openmp=$flag
+                    break
+                fi
+            done
+            if [ "x$cflags_openmp" = x ]; then
+                warning="${warning}\n\tCouldn't determine C compiler flag for OpenMP.  The library should compile"
+                warning="${warning}\n\tfine with OpenMP enabled, but some examples may fail to compile."
+                warning="${warning}\n\tIf in doubt, re-configure with CFLAGS_OPENMP set to the appropriate flag."
+            fi
+        fi
     fi
     rm -f ./$test_stem.* ./$test_stem$XX
 fi
-
 
 # Sundials examples directory
 if [ "x$EXAMPLESROOT" = x ]; then
@@ -935,6 +967,7 @@ cat ${LOG}
 	 s#@install_docs@#${install_docs:-1}#;
 	 s#@cflags@#${cflags}#;
 	 s#@cppflags@#${cppflags}#;
+	 s#@cflags_openmp@#${cflags_openmp}#;
 	 s#@ml_cppflags@#${ml_cppflags}#;
 	 s#@ldflags@#${ldflags}#;
 	 s#@sundials_lib_path@#${Lsundials_lib_path}#;
