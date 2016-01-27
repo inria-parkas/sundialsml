@@ -56,9 +56,11 @@ ARKODE_COBJ_BBD = @arkode_cobj_bbd@
 SLS_ML_XO = @sls_ml_xo@
 SLS_CMO = @sls_cmo@
 
+PTHREADS_ENABLED = @nvecpthreads_enabled@
 NVECPTHREADS_ML_XO = @nvecpthreads_ml_xo@
 NVECPTHREADS_CMO = @nvecpthreads_cmo@
 
+OPENMP_ENABLED = @nvecopenmp_enabled@
 NVECOPENMP_ML_XO = @nvecopenmp_ml_xo@
 NVECOPENMP_CMO = @nvecopenmp_cmo@
 

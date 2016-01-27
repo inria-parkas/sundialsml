@@ -962,8 +962,10 @@ cat ${LOG}
 	 s#@lapack_enabled@#${lapack_enabled}#;
 	 s#@sls_ml_xo@#${sls_ml_xo}#;
 	 s#@sls_cmo@#${sls_cmo}#;
+	 s#@nvecpthreads_enabled@#${nvecpthreads_enabled}#;
 	 s#@nvecpthreads_ml_xo@#${nvecpthreads_ml_xo}#;
 	 s#@nvecpthreads_cmo@#${nvecpthreads_cmo}#;
+	 s#@nvecopenmp_enabled@#${nvecopenmp_enabled}#;
 	 s#@nvecopenmp_ml_xo@#${nvecopenmp_ml_xo}#;
 	 s#@nvecopenmp_cmo@#${nvecopenmp_cmo}#;
 	 s#@serial_nvec_libs@#${serial_nvec_libs}#;

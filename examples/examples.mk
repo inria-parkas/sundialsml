@@ -12,11 +12,13 @@
 # * C_SUBDIR
 #   Which subdirectory of sundials' examples directory contains
 #   the corresponding examples, if different from SUBDIR.
-# * EXAMPLES, LAPACK_EXAMPLES, MPI_EXAMPLES
+# * EXAMPLES, LAPACK_EXAMPLES, MPI_EXAMPLES, OPENMP_EXAMPLES, PTHREADS_EXAMPLES
 #   List of .ml files in $(SUBDIR) that:
 #     - don't use lapack or MPI
 #     - use lapack
 #     - use MPI
+#     - use OpenMP
+#     - use pthreads
 #   respectively.
 # * FILES_TO_CLEAN
 #   Space-separated names of files (relative to current path) that should
@@ -51,9 +53,12 @@ C_SUBDIR ?= $(SUBDIR)
 
 ## Shorthands
 DIVIDER = "----------------------------------------------------------------------"
-ALL_EXAMPLES=$(EXAMPLES) $(LAPACK_EXAMPLES) $(MPI_EXAMPLES)
-ENABLED_EXAMPLES=$(EXAMPLES) $(if $(LAPACK_ENABLED),$(LAPACK_EXAMPLES)) \
-	         $(if $(MPI_ENABLED),$(MPI_EXAMPLES))
+ALL_EXAMPLES=$(EXAMPLES) $(LAPACK_EXAMPLES) $(MPI_EXAMPLES)	\
+	     $(OPENMP_EXAMPLES) $(PTHREADS_EXAMPLES)
+ENABLED_EXAMPLES=$(EXAMPLES) $(if $(LAPACK_ENABLED),$(LAPACK_EXAMPLES))	\
+	         $(if $(MPI_ENABLED),$(MPI_EXAMPLES))			\
+	         $(if $(OPENMP_ENABLED),$(OPENMP_EXAMPLES))		\
+	         $(if $(PTHREADS_ENABLED),$(PTHREADS_EXAMPLES))
 SERIAL_EXAMPLES=$(EXAMPLES) $(LAPACK_EXAMPLES)
 SUNDIALSLIB_DEPS=$(foreach x,$(SUNDIALSLIB),$(SRC)/$x)
 
@@ -147,6 +152,35 @@ $(MPI_EXAMPLES:.ml=.byte): %.byte: %.ml $(SRC)/$(USELIB).cma \
 	    bigarray.cma unix.cma mpi.cma $(USELIB).cma sundials_mpi.cma $<
 
 $(MPI_EXAMPLES:.ml=.opt): %.opt: %.ml $(SRC)/$(USELIB).cmxa \
+$(OPENMP_EXAMPLES:.ml=.byte): %.byte: %.ml $(SRC)/$(USELIB).cma \
+			      $(SRC)/sundials_mpi.cma
+	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
+	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC) -dllpath $(SRC) \
+	    $(SUBDIRS:%=-I $(SRC)/%) \
+	    bigarray.cma unix.cma mpi.cma $(USELIB).cma sundials_mpi.cma $<
+
+$(OPENMP_EXAMPLES:.ml=.byte): %.byte: %.ml $(SRC)/$(USELIB).cma \
+			   $(SRC)/sundials_mpi.cma
+	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
+	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC) -dllpath $(SRC) \
+	    $(SUBDIRS:%=-I $(SRC)/%) \
+	    bigarray.cma unix.cma mpi.cma $(USELIB).cma sundials_mpi.cma $<
+
+$(OPENMP_EXAMPLES:.ml=.opt): %.opt: %.ml $(SRC)/$(USELIB).cmxa \
+			  $(SRC)/sundials_mpi.cmxa
+	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
+	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC) \
+	    $(SUBDIRS:%=-I $(SRC)/%) \
+	    bigarray.cmxa unix.cmxa mpi.cmxa $(USELIB).cmxa sundials_mpi.cmxa $<
+
+$(PTHREADS_EXAMPLES:.ml=.byte): %.byte: %.ml $(SRC)/$(USELIB).cma \
+			        $(SRC)/sundials_mpi.cma
+	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
+	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC) -dllpath $(SRC) \
+	    $(SUBDIRS:%=-I $(SRC)/%) \
+	    bigarray.cma unix.cma mpi.cma $(USELIB).cma sundials_mpi.cma $<
+
+$(PTHREADS_EXAMPLES:.ml=.opt): %.opt: %.ml $(SRC)/$(USELIB).cmxa \
 			  $(SRC)/sundials_mpi.cmxa
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
 	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC) \

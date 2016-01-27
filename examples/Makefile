@@ -17,12 +17,12 @@ c_examples_unavailable:
 	@echo "examples) the one in the installation."
 	@false
 
-MODULES  = cvode cvodes ida idas kinsol
-VECTYPES = serial $(if $(MPI_ENABLED),parallel)
-
-SUBDIRS=$(foreach m,cvode cvodes ida idas kinsol,	\
-	  $(foreach v,serial parallel,$m/$v))		\
-	arkode/C_serial
+# This should list absolutely all subdirectories, including ones that
+# are disabled under the current configuration.  Examples that use
+# disabled features are filtered out in examples.mk.
+SUBDIRS=$(foreach m,cvode cvodes ida idas kinsol,		\
+	  $(foreach v,serial parallel,$m/$v))			\
+	$(foreach v,C_serial C_parallel C_openmp,arkode/$v)
 
 TOP_TARGETS = tests.byte.log tests.opt.log perf.byte.log perf.opt.log reps
 SUBDIR_TARGETS = $(foreach d,$(SUBDIRS),$(foreach t,$(TOP_TARGETS),$d/$t))
