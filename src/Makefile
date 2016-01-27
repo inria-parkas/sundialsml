@@ -216,7 +216,7 @@ distcheck:
 
 depend: .depend
 .depend:
-	$(OCAMLDEP) *.mli *.ml */*.mli */*.ml > .depend
+	$(OCAMLDEP) $(foreach d,$(SUBDIRS),-I $d) */*.mli */*.ml > .depend
 	$(CC) -MM $(CPPFLAGS) */*.c >> .depend
 
 clean:
