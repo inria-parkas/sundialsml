@@ -349,10 +349,10 @@ $(OPENMP_EXAMPLES:.ml=.sundials): %.sundials: %.sundials.c $(SRCROOT)/config
 	    $(EG_CFLAGS) $< $(LIB_PATH) $(EG_LDFLAGS) \
 	    $(LAPACK_LIB) $(OPENMP_LIBLINK)
 
-$(PTHREAD_EXAMPLES:.ml=.sundials): %.sundials: %.sundials.c $(SRCROOT)/config
+$(PTHREADS_EXAMPLES:.ml=.sundials): %.sundials: %.sundials.c $(SRCROOT)/config
 	$(CC) -o $@ -I $(EXAMPLESROOT)/$(C_SUBDIR) \
 	    $(EG_CFLAGS) $< $(LIB_PATH) $(EG_LDFLAGS) \
-	    $(LAPACK_LIB) $(PTHREAD_LIBLINK)
+	    $(LAPACK_LIB) $(PTHREADS_LIBLINK)
 
 ## Misc
 
