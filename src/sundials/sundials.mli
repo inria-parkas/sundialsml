@@ -23,7 +23,7 @@
 
 (** The [major], [minor], [patch], and [binding] version numbers of
     Sundials/ML.
-    The first three elements correspond to the maximume supported version
+    The first three elements correspond to the maximum supported version
     of the underlying Sundials/C library.
     The [binding] number distinguishes updates to the binding (restarting
     from 0 for each increment of the other elements). *)
