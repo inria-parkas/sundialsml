@@ -343,8 +343,8 @@ let main () =
 
   (* Loop over jpre (= PREC_LEFT, PREC_RIGHT), and solve the problem *)
 
-  let jrpe_loop jpre jrpe_str =
-    printf "\n\nPreconditioner type is:  jpre = %s\n\n" jrpe_str;
+  let jpre_loop jpre jpre_str =
+    printf "\n\nPreconditioner type is:  jpre = %s\n\n" jpre_str;
     
     (* In loop over output points, call CVode, print results, test for error *)
     let tout = ref twohr in
@@ -358,22 +358,38 @@ let main () =
     print_final_stats cvode_mem
   in (* End of jpre loop *)
 
-  jrpe_loop Spils.PrecLeft  "PREC_LEFT";
+  jpre_loop Spils.PrecLeft  "PREC_LEFT";
 
   (* On second run, re-initialize u, the solver, and CVSPGMR *)
   set_initial_profiles (unwrap u) data.dx data.dy;
-  Cvode.reinit cvode_mem t0 u;
 
-  (* NB: the prec type could be changed by giving a suitable ~iter_type
-     parameter to reinit, but this is avoided here because reinit also resets
-     the statistics.  The number of rhs function evaluation in sundials' C code
-     is cumulative, and using set_prec_type is necessary to simulate that
-     behavior.  *)
+  (* NB: The C code changed in Sundials 2.6.0, so we split cases on
+     the version number.  The C code in 2.6.x version calls
+     CVBandPrecInit() after CVodeReInit() and CVSpilsSetPrecType(),
+     whereas 2.5.x skips CVBandPrecInit().
+
+     Unfortunately, 2.6.x's sequence of calls: a) is irreproducible in
+     this OCaml binding, and b) triggers a memory leak in the C
+     library.  The following OCaml code does not leak memory because
+     it calls CVSpgmr() to reallocate the SPILS solver.  The overhead
+     in this case is negligible, though if this loop were run
+     thousands of times the difference may become notable.
+  *)
+  (match Sundials.sundials_version with
+   | (2,6,_) ->
+      let bandrange = { Cvode.mupper = mu; Cvode.mlower = ml } in
+      Cvode.reinit cvode_mem t0 u
+        ~iter_type:Cvode.(Newton Spils.(spgmr (Banded.prec_right bandrange)))
+   | (2,5,_) ->
+      Cvode.reinit cvode_mem t0 u
+   | _ -> failwith "Unrecognized Sundials version.")
+  ;
+
   Cvode.Spils.set_prec_type cvode_mem Spils.PrecRight;
   printf "\n\n-------------------------------------------------------";
   printf "------------\n";
     
-  jrpe_loop Spils.PrecRight "PREC_RIGHT"
+  jpre_loop Spils.PrecRight "PREC_RIGHT"
 
 (* Check environment variables for extra arguments.  *)
 let reps =

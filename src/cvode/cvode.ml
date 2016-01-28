@@ -397,7 +397,7 @@ module Spils =
          a fresh spils solver (i.e. right after CVSpgmr, CVSpbcg, or
          CVSptfqmr).
 
-         As of Sundials 2.5.0, calling
+         In Sundials 2.5.0 and 2.6.2, calling
 
            CVSpgmr -> CVBandPrecInit -> CVBandPrecInit
 
