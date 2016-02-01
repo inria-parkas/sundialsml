@@ -161,30 +161,26 @@ $(MPI_EXAMPLES:.ml=.opt): %.opt: %.ml $(SRC)/$(USELIB).cmxa \
 	    bigarray.cmxa unix.cmxa mpi.cmxa $(USELIB).cmxa sundials_mpi.cmxa $<
 
 # OpenMP
-$(OPENMP_EXAMPLES:.ml=.byte): %.byte: %.ml $(SRC)/$(USELIB).cma \
-			   $(SRC)/sundials.cma
+$(OPENMP_EXAMPLES:.ml=.byte): %.byte: %.ml $(SRC)/$(USELIB).cma
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
 	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC) -dllpath $(SRC) \
 	    $(SUBDIRS:%=-I $(SRC)/%) \
 	    bigarray.cma unix.cma $(USELIB).cma $<
 
-$(OPENMP_EXAMPLES:.ml=.opt): %.opt: %.ml $(SRC)/$(USELIB).cmxa \
-			  $(SRC)/sundials.cmxa
+$(OPENMP_EXAMPLES:.ml=.opt): %.opt: %.ml $(SRC)/$(USELIB).cmxa
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
 	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC) \
 	    $(SUBDIRS:%=-I $(SRC)/%) \
-	    bigarray.cmxa unix.cmxa $(USELIB).cmxa sundials.cmxa $<
+	    bigarray.cmxa unix.cmxa $(USELIB).cmxa $<
 
 # pthreads
-$(PTHREADS_EXAMPLES:.ml=.byte): %.byte: %.ml $(SRC)/$(USELIB).cma \
-			        $(SRC)/sundials_mpi.cma
+$(PTHREADS_EXAMPLES:.ml=.byte): %.byte: %.ml $(SRC)/$(USELIB).cma
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
 	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC) -dllpath $(SRC) \
 	    $(SUBDIRS:%=-I $(SRC)/%) \
 	    bigarray.cma unix.cma mpi.cma $(USELIB).cma $<
 
-$(PTHREADS_EXAMPLES:.ml=.opt): %.opt: %.ml $(SRC)/$(USELIB).cmxa \
-			  $(SRC)/sundials_mpi.cmxa
+$(PTHREADS_EXAMPLES:.ml=.opt): %.opt: %.ml $(SRC)/$(USELIB).cmxa
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
 	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC) \
 	    $(SUBDIRS:%=-I $(SRC)/%) \
