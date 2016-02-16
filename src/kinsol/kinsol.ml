@@ -43,7 +43,7 @@ type eta_choice =
   | EtaChoice2 of eta_params    (* KIN_ETACHOICE2 *)
   | EtaConstant of float option (* KIN_ETACONSTANT *)
 
-type serial_linear_solver = (RealArray.t, Nvector_serial.kind) linear_solver
+type serial_linear_solver = (RealArray.t, [>`Serial]) linear_solver
 type 'a double = 'a * 'a
 
 (* interface *)

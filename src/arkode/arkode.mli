@@ -60,7 +60,7 @@ open Sundials
 type ('d, 'k) session = ('d, 'k) Arkode_impl.session
 
 (** Alias for sessions based on serial nvectors. *)
-type serial_session = (Nvector_serial.data, Nvector_serial.kind) session
+type serial_session = (Nvector_serial.data, [>`Serial]) session
 
 (** {2:linear Linear and mass matrix solvers} *)
 
@@ -70,8 +70,7 @@ type serial_session = (Nvector_serial.data, Nvector_serial.kind) session
 type ('data, 'kind) linear_solver = ('data, 'kind) Arkode_impl.linear_solver
 
 (** Alias for linear solvers that are restricted to serial nvectors. *)
-type serial_linear_solver =
-      (Nvector_serial.data, Nvector_serial.kind) linear_solver
+type serial_linear_solver = (Nvector_serial.data, [>`Serial]) linear_solver
 
 (** Mass matrix solvers used by Arkode.
 
@@ -79,8 +78,7 @@ type serial_linear_solver =
 type ('data, 'kind) mass_solver = ('data, 'kind) Arkode_impl.mass_solver
 
 (** Alias for mass matrix solvers that are restricted to serial nvectors. *)
-type serial_mass_solver =
-      (Nvector_serial.data, Nvector_serial.kind) mass_solver
+type serial_mass_solver = (Nvector_serial.data, [>`Serial]) mass_solver
 
 (** Workspaces with three temporary vectors. *)
 type 'd triple = 'd * 'd * 'd
@@ -486,22 +484,19 @@ module Spils :
 
           @noarkode <node> ARKBandPrecInit *)
       val prec_left :
-           bandrange
-        -> (Nvector_serial.data, Nvector_serial.kind) preconditioner
+           bandrange -> (Nvector_serial.data, [>`Serial]) preconditioner
 
       (** Like {!prec_left} but preconditions from the right.
 
           @noarkode <node> ARKBandPrecInit *)
       val prec_right :
-           bandrange
-        -> (Nvector_serial.data, Nvector_serial.kind) preconditioner
+           bandrange -> (Nvector_serial.data, [>`Serial]) preconditioner
 
       (** Like {!prec_left} but preconditions from both sides.
 
           @noarkode <node> ARKBandPrecInit *)
       val prec_both :
-           bandrange
-        -> (Nvector_serial.data, Nvector_serial.kind) preconditioner
+           bandrange -> (Nvector_serial.data, [>`Serial]) preconditioner
 
       (** {4:stats Banded statistics} *)
 

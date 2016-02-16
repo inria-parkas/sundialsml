@@ -54,7 +54,7 @@ open Sundials
 type ('d, 'k) session = ('d, 'k) Cvode_impl.session
 
 (** Alias for sessions based on serial nvectors. *)
-type serial_session = (Nvector_serial.data, Nvector_serial.kind) session
+type serial_session = (Nvector_serial.data, [>`Serial]) session
 
 (** {2:linear Linear solvers} *)
 
@@ -64,8 +64,7 @@ type serial_session = (Nvector_serial.data, Nvector_serial.kind) session
 type ('data, 'kind) linear_solver = ('data, 'kind) Cvode_impl.linear_solver
 
 (** Alias for linear solvers that are restricted to serial nvectors. *)
-type serial_linear_solver =
-      (Nvector_serial.data, Nvector_serial.kind) linear_solver
+type serial_linear_solver = (Nvector_serial.data, [>`Serial]) linear_solver
 
 (** Workspaces with two temporary vectors. *)
 type 'd double = 'd * 'd
@@ -393,22 +392,19 @@ module Spils :
 
           @cvode <node5#sss:cvbandpre> CVBandPrecInit *)
       val prec_left :
-           bandrange
-        -> (Nvector_serial.data, Nvector_serial.kind) preconditioner
+           bandrange -> (Nvector_serial.data, [>`Serial]) preconditioner
 
       (** Like {!prec_left} but preconditions from the right.
 
           @cvode <node5#sss:cvbandpre> CVBandPrecInit *)
       val prec_right :
-           bandrange
-        -> (Nvector_serial.data, Nvector_serial.kind) preconditioner
+           bandrange -> (Nvector_serial.data, [>`Serial]) preconditioner
 
       (** Like {!prec_left} but preconditions from both sides.
 
           @cvode <node5#sss:cvbandpre> CVBandPrecInit *)
       val prec_both :
-           bandrange
-        -> (Nvector_serial.data, Nvector_serial.kind) preconditioner
+           bandrange -> (Nvector_serial.data, [>`Serial]) preconditioner
 
       (** {4:stats Banded statistics} *)
 

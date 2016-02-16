@@ -601,7 +601,7 @@ let ls_check_spils_bbd session =
 
 (* Types that depend on session *)
 
-type serial_session = (Nvector_serial.data, Nvector_serial.kind) session
+type serial_session = (Nvector_serial.data, [>`Serial]) session
 
 (* IDA's linear_solver receives two vectors, y and y'.  They usually
    (always?) have identical size and other properties, so one of them
@@ -613,7 +613,7 @@ type ('data, 'kind) linear_solver =
   -> unit
 
 type serial_linear_solver =
-  (Nvector_serial.data, Nvector_serial.kind) linear_solver
+  (Nvector_serial.data, [>`Serial]) linear_solver
 
 module SpilsTypes = struct
   include SpilsTypes'
@@ -627,7 +627,7 @@ module SpilsTypes = struct
     | InternalPrecLeft of ('a, 'k) set_preconditioner
 
   type serial_preconditioner =
-    (Nvector_serial.data, Nvector_serial.kind) preconditioner
+    (Nvector_serial.data, [>`Serial]) preconditioner
 
 end
 
@@ -661,7 +661,7 @@ module AdjointTypes = struct
   include AdjointTypes'
   (* Backwards session. *)
   type ('a, 'k) bsession = Bsession of ('a, 'k) session
-  type serial_bsession = (Nvector_serial.data, Nvector_serial.kind) bsession
+  type serial_bsession = (Nvector_serial.data, [>`Serial]) bsession
   let tosession (Bsession s) = s
   let parent_and_which s =
     match (tosession s).sensext with
@@ -674,7 +674,7 @@ module AdjointTypes = struct
     -> ('data, 'kind) Nvector.t (* y' *)
     -> unit
   type serial_linear_solver =
-    (Nvector_serial.data, Nvector_serial.kind) linear_solver
+    (Nvector_serial.data, [>`Serial]) linear_solver
 
   module SpilsTypes = struct
     include SpilsTypes'
@@ -689,7 +689,7 @@ module AdjointTypes = struct
       | InternalPrecLeft of ('a, 'k) set_preconditioner
 
     type serial_preconditioner =
-      (Nvector_serial.data, Nvector_serial.kind) preconditioner
+      (Nvector_serial.data, [>`Serial]) preconditioner
 
   end
 end

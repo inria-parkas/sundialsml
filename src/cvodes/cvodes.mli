@@ -867,7 +867,7 @@ module Adjoint :
     type ('data, 'kind) bsession = ('data, 'kind) AdjointTypes.bsession
 
     (** Alias for backward sessions based on serial nvectors. *)
-    type serial_bsession = (Nvector_serial.data, Nvector_serial.kind) bsession
+    type serial_bsession = (Nvector_serial.data, [>`Serial]) bsession
 
     (** {2:fwd Forward solution} *)
 
@@ -940,8 +940,7 @@ module Adjoint :
             ('data, 'kind) AdjointTypes.linear_solver
 
     (** Alias for linear solvers that are restricted to serial nvectors. *)
-    type serial_linear_solver =
-            (Nvector_serial.data, Nvector_serial.kind) linear_solver
+    type serial_linear_solver = (Nvector_serial.data, [>`Serial]) linear_solver
 
     (** Workspaces with three temporary vectors. *)
     type 'd triple = 'd * 'd * 'd
@@ -1465,22 +1464,19 @@ module Adjoint :
 
               @cvode <node7#SECTION00741000000000000000> CVBandPrecInitB *)
           val prec_left :
-               bandrange
-            -> (Nvector_serial.data, Nvector_serial.kind) preconditioner
+               bandrange -> (Nvector_serial.data, [>`Serial]) preconditioner
 
           (** Like {!prec_left} but preconditions from the right.
 
               @cvode <node7#SECTION00741000000000000000> CVBandPrecInitB *)
           val prec_right :
-               bandrange
-            -> (Nvector_serial.data, Nvector_serial.kind) preconditioner
+               bandrange -> (Nvector_serial.data, [>`Serial]) preconditioner
 
           (** Like {!prec_left} but preconditions from both sides.
 
               @cvode <node7#SECTION00741000000000000000> CVBandPrecInitB *)
           val prec_both :
-               bandrange
-            -> (Nvector_serial.data, Nvector_serial.kind) preconditioner
+               bandrange -> (Nvector_serial.data, [>`Serial]) preconditioner
 
           (** {4:stats Banded statistics} *)
 

@@ -501,18 +501,16 @@ let mass_check_spils_band session =
 
 (* Types that depend on session *)
 
-type serial_session = (Nvector_serial.data, Nvector_serial.kind) session
+type serial_session = (Nvector_serial.data, [>`Serial]) session
 
-type serial_linear_solver =
-  (Nvector_serial.data, Nvector_serial.kind) linear_solver
+type serial_linear_solver = (Nvector_serial.data, [>`Serial]) linear_solver
 
 type ('data, 'kind) mass_solver =
   ('data, 'kind) session
   -> ('data, 'kind) nvector
   -> unit
 
-type serial_mass_solver =
-  (Nvector_serial.data, Nvector_serial.kind) mass_solver
+type serial_mass_solver = (Nvector_serial.data, [>`Serial]) mass_solver
 
 module SpilsTypes = struct
   include SpilsTypes'
@@ -526,8 +524,7 @@ module SpilsTypes = struct
     | InternalPrecRight of ('a, 'k) set_preconditioner
     | InternalPrecBoth  of ('a, 'k) set_preconditioner
 
-  type serial_preconditioner =
-    (Nvector_serial.data, Nvector_serial.kind) preconditioner
+  type serial_preconditioner = (Nvector_serial.data, [>`Serial]) preconditioner
 
   module MassTypes = struct
     include SpilsTypes'.MassTypes'
@@ -542,7 +539,7 @@ module SpilsTypes = struct
       | InternalPrecBoth  of ('a, 'k) set_preconditioner
 
     type serial_preconditioner =
-      (Nvector_serial.data, Nvector_serial.kind) preconditioner
+      (Nvector_serial.data, [>`Serial]) preconditioner
   end
 end
 

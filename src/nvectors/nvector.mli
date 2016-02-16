@@ -20,7 +20,8 @@
 
 (** Represents an nvector of kind ['kind] with underlying data of type ['data].
     The type argument ['kind] is either {!Nvector_serial.kind},
-    {!Nvector_parallel.kind}, or {!Nvector_custom.kind}.
+    {!Nvector_parallel.kind}, {!Nvector_custom.kind}, {!Nvector_openmp.kind},
+    or {!Nvector_pthreads.kind}.
     It is needed because some linear solvers make additional
     assumptions about the underlying vector representation.
 
