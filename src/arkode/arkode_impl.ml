@@ -501,16 +501,19 @@ let mass_check_spils_band session =
 
 (* Types that depend on session *)
 
-type serial_session = (Nvector_serial.data, [>`Serial]) session
+type 'k serial_session = (Nvector_serial.data, 'k) session
+                         constraint 'k = [>`Serial]
 
-type serial_linear_solver = (Nvector_serial.data, [>`Serial]) linear_solver
+type 'k serial_linear_solver = (Nvector_serial.data, 'k) linear_solver
+                               constraint 'k = [>`Serial]
 
 type ('data, 'kind) mass_solver =
   ('data, 'kind) session
   -> ('data, 'kind) nvector
   -> unit
 
-type serial_mass_solver = (Nvector_serial.data, [>`Serial]) mass_solver
+type 'k serial_mass_solver = (Nvector_serial.data, 'k) mass_solver
+                             constraint 'k = [>`Serial]
 
 module SpilsTypes = struct
   include SpilsTypes'
@@ -524,7 +527,8 @@ module SpilsTypes = struct
     | InternalPrecRight of ('a, 'k) set_preconditioner
     | InternalPrecBoth  of ('a, 'k) set_preconditioner
 
-  type serial_preconditioner = (Nvector_serial.data, [>`Serial]) preconditioner
+  type 'k serial_preconditioner = (Nvector_serial.data, 'k) preconditioner
+                                  constraint 'k = [>`Serial]
 
   module MassTypes = struct
     include SpilsTypes'.MassTypes'
@@ -538,8 +542,8 @@ module SpilsTypes = struct
       | InternalPrecRight of ('a, 'k) set_preconditioner
       | InternalPrecBoth  of ('a, 'k) set_preconditioner
 
-    type serial_preconditioner =
-      (Nvector_serial.data, [>`Serial]) preconditioner
+    type 'k serial_preconditioner = (Nvector_serial.data, 'k) preconditioner
+                                    constraint 'k = [>`Serial]
   end
 end
 

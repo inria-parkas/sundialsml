@@ -197,7 +197,7 @@ type web_data = {
 
     rewt      : Nvector_serial.t;
 
-    mutable cvode_mem : Cvode.serial_session option;
+    mutable cvode_mem : Nvector_serial.kind Cvode.serial_session option;
   }
 
 (* Private Helper Functions *)

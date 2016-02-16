@@ -867,7 +867,8 @@ module Adjoint :
     type ('data, 'kind) bsession = ('data, 'kind) AdjointTypes.bsession
 
     (** Alias for backward sessions based on serial nvectors. *)
-    type serial_bsession = (Nvector_serial.data, [>`Serial]) bsession
+    type 'kind serial_bsession = (Nvector_serial.data, 'kind) bsession
+                                 constraint 'kind = [>`Serial]
 
     (** {2:fwd Forward solution} *)
 
@@ -940,7 +941,8 @@ module Adjoint :
             ('data, 'kind) AdjointTypes.linear_solver
 
     (** Alias for linear solvers that are restricted to serial nvectors. *)
-    type serial_linear_solver = (Nvector_serial.data, [>`Serial]) linear_solver
+    type 'kind serial_linear_solver = (Nvector_serial.data, 'kind) linear_solver
+                                      constraint 'kind = [>`Serial]
 
     (** Workspaces with three temporary vectors. *)
     type 'd triple = 'd * 'd * 'd
@@ -1063,7 +1065,7 @@ module Adjoint :
             @nocvodes <node7#SECTION00728200000000000000> CVDlsSetDenseJacFnBS
             @cvodes <node7#ss:densejac_b> CVDlsDenseJacFnB
             @nocvodes <node7#ss:densejac_bs> CVDlsDenseJacFnBS *)
-        val dense : ?jac:dense_jac_fn -> unit -> serial_linear_solver
+        val dense : ?jac:dense_jac_fn -> unit -> 'k serial_linear_solver
 
         (** A direct linear solver on dense matrices using LAPACK. See {!dense}.
             Only available if {!Sundials.lapack_enabled}.
@@ -1072,7 +1074,7 @@ module Adjoint :
             @cvodes <node7#sss:lin_solv_b> CVLapackDenseB
             @cvodes <node7#SECTION00728200000000000000> CVDlsSetDenseJacFnB
             @cvodes <node7#ss:densejac_b> CVDlsDenseJacFnB *)
-        val lapack_dense : ?jac:dense_jac_fn -> unit -> serial_linear_solver
+        val lapack_dense : ?jac:dense_jac_fn -> unit -> 'k serial_linear_solver
 
         (** Callback functions that compute banded approximations to
             a Jacobian matrix without forward sensitivities. In the call
@@ -1150,7 +1152,7 @@ module Adjoint :
             @cvodes <node7#sss:lin_solv_b> CVBandB
             @cvodes <node7#SECTION00728300000000000000> CVDlsSetBandJacFnB
             @cvodes <node7#ss:bandjac_b> CVDlsBandJacFnB *)
-        val band : ?jac:band_jac_fn -> bandrange -> serial_linear_solver
+        val band : ?jac:band_jac_fn -> bandrange -> 'k serial_linear_solver
 
         (** A direct linear solver on banded matrices using LAPACK. See {!band}.
             Only available if {!Sundials.lapack_enabled}.
@@ -1159,7 +1161,8 @@ module Adjoint :
             @cvodes <node7#sss:lin_solv_b> CVLapackBandB
             @cvodes <node7#SECTION00728300000000000000> CVDlsSetBandJacFnB
             @cvodes <node7#ss:bandjac_b> CVDlsBandJacFnB *)
-        val lapack_band : ?jac:band_jac_fn -> bandrange -> serial_linear_solver
+        val lapack_band
+              : ?jac:band_jac_fn -> bandrange -> 'k serial_linear_solver
 
         (** {3:stats Solver statistics} *)
 
@@ -1169,21 +1172,21 @@ module Adjoint :
             @cvode <node5#sss:optout_dls> CVDlsGetWorkSpace
             @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
             @return ([real_size], [integer_size]) *)
-        val get_work_space : serial_bsession -> int * int
+        val get_work_space : 'k serial_bsession -> int * int
 
         (** Returns the number of calls made by a direct linear solver to the
             Jacobian approximation function.
 
             @cvode <node5#sss:optout_dls> CVDlsGetNumJacEvals
             @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
-        val get_num_jac_evals : serial_bsession -> int
+        val get_num_jac_evals : 'k serial_bsession -> int
 
         (** Returns the number of calls to the right-hand side callback due to
             the finite difference Jacobian approximation.
 
             @cvode <node5#sss:optout_dls> CVDlsGetNumRhsEvals
             @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
-        val get_num_rhs_evals : serial_bsession -> int
+        val get_num_rhs_evals : 'k serial_bsession -> int
 
         (** {3:lowlevel Low-level solver manipulation}
 
@@ -1196,27 +1199,27 @@ module Adjoint :
        
             @cvode <node5#SECTION00728200000000000000> CVDlsSetDenseJacFnB
             @nocvode <node5#SECTION00728200000000000000> CVDlsSetDenseJacFnBS *)
-        val set_dense_jac_fn : serial_bsession -> dense_jac_fn -> unit
+        val set_dense_jac_fn : 'k serial_bsession -> dense_jac_fn -> unit
 
         (** Remove a dense Jacobian function and use the default
             implementation.
 
             @cvode <node5#SECTION00728200000000000000> CVDlsSetDenseJacFnB
             @nocvode <node5#SECTION00728200000000000000> CVDlsSetDenseJacFnBS *)
-        val clear_dense_jac_fn : serial_bsession -> unit
+        val clear_dense_jac_fn : 'k serial_bsession -> unit
 
         (** Change the band Jacobian function.
 
             @cvode <node5#SECTION00728300000000000000> CVDlsSetBandJacFnB
             @nocvode <node5#SECTION00728300000000000000> CVDlsSetBandJacFnBS *)
-        val set_band_jac_fn : serial_bsession -> band_jac_fn -> unit
+        val set_band_jac_fn : 'k serial_bsession -> band_jac_fn -> unit
 
         (** Remove a banded Jacobian function and use the default
             implementation.
 
             @cvode <node5#SECTION00728300000000000000> CVDlsSetBandJacFnB
             @nocvode <node5#SECTION00728300000000000000> CVDlsSetBandJacFnBS *)
-        val clear_band_jac_fn : serial_bsession -> unit
+        val clear_band_jac_fn : 'k serial_bsession -> unit
       end (* }}} *)
 
     (** Scaled Preconditioned Iterative Linear Solvers.
@@ -1486,7 +1489,7 @@ module Adjoint :
               @cvodes <node5#sss:cvbandpre> CVBandPrecGetWorkSpace
               @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
               @return ([real_size], [integer_size]) *)
-          val get_work_space : serial_bsession -> int * int
+          val get_work_space : 'k serial_bsession -> int * int
 
           (** Returns the number of calls to the right-hand side callback for the
               difference banded Jacobian approximation. This counter is only updated
@@ -1494,7 +1497,7 @@ module Adjoint :
 
               @cvodes <node5#sss:cvbandpre> CVBandPrecGetNumRhsEvals
               @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
-          val get_num_rhs_evals : serial_bsession -> int
+          val get_num_rhs_evals : 'k serial_bsession -> int
         end
 
         (** {3:lsolvers Solvers} *)

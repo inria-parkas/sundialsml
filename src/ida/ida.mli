@@ -57,7 +57,7 @@ open Sundials
 type ('d, 'k) session = ('d, 'k) Ida_impl.session
 
 (** Alias for sessions based on serial nvectors. *)
-type serial_session = (RealArray.t, [>`Serial]) session
+type 'k serial_session = (RealArray.t, 'k) session constraint 'k = [>`Serial]
 
 (** {2:linear Linear solvers} *)
 
@@ -67,7 +67,8 @@ type serial_session = (RealArray.t, [>`Serial]) session
 type ('data, 'kind) linear_solver = ('data, 'kind) Ida_impl.linear_solver
 
 (** Alias for linear solvers that are restricted to serial nvectors. *)
-type serial_linear_solver = (Nvector_serial.data, [>`Serial]) linear_solver
+type 'kind serial_linear_solver = (Nvector_serial.data, 'kind) linear_solver
+                                  constraint 'kind = [>`Serial]
 
 (** Workspaces with two temporary vectors. *)
 type 'd double = 'd * 'd
@@ -135,7 +136,7 @@ module Dls :
         @ida <node5#sss:lin_solv_init> IDADense
         @ida <node5#sss:optin_dls> IDADlsSetDenseJacFn
         @ida <node5#ss:djacFn> IDADlsDenseJacFn *)
-    val dense : ?jac:dense_jac_fn -> unit -> serial_linear_solver
+    val dense : ?jac:dense_jac_fn -> unit -> 'k serial_linear_solver
 
     (** A direct linear solver on dense matrices using LAPACK. See {!dense}.
         Only available if {!Sundials.lapack_enabled}.
@@ -144,7 +145,7 @@ module Dls :
         @ida <node5#sss:lin_solv_init> IDALapackDense
         @ida <node5#sss:optin_dls> IDADlsSetDenseJacFn
         @ida <node5#ss:djacFn> IDADlsDenseJacFn *)
-    val lapack_dense : ?jac:dense_jac_fn -> unit -> serial_linear_solver
+    val lapack_dense : ?jac:dense_jac_fn -> unit -> 'k serial_linear_solver
 
     (** Callback functions that compute banded approximations to
         a Jacobian matrix. In the call [band_jac_fn {mupper; mlower} arg jac],
@@ -179,7 +180,7 @@ module Dls :
         @ida <node5#sss:lin_solv_init> IDABand
         @ida <node5#sss:optin_dls> IDADlsSetBandJacFn
         @ida <node5#ss:bjacFn> IDADlsBandJacFn *)
-    val band : ?jac:band_jac_fn -> bandrange -> serial_linear_solver
+    val band : ?jac:band_jac_fn -> bandrange -> 'k serial_linear_solver
 
     (** A direct linear solver on banded matrices using LAPACK. See {!band}.
         Only available if {!Sundials.lapack_enabled}.
@@ -188,7 +189,7 @@ module Dls :
         @ida <node5#sss:lin_solv_init> IDALapackBand
         @ida <node5#sss:optin_dls> IDADlsSetBandJacFn
         @ida <node5#ss:bjacFn> IDADlsBandJacFn *)
-    val lapack_band : ?jac:band_jac_fn -> bandrange -> serial_linear_solver
+    val lapack_band : ?jac:band_jac_fn -> bandrange -> 'k serial_linear_solver
 
     (** {3:stats Solver statistics} *)
 
@@ -197,20 +198,20 @@ module Dls :
 
         @ida <node5#sss:optout_dls> IDADlsGetWorkSpace
         @return ([real_size], [integer_size]) *)
-    val get_work_space : serial_session -> int * int
+    val get_work_space : 'k serial_session -> int * int
 
 
     (** Returns the number of calls made by a direct linear solver to the
         Jacobian approximation function.
 
         @ida <node5#sss:optout_dls> IDADlsGetNumJacEvals *)
-    val get_num_jac_evals : serial_session -> int
+    val get_num_jac_evals : 'k serial_session -> int
 
     (** Returns the number of calls to the residual callback due to
         the finite difference Jacobian approximation.
 
         @ida <node5#sss:optout_dls> IDADlsGetNumResEvals *)
-    val get_num_res_evals : serial_session -> int
+    val get_num_res_evals : 'k serial_session -> int
 
     (** {3:lowlevel Low-level solver manipulation}
 
@@ -222,24 +223,24 @@ module Dls :
     (** Change the dense Jacobian function.
 
         @ida <node5#sss:optin_dls> IDADlsSetDenseJacFn *)
-    val set_dense_jac_fn : serial_session -> dense_jac_fn -> unit
+    val set_dense_jac_fn : 'k serial_session -> dense_jac_fn -> unit
 
     (** Remove a dense Jacobian function and use the default
         implementation.
 
         @ida <node5#sss:optin_dls> IDADlsSetDenseJacFn *)
-    val clear_dense_jac_fn : serial_session -> unit
+    val clear_dense_jac_fn : 'k serial_session -> unit
 
     (** Change the band Jacobian function.
 
         @ida <node5#sss:optin_dls> IDADlsSetBandJacFn *)
-    val set_band_jac_fn : serial_session -> band_jac_fn -> unit
+    val set_band_jac_fn : 'k serial_session -> band_jac_fn -> unit
 
     (** Remove a banded Jacobian function and use the default
         implementation.
 
         @ida <node5#sss:optin_dls> IDADlsSetBandJacFn *)
-    val clear_band_jac_fn : serial_session -> unit
+    val clear_band_jac_fn : 'k serial_session -> unit
   end (* }}} *)
 
 (** Scaled Preconditioned Iterative Linear Solvers.

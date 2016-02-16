@@ -646,14 +646,16 @@ let ls_check_spils_bbd session =
 
 (* Types that depend on session *)
 
-type serial_session = (Nvector_serial.data, [>`Serial]) session
+type 'kind serial_session = (Nvector_serial.data, 'kind) session
+                            constraint 'kind = [>`Serial]
 
 type ('data, 'kind) linear_solver =
   ('data, 'kind) session
   -> ('data, 'kind) nvector
   -> unit
 
-type serial_linear_solver = (Nvector_serial.data, [>`Serial]) linear_solver
+type 'k serial_linear_solver = (Nvector_serial.data, 'k) linear_solver
+                               constraint 'k = [>`Serial]
 
 module SpilsTypes = struct
   include SpilsTypes'
@@ -667,7 +669,9 @@ module SpilsTypes = struct
     | InternalPrecRight of ('a, 'k) set_preconditioner
     | InternalPrecBoth of ('a, 'k) set_preconditioner
 
-  type serial_preconditioner = (Nvector_serial.data, [>`Serial]) preconditioner
+  type 'k serial_preconditioner = (Nvector_serial.data, 'k) preconditioner
+                                  constraint 'k = [>`Serial]
+
 end
 
 module AlternateTypes = struct
@@ -699,7 +703,8 @@ module AdjointTypes = struct
   include AdjointTypes'
   (* Backwards session. *)
   type ('a, 'k) bsession = Bsession of ('a, 'k) session
-  type serial_bsession = (Nvector_serial.data, [>`Serial]) bsession
+  type 'k serial_bsession = (Nvector_serial.data, 'k) bsession
+                            constraint 'k = [>`Serial]
   let tosession (Bsession s) = s
   let parent_and_which s =
     match (tosession s).sensext with
@@ -710,7 +715,8 @@ module AdjointTypes = struct
     ('data, 'kind) bsession
     -> ('data, 'kind) nvector
     -> unit
-  type serial_linear_solver = (Nvector_serial.data, [>`Serial]) linear_solver
+  type 'kind serial_linear_solver = (Nvector_serial.data, 'kind) linear_solver
+                                    constraint 'kind = [>`Serial]
 
   module SpilsTypes = struct
     include SpilsTypes'
@@ -724,8 +730,8 @@ module AdjointTypes = struct
       | InternalPrecRight of ('a, 'k) set_preconditioner
       | InternalPrecBoth of ('a, 'k) set_preconditioner
 
-    type serial_preconditioner =
-      (Nvector_serial.data, [>`Serial]) preconditioner
+    type 'k serial_preconditioner = (Nvector_serial.data, 'k) preconditioner
+                                    constraint 'k = [>`Serial]
   end
 end
 

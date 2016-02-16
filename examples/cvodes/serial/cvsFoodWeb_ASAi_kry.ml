@@ -183,8 +183,8 @@ type web_data = {
     rewt      : Nvector_serial.t;
     rewtb     : Nvector_serial.t;
 
-    mutable cvode_mem  : Cvode.serial_session option;
-    mutable cvode_memb : Adj.serial_bsession option;
+    mutable cvode_mem  : Nvector_serial.kind Cvode.serial_session option;
+    mutable cvode_memb : Nvector_serial.kind Adj.serial_bsession option;
   }
 
 (* Adjoint calculation constants *)

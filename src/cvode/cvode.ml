@@ -96,20 +96,20 @@ module Dls =
   struct
     include DlsTypes
 
-    external c_dls_dense : serial_session -> int -> bool -> unit
+    external c_dls_dense : 'k serial_session -> int -> bool -> unit
       = "c_cvode_dls_dense"
 
-    external c_dls_lapack_dense : serial_session -> int -> bool -> unit
+    external c_dls_lapack_dense : 'k serial_session -> int -> bool -> unit
       = "c_cvode_dls_lapack_dense"
 
-    external c_dls_band : (serial_session * int) -> int -> int -> bool -> unit
+    external c_dls_band : ('k serial_session * int) -> int -> int -> bool -> unit
       = "c_cvode_dls_band"
 
     external c_dls_lapack_band
-      : (serial_session * int) -> int -> int -> bool -> unit
+      : ('k serial_session * int) -> int -> int -> bool -> unit
       = "c_cvode_dls_lapack_band"
 
-    external set_dense_jac_fn : serial_session -> unit
+    external set_dense_jac_fn : 'k serial_session -> unit
         = "c_cvode_dls_set_dense_jac_fn"
 
     let dense ?jac () session nv =
@@ -172,7 +172,7 @@ module Dls =
           set_dense_jac_fn s
       | _ -> raise Sundials.InvalidLinearSolver
 
-    external clear_dense_jac_fn : serial_session -> unit
+    external clear_dense_jac_fn : 'k serial_session -> unit
         = "c_cvode_dls_clear_dense_jac_fn"
 
     let clear_dense_jac_fn s =
@@ -183,7 +183,7 @@ module Dls =
           clear_dense_jac_fn s
       | _ -> raise Sundials.InvalidLinearSolver
 
-    external set_band_jac_fn : serial_session -> unit
+    external set_band_jac_fn : 'k serial_session -> unit
         = "c_cvode_dls_set_band_jac_fn"
 
     let set_band_jac_fn s f =
@@ -194,7 +194,7 @@ module Dls =
           set_band_jac_fn s
       | _ -> raise Sundials.InvalidLinearSolver
 
-    external clear_band_jac_fn : serial_session -> unit
+    external clear_band_jac_fn : 'k serial_session -> unit
         = "c_cvode_dls_clear_band_jac_fn"
 
     let clear_band_jac_fn s =
@@ -205,21 +205,21 @@ module Dls =
           clear_band_jac_fn s
       | _ -> raise Sundials.InvalidLinearSolver
 
-    external get_work_space : serial_session -> int * int
+    external get_work_space : 'k serial_session -> int * int
         = "c_cvode_dls_get_work_space"
 
     let get_work_space s =
       ls_check_dls s;
       get_work_space s
 
-    external get_num_jac_evals : serial_session -> int
+    external get_num_jac_evals : 'k serial_session -> int
         = "c_cvode_dls_get_num_jac_evals"
 
     let get_num_jac_evals s =
       ls_check_dls s;
       get_num_jac_evals s
 
-    external get_num_rhs_evals : serial_session -> int
+    external get_num_rhs_evals : 'k serial_session -> int
         = "c_cvode_dls_get_num_rhs_evals"
 
     let get_num_rhs_evals s =
@@ -439,14 +439,14 @@ module Spils =
       let prec_both bandrange =
         InternalPrecBoth (init_preconditioner bandrange)
 
-      external get_work_space : serial_session -> int * int
+      external get_work_space : 'k serial_session -> int * int
         = "c_cvode_bandprec_get_work_space"
 
       let get_work_space s =
         ls_check_spils_band s;
         get_work_space s
 
-      external get_num_rhs_evals : serial_session -> int
+      external get_num_rhs_evals : 'k serial_session -> int
         = "c_cvode_bandprec_get_num_rhs_evals"
 
       let get_num_rhs_evals s =

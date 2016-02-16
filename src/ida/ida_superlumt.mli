@@ -51,7 +51,7 @@ type sparse_jac_fn =
     @noida <node5#sss:optin_sls> IDASlsSetSparseJacFn
     @noida <node5#ss:sjacFn> IDASlsSparseJacFn *)
 val superlumt
-      : sparse_jac_fn -> nnz:int -> nthreads:int -> Ida.serial_linear_solver
+      : sparse_jac_fn -> nnz:int -> nthreads:int -> 'k Ida.serial_linear_solver
 
 (** The ordering algorithm used for reducing fill. *)
 type ordering =
@@ -63,11 +63,11 @@ type ordering =
 (** Sets the ordering algorithm used to minimize fill-in.
 
     @noida <node5#ss:sls_optin> IDASuperLUMTSetOrdering *)
-val set_ordering : Ida.serial_session -> ordering -> unit
+val set_ordering : 'k Ida.serial_session -> ordering -> unit
 
 (** Returns the number of calls made by a sparse linear solver to the
     Jacobian approximation function.
 
     @noida <node5#sss:optout_sls> IDASlsGetNumJacEvals *)
-val get_num_jac_evals : Ida.serial_session -> int
+val get_num_jac_evals : 'k Ida.serial_session -> int
 

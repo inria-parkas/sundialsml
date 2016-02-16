@@ -706,19 +706,19 @@ module Adjoint =
         include DlsTypes
 
         external c_dls_dense
-          : serial_session -> int -> int -> bool -> bool -> unit
+          : 'k serial_session -> int -> int -> bool -> bool -> unit
           = "c_cvodes_adj_dls_dense"
 
         external c_dls_lapack_dense
-          : serial_session -> int -> int -> bool -> bool -> unit
+          : 'k serial_session -> int -> int -> bool -> bool -> unit
           = "c_cvodes_adj_dls_lapack_dense"
 
-        external c_dls_band
-          : (serial_session * int) -> int -> bandrange -> bool -> bool -> unit
+        external c_dls_band : ('k serial_session * int) -> int -> bandrange
+                                -> bool -> bool -> unit
           = "c_cvodes_adj_dls_band"
 
-        external c_dls_lapack_band
-          : (serial_session * int) -> int -> bandrange -> bool -> bool -> unit
+        external c_dls_lapack_band : ('k serial_session * int) -> int
+                                      -> bandrange -> bool -> bool -> unit
           = "c_cvodes_adj_dls_lapack_band"
 
         let dense ?jac () bs nv =
@@ -816,7 +816,7 @@ module Adjoint =
               cb.bmat_sens <- None
           | _ -> ()
 
-        external set_dense_jac_fn : serial_session -> int -> bool -> unit
+        external set_dense_jac_fn : 'k serial_session -> int -> bool -> unit
             = "c_cvodes_adj_dls_set_dense_jac_fn"
 
         let set_dense_jac_fn bs fjacfn =
@@ -840,7 +840,7 @@ module Adjoint =
                                                              dmat_sens = None })
           | _ -> raise Sundials.InvalidLinearSolver
 
-        external clear_dense_jac_fn : serial_session -> int -> unit
+        external clear_dense_jac_fn : 'k serial_session -> int -> unit
             = "c_cvodes_adj_dls_clear_dense_jac_fn"
 
         let clear_dense_jac_fn bs =
@@ -853,7 +853,7 @@ module Adjoint =
               clear_dense_jac_fn parent which
           | _ -> raise Sundials.InvalidLinearSolver
 
-        external set_band_jac_fn : serial_session -> int -> bool -> unit
+        external set_band_jac_fn : 'k serial_session -> int -> bool -> unit
             = "c_cvodes_adj_dls_set_band_jac_fn"
 
         let set_band_jac_fn bs f =
@@ -877,7 +877,7 @@ module Adjoint =
                                                             bmat_sens = None })
           | _ -> raise Sundials.InvalidLinearSolver
 
-        external clear_band_jac_fn : serial_session -> int -> unit
+        external clear_band_jac_fn : 'k serial_session -> int -> unit
             = "c_cvodes_adj_dls_clear_band_jac_fn"
 
         let clear_band_jac_fn bs =

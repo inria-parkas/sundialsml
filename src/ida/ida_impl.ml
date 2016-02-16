@@ -601,7 +601,8 @@ let ls_check_spils_bbd session =
 
 (* Types that depend on session *)
 
-type serial_session = (Nvector_serial.data, [>`Serial]) session
+type 'kind serial_session = (Nvector_serial.data, 'kind) session
+                            constraint 'kind = [>`Serial]
 
 (* IDA's linear_solver receives two vectors, y and y'.  They usually
    (always?) have identical size and other properties, so one of them
@@ -612,8 +613,8 @@ type ('data, 'kind) linear_solver =
   -> ('data, 'kind) Nvector.t (* y' *)
   -> unit
 
-type serial_linear_solver =
-  (Nvector_serial.data, [>`Serial]) linear_solver
+type 'kind serial_linear_solver = (Nvector_serial.data, 'kind) linear_solver
+                                  constraint 'kind = [>`Serial]
 
 module SpilsTypes = struct
   include SpilsTypes'
@@ -626,8 +627,8 @@ module SpilsTypes = struct
     | InternalPrecNone of ('a, 'k) set_preconditioner
     | InternalPrecLeft of ('a, 'k) set_preconditioner
 
-  type serial_preconditioner =
-    (Nvector_serial.data, [>`Serial]) preconditioner
+  type 'k serial_preconditioner = (Nvector_serial.data, 'k) preconditioner
+                                  constraint 'k = [>`Serial]
 
 end
 
@@ -661,7 +662,8 @@ module AdjointTypes = struct
   include AdjointTypes'
   (* Backwards session. *)
   type ('a, 'k) bsession = Bsession of ('a, 'k) session
-  type serial_bsession = (Nvector_serial.data, [>`Serial]) bsession
+  type 'k serial_bsession = (Nvector_serial.data, 'k) bsession
+                            constraint 'k = [>`Serial]
   let tosession (Bsession s) = s
   let parent_and_which s =
     match (tosession s).sensext with
@@ -673,8 +675,8 @@ module AdjointTypes = struct
     -> ('data, 'kind) Nvector.t (* y *)
     -> ('data, 'kind) Nvector.t (* y' *)
     -> unit
-  type serial_linear_solver =
-    (Nvector_serial.data, [>`Serial]) linear_solver
+  type 'kind serial_linear_solver = (Nvector_serial.data, 'kind) linear_solver
+                                    constraint 'kind = [>`Serial]
 
   module SpilsTypes = struct
     include SpilsTypes'
@@ -688,8 +690,8 @@ module AdjointTypes = struct
       | InternalPrecNone of ('a, 'k) set_preconditioner
       | InternalPrecLeft of ('a, 'k) set_preconditioner
 
-    type serial_preconditioner =
-      (Nvector_serial.data, [>`Serial]) preconditioner
+    type 'k serial_preconditioner = (Nvector_serial.data, 'k) preconditioner
+                                    constraint 'k = [>`Serial]
 
   end
 end

@@ -42,7 +42,7 @@
 module RealArray = Sundials.RealArray
 let printf = Printf.printf
 let fprintf = Printf.fprintf
-let n_vdotprod = Nvector_serial.Raw.Ops.n_vdotprod
+let n_vdotprod = Nvector_serial.Ops.n_vdotprod
 
 (* user data structure *)
 type user_data = {
@@ -107,9 +107,7 @@ let main () =
 
   (* Initialize data structures *)
   let data = RealArray.make mesh_n 0.0 in(* Set initial conditions *)
-  let y_raw = Nvector_serial.Raw.wrap data in (* Create serial vector
-                                                 for solution *)
-  let y     = Nvector_serial.Raw.as_serial y_raw in
+  let y = Nvector_serial.wrap data in (* Create serial vector for solution *)
 
   (* Call ARKodeInit to initialize the integrator memory and specify the
      hand-side side function in y'=f(t,y), the inital time t0, and
@@ -150,15 +148,14 @@ let main () =
   let tout  = ref (t0+.dTout) in
   printf "        t      ||u||_rms\n";
   printf "   -------------------------\n";
-  printf "  %10.6f  %10.6f\n" t0 (sqrt((n_vdotprod y_raw y_raw)/.float mesh_n));
+  printf "  %10.6f  %10.6f\n" t0 (sqrt((n_vdotprod y y)/.float mesh_n));
   (try
      for iout=0 to nt-1 do
  
        (* call integrator *)
        let t, _ = Arkode.solve_normal arkode_mem !tout y in
        (* print solution stats *)
-       printf "  %10.6f  %10.6f\n"
-                  t (sqrt((n_vdotprod y_raw y_raw)/.float mesh_n));
+       printf "  %10.6f  %10.6f\n" t (sqrt((n_vdotprod y y)/.float mesh_n));
        (* successful solve: update output time *)
        tout := !tout +. dTout;
        if !tout > tf then tout := tf;
