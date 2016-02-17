@@ -25,7 +25,7 @@ type data = Sundials.RealArray.t
 
 (** Represents the internal layout of an OpenMP nvector.
     OpenMP nvectors can usually be used wherever serial nvectors can. *)
-type kind = [`OpenMP|`Serial]
+type kind = [`OpenMP|Nvector_serial.kind]
 
 (** The type of OpenMP nvectors. *)
 type t = (data, kind) Nvector.t

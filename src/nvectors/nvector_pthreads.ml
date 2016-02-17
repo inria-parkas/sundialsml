@@ -1,6 +1,6 @@
 
 type data = Sundials.RealArray.t
-type kind = [`Pthreads|`Serial]
+type kind = [`Pthreads|Nvector_serial.kind]
 type t = (data, kind) Nvector.t
 
 external c_wrap : int -> Sundials.RealArray.t

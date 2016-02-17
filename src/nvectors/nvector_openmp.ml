@@ -1,6 +1,6 @@
 
 type data = Sundials.RealArray.t
-type kind = [`OpenMP|`Serial]
+type kind = [`OpenMP|Nvector_serial.kind]
 type t = (data, kind) Nvector.t
 
 external c_wrap : int -> Sundials.RealArray.t

@@ -25,7 +25,7 @@ type data = Sundials.RealArray.t
 
 (** Represents the internal layout of a Pthreads nvector.
     Pthreads nvectors can usually be used wherever serial nvectors can. *)
-type kind = [`Pthreads|`Serial]
+type kind = [`Pthreads|Nvector_serial.kind]
 
 (** The type of Pthreads nvectors. *)
 type t = (data, kind) Nvector.t

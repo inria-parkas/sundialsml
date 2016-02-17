@@ -57,7 +57,8 @@ open Sundials
 type ('d, 'k) session = ('d, 'k) Ida_impl.session
 
 (** Alias for sessions based on serial nvectors. *)
-type 'k serial_session = (RealArray.t, 'k) session constraint 'k = [>`Serial]
+type 'k serial_session = (RealArray.t, 'k) session
+                         constraint 'k = [>Nvector_serial.kind]
 
 (** {2:linear Linear solvers} *)
 
@@ -68,7 +69,7 @@ type ('data, 'kind) linear_solver = ('data, 'kind) Ida_impl.linear_solver
 
 (** Alias for linear solvers that are restricted to serial nvectors. *)
 type 'kind serial_linear_solver = (Nvector_serial.data, 'kind) linear_solver
-                                  constraint 'kind = [>`Serial]
+                                  constraint 'kind = [>Nvector_serial.kind]
 
 (** Workspaces with two temporary vectors. *)
 type 'd double = 'd * 'd

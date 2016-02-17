@@ -234,7 +234,7 @@ let ls_check_spils_bbd session =
 
 (* Types that depend on session *)
 type 'kind serial_session = (Nvector_serial.data, 'kind) session
-                            constraint 'kind = [>`Serial]
+                            constraint 'kind = [>Nvector_serial.kind]
 
 type ('data, 'kind) linear_solver =
   ('data, 'kind) session

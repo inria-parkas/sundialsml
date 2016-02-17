@@ -602,7 +602,7 @@ let ls_check_spils_bbd session =
 (* Types that depend on session *)
 
 type 'kind serial_session = (Nvector_serial.data, 'kind) session
-                            constraint 'kind = [>`Serial]
+                            constraint 'kind = [>Nvector_serial.kind]
 
 (* IDA's linear_solver receives two vectors, y and y'.  They usually
    (always?) have identical size and other properties, so one of them
@@ -614,7 +614,7 @@ type ('data, 'kind) linear_solver =
   -> unit
 
 type 'kind serial_linear_solver = (Nvector_serial.data, 'kind) linear_solver
-                                  constraint 'kind = [>`Serial]
+                                  constraint 'kind = [>Nvector_serial.kind]
 
 module SpilsTypes = struct
   include SpilsTypes'
@@ -628,7 +628,7 @@ module SpilsTypes = struct
     | InternalPrecLeft of ('a, 'k) set_preconditioner
 
   type 'k serial_preconditioner = (Nvector_serial.data, 'k) preconditioner
-                                  constraint 'k = [>`Serial]
+                                  constraint 'k = [>Nvector_serial.kind]
 
 end
 
@@ -663,7 +663,7 @@ module AdjointTypes = struct
   (* Backwards session. *)
   type ('a, 'k) bsession = Bsession of ('a, 'k) session
   type 'k serial_bsession = (Nvector_serial.data, 'k) bsession
-                            constraint 'k = [>`Serial]
+                            constraint 'k = [>Nvector_serial.kind]
   let tosession (Bsession s) = s
   let parent_and_which s =
     match (tosession s).sensext with
@@ -676,7 +676,7 @@ module AdjointTypes = struct
     -> ('data, 'kind) Nvector.t (* y' *)
     -> unit
   type 'kind serial_linear_solver = (Nvector_serial.data, 'kind) linear_solver
-                                    constraint 'kind = [>`Serial]
+                                    constraint 'kind = [>Nvector_serial.kind]
 
   module SpilsTypes = struct
     include SpilsTypes'
@@ -691,7 +691,7 @@ module AdjointTypes = struct
       | InternalPrecLeft of ('a, 'k) set_preconditioner
 
     type 'k serial_preconditioner = (Nvector_serial.data, 'k) preconditioner
-                                    constraint 'k = [>`Serial]
+                                    constraint 'k = [>Nvector_serial.kind]
 
   end
 end

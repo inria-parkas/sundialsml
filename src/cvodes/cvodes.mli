@@ -868,7 +868,7 @@ module Adjoint :
 
     (** Alias for backward sessions based on serial nvectors. *)
     type 'kind serial_bsession = (Nvector_serial.data, 'kind) bsession
-                                 constraint 'kind = [>`Serial]
+                                 constraint 'kind = [>Nvector_serial.kind]
 
     (** {2:fwd Forward solution} *)
 
@@ -942,7 +942,7 @@ module Adjoint :
 
     (** Alias for linear solvers that are restricted to serial nvectors. *)
     type 'kind serial_linear_solver = (Nvector_serial.data, 'kind) linear_solver
-                                      constraint 'kind = [>`Serial]
+                                      constraint 'kind = [>Nvector_serial.kind]
 
     (** Workspaces with three temporary vectors. *)
     type 'd triple = 'd * 'd * 'd
@@ -1466,20 +1466,20 @@ module Adjoint :
               sub-diagonals and [br.mupper] super-diagonals.
 
               @cvode <node7#SECTION00741000000000000000> CVBandPrecInitB *)
-          val prec_left :
-               bandrange -> (Nvector_serial.data, [>`Serial]) preconditioner
+          val prec_left : bandrange -> (Nvector_serial.data,
+                                        [>Nvector_serial.kind]) preconditioner
 
           (** Like {!prec_left} but preconditions from the right.
 
               @cvode <node7#SECTION00741000000000000000> CVBandPrecInitB *)
-          val prec_right :
-               bandrange -> (Nvector_serial.data, [>`Serial]) preconditioner
+          val prec_right : bandrange -> (Nvector_serial.data,
+                                         [>Nvector_serial.kind]) preconditioner
 
           (** Like {!prec_left} but preconditions from both sides.
 
               @cvode <node7#SECTION00741000000000000000> CVBandPrecInitB *)
-          val prec_both :
-               bandrange -> (Nvector_serial.data, [>`Serial]) preconditioner
+          val prec_both : bandrange -> (Nvector_serial.data,
+                                        [>Nvector_serial.kind]) preconditioner
 
           (** {4:stats Banded statistics} *)
 

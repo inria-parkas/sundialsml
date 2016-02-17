@@ -55,7 +55,7 @@ type ('d, 'k) session = ('d, 'k) Cvode_impl.session
 
 (** Alias for sessions based on serial nvectors. *)
 type 'k serial_session = (Nvector_serial.data, 'k) session
-                         constraint 'k = [>`Serial]
+                         constraint 'k = [>Nvector_serial.kind]
 
 (** {2:linear Linear solvers} *)
 
@@ -66,7 +66,7 @@ type ('data, 'kind) linear_solver = ('data, 'kind) Cvode_impl.linear_solver
 
 (** Alias for linear solvers that are restricted to serial nvectors. *)
 type 'kind serial_linear_solver = (Nvector_serial.data, 'kind) linear_solver
-                                  constraint 'kind = [>`Serial]
+                                  constraint 'kind = [>Nvector_serial.kind]
 
 (** Workspaces with two temporary vectors. *)
 type 'd double = 'd * 'd
@@ -394,20 +394,20 @@ module Spils :
           sub-diagonals and [br.mupper] super-diagonals.
 
           @cvode <node5#sss:cvbandpre> CVBandPrecInit *)
-      val prec_left :
-           bandrange -> (Nvector_serial.data, [>`Serial]) preconditioner
+      val prec_left : bandrange -> (Nvector_serial.data,
+                                    [>Nvector_serial.kind]) preconditioner
 
       (** Like {!prec_left} but preconditions from the right.
 
           @cvode <node5#sss:cvbandpre> CVBandPrecInit *)
-      val prec_right :
-           bandrange -> (Nvector_serial.data, [>`Serial]) preconditioner
+      val prec_right : bandrange -> (Nvector_serial.data,
+                                     [>Nvector_serial.kind]) preconditioner
 
       (** Like {!prec_left} but preconditions from both sides.
 
           @cvode <node5#sss:cvbandpre> CVBandPrecInit *)
-      val prec_both :
-           bandrange -> (Nvector_serial.data, [>`Serial]) preconditioner
+      val prec_both : bandrange -> (Nvector_serial.data,
+                                    [>Nvector_serial.kind]) preconditioner
 
       (** {4:stats Banded statistics} *)
 

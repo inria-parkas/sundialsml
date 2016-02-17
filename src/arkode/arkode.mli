@@ -61,7 +61,7 @@ type ('d, 'k) session = ('d, 'k) Arkode_impl.session
 
 (** Alias for sessions based on serial nvectors. *)
 type 'k serial_session = (Nvector_serial.data, 'k) session
-                         constraint 'k = [>`Serial]
+                         constraint 'k = [>Nvector_serial.kind]
 
 (** {2:linear Linear and mass matrix solvers} *)
 
@@ -72,7 +72,7 @@ type ('data, 'kind) linear_solver = ('data, 'kind) Arkode_impl.linear_solver
 
 (** Alias for linear solvers that are restricted to serial nvectors. *)
 type 'kind serial_linear_solver = (Nvector_serial.data, 'kind) linear_solver
-                                  constraint 'kind = [>`Serial]
+                                  constraint 'kind = [>Nvector_serial.kind]
 
 (** Mass matrix solvers used by Arkode.
 
@@ -81,7 +81,7 @@ type ('data, 'kind) mass_solver = ('data, 'kind) Arkode_impl.mass_solver
 
 (** Alias for mass matrix solvers that are restricted to serial nvectors. *)
 type 'kind serial_mass_solver = (Nvector_serial.data, 'kind) mass_solver
-                                constraint 'kind = [>`Serial]
+                                constraint 'kind = [>Nvector_serial.kind]
 
 (** Workspaces with three temporary vectors. *)
 type 'd triple = 'd * 'd * 'd
@@ -486,20 +486,22 @@ module Spils :
           sub-diagonals and [br.mupper] super-diagonals.
 
           @noarkode <node> ARKBandPrecInit *)
-      val prec_left :
-           bandrange -> (Nvector_serial.data, [>`Serial]) preconditioner
+      val prec_left : bandrange -> (Nvector_serial.data,
+                                    [>Nvector_serial.kind]) preconditioner
 
       (** Like {!prec_left} but preconditions from the right.
 
           @noarkode <node> ARKBandPrecInit *)
       val prec_right :
-           bandrange -> (Nvector_serial.data, [>`Serial]) preconditioner
+           bandrange -> (Nvector_serial.data,
+                         [>Nvector_serial.kind]) preconditioner
 
       (** Like {!prec_left} but preconditions from both sides.
 
           @noarkode <node> ARKBandPrecInit *)
       val prec_both :
-           bandrange -> (Nvector_serial.data, [>`Serial]) preconditioner
+           bandrange -> (Nvector_serial.data,
+                         [>Nvector_serial.kind]) preconditioner
 
       (** {4:stats Banded statistics} *)
 

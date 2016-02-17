@@ -53,7 +53,7 @@ type ('data, 'kind) session = ('data, 'kind) Kinsol_impl.session
 
 (** Alias for sessions based on serial nvectors. *)
 type 'kind serial_session = (Nvector_serial.data, 'kind) session
-                            constraint 'kind = [>`Serial]
+                            constraint 'kind = [>Nvector_serial.kind]
 
 (** {2:linear Linear solvers} *)
 
@@ -64,7 +64,7 @@ type ('data, 'kind) linear_solver = ('data, 'kind) Kinsol_impl.linear_solver
 
 (** Alias for linear solvers that are restricted to serial nvectors. *)
 type 'kind serial_linear_solver = (Nvector_serial.data, 'kind) linear_solver
-                                  constraint 'kind = [>`Serial]
+                                  constraint 'kind = [>Nvector_serial.kind]
 
 (** Workspaces with two temporary vectors. *)
 type 'd double = 'd * 'd

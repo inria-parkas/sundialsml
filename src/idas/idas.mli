@@ -823,7 +823,7 @@ module Adjoint :
 
     (** Alias for backward sessions based on serial nvectors. *)
     type 'k serial_bsession = (RealArray.t, 'k) bsession
-                              constraint 'k = [>`Serial]
+                              constraint 'k = [>Nvector_serial.kind]
 
     (** {2:fwd Forward solution} *)
 
@@ -899,7 +899,7 @@ module Adjoint :
 
     (** Alias for linear solvers that are restricted to serial nvectors. *)
     type 'kind serial_linear_solver = (RealArray.t, 'kind) linear_solver
-                                      constraint 'kind = [>`Serial]
+                                      constraint 'kind = [>Nvector_serial.kind]
 
     (** Workspaces with three temporary vectors. *)
     type 'd triple = 'd * 'd * 'd
