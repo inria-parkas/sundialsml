@@ -473,7 +473,7 @@ if command -v opam >/dev/null 2>&1; then
 
     # install the docs with opam
     if [ "x${docdir}" = x ]; then
-	docdir="$(dirname "${opam_libpath}")/doc/sundials/"
+	docdir="$(dirname "${opam_libpath}")/doc/sundialsml/"
     fi
 else
     opam_libpath=''
@@ -957,7 +957,7 @@ printf "  prefix:\t\t${prefix}\n"                                     >> ${LOG}
 printf "  libdir:\t\t${libdir:-${ocaml_libpath}}\n"                   >> ${LOG}
 printf "  stubdir:\t\t${stubdir:-${ocaml_libpath}stublibs/}\n"        >> ${LOG}
 if [ ${install_docs:-1} -eq 1 ]; then
-    printf "  docdir:\t\t${docdir:-${prefix}share/doc/sundials_ml/}\n" >> ${LOG}
+    printf "  docdir:\t\t${docdir:-${prefix}share/doc/sundialsml/}\n" >> ${LOG}
 fi
 printf "\n"                                                           >> ${LOG}
 
@@ -978,7 +978,7 @@ cat ${LOG}
 	 s#@versionp@#${versionp}#;
 	 s#@libdir@#${libdir:-${ocaml_libpath}}#;
 	 s#@stubdir@#${stubdir:-${ocaml_libpath}stublibs/}#;
-	 s#@docdir@#${docdir:-${prefix}share/doc/sundials_ml/}#;
+	 s#@docdir@#${docdir:-${prefix}share/doc/sundialsml/}#;
 	 s#@install_docs@#${install_docs:-1}#;
 	 s#@cflags@#${cflags}#;
 	 s#@cppflags@#${cppflags}#;

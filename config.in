@@ -107,7 +107,7 @@ OCAMLMPI ?= @ocamlmpi_path@
 CAMLP4OF= @OCAMLBIN@camlp4of
 CAMLP4ORF= @OCAMLBIN@camlp4orf
 
-PKGDIR = @libdir@sundials/
+PKGDIR = @libdir@sundialsml/
 STUBDIR= @stubdir@
 
 DOCDIR = @docdir@
