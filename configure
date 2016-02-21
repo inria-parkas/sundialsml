@@ -640,6 +640,8 @@ if [ $sundials -ge 260 ]; then
 		klu_cobj_sens="$klu_cobj_sens cvodes/cvodes_klu_ml${XO}"
 		klu_cobj_sens="$klu_cobj_sens idas/ida_klu_ml_s${XO}"
 		klu_cobj_sens="$klu_cobj_sens idas/idas_klu_ml${XO}"
+		klu_cobj_sens="$klu_cobj_sens kinsol/kinsol_klu_ml${XO}"
+		klu_cobj_sens="$klu_cobj_sens arkode/arkode_klu_ml${XO}"
 
 		klu_cobj_no_sens="$klu_cobj_no_sens cvode/cvode_klu_ml${XO}"
 		klu_cobj_no_sens="$klu_cobj_no_sens ida/ida_klu_ml${XO}"
@@ -672,6 +674,8 @@ superlumt_cobj_sens="$superlumt_cobj_sens cvodes/cvode_superlumt_ml_s${XO}"
 superlumt_cobj_sens="$superlumt_cobj_sens cvodes/cvodes_superlumt_ml${XO}"
 superlumt_cobj_sens="$superlumt_cobj_sens idas/ida_superlumt_ml_s${XO}"
 superlumt_cobj_sens="$superlumt_cobj_sens idas/idas_superlumt_ml${XO}"
+superlumt_cobj_sens="$superlumt_cobj_sens kinsol/kinsol_superlumt_ml${XO}"
+superlumt_cobj_sens="$superlumt_cobj_sens arkode/arkode_superlumt_ml${XO}"
 
 superlumt_cobj_no_sens="$superlumt_cobj_no_sens cvode/cvode_superlumt_ml${XO}"
 superlumt_cobj_no_sens="$superlumt_cobj_no_sens ida/ida_superlumt_ml${XO}"
