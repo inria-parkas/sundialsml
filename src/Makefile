@@ -156,6 +156,12 @@ idas/ida_superlumt_ml_s.o: ida/ida_superlumt_ml.c
 idas/idas_superlumt_ml.o: idas/idas_superlumt_ml.c
 	$(CC) -I $(OCAML_INCLUDE) $(IDAS_CFLAGS) -o $@ -c $<
 
+# Other files
+
+META: META.in ../config
+	$(CPP) $(if $(MPI_ENABLED),-DMPI_ENABLED) -DVERSION=\"$(VERSION)\" $< \
+	    | grep -v '^#' > $@
+
 ### Install / Uninstall
 
 install: install-sys $(if $(INSTALL_DOCS),install-doc)
@@ -171,18 +177,18 @@ install-ocamlfind: install-findlib
 install-findlib: META $(INSTALL_CMA) $(INSTALL_CMA:.cma=.cmxa)
 	@ocamlfind install sundialsml $(INSTALL_FILES) -optional $(STUBLIBS)
 
-
-uninstall: uninstall-sys
-
-uninstall-sys:
-	-$(RM) -f $(foreach f,$(STUBLIBS),$(STUBDIR)$f)
-	-$(RM) -f $(foreach f,$(INSTALL_FILES),$(PKGDIR)$f)
-	-$(RMDIR) $(PKGDIR)
+install-doc:
+	$(MAKE) -C ../doc install
 
 uninstall-doc:
-	-$(RM) $(DOCDIR)/html/docstyle.css $(DOCDIR)/html/*.html
-	-$(RMDIR) $(DOCDIR)/html
-	-$(RMDIR) $(DOCDIR)
+	$(MAKE) -C ../doc uninstall
+
+uninstall: uninstall-sys uninstall-doc
+
+uninstall-sys:
+	-$(RM) $(foreach f,$(STUBLIBS),$(STUBDIR)$f)
+	-$(RM) $(foreach f,$(notdir $(INSTALL_FILES)),$(PKGDIR)$f)
+	-$(RMDIR) $(PKGDIR)
 
 uninstall-ocamlfind: uninstall-findlib
 uninstall-findlib:
