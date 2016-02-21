@@ -309,7 +309,7 @@ invocation:
 {C {[ocaml bigarray.cma -I +sundialsml sundials.cma]}}
 or through [ocamlfind], for example: {[
 #use "topfind";;
-#require "sundialsml";;
+#require "sundials";;
 
 let f t y yd = yd.{0} <- 1.;;
 let g t y gout = gout.{0} <- y.{0};;
