@@ -35,10 +35,6 @@ sundials_docs.cmxs: ../src/sundials/sundials_config.cmx dochtml.cmx
 	@echo 1>&2 "first by typing 'make' at the root of the source tree."
 	@false
 
-META: META.in ../config
-	$(CPP) $(if $(MPI_ENABLED),-DMPI_ENABLED) -DVERSION=\"$(VERSION)\" $< \
-	    | grep -v '^#' > $@
-
 DOC_URLS=$(if $(CVODE_DOC_ROOT),-cvode-doc-root "$(CVODE_DOC_ROOT)")	\
 	 $(if $(CVODES_DOC_ROOT),-cvodes-doc-root "$(CVODES_DOC_ROOT)")	\
 	 $(if $(ARKODE_DOC_ROOT),-arkode-doc-root "$(ARKODE_DOC_ROOT)")	\
@@ -80,8 +76,13 @@ html/perf.opt.png: ../examples/perf.opt.log
 
 install: html/index.html
 	[ -d $(DOCDIR) ] || $(MKDIR) $(DOCDIR)
-	[ -d $(DOCDIR)/html ] || $(MKDIR) $(DOCDIR)/html
-	$(CP) ../doc/html/docstyle.css ../doc/html/*.html $(DOCDIR)/html/
+	[ -d $(DOCDIR)html ] || $(MKDIR) $(DOCDIR)html
+	$(CP) ../doc/html/docstyle.css ../doc/html/*.html $(DOCDIR)html/
+
+uninstall:
+	-$(RM) $(DOCDIR)html/docstyle.css $(DOCDIR)html/*.html
+	-$(RMDIR) $(DOCDIR)html
+	-$(RMDIR) $(DOCDIR)
 
 distclean clean:
 	-@$(RM) -f html/*.html sundials_doc.cmxs sundials_doc.cma

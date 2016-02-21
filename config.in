@@ -110,7 +110,7 @@ CAMLP4ORF= @OCAMLBIN@camlp4orf
 PKGDIR = @libdir@sundials/
 STUBDIR= @stubdir@
 
-DOCDIR = @docdir@sundials_ml
+DOCDIR = @docdir@
 INSTALL_DOCS = @install_docs@
 
 OCAMLOPT ?= @ocamlopt@
