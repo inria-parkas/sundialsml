@@ -889,6 +889,14 @@ if [ -d "$EXAMPLESROOT/cvode/serial" ]; then
 else
     examples_info="NOT FOUND"
     EXAMPLESROOT=
+
+    # try a few other locations since there's nothing to lose
+    for d in /usr/share/doc/libsundials-serial-dev/examples; do
+	if [ -d "$d/cvode/serial" ]; then
+	    EXAMPLESROOT="$d"
+	    examples_info="$EXAMPLESROOT"
+	fi
+    done
 fi
 
 
