@@ -25,7 +25,6 @@ case `uname -s` in
 	Lsundials_lib_path=-L${sundials_lib_path}
 	sundials_inc_path=/usr/local/include
 	Isundials_inc_path=-I${sundials_inc_path}
-	idirafter_sundials_inc_path="-idirafter ${sundials_inc_path}"
 	;;
 esac
 
@@ -125,8 +124,7 @@ END_HELP_TEXT
 	Lsundials_lib_path="-L${sundials_lib_path}";;
     SUNDIALS_INC_PATH)
 	sundials_inc_path="${value%/}"
-	Isundials_inc_path="-I${sundials_inc_path}"
-	idirafter_sundials_inc_path="-idirafter ${sundials_inc_path}";;
+	Isundials_inc_path="-I${sundials_inc_path}";;
     SUPERLUMT_LIB_PATH)
 	superlumt_lib_path="${value%/}"
 	Lsuperlumt_lib_path="-L${superlumt_lib_path}";;
@@ -403,7 +401,7 @@ else
 fi
 
 
-cppflags="${cppflags} ${idirafter_sundials_inc_path} -idirafter ${ocaml_path}"
+cppflags="${cppflags} ${Isundials_inc_path} -I${ocaml_path}"
 cflags="${cflags} -I${ocaml_path}"
 
 include="<caml/mlvalues.h>"
