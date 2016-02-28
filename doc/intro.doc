@@ -42,7 +42,7 @@ Support requests should be made to the (public)
 {2:overview Overview}
 
 The structure of this interface mostly follows that of the original library,
-both for ease of reading the existing documentation and for converting
+both for ease of reading the official documentation and for converting
 existing source code, but several changes have been made for programming
 convenience and to increase safety, namely:
 - solver sessions are mostly configured via algebraic data types
@@ -86,7 +86,8 @@ serial, parallel, pthreads, and openmp instantiations.
 The OCaml interface defines likewise a generic
 {!Nvector.t} type whose type arguments indicate the underlying {e
 data} and {e kind}—the latter may be {!Nvector_serial.kind},
-{!Nvector_parallel.kind}, or {!Nvector_custom.kind}.
+{!Nvector_parallel.kind}, {!Nvector_pthreads.kind}, {!Nvector_openmp.kind},
+or {!Nvector_custom.kind}.
 The {!Nvector.unwrap} function gives direct access to the underlying data.
 
 The interface to serial nvectors, {!Nvector_serial}, is based on
@@ -102,11 +103,12 @@ The interface to parallel nvectors, {!Nvector_parallel}, is based on
 {{:http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.html}Bigarrays}
 and the {{:https://forge.ocamlcore.org/projects/ocamlmpi/}OCamlMPI}
 library. Parallel nvectors are only available when Sundials/ML is configured
-to use MPI, as described {{:install}below}.
+to use MPI, as described {{:#install}below}.
 
-Pthreads nvectors, {!Nvector_pthreads}, and openmp nvectors, {!Nvector_openmp},
-are essentially serial nvectors whose underlying operations are executed by
-multiple threads.
+The underlying operations of pthreads nvectors, {!Nvector_pthreads}, and
+openmp nvectors, {!Nvector_openmp}, are implemented using multiple threads.
+These nvectors can be used anywhere that Serial nvectors can (except for
+the operations in {!Nvector_serial.Ops}).
 
 Besides these four standard implementations, it is also possible to define
 new nvector implementations through {!Nvector_custom} by providing low-level
@@ -144,7 +146,8 @@ Sundials provides six options for the solution of linear equations:
     linear solver modules (in OCaml).}
 }
 
-The DLS routines are only available to sessions that use serial nvectors.
+The DLS routines are only available to sessions that use serial, Pthreads,
+or OpenMP nvectors.
 Callback functions can either update the Jacobian matrix as a
 {!Dls.DenseMatrix.t} or a {!Dls.BandMatrix.t}. Access to the underlying
 solver routines on bigarrays is provided via {!Dls.ArrayDenseMatrix}
@@ -155,14 +158,15 @@ Scaled Preconditioned Bi-CGStab (SPBCG)}, {e Scaled Preconditioned TFQMR
 (SPTFQMR)}, {e Scaled Preconditioned Flexible GMRES (SPFMGR)}, and
 {e Preconditioned Conjugate Gradient (PCG)} methods.
 Additionally, {!Cvode} provides banded preconditioners
-for sessions that use serial nvectors. Access to the underlying solver
+for sessions that use serial, Pthreads, or OpenMP nvectors.
+Access to the underlying solver
 routines on bigarrays is provided via the submodules of {!Spils}.
 Parallel Band-Block-Diagonal (BBD) preconditioners are available to sessions
 that use parallel nvectors—see {!Cvode_bbd}, {!Cvodes_bbd}, {!Ida_bbd},
 {!Idas_bbd}, and {!Kinsol_bbd}.
 
 The SuperLU_MT and KLU routines are only available to sessions that use
-serial nvectors.
+serial, Pthreads, or OpenMP nvectors.
 Callback functions update the Jacobian matrix as an {!Sls.SparseMatrix.t}.
 
 Each solver module has a distinct linear solver type, e.g.,
@@ -190,7 +194,8 @@ appropriate [init] or [reinit] functions to configure sessions.
 
 The dependencies of Sundials/ML are
 - {{:http://caml.inria.fr/ocaml/}OCaml} {b 3.12.1 or greater},
-- {{:http://computation.llnl.gov/casc/sundials/}Sundials} {b {var version}},
+- {{:http://computation.llnl.gov/casc/sundials/}Sundials} {b {var version}}
+  (compiles with 2.5.0 onwards, with less features),
 - {e Optionally}:
   {{:https://forge.ocamlcore.org/projects/ocamlmpi/}OCamlMPI} {b 1.01}.
 
@@ -198,29 +203,20 @@ Sundials must be compiled with 64-bit floats (the default: {i
 --with-precision=double}) and the C compiler must provide 32-bit
 [int]s.
 
-When building Sundials manually, we recommend applying the
-[sundials-2.5.0.patch] file distributed with Sundials/ML and using
-[./configure --enable-examples --enable-shared].  Sundials/ML will
-function correctly if the patch is not applied, but the comparison of
-examples will fail with incorrect results.
-
 The [configure] script detects and automatically enables optional
 features.  Lapack solvers, like {!Cvode.Dls.lapack_dense}, are enabled
-if Sundials was built with lapack support.
-The {!Sundials.lapack_enabled} value indicates whether these solvers are
-available.
+if Sundials was built with lapack support (see also {!Sundials.lapack_enabled}).
 The KLU and SuperLU_MT solvers, and the pthreads and openmp nvectors are
-enabled if Sundials was built with them.
+only enabled if Sundials was built with them.
 Parallel nvectors and Band-Block-Diagonal (BBD) solvers
-are enabled if Sundials was built with them and OCamlMPI is available.
+are only enabled if Sundials was built with them and OCamlMPI is available.
 
 {3:opam Opam}
 
 Opam is the easiest way to install the library:
 {ol
     {- {{:http://computation.llnl.gov/casc/sundials/download/download.php}Download}
-        and manually install Sundials (see notes above), or use a
-        package manager:
+        and manually install Sundials, or use a package manager:
 	{ul
 	    {- Debian/Ubuntu (without parallelism):
 		    [apt-get install libsundials-serial-dev]}
@@ -235,7 +231,7 @@ Opam is the easiest way to install the library:
 Building from source is a three step process:
 {ol
     {- {{:http://computation.llnl.gov/casc/sundials/download/download.php}Download}
-        and manually install Sundials (see notes above),
+        and manually install Sundials,
         or use a package manager:
 	{ul
 	    {- Debian/Ubuntu (without parallelism):
@@ -281,10 +277,12 @@ even though they are compiled from distinct source files. The
 [sundials_no_sens.cma/cmxa] files, on the other hand, link against the
 libraries [libsundials_cvode] and [libsundials_ida] and thus do not include the
 functionality in {!Cvodes} or {!Idas}. Both sets of files link against
-[libsundials_kinsol] and [libsundials_nvecserial].
+[libsundials_kinsol], [libsundials_arkode], and [libsundials_nvecserial]
+(and, if available, [libsundials_nvecpthreads] and [libsundials_nvecopenmp]).
 
 The parallel features—in the {!Nvector_parallel}, {!Cvode_bbd},
-{!Cvodes_bbd}, {!Ida_bbd}, {!Idas_bbd}, and {!Kinsol_bbd} modules—require the
+{!Cvodes_bbd}, {!Ida_bbd}, {!Idas_bbd}, {!Kinsol_bbd}, and {!Arkode_bbd}
+modules—require the
 additional inclusions of [mpi.cma] and [sundials_mpi.cma]. So, for example:
 {C {[ocamlc -o myprog.byte -I +sundialsml bigarray.cma mpi.cma sundials.cma sundials_mpi.cma myprog.ml]}}
 or with the [.cmxa] versions:
@@ -325,7 +323,7 @@ Printf.printf "%e: " t';
 Sundials.RealArray.iter (Printf.printf "\t%e") y;
 Printf.printf "\n";;]}
 
-Using parallel features from a toplevel is most cleanly done with [ocamlfind]
+Using parallel features from a toplevel is best done with [ocamlfind]
 by first creating a custom toplevel:
 {C [ocamlfind ocamlmktop -o partop -package sundialsml.mpi,findlib -linkpkg]}
 
@@ -354,7 +352,7 @@ Printf.printf "Sum of abs. = %f\n" (Nvector_parallel.Ops.n_vl1norm pv);;
        can usually be fixed by updating [LD_LIBRARY_PATH], for example,
        {[export LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH}]}
        Otherwise you may have compiled Sundials without
-       [--enable-shared]; see {{:#install}above}.}
+       [--enable-shared].}
 }
 
 

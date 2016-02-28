@@ -240,7 +240,7 @@ code code { font-size: 100%; }
 code.type { white-space: pre; }
 
 div#intro {
-  max-width: 50em;
+  max-width: 42em;
   text-align: justify;
   margin: 0px auto;
 }
