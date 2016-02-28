@@ -208,16 +208,19 @@ dependencies and the right cmake incantation.
 For {b Debian}-based systems, we found the following worked:
 {ol
     {- [apt-get install cmake liblapack-dev mpi-default-dev libsuitesparse-dev]}
-    {- Download {{:http://crd-legacy.lbl.gov/~xiaoye/SuperLU/}SuperLUMT};
-       edit [make.inc], setting [BLASDEF = -DUSE_VENDOR_BLAS]
-       and [BLASLIB = -lblas]; then run [make].}
+    {- Download
+       {{:http://crd-legacy.lbl.gov/~xiaoye/SuperLU/#superlu_mt}SuperLUMT}
+       (2.4); edit [make.inc], setting [BLASDEF = -DUSE_VENDOR_BLAS] and
+       [BLASLIB = -lblas]; [apt-get install csh]; then run [make].}
     {- [mkdir build; cd build]}
     {- {[cmake ../sundials-2.6.2 -DOPENMP_ENABLE=1 -DPTHREAD_ENABLE=1
 	-DMPI_ENABLE=1 -DLAPACK_ENABLE=1 -DLAPACK_LIBRARIES='-llapack -lblas'
 	-DKLU_ENABLE=1 -DKLU_LIBRARY_DIR=/usr/lib/x86_64-linux-gnu
 	-DKLU_INCLUDE_DIR=/usr/include/suitesparse
-	-DSUPERLUMT_ENABLE=1 -DSUPERLUMT_LIBRARY_DIR=<path/to/src>/lib
-	-DSUPERLUMT_INCLUDE_DIR=<path/to/src>/SRC]} }
+	-DSUPERLUMT_ENABLE=1 -DSUPERLUMT_LIBRARY_DIR=../SuperLU_MT_2.4/lib
+	-DSUPERLUMT_INCLUDE_DIR=../SuperLU_MT_2.4/SRC]} }
+    {- Configure Sundials/ML with
+	{[./configure SUPERLUMT_LIB_PATH=../SuperLU_MT_2.4/lib]}}
 }
 
 The [configure] script detects and automatically enables optional
