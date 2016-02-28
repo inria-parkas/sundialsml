@@ -22,7 +22,8 @@ c_examples_unavailable:
 # disabled features are filtered out in examples.mk.
 SUBDIRS=$(foreach m,cvode cvodes ida idas kinsol,		\
 	  $(foreach v,serial parallel,$m/$v))			\
-	$(foreach v,C_serial C_parallel C_openmp,arkode/$v)
+	$(if $(ARKODE_ENABLED),					\
+	    $(foreach v,C_serial C_parallel C_openmp,arkode/$v))
 
 TOP_TARGETS = tests.byte.log tests.opt.log perf.byte.log perf.opt.log reps
 SUBDIR_TARGETS = $(foreach d,$(SUBDIRS),$(foreach t,$(TOP_TARGETS),$d/$t))
