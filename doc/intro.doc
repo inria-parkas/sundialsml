@@ -203,6 +203,19 @@ Sundials must be compiled with 64-bit floats (the default: {i
 --with-precision=double}) and the C compiler must provide 32-bit
 [int]s.
 
+Building the extra features of Sundials requires the installation of
+dependencies and the right cmake incantation.
+For {b Debian}-based systems, we found the following worked for everything but
+SuperLUMT:
+{ol
+    {- [apt-get install cmake liblapack-dev mpi-default-dev libsuitesparse-dev]}
+    {- [mkdir build; cd build]}
+    {- {[cmake ../sundials-2.6.2 -DOPENMP_ENABLE=1 -DPTHREAD_ENABLE=1
+	-DMPI_ENABLE=1 -DLAPACK_ENABLE=1 -DLAPACK_LIBRARIES='-llapack -lblas'
+	-DKLU_ENABLE=1 -DKLU_LIBRARY_DIR=/usr/lib/x86_64-linux-gnu
+	-DKLU_INCLUDE_DIR=/usr/include/suitesparse]} }
+}
+
 The [configure] script detects and automatically enables optional
 features.  Lapack solvers, like {!Cvode.Dls.lapack_dense}, are enabled
 if Sundials was built with lapack support (see also {!Sundials.lapack_enabled}).
