@@ -837,12 +837,14 @@ EOF
         # Determine the C compiler flag for enabling OpenMP.
         if [ "x$cflags_openmp" = x ]; then
             cat > $test_stem.c <<EOF
+#include <stdio.h>
 void omp_set_num_threads (int);
 int main (int argc, char *argv[])
 {
+  int i;
   omp_set_num_threads(argc);
   #pragma omp for
-  for (int i = 0; i <= argc; ++i)
+  for (i = 0; i <= argc; ++i)
     printf ("Making extra sure omp_set_num_threads() isn't optimized away");
   return 0;
 }
