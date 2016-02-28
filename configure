@@ -1014,6 +1014,8 @@ cat ${LOG}
 	 s#@ocamlmpi_enabled@#${ocamlmpi_enabled}#;
 	 s#@enable_shared@#${enable_shared}#;
 	 s#@lapack_enabled@#${lapack_enabled}#;
+	 s#@klu_enabled@#${klu_enabled}#;
+	 s#@superlumt_enabled@#${superlumt_enabled}#;
 	 s#@sls_ml_xo@#${sls_ml_xo}#;
 	 s#@sls_cmo@#${sls_cmo}#;
 	 s#@nvecpthreads_enabled@#${nvecpthreads_enabled}#;

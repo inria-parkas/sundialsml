@@ -65,11 +65,13 @@ NVECOPENMP_ML_XO = @nvecopenmp_ml_xo@
 NVECOPENMP_CMO = @nvecopenmp_cmo@
 CFLAGS_OPENMP = @cflags_openmp@
 
+KLU_ENABLED = @klu_enabled@
 KLU_COBJ_SENS = @klu_cobj_sens@
 KLU_COBJ_NO_SENS = @klu_cobj_no_sens@
 KLU_MLOBJ_MAIN = @klu_mlobj_main@
 KLU_MLOBJ_SENS = @klu_mlobj_sens@
 
+SUPERLUMT_ENABLED = @superlumt_enabled@
 SUPERLUMT_COBJ_SENS = @superlumt_cobj_sens@
 SUPERLUMT_COBJ_NO_SENS = @superlumt_cobj_no_sens@
 SUPERLUMT_MLOBJ_MAIN = @superlumt_mlobj_main@
