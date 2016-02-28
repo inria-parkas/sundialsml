@@ -32,19 +32,16 @@ external c_superlumtb : (serial_session * int)
 let superlumt f ~nnz ~nthreads bs nv =
   let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
   let session = tosession bs in
-  let use_sens =
-    match f with
-    | NoSens fns ->
-        (session.ls_callbacks <-
-            BSlsSuperlumtCallback { jacfn = fns; smat = None };
-         false)
-    | WithSens fbs ->
-        (session.ls_callbacks <-
-            BSlsSuperlumtCallbackSens { jacfn_sens = fbs; smat_sens = None };
-         true)
-  in
+  let use_sens = match f with NoSens _ -> false | WithSens _ -> true in
+  c_superlumtb (AdjointTypes.parent_and_which bs) neqs nnz nthreads use_sens;
   session.ls_precfns <- NoPrecFns;
-  c_superlumtb (AdjointTypes.parent_and_which bs) neqs nnz nthreads use_sens
+  match f with
+  | NoSens fns ->
+      session.ls_callbacks <-
+        BSlsSuperlumtCallback { jacfn = fns; smat = None }
+  | WithSens fbs ->
+      session.ls_callbacks <-
+        BSlsSuperlumtCallbackSens { jacfn_sens = fbs; smat_sens = None }
 
 let set_ordering bs = Cvode_superlumt.set_ordering (tosession bs)
 let get_num_jac_evals bs = Cvode_superlumt.get_num_jac_evals (tosession bs)

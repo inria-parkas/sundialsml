@@ -1061,9 +1061,7 @@ module Adjoint :
 
             @cvodes <node7#sss:lin_solv_b> CVDenseB
             @cvodes <node7#SECTION00728200000000000000> CVDlsSetDenseJacFnB
-            @nocvodes <node7#SECTION00728200000000000000> CVDlsSetDenseJacFnBS
-            @cvodes <node7#ss:densejac_b> CVDlsDenseJacFnB
-            @nocvodes <node7#ss:densejac_bs> CVDlsDenseJacFnBS *)
+            @nocvodes <node7#SECTION00728200000000000000> CVDlsSetDenseJacFnBS *)
         val dense : ?jac:dense_jac_fn -> unit -> serial_linear_solver
 
         (** A direct linear solver on dense matrices using LAPACK. See {!dense}.
@@ -1072,7 +1070,7 @@ module Adjoint :
             @raise Sundials.NotImplementedBySundialsVersion Solver not available.
             @cvodes <node7#sss:lin_solv_b> CVLapackDenseB
             @cvodes <node7#SECTION00728200000000000000> CVDlsSetDenseJacFnB
-            @cvodes <node7#ss:densejac_b> CVDlsDenseJacFnB *)
+            @nocvodes <node7#SECTION00728200000000000000> CVDlsSetDenseJacFnBS *)
         val lapack_dense : ?jac:dense_jac_fn -> unit -> serial_linear_solver
 
         (** Callback functions that compute banded approximations to
@@ -1150,7 +1148,7 @@ module Adjoint :
 
             @cvodes <node7#sss:lin_solv_b> CVBandB
             @cvodes <node7#SECTION00728300000000000000> CVDlsSetBandJacFnB
-            @cvodes <node7#ss:bandjac_b> CVDlsBandJacFnB *)
+            @nocvodes <node5#SECTION00728300000000000000> CVDlsSetBandJacFnBS *)
         val band : ?jac:band_jac_fn -> bandrange -> serial_linear_solver
 
         (** A direct linear solver on banded matrices using LAPACK. See {!band}.
@@ -1159,7 +1157,7 @@ module Adjoint :
             @raise Sundials.NotImplementedBySundialsVersion Solver not available.
             @cvodes <node7#sss:lin_solv_b> CVLapackBandB
             @cvodes <node7#SECTION00728300000000000000> CVDlsSetBandJacFnB
-            @cvodes <node7#ss:bandjac_b> CVDlsBandJacFnB *)
+            @nocvodes <node5#SECTION00728300000000000000> CVDlsSetBandJacFnBS *)
         val lapack_band : ?jac:band_jac_fn -> bandrange -> serial_linear_solver
 
         (** {3:stats Solver statistics} *)

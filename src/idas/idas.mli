@@ -1001,7 +1001,7 @@ module Adjoint :
 
             @idas <node7#sss:lin_solv_b> IDADenseB
             @idas <node7#SECTION00729200000000000000> IDADlsSetDenseJacFnB
-            @idas <node7#ss:densejac_b> IDADlsDenseJacFnB *)
+            @noidas <node7> IDADlsSetDenseJacFnBS *)
         val dense : ?jac:dense_jac_fn -> unit -> serial_linear_solver
 
         (** A direct linear solver on dense matrices using LAPACK. See {!dense}.
@@ -1011,7 +1011,7 @@ module Adjoint :
             @raise Sundials.NotImplementedBySundialsVersion Solver not available.
             @idas <node7#sss:lin_solv_b> IDALapackDenseB
             @idas <node7#SECTION00729200000000000000> IDADlsSetDenseJacFnB
-            @idas <node7#ss:densejac_b> IDADlsDenseJacFnB *)
+            @noidas <node7> IDADlsSetDenseJacFnBS *)
         val lapack_dense : ?jac:dense_jac_fn -> unit -> serial_linear_solver
 
         (** Callback functions that compute banded approximations to
@@ -1091,7 +1091,7 @@ module Adjoint :
 
             @idas <node7#sss:lin_solv_b> IDABandB
             @idas <node7#SECTION00729300000000000000> IDADlsSetBandJacFnB
-            @idas <node7#ss:bandjac_b> IDADlsBandJacFnB *)
+            @noidas <node7> IDADlsSetBandJacFnBS *)
         val band : ?jac:band_jac_fn -> bandrange -> serial_linear_solver
 
         (** A direct linear solver on banded matrices using LAPACK. See {!band}.
@@ -1101,7 +1101,7 @@ module Adjoint :
             @raise Sundials.NotImplementedBySundialsVersion Solver not available.
             @idas <node7#sss:lin_solv_b> IDALapackBandB
             @idas <node7#SECTION00729300000000000000> IDADlsSetBandJacFnB
-            @idas <node7#ss:bandjac_b> CVDlsBandJacFnB *)
+            @noidas <node7> IDADlsSetBandJacFnBS *)
         val lapack_band : ?jac:band_jac_fn -> bandrange -> serial_linear_solver
 
         (** {3:stats Solver statistics} *)
