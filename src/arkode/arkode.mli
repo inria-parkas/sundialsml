@@ -755,6 +755,13 @@ module Spils :
             @noarkode <node> ARKSpilsGetNumMassConvFails *)
         val get_num_conv_fails   : ('d, 'k) session -> int
 
+        (** Returns the cumulative number of calls to the mass-matrix-vector
+            product function ({!times_vec_fn}).
+
+            @noarkode <node> ARKSpilsGetNumMtimesEvals
+            @since Sundials 2.6.3 *)
+        val get_num_mtimes_evals : ('d, 'k) session -> int
+
         (** Returns the cumulative number of calls to the setup function with
             [jok=false].
 

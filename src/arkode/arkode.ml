@@ -674,6 +674,13 @@ module Spils =
         mass_check_spils s;
         get_num_conv_fails s
 
+      external get_num_mtimes_evals   : ('a, 'k) session -> int
+          = "c_arkode_spils_get_num_mtimes_evals"
+
+      let get_num_mtimes_evals s =
+        mass_check_spils s;
+        get_num_mtimes_evals s
+
       external get_work_space         : ('a, 'k) session -> int * int
           = "c_arkode_spils_get_mass_work_space"
 

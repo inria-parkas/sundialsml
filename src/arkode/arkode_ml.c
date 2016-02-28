@@ -2759,6 +2759,21 @@ CAMLprim value c_arkode_spils_get_num_conv_fails(value varkode_mem)
     CAMLreturn(Val_long(r));
 }
 
+CAMLprim value c_arkode_spils_get_num_mtimes_evals(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int r;
+
+#if SUNDIALS_LIB_VERSION >= 263
+    int flag = ARKSpilsGetNumMtimesEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("ARKSpilsGetNumMtimesEvals", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(Val_long(r));
+}
+
 CAMLprim value c_arkode_spils_get_work_space(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
