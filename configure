@@ -278,6 +278,7 @@ arkode_cobj_main=
 arkode_mlobj_bbd=
 arkode_cobj_bbd=
 arkode_subdir=
+arkode_enabled=
 if [ "${sundials_version}" = "SUNDIALS_PACKAGE_VERSION" ]; then
     error="${error}\n\tcould not find sundials_config.h"
     sundials=0
@@ -296,6 +297,7 @@ else
 	    arkode_mlobj_bbd=arkode/arkode_bbd.cmo
 	    arkode_cobj_bbd=arkode/arkode_bbd_ml${XO}
 	    arkode_subdir=arkode
+	    arkode_enabled=1
 	    ;;
     esac
     case "${sundials_version}" in
@@ -994,6 +996,7 @@ cat ${LOG}
 	 s#@sundials_lib_path@#${Lsundials_lib_path}#;
 	 s#@sundials_inc_path@#${Isundials_inc_path}#;
 	 s#@superlumt_lib_path@#${Lsuperlumt_lib_path}#;
+	 s#@arkode_enabled@#${arkode_enabled}#;
 	 s#@link_sundials_arkode@#${Lsundials_arkode}#;
 	 s#@arkode_mlobj_main@#${arkode_mlobj_main}#;
 	 s#@arkode_cobj_main@#${arkode_cobj_main}#;
