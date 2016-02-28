@@ -1340,10 +1340,11 @@ type 'd rootsfn = float -> 'd -> RealArray.t -> unit
 val no_roots : (int * 'd rootsfn)
 
 (** Creates and initializes a session with the solver. The call
-    {[init problem tol ~order:ord ~mass:msolver ~roots:(nroots, g) t0 y0]} has
-    as arguments:
+    {[init problem tol ~restol ~order:ord ~mass:msolver ~roots:(nroots, g) t0 y0]}
+    has as arguments:
     - [problem], specifies the problem to solve (see {!problem}),
     - [tol],     the integration tolerances,
+    - [restol],  (optional) mass matrix residual tolerances,
     - [ord],     the order of accuracy for the integration method,
     - [msolver], optionally, a linear mass matrix solver,
     - [nroots],  the number of root functions,
@@ -1484,13 +1485,14 @@ val reinit :
 type 'd resize_fn = 'd -> 'd -> unit
 
 (** Change the number of equations and unknowns between integrator steps.
-    The call [resize s ~resize_nvec:rfn ~linsolv:ls tol hscale ynew t0]
+    The call [resize s ~resize_nvec:rfn ~linsolv:ls tol ~restol hscale ynew t0]
     has as arguments:
     - [s], the solver session to resize,
     - [rfn], a resize function that transforms nvectors in place-otherwise
              they are simply destroyed and recloned,
     - [ls], specify a different linear solver,
     - [tol], tolerance values (ensures that any tolerance vectors are resized),
+    - [restol], (optional) mass matrix residual tolerances,
     - [hscale], the next step will be of size {% $h \mathtt{hscale}$%},
     - [ynew], the newly-sized solution vector with the value {% $y(t_0)$%}, and
     - [t0], the current value of the independent variable $t_0$.
@@ -1499,12 +1501,20 @@ type 'd resize_fn = 'd -> 'd -> unit
     is destroyed and reinitialized; settings must be reconfigured after
     resizing.
 
+    If the mass matrix residual tolerance was previously set to
+    {{!res_tolerance}ResVtolerance} and [restol] is not given, then it is reset
+    to {{!res_tolerance}ResStolerance} with the default value.
+
+    The [tol] argument is ignored in versions 2.6.1 and 2.6.2 since it may cause
+    a segmentation error.
+
     @noarkode <node> ARKodeResize *)
 val resize :
   ('d, 'kind) session
   -> ?resize_nvec:('d resize_fn)
   -> ?linsolv:(('d, 'kind) linear_solver)
   -> ('d, 'kind) tolerance
+  -> ?restol:(('d, 'kind) res_tolerance)
   -> float
   -> ('d, 'kind) Nvector.t
   -> float

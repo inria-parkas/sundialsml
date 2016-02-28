@@ -303,6 +303,7 @@ type ('a, 'kind) session = {
   err_file   : arkode_file;
   diag_file  : arkode_file;
   mutable checkvec     : (('a, 'kind) Nvector.t -> unit);
+  mutable uses_resv    : bool;
 
   mutable exn_temp     : exn option;
 

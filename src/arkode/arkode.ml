@@ -769,10 +769,16 @@ type ('data, 'kind) res_tolerance =
 
 let set_res_tolerance s tol =
   match tol with
-  | ResStolerance abs -> (s.resw <- dummy_resw; ress_tolerance s abs)
+  | ResStolerance abs -> (s.resw <- dummy_resw;
+                          s.uses_resv <- false;
+                          ress_tolerance s abs)
   | ResVtolerance abs -> (if Sundials_config.safe then s.checkvec abs;
-                           s.resw <- dummy_resw; resv_tolerance s abs)
-  | ResFtolerance fresw -> (s.resw <- fresw; resf_tolerance s)
+                          s.uses_resv <- true;
+                          s.resw <- dummy_resw;
+                          resv_tolerance s abs)
+  | ResFtolerance fresw -> (s.resw <- fresw;
+                            s.uses_resv <- false;
+                            resf_tolerance s)
 
 external set_fixed_point : ('a, 'k) session -> int -> unit
   = "c_arkode_set_fixed_point"
@@ -829,6 +835,7 @@ let init prob tol ?restol ?order ?mass ?(roots=no_roots) t0 y0 =
           err_file     = no_file;
           diag_file    = no_file;
           checkvec     = checkvec;
+          uses_resv    = false;
 
           exn_temp     = None;
 
@@ -904,13 +911,19 @@ external c_resize
     : ('a, 'k) session -> bool -> float -> float -> ('a, 'k) nvector -> unit
     = "c_arkode_resize"
 
-let resize session ?resize_nvec ?linsolv tol hscale ynew t0 =
+let resize session ?resize_nvec ?linsolv tol ?restol hscale ynew t0 =
   session.checkvec <- Nvector.check ynew;
   (match linsolv with None -> () | ls -> session.linsolver <- ls);
   (match resize_nvec with None -> () | Some f -> session.resizefn <- f);
   c_resize session (resize_nvec <> None) hscale t0 ynew;
   session.resizefn <- dummy_resizefn;
-  (* set_tolerances session tol; TODO: disabled pending an ARKode bug. *)
+  (match Sundials.sundials_version with
+   | 2,6,1 | 2,6,2 -> () (* avoid a segmentation fault in earlier versions *)
+   | _ -> set_tolerances session tol);
+  (match restol with
+   | Some rt -> set_res_tolerance session rt
+   | _ when session.uses_resv -> set_res_tolerance session (ResStolerance 1.e-9)
+   | _ -> ());
   (match session.linsolver with Some ls -> ls session ynew | None -> ())
 
 external get_root_info  : ('a, 'k) session -> Sundials.Roots.t -> unit
