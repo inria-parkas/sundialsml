@@ -754,7 +754,8 @@ int main (int argc, char *argv[])
 EOF
     if ! $mpicc -o $test_stem$XX ${Isundials_inc_path} $test_stem.c \
 	 ${Lsundials_lib_path} -lsundials_cvode -lsundials_nvecparallel \
-	 ${libm} ${sparse_libs} ${lapack_lib} >/dev/null 2>&1;
+	 ${Lsuperlumt_lib_path} ${libm} ${sparse_libs} ${lapack_lib} \
+	 >/dev/null 2>&1;
     then
         sundialsmpi_info='not installed'
         ocamlmpi_enabled=
