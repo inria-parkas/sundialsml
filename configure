@@ -232,6 +232,8 @@ if [ "x${cflags}" = x ]; then    # Don't touch CFLAGS if explicitly given.
 fi
 
 if [ "x$enable_debug" = x1 ]; then
+    ocamloptflags="${ocamloptflags} -g"
+    ocamlflags="${ocamlflags} -g"
     if [ $using_gcc = true ]; then
         # This case is handled above.
         :
