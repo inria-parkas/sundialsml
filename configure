@@ -572,7 +572,7 @@ if ! ${OCAMLBIN}ocamlmklib $test_c_stem$XO $test_stem.cmo \
     ${Lsundials_lib_path} -lsundials_cvode -lsundials_nvecserial ${libm} \
     > $test_stem.log 2>&1
 then
-    warning="${warning}\n\tSundials/C seems to be compiled without shared. library support"
+    warning="${warning}\n\tSundials/C seems to be compiled without shared library support."
     warning="${warning}\n\tSundials/ML may not work in the toplevel."
     enable_shared=
 fi
