@@ -10,12 +10,11 @@ EXAMPLES_SINCE_2_5 = kinFerTron_dns.ml		\
 		     kinFoodWeb_kry_custom.ml	\
 		     kinKrylovDemo_ls.ml	\
 		     kinLaplace_bnd.ml		\
-		     kinLaplace_picard_bnd.ml	\
-		     kinRoberts_fp.ml		\
 		     kinRoboKin_dns.ml		\
 		     kinRoboKin_dns_alt.ml
 
-EXAMPLES_SINCE_2_6 =
+EXAMPLES_SINCE_2_6 = kinRoberts_fp.ml		\
+		     kinLaplace_picard_bnd.ml
 
 EXAMPLES = $(EXAMPLES_SINCE_2_5) $(EXAMPLES_SINCE_2_6)
 

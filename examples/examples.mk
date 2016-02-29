@@ -19,8 +19,15 @@
 #     - use MPI
 #     - use OpenMP
 #     - use pthreads
-#   respectively.
-# * FILES_TO_CLEAN
+#   respectively.  Variables are named differently for files whose
+#   build instructions differ.
+# * ENABLED_EXAMPLES [optional]
+#   List of .ml files to be built under the current configuration.  If
+#   left empty, this will be inferred for the current configuration
+#   based on EXAMPLES, MPI_EXAMPLES, etc.  Setting this manually is
+#   useful when some files with the same build instructions have to be
+#   filtered out while others must remain.
+# * FILES_TO_CLEAN [optional]
 #   Space-separated names of files (relative to current path) that should
 #   be deleted upon `make clean'.
 # * USELIB [optional]
@@ -55,10 +62,10 @@ C_SUBDIR ?= $(SUBDIR)
 DIVIDER = "----------------------------------------------------------------------"
 ALL_EXAMPLES=$(EXAMPLES) $(LAPACK_EXAMPLES) $(MPI_EXAMPLES)	\
 	     $(OPENMP_EXAMPLES) $(PTHREADS_EXAMPLES)
-ENABLED_EXAMPLES=$(EXAMPLES) $(if $(LAPACK_ENABLED),$(LAPACK_EXAMPLES))	\
-	         $(if $(MPI_ENABLED),$(MPI_EXAMPLES))			\
-	         $(if $(OPENMP_ENABLED),$(OPENMP_EXAMPLES))		\
-	         $(if $(PTHREADS_ENABLED),$(PTHREADS_EXAMPLES))
+ENABLED_EXAMPLES ?= $(EXAMPLES) $(if $(LAPACK_ENABLED),$(LAPACK_EXAMPLES)) \
+		    $(if $(MPI_ENABLED),$(MPI_EXAMPLES))		   \
+		    $(if $(OPENMP_ENABLED),$(OPENMP_EXAMPLES))		   \
+		    $(if $(PTHREADS_ENABLED),$(PTHREADS_EXAMPLES))
 SERIAL_EXAMPLES=$(EXAMPLES) $(LAPACK_EXAMPLES)
 SUNDIALSLIB_DEPS=$(foreach x,$(SUNDIALSLIB),$(SRC)/$x)
 
