@@ -50,7 +50,7 @@ module RealArray = Sundials.RealArray
 let unwrap = Nvector.unwrap
 
 let printf = Printf.printf
-let vmax_norm = Nvector_serial.Raw.Ops.n_vmaxnorm
+let vmax_norm = Nvector_serial.Ops.n_vmaxnorm
 
 (* Problem Constants *)
 
@@ -224,8 +224,7 @@ let main () =
     } in
 
   (* Allocate and set initial states *)
-  let u_raw = Nvector_serial.Raw.make neq 0.0 in
-  let u     = Nvector_serial.Raw.as_serial u_raw in
+  let u = Nvector_serial.make neq 0.0 in
   set_ic (unwrap u) dx;
 
   (* Set integration tolerances *)
@@ -253,8 +252,7 @@ let main () =
         let pbar = RealArray.create ns in
         RealArray.mapi (fun is _ -> data.p.{plist.(is)}) pbar;
 
-        let uS_raw = Array.init ns (fun _ -> Nvector_serial.Raw.make neq 0.0) in
-        let uS     = Array.map Nvector_serial.Raw.as_serial uS_raw in
+        let uS = Array.init ns (fun _ -> Nvector_serial.make neq 0.0) in
 
         Sens.(init cvode_mem
                    EEtolerances
@@ -275,7 +273,7 @@ let main () =
         print_string (if err_con then " FULL ERROR CONTROL )"
                                  else " PARTIAL ERROR CONTROL )");
 
-        (fun s -> (ignore (Sens.get s uS); print_output_s uS_raw))
+        (fun s -> (ignore (Sens.get s uS); print_output_s uS))
       end
   in
 
@@ -288,7 +286,7 @@ let main () =
   let tout = ref t1 in
   for iout = 1 to nout do
     let t, _ = Cvode.solve_normal cvode_mem !tout u in
-    print_output cvode_mem t u_raw;
+    print_output cvode_mem t u;
     print_sensi cvode_mem;
     print_string "------------------------------------------------------------\n";
     tout := !tout +. dtout

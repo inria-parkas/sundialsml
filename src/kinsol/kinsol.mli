@@ -52,7 +52,8 @@ open Sundials
 type ('data, 'kind) session = ('data, 'kind) Kinsol_impl.session
 
 (** Alias for sessions based on serial nvectors. *)
-type serial_session = (Nvector_serial.data, Nvector_serial.kind) session
+type 'kind serial_session = (Nvector_serial.data, 'kind) session
+                            constraint 'kind = [>Nvector_serial.kind]
 
 (** {2:linear Linear solvers} *)
 
@@ -62,8 +63,8 @@ type serial_session = (Nvector_serial.data, Nvector_serial.kind) session
 type ('data, 'kind) linear_solver = ('data, 'kind) Kinsol_impl.linear_solver
 
 (** Alias for linear solvers that are restricted to serial nvectors. *)
-type serial_linear_solver =
-        (Nvector_serial.data, Nvector_serial.kind) linear_solver
+type 'kind serial_linear_solver = (Nvector_serial.data, 'kind) linear_solver
+                                  constraint 'kind = [>Nvector_serial.kind]
 
 (** Workspaces with two temporary vectors. *)
 type 'd double = 'd * 'd
@@ -122,7 +123,7 @@ module Dls :
         @kinsol <node5#sss:lin_solv_init> KINDense
         @kinsol <node5#sss:optin_dls> KINDlsSetDenseJacFn
         @kinsol <node5#ss:djacFn> KINDlsDenseJacFn *)
-    val dense : ?jac:dense_jac_fn -> unit -> serial_linear_solver
+    val dense : ?jac:dense_jac_fn -> unit -> 'k serial_linear_solver
 
     (** A direct linear solver on dense matrices using LAPACK. See {!dense}.
         Only available if {!Sundials.lapack_enabled}.
@@ -131,7 +132,7 @@ module Dls :
         @kinsol <node5#sss:lin_solv_init> KINLapackDense
         @kinsol <node5#sss:optin_dls> KINDlsSetDenseJacFn
         @kinsol <node5#ss:djacFn> KINDlsDenseJacFn *)
-    val lapack_dense : ?jac:dense_jac_fn -> unit -> serial_linear_solver
+    val lapack_dense : ?jac:dense_jac_fn -> unit -> 'k serial_linear_solver
 
     (** Callback functions that compute banded approximations to
         a Jacobian matrix. In the call [band_jac_fn {mupper; mlower} arg jac],
@@ -165,7 +166,7 @@ module Dls :
         @kinsol <node5#sss:lin_solv_init> KINBand
         @kinsol <node5#sss:optin_dls> KINDlsSetBandJacFn
         @kinsol <node5#ss:bjacFn> KINDlsBandJacFn *)
-    val band : ?jac:band_jac_fn -> bandrange -> serial_linear_solver
+    val band : ?jac:band_jac_fn -> bandrange -> 'k serial_linear_solver
 
     (** A direct linear solver on banded matrices using LAPACK. See {!band}.
         Only available if {!Sundials.lapack_enabled}.
@@ -174,7 +175,7 @@ module Dls :
         @kinsol <node5#sss:lin_solv_init> KINLapackBand
         @kinsol <node5#sss:optin_dls> KINDlsSetBandJacFn
         @kinsol <node5#ss:bjacFn> KINDlsBandJacFn *)
-    val lapack_band : ?jac:band_jac_fn -> bandrange -> serial_linear_solver
+    val lapack_band : ?jac:band_jac_fn -> bandrange -> 'k serial_linear_solver
 
     (** {3:stats Solver statistics} *)
 
@@ -183,43 +184,43 @@ module Dls :
 
         @kinsol <node5#sss:optout_dense> KINDlsGetWorkSpace
         @return ([real_size], [integer_size]) *)
-    val get_work_space : serial_session -> int * int
+    val get_work_space : 'k serial_session -> int * int
 
     (** Returns the number of calls made by a direct linear solver to the
         Jacobian approximation function.
 
         @kinsol <node5#sss:optout_dense> KINDlsGetNumJacEvals *)
-    val get_num_jac_evals : serial_session -> int
+    val get_num_jac_evals : 'k serial_session -> int
 
     (** Returns the number of calls made by a direct linear solver to the
         Jacobian approximation function.
 
         @kinsol <node5#sss:optout_dense> KINDlsGetNumFuncEvals *)
-    val get_num_func_evals : serial_session -> int
+    val get_num_func_evals : 'k serial_session -> int
 
     (** {3:lowlevel Low-level solver manipulation} *)
 
     (** Change the dense Jacobian function.
  
         @kinsol <node5#sss:optin_dls> KINDlsSetDenseJacFn *)
-    val set_dense_jac_fn : serial_session -> dense_jac_fn -> unit
+    val set_dense_jac_fn : 'k serial_session -> dense_jac_fn -> unit
 
     (** Remove a dense Jacobian function and use the default
         implementation.
  
         @kinsol <node5#sss:optin_dls> KINDlsSetDenseJacFn *)
-    val clear_dense_jac_fn : serial_session -> unit
+    val clear_dense_jac_fn : 'k serial_session -> unit
 
     (** Change the band Jacobian function.
 
         @kinsol <node5#sss:optin_dls> KINDlsSetBandJacFn *)
-    val set_band_jac_fn : serial_session -> band_jac_fn -> unit
+    val set_band_jac_fn : 'k serial_session -> band_jac_fn -> unit
 
     (** Remove a banded Jacobian function and use the default
         implementation.
 
         @kinsol <node5#sss:optin_dls> KINDlsSetBandJacFn *)
-    val clear_band_jac_fn : serial_session -> unit
+    val clear_band_jac_fn : 'k serial_session -> unit
   end (* }}} *)
 
 (** Scaled Preconditioned Iterative Linear Solvers.
@@ -696,13 +697,13 @@ val set_init_setup : ('d, 'k) session -> unit
     updating. It only has an effect for the Dense and Band solvers.
 
     @kinsol <node5#ss:optin_main> KINSetNoResMon *)
-val set_no_res_mon : serial_session -> unit
+val set_no_res_mon : 'k serial_session -> unit
 
 (** Enables the nonlinear residual monitoring scheme that controls Jacobian
     updating. It only has an effect for the Dense and Band solvers.
 
     @kinsol <node5#ss:optin_main> KINSetNoResMon *)
-val set_res_mon : serial_session -> unit
+val set_res_mon : 'k serial_session -> unit
 
 (** Specifies the maximum number of nonlinear iterations between calls to the
     preconditioner setup function. Pass 0 to set the default (10).
@@ -715,7 +716,7 @@ val set_max_setup_calls : ('d, 'k) session -> int -> unit
     affects the Dense and Band solvers.
 
     @kinsol <node5#ss:optin_main> KINSetMaxSubSetupCalls *)
-val set_max_sub_setup_calls : serial_session -> int -> unit
+val set_max_sub_setup_calls : 'k serial_session -> int -> unit
 
 (** The parameters {i gamma} and {i alpha} in the formula for the Eisenstat and
     Walker Choice 2 for {i eta}. Set either to [None] to specify its default

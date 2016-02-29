@@ -233,7 +233,8 @@ let ls_check_spils_bbd session =
     | _ -> raise Sundials.InvalidLinearSolver
 
 (* Types that depend on session *)
-type serial_session = (Nvector_serial.data, Nvector_serial.kind) session
+type 'kind serial_session = (Nvector_serial.data, 'kind) session
+                            constraint 'kind = [>Nvector_serial.kind]
 
 type ('data, 'kind) linear_solver =
   ('data, 'kind) session

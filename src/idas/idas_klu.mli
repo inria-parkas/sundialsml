@@ -90,7 +90,7 @@ type sparse_jac_fn =
     @noidas <node5#sss:optin_sls> IDASlsSetSparseJacFnBS
     @noidas <node5#ss:sjacFnB> IDASlsSparseJacFnB
     @noidas <node5#ss:sjacFnBS> IDASlsSparseJacFnBS *)
-val klu : sparse_jac_fn -> int -> Idas.Adjoint.serial_linear_solver
+val klu : sparse_jac_fn -> int -> 'k Idas.Adjoint.serial_linear_solver
 
 (** The ordering algorithm used for reducing fill. *)
 type ordering = Ida_klu.ordering =
@@ -102,7 +102,7 @@ type ordering = Ida_klu.ordering =
 
     @noidas <node5#ss:sls_optin> IDAKLUSetOrdering
     @idas <node7#ss:optional_output_b> IDAGetAdjIdaBmem *)
-val set_ordering : Idas.Adjoint.serial_bsession -> ordering -> unit
+val set_ordering : 'k Idas.Adjoint.serial_bsession -> ordering -> unit
 
 (** Reinitializes the Jacobian matrix memory and flags.
     In the call, [reinit s n nnz realloc], [n] is the number of system state
@@ -113,12 +113,12 @@ val set_ordering : Idas.Adjoint.serial_bsession -> ordering -> unit
 
     @noidas <node5#ss:sls_optin> IDAKLUReInit
     @idas <node7#ss:optional_output_b> IDAGetAdjIdaBmem *)
-val reinit : Idas.Adjoint.serial_bsession -> int -> int -> bool -> unit
+val reinit : 'k Idas.Adjoint.serial_bsession -> int -> int -> bool -> unit
 
 (** Returns the number of calls made by a sparse linear solver to the
     Jacobian approximation function.
 
     @noidas <node5#sss:optout_sls> IDASlsGetNumJacEvals
     @idas <node7#ss:optional_output_b> IDAGetAdjIdaBmem *)
-val get_num_jac_evals : Idas.Adjoint.serial_bsession -> int
+val get_num_jac_evals : 'k Idas.Adjoint.serial_bsession -> int
 

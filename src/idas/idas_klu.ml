@@ -24,7 +24,7 @@ type sparse_jac_fn =
     NoSens of sparse_jac_fn_no_sens
   | WithSens of sparse_jac_fn_with_sens
 
-external c_klub : serial_session -> int -> int -> int -> bool -> unit
+external c_klub : 'k serial_session -> int -> int -> int -> bool -> unit
   = "c_idas_klub_init"
 
 let klu f nnz bs nv nv' =

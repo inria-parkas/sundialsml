@@ -26,7 +26,7 @@ type data = Sundials.RealArray.t
 (** Represents any nvector that can be treated as a serial nvector. That is,
     any nvector whose underlying elements can be accessed as an array
     locally. *)
-type kind
+type kind = [`Serial]
 
 (** The type of serial nvectors. *)
 type t = (data, kind) Nvector.t
@@ -41,35 +41,8 @@ val wrap : Sundials.RealArray.t -> t
 (** Aliases {!Nvector.unwrap}. *)
 val unwrap : t -> Sundials.RealArray.t
 
-(** Truly serial nvectors. While other kinds of nvectors, namely
-    {!Nvector_pthreads} and {!Nvector_openmp}, can be used as serial nvectors,
-    the underlying nvector operations may only be applied to truly
-    serial ones. *)
-module Raw : sig
-  (** Represents the internal layout of a serial nvector. *)
-  type serial_kind = kind
-  type data = Sundials.RealArray.t
-  type kind
-
-  (** The type of raw serial nvectors. *)
-  type t = (data, kind) Nvector.t
-
-  (** [make n iv] creates a new raw serial nvector with [n] elements, each
-      initialized to [iv]. *)
-  val make : int -> float -> t
-
-  (** [wrap a] creates a new raw serial nvector over the elements of [a]. *)
-  val wrap : Sundials.RealArray.t -> t
-
-  (** Aliases {!Nvector.unwrap}. *)
-  val unwrap : t -> Sundials.RealArray.t
-
-  (** Raw nvectors are serial nvectors. *)
-  val as_serial : t -> (data, serial_kind) Nvector.t
-
-  (** Underlying nvector operations on serial nvectors. *)
-  module Ops : Nvector.NVECTOR_OPS with type t = t
-end
+(** Underlying nvector operations on serial nvectors. *)
+module Ops : Nvector.NVECTOR_OPS with type t = t
 
 (** Nvector operations on {!Sundials.RealArray}s implemented in OCaml. *)
 module DataOps : Nvector.NVECTOR_OPS with type t = Sundials.RealArray.t

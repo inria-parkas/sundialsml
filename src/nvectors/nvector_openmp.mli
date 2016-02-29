@@ -23,8 +23,9 @@
     {{:OCAML_DOC_ROOT(Bigarray.Array1.html)} bigarrays} of floats. *)
 type data = Sundials.RealArray.t
 
-(** Represents the internal layout of an OpenMP nvector. *)
-type kind
+(** Represents the internal layout of an OpenMP nvector.
+    OpenMP nvectors can usually be used wherever serial nvectors can. *)
+type kind = [`OpenMP|Nvector_serial.kind]
 
 (** The type of OpenMP nvectors. *)
 type t = (data, kind) Nvector.t
@@ -39,9 +40,6 @@ val wrap : int -> Sundials.RealArray.t -> t
 
 (** Aliases {!Nvector.unwrap}. *)
 val unwrap : t -> Sundials.RealArray.t
-
-(** OpenMP nvectors can be used wherever Serial nvectors can. *)
-val as_serial : t -> (data, Nvector_serial.kind) Nvector.t
 
 (** Returns the number of threads used within an OpenMP nvector. *)
 val num_threads : t -> int

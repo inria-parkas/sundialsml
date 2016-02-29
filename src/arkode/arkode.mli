@@ -60,7 +60,8 @@ open Sundials
 type ('d, 'k) session = ('d, 'k) Arkode_impl.session
 
 (** Alias for sessions based on serial nvectors. *)
-type serial_session = (Nvector_serial.data, Nvector_serial.kind) session
+type 'k serial_session = (Nvector_serial.data, 'k) session
+                         constraint 'k = [>Nvector_serial.kind]
 
 (** {2:linear Linear and mass matrix solvers} *)
 
@@ -70,8 +71,8 @@ type serial_session = (Nvector_serial.data, Nvector_serial.kind) session
 type ('data, 'kind) linear_solver = ('data, 'kind) Arkode_impl.linear_solver
 
 (** Alias for linear solvers that are restricted to serial nvectors. *)
-type serial_linear_solver =
-      (Nvector_serial.data, Nvector_serial.kind) linear_solver
+type 'kind serial_linear_solver = (Nvector_serial.data, 'kind) linear_solver
+                                  constraint 'kind = [>Nvector_serial.kind]
 
 (** Mass matrix solvers used by Arkode.
 
@@ -79,8 +80,8 @@ type serial_linear_solver =
 type ('data, 'kind) mass_solver = ('data, 'kind) Arkode_impl.mass_solver
 
 (** Alias for mass matrix solvers that are restricted to serial nvectors. *)
-type serial_mass_solver =
-      (Nvector_serial.data, Nvector_serial.kind) mass_solver
+type 'kind serial_mass_solver = (Nvector_serial.data, 'kind) mass_solver
+                                constraint 'kind = [>Nvector_serial.kind]
 
 (** Workspaces with three temporary vectors. *)
 type 'd triple = 'd * 'd * 'd
@@ -143,7 +144,7 @@ module Dls :
         @noarkode <node> ARKDense
         @noarkode <node> ARKDlsSetDenseJacFn
         @noarkode <node> ARKDlsDenseJacFn *)
-    val dense : ?jac:dense_jac_fn -> unit -> serial_linear_solver
+    val dense : ?jac:dense_jac_fn -> unit -> 'k serial_linear_solver
 
     (** A direct linear solver on dense matrices using LAPACK. See {!dense}.
         Only available if {!Sundials.lapack_enabled}.
@@ -152,7 +153,7 @@ module Dls :
         @noarkode <node> ARKLapackDense
         @noarkode <node> ARKDlsSetDenseJacFn
         @noarkode <node> ARKDlsDenseJacFn *)
-    val lapack_dense : ?jac:dense_jac_fn -> unit -> serial_linear_solver
+    val lapack_dense : ?jac:dense_jac_fn -> unit -> 'k serial_linear_solver
 
     (** Callback functions that compute banded approximations to
         a Jacobian matrix. In the call [band_jac_fn {mupper; mlower} arg jac],
@@ -187,7 +188,7 @@ module Dls :
         @noarkode <node> ARKBand
         @noarkode <node> ARKDlsSetBandJacFn
         @noarkode <node> ARKDlsBandJacFn *)
-    val band : ?jac:band_jac_fn -> bandrange -> serial_linear_solver
+    val band : ?jac:band_jac_fn -> bandrange -> 'k serial_linear_solver
 
     (** A direct linear solver on banded matrices using LAPACK. See {!band}.
         Only available if {!Sundials.lapack_enabled}.
@@ -196,7 +197,7 @@ module Dls :
         @noarkode <node> ARKLapackBand
         @noarkode <node> ARKDlsSetBandJacFn
         @noarkode <node> ARKDlsBandJacFn *)
-    val lapack_band : ?jac:band_jac_fn -> bandrange -> serial_linear_solver
+    val lapack_band : ?jac:band_jac_fn -> bandrange -> 'k serial_linear_solver
 
     (** {3:dlsmass Mass matrix solvers} *)
     module Mass :
@@ -225,14 +226,14 @@ module Dls :
 
             @noarkode <node> ARKMassDense
             @noarkode <node> ARKDlsDenseMassFn *)
-        val dense : dense_fn -> serial_mass_solver
+        val dense : dense_fn -> 'k serial_mass_solver
 
         (** A direct linear solver for mass matrix linear systems using LAPACK.
             Only available if {!Sundials.lapack_enabled}.
 
             @noarkode <node> ARKMassLapackDense
             @noarkode <node> ARKDlsDenseMassFn *)
-        val lapack_dense : dense_fn -> serial_mass_solver
+        val lapack_dense : dense_fn -> 'k serial_mass_solver
 
         (** Callback functions that compute banded approximations to a mass
             matrix. In the call [band_fn {mupper; mlower} t work m],
@@ -261,14 +262,14 @@ module Dls :
 
             @noarkode <node> ARKMassBand
             @noarkode <node> ARKDlsBandMassFn *)
-        val band : band_fn -> bandrange -> serial_mass_solver
+        val band : band_fn -> bandrange -> 'k serial_mass_solver
 
         (** A direct linear solver for mass matrix linear systems on banded
             matrices using LAPACK. Only available if {!Sundials.lapack_enabled}.
 
             @noarkode <node> ARKMassLapackBand
             @noarkode <node> ARKDlsBandMassFn *)
-        val lapack_band : band_fn -> bandrange -> serial_mass_solver
+        val lapack_band : band_fn -> bandrange -> 'k serial_mass_solver
 
         (** {3:stats Solver statistics} *)
 
@@ -277,13 +278,13 @@ module Dls :
 
             @noarkode <node> ARKDlsGetMassWorkSpace
             @return ([real_size], [integer_size]) *)
-        val get_work_space : serial_session -> int * int
+        val get_work_space : 'k serial_session -> int * int
 
         (** Returns the number of calls made by a direct linear solver to the
             mass matrix construction routine.
 
             @noarkode <node> ARKDlsGetNumMassEvals *)
-        val get_num_evals : serial_session -> int
+        val get_num_evals : 'k serial_session -> int
 
         (** {3:lowlevel Low-level solver manipulation}
 
@@ -295,12 +296,12 @@ module Dls :
         (** Change the dense mass matrix function.
        
             @noarkode <node> ARKDlsSetDenseMassFn *)
-        val set_dense_fn : serial_session -> dense_fn -> unit
+        val set_dense_fn : 'k serial_session -> dense_fn -> unit
 
         (** Change the band mass matrix function.
 
             @noarkode <node> ARKDlsSetBandMassFn *)
-        val set_band_fn : serial_session -> band_fn -> unit
+        val set_band_fn : 'k serial_session -> band_fn -> unit
       end (* }}} *)
 
     (** {3:stats Solver statistics} *)
@@ -310,19 +311,19 @@ module Dls :
 
         @noarkode <node> ARKDlsGetWorkSpace
         @return ([real_size], [integer_size]) *)
-    val get_work_space : serial_session -> int * int
+    val get_work_space : 'k serial_session -> int * int
 
     (** Returns the number of calls made by a direct linear solver to the
         Jacobian approximation function.
 
         @noarkode <node> ARKDlsGetNumJacEvals *)
-    val get_num_jac_evals : serial_session -> int
+    val get_num_jac_evals : 'k serial_session -> int
 
     (** Returns the number of calls to the right-hand side callback due to
         the finite difference Jacobian approximation.
 
         @noarkode <node> ARKDlsGetNumRhsEvals *)
-    val get_num_rhs_evals : serial_session -> int
+    val get_num_rhs_evals : 'k serial_session -> int
 
     (** {3:lowlevel Low-level solver manipulation}
 
@@ -334,24 +335,24 @@ module Dls :
     (** Change the dense Jacobian function.
    
         @noarkode <node> ARKDlsSetDenseJacFn *)
-    val set_dense_jac_fn : serial_session -> dense_jac_fn -> unit
+    val set_dense_jac_fn : 'k serial_session -> dense_jac_fn -> unit
 
     (** Remove a dense Jacobian function and use the default
         implementation.
 
         @noarkode <node> ARKDlsSetDenseJacFn *)
-    val clear_dense_jac_fn : serial_session -> unit
+    val clear_dense_jac_fn : 'k serial_session -> unit
 
     (** Change the band Jacobian function.
 
         @noarkode <node> ARKDlsSetBandJacFn *)
-    val set_band_jac_fn : serial_session -> band_jac_fn -> unit
+    val set_band_jac_fn : 'k serial_session -> band_jac_fn -> unit
 
     (** Remove a banded Jacobian function and use the default
         implementation.
 
         @noarkode <node> ARKDlsSetBandJacFn *)
-    val clear_band_jac_fn : serial_session -> unit
+    val clear_band_jac_fn : 'k serial_session -> unit
   end (* }}} *)
 
 (** Scaled Preconditioned Iterative Linear Solvers.
@@ -485,23 +486,22 @@ module Spils :
           sub-diagonals and [br.mupper] super-diagonals.
 
           @noarkode <node> ARKBandPrecInit *)
-      val prec_left :
-           bandrange
-        -> (Nvector_serial.data, Nvector_serial.kind) preconditioner
+      val prec_left : bandrange -> (Nvector_serial.data,
+                                    [>Nvector_serial.kind]) preconditioner
 
       (** Like {!prec_left} but preconditions from the right.
 
           @noarkode <node> ARKBandPrecInit *)
       val prec_right :
-           bandrange
-        -> (Nvector_serial.data, Nvector_serial.kind) preconditioner
+           bandrange -> (Nvector_serial.data,
+                         [>Nvector_serial.kind]) preconditioner
 
       (** Like {!prec_left} but preconditions from both sides.
 
           @noarkode <node> ARKBandPrecInit *)
       val prec_both :
-           bandrange
-        -> (Nvector_serial.data, Nvector_serial.kind) preconditioner
+           bandrange -> (Nvector_serial.data,
+                         [>Nvector_serial.kind]) preconditioner
 
       (** {4:stats Banded statistics} *)
 
@@ -510,14 +510,14 @@ module Spils :
 
           @noarkode <node> ARKBandPrecGetWorkSpace
           @return ([real_size], [integer_size]) *)
-      val get_work_space : serial_session -> int * int
+      val get_work_space : 'k serial_session -> int * int
 
       (** Returns the number of calls to the right-hand side callback for the
           difference banded Jacobian approximation. This counter is only updated
           if the default difference quotient function is used.
 
           @noarkode <node> ARKBandPrecGetNumRhsEvals *)
-      val get_num_rhs_evals : serial_session -> int
+      val get_num_rhs_evals : 'k serial_session -> int
     end (* }}} *)
 
     (** {3:spilsmass Mass matrix solvers} *)

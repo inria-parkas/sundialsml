@@ -49,7 +49,7 @@ type sparse_jac_fn =
     @noarkode <node5#sss:lin_solv_init> ARKKLU
     @noarkode <node5#sss:optin_sls> ARKSlsSetSparseJacFn
     @noarkode <node5#ss:sjacFn> ARKSlsSparseJacFn *)
-val klu : sparse_jac_fn -> int -> Arkode.serial_linear_solver
+val klu : sparse_jac_fn -> int -> 'k Arkode.serial_linear_solver
 
 (** The ordering algorithm used for reducing fill. *)
 type ordering =
@@ -60,7 +60,7 @@ type ordering =
 (** Sets the ordering algorithm used to minimize fill-in.
 
     @noarkode <node5#ss:sls_optin> ARKKLUSetOrdering *)
-val set_ordering : Arkode.serial_session -> ordering -> unit
+val set_ordering : 'k Arkode.serial_session -> ordering -> unit
 
 (** Reinitializes the Jacobian matrix memory and flags.
     In the call, [reinit s n nnz realloc], [n] is the number of system state
@@ -70,13 +70,13 @@ val set_ordering : Arkode.serial_session -> ordering -> unit
     [nnz].
 
     @noarkode <node5#ss:sls_optin> ARKKLUReInit *)
-val reinit : Arkode.serial_session -> int -> int -> bool -> unit
+val reinit : 'k Arkode.serial_session -> int -> int -> bool -> unit
 
 (** Returns the number of calls made by a sparse linear solver to the
     Jacobian approximation function.
 
     @noarkode <node5#sss:optout_sls> ARKSlsGetNumJacEvals *)
-val get_num_jac_evals : Arkode.serial_session -> int
+val get_num_jac_evals : 'k Arkode.serial_session -> int
 
 module Mass : sig
 
@@ -107,12 +107,12 @@ module Mass : sig
       @noarkode <node5#sss:lin_solv_init> ARKMassKLU
       @noarkode <node5#sss:optin_sls> ARKSlsSetSparseMassFn
       @noarkode <node5#ss:smassFn> ARKSlsSparseMassFn *)
-  val klu : sparse_fn -> int -> Arkode.serial_linear_solver
+  val klu : sparse_fn -> int -> 'k Arkode.serial_linear_solver
 
   (** Sets the ordering algorithm used to minimize fill-in.
 
       @noarkode <node5#ss:sls_optin> ARKMassKLUSetOrdering *)
-  val set_ordering : Arkode.serial_session -> ordering -> unit
+  val set_ordering : 'k Arkode.serial_session -> ordering -> unit
 
   (** Reinitializes the mass matrix memory and flags.
       In the call, [reinit s n nnz realloc], [n] is the number of system state
@@ -122,12 +122,12 @@ module Mass : sig
       reallocated based on [nnz].
 
       @noarkode <node5#ss:sls_optin> ARKMassKLUReInit *)
-  val reinit : Arkode.serial_session -> int -> int -> bool -> unit
+  val reinit : 'k Arkode.serial_session -> int -> int -> bool -> unit
 
   (** Returns the number of calls made by a sparse linear solver to the
       mass matrix approximation function.
 
       @noarkode <node5#sss:optout_sls> ARKSlsGetNumMassEvals *)
-  val get_num_evals : Arkode.serial_session -> int
+  val get_num_evals : 'k Arkode.serial_session -> int
 end
 

@@ -204,7 +204,7 @@ type web_data = {
 
     rewt      : Nvector_serial.t;
 
-    mutable arkode_mem : Arkode.serial_session option;
+    mutable arkode_mem : Nvector_serial.kind Arkode.serial_session option;
   }
 
 (* Private Helper Functions *)

@@ -25,7 +25,7 @@ type sparse_jac_fn =
     NoSens of sparse_jac_fn_no_sens
   | WithSens of sparse_jac_fn_with_sens
 
-external c_superlumtb : (serial_session * int)
+external c_superlumtb : ('k serial_session * int)
                         -> int -> int -> int -> bool -> unit
   = "c_cvodes_superlumtb_init"
 

@@ -49,7 +49,7 @@ type sparse_jac_fn =
     @noida <node5#sss:lin_solv_init> IDAKLU
     @noida <node5#sss:optin_sls> IDASlsSetSparseJacFn
     @noida <node5#ss:sjacFn> IDASlsSparseJacFn *)
-val klu : sparse_jac_fn -> int -> Ida.serial_linear_solver
+val klu : sparse_jac_fn -> int -> 'k Ida.serial_linear_solver
 
 (** The ordering algorithm used for reducing fill. *)
 type ordering =
@@ -60,7 +60,7 @@ type ordering =
 (** Sets the ordering algorithm used to minimize fill-in.
 
     @noida <node5#ss:sls_optin> IDAKLUSetOrdering *)
-val set_ordering : Ida.serial_session -> ordering -> unit
+val set_ordering : 'k Ida.serial_session -> ordering -> unit
 
 (** Reinitializes the Jacobian matrix memory and flags.
     In the call, [reinit s n nnz realloc], [n] is the number of system state
@@ -70,11 +70,11 @@ val set_ordering : Ida.serial_session -> ordering -> unit
     [nnz].
 
     @noida <node5#ss:sls_optin> IDAKLUReInit *)
-val reinit : Ida.serial_session -> int -> int -> bool -> unit
+val reinit : 'k Ida.serial_session -> int -> int -> bool -> unit
 
 (** Returns the number of calls made by a sparse linear solver to the
     Jacobian approximation function.
 
     @noida <node5#sss:optout_sls> IDASlsGetNumJacEvals *)
-val get_num_jac_evals : Ida.serial_session -> int
+val get_num_jac_evals : 'k Ida.serial_session -> int
 

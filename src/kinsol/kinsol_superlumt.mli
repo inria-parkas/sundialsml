@@ -52,7 +52,7 @@ type sparse_jac_fn =
     @nokinsol <node5#sss:optin_sls> KINSlsSetSparseJacFn
     @nokinsol <node5#ss:sjacFn> KINSlsSparseJacFn *)
 val superlumt
-      : sparse_jac_fn -> nnz:int -> nthreads:int -> Kinsol.serial_linear_solver
+    : sparse_jac_fn -> nnz:int -> nthreads:int -> 'k Kinsol.serial_linear_solver
 
 (** The ordering algorithm used for reducing fill. *)
 type ordering =
@@ -64,11 +64,11 @@ type ordering =
 (** Sets the ordering algorithm used to minimize fill-in.
 
     @nokinsol <node5#ss:sls_optin> KINSuperLUMTSetOrdering *)
-val set_ordering : Kinsol.serial_session -> ordering -> unit
+val set_ordering : 'k Kinsol.serial_session -> ordering -> unit
 
 (** Returns the number of calls made by a sparse linear solver to the
     Jacobian approximation function.
 
     @nokinsol <node5#sss:optout_sls> KINSlsGetNumJacEvals *)
-val get_num_jac_evals : Kinsol.serial_session -> int
+val get_num_jac_evals : 'k Kinsol.serial_session -> int
 

@@ -204,7 +204,6 @@ let main () =
   (* Initialize data structures *)
   let data = RealArray.create neq in  (* Access data array for new NVector y *)
   let y = Nvector_openmp.wrap num_threads data in (* Create solution vector *)
-  let y_ser = Nvector_openmp.as_serial y in
 
   (* Set initial conditions into y *)
   let pi = 4.0*.atan(1.0) in
@@ -245,7 +244,7 @@ let main () =
                  Nonlinear))
       (SStolerances (reltol, abstol))
       t0
-      y_ser
+      y
   ) in
   (* output spatial mesh to disk *)
   let fid = open_out "bruss_mesh.txt" in
@@ -279,7 +278,7 @@ let main () =
   (try
      for iout=0 to nt-1 do
        (* call integrator *)
-       let t, _ = Arkode.solve_normal arkode_mem !tout y_ser in
+       let t, _ = Arkode.solve_normal arkode_mem !tout y in
  
        (* access/print solution statistics *)
        let u = n_vwl2norm y umask in

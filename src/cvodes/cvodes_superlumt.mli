@@ -89,7 +89,7 @@ type sparse_jac_fn =
     @nocvodes <node5#ss:sjacFnB> CVSlsSparseJacFnB
     @nocvodes <node5#ss:sjacFnBS> CVSlsSparseJacFnBS *)
 val superlumt : sparse_jac_fn -> nnz:int -> nthreads:int
-                  -> Cvodes.Adjoint.serial_linear_solver
+                  -> 'k Cvodes.Adjoint.serial_linear_solver
 
 (** The ordering algorithm used for reducing fill. *)
 type ordering = Cvode_superlumt.ordering =
@@ -102,12 +102,12 @@ type ordering = Cvode_superlumt.ordering =
 
     @nocvodes <node5#ss:sls_optin> CVSuperLUMTSetOrdering
     @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
-val set_ordering : Cvodes.Adjoint.serial_bsession -> ordering -> unit
+val set_ordering : 'k Cvodes.Adjoint.serial_bsession -> ordering -> unit
 
 (** Returns the number of calls made by a sparse linear solver to the
     Jacobian approximation function.
 
     @nocvodes <node5#sss:optout_sls> CVSlsGetNumJacEvals
     @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
-val get_num_jac_evals : Cvodes.Adjoint.serial_bsession -> int
+val get_num_jac_evals : 'k Cvodes.Adjoint.serial_bsession -> int
 

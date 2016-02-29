@@ -87,7 +87,7 @@ type sparse_jac_fn =
     @nocvodes <node5#sss:optin_sls> CVSlsSetSparseJacFnBS
     @nocvodes <node5#ss:sjacFnB> CVSlsSparseJacFnB
     @nocvodes <node5#ss:sjacFnBS> CVSlsSparseJacFnBS *)
-val klu : sparse_jac_fn -> int -> Cvodes.Adjoint.serial_linear_solver
+val klu : sparse_jac_fn -> int -> 'k Cvodes.Adjoint.serial_linear_solver
 
 (** The ordering algorithm used for reducing fill. *)
 type ordering = Cvode_klu.ordering =
@@ -99,7 +99,7 @@ type ordering = Cvode_klu.ordering =
 
     @nocvodes <node5#ss:sls_optin> CVKLUSetOrdering
     @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
-val set_ordering : Cvodes.Adjoint.serial_bsession -> ordering -> unit
+val set_ordering : 'k Cvodes.Adjoint.serial_bsession -> ordering -> unit
 
 (** Reinitializes the Jacobian matrix memory and flags.
     In the call, [reinit s n nnz realloc], [n] is the number of system state
@@ -110,12 +110,12 @@ val set_ordering : Cvodes.Adjoint.serial_bsession -> ordering -> unit
 
     @nocvodes <node5#ss:sls_optin> CVKLUReInit
     @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
-val reinit : Cvodes.Adjoint.serial_bsession -> int -> int -> bool -> unit
+val reinit : 'k Cvodes.Adjoint.serial_bsession -> int -> int -> bool -> unit
 
 (** Returns the number of calls made by a sparse linear solver to the
     Jacobian approximation function.
 
     @nocvodes <node5#sss:optout_sls> CVSlsGetNumJacEvals
     @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
-val get_num_jac_evals : Cvodes.Adjoint.serial_bsession -> int
+val get_num_jac_evals : 'k Cvodes.Adjoint.serial_bsession -> int
 

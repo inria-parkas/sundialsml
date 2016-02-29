@@ -43,7 +43,8 @@ type eta_choice =
   | EtaChoice2 of eta_params    (* KIN_ETACHOICE2 *)
   | EtaConstant of float option (* KIN_ETACONSTANT *)
 
-type serial_linear_solver = (RealArray.t, Nvector_serial.kind) linear_solver
+type 'k serial_linear_solver = (RealArray.t, 'k) linear_solver
+                               constraint 'k = [>Nvector_serial.kind]
 type 'a double = 'a * 'a
 
 (* interface *)
@@ -54,16 +55,16 @@ module Dls =
   struct
     include DlsTypes
 
-    external c_dls_dense : serial_session -> bool -> unit
+    external c_dls_dense : 'k serial_session -> bool -> unit
       = "c_kinsol_dls_dense"
 
-    external c_dls_lapack_dense : serial_session -> bool -> unit
+    external c_dls_lapack_dense : 'k serial_session -> bool -> unit
       = "c_kinsol_dls_lapack_dense"
 
-    external c_dls_band : serial_session -> int -> int -> bool -> unit
+    external c_dls_band : 'k serial_session -> int -> int -> bool -> unit
       = "c_kinsol_dls_band"
 
-    external c_dls_lapack_band : serial_session -> int -> int -> bool -> unit
+    external c_dls_lapack_band : 'k serial_session -> int -> int -> bool -> unit
       = "c_kinsol_dls_lapack_band"
 
     let dense ?jac () s nv =
@@ -108,7 +109,7 @@ module Dls =
           cb.bmat <- None
       | _ -> ()
 
-    external set_dense_jac_fn : serial_session -> unit
+    external set_dense_jac_fn : 'k serial_session -> unit
         = "c_kinsol_dls_set_dense_jac_fn"
 
     let set_dense_jac_fn s fjacfn =
@@ -119,7 +120,7 @@ module Dls =
           set_dense_jac_fn s
       | _ -> raise Sundials.InvalidLinearSolver
 
-    external clear_dense_jac_fn : serial_session -> unit
+    external clear_dense_jac_fn : 'k serial_session -> unit
         = "c_kinsol_dls_clear_dense_jac_fn"
 
     let clear_dense_jac_fn s =
@@ -130,7 +131,7 @@ module Dls =
           clear_dense_jac_fn s
       | _ -> raise Sundials.InvalidLinearSolver
 
-    external set_band_jac_fn : serial_session -> unit
+    external set_band_jac_fn : 'k serial_session -> unit
         = "c_kinsol_dls_set_band_jac_fn"
 
     let set_band_jac_fn s fbandjacfn =
@@ -142,7 +143,7 @@ module Dls =
           set_band_jac_fn s
       | _ -> raise Sundials.InvalidLinearSolver
 
-    external clear_band_jac_fn : serial_session -> unit
+    external clear_band_jac_fn : 'k serial_session -> unit
         = "c_kinsol_dls_clear_band_jac_fn"
 
     let clear_band_jac_fn s =
@@ -153,21 +154,21 @@ module Dls =
           clear_band_jac_fn s
       | _ -> raise Sundials.InvalidLinearSolver
 
-    external get_work_space : serial_session -> int * int
+    external get_work_space : 'k serial_session -> int * int
         = "c_kinsol_dls_get_work_space"
 
     let get_work_space s =
       ls_check_dls s;
       get_work_space s
 
-    external get_num_jac_evals : serial_session -> int
+    external get_num_jac_evals : 'k serial_session -> int
         = "c_kinsol_dls_get_num_jac_evals"
 
     let get_num_jac_evals s =
       ls_check_dls s;
       get_num_jac_evals s
 
-    external get_num_func_evals : serial_session -> int
+    external get_num_func_evals : 'k serial_session -> int
         = "c_kinsol_dls_get_num_func_evals"
 
     let get_num_func_evals s =

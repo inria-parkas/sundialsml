@@ -52,7 +52,7 @@ type sparse_jac_fn =
     @noarkode <node5#sss:optin_sls> ARKSlsSetSparseJacFn
     @noarkode <node5#ss:sjacFn> ARKSlsSparseJacFn *)
 val superlumt
-      : sparse_jac_fn -> nnz:int -> nthreads:int -> Arkode.serial_linear_solver
+    : sparse_jac_fn -> nnz:int -> nthreads:int -> 'k Arkode.serial_linear_solver
 
 (** The ordering algorithm used for reducing fill. *)
 type ordering =
@@ -64,13 +64,13 @@ type ordering =
 (** Sets the ordering algorithm used to minimize fill-in.
 
     @noarkode <node5#ss:sls_optin> ARKSuperLUMTSetOrdering *)
-val set_ordering : Arkode.serial_session -> ordering -> unit
+val set_ordering : 'k Arkode.serial_session -> ordering -> unit
 
 (** Returns the number of calls made by a sparse linear solver to the
     Jacobian approximation function.
 
     @noarkode <node5#sss:optout_sls> ARKSlsGetNumJacEvals *)
-val get_num_jac_evals : Arkode.serial_session -> int
+val get_num_jac_evals : 'k Arkode.serial_session -> int
 
 module Mass : sig
   (** Callback functions that compute sparse approximations to the mass
@@ -101,17 +101,17 @@ module Mass : sig
       @noarkode <node5#sss:lin_solv_init> ARKMassSuperLUMT
       @noarkode <node5#ss:smassFn> ARKSlsSparseMassFn *)
   val superlumt
-      : sparse_fn -> nnz:int -> nthreads:int -> Arkode.serial_linear_solver
+      : sparse_fn -> nnz:int -> nthreads:int -> 'k Arkode.serial_linear_solver
 
   (** Sets the ordering algorithm used to minimize fill-in.
 
       @noarkode <node5#ss:sls_optin> ARKMassSuperLUMTSetOrdering *)
-  val set_ordering : Arkode.serial_session -> ordering -> unit
+  val set_ordering : 'k Arkode.serial_session -> ordering -> unit
 
   (** Returns the number of calls made by a sparse linear solver to the
       mass matrix approximation function.
 
       @noarkode <node5#sss:optout_sls> ARKSlsGetNumMassEvals *)
-  val get_num_evals : Arkode.serial_session -> int
+  val get_num_evals : 'k Arkode.serial_session -> int
 end
 
