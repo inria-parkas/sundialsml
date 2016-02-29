@@ -327,7 +327,7 @@ div.sundials { padding-top: 1.2ex;
 div.sundials + div.sundials { padding-top: 0ex; }
 div.sundials + div.sundials > span.seesundials { visibility: hidden; }
 
-img { max-width: 50em;
+img { max-width: 100%;
       height: auto;
       display: block;
       margin-left: auto;
