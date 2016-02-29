@@ -17,8 +17,6 @@ EXAMPLES = ark_KrylovDemo_prec.ml \
 	   ark_robertson.ml \
 	   ark_robertson_root.ml
 
-LAPACK_EXAMPLES =
-
 KLU_EXAMPLES = ark_brusselator1D_klu.ml
 SUPERLUMT_EXAMPLES = ark_brusselator1D_FEM_slu.ml
 

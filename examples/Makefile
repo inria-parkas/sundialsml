@@ -17,13 +17,26 @@ c_examples_unavailable:
 	@echo "examples) the one in the installation."
 	@false
 
-# This should list absolutely all subdirectories, including ones that
-# are disabled under the current configuration.  Examples that use
-# disabled features are filtered out in examples.mk.
-SUBDIRS=$(foreach m,cvode cvodes ida idas kinsol,		\
-	  $(foreach v,serial parallel,$m/$v))			\
-	$(if $(ARKODE_ENABLED),					\
-	    $(foreach v,C_serial C_parallel C_openmp,arkode/$v))
+
+# Every conditional in this function should be prefixed with $(or
+# $(1), ...), so that if $(1) is nonempty we get the list of
+# absolutely all subdirectories including disabled ones, and if $(1)
+# is empty we get the list of enabled subdirectories.  Per-example
+# filtering is handled in examples.mk.
+GEN_SUBDIRS=$(foreach m,cvode cvodes ida idas kinsol,			\
+	       $(foreach v,						\
+	            serial						\
+	            $(if $(or $(1),$(MPI_ENABLED)),parallel),		\
+	          $m/$v))						\
+	    $(if $(or $(1),$(ARKODE_ENABLED)),				\
+	       $(foreach v,						\
+	             C_serial						\
+	             $(if $(or $(1),$(MPI_ENABLED)),C_parallel)		\
+	             $(if $(or $(1),$(OPENMP_ENABLED)),C_openmp),	\
+	           arkode/$v))
+
+ALL_SUBDIRS=$(call GEN_SUBDIRS,all)  # All subdirectories
+SUBDIRS=$(call GEN_SUBDIRS)          # Just the enabled ones.
 
 TOP_TARGETS = tests.byte.log tests.opt.log perf.byte.log perf.opt.log reps
 SUBDIR_TARGETS = $(foreach d,$(SUBDIRS),$(foreach t,$(TOP_TARGETS),$d/$t))
@@ -113,13 +126,13 @@ ocaml:
 	${MAKE} -C ocaml
 
 distclean: clean-utils
-	@for s in ${SUBDIRS}; do		\
+	@for s in ${ALL_SUBDIRS}; do		\
 		${MAKE} -C $$s distclean;	\
 	done
 	@${MAKE} -C ocaml distclean
 
 clean: clean-utils
-	@for s in ${SUBDIRS}; do		\
+	@for s in ${ALL_SUBDIRS}; do		\
 		${MAKE} -C $$s clean;		\
 	done
 	@${MAKE} -C ocaml clean

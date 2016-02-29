@@ -5,15 +5,24 @@ USELIB ?= sundials_no_sens
 SRCROOT = ../../..
 SUBDIR = kinsol/serial
 
-EXAMPLES = kinFerTron_dns.ml			\
-	   kinFoodWeb_kry.ml			\
-	   kinFoodWeb_kry_custom.ml		\
-	   kinKrylovDemo_ls.ml			\
-	   kinLaplace_bnd.ml			\
-	   kinLaplace_picard_bnd.ml		\
-	   kinRoberts_fp.ml			\
-	   kinRoboKin_dns.ml			\
-	   kinRoboKin_dns_alt.ml
+EXAMPLES_SINCE_2_5 = kinFerTron_dns.ml		\
+		     kinFoodWeb_kry.ml		\
+		     kinFoodWeb_kry_custom.ml	\
+		     kinKrylovDemo_ls.ml	\
+		     kinLaplace_bnd.ml		\
+		     kinLaplace_picard_bnd.ml	\
+		     kinRoberts_fp.ml		\
+		     kinRoboKin_dns.ml		\
+		     kinRoboKin_dns_alt.ml
+
+EXAMPLES_SINCE_2_6 =
+
+EXAMPLES = $(EXAMPLES_SINCE_2_5) $(EXAMPLES_SINCE_2_6)
+
+
+ENABLED_EXAMPLES = $(EXAMPLES_SINCE_2_5)				      \
+		   $(if $(equal $(wordlist 1,2,$(subst ., ,$(VERSION))),2 5), \
+		        $(EXAMPLES_SINCE_2_6))
 
 include ../../examples.mk
 
