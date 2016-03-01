@@ -6,6 +6,11 @@ CONFIG_COMMAND ?= @configure_command@
 VERSION = @version@
 VERSIONP = @versionp@
 
+VERSION_MAJ_MIN = $(wordlist 1,2,$(subst ., ,$(VERSION)))
+# NB: concatenation works as disjunction
+AT_LEAST_2_6 = $(findstring 2 6,$(VERSION_MAJ_MIN))
+AT_LEAST_2_5 = $(findstring 2 5,$(VERSION_MAJ_MIN))$(AT_LEAST_2_6)
+
 CVODE_DOC_ROOT_DEFAULT  = https://computation.llnl.gov/casc/sundials/documentation/cv_guide/
 CVODES_DOC_ROOT_DEFAULT = https://computation.llnl.gov/casc/sundials/documentation/cvs_guide/
 ARKODE_DOC_ROOT_DEFAULT  = https://computation.llnl.gov/casc/sundials/documentation/ark_guide/

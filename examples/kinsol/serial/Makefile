@@ -20,8 +20,7 @@ EXAMPLES = $(EXAMPLES_SINCE_2_5) $(EXAMPLES_SINCE_2_6)
 
 
 ENABLED_EXAMPLES = $(EXAMPLES_SINCE_2_5)				      \
-		   $(if $(equal $(wordlist 1,2,$(subst ., ,$(VERSION))),2 5), \
-		        $(EXAMPLES_SINCE_2_6))
+		   $(if $(AT_LEAST_2_6),$(EXAMPLES_SINCE_2_6))
 
 include ../../examples.mk
 
