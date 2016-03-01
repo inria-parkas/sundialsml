@@ -385,9 +385,7 @@ let main () =
    | _ -> failwith "Unrecognized Sundials version.")
   ;
 
-  (* Cvode.Spils.set_prec_type cvode_mem Spils.PrecRight; *)
-  Cvode.(Spils.(reinit_preconditioner
-    cvode_mem (Banded.prec_right { mupper = mu; mlower = ml}) u));
+  Cvode.Spils.set_prec_type cvode_mem Spils.PrecRight;
   printf "\n\n-------------------------------------------------------";
   printf "------------\n";
     

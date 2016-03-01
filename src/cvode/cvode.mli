@@ -580,20 +580,6 @@ module Spils :
       -> 'd prec_solve_fn
       -> unit
 
-    (** Instantiates a newly initalized preconditioner. The nvector is used
-        to configure the new preconditioner; its contents are not modified.
-
-        This functionality is used in the Sundials examples but it causes
-        memory leaks because any existing preconditioner is not correctly
-        deallocated by the underlying library.
-
-        @deprecated Causes memory leaks in Sundials *)
-    val reinit_preconditioner :
-      ('d, 'k) session
-      -> ('d, 'k) preconditioner
-      -> ('d, 'k) Nvector.t
-      -> unit
-
     (** Change the Jacobian-times-vector function.
 
         @cvode <node5#sss:optin_spils> CVSpilsSetJacTimesVecFn
