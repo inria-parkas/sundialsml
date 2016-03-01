@@ -214,7 +214,7 @@ For {b Debian}-based systems, we found the following worked:
        (2.4); edit [make.inc], setting [BLASDEF = -DUSE_VENDOR_BLAS], 
        [BLASLIB = -lblas], and adding [-fPIC] to the [CC] line;
        [apt-get install csh]; then run [make].}
-    {- {v mkdir build; cd build v}
+    {- {v mkdir build; cd build v}}
     {- {v cmake ../sundials-2.6.2 -DOPENMP_ENABLE=1 -DPTHREAD_ENABLE=1 -DMPI_ENABLE=1 -DLAPACK_ENABLE=1 -DLAPACK_LIBRARIES='-llapack -lblas' -DKLU_ENABLE=1 -DKLU_LIBRARY_DIR=/usr/lib/x86_64-linux-gnu -DKLU_INCLUDE_DIR=/usr/include/suitesparse -DSUPERLUMT_ENABLE=1 -DSUPERLUMT_LIBRARY_DIR=../SuperLU_MT_2.4/lib -DSUPERLUMT_INCLUDE_DIR=../SuperLU_MT_2.4/SRC v} }
     {- Configure Sundials/ML with
 	{v ./configure SUPERLUMT_LIB_PATH=../SuperLU_MT_2.4/lib v}}
