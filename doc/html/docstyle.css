@@ -359,6 +359,10 @@ center {
     padding-bottom: .4em;
 }
 
+pre.verbatim {
+   text-align: left;
+}
+
 @media print {
     body { font-size: 8pt; }
 }
