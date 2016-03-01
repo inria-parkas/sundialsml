@@ -1,6 +1,6 @@
 include ../../../config
 
-SRCROOT = ../../..
+SRCROOT = ../../../src
 
 all: ball.byte ball.opt
 

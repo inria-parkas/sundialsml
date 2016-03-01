@@ -2,7 +2,7 @@ include ../../../config
 
 # TODO: finish the other skeletons and add them to the docs.
 
-SRCROOT = ../../..
+SRCROOT = ../../../src
 
 EXAMPLES = cvode_skel.byte  \
 	   ida_skel.byte    \
@@ -47,8 +47,7 @@ distclean: clean
 
 .ml.byte:
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ -dllpath $(SRCROOT) $(INCLUDES) \
-	    -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) -dllpath $(SRCROOT) \
-	    $(INCLUDES) -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) \
+	    -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) \
 	    bigarray.cma sundials.cma $<
 
 .ml.opt:

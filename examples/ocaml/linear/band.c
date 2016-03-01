@@ -3,7 +3,7 @@
 #include <sundials/sundials_types.h>
 #include <sundials/sundials_direct.h>
 #include <sundials/sundials_band.h>
-#include "../../../config.h"
+#include "../../../src/config.h"
 
 #define SIZE 5
 

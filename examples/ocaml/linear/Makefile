@@ -1,9 +1,9 @@
 include ../../../config
 
-SRCROOT = ../../../
+SRCROOT = ../../../src
 
-SUNDIALS_CMA = ../../../sundials.cma
-SUNDIALS_CMXA = ../../../sundials.cmxa
+SUNDIALS_CMA = $(SRCROOT)/sundials.cma
+SUNDIALS_CMXA = $(SRCROOT)/sundials.cmxa
 
 EXAMPLES = arraydense.byte arraydense.opt 		\
 	   dense.byte dense.opt				\

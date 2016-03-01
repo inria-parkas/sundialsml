@@ -1,6 +1,6 @@
 include ../../../config
 
-SRCROOT = ../../../
+SRCROOT = ../../../src
 
 EXAMPLES = cchatter.byte discontinuous.byte printall.byte \
 	   upvseither.byte integr_backward.byte one_over_x.byte \

@@ -1,6 +1,6 @@
 include ../../../config
 
-SRCROOT = ../../../
+SRCROOT = ../../../src
 
 all: sincos.byte sincos_nvec.byte sincos.opt sincos_nvec.opt
 
