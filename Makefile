@@ -8,6 +8,7 @@ all:
 test:
 	$(MAKE) -C examples tests.opt.log
 doc:
+	$(MAKE) -C src
 	$(MAKE) -C doc
 
 # install-sys installs to OCaml's system directory -- /usr/lib/ocaml
