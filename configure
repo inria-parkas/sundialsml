@@ -605,6 +605,7 @@ if [ "${lapack_lib}" = "" ]; then
 else
     lapack_info=" (with lapack: ${lapack_lib})"
     lapack_enabled=1
+    blas_lib="-lblas"
 fi
 
 # Check for SUPERLUMT and KLU
@@ -693,8 +694,9 @@ superlumt_mlobj_sens="$superlumt_mlobj_sens cvodes/cvodes_superlumt.cmo"
 superlumt_mlobj_sens="$superlumt_mlobj_sens idas/idas_superlumt.cmo"
 
 # TODO: detect which to install (how to do this?)
-sparse_libs="$sparse_libs -lsuperlu_mt_PTHREAD -lblas -lpthread"
-#sparse_libs="$sparse_libs -lsuperlu_mt_OPENMP -lblas -lopenmp"
+sparse_libs="$sparse_libs -lsuperlu_mt_PTHREAD -lpthread"
+blas_libs="-lblas"
+#sparse_libs="$sparse_libs -lsuperlu_mt_OPENMP -lopenmp"
 		test_stem=__configure_test_c_file__superlumt
 		cat > $test_stem.c <<EOF
 int main ()
@@ -722,7 +724,7 @@ fi
 
 # Combine all ldflags
 
-ldflags="${ldflags} ${sparse_libs} ${lapack_lib}"
+ldflags="${ldflags} ${sparse_libs} ${lapack_lib} ${blas_lib}"
 
 # Parallel features
 mpicc=${mpicc:-mpicc}
