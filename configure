@@ -706,7 +706,7 @@ int main ()
   return 0;
 }
 EOF
-		compile_cmd="$CC $test_stem.c ${sparse_libs} ${Lsuperlumt_lib_path} -o ${test_stem}${XX}"
+		compile_cmd="$CC $test_stem.c ${sparse_libs} ${blas_libs} ${Lsuperlumt_lib_path} -o ${test_stem}${XX}"
 		if ! eval "${compile_cmd}" >/dev/null 2>&1
                 then
                     error="${error}\n\tCan't link to SuperLU_MT.  You may have to specify SUPERLUMT_LIB_PATH."
