@@ -373,6 +373,11 @@ Printf.printf "Sum of abs. = %f\n" (Nvector_parallel.Ops.n_vl1norm pv);;
        {[export LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH}]}
        Otherwise you may have compiled Sundials without
        [--enable-shared].}
+    {- The configuration warning
+       {[Couldn't determine C compiler flag for OpenMP.]}
+       can usually be eliminated by specifying a compiler that supports OpenMP,
+       for example,
+       {[CC=gcc-5 ./configure]}}
 }
 
 

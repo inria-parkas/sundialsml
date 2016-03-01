@@ -866,8 +866,9 @@ EOF
             done
             if [ "x$cflags_openmp" = x ]; then
                 warning="${warning}\n\tCouldn't determine C compiler flag for OpenMP.  The library should compile"
-                warning="${warning}\n\tfine with OpenMP enabled, but some examples may fail to compile."
-                warning="${warning}\n\tIf in doubt, re-configure with CFLAGS_OPENMP set to the appropriate flag."
+                warning="${warning}\n\tcorrectly with OpenMP enabled, but some examples may fail to compile."
+                warning="${warning}\n\tTo fix this warning, re-configure with CFLAGS_OPENMP set to the appropriate"
+		warning="${warning}\n\tflag, or use CC= to specify a compiler that supports OpenMP."
             fi
         fi
     fi
