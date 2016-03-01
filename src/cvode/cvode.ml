@@ -282,7 +282,7 @@ module Spils =
         | Some jtv -> set_jac_times_vec_fn session jtv
       in
       match prec with
-      | InternalPrecNone set_prec  -> with_prec Spils.PrecNone set_prec;
+      | InternalPrecNone set_prec  -> with_prec Spils.PrecNone set_prec
       | InternalPrecLeft set_prec  -> with_prec Spils.PrecLeft set_prec
       | InternalPrecRight set_prec -> with_prec Spils.PrecRight set_prec
       | InternalPrecBoth set_prec  -> with_prec Spils.PrecBoth set_prec
