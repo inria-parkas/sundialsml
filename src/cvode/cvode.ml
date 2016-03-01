@@ -282,7 +282,7 @@ module Spils =
         | Some jtv -> set_jac_times_vec_fn session jtv
       in
       match prec with
-      | InternalPrecNone set_prec  -> with_prec Spils.PrecNone set_prec;
+      | InternalPrecNone set_prec  -> with_prec Spils.PrecNone set_prec
       | InternalPrecLeft set_prec  -> with_prec Spils.PrecLeft set_prec
       | InternalPrecRight set_prec -> with_prec Spils.PrecRight set_prec
       | InternalPrecBoth set_prec  -> with_prec Spils.PrecBoth set_prec
@@ -311,13 +311,26 @@ module Spils =
           s.ls_callbacks <- SpilsCallback None
       | _ -> raise Sundials.InvalidLinearSolver
 
-    external set_prec_type
+    external c_set_prec_type
         : ('a, 'k) session -> Spils.preconditioning_type -> unit
         = "c_cvode_spils_set_prec_type"
 
     let set_prec_type s t =
       ls_check_spils s;
-      set_prec_type s t
+      c_set_prec_type s t
+
+    let reinit_preconditioner s prec nv =
+      let with_prec prec_type set_prec =
+        c_set_prec_type s prec_type;
+        set_prec s nv
+      in
+      ls_check_spils s;
+      if Sundials_config.safe then s.checkvec nv;
+      match prec with
+      | InternalPrecNone set_prec  -> with_prec Spils.PrecNone  set_prec
+      | InternalPrecLeft set_prec  -> with_prec Spils.PrecLeft  set_prec
+      | InternalPrecRight set_prec -> with_prec Spils.PrecRight set_prec
+      | InternalPrecBoth set_prec  -> with_prec Spils.PrecBoth  set_prec
 
     external set_gs_type : ('a, 'k) session -> gramschmidt_type -> unit
         = "c_cvode_spils_set_gs_type"
