@@ -45,6 +45,12 @@ GEN_SUBDIRS=$(foreach m,cvode cvodes ida idas kinsol,			\
 ALL_SUBDIRS=$(call GEN_SUBDIRS,all)  # All subdirectories
 SUBDIRS=$(call GEN_SUBDIRS)          # Just the enabled ones.
 
+# Nvector examples are unsuitable for performance comparisons, so
+# filter them out unless PERF_FORCE_NVECTORS is nonempty.
+PERF_SUBDIRS=$(if $(PERF_FORCE_NVECTORS),$(SUBDIRS),\
+		  $(filter-out nvector/%,$(SUBDIRS)))
+
+
 TOP_TARGETS = tests.byte.log tests.opt.log perf.byte.log perf.opt.log reps
 SUBDIR_TARGETS = $(foreach d,$(SUBDIRS),$(foreach t,$(TOP_TARGETS),$d/$t))
 
@@ -92,9 +98,9 @@ $(UTILS)/perf: $(UTILS)/perf.ml
 $(UTILS)/crunchperf: $(UTILS)/crunchperf.ml
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ str.cmxa unix.cmxa $<
 
-perf.opt.log perf.byte.log: perf.%.log: $(C_EXAMPLES)			      \
-					$(UTILS)/perf $(UTILS)/crunchperf     \
-					$(foreach s,$(SUBDIRS),$s/perf.%.log)
+perf.opt.log perf.byte.log: perf.%.log: $(C_EXAMPLES)			   \
+				$(UTILS)/perf $(UTILS)/crunchperf	   \
+				$(foreach s,$(PERF_SUBDIRS),$s/perf.%.log)
 	@echo ======================================================================
 	@$(UTILS)/crunchperf -m $(foreach s,$(SUBDIRS),$s/$@) > $@
 	$(UTILS)/crunchperf -s $@
