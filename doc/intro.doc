@@ -220,6 +220,20 @@ For {b Debian}-based systems, we found the following worked:
 	{v ./configure SUPERLUMT_LIB_PATH=../SuperLU_MT_2.4/lib v}}
 }
 
+For {b OS X}, we found the following worked:
+{ol
+    {- (Optional) Build and install
+    {{:http://faculty.cse.tamu.edu/davis/suitesparse.html}suite-space} from
+    the sources (the brew package does not include dynamic libraries).}
+    {- Avoid SuperLUMT for now; it does not build dynamic libraries by
+    default.}
+    {- {v mkdir build; cd build v}}
+    {- For OpenMP, the gcc compiler is required:
+       {v cmake -Wno-dev ../sundials-2.6.2 -DCMAKE_C_COMPILER=/usr/local/bin/gcc-5 -DOPENMP_ENABLE=1 -DPTHREAD_ENABLE=1 -DMPI_ENABLE=1 -DLAPACK_ENABLE=1 -DKLU_ENABLE=1 -DKLU_LIBRARY_DIR=/usr/local/lib -DKLU_INCLUDE_DIR=/usr/local/include v} }
+    {- Configure Sundials/ML with
+	{v CC=gcc-5 ./configure v}}
+}
+
 The [configure] script detects and automatically enables optional
 features.  Lapack solvers, like {!Cvode.Dls.lapack_dense}, are enabled
 if Sundials was built with lapack support (see also {!Sundials.lapack_enabled}).
@@ -230,7 +244,12 @@ are only enabled if Sundials was built with them and OCamlMPI is available.
 
 {3:opam Opam}
 
-Opam is the easiest way to install the library:
+The easiest way to use the library is to install Sundials using a package
+manager and the library itself using Opam.
+Note, however that the {i Debian/Ubuntu and Brew packages are out-of-date}, 
+they install Sundials 2.5.0 (at the time of writing).
+Sundials/ML will function correctly but with less features.
+
 {ol
     {- {{:http://computation.llnl.gov/casc/sundials/download/download.php}Download}
         and manually install Sundials, or use a package manager:
