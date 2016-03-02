@@ -93,7 +93,7 @@ define common
 endef
 
 OCAMLC ?= @ocamlc@
-OCAMLFLAGS = -annot @ocamlflags@
+OCAMLFLAGS += -annot @ocamlflags@
 OCAML_INCLUDE := $(shell $(OCAMLC) -where)
 OCAML_ALL_LIBLINK = $(strip $(call common, $(CVODE_LDFLAGS) $(CVODES_LDFLAGS) \
 		    			   $(ARKODE_LDFLAGS)		      \
@@ -122,7 +122,7 @@ DOCDIR = @docdir@
 INSTALL_DOCS = @install_docs@
 
 OCAMLOPT ?= @ocamlopt@
-OCAMLOPTFLAGS = @ocamloptflags@
+OCAMLOPTFLAGS += @ocamloptflags@
 
 OCAMLDEP ?= @ocamldep@
 OCAMLDOC ?= @ocamldoc@
