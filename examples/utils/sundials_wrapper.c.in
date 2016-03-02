@@ -2,6 +2,38 @@
  * distribution, which parses NUM_REPS and iterates the example that
  * many times.  */
 
+#if USES_MPI
+/* MPI_Init() and MPI_Finalize() must be called exactly once each, so
+ * we need to hijack their definitions to ensure that repeated calls
+ * to main() doesn't trigger repeated calls to these functions.  */
+
+/* Implementation note: we have to #include <mpi.h> before #defining
+ * MPI_Init and MPI_Finalize, because the macros would interfere with
+ * the prototype declarations in the header.  But we should include
+ * <mpi.h> only if the example actually uses MPI, so case-splitting
+ * with #if is strictly necessary.  */
+#include <mpi.h>
+
+void mpi_init (int *argc, char ***argv)
+{
+  MPI_Init (argc, argv);
+}
+
+void mpi_finalize (void)
+{
+  MPI_Finalize ();
+}
+
+#define MPI_Init(argc, argv)    /* empty */
+#define MPI_Finalize()          /* empty */
+
+#else
+
+#define mpi_init(argc, argv)    /* empty */
+#define mpi_finalize()          /* empty */
+
+#endif
+
 #define main _main
 #include "@sundials_src_name@"
 #include <stdlib.h>
@@ -15,9 +47,11 @@ int main (int argc, char *argv[])
     reps = strtol (p, &p, 10);
     if (*p) reps = 1;
   }
+  mpi_init (&argc, &argv);
   while (reps-- > 0) {
     ret = _main (@main_args@);
     if (ret) return ret;
   }
+  mpi_finalize ();
   return 0;
 }

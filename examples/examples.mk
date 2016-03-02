@@ -356,7 +356,7 @@ $(SERIAL_EXAMPLES:.ml=.sundials): %.sundials: %.sundials.c $(SRCROOT)/config
 
 $(MPI_EXAMPLES:.ml=.sundials): %.sundials: %.sundials.c $(SRCROOT)/config
 	$(MPICC) -o $@ -I $(EXAMPLESROOT)/$(C_SUBDIR) \
-	    $(EG_CFLAGS) $< $(LIB_PATH) $(EG_LDFLAGS) \
+	    $(EG_CFLAGS) -DUSES_MPI=1 $< $(LIB_PATH) $(EG_LDFLAGS) \
 	    $(LAPACK_LIB) $(MPI_LIBLINK)
 
 $(OPENMP_EXAMPLES:.ml=.sundials): %.sundials: %.sundials.c $(SRCROOT)/config
