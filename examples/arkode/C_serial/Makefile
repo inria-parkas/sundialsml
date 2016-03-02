@@ -15,7 +15,9 @@ EXAMPLES = ark_KrylovDemo_prec.ml \
 	   ark_heat1D.ml \
 	   ark_heat1D_adapt.ml \
 	   ark_robertson.ml \
-	   ark_robertson_root.ml
+	   ark_robertson_root.ml \
+	   $(if $(KLU_ENABLED),$(KLU_EXAMPLES)) \
+	   $(if $(SUPERLUMT_ENABLED),$(SUPERLUMT_EXAMPLES))
 
 KLU_EXAMPLES = ark_brusselator1D_klu.ml
 SUPERLUMT_EXAMPLES = ark_brusselator1D_FEM_slu.ml

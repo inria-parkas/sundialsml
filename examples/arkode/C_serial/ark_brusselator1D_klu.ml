@@ -55,8 +55,7 @@ module RealArray = Sundials.RealArray
 let printf = Printf.printf
 let fprintf = Printf.fprintf
 let unwrap = Nvector_serial.unwrap
-let n_vwl2norm = Nvector_serial.Raw.Ops.n_vwl2norm
-let as_serial = Nvector_serial.Raw.as_serial
+let n_vwl2norm = Nvector_serial.Ops.n_vwl2norm
 
 (* accessor macros between (x,v) location and 1D NVector array *)
 let idx x v = 3*x+v
@@ -274,8 +273,7 @@ let main () =
 
   (* Initialize data structures *)
   let data = RealArray.create neq in  (* Access data array for new NVector y *)
-  let y = Nvector_serial.Raw.wrap data in (* Create serial vector
-                                             for solution *)
+  let y = Nvector_serial.wrap data in (* Create serial vector for solution *)
 
   (* Set initial conditions into y *)
   let pi = 4.0*.atan(1.0) in
@@ -288,19 +286,19 @@ let main () =
 
   (* Set mask array values for each solution component *)
   let data = RealArray.make neq 0.0 in
-  let umask = Nvector_serial.Raw.wrap data in
+  let umask = Nvector_serial.wrap data in
   for i=0 to n_mesh-1 do
     data.{idx i 0} <- 1.0
   done;
 
   let data = RealArray.make neq 0.0 in
-  let vmask = Nvector_serial.Raw.wrap data in
+  let vmask = Nvector_serial.wrap data in
   for i=0 to n_mesh-1 do
     data.{idx i 1} <- 1.0
   done;
 
   let data = RealArray.make neq 0.0 in
-  let wmask = Nvector_serial.Raw.wrap data in
+  let wmask = Nvector_serial.wrap data in
   for i=0 to n_mesh-1 do
     data.{idx i 2} <- 1.0
   done;
@@ -315,7 +313,7 @@ let main () =
       (Implicit (f udata, Newton (Arkode_klu.klu (jac udata) nnz), Nonlinear))
       (SStolerances (reltol, abstol))
       t0
-      (as_serial y)
+      y
   ) in
   (* output spatial mesh to disk *)
   let fid = open_out "bruss_mesh.txt" in
@@ -330,7 +328,7 @@ let main () =
   let wfid = open_out "bruss_w.txt" in
 
   (* output initial condition to disk *)
-  let data = unwrap (as_serial y) in
+  let data = unwrap y in
   for i=0 to n_mesh-1 do
     fprintf ufid " %.16e" data.{idx i 0};
     fprintf vfid " %.16e" data.{idx i 1};
@@ -349,7 +347,7 @@ let main () =
   (try
      for iout=0 to nt-1 do
        (* call integrator *)
-       let t, _ = Arkode.solve_normal arkode_mem !tout (as_serial y) in
+       let t, _ = Arkode.solve_normal arkode_mem !tout y in
  
        (* access/print solution statistics *)
        let u = n_vwl2norm y umask in

@@ -14,7 +14,9 @@ EXAMPLES = cvAdvDiff_bnd.ml \
 	   cvDiurnal_kry.ml \
 	   cvDiurnal_kry_bp.ml \
 	   cvKrylovDemo_ls.ml \
-	   cvKrylovDemo_prec.ml
+	   cvKrylovDemo_prec.ml \
+	   $(if $(KLU_ENABLED),$(KLU_EXAMPLES)) \
+	   $(if $(SUPERLUMT_ENABLED),$(SUPERLUMT_EXAMPLES))
 
 LAPACK_EXAMPLES = cvAdvDiff_bndL.ml \
 		  cvRoberts_dnsL.ml
