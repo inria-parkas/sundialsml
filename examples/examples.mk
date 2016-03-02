@@ -21,6 +21,10 @@
 #     - use pthreads
 #   respectively.  Variables are named differently for files whose
 #   build instructions differ.
+# * EXTRA_DEPS [optional]
+#   List of OCaml files that every test in that subdirectory depends on.
+#   Each file should have suffix .cmo, which will be converted to .cmx
+#   as needed.
 # * ENABLED_EXAMPLES [optional]
 #   List of .ml files to be built under the current configuration.  If
 #   left empty, this will be inferred for the current configuration
@@ -139,59 +143,64 @@ $(LAPACK_TESTS): lapack-tests.%.log: $(LAPACK_EXAMPLES:.ml=.%.diff)
 # way to protect against the latter without being too invasive?
 
 # Serial
-$(SERIAL_EXAMPLES:.ml=.byte): %.byte: %.ml $(SRC)/$(USELIB).cma
-	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
-	    $(INCLUDES) -I $(SRC) -dllpath $(SRC) \
-	    $(SUBDIRS:%=-I $(SRC)/%) \
-	    bigarray.cma unix.cma \
-	    $(USELIB).cma $<
+$(SERIAL_EXAMPLES:.ml=.byte): %.byte: $(SRC)/$(USELIB).cma $(EXTRA_DEPS) %.ml
+	$(OCAMLC) $(OCAMLFLAGS) -o $@			\
+	    $(INCLUDES) -I $(SRC) -dllpath $(SRC)	\
+	    $(SUBDIRS:%=-I $(SRC)/%)			\
+	    bigarray.cma unix.cma $^
 
-$(SERIAL_EXAMPLES:.ml=.opt): %.opt: %.ml $(SRC)/$(USELIB).cmxa
-	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
-	    $(INCLUDES) -I $(SRC) bigarray.cmxa unix.cmxa \
-	    $(SUBDIRS:%=-I $(SRC)/%) \
-	    $(USELIB).cmxa $<
+$(SERIAL_EXAMPLES:.ml=.opt): %.opt: $(SRC)/$(USELIB).cmxa \
+				    $(EXTRA_DEPS:.cmo=.cmx) %.ml
+	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@			\
+	    $(INCLUDES) -I $(SRC) $(SUBDIRS:%=-I $(SRC)/%)	\
+	    bigarray.cmxa unix.cmxa $^
 
 # MPI
-$(MPI_EXAMPLES:.ml=.byte): %.byte: %.ml $(SRC)/$(USELIB).cma \
-			   $(SRC)/sundials_mpi.cma
-	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
-	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC) -dllpath $(SRC) \
-	    $(SUBDIRS:%=-I $(SRC)/%) \
-	    bigarray.cma unix.cma mpi.cma $(USELIB).cma sundials_mpi.cma $<
+$(MPI_EXAMPLES:.ml=.byte): %.byte: $(SRC)/$(USELIB).cma $(EXTRA_DEPS)	\
+				   $(SRC)/sundials_mpi.cma %.ml
+	$(OCAMLC) $(OCAMLFLAGS) -o $@					    \
+	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC) -dllpath $(SRC)	    \
+	    $(SUBDIRS:%=-I $(SRC)/%)					    \
+	    bigarray.cma unix.cma mpi.cma $^
 
-$(MPI_EXAMPLES:.ml=.opt): %.opt: %.ml $(SRC)/$(USELIB).cmxa \
-			  $(SRC)/sundials_mpi.cmxa
-	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
-	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC) \
-	    $(SUBDIRS:%=-I $(SRC)/%) \
-	    bigarray.cmxa unix.cmxa mpi.cmxa $(USELIB).cmxa sundials_mpi.cmxa $<
+$(MPI_EXAMPLES:.ml=.opt): %.opt: $(SRC)/$(USELIB).cmxa		\
+				 $(EXTRA_DEPS:.cmo=.cmx)	\
+				 $(SRC)/sundials_mpi.cmxa %.ml
+	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@				\
+	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC)			\
+	    $(SUBDIRS:%=-I $(SRC)/%)					\
+	    bigarray.cmxa unix.cmxa mpi.cmxa $^
 
 # OpenMP
-$(OPENMP_EXAMPLES:.ml=.byte): %.byte: %.ml $(SRC)/$(USELIB).cma
-	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
-	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC) -dllpath $(SRC) \
-	    $(SUBDIRS:%=-I $(SRC)/%) \
-	    bigarray.cma unix.cma $(USELIB).cma $<
+$(OPENMP_EXAMPLES:.ml=.byte): %.byte: $(SRC)/$(USELIB).cma $(EXTRA_DEPS) \
+				      %.ml
+	$(OCAMLC) $(OCAMLFLAGS) -o $@					\
+	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC) -dllpath $(SRC)	\
+	    $(SUBDIRS:%=-I $(SRC)/%)					\
+	    bigarray.cma unix.cma $^
 
-$(OPENMP_EXAMPLES:.ml=.opt): %.opt: %.ml $(SRC)/$(USELIB).cmxa
-	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
-	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC) \
-	    $(SUBDIRS:%=-I $(SRC)/%) \
-	    bigarray.cmxa unix.cmxa $(USELIB).cmxa $<
+$(OPENMP_EXAMPLES:.ml=.opt): %.opt: $(SRC)/$(USELIB).cmxa	\
+				    $(EXTRA_DEPS:.cmo=.cmx)	\
+				    %.ml
+	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@		\
+	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC)	\
+	    $(SUBDIRS:%=-I $(SRC)/%)			\
+	    bigarray.cmxa unix.cmxa $^
 
 # pthreads
-$(PTHREADS_EXAMPLES:.ml=.byte): %.byte: %.ml $(SRC)/$(USELIB).cma
-	$(OCAMLC) $(OCAMLFLAGS) -o $@ \
-	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC) -dllpath $(SRC) \
-	    $(SUBDIRS:%=-I $(SRC)/%) \
-	    bigarray.cma unix.cma mpi.cma $(USELIB).cma $<
+$(PTHREADS_EXAMPLES:.ml=.byte): %.byte: $(SRC)/$(USELIB).cma $(EXTRA_DEPS) %.ml
+	$(OCAMLC) $(OCAMLFLAGS) -o $@					\
+	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC) -dllpath $(SRC)	\
+	    $(SUBDIRS:%=-I $(SRC)/%)					\
+	    bigarray.cma unix.cma mpi.cma $^
 
-$(PTHREADS_EXAMPLES:.ml=.opt): %.opt: %.ml $(SRC)/$(USELIB).cmxa
-	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
-	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC) \
-	    $(SUBDIRS:%=-I $(SRC)/%) \
-	    bigarray.cmxa unix.cmxa mpi.cmxa $(USELIB).cmxa $<
+$(PTHREADS_EXAMPLES:.ml=.opt): %.opt: $(SRC)/$(USELIB).cmxa	\
+				      $(EXTRA_DEPS:.cmo=.cmx)	\
+				      %.ml
+	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@				\
+	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC)			\
+	    $(SUBDIRS:%=-I $(SRC)/%)					\
+	    bigarray.cmxa unix.cmxa mpi.cmxa $^
 
 # opam inserts opam's and the system's stublibs directory into
 # CAML_LD_LIBRARY_PATH, which has higher precdence than -dllpath.
@@ -324,6 +333,9 @@ EG_LDFLAGS=$(KINSOL_LDFLAGS)
 else ifeq ($(MODULE),arkode)
 EG_CFLAGS=$(ARKODE_CFLAGS)
 EG_LDFLAGS=$(ARKODE_LDFLAGS)
+else ifeq ($(MODULE),nvector)
+EG_CFLAGS=$(CVODE_CFLAGS) $(EXAMPLESROOT)/$(C_SUBDIR)/test_nvector.c
+EG_LDFLAGS=$(CVODE_LDFLAGS)
 endif
 
 EG_CFLAGS += $(C_SUPPRESS_WARNINGS)
