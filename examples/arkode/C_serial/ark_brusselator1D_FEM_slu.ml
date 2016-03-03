@@ -641,7 +641,7 @@ let f ud t y ydot =
   f_diff ud t y ydot
 
 (* Interface routine to compute the Jacobian of the full RHS function, f(y) *)
-let jac ud _ { Arkode.jac_y = y } j =
+let jac ud { Arkode.jac_y = (y : RealArray.t) } j =
   let m, n, nnz = Sls.SparseMatrix.size j in
 
   (* ensure that Jac is the correct size *)
@@ -971,7 +971,8 @@ let main () =
   let netf     = get_num_err_test_fails arkode_mem in
   let nni      = get_num_nonlin_solv_iters arkode_mem in
   let ncfn     = get_num_nonlin_solv_conv_fails arkode_mem in
-  let nje      = Sls.get_num_jac_evals arkode_mem in
+  let nms      = get_num_mass_solves arkode_mem in
+  let nje      = Arkode_superlumt.get_num_jac_evals arkode_mem in
 
   printf "\nFinal Solver Statistics:\n";
   printf "   Internal solver steps = %d (attempted = %d)\n" nst nst_a;
