@@ -580,7 +580,7 @@ let f_rx { n; a; b; ep; x } t y ydot =
 (* Routine to compute the diffusion portion of the ODE RHS function f(t,y). *)
 let f_diff { n; du; dv; dw; x } t y ydot =
   (* iterate over intervals, filling in residual function *)
-  for i=0 to n-1 do
+  for i=0 to n-2 do
     (* set booleans to determine whether equations exist on the left/right *)
     let left  = i <> 0 in
     let right = i <> n - 2 in
