@@ -99,6 +99,7 @@ do
 	  SUNDIALS_LIB_PATH	Path to Sundials libraries (for linking)
 	  SUNDIALS_INC_PATH	Path to Sundials header files (for compiling)
 	  SUPERLUMT_LIB_PATH	Path to SuperLU_MT libraries
+	  KUL_LIB_PATH		Path to KLU (SuiteSparse) libraries
 	  LAPACKLIB		Command for linking with Lapack (default: -llapack)
 	                        (sometimes also: -lSimTKlapack)
 	  EXAMPLES		Path to installed examples (for comparison with Sundials).
@@ -128,6 +129,9 @@ END_HELP_TEXT
     SUPERLUMT_LIB_PATH)
 	superlumt_lib_path="${value%/}"
 	Lsuperlumt_lib_path="-L${superlumt_lib_path}";;
+    KLU_LIB_PATH)
+	klu_lib_path="${value%/}"
+	Lklu_lib_path="-L${klu_lib_path}";;
     CFLAGS_OPENMP)
         cflags_openmp="${value}";;
     LAPACKLIB)
@@ -617,6 +621,7 @@ klu_cobj_sens=
 klu_cobj_no_sens=
 klu_mlobj_main=
 klu_mlobj_sens=
+klu_libs=
 
 superlumt_enabled=
 superlumt_info="not available"
@@ -624,6 +629,7 @@ superlumt_cobj_sens=
 superlumt_cobj_no_sens=
 superlumt_mlobj_main=
 superlumt_mlobj_sens=
+superlumt_libs=
 
 if [ $sundials -ge 260 ]; then
     include="\"sundials/sundials_config.h\""
@@ -659,8 +665,8 @@ if [ $sundials -ge 260 ]; then
 		klu_mlobj_sens="$klu_mlobj_sens cvodes/cvodes_klu.cmo"
 		klu_mlobj_sens="$klu_mlobj_sens idas/idas_klu.cmo"
 
-		sparse_libs="$sparse_libs -lklu -lamd -lcolamd -lbtf"
-		sparse_libs="$sparse_libs -lsuitesparseconfig"
+		klu_libs="-lklu -lamd -lcolamd -lbtf -lsuitesparseconfig"
+		sparse_libs="$sparse_libs $klu_libs"
 	    else
 		klu_info='disabled'
 	    fi;;
@@ -694,7 +700,8 @@ superlumt_mlobj_sens="$superlumt_mlobj_sens cvodes/cvodes_superlumt.cmo"
 superlumt_mlobj_sens="$superlumt_mlobj_sens idas/idas_superlumt.cmo"
 
 # TODO: detect which to install (how to do this?)
-sparse_libs="$sparse_libs -lsuperlu_mt_PTHREAD -lpthread"
+superlumt_libs="-lsuperlu_mt_PTHREAD -lpthread"
+sparse_libs="$sparse_libs $superlumt_libs"
 blas_libs="-lblas"
 #sparse_libs="$sparse_libs -lsuperlu_mt_OPENMP -lopenmp"
 		test_stem=__configure_test_c_file__superlumt
@@ -706,7 +713,7 @@ int main ()
   return 0;
 }
 EOF
-		compile_cmd="$CC $test_stem.c ${sparse_libs} ${blas_libs} ${Lsuperlumt_lib_path} -o ${test_stem}${XX}"
+		compile_cmd="$CC $test_stem.c ${superlumt_libs} ${blas_libs} ${Lsuperlumt_lib_path} -o ${test_stem}${XX}"
 		if ! eval "${compile_cmd}" >/dev/null 2>&1
                 then
                     error="${error}\n\tCan't link to SuperLU_MT.  You may have to specify SUPERLUMT_LIB_PATH."
@@ -758,8 +765,8 @@ int main (int argc, char *argv[])
 EOF
     if ! $mpicc -o $test_stem$XX ${Isundials_inc_path} $test_stem.c \
 	 ${Lsundials_lib_path} -lsundials_cvode -lsundials_nvecparallel \
-	 ${Lsuperlumt_lib_path} ${libm} ${sparse_libs} ${blas_libs} \
-	 ${lapack_lib} \
+	 ${Lsuperlumt_lib_path} ${Lklu_lib_path} ${libm} ${sparse_libs} \
+	 ${blas_libs} ${lapack_lib} \
 	 >/dev/null 2>&1;
     then
         sundialsmpi_info='not installed'
@@ -1005,6 +1012,7 @@ cat ${LOG}
 	 s#@sundials_lib_path@#${Lsundials_lib_path}#;
 	 s#@sundials_inc_path@#${Isundials_inc_path}#;
 	 s#@superlumt_lib_path@#${Lsuperlumt_lib_path}#;
+	 s#@klu_lib_path@#${Lklu_lib_path}#;
 	 s#@arkode_enabled@#${arkode_enabled}#;
 	 s#@link_sundials_arkode@#${Lsundials_arkode}#;
 	 s#@arkode_mlobj_main@#${arkode_mlobj_main}#;
