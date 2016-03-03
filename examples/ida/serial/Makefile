@@ -13,12 +13,9 @@ EXAMPLES = idaRoberts_dns.ml  \
 	   idaSlCrank_dns.ml  \
 	   idaKrylovDemo_ls.ml \
 	   idaRoberts_dns_alt.ml \
-	   $(if $(KLU_ENABLED),$(KLU_EXAMPLES)) \
-	   $(if $(SUPERLUMT_ENABLED),$(SUPERLUMT_EXAMPLES))
-
-KLU_EXAMPLES = idaHeat2D_klu.ml \
-	       idaRoberts_klu.ml
-SUPERLUMT_EXAMPLES = idaRoberts_sps.ml
+	   $(if $(KLU_ENABLED),idaHeat2D_klu.ml \) \
+	   $(if $(KLU_ENABLED),idaRoberts_klu.ml) \
+	   $(if $(SUPERLUMT_ENABLED),idaRoberts_sps.ml)
 
 include ../../examples.mk
 

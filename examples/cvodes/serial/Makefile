@@ -8,9 +8,7 @@ EXAMPLES = cvsAdvDiff_ASAi_bnd.ml \
 	   cvsFoodWeb_ASAp_kry.ml \
 	   cvsHessian_ASA_FSA.ml  \
 	   cvsRoberts_ASAi_dns.ml \
-	   cvsRoberts_FSA_dns.ml  \
-	   $(if $(KLU_ENABLED),$(KLU_EXAMPLES)) \
-	   $(if $(SUPERLUMT_ENABLED),$(SUPERLUMT_EXAMPLES))
+	   cvsRoberts_FSA_dns.ml
 
 include ../../examples.mk
 

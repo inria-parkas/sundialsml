@@ -15,14 +15,11 @@ EXAMPLES = cvAdvDiff_bnd.ml \
 	   cvDiurnal_kry_bp.ml \
 	   cvKrylovDemo_ls.ml \
 	   cvKrylovDemo_prec.ml \
-	   $(if $(KLU_ENABLED),$(KLU_EXAMPLES)) \
-	   $(if $(SUPERLUMT_ENABLED),$(SUPERLUMT_EXAMPLES))
+	   $(if $(KLU_ENABLED),cvRoberts_klu.ml) \
+	   $(if $(SUPERLUMT_ENABLED),cvRoberts_sps.ml)
 
 LAPACK_EXAMPLES = cvAdvDiff_bndL.ml \
 		  cvRoberts_dnsL.ml
-
-KLU_EXAMPLES = cvRoberts_klu.ml
-SUPERLUMT_EXAMPLES = cvRoberts_sps.ml
 
 include ../../examples.mk
 

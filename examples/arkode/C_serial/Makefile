@@ -16,11 +16,8 @@ EXAMPLES = ark_KrylovDemo_prec.ml \
 	   ark_heat1D_adapt.ml \
 	   ark_robertson.ml \
 	   ark_robertson_root.ml \
-	   $(if $(KLU_ENABLED),$(KLU_EXAMPLES)) \
-	   $(if $(SUPERLUMT_ENABLED),$(SUPERLUMT_EXAMPLES))
-
-KLU_EXAMPLES = ark_brusselator1D_klu.ml
-SUPERLUMT_EXAMPLES = ark_brusselator1D_FEM_slu.ml
+	   $(if $(KLU_ENABLED),ark_brusselator1D_klu.ml) \
+	   $(if $(SUPERLUMT_ENABLED),ark_brusselator1D_FEM_slu.ml)
 
 FILES_TO_CLEAN = bruss_mesh.txt bruss_u.txt bruss_v.txt bruss_w.txt \
 		 heat1D.txt heat_mesh.txt solution.txt
