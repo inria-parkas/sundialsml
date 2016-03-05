@@ -301,7 +301,7 @@ let print_final_stats s =
  
 (* Routine to send boundary data to neighboring PEs *)
 
-let bsend comm my_pe isubx isuby dsizex dsizey udata =
+let bsend comm my_pe isubx isuby dsizex dsizey (udata : RealArray.t) =
   let buf = RealArray.create (nvars*mysub) in
 
   (* If isuby > 0, send data from bottom x-line of u *)
@@ -368,7 +368,7 @@ let brecvpost comm my_pe isubx isuby dsizex dsizey =
    be manipulated between the two calls.
    2) request should have 4 entries, and should be passed in both calls also. *)
 
-let brecvwait request isubx isuby dsizex uext =
+let brecvwait request isubx isuby dsizex (uext : RealArray.t) =
   let dsizex2 = dsizex + 2*nvars in
 
   (* If isuby > 0, receive data for bottom x-line of uext *)

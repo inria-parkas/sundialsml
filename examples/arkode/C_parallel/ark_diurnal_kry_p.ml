@@ -309,7 +309,7 @@ let print_final_stats s =
  
 (* Routine to send boundary data to neighboring PEs *)
 
-let bsend comm my_pe isubx isuby dsizex dsizey udata =
+let bsend comm my_pe isubx isuby dsizex dsizey (udata : RealArray.t) =
   let buf = RealArray.create (nvars*mysub) in
 
   (* If isuby > 0, send data from bottom x-line of u *)
@@ -376,7 +376,7 @@ let brecvpost comm my_pe isubx isuby dsizex dsizey =
    be manipulated between the two calls.
    2) request should have 4 entries, and should be passed in both calls also. *)
 
-let brecvwait request isubx isuby dsizex uext =
+let brecvwait request isubx isuby dsizex (uext : RealArray.t) =
   let dsizex2 = dsizex + 2*nvars in
 
   (* If isuby > 0, receive data for bottom x-line of uext *)
@@ -438,7 +438,7 @@ let ucomm data t udata =
    between processors of data needed to calculate f has already been done,
    and this data is in the work array uext. *)
 
-let fcalc data t udata dudata =
+let fcalc data t (udata : RealArray.t) (dudata : RealArray.t) =
   (* Get subgrid indices, data sizes, extended work array uext *)
   let isubx    = data.isubx
   and isuby    = data.isuby
@@ -547,7 +547,7 @@ let f data t ((udata : RealArray.t),_,_) ((dudata : RealArray.t),_,_) =
 (* Preconditioner setup routine. Generate and preprocess P. *)
 let precond data jacarg jok gamma =
   let { Arkode.jac_t   = tn;
-        Arkode.jac_y   = (udata, _, _);
+        Arkode.jac_y   = ((udata : RealArray.t), _, _);
       } = jacarg
   in
   (* Make local copies of pointers in user_data, and of pointer to u's data *)
@@ -622,8 +622,8 @@ let precond data jacarg jok gamma =
 
 (* Preconditioner solve routine *)
 
-let psolve data jac_arg solve_arg (zdata, _, _) =
-  let { Arkode.Spils.rhs = (r, _, _);
+let psolve data jac_arg solve_arg ((zdata : RealArray.t), _, _) =
+  let { Arkode.Spils.rhs = ((r : RealArray.t), _, _);
         Arkode.Spils.gamma = gamma;
         Arkode.Spils.delta = delta;
         Arkode.Spils.left = lr } = solve_arg

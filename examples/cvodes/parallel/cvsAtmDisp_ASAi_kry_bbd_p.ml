@@ -332,7 +332,7 @@ let set_data comm npes myId =
  *------------------------------------------------------------------
  *)
 
-let f_comm d t (ydata, _, _) =
+let f_comm d t ((ydata : RealArray.t), _, _) =
   let comm = d.comm in
   let id = d.myId in
   
@@ -439,7 +439,7 @@ let f_comm d t (ydata, _, _) =
  *------------------------------------------------------------------
  *)
 
-let load_yext data src =
+let load_yext data (src : RealArray.t) =
   let i = Array.make dim 0 in
   let l_m = data.l_m in
   (* copy local segment *)
@@ -655,7 +655,8 @@ let output_gradient data myId qB =
  *------------------------------------------------------------------
  *)
 
-let f_local data t (ydata, _, _) (dydata, _, _) =
+let f_local data t ((ydata : RealArray.t), _, _)
+                   ((dydata : RealArray.t), _, _) =
   (* Extract stuff from data structure *)
   let id = data.myId in
   let xmin = data.xmin in
@@ -742,7 +743,7 @@ let f data t y ydot =
  *------------------------------------------------------------------
  *)
 
-let fQ data t y (dqdata, _, _) =
+let fQ data t y ((dqdata : RealArray.t), _, _) =
   dqdata.{0} <- (n_vdotprod y y) *. 0.5 *. data.dOmega
 
 (*
@@ -752,8 +753,10 @@ let fQ data t y (dqdata, _, _) =
  *------------------------------------------------------------------
  *)
 
-let fB_local data { Adj.t = t; Adj.y = (ydata, _, _); Adj.yb = (yBdata, _, _) }
-    (dyBdata, _, _) =
+let fB_local data { Adj.t = t;
+                    Adj.y  = ((ydata : RealArray.t), _, _);
+                    Adj.yb = ((yBdata : RealArray.t), _, _) }
+    ((dyBdata : RealArray.t), _, _) =
   (* Extract stuff from data structure *)
   let id = data.myId in
   let xmin = data.xmin in
