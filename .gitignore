@@ -23,15 +23,6 @@ config
 META
 config.h
 sundials_config.ml
-examples/*/parallel/grad*.m
-examples/arkode/C_serial/*.txt
-examples/arkode/C_openmp/*.txt
-examples/*/*/*.sundials.c
-examples/*/*/*.sundials
-examples/utils/perf
-examples/utils/crunchperf
-examples/perf.opt.*
-examples/perf.byte.*
 style.css
 # Emacs temporary files.
 \#*

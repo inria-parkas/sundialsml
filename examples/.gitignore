@@ -1,0 +1,10 @@
+*-e
+*/parallel/grad*.m
+arkode/C_serial/*.txt
+arkode/C_openmp/*.txt
+*/*/*.sundials.c
+*/*/*.sundials
+utils/perf
+utils/crunchperf
+perf.opt.*
+perf.byte.*
