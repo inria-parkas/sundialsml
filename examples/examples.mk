@@ -175,16 +175,15 @@ $(MPI_EXAMPLES:.ml=.opt): %.opt: $(SRC)/$(USELIB).cmxa		\
 $(OPENMP_EXAMPLES:.ml=.byte): %.byte: $(SRC)/$(USELIB).cma $(EXTRA_DEPS) \
 				      %.ml
 	$(OCAMLC) $(OCAMLFLAGS) -o $@					\
-	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC) -dllpath $(SRC)	\
+	    $(INCLUDES) -I $(SRC) -dllpath $(SRC)			\
 	    $(SUBDIRS:%=-I $(SRC)/%)					\
 	    bigarray.cma unix.cma $^
 
 $(OPENMP_EXAMPLES:.ml=.opt): %.opt: $(SRC)/$(USELIB).cmxa	\
 				    $(EXTRA_DEPS:.cmo=.cmx)	\
 				    %.ml
-	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@		\
-	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC)	\
-	    $(SUBDIRS:%=-I $(SRC)/%)			\
+	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@			\
+	    $(INCLUDES) -I $(SRC) $(SUBDIRS:%=-I $(SRC)/%)	\
 	    bigarray.cmxa unix.cmxa $^
 
 # pthreads
