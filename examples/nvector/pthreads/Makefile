@@ -4,7 +4,7 @@
 # are recompiled to link against CVODES.
 USELIB ?= sundials_no_sens
 SRCROOT=../../..
-SUBDIR=nvector/openmp
+SUBDIR=nvector/pthreads
 
 PTHREADS_EXAMPLES = test_nvector_pthreads.ml
 
