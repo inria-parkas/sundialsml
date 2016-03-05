@@ -67,7 +67,7 @@ let init_stop_watch executable args =
     fun num_reps ->
       env.(0) <- Printf.sprintf "NUM_REPS=%d" num_reps;
       spawn_wait "time" args dev_null dev_null pipe_write;
-      Scanf.fscanf pipe_read "%f\n" (fun f -> f)
+      Scanf.bscanf (Scanf.Scanning.from_channel pipe_read) "%f\n" (fun f -> f)
   in
   try ignore (with_time_command "true" [||] 1);
     with_time_command executable args
@@ -116,7 +116,7 @@ let measure_performance reps n executable args =
   done
 
 let load_reps_file file =
-  try Scanf.fscanf (open_in file) "NUM_REPS = %d\n" (fun r -> r)
+  try Scanf.bscanf (Scanf.Scanning.open_in file) "NUM_REPS = %d\n" (fun r -> r)
   with e -> failwith @@ Printf.sprintf "Reps file %s broken: %s" file
                      @@ Printexc.to_string e
 
