@@ -132,7 +132,7 @@ let read_pos_float s =
   try let f = float_of_string s in
     if f <= 0. then failwith ""
     else f
-  with Failure "float_of_string" ->
+  with Failure _ ->
     failwith ("Error: positive real number but got " ^ s)
 
 let _ =

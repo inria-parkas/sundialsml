@@ -200,7 +200,7 @@ let combine ocaml sundials name =
     let lines = get_lines path in
     let reps =
       try scan_line "# NUM_REPS = %d\n" (fun r -> r) (List.hd lines)
-      with End_of_file | Failure "hd" ->
+      with End_of_file | Failure _ ->
         failwith ("Input file " ^ path ^ " contains no data")
     in
     let times = ref [] in
