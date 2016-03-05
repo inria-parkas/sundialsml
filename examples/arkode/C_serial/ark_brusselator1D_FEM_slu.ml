@@ -112,12 +112,13 @@ let laplace_matrix { n; du; dv; dw; x } l =
     (* dependence on u at this node *)
     set_col (idx i 0);
 
-    if i>1 then
+    if i>1 then begin
       let xl = x.{i-1} in
       let xr = x.{i} in
       set (idx (i-1) 0) ((-.du) *. quad(1.0,1.0,1.0,xl,xr)
-                                *. chiL_x(xl,xr) *. chiR_x(xl,xr));
-    if i<n-1 && i>0 then
+                                *. chiL_x(xl,xr) *. chiR_x(xl,xr))
+    end;
+    if i<n-1 && i>0 then begin
       let xl = x.{i-1} in
       let xr = x.{i} in
       let d = (-.du) *. quad(1.0,1.0,1.0,xl,xr)
@@ -125,22 +126,26 @@ let laplace_matrix { n; du; dv; dw; x } l =
       let xl = x.{i} in
       let xr = x.{i+1} in
       set (idx i 0) (d +. (-.du) *. quad(1.0,1.0,1.0,xl,xr)
-                                 *. chiL_x(xl,xr) *. chiL_x(xl,xr));
-    if i<n-2 then
+                                 *. chiL_x(xl,xr) *. chiL_x(xl,xr))
+    end;
+
+    if i<n-2 then begin
       let xl = x.{i} in
       let xr = x.{i+1} in
       set (idx (i+1) 0) ((-.du) *. quad(1.0,1.0,1.0,xl,xr)
-                                *. chiL_x(xl,xr) *. chiR_x(xl,xr));
+                                *. chiL_x(xl,xr) *. chiR_x(xl,xr))
+    end;
 
     (* dependence on v at this node *)
     set_col (idx i 1);
 
-    if i>1 then
+    if i>1 then begin
       let xl = x.{i-1} in
       let xr = x.{i} in
       set (idx (i-1) 1) ((-.dv) *. quad(1.0,1.0,1.0,xl,xr)
-                                *. chiL_x(xl,xr) *. chiR_x(xl,xr));
-    if i>0 && i<n-1 then
+                                *. chiL_x(xl,xr) *. chiR_x(xl,xr))
+    end;
+    if i>0 && i<n-1 then begin
       let xl = x.{i} in
       let xr = x.{i+1} in
       let d = (-.dv) *. quad(1.0,1.0,1.0,xl,xr)
@@ -148,22 +153,25 @@ let laplace_matrix { n; du; dv; dw; x } l =
       let xl = x.{i-1} in
       let xr = x.{i} in
       set (idx i 1) (d +. (-.dv) *. quad(1.0,1.0,1.0,xl,xr)
-                                 *. chiR_x(xl,xr) *. chiR_x(xl,xr));
-    if i<n-2 then
+                                 *. chiR_x(xl,xr) *. chiR_x(xl,xr))
+    end;
+    if i<n-2 then begin
       let xl = x.{i} in
       let xr = x.{i+1} in
       set (idx (i+1) 1) ((-.dv) *. quad(1.0,1.0,1.0,xl,xr)
-                                *. chiL_x(xl,xr) *. chiR_x(xl,xr));
+                                *. chiL_x(xl,xr) *. chiR_x(xl,xr))
+    end;
 
     (* dependence on w at this node *)
     set_col (idx i 2);
 
-    if i>1 then
+    if i>1 then begin
       let xl = x.{i-1} in
       let xr = x.{i} in
       set (idx (i-1) 2) ((-.dw) *. quad(1.0,1.0,1.0,xl,xr)
-                                *. chiL_x(xl,xr) *. chiR_x(xl,xr));
-    if i>0 && i<n-1 then
+                                *. chiL_x(xl,xr) *. chiR_x(xl,xr))
+    end;
+    if i>0 && i<n-1 then begin
       let xl = x.{i} in
       let xr = x.{i+1} in
       let d = (-.dw) *. quad(1.0,1.0,1.0,xl,xr)
@@ -171,12 +179,14 @@ let laplace_matrix { n; du; dv; dw; x } l =
       let xl = x.{i-1} in
       let xr = x.{i} in
       set (idx i 2) (d +. (-.dw) *. quad(1.0,1.0,1.0,xl,xr)
-                                 *. chiR_x(xl,xr) *. chiR_x(xl,xr));
-    if i<n-2 then
+                                 *. chiR_x(xl,xr) *. chiR_x(xl,xr))
+    end;
+    if i<n-2 then begin
       let xl = x.{i} in
       let xr = x.{i+1} in
       set (idx (i+1) 2) ((-.dw) *. quad(1.0,1.0,1.0,xl,xr)
                                 *. chiL_x(xl,xr) *. chiR_x(xl,xr))
+    end
   done;
 
   (* signal end of data *)
