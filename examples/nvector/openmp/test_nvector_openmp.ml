@@ -63,10 +63,10 @@ let main () =
   printf "\nRunning with number of threads %d \n \n" num_threads;
 
   (* Create vectors *)
-  let w = Nvector_openmp.make veclen num_threads 0.0
-  and x = Nvector_openmp.make veclen num_threads 0.0
-  and y = Nvector_openmp.make veclen num_threads 0.0
-  and z = Nvector_openmp.make veclen num_threads 0.0
+  let w = Nvector_openmp.make num_threads veclen 0.0
+  and x = Nvector_openmp.make num_threads veclen 0.0
+  and y = Nvector_openmp.make num_threads veclen 0.0
+  and z = Nvector_openmp.make num_threads veclen 0.0
   in
 
   (* NVector Tests *)

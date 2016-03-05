@@ -67,10 +67,10 @@ let main () =
   printf "\nRunning with %d threads and vector length %d \n \n" nthreads veclen;
 
   (* Create vectors *)
-  let w = Nvector_pthreads.make veclen nthreads 0.0
-  and x = Nvector_pthreads.make veclen nthreads 0.0
-  and y = Nvector_pthreads.make veclen nthreads 0.0
-  and z = Nvector_pthreads.make veclen nthreads 0.0
+  let w = Nvector_pthreads.make nthreads veclen 0.0
+  and x = Nvector_pthreads.make nthreads veclen 0.0
+  and y = Nvector_pthreads.make nthreads veclen 0.0
+  and z = Nvector_pthreads.make nthreads veclen 0.0
   in
 
   (* NVector Tests *)
