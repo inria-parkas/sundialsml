@@ -13,7 +13,7 @@ EXAMPLES = idaRoberts_dns.ml  \
 	   idaSlCrank_dns.ml  \
 	   idaKrylovDemo_ls.ml \
 	   idaRoberts_dns_alt.ml \
-	   $(if $(KLU_ENABLED),idaHeat2D_klu.ml \) \
+	   $(if $(KLU_ENABLED),idaHeat2D_klu.ml) \
 	   $(if $(KLU_ENABLED),idaRoberts_klu.ml) \
 	   $(if $(SUPERLUMT_ENABLED),idaRoberts_sps.ml)
 
