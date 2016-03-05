@@ -645,13 +645,13 @@ let main () =
 (* Check environment variables for extra arguments.  *)
 let reps =
   try int_of_string (Unix.getenv "NUM_REPS")
-  with Not_found | Failure "int_of_string" -> 1
+  with Not_found | Failure _ -> 1
 let gc_at_end =
   try int_of_string (Unix.getenv "GC_AT_END") <> 0
-  with Not_found | Failure "int_of_string" -> false
+  with Not_found | Failure _ -> false
 let gc_each_rep =
   try int_of_string (Unix.getenv "GC_EACH_REP") <> 0
-  with Not_found | Failure "int_of_string" -> false
+  with Not_found | Failure _ -> false
 
 (* Entry point *)
 let _ =
