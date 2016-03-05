@@ -41,7 +41,7 @@ let fprintf = Printf.fprintf
 (* Functions called by the solver *)
 
 (* f routine to compute the ODE RHS function f(t,y). *)
-let f lamda t y ydot =
+let f lamda t (y : RealArray.t) (ydot : RealArray.t) =
   let u = y.{0} in (* access current solution value *)
   (* fill in the RHS function *)
   ydot.{0} <- lamda*.u +. 1.0/.(1.0+.t*.t) -. lamda*.atan(t)

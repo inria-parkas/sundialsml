@@ -36,7 +36,8 @@ let fprintf = Printf.fprintf
 (* Functions called by the solver *)
 
 (* f routine to compute the ODE RHS function f(t,y). *)
-let f t y ydot = ydot.{0} <- (t+.1.0)*.exp(-.y.{0})
+let f t (y : RealArray.t) (ydot : RealArray.t) =
+  ydot.{0} <- (t+.1.0)*.exp(-.y.{0})
 
 (* Main Program *)
 let main () =

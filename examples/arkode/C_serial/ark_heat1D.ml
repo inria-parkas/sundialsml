@@ -54,7 +54,7 @@ type user_data = {
 (* Functions called by the solver *)
 
 (* f routine to compute the ODE RHS function f(t,y). *)
-let f { n; dx; k } t y ydot =
+let f { n; dx; k } t (y : RealArray.t) (ydot : RealArray.t) =
   RealArray.fill ydot 0.0;    (* Initialize ydot to zero *)
 
   (* iterate over domain, computing all equations *)
@@ -69,7 +69,7 @@ let f { n; dx; k } t y ydot =
   ydot.{isource} <- ydot.{isource} +. 0.01/.dx (* source term *)
 
 (* Jacobian routine to compute J(t,y) = df/dy. *)
-let jac { n; dx; k } _ v jv =
+let jac { n; dx; k } _ (v : RealArray.t) (jv : RealArray.t) =
   (* iterate over domain, computing all Jacobian-vector products *)
   let c1 = k/.dx/.dx in
   let c2 = -2.0*.k/.dx/.dx in

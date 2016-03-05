@@ -62,7 +62,7 @@ let printf = Printf.printf
 let fprintf = Printf.fprintf
 
 (* f routine to compute the ODE RHS function f(t,y). *)
-let f rdata t y ydot =
+let f rdata t (y : RealArray.t) (ydot : RealArray.t) =
   let a  = rdata.(0) in     (* access data entries *)
   let b  = rdata.(1) in
   let ep = rdata.(2) in

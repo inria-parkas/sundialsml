@@ -193,7 +193,7 @@ let laplace_matrix { n; du; dv; dw; x } l =
   set_col ((idx (n-1) 2)+1)
 
 (* Routine to compute the Jacobian matrix from R(y) *)
-let reaction_jac { n; ep; x } y jac =
+let reaction_jac { n; ep; x } (y : RealArray.t) jac =
   let nz = ref 0 in
   let set_col j = Sls.SparseMatrix.set_col jac j !nz in
   let set j v = (Sls.SparseMatrix.set jac !nz j v; incr nz) in
@@ -471,7 +471,7 @@ let reaction_jac { n; ep; x } y jac =
   set_col ((idx (n-1) 2)+1)
 
 (* Routine to compute the reaction portion of the ODE RHS function f(t,y). *)
-let f_rx { n; a; b; ep; x } t y ydot =
+let f_rx { n; a; b; ep; x } t (y : RealArray.t) (ydot : RealArray.t) =
   (* iterate over intervals, filling in residual function *)
   for i=0 to n-1-1 do
     (* set booleans to determine whether equations exist on the left/right *)
@@ -588,7 +588,7 @@ let f_rx { n; a; b; ep; x } t y ydot =
   done
 
 (* Routine to compute the diffusion portion of the ODE RHS function f(t,y). *)
-let f_diff { n; du; dv; dw; x } t y ydot =
+let f_diff { n; du; dv; dw; x } t (y : RealArray.t) (ydot : RealArray.t) =
   (* iterate over intervals, filling in residual function *)
   for i=0 to n-2 do
     (* set booleans to determine whether equations exist on the left/right *)

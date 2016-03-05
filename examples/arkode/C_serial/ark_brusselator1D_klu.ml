@@ -75,7 +75,7 @@ type user_data = {
   }
 
 (* f routine to compute the ODE RHS function f(t,y). *)
-let f ud t y dy =
+let f ud t (y : RealArray.t) (dy : RealArray.t) =
   RealArray.fill dy 0.0; (* initialize ydot to zero *)
 
   (* iterate over domain, computing all equations *)
@@ -158,7 +158,7 @@ let laplace_matrix ud jac =
 
 (* Routine to compute the Jacobian matrix from R(y), scaled by the factor c.
    We add the result into Jac and do not erase what was already there *)
-let reaction_jac ud y jac =
+let reaction_jac ud (y : RealArray.t) jac =
   let nz = ref 0 in
   let set_col j = Sls.SparseMatrix.set_col jac j !nz in
   let set j v = (Sls.SparseMatrix.set jac !nz j v; incr nz) in
@@ -202,7 +202,7 @@ let reaction_jac ud y jac =
   set_col ((idx (ud.n-1) 2)+1)
 
 (* Jacobian routine to compute J(t,y) = df/dy. *)
-let jac ud { Arkode.jac_y = y } j =
+let jac ud { Arkode.jac_y = (y : RealArray.t) } j =
   let m, n, nnz = Sls.SparseMatrix.size j in
 
   (* ensure that Jac is the correct size *)

@@ -61,7 +61,7 @@ let printf = Printf.printf
 let fprintf = Printf.fprintf
 
 (* fi routine to compute the implicit portion of the ODE RHS. *)
-let fi rdata t y ydot =
+let fi rdata t (y : RealArray.t) (ydot : RealArray.t) =
   let b  = rdata.(1) in     (* access data entries *)
   let ep = rdata.(2) in
   let w = y.{2} in          (* access solution values *)
@@ -72,7 +72,7 @@ let fi rdata t y ydot =
   ydot.{2} <- (b-.w) /. ep
 
 (* fe routine to compute the explicit portion of the ODE RHS. *)
-let fe rdata t y ydot =
+let fe rdata t (y : RealArray.t) (ydot : RealArray.t) =
   let a  = rdata.(0) in     (* access data entries *)
   let u = y.{0} in          (* access solution values *)
   let v = y.{1} in

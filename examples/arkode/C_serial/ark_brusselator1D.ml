@@ -68,7 +68,7 @@ type user_data = {
   }
 
 (* f routine to compute the ODE RHS function f(t,y). *)
-let f ud t y dy =
+let f ud t (y : RealArray.t) (dy : RealArray.t) =
   RealArray.fill dy 0.0; (* initialize ydot to zero *)
 
   (* iterate over domain, computing all equations *)
@@ -121,7 +121,7 @@ let laplace_matrix ud c jac =
 
 (* Routine to compute the Jacobian matrix from R(y), scaled by the factor c.
    We add the result into Jac and do not erase what was already there *)
-let reaction_jac ud c y jac =
+let reaction_jac ud c (y : RealArray.t) jac =
   let inc_elem i j inc = Dls.BandMatrix.update jac i j (fun v -> v +. inc) in
 
   (* iterate over nodes, filling in Jacobian of reaction terms *)
@@ -147,7 +147,7 @@ let reaction_jac ud c y jac =
   done
 
 (* Jacobian routine to compute J(t,y) = df/dy. *)
-let jac ud _ { Arkode.jac_y = y } j =
+let jac ud _ { Arkode.jac_y = (y : RealArray.t) } j =
   (* Fill in the Laplace matrix *)
   laplace_matrix ud 1.0 j;
   (* Add in the Jacobian of the reaction terms matrix *)

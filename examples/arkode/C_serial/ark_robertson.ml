@@ -41,7 +41,7 @@ let printf = Printf.printf
 let fprintf = Printf.fprintf
 
 (* f routine to compute the ODE RHS function f(t,y). *)
-let f t y ydot =
+let f t (y : RealArray.t) (ydot : RealArray.t) =
   let u = y.{0} in   (* access current solution *)
   let v = y.{1} in
   let w = y.{2} in
@@ -52,7 +52,7 @@ let f t y ydot =
   ydot.{2} <- 3.e7*.v*.v
 
 (* Jacobian routine to compute J(t,y) = df/dy. *)
-let jac { Arkode.jac_y = y } j =
+let jac { Arkode.jac_y = (y : RealArray.t) } j =
   let v = y.{1} in   (* access current solution *)
   let w = y.{2} in
 
