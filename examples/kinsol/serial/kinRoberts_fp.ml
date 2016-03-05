@@ -41,12 +41,12 @@ let priors = 2
 
 (* User-defined vector accessor macro: Ith *)
 
-let ith v i = v.{i - 1}
-let set_ith v i e = v.{i - 1} <- e
+let ith (v : RealArray.t) i = v.{i - 1}
+let set_ith (v : RealArray.t) i e = v.{i - 1} <- e
 
 (* System function *)
 
-let func_roberts y g =
+let func_roberts (y : RealArray.t) (g : RealArray.t) =
   let y1 = ith y 1 in
   let y2 = ith y 2 in
   let y3 = ith y 3 in
@@ -60,7 +60,7 @@ let func_roberts y g =
 
 (* Print solution at selected points *)
 
-let print_output y =
+let print_output (y : RealArray.t) =
   let y1 = ith y 1 in
   let y2 = ith y 2 in
   let y3 = ith y 3 in
