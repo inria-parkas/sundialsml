@@ -1,0 +1,55 @@
+diff -ur SuperLU_MT_2.4-orig/Makefile SuperLU_MT_2.4/Makefile
+--- SuperLU_MT_2.4-orig/Makefile	2016-03-05 17:32:32.000000000 +0100
++++ SuperLU_MT_2.4/Makefile	2016-03-06 11:31:52.000000000 +0100
+@@ -18,6 +18,10 @@
+ all: install lib testing
+ 
+ lib: superlulib tmglib
++	case `uname` in						\
++	Darwin) $(MAKE) -C ./SRC ../lib/libsuperlu_mt_PTHREAD.dylib;;	\
++	*) $(MAKE) -C ./SRC ../lib/libsuperlu_mt_PTHREAD.so;;		\
++	esac
+ 
+ clean: cleanlib cleantesting
+ 
+diff -ur SuperLU_MT_2.4-orig/SRC/Makefile SuperLU_MT_2.4/SRC/Makefile
+--- SuperLU_MT_2.4-orig/SRC/Makefile	2016-03-05 17:32:32.000000000 +0100
++++ SuperLU_MT_2.4/SRC/Makefile	2016-03-05 17:37:47.000000000 +0100
+@@ -117,6 +117,14 @@
+ 	$(ARCH) $(ARCHFLAGS) ../lib/$(SUPERLULIB) $(ZLUSRC) $(ALLAUX) $(DZAUX)
+ 	$(RANLIB) ../lib/$(SUPERLULIB)
+ 
++../lib/$(SUPERLULIB:.a=.dylib): $(ZLUSRC) $(ALLAUX) $(DZAUX)
++	$(CC) -dynamiclib -shared -undefined dynamic_lookup	\
++	   -compatibility_version 3.0 -current_version 3.0	\
++	$(DLUSRC) $(ALLAUX) $(DZAUX) -o $@
++
++../lib/$(SUPERLULIB:.a=.so): $(ZLUSRC) $(ALLAUX) $(DZAUX)
++	$(CC) -shared $(DLUSRC) $(ALLAUX) $(DZAUX) -o $@
++
+ ##################################
+ # Do not optimize this routine   #
+ ##################################
+diff -ur SuperLU_MT_2.4-orig/make.inc SuperLU_MT_2.4/make.inc
+--- SuperLU_MT_2.4-orig/make.inc	2016-03-05 17:32:32.000000000 +0100
++++ SuperLU_MT_2.4/make.inc	2016-03-05 17:33:38.000000000 +0100
+@@ -21,8 +21,8 @@
+ #
+ TMGLIB       	= libtmglib$(PLAT).a
+ SUPERLULIB   	= libsuperlu_mt$(PLAT).a
+-#BLASDEF	        = -DUSE_VENDOR_BLAS
+-BLASLIB = ../lib/libblas$(PLAT).a
++BLASDEF	        = -DUSE_VENDOR_BLAS
++BLASLIB		= -lblas
+ MATHLIB		= -lm 
+ MPLIB		= -lpthread
+ 
+@@ -39,7 +39,7 @@
+ # Definitions used by CPP:
+ PREDEFS      	= -D__PTHREAD
+ #
+-CC           	= gcc
++CC           	= gcc -fPIC
+ CFLAGS       	= $(PREDEFS) -O3
+ #
+ # There are a few files that should NOT be optimized, which appear in the

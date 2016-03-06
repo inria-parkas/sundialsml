@@ -5,3 +5,4 @@
 
 html/*.html
 html/*.ml
+html/*.patch
