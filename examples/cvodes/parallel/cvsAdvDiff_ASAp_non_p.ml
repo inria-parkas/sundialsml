@@ -129,7 +129,7 @@ let set_ic_back uB my_base =
 
 (* Compute local value of the space integral int_x z(x) dx *)
 
-let xintgr z l dx =
+let xintgr (z : RealArray.t) l dx =
   let my_intgr = ref (0.5*.(z.{0} +. z.{l-1})) in
   for i = 1 to l-2 do
     my_intgr := !my_intgr +. z.{i}
@@ -206,7 +206,7 @@ let print_output data g_val uB =
 
 (* f routine. Compute f(t,u) for forward phase. *)
 
-let f data t (udata, _, _) (dudata, _, _) =
+let f data t ((udata : RealArray.t), _, _) ((dudata : RealArray.t), _, _) =
 
   (* Extract MPI info. from data *)
   let comm      = data.comm in
@@ -253,8 +253,9 @@ let f data t (udata, _, _) (dudata, _, _) =
 
 (* fB routine. Compute right hand side of backward problem *)
 
-let fB data { Adjoint.y = (udata, _, _);
-              Adjoint.yb = (uBdata, _, _) } (duBdata, _, _) =
+let fB data { Adjoint.y = ((udata : RealArray.t), _, _);
+              Adjoint.yb = ((uBdata : RealArray.t), _, _) }
+            ((duBdata : RealArray.t), _, _) =
 
   (* Extract MPI info. from data *)
   let comm      = data.comm in

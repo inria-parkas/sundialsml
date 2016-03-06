@@ -23,7 +23,7 @@ open Bigarray
 let printf = Printf.printf
 let eprintf = Printf.eprintf
 let fprintf = Printf.fprintf
-let sqr x = x ** 2.0
+let sqr x = x *. x
 let local_array = Nvector_parallel.local_array
 
 let n_vdotprod = Nvector.DataOps.n_vdotprod
@@ -131,38 +131,45 @@ let g2 = Array.of_list (takedim [ g2_x; g2_y; g2_z ])
 
 let ijth =
   if dim = 3 then
-    fun l_m y i -> y.{i.(0)+(l_m.(0)*(i.(1)+i.(2)*l_m.(1)))}
+    fun l_m (y : RealArray.t) i ->
+      y.{i.(0)+(l_m.(0)*(i.(1)+i.(2)*l_m.(1)))}
   else
-    fun l_m y i -> y.{i.(0)+i.(1)*l_m.(0)}
+    fun l_m (y : RealArray.t) i ->
+      y.{i.(0)+i.(1)*l_m.(0)}
 
 let set_ijth =
   if dim = 3 then
-    fun l_m y i v -> y.{i.(0)+(l_m.(0)*(i.(1)+i.(2)*l_m.(1)))} <- v
+    fun l_m (y : RealArray.t) i v ->
+      y.{i.(0)+(l_m.(0)*(i.(1)+i.(2)*l_m.(1)))} <- v
   else
-    fun l_m y i v -> y.{i.(0)+i.(1)*l_m.(0)} <- v
+    fun l_m (y : RealArray.t) i v ->
+      y.{i.(0)+i.(1)*l_m.(0)} <- v
 
 let add_to_ijth =
   if dim = 3 then
-    fun l_m y i v ->
+    fun l_m (y : RealArray.t) i v ->
       let idx = i.(0)+(l_m.(0)*(i.(1)+i.(2)*l_m.(1))) in
       y.{idx} <- y.{idx} +. v
   else
-    fun l_m y i v ->
+    fun l_m (y : RealArray.t) i v ->
       let idx = i.(0)+i.(1)*l_m.(0) in
       y.{idx} <- y.{idx} +. v
 
 let ijth_ext =
   if dim = 3 then
-    fun l_m y i -> y.{(i.(0)+1)+((l_m.(0)+2)*((i.(1)+1)+(i.(2)+1)*(l_m.(1)+2)))}
+    fun l_m (y : RealArray.t) i ->
+      y.{(i.(0)+1)+((l_m.(0)+2)*((i.(1)+1)+(i.(2)+1)*(l_m.(1)+2)))}
   else
-    fun l_m y i -> y.{(i.(0)+1) + (i.(1)+1) * (l_m.(0)+2)}
+    fun l_m (y : RealArray.t) i ->
+      y.{(i.(0)+1) + (i.(1)+1) * (l_m.(0)+2)}
 
 let set_ijth_ext =
   if dim = 3 then
-    fun l_m y i v ->
+    fun l_m (y : RealArray.t) i v ->
       y.{(i.(0)+1)+((l_m.(0)+2)*((i.(1)+1)+(i.(2)+1)*(l_m.(1)+2)))} <- v
   else
-    fun l_m y i v -> y.{(i.(0)+1) + (i.(1)+1) * (l_m.(0)+2)} <- v
+    fun l_m (y : RealArray.t) i v ->
+      y.{(i.(0)+1) + (i.(1)+1) * (l_m.(0)+2)} <- v
 
 (*
  *------------------------------------------------------------------

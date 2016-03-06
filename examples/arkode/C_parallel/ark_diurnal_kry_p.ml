@@ -170,7 +170,7 @@ type user_data = {
 
 (* Load constants in data *)
 
-let sqr x = x ** 2.0
+let sqr x = x *. x
 
 let init_user_data my_pe comm =
   let new_dmat _ = Direct.create nvars nvars in
