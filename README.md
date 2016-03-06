@@ -39,8 +39,6 @@ NB: For SuperLU/MT, Sundials/ML requires shared libraries.
 We provide patches for [2.4](superlu_mt_2.4.patch) and
 [3.0](superlu_mt_3.0.patch) to build them.
 
-to build these.
-
 Contact
 -------
 * [Support (public OCaml list)](mailto:caml-list@inria.fr?subject=Sundials/ML:)
