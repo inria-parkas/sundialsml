@@ -217,14 +217,21 @@ Installation requires csh ([apt-get install csh]).
 
 For {b Debian}-based systems, we found the following worked:
 {ol
-    {- {v apt-get install cmake liblapack-dev libopenmpi-dev openmpi-bin
-	    libsuitesparse-dev v}}
+    {- {v apt-get install cmake liblapack-dev libopenmpi-dev openmpi-bin libsuitesparse-dev v}}
     {- Optionally download and build SuperLU/MT as described above, since the
 	libsuperlu-dev package does not provide the shared library file.}
     {- {v cd sundials-2.6.2; mkdir build; cd build v}}
-    {- {v cmake -Wno-dev ../sundials-2.6.2 -DOPENMP_ENABLE=1 -DPTHREAD_ENABLE=1 -DMPI_ENABLE=1 -DLAPACK_ENABLE=1 -DLAPACK_LIBRARIES='-llapack -lblas' -DKLU_ENABLE=1 -DKLU_LIBRARY_DIR=/usr/lib/x86_64-linux-gnu -DKLU_INCLUDE_DIR=/usr/include/suitesparse v}
+    {- {v cmake -Wno-dev ../sundials-2.6.2 \
+-DOPENMP_ENABLE=1 \
+-DPTHREAD_ENABLE=1 \
+-DMPI_ENABLE=1 \
+-DLAPACK_ENABLE=1 -DLAPACK_LIBRARIES='-llapack -lblas' \
+-DKLU_ENABLE=1 -DKLU_LIBRARY_DIR=/usr/lib/x86_64-linux-gnu \
+-DKLU_INCLUDE_DIR=/usr/include/suitesparse v}
        adding, if necessary,
-       {v -DSUPERLUMT_ENABLE=1 -DSUPERLUMT_LIBRARY_DIR=../SuperLU_MT_2.4/lib -DSUPERLUMT_INCLUDE_DIR=../SuperLU_MT_2.4/SRC v}}
+       {v -DSUPERLUMT_ENABLE=1 \
+-DSUPERLUMT_LIBRARY_DIR=../SuperLU_MT_2.4/lib \
+-DSUPERLUMT_INCLUDE_DIR=../SuperLU_MT_2.4/SRC v}}
     {- Configure Sundials/ML with
 	{v ./configure SUPERLUMT_LIB_PATH=../SuperLU_MT_2.4/lib v}}
 }
@@ -237,9 +244,17 @@ For {b OS X}, we found the following worked:
     {- Optionally download and build SuperLU/MT as described above.}
     {- {v cd sundials-2.6.2; mkdir build; cd build v}}
     {- For OpenMP, the gcc compiler is required:
-       {v cmake -Wno-dev ../sundials-2.6.2 -DCMAKE_C_COMPILER=/usr/local/bin/gcc-5 -DOPENMP_ENABLE=1 -DPTHREAD_ENABLE=1 -DMPI_ENABLE=1 -DLAPACK_ENABLE=1 -DKLU_ENABLE=1 -DKLU_LIBRARY_DIR=/usr/local/lib -DKLU_INCLUDE_DIR=/usr/local/include v}
+       {v cmake -Wno-dev ../sundials-2.6.2 \
+-DCMAKE_C_COMPILER=/usr/local/bin/gcc-5 \
+-DOPENMP_ENABLE=1 \
+-DPTHREAD_ENABLE=1 \
+-DMPI_ENABLE=1 \
+-DLAPACK_ENABLE=1 \
+-DKLU_ENABLE=1 -DKLU_LIBRARY_DIR=/usr/local/lib -DKLU_INCLUDE_DIR=/usr/local/include v}
        adding, if necessary,
-       {v -DSUPERLUMT_ENABLE=1 -DSUPERLUMT_LIBRARY_DIR=../SuperLU_MT_2.4/lib -DSUPERLUMT_INCLUDE_DIR=../SuperLU_MT_2.4/SRC v}}
+       {v -DSUPERLUMT_ENABLE=1 \
+-DSUPERLUMT_LIBRARY_DIR=../SuperLU_MT_2.4/lib \
+-DSUPERLUMT_INCLUDE_DIR=../SuperLU_MT_2.4/SRC v}}
     {- Configure Sundials/ML with
 	{v CC=gcc-5 ./configure v}}
 }

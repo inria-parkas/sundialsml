@@ -200,7 +200,6 @@ h1, h1 a:link, h1 a:visited, h1 a {
 
 pre, code {
   font-family: "DejaVu Sans Mono", "Bitstream Vera Mono", "Courrier New", monospace;
-  white-space: normal;
   font-weight: bold;
 }
 
