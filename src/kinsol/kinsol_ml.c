@@ -667,7 +667,7 @@ CAMLprim value c_kinsol_spils_set_preconditioner (value vsession,
 
 CAMLprim value c_kinsol_spils_set_jac_times_vec_fn(value vdata, value vset_jac)
 {
-    CAMLparam1(vdata);
+    CAMLparam2(vdata, vset_jac);
     KINSpilsJacTimesVecFn jac = Bool_val (vset_jac) ? jactimesfn : NULL;
     int flag = KINSpilsSetJacTimesVecFn(KINSOL_MEM_FROM_ML(vdata), jac);
     CHECK_FLAG("KINSpilsSetJacTimesVecFn", flag);
