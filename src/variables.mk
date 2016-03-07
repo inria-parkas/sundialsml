@@ -25,9 +25,7 @@ COBJ_COMMON = sundials/sundials_ml$(XO)	\
 	      lsolvers/dls_ml$(XO)	\
 	      $(SLS_ML_XO)		\
 	      nvectors/nvector_ml$(XO)	\
-	      lsolvers/spils_ml$(XO)	\
-	      $(NVECPTHREADS_ML_XO)	\
-	      $(NVECOPENMP_ML_XO)
+	      lsolvers/spils_ml$(XO)
 
 COBJ_MAIN = $(COBJ_COMMON) kinsol/kinsol_ml$(XO) $(ARKODE_COBJ_MAIN)
 
@@ -42,8 +40,6 @@ MLOBJ_MAIN =	sundials/sundials_config.cmo	\
 		nvectors/nvector_custom.cmo	\
 		nvectors/nvector_array.cmo	\
 		nvectors/nvector_serial.cmo	\
-		$(NVECPTHREADS_CMO)		\
-		$(NVECOPENMP_CMO)		\
 		cvode/cvode_impl.cmo		\
 		ida/ida_impl.cmo		\
 		kinsol/kinsol_impl.cmo		\
@@ -94,22 +90,40 @@ MLOBJ_MPI =	nvectors/nvector_parallel.cmo	\
 		idas/idas_bbd.cmo
 CMI_MPI = $(MLOBJ_MPI:.cmo=.cmi)
 
+### Objects specific to sundials_pthreads.cma.
+COBJ_PTHREADS =	nvectors/nvector_pthreads_ml$(XO)
+MLOBJ_PTHREADS=	nvectors/nvector_pthreads.cmo
+CMI_PTHREADS =	$(MLOBJ_PTHREADS:.cmo=.cmi)
+
+### Objects specific to sundials_pthreads.cma.
+COBJ_OPENMP =	nvectors/nvector_openmp_ml$(XO)
+MLOBJ_OPENMP =	nvectors/nvector_openmp.cmo
+CMI_OPENMP =	$(MLOBJ_OPENMP:.cmo=.cmi)
+
 ### Other sets of files.
 
 # For `make clean'.  All object files, including ones that may not be
 # built/updated under the current configuration.  Duplicates OK.
-ALL_COBJ = $(COBJ_MAIN) $(COBJ_SENS) $(COBJ_NO_SENS) $(COBJ_MPI)
-ALL_MLOBJ =doc/dochtml.cmo $(MLOBJ_MAIN) \
-	   $(MLOBJ_SENS) $(MLOBJ_NO_SENS) $(MLOBJ_MPI)
-ALL_CMA = sundials.cma sundials_no_sens.cma sundials_mpi.cma \
-          sundials_docs.cma sundials_docs.cmxs
+ALL_COBJ = $(COBJ_MAIN) $(COBJ_SENS) $(COBJ_NO_SENS) $(COBJ_MPI) \
+	   $(COBJ_OPENMP) $(COBJ_PTHREADS)
+ALL_MLOBJ =doc/dochtml.cmo $(MLOBJ_MAIN)		\
+	   $(MLOBJ_SENS) $(MLOBJ_NO_SENS) $(MLOBJ_MPI)	\
+	   $(MLOBJ_OPENMP) $(MLOBJ_PTHREADS)
+ALL_CMA = sundials.cma sundials_no_sens.cma sundials_mpi.cma	\
+	  sundials_openmp.cma sundials_pthreads.cma		\
+	  sundials_docs.cma sundials_docs.cmxs
 
 # Installed files.
 
-INSTALL_CMA=sundials.cma sundials_no_sens.cma \
-	    $(if $(MPI_ENABLED),sundials_mpi.cma)
+INSTALL_CMA=sundials.cma sundials_no_sens.cma			\
+	    $(if $(MPI_ENABLED),sundials_mpi.cma)		\
+	    $(if $(OPENMP_ENABLED),sundials_openmp.cma)		\
+	    $(if $(PTHREADS_ENABLED),sundials_pthreads.cma)
 
-INSTALL_CMI=$(CMI_MAIN) $(CMI_SENS) $(if $(MPI_ENABLED),$(CMI_MPI))
+INSTALL_CMI=$(CMI_MAIN) $(CMI_SENS)			\
+	    $(if $(MPI_ENABLED),$(CMI_MPI))		\
+	    $(if $(PTHREADS_ENABLED),$(CMI_PTHREADS))	\
+	    $(if $(OPENMP_ENABLED),$(CMI_OPENMP))
 
 STUBLIBS=$(foreach file,$(INSTALL_CMA:.cma=$(XS)), dllml$(file))
 

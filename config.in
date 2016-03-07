@@ -61,13 +61,11 @@ SLS_ML_XO = @sls_ml_xo@
 SLS_CMO = @sls_cmo@
 
 PTHREADS_ENABLED = @nvecpthreads_enabled@
-NVECPTHREADS_ML_XO = @nvecpthreads_ml_xo@
-NVECPTHREADS_CMO = @nvecpthreads_cmo@
+PTHREADS_LIBLINK = -lsundials_nvecpthreads -lpthread
 
 OPENMP_ENABLED = @nvecopenmp_enabled@
-NVECOPENMP_ML_XO = @nvecopenmp_ml_xo@
-NVECOPENMP_CMO = @nvecopenmp_cmo@
 CFLAGS_OPENMP = @cflags_openmp@
+OPENMP_LIBLINK = -lsundials_nvecopenmp @cflags_openmp@
 
 KLU_ENABLED = @klu_enabled@
 KLU_COBJ_SENS = @klu_cobj_sens@

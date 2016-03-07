@@ -156,23 +156,28 @@ $(SERIAL_EXAMPLES:.ml=.opt): %.opt: $(SRC)/$(USELIB).cmxa \
 	    bigarray.cmxa unix.cmxa $^
 
 # MPI
-$(MPI_EXAMPLES:.ml=.byte): %.byte: $(SRC)/$(USELIB).cma $(EXTRA_DEPS)	\
-				   $(SRC)/sundials_mpi.cma %.ml
+$(MPI_EXAMPLES:.ml=.byte): %.byte: $(SRC)/$(USELIB).cma		\
+				   $(SRC)/sundials_mpi.cma	\
+				   $(EXTRA_DEPS)		\
+				   %.ml
 	$(OCAMLC) $(OCAMLFLAGS) -o $@					    \
 	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC) -dllpath $(SRC)	    \
 	    $(SUBDIRS:%=-I $(SRC)/%)					    \
 	    bigarray.cma unix.cma mpi.cma $^
 
 $(MPI_EXAMPLES:.ml=.opt): %.opt: $(SRC)/$(USELIB).cmxa		\
+				 $(SRC)/sundials_mpi.cmxa	\
 				 $(EXTRA_DEPS:.cmo=.cmx)	\
-				 $(SRC)/sundials_mpi.cmxa %.ml
+				 %.ml
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@				\
 	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC)			\
 	    $(SUBDIRS:%=-I $(SRC)/%)					\
 	    bigarray.cmxa unix.cmxa mpi.cmxa $^
 
 # OpenMP
-$(OPENMP_EXAMPLES:.ml=.byte): %.byte: $(SRC)/$(USELIB).cma $(EXTRA_DEPS) \
+$(OPENMP_EXAMPLES:.ml=.byte): %.byte: $(SRC)/$(USELIB).cma		\
+				      $(SRC)/sundials_openmp.cma	\
+				      $(EXTRA_DEPS)			\
 				      %.ml
 	$(OCAMLC) $(OCAMLFLAGS) -o $@					\
 	    $(INCLUDES) -I $(SRC) -dllpath $(SRC)			\
@@ -180,6 +185,7 @@ $(OPENMP_EXAMPLES:.ml=.byte): %.byte: $(SRC)/$(USELIB).cma $(EXTRA_DEPS) \
 	    bigarray.cma unix.cma $^
 
 $(OPENMP_EXAMPLES:.ml=.opt): %.opt: $(SRC)/$(USELIB).cmxa	\
+				    $(SRC)/sundials_openmp.cmxa	\
 				    $(EXTRA_DEPS:.cmo=.cmx)	\
 				    %.ml
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@			\
@@ -187,13 +193,16 @@ $(OPENMP_EXAMPLES:.ml=.opt): %.opt: $(SRC)/$(USELIB).cmxa	\
 	    bigarray.cmxa unix.cmxa $^
 
 # pthreads
-$(PTHREADS_EXAMPLES:.ml=.byte): %.byte: $(SRC)/$(USELIB).cma $(EXTRA_DEPS) %.ml
+$(PTHREADS_EXAMPLES:.ml=.byte): %.byte: $(SRC)/$(USELIB).cma		\
+					$(SRC)/sundials_pthreads.cma	\
+					$(EXTRA_DEPS) %.ml
 	$(OCAMLC) $(OCAMLFLAGS) -o $@					\
 	    $(INCLUDES) -I $(SRC) -dllpath $(SRC) $(SUBDIRS:%=-I $(SRC)/%) \
 	    bigarray.cma unix.cma $^
 
-$(PTHREADS_EXAMPLES:.ml=.opt): %.opt: $(SRC)/$(USELIB).cmxa	\
-				      $(EXTRA_DEPS:.cmo=.cmx)	\
+$(PTHREADS_EXAMPLES:.ml=.opt): %.opt: $(SRC)/$(USELIB).cmxa		\
+				      $(SRC)/sundials_pthreads.cmxa	\
+				      $(EXTRA_DEPS:.cmo=.cmx)		\
 				      %.ml
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@				\
 	    $(INCLUDES) -I $(SRC) $(SUBDIRS:%=-I $(SRC)/%)		\

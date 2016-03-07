@@ -45,6 +45,22 @@ sundials_mpi.cma sundials_mpi.cmxa: $(MLOBJ_MPI) $(MLOBJ_MPI:.cmo=.cmx) \
 	    -o sundials_mpi -oc mlsundials_mpi $^	\
 	    $(LIB_PATH) $(MPI_LIBLINK)
 
+sundials_pthreads.cma sundials_pthreads.cmxa: $(MLOBJ_PTHREADS)		  \
+					      $(MLOBJ_PTHREADS:.cmo=.cmx) \
+					      $(COBJ_PTHREADS)
+	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS)		\
+	    $(if $(ENABLE_SHARED),,-custom)		\
+	    -o sundials_pthreads -oc mlsundials_pthreads $^	\
+	    $(LIB_PATH) $(PTHREADS_LIBLINK)
+
+sundials_openmp.cma sundials_openmp.cmxa: $(MLOBJ_OPENMP)		\
+					  $(MLOBJ_OPENMP:.cmo=.cmx)	\
+					  $(COBJ_OPENMP)
+	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS)		\
+	    $(if $(ENABLE_SHARED),,-custom)		\
+	    -o sundials_openmp -oc mlsundials_openmp $^	\
+	    $(LIB_PATH) $(OPENMP_LIBLINK)
+
 $(MLOBJ_MPI) $(CMI_MPI) $(MLOBJ_MPI:.cmo=.cmx)	\
 	     doc/html/index.html :		\
     INCLUDES += $(MPI_INCLUDES)
@@ -55,6 +71,12 @@ $(COBJ_COMMON): %.o: %.c
 
 nvectors/nvector_parallel_ml.o: nvectors/nvector_parallel_ml.c
 	$(MPICC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
+
+nvectors/nvector_openmp_ml.o: nvectors/nvector_openmp_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
+
+nvectors/nvector_pthreads_ml.o: nvectors/nvector_pthreads_ml.c
+	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
 
 # KINSOL-specific C files.
 kinsol/kinsol_ml.o: kinsol/kinsol_ml.c
@@ -229,8 +251,8 @@ clean:
 	-@$(RM) -f $(ALL_MLOBJ) $(ALL_MLOBJ:.cmo=.cmx) $(ALL_MLOBJ:.cmo=.o)
 	-@$(RM) -f $(ALL_MLOBJ:.cmo=.cmi) $(ALL_MLOBJ:.cmo=.annot) $(ALL_COBJ)
 	-@$(RM) -f $(ALL_CMA) $(ALL_CMA:.cma=.cmxa) $(ALL_CMA:.cma=.a)
-	-@$(RM) -f $(foreach file,$(INSTALL_CMA:.cma=$(XA)),libml$(file))
-	-@$(RM) -f $(foreach file,$(INSTALL_CMA:.cma=$(XS)),dllml$(file))
+	-@$(RM) -f $(foreach file,$(ALL_CMA:.cma=$(XA)),libml$(file))
+	-@$(RM) -f $(foreach file,$(ALL_CMA:.cma=$(XS)),dllml$(file))
 	-@$(RM) -f $(STUBLIBS)
 
 distclean: clean

@@ -811,8 +811,6 @@ serial_nvec_libs=-lsundials_nvecserial
 # Check for nvector_pthread installation
 nvecpthreads_info='not available'
 nvecpthreads_enabled=
-nvecpthreads_ml_xo=
-nvecpthreads_cmo=
 if [ $sundials -ge 260 ]; then
     test_stem=__configure_test_file__
     cat > $test_stem.c <<EOF
@@ -831,8 +829,6 @@ EOF
     else
 	nvecpthreads_info='installed'
 	nvecpthreads_enabled=1
-	nvecpthreads_ml_xo=nvectors/nvector_pthreads_ml${XO}
-	nvecpthreads_cmo=nvectors/nvector_pthreads.cmo
 	serial_nvec_libs="$serial_nvec_libs -lsundials_nvecpthreads"
     fi
     rm -f ./$test_stem.* ./$test_stem$XX
@@ -842,8 +838,6 @@ fi
 # Check for nvector_openmp installation
 nvecopenmp_info='not available'
 nvecopenmp_enabled=
-nvecopenmp_ml_xo=
-nvecopenmp_cmo=
 if [ $sundials -ge 260 ]; then
     test_stem=__configure_test_file__
     cat > $test_stem.c <<EOF
@@ -862,8 +856,6 @@ EOF
     else
 	nvecopenmp_info='installed'
 	nvecopenmp_enabled=1
-	nvecopenmp_ml_xo=nvectors/nvector_openmp_ml${XO}
-	nvecopenmp_cmo=nvectors/nvector_openmp.cmo
 	serial_nvec_libs="$serial_nvec_libs -lsundials_nvecopenmp"
 
         # Determine the C compiler flag for enabling OpenMP.
@@ -1061,11 +1053,7 @@ cat ${LOG}
 	 s#@sls_ml_xo@#${sls_ml_xo}#;
 	 s#@sls_cmo@#${sls_cmo}#;
 	 s#@nvecpthreads_enabled@#${nvecpthreads_enabled}#;
-	 s#@nvecpthreads_ml_xo@#${nvecpthreads_ml_xo}#;
-	 s#@nvecpthreads_cmo@#${nvecpthreads_cmo}#;
 	 s#@nvecopenmp_enabled@#${nvecopenmp_enabled}#;
-	 s#@nvecopenmp_ml_xo@#${nvecopenmp_ml_xo}#;
-	 s#@nvecopenmp_cmo@#${nvecopenmp_cmo}#;
 	 s#@serial_nvec_libs@#${serial_nvec_libs}#;
 	 s#@sparse_libs@#${sparse_libs}#;
 	 s#@klu_cobj_sens@#${klu_cobj_sens}#;
