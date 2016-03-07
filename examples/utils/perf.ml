@@ -37,22 +37,33 @@ let init_stop_watch executable args =
     Array.of_list ("NUM_REPS=0"::List.filter not_num_reps
                      (Array.to_list (Unix.environment ())))
   in
+  let dump_env env =
+    Printf.fprintf stderr "Environment:\n";
+    Array.iter (fun s -> Printf.fprintf stderr "%s\n" s) env
+  in
 
   (* Use time(1) if one is installed and accepts -f '%e'.  Otherwise,
      use Unix.gettimeofday.  The latter has more overhead (and
      probably less accurate) but is more portable.  *)
   let spawn_wait file args stdin stdout stderr =
     let pid = Unix.create_process_env file args env stdin stdout stderr in
+    let cmd () = env.(0) ^ " " ^ String.concat " " (Array.to_list args) in
     let _, status = Unix.waitpid [] pid in
     match status with
     | Unix.WEXITED 0 -> ()
-    | Unix.WEXITED n -> failwith ("Command exited with nonzero status "
-                                  ^ string_of_int n)
-    | Unix.WSIGNALED n -> failwith ("Command killed by signal "
-                                    ^ string_of_int n)
+    | Unix.WEXITED n ->
+       dump_env env;
+       failwith ("Command " ^ cmd () ^ " exited with nonzero status "
+                 ^ string_of_int n)
+    | Unix.WSIGNALED n ->
+       dump_env env;
+       failwith ("Command " ^ cmd ()
+                 ^ " killed by signal "
+                 ^ string_of_int n)
     | Unix.WSTOPPED n ->
-      failwith ("Command stopped by signal - execution time "
-                ^ "measurement is compromised.")
+       dump_env env;
+       failwith ("Command stopped by signal - execution time "
+                 ^ "measurement is compromised.")
   in
   let with_gettimeofday =
     let args = Array.append [|executable|] args in
