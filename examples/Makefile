@@ -87,8 +87,8 @@ tests.opt.log tests.byte.log: tests.%.log: $(C_EXAMPLES) \
 	    grep "^ *[0-9]* $$s" $$s/$@;	\
 	done | grep -vq '^ *0'
 
-NATIVE_TITLE='OCaml native code performance over C ($(CC) $(CFLAGS))'
-BYTE_TITLE  ='OCaml byte code performance over C ($(CC) $(CFLAGS))'
+NATIVE_TITLE='OCaml ($(OCAML_VERSION)) native code performance over C ($(CC) $(CFLAGS))'
+BYTE_TITLE  ='OCaml ($(OCAML_VERSION)) byte code performance over C ($(CC) $(CFLAGS))'
 
 UTILS=utils
 
