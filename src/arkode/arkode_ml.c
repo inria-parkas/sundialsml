@@ -780,7 +780,7 @@ CAMLprim value c_arkode_spils_set_banded_preconditioner (value vsession,
 							 value vmupper,
 							 value vmlower)
 {
-    CAMLparam3 (vsession, vmupper, vmlower);
+    CAMLparam4 (vsession, vneqs, vmupper, vmlower);
     long neqs = Long_val (vneqs);
     int flag = ARKBandPrecInit (ARKODE_MEM_FROM_ML (vsession), neqs,
 			       Long_val (vmupper), Long_val (vmlower));
@@ -1879,7 +1879,7 @@ CAMLprim value c_arkode_set_newton(value varkode_mem)
 
 CAMLprim value c_arkode_set_linear(value varkode_mem, value vtimedepend)
 {
-    CAMLparam1(varkode_mem);
+    CAMLparam2(varkode_mem, vtimedepend);
 
     int flag = ARKodeSetLinear(ARKODE_MEM_FROM_ML(varkode_mem),
 			       Bool_val(vtimedepend));
