@@ -37,10 +37,6 @@ let init_stop_watch executable args =
     Array.of_list ("NUM_REPS=0"::List.filter not_num_reps
                      (Array.to_list (Unix.environment ())))
   in
-  let dump_env env =
-    Printf.fprintf stderr "Environment:\n";
-    Array.iter (fun s -> Printf.fprintf stderr "%s\n" s) env
-  in
 
   (* Use time(1) if one is installed and accepts -f '%e'.  Otherwise,
      use Unix.gettimeofday.  The latter has more overhead (and
@@ -52,16 +48,13 @@ let init_stop_watch executable args =
     match status with
     | Unix.WEXITED 0 -> ()
     | Unix.WEXITED n ->
-       dump_env env;
        failwith ("Command " ^ cmd () ^ " exited with nonzero status "
                  ^ string_of_int n)
     | Unix.WSIGNALED n ->
-       dump_env env;
        failwith ("Command " ^ cmd ()
                  ^ " killed by signal "
                  ^ string_of_int n)
     | Unix.WSTOPPED n ->
-       dump_env env;
        failwith ("Command stopped by signal - execution time "
                  ^ "measurement is compromised.")
   in
