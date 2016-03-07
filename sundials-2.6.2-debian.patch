@@ -1,0 +1,12 @@
+diff -ur sundials-2.6.2-orig/config/FindSUPERLUMT.cmake sundials-2.6.2/config/FindSUPERLUMT.cmake
+--- sundials-2.6.2-orig/config/FindSUPERLUMT.cmake	2015-07-31 02:07:24.000000000 +0200
++++ sundials-2.6.2/config/FindSUPERLUMT.cmake	2016-03-07 11:51:31.824622621 +0100
+@@ -91,4 +91,6 @@
+     FIND_LIBRARY( SUPERLUMT_BLAS_LIBRARIES ${PRE}blas_${POST} ${SUPERLUMT_LIBRARY_DIR} NO_DEFAULT_PATH)
+     set(SUPERLUMT_LIBRARIES ${SUPERLUMT_LIBRARIES} ${SUPERLUMT_BLAS_LIBRARIES})
+     mark_as_advanced(SUPERLUMT_BLAS_LIBRARIES)
+-endif(NOT LAPACK_ENABLE)
+\ No newline at end of file
++else(NOT LAPACK_ENABLE)
++    set(SUPERLUMT_LIBRARIES ${SUPERLUMT_LIBRARIES} -lblas)
++endif(NOT LAPACK_ENABLE)
