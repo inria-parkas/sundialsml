@@ -344,6 +344,7 @@ if [ $? -ne 0 ]; then
     error="${error}\n\tcould not find ocamlc"
     ocaml_path='NOT FOUND'
     ocaml_version=''
+    ocaml_version_info=''
     ocaml_libpath=''
     ocaml_3x=''
     ocaml_has_version_h=''
@@ -366,7 +367,7 @@ else
     esac
 
     ocaml_libpath="${ocaml_path%/}/"
-    ocaml_version=" (${ocaml_version})"
+    ocaml_version_info=" (${ocaml_version})"
 fi
 
 # Check if .opt variants are available.
@@ -955,7 +956,7 @@ LOG=config.log
 printf "\nConfiguration (${version}p${versionp})\n-----------------------\n" \
                                                                        > ${LOG}
 
-printf "  OCaml\t\t\t${ocaml_path}${ocaml_version}\n"	              >> ${LOG}
+printf "  OCaml\t\t\t${ocaml_path}${ocaml_version_info}\n"	      >> ${LOG}
 printf "  Sundials\t\t${sundials_version}${lapack_info}\n"            >> ${LOG}
 printf "    -parallel\t\t${sundialsmpi_info}\n"	                      >> ${LOG}
 printf "    -nvector: pthreads\t${nvecpthreads_info}\n"	              >> ${LOG}
@@ -1025,6 +1026,7 @@ cat ${LOG}
 	 s#@ocaml_3x@#${ocaml_3x}#;
 	 s#@ocamlmklibflags@#${ocamlmklibflags}#;
 	 s#@bounds_checking@#${bounds_checking}#;
+	 s#@ocaml_version@#${ocaml_version}#;
 	 s#@ocamlc@#${ocamlc}#;
 	 s#@ocamlopt@#${ocamlopt}#;
 	 s#@ocamldoc@#${ocamldoc}#;

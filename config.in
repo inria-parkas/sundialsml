@@ -92,6 +92,7 @@ define common
   ${dups}
 endef
 
+OCAML_VERSION = @ocaml_version@
 OCAMLC ?= @ocamlc@
 OCAMLFLAGS += -annot @ocamlflags@
 OCAML_INCLUDE := $(shell $(OCAMLC) -where)
