@@ -102,7 +102,7 @@ perf.opt.log perf.byte.log: perf.%.log: $(C_EXAMPLES)			   \
 				$(UTILS)/perf $(UTILS)/crunchperf	   \
 				$(foreach s,$(PERF_SUBDIRS),$s/perf.%.log)
 	@echo ======================================================================
-	@$(UTILS)/crunchperf -m $(foreach s,$(SUBDIRS),$s/$@) > $@
+	@$(UTILS)/crunchperf -m $(foreach s,$(PERF_SUBDIRS),$s/$@) > $@
 	$(UTILS)/crunchperf -s $@
 	@$(if $(findstring $@,$(MAKECMDGOALS)), \
 	   echo "Note: \"make $(@:.log=.plot)\" can plot this for you.")
