@@ -219,9 +219,7 @@ For {b Debian}-based systems, we found the following worked:
 {ol
     {- {v apt-get install cmake liblapack-dev libopenmpi-dev openmpi-bin libsuitesparse-dev v}}
     {- Optionally download and build SuperLU/MT as described above, since the
-	libsuperlu-dev package does not provide the shared library file.
-       We found that we had to {{:sundials-2.6.2-debian.patch}patch} the
-       Sundials build system to avoid a [WARNING: SUPERLUMT not functional].}
+	libsuperlu-dev package does not provide the shared library file.}
     {- {v mkdir build; cd build v}}
     {- {v cmake -Wno-dev ../sundials-2.6.2 \
 -DOPENMP_ENABLE=1 \
@@ -233,7 +231,8 @@ For {b Debian}-based systems, we found the following worked:
        adding, if necessary,
        {v -DSUPERLUMT_ENABLE=1 \
 -DSUPERLUMT_LIBRARY_DIR=/fullpath/to/SuperLU_MT_2.4/lib \
--DSUPERLUMT_INCLUDE_DIR=/fullpath/to/SuperLU_MT_2.4/SRC v}}
+-DSUPERLUMT_INCLUDE_DIR=/fullpath/to/SuperLU_MT_2.4/SRC \
+-DSUPERLUMT_LIBRARIES=-lblas v}}
     {- Configure Sundials/ML with
 	{v ./configure SUPERLUMT_LIB_PATH=/fullpath/to/SuperLU_MT_2.4/lib v}
        Note that [SUPERLUMT_LIB_PATH] must be registered with [ld]:

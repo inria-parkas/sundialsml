@@ -6,7 +6,6 @@ doc: html/index.html
 	done
 	cp ../superlu_mt_2.4.patch html/
 	cp ../superlu_mt_3.0.patch html/
-	cp ../sundials-2.6.2-debian.patch html/
 
 DOCHTML_PP=$(CPP) $(ML_CPPFLAGS) -DOCAML_3X=$(OCAML_3X)
 DOCHTML_PLUGIN_PP=$(DOCHTML_PP)						\
