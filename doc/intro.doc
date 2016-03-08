@@ -231,7 +231,9 @@ For {b Debian}-based systems, we found the following worked:
        {v -DSUPERLUMT_ENABLE=1 \
 -DSUPERLUMT_LIBRARY_DIR=<full-path-to>/SuperLU_MT_2.4/lib \
 -DSUPERLUMT_INCLUDE_DIR=<full-path-to>/SuperLU_MT_2.4/SRC \
--DSUPERLUMT_LIBRARIES=-lblas v}}
+-DSUPERLUMT_LIBRARIES=-lblas v}
+       If cmake claims that SuperLU_MT is not functional, you might try this
+       {{:sundials-2.6.2-debian.patch}patch}.}
     {- Configure Sundials/ML with
 	{v ./configure SUPERLUMT_LIB_PATH=<full-path-to>/SuperLU_MT_2.4/lib v}
        Note that [SUPERLUMT_LIB_PATH] must be registered with [ld]:
