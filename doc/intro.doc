@@ -208,8 +208,7 @@ dependencies and the right cmake incantation.
 In particular, it can be tricky to get the optional
 {{:http://crd-legacy.lbl.gov/~xiaoye/SuperLU/#superlu_mt}SuperLU/MT}
 library to work.
-We provide patches for {{:superlu_mt_2.4.patch}2.4} and
-{{:superlu_mt_3.0.patch}3.0} that update [make.inc],
+We provide a patch for {{:superlu_mt_2.4.patch}2.4} that updates [make.inc],
 setting [BLASDEF = -DUSE_VENDOR_BLAS] and
 [BLASLIB = -lblas], adding [-fPIC] to the [CC] line, and adding a target to
 build the dynamic library required for linking with OCaml.
