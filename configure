@@ -292,6 +292,7 @@ if [ "${sundials_version}" = "SUNDIALS_PACKAGE_VERSION" ]; then
 else
     case "${sundials_version}" in
 	[0-1].*.* | 2.[0-4].*)
+	    sundials=0
 	    error="${error}\n\tsundials >= 2.5.0 required" ;;
 	2.5.*) sundials=250;;
 	*)  sundials=260
@@ -335,6 +336,17 @@ EOF
     else
         rm -f ./$test_stem*
     fi
+fi
+
+if [ ${sundials} -ge 260 ]; then
+    sundials_at_least_2_6=1
+    sundials_at_least_2_5=1
+elif [ ${sundials} -ge 250 ]; then
+    sundials_at_least_2_6=
+    sundials_at_least_2_5=1
+else
+    sundials_at_least_2_6=
+    sundials_at_least_2_5=
 fi
 
 # Check for OCaml installation (and version)
@@ -1001,6 +1013,8 @@ cat ${LOG}
 	 s#@configure_command@#${configure_command}#;
 	 s#@version@#${version}#;
 	 s#@versionp@#${versionp}#;
+	 s#@sundials_at_least_2_6@#${sundials_at_least_2_6}#;
+	 s#@sundials_at_least_2_5@#${sundials_at_least_2_5}#;
 	 s#@libdir@#${libdir:-${ocaml_libpath}}#;
 	 s#@stubdir@#${stubdir:-${ocaml_libpath}stublibs/}#;
 	 s#@docdir@#${docdir:-${prefix}share/doc/sundialsml/}#;
