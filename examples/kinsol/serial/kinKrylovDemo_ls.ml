@@ -402,6 +402,11 @@ let print_output cc =
   done;
   printf("\n\n")
 
+let last_preconditioner =
+  match Sundials.sundials_version with
+  | 2,5,_ -> Use_Sptfqmr
+  | _ -> Use_Spfgmr
+
 (* Print final statistics contained in iopt *)
 let print_final_stats kmem linsolver =
   let open Kinsol in
@@ -416,12 +421,8 @@ let print_final_stats kmem linsolver =
   printf "nni    = %5d    nli   = %5d\n" nni nli;
   printf "nfe    = %5d    nfeSG = %5d\n" nfe nfeSG;
   printf "nps    = %5d    npe   = %5d     ncfl  = %5d\n" nps npe ncfl;
-  match Sundials.sundials_version with
-  | 2,5,_ when linsolver <> Use_Sptfqmr ->
+  if linsolver <> last_preconditioner then
     printf "\n=========================================================\n\n"
-  | _ when linsolver <> Use_Spfgmr ->
-    printf "\n=========================================================\n\n"
-  | _ -> ()
 
 (* MAIN PROGRAM *)
 let main () =
