@@ -88,7 +88,7 @@ let func (udata : RealArray.t) (fdata : RealArray.t) =
   fdata.{5} <- l2' -. x2 +. ub.{1}
 
 (* Initial guesses *)
-let set_initial_guess1 udata =
+let set_initial_guess1 (udata : RealArray.t) =
   (* There are two known solutions for this problem *)
   (* this init. guess should take us to (0.29945; 2.83693) *)
   let x1 = lb.{0} in
@@ -100,7 +100,7 @@ let set_initial_guess1 udata =
   udata.{4} <- x2 -. lb.{1};
   udata.{5} <- x2 -. ub.{1}
 
-let set_initial_guess2 udata =
+let set_initial_guess2 (udata : RealArray.t) =
   (* There are two known solutions for this problem *)
   (* this init. guess should take us to (0.5; 3.1415926) *)
   let x1 = pt5 *. (lb.{0} +. ub.{0}) in
@@ -120,15 +120,8 @@ let print_header fnormtol scsteptol =
   printf "  fnormtol  = %10.6g\n  scsteptol = %10.6g\n" fnormtol scsteptol
 
 (* Print solution *)
-let print_output u = printf " %8.6g  %8.6g\n" u.{0} u.{1}
-
-let print_string_5d s i =
-  print_string s;
-  if i < 10 then print_string "    "
-  else if i < 100 then print_string "   "
-  else if i < 1000 then print_string "  "
-  else if i < 10000 then print_string " ";
-  print_int i
+let print_output (u : RealArray.t) =
+  printf " %8.6g  %8.6g\n" u.{0} u.{1}
 
 (* Print final statistics contained in iopt *)
 (* For high NUM_REPS, the cost of OCaml printf becomes important! *)
@@ -139,11 +132,8 @@ let print_final_stats kmem =
   let nje  = Dls.get_num_jac_evals kmem in
   let nfeD = Dls.get_num_func_evals kmem in
   print_string "Final Statistics:\n";
-  print_string_5d "  nni = " nni;
-  print_string_5d "    nfe  = " nfe;
-  print_string_5d " \n  nje = " nje;
-  print_string_5d "    nfeD = " nfeD;
-  print_string " \n"
+  printf "  nni = %5d    nfe  = %5d \n  nje = %5d    nfeD = %5d \n"
+    nni nfe nje nfeD
 
 (* MAIN PROGRAM *)
 let solve_it kmem u s glstr mset =
