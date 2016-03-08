@@ -269,6 +269,11 @@ only enabled if Sundials was built with them.
 Parallel nvectors and Band-Block-Diagonal (BBD) solvers
 are only enabled if Sundials was built with them and OCamlMPI is available.
 
+Under older versions of Sundials (2.5.0), the comparison of examples will
+only function correctly if the Sundials sources are
+{{:sundials-2.5.0.patch}patched} and configured with
+[--enable-examples] and [--enable-shared].
+
 {3:opam Opam}
 
 The easiest way to use the library is to install Sundials using a package
