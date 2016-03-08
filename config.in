@@ -34,7 +34,7 @@ MPICC = @mpicc@
 MPIRUN = @mpirun@
 MPI_ENABLED=@ocamlmpi_enabled@
 
-MPI_LIBLINK= -lsundials_nvecparallel
+MPI_LIBLINK=-lsundials_nvecparallel
 
 LIB_PATH = $(sort @sundials_lib_path@ @superlumt_lib_path@ @klu_lib_path@)
 INC_PATH = @sundials_inc_path@

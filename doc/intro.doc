@@ -288,9 +288,17 @@ Sundials/ML will function correctly but with less features.
     {- {{:http://computation.llnl.gov/casc/sundials/download/download.php}Download}
         and manually install Sundials, or use a package manager:
 	{ul
-	    {- Debian/Ubuntu (without parallelism):
+	    {- Debian/Ubuntu (version 2.5.0 without parallelism):
 		    [apt-get install libsundials-serial-dev]}
-	    {- Mac OS X: [brew install sundials] / [port install sundials]}
+	    {- Fedora:
+		    [dnf install lapack-devel sundials-devel
+		    sundials-threads-devel sundials-openmpi-devel],
+		and configure Sundials/ML with
+		[MPICC=/usr/lib64/openmpi/bin/mpicc
+		MPIRUN=/usr/lib64/openmpi/bin/mpirun
+		MPI_LIB_PATH=/usr/lib64/openmpi/lib]}
+	    {- Mac OS X (version 2.5.0 without parallelism):
+		[brew install sundials] / [port install sundials]}
 	}}
     {- {i Optionally} run [opam install mpi].}
     {- Run [opam install sundialsml].}

@@ -15,6 +15,8 @@ unset enable_debug
 unset mathjax
 opt_compiler=1
 cflags_openmp=
+unset mpi_lib_path
+unset Lmpi_lib_path
 
 configure_command="$0"
 
@@ -106,6 +108,7 @@ do
 	  OCAMLMPI		Path to OCamlMPI installation
 	  MPICC			Name of the MPI compiler (default: mpicc)
 	  MPIRUN		Name of MPI program launcher (default: mpirun)
+	  MPI_LIB_PATH		Path to include for MPI libraries (optional)
 	  MATHJAX		Local or remote directory containing MathJax.js
 	                        (e.g., MATHJAX=/usr/share/javascript/mathjax)
 
@@ -156,6 +159,9 @@ END_HELP_TEXT
 	mpicc="${value}";;
     MPIRUN)
 	mpirun="${value}";;
+    MPI_LIB_PATH)
+	mpi_lib_path="${value}"
+	Lmpi_lib_path="-L${value}";;
     MATHJAX)
 	mathjax="${value}";;
     *)
@@ -1024,7 +1030,7 @@ cat ${LOG}
 	 s#@cflags_openmp@#${cflags_openmp}#;
 	 s#@ml_cppflags@#${ml_cppflags}#;
 	 s#@ldflags@#${ldflags}#;
-	 s#@sundials_lib_path@#${Lsundials_lib_path}#;
+	 s#@sundials_lib_path@#${Lsundials_lib_path} ${Lmpi_lib_path}#;
 	 s#@sundials_inc_path@#${Isundials_inc_path}#;
 	 s#@superlumt_lib_path@#${Lsuperlumt_lib_path}#;
 	 s#@klu_lib_path@#${Lklu_lib_path}#;
@@ -1072,8 +1078,8 @@ cat ${LOG}
 	 s#@superlumt_mlobj_sens@#${superlumt_mlobj_sens}#;
 	 s#@cc@#${CC}#;
 	 s#@cpp@#${CPP}#;
-	 s#@mpicc@#$mpicc#;
-	 s#@mpirun@#$mpirun#;
+	 s#@mpicc@#${mpicc}#;
+	 s#@mpirun@#${mpirun}#;
 	 s#@mathjax@#${mathjax%/}#;
 	 s#@c_suppress_warnings@#${c_suppress_warnings}#;
 	 s#@XA@#${XA}#;
