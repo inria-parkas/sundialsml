@@ -229,13 +229,13 @@ For {b Debian}-based systems, we found the following worked:
 -DKLU_INCLUDE_DIR=/usr/include/suitesparse v}
        adding, if necessary,
        {v -DSUPERLUMT_ENABLE=1 \
--DSUPERLUMT_LIBRARY_DIR=/fullpath/to/SuperLU_MT_2.4/lib \
--DSUPERLUMT_INCLUDE_DIR=/fullpath/to/SuperLU_MT_2.4/SRC \
+-DSUPERLUMT_LIBRARY_DIR=<full-path-to>/SuperLU_MT_2.4/lib \
+-DSUPERLUMT_INCLUDE_DIR=<full-path-to>/SuperLU_MT_2.4/SRC \
 -DSUPERLUMT_LIBRARIES=-lblas v}}
     {- Configure Sundials/ML with
-	{v ./configure SUPERLUMT_LIB_PATH=/fullpath/to/SuperLU_MT_2.4/lib v}
+	{v ./configure SUPERLUMT_LIB_PATH=<full-path-to>/SuperLU_MT_2.4/lib v}
        Note that [SUPERLUMT_LIB_PATH] must be registered with [ld]:
-	{v export LD_LIBRARY_PATH=/fullpath/to/SuperLU_MT_2.4/lib:$LD_LIBRARY_PATH v}}
+	{v export LD_LIBRARY_PATH=<full-path-to>/SuperLU_MT_2.4/lib:$LD_LIBRARY_PATH v}}
 }
 
 For {b OS X}, we found the following worked:
@@ -255,10 +255,10 @@ For {b OS X}, we found the following worked:
 -DKLU_ENABLE=1 -DKLU_LIBRARY_DIR=/usr/local/lib -DKLU_INCLUDE_DIR=/usr/local/include v}
        adding, if necessary,
        {v -DSUPERLUMT_ENABLE=1 \
--DSUPERLUMT_LIBRARY_DIR=/fullpath/to/SuperLU_MT_2.4/lib \
--DSUPERLUMT_INCLUDE_DIR=/fullpath/to/SuperLU_MT_2.4/SRC v}}
+-DSUPERLUMT_LIBRARY_DIR=<full-path-to>/SuperLU_MT_2.4/lib \
+-DSUPERLUMT_INCLUDE_DIR=<full-path-to>/SuperLU_MT_2.4/SRC v}}
     {- Configure Sundials/ML with
-	{v ./configure SUPERLUMT_LIB_PATH=/fullpath/to/SuperLU_MT_2.4/lib v}}
+	{v ./configure SUPERLUMT_LIB_PATH=<full-path-to>/SuperLU_MT_2.4/lib v}}
 }
 
 The [configure] script detects and automatically enables optional
