@@ -1,30 +1,39 @@
 version = VERSION
 description = "OCaml interface to Sundials"
 requires = "bigarray"
-archive(byte) = "sundials.cma"
-archive(native) = "sundials.cmxa"
+archive(byte,-no_sens) = "sundials.cma"
+archive(byte,no_sens) = "sundials_no_sens.cma"
+archive(native,-no_sens) = "sundials.cmxa"
+archive(native,no_sens) = "sundials_no_sens.cmxa"
 package "no_sens" (
   version = VERSION
   description = "Sundials/ML without sensitivity analysis (CVODE, IDA, KINSOL)"
-  requires = "bigarray"
-  archive(byte) = "sundials_no_sens.cma"
-  archive(native) = "sundials_no_sens.cmxa"
-#ifdef MPI_ENABLED
-  package "mpi" (
-    version = VERSION
-    requires = "sundialsml.no_sens mpi"
-    description = "Add MPI support to sundials.no_sens"
-    archive(byte) = "sundials_mpi.cma"
-    archive(native) = "sundials_mpi.cmxa"
-  )
-#endif
+  requires = "sundialsml"
 )
 #ifdef MPI_ENABLED
 package "mpi" (
   version = VERSION
-  description = "Add MPI support to Sundials/ML"
-  requires = "sundialsml mpi"
+  requires = "sundialsml"
+  description = "Add MPI support to sundials"
   archive(byte) = "sundials_mpi.cma"
   archive(native) = "sundials_mpi.cmxa"
+)
+#endif
+#ifdef PTHREADS_ENABLED
+package "pthreads" (
+  version = VERSION
+  requires = "sundialsml"
+  description = "Add Pthreads support to sundials"
+  archive(byte) = "sundials_pthreads.cma"
+  archive(native) = "sundials_pthreads.cmxa"
+)
+#endif
+#ifdef OPENMP_ENABLED
+package "openmp" (
+  version = VERSION
+  requires = "sundialsml"
+  description = "Add OpenMP support to sundials"
+  archive(byte) = "sundials_openmp.cma"
+  archive(native) = "sundials_openmp.cmxa"
 )
 #endif

@@ -181,7 +181,11 @@ idas/idas_superlumt_ml.o: idas/idas_superlumt_ml.c
 # Other files
 
 META: META.in ../config
-	$(CPP) $(if $(MPI_ENABLED),-DMPI_ENABLED) -DVERSION=\"$(VERSION)\" $< \
+	$(CPP) -DVERSION=\"$(VERSION)\"				\
+	    $(if $(MPI_ENABLED),-DMPI_ENABLED)			\
+	    $(if $(PTHREADS_ENABLED),-DPTHREADS_ENABLED)	\
+	    $(if $(OPENMP_ENABLED),-DOPENMP_ENABLED)		\
+	    $<							\
 	    | grep -v '^#' > $@
 
 ### Install / Uninstall
