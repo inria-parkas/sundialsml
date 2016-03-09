@@ -37,10 +37,10 @@ let abbreviate name =
      ("^kinsol", "kin");
      ("^arkode", "ark");
      ("/serial/", "--ser--");
-     ("/C_serial/", "--ser--");
+     ("/C_serial/", "--C_ser--");
      ("/parallel/", "--par--");
-     ("/C_parallel/", "--par--");
-     ("/C_openmp/", "--omp--");
+     ("/C_parallel/", "--C_par--");
+     ("/C_openmp/", "--C_omp--");
     ]
 let expand name =
   List.fold_left
