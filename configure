@@ -5,7 +5,7 @@ version=2.6.2
 versionp=0
 contact='tim@tbrk.org'
 
-prefix=/usr/local/
+unset prefix
 unset libdir
 unset stubdir
 unset docdir
@@ -20,16 +20,6 @@ unset Lmpi_lib_path
 
 configure_command="$0"
 
-case `uname -s` in
-    Darwin)
-	# OS X does not search /usr/local by default.
-	sundials_lib_path=/usr/local/lib
-	Lsundials_lib_path=-L${sundials_lib_path}
-	sundials_inc_path=/usr/local/include
-	Isundials_inc_path=-I${sundials_inc_path}
-	;;
-esac
-
 for option in "$@"
 do
     # Try to quote configure_command so that it can be cut-and-pasted to the
@@ -41,7 +31,16 @@ do
 
     case "$name" in
     --prefix)
-	prefix="${value%/}/";;
+	prefix="${value%/}/"
+	if [ "x${sundials_lib_path}" = x ]; then
+	    sundials_lib_path="${prefix}lib/"
+	    Lsundials_lib_path="-L${sundials_lib_path}"
+	fi
+	if [ "x${sundials_inc_path}" = x ]; then
+	    sundials_inc_path="${prefix}include/"
+	    Isundials_inc_path="-I${sundials_inc_path}"
+	fi
+	;;
     --libdir)
 	libdir="${value%/}/";;
     --stubdir)
@@ -173,6 +172,24 @@ CC=${CC:-cc}
 CPP=${CPP:-cpp}
 LAPACKLIB=${LAPACKLIB:-"-llapack"}
 error=""
+
+if [ "x${prefix}" = x ]; then
+    prefix=/usr/local/
+
+    case `uname -s` in
+	Darwin)
+	    # OS X does not search /usr/local by default.
+	    if [ "x${sundials_lib_path}" = x ]; then
+		sundials_lib_path="${prefix}lib/"
+		Lsundials_lib_path="-L${sundials_lib_path}"
+	    fi
+	    if [ "x${sundials_inc_path}" = x ]; then
+		sundials_inc_path="${prefix}include/"
+		Isundials_inc_path="-I${sundials_inc_path}"
+	    fi
+	    ;;
+    esac
+fi
 
 bounds_checking=${bounds_checking:-1}
 
@@ -906,7 +923,7 @@ if [ "x$EXAMPLESROOT" = x ]; then
     if [ "x${prefix_info}" != x ]; then
 	EXAMPLESROOT="${prefix_info}/examples"
     elif [ "x${sundials_lib_path}" = x ]; then
-	EXAMPLESROOT=/usr/local/examples
+	EXAMPLESROOT=${prefix}examples
     else
 	# Try to infer it from LIB_PATH.
 	EXAMPLESROOT=`echo ${sundials_lib_path} | sed -e 's/lib$/examples/'`
