@@ -153,7 +153,7 @@ SET_COMMON="$SET_COMMON; set yrange [0:${YMAX}]; set y2range [0:${Y2MAX}]"
 SET_COMMON="$SET_COMMON; set xtics rotate by -90 left"
 SET_COMMON="$SET_COMMON; files='$@'"
 SET_COMMON="$SET_COMMON; BOXCOLORS='${BOXCOLORS}'; DOTCOLORS='${DOTCOLORS}'"
-SET_COMMON="$SET_COMMON; DOTSIZE='${DOTSIZE:-0.7}'; DOTTYPE='${DOTTYPE:-7}'"
+SET_COMMON="$SET_COMMON; DOTSIZE=${DOTSIZE:-0.7}; DOTTYPE=${DOTTYPE:-7}"
 
 # C median points must be plotted after boxes, but their key looks
 # better above the boxes' key.
