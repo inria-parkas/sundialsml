@@ -235,8 +235,8 @@ For {b Debian}-based systems, we found the following worked:
        If cmake claims that SuperLU_MT is not functional, you might try this
        {{:sundials-2.6.2-debian.patch}patch}.}
     {- Configure Sundials/ML with
-	{v ./configure SUPERLUMT_LIB_PATH=<full-path-to>/SuperLU_MT_2.4/lib v}
-       Note that [SUPERLUMT_LIB_PATH] must be registered with [ld]:
+	{v ./configure SUPERLUMT_LIBRARY_DIR=<full-path-to>/SuperLU_MT_2.4/lib v}
+       Note that [SUPERLUMT_LIBRARY_DIR] must be registered with [ld]:
 	{v export LD_LIBRARY_PATH=<full-path-to>/SuperLU_MT_2.4/lib:$LD_LIBRARY_PATH v}}
 }
 
@@ -260,7 +260,7 @@ For {b OS X}, we found the following worked:
 -DSUPERLUMT_LIBRARY_DIR=<full-path-to>/SuperLU_MT_2.4/lib \
 -DSUPERLUMT_INCLUDE_DIR=<full-path-to>/SuperLU_MT_2.4/SRC v}}
     {- Configure Sundials/ML with
-	{v ./configure SUPERLUMT_LIB_PATH=<full-path-to>/SuperLU_MT_2.4/lib v}}
+	{v ./configure SUPERLUMT_LIBRARY_DIR=<full-path-to>/SuperLU_MT_2.4/lib v}}
 }
 
 The [configure] script detects and automatically enables optional
@@ -296,7 +296,7 @@ Sundials/ML will function correctly but with less features.
 		and configure Sundials/ML with
 		[MPICC=/usr/lib64/openmpi/bin/mpicc
 		MPIRUN=/usr/lib64/openmpi/bin/mpirun
-		MPI_LIB_PATH=/usr/lib64/openmpi/lib]}
+		MPI_LIBRARY_DIR=/usr/lib64/openmpi/lib]}
 	    {- Mac OS X (version 2.5.0 without parallelism):
 		[brew install sundials] / [port install sundials]}
 	}}

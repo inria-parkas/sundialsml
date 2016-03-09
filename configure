@@ -98,17 +98,17 @@ do
 
 	Optional settings:
 	  OCAMLROOT		Path to OCaml installation
-	  SUNDIALS_LIB_PATH	Path to Sundials libraries (for linking)
-	  SUNDIALS_INC_PATH	Path to Sundials header files (for compiling)
-	  SUPERLUMT_LIB_PATH	Path to SuperLU_MT libraries
-	  KUL_LIB_PATH		Path to KLU (SuiteSparse) libraries
+	  SUNDIALS_LIBRARY_DIR	Path to Sundials libraries (for linking)
+	  SUNDIALS_INCLUDE_DIR	Path to Sundials header files (for compiling)
+	  SUPERLUMT_LIBRARY_DIR	Path to SuperLU_MT libraries
+	  KLU_LIBRARY_DIR	Path to KLU (SuiteSparse) libraries
 	  LAPACKLIB		Command for linking with Lapack (default: -llapack)
 	                        (sometimes also: -lSimTKlapack)
-	  EXAMPLES		Path to installed examples (for comparison with Sundials).
+	  SUNDIALS_EXAMPLES_DIR	Path to installed examples (for comparison with Sundials).
 	  OCAMLMPI		Path to OCamlMPI installation
 	  MPICC			Name of the MPI compiler (default: mpicc)
 	  MPIRUN		Name of MPI program launcher (default: mpirun)
-	  MPI_LIB_PATH		Path to include for MPI libraries (optional)
+	  MPI_LIBRARY_DIR	Path to include for MPI libraries (optional)
 	  MATHJAX		Local or remote directory containing MathJax.js
 	                        (e.g., MATHJAX=/usr/share/javascript/mathjax)
 
@@ -123,23 +123,23 @@ END_HELP_TEXT
     OCAMLROOT)
 	OCAMLROOT="${value%/}/"
 	OCAMLBIN="${OCAMLROOT}bin/";;
-    SUNDIALS_LIB_PATH)
+    SUNDIALS_LIBRARY_DIR)
 	sundials_lib_path="${value%/}"
 	Lsundials_lib_path="-L${sundials_lib_path}";;
-    SUNDIALS_INC_PATH)
+    SUNDIALS_INCLUDE_DIR)
 	sundials_inc_path="${value%/}"
 	Isundials_inc_path="-I${sundials_inc_path}";;
-    SUPERLUMT_LIB_PATH)
+    SUPERLUMT_LIBRARY_DIR)
 	superlumt_lib_path="${value%/}"
 	Lsuperlumt_lib_path="-L${superlumt_lib_path}";;
-    KLU_LIB_PATH)
+    KLU_LIBRARY_DIR)
 	klu_lib_path="${value%/}"
 	Lklu_lib_path="-L${klu_lib_path}";;
     CFLAGS_OPENMP)
         cflags_openmp="${value}";;
     LAPACKLIB)
 	LAPACKLIB="${value}";;
-    EXAMPLES)
+    SUNDIALS_EXAMPLES_DIR)
 	EXAMPLESROOT="${value}";;
     CPPFLAGS)
         cppflags="${value}";;
@@ -159,7 +159,7 @@ END_HELP_TEXT
 	mpicc="${value}";;
     MPIRUN)
 	mpirun="${value}";;
-    MPI_LIB_PATH)
+    MPI_LIBRARY_DIR)
 	mpi_lib_path="${value}"
 	Lmpi_lib_path="-L${value}";;
     MATHJAX)
@@ -735,7 +735,7 @@ EOF
 		compile_cmd="$CC $test_stem.c ${superlumt_libs} ${blas_libs} ${Lsuperlumt_lib_path} -o ${test_stem}${XX}"
 		if ! eval "${compile_cmd}" >/dev/null 2>&1
                 then
-                    error="${error}\n\tCan't link to SuperLU_MT.  You may have to specify SUPERLUMT_LIB_PATH."
+                    error="${error}\n\tCan't link to SuperLU_MT.  You may have to specify SUPERLUMT_LIBRARY_DIR."
                     error="${error}\n\tSaved test code as ${test_stem}.c"
                     error="${error}\n\tCompilation command was: ${compile_cmd}"
                 else
