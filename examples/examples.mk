@@ -260,8 +260,9 @@ perf.byte.log perf.opt.log: perf.%.log: $(ENABLED_EXAMPLES:.ml=.%.perf)       \
 	$(UTILS)/crunchperf -m $(filter-out $(UTILS)/crunchperf,$^) > $@
 	$(UTILS)/crunchperf -s $@
 
-NATIVE_TITLE='OCaml native code performance over C ($(CC) $(CFLAGS))'
-BYTE_TITLE  ='OCaml byte code performance over C ($(CC) $(CFLAGS))'
+C_TITLE=C ($(CC) $(filter-out -I% -DNDEBUG=1,$(CFLAGS)))
+NATIVE_TITLE='OCaml ($(OCAML_VERSION)) native code performance over $(C_TITLE)'
+BYTE_TITLE  ='OCaml ($(OCAML_VERSION)) byte code performance over $(C_TITLE)'
 PLOTTYPES=jpg png pdf eps
 
 perf.opt.plot: perf.opt.log

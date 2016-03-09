@@ -87,9 +87,6 @@ tests.opt.log tests.byte.log: tests.%.log: $(C_EXAMPLES) \
 	    grep "^ *[0-9]* $$s" $$s/$@;	\
 	done | grep -vq '^ *0'
 
-NATIVE_TITLE='OCaml ($(OCAML_VERSION)) native code performance over C ($(CC) $(CFLAGS))'
-BYTE_TITLE  ='OCaml ($(OCAML_VERSION)) byte code performance over C ($(CC) $(CFLAGS))'
-
 UTILS=utils
 
 $(UTILS)/perf: $(UTILS)/perf.ml
@@ -109,8 +106,10 @@ perf.opt.log perf.byte.log: perf.%.log: $(C_EXAMPLES)			   \
 
 reps: $(foreach s,$(SUBDIRS),$s/reps)
 
-NATIVE_TITLE='OCaml native code performance over C ($(CC) $(CFLAGS))'
-BYTE_TITLE  ='OCaml byte code performance over C ($(CC) $(CFLAGS))'
+C_TITLE=C ($(CC) $(filter-out -I% -DNDEBUG=1,$(CFLAGS)))
+NATIVE_TITLE='OCaml ($(OCAML_VERSION)) native code performance over $(C_TITLE)'
+BYTE_TITLE  ='OCaml ($(OCAML_VERSION)) byte code performance over $(C_TITLE)'
+
 PLOTTYPES=jpg png pdf eps
 
 perf.opt.plot: perf.opt.log
