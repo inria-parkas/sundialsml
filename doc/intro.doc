@@ -195,7 +195,7 @@ appropriate [init] or [reinit] functions to configure sessions.
 The dependencies of Sundials/ML are
 - {{:http://caml.inria.fr/ocaml/}OCaml} {b 3.12.1 or greater},
 - {{:http://computation.llnl.gov/casc/sundials/}Sundials} {b {var version}}
-  (compiles with 2.5.0 onwards, with less features),
+  (compiles with 2.5.0 onwards with less features),
 - {e Optionally}:
   {{:https://forge.ocamlcore.org/projects/ocamlmpi/}OCamlMPI} {b 1.01}.
 
@@ -343,9 +343,9 @@ Programs are compiled by specifying where Sundials/ML is installed, e.g.,
     {- or [-I `opam config var lib`/sundialsml],}
     {- or [ocamlfind ... -package sundialsml],}}
 and including [bigarray.cma] and [sundials.cma], for example:
-{C {[ocamlc -o myprog.byte -I +sundialsml bigarray.cma sundials.cma myprog.ml]}}
+{v ocamlc -o myprog.byte -I +sundialsml bigarray.cma sundials.cma myprog.ml v}
 or the [.cmxa] versions:
-{C {[ocamlopt -o myprog.opt -I +sundialsml bigarray.cmxa sundials.cmxa myprog.ml]}}
+{v ocamlopt -o myprog.opt -I +sundialsml bigarray.cmxa sundials.cmxa myprog.ml v}
 
 The [sundials.cma/.cmxa] files link against the libraries
 [libsundials_cvodes] and [libsundials_idas]. The code in these libraries
@@ -354,37 +354,48 @@ should give the same results as that in those without sensitivity analysis
 even though they are compiled from distinct source files. The
 [sundials_no_sens.cma/cmxa] files, on the other hand, link against the
 libraries [libsundials_cvode] and [libsundials_ida] and thus do not include the
-functionality in {!Cvodes} or {!Idas}. Both sets of files link against
-[libsundials_kinsol], [libsundials_arkode], and [libsundials_nvecserial]
-(and, if available, [libsundials_nvecpthreads] and [libsundials_nvecopenmp]).
+functionality in {!Cvodes} or {!Idas}.
+Both sets of files link against
+[libsundials_kinsol], [libsundials_arkode], and [libsundials_nvecserial].
 
 The parallel features—in the {!Nvector_parallel}, {!Cvode_bbd},
 {!Cvodes_bbd}, {!Ida_bbd}, {!Idas_bbd}, {!Kinsol_bbd}, and {!Arkode_bbd}
 modules—require the
 additional inclusions of [mpi.cma] and [sundials_mpi.cma]. So, for example:
-{C {[ocamlc -o myprog.byte -I +sundialsml bigarray.cma mpi.cma sundials.cma sundials_mpi.cma myprog.ml]}}
+{v ocamlc -o myprog.byte -I +sundialsml bigarray.cma mpi.cma sundials.cma \
+					sundials_mpi.cma myprog.ml v}
 or with the [.cmxa] versions:
-{C {[ocamlopt -o myprog.opt -I +sundialsml bigarray.cmxa mpi.cmxa sundials.cmxa sundials_mpi.cmxa myprog.ml]}}
-The [sundials_mpi.cma/.cmxa] files link against the
+{v ocamlopt -o myprog.opt -I +sundialsml bigarray.cmxa mpi.cmxa sundials.cmxa \
+					 sundials_mpi.cmxa myprog.ml v}
+The [sundials_mpi.cm(x)a] files link against the
 [libsundials_nvecparallel] library.
 
-Under [ocamlfind], the sensitivity and parallel features
-are selected via subpackages.  For example, for both:
-{C {[ocamlfind ocamlopt -package sundialsml.mpi -linkpkg -o mysim.opt mysim.ml]}}
+The [Nvector_openmp] and [Nvector_pthreads] modules require the additional
+inclusion, respectively, of [sundials_openmp.cm(x)a] and
+[sundials_pthreads.cm(x)a].
+
+Under [ocamlfind], the parallel, OpenMP, and Pthreads features
+are selected via subpackages, and the use of the libraries without
+sensitivity analysis via a predicate.
+For example, for everything:
+{v ocamlfind ocamlopt -package sundialsml.mpi,sundials.pthreads,sundials.openmp \
+				-linkpkg -o mysim.opt mysim.ml v}
 The available packages and the features they select are:
 {ul
-    {- [sundialsml]: sensitivity ON, parallel OFF,}
-    {- [sundialsml.mpi]: sensitivity ON, parallel ON,}
-    {- [sundialsml.no_sens]: sensitivity OFF, parallel OFF, and}
-    {- [sundialsml.no_sens.mpi]: sensitivity OFF, parallel ON.}}
+    {- [sundialsml]: basic features; add [-predicate no_sens] to disable
+    sensitivity, }
+    {- [sundialsml.mpi]: additionally include parallel features,}
+    {- [sundialsml.openmp]: additionally include OpenMP nvectors,}
+    {- [sundialsml.pthreads]: additionally include Pthreads nvectors.}}
 
 {3:toplevel From the toplevel}
 
 Sundials/ML can also be used from the OCaml interactive loop, either by the
 invocation:
-{C {[ocaml bigarray.cma -I +sundialsml sundials.cma]}}
+{v ocaml bigarray.cma -I +sundialsml sundials.cma sundials_openmp.cma v}
 or through [ocamlfind], for example: {[
 #use "topfind";;
+#predicates "no_sens";;	  (* optionally exclude sensitivity code *)
 #require "sundialsml";;
 
 let f t y yd = yd.{0} <- 1.;;
@@ -403,10 +414,10 @@ Printf.printf "\n";;]}
 
 Using parallel features from a toplevel is best done with [ocamlfind]
 by first creating a custom toplevel:
-{C [ocamlfind ocamlmktop -o partop -package sundialsml.mpi,findlib -linkpkg]}
+{v ocamlfind ocamlmktop -o partop -package sundialsml.mpi,findlib -linkpkg v}
 
 and then launching it in multiple terminals:
-{C [mpirun -np 2 xterm -e ./partop]}
+{v mpirun -np 2 xterm -e ./partop v}
 Here, [2] is the number of processes, [xterm] is the terminal program, and
 [-e ./partop] has each [xterm] execute [./partop].
 As a simple test, paste the following into all terminals: {[
@@ -426,16 +437,16 @@ Printf.printf "Sum of abs. = %f\n" (Nvector_parallel.Ops.n_vl1norm pv);;
 
 {ol
     {- The message
-       {[Fatal error: cannot load shared library dllmlsundials]}
+       {v Fatal error: cannot load shared library dllmlsundials v}
        can usually be fixed by updating [LD_LIBRARY_PATH], for example,
-       {[export LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH}]}
+       {v export LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH} v}
        Otherwise you may have compiled Sundials without
        [--enable-shared].}
     {- The configuration warning
-       {[Couldn't determine C compiler flag for OpenMP.]}
+       {v Couldn't determine C compiler flag for OpenMP. v}
        can usually be eliminated by specifying a compiler that supports OpenMP,
        for example,
-       {[CC=gcc-5 ./configure]}}
+       {v CC=gcc-5 ./configure v}}
 }
 
 
@@ -553,7 +564,7 @@ driven physical systems operation), {{:http://www.inria.fr/}Inria}, and
 the {{:http://www.di.ens.fr/}Departement d'Informatique de l'ENS}.
 
 This library benefits greatly from the OCaml {{:http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.html}Bigarray} and {{:https://forge.ocamlcore.org/projects/ocamlmpi/}MPI}
-libraries, and from {{:https://ocaml.org/}OCaml}'s optimised floating-point
+libraries, and from {{:https://ocaml.org/}OCaml}'s optimized floating-point
 representations and compilation.
 
 This documentation uses {{:http://www.xulforum.org}J. Protzenko}'s

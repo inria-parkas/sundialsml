@@ -45,8 +45,10 @@ DOC_URLS=$(if $(CVODE_DOC_ROOT),-cvode-doc-root "$(CVODE_DOC_ROOT)")	\
 	 $(if $(IDAS_DOC_ROOT),-idas-doc-root "$(IDAS_DOC_ROOT)")	\
 	 $(if $(KINSOL_DOC_ROOT),-kinsol-doc-root "$(KINSOL_DOC_ROOT)")	\
 	 $(if $(MATHJAX_URL),-mathjax "$(MATHJAX_URL)")
-DOC_SOURCES=$(filter-out %_impl.cmi, $(CMI_MAIN))		\
-	    $(CMI_SENS) $(if $(MPI_ENABLED), $(CMI_MPI))
+DOC_SOURCES=$(filter-out %_impl.cmi, $(CMI_MAIN))			\
+	    $(CMI_SENS) $(if $(MPI_ENABLED), $(CMI_MPI))		\
+	    $(if $(OPENMP_ENABLED),../src/nvectors/nvector_openmp.mli)	\
+	    $(if $(PTHREADS_ENABLED),../src/nvectors/nvector_pthreads.mli)
 html/index.html: OCAML_DOC_ROOT="$(OCAML_DOC_ROOT_DEFAULT)"
 html/index.html: INCLUDES += $(MPI_INCLUDES)
 html/index.html: html $(SUNDIALS_DOCS) intro.doc

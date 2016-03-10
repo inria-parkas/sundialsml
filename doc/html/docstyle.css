@@ -360,6 +360,9 @@ center {
 
 pre.verbatim {
    text-align: left;
+   margin-top: .2em;
+   padding-left: 1em;
+   font-weight: normal;
 }
 
 @media print {
