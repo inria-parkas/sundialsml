@@ -5,11 +5,6 @@ archive(byte,-no_sens) = "sundials.cma"
 archive(byte,no_sens) = "sundials_no_sens.cma"
 archive(native,-no_sens) = "sundials.cmxa"
 archive(native,no_sens) = "sundials_no_sens.cmxa"
-package "no_sens" (
-  version = VERSION
-  description = "Sundials/ML without sensitivity analysis (CVODE, IDA, KINSOL)"
-  requires = "sundialsml"
-)
 #ifdef MPI_ENABLED
 package "mpi" (
   version = VERSION
