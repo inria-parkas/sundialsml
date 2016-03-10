@@ -4,9 +4,9 @@ doc: html/index.html
 	for f in cvode_skel.ml ida_skel.ml kinsol_skel.ml; do	\
 	    cp ../examples/ocaml/skeletons/$$f html/;	\
 	done
-	cp ../sundials-2.5.0.patch html/
-	cp ../sundials-2.6.2-superlumt.patch html/
-	cp ../superlu_mt_2.4.patch html/
+	cp ../misc/sundials-2.5.0.patch html/
+	cp ../misc/sundials-2.6.2-superlumt.patch html/
+	cp ../misc/superlu_mt_2.4.patch html/
 
 DOCHTML_PP=$(CPP) $(ML_CPPFLAGS) -DOCAML_3X=$(OCAML_3X)
 DOCHTML_PLUGIN_PP=$(DOCHTML_PP)						\
