@@ -82,7 +82,7 @@ possible (the original HTML documentation is not currently being updated).
 {3:nvector Nvectors}
 
 Sundials defines an abstract interface for vectors and provides default
-serial, parallel, pthreads, and openmp instantiations.
+serial, parallel, Pthreads, and OpenMP instantiations.
 The OCaml interface defines likewise a generic
 {!Nvector.t} type whose type arguments indicate the underlying {e
 data} and {e kind}—the latter may be {!Nvector_serial.kind},
@@ -105,8 +105,8 @@ and the {{:https://forge.ocamlcore.org/projects/ocamlmpi/}OCamlMPI}
 library. Parallel nvectors are only available when Sundials/ML is configured
 to use MPI, as described {{:#install}below}.
 
-The underlying operations of pthreads nvectors, {!Nvector_pthreads}, and
-openmp nvectors, {!Nvector_openmp}, are implemented using multiple threads.
+The underlying operations of Pthreads nvectors, {!Nvector_pthreads}, and
+OpenMP nvectors, {!Nvector_openmp}, are implemented using multiple threads.
 These nvectors can be used anywhere that Serial nvectors can (except for
 the operations in {!Nvector_serial.Ops}).
 
@@ -266,7 +266,7 @@ For {b OS X}, we found the following worked:
 The [configure] script detects and automatically enables optional
 features.  Lapack solvers, like {!Cvode.Dls.lapack_dense}, are enabled
 if Sundials was built with lapack support (see also {!Sundials.lapack_enabled}).
-The KLU and SuperLU_MT solvers, and the pthreads and openmp nvectors are
+The KLU and SuperLU_MT solvers, and the Pthreads and OpenMP nvectors are
 only enabled if Sundials was built with them.
 Parallel nvectors and Band-Block-Diagonal (BBD) solvers
 are only enabled if Sundials was built with them and OCamlMPI is available.
