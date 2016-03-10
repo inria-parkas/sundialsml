@@ -22,7 +22,6 @@
 #include <caml/alloc.h>
 #include <caml/callback.h>
 #include <caml/bigarray.h>
-#include <caml/unixsupport.h>
 
 #ifdef SUNDIALSML_WITHSENS
 /* IDAS (with sensitivity) */

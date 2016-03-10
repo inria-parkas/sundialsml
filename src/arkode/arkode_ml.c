@@ -20,7 +20,6 @@
 #include <caml/callback.h>
 #include <caml/custom.h>
 #include <caml/fail.h>
-#include <caml/unixsupport.h>
 #include <caml/bigarray.h>
 
 /* ARKODE */
