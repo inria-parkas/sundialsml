@@ -90,9 +90,9 @@ do
 	  OCAMLROOT		Path to OCaml installation
 	  SUNDIALS_DIR		Path to Sundials installation
 	  SUNDIALS_LIBRARY_DIR	Path to Sundials libraries (for linking)
-				(default: $$SUNDIALS_DIR/lib)
+	                        (default: \$SUNDIALS_DIR/lib)
 	  SUNDIALS_INCLUDE_DIR	Path to Sundials header files (for compiling)
-				(default: $$SUNDIALS_DIR/include)
+	                        (default: \$SUNDIALS_DIR/include)
 	  SUPERLUMT_LIBRARY_DIR	Path to SuperLU_MT libraries
 	  KLU_LIBRARY_DIR	Path to KLU (SuiteSparse) libraries
 	  LAPACKLIB		Command for linking with Lapack (default: -llapack)
