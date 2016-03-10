@@ -17,6 +17,7 @@ opt_compiler=1
 cflags_openmp=
 unset mpi_lib_path
 unset Lmpi_lib_path
+ocaml_tweaks=
 
 configure_command="$0"
 
@@ -47,8 +48,10 @@ do
     --disable-superlumt)
 	enable_superlumt=0;;
     --enable-debug)
+	ocaml_tweaks="${ocaml_tweaks} debug"
 	enable_debug=1;;
     --unsafe)
+	ocaml_tweaks="${ocaml_tweaks} unsafe"
 	bounds_checking=0;;
     --no-opt-compiler) # not meant for users (under normal circumstances)
 	opt_compiler=0;;
@@ -986,8 +989,8 @@ LOG=config.log
 
 printf "\nConfiguration (${version}p${versionp})\n-----------------------\n" \
                                                                        > ${LOG}
-
-printf "  OCaml\t\t\t${ocaml_path}${ocaml_version_info}\n"	      >> ${LOG}
+printf "  OCaml\t\t\t${ocaml_path}${ocaml_version_info}${ocaml_tweaks}\n"    \
+								      >> ${LOG}
 printf "  Sundials\t\t${sundials_version}${lapack_info}\n"            >> ${LOG}
 printf "    -parallel\t\t${sundialsmpi_info}\n"	                      >> ${LOG}
 printf "    -nvector: pthreads\t${nvecpthreads_info}\n"	              >> ${LOG}
