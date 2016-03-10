@@ -206,58 +206,74 @@ let reaction_jac { n; ep; x } (y : RealArray.t) jac =
     let xr = if i<n-1 then x.{i+1} else 0.0 in
 
     (* set nodal value shortcuts *)
-    let ul = if i>0 then y.{idx (i-1) 0} else 0.0 in
-    let vl = if i>0 then y.{idx (i-1) 1} else 0.0 in
-    let wl = if i>0 then y.{idx (i-1) 2} else 0.0 in
+    let ul, vl, wl =
+      if i > 0 then y.{idx (i-1) 0}, y.{idx (i-1) 1}, y.{idx (i-1) 2} 
+      else 0.0, 0.0, 0.0 in
 
     let uc = y.{idx i 0} in
     let vc = y.{idx i 1} in
     let wc = y.{idx i 2} in
 
-    let ur = if i<n-1 then y.{idx (i+1) 0} else 0.0 in
-    let vr = if i<n-1 then y.{idx (i+1) 1} else 0.0 in
-    let wr = if i<n-1 then y.{idx (i+1) 2} else 0.0 in
+    let ur, vr, wr =
+      if i<n-1 then y.{idx (i+1) 0}, y.{idx (i+1) 1}, y.{idx (i+1) 2}
+      else 0.0, 0.0, 0.0 in
 
-    let u1l = if i>0 then eval(ul,uc,xl,xc,x1(xl,xc)) else 0.0 in
-    let v1l = if i>0 then eval(vl,vc,xl,xc,x1(xl,xc)) else 0.0 in
-    let w1l = if i>0 then eval(wl,wc,xl,xc,x1(xl,xc)) else 0.0 in
-    let u2l = if i>0 then eval(ul,uc,xl,xc,x2(xl,xc)) else 0.0 in
-    let v2l = if i>0 then eval(vl,vc,xl,xc,x2(xl,xc)) else 0.0 in
-    let w2l = if i>0 then eval(wl,wc,xl,xc,x2(xl,xc)) else 0.0 in
-    let u3l = if i>0 then eval(ul,uc,xl,xc,x3(xl,xc)) else 0.0 in
-    let v3l = if i>0 then eval(vl,vc,xl,xc,x3(xl,xc)) else 0.0 in
-    let w3l = if i>0 then eval(wl,wc,xl,xc,x3(xl,xc)) else 0.0 in
+    let u1l, v1l, w1l, u2l, v2l, w2l, u3l, v3l, w3l =
+      if i > 0 then 
+        eval(ul,uc,xl,xc,x1(xl,xc)),
+        eval(vl,vc,xl,xc,x1(xl,xc)),
+        eval(wl,wc,xl,xc,x1(xl,xc)),
+        eval(ul,uc,xl,xc,x2(xl,xc)),
+        eval(vl,vc,xl,xc,x2(xl,xc)),
+        eval(wl,wc,xl,xc,x2(xl,xc)),
+        eval(ul,uc,xl,xc,x3(xl,xc)),
+        eval(vl,vc,xl,xc,x3(xl,xc)),
+        eval(wl,wc,xl,xc,x3(xl,xc))
+      else 0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+    in
 
-    let u1r = if i<n-1 then eval(uc,ur,xc,xr,x1(xc,xr)) else 0.0 in
-    let v1r = if i<n-1 then eval(vc,vr,xc,xr,x1(xc,xr)) else 0.0 in
-    let w1r = if i<n-1 then eval(wc,wr,xc,xr,x1(xc,xr)) else 0.0 in
-    let u2r = if i<n-1 then eval(uc,ur,xc,xr,x2(xc,xr)) else 0.0 in
-    let v2r = if i<n-1 then eval(vc,vr,xc,xr,x2(xc,xr)) else 0.0 in
-    let w2r = if i<n-1 then eval(wc,wr,xc,xr,x2(xc,xr)) else 0.0 in
-    let u3r = if i<n-1 then eval(uc,ur,xc,xr,x3(xc,xr)) else 0.0 in
-    let v3r = if i<n-1 then eval(vc,vr,xc,xr,x3(xc,xr)) else 0.0 in
-    let w3r = if i<n-1 then eval(wc,wr,xc,xr,x3(xc,xr)) else 0.0 in
+    let u1r, v1r, w1r, u2r, v2r, w2r, u3r, v3r, w3r =
+      if i<n-1 then
+        eval(uc,ur,xc,xr,x1(xc,xr)),
+        eval(vc,vr,xc,xr,x1(xc,xr)),
+        eval(wc,wr,xc,xr,x1(xc,xr)),
+        eval(uc,ur,xc,xr,x2(xc,xr)),
+        eval(vc,vr,xc,xr,x2(xc,xr)),
+        eval(wc,wr,xc,xr,x2(xc,xr)),
+        eval(uc,ur,xc,xr,x3(xc,xr)),
+        eval(vc,vr,xc,xr,x3(xc,xr)),
+        eval(wc,wr,xc,xr,x3(xc,xr))
+      else 0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+    in
 
     (* set partial derivative shortcuts *)
-    let dQdf1l = if i>0 then quad(1.0, 0.0, 0.0, xl, xc) else 0.0 in
-    let dQdf2l = if i>0 then quad(0.0, 1.0, 0.0, xl, xc) else 0.0 in
-    let dQdf3l = if i>0 then quad(0.0, 0.0, 1.0, xl, xc) else 0.0 in
-    let chiL1l = if i>0 then chiL(xl,xc,x1(xl,xc)) else 0.0 in
-    let chiL2l = if i>0 then chiL(xl,xc,x2(xl,xc)) else 0.0 in
-    let chiL3l = if i>0 then chiL(xl,xc,x3(xl,xc)) else 0.0 in
-    let chiR1l = if i>0 then chiR(xl,xc,x1(xl,xc)) else 0.0 in
-    let chiR2l = if i>0 then chiR(xl,xc,x2(xl,xc)) else 0.0 in
-    let chiR3l = if i>0 then chiR(xl,xc,x3(xl,xc)) else 0.0 in
+    let dQdf1l, dQdf2l, dQdf3l, chiL1l, chiL2l, chiL3l, chiR1l, chiR2l, chiR3l =
+      if i>0 then
+        quad(1.0, 0.0, 0.0, xl, xc),
+        quad(0.0, 1.0, 0.0, xl, xc),
+        quad(0.0, 0.0, 1.0, xl, xc),
+        chiL(xl,xc,x1(xl,xc)),
+        chiL(xl,xc,x2(xl,xc)),
+        chiL(xl,xc,x3(xl,xc)),
+        chiR(xl,xc,x1(xl,xc)),
+        chiR(xl,xc,x2(xl,xc)),
+        chiR(xl,xc,x3(xl,xc))
+      else 0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+    in
 
-    let dQdf1r = if i<n-1 then quad(1.0, 0.0, 0.0, xc, xr) else 0.0 in
-    let dQdf2r = if i<n-1 then quad(0.0, 1.0, 0.0, xc, xr) else 0.0 in
-    let dQdf3r = if i<n-1 then quad(0.0, 0.0, 1.0, xc, xr) else 0.0 in
-    let chiL1r = if i<n-1 then chiL(xc,xr,x1(xc,xr)) else 0.0 in
-    let chiL2r = if i<n-1 then chiL(xc,xr,x2(xc,xr)) else 0.0 in
-    let chiL3r = if i<n-1 then chiL(xc,xr,x3(xc,xr)) else 0.0 in
-    let chiR1r = if i<n-1 then chiR(xc,xr,x1(xc,xr)) else 0.0 in
-    let chiR2r = if i<n-1 then chiR(xc,xr,x2(xc,xr)) else 0.0 in
-    let chiR3r = if i<n-1 then chiR(xc,xr,x3(xc,xr)) else 0.0 in
+    let dQdf1r, dQdf2r, dQdf3r, chiL1r, chiL2r, chiL3r, chiR1r, chiR2r, chiR3r =
+      if i<n-1 then
+        quad(1.0, 0.0, 0.0, xc, xr),
+        quad(0.0, 1.0, 0.0, xc, xr),
+        quad(0.0, 0.0, 1.0, xc, xr),
+        chiL(xc,xr,x1(xc,xr)),
+        chiL(xc,xr,x2(xc,xr)),
+        chiL(xc,xr,x3(xc,xr)),
+        chiR(xc,xr,x1(xc,xr)),
+        chiR(xc,xr,x2(xc,xr)),
+        chiR(xc,xr,x3(xc,xr))
+      else 0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+    in
 
     (*** evaluate dR/dy at this node ***)
 
