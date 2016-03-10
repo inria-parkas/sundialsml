@@ -36,8 +36,7 @@ Installation
 3. [Start coding!](http://inria-parkas.github.io/sundialsml/#running)
 
 NB: For SuperLU/MT, Sundials/ML requires shared libraries.
-We provide patches for [2.4](superlu_mt_2.4.patch) and
-[3.0](superlu_mt_3.0.patch) to build them.
+We provide a [patch](superlu_mt_2.4.patch) to build them.
 
 Contact
 -------
