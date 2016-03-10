@@ -382,7 +382,7 @@ For example, for everything:
 				-linkpkg -o mysim.opt mysim.ml v}
 The available packages and the features they select are:
 {ul
-    {- [sundialsml]: basic features; add [-predicate no_sens] to disable
+    {- [sundialsml]: basic features; add [-predicates no_sens] to disable
     sensitivity, }
     {- [sundialsml.mpi]: additionally include parallel features,}
     {- [sundialsml.openmp]: additionally include OpenMP nvectors,}
