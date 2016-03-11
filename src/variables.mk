@@ -64,6 +64,8 @@ COBJ_SENS  =	cvodes/cvode_ml_s$(XO)		\
 		cvodes/cvodes_superlumt_ml${XO}	\
 		arkode/arkode_klu_ml$(XO)	\
 		arkode/arkode_superlumt_ml$(XO)	\
+		kinsol/kinsol_klu_ml${XO}	\
+		kinsol/kinsol_superlumt_ml${XO}	\
 		$(KLU_COBJ_SENS)		\
 		$(SUPERLUMT_COBJ_SENS)
 MLOBJ_SENS =	cvodes/cvodes.cmo		\
@@ -81,6 +83,8 @@ COBJ_NO_SENS =	cvode/cvode_ml$(XO)		\
 		cvodes/cvodes_superlumt_ml${XO}	\
 		arkode/arkode_klu_ml$(XO)	\
 		arkode/arkode_superlumt_ml$(XO)	\
+		kinsol/kinsol_klu_ml${XO}	\
+		kinsol/kinsol_superlumt_ml${XO}	\
 		$(KLU_COBJ_NO_SENS)		\
 		$(SUPERLUMT_COBJ_NO_SENS)
 MLOBJ_NO_SENS =

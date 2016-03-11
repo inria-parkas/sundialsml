@@ -11,10 +11,6 @@
  *                                                                     *
  ***********************************************************************/
 
-#include <kinsol/kinsol.h>
-#include <kinsol/kinsol_sparse.h>
-#include <kinsol/kinsol_klu.h>
-
 #include <caml/mlvalues.h>
 #include <caml/alloc.h>
 #include <caml/memory.h>
@@ -25,6 +21,25 @@
 #include "../sundials/sundials_ml.h"
 #include "kinsol_ml.h"
 #include "../lsolvers/sls_ml.h"
+
+#ifndef SUNDIALS_ML_KLU
+CAMLprim value c_kinsol_klu_init (value vkin_mem, value vneqs, value vnnz)
+{ CAMLparam0(); CAMLreturn (Val_unit); }
+
+CAMLprim value c_kinsol_klu_set_ordering (value vkin_mem, value vordering)
+{ CAMLparam0(); CAMLreturn (Val_unit); }
+
+CAMLprim value c_kinsol_klu_reinit (value vkin_mem, value vn, value vnnz,
+				   value vrealloc)
+{ CAMLparam0(); CAMLreturn (Val_unit); }
+
+CAMLprim value c_kinsol_klu_get_num_jac_evals(value vkin_mem)
+{ CAMLparam0(); CAMLreturn (Val_unit); }
+#else
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#include <kinsol/kinsol.h>
+#include <kinsol/kinsol_sparse.h>
+#include <kinsol/kinsol_klu.h>
 
 enum kinsol_klu_ordering_tag {
   VARIANT_CVODE_KLU_AMD     = 0,
@@ -122,3 +137,4 @@ CAMLprim value c_kinsol_klu_get_num_jac_evals(value vkin_mem)
     CAMLreturn(Val_long(r));
 }
 
+#endif
