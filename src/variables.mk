@@ -58,6 +58,10 @@ COBJ_SENS  =	cvodes/cvode_ml_s$(XO)		\
 		idas/ida_ml_s$(XO)		\
 		cvodes/cvodes_ml$(XO)		\
 		idas/idas_ml$(XO)		\
+		cvodes/cvode_klu_ml_s${XO}	\
+		cvodes/cvode_superlumt_ml_s${XO}\
+		cvodes/cvodes_klu_ml${XO}	\
+		cvodes/cvodes_superlumt_ml${XO}	\
 		arkode/arkode_klu_ml$(XO)	\
 		arkode/arkode_superlumt_ml$(XO)	\
 		$(KLU_COBJ_SENS)		\
@@ -73,6 +77,8 @@ COBJ_NO_SENS =	cvode/cvode_ml$(XO)		\
 		ida/ida_ml$(XO)			\
 		cvode/cvode_klu_ml${XO}		\
 		cvode/cvode_superlumt_ml${XO}	\
+		cvodes/cvodes_klu_ml${XO}	\
+		cvodes/cvodes_superlumt_ml${XO}	\
 		arkode/arkode_klu_ml$(XO)	\
 		arkode/arkode_superlumt_ml$(XO)	\
 		$(KLU_COBJ_NO_SENS)		\

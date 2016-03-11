@@ -895,6 +895,85 @@ module Adjoint =
         let get_num_rhs_evals bs = Cvode.Dls.get_num_rhs_evals (tosession bs)
       end
 
+    module Sls =
+      struct
+        include AdjointTypes'.SlsTypes
+
+        type sparse_jac_fn =
+            NoSens of sparse_jac_fn_no_sens
+          | WithSens of sparse_jac_fn_with_sens
+
+        module Klu = struct
+          type ordering = Cvode.Sls.Klu.ordering =
+               Amd
+             | ColAmd
+             | Natural
+
+          external c_klub
+            : 'k serial_session -> int -> int -> int -> bool -> unit
+            = "c_cvodes_klub_init"
+
+          let solver f nnz bs nv =
+            if not Sundials_config.klu_enabled
+              then raise Sundials.NotImplementedBySundialsVersion;
+            let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
+            let session = tosession bs in
+            let parent, which = AdjointTypes.parent_and_which bs in
+            let use_sens = match f with WithSens _ -> true | NoSens _ -> false in
+            c_klub parent which neqs nnz use_sens;
+            session.ls_precfns <- NoPrecFns;
+            match f with
+            | NoSens fns ->
+                session.ls_callbacks <-
+                    BSlsKluCallback { jacfn = fns; smat = None }
+            | WithSens fbs ->
+                session.ls_callbacks <-
+                    BSlsKluCallbackSens { jacfn_sens = fbs; smat_sens = None }
+
+          let set_ordering bs = Cvode.Sls.Klu.set_ordering (tosession bs)
+          let reinit bs = Cvode.Sls.Klu.reinit (tosession bs)
+          let get_num_jac_evals bs
+            = Cvode.Sls.Klu.get_num_jac_evals (tosession bs)
+        end
+
+        module Superlumt = struct
+          type ordering = Cvode.Sls.Superlumt.ordering =
+               Natural
+             | MinDegreeProd
+             | MinDegreeSum
+             | ColAmd
+
+          external c_superlumtb : ('k serial_session * int)
+                                  -> int -> int -> int -> bool -> unit
+            = "c_cvodes_superlumtb_init"
+
+          let solver f ~nnz ~nthreads bs nv =
+            if not Sundials_config.superlumt_enabled
+              then raise Sundials.NotImplementedBySundialsVersion;
+            let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
+            let session = tosession bs in
+            let use_sens =
+              match f with NoSens _ -> false | WithSens _ -> true in
+            c_superlumtb (AdjointTypes.parent_and_which bs)
+                         neqs nnz nthreads use_sens;
+            session.ls_precfns <- NoPrecFns;
+            match f with
+            | NoSens fns ->
+                session.ls_callbacks <-
+                  BSlsSuperlumtCallback { jacfn = fns; smat = None }
+            | WithSens fbs ->
+                session.ls_callbacks <-
+                  BSlsSuperlumtCallbackSens { jacfn_sens = fbs;
+                                              smat_sens = None }
+
+          let set_ordering bs
+            = Cvode.Sls.Superlumt.set_ordering (tosession bs)
+
+          let get_num_jac_evals bs
+            = Cvode.Sls.Superlumt.get_num_jac_evals (tosession bs)
+        end
+      end
+
     module Spils =
       struct
         include SpilsTypes

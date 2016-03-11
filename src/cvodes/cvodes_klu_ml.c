@@ -11,10 +11,6 @@
  *                                                                     *
  ***********************************************************************/
 
-#include <cvodes/cvodes.h>
-#include <cvodes/cvodes_sparse.h>
-#include <cvodes/cvodes_klu.h>
-
 #include <caml/mlvalues.h>
 #include <caml/alloc.h>
 #include <caml/memory.h>
@@ -26,6 +22,16 @@
 #include "../cvode/cvode_ml.h"
 #include "cvodes_ml.h"
 #include "../lsolvers/sls_ml.h"
+
+#ifndef SUNDIALS_ML_KLU
+CAMLprim value c_cvodes_klub_init (value vparent, value vwhich,
+				   value vneqs, value vnnz, value vusesens)
+{ CAMLparam0(); CAMLreturn (Val_unit); }
+#else
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#include <cvodes/cvodes.h>
+#include <cvodes/cvodes_sparse.h>
+#include <cvodes/cvodes_klu.h>
 
 static int jacfn_nosens( /* CVSlsSparseJacFnB */
     realtype t,
@@ -140,3 +146,4 @@ CAMLprim value c_cvodes_klub_init (value vparent, value vwhich,
     CAMLreturn (Val_unit);
 }
 
+#endif
