@@ -384,7 +384,7 @@ The available packages and the features they select are:
 {ul
     {- [sundialsml]: basic features; add [-predicates no_sens] to disable
     sensitivity, }
-    {- [sundialsml.mpi]: additionally include parallel features,}
+    {- [sundialsml.mpi]: additionally include MPI-based parallel nvectors,}
     {- [sundialsml.openmp]: additionally include OpenMP nvectors,}
     {- [sundialsml.pthreads]: additionally include Pthreads nvectors.}}
 
@@ -412,8 +412,8 @@ Printf.printf "%e: " t';
 Sundials.RealArray.iter (Printf.printf "\t%e") y;
 Printf.printf "\n";;]}
 
-Using parallel features from a toplevel is best done with [ocamlfind]
-by first creating a custom toplevel:
+Using MPI from a toplevel is best done with [ocamlfind] by first creating a
+custom toplevel:
 {v ocamlfind ocamlmktop -o partop -package sundialsml.mpi,findlib -linkpkg v}
 
 and then launching it in multiple terminals:
