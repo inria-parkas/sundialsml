@@ -92,6 +92,9 @@ uninstall:
 distclean clean:
 	-@$(RM) -f html/*.html sundials_doc.cmxs sundials_doc.cma
 	-@$(RM) -f dochtml.cmo dochtml.cmx dochtml.cmi dochtml.o
+	-@$(RM) -f html/sundials-2.5.0.patch
+	-@$(RM) -f sundials-2.6.2-superlumt.patch
+	-@$(RM) -f html/superlu_mt_2.4.patch
 
 depend: .depend
 .depend:
