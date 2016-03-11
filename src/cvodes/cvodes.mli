@@ -1226,7 +1226,7 @@ module Adjoint :
 
         @nocvodes <node> The SLS modules *)
     module Sls :
-      sig
+      sig (* {{{ *)
         (** Callback functions that compute sparse approximations to a Jacobian
             matrix without forward sensitivites. In the call [sparse_jac_fn arg
             jac], [arg] is a {!Cvodes.Adjoint.jacobian_arg} with three work
@@ -1374,7 +1374,7 @@ module Adjoint :
           val get_num_jac_evals : 'k serial_bsession -> int
 
         end (* }}} *)
-      end
+      end (* }}} *)
 
     (** Scaled Preconditioned Iterative Linear Solvers.
 

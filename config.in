@@ -68,12 +68,7 @@ CFLAGS_OPENMP = @cflags_openmp@
 OPENMP_LIBLINK = -lsundials_nvecopenmp @cflags_openmp@
 
 KLU_ENABLED = @klu_enabled@
-KLU_COBJ_SENS = @klu_cobj_sens@
-KLU_MLOBJ_SENS = @klu_mlobj_sens@
-
 SUPERLUMT_ENABLED = @superlumt_enabled@
-SUPERLUMT_COBJ_NO_SENS = @superlumt_cobj_no_sens@
-SUPERLUMT_MLOBJ_SENS = @superlumt_mlobj_sens@
 
 define common
   $(eval seen :=)
