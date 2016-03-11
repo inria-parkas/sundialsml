@@ -14,7 +14,8 @@ EXAMPLES_SINCE_2_5 = kinFerTron_dns.ml		\
 		     kinRoboKin_dns_alt.ml
 
 EXAMPLES_SINCE_2_6 = kinRoberts_fp.ml		\
-		     kinLaplace_picard_bnd.ml
+		     kinLaplace_picard_bnd.ml   \
+		     $(if $(SUPERLUMT_ENABLED),kinRoboKin_slu.ml)
 
 EXAMPLES = $(EXAMPLES_SINCE_2_5) $(EXAMPLES_SINCE_2_6)
 
