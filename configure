@@ -786,7 +786,7 @@ if [ "x${mpi_lib_path}" = x ]; then
 	    mpicc="$d/bin/mpicc"
 	fi
 	if [ "x${mpirun}" = x -a -x "$d/bin/mpirun" ]; then
-	    mpicc="$d/bin/mpirun"
+	    mpirun="$d/bin/mpirun"
 	fi
     done
 fi
