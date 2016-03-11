@@ -272,7 +272,7 @@ module Sls :
       (Sundials.RealArray.t triple, Sundials.RealArray.t) jacobian_arg
       -> Sls.SparseMatrix.t -> unit
 
-    (** KLU sparse-direct linear solver module for IDA (requires KLU).
+    (** KLU sparse-direct linear solver module (requires KLU).
 
         @noida <node5#sss:idaklu> The KLU Solver *)
     module Klu : sig (* {{{ *)
@@ -317,8 +317,7 @@ module Sls :
 
     end (* }}} *)
 
-    (** SuperLU_MT sparse-direct linear solver module for IDA (requires
-        SuperLU_MT).
+    (** SuperLU_MT sparse-direct linear solver module (requires SuperLU_MT).
 
         @noida <node5#sss:idasuperlumt> The SUPERLUMT Solver *)
     module Superlumt : sig (* {{{ *)

@@ -1283,7 +1283,7 @@ module Adjoint :
           | WithSens of sparse_jac_fn_with_sens
             (** Depends on forward sensitivities. *)
 
-        (** KLU sparse-direct linear solver module for CVODES (requires KLU).
+        (** KLU sparse-direct linear solver module (requires KLU).
 
             @nocvodes <node5#sss:cvklu> The KLU Solver *)
         module Klu : sig (* {{{ *)
@@ -1333,8 +1333,7 @@ module Adjoint :
 
         end (* }}} *)
 
-        (** SuperLU_MT sparse-direct linear solver module for CVODES
-            (requires SuperLU_MT).
+        (** SuperLU_MT sparse-direct linear solver module (requires SuperLU_MT).
 
             @nocvodes <node5#sss:cvsuperlumt> The SuperLUMT Solver *)
         module Superlumt : sig (* {{{ *)

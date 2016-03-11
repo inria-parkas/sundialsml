@@ -404,7 +404,7 @@ module Sls :
                           -> Sls.SparseMatrix.t
                           -> unit
 
-    (** KLU sparse-direct linear solver module for ARKODE (requires KLU).
+    (** KLU sparse-direct linear solver module (requires KLU).
 
         @noarkode <node> The KLU Solver *)
     module Klu : sig (* {{{ *)
@@ -482,8 +482,7 @@ module Sls :
       end
     end (* }}} *)
 
-    (** SuperLU_MT sparse-direct linear solver module for ARKODE
-        (requires SuperLU_MT).
+    (** SuperLU_MT sparse-direct linear solver module (requires SuperLU_MT).
 
         @noarkode <node> The SuperLU_MT solver *)
     module Superlumt : sig (* {{{ *)

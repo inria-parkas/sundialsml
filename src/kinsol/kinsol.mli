@@ -251,7 +251,7 @@ module Sls :
       (Sundials.RealArray.t double, Sundials.RealArray.t) jacobian_arg
       -> Sls.SparseMatrix.t -> unit
 
-    (** KLU sparse-direct linear solver module for KINSOL (requires KLU).
+    (** KLU sparse-direct linear solver module (requires KLU).
 
         @nokinsol <node5#sss:KINklu> The KLU Solver *)
     module Klu : sig (* {{{ *)
@@ -294,8 +294,7 @@ module Sls :
       val get_num_jac_evals : 'k serial_session -> int
     end (* }}} *)
 
-    (** SuperLU_MT sparse-direct linear solver module for KINSOL
-        (requires SuperLU_MT).
+    (** SuperLU_MT sparse-direct linear solver module (requires SuperLU_MT).
 
         @nokinsol <node5#sss:kinsuperlumt> The SuperLUMT Solver *)
     module Superlumt : sig (* {{{ *)
