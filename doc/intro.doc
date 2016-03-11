@@ -390,12 +390,12 @@ The available packages and the features they select are:
 
 {3:toplevel From the toplevel}
 
-Sundials/ML can also be used from the OCaml interactive loop, either by the
-invocation:
+Sundials/ML can also be used from the OCaml interactive loop, either by an
+invocation like:
 {v ocaml bigarray.cma -I +sundialsml sundials.cma sundials_openmp.cma v}
 or through [ocamlfind], for example: {[
 #use "topfind";;
-#predicates "no_sens";;	  (* optionally exclude sensitivity code *)
+#predicates "no_sens";;	  (* optional -- excludes sensitivity code *)
 #require "sundialsml";;
 
 let f t y yd = yd.{0} <- 1.;;
