@@ -777,10 +777,16 @@ fi
 ldflags="${ldflags} ${sparse_libs} ${lapack_lib} ${blas_lib}"
 
 if [ "x${mpi_lib_path}" = x ]; then
-    for d in /usr/lib64/openmpi/lib; do
-	if [ -d "$d/libsundials_nvecparallel.so" ]; then
-	    mpi_lib_path="${d}/"
+    for d in /usr/lib64/openmpi; do
+	if [ -e "$d/lib/libsundials_nvecparallel.so" ]; then
+	    mpi_lib_path="$d/lib"
 	    Lmpi_lib_path="-L${mpi_lib_path}"
+	fi
+	if [ "x${mpicc}" = x -a -x "$d/bin/mpicc" ]; then
+	    mpicc="$d/bin/mpicc"
+	fi
+	if [ "x${mpirun}" = x -a -x "$d/bin/mpirun" ]; then
+	    mpicc="$d/bin/mpirun"
 	fi
     done
 fi
