@@ -22,7 +22,7 @@
 #include "cvode_ml.h"
 #include "../lsolvers/sls_ml.h"
 
-#ifndef SUNDIALS_ML_KLU
+#ifndef SUNDIALS_ML_SUPERLUMT
 CAMLprim value c_cvode_superlumt_init (value vcvode_mem, value vneqs,
 				       value vnnz, value vnthreads)
 { CAMLparam0(); CAMLreturn (Val_unit); }

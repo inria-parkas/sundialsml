@@ -282,7 +282,7 @@ module Sls = struct
       = "c_cvode_superlumt_init"
 
     let solver f ~nnz ~nthreads session nv =
-      if not Sundials_config.klu_enabled
+      if not Sundials_config.superlumt_enabled
         then raise Sundials.NotImplementedBySundialsVersion;
       let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
       session.ls_callbacks <- SlsSuperlumtCallback { jacfn = f; smat = None };
