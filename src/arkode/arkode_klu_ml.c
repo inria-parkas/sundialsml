@@ -11,10 +11,6 @@
  *                                                                     *
  ***********************************************************************/
 
-#include <arkode/arkode.h>
-#include <arkode/arkode_sparse.h>
-#include <arkode/arkode_klu.h>
-
 #include <caml/mlvalues.h>
 #include <caml/alloc.h>
 #include <caml/memory.h>
@@ -25,6 +21,41 @@
 #include "../sundials/sundials_ml.h"
 #include "arkode_ml.h"
 #include "../lsolvers/sls_ml.h"
+
+#ifndef SUNDIALS_ML_KLU
+CAMLprim value c_arkode_klu_init (value varkode_mem, value vneqs, value vnnz)
+{ CAMLparam0(); CAMLreturn (Val_unit); }
+
+CAMLprim value c_arkode_klu_set_ordering (value varkode_mem, value vordering)
+{ CAMLparam0(); CAMLreturn (Val_unit); }
+
+CAMLprim value c_arkode_klu_reinit (value varkode_mem, value vn, value vnnz,
+				    value vrealloc)
+{ CAMLparam0(); CAMLreturn (Val_unit); }
+
+CAMLprim value c_arkode_klu_get_num_jac_evals(value varkode_mem)
+{ CAMLparam0(); CAMLreturn (Val_unit); }
+
+CAMLprim value c_arkode_mass_klu_init (value varkode_mem, value vneqs,
+				       value vnnz)
+{ CAMLparam0(); CAMLreturn (Val_unit); }
+
+CAMLprim value c_arkode_mass_klu_set_ordering (value varkode_mem,
+					       value vordering)
+{ CAMLparam0(); CAMLreturn (Val_unit); }
+
+CAMLprim value c_arkode_mass_klu_reinit (value varkode_mem,
+					 value vn, value vnnz, value vrealloc)
+{ CAMLparam0(); CAMLreturn (Val_unit); }
+
+CAMLprim value c_arkode_klu_get_num_mass_evals(value varkode_mem)
+{ CAMLparam0(); CAMLreturn (Val_unit); }
+#else
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+#include <arkode/arkode.h>
+#include <arkode/arkode_sparse.h>
+#include <arkode/arkode_klu.h>
 
 enum arkode_klu_ordering_tag {
   VARIANT_ARKODE_KLU_AMD     = 0,
@@ -205,3 +236,4 @@ CAMLprim value c_arkode_klu_get_num_mass_evals(value varkode_mem)
     CAMLreturn(Val_long(r));
 }
 
+#endif

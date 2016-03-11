@@ -269,12 +269,12 @@ module Dls =
         | DlsBandMassCallback  ({ bmat = Some d } as cb) ->
             Dls.BandMatrix.invalidate d;
             cb.bmat <- None
-        | SlsKluMassCallback ({ SlsTypes.MassTypes.smat = Some d } as cb) ->
+        | SlsKluMassCallback ({ SlsTypes.smat = Some d } as cb) ->
             Sls_impl.invalidate d;
-            cb.SlsTypes.MassTypes.smat <- None
-        | SlsSuperlumtMassCallback ({ SlsTypes.MassTypes.smat = Some d } as cb)
+            cb.SlsTypes.smat <- None
+        | SlsSuperlumtMassCallback ({ SlsTypes.smat = Some d } as cb)
             -> Sls_impl.invalidate d;
-               cb.SlsTypes.MassTypes.smat <- None
+               cb.SlsTypes.smat <- None
         | _ -> ()
 
       let set_dense_fn s f =
@@ -306,6 +306,161 @@ module Dls =
         get_num_evals s
     end
   end
+
+module Sls = struct
+  include SlsTypes
+  
+  module Klu = struct
+    let check_klu_enabled () =
+      if not Sundials_config.klu_enabled
+        then raise Sundials.NotImplementedBySundialsVersion
+
+    (* Must correspond with arkode_klu_ordering_tag *)
+    type ordering =
+         Amd
+       | ColAmd
+       | Natural
+
+    external c_klu : 'k serial_session -> int -> int -> unit
+      = "c_arkode_klu_init"
+
+    let solver f nnz session nv =
+      check_klu_enabled ();
+      let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
+      session.ls_callbacks <- SlsKluCallback { jacfn = f; smat = None };
+      session.ls_precfns <- NoPrecFns;
+      c_klu session neqs nnz
+
+    external c_set_ordering : 'k serial_session -> ordering -> unit
+      = "c_arkode_klu_set_ordering"
+
+    let set_ordering session ordering =
+      check_klu_enabled ();
+      ls_check_klu session;
+      c_set_ordering session ordering
+
+    external c_reinit : 'k serial_session -> int -> int -> bool -> unit
+      = "c_arkode_klu_reinit"
+
+    let reinit session n nnz realloc =
+      check_klu_enabled ();
+      ls_check_klu session;
+      c_reinit session n nnz realloc
+
+    external c_get_num_jac_evals : 'k serial_session -> int
+      = "c_arkode_klu_get_num_jac_evals"
+
+    let get_num_jac_evals session =
+      check_klu_enabled ();
+      ls_check_klu session;
+      c_get_num_jac_evals session
+
+    module Mass = struct
+
+      external c_mass_klu : 'k serial_session -> int -> int -> unit
+        = "c_arkode_mass_klu_init"
+
+      let solver f nnz session nv =
+        check_klu_enabled ();
+        let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
+        session.mass_callbacks <- SlsKluMassCallback { massfn = f; smat = None };
+        session.mass_precfns <- NoMassPrecFns;
+        c_mass_klu session neqs nnz
+
+      external c_set_ordering : 'k serial_session -> ordering -> unit
+        = "c_arkode_mass_klu_set_ordering"
+
+      let set_ordering session ordering =
+        check_klu_enabled ();
+        mass_check_klu session;
+        c_set_ordering session ordering
+
+      external c_reinit : 'k serial_session -> int -> int -> bool -> unit
+        = "c_arkode_mass_klu_reinit"
+
+      let reinit session n nnz realloc =
+        check_klu_enabled ();
+        mass_check_klu session;
+        c_reinit session n nnz realloc
+
+      external c_get_num_evals : 'k serial_session -> int
+        = "c_arkode_klu_get_num_mass_evals"
+
+      let get_num_evals session =
+        check_klu_enabled ();
+        mass_check_klu session;
+        c_get_num_jac_evals session
+    end
+  end
+
+  module Superlumt = struct
+    let check_slu_enabled () =
+      if not Sundials_config.superlumt_enabled
+        then raise Sundials.NotImplementedBySundialsVersion
+
+    (* Must correspond with arkode_superlumt_ordering_tag *)
+    type ordering =
+         Natural
+       | MinDegreeProd
+       | MinDegreeSum
+       | ColAmd
+
+    external c_superlumt : 'k serial_session -> int -> int -> int -> unit
+      = "c_arkode_superlumt_init"
+
+    let solver f ~nnz ~nthreads session nv =
+      check_slu_enabled ();
+      let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
+      session.ls_callbacks <- SlsSuperlumtCallback { jacfn = f; smat = None };
+      session.ls_precfns <- NoPrecFns;
+      c_superlumt session neqs nnz nthreads
+
+    external c_set_ordering : 'k serial_session -> ordering -> unit
+      = "c_arkode_superlumt_set_ordering"
+
+    let set_ordering session ordering =
+      check_slu_enabled ();
+      ls_check_superlumt session;
+      c_set_ordering session ordering
+
+    external c_get_num_jac_evals : 'k serial_session -> int
+      = "c_arkode_superlumt_get_num_jac_evals"
+
+    let get_num_jac_evals session =
+      check_slu_enabled ();
+      ls_check_superlumt session;
+      c_get_num_jac_evals session
+
+    module Mass = struct
+      external c_mass_superlumt : 'k serial_session -> int -> int -> int -> unit
+        = "c_arkode_mass_superlumt_init"
+
+      let solver f ~nnz ~nthreads session nv =
+        check_slu_enabled ();
+        let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
+        session.mass_callbacks
+          <- SlsSuperlumtMassCallback { massfn = f; smat = None };
+        session.mass_precfns <- NoMassPrecFns;
+        c_mass_superlumt session neqs nnz nthreads
+
+      external c_set_ordering : 'k serial_session -> ordering -> unit
+        = "c_arkode_mass_superlumt_set_ordering"
+
+      let set_ordering session ordering =
+        check_slu_enabled ();
+        mass_check_superlumt session;
+        c_set_ordering session ordering
+
+      external c_get_num_evals : 'k serial_session -> int
+        = "c_arkode_superlumt_get_num_mass_evals"
+
+      let get_num_evals session =
+        check_slu_enabled ();
+        mass_check_superlumt session;
+        c_get_num_evals session
+    end
+  end
+end
 
 module Spils =
   struct

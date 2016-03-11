@@ -11,10 +11,6 @@
  *                                                                     *
  ***********************************************************************/
 
-#include <arkode/arkode.h>
-#include <arkode/arkode_sparse.h>
-#include <arkode/arkode_superlumt.h>
-
 #include <caml/mlvalues.h>
 #include <caml/alloc.h>
 #include <caml/memory.h>
@@ -25,6 +21,35 @@
 #include "../sundials/sundials_ml.h"
 #include "arkode_ml.h"
 #include "../lsolvers/sls_ml.h"
+
+#ifndef SUNDIALS_ML_SUPERLUMT
+CAMLprim value c_arkode_superlumt_init (value varkode_mem, value vneqs,
+					value vnnz, value vnthreads)
+{ CAMLparam0(); CAMLreturn (Val_unit); }
+
+CAMLprim value c_arkode_superlumt_set_ordering (value varkode_mem,
+						value vordering)
+{ CAMLparam0(); CAMLreturn (Val_unit); }
+
+CAMLprim value c_arkode_superlumt_get_num_jac_evals(value varkode_mem)
+{ CAMLparam0(); CAMLreturn (Val_unit); }
+
+CAMLprim value c_arkode_mass_superlumt_init (value varkode_mem, value vneqs,
+					     value vnnz, value vnthreads)
+{ CAMLparam0(); CAMLreturn (Val_unit); }
+
+CAMLprim value c_arkode_mass_superlumt_set_ordering (value varkode_mem,
+					             value vordering)
+{ CAMLparam0(); CAMLreturn (Val_unit); }
+
+CAMLprim value c_arkode_superlumt_get_num_mass_evals(value varkode_mem)
+{ CAMLparam0(); CAMLreturn (Val_unit); }
+#else
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+#include <arkode/arkode.h>
+#include <arkode/arkode_sparse.h>
+#include <arkode/arkode_superlumt.h>
 
 enum arkode_superlumt_ordering_tag {
   VARIANT_ARKODE_SUPERLUMT_NATURAL    = 0,
@@ -186,3 +211,4 @@ CAMLprim value c_arkode_superlumt_get_num_mass_evals(value varkode_mem)
     CAMLreturn(Val_long(r));
 }
 
+#endif

@@ -310,7 +310,7 @@ let main () =
   let nnz = 5*neq in
   let arkode_mem = Arkode.(
     init
-      (Implicit (f udata, Newton (Arkode_klu.klu (jac udata) nnz), Nonlinear))
+      (Implicit (f udata, Newton (Sls.Klu.solver (jac udata) nnz), Nonlinear))
       (SStolerances (reltol, abstol))
       t0
       y
@@ -387,7 +387,7 @@ let main () =
   let netf     = get_num_err_test_fails arkode_mem in
   let nni      = get_num_nonlin_solv_iters arkode_mem in
   let ncfn     = get_num_nonlin_solv_conv_fails arkode_mem in
-  let nje      = Arkode_klu.get_num_jac_evals arkode_mem in
+  let nje      = Sls.Klu.get_num_jac_evals arkode_mem in
 
   printf "\nFinal Solver Statistics:\n";
   printf "   Internal solver steps = %d (attempted = %d)\n" nst nst_a;
