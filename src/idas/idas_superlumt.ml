@@ -15,7 +15,7 @@ open Ida_impl
 include AdjointTypes'.SlsTypes
 let tosession = AdjointTypes.tosession
 
-type ordering = Ida_superlumt.ordering =
+type ordering = Ida.Sls.Superlumt.ordering =
      Natural
    | MinDegreeProd
    | MinDegreeSum
@@ -43,6 +43,6 @@ let superlumt f ~nnz ~nthreads bs nv nv' =
       session.ls_callbacks <-
         BSlsSuperlumtCallbackSens { jacfn_sens = fbs; smat_sens = None }
 
-let set_ordering bs = Ida_superlumt.set_ordering (tosession bs)
-let get_num_jac_evals bs = Ida_superlumt.get_num_jac_evals (tosession bs)
+let set_ordering bs = Ida.Sls.Superlumt.set_ordering (tosession bs)
+let get_num_jac_evals bs = Ida.Sls.Superlumt.get_num_jac_evals (tosession bs)
 

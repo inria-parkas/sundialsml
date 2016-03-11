@@ -95,7 +95,7 @@ val superlumt : sparse_jac_fn -> nnz:int -> nthreads:int
                   -> 'k Idas.Adjoint.serial_linear_solver
 
 (** The ordering algorithm used for reducing fill. *)
-type ordering = Ida_superlumt.ordering =
+type ordering = Ida.Sls.Superlumt.ordering =
      Natural       (** Natural ordering. *)
    | MinDegreeProd (** Minimal degree ordering on $J^T J$. *)
    | MinDegreeSum  (** Minimal degree ordering on $J^T + J$. *)

@@ -46,9 +46,7 @@ MLOBJ_MAIN =	sundials/sundials_config.cmo	\
 		cvode/cvode.cmo			\
 		kinsol/kinsol.cmo		\
 		ida/ida.cmo			\
-		$(ARKODE_MLOBJ_MAIN)		\
-		$(KLU_MLOBJ_MAIN)		\
-		$(SUPERLUMT_MLOBJ_MAIN)
+		$(ARKODE_MLOBJ_MAIN)
 
 CMI_MAIN = $(filter-out sundials/sundials_config.cmi,$(filter-out %_impl.cmi,\
 	    $(MLOBJ_MAIN:.cmo=.cmi)))
@@ -79,14 +77,14 @@ COBJ_NO_SENS =	cvode/cvode_ml$(XO)		\
 		ida/ida_ml$(XO)			\
 		cvode/cvode_klu_ml${XO}		\
 		cvode/cvode_superlumt_ml${XO}	\
+		ida/ida_klu_ml${XO}		\
+		ida/ida_superlumt_ml${XO}	\
 		cvodes/cvodes_klu_ml${XO}	\
 		cvodes/cvodes_superlumt_ml${XO}	\
 		arkode/arkode_klu_ml$(XO)	\
 		arkode/arkode_superlumt_ml$(XO)	\
 		kinsol/kinsol_klu_ml${XO}	\
-		kinsol/kinsol_superlumt_ml${XO}	\
-		$(KLU_COBJ_NO_SENS)		\
-		$(SUPERLUMT_COBJ_NO_SENS)
+		kinsol/kinsol_superlumt_ml${XO}
 MLOBJ_NO_SENS =
 
 ### Objects specific to sundials_mpi.cma.

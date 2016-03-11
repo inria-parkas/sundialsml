@@ -661,16 +661,12 @@ sparse_libs=
 klu_enabled=
 klu_info="not available"
 klu_cobj_sens=
-klu_cobj_no_sens=
-klu_mlobj_main=
 klu_mlobj_sens=
 klu_libs=
 
 superlumt_enabled=
 superlumt_info="not available"
 superlumt_cobj_sens=
-superlumt_cobj_no_sens=
-superlumt_mlobj_main=
 superlumt_mlobj_sens=
 superlumt_libs=
 
@@ -691,10 +687,6 @@ if [ $sundials -ge 260 ]; then
 		klu_cobj_sens="$klu_cobj_sens idas/ida_klu_ml_s${XO}"
 		klu_cobj_sens="$klu_cobj_sens idas/idas_klu_ml${XO}"
 
-		klu_cobj_no_sens="$klu_cobj_no_sens ida/ida_klu_ml${XO}"
-
-		klu_mlobj_main="$klu_mlobj_main ida/ida_klu.cmo"
-
 		klu_mlobj_sens="$klu_mlobj_sens idas/idas_klu.cmo"
 
 		klu_libs="-lklu -lamd -lcolamd -lbtf -lsuitesparseconfig"
@@ -713,10 +705,6 @@ if [ $sundials -ge 260 ]; then
 
 superlumt_cobj_sens="$superlumt_cobj_sens idas/ida_superlumt_ml_s${XO}"
 superlumt_cobj_sens="$superlumt_cobj_sens idas/idas_superlumt_ml${XO}"
-
-superlumt_cobj_no_sens="$superlumt_cobj_no_sens ida/ida_superlumt_ml${XO}"
-
-superlumt_mlobj_main="$superlumt_mlobj_main ida/ida_superlumt.cmo"
 
 superlumt_mlobj_sens="$superlumt_mlobj_sens idas/idas_superlumt.cmo"
 
@@ -1074,12 +1062,8 @@ cat ${LOG}
 	 s#@serial_nvec_libs@#${serial_nvec_libs}#;
 	 s#@sparse_libs@#${sparse_libs}#;
 	 s#@klu_cobj_sens@#${klu_cobj_sens}#;
-	 s#@klu_cobj_no_sens@#${klu_cobj_no_sens}#;
-	 s#@klu_mlobj_main@#${klu_mlobj_main}#;
 	 s#@klu_mlobj_sens@#${klu_mlobj_sens}#;
 	 s#@superlumt_cobj_sens@#${superlumt_cobj_sens}#;
-	 s#@superlumt_cobj_no_sens@#${superlumt_cobj_no_sens}#;
-	 s#@superlumt_mlobj_main@#${superlumt_mlobj_main}#;
 	 s#@superlumt_mlobj_sens@#${superlumt_mlobj_sens}#;
 	 s#@cc@#${CC}#;
 	 s#@cpp@#${CPP}#;

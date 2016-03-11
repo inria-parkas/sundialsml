@@ -15,7 +15,7 @@ open Ida_impl
 include AdjointTypes'.SlsTypes
 let tosession = AdjointTypes.tosession
 
-type ordering = Ida_klu.ordering =
+type ordering = Ida.Sls.Klu.ordering =
      Amd
    | ColAmd
    | Natural
@@ -42,7 +42,7 @@ let klu f nnz bs nv nv' =
       session.ls_callbacks <-
         BSlsKluCallbackSens { jacfn_sens = fbs; smat_sens = None }
 
-let set_ordering bs = Ida_klu.set_ordering (tosession bs)
-let reinit bs = Ida_klu.reinit (tosession bs)
-let get_num_jac_evals bs = Ida_klu.get_num_jac_evals (tosession bs)
+let set_ordering bs = Ida.Sls.Klu.set_ordering (tosession bs)
+let reinit bs = Ida.Sls.Klu.reinit (tosession bs)
+let get_num_jac_evals bs = Ida.Sls.Klu.get_num_jac_evals (tosession bs)
 

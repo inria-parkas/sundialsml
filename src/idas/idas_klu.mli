@@ -93,7 +93,7 @@ type sparse_jac_fn =
 val klu : sparse_jac_fn -> int -> 'k Idas.Adjoint.serial_linear_solver
 
 (** The ordering algorithm used for reducing fill. *)
-type ordering = Ida_klu.ordering =
+type ordering = Ida.Sls.Klu.ordering =
      Amd      (** Approximate minimum degree permutation. *)
    | ColAmd   (** Column approximate minimum degree permutation. *)
    | Natural  (** Natural ordering. *)
