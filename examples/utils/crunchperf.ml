@@ -56,7 +56,7 @@ let expand name =
      ("--C_omp--", "/C_openmp/");
     ]
 
-let parallel_example s      = Str.string_match (Str.regexp ".*--par--\\|/parallel/.*") s 0
+let parallel_example s      = Str.string_match (Str.regexp ".*--\\(C_\\)?par--\\|/parallel/.*") s 0
 let uses_alternate_solver s = Str.string_match (Str.regexp ".*_alt$") s 0
 let uses_nvector_array s    = Str.string_match (Str.regexp ".*_custom$") s 0
 let colorof name =
