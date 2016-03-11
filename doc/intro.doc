@@ -183,12 +183,10 @@ appropriate [init] or [reinit] functions to configure sessions.
 {!modules: Nvector Nvector_serial Nvector_parallel
 	   Nvector_pthreads Nvector_openmp
 	   Nvector_custom Nvector_array}
-{!modules: Cvode Cvode_bbd Cvode_klu Cvode_superlumt
-	   Cvodes Cvodes_bbd Cvodes_klu Cvodes_superlumt}
-{!modules: Ida Ida_bbd Ida_klu Ida_superlumt
-	   Idas Idas_bbd Idas_klu Idas_superlumt}
-{!modules: Arkode Arkode_bbd Arkode_klu Arkode_superlumt}
-{!modules: Kinsol Kinsol_bbd Kinsol_klu Kinsol_superlumt}
+{!modules: Cvode Cvode_bbd Cvodes Cvodes_bbd}
+{!modules: Ida Ida_bbd Idas Idas_bbd}
+{!modules: Arkode Arkode_bbd}
+{!modules: Kinsol Kinsol_bbd}
 
 {2:install Installation}
 
