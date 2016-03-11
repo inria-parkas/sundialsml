@@ -15,7 +15,7 @@ open Cvode_impl
 include AdjointTypes'.SlsTypes
 let tosession = AdjointTypes.tosession
 
-type ordering = Cvode_klu.ordering =
+type ordering = Cvode.Sls.Klu.ordering =
      Amd
    | ColAmd
    | Natural
@@ -42,7 +42,7 @@ let klu f nnz bs nv =
       session.ls_callbacks <-
           BSlsKluCallbackSens { jacfn_sens = fbs; smat_sens = None }
 
-let set_ordering bs = Cvode_klu.set_ordering (tosession bs)
-let reinit bs = Cvode_klu.reinit (tosession bs)
-let get_num_jac_evals bs = Cvode_klu.get_num_jac_evals (tosession bs)
+let set_ordering bs = Cvode.Sls.Klu.set_ordering (tosession bs)
+let reinit bs = Cvode.Sls.Klu.reinit (tosession bs)
+let get_num_jac_evals bs = Cvode.Sls.Klu.get_num_jac_evals (tosession bs)
 

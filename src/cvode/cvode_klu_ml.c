@@ -11,6 +11,33 @@
  *                                                                     *
  ***********************************************************************/
 
+#include <caml/mlvalues.h>
+#include <caml/alloc.h>
+#include <caml/memory.h>
+#include <caml/callback.h>
+#include <caml/custom.h>
+#include <caml/fail.h>
+
+#include "../sundials/sundials_ml.h"
+#include "cvode_ml.h"
+#include "../lsolvers/sls_ml.h"
+
+#ifndef SUNDIALS_ML_KLU
+CAMLprim value c_cvode_klu_init (value vcvode_mem, value vneqs, value vnnz)
+{ CAMLparam0(); CAMLreturn (Val_unit); }
+
+CAMLprim value c_cvode_klu_set_ordering (value vcvode_mem, value vordering)
+{ CAMLparam0(); CAMLreturn (Val_unit); }
+
+CAMLprim value c_cvode_klu_reinit (value vcvode_mem, value vn, value vnnz,
+				   value vrealloc)
+{ CAMLparam0(); CAMLreturn (Val_unit); }
+
+CAMLprim value c_cvode_klu_get_num_jac_evals(value vcvode_mem)
+{ CAMLparam0(); CAMLreturn (Val_unit); }
+#else
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 #ifdef SUNDIALSML_WITHSENS
 /* CVODES (with sensitivity) */
 
@@ -26,17 +53,6 @@
 #include <cvode/cvode_klu.h>
 
 #endif
-
-#include <caml/mlvalues.h>
-#include <caml/alloc.h>
-#include <caml/memory.h>
-#include <caml/callback.h>
-#include <caml/custom.h>
-#include <caml/fail.h>
-
-#include "../sundials/sundials_ml.h"
-#include "cvode_ml.h"
-#include "../lsolvers/sls_ml.h"
 
 enum cvode_klu_ordering_tag {
   VARIANT_CVODE_KLU_AMD     = 0,
@@ -137,3 +153,4 @@ CAMLprim value c_cvode_klu_get_num_jac_evals(value vcvode_mem)
     CAMLreturn(Val_long(r));
 }
 
+#endif

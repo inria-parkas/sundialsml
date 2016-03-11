@@ -15,7 +15,7 @@ open Cvode_impl
 include AdjointTypes'.SlsTypes
 let tosession = AdjointTypes.tosession
 
-type ordering = Cvode_superlumt.ordering =
+type ordering = Cvode.Sls.Superlumt.ordering =
      Natural
    | MinDegreeProd
    | MinDegreeSum
@@ -43,6 +43,6 @@ let superlumt f ~nnz ~nthreads bs nv =
       session.ls_callbacks <-
         BSlsSuperlumtCallbackSens { jacfn_sens = fbs; smat_sens = None }
 
-let set_ordering bs = Cvode_superlumt.set_ordering (tosession bs)
-let get_num_jac_evals bs = Cvode_superlumt.get_num_jac_evals (tosession bs)
+let set_ordering bs = Cvode.Sls.Superlumt.set_ordering (tosession bs)
+let get_num_jac_evals bs = Cvode.Sls.Superlumt.get_num_jac_evals (tosession bs)
 

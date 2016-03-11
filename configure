@@ -694,11 +694,9 @@ if [ $sundials -ge 260 ]; then
 		klu_cobj_sens="$klu_cobj_sens idas/idas_klu_ml${XO}"
 		klu_cobj_sens="$klu_cobj_sens kinsol/kinsol_klu_ml${XO}"
 
-		klu_cobj_no_sens="$klu_cobj_no_sens cvode/cvode_klu_ml${XO}"
 		klu_cobj_no_sens="$klu_cobj_no_sens ida/ida_klu_ml${XO}"
 		klu_cobj_no_sens="$klu_cobj_no_sens kinsol/kinsol_klu_ml${XO}"
 
-		klu_mlobj_main="$klu_mlobj_main cvode/cvode_klu.cmo"
 		klu_mlobj_main="$klu_mlobj_main ida/ida_klu.cmo"
 		klu_mlobj_main="$klu_mlobj_main kinsol/kinsol_klu.cmo"
 
@@ -725,11 +723,9 @@ superlumt_cobj_sens="$superlumt_cobj_sens idas/ida_superlumt_ml_s${XO}"
 superlumt_cobj_sens="$superlumt_cobj_sens idas/idas_superlumt_ml${XO}"
 superlumt_cobj_sens="$superlumt_cobj_sens kinsol/kinsol_superlumt_ml${XO}"
 
-superlumt_cobj_no_sens="$superlumt_cobj_no_sens cvode/cvode_superlumt_ml${XO}"
 superlumt_cobj_no_sens="$superlumt_cobj_no_sens ida/ida_superlumt_ml${XO}"
 superlumt_cobj_no_sens="$superlumt_cobj_no_sens kinsol/kinsol_superlumt_ml${XO}"
 
-superlumt_mlobj_main="$superlumt_mlobj_main cvode/cvode_superlumt.cmo"
 superlumt_mlobj_main="$superlumt_mlobj_main ida/ida_superlumt.cmo"
 superlumt_mlobj_main="$superlumt_mlobj_main kinsol/kinsol_superlumt.cmo"
 

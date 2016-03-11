@@ -90,7 +90,7 @@ type sparse_jac_fn =
 val klu : sparse_jac_fn -> int -> 'k Cvodes.Adjoint.serial_linear_solver
 
 (** The ordering algorithm used for reducing fill. *)
-type ordering = Cvode_klu.ordering =
+type ordering = Cvode.Sls.Klu.ordering =
      Amd      (** Approximate minimum degree permutation. *)
    | ColAmd   (** Column approximate minimum degree permutation. *)
    | Natural  (** Natural ordering. *)

@@ -92,7 +92,7 @@ val superlumt : sparse_jac_fn -> nnz:int -> nthreads:int
                   -> 'k Cvodes.Adjoint.serial_linear_solver
 
 (** The ordering algorithm used for reducing fill. *)
-type ordering = Cvode_superlumt.ordering =
+type ordering = Cvode.Sls.Superlumt.ordering =
      Natural       (** Natural ordering. *)
    | MinDegreeProd (** Minimal degree ordering on $J^T J$. *)
    | MinDegreeSum  (** Minimal degree ordering on $J^T + J$. *)

@@ -71,6 +71,8 @@ CMI_SENS = $(MLOBJ_SENS:.cmo=.cmi)
 ### Objects specific to sundials_no_sens.cma.
 COBJ_NO_SENS =	cvode/cvode_ml$(XO)		\
 		ida/ida_ml$(XO)			\
+		cvode/cvode_klu_ml${XO}		\
+		cvode/cvode_superlumt_ml${XO}	\
 		arkode/arkode_klu_ml$(XO)	\
 		arkode/arkode_superlumt_ml$(XO)	\
 		$(KLU_COBJ_NO_SENS)		\
