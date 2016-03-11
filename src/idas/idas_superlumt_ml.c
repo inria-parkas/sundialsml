@@ -24,9 +24,9 @@
 #include "../lsolvers/sls_ml.h"
 
 #ifndef SUNDIALS_ML_SUPERLUMT
-CAMLprim value c_ida_superlumtb_init (value vparent_which,
-				      value vneqs, value vnnz,
-				      value vnthreads, value vusesens)
+CAMLprim value c_idas_superlumtb_init (value vparent_which,
+		 		       value vneqs, value vnnz,
+				       value vnthreads, value vusesens)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 #else
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -128,9 +128,9 @@ static int jacfn_withsens( /* IDASlsSparseJacFnB */
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
-CAMLprim value c_ida_superlumtb_init (value vparent_which,
-				      value vneqs, value vnnz,
-				      value vnthreads, value vusesens)
+CAMLprim value c_idas_superlumtb_init (value vparent_which,
+				       value vneqs, value vnnz,
+				       value vnthreads, value vusesens)
 {
     CAMLparam5(vparent_which, vneqs, vnnz, vnthreads, vusesens);
     void *ida_mem = IDA_MEM_FROM_ML (Field(vparent_which, 0));
