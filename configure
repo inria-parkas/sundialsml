@@ -776,6 +776,15 @@ fi
 
 ldflags="${ldflags} ${sparse_libs} ${lapack_lib} ${blas_lib}"
 
+if [ "x${mpi_lib_path}" = x ]; then
+    for d in /usr/lib64/openmpi/lib; do
+	if [ -d "$d/libsundials_nvecparallel.so" ]; then
+	    mpi_lib_path="${d}/"
+	    Lmpi_lib_path="-L${mpi_lib_path}"
+	fi
+    done
+fi
+
 # Parallel features
 mpicc=${mpicc:-mpicc}
 mpirun=${mpirun:-mpirun}
