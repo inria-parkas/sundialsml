@@ -406,7 +406,7 @@ module Sls :
 
     (** KLU sparse-direct linear solver module for ARKODE (requires KLU).
 
-        @noarkode <node> Linear solver specification functions *)
+        @noarkode <node> The KLU Solver *)
     module Klu : sig (* {{{ *)
 
       (** A direct linear solver on sparse matrices. In the call,
@@ -414,6 +414,7 @@ module Sls :
           approximation to the Jacobian matrix and [nnz] is the maximum number
           of nonzero entries in that matrix.
 
+          @raise Sundials.NotImplementedBySundialsVersion Solver not available.
           @noarkode <node5#sss:lin_solv_init> ARKKLU
           @noarkode <node5#sss:optin_sls> ARKSlsSetSparseJacFn
           @noarkode <node5#ss:sjacFn> ARKSlsSparseJacFn *)
@@ -452,6 +453,7 @@ module Sls :
             approximation to the mass matrix and [nnz] is the maximum number
             of nonzero entries in that matrix.
 
+            @raise Sundials.NotImplementedBySundialsVersion Solver not available.
             @noarkode <node5#sss:lin_solv_init> ARKMassKLU
             @noarkode <node5#sss:optin_sls> ARKSlsSetSparseMassFn
             @noarkode <node5#ss:smassFn> ARKSlsSparseMassFn *)
@@ -483,7 +485,7 @@ module Sls :
     (** SuperLU_MT sparse-direct linear solver module for ARKODE
         (requires SuperLU_MT).
 
-        @noarkode <node> Linear solver specification functions *)
+        @noarkode <node> The SuperLU_MT solver *)
     module Superlumt : sig (* {{{ *)
 
       (** A direct linear solver on sparse matrices. In the call,
@@ -492,6 +494,7 @@ module Sls :
           maximum number of nonzero entries in that matrix, and [nthreads] is
           the number of threads to use when factorizing/solving.
 
+          @raise Sundials.NotImplementedBySundialsVersion Solver not available.
           @noarkode <node5#sss:lin_solv_init> ARKSuperLUMT
           @noarkode <node5#sss:optin_sls> ARKSlsSetSparseJacFn
           @noarkode <node5#ss:sjacFn> ARKSlsSparseJacFn *)
@@ -526,6 +529,7 @@ module Sls :
             number of nonzero entries in that matrix, and [nthreads] is the
             number of threads to use when factorizing/solving.
 
+            @raise Sundials.NotImplementedBySundialsVersion Solver not available.
             @noarkode <node5#sss:lin_solv_init> ARKMassSuperLUMT
             @noarkode <node5#ss:smassFn> ARKSlsSparseMassFn *)
         val solver : sparse_mass_fn
