@@ -834,6 +834,7 @@ EOF
     fi
     rm -f ./$test_stem.* ./$test_stem$XX
 else
+    sundialsmpi_info='disabled'
     ocamlmpi_enabled=
     ocamlmpi='DISABLED (no parallel features)'
 fi
