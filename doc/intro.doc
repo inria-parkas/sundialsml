@@ -531,7 +531,7 @@ We were able to make our OCaml versions much faster (up to 4 times) by:
 
 In summary, OCaml code using the Sundials solvers should almost never be
 more than 50% slower than the equivalent code written in C, provided the
-guidelines above are followed, and it may sometimes only be 30%
+guidelines above are followed, and it should usually not be more than 30%
 slower. It is usually, however, faster to write and debug OCaml code thanks
 to automatic memory management, bounds checking on arrays, strong static
 type checking, higher-order functions, etcetera. Moreover, the Sundials/ML
