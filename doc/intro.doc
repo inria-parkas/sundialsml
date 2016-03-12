@@ -463,8 +463,8 @@ time of the C code.
 
 {img perf.opt.png}
 
-The graph suggests that the OCaml versions are rarely more than 50% slower
-than the original ones and that they are often around or less than 30%
+The graph suggests that the OCaml versions are rarely more than 40% slower
+than the original ones and that they are often around or less than 20%
 slower.
 The [*_custom] example ({color #deebf7 light blue}) uses custom nvectors
 with low-level operations in OCaml and the [*_alt] examples ({color #9ecae1
@@ -478,7 +478,8 @@ examples are so short that accurate profiling is not possible, i.e.,
 and {{:https://sourceware.org/binutils/docs/gprof/}gprof} simply show 0
 seconds.
 The figures in the graph were obtained by modifying the examples to
-repeatedly execute their [main] functions.
+repeatedly execute their [main] functions; we trigger a [Gc.compact] after
+each execution since the C program must call [malloc] and [free].
 The number of repetitions varies per example since otherwise the slower
 examples take too long.
 The timings indicated by the dots and the axis at right are calculated by
@@ -487,11 +488,11 @@ All but six of the serial examples ({color #de2d26 red}) run so fast that
 comparisons are made based on tens, or usually hundreds of repetitions and
 in some cases this amplifies factors other than the interface overhead.
 The slowest example, for instance, [kin--ser--kinRoberts_fp] is iterated
-more than 100,000 times to achieve a significant wall clock time.
+more than 100 000 times to achieve a significant wall clock time.
 This means creating and destroying many more data structures than usual for
 such code.
-Running the example with a larger minor heap ([OCAMLRUNPARAM=s=128M])
-decreases the OCaml/C ratio to 1.8.
+Running the example without explicit compacts and with a larger minor
+heap ([OCAMLRUNPARAM=s=128M]) decreases the OCaml/C ratio to 1.8.
 
 The parallel examples ({color #fc9272 lighter red}) all have relatively long
 run times and results are obtained without iterating.
