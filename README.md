@@ -11,6 +11,9 @@ This interface provides access to all features of the underlying library.
 
 Installation
 ------------
+See our [detailed 
+notes](http://inria-parkas.github.io/sundialsml/#running)), or try:
+
 1. [Download Sundials](http://computation.llnl.gov/casc/sundials/download/download.php), extract, and install it:
     1. `mkdir sundials-build`
     2. `cd sundials-build`
@@ -21,12 +24,9 @@ Installation
         - `-DLAPACK_ENABLE=1` to use LAPACK routines,
         - `-DSUPERLUMT_ENABLE=1` for 
           [SuperLUMT](http://crd-legacy.lbl.gov/~xiaoye/SuperLU/#superlu_mt) 
-          solvers (with `-DSUPERLUMT_THREAD_TYPE=Pthread` or `OpenMP`,
-           `-DSUPERLUMT_LIBRARY_DIR=...`, `-DSUPERLUMT_INCLUDE_DIR=...`), 
-           and
+          solvers, and
         - `-DKLU_ENABLE=1` for 
           [KLU](http://faculty.cse.tamu.edu/davis/suitesparse.html) solvers
-          (with `-DKLU_LIBRARY_DIR=...`, `-DKLU_INCLUDE_DIR=...`)
     4. `make install`
 2. Either install from OPAM: `opam install sundialsml`, or
     1. [Download Sundials/ML](https://github.com/inria-parkas/sundialsml/releases), extract, and install it:
