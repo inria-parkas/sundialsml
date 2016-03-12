@@ -115,7 +115,6 @@ let ay          = 1.0    (* total range of y variable *)
 let ftol        = 1.e-7  (* ftol tolerance *)
 let stol        = 1.e-13 (* stol tolerance *)
 let thousand    = 1000.0 (* one thousand *)
-let two         = 2.0    (* 2. *)
 let preyin      = 1.0    (* initial guess for prey concentrations. *)
 let predin      = 30000.0(* initial guess for predator concs.      *)
 
@@ -428,7 +427,7 @@ let main () =
                                     (prec_right ~setup:prec_setup_bd
                                                 ~solve:prec_solve_bd ()))
               func ccnv) in
-  Kinsol.set_constraints kmem (wrap (Array.make neq two));
+  Kinsol.set_constraints kmem (wrap (Array.make neq 2.0));
   Kinsol.set_func_norm_tol kmem fnormtol;
   Kinsol.set_scaled_step_tol kmem scsteptol;
 

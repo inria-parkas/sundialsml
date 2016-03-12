@@ -86,8 +86,6 @@ let unvec = Nvector.unwrap
 open Bigarray
 
 let printf = Printf.printf
-let subarray = Array1.sub
-let slice_left = Array2.slice_left
 let unwrap = Sundials.RealArray2.unwrap
 let nvwl2norm = Nvector_serial.DataOps.n_vwl2norm
 
@@ -114,9 +112,6 @@ let ay          = 1.0    (* total range of y variable *)
 let ftol        = 1.e-7  (* ftol tolerance *)
 let stol        = 1.e-13 (* stol tolerance *)
 let thousand    = 1000.0 (* one thousand *)
-let zero        = 0.0    (* 0. *)
-let one         = 1.0    (* 1. *)
-let two         = 2.0    (* 2. *)
 let preyin      = 1.0    (* initial guess for prey concentrations. *)
 let predin      = 30000.0(* initial guess for predator concs.      *)
 
@@ -127,7 +122,6 @@ let predin      = 30000.0(* initial guess for predator concs.      *)
    ij_vptr vv i j  returns a pointer to the location in vv corresponding to 
    indices is = 0, jx = i, jy = j.    *)
 let ij_vptr_idx i j = i*num_species + j*nsmx
-let ij_vptr vv i j = subarray vv (ij_vptr_idx i j) num_species
 
 (* Type : UserData 
    contains preconditioner blocks, pivot arrays, and problem constants *)
@@ -147,11 +141,11 @@ let pivot =
     ))
 
 let acoef = Sundials.RealArray2.make_data num_species num_species
-let bcoef = RealArray.create num_species
-let cox = RealArray.create num_species
-let coy = RealArray.create num_species
+let bcoef = RealArray.make num_species 0.0
+let cox = RealArray.make num_species 0.0
+let coy = RealArray.make num_species 0.0
 
-let rates = RealArray.create neq
+let rates = RealArray.make neq 0.0
 
 (* Load problem constants in data *)
 
@@ -167,16 +161,11 @@ let init_user_data =
 
   (* Fill in the portion of acoef in the four quadrants, row by row *)
   for i = 0 to np - 1 do
-    let a1 = subarray (slice_left acoef i) np np in
-    let a2 = slice_left acoef (i + np) in
-    let a3 = slice_left acoef i in
-    let a4 = subarray (slice_left acoef (i + np)) np np in
-
     for j = 0 to np - 1 do
-      a1.{j} <- -.gg;
-      a2.{j} <-   ee;
-      a3.{j} <-   zero;
-      a4.{j} <-   zero
+      acoef.{     i, j + np} <- -.gg;
+      acoef.{i + np,      j} <-   ee;
+      acoef.{     i,      j} <-   0.0;
+      acoef.{i + np, j + np} <-   0.0
     done;
 
     (* and then change the diagonal elements of acoef to -AA *)
@@ -195,7 +184,7 @@ let init_user_data =
 
 (* Dot product routine for realtype arrays *)
 let dot_prod size (x1 : RealArray.t) x1off (x2 : RealArray2.data) x2r =
-  let temp =ref zero in
+  let temp =ref 0.0 in
   for i = 0 to size - 1 do
     temp := !temp +. x1.{x1off + i} *. x2.{x2r, i}
   done;
@@ -208,7 +197,7 @@ let web_rate xx yy (cxy : RealArray.t) cxyoff (ratesxy : RealArray.t) ratesxyoff
     ratesxy.{ratesxyoff + i} <- dot_prod num_species cxy cxyoff acoef i
   done;
   
-  let fac = one +. alpha *. xx *. yy in
+  let fac = 1.0 +. alpha *. xx *. yy in
   for i = 0 to num_species - 1 do
     ratesxy.{ratesxyoff + i} <- cxy.{cxyoff + i} *. (bcoef.{i} *. fac
                                   +. ratesxy.{ratesxyoff + i})
@@ -257,21 +246,20 @@ let func (cc : RealArray.t) (fval : RealArray.t) =
     done (* end of jx loop *)
   done (* end of jy loop *)
 
-let perturb_rates = Sundials.RealArray.create num_species
-
 (* Preconditioner setup routine. Generate and preprocess P. *)
 let prec_setup_bd { Kinsol.jac_u=cc;
                     Kinsol.jac_fu=fval;
                     Kinsol.jac_tmp=(vtemp1, vtemp2)}
                   { Kinsol.Spils.uscale=cscale;
                     Kinsol.Spils.fscale=fscale } =
+  let perturb_rates = Sundials.RealArray.make num_species 0.0 in
   
   let delx = dx in
   let dely = dy in
 
   let fac = nvwl2norm fval fscale in
   let r0 = thousand *. uround *. fac *. float(neq) in
-  let r0 = if r0 = zero then one else r0 in
+  let r0 = if r0 = 0.0 then 1.0 else r0 in
   
   (* Loop over spatial points; get size NUM_SPECIES Jacobian block at each *)
   for jy = 0 to my - 1 do
@@ -287,7 +275,7 @@ let prec_setup_bd { Kinsol.jac_u=cc;
         let csave = cc.{off + j} in  (* Save the j,jx,jy element of cc *)
         let r = max (sqruround *. abs_float csave) (r0/.cscale.{off + j}) in
         cc.{off + j} <- cc.{off + j} +. r; (* Perturb the j,jx,jy element of cc *)
-        let fac = one/.r in
+        let fac = 1.0/.r in
         web_rate xx yy cc off perturb_rates 0;
         
         (* Restore j,jx,jy element of cc *)
@@ -324,15 +312,14 @@ let set_initial_profiles cc sc =
   (* Load initial profiles into cc and sc vector. *)
   for jy = 0 to my - 1 do
     for jx = 0 to mx - 1 do
-      let cloc = ij_vptr cc jx jy in
-      let sloc = ij_vptr sc jx jy in
+      let idx = ij_vptr_idx jx jy in
       for i = 0 to num_species/2 - 1 do
-        cloc.{i} <- preyin;
-        sloc.{i} <- one
+        cc.{idx+i} <- preyin;
+        sc.{idx+i} <- 1.0
       done;
       for i = num_species/2 to num_species - 1 do
-        cloc.{i} <- predin;
-        sloc.{i} <- 0.00001
+        cc.{idx+i} <- predin;
+        sc.{idx+i} <- 0.00001
       done
     done
   done
@@ -358,24 +345,24 @@ let print_header globalstrategy maxl maxlrst fnormtol scsteptol =
 let print_output cc =
   let jy = 0 in
   let jx = 0 in
-  let ct = ij_vptr cc jx jy in
+  let ct = ij_vptr_idx jx jy in
   printf "\nAt bottom left:";
 
   (* Print out lines with up to 6 values per line *)
   for is = 0 to num_species - 1 do
     if ((is mod 6)*6 = is) then printf "\n";
-    printf " %g" ct.{is}
+    printf " %g" cc.{ct+is}
   done;
   
   let jy = my-1 in
   let jx = mx-1 in
-  let ct = ij_vptr cc jx jy in
+  let ct = ij_vptr_idx jx jy in
   printf("\n\nAt top right:");
 
   (* Print out lines with up to 6 values per line *)
   for is = 0 to num_species - 1 do
     if ((is mod 6)*6 = is) then printf("\n");
-    printf " %g" ct.{is}
+    printf " %g" cc.{ct+is}
   done;
   printf("\n\n")
 
@@ -417,7 +404,7 @@ let main () =
                                     (prec_right ~setup:prec_setup_bd
                                                 ~solve:prec_solve_bd ()))
               func cc) in
-  Kinsol.set_constraints kmem (Nvector_serial.make neq two);
+  Kinsol.set_constraints kmem (Nvector_serial.make neq 2.0);
   Kinsol.set_func_norm_tol kmem fnormtol;
   Kinsol.set_scaled_step_tol kmem scsteptol;
 
