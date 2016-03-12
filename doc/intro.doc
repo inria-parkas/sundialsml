@@ -463,8 +463,8 @@ time of the C code.
 
 {img perf.opt.png}
 
-The graph suggests that the OCaml versions are rarely more than twice as
-slow as the original ones and that they are often around or less than 50%
+The graph suggests that the OCaml versions are rarely more than 50% slower
+than the original ones and that they are often around or less than 30%
 slower.
 The [*_custom] example ({color #deebf7 light blue}) uses custom nvectors
 with low-level operations in OCaml and the [*_alt] examples ({color #9ecae1
@@ -486,9 +486,12 @@ dividing the wall-clock time of each C version by the number of repetitions.
 All but six of the serial examples ({color #de2d26 red}) run so fast that 
 comparisons are made based on tens, or usually hundreds of repetitions and
 in some cases this amplifies factors other than the interface overhead.
-For instance, OCaml versions (more so for versions before 4.02) spend a
-significant fraction of their time in [printf], and we were able to lower
-their ratios by instead using [print_string] and [print_int].
+The slowest example, for instance, [kin--ser--kinRoberts_fp] is iterated
+more than 100,000 times to achieve a significant wall clock time.
+This means creating and destroying many more data structures than usual for
+such code.
+Running the example with a larger minor heap ([OCAMLRUNPARAM=s=128M])
+decreases the OCaml/C ratio to 1.8.
 
 The parallel examples ({color #fc9272 lighter red}) all have relatively long
 run times and results are obtained without iterating.
@@ -526,9 +529,9 @@ We were able to make our OCaml versions much faster (up to 4 times) by:
        to avoid float ‘boxing’.}
 }
 
-In summary, OCaml code using the Sundials solvers should never be
-more than twice as slow as the equivalent code written in C, provided the
-guidelines above are followed, and it may sometimes only be 50%
+In summary, OCaml code using the Sundials solvers should almost never be
+more than 50% slower than the equivalent code written in C, provided the
+guidelines above are followed, and it may sometimes only be 30%
 slower. It is usually, however, faster to write and debug OCaml code thanks
 to automatic memory management, bounds checking on arrays, strong static
 type checking, higher-order functions, etcetera. Moreover, the Sundials/ML
