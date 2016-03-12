@@ -11,6 +11,13 @@ doc:
 	$(MAKE) -C src
 	$(MAKE) -C doc
 
+loc:
+	@printf "OCaml (ocamlwc: lines of code, lines of comments)\n"
+	@ocamlwc $(shell find src -iregex '.*ml$$' -o -iregex '.*mli$$') \
+	    | tail -1
+	@printf "Running cloc:\n"
+	@cloc --quiet src
+
 # install-sys installs to OCaml's system directory -- /usr/lib/ocaml
 # on Debian derivatives.
 
