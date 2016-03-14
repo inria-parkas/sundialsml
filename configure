@@ -1160,6 +1160,11 @@ if [ "x${lapack_enabled}" = x ]; then
 else
     echo "let lapack_enabled = true"  >> src/sundials/sundials_config.ml
 fi
+if [ "x${ocamlmpi_enabled}" = x ]; then
+    echo "let mpi_enabled = false" >> src/sundials/sundials_config.ml
+else
+    echo "let mpi_enabled = true"  >> src/sundials/sundials_config.ml
+fi
 if [ "x${klu_enabled}" = x ]; then
     echo "let klu_enabled = false" >> src/sundials/sundials_config.ml
 else

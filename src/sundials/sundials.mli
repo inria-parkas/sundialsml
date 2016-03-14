@@ -37,6 +37,9 @@ val sundials_version : int * int * int
 (** Indicates whether the interface was compiled with BLAS/LAPACK support. *)
 val lapack_enabled : bool
 
+(** Indicates whether the parallel nvectors and linear solvers are available. *)
+val mpi_enabled : bool
+
 (** Indicates whether the KLU sparse linear solver is available. *)
 val klu_enabled : bool
 
