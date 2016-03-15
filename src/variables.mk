@@ -46,31 +46,43 @@ MLOBJ_MAIN =	sundials/sundials_config.cmo	\
 		cvode/cvode.cmo			\
 		kinsol/kinsol.cmo		\
 		ida/ida.cmo			\
-		$(ARKODE_MLOBJ_MAIN)		\
-		$(KLU_MLOBJ_MAIN)		\
-		$(SUPERLUMT_MLOBJ_MAIN)
+		$(ARKODE_MLOBJ_MAIN)
 
 CMI_MAIN = $(filter-out sundials/sundials_config.cmi,$(filter-out %_impl.cmi,\
 	    $(MLOBJ_MAIN:.cmo=.cmi)))
 
 ### Objects specific to sundials.cma.
 COBJ_SENS  =	cvodes/cvode_ml_s$(XO)		\
+		cvodes/cvodes_ml$(XO)		\
+		cvodes/cvode_klu_ml_s${XO}	\
+		cvodes/cvodes_klu_ml${XO}	\
+		cvodes/cvode_superlumt_ml_s${XO}\
+		cvodes/cvodes_superlumt_ml${XO}	\
 		idas/ida_ml_s$(XO)		\
-		cvodes/cvodes_ml.o		\
-		idas/idas_ml.o			\
-		$(KLU_COBJ_SENS)		\
-		$(SUPERLUMT_COBJ_SENS)
+		idas/idas_ml$(XO)		\
+		idas/ida_klu_ml_s${XO}		\
+		idas/idas_klu_ml${XO}		\
+		idas/ida_superlumt_ml_s${XO}	\
+		idas/idas_superlumt_ml${XO}	\
+		arkode/arkode_klu_ml$(XO)	\
+		arkode/arkode_superlumt_ml$(XO)	\
+		kinsol/kinsol_klu_ml${XO}	\
+		kinsol/kinsol_superlumt_ml${XO}
 MLOBJ_SENS =	cvodes/cvodes.cmo		\
-		idas/idas.cmo			\
-		$(KLU_MLOBJ_SENS)		\
-		$(SUPERLUMT_MLOBJ_SENS)
+		idas/idas.cmo
 CMI_SENS = $(MLOBJ_SENS:.cmo=.cmi)
 
 ### Objects specific to sundials_no_sens.cma.
 COBJ_NO_SENS =	cvode/cvode_ml$(XO)		\
+		cvode/cvode_klu_ml${XO}		\
+		cvode/cvode_superlumt_ml${XO}	\
 		ida/ida_ml$(XO)			\
-		$(KLU_COBJ_NO_SENS)		\
-		$(SUPERLUMT_COBJ_NO_SENS)
+		ida/ida_klu_ml${XO}		\
+		ida/ida_superlumt_ml${XO}	\
+		arkode/arkode_klu_ml$(XO)	\
+		arkode/arkode_superlumt_ml$(XO)	\
+		kinsol/kinsol_klu_ml${XO}	\
+		kinsol/kinsol_superlumt_ml${XO}
 MLOBJ_NO_SENS =
 
 ### Objects specific to sundials_mpi.cma.

@@ -654,18 +654,10 @@ sparse_libs=
 
 klu_enabled=
 klu_info="not available"
-klu_cobj_sens=
-klu_cobj_no_sens=
-klu_mlobj_main=
-klu_mlobj_sens=
 klu_libs=
 
 superlumt_enabled=
 superlumt_info="not available"
-superlumt_cobj_sens=
-superlumt_cobj_no_sens=
-superlumt_mlobj_main=
-superlumt_mlobj_sens=
 superlumt_libs=
 
 if [ $sundials -ge 260 ]; then
@@ -681,27 +673,6 @@ if [ $sundials -ge 260 ]; then
 	    if [ ${enable_klu:-1} -eq 1 ]; then
 		klu_enabled=1
 		klu_info="installed"
-
-		klu_cobj_sens="$klu_cobj_sens cvodes/cvode_klu_ml_s${XO}"
-		klu_cobj_sens="$klu_cobj_sens cvodes/cvodes_klu_ml${XO}"
-		klu_cobj_sens="$klu_cobj_sens idas/ida_klu_ml_s${XO}"
-		klu_cobj_sens="$klu_cobj_sens idas/idas_klu_ml${XO}"
-		klu_cobj_sens="$klu_cobj_sens kinsol/kinsol_klu_ml${XO}"
-		klu_cobj_sens="$klu_cobj_sens arkode/arkode_klu_ml${XO}"
-
-		klu_cobj_no_sens="$klu_cobj_no_sens cvode/cvode_klu_ml${XO}"
-		klu_cobj_no_sens="$klu_cobj_no_sens ida/ida_klu_ml${XO}"
-		klu_cobj_no_sens="$klu_cobj_no_sens kinsol/kinsol_klu_ml${XO}"
-		klu_cobj_no_sens="$klu_cobj_no_sens arkode/arkode_klu_ml${XO}"
-
-		klu_mlobj_main="$klu_mlobj_main cvode/cvode_klu.cmo"
-		klu_mlobj_main="$klu_mlobj_main ida/ida_klu.cmo"
-		klu_mlobj_main="$klu_mlobj_main kinsol/kinsol_klu.cmo"
-		klu_mlobj_main="$klu_mlobj_main arkode/arkode_klu.cmo"
-
-		klu_mlobj_sens="$klu_mlobj_sens cvodes/cvodes_klu.cmo"
-		klu_mlobj_sens="$klu_mlobj_sens idas/idas_klu.cmo"
-
 		klu_libs="-lklu -lamd -lcolamd -lbtf -lsuitesparseconfig"
 		sparse_libs="$sparse_libs $klu_libs"
 	    else
@@ -716,31 +687,11 @@ if [ $sundials -ge 260 ]; then
 		superlumt_enabled=1
 	        superlumt_info="installed"
 
-superlumt_cobj_sens="$superlumt_cobj_sens cvodes/cvode_superlumt_ml_s${XO}"
-superlumt_cobj_sens="$superlumt_cobj_sens cvodes/cvodes_superlumt_ml${XO}"
-superlumt_cobj_sens="$superlumt_cobj_sens idas/ida_superlumt_ml_s${XO}"
-superlumt_cobj_sens="$superlumt_cobj_sens idas/idas_superlumt_ml${XO}"
-superlumt_cobj_sens="$superlumt_cobj_sens kinsol/kinsol_superlumt_ml${XO}"
-superlumt_cobj_sens="$superlumt_cobj_sens arkode/arkode_superlumt_ml${XO}"
-
-superlumt_cobj_no_sens="$superlumt_cobj_no_sens cvode/cvode_superlumt_ml${XO}"
-superlumt_cobj_no_sens="$superlumt_cobj_no_sens ida/ida_superlumt_ml${XO}"
-superlumt_cobj_no_sens="$superlumt_cobj_no_sens kinsol/kinsol_superlumt_ml${XO}"
-superlumt_cobj_no_sens="$superlumt_cobj_no_sens arkode/arkode_superlumt_ml${XO}"
-
-superlumt_mlobj_main="$superlumt_mlobj_main cvode/cvode_superlumt.cmo"
-superlumt_mlobj_main="$superlumt_mlobj_main ida/ida_superlumt.cmo"
-superlumt_mlobj_main="$superlumt_mlobj_main kinsol/kinsol_superlumt.cmo"
-superlumt_mlobj_main="$superlumt_mlobj_main arkode/arkode_superlumt.cmo"
-
-superlumt_mlobj_sens="$superlumt_mlobj_sens cvodes/cvodes_superlumt.cmo"
-superlumt_mlobj_sens="$superlumt_mlobj_sens idas/idas_superlumt.cmo"
-
-# TODO: detect which to install (how to do this?)
-superlumt_libs="-lsuperlu_mt_PTHREAD -lpthread"
-sparse_libs="$sparse_libs $superlumt_libs"
-blas_libs="-lblas"
-#sparse_libs="$sparse_libs -lsuperlu_mt_OPENMP -lopenmp"
+		# TODO: detect which to install (how to do this?)
+		superlumt_libs="-lsuperlu_mt_PTHREAD -lpthread"
+		sparse_libs="$sparse_libs $superlumt_libs"
+		blas_libs="-lblas"
+		#sparse_libs="$sparse_libs -lsuperlu_mt_OPENMP -lopenmp"
 		test_stem=__configure_test_c_file__superlumt
 		cat > $test_stem.c <<EOF
 int main ()
@@ -1090,14 +1041,6 @@ cat ${LOG}
 	 s#@nvecopenmp_enabled@#${nvecopenmp_enabled}#;
 	 s#@serial_nvec_libs@#${serial_nvec_libs}#;
 	 s#@sparse_libs@#${sparse_libs}#;
-	 s#@klu_cobj_sens@#${klu_cobj_sens}#;
-	 s#@klu_cobj_no_sens@#${klu_cobj_no_sens}#;
-	 s#@klu_mlobj_main@#${klu_mlobj_main}#;
-	 s#@klu_mlobj_sens@#${klu_mlobj_sens}#;
-	 s#@superlumt_cobj_sens@#${superlumt_cobj_sens}#;
-	 s#@superlumt_cobj_no_sens@#${superlumt_cobj_no_sens}#;
-	 s#@superlumt_mlobj_main@#${superlumt_mlobj_main}#;
-	 s#@superlumt_mlobj_sens@#${superlumt_mlobj_sens}#;
 	 s#@cc@#${CC}#;
 	 s#@cpp@#${CPP}#;
 	 s#@mpicc@#${mpicc}#;

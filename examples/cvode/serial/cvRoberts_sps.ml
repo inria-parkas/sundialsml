@@ -103,7 +103,7 @@ let print_final_stats s =
   and netf    = get_num_err_test_fails s
   and nni     = get_num_nonlin_solv_iters s
   and ncfn    = get_num_nonlin_solv_conv_fails s
-  and nje     = Cvode_superlumt.get_num_jac_evals s
+  and nje     = Sls.Superlumt.get_num_jac_evals s
   and nge     = get_num_g_evals s
   in
   printf "\nFinal Statistics:\n";
@@ -143,7 +143,7 @@ let main () =
   (* Call CVDense to specify the CVDENSE dense linear solver *)
   (* Set the Jacobian routine to Jac (user-supplied) *)
   let cvode_mem =
-    Cvode.(init BDF (Newton (Cvode_superlumt.superlumt jac ~nnz ~nthreads:1))
+    Cvode.(init BDF (Newton (Sls.Superlumt.solver jac ~nnz ~nthreads:1))
                 (SVtolerances (rtol, (Nvector_serial.wrap abstol))) f
                 ~roots:(nroots, g) t0 y)
   in

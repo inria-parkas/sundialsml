@@ -1222,6 +1222,159 @@ module Adjoint :
         val clear_band_jac_fn : 'k serial_bsession -> unit
       end (* }}} *)
 
+    (** Sparse Linear Solvers.
+
+        @nocvodes <node> The SLS modules *)
+    module Sls :
+      sig (* {{{ *)
+        (** Callback functions that compute sparse approximations to a Jacobian
+            matrix without forward sensitivites. In the call [sparse_jac_fn arg
+            jac], [arg] is a {!Cvodes.Adjoint.jacobian_arg} with three work
+            vectors and the computed Jacobian must be stored in [jac].
+
+            The callback should load the [(i,j)]th entry of [jac] with
+            {% $\partial y_i/\partial y_j$%}, i.e., the partial derivative of
+            the [i]th equation with respect to the [j]th variable, evaluated at
+            the values of [t] and [y] obtained from [arg]. Only nonzero elements
+            need be loaded into [jac].
+
+            Raising {!Sundials.RecoverableFailure} indicates a recoverable
+            error. Any other exception is treated as an unrecoverable error.
+
+            {warning Neither the elements of [arg] nor the matrix [jac] should
+                     be accessed after the function has returned.}
+
+            @nocvodes <node5#ss:sjacFnB> CVSlsSparseJacFnB *)
+        type sparse_jac_fn_no_sens =
+          (Sundials.RealArray.t triple, Sundials.RealArray.t) jacobian_arg
+          -> Sls.SparseMatrix.t -> unit
+
+        (** Callback functions that compute sparse approximations to a Jacobian
+            matrix with forward sensitivities. In the call [sparse_jac_fn arg s
+            jac], [arg] is a {!Cvodes.Adjoint.jacobian_arg} with three work
+            vectors, [s] is an array of forward sensitivity vectors, and the
+            computed Jacobian must be stored in [jac].
+
+            The callback should load the [(i,j)]th entry of [jac] with
+            {% $\partial y_i/\partial y_j$%}, i.e., the partial derivative of
+            the [i]th equation with respect to the [j]th variable, evaluated at
+            the values of [t] and [y] obtained from [arg]. Only nonzero elements
+            need be loaded into [jac].
+
+            Raising {!Sundials.RecoverableFailure} indicates a recoverable
+            error. Any other exception is treated as an unrecoverable error.
+
+            {warning Neither the elements of [arg] nor the matrix [jac] should
+                     be accessed after the function has returned.}
+
+            @nocvodes <node5#ss:sjacFnBS> CVSlsSparseJacFnBS *)
+        type sparse_jac_fn_with_sens =
+          (Sundials.RealArray.t triple, Sundials.RealArray.t) jacobian_arg
+          -> Sundials.RealArray.t array -> Sls.SparseMatrix.t -> unit
+
+        (** Callback functions that compute sparse approximations to a Jacobian
+            matrix.
+
+            @nocvodes <node5#ss:sjacFnB> CVSlsSparseJacFnB
+            @nocvodes <node5#ss:sjacFnBS> CVSlsSparseJacFnBS *)
+        type sparse_jac_fn =
+            NoSens of sparse_jac_fn_no_sens
+            (** Does not depend on forward sensitivities. *)
+          | WithSens of sparse_jac_fn_with_sens
+            (** Depends on forward sensitivities. *)
+
+        (** KLU sparse-direct linear solver module (requires KLU).
+
+            @nocvodes <node5#sss:cvklu> The KLU Solver *)
+        module Klu : sig (* {{{ *)
+
+          (** A direct linear solver on sparse matrices. In the call,
+              [klu jfn nnz], [jfn] is a callback function that computes an
+              approximation to the Jacobian matrix and [nnz] is the maximum
+              number of nonzero entries in that matrix.
+
+              @raise Sundials.NotImplementedBySundialsVersion Solver not available.
+              @nocvodes <node5#sss:lin_solv_init> CVKLUB
+              @nocvodes <node5#sss:optin_sls> CVSlsSetSparseJacFnB
+              @nocvodes <node5#sss:optin_sls> CVSlsSetSparseJacFnBS
+              @nocvodes <node5#ss:sjacFnB> CVSlsSparseJacFnB
+              @nocvodes <node5#ss:sjacFnBS> CVSlsSparseJacFnBS *)
+          val solver : sparse_jac_fn -> int -> 'k serial_linear_solver
+
+          (** The ordering algorithm used for reducing fill. *)
+          type ordering = Cvode.Sls.Klu.ordering =
+               Amd      (** Approximate minimum degree permutation. *)
+             | ColAmd   (** Column approximate minimum degree permutation. *)
+             | Natural  (** Natural ordering. *)
+
+          (** Sets the ordering algorithm used to minimize fill-in.
+
+              @nocvodes <node5#ss:sls_optin> CVKLUSetOrdering
+              @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+          val set_ordering : 'k serial_bsession -> ordering -> unit
+
+          (** Reinitializes the Jacobian matrix memory and flags.
+              In the call, [reinit s n nnz realloc], [n] is the number of system
+              state variables, and [nnz] is the number of non-zeroes in the
+              Jacobian matrix. New symbolic and numeric factorizations will be
+              completed at the next solver step. If [realloc] is true, the
+              Jacobian matrix will be reallocated based on [nnz].
+
+              @nocvodes <node5#ss:sls_optin> CVKLUReInit
+              @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+          val reinit : 'k serial_bsession -> int -> int -> bool -> unit
+
+          (** Returns the number of calls made by a sparse linear solver to the
+              Jacobian approximation function.
+
+              @nocvodes <node5#sss:optout_sls> CVSlsGetNumJacEvals
+              @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+          val get_num_jac_evals : 'k serial_bsession -> int
+
+        end (* }}} *)
+
+        (** SuperLU_MT sparse-direct linear solver module (requires SuperLU_MT).
+
+            @nocvodes <node5#sss:cvsuperlumt> The SuperLUMT Solver *)
+        module Superlumt : sig (* {{{ *)
+
+          (** A direct linear solver on sparse matrices. In the call,
+              [superlumt jfn nnz], [jfn] specifies a callback function that
+              computes an approximation to the Jacobian matrix and [nnz] is the
+              maximum number of nonzero entries in that matrix.
+
+              @raise Sundials.NotImplementedBySundialsVersion Solver not available.
+              @nocvodes <node5#sss:lin_solv_init> CVSuperLUMTB
+              @nocvodes <node5#sss:optin_sls> CVSlsSetSparseJacFnB
+              @nocvodes <node5#sss:optin_sls> CVSlsSetSparseJacFnBS
+              @nocvodes <node5#ss:sjacFnB> CVSlsSparseJacFnB
+              @nocvodes <node5#ss:sjacFnBS> CVSlsSparseJacFnBS *)
+          val solver : sparse_jac_fn -> nnz:int -> nthreads:int
+                            -> 'k serial_linear_solver
+
+          (** The ordering algorithm used for reducing fill. *)
+          type ordering = Cvode.Sls.Superlumt.ordering =
+               Natural       (** Natural ordering. *)
+             | MinDegreeProd (** Minimal degree ordering on $J^T J$. *)
+             | MinDegreeSum  (** Minimal degree ordering on $J^T + J$. *)
+             | ColAmd        (** Column approximate minimum degree permutation. *)
+
+          (** Sets the ordering algorithm used to minimize fill-in.
+
+              @nocvodes <node5#ss:sls_optin> CVSuperLUMTSetOrdering
+              @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+          val set_ordering : 'k serial_bsession -> ordering -> unit
+
+          (** Returns the number of calls made by a sparse linear solver to the
+              Jacobian approximation function.
+
+              @nocvodes <node5#sss:optout_sls> CVSlsGetNumJacEvals
+              @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+          val get_num_jac_evals : 'k serial_bsession -> int
+
+        end (* }}} *)
+      end (* }}} *)
+
     (** Scaled Preconditioned Iterative Linear Solvers.
 
         @cvodes <node7#ss:optional_output_b> Optional output functions for the backward problem.

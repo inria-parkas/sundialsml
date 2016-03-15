@@ -139,21 +139,18 @@ module SlsTypes = struct
       mutable smat : Sls_impl.t option
     }
 
-  module MassTypes = struct
-    type sparse_fn =
-      float
-      -> RealArray.t triple
-      -> Sls.SparseMatrix.t
-      -> unit
+  type sparse_mass_fn =
+    float
+    -> RealArray.t triple
+    -> Sls.SparseMatrix.t
+    -> unit
 
-    (* These fields are accessed from arkode_ml.c *)
-    type sparse_callback =
-      {
-        massfn: sparse_fn;
-        mutable smat : Sls_impl.t option
-      }
-  end
-
+  (* These fields are accessed from arkode_ml.c *)
+  type sparse_mass_callback =
+    {
+      massfn: sparse_mass_fn;
+      mutable smat : Sls_impl.t option
+    }
 end
 
 module SpilsCommonTypes = struct
@@ -398,8 +395,8 @@ and ('a, 'kind) mass_callbacks =
   | DlsBandMassCallback  of DlsTypes.MassTypes.band_callback
 
   (* Sls *)
-  | SlsKluMassCallback of SlsTypes.MassTypes.sparse_callback
-  | SlsSuperlumtMassCallback of SlsTypes.MassTypes.sparse_callback
+  | SlsKluMassCallback of SlsTypes.sparse_mass_callback
+  | SlsSuperlumtMassCallback of SlsTypes.sparse_mass_callback
 
   (* Spils *)
   | SpilsMassCallback of 'a SpilsTypes'.MassTypes'.times_vec_fn

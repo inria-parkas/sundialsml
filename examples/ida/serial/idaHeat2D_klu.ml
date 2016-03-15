@@ -465,7 +465,7 @@ let print_output mem t u =
   and nni   = get_num_nonlin_solv_iters mem
   and nre   = get_num_res_evals mem
   and hused = get_last_step mem
-  and nje   = Ida_klu.get_num_jac_evals mem
+  and nje   = Sls.Klu.get_num_jac_evals mem
   in
   printf " %5.2f %13.5e  %d  %3d  %3d  %3d  %4d  %9.2e \n"
          t umax kused nst nni nje nre hused
@@ -515,10 +515,10 @@ let main () =
     else failwith "mgrid size is too small to run."
   in
   let mem =
-    Ida.init (Ida_klu.klu jacfn nnz)
-             (Ida.SStolerances (rtol, atol))
-             (fun t u u' r -> heatres t u u' r data)
-             t0 wu wu'
+    Ida.(init (Sls.Klu.solver jacfn nnz)
+              (SStolerances (rtol, atol))
+              (fun t u u' r -> heatres t u u' r data)
+              t0 wu wu')
   in
   Ida.set_constraints mem (Nvector_serial.wrap constraints);
 

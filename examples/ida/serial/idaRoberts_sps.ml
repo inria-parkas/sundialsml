@@ -76,7 +76,7 @@ and print_final_stats ida =
   let open Ida in
   let nst  = get_num_steps ida
   and nre  = get_num_res_evals ida
-  and nje  = Ida_superlumt.get_num_jac_evals ida
+  and nje  = Sls.Superlumt.get_num_jac_evals ida
   and nni  = get_num_nonlin_solv_iters ida
   and netf = get_num_err_test_fails ida
   and ncfn = get_num_nonlin_solv_conv_fails ida
@@ -166,9 +166,9 @@ let main () =
   (* Call IDACreate, IDAInit, and IDARootInit to initialize IDA memory with
    * a 2-component root function and the dense direct linear solver.  *)
   let ida_mem =
-    Ida.init (Ida_superlumt.superlumt jacrob ~nnz:(neq*neq) ~nthreads:1)
-             (Ida.SVtolerances (rtol, Nvector_serial.wrap avtol))
-             resrob ~roots:(nroots, grob) t0 wy wy'
+    Ida.(init (Sls.Superlumt.solver jacrob ~nnz:(neq*neq) ~nthreads:1)
+              (SVtolerances (rtol, Nvector_serial.wrap avtol))
+              resrob ~roots:(nroots, grob) t0 wy wy')
   in
   (* In loop, call IDASolve, print results, and test for error.  Break out of
    * loop when NOUT preset output times have been reached. *)

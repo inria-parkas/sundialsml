@@ -915,12 +915,12 @@ let main () =
     init
       (Arkode.Implicit
         (f udata,
-         Newton (Arkode_superlumt.superlumt (jac udata)
+         Newton (Sls.Superlumt.solver (jac udata)
                     ~nnz:nnz ~nthreads:num_threads),
          Nonlinear))
       (SStolerances (reltol, abstol))
       ~restol:(ResStolerance abstol)
-      ~mass:(Arkode_superlumt.Mass.superlumt (mass_matrix udata)
+      ~mass:(Sls.Superlumt.Mass.solver (mass_matrix udata)
                   ~nnz:nnz ~nthreads:num_threads)
       t0
       y
@@ -998,7 +998,7 @@ let main () =
   let nni      = get_num_nonlin_solv_iters arkode_mem in
   let ncfn     = get_num_nonlin_solv_conv_fails arkode_mem in
   let nms      = get_num_mass_solves arkode_mem in
-  let nje      = Arkode_superlumt.get_num_jac_evals arkode_mem in
+  let nje      = Sls.Superlumt.get_num_jac_evals arkode_mem in
 
   printf "\nFinal Solver Statistics:\n";
   printf "   Internal solver steps = %d (attempted = %d)\n" nst nst_a;

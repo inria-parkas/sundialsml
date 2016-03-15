@@ -11,10 +11,6 @@
  *                                                                     *
  ***********************************************************************/
 
-#include <idas/idas.h>
-#include <idas/idas_sparse.h>
-#include <idas/idas_superlumt.h>
-
 #include <caml/mlvalues.h>
 #include <caml/alloc.h>
 #include <caml/memory.h>
@@ -26,6 +22,17 @@
 #include "../ida/ida_ml.h"
 #include "idas_ml.h"
 #include "../lsolvers/sls_ml.h"
+
+#ifndef SUNDIALS_ML_SUPERLUMT
+CAMLprim value c_idas_superlumtb_init (value vparent_which,
+		 		       value vneqs, value vnnz,
+				       value vnthreads, value vusesens)
+{ CAMLparam0(); CAMLreturn (Val_unit); }
+#else
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#include <idas/idas.h>
+#include <idas/idas_sparse.h>
+#include <idas/idas_superlumt.h>
 
 static int jacfn_nosens( /* IDASlsSparseJacFnB */
 	realtype t,
@@ -121,9 +128,9 @@ static int jacfn_withsens( /* IDASlsSparseJacFnB */
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
-CAMLprim value c_ida_superlumtb_init (value vparent_which,
-				      value vneqs, value vnnz,
-				      value vnthreads, value vusesens)
+CAMLprim value c_idas_superlumtb_init (value vparent_which,
+				       value vneqs, value vnnz,
+				       value vnthreads, value vusesens)
 {
     CAMLparam5(vparent_which, vneqs, vnnz, vnthreads, vusesens);
     void *ida_mem = IDA_MEM_FROM_ML (Field(vparent_which, 0));
@@ -144,4 +151,5 @@ CAMLprim value c_ida_superlumtb_init (value vparent_which,
     CAMLreturn (Val_unit);
 }
 
+#endif
 
