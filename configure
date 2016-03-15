@@ -188,7 +188,14 @@ if [ "x${prefix}" = x ]; then
 		sundials_inc_path="${prefix}include/"
 		Isundials_inc_path="-I${sundials_inc_path}"
 	    fi
-	    ;;
+	    if [ "x${superlumt_lib_path}" = x ]; then
+		superlumt_lib_path="${prefix}lib/"
+		Lsuperlumt_lib_path="-L${superlumt_lib_path}"
+	    fi
+	    if [ "x${klu_lib_path}" = x ]; then
+		klu_lib_path="${prefix}lib/"
+		Lklu_lib_path="-L${klu_lib_path}"
+	    fi
     esac
 fi
 
