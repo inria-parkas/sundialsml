@@ -220,30 +220,6 @@ uninstall-ocamlfind: uninstall-findlib
 uninstall-findlib:
 	@ocamlfind remove sundialsml
 
-### Preparing Releases
-
-# Sets up a sandbox and makes sure everything compiles.  You need
-# everything to do this: gcc, git, OCaml >= 4, OCamlMPI, lapack, etc.
-# The sandbox is configured with $(CONFIG_COMMAND), which defaults to
-# the command you used to configure the current repository.
-distcheck:
-	git clone . sandbox
-	cd sandbox && $(CONFIG_COMMAND) > config.log
-	@ # Make sure everything is enabled.
-	! grep "NOT FOUND" sandbox/config.log
-	! grep "DISABLED" sandbox/config.log
-	! grep "without lapack" sandbox/config.log
-	@ # Tests.  Important ones and short ones first.
-	$(MAKE) -C sandbox all
-	$(MAKE) -C sandbox/examples tests.opt.log
-	$(MAKE) -C sandbox/examples/ocaml
-	$(MAKE) -C sandbox doc
-	@ # Because perf.opt.log repeats tests, it sometimes uncovers
-	@ # GC bugs that tests.opt.log doesn't.
-	$(MAKE) -C sandbox/examples PERF_DATA_POINTS=1 perf.opt.log
-	$(MAKE) -C sandbox/examples tests.byte.log
-	rm -rf sandbox
-
 ### Misc
 
 depend: .depend
