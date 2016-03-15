@@ -121,11 +121,11 @@ END_HELP_TEXT
 	OCAMLBIN="${OCAMLROOT}bin/";;
     SUNDIALS_DIR)
 	if [ "x${sundials_lib_path}" = x ]; then
-	    sundials_lib_path="${prefix}lib/"
+	    sundials_lib_path="${value%/}/lib/"
 	    Lsundials_lib_path="-L${sundials_lib_path}"
 	fi
 	if [ "x${sundials_inc_path}" = x ]; then
-	    sundials_inc_path="${prefix}include/"
+	    sundials_inc_path="${value%/}/include/"
 	    Isundials_inc_path="-I${sundials_inc_path}"
 	fi
 	;;
