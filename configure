@@ -574,6 +574,7 @@ if ${ocamlc} ${test_stem}.c ${test_ml_stem}.ml -o ${test_ml_stem}$XX \
     have_weak=1
 else
     have_weak=0
+    warning="${warning}\n\tCould not compile caml_weak_get; using workaround."
 fi
 rm -f ./${test_stem}.* ./${test_ml_stem}.* ${test_ml_stem}
 
