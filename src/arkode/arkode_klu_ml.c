@@ -19,8 +19,6 @@
 #include <caml/fail.h>
 
 #include "../sundials/sundials_ml.h"
-#include "arkode_ml.h"
-#include "../lsolvers/sls_ml.h"
 
 #ifndef SUNDIALS_ML_KLU
 CAMLprim value c_arkode_klu_init (value varkode_mem, value vneqs, value vnnz)
@@ -52,6 +50,8 @@ CAMLprim value c_arkode_klu_get_num_mass_evals(value varkode_mem)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 #else
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#include "arkode_ml.h"
+#include "../lsolvers/sls_ml.h"
 
 #include <arkode/arkode.h>
 #include <arkode/arkode_sparse.h>

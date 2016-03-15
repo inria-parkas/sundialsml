@@ -19,8 +19,6 @@
 #include <caml/fail.h>
 
 #include "../sundials/sundials_ml.h"
-#include "kinsol_ml.h"
-#include "../lsolvers/sls_ml.h"
 
 #ifndef SUNDIALS_ML_KLU
 CAMLprim value c_kinsol_klu_init (value vkin_mem, value vneqs, value vnnz)
@@ -37,6 +35,9 @@ CAMLprim value c_kinsol_klu_get_num_jac_evals(value vkin_mem)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 #else
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#include "kinsol_ml.h"
+#include "../lsolvers/sls_ml.h"
+
 #include <kinsol/kinsol.h>
 #include <kinsol/kinsol_sparse.h>
 #include <kinsol/kinsol_klu.h>
