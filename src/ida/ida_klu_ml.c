@@ -19,8 +19,6 @@
 #include <caml/fail.h>
 
 #include "../sundials/sundials_ml.h"
-#include "ida_ml.h"
-#include "../lsolvers/sls_ml.h"
 
 #ifndef SUNDIALS_ML_KLU
 CAMLprim value c_ida_klu_init (value vida_mem, value vneqs, value vnnz)
@@ -37,6 +35,9 @@ CAMLprim value c_ida_klu_get_num_jac_evals(value vida_mem)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 #else
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#include "ida_ml.h"
+#include "../lsolvers/sls_ml.h"
+
 #ifdef SUNDIALSML_WITHSENS
 /* IDAS (with sensitivity) */
 

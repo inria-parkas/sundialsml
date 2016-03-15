@@ -19,8 +19,6 @@
 #include <caml/fail.h>
 
 #include "../sundials/sundials_ml.h"
-#include "cvode_ml.h"
-#include "../lsolvers/sls_ml.h"
 
 #ifndef SUNDIALS_ML_KLU
 CAMLprim value c_cvode_klu_init (value vcvode_mem, value vneqs, value vnnz)
@@ -37,6 +35,8 @@ CAMLprim value c_cvode_klu_get_num_jac_evals(value vcvode_mem)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 #else
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#include "cvode_ml.h"
+#include "../lsolvers/sls_ml.h"
 
 #ifdef SUNDIALSML_WITHSENS
 /* CVODES (with sensitivity) */

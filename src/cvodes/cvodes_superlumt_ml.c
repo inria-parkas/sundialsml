@@ -19,9 +19,6 @@
 #include <caml/fail.h>
 
 #include "../sundials/sundials_ml.h"
-#include "../cvode/cvode_ml.h"
-#include "cvodes_ml.h"
-#include "../lsolvers/sls_ml.h"
 
 #ifndef SUNDIALS_ML_SUPERLUMT
 CAMLprim value c_cvodes_superlumtb_init (value vparent_which,
@@ -30,6 +27,10 @@ CAMLprim value c_cvodes_superlumtb_init (value vparent_which,
 { CAMLparam0(); CAMLreturn (Val_unit); }
 #else
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#include "../cvode/cvode_ml.h"
+#include "cvodes_ml.h"
+#include "../lsolvers/sls_ml.h"
+
 #include <cvodes/cvodes.h>
 #include <cvodes/cvodes_sparse.h>
 #include <cvodes/cvodes_superlumt.h>

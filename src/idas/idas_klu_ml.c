@@ -19,9 +19,6 @@
 #include <caml/fail.h>
 
 #include "../sundials/sundials_ml.h"
-#include "../ida/ida_ml.h"
-#include "idas_ml.h"
-#include "../lsolvers/sls_ml.h"
 
 #ifndef SUNDIALS_ML_KLU
 CAMLprim value c_idas_klub_init (value vparent, value vwhich,
@@ -29,6 +26,10 @@ CAMLprim value c_idas_klub_init (value vparent, value vwhich,
 { CAMLparam0(); CAMLreturn (Val_unit); }
 #else
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#include "../ida/ida_ml.h"
+#include "idas_ml.h"
+#include "../lsolvers/sls_ml.h"
+
 #include <idas/idas.h>
 #include <idas/idas_sparse.h>
 #include <idas/idas_klu.h>

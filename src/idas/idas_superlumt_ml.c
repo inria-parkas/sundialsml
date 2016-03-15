@@ -19,9 +19,6 @@
 #include <caml/fail.h>
 
 #include "../sundials/sundials_ml.h"
-#include "../ida/ida_ml.h"
-#include "idas_ml.h"
-#include "../lsolvers/sls_ml.h"
 
 #ifndef SUNDIALS_ML_SUPERLUMT
 CAMLprim value c_idas_superlumtb_init (value vparent_which,
@@ -30,6 +27,10 @@ CAMLprim value c_idas_superlumtb_init (value vparent_which,
 { CAMLparam0(); CAMLreturn (Val_unit); }
 #else
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#include "../ida/ida_ml.h"
+#include "idas_ml.h"
+#include "../lsolvers/sls_ml.h"
+
 #include <idas/idas.h>
 #include <idas/idas_sparse.h>
 #include <idas/idas_superlumt.h>
