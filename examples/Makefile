@@ -74,7 +74,7 @@ define ADD_IGNORE_RULE
 endef
 $(foreach t,$(SUBDIR_TARGETS),$(eval $(call ADD_IGNORE_RULE,$t)))
 
-tests.opt tests.byte: tests.%: $(foreach s,$(SUBDIR),$s/tests.%)
+tests.opt tests.byte: tests.%: $(foreach s,$(SUBDIRS),$s/tests.%)
 
 tests.opt.log tests.byte.log: tests.%.log: $(C_EXAMPLES) \
 					$(foreach s,$(SUBDIRS),$s/tests.%.log)
