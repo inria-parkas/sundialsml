@@ -1,0 +1,134 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="Up" href="Arkode.Alternate.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Dls" rel="Chapter" href="Dls.html">
+<link title="Sls" rel="Chapter" href="Sls.html">
+<link title="Spils" rel="Chapter" href="Spils.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Arkode" rel="Chapter" href="Arkode.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Arkode_bbd" rel="Chapter" href="Arkode_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Nvector_openmp" rel="Chapter" href="Nvector_openmp.html">
+<link title="Nvector_pthreads" rel="Chapter" href="Nvector_pthreads.html"><title>Sundials/ML 2.6.2p0 : Arkode.Alternate.Mass</title>
+</head>
+<body>
+<div class="navbar">&nbsp;<a class="up" href="Arkode.Alternate.html" title="Arkode.Alternate">Up</a>
+&nbsp;</div>
+<h1>Module <a href="type_Arkode.Alternate.Mass.html">Arkode.Alternate.Mass</a></h1>
+
+<pre><span class="keyword">module</span> Mass: <code class="code"><span class="keyword">sig</span></code> <a href="Arkode.Alternate.Mass.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+<h3 id="altmass">Mass matrix solvers</h3><br>
+</div>
+<hr width="100%">
+
+<pre><span id="TYPEminit"><span class="keyword">type</span> <code class="type">('data, 'kind)</code> minit</span> = <code class="type">('data, 'kind) <a href="Arkode.html#TYPEsession">Arkode.session</a> -> unit</code> </pre>
+<div class="info ">
+Functions that initialize mass matrix solver data, like counters and
+            statistics.
+<p>
+
+            Raising any exception in this function (including
+            <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a>) is treated as an unrecoverable
+            error.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>minit</div></div>
+
+
+<pre><span id="TYPEmsetup"><span class="keyword">type</span> <code class="type">('data, 'kind)</code> msetup</span> = <code class="type">('data, 'kind) <a href="Arkode.html#TYPEsession">Arkode.session</a> -> 'data <a href="Arkode.html#TYPEtriple">Arkode.triple</a> -> unit</code> </pre>
+<div class="info ">
+Functions that prepare the mass matrix solver for subsequent calls
+            to <a href="Arkode.Alternate.Mass.html#TYPEcallbacks">lsolve</a>.
+<p>
+
+            This function may raise a <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a> exception
+            to indicate that a recoverable error has occurred. Any other
+            exception is treated as an unrecoverable error.
+<p>
+
+            <div class="warningbox"> The vectors <code class="code">ypred</code>, <code class="code">fpred</code>, and those in <code class="code">tmp</code> should
+                     not be accessed after the function returns.</div><br>
+<div class="sundials"><span class="seesundials">See sundials: </span>msetup</div></div>
+
+
+<pre><span id="TYPEmsolve"><span class="keyword">type</span> <code class="type">('data, 'kind)</code> msolve</span> = <code class="type">('data, 'kind) <a href="Arkode.html#TYPEsession">Arkode.session</a> -> 'data -> 'data -> unit</code> </pre>
+<div class="info ">
+Functions that solve the linear equation $Mx = b$. $M$ is the system
+            mass matrix. The call <code class="code">lsolve s b weight</code> has as arguments:<ul>
+<li><code class="code">s</code>, the solver session,</li>
+<li><code class="code">b</code>, the right-hand side vector, also used for returning the
+                   result, and</li>
+<li><code class="code">weight</code>, a vector containing the error weights.</li>
+</ul>
+
+            Raising <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a> indicates a recoverable
+            error. Any other exception is treated as an unrecoverable error.
+<p>
+
+            <div class="warningbox"> The vectors <code class="code">b</code> and <code class="code">weight</code> should not be accessed after
+                     the function returns.</div><br>
+<div class="sundials"><span class="seesundials">See sundials: </span>msolve</div><div class="sundials"><span class="seesundials">See sundials: </span>Mass matrix solver</div></div>
+
+
+<pre><code><span id="TYPEcallbacks"><span class="keyword">type</span> <code class="type">('data, 'kind)</code> callbacks</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTcallbacks.minit">minit</span>&nbsp;: <code class="type">('data, 'kind) <a href="Arkode.Alternate.Mass.html#TYPEminit">minit</a> option</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTcallbacks.msetup">msetup</span>&nbsp;: <code class="type">('data, 'kind) <a href="Arkode.Alternate.Mass.html#TYPEmsetup">msetup</a> option</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTcallbacks.msolve">msolve</span>&nbsp;: <code class="type">('data, 'kind) <a href="Arkode.Alternate.Mass.html#TYPEmsolve">msolve</a></code>;</code></td>
+
+</tr></table>
+}
+
+<div class="info ">
+The callbacks needed to implement an alternate linear solver.<br>
+</div>
+
+
+<pre><span id="VALmake"><span class="keyword">val</span> make</span> : <code class="type">(('data, 'kind) <a href="Arkode.html#TYPEsession">Arkode.session</a> -><br>        ('data, 'kind) <a href="Nvector.html#TYPEt">Nvector.t</a> -> ('data, 'kind) <a href="Arkode.Alternate.Mass.html#TYPEcallbacks">callbacks</a>) -><br>       ('data, 'kind) <a href="Arkode.html#TYPElinear_solver">Arkode.linear_solver</a></code></pre><div class="info ">
+Creates a mass matrix solver from a function returning a set of
+            callbacks. The creation function is passed a session and a vector.
+            The latter indicates the problem size and can, for example, be
+            cloned.<br>
+</div>
+</body></html>

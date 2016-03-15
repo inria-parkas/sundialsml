@@ -1,0 +1,331 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Arkode.Spils.Banded.html">
+<link rel="Up" href="Arkode.Spils.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Dls" rel="Chapter" href="Dls.html">
+<link title="Sls" rel="Chapter" href="Sls.html">
+<link title="Spils" rel="Chapter" href="Spils.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Arkode" rel="Chapter" href="Arkode.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Arkode_bbd" rel="Chapter" href="Arkode_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Nvector_openmp" rel="Chapter" href="Nvector_openmp.html">
+<link title="Nvector_pthreads" rel="Chapter" href="Nvector_pthreads.html"><link title="Preconditioners" rel="Section" href="#precond">
+<link title="Solvers" rel="Section" href="#lsolvers">
+<link title="Solver parameters" rel="Section" href="#set">
+<link title="Solver statistics" rel="Section" href="#stats">
+<link title="Low-level solver manipulation" rel="Section" href="#lowlevel">
+<title>Sundials/ML 2.6.2p0 : Arkode.Spils.Mass</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Arkode.Spils.Banded.html" title="Arkode.Spils.Banded">Previous</a>
+&nbsp;<a class="up" href="Arkode.Spils.html" title="Arkode.Spils">Up</a>
+&nbsp;</div>
+<h1>Module <a href="type_Arkode.Spils.Mass.html">Arkode.Spils.Mass</a></h1>
+
+<pre><span class="keyword">module</span> Mass: <code class="code"><span class="keyword">sig</span></code> <a href="Arkode.Spils.Mass.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+<h3 id="spilsmass">Mass matrix solvers</h3><br>
+</div>
+<hr width="100%">
+<br>
+<h3 id="precond">Preconditioners</h3><br>
+
+<pre><code><span id="TYPEprec_solve_arg"><span class="keyword">type</span> <code class="type">'d</code> prec_solve_arg</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTprec_solve_arg.rhs">rhs</span>&nbsp;: <code class="type">'d</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Right-hand side vector of the linear system.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTprec_solve_arg.delta">delta</span>&nbsp;: <code class="type">float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Input tolerance for iterative methods.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTprec_solve_arg.left">left</span>&nbsp;: <code class="type">bool</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<code class="code"><span class="keyword">true</span></code> for left preconditioning and
+                                 <code class="code"><span class="keyword">false</span></code> for right preconditioning.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTprec_solve_arg.tmp">tmp</span>&nbsp;: <code class="type">'d</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Workspace data.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+}
+
+<div class="info ">
+Arguments passed to the mass matrix preconditioner solver function.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKSpilsMassPrecSolveFn</div></div>
+
+
+<pre><span id="TYPEprec_solve_fn"><span class="keyword">type</span> <code class="type">'d</code> prec_solve_fn</span> = <code class="type">float -> 'd <a href="Arkode.Spils.Mass.html#TYPEprec_solve_arg">prec_solve_arg</a> -> 'd -> unit</code> </pre>
+<div class="info ">
+Callback functions that solve a linear mass matrix system involving
+            a preconditioner matrix. In the call <code class="code">prec_solve_fn t arg z</code>, <code class="code">t</code>
+            is the independent variable, <code class="code">arg</code> is a <a href="Arkode.Spils.Mass.html#TYPEprec_solve_arg"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.prec_solve_arg</code></a> that
+            specifies the linear system, and <code class="code">z</code> is computed to solve
+            $P\mathtt{z} = \mathtt{arg.rhs}$. $P$ is a left or right
+            preconditioning matrix, if preconditioning is done on both sides,
+            the product of the two preconditioner matrices should approximate
+            $M$.
+<p>
+
+            Raising <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a> indicates a recoverable
+            error. Any other exception is treated as an unrecoverable error.
+<p>
+
+            <div class="warningbox"> The elements of <code class="code">arg</code> and <code class="code">z</code> should not
+                     be accessed after the function has returned.</div><br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKSpilsMassPrecSolveFn</div></div>
+
+
+<pre><span id="TYPEprec_setup_fn"><span class="keyword">type</span> <code class="type">'d</code> prec_setup_fn</span> = <code class="type">float -> 'd <a href="Arkode.html#TYPEtriple">Arkode.triple</a> -> unit</code> </pre>
+<div class="info ">
+Callback functions that preprocess or evaluate mass matrix-related
+            data needed by <a href="Arkode.Spils.Mass.html#TYPEprec_solve_fn"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.prec_solve_fn</code></a>. In the call
+            <code class="code">prec_setup_fn t tmp</code>, <code class="code">t</code> is the independent variable, and <code class="code">tmp</code>
+            is workspace data.
+<p>
+
+            Raising <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a> indicates a recoverable
+            error. Any other exception is treated as an unrecoverable error.
+<p>
+
+            <div class="warningbox"> The elements of <code class="code">tmp</code> should not be accessed after
+                     the function has returned.</div><br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKSpilsMassPrecSetupFn</div></div>
+
+
+<pre><span id="TYPEtimes_vec_fn"><span class="keyword">type</span> <code class="type">'d</code> times_vec_fn</span> = <code class="type">float -> 'd -> 'd -> unit</code> </pre>
+<div class="info ">
+Callback functions that compute the mass matrix times a vector. In
+            the call <code class="code">times_vec_fn t v mv</code>,<ul>
+<li><code class="code">t</code> is the independent variable,</li>
+<li><code class="code">v</code> is the vector to multiply, and</li>
+<li><code class="code">mv</code> is the computed output
+                   vector—$\mathtt{mv} = M\mathtt{v}$.</li>
+</ul>
+
+            Raising <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a> indicates a recoverable
+            error. Any other exception is treated as an unrecoverable error.
+<p>
+
+            <div class="warningbox"> Neither the elements of <code class="code">v</code> nor <code class="code">mv</code> should be
+                     accessed after the function has returned.</div><br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKSpilsMassTimesVecFn</div></div>
+
+
+<pre><span id="TYPEpreconditioner"><span class="keyword">type</span> <code class="type">('d, 'k)</code> preconditioner</span> = <code class="type">('d, 'k) SpilsTypes.MassTypes.preconditioner</code> </pre>
+<div class="info ">
+Specifies a preconditioner, including the type of preconditioning
+            (none, left, right, or both) and callback functions.
+            The following functions construct preconditioners.
+<p>
+
+            The <a href="Arkode.Spils.Mass.html#TYPEprec_solve_fn"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.prec_solve_fn</code></a> and <a href="Arkode.Spils.Mass.html#TYPEtimes_vec_fn"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.times_vec_fn</code></a> are mandatory. The
+            <a href="Arkode.Spils.Mass.html#TYPEprec_setup_fn"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.prec_setup_fn</code></a> can be omitted if not needed.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKSpilsSetMassPreconditioner</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKSpilsSetMassTimesVecFn</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKSpilsMassPrecSetupFn</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKSpilsMassPrecSolveFn</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKSpilsMassTimesVecFn</div></div>
+
+
+<pre><span id="VALprec_none"><span class="keyword">val</span> prec_none</span> : <code class="type">('d, 'k) <a href="Arkode.Spils.Mass.html#TYPEpreconditioner">preconditioner</a></code></pre><div class="info ">
+No preconditioning.<br>
+</div>
+
+<pre><span id="VALprec_left"><span class="keyword">val</span> prec_left</span> : <code class="type">?setup:'d <a href="Arkode.Spils.Mass.html#TYPEprec_setup_fn">prec_setup_fn</a> -><br>       'd <a href="Arkode.Spils.Mass.html#TYPEprec_solve_fn">prec_solve_fn</a> -><br>       ('d, 'k) <a href="Arkode.Spils.Mass.html#TYPEpreconditioner">preconditioner</a></code></pre><div class="info ">
+Left preconditioning. $(P^{-1}M)x = P^{-1}b$ .<br>
+</div>
+
+<pre><span id="VALprec_right"><span class="keyword">val</span> prec_right</span> : <code class="type">?setup:'d <a href="Arkode.Spils.Mass.html#TYPEprec_setup_fn">prec_setup_fn</a> -><br>       'd <a href="Arkode.Spils.Mass.html#TYPEprec_solve_fn">prec_solve_fn</a> -><br>       ('d, 'k) <a href="Arkode.Spils.Mass.html#TYPEpreconditioner">preconditioner</a></code></pre><div class="info ">
+Right preconditioning. $(MP^{-1})Px = b$ .<br>
+</div>
+
+<pre><span id="VALprec_both"><span class="keyword">val</span> prec_both</span> : <code class="type">?setup:'d <a href="Arkode.Spils.Mass.html#TYPEprec_setup_fn">prec_setup_fn</a> -><br>       'd <a href="Arkode.Spils.Mass.html#TYPEprec_solve_fn">prec_solve_fn</a> -><br>       ('d, 'k) <a href="Arkode.Spils.Mass.html#TYPEpreconditioner">preconditioner</a></code></pre><div class="info ">
+Left and right preconditioning.
+            $(P_L^{-1}MP_R^{-1})P_Rx = P_L^{-1}b$ <br>
+</div>
+<br>
+<h3 id="lsolvers">Solvers</h3><br>
+
+<pre><span id="VALspgmr"><span class="keyword">val</span> spgmr</span> : <code class="type">?maxl:int -><br>       'd <a href="Arkode.Spils.Mass.html#TYPEtimes_vec_fn">times_vec_fn</a> -><br>       ('d, 'k) <a href="Arkode.Spils.Mass.html#TYPEpreconditioner">preconditioner</a> -> ('d, 'k) <a href="Arkode.html#TYPElinear_solver">Arkode.linear_solver</a></code></pre><div class="info ">
+Krylov iterative solver using the scaled preconditioned generalized
+            minimum residual (GMRES) method.
+            In the call <code class="code">spgmr ~maxl:maxl mtv prec</code>,<ul>
+<li><code class="code">maxl</code> is the maximum dimension of the Krylov subspace
+                     (defaults to 5),</li>
+<li><code class="code">mtv</code> is the mass-matrix-vector product function, and</li>
+<li><code class="code">prec</code> is a <a href="Arkode.Spils.Mass.html#TYPEpreconditioner"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.preconditioner</code></a>,</li>
+</ul>
+<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKMassSpgmr</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKSpilsSetMassPreconditioner</div></div>
+
+<pre><span id="VALspbcg"><span class="keyword">val</span> spbcg</span> : <code class="type">?maxl:int -><br>       'd <a href="Arkode.Spils.Mass.html#TYPEtimes_vec_fn">times_vec_fn</a> -><br>       ('d, 'k) <a href="Arkode.Spils.Mass.html#TYPEpreconditioner">preconditioner</a> -> ('d, 'k) <a href="Arkode.html#TYPElinear_solver">Arkode.linear_solver</a></code></pre><div class="info ">
+Krylov iterative solver using the scaled preconditioned biconjugate
+            stabilized (Bi-CGStab) method.
+            In the call <code class="code">spbcg ~maxl:maxl mtv prec</code>,<ul>
+<li><code class="code">maxl</code> is the maximum dimension of the Krylov subspace
+                     (defaults to 5),</li>
+<li><code class="code">mtv</code> is the mass-matrix-vector product function, and</li>
+<li><code class="code">prec</code> is a <a href="Arkode.Spils.Mass.html#TYPEpreconditioner"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.preconditioner</code></a>,</li>
+</ul>
+<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKMassSpbcg</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKSpilsSetMassPreconditioner</div></div>
+
+<pre><span id="VALsptfqmr"><span class="keyword">val</span> sptfqmr</span> : <code class="type">?maxl:int -><br>       'd <a href="Arkode.Spils.Mass.html#TYPEtimes_vec_fn">times_vec_fn</a> -><br>       ('d, 'k) <a href="Arkode.Spils.Mass.html#TYPEpreconditioner">preconditioner</a> -> ('d, 'k) <a href="Arkode.html#TYPElinear_solver">Arkode.linear_solver</a></code></pre><div class="info ">
+Krylov iterative with the scaled preconditioned transpose-free
+            quasi-minimal residual (SPTFQMR) method.
+            In the call <code class="code">sptfqmr ~maxl:maxl mtv prec</code>,<ul>
+<li><code class="code">maxl</code> is the maximum dimension of the Krylov subspace
+                     (defaults to 5),</li>
+<li><code class="code">mtv</code> is the mass-matrix-vector product function, and</li>
+<li><code class="code">prec</code> is a <a href="Arkode.Spils.Mass.html#TYPEpreconditioner"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.preconditioner</code></a>,</li>
+</ul>
+<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKMassSptfqmr</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKSpilsSetMassPreconditioner</div></div>
+
+<pre><span id="VALspfgmr"><span class="keyword">val</span> spfgmr</span> : <code class="type">?maxl:int -><br>       'd <a href="Arkode.Spils.Mass.html#TYPEtimes_vec_fn">times_vec_fn</a> -><br>       ('d, 'k) <a href="Arkode.Spils.Mass.html#TYPEpreconditioner">preconditioner</a> -> ('d, 'k) <a href="Arkode.html#TYPElinear_solver">Arkode.linear_solver</a></code></pre><div class="info ">
+Krylov iterative solver using the scaled preconditioned flexible
+            generalized minimum residual (GMRES) method.
+            In the call <code class="code">spfgmr ~maxl:maxl mtv prec</code>,<ul>
+<li><code class="code">maxl</code> is the maximum dimension of the Krylov subspace
+                     (defaults to 5),</li>
+<li><code class="code">mtv</code> is the mass-matrix-vector product function, and</li>
+<li><code class="code">prec</code> is a <a href="Arkode.Spils.Mass.html#TYPEpreconditioner"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.preconditioner</code></a>,</li>
+</ul>
+<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKMassSpfgmr</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKSpilsSetMassPreconditioner</div></div>
+
+<pre><span id="VALpcg"><span class="keyword">val</span> pcg</span> : <code class="type">?maxl:int -><br>       'd <a href="Arkode.Spils.Mass.html#TYPEtimes_vec_fn">times_vec_fn</a> -><br>       ('d, 'k) <a href="Arkode.Spils.Mass.html#TYPEpreconditioner">preconditioner</a> -> ('d, 'k) <a href="Arkode.html#TYPElinear_solver">Arkode.linear_solver</a></code></pre><div class="info ">
+Krylov iterative solver using the preconditioned conjugate gradient
+            (PCG) method.
+            In the call <code class="code">pcg ~maxl:maxl mtv prec</code>,<ul>
+<li><code class="code">maxl</code> is the maximum dimension of the Krylov subspace
+                     (defaults to 5),</li>
+<li><code class="code">mtv</code> is the mass-matrix-vector product function, and</li>
+<li><code class="code">prec</code> is a <a href="Arkode.Spils.Mass.html#TYPEpreconditioner"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.preconditioner</code></a>,</li>
+</ul>
+<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKMassPcg</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKSpilsSetMassPreconditioner</div></div>
+<br>
+<h3 id="set">Solver parameters</h3><br>
+
+<pre><span id="VALset_gs_type"><span class="keyword">val</span> set_gs_type</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">Arkode.session</a> -> <a href="Spils.html#TYPEgramschmidt_type">Spils.gramschmidt_type</a> -> unit</code></pre><div class="info ">
+Sets the Gram-Schmidt orthogonalization to be used with the
+            Spgmr or Spfgmr <a href="Arkode.html#TYPElinear_solver"><code class="code"><span class="constructor">Arkode</span>.linear_solver</code></a>.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKSpilsSetMassGSType</div></div>
+
+<pre><span id="VALset_eps_lin"><span class="keyword">val</span> set_eps_lin</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">Arkode.session</a> -> float -> unit</code></pre><div class="info ">
+Sets the factor by which the Krylov linear solver's convergence
+            test constant is reduced from the Newton iteration test constant.
+            This factor must be &gt;= 0; passing 0 specifies the default (0.05).<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKSpilsSetMassEpsLin</div></div>
+
+<pre><span id="VALset_maxl"><span class="keyword">val</span> set_maxl</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">Arkode.session</a> -> int -> unit</code></pre><div class="info ">
+Resets the maximum Krylov subspace dimension for the Bi-CGStab,
+            TFQMR, or PCG methods. A value &lt;= 0 specifies the default (5.0).<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKSpilsSetMassMaxl</div></div>
+<br>
+<h3 id="stats">Solver statistics</h3><br>
+
+<pre><span id="VALget_work_space"><span class="keyword">val</span> get_work_space</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">Arkode.session</a> -> int * int</code></pre><div class="info ">
+Returns the sizes of the real and integer workspaces used by the
+            spils linear solver.<br>
+<b>Returns</b> (<code class="code">real_size</code>, <code class="code">integer_size</code>)<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKSpilsGetMassWorkSpace</div></div>
+
+<pre><span id="VALget_num_lin_iters"><span class="keyword">val</span> get_num_lin_iters</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">Arkode.session</a> -> int</code></pre><div class="info ">
+Returns the cumulative number of linear iterations.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKSpilsGetNumMassIters</div></div>
+
+<pre><span id="VALget_num_conv_fails"><span class="keyword">val</span> get_num_conv_fails</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">Arkode.session</a> -> int</code></pre><div class="info ">
+Returns the cumulative number of linear convergence failures.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKSpilsGetNumMassConvFails</div></div>
+
+<pre><span id="VALget_num_mtimes_evals"><span class="keyword">val</span> get_num_mtimes_evals</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">Arkode.session</a> -> int</code></pre><div class="info ">
+Returns the cumulative number of calls to the mass-matrix-vector
+            product function (<a href="Arkode.Spils.Mass.html#TYPEtimes_vec_fn"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.times_vec_fn</code></a>).<br>
+<b>Since</b> Sundials 2.6.3<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKSpilsGetNumMtimesEvals</div></div>
+
+<pre><span id="VALget_num_prec_evals"><span class="keyword">val</span> get_num_prec_evals</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">Arkode.session</a> -> int</code></pre><div class="info ">
+Returns the cumulative number of calls to the setup function with
+            <code class="code">jok=<span class="keyword">false</span></code>.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKSpilsGetNumMassPrecEvals</div></div>
+
+<pre><span id="VALget_num_prec_solves"><span class="keyword">val</span> get_num_prec_solves</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">Arkode.session</a> -> int</code></pre><div class="info ">
+Returns the cumulative number of calls to the preconditioner solve
+            function.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKSpilsGetNumMassPrecSolves</div></div>
+<br>
+<h3 id="lowlevel">Low-level solver manipulation</h3>
+<p>
+
+            The <a href="Arkode.html#VALinit"><code class="code"><span class="constructor">Arkode</span>.init</code></a> and <a href="Arkode.html#VALreinit"><code class="code"><span class="constructor">Arkode</span>.reinit</code></a> functions are the preferred way to set or
+            change preconditioner functions. These low-level functions are
+            provided for experts who want to avoid resetting internal counters
+            and other associated side-effects.<br>
+
+<pre><span id="VALset_preconditioner"><span class="keyword">val</span> set_preconditioner</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">Arkode.session</a> -><br>       ?setup:'d <a href="Arkode.Spils.Mass.html#TYPEprec_setup_fn">prec_setup_fn</a> -><br>       'd <a href="Arkode.Spils.Mass.html#TYPEprec_solve_fn">prec_solve_fn</a> -> unit</code></pre><div class="info ">
+Change the preconditioner functions.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKSpilsSetMassPreconditioner</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKSpilsMassPrecSolveFn</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKSpilsMassPrecSetupFn</div></div>
+
+<pre><span id="VALset_times_vec_fn"><span class="keyword">val</span> set_times_vec_fn</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">Arkode.session</a> -> 'd <a href="Arkode.Spils.Mass.html#TYPEtimes_vec_fn">times_vec_fn</a> -> unit</code></pre><div class="info ">
+Change the mass matrix-times-vector function.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKSpilsSetMassTimesVecFn</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKSpilsMassTimesVecFn</div></div>
+
+<pre><span id="VALset_prec_type"><span class="keyword">val</span> set_prec_type</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">Arkode.session</a> -> <a href="Spils.html#TYPEpreconditioning_type">Spils.preconditioning_type</a> -> unit</code></pre><div class="info ">
+Change the preconditioning direction without modifying
+            callback functions. If the preconditioning type is changed from
+            <a href="Spils.html#TYPEpreconditioning_type">Spils.PrecNone</a>
+            then <a href="Arkode.Spils.Mass.html#VALset_preconditioner"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.set_preconditioner</code></a> must be called to install the necessary
+            callbacks.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKSpilsSetMassPrecType</div></div>
+</body></html>

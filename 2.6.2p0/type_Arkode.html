@@ -1,0 +1,664 @@
+<html><head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Dls" rel="Chapter" href="Dls.html">
+<link title="Sls" rel="Chapter" href="Sls.html">
+<link title="Spils" rel="Chapter" href="Spils.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Arkode" rel="Chapter" href="Arkode.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Arkode_bbd" rel="Chapter" href="Arkode_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Nvector_openmp" rel="Chapter" href="Nvector_openmp.html">
+<link title="Nvector_pthreads" rel="Chapter" href="Nvector_pthreads.html"><title>Sundials/ML 2.6.2p0 : Arkode</title>
+</head>
+<body>
+<code class="code"><span class="keyword">sig</span>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;session&nbsp;=&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode_impl</span>.session
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;serial_session&nbsp;=&nbsp;(<span class="constructor">Nvector_serial</span>.data,&nbsp;<span class="keywordsign">'</span>a)&nbsp;<span class="constructor">Arkode</span>.session
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">constraint</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;=&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;linear_solver&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode_impl</span>.linear_solver
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;serial_linear_solver&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Nvector_serial</span>.data,&nbsp;<span class="keywordsign">'</span>a)&nbsp;<span class="constructor">Arkode</span>.linear_solver
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">constraint</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;=&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;mass_solver&nbsp;=&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode_impl</span>.mass_solver
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;serial_mass_solver&nbsp;=&nbsp;(<span class="constructor">Nvector_serial</span>.data,&nbsp;<span class="keywordsign">'</span>a)&nbsp;<span class="constructor">Arkode</span>.mass_solver
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">constraint</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;=&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;triple&nbsp;=&nbsp;<span class="keywordsign">'</span>d&nbsp;*&nbsp;<span class="keywordsign">'</span>d&nbsp;*&nbsp;<span class="keywordsign">'</span>d
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;(<span class="keywordsign">'</span>t,&nbsp;<span class="keywordsign">'</span>d)&nbsp;jacobian_arg&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>t,&nbsp;<span class="keywordsign">'</span>d)&nbsp;<span class="constructor">Arkode_impl</span>.jacobian_arg&nbsp;=&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;jac_t&nbsp;:&nbsp;float;
+&nbsp;&nbsp;&nbsp;&nbsp;jac_y&nbsp;:&nbsp;<span class="keywordsign">'</span>d;
+&nbsp;&nbsp;&nbsp;&nbsp;jac_fy&nbsp;:&nbsp;<span class="keywordsign">'</span>d;
+&nbsp;&nbsp;&nbsp;&nbsp;jac_tmp&nbsp;:&nbsp;<span class="keywordsign">'</span>t;
+&nbsp;&nbsp;}
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;bandrange&nbsp;=&nbsp;<span class="constructor">Arkode_impl</span>.bandrange&nbsp;=&nbsp;{&nbsp;mupper&nbsp;:&nbsp;int;&nbsp;mlower&nbsp;:&nbsp;int;&nbsp;}
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Dls</span>&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">sig</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;dense_jac_fn&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.t&nbsp;<span class="constructor">Arkode</span>.triple,&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.t)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.jacobian_arg&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Dls</span>.<span class="constructor">DenseMatrix</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;dense&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?jac:<span class="constructor">Arkode</span>.<span class="constructor">Dls</span>.dense_jac_fn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unit&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_linear_solver
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;lapack_dense&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?jac:<span class="constructor">Arkode</span>.<span class="constructor">Dls</span>.dense_jac_fn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unit&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_linear_solver
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;band_jac_fn&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.bandrange&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.t&nbsp;<span class="constructor">Arkode</span>.triple,&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.t)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.jacobian_arg&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Dls</span>.<span class="constructor">BandMatrix</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;band&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?jac:<span class="constructor">Arkode</span>.<span class="constructor">Dls</span>.band_jac_fn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.bandrange&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_linear_solver
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;lapack_band&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?jac:<span class="constructor">Arkode</span>.<span class="constructor">Dls</span>.band_jac_fn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.bandrange&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_linear_solver
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Mass</span>&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">sig</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;dense_fn&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.t&nbsp;<span class="constructor">Arkode</span>.triple&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Dls</span>.<span class="constructor">DenseMatrix</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;dense&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Dls</span>.<span class="constructor">Mass</span>.dense_fn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_mass_solver
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;lapack_dense&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Dls</span>.<span class="constructor">Mass</span>.dense_fn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_mass_solver
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;band_fn&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.bandrange&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.t&nbsp;<span class="constructor">Arkode</span>.triple&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Dls</span>.<span class="constructor">BandMatrix</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;band&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Dls</span>.<span class="constructor">Mass</span>.band_fn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.bandrange&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_mass_solver
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;lapack_band&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Dls</span>.<span class="constructor">Mass</span>.band_fn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.bandrange&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_mass_solver
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_work_space&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;*&nbsp;int
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_evals&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_dense_fn&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_session&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Dls</span>.<span class="constructor">Mass</span>.dense_fn&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_band_fn&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_session&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Dls</span>.<span class="constructor">Mass</span>.band_fn&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_work_space&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;*&nbsp;int
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_jac_evals&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_rhs_evals&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_dense_jac_fn&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_session&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Dls</span>.dense_jac_fn&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;clear_dense_jac_fn&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_band_jac_fn&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_session&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Dls</span>.band_jac_fn&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;clear_band_jac_fn&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Sls</span>&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">sig</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;sparse_jac_fn&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.t&nbsp;<span class="constructor">Arkode</span>.triple,&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.t)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.jacobian_arg&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Sls</span>.<span class="constructor">SparseMatrix</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;sparse_mass_fn&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.t&nbsp;<span class="constructor">Arkode</span>.triple&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Sls</span>.<span class="constructor">SparseMatrix</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Klu</span>&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">sig</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;solver&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Sls</span>.sparse_jac_fn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_linear_solver
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;ordering&nbsp;=&nbsp;<span class="constructor">Amd</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">ColAmd</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Natural</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_ordering&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_session&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Sls</span>.<span class="constructor">Klu</span>.ordering&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;reinit&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_session&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;bool&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_jac_evals&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Mass</span>&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">sig</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;solver&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Sls</span>.sparse_mass_fn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_mass_solver
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_ordering&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_session&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Sls</span>.<span class="constructor">Klu</span>.ordering&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;reinit&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_session&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;bool&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_evals&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Superlumt</span>&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">sig</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;solver&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Sls</span>.sparse_jac_fn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nnz:int&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nthreads:int&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_linear_solver
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;ordering&nbsp;=&nbsp;<span class="constructor">Natural</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">MinDegreeProd</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">MinDegreeSum</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">ColAmd</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_ordering&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_session&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Sls</span>.<span class="constructor">Superlumt</span>.ordering&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_jac_evals&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Mass</span>&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">sig</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;solver&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Sls</span>.sparse_mass_fn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nnz:int&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nthreads:int&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_mass_solver
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_ordering&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_session&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Sls</span>.<span class="constructor">Superlumt</span>.ordering&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_evals&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Spils</span>&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">sig</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;prec_solve_arg&nbsp;=&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rhs&nbsp;:&nbsp;<span class="keywordsign">'</span>d;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gamma&nbsp;:&nbsp;float;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;delta&nbsp;:&nbsp;float;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;left&nbsp;:&nbsp;bool;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;prec_solve_fn&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>d)&nbsp;<span class="constructor">Arkode</span>.jacobian_arg&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.prec_solve_arg&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;prec_setup_fn&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.triple,&nbsp;<span class="keywordsign">'</span>d)&nbsp;<span class="constructor">Arkode</span>.jacobian_arg&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;bool&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;bool
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;jac_times_vec_fn&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>d)&nbsp;<span class="constructor">Arkode</span>.jacobian_arg&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;preconditioner&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode_impl</span>.<span class="constructor">SpilsTypes</span>.preconditioner
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;prec_none&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.preconditioner
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;prec_left&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?setup:<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.prec_setup_fn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.prec_solve_fn&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.preconditioner
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;prec_right&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?setup:<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.prec_setup_fn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.prec_solve_fn&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.preconditioner
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;prec_both&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?setup:<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.prec_setup_fn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.prec_solve_fn&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.preconditioner
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Banded</span>&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">sig</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;prec_left&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.bandrange&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Nvector_serial</span>.data,&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;])
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.preconditioner
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;prec_right&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.bandrange&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Nvector_serial</span>.data,&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;])
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.preconditioner
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;prec_both&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.bandrange&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Nvector_serial</span>.data,&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;])
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.preconditioner
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_work_space&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;*&nbsp;int
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_rhs_evals&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="constructor">Nvector_serial</span>.kind&nbsp;]&nbsp;<span class="constructor">Arkode</span>.serial_session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Mass</span>&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">sig</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;prec_solve_arg&nbsp;=&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rhs&nbsp;:&nbsp;<span class="keywordsign">'</span>d;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;delta&nbsp;:&nbsp;float;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;left&nbsp;:&nbsp;bool;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tmp&nbsp;:&nbsp;<span class="keywordsign">'</span>d;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;prec_solve_fn&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.prec_solve_arg&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;prec_setup_fn&nbsp;=&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.triple&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;times_vec_fn&nbsp;=&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;preconditioner&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode_impl</span>.<span class="constructor">SpilsTypes</span>.<span class="constructor">MassTypes</span>.preconditioner
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;prec_none&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.preconditioner
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;prec_left&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?setup:<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.prec_setup_fn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.prec_solve_fn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.preconditioner
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;prec_right&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?setup:<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.prec_setup_fn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.prec_solve_fn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.preconditioner
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;prec_both&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?setup:<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.prec_setup_fn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.prec_solve_fn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.preconditioner
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;spgmr&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?maxl:int&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.times_vec_fn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.preconditioner&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.linear_solver
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;spbcg&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?maxl:int&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.times_vec_fn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.preconditioner&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.linear_solver
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;sptfqmr&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?maxl:int&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.times_vec_fn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.preconditioner&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.linear_solver
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;spfgmr&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?maxl:int&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.times_vec_fn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.preconditioner&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.linear_solver
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;pcg&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?maxl:int&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.times_vec_fn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.preconditioner&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.linear_solver
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_gs_type&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Spils</span>.gramschmidt_type&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_eps_lin&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_maxl&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_work_space&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;*&nbsp;int
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_lin_iters&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_conv_fails&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_mtimes_evals&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_prec_evals&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_prec_solves&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_preconditioner&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?setup:<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.prec_setup_fn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.prec_solve_fn&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_times_vec_fn&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.<span class="constructor">Mass</span>.times_vec_fn&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_prec_type&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Spils</span>.preconditioning_type&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;spgmr&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?maxl:int&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?jac_times_vec:<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.jac_times_vec_fn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.preconditioner&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.linear_solver
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;spbcg&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?maxl:int&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?jac_times_vec:<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.jac_times_vec_fn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.preconditioner&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.linear_solver
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;sptfqmr&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?maxl:int&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?jac_times_vec:<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.jac_times_vec_fn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.preconditioner&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.linear_solver
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;spfgmr&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?maxl:int&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?jac_times_vec:<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.jac_times_vec_fn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.preconditioner&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.linear_solver
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;pcg&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?maxl:int&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?jac_times_vec:<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.jac_times_vec_fn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.preconditioner&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.linear_solver
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_gs_type&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Spils</span>.gramschmidt_type&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_eps_lin&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_maxl&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_work_space&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;*&nbsp;int
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_lin_iters&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_conv_fails&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_prec_evals&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_prec_solves&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_jtimes_evals&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_rhs_evals&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_preconditioner&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?setup:<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.prec_setup_fn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.prec_solve_fn&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_jac_times_vec_fn&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Spils</span>.jac_times_vec_fn&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;clear_jac_times_vec_fn&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_prec_type&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Spils</span>.preconditioning_type&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Alternate</span>&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">sig</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;conv_fail&nbsp;=&nbsp;<span class="constructor">NoFailures</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">FailBadJ</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">FailOther</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;linit&nbsp;=&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;lsetup&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">'</span>data&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Alternate</span>.lsetup_args&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;bool
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">and</span>&nbsp;<span class="keywordsign">'</span>data&nbsp;lsetup_args&nbsp;=&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lsetup_conv_fail&nbsp;:&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Alternate</span>.conv_fail;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lsetup_y&nbsp;:&nbsp;<span class="keywordsign">'</span>data;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lsetup_rhs&nbsp;:&nbsp;<span class="keywordsign">'</span>data;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lsetup_tmp&nbsp;:&nbsp;<span class="keywordsign">'</span>data&nbsp;<span class="constructor">Arkode</span>.triple;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;lsolve&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">'</span>data&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Alternate</span>.lsolve_args&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>data&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">and</span>&nbsp;<span class="keywordsign">'</span>data&nbsp;lsolve_args&nbsp;=&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lsolve_ewt&nbsp;:&nbsp;<span class="keywordsign">'</span>data;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lsolve_y&nbsp;:&nbsp;<span class="keywordsign">'</span>data;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lsolve_rhs&nbsp;:&nbsp;<span class="keywordsign">'</span>data;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;callbacks&nbsp;=&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;linit&nbsp;:&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Alternate</span>.linit&nbsp;option;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lsetup&nbsp;:&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Alternate</span>.lsetup&nbsp;option;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lsolve&nbsp;:&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Alternate</span>.lsolve;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;make&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;((<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Alternate</span>.callbacks)&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode</span>.linear_solver
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Mass</span>&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">sig</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;minit&nbsp;=&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;msetup&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>data&nbsp;<span class="constructor">Arkode</span>.triple&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;msolve&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>data&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>data&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;callbacks&nbsp;=&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;minit&nbsp;:&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Alternate</span>.<span class="constructor">Mass</span>.minit&nbsp;option;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msetup&nbsp;:&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Alternate</span>.<span class="constructor">Mass</span>.msetup&nbsp;option;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msolve&nbsp;:&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Alternate</span>.<span class="constructor">Mass</span>.msolve;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;make&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;((<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Alternate</span>.<span class="constructor">Mass</span>.callbacks)&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode</span>.linear_solver
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;gammas&nbsp;=&nbsp;{&nbsp;gamma&nbsp;:&nbsp;float;&nbsp;gammap&nbsp;:&nbsp;float;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_gammas&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Alternate</span>.gammas
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>data&nbsp;error_weight_fun&nbsp;=&nbsp;<span class="keywordsign">'</span>data&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>data&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;tolerance&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">SStolerances</span>&nbsp;<span class="keyword">of</span>&nbsp;float&nbsp;*&nbsp;float
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">SVtolerances</span>&nbsp;<span class="keyword">of</span>&nbsp;float&nbsp;*&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Nvector</span>.t
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">WFtolerances</span>&nbsp;<span class="keyword">of</span>&nbsp;<span class="keywordsign">'</span>data&nbsp;<span class="constructor">Arkode</span>.error_weight_fun
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;default_tolerances&nbsp;:&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode</span>.tolerance
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>data&nbsp;res_weight_fun&nbsp;=&nbsp;<span class="keywordsign">'</span>data&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>data&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;res_tolerance&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">ResStolerance</span>&nbsp;<span class="keyword">of</span>&nbsp;float
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">ResVtolerance</span>&nbsp;<span class="keyword">of</span>&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Nvector</span>.t
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">ResFtolerance</span>&nbsp;<span class="keyword">of</span>&nbsp;<span class="keywordsign">'</span>data&nbsp;<span class="constructor">Arkode</span>.res_weight_fun
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;iter&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Newton</span>&nbsp;<span class="keyword">of</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode</span>.linear_solver
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">FixedPoint</span>&nbsp;<span class="keyword">of</span>&nbsp;int
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;linearity&nbsp;=&nbsp;<span class="constructor">Linear</span>&nbsp;<span class="keyword">of</span>&nbsp;bool&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Nonlinear</span>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;rhsfn&nbsp;=&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;imex&nbsp;=&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;implicit&nbsp;:&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.rhsfn&nbsp;*&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.iter&nbsp;*&nbsp;<span class="constructor">Arkode</span>.linearity;
+&nbsp;&nbsp;&nbsp;&nbsp;explicit&nbsp;:&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.rhsfn;
+&nbsp;&nbsp;}
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;problem&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Implicit</span>&nbsp;<span class="keyword">of</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.rhsfn&nbsp;*&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.iter&nbsp;*&nbsp;<span class="constructor">Arkode</span>.linearity
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Explicit</span>&nbsp;<span class="keyword">of</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.rhsfn
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">ImEx</span>&nbsp;<span class="keyword">of</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.imex
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;rootsfn&nbsp;=&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;no_roots&nbsp;:&nbsp;int&nbsp;*&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.rootsfn
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;init&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode</span>.problem&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode</span>.tolerance&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;?restol:(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode</span>.res_tolerance&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;?order:int&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;?mass:(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode</span>.mass_solver&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;?roots:int&nbsp;*&nbsp;<span class="keywordsign">'</span>data&nbsp;<span class="constructor">Arkode</span>.rootsfn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode</span>.session
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;solver_result&nbsp;=&nbsp;<span class="constructor">Success</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">RootsFound</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">StopTimeReached</span>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;solve_normal&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;*&nbsp;<span class="constructor">Arkode</span>.solver_result
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;solve_one_step&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;*&nbsp;<span class="constructor">Arkode</span>.solver_result
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_dky&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;reinit&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;?problem:(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode</span>.problem&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;?order:int&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;?roots:int&nbsp;*&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.rootsfn&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;resize_fn&nbsp;=&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;resize&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;?resize_nvec:<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.resize_fn&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;?linsolv:(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode</span>.linear_solver&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode</span>.tolerance&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;?restol:(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode</span>.res_tolerance&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_tolerances&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.tolerance&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_res_tolerance&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.res_tolerance&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_defaults&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_dense_order&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_diagnostics&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;bool&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_error_file&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;bool&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_err_handler_fn&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="constructor">Sundials</span>.error_details&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;clear_err_handler_fn&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_init_step&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_fixed_step&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;option&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_max_hnil_warns&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_max_num_steps&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_max_err_test_fails&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_min_step&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_max_step&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_optimal_params&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_stop_time&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_imex&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_explicit&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_implicit&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;rk_method&nbsp;=&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;stages&nbsp;:&nbsp;int;
+&nbsp;&nbsp;&nbsp;&nbsp;global_order&nbsp;:&nbsp;int;
+&nbsp;&nbsp;&nbsp;&nbsp;global_embedded_order&nbsp;:&nbsp;int;
+&nbsp;&nbsp;&nbsp;&nbsp;stage_times&nbsp;:&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.t;
+&nbsp;&nbsp;&nbsp;&nbsp;coefficients&nbsp;:&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.t;
+&nbsp;&nbsp;&nbsp;&nbsp;bembed&nbsp;:&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.t;
+&nbsp;&nbsp;}
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_ark_tables&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.rk_method&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_erk_table&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.rk_method&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_irk_table&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.rk_method&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;erk_table&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">HeunEuler_2_1_2</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">BogackiShampine_4_2_3</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">ARK_4_2_3_Explicit</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Zonneveld_5_3_4</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">ARK_6_3_4_Explicit</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">SayfyAburub_6_3_4</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">CashKarp_6_4_5</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Fehlberg_6_4_5</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">DormandPrince_7_4_5</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">ARK_8_4_5_Explicit</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Verner_8_5_6</span>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;irk_table&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">SDIRK_2_1_2</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Billington_3_2_3</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">TRBDF2_3_2_3</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Kvaerno_4_2_3</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">ARK_4_2_3_Implicit</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Cash_5_2_4</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Cash_5_3_4</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">SDIRK_5_3_4</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Kvaerno_5_3_4</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">ARK_6_3_4_Implicit</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Kvaerno_7_4_5</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">ARK_8_4_5_Implicit</span>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;ark_table&nbsp;=&nbsp;<span class="constructor">ARK_4_2_3</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">ARK_6_3_4</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">ARK_8_4_5</span>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_ark_table_num&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Arkode</span>.ark_table&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_erk_table_num&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Arkode</span>.erk_table&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_irk_table_num&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Arkode</span>.irk_table&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;adaptivity_args&nbsp;=&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;h1&nbsp;:&nbsp;float;
+&nbsp;&nbsp;&nbsp;&nbsp;h2&nbsp;:&nbsp;float;
+&nbsp;&nbsp;&nbsp;&nbsp;h3&nbsp;:&nbsp;float;
+&nbsp;&nbsp;&nbsp;&nbsp;e1&nbsp;:&nbsp;float;
+&nbsp;&nbsp;&nbsp;&nbsp;e2&nbsp;:&nbsp;float;
+&nbsp;&nbsp;&nbsp;&nbsp;e3&nbsp;:&nbsp;float;
+&nbsp;&nbsp;&nbsp;&nbsp;q&nbsp;:&nbsp;int;
+&nbsp;&nbsp;&nbsp;&nbsp;p&nbsp;:&nbsp;int;
+&nbsp;&nbsp;}
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;adaptivity_fn&nbsp;=&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Arkode</span>.adaptivity_args&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;adaptivity_params&nbsp;=&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;ks&nbsp;:&nbsp;(float&nbsp;*&nbsp;float&nbsp;*&nbsp;float)&nbsp;option;
+&nbsp;&nbsp;&nbsp;&nbsp;method_order&nbsp;:&nbsp;bool;
+&nbsp;&nbsp;}
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;adaptivity_method&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">PIDcontroller</span>&nbsp;<span class="keyword">of</span>&nbsp;<span class="constructor">Arkode</span>.adaptivity_params
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">PIcontroller</span>&nbsp;<span class="keyword">of</span>&nbsp;<span class="constructor">Arkode</span>.adaptivity_params
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Icontroller</span>&nbsp;<span class="keyword">of</span>&nbsp;<span class="constructor">Arkode</span>.adaptivity_params
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">ExplicitGustafsson</span>&nbsp;<span class="keyword">of</span>&nbsp;<span class="constructor">Arkode</span>.adaptivity_params
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">ImplicitGustafsson</span>&nbsp;<span class="keyword">of</span>&nbsp;<span class="constructor">Arkode</span>.adaptivity_params
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">ImExGustafsson</span>&nbsp;<span class="keyword">of</span>&nbsp;<span class="constructor">Arkode</span>.adaptivity_params
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">AdaptivityFn</span>&nbsp;<span class="keyword">of</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.adaptivity_fn
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_adaptivity_method&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.adaptivity_method&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_cfl_fraction&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_error_bias&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_fixed_step_bounds&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_max_cfail_growth&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_max_efail_growth&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_max_first_growth&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_max_growth&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_safety_factor&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_small_num_efails&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;stability_fn&nbsp;=&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_stability_fn&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.stability_fn&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;clear_stability_fn&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_fixed_point&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_newton&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_linear&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;bool&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_nonlinear&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;predictor_method&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">TrivialPredictor</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">MaximumOrderPredictor</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">VariableOrderPredictor</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">CutoffOrderPredictor</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">BootstrapPredictor</span>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_predictor_method&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Arkode</span>.predictor_method&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_max_nonlin_iters&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_max_conv_fails&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_nonlin_conv_coef&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_nonlin_crdown&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_nonlin_rdiv&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_delta_gamma_max&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_max_steps_between_lset&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_work_space&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;*&nbsp;int
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_steps&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_exp_steps&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_acc_steps&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_step_attempts&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_rhs_evals&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;*&nbsp;int
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_err_test_fails&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_last_step&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_current_step&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_actual_init_step&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_current_time&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_current_butcher_tables&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.t&nbsp;*&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.t&nbsp;*&nbsp;<span class="constructor">Arkode</span>.rk_method
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_tol_scale_factor&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_err_weights&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_est_local_errors&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;integrator_stats&nbsp;=&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;num_steps&nbsp;:&nbsp;int;
+&nbsp;&nbsp;&nbsp;&nbsp;exp_steps&nbsp;:&nbsp;int;
+&nbsp;&nbsp;&nbsp;&nbsp;acc_steps&nbsp;:&nbsp;int;
+&nbsp;&nbsp;&nbsp;&nbsp;step_attempts&nbsp;:&nbsp;int;
+&nbsp;&nbsp;&nbsp;&nbsp;num_nfe_evals&nbsp;:&nbsp;int;
+&nbsp;&nbsp;&nbsp;&nbsp;num_nfi_evals&nbsp;:&nbsp;int;
+&nbsp;&nbsp;&nbsp;&nbsp;num_lin_solv_setups&nbsp;:&nbsp;int;
+&nbsp;&nbsp;&nbsp;&nbsp;num_err_test_fails&nbsp;:&nbsp;int;
+&nbsp;&nbsp;&nbsp;&nbsp;actual_init_step&nbsp;:&nbsp;float;
+&nbsp;&nbsp;&nbsp;&nbsp;last_step&nbsp;:&nbsp;float;
+&nbsp;&nbsp;&nbsp;&nbsp;current_step&nbsp;:&nbsp;float;
+&nbsp;&nbsp;&nbsp;&nbsp;current_time&nbsp;:&nbsp;float;
+&nbsp;&nbsp;}
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_integrator_stats&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Arkode</span>.integrator_stats
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;print_integrator_stats&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Pervasives</span>.out_channel&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_lin_solv_setups&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_mass_solves&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_nonlin_solv_iters&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_nonlin_solv_conv_fails&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_nonlin_solv_stats&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;*&nbsp;int
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_root_direction&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">RootDirs</span>.d&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_all_root_directions&nbsp;:
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">RootDirs</span>.d&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_no_inactive_root_warn&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_roots&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_root_info&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">Roots</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_g_evals&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int
+&nbsp;&nbsp;<span class="keyword">exception</span>&nbsp;<span class="constructor">IllInput</span>
+&nbsp;&nbsp;<span class="keyword">exception</span>&nbsp;<span class="constructor">TooClose</span>
+&nbsp;&nbsp;<span class="keyword">exception</span>&nbsp;<span class="constructor">TooMuchWork</span>
+&nbsp;&nbsp;<span class="keyword">exception</span>&nbsp;<span class="constructor">TooMuchAccuracy</span>
+&nbsp;&nbsp;<span class="keyword">exception</span>&nbsp;<span class="constructor">ErrFailure</span>
+&nbsp;&nbsp;<span class="keyword">exception</span>&nbsp;<span class="constructor">ConvergenceFailure</span>
+&nbsp;&nbsp;<span class="keyword">exception</span>&nbsp;<span class="constructor">LinearInitFailure</span>
+&nbsp;&nbsp;<span class="keyword">exception</span>&nbsp;<span class="constructor">LinearSetupFailure</span>
+&nbsp;&nbsp;<span class="keyword">exception</span>&nbsp;<span class="constructor">LinearSolveFailure</span>
+&nbsp;&nbsp;<span class="keyword">exception</span>&nbsp;<span class="constructor">MassInitFailure</span>
+&nbsp;&nbsp;<span class="keyword">exception</span>&nbsp;<span class="constructor">MassSetupFailure</span>
+&nbsp;&nbsp;<span class="keyword">exception</span>&nbsp;<span class="constructor">MassSolveFailure</span>
+&nbsp;&nbsp;<span class="keyword">exception</span>&nbsp;<span class="constructor">MassMultFailure</span>
+&nbsp;&nbsp;<span class="keyword">exception</span>&nbsp;<span class="constructor">RhsFuncFailure</span>
+&nbsp;&nbsp;<span class="keyword">exception</span>&nbsp;<span class="constructor">FirstRhsFuncFailure</span>
+&nbsp;&nbsp;<span class="keyword">exception</span>&nbsp;<span class="constructor">RepeatedRhsFuncFailure</span>
+&nbsp;&nbsp;<span class="keyword">exception</span>&nbsp;<span class="constructor">UnrecoverableRhsFuncFailure</span>
+&nbsp;&nbsp;<span class="keyword">exception</span>&nbsp;<span class="constructor">RootFuncFailure</span>
+&nbsp;&nbsp;<span class="keyword">exception</span>&nbsp;<span class="constructor">BadK</span>
+&nbsp;&nbsp;<span class="keyword">exception</span>&nbsp;<span class="constructor">BadT</span>
+<span class="keyword">end</span></code></body></html>

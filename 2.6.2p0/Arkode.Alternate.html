@@ -1,0 +1,313 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Arkode.Spils.html">
+<link rel="Up" href="Arkode.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Dls" rel="Chapter" href="Dls.html">
+<link title="Sls" rel="Chapter" href="Sls.html">
+<link title="Spils" rel="Chapter" href="Spils.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Arkode" rel="Chapter" href="Arkode.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Arkode_bbd" rel="Chapter" href="Arkode_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Nvector_openmp" rel="Chapter" href="Nvector_openmp.html">
+<link title="Nvector_pthreads" rel="Chapter" href="Nvector_pthreads.html"><link title="Solver internals" rel="Section" href="#internals">
+<title>Sundials/ML 2.6.2p0 : Arkode.Alternate</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Arkode.Spils.html" title="Arkode.Spils">Previous</a>
+&nbsp;<a class="up" href="Arkode.html" title="Arkode">Up</a>
+&nbsp;</div>
+<h1>Module <a href="type_Arkode.Alternate.html">Arkode.Alternate</a></h1>
+
+<pre><span class="keyword">module</span> Alternate: <code class="code"><span class="keyword">sig</span></code> <a href="Arkode.Alternate.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+Alternate Linear Solvers.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>Providing Alternate Linear Solver Modules</div></div>
+<hr width="100%">
+
+<pre><code><span id="TYPEconv_fail"><span class="keyword">type</span> <code class="type"></code>conv_fail</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTconv_fail.NoFailures"><span class="constructor">NoFailures</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Either the first call for a step or the local error test
+              failed on the previous attempt at this setup but the Newton
+              iteration converged. <span class="cconst">(ARK_NO_FAILURES)</span><br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTconv_fail.FailBadJ"><span class="constructor">FailBadJ</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The setup routine indicates that its Jacobian related data is not
+              current and either the previous Newton corrector iteration did not
+              converge, or, during the previous Newton corrector iteration, the
+              linear solver's <a href="Arkode.Alternate.html#TYPEcallbacks">lsolve</a> routine failed in a
+              recoverable manner. <span class="cconst">(ARK_FAIL_BAD_J)</span><br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTconv_fail.FailOther"><span class="constructor">FailOther</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The previous Newton iteration failed to converge even
+              though the linear solver was using current
+              Jacobian-related data. <span class="cconst">(ARK_FAIL_OTHER)</span><br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+Indicates problems during the solution of nonlinear equations at a
+        step. Helps decide whether to update the Jacobian data kept by a
+        linear solver.<br>
+</div>
+
+
+<pre><span id="TYPElinit"><span class="keyword">type</span> <code class="type">('data, 'kind)</code> linit</span> = <code class="type">('data, 'kind) <a href="Arkode.html#TYPEsession">Arkode.session</a> -> unit</code> </pre>
+<div class="info ">
+Functions that initialize linear solver data, like counters and
+        statistics.
+<p>
+
+        Raising any exception in this function (including
+        <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a>) is treated as an unrecoverable error.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>linit</div></div>
+
+
+<pre><span id="TYPElsetup"><span class="keyword">type</span> <code class="type">('data, 'kind)</code> lsetup</span> = <code class="type">('data, 'kind) <a href="Arkode.html#TYPEsession">Arkode.session</a> -> 'data <a href="Arkode.Alternate.html#TYPElsetup_args">lsetup_args</a> -> bool</code> </pre>
+<div class="info ">
+Functions that prepare the linear solver for subsequent calls
+        to <a href="Arkode.Alternate.html#TYPEcallbacks">lsolve</a>.  This function must return <code class="code"><span class="keyword">true</span></code>
+        only if the Jacobian-related data is current after the call.
+<p>
+
+        This function may raise a <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a> exception to
+        indicate that a recoverable error has occurred. Any other exception is
+        treated as an unrecoverable error.
+<p>
+
+        <div class="warningbox"> The vectors <code class="code">ypred</code>, <code class="code">fpred</code>, and those in <code class="code">tmp</code> should not be
+                 accessed after the function returns.</div><br>
+<div class="sundials"><span class="seesundials">See sundials: </span>lsetup</div></div>
+
+
+<pre><code><span id="TYPElsetup_args"><span class="keyword">type</span> <code class="type">'data</code> lsetup_args</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTlsetup_args.lsetup_conv_fail">lsetup_conv_fail</span>&nbsp;: <code class="type"><a href="Arkode.Alternate.html#TYPEconv_fail">conv_fail</a></code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Indicates that a problem occurred during the solution of
+            the nonlinear equation at the current time step.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTlsetup_args.lsetup_y">lsetup_y</span>&nbsp;: <code class="type">'data</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The predicted $y$ vector for the current internal step.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTlsetup_args.lsetup_rhs">lsetup_rhs</span>&nbsp;: <code class="type">'data</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The value of the implicit right-hand side at the predicted $y$
+            vector.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTlsetup_args.lsetup_tmp">lsetup_tmp</span>&nbsp;: <code class="type">'data <a href="Arkode.html#TYPEtriple">Arkode.triple</a></code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Temporary variables for use by the routine.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+}
+
+<div class="info ">
+Arguments to <a href="Arkode.Alternate.html#TYPElsetup"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">Alternate</span>.lsetup</code></a>.<br>
+</div>
+
+
+<pre><span id="TYPElsolve"><span class="keyword">type</span> <code class="type">('data, 'kind)</code> lsolve</span> = <code class="type">('data, 'kind) <a href="Arkode.html#TYPEsession">Arkode.session</a> -><br>       'data <a href="Arkode.Alternate.html#TYPElsolve_args">lsolve_args</a> -> 'data -> unit</code> </pre>
+<div class="info ">
+Functions that solve the linear equation $Ax = b$.
+        $A$ is arises in the Newton iteration and gives some approximation to
+        the Newton matrix $M-\gamma J$ where
+        $J = \frac{\partial}{\partial y}f_I(t_n, y_{\text{cur}})$,
+        $\gamma$ is available through <a href="Arkode.Alternate.html#VALget_gammas"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">Alternate</span>.get_gammas</code></a>.
+        The call <code class="code">lsolve s args b</code> has as arguments:<ul>
+<li><code class="code">s</code>, the solver session,</li>
+<li><code class="code">args</code>, summarizing current approximations to the solution, and</li>
+<li><code class="code">b</code>, the right-hand side vector, also used for returning the result.</li>
+</ul>
+
+        Raising <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a> indicates a recoverable error.
+        Any other exception is treated as an unrecoverable error.
+<p>
+
+        <div class="warningbox"> The vectors in <a href="Arkode.Alternate.html#TYPElsolve_args"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">Alternate</span>.lsolve_args</code></a> should not be accessed
+                 after the function returns.</div><br>
+<div class="sundials"><span class="seesundials">See sundials: </span>lsolve</div></div>
+
+
+<pre><code><span id="TYPElsolve_args"><span class="keyword">type</span> <code class="type">'data</code> lsolve_args</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTlsolve_args.lsolve_ewt">lsolve_ewt</span>&nbsp;: <code class="type">'data</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The error weights.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTlsolve_args.lsolve_y">lsolve_y</span>&nbsp;: <code class="type">'data</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The solver's current approximation to $y(t_n)$.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTlsolve_args.lsolve_rhs">lsolve_rhs</span>&nbsp;: <code class="type">'data</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+A vector containing $f_I(t_n, y_{\text{cur}})$.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+}
+
+<div class="info ">
+Arguments to <a href="Arkode.Alternate.html#TYPElsolve"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">Alternate</span>.lsolve</code></a>.<br>
+</div>
+
+
+<pre><code><span id="TYPEcallbacks"><span class="keyword">type</span> <code class="type">('data, 'kind)</code> callbacks</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTcallbacks.linit">linit</span>&nbsp;: <code class="type">('data, 'kind) <a href="Arkode.Alternate.html#TYPElinit">linit</a> option</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTcallbacks.lsetup">lsetup</span>&nbsp;: <code class="type">('data, 'kind) <a href="Arkode.Alternate.html#TYPElsetup">lsetup</a> option</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTcallbacks.lsolve">lsolve</span>&nbsp;: <code class="type">('data, 'kind) <a href="Arkode.Alternate.html#TYPElsolve">lsolve</a></code>;</code></td>
+
+</tr></table>
+}
+
+<div class="info ">
+The callbacks needed to implement an alternate linear solver.<br>
+</div>
+
+
+<pre><span id="VALmake"><span class="keyword">val</span> make</span> : <code class="type">(('data, 'kind) <a href="Arkode.html#TYPEsession">Arkode.session</a> -><br>        ('data, 'kind) <a href="Nvector.html#TYPEt">Nvector.t</a> -> ('data, 'kind) <a href="Arkode.Alternate.html#TYPEcallbacks">callbacks</a>) -><br>       ('data, 'kind) <a href="Arkode.html#TYPElinear_solver">Arkode.linear_solver</a></code></pre><div class="info ">
+Creates a linear solver from a function returning a set of
+        callbacks. The creation function is passed a session and a vector.
+        The latter indicates the problem size and can, for example, be
+        cloned.<br>
+</div>
+
+<pre><span class="keyword">module</span> <a href="Arkode.Alternate.Mass.html">Mass</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Arkode.Alternate.Mass.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+Mass matrix solvers
+</div>
+<br>
+<h3 id="internals">Solver internals</h3><br>
+
+<pre><code><span id="TYPEgammas"><span class="keyword">type</span> <code class="type"></code>gammas</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTgammas.gamma">gamma</span>&nbsp;: <code class="type">float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The current $\gamma$ value.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTgammas.gammap">gammap</span>&nbsp;: <code class="type">float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The value of $\gamma$ at the last setup call.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+}
+
+<div class="info ">
+Internal values used in Newton iteration.<br>
+</div>
+
+
+<pre><span id="VALget_gammas"><span class="keyword">val</span> get_gammas</span> : <code class="type">('data, 'kind) <a href="Arkode.html#TYPEsession">Arkode.session</a> -> <a href="Arkode.Alternate.html#TYPEgammas">gammas</a></code></pre><div class="info ">
+Returns the current and previous gamma values.<br>
+</div>
+</body></html>

@@ -1,0 +1,2024 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Ida.html">
+<link rel="next" href="Cvodes.html">
+<link rel="Up" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Dls" rel="Chapter" href="Dls.html">
+<link title="Sls" rel="Chapter" href="Sls.html">
+<link title="Spils" rel="Chapter" href="Spils.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Arkode" rel="Chapter" href="Arkode.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Arkode_bbd" rel="Chapter" href="Arkode_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Nvector_openmp" rel="Chapter" href="Nvector_openmp.html">
+<link title="Nvector_pthreads" rel="Chapter" href="Nvector_pthreads.html"><link title="Linear and mass matrix solvers" rel="Section" href="#linear">
+<link title="Tolerances" rel="Section" href="#tols">
+<link title="Solver initialization and use" rel="Section" href="#solver">
+<link title="Modifying the solver (optional input functions)" rel="Section" href="#set">
+<link title="Querying the solver (optional output functions)" rel="Section" href="#get">
+<link title="Additional root-finding functions" rel="Section" href="#roots">
+<link title="Exceptions" rel="Section" href="#exceptions">
+<link title="Optional inputs for ARKode" rel="Subsection" href="#setarkode">
+<link title="Optional inputs for IVP method selection" rel="Subsection" href="#setivp">
+<link title="Optional inputs for time step adaptivity" rel="Subsection" href="#setadap">
+<link title="Optional inputs for implicit stage solves" rel="Subsection" href="#setimplicit">
+<link title="Implicit solver optional output functions" rel="Subsection" href="#setimplicit">
+<title>Sundials/ML 2.6.2p0 : Arkode</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Ida.html" title="Ida">Previous</a>
+&nbsp;<a class="up" href="index.html" title="Index">Up</a>
+&nbsp;<a class="post" href="Cvodes.html" title="Cvodes">Next</a>
+</div>
+<h1>Module <a href="type_Arkode.html">Arkode</a></h1>
+
+<pre><span class="keyword">module</span> Arkode: <code class="code"><span class="keyword">sig</span></code> <a href="Arkode.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+Adaptive-step time integration for stiff, nonstiff, and multi-rate
+    systems of ODE initial value problems with zero-crossing
+    detection.
+<p>
+
+    This module solves numerically problems of the form
+    $M\dot{y} = f_E(t, y) + f_I(t, y)$, $y(t_0) = y_0$.
+<p>
+
+    This documented interface is structured as follows.
+    <OL>
+<li><a href="#linear">Linear and mass matrix solvers</a></li>
+<li><a href="#tols">Tolerances</a></li>
+<li><a href="#solver">Solver initialization and use</a></li>
+<li><a href="#set">Modifying the solver</a></li>
+<li><a href="#get">Querying the solver</a></li>
+<li><a href="#roots">Additional root finding functions</a></li>
+<li><a href="#exceptions">Exceptions</a></li>
+</OL>
+<br>
+<div class="authors"><b>Author(s):</b> Timothy Bourke (Inria/ENS), Jun Inoue (Inria/ENS), Marc Pouzet (UPMC/ENS/Inria)</div>
+<b>Version:</b> 2.6.2<br>
+</div>
+<hr width="100%">
+
+<pre><span id="TYPEsession"><span class="keyword">type</span> <code class="type">('d, 'k)</code> session</span> = <code class="type">('d, 'k) session</code> </pre>
+<div class="info ">
+A session with the ARKODE solver.
+<p>
+
+    An example session with Arkode (<a href="arkode_skel.ml">arkode_skel.ml</a>): <pre class="codepre"><code class="code"><span class="comment">(*&nbsp;1.&nbsp;Define&nbsp;right-hand-side&nbsp;functions.&nbsp;*)</span>
+<span class="keyword">let</span>&nbsp;f_e&nbsp;t&nbsp;y&nbsp;yd&nbsp;=&nbsp;yd.{0}&nbsp;&lt;-&nbsp;y.{1}
+<span class="keyword">let</span>&nbsp;f_i&nbsp;t&nbsp;y&nbsp;yd&nbsp;=&nbsp;yd.{1}&nbsp;&lt;-&nbsp;-9.81
+
+<span class="comment">(*&nbsp;2.&nbsp;Optionally&nbsp;define&nbsp;a&nbsp;root&nbsp;function.&nbsp;*)</span>
+<span class="keyword">let</span>&nbsp;g&nbsp;t&nbsp;y&nbsp;gout&nbsp;=&nbsp;gout.{0}&nbsp;&lt;-&nbsp;1.0&nbsp;-.&nbsp;y.{0}
+
+<span class="comment">(*&nbsp;3.&nbsp;Set&nbsp;vector&nbsp;of&nbsp;initial&nbsp;values.
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The&nbsp;length&nbsp;of&nbsp;this&nbsp;vector&nbsp;determines&nbsp;the&nbsp;problem&nbsp;size.&nbsp;*)</span>
+<span class="keyword">let</span>&nbsp;yd&nbsp;=&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.of_list&nbsp;[&nbsp;10.0;&nbsp;0.0&nbsp;]
+<span class="keyword">let</span>&nbsp;y&nbsp;=&nbsp;<span class="constructor">Nvector_serial</span>.wrap&nbsp;yd
+
+<span class="comment">(*&nbsp;4.&nbsp;Create&nbsp;and&nbsp;initialize&nbsp;a&nbsp;solver&nbsp;session.
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This&nbsp;will&nbsp;determine&nbsp;whether&nbsp;the&nbsp;problem&nbsp;is&nbsp;purely&nbsp;explicit,&nbsp;purely
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;implicit,&nbsp;or&nbsp;both.&nbsp;Initialize&nbsp;a&nbsp;specific&nbsp;linear&nbsp;solver&nbsp;if&nbsp;there&nbsp;is&nbsp;an
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;implicit&nbsp;component,&nbsp;and&nbsp;root-finding&nbsp;if&nbsp;necessary.&nbsp;It&nbsp;is&nbsp;also&nbsp;possible&nbsp;to
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;specify&nbsp;a&nbsp;mass&nbsp;matrix&nbsp;solver.&nbsp;*)</span>
+<span class="keyword">let</span>&nbsp;s&nbsp;=&nbsp;<span class="constructor">Arkode</span>.(
+&nbsp;&nbsp;init
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">ImEx</span>&nbsp;{&nbsp;explicit&nbsp;=&nbsp;f_e;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;implicit&nbsp;=&nbsp;(f_i,&nbsp;<span class="constructor">Newton</span>&nbsp;(<span class="constructor">Dls</span>.dense&nbsp;()),&nbsp;<span class="constructor">Linear</span>&nbsp;<span class="keyword">true</span>);&nbsp;})
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">SStolerances</span>&nbsp;(1e-4,&nbsp;1e-9))
+&nbsp;&nbsp;&nbsp;&nbsp;~roots:(1,&nbsp;g)
+&nbsp;&nbsp;&nbsp;&nbsp;0.0
+&nbsp;&nbsp;&nbsp;&nbsp;y);;
+
+<span class="comment">(*&nbsp;5.&nbsp;Set&nbsp;optional&nbsp;inputs,&nbsp;e.g.,
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;call&nbsp;[set_*]&nbsp;functions&nbsp;to&nbsp;change&nbsp;solver&nbsp;parameters.&nbsp;*)</span>
+<span class="constructor">Arkode</span>.set_stop_time&nbsp;s&nbsp;10.0;;
+<span class="constructor">Arkode</span>.set_all_root_directions&nbsp;s&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">RootDirs</span>.<span class="constructor">Increasing</span>;;
+
+<span class="comment">(*&nbsp;6.&nbsp;Advance&nbsp;the&nbsp;solution&nbsp;in&nbsp;time,
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;repeatedly&nbsp;calling&nbsp;[solve_normal]&nbsp;or&nbsp;[solve_one_step].&nbsp;*)</span>
+<span class="keyword">let</span>&nbsp;<span class="keyword">rec</span>&nbsp;go&nbsp;(t,&nbsp;r)&nbsp;=
+&nbsp;&nbsp;<span class="constructor">Printf</span>.printf&nbsp;<span class="string">"%&nbsp;.10e\t%&nbsp;.10e\t%&nbsp;.10e\n"</span>&nbsp;t&nbsp;yd.{0}&nbsp;yd.{1};
+&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;r&nbsp;<span class="keyword">with</span>
+&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Success</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;go&nbsp;(<span class="constructor">Arkode</span>.solve_normal&nbsp;s&nbsp;(t&nbsp;+.&nbsp;0.5)&nbsp;y)
+&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">RootsFound</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keyword">begin</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;yd.{1}&nbsp;&lt;-&nbsp;-0.8&nbsp;*.&nbsp;yd.{1};
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.reinit&nbsp;s&nbsp;t&nbsp;y;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;go&nbsp;(t,&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Success</span>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>
+&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">StopTimeReached</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;();;
+
+<span class="constructor">Printf</span>.printf&nbsp;<span class="string">"time\ty\ty'\n"</span>;;
+go&nbsp;(0.0,&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">Success</span>);;
+
+<span class="comment">(*&nbsp;7.&nbsp;Get&nbsp;optional&nbsp;outputs,
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;call&nbsp;the&nbsp;[get_*]&nbsp;functions&nbsp;to&nbsp;examine&nbsp;solver&nbsp;statistics.&nbsp;*)</span>
+<span class="keyword">let</span>&nbsp;ns&nbsp;=&nbsp;<span class="constructor">Arkode</span>.get_num_steps&nbsp;s
+
+&nbsp;&nbsp;&nbsp;&nbsp;</code></pre><br>
+<div class="sundials"><span class="seesundials">See sundials: </span>Skeleton of main program</div></div>
+
+
+<pre><span id="TYPEserial_session"><span class="keyword">type</span> <code class="type">[> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ]</code> serial_session</span> = <code class="type">(<a href="Nvector_serial.html#TYPEdata">Nvector_serial.data</a>, [> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ] as 'a) <a href="Arkode.html#TYPEsession">session</a></code> </pre>
+<div class="info ">
+Alias for sessions based on serial nvectors.<br>
+</div>
+
+<br>
+<h2 id="linear">Linear and mass matrix solvers</h2><br>
+
+<pre><span id="TYPElinear_solver"><span class="keyword">type</span> <code class="type">('data, 'kind)</code> linear_solver</span> = <code class="type">('data, 'kind) linear_solver</code> </pre>
+<div class="info ">
+Linear solvers used by Arkode.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>Linear Solver Specification Functions</div></div>
+
+
+<pre><span id="TYPEserial_linear_solver"><span class="keyword">type</span> <code class="type">[> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ]</code> serial_linear_solver</span> = <code class="type">(<a href="Nvector_serial.html#TYPEdata">Nvector_serial.data</a>, [> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ] as 'a) <a href="Arkode.html#TYPElinear_solver">linear_solver</a></code> </pre>
+<div class="info ">
+Alias for linear solvers that are restricted to serial nvectors.<br>
+</div>
+
+
+<pre><span id="TYPEmass_solver"><span class="keyword">type</span> <code class="type">('data, 'kind)</code> mass_solver</span> = <code class="type">('data, 'kind) mass_solver</code> </pre>
+<div class="info ">
+Mass matrix solvers used by Arkode.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>Mass matrix solver specification functions</div></div>
+
+
+<pre><span id="TYPEserial_mass_solver"><span class="keyword">type</span> <code class="type">[> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ]</code> serial_mass_solver</span> = <code class="type">(<a href="Nvector_serial.html#TYPEdata">Nvector_serial.data</a>, [> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ] as 'a) <a href="Arkode.html#TYPEmass_solver">mass_solver</a></code> </pre>
+<div class="info ">
+Alias for mass matrix solvers that are restricted to serial nvectors.<br>
+</div>
+
+
+<pre><span id="TYPEtriple"><span class="keyword">type</span> <code class="type">'d</code> triple</span> = <code class="type">'d * 'd * 'd</code> </pre>
+<div class="info ">
+Workspaces with three temporary vectors.<br>
+</div>
+
+
+<pre><span id="TYPEjacobian_arg"><span class="keyword">type</span> <code class="type">('t, 'd)</code> jacobian_arg</span> = <code class="type">('t, 'd) jacobian_arg</code> = {</pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTjacobian_arg.jac_t">jac_t</span>&nbsp;: <code class="type">float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The independent variable.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTjacobian_arg.jac_y">jac_y</span>&nbsp;: <code class="type">'d</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The dependent variable vector.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTjacobian_arg.jac_fy">jac_fy</span>&nbsp;: <code class="type">'d</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The derivative vector $f_I(t, y)$.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTjacobian_arg.jac_tmp">jac_tmp</span>&nbsp;: <code class="type">'t</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Workspace data.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+}
+
+<div class="info ">
+Arguments common to Jacobian callback functions.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKDlsDenseJacFn</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKDlsBandJacFn</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKSpilsJacTimesVecFn</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKSpilsPrecSolveFn</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKSpilsPrecSetupFn</div></div>
+
+
+<pre><span id="TYPEbandrange"><span class="keyword">type</span> <code class="type"></code>bandrange</span> = <code class="type">bandrange</code> = {</pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTbandrange.mupper">mupper</span>&nbsp;: <code class="type">int</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The upper half-bandwidth.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTbandrange.mlower">mlower</span>&nbsp;: <code class="type">int</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The lower half-bandwidth.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+}
+
+<div class="info ">
+The range of nonzero entries in a band matrix.<br>
+</div>
+
+
+<pre><span class="keyword">module</span> <a href="Arkode.Dls.html">Dls</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Arkode.Dls.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+Direct Linear Solvers operating on dense and banded matrices.
+</div>
+
+<pre><span class="keyword">module</span> <a href="Arkode.Sls.html">Sls</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Arkode.Sls.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+Sparse Linear Solvers.
+</div>
+
+<pre><span class="keyword">module</span> <a href="Arkode.Spils.html">Spils</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Arkode.Spils.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+Scaled Preconditioned Iterative Linear Solvers.
+</div>
+
+<pre><span class="keyword">module</span> <a href="Arkode.Alternate.html">Alternate</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Arkode.Alternate.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+Alternate Linear Solvers.
+</div>
+<br>
+<h2 id="tols">Tolerances</h2><br>
+
+<pre><span id="TYPEerror_weight_fun"><span class="keyword">type</span> <code class="type">'data</code> error_weight_fun</span> = <code class="type">'data -> 'data -> unit</code> </pre>
+<div class="info ">
+Functions that set the multiplicative error weights for use in the weighted
+    RMS norm. The call <code class="code">efun y ewt</code> takes the dependent variable vector <code class="code">y</code> and
+    fills the error-weight vector <code class="code">ewt</code> with positive values or raises
+    <a href="Sundials.html#EXCEPTIONNonPositiveEwt"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">NonPositiveEwt</span></code></a>. Other exceptions are eventually propagated, but
+    should be avoided (<code class="code">efun</code> is not allowed to abort the solver).<br>
+</div>
+
+
+<pre><code><span id="TYPEtolerance"><span class="keyword">type</span> <code class="type">('data, 'kind)</code> tolerance</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTtolerance.SStolerances"><span class="constructor">SStolerances</span></span> <span class="keyword">of</span> <code class="type">float * float</code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<code class="code">(rel, abs)</code> : scalar relative and absolute tolerances.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTtolerance.SVtolerances"><span class="constructor">SVtolerances</span></span> <span class="keyword">of</span> <code class="type">float * ('data, 'kind) <a href="Nvector.html#TYPEt">Nvector.t</a></code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<code class="code">(rel, abs)</code> : scalar relative and vector absolute tolerances.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTtolerance.WFtolerances"><span class="constructor">WFtolerances</span></span> <span class="keyword">of</span> <code class="type">'data <a href="Arkode.html#TYPEerror_weight_fun">error_weight_fun</a></code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Set the multiplicative error weights for the weighted RMS norm.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+Tolerance specifications.<br>
+</div>
+
+
+<pre><span id="VALdefault_tolerances"><span class="keyword">val</span> default_tolerances</span> : <code class="type">('data, 'kind) <a href="Arkode.html#TYPEtolerance">tolerance</a></code></pre><div class="info ">
+A default relative tolerance of 1.0e-4 and absolute tolerance of 1.0e-9.<br>
+</div>
+
+<pre><span id="TYPEres_weight_fun"><span class="keyword">type</span> <code class="type">'data</code> res_weight_fun</span> = <code class="type">'data -> 'data -> unit</code> </pre>
+<div class="info ">
+Functions that compute the weighted RMS residual weights. The call
+    <code class="code">rfun y rwt</code> takes the dependent variable vector <code class="code">y</code> and fills the
+    residual-weight vector <code class="code">rwt</code> with positive values or raises
+    <a href="Sundials.html#EXCEPTIONNonPositiveEwt"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">NonPositiveEwt</span></code></a>. Other exceptions are eventually propagated, but
+    should be avoided (<code class="code">ffun</code> is not allowed to abort the solver).<br>
+</div>
+
+
+<pre><code><span id="TYPEres_tolerance"><span class="keyword">type</span> <code class="type">('data, 'kind)</code> res_tolerance</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTres_tolerance.ResStolerance"><span class="constructor">ResStolerance</span></span> <span class="keyword">of</span> <code class="type">float</code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<code class="code">abs</code> : scalar absolute residual tolerance.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTres_tolerance.ResVtolerance"><span class="constructor">ResVtolerance</span></span> <span class="keyword">of</span> <code class="type">('data, 'kind) <a href="Nvector.html#TYPEt">Nvector.t</a></code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<code class="code">abs</code> : vector of absolute residual tolerances.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTres_tolerance.ResFtolerance"><span class="constructor">ResFtolerance</span></span> <span class="keyword">of</span> <code class="type">'data <a href="Arkode.html#TYPEres_weight_fun">res_weight_fun</a></code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Compute the residual weight vector.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+
+<br>
+<h2 id="solver">Solver initialization and use</h2><br>
+
+<pre><code><span id="TYPEiter"><span class="keyword">type</span> <code class="type">('d, 'kind)</code> iter</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTiter.Newton"><span class="constructor">Newton</span></span> <span class="keyword">of</span> <code class="type">('d, 'kind) <a href="Arkode.html#TYPElinear_solver">linear_solver</a></code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Modified Newton iteration with a given linear solver.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTiter.FixedPoint"><span class="constructor">FixedPoint</span></span> <span class="keyword">of</span> <code class="type">int</code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Accelerated fixed-point solver. Specifies the number of vectors to
+        store within the Anderson acceleration subspace.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+Choice of method for solving non-linear systems that arise in the solution
+    of implicit systems.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>Nonlinear solver methods</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKodeInit</div></div>
+
+
+<pre><code><span id="TYPElinearity"><span class="keyword">type</span> <code class="type"></code>linearity</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTlinearity.Linear"><span class="constructor">Linear</span></span> <span class="keyword">of</span> <code class="type">bool</code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Implicit portion is linear. Specifies whether
+                        $f_I(t, y)$ or the preconditioner is time-dependent.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTlinearity.Nonlinear"><span class="constructor">Nonlinear</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Implicit portion is nonlinear.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+The linearity of the implicit portion of the problem.<br>
+</div>
+
+
+<pre><span id="TYPErhsfn"><span class="keyword">type</span> <code class="type">'d</code> rhsfn</span> = <code class="type">float -> 'd -> 'd -> unit</code> </pre>
+<div class="info ">
+Right-hand side functions for calculating ODE derivatives. They are passed
+    three arguments:<ul>
+<li><code class="code">t</code>, the value of the independent variable, i.e., the simulation time,</li>
+<li><code class="code">y</code>, the vector of dependent-variable values, i.e., $y(t)$, and,</li>
+<li><code class="code">y'</code>, a vector for storing the value of $f(t, y)$.</li>
+</ul>
+
+    Within the function, raising a <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a> exception
+    indicates a recoverable error. Any other exception is treated as an
+    unrecoverable error.
+<p>
+
+    <div class="warningbox"> <code class="code">y</code> and <code class="code">y'</code> should not be accessed after the function returns.</div><br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKRhsFn</div></div>
+
+
+<pre><code><span id="TYPEimex"><span class="keyword">type</span> <code class="type">('d, 'k)</code> imex</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTimex.implicit">implicit</span>&nbsp;: <code class="type">'d <a href="Arkode.html#TYPErhsfn">rhsfn</a> * ('d, 'k) <a href="Arkode.html#TYPEiter">iter</a> * <a href="Arkode.html#TYPElinearity">linearity</a></code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTimex.explicit">explicit</span>&nbsp;: <code class="type">'d <a href="Arkode.html#TYPErhsfn">rhsfn</a></code>;</code></td>
+
+</tr></table>
+}
+
+
+
+<pre><code><span id="TYPEproblem"><span class="keyword">type</span> <code class="type">('d, 'k)</code> problem</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTproblem.Implicit"><span class="constructor">Implicit</span></span> <span class="keyword">of</span> <code class="type">'d <a href="Arkode.html#TYPErhsfn">rhsfn</a> * ('d, 'k) <a href="Arkode.html#TYPEiter">iter</a> * <a href="Arkode.html#TYPElinearity">linearity</a></code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Diagonally Implicit Runge-Kutta (DIRK) solution of stiff problem.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTproblem.Explicit"><span class="constructor">Explicit</span></span> <span class="keyword">of</span> <code class="type">'d <a href="Arkode.html#TYPErhsfn">rhsfn</a></code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Explicit Runge-Kutta (ERK) solution of non-stiff problem.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTproblem.ImEx"><span class="constructor">ImEx</span></span> <span class="keyword">of</span> <code class="type">('d, 'k) <a href="Arkode.html#TYPEimex">imex</a></code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Additive Runge-Kutta (ARK) solution of multi-rate problem.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+The form of the initial value problem.<br>
+</div>
+
+
+<pre><span id="TYPErootsfn"><span class="keyword">type</span> <code class="type">'d</code> rootsfn</span> = <code class="type">float -> 'd -> <a href="Sundials.RealArray.html#TYPEt">Sundials.RealArray.t</a> -> unit</code> </pre>
+<div class="info ">
+Called by the solver to calculate the values of root functions. These
+    ‘zero-crossings’ are used to detect significant events. The function is
+    passed three arguments:<ul>
+<li><code class="code">t</code>, the value of the independent variable, i.e., the simulation time,</li>
+<li><code class="code">y</code>, the vector of dependent-variable values, i.e., $y(t)$, and,</li>
+<li><code class="code">gout</code>, a vector for storing the value of $g(t, y)$.</li>
+</ul>
+
+    <div class="warningbox"> <code class="code">y</code> and <code class="code">gout</code> should not be accessed after the function has
+             returned.</div><br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKRootFn</div></div>
+
+
+<pre><span id="VALno_roots"><span class="keyword">val</span> no_roots</span> : <code class="type">int * 'd <a href="Arkode.html#TYPErootsfn">rootsfn</a></code></pre><div class="info ">
+A convenience value for signalling that there are no roots to monitor.<br>
+</div>
+
+<pre><span id="VALinit"><span class="keyword">val</span> init</span> : <code class="type">('data, 'kind) <a href="Arkode.html#TYPEproblem">problem</a> -><br>       ('data, 'kind) <a href="Arkode.html#TYPEtolerance">tolerance</a> -><br>       ?restol:('data, 'kind) <a href="Arkode.html#TYPEres_tolerance">res_tolerance</a> -><br>       ?order:int -><br>       ?mass:('data, 'kind) <a href="Arkode.html#TYPEmass_solver">mass_solver</a> -><br>       ?roots:int * 'data <a href="Arkode.html#TYPErootsfn">rootsfn</a> -><br>       float -> ('data, 'kind) <a href="Nvector.html#TYPEt">Nvector.t</a> -> ('data, 'kind) <a href="Arkode.html#TYPEsession">session</a></code></pre><div class="info ">
+Creates and initializes a session with the solver. The call
+    <pre class="codepre"><code class="code">init&nbsp;problem&nbsp;tol&nbsp;~restol&nbsp;~order:ord&nbsp;~mass:msolver&nbsp;~roots:(nroots,&nbsp;g)&nbsp;t0&nbsp;y0</code></pre>
+    has as arguments:<ul>
+<li><code class="code">problem</code>, specifies the problem to solve (see <a href="Arkode.html#TYPEproblem"><code class="code"><span class="constructor">Arkode</span>.problem</code></a>),</li>
+<li><code class="code">tol</code>,     the integration tolerances,</li>
+<li><code class="code">restol</code>,  (optional) mass matrix residual tolerances,</li>
+<li><code class="code">ord</code>,     the order of accuracy for the integration method,</li>
+<li><code class="code">msolver</code>, optionally, a linear mass matrix solver,</li>
+<li><code class="code">nroots</code>,  the number of root functions,</li>
+<li><code class="code">g</code>,       the root function (<code class="code">(nroots, g)</code> defaults to <a href="Arkode.html#VALno_roots"><code class="code"><span class="constructor">Arkode</span>.no_roots</code></a>),</li>
+<li><code class="code">t0</code>,     the initial value of the independent variable, and</li>
+<li><code class="code">y0</code>,     a vector of initial values that also determines the number
+                of equations.</li>
+</ul>
+
+    The allowed values for <code class="code">ord</code> are:<ul>
+<li>for explicit methods: $2 \le \mathtt{ord} \le 6$, </li>
+<li>for implicit methods: $2 \le \mathtt{ord} \le 5$, and</li>
+<li>for imex methods: $3 \le \mathtt{ord} \le 5$.</li>
+</ul>
+
+    This function does everything necessary to initialize a session, i.e.,
+    it makes the calls referenced below. The <a href="Arkode.html#VALsolve_normal"><code class="code"><span class="constructor">Arkode</span>.solve_normal</code></a> and
+    <a href="Arkode.html#VALsolve_one_step"><code class="code"><span class="constructor">Arkode</span>.solve_one_step</code></a> functions may be called directly.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeCreate</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKodeInit</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetFixedPoint</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetLinear</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetNonlinear</div><div class="sundials"><span class="seesundials">See sundials: </span>Linear solver specification functions</div><div class="sundials"><span class="seesundials">See sundials: </span>Mass matrix solver specification functions</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKodeRootInit</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSStolerances</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSVtolerances</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKodeWFtolerances</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKodeResStolerance</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKodeResVtolerance</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKodeResFtolerance</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetOrder</div></div>
+
+<pre><code><span id="TYPEsolver_result"><span class="keyword">type</span> <code class="type"></code>solver_result</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTsolver_result.Success"><span class="constructor">Success</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The solution was advanced. <span class="cconst">(ARK_SUCCESS)</span><br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTsolver_result.RootsFound"><span class="constructor">RootsFound</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+A root was found. See <a href="Arkode.html#VALget_root_info"><code class="code"><span class="constructor">Arkode</span>.get_root_info</code></a>.
+                            <span class="cconst">(ARK_ROOT_RETURN)</span><br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTsolver_result.StopTimeReached"><span class="constructor">StopTimeReached</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The stop time was reached. See <a href="Arkode.html#VALset_stop_time"><code class="code"><span class="constructor">Arkode</span>.set_stop_time</code></a>.
+                            <span class="cconst">(ARK_TSTOP_RETURN)</span><br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+Values returned by the step functions. Failures are indicated by
+    exceptions.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKode</div></div>
+
+
+<pre><span id="VALsolve_normal"><span class="keyword">val</span> solve_normal</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -><br>       float -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> float * <a href="Arkode.html#TYPEsolver_result">solver_result</a></code></pre><div class="info ">
+Integrates an ODE system over an interval. The call
+    <code class="code">tret, r = solve_normal s tout yout</code> has as arguments<ul>
+<li><code class="code">s</code>, a solver session,</li>
+<li><code class="code">tout</code>, the next time at which a solution is desired, and,</li>
+<li><code class="code">yout</code>, a vector to store the computed solution.</li>
+</ul>
+
+    It returns <code class="code">tret</code>, the time reached by the solver, which will be equal to
+    <code class="code">tout</code> if no errors occur, and, <code class="code">r</code>, a <a href="Arkode.html#TYPEsolver_result"><code class="code"><span class="constructor">Arkode</span>.solver_result</code></a>.<br>
+<div class="raisedexceptions"><span class="raises">Raises</span><ul><li><code>IllInput</code> Missing or illegal solver inputs.</li>
+<li><code>TooClose</code> The initial and final times are too close to each other and not initial step size was specified.</li>
+<li><code>TooMuchWork</code> The requested time could not be reached in <code class="code">mxstep</code> internal steps.</li>
+<li><code>TooMuchAccuracy</code> The requested accuracy could not be satisfied.</li>
+<li><code>ErrFailure</code> Too many error test failures within a step or at the minimum step size.</li>
+<li><code>ConvergenceFailure</code> Too many convergence test failures within a step or at the minimum step size.</li>
+<li><code>LinearInitFailure</code> Linear solver initialization failed.</li>
+<li><code>LinearSetupFailure</code> Linear solver setup failed unrecoverably.</li>
+<li><code>LinearSolveFailure</code> Linear solver solution failed unrecoverably.</li>
+<li><code>MassInitFailure</code> Mass matrix solver initialization failed.</li>
+<li><code>MassSetupFailure</code> Mass matrix solver setup failed unrecoverably.</li>
+<li><code>MassSolveFailure</code> Mass matrix solver solution failed unrecoverably.</li>
+<li><code>RhsFuncFailure</code> Unrecoverable failure in one of the RHS functions.</li>
+<li><code>FirstRhsFuncFailure</code> Initial unrecoverable failure in one of the RHS functions.</li>
+<li><code>RepeatedRhsFuncFailure</code> Too many convergence test failures, or unable to estimate the initial step size, due to repeated recoverable errors in one of the right-hand side functions.</li>
+<li><code>UnrecoverableRhsFuncFailure</code> One of the right-hand side functions had a recoverable error, but no recovery was possible. This error can only occur after an error test failure at order one.</li>
+<li><code>RootFuncFailure</code> Failure in the rootfinding function <code class="code">g</code>.</li>
+</ul></div>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKode (ARK_NORMAL)</div></div>
+
+<pre><span id="VALsolve_one_step"><span class="keyword">val</span> solve_one_step</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -><br>       float -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> float * <a href="Arkode.html#TYPEsolver_result">solver_result</a></code></pre><div class="info ">
+Like <a href="Arkode.html#VALsolve_normal"><code class="code"><span class="constructor">Arkode</span>.solve_normal</code></a> but returns after one internal solver step.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKode (ARK_ONE_STEP)</div></div>
+
+<pre><span id="VALget_dky"><span class="keyword">val</span> get_dky</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> float -> int -> unit</code></pre><div class="info ">
+Returns the interpolated solution or derivatives.
+    <code class="code">get_dky s dky t k</code> computes the <code class="code">k</code>th derivative of the function at time
+    <code class="code">t</code>, i.e., $\frac{d^\mathtt{k}}{\mathit{dt}^\mathtt{k}}y(\mathtt{t})$,
+    and stores it in <code class="code">dky</code>. The arguments must satisfy
+    $t_n - h_n \leq \mathtt{t} \leq t_n$—where $t_n$
+    denotes <a href="Arkode.html#VALget_current_time"><code class="code"><span class="constructor">Arkode</span>.get_current_time</code></a> and $h_n$ denotes <a href="Arkode.html#VALget_last_step"><code class="code"><span class="constructor">Arkode</span>.get_last_step</code></a>,—
+    and $0 \leq \mathtt{k} \leq 3$.
+<p>
+
+    This function may only be called after a successful return from either
+    <a href="Arkode.html#VALsolve_normal"><code class="code"><span class="constructor">Arkode</span>.solve_normal</code></a> or <a href="Arkode.html#VALsolve_one_step"><code class="code"><span class="constructor">Arkode</span>.solve_one_step</code></a>.<br>
+<div class="raisedexceptions"><span class="raises">Raises</span><ul><li><code>BadT</code> <code class="code">t</code> is not in the interval $[t_n - h_n, t_n]$.</li>
+<li><code>BadK</code> <code class="code">k</code> is not in the range {0, 1, 2, 3}.</li>
+</ul></div>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeGetDky</div></div>
+
+<pre><span id="VALreinit"><span class="keyword">val</span> reinit</span> : <code class="type">('d, 'kind) <a href="Arkode.html#TYPEsession">session</a> -><br>       ?problem:('d, 'kind) <a href="Arkode.html#TYPEproblem">problem</a> -><br>       ?order:int -><br>       ?roots:int * 'd <a href="Arkode.html#TYPErootsfn">rootsfn</a> -> float -> ('d, 'kind) <a href="Nvector.html#TYPEt">Nvector.t</a> -> unit</code></pre><div class="info ">
+Reinitializes the solver with new parameters and state values. The
+    values of the independent variable, i.e., the simulation time, and the
+    state variables must be given. The new problem must have the same size
+    as the previous one. Only the functions in the given problem description
+    have any effect; the <code class="code">iter</code> and <code class="code">linear</code> fields are ignored.
+<p>
+
+    The allowed values for <code class="code">order</code> are:<ul>
+<li>for explicit methods: $2 \le \mathtt{order} \le 6$, </li>
+<li>for implicit methods: $2 \le \mathtt{order} \le 5$, and</li>
+<li>for imex methods: $3 \le \mathtt{order} \le 5$.</li>
+</ul>
+<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeReInit</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKodeRootInit</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetOrder</div></div>
+
+<pre><span id="TYPEresize_fn"><span class="keyword">type</span> <code class="type">'d</code> resize_fn</span> = <code class="type">'d -> 'd -> unit</code> </pre>
+<div class="info ">
+Called to resize a vector to match the dimensions of another. The call
+    <code class="code">resizefn y ytemplate</code> must resize <code class="code">y</code> to match the size of <code class="code">ytemplate</code>.
+<p>
+
+    <div class="warningbox"> <code class="code">y</code> and <code class="code">ytemplate</code> should not be accessed after the function
+             has returned.</div><br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKVecResizeFn</div></div>
+
+
+<pre><span id="VALresize"><span class="keyword">val</span> resize</span> : <code class="type">('d, 'kind) <a href="Arkode.html#TYPEsession">session</a> -><br>       ?resize_nvec:'d <a href="Arkode.html#TYPEresize_fn">resize_fn</a> -><br>       ?linsolv:('d, 'kind) <a href="Arkode.html#TYPElinear_solver">linear_solver</a> -><br>       ('d, 'kind) <a href="Arkode.html#TYPEtolerance">tolerance</a> -><br>       ?restol:('d, 'kind) <a href="Arkode.html#TYPEres_tolerance">res_tolerance</a> -><br>       float -> ('d, 'kind) <a href="Nvector.html#TYPEt">Nvector.t</a> -> float -> unit</code></pre><div class="info ">
+Change the number of equations and unknowns between integrator steps.
+    The call <code class="code">resize s ~resize_nvec:rfn ~linsolv:ls tol ~restol hscale ynew t0</code>
+    has as arguments:<ul>
+<li><code class="code">s</code>, the solver session to resize,</li>
+<li><code class="code">rfn</code>, a resize function that transforms nvectors in place-otherwise
+             they are simply destroyed and recloned,</li>
+<li><code class="code">ls</code>, specify a different linear solver,</li>
+<li><code class="code">tol</code>, tolerance values (ensures that any tolerance vectors are resized),</li>
+<li><code class="code">restol</code>, (optional) mass matrix residual tolerances,</li>
+<li><code class="code">hscale</code>, the next step will be of size $h \mathtt{hscale}$,</li>
+<li><code class="code">ynew</code>, the newly-sized solution vector with the value $y(t_0)$, and</li>
+<li><code class="code">t0</code>, the current value of the independent variable $t_0$.</li>
+</ul>
+
+    If a new linear solver is not specified, any existing linear solver in use
+    is destroyed and reinitialized; settings must be reconfigured after
+    resizing.
+<p>
+
+    If the mass matrix residual tolerance was previously set to
+    <a href="Arkode.html#TYPEres_tolerance">ResVtolerance</a> and <code class="code">restol</code> is not given, then it is reset
+    to <a href="Arkode.html#TYPEres_tolerance">ResStolerance</a> with the default value.
+<p>
+
+    The <code class="code">tol</code> argument is ignored in versions 2.6.1 and 2.6.2 since it may cause
+    a segmentation error.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeResize</div></div>
+<br>
+<h2 id="set">Modifying the solver (optional input functions)</h2><br>
+<br>
+<h3 id="setarkode">Optional inputs for ARKode</h3><br>
+
+<pre><span id="VALset_tolerances"><span class="keyword">val</span> set_tolerances</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> ('d, 'k) <a href="Arkode.html#TYPEtolerance">tolerance</a> -> unit</code></pre><div class="info ">
+Sets the integration tolerances.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSStolerances</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSVtolerances</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKodeWFtolerances</div></div>
+
+<pre><span id="VALset_res_tolerance"><span class="keyword">val</span> set_res_tolerance</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> ('d, 'k) <a href="Arkode.html#TYPEres_tolerance">res_tolerance</a> -> unit</code></pre><div class="info ">
+Sets the residual tolerance.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeResStolerance</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKodeResVtolerance</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKodeResFtolerance</div></div>
+
+<pre><span id="VALset_defaults"><span class="keyword">val</span> set_defaults</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> unit</code></pre><div class="info ">
+Resets all optional input parameters to their default values. Neither the
+    problem-defining functions nor the root-finding functions are changed.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetDefaults</div></div>
+
+<pre><span id="VALset_dense_order"><span class="keyword">val</span> set_dense_order</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> int -> unit</code></pre><div class="info ">
+Specifies the order of accuracy for the polynomial interpolant used for
+    dense output. The interpolant is used both for solution output values and
+    implicit method predictors.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetDenseOrder</div></div>
+
+<pre><span id="VALset_diagnostics"><span class="keyword">val</span> set_diagnostics</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> string -> bool -> unit</code></pre><div class="info ">
+Opens the named file to receive step adaptivity and solver diagnostics.
+    If the file already exists it is either truncated (<code class="code"><span class="keyword">true</span></code>) or extended
+    (<code class="code"><span class="keyword">false</span></code>).
+    The file is closed if the function is called again or when the session is
+    garbage collected.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetDiagnostics</div></div>
+
+<pre><span id="VALset_error_file"><span class="keyword">val</span> set_error_file</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> string -> bool -> unit</code></pre><div class="info ">
+Opens the named file to receive messages from the default error handler.
+    If the file already exists it is either truncated (<code class="code"><span class="keyword">true</span></code>) or extended
+    (<code class="code"><span class="keyword">false</span></code>).
+    The file is closed if the function is called again or when the session is
+    garbage collected.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetErrFile</div></div>
+
+<pre><span id="VALset_err_handler_fn"><span class="keyword">val</span> set_err_handler_fn</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> (<a href="Sundials.html#TYPEerror_details">Sundials.error_details</a> -> unit) -> unit</code></pre><div class="info ">
+Specifies a custom function for handling error messages.
+    The handler must not fail: any exceptions are trapped and discarded.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetErrHandlerFn</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKErrHandlerFn</div></div>
+
+<pre><span id="VALclear_err_handler_fn"><span class="keyword">val</span> clear_err_handler_fn</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> unit</code></pre><div class="info ">
+Restores the default error handling function.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetErrHandlerFn</div></div>
+
+<pre><span id="VALset_init_step"><span class="keyword">val</span> set_init_step</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> float -> unit</code></pre><div class="info ">
+Specifies the initial step size.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetInitStep</div></div>
+
+<pre><span id="VALset_fixed_step"><span class="keyword">val</span> set_fixed_step</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> float option -> unit</code></pre><div class="info ">
+Disables time step adaptivity and fix the step size for all internal steps.
+    Pass <code class="code"><span class="constructor">None</span></code> to restore time step adaptivity. This function is not
+    recommended since there is no assurance of the validity of the computed
+    solutions. It is provided primarily for code-to-code verification testing.
+    Use in conjunction with <a href="Arkode.html#VALset_min_step"><code class="code"><span class="constructor">Arkode</span>.set_min_step</code></a> or <a href="Arkode.html#VALset_max_step"><code class="code"><span class="constructor">Arkode</span>.set_max_step</code></a>.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetFixedStep</div></div>
+
+<pre><span id="VALset_max_hnil_warns"><span class="keyword">val</span> set_max_hnil_warns</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> int -> unit</code></pre><div class="info ">
+Specifies the maximum number of messages warning that <code class="code">t + h = t</code> on
+    the next internal step.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetMaxHnilWarns</div></div>
+
+<pre><span id="VALset_max_num_steps"><span class="keyword">val</span> set_max_num_steps</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> int -> unit</code></pre><div class="info ">
+Specifies the maximum number of steps taken in attempting to reach
+    a given output time.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetMaxNumSteps</div></div>
+
+<pre><span id="VALset_max_err_test_fails"><span class="keyword">val</span> set_max_err_test_fails</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> int -> unit</code></pre><div class="info ">
+Specifies the maximum number of error test failures permitted in attempting
+    one step.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetMaxErrTestFails</div></div>
+
+<pre><span id="VALset_min_step"><span class="keyword">val</span> set_min_step</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> float -> unit</code></pre><div class="info ">
+Specifies a lower bound on the magnitude of the step size.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetMinStep</div></div>
+
+<pre><span id="VALset_max_step"><span class="keyword">val</span> set_max_step</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> float -> unit</code></pre><div class="info ">
+Specifies an upper bound on the magnitude of the step size.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetMaxStep</div></div>
+
+<pre><span id="VALset_optimal_params"><span class="keyword">val</span> set_optimal_params</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> unit</code></pre><div class="info ">
+Sets all adaptivity and solver parameters to ‘best guess’ values. This
+    routine takes into account the integration method (ERK, DIRK, or ARK) and a
+    given method order; it should only be called after these have been set.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetOptimalParams</div></div>
+
+<pre><span id="VALset_stop_time"><span class="keyword">val</span> set_stop_time</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> float -> unit</code></pre><div class="info ">
+Limits the value of the independent variable <code class="code">t</code> when solving.
+    By default no stop time is imposed.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetStopTime</div></div>
+<br>
+<h3 id="setivp">Optional inputs for IVP method selection</h3><br>
+
+<pre><span id="VALset_imex"><span class="keyword">val</span> set_imex</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> unit</code></pre><div class="info ">
+Enables both the implicit and explicit portions of a problem.<br>
+<div class="raisedexceptions"><span class="raises">Raises</span> <code>IllInput</code> If $f_I$ and $f_E$ are not already specified.</div>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetImEx</div></div>
+
+<pre><span id="VALset_explicit"><span class="keyword">val</span> set_explicit</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> unit</code></pre><div class="info ">
+Disables the implicit portion of a problem.<br>
+<div class="raisedexceptions"><span class="raises">Raises</span> <code>IllInput</code> If $f_E$ is not already specified.</div>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetExplicit</div></div>
+
+<pre><span id="VALset_implicit"><span class="keyword">val</span> set_implicit</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> unit</code></pre><div class="info ">
+Disables the explicit portion of a problem.<br>
+<div class="raisedexceptions"><span class="raises">Raises</span> <code>IllInput</code> If $f_I$ is not already specified.</div>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetImplicit</div></div>
+
+<pre><code><span id="TYPErk_method"><span class="keyword">type</span> <code class="type"></code>rk_method</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTrk_method.stages">stages</span>&nbsp;: <code class="type">int</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Number of stages ($s$).<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTrk_method.global_order">global_order</span>&nbsp;: <code class="type">int</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Global order of accuracy ($q$).<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTrk_method.global_embedded_order">global_embedded_order</span>&nbsp;: <code class="type">int</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Global order of accuracy for the embedded
+                                     RK method ($p$).<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTrk_method.stage_times">stage_times</span>&nbsp;: <code class="type"><a href="Sundials.RealArray.html#TYPEt">Sundials.RealArray.t</a></code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Array (of length <code class="code">stages</code>) of
+                                     stage times.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTrk_method.coefficients">coefficients</span>&nbsp;: <code class="type"><a href="Sundials.RealArray.html#TYPEt">Sundials.RealArray.t</a></code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Array (of length <code class="code">stages</code>) of coefficients
+                                     defining the time step solution ($b$).<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTrk_method.bembed">bembed</span>&nbsp;: <code class="type"><a href="Sundials.RealArray.html#TYPEt">Sundials.RealArray.t</a></code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Array (of length <code class="code">stages</code>) of coefficients
+                                     defining the embedded solution.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+}
+
+<div class="info ">
+Parameters for the RK method.<br>
+</div>
+
+
+<pre><span id="VALset_ark_tables"><span class="keyword">val</span> set_ark_tables</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -><br>       <a href="Arkode.html#TYPErk_method">rk_method</a> -> <a href="Sundials.RealArray.html#TYPEt">Sundials.RealArray.t</a> -> <a href="Sundials.RealArray.html#TYPEt">Sundials.RealArray.t</a> -> unit</code></pre><div class="info ">
+Specifies a customized Butcher table pair for the additive RK method. The
+    call <code class="code">set_ark_tables rkm ai ae</code> specifies:<ul>
+<li><code class="code">rkm</code>, the RK method parameters,</li>
+<li><code class="code">ai</code>, the coefficients defining the implicit RK stages (of length
+            <code class="code">rkm.stages * rkm.stages</code> in row-major order), and</li>
+<li><code class="code">ae</code>, the coefficients defining the explicit RK stages (of length
+            <code class="code">rkm.stages * rkm.stages</code> in row-major order).</li>
+</ul>
+<br>
+<div class="raisedexceptions"><span class="raises">Raises</span> <code>IllInput</code> If $f_I$ and $f_E$ are not already specified.</div>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetARKTables</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetImEx</div></div>
+
+<pre><span id="VALset_erk_table"><span class="keyword">val</span> set_erk_table</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> <a href="Arkode.html#TYPErk_method">rk_method</a> -> <a href="Sundials.RealArray.html#TYPEt">Sundials.RealArray.t</a> -> unit</code></pre><div class="info ">
+Specifies a customized Butcher table pair for the explicit portion of the
+    system. The call <code class="code">set_erk_table rkm ae</code> specifies:<ul>
+<li><code class="code">rkm</code>, the RK method parameters, and</li>
+<li><code class="code">ae</code>, the coefficients defining the explicit RK stages (of length
+            <code class="code">rkm.stages * rkm.stages</code> in row-major order).</li>
+</ul>
+<br>
+<div class="raisedexceptions"><span class="raises">Raises</span> <code>IllInput</code> If $f_E$ is not already specified.</div>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetERKTable</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetExplicit</div></div>
+
+<pre><span id="VALset_irk_table"><span class="keyword">val</span> set_irk_table</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> <a href="Arkode.html#TYPErk_method">rk_method</a> -> <a href="Sundials.RealArray.html#TYPEt">Sundials.RealArray.t</a> -> unit</code></pre><div class="info ">
+Specifies a customized Butcher table pair for the implicit portion of the
+    system. The call <code class="code">set_irk_table rkm ai</code> specifies:<ul>
+<li><code class="code">rkm</code>, the RK method parameters, and</li>
+<li><code class="code">ai</code>, the coefficients defining the implicit RK stages (of length
+            <code class="code">rkm.stages * rkm.stages</code> in row-major order).</li>
+</ul>
+<br>
+<div class="raisedexceptions"><span class="raises">Raises</span> <code>IllInput</code> If $f_I$ is not already specified.</div>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetIRKTable</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetImplicit</div></div>
+
+<pre><code><span id="TYPEerk_table"><span class="keyword">type</span> <code class="type"></code>erk_table</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTerk_table.HeunEuler_2_1_2"><span class="constructor">HeunEuler_2_1_2</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Default 2nd order explicit method (table 0).<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTerk_table.BogackiShampine_4_2_3"><span class="constructor">BogackiShampine_4_2_3</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Default 3rd order explicit method (table 1).<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTerk_table.ARK_4_2_3_Explicit"><span class="constructor">ARK_4_2_3_Explicit</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Explicit portion of default 3rd order additive
+                              method (table 2).<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTerk_table.Zonneveld_5_3_4"><span class="constructor">Zonneveld_5_3_4</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Default 4th order explicit method (table 3).<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTerk_table.ARK_6_3_4_Explicit"><span class="constructor">ARK_6_3_4_Explicit</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Explicit portion of default 3rd order additive
+                              method (table 4).<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTerk_table.SayfyAburub_6_3_4"><span class="constructor">SayfyAburub_6_3_4</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Butcher table number 5.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTerk_table.CashKarp_6_4_5"><span class="constructor">CashKarp_6_4_5</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Default 5th order explicit method (table 6).<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTerk_table.Fehlberg_6_4_5"><span class="constructor">Fehlberg_6_4_5</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Butcher table number 7.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTerk_table.DormandPrince_7_4_5"><span class="constructor">DormandPrince_7_4_5</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Butcher table number 8.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTerk_table.ARK_8_4_5_Explicit"><span class="constructor">ARK_8_4_5_Explicit</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Explicit portion of default 5th order additive
+                              method (table 9).<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTerk_table.Verner_8_5_6"><span class="constructor">Verner_8_5_6</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Default 6th order explicit method (table 10).<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+Explicit Butcher tables<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>Explicit Butcher tables</div></div>
+
+
+<pre><code><span id="TYPEirk_table"><span class="keyword">type</span> <code class="type"></code>irk_table</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTirk_table.SDIRK_2_1_2"><span class="constructor">SDIRK_2_1_2</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Default 2nd order implicit method (table 11).<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTirk_table.Billington_3_2_3"><span class="constructor">Billington_3_2_3</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Butcher table number 12.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTirk_table.TRBDF2_3_2_3"><span class="constructor">TRBDF2_3_2_3</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Butcher table number 13.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTirk_table.Kvaerno_4_2_3"><span class="constructor">Kvaerno_4_2_3</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Butcher table number 14.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTirk_table.ARK_4_2_3_Implicit"><span class="constructor">ARK_4_2_3_Implicit</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Default 3rd order implicit method and the implicit
+                              portion of the default 3rd order additive method
+                              (table 15).<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTirk_table.Cash_5_2_4"><span class="constructor">Cash_5_2_4</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Butcher table number 16.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTirk_table.Cash_5_3_4"><span class="constructor">Cash_5_3_4</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Butcher table number 17.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTirk_table.SDIRK_5_3_4"><span class="constructor">SDIRK_5_3_4</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Default 4th order implicit method (table 18).<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTirk_table.Kvaerno_5_3_4"><span class="constructor">Kvaerno_5_3_4</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Butcher table number 19.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTirk_table.ARK_6_3_4_Implicit"><span class="constructor">ARK_6_3_4_Implicit</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Implicit portion of the default 4th order additive
+                              method (table 20).<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTirk_table.Kvaerno_7_4_5"><span class="constructor">Kvaerno_7_4_5</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Butcher table number 21.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTirk_table.ARK_8_4_5_Implicit"><span class="constructor">ARK_8_4_5_Implicit</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Default 5th order method and the implicit portion
+                              of the default 5th order additive method
+                              (table 22).<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+Implicit Butcher tables<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>Implicit Butcher tables</div></div>
+
+
+<pre><code><span id="TYPEark_table"><span class="keyword">type</span> <code class="type"></code>ark_table</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTark_table.ARK_4_2_3"><span class="constructor">ARK_4_2_3</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+3rd-order pair combining tables 2 and 15.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTark_table.ARK_6_3_4"><span class="constructor">ARK_6_3_4</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+4th-order pair combining tables 4 and 20.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTark_table.ARK_8_4_5"><span class="constructor">ARK_8_4_5</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+5th-order pair combining tables 9 and 22.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+Additive Butcher tables<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>Additive Butcher tables</div></div>
+
+
+<pre><span id="VALset_ark_table_num"><span class="keyword">val</span> set_ark_table_num</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> <a href="Arkode.html#TYPEark_table">ark_table</a> -> unit</code></pre><div class="info ">
+Use specific built-in Butcher tables for an ImEx system.<br>
+<div class="raisedexceptions"><span class="raises">Raises</span> <code>IllInput</code> If $f_I$ and $f_E$ are not already specified.</div>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetARKTableNum</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetImEx</div></div>
+
+<pre><span id="VALset_erk_table_num"><span class="keyword">val</span> set_erk_table_num</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> <a href="Arkode.html#TYPEerk_table">erk_table</a> -> unit</code></pre><div class="info ">
+Use specific built-in Butcher tables for an explicit integration of the
+    problem.<br>
+<div class="raisedexceptions"><span class="raises">Raises</span> <code>IllInput</code> If $f_E$ is not already specified.</div>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetERKTableNum</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetExplicit</div></div>
+
+<pre><span id="VALset_irk_table_num"><span class="keyword">val</span> set_irk_table_num</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> <a href="Arkode.html#TYPEirk_table">irk_table</a> -> unit</code></pre><div class="info ">
+Use specific built-in Butcher tables for an implicit integration of the
+    problem.<br>
+<div class="raisedexceptions"><span class="raises">Raises</span> <code>IllInput</code> If $f_I$ is not already specified.</div>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetIRKTableNum</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetImplicit</div></div>
+<br>
+<h3 id="setadap">Optional inputs for time step adaptivity</h3><br>
+
+<pre><code><span id="TYPEadaptivity_args"><span class="keyword">type</span> <code class="type"></code>adaptivity_args</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTadaptivity_args.h1">h1</span>&nbsp;: <code class="type">float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+the current step size, $t_m - t_{m-1}$.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTadaptivity_args.h2">h2</span>&nbsp;: <code class="type">float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+the previous step size, $t_{m-1} - t_{m-2}$.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTadaptivity_args.h3">h3</span>&nbsp;: <code class="type">float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+the step size $t_{m-2} - t_{m-3}$.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTadaptivity_args.e1">e1</span>&nbsp;: <code class="type">float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+the error estimate from the current step, $m$.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTadaptivity_args.e2">e2</span>&nbsp;: <code class="type">float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+the error estimate from the previous step, $m-1$.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTadaptivity_args.e3">e3</span>&nbsp;: <code class="type">float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+the error estimate from the step $m-2$.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTadaptivity_args.q">q</span>&nbsp;: <code class="type">int</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+the global order of accuracy for the integration method.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTadaptivity_args.p">p</span>&nbsp;: <code class="type">int</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+the global order of accuracy for the embedding.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+}
+
+
+
+<pre><span id="TYPEadaptivity_fn"><span class="keyword">type</span> <code class="type">'d</code> adaptivity_fn</span> = <code class="type">float -> 'd -> <a href="Arkode.html#TYPEadaptivity_args">adaptivity_args</a> -> float</code> </pre>
+<div class="info ">
+A function implementing a time step adaptivity algorithm that chooses an
+    $h$ that satisfies the error tolerances. The call <code class="code">hnew = adapt_fn t y args</code>
+    has as arguments<ul>
+<li><code class="code">t</code>, the value of the independent variable,</li>
+<li><code class="code">y</code>, the value of the dependent variable vector $y(t)$, and</li>
+<li><code class="code">args</code>, information on step sizes, error estimates, and accuracies.
+    and returns the next step size <code class="code">hnew</code>. The function should raise an
+    exception if it cannot set the next step size. The step size should be the
+    maximum value where the error estimates remain below 1.</li>
+</ul>
+
+    This function should focus on accuracy-based time step estimation; for
+    stability based time steps, <a href="Arkode.html#VALset_stability_fn"><code class="code"><span class="constructor">Arkode</span>.set_stability_fn</code></a> should be used.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKAdaptFn</div></div>
+
+
+<pre><code><span id="TYPEadaptivity_params"><span class="keyword">type</span> <code class="type"></code>adaptivity_params</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTadaptivity_params.ks">ks</span>&nbsp;: <code class="type">(float * float * float) option</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTadaptivity_params.method_order">method_order</span>&nbsp;: <code class="type">bool</code>;</code></td>
+
+</tr></table>
+}
+
+<div class="info ">
+Parameters for the standard adaptivity algorithms.
+    There are two:<ul>
+<li><code class="code">adaptivity_ks</code>, the <code class="code">k1</code>, <code class="code">k2</code>, and <code class="code">k3</code> parameters, or <code class="code"><span class="constructor">None</span></code> to use
+      the defaults, and</li>
+<li><code class="code">adaptivity_method_order</code>, <code class="code"><span class="keyword">true</span></code> specifies the method order of
+      accuracy $q$ and <code class="code"><span class="keyword">false</span></code> specifies the embedding order of accuracy $p$.</li>
+</ul>
+<br>
+</div>
+
+
+<pre><code><span id="TYPEadaptivity_method"><span class="keyword">type</span> <code class="type">'d</code> adaptivity_method</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTadaptivity_method.PIDcontroller"><span class="constructor">PIDcontroller</span></span> <span class="keyword">of</span> <code class="type"><a href="Arkode.html#TYPEadaptivity_params">adaptivity_params</a></code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+The default time adaptivity controller.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTadaptivity_method.PIcontroller"><span class="constructor">PIcontroller</span></span> <span class="keyword">of</span> <code class="type"><a href="Arkode.html#TYPEadaptivity_params">adaptivity_params</a></code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Uses the two most recent step sizes.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTadaptivity_method.Icontroller"><span class="constructor">Icontroller</span></span> <span class="keyword">of</span> <code class="type"><a href="Arkode.html#TYPEadaptivity_params">adaptivity_params</a></code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Standard time adaptivity control algorithm.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTadaptivity_method.ExplicitGustafsson"><span class="constructor">ExplicitGustafsson</span></span> <span class="keyword">of</span> <code class="type"><a href="Arkode.html#TYPEadaptivity_params">adaptivity_params</a></code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Primarily used with explicit RK methods.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTadaptivity_method.ImplicitGustafsson"><span class="constructor">ImplicitGustafsson</span></span> <span class="keyword">of</span> <code class="type"><a href="Arkode.html#TYPEadaptivity_params">adaptivity_params</a></code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Primarily used with implicit RK methods.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTadaptivity_method.ImExGustafsson"><span class="constructor">ImExGustafsson</span></span> <span class="keyword">of</span> <code class="type"><a href="Arkode.html#TYPEadaptivity_params">adaptivity_params</a></code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+An ImEx version of the two preceding controllers.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTadaptivity_method.AdaptivityFn"><span class="constructor">AdaptivityFn</span></span> <span class="keyword">of</span> <code class="type">'d <a href="Arkode.html#TYPEadaptivity_fn">adaptivity_fn</a></code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+A custom time-step adaptivity function.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+Asymptotic error control algorithms.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>Asymptotic error control</div></div>
+
+
+<pre><span id="VALset_adaptivity_method"><span class="keyword">val</span> set_adaptivity_method</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> 'd <a href="Arkode.html#TYPEadaptivity_method">adaptivity_method</a> -> unit</code></pre><div class="info ">
+Specifies the method and associated parameters used for time step
+    adaptivity.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetAdaptivityMethod</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetAdaptivityFn</div></div>
+
+<pre><span id="VALset_cfl_fraction"><span class="keyword">val</span> set_cfl_fraction</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> float -> unit</code></pre><div class="info ">
+Specifies the fraction of the estimated explicitly stable step to use. Any
+    non-positive argument resets to the default value (0.5).<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetCFLFraction</div></div>
+
+<pre><span id="VALset_error_bias"><span class="keyword">val</span> set_error_bias</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> float -> unit</code></pre><div class="info ">
+Specifies the bias to apply to the error estimates within accuracy-based
+    adaptivity strategies.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetErrorBias</div></div>
+
+<pre><span id="VALset_fixed_step_bounds"><span class="keyword">val</span> set_fixed_step_bounds</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> float -> float -> unit</code></pre><div class="info ">
+Specifies the step growth interval in which the step size will remain
+    unchanged. In the call <code class="code">set_fixed_step_bounds s lb ub</code>, <code class="code">lb</code> specifies a
+    lower bound on the window to leave the step size fixed and <code class="code">ub</code> specifies
+    an upper bound. Any interval not containing 1.0 resets to default
+    values.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetFixedStepBounds</div></div>
+
+<pre><span id="VALset_max_cfail_growth"><span class="keyword">val</span> set_max_cfail_growth</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> float -> unit</code></pre><div class="info ">
+Specifies the maximum step size growth factor upon a convergence failure on
+    a stage solve within a step. Any value outside the interval $(0, 1]$
+    resets to the default value.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetMaxCFailGrowth</div></div>
+
+<pre><span id="VALset_max_efail_growth"><span class="keyword">val</span> set_max_efail_growth</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> float -> unit</code></pre><div class="info ">
+Specifies the maximum step size growth factor upon multiple successive
+    accuracy-based error failures in the solver. Any value outside the interval
+    $(0, 1]$ resets to the default value.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetMaxEFailGrowth</div></div>
+
+<pre><span id="VALset_max_first_growth"><span class="keyword">val</span> set_max_first_growth</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> float -> unit</code></pre><div class="info ">
+Specifies the maximum allowed step size change following the very first
+    integration step. Any value $\le 1$ resets to the default value.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetMaxFirstGrowth</div></div>
+
+<pre><span id="VALset_max_growth"><span class="keyword">val</span> set_max_growth</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> float -> unit</code></pre><div class="info ">
+Specifies the maximum growth of the step size between consecutive time
+    steps. Any value $\le 1$ resets to the default value.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetMaxGrowth</div></div>
+
+<pre><span id="VALset_safety_factor"><span class="keyword">val</span> set_safety_factor</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> float -> unit</code></pre><div class="info ">
+Specifies the safety factor to be applied to the accuracy-based estimated
+    step. Any non-positive value resets to the default value.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetSafetyFactor</div></div>
+
+<pre><span id="VALset_small_num_efails"><span class="keyword">val</span> set_small_num_efails</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> float -> unit</code></pre><div class="info ">
+Specifies the threshold for “multiple” successive error failures before the
+    factor from <a href="Arkode.html#VALset_max_efail_growth"><code class="code"><span class="constructor">Arkode</span>.set_max_efail_growth</code></a> is applied. Any non-positive value
+    resets to the default value.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetSmallNumEFails</div></div>
+
+<pre><span id="TYPEstability_fn"><span class="keyword">type</span> <code class="type">'d</code> stability_fn</span> = <code class="type">float -> 'd -> float</code> </pre>
+<div class="info ">
+A function that predicts the maximum stable step size for the explicit
+    portions of an ImEx ODE system. The call <code class="code">hstab = stab_fn t y</code>
+    has as arguments<ul>
+<li><code class="code">t</code>, the value of the independent variable, and</li>
+<li><code class="code">y</code>, the value of the dependent variable vector $y(t)$.
+    and returns the absolute value of the maximum stable step size <code class="code">hstab</code>.
+    Returning $\mathtt{hstab}\le 0$ indicates that there is no explicit
+    stability restriction on the time step size. The function should raise
+    an exception if it cannot set the next step size.</li>
+</ul>
+<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKExpStabFn</div></div>
+
+
+<pre><span id="VALset_stability_fn"><span class="keyword">val</span> set_stability_fn</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> 'd <a href="Arkode.html#TYPEstability_fn">stability_fn</a> -> unit</code></pre><div class="info ">
+Sets a problem-dependent function to estimate a stable time step size for
+    the explicit portion of the ODE system.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetStabilityFn</div></div>
+
+<pre><span id="VALclear_stability_fn"><span class="keyword">val</span> clear_stability_fn</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> unit</code></pre><div class="info ">
+Clears the problem-dependent function that estimates a stable time step
+    size for the explicit portion of the ODE system.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetStabilityFn</div></div>
+<br>
+<h3 id="setimplicit">Optional inputs for implicit stage solves</h3><br>
+
+<pre><span id="VALset_fixed_point"><span class="keyword">val</span> set_fixed_point</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> int -> unit</code></pre><div class="info ">
+Solve the implicit portion of the problem using the accelerated fixed-point
+    solver instead of the modified Newton iteration. The integer argument gives
+    the maximum dimension of the accelerated subspace (i.e., the number of
+    vectors to store within the Anderson acceleration subspace).<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetFixedPoint</div></div>
+
+<pre><span id="VALset_newton"><span class="keyword">val</span> set_newton</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> unit</code></pre><div class="info ">
+Solve the implicit portion of the problem using the modified Newton solver.
+    Overrides a previous call to <a href="Arkode.html#VALset_fixed_point"><code class="code"><span class="constructor">Arkode</span>.set_fixed_point</code></a>.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetNewton</div></div>
+
+<pre><span id="VALset_linear"><span class="keyword">val</span> set_linear</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> bool -> unit</code></pre><div class="info ">
+Specifies that the implicit portion of the problem is linear. The flag
+    indicates whether the Jacobian of $f_I(t,y)$, or, when using an
+    iterative linear solver, the preconditioner is time-dependent (<code class="code"><span class="keyword">true</span></code>)
+    or not (<code class="code"><span class="keyword">false</span></code>).<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetLinear</div></div>
+
+<pre><span id="VALset_nonlinear"><span class="keyword">val</span> set_nonlinear</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> unit</code></pre><div class="info ">
+Specifies that the implicit portion of the problem is nonlinear.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetNonlinear</div></div>
+
+<pre><code><span id="TYPEpredictor_method"><span class="keyword">type</span> <code class="type"></code>predictor_method</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTpredictor_method.TrivialPredictor"><span class="constructor">TrivialPredictor</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Piece-wise constant interpolant
+                                $p_0(\tau) = y_{n-1}$ %<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTpredictor_method.MaximumOrderPredictor"><span class="constructor">MaximumOrderPredictor</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+An interpolant $p_q(t)$ of polynomial
+                                order up to $q=3$.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTpredictor_method.VariableOrderPredictor"><span class="constructor">VariableOrderPredictor</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Decrease the polynomial degree for later RK
+                                stages.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTpredictor_method.CutoffOrderPredictor"><span class="constructor">CutoffOrderPredictor</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Maximum order for early RK stages and
+                                first-order for later ones.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTpredictor_method.BootstrapPredictor"><span class="constructor">BootstrapPredictor</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Second-order predictor based only on the
+                                current step.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+<div class="sundials"><span class="seesundials">See sundials: </span>Implicit predictors</div></div>
+
+
+<pre><span id="VALset_predictor_method"><span class="keyword">val</span> set_predictor_method</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> <a href="Arkode.html#TYPEpredictor_method">predictor_method</a> -> unit</code></pre><div class="info ">
+Specifies the method for predicting implicit solutions.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetPredictorMethod</div></div>
+
+<pre><span id="VALset_max_nonlin_iters"><span class="keyword">val</span> set_max_nonlin_iters</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> int -> unit</code></pre><div class="info ">
+Specifies the maximum number of nonlinear solver iterations permitted per RK
+    stage at each step.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetMaxNonlinIters</div></div>
+
+<pre><span id="VALset_max_conv_fails"><span class="keyword">val</span> set_max_conv_fails</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> int -> unit</code></pre><div class="info ">
+Specifies the maximum number of nonlinear solver convergence failures
+    permitted during one step.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetMaxConvFails</div></div>
+
+<pre><span id="VALset_nonlin_conv_coef"><span class="keyword">val</span> set_nonlin_conv_coef</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> float -> unit</code></pre><div class="info ">
+Specifies the safety factor used in the nonlinear convergence test.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetNonlinConvCoef</div></div>
+
+<pre><span id="VALset_nonlin_crdown"><span class="keyword">val</span> set_nonlin_crdown</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> float -> unit</code></pre><div class="info ">
+Specifies the constant used in estimating the nonlinear solver convergence
+    rate.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetNonlinCRDown</div></div>
+
+<pre><span id="VALset_nonlin_rdiv"><span class="keyword">val</span> set_nonlin_rdiv</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> float -> unit</code></pre><div class="info ">
+Specifies the nonlinear correction threshold beyond which the iteration
+    will be declared divergent.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetNonlinRDiv</div></div>
+
+<pre><span id="VALset_delta_gamma_max"><span class="keyword">val</span> set_delta_gamma_max</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> float -> unit</code></pre><div class="info ">
+Specifies a scaled step size ratio tolerance beyond which the linear solver
+    setup routine will be signalled.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetDeltaGammaMax</div></div>
+
+<pre><span id="VALset_max_steps_between_lset"><span class="keyword">val</span> set_max_steps_between_lset</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> int -> unit</code></pre><div class="info ">
+Specifies the frequency of calls to the linear solver setup routine.
+    Positive values specify the number of time steps between setup calls,
+    negative values force recomputation at each Newton step, and zero values
+    reset to the default.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetMaxStepsBetweenLSet</div></div>
+<br>
+<h2 id="get">Querying the solver (optional output functions)</h2><br>
+
+<pre><span id="VALget_work_space"><span class="keyword">val</span> get_work_space</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> int * int</code></pre><div class="info ">
+Returns the real and integer workspace sizes.<br>
+<b>Returns</b> (<code class="code">real_size</code>, <code class="code">integer_size</code>)<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeGetWorkSpace</div></div>
+
+<pre><span id="VALget_num_steps"><span class="keyword">val</span> get_num_steps</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> int</code></pre><div class="info ">
+Returns the cumulative number of internal steps taken by the solver.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeGetNumSteps</div></div>
+
+<pre><span id="VALget_num_exp_steps"><span class="keyword">val</span> get_num_exp_steps</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> int</code></pre><div class="info ">
+Returns the cumulative number of stability-limited steps taken by the
+    solver.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeGetNumExpSteps</div></div>
+
+<pre><span id="VALget_num_acc_steps"><span class="keyword">val</span> get_num_acc_steps</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> int</code></pre><div class="info ">
+Returns the cumulative number of accuracy-limited steps taken by the
+    solver.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeGetNumAccSteps</div></div>
+
+<pre><span id="VALget_num_step_attempts"><span class="keyword">val</span> get_num_step_attempts</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> int</code></pre><div class="info ">
+Returns the cumulative number of steps attempted by the solver.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeGetNumStepAttempts</div></div>
+
+<pre><span id="VALget_num_rhs_evals"><span class="keyword">val</span> get_num_rhs_evals</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> int * int</code></pre><div class="info ">
+Returns the number of calls to the right-hand side functions.
+    In the call <code class="code">(nfe_evals, nfi_evals) = get_num_rhs_evals s</code>,<ul>
+<li><code class="code">nfe_evals</code> is the number of calls to $f_E$, and</li>
+<li><code class="code">nfi_evals</code> is the number of calls to $f_I$.</li>
+</ul>
+<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeGetNumRhsEvals</div></div>
+
+<pre><span id="VALget_num_err_test_fails"><span class="keyword">val</span> get_num_err_test_fails</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> int</code></pre><div class="info ">
+Returns the number of local error test failures that have occurred.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeGetNumErrTestFails</div></div>
+
+<pre><span id="VALget_last_step"><span class="keyword">val</span> get_last_step</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> float</code></pre><div class="info ">
+Returns the integration step size taken on the last successful internal
+    step.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeGetLastStep</div></div>
+
+<pre><span id="VALget_current_step"><span class="keyword">val</span> get_current_step</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> float</code></pre><div class="info ">
+Returns the integration step size to be attempted on the next internal step.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeGetCurrentStep</div></div>
+
+<pre><span id="VALget_actual_init_step"><span class="keyword">val</span> get_actual_init_step</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> float</code></pre><div class="info ">
+Returns the the value of the integration step size used on the first step.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeGetActualInitStep</div></div>
+
+<pre><span id="VALget_current_time"><span class="keyword">val</span> get_current_time</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> float</code></pre><div class="info ">
+Returns the the current internal time reached by the solver.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeGetCurrentTime</div></div>
+
+<pre><span id="VALget_current_butcher_tables"><span class="keyword">val</span> get_current_butcher_tables</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -><br>       <a href="Sundials.RealArray.html#TYPEt">Sundials.RealArray.t</a> * <a href="Sundials.RealArray.html#TYPEt">Sundials.RealArray.t</a> * <a href="Arkode.html#TYPErk_method">rk_method</a></code></pre><div class="info ">
+Returns the explicit and implicit Butcher tables in use by the solver.
+    In the call <code class="code">(ai, ae, rkm) = get_current_butcher_tables s</code>,<ul>
+<li><code class="code">ai</code> gives the coefficients of the DIRK method,</li>
+<li><code class="code">ae</code> gives the coefficients of the ERK method, and</li>
+<li><code class="code">rkm</code> gives the other parameters.</li>
+</ul>
+<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeGetCurrentButcherTables</div></div>
+
+<pre><span id="VALget_tol_scale_factor"><span class="keyword">val</span> get_tol_scale_factor</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> float</code></pre><div class="info ">
+Returns a suggested factor by which the user's tolerances should be scaled
+    when too much accuracy has been requested for some internal step.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeGetTolScaleFactor</div></div>
+
+<pre><span id="VALget_err_weights"><span class="keyword">val</span> get_err_weights</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> unit</code></pre><div class="info ">
+Returns the solution error weights at the current time.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeGetErrWeights</div></div>
+
+<pre><span id="VALget_est_local_errors"><span class="keyword">val</span> get_est_local_errors</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> unit</code></pre><div class="info ">
+Returns the vector of estimated local errors.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeGetEstLocalErrors</div></div>
+
+<pre><code><span id="TYPEintegrator_stats"><span class="keyword">type</span> <code class="type"></code>integrator_stats</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTintegrator_stats.num_steps">num_steps</span>&nbsp;: <code class="type">int</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Cumulative number of internal solver steps.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTintegrator_stats.exp_steps">exp_steps</span>&nbsp;: <code class="type">int</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Cumulative number of stability-limited solver steps.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTintegrator_stats.acc_steps">acc_steps</span>&nbsp;: <code class="type">int</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Cumulative number of accuracy-limited solver steps.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTintegrator_stats.step_attempts">step_attempts</span>&nbsp;: <code class="type">int</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Cumulative number of steps attempted by the solver.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTintegrator_stats.num_nfe_evals">num_nfe_evals</span>&nbsp;: <code class="type">int</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Number of calls to the explicit right-hand side function.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTintegrator_stats.num_nfi_evals">num_nfi_evals</span>&nbsp;: <code class="type">int</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Number of calls to the implicit right-hand side function.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTintegrator_stats.num_lin_solv_setups">num_lin_solv_setups</span>&nbsp;: <code class="type">int</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Number of setups calls to the linear solver.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTintegrator_stats.num_err_test_fails">num_err_test_fails</span>&nbsp;: <code class="type">int</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Number of local error test failures.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTintegrator_stats.actual_init_step">actual_init_step</span>&nbsp;: <code class="type">float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Integration step sized used on the first step.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTintegrator_stats.last_step">last_step</span>&nbsp;: <code class="type">float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Integration step size of the last internal step.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTintegrator_stats.current_step">current_step</span>&nbsp;: <code class="type">float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Integration step size to attempt on the next internal step.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTintegrator_stats.current_time">current_time</span>&nbsp;: <code class="type">float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Current internal time reached by the solver.<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+}
+
+<div class="info ">
+Summaries of integrator statistics.<br>
+</div>
+
+
+<pre><span id="VALget_integrator_stats"><span class="keyword">val</span> get_integrator_stats</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> <a href="Arkode.html#TYPEintegrator_stats">integrator_stats</a></code></pre><div class="info ">
+Returns the integrator statistics as a group.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeGetIntegratorStats</div></div>
+
+<pre><span id="VALprint_integrator_stats"><span class="keyword">val</span> print_integrator_stats</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> Pervasives.out_channel -> unit</code></pre><div class="info ">
+Prints the integrator statistics on the given channel.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeGetIntegratorStats</div></div>
+<br>
+<h3 id="setimplicit">Implicit solver optional output functions</h3><br>
+
+<pre><span id="VALget_num_lin_solv_setups"><span class="keyword">val</span> get_num_lin_solv_setups</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> int</code></pre><div class="info ">
+Returns the number of calls made to the linear solver's setup function.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeGetNumLinSolvSetups</div></div>
+
+<pre><span id="VALget_num_mass_solves"><span class="keyword">val</span> get_num_mass_solves</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> int</code></pre><div class="info ">
+Returns the number of calls made to the mass matrix solver.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeGetNumMassSolves</div></div>
+
+<pre><span id="VALget_num_nonlin_solv_iters"><span class="keyword">val</span> get_num_nonlin_solv_iters</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> int</code></pre><div class="info ">
+Returns the number of nonlinear (functional or Newton) iterations performed.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeGetNumNonlinSolvIters</div></div>
+
+<pre><span id="VALget_num_nonlin_solv_conv_fails"><span class="keyword">val</span> get_num_nonlin_solv_conv_fails</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> int</code></pre><div class="info ">
+Returns the number of nonlinear convergence failures that have occurred.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeGetNumNonlinSolvConvFails</div></div>
+
+<pre><span id="VALget_nonlin_solv_stats"><span class="keyword">val</span> get_nonlin_solv_stats</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> int * int</code></pre><div class="info ">
+Returns both the numbers of nonlinear iterations performed <code class="code">nniters</code> and
+    nonlinear convergence failures <code class="code">nncfails</code>.<br>
+<b>Returns</b> (<code class="code">nniters</code>, <code class="code">nncfails</code>)<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeGetNonlinSolvStats</div></div>
+<br>
+<h2 id="roots">Additional root-finding functions</h2><br>
+
+<pre><span id="VALset_root_direction"><span class="keyword">val</span> set_root_direction</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> <a href="Sundials.RootDirs.html#TYPEd">Sundials.RootDirs.d</a> array -> unit</code></pre><div class="info ">
+<code class="code">set_root_direction s dir</code> specifies the direction of zero-crossings to be
+    located and returned. <code class="code">dir</code> may contain one entry for each root function.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetRootDirection</div></div>
+
+<pre><span id="VALset_all_root_directions"><span class="keyword">val</span> set_all_root_directions</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> <a href="Sundials.RootDirs.html#TYPEd">Sundials.RootDirs.d</a> -> unit</code></pre><div class="info ">
+Like <a href="Arkode.html#VALset_root_direction"><code class="code"><span class="constructor">Arkode</span>.set_root_direction</code></a> but specifies a single direction for all root
+    functions.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetRootDirection</div></div>
+
+<pre><span id="VALset_no_inactive_root_warn"><span class="keyword">val</span> set_no_inactive_root_warn</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> unit</code></pre><div class="info ">
+Disables issuing a warning if some root function appears to be identically
+    zero at the beginning of the integration.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeSetNoInactiveRootWarn</div></div>
+
+<pre><span id="VALget_num_roots"><span class="keyword">val</span> get_num_roots</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> int</code></pre><div class="info ">
+Returns the number of root functions.<br>
+</div>
+
+<pre><span id="VALget_root_info"><span class="keyword">val</span> get_root_info</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> <a href="Sundials.Roots.html#TYPEt">Sundials.Roots.t</a> -> unit</code></pre><div class="info ">
+Fills an array showing which functions were found to have a root.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeGetRootInfo</div></div>
+
+<pre><span id="VALget_num_g_evals"><span class="keyword">val</span> get_num_g_evals</span> : <code class="type">('d, 'k) <a href="Arkode.html#TYPEsession">session</a> -> int</code></pre><div class="info ">
+Returns the cumulative number of calls made to the user-supplied root
+    function g.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeGetNumGEvals</div></div>
+<br>
+<h2 id="exceptions">Exceptions</h2><br>
+
+<pre><span id="EXCEPTIONIllInput"><span class="keyword">exception</span> IllInput</span></pre>
+<div class="info ">
+Raised on missing or illegal solver inputs. Also raised if an element
+    of the error weight vector becomes zero during time stepping, or the
+    linear solver initialization function failed, or a root was found both at
+    <code class="code">t</code> and very near <code class="code">t</code>.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARK_ILL_INPUT</div></div>
+
+<pre><span id="EXCEPTIONTooClose"><span class="keyword">exception</span> TooClose</span></pre>
+<div class="info ">
+The initial and final times are too close to each other and an initial step
+    size was not specified.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARK_TOO_CLOSE</div></div>
+
+<pre><span id="EXCEPTIONTooMuchWork"><span class="keyword">exception</span> TooMuchWork</span></pre>
+<div class="info ">
+The requested time could not be reached in <code class="code">mxstep</code> internal steps.
+    See <a href="Arkode.html#VALset_max_num_steps"><code class="code"><span class="constructor">Arkode</span>.set_max_num_steps</code></a><br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARK_TOO_MUCH_WORK</div></div>
+
+<pre><span id="EXCEPTIONTooMuchAccuracy"><span class="keyword">exception</span> TooMuchAccuracy</span></pre>
+<div class="info ">
+The requested accuracy could not be satisfied.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARK_TOO_MUCH_ACC</div></div>
+
+<pre><span id="EXCEPTIONErrFailure"><span class="keyword">exception</span> ErrFailure</span></pre>
+<div class="info ">
+Too many error test failures within a step or at the minimum step size.
+    See <a href="Arkode.html#VALset_max_err_test_fails"><code class="code"><span class="constructor">Arkode</span>.set_max_err_test_fails</code></a> and <a href="Arkode.html#VALset_min_step"><code class="code"><span class="constructor">Arkode</span>.set_min_step</code></a>.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARK_ERR_FAILURE</div></div>
+
+<pre><span id="EXCEPTIONConvergenceFailure"><span class="keyword">exception</span> ConvergenceFailure</span></pre>
+<div class="info ">
+Too many convergence test failures within a step or at the minimum step
+    size. See <a href="Arkode.html#VALset_max_conv_fails"><code class="code"><span class="constructor">Arkode</span>.set_max_conv_fails</code></a> and <a href="Arkode.html#VALset_min_step"><code class="code"><span class="constructor">Arkode</span>.set_min_step</code></a>.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARK_CONV_FAILURE</div></div>
+
+<pre><span id="EXCEPTIONLinearInitFailure"><span class="keyword">exception</span> LinearInitFailure</span></pre>
+<div class="info ">
+Linear solver initialization failed.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARK_LINIT_FAIL</div></div>
+
+<pre><span id="EXCEPTIONLinearSetupFailure"><span class="keyword">exception</span> LinearSetupFailure</span></pre>
+<div class="info ">
+Linear solver setup failed in an unrecoverable manner.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARK_LSETUP_FAIL</div></div>
+
+<pre><span id="EXCEPTIONLinearSolveFailure"><span class="keyword">exception</span> LinearSolveFailure</span></pre>
+<div class="info ">
+Linear solver solution failed in an unrecoverable manner.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARK_LSOLVE_FAIL</div></div>
+
+<pre><span id="EXCEPTIONMassInitFailure"><span class="keyword">exception</span> MassInitFailure</span></pre>
+<div class="info ">
+Mass matrix solver initialization failed.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARK_MASSINIT_FAIL</div></div>
+
+<pre><span id="EXCEPTIONMassSetupFailure"><span class="keyword">exception</span> MassSetupFailure</span></pre>
+<div class="info ">
+Mass matrix solver setup failed in an unrecoverable manner.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARK_MASSSETUP_FAIL</div></div>
+
+<pre><span id="EXCEPTIONMassSolveFailure"><span class="keyword">exception</span> MassSolveFailure</span></pre>
+<div class="info ">
+Mass matrix solver solution failed in an unrecoverable manner.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARK_MASSSOLVE_FAIL</div></div>
+
+<pre><span id="EXCEPTIONMassMultFailure"><span class="keyword">exception</span> MassMultFailure</span></pre>
+<div class="info ">
+Mass matrix-vector multiplication failed.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARK_MASSMULT_FAIL</div></div>
+
+<pre><span id="EXCEPTIONRhsFuncFailure"><span class="keyword">exception</span> RhsFuncFailure</span></pre>
+<div class="info ">
+The right-hand side function failed in an unrecoverable manner.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARK_RHSFUNC_FAIL</div></div>
+
+<pre><span id="EXCEPTIONFirstRhsFuncFailure"><span class="keyword">exception</span> FirstRhsFuncFailure</span></pre>
+<div class="info ">
+The right-hand side function had a recoverable error when first called.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARK_FIRST_RHSFUNC_ERR</div></div>
+
+<pre><span id="EXCEPTIONRepeatedRhsFuncFailure"><span class="keyword">exception</span> RepeatedRhsFuncFailure</span></pre>
+<div class="info ">
+Too many convergence test failures, or unable to estimate the initial step
+    size, due to repeated recoverable errors in the right-hand side function.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARK_REPTD_RHSFUNC_ERR</div></div>
+
+<pre><span id="EXCEPTIONUnrecoverableRhsFuncFailure"><span class="keyword">exception</span> UnrecoverableRhsFuncFailure</span></pre>
+<div class="info ">
+The right-hand side function had a recoverable error, but no recovery was
+    possible. This error can only occur after an error test failure at order
+    one.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARK_UNREC_RHSFUNC_ERR</div></div>
+
+<pre><span id="EXCEPTIONRootFuncFailure"><span class="keyword">exception</span> RootFuncFailure</span></pre>
+<div class="info ">
+The rootfinding function failed.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARK_RTFUNC_FAIL</div></div>
+
+<pre><span id="EXCEPTIONBadK"><span class="keyword">exception</span> BadK</span></pre>
+<div class="info ">
+Raised by <a href="Arkode.html#VALget_dky"><code class="code"><span class="constructor">Arkode</span>.get_dky</code></a> for invalid order values.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeGetDky (ARK_BAD_K)</div></div>
+
+<pre><span id="EXCEPTIONBadT"><span class="keyword">exception</span> BadT</span></pre>
+<div class="info ">
+Raised by <a href="Arkode.html#VALget_dky"><code class="code"><span class="constructor">Arkode</span>.get_dky</code></a> for invalid time values.<br>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeGetDky (ARK_BAD_T)</div></div>
+</body></html>
