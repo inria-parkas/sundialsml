@@ -43,10 +43,6 @@ do
 	install_docs=0;;
     --disable-mpi)
 	enable_mpi=0;;
-    --disable-klu)
-	enable_klu=0;;
-    --disable-superlumt)
-	enable_superlumt=0;;
     --enable-debug)
 	ocaml_tweaks="${ocaml_tweaks} debug"
 	enable_debug=1;;
@@ -83,8 +79,6 @@ do
 	Optional Features:
 	  --disable-doc          do not install html documentation
 	  --disable-mpi          build without parallel features
-	  --disable-klu		 disable the KLU features
-	  --disable-superlumt	 disable the SuperLU_MT features
 	  --no-lib-path          do not record paths in the OCaml library
 	  --enable-debug         enable assertions and debug symbols
 	  --unsafe               no bounds or other runtime checks
