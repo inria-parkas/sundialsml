@@ -23,6 +23,8 @@ Notes:
   provided.
 * The Kinsol interface changes for new features (new strategies and Anderson
   iteration).
+* Incompatibility: The {Cvode,Ida,...}.serial_session type synonyms gain a 
+  polymorphic variable to admit OpenMP and Pthreads nvectors.
 
 Sundials/ML 2.5.0p0 (November 2014)
 -----------------------------------
