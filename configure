@@ -18,8 +18,33 @@ cflags_openmp=
 unset mpi_lib_path
 unset Lmpi_lib_path
 ocaml_tweaks=
+unset EXAMPLESROOT
 
 configure_command="$0"
+
+for option in "$@"
+do
+    case "$option" in
+        --ignore-envs)
+            OCAMLROOT=
+            SUNDIALS_DIR=
+            SUNDIALS_LIBRARY_DIR=
+            SUNDIALS_INCLUDE_DIR=
+            SUPERLUMT_LIBRARY_DIR=
+            KLU_LIBRARY_DIR=
+            LAPACKLIB=
+            SUNDIALS_EXAMPLES_DIR=
+            OCAMLMPI=
+            MPICC=
+            MPIRUN=
+            MPI_LIBRARY_DIR=
+            MATHJAX=
+            CFLAGS_OPENMP=
+            CC=
+            CPP=
+            ;;
+    esac
+done
 
 for option in "$@"
 do
@@ -59,11 +84,14 @@ do
 
 	To assign environment variables (e.g., CC, CFLAGS...), specify them as
 	VAR=VALUE.  See below for descriptions of some of the useful variables.
+	Those variables can be set in the shell to affect all future invocations
+	of $0.
 
 	Defaults for the options are specified in brackets.
 
 	Configuration:
 	  -h, --help              display this help and exit
+	  --ignore-envs           ignore variables set in the shell
 
 	Installation directories:
 	  --prefix=PREFIX         install architecture-independent files in PREFIX
@@ -83,7 +111,7 @@ do
 	  --enable-debug         enable assertions and debug symbols
 	  --unsafe               no bounds or other runtime checks
 
-	Optional settings:
+	Influential environment variables:
 	  OCAMLROOT		Path to OCaml installation
 	  SUNDIALS_DIR		Path to Sundials installation
 	  SUNDIALS_LIBRARY_DIR	Path to Sundials libraries (for linking)
@@ -110,64 +138,120 @@ do
 END_HELP_TEXT
 	exit 0
 	;;
+    --ignore-envs)
+        : # Handled above.
+        ;;
     OCAMLROOT)
-	OCAMLROOT="${value%/}/"
-	OCAMLBIN="${OCAMLROOT}bin/";;
+	OCAMLROOT="${value}";;
     SUNDIALS_DIR)
-	if [ "x${sundials_lib_path}" = x ]; then
-	    sundials_lib_path="${value%/}/lib/"
-	    Lsundials_lib_path="-L${sundials_lib_path}"
-	fi
-	if [ "x${sundials_inc_path}" = x ]; then
-	    sundials_inc_path="${value%/}/include/"
-	    Isundials_inc_path="-I${sundials_inc_path}"
-	fi
-	;;
+	SUNDIALS_DIR="${value}";;
     SUNDIALS_LIBRARY_DIR)
-	sundials_lib_path="${value%/}"
-	Lsundials_lib_path="-L${sundials_lib_path}";;
+	SUNDIALS_LIBRARY_DIR="${value}";;
     SUNDIALS_INCLUDE_DIR)
-	sundials_inc_path="${value%/}"
-	Isundials_inc_path="-I${sundials_inc_path}";;
+	SUNDIALS_INCLUDE_DIR="${value}";;
     SUPERLUMT_LIBRARY_DIR)
-	superlumt_lib_path="${value%/}"
-	Lsuperlumt_lib_path="-L${superlumt_lib_path}";;
+	SUPERLUMT_LIBRARY_DIR="${value}";;
     KLU_LIBRARY_DIR)
-	klu_lib_path="${value%/}"
-	Lklu_lib_path="-L${klu_lib_path}";;
+	KLU_LIBRARY_DIR="${value}";;
     CFLAGS_OPENMP)
-        cflags_openmp="${value}";;
+        CFLAGS_OPENMP="${value}";;
     LAPACKLIB)
 	LAPACKLIB="${value}";;
     SUNDIALS_EXAMPLES_DIR)
-	EXAMPLESROOT="${value}";;
+	SUNDIALS_EXAMPLES_DIR="${value}";;
     CPPFLAGS)
-        cppflags="${value}";;
+	CPPFLAGS="${value}";;
     CFLAGS)
-	cflags="${value}";;
+	CFLAGS="${value}";;
     LDFLAGS)
-	ldflags="${value}";;
+	LDFLAGS="${value}";;
     OCAMLMPI)
 	OCAMLMPI="${value}";;
     OCAMLFLAGS)
-	ocamlflags="${value}";;
+	OCAMLFLAGS="${value}";;
     OCAMLOPTFLAGS)
-	ocamloptflags="${value}";;
+	OCAMLOPTFLAGS="${value}";;
     OCAMLMKLIBFLAGS)
-	ocamlmklibflags="${value}";;
+	OCAMLMKLIBFLAGS="${value}";;
     MPICC)
-	mpicc="${value}";;
+	MPICC="${value}";;
     MPIRUN)
-	mpirun="${value}";;
+	MPIRUN="${value}";;
     MPI_LIBRARY_DIR)
-	mpi_lib_path="${value}"
-	Lmpi_lib_path="-L${value}";;
+	MPI_LIBRARY_DIR="${value}";;
     MATHJAX)
-	mathjax="${value}";;
+	MATHJAX="${value}";;
     *)
 	printf "illegal option \"%s\".\n" "$option" 1>&2; exit 2;;
     esac
 done
+
+if [ x"${OCAMLROOT}" != x ]; then
+    OCAMLBIN="${OCAMLROOT%/}/bin/"
+fi
+if [ x"${SUNDIALS_LIBRARY_DIR}" != x ]; then
+    sundials_lib_path="${SUNDIALS_LIBRARY_DIR%/}"
+    Lsundials_lib_path="-L${sundials_lib_path}"
+fi
+if [ x"${SUNDIALS_INCLUDE_DIR}" != x ]; then
+    sundials_inc_path="${SUNDIALS_INCLUDE_DIR%/}"
+    Isundials_inc_path="-I${sundials_inc_path}"
+fi
+if [ x"${SUNDIALS_EXAMPLES_DIR}" != x ]; then
+    EXAMPLESROOT="${SUNDIALS_EXAMPLES_DIR%/}"
+fi
+if [ x"${SUNDIALS_DIR}" != x ]; then
+    if [ "x${sundials_lib_path}" = x ]; then
+	sundials_lib_path="${SUNDIALS_DIR%/}/lib/"
+	Lsundials_lib_path="-L${sundials_lib_path}"
+    fi
+    if [ "x${sundials_inc_path}" = x ]; then
+	sundials_inc_path="${SUNDIALS_DIR%/}/include/"
+	Isundials_inc_path="-I${sundials_inc_path}"
+    fi
+fi
+if [ x"${SUPERLUMT_LIBRARY_DIR}" != x ]; then
+    superlumt_lib_path="${SUPERLUMT_LIBRARY_DIR%/}"
+    Lsuperlumt_lib_path="-L${superlumt_lib_path}"
+fi
+if [ x"${KLU_LIBRARY_DIR}" != x ]; then
+    klu_lib_path="${KLU_LIBRARY_DIR%/}"
+    Lklu_lib_path="-L${klu_lib_path}"
+fi
+if [ x"${CFLAGS_OPENMP}" != x ]; then
+    cflags_openmp="${CFLAGS_OPENMP}"
+fi
+if [ x"${CPPFLAGS}" != x ]; then
+    cppflags="${CPPFLAGS}"
+fi
+if [ x"${CFLAGS}" != x ]; then
+    cflags="${CFLAGS}"
+fi
+if [ x"${LDFLAGS}" != x ]; then
+    ldflags="${LDFLAGS}"
+fi
+if [ x"${OCAMLFLAGS}" != x ]; then
+    ocamlflags="${OCAMLFLAGS}"
+fi
+if [ x"${OCAMLOPTFLAGS}" != x ]; then
+    ocamloptflags="${OCAMLOPTFLAGS}"
+fi
+if [ x"${OCAMLMKLIBFLAGS}" != x ]; then
+    ocamlmklibflags="${OCAMLMKLIBFLAGS}"
+fi
+if [ x"${MPICC}" != x ]; then
+    mpicc="${MPICC}"
+fi
+if [ x"${MPIRUN}" != x ]; then
+    mpirun="${MPIRUN}"
+fi
+if [ x"${MPI_LIBRARY_DIR}" != x ]; then
+    mpi_lib_path="${MPI_LIBRARY_DIR%/}"
+    Lmpi_lib_path="-L${MPI_LIBRARY_DIR%/}"
+fi
+if [ x"${MATHJAX}" != x ]; then
+    mathjax="${MATHJAX}"
+fi
 
 CC=${CC:-cc}
 CPP=${CPP:-cpp}
@@ -1059,8 +1143,7 @@ cat ${LOG}
 	 s#@XO@#${XO}#;
 	 s#@XS@#${XS}#;
 	 s#@EXAMPLESROOT@#${EXAMPLESROOT}#;
-	 s#@OCAMLBIN@#${OCAMLBIN}#;
-	 s#@OCAMLROOT@#${OCAMLROOT}#;" config.in) > config
+	 s#@OCAMLBIN@#${OCAMLBIN}#;" config.in) > config
 
 echo "/* Automatically generated file - don't edit!  See configure.  */"\
      > src/config.h
