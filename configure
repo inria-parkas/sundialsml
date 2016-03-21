@@ -95,7 +95,6 @@ do
 
 	Installation directories:
 	  --prefix=PREFIX         install architecture-independent files in PREFIX
-	                          [$prefix]
 
 	For better control, use the options below.
 
