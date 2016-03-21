@@ -54,11 +54,11 @@ module RealArray =
       for i = 0 to size - 1 do
         a.{i} <- f i
       done;
-      a 
+      a
 
     let length : t -> int = Array1.dim
 
-    let pp ?(start="[") ?(stop="]") ?(sep=", ")
+    let pp ?(start="[") ?(stop="]") ?(sep="; ")
            ?(item=fun fmt (i, e) -> Format.pp_print_float fmt e) 
            fmt a =
       Format.pp_print_string fmt start;

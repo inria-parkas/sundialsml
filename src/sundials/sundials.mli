@@ -108,7 +108,7 @@ module RealArray :
 
     (** Pretty-print an array using the
         {{:OCAML_DOC_ROOT(Format.html)} Format} module.
-        The defaults are: [start="\["], [stop="\]"], [sep=", "], and
+        The defaults are: [start="\["], [stop="\]"], [sep="; "], and
         [item] ignores the index and uses
       {{:OCAML_DOC_ROOT(Format.html#VALpp_print_float)} Format.pp_print_float}.
     *)
