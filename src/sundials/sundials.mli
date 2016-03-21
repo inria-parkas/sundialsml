@@ -106,6 +106,16 @@ module RealArray :
         set to [f i]. *)
     val init : int -> (int -> float) -> t
 
+    (** Pretty-print an array using the
+        {{:OCAML_DOC_ROOT(Format.html)} Format} module.
+        The defaults are: [start="\["], [stop="\]"], [sep=", "], and
+        [item] ignores the index and uses
+      {{:OCAML_DOC_ROOT(Format.html#VALpp_print_float)} Format.pp_print_float}.
+    *)
+    val pp : ?start:string -> ?stop:string -> ?sep:string
+             -> ?item:(Format.formatter -> (int * float) -> unit)
+             -> Format.formatter -> t -> unit
+
     (** Creates an array by copying the contents of a
         {{:OCAML_DOC_ROOT(Array.html)} [float array]}. *)
     val of_array : float array -> t

@@ -54,9 +54,22 @@ module RealArray =
       for i = 0 to size - 1 do
         a.{i} <- f i
       done;
-      a
+      a 
 
     let length : t -> int = Array1.dim
+
+    let pp ?(start="[") ?(stop="]") ?(sep=", ")
+           ?(item=fun fmt (i, e) -> Format.pp_print_float fmt e) 
+           fmt a =
+      Format.pp_print_string fmt start;
+      for i = 0 to length a - 1 do
+        if i > 0 then (
+          Format.pp_print_string fmt sep;
+          Format.pp_print_cut fmt ();
+        );
+        item fmt (i, a.{i})
+      done;
+      Format.pp_print_string fmt stop
 
     let blit_some src isrc dst idst len =
       if Sundials_config.safe &&
