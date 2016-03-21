@@ -21,7 +21,7 @@ license: "BSD3"
 build: [
     ["./configure" "--stubdir=%{stublibs}%/"
 		   "--libdir=%{lib}%/"
-		   "--docdir=%{doc}%/"]
+		   "--docdir=%{doc}%/sundialsml/"]
 ]
 install: [
     [make "install-findlib"]

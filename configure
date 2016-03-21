@@ -102,7 +102,7 @@ do
 	Fine tuning of the installation directories:
 	  --libdir=DIR           installation directory [OCAML]
 	  --stubdir=DIR          stub installation directory [OCAML/stublibs]
-	  --docdir=DIR           documentation [PREFIX/share/doc]
+	  --docdir=DIR           documentation [PREFIX/share/doc/sundialsml]
 
 	Optional Features:
 	  --disable-doc          do not install html documentation
