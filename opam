@@ -33,7 +33,10 @@ build-doc: [
 build-test: [
     [make "tests.opt.log"]
 ]
-remove: [["ocamlfind" "remove" "sundialsml"]]
+remove: [
+    ["ocamlfind" "remove" "sundialsml"]
+    ["rm" "-rf" "%{doc}%/sundialsml"]
+]
 depends: [
     "base-bigarray"
     "ocamlfind"
