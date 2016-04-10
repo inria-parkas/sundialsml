@@ -59,7 +59,7 @@ module RealArray =
     let length : t -> int = Array1.dim
 
     let pp ?(start="[") ?(stop="]") ?(sep="; ")
-           ?(item=fun fmt (i, e) -> Format.pp_print_float fmt e) 
+           ?(item=Format.pp_print_float)
            fmt a =
       Format.pp_print_string fmt start;
       for i = 0 to length a - 1 do
@@ -67,7 +67,20 @@ module RealArray =
           Format.pp_print_string fmt sep;
           Format.pp_print_cut fmt ();
         );
-        item fmt (i, a.{i})
+        item fmt a.{i}
+      done;
+      Format.pp_print_string fmt stop
+
+    let ppi ?(start="[") ?(stop="]") ?(sep="; ")
+            ?(item=fun fmt i e -> Format.pp_print_float fmt e)
+            fmt a =
+      Format.pp_print_string fmt start;
+      for i = 0 to length a - 1 do
+        if i > 0 then (
+          Format.pp_print_string fmt sep;
+          Format.pp_print_cut fmt ();
+        );
+        item fmt i a.{i}
       done;
       Format.pp_print_string fmt stop
 

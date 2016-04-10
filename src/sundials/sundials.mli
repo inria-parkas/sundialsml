@@ -109,12 +109,17 @@ module RealArray :
     (** Pretty-print an array using the
         {{:OCAML_DOC_ROOT(Format.html)} Format} module.
         The defaults are: [start="\["], [stop="\]"], [sep="; "], and
-        [item] ignores the index and uses
+        [item] is 
       {{:OCAML_DOC_ROOT(Format.html#VALpp_print_float)} Format.pp_print_float}.
     *)
     val pp : ?start:string -> ?stop:string -> ?sep:string
-             -> ?item:(Format.formatter -> (int * float) -> unit)
+             -> ?item:(Format.formatter -> float -> unit)
              -> Format.formatter -> t -> unit
+
+    (** Like {pp} but the [item] function is passed element index values. *)
+    val ppi : ?start:string -> ?stop:string -> ?sep:string
+              -> ?item:(Format.formatter -> int -> float -> unit)
+              -> Format.formatter -> t -> unit
 
     (** Creates an array by copying the contents of a
         {{:OCAML_DOC_ROOT(Array.html)} [float array]}. *)
