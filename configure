@@ -488,6 +488,7 @@ else
 
     case "${ocaml_version}" in
 	3.*) ocaml_has_version_h=0 ;;
+	4.00.*) ocaml_has_version_h=0 ;;
 	4.01.*) ocaml_has_version_h=0 ;;
 	*) ocaml_has_version_h=1 ;;
     esac
