@@ -738,7 +738,7 @@ if [ "${lapack_lib}" = "" ]; then
 else
     lapack_info=" (with lapack: ${lapack_lib})"
     lapack_enabled=1
-    blas_lib="-lblas"
+    blas_libs="-lblas"
 fi
 
 # Check for SUPERLUMT and KLU
@@ -811,7 +811,7 @@ fi
 
 # Combine all ldflags
 
-ldflags="${ldflags} ${sparse_libs} ${lapack_lib} ${blas_lib}"
+ldflags="${ldflags} ${sparse_libs} ${lapack_lib} ${blas_libs}"
 
 if [ "x${mpi_lib_path}" = x ]; then
     for d in /usr/lib64/openmpi; do
