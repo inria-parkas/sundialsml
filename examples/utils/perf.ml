@@ -25,8 +25,6 @@ let init_stop_watch executable args =
            Giving up.";
         exit 2
   in
-  let pipe_read, pipe_write = Unix.pipe () in
-  let pipe_read = Unix.in_channel_of_descr pipe_read in
 
   (* The current environment, with NUM_REPS=* moved to index 0. *)
   let env =
@@ -67,17 +65,32 @@ let init_stop_watch executable args =
       let finish = Unix.gettimeofday () in
       finish -. start
   and with_time_command executable args =
-    let args = Array.append [|"time"; "-f"; "%e"; executable|] args in
+    (* We get the output from time(1) via a named file because in some
+       cases the test program may print to stderr.  *)
+    let args = Array.append [|"time"; "-f"; "%e"; "-o"; ""; executable|] args
+    and tmp_index = 4 (* the index after the "-o" *)
+    in
+    let with_temp_file f =
+      let tmpfile = Filename.temp_file "sundials-perf." ".tmp" in
+      try
+        let ret = f tmpfile in
+        Sys.remove tmpfile;
+        ret
+      with e -> Sys.remove tmpfile; raise e
+    in
     fun num_reps ->
-      env.(0) <- Printf.sprintf "NUM_REPS=%d" num_reps;
-      spawn_wait "time" args dev_null dev_null pipe_write;
-      Scanf.bscanf (Scanf.Scanning.from_channel pipe_read) "%f\n" (fun f -> f)
+      with_temp_file (fun tmpfile ->
+        args.(tmp_index) <- tmpfile;
+        env.(0) <- Printf.sprintf "NUM_REPS=%d" num_reps;
+        spawn_wait "time" args dev_null dev_null Unix.stderr;
+        Scanf.bscanf (Scanf.Scanning.from_file tmpfile) "%f\n" (fun f -> f)
+      )
   in
   try ignore (with_time_command "true" [||] 1);
     with_time_command executable args
   with _ ->
     prerr_string
-      ("Warning: can't find time(1) that accepts -f, measuring time\n" ^
+      ("Warning: can't find time(1) that accepts -f and -o, measuring time\n" ^
        "with OCaml.  This may be slightly less accurate than time(1).\n");
     flush stderr;
     with_gettimeofday
