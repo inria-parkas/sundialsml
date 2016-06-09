@@ -63,6 +63,9 @@ let jac_heat3 { Ida.jac_y = (yval : RealArray.t);
   let dx = 1.0/.float(mgrid - 1) in
   let beta = 4.0/.(dx*.dx) +. cj in
 
+  (* initialize Jacobian matrix *)
+  Sls.SparseMatrix.set_to_zero jacmat;
+
   (* set up number of elements in each column *)
   set_col 0 0;
   set_col 1 1;
@@ -105,6 +108,9 @@ let jac_heat { Ida.jac_y = (yval : RealArray.t);
     let rec go i = if i < limit then (f i; go (i + increment)) else () in
     go start
   in
+
+  (* initialize Jacobian matrix *)
+  Sls.SparseMatrix.set_to_zero jacmat;
   
   (* ---- set up number of elements in each column ---- *)
 
