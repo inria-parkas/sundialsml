@@ -28,13 +28,6 @@
 <link title="Arkode" rel="Chapter" href="Arkode.html">
 <link title="Cvodes" rel="Chapter" href="Cvodes.html">
 <link title="Idas" rel="Chapter" href="Idas.html">
-<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
-<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
-<link title="Arkode_bbd" rel="Chapter" href="Arkode_bbd.html">
-<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
-<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
-<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
-<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
 <link title="Nvector_openmp" rel="Chapter" href="Nvector_openmp.html">
 <link title="Nvector_pthreads" rel="Chapter" href="Nvector_pthreads.html"><title>Sundials/ML 2.6.2p0</title>
 </head>
@@ -138,7 +131,7 @@ Sundials defines an abstract interface for vectors and provides default
 serial, parallel, Pthreads, and OpenMP instantiations.
 The OCaml interface defines likewise a generic
 <a href="Nvector.html#TYPEt"><code class="code"><span class="constructor">Nvector</span>.t</code></a> type whose type arguments indicate the underlying <em>data</em> and <em>kind</em>—the latter may be <a href="Nvector_serial.html#TYPEkind"><code class="code"><span class="constructor">Nvector_serial</span>.kind</code></a>,
-<a href="Nvector_parallel.html#TYPEkind"><code class="code"><span class="constructor">Nvector_parallel</span>.kind</code></a>, <a href="Nvector_pthreads.html#TYPEkind"><code class="code"><span class="constructor">Nvector_pthreads</span>.kind</code></a>, <a href="Nvector_openmp.html#TYPEkind"><code class="code"><span class="constructor">Nvector_openmp</span>.kind</code></a>,
+<code class="code"><span class="constructor">Nvector_parallel</span>.kind</code>, <a href="Nvector_pthreads.html#TYPEkind"><code class="code"><span class="constructor">Nvector_pthreads</span>.kind</code></a>, <a href="Nvector_openmp.html#TYPEkind"><code class="code"><span class="constructor">Nvector_openmp</span>.kind</code></a>,
 or <a href="Nvector_custom.html#TYPEkind"><code class="code"><span class="constructor">Nvector_custom</span>.kind</code></a>.
 The <a href="Nvector.html#VALunwrap"><code class="code"><span class="constructor">Nvector</span>.unwrap</code></a> function gives direct access to the underlying data.
 <p>
@@ -153,7 +146,7 @@ The same low-level operations can be called from OCaml
 underlying data (<a href="Nvector_serial.DataOps.html"><code class="code"><span class="constructor">Nvector_serial</span>.<span class="constructor">DataOps</span></code></a>).
 <p>
 
-The interface to parallel nvectors, <a href="Nvector_parallel.html"><code class="code"><span class="constructor">Nvector_parallel</span></code></a>, is based on
+The interface to parallel nvectors, <code class="code"><span class="constructor">Nvector_parallel</span></code>, is based on
 <a href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.html">Bigarrays</a>
 and the <a href="https://forge.ocamlcore.org/projects/ocamlmpi/">OCamlMPI</a>
 library. Parallel nvectors are only available when Sundials/ML is configured
@@ -223,8 +216,8 @@ for sessions that use serial, Pthreads, or OpenMP nvectors.
 Access to the underlying solver
 routines on bigarrays is provided via the submodules of <a href="Spils.html"><code class="code"><span class="constructor">Spils</span></code></a>.
 Parallel Band-Block-Diagonal (BBD) preconditioners are available to sessions
-that use parallel nvectors—see <a href="Cvode_bbd.html"><code class="code"><span class="constructor">Cvode_bbd</span></code></a>, <a href="Cvodes_bbd.html"><code class="code"><span class="constructor">Cvodes_bbd</span></code></a>, <a href="Ida_bbd.html"><code class="code"><span class="constructor">Ida_bbd</span></code></a>,
-<a href="Idas_bbd.html"><code class="code"><span class="constructor">Idas_bbd</span></code></a>, and <a href="Kinsol_bbd.html"><code class="code"><span class="constructor">Kinsol_bbd</span></code></a>.
+that use parallel nvectors—see <code class="code"><span class="constructor">Cvode_bbd</span></code>, <code class="code"><span class="constructor">Cvodes_bbd</span></code>, <code class="code"><span class="constructor">Ida_bbd</span></code>,
+<code class="code"><span class="constructor">Idas_bbd</span></code>, and <code class="code"><span class="constructor">Kinsol_bbd</span></code>.
 <p>
 
 The SuperLU_MT and KLU routines are only available to sessions that use
@@ -277,10 +270,7 @@ Generic nvector types and operations.
 The standard serial nvectors of Sundials.
 </div>
 </td></tr>
-<tr><td class="module"><a href="Nvector_parallel.html">Nvector_parallel</a></td><td><div class="info">
-The standard parallel nvectors of Sundials (requires MPI).
-</div>
-</td></tr>
+<tr><td class="module">Nvector_parallel</td><td></td></tr>
 <tr><td class="module"><a href="Nvector_pthreads.html">Nvector_pthreads</a></td><td><div class="info">
 The Pthreads nvectors of Sundials (requires pthreads).
 </div>
@@ -306,19 +296,13 @@ Variable-step solution of ODE initial value problems with
     zero-crossing detection.
 </div>
 </td></tr>
-<tr><td class="module"><a href="Cvode_bbd.html">Cvode_bbd</a></td><td><div class="info">
-Parallel band-block-diagonal preconditioners for CVODE (requires MPI).
-</div>
-</td></tr>
+<tr><td class="module">Cvode_bbd</td><td></td></tr>
 <tr><td class="module"><a href="Cvodes.html">Cvodes</a></td><td><div class="info">
 Sensitivity analysis (forward and adjoint) and quadrature equations
     for CVODE.
 </div>
 </td></tr>
-<tr><td class="module"><a href="Cvodes_bbd.html">Cvodes_bbd</a></td><td><div class="info">
-Parallel band-block-diagonal preconditioners for CVODES (requires MPI).
-</div>
-</td></tr>
+<tr><td class="module">Cvodes_bbd</td><td></td></tr>
 </table>
 
 <br>
@@ -328,19 +312,13 @@ Variable-step solution of DAE initial value problems with
     zero-crossing detection.
 </div>
 </td></tr>
-<tr><td class="module"><a href="Ida_bbd.html">Ida_bbd</a></td><td><div class="info">
-Parallel band-block-diagonal preconditioners for IDA (requires MPI).
-</div>
-</td></tr>
+<tr><td class="module">Ida_bbd</td><td></td></tr>
 <tr><td class="module"><a href="Idas.html">Idas</a></td><td><div class="info">
 Sensitivity analysis (forward and adjoint) and quadrature equations for
     IDA.
 </div>
 </td></tr>
-<tr><td class="module"><a href="Idas_bbd.html">Idas_bbd</a></td><td><div class="info">
-Parallel band-block-diagonal preconditioners for IDAS (requires MPI).
-</div>
-</td></tr>
+<tr><td class="module">Idas_bbd</td><td></td></tr>
 </table>
 
 <br>
@@ -351,10 +329,7 @@ Adaptive-step time integration for stiff, nonstiff, and multi-rate
     detection.
 </div>
 </td></tr>
-<tr><td class="module"><a href="Arkode_bbd.html">Arkode_bbd</a></td><td><div class="info">
-Parallel band-block-diagonal preconditioners for ARKODE (requires MPI).
-</div>
-</td></tr>
+<tr><td class="module">Arkode_bbd</td><td></td></tr>
 </table>
 
 <br>
@@ -363,10 +338,7 @@ Parallel band-block-diagonal preconditioners for ARKODE (requires MPI).
 Solves nonlinear systems using Newton-Krylov techniques.
 </div>
 </td></tr>
-<tr><td class="module"><a href="Kinsol_bbd.html">Kinsol_bbd</a></td><td><div class="info">
-Parallel band-block-diagonal preconditioners for KINSOL (requires MPI).
-</div>
-</td></tr>
+<tr><td class="module">Kinsol_bbd</td><td></td></tr>
 </table>
 
 <p>
@@ -407,6 +379,7 @@ For <b>Debian</b>-based systems, we found the following worked:
 	libsuperlu-dev package does not provide the shared library file.</li>
 <li><pre class="verbatim">mkdir build; cd build</pre></li>
 <li><pre class="verbatim">cmake -Wno-dev ../sundials-2.6.2 \
+-DCMAKE_BUILD_TYPE=Release \
 -DOPENMP_ENABLE=1 \
 -DPTHREAD_ENABLE=1 \
 -DMPI_ENABLE=1 \
@@ -435,6 +408,7 @@ For <b>OS X</b>, we found the following worked:
 <li><pre class="verbatim">mkdir build; cd build</pre></li>
 <li>For OpenMP, the gcc compiler is required:
        <pre class="verbatim">cmake -Wno-dev ../sundials-2.6.2 \
+-DCMAKE_BUILD_TYPE=Release \
 -DCMAKE_C_COMPILER=/usr/local/bin/gcc-5 \
 -DOPENMP_ENABLE=1 \
 -DPTHREAD_ENABLE=1 \
@@ -561,8 +535,8 @@ Both sets of files link against
 <code class="code">libsundials_kinsol</code>, <code class="code">libsundials_arkode</code>, and <code class="code">libsundials_nvecserial</code>.
 <p>
 
-The parallel features—in the <a href="Nvector_parallel.html"><code class="code"><span class="constructor">Nvector_parallel</span></code></a>, <a href="Cvode_bbd.html"><code class="code"><span class="constructor">Cvode_bbd</span></code></a>,
-<a href="Cvodes_bbd.html"><code class="code"><span class="constructor">Cvodes_bbd</span></code></a>, <a href="Ida_bbd.html"><code class="code"><span class="constructor">Ida_bbd</span></code></a>, <a href="Idas_bbd.html"><code class="code"><span class="constructor">Idas_bbd</span></code></a>, <a href="Kinsol_bbd.html"><code class="code"><span class="constructor">Kinsol_bbd</span></code></a>, and <a href="Arkode_bbd.html"><code class="code"><span class="constructor">Arkode_bbd</span></code></a>
+The parallel features—in the <code class="code"><span class="constructor">Nvector_parallel</span></code>, <code class="code"><span class="constructor">Cvode_bbd</span></code>,
+<code class="code"><span class="constructor">Cvodes_bbd</span></code>, <code class="code"><span class="constructor">Ida_bbd</span></code>, <code class="code"><span class="constructor">Idas_bbd</span></code>, <code class="code"><span class="constructor">Kinsol_bbd</span></code>, and <code class="code"><span class="constructor">Arkode_bbd</span></code>
 modules—require the
 additional inclusions of <code class="code">mpi.cma</code> and <code class="code">sundials_mpi.cma</code>. So, for example:
 <pre class="verbatim">ocamlc -o myprog.byte -I +sundialsml bigarray.cma mpi.cma sundials.cma \
@@ -683,9 +657,8 @@ time of the C code.
 <a href=" perf.opt.png"><img src=" perf.opt.png"></a>
 <p>
 
-The graph suggests that the OCaml versions are rarely more than 40% slower
-than the original ones and that they are often around or less than 20%
-slower.
+The graph shows that the OCaml examles are only sometimes more than 50% slower
+than the original ones.
 The <code class="code">*_custom</code> example (<span style="color: #deebf7;">light blue</span>) uses custom nvectors
 with low-level operations in OCaml and the <code class="code">*_alt</code> examples (<span style="color: #9ecae1;">darker blue</span>) use linear solvers implemented in OCaml.
 <p>
@@ -708,11 +681,11 @@ All but six of the serial examples (<span style="color: #de2d26;">red</span>) ru
 comparisons are made based on tens, or usually hundreds of repetitions and
 in some cases this amplifies factors other than the interface overhead.
 The slowest example, for instance, <code class="code">kin--ser--kinRoberts_fp</code> is iterated
-more than 100 000 times to achieve a significant wall clock time.
+more than 185 000 times to achieve a significant wall clock time.
 This means creating and destroying many more data structures than usual for
 such code.
 Running the example without explicit compacts and with a larger minor
-heap (<code class="code"><span class="constructor">OCAMLRUNPARAM</span>=s=128<span class="constructor">M</span></code>) decreases the OCaml/C ratio to 1.8.
+heap (<code class="code"><span class="constructor">OCAMLRUNPARAM</span>=s=128<span class="constructor">M</span></code>) decreases the OCaml/C ratio to 2.6.
 <p>
 
 The parallel examples (<span style="color: #fc9272;">lighter red</span>) all have relatively long
@@ -762,6 +735,12 @@ to automatic memory management, bounds checking on arrays, strong static
 type checking, higher-order functions, etcetera. Moreover, the Sundials/ML
 library offers a good comprise for programs combining symbolic manipulation and
 numeric calculation.
+<p>
+
+The graph above can be generated from the Sundials source by running <pre class="codepre"><code class="code">cd&nbsp;examples;&nbsp;make&nbsp;perf.opt.log&nbsp;<span class="constructor">GC_AT_END</span>=1&nbsp;<span class="constructor">PERF_DATA_POINTS</span>=10
+</code></pre>
+Be sure to build Sundials with <code class="code">-<span class="constructor">DCMAKE_BUILD_TYPE</span>=<span class="constructor">Release</span></code> otherwise the
+underlying library is unoptimized.
 <p>
 
 <h2 id="refs">References</h2>
