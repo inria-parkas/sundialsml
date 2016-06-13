@@ -28,6 +28,13 @@
 <link title="Arkode" rel="Chapter" href="Arkode.html">
 <link title="Cvodes" rel="Chapter" href="Cvodes.html">
 <link title="Idas" rel="Chapter" href="Idas.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Arkode_bbd" rel="Chapter" href="Arkode_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
 <link title="Nvector_openmp" rel="Chapter" href="Nvector_openmp.html">
 <link title="Nvector_pthreads" rel="Chapter" href="Nvector_pthreads.html"><title>Sundials/ML 2.6.2p0</title>
 </head>
@@ -131,7 +138,7 @@ Sundials defines an abstract interface for vectors and provides default
 serial, parallel, Pthreads, and OpenMP instantiations.
 The OCaml interface defines likewise a generic
 <a href="Nvector.html#TYPEt"><code class="code"><span class="constructor">Nvector</span>.t</code></a> type whose type arguments indicate the underlying <em>data</em> and <em>kind</em>—the latter may be <a href="Nvector_serial.html#TYPEkind"><code class="code"><span class="constructor">Nvector_serial</span>.kind</code></a>,
-<code class="code"><span class="constructor">Nvector_parallel</span>.kind</code>, <a href="Nvector_pthreads.html#TYPEkind"><code class="code"><span class="constructor">Nvector_pthreads</span>.kind</code></a>, <a href="Nvector_openmp.html#TYPEkind"><code class="code"><span class="constructor">Nvector_openmp</span>.kind</code></a>,
+<a href="Nvector_parallel.html#TYPEkind"><code class="code"><span class="constructor">Nvector_parallel</span>.kind</code></a>, <a href="Nvector_pthreads.html#TYPEkind"><code class="code"><span class="constructor">Nvector_pthreads</span>.kind</code></a>, <a href="Nvector_openmp.html#TYPEkind"><code class="code"><span class="constructor">Nvector_openmp</span>.kind</code></a>,
 or <a href="Nvector_custom.html#TYPEkind"><code class="code"><span class="constructor">Nvector_custom</span>.kind</code></a>.
 The <a href="Nvector.html#VALunwrap"><code class="code"><span class="constructor">Nvector</span>.unwrap</code></a> function gives direct access to the underlying data.
 <p>
@@ -146,7 +153,7 @@ The same low-level operations can be called from OCaml
 underlying data (<a href="Nvector_serial.DataOps.html"><code class="code"><span class="constructor">Nvector_serial</span>.<span class="constructor">DataOps</span></code></a>).
 <p>
 
-The interface to parallel nvectors, <code class="code"><span class="constructor">Nvector_parallel</span></code>, is based on
+The interface to parallel nvectors, <a href="Nvector_parallel.html"><code class="code"><span class="constructor">Nvector_parallel</span></code></a>, is based on
 <a href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.html">Bigarrays</a>
 and the <a href="https://forge.ocamlcore.org/projects/ocamlmpi/">OCamlMPI</a>
 library. Parallel nvectors are only available when Sundials/ML is configured
@@ -216,8 +223,8 @@ for sessions that use serial, Pthreads, or OpenMP nvectors.
 Access to the underlying solver
 routines on bigarrays is provided via the submodules of <a href="Spils.html"><code class="code"><span class="constructor">Spils</span></code></a>.
 Parallel Band-Block-Diagonal (BBD) preconditioners are available to sessions
-that use parallel nvectors—see <code class="code"><span class="constructor">Cvode_bbd</span></code>, <code class="code"><span class="constructor">Cvodes_bbd</span></code>, <code class="code"><span class="constructor">Ida_bbd</span></code>,
-<code class="code"><span class="constructor">Idas_bbd</span></code>, and <code class="code"><span class="constructor">Kinsol_bbd</span></code>.
+that use parallel nvectors—see <a href="Cvode_bbd.html"><code class="code"><span class="constructor">Cvode_bbd</span></code></a>, <a href="Cvodes_bbd.html"><code class="code"><span class="constructor">Cvodes_bbd</span></code></a>, <a href="Ida_bbd.html"><code class="code"><span class="constructor">Ida_bbd</span></code></a>,
+<a href="Idas_bbd.html"><code class="code"><span class="constructor">Idas_bbd</span></code></a>, and <a href="Kinsol_bbd.html"><code class="code"><span class="constructor">Kinsol_bbd</span></code></a>.
 <p>
 
 The SuperLU_MT and KLU routines are only available to sessions that use
@@ -270,7 +277,10 @@ Generic nvector types and operations.
 The standard serial nvectors of Sundials.
 </div>
 </td></tr>
-<tr><td class="module">Nvector_parallel</td><td></td></tr>
+<tr><td class="module"><a href="Nvector_parallel.html">Nvector_parallel</a></td><td><div class="info">
+The standard parallel nvectors of Sundials (requires MPI).
+</div>
+</td></tr>
 <tr><td class="module"><a href="Nvector_pthreads.html">Nvector_pthreads</a></td><td><div class="info">
 The Pthreads nvectors of Sundials (requires pthreads).
 </div>
@@ -296,13 +306,19 @@ Variable-step solution of ODE initial value problems with
     zero-crossing detection.
 </div>
 </td></tr>
-<tr><td class="module">Cvode_bbd</td><td></td></tr>
+<tr><td class="module"><a href="Cvode_bbd.html">Cvode_bbd</a></td><td><div class="info">
+Parallel band-block-diagonal preconditioners for CVODE (requires MPI).
+</div>
+</td></tr>
 <tr><td class="module"><a href="Cvodes.html">Cvodes</a></td><td><div class="info">
 Sensitivity analysis (forward and adjoint) and quadrature equations
     for CVODE.
 </div>
 </td></tr>
-<tr><td class="module">Cvodes_bbd</td><td></td></tr>
+<tr><td class="module"><a href="Cvodes_bbd.html">Cvodes_bbd</a></td><td><div class="info">
+Parallel band-block-diagonal preconditioners for CVODES (requires MPI).
+</div>
+</td></tr>
 </table>
 
 <br>
@@ -312,13 +328,19 @@ Variable-step solution of DAE initial value problems with
     zero-crossing detection.
 </div>
 </td></tr>
-<tr><td class="module">Ida_bbd</td><td></td></tr>
+<tr><td class="module"><a href="Ida_bbd.html">Ida_bbd</a></td><td><div class="info">
+Parallel band-block-diagonal preconditioners for IDA (requires MPI).
+</div>
+</td></tr>
 <tr><td class="module"><a href="Idas.html">Idas</a></td><td><div class="info">
 Sensitivity analysis (forward and adjoint) and quadrature equations for
     IDA.
 </div>
 </td></tr>
-<tr><td class="module">Idas_bbd</td><td></td></tr>
+<tr><td class="module"><a href="Idas_bbd.html">Idas_bbd</a></td><td><div class="info">
+Parallel band-block-diagonal preconditioners for IDAS (requires MPI).
+</div>
+</td></tr>
 </table>
 
 <br>
@@ -329,7 +351,10 @@ Adaptive-step time integration for stiff, nonstiff, and multi-rate
     detection.
 </div>
 </td></tr>
-<tr><td class="module">Arkode_bbd</td><td></td></tr>
+<tr><td class="module"><a href="Arkode_bbd.html">Arkode_bbd</a></td><td><div class="info">
+Parallel band-block-diagonal preconditioners for ARKODE (requires MPI).
+</div>
+</td></tr>
 </table>
 
 <br>
@@ -338,7 +363,10 @@ Adaptive-step time integration for stiff, nonstiff, and multi-rate
 Solves nonlinear systems using Newton-Krylov techniques.
 </div>
 </td></tr>
-<tr><td class="module">Kinsol_bbd</td><td></td></tr>
+<tr><td class="module"><a href="Kinsol_bbd.html">Kinsol_bbd</a></td><td><div class="info">
+Parallel band-block-diagonal preconditioners for KINSOL (requires MPI).
+</div>
+</td></tr>
 </table>
 
 <p>
@@ -535,8 +563,8 @@ Both sets of files link against
 <code class="code">libsundials_kinsol</code>, <code class="code">libsundials_arkode</code>, and <code class="code">libsundials_nvecserial</code>.
 <p>
 
-The parallel features—in the <code class="code"><span class="constructor">Nvector_parallel</span></code>, <code class="code"><span class="constructor">Cvode_bbd</span></code>,
-<code class="code"><span class="constructor">Cvodes_bbd</span></code>, <code class="code"><span class="constructor">Ida_bbd</span></code>, <code class="code"><span class="constructor">Idas_bbd</span></code>, <code class="code"><span class="constructor">Kinsol_bbd</span></code>, and <code class="code"><span class="constructor">Arkode_bbd</span></code>
+The parallel features—in the <a href="Nvector_parallel.html"><code class="code"><span class="constructor">Nvector_parallel</span></code></a>, <a href="Cvode_bbd.html"><code class="code"><span class="constructor">Cvode_bbd</span></code></a>,
+<a href="Cvodes_bbd.html"><code class="code"><span class="constructor">Cvodes_bbd</span></code></a>, <a href="Ida_bbd.html"><code class="code"><span class="constructor">Ida_bbd</span></code></a>, <a href="Idas_bbd.html"><code class="code"><span class="constructor">Idas_bbd</span></code></a>, <a href="Kinsol_bbd.html"><code class="code"><span class="constructor">Kinsol_bbd</span></code></a>, and <a href="Arkode_bbd.html"><code class="code"><span class="constructor">Arkode_bbd</span></code></a>
 modules—require the
 additional inclusions of <code class="code">mpi.cma</code> and <code class="code">sundials_mpi.cma</code>. So, for example:
 <pre class="verbatim">ocamlc -o myprog.byte -I +sundialsml bigarray.cma mpi.cma sundials.cma \
