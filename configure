@@ -121,8 +121,9 @@ do
 	  KLU_LIBRARY_DIR	Path to KLU (SuiteSparse) libraries
 	  LAPACKLIB		Command for linking with Lapack (default: -llapack)
 	                        (sometimes also: -lSimTKlapack)
-	  SUNDIALS_EXAMPLES_DIR	Path to installed examples (for comparison with Sundials).
+	  SUNDIALS_EXAMPLES_DIR	Path to installed examples (for comparison with Sundials)
 	  OCAMLMPI		Path to OCamlMPI installation
+	  CFLAGS_OPENMP		Compiler flag to enable OpenMP compilation
 	  MPICC			Name of the MPI compiler (default: mpicc)
 	  MPIRUN		Name of MPI program launcher (default: mpirun)
 	  MPI_LIBRARY_DIR	Path to include for MPI libraries (optional)
