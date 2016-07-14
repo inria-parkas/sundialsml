@@ -110,6 +110,37 @@ module SparseMatrix =
       if Sundials_config.safe && not valid then raise Invalidated;
       data.{idx}
 
+    let pp fmt mat =
+      if Sundials_config.safe && not mat.valid then raise Invalidated;
+      let m, n, nnz = size mat in
+      let end_row = ref false in
+
+      Format.pp_print_string fmt "[";
+      Format.pp_open_vbox fmt 0;
+      for j = 0 to n - 1 do
+        let p, np = get_col mat j, get_col mat (j + 1) in
+        if p < np then begin
+          if !end_row then begin
+            Format.pp_print_string fmt ";";
+            Format.pp_print_cut fmt ();
+            Format.pp_close_box fmt ()
+          end;
+          Format.pp_open_hovbox fmt 4;
+          Format.fprintf fmt "col %2d: " j;
+          Format.pp_print_space fmt ();
+
+          for i = p to np - 1 do
+            if i > p then Format.pp_print_space fmt ();
+            let r, v = get mat i in
+            Format.fprintf fmt "%2d=% -15e" r v
+          done;
+          end_row := true
+        end;
+      done;
+      if !end_row then Format.pp_close_box fmt ();
+      Format.pp_close_box fmt ();
+      Format.pp_print_string fmt "]"
+
     external c_add_identity : t -> unit
         = "c_sparsematrix_add_identity"
 

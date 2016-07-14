@@ -56,6 +56,10 @@ module SparseMatrix :
         @nocvode <node9#ss:sparse> PrintSparseMat *)
     val print : t -> unit
 
+    (** Pretty-print a sparse matrix using the
+        {{:OCAML_DOC_ROOT(Format.html)} Format} module. *)
+    val pp : Format.formatter -> t -> unit
+
     (** Create a sparse matrix from a dense one.
 
         @nocvode <node9#ss:sparse> SlsConvertDls *)
