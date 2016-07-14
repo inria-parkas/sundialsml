@@ -161,7 +161,7 @@ module RealArray2 =
 
     let size a =
       let d = unwrap a in
-      (Array2.dim1 d, Array2.dim2 d)
+      (Array2.dim2 d, Array2.dim1 d)
 
     let get x i j = Array2.get (unwrap x) j i
     let set x i j = Array2.set (unwrap x) j i
