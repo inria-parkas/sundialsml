@@ -58,20 +58,18 @@ module RealArray =
 
     let length : t -> int = Array1.dim
 
-    let pp ?(start="[") ?(stop="]") ?(sep=" ")
-           ?(item=fun f->Format.fprintf f "% -15e")
-           fmt a =
-      Format.pp_print_string fmt start;
+    let pp fmt a =
+      Format.pp_print_string fmt "[";
       Format.pp_open_hovbox fmt 0;
       for i = 0 to length a - 1 do
         if i > 0 then (
-          Format.pp_print_string fmt sep;
+          Format.pp_print_string fmt " ";
           Format.pp_print_cut fmt ();
         );
-        item fmt a.{i}
+        Format.fprintf fmt "% -15e" a.{i}
       done;
       Format.pp_close_box fmt ();
-      Format.pp_print_string fmt stop
+      Format.pp_print_string fmt "]"
 
     let ppi ?(start="[") ?(stop="]") ?(sep="; ")
             ?(item=fun f->Format.fprintf f "%2d=% -15e")
@@ -193,33 +191,31 @@ module RealArray2 =
       let d = unwrap a in
       (Array2.dim2 d, Array2.dim1 d)
 
-    let pp ?(start="[") ?(stop="]") ?(rowsep=";") ?(indent=4) ?(sep=" ")
-           ?(item=fun f->Format.fprintf f "% -15e")
-           fmt a =
+    let pp fmt a =
       let d = unwrap a in
       let ni, nj = Array2.dim2 d - 1, Array2.dim1 d - 1 in
-      Format.pp_print_string fmt start;
+      Format.pp_print_string fmt "[";
       Format.pp_open_vbox fmt 0;
       for i = 0 to ni do
 
-        Format.pp_open_hovbox fmt indent;
+        Format.pp_open_hovbox fmt 4;
         for j = 0 to nj do
           if j > 0 then (
-            Format.pp_print_string fmt sep;
+            Format.pp_print_string fmt " ";
             Format.pp_print_cut fmt ();
           );
-          item fmt d.{j, i}
+          Format.fprintf fmt "% -15e" d.{j, i}
         done;
         Format.pp_close_box fmt ();
 
         if i < ni then (
-          Format.pp_print_string fmt rowsep;
+          Format.pp_print_string fmt ";";
           Format.pp_print_cut fmt ();
         );
 
       done;
       Format.pp_close_box fmt ();
-      Format.pp_print_string fmt stop
+      Format.pp_print_string fmt "]"
 
     let ppi ?(start="[") ?(stop="]") ?(rowsep=";") ?(indent=4) ?(sep=" ")
             ?(item=fun f->Format.fprintf f "(%2d,%2d)=% -15e")
@@ -405,20 +401,18 @@ module LintArray =
       Array1.fill v x;
       v
 
-    let pp ?(start="[") ?(stop="]") ?(sep="; ")
-           ?(item=fun fmt->Format.fprintf fmt "% 6d")
-           fmt a =
-      Format.pp_print_string fmt start;
+    let pp fmt a =
+      Format.pp_print_string fmt "[";
       Format.pp_open_hovbox fmt 0;
       for i = 0 to Array1.dim a - 1 do
         if i > 0 then (
-          Format.pp_print_string fmt sep;
+          Format.pp_print_string fmt "; ";
           Format.pp_print_cut fmt ();
         );
-        item fmt a.{i}
+        Format.fprintf fmt "% 6d" a.{i}
       done;
       Format.pp_close_box fmt ();
-      Format.pp_print_string fmt stop
+      Format.pp_print_string fmt "]"
 
     let ppi ?(start="[") ?(stop="]") ?(sep="; ")
             ?(item=fun fmt ->Format.fprintf fmt "%2d=% 6d")
@@ -495,21 +489,18 @@ module Roots =
       | Rising  -> "R"
       | Falling -> "F"
 
-    let pp ?(start="[") ?(stop="]") ?(sep="; ")
-           ?(item=fun fmt e ->
-              Format.pp_print_string fmt (string_of_root e))
-           fmt a =
-      Format.pp_print_string fmt start;
+    let pp fmt a =
+      Format.pp_print_string fmt "[";
       Format.pp_open_hovbox fmt 0;
       for i = 0 to length a - 1 do
         if i > 0 then (
-          Format.pp_print_string fmt sep;
+          Format.pp_print_string fmt "; ";
           Format.pp_print_cut fmt ();
         );
-        item fmt (root_of_int32 a.{i})
+        Format.pp_print_string fmt (string_of_root (root_of_int32 a.{i}))
       done;
       Format.pp_close_box fmt ();
-      Format.pp_print_string fmt stop
+      Format.pp_print_string fmt "]"
 
     let ppi ?(start="[") ?(stop="]") ?(sep="; ")
             ?(item=fun fmt i e ->
@@ -610,21 +601,18 @@ module RootDirs =
       | Decreasing -> "F"
       | IncreasingOrDecreasing -> "E"
 
-    let pp ?(start="[") ?(stop="]") ?(sep="; ")
-           ?(item=fun fmt e ->
-              Format.pp_print_string fmt (string_of_rootdir e))
-           fmt a =
-      Format.pp_print_string fmt start;
+    let pp fmt a =
+      Format.pp_print_string fmt "[";
       Format.pp_open_hovbox fmt 0;
       for i = 0 to length a - 1 do
         if i > 0 then (
-          Format.pp_print_string fmt sep;
+          Format.pp_print_string fmt "; ";
           Format.pp_print_cut fmt ();
         );
-        item fmt (rootdir_of_int32 a.{i})
+        Format.pp_print_string fmt (string_of_rootdir (rootdir_of_int32 a.{i}))
       done;
       Format.pp_close_box fmt ();
-      Format.pp_print_string fmt stop
+      Format.pp_print_string fmt "]"
 
     let ppi ?(start="[") ?(stop="]") ?(sep="; ")
             ?(item=fun fmt i e ->
