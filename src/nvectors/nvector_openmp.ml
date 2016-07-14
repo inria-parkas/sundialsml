@@ -13,6 +13,8 @@ let wrap nthreads v =
 
 let unwrap = Nvector.unwrap
 
+let pp fmt v = Sundials.RealArray.pp fmt (unwrap v)
+
 let make nthreads n iv = wrap nthreads (Sundials.RealArray.make n iv)
 
 external num_threads : t -> int

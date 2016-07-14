@@ -41,6 +41,10 @@ val wrap : int -> Sundials.RealArray.t -> t
 (** Aliases {!Nvector.unwrap}. *)
 val unwrap : t -> Sundials.RealArray.t
 
+(** Pretty-print a Pthreads nvector using the
+    {{:OCAML_DOC_ROOT(Format.html)} Format} module. *)
+val pp : Format.formatter -> t -> unit
+
 (** Returns the number of threads used within a Pthreads nvector. *)
 val num_threads : t -> int
 

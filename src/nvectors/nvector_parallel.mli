@@ -46,6 +46,10 @@ val clone : t -> t
 (** Aliases {!Nvector.unwrap}. *)
 val unwrap : t -> data
 
+(** Pretty-print the local portion of a parallel nvector using the
+    {{:OCAML_DOC_ROOT(Format.html)} Format} module. *)
+val pp : Format.formatter -> t -> unit
+
 (** [local_array nv] returns the local array [a] underlying the parallel
     nvector [nv]. *)
 val local_array : t -> Sundials.RealArray.t

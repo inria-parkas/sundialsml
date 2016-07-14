@@ -25,6 +25,10 @@ let clone nv =
 
 let unwrap = Nvector.unwrap
 
+let pp fmt v =
+  let data, _, _ = Nvector.unwrap nv in
+  Sundials.RealArray.pp fmt data
+
 let local_array nv =
   let data, _, _ = Nvector.unwrap nv in
   data
