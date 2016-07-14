@@ -71,7 +71,7 @@ module RealArray =
       Format.pp_close_box fmt ();
       Format.pp_print_string fmt "]"
 
-    let ppi ?(start="[") ?(stop="]") ?(sep="; ")
+    let ppi ?(start="[") ?(stop="]") ?(sep=" ")
             ?(item=fun f->Format.fprintf f "%2d=% -15e")
             fmt a =
       Format.pp_print_string fmt start;

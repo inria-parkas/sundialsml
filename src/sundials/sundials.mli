@@ -112,7 +112,7 @@ module RealArray :
 
     (** Pretty-print an array using the
         {{:OCAML_DOC_ROOT(Format.html)} Format} module.
-        The defaults are: [start="\["], [stop="\]"], [sep="; "], and
+        The defaults are: [start="\["], [stop="\]"], [sep=" "], and
         [item=fun f->Format.fprintf f "%2d=% -15e"] (see
       {{:OCAML_DOC_ROOT(Format.html#VALfprintf)} fprintf}). *)
     val ppi : ?start:string -> ?stop:string -> ?sep:string
