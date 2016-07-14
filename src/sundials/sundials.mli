@@ -109,14 +109,14 @@ module RealArray :
     (** Pretty-print an array using the
         {{:OCAML_DOC_ROOT(Format.html)} Format} module.
         The defaults are: [start="\["], [stop="\]"], [sep="; "], and
-        [item] is 
-      {{:OCAML_DOC_ROOT(Format.html#VALpp_print_float)} Format.pp_print_float}.
-    *)
+        [item=fun f->Format.fprintf f "% -15e"] (see
+      {{:OCAML_DOC_ROOT(Format.html#VALfprintf)} fprintf}). *)
     val pp : ?start:string -> ?stop:string -> ?sep:string
              -> ?item:(Format.formatter -> float -> unit)
              -> Format.formatter -> t -> unit
 
-    (** Like {pp} but the [item] function is passed element index values. *)
+    (** Like {!pp} but the [item] function is also passed element index
+        values. *)
     val ppi : ?start:string -> ?stop:string -> ?sep:string
               -> ?item:(Format.formatter -> int -> float -> unit)
               -> Format.formatter -> t -> unit
@@ -217,6 +217,25 @@ module RealArray2 :
         of [a] *)
     val size : t -> int * int
 
+    (** Pretty-print an array using the
+        {{:OCAML_DOC_ROOT(Format.html)} Format} module.
+        The defaults are: [start="\["], [stop="\]"], [rowsep=";"],
+        [indent=4], [sep=" "], and
+        [item=fun f->Format.fprintf f "% -15e"] (see
+        {{:OCAML_DOC_ROOT(Format.html#VALfprintf)} fprintf}).
+        The [indent] argument specifies the indent for wrapped rows. *)
+    val pp : ?start:string -> ?stop:string -> ?rowsep:string
+             -> ?indent:int -> ?sep:string
+             -> ?item:(Format.formatter -> float -> unit)
+             -> Format.formatter -> t -> unit
+
+    (** Like {!pp} but the [item] function is also passed element row and
+        column index values. *)
+    val ppi : ?start:string -> ?stop:string -> ?rowsep:string
+              -> ?indent:int -> ?sep:string
+              -> ?item:(Format.formatter -> int -> int -> float -> unit)
+              -> Format.formatter -> t -> unit
+
     (** Creates a new array with the same contents as an existing one. *)
     val copy : t -> t
 
@@ -250,6 +269,21 @@ module LintArray :
 
     (** [create n] returns an uninitialized array with [n] elements. *)
     val create  : int -> t
+
+    (** Pretty-print an array using the
+        {{:OCAML_DOC_ROOT(Format.html)} Format} module.
+        The defaults are: [start="\["], [stop="\]"], [sep="; "], and
+        [item=fun f->Format.fprintf f "% 6d"] (see
+      {{:OCAML_DOC_ROOT(Format.html#VALfprintf)} fprintf}). *)
+    val pp : ?start:string -> ?stop:string -> ?sep:string
+             -> ?item:(Format.formatter -> int -> unit)
+             -> Format.formatter -> t -> unit
+
+    (** Like {!pp} but the [item] function is also passed element index
+        values. *)
+    val ppi : ?start:string -> ?stop:string -> ?sep:string
+              -> ?item:(Format.formatter -> int -> int -> unit)
+              -> Format.formatter -> t -> unit
   end
 
 (** {2:roots Arrays of roots (zero-crossings)} *)
@@ -278,6 +312,21 @@ module Roots :
 
     (** Returns the length of an array. *)
     val length : t -> int
+
+    (** Pretty-print a root array using the
+        {{:OCAML_DOC_ROOT(Format.html)} Format} module.
+        The defaults are: [start="\["], [stop="\]"], [sep="; "], and
+        [item] prints '_' for {!NoRoot}, 'R' for {!Rising}, and 'F' for
+        {!Falling}. *)
+    val pp : ?start:string -> ?stop:string -> ?sep:string
+             -> ?item:(Format.formatter -> r -> unit)
+             -> Format.formatter -> t -> unit
+
+    (** Like {!pp} but the [item] function is also passed element index
+        values. *)
+    val ppi : ?start:string -> ?stop:string -> ?sep:string
+              -> ?item:(Format.formatter -> int -> r -> unit)
+              -> Format.formatter -> t -> unit
 
     (** Returns [true] only if the specified element is either [Rising] or
         [Falling]. *)
@@ -367,6 +416,21 @@ module RootDirs :
     (** [init n f] returns an array with [n] elements, with element [i] set
         to [f i]. *)
     val init : int -> (int -> d) -> t
+
+    (** Pretty-print a root direction array using the
+        {{:OCAML_DOC_ROOT(Format.html)} Format} module.
+        The defaults are: [start="\["], [stop="\]"], [sep="; "], and
+        [item] prints 'R' for {!Increasing}, 'F' for {!Decreasing}, and
+        'E' (either) for {!IncreasingOrDecreasting}. *)
+    val pp : ?start:string -> ?stop:string -> ?sep:string
+             -> ?item:(Format.formatter -> d -> unit)
+             -> Format.formatter -> t -> unit
+
+    (** Like {!pp} but the [item] function is also passed element index
+        values. *)
+    val ppi : ?start:string -> ?stop:string -> ?sep:string
+              -> ?item:(Format.formatter -> int -> d -> unit)
+              -> Format.formatter -> t -> unit
 
     (** [copy n a] returns an array with [n] elements, initialized from
         the contents of a. If [n > Array.length a] then the extra space is
