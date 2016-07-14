@@ -56,6 +56,60 @@ module DenseMatrix =
       if Sundials_config.safe && not valid then raise Invalidated;
       c_print dlsmat
 
+    let pp fmt { payload=d; valid } =
+      if Sundials_config.safe && not valid then raise Invalidated;
+      let ni, nj = Bigarray.Array2.dim2 d - 1, Bigarray.Array2.dim1 d - 1 in
+      Format.pp_print_string fmt "[";
+      Format.pp_open_vbox fmt 0;
+      for i = 0 to ni do
+
+        Format.pp_open_hovbox fmt 4;
+        for j = 0 to nj do
+          if j > 0 then (
+            Format.pp_print_string fmt " ";
+            Format.pp_print_cut fmt ();
+          );
+          Format.fprintf fmt "% -15e" d.{j, i}
+        done;
+        Format.pp_close_box fmt ();
+
+        if i < ni then (
+          Format.pp_print_string fmt ";";
+          Format.pp_print_cut fmt ();
+        );
+
+      done;
+      Format.pp_close_box fmt ();
+      Format.pp_print_string fmt "]"
+
+    let ppi ?(start="[") ?(stop="]") ?(rowsep=";") ?(indent=4) ?(sep=" ")
+            ?(item=fun f->Format.fprintf f "(%2d,%2d)=% -15e")
+            fmt { payload=d; valid } =
+      if Sundials_config.safe && not valid then raise Invalidated;
+      let ni, nj = Bigarray.Array2.dim2 d - 1, Bigarray.Array2.dim1 d - 1 in
+      Format.pp_print_string fmt start;
+      Format.pp_open_vbox fmt 0;
+      for i = 0 to ni do
+
+        Format.pp_open_hovbox fmt indent;
+        for j = 0 to nj do
+          if j > 0 then (
+            Format.pp_print_string fmt sep;
+            Format.pp_print_cut fmt ();
+          );
+          item fmt i j d.{j, i}
+        done;
+        Format.pp_close_box fmt ();
+
+        if i < ni then (
+          Format.pp_print_string fmt rowsep;
+          Format.pp_print_cut fmt ();
+        );
+
+      done;
+      Format.pp_close_box fmt ();
+      Format.pp_print_string fmt stop
+
     external c_set_to_zero  : dlsmat -> unit
         = "c_densematrix_set_to_zero"
 
@@ -268,6 +322,67 @@ module BandMatrix =
     let print { dlsmat; valid } =
       if Sundials_config.safe && not valid then raise Invalidated;
       c_print dlsmat
+
+    let pp fmt ({ payload; valid } as m) =
+      if Sundials_config.safe && not valid then raise Invalidated;
+      let {n; mu; ml; smu} = size m in
+
+      Format.pp_print_string fmt "[";
+      Format.pp_open_vbox fmt 0;
+      for i = 0 to n - 1 do
+
+        Format.pp_open_hovbox fmt 4;
+        for j = 0 to n - 1 do
+          if j > 0 then (
+            Format.pp_print_string fmt " ";
+            Format.pp_print_cut fmt ();
+          );
+          if (i > j + ml) || (j > i + mu)
+          then Format.pp_print_string fmt "~"
+          else Format.fprintf fmt "% -15e" payload.{j, i - j + smu}
+        done;
+        Format.pp_close_box fmt ();
+
+        if i < n - 1 then (
+          Format.pp_print_string fmt ";";
+          Format.pp_print_cut fmt ();
+        );
+
+      done;
+      Format.pp_close_box fmt ();
+      Format.pp_print_string fmt "]"
+
+    let ppi ?(start="[") ?(stop="]") ?(rowsep=";") ?(indent=4) ?(sep=" ")
+            ?(empty="~")
+            ?(item=fun f->Format.fprintf f "(%2d,%2d)=% -15e")
+            fmt ({ payload; valid } as m) =
+      if Sundials_config.safe && not valid then raise Invalidated;
+      let {n; mu; ml; smu} = size m in
+
+      Format.pp_print_string fmt start;
+      Format.pp_open_vbox fmt 0;
+      for i = 0 to n - 1 do
+
+        Format.pp_open_hovbox fmt indent;
+        for j = 0 to n - 1 do
+          if j > 0 then (
+            Format.pp_print_string fmt sep;
+            Format.pp_print_cut fmt ();
+          );
+          if (i > j + ml) || (j > i + mu)
+          then Format.pp_print_string fmt empty
+          else item fmt i j payload.{j, i - j + smu}
+        done;
+        Format.pp_close_box fmt ();
+
+        if i < n - 1 then (
+          Format.pp_print_string fmt rowsep;
+          Format.pp_print_cut fmt ();
+        );
+
+      done;
+      Format.pp_close_box fmt ();
+      Format.pp_print_string fmt stop
 
     external c_set_to_zero    : dlsmat -> unit
         = "c_densematrix_set_to_zero"
