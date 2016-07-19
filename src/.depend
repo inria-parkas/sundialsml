@@ -41,6 +41,7 @@ nvectors/nvector_pthreads.cmi : sundials/sundials.cmi \
     nvectors/nvector_serial.cmi nvectors/nvector.cmi
 nvectors/nvector_serial.cmi : sundials/sundials.cmi nvectors/nvector.cmi
 sundials/sundials.cmi :
+sundials/sundials_top.cmi :
 arkode/arkode.cmo : sundials/sundials_config.cmo sundials/sundials.cmi \
     lsolvers/spils.cmi lsolvers/sls_impl.cmo nvectors/nvector.cmi \
     lsolvers/dls.cmi arkode/arkode_impl.cmo arkode/arkode.cmi
@@ -187,3 +188,5 @@ sundials/sundials.cmo : sundials/sundials_config.cmo sundials/sundials.cmi
 sundials/sundials.cmx : sundials/sundials_config.cmx sundials/sundials.cmi
 sundials/sundials_config.cmo :
 sundials/sundials_config.cmx :
+sundials/sundials_top.cmo : sundials/sundials_top.cmi
+sundials/sundials_top.cmx : sundials/sundials_top.cmi

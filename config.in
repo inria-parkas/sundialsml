@@ -106,6 +106,8 @@ CAMLP4ORF= @OCAMLBIN@camlp4orf
 PKGDIR = @libdir@sundialsml/
 STUBDIR= @stubdir@
 
+TOP_ENABLED = @have_compiler_libs@
+
 DOCDIR = @docdir@
 INSTALL_DOCS = @install_docs@
 
@@ -141,9 +143,11 @@ RMDIR  ?= rmdir
 SED    ?= sed
 
 MPI_DIRECTORIES = @ocamlmpi_path@
+TOP_DIRECTORIES = @compiler_libs_path@
 DIRECTORIES =
 
 MPI_INCLUDES = $(MPI_DIRECTORIES:%=-I %)
+TOP_INCLUDES = $(TOP_DIRECTORIES:%=-I %)
 INCLUDES = $(DIRECTORIES:%=-I %)
 
 OBJ_OPT = $(OBJ:.cmo=.cmx)

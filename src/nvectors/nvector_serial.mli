@@ -41,6 +41,7 @@ val wrap : Sundials.RealArray.t -> t
 (** Aliases {!Nvector.unwrap}. *)
 val unwrap : t -> Sundials.RealArray.t
 
+(* TOPLEVEL-PRINTER: Nvector_serial.pp *)
 (** Pretty-print a serial nvector using the
     {{:OCAML_DOC_ROOT(Format.html)} Format} module. *)
 val pp : Format.formatter -> t -> unit

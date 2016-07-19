@@ -668,6 +668,26 @@ else
 fi
 rm -f ./${test_stem}.* ./${test_ml_stem}.* ${test_ml_stem}
 
+# Check whether compiler-libs is available
+test_ml_stem=__configure_test_ml_file__
+cat > ${test_ml_stem}.ml <<EOF
+Toploop.execute_phrase false Format.err_formatter
+  (!Toploop.parse_toplevel_phrase (Lexing.from_string ""))
+EOF
+# FIXME: is it ever possible that compiler-libs is installed somewhere else?
+if ${ocamlc} -I +compiler-libs -c ${test_ml_stem}.ml \
+    -o ${test_ml_stem}.cmo > /dev/null 2>&1; then
+    have_compiler_libs=1
+    compiler_libs_path=+compiler-libs
+else
+    # have_compiler_libs should be empty, not 0.
+    have_compiler_libs=
+    compiler_libs_path=
+    warning="${warning}\n\tCould not find compiler-libs; printers will not be"
+    warning="${warning}\n\tinstalled by default in the OCaml toplevel."
+fi
+rm -f ./${test_ml_stem}.* ${test_ml_stem}
+
 # Check whether using generic math library (-lm) or not
 libm=-lm
 if [ $sundials -ge 260 ]; then
@@ -1122,6 +1142,8 @@ cat ${LOG}
 	 s#@ocamldep@#${ocamldep}#;
 	 s#@ocamlmpi_path@#${ocamlmpi_path}#;
 	 s#@ocamlmpi_enabled@#${ocamlmpi_enabled}#;
+	 s#@have_compiler_libs@#${have_compiler_libs}#;
+	 s#@compiler_libs_path@#${compiler_libs_path}#;
 	 s#@enable_shared@#${enable_shared}#;
 	 s#@lapack_enabled@#${lapack_enabled}#;
 	 s#@klu_enabled@#${klu_enabled}#;

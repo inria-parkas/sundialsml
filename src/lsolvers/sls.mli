@@ -56,6 +56,7 @@ module SparseMatrix :
         @nocvode <node9#ss:sparse> PrintSparseMat *)
     val print : t -> unit
 
+    (* TOPLEVEL-PRINTER: Sls.SparseMatrix.pp *)
     (** Pretty-print a sparse matrix using the
         {{:OCAML_DOC_ROOT(Format.html)} Format} module. *)
     val pp : Format.formatter -> t -> unit

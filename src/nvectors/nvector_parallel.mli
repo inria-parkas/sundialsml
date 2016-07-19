@@ -46,6 +46,7 @@ val clone : t -> t
 (** Aliases {!Nvector.unwrap}. *)
 val unwrap : t -> data
 
+(* TOPLEVEL-PRINTER: Nvector_parallel.pp *)
 (** Pretty-print the local portion of a parallel nvector using the
     {{:OCAML_DOC_ROOT(Format.html)} Format} module. *)
 val pp : Format.formatter -> t -> unit

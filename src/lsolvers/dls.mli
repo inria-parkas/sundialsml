@@ -65,6 +65,7 @@ module DenseMatrix :
         @cvode <node9#ss:dense> PrintMat *)
     val print : t -> unit
 
+    (* TOPLEVEL-PRINTER: Dls.DenseMatrix.pp *)
     (** Pretty-print a dense matrix using the
         {{:OCAML_DOC_ROOT(Format.html)} Format} module. *)
     val pp : Format.formatter -> t -> unit
@@ -367,6 +368,7 @@ module BandMatrix :
         @cvode <node9#ss:band> PrintMat *)
     val print : t -> unit
 
+    (* TOPLEVEL-PRINTER: Dls.BandMatrix.pp *)
     (** Pretty-print a band matrix using the
         {{:OCAML_DOC_ROOT(Format.html)} Format} module. *)
     val pp : Format.formatter -> t -> unit
