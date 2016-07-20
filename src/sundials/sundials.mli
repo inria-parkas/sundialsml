@@ -303,6 +303,10 @@ module Roots :
     (** [make n x] returns an array with [n] elements each set to [x]. *)
     val make : int -> r -> t
 
+    (** [init n f] returns an array with [n] elements, with element [i] set
+        to [f i]. *)
+    val init : int -> (int -> r) -> t
+
     (** Returns the length of an array. *)
     val length : t -> int
 

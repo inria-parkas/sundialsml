@@ -532,6 +532,7 @@ module Roots =
 
     let make n x = A.make n x
     let copy = A.copy
+    let init = A.init
     let fold_left = A.fold_left
     let fold_right = A.fold_right
 
