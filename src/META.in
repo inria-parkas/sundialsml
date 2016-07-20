@@ -8,7 +8,7 @@ archive(native,no_sens) = "sundials_no_sens.cmxa"
 #ifdef MPI_ENABLED
 package "mpi" (
   version = VERSION
-  requires = "sundialsml"
+  requires = "sundialsml mpi"
   description = "Add MPI support to sundials"
   archive(byte) = "sundials_mpi.cma"
   archive(native) = "sundials_mpi.cmxa"
