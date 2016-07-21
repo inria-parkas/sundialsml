@@ -528,5 +528,5 @@ external c_init_module : exn array -> unit =
 let _ =
   c_init_module
     (* Exceptions must be listed in the same order as
-       idas_exn_index.  *)
+       nvector_parallel_exn_index.  *)
     [|IncorrectGlobalSize|]
