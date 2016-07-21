@@ -191,42 +191,22 @@ module RealArray2 =
       let d = unwrap a in
       (Array2.dim2 d, Array2.dim1 d)
 
-    let pp fmt a =
-      let d = unwrap a in
-      let ni, nj = Array2.dim2 d - 1, Array2.dim1 d - 1 in
-      Format.pp_print_string fmt "[";
-      Format.pp_open_vbox fmt 0;
-      for i = 0 to ni do
-
-        Format.pp_open_hovbox fmt 4;
-        for j = 0 to nj do
-          if j > 0 then (
-            Format.pp_print_string fmt " ";
-            Format.pp_print_cut fmt ();
-          );
-          Format.fprintf fmt "% -15e" d.{j, i}
-        done;
-        Format.pp_close_box fmt ();
-
-        if i < ni then (
-          Format.pp_print_string fmt ";";
-          Format.pp_print_cut fmt ();
-        );
-
-      done;
-      Format.pp_close_box fmt ();
-      Format.pp_print_string fmt "]"
-
-    let ppi ?(start="[") ?(stop="]") ?(rowsep=";") ?(indent=4) ?(sep=" ")
-            ?(item=fun f->Format.fprintf f "(%2d,%2d)=% -15e")
+    let ppi ?(start="[") ?(rowstart="[") ?(stop="]") ?(rowstop="]")
+            ?(sep=" ") ?(rowsep=";")
+            ?(item=fun f -> Format.fprintf f "(%2d,%2d)=% -15e")
             fmt a =
       let d = unwrap a in
       let ni, nj = Array2.dim2 d - 1, Array2.dim1 d - 1 in
       Format.pp_print_string fmt start;
       Format.pp_open_vbox fmt 0;
       for i = 0 to ni do
+        if i > 0 then (
+          Format.pp_print_string fmt rowsep;
+          Format.pp_print_cut fmt ()
+        );
 
-        Format.pp_open_hovbox fmt indent;
+        Format.pp_print_string fmt rowstart;
+        Format.pp_open_hovbox fmt 0;
         for j = 0 to nj do
           if j > 0 then (
             Format.pp_print_string fmt sep;
@@ -235,15 +215,14 @@ module RealArray2 =
           item fmt i j d.{j, i}
         done;
         Format.pp_close_box fmt ();
-
-        if i < ni then (
-          Format.pp_print_string fmt rowsep;
-          Format.pp_print_cut fmt ();
-        );
+        Format.pp_print_string fmt rowstop
 
       done;
       Format.pp_close_box fmt ();
       Format.pp_print_string fmt stop
+
+    let pp fmt a = ppi fmt a
+      ~item:(fun f _ _ x -> Format.fprintf f "% -15e" x)
 
     let get x i j = Array2.get (unwrap x) j i
     let set x i j = Array2.set (unwrap x) j i

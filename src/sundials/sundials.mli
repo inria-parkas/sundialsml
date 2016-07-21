@@ -226,8 +226,9 @@ module RealArray2 :
         [item=fun f r c->Format.fprintf f "(%2d,%2d)=% -15e" r c] (see
         {{:OCAML_DOC_ROOT(Format.html#VALfprintf)} fprintf}).
         The [indent] argument specifies the indent for wrapped rows. *)
-    val ppi : ?start:string -> ?stop:string -> ?rowsep:string
-              -> ?indent:int -> ?sep:string
+    val ppi : ?start:string -> ?rowstart:string
+              -> ?stop:string -> ?rowstop:string
+              -> ?sep:string -> ?rowsep:string
               -> ?item:(Format.formatter -> int -> int -> float -> unit)
               -> Format.formatter -> t -> unit
 
