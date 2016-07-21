@@ -174,16 +174,8 @@ enum kinsol_exn_index {
     KINSOL_EXN_SET_SIZE,
 };
 
-#define KINSOL_EXN_TAG(name) (Field(Field (Field (sundials_ml_exn_table,\
-					      KINSOL_EXN_SET),		\
-				       KINSOL_EXN_ ## name),		\
-				0))
-#if OCAML_VERSION < 40200
-#define KINSOL_EXN(name) KINSOL_EXN_TAG(name)
-#else
-#define KINSOL_EXN(name)						\
-    (Field (Field (sundials_ml_exn_table, KINSOL_EXN_SET),		\
-	    KINSOL_EXN_ ## name))
-#endif
+#define KINSOL_EXN(name)     REGISTERED_EXN(KINSOL, name)
+#define KINSOL_EXN_TAG(name) REGISTERED_EXN_TAG(KINSOL, name)
+
 
 #endif

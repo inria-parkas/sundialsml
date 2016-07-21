@@ -191,16 +191,8 @@ enum ida_exn_index {
     IDA_EXN_SET_SIZE,
 };
 
-#define IDA_EXN_TAG(name) (Field(Field (Field (sundials_ml_exn_table,	\
-					   IDA_EXN_SET),		\
-				    IDA_EXN_ ## name),			\
-			     0))
-#if OCAML_VERSION < 40200
-#define IDA_EXN(name) IDA_EXN_TAG(name)
-#else
-#define IDA_EXN(name)						\
-    (Field (Field (sundials_ml_exn_table, IDA_EXN_SET),		\
-	    IDA_EXN_ ## name))
-#endif
+#define IDA_EXN(name)     REGISTERED_EXN(IDA, name)
+#define IDA_EXN_TAG(name) REGISTERED_EXN_TAG(IDA, name)
+
 
 #endif /* _IDA_ML_H__ */

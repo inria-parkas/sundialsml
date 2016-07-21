@@ -238,16 +238,8 @@ enum cvodes_enum_index {
     CVODES_EXN_SET_SIZE
 };
 
-#define CVODES_EXN_TAG(name) (Field(Field (Field (sundials_ml_exn_table,\
-					      CVODES_EXN_SET),		\
-				       CVODES_EXN_ ## name),		\
-				0))
-#if OCAML_VERSION < 40200
-#define CVODES_EXN(name) CVODES_EXN_TAG(name)
-#else
-#define CVODES_EXN(name)						\
-    (Field (Field (sundials_ml_exn_table, CVODES_EXN_SET),		\
-	    CVODES_EXN_ ## name))
-#endif
+#define CVODES_EXN(name)     REGISTERED_EXN(CVODES, name)
+#define CVODES_EXN_TAG(name) REGISTERED_EXN_TAG(CVODES, name)
+
 
 #endif
