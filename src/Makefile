@@ -84,7 +84,7 @@ $(MLOBJ_TOP_ALL) $(CMI_TOP) $(MLOBJ_TOP_ALL:.cmo=.cmx):	\
 
 $(MLOBJ_TOP_GEN): sundials/sundials_top.cmo
 
-$(MLOBJ_TOP_GEN:.cmo=.ml): %_top.ml: %.mli
+$(MLOBJ_TOP_PP:.cmo=.ml): %_top.ml: %.mli
 	echo "(* Automatically generated file - don't edit!  See the Makefile.  *)" > $@
 	echo "Sundials_top.install_printers [" >> $@
 	grep '(\* TOPLEVEL-PRINTER: ' $< | \
