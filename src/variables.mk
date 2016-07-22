@@ -176,6 +176,8 @@ INSTALL_CMA_NO_COBJ = $(if $(TOP_ENABLED),				    \
 			 $(if $(PTHREADS_ENABLED),sundials_top_pthreads.cma)\
 		      )
 
+INSTALL_CMA_FINDLIB = $(if $(TOP_ENABLED),sundials_top_findlib.cma)
+
 INSTALL_CMA = $(INSTALL_CMA_WITH_COBJ) $(INSTALL_CMA_NO_COBJ)
 
 INSTALL_CMI=$(CMI_MAIN) $(CMI_SENS)			\
@@ -196,3 +198,5 @@ INSTALL_FILES=							\
     $(INSTALL_CMA:.cma=.cmxa)					\
     $(INSTALL_XA)						\
     $(foreach file,$(INSTALL_XA), libml$(file))
+
+INSTALL_FILES_FINDLIB=$(INSTALL_CMA_FINDLIB) $(INSTALL_CMA_FINDLIB:.cma=.cmxa)
