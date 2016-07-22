@@ -69,113 +69,164 @@ $(MLOBJ_MPI) $(CMI_MPI) $(MLOBJ_MPI:.cmo=.cmx)	\
 $(COBJ_COMMON): %.o: %.c
 	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
 
-nvectors/nvector_parallel_ml.o: nvectors/nvector_parallel_ml.c
+nvectors/nvector_parallel_ml.o: nvectors/nvector_parallel_ml.c \
+		sundials/sundials_ml.h nvectors/nvector_ml.h \
+		nvectors/nvector_parallel_ml.h
 	$(MPICC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
 
-nvectors/nvector_openmp_ml.o: nvectors/nvector_openmp_ml.c
+nvectors/nvector_openmp_ml.o: nvectors/nvector_openmp_ml.c \
+		sundials/sundials_ml.h nvectors/nvector_ml.h \
+		nvectors/nvector_openmp_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
 
-nvectors/nvector_pthreads_ml.o: nvectors/nvector_pthreads_ml.c
+nvectors/nvector_pthreads_ml.o: nvectors/nvector_pthreads_ml.c \
+		sundials/sundials_ml.h nvectors/nvector_ml.h \
+		nvectors/nvector_pthreads_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
 
 # KINSOL-specific C files.
-kinsol/kinsol_ml.o: kinsol/kinsol_ml.c
+kinsol/kinsol_ml.o: kinsol/kinsol_ml.c \
+		sundials/sundials_ml.h lsolvers/dls_ml.h lsolvers/spils_ml.h \
+		kinsol/kinsol_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(KINSOL_CFLAGS) -o $@ -c $<
 
-kinsol/kinsol_bbd_ml.o: kinsol/kinsol_bbd_ml.c
+kinsol/kinsol_bbd_ml.o: kinsol/kinsol_bbd_ml.c kinsol/kinsol_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(KINSOL_CFLAGS) -o $@ -c $<
 
-kinsol/kinsol_klu_ml.o: kinsol/kinsol_klu_ml.c
+kinsol/kinsol_klu_ml.o: kinsol/kinsol_klu_ml.c \
+		sundials/sundials_ml.h kinsol/kinsol_ml.h lsolvers/sls_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(KINSOL_CFLAGS) -o $@ -c $<
 
-kinsol/kinsol_superlumt_ml.o: kinsol/kinsol_superlumt_ml.c
+kinsol/kinsol_superlumt_ml.o: kinsol/kinsol_superlumt_ml.c \
+		sundials/sundials_ml.h kinsol/kinsol_ml.h lsolvers/sls_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(KINSOL_CFLAGS) -o $@ -c $<
 
 # ARKODE-specific C files.
-arkode/arkode_ml.o: arkode/arkode_ml.c
+arkode/arkode_ml.o: arkode/arkode_ml.c \
+		lsolvers/dls_ml.h lsolvers/spils_ml.h sundials/sundials_ml.h \
+		arkode/arkode_ml.h nvectors/nvector_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(ARKODE_CFLAGS) -o $@ -c $<
 
-arkode/arkode_bbd_ml.o: arkode/arkode_bbd_ml.c
+arkode/arkode_bbd_ml.o: arkode/arkode_bbd_ml.c \
+		sundials/sundials_ml.h arkode/arkode_ml.h nvectors/nvector_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(ARKODE_CFLAGS) -o $@ -c $<
 
-arkode/arkode_klu_ml.o: arkode/arkode_klu_ml.c
+arkode/arkode_klu_ml.o: arkode/arkode_klu_ml.c \
+		sundials/sundials_ml.h arkode/arkode_ml.h lsolvers/sls_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(ARKODE_CFLAGS) -o $@ -c $<
 
-arkode/arkode_superlumt_ml.o: arkode/arkode_superlumt_ml.c
+arkode/arkode_superlumt_ml.o: arkode/arkode_superlumt_ml.c \
+		sundials/sundials_ml.h arkode/arkode_ml.h lsolvers/sls_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(ARKODE_CFLAGS) -o $@ -c $<
 
 # CVODE[S]-specific C files.
-cvode/cvode_ml.o: cvode/cvode_ml.c
+cvode/cvode_ml.o: cvode/cvode_ml.c \
+		lsolvers/dls_ml.h lsolvers/spils_ml.h sundials/sundials_ml.h \
+		cvode/cvode_ml.h nvectors/nvector_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
 
-cvodes/cvode_ml_s.o: cvode/cvode_ml.c
+cvodes/cvode_ml_s.o: cvode/cvode_ml.c \
+		lsolvers/dls_ml.h lsolvers/spils_ml.h sundials/sundials_ml.h \
+		cvode/cvode_ml.h nvectors/nvector_ml.h
 	$(CC) -DSUNDIALSML_WITHSENS -I $(OCAML_INCLUDE) \
 	    $(CVODE_CFLAGS) -o $@ -c $<
 
-cvodes/cvodes_ml.o: cvodes/cvodes_ml.c
+cvodes/cvodes_ml.o: cvodes/cvodes_ml.c \
+		lsolvers/dls_ml.h lsolvers/spils_ml.h sundials/sundials_ml.h \
+		cvode/cvode_ml.h nvectors/nvector_ml.h cvodes/cvodes_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(CVODES_CFLAGS) -Icvode -o $@ -c $<
 
-cvode/cvode_bbd_ml.o: cvode/cvode_bbd_ml.c
+cvode/cvode_bbd_ml.o: cvode/cvode_bbd_ml.c \
+		sundials/sundials_ml.h cvode/cvode_ml.h nvectors/nvector_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
 
-cvodes/cvodes_bbd_ml.o: cvodes/cvodes_bbd_ml.c
+cvodes/cvodes_bbd_ml.o: cvodes/cvodes_bbd_ml.c \
+		sundials/sundials_ml.h cvode/cvode_ml.h nvectors/nvector_ml.h \
+		cvodes/cvodes_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(CVODES_CFLAGS) -Icvode -o $@ -c $<
 
-cvode/cvode_klu_ml.o: cvode/cvode_klu_ml.c
+cvode/cvode_klu_ml.o: cvode/cvode_klu_ml.c \
+		sundials/sundials_ml.h cvode/cvode_ml.h lsolvers/sls_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
 
-cvodes/cvode_klu_ml_s.o: cvode/cvode_klu_ml.c
+cvodes/cvode_klu_ml_s.o: cvode/cvode_klu_ml.c \
+		sundials/sundials_ml.h cvode/cvode_ml.h lsolvers/sls_ml.h \
+		cvodes/cvodes_ml.h
 	$(CC) -DSUNDIALSML_WITHSENS -I $(OCAML_INCLUDE) \
 	    $(CVODE_CFLAGS) -o $@ -c $<
 
-cvodes/cvodes_klu_ml.o: cvodes/cvodes_klu_ml.c
+cvodes/cvodes_klu_ml.o: cvodes/cvodes_klu_ml.c \
+		sundials/sundials_ml.h cvode/cvode_ml.h lsolvers/sls_ml.h \
+		cvodes/cvodes_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(CVODES_CFLAGS) -Icvode -o $@ -c $<
 
-cvode/cvode_superlumt_ml.o: cvode/cvode_superlumt_ml.c
+cvode/cvode_superlumt_ml.o: cvode/cvode_superlumt_ml.c \
+		sundials/sundials_ml.h cvode/cvode_ml.h lsolvers/sls_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
 
-cvodes/cvode_superlumt_ml_s.o: cvode/cvode_superlumt_ml.c
+cvodes/cvode_superlumt_ml_s.o: cvode/cvode_superlumt_ml.c \
+		sundials/sundials_ml.h cvode/cvode_ml.h lsolvers/sls_ml.h \
+		cvodes/cvodes_ml.h
 	$(CC) -DSUNDIALSML_WITHSENS -I $(OCAML_INCLUDE) \
 	    $(CVODE_CFLAGS) -o $@ -c $<
 
-cvodes/cvodes_superlumt_ml.o: cvodes/cvodes_superlumt_ml.c
+cvodes/cvodes_superlumt_ml.o: cvodes/cvodes_superlumt_ml.c \
+		sundials/sundials_ml.h cvode/cvode_ml.h lsolvers/sls_ml.h \
+		cvodes/cvodes_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(CVODES_CFLAGS) -Icvode -o $@ -c $<
 
 # IDA[S]-specific C files.
-ida/ida_ml.o: ida/ida_ml.c
+ida/ida_ml.o: ida/ida_ml.c \
+		sundials/sundials_ml.h lsolvers/spils_ml.h ida/ida_ml.h \
+		nvectors/nvector_ml.h lsolvers/dls_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(IDA_CFLAGS) -o $@ -c $<
 
-idas/ida_ml_s.o: ida/ida_ml.c
+idas/ida_ml_s.o: ida/ida_ml.c \
+		sundials/sundials_ml.h lsolvers/spils_ml.h ida/ida_ml.h \
+		nvectors/nvector_ml.h lsolvers/dls_ml.h
 	$(CC) -DSUNDIALSML_WITHSENS -I $(OCAML_INCLUDE) \
 	    $(IDA_CFLAGS) -o $@ -c $<
 
-idas/idas_ml.o: idas/idas_ml.c
+idas/idas_ml.o: idas/idas_ml.c \
+		lsolvers/spils_ml.h ida/ida_ml.h idas/idas_ml.h \
+		sundials/sundials_ml.h nvectors/nvector_ml.h lsolvers/dls_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(IDAS_CFLAGS) -Iida -o $@ -c $<
 
-ida/ida_bbd_ml.o: ida/ida_bbd_ml.c
+ida/ida_bbd_ml.o: ida/ida_bbd_ml.c \
+		sundials/sundials_ml.h ida/ida_ml.h nvectors/nvector_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(IDA_CFLAGS) -o $@ -c $<
 
-idas/idas_bbd_ml.o: idas/idas_bbd_ml.c
+idas/idas_bbd_ml.o: idas/idas_bbd_ml.c \
+		lsolvers/dls_ml.h lsolvers/spils_ml.h sundials/sundials_ml.h \
+		ida/ida_ml.h idas/idas_ml.h nvectors/nvector_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(IDAS_CFLAGS) -Iida -o $@ -c $<
 
-ida/ida_klu_ml.o: ida/ida_klu_ml.c
+ida/ida_klu_ml.o: ida/ida_klu_ml.c \
+		sundials/sundials_ml.h ida/ida_ml.h lsolvers/sls_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(IDA_CFLAGS) -o $@ -c $<
 
-idas/ida_klu_ml_s.o: ida/ida_klu_ml.c
+idas/ida_klu_ml_s.o: ida/ida_klu_ml.c \
+		sundials/sundials_ml.h ida/ida_ml.h lsolvers/sls_ml.h
 	$(CC) -DSUNDIALSML_WITHSENS -I $(OCAML_INCLUDE) \
 	    $(IDA_CFLAGS) -o $@ -c $<
 
-idas/idas_klu_ml.o: idas/idas_klu_ml.c
+idas/idas_klu_ml.o: idas/idas_klu_ml.c \
+		sundials/sundials_ml.h ida/ida_ml.h lsolvers/sls_ml.h \
+		idas/idas_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(IDAS_CFLAGS) -Iida -o $@ -c $<
 
-ida/ida_superlumt_ml.o: ida/ida_superlumt_ml.c
+ida/ida_superlumt_ml.o: ida/ida_superlumt_ml.c \
+		sundials/sundials_ml.h ida/ida_ml.h lsolvers/sls_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(IDA_CFLAGS) -o $@ -c $<
 
-idas/ida_superlumt_ml_s.o: ida/ida_superlumt_ml.c
+idas/ida_superlumt_ml_s.o: ida/ida_superlumt_ml.c \
+		sundials/sundials_ml.h ida/ida_ml.h lsolvers/sls_ml.h
 	$(CC) -DSUNDIALSML_WITHSENS -I $(OCAML_INCLUDE) \
 	    $(IDA_CFLAGS) -o $@ -c $<
 
-idas/idas_superlumt_ml.o: idas/idas_superlumt_ml.c
+idas/idas_superlumt_ml.o: idas/idas_superlumt_ml.c \
+		sundials/sundials_ml.h ida/ida_ml.h lsolvers/sls_ml.h \
+		idas/idas_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(IDAS_CFLAGS) -o $@ -c $<
 
 # Other files

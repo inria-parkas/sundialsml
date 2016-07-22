@@ -26,8 +26,6 @@
 #include <caml/fail.h>
 #include <caml/bigarray.h>
 
-#include "../lsolvers/dls_ml.h"
-#include "../lsolvers/spils_ml.h"
 #include "../sundials/sundials_ml.h"
 #include "../cvode/cvode_ml.h"
 #include "cvodes_ml.h"

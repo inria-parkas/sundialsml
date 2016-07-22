@@ -56,7 +56,6 @@
 
 #include <stdio.h>
 #include "../lsolvers/spils_ml.h"
-#include "ida_ml.h"
 
 #define MAX_ERRMSG_LEN 256
 
