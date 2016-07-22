@@ -717,7 +717,7 @@ CAMLprim value c_ida_root_init (value vida_mem, value vnroots)
 CAMLprim value c_ida_init (value weakref, value vt0, value vy, value vyp)
 {
     CAMLparam4 (weakref, vy, vyp, vt0);
-    CAMLlocal1 (r);
+    CAMLlocal2 (r, vida_mem);
     int flag;
     N_Vector y, yp;
     void *ida_mem = NULL;
@@ -726,6 +726,9 @@ CAMLprim value c_ida_init (value weakref, value vt0, value vy, value vyp)
     ida_mem = IDACreate ();
     if (ida_mem == NULL)
 	caml_failwith ("IDACreate failed");
+
+    vida_mem = caml_alloc_final(1, NULL, sizeof(void *), sizeof(void *) * 5);
+    IDA_MEM(vida_mem) = ida_mem;
 
     y = NVEC_VAL (vy);
     yp = NVEC_VAL (vyp);
@@ -745,7 +748,7 @@ CAMLprim value c_ida_init (value weakref, value vt0, value vy, value vyp)
     IDASetUserData (ida_mem, backref);
 
     r = caml_alloc_tuple(3);
-    Store_field(r, 0, (value)ida_mem);
+    Store_field(r, 0, vida_mem);
     Store_field(r, 1, (value)backref);
     Store_field(r, 2, 0); // no err_file = NULL; note OCaml doesn't
 			  // (seem to) support architectures where

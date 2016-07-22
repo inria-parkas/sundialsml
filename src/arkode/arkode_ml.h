@@ -153,8 +153,9 @@ enum arkode_session_index {
     RECORD_ARKODE_SESSION_SIZE,
 };
 
+#define ARKODE_MEM(v) (*(void **)Data_custom_val(v))
 #define ARKODE_MEM_FROM_ML(v) \
-    ((void *)Field((v), RECORD_ARKODE_SESSION_ARKODE))
+    (ARKODE_MEM(Field((v), RECORD_ARKODE_SESSION_ARKODE)))
 #define ARKODE_BACKREF_FROM_ML(v) \
     ((value *)(Field((v), RECORD_ARKODE_SESSION_BACKREF)))
 #define ARKODE_NROOTS_FROM_ML(v) \

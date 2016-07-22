@@ -1525,7 +1525,7 @@ CAMLprim value c_cvodes_adj_init_backward(value vparent, value weakref,
 					 value vargs, value vwithsens)
 {
     CAMLparam4(vparent, weakref, vargs, vwithsens);
-    CAMLlocal1(r);
+    CAMLlocal2(r, vcvode_mem);
     CAMLlocal2(vlmm, viter);
     int flag, lmm_c, iter_c, which;
     void *parent = CVODE_MEM_FROM_ML(vparent);
@@ -1571,6 +1571,9 @@ CAMLprim value c_cvodes_adj_init_backward(value vparent, value weakref,
 	}
     }
 
+    vcvode_mem = caml_alloc_final(1, NULL, sizeof(void *), sizeof(void *) * 15);
+    CVODE_MEM(vcvode_mem) = CVodeGetAdjCVodeBmem(parent, which);
+
     value *backref;
     backref = malloc (sizeof (*backref));
     if (backref == NULL) {
@@ -1581,7 +1584,7 @@ CAMLprim value c_cvodes_adj_init_backward(value vparent, value weakref,
     CVodeSetUserDataB (parent, which, backref);
 
     r = caml_alloc_tuple (4);
-    Store_field (r, 0, (value)CVodeGetAdjCVodeBmem(parent, which));
+    Store_field (r, 0, vcvode_mem);
     Store_field (r, 1, Val_int(which));
     Store_field (r, 2, (value)backref);
     Store_field (r, 3, 0); // no err_file = NULL; note OCaml doesn't

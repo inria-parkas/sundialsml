@@ -12,9 +12,14 @@ They each contain three types of pointers into the C heap:
 
 * `cvode`/`ida`/`kinsol`/`arkode`: pointer to session record. It is created
   within the `c_*_init` functions by a call to the appropriate Sundials
-  create function (e.g., `CVodeCreate`), which return a pointer to
-  `malloc`ed memory. These fields are accessed frequently on the C side
-  via the macros `*_MEM_FROM_ML`. They are never accessed on the OCaml side.
+  create function (e.g., `CVodeCreate`). The create functions return a
+  pointer to `malloc`ed memory, which is then wrapped as a custom block.
+  This block has no finalizer since the finalizer of the enclosing OCaml
+  session value frees the associated memory (e.g., `CVodeFree`). The two
+  objects cannot exist independently (due to user data and callbacks
+  configure across them both). These fields are accessed frequently on the
+  C side via the macros `*_MEM_FROM_ML`. They are never accessed on the
+  OCaml side.
 
 * `backref`: pointer to a global root containing a weak pointer back to the
   session value. It is `malloc`ed and set by the `c_*_init` functions. It is

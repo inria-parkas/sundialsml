@@ -714,7 +714,7 @@ CAMLprim value c_kinsol_init(value weakref, value vtemp,
 			     value vomaxiters, value vomaa)
 {
     CAMLparam4(weakref, vtemp, vomaxiters, vomaa);
-    CAMLlocal1(r);
+    CAMLlocal2(r, vkin_mem);
     int flag;
     value *backref;
     void *kin_mem;
@@ -727,6 +727,9 @@ CAMLprim value c_kinsol_init(value weakref, value vtemp,
     kin_mem = KINCreate();
     if (kin_mem == NULL)
 	caml_failwith("KINCreate returned NULL");
+
+    vkin_mem = caml_alloc_final(1, NULL, sizeof(void *), sizeof(void *) * 5);
+    KINSOL_MEM(vkin_mem) = kin_mem;
 
     if (vomaxiters != Val_none) {
 	flag = KINSetNumMaxIters(kin_mem, Long_val(Some_val(vomaxiters)));
@@ -761,7 +764,7 @@ CAMLprim value c_kinsol_init(value weakref, value vtemp,
     KINSetUserData (kin_mem, backref);
 
     r = caml_alloc_tuple (4);
-    Store_field (r, 0, (value)kin_mem);
+    Store_field (r, 0, vkin_mem);
     Store_field (r, 1, (value)backref);
 
     /* No file = NULL; note OCaml doesn't (seem to) support

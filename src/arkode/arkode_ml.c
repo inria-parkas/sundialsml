@@ -1133,7 +1133,7 @@ CAMLprim value c_arkode_init(value weakref, value hasfi, value hasfe,
 			     value y0, value t0)
 {
     CAMLparam5(weakref, hasfi, hasfe, y0, t0);
-    CAMLlocal1(r);
+    CAMLlocal2(r, varkode_mem);
 
     if (sizeof(int) != 4) {
 	caml_failwith("The library assumes that an int (in C) has 32-bits.");
@@ -1144,6 +1144,9 @@ CAMLprim value c_arkode_init(value weakref, value hasfi, value hasfe,
     void *arkode_mem = ARKodeCreate();
     if (arkode_mem == NULL)
 	caml_failwith("ARKodeCreate returned NULL");
+
+    varkode_mem = caml_alloc_final(1, NULL, sizeof(void *), sizeof(void *) * 5);
+    ARKODE_MEM(varkode_mem) = arkode_mem;
 
     N_Vector nv_y0 = NVEC_VAL(y0);
     flag = ARKodeInit(arkode_mem,
@@ -1167,7 +1170,7 @@ CAMLprim value c_arkode_init(value weakref, value hasfi, value hasfe,
     ARKodeSetUserData (arkode_mem, backref);
 
     r = caml_alloc_tuple (3);
-    Store_field (r, 0, (value)arkode_mem);
+    Store_field (r, 0, varkode_mem);
     Store_field (r, 1, (value)backref);
     Store_field (r, 2, 0);   // no err_file = NULL; note OCaml doesn't
 			     // (seem to) support architectures where

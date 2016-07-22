@@ -2161,7 +2161,7 @@ CAMLprim value c_idas_adj_init_backward(value vparent, value weakref,
 {
     CAMLparam5(vparent, weakref, vtb0, vy0, vyp0);
     CAMLxparam1(vwithsens);
-    CAMLlocal1(r);
+    CAMLlocal2(r, vida_mem);
     CAMLlocal2(vlmm, viter);
     int flag, which;
     void *parent = IDA_MEM_FROM_ML(vparent);
@@ -2187,6 +2187,9 @@ CAMLprim value c_idas_adj_init_backward(value vparent, value weakref,
 	}
     }
 
+    vida_mem = caml_alloc_final(1, NULL, sizeof(void *), sizeof(void *) * 15);
+    IDA_MEM(vida_mem) = IDAGetAdjIDABmem(parent, which);
+
     value *backref;
     backref = malloc (sizeof (*backref));
     if (backref == NULL) {
@@ -2197,7 +2200,7 @@ CAMLprim value c_idas_adj_init_backward(value vparent, value weakref,
     IDASetUserDataB (parent, which, backref);
 
     r = caml_alloc_tuple (4);
-    Store_field (r, 0, (value)IDAGetAdjIDABmem(parent, which));
+    Store_field (r, 0, vida_mem);
     Store_field (r, 1, Val_int(which));
     Store_field (r, 2, (value)backref);
     Store_field (r, 3, 0); // no err_file = NULL; note OCaml doesn't

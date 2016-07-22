@@ -734,7 +734,7 @@ CAMLprim value c_cvode_init(value weakref, value lmm, value iter, value initial,
 			    value t0)
 {
     CAMLparam5(weakref, lmm, iter, initial, t0);
-    CAMLlocal1(r);
+    CAMLlocal2(r, vcvode_mem);
 
     if (sizeof(int) != 4) {
 	caml_failwith("The library assumes that an int (in C) has 32-bits.");
@@ -768,6 +768,9 @@ CAMLprim value c_cvode_init(value weakref, value lmm, value iter, value initial,
     if (cvode_mem == NULL)
 	caml_failwith("CVodeCreate returned NULL");
 
+    vcvode_mem = caml_alloc_final(1, NULL, sizeof(void *), sizeof(void *) * 5);
+    CVODE_MEM(vcvode_mem) = cvode_mem;
+
     N_Vector initial_nv = NVEC_VAL(initial);
     flag = CVodeInit(cvode_mem, rhsfn, Double_val(t0), initial_nv);
     if (flag != CV_SUCCESS) {
@@ -786,12 +789,11 @@ CAMLprim value c_cvode_init(value weakref, value lmm, value iter, value initial,
     CVodeSetUserData (cvode_mem, backref);
 
     r = caml_alloc_tuple (3);
-    Store_field (r, 0, (value)cvode_mem);
+    Store_field (r, 0, vcvode_mem);
     Store_field (r, 1, (value)backref);
     Store_field (r, 2, 0);   // no err_file = NULL; note OCaml doesn't
 			     // (seem to) support architectures where
 			     // 0 != (value)(void*)NULL.
-
 
     CAMLreturn(r);
 }
