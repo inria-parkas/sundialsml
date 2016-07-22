@@ -54,7 +54,7 @@ CAMLprim value c_dls_dense_wrap(DlsMat a, int finalize)
     va = caml_ba_alloc_dims(BIGARRAY_FLOAT, 2, a->data, a->N, a->ldim);
 
     /* a DlsMat is a pointer to a struct _DlsMat */
-    vv = caml_alloc_final(2, finalize ? &finalize_dlsmat : NULL,
+    vv = caml_alloc_final(1, finalize ? &finalize_dlsmat : NULL,
 			  approx_size, approx_size * 20);
     DLSMAT(vv) = a;
 
@@ -513,7 +513,7 @@ CAMLprim value c_dls_band_wrap(DlsMat a, int finalize)
     va = caml_ba_alloc_dims(BIGARRAY_FLOAT, 2, a->data, a->N, a->ldim);
 
     /* a DlsMat is a pointer to a struct _DlsMat */
-    vv = caml_alloc_final(2, finalize ? &finalize_dlsmat : NULL,
+    vv = caml_alloc_final(1, finalize ? &finalize_dlsmat : NULL,
 			  approx_size, approx_size * 20);
     DLSMAT(vv) = a;
 
