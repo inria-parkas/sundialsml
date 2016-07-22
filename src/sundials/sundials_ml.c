@@ -18,6 +18,7 @@
 #include <sundials/sundials_band.h>
 
 #include <caml/mlvalues.h>
+#include <caml/gc.h>
 #include <caml/memory.h>
 #include <caml/alloc.h>
 #include <caml/callback.h>
@@ -142,18 +143,18 @@ CAMLprim void sundials_crash (value msg)
 
 value *c_sundials_malloc_value(value v)
 {
-    value *heapref;
-    heapref = malloc (sizeof (*heapref));
-    if (heapref == NULL) return NULL;
-    *heapref = v;
-    caml_register_generational_global_root (heapref);
-
-    return heapref;
+    header_t *block;
+    block = (header_t *)malloc(Bhsize_wosize(1));
+    if (block == NULL) return NULL;
+    *block = Make_header(1, 0, Caml_black);
+    Field(Val_hp(block), 0) = v;
+    caml_register_generational_global_root (Op_hp(block));
+    return Op_hp(block);
 }
 
-void c_sundials_free_value(value *heapref)
+void c_sundials_free_value(value *pv)
 {
-    caml_remove_generational_global_root (heapref);
-    free (heapref);
+    caml_remove_generational_global_root (pv);
+    free (Hp_op(pv));
 }
 

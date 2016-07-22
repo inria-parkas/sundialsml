@@ -22,11 +22,15 @@ They each contain three types of pointers into the C heap:
   OCaml side.
 
 * `backref`: pointer to a global root containing a weak pointer back to the
-  session value. It is `malloc`ed and set by the `c_*_init` functions. It is
-  used by the `c_*_session_finalize` functions to remove the GC root before
-  its memory is freed. This field is never used from OCaml. It is also used
-  by the `c_*_set_err_handler_fn` functions to retrieve the weak session
-  pointer. Access is via the `*_BACKREF_FROM_ML` macro.
+  session value. The `c_sundials_malloc_value` function `malloc`s and
+  configures an OCaml block on the C-heap and registers its only value as a
+  global root (the header is valid and marked black to satisfy
+  -no-naked-pointers). This function is called by the `c_*_init` functions.
+  A `c_sundials_Free_value` function deregisters the global root and `free`s
+  the memory. It is called by the `c_*_session_finalize` functions. This
+  field is also used by the `c_*_set_err_handler_fn` functions to retrieve
+  the weak session pointer. Access is via the `*_BACKREF_FROM_ML` macro. It
+  is never used from OCaml.
 
 * `err_file`, `info_file`, `diag_file`: pointer to file handle (`FILE *`)
   returned by `fopen` (called within our code). Accessed from C in the
