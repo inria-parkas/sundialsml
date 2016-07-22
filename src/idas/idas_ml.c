@@ -1825,8 +1825,7 @@ CAMLprim value c_idas_adj_bsession_finalize(value vdata)
     if (IDA_MEM_FROM_ML(vdata) != NULL) {
 	value *backref = IDA_BACKREF_FROM_ML(vdata);
 	// NB: IDAFree() is *not* called: parents free-up backward problems
-	caml_remove_generational_global_root (backref);
-	free (backref);
+	c_sundials_free_value(backref);
     }
     return Val_unit;
 }
@@ -2190,13 +2189,10 @@ CAMLprim value c_idas_adj_init_backward(value vparent, value weakref,
     vida_mem = caml_alloc_final(1, NULL, sizeof(void *), sizeof(void *) * 15);
     IDA_MEM(vida_mem) = IDAGetAdjIDABmem(parent, which);
 
-    value *backref;
-    backref = malloc (sizeof (*backref));
+    value *backref = c_sundials_malloc_value(weakref);
     if (backref == NULL) {
 	caml_raise_out_of_memory();
     }
-    *backref = weakref;
-    caml_register_generational_global_root (backref);
     IDASetUserDataB (parent, which, backref);
 
     r = caml_alloc_tuple (4);

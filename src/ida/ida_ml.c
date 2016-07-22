@@ -738,13 +738,11 @@ CAMLprim value c_ida_init (value weakref, value vt0, value vy, value vyp)
 	CHECK_FLAG ("IDAInit", flag);
     }
 
-    backref = malloc (sizeof (*backref));
+    backref = c_sundials_malloc_value(weakref);
     if (backref == NULL) {
 	IDAFree (&ida_mem);
 	caml_failwith ("Out of memory");
     }
-    *backref = weakref;
-    caml_register_generational_global_root (backref);
     IDASetUserData (ida_mem, backref);
 
     r = caml_alloc_tuple(3);
@@ -1040,8 +1038,7 @@ CAMLprim value c_ida_session_finalize(value vdata)
 	void *ida_mem = IDA_MEM_FROM_ML(vdata);
 	value *backref = IDA_BACKREF_FROM_ML(vdata);
 	IDAFree(&ida_mem);
-	caml_remove_generational_global_root (backref);
-	free (backref);
+	c_sundials_free_value(backref);
     }
 
     FILE* err_file = (FILE *)Field(vdata, RECORD_IDA_SESSION_ERRFILE);

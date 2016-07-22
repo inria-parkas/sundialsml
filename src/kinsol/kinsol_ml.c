@@ -754,13 +754,11 @@ CAMLprim value c_kinsol_init(value weakref, value vtemp,
 	CHECK_FLAG("KINInit", flag);
     }
 
-    backref = malloc (sizeof (*backref));
+    backref = c_sundials_malloc_value(weakref);
     if (backref == NULL) {
 	KINFree (&kin_mem);
 	caml_raise_out_of_memory();
     }
-    *backref = weakref;
-    caml_register_generational_global_root (backref);
     KINSetUserData (kin_mem, backref);
 
     r = caml_alloc_tuple (4);
@@ -915,8 +913,7 @@ CAMLprim value c_kinsol_session_finalize(value vdata)
 	void *kin_mem = KINSOL_MEM_FROM_ML(vdata);
 	value *backref = KINSOL_BACKREF_FROM_ML(vdata);
 	KINFree(&kin_mem);
-	caml_remove_generational_global_root (backref);
-	free (backref);
+	c_sundials_free_value(backref);
     }
 
     FILE* err_file = (FILE *)Field(vdata, RECORD_KINSOL_SESSION_ERRFILE);

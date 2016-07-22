@@ -1574,13 +1574,10 @@ CAMLprim value c_cvodes_adj_init_backward(value vparent, value weakref,
     vcvode_mem = caml_alloc_final(1, NULL, sizeof(void *), sizeof(void *) * 15);
     CVODE_MEM(vcvode_mem) = CVodeGetAdjCVodeBmem(parent, which);
 
-    value *backref;
-    backref = malloc (sizeof (*backref));
+    value *backref = c_sundials_malloc_value(weakref);
     if (backref == NULL) {
 	caml_raise_out_of_memory();
     }
-    *backref = weakref;
-    caml_register_generational_global_root (backref);
     CVodeSetUserDataB (parent, which, backref);
 
     r = caml_alloc_tuple (4);
@@ -2386,8 +2383,7 @@ CAMLprim value c_cvodes_adj_bsession_finalize(value vdata)
     if (CVODE_MEM_FROM_ML(vdata) != NULL) {
 	value *backref = CVODE_BACKREF_FROM_ML(vdata);
 	// NB: CVodeFree() is *not* called: parents free-up backward problems
-	caml_remove_generational_global_root (backref);
-	free (backref);
+	c_sundials_free_value(backref);
     }
     return Val_unit;
 }

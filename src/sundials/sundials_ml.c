@@ -137,3 +137,23 @@ CAMLprim void sundials_crash (value msg)
     abort ();
     CAMLreturn0;
 }
+
+/* Functions for storing OCaml values in the C heap. */
+
+value *c_sundials_malloc_value(value v)
+{
+    value *heapref;
+    heapref = malloc (sizeof (*heapref));
+    if (heapref == NULL) return NULL;
+    *heapref = v;
+    caml_register_generational_global_root (heapref);
+
+    return heapref;
+}
+
+void c_sundials_free_value(value *heapref)
+{
+    caml_remove_generational_global_root (heapref);
+    free (heapref);
+}
+

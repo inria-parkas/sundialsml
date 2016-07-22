@@ -1159,14 +1159,11 @@ CAMLprim value c_arkode_init(value weakref, value hasfi, value hasfe,
 	CHECK_FLAG("ARKodeInit", flag);
     }
 
-    value *backref;
-    backref = malloc (sizeof (*backref));
+    value *backref = c_sundials_malloc_value(weakref);
     if (backref == NULL) {
 	ARKodeFree (&arkode_mem);
 	caml_raise_out_of_memory();
     }
-    *backref = weakref;
-    caml_register_generational_global_root (backref);
     ARKodeSetUserData (arkode_mem, backref);
 
     r = caml_alloc_tuple (3);
@@ -1421,8 +1418,7 @@ CAMLprim value c_arkode_session_finalize(value vdata)
 	void *arkode_mem = ARKODE_MEM_FROM_ML(vdata);
 	value *backref = ARKODE_BACKREF_FROM_ML(vdata);
 	ARKodeFree(&arkode_mem);
-	caml_remove_generational_global_root (backref);
-	free (backref);
+	c_sundials_free_value(backref);
     }
 
     FILE* err_file = (FILE *)Field(vdata, RECORD_ARKODE_SESSION_ERRFILE);

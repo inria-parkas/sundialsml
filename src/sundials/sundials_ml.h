@@ -161,6 +161,12 @@ enum sundials_exn_index {
 
 #define CAML_FN(fcn) (callbacks[IX_ ## fcn])
 
+/* Functions for storing OCaml values in the C heap, with registration of a
+   global root and construction of a block header. */
+
+value *c_sundials_malloc_value(value);
+void c_sundials_free_value(value *heapref);
+
 /* Generate trampolines needed for functions with >= 6 arguments.  */
 #define COMMA ,
 #define BYTE_STUB(fcn_name, extras)				\
