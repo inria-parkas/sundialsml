@@ -21,7 +21,7 @@ They each contain three types of pointers into the C heap:
   used by the `c_*_session_finalize` functions to remove the GC root before
   its memory is freed. This field is never used from OCaml. It is also used
   by the `c_*_set_err_handler_fn` functions to retrieve the weak session
-  pointer.
+  pointer. Access is via the `*_BACKREF_FROM_ML` macro.
 
 * `err_file`, `info_file`, `diag_file`: pointer to file handle (`FILE *`)
   returned by `fopen` (called within our code). Accessed from C in the
@@ -44,4 +44,11 @@ There are two types of matrix pointer: `dlsmat` (`DenseMatrix.t` and
 `BandMatrix.t`) and `slsmat` (`SparseMatrix.t`). Both are created as custom
 blocks using `caml_alloc_final` (by `c_dls_dense_wrap` and
 `c_sls_sparse_wrap`).
+
+SPILS Solvers
+-------------
+
+Pointers can be created to sessions of the various SPILS solvers (e.g., the
+field of type `Spils.SPGMR.memrec` within `Spils.SPGMR.t`). These pointers
+are created as custom blocks using `caml_alloc_final` (by `c_spils_*_make`).
 
