@@ -28,6 +28,11 @@ They each contain three types of pointers into the C heap:
   functions `c_*_init` (to set to NULL), `c_*_session_finalize` (to close
   the handle) and `c_*_set_error_file` (to open the handle).
 
+* Note that the sensitivity solvers also contain pointers to the session
+  record (from, e.g., `CVodeSetUserDataB`), to a `backref`, and to file
+  handles; see the `c_cvodes_adj_init_backward` and
+  c_idas_adj_init_backward` functions.
+
 Nvectors
 --------
 
