@@ -440,6 +440,29 @@ module Constraint :
 
 (** {2:results Solver results and error reporting} *)
 
+(** Files for error and diagnostic information. File values are passed
+    to functions like {!Cvode.set_error_file} and {!Kinsol.set_info_file} to
+    log solver errors and diagnostics. *)
+module Logfile :
+  sig
+    (** An open log file. *)
+    type t
+
+    (** The stderr file. *)
+    val stderr : t
+
+    (** The stdout file. *)
+    val stdout : t
+
+    (** Opens the named file. When [trunc] is false, the default, writes are
+        appended to the file. When [trunc] is true, the opened file is
+        truncated to zero length. Files are closed on garbage collection. *)
+    val openfile : ?trunc:bool -> string -> t
+
+    (** Flushes the given file. *)
+    val flush : t -> unit
+  end
+
 (** Information passed to registered error handler functions.
     See {!Cvode.set_err_handler_fn}, {!Ida.set_err_handler_fn}, and
     {!Kinsol.set_err_handler_fn}.

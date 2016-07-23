@@ -12,8 +12,6 @@
  ***********************************************************************/
 
 #include "../config.h"
-#include <errno.h>
-#include <string.h>
 
 #include <caml/alloc.h>
 #include <caml/memory.h>
@@ -785,12 +783,9 @@ CAMLprim value c_cvode_init(value weakref, value lmm, value iter, value initial,
     }
     CVodeSetUserData (cvode_mem, backref);
 
-    r = caml_alloc_tuple (3);
+    r = caml_alloc_tuple (2);
     Store_field (r, 0, vcvode_mem);
     Store_field (r, 1, (value)backref);
-    Store_field (r, 2, 0);   // no err_file = NULL; note OCaml doesn't
-			     // (seem to) support architectures where
-			     // 0 != (value)(void*)NULL.
 
     CAMLreturn(r);
 }
@@ -1011,11 +1006,6 @@ CAMLprim value c_cvode_session_finalize(value vdata)
 	c_sundials_free_value(backref);
     }
 
-    FILE* err_file = (FILE *)Field(vdata, RECORD_CVODE_SESSION_ERRFILE);
-    if (err_file != NULL) {
-	fclose(err_file);
-    }
-
     return Val_unit;
 }
 
@@ -1098,31 +1088,12 @@ CAMLprim value c_cvode_get_integrator_stats(value vdata)
     CAMLreturn(r);
 }
 
-CAMLprim value c_cvode_set_error_file(value vdata, value vpath, value vtrunc)
+CAMLprim value c_cvode_set_error_file(value vdata, value vfile)
 {
-    CAMLparam3(vdata, vpath, vtrunc);
+    CAMLparam2(vdata, vfile);
 
-    FILE* err_file = (FILE *)Field(vdata, RECORD_CVODE_SESSION_ERRFILE);
-
-    if (err_file != NULL) {
-	fclose(err_file);
-	Store_field(vdata, RECORD_CVODE_SESSION_ERRFILE, 0);
-    }
-    char *mode = Bool_val(vtrunc) ? "w" : "a";
-    err_file = fopen(String_val(vpath), mode);
-    if (err_file == NULL) {
-	// uerror("fopen", vpath); /* depends on unix.cma */
-	caml_failwith(strerror(errno));
-    }
-    if (1 & (value)err_file) {
-	fclose (err_file);
-	caml_failwith("FILE pointer is unaligned");
-    }
-
-    int flag = CVodeSetErrFile(CVODE_MEM_FROM_ML(vdata), err_file);
+    int flag = CVodeSetErrFile(CVODE_MEM_FROM_ML(vdata), ML_CFILE(vfile));
     CHECK_FLAG("CVodeSetErrFile", flag);
-
-    Store_field(vdata, RECORD_CVODE_SESSION_ERRFILE, (value)err_file);
 
     CAMLreturn (Val_unit);
 }

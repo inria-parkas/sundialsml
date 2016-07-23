@@ -445,7 +445,6 @@ end
 module CvodesBbdTypes = CvodeBbdTypes
 
 type cvode_mem
-type cvode_file
 type c_weak_ref
 
 type 'a rhsfn = float -> 'a -> 'a -> unit
@@ -462,7 +461,6 @@ type ('a, 'kind) session = {
   cvode      : cvode_mem;
   backref    : c_weak_ref;
   nroots     : int;
-  err_file   : cvode_file;
   checkvec   : (('a, 'kind) Nvector.t -> unit);
 
   mutable exn_temp     : exn option;

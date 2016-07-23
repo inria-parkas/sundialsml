@@ -137,7 +137,6 @@ module KinsolBbdTypes = struct
 end
 
 type kin_mem
-type kin_file
 type c_weak_ref
 
 type 'a sysfn = 'a -> 'a -> unit
@@ -152,8 +151,6 @@ type infoh = Sundials.error_details -> unit
 type ('a, 'k) session = {
   kinsol    : kin_mem;
   backref   : c_weak_ref;
-  err_file  : kin_file;
-  info_file : kin_file;
   initvec   : ('a, 'k) Nvector.t;   (* for the set_linear_solver call. *)
   checkvec  : (('a, 'k) Nvector.t -> unit);
 

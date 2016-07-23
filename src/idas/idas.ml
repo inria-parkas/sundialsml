@@ -1231,7 +1231,7 @@ module Adjoint =
           -> ('a, 'k) Nvector.t
           -> ('a, 'k) Nvector.t
           -> bool
-          -> (ida_mem * int * c_weak_ref * ida_file)
+          -> (ida_mem * int * c_weak_ref)
         = "c_idas_adj_init_backward_byte"
           "c_idas_adj_init_backward"
 
@@ -1241,7 +1241,7 @@ module Adjoint =
       let checkvec = Nvector.check y0 in
       if Sundials_config.safe then checkvec y'0;
       let weakref = Weak.create 1 in
-      let ida_mem, which, backref, err_file =
+      let ida_mem, which, backref =
         match mf with
         | NoSens _ -> c_init_backward s weakref t0 y0 y'0 false
         | WithSens _ -> c_init_backward s weakref t0 y0 y'0 true
@@ -1252,7 +1252,6 @@ module Adjoint =
               ida          = ida_mem;
               backref      = backref;
               nroots       = 0;
-              err_file     = err_file;
               checkvec     = checkvec;
 
               exn_temp     = None;

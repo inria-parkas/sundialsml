@@ -1166,12 +1166,9 @@ CAMLprim value c_arkode_init(value weakref, value hasfi, value hasfe,
     }
     ARKodeSetUserData (arkode_mem, backref);
 
-    r = caml_alloc_tuple (3);
+    r = caml_alloc_tuple (2);
     Store_field (r, 0, varkode_mem);
     Store_field (r, 1, (value)backref);
-    Store_field (r, 2, 0);   // no err_file = NULL; note OCaml doesn't
-			     // (seem to) support architectures where
-			     // 0 != (value)(void*)NULL.
 
     CAMLreturn(r);
 }
@@ -1421,11 +1418,6 @@ CAMLprim value c_arkode_session_finalize(value vdata)
 	c_sundials_free_value(backref);
     }
 
-    FILE* err_file = (FILE *)Field(vdata, RECORD_ARKODE_SESSION_ERRFILE);
-    if (err_file != NULL) {
-	fclose(err_file);
-    }
-
     return Val_unit;
 }
 
@@ -1522,60 +1514,32 @@ CAMLprim value c_arkode_get_integrator_stats(value vdata)
     CAMLreturn(r);
 }
 
-CAMLprim value c_arkode_set_error_file(value vdata, value vpath, value vtrunc)
+CAMLprim value c_arkode_set_error_file(value vdata, value vfile)
 {
-    CAMLparam3(vdata, vpath, vtrunc);
+    CAMLparam2(vdata, vfile);
 
-    FILE* err_file = (FILE *)Field(vdata, RECORD_ARKODE_SESSION_ERRFILE);
-
-    if (err_file != NULL) {
-	fclose(err_file);
-	Store_field(vdata, RECORD_ARKODE_SESSION_ERRFILE, 0);
-    }
-    char *mode = Bool_val(vtrunc) ? "w" : "a";
-    err_file = fopen(String_val(vpath), mode);
-    if (err_file == NULL) {
-	// uerror("fopen", vpath); /* depends on unix.cma */
-	caml_failwith(strerror(errno));
-    }
-    if (1 & (value)err_file) {
-	fclose (err_file);
-	caml_failwith("FILE pointer is unaligned");
-    }
-
-    int flag = ARKodeSetErrFile(ARKODE_MEM_FROM_ML(vdata), err_file);
+    int flag = ARKodeSetErrFile(ARKODE_MEM_FROM_ML(vdata), ML_CFILE(vfile));
     CHECK_FLAG("ARKodeSetErrFile", flag);
-
-    Store_field(vdata, RECORD_ARKODE_SESSION_ERRFILE, (value)err_file);
 
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_diagnostics(value vdata, value vpath, value vtrunc)
+CAMLprim value c_arkode_set_diagnostics(value vdata, value vfile)
 {
-    CAMLparam3(vdata, vpath, vtrunc);
+    CAMLparam2(vdata, vfile);
 
-    FILE* diag_file = (FILE *)Field(vdata, RECORD_ARKODE_SESSION_DIAGFILE);
-
-    if (diag_file != NULL) {
-	fclose(diag_file);
-	Store_field(vdata, RECORD_ARKODE_SESSION_DIAGFILE, 0);
-    }
-    char *mode = Bool_val(vtrunc) ? "w" : "a";
-    diag_file = fopen(String_val(vpath), mode);
-    if (diag_file == NULL) {
-	// uerror("fopen", vpath); /* depends on unix.cma */
-	caml_failwith(strerror(errno));
-    }
-    if (1 & (value)diag_file) {
-	fclose (diag_file);
-	caml_failwith("FILE pointer is unaligned");
-    }
-
-    int flag = ARKodeSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), diag_file);
+    int flag = ARKodeSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), ML_CFILE(vfile));
     CHECK_FLAG("ARKodeSetDiagnostics", flag);
 
-    Store_field(vdata, RECORD_ARKODE_SESSION_DIAGFILE, (value)diag_file);
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value c_arkode_clear_diagnostics(value vdata)
+{
+    CAMLparam1(vdata);
+
+    int flag = ARKodeSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), NULL);
+    CHECK_FLAG("ARKodeSetDiagnostics", flag);
 
     CAMLreturn (Val_unit);
 }

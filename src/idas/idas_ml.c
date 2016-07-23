@@ -2195,13 +2195,10 @@ CAMLprim value c_idas_adj_init_backward(value vparent, value weakref,
     }
     IDASetUserDataB (parent, which, backref);
 
-    r = caml_alloc_tuple (4);
+    r = caml_alloc_tuple (3);
     Store_field (r, 0, vida_mem);
     Store_field (r, 1, Val_int(which));
     Store_field (r, 2, (value)backref);
-    Store_field (r, 3, 0); // no err_file = NULL; note OCaml doesn't
-			   // (seem to) support architectures where
-			   // 0 != (value)(void*)NULL.
 
     CAMLreturn(r);
 }

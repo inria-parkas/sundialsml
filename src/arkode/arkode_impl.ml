@@ -264,7 +264,6 @@ module ArkodeBbdTypes = struct
 end
 
 type arkode_mem
-type arkode_file
 type c_weak_ref
 
 type 'a rhsfn = float -> 'a -> 'a -> unit
@@ -297,8 +296,6 @@ type ('a, 'kind) session = {
   arkode     : arkode_mem;
   backref    : c_weak_ref;
   nroots     : int;
-  err_file   : arkode_file;
-  diag_file  : arkode_file;
   mutable checkvec     : (('a, 'kind) Nvector.t -> unit);
   mutable uses_resv    : bool;
 

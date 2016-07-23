@@ -745,12 +745,9 @@ CAMLprim value c_ida_init (value weakref, value vt0, value vy, value vyp)
     }
     IDASetUserData (ida_mem, backref);
 
-    r = caml_alloc_tuple(3);
+    r = caml_alloc_tuple(2);
     Store_field(r, 0, vida_mem);
     Store_field(r, 1, (value)backref);
-    Store_field(r, 2, 0); // no err_file = NULL; note OCaml doesn't
-			  // (seem to) support architectures where
-			  // 0 != (value)(void*)NULL.
 
     CAMLreturn (r);
 }
@@ -1041,13 +1038,8 @@ CAMLprim value c_ida_session_finalize(value vdata)
 	c_sundials_free_value(backref);
     }
 
-    FILE* err_file = (FILE *)Field(vdata, RECORD_IDA_SESSION_ERRFILE);
-    if (err_file != NULL) {
-	fclose(err_file);
-    }
     return Val_unit;
 }
-
  
 CAMLprim value c_ida_ss_tolerances(value vdata, value reltol, value abstol)
 {
@@ -1128,31 +1120,12 @@ CAMLprim value c_ida_get_integrator_stats(value vdata)
     CAMLreturn(r);
 }
 
-CAMLprim value c_ida_set_error_file(value vdata, value vpath, value vtrunc)
+CAMLprim value c_ida_set_error_file(value vdata, value vfile)
 {
-    CAMLparam3(vdata, vpath, vtrunc);
+    CAMLparam2(vdata, vfile);
 
-    FILE* err_file = (FILE*)Field(vdata, RECORD_IDA_SESSION_ERRFILE);
-
-    if (err_file != NULL) {
-	fclose(err_file);
-	Store_field(vdata, RECORD_IDA_SESSION_ERRFILE, 0);
-    }
-    char *mode = Bool_val(vtrunc) ? "w" : "a";
-    err_file = fopen(String_val(vpath), mode);
-    if (err_file == NULL) {
-	// uerror("fopen", vpath); /* depends on unix.cma */
-	caml_failwith(strerror(errno));
-    }
-    if (1 & (value)err_file) {
-	fclose (err_file);
-	caml_failwith("FILE pointer is unaligned");
-    }
-
-    int flag = IDASetErrFile(IDA_MEM_FROM_ML(vdata), err_file);
+    int flag = IDASetErrFile(IDA_MEM_FROM_ML(vdata), ML_CFILE(vfile));
     CHECK_FLAG("IDASetErrFile", flag);
-
-    Store_field(vdata, RECORD_IDA_SESSION_ERRFILE, (value)err_file);
 
     CAMLreturn (Val_unit);
 }

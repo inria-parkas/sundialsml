@@ -1753,23 +1753,21 @@ val set_defaults : ('d, 'k) session -> unit
     @noarkode <node> ARKodeSetDenseOrder *)
 val set_dense_order : ('d, 'k) session -> int -> unit
 
-(** Opens the named file to receive step adaptivity and solver diagnostics.
-    If the file already exists it is either truncated ([true]) or extended
-    ([false]).
-    The file is closed if the function is called again or when the session is
-    garbage collected.
+(** Write step adaptivity and solver diagnostics to the given file.
 
     @noarkode <node> ARKodeSetDiagnostics *)
-val set_diagnostics : ('d, 'k) session -> string -> bool -> unit
+val set_diagnostics : ('d, 'k) session -> Sundials.Logfile.t -> unit
 
-(** Opens the named file to receive messages from the default error handler.
-    If the file already exists it is either truncated ([true]) or extended
-    ([false]).
-    The file is closed if the function is called again or when the session is
-    garbage collected.
+(** Do not write step adaptivity or solver diagnostics of a file.
+ 
+    @noarkode <node> ARKodeSetDiagnostics *)
+val clear_diagnostics : ('d, 'k) session -> unit
+
+(** Configure the default error handler to write messages to a file.
+    By default it writes to Sundials.Logfile.stderr.
 
     @noarkode <node> ARKodeSetErrFile *)
-val set_error_file : ('d, 'k) session -> string -> bool -> unit
+val set_error_file : ('d, 'k) session -> Sundials.Logfile.t -> unit
 
 (** Specifies a custom function for handling error messages.
     The handler must not fail: any exceptions are trapped and discarded.
