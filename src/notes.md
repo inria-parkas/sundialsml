@@ -42,6 +42,11 @@ finalizer around an `N_Vector`. The `NVEC_CVAL` macro is used to access the
 payload of such a value (or `NVEC_VAL` to access it via a field within a
 value of type `Nvector.t`).
 
+The `N_Vector` struct (created in the C heap) is extended with a _backlink_
+to the vector payload in the OCaml heap. This extra field is registered as a
+global root. It is not referenced from OCaml and it contains a valid
+reference into the OCaml heap.
+
 Matrices
 --------
 
