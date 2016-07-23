@@ -542,8 +542,6 @@ let set_constraints s cc =
   if Sundials_config.safe then s.checkvec cc;
   c_set_constraints s cc
 
-let set_linear_solver s lin_solv = lin_solv s s.initvec
-
 let set_sys_func s fsys =
   s.sysfn <- fsys
 

@@ -931,12 +931,6 @@ val set_scaled_step_tol : ('d, 'k) session -> float -> unit
     @kinsol <node5#ss:optin_main> KINSetConstraints *)
 val set_constraints : ('d, 'k) session -> ('d, 'k) Nvector.t -> unit
 
-(** Changes the linear solver. Allows consecutive solution attempts with
-    different tools or parameters.
-
-    @kinsol <node5#sss:lin_solv_init> Linear solver specification functions *)
-val set_linear_solver : ('d, 'k) session -> ('d, 'k) linear_solver -> unit
-
 (** Changes the system function. Allows solutions of several problems of the
     same size but with different functions.
 
