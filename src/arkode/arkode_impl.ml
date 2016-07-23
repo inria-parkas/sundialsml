@@ -149,7 +149,7 @@ module SlsTypes = struct
   type sparse_mass_callback =
     {
       massfn: sparse_mass_fn;
-      mutable smat : Sls_impl.t option
+      mutable smmat : Sls_impl.t option
     }
 end
 

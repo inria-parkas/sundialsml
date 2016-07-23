@@ -269,12 +269,12 @@ module Dls =
         | DlsBandMassCallback  ({ bmat = Some d } as cb) ->
             Dls.BandMatrix.invalidate d;
             cb.bmat <- None
-        | SlsKluMassCallback ({ SlsTypes.smat = Some d } as cb) ->
+        | SlsKluMassCallback ({ SlsTypes.smmat = Some d } as cb) ->
             Sls_impl.invalidate d;
-            cb.SlsTypes.smat <- None
-        | SlsSuperlumtMassCallback ({ SlsTypes.smat = Some d } as cb)
+            cb.SlsTypes.smmat <- None
+        | SlsSuperlumtMassCallback ({ SlsTypes.smmat = Some d } as cb)
             -> Sls_impl.invalidate d;
-               cb.SlsTypes.smat <- None
+               cb.SlsTypes.smmat <- None
         | _ -> ()
 
       let set_dense_fn s f =
@@ -359,7 +359,8 @@ module Sls = struct
         if not Sundials_config.klu_enabled
           then raise Sundials.NotImplementedBySundialsVersion;
         let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
-        session.mass_callbacks <- SlsKluMassCallback { massfn = f; smat = None };
+        session.mass_callbacks
+          <- SlsKluMassCallback { massfn = f; smmat = None };
         session.mass_precfns <- NoMassPrecFns;
         c_mass_klu session neqs nnz
 
@@ -429,7 +430,7 @@ module Sls = struct
           then raise Sundials.NotImplementedBySundialsVersion;
         let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
         session.mass_callbacks
-          <- SlsSuperlumtMassCallback { massfn = f; smat = None };
+          <- SlsSuperlumtMassCallback { massfn = f; smmat = None };
         session.mass_precfns <- NoMassPrecFns;
         c_mass_superlumt session neqs nnz nthreads
 
