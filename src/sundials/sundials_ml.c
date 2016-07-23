@@ -150,7 +150,7 @@ value *c_sundials_malloc_value(value v)
     block = (header_t *)malloc(Bhsize_wosize(1));
     if (block == NULL) return NULL;
     *block = Make_header(1, 0, Caml_black);
-    Field(Val_hp(block), 0) = v;
+    Store_field(Val_hp(block), 0, v);
     caml_register_generational_global_root (Op_hp(block));
     return Op_hp(block);
 }
