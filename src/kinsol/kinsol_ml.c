@@ -12,8 +12,6 @@
  ***********************************************************************/
 
 #include "../config.h"
-#include <errno.h>
-#include <string.h>
 
 #include <kinsol/kinsol.h>
 #include <sundials/sundials_types.h>

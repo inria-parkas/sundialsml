@@ -12,8 +12,6 @@
  ***********************************************************************/
 
 #include "../config.h"
-#include <errno.h>
-#include <string.h>
 
 #include <caml/alloc.h>
 #include <caml/memory.h>

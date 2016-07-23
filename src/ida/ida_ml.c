@@ -12,8 +12,6 @@
  ***********************************************************************/
 
 #include "../config.h"
-#include <errno.h>
-#include <string.h>
 
 /* Sundials IDA interface functions that do not involve NVectors. */
 
