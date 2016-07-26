@@ -1135,10 +1135,6 @@ CAMLprim value c_arkode_init(value weakref, value hasfi, value hasfe,
     CAMLparam5(weakref, hasfi, hasfe, y0, t0);
     CAMLlocal1(r);
 
-    if (sizeof(int) != 4) {
-	caml_failwith("The library assumes that an int (in C) has 32-bits.");
-    }
-
     int flag;
 
     void *arkode_mem = ARKodeCreate();

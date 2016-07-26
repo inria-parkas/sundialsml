@@ -736,10 +736,6 @@ CAMLprim value c_cvode_init(value weakref, value lmm, value iter, value initial,
     CAMLparam5(weakref, lmm, iter, initial, t0);
     CAMLlocal1(r);
 
-    if (sizeof(int) != 4) {
-	caml_failwith("The library assumes that an int (in C) has 32-bits.");
-    }
-
     int flag;
 
     int lmm_c;

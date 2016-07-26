@@ -720,10 +720,6 @@ CAMLprim value c_kinsol_init(value weakref, value vtemp,
     void *kin_mem;
     N_Vector temp;
 
-    if (sizeof(int) != 4) {
-	caml_failwith("The library assumes that an int (in C) has 32-bits.");
-    }
-
     kin_mem = KINCreate();
     if (kin_mem == NULL)
 	caml_failwith("KINCreate returned NULL");
