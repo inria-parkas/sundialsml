@@ -162,23 +162,27 @@ ALL_CMA = sundials.cma sundials_no_sens.cma sundials_mpi.cma	\
 
 # Installed files.
 
-INSTALL_CMA_WITH_COBJ=	sundials.cma sundials_no_sens.cma		\
-			$(if $(MPI_ENABLED),sundials_mpi.cma)		\
-			$(if $(OPENMP_ENABLED),sundials_openmp.cma)	\
-			$(if $(PTHREADS_ENABLED),sundials_pthreads.cma)
+# Libraries made by linking .cmo, .cmx, and .o files, yielding
+# foo.cma, foo.cmxa, foo.a, libmlfoo.a, and dllmlfoo.so.
+CMA_OF_CMO_CMX_COBJ=sundials.cma sundials_no_sens.cma			\
+		    $(if $(MPI_ENABLED),sundials_mpi.cma)		\
+		    $(if $(OPENMP_ENABLED),sundials_openmp.cma)		\
+		    $(if $(PTHREADS_ENABLED),sundials_pthreads.cma)
 
+# Libraries made by linking .cmo files, yielding foo.cma.
 # sundials_top_findlib.cma is built and installed only when the
 # install target is install-findlib, so it's not listed here.
-INSTALL_CMA_NO_COBJ = $(if $(TOP_ENABLED),				    \
-			 sundials_top.cma				    \
-			 $(if $(MPI_ENABLED),sundials_top_mpi.cma)	    \
-			 $(if $(OPENMP_ENABLED),sundials_top_openmp.cma)    \
-			 $(if $(PTHREADS_ENABLED),sundials_top_pthreads.cma)\
-		      )
+CMA_OF_CMO=$(if $(TOP_ENABLED),						\
+		sundials_top.cma					\
+		$(if $(MPI_ENABLED),sundials_top_mpi.cma)		\
+		$(if $(OPENMP_ENABLED),sundials_top_openmp.cma)		\
+		$(if $(PTHREADS_ENABLED),sundials_top_pthreads.cma)	\
+	    )
 
-INSTALL_CMA_FINDLIB = $(if $(TOP_ENABLED),sundials_top_findlib.cma)
+INSTALL_CMA= $(CMA_OF_CMO_CMX_COBJ) $(CMA_OF_CMO)
+INSTALL_CMXA=$(CMA_OF_CMO_CMX_COBJ:.cma=.cmxa)
 
-INSTALL_CMA = $(INSTALL_CMA_WITH_COBJ) $(INSTALL_CMA_NO_COBJ)
+INSTALL_LIBS=$(foreach file,$(CMA_OF_CMO_CMX_COBJ:.cma=$(XA)),libml$(file))
 
 INSTALL_CMI=$(CMI_MAIN) $(CMI_SENS)			\
 	    $(if $(TOP_ENABLED),$(CMI_TOP))		\
@@ -186,17 +190,17 @@ INSTALL_CMI=$(CMI_MAIN) $(CMI_SENS)			\
 	    $(if $(PTHREADS_ENABLED),$(CMI_PTHREADS))	\
 	    $(if $(OPENMP_ENABLED),$(CMI_OPENMP))
 
-INSTALL_XA=$(INSTALL_CMA_WITH_COBJ:.cma=$(XA))
+INSTALL_CMA_FINDLIB = $(if $(TOP_ENABLED),sundials_top_findlib.cma)
 
-STUBLIBS=$(foreach file,$(INSTALL_CMA_WITH_COBJ:.cma=$(XS)), dllml$(file))
+STUBLIBS=$(foreach file,$(CMA_OF_CMO_CMX_COBJ:.cma=$(XS)), dllml$(file))
 
 # Don't include $(STUBLIBS) here; they go in a different directory.
-INSTALL_FILES=							\
-    META							\
-    $(INSTALL_CMI)						\
-    $(INSTALL_CMA)						\
-    $(INSTALL_CMA:.cma=.cmxa)					\
-    $(INSTALL_XA)						\
-    $(foreach file,$(INSTALL_XA), libml$(file))
+INSTALL_FILES=								\
+    META								\
+    $(INSTALL_CMI)							\
+    $(INSTALL_CMA)							\
+    $(INSTALL_CMXA)							\
+    $(INSTALL_CMXA:.cmxa=$(XA))						\
+    $(INSTALL_LIBS)
 
 INSTALL_FILES_FINDLIB=$(INSTALL_CMA_FINDLIB) $(INSTALL_CMA_FINDLIB:.cma=.cmxa)
