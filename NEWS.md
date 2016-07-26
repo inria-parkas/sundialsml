@@ -1,3 +1,16 @@
+Lastest updates
+--------------------------------
+* Add pretty printers with automatic installation
+  (thanks to Nils Becker for the suggestion).
+* Improve Opam integration allowing pin from source code
+  (thanks to Gabriel Scherer for the suggestion).
+* Ensure compatibility with OCaml no-naked-pointers mode.
+* Fix segfaulting on exceptions in newer versions of OCaml.
+* Fix bug in RealArray2.size.
+* Update the set_err_file/set_info_file/set_diagnostics interface
+  (minor incompatibility).
+* Miscellaneous improvements to the build system.
+
 Sundials/ML 2.6.2p0 (March 2016)
 --------------------------------
 Sundials/ML v2.6.2p0 adds support for v2.6.x of the Sundials Suite of
