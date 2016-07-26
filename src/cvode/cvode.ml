@@ -599,7 +599,7 @@ let session_finalize s =
 
 external c_init
     : ('a, 'k) session Weak.t -> lmm -> ('a, 'k) iter -> ('a, 'k) nvector
-      -> float -> (cvode_mem * c_weak_ref * cvode_file)
+      -> float -> (cvode_mem * c_weak_ref)
     = "c_cvode_init"
 
 let init lmm iter tol f ?(roots=no_roots) t0 y0 =
@@ -608,14 +608,13 @@ let init lmm iter tol f ?(roots=no_roots) t0 y0 =
   if Sundials_config.safe && nroots < 0 then
     raise (Invalid_argument "number of root functions is negative");
   let weakref = Weak.create 1 in
-  let cvode_mem, backref, err_file = c_init weakref lmm iter y0 t0 in
+  let cvode_mem, backref = c_init weakref lmm iter y0 t0 in
   (* cvode_mem and backref have to be immediately captured in a session and
      associated with the finalizer before we do anything else.  *)
   let session = {
           cvode        = cvode_mem;
           backref      = backref;
           nroots       = nroots;
-          err_file     = err_file;
           checkvec     = checkvec;
 
           exn_temp     = None;
@@ -739,7 +738,7 @@ let print_integrator_stats s oc =
     Printf.fprintf oc "current_step = %e\n"        stats.current_step;
     Printf.fprintf oc "current_time = %e\n"        stats.current_time;
 
-external set_error_file : ('a, 'k) session -> string -> bool -> unit
+external set_error_file : ('a, 'k) session -> Sundials.Logfile.t -> unit
     = "c_cvode_set_error_file"
 
 external set_err_handler_fn  : ('a, 'k) session -> unit

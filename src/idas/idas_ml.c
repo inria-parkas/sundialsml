@@ -1825,8 +1825,7 @@ CAMLprim value c_idas_adj_bsession_finalize(value vdata)
     if (IDA_MEM_FROM_ML(vdata) != NULL) {
 	value *backref = IDA_BACKREF_FROM_ML(vdata);
 	// NB: IDAFree() is *not* called: parents free-up backward problems
-	caml_remove_generational_global_root (backref);
-	free (backref);
+	c_sundials_free_value(backref);
     }
     return Val_unit;
 }
@@ -2161,7 +2160,7 @@ CAMLprim value c_idas_adj_init_backward(value vparent, value weakref,
 {
     CAMLparam5(vparent, weakref, vtb0, vy0, vyp0);
     CAMLxparam1(vwithsens);
-    CAMLlocal1(r);
+    CAMLlocal2(r, vida_mem);
     CAMLlocal2(vlmm, viter);
     int flag, which;
     void *parent = IDA_MEM_FROM_ML(vparent);
@@ -2187,22 +2186,19 @@ CAMLprim value c_idas_adj_init_backward(value vparent, value weakref,
 	}
     }
 
-    value *backref;
-    backref = malloc (sizeof (*backref));
+    vida_mem = caml_alloc_final(1, NULL, sizeof(void *), sizeof(void *) * 15);
+    IDA_MEM(vida_mem) = IDAGetAdjIDABmem(parent, which);
+
+    value *backref = c_sundials_malloc_value(weakref);
     if (backref == NULL) {
 	caml_raise_out_of_memory();
     }
-    *backref = weakref;
-    caml_register_generational_global_root (backref);
     IDASetUserDataB (parent, which, backref);
 
-    r = caml_alloc_tuple (4);
-    Store_field (r, 0, (value)IDAGetAdjIDABmem(parent, which));
+    r = caml_alloc_tuple (3);
+    Store_field (r, 0, vida_mem);
     Store_field (r, 1, Val_int(which));
     Store_field (r, 2, (value)backref);
-    Store_field (r, 3, 0); // no err_file = NULL; note OCaml doesn't
-			   // (seem to) support architectures where
-			   // 0 != (value)(void*)NULL.
 
     CAMLreturn(r);
 }

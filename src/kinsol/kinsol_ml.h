@@ -51,8 +51,6 @@ int kinsol_translate_exception (value session, value exn_result,
 enum kinsol_index {
     RECORD_KINSOL_SESSION_MEM = 0,
     RECORD_KINSOL_SESSION_BACKREF,
-    RECORD_KINSOL_SESSION_ERRFILE,
-    RECORD_KINSOL_SESSION_INFOFILE,
     RECORD_KINSOL_SESSION_INITVEC,
     RECORD_KINSOL_SESSION_CHECKVEC,
     RECORD_KINSOL_SESSION_NEQS,
@@ -78,7 +76,9 @@ enum kinsol_bandrange_index {
   RECORD_KINSOL_BANDRANGE_SIZE
 };
 
-#define KINSOL_MEM_FROM_ML(v)   ((void *)Field((v), RECORD_KINSOL_SESSION_MEM))
+#define KINSOL_MEM(v) (*(void **)Data_custom_val(v))
+#define KINSOL_MEM_FROM_ML(v) \
+    (KINSOL_MEM(Field((v), RECORD_KINSOL_SESSION_MEM)))
 #define KINSOL_BACKREF_FROM_ML(v) \
     ((value *)(Field((v), RECORD_KINSOL_SESSION_BACKREF)))
 

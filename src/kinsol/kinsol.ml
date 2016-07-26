@@ -424,7 +424,7 @@ module Alternate =
 
   end
 
-external set_error_file : ('a, 'k) session -> string -> bool -> unit
+external set_error_file : ('a, 'k) session -> Sundials.Logfile.t -> unit
     = "c_kinsol_set_error_file"
 
 external c_set_err_handler_fn : ('a, 'k) session -> unit
@@ -441,7 +441,7 @@ let clear_err_handler_fn s =
   s.errh <- dummy_errh;
   c_clear_err_handler_fn s
 
-external set_info_file : ('a, 'k) session -> string -> bool -> unit
+external set_info_file : ('a, 'k) session -> Sundials.Logfile.t -> unit
     = "c_kinsol_set_info_file"
 
 external c_set_info_handler_fn : ('a, 'k) session -> unit
@@ -568,7 +568,7 @@ external get_step_length : ('a, 'k) session -> float
 
 external c_init
     : ('a, 'k) session Weak.t -> ('a, 'k) nvector -> int option -> int option
-      -> (kin_mem * c_weak_ref * kin_file * kin_file)
+      -> (kin_mem * c_weak_ref)
     = "c_kinsol_init"
 
 external c_session_finalize : ('a, 'k) session -> unit
@@ -581,14 +581,11 @@ let session_finalize s =
 let init ?max_iters ?maa ?linsolv f u0 =
   let checkvec = Nvector.check u0 in
   let weakref = Weak.create 1 in
-  let kin_mem, backref, err_file, info_file
-        = c_init weakref u0 max_iters maa
+  let kin_mem, backref = c_init weakref u0 max_iters maa
   in
   let session = {
           kinsol       = kin_mem;
           backref      = backref;
-          err_file     = err_file;
-          info_file    = info_file;
           initvec      = u0;
           checkvec     = checkvec;
 

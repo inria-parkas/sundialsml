@@ -40,10 +40,10 @@
  *   | cvode_mem  |<----------------------------------+ cvode          |
  *   +------------+      |    +-----------------------+ backref        |
  *   |    ...     |      |          .                 | nroots         |
- *   |cv_user_data+------+          .                 | err_file       |
- *   |    ...     |                 .                 | ls_callbacks   |
- *   +------------+                 .                 | ...            |
- *                                  .                 +----------------+
+ *   |cv_user_data+------+          .                 | ls_callbacks   |
+ *   |    ...     |                 .                 | ...            |
+ *   +------------+                 .                 +----------------+
+ *                                  .
  *
  *  * A cvode_mem structure is allocated by CVodeInit for each session. It
  *    is the "C side" of the session data structure.
@@ -116,12 +116,12 @@
  *  |  +--------------+     .  NOT show how .        +----------------+
  *  |  |  cvode_mem   |<-----  the current  ---------+ cvode          |
  *  |  +--------------+     .  code works!! .        | nroots         |
- *  |  |     ...      |     .  The diagram  .        | err_file       |
- *  +--+ cv_user_data |     .  above does!! .        | closure_rhsfn  |
- *     | conceptually |     .               .        | closure_rootsfn|
- *     | of type      |     .               .        | ...            |
- *     | value **     |     .               .        |                |
- *     |     ...      |     .               .        +----------------+
+ *  |  |     ...      |     .  The diagram  .        | closure_rhsfn  |
+ *  +--+ cv_user_data |     .  above does!! .        | closure_rootsfn|
+ *     | conceptually |     .               .        | ...            |
+ *     | of type      |     .               .        |                |
+ *     | value **     |     .               .        +----------------+
+ *     |     ...      |     .               .
  *     +--------------+     .               .
  *
  * On the one hand, we dropped this approach because it's invasive and
@@ -174,7 +174,6 @@ enum cvode_session_index {
     RECORD_CVODE_SESSION_CVODE = 0,
     RECORD_CVODE_SESSION_BACKREF,
     RECORD_CVODE_SESSION_NROOTS,
-    RECORD_CVODE_SESSION_ERRFILE,
     RECORD_CVODE_SESSION_CHECKVEC,
     RECORD_CVODE_SESSION_EXN_TEMP,
     RECORD_CVODE_SESSION_RHSFN,
@@ -187,7 +186,8 @@ enum cvode_session_index {
     RECORD_CVODE_SESSION_SIZE,	/* This has to come last.  */
 };
 
-#define CVODE_MEM_FROM_ML(v)   ((void *)Field((v), RECORD_CVODE_SESSION_CVODE))
+#define CVODE_MEM(v) (*(void **)Data_custom_val(v))
+#define CVODE_MEM_FROM_ML(v) (CVODE_MEM(Field((v), RECORD_CVODE_SESSION_CVODE)))
 #define CVODE_BACKREF_FROM_ML(v) \
     ((value *)(Field((v), RECORD_CVODE_SESSION_BACKREF)))
 #define CVODE_NROOTS_FROM_ML(v) \

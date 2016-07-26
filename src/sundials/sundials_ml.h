@@ -22,6 +22,7 @@
 #include <caml/mlvalues.h>
 
 #include "../config.h"
+#include <stdio.h>
 #include <assert.h>
 
 void sundials_ml_warn_discarded_exn (value exn, const char *context);
@@ -160,6 +161,15 @@ enum sundials_exn_index {
     } while (0)
 
 #define CAML_FN(fcn) (callbacks[IX_ ## fcn])
+
+/* Accessing FILE* values */
+#define ML_CFILE(v) (*(FILE **)Data_custom_val(v))
+
+/* Functions for storing OCaml values in the C heap, with registration of a
+   global root and construction of a block header. */
+
+value *c_sundials_malloc_value(value);
+void c_sundials_free_value(value *heapref);
 
 /* Generate trampolines needed for functions with >= 6 arguments.  */
 #define COMMA ,

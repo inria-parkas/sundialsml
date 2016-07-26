@@ -519,7 +519,7 @@ let session_finalize s =
 
 external c_init : ('a, 'k) session Weak.t -> float
                   -> ('a, 'k) Nvector.t -> ('a, 'k) Nvector.t
-                  -> (ida_mem * c_weak_ref * ida_file)
+                  -> (ida_mem * c_weak_ref)
     = "c_ida_init"
 
 let init linsolv tol resfn ?varid ?(roots=no_roots) t0 y y' =
@@ -531,13 +531,12 @@ let init linsolv tol resfn ?varid ?(roots=no_roots) t0 y y' =
   (* FIXME: can we check y and y' have the same length, at least for
      some nvector types?  *)
   let weakref = Weak.create 1 in
-  let ida_mem, backref, err_file = c_init weakref t0 y y' in
+  let ida_mem, backref = c_init weakref t0 y y' in
   (* ida_mem and backref have to be immediately captured in a session and
      associated with the finalizer before we do anything else.  *)
   let session = { ida        = ida_mem;
                   backref    = backref;
                   nroots     = nroots;
-                  err_file   = err_file;
                   checkvec   = checkvec;
                   exn_temp   = None;
                   id_set     = false;
@@ -671,7 +670,7 @@ let print_integrator_stats s oc =
     Printf.fprintf oc "current_step = %e\n"        stats.current_step;
     Printf.fprintf oc "current_time = %e\n"        stats.current_time;
 
-external set_error_file : ('a, 'k) session -> string -> bool -> unit
+external set_error_file : ('a, 'k) session -> Sundials.Logfile.t -> unit
     = "c_ida_set_error_file"
 
 external set_err_handler_fn  : ('a, 'k) session -> unit

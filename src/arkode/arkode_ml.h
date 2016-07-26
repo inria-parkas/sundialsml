@@ -40,10 +40,9 @@
  *   | arkode_mem  |<---------------------------------+ arkode         |
  *   +-------------+     |    +-----------------------+ backref        |
  *   |    ...      |     |          .                 | nroots         |
- *   |ark_user_data+-----+          .                 | err_file       |
- *   |    ...      |                .                 | ls_callbacks   |
- *   +-------------+                .                 | ...            |
- *                                  .                 +----------------+
+ *   |ark_user_data+-----+          .                 | ls_callbacks   |
+ *   |    ...      |                .                 | ...            |
+ *   +-------------+                .                 +----------------+
  *
  *  * An arkode_mem structure is allocated by ARKodeInit for each session. It
  *    is the "C side" of the session data structure.
@@ -130,8 +129,6 @@ enum arkode_session_index {
     RECORD_ARKODE_SESSION_ARKODE = 0,
     RECORD_ARKODE_SESSION_BACKREF,
     RECORD_ARKODE_SESSION_NROOTS,
-    RECORD_ARKODE_SESSION_ERRFILE,
-    RECORD_ARKODE_SESSION_DIAGFILE,
     RECORD_ARKODE_SESSION_CHECKVEC,
     RECORD_ARKODE_SESSION_USES_RESV,
     RECORD_ARKODE_SESSION_EXN_TEMP,
@@ -153,8 +150,9 @@ enum arkode_session_index {
     RECORD_ARKODE_SESSION_SIZE,
 };
 
+#define ARKODE_MEM(v) (*(void **)Data_custom_val(v))
 #define ARKODE_MEM_FROM_ML(v) \
-    ((void *)Field((v), RECORD_ARKODE_SESSION_ARKODE))
+    (ARKODE_MEM(Field((v), RECORD_ARKODE_SESSION_ARKODE)))
 #define ARKODE_BACKREF_FROM_ML(v) \
     ((value *)(Field((v), RECORD_ARKODE_SESSION_BACKREF)))
 #define ARKODE_NROOTS_FROM_ML(v) \

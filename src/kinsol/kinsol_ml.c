@@ -12,8 +12,6 @@
  ***********************************************************************/
 
 #include "../config.h"
-#include <errno.h>
-#include <string.h>
 
 #include <kinsol/kinsol.h>
 #include <sundials/sundials_types.h>
@@ -714,7 +712,7 @@ CAMLprim value c_kinsol_init(value weakref, value vtemp,
 			     value vomaxiters, value vomaa)
 {
     CAMLparam4(weakref, vtemp, vomaxiters, vomaa);
-    CAMLlocal1(r);
+    CAMLlocal2(r, vkin_mem);
     int flag;
     value *backref;
     void *kin_mem;
@@ -723,6 +721,9 @@ CAMLprim value c_kinsol_init(value weakref, value vtemp,
     kin_mem = KINCreate();
     if (kin_mem == NULL)
 	caml_failwith("KINCreate returned NULL");
+
+    vkin_mem = caml_alloc_final(1, NULL, sizeof(void *), sizeof(void *) * 5);
+    KINSOL_MEM(vkin_mem) = kin_mem;
 
     if (vomaxiters != Val_none) {
 	flag = KINSetNumMaxIters(kin_mem, Long_val(Some_val(vomaxiters)));
@@ -747,23 +748,16 @@ CAMLprim value c_kinsol_init(value weakref, value vtemp,
 	CHECK_FLAG("KINInit", flag);
     }
 
-    backref = malloc (sizeof (*backref));
+    backref = c_sundials_malloc_value(weakref);
     if (backref == NULL) {
 	KINFree (&kin_mem);
 	caml_raise_out_of_memory();
     }
-    *backref = weakref;
-    caml_register_generational_global_root (backref);
     KINSetUserData (kin_mem, backref);
 
-    r = caml_alloc_tuple (4);
-    Store_field (r, 0, (value)kin_mem);
+    r = caml_alloc_tuple (2);
+    Store_field (r, 0, vkin_mem);
     Store_field (r, 1, (value)backref);
-
-    /* No file = NULL; note OCaml doesn't (seem to) support
-     * architectures where 0 != (value)(void*)NULL. */
-    Store_field (r, 2, 0);
-    Store_field (r, 3, 0);
 
     CAMLreturn(r);
 }
@@ -908,18 +902,7 @@ CAMLprim value c_kinsol_session_finalize(value vdata)
 	void *kin_mem = KINSOL_MEM_FROM_ML(vdata);
 	value *backref = KINSOL_BACKREF_FROM_ML(vdata);
 	KINFree(&kin_mem);
-	caml_remove_generational_global_root (backref);
-	free (backref);
-    }
-
-    FILE* err_file = (FILE *)Field(vdata, RECORD_KINSOL_SESSION_ERRFILE);
-    if (err_file != NULL) {
-	fclose(err_file);
-    }
-
-    FILE* info_file = (FILE *)Field(vdata, RECORD_KINSOL_SESSION_INFOFILE);
-    if (info_file != NULL) {
-	fclose(info_file);
+	c_sundials_free_value(backref);
     }
 
     return Val_unit;
@@ -1120,60 +1103,22 @@ CAMLprim value c_kinsol_spils_get_num_func_evals (value vkin_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_kinsol_set_error_file(value vdata, value vpath, value vtrunc)
+CAMLprim value c_kinsol_set_error_file(value vdata, value vfile)
 {
-    CAMLparam3(vdata, vpath, vtrunc);
+    CAMLparam2(vdata, vfile);
 
-    FILE* err_file = (FILE *)Field(vdata, RECORD_KINSOL_SESSION_ERRFILE);
-
-    if (err_file != NULL) {
-	fclose(err_file);
-	Store_field(vdata, RECORD_KINSOL_SESSION_ERRFILE, 0);
-    }
-    char *mode = Bool_val(vtrunc) ? "w" : "a";
-    err_file = fopen(String_val(vpath), mode);
-    if (err_file == NULL) {
-	// uerror("fopen", vpath); /* depends on unix.cma */
-	caml_failwith(strerror(errno));
-    }
-    if (1 & (value)err_file) {
-	fclose (err_file);
-	caml_failwith("FILE pointer is unaligned");
-    }
-
-    int flag = KINSetErrFile(KINSOL_MEM_FROM_ML(vdata), err_file);
+    int flag = KINSetErrFile(KINSOL_MEM_FROM_ML(vdata), ML_CFILE(vfile));
     CHECK_FLAG("KINSetErrFile", flag);
-
-    Store_field(vdata, RECORD_KINSOL_SESSION_ERRFILE, (value)err_file);
 
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_set_info_file(value vdata, value vpath, value vtrunc)
+CAMLprim value c_kinsol_set_info_file(value vdata, value vfile)
 {
-    CAMLparam3(vdata, vpath, vtrunc);
+    CAMLparam2(vdata, vfile);
 
-    FILE* info_file = (FILE *)Field(vdata, RECORD_KINSOL_SESSION_INFOFILE);
-
-    if (info_file != NULL) {
-	fclose(info_file);
-	Store_field(vdata, RECORD_KINSOL_SESSION_INFOFILE, 0);
-    }
-    char *mode = Bool_val(vtrunc) ? "w" : "a";
-    info_file = fopen(String_val(vpath), mode);
-    if (info_file == NULL) {
-	// uerror("fopen", vpath); /* depends on unix.cma */
-	caml_failwith(strerror(errno));
-    }
-    if (1 & (value)info_file) {
-	fclose (info_file);
-	caml_failwith("FILE pointer is unaligned");
-    }
-
-    int flag = KINSetInfoFile(KINSOL_MEM_FROM_ML(vdata), info_file);
+    int flag = KINSetInfoFile(KINSOL_MEM_FROM_ML(vdata), ML_CFILE(vfile));
     CHECK_FLAG("KINSetInfoFile", flag);
-
-    Store_field(vdata, RECORD_KINSOL_SESSION_INFOFILE, (value)info_file);
 
     CAMLreturn (Val_unit);
 }
