@@ -1978,7 +1978,7 @@ CAMLprim value c_cvodes_sens_set_params(value vdata, value vparams)
     if (vplist != Val_none) {
 	vplist = Some_val(vplist);
 	ns = Wosize_val (vplist); /* vplist : int array */
-	plist = calloc(ns, sizeof(int));
+	plist = calloc(ns, sizeof(*plist));
 
 	for (i=0; i < ns; ++i) {
 	    plist[i] = Int_val(Field(vplist, i));

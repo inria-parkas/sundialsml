@@ -61,6 +61,32 @@ sundials_openmp.cma sundials_openmp.cmxa: $(MLOBJ_OPENMP)		\
 	    -o sundials_openmp -oc mlsundials_openmp $^	\
 	    $(LIB_PATH) $(OPENMP_LIBLINK)
 
+$(CMA_TOP_ALL): %.cma:
+	$(OCAMLC) -a -o $@ $^
+
+$(CMA_TOP_ALL:.cma=.cmxa): %.cmxa:
+	$(OCAMLOPT) -a -o $@ $^
+
+sundials_top.cma: $(MLOBJ_TOP)
+sundials_top_mpi.cma: $(MLOBJ_TOP_MPI)
+sundials_top_openmp.cma: $(MLOBJ_TOP_OPENMP)
+sundials_top_pthreads.cma: $(MLOBJ_TOP_PTHREADS)
+sundials_top_findlib.cma: $(MLOBJ_TOP_FINDLIB)
+
+sundials_top.cmxa: $(MLOBJ_TOP:.cmo=.cmx)
+sundials_top_mpi.cmxa: $(MLOBJ_TOP_MPI:.cmo=.cmx)
+sundials_top_openmp.cmxa: $(MLOBJ_TOP_OPENMP:.cmo=.cmx)
+sundials_top_pthreads.cmxa: $(MLOBJ_TOP_PTHREADS:.cmo=.cmx)
+sundials_top_findlib.cmxa: $(MLOBJ_TOP_FINDLIB:.cmo=.cmx)
+
+$(MLOBJ_TOP_ALL) $(CMI_TOP) $(MLOBJ_TOP_ALL:.cmo=.cmx):	\
+	INCLUDES += $(TOP_INCLUDES)
+
+$(MLOBJ_TOP_FINDLIB:.cmo=.ml): %.ml: ../config
+	echo "(* Automatically generated file - don't edit!  See the Makefile.  *)" > $@
+	ocamlfind printconf destdir | sed -e 's/^/Topdirs.dir_directory \"/' \
+	    -e 's/$$/\/sundialsml";;/' >> $@
+
 $(MLOBJ_MPI) $(CMI_MPI) $(MLOBJ_MPI:.cmo=.cmx)	\
 	     doc/html/index.html :		\
     INCLUDES += $(MPI_INCLUDES)
@@ -236,6 +262,7 @@ META: META.in ../config
 	    $(if $(MPI_ENABLED),-DMPI_ENABLED)			\
 	    $(if $(PTHREADS_ENABLED),-DPTHREADS_ENABLED)	\
 	    $(if $(OPENMP_ENABLED),-DOPENMP_ENABLED)		\
+	    $(if $(TOP_ENABLED),-DTOP_ENABLED)			\
 	    $<							\
 	    | grep -v '^#' > $@
 
@@ -251,8 +278,11 @@ install-sys: META $(INSTALL_CMA) $(INSTALL_CMA:.cma=.cmxa)
 	$(if $(ENABLE_SHARED),$(CP) $(STUBLIBS) $(STUBDIR))
 
 install-ocamlfind: install-findlib
-install-findlib: META $(INSTALL_CMA) $(INSTALL_CMA:.cma=.cmxa)
-	@ocamlfind install sundialsml $(INSTALL_FILES) -optional $(STUBLIBS)
+install-findlib: META $(INSTALL_CMA) $(INSTALL_CMXA)		\
+		 $(INSTALL_CMA_FINDLIB)
+	@ocamlfind install sundialsml $(INSTALL_FILES)	\
+	    $(INSTALL_FILES_FINDLIB)			\
+	    -optional $(STUBLIBS)
 
 install-doc:
 	$(MAKE) -C ../doc install

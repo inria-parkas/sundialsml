@@ -404,9 +404,7 @@ Cvode.set_stop_time s 2.;;
 
 (* repeat the commands below to advance the simulation until t = 2.0 *)
 let (t', result) = Cvode.solve_normal s 2. yvec;;
-Printf.printf "%e: " t';
-Sundials.RealArray.iter (Printf.printf "\t%e") y;
-Printf.printf "\n";;]}
+Format.printf "%e: %a\n" t' Sundials.RealArray.pp y;;]}
 
 Using MPI from a toplevel is best done with [ocamlfind] by first creating a
 custom toplevel:
