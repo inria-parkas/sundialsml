@@ -238,7 +238,7 @@ install-sys: META $(INSTALL_CMA) $(INSTALL_CMA:.cma=.cmxa)
 
 install-ocamlfind: install-findlib
 install-findlib: META $(INSTALL_CMA) $(INSTALL_CMXA)		\
-		 $(INSTALL_CMA_FINDLIB) $(INSTALL_CMA_FINDLIB:.cma=.cmxa)
+		 $(INSTALL_CMA_FINDLIB)
 	@ocamlfind install sundialsml $(INSTALL_FILES)	\
 	    $(INSTALL_FILES_FINDLIB)			\
 	    -optional $(STUBLIBS)
