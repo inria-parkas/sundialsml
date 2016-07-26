@@ -82,16 +82,6 @@ sundials_top_findlib.cmxa: $(MLOBJ_TOP_FINDLIB:.cmo=.cmx)
 $(MLOBJ_TOP_ALL) $(CMI_TOP) $(MLOBJ_TOP_ALL:.cmo=.cmx):	\
 	INCLUDES += $(TOP_INCLUDES)
 
-$(MLOBJ_TOP_GEN): sundials/sundials_top.cmo
-
-$(MLOBJ_TOP_PP:.cmo=.ml): %_top.ml: %.mli
-	echo "(* Automatically generated file - don't edit!  See the Makefile.  *)" > $@
-	echo "Sundials_top.install_printers [" >> $@
-	grep '(\* TOPLEVEL-PRINTER: ' $< | \
-	    sed -e 's/^.*(\* TOPLEVEL-PRINTER: \([a-zA-Z_0-9\.]*\) \*).*$$/\1/' \
-	        -e 's/^/ "/' -e 's/$$/";/' >> $@
-	echo "];;" >> $@
-
 $(MLOBJ_TOP_FINDLIB:.cmo=.ml): %.ml: ../config
 	echo "(* Automatically generated file - don't edit!  See the Makefile.  *)" > $@
 	ocamlfind printconf destdir | sed -e 's/^/Topdirs.dir_directory \"/' \

@@ -138,9 +138,6 @@ MLOBJ_TOP_PP = $(filter-out sundials/sundials_top_findlib.cmo	\
 			     sundials/sundials_top.cmo,		\
 			$(MLOBJ_TOP_ALL))
 
-# Modules that are automatically generated.
-MLOBJ_TOP_GEN= $(MLOBJ_TOP_PP) sundials/sundials_top_findlib.cmo
-
 CMA_TOP_ALL = sundials_top.cma sundials_top_mpi.cma		\
 	      sundials_top_openmp.cma sundials_top_pthreads.cma	\
 	      sundials_top_findlib.cma
@@ -154,7 +151,7 @@ ALL_COBJ = $(COBJ_MAIN) $(COBJ_SENS) $(COBJ_NO_SENS) $(COBJ_MPI) \
 ALL_MLOBJ =doc/dochtml.cmo $(MLOBJ_MAIN)		\
 	   $(MLOBJ_SENS) $(MLOBJ_NO_SENS) $(MLOBJ_MPI)	\
 	   $(MLOBJ_OPENMP) $(MLOBJ_PTHREADS)		\
-	   $(MLOBJ_TOP_ALL) $(MLOBJ_TOP_GEN:.cmo=.ml)
+	   $(MLOBJ_TOP_ALL)
 ALL_CMA = sundials.cma sundials_no_sens.cma sundials_mpi.cma	\
 	  sundials_openmp.cma sundials_pthreads.cma		\
 	  sundials_docs.cma sundials_docs.cmxs			\

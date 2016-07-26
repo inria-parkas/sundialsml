@@ -1,7 +1,1 @@
-lsolvers/dls_top.ml
-lsolvers/sls_top.ml
-nvectors/nvector_openmp_top.ml
-nvectors/nvector_parallel_top.ml
-nvectors/nvector_pthreads_top.ml
-nvectors/nvector_serial_top.ml
 sundials/sundials_top_findlib.ml
