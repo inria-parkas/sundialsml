@@ -9,7 +9,7 @@ default: all
 
 .PHONY: all sundials install doc clean distclean
 
-all: $(INSTALL_CMA) $(INSTALL_CMA:.cma=.cmxa)
+all: $(INSTALL_CMA) $(INSTALL_CMXA)
 
 sundials.cma sundials.cmxa: $(MLOBJ_MAIN) $(MLOBJ_SENS)			    \
 			    $(MLOBJ_MAIN:.cmo=.cmx) $(MLOBJ_SENS:.cmo=.cmx) \
@@ -271,7 +271,7 @@ META: META.in ../config
 install: install-sys $(if $(INSTALL_DOCS),install-doc)
 
 # Install to OCaml's system directory -- /usr/lib/ocaml on Debian derivatives.
-install-sys: META $(INSTALL_CMA) $(INSTALL_CMA:.cma=.cmxa)
+install-sys: META $(INSTALL_CMA) $(INSTALL_CMXA)
 	[ -d $(PKGDIR) ] || $(MKDIR) $(PKGDIR)
 	$(CP) $(INSTALL_FILES) $(PKGDIR)
 	$(if $(ENABLE_SHARED),[ -d $(STUBDIR) ] || $(MKDIR) $(STUBDIR))
