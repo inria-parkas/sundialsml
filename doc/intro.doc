@@ -27,6 +27,11 @@ are welcome.
 Support requests should be made to the (public)
 {{:mailto:caml-list\@inria.fr?subject=Sundials/ML:}OCaml mailing list}.
 
+We presented Sundials/ML at the 2016
+{{:https://ocaml.org/meetings/ocaml/2016/}The OCaml Users and Developers Workshop}.
+A brief {{:mlworkshop2016.pdf}technical summary} is included in the proceedings
+of the 2016 {{:http://www.mlworkshop.org/ml2016/}ACM Workshop on ML}.
+
 {3:contents Contents}
 {ul
     {- {{:#overview}Overview}}
