@@ -58,6 +58,24 @@ module RealArray =
 
     let length : t -> int = Array1.dim
 
+    let ppi ?(start="[") ?(stop="]") ?(sep=";")
+            ?(item=fun f->Format.fprintf f "%2d=% -14e")
+            fmt a =
+      Format.pp_print_string fmt start;
+      Format.pp_open_hovbox fmt 0;
+      for i = 0 to length a - 1 do
+        if i > 0 then (
+          Format.pp_print_string fmt sep;
+          Format.pp_print_space fmt ();
+        );
+        item fmt i a.{i}
+      done;
+      Format.pp_close_box fmt ();
+      Format.pp_print_string fmt stop
+
+    let pp fmt a = ppi fmt a
+      ~item:(fun fmt _ x -> Format.fprintf fmt "% -14e" x)
+
     let blit_some src isrc dst idst len =
       if Sundials_config.safe &&
          (len < 0 || isrc < 0 || isrc + len >= length src
@@ -161,7 +179,40 @@ module RealArray2 =
 
     let size a =
       let d = unwrap a in
-      (Array2.dim1 d, Array2.dim2 d)
+      (Array2.dim2 d, Array2.dim1 d)
+
+    let ppi ?(start="[") ?(rowstart="[") ?(stop="]") ?(rowstop="]")
+            ?(sep=";") ?(rowsep=";")
+            ?(item=fun f -> Format.fprintf f "(%2d,%2d)=% -14e")
+            fmt a =
+      let d = unwrap a in
+      let ni, nj = Array2.dim2 d - 1, Array2.dim1 d - 1 in
+      Format.pp_print_string fmt start;
+      Format.pp_open_vbox fmt 0;
+      for i = 0 to ni do
+        if i > 0 then (
+          Format.pp_print_string fmt rowsep;
+          Format.pp_print_cut fmt ()
+        );
+
+        Format.pp_print_string fmt rowstart;
+        Format.pp_open_hovbox fmt 0;
+        for j = 0 to nj do
+          if j > 0 then (
+            Format.pp_print_string fmt sep;
+            Format.pp_print_space fmt ();
+          );
+          item fmt i j d.{j, i}
+        done;
+        Format.pp_close_box fmt ();
+        Format.pp_print_string fmt rowstop
+
+      done;
+      Format.pp_close_box fmt ();
+      Format.pp_print_string fmt stop
+
+    let pp fmt a = ppi fmt a
+      ~item:(fun fmt _ _ x -> Format.fprintf fmt "% -14e" x)
 
     let get x i j = Array2.get (unwrap x) j i
     let set x i j = Array2.set (unwrap x) j i
@@ -319,6 +370,34 @@ module LintArray =
       Array1.fill v x;
       v
 
+    let pp fmt a =
+      Format.pp_print_string fmt "[";
+      Format.pp_open_hovbox fmt 0;
+      for i = 0 to Array1.dim a - 1 do
+        if i > 0 then (
+          Format.pp_print_string fmt ";";
+          Format.pp_print_space fmt ();
+        );
+        Format.fprintf fmt "% 6d" a.{i}
+      done;
+      Format.pp_close_box fmt ();
+      Format.pp_print_string fmt "]"
+
+    let ppi ?(start="[") ?(stop="]") ?(sep=";")
+            ?(item=fun fmt ->Format.fprintf fmt "%2d=% 6d")
+            fmt a =
+      Format.pp_print_string fmt start;
+      Format.pp_open_hovbox fmt 0;
+      for i = 0 to Array1.dim a - 1 do
+        if i > 0 then (
+          Format.pp_print_string fmt sep;
+          Format.pp_print_space fmt ();
+        );
+        item fmt i a.{i}
+      done;
+      Format.pp_close_box fmt ();
+      Format.pp_print_string fmt stop
+
   end
 
 module Roots =
@@ -373,6 +452,43 @@ module Roots =
 
     let length = Array1.dim
 
+    let string_of_root e =
+      match e with
+      | NoRoot  -> "_"
+      | Rising  -> "R"
+      | Falling -> "F"
+
+    let pp fmt a =
+      Format.pp_print_string fmt "[";
+      Format.pp_open_hovbox fmt 0;
+      for i = 0 to length a - 1 do
+        if i > 0 then (
+          Format.pp_print_string fmt ";";
+          Format.pp_print_space fmt ();
+        );
+        Format.pp_print_string fmt (string_of_root (root_of_int32 a.{i}))
+      done;
+      Format.pp_close_box fmt ();
+      Format.pp_print_string fmt "]"
+
+    let ppi ?(start="[") ?(stop="]") ?(sep=";")
+            ?(item=fun fmt i e ->
+                      Format.pp_print_int fmt i;
+                      Format.pp_print_string fmt "=";
+                      Format.pp_print_string fmt (string_of_root e))
+            fmt a =
+      Format.pp_print_string fmt start;
+      Format.pp_open_hovbox fmt 0;
+      for i = 0 to length a - 1 do
+        if i > 0 then (
+          Format.pp_print_string fmt sep;
+          Format.pp_print_space fmt ();
+        );
+        item fmt i (root_of_int32 a.{i})
+      done;
+      Format.pp_close_box fmt ();
+      Format.pp_print_string fmt stop
+
     module A = ArrayLike (struct
       type t = (int32, int32_elt, c_layout) Array1.t
       and elt = r
@@ -385,6 +501,7 @@ module Roots =
 
     let make n x = A.make n x
     let copy = A.copy
+    let init = A.init
     let fold_left = A.fold_left
     let fold_right = A.fold_right
 
@@ -428,6 +545,7 @@ module RootDirs =
       | Increasing -> 1l
       | Decreasing -> -1l
       | IncreasingOrDecreasing -> 0l
+
     let rootdir_of_int32 x =
       match x with
       | 1l -> Increasing
@@ -446,6 +564,43 @@ module RootDirs =
     let create n = make n IncreasingOrDecreasing
 
     let length a = Array1.dim a
+
+    let string_of_rootdir e =
+      match e with
+      | Increasing -> "R"
+      | Decreasing -> "F"
+      | IncreasingOrDecreasing -> "E"
+
+    let pp fmt a =
+      Format.pp_print_string fmt "[";
+      Format.pp_open_hovbox fmt 0;
+      for i = 0 to length a - 1 do
+        if i > 0 then (
+          Format.pp_print_string fmt ";";
+          Format.pp_print_space fmt ();
+        );
+        Format.pp_print_string fmt (string_of_rootdir (rootdir_of_int32 a.{i}))
+      done;
+      Format.pp_close_box fmt ();
+      Format.pp_print_string fmt "]"
+
+    let ppi ?(start="[") ?(stop="]") ?(sep=";")
+            ?(item=fun fmt i e ->
+                      Format.pp_print_int fmt i;
+                      Format.pp_print_string fmt "=";
+                      Format.pp_print_string fmt (string_of_rootdir e))
+            fmt a =
+      Format.pp_print_string fmt start;
+      Format.pp_open_hovbox fmt 0;
+      for i = 0 to length a - 1 do
+        if i > 0 then (
+          Format.pp_print_string fmt sep;
+          Format.pp_print_space fmt ();
+        );
+        item fmt i (rootdir_of_int32 a.{i})
+      done;
+      Format.pp_close_box fmt ();
+      Format.pp_print_string fmt stop
 
     let copy n src =
       let nsrc = Array.length src in
@@ -512,6 +667,28 @@ module Constraint =
       | LeqZero       -> -1.0
       | GtZero        -> 2.0
       | LtZero        -> -2.0
+  end
+
+module Logfile =
+  struct
+    type t
+
+    external c_stderr : unit -> t
+      = "c_sundials_stderr"
+
+    external c_stdout : unit -> t
+      = "c_sundials_stdout"
+
+    external fopen : string -> bool -> t
+      = "c_sundials_fopen"
+
+    let stderr = c_stderr ()
+    let stdout = c_stdout ()
+
+    let openfile ?(trunc=false) fpath = fopen fpath trunc
+
+    external flush : t -> unit
+      = "c_sundials_fflush"
   end
 
 type solver_result =

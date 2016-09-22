@@ -27,8 +27,6 @@
 #include <kinsol/kinsol.h>
 #include <kinsol/kinsol_bbdpre.h>
 
-#include "../lsolvers/dls_ml.h"
-#include "../lsolvers/spils_ml.h"
 #include "kinsol_ml.h"
 
 enum callback_index {

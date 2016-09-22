@@ -2,7 +2,7 @@
 
 sysname='Sundials/ML'
 version=2.6.2
-versionp=0
+versionp=1
 contact='tim@tbrk.org'
 
 unset prefix
@@ -95,14 +95,13 @@ do
 
 	Installation directories:
 	  --prefix=PREFIX         install architecture-independent files in PREFIX
-	                          [$prefix]
 
 	For better control, use the options below.
 
 	Fine tuning of the installation directories:
 	  --libdir=DIR           installation directory [OCAML]
 	  --stubdir=DIR          stub installation directory [OCAML/stublibs]
-	  --docdir=DIR           documentation [PREFIX/share/doc]
+	  --docdir=DIR           documentation [PREFIX/share/doc/sundialsml]
 
 	Optional Features:
 	  --disable-doc          do not install html documentation
@@ -122,8 +121,9 @@ do
 	  KLU_LIBRARY_DIR	Path to KLU (SuiteSparse) libraries
 	  LAPACKLIB		Command for linking with Lapack (default: -llapack)
 	                        (sometimes also: -lSimTKlapack)
-	  SUNDIALS_EXAMPLES_DIR	Path to installed examples (for comparison with Sundials).
+	  SUNDIALS_EXAMPLES_DIR	Path to installed examples (for comparison with Sundials)
 	  OCAMLMPI		Path to OCamlMPI installation
+	  CFLAGS_OPENMP		Compiler flag to enable OpenMP compilation
 	  MPICC			Name of the MPI compiler (default: mpicc)
 	  MPIRUN		Name of MPI program launcher (default: mpirun)
 	  MPI_LIBRARY_DIR	Path to include for MPI libraries (optional)
@@ -489,6 +489,7 @@ else
 
     case "${ocaml_version}" in
 	3.*) ocaml_has_version_h=0 ;;
+	4.00.*) ocaml_has_version_h=0 ;;
 	4.01.*) ocaml_has_version_h=0 ;;
 	*) ocaml_has_version_h=1 ;;
     esac
@@ -669,6 +670,26 @@ else
 fi
 rm -f ./${test_stem}.* ./${test_ml_stem}.* ${test_ml_stem}
 
+# Check whether compiler-libs is available
+test_ml_stem=__configure_test_ml_file__
+cat > ${test_ml_stem}.ml <<EOF
+Toploop.execute_phrase false Format.err_formatter
+  (!Toploop.parse_toplevel_phrase (Lexing.from_string ""))
+EOF
+# FIXME: is it ever possible that compiler-libs is installed somewhere else?
+if ${ocamlc} -I +compiler-libs -c ${test_ml_stem}.ml \
+    -o ${test_ml_stem}.cmo > /dev/null 2>&1; then
+    have_compiler_libs=1
+    compiler_libs_path=+compiler-libs
+else
+    # have_compiler_libs should be empty, not 0.
+    have_compiler_libs=
+    compiler_libs_path=
+    warning="${warning}\n\tCould not find compiler-libs; printers will not be"
+    warning="${warning}\n\tinstalled by default in the OCaml toplevel."
+fi
+rm -f ./${test_ml_stem}.* ${test_ml_stem}
+
 # Check whether using generic math library (-lm) or not
 libm=-lm
 if [ $sundials -ge 260 ]; then
@@ -738,7 +759,7 @@ if [ "${lapack_lib}" = "" ]; then
 else
     lapack_info=" (with lapack: ${lapack_lib})"
     lapack_enabled=1
-    blas_lib="-lblas"
+    blas_libs="-lblas"
 fi
 
 # Check for SUPERLUMT and KLU
@@ -811,7 +832,7 @@ fi
 
 # Combine all ldflags
 
-ldflags="${ldflags} ${sparse_libs} ${lapack_lib} ${blas_lib}"
+ldflags="${ldflags} ${sparse_libs} ${lapack_lib} ${blas_libs}"
 
 if [ "x${mpi_lib_path}" = x ]; then
     for d in /usr/lib64/openmpi; do
@@ -1042,17 +1063,17 @@ LOG=config.log
 
 printf "\nConfiguration (${version}p${versionp})\n-----------------------\n" \
                                                                        > ${LOG}
-printf "  OCaml\t\t\t${ocaml_path}${ocaml_version_info}${ocaml_tweaks}\n"    \
+printf "  OCaml                 ${ocaml_path}${ocaml_version_info}${ocaml_tweaks}\n" \
 								      >> ${LOG}
-printf "  Sundials\t\t${sundials_version}${lapack_info}\n"            >> ${LOG}
-printf "    -parallel\t\t${sundialsmpi_info}\n"	                      >> ${LOG}
-printf "    -nvector: pthreads\t${nvecpthreads_info}\n"	              >> ${LOG}
-printf "    -nvector: openmp\t${nvecopenmp_info}\n"                   >> ${LOG}
-printf "    -SuperLU_MT\t\t${superlumt_info}\n"	                      >> ${LOG}
-printf "    -KLU\t\t${klu_info}\n"                                    >> ${LOG}
-printf "    -examples\t\t${examples_info}\n"                          >> ${LOG}
-printf "  OCamlMPI\t\t${ocamlmpi}\n"                                  >> ${LOG}
-printf "  MathJax (for docs)\t${mathjax}"                             >> ${LOG}
+printf "  Sundials              ${sundials_version}${lapack_info}\n"  >> ${LOG}
+printf "    -parallel           ${sundialsmpi_info}\n"	              >> ${LOG}
+printf "    -nvector: pthreads  ${nvecpthreads_info}\n"	              >> ${LOG}
+printf "    -nvector: openmp    ${nvecopenmp_info}\n"                 >> ${LOG}
+printf "    -SuperLU_MT         ${superlumt_info}\n"	              >> ${LOG}
+printf "    -KLU                ${klu_info}\n"                        >> ${LOG}
+printf "    -examples           ${examples_info}\n"                   >> ${LOG}
+printf "  OCamlMPI              ${ocamlmpi}\n"                        >> ${LOG}
+printf "  MathJax (for docs)    ${mathjax}"                           >> ${LOG}
 if [ "x${mathjax_known_online}" = x1 ]; then
     printf " (rendering needs network)\n"                             >> ${LOG}
 elif [ "x${mathjax_known_local}" = x1 ]; then
@@ -1061,15 +1082,15 @@ else
     printf "\n"	                                                      >> ${LOG}
 fi
 printf "\n"                                                           >> ${LOG}
-printf "  Architecture\t\t${arch}\n"                                  >> ${LOG}
+printf "  Architecture          ${arch}\n"                            >> ${LOG}
 [ "x$enable_debug" = x1 ] && printf "  Debugging\t\tENABLED\n"        >> ${LOG}
 printf "\n"                                                           >> ${LOG}
 printf "Installation paths\n"                                         >> ${LOG}
-printf "  prefix:\t\t${prefix}\n"                                     >> ${LOG}
-printf "  libdir:\t\t${libdir:-${ocaml_libpath}}\n"                   >> ${LOG}
-printf "  stubdir:\t\t${stubdir:-${ocaml_libpath}stublibs/}\n"        >> ${LOG}
+printf "  prefix:               ${prefix}\n"                          >> ${LOG}
+printf "  libdir:               ${libdir:-${ocaml_libpath}}\n"        >> ${LOG}
+printf "  stubdir:              ${stubdir:-${ocaml_libpath}stublibs/}\n" >> ${LOG}
 if [ ${install_docs:-1} -eq 1 ]; then
-    printf "  docdir:\t\t${docdir:-${prefix}share/doc/sundialsml/}\n" >> ${LOG}
+    printf "  docdir:               ${docdir:-${prefix}share/doc/sundialsml/}\n" >> ${LOG}
 fi
 printf "\n"                                                           >> ${LOG}
 
@@ -1123,6 +1144,8 @@ cat ${LOG}
 	 s#@ocamldep@#${ocamldep}#;
 	 s#@ocamlmpi_path@#${ocamlmpi_path}#;
 	 s#@ocamlmpi_enabled@#${ocamlmpi_enabled}#;
+	 s#@have_compiler_libs@#${have_compiler_libs}#;
+	 s#@compiler_libs_path@#${compiler_libs_path}#;
 	 s#@enable_shared@#${enable_shared}#;
 	 s#@lapack_enabled@#${lapack_enabled}#;
 	 s#@klu_enabled@#${klu_enabled}#;

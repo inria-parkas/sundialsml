@@ -22,6 +22,7 @@
 #include <caml/mlvalues.h>
 
 #include "../config.h"
+#include <stdio.h>
 #include <assert.h>
 
 void sundials_ml_warn_discarded_exn (value exn, const char *context);
@@ -107,6 +108,26 @@ enum sundials_exn_set_index {
 /* Set a field in sundials_ml_exn_table */
 void sundials_ml_register_exns (enum sundials_exn_set_index index, value exns);
 
+#define REGISTER_EXNS(MODULE, exns)					\
+    (assert (Wosize_val (exns) == MODULE ## _EXN_SET_SIZE),		\
+     sundials_ml_register_exns (MODULE ## _EXN_SET, exns))
+
+#define REGISTERED_EXN_OBJ(MODULE, name)			\
+    (Field (Field (sundials_ml_exn_table, MODULE ## _EXN_SET),	\
+	    MODULE ## _EXN_ ## name))
+
+#define REGISTERED_EXN_TAG(MODULE, name)	\
+    (Field (REGISTERED_EXN_OBJ (MODULE, name), 0))
+
+/* For constant exceptions only.  Exceptions with arguments should be
+ * raised by extracting the tag with REGISTERED_EXN_TAG.  */
+#if OCAML_VERSION < 40200
+#define REGISTERED_EXN(MODULE, name) REGISTERED_EXN_TAG(MODULE, name)
+#else
+#define REGISTERED_EXN(MODULE, name) REGISTERED_EXN_OBJ(MODULE, name)
+#endif
+
+
 /* This enum must list exceptions in the same order as the call to
  * c_init_module in sundials.ml.  */
 enum sundials_exn_index {
@@ -116,21 +137,9 @@ enum sundials_exn_index {
   SUNDIALS_EXN_SET_SIZE
 };
 
-#define SUNDIALS_EXN_TAG(name) (Field(Field (Field (sundials_ml_exn_table, \
-					  SUNDIALS_EXN_SET),		   \
-					 SUNDIALS_EXN_ ## name),	   \
-				      0))
-#if OCAML_VERSION < 40200
-#define SUNDIALS_EXN(name) SUNDIALS_EXN_TAG(name)
-#else
-#define SUNDIALS_EXN(name)						\
-    (Field (Field (sundials_ml_exn_table, SUNDIALS_EXN_SET),		\
-	    SUNDIALS_EXN_ ## name))
-#endif
+#define SUNDIALS_EXN(name)     REGISTERED_EXN(SUNDIALS, name)
+#define SUNDIALS_EXN_TAG(name) REGISTERED_EXN_TAG(SUNDIALS, name)
 
-#define REGISTER_EXNS(MODULE, exns)					\
-    (assert (Wosize_val (exns) == MODULE ## _EXN_SET_SIZE),		\
-     sundials_ml_register_exns (MODULE ## _EXN_SET, exns))
 
 /* Callback functions are passed from OCaml to C by basically the same
  * mechanism as exceptions, but since callbacks are very frequently
@@ -152,6 +161,15 @@ enum sundials_exn_index {
     } while (0)
 
 #define CAML_FN(fcn) (callbacks[IX_ ## fcn])
+
+/* Accessing FILE* values */
+#define ML_CFILE(v) (*(FILE **)Data_custom_val(v))
+
+/* Functions for storing OCaml values in the C heap, with registration of a
+   global root and construction of a block header. */
+
+value *c_sundials_malloc_value(value);
+void c_sundials_free_value(value *heapref);
 
 /* Generate trampolines needed for functions with >= 6 arguments.  */
 #define COMMA ,

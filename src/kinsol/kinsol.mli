@@ -931,12 +931,6 @@ val set_scaled_step_tol : ('d, 'k) session -> float -> unit
     @kinsol <node5#ss:optin_main> KINSetConstraints *)
 val set_constraints : ('d, 'k) session -> ('d, 'k) Nvector.t -> unit
 
-(** Changes the linear solver. Allows consecutive solution attempts with
-    different tools or parameters.
-
-    @kinsol <node5#sss:lin_solv_init> Linear solver specification functions *)
-val set_linear_solver : ('d, 'k) session -> ('d, 'k) linear_solver -> unit
-
 (** Changes the system function. Allows solutions of several problems of the
     same size but with different functions.
 
@@ -946,14 +940,11 @@ val set_sys_func : ('d, 'k) session -> ('d -> 'd -> unit) -> unit
 
 (** {3:info Logging and error handling} *)
 
-(** Opens the named file to receive messages from the default error handler.
-    If the file already exists it is either truncated ([true]) or extended
-    ([false]).
-    The file is closed if the function is called again or when the session is
-    garbage collected.
+(** Configure the default error handler to write messages to a file.
+    By default it writes to Sundials.Logfile.stderr.
 
     @kinsol <node5#ss:optin_main> KINSetErrFile *)
-val set_error_file : ('d, 'k) session -> string -> bool -> unit
+val set_error_file : ('d, 'k) session -> Sundials.Logfile.t -> unit
 
 (** Specifies a custom function for handling error messages.
     The handler must not fail: any exceptions are trapped and discarded.
@@ -967,14 +958,11 @@ val set_err_handler_fn : ('d, 'k) session -> (error_details -> unit) -> unit
     @kinsol <node5#ss:optin_main> KINSetErrHandlerFn *)
 val clear_err_handler_fn : ('d, 'k) session -> unit
 
-(** Opens the named file to receive informational (non-error) messages.
-    If the file already exists it is either truncated ([true]) or extended
-    ([false]).
-    The file is closed if {!set_info_file} is called again or when the session
-    is garbage collected.
-   
+(** Write informational (non-error) messages to the given file.
+    By default they are written to Sundials.Logfile.stdout.
+
     @kinsol <node5#ss:optin_main> KINSetInfoFile *)
-val set_info_file : ('d, 'k) session -> string -> bool -> unit
+val set_info_file : ('d, 'k) session -> Sundials.Logfile.t -> unit
 
 (** Specifies a custom function for handling informational (non-error) messages.
     The [error_code] field of {!Sundials.error_details} is [0] for

@@ -65,6 +65,23 @@ module DenseMatrix :
         @cvode <node9#ss:dense> PrintMat *)
     val print : t -> unit
 
+    (* TOPLEVEL-PRINTER: Dls.DenseMatrix.pp *)
+    (** Pretty-print a dense matrix using the
+        {{:OCAML_DOC_ROOT(Format.html)} Format} module. *)
+    val pp : Format.formatter -> t -> unit
+
+    (** Pretty-print a dense matrix using the
+        {{:OCAML_DOC_ROOT(Format.html)} Format} module.
+        The defaults are: [start="\["], [stop="\]"], [rowsep=";"],
+        [indent=4], [sep=" "], and
+        [item=fun f r c->Format.fprintf f "(%2d,%2d)=% -15e" r c] (see
+        {{:OCAML_DOC_ROOT(Format.html#VALfprintf)} fprintf}).
+        The [indent] argument specifies the indent for wrapped rows. *)
+    val ppi : ?start:string -> ?stop:string -> ?rowsep:string
+              -> ?indent:int -> ?sep:string
+              -> ?item:(Format.formatter -> int -> int -> float -> unit)
+              -> Format.formatter -> t -> unit
+
     (** [get a i j] returns the value at row [i] and column [j] of [a].
 
         @cvode <node9#s:dls> DENSE_ELEM *)
@@ -350,6 +367,23 @@ module BandMatrix :
 
         @cvode <node9#ss:band> PrintMat *)
     val print : t -> unit
+
+    (* TOPLEVEL-PRINTER: Dls.BandMatrix.pp *)
+    (** Pretty-print a band matrix using the
+        {{:OCAML_DOC_ROOT(Format.html)} Format} module. *)
+    val pp : Format.formatter -> t -> unit
+
+    (** Pretty-print a band matrix using the
+        {{:OCAML_DOC_ROOT(Format.html)} Format} module.
+        The defaults are: [start="\["], [stop="\]"], [rowsep=";"],
+        [indent=4], [sep=" "], [empty="~"] and
+        [item=fun f r c->Format.fprintf f "(%2d,%2d)=% -15e" r c] (see
+        {{:OCAML_DOC_ROOT(Format.html#VALfprintf)} fprintf}).
+        The [indent] argument specifies the indent for wrapped rows. *)
+    val ppi : ?start:string -> ?stop:string -> ?rowsep:string
+              -> ?indent:int -> ?sep:string -> ?empty:string
+              -> ?item:(Format.formatter -> int -> int -> float -> unit)
+              -> Format.formatter -> t -> unit
 
     (** [get a i j] returns the value at row [i] and column [j] of [a].
         Only rows and columns satisfying

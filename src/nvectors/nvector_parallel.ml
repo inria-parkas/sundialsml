@@ -25,6 +25,10 @@ let clone nv =
 
 let unwrap = Nvector.unwrap
 
+let pp fmt nv =
+  let data, _, _ = Nvector.unwrap nv in
+  Sundials.RealArray.pp fmt data
+
 let local_array nv =
   let data, _, _ = Nvector.unwrap nv in
   data
@@ -528,5 +532,5 @@ external c_init_module : exn array -> unit =
 let _ =
   c_init_module
     (* Exceptions must be listed in the same order as
-       idas_exn_index.  *)
+       nvector_parallel_exn_index.  *)
     [|IncorrectGlobalSize|]

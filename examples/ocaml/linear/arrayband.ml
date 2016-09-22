@@ -21,11 +21,11 @@ let print_mat_data out m =
   fprintf out "@]"
 
 let print_mat mu ml smu out m =
-  let (nr, nc) = RealArray2.size m in
+  let (_, nc) = RealArray2.size m in
   fprintf out "@[<v>";
-  for i = 0 to nr - 1 do
+  for i = 0 to nc - 1 do
     fprintf out "@[<h>";
-    for j = 0 to nr - 1 do (* square *)
+    for j = 0 to nc - 1 do (* square *)
       if (i > j + ml) || (j > i + mu)
       then fprintf out "       --     "
       else fprintf out "@ % e" (M.get m smu i j)
@@ -35,11 +35,11 @@ let print_mat mu ml smu out m =
   fprintf out "@]"
 
 let print_factored_mat mu ml smu out m =
-  let (nr, nc) = RealArray2.size m in
+  let (_, nc) = RealArray2.size m in
   fprintf out "@[<v>";
-  for i = 0 to nr - 1 do
+  for i = 0 to nc - 1 do
     fprintf out "@[<h>";
-    for j = 0 to nr - 1 do (* square *)
+    for j = 0 to nc - 1 do (* square *)
       if (j > i + mu) && (j <= i + smu)
       then fprintf out "@ (% e)" (M.get m smu i j)
       else if (i > j + ml) || (j  > i + mu)

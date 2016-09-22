@@ -14,6 +14,8 @@ let make n iv = wrap (Sundials.RealArray.make n iv)
 
 let unwrap = Nvector.unwrap
 
+let pp fmt v = Sundials.RealArray.pp fmt (unwrap v)
+
 module Ops = struct
   type t = (Sundials.RealArray.t, kind) Nvector.t
 

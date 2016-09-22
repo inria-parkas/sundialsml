@@ -1181,7 +1181,7 @@ module Adjoint =
         : ('a, 'k) session -> ('a, 'k) session Weak.t
           -> (Cvode.lmm * ('a, 'k) iter * float * ('a, 'k) nvector)
           -> bool
-          -> (cvode_mem * int * c_weak_ref * cvode_file)
+          -> (cvode_mem * int * c_weak_ref)
         = "c_cvodes_adj_init_backward"
 
     let init_backward s lmm iter tol mf t0 y0 =
@@ -1189,7 +1189,7 @@ module Adjoint =
       let ns = num_sensitivities s in
       let checkvec = Nvector.check y0 in
       let weakref = Weak.create 1 in
-      let cvode_mem, which, backref, err_file =
+      let cvode_mem, which, backref =
         match mf with
         | NoSens _ -> c_init_backward s weakref (lmm, iter, t0, y0) false
         | WithSens _ -> c_init_backward s weakref (lmm, iter, t0, y0) true
@@ -1200,7 +1200,6 @@ module Adjoint =
               cvode        = cvode_mem;
               backref      = backref;
               nroots       = 0;
-              err_file     = err_file;
               checkvec     = checkvec;
 
               exn_temp     = None;

@@ -26,16 +26,9 @@ enum dls_exn_index {
     DLS_EXN_SET_SIZE
 };
 
-#define DLS_EXN_TAG(name) (Field (Field (Field (sundials_ml_exn_table,	\
-					    DLS_EXN_SET),		\
-				     DLS_EXN_ ## name),			\
-			      0))
-#if OCAML_VERSION < 40200
-#define DLS_EXN(name) DLS_EXN_TAG(name)
-#else
-#define DLS_EXN(name) (Field (Field (sundials_ml_exn_table, DLS_EXN_SET), \
-			      DLS_EXN_ ## name))
-#endif
+#define DLS_EXN(name)     REGISTERED_EXN(DLS, name)
+#define DLS_EXN_TAG(name) REGISTERED_EXN_TAG(DLS, name)
+
 
 enum dls_densematrix_index {
   RECORD_DLS_DENSEMATRIX_PAYLOAD    = 0,

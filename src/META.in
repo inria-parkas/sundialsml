@@ -5,13 +5,25 @@ archive(byte,-no_sens) = "sundials.cma"
 archive(byte,no_sens) = "sundials_no_sens.cma"
 archive(native,-no_sens) = "sundials.cmxa"
 archive(native,no_sens) = "sundials_no_sens.cmxa"
+#ifdef TOP_ENABLED
+archive(toploop,byte,-no_top) += "sundials_top.cma"
+archive(toploop,native,-no_top) += "sundials_top.cmxa"
+archive(create_toploop,byte,-no_top) += "sundials_top_findlib.cma sundials_top.cma"
+archive(create_toploop,native,-no_top) += "sundials_top_findlib.cmxa sundials_top.cmxa"
+#endif
 #ifdef MPI_ENABLED
 package "mpi" (
   version = VERSION
-  requires = "sundialsml"
+  requires = "sundialsml mpi"
   description = "Add MPI support to sundials"
   archive(byte) = "sundials_mpi.cma"
   archive(native) = "sundials_mpi.cmxa"
+#ifdef TOP_ENABLED
+  archive(toploop,byte,-no_top) += "sundials_top_mpi.cma"
+  archive(toploop,native,-no_top) += "sundials_top_mpi.cmxa"
+  archive(create_toploop,byte,-no_top) += "sundials_top_mpi.cma"
+  archive(create_toploop,native,-no_top) += "sundials_top_mpi.cmxa"
+#endif
 )
 #endif
 #ifdef PTHREADS_ENABLED
@@ -21,6 +33,12 @@ package "pthreads" (
   description = "Add Pthreads support to sundials"
   archive(byte) = "sundials_pthreads.cma"
   archive(native) = "sundials_pthreads.cmxa"
+#ifdef TOP_ENABLED
+  archive(toploop,byte,-no_top) += "sundials_top_pthreads.cma"
+  archive(toploop,native,-no_top) += "sundials_top_pthreads.cmxa"
+  archive(create_toploop,byte,-no_top) += "sundials_top_pthreads.cma"
+  archive(create_toploop,native,-no_top) += "sundials_top_pthreads.cmxa"
+#endif
 )
 #endif
 #ifdef OPENMP_ENABLED
@@ -30,5 +48,11 @@ package "openmp" (
   description = "Add OpenMP support to sundials"
   archive(byte) = "sundials_openmp.cma"
   archive(native) = "sundials_openmp.cmxa"
+#ifdef TOP_ENABLED
+  archive(toploop,byte,-no_top) += "sundials_top_openmp.cma"
+  archive(toploop,native,-no_top) += "sundials_top_openmp.cmxa"
+  archive(create_toploop,byte,-no_top) += "sundials_top_openmp.cma"
+  archive(create_toploop,native,-no_top) += "sundials_top_openmp.cmxa"
+#endif
 )
 #endif

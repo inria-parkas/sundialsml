@@ -215,15 +215,25 @@ $(PTHREADS_EXAMPLES:.ml=.opt): %.opt: $(SRC)/$(USELIB).cmxa		\
 # because it statically links in C stubs.
 CAML_LD_LIBRARY_PATH:=$(SRC):$(CAML_LD_LIBRARY_PATH)
 
+# TEST_WRAPPER can be used to run example programs under various
+# wrappers like valgrind or ltrace.  The program's name is available
+# as $$< (there should be two $'s in the string passed into `make').
+# Valgrind is particularly common, but its arguments are a pain to
+# memorize or type, so here's a shortcut.
+ifeq ($(RUN_WITH_VALGRIND),1)
+TEST_WRAPPER=valgrind --trace-children=yes '--log-file=valgrind-$$<.%p'
+endif
+
 # Rules for producing *.out files.  Subroutine of EXECUTION_RULE.
 define ADD_EXECUTE_RULES
     $1.byte.out: $1.byte
-	CAML_LD_LIBRARY_PATH=$(CAML_LD_LIBRARY_PATH) $(2:$$<=./$$<) > $$@
+	CAML_LD_LIBRARY_PATH=$(CAML_LD_LIBRARY_PATH) \
+	$(TEST_WRAPPER) $(2:$$<=./$$<) > $$@
     $1.opt.out: $1.opt
-	$(2:$$<=./$$<) > $$@
+	$(TEST_WRAPPER) $(2:$$<=./$$<) > $$@
     ifeq ($3,)
     $1.sundials.out: $1.sundials
-	$(2:$$<=./$$<) > $$@
+	$(TEST_WRAPPER) $(2:$$<=./$$<) > $$@
     else
     $1.sundials.out: $3.sundials.out
 	cp $$< $$@
@@ -402,6 +412,7 @@ $(eval $(call EXECUTION_RULE,%,$$<))
 distclean: clean
 	-@rm -f $(ALL_EXAMPLES:.ml=.reps)
 clean:
+	-@rm -f $(foreach p,$(ALL_EXAMPLES:.ml=),valgrind-$p.*)
 	-@rm -f $(ALL_EXAMPLES:.ml=.cmo) $(ALL_EXAMPLES:.ml=.cmx)
 	-@rm -f $(ALL_EXAMPLES:.ml=.o) $(ALL_EXAMPLES:.ml=.cmi)
 	-@rm -f $(ALL_EXAMPLES:.ml=.c.log) $(ALL_EXAMPLES:.ml=.ml.log)

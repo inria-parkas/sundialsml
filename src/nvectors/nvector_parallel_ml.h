@@ -45,10 +45,8 @@ enum nvector_parallel_exn_index {
     NVECTOR_PARALLEL_EXN_SET_SIZE
 };
 
-#define NVECTOR_PARALLEL_EXN(name)					\
-    (Field(Field (Field (sundials_ml_exn_table,				\
-			 NVECTOR_PARALLEL_EXN_SET),			\
-		  NVECTOR_PARALLEL_EXN_ ## name),			\
-	   0))
+#define NVECTOR_PARALLEL_EXN(name)     REGISTERED_EXN(NVECTOR_PARALLEL, name)
+#define NVECTOR_PARALLEL_EXN_TAG(name) REGISTERED_EXN_TAG(NVECTOR_PARALLEL, name)
+
 
 #endif

@@ -41,6 +41,7 @@ nvectors/nvector_pthreads.cmi : sundials/sundials.cmi \
     nvectors/nvector_serial.cmi nvectors/nvector.cmi
 nvectors/nvector_serial.cmi : sundials/sundials.cmi nvectors/nvector.cmi
 sundials/sundials.cmi :
+sundials/sundials_top.cmi :
 arkode/arkode.cmo : sundials/sundials_config.cmo sundials/sundials.cmi \
     lsolvers/spils.cmi lsolvers/sls_impl.cmo nvectors/nvector.cmi \
     lsolvers/dls.cmi arkode/arkode_impl.cmo arkode/arkode.cmi
@@ -141,12 +142,16 @@ lsolvers/dls.cmx : sundials/sundials_config.cmx sundials/sundials.cmx \
     lsolvers/dls_impl.cmx lsolvers/dls.cmi
 lsolvers/dls_impl.cmo :
 lsolvers/dls_impl.cmx :
+lsolvers/dls_top.cmo : sundials/sundials_top.cmi
+lsolvers/dls_top.cmx : sundials/sundials_top.cmx
 lsolvers/sls.cmo : sundials/sundials_config.cmo lsolvers/sls_impl.cmo \
     lsolvers/dls_impl.cmo lsolvers/sls.cmi
 lsolvers/sls.cmx : sundials/sundials_config.cmx lsolvers/sls_impl.cmx \
     lsolvers/dls_impl.cmx lsolvers/sls.cmi
 lsolvers/sls_impl.cmo : sundials/sundials.cmi
 lsolvers/sls_impl.cmx : sundials/sundials.cmx
+lsolvers/sls_top.cmo : sundials/sundials_top.cmi
+lsolvers/sls_top.cmx : sundials/sundials_top.cmx
 lsolvers/spils.cmo : sundials/sundials_config.cmo sundials/sundials.cmi \
     nvectors/nvector.cmi lsolvers/spils.cmi
 lsolvers/spils.cmx : sundials/sundials_config.cmx sundials/sundials.cmx \
@@ -169,21 +174,33 @@ nvectors/nvector_openmp.cmo : sundials/sundials.cmi \
 nvectors/nvector_openmp.cmx : sundials/sundials.cmx \
     nvectors/nvector_serial.cmx nvectors/nvector.cmx \
     nvectors/nvector_openmp.cmi
+nvectors/nvector_openmp_top.cmo : sundials/sundials_top.cmi
+nvectors/nvector_openmp_top.cmx : sundials/sundials_top.cmx
 nvectors/nvector_parallel.cmo : sundials/sundials.cmi nvectors/nvector.cmi \
     nvectors/nvector_parallel.cmi
 nvectors/nvector_parallel.cmx : sundials/sundials.cmx nvectors/nvector.cmx \
     nvectors/nvector_parallel.cmi
+nvectors/nvector_parallel_top.cmo : sundials/sundials_top.cmi
+nvectors/nvector_parallel_top.cmx : sundials/sundials_top.cmx
 nvectors/nvector_pthreads.cmo : sundials/sundials.cmi \
     nvectors/nvector_serial.cmi nvectors/nvector.cmi \
     nvectors/nvector_pthreads.cmi
 nvectors/nvector_pthreads.cmx : sundials/sundials.cmx \
     nvectors/nvector_serial.cmx nvectors/nvector.cmx \
     nvectors/nvector_pthreads.cmi
+nvectors/nvector_pthreads_top.cmo : sundials/sundials_top.cmi
+nvectors/nvector_pthreads_top.cmx : sundials/sundials_top.cmx
 nvectors/nvector_serial.cmo : sundials/sundials.cmi nvectors/nvector.cmi \
     nvectors/nvector_serial.cmi
 nvectors/nvector_serial.cmx : sundials/sundials.cmx nvectors/nvector.cmx \
     nvectors/nvector_serial.cmi
+nvectors/nvector_serial_top.cmo : sundials/sundials_top.cmi
+nvectors/nvector_serial_top.cmx : sundials/sundials_top.cmx
 sundials/sundials.cmo : sundials/sundials_config.cmo sundials/sundials.cmi
 sundials/sundials.cmx : sundials/sundials_config.cmx sundials/sundials.cmi
 sundials/sundials_config.cmo :
 sundials/sundials_config.cmx :
+sundials/sundials_top.cmo : sundials/sundials_top.cmi
+sundials/sundials_top.cmx : sundials/sundials_top.cmi
+sundials/sundials_top_findlib.cmo :
+sundials/sundials_top_findlib.cmx :

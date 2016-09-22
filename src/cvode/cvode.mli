@@ -1054,14 +1054,11 @@ val reinit :
     @cvode <node5#ss:ewtsetFn>       CVEwtFn *)
 val set_tolerances : ('d, 'k) session -> ('d, 'k) tolerance -> unit
 
-(** Opens the named file to receive messages from the default error handler.
-    If the file already exists it is either truncated ([true]) or extended
-    ([false]).
-    The file is closed if the function is called again or when the session is
-    garbage collected.
+(** Configure the default error handler to write messages to a file.
+    By default it writes to Sundials.Logfile.stderr.
 
     @cvode <node5#sss:optin_main> CVodeSetErrFile *)
-val set_error_file : ('d, 'k) session -> string -> bool -> unit
+val set_error_file : ('d, 'k) session -> Sundials.Logfile.t -> unit
 
 (** Specifies a custom function for handling error messages.
     The handler must not fail: any exceptions are trapped and discarded.

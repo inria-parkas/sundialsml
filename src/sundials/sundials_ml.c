@@ -18,12 +18,16 @@
 #include <sundials/sundials_band.h>
 
 #include <caml/mlvalues.h>
+#include <caml/gc.h>
+#include <caml/fail.h>
 #include <caml/memory.h>
 #include <caml/alloc.h>
 #include <caml/callback.h>
 #include <caml/bigarray.h>
 
 #include <stdio.h>
+#include <errno.h>
+#include <string.h>
 
 #include "sundials_ml.h"
 
@@ -112,7 +116,7 @@ CAMLprim value c_sundials_realarray2_wrap(value vba)
     int nc = ba->dim[0];
     int nr = ba->dim[1];
 
-    vtable = caml_alloc_final(1 + nc, NULL, nc, nc * 20);
+    vtable = caml_alloc_final(nc, NULL, nc, nc * 20);
     realtype **table = (realtype **)Data_custom_val(vtable);
 
     int j;
@@ -137,3 +141,83 @@ CAMLprim void sundials_crash (value msg)
     abort ();
     CAMLreturn0;
 }
+
+/* Functions for storing OCaml values in the C heap. */
+
+value *c_sundials_malloc_value(value v)
+{
+    header_t *block;
+    block = (header_t *)malloc(Bhsize_wosize(1));
+    if (block == NULL) return NULL;
+    *block = Make_header(1, 0, Caml_black);
+    Field(Val_hp(block), 0) = v;
+    caml_register_generational_global_root (Op_hp(block));
+    return Op_hp(block);
+}
+
+void c_sundials_free_value(value *pv)
+{
+    caml_remove_generational_global_root (pv);
+    free (Hp_op(pv));
+}
+
+/* Functions for manipulating FILE pointers. */
+
+static void finalize_cfile(value vf)
+{
+    FILE *file = ML_CFILE(vf);
+
+    if (file != NULL) {
+	fclose(file);
+    }
+}
+
+CAMLprim value c_sundials_fopen(value vpath, value vtrunc)
+{
+    CAMLparam2(vpath, vtrunc);
+    CAMLlocal1(vr);
+
+    char *mode = Bool_val(vtrunc) ? "w" : "a";
+    FILE *file = fopen(String_val(vpath), mode);
+
+    if (file == NULL) {
+	// uerror("fopen", vpath); /* depends on unix.cma */
+	caml_failwith(strerror(errno));
+    }
+
+    vr = caml_alloc_final(1, &finalize_cfile, 1, 10);
+    ML_CFILE(vr) = file;
+
+    CAMLreturn (vr);
+}
+
+CAMLprim value c_sundials_fflush(value vfile)
+{
+    CAMLparam1(vfile);
+    FILE *file = ML_CFILE(vfile);
+    fflush(file);
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value c_sundials_stderr(value vunit)
+{
+    CAMLparam1(vunit);
+    CAMLlocal1(vr);
+
+    vr = caml_alloc_final(1, NULL, 1, 1);
+    ML_CFILE(vr) = stderr;
+
+    CAMLreturn (vr);
+}
+
+CAMLprim value c_sundials_stdout(value vunit)
+{
+    CAMLparam1(vunit);
+    CAMLlocal1(vr);
+
+    vr = caml_alloc_final(1, NULL, 1, 1);
+    ML_CFILE(vr) = stdout;
+
+    CAMLreturn (vr);
+}
+

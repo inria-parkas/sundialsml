@@ -269,12 +269,12 @@ module Dls =
         | DlsBandMassCallback  ({ bmat = Some d } as cb) ->
             Dls.BandMatrix.invalidate d;
             cb.bmat <- None
-        | SlsKluMassCallback ({ SlsTypes.smat = Some d } as cb) ->
+        | SlsKluMassCallback ({ SlsTypes.smmat = Some d } as cb) ->
             Sls_impl.invalidate d;
-            cb.SlsTypes.smat <- None
-        | SlsSuperlumtMassCallback ({ SlsTypes.smat = Some d } as cb)
+            cb.SlsTypes.smmat <- None
+        | SlsSuperlumtMassCallback ({ SlsTypes.smmat = Some d } as cb)
             -> Sls_impl.invalidate d;
-               cb.SlsTypes.smat <- None
+               cb.SlsTypes.smmat <- None
         | _ -> ()
 
       let set_dense_fn s f =
@@ -359,7 +359,8 @@ module Sls = struct
         if not Sundials_config.klu_enabled
           then raise Sundials.NotImplementedBySundialsVersion;
         let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
-        session.mass_callbacks <- SlsKluMassCallback { massfn = f; smat = None };
+        session.mass_callbacks
+          <- SlsKluMassCallback { massfn = f; smmat = None };
         session.mass_precfns <- NoMassPrecFns;
         c_mass_klu session neqs nnz
 
@@ -429,7 +430,7 @@ module Sls = struct
           then raise Sundials.NotImplementedBySundialsVersion;
         let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
         session.mass_callbacks
-          <- SlsSuperlumtMassCallback { massfn = f; smat = None };
+          <- SlsSuperlumtMassCallback { massfn = f; smmat = None };
         session.mass_precfns <- NoMassPrecFns;
         c_mass_superlumt session neqs nnz nthreads
 
@@ -958,7 +959,7 @@ external c_init :
   -> bool             (* f_e given *)
   -> ('a, 'k) nvector (* y_0 *)
   -> float            (* t_0 *)
-  -> (arkode_mem * c_weak_ref * arkode_file)
+  -> (arkode_mem * c_weak_ref)
   = "c_arkode_init"
 
 let init prob tol ?restol ?order ?mass ?(roots=no_roots) t0 y0 =
@@ -974,16 +975,13 @@ let init prob tol ?restol ?order ?mass ?(roots=no_roots) t0 y0 =
     | ImEx { implicit=(fi, i, l); explicit=fe }
                         -> ImplicitAndExplicit, Some fi, Some fe, Some i, Some l
   in
-  let arkode_mem, backref, no_file
-        = c_init weakref (fi <> None) (fe <> None) y0 t0 in
+  let arkode_mem, backref = c_init weakref (fi <> None) (fe <> None) y0 t0 in
   (* arkode_mem and backref have to be immediately captured in a session and
      associated with the finalizer before we do anything else.  *)
   let session = {
           arkode       = arkode_mem;
           backref      = backref;
           nroots       = nroots;
-          err_file     = no_file;
-          diag_file    = no_file;
           checkvec     = checkvec;
           uses_resv    = false;
 
@@ -1166,10 +1164,13 @@ let print_integrator_stats s oc =
     Printf.fprintf oc "current_step = %e\n"        stats.current_step;
     Printf.fprintf oc "current_time = %e\n"        stats.current_time
 
-external set_diagnostics : ('a, 'k) session -> string -> bool -> unit
+external set_diagnostics : ('a, 'k) session -> Sundials.Logfile.t -> unit
     = "c_arkode_set_diagnostics"
 
-external set_error_file : ('a, 'k) session -> string -> bool -> unit
+external clear_diagnostics : ('a, 'k) session -> unit
+    = "c_arkode_clear_diagnostics"
+
+external set_error_file : ('a, 'k) session -> Sundials.Logfile.t -> unit
     = "c_arkode_set_error_file"
 
 external c_set_err_handler_fn  : ('a, 'k) session -> unit

@@ -253,9 +253,8 @@ enum idas_exn_index {
     IDAS_EXN_SET_SIZE,
 };
 
-#define IDAS_EXN(name) (Field(Field (Field (sundials_ml_exn_table,	\
-					    IDAS_EXN_SET),		\
-				     IDAS_EXN_ ## name),		\
-			      0))
+#define IDAS_EXN(name)     REGISTERED_EXN(IDAS, name)
+#define IDAS_EXN_TAG(name) REGISTERED_EXN_TAG(IDAS, name)
+
 
 #endif

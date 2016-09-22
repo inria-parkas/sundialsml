@@ -438,68 +438,66 @@ let main () =
 
   let maxl = ref 15 in
   let maxlrst = ref 2 in
-
-  (* Call KINCreate/KINInit to initialize KINSOL using the linear solver
-     KINSPGMR with preconditioner routines prec_setup_bd
-     and prec_solve_bd. *)
-  let kmem = Kinsol.(init
-              ~linsolv:Spils.(spgmr ~maxl:!maxl ~max_restarts:!maxlrst
-                               (prec_right ~setup:prec_setup_bd
-                                           ~solve:prec_solve_bd ()))
-              func cc) in
-  Kinsol.set_constraints kmem (Nvector_serial.make neq two);
-  Kinsol.set_func_norm_tol kmem fnormtol;
-  Kinsol.set_scaled_step_tol kmem scsteptol;
+  let constraints = Nvector_serial.make neq two in
 
   let go linsolver =
     if linsolver != Use_Spgmr then set_initial_profiles (unvec cc) (unvec sc);
-    (match linsolver with
-     | Use_Spgmr ->
-         printf " -------";
-         printf " \n| SPGMR |\n";
-         printf " -------\n"
+    let spils =
+      match linsolver with
+      | Use_Spgmr ->
+          printf " -------";
+          printf " \n| SPGMR |\n";
+          printf " -------\n";
+          Kinsol.Spils.(spgmr ~maxl:!maxl ~max_restarts:!maxlrst
+                              (prec_right ~setup:prec_setup_bd
+                                          ~solve:prec_solve_bd ()))
 
-     | Use_Spbcg ->
-         printf " -------";
-         printf " \n| SPBCG |\n";
-         printf " -------\n";
+      | Use_Spbcg ->
+          printf " -------";
+          printf " \n| SPBCG |\n";
+          printf " -------\n";
 
-         (* Call KINSpbcg to specify the linear solver KINSPBCG with preconditioner
-           routines PrecSetupBD and PrecSolveBD, and the pointer to the user block
-           data. *)
-         maxl := 15;
-         Kinsol.(set_linear_solver kmem
-                    Spils.(spbcg ~maxl:(!maxl)
-                             (prec_right ~setup:prec_setup_bd
-                                         ~solve:prec_solve_bd ())))
-     | Use_Sptfqmr ->
-         printf " ---------";
-         printf " \n| SPTFQMR |\n";
-         printf " ---------\n";
+          (* Call KINSpbcg to specify the linear solver KINSPBCG with preconditioner
+            routines PrecSetupBD and PrecSolveBD, and the pointer to the user block
+            data. *)
+          maxl := 15;
+          Kinsol.Spils.(spbcg ~maxl:(!maxl)
+                              (prec_right ~setup:prec_setup_bd
+                                          ~solve:prec_solve_bd ()))
+      | Use_Sptfqmr ->
+          printf " ---------";
+          printf " \n| SPTFQMR |\n";
+          printf " ---------\n";
 
-         (* Call KINSptfqmr to specify the linear solver KINSPTFQMR with
-            preconditioner routines PrecSetupBD and PrecSolveBD, and the pointer to
-            the user block data. *)
-         maxl := 25;
-         Kinsol.(set_linear_solver kmem
-                    Spils.(sptfqmr ~maxl:(!maxl)
-                             (prec_right ~setup:prec_setup_bd
-                                         ~solve:prec_solve_bd ())))
+          (* Call KINSptfqmr to specify the linear solver KINSPTFQMR with
+             preconditioner routines PrecSetupBD and PrecSolveBD, and the pointer to
+             the user block data. *)
+          maxl := 25;
+          Kinsol.Spils.(sptfqmr ~maxl:(!maxl)
+                                (prec_right ~setup:prec_setup_bd
+                                            ~solve:prec_solve_bd ()))
 
-     | Use_Spfgmr ->
-         printf " -------";
-         printf " \n| SPFGMR |\n";
-         printf " -------\n";
+      | Use_Spfgmr ->
+          printf " -------";
+          printf " \n| SPFGMR |\n";
+          printf " -------\n";
 
-         (* Call KINSptfqmr to specify the linear solver KINSPFGMR with
-            preconditioner routines PrecSetupBD and PrecSolveBD, and the pointer to
-            the user block data. *)
-         maxl := 15;
-         maxlrst := 2;
-         Kinsol.(set_linear_solver kmem
-            Spils.(spfgmr ~maxl:(!maxl) ~max_restarts:(!maxlrst)
-                          (prec_right ~setup:prec_setup_bd
-                                      ~solve:prec_solve_bd ()))));
+          (* Call KINSptfqmr to specify the linear solver KINSPFGMR with
+             preconditioner routines PrecSetupBD and PrecSolveBD, and the pointer to
+             the user block data. *)
+          maxl := 15;
+          maxlrst := 2;
+          Kinsol.Spils.(spfgmr ~maxl:(!maxl) ~max_restarts:(!maxlrst)
+                               (prec_right ~setup:prec_setup_bd
+                                           ~solve:prec_solve_bd ()))
+    in
+    (* Call KINCreate/KINInit to initialize KINSOL using the linear solver
+       KINSPGMR with preconditioner routines prec_setup_bd
+       and prec_solve_bd. *)
+    let kmem = Kinsol.(init ~linsolv:spils func cc) in
+    Kinsol.set_constraints kmem constraints;
+    Kinsol.set_func_norm_tol kmem fnormtol;
+    Kinsol.set_scaled_step_tol kmem scsteptol;
 
     (* Print out the problem size, solution parameters, initial guess. *)
     print_header globalstrategy !maxl !maxlrst fnormtol scsteptol linsolver;

@@ -27,6 +27,11 @@ are welcome.
 Support requests should be made to the (public)
 {{:mailto:caml-list\@inria.fr?subject=Sundials/ML:}OCaml mailing list}.
 
+We presented Sundials/ML at the 2016
+{{:https://ocaml.org/meetings/ocaml/2016/}The OCaml Users and Developers Workshop}.
+A brief {{:mlworkshop2016.pdf}technical summary} is included in the proceedings
+of the 2016 {{:http://www.mlworkshop.org/ml2016/}ACM Workshop on ML}.
+
 {3:contents Contents}
 {ul
     {- {{:#overview}Overview}}
@@ -221,6 +226,7 @@ For {b Debian}-based systems, we found the following worked:
 	libsuperlu-dev package does not provide the shared library file.}
     {- {v mkdir build; cd build v}}
     {- {v cmake -Wno-dev ../sundials-2.6.2 \
+-DCMAKE_BUILD_TYPE=Release \
 -DOPENMP_ENABLE=1 \
 -DPTHREAD_ENABLE=1 \
 -DMPI_ENABLE=1 \
@@ -247,6 +253,7 @@ For {b OS X}, we found the following worked:
     {- {v mkdir build; cd build v}}
     {- For OpenMP, the gcc compiler is required:
        {v cmake -Wno-dev ../sundials-2.6.2 \
+-DCMAKE_BUILD_TYPE=Release \
 -DCMAKE_C_COMPILER=/usr/local/bin/gcc-5 \
 -DOPENMP_ENABLE=1 \
 -DPTHREAD_ENABLE=1 \
@@ -396,15 +403,13 @@ let f t y yd = yd.{0} <- 1.;;
 let g t y gout = gout.{0} <- y.{0};;
 let y = Sundials.RealArray.of_array [| -1.0 |];;
 let yvec = Nvector_serial.wrap y;;
-let s = Cvode.init Cvode.Adams Cvode.Functional Cvode.default_tolerances
-		   f ~roots:(1, g) 0. yvec;;
+let s =
+  Cvode.(init Adams Functional default_tolerances f ~roots:(1, g) 0. yvec);;
 Cvode.set_stop_time s 2.;;
 
 (* repeat the commands below to advance the simulation until t = 2.0 *)
 let (t', result) = Cvode.solve_normal s 2. yvec;;
-Printf.printf "%e: " t';
-Sundials.RealArray.iter (Printf.printf "\t%e") y;
-Printf.printf "\n";;]}
+Format.printf "%e: %a\n" t' Sundials.RealArray.pp y;;]}
 
 Using MPI from a toplevel is best done with [ocamlfind] by first creating a
 custom toplevel:
@@ -461,9 +466,8 @@ time of the C code.
 
 {img perf.opt.png}
 
-The graph suggests that the OCaml versions are rarely more than 40% slower
-than the original ones and that they are often around or less than 20%
-slower.
+The graph shows that the OCaml examles are only sometimes more than 50% slower
+than the original ones.
 The [*_custom] example ({color #deebf7 light blue}) uses custom nvectors
 with low-level operations in OCaml and the [*_alt] examples ({color #9ecae1
 darker blue}) use linear solvers implemented in OCaml.
@@ -486,11 +490,11 @@ All but six of the serial examples ({color #de2d26 red}) run so fast that
 comparisons are made based on tens, or usually hundreds of repetitions and
 in some cases this amplifies factors other than the interface overhead.
 The slowest example, for instance, [kin--ser--kinRoberts_fp] is iterated
-more than 100 000 times to achieve a significant wall clock time.
+more than 185 000 times to achieve a significant wall clock time.
 This means creating and destroying many more data structures than usual for
 such code.
 Running the example without explicit compacts and with a larger minor
-heap ([OCAMLRUNPARAM=s=128M]) decreases the OCaml/C ratio to 1.8.
+heap ([OCAMLRUNPARAM=s=128M]) decreases the OCaml/C ratio to 2.6.
 
 The parallel examples ({color #fc9272 lighter red}) all have relatively long
 run times and results are obtained without iterating.
@@ -536,6 +540,12 @@ to automatic memory management, bounds checking on arrays, strong static
 type checking, higher-order functions, etcetera. Moreover, the Sundials/ML
 library offers a good comprise for programs combining symbolic manipulation and
 numeric calculation.
+
+The graph above can be generated from the Sundials source by running {[
+cd examples; make perf.opt.log GC_AT_END=1 PERF_DATA_POINTS=10
+]}
+Be sure to build Sundials with [-DCMAKE_BUILD_TYPE=Release] otherwise the
+underlying library is unoptimized.
 
 {2:refs References}
 

@@ -58,7 +58,6 @@ enum ida_index {
     RECORD_IDA_SESSION_MEM = 0,
     RECORD_IDA_SESSION_BACKREF,
     RECORD_IDA_SESSION_NROOTS,
-    RECORD_IDA_SESSION_ERRFILE,
     RECORD_IDA_SESSION_CHECKVEC,
     RECORD_IDA_SESSION_EXN_TEMP,
     RECORD_IDA_SESSION_ID_SET,
@@ -72,7 +71,8 @@ enum ida_index {
     RECORD_IDA_SESSION_SIZE	/* This has to come last. */
 };
 
-#define IDA_MEM_FROM_ML(v) ((void *)Field((v), RECORD_IDA_SESSION_MEM))
+#define IDA_MEM(v) (*(void **)Data_custom_val(v))
+#define IDA_MEM_FROM_ML(v) (IDA_MEM(Field((v), RECORD_IDA_SESSION_MEM)))
 #define IDA_BACKREF_FROM_ML(v) ((value*)Field((v), RECORD_IDA_SESSION_BACKREF))
 #define IDA_NEQS_FROM_ML(v)    Long_val(Field((v), RECORD_IDA_SESSION_NEQS))
 #define IDA_NROOTS_FROM_ML(v)  Long_val(Field((v), RECORD_IDA_SESSION_NROOTS))
@@ -191,9 +191,8 @@ enum ida_exn_index {
     IDA_EXN_SET_SIZE,
 };
 
-#define IDA_EXN(name) (Field(Field (Field (sundials_ml_exn_table,	\
-					   IDA_EXN_SET),		\
-				    IDA_EXN_ ## name),			\
-			     0))
+#define IDA_EXN(name)     REGISTERED_EXN(IDA, name)
+#define IDA_EXN_TAG(name) REGISTERED_EXN_TAG(IDA, name)
+
 
 #endif /* _IDA_ML_H__ */

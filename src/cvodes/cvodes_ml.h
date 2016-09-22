@@ -238,9 +238,8 @@ enum cvodes_enum_index {
     CVODES_EXN_SET_SIZE
 };
 
-#define CVODES_EXN(name) (Field(Field (Field (sundials_ml_exn_table,	\
-					      CVODES_EXN_SET),		\
-				       CVODES_EXN_ ## name),		\
-				0))
+#define CVODES_EXN(name)     REGISTERED_EXN(CVODES, name)
+#define CVODES_EXN_TAG(name) REGISTERED_EXN_TAG(CVODES, name)
+
 
 #endif

@@ -106,6 +106,19 @@ module RealArray :
         set to [f i]. *)
     val init : int -> (int -> float) -> t
 
+    (** Pretty-print an array using the
+        {{:OCAML_DOC_ROOT(Format.html)} Format} module. *)
+    val pp : Format.formatter -> t -> unit
+
+    (** Pretty-print an array using the
+        {{:OCAML_DOC_ROOT(Format.html)} Format} module.
+        The defaults are: [start="\["], [stop="\]"], [sep=" "], and
+        [item=fun f->Format.fprintf f "%2d=% -15e"] (see
+      {{:OCAML_DOC_ROOT(Format.html#VALfprintf)} fprintf}). *)
+    val ppi : ?start:string -> ?stop:string -> ?sep:string
+              -> ?item:(Format.formatter -> int -> float -> unit)
+              -> Format.formatter -> t -> unit
+
     (** Creates an array by copying the contents of a
         {{:OCAML_DOC_ROOT(Array.html)} [float array]}. *)
     val of_array : float array -> t
@@ -202,6 +215,23 @@ module RealArray2 :
         of [a] *)
     val size : t -> int * int
 
+    (** Pretty-print an array using the
+        {{:OCAML_DOC_ROOT(Format.html)} Format} module. *)
+    val pp : Format.formatter -> t -> unit
+
+    (** Pretty-print an array using the
+        {{:OCAML_DOC_ROOT(Format.html)} Format} module.
+        The defaults are: [start="\["], [stop="\]"], [rowsep=";"],
+        [indent=4], [sep=" "], and
+        [item=fun f r c->Format.fprintf f "(%2d,%2d)=% -15e" r c] (see
+        {{:OCAML_DOC_ROOT(Format.html#VALfprintf)} fprintf}).
+        The [indent] argument specifies the indent for wrapped rows. *)
+    val ppi : ?start:string -> ?rowstart:string
+              -> ?stop:string -> ?rowstop:string
+              -> ?sep:string -> ?rowsep:string
+              -> ?item:(Format.formatter -> int -> int -> float -> unit)
+              -> Format.formatter -> t -> unit
+
     (** Creates a new array with the same contents as an existing one. *)
     val copy : t -> t
 
@@ -235,6 +265,19 @@ module LintArray :
 
     (** [create n] returns an uninitialized array with [n] elements. *)
     val create  : int -> t
+
+    (** Pretty-print an array using the
+        {{:OCAML_DOC_ROOT(Format.html)} Format} module. *)
+    val pp : Format.formatter -> t -> unit
+
+    (** Pretty-print an array using the
+        {{:OCAML_DOC_ROOT(Format.html)} Format} module.
+        The defaults are: [start="\["], [stop="\]"], [sep="; "], and
+        [item=fun f->Format.fprintf f "%2d=% 6d"] (see
+      {{:OCAML_DOC_ROOT(Format.html#VALfprintf)} fprintf}). *)
+    val ppi : ?start:string -> ?stop:string -> ?sep:string
+              -> ?item:(Format.formatter -> int -> int -> unit)
+              -> Format.formatter -> t -> unit
   end
 
 (** {2:roots Arrays of roots (zero-crossings)} *)
@@ -255,23 +298,41 @@ module Roots :
       | Rising      (** The corresponding root function is increasing (1). *)
       | Falling     (** The corresponding root function is decreasing (-1). *)
 
-    (** [create n] returns an array with [n] elements each set to [NoRoot]. *)
+    (** [create n] returns an array with [n] elements each set to
+        {{!r}NoRoot}. *)
     val create : int -> t
 
     (** [make n x] returns an array with [n] elements each set to [x]. *)
     val make : int -> r -> t
 
+    (** [init n f] returns an array with [n] elements, with element [i] set
+        to [f i]. *)
+    val init : int -> (int -> r) -> t
+
     (** Returns the length of an array. *)
     val length : t -> int
 
-    (** Returns [true] only if the specified element is either [Rising] or
-        [Falling]. *)
+    (** Pretty-print a root array using the
+        {{:OCAML_DOC_ROOT(Format.html)} Format} module. *)
+    val pp : Format.formatter -> t -> unit
+
+    (** Pretty-print a root array using the
+        {{:OCAML_DOC_ROOT(Format.html)} Format} module.
+        The defaults are: [start="\["], [stop="\]"], [sep="; "], and
+        [item] prints '_' for {{!r}NoRoot}, 'R' for {{!r}Rising}, and 'F' for
+        {{!r}Falling}. *)
+    val ppi : ?start:string -> ?stop:string -> ?sep:string
+              -> ?item:(Format.formatter -> int -> r -> unit)
+              -> Format.formatter -> t -> unit
+
+    (** Returns [true] only if the specified element is either {{!r}Rising} or
+        {{!r}Falling}. *)
     val detected : t -> int -> bool
 
-    (** Returns [true] only if the specified element is [Rising]. *)
+    (** Returns [true] only if the specified element is {{!r}Rising}. *)
     val rising : t -> int -> bool
 
-    (** Returns [true] only if the specified element is [Falling]. *)
+    (** Returns [true] only if the specified element is {{!r}Falling}. *)
     val falling : t -> int -> bool
 
     (** [get r i] returns the [i]th element of [r]. *)
@@ -280,13 +341,13 @@ module Roots :
     (** [set r i v] sets the [i]th element of [r] to [v]. *)
     val set : t -> int -> r -> unit
 
-    (** [set_noroot r i] sets the [i]th element of [r] to [NoRoot]. *)
+    (** [set_noroot r i] sets the [i]th element of [r] to {{!r}NoRoot}. *)
     val set_noroot : t -> int -> unit
 
-    (** [set_rising r i] sets the [i]th element of [r] to [Rising]. *)
+    (** [set_rising r i] sets the [i]th element of [r] to {{!r}Rising}. *)
     val set_rising : t -> int -> unit
 
-    (** [set_falling r i] sets the [i]th element of [r] to [Falling]. *)
+    (** [set_falling r i] sets the [i]th element of [r] to {{!r}Falling}. *)
     val set_falling : t -> int -> unit
 
     (** [fill a x] sets all elements in [a] to [x]. *)
@@ -295,13 +356,14 @@ module Roots :
     (** Creates a new array with the same contents as an existing one. *)
     val copy : t -> t
 
-    (** Returns [0] for [NoRoot], [1] for [Rising], and [-1] for [Falling]. *)
+    (** Returns [0] for {{!r}NoRoot}, [1] for {{!r}Rising}, and [-1] for
+        {{!r}Falling}. *)
     val int_of_root : r -> int
 
-    (** Resets all elements to [NoRoot]. *)
+    (** Resets all elements to {{!r}NoRoot}. *)
     val reset : t -> unit
 
-    (** [true] if any elements are equal to [Rising] or [Falling]. *)
+    (** [true] if any elements are equal to {{!r}Rising} or {{!r}Falling}. *)
     val exists : t -> bool
 
     (** [iter f r] successively applies [f] to each element in [r]. *)
@@ -346,16 +408,29 @@ module RootDirs :
     val make : int -> d -> t
 
     (** [create n] returns an array with [n] elements each set to
-        [IncreasingOrDecreasing]. *)
+        {{!d}IncreasingOrDecreasing}. *)
     val create : int -> t
 
     (** [init n f] returns an array with [n] elements, with element [i] set
         to [f i]. *)
     val init : int -> (int -> d) -> t
 
+    (** Pretty-print a root direction array using the
+        {{:OCAML_DOC_ROOT(Format.html)} Format} module. *)
+    val pp : Format.formatter -> t -> unit
+
+    (** Pretty-print a root direction array using the
+        {{:OCAML_DOC_ROOT(Format.html)} Format} module.
+        The defaults are: [start="\["], [stop="\]"], [sep="; "], and
+        [item] prints 'R' for {{!d}Increasing}, 'F' for {{!d}Decreasing}, and
+        'E' (either) for {{!d}IncreasingOrDecreasing}. *)
+    val ppi : ?start:string -> ?stop:string -> ?sep:string
+              -> ?item:(Format.formatter -> int -> d -> unit)
+              -> Format.formatter -> t -> unit
+
     (** [copy n a] returns an array with [n] elements, initialized from
         the contents of a. If [n > Array.length a] then the extra space is
-        initialized to [IncreasingOrDecreasing]. *)
+        initialized to {{!d}IncreasingOrDecreasing}. *)
     val copy : int -> d array -> t
 
     (** Returns the length of an array *)
@@ -439,6 +514,29 @@ module Constraint :
   end
 
 (** {2:results Solver results and error reporting} *)
+
+(** Files for error and diagnostic information. File values are passed
+    to functions like {!Cvode.set_error_file} and {!Kinsol.set_info_file} to
+    log solver errors and diagnostics. *)
+module Logfile :
+  sig
+    (** An open log file. *)
+    type t
+
+    (** The stderr file. *)
+    val stderr : t
+
+    (** The stdout file. *)
+    val stdout : t
+
+    (** Opens the named file. When [trunc] is false, the default, writes are
+        appended to the file. When [trunc] is true, the opened file is
+        truncated to zero length. Files are closed on garbage collection. *)
+    val openfile : ?trunc:bool -> string -> t
+
+    (** Flushes the given file. *)
+    val flush : t -> unit
+  end
 
 (** Information passed to registered error handler functions.
     See {!Cvode.set_err_handler_fn}, {!Ida.set_err_handler_fn}, and
