@@ -1,5 +1,7 @@
-Lastest updates
---------------------------------
+Sundials/ML 2.6.2p1 (September 2016)
+------------------------------------
+Sundials/ML v2.6.2p1 includes several bug fixes and minor 
+additions/improvements:
 * Add pretty printers with automatic installation
   (thanks to Nils Becker for the suggestion).
 * Improve Opam integration allowing pin from source code
@@ -10,6 +12,10 @@ Lastest updates
 * Update the set_err_file/set_info_file/set_diagnostics interface
   (minor incompatibility).
 * Miscellaneous improvements to the build system.
+* Remove the Kinsol.set_linear_solver function due to
+  [memory leak issues] [1].
+
+[1]: http://sundials.2283335.n4.nabble.com/KINSOL-documentation-td4653693.html
 
 Sundials/ML 2.6.2p0 (March 2016)
 --------------------------------
