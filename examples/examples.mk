@@ -351,7 +351,13 @@ else ifeq ($(MODULE),arkode)
 EG_CFLAGS=$(ARKODE_CFLAGS)
 EG_LDFLAGS=$(ARKODE_LDFLAGS)
 else ifeq ($(MODULE),nvector)
-EG_CFLAGS=$(CVODE_CFLAGS) $(EXAMPLESROOT)/$(C_SUBDIR)/test_nvector.c
+# The test_nvector.{c,h} files live in examples/nvector in the source
+# tree, but when the examples get installed, they get copied to
+# subdirectories like examples/nvector/serial.
+EG_CFLAGS=$(CVODE_CFLAGS) -I $(EXAMPLESROOT)/nvector \
+    `if test -f $(EXAMPLESROOT)/$(C_SUBDIR)/test_nvector.c; \
+     then echo $(EXAMPLESROOT)/$(C_SUBDIR)/test_nvector.c; \
+     else echo $(EXAMPLESROOT)/nvector/test_nvector.c; fi`
 EG_LDFLAGS=$(CVODE_LDFLAGS)
 endif
 
