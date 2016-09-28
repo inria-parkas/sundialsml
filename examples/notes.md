@@ -24,3 +24,11 @@ Or just a single example:
     GC_EACH_REP=1 GC_AT_END=1 valgrind --leak-check=full \
       ./ark_heat1D_adapt.opt > /dev/null
 
+To run a program under valgrind so that gdb can attach to it:
+    GC_AT_END=1 valgrind --leak-check=full --vgdb=full \
+      --vgdb-error=0 ./ark_heat1D_adapt.opt > /dev/null
+
+Triggering leak checks from gdb + valgrind:
+    # Assume gdb is attached to a process supervised by valgrind.
+    monitor leak_check full reachable any  # Check leaks.
+    monitor block_list <loss record ID(s)> # Get details of the leak.
