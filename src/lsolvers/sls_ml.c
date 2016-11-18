@@ -33,7 +33,7 @@
 
 static void finalize_slsmat(value va)
 {
-    DestroySparseMat(SLSMAT(va));
+    SparseDestroyMat(SLSMAT(va));
 }
 
 CAMLprim value c_sls_sparse_wrap(SlsMat a, int finalize)
@@ -106,7 +106,7 @@ CAMLprim value c_sparsematrix_new_sparse_mat(value vm, value vn, value vnnz)
     int n = Int_val(vn);
     int nnz = Int_val(vnnz);
 
-    SlsMat a = NewSparseMat(m, n, nnz);
+    SlsMat a = SparseNewMat(m, n, nnz, 0);
     if (a == NULL)
 	caml_raise_out_of_memory();
 
@@ -130,7 +130,7 @@ CAMLprim value c_sparsematrix_size(value va)
 CAMLprim value c_sparsematrix_print_mat(value va)
 {
     CAMLparam1(va);
-    PrintSparseMat(SLSMAT(va));
+    SparsePrintMat(SLSMAT(va), stdout);
     fflush(stdout);
     CAMLreturn (Val_unit);
 }
@@ -138,7 +138,7 @@ CAMLprim value c_sparsematrix_print_mat(value va)
 CAMLprim value c_sparsematrix_set_to_zero(value va)
 {
     CAMLparam1(va);
-    SlsSetToZero(SLSMAT(va));
+    SparseSetMatToZero(SLSMAT(va));
     CAMLreturn (Val_unit);
 }
 
@@ -148,7 +148,7 @@ CAMLprim value c_sparsematrix_convert_dls(value va)
     CAMLlocal1(vr);
 
     DlsMat da = DLSMAT(va);
-    SlsMat ma = SlsConvertDls(da);
+    SlsMat ma = SparseFromDenseMat(da, 0);
 
     CAMLreturn(c_sls_sparse_wrap(ma, 1));
 }
@@ -157,7 +157,7 @@ CAMLprim value c_sparsematrix_add_identity(value vma)
 {
     CAMLparam1(vma);
 
-    AddIdentitySparseMat(SLSMAT(Field(vma, RECORD_SLS_SPARSEMATRIX_SLSMAT)));
+    SparseAddIdentityMat(SLSMAT(Field(vma, RECORD_SLS_SPARSEMATRIX_SLSMAT)));
     c_sparsematrix_realloc(vma, Val_int(0));
 
     CAMLreturn (Val_unit);
@@ -167,7 +167,7 @@ CAMLprim value c_sparsematrix_copy(value va, value vmb)
 {
     CAMLparam2(va, vmb);
 
-    CopySparseMat(SLSMAT(va),
+    SparseCopyMat(SLSMAT(va),
 		  SLSMAT(Field(vmb, RECORD_SLS_SPARSEMATRIX_SLSMAT)));
     c_sparsematrix_realloc(vmb, Val_int(0));
 
@@ -177,7 +177,7 @@ CAMLprim value c_sparsematrix_copy(value va, value vmb)
 CAMLprim value c_sparsematrix_scale(value vc, value va)
 {
     CAMLparam2(vc, va);
-    ScaleSparseMat(Double_val(vc), SLSMAT(va));
+    SparseScaleMat(Double_val(vc), SLSMAT(va));
     CAMLreturn (Val_unit);
 }
 
@@ -185,7 +185,7 @@ CAMLprim value c_sparsematrix_add(value vma, value vb)
 {
     CAMLparam2(vma, vb);
 
-    SlsAddMat(SLSMAT(Field(vma, RECORD_SLS_SPARSEMATRIX_SLSMAT)), SLSMAT(vb));
+    SparseAddMat(SLSMAT(Field(vma, RECORD_SLS_SPARSEMATRIX_SLSMAT)), SLSMAT(vb));
     c_sparsematrix_realloc(vma, Val_int(0));
 
     CAMLreturn (Val_unit);
@@ -204,7 +204,7 @@ CAMLprim value c_sparsematrix_matvec(value va, value vx, value vy)
 	caml_invalid_argument("SparseMatrix.matvec: y has wrong size.");
 #endif
 
-    SlsMatvec(a, REAL_ARRAY(vx), REAL_ARRAY(vy));
+    SparseMatvec(a, REAL_ARRAY(vx), REAL_ARRAY(vy));
     /* assert (r == 0) */
 
     CAMLreturn (Val_unit);

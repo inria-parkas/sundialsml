@@ -1600,40 +1600,50 @@ CAMLprim value c_arkode_resize(value varkode_mem,
 CAMLprim value c_arkode_get_current_butcher_tables(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
-    CAMLlocal4(rkm, vc, vb, vb2);
-    CAMLlocal3(r, ai, ae);
+    CAMLlocal3(rkm, ci, ce);
+    CAMLlocal4(bi, be, b2i, b2e);
+    CAMLlocal3(r, Ai, Ae);
 
     int flag;
     int s;
     int q;
     int p;
 
-    ai  = caml_ba_alloc_dims (BIGARRAY_FLOAT, 1, NULL, ARK_S_MAX * ARK_S_MAX);
-    ae  = caml_ba_alloc_dims (BIGARRAY_FLOAT, 1, NULL, ARK_S_MAX * ARK_S_MAX);
-    vc  = caml_ba_alloc_dims (BIGARRAY_FLOAT, 1, NULL, ARK_S_MAX);
-    vb  = caml_ba_alloc_dims (BIGARRAY_FLOAT, 1, NULL, ARK_S_MAX);
-    vb2 = caml_ba_alloc_dims (BIGARRAY_FLOAT, 1, NULL, ARK_S_MAX);
+    Ai  = caml_ba_alloc_dims (BIGARRAY_FLOAT, 1, NULL, ARK_S_MAX * ARK_S_MAX);
+    Ae  = caml_ba_alloc_dims (BIGARRAY_FLOAT, 1, NULL, ARK_S_MAX * ARK_S_MAX);
+    ci  = caml_ba_alloc_dims (BIGARRAY_FLOAT, 1, NULL, ARK_S_MAX);
+    ce  = caml_ba_alloc_dims (BIGARRAY_FLOAT, 1, NULL, ARK_S_MAX);
+    bi  = caml_ba_alloc_dims (BIGARRAY_FLOAT, 1, NULL, ARK_S_MAX);
+    be  = caml_ba_alloc_dims (BIGARRAY_FLOAT, 1, NULL, ARK_S_MAX);
+    b2i = caml_ba_alloc_dims (BIGARRAY_FLOAT, 1, NULL, ARK_S_MAX);
+    b2e = caml_ba_alloc_dims (BIGARRAY_FLOAT, 1, NULL, ARK_S_MAX);
 
     flag = ARKodeGetCurrentButcherTables(ARKODE_MEM_FROM_ML(varkode_mem),
 					 &s, &q, &p,
-					 REAL_ARRAY(ai),
-					 REAL_ARRAY(ae),
-					 REAL_ARRAY(vc),
-					 REAL_ARRAY(vb),
-					 REAL_ARRAY(vb2));
+					 REAL_ARRAY(Ai),
+					 REAL_ARRAY(Ae),
+					 REAL_ARRAY(ci),
+					 REAL_ARRAY(ce),
+					 REAL_ARRAY(bi),
+					 REAL_ARRAY(be),
+					 REAL_ARRAY(b2i),
+					 REAL_ARRAY(b2e));
     CHECK_FLAG("ARKodeGetCurrentButcherTables", flag);
 
     rkm = caml_alloc_tuple(RECORD_ARKODE_RK_METHOD_SIZE);
     Store_field(rkm, RECORD_ARKODE_RK_METHOD_STAGES, Val_int(s));
     Store_field(rkm, RECORD_ARKODE_RK_METHOD_GLOBAL_ORDER, Val_int(q));
     Store_field(rkm, RECORD_ARKODE_RK_METHOD_GLOBAL_EMBEDDED_ORDER,Val_int(p));
-    Store_field(rkm, RECORD_ARKODE_RK_METHOD_STAGE_TIMES, vc);
-    Store_field(rkm, RECORD_ARKODE_RK_METHOD_COEFFICIENTS, vb);
-    Store_field(rkm, RECORD_ARKODE_RK_METHOD_BEMBED, vb2);
+    Store_field(rkm, RECORD_ARKODE_RK_METHOD_STAGE_TIMES, ci);
+    Store_field(rkm, RECORD_ARKODE_RK_METHOD_STAGE_TIMES, ce);
+    Store_field(rkm, RECORD_ARKODE_RK_METHOD_COEFFICIENTS, bi);
+    Store_field(rkm, RECORD_ARKODE_RK_METHOD_COEFFICIENTS, be);
+    Store_field(rkm, RECORD_ARKODE_RK_METHOD_BEMBED, b2i);
+    Store_field(rkm, RECORD_ARKODE_RK_METHOD_BEMBED, b2e);
 
     r = caml_alloc_tuple(3);
-    Store_field(r, 0, ai);
-    Store_field(r, 1, ae);
+    Store_field(r, 0, Ai);
+    Store_field(r, 1, Ae);
     Store_field(r, 2, rkm);
 
     CAMLreturn(r);
@@ -1688,9 +1698,12 @@ CAMLprim value c_arkode_set_ark_tables(value varkode_mem,
 	    Int_val(Field(vrkm, RECORD_ARKODE_RK_METHOD_GLOBAL_ORDER)),
 	    Int_val(Field(vrkm, RECORD_ARKODE_RK_METHOD_GLOBAL_EMBEDDED_ORDER)),
 	    REAL_ARRAY(Field(vrkm, RECORD_ARKODE_RK_METHOD_STAGE_TIMES)),
+	    REAL_ARRAY(Field(vrkm, RECORD_ARKODE_RK_METHOD_STAGE_TIMES)),
 	    REAL_ARRAY(vai),
 	    REAL_ARRAY(vae),
 	    REAL_ARRAY(Field(vrkm, RECORD_ARKODE_RK_METHOD_COEFFICIENTS)),
+	    REAL_ARRAY(Field(vrkm, RECORD_ARKODE_RK_METHOD_COEFFICIENTS)),
+	    REAL_ARRAY(Field(vrkm, RECORD_ARKODE_RK_METHOD_BEMBED)),
 	    REAL_ARRAY(Field(vrkm, RECORD_ARKODE_RK_METHOD_BEMBED)));
     CHECK_FLAG("ARKodeSetARKTables", flag);
 
