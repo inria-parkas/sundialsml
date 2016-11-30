@@ -1600,28 +1600,29 @@ CAMLprim value c_arkode_resize(value varkode_mem,
 CAMLprim value c_arkode_get_current_butcher_tables(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
-    CAMLlocal3(rkm, ci, ce);
+    CAMLlocal4(ai, ae, ci, ce);
     CAMLlocal4(bi, be, b2i, b2e);
-    CAMLlocal3(r, Ai, Ae);
+    CAMLlocal4(rkm, rtci, rtce, r);
 
     int flag;
     int s;
     int q;
     int p;
 
-    Ai  = caml_ba_alloc_dims (BIGARRAY_FLOAT, 1, NULL, ARK_S_MAX * ARK_S_MAX);
-    Ae  = caml_ba_alloc_dims (BIGARRAY_FLOAT, 1, NULL, ARK_S_MAX * ARK_S_MAX);
+    ai  = caml_ba_alloc_dims (BIGARRAY_FLOAT, 1, NULL, ARK_S_MAX * ARK_S_MAX);
+    ae  = caml_ba_alloc_dims (BIGARRAY_FLOAT, 1, NULL, ARK_S_MAX * ARK_S_MAX);
     ci  = caml_ba_alloc_dims (BIGARRAY_FLOAT, 1, NULL, ARK_S_MAX);
-    ce  = caml_ba_alloc_dims (BIGARRAY_FLOAT, 1, NULL, ARK_S_MAX);
     bi  = caml_ba_alloc_dims (BIGARRAY_FLOAT, 1, NULL, ARK_S_MAX);
-    be  = caml_ba_alloc_dims (BIGARRAY_FLOAT, 1, NULL, ARK_S_MAX);
     b2i = caml_ba_alloc_dims (BIGARRAY_FLOAT, 1, NULL, ARK_S_MAX);
-    b2e = caml_ba_alloc_dims (BIGARRAY_FLOAT, 1, NULL, ARK_S_MAX);
 
+#if SUNDIALS_LIB_VERSION >= 270
+    ce  = caml_ba_alloc_dims (BIGARRAY_FLOAT, 1, NULL, ARK_S_MAX);
+    be  = caml_ba_alloc_dims (BIGARRAY_FLOAT, 1, NULL, ARK_S_MAX);
+    b2e = caml_ba_alloc_dims (BIGARRAY_FLOAT, 1, NULL, ARK_S_MAX);
     flag = ARKodeGetCurrentButcherTables(ARKODE_MEM_FROM_ML(varkode_mem),
 					 &s, &q, &p,
-					 REAL_ARRAY(Ai),
-					 REAL_ARRAY(Ae),
+					 REAL_ARRAY(ai),
+					 REAL_ARRAY(ae),
 					 REAL_ARRAY(ci),
 					 REAL_ARRAY(ce),
 					 REAL_ARRAY(bi),
@@ -1630,81 +1631,129 @@ CAMLprim value c_arkode_get_current_butcher_tables(value varkode_mem)
 					 REAL_ARRAY(b2e));
     CHECK_FLAG("ARKodeGetCurrentButcherTables", flag);
 
+    rtci = caml_alloc_tuple(RECORD_ARKODE_RK_TIMESCOEFS_SIZE);
+    Store_field(rtci, RECORD_ARKODE_RK_TIMESCOEFS_STAGE_TIMES, ci);
+    Store_field(rtci, RECORD_ARKODE_RK_TIMESCOEFS_COEFFICIENTS, bi);
+    Store_some(Field(rtci, RECORD_ARKODE_RK_TIMESCOEFS_BEMBED), b2i);
+
+    rtce = caml_alloc_tuple(RECORD_ARKODE_RK_TIMESCOEFS_SIZE);
+    Store_field(rtce, RECORD_ARKODE_RK_TIMESCOEFS_STAGE_TIMES, ce);
+    Store_field(rtce, RECORD_ARKODE_RK_TIMESCOEFS_COEFFICIENTS, be);
+    Store_some(Field(rtce, RECORD_ARKODE_RK_TIMESCOEFS_BEMBED), b2e);
+#else
+    flag = ARKodeGetCurrentButcherTables(ARKODE_MEM_FROM_ML(varkode_mem),
+					 &s, &q, &p,
+					 REAL_ARRAY(ai),
+					 REAL_ARRAY(ae),
+					 REAL_ARRAY(ci),
+					 REAL_ARRAY(bi),
+					 REAL_ARRAY(b2i));
+    CHECK_FLAG("ARKodeGetCurrentButcherTables", flag);
+
+    rtci = caml_alloc_tuple(RECORD_ARKODE_RK_TIMESCOEFS_SIZE);
+    Store_field(rtci, RECORD_ARKODE_RK_TIMESCOEFS_STAGE_TIMES, ci);
+    Store_field(rtci, RECORD_ARKODE_RK_TIMESCOEFS_COEFFICIENTS, bi);
+    Store_some(Field(rtci, RECORD_ARKODE_RK_TIMESCOEFS_BEMBED), b2i);
+
+    rtce = rtci;
+#endif
+
     rkm = caml_alloc_tuple(RECORD_ARKODE_RK_METHOD_SIZE);
     Store_field(rkm, RECORD_ARKODE_RK_METHOD_STAGES, Val_int(s));
     Store_field(rkm, RECORD_ARKODE_RK_METHOD_GLOBAL_ORDER, Val_int(q));
     Store_field(rkm, RECORD_ARKODE_RK_METHOD_GLOBAL_EMBEDDED_ORDER,Val_int(p));
-    Store_field(rkm, RECORD_ARKODE_RK_METHOD_STAGE_TIMES, ci);
-    Store_field(rkm, RECORD_ARKODE_RK_METHOD_STAGE_TIMES, ce);
-    Store_field(rkm, RECORD_ARKODE_RK_METHOD_COEFFICIENTS, bi);
-    Store_field(rkm, RECORD_ARKODE_RK_METHOD_COEFFICIENTS, be);
-    Store_field(rkm, RECORD_ARKODE_RK_METHOD_BEMBED, b2i);
-    Store_field(rkm, RECORD_ARKODE_RK_METHOD_BEMBED, b2e);
 
-    r = caml_alloc_tuple(3);
-    Store_field(r, 0, Ai);
-    Store_field(r, 1, Ae);
-    Store_field(r, 2, rkm);
+    r = caml_alloc_tuple(5);
+    Store_field(r, 0, rkm);
+    Store_field(r, 1, ai);
+    Store_field(r, 2, ae);
+    Store_field(r, 3, rtci);
+    Store_field(r, 4, rtce);
 
     CAMLreturn(r);
 }
 
 CAMLprim value c_arkode_set_erk_table(value varkode_mem,
-				      value vrkm, value vae)
+				      value vrkm, value vae, value vtc)
 {
-    CAMLparam3(varkode_mem, vrkm, vae);
+    CAMLparam4(varkode_mem, vrkm, vae, vtc);
+    CAMLlocal1(vtcb2);
+
+    vtcb2 = Field(vtc, RECORD_ARKODE_RK_TIMESCOEFS_BEMBED);
 
     int flag =
 	ARKodeSetERKTable(ARKODE_MEM_FROM_ML(varkode_mem),
 	    Int_val(Field(vrkm, RECORD_ARKODE_RK_METHOD_STAGES)),
 	    Int_val(Field(vrkm, RECORD_ARKODE_RK_METHOD_GLOBAL_ORDER)),
 	    Int_val(Field(vrkm, RECORD_ARKODE_RK_METHOD_GLOBAL_EMBEDDED_ORDER)),
-	    REAL_ARRAY(Field(vrkm, RECORD_ARKODE_RK_METHOD_STAGE_TIMES)),
+	    REAL_ARRAY(Field(vtc, RECORD_ARKODE_RK_TIMESCOEFS_STAGE_TIMES)),
 	    REAL_ARRAY(vae),
-	    REAL_ARRAY(Field(vrkm, RECORD_ARKODE_RK_METHOD_COEFFICIENTS)),
-	    REAL_ARRAY(Field(vrkm, RECORD_ARKODE_RK_METHOD_BEMBED)));
+	    REAL_ARRAY(Field(vtc, RECORD_ARKODE_RK_TIMESCOEFS_COEFFICIENTS)),
+	    ((vtcb2 == Val_none) ? NULL : REAL_ARRAY(Some_val(vtcb2))));
     CHECK_FLAG("ARKodeSetERKTable", flag);
 
     CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_arkode_set_irk_table(value varkode_mem,
-				      value vrkm, value vai)
+				      value vrkm, value vai, value vtc)
 {
-    CAMLparam3(varkode_mem, vrkm, vai);
+    CAMLparam4(varkode_mem, vrkm, vai, vtc);
+    CAMLlocal1(vtcb2);
+
+    vtcb2 = Field(vtc, RECORD_ARKODE_RK_TIMESCOEFS_BEMBED);
 
     int flag =
 	ARKodeSetIRKTable(ARKODE_MEM_FROM_ML(varkode_mem),
 	    Int_val(Field(vrkm, RECORD_ARKODE_RK_METHOD_STAGES)),
 	    Int_val(Field(vrkm, RECORD_ARKODE_RK_METHOD_GLOBAL_ORDER)),
 	    Int_val(Field(vrkm, RECORD_ARKODE_RK_METHOD_GLOBAL_EMBEDDED_ORDER)),
-	    REAL_ARRAY(Field(vrkm, RECORD_ARKODE_RK_METHOD_STAGE_TIMES)),
+	    REAL_ARRAY(Field(vtc, RECORD_ARKODE_RK_TIMESCOEFS_STAGE_TIMES)),
 	    REAL_ARRAY(vai),
-	    REAL_ARRAY(Field(vrkm, RECORD_ARKODE_RK_METHOD_COEFFICIENTS)),
-	    REAL_ARRAY(Field(vrkm, RECORD_ARKODE_RK_METHOD_BEMBED)));
+	    REAL_ARRAY(Field(vtc, RECORD_ARKODE_RK_TIMESCOEFS_COEFFICIENTS)),
+	    ((vtcb2 == Val_none) ? NULL : REAL_ARRAY(Some_val(vtcb2))));
     CHECK_FLAG("ARKodeSetIRKTable", flag);
 
     CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_arkode_set_ark_tables(value varkode_mem,
-				       value vrkm, value vai, value vae)
+				       value vrkm, value vai, value vae,
+				       value vtcs)
 {
-    CAMLparam4(varkode_mem, vrkm, vai, vae);
+    CAMLparam5(varkode_mem, vrkm, vai, vae, vtcs);
+    CAMLlocal4(vtcsi, vtcse, vb2i, vb2e);
+    int flag;
 
-    int flag =
-	ARKodeSetARKTables(ARKODE_MEM_FROM_ML(varkode_mem),
+    vtcsi = Field(vtcs, 0);
+    vtcse = Field(vtcs, 1);
+    vb2i = Field(vtcsi, RECORD_ARKODE_RK_TIMESCOEFS_BEMBED);
+    vb2e = Field(vtcse, RECORD_ARKODE_RK_TIMESCOEFS_BEMBED);
+
+#if SUNDIALS_LIB_VERSION >= 270
+    flag = ARKodeSetARKTables(ARKODE_MEM_FROM_ML(varkode_mem),
 	    Int_val(Field(vrkm, RECORD_ARKODE_RK_METHOD_STAGES)),
 	    Int_val(Field(vrkm, RECORD_ARKODE_RK_METHOD_GLOBAL_ORDER)),
 	    Int_val(Field(vrkm, RECORD_ARKODE_RK_METHOD_GLOBAL_EMBEDDED_ORDER)),
-	    REAL_ARRAY(Field(vrkm, RECORD_ARKODE_RK_METHOD_STAGE_TIMES)),
-	    REAL_ARRAY(Field(vrkm, RECORD_ARKODE_RK_METHOD_STAGE_TIMES)),
+	    REAL_ARRAY(Field(vtcsi, RECORD_ARKODE_RK_TIMESCOEFS_STAGE_TIMES)),
+	    REAL_ARRAY(Field(vtcse, RECORD_ARKODE_RK_TIMESCOEFS_STAGE_TIMES)),
 	    REAL_ARRAY(vai),
 	    REAL_ARRAY(vae),
-	    REAL_ARRAY(Field(vrkm, RECORD_ARKODE_RK_METHOD_COEFFICIENTS)),
-	    REAL_ARRAY(Field(vrkm, RECORD_ARKODE_RK_METHOD_COEFFICIENTS)),
-	    REAL_ARRAY(Field(vrkm, RECORD_ARKODE_RK_METHOD_BEMBED)),
-	    REAL_ARRAY(Field(vrkm, RECORD_ARKODE_RK_METHOD_BEMBED)));
+	    REAL_ARRAY(Field(vtcsi, RECORD_ARKODE_RK_TIMESCOEFS_COEFFICIENTS)),
+	    REAL_ARRAY(Field(vtcse, RECORD_ARKODE_RK_TIMESCOEFS_COEFFICIENTS)),
+	    ((vb2i == Val_none) ? NULL : REAL_ARRAY(Some_val(vb2i))),
+	    ((vb2e == Val_none) ? NULL : REAL_ARRAY(Some_val(vb2e))));
+#else
+    flag = ARKodeSetARKTables(ARKODE_MEM_FROM_ML(varkode_mem),
+	    Int_val(Field(vrkm, RECORD_ARKODE_RK_METHOD_STAGES)),
+	    Int_val(Field(vrkm, RECORD_ARKODE_RK_METHOD_GLOBAL_ORDER)),
+	    Int_val(Field(vrkm, RECORD_ARKODE_RK_METHOD_GLOBAL_EMBEDDED_ORDER)),
+	    REAL_ARRAY(Field(vtcsi, RECORD_ARKODE_RK_TIMESCOEFS_STAGE_TIMES)),
+	    REAL_ARRAY(vai),
+	    REAL_ARRAY(vae),
+	    REAL_ARRAY(Field(vtcsi, RECORD_ARKODE_RK_TIMESCOEFS_COEFFICIENTS)),
+	    REAL_ARRAY(Some_val(vb2i)));
+#endif
     CHECK_FLAG("ARKodeSetARKTables", flag);
 
     CAMLreturn (Val_unit);

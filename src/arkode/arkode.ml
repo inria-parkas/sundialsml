@@ -1215,34 +1215,52 @@ type rk_method = {
     stages : int;
     global_order : int;
     global_embedded_order : int;
-    stage_times : RealArray.t;
+  }
+
+type rk_timescoefs = {
+    stage_times  : RealArray.t;
     coefficients : RealArray.t;
-    bembed : RealArray.t;
+    bembed       : RealArray.t option;
   }
 
 external c_set_ark_tables
-  : ('d, 'k) session -> rk_method -> RealArray.t -> RealArray.t -> unit
+  : ('d, 'k) session -> rk_method
+    -> RealArray.t -> RealArray.t
+    -> rk_timescoefs * rk_timescoefs
+    -> unit
     = "c_arkode_set_ark_tables"
 
 external c_set_erk_table
-  : ('d, 'k) session -> rk_method -> RealArray.t -> unit
+  : ('d, 'k) session -> rk_method -> RealArray.t -> rk_timescoefs -> unit
     = "c_arkode_set_erk_table"
 
 external c_set_irk_table
-  : ('d, 'k) session -> rk_method -> RealArray.t -> unit
+  : ('d, 'k) session -> rk_method -> RealArray.t -> rk_timescoefs -> unit
     = "c_arkode_set_irk_table"
 
-let set_ark_tables s rkm ai ae =
+let set_ark_tables s rkm ai ae tci tce =
   (if s.irhsfn == dummy_irhsfn || s.erhsfn == dummy_erhsfn then raise IllInput);
-  c_set_ark_tables s rkm ai ae
+  (match Sundials.sundials_version with
+   | 2,5,_ | 2,6,_ -> if tci.bembed = None || tce.bembed = None
+                      then raise Sundials.NotImplementedBySundialsVersion
+   | _ -> ());
+  c_set_ark_tables s rkm ai ae (tci, tce)
 
-let set_erk_table s rkm ae =
+let set_erk_table s rkm ae tc =
   (if s.erhsfn == dummy_erhsfn then raise IllInput);
-  c_set_erk_table s rkm ae
+  (match Sundials.sundials_version with
+   | 2,5,_ | 2,6,_ -> if tc.bembed = None
+                      then raise Sundials.NotImplementedBySundialsVersion
+   | _ -> ());
+  c_set_erk_table s rkm ae tc
 
-let set_irk_table s rkm ai =
+let set_irk_table s rkm ai tc =
   (if s.irhsfn == dummy_irhsfn then raise IllInput);
-  c_set_irk_table s rkm ai
+  (match Sundials.sundials_version with
+   | 2,5,_ | 2,6,_ -> if tc.bembed = None
+                      then raise Sundials.NotImplementedBySundialsVersion
+   | _ -> ());
+  c_set_irk_table s rkm ai tc
 
 type erk_table =
   | HeunEuler_2_1_2
@@ -1435,7 +1453,8 @@ external set_no_inactive_root_warn      : ('a, 'k) session -> unit
     = "c_arkode_set_no_inactive_root_warn"
 
 external get_current_butcher_tables
-  : ('d, 'k) session -> RealArray.t * RealArray.t * rk_method
+  : ('d, 'k) session
+    -> rk_method * RealArray.t * RealArray.t * rk_timescoefs * rk_timescoefs
     = "c_arkode_get_current_butcher_tables"
 
 external get_tol_scale_factor           : ('a, 'k) session -> float

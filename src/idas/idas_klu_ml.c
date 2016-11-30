@@ -136,7 +136,11 @@ CAMLprim value c_idas_klub_init (value vparent, value vwhich,
     int which = Int_val(vwhich);
     int flag;
 
+#if SUNDIALS_LIB_VERSION >= 270
+    flag = IDAKLUB (mem, which, Int_val(vneqs), Int_val(vnnz), CSC_MAT);
+#else
     flag = IDAKLUB (mem, which, Int_val(vneqs), Int_val(vnnz));
+#endif
     CHECK_FLAG ("IDAKLUB", flag);
     if (Bool_val(vusesens)) {
 	flag = IDASlsSetSparseJacFnBS(mem, which, jacfn_withsens);

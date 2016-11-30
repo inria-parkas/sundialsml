@@ -88,7 +88,11 @@ CAMLprim value c_kinsol_klu_init (value vkin_mem, value vneqs, value vnnz)
     void *kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
     int flag;
 
+#if SUNDIALS_LIB_VERSION >= 270
+    flag = KINKLU (kin_mem, Int_val(vneqs), Int_val(vnnz), CSC_MAT);
+#else
     flag = KINKLU (kin_mem, Int_val(vneqs), Int_val(vnnz));
+#endif
     CHECK_FLAG ("KINKLU", flag);
     flag = KINSlsSetSparseJacFn(kin_mem, jacfn);
     CHECK_FLAG("KINSlsSetSparseJacFn", flag);

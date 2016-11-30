@@ -99,7 +99,11 @@ CAMLprim value c_ida_klu_init (value vida_mem, value vneqs, value vnnz)
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
     int flag;
 
+#if SUNDIALS_LIB_VERSION >= 270
+    flag = IDAKLU (ida_mem, Int_val(vneqs), Int_val(vnnz), CSC_MAT);
+#else
     flag = IDAKLU (ida_mem, Int_val(vneqs), Int_val(vnnz));
+#endif
     CHECK_FLAG ("IDAKLU", flag);
     flag = IDASlsSetSparseJacFn(ida_mem, jacfn);
     CHECK_FLAG("IDASlsSetSparseJacFn", flag);

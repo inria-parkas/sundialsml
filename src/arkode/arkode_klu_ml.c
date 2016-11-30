@@ -104,7 +104,11 @@ CAMLprim value c_arkode_klu_init (value varkode_mem, value vneqs, value vnnz)
     void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
     int flag;
 
+#if SUNDIALS_LIB_VERSION >= 270
+    flag = ARKKLU (arkode_mem, Int_val(vneqs), Int_val(vnnz), CSC_MAT);
+#else
     flag = ARKKLU (arkode_mem, Int_val(vneqs), Int_val(vnnz));
+#endif
     CHECK_FLAG ("ARKKLU", flag);
     flag = ARKSlsSetSparseJacFn(arkode_mem, jacfn);
     CHECK_FLAG("ARKSlsSetSparseJacFn", flag);
@@ -191,7 +195,12 @@ CAMLprim value c_arkode_mass_klu_init (value varkode_mem, value vneqs, value vnn
     void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
     int flag;
 
+#if SUNDIALS_LIB_VERSION >= 270
+    flag = ARKMassKLU (arkode_mem, Int_val(vneqs), Int_val(vnnz), CSC_MAT,
+		       massfn);
+#else
     flag = ARKMassKLU (arkode_mem, Int_val(vneqs), Int_val(vnnz), massfn);
+#endif
     CHECK_FLAG ("ARKMassKLU", flag);
 
     CAMLreturn (Val_unit);

@@ -426,6 +426,7 @@ else
 	2.6.0) sundials=260 ;;
 	2.6.1) sundials=261 ;;
 	2.6.2) sundials=262 ;;
+	2.7.*) sundials=270 ;;
 	*) ;;
     esac
 
@@ -453,7 +454,11 @@ EOF
     fi
 fi
 
-if [ ${sundials} -ge 260 ]; then
+if [ ${sundials} -ge 270 ]; then
+    sundials_at_least_2_7=1
+    sundials_at_least_2_6=1
+    sundials_at_least_2_5=1
+elif [ ${sundials} -ge 260 ]; then
     sundials_at_least_2_6=1
     sundials_at_least_2_5=1
 elif [ ${sundials} -ge 250 ]; then
@@ -1109,6 +1114,7 @@ cat ${LOG}
 	 s#@configure_command@#${configure_command}#;
 	 s#@version@#${version}#;
 	 s#@versionp@#${versionp}#;
+	 s#@sundials_at_least_2_7@#${sundials_at_least_2_7}#;
 	 s#@sundials_at_least_2_6@#${sundials_at_least_2_6}#;
 	 s#@sundials_at_least_2_5@#${sundials_at_least_2_5}#;
 	 s#@libdir@#${libdir:-${ocaml_libpath}}#;

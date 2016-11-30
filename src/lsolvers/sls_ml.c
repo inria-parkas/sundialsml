@@ -33,7 +33,11 @@
 
 static void finalize_slsmat(value va)
 {
+#if SUNDIALS_LIB_VERSION >= 270
     SparseDestroyMat(SLSMAT(va));
+#else
+    DestroySparseMat(SLSMAT(va));
+#endif
 }
 
 CAMLprim value c_sls_sparse_wrap(SlsMat a, int finalize)
@@ -106,7 +110,11 @@ CAMLprim value c_sparsematrix_new_sparse_mat(value vm, value vn, value vnnz)
     int n = Int_val(vn);
     int nnz = Int_val(vnnz);
 
-    SlsMat a = SparseNewMat(m, n, nnz, 0);
+#if SUNDIALS_LIB_VERSION >= 270
+    SlsMat a = SparseNewMat(m, n, nnz, CSC_MAT);
+#else
+    SlsMat a = NewSparseMat(m, n, nnz);
+#endif
     if (a == NULL)
 	caml_raise_out_of_memory();
 
@@ -130,7 +138,11 @@ CAMLprim value c_sparsematrix_size(value va)
 CAMLprim value c_sparsematrix_print_mat(value va)
 {
     CAMLparam1(va);
+#if SUNDIALS_LIB_VERSION >= 270
     SparsePrintMat(SLSMAT(va), stdout);
+#else
+    PrintSparseMat(SLSMAT(va));
+#endif
     fflush(stdout);
     CAMLreturn (Val_unit);
 }
@@ -138,7 +150,11 @@ CAMLprim value c_sparsematrix_print_mat(value va)
 CAMLprim value c_sparsematrix_set_to_zero(value va)
 {
     CAMLparam1(va);
+#if SUNDIALS_LIB_VERSION >= 270
     SparseSetMatToZero(SLSMAT(va));
+#else
+    SlsSetToZero(SLSMAT(va));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -148,7 +164,11 @@ CAMLprim value c_sparsematrix_convert_dls(value va)
     CAMLlocal1(vr);
 
     DlsMat da = DLSMAT(va);
-    SlsMat ma = SparseFromDenseMat(da, 0);
+#if SUNDIALS_LIB_VERSION >= 270
+    SlsMat ma = SparseFromDenseMat(da, CSC_MAT);
+#else
+    SlsMat ma = SlsConvertDls(da);
+#endif
 
     CAMLreturn(c_sls_sparse_wrap(ma, 1));
 }
@@ -157,7 +177,11 @@ CAMLprim value c_sparsematrix_add_identity(value vma)
 {
     CAMLparam1(vma);
 
+#if SUNDIALS_LIB_VERSION >= 270
     SparseAddIdentityMat(SLSMAT(Field(vma, RECORD_SLS_SPARSEMATRIX_SLSMAT)));
+#else
+    AddIdentitySparseMat(SLSMAT(Field(vma, RECORD_SLS_SPARSEMATRIX_SLSMAT)));
+#endif
     c_sparsematrix_realloc(vma, Val_int(0));
 
     CAMLreturn (Val_unit);
@@ -167,8 +191,13 @@ CAMLprim value c_sparsematrix_copy(value va, value vmb)
 {
     CAMLparam2(va, vmb);
 
+#if SUNDIALS_LIB_VERSION >= 270
     SparseCopyMat(SLSMAT(va),
 		  SLSMAT(Field(vmb, RECORD_SLS_SPARSEMATRIX_SLSMAT)));
+#else
+    CopySparseMat(SLSMAT(va),
+		  SLSMAT(Field(vmb, RECORD_SLS_SPARSEMATRIX_SLSMAT)));
+#endif
     c_sparsematrix_realloc(vmb, Val_int(0));
 
     CAMLreturn (Val_unit);
@@ -177,7 +206,11 @@ CAMLprim value c_sparsematrix_copy(value va, value vmb)
 CAMLprim value c_sparsematrix_scale(value vc, value va)
 {
     CAMLparam2(vc, va);
+#if SUNDIALS_LIB_VERSION >= 270
     SparseScaleMat(Double_val(vc), SLSMAT(va));
+#else
+    ScaleSparseMat(Double_val(vc), SLSMAT(va));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -185,7 +218,11 @@ CAMLprim value c_sparsematrix_add(value vma, value vb)
 {
     CAMLparam2(vma, vb);
 
+#if SUNDIALS_LIB_VERSION >= 270
     SparseAddMat(SLSMAT(Field(vma, RECORD_SLS_SPARSEMATRIX_SLSMAT)), SLSMAT(vb));
+#else
+    SlsAddMat(SLSMAT(Field(vma, RECORD_SLS_SPARSEMATRIX_SLSMAT)), SLSMAT(vb));
+#endif
     c_sparsematrix_realloc(vma, Val_int(0));
 
     CAMLreturn (Val_unit);
@@ -204,7 +241,11 @@ CAMLprim value c_sparsematrix_matvec(value va, value vx, value vy)
 	caml_invalid_argument("SparseMatrix.matvec: y has wrong size.");
 #endif
 
+#if SUNDIALS_LIB_VERSION >= 270
     SparseMatvec(a, REAL_ARRAY(vx), REAL_ARRAY(vy));
+#else
+    SlsMatvec(a, REAL_ARRAY(vx), REAL_ARRAY(vy));
+#endif
     /* assert (r == 0) */
 
     CAMLreturn (Val_unit);

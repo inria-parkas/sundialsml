@@ -134,7 +134,11 @@ CAMLprim value c_cvodes_klub_init (value vparent, value vwhich,
     int which = Int_val(vwhich);
     int flag;
 
+#if SUNDIALS_LIB_VERSION >= 270
+    flag = CVKLUB (mem, which, Int_val(vneqs), Int_val(vnnz), CSC_MAT);
+#else
     flag = CVKLUB (mem, which, Int_val(vneqs), Int_val(vnnz));
+#endif
     CHECK_FLAG ("CVKLUB", flag);
     if (Bool_val(vusesens)) {
 	flag = CVSlsSetSparseJacFnBS(mem, which, jacfn_withsens);

@@ -103,7 +103,11 @@ CAMLprim value c_cvode_klu_init (value vcvode_mem, value vneqs, value vnnz)
     void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
     int flag;
 
+#if SUNDIALS_LIB_VERSION >= 270
+    flag = CVKLU (cvode_mem, Int_val(vneqs), Int_val(vnnz), CSC_MAT);
+#else
     flag = CVKLU (cvode_mem, Int_val(vneqs), Int_val(vnnz));
+#endif
     CHECK_FLAG ("CVKLU", flag);
     flag = CVSlsSetSparseJacFn(cvode_mem, jacfn);
     CHECK_FLAG("CVSlsSetSparseJacFn", flag);
