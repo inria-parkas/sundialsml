@@ -90,6 +90,9 @@ void clone_cnvec_ops(N_Vector dst, N_Vector src)
     ops->nvclone           = src->ops->nvclone;
     ops->nvcloneempty      = src->ops->nvcloneempty;
     ops->nvdestroy         = src->ops->nvdestroy;
+#if SUNDIALS_LIB_VERSION >= 270
+    ops->nvgetvectorid	   = src->nvgetvectorid;
+#endif
     ops->nvspace           = src->ops->nvspace;
     ops->nvgetarraypointer = src->ops->nvgetarraypointer;
     ops->nvsetarraypointer = src->ops->nvsetarraypointer;
@@ -174,6 +177,9 @@ CAMLprim value ml_nvec_wrap_serial(value payload, value checkfn)
     ops->nvcloneempty      = NULL;
     /* This is registered but only ever called for C-allocated clones. */
     ops->nvdestroy         = free_cnvec;
+#if SUNDIALS_LIB_VERSION >= 270
+    ops->nvgetvectorid	   = SUNDIALS_NVEC_SERIAL;
+#endif
 
     ops->nvspace           = N_VSpace_Serial;		    /* theirs */
     ops->nvgetarraypointer = N_VGetArrayPointer_Serial;
@@ -251,6 +257,9 @@ CAMLprim value ml_nvec_wrap_custom(value mlops, value payload, value checkfn)
     ops->nvclone           = callml_vclone;
     ops->nvcloneempty      = NULL;
     ops->nvdestroy         = free_custom_cnvec;
+#if SUNDIALS_LIB_VERSION >= 270
+    ops->nvgetvectorid	   = SUNDIALS_NVEC_CUSTOM;
+#endif
 
     ops->nvspace = NULL;
     if (HAS_OP(mlops, NVECTOR_OPS_NVSPACE))
