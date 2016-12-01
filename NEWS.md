@@ -1,3 +1,20 @@
+Sundials/ML 2.7.0p0 (December 2016)
+------------------------------------
+Sundials/ML v2.7.0p0 adds support for v2.7.x of the Sundials Suite of
+numerical solvers.
+
+Notes:
+* Arkode: the interfaces to the Butcher tables have changed.
+* The sparse matrix interface has changed:
+  Sls.SparseMatrix:
+    make       -> make_csc
+    create     -> create_csc
+    from_dense -> csc_from_dense
+    from_band  -> csc_from_band
+* The Klu and Superlumt linear solver interfaces have changed.
+    *.Klu.solver -> Klu.solver_csc
+    *.Superlumt.solver -> Superlumt.solver_csc
+
 Sundials/ML 2.6.2p1 (September 2016)
 ------------------------------------
 Sundials/ML v2.6.2p1 includes several bug fixes and minor 
