@@ -1518,16 +1518,12 @@ external c_set_postprocess_step_fn : ('a, 'k) session -> bool -> unit
     = "c_arkode_set_postprocess_step_fn"
 
 let set_postprocess_step_fn s fn =
-  match Sundials.sundials_version with
-  | 2,5,_ | 2,6,_ -> raise Sundials.NotImplementedBySundialsVersion
-  | _ -> (s.poststepfn <- fn;
-          c_set_postprocess_step_fn s true)
+  s.poststepfn <- fn;
+  c_set_postprocess_step_fn s true
 
 let clear_postprocess_step_fn s =
-  match Sundials.sundials_version with
-  | 2,5,_ | 2,6,_ -> raise Sundials.NotImplementedBySundialsVersion
-  | _ -> (s.poststepfn <- dummy_poststepfn;
-          c_set_postprocess_step_fn s false)
+  s.poststepfn <- dummy_poststepfn;
+  c_set_postprocess_step_fn s false
 
 external c_set_root_direction   : ('a, 'k) session -> Sundials.RootDirs.t -> unit
     = "c_arkode_set_root_direction"

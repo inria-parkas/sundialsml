@@ -1962,6 +1962,8 @@ CAMLprim value c_arkode_set_postprocess_step_fn(value varkode_mem, value vhasf)
     int flag = ARKodeSetPostprocessStepFn(arkode_mem,
 					  Bool_val(vhasf) ? poststepfn : NULL);
     CHECK_FLAG("ARKodeSetPostprocessStepFn", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
 
     CAMLreturn (Val_unit);
