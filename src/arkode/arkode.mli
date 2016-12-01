@@ -1658,7 +1658,9 @@ type solver_result =
     @raise FirstRhsFuncFailure Initial unrecoverable failure in one of the RHS functions.
     @raise RepeatedRhsFuncFailure Too many convergence test failures, or unable to estimate the initial step size, due to repeated recoverable errors in one of the right-hand side functions.
     @raise UnrecoverableRhsFuncFailure One of the right-hand side functions had a recoverable error, but no recovery was possible. This error can only occur after an error test failure at order one.
-    @raise RootFuncFailure Failure in the rootfinding function [g]. *)
+    @raise RootFuncFailure Failure in the rootfinding function [g].
+    @raise PostprocStepFailure Failure in the Postprocess Step function.
+    *)
 val solve_normal : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
                         -> float * solver_result
 
@@ -2614,6 +2616,11 @@ exception UnrecoverableRhsFuncFailure
   
     @noarkode <node> ARK_RTFUNC_FAIL *)
 exception RootFuncFailure           
+
+(** The postprocess step function failed.
+  
+    @noarkode <node> ARK_POSTPROCESS_FAIL *)
+exception PostprocStepFailure
 
 (** Raised by {!get_dky} for invalid order values.
 

@@ -1411,6 +1411,11 @@ void arkode_ml_check_flag(const char *call, int flag)
 	case ARK_RTFUNC_FAIL:
 	    caml_raise_constant(ARKODE_EXN(RootFuncFailure));
 
+#if SUNDIALS_LIB_VERSION >= 270
+	case ARK_POSTPROCESS_FAIL:
+	    caml_raise_constant(ARKODE_EXN(PostprocStepFailure));
+#endif
+
 	case ARK_BAD_K:
 	    caml_raise_constant(ARKODE_EXN(BadK));
 

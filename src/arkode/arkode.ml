@@ -36,6 +36,7 @@ exception FirstRhsFuncFailure
 exception RepeatedRhsFuncFailure
 exception UnrecoverableRhsFuncFailure
 exception RootFuncFailure
+exception PostprocStepFailure
 
 (* get_dky exceptions *)
 exception BadK
@@ -1601,6 +1602,7 @@ let _ =
       RepeatedRhsFuncFailure;
       UnrecoverableRhsFuncFailure;
       RootFuncFailure;
+      PostprocStepFailure;
       BadK;
       BadT;
     |]
