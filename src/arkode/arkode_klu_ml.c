@@ -21,7 +21,8 @@
 #include "../sundials/sundials_ml.h"
 
 #ifndef SUNDIALS_ML_KLU
-CAMLprim value c_arkode_klu_init (value varkode_mem, value vneqs, value vnnz)
+CAMLprim value c_arkode_klu_init (value varkode_mem, value vformat,
+				  value vneqs, value vnnz)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 
 CAMLprim value c_arkode_klu_set_ordering (value varkode_mem, value vordering)
@@ -34,8 +35,8 @@ CAMLprim value c_arkode_klu_reinit (value varkode_mem, value vn, value vnnz,
 CAMLprim value c_arkode_klu_get_num_jac_evals(value varkode_mem)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 
-CAMLprim value c_arkode_mass_klu_init (value varkode_mem, value vneqs,
-				       value vnnz)
+CAMLprim value c_arkode_mass_klu_init (value varkode_mem, value vformat,
+				       value vneqs, value vnnz)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 
 CAMLprim value c_arkode_mass_klu_set_ordering (value varkode_mem,
@@ -84,7 +85,11 @@ static int jacfn(realtype t,
     cb = Field (cb, 0);
     smat = Field(cb, 1);
     if (smat == Val_none) {
-	Store_some(smat, c_sls_sparse_wrap(Jac, 0));
+#if SUNDIALS_LIB_VERSION >= 270
+	Store_some(smat, c_sls_sparse_wrap(Jac, 0, Val_int(Jac->sparsetype)));
+#else
+	Store_some(smat, c_sls_sparse_wrap(Jac, 0, Val_int(0)));
+#endif
 	Store_field(cb, 1, smat);
 	args[1] = Some_val(smat);
     } else {
@@ -98,14 +103,15 @@ static int jacfn(realtype t,
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
-CAMLprim value c_arkode_klu_init (value varkode_mem, value vneqs, value vnnz)
+CAMLprim value c_arkode_klu_init (value varkode_mem, value vformat,
+				  value vneqs, value vnnz)
 {
-    CAMLparam3(varkode_mem, vneqs, vnnz);
+    CAMLparam4(varkode_mem, vformat, vneqs, vnnz);
     void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
     int flag;
 
 #if SUNDIALS_LIB_VERSION >= 270
-    flag = ARKKLU (arkode_mem, Int_val(vneqs), Int_val(vnnz), CSC_MAT);
+    flag = ARKKLU (arkode_mem, Int_val(vneqs), Int_val(vnnz), Int_val(vformat));
 #else
     flag = ARKKLU (arkode_mem, Int_val(vneqs), Int_val(vnnz));
 #endif
@@ -175,7 +181,11 @@ static int massfn(realtype t,
     cb = Field (cb, 0);
     smat = Field(cb, 1);
     if (smat == Val_none) {
-	Store_some(smat, c_sls_sparse_wrap(M, 0));
+#if SUNDIALS_LIB_VERSION >= 270
+	Store_some(smat, c_sls_sparse_wrap(M, 0, Val_int(M->sparsetype)));
+#else
+	Store_some(smat, c_sls_sparse_wrap(M, 0, Val_int(0)));
+#endif
 	Store_field(cb, 1, smat);
 	args[2] = Some_val(smat);
     } else {
@@ -189,15 +199,16 @@ static int massfn(realtype t,
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
-CAMLprim value c_arkode_mass_klu_init (value varkode_mem, value vneqs, value vnnz)
+CAMLprim value c_arkode_mass_klu_init (value varkode_mem, value vformat,
+				       value vneqs, value vnnz)
 {
-    CAMLparam3(varkode_mem, vneqs, vnnz);
+    CAMLparam4(varkode_mem, vformat, vneqs, vnnz);
     void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
     int flag;
 
 #if SUNDIALS_LIB_VERSION >= 270
-    flag = ARKMassKLU (arkode_mem, Int_val(vneqs), Int_val(vnnz), CSC_MAT,
-		       massfn);
+    flag = ARKMassKLU (arkode_mem, Int_val(vneqs), Int_val(vnnz),
+		       Int_val(vformat), massfn);
 #else
     flag = ARKMassKLU (arkode_mem, Int_val(vneqs), Int_val(vnnz), massfn);
 #endif

@@ -24,6 +24,16 @@ void print_mat_data(realtype** m, long int nr, long int nc) {
     }
 }
 
+void zero_mat_data(realtype** m, long int nr, long int nc) {
+    int i, j;
+
+    for (j=0; j < nr; ++j) {
+	for (i=0; i < nc; ++i) {
+	    m[j][i] = 0;
+	}
+    }
+}
+
 void print_mat(realtype** m, long int n,
 	       long int mu, long int ml, long int smu) {
     int i, j;
@@ -82,6 +92,9 @@ int main(int argc, char** argv)
     realtype **b = newBandMat(SIZE, SMU, ML);
     long int p[SIZE] = { 0.0 };
     realtype s[SIZE] = { 5.0, 15.0, 31.0, 53.0, 45.0 };
+
+    zero_mat_data(a, SIZE, SMU + ML + 1);
+    zero_mat_data(b, SIZE, SMU + ML + 1);
 
     a[0][0] = 0.0;
     a[0][1] = 0.0;

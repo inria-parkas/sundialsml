@@ -143,7 +143,7 @@ let main () =
   (* Call CVDense to specify the CVDENSE dense linear solver *)
   (* Set the Jacobian routine to Jac (user-supplied) *)
   let cvode_mem =
-    Cvode.(init BDF (Newton (Sls.Superlumt.solver jac ~nnz ~nthreads:1))
+    Cvode.(init BDF (Newton (Sls.Superlumt.solver_csc jac ~nnz ~nthreads:1))
                 (SVtolerances (rtol, (Nvector_serial.wrap abstol))) f
                 ~roots:(nroots, g) t0 y)
   in

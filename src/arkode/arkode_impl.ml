@@ -127,29 +127,29 @@ end
 
 module SlsTypes = struct
 
-  type sparse_jac_fn =
+  type 'f sparse_jac_fn =
     (RealArray.t triple, RealArray.t) jacobian_arg
-    -> Sls.SparseMatrix.t
+    -> 'f Sls.SparseMatrix.t
     -> unit
 
   (* These fields are accessed from arkode_ml.c *)
-  type sparse_jac_callback =
+  type 'f sparse_jac_callback =
     {
-      jacfn: sparse_jac_fn;
-      mutable smat : Sls_impl.t option
+      jacfn: 'f sparse_jac_fn;
+      mutable smat : 'f Sls_impl.t option
     }
 
-  type sparse_mass_fn =
+  type 'f sparse_mass_fn =
     float
     -> RealArray.t triple
-    -> Sls.SparseMatrix.t
+    -> 'f Sls.SparseMatrix.t
     -> unit
 
   (* These fields are accessed from arkode_ml.c *)
-  type sparse_mass_callback =
+  type 'f sparse_mass_callback =
     {
-      massfn: sparse_mass_fn;
-      mutable smmat : Sls_impl.t option
+      massfn: 'f sparse_mass_fn;
+      mutable smmat : 'f Sls_impl.t option
     }
 end
 
@@ -339,8 +339,8 @@ and ('a, 'kind) linsolv_callbacks =
   | DlsBandCallback  of DlsTypes.band_jac_callback
 
   (* Sls *)
-  | SlsKluCallback of SlsTypes.sparse_jac_callback
-  | SlsSuperlumtCallback of SlsTypes.sparse_jac_callback
+  | SlsKluCallback of unit SlsTypes.sparse_jac_callback
+  | SlsSuperlumtCallback of unit SlsTypes.sparse_jac_callback
 
   (* Spils *)
   | SpilsCallback of 'a SpilsTypes'.jac_times_vec_fn option
@@ -392,8 +392,8 @@ and ('a, 'kind) mass_callbacks =
   | DlsBandMassCallback  of DlsTypes.MassTypes.band_callback
 
   (* Sls *)
-  | SlsKluMassCallback of SlsTypes.sparse_mass_callback
-  | SlsSuperlumtMassCallback of SlsTypes.sparse_mass_callback
+  | SlsKluMassCallback of unit SlsTypes.sparse_mass_callback
+  | SlsSuperlumtMassCallback of unit SlsTypes.sparse_mass_callback
 
   (* Spils *)
   | SpilsMassCallback of 'a SpilsTypes'.MassTypes'.times_vec_fn

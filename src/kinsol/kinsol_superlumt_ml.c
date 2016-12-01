@@ -65,7 +65,11 @@ static int jacfn(
     cb = Field (cb, 0);
     smat = Field(cb, 1);
     if (smat == Val_none) {
-	Store_some(smat, c_sls_sparse_wrap(Jac, 0));
+#if SUNDIALS_LIB_VERSION >= 270
+	Store_some(smat, c_sls_sparse_wrap(Jac, 0, Val_int(Jac->sparsetype)));
+#else
+	Store_some(smat, c_sls_sparse_wrap(Jac, 0, Val_int(0)));
+#endif
 	Store_field(cb, 1, smat);
 
 	args[1] = Some_val(smat);

@@ -59,7 +59,11 @@ static int jacfn_nosens( /* CVSlsSparseJacFnB */
 
     smat = Field(cb, 1);
     if (smat == Val_none) {
-	Store_some(smat, c_sls_sparse_wrap(jacb, 0));
+#if SUNDIALS_LIB_VERSION >= 270
+	Store_some(smat, c_sls_sparse_wrap(jacb, 0, Val_int(jacb->sparsetype)));
+#else
+	Store_some(smat, c_sls_sparse_wrap(jacb, 0, Val_int(0)));
+#endif
 	Store_field(cb, 1, smat);
 
 	args[1] = Some_val(smat);
@@ -106,7 +110,11 @@ static int jacfn_withsens( /* CVSlsSparseJacFnBS */
 
     smat = Field(cb, 1);
     if (smat == Val_none) {
-	Store_some(smat, c_sls_sparse_wrap(jacb, 0));
+#if SUNDIALS_LIB_VERSION >= 270
+	Store_some(smat, c_sls_sparse_wrap(jacb, 0, Val_int(jacb->sparsetype)));
+#else
+	Store_some(smat, c_sls_sparse_wrap(jacb, 0, Val_int(0)));
+#endif
 	Store_field(cb, 1, smat);
 
 	args[2] = Some_val(smat);

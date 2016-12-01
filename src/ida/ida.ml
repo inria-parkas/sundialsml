@@ -231,16 +231,28 @@ module Sls =
          | ColAmd
          | Natural
 
-      external c_klu : 'k serial_session -> int -> int -> unit
+      external c_klu
+        : 'k serial_session -> Sls_impl.sformat -> int -> int -> unit
         = "c_ida_klu_init"
 
-      let solver f nnz session nv nv' =
+      let solver sformat f nnz session nv nv' =
         if not Sundials_config.klu_enabled
           then raise Sundials.NotImplementedBySundialsVersion;
         let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
         session.ls_precfns <- NoPrecFns;
         session.ls_callbacks <- SlsKluCallback { jacfn = f; smat = None };
-        c_klu session neqs nnz
+        c_klu session sformat neqs nnz
+
+      (* We force the type argument here to avoid propagating it to the
+         session type; which is unnecessary and needlessy complicated
+         for users. *)
+      let solver_csc (f : Sls.SparseMatrix.csc sparse_jac_fn)
+        = solver Sls_impl.CSC_MAT (Obj.magic f : unit sparse_jac_fn)
+
+      let solver_csr (f : Sls.SparseMatrix.csr sparse_jac_fn)
+        = match Sundials.sundials_version with
+          | 2,5,_ | 2,6,_ -> raise Sundials.NotImplementedBySundialsVersion
+          | _ -> solver Sls_impl.CSR_MAT (Obj.magic f : unit sparse_jac_fn)
 
       external c_set_ordering : 'k serial_session -> ordering -> unit
         = "c_ida_klu_set_ordering"
@@ -277,13 +289,19 @@ module Sls =
       external c_superlumt : 'k serial_session -> int -> int -> int -> unit
         = "c_ida_superlumt_init"
 
-      let solver f ~nnz ~nthreads session nv nv' =
+      let solver sformat f ~nnz ~nthreads session nv nv' =
         if not Sundials_config.superlumt_enabled
           then raise Sundials.NotImplementedBySundialsVersion;
         let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
         session.ls_precfns <- NoPrecFns;
         session.ls_callbacks <- SlsSuperlumtCallback { jacfn = f; smat = None };
         c_superlumt session neqs nnz nthreads
+
+      (* We force the type argument here to avoid propagating it to the
+         session type; which is unnecessary and needlessy complicated
+         for users. *)
+      let solver_csc (f : Sls.SparseMatrix.csc sparse_jac_fn)
+        = solver Sls_impl.CSC_MAT (Obj.magic f : unit sparse_jac_fn)
 
       external c_set_ordering : 'k serial_session -> ordering -> unit
         = "c_ida_superlumt_set_ordering"

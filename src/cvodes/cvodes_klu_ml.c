@@ -21,7 +21,7 @@
 #include "../sundials/sundials_ml.h"
 
 #ifndef SUNDIALS_ML_KLU
-CAMLprim value c_cvodes_klub_init (value vparent, value vwhich,
+CAMLprim value c_cvodes_klub_init (value vparent_which, value vformat,
 				   value vneqs, value vnnz, value vusesens)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 #else
@@ -58,7 +58,11 @@ static int jacfn_nosens( /* CVSlsSparseJacFnB */
 
     smat = Field(cb, 1);
     if (smat == Val_none) {
-	Store_some(smat, c_sls_sparse_wrap(jacb, 0));
+#if SUNDIALS_LIB_VERSION >= 270
+	Store_some(smat, c_sls_sparse_wrap(jacb, 0, Val_int(jacb->sparsetype)));
+#else
+	Store_some(smat, c_sls_sparse_wrap(jacb, 0, Val_int(0)));
+#endif
 	Store_field(cb, 1, smat);
 
 	args[1] = Some_val(smat);
@@ -105,7 +109,11 @@ static int jacfn_withsens( /* CVSlsSparseJacFnBS */
 
     smat = Field(cb, 1);
     if (smat == Val_none) {
-	Store_some(smat, c_sls_sparse_wrap(jacb, 0));
+#if SUNDIALS_LIB_VERSION >= 270
+	Store_some(smat, c_sls_sparse_wrap(jacb, 0, Val_int(jacb->sparsetype)));
+#else
+	Store_some(smat, c_sls_sparse_wrap(jacb, 0, Val_int(0)));
+#endif
 	Store_field(cb, 1, smat);
 
 	args[2] = Some_val(smat);
@@ -126,16 +134,16 @@ static int jacfn_withsens( /* CVSlsSparseJacFnBS */
 SUNDIALS_EXPORT int CVKLUB(void *, int, int, int);
 #endif
 
-CAMLprim value c_cvodes_klub_init (value vparent, value vwhich,
+CAMLprim value c_cvodes_klub_init (value vparent_which, value vformat,
 				   value vneqs, value vnnz, value vusesens)
 {
-    CAMLparam5(vparent, vwhich, vneqs, vnnz, vusesens);
-    void *mem = CVODE_MEM_FROM_ML (vparent);
-    int which = Int_val(vwhich);
+    CAMLparam5(vparent_which, vformat, vneqs, vnnz, vusesens);
+    void *mem = CVODE_MEM_FROM_ML (Field(vparent_which, 0));
+    int which = Int_val(Field(vparent_which, 1));
     int flag;
 
 #if SUNDIALS_LIB_VERSION >= 270
-    flag = CVKLUB (mem, which, Int_val(vneqs), Int_val(vnnz), CSC_MAT);
+    flag = CVKLUB (mem, which, Int_val(vneqs), Int_val(vnnz), Int_val(vformat));
 #else
     flag = CVKLUB (mem, which, Int_val(vneqs), Int_val(vnnz));
 #endif

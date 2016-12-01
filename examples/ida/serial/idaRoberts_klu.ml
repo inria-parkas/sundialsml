@@ -110,8 +110,8 @@ let resrob tres (y : RealArray.t) (yp : RealArray.t) (rr : RealArray.t) =
   rr.{0} <-  rr.{0} -. yp.{0};
   rr.{2} <-  y.{0} +. y.{1} +. y.{2} -. 1.0
 
-let jacrob { Ida.jac_y = (yval : RealArray.t);
-             Ida.jac_coef = cj }
+let jacrob_csc { Ida.jac_y = (yval : RealArray.t);
+                 Ida.jac_coef = cj }
            jacmat =
   let set_col = Sls.SparseMatrix.set_col jacmat in
   let set = Sls.SparseMatrix.set jacmat in
@@ -131,6 +131,29 @@ let jacrob { Ida.jac_y = (yval : RealArray.t);
 
   set 6 0 (1.0e4*.yval.{1});
   set 7 1 (-1.0e4*.yval.{1});
+  set 8 2 (1.0)
+
+let jacrob_csr { Ida.jac_y = (yval : RealArray.t);
+                 Ida.jac_coef = cj }
+           jacmat =
+  let set_row = Sls.SparseMatrix.set_row jacmat in
+  let set = Sls.SparseMatrix.set jacmat in
+
+  set_row 0 0;
+  set_row 1 3;
+  set_row 2 6;
+  set_row 3 9;
+
+  set 0 0 (-0.04 -. cj);
+  set 1 1 (1.0e4*.yval.{2});
+  set 2 2 (1.0e4*.yval.{1});
+
+  set 3 0 (0.04);
+  set 4 1 ((-1.0e4*.yval.{2}) -. (6.0e7*.yval.{1}) -. cj);
+  set 5 2 (-1.0e4*.yval.{1});
+
+  set 6 0 (1.0);
+  set 7 1 (1.0);
   set 8 2 (1.0)
 
 and grob t (y : RealArray.t) y' (gout : RealArray.t) =
@@ -167,7 +190,7 @@ let main () =
    * a 2-component root function and the dense direct linear solver.  *)
   let nnz = neq * neq in
   let ida_mem =
-    Ida.(init (Sls.Klu.solver jacrob nnz)
+    Ida.(init (Sls.Klu.solver_csr jacrob_csr nnz)
               (SVtolerances (rtol, Nvector_serial.wrap avtol))
               resrob ~roots:(nroots, grob) t0 wy wy')
   in

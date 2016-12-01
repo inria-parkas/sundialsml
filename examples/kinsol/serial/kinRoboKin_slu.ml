@@ -278,7 +278,7 @@ let main () =
   (* Initialize and allocate memory for KINSOL *)
   (* Attach dense linear solver *)
   let kmem = Kinsol.(init
-              ~linsolv:(Sls.Superlumt.solver jac ~nnz:56 ~nthreads:2)
+              ~linsolv:(Sls.Superlumt.solver_csc jac ~nnz:56 ~nthreads:2)
               func y)
   in
 

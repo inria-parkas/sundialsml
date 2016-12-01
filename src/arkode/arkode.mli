@@ -379,9 +379,9 @@ module Sls :
                  be accessed after the function has returned.}
 
         @noarkode <node5#ss:sjacFn> ARKSlsSparseJacFn *)
-    type sparse_jac_fn =
+    type 'f sparse_jac_fn =
       (Sundials.RealArray.t triple, Sundials.RealArray.t)
-                            jacobian_arg -> Sls.SparseMatrix.t -> unit
+                            jacobian_arg -> 'f Sls.SparseMatrix.t -> unit
 
     (** Callback functions that compute sparse approximations to the mass
         matrix. In the call [sparse_fn t tmp m],
@@ -399,9 +399,9 @@ module Sls :
                  be accessed after the function has returned.}
 
         @noarkode <node5#ss:sjacFn> ARKSlsSparseMassFn *)
-    type sparse_mass_fn = float
+    type 'f sparse_mass_fn = float
                           -> Sundials.RealArray.t triple
-                          -> Sls.SparseMatrix.t
+                          -> 'f Sls.SparseMatrix.t
                           -> unit
 
     (** KLU sparse-direct linear solver module (requires KLU).
@@ -409,16 +409,30 @@ module Sls :
         @noarkode <node> The KLU Solver *)
     module Klu : sig (* {{{ *)
 
-      (** A direct linear solver on sparse matrices. In the call,
-          [klu jfn nnz], [jfn] is a callback function that computes an
-          approximation to the Jacobian matrix and [nnz] is the maximum number
-          of nonzero entries in that matrix.
+      (** A direct linear solver on compressed-sparse-column matrices.
+          In the call, [klu jfn nnz], [jfn] is a callback function that
+          computes an approximation to the Jacobian matrix and [nnz] is
+          the maximum number of nonzero entries in that matrix.
 
           @raise Sundials.NotImplementedBySundialsVersion Solver not available.
           @noarkode <node5#sss:lin_solv_init> ARKKLU
           @noarkode <node5#sss:optin_sls> ARKSlsSetSparseJacFn
           @noarkode <node5#ss:sjacFn> ARKSlsSparseJacFn *)
-      val solver : sparse_jac_fn -> int -> 'k serial_linear_solver
+      val solver_csc : Sls.SparseMatrix.csc sparse_jac_fn
+                       -> int -> 'k serial_linear_solver
+
+      (** A direct linear solver on compressed-sparse-row matrices.
+          In the call, [klu jfn nnz], [jfn] is a callback function that
+          computes an approximation to the Jacobian matrix and [nnz] is
+          the maximum number of nonzero entries in that matrix.
+
+          @since 2.7.0
+          @raise Sundials.NotImplementedBySundialsVersion Solver not available.
+          @noarkode <node5#sss:lin_solv_init> ARKKLU
+          @noarkode <node5#sss:optin_sls> ARKSlsSetSparseJacFn
+          @noarkode <node5#ss:sjacFn> ARKSlsSparseJacFn *)
+      val solver_csr : Sls.SparseMatrix.csr sparse_jac_fn
+                       -> int -> 'k serial_linear_solver
 
       (** The ordering algorithm used for reducing fill. *)
       type ordering =
@@ -448,16 +462,30 @@ module Sls :
       val get_num_jac_evals : 'k serial_session -> int
 
       module Mass : sig
-        (** A direct linear solver on sparse matrices. In the call,
-            [klu mfn nnz], [mfn] is a callback function that computes an
-            approximation to the mass matrix and [nnz] is the maximum number
-            of nonzero entries in that matrix.
+        (** A direct linear solver on compressed-sparse-column matrices.
+            In the call, [klu mfn nnz], [mfn] is a callback function that
+            computes an approximation to the mass matrix and [nnz] is the
+            maximum number of nonzero entries in that matrix.
 
             @raise Sundials.NotImplementedBySundialsVersion Solver not available.
             @noarkode <node5#sss:lin_solv_init> ARKMassKLU
             @noarkode <node5#sss:optin_sls> ARKSlsSetSparseMassFn
             @noarkode <node5#ss:smassFn> ARKSlsSparseMassFn *)
-        val solver : sparse_mass_fn -> int -> 'k serial_mass_solver
+        val solver_csc : Sls.SparseMatrix.csc sparse_mass_fn
+                         -> int -> 'k serial_mass_solver
+
+        (** A direct linear solver on compressed-sparse-row matrices.
+            In the call, [klu mfn nnz], [mfn] is a callback function that
+            computes an approximation to the mass matrix and [nnz] is the
+            maximum number of nonzero entries in that matrix.
+
+            @since 2.7.0
+            @raise Sundials.NotImplementedBySundialsVersion Solver not available.
+            @noarkode <node5#sss:lin_solv_init> ARKMassKLU
+            @noarkode <node5#sss:optin_sls> ARKSlsSetSparseMassFn
+            @noarkode <node5#ss:smassFn> ARKSlsSparseMassFn *)
+        val solver_csr : Sls.SparseMatrix.csr sparse_mass_fn
+                         -> int -> 'k serial_mass_solver
 
         (** Sets the ordering algorithm used to minimize fill-in.
 
@@ -487,20 +515,21 @@ module Sls :
         @noarkode <node> The SuperLU_MT solver *)
     module Superlumt : sig (* {{{ *)
 
-      (** A direct linear solver on sparse matrices. In the call,
-          [superlumt jfn ~nnz ~nthreads], [jfn] is a callback function that
-          computes an approximation to the Jacobian matrix, [nnz] is the
-          maximum number of nonzero entries in that matrix, and [nthreads] is
-          the number of threads to use when factorizing/solving.
+      (** A direct linear solver on compressed-sparse-column matrices.
+          In the call, [superlumt jfn ~nnz ~nthreads], [jfn] is a callback
+          function that computes an approximation to the Jacobian matrix,
+          [nnz] is the maximum number of nonzero entries in that matrix,
+          and [nthreads] is the number of threads to use when
+          factorizing/solving.
 
           @raise Sundials.NotImplementedBySundialsVersion Solver not available.
           @noarkode <node5#sss:lin_solv_init> ARKSuperLUMT
           @noarkode <node5#sss:optin_sls> ARKSlsSetSparseJacFn
           @noarkode <node5#ss:sjacFn> ARKSlsSparseJacFn *)
-      val solver : sparse_jac_fn
-                   -> nnz:int
-                   -> nthreads:int
-                   -> 'k serial_linear_solver
+      val solver_csc : Sls.SparseMatrix.csc sparse_jac_fn
+                       -> nnz:int
+                       -> nthreads:int
+                       -> 'k serial_linear_solver
 
       (** The ordering algorithm used for reducing fill. *)
       type ordering =
@@ -522,19 +551,20 @@ module Sls :
 
       module Mass : sig (* {{{ *)
 
-        (** A direct linear solver on sparse matrices. In the call,
-            [superlumt mfn ~nnz ~nthreads], [mfn] is a callback function that
-            computes an approximation to the mass matrix, [nnz] is the maximum
-            number of nonzero entries in that matrix, and [nthreads] is the
-            number of threads to use when factorizing/solving.
+        (** A direct linear solver on compressed-sparse-column matrices.
+            In the call, [superlumt mfn ~nnz ~nthreads], [mfn] is a callback
+            function that computes an approximation to the mass matrix,
+            [nnz] is the maximum number of nonzero entries in that matrix,
+            and [nthreads] is the number of threads to use when
+            factorizing/solving.
 
             @raise Sundials.NotImplementedBySundialsVersion Solver not available.
             @noarkode <node5#sss:lin_solv_init> ARKMassSuperLUMT
             @noarkode <node5#ss:smassFn> ARKSlsSparseMassFn *)
-        val solver : sparse_mass_fn
-                     -> nnz:int
-                     -> nthreads:int
-                     -> 'k serial_mass_solver
+        val solver_csc : Sls.SparseMatrix.csc sparse_mass_fn
+                         -> nnz:int
+                         -> nthreads:int
+                         -> 'k serial_mass_solver
 
         (** Sets the ordering algorithm used to minimize fill-in.
 

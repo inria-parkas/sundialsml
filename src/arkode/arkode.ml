@@ -318,16 +318,27 @@ module Sls = struct
        | ColAmd
        | Natural
 
-    external c_klu : 'k serial_session -> int -> int -> unit
+    external c_klu : 'k serial_session -> Sls_impl.sformat -> int -> int -> unit
       = "c_arkode_klu_init"
 
-    let solver f nnz session nv =
+    let solver sformat f nnz session nv =
       if not Sundials_config.klu_enabled
         then raise Sundials.NotImplementedBySundialsVersion;
       let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
       session.ls_callbacks <- SlsKluCallback { jacfn = f; smat = None };
       session.ls_precfns <- NoPrecFns;
-      c_klu session neqs nnz
+      c_klu session sformat neqs nnz
+
+    (* We force the type argument here to avoid propagating it to the
+       session type; which is unnecessary and needlessy complicated
+       for users. *)
+    let solver_csc (f : Sls.SparseMatrix.csc sparse_jac_fn)
+      = solver Sls_impl.CSC_MAT (Obj.magic f : unit sparse_jac_fn)
+
+    let solver_csr (f : Sls.SparseMatrix.csr sparse_jac_fn)
+      = match Sundials.sundials_version with
+        | 2,5,_ | 2,6,_ -> raise Sundials.NotImplementedBySundialsVersion
+        | _ -> solver Sls_impl.CSR_MAT (Obj.magic f : unit sparse_jac_fn)
 
     external c_set_ordering : 'k serial_session -> ordering -> unit
       = "c_arkode_klu_set_ordering"
@@ -352,17 +363,29 @@ module Sls = struct
 
     module Mass = struct
 
-      external c_mass_klu : 'k serial_session -> int -> int -> unit
+      external c_mass_klu
+        : 'k serial_session -> Sls_impl.sformat -> int -> int -> unit
         = "c_arkode_mass_klu_init"
 
-      let solver f nnz session nv =
+      let solver sformat f nnz session nv =
         if not Sundials_config.klu_enabled
           then raise Sundials.NotImplementedBySundialsVersion;
         let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
         session.mass_callbacks
           <- SlsKluMassCallback { massfn = f; smmat = None };
         session.mass_precfns <- NoMassPrecFns;
-        c_mass_klu session neqs nnz
+        c_mass_klu session sformat neqs nnz
+
+      (* We force the type argument here to avoid propagating it to the
+         session type; which is unnecessary and needlessy complicated
+         for users. *)
+      let solver_csc (f : Sls.SparseMatrix.csc sparse_mass_fn)
+        = solver Sls_impl.CSC_MAT (Obj.magic f : unit sparse_mass_fn)
+
+      let solver_csr (f : Sls.SparseMatrix.csr sparse_mass_fn)
+      = match Sundials.sundials_version with
+        | 2,5,_ | 2,6,_ -> raise Sundials.NotImplementedBySundialsVersion
+        | _ -> solver Sls_impl.CSR_MAT (Obj.magic f : unit sparse_mass_fn)
 
       external c_set_ordering : 'k serial_session -> ordering -> unit
         = "c_arkode_mass_klu_set_ordering"
@@ -399,13 +422,19 @@ module Sls = struct
     external c_superlumt : 'k serial_session -> int -> int -> int -> unit
       = "c_arkode_superlumt_init"
 
-    let solver f ~nnz ~nthreads session nv =
+    let solver sformat f ~nnz ~nthreads session nv =
       if not Sundials_config.superlumt_enabled
         then raise Sundials.NotImplementedBySundialsVersion;
       let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
       session.ls_callbacks <- SlsSuperlumtCallback { jacfn = f; smat = None };
       session.ls_precfns <- NoPrecFns;
       c_superlumt session neqs nnz nthreads
+
+    (* We force the type argument here to avoid propagating it to the
+       session type; which is unnecessary and needlessy complicated
+       for users. *)
+    let solver_csc (f : Sls.SparseMatrix.csc sparse_jac_fn)
+      = solver Sls_impl.CSC_MAT (Obj.magic f : unit sparse_jac_fn)
 
     external c_set_ordering : 'k serial_session -> ordering -> unit
       = "c_arkode_superlumt_set_ordering"
@@ -425,7 +454,7 @@ module Sls = struct
       external c_mass_superlumt : 'k serial_session -> int -> int -> int -> unit
         = "c_arkode_mass_superlumt_init"
 
-      let solver f ~nnz ~nthreads session nv =
+      let solver fmt f ~nnz ~nthreads session nv =
         if not Sundials_config.superlumt_enabled
           then raise Sundials.NotImplementedBySundialsVersion;
         let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
@@ -433,6 +462,12 @@ module Sls = struct
           <- SlsSuperlumtMassCallback { massfn = f; smmat = None };
         session.mass_precfns <- NoMassPrecFns;
         c_mass_superlumt session neqs nnz nthreads
+
+      (* We force the type argument here to avoid propagating it to the
+         session type; which is unnecessary and needlessy complicated
+         for users. *)
+      let solver_csc (f : Sls.SparseMatrix.csc sparse_mass_fn)
+        = solver Sls_impl.CSC_MAT (Obj.magic f : unit sparse_mass_fn)
 
       external c_set_ordering : 'k serial_session -> ordering -> unit
         = "c_arkode_mass_superlumt_set_ordering"

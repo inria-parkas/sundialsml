@@ -521,7 +521,7 @@ let main () =
     else failwith "mgrid size is too small to run."
   in
   let mem =
-    Ida.(init (Sls.Klu.solver jacfn nnz)
+    Ida.(init (Sls.Klu.solver_csc jacfn nnz)
               (SStolerances (rtol, atol))
               (fun t u u' r -> heatres t u u' r data)
               t0 wu wu')

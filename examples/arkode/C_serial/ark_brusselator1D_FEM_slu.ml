@@ -98,7 +98,7 @@ type user_data = {
   dv  : float;                          (* diffusion coeff for v   *)
   dw  : float;                          (* diffusion coeff for w   *)
   ep  : float;                          (* stiffness parameter     *)
-  mutable r : Sls.SparseMatrix.t option (* temporary storage       *)
+  mutable r : Sls.SparseMatrix.t_csc option (* temporary storage       *)
 }
 
 (* Routine to compute the Laplace matrix *)
@@ -682,7 +682,7 @@ let jac ud { Arkode.jac_y = (y : RealArray.t) } j =
   (match ud.r with
    | Some _ -> ()
    | None ->
-      try ud.r <- Some (Sls.SparseMatrix.make m n nnz)
+      try ud.r <- Some (Sls.SparseMatrix.make_csc m n nnz)
       with _ ->
         (printf "Jac: error in allocating R matrix!\n";
          raise Sundials.RecoverableFailure));
@@ -915,12 +915,12 @@ let main () =
     init
       (Arkode.Implicit
         (f udata,
-         Newton (Sls.Superlumt.solver (jac udata)
+         Newton (Sls.Superlumt.solver_csc (jac udata)
                     ~nnz:nnz ~nthreads:num_threads),
          Nonlinear))
       (SStolerances (reltol, abstol))
       ~restol:(ResStolerance abstol)
-      ~mass:(Sls.Superlumt.Mass.solver (mass_matrix udata)
+      ~mass:(Sls.Superlumt.Mass.solver_csc (mass_matrix udata)
                   ~nnz:nnz ~nthreads:num_threads)
       t0
       y

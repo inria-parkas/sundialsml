@@ -21,7 +21,8 @@
 #include "../sundials/sundials_ml.h"
 
 #ifndef SUNDIALS_ML_KLU
-CAMLprim value c_kinsol_klu_init (value vkin_mem, value vneqs, value vnnz)
+CAMLprim value c_kinsol_klu_init (value vkin_mem, value vformat,
+				  value vneqs, value vnnz)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 
 CAMLprim value c_kinsol_klu_set_ordering (value vkin_mem, value vordering)
@@ -67,7 +68,11 @@ static int jacfn(
     cb = Field (cb, 0);
     smat = Field(cb, 1);
     if (smat == Val_none) {
-	Store_some(smat, c_sls_sparse_wrap(Jac, 0));
+#if SUNDIALS_LIB_VERSION >= 270
+	Store_some(smat, c_sls_sparse_wrap(Jac, 0, Val_int(Jac->sparsetype)));
+#else
+	Store_some(smat, c_sls_sparse_wrap(Jac, 0, Val_int(0)));
+#endif
 	Store_field(cb, 1, smat);
 
 	args[1] = Some_val(smat);
@@ -82,14 +87,15 @@ static int jacfn(
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, UNRECOVERABLE));
 }
 
-CAMLprim value c_kinsol_klu_init (value vkin_mem, value vneqs, value vnnz)
+CAMLprim value c_kinsol_klu_init (value vkin_mem, value vformat,
+				  value vneqs, value vnnz)
 {
-    CAMLparam3(vkin_mem, vneqs, vnnz);
+    CAMLparam4(vkin_mem, vformat, vneqs, vnnz);
     void *kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
     int flag;
 
 #if SUNDIALS_LIB_VERSION >= 270
-    flag = KINKLU (kin_mem, Int_val(vneqs), Int_val(vnnz), CSC_MAT);
+    flag = KINKLU (kin_mem, Int_val(vneqs), Int_val(vnnz), Int_val(vformat));
 #else
     flag = KINKLU (kin_mem, Int_val(vneqs), Int_val(vnnz));
 #endif

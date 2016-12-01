@@ -268,25 +268,41 @@ module Sls :
                  be accessed after the function has returned.}
 
         @noida <node5#ss:sjacFn> IDASlsSparseJacFn *)
-    type sparse_jac_fn =
+    type 'f sparse_jac_fn =
       (Sundials.RealArray.t triple, Sundials.RealArray.t) jacobian_arg
-      -> Sls.SparseMatrix.t -> unit
+      -> 'f Sls.SparseMatrix.t -> unit
 
     (** KLU sparse-direct linear solver module (requires KLU).
 
         @noida <node5#sss:idaklu> The KLU Solver *)
     module Klu : sig (* {{{ *)
 
-      (** A direct linear solver on sparse matrices. In the call,
-          [klu jfn nnz], [jfn] is a callback function that computes an
-          approximation to the Jacobian matrix and [nnz] is the maximum number
-          of nonzero entries in that matrix.
+      (** A direct linear solver on compressed-sparse-column matrices.
+          In the call, [klu jfn nnz], [jfn] is a callback function that
+          computes an approximation to the Jacobian matrix and [nnz] is
+          the maximum number of nonzero entries in that matrix.
 
           @raise Sundials.NotImplementedBySundialsVersion Solver not available.
           @noida <node5#sss:lin_solv_init> IDAKLU
           @noida <node5#sss:optin_sls> IDASlsSetSparseJacFn
           @noida <node5#ss:sjacFn> IDASlsSparseJacFn *)
-      val solver : sparse_jac_fn -> int -> 'k serial_linear_solver
+      val solver_csc : Sls.SparseMatrix.csc sparse_jac_fn
+                       -> int
+                       -> 'k serial_linear_solver
+
+      (** A direct linear solver on compressed-sparse-row matrices.
+          In the call, [klu jfn nnz], [jfn] is a callback function that
+          computes an approximation to the Jacobian matrix and [nnz] is
+          the maximum number of nonzero entries in that matrix.
+
+          @since 2.7.0
+          @raise Sundials.NotImplementedBySundialsVersion Solver not available.
+          @noida <node5#sss:lin_solv_init> IDAKLU
+          @noida <node5#sss:optin_sls> IDASlsSetSparseJacFn
+          @noida <node5#ss:sjacFn> IDASlsSparseJacFn *)
+      val solver_csr : Sls.SparseMatrix.csr sparse_jac_fn
+                       -> int
+                       -> 'k serial_linear_solver
 
       (** The ordering algorithm used for reducing fill. *)
       type ordering =
@@ -322,18 +338,21 @@ module Sls :
         @noida <node5#sss:idasuperlumt> The SUPERLUMT Solver *)
     module Superlumt : sig (* {{{ *)
 
-      (** A direct linear solver on sparse matrices. In the call,
-          [superlumt jfn nnz nthreads], [jfn] is a callback function that
-          computes an approximation to the Jacobian matrix, [nnz] is the maximum
-          number of nonzero entries in that matrix, and [nthreads] is the number
-          of threads to use when factorizing/solving.
+      (** A direct linear solver on compresed-sparse-column matrices.
+          In the call, [superlumt jfn nnz nthreads], [jfn] is a callback
+          function that computes an approximation to the Jacobian matrix,
+          [nnz] is the maximum number of nonzero entries in that matrix,
+          and [nthreads] is the number of threads to use when
+          factorizing/solving.
 
           @raise Sundials.NotImplementedBySundialsVersion Solver not available.
           @noida <node5#sss:lin_solv_init> IDASuperLUMT
           @noida <node5#sss:optin_sls> IDASlsSetSparseJacFn
           @noida <node5#ss:sjacFn> IDASlsSparseJacFn *)
-      val solver
-          : sparse_jac_fn -> nnz:int -> nthreads:int -> 'k serial_linear_solver
+      val solver_csc : Sls.SparseMatrix.csc sparse_jac_fn
+                       -> nnz:int
+                       -> nthreads:int
+                       -> 'k serial_linear_solver
 
       (** The ordering algorithm used for reducing fill. *)
       type ordering =

@@ -79,16 +79,16 @@ end
 
 module SlsTypes = struct
 
-  type sparse_jac_fn =
+  type 'f sparse_jac_fn =
     (real_array double_tmp, real_array) jacobian_arg
-    -> Sls_impl.t
+    -> 'f Sls_impl.t
     -> unit
 
   (* These fields are accessed from kinsol_ml.c *)
-  type sparse_jac_callback =
+  type 'f sparse_jac_callback =
     {
-      jacfn: sparse_jac_fn;
-      mutable smat : Sls_impl.t option
+      jacfn: 'f sparse_jac_fn;
+      mutable smat : 'f Sls_impl.t option
     }
 
 end
@@ -171,8 +171,8 @@ and ('a, 'kind) linsolv_callbacks =
   | DlsDenseCallback of DlsTypes.dense_jac_callback
   | DlsBandCallback  of DlsTypes.band_jac_callback
 
-  | SlsKluCallback of SlsTypes.sparse_jac_callback
-  | SlsSuperlumtCallback of SlsTypes.sparse_jac_callback
+  | SlsKluCallback of unit SlsTypes.sparse_jac_callback
+  | SlsSuperlumtCallback of unit SlsTypes.sparse_jac_callback
 
   | SpilsCallback of 'a SpilsTypes'.jac_times_vec_fn option
 

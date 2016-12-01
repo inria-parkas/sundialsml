@@ -70,7 +70,7 @@ type user_data = {
     dv : float;      (* diffusion coeff for v   *)
     dw : float;      (* diffusion coeff for w   *)
     ep : float;      (* stiffness parameter     *)
-    mutable r  : Sls.SparseMatrix.t option
+    mutable r  : Sls.SparseMatrix.t_csc option
                      (* temporary storage       *)
   }
 
@@ -217,7 +217,7 @@ let jac ud { Arkode.jac_y = (y : RealArray.t) } j =
   (match ud.r with
    | Some _ -> ()
    | None ->
-      try ud.r <- Some (Sls.SparseMatrix.make m n nnz)
+      try ud.r <- Some (Sls.SparseMatrix.make_csc m n nnz)
       with _ ->
         (printf "Jacobian calculation error in allocating R matrix!\n";
          raise Sundials.RecoverableFailure));
@@ -310,7 +310,8 @@ let main () =
   let nnz = 5*neq in
   let arkode_mem = Arkode.(
     init
-      (Implicit (f udata, Newton (Sls.Klu.solver (jac udata) nnz), Nonlinear))
+      (Implicit (f udata,
+                 Newton (Sls.Klu.solver_csc (jac udata) nnz), Nonlinear))
       (SStolerances (reltol, abstol))
       t0
       y
