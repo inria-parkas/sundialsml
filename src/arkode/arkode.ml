@@ -1309,6 +1309,7 @@ type erk_table =
   | DormandPrince_7_4_5
   | ARK_8_4_5_Explicit
   | Verner_8_5_6
+  | Fehlberg_13_7_8
 
 type irk_table =
   | SDIRK_2_1_2
@@ -1330,39 +1331,75 @@ type ark_table =
   | ARK_8_4_5
 
 let int_of_erk_table v =
-  match v with
-  | HeunEuler_2_1_2       -> 0
-  | BogackiShampine_4_2_3 -> 1
-  | ARK_4_2_3_Explicit    -> 2
-  | Zonneveld_5_3_4       -> 3
-  | ARK_6_3_4_Explicit    -> 4
-  | SayfyAburub_6_3_4     -> 5
-  | CashKarp_6_4_5        -> 6
-  | Fehlberg_6_4_5        -> 7
-  | DormandPrince_7_4_5   -> 8
-  | ARK_8_4_5_Explicit    -> 9
-  | Verner_8_5_6          -> 10
+  match Sundials.sundials_version with
+  | 2,5,_ | 2,6,_ ->
+    (match v with
+     | HeunEuler_2_1_2       -> 0
+     | BogackiShampine_4_2_3 -> 1
+     | ARK_4_2_3_Explicit    -> 2
+     | Zonneveld_5_3_4       -> 3
+     | ARK_6_3_4_Explicit    -> 4
+     | SayfyAburub_6_3_4     -> 5
+     | CashKarp_6_4_5        -> 6
+     | Fehlberg_6_4_5        -> 7
+     | DormandPrince_7_4_5   -> 8
+     | ARK_8_4_5_Explicit    -> 9
+     | Verner_8_5_6          -> 10
+     | Fehlberg_13_7_8       -> raise Sundials.NotImplementedBySundialsVersion)
+  | _ ->
+    (match v with
+     | HeunEuler_2_1_2       -> 0
+     | BogackiShampine_4_2_3 -> 1
+     | ARK_4_2_3_Explicit    -> 2
+     | Zonneveld_5_3_4       -> 3
+     | ARK_6_3_4_Explicit    -> 4
+     | SayfyAburub_6_3_4     -> 5
+     | CashKarp_6_4_5        -> 6
+     | Fehlberg_6_4_5        -> 7
+     | DormandPrince_7_4_5   -> 8
+     | ARK_8_4_5_Explicit    -> 9
+     | Verner_8_5_6          -> 10
+     | Fehlberg_13_7_8       -> 11)
 
 let int_of_irk_table v =
-  match v with
-  | SDIRK_2_1_2        -> 11
-  | Billington_3_2_3   -> 12
-  | TRBDF2_3_2_3       -> 13
-  | Kvaerno_4_2_3      -> 14
-  | ARK_4_2_3_Implicit -> 15
-  | Cash_5_2_4         -> 16
-  | Cash_5_3_4         -> 17
-  | SDIRK_5_3_4        -> 18
-  | Kvaerno_5_3_4      -> 19
-  | ARK_6_3_4_Implicit -> 20
-  | Kvaerno_7_4_5      -> 21
-  | ARK_8_4_5_Implicit -> 22
+  match Sundials.sundials_version with
+  | 2,5,_ | 2,6,_ ->
+    (match v with
+     | SDIRK_2_1_2        -> 11
+     | Billington_3_2_3   -> 12
+     | TRBDF2_3_2_3       -> 13
+     | Kvaerno_4_2_3      -> 14
+     | ARK_4_2_3_Implicit -> 15
+     | Cash_5_2_4         -> 16
+     | Cash_5_3_4         -> 17
+     | SDIRK_5_3_4        -> 18
+     | Kvaerno_5_3_4      -> 19
+     | ARK_6_3_4_Implicit -> 20
+     | Kvaerno_7_4_5      -> 21
+     | ARK_8_4_5_Implicit -> 22)
+  | _ ->
+    (match v with
+     | SDIRK_2_1_2        -> 12
+     | Billington_3_2_3   -> 13
+     | TRBDF2_3_2_3       -> 14
+     | Kvaerno_4_2_3      -> 15
+     | ARK_4_2_3_Implicit -> 16
+     | Cash_5_2_4         -> 17
+     | Cash_5_3_4         -> 18
+     | SDIRK_5_3_4        -> 19
+     | Kvaerno_5_3_4      -> 20
+     | ARK_6_3_4_Implicit -> 21
+     | Kvaerno_7_4_5      -> 22
+     | ARK_8_4_5_Implicit -> 23)
 
 let ints_of_ark_table v =
   match v with
-  | ARK_4_2_3 -> (15, 2)
-  | ARK_6_3_4 -> (20, 4)
-  | ARK_8_4_5 -> (22, 9)
+  | ARK_4_2_3 -> (int_of_irk_table ARK_4_2_3_Implicit,
+                  int_of_erk_table ARK_4_2_3_Explicit)
+  | ARK_6_3_4 -> (int_of_irk_table ARK_6_3_4_Implicit,
+                  int_of_erk_table ARK_6_3_4_Explicit)
+  | ARK_8_4_5 -> (int_of_irk_table ARK_8_4_5_Implicit,
+                  int_of_erk_table ARK_8_4_5_Explicit)
 
 external c_set_erk_table_num      : ('d, 'k) session -> int -> unit
     = "c_arkode_set_erk_table_num"

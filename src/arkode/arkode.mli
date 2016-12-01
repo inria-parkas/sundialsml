@@ -1993,28 +1993,29 @@ type erk_table =
   | ARK_8_4_5_Explicit    (** Explicit portion of default 5th order additive
                               method (table 9). *)
   | Verner_8_5_6          (** Default 6th order explicit method (table 10). *)
+  | Fehlberg_13_7_8       (** Default 8th order explicit method (table 11). *)
 
 (** Implicit Butcher tables
 
     @noarkode <node> Implicit Butcher tables *)
 type irk_table =
-  | SDIRK_2_1_2           (** Default 2nd order implicit method (table 11). *)
-  | Billington_3_2_3      (** Butcher table number 12. *)
-  | TRBDF2_3_2_3          (** Butcher table number 13. *)
-  | Kvaerno_4_2_3         (** Butcher table number 14. *)
+  | SDIRK_2_1_2           (** Default 2nd order implicit method (table 12). *)
+  | Billington_3_2_3      (** Butcher table number 13. *)
+  | TRBDF2_3_2_3          (** Butcher table number 14. *)
+  | Kvaerno_4_2_3         (** Butcher table number 15. *)
   | ARK_4_2_3_Implicit    (** Default 3rd order implicit method and the implicit
                               portion of the default 3rd order additive method
-                              (table 15). *)
-  | Cash_5_2_4            (** Butcher table number 16. *)
-  | Cash_5_3_4            (** Butcher table number 17. *)
-  | SDIRK_5_3_4           (** Default 4th order implicit method (table 18). *)
-  | Kvaerno_5_3_4         (** Butcher table number 19. *)
+                              (table 16). *)
+  | Cash_5_2_4            (** Butcher table number 17. *)
+  | Cash_5_3_4            (** Butcher table number 18. *)
+  | SDIRK_5_3_4           (** Default 4th order implicit method (table 19). *)
+  | Kvaerno_5_3_4         (** Butcher table number 20. *)
   | ARK_6_3_4_Implicit    (** Implicit portion of the default 4th order additive
-                              method (table 20). *)
-  | Kvaerno_7_4_5         (** Butcher table number 21. *)
+                              method (table 21). *)
+  | Kvaerno_7_4_5         (** Butcher table number 22. *)
   | ARK_8_4_5_Implicit    (** Default 5th order method and the implicit portion
                               of the default 5th order additive method
-                              (table 22). *)
+                              (table 23). *)
 
 (** Additive Butcher tables
 
@@ -2033,6 +2034,9 @@ val set_ark_table_num : ('d, 'k) session -> ark_table -> unit
 
 (** Use specific built-in Butcher tables for an explicit integration of the
     problem.
+
+    The {{!erk_table}Fehlberg_13_7_8} method is not available prior to
+    Sundials 2.7.0.
 
     @raise IllInput If $f_E$ is not already specified.
     @noarkode <node> ARKodeSetERKTableNum
