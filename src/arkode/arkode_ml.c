@@ -312,6 +312,27 @@ static int resizefn(N_Vector y, N_Vector ytemplate, void *user_data)
     CAMLreturnT(int, Is_exception_result(r));
 }
 
+#if SUNDIALS_LIB_VERSION >= 270
+static int poststepfn(realtype t, N_Vector y, void *user_data)
+{
+    CAMLparam0();
+    CAMLlocal1(session);
+    CAMLlocalN(args, 2);
+
+    value *backref = user_data;
+    WEAK_DEREF (session, *backref);
+
+    args[0] = caml_copy_double (t);
+    args[1] = NVEC_BACKLINK (y);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback2_exn(Field(session, RECORD_ARKODE_SESSION_POSTSTEPFN),
+				 args[0], args[1]);
+
+    CAMLreturnT(int, Is_exception_result(r));
+}
+#endif
+
 value arkode_make_jac_arg(realtype t, N_Vector y, N_Vector fy, value tmp)
 {
     CAMLparam1(tmp);
@@ -1923,6 +1944,20 @@ CAMLprim value c_arkode_set_predictor_method(value varkode_mem, value vmethod)
     int flag = ARKodeSetPredictorMethod(ARKODE_MEM_FROM_ML(varkode_mem),
 				        Int_val(vmethod));
     CHECK_FLAG("ARKodeSetPredictorMethod", flag);
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value c_arkode_set_postprocess_step_fn(value varkode_mem, value vhasf)
+{
+    CAMLparam2(varkode_mem, vhasf);
+#if SUNDIALS_LIB_VERSION >= 270
+    ARKodeMem arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
+
+    int flag = ARKodeSetPostprocessStepFn(arkode_mem,
+					  Bool_val(vhasf) ? poststepfn : NULL);
+    CHECK_FLAG("ARKodeSetPostprocessStepFn", flag);
+#endif
 
     CAMLreturn (Val_unit);
 }

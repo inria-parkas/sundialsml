@@ -1034,6 +1034,7 @@ let init prob tol ?restol ?order ?mass ?(roots=no_roots) t0 y0 =
           adaptfn      = dummy_adaptfn;
           stabfn       = dummy_stabfn;
           resizefn     = dummy_resizefn;
+          poststepfn   = dummy_poststepfn;
 
           linsolver      = None;
           ls_callbacks   = NoCallbacks;
@@ -1511,6 +1512,21 @@ external set_safety_factor      : ('a, 'k) session -> float -> unit
     = "c_arkode_set_safety_factor"
 external set_small_num_efails   : ('a, 'k) session -> float -> unit
     = "c_arkode_set_small_num_efails"
+
+external c_set_postprocess_step_fn : ('a, 'k) session -> bool -> unit
+    = "c_arkode_set_postprocess_step_fn"
+
+let set_postprocess_step_fn s fn =
+  match Sundials.sundials_version with
+  | 2,5,_ | 2,6,_ -> raise Sundials.NotImplementedBySundialsVersion
+  | _ -> (s.poststepfn <- fn;
+          c_set_postprocess_step_fn s true)
+
+let clear_postprocess_step_fn s =
+  match Sundials.sundials_version with
+  | 2,5,_ | 2,6,_ -> raise Sundials.NotImplementedBySundialsVersion
+  | _ -> (s.poststepfn <- dummy_poststepfn;
+          c_set_postprocess_step_fn s false)
 
 external c_set_root_direction   : ('a, 'k) session -> Sundials.RootDirs.t -> unit
     = "c_arkode_set_root_direction"

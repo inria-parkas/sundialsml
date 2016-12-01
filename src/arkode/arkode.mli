@@ -2292,6 +2292,28 @@ val set_delta_gamma_max : ('d, 'k) session -> float -> unit
     @noarkode <node> ARKodeSetMaxStepsBetweenLSet *)
 val set_max_steps_between_lset : ('d, 'k) session -> int -> unit
 
+(** A function to process the results of each timestep solution.
+    The arguments are
+    - [t], the value of the independent variable, and
+    - [y], the value of the dependent variable vector {% $y(t)$%}.
+
+    @noarkode <node> ARKPostprocessStepFn *)
+type 'd postprocess_step_fn = float -> 'd -> unit
+
+(** Set a post processing step function.
+
+    @since 2.7.0
+    @raise Sundials.NotImplementedBySundialsVersion Post processing not available
+    @noarkode <node> ARKSetPostprocessStepFn *)
+val set_postprocess_step_fn : ('d, 'k) session -> 'd postprocess_step_fn -> unit
+
+(** Clear the post processing step function.
+
+    @since 2.7.0
+    @raise Sundials.NotImplementedBySundialsVersion Post processing not available
+    @noarkode <node> ARKSetPostprocessStepFn *)
+val clear_postprocess_step_fn : ('d, 'k) session -> unit
+
 (** {2:get Querying the solver (optional output functions)} *)
 
 (** Returns the real and integer workspace sizes.

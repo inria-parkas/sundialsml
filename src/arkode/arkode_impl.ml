@@ -286,6 +286,7 @@ type adaptivity_args = {
 type 'd adaptivity_fn = float -> 'd -> adaptivity_args -> float
 type 'd stability_fn = float -> 'd -> float
 type 'd resize_fn = 'd -> 'd -> unit
+type 'd postprocess_step_fn = float -> 'd -> unit
 
 (* Session: here comes the big blob.  These mutually recursive types
    cannot be handed out separately to modules without menial
@@ -313,6 +314,7 @@ type ('a, 'kind) session = {
   mutable adaptfn      : 'a adaptivity_fn;
   mutable stabfn       : 'a stability_fn;
   mutable resizefn     : 'a resize_fn;
+  mutable poststepfn   : 'a postprocess_step_fn;
 
   mutable linsolver      : ('a, 'kind) linear_solver option;
   mutable ls_callbacks   : ('a, 'kind) linsolv_callbacks;
@@ -605,4 +607,6 @@ let dummy_stabfn _ _ =
   (crash "Internal error: dummy_stabfn called\n"; 0.0)
 let dummy_resizefn _ _ =
   crash "Internal error: dummy_resizefn called\n"
+let dummy_poststepfn _ _ =
+  crash "Internal error: dummy_poststepfn called\n"
 
