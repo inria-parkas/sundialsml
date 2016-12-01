@@ -34,7 +34,7 @@ module SparseMatrix :
         {{!Invalidated}Invalidated} exception.
 
         The type argument ['sformat] specifies the storage format.
-        It is either {csc} or {csr}.
+        It is either {!csc} or {!csr}.
 
         @nocvode <node9#s:sls>  Type SlsMat *)
     type 'sformat t = 'sformat Sls_impl.t

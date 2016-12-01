@@ -1,8 +1,8 @@
 #! /bin/sh
 
 sysname='Sundials/ML'
-version=2.6.2
-versionp=1
+version=2.7.0
+versionp=0
 contact='tim@tbrk.org'
 
 unset prefix
