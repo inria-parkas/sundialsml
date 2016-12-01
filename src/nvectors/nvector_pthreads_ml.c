@@ -85,7 +85,7 @@ CAMLprim value ml_nvec_wrap_pthreads(value nthreads,
     /* This is registered but only ever called for C-allocated clones. */
     ops->nvdestroy         = free_cnvec;
 #if SUNDIALS_LIB_VERSION >= 270
-    ops->nvgetvectorid	   = SUNDIALS_NVEC_PTHREADS;
+    ops->nvgetvectorid	   = N_VGetVectorID_Pthreads;
 #endif
 
     ops->nvspace           = N_VSpace_Pthreads;		    /* theirs */

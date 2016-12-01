@@ -91,7 +91,7 @@ void clone_cnvec_ops(N_Vector dst, N_Vector src)
     ops->nvcloneempty      = src->ops->nvcloneempty;
     ops->nvdestroy         = src->ops->nvdestroy;
 #if SUNDIALS_LIB_VERSION >= 270
-    ops->nvgetvectorid	   = src->nvgetvectorid;
+    ops->nvgetvectorid	   = src->ops->nvgetvectorid;
 #endif
     ops->nvspace           = src->ops->nvspace;
     ops->nvgetarraypointer = src->ops->nvgetarraypointer;
@@ -178,7 +178,7 @@ CAMLprim value ml_nvec_wrap_serial(value payload, value checkfn)
     /* This is registered but only ever called for C-allocated clones. */
     ops->nvdestroy         = free_cnvec;
 #if SUNDIALS_LIB_VERSION >= 270
-    ops->nvgetvectorid	   = SUNDIALS_NVEC_SERIAL;
+    ops->nvgetvectorid	   = N_VGetVectorID_Serial;
 #endif
 
     ops->nvspace           = N_VSpace_Serial;		    /* theirs */
@@ -239,6 +239,13 @@ static void finalize_custom_caml_nvec(value vnv)
     free_custom_cnvec (NVEC_CVAL(vnv));
 }
 
+#if SUNDIALS_LIB_VERSION >= 270
+static N_Vector_ID getvectorid_custom(N_Vector v)
+{
+      return SUNDIALS_NVEC_CUSTOM;
+}
+#endif
+
 /* Creation from OCaml. */
 CAMLprim value ml_nvec_wrap_custom(value mlops, value payload, value checkfn)
 {
@@ -258,7 +265,7 @@ CAMLprim value ml_nvec_wrap_custom(value mlops, value payload, value checkfn)
     ops->nvcloneempty      = NULL;
     ops->nvdestroy         = free_custom_cnvec;
 #if SUNDIALS_LIB_VERSION >= 270
-    ops->nvgetvectorid	   = SUNDIALS_NVEC_CUSTOM;
+    ops->nvgetvectorid	   = getvectorid_custom;
 #endif
 
     ops->nvspace = NULL;

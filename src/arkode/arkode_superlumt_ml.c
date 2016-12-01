@@ -161,7 +161,7 @@ static int massfn(realtype t,
     smat = Field(cb, 1);
     if (smat == Val_none) {
 #if SUNDIALS_LIB_VERSION >= 270
-	Store_some(smat, c_sls_sparse_wrap(M, 0, Val_int(jac->sparsetype)));
+	Store_some(smat, c_sls_sparse_wrap(M, 0, Val_int(M->sparsetype)));
 #else
 	Store_some(smat, c_sls_sparse_wrap(M, 0, Val_int(0)));
 #endif

@@ -1346,6 +1346,11 @@ CAMLprim value c_ida_set_max_num_iters_ic(value vida_mem, value vmaxnit)
     CAMLreturn (Val_unit);
 }
 
+#if SUNDIALS_LIB_VERSION == 270
+// work around a missing prototype in 2.7.0
+int IDASetMaxBacksIC(void *, int);
+#endif
+
 CAMLprim value c_ida_set_max_backs_ic(value vida_mem, value vmaxbacks)
 {
     CAMLparam2(vida_mem, vmaxbacks);
