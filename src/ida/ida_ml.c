@@ -1346,6 +1346,20 @@ CAMLprim value c_ida_set_max_num_iters_ic(value vida_mem, value vmaxnit)
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value c_ida_set_max_backs_ic(value vida_mem, value vmaxbacks)
+{
+    CAMLparam2(vida_mem, vmaxbacks);
+
+#if SUNDIALS_LIB_VERSION >= 270
+    int flag = IDASetMaxBacksIC(IDA_MEM_FROM_ML(vida_mem), Int_val(vmaxbacks));
+    CHECK_FLAG("IDASetMaxBacksIC", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value c_ida_set_line_search_ic(value vida_mem, value vls)
 {
     CAMLparam2(vida_mem, vls);

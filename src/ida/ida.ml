@@ -800,6 +800,9 @@ external set_max_num_jacs_ic : ('d, 'k) session -> int -> unit
 external set_max_num_iters_ic : ('d, 'k) session -> int -> unit
   = "c_ida_set_max_num_iters_ic"
 
+external set_max_backs_ic : ('d, 'k) session -> int -> unit
+  = "c_ida_set_max_backs_ic"
+
 external set_line_search_ic : ('d, 'k) session -> bool -> unit
   = "c_ida_set_line_search_ic"
 

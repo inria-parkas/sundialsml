@@ -977,6 +977,16 @@ val set_max_num_jacs_ic : ('d, 'k) session -> int -> unit
     @ida <node5#ss:idacalcic> IDACalcIC *)
 val set_max_num_iters_ic : ('d, 'k) session -> int -> unit
 
+(** Specifies the maximum number of linesearch backtracks allowed in any
+    Newton iteration, when solving the initial conditions calculation
+    problem.
+
+    @since 2.7.0
+    @raise Sundials.NotImplementedBySundialsVersion Feature not available.
+    @noida <node5#sss:initoptin> IDASetMaxBacksIC
+    @ida <node5#ss:idacalcic> IDACalcIC *)
+val set_max_backs_ic : ('d, 'k) session -> int -> unit
+
 (** Enables ([true]) or disables ([false]) the linesearch algorithm
     in the initial condition calculation.
 
