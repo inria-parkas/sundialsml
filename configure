@@ -198,7 +198,12 @@ if [ x"${SUNDIALS_INCLUDE_DIR}" != x ]; then
     Isundials_inc_path="-I${sundials_inc_path}"
 fi
 if [ x"${SUNDIALS_EXAMPLES_DIR}" != x ]; then
-    EXAMPLESROOT="${SUNDIALS_EXAMPLES_DIR%/}"
+    if [ ! -d "${SUNDIALS_EXAMPLES_DIR%/}/templates" ]; then
+	msg="ignoring invalid examples directory (${SUNDIALS_EXAMPLES_DIR%})"
+	warning="${warning}\n\t${msg}"
+    else
+	EXAMPLESROOT="${SUNDIALS_EXAMPLES_DIR%/}"
+    fi
 fi
 if [ x"${SUNDIALS_DIR}" != x ]; then
     if [ "x${sundials_lib_path}" = x ]; then
