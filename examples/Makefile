@@ -38,7 +38,7 @@ GEN_SUBDIRS=$(foreach m,cvode cvodes ida idas kinsol,			\
 	       $(foreach v,						\
 	             serial						\
 	             $(if $(or $(1),$(MPI_ENABLED)),parallel)		\
-	             $(if $(or $(1),$(OPENMP_ENABLED)),openmp)		\
+	             $(if $(or $(1),$(OPENMP_ENABLED)),C_openmp)	\
 	             $(if $(or $(1),$(PTHREADS_ENABLED)),pthreads),	\
 	           nvector/$v))
 

@@ -4,7 +4,13 @@
 # are recompiled to link against CVODES.
 USELIB ?= sundials_no_sens
 SRCROOT=../../..
-SUBDIR=nvector/openmp
+
+SUBDIR=nvector/C_openmp
+ifeq ($(AT_LEAST_2_7), 1)
+    C_SUBDIR=nvector/C_openmp
+else
+    C_SUBDIR=nvector/openmp
+endif
 
 OPENMP_EXAMPLES = test_nvector_openmp.ml
 

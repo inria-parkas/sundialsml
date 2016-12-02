@@ -376,14 +376,12 @@ let main () =
      thousands of times the difference may become notable.
   *)
   (match Sundials.sundials_version with
-   | (2,6,_) ->
+   | 2,5,_ ->
+      Cvode.reinit cvode_mem t0 u
+   | _ ->
       let bandrange = { Cvode.mupper = mu; Cvode.mlower = ml } in
       Cvode.reinit cvode_mem t0 u
-        ~iter_type:Cvode.(Newton Spils.(spgmr (Banded.prec_right bandrange)))
-   | (2,5,_) ->
-      Cvode.reinit cvode_mem t0 u
-   | _ -> failwith "Unrecognized Sundials version.")
-  ;
+        ~iter_type:Cvode.(Newton Spils.(spgmr (Banded.prec_right bandrange))));
 
   Cvode.Spils.set_prec_type cvode_mem Spils.PrecRight;
   printf "\n\n-------------------------------------------------------";

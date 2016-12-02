@@ -33,6 +33,11 @@ module Roots = Sundials.Roots
 
 let printf = Printf.printf
 
+let sundials_270_or_later =
+  match Sundials.sundials_version with
+  | 2,5,_ | 2,6,_ -> false
+  | _ -> true
+
 (* Problem Constants *)
 
 let neq    = 3        (* number of equations  *)
@@ -190,9 +195,13 @@ let main () =
    * a 2-component root function and the dense direct linear solver.  *)
   let nnz = neq * neq in
   let ida_mem =
-    Ida.(init (Sls.Klu.solver_csr jacrob_csr nnz)
-              (SVtolerances (rtol, Nvector_serial.wrap avtol))
-              resrob ~roots:(nroots, grob) t0 wy wy')
+    if sundials_270_or_later
+    then Ida.(init (Sls.Klu.solver_csr jacrob_csr nnz)
+                     (SVtolerances (rtol, Nvector_serial.wrap avtol))
+                     resrob ~roots:(nroots, grob) t0 wy wy')
+    else Ida.(init (Sls.Klu.solver_csc jacrob_csc nnz)
+                     (SVtolerances (rtol, Nvector_serial.wrap avtol))
+                     resrob ~roots:(nroots, grob) t0 wy wy')
   in
   (* In loop, call IDASolve, print results, and test for error.  Break out of
    * loop when NOUT preset output times have been reached. *)
