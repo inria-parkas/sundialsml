@@ -2,6 +2,7 @@ Sundials/ML
 ===========
 
 Sundials/ML is an interface to the Sundials suite of numerical solvers.
+All features are supported except Hypre and PETSC nvectors.
 
 [Full documentation](http://inria-parkas.github.io/sundialsml/) is online.
 
