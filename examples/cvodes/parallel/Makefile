@@ -16,7 +16,7 @@ $(eval $(call EXECUTION_RULE,cvsAdvDiff_FSA_non_p,\
 	$(MPIRUN) -np 4 $$< -sensi sim t))
 $(eval $(call EXECUTION_RULE,cvsDiurnal_FSA_kry_p,\
 	$(MPIRUN) -np 4 $$< -sensi sim t))
-ifeq ($(AT_LEAST_2_7), 1)
+ifeq ($(AT_LEAST_2_7),)
     $(eval $(call EXECUTION_RULE,cvsAtmDisp_ASAi_kry_bbd_p,\
 	    $(MPIRUN) -np 8 $$< -sensi sim t))
 else

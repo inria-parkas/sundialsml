@@ -5,12 +5,15 @@
  * -----------------------------------------------------------------
  * Programmer(s): Allan Taylor, Alan Hindmarsh and
  *                Radu Serban @ LLNL
+ * Programmer(s): Ting Yan @ SMU
+ *      Based on idaFoodWeb_bnd.c and parallelized with OpenMP
  * -----------------------------------------------------------------
  * OCaml port: Jun Inoue, Inria, Aug 2014.
+ * OCaml port: Timothy Bourke, Inria, Dec 2016.
  * -----------------------------------------------------------------
  * Example program for IDA: Food web problem.
  *
- * This example program (serial version) uses the IDABAND linear 
+ * This example program (OpenMP version) uses the IDABAND linear 
  * solver, and IDACalcIC for initial condition calculation.
  *
  * The mathematical problem solved in this example is a DAE system
@@ -66,6 +69,21 @@
  *
  * The DAE system is solved by IDA using the IDABAND linear solver.
  * Output is printed at t = 0, .001, .01, .1, .4, .7, 1.
+ *
+ * Optionally, we can set the number of threads from environment 
+ * variable or command line. To check the current value for number
+ * of threads from environment:
+ *      % echo $OMP_NUM_THREADS
+ *
+ * Execution:
+ *
+ * If the user want to use the default value or the number of threads 
+ * from environment value:
+ *      % ./idaFoodWeb_bnd_omp 
+ * If the user want to specify the number of threads to use
+ *      % ./idaFoodWeb_bnd_omp num_threads
+ * where num_threads is the number of threads the user want to use 
+ *
  * -----------------------------------------------------------------
  * References:
  * [1] Peter N. Brown and Alan C. Hindmarsh,
@@ -103,7 +121,7 @@ let pi          = 3.1415926535898
 let fourpi      = 4.0*.pi
 let mx          = 20                    (* MX = number of x mesh points *)
 let my          = 20                    (* MY = number of y mesh points *)
-let nsmx        = num_species * mx
+let nsmx        = num_species * my
 let neq         = num_species * mx * my
 let aa          = 1.0                   (* Coefficient in above eqns. for a *)
 let ee          = 10000.                (* Coefficient in above eqns. for a *)
@@ -323,7 +341,7 @@ let set_initial_profiles webdata c c' id =
 
 (* Print first lines of output (problem description) *)
 let print_header mu ml rtol atol =
-  printf "\nidaFoodWeb_bnd: Predator-prey DAE serial example problem for IDA \n\n";
+  printf "\nidaFoodWeb_bnd_omp: Predator-prey DAE OpenMP example problem for IDA \n\n";
   printf "Number of species ns: %d" num_species;
   printf "     Mesh dimensions: %d x %d" mx my;
   printf "     System size: %d\n" neq;
@@ -382,6 +400,13 @@ let print_final_stats mem =
   printf "Number of nonlinear conv. failures = %d\n" ncfn
 
 let main () =
+  (* Set the number of threads to use *)
+  let num_threads =
+    if Array.length Sys.argv > 1
+    then int_of_string Sys.argv.(1)
+    else 1
+  in
+
   let webdata = init_user_data ()
   and c  = RealArray.create neq
   and c' = RealArray.create neq
@@ -393,8 +418,8 @@ let main () =
 
   (* Wrap c and c' in nvectors.  Operations performed on the wrapped
      representation affect the originals c and c'.  *)
-  let wc = Nvector_serial.wrap c
-  and wc' = Nvector_serial.wrap c'
+  let wc = Nvector_openmp.wrap num_threads c
+  and wc' = Nvector_openmp.wrap num_threads c'
   in
 
   (* Call IDACreate and IDABand to initialize IDA including the linear
@@ -404,7 +429,7 @@ let main () =
   let mem = Ida.init solver (Ida.SStolerances (rtol, atol))
                      (resweb webdata) t0 wc wc' in
   let tout1 = 0.001 in
-  Ida.calc_ic_ya_yd' mem ~varid:(Nvector_serial.wrap id) tout1;
+  Ida.calc_ic_ya_yd' mem ~varid:(Nvector_openmp.wrap num_threads id) tout1;
 
   (* Print heading, basic parameters, and initial values. *)
   print_header mu ml rtol atol;
@@ -419,7 +444,8 @@ let main () =
     else tout := !tout +. tadd
   done;
 
-  print_final_stats mem
+  print_final_stats mem;
+  printf "num_threads = %i\n\n" num_threads
 
 (* Check environment variables for extra arguments.  *)
 let reps =

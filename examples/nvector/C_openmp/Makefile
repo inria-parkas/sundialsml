@@ -6,7 +6,7 @@ USELIB ?= sundials_no_sens
 SRCROOT=../../..
 
 SUBDIR=nvector/C_openmp
-ifeq ($(AT_LEAST_2_7), 1)
+ifeq ($(AT_LEAST_2_7),)
     C_SUBDIR=nvector/C_openmp
 else
     C_SUBDIR=nvector/openmp

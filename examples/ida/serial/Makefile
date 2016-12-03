@@ -15,7 +15,8 @@ EXAMPLES = idaRoberts_dns.ml  \
 	   idaRoberts_dns_alt.ml \
 	   $(if $(KLU_ENABLED),idaHeat2D_klu.ml) \
 	   $(if $(KLU_ENABLED),idaRoberts_klu.ml) \
-	   $(if $(SUPERLUMT_ENABLED),idaRoberts_sps.ml)
+	   $(if $(SUPERLUMT_ENABLED),idaRoberts_sps.ml) \
+	   $(if $(AT_LEAST_2_7),idaFoodWeb_kry.ml)
 
 include ../../examples.mk
 

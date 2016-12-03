@@ -72,6 +72,37 @@ let e      = 2.7182818
 let lb = RealArray.create nvar
 let ub = RealArray.create nvar
 
+let jac { Kinsol.jac_u = (y : RealArray.t) } jacmat =
+  let set_row = Sls.SparseMatrix.set_row jacmat in
+  let set = Sls.SparseMatrix.set jacmat in
+  Sls.SparseMatrix.set_to_zero jacmat;
+
+  set_row 0  0;
+  set_row 1  2;
+  set_row 2  4;
+  set_row 3  6;
+  set_row 4  8;
+  set_row 5 10;
+  set_row 6 12;
+
+  set  0 0 (pt5 *. cos(y.{0}*.y.{1}) *. y.{1} -. pt5);
+  set  1 1 (pt5 *. cos(y.{0}*.y.{1}) *. y.{0} -. pt25/.pi);
+
+  set  2 0 (two *. (one -. pt25/.pi) *. (exp(two*.y.{0}) -. e));
+  set  3 1 (e /. pi);
+
+  set  4 0 (-.one);
+  set  5 2 (one);
+ 
+  set  6 0 (-.one);
+  set  7 3 (one);
+
+  set  8 1 (-.one);
+  set  9 4 (one);
+
+  set 10 1 (-.one);
+  set 11 5 (one)
+
 let func (udata : RealArray.t) (fdata : RealArray.t) =
   let x1  = udata.{0} in
   let x2  = udata.{1} in
@@ -129,11 +160,9 @@ let print_final_stats kmem =
   let open Kinsol in
   let nni  = get_num_nonlin_solv_iters kmem in
   let nfe  = get_num_func_evals kmem in
-  let nje  = Dls.get_num_jac_evals kmem in
-  let nfeD = Dls.get_num_func_evals kmem in
+  let nje  = Sls.Klu.get_num_jac_evals kmem in
   print_string "Final Statistics:\n";
-  printf "  nni = %5d    nfe  = %5d \n  nje = %5d    nfeD = %5d \n"
-    nni nfe nje nfeD
+  printf "  nni = %5d    nfe  = %5d \n  nje = %5d    \n" nni nfe nje
 
 (* MAIN PROGRAM *)
 let solve_it kmem u s glstr mset =
@@ -172,9 +201,10 @@ let main () =
 
   let fnormtol = ftol in
   let scsteptol = stol in
+  let nnz = 12 in
 
-  (* Call KINDense to specify the linear solver *)
-  let kmem = Kinsol.init ~linsolv:(Kinsol.Dls.dense ()) func u_nvec in
+  (* Call KINKlu to specify the linear solver *)
+  let kmem = Kinsol.(init ~linsolv:(Sls.Klu.solver_csr jac nnz) func u_nvec) in
   Kinsol.set_constraints kmem c_nvec;
   Kinsol.set_func_norm_tol kmem fnormtol;
   Kinsol.set_scaled_step_tol kmem scsteptol;

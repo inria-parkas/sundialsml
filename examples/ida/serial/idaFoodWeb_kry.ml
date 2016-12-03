@@ -1,16 +1,16 @@
 (*
  * -----------------------------------------------------------------
- * $Revision: 1.2 $
- * $Date: 2009/09/30 23:25:59 $
+ * $Revision:  $
+ * $Date:  $
  * -----------------------------------------------------------------
- * Programmer(s): Allan Taylor, Alan Hindmarsh and
- *                Radu Serban @ LLNL
+ * Programmer(s): Ting Yan @ SMU
  * -----------------------------------------------------------------
- * OCaml port: Jun Inoue, Inria, Aug 2014.
+ * OCaml port: Timothy Bourke, Inria, Dec 2016.
  * -----------------------------------------------------------------
- * Example program for IDA: Food web problem.
+ * Example program for IDA: Food web problem, OpenMP, GMRES, 
+ * user-supplied preconditioner
  *
- * This example program (serial version) uses the IDABAND linear 
+ * This example program uses the IDASPGMR as the linear 
  * solver, and IDACalcIC for initial condition calculation.
  *
  * The mathematical problem solved in this example is a DAE system
@@ -51,15 +51,15 @@
  *  d(i) = DPREY   (i <= np)
  *  d(i) = DPRED   (i > np)
  *
- * The various scalar parameters required are set using top-level let
- * bindings or directly in routine init_user_data. In this program,
+ * The various scalar parameters required are set using '#define'
+ * statements or directly in routine InitUserData. In this program,
  * np = 1, ns = 2. The boundary conditions are homogeneous Neumann:
  * normal derivative = 0.
  *
  * A polynomial in x and y is used to set the initial values of the
  * first np variables (the prey variables) at each x,y location,
  * while initial values for the remaining (predator) variables are
- * set to a flat value, which is corrected by calc_ic_ya_yd'_init.
+ * set to a flat value, which is corrected by IDACalcIC.
  *
  * The PDEs are discretized by central differencing on a MX by MY
  * mesh.
@@ -88,13 +88,9 @@ module RealArray = Sundials.RealArray
 module RealArray2 = Sundials.RealArray2
 module Roots = Sundials.Roots
 module Matrix = Dls.ArrayDenseMatrix
+module LintArray = Sundials.LintArray
 
 let printf = Printf.printf
-
-let sundials_270_or_later =
-  match Sundials.sundials_version with
-  | 2,5,_ | 2,6,_ -> false
-  | _ -> true
 
 (* Problem Constants. *)
 let nprey       = 1                     (* No. of prey (= no. of predators). *)
@@ -148,7 +144,12 @@ type user_data =
     cox   : float array;
     coy   : float array;
     bcoef : float array;
-    rates : RealArray.t
+    rates : RealArray.t;
+    pp    : Matrix.t array array;
+    pivot : LintArray.t array array;
+    ewt   : Nvector_serial.t;
+    mutable ida_mem :
+      (Nvector_serial.data, Nvector_serial.kind) Ida.session option;
   }
 
 (* init_user_data: Load problem constants in webdata (of type user_data).  *)
@@ -166,6 +167,14 @@ let init_user_data () =
       coy   = Array.make num_species 0.;
       bcoef = Array.make num_species 0.;
       rates = RealArray.create neq;
+      pp    = Array.init mx (fun jx ->
+                Array.init my (fun jy ->
+                  Matrix.create num_species num_species));
+      pivot = Array.init mx (fun jx ->
+                Array.init my (fun jy ->
+                  LintArray.make num_species 0));
+      ewt   = Nvector_serial.make neq 0.0;
+      ida_mem = None;
     } in
   (* Set up shorthands. *)
   let acoef = webdata.acoef
@@ -287,6 +296,88 @@ let resweb webdata t c (c' : RealArray.t) res =
     done
   done
 
+let precond webdata jac =
+  let cc = jac.Ida.jac_y
+  and cp = jac.Ida.jac_y'
+  and cj = jac.Ida.jac_coef
+  in
+
+  let mx =    webdata.mx in
+  let my =    webdata.my in
+  let np =    webdata.np in
+  let dx =    webdata.dx in
+  let dy =    webdata.dy in
+  let rates = webdata.rates in
+  let ns =    webdata.ns in
+
+  let perturb_rates = RealArray.create num_species in
+
+  let uround = Sundials.unit_roundoff in
+  let sqru = sqrt uround in
+  let mem =
+    match webdata.ida_mem with
+    | Some m -> m
+    | None -> invalid_arg "Internal error: webdata.ida_mem not set"
+  in
+  let ewt = Nvector_serial.unwrap webdata.ewt in
+  Ida.get_err_weights mem webdata.ewt;
+  let hh = Ida.get_current_step mem in
+
+  for jy = 0 to my-1 do
+    let yy = float_of_int jy *. dy in
+
+    for jx = 0 to mx-1 do
+      let xx = float_of_int jx *. dx in
+      let pxy = webdata.pp.(jx).(jy) in
+      let off = index jx jy 0 in
+
+      for js = 0 to ns-1 do
+        let inc = sqru*.(max (abs_float (cc.{off+js}))
+                             (max (hh*.abs_float (cp.{off+js}))
+                                  (1.0/.ewt.{off+js}))) in
+        let cctemp = cc.{off+js} in(* Save the (js,jx,jy) element of cc. *)
+        cc.{off+js} <- cc.{off+js} +. inc;    (* Perturb the (js,jx,jy) element of cc. *)
+        let fac = -.1.0/.inc in
+
+        web_rates webdata xx yy (cc, off) (perturb_rates, 0);
+
+        let pxycol = RealArray2.col pxy js in
+
+        for is = 0 to ns-1 do
+          pxycol.{is} <- (perturb_rates.{is} -. rates.{off+is})*.fac
+        done;
+
+        (* Add partial with respect to cp. *)
+        if js < np then pxycol.{js} <- pxycol.{js} +. cj;
+
+        cc.{off+js} <- cctemp; (* Restore (js,jx,jy) element of cc. *)
+
+      done; (* End of js loop. *)
+
+      (* Do LU decomposition of matrix block for grid point (jx,jy). *)
+      (try Matrix.getrf pxy webdata.pivot.(jx).(jy)
+       with Dls.ZeroDiagonalElement _ -> raise Sundials.RecoverableFailure)
+
+    done (* End of jx loop. *)
+  done (* End of jy loop. *)
+
+let psolve webdata jac rvec zvec delta =
+  RealArray.blit rvec zvec;
+
+  (* Loop through subgrid and apply preconditioner factors at each point. *)
+  for jx = 0 to webdata.mx-1 do
+    for jy = 0 to webdata.my-1 do
+
+      (* For grid point (jx,jy), do backsolve on local vector. 
+         zxy is the address of the local portion of zvec, and
+         Pxy is the address of the corresponding block of PP.  *)
+      let zxy = ij_v zvec jx jy in
+      let pxy = webdata.pp.(jx).(jy) in
+      let pivot = webdata.pivot.(jx).(jy) in
+      Matrix.getrs pxy pivot zxy
+    done (* End of jy loop. *)
+  done (* End of jx loop. *)
+
 let set_initial_profiles webdata c c' id =
   (* Loop over grid, load c values and id values.  *)
   for jy = 0 to my-1 do
@@ -322,13 +413,13 @@ let set_initial_profiles webdata c c' id =
   done
 
 (* Print first lines of output (problem description) *)
-let print_header mu ml rtol atol =
-  printf "\nidaFoodWeb_bnd: Predator-prey DAE serial example problem for IDA \n\n";
+let print_header maxl rtol atol =
+  printf "\nidaFoodWeb_kry: Predator-prey DAE serial example problem for IDA \n\n";
   printf "Number of species ns: %d" num_species;
   printf "     Mesh dimensions: %d x %d" mx my;
   printf "     System size: %d\n" neq;
   printf "Tolerance parameters:  rtol = %g   atol = %g\n" rtol atol;
-  printf "Linear solver: IDABAND,  Band parameters mu = %d, ml = %d\n" mu ml;
+  printf "Linear solver: IDASpgmr,  Spgmr parameters maxl = %d\n" maxl;
   printf "CalcIC called to correct initial predator concentrations.\n\n";
   printf "-----------------------------------------------------------\n";
   printf "  t        bottom-left  top-right";
@@ -348,11 +439,8 @@ let print_output mem c t =
   and c_bl = ij_v c 0 0
   and c_tr = ij_v c (mx-1) (my-1) in
 
-  if sundials_270_or_later
-  then printf "%8.2e %12.4e %12.4e   | %3d  %1d %12.4e\n"
-         t c_bl.{0} c_tr.{0} nst kused hused
-  else printf "%8.2e %12.4e %12.4e   | %3d  %1d %12.4e\n"
-         t c_bl.{0} c_tr.{1} nst kused hused;
+  printf "%8.2e %12.4e %12.4e   | %3d  %1d %12.4e\n"
+         t c_bl.{0} c_tr.{0} nst kused hused;
   for i = 1 to num_species-1 do
     printf "         %12.4e %12.4e   |\n" c_bl.{i} c_tr.{i}
   done;
@@ -364,57 +452,58 @@ let print_output mem c t =
 
 let print_final_stats mem =
   let open Ida in
-  let nst   = get_num_steps mem
-  and nni   = get_num_nonlin_solv_iters mem
-  and nre   = get_num_res_evals mem
-  and netf  = get_num_err_test_fails mem
-  and ncfn  = get_num_nonlin_solv_conv_fails mem
-  and nje   = Dls.get_num_jac_evals mem
-  and nreLS = Dls.get_num_res_evals mem in
-
+  let nst     = get_num_steps mem
+  and sli     = Spils.get_num_lin_iters mem
+  and nre     = get_num_res_evals mem
+  and netf    = get_num_err_test_fails mem
+  and nps     = Spils.get_num_prec_solves mem
+  and npevals = Spils.get_num_prec_evals mem
+  in
   printf "-----------------------------------------------------------\n";
   printf "Final run statistics: \n\n";
-  printf "Number of steps                    = %d\n" nst;
-  printf "Number of residual evaluations     = %d\n" (nre+nreLS);
-  printf "Number of Jacobian evaluations     = %d\n" nje;
-  printf "Number of nonlinear iterations     = %d\n" nni;
-  printf "Number of error test failures      = %d\n" netf;
-  printf "Number of nonlinear conv. failures = %d\n" ncfn
+  printf "Number of steps                       = %d\n" nst;
+  printf "Number of residual evaluations        = %d\n" nre;
+  printf "Number of Preconditioner evaluations  = %d\n" npevals;
+  printf "Number of linear iterations           = %d\n" sli;
+  printf "Number of error test failures         = %d\n" netf;
+  printf "Number of precond solve fun called    = %d\n" nps
 
 let main () =
   let webdata = init_user_data ()
-  and c  = RealArray.create neq
-  and c' = RealArray.create neq
+  and cc = RealArray.create neq
+  and cp = RealArray.create neq
   and id = RealArray.create neq in
-  set_initial_profiles webdata c c' id;
+  set_initial_profiles webdata cc cp id;
 
   (* Set remaining inputs to IDAInit. *)
   let t0 = 0. in
 
   (* Wrap c and c' in nvectors.  Operations performed on the wrapped
      representation affect the originals c and c'.  *)
-  let wc = Nvector_serial.wrap c
-  and wc' = Nvector_serial.wrap c'
+  let wcc = Nvector_serial.wrap cc
+  and wcp = Nvector_serial.wrap cp
   in
 
   (* Call IDACreate and IDABand to initialize IDA including the linear
      solver. *)
-  let mu = nsmx and ml = nsmx in
-  let solver = Ida.Dls.band { Ida.mupper = mu; Ida.mlower = ml } in
+  let maxl = 16 in
+  let solver = Ida.Spils.(spgmr ~maxl:maxl
+                (prec_left ~setup:(precond webdata) (psolve webdata))) in
   let mem = Ida.init solver (Ida.SStolerances (rtol, atol))
-                     (resweb webdata) t0 wc wc' in
+                     (resweb webdata) t0 wcc wcp in
+  webdata.ida_mem <- Some mem;
   let tout1 = 0.001 in
   Ida.calc_ic_ya_yd' mem ~varid:(Nvector_serial.wrap id) tout1;
 
   (* Print heading, basic parameters, and initial values. *)
-  print_header mu ml rtol atol;
-  print_output mem c 0.;
+  print_header maxl rtol atol;
+  print_output mem cc 0.;
 
   (* Loop over iout, call IDASolve (normal mode), print selected output. *)
   let tout = ref tout1 in
   for iout = 1 to nout do
-    let (tret, retval) = Ida.solve_normal mem !tout wc wc' in
-    print_output mem c tret;
+    let (tret, retval) = Ida.solve_normal mem !tout wcc wcp in
+    print_output mem cc tret;
     if iout < 3 then tout := !tout *. tmult
     else tout := !tout +. tadd
   done;
