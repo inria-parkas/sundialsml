@@ -59,9 +59,6 @@ module SparseMatrix =
 
     let print logfile { slsmat; valid } =
       if Sundials_config.safe && not valid then raise Invalidated;
-      (match Sundials.sundials_version with
-       | 2,5,_ | 2,6,_ -> raise Sundials.NotImplementedBySundialsVersion
-       | _ -> ());
       c_print logfile slsmat
 
     external c_set_to_zero  : slsmat -> unit

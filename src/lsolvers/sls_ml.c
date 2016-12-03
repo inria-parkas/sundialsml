@@ -164,6 +164,8 @@ CAMLprim value c_sparsematrix_print_mat(value vlogfile, value va)
 #if SUNDIALS_LIB_VERSION >= 270
     SparsePrintMat(SLSMAT(va), ML_CFILE(vlogfile));
 #else
+    if (ML_CFILE(vlogfile) != stdout)
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
     PrintSparseMat(SLSMAT(va));
 #endif
     fflush(ML_CFILE(vlogfile));

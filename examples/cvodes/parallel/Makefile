@@ -18,8 +18,8 @@ $(eval $(call EXECUTION_RULE,cvsDiurnal_FSA_kry_p,\
 	$(MPIRUN) -np 4 $$< -sensi sim t))
 ifeq ($(AT_LEAST_2_7),)
     $(eval $(call EXECUTION_RULE,cvsAtmDisp_ASAi_kry_bbd_p,\
-	    $(MPIRUN) -np 8 $$< -sensi sim t))
+	    $(MPIRUN) -np 4 $$< -sensi sim t))
 else
     $(eval $(call EXECUTION_RULE,cvsAtmDisp_ASAi_kry_bbd_p,\
-	    $(MPIRUN) -np 4 $$< -sensi sim t))
+	    $(MPIRUN) -np 8 $$< -sensi sim t))
 endif

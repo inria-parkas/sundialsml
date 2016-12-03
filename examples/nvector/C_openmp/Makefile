@@ -6,11 +6,7 @@ USELIB ?= sundials_no_sens
 SRCROOT=../../..
 
 SUBDIR=nvector/C_openmp
-ifeq ($(AT_LEAST_2_7),)
-    C_SUBDIR=nvector/C_openmp
-else
-    C_SUBDIR=nvector/openmp
-endif
+C_SUBDIR=nvector/$(if $(AT_LEAST_2_7),C_openmp,openmp)
 
 OPENMP_EXAMPLES = test_nvector_openmp.ml
 
