@@ -96,16 +96,16 @@ end
 
 module SlsTypes = struct
 
-  type sparse_jac_fn =
+  type 'f sparse_jac_fn =
     (RealArray.t triple, RealArray.t) jacobian_arg
-    -> Sls_impl.t
+    -> 'f Sls_impl.t
     -> unit
 
   (* These fields are accessed from cvode_ml.c *)
-  type sparse_jac_callback =
+  type 'f sparse_jac_callback =
     {
-      jacfn: sparse_jac_fn;
-      mutable smat : Sls_impl.t option
+      jacfn: 'f sparse_jac_fn;
+      mutable smat : 'f Sls_impl.t option
     }
 
 end
@@ -347,29 +347,29 @@ module AdjointTypes' = struct
 
   module SlsTypes = struct
 
-    type sparse_jac_fn_no_sens =
+    type 'f sparse_jac_fn_no_sens =
       (RealArray.t triple, RealArray.t) jacobian_arg
-      -> Sls_impl.t
+      -> 'f Sls_impl.t
       -> unit
 
-    type sparse_jac_fn_with_sens =
+    type 'f sparse_jac_fn_with_sens =
       (RealArray.t triple, RealArray.t) jacobian_arg
       -> RealArray.t array
-      -> Sls_impl.t
+      -> 'f Sls_impl.t
       -> unit
 
     (* These fields are accessed from cvodes_ml.c *)
-    type sparse_jac_callback_no_sens =
+    type 'f sparse_jac_callback_no_sens =
       {
-        jacfn: sparse_jac_fn_no_sens;
-        mutable smat : Sls_impl.t option
+        jacfn: 'f sparse_jac_fn_no_sens;
+        mutable smat : 'f Sls_impl.t option
       }
 
     (* These fields are accessed from cvodes_ml.c *)
-    type sparse_jac_callback_with_sens =
+    type 'f sparse_jac_callback_with_sens =
       {
-        jacfn_sens: sparse_jac_fn_with_sens;
-        mutable smat_sens : Sls_impl.t option
+        jacfn_sens: 'f sparse_jac_fn_with_sens;
+        mutable smat_sens : 'f Sls_impl.t option
       }
 
   end
@@ -492,14 +492,16 @@ and ('a, 'kind) linsolv_callbacks =
   | BDlsBandCallbackSens  of AdjointTypes'.DlsTypes.band_jac_callback_with_sens
 
   (* Sls *)
-  | SlsKluCallback of SlsTypes.sparse_jac_callback
-  | BSlsKluCallback of AdjointTypes'.SlsTypes.sparse_jac_callback_no_sens
-  | BSlsKluCallbackSens of AdjointTypes'.SlsTypes.sparse_jac_callback_with_sens
+  | SlsKluCallback of unit SlsTypes.sparse_jac_callback
+  | BSlsKluCallback of unit AdjointTypes'.SlsTypes.sparse_jac_callback_no_sens
+  | BSlsKluCallbackSens
+      of unit AdjointTypes'.SlsTypes.sparse_jac_callback_with_sens
 
-  | SlsSuperlumtCallback of SlsTypes.sparse_jac_callback
-  | BSlsSuperlumtCallback of AdjointTypes'.SlsTypes.sparse_jac_callback_no_sens
+  | SlsSuperlumtCallback of unit SlsTypes.sparse_jac_callback
+  | BSlsSuperlumtCallback
+      of unit AdjointTypes'.SlsTypes.sparse_jac_callback_no_sens
   | BSlsSuperlumtCallbackSens
-      of AdjointTypes'.SlsTypes.sparse_jac_callback_with_sens
+      of unit AdjointTypes'.SlsTypes.sparse_jac_callback_with_sens
 
   (* Spils *)
   | SpilsCallback of 'a SpilsTypes'.jac_times_vec_fn option

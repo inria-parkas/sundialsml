@@ -57,6 +57,7 @@ spils_serial1.byte: spils_serial1.ml $(SUNDIALS_CMA)
 spils_serial1.opt: spils_serial1.ml $(SUNDIALS_CMXA)
 
 clean:
+	-@rm -f $(EXAMPLES) $(CEXAMPLES)
 	-@rm -f $(EXAMPLES:.byte=.cmo) $(EXAMPLES:.byte=.cmx)
 	-@rm -f $(EXAMPLES:.byte=.o) $(EXAMPLES:.byte=.cmi)
 	-@rm -f $(EXAMPLES:.byte=.annot)

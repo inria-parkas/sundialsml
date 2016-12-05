@@ -331,13 +331,13 @@ let main () =
 
   (* First get results at t = tBout1 *)
   (match Sundials.sundials_version with
-   | 2,6,_ ->
+   | 2,5,_ -> printf "Backward integration ... "
+   | _ ->
       print_head tb1;
       Adj.backward_normal cvode_mem tBout1;
       let time = Adj.get cvode_memB yB in
       Adj.get_y cvode_mem y tBout1;
-      print_output1 time tBout1 ydata yBdata
-    | _ -> printf "Backward integration ... ");
+      print_output1 time tBout1 ydata yBdata);
 
   (* Then at t = T0 *)
 
@@ -345,16 +345,16 @@ let main () =
   let nstB = Adj.get_num_steps cvode_memB in
 
   (match Sundials.sundials_version with
-   | 2,6,_ -> printf "Done ( nst = %d )\n"  nstB
-   | _     -> printf "done ( nst = %d )\n"  nstB);
+   | 2,5,_ -> printf "done ( nst = %d )\n"  nstB
+   | _     -> printf "Done ( nst = %d )\n"  nstB);
 
   ignore (Adj.get cvode_memB yB);
   let time = QuadAdj.get cvode_memB qB in
   Adj.get_y cvode_mem y t0;
 
   (match Sundials.sundials_version with
-   | 2,6,_ -> print_output time ydata yBdata qBdata
-   | _     -> print_output tb1 ydata yBdata qBdata);
+   | 2,5,_ -> print_output tb1 ydata yBdata qBdata
+   | _     -> print_output time ydata yBdata qBdata);
 
   (* Reinitialize backward phase (new tB0) *)
 
@@ -373,13 +373,13 @@ let main () =
 
   (* First get results at t = tBout1 *)
   (match Sundials.sundials_version with
-   | 2,6,_ ->
+   | 2,5,_ -> printf "Backward integration ... "
+   | _     ->
       print_head tb2;
       Adj.backward_normal cvode_mem tBout1;
       let time = Adj.get cvode_memB yB in
       Adj.get_y cvode_mem y tBout1;
-      print_output1 time tBout1 ydata yBdata
-    | _ -> printf "Backward integration ... ");
+      print_output1 time tBout1 ydata yBdata);
 
   (* Then at t = T0 *)
 
@@ -387,16 +387,16 @@ let main () =
   let nstB = Adj.get_num_steps cvode_memB in
 
   (match Sundials.sundials_version with
-   | 2,6,_ -> printf "Done ( nst = %d )\n"  nstB
-   | _     -> printf "done ( nst = %d )\n"  nstB);
+   | 2,5,_ -> printf "done ( nst = %d )\n"  nstB
+   | _     -> printf "Done ( nst = %d )\n"  nstB);
 
   ignore (Adj.get cvode_memB yB);
   let time = QuadAdj.get cvode_memB qB in
   Adj.get_y cvode_mem y t0;
 
   (match Sundials.sundials_version with
-   | 2,6,_ -> print_output time ydata yBdata qBdata
-   | _     -> print_output tb2 ydata yBdata qBdata);
+   | 2,5,_ -> print_output tb2 ydata yBdata qBdata
+   | _     -> print_output time ydata yBdata qBdata);
 
   printf "Free memory\n\n"
 

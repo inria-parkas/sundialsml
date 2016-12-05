@@ -44,6 +44,11 @@ let printf = Printf.printf
 let fprintf = Printf.fprintf
 let n_vdotprod = Nvector_serial.Ops.n_vdotprod
 
+let sundials_270_or_later =
+  match Sundials.sundials_version with
+  | 2,5,_ | 2,6,_ -> false
+  | _ -> true
+
 (* user data structure *)
 type user_data = {
     n   : int;    (* number of intervals   *)
@@ -125,6 +130,9 @@ let main () =
   ) in
   (* Set routines *)
   Arkode.set_max_num_steps arkode_mem 10000;   (* Increase max num steps  *)
+
+  if sundials_270_or_later then
+    Arkode.(set_predictor_method arkode_mem MaximumOrderPredictor);
 
   (* output mesh to disk *)
   let fid = open_out "heat_mesh.txt" in

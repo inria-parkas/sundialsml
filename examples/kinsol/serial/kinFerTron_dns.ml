@@ -139,9 +139,9 @@ let print_final_stats kmem =
 let solve_it kmem u s glstr mset =
   print_newline ();
   print_string (if mset==1 then "Exact Newton" else "Modified Newton");
-  if not glstr then print_newline () else print_string " with line search\n";
+  if glstr then print_string " with line search\n" else print_newline ();
   Kinsol.set_max_setup_calls kmem mset;
-  ignore Kinsol.(solve kmem u (if glstr then Newton else LineSearch) s s);
+  ignore Kinsol.(solve kmem u (if glstr then LineSearch else Newton) s s);
   print_string "Solution:\n  [x1,x2] = ";
   print_output (Nvector.unwrap u);
   print_final_stats kmem

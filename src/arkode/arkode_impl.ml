@@ -127,29 +127,29 @@ end
 
 module SlsTypes = struct
 
-  type sparse_jac_fn =
+  type 'f sparse_jac_fn =
     (RealArray.t triple, RealArray.t) jacobian_arg
-    -> Sls.SparseMatrix.t
+    -> 'f Sls.SparseMatrix.t
     -> unit
 
   (* These fields are accessed from arkode_ml.c *)
-  type sparse_jac_callback =
+  type 'f sparse_jac_callback =
     {
-      jacfn: sparse_jac_fn;
-      mutable smat : Sls_impl.t option
+      jacfn: 'f sparse_jac_fn;
+      mutable smat : 'f Sls_impl.t option
     }
 
-  type sparse_mass_fn =
+  type 'f sparse_mass_fn =
     float
     -> RealArray.t triple
-    -> Sls.SparseMatrix.t
+    -> 'f Sls.SparseMatrix.t
     -> unit
 
   (* These fields are accessed from arkode_ml.c *)
-  type sparse_mass_callback =
+  type 'f sparse_mass_callback =
     {
-      massfn: sparse_mass_fn;
-      mutable smmat : Sls_impl.t option
+      massfn: 'f sparse_mass_fn;
+      mutable smmat : 'f Sls_impl.t option
     }
 end
 
@@ -286,6 +286,7 @@ type adaptivity_args = {
 type 'd adaptivity_fn = float -> 'd -> adaptivity_args -> float
 type 'd stability_fn = float -> 'd -> float
 type 'd resize_fn = 'd -> 'd -> unit
+type 'd postprocess_step_fn = float -> 'd -> unit
 
 (* Session: here comes the big blob.  These mutually recursive types
    cannot be handed out separately to modules without menial
@@ -313,6 +314,7 @@ type ('a, 'kind) session = {
   mutable adaptfn      : 'a adaptivity_fn;
   mutable stabfn       : 'a stability_fn;
   mutable resizefn     : 'a resize_fn;
+  mutable poststepfn   : 'a postprocess_step_fn;
 
   mutable linsolver      : ('a, 'kind) linear_solver option;
   mutable ls_callbacks   : ('a, 'kind) linsolv_callbacks;
@@ -339,8 +341,8 @@ and ('a, 'kind) linsolv_callbacks =
   | DlsBandCallback  of DlsTypes.band_jac_callback
 
   (* Sls *)
-  | SlsKluCallback of SlsTypes.sparse_jac_callback
-  | SlsSuperlumtCallback of SlsTypes.sparse_jac_callback
+  | SlsKluCallback of unit SlsTypes.sparse_jac_callback
+  | SlsSuperlumtCallback of unit SlsTypes.sparse_jac_callback
 
   (* Spils *)
   | SpilsCallback of 'a SpilsTypes'.jac_times_vec_fn option
@@ -392,8 +394,8 @@ and ('a, 'kind) mass_callbacks =
   | DlsBandMassCallback  of DlsTypes.MassTypes.band_callback
 
   (* Sls *)
-  | SlsKluMassCallback of SlsTypes.sparse_mass_callback
-  | SlsSuperlumtMassCallback of SlsTypes.sparse_mass_callback
+  | SlsKluMassCallback of unit SlsTypes.sparse_mass_callback
+  | SlsSuperlumtMassCallback of unit SlsTypes.sparse_mass_callback
 
   (* Spils *)
   | SpilsMassCallback of 'a SpilsTypes'.MassTypes'.times_vec_fn
@@ -605,4 +607,6 @@ let dummy_stabfn _ _ =
   (crash "Internal error: dummy_stabfn called\n"; 0.0)
 let dummy_resizefn _ _ =
   crash "Internal error: dummy_resizefn called\n"
+let dummy_poststepfn _ _ =
+  crash "Internal error: dummy_poststepfn called\n"
 

@@ -32,7 +32,7 @@ let nrows, ncols, nzeros = 3, 3, 5;;
 
 let main () =
   let da = D.create nrows ncols in
-  let b = S.create nrows ncols 2 in
+  let b = S.create_csc nrows ncols 2 in
   let x = Sundials.RealArray.of_list [2.0; 3.0; 4.0] in
   let y = Sundials.RealArray.create nrows in
 
@@ -52,9 +52,9 @@ let main () =
   D.print da;
   printf "@\n";
 
-  let a = S.from_dense da in
+  let a = S.csc_from_dense da in
   printf "initially a=@\n%!";
-  S.print a;
+  S.print Sundials.Logfile.stdout a;
   printf "%a@\n" print_mat a;
 
   S.add_identity a;

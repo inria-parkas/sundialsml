@@ -247,24 +247,40 @@ module Sls :
                  be accessed after the function has returned.}
 
         @nokinsol <node5#ss:sjacFn> KINSlsSparseJacFn *)
-    type sparse_jac_fn =
+    type 'f sparse_jac_fn =
       (Sundials.RealArray.t double, Sundials.RealArray.t) jacobian_arg
-      -> Sls.SparseMatrix.t -> unit
+      -> 'f Sls.SparseMatrix.t -> unit
 
     (** KLU sparse-direct linear solver module (requires KLU).
 
         @nokinsol <node5#sss:KINklu> The KLU Solver *)
     module Klu : sig (* {{{ *)
-      (** A direct linear solver on sparse matrices. In the call,
-          [klu jfn nnz], [jfn] is a callback function that computes an
-          approximation to the Jacobian matrix and [nnz] is the maximum number
-          of nonzero entries in that matrix.
+      (** A direct linear solver on compressed-sparse-column matrices.
+          In the call, [klu jfn nnz], [jfn] is a callback function that
+          computes an approximation to the Jacobian matrix and [nnz] is
+          the maximum number of nonzero entries in that matrix.
 
           @raise Sundials.NotImplementedBySundialsVersion Solver not available.
           @nokinsol <node5#sss:lin_solv_init> KINKLU
           @nokinsol <node5#sss:optin_sls> KINSlsSetSparseJacFn
           @nokinsol <node5#ss:sjacFn> KINSlsSparseJacFn *)
-      val solver : sparse_jac_fn -> int -> 'k serial_linear_solver
+      val solver_csc : Sls.SparseMatrix.csc sparse_jac_fn
+                       -> int
+                       -> 'k serial_linear_solver
+
+      (** A direct linear solver on compressed-sparse-row matrices.
+          In the call, [klu jfn nnz], [jfn] is a callback function that
+          computes an approximation to the Jacobian matrix and [nnz] is
+          the maximum number of nonzero entries in that matrix.
+
+          @since 2.7.0
+          @raise Sundials.NotImplementedBySundialsVersion Solver not available.
+          @nokinsol <node5#sss:lin_solv_init> KINKLU
+          @nokinsol <node5#sss:optin_sls> KINSlsSetSparseJacFn
+          @nokinsol <node5#ss:sjacFn> KINSlsSparseJacFn *)
+      val solver_csr : Sls.SparseMatrix.csr sparse_jac_fn
+                       -> int
+                       -> 'k serial_linear_solver
 
       (** The ordering algorithm used for reducing fill. *)
       type ordering =
@@ -299,18 +315,22 @@ module Sls :
         @nokinsol <node5#sss:kinsuperlumt> The SuperLUMT Solver *)
     module Superlumt : sig (* {{{ *)
 
-      (** A direct linear solver on sparse matrices. In the call,
-          [superlumt jfn nnz nthreads], [jfn] is a callback function that
-          computes an approximation to the Jacobian matrix, [nnz] is the maximum
-          number of nonzero entries in that matrix, and [nthreads] is the number
-          of threads to use when factorizing/solving.
+      (** A direct linear solver on compressed-sparse-column matrices.
+          In the call, [superlumt jfn nnz nthreads], [jfn] is a callback
+          function that computes an approximation to the Jacobian matrix,
+          [nnz] is the maximum number of nonzero entries in that matrix,
+          and [nthreads] is the number of threads to use when
+          factorizing/solving.
 
           @raise Sundials.NotImplementedBySundialsVersion Solver not available.
           @nokinsol <node5#sss:lin_solv_init> KINSuperLUMT
           @nokinsol <node5#sss:optin_sls> KINSlsSetSparseJacFn
           @nokinsol <node5#ss:sjacFn> KINSlsSparseJacFn *)
-      val solver
-          : sparse_jac_fn -> nnz:int -> nthreads:int -> 'k serial_linear_solver
+      val solver_csc
+          : Sls.SparseMatrix.csc sparse_jac_fn
+            -> nnz:int
+            -> nthreads:int
+            -> 'k serial_linear_solver
 
       (** The ordering algorithm used for reducing fill. *)
       type ordering =

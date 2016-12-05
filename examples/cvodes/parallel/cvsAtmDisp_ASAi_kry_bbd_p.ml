@@ -37,22 +37,45 @@ let n_vscale = Nvector.DataOps.n_vscale
 
 let dim = 2 (* = 3 (* USE3D *) *)
 
+let sundials_270_or_later =
+  match Sundials.sundials_version with
+  | 2,5,_ | 2,6,_ -> false
+  | _ -> true
+
 (* Domain definition *)
 
 let xmin = 0.0
 let xmax = 20.0
-let mx =   20    (* no. of divisions in x dir. *)
+let mx =
+  if sundials_270_or_later
+  then 80    (* no. of divisions in x dir. *)
+  else 20    (* no. of divisions in x dir. *)
+
 let npx =  2     (* no. of procs. in x dir.    *)
 
 let ymin = 0.0
 let ymax = 20.0
-let my =   40    (* no. of divisions in y dir. *)
-let npy =  2     (* no. of procs. in y dir.    *)
+let my =
+  if sundials_270_or_later
+  then 80    (* no. of divisions in y dir. *)
+  else 40    (* no. of divisions in y dir. *)
+
+let npy =
+  if sundials_270_or_later
+  then 4    (* no. of procs. in y dir.    *)
+  else 2    (* no. of procs. in y dir.    *)
 
 let zmin = 0.0
 let zmax = 20.0
-let mz =   20    (* no. of divisions in z dir. *)
-let npz =  1     (* no. of procs. in z dir.    *)
+let mz =
+  if sundials_270_or_later
+  then 40    (* no. of divisions in z dir. *)
+  else 20    (* no. of divisions in z dir. *)
+
+let npz =
+  if sundials_270_or_later
+  then 2     (* no. of procs. in z dir.    *)
+  else 1     (* no. of procs. in z dir.    *)
 
 (* Parameters for source Gaussians *)
 
@@ -556,7 +579,7 @@ let output_gradient data myId qB =
 
   let l_m     = data.l_m in
   let m_start = data.m_start in
-  let xmin    = data.xmin in
+  let dxmin   = data.xmin in
   let dx      = data.dx in
 
   let qBdata = local_array qB in
@@ -565,29 +588,66 @@ let output_gradient data myId qB =
   (* Write matlab files with solutions from each process *)
   let i = Array.make dim 0 in
   let x = Array.make dim zero in
+
+  if sundials_270_or_later then begin
+    (*   Allocate Matlab storage for data *)
+    fprintf fid "x%d = zeros(%d,1); \n" myId l_m.(0);
+    fprintf fid "y%d = zeros(%d,1); \n" myId l_m.(1);
+    if dim = 3 then begin
+      fprintf fid "z%d = zeros(%d,1); \n" myId l_m.(2);
+      fprintf fid "p%d = zeros(%d,%d,%d); \n" myId l_m.(1) l_m.(0) l_m.(2);
+      fprintf fid "g%d = zeros(%d,%d,%d); \n" myId l_m.(1) l_m.(0) l_m.(2)
+    end else begin
+      fprintf fid "p%d = zeros(%d,%d); \n" myId l_m.(1) l_m.(0);
+      fprintf fid "g%d = zeros(%d,%d); \n" myId l_m.(1) l_m.(0)
+    end;
+
+    (*   Write mesh information *)
+    for i=0 to l_m.(0) - 1 do
+      x.(0) <- dxmin.(0) +. float (m_start.(0)+i) *. dx.(0);
+      fprintf fid "x%d(%d,1) = %e; \n" myId (i+1) x.(0)
+    done;
+
+    for i=0 to l_m.(1) - 1 do
+      x.(1) <- dxmin.(1) +. float (m_start.(1)+i) *. dx.(1);
+      fprintf fid "y%d(%d,1) = %e; \n" myId i x.(1)
+    done;
+
+    if dim = 3 then begin
+      for i=0 to l_m.(2) - 1 do
+        x.(2) <- dxmin.(2) +. float (m_start.(2)+i) *. dx.(2);
+        fprintf fid "z%d(%d,1) = %e; \n" myId (i+1) x.(2)
+      done
+    end
+   end;
+
   for j=0 to l_m.(0) - 1 do
     i.(0) <- j;
-    x.(0) <- xmin.(0) +. float (m_start.(0)+i.(0)) *. dx.(0);
+    x.(0) <- dxmin.(0) +. float (m_start.(0)+i.(0)) *. dx.(0);
     for k=0 to l_m.(1) - 1 do
       i.(1) <- k;
-      x.(1) <- xmin.(1) +. float (m_start.(1)+i.(1)) *. dx.(1);
+      x.(1) <- dxmin.(1) +. float (m_start.(1)+i.(1)) *. dx.(1);
       if dim = 3 then
         for j=0 to l_m.(2) - 1 do
           i.(2) <- j;
-          x.(2) <- xmin.(2) +. float (m_start.(2)+i.(2)) *. dx.(2);
+          x.(2) <- dxmin.(2) +. float (m_start.(2)+i.(2)) *. dx.(2);
           let g = ijth l_m qBdata i in
           let p = ijth l_m pdata i in
-          fprintf fid "x%d(%d,1) = %e; \n" myId (i.(0)+1) x.(0);
-          fprintf fid "y%d(%d,1) = %e; \n" myId (i.(1)+1) x.(1);
-          fprintf fid "z%d(%d,1) = %e; \n" myId (i.(2)+1) x.(2);
+          if not sundials_270_or_later then begin
+            fprintf fid "x%d(%d,1) = %e; \n" myId (i.(0)+1) x.(0);
+            fprintf fid "y%d(%d,1) = %e; \n" myId (i.(1)+1) x.(1);
+            fprintf fid "z%d(%d,1) = %e; \n" myId (i.(2)+1) x.(2)
+          end;
           fprintf fid "p%d(%d,%d,%d) = %e; \n" myId (i.(1)+1) (i.(0)+1) (i.(2)+1) p;
           fprintf fid "g%d(%d,%d,%d) = %e; \n" myId (i.(1)+1) (i.(0)+1) (i.(2)+1) g
         done
       else begin
         let g = ijth l_m qBdata i in
         let p = ijth l_m pdata i in
-        fprintf fid "x%d(%d,1) = %e; \n" myId (i.(0)+1) x.(0);
-        fprintf fid "y%d(%d,1) = %e; \n" myId (i.(1)+1) x.(1);
+        if not sundials_270_or_later then begin
+          fprintf fid "x%d(%d,1) = %e; \n" myId (i.(0)+1) x.(0);
+          fprintf fid "y%d(%d,1) = %e; \n" myId (i.(1)+1) x.(1)
+        end;
         fprintf fid "p%d(%d,%d) = %e; \n" myId (i.(1)+1) (i.(0)+1) p;
         fprintf fid "g%d(%d,%d) = %e; \n" myId (i.(1)+1) (i.(0)+1) g
       end
@@ -601,49 +661,133 @@ let output_gradient data myId qB =
 
     if dim = 3 then begin
       fprintf fid "clear;\nfigure;\nhold on\n";
+      if sundials_270_or_later then begin
+        fprintf fid "figure(1);\nhold on\n";
+        fprintf fid "figure(2);\nhold on\n"
+      end;
       fprintf fid "trans = 0.7;\n";
       fprintf fid "ecol  = 'none';\n";
+      if sundials_270_or_later then begin
+        fprintf fid "glev1 = 0.4;\n";
+        fprintf fid "glev2 = 0.25;\n";
+        fprintf fid "gcol1 = 'blue';\n";
+        fprintf fid "gcol2 = 'green';\n";
+        fprintf fid "gtrans = 0.5;\n"
+      end;
       fprintf fid "xp=[%f %f];\n" g1_x g2_x;
-      fprintf fid "yp=[%f %f];\n" g1_y g2_y;
-      fprintf fid "zp=[%f %f];\n" g1_z g2_z;
-      fprintf fid "ns = length(xp)*length(yp)*length(zp);\n";
+      if sundials_270_or_later
+      then (fprintf fid "yp=[%f];\n" g2_y;
+            fprintf fid "zp=[%f];\n" g1_z)
+      else (fprintf fid "yp=[%f %f];\n" g1_y g2_y;
+            fprintf fid "zp=[%f %f];\n" g1_z g2_z);
+      if not sundials_270_or_later then
+        fprintf fid "ns = length(xp)*length(yp)*length(zp);\n";
 
       for ip=0 to data.npes - 1 do
         fprintf fid "\ngrad%03d;\n" ip;
+        if sundials_270_or_later then fprintf fid "figure(1)\n";
         fprintf fid "[X Y Z]=meshgrid(x%d,y%d,z%d);\n" ip ip ip;
-        fprintf fid "s%d=slice(X,Y,Z,g%d,xp,yp,zp);\n" ip ip;
-        fprintf fid "for i = 1:ns\n";
+        if sundials_270_or_later
+        then (fprintf fid "s%d=slice(X,Y,Z,p%d,xp,yp,zp);\n" ip ip;
+              fprintf fid "for i = 1:length(s%d)\n" ip)
+        else (fprintf fid "s%d=slice(X,Y,Z,g%d,xp,yp,zp);\n" ip ip;
+              fprintf fid "for i = 1:ns\n");
         fprintf fid "  set(s%d(i),'FaceAlpha',trans);\n" ip;
         fprintf fid "  set(s%d(i),'EdgeColor',ecol);\n" ip;
-        fprintf fid "end\n"
+        fprintf fid "end\n";
+
+        if sundials_270_or_later then begin
+          fprintf fid "\nfigure(2)\n";
+          fprintf fid "p=patch(isosurface(X,Y,Z,g%d,glev1));\n"ip;
+          fprintf fid "p.FaceColor = gcol1;\n";
+          fprintf fid "p.EdgeColor = ecol;\n";
+          fprintf fid "p=patch(isosurface(X,Y,Z,g%d,glev2));\n" ip;
+          fprintf fid "p.FaceColor = gcol2;\n";
+          fprintf fid "p.EdgeColor = ecol;\n";
+          fprintf fid "p.FaceAlpha = gtrans;\n";
+          fprintf fid "clear x%d y%d z%d p%d g%d;\n" ip ip ip ip ip
+        end
       done;
       
+      if sundials_270_or_later then begin
+        fprintf fid "\nfigure(1)\n";
+        fprintf fid "view(3)\n";
+        fprintf fid "shading interp\naxis equal\n";
+        fprintf fid "hold off\n";
+        fprintf fid "xlabel('x')\n";
+        fprintf fid "ylabel('y')\n";
+        fprintf fid "zlabel('z')\n";
+        fprintf fid "axis([%f, %f, %f, %f, %f, %f])\n"
+                      xmin xmax ymin ymax zmin zmax;
+        fprintf fid "print('cvsadjkryx_p3Dcf','-depsc')\n";
+        fprintf fid "savefig('cvsadjkryx_p3Dcf.fig')\n";
+
+        fprintf fid "\nfigure(2)\n";
+      end;
       fprintf fid "view(3)\n";
-      fprintf fid "\nshading interp\naxis equal\n"
+      if sundials_270_or_later then begin
+        fprintf fid "axis equal\n";
+        fprintf fid "hold off\n";
+        fprintf fid "xlabel('x')\n";
+        fprintf fid "ylabel('y')\n";
+        fprintf fid "zlabel('z')\n";
+        fprintf fid "axis([%f, %f, %f, %f, %f, %f])\n"
+                      xmin xmax ymin ymax zmin zmax;
+        fprintf fid "camlight\n";
+        fprintf fid "lighting gouraud\n";
+        fprintf fid "print('cvsadjkryx_p3Dgrad','-depsc')\n";
+        fprintf fid "savefig('cvsadjkryx_p3Dgrad.fig')\n"
+      end else
+        fprintf fid "\nshading interp\naxis equal\n"
     end else begin
-      fprintf fid "clear;\nfigure;\n";
+      if sundials_270_or_later then begin
+        fprintf fid "clear;\n";
+        fprintf fid "figure('units','normalized','position',[.1 .1 .6 .4])\n"
+      end else fprintf fid "clear;\nfigure;\n";
       fprintf fid "trans = 0.7;\n";
       fprintf fid "ecol  = 'none';\n";
 
       for ip=0 to data.npes - 1 do
         fprintf fid "\ngrad%03d;\n" ip;
 
-        fprintf fid "\nsubplot(1,2,1)\n";
-        fprintf fid "s=surf(x%d,y%d,g%d);\n" ip ip ip;
-        fprintf fid "set(s,'FaceAlpha',trans);\n";
-        fprintf fid "set(s,'EdgeColor',ecol);\n";
-        fprintf fid "hold on\n";
-        fprintf fid "axis tight\n";
-        fprintf fid "box on\n";
-        
-        fprintf fid "\nsubplot(1,2,2)\n";
-        fprintf fid "s=surf(x%d,y%d,p%d);\n" ip ip ip;
-        fprintf fid "set(s,'CData',g%d);\n" ip;
-        fprintf fid "set(s,'FaceAlpha',trans);\n";
-        fprintf fid "set(s,'EdgeColor',ecol);\n";
-        fprintf fid "hold on\n";
-        fprintf fid "axis tight\n";
-        fprintf fid "box on\n"
+        if sundials_270_or_later then begin
+          fprintf fid "\nax(1) = subplot(1,2,1);\n";
+          fprintf fid "s = surf(x%d,y%d,g%d);\n" ip ip ip;
+          fprintf fid "set(s, 'FaceAlpha', trans);\n";
+          fprintf fid "set(s, 'EdgeColor', ecol);\n";
+          fprintf fid "hold on\n";
+          fprintf fid "axis tight\n";
+          fprintf fid "box on\n";
+          fprintf fid "colorbar('Position', [0.5 0.1 0.025 0.8])\n";
+          
+          fprintf fid "\nax(2) = subplot(1,2,2);\n";
+          fprintf fid "s = surf(x%d,y%d,p%d);\n" ip ip ip;
+          fprintf fid "set(s, 'CData', g%d);\n" ip;
+          fprintf fid "set(s, 'FaceAlpha', trans);\n";
+          fprintf fid "set(s, 'EdgeColor', ecol);\n";
+          fprintf fid "hold on\n";
+          fprintf fid "axis tight\n";
+          fprintf fid "box on\n";
+
+          fprintf fid "clear x%d y%d p%d g%d;\n" ip ip ip ip
+        end else begin
+          fprintf fid "\nsubplot(1,2,1)\n";
+          fprintf fid "s=surf(x%d,y%d,g%d);\n" ip ip ip;
+          fprintf fid "set(s,'FaceAlpha',trans);\n";
+          fprintf fid "set(s,'EdgeColor',ecol);\n";
+          fprintf fid "hold on\n";
+          fprintf fid "axis tight\n";
+          fprintf fid "box on\n";
+          
+          fprintf fid "\nsubplot(1,2,2)\n";
+          fprintf fid "s=surf(x%d,y%d,p%d);\n" ip ip ip;
+          fprintf fid "set(s,'CData',g%d);\n" ip;
+          fprintf fid "set(s,'FaceAlpha',trans);\n";
+          fprintf fid "set(s,'EdgeColor',ecol);\n";
+          fprintf fid "hold on\n";
+          fprintf fid "axis tight\n";
+          fprintf fid "box on\n"
+        end
       done
     end;
     close_out fid

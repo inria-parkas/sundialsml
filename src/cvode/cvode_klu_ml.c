@@ -21,7 +21,8 @@
 #include "../sundials/sundials_ml.h"
 
 #ifndef SUNDIALS_ML_KLU
-CAMLprim value c_cvode_klu_init (value vcvode_mem, value vneqs, value vnnz)
+CAMLprim value c_cvode_klu_init (value vcvode_mem, value vformat,
+			 	 value vneqs, value vnnz)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 
 CAMLprim value c_cvode_klu_set_ordering (value vcvode_mem, value vordering)
@@ -82,7 +83,11 @@ static int jacfn(
     cb = Field (cb, 0);
     smat = Field(cb, 1);
     if (smat == Val_none) {
-	Store_some(smat, c_sls_sparse_wrap(Jac, 0));
+#if SUNDIALS_LIB_VERSION >= 270
+	Store_some(smat, c_sls_sparse_wrap(Jac, 0, Val_int(Jac->sparsetype)));
+#else
+	Store_some(smat, c_sls_sparse_wrap(Jac, 0, Val_int(0)));
+#endif
 	Store_field(cb, 1, smat);
 
 	args[1] = Some_val(smat);
@@ -97,13 +102,18 @@ static int jacfn(
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
-CAMLprim value c_cvode_klu_init (value vcvode_mem, value vneqs, value vnnz)
+CAMLprim value c_cvode_klu_init (value vcvode_mem, value vformat,
+				 value vneqs, value vnnz)
 {
-    CAMLparam3(vcvode_mem, vneqs, vnnz);
+    CAMLparam4(vcvode_mem, vformat, vneqs, vnnz);
     void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
     int flag;
 
+#if SUNDIALS_LIB_VERSION >= 270
+    flag = CVKLU (cvode_mem, Int_val(vneqs), Int_val(vnnz), Int_val(vformat));
+#else
     flag = CVKLU (cvode_mem, Int_val(vneqs), Int_val(vnnz));
+#endif
     CHECK_FLAG ("CVKLU", flag);
     flag = CVSlsSetSparseJacFn(cvode_mem, jacfn);
     CHECK_FLAG("CVSlsSetSparseJacFn", flag);

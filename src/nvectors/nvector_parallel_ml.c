@@ -115,6 +115,9 @@ CAMLprim value ml_nvec_wrap_parallel(value payload, value checkfn)
     ops->nvclone           = clone_parallel;		    /* ours */
     ops->nvcloneempty      = NULL;
     ops->nvdestroy         = free_cnvec;
+#if SUNDIALS_LIB_VERSION >= 270
+    ops->nvgetvectorid	   = N_VGetVectorID_Parallel;
+#endif
 
     ops->nvspace           = N_VSpace_Parallel;		    /* theirs */
     ops->nvgetarraypointer = N_VGetArrayPointer_Parallel;

@@ -4,13 +4,11 @@
 # are recompiled to link against CVODES.
 USELIB ?= sundials_no_sens
 SRCROOT=../../..
-SUBDIR=nvector/openmp
+SUBDIR=kinsol/C_openmp
 
-OPENMP_EXAMPLES = test_nvector_openmp.ml
+OPENMP_EXAMPLES = $(if $(AT_LEAST_2_7),kinFoodWeb_kry_omp.ml)
 
-include ../nvector.mk
+include ../../examples.mk
 
-NVECTOR_SIZE ?= 100000
-NUM_THREADS ?= 4
-$(eval $(call EXECUTION_RULE,test_nvector_openmp,\
-	$$< $(NVECTOR_SIZE) $(NUM_THREADS) 0))
+# Run with 4 threads.
+$(eval $(call EXECUTION_RULE,kinFoodWeb_kry_omp,$$< 4))

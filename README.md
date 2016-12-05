@@ -2,6 +2,7 @@ Sundials/ML
 ===========
 
 Sundials/ML is an interface to the Sundials suite of numerical solvers.
+All features are supported except Hypre and PETSC nvectors.
 
 [Full documentation](http://inria-parkas.github.io/sundialsml/) is online.
 
@@ -18,7 +19,7 @@ or try:
 1. [Download Sundials](http://computation.llnl.gov/casc/sundials/download/download.php), extract, and install it:
     1. `mkdir sundials-build`
     2. `cd sundials-build`
-    3. `cmake -Wno-dev ../sundials-2.6.3`, optionally adding:
+    3. `cmake -Wno-dev ../sundials-2.7.0`, optionally adding:
         - `-DOPENMP_ENABLE=1` for OpenMP nvectors,
         - `-DPTHREAD_ENABLE=1` for Pthreads nvectors,
         - `-DMPI_ENABLE=1` for parallel nvectors,
@@ -35,9 +36,6 @@ or try:
     3. `make`
     4. `make install` or `make install-findlib`
 3. [Start coding!](http://inria-parkas.github.io/sundialsml/#running)
-
-NB: For SuperLU/MT, Sundials/ML requires shared libraries.
-We provide a [patch](misc/superlu_mt_2.4.patch) to build them.
 
 Contact
 -------

@@ -44,6 +44,11 @@ module Roots = Sundials.Roots
 let printf = Printf.printf
 let fprintf = Printf.fprintf
 
+let sundials_270_or_later =
+  match Sundials.sundials_version with
+  | 2,5,_ | 2,6,_ -> false
+  | _ -> true
+
 (* f routine to compute the ODE RHS function f(t,y). *)
 let f t (y : RealArray.t) (ydot : RealArray.t) =
   let u = y.{0} in   (* access current solution *)
@@ -122,6 +127,9 @@ let main () =
   Arkode.set_max_nonlin_iters arkode_mem 8;   (* Increase max nonlin iters  *)
   Arkode.set_nonlin_conv_coef arkode_mem 1.e-7;(* Nonlinear convergence coeff.*)
   Arkode.set_max_num_steps arkode_mem 100000; (* Increase max num steps *)
+
+  if sundials_270_or_later then
+    Arkode.(set_predictor_method arkode_mem MaximumOrderPredictor);
 
   (* Open output stream for results, output comment line *)
   let ufid = open_out "solution.txt" in

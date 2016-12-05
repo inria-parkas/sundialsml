@@ -379,9 +379,9 @@ module Sls :
                  be accessed after the function has returned.}
 
         @noarkode <node5#ss:sjacFn> ARKSlsSparseJacFn *)
-    type sparse_jac_fn =
+    type 'f sparse_jac_fn =
       (Sundials.RealArray.t triple, Sundials.RealArray.t)
-                            jacobian_arg -> Sls.SparseMatrix.t -> unit
+                            jacobian_arg -> 'f Sls.SparseMatrix.t -> unit
 
     (** Callback functions that compute sparse approximations to the mass
         matrix. In the call [sparse_fn t tmp m],
@@ -399,9 +399,9 @@ module Sls :
                  be accessed after the function has returned.}
 
         @noarkode <node5#ss:sjacFn> ARKSlsSparseMassFn *)
-    type sparse_mass_fn = float
+    type 'f sparse_mass_fn = float
                           -> Sundials.RealArray.t triple
-                          -> Sls.SparseMatrix.t
+                          -> 'f Sls.SparseMatrix.t
                           -> unit
 
     (** KLU sparse-direct linear solver module (requires KLU).
@@ -409,16 +409,30 @@ module Sls :
         @noarkode <node> The KLU Solver *)
     module Klu : sig (* {{{ *)
 
-      (** A direct linear solver on sparse matrices. In the call,
-          [klu jfn nnz], [jfn] is a callback function that computes an
-          approximation to the Jacobian matrix and [nnz] is the maximum number
-          of nonzero entries in that matrix.
+      (** A direct linear solver on compressed-sparse-column matrices.
+          In the call, [klu jfn nnz], [jfn] is a callback function that
+          computes an approximation to the Jacobian matrix and [nnz] is
+          the maximum number of nonzero entries in that matrix.
 
           @raise Sundials.NotImplementedBySundialsVersion Solver not available.
           @noarkode <node5#sss:lin_solv_init> ARKKLU
           @noarkode <node5#sss:optin_sls> ARKSlsSetSparseJacFn
           @noarkode <node5#ss:sjacFn> ARKSlsSparseJacFn *)
-      val solver : sparse_jac_fn -> int -> 'k serial_linear_solver
+      val solver_csc : Sls.SparseMatrix.csc sparse_jac_fn
+                       -> int -> 'k serial_linear_solver
+
+      (** A direct linear solver on compressed-sparse-row matrices.
+          In the call, [klu jfn nnz], [jfn] is a callback function that
+          computes an approximation to the Jacobian matrix and [nnz] is
+          the maximum number of nonzero entries in that matrix.
+
+          @since 2.7.0
+          @raise Sundials.NotImplementedBySundialsVersion Solver not available.
+          @noarkode <node5#sss:lin_solv_init> ARKKLU
+          @noarkode <node5#sss:optin_sls> ARKSlsSetSparseJacFn
+          @noarkode <node5#ss:sjacFn> ARKSlsSparseJacFn *)
+      val solver_csr : Sls.SparseMatrix.csr sparse_jac_fn
+                       -> int -> 'k serial_linear_solver
 
       (** The ordering algorithm used for reducing fill. *)
       type ordering =
@@ -448,16 +462,30 @@ module Sls :
       val get_num_jac_evals : 'k serial_session -> int
 
       module Mass : sig
-        (** A direct linear solver on sparse matrices. In the call,
-            [klu mfn nnz], [mfn] is a callback function that computes an
-            approximation to the mass matrix and [nnz] is the maximum number
-            of nonzero entries in that matrix.
+        (** A direct linear solver on compressed-sparse-column matrices.
+            In the call, [klu mfn nnz], [mfn] is a callback function that
+            computes an approximation to the mass matrix and [nnz] is the
+            maximum number of nonzero entries in that matrix.
 
             @raise Sundials.NotImplementedBySundialsVersion Solver not available.
             @noarkode <node5#sss:lin_solv_init> ARKMassKLU
             @noarkode <node5#sss:optin_sls> ARKSlsSetSparseMassFn
             @noarkode <node5#ss:smassFn> ARKSlsSparseMassFn *)
-        val solver : sparse_mass_fn -> int -> 'k serial_mass_solver
+        val solver_csc : Sls.SparseMatrix.csc sparse_mass_fn
+                         -> int -> 'k serial_mass_solver
+
+        (** A direct linear solver on compressed-sparse-row matrices.
+            In the call, [klu mfn nnz], [mfn] is a callback function that
+            computes an approximation to the mass matrix and [nnz] is the
+            maximum number of nonzero entries in that matrix.
+
+            @since 2.7.0
+            @raise Sundials.NotImplementedBySundialsVersion Solver not available.
+            @noarkode <node5#sss:lin_solv_init> ARKMassKLU
+            @noarkode <node5#sss:optin_sls> ARKSlsSetSparseMassFn
+            @noarkode <node5#ss:smassFn> ARKSlsSparseMassFn *)
+        val solver_csr : Sls.SparseMatrix.csr sparse_mass_fn
+                         -> int -> 'k serial_mass_solver
 
         (** Sets the ordering algorithm used to minimize fill-in.
 
@@ -487,20 +515,21 @@ module Sls :
         @noarkode <node> The SuperLU_MT solver *)
     module Superlumt : sig (* {{{ *)
 
-      (** A direct linear solver on sparse matrices. In the call,
-          [superlumt jfn ~nnz ~nthreads], [jfn] is a callback function that
-          computes an approximation to the Jacobian matrix, [nnz] is the
-          maximum number of nonzero entries in that matrix, and [nthreads] is
-          the number of threads to use when factorizing/solving.
+      (** A direct linear solver on compressed-sparse-column matrices.
+          In the call, [superlumt jfn ~nnz ~nthreads], [jfn] is a callback
+          function that computes an approximation to the Jacobian matrix,
+          [nnz] is the maximum number of nonzero entries in that matrix,
+          and [nthreads] is the number of threads to use when
+          factorizing/solving.
 
           @raise Sundials.NotImplementedBySundialsVersion Solver not available.
           @noarkode <node5#sss:lin_solv_init> ARKSuperLUMT
           @noarkode <node5#sss:optin_sls> ARKSlsSetSparseJacFn
           @noarkode <node5#ss:sjacFn> ARKSlsSparseJacFn *)
-      val solver : sparse_jac_fn
-                   -> nnz:int
-                   -> nthreads:int
-                   -> 'k serial_linear_solver
+      val solver_csc : Sls.SparseMatrix.csc sparse_jac_fn
+                       -> nnz:int
+                       -> nthreads:int
+                       -> 'k serial_linear_solver
 
       (** The ordering algorithm used for reducing fill. *)
       type ordering =
@@ -522,19 +551,20 @@ module Sls :
 
       module Mass : sig (* {{{ *)
 
-        (** A direct linear solver on sparse matrices. In the call,
-            [superlumt mfn ~nnz ~nthreads], [mfn] is a callback function that
-            computes an approximation to the mass matrix, [nnz] is the maximum
-            number of nonzero entries in that matrix, and [nthreads] is the
-            number of threads to use when factorizing/solving.
+        (** A direct linear solver on compressed-sparse-column matrices.
+            In the call, [superlumt mfn ~nnz ~nthreads], [mfn] is a callback
+            function that computes an approximation to the mass matrix,
+            [nnz] is the maximum number of nonzero entries in that matrix,
+            and [nthreads] is the number of threads to use when
+            factorizing/solving.
 
             @raise Sundials.NotImplementedBySundialsVersion Solver not available.
             @noarkode <node5#sss:lin_solv_init> ARKMassSuperLUMT
             @noarkode <node5#ss:smassFn> ARKSlsSparseMassFn *)
-        val solver : sparse_mass_fn
-                     -> nnz:int
-                     -> nthreads:int
-                     -> 'k serial_mass_solver
+        val solver_csc : Sls.SparseMatrix.csc sparse_mass_fn
+                         -> nnz:int
+                         -> nthreads:int
+                         -> 'k serial_mass_solver
 
         (** Sets the ordering algorithm used to minimize fill-in.
 
@@ -1628,7 +1658,9 @@ type solver_result =
     @raise FirstRhsFuncFailure Initial unrecoverable failure in one of the RHS functions.
     @raise RepeatedRhsFuncFailure Too many convergence test failures, or unable to estimate the initial step size, due to repeated recoverable errors in one of the right-hand side functions.
     @raise UnrecoverableRhsFuncFailure One of the right-hand side functions had a recoverable error, but no recovery was possible. This error can only occur after an error test failure at order one.
-    @raise RootFuncFailure Failure in the rootfinding function [g]. *)
+    @raise RootFuncFailure Failure in the rootfinding function [g].
+    @raise PostprocStepFailure Failure in the Postprocess Step function.
+    *)
 val solve_normal : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
                         -> float * solver_result
 
@@ -1862,49 +1894,88 @@ type rk_method = {
     global_order : int;          (** Global order of accuracy ($q$). *)
     global_embedded_order : int; (** Global order of accuracy for the embedded
                                      RK method ($p$). *)
+  }
+
+(** Coefficients for the RK method. *)
+type rk_timescoefs = {
     stage_times : RealArray.t;   (** Array (of length [stages]) of
-                                     stage times. *)
-    coefficients : RealArray.t;  (** Array (of length [stages]) of coefficients
-                                     defining the time step solution ($b$). *)
-    bembed : RealArray.t;        (** Array (of length [stages]) of coefficients
-                                     defining the embedded solution. *)
+                                     stage times ($c$). *)
+    coefficients : RealArray.t;  (** Array (of length [stages]) of
+                                     solution coefficients ($b$). *)
+    bembed : RealArray.t option; (** Optional array (of length [stages]) of
+                                     embedding coefficients ($b2$). *)
   }
 
 (** Specifies a customized Butcher table pair for the additive RK method. The
     call [set_ark_tables rkm ai ae] specifies:
     - [rkm], the RK method parameters,
     - [ai], the coefficients defining the implicit RK stages (of length
-            [rkm.stages * rkm.stages] in row-major order), and
+            [rkm.stages * rkm.stages] in row-major order),
     - [ae], the coefficients defining the explicit RK stages (of length
-            [rkm.stages * rkm.stages] in row-major order).
+            [rkm.stages * rkm.stages] in row-major order),
+    - [i], the implicit stage times, solution coefficients, and embedding
+          coefficients, and
+    - [e], the explicit stage times, solution coefficients, and embedding
+          coefficients.
+
+    In versions of Sundials prior to 2.7.0, the [e] parameter is ignored; only
+    the [i] parameter is used.
  
+    If the [i.bembed] or the [e.bembed] field is [None] then the solver will
+    run in fixed step mode and the step size must be set, or have been set,
+    using either {!set_fixed_step} or {!set_init_step}. This feature is not
+    available for Sundials versions prior to 2.7.0
+    (the {!Sundials.NotImplementedBySundialsVersion} exception is raised).
+
     @raise IllInput If $f_I$ and $f_E$ are not already specified.
     @noarkode <node> ARKodeSetARKTables
     @noarkode <node> ARKodeSetImEx *)
 val set_ark_tables
-  : ('d, 'k) session -> rk_method -> RealArray.t -> RealArray.t -> unit
+  : ('d, 'k) session
+    -> rk_method
+    -> RealArray.t -> RealArray.t
+    -> rk_timescoefs -> rk_timescoefs
+    -> unit
 
 (** Specifies a customized Butcher table pair for the explicit portion of the
     system. The call [set_erk_table rkm ae] specifies:
-    - [rkm], the RK method parameters, and
+    - [rkm], the RK method parameters,
     - [ae], the coefficients defining the explicit RK stages (of length
-            [rkm.stages * rkm.stages] in row-major order).
+            [rkm.stages * rkm.stages] in row-major order), and
+    - [e], the explicit stage times, solution coefficients, and embedding
+          coefficients.
+
+    If the [e.bembed] field is [None] then the solver will
+    run in fixed step mode and the step size must be set, or have been set,
+    using either {!set_fixed_step} or {!set_init_step}. This feature is not
+    available for Sundials versions prior to 2.7.0
+    (the {!Sundials.NotImplementedBySundialsVersion} exception is raised).
  
     @raise IllInput If $f_E$ is not already specified.
     @noarkode <node> ARKodeSetERKTable
     @noarkode <node> ARKodeSetExplicit *)
-val set_erk_table : ('d, 'k) session -> rk_method -> RealArray.t -> unit
+val set_erk_table
+  : ('d, 'k) session -> rk_method -> RealArray.t -> rk_timescoefs -> unit
 
 (** Specifies a customized Butcher table pair for the implicit portion of the
     system. The call [set_irk_table rkm ai] specifies:
-    - [rkm], the RK method parameters, and
+    - [rkm], the RK method parameters,
     - [ai], the coefficients defining the implicit RK stages (of length
-            [rkm.stages * rkm.stages] in row-major order).
+            [rkm.stages * rkm.stages] in row-major order), and
+    - [i], the implicit stage times, solution coefficients, and embedding
+          coefficients.
+
+    If the [i.bembed] field is [None] then the solver will
+    run in fixed step mode and the step size must be set, or have been set,
+    using either {!set_fixed_step} or {!set_init_step}. This feature is not
+    available for Sundials versions prior to 2.7.0
+    (the {!Sundials.NotImplementedBySundialsVersion} exception is raised).
  
     @raise IllInput If $f_I$ is not already specified.
     @noarkode <node> ARKodeSetIRKTable
     @noarkode <node> ARKodeSetImplicit *)
-val set_irk_table : ('d, 'k) session -> rk_method -> RealArray.t -> unit
+val set_irk_table
+  : ('d, 'k) session -> rk_method -> RealArray.t -> rk_timescoefs -> unit
 
 (** Explicit Butcher tables
 
@@ -1924,28 +1995,29 @@ type erk_table =
   | ARK_8_4_5_Explicit    (** Explicit portion of default 5th order additive
                               method (table 9). *)
   | Verner_8_5_6          (** Default 6th order explicit method (table 10). *)
+  | Fehlberg_13_7_8       (** Default 8th order explicit method (table 11). *)
 
 (** Implicit Butcher tables
 
     @noarkode <node> Implicit Butcher tables *)
 type irk_table =
-  | SDIRK_2_1_2           (** Default 2nd order implicit method (table 11). *)
-  | Billington_3_2_3      (** Butcher table number 12. *)
-  | TRBDF2_3_2_3          (** Butcher table number 13. *)
-  | Kvaerno_4_2_3         (** Butcher table number 14. *)
+  | SDIRK_2_1_2           (** Default 2nd order implicit method (table 12). *)
+  | Billington_3_2_3      (** Butcher table number 13. *)
+  | TRBDF2_3_2_3          (** Butcher table number 14. *)
+  | Kvaerno_4_2_3         (** Butcher table number 15. *)
   | ARK_4_2_3_Implicit    (** Default 3rd order implicit method and the implicit
                               portion of the default 3rd order additive method
-                              (table 15). *)
-  | Cash_5_2_4            (** Butcher table number 16. *)
-  | Cash_5_3_4            (** Butcher table number 17. *)
-  | SDIRK_5_3_4           (** Default 4th order implicit method (table 18). *)
-  | Kvaerno_5_3_4         (** Butcher table number 19. *)
+                              (table 16). *)
+  | Cash_5_2_4            (** Butcher table number 17. *)
+  | Cash_5_3_4            (** Butcher table number 18. *)
+  | SDIRK_5_3_4           (** Default 4th order implicit method (table 19). *)
+  | Kvaerno_5_3_4         (** Butcher table number 20. *)
   | ARK_6_3_4_Implicit    (** Implicit portion of the default 4th order additive
-                              method (table 20). *)
-  | Kvaerno_7_4_5         (** Butcher table number 21. *)
+                              method (table 21). *)
+  | Kvaerno_7_4_5         (** Butcher table number 22. *)
   | ARK_8_4_5_Implicit    (** Default 5th order method and the implicit portion
                               of the default 5th order additive method
-                              (table 22). *)
+                              (table 23). *)
 
 (** Additive Butcher tables
 
@@ -1964,6 +2036,9 @@ val set_ark_table_num : ('d, 'k) session -> ark_table -> unit
 
 (** Use specific built-in Butcher tables for an explicit integration of the
     problem.
+
+    The {{!erk_table}Fehlberg_13_7_8} method is not available prior to
+    Sundials 2.7.0.
 
     @raise IllInput If $f_E$ is not already specified.
     @noarkode <node> ARKodeSetERKTableNum
@@ -2219,6 +2294,28 @@ val set_delta_gamma_max : ('d, 'k) session -> float -> unit
     @noarkode <node> ARKodeSetMaxStepsBetweenLSet *)
 val set_max_steps_between_lset : ('d, 'k) session -> int -> unit
 
+(** A function to process the results of each timestep solution.
+    The arguments are
+    - [t], the value of the independent variable, and
+    - [y], the value of the dependent variable vector {% $y(t)$%}.
+
+    @noarkode <node> ARKPostprocessStepFn *)
+type 'd postprocess_step_fn = float -> 'd -> unit
+
+(** Set a post processing step function.
+
+    @since 2.7.0
+    @raise Sundials.NotImplementedBySundialsVersion Post processing not available
+    @noarkode <node> ARKSetPostprocessStepFn *)
+val set_postprocess_step_fn : ('d, 'k) session -> 'd postprocess_step_fn -> unit
+
+(** Clear the post processing step function.
+
+    @since 2.7.0
+    @raise Sundials.NotImplementedBySundialsVersion Post processing not available
+    @noarkode <node> ARKSetPostprocessStepFn *)
+val clear_postprocess_step_fn : ('d, 'k) session -> unit
+
 (** {2:get Querying the solver (optional output functions)} *)
 
 (** Returns the real and integer workspace sizes.
@@ -2284,14 +2381,22 @@ val get_actual_init_step    : ('d, 'k) session -> float
 val get_current_time        : ('d, 'k) session -> float
 
 (** Returns the explicit and implicit Butcher tables in use by the solver.
-    In the call [(ai, ae, rkm) = get_current_butcher_tables s],
-    - [ai] gives the coefficients of the DIRK method,
-    - [ae] gives the coefficients of the ERK method, and
-    - [rkm] gives the other parameters.
+    In the call [(rkm, ai, ae, i, e) = get_current_butcher_tables s],
+    - [rkm] are the number of stages and global order accuracies,
+    - [ai] are the coefficients of the DIRK method,
+    - [ae] are the coefficients of the ERK method,
+    - [i] are the implicit stage times, solution coefficients, and embedding
+          coefficients, and
+    - [e] are the explicit stage times, solution coefficients, and embedding
+          coefficients.
+
+    For versions of Sundials prior to 2.7.0, the [i] and [e] results are
+    identical.
 
     @noarkode <node> ARKodeGetCurrentButcherTables *)
 val get_current_butcher_tables
-  : ('d, 'k) session -> RealArray.t * RealArray.t * rk_method
+  : ('d, 'k) session
+    -> rk_method * RealArray.t * RealArray.t * rk_timescoefs * rk_timescoefs
 
 (** Returns a suggested factor by which the user's tolerances should be scaled
     when too much accuracy has been requested for some internal step.
@@ -2511,6 +2616,11 @@ exception UnrecoverableRhsFuncFailure
   
     @noarkode <node> ARK_RTFUNC_FAIL *)
 exception RootFuncFailure           
+
+(** The postprocess step function failed.
+  
+    @noarkode <node> ARK_POSTPROCESS_FAIL *)
+exception PostprocStepFailure
 
 (** Raised by {!get_dky} for invalid order values.
 

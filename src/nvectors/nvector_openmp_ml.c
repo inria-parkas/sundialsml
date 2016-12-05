@@ -84,6 +84,9 @@ CAMLprim value ml_nvec_wrap_openmp(value nthreads,
     ops->nvcloneempty      = NULL;
     /* This is registered but only ever called for C-allocated clones. */
     ops->nvdestroy         = free_cnvec;
+#if SUNDIALS_LIB_VERSION >= 270
+    ops->nvgetvectorid	   = N_VGetVectorID_OpenMP;
+#endif
 
     ops->nvspace           = N_VSpace_OpenMP;		    /* theirs */
     ops->nvgetarraypointer = N_VGetArrayPointer_OpenMP;

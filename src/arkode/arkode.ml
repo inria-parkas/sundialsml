@@ -36,6 +36,7 @@ exception FirstRhsFuncFailure
 exception RepeatedRhsFuncFailure
 exception UnrecoverableRhsFuncFailure
 exception RootFuncFailure
+exception PostprocStepFailure
 
 (* get_dky exceptions *)
 exception BadK
@@ -318,16 +319,27 @@ module Sls = struct
        | ColAmd
        | Natural
 
-    external c_klu : 'k serial_session -> int -> int -> unit
+    external c_klu : 'k serial_session -> Sls_impl.sformat -> int -> int -> unit
       = "c_arkode_klu_init"
 
-    let solver f nnz session nv =
+    let solver sformat f nnz session nv =
       if not Sundials_config.klu_enabled
         then raise Sundials.NotImplementedBySundialsVersion;
       let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
       session.ls_callbacks <- SlsKluCallback { jacfn = f; smat = None };
       session.ls_precfns <- NoPrecFns;
-      c_klu session neqs nnz
+      c_klu session sformat neqs nnz
+
+    (* We force the type argument here to avoid propagating it to the
+       session type; which is unnecessary and needlessy complicated
+       for users. *)
+    let solver_csc (f : Sls.SparseMatrix.csc sparse_jac_fn)
+      = solver Sls_impl.CSC_MAT (Obj.magic f : unit sparse_jac_fn)
+
+    let solver_csr (f : Sls.SparseMatrix.csr sparse_jac_fn)
+      = match Sundials.sundials_version with
+        | 2,5,_ | 2,6,_ -> raise Sundials.NotImplementedBySundialsVersion
+        | _ -> solver Sls_impl.CSR_MAT (Obj.magic f : unit sparse_jac_fn)
 
     external c_set_ordering : 'k serial_session -> ordering -> unit
       = "c_arkode_klu_set_ordering"
@@ -352,17 +364,29 @@ module Sls = struct
 
     module Mass = struct
 
-      external c_mass_klu : 'k serial_session -> int -> int -> unit
+      external c_mass_klu
+        : 'k serial_session -> Sls_impl.sformat -> int -> int -> unit
         = "c_arkode_mass_klu_init"
 
-      let solver f nnz session nv =
+      let solver sformat f nnz session nv =
         if not Sundials_config.klu_enabled
           then raise Sundials.NotImplementedBySundialsVersion;
         let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
         session.mass_callbacks
           <- SlsKluMassCallback { massfn = f; smmat = None };
         session.mass_precfns <- NoMassPrecFns;
-        c_mass_klu session neqs nnz
+        c_mass_klu session sformat neqs nnz
+
+      (* We force the type argument here to avoid propagating it to the
+         session type; which is unnecessary and needlessy complicated
+         for users. *)
+      let solver_csc (f : Sls.SparseMatrix.csc sparse_mass_fn)
+        = solver Sls_impl.CSC_MAT (Obj.magic f : unit sparse_mass_fn)
+
+      let solver_csr (f : Sls.SparseMatrix.csr sparse_mass_fn)
+      = match Sundials.sundials_version with
+        | 2,5,_ | 2,6,_ -> raise Sundials.NotImplementedBySundialsVersion
+        | _ -> solver Sls_impl.CSR_MAT (Obj.magic f : unit sparse_mass_fn)
 
       external c_set_ordering : 'k serial_session -> ordering -> unit
         = "c_arkode_mass_klu_set_ordering"
@@ -399,13 +423,19 @@ module Sls = struct
     external c_superlumt : 'k serial_session -> int -> int -> int -> unit
       = "c_arkode_superlumt_init"
 
-    let solver f ~nnz ~nthreads session nv =
+    let solver sformat f ~nnz ~nthreads session nv =
       if not Sundials_config.superlumt_enabled
         then raise Sundials.NotImplementedBySundialsVersion;
       let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
       session.ls_callbacks <- SlsSuperlumtCallback { jacfn = f; smat = None };
       session.ls_precfns <- NoPrecFns;
       c_superlumt session neqs nnz nthreads
+
+    (* We force the type argument here to avoid propagating it to the
+       session type; which is unnecessary and needlessy complicated
+       for users. *)
+    let solver_csc (f : Sls.SparseMatrix.csc sparse_jac_fn)
+      = solver Sls_impl.CSC_MAT (Obj.magic f : unit sparse_jac_fn)
 
     external c_set_ordering : 'k serial_session -> ordering -> unit
       = "c_arkode_superlumt_set_ordering"
@@ -425,7 +455,7 @@ module Sls = struct
       external c_mass_superlumt : 'k serial_session -> int -> int -> int -> unit
         = "c_arkode_mass_superlumt_init"
 
-      let solver f ~nnz ~nthreads session nv =
+      let solver fmt f ~nnz ~nthreads session nv =
         if not Sundials_config.superlumt_enabled
           then raise Sundials.NotImplementedBySundialsVersion;
         let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
@@ -433,6 +463,12 @@ module Sls = struct
           <- SlsSuperlumtMassCallback { massfn = f; smmat = None };
         session.mass_precfns <- NoMassPrecFns;
         c_mass_superlumt session neqs nnz nthreads
+
+      (* We force the type argument here to avoid propagating it to the
+         session type; which is unnecessary and needlessy complicated
+         for users. *)
+      let solver_csc (f : Sls.SparseMatrix.csc sparse_mass_fn)
+        = solver Sls_impl.CSC_MAT (Obj.magic f : unit sparse_mass_fn)
 
       external c_set_ordering : 'k serial_session -> ordering -> unit
         = "c_arkode_mass_superlumt_set_ordering"
@@ -999,6 +1035,7 @@ let init prob tol ?restol ?order ?mass ?(roots=no_roots) t0 y0 =
           adaptfn      = dummy_adaptfn;
           stabfn       = dummy_stabfn;
           resizefn     = dummy_resizefn;
+          poststepfn   = dummy_poststepfn;
 
           linsolver      = None;
           ls_callbacks   = NoCallbacks;
@@ -1215,34 +1252,52 @@ type rk_method = {
     stages : int;
     global_order : int;
     global_embedded_order : int;
-    stage_times : RealArray.t;
+  }
+
+type rk_timescoefs = {
+    stage_times  : RealArray.t;
     coefficients : RealArray.t;
-    bembed : RealArray.t;
+    bembed       : RealArray.t option;
   }
 
 external c_set_ark_tables
-  : ('d, 'k) session -> rk_method -> RealArray.t -> RealArray.t -> unit
+  : ('d, 'k) session -> rk_method
+    -> RealArray.t -> RealArray.t
+    -> rk_timescoefs * rk_timescoefs
+    -> unit
     = "c_arkode_set_ark_tables"
 
 external c_set_erk_table
-  : ('d, 'k) session -> rk_method -> RealArray.t -> unit
+  : ('d, 'k) session -> rk_method -> RealArray.t -> rk_timescoefs -> unit
     = "c_arkode_set_erk_table"
 
 external c_set_irk_table
-  : ('d, 'k) session -> rk_method -> RealArray.t -> unit
+  : ('d, 'k) session -> rk_method -> RealArray.t -> rk_timescoefs -> unit
     = "c_arkode_set_irk_table"
 
-let set_ark_tables s rkm ai ae =
+let set_ark_tables s rkm ai ae tci tce =
   (if s.irhsfn == dummy_irhsfn || s.erhsfn == dummy_erhsfn then raise IllInput);
-  c_set_ark_tables s rkm ai ae
+  (match Sundials.sundials_version with
+   | 2,5,_ | 2,6,_ -> if tci.bembed = None || tce.bembed = None
+                      then raise Sundials.NotImplementedBySundialsVersion
+   | _ -> ());
+  c_set_ark_tables s rkm ai ae (tci, tce)
 
-let set_erk_table s rkm ae =
+let set_erk_table s rkm ae tc =
   (if s.erhsfn == dummy_erhsfn then raise IllInput);
-  c_set_erk_table s rkm ae
+  (match Sundials.sundials_version with
+   | 2,5,_ | 2,6,_ -> if tc.bembed = None
+                      then raise Sundials.NotImplementedBySundialsVersion
+   | _ -> ());
+  c_set_erk_table s rkm ae tc
 
-let set_irk_table s rkm ai =
+let set_irk_table s rkm ai tc =
   (if s.irhsfn == dummy_irhsfn then raise IllInput);
-  c_set_irk_table s rkm ai
+  (match Sundials.sundials_version with
+   | 2,5,_ | 2,6,_ -> if tc.bembed = None
+                      then raise Sundials.NotImplementedBySundialsVersion
+   | _ -> ());
+  c_set_irk_table s rkm ai tc
 
 type erk_table =
   | HeunEuler_2_1_2
@@ -1256,6 +1311,7 @@ type erk_table =
   | DormandPrince_7_4_5
   | ARK_8_4_5_Explicit
   | Verner_8_5_6
+  | Fehlberg_13_7_8
 
 type irk_table =
   | SDIRK_2_1_2
@@ -1277,39 +1333,75 @@ type ark_table =
   | ARK_8_4_5
 
 let int_of_erk_table v =
-  match v with
-  | HeunEuler_2_1_2       -> 0
-  | BogackiShampine_4_2_3 -> 1
-  | ARK_4_2_3_Explicit    -> 2
-  | Zonneveld_5_3_4       -> 3
-  | ARK_6_3_4_Explicit    -> 4
-  | SayfyAburub_6_3_4     -> 5
-  | CashKarp_6_4_5        -> 6
-  | Fehlberg_6_4_5        -> 7
-  | DormandPrince_7_4_5   -> 8
-  | ARK_8_4_5_Explicit    -> 9
-  | Verner_8_5_6          -> 10
+  match Sundials.sundials_version with
+  | 2,5,_ | 2,6,_ ->
+    (match v with
+     | HeunEuler_2_1_2       -> 0
+     | BogackiShampine_4_2_3 -> 1
+     | ARK_4_2_3_Explicit    -> 2
+     | Zonneveld_5_3_4       -> 3
+     | ARK_6_3_4_Explicit    -> 4
+     | SayfyAburub_6_3_4     -> 5
+     | CashKarp_6_4_5        -> 6
+     | Fehlberg_6_4_5        -> 7
+     | DormandPrince_7_4_5   -> 8
+     | ARK_8_4_5_Explicit    -> 9
+     | Verner_8_5_6          -> 10
+     | Fehlberg_13_7_8       -> raise Sundials.NotImplementedBySundialsVersion)
+  | _ ->
+    (match v with
+     | HeunEuler_2_1_2       -> 0
+     | BogackiShampine_4_2_3 -> 1
+     | ARK_4_2_3_Explicit    -> 2
+     | Zonneveld_5_3_4       -> 3
+     | ARK_6_3_4_Explicit    -> 4
+     | SayfyAburub_6_3_4     -> 5
+     | CashKarp_6_4_5        -> 6
+     | Fehlberg_6_4_5        -> 7
+     | DormandPrince_7_4_5   -> 8
+     | ARK_8_4_5_Explicit    -> 9
+     | Verner_8_5_6          -> 10
+     | Fehlberg_13_7_8       -> 11)
 
 let int_of_irk_table v =
-  match v with
-  | SDIRK_2_1_2        -> 11
-  | Billington_3_2_3   -> 12
-  | TRBDF2_3_2_3       -> 13
-  | Kvaerno_4_2_3      -> 14
-  | ARK_4_2_3_Implicit -> 15
-  | Cash_5_2_4         -> 16
-  | Cash_5_3_4         -> 17
-  | SDIRK_5_3_4        -> 18
-  | Kvaerno_5_3_4      -> 19
-  | ARK_6_3_4_Implicit -> 20
-  | Kvaerno_7_4_5      -> 21
-  | ARK_8_4_5_Implicit -> 22
+  match Sundials.sundials_version with
+  | 2,5,_ | 2,6,_ ->
+    (match v with
+     | SDIRK_2_1_2        -> 11
+     | Billington_3_2_3   -> 12
+     | TRBDF2_3_2_3       -> 13
+     | Kvaerno_4_2_3      -> 14
+     | ARK_4_2_3_Implicit -> 15
+     | Cash_5_2_4         -> 16
+     | Cash_5_3_4         -> 17
+     | SDIRK_5_3_4        -> 18
+     | Kvaerno_5_3_4      -> 19
+     | ARK_6_3_4_Implicit -> 20
+     | Kvaerno_7_4_5      -> 21
+     | ARK_8_4_5_Implicit -> 22)
+  | _ ->
+    (match v with
+     | SDIRK_2_1_2        -> 12
+     | Billington_3_2_3   -> 13
+     | TRBDF2_3_2_3       -> 14
+     | Kvaerno_4_2_3      -> 15
+     | ARK_4_2_3_Implicit -> 16
+     | Cash_5_2_4         -> 17
+     | Cash_5_3_4         -> 18
+     | SDIRK_5_3_4        -> 19
+     | Kvaerno_5_3_4      -> 20
+     | ARK_6_3_4_Implicit -> 21
+     | Kvaerno_7_4_5      -> 22
+     | ARK_8_4_5_Implicit -> 23)
 
 let ints_of_ark_table v =
   match v with
-  | ARK_4_2_3 -> (15, 2)
-  | ARK_6_3_4 -> (20, 4)
-  | ARK_8_4_5 -> (22, 9)
+  | ARK_4_2_3 -> (int_of_irk_table ARK_4_2_3_Implicit,
+                  int_of_erk_table ARK_4_2_3_Explicit)
+  | ARK_6_3_4 -> (int_of_irk_table ARK_6_3_4_Implicit,
+                  int_of_erk_table ARK_6_3_4_Explicit)
+  | ARK_8_4_5 -> (int_of_irk_table ARK_8_4_5_Implicit,
+                  int_of_erk_table ARK_8_4_5_Explicit)
 
 external c_set_erk_table_num      : ('d, 'k) session -> int -> unit
     = "c_arkode_set_erk_table_num"
@@ -1422,6 +1514,17 @@ external set_safety_factor      : ('a, 'k) session -> float -> unit
 external set_small_num_efails   : ('a, 'k) session -> float -> unit
     = "c_arkode_set_small_num_efails"
 
+external c_set_postprocess_step_fn : ('a, 'k) session -> bool -> unit
+    = "c_arkode_set_postprocess_step_fn"
+
+let set_postprocess_step_fn s fn =
+  s.poststepfn <- fn;
+  c_set_postprocess_step_fn s true
+
+let clear_postprocess_step_fn s =
+  s.poststepfn <- dummy_poststepfn;
+  c_set_postprocess_step_fn s false
+
 external c_set_root_direction   : ('a, 'k) session -> Sundials.RootDirs.t -> unit
     = "c_arkode_set_root_direction"
 
@@ -1435,7 +1538,8 @@ external set_no_inactive_root_warn      : ('a, 'k) session -> unit
     = "c_arkode_set_no_inactive_root_warn"
 
 external get_current_butcher_tables
-  : ('d, 'k) session -> RealArray.t * RealArray.t * rk_method
+  : ('d, 'k) session
+    -> rk_method * RealArray.t * RealArray.t * rk_timescoefs * rk_timescoefs
     = "c_arkode_get_current_butcher_tables"
 
 external get_tol_scale_factor           : ('a, 'k) session -> float
@@ -1494,6 +1598,7 @@ let _ =
       RepeatedRhsFuncFailure;
       UnrecoverableRhsFuncFailure;
       RootFuncFailure;
+      PostprocStepFailure;
       BadK;
       BadT;
     |]

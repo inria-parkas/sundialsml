@@ -11,7 +11,8 @@ EXAMPLES_SINCE_2_5 = kinFerTron_dns.ml		\
 		     kinKrylovDemo_ls.ml	\
 		     kinLaplace_bnd.ml		\
 		     kinRoboKin_dns.ml		\
-		     kinRoboKin_dns_alt.ml
+		     kinRoboKin_dns_alt.ml	\
+		     $(if $(and $(AT_LEAST_2_7),$(KLU_ENABLED)),kinFerTron_klu.ml) \
 
 EXAMPLES_SINCE_2_6 = kinRoberts_fp.ml		\
 		     kinLaplace_picard_bnd.ml   \

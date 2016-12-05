@@ -25,11 +25,16 @@ type real_array = Sundials.RealArray.t
 
 type slsmat
 
-type t = {
-  colptrs : int_array;
-  rowvals : int_array;
+type sformat =
+  | CSC_MAT
+  | CSR_MAT
+
+type 'f t = {
+  idxptrs : int_array;
+  idxvals : int_array;
   data    : real_array;
   slsmat  : slsmat;
+  sformat : sformat;
   mutable valid : bool;
 }
 

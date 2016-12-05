@@ -16,7 +16,9 @@ This OCaml interface was written by {{:http://www.tbrk.org}Timothy Bourke}
 and
 {{:http://www.di.ens.fr/~pouzet/}Marc Pouzet}
 ({{:http://www.upmc.fr/}UPMC}/{{:http://www.di.ens.fr/}ENS}/{{:http://www.inria.fr/}Inria}).
-It provides a complete OCaml interface to Sundials version {b {var version}}.
+It provides an OCaml interface to Sundials version {b {var version}}.
+The only features missing are the Hypre ParVector and PETSC nvector modules
+({{:mailto:tim\@tbrk.org}contact us} if you need these).
 
 The source code is available under a New BSD license at
 {{:https://github.com/inria-parkas/sundialsml}git\@github.com:inria-parkas/sundialsml.git}.
@@ -211,13 +213,8 @@ dependencies and the right cmake incantation.
 In particular, it can be tricky to get the optional
 {{:http://crd-legacy.lbl.gov/~xiaoye/SuperLU/#superlu_mt}SuperLU/MT}
 library to work.
-We provide a patch for {{:superlu_mt_2.4.patch}2.4} that updates [make.inc],
-setting [BLASDEF = -DUSE_VENDOR_BLAS] and
-[BLASLIB = -lblas], adding [-fPIC] to the [CC] line, and adding a target to
-build the dynamic library required for linking with OCaml.
-Installation requires csh ([apt-get install csh]).
 If Sundials cmake claims that SuperLU_MT is not functional, this
-{{:sundials-2.6.2-superlumt.patch}patch} may help.
+{{:sundials-2.7.0-superlumt.patch}patch} may help.
 
 For {b Debian}-based systems, we found the following worked:
 {ol
@@ -225,7 +222,7 @@ For {b Debian}-based systems, we found the following worked:
     {- Optionally download and build SuperLU/MT as described above, since the
 	libsuperlu-dev package does not provide the shared library file.}
     {- {v mkdir build; cd build v}}
-    {- {v cmake -Wno-dev ../sundials-2.6.2 \
+    {- {v cmake -Wno-dev ../sundials-2.7.0 \
 -DCMAKE_BUILD_TYPE=Release \
 -DOPENMP_ENABLE=1 \
 -DPTHREAD_ENABLE=1 \
@@ -235,13 +232,13 @@ For {b Debian}-based systems, we found the following worked:
 -DKLU_INCLUDE_DIR=/usr/include/suitesparse v}
        adding, if necessary,
        {v -DSUPERLUMT_ENABLE=1 \
--DSUPERLUMT_LIBRARY_DIR=<full-path-to>/SuperLU_MT_2.4/lib \
--DSUPERLUMT_INCLUDE_DIR=<full-path-to>/SuperLU_MT_2.4/SRC \
+-DSUPERLUMT_LIBRARY_DIR=<full-path-to>/SuperLU_MT_3.0/lib \
+-DSUPERLUMT_INCLUDE_DIR=<full-path-to>/SuperLU_MT_3.0/SRC \
 -DSUPERLUMT_LIBRARIES=-lblas v}}
     {- Configure Sundials/ML with
-	{v ./configure SUPERLUMT_LIBRARY_DIR=<full-path-to>/SuperLU_MT_2.4/lib v}
+	{v ./configure SUPERLUMT_LIBRARY_DIR=<full-path-to>/SuperLU_MT_3.0/lib v}
        Note that [SUPERLUMT_LIBRARY_DIR] must be registered with [ld]:
-	{v export LD_LIBRARY_PATH=<full-path-to>/SuperLU_MT_2.4/lib:$LD_LIBRARY_PATH v}}
+	{v export LD_LIBRARY_PATH=<full-path-to>/SuperLU_MT_3.0/lib:$LD_LIBRARY_PATH v}}
 }
 
 For {b OS X}, we found the following worked:
@@ -252,7 +249,7 @@ For {b OS X}, we found the following worked:
     {- Optionally download and build SuperLU/MT as described above.}
     {- {v mkdir build; cd build v}}
     {- For OpenMP, the gcc compiler is required:
-       {v cmake -Wno-dev ../sundials-2.6.2 \
+       {v cmake -Wno-dev ../sundials-2.7.0 \
 -DCMAKE_BUILD_TYPE=Release \
 -DCMAKE_C_COMPILER=/usr/local/bin/gcc-5 \
 -DOPENMP_ENABLE=1 \
@@ -262,10 +259,10 @@ For {b OS X}, we found the following worked:
 -DKLU_ENABLE=1 -DKLU_LIBRARY_DIR=/usr/local/lib -DKLU_INCLUDE_DIR=/usr/local/include v}
        adding, if necessary,
        {v -DSUPERLUMT_ENABLE=1 \
--DSUPERLUMT_LIBRARY_DIR=<full-path-to>/SuperLU_MT_2.4/lib \
--DSUPERLUMT_INCLUDE_DIR=<full-path-to>/SuperLU_MT_2.4/SRC v}}
+-DSUPERLUMT_LIBRARY_DIR=<full-path-to>/SuperLU_MT_3.0/lib \
+-DSUPERLUMT_INCLUDE_DIR=<full-path-to>/SuperLU_MT_3.0/SRC v}}
     {- Configure Sundials/ML with
-	{v ./configure SUPERLUMT_LIBRARY_DIR=<full-path-to>/SuperLU_MT_2.4/lib v}}
+	{v ./configure SUPERLUMT_LIBRARY_DIR=<full-path-to>/SuperLU_MT_3.0/lib v}}
 }
 
 The [configure] script detects and automatically enables optional
@@ -298,7 +295,7 @@ Sundials/ML will function correctly but with less features.
 	    {- Fedora:
 		    [dnf install lapack-devel sundials-devel
 		    sundials-threads-devel sundials-openmpi-devel]}
-	    {- Mac OS X (version 2.5.0 without parallelism):
+	    {- Mac OS X (version 2.7.0 without parallelism):
 		[brew install sundials] / [port install sundials]}
 	}}
     {- {i Optionally} run [opam install mpi].}
@@ -582,6 +579,7 @@ This documentation uses {{:http://www.xulforum.org}J. Protzenko}'s
 We are grateful for direct contributions to this library from
 {ul
     {- {{:http://gallium.inria.fr/~scherer/}G. Scherer}}
+    {- {{:http://www.lix.polytechnique.fr/~ghorbal/}K. Ghorbal}}
 }
 
 {2:indexes Indexes}

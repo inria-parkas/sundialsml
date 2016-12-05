@@ -7,7 +7,7 @@ SRCROOT=../../..
 SUBDIR=ida/parallel
 MPI_EXAMPLES = idaFoodWeb_kry_p.ml	\
 	       idaFoodWeb_kry_bbd_p.ml	\
-	       idaHeat2D_kry_p.ml	\
+	       $(if $(AT_LEAST_2_7),idaHeat2D_kry_p.ml)	\
 	       idaHeat2D_kry_bbd_p.ml
 
 include ../../examples.mk

@@ -91,6 +91,11 @@ module Matrix = Dls.ArrayDenseMatrix
 
 let printf = Printf.printf
 
+let sundials_270_or_later =
+  match Sundials.sundials_version with
+  | 2,5,_ | 2,6,_ -> false
+  | _ -> true
+
 (* Problem Constants. *)
 let nprey       = 1                     (* No. of prey (= no. of predators). *)
 let num_species = 2*nprey
@@ -98,7 +103,7 @@ let pi          = 3.1415926535898
 let fourpi      = 4.0*.pi
 let mx          = 20                    (* MX = number of x mesh points *)
 let my          = 20                    (* MY = number of y mesh points *)
-let nsmx        = num_species * my
+let nsmx        = num_species * mx
 let neq         = num_species * mx * my
 let aa          = 1.0                   (* Coefficient in above eqns. for a *)
 let ee          = 10000.                (* Coefficient in above eqns. for a *)
@@ -292,10 +297,6 @@ let set_initial_profiles webdata c c' id =
       let xyfactor = 16.0*.x*.(1.-.x)*.y*.(1.-.y) in
       let xyfactor = xyfactor *. xyfactor
       and loc = yloc + num_species*jx in
-      (* The variable fac defined in the C code from SUNDIALS 2.5.0
-         doesn't seem to be used:
-      let fac = 1. +. alpha *. x *. y
-                   +. beta *. sin (fourpi*.x) *. sin (fourpi*.y) in *)
       for is = 0 to num_species-1 do
         if is < webdata.np
         then (c.{loc+is} <- 10.0 +. float_of_int (is+1) *. xyfactor;
@@ -347,7 +348,10 @@ let print_output mem c t =
   and c_bl = ij_v c 0 0
   and c_tr = ij_v c (mx-1) (my-1) in
 
-  printf "%8.2e %12.4e %12.4e   | %3d  %1d %12.4e\n"
+  if sundials_270_or_later
+  then printf "%8.2e %12.4e %12.4e   | %3d  %1d %12.4e\n"
+         t c_bl.{0} c_tr.{0} nst kused hused
+  else printf "%8.2e %12.4e %12.4e   | %3d  %1d %12.4e\n"
          t c_bl.{0} c_tr.{1} nst kused hused;
   for i = 1 to num_species-1 do
     printf "         %12.4e %12.4e   |\n" c_bl.{i} c_tr.{i}

@@ -1,8 +1,8 @@
 #! /bin/sh
 
 sysname='Sundials/ML'
-version=2.6.2
-versionp=1
+version=2.7.0
+versionp=0
 contact='tim@tbrk.org'
 
 unset prefix
@@ -198,7 +198,12 @@ if [ x"${SUNDIALS_INCLUDE_DIR}" != x ]; then
     Isundials_inc_path="-I${sundials_inc_path}"
 fi
 if [ x"${SUNDIALS_EXAMPLES_DIR}" != x ]; then
-    EXAMPLESROOT="${SUNDIALS_EXAMPLES_DIR%/}"
+    if [ ! -d "${SUNDIALS_EXAMPLES_DIR%/}/templates" ]; then
+	msg="ignoring invalid examples directory (${SUNDIALS_EXAMPLES_DIR%})"
+	warning="${warning}\n\t${msg}"
+    else
+	EXAMPLESROOT="${SUNDIALS_EXAMPLES_DIR%/}"
+    fi
 fi
 if [ x"${SUNDIALS_DIR}" != x ]; then
     if [ "x${sundials_lib_path}" = x ]; then
@@ -426,6 +431,7 @@ else
 	2.6.0) sundials=260 ;;
 	2.6.1) sundials=261 ;;
 	2.6.2) sundials=262 ;;
+	2.7.*) sundials=270 ;;
 	*) ;;
     esac
 
@@ -453,7 +459,11 @@ EOF
     fi
 fi
 
-if [ ${sundials} -ge 260 ]; then
+if [ ${sundials} -ge 270 ]; then
+    sundials_at_least_2_7=1
+    sundials_at_least_2_6=1
+    sundials_at_least_2_5=1
+elif [ ${sundials} -ge 260 ]; then
     sundials_at_least_2_6=1
     sundials_at_least_2_5=1
 elif [ ${sundials} -ge 250 ]; then
@@ -1109,6 +1119,7 @@ cat ${LOG}
 	 s#@configure_command@#${configure_command}#;
 	 s#@version@#${version}#;
 	 s#@versionp@#${versionp}#;
+	 s#@sundials_at_least_2_7@#${sundials_at_least_2_7}#;
 	 s#@sundials_at_least_2_6@#${sundials_at_least_2_6}#;
 	 s#@sundials_at_least_2_5@#${sundials_at_least_2_5}#;
 	 s#@libdir@#${libdir:-${ocaml_libpath}}#;

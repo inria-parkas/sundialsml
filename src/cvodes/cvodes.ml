@@ -899,9 +899,9 @@ module Adjoint =
       struct
         include AdjointTypes'.SlsTypes
 
-        type sparse_jac_fn =
-            NoSens of sparse_jac_fn_no_sens
-          | WithSens of sparse_jac_fn_with_sens
+        type 'f sparse_jac_fn =
+            NoSens of 'f sparse_jac_fn_no_sens
+          | WithSens of 'f sparse_jac_fn_with_sens
 
         module Klu = struct
           type ordering = Cvode.Sls.Klu.ordering =
@@ -910,17 +910,18 @@ module Adjoint =
              | Natural
 
           external c_klub
-            : 'k serial_session -> int -> int -> int -> bool -> unit
+            : 'k serial_session * int -> Sls_impl.sformat
+              -> int -> int -> bool -> unit
             = "c_cvodes_klub_init"
 
-          let solver f nnz bs nv =
+          let solver sformat f nnz bs nv =
             if not Sundials_config.klu_enabled
               then raise Sundials.NotImplementedBySundialsVersion;
             let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
             let session = tosession bs in
             let parent, which = AdjointTypes.parent_and_which bs in
             let use_sens = match f with WithSens _ -> true | NoSens _ -> false in
-            c_klub parent which neqs nnz use_sens;
+            c_klub (parent, which) sformat neqs nnz use_sens;
             session.ls_precfns <- NoPrecFns;
             match f with
             | NoSens fns ->
@@ -929,6 +930,17 @@ module Adjoint =
             | WithSens fbs ->
                 session.ls_callbacks <-
                     BSlsKluCallbackSens { jacfn_sens = fbs; smat_sens = None }
+
+          (* We force the type argument here to avoid propagating it to the
+             session type; which is unnecessary and needlessy complicated
+             for users. *)
+          let solver_csc (f : Sls.SparseMatrix.csc sparse_jac_fn)
+            = solver Sls_impl.CSC_MAT (Obj.magic f : unit sparse_jac_fn)
+
+          let solver_csr (f : Sls.SparseMatrix.csr sparse_jac_fn)
+            = match Sundials.sundials_version with
+              | 2,5,_ | 2,6,_ -> raise Sundials.NotImplementedBySundialsVersion
+              | _ -> solver Sls_impl.CSR_MAT (Obj.magic f : unit sparse_jac_fn)
 
           let set_ordering bs = Cvode.Sls.Klu.set_ordering (tosession bs)
           let reinit bs = Cvode.Sls.Klu.reinit (tosession bs)
@@ -947,7 +959,7 @@ module Adjoint =
                                   -> int -> int -> int -> bool -> unit
             = "c_cvodes_superlumtb_init"
 
-          let solver f ~nnz ~nthreads bs nv =
+          let solver sformat f ~nnz ~nthreads bs nv =
             if not Sundials_config.superlumt_enabled
               then raise Sundials.NotImplementedBySundialsVersion;
             let neqs = Sundials.RealArray.length (Nvector.unwrap nv) in
@@ -965,6 +977,12 @@ module Adjoint =
                 session.ls_callbacks <-
                   BSlsSuperlumtCallbackSens { jacfn_sens = fbs;
                                               smat_sens = None }
+
+          (* We force the type argument here to avoid propagating it to the
+             session type; which is unnecessary and needlessy complicated
+             for users. *)
+          let solver_csc (f : Sls.SparseMatrix.csc sparse_jac_fn)
+            = solver Sls_impl.CSC_MAT (Obj.magic f : unit sparse_jac_fn)
 
           let set_ordering bs
             = Cvode.Sls.Superlumt.set_ordering (tosession bs)
