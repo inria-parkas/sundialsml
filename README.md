@@ -2,14 +2,14 @@ Sundials/ML
 ===========
 
 Sundials/ML is an interface to the Sundials suite of numerical solvers.
-All features are supported except Hypre and PETSC nvectors.
 
 [Full documentation](http://inria-parkas.github.io/sundialsml/) is online.
 
 [Sundials](http://computation.llnl.gov/casc/sundials/main.html) is a 
 collection of six numerical solvers:
 CVODE, CVODES, IDA, IDAS, ARKODE, and KINSOL.
-This interface provides access to all features of the underlying library.
+This interface provides access to all features of the underlying library 
+except the Hypre and PETSC nvectors.
 
 Installation
 ------------
