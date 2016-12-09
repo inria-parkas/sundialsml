@@ -40,7 +40,9 @@ GEN_SUBDIRS=$(foreach m,cvode cvodes ida idas kinsol,			\
 	             $(if $(or $(1),$(MPI_ENABLED)),parallel)		\
 	             $(if $(or $(1),$(OPENMP_ENABLED)),C_openmp)	\
 	             $(if $(or $(1),$(PTHREADS_ENABLED)),pthreads),	\
-	           nvector/$v))
+	           nvector/$v))						\
+	    $(if $(or $(1),$(AT_LEAST_2_7)),				\
+	       $(if $(or $(1),$(OPENMP_ENABLED)),idas/C_openmp))
 
 ALL_SUBDIRS=$(call GEN_SUBDIRS,all)  # All subdirectories
 SUBDIRS=$(call GEN_SUBDIRS)          # Just the enabled ones.
