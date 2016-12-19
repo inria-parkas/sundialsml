@@ -4,10 +4,11 @@
 collection of six numeric solvers: CVODE,  CVODES, IDA, IDAS, ARKODE,
 and KINSOL.
 It is written by Carol S. Woodward, Daniel R. Reynolds, Alan C. Hindmarsh,
-and Lawrence E. Banks at the {e Center for Applied Scientific Computing,
-Lawrence Livermore National Laboratory} with significant contributions from
-Radu Serban, and contributions from Peter N. Brown, Scott Cohen, Aaron Collier,
-Keith E. Grant, Steven L. Lee, Cosmin Petra, Dan Shumaker, and Allan G. Taylor.
+Slaven Peles, and Lawrence E. Banks at the {e Center for Applied Scientific
+Computing, Lawrence Livermore National Laboratory} with significant
+contributions from Radu Serban, and contributions from Peter N. Brown,
+Scott Cohen, Aaron Collier, Keith E. Grant, Steven L. Lee, Cosmin Petra,
+Dan Shumaker, and Allan G. Taylor.
 
 This OCaml interface was written by {{:http://www.tbrk.org}Timothy Bourke}
 ({{:http://www.inria.fr}Inria}/{{:http://www.di.ens.fr/}ENS}),
