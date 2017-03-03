@@ -1,0 +1,22 @@
+B .
+B arkode
+B cvode
+B cvodes
+B ida
+B idas
+B kinsol
+B lsolvers
+B nvectors
+B sundials
+
+S .
+S arkode
+S cvode
+S cvodes
+S ida
+S idas
+S kinsol
+S lsolvers
+S nvectors
+S sundials
+
