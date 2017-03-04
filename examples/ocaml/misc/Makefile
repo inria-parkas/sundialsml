@@ -26,6 +26,7 @@ ramp.opt: ramp.ml
 
 clean:
 	-@rm -f $(EXAMPLES:.byte=.cmo) $(EXAMPLES:.byte=.cmx)
+	-@rm -f $(EXAMPLES:.byte=.cmt) $(EXAMPLES:.byte=.cmti)
 	-@rm -f $(EXAMPLES:.byte=.o) $(EXAMPLES:.byte=.cmi)
 	-@rm -f $(EXAMPLES:.byte=.annot)
 

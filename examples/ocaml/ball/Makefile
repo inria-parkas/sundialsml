@@ -27,7 +27,9 @@ showball.cmx : showball.ml
 
 clean:
 	-@rm -f showball.cmi showball.cmo showball.cmx showball.o
+	-@rm -f showball.cmt showball.cmti
 	-@rm -f ball.cmi ball.cmo ball.cmx ball.o
+	-@rm -f ball.cmt ball.cmti
 	-@rm -f showball.annot ball.annot
 
 distclean: clean

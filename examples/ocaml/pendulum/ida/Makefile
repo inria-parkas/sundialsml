@@ -25,7 +25,9 @@ showpendulum.cmx: showpendulum.ml
 clean:
 	-@rm -f showpendulum.cmi showpendulum.cmo showpendulum.cmx showpendulum.o
 	-@rm -f showpendulum.annot pendulum.annot
+	-@rm -f showpendulum.cmt showpendulum.cmti
 	-@rm -f pendulum.cmi pendulum.cmo pendulum.cmx pendulum.o
+	-@rm -f pendulum.cmt pendulum.cmti
 
 distclean: clean
 	-@rm -f pendulum.byte pendulum.opt

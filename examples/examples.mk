@@ -420,6 +420,7 @@ distclean: clean
 clean:
 	-@rm -f $(foreach p,$(ALL_EXAMPLES:.ml=),valgrind-$p.*)
 	-@rm -f $(ALL_EXAMPLES:.ml=.cmo) $(ALL_EXAMPLES:.ml=.cmx)
+	-@rm -f $(ALL_EXAMPLES:.ml=.cmt) $(ALL_EXAMPLES:.ml=.cmti)
 	-@rm -f $(ALL_EXAMPLES:.ml=.o) $(ALL_EXAMPLES:.ml=.cmi)
 	-@rm -f $(ALL_EXAMPLES:.ml=.c.log) $(ALL_EXAMPLES:.ml=.ml.log)
 	-@rm -f $(ALL_EXAMPLES:.ml=.byte) $(ALL_EXAMPLES:.ml=.opt)

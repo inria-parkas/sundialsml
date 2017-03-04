@@ -485,6 +485,7 @@ if [ $? -ne 0 ]; then
     ocaml_libpath=''
     ocaml_3x=''
     ocaml_has_version_h=''
+    ocaml_has_binannot=''
 else
     case "${ocaml_version}" in
 	[0-2].*.* | 3.0* | 3.[2-9].* | 3.10.* | 3.11.*)
@@ -498,14 +499,32 @@ else
     esac
 
     case "${ocaml_version}" in
-	3.*) ocaml_has_version_h=0 ;;
-	4.00.*) ocaml_has_version_h=0 ;;
-	4.01.*) ocaml_has_version_h=0 ;;
-	*) ocaml_has_version_h=1 ;;
+	3.*)
+	    ocaml_has_version_h=0
+	    ocaml_has_binannot=0
+	    ;;
+	4.00.*)
+	    ocaml_has_version_h=0
+	    ocaml_has_binannot=1
+	    ;;
+	4.01.*)
+	    ocaml_has_version_h=0
+	    ocaml_has_binannot=1
+	    ;;
+	*)
+	    ocaml_has_version_h=1
+	    ocaml_has_binannot=1
+	    ;;
     esac
 
     ocaml_libpath="${ocaml_path%/}/"
     ocaml_version_info=" (${ocaml_version})"
+fi
+
+if [ "x$ocaml_has_binannot" = x1 ]
+then
+    ocamlflags="${ocamlflags} -bin-annot"
+    ocamloptflags="${ocamloptflags} -bin-annot"
 fi
 
 # Check if .opt variants are available.

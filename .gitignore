@@ -3,6 +3,8 @@ config
 *.cmx
 *.cmxs
 *.cmi
+*.cmt
+*.cmti
 *.cma
 *.cmxa
 *.cmxs

@@ -36,7 +36,9 @@ sincos_nvec.opt: sincos_nvec.ml
 
 clean:
 	-@rm -f sincos.cmi sincos.cmo sincos.cmx sincos.o
+	-@rm -f sincos.cmt sincos.cmti
 	-@rm -f sincos_nvec.cmi sincos_nvec.cmo sincos_nvec.cmx sincos_nvec.o
+	-@rm -f sincos_nvec.cmt sincos_nvec.cmti
 	-@rm -f sincos.log sincos-roots.log
 
 distclean: clean

@@ -311,6 +311,7 @@ depend: .depend
 clean:
 	-@$(RM) -f $(ALL_MLOBJ) $(ALL_MLOBJ:.cmo=.cmx) $(ALL_MLOBJ:.cmo=.o)
 	-@$(RM) -f $(ALL_MLOBJ:.cmo=.cmi) $(ALL_MLOBJ:.cmo=.annot) $(ALL_COBJ)
+	-@$(RM) -f $(ALL_MLOBJ:.cmo=.cmt) $(ALL_MLOBJ:.cmo=.cmti)
 	-@$(RM) -f $(ALL_CMA) $(ALL_CMA:.cma=.cmxa) $(ALL_CMA:.cma=.a)
 	-@$(RM) -f $(foreach file,$(ALL_CMA:.cma=$(XA)),libml$(file))
 	-@$(RM) -f $(foreach file,$(ALL_CMA:.cma=$(XS)),dllml$(file))

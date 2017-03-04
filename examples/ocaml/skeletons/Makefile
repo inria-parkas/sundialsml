@@ -34,6 +34,7 @@ intro2.out: intro2.ml
 
 clean:
 	-@rm -f $(EXAMPLES:.byte=.cmo) $(EXAMPLES:.byte=.cmx)
+	-@rm -f $(EXAMPLES:.byte=.cmt) $(EXAMPLES:.byte=.cmti)
 	-@rm -f $(EXAMPLES:.byte=.o) $(EXAMPLES:.byte=.cmi)
 	-@rm -f $(EXAMPLES:.byte=.annot) $(EXAMPLES)
 	-@rm -f intro1.out intro2.out
