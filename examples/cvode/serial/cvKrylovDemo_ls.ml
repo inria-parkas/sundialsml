@@ -498,8 +498,7 @@ let main () =
         (* Call CVSpgmr to specify the linear solver CVSPGMR 
            with left preconditioning and the maximum Krylov dimension maxl *)
         Cvode.(reinit cvode_mem t0 u
-          ~iter_type:
-            (Newton
+          ~iter:(Newton
                Spils.(spgmr (prec_left ~setup:(precond data) (psolve data)))));
 
         (* Set modified Gram-Schmidt orthogonalization, preconditioner 
@@ -518,8 +517,7 @@ let main () =
         (* Call CVSpbcg to specify the linear solver CVSPBCG 
            with left preconditioning and the maximum Krylov dimension maxl *)
         Cvode.(reinit cvode_mem t0 u
-          ~iter_type:
-            (Newton
+          ~iter:(Newton
                Spils.(spbcg (prec_left ~setup:(precond data) (psolve data)))))
       end
 
@@ -533,8 +531,7 @@ let main () =
         (* Call CVSptfqmr to specify the linear solver CVSPTFQMR
            with left preconditioning and the maximum Krylov dimension maxl *)
         Cvode.(reinit cvode_mem t0 u
-          ~iter_type:
-            (Newton
+          ~iter:(Newton
                Spils.(sptfqmr (prec_left ~setup:(precond data) (psolve data)))))
       end);
 

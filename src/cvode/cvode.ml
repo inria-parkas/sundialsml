@@ -662,11 +662,11 @@ external c_reinit
     : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
     = "c_cvode_reinit"
 
-let reinit session ?iter_type ?roots t0 y0 =
+let reinit session ?iter ?roots t0 y0 =
   if Sundials_config.safe then session.checkvec y0;
   Dls.invalidate_callback session;
   c_reinit session t0 y0;
-  (match iter_type with
+  (match iter with
    | None -> ()
    | Some iter_type -> set_iter_type session y0 iter_type);
   (match roots with

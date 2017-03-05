@@ -2206,7 +2206,7 @@ module Adjoint :
         @raise BadFinalTime The final time is not within the forward problem solution interval. *)
     val reinit :
       ('d, 'k) bsession
-      -> ?iter_type:('d, 'k) iter
+      -> ?iter:('d, 'k) iter
       -> float
       -> ('d, 'k) Nvector.t
       -> unit
