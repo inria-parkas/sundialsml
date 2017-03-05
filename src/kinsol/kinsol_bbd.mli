@@ -69,7 +69,7 @@ type comm_fn = Nvector_parallel.data -> unit
     @kinsol <node5#sss:kinbbdpre> KINBBDPrecInit *)
 val prec_right : ?dqrely:float
                  -> bandwidths
-                 -> ?comm_fn:comm_fn
+                 -> ?comm:comm_fn
                  -> local_fn
                  -> parallel_preconditioner
 

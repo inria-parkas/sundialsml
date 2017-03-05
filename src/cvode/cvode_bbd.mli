@@ -69,7 +69,7 @@ type comm_fn = float -> Nvector_parallel.data -> unit
     @cvode <node5#sss:cvbbdpre> CVBBDPrecInit *)
 val prec_left : ?dqrely:float
                 -> bandwidths
-                -> ?comm_fn:comm_fn
+                -> ?comm:comm_fn
                 -> local_fn
                 -> parallel_preconditioner
 
@@ -81,7 +81,7 @@ val prec_left : ?dqrely:float
     @cvode <node5#sss:cvbbdpre> CVBBDPrecInit *)
 val prec_right : ?dqrely:float
                  -> bandwidths
-                 -> ?comm_fn:comm_fn
+                 -> ?comm:comm_fn
                  -> local_fn
                  -> parallel_preconditioner
 
@@ -93,7 +93,7 @@ val prec_right : ?dqrely:float
     @cvode <node5#sss:cvbbdpre> CVBBDPrecInit *)
 val prec_both : ?dqrely:float
                 -> bandwidths
-                 -> ?comm_fn:comm_fn
+                 -> ?comm:comm_fn
                  -> local_fn
                 -> parallel_preconditioner
 
