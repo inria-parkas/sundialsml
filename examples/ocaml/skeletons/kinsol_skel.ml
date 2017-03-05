@@ -15,7 +15,7 @@ let u = Nvector_serial.wrap ud
 
 (* 3. Create and initialize a solver session.
       This will initialize a specific linear solver. *)
-let s = Kinsol.(init ~linsolv:(Dls.dense ()) sysf u);;
+let s = Kinsol.(init ~lsolver:(Dls.dense ()) sysf u);;
 
 (* 4. Set optional inputs, e.g.,
       call [set_*] functions to change solver parameters. *)

@@ -821,9 +821,9 @@ type 'd resfn = float -> 'd -> 'd -> 'd -> unit
 type 'd rootsfn = float -> 'd -> 'd -> RealArray.t -> unit
 
 (** Creates and initializes a session with the solver. The call
-    {[init linsolv tol f ~varid:varid ~roots:(nroots, g) t0 y0 y'0]} has
+    {[init lsolver tol f ~varid:varid ~roots:(nroots, g) t0 y0 y'0]} has
     as arguments:
-    - [linsolv], the linear solver to use,
+    - [lsolver   the linear solver to use,
     - [tol],     the integration tolerances,
     - [f],       the DAE residual function,
     - [varid],   optionally classifies variables as algebraic or differential,
@@ -1074,14 +1074,14 @@ val get_dky : ('d, 'k) session -> ('d, 'k) Nvector.t -> float -> int -> unit
 (** Reinitializes the solver with new parameters and state values. The
     values of the independent variable, i.e., the simulation time, the
     state variables, and the derivatives must be given.
-    If the argument [~linsolv] is not given, the current linear solver
+    If the argument [~lsolver] is not given, the current linear solver
     remains unchanged. The argument [~roots] works similarly; pass
     {!no_roots} to disable root finding.
 
     @ida <node5#sss:cvreinit> IDAReInit *)
 val reinit :
   ('d, 'k) session
-  -> ?linsolv:('d, 'k) linear_solver
+  -> ?lsolver:('d, 'k) linear_solver
   -> ?roots:(int * 'd rootsfn)
   -> float
   -> ('d, 'k) Nvector.t

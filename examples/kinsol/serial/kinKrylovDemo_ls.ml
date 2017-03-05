@@ -494,7 +494,7 @@ let main () =
     (* Call KINCreate/KINInit to initialize KINSOL using the linear solver
        KINSPGMR with preconditioner routines prec_setup_bd
        and prec_solve_bd. *)
-    let kmem = Kinsol.(init ~linsolv:spils func cc) in
+    let kmem = Kinsol.(init ~lsolver:spils func cc) in
     Kinsol.set_constraints kmem constraints;
     Kinsol.set_func_norm_tol kmem fnormtol;
     Kinsol.set_scaled_step_tol kmem scsteptol;

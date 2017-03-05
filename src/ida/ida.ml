@@ -587,13 +587,13 @@ external c_reinit
       -> ('a, 'k) Nvector.t -> unit
     = "c_ida_reinit"
 
-let reinit session ?linsolv ?roots t0 y0 y'0 =
+let reinit session ?lsolver ?roots t0 y0 y'0 =
   if Sundials_config.safe then
     (session.checkvec y0;
      session.checkvec y'0);
   Dls.invalidate_callback session;
   c_reinit session t0 y0 y'0;
-  (match linsolv with
+  (match lsolver with
    | None -> ()
    | Some linsolv -> set_linear_solver session linsolv y0 y'0);
   (match roots with

@@ -1096,9 +1096,9 @@ external c_resize
     : ('a, 'k) session -> bool -> float -> float -> ('a, 'k) nvector -> unit
     = "c_arkode_resize"
 
-let resize session ?resize_nvec ?linsolv tol ?restol hscale ynew t0 =
+let resize session ?resize_nvec ?lsolver tol ?restol hscale ynew t0 =
   session.checkvec <- Nvector.check ynew;
-  (match linsolv with None -> () | ls -> session.linsolver <- ls);
+  (match lsolver with None -> () | ls -> session.linsolver <- ls);
   (match resize_nvec with None -> () | Some f -> session.resizefn <- f);
   c_resize session (resize_nvec <> None) hscale t0 ynew;
   session.resizefn <- dummy_resizefn;

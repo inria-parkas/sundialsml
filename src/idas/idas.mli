@@ -1827,9 +1827,9 @@ module Adjoint :
 
     (** Creates and initializes a backward session attached to an existing
         (forward) session. The call
-        {[init_backward s linsolv tol fb tb0 yb0 yb0']} has as arguments:
+        {[init_backward s lsolver tol fb tb0 yb0 yb0']} has as arguments:
         - [s], the parent (forward) session,
-        - [linsolv], the linear solver to use,
+        - [lsolver], the linear solver to use,
         - [tol], the integration tolerances,
         - [fb], the backward residual function,
         - [varid], (optionally) classifies variables as algebraic or
@@ -2092,7 +2092,7 @@ module Adjoint :
         @raise BadFinalTime      The final time is outside the interval over which the forward problem was solved. *)
     val reinit :
       ('d, 'k) bsession
-      -> ?linsolv:('d, 'k) linear_solver
+      -> ?lsolver:('d, 'k) linear_solver
       -> float
       -> ('d, 'k) Nvector.t
       -> ('d, 'k) Nvector.t

@@ -144,7 +144,7 @@ let main () =
    * y is used as a template
    * Attach band linear solver 
    * ----------------------------------------- *)
-  let kmem = Kinsol.(init ~linsolv:(Dls.band {mupper=ny; mlower=ny}) func y) in
+  let kmem = Kinsol.(init ~lsolver:(Dls.band {mupper=ny; mlower=ny}) func y) in
   (* -------------------
    * Set optional inputs 
    * ------------------- *)

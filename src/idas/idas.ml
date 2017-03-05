@@ -1323,14 +1323,14 @@ module Adjoint =
           -> unit
         = "c_idas_adj_reinit"
 
-    let reinit bs ?linsolv tb0 yb0 y'b0 =
+    let reinit bs ?lsolver tb0 yb0 y'b0 =
       if Sundials_config.safe then
         (let checkvec = (tosession bs).checkvec in
          checkvec yb0;
          checkvec y'b0);
       let parent, which = parent_and_which bs in
       c_reinit parent which tb0 yb0 y'b0;
-      (match linsolv with
+      (match lsolver with
        | Some linsolv -> set_linear_solver bs linsolv yb0 y'b0
        | None -> ())
 

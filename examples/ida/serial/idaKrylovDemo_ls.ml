@@ -281,19 +281,19 @@ let main() =
                       printf " \n| SPGMR |\n";
                       printf " -------\n";
                       flush stdout;
-                      Ida.reinit mem ~linsolv:(Ida.Spils.spgmr prec)
+                      Ida.reinit mem ~lsolver:(Ida.Spils.spgmr prec)
                         t0 wu wu')
       | USE_SPBCG -> (printf " -------";
                       printf " \n| SPBCG |\n";
                       printf " -------\n";
                       flush stdout;
-                      Ida.reinit mem ~linsolv:(Ida.Spils.spbcg prec)
+                      Ida.reinit mem ~lsolver:(Ida.Spils.spbcg prec)
                         t0 wu wu')
       | USE_SPTFQMR -> (printf " ---------";
                         printf " \n| SPTFQMR |\n";
                         printf " ---------\n";
                       flush stdout;
-                        Ida.reinit mem ~linsolv:(Ida.Spils.sptfqmr prec)
+                        Ida.reinit mem ~lsolver:(Ida.Spils.sptfqmr prec)
                           t0 wu wu')
     end;
 

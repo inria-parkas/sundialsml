@@ -182,7 +182,7 @@ let main () =
    * Use acceleration with up to 3 prior residuals
    * ----------------------------------------- *)
   let kmem = Kinsol.(init ~maa:3
-                ~linsolv:(Dls.band ~jac:jac {mupper=ny; mlower=ny})
+                ~lsolver:(Dls.band ~jac:jac {mupper=ny; mlower=ny})
                 func y)
   in
 

@@ -204,7 +204,7 @@ let main () =
   let nnz = 12 in
 
   (* Call KINKlu to specify the linear solver *)
-  let kmem = Kinsol.(init ~linsolv:(Sls.Klu.solver_csr jac nnz) func u_nvec) in
+  let kmem = Kinsol.(init ~lsolver:(Sls.Klu.solver_csr jac nnz) func u_nvec) in
   Kinsol.set_constraints kmem c_nvec;
   Kinsol.set_func_norm_tol kmem fnormtol;
   Kinsol.set_scaled_step_tol kmem scsteptol;

@@ -725,7 +725,7 @@ module Alternate :
 type 'data sysfn = 'data -> 'data -> unit
 
 (** Creates and initializes a session with the Kinsol solver. The call
-    [init ~max_lin_iters:mli ~maa:maa ~linsolv:ls f tmpl] has as arguments:
+    [init ~max_lin_iters:mli ~maa:maa ~lsolver:ls f tmpl] has as arguments:
      - [mli], the maximum number of nonlinear iterations allowed,
      - [maa], the size of the Anderson acceleration subspace for the
               {{!strategy}Picard} and {{!strategy}FixedPoint} strategies,
@@ -742,7 +742,7 @@ type 'data sysfn = 'data -> 'data -> unit
 val init :
   ?max_iters:int
   -> ?maa:int
-  -> ?linsolv:('data, 'kind) linear_solver
+  -> ?lsolver:('data, 'kind) linear_solver
   -> 'data sysfn
   -> ('data, 'kind) Nvector.t
   -> ('data, 'kind) session
