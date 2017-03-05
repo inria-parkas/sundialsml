@@ -76,7 +76,7 @@ type comm_fn = Nvector_parallel.data Cvodes.Adjoint.brhsfn_args -> unit
     @cvodes <node7#SECTION00742100000000000000> CVBBDPrecInitB *)
 val prec_left : ?dqrely:float
                 -> bandwidths
-                -> ?comm_fn:comm_fn
+                -> ?comm:comm_fn
                 -> local_fn
                 -> parallel_preconditioner
 
@@ -88,7 +88,7 @@ val prec_left : ?dqrely:float
     @cvodes <node7#SECTION00742100000000000000> CVBBDPrecInitB *)
 val prec_right : ?dqrely:float
                  -> bandwidths
-                 -> ?comm_fn:comm_fn
+                 -> ?comm:comm_fn
                  -> local_fn
                  -> parallel_preconditioner
 
@@ -100,7 +100,7 @@ val prec_right : ?dqrely:float
     @cvodes <node7#SECTION00742100000000000000> CVBBDPrecInitB *)
 val prec_both : ?dqrely:float
                 -> bandwidths
-                -> ?comm_fn:comm_fn
+                -> ?comm:comm_fn
                 -> local_fn
                 -> parallel_preconditioner
 

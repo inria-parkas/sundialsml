@@ -70,7 +70,7 @@ type comm_fn = float -> Nvector_parallel.data -> unit
     @noarkode <node5#sss:arkbbdpre> ARKBBDPrecInit *)
 val prec_left : ?dqrely:float
                 -> bandwidths
-                -> ?comm_fn:comm_fn
+                -> ?comm:comm_fn
                 -> local_fn
                 -> parallel_preconditioner
 
@@ -82,7 +82,7 @@ val prec_left : ?dqrely:float
     @noarkode <node5#sss:arkbbdpre> ARKBBDPrecInit *)
 val prec_right : ?dqrely:float
                  -> bandwidths
-                 -> ?comm_fn:comm_fn
+                 -> ?comm:comm_fn
                  -> local_fn
                  -> parallel_preconditioner
 
@@ -94,7 +94,7 @@ val prec_right : ?dqrely:float
     @noarkode <node5#sss:arkbbdpre> ARKBBDPrecInit *)
 val prec_both : ?dqrely:float
                 -> bandwidths
-                 -> ?comm_fn:comm_fn
+                 -> ?comm:comm_fn
                  -> local_fn
                 -> parallel_preconditioner
 

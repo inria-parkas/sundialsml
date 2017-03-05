@@ -82,7 +82,7 @@ type comm_fn = Nvector_parallel.data Idas.Adjoint.bresfn_args
     @idas <node7#SECTION00742100000000000000> IDABBDPrecInitB *)
 val prec_left : ?dqrely:float
                 -> bandwidths
-                -> ?comm_fn:comm_fn
+                -> ?comm:comm_fn
                 -> local_fn
                 -> parallel_preconditioner
 

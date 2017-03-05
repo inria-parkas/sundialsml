@@ -41,9 +41,9 @@ let init_preconditioner dqrely bandwidths precfns session nv =
   c_bbd_prec_init session localn bandwidths dqrely (precfns.comm_fn <> None);
   session.ls_precfns <- BBDPrecFns (bbd_precfns precfns)
 
-let prec_right ?(dqrely=0.0) bandwidths ?comm_fn local_fn =
+let prec_right ?(dqrely=0.0) bandwidths ?comm local_fn =
   SpilsTypes.InternalPrecRight
-    (init_preconditioner dqrely bandwidths { local_fn; comm_fn })
+    (init_preconditioner dqrely bandwidths { local_fn; comm_fn = comm })
 
 external get_work_space : parallel_session -> int * int
     = "c_kinsol_bbd_get_work_space"

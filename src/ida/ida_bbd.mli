@@ -75,7 +75,7 @@ type comm_fn = float -> Nvector_parallel.data -> Nvector_parallel.data -> unit
     @ida <node5#sss:idabbdpre> IDABBDPrecInit *)
 val prec_left : ?dqrely:float
                 -> bandwidths
-                -> ?comm_fn:comm_fn
+                -> ?comm:comm_fn
                 -> local_fn
                 -> parallel_preconditioner
 
