@@ -1719,7 +1719,7 @@ val reinit :
 type 'd resize_fn = 'd -> 'd -> unit
 
 (** Change the number of equations and unknowns between integrator steps.
-    The call [resize s ~resize_nvec:rfn ~lsolver:ls tol ~restol hscale ynew t0]
+    The call [resize s ~rnvec:rfn ~lsolver:ls tol ~restol hscale ynew t0]
     has as arguments:
     - [s], the solver session to resize,
     - [rfn], a resize function that transforms nvectors in place-otherwise
@@ -1745,7 +1745,7 @@ type 'd resize_fn = 'd -> 'd -> unit
     @noarkode <node> ARKodeResize *)
 val resize :
   ('d, 'kind) session
-  -> ?resize_nvec:('d resize_fn)
+  -> ?rnvec:('d resize_fn)
   -> ?lsolver:(('d, 'kind) linear_solver)
   -> ('d, 'kind) tolerance
   -> ?restol:(('d, 'kind) res_tolerance)
