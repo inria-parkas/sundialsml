@@ -1077,14 +1077,14 @@ module Adjoint =
           | InternalPrecRight set_prec -> with_prec Spils.PrecRight set_prec
           | InternalPrecBoth set_prec  -> with_prec Spils.PrecBoth set_prec
 
-        let spgmr ?(maxl=0) ?jac_times_vec prec bs nv =
-          init_spils c_spgmr maxl jac_times_vec prec bs nv
+        let spgmr ?(maxl=0) ?jtv prec bs nv =
+          init_spils c_spgmr maxl jtv prec bs nv
 
-        let spbcg ?(maxl=0) ?jac_times_vec prec bs nv =
-          init_spils c_spbcg maxl jac_times_vec prec bs nv
+        let spbcg ?(maxl=0) ?jtv prec bs nv =
+          init_spils c_spbcg maxl jtv prec bs nv
 
-        let sptfqmr ?(maxl=0) ?jac_times_vec prec bs nv =
-          init_spils c_sptfqmr maxl jac_times_vec prec bs nv
+        let sptfqmr ?(maxl=0) ?jtv prec bs nv =
+          init_spils c_sptfqmr maxl jtv prec bs nv
 
         external set_prec_type
             : ('a, 'k) bsession -> Spils.preconditioning_type -> unit

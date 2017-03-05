@@ -122,7 +122,7 @@ let main () =
     init
       (Implicit
         (f udata,
-         Newton Spils.(pcg ~maxl:mesh_n ~jac_times_vec:(jac udata) prec_none),
+         Newton Spils.(pcg ~maxl:mesh_n ~jtv:(jac udata) prec_none),
          Linear true))
       (SStolerances (rtol, atol))
       t0

@@ -1151,19 +1151,19 @@ module Adjoint =
            | None -> ()
            | Some jtv -> set_jac_times_vec_fn bs jtv)
 
-        let spgmr ?(maxl=0) ?max_restarts ?jac_times_vec prec bs nv nv' =
-          init_spils c_spils_spgmr maxl jac_times_vec prec bs nv nv';
+        let spgmr ?(maxl=0) ?max_restarts ?jtv prec bs nv nv' =
+          init_spils c_spils_spgmr maxl jtv prec bs nv nv';
           (match max_restarts with
            | Some maxr ->
              let parent, which = parent_and_which bs in
              c_set_max_restarts parent which maxr
            | None -> ())
 
-        let spbcg ?(maxl=0) ?jac_times_vec prec bs nv nv' =
-          init_spils c_spils_spbcg maxl jac_times_vec prec bs nv nv'
+        let spbcg ?(maxl=0) ?jtv prec bs nv nv' =
+          init_spils c_spils_spbcg maxl jtv prec bs nv nv'
 
-        let sptfqmr ?(maxl=0) ?jac_times_vec prec bs nv nv' =
-          init_spils c_spils_sptfqmr maxl jac_times_vec prec bs nv nv'
+        let sptfqmr ?(maxl=0) ?jtv prec bs nv nv' =
+          init_spils c_spils_sptfqmr maxl jtv prec bs nv nv'
 
         let set_preconditioner bs ?setup solve =
           match (tosession bs).ls_callbacks with

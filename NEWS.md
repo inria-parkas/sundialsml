@@ -1,3 +1,11 @@
+Sundials/ML 2.7.0p1 (TBA)
+------------------------------------
+* Potential incompatibility: changes to some label names:
+  jac_times_vec -> jtv
+  comm_fn -> comm
+  iter_type -> iter
+  linsolve -> lsolver
+
 Sundials/ML 2.7.0p0 (December 2016)
 ------------------------------------
 Sundials/ML v2.7.0p0 adds support for v2.7.x of the Sundials Suite of

@@ -472,7 +472,7 @@ module Spils :
 
     (** Krylov iterative solver using the scaled preconditioned generalized
         minimum residual (GMRES) method.
-        In the call [spgmr ~maxl:maxl ~max_restarts:maxr ~jac_times_vec:jtv prec],
+        In the call [spgmr ~maxl:maxl ~max_restarts:maxr ~jtv:jtv prec],
         - [maxl] is the maximum dimension of the Krylov subspace
                  (defaults to 5),
         - [maxr] is the maximum number of restarts (defaults to 5),
@@ -480,7 +480,7 @@ module Spils :
                 matrix and a vector, and
         - [prec] is a {!preconditioner}.
 
-        If the {!jac_times_vec_fn} is omitted, a default implementation based on
+        If {!jtv} is omitted, a default implementation based on
         difference quotients is used.
 
         @ida <node5#sss:lin_solv_init> IDASpgmr
@@ -492,20 +492,20 @@ module Spils :
     val spgmr :
       ?maxl:int
       -> ?max_restarts:int
-      -> ?jac_times_vec:'d jac_times_vec_fn
+      -> ?jtv:'d jac_times_vec_fn
       -> ('d, 'k) preconditioner
       -> ('d, 'k) linear_solver
 
     (** Krylov iterative solver using the scaled preconditioned biconjugate
         stabilized (Bi-CGStab) method.
-        In the call [spbcg ~maxl:maxl ~jac_times_vec:jtv prec],
+        In the call [spbcg ~maxl:maxl ~jtv:jtv prec],
         - [maxl] is the maximum dimension of the Krylov subspace
                  (defaults to 5),
         - [jtv] computes an approximation to the product between the Jacobian
                 matrix and a vector, and
         - [prec] is a {!preconditioner}.
 
-        If the {!jac_times_vec_fn} is omitted, a default implementation based on
+        If {!jtv} is omitted, a default implementation based on
         difference quotients is used.
 
         @ida <node5#sss:lin_solv_init> IDASpbcg
@@ -515,20 +515,20 @@ module Spils :
         @ida <node5#sss:optin_spils> IDASpilsSetMaxl *)
     val spbcg :
       ?maxl:int
-      -> ?jac_times_vec:'d jac_times_vec_fn
+      -> ?jtv:'d jac_times_vec_fn
       -> ('d, 'k) preconditioner
       -> ('d, 'k) linear_solver
 
     (** Krylov iterative with the scaled preconditioned transpose-free
         quasi-minimal residual (SPTFQMR) method.
-        In the call [sptfqmr ~maxl:maxl ~jac_times_vec:jtv prec],
+        In the call [sptfqmr ~maxl:maxl ~jtv:jtv prec],
         - [maxl] is the maximum dimension of the Krylov subspace
                  (defaults to 5),
         - [jtv] computes an approximation to the product between the Jacobian
                 matrix and a vector, and
         - [prec] is a {!preconditioner}.
 
-        If the {!jac_times_vec_fn} is omitted, a default implementation based on
+        If {!jtv} is omitted, a default implementation based on
         difference quotients is used.
 
         @ida <node5#sss:lin_solv_init> IDASptfqmr
@@ -538,7 +538,7 @@ module Spils :
         @ida <node5#sss:optin_spils> IDASpilsSetMaxl *)
     val sptfqmr :
       ?maxl:int
-      -> ?jac_times_vec:'d jac_times_vec_fn
+      -> ?jtv:'d jac_times_vec_fn
       -> ('d, 'k) preconditioner
       -> ('d, 'k) linear_solver
 

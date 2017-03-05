@@ -538,7 +538,7 @@ let main () =
   let cvode_mem = Cvode.(
     init BDF
       (Newton
-          Spils.(spgmr ~jac_times_vec:(jtv data)
+          Spils.(spgmr ~jtv:(jtv data)
                       (prec_left ~setup:(precond data) (psolve data))))
       (SStolerances (reltol, abstol))
       (f data) t0 u

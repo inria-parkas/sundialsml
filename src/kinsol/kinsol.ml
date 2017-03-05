@@ -329,25 +329,25 @@ module Spils =
        | None -> ()
        | Some jtv -> set_jac_times_vec_fn session jtv)
 
-    let spgmr ?(maxl=0) ?(max_restarts=5) ?jac_times_vec prec session nv =
-      init_spils c_spgmr maxl jac_times_vec prec session nv;
+    let spgmr ?(maxl=0) ?(max_restarts=5) ?jtv prec session nv =
+      init_spils c_spgmr maxl jtv prec session nv;
       (* Note: we can skip set_max_restarts only when initializing a
          fresh solver.  *)
       if max_restarts <> 5 then
         c_set_max_restarts session max_restarts
 
-    let spfgmr ?(maxl=0) ?(max_restarts=5) ?jac_times_vec prec session nv =
-      init_spils c_spfgmr maxl jac_times_vec prec session nv;
+    let spfgmr ?(maxl=0) ?(max_restarts=5) ?jtv prec session nv =
+      init_spils c_spfgmr maxl jtv prec session nv;
       (* Note: we can skip set_max_restarts only when initializing a
          fresh solver.  *)
       if max_restarts <> 5 then
         c_set_max_restarts session max_restarts
 
-    let spbcg ?(maxl=0) ?jac_times_vec prec session nv =
-      init_spils c_spbcg maxl jac_times_vec prec session nv
+    let spbcg ?(maxl=0) ?jtv prec session nv =
+      init_spils c_spbcg maxl jtv prec session nv
 
-    let sptfqmr ?(maxl=0) ?jac_times_vec prec session nv =
-      init_spils c_sptfqmr maxl jac_times_vec prec session nv
+    let sptfqmr ?(maxl=0) ?jtv prec session nv =
+      init_spils c_sptfqmr maxl jtv prec session nv
 
     let set_preconditioner s ?setup ?solve () =
       match s.ls_callbacks with

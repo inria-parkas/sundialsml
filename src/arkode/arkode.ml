@@ -555,20 +555,20 @@ module Spils =
       | InternalPrecRight set_prec -> with_prec Spils.PrecRight set_prec
       | InternalPrecBoth set_prec  -> with_prec Spils.PrecBoth set_prec
 
-    let spgmr ?(maxl=0) ?jac_times_vec prec session nv =
-      init_spils c_spgmr maxl jac_times_vec prec session nv
+    let spgmr ?(maxl=0) ?jtv prec session nv =
+      init_spils c_spgmr maxl jtv prec session nv
 
-    let spbcg ?(maxl=0) ?jac_times_vec prec session nv =
-      init_spils c_spbcg maxl jac_times_vec prec session nv
+    let spbcg ?(maxl=0) ?jtv prec session nv =
+      init_spils c_spbcg maxl jtv prec session nv
 
-    let sptfqmr ?(maxl=0) ?jac_times_vec prec session nv =
-      init_spils c_sptfqmr maxl jac_times_vec prec session nv
+    let sptfqmr ?(maxl=0) ?jtv prec session nv =
+      init_spils c_sptfqmr maxl jtv prec session nv
 
-    let spfgmr ?(maxl=0) ?jac_times_vec prec session nv =
-      init_spils c_spfgmr maxl jac_times_vec prec session nv
+    let spfgmr ?(maxl=0) ?jtv prec session nv =
+      init_spils c_spfgmr maxl jtv prec session nv
 
-    let pcg ?(maxl=0) ?jac_times_vec prec session nv =
-      init_spils c_pcg maxl jac_times_vec prec session nv
+    let pcg ?(maxl=0) ?jtv prec session nv =
+      init_spils c_pcg maxl jtv prec session nv
 
     let set_preconditioner s ?setup solve =
       match s.ls_callbacks with

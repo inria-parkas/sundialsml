@@ -240,7 +240,7 @@ let main () =
   let arkode_mem = Arkode.(
     init
       (Implicit (f udata,
-                 Newton Spils.(pcg ~maxl:n_mesh ~jac_times_vec:jac prec_none),
+                 Newton Spils.(pcg ~maxl:n_mesh ~jtv:jac prec_none),
                  Nonlinear))
       (SStolerances (rtol, atol))
       t0
@@ -302,7 +302,7 @@ let main () =
 
       (* call ARKodeResize to notify integrator of change in mesh *)
       Arkode.(resize arkode_mem
-        ~linsolv:(Spils.(pcg ~maxl:nnew ~jac_times_vec:jac prec_none))
+        ~linsolv:(Spils.(pcg ~maxl:nnew ~jtv:jac prec_none))
         (SStolerances (rtol, atol))
         hscale y2 t);
 
