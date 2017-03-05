@@ -271,7 +271,7 @@ module SPFGMR :
         @param b right-hand side vector
         @param delta tolerance of the L2 norm: [res_norm <= delta]
         @param maxr allowed restarts before failure (defaults to 0)
-        @param max_iters maximum number of iterations (defaults to [lmax]).
+        @param maxi maximum number of iterations (defaults to [lmax]).
         @param s1 optional positive scale factors for {% $P_1 - b^{-1}$ %},
                   where {% $P_1$ %} is the left preconditioner.
         @param s2 optional positive scale factors for {% $P_2 x$ %},
@@ -290,7 +290,7 @@ module SPFGMR :
                 -> b:('d, 'k) Nvector.t
                 -> delta:float
                 -> ?maxr:int
-                -> ?max_iters:int
+                -> ?maxi:int
                 -> ?s1:(('d, 'k) Nvector.t)
                 -> ?s2:(('d, 'k) Nvector.t)
                 -> ?psolve:('d psolve)

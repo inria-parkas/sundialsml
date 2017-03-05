@@ -680,7 +680,7 @@ let main () =
      KINSPGMR with preconditioner routines precondbd
      and psolvebd. *)
   let kmem =
-    Kinsol.(init ~max_iters:250
+    Kinsol.(init ~maxi:250
                  ~lsolver:Spils.(spgmr ~maxl:maxl ~maxr:maxlrst
                                        (prec_right ~setup:(precondbd data)
                                                    ~solve:(psolvebd data) ()))

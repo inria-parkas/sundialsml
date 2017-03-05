@@ -740,7 +740,7 @@ type 'data sysfn = 'data -> 'data -> unit
      @nokinsol <node5#ss:optin_main> KINSetMAA
      @kinsol <node5#sss:lin_solv_init> Linear solver specification functions *)
 val init :
-  ?max_iters:int
+  ?maxi:int
   -> ?maa:int
   -> ?lsolver:('data, 'kind) linear_solver
   -> 'data sysfn

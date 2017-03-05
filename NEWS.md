@@ -6,6 +6,7 @@ Sundials/ML 2.7.0p1 (TBA)
   iter_type -> iter
   linsolve -> lsolver
   max_restarts -> maxr
+  max_iters -> maxi
 
 Sundials/ML 2.7.0p0 (December 2016)
 ------------------------------------

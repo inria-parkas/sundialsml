@@ -127,7 +127,7 @@ module SPFGMR =
         = "c_spils_spfgmr_solve"
 
     let solve (s, checkvec) ~x ~b ~delta ?maxr:(mr=0)
-                ?max_iters:(mi=max_int) ?s1 ?s2 ?psolve atimes pretype gstype
+                ?maxi:(mi=max_int) ?s1 ?s2 ?psolve atimes pretype gstype
         = if Sundials_config.safe then begin
             checkvec x;
             checkvec b;
