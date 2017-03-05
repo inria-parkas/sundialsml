@@ -1552,7 +1552,7 @@ module Adjoint :
 
         (** Krylov iterative solver using the scaled preconditioned generalized
             minimum residual (GMRES) method.
-            In the call [spgmr ~maxl:maxl ~max_restarts:maxr ~jtv:jtv prec],
+            In the call [spgmr ~maxl:maxl ~maxr:maxr ~jtv:jtv prec],
             - [maxl] is the maximum dimension of the Krylov subspace
                      (defaults to 5),
             - [maxr] is the maximum number of restarts (defaults to 5),
@@ -1572,7 +1572,7 @@ module Adjoint :
             @noidas <node7#ss:jactimesvec_bs> IDASpilsJacTimesVecFnBS *)
         val spgmr :
           ?maxl:int
-          -> ?max_restarts:int
+          -> ?maxr:int
           -> ?jtv:'d jac_times_vec_fn
           -> ('d, 'k) preconditioner
           -> ('d, 'k) linear_solver

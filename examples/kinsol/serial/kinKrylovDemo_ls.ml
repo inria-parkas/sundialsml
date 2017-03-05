@@ -448,7 +448,7 @@ let main () =
           printf " -------";
           printf " \n| SPGMR |\n";
           printf " -------\n";
-          Kinsol.Spils.(spgmr ~maxl:!maxl ~max_restarts:!maxlrst
+          Kinsol.Spils.(spgmr ~maxl:!maxl ~maxr:!maxlrst
                               (prec_right ~setup:prec_setup_bd
                                           ~solve:prec_solve_bd ()))
 
@@ -487,7 +487,7 @@ let main () =
              the user block data. *)
           maxl := 15;
           maxlrst := 2;
-          Kinsol.Spils.(spfgmr ~maxl:(!maxl) ~max_restarts:(!maxlrst)
+          Kinsol.Spils.(spfgmr ~maxl:(!maxl) ~maxr:(!maxlrst)
                                (prec_right ~setup:prec_setup_bd
                                            ~solve:prec_solve_bd ()))
     in

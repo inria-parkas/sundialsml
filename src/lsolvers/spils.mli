@@ -209,7 +209,7 @@ module SPGMR :
         @param x initial guess on entry; result on return
         @param b right-hand side vector
         @param delta tolerance of the L2 norm: [res_norm <= delta]
-        @param max_restarts allowed restarts before failure (defaults to 0)
+        @param maxr allowed restarts before failure (defaults to 0)
         @param s1 optional positive scale factors for {% $P_1 - b^{-1}$ %},
                   where {% $P_1$ %} is the left preconditioner.
         @param s2 optional positive scale factors for {% $P_2 x$ %},
@@ -227,7 +227,7 @@ module SPGMR :
                 -> x:('d, 'k) Nvector.t
                 -> b:('d, 'k) Nvector.t
                 -> delta:float
-                -> ?max_restarts:int
+                -> ?maxr:int
                 -> ?s1:(('d, 'k) Nvector.t)
                 -> ?s2:(('d, 'k) Nvector.t)
                 -> ?psolve:('d psolve)
@@ -270,7 +270,7 @@ module SPFGMR :
         @param x initial guess on entry; result on return
         @param b right-hand side vector
         @param delta tolerance of the L2 norm: [res_norm <= delta]
-        @param max_restarts allowed restarts before failure (defaults to 0)
+        @param maxr allowed restarts before failure (defaults to 0)
         @param max_iters maximum number of iterations (defaults to [lmax]).
         @param s1 optional positive scale factors for {% $P_1 - b^{-1}$ %},
                   where {% $P_1$ %} is the left preconditioner.
@@ -289,7 +289,7 @@ module SPFGMR :
                 -> x:('d, 'k) Nvector.t
                 -> b:('d, 'k) Nvector.t
                 -> delta:float
-                -> ?max_restarts:int
+                -> ?maxr:int
                 -> ?max_iters:int
                 -> ?s1:(('d, 'k) Nvector.t)
                 -> ?s2:(('d, 'k) Nvector.t)

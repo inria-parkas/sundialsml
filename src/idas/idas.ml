@@ -1151,9 +1151,9 @@ module Adjoint =
            | None -> ()
            | Some jtv -> set_jac_times_vec_fn bs jtv)
 
-        let spgmr ?(maxl=0) ?max_restarts ?jtv prec bs nv nv' =
+        let spgmr ?(maxl=0) ?maxr ?jtv prec bs nv nv' =
           init_spils c_spils_spgmr maxl jtv prec bs nv nv';
-          (match max_restarts with
+          (match maxr with
            | Some maxr ->
              let parent, which = parent_and_which bs in
              c_set_max_restarts parent which maxr

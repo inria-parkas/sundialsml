@@ -329,19 +329,17 @@ module Spils =
        | None -> ()
        | Some jtv -> set_jac_times_vec_fn session jtv)
 
-    let spgmr ?(maxl=0) ?(max_restarts=5) ?jtv prec session nv =
+    let spgmr ?(maxl=0) ?(maxr=5) ?jtv prec session nv =
       init_spils c_spgmr maxl jtv prec session nv;
       (* Note: we can skip set_max_restarts only when initializing a
          fresh solver.  *)
-      if max_restarts <> 5 then
-        c_set_max_restarts session max_restarts
+      if maxr <> 5 then c_set_max_restarts session maxr
 
-    let spfgmr ?(maxl=0) ?(max_restarts=5) ?jtv prec session nv =
+    let spfgmr ?(maxl=0) ?(maxr=5) ?jtv prec session nv =
       init_spils c_spfgmr maxl jtv prec session nv;
       (* Note: we can skip set_max_restarts only when initializing a
          fresh solver.  *)
-      if max_restarts <> 5 then
-        c_set_max_restarts session max_restarts
+      if maxr <> 5 then c_set_max_restarts session maxr
 
     let spbcg ?(maxl=0) ?jtv prec session nv =
       init_spils c_spbcg maxl jtv prec session nv

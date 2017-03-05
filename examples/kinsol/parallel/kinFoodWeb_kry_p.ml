@@ -681,7 +681,7 @@ let main () =
      and psolvebd. *)
   let kmem =
     Kinsol.(init ~max_iters:250
-                 ~lsolver:Spils.(spgmr ~maxl:maxl ~max_restarts:maxlrst
+                 ~lsolver:Spils.(spgmr ~maxl:maxl ~maxr:maxlrst
                                        (prec_right ~setup:(precondbd data)
                                                    ~solve:(psolvebd data) ()))
                  (funcprpr data) cc) in

@@ -241,7 +241,7 @@ CAMLprim value c_spils_spgmr_solve(value vargs)
 		      spils_precond_type(Field(vargs, 3)), // pretype
 		      spils_gs_type(Field(vargs, 4)),	   // gstype
 		      Double_val(Field(vargs, 5)),         // delta
-		      Int_val(Field(vargs, 6)),            // max_restarts
+		      Int_val(Field(vargs, 6)),            // maxr
 		      p_data,				   // p_data = user psolve
 		      s1,
 		      s2,
@@ -365,7 +365,7 @@ CAMLprim value c_spils_spfgmr_solve(value vargs)
 		       spils_precond_type(Field(vargs, 3)), // pretype
 		       spils_gs_type(Field(vargs, 4)),	    // gstype
 		       Double_val(Field(vargs, 5)),         // delta
-		       Int_val(Field(vargs, 6)),            // max_restarts
+		       Int_val(Field(vargs, 6)),            // maxr
 		       Int_val(Field(vargs, 11)),	    // maxit
 		       p_data,				    // p_data = user psolve
 		       s1,

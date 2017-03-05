@@ -373,9 +373,9 @@ module Spils =
        | None -> ()
        | Some jtv -> set_jac_times_vec_fn session jtv)
 
-    let spgmr ?(maxl=0) ?max_restarts ?jtv prec session nv nv' =
+    let spgmr ?(maxl=0) ?maxr ?jtv prec session nv nv' =
       init_spils c_spgmr maxl jtv prec session nv nv';
-      (match max_restarts with
+      (match maxr with
        | Some m -> c_set_max_restarts session m
        | None -> ())
 

@@ -617,7 +617,7 @@ let main () =
   let mlkeep = num_species in
   let kmem =
     Kinsol.(init
-        ~lsolver:(Spils.spgmr ~maxl:maxl ~max_restarts:maxlrst
+        ~lsolver:(Spils.spgmr ~maxl:maxl ~maxr:maxlrst
                               (Kinsol_bbd.prec_right
                                   Bbd.({ mudq; mldq; mukeep; mlkeep; })
                                   (func_local data)))

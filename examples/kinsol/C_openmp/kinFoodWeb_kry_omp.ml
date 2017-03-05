@@ -424,7 +424,7 @@ let main () =
      KINSPGMR with preconditioner routines prec_setup_bd
      and prec_solve_bd. *)
   let kmem = Kinsol.(init
-              ~lsolver:Spils.(spgmr ~maxl:maxl ~max_restarts:maxlrst
+              ~lsolver:Spils.(spgmr ~maxl:maxl ~maxr:maxlrst
                                     (prec_right ~setup:prec_setup_bd
                                                 ~solve:prec_solve_bd ()))
               func cc) in
