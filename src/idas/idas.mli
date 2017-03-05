@@ -317,7 +317,7 @@ module Sensitivity :
         - [s], a session created with {!Ida.init},
         - [tol], the tolerances desired,
         - [sm], the solution method,
-        - [~sens_params], the parameter information (see {!sens_params}),
+        - [~sensp], the parameter information (see {!sens_params}),
         - [~fs], the sensitivity function,
         - [s0], initial values of the sensitivities for each parameter, and,
         - [s0'], initial values of the sensitivity derivatives for each
@@ -326,7 +326,7 @@ module Sensitivity :
         If [~fs] is not given, an internal difference quotient routine
         is used.  In that case, or if the internal difference quotient
         routine will be specified in a subsequent call to
-        {!Sensitivity.Quadrature.init}, then [sens_params] must be
+        {!Sensitivity.Quadrature.init}, then [sensp] must be
         given with [pvals] set to non-[None].
 
         @idas <node6#ss:sensi_init> IDASensInit
@@ -337,7 +337,7 @@ module Sensitivity :
     val init : ('d, 'k) Ida.session
                -> ('d, 'k) tolerance
                -> sens_method
-               -> ?sens_params:sens_params
+               -> ?sensp:sens_params
                -> ?fs:'d sensresfn
                -> ('d, 'k) Nvector.t array
                -> ('d, 'k) Nvector.t array
@@ -429,7 +429,7 @@ module Sensitivity :
 
             If [~fqs] is not given, an internal difference quotient
             routine is used.  In that case, {!Sensitivity.init} must
-            have been invoked with a [sens_params] whose [pvals] is
+            have been invoked with a [sensp] whose [pvals] is
             non-[None].
 
             @idas <node6#ss:quad_sens_init> IDAQuadSensInit

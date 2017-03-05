@@ -299,9 +299,9 @@ let main () =
 
   pbar.{0} <- data.params.{0}; pbar.{1} <- data.params.{1};
   Sens.(init mem EEtolerances Simultaneous
-                 ~sens_params:{ pvals = Some data.params;
-                                pbar = Some pbar;
-                                plist = None }
+                 ~sensp:{ pvals = Some data.params;
+                          pbar = Some pbar;
+                          plist = None }
                  yyS
                  ypS);
   Sens.set_err_con mem true;

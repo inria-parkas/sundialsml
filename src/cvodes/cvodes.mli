@@ -372,14 +372,14 @@ module Sensitivity :
         - [s], a session created with {!Cvode.init},
         - [tol], the tolerances desired,
         - [sens_method], the solution method,
-        - [~sens_params], the parameter information (see {!sens_params}),
+        - [~sensp], the parameter information (see {!sens_params}),
         - [~fs], the sensitivity function, and,
         - [ys0], initial values of the sensitivities for each parameter.
 
         If [~fs] is not given, an internal difference quotient routine
         is used.  In that case, or if the internal difference quotient
         routine will be specified in a subsequent call to
-        {!Sensitivity.Quadrature.init}, then [sens_params] must be
+        {!Sensitivity.Quadrature.init}, then [sensp] must be
         given with [pvals] set to non-[None].
 
         @cvodes <node6#ss:sensi_malloc> CVodeSensInit
@@ -391,7 +391,7 @@ module Sensitivity :
     val init : ('d, 'k) Cvode.session
                -> ('d, 'k) tolerance
                -> sens_method
-               -> ?sens_params:sens_params
+               -> ?sensp:sens_params
                -> 'd sensrhsfn
                -> ('d, 'k) Nvector.t array
                -> unit
@@ -468,7 +468,7 @@ module Sensitivity :
 
             If [~fqs] is not given, an internal difference quotient
             routine is used.  In that case, {!Sensitivity.init} must
-            have been invoked with a [sens_params] whose [pvals] is
+            have been invoked with a [sensp] whose [pvals] is
             non-[None].
 
             @cvodes <node6#ss:quad_sens_init> CVodeQuadSensInit

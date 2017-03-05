@@ -854,7 +854,7 @@ let main () =
       Sens.plist = None;
     }
   in
-  Sens.(init mem EEtolerances Simultaneous ~sens_params:sparams uvS uvpS);
+  Sens.(init mem EEtolerances Simultaneous ~sensp:sparams uvS uvpS);
   Sens.set_err_con mem true;
 
   (* Call IDACalcIC (with default options) to correct the initial values. *)

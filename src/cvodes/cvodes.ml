@@ -235,14 +235,14 @@ module Sensitivity =
                else Array.iter check_pi p)
           end
 
-    let init s tol fmethod ?(sens_params=no_sens_params) fm v0 =
+    let init s tol fmethod ?(sensp=no_sens_params) fm v0 =
       if Sundials_config.safe then Array.iter s.checkvec v0;
       add_fwdsensext s;
       let se = fwdsensext s in
       let ns = Array.length v0 in
       if Sundials_config.safe && ns = 0 then
         invalid_arg "init: require at least one sensitivity parameter";
-      check_sens_params ns sens_params;
+      check_sens_params ns sensp;
       (match fm with
        | AllAtOnce fo -> begin
            if fmethod = Staggered1 then
@@ -255,8 +255,8 @@ module Sensitivity =
            c_sens_init_1 s fmethod (fo <> None) v0
          end);
       se.num_sensitivities <- ns;
-      c_set_params s sens_params;
-      se.senspvals <- sens_params.pvals;
+      c_set_params s sensp;
+      se.senspvals <- sensp.pvals;
       se.sensarray1 <- c_alloc_nvector_array ns;
       se.sensarray2 <- c_alloc_nvector_array ns;
       set_tolerances s tol

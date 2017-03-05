@@ -703,7 +703,7 @@ let main () =
           Sens.pbar = Some pbar;
           Sens.plist = None; }
       in
-      Sens.(init mem EEtolerances sensi_meth ~sens_params:params uuS upS);
+      Sens.(init mem EEtolerances sensi_meth ~sensp:params uuS upS);
 
       (* Specify whether the sensitivity variables are included in the error
          test or not *)

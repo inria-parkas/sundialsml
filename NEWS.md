@@ -8,6 +8,7 @@ Sundials/ML 2.7.0p1 (TBA)
   max_restarts -> maxr
   max_iters -> maxi
   resize_nvec -> rnvec
+  sens_params -> sensp
 
 Sundials/ML 2.7.0p0 (December 2016)
 ------------------------------------
