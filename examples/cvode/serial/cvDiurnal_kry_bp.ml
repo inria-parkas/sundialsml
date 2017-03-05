@@ -381,7 +381,7 @@ let main () =
    | _ ->
       let bandrange = { Cvode.mupper = mu; Cvode.mlower = ml } in
       Cvode.reinit cvode_mem t0 u
-        ~iter_type:Cvode.(Newton Spils.(spgmr (Banded.prec_right bandrange))));
+        ~iter:Cvode.(Newton Spils.(spgmr (Banded.prec_right bandrange))));
 
   Cvode.Spils.set_prec_type cvode_mem Spils.PrecRight;
   printf "\n\n-------------------------------------------------------";

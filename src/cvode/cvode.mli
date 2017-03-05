@@ -1046,14 +1046,14 @@ val get_dky : ('d, 'k) session -> ('d, 'k) Nvector.t -> float -> int -> unit
 
 (** Reinitializes the solver with new parameters and state values. The
     values of the independent variable, i.e., the simulation time, and the
-    state variables must be given. If given, [iter_type] specifies a new
+    state variables must be given. If given, [iter] specifies a new
     iteration method, and [roots] specifies a new root finding function;
     both default to unchanged.
 
     @cvode <node5#sss:cvreinit> CVodeReInit *)
 val reinit :
   ('d, 'kind) session
-  -> ?iter_type:('d, 'kind) iter
+  -> ?iter:('d, 'kind) iter
   -> ?roots:(int * 'd rootsfn)
   -> float
   -> ('d, 'kind) Nvector.t
