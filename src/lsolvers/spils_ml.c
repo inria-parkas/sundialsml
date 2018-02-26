@@ -157,14 +157,24 @@ static int atimes_f(void *a_fn, N_Vector v, N_Vector z)
     CAMLreturnT(int, r);
 }
 
+#if SUNDIALS_LIB_VERSION >= 300
+static int psolve_f(void *p_fn, N_Vector r, N_Vector z, realtype tol, int lr)
+#else
 static int psolve_f(void *p_fn, N_Vector r, N_Vector z, int lr)
+#endif
 {
     CAMLparam0();
-    CAMLlocal2(vr, vz);
+    CAMLlocalN(args, 4);
     int fr = 0;
 
-    vr = NVEC_BACKLINK(r);
-    vz = NVEC_BACKLINK(z);
+    args[0] = NVEC_BACKLINK(r);	     /* vr */
+    args[1] = NVEC_BACKLINK(z);	     /* vz */
+#if SUNDIALS_LIB_VERSION >= 300
+    args[2] = caml_copy_double(tol); /* tol */
+#else
+    args[2] = caml_copy_double(0.0); /* tol */
+#endif
+    args[3] = Val_bool(lr == 1);     /* lr */
 
     // the data payloads inside vr and vz are only valid during this call,
     // afterward that memory goes back to Sundials. These bigarrays must not
@@ -172,7 +182,7 @@ static int psolve_f(void *p_fn, N_Vector r, N_Vector z, int lr)
     // make it manually.
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value res = caml_callback3_exn((value)p_fn, vr, vz, Val_bool(lr == 1));
+    value res = caml_callbackN_exn((value)p_fn, 4, args);
     if (Is_exception_result(res)) {
 	res = Extract_exception(res);
 	fr = (Field(res, 0) == SUNDIALS_EXN_TAG(RecoverableFailure))?1:-1;

@@ -45,7 +45,7 @@ external qr_sol : Sundials.RealArray2.t
 
 type 'a atimes = 'a -> 'a -> unit
 
-type 'a psolve = 'a -> 'a -> bool -> unit
+type 'a psolve = 'a -> 'a -> float -> bool -> unit
 
 external modified_gs : (('a, 'k) Nvector.t) array
                        -> Sundials.RealArray2.t

@@ -171,12 +171,18 @@ val classical_gs : (('d, 'k) Nvector.t) array
     any other exception indicates an unrecoverable failure. *)
 type 'd atimes = 'd -> 'd -> unit
 
-(** Functions [f r z lr] that solve the preconditioner equation [P z = r] for
-    the vector [z]. If [lr = true] then [P] is used as a left preconditioner
-    and otherwise as a right preconditioner.
+(** Functions [f r z tol lr] that solve the preconditioner equation [P z = r]
+    for the vector [z] such that
+    $\left\lVert Pz - r \right\rVert_\mathrm{wrms} < \mathit{tol}$.
+    If [lr = true] then [P] is used as a left preconditioner and otherwise as
+    a right preconditioner.
     Raise {!Sundials.RecoverableFailure} to indicate a recoverable failure,
-    any other exception indicates an unrecoverable failure. *)
-type 'd psolve = 'd -> 'd -> bool -> unit
+    any other exception indicates an unrecoverable failure.
+
+    In versions of Sundials prior to 3.0.0, the [tol] parameter is always [0.0]
+    and should be ignored.
+*)
+type 'd psolve = 'd -> 'd -> float -> bool -> unit
 
 (** The Scaled Preconditioned Generalized Minimum Residual (GMRES) method. *)
 module SPGMR :
