@@ -26,8 +26,6 @@
 #include <caml/fail.h>
 #include <caml/bigarray.h>
 
-#include <stdio.h>
-
 #include "../sundials/sundials_ml.h"
 #include "../lsolvers/dls_ml.h"
 
@@ -98,7 +96,11 @@ CAMLprim value c_densematrix_size(value va)
 CAMLprim value c_densematrix_print_mat(value va)
 {
     CAMLparam1(va);
+#if SUNDIALS_LIB_VERSION >= 300
+    PrintMat(DLSMAT(va), stdout);
+#else
     PrintMat(DLSMAT(va));
+#endif
     fflush(stdout);
     CAMLreturn (Val_unit);
 }
