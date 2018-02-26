@@ -667,7 +667,7 @@ booleantype callml_vinvtest(N_Vector x, N_Vector z)
     if (Is_exception_result (r)) {
 	sundials_ml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vinvtest");
-	CAMLreturnT(booleantype, FALSE);
+	CAMLreturnT(booleantype, 0);
     }
 
     CAMLreturnT(booleantype, Bool_val(r));
@@ -685,7 +685,7 @@ booleantype callml_vconstrmask(N_Vector c, N_Vector x, N_Vector m)
     if (Is_exception_result (r)) {
 	sundials_ml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vconstrmask");
-	CAMLreturnT(booleantype, FALSE);
+	CAMLreturnT(booleantype, 0);
     }
 
     CAMLreturnT(booleantype, Bool_val(r));
