@@ -1,7 +1,7 @@
 #! /bin/sh
 
 sysname='Sundials/ML'
-version=2.7.0
+version=3.1.0
 versionp=0
 contact='tim@tbrk.org'
 
@@ -19,6 +19,8 @@ unset mpi_lib_path
 unset Lmpi_lib_path
 ocaml_tweaks=
 unset EXAMPLESROOT
+debug_configure=false
+logfile=/dev/null
 
 configure_command="$0"
 
@@ -76,6 +78,10 @@ do
 	bounds_checking=0;;
     --no-opt-compiler) # not meant for users (under normal circumstances)
 	opt_compiler=0;;
+    --debug-configure)
+	debug_configure=true
+	logfile="config.debug"
+	echo >${logfile};;
     -h|--help)
 	cat <<-END_HELP_TEXT
 	'configure' configures $sysname ${version}p${versionp} to adapt to many kinds of systems.
@@ -310,13 +316,15 @@ fi
 
 
 # Check C compiler: detect gcc and add a default optimization level.
-test_stem=__configure_test_file__
-echo "#ifndef __GNUC__" > $test_stem.c
+test_stem=__configure_test_file__gcc
+test_cmd="$CC -c $test_stem.c"
+echo "/* $test_cmd */" > $test_stem.c
+echo "#ifndef __GNUC__" >> $test_stem.c
 echo "#error not gcc" >> $test_stem.c
 echo "#endif" >> $test_stem.c
 using_gcc=false
-$CC -c $test_stem.c >/dev/null 2>&1 && using_gcc=true
-rm -f ./$test_stem.*
+${test_cmd} >>${logfile} 2>&1 && using_gcc=true
+${debug_configure} || rm -f ./$test_stem.*
 if [ $using_gcc = true ]; then
     c_suppress_warnings=-w
 else
@@ -394,7 +402,7 @@ esac
 include="\"sundials/sundials_config.h\""
 query="SUNDIALS_PACKAGE_VERSION"
 sundials_version=`printf "#include %s\n%s" "${include}" "${query}" \
-		    | ${CPP} ${cppflags} ${Isundials_inc_path} -P 2>/dev/null \
+		    | ${CPP} ${cppflags} ${Isundials_inc_path} -P 2>>${logfile} \
 		    | tail -1 | sed -e 's/ //g' -e 's/"//g'`
 sls_ml_xo=
 sls_cmo=
@@ -406,6 +414,14 @@ arkode_cobj_bbd=
 arkode_subdir=
 arkode_enabled=
 if [ "${sundials_version}" = "SUNDIALS_PACKAGE_VERSION" ]; then
+    query="SUNDIALS_VERSION"
+    sundials_version=`printf "#include %s\n%s" "${include}" "${query}" \
+			| ${CPP} ${cppflags} ${Isundials_inc_path} \
+			    -P 2>>${logfile} \
+			| tail -1 | sed -e 's/ //g' -e 's/"//g'`
+fi
+
+if [ "${sundials_version}" = "SUNDIALS_VERSION" ]; then
     error="${error}\n\tcould not find sundials_config.h"
     sundials=0
     sundials_version="UNKNOWN"
@@ -432,34 +448,41 @@ else
 	2.6.1) sundials=261 ;;
 	2.6.2) sundials=262 ;;
 	2.7.*) sundials=270 ;;
+	3.*)   sundials=300 ;;
 	*) ;;
     esac
 
     # Make sure realtype has the right size.
     test_stem=__configure_test_file__realtype
+    test_cmd="$CC ${Isundials_inc_path} -o ${test_stem}${XX} $test_stem.c"
     cat > $test_stem.c <<EOF
+/* ${test_cmd} */
 #include <sundials/sundials_types.h>
 int main (int argc, char *argv[])
 {
   return sizeof (realtype) != sizeof (double);
 }
 EOF
-    compile_cmd="$CC ${Isundials_inc_path} -o ${test_stem}${XX} $test_stem.c"
-    if ! eval "${compile_cmd}" >/dev/null 2>&1
+    if ! eval "${test_cmd}" >>${logfile} 2>&1
     then
         error="${error}\n\tCan't link C code to sundials.  Is sundials installed properly?"
         error="${error}\n\tSaved test code as ${test_stem}.c"
         error="${error}\n\tCompilation command was:"
-        error="${error}\n\t${compile_cmd}"
+        error="${error}\n\t${test_cmd}"
     elif ! ./$test_stem$XX
     then
         error="${error}\n\trealtype not defined as double.  Recompile sundials with -DSUNDIALS_PRECISION=double."
     else
-        rm -f ./$test_stem*
+	${debug_configure} || rm -f ./$test_stem*
     fi
 fi
 
-if [ ${sundials} -ge 270 ]; then
+if [ ${sundials} -ge 300 ]; then
+    sundials_at_least_3_0=1
+    sundials_at_least_2_7=1
+    sundials_at_least_2_6=1
+    sundials_at_least_2_5=1
+elif [ ${sundials} -ge 270 ]; then
     sundials_at_least_2_7=1
     sundials_at_least_2_6=1
     sundials_at_least_2_5=1
@@ -530,7 +553,7 @@ fi
 # Check if .opt variants are available.
 if [ "x$opt_compiler" = x1 ] && \
        ([ -x ${OCAMLBIN}ocamlc.opt ] \
-        || which ${OCAMLBIN}ocamlc.opt > /dev/null 2>&1)
+        || which ${OCAMLBIN}ocamlc.opt >>${logfile} 2>&1)
 then
     ocamlc="${OCAMLBIN}ocamlc.opt"
 else
@@ -539,7 +562,7 @@ fi
 
 if [ "x$opt_compiler" = x1 ] && \
        ([ -x ${OCAMLBIN}ocamlopt.opt ] \
-        || which ${OCAMLBIN}ocamlopt.opt > /dev/null 2>&1)
+        || which ${OCAMLBIN}ocamlopt.opt >>${logfile} 2>&1)
 then
     ocamlopt="${OCAMLBIN}ocamlopt.opt"
 else
@@ -548,7 +571,7 @@ fi
 
 if [ "x$opt_compiler" = x1 ] && \
        ([ -x ${OCAMLBIN}ocamldoc.opt ] \
-        || which ${OCAMLBIN}ocamldoc.opt > /dev/null 2>&1)
+        || which ${OCAMLBIN}ocamldoc.opt >>${logfile} 2>&1)
 then
     ocamldoc="${OCAMLBIN}ocamldoc.opt"
     ocamldoc_plugin=".cmxs"
@@ -559,7 +582,7 @@ fi
 
 if [ "x$opt_compiler" = x1 ] && \
        ([ -x ${OCAMLBIN}ocamldep.opt ] \
-        || which ${OCAMLBIN}ocamldep.opt > /dev/null 2>&1)
+        || which ${OCAMLBIN}ocamldep.opt >>${logfile} 2>&1)
 then
     ocamldep="${OCAMLBIN}ocamldep.opt"
 else
@@ -572,7 +595,8 @@ cflags="${cflags} -I${ocaml_path}"
 
 include="<caml/mlvalues.h>"
 query="SIZEOF_INT,SIZEOF_LONG,SIZEOF_PTR"
-ilp_size=`printf "#include %s\n%s" "${include}" "${query}" | ${CPP} ${cppflags} -P 2>/dev/null | tail -1`
+ilp_size=`printf "#include %s\n%s" "${include}" "${query}" \
+    | ${CPP} ${cppflags} -P 2>>${logfile} | tail -1`
 int_size=`expr "$ilp_size" : "^\([^,]*\),*"`
 long_size=`expr "$ilp_size" : "^[^,]*,\([^,]*\),*"`
 ptr_size=`expr "$ilp_size" : "^[^,]*,[^,]*,\([^,]*\)"`
@@ -626,7 +650,7 @@ if [ "${int_size}" -ne 4 ]; then
 fi
 
 # Check for opam
-if command -v opam >/dev/null 2>&1; then
+if command -v opam >>${logfile} 2>&1; then
     opam_libpath="$(opam config var lib)/"
 
     # if the opam path is a prefix of the ocaml path, use the former
@@ -647,8 +671,8 @@ fi
 # Check if we can compile a direct call to caml_weak_get from C.  Usually we
 # can, but it doesn't seem to be supported officially.  Note that a .c + .ml
 # pair is infinitely easier to compile portably than a standalone .c file.
-test_stem=__configure_test_file__
-test_ml_stem=__configure_test_ml_file__
+test_stem=__configure_test_file__weakget
+test_ml_stem=configure_test_ml_file__weakget
 cat > $test_stem.c <<EOF
 /* This file tests if we can call caml_weak_get() directly from C.  */
 #include <caml/mlvalues.h>
@@ -686,28 +710,31 @@ CAMLprim value f ()
   CAMLreturn (Val_int (0));
 }
 EOF
+test_cmd="${ocamlc} ${test_stem}.c ${test_ml_stem}.ml \
+    -o ${test_ml_stem}$XX  -custom"
 cat > ${test_ml_stem}.ml <<EOF
+(* ${test_cmd} *)
 external f : unit -> int = "f"
 let _ = exit (f ())
 EOF
-if ${ocamlc} ${test_stem}.c ${test_ml_stem}.ml -o ${test_ml_stem}$XX \
-    -custom > /dev/null 2>&1 && ./${test_ml_stem}$XX; then
+if eval "${test_cmd}" >>${logfile} 2>&1 && ./${test_ml_stem}$XX; then
     have_weak=1
 else
     have_weak=0
     warning="${warning}\n\tCould not compile caml_weak_get; using workaround."
 fi
-rm -f ./${test_stem}.* ./${test_ml_stem}.* ${test_ml_stem}
+${debug_configure} || \
+    rm -f ./${test_stem}.* ./${test_ml_stem}.* ${test_ml_stem}
 
 # Check whether compiler-libs is available
-test_ml_stem=__configure_test_ml_file__
+test_ml_stem=configure_test_ml_file__
 cat > ${test_ml_stem}.ml <<EOF
 Toploop.execute_phrase false Format.err_formatter
   (!Toploop.parse_toplevel_phrase (Lexing.from_string ""))
 EOF
 # FIXME: is it ever possible that compiler-libs is installed somewhere else?
 if ${ocamlc} -I +compiler-libs -c ${test_ml_stem}.ml \
-    -o ${test_ml_stem}.cmo > /dev/null 2>&1; then
+    -o ${test_ml_stem}.cmo >>${logfile} 2>&1; then
     have_compiler_libs=1
     compiler_libs_path=+compiler-libs
 else
@@ -717,7 +744,7 @@ else
     warning="${warning}\n\tCould not find compiler-libs; printers will not be"
     warning="${warning}\n\tinstalled by default in the OCaml toplevel."
 fi
-rm -f ./${test_ml_stem}.* ${test_ml_stem}
+${debug_configure} || rm -f ./${test_ml_stem}.* ${test_ml_stem}
 
 # Check whether using generic math library (-lm) or not
 libm=-lm
@@ -725,7 +752,8 @@ if [ $sundials -ge 260 ]; then
     include="\"sundials/sundials_config.h\""
     query="#ifdef SUNDIALS_USE_GENERIC_MATH\n1\n#else\n0\n#endif\n"
     sundials_info=`printf "#include %s\n%b" "${include}" "${query}" \
-			| ${CPP} ${cppflags} ${Isundials_inc_path} -P 2>/dev/null \
+			| ${CPP} ${cppflags} ${Isundials_inc_path} \
+			    -P 2>>${logfile} \
 			| grep -v ^$`
     case "${sundials_info}" in
 	1) ;;
@@ -737,31 +765,37 @@ fi
 # Check for shared library support in Sundials/C
 enable_shared=1
 
-test_stem=__configure_test_file__
-test_c_stem=__configure_test_c_file__
-echo 'void CVode(); void dummy () { CVode (); }' > $test_c_stem.c
-echo 'external dummy : unit -> unit = "dummy" let _ = dummy ()' > $test_stem.ml
-if ! $CC ${cflags} ${Isundials_inc_path} -o $test_c_stem$XO -c $test_c_stem.c \
-    >$test_stem.log 2>&1 || ! ${ocamlc} -c $test_stem.ml \
-    >> $test_stem.log 2>&1
+test_stem=__configure_test_file__sharedlib
+test_c_stem=__configure_test_c_file__sharedlib
+test_cmd="$CC ${cflags} ${Isundials_inc_path} -o $test_c_stem$XO \
+    -c $test_c_stem.c "
+test_ml_cmd="${ocamlc} -c $test_stem.ml"
+test_mklib_cmd="${OCAMLBIN}ocamlmklib $test_c_stem$XO $test_stem.cmo \
+    -o $test_stem -oc $test_stem \
+    ${Lsundials_lib_path} -lsundials_cvode -lsundials_nvecserial ${libm}"
+echo "/* ${test_cmd} */" > $test_c_stem.c
+echo 'void CVode(); void dummy () { CVode (); }' >> $test_c_stem.c
+echo "(* ${test_ml_cmd} *)" > $test_stem.ml
+echo "(* ${test_mklib_cmd} *)" >> $test_stem.ml
+echo 'external dummy : unit -> unit = "dummy" let _ = dummy ()' >> $test_stem.ml
+if ! eval ${test_cmd} >$test_stem.log 2>&1 \
+    || ! eval ${test_ml_cmd} >> $test_stem.log 2>&1
 then
     echo 1>&2 "Panic!  Dummy library failed to compile.  Please report"
     echo 1>&2 "this with ${test_stem}.log attached."
     exit 1
 fi
 
-if ! ${OCAMLBIN}ocamlmklib $test_c_stem$XO $test_stem.cmo \
-    -o $test_stem -oc $test_stem \
-    ${Lsundials_lib_path} -lsundials_cvode -lsundials_nvecserial ${libm} \
-    > $test_stem.log 2>&1
+if ! ${test_mklib_cmd} > $test_stem.log 2>&1
 then
     warning="${warning}\n\tSundials/C seems to be compiled without shared library support."
     warning="${warning}\n\tSundials/ML may not work in the toplevel."
     enable_shared=
 fi
 
-rm -f ./lib${test_stem}.* ./dll${test_stem}.* \
-    ./${test_stem}.* ./${test_c_stem}.*
+${debug_configure} || \
+    rm -f ./lib${test_stem}.* ./dll${test_stem}.* \
+	./${test_stem}.* ./${test_c_stem}.*
 
 # Check for LAPACK support
 unset lapack_lib
@@ -773,7 +807,8 @@ if [ $sundials -gt 0 ]; then
 	query="SUNDIALS_BLAS_LAPACK"
     fi
     sundials_info=`printf "#include %s\n%b" "${include}" "${query}" \
-			| ${CPP} ${cppflags} ${Isundials_inc_path} -P 2>/dev/null \
+			| ${CPP} ${cppflags} ${Isundials_inc_path} \
+			    -P 2>>${logfile} \
 			| grep -v ^$`
     case "${sundials_info}" in
 	1) lapack_lib=${LAPACKLIB} ;;
@@ -807,7 +842,8 @@ if [ $sundials -ge 260 ]; then
     q1="#ifdef SUNDIALS_KLU\n:KLU:\n#endif\n"
     q2="#ifdef SUNDIALS_SUPERLUMT\n:SUPERLUMT:\n#endif\n"
     sundials_info=`printf "#include %s\n%b%b" "${include}" "${q1}" "${q2}" \
-		    | ${CPP} ${cppflags} ${Isundials_inc_path} -P 2>/dev/null \
+		    | ${CPP} ${cppflags} ${Isundials_inc_path} \
+			-P 2>>${logfile} \
 		    | grep -v ^$`
 
     case "${sundials_info}" in
@@ -835,7 +871,9 @@ if [ $sundials -ge 260 ]; then
 		blas_libs="-lblas"
 		#sparse_libs="$sparse_libs -lsuperlu_mt_OPENMP -lopenmp"
 		test_stem=__configure_test_c_file__superlumt
+		test_cmd="$CC $test_stem.c ${superlumt_libs} ${blas_libs} ${Lsuperlumt_lib_path} -o ${test_stem}${XX}"
 		cat > $test_stem.c <<EOF
+/* ${test_cmd} */
 int main ()
 {
   void dCreate_Dense_Matrix ();
@@ -843,14 +881,13 @@ int main ()
   return 0;
 }
 EOF
-		compile_cmd="$CC $test_stem.c ${superlumt_libs} ${blas_libs} ${Lsuperlumt_lib_path} -o ${test_stem}${XX}"
-		if ! eval "${compile_cmd}" >/dev/null 2>&1
+		if ! eval "${test_cmd}" >>${logfile} 2>&1
                 then
                     error="${error}\n\tCan't link to SuperLU_MT.  You may have to specify SUPERLUMT_LIBRARY_DIR."
                     error="${error}\n\tSaved test code as ${test_stem}.c"
-                    error="${error}\n\tCompilation command was: ${compile_cmd}"
+                    error="${error}\n\tCompilation command was: ${test_cmd}"
                 else
-                    rm -f ${test_stem} ${test_stem}.*
+		    ${debug_configure} || rm -f ${test_stem} ${test_stem}.*
                 fi
 	    else
 		superlumt_info='disabled'
@@ -898,8 +935,14 @@ if [ ${enable_mpi:-1} -eq 1 ]; then
     fi
 
     # Check for nvector_parallel installation
-    test_stem=__configure_test_file__
+    test_stem=__configure_test_file__parallel
+    test_cmd="$mpicc -o $test_stem$XX ${Isundials_inc_path} $test_stem.c \
+	 ${Lsundials_lib_path} -lsundials_cvode -lsundials_nvecparallel \
+	 ${Lsuperlumt_lib_path} ${Lklu_lib_path} ${libm} ${sparse_libs} \
+	 ${blas_libs} ${lapack_lib}"
     cat > $test_stem.c <<EOF
+/* $test_cmd */
+#include <stdio.h>
 #include <nvector/nvector_parallel.h>
 int main (int argc, char *argv[])
 {
@@ -908,18 +951,14 @@ int main (int argc, char *argv[])
   return 0;
 }
 EOF
-    if ! $mpicc -o $test_stem$XX ${Isundials_inc_path} $test_stem.c \
-	 ${Lsundials_lib_path} -lsundials_cvode -lsundials_nvecparallel \
-	 ${Lsuperlumt_lib_path} ${Lklu_lib_path} ${libm} ${sparse_libs} \
-	 ${blas_libs} ${lapack_lib} \
-	 >/dev/null 2>&1;
+    if ! eval "${test_cmd}" >>${logfile} 2>&1;
     then
         sundialsmpi_info='not installed'
         ocamlmpi_enabled=
     else
         sundialsmpi_info='installed'
     fi
-    rm -f ./$test_stem.* ./$test_stem$XX
+    ${debug_configure} || rm -f ./$test_stem.* ./$test_stem$XX
 else
     sundialsmpi_info='disabled'
     ocamlmpi_enabled=
@@ -939,8 +978,9 @@ serial_nvec_libs=-lsundials_nvecserial
 nvecpthreads_info='not available'
 nvecpthreads_enabled=
 if [ $sundials -ge 260 ]; then
-    test_stem=__configure_test_file__
+    test_stem=__configure_test_file__nvecpthreads
     cat > $test_stem.c <<EOF
+#include <stdio.h>
 #include <nvector/nvector_pthreads.h>
 int main (int argc, char *argv[])
 {
@@ -950,7 +990,7 @@ int main (int argc, char *argv[])
 EOF
     if ! $CC -o $test_stem$XX ${Isundials_inc_path} $test_stem.c \
 	 ${Lsundials_lib_path} -lsundials_nvecpthreads -lpthread ${libm} \
-       >/dev/null 2>&1;
+       >>${logfile} 2>&1;
     then
 	nvecpthreads_info='not installed'
     else
@@ -958,7 +998,7 @@ EOF
 	nvecpthreads_enabled=1
 	serial_nvec_libs="$serial_nvec_libs -lsundials_nvecpthreads"
     fi
-    rm -f ./$test_stem.* ./$test_stem$XX
+    ${debug_configure} || rm -f ./$test_stem.* ./$test_stem$XX
 fi
 
 
@@ -966,8 +1006,9 @@ fi
 nvecopenmp_info='not available'
 nvecopenmp_enabled=
 if [ $sundials -ge 260 ]; then
-    test_stem=__configure_test_file__
+    test_stem=__configure_test_file__nvecopenmp
     cat > $test_stem.c <<EOF
+#include <stdio.h>
 #include <nvector/nvector_openmp.h>
 int main (int argc, char *argv[])
 {
@@ -977,7 +1018,7 @@ int main (int argc, char *argv[])
 EOF
     if ! $CC -o $test_stem$XX ${Isundials_inc_path} $test_stem.c \
 	 ${Lsundials_lib_path} -lsundials_nvecopenmp ${libm} \
-       >/dev/null 2>&1;
+       >>${logfile} 2>&1;
     then
 	nvecopenmp_info='not installed'
     else
@@ -1004,7 +1045,7 @@ EOF
             for flag in -fopenmp -openmp -mp -xopenmp -omp -qsmp=omp
             do
                 if $CC $CFLAGS $flag $test_stem.c -o $test_stem$XX \
-                       >/dev/null 2>&1
+                       >>${logfile} 2>&1
                 then
                     cflags_openmp=$flag
                     break
@@ -1018,7 +1059,7 @@ EOF
             fi
         fi
     fi
-    rm -f ./$test_stem.* ./$test_stem$XX
+    ${debug_configure} || rm -f ./$test_stem.* ./$test_stem$XX
 fi
 
 # Sundials examples directory
@@ -1026,7 +1067,7 @@ if [ "x$EXAMPLESROOT" = x ]; then
     # Try to infer it from the include path.
     include="\"sundials/sundials_config.h\""
     prefix_info=`printf "#include %s\n" "${include}" \
-	| ${CPP} ${cppflags} ${Isundials_inc_path} -E 2>/dev/null \
+	| ${CPP} ${cppflags} ${Isundials_inc_path} -E 2>>${logfile} \
 	| sed -ne "s/^.*\"\(.*\)\/include\/sundials\/sundials_config.h\".*$/\1/p" \
 	| head -n 1`
 
@@ -1138,6 +1179,7 @@ cat ${LOG}
 	 s#@configure_command@#${configure_command}#;
 	 s#@version@#${version}#;
 	 s#@versionp@#${versionp}#;
+	 s#@sundials_at_least_3_0@#${sundials_at_least_3_0}#;
 	 s#@sundials_at_least_2_7@#${sundials_at_least_2_7}#;
 	 s#@sundials_at_least_2_6@#${sundials_at_least_2_6}#;
 	 s#@sundials_at_least_2_5@#${sundials_at_least_2_5}#;
@@ -1271,4 +1313,6 @@ if [ "x${bounds_checking}" = x ]; then
 else
     echo "let safe = true"  >> src/sundials/sundials_config.ml
 fi
+
+${debug_configure} && (echo "#----${logfile}:"; cat ${logfile})
 
