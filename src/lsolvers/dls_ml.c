@@ -11,6 +11,8 @@
  *                                                                     *
  ***********************************************************************/
 
+#include <stdio.h>
+
 #include <sundials/sundials_types.h>
 #include <sundials/sundials_band.h>
 

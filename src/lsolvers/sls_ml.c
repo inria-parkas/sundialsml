@@ -13,6 +13,8 @@
 
 #include "../config.h"
 
+#include <stdio.h>
+
 #include <sundials/sundials_types.h>
 #include <sundials/sundials_direct.h>
 #include <sundials/sundials_sparse.h>
@@ -24,8 +26,6 @@
 #include <caml/custom.h>
 #include <caml/fail.h>
 #include <caml/bigarray.h>
-
-#include <stdio.h>
 
 #include "../sundials/sundials_ml.h"
 #include "../lsolvers/sls_ml.h"

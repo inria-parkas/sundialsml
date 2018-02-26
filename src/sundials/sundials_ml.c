@@ -13,6 +13,10 @@
 
 /* Sundials interface functions that are common to CVODE and IDA. */
 
+#include <stdio.h>
+#include <errno.h>
+#include <string.h>
+
 #include <sundials/sundials_config.h>
 #include <sundials/sundials_types.h>
 #include <sundials/sundials_band.h>
@@ -24,10 +28,6 @@
 #include <caml/alloc.h>
 #include <caml/callback.h>
 #include <caml/bigarray.h>
-
-#include <stdio.h>
-#include <errno.h>
-#include <string.h>
 
 #include "sundials_ml.h"
 
