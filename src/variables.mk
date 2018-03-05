@@ -37,6 +37,8 @@ MLOBJ_MAIN =	sundials/sundials_config.cmo	\
 		lsolvers/sls_impl.cmo		\
 		$(SLS_CMO)			\
 		lsolvers/spils.cmo		\
+		lsolvers/lsolver.cmo		\
+		lsolvers/matrix.cmo		\
 		nvectors/nvector_custom.cmo	\
 		nvectors/nvector_array.cmo	\
 		nvectors/nvector_serial.cmo	\
@@ -116,6 +118,7 @@ CMI_OPENMP =	$(MLOBJ_OPENMP:.cmo=.cmi)
 
 MLOBJ_TOP = sundials/sundials_top.cmo		\
 	    lsolvers/dls_top.cmo		\
+	    lsolvers/matrix_top.cmo		\
 	    nvectors/nvector_serial_top.cmo	\
 	    $(SLS_CMO:.cmo=_top.cmo)
 

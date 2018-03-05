@@ -2,6 +2,7 @@
 type data = Sundials.RealArray.t
 type kind = [`Serial]
 type t = (data, kind) Nvector.t
+type 'k any = (data, [>kind] as 'k) Nvector.t
 
 external c_wrap : Sundials.RealArray.t -> (Sundials.RealArray.t -> bool) -> t
   = "ml_nvec_wrap_serial"
