@@ -53,7 +53,6 @@ enum dls_bandmatrix_dims_index {
   RECORD_DLS_BANDMATRIX_DIMS_SIZE /* This has to come last. */
 };
 
-CAMLprim value c_dls_invalidate(value);
 CAMLprim value c_dls_dense_wrap(DlsMat a, int finalize);
 CAMLprim value c_dls_band_wrap(DlsMat a, int finalize);
 

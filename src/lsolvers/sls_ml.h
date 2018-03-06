@@ -29,7 +29,6 @@ enum sls_densematrix_index {
   RECORD_SLS_SPARSEMATRIX_SIZE /* This has to come last. */
 };
 
-CAMLprim value c_sls_invalidate(value);
 CAMLprim value c_sls_sparse_wrap(SlsMat a, int finalize, value vformat);
 CAMLprim value c_sparsematrix_realloc(value vma, value vnnz);
 
