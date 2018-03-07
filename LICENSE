@@ -1,5 +1,5 @@
 
-Copyright (c) 2014, INRIA / UPMC
+Copyright (c) 2014-2018, INRIA / UPMC
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -27,4 +27,15 @@ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
 CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+This library builds on the Sundials library, which is subject to the
+copyright and licence described in the SUNDIALS_LICENSE file. The source
+code of certain low-level Sundials routines is adapted directly when
+for technical reasons it is not possible to simply call them. These code
+extracts are preceded with a comment stating the name of the original
+function. Certain elements of the Sundials documentation are reused in
+the documentation of the OCamls library. Hyperlinks to the original
+documentation are included when possible.
 
