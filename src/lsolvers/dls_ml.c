@@ -70,8 +70,8 @@ CAMLprim value c_densematrix_new_dense_mat(value vm, value vn)
 {
     CAMLparam2(vm, vn);
 
-    int m = Long_val(vm);
-    int n = Long_val(vn);
+    long int m = Long_val(vm);
+    long int n = Long_val(vn);
 
     DlsMat a = NewDenseMat(m, n);
     if (a == NULL)
@@ -268,8 +268,8 @@ CAMLprim value c_densematrix_get(value vmatrix, value vi, value vj)
     CAMLparam3(vmatrix, vi, vj);
     DlsMat m = DLSMAT(vmatrix);
 
-    int i = Long_val(vi);
-    int j = Long_val(vj);
+    long int i = Long_val(vi);
+    long int j = Long_val(vj);
 
 #if SUNDIALS_ML_SAFE == 1
     if (i < 0 || i >= m->M) caml_invalid_argument("invalid i.");
@@ -285,8 +285,8 @@ CAMLprim value c_densematrix_set(value vmatrix, value vi, value vj, value v)
     CAMLparam4(vmatrix, vi, vj, v);
     DlsMat m = DLSMAT(vmatrix);
 
-    int i = Long_val(vi);
-    int j = Long_val(vj);
+    long int i = Long_val(vi);
+    long int j = Long_val(vj);
 
 #if SUNDIALS_ML_SAFE == 1
     if (i < 0 || i >= m->M) caml_invalid_argument("invalid i.");
@@ -294,7 +294,7 @@ CAMLprim value c_densematrix_set(value vmatrix, value vi, value vj, value v)
 #endif
 
     DENSE_ELEM(m, i, j) = Double_val(v);
-    CAMLreturn(caml_copy_double(v));
+    CAMLreturn(Val_unit);
 }
 
 /* Array dense matrix functions */
@@ -633,11 +633,12 @@ CAMLprim value c_bandmatrix_get(value vmatrix, value vi, value vj)
     CAMLparam3(vmatrix, vi, vj);
     DlsMat m = DLSMAT(vmatrix);
 
-    int i = Long_val(vi);
-    int j = Long_val(vj);
+    long int i = Long_val(vi);
+    long int j = Long_val(vj);
+    long int ii = i - j + m->s_mu;
 
 #if SUNDIALS_ML_SAFE == 1
-    if (i < 0 || i >= m->M) caml_invalid_argument("invalid i");
+    if (ii < 0 || ii >= m->ldim) caml_invalid_argument("invalid i");
     if (j < 0 || j >= m->N) caml_invalid_argument("invalid j");
 #endif
 
@@ -650,16 +651,17 @@ CAMLprim value c_bandmatrix_set(value vmatrix, value vi, value vj, value v)
     CAMLparam4(vmatrix, vi, vj, v);
     DlsMat m = DLSMAT(vmatrix);
 
-    int i = Long_val(vi);
-    int j = Long_val(vj);
+    long int i = Long_val(vi);
+    long int j = Long_val(vj);
+    long int ii = i - j + m->s_mu;
 
 #if SUNDIALS_ML_SAFE == 1
-    if (i < 0 || i >= m->M) caml_invalid_argument("invalid i");
+    if (ii < 0 || ii >= m->ldim) caml_invalid_argument("invalid i");
     if (j < 0 || j >= m->N) caml_invalid_argument("invalid j");
 #endif
 
     BAND_ELEM(m, i, j) = Double_val(v);
-    CAMLreturn(caml_copy_double(v));
+    CAMLreturn(Val_unit);
 }
 
 /* Array Band matrix functions */
@@ -671,10 +673,10 @@ CAMLprim value c_arraybandmatrix_copy(value va, value vb, value vsizes)
     struct caml_ba_array *ba = ARRAY2_DATA(va);
     intnat am = ba->dim[0];
 
-    int a_smu  = Long_val(Field(vsizes, 0));
-    int b_smu  = Long_val(Field(vsizes, 1));
-    int copymu = Long_val(Field(vsizes, 2));
-    int copyml = Long_val(Field(vsizes, 3));
+    long int a_smu  = Long_val(Field(vsizes, 0));
+    long int b_smu  = Long_val(Field(vsizes, 1));
+    long int copymu = Long_val(Field(vsizes, 2));
+    long int copyml = Long_val(Field(vsizes, 3));
 
 #if SUNDIALS_ML_SAFE == 1
     intnat an = ba->dim[1];
