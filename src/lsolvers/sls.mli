@@ -100,6 +100,8 @@ module SparseMatrix :
 
     (** Create a compressed-sparse-row matrix from a dense one.
 
+        @since 2.7.0
+        @raise Sundials.NotImplementedBySundialsVersion CSR format not available.
         @nocvode <node9#ss:sparse> SparseFromDenseMat *)
     val csr_from_dense : Dls.DenseMatrix.t -> csr t
 
@@ -110,6 +112,8 @@ module SparseMatrix :
 
     (** Create a sparse matrix from a banded one.
 
+        @since 2.7.0
+        @raise Sundials.NotImplementedBySundialsVersion CSR format not available.
         @nocvode <node9#ss:sparse> SparseFromDenseMat *)
     val csr_from_band : Dls.BandMatrix.t -> csr t
 

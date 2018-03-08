@@ -90,6 +90,10 @@ module SparseMatrix =
     let csr_from_dense { Dls_impl.DenseTypes.valid = valid;
                          Dls_impl.DenseTypes.dlsmat = dlsmat } =
       if Sundials_config.safe && not valid then raise Invalidated;
+      if Sundials_config.safe then
+        (match Sundials.sundials_version with
+         | 2,v,_ when v < 7 -> raise Sundials.NotImplementedBySundialsVersion
+         | _ -> ());
       c_convert_dls CSR_MAT dlsmat
 
     let csc_from_band { Dls_impl.BandTypes.valid = valid;
@@ -100,6 +104,10 @@ module SparseMatrix =
     let csr_from_band { Dls_impl.BandTypes.valid = valid;
                     Dls_impl.BandTypes.dlsmat = dlsmat } =
       if Sundials_config.safe && not valid then raise Invalidated;
+      if Sundials_config.safe then
+        (match Sundials.sundials_version with
+         | 2,v,_ when v < 7 -> raise Sundials.NotImplementedBySundialsVersion
+         | _ -> ());
       c_convert_dls CSR_MAT dlsmat
 
     let set_col { idxptrs; valid } j idx =
