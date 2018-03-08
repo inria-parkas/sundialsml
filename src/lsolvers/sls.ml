@@ -37,6 +37,10 @@ module SparseMatrix =
     let create_csr m n nnz =
       if Sundials_config.safe && (m <= 0 || n <= 0 || nnz <= 0)
       then failwith "M, N and NNZ must all be positive";
+      if Sundials_config.safe then
+        (match Sundials.sundials_version with
+         | 2,v,_ when v < 7 -> raise Sundials.NotImplementedBySundialsVersion
+         | _ -> ());
       c_create m n nnz CSR_MAT
 
     (* Allowing direct access is not safe because the underlying data may
