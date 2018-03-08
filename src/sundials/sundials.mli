@@ -181,17 +181,20 @@ module RealArray :
     val mapi : (int -> float -> float) -> t -> unit
   end
 
-(** Matrices of floats (wrappers around two-dimensional bigarrays). *)
+(** An alias for two-dimensional
+    {{:OCAML_DOC_ROOT(Bigarray.Array2.html)}Bigarray}s of floating-point
+    numbers. *)
+type real_array2 =
+  (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
+
+(** Matrices of floats (wrappers around two-dimensional bigarrays with
+    extra internal information required by Sundials). *)
 module RealArray2 :
   sig
     (** A two-dimensional matrix. The underlying data can be accessed as
         a {{:OCAML_DOC_ROOT(Bigarray.Array2.html)}Bigarray} via {!unwrap},
         but note that the first index specifies the column. *)
     type t
-
-    (** An alias for the underlying
-        {{:OCAML_DOC_ROOT(Bigarray.Array2.html)}Bigarray}. *)
-    type data = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
 
     (** [make nr nc v] returns an array with [nr] rows and [nc] columns, and
         with elements set to [v]. *)
@@ -241,17 +244,17 @@ module RealArray2 :
     val blit : t -> t -> unit
 
     (** [make m n] returns an uninitialized [m] by [n] array. *)
-    val make_data : int -> int -> data
+    val make_data : int -> int -> real_array2
 
-    (** Creates a new matrix from an existing {!data} array. Changes to one
-        affect the other since they share the same underlying storage. *)
-    val wrap : data -> t
+    (** Creates a new matrix from an existing {!real_array2} array. Changes to
+        one affect the other since they share the same underlying storage. *)
+    val wrap : real_array2 -> t
 
-    (** Returns the {!data} array behind a matrix. Changes to one affect the
-        other since they share the same underlying storage. Note that the
+    (** Returns the {!real_array2} array behind a matrix. Changes to one affect
+        the other since they share the same underlying storage. Note that the
         array is accessed column-first, that is,
         [get a i j = (unwrap a).{j, i}]. *)
-    val unwrap : t -> data
+    val unwrap : t -> real_array2
   end
 
 (** Vectors of integers (one-dimensional bigarrays). *)

@@ -145,7 +145,7 @@ let ij_vptr vv i j = subarray vv (ij_vptr_idx i j) num_species
 type user_data = {
   p     : RealArray2.t array array;
   pivot : LintArray.t array array;
-  acoef : RealArray2.data;
+  acoef : real_array2;
   bcoef : RealArray.t;
   cox   : RealArray.t;
   coy   : RealArray.t;

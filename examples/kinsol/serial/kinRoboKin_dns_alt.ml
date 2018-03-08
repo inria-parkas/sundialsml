@@ -99,7 +99,7 @@ let two   = 2.0
 let ith v i = v.{i - 1}
 let set_ith v i e = v.{i - 1} <- e
 
-let set_ijth (m : RealArray2.data) i j e = m.{j - 1, i - 1} <- e
+let set_ijth (m : real_array2) i j e = m.{j - 1, i - 1} <- e
 
 (* System function *)
 let func (yd : RealArray.t) (fd : RealArray.t) =

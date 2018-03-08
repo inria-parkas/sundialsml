@@ -152,17 +152,18 @@ module RealArray =
       done
   end
 
+type real_array2 =
+  (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
+
 module RealArray2 =
   struct
     open Bigarray
 
-    type data = (float, float64_elt, c_layout) Array2.t
-
     let make_data = Array2.create float64 c_layout
 
-    type t = data * Obj.t
+    type t = real_array2 * Obj.t
 
-    external wrap : data -> t
+    external wrap : real_array2 -> t
       = "c_sundials_realarray2_wrap"
 
     let unwrap = fst

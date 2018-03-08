@@ -200,7 +200,7 @@ let init_user_data =
   done
 
 (* Dot product routine for realtype arrays *)
-let dot_prod size (x1 : RealArray.t) x1off (x2 : RealArray2.data) x2r =
+let dot_prod size (x1 : RealArray.t) x1off (x2 : real_array2) x2r =
   let temp =ref 0.0 in
   for i = 0 to size - 1 do
     temp := !temp +. x1.{x1off + i} *. x2.{x2r, i}
