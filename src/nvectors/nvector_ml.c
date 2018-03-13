@@ -370,8 +370,8 @@ void callml_vspace(N_Vector v, long int *lrw, long int *liw)
     if (Is_exception_result (r)) {
 	sundials_ml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vspace");
-	fputs ("Sundials/ML has no sensible value to return to Sundials/C, "
-	       "and incorrect values risk meomry corruption.  Abort.", stderr);
+	fputs ("Sundials/ML has no sensible value to return to Sundials, "
+	       "and incorrect values risk memory corruption.  Abort.", stderr);
 	fflush (stderr);
 	abort ();
     } else {
