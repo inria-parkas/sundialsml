@@ -27,6 +27,13 @@
 
 void sundials_ml_warn_discarded_exn (value exn, const char *context);
 
+
+#if SUNDIALS_LIB_VERSION >= 300
+typedef sunindextype sundials_ml_index
+#else
+typedef long int sundials_ml_index
+#endif
+
 /* Interfacing with OCaml's bigarray infrastructure.  */
 #define BIGARRAY_FLOAT (CAML_BA_FLOAT64 | CAML_BA_C_LAYOUT)
 #define BIGARRAY_INT (CAML_BA_INT32 | CAML_BA_C_LAYOUT)
