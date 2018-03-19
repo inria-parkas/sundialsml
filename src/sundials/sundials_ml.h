@@ -29,10 +29,11 @@ void sundials_ml_warn_discarded_exn (value exn, const char *context);
 
 
 #if SUNDIALS_LIB_VERSION >= 300
-typedef sunindextype sundials_ml_index
+typedef sunindextype sundials_ml_index;
 #else
-typedef long int sundials_ml_index
+typedef long int sundials_ml_index;
 #endif
+#define INDEX_ARRAY(v) ((sundials_ml_index *)Caml_ba_data_val(v))
 
 /* Interfacing with OCaml's bigarray infrastructure.  */
 #define BIGARRAY_FLOAT (CAML_BA_FLOAT64 | CAML_BA_C_LAYOUT)
@@ -109,6 +110,7 @@ enum sundials_exn_set_index {
     DLS_EXN_SET,
     SPILS_EXN_SET,
     NVECTOR_PARALLEL_EXN_SET,
+    MATRIX_EXN_SET,
     SUNDIALS_NUM_EXN_SETS
 };
 

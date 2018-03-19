@@ -22,6 +22,7 @@ include ../config
 
 # Common to CVODE, IDA, KINSOL, and ARKODE.
 COBJ_COMMON = sundials/sundials_ml$(XO)	\
+	      lsolvers/matrix_ml$(XO)	\
 	      lsolvers/dls_ml$(XO)	\
 	      $(SLS_ML_XO)		\
 	      nvectors/nvector_ml$(XO)	\

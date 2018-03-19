@@ -11,8 +11,6 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(* TODO: Change the name/location of this module? *)
-
 (** Generic matrices.
 
     @version VERSION()
@@ -58,6 +56,9 @@ type ('m, 'd, 'k) matrix_ops = {
     become invalid in {!Sundials.sundials_version} >= 3.0.0. *)
 exception Invalidated
 
+(** Raised if matrix operation arguments are mutually incompatible. *)
+exception IncompatibleArguments
+
 (** Dense matrices *)
 module Dense :
   sig
@@ -91,14 +92,6 @@ module Dense :
         @nocvode <node> SUNDenseMatrix_Columns *)
     val size : t -> int * int
 
-    (** Prints a dense matrix to stdout.
-
-        In versions of Sundials prior to 3.0.0, the only valid log file
-        is {Sundials.Logfile.stdout}.
-
-        @nocvode <node> SUNDenseMatrix_Print *)
-    val print : Sundials.Logfile.t -> t -> unit
-
     (* TOPLEVEL-PRINTER: Matrix.Dense.pp *)
     (** Pretty-print a dense matrix using the
         {{:OCAML_DOC_ROOT(Format.html)} Format} module. *)
@@ -106,13 +99,13 @@ module Dense :
 
     (** Pretty-print a dense matrix using the
         {{:OCAML_DOC_ROOT(Format.html)} Format} module.
-        The defaults are: [start="\["], [stop="\]"], [rowsep=";"],
-        [indent=4], [sep=" "], and
+        The defaults are: [start="\["], [stop="\]"], [sep=";"],
+        [indent=4], [itemsep=" "], and
         [item=fun f r c->Format.fprintf f "(%2d,%2d)=% -15e" r c] (see
         {{:OCAML_DOC_ROOT(Format.html#VALfprintf)} fprintf}).
         The [indent] argument specifies the indent for wrapped rows. *)
-    val ppi : ?start:string -> ?stop:string -> ?rowsep:string
-              -> ?indent:int -> ?sep:string
+    val ppi : ?start:string -> ?stop:string -> ?sep:string
+              -> ?indent:int -> ?itemsep:string
               -> ?item:(Format.formatter -> int -> int -> float -> unit)
               -> Format.formatter -> t -> unit
 
@@ -140,7 +133,7 @@ module Dense :
         storage is valid, which will be the case in callbacks.
 
         @nocvode <node> SM_CONTENT_D *)
-    val unwrap : t -> Sundials.RealArray2.data
+    val unwrap : t -> Sundials.real_array2
 
     (** {4 Operations} *)
 
@@ -250,14 +243,6 @@ module Band :
         @nocvode <node> SUNBandMatrix_LowerBandwidth *)
     val dims : t -> dimensions
 
-    (** Prints a band matrix to the given file.
-
-        In versions of Sundials prior to 3.0.0, the only valid log file
-        is {Sundials.Logfile.stdout}.
-
-        @nocvode <node> SUNBandMatrix_Print *)
-    val print : Sundials.Logfile.t -> t -> unit
-
     (* TOPLEVEL-PRINTER: Matrix.Band.pp *)
     (** Pretty-print a band matrix using the
         {{:OCAML_DOC_ROOT(Format.html)} Format} module. *)
@@ -265,13 +250,13 @@ module Band :
 
     (** Pretty-print a band matrix using the
         {{:OCAML_DOC_ROOT(Format.html)} Format} module.
-        The defaults are: [start="\["], [stop="\]"], [rowsep=";"],
-        [indent=4], [sep=" "], and
+        The defaults are: [start="\["], [stop="\]"], [sep=";"],
+        [indent=4], [itemsep=" "], and
         [item=fun f r c->Format.fprintf f "(%2d,%2d)=% -15e" r c] (see
         {{:OCAML_DOC_ROOT(Format.html#VALfprintf)} fprintf}).
         The [indent] argument specifies the indent for wrapped rows. *)
-    val ppi : ?start:string -> ?stop:string -> ?rowsep:string
-              -> ?indent:int -> ?sep:string
+    val ppi : ?start:string -> ?stop:string -> ?sep:string
+              -> ?indent:int -> ?itemsep:string
               -> ?item:(Format.formatter -> int -> int -> float -> unit)
               -> Format.formatter -> t -> unit
 
@@ -302,12 +287,18 @@ module Band :
     (** Direct access to the underlying storage array, which is accessed
         column first (unlike in {!get}).
 
+        NB: The {!scale_add} operation, invoked either directly or from within
+        a solver, may replace the underlying storage of its first matrix
+        argument if the second matrix has a strictly larger bandwidth. In this
+        case, any previously 'unwrapped' array is no longer associated with
+        the matrix storage.
+
         NB: For {!Sundials.sundials_version} < 3.0.0, this access is
         potentially unsafe and {b must} only be used when the underlying
         storage is valid, which will be the case in callbacks.
 
         @nocvode <node> SM_CONTENT_B *)
-    val unwrap : t -> Sundials.RealArray2.data
+    val unwrap : t -> Sundials.real_array2
 
     (** {4 Operations} *)
 
@@ -341,6 +332,12 @@ module Band :
 
     (** [blit src dst] copies the contents of [src] into [dst]. Both
         must have the same size.
+
+        NB: This operation, invoked either directly or from within a solver,
+        may replace the underlying storage of its second matrix argument if
+        the first matrix has a strictly larger bandwidth. In this case, any
+        previously 'unwrapped' array is no longer associated with
+        the matrix storage.
 
         @nocvode <node> SUNMatCopy
         @nocvode <node> SUNMatCopy_Band *)
@@ -383,17 +380,19 @@ module Sparse :
 
     (** {4 Basic access} *)
 
-    (** [make m n nnz] returns an [m] by [n] sparse matrix in
+    (** [make_csc m n nnz] returns an [m] by [n] sparse matrix in
         compressed-sparse-column format with a potential
         for [nnz] non-zero elements. All elements are initially zero.
 
         @nocvode <node> SUNSparseMatrix *)
     val make_csc : int -> int -> int -> csc t
 
-    (** [make m n nnz] returns an [m] by [n] sparse matrix in
+    (** [make_csr m n nnz] returns an [m] by [n] sparse matrix in
         compressed-sparse-row format with a potential
         for [nnz] non-zero elements. All elements are initially zero.
 
+        @since 2.7.0
+        @raise Sundials.NotImplementedBySundialsVersion CSR format not available.
         @nocvode <node> SUNSparseMatrix *)
     val make_csr : int -> int -> int -> csr t
 
@@ -402,31 +401,32 @@ module Sparse :
         tolerance.
 
         @nocvode <node> SUNSparseFromDenseMatrix *)
-    val csc_from_dense : Dense.t -> float -> csc t
+    val csc_from_dense : float -> Dense.t -> csc t
 
     (** Creates a sparse matrix in compressed-sparse-row format from a dense
         matrix by copying all values of magnitude greater than the given
         tolerance.
 
+        @since 2.7.0
+        @raise Sundials.NotImplementedBySundialsVersion CSR format not available.
         @nocvode <node> SUNSparseFromDenseMatrix *)
-    val csr_from_dense : Dense.t -> float -> csr t
+    val csr_from_dense : float -> Dense.t -> csr t
 
     (** Creates a sparse matrix in compressed-sparse-column format from a band
         matrix by copying all values of magnitude greater than the given
         tolerance.
 
         @nocvode <node> SUNSparseFromBandMatrix *)
-    val csc_from_band : Band.t -> float -> csc t
+    val csc_from_band : float -> Band.t -> csc t
 
     (** Creates a sparse matrix in compressed-sparse-row format from a band
         matrix by copying all values of magnitude greater than the given
         tolerance.
 
+        @since 2.7.0
+        @raise Sundials.NotImplementedBySundialsVersion CSR format not available.
         @nocvode <node> SUNSparseFromBandMatrix *)
-    val csr_from_band : Band.t -> float -> csr t
-
-    (** Reallocates internal storage to remove any wasted space. *)
-    val realloc : 's t -> unit
+    val csr_from_band : float -> Band.t -> csr t
 
     (** [m, n = size a] returns the numbers of columns [m] and rows [n]
         of [a].
@@ -447,14 +447,6 @@ module Sparse :
         @nocvode <node> SUNSparseMatrix_NP *)
     val dims : 's t -> int * int
 
-    (** Prints a band matrix to the given file.
-
-        In versions of Sundials prior to 2.7.0, the only valid log file
-        is {Sundials.Logfile.stdout}.
-
-        @nocvode <node> SUNBandMatrix_Print *)
-    val print : Sundials.Logfile.t -> 's t -> unit
-
     (* TOPLEVEL-PRINTER: Matrix.Sparse.pp *)
     (** Pretty-print a sparse matrix using the
         {{:OCAML_DOC_ROOT(Format.html)} Format} module. *)
@@ -462,14 +454,14 @@ module Sparse :
 
     (** Pretty-print a sparse matrix using the
         {{:OCAML_DOC_ROOT(Format.html)} Format} module.
-        The defaults are: [start="\["], [stop="\]"], [rowsep=";"],
-        [indent=4], [sep=" "],
+        The defaults are: [start="\["], [stop="\]"], [sep=";"],
+        [indent=4], [itemsep=" "],
         [rowcol=fun f i->Format.fprintf f "%2d: " i], and
         [item=fun f r c->Format.fprintf f "(%2d,%2d)=% -15e" r c] (see
         {{:OCAML_DOC_ROOT(Format.html#VALfprintf)} fprintf}).
         The [indent] argument specifies the indent for wrapped rows. *)
-    val ppi : ?start:string -> ?stop:string -> ?rowsep:string
-              -> ?indent:int -> ?sep:string
+    val ppi : ?start:string -> ?stop:string -> ?sep:string
+              -> ?indent:int -> ?itemsep:string
               -> ?rowcol:(Format.formatter -> int -> unit)
               -> ?item:(Format.formatter -> int -> float -> unit)
               -> Format.formatter -> 's t -> unit
@@ -519,11 +511,23 @@ module Sparse :
 
     (** [scale_add c A B] calculates $A = cA + B$.
 
+        NB: The {!scale_add} operation, invoked either directly or from within
+        a solver, may replace the underlying storage of its first matrix
+        argument does not contain the sparsity of the second matrix argument.
+        In this case, any previously 'unwrapped' array is no longer associated
+        with the matrix storage.
+
         @nocvode <node> SUNMatScaleAdd
         @nocvode <node> SUNMatScaleAdd_Sparse *)
     val scale_add    : float -> 's t -> 's t -> unit
 
     (** [scale_addi c A] calculates $A = cA + I$.
+
+        NB: The {!scale_add} operation, invoked either directly or from within
+        a solver, may replace the underlying storage of its matrix argument
+        if it does not already contain a complete diagonal. In this
+        case, any previously 'unwrapped' array is no longer associated with
+        the matrix storage.
 
         @nocvode <node> SUNMatScaleAddI
         @nocvode <node> SUNMatScaleAddI_Sparse *)
@@ -544,6 +548,12 @@ module Sparse :
 
     (** [blit src dst] copies the contents of [src] into [dst]. Both
         must have the same size.
+
+        NB: This operation, invoked either directly or from within a solver,
+        may replace the underlying storage of its second matrix argument if it
+        does not contain the sparsity of the first matrix argument.
+        In this case, any previously 'unwrapped' array is no longer associated
+        with the matrix storage.
 
         @nocvode <node> SUNMatCopy
         @nocvode <node> SUNMatCopy_Sparse *)
