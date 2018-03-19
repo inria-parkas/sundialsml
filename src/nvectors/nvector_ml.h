@@ -16,6 +16,7 @@
 
 #include <sundials/sundials_nvector.h>
 #include <caml/mlvalues.h>
+#include "../sundials/sundials_ml.h"
 
 /* OCaml interface to Serial and Custom NVectors.
 
@@ -197,7 +198,7 @@ value ml_nvec_wrap_custom(value mlops, value payload, value checkfn);
 // Custom operations
 N_Vector callml_vclone(N_Vector w);
 void callml_vdestroy(N_Vector v);
-void callml_vspace(N_Vector v, long int *lrw, long int *liw);
+void callml_vspace(N_Vector v, sundials_ml_index *lrw, sundials_ml_index *liw);
 void callml_vlinearsum(realtype a, N_Vector x, realtype b, N_Vector y, N_Vector z);
 void callml_vconst(realtype c, N_Vector z);
 void callml_vprod(N_Vector x, N_Vector y, N_Vector z);

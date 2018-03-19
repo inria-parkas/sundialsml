@@ -359,7 +359,7 @@ N_Vector callml_vclone(N_Vector w)
     CAMLreturnT(N_Vector, v);
 }
 
-void callml_vspace(N_Vector v, long int *lrw, long int *liw)
+void callml_vspace(N_Vector v, sundials_ml_index *lrw, sundials_ml_index *liw)
 {
     CAMLparam0();
     CAMLlocal1(mlop);
