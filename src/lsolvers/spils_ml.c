@@ -793,8 +793,6 @@ CAMLprim value c_spils_pcg_solve(value vargs)
 
 int spils_precond_type(value vptype)
 {
-    CAMLparam1(vptype);
-
     int ptype = -1;
     switch (Int_val(vptype)) {
     case VARIANT_SPILS_PRECONDITIONING_TYPE_PREC_TYPE_NONE:
@@ -814,13 +812,11 @@ int spils_precond_type(value vptype)
 	break;
     }
 
-    CAMLreturnT(int, ptype);
+    return ptype;
 }
 
 int spils_gs_type(value vgstype)
 {
-    CAMLparam1(vgstype);
-
     int gstype = -1;
     switch (Int_val(vgstype)) {
     case VARIANT_SPILS_GRAMSCHMIDT_TYPE_MODIFIEDGS:
@@ -832,7 +828,7 @@ int spils_gs_type(value vgstype)
 	break;
     }
 
-    CAMLreturnT(int, gstype);
+    return gstype;
 }
 
 CAMLprim value c_spils_qr_fact(value vh, value vq, value vnewjob)
