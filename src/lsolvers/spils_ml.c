@@ -814,7 +814,7 @@ int spils_precond_type(value vptype)
 	break;
     }
 
-    CAMLreturn(ptype);
+    CAMLreturnT(int, ptype);
 }
 
 int spils_gs_type(value vgstype)
@@ -832,7 +832,7 @@ int spils_gs_type(value vgstype)
 	break;
     }
 
-    CAMLreturn(gstype);
+    CAMLreturnT(int, gstype);
 }
 
 CAMLprim value c_spils_qr_fact(value vh, value vq, value vnewjob)
