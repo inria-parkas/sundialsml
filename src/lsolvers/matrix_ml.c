@@ -1428,7 +1428,7 @@ CAMLprim void ml_matrix_sparse_matvec(value vcptra, value vx, value vy)
     CAMLreturn0;
 }
 
-static void matrix_sparse_resize(value va, sundials_ml_index nnz)
+void ml_matrix_sparse_resize(value va, sundials_ml_index nnz)
 {
     CAMLparam1(va);
     CAMLlocal4(vcptr, vdata, vidxvals, vpayload);
@@ -1482,7 +1482,7 @@ CAMLprim void ml_matrix_sparse_copy(value vcptra, value vb)
 
     /* ensure that B is allocated with at least as 
     much memory as we have nonzeros in A */
-    if (B->NNZ < A_nz) matrix_sparse_resize(vb, A_nz);
+    if (B->NNZ < A_nz) ml_matrix_sparse_resize(vb, A_nz);
 
     /* zero out B so that copy works correctly */
 #if SUNDIALS_LIB_VERSION >= 300
