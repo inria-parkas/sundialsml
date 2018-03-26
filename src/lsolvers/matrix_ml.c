@@ -1188,9 +1188,11 @@ CAMLprim void ml_matrix_sparse_scale_add(value vc, value va, value vcptrb)
 	A->indexptrs = C->indexptrs;
 	C->indexptrs = NULL;
 
+#if SUNDIALS_LIB_VERSION >= 300
 	vpayload = Field(va, RECORD_MAT_MATRIXCONTENT_PAYLOAD);
 	Store_field(vpayload, RECORD_MAT_SPARSEDATA_DATA,    vdatac);
 	Store_field(vpayload, RECORD_MAT_SPARSEDATA_IDXVALS, vidxvalsc);
+#endif
     }
 
     /* clean up */
@@ -1354,9 +1356,11 @@ CAMLprim void ml_matrix_sparse_scale_addi(value vc, value va)
 	A->indexptrs = C->indexptrs;
 	C->indexptrs = NULL;
 
+#if SUNDIALS_LIB_VERSION >= 300
 	vpayload = Field(va, RECORD_MAT_MATRIXCONTENT_PAYLOAD);
 	Store_field(vpayload, RECORD_MAT_SPARSEDATA_DATA,    vdatac);
 	Store_field(vpayload, RECORD_MAT_SPARSEDATA_IDXVALS, vidxvalsc);
+#endif
 
 	/* clean up */
 	free(w);
@@ -1428,26 +1432,54 @@ CAMLprim void ml_matrix_sparse_matvec(value vcptra, value vx, value vy)
     CAMLreturn0;
 }
 
-void ml_matrix_sparse_resize(value va, sundials_ml_index nnz)
+void matrix_sparse_upsize(value va, sundials_ml_index nnz, int copy)
 {
     CAMLparam1(va);
     CAMLlocal4(vcptr, vdata, vidxvals, vpayload);
+    sundials_ml_index old_nnz, i;
+    sundials_ml_index *old_indexvals;
+    realtype *old_data;
     MAT_CONTENT_SPARSE_TYPE A;
 
     vcptr = Field(va, RECORD_MAT_MATRIXCONTENT_RAWPTR);
     vpayload = Field(va, RECORD_MAT_MATRIXCONTENT_PAYLOAD);
     A = MAT_CONTENT_SPARSE(vcptr);
 
-    vdata = caml_ba_alloc_dims(BIGARRAY_FLOAT, 1, NULL, nnz);
-    vidxvals = caml_ba_alloc_dims(BIGARRAY_INT, 1, NULL, nnz);
+    if (A->NNZ < nnz) {
+	vdata = caml_ba_alloc_dims(BIGARRAY_FLOAT, 1, NULL, nnz);
+	vidxvals = caml_ba_alloc_dims(BIGARRAY_INT, 1, NULL, nnz);
 
-    Store_field(vpayload, RECORD_MAT_SPARSEDATA_DATA,    vdata);
-    Store_field(vpayload, RECORD_MAT_SPARSEDATA_IDXVALS, vidxvals);
+#if SUNDIALS_LIB_VERSION >= 300
+	Store_field(vpayload, RECORD_MAT_SPARSEDATA_DATA,    vdata);
+	Store_field(vpayload, RECORD_MAT_SPARSEDATA_IDXVALS, vidxvals);
+#endif
+	old_indexvals = A->indexvals;
+	old_data = A->data;
+	old_nnz = A->NNZ;
 
-    A->indexvals = INDEX_ARRAY(vidxvals);
-    A->data = REAL_ARRAY(vdata);
-    A->NNZ = nnz;
+	A->indexvals = INDEX_ARRAY(vidxvals);
+	A->data = REAL_ARRAY(vdata);
+	A->NNZ = nnz;
 
+	if (copy) {
+	    for (i=0; i < old_nnz; i++) {
+		A->data[i] = old_data[i];
+		A->indexvals[i] = old_indexvals[i];
+	    }
+	    for (; i < nnz; i++) {
+		A->data[i] = 0.0;
+		A->indexvals[i] = 0;
+	    }
+	}
+    }
+
+    CAMLreturn0;
+}
+
+CAMLprim void ml_matrix_sparse_upsize(value va, value vnnz, value vcopy)
+{
+    CAMLparam3(va, vnnz, vcopy);
+    matrix_sparse_upsize(va, Long_val(vnnz), Bool_val(vcopy));
     CAMLreturn0;
 }
 
@@ -1482,7 +1514,7 @@ CAMLprim void ml_matrix_sparse_copy(value vcptra, value vb)
 
     /* ensure that B is allocated with at least as 
     much memory as we have nonzeros in A */
-    if (B->NNZ < A_nz) ml_matrix_sparse_resize(vb, A_nz);
+    if (B->NNZ < A_nz) ml_matrix_sparse_upsize(vb, A_nz, 0);
 
     /* zero out B so that copy works correctly */
 #if SUNDIALS_LIB_VERSION >= 300

@@ -550,6 +550,11 @@ module Sparse = struct
     if unsafe_content then c_rewrap rawptr
     else idxvals, idxptrs, data
 
+  external c_upsize : 's t -> int -> bool -> unit
+    = "ml_matrix_sparse_upsize"
+
+  let upsize nnz a = c_upsize a nnz true
+
   let invalidate v =
     if check_valid then v.valid <- false
 

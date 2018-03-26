@@ -504,6 +504,15 @@ module Sparse :
     *)
     val unwrap : 's t -> index_array * index_array * Sundials.RealArray.t
 
+    (** Reallocates the underlying arrays to have at least the given number
+        of non-zero elements. Nothing is done if the matrix already has at
+        least the specified number of non-zero elements.
+
+        NB: The {!upsize} operation may replace the underlying storage of the
+        matrix argument. In this case, any previously 'unwrapped' array is no
+        longer associated with the matrix storage. *)
+    val upsize : int -> 's t -> unit
+
     (** {4 Operations} *)
 
     (** Operations on dense matrices. *)
