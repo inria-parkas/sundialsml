@@ -39,6 +39,7 @@ MLOBJ_MAIN =	sundials/sundials_config.cmo	\
 		$(SLS_CMO)			\
 		lsolvers/spils.cmo		\
 		lsolvers/lsolver.cmo		\
+		lsolvers/lsolver_impl.cmo	\
 		lsolvers/matrix.cmo		\
 		nvectors/nvector_custom.cmo	\
 		nvectors/nvector_array.cmo	\

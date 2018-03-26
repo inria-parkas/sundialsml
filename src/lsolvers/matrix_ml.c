@@ -58,6 +58,8 @@ CAMLprim void ml_mat_init_module (value exns)
  * Matrix.Dense
  */
 
+// TODO: < 3.0.0; keep payload synchronized and optimize gets (we never reallocate)
+
 static void finalize_mat_content_dense(value va)
 {
     MAT_CONTENT_DENSE_TYPE content = MAT_CONTENT_DENSE(va);
@@ -481,6 +483,8 @@ CAMLprim void ml_matrix_band_copy(value vcptra, value vb)
     if (A->M != B->M || A->N != B->N) MATRIX_EXN(IncompatibleArguments);
 #endif
 
+    // TODO: >= 3.0.0 Rework: reallocate storage without recreating cptr
+    // TODO: < 3.0.0 Rework: throw exception (no reallocation)
     /* Grow B if A's bandwidth is larger */
     if ( (A->mu > B->mu) || (A->ml > B->ml) ) {
 	ml  = SUNMAX(B->ml, A->ml);
@@ -488,7 +492,7 @@ CAMLprim void ml_matrix_band_copy(value vcptra, value vb)
 	smu = SUNMAX(B->s_mu, A->s_mu);
 	colSize = smu + ml + 1;
 
-	if (!matrix_band_create_vcptr(B->N, mu, ml, smu, &vdatab, &vcptrb))
+	if (!matrix_band_create_vcptr(A->N, mu, ml, smu, &vdatab, &vcptrb))
 	    caml_raise_out_of_memory();
 	B = MAT_CONTENT_BAND(vcptrb);
 
@@ -589,6 +593,8 @@ static void matrix_band_scale_add_new(value vc, value va, value vcptrb)
     Store_field(va, RECORD_MAT_MATRIXCONTENT_PAYLOAD, vpayloadc);
     Store_field(va, RECORD_MAT_MATRIXCONTENT_RAWPTR, vcptrc);
     // No need to free A; the associated vptra will finalize it when collected.
+
+    // TODO: rethink array freeing for < 3.0.0
 
     CAMLreturn0;
 }
@@ -1188,6 +1194,8 @@ CAMLprim void ml_matrix_sparse_scale_add(value vc, value va, value vcptrb)
 	A->indexptrs = C->indexptrs;
 	C->indexptrs = NULL;
 
+	// TODO: < 3.0.0, free old arrays?
+
 #if SUNDIALS_LIB_VERSION >= 300
 	vpayload = Field(va, RECORD_MAT_MATRIXCONTENT_PAYLOAD);
 	Store_field(vpayload, RECORD_MAT_SPARSEDATA_DATA,    vdatac);
@@ -1343,6 +1351,8 @@ CAMLprim void ml_matrix_sparse_scale_addi(value vc, value va)
 	/* indicate end of data */
 	Cp[N] = nz;
 
+	// TODO: < 3.0.0, free old arrays?
+
 	/* update A's structure with C's values; nullify C's pointers */
 	/* No need to free A's arrays; the garbage collector will finalize
 	   them when the associated bigarray is collected. */
@@ -1432,7 +1442,7 @@ CAMLprim void ml_matrix_sparse_matvec(value vcptra, value vx, value vy)
     CAMLreturn0;
 }
 
-void matrix_sparse_upsize(value va, sundials_ml_index nnz, int copy)
+static void matrix_sparse_upsize(value va, sundials_ml_index nnz, int copy)
 {
     CAMLparam1(va);
     CAMLlocal4(vcptr, vdata, vidxvals, vpayload);
@@ -1471,6 +1481,11 @@ void matrix_sparse_upsize(value va, sundials_ml_index nnz, int copy)
 		A->indexvals[i] = 0;
 	    }
 	}
+
+#if SUNDIALS_LIB_VERSION < 300
+	free(old_data);
+	free(old_indexvals);
+#endif
     }
 
     CAMLreturn0;

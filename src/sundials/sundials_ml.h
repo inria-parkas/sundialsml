@@ -19,6 +19,8 @@
 #ifndef _SUNDIALS_ML_H__
 #define _SUNDIALS_ML_H__
 
+#include <sundials/sundials_types.h>
+
 #include <caml/mlvalues.h>
 
 #include "../config.h"
@@ -111,6 +113,7 @@ enum sundials_exn_set_index {
     SPILS_EXN_SET,
     NVECTOR_PARALLEL_EXN_SET,
     MATRIX_EXN_SET,
+    LSOLVER_EXN_SET,
     SUNDIALS_NUM_EXN_SETS
 };
 

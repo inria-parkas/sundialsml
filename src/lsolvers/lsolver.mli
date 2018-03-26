@@ -11,8 +11,6 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(* TODO: Change the name/location of this module? *)
-
 (** Generic linear solvers.
 
     @version VERSION()
@@ -75,6 +73,12 @@ module Direct : sig
 
   (** KLU direct linear solver operating on sparse matrices (requires KLU). *)
   module Klu : sig
+    (** The ordering algorithm used for reducing fill. *)
+    type ordering = Lsolver_impl.Klu.ordering =
+         Amd      (** Approximate minimum degree permutation. *)
+       | ColAmd   (** Column approximate minimum degree permutation. *)
+       | Natural  (** Natural ordering. *)
+
     (** Creates a direct linear solver on sparse matrices using KLU. The
         nvector and matrix argument are used to determine the linear system
         size and to assess compatibility with the linear solver implementation.
@@ -82,7 +86,8 @@ module Direct : sig
         @raise Sundials.NotImplementedBySundialsVersion Solver not available.
         @nocvode <node> SUNKLU *)
     val make :
-      'k Nvector_serial.any
+      ?ordering:ordering
+      -> 'k Nvector_serial.any
       -> ('s, 'k) Matrix.sparse
       -> ('s Matrix.Sparse.t, 'k) serial_t
 
@@ -94,13 +99,7 @@ module Direct : sig
 
         @nocvode <node> SUNKLUReInit *)
     val reinit : ('s Matrix.Sparse.t, 'k) serial_t
-      -> ('s, 'k) Matrix.sparse -> int option -> unit
-
-    (** The ordering algorithm used for reducing fill. *)
-    type ordering =
-         Amd      (** Approximate minimum degree permutation. *)
-       | ColAmd   (** Column approximate minimum degree permutation. *)
-       | Natural  (** Natural ordering. *)
+      -> ('s, 'k) Matrix.sparse -> ?nnz:int -> unit -> unit
 
     (** Sets the ordering algorithm used to minimize fill-in.
 
@@ -111,6 +110,12 @@ module Direct : sig
   (** SuperLUMT direct linear solver operating on sparse matrices (requires
       SuperLUMT). *)
   module Superlumt : sig
+    (** The ordering algorithm used for reducing fill. *)
+    type ordering = Lsolver_impl.Superlumt.ordering =
+         Natural       (** Natural ordering. *)
+       | MinDegreeProd (** Minimal degree ordering on $J^T J$. *)
+       | MinDegreeSum  (** Minimal degree ordering on $J^T + J$. *)
+       | ColAmd        (** Column approximate minimum degree permutation. *)
 
     (** Creates a direct linear solver on sparse matrices using SuperLUMT. The
         nvector and matrix argument are used to determine the linear system
@@ -119,16 +124,11 @@ module Direct : sig
         @raise Sundials.NotImplementedBySundialsVersion Solver not available.
         @nocvode <node> SUNSuperLUMT *)
     val make :
-      'k Nvector_serial.any
+      ?ordering:ordering
+      -> nthreads:int
+      -> 'k Nvector_serial.any
       -> ('s, 'k) Matrix.sparse
       -> ('s Matrix.Sparse.t, 'k) serial_t
-
-    (** The ordering algorithm used for reducing fill. *)
-    type ordering =
-         Natural       (** Natural ordering. *)
-       | MinDegreeProd (** Minimal degree ordering on $J^T J$. *)
-       | MinDegreeSum  (** Minimal degree ordering on $J^T + J$. *)
-       | ColAmd        (** Column approximate minimum degree permutation. *)
 
     (** Sets the ordering algorithm used to minimize fill-in.
 
@@ -148,6 +148,15 @@ module Iterative : sig
       @nocvode <node> SUNLinearSolver *)
   type ('nd, 'nk, 'f) t
 
+  (** The type of Gram-Schmidt orthogonalization in iterative linear solvers.
+
+      @nocvode <node> ModifiedGS/ClassicalGS *)
+  type gramschmidt_type = Spils.gramschmidt_type =
+    | ModifiedGS   (** Modified Gram-Schmidt orthogonalization
+                       {cconst MODIFIED_GS} *)
+    | ClassicalGS  (** Classical Gram Schmidt orthogonalization
+                       {cconst CLASSICAL_GS} *)
+
   (** {3:iter_solvers Solvers} *)
 
   (** Krylov iterative solver using the scaled preconditioned biconjugate
@@ -164,7 +173,8 @@ module Iterative : sig
       nvector argument is used as a template.
 
       @nocvode <node> SUNSPFGMR *)
-  val spfgmr : ?maxl:int -> ?gs_type:Spils.gramschmidt_type
+  val spfgmr : ?maxl:int -> ?max_restarts:int
+               -> ?gs_type:gramschmidt_type
                -> ('d, 'k) Nvector.t -> ('d, 'k, [`Spfgmr]) t
 
   (** Krylov iterative solver using the scaled preconditioned generalized
@@ -173,7 +183,8 @@ module Iterative : sig
       is used as a template.
       
       @nocvode <node> SUNSPGMR *)
-  val spgmr : ?maxl:int -> ?gs_type:Spils.gramschmidt_type 
+  val spgmr : ?maxl:int -> ?max_restarts:int
+              -> ?gs_type:gramschmidt_type 
               -> ('d, 'k) Nvector.t -> ('d, 'k, [`Spgmr]) t
 
   (** Krylov iterative with the scaled preconditioned transpose-free
@@ -208,13 +219,53 @@ module Iterative : sig
       @nocvode <node> SUNSPGMRSetGSType
       @nocvode <node> SUNSPFGMRSetGSType *)
   val set_gs_type :
-    ('d, 'k, [< `Spfgmr|`Spgmr]) t -> Spils.gramschmidt_type -> unit
+    ('d, 'k, [< `Spfgmr|`Spgmr]) t -> gramschmidt_type -> unit
 
   (** Sets the number of GMRES restarts to allow.
  
       @nocvode <node> SUNSPGMRSetMaxRestarts
       @nocvode <node> SUNSPFGMRSetMaxRestarts *)
   val set_max_restarts : ('d, 'k, [< `Spfgmr|`Spgmr]) t -> int -> unit
+
+  (** {2 Exceptions} *)
+
+  (** Raised when an atimes function fails. The argument is [true] for a
+      recoverable failure and [false] for an unrecoverable one.
+      {cconst SUNLS_ATIMES_FAIL_REC/_UNREC} *)
+  exception ATimesFailure of bool
+
+  (** Raised when a preconditioner setup routine fails. The argument is [true]
+      for a recoverable failure and [false] for an unrecoverable one.
+      {cconst SUNLS_PSET_FAIL_REC/_UNREC} *)
+  exception PSetFailure of bool
+
+  (** Raised when a preconditioner solver fails. The argument is [true] for a
+      recoverable failure and [false] for an unrecoverable one.
+      {cconst SUNLS_PSOLVE_FAIL_REC/_UNREC} *)
+  exception PSolveFailure of bool
+
+  (** Raised when a Gram-Schmidt routine fails. {cconst SUNLS_GS_FAIL} *)
+  exception GSFailure
+
+  (** Raised QR solution finds a singular result. {cconst SUNLS_QRSOL_FAIL} *)
+  exception QRSolFailure
+
+  (** Raised if the residual is reduced but without convergence to the desired
+      tolerance. {cconst SUNLS_RES_REDUCED} *)
+  exception ResReduced
+
+  (** Raised when a solver fails to converge.
+      {cconst SUNLS_CONV_FAIL} *)
+  exception ConvFailure
+
+  (** Raised when QR factorization encounters a singular matrix.
+      {cconst SUNLS_QRFACT_FAIL} *)
+  exception QRfactFailure
+
+  (** Raised when LU factorization encounters a singular matrix.
+      {cconst SUNLS_LUFACT_FAIL} *)
+  exception LUfactFailure
+
 end
 
 (* TODO: Add custom linear solvers
@@ -223,17 +274,13 @@ end
    - custom lsolver (four functions to each solver as before)
  *)
 
-(*
-type ('a, 'd, 'k) atimes_fn
-  = 'a -> ('d, 'k) Nvector.t -> ('d, 'k) Nvector.t -> unit
+(** {2 Exceptions} *)
 
-type ('ls, 'm, 'd, 'k) lsolver_ops = {
-  m_initialize : 'ls -> unit;
-  m_setup : 'ls -> 'm -> unit;
-  m_solve
-    : 'ls -> 'm -> ('d, 'k) Nvector.t -> ('d, 'k) Nvector.t -> float -> unit;
-  m_set_atimes : ('ls -> ('a, 'd, 'k) atimes_fn -> unit) option
+(** Raised on an unrecoverable failure in a linear solver. The argument is
+    [true] for a recoverable failure and [false] for an unrecoverable one.
+    {cconst SUNLS_PACKAGE_FAIL_REC/_UNREC} *)
+exception UnrecoverableFailure of bool
 
-}
-*)
+(** Raised when creating a linear solver if the given matrix is not square. *)
+exception MatrixNotSquare
 

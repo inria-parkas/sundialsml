@@ -180,9 +180,6 @@ struct csmat {
 // MAT_VAL turns an OCaml Matrix.t into a c-sunmatrix
 #define MAT_VAL(v) (MAT_CVAL(Field(v, 1)))
 
-// upsize a Matrix.Sparse.t (dissociating existing arrays)
-void matrix_sparse_upsize(value va, sundials_ml_index nnz, int copy);
-
 #else // SUNDIALS_LIB_VERSION < 300
 #define MAT_CONTENT_DENSE(v)  DLSMAT(v)
 #define MAT_CONTENT_BAND(v)   DLSMAT(v)
