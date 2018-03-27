@@ -58,43 +58,31 @@ CAMLprim void ml_mat_init_module (value exns)
  * Matrix.Dense
  */
 
-// TODO: < 3.0.0; keep payload synchronized and optimize gets (we never reallocate)
-
 static void finalize_mat_content_dense(value va)
 {
     MAT_CONTENT_DENSE_TYPE content = MAT_CONTENT_DENSE(va);
 
-#if SUNDIALS_LIB_VERSION >= 300
     if (content->cols != NULL)
 	free(content->cols);
     free(content);
-
-#else // SUNDIALS_LIB_VERSION < 300 (as per finalize_dlsmat)
-    DestroyMat(content);
-
-#endif
+    // A->data is destroyed by the associated bigarray finalizer
 }
 
 CAMLprim value ml_matrix_dense_create(value vm, value vn)
 {
     CAMLparam2(vm, vn);
     CAMLlocal3(vdata, vcptr, vr);
-
+    sundials_ml_index j;
+    MAT_CONTENT_DENSE_TYPE content = NULL;
     sundials_ml_index m = Long_val(vm);
     sundials_ml_index n = Long_val(vn);
-
-#if SUNDIALS_LIB_VERSION >= 300
-    SUNMatrixContent_Dense content = NULL;
-    sundials_ml_index j;
 
     // columns first
     vdata = caml_ba_alloc_dims(BIGARRAY_FLOAT, 2, NULL, n, m);
 
     // Setup the C-side content
-    content = (SUNMatrixContent_Dense)
-		malloc(sizeof(struct _SUNMatrixContent_Dense));
-    if (content == NULL)
-	caml_raise_out_of_memory();
+    content = (MAT_CONTENT_DENSE_TYPE) malloc(sizeof *content);
+    if (content == NULL) caml_raise_out_of_memory();
 
     content->M = m;
     content->N = n;
@@ -109,22 +97,14 @@ CAMLprim value ml_matrix_dense_create(value vm, value vn)
     for (j=0; j<n; j++)
 	content->cols[j] = content->data + j * m;
 
+#if SUNDIALS_LIB_VERSION < 300
+    content->ldim = m;
+    content->type = SUNDIALS_DENSE;
+#endif
+
     // Setup the OCaml-side
     vcptr = caml_alloc_final(1, &finalize_mat_content_dense, 1, 20);
     MAT_CONTENT_DENSE(vcptr) = content;
-
-#else // SUNDIALS_LIB_VERSION < 300 (As per c_densematrix_new_dense_mat)
-    DlsMat a = NewDenseMat(m, n);
-
-    if (a == NULL)
-	caml_raise_out_of_memory();
-
-    vdata = Val_unit; /* no payload when Sundials < 3.0.0 */
-
-    vcptr = caml_alloc_final(1, finalize_mat_content_dense, 1, 20);
-    DLSMAT(vcptr) = a;
-
-#endif
 
     vr = caml_alloc_tuple(RECORD_MAT_MATRIXCONTENT_SIZE);
     Store_field(vr, RECORD_MAT_MATRIXCONTENT_PAYLOAD, vdata);
@@ -134,6 +114,7 @@ CAMLprim value ml_matrix_dense_create(value vm, value vn)
     CAMLreturn(vr);
 }
 
+/*
 CAMLprim value ml_matrix_dense_get(value vcptr, value vi, value vj)
 {
     CAMLparam3(vcptr, vi, vj);
@@ -148,7 +129,9 @@ CAMLprim value ml_matrix_dense_get(value vcptr, value vi, value vj)
 
     CAMLreturn(caml_copy_double(m->cols[j][i]));
 }
+*/
 
+/*
 CAMLprim void ml_matrix_dense_set(value vcptr, value vi, value vj, value vv)
 {
     CAMLparam4(vcptr, vi, vj, vv);
@@ -164,6 +147,7 @@ CAMLprim void ml_matrix_dense_set(value vcptr, value vi, value vj, value vv)
     m->cols[j][i] = Double_val(vv);
     CAMLreturn0;
 }
+*/
 
 CAMLprim void ml_matrix_dense_scale_add(value vc, value vcptra, value vcptrb)
 {
@@ -238,69 +222,6 @@ CAMLprim value ml_matrix_dense_space(value vcptr)
     vr = caml_alloc_tuple(2);
     Store_field(vr, 0, Val_long(content->ldata));
     Store_field(vr, 1, Val_long(3 + content->N));
-
-    CAMLreturn(vr);
-}
-
-// Sundials < 3.0.0
-CAMLprim void ml_matrix_dense_fill(value vcptr, value vc)
-{
-    CAMLparam2(vcptr, vc);
-    MAT_CONTENT_DENSE_TYPE content = MAT_CONTENT_DENSE(vcptr);
-    sundials_ml_index i;
-    realtype c = Double_val(vc);
-
-    /* Perform operation */
-    for (i=0; i < content->ldata; i++)
-	content->data[i] = c;
-
-    CAMLreturn0;
-}
-
-// Sundials < 3.0.0
-CAMLprim void ml_matrix_dense_copy(value vcptra, value vcptrb)
-{
-    CAMLparam2(vcptra, vcptrb);
-    MAT_CONTENT_DENSE_TYPE contenta = MAT_CONTENT_DENSE(vcptra);
-    MAT_CONTENT_DENSE_TYPE contentb = MAT_CONTENT_DENSE(vcptrb);
-    sundials_ml_index i, j;
-
-#if SUNDIALS_ML_SAFE == 1
-    if ((contenta->M != contentb->M) || (contenta->N != contentb->N))
-	MATRIX_EXN(IncompatibleArguments);
-#endif
-
-    /* Perform operation */
-    for (j=0; j < contenta->N; j++)
-	for (i=0; i < contenta->M; i++)
-	    contentb->cols[j][i] = contenta->cols[j][i];
-
-    CAMLreturn0;
-}
-
-// Sundials < 3.0.0
-CAMLprim value ml_matrix_dense_size(value vcptr)
-{
-    CAMLparam1(vcptr);
-    CAMLlocal1(vr);
-    MAT_CONTENT_DENSE_TYPE content = MAT_CONTENT_DENSE(vcptr);
-    
-    vr = caml_alloc_tuple(2);
-    Store_field(vr, 0, Val_long(content->M));
-    Store_field(vr, 1, Val_long(content->N));
-
-    CAMLreturn(vr);
-}
-
-// Sundials < 3.0.0
-CAMLprim value ml_matrix_dense_rewrap(value vcptr)
-{
-    CAMLparam1(vcptr);
-    CAMLlocal1(vr);
-    MAT_CONTENT_DENSE_TYPE content = MAT_CONTENT_DENSE(vcptr);
-
-    vr = caml_ba_alloc_dims(BIGARRAY_FLOAT, 2, content->data,
-	    content->N, content->M);
 
     CAMLreturn(vr);
 }

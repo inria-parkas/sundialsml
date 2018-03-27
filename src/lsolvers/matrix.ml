@@ -57,36 +57,22 @@ module Dense = struct
     end;
     c_create i j
 
-  external c_rewrap : cptr -> data
-    = "ml_matrix_dense_rewrap"
-
-  let unwrap { rawptr; payload } =
-    if unsafe_content then c_rewrap rawptr
-    else payload
-
-  external c_fill : cptr -> float -> unit
-    = "ml_matrix_dense_fill"
+  let unwrap { payload } = payload
 
   let make m n v =
-    let { payload; rawptr } as r = create m n in
-    if unsafe_content then c_fill rawptr 0.0
-    else Bigarray.Array2.fill payload 0.0;
+    let { payload } as r = create m n in
+    Bigarray.Array2.fill payload 0.0;
     r
 
   let invalidate v =
     if check_valid then v.valid <- false
 
-  external c_size : cptr -> int * int
-    = "ml_matrix_dense_size"
-
   let size { payload; rawptr; valid } =
     if check_valid && not valid then raise Invalidated;
-    if unsafe_content then c_size rawptr
-    else Bigarray.Array2.(dim2 payload, dim1 payload)
+    Bigarray.Array2.(dim2 payload, dim1 payload)
 
-  let pp fmt { payload; rawptr; valid } =
+  let pp fmt { payload = d; valid } =
     if check_valid && not valid then raise Invalidated;
-    let d = if unsafe_content then c_rewrap rawptr else payload in
     let ni, nj = Bigarray.Array2.dim2 d - 1, Bigarray.Array2.dim1 d - 1 in
     Format.pp_print_string fmt "[";
     Format.pp_open_vbox fmt 0;
@@ -113,9 +99,8 @@ module Dense = struct
 
   let ppi ?(start="[") ?(stop="]") ?(sep=";") ?(indent=4) ?(itemsep=" ")
           ?(item=fun f->Format.fprintf f "(%2d,%2d)=% -15e")
-          fmt { payload; rawptr; valid } =
+          fmt { payload = d; valid } =
     if check_valid && not valid then raise Invalidated;
-    let d = if unsafe_content then c_rewrap rawptr else payload in
     let ni, nj = Bigarray.Array2.dim2 d - 1, Bigarray.Array2.dim1 d - 1 in
     Format.pp_print_string fmt start;
     Format.pp_open_vbox fmt 0;
@@ -140,26 +125,25 @@ module Dense = struct
     Format.pp_close_box fmt ();
     Format.pp_print_string fmt stop
 
+  (*
   external c_get : cptr -> int -> int -> float
     = "ml_matrix_dense_get"
+  *)
 
-  let get { payload; rawptr; valid } i j =
+  let get { payload; valid } i j =
     if check_valid && not valid then raise Invalidated;
-    if unsafe_content then c_get rawptr i j
-    else payload.{j, i}
+    payload.{j, i}
 
-  external c_set : cptr -> int -> int -> float -> unit
-    = "ml_matrix_dense_set"
+  (* external c_set : cptr -> int -> int -> float -> unit
+    = "ml_matrix_dense_set" *)
 
-  let set { payload; rawptr; valid } i j v =
+  let set { payload; valid } i j v =
     if check_valid && not valid then raise Invalidated;
-    if unsafe_content then c_set rawptr i j v
-    else payload.{j, i} <- v
+    payload.{j, i} <- v
 
-  let update { payload; rawptr; valid } i j f =
+  let update { payload; valid } i j f =
     if check_valid && not valid then raise Invalidated;
-    if unsafe_content then c_set rawptr i j (f (c_get rawptr i j))
-    else payload.{j, i} <- f payload.{j, i}
+    payload.{j, i} <- f payload.{j, i}
 
   external c_scale_add : float -> cptr -> cptr -> unit
     = "ml_matrix_dense_scale_add"
@@ -185,25 +169,19 @@ module Dense = struct
     if Sundials_config.safe then begin
       let xl = Sundials.RealArray.length (Nvector.unwrap x) in
       let yl = Sundials.RealArray.length (Nvector.unwrap y) in
-      let m, n = if unsafe_content then c_size rawptr
-                 else Bigarray.Array2.(dim2 payload, dim1 payload) in
+      let m, n = Bigarray.Array2.(dim2 payload, dim1 payload) in
       if n <> xl || m <> yl then raise IncompatibleArguments
     end;
     c_matvec rawptr x y
 
   let set_to_zero { payload = data; rawptr; valid } =
     if check_valid && not valid then raise Invalidated;
-    if unsafe_content then c_fill rawptr 0.0
-    else Bigarray.Array2.fill data 0.0
+    Bigarray.Array2.fill data 0.0
 
-  external c_copy : cptr -> cptr -> unit
-    = "ml_matrix_dense_copy"
-
-  let blit { payload = data1; rawptr = cptr1; valid = valid1 }
-           { payload = data2; rawptr = cptr2; valid = valid2 } =
+  let blit { payload = data1; valid = valid1 }
+           { payload = data2; valid = valid2 } =
     if check_valid && not (valid1 && valid2) then raise Invalidated;
-    if unsafe_content then c_copy cptr1 cptr2
-    else Bigarray.Array2.blit data1 data2
+    Bigarray.Array2.blit data1 data2
 
   external c_space : cptr -> int * int
       = "ml_matrix_dense_space"
@@ -212,13 +190,11 @@ module Dense = struct
     if check_valid && not valid then raise Invalidated;
     c_space rawptr
 
-  let clone { payload = dataa; rawptr = cptra; valid } =
+  let clone { payload = dataa; valid } =
     if check_valid && not valid then raise Invalidated;
-    let m, n = if unsafe_content then c_size cptra
-               else Bigarray.Array2.(dim2 dataa, dim1 dataa) in
+    let m, n = Bigarray.Array2.(dim2 dataa, dim1 dataa) in
     let { payload = datab; rawptr = cptrb } as r = create m n in
-    if unsafe_content then c_copy cptra cptrb
-    else Bigarray.Array2.blit dataa datab;
+    Bigarray.Array2.blit dataa datab;
     r
 
   let ops = {
