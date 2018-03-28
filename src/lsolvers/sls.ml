@@ -12,7 +12,6 @@
 
 (* sparse linear solvers functions *)
 
-(* note: uses DENSE_ELEM rather than the more efficient DENSE_COL. *)
 module SparseMatrix =
   struct
     (* Must correspond with sls_ml.h:sls_sparsematrix_index *)
