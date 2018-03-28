@@ -710,14 +710,6 @@ CAMLprim value c_matrix_band_wrap(DlsMat a)
  * when the C data structures are reallocated.
  */
 
-/* Note: A wrapper for SUNSparseMatrix_Realloc is not provided since this
- * function relies on realloc() but we cannot reallocate/resize a bigarray.
- * Instead of calling this function internally, we try to more accurately
- * calculate the number of non-zero elements required. This requires more
- * work, but we would have to anyway copy all of the non-zero elements to
- * resize the arrays.
- */
-
 static void finalize_mat_content_sparse(value vcptra)
 {
     MAT_CONTENT_SPARSE_TYPE content = MAT_CONTENT_SPARSE(vcptra);
@@ -1064,7 +1056,7 @@ static value sparse_wrap_payload(SlsMat a)
 }
 #endif
 
-static void matrix_sparse_upsize(value va, sundials_ml_index nnz,
+static void matrix_sparse_resize(value va, sundials_ml_index nnz,
 	int copy, int free)
 {
     CAMLparam1(va);
@@ -1081,90 +1073,92 @@ static void matrix_sparse_upsize(value va, sundials_ml_index nnz,
     vpayload = Field(va, RECORD_MAT_MATRIXCONTENT_PAYLOAD);
     A = MAT_CONTENT_SPARSE(vcptr);
 
-    if (A->NNZ < nnz) {
+    if (nnz <= 0)
+	nnz = A->NNZ;
+
 #if SUNDIALS_LIB_VERSION >= 270
-	old_indexptrs = A->indexptrs;
-	old_indexvals = A->indexvals;
+    old_indexptrs = A->indexptrs;
+    old_indexvals = A->indexvals;
 #else
-	old_indexptrs = A->rowvals;
-	old_indexvals = A->colptrs;
+    old_indexptrs = A->rowvals;
+    old_indexvals = A->colptrs;
 #endif
-	old_data = A->data;
-	old_nnz = A->NNZ;
+    old_data = A->data;
+    old_nnz = A->NNZ;
 
 #if SUNDIALS_LIB_VERSION >= 300
-	vdata = caml_ba_alloc_dims(BIGARRAY_FLOAT, 1, NULL, nnz);
-	vidxvals = caml_ba_alloc_dims(BIGARRAY_INT, 1, NULL, nnz);
-	vidxptrs = caml_ba_alloc_dims(BIGARRAY_INT, 1, NULL, A->NP + 1);
+    vdata = caml_ba_alloc_dims(BIGARRAY_FLOAT, 1, NULL, nnz);
+    vidxvals = caml_ba_alloc_dims(BIGARRAY_INT, 1, NULL, nnz);
+    vidxptrs = caml_ba_alloc_dims(BIGARRAY_INT, 1, NULL, A->NP + 1);
 
-	/* Strictly speaking, it is not necessary to reallocate and recopy the
-	   indexptrs. We do it for two reasons:
-	   (1) it is conceptually simpler to deep-copy the sparse payload
-	   (2) it simplifies functions like ml_matrix_sparse_scale_add,
-	       since they can "pretend" that upsize duplicates the
-	       matrix argument if they cache the old underlying arrays
-	       and call with free=0. */
+    /* Strictly speaking, it is not necessary to reallocate and recopy the
+       indexptrs. We do it for two reasons:
+       (1) it is conceptually simpler to deep-copy the sparse payload
+       (2) it simplifies functions like ml_matrix_sparse_scale_add,
+	   since they can "pretend" that resize duplicates the
+	   matrix argument if they cache the old underlying arrays
+	   and call with free=0. */
 
-	vnewpayload = caml_alloc_tuple(RECORD_MAT_SPARSEDATA_SIZE);
-	Store_field(vnewpayload, RECORD_MAT_SPARSEDATA_IDXVALS, vidxvals);
-	Store_field(vnewpayload, RECORD_MAT_SPARSEDATA_IDXPTRS, vidxptrs);
-	Store_field(vnewpayload, RECORD_MAT_SPARSEDATA_DATA,    vdata);
-	Store_field(vnewpayload, RECORD_MAT_SPARSEDATA_SFORMAT,
-		    MAT_TO_SFORMAT(A->sparsetype));
+    vnewpayload = caml_alloc_tuple(RECORD_MAT_SPARSEDATA_SIZE);
+    Store_field(vnewpayload, RECORD_MAT_SPARSEDATA_IDXVALS, vidxvals);
+    Store_field(vnewpayload, RECORD_MAT_SPARSEDATA_IDXPTRS, vidxptrs);
+    Store_field(vnewpayload, RECORD_MAT_SPARSEDATA_DATA,    vdata);
+    Store_field(vnewpayload, RECORD_MAT_SPARSEDATA_SFORMAT,
+		MAT_TO_SFORMAT(A->sparsetype));
 
-	Store_field(va, RECORD_MAT_MATRIXCONTENT_PAYLOAD, vnewpayload);
+    Store_field(va, RECORD_MAT_MATRIXCONTENT_PAYLOAD, vnewpayload);
 
-	new_data = REAL_ARRAY(vdata);
-	new_indexptrs = INDEX_ARRAY(vidxptrs);
-	new_indexvals = INDEX_ARRAY(vidxvals);
+    new_data = REAL_ARRAY(vdata);
+    new_indexptrs = INDEX_ARRAY(vidxptrs);
+    new_indexvals = INDEX_ARRAY(vidxvals);
 
-	A->data = new_data;
-	A->indexptrs = new_indexptrs;
-	A->indexvals = new_indexvals;
+    A->data = new_data;
+    A->indexptrs = new_indexptrs;
+    A->indexvals = new_indexvals;
 #else
-	new_indexvals = (int *) malloc(nnz * sizeof(int));
-	if (new_indexvals == NULL) caml_raise_out_of_memory();
+    new_indexvals = (int *) malloc(nnz * sizeof(int));
+    if (new_indexvals == NULL) caml_raise_out_of_memory();
 
-	new_indexptrs = (int *) malloc((A->NP + 1) * sizeof(int));
-	if (new_indexptrs == NULL) {
-	    free(new_indexvals);
-	    caml_raise_out_of_memory();
-	}
+    new_indexptrs = (int *) malloc((A->NP + 1) * sizeof(int));
+    if (new_indexptrs == NULL) {
+	free(new_indexvals);
+	caml_raise_out_of_memory();
+    }
 
-	new_data = (realtype *) malloc(nnz * sizeof(realtype));
-	if (new_data == NULL) {
-	    free(new_indexptrs);
-	    free(new_indexvals);
-	    caml_raise_out_of_memory();
-	}
+    new_data = (realtype *) malloc(nnz * sizeof(realtype));
+    if (new_data == NULL) {
+	free(new_indexptrs);
+	free(new_indexvals);
+	caml_raise_out_of_memory();
+    }
 
 #if SUNDIALS_LIB_VERSION >= 270
-	A->indexptrs = new_indexptrs;
-	A->indexvals = new_indexvals;
+    A->indexptrs = new_indexptrs;
+    A->indexvals = new_indexvals;
 #else
-	A->rowvals = new_indexptrs;
-	A->colptrs = new_indexvals;
+    A->rowvals = new_indexptrs;
+    A->colptrs = new_indexvals;
 #endif
-	A->data = new_data;
+    A->data = new_data;
 
-	vnewpayload = sparse_wrap_payload(A);
-	Store_field(va, RECORD_MAT_MATRIXCONTENT_PAYLOAD, vnewpayload);
+    vnewpayload = sparse_wrap_payload(A);
+    Store_field(va, RECORD_MAT_MATRIXCONTENT_PAYLOAD, vnewpayload);
 #endif
-	A->NNZ = nnz;
+    A->NNZ = nnz;
 
-	if (copy) {
-	    for (i=0; i < old_nnz; i++) {
-		new_data[i] = old_data[i];
-		new_indexvals[i] = old_indexvals[i];
-	    }
-	    for (; i < nnz; i++) {
-		new_data[i] = 0.0;
-		new_indexvals[i] = 0;
-	    }
-	    for (i=0; i < A->NP + 1; i++) {
-		new_indexptrs[i] = old_indexptrs[i];
-	    }
+    if (copy) {
+	for (i=0; i < SUNMIN(old_nnz, nnz); i++) {
+	    new_data[i] = old_data[i];
+	    new_indexvals[i] = old_indexvals[i];
 	}
+	for (; i < nnz; i++) {
+	    new_data[i] = 0.0;
+	    new_indexvals[i] = 0;
+	}
+	for (i=0; i < A->NP + 1; i++) {
+	    new_indexptrs[i] = old_indexptrs[i];
+	}
+    }
 
 #if SUNDIALS_LIB_VERSION < 300
     if (free) {
@@ -1282,7 +1276,7 @@ CAMLprim void ml_matrix_sparse_scale_add(value vc, value va, value vcptrb)
     /*   case 2: A does not already contain B's sparsity */
     } else {
 
-	/* access data from (pre upsize) CSR structures (return if failure) */
+	/* access data from (pre resize) CSR structures (return if failure) */
 	Ap = A_indexptrs;
 	Ai = A_indexvals;
 	Ax = A->data;
@@ -1291,10 +1285,10 @@ CAMLprim void ml_matrix_sparse_scale_add(value vc, value va, value vcptrb)
 	Bx = B->data;
 
 	/* reallocate memory within A */
-	matrix_sparse_upsize(va, nz, 0, 0); // no-copy, no-free
+	matrix_sparse_resize(va, nz, 0, 0); // no-copy, no-free
 	zero_sparse(A);
 
-	/* access data from (post upsize) CSR structures (return if failure) */
+	/* access data from (post resize) CSR structures (return if failure) */
 	Cp = A_indexptrs;
 	Ci = A_indexvals;
 	Cx = A->data;
@@ -1450,16 +1444,16 @@ CAMLprim void ml_matrix_sparse_scale_addi(value vc, value va)
 	w = (sundials_ml_index *) malloc(A->M * sizeof(sundials_ml_index));
 	x = (realtype *) malloc(A->M * sizeof(realtype));
 
-	/* access data from (pre upsize) CSR structures (return if failure) */
+	/* access data from (pre resize) CSR structures (return if failure) */
 	Ap = A_indexptrs;
 	Ai = A_indexvals;
 	Ax = A->data;
 
 	/* reallocate memory within A */
-	matrix_sparse_upsize(va, nz, 0, 0); // no-copy, no-free
+	matrix_sparse_resize(va, nz, 0, 0); // no-copy, no-free
 	zero_sparse(A);
 
-	/* access data from (post upsize) CSR structures (return if failure) */
+	/* access data from (post resize) CSR structures (return if failure) */
 	Cp = A_indexptrs;
 	Ci = A_indexvals;
 	Cx = A->data;
@@ -1585,10 +1579,10 @@ CAMLprim void ml_matrix_sparse_matvec(value vcptra, value vx, value vy)
     CAMLreturn0;
 }
 
-CAMLprim void ml_matrix_sparse_upsize(value va, value vnnz, value vcopy)
+CAMLprim void ml_matrix_sparse_resize(value va, value vnnz, value vcopy)
 {
     CAMLparam3(va, vnnz, vcopy);
-    matrix_sparse_upsize(va, Long_val(vnnz), Bool_val(vcopy), 1);
+    matrix_sparse_resize(va, Long_val(vnnz), Bool_val(vcopy), 1);
     CAMLreturn0;
 }
 
@@ -1622,7 +1616,7 @@ CAMLprim void ml_matrix_sparse_copy(value vcptra, value vb)
 
     /* ensure that B is allocated with at least as 
     much memory as we have nonzeros in A */
-    if (B->NNZ < A_nz) matrix_sparse_upsize(vb, A_nz, 0, 1); // no-copy, free
+    if (B->NNZ < A_nz) matrix_sparse_resize(vb, A_nz, 0, 1); // no-copy, free
 
     /* zero out B so that copy works correctly */
     zero_sparse(B);

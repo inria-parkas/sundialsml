@@ -494,10 +494,12 @@ module Sparse = struct
     in
     idxvals, idxptrs, data
 
-  external c_upsize : 's t -> int -> bool -> unit
-    = "ml_matrix_sparse_upsize"
+  external c_resize : 's t -> int -> bool -> unit
+    = "ml_matrix_sparse_resize"
 
-  let upsize nnz a = c_upsize a nnz true
+  let resize ?nnz a =
+    let nnz = match nnz with Some x -> x | None -> 0 in
+    c_resize a nnz true
 
   let invalidate v =
     if check_valid then v.valid <- false

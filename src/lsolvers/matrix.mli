@@ -500,7 +500,7 @@ module Sparse :
                  row (if [csr]) entries in [data] and [vals], and
         - [data] contains the values of the nonzero entries.
 
-        NB: The {!scale_add}, {!scale_addi}, {!blit}, and {!upsize} functions,
+        NB: The {!scale_add}, {!scale_addi}, {!blit}, and {!resize} functions,
         invoked either directly or from within a solver, may replace the
         underlying storage. In these cases, any previously 'unwrapped' arrays
         are no longer associated with the matrix storage.
@@ -508,7 +508,7 @@ module Sparse :
         NB: For {!Sundials.sundials_version} < 3.0.0, this access is
         potentially unsafe and {b must} only be used when the underlying
         storage is valid, which will be the case in callbacks unless the
-        {!scale_add}, {!scale_addi}, {!blit}, and {!upsize} functions are
+        {!scale_add}, {!scale_addi}, {!blit}, and {!resize} functions are
         used.
 
         @nocvode <node> SM_INDEXVALS_S
@@ -517,14 +517,15 @@ module Sparse :
     *)
     val unwrap : 's t -> index_array * index_array * Sundials.RealArray.t
 
-    (** Reallocates the underlying arrays to have at least the given number
-        of non-zero elements. Nothing is done if the matrix already has at
-        least the specified number of non-zero elements.
-
-        NB: The {!upsize} operation may replace the underlying storage of the
+    (** Reallocates the underlying arrays to the given number of non-zero
+        elements, or otherwise to the current number of non-zero elements .
+        
+        NB: The {!resize} operation may replace the underlying storage of the
         matrix argument. In this case, any previously 'unwrapped' array is no
-        longer associated with the matrix storage. *)
-    val upsize : int -> 's t -> unit
+        longer associated with the matrix storage.
+
+        @nocvode <node> SUNSparseMatrix_Reallocate *)
+    val resize : ?nnz:int -> 's t -> unit
 
     (** {4 Operations} *)
 
