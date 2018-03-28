@@ -46,9 +46,6 @@ CAMLprim value c_sls_sparse_wrap(SlsMat a, int finalize, value vformat)
     CAMLlocal4(vidxptrs, vidxvals, vdata, vv);
     CAMLlocal1(vr);
 
-    mlsize_t approx_size = (a->M + a->N) * sizeof(long int)
-			    + a->NNZ * sizeof(realtype) + 5;
-
 #if SUNDIALS_LIB_VERSION >= 270
     vidxptrs = caml_ba_alloc_dims(BIGARRAY_INT,   1, a->indexptrs, a->N + 1);
     vidxvals = caml_ba_alloc_dims(BIGARRAY_INT,   1, a->indexvals, a->NNZ);
@@ -59,8 +56,7 @@ CAMLprim value c_sls_sparse_wrap(SlsMat a, int finalize, value vformat)
     vdata    = caml_ba_alloc_dims(BIGARRAY_FLOAT, 1, a->data,    a->NNZ);
 
     /* a SlsMat is a pointer to a struct _SlsMat */
-    vv = caml_alloc_final(2, finalize ? &finalize_slsmat : NULL,
-			  approx_size, approx_size * 20);
+    vv = caml_alloc_final(2, finalize ? &finalize_slsmat : NULL, 1, 20);
     SLSMAT(vv) = a;
 
     vr = caml_alloc_tuple(RECORD_SLS_SPARSEMATRIX_SIZE);

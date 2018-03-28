@@ -49,13 +49,11 @@ CAMLprim value c_dls_dense_wrap(DlsMat a, int finalize)
 {
     CAMLparam0();
     CAMLlocal3(vv, va, vr);
-    mlsize_t approx_size = a->ldim * a->N * sizeof(realtype) + 1;
 
     va = caml_ba_alloc_dims(BIGARRAY_FLOAT, 2, a->data, a->N, a->ldim);
 
     /* a DlsMat is a pointer to a struct _DlsMat */
-    vv = caml_alloc_final(1, finalize ? &finalize_dlsmat : NULL,
-			  approx_size, approx_size * 20);
+    vv = caml_alloc_final(1, finalize ? &finalize_dlsmat : NULL, 1, 20);
     DLSMAT(vv) = a;
 
     vr = caml_alloc_tuple(RECORD_DLS_DENSEMATRIX_SIZE);
@@ -512,13 +510,11 @@ CAMLprim value c_dls_band_wrap(DlsMat a, int finalize)
 {
     CAMLparam0();
     CAMLlocal3(vv, va, vr);
-    mlsize_t approx_size = a->ldim * a->N * sizeof(realtype) + 2;
 
     va = caml_ba_alloc_dims(BIGARRAY_FLOAT, 2, a->data, a->N, a->ldim);
 
     /* a DlsMat is a pointer to a struct _DlsMat */
-    vv = caml_alloc_final(1, finalize ? &finalize_dlsmat : NULL,
-			  approx_size, approx_size * 20);
+    vv = caml_alloc_final(1, finalize ? &finalize_dlsmat : NULL, 1, 20);
     DLSMAT(vv) = a;
 
     vr = caml_alloc_tuple(RECORD_DLS_BANDMATRIX_SIZE);

@@ -2,12 +2,6 @@
 exception Invalidated
 exception IncompatibleArguments
 
-(* The payload field cannot be relied upon for Sundials < 3.0.0 *)
-let unsafe_content =
-  match Sundials.sundials_version with
-  | 2,_,_ -> true
-  | _ -> false
-
 let check_valid =
   match Sundials.sundials_version with
   | 2,_,_ -> Sundials_config.safe
@@ -218,15 +212,6 @@ end
 
 module Band = struct
 
-  (* Must correspond with matrix_ml.h:mat_band_data_index *)
-  type data = {
-    ismu : int;
-    data : Sundials.real_array2;
-  }
-  type cptr
-
-  type t = (data, cptr) matrix_content
-
   (* Must correspond with matrix_ml.h:mat_band_dimensions_index *)
   type dimensions = {
       n   : int;
@@ -234,6 +219,15 @@ module Band = struct
       smu : int;
       ml  : int;
     }
+
+  (* Must correspond with matrix_ml.h:mat_band_data_index *)
+  type data = {
+    data : Sundials.real_array2;
+    dims : dimensions;
+  }
+  type cptr
+
+  type t = (data, cptr) matrix_content
 
   external c_create : dimensions -> t
     = "ml_matrix_band_create"
@@ -246,43 +240,26 @@ module Band = struct
     end;
     c_create dimensions
 
-  external c_rewrap : cptr -> Sundials.real_array2
-    = "ml_matrix_band_rewrap"
-
-  let unwrap { payload = { data }; rawptr } =
-    if unsafe_content then c_rewrap rawptr
-    else data
-
-  external c_fill : cptr -> float -> unit
-    = "ml_matrix_band_fill"
+  let unwrap { payload = { data }; rawptr } = data
 
   let make dimensions x =
     let { payload = { data }; rawptr } as r = create dimensions in
-    if unsafe_content then c_fill rawptr x
-    else Bigarray.Array2.fill data x;
+    Bigarray.Array2.fill data x;
     r
 
   let invalidate v =
     if check_valid then v.valid <- false
 
-  external c_size : cptr -> int * int
-    = "ml_matrix_band_size"
-
-  let size { payload = { data }; rawptr; valid } =
+  let size { payload = { dims = { n } }; valid } =
     if check_valid && not valid then raise Invalidated;
-    if unsafe_content then c_size rawptr
-    else Bigarray.Array2.(dim2 data, dim1 data)
+    n, n
 
-  external c_dims : cptr -> dimensions
-      = "ml_matrix_band_dims"
-
-  let dims { rawptr; valid } =
+  let dims { payload = { dims }; rawptr; valid } =
     if check_valid && not valid then raise Invalidated;
-    c_dims rawptr
+    dims
 
-  let pp fmt { payload={data}; rawptr; valid } =
+  let pp fmt { payload={data = d}; rawptr; valid } =
     if check_valid && not valid then raise Invalidated;
-    let d = if unsafe_content then c_rewrap rawptr else data in
     let ni, nj = Bigarray.Array2.dim2 d - 1, Bigarray.Array2.dim1 d - 1 in
     Format.pp_print_string fmt "[";
     Format.pp_open_vbox fmt 0;
@@ -309,9 +286,8 @@ module Band = struct
 
   let ppi ?(start="[") ?(stop="]") ?(sep=";") ?(indent=4) ?(itemsep=" ")
           ?(item=fun f->Format.fprintf f "(%2d,%2d)=% -15e")
-          fmt { payload={data}; rawptr; valid } =
+          fmt { payload={data = d}; rawptr; valid } =
     if check_valid && not valid then raise Invalidated;
-    let d = if unsafe_content then c_rewrap rawptr else data in
     let ni, nj = Bigarray.Array2.dim2 d - 1, Bigarray.Array2.dim1 d - 1 in
     Format.pp_print_string fmt start;
     Format.pp_open_vbox fmt 0;
@@ -336,27 +312,18 @@ module Band = struct
     Format.pp_close_box fmt ();
     Format.pp_print_string fmt stop
 
-  external c_get : cptr -> int -> int -> float
-    = "ml_matrix_band_get"
-
-  let get { payload = {data; ismu}; rawptr; valid } i j =
+  let get { payload = {data; dims = { smu } }; rawptr; valid } i j =
     if check_valid && not valid then raise Invalidated;
-    if unsafe_content then c_get rawptr i j
-    else data.{j, i - j + ismu}
+    data.{j, i - j + smu}
 
-  external c_set : cptr -> int -> int -> float -> unit
-    = "ml_matrix_band_set"
-
-  let set { payload={data; ismu}; rawptr; valid } i j v =
+  let set { payload={data; dims = { smu } }; rawptr; valid } i j v =
     if check_valid && not valid then raise Invalidated;
-    if unsafe_content then c_set rawptr i j v
-    else data.{j, i - j + ismu} <- v
+    data.{j, i - j + smu} <- v
 
-  let update { payload={data; ismu}; rawptr; valid } i j f =
+  let update { payload={data; dims = { smu }}; rawptr; valid } i j f =
     if check_valid && not valid then raise Invalidated;
-    if unsafe_content then c_set rawptr i j (f (c_get rawptr i j))
-    else let k = i - j + ismu in
-         data.{j, k} <- f data.{j, k}
+    let k = i - j + smu in
+    data.{j, k} <- f data.{j, k}
 
   external c_scale_add : float -> t -> cptr -> unit
     = "ml_matrix_band_scale_add"
@@ -377,21 +344,18 @@ module Band = struct
   external c_matvec : cptr -> 'a serial_nvector -> 'a serial_nvector -> unit
     = "ml_matrix_band_matvec"
 
-  let matvec { rawptr; payload = { data }; valid } ~x ~y =
+  let matvec { rawptr; payload = { data; dims = { n } }; valid } ~x ~y =
     if check_valid && not valid then raise Invalidated;
     if Sundials_config.safe then begin
       let xl = Sundials.RealArray.length (Nvector.unwrap x) in
       let yl = Sundials.RealArray.length (Nvector.unwrap y) in
-      let m, n = if unsafe_content then c_size rawptr
-                 else Bigarray.Array2.(dim2 data, dim1 data) in
-      if n <> xl || m <> yl then raise IncompatibleArguments
+      if n <> yl || n <> xl then raise IncompatibleArguments
     end;
     c_matvec rawptr x y
 
   let set_to_zero { payload = { data }; rawptr; valid } =
     if check_valid && not valid then raise Invalidated;
-    if unsafe_content then c_fill rawptr 0.0
-    else Bigarray.Array2.fill data 0.0
+    Bigarray.Array2.fill data 0.0
 
   external c_copy : cptr -> t -> unit
     = "ml_matrix_band_copy"
@@ -402,19 +366,14 @@ module Band = struct
     if check_valid && not (valid1 && valid2) then raise Invalidated;
     c_copy cptr1 m2
 
-  external c_space : cptr -> int * int
-      = "ml_matrix_band_space"
-
-  let space { rawptr; valid } =
+  let space { payload = { dims = { n; mu; smu; ml } }; valid } =
     if check_valid && not valid then raise Invalidated;
-    c_space rawptr
+    (n * (smu + ml + 1), 7 + n)
 
-  let clone { rawptr = cptra; valid; payload = { data = dataa } } =
+  let clone { payload = { data = dataa; dims }; valid } =
     if check_valid && not valid then raise Invalidated;
-    let d = c_dims cptra in
-    let { payload = { data = datab } } as r = create d in
-    if unsafe_content then c_copy cptra r
-    else Bigarray.Array2.blit dataa datab;
+    let { payload = { data = datab } } as r = create dims in
+    Bigarray.Array2.blit dataa datab;
     r
 
   let ops = {
@@ -440,19 +399,26 @@ module Sparse = struct
   type csc
   type csr
 
+  (* The payload field cannot be relied upon for Sundials < 3.0.0 *)
+  let unsafe_content =
+    match Sundials.sundials_version with
+    | 2,_,_ -> true
+    | _ -> false
+
   type index_array =
     (int, Bigarray.int_elt, Bigarray.c_layout) Bigarray.Array1.t
 
+  (* See MAT_TO/FROM_SFORMAT(x) in matrix_ml.h *)
   type sformat =
-    | CSC_MAT
-    | CSR_MAT
+    | CSC_MAT   (* Must correpond with Sundials CSC_MAT = 0 constant. *)
+    | CSR_MAT   (* Must correpond with Sundials CSR_MAT = 1 constant. *)
 
   (* Must correspond with matrix_ml.h:mat_sparse_data_index *)
   type data = {
-    mutable idxvals : index_array;
-    idxptrs         : index_array;
-    mutable data    : Sundials.RealArray.t;
-    sformat         : sformat;
+    idxvals : index_array;
+    idxptrs : index_array;
+    data    : Sundials.RealArray.t;
+    sformat : sformat;
   }
     
   type cptr
@@ -519,12 +485,14 @@ module Sparse = struct
        | _ -> ());
     c_from_band CSR_MAT rawptr droptol
 
-  external c_rewrap : cptr -> index_array * index_array * Sundials.RealArray.t
+  external c_rewrap : 'f t -> data
     = "ml_matrix_sparse_rewrap"
 
-  let unwrap { payload = { idxvals; idxptrs; data }; rawptr } =
-    if unsafe_content then c_rewrap rawptr
-    else idxvals, idxptrs, data
+  let unwrap ({ payload; rawptr } as m) =
+    let { idxvals; idxptrs; data } =
+      if unsafe_content then c_rewrap m else payload
+    in
+    idxvals, idxptrs, data
 
   external c_upsize : 's t -> int -> bool -> unit
     = "ml_matrix_sparse_upsize"
@@ -711,8 +679,8 @@ module Sparse = struct
     if Sundials_config.safe then begin
       let xl = Sundials.RealArray.length (Nvector.unwrap x) in
       let yl = Sundials.RealArray.length (Nvector.unwrap y) in
-      let _, n = c_size rawptr in
-      if n <> xl || n <> yl then raise IncompatibleArguments
+      let m, n = c_size rawptr in
+      if n <> xl || m <> yl then raise IncompatibleArguments
     end;
     c_matvec rawptr x y
 

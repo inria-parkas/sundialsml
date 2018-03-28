@@ -29,7 +29,6 @@ enum dls_exn_index {
 #define DLS_EXN(name)     REGISTERED_EXN(DLS, name)
 #define DLS_EXN_TAG(name) REGISTERED_EXN_TAG(DLS, name)
 
-
 enum dls_densematrix_index {
   RECORD_DLS_DENSEMATRIX_PAYLOAD    = 0,
   RECORD_DLS_DENSEMATRIX_DLSMAT,
@@ -53,8 +52,4 @@ enum dls_bandmatrix_dims_index {
   RECORD_DLS_BANDMATRIX_DIMS_SIZE /* This has to come last. */
 };
 
-CAMLprim value c_dls_dense_wrap(DlsMat a, int finalize);
-CAMLprim value c_dls_band_wrap(DlsMat a, int finalize);
-
 #endif
-

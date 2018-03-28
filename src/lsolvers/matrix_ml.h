@@ -188,7 +188,18 @@ struct csmat {
 #define MAT_CONTENT_BAND_TYPE DlsMat
 #define MAT_CONTENT_SPARSE_TYPE SlsMat
 
+CAMLprim value c_matrix_dense_wrap(DlsMat a);
+CAMLprim value c_matrix_band_wrap(DlsMat a);
+
+CAMLprim value c_matrix_sparse_wrap(SlsMat a);
+// see also: ml_matrix_sparse_rewrap
+
 #endif
+
+// Convert Sundials CSC_MAT=0 and CSR_MAT=1 constants into
+// Matrix.Sparse.sformat values
+#define MAT_TO_SFORMAT(x) (Val_int(x))
+#define MAT_FROM_SFORMAT(x) (Int_val(x))
 
 enum mat_matrix_id_tag {
     MATRIX_ID_DENSE = 0,
@@ -216,8 +227,8 @@ enum mat_matrix_ops_index {
 };
 
 enum mat_band_data_index {
-    RECORD_MAT_BANDDATA_ISMU   = 0,
-    RECORD_MAT_BANDDATA_DATA,
+    RECORD_MAT_BANDDATA_DATA = 0,
+    RECORD_MAT_BANDDATA_DIMS,
     RECORD_MAT_BANDDATA_SIZE /* This has to come last. */
 };
 

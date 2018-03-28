@@ -288,10 +288,13 @@ module Band :
         column first (unlike in {!get}).
 
         NB: The {!scale_add} operation, invoked either directly or from within
-        a solver, may replace the underlying storage of its first matrix
-        argument if the second matrix has a strictly larger bandwidth. In this
-        case, any previously 'unwrapped' array is no longer associated with
-        the matrix storage.
+        a solver, will replace the underlying storage of its first matrix
+        argument if the second matrix has a strictly larger bandwidth.
+        Similarly, the {!blit} operation, invoked either directly or from
+        within a solver, will replace the underlying storage of its second
+        matrix argument if the first matrix has a strictly larger bandwidth.
+        In both cases, any previously 'unwrapped' array is no longer
+        associated with the matrix storage.
 
         NB: For {!Sundials.sundials_version} < 3.0.0, this access is
         potentially unsafe and {b must} only be used when the underlying
@@ -303,9 +306,14 @@ module Band :
     (** {4 Operations} *)
 
     (** Operations on dense matrices. *)
+
     val ops : (t, Nvector_serial.data, [>Nvector_serial.kind]) matrix_ops
 
     (** [scale_add c A B] calculates $A = cA + B$.
+
+        NB: This operation, invoked either directly or from within a solver,
+        will replace the underlying storage of its first matrix argument if
+        the second matrix has a strictly larger bandwidth.
 
         @nocvode <node> SUNMatScaleAdd
         @nocvode <node> SUNMatScaleAdd_Band *)
@@ -334,10 +342,8 @@ module Band :
         must have the same size.
 
         NB: This operation, invoked either directly or from within a solver,
-        may replace the underlying storage of its second matrix argument if
-        the first matrix has a strictly larger bandwidth. In this case, any
-        previously 'unwrapped' array is no longer associated with
-        the matrix storage.
+        will replace the underlying storage of its second matrix argument if
+        the first matrix has a strictly larger bandwidth.
 
         @nocvode <node> SUNMatCopy
         @nocvode <node> SUNMatCopy_Band *)
@@ -494,9 +500,16 @@ module Sparse :
                  row (if [csr]) entries in [data] and [vals], and
         - [data] contains the values of the nonzero entries.
 
+        NB: The {!scale_add}, {!scale_addi}, {!blit}, and {!upsize} functions,
+        invoked either directly or from within a solver, may replace the
+        underlying storage. In these cases, any previously 'unwrapped' arrays
+        are no longer associated with the matrix storage.
+
         NB: For {!Sundials.sundials_version} < 3.0.0, this access is
         potentially unsafe and {b must} only be used when the underlying
-        storage is valid, which will be the case in callbacks.
+        storage is valid, which will be the case in callbacks unless the
+        {!scale_add}, {!scale_addi}, {!blit}, and {!upsize} functions are
+        used.
 
         @nocvode <node> SM_INDEXVALS_S
         @nocvode <node> SM_INDEXPTRS_S
