@@ -1167,12 +1167,13 @@ static void matrix_sparse_upsize(value va, sundials_ml_index nnz,
 	}
 
 #if SUNDIALS_LIB_VERSION < 300
+    if (free) {
 	free(old_data);
 	free(old_indexptrs);
 	free(old_indexvals);
 	// For >= 300, the OCaml bigarrays ensure gc of these arrays
-#endif
     }
+#endif
 
     CAMLreturn0;
 }
