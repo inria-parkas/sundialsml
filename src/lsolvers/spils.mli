@@ -42,7 +42,7 @@ type gramschmidt_type =
 (** The type of preconditioning in Krylov solvers.
 
     @cvode <node3#s:preconditioning> Preconditioning
-    @cvode <node5#sss:lin_solv_init> CVSpgmr/CVSpbcg/CVSptfqrm *)
+    @cvode <node5#sss:lin_solv_init> CVSpgmr/CVSpbcg/CVSptfqmr *)
 type preconditioning_type =
   | PrecNone    (** No preconditioning *)
   | PrecLeft    (** {% $(P^{-1}A)x = P^{-1}b$ %} *)
