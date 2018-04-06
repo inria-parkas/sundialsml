@@ -30,7 +30,7 @@ module Direct = struct
 
   let dense nvec mat = {
       rawptr = c_dense nvec mat;
-      compat = Dense;
+      solver = Dense;
     }
 
   external c_lapack_dense : 'k Nvector_serial.any -> 'k Matrix.dense -> cptr
@@ -41,7 +41,7 @@ module Direct = struct
       then raise Sundials.NotImplementedBySundialsVersion;
     {
       rawptr = c_lapack_dense nvec mat;
-      compat = LapackDense;
+      solver = LapackDense;
     }
 
   external c_band : 'k Nvector_serial.any -> 'k Matrix.band -> cptr
@@ -49,7 +49,7 @@ module Direct = struct
 
   let band nvec mat = {
       rawptr = c_band nvec mat;
-      compat = Band;
+      solver = Band;
     }
 
   external c_lapack_band : 'k Nvector_serial.any -> 'k Matrix.band -> cptr
@@ -60,7 +60,7 @@ module Direct = struct
       then raise Sundials.NotImplementedBySundialsVersion;
     {
       rawptr = c_lapack_band nvec mat;
-      compat = LapackBand;
+      solver = LapackBand;
     }
 
   module Klu = struct
@@ -73,28 +73,28 @@ module Direct = struct
       if not Sundials_config.klu_enabled
         then raise Sundials.NotImplementedBySundialsVersion;
       let cptr = c_klu nvec mat in
-      let compat =
+      let info =
         if in_compat_mode
         then let r = { info with ordering = ordering } in
              r.set_ordering <- (fun o -> r.ordering <- Some o); r
         else info
       in
       { rawptr = cptr;
-        compat = Klu compat; }
+        solver = Klu info; }
 
     external c_reinit : cptr -> ('s, 'k) Matrix.sparse -> unit
       = "ml_lsolver_klu_reinit"
 
-    let reinit { rawptr = cptr; compat } mat ?nnz () =
+    let reinit { rawptr = cptr; solver } mat ?nnz () =
       if in_compat_mode then
-        match compat with
+        match solver with
         | Klu { reinit = f } ->
             let smat = Matrix.unwrap mat in
             f (fst (Matrix.Sparse.size smat)) nnz
         | _ -> assert false
       else begin
         (match nnz with
-         | Some n -> Matrix.Sparse.upsize n (Matrix.unwrap mat)
+         | Some n -> Matrix.Sparse.resize ~nnz:n (Matrix.unwrap mat)
          | None -> ());
         c_reinit cptr mat
       end
@@ -102,9 +102,9 @@ module Direct = struct
     external c_set_ordering : cptr -> ordering -> unit
       = "ml_lsolver_klu_set_ordering"
 
-    let set_ordering { rawptr = cptr; compat } ordering =
+    let set_ordering { rawptr = cptr; solver } ordering =
       if in_compat_mode then
-        match compat with
+        match solver with
         | Klu { set_ordering = f } -> f ordering
         | _ -> assert false
       else c_set_ordering cptr ordering
@@ -121,21 +121,21 @@ module Direct = struct
       if not Sundials_config.superlumt_enabled
         then raise Sundials.NotImplementedBySundialsVersion;
       let cptr = c_superlumt nvec mat nthreads in
-      let compat =
+      let info =
         if in_compat_mode
-        then let r = { info with ordering = ordering } in
+        then let r = { (info nthreads) with ordering = ordering } in
              r.set_ordering <- (fun o -> r.ordering <- Some o); r
-        else info
+        else info nthreads
       in
       { rawptr = cptr;
-        compat = Superlumt compat; }
+        solver = Superlumt info; }
 
     external c_set_ordering : cptr -> ordering -> unit
       = "ml_lsolver_superlumt_set_ordering"
 
-    let set_ordering { rawptr = cptr; compat } ordering =
+    let set_ordering { rawptr = cptr; solver } ordering =
       if in_compat_mode then
-        match compat with
+        match solver with
         | Superlumt { set_ordering = f } -> f ordering
         | _ -> assert false
       else c_set_ordering cptr ordering
@@ -164,17 +164,21 @@ module Iterative = struct
   external c_set_max_restarts : cptr -> solver -> int -> unit
     = "ml_lsolver_set_max_restarts"
 
-  let set_maxl { rawptr = cptr; solver; compat } maxl =
+  let set_maxl { rawptr; solver; compat } maxl =
     if in_compat_mode then compat.set_maxl maxl
-    else c_set_maxl cptr solver maxl
+    else c_set_maxl rawptr solver maxl
 
-  let set_gs_type { rawptr = cptr; solver; compat } gs_type =
+  let set_gs_type { rawptr; solver; compat } gs_type =
     if in_compat_mode then compat.set_gs_type gs_type
-    else c_set_gs_type cptr solver gs_type
+    else c_set_gs_type rawptr solver gs_type
 
-  let set_max_restarts { rawptr = cptr; solver; compat } max_restarts =
-    if in_compat_mode then compat.set_max_restarts max_restarts
-    else c_set_max_restarts cptr solver max_restarts
+  let set_max_restarts { rawptr; solver; compat } max_restarts =
+    if in_compat_mode then raise Sundials.NotImplementedBySundialsVersion
+    else c_set_max_restarts rawptr solver max_restarts
+
+  let set_prec_type { rawptr; solver; compat } prec_type =
+    if in_compat_mode then compat.set_prec_type prec_type
+    else c_set_prec_type rawptr solver prec_type
 
   let default = function
     | Some x -> x
@@ -184,11 +188,13 @@ module Iterative = struct
     = "ml_lsolver_spbcgs"
 
   let spbcgs ?maxl nvec =
-    let cptr = c_spbcgs (default maxl) nvec in
+    let maxl = default maxl in
+    let cptr = c_spbcgs maxl nvec in
     let compat =
       if in_compat_mode
       then let r = { info with maxl = maxl } in
-           r.set_maxl <- (fun m -> r.maxl <- Some m); r
+           r.set_maxl <- (fun m -> r.maxl <- m);
+           r
       else info
     in
     { rawptr = cptr;
@@ -199,13 +205,16 @@ module Iterative = struct
     = "ml_lsolver_spfgmr"
 
   let spfgmr ?maxl ?max_restarts ?gs_type nvec =
-    let cptr = c_spfgmr (default maxl) nvec in
+    let maxl = default maxl in
+    let cptr = c_spfgmr maxl nvec in
     let compat =
       if in_compat_mode
-      then let r = { info with max_restarts = max_restarts;
-                               gs_type = gs_type } in
-           r.set_max_restarts <- (fun m -> r.max_restarts <- Some m);
-           r.set_gs_type      <- (fun t -> r.gs_type <- Some t); r
+      then begin
+             if max_restarts <> None
+               then raise Sundials.NotImplementedBySundialsVersion;
+             let r = { info with maxl = maxl; gs_type = gs_type } in
+             r.set_gs_type <- (fun t -> r.gs_type <- Some t); r
+           end
       else begin
         (match max_restarts with
          | Some mr -> c_set_max_restarts cptr Spfgmr mr
@@ -224,13 +233,17 @@ module Iterative = struct
     = "ml_lsolver_spgmr"
 
   let spgmr ?maxl ?max_restarts ?gs_type nvec =
-    let cptr = c_spgmr (default maxl) nvec in
+    let maxl = default maxl in
+    let cptr = c_spgmr maxl nvec in
     let compat =
       if in_compat_mode
-      then let r = { info with max_restarts = max_restarts;
-                               gs_type      = gs_type } in
-           r.set_max_restarts <- (fun m -> r.max_restarts <- Some m);
-           r.set_gs_type      <- (fun t -> r.gs_type <- Some t); r
+      then begin
+             if max_restarts <> None
+               then raise Sundials.NotImplementedBySundialsVersion;
+             let r = { info with maxl = maxl; gs_type = gs_type } in
+             r.set_gs_type <- (fun t -> r.gs_type <- Some t);
+             r
+           end
       else begin
         (match max_restarts with
          | Some mr -> c_set_max_restarts cptr Spgmr mr
@@ -249,11 +262,13 @@ module Iterative = struct
     = "ml_lsolver_sptfqmr"
 
   let sptfqmr ?maxl nvec =
-    let cptr = c_sptfqmr (default maxl) nvec in
+    let maxl = default maxl in
+    let cptr = c_sptfqmr maxl nvec in
     let compat =
       if in_compat_mode
       then let r = { info with maxl = maxl } in
-           r.set_maxl <- (fun m -> r.maxl <- Some m); r
+           r.set_maxl <- (fun m -> r.maxl <- m);
+           r
       else info
     in
     { rawptr = cptr;
@@ -264,11 +279,12 @@ module Iterative = struct
     = "ml_lsolver_pcg"
 
   let pcg ?maxl nvec =
-    let cptr = c_pcg (default maxl) nvec in
+    let maxl = default maxl in
+    let cptr = c_pcg maxl nvec in
     let compat =
       if in_compat_mode
       then let r = { info with maxl = maxl } in
-           r.set_maxl <- (fun m -> r.maxl <- Some m); r
+           r.set_maxl <- (fun m -> r.maxl <- m); r
       else info
     in
     { rawptr = cptr;

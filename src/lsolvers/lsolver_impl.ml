@@ -52,52 +52,64 @@ module Superlumt = struct
   type info = {
     mutable ordering     : ordering option;
     mutable set_ordering : ordering -> unit;
+    num_threads          : int;
   }
 
-  let info = {
+  let info num_threads = {
     ordering     = None;
     set_ordering = (fun _ -> ());
+    num_threads  = num_threads;
   }
 end
 
 module Direct = struct
 
-  type solver =
-    | Dense
-    | LapackDense
-    | Band
-    | LapackBand
-    | Klu of Klu.info
-    | Superlumt of Superlumt.info
+  type _ solver =
+    | Dense       : Matrix.Dense.t solver
+    | LapackDense : Matrix.Dense.t solver
+    | Band        : Matrix.Band.t  solver
+    | LapackBand  : Matrix.Band.t  solver
+    | Klu         : Klu.info       -> 's Matrix.Sparse.t solver
+    | Superlumt   : Superlumt.info -> 's Matrix.Sparse.t solver
 
   type cptr
 
   type ('m, 'nd, 'nk) t = {
     rawptr : cptr;
-    compat : solver;
+    solver : 'm solver;
   }
 end
 
 module Iterative = struct
 
+  (* Must correspond with lsolver_ml.h:lsolver_gramschmidt_type_tag *)
+  type gramschmidt_type = Spils.gramschmidt_type =
+    | ModifiedGS
+    | ClassicalGS
+
+  (* Must correspond with lsolver_ml.h:lsolver_preconditioning_type_tag *)
+  type preconditioning_type = Spils.preconditioning_type =
+    | PrecNone
+    | PrecLeft
+    | PrecRight
+    | PrecBoth
+
   type info = {
-    mutable maxl             : int option;
-    mutable gs_type          : Spils.gramschmidt_type option;
-    mutable max_restarts     : int option;
+    mutable maxl             : int;
+    mutable gs_type          : gramschmidt_type option;
 
     mutable set_maxl         : int -> unit;
-    mutable set_gs_type      : Spils.gramschmidt_type -> unit;
-    mutable set_max_restarts : int -> unit;
+    mutable set_gs_type      : gramschmidt_type -> unit;
+    mutable set_prec_type    : preconditioning_type -> unit;
   }
 
   let info = {
-    maxl             = None;
+    maxl             = 0;
     gs_type          = None;
-    max_restarts     = None;
 
     set_maxl         = (fun _ -> ());
     set_gs_type      = (fun _ -> ());
-    set_max_restarts = (fun _ -> ());
+    set_prec_type    = (fun _ -> ());
   }
 
   (* Must correspond with lsolver_ml.h:lsolver_iterative_solver_tag *)
@@ -115,18 +127,6 @@ module Iterative = struct
     solver : solver;
     compat : info;
   }
-
-  (* Must correspond with lsolver_ml.h:lsolver_gramschmidt_type_tag *)
-  type gramschmidt_type = Spils.gramschmidt_type =
-    | ModifiedGS
-    | ClassicalGS
-
-  (* Must correspond with lsolver_ml.h:lsolver_preconditioning_type_tag *)
-  type preconditioning_type = Spils.preconditioning_type =
-    | PrecNone
-    | PrecLeft
-    | PrecRight
-    | PrecBoth
 
   external c_set_prec_type : cptr -> solver -> preconditioning_type -> unit
     = "ml_lsolvers_set_prec_type"

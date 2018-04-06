@@ -21,17 +21,23 @@
     @nocvode <node> Description of the SUNLinearSolver module
     @since 3.0.0 *)
 
+(* TODO: Write up notes on how the linear solvers work and explain the
+   important differences before and after Sundials 3.0.0. *)
+
 (** Direct Linear Solvers. *)
-module Direct : sig
+module Direct : sig (* {{{ *)
   (** A direct linear solver.
+      The type variables specify the Jacobian matrix (['matrix]) and the
+      {!Nvector.nvector} data (['data]) and kind (['kind]).
 
       @nocvode <node> Description of the SUNLinearSolver module
       @nocvode <node> SUNLinearSolver *)
-  type ('m, 'nd, 'nk) t
+  type ('matrix, 'data, 'kind) t
+    = ('matrix, 'data, 'kind) Lsolver_impl.Direct.t
 
   (** Alias for linear solvers that are restricted to serial nvectors. *)
-  type ('m, 'nk) serial_t
-    = ('m, Nvector_serial.data, [>Nvector_serial.kind] as 'nk) t
+  type ('mat, 'kind) serial_t
+    = ('mat, Nvector_serial.data, [>Nvector_serial.kind] as 'kind) t
 
   (** Creates a direct linear solver on dense matrices. The nvector and matrix
       argument are used to determine the linear system size and to assess
@@ -127,8 +133,8 @@ module Direct : sig
       ?ordering:ordering
       -> nthreads:int
       -> 'k Nvector_serial.any
-      -> ('s, 'k) Matrix.sparse
-      -> ('s Matrix.Sparse.t, 'k) serial_t
+      -> (Matrix.csc, 'k) Matrix.sparse
+      -> (Matrix.csc Matrix.Sparse.t, 'k) serial_t
 
     (** Sets the ordering algorithm used to minimize fill-in.
 
@@ -137,16 +143,19 @@ module Direct : sig
   end
 
   (* TODO: Add custom direct lsolver (subset of generic functions). *)
-end
+end (* }}} *)
 
 (** Iterative linear Solvers. *)
-module Iterative : sig
+module Iterative : sig (* {{{ *)
 
   (** An iterative linear solver.
+      The type variables specify the {!Nvector.nvector} data (['data]) and
+      kind (['kind]), and the iterative method (['iter]).
 
       @nocvode <node> Description of the SUNLinearSolver module
       @nocvode <node> SUNLinearSolver *)
-  type ('nd, 'nk, 'f) t
+  type ('data, 'kind, 'iter) t
+    = ('data, 'kind, 'iter) Lsolver_impl.Iterative.t
 
   (** The type of Gram-Schmidt orthogonalization in iterative linear solvers.
 
@@ -172,6 +181,8 @@ module Iterative : sig
       the maximum dimension of the Krylov subspace (defaults to 5). The
       nvector argument is used as a template.
 
+      NB: [max_restarts] is ignored in Sundials < 3.0.0.
+
       @nocvode <node> SUNSPFGMR *)
   val spfgmr : ?maxl:int -> ?max_restarts:int
                -> ?gs_type:gramschmidt_type
@@ -181,6 +192,8 @@ module Iterative : sig
       minimum residual (GMRES) method. The [maxl] arguments gives the maximum
       dimension of the Krylov subspace (defaults to 5). The nvector argument
       is used as a template.
+
+      NB: [max_restarts] is ignored in Sundials < 3.0.0.
       
       @nocvode <node> SUNSPGMR *)
   val spgmr : ?maxl:int -> ?max_restarts:int
@@ -222,10 +235,33 @@ module Iterative : sig
     ('d, 'k, [< `Spfgmr|`Spgmr]) t -> gramschmidt_type -> unit
 
   (** Sets the number of GMRES restarts to allow.
+
+      NB: This feature is not supported by Sundials < 3.0.0.
  
       @nocvode <node> SUNSPGMRSetMaxRestarts
       @nocvode <node> SUNSPFGMRSetMaxRestarts *)
   val set_max_restarts : ('d, 'k, [< `Spfgmr|`Spgmr]) t -> int -> unit
+
+  (** The type of preconditioning in Krylov solvers.
+
+      @nocvode <node> Preconditioning *)
+  type preconditioning_type = Spils.preconditioning_type =
+    | PrecNone    (** No preconditioning *)
+    | PrecLeft    (** {% $(P^{-1}A)x = P^{-1}b$ %} *)
+    | PrecRight   (** {% $(AP^{-1})Px = b$ %} *)
+    | PrecBoth    (** {% $(P_L^{-1}AP_R^{-1})P_Rx = P_L^{-1}b$ %} *)
+
+  (** Change the preconditioning direction without modifying callback
+      functions. Raises {Invalid_argument} if the current preconditioner
+      is {{!preconditioning_type}PrecNone} and the given argument is not
+      (since no callback functions are specified in this case.
+
+      @nocvode <node> SUNPCGSetPrecType
+      @nocvode <node> SUNSPBCGSSetPrecType
+      @nocvode <node> SUNSPFGMRSetPrecType
+      @nocvode <node> SUNSPGMRSetPrecType
+      @nocvode <node> SUNSPTFQMRSetPrecType *)
+  val set_prec_type : ('d, 'k, 'f) t -> preconditioning_type -> unit
 
   (** {2 Exceptions} *)
 
@@ -266,7 +302,7 @@ module Iterative : sig
       {cconst SUNLS_LUFACT_FAIL} *)
   exception LUfactFailure
 
-end
+end (* }}} *)
 
 (* TODO: Add custom linear solvers
    - custom direct lsolver (subset of generic functions)
