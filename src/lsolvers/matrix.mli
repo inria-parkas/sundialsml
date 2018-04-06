@@ -25,7 +25,7 @@
     signalled by raising an exception.
 
     @nocvode <node> Description of the SUNMatrix module *)
-type ('m, 'd, 'k) matrix_ops = {
+type ('m, 'd, 'k) matrix_ops = { (* {{{ *)
   m_clone     : 'm -> 'm;
   (** Create a new, distinct matrix from an existing one without
       copying the contents of the original matrix. *)
@@ -48,7 +48,7 @@ type ('m, 'd, 'k) matrix_ops = {
   m_space     : 'm -> int * int;
   (** [lrw, liw = m_space a] returns the number of realtype words [lrw] and
       integer words [liw] required to store the matrix [a]. *)
-}
+} (* }}} *)
 
 (** Raised in {!Sundials.sundials_version} < 3.0.0 on an attempt to
     access a value that has become invalid. Such values refer to matrices
@@ -60,7 +60,7 @@ exception Invalidated
 exception IncompatibleArguments
 
 (** Dense matrices *)
-module Dense :
+module Dense : (* {{{ *)
   sig
     (* TODO: check documentation links *)
     (** A dense matrix. Values of this type are typically passed to linear
@@ -185,10 +185,10 @@ module Dense :
         library ceases to exist. Has no effect when
         {!Sundials.sundials_version} >= 3.0.0. *)
     val invalidate : t -> unit
-  end
+  end (* }}} *)
 
 (** Banded matrices *)
-module Band :
+module Band : (* {{{ *)
   sig
     (* TODO: check documentation links *)
     (** A band matrix. Values of this type are typically passed to linear
@@ -362,13 +362,18 @@ module Band :
         library ceases to exist. Has no effect when
         {!Sundials.sundials_version} >= 3.0.0. *)
     val invalidate : t -> unit
-  end
+  end (* }}} *)
 
 (** Sparse matrices *)
-module Sparse :
+module Sparse : (* {{{ *)
   sig
-    type csc  (* Compressed-sparse-column format ([CSC_MAT]). *)
-    type csr  (* Compressed-sparse-row format ([CSR_MAT]). *)
+    type csc (** Compressed-sparse-column format. *)
+    type csr (** Compressed-sparse-row format. *)
+
+    (* Matrix storage formats. *)
+    type _ sformat =
+      | CSC : csc sformat (** Compressed-sparse-column format ([CSC_MAT]). *)
+      | CSR : csr sformat (** Compressed-sparse-row format ([CSR_MAT]). *)
 
     (* TODO: check documentation links *)
     (** A spare matrix. Values of this type are typically passed to linear
@@ -377,8 +382,6 @@ module Sparse :
 
         @nocvode <node> The SUNMatrix_Sparse implementation *)
     type 's t
-    type t_csc = csc t
-    type t_csr = csr t
 
     (** Array of row or column indices *)
     type index_array =
@@ -386,53 +389,33 @@ module Sparse :
 
     (** {4 Basic access} *)
 
-    (** [make_csc m n nnz] returns an [m] by [n] sparse matrix in
-        compressed-sparse-column format with a potential
-        for [nnz] non-zero elements. All elements are initially zero.
+    (** [make fmt m n nnz] returns an [m] by [n] sparse matrix in the
+        specified format with a potential for [nnz] non-zero elements.
+        All elements are initially zero.
+
+        The {!sformat.CSR} format is only available from Sundials 2.7.0 onwards.
 
         @nocvode <node> SUNSparseMatrix *)
-    val make_csc : int -> int -> int -> csc t
+    val make : 's sformat -> int -> int -> int -> 's t
 
-    (** [make_csr m n nnz] returns an [m] by [n] sparse matrix in
-        compressed-sparse-row format with a potential
-        for [nnz] non-zero elements. All elements are initially zero.
+    (** Creates a sparse matrix in in the specified format from a dense matrix
+        by copying all values of magnitude greater than the given tolerance.
 
-        @since 2.7.0
-        @raise Sundials.NotImplementedBySundialsVersion CSR format not available.
-        @nocvode <node> SUNSparseMatrix *)
-    val make_csr : int -> int -> int -> csr t
-
-    (** Creates a sparse matrix in compressed-sparse-column format from a dense
-        matrix by copying all values of magnitude greater than the given
-        tolerance.
+        The {!sformat.CSR} format is only available from Sundials 2.7.0 onwards.
 
         @nocvode <node> SUNSparseFromDenseMatrix *)
-    val csc_from_dense : float -> Dense.t -> csc t
+    val from_dense : 's sformat -> float -> Dense.t -> 's t
 
-    (** Creates a sparse matrix in compressed-sparse-row format from a dense
-        matrix by copying all values of magnitude greater than the given
-        tolerance.
+    (** Creates a sparse matrix in the specified format from a band matrix by
+        copying all values of magnitude greater than the given tolerance.
 
-        @since 2.7.0
-        @raise Sundials.NotImplementedBySundialsVersion CSR format not available.
-        @nocvode <node> SUNSparseFromDenseMatrix *)
-    val csr_from_dense : float -> Dense.t -> csr t
-
-    (** Creates a sparse matrix in compressed-sparse-column format from a band
-        matrix by copying all values of magnitude greater than the given
-        tolerance.
+        The {!sformat.CSR} format is only available from Sundials 2.7.0 onwards.
 
         @nocvode <node> SUNSparseFromBandMatrix *)
-    val csc_from_band : float -> Band.t -> csc t
+    val from_band : 's sformat -> float -> Band.t -> 's t
 
-    (** Creates a sparse matrix in compressed-sparse-row format from a band
-        matrix by copying all values of magnitude greater than the given
-        tolerance.
-
-        @since 2.7.0
-        @raise Sundials.NotImplementedBySundialsVersion CSR format not available.
-        @nocvode <node> SUNSparseFromBandMatrix *)
-    val csr_from_band : float -> Band.t -> csr t
+    (** Return the matrix format. *)
+    val sformat : 's t -> 's sformat
 
     (** [m, n = size a] returns the numbers of columns [m] and rows [n]
         of [a].
@@ -614,7 +597,7 @@ module Sparse :
         library ceases to exist. Has no effect when
         {!Sundials.sundials_version} >= 3.0.0. *)
     val invalidate : 's t -> unit
-  end
+  end (* }}} *)
 
 type csc = Sparse.csc
 type csr = Sparse.csr
@@ -666,19 +649,13 @@ val make_band : Band.dimensions -> float -> 'nk band
     @nocvode <node> SUNBandMatrix *)
 val wrap_band : Band.t -> 'nk band
 
-(** [make m n nnz] returns an [m] by [n] (sparse compressed-sparse-column)
-    matrix with a potential for [nnz] non-zero elements. All elements are
-    initially zero.
+(** [make m n nnz] returns an [m] by [n] matrix in the specified format with
+    a potential for [nnz] non-zero elements. All elements are initially zero.
+
+    The {!sformat.CSR} format is only available from Sundials 2.7.0 onwards.
 
     @nocvode <node> SUNSparseMatrix *)
-val make_sparse_csc : int -> int -> int -> (csc, 'nk) sparse
-
-(** [make m n nnz] returns an [m] by [n] (sparse compressed-sparse-row)
-    matrix with a potential for [nnz] non-zero elements. All elements are
-    initially zero.
-
-    @nocvode <node> SUNSparseMatrix *)
-val make_sparse_csr : int -> int -> int -> (csr, 'nk) sparse
+val make_sparse : 's Sparse.sformat -> int -> int -> int -> ('s, 'nk) sparse
 
 (** Creates a (sparse) matrix by wrapping an existing sparse matrix. The two
     values share the same underlying storage.

@@ -34,7 +34,7 @@ type ('m, 'd, 'k) matrix_ops = {
   m_space      : 'm -> int * int;
 }
 
-module Dense = struct
+module Dense = struct (* {{{ *)
 
   type data = Sundials.real_array2
   type cptr
@@ -208,9 +208,9 @@ module Dense = struct
 
     m_space      = space;
   }
-end
+end (* }}} *)
 
-module Band = struct
+module Band = struct (* {{{ *)
 
   (* Must correspond with matrix_ml.h:mat_band_dimensions_index *)
   type dimensions = {
@@ -393,11 +393,16 @@ module Band = struct
 
     m_space      = space;
   }
-end
+end (* }}} *)
 
-module Sparse = struct
+module Sparse = struct (* {{{ *)
   type csc
   type csr
+
+  (* See MAT_TO/FROM_SFORMAT(x) in matrix_ml.h *)
+  type _ sformat =
+    | CSC : csc sformat (* Must correpond with Sundials CSC_MAT = 0 constant. *)
+    | CSR : csr sformat (* Must correpond with Sundials CSR_MAT = 1 constant. *)
 
   (* The payload field cannot be relied upon for Sundials < 3.0.0 *)
   let unsafe_content =
@@ -408,84 +413,65 @@ module Sparse = struct
   type index_array =
     (int, Bigarray.int_elt, Bigarray.c_layout) Bigarray.Array1.t
 
-  (* See MAT_TO/FROM_SFORMAT(x) in matrix_ml.h *)
-  type sformat =
-    | CSC_MAT   (* Must correpond with Sundials CSC_MAT = 0 constant. *)
-    | CSR_MAT   (* Must correpond with Sundials CSR_MAT = 1 constant. *)
-
   (* Must correspond with matrix_ml.h:mat_sparse_data_index *)
-  type data = {
+  type 's data = {
     idxvals : index_array;
     idxptrs : index_array;
     data    : Sundials.RealArray.t;
-    sformat : sformat;
+    sformat : 's sformat;
   }
     
   type cptr
 
-  type 's t = (data, cptr) matrix_content
+  type 's t = ('s data, cptr) matrix_content
 
-  type t_csc = csc t
-  type t_csr = csr t
-
-  external c_create : int -> int -> int -> sformat -> 'f t
+  external c_create : int -> int -> int -> 's sformat -> 's t
     = "ml_matrix_sparse_create"
 
-  let make_csc m n nnz =
-    if Sundials_config.safe then begin
-      if m <= 0 then invalid_arg "m";
-      if n <= 0 then invalid_arg "n";
-      if nnz <= 0 then invalid_arg "nnz"
-    end;
-    c_create m n nnz CSC_MAT
-
-  let make_csr m n nnz =
+  let make (type s) (sformat : s sformat) m n nnz =
     if Sundials_config.safe then begin
       if m <= 0 then invalid_arg "m";
       if n <= 0 then invalid_arg "n";
       if nnz <= 0 then invalid_arg "nnz"
     end;
     if Sundials_config.safe then
-      (match Sundials.sundials_version with
-       | 2,v,_ when v < 7 -> raise Sundials.NotImplementedBySundialsVersion
+      (match Sundials.sundials_version, sformat with
+       | (2,v,_), CSR when v < 7 ->
+           raise Sundials.NotImplementedBySundialsVersion
        | _ -> ());
-    c_create m n nnz CSR_MAT
+    c_create m n nnz sformat
 
-  external c_from_dense : sformat -> Dense.cptr -> float -> 'f t
+  external c_from_dense : 's sformat -> Dense.cptr -> float -> 's t
     = "ml_matrix_sparse_from_dense"
 
-  let csc_from_dense droptol Dense.({ rawptr; valid }) =
-    if check_valid && not valid then raise Invalidated;
-    if Sundials_config.safe && droptol < 0.0 then invalid_arg "droptol";
-    c_from_dense CSC_MAT rawptr droptol
-
-  let csr_from_dense droptol Dense.({ rawptr; valid }) =
+  let from_dense (type s) (sformat : s sformat)
+        droptol Dense.({ rawptr; valid }) =
     if check_valid && not valid then raise Invalidated;
     if Sundials_config.safe && droptol < 0.0 then invalid_arg "droptol";
     if Sundials_config.safe then
-      (match Sundials.sundials_version with
-       | 2,v,_ when v < 7 -> raise Sundials.NotImplementedBySundialsVersion
+      (match Sundials.sundials_version, sformat with
+       | (2,v,_), CSR when v < 7 ->
+           raise Sundials.NotImplementedBySundialsVersion
        | _ -> ());
-    c_from_dense CSR_MAT rawptr droptol
+    c_from_dense sformat rawptr droptol
 
-  external c_from_band : sformat -> Band.cptr -> float -> 'f t
+  external c_from_band : 's sformat -> Band.cptr -> float -> 's t
     = "ml_matrix_sparse_from_band"
 
-  let csc_from_band droptol Band.({ rawptr; valid }) =
-    if check_valid && not valid then raise Invalidated;
-    if Sundials_config.safe && droptol < 0.0 then invalid_arg "droptol";
-    c_from_band CSC_MAT rawptr droptol
-
-  let csr_from_band droptol Band.({ rawptr; valid }) =
+  let from_band (type s) (sformat : s sformat)
+        droptol Band.({ rawptr; valid }) =
     if check_valid && not valid then raise Invalidated;
     if Sundials_config.safe && droptol < 0.0 then invalid_arg "droptol";
     if Sundials_config.safe then
-      (match Sundials.sundials_version with
-       | 2,v,_ when v < 7 -> raise Sundials.NotImplementedBySundialsVersion
+      (match Sundials.sundials_version, sformat with
+       | (2,v,_), CSR when v < 7 ->
+           raise Sundials.NotImplementedBySundialsVersion
        | _ -> ());
-    c_from_band CSR_MAT rawptr droptol
+    c_from_band sformat rawptr droptol
 
-  external c_rewrap : 'f t -> data
+  let sformat { payload = { sformat } } = sformat
+
+  external c_rewrap : 's t -> 's data
     = "ml_matrix_sparse_rewrap"
 
   let unwrap ({ payload; rawptr } as m) =
@@ -583,13 +569,13 @@ module Sparse = struct
     if unsafe_content then c_get_data rawptr idx
     else data.{idx}
 
-  let pp fmt mat =
+  let pp (type s) fmt (mat : s t) =
     if check_valid && not mat.valid then raise Invalidated;
     let m, n = size mat in
     let end_row = ref false in
     let idxrole = match mat.payload.sformat with
-                  | CSC_MAT -> "col"
-                  | CSR_MAT -> "row" in
+                  | CSC -> "col"
+                  | CSR -> "row" in
 
     Format.pp_print_string fmt "[";
     Format.pp_open_vbox fmt 0;
@@ -743,7 +729,7 @@ module Sparse = struct
 
     m_space      = space;
   }
-end
+end (* }}} *)
 
 type standard
 type custom
@@ -805,9 +791,7 @@ let wrap_sparse data = {
     mat_ops = Sparse.ops;
   }
 
-let make_sparse_csc m n nnz = wrap_sparse (Sparse.make_csc m n nnz)
-
-let make_sparse_csr m n nnz = wrap_sparse (Sparse.make_csr m n nnz)
+let make_sparse sfmt m n nnz = wrap_sparse (Sparse.make sfmt m n nnz)
 
 external c_wrap_custom : ('m, 'd, 'k) matrix_ops -> 'm -> cptr
   = "ml_matrix_wrap_custom"
