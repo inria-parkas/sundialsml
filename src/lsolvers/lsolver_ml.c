@@ -277,28 +277,60 @@ CAMLprim void ml_lsolver_set_prec_type(value vcptr, value vsolver,
     CAMLparam2(vcptr, vpretype);
 
 #if SUNDIALS_LIB_VERSION >= 300
+    int old_pretype = PREC_NONE;
     int pretype = lsolver_precond_type(vpretype);
+    SUNLinearSolver lsolv = LSOLVER(vcptr);
+
+    switch (Int_val(vsolver)) {
+	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPFGMR:
+	    old_pretype =
+		((SUNLinearSolverContent_SPFGMR)(lsolv->content))->pretype;
+	    break;
+
+	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPGMR:
+	    old_pretype =
+		((SUNLinearSolverContent_SPGMR)(lsolv->content))->pretype;
+	    break;
+
+	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPBCGS:
+	    old_pretype =
+		((SUNLinearSolverContent_SPBCGS)(lsolv->content))->pretype;
+	    break;
+
+	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPTFQMR:
+	    old_pretype =
+		((SUNLinearSolverContent_SPTFQMR)(lsolv->content))->pretype;
+	    break;
+
+	case VARIANT_LSOLVER_ITERATIVE_SOLVER_PCG:
+	    old_pretype =
+		((SUNLinearSolverContent_PCG)(lsolv->content))->pretype;
+	    break;
+    }
+
+    if ((old_pretype = PREC_NONE) && (pretype <> PREC_NONE))
+	caml_invalid_argument("cannot change prec_type from PREC_NONE");
 
     // ignore returned values
     switch (Int_val(vsolver)) {
 	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPFGMR:
-	    SUNSPFGMRSetPrecType(LSOLVER(vcptr), pretype);
+	    SUNSPFGMRSetPrecType(lsolv, pretype);
 	    break;
 
 	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPGMR:
-	    SUNSPGMRSetPrecType(LSOLVER(vcptr), pretype);
+	    SUNSPGMRSetPrecType(lsolv, pretype);
 	    break;
 
 	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPBCGS:
-	    SUNSPBCGSSetPrecType(LSOLVER(vcptr), pretype);
+	    SUNSPBCGSSetPrecType(lsolv, pretype);
 	    break;
 
 	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPTFQMR:
-	    SUNSPTFQMRSetPrecType(LSOLVER(vcptr), pretype);
+	    SUNSPTFQMRSetPrecType(lsolv, pretype);
 	    break;
 
 	case VARIANT_LSOLVER_ITERATIVE_SOLVER_PCG:
-	    SUNPCGSetPrecType(LSOLVER(vcptr), pretype);
+	    SUNPCGSetPrecType(lsolv, pretype);
 	    break;
     }
 #endif
