@@ -694,7 +694,7 @@ static int bbandjacfn_nosens(
 	N_Vector tmp3b)
 {
     CAMLparam0();
-    CAMLlocalN(args, 3);
+    CAMLlocalN(args, 2);
     CAMLlocal3(session, cb, bmat);
     value *backref = user_data;
     WEAK_DEREF (session, *backref);
@@ -708,15 +708,12 @@ static int bbandjacfn_nosens(
 	Store_field(cb, 1, bmat);
     }
 
-    args[0] = caml_alloc_tuple(RECORD_CVODES_ADJ_BANDRANGE_SIZE);
-    Store_field(args[0], RECORD_CVODES_ADJ_BANDRANGE_MUPPER, Val_long(mupperb));
-    Store_field(args[0], RECORD_CVODES_ADJ_BANDRANGE_MLOWER, Val_long(mlowerb));
-    args[1] = cvodes_make_jac_arg(t, y, yb, fyb,
+    args[0] = cvodes_make_jac_arg(t, y, yb, fyb,
 		cvode_make_triple_tmp(tmp1b, tmp2b, tmp3b));
-    args[2] = Some_val(bmat);
+    args[1] = Some_val(bmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn (Field(cb, 0), args[0], args[1], args[2]);
+    value r = caml_callbackN_exn (Field(cb, 0), 2, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -738,7 +735,7 @@ static int bbandjacfn_withsens(
 	N_Vector tmp3b)
 {
     CAMLparam0();
-    CAMLlocalN(args, 4);
+    CAMLlocalN(args, 3);
     CAMLlocal4(session, bsensext, cb, bmat);
     value *backref = user_data;
     int ns;
@@ -755,20 +752,17 @@ static int bbandjacfn_withsens(
 	Store_field(cb, 1, bmat);
     }
 
-    args[0] = caml_alloc_tuple(RECORD_CVODES_ADJ_BANDRANGE_SIZE);
-    Store_field(args[0], RECORD_CVODES_ADJ_BANDRANGE_MUPPER, Val_long(mupperb));
-    Store_field(args[0], RECORD_CVODES_ADJ_BANDRANGE_MLOWER, Val_long(mlowerb));
-    args[1] = cvodes_make_jac_arg(t, y, yb, fyb,
+    args[0] = cvodes_make_jac_arg(t, y, yb, fyb,
 		cvode_make_triple_tmp(tmp1b, tmp2b, tmp3b));
 
     ns = Int_val(Field(bsensext, RECORD_CVODES_BWD_SESSION_NUMSENSITIVITIES));
-    args[2] = CVODES_BSENSARRAY_FROM_EXT(bsensext);
+    args[1] = CVODES_BSENSARRAY_FROM_EXT(bsensext);
     cvodes_wrap_to_nvector_table(ns, args[2], ys);
 
-    args[3] = Some_val(bmat);
+    args[2] = Some_val(bmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (Field(cb, 0), 4, args);
+    value r = caml_callbackN_exn (Field(cb, 0), 3, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }

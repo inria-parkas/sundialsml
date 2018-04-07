@@ -90,11 +90,6 @@ type ('t, 'd) jacobian_arg = ('t, 'd) Cvode_impl.jacobian_arg =
     jac_tmp : 't            (** Workspace data. *)
   }
 
-(** The range of nonzero entries in a band matrix. *)
-type bandrange = Cvode_impl.bandrange =
-  { mupper : int; (** The upper half-bandwidth. *)
-    mlower : int; (** The lower half-bandwidth. *) }
-
 (** Diagonal approximation of Jacobians by difference quotients. *)
 module Diag :
   sig (* {{{ *)
@@ -119,7 +114,7 @@ module Diag :
     val get_num_rhs_evals : ('d, 'k) session -> int
   end (* }}} *)
 
-(** Direct Linear Solvers operating on dense and banded matrices.
+(** Direct Linear Solvers operating on dense, banded, and sparse matrices.
 
     @cvode <node5#sss:optin_dls> Direct linear solvers optional input functions
     @cvode <node5#sss:optout_dls> Direct linear solvers optional output functions *)
@@ -147,13 +142,18 @@ module Direct :
       (RealArray.t triple, RealArray.t) jacobian_arg -> 'm -> unit
 
     (** Create a Cvode-specific linear solver from a generic dense linear
-        solver.
+        solver, a Jacobian approximation function, and a Jacobian matrix
+        for the solver's internal use. The Jacobian approximation function
+        is optional for direct and banded solvers (if not given an internal
+        difference quotient approximation is used), but must be provided for
+        other solvers (or {Invalid_argument} is raised).
 
         @nocvode <node> CVDlsSetLinearSolver
         @nocvode <node> CVDlsSetJacFn *)
     val make :
-      ?jac:'m jac_fn ->
       ('m, 'kind) Lsolver.Direct.serial_t ->
+      ?jac:'m jac_fn ->
+      ('k, 'm, Nvector_serial.data, 'kind) Matrix.t ->
       'kind serial_linear_solver
 
     (** {3:stats Solver statistics} *)
@@ -179,13 +179,13 @@ module Direct :
 
   end (* }}} *)
 
-(** Scaled Preconditioned Iterative Linear Solvers.
+(** Iterative Linear Solvers.
 
     @cvode <node5#sss:optin_spils> Iterative linear solvers optional input functions.
     @cvode <node5#sss:optout_spils> Iterative linear solvers optional output functions.
     @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
     @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
-module Spils :
+module Iterative :
   sig (* {{{ *)
     (** {3:precond Preconditioners} *)
 
@@ -319,6 +319,11 @@ module Spils :
     (** Banded preconditioners.  *)
     module Banded : sig (* {{{ *)
 
+      (** The range of nonzero entries in a band matrix. *)
+      type bandrange =
+        { mupper : int; (** The upper half-bandwidth. *)
+          mlower : int; (** The lower half-bandwidth. *) }
+
       (** A band matrix {!preconditioner} based on difference quotients.
           The call [prec_left br] instantiates a left preconditioner which
           generates a banded approximation to the Jacobian with [br.mlower]
@@ -361,6 +366,9 @@ module Spils :
 
     (** Create a Cvode-specific linear solver from a generic iterative
         linear solver.
+
+        NB: the [jac_times_setup] argument is not supported in
+            {!Sundials.sundials_version} < 3.0.0.
 
         @nocvode <node> CVDlsSetLinearSolver
         @nocvode <node> CVDlsSetJacFn *)
@@ -451,6 +459,9 @@ module Spils :
 
     (** Change the Jacobian-times-vector function.
 
+        NB: the [jac_times_setup] argument is not supported in
+            {!Sundials.sundials_version} < 3.0.0.
+
         @nocvode <node> CVSpilsSetJacTimes
         @nocvode <node> CVSpilsJacTimesSetupFn
         @nocvode <node> CVSpilsJacTimesVecFn *)
@@ -468,17 +479,6 @@ module Spils :
         @nocvode <node> CVSpilsJacTimesVecFn *)
     val clear_jac_times : ('d, 'k) session -> unit
 
-    (** Change the preconditioning direction without modifying
-        callback functions. If the preconditioning type is changed from
-        {{!Spils.preconditioning_type}Spils.PrecNone}
-        then {!set_preconditioner} must be called to install the necessary
-        callbacks.
-
-        @nocvode <node> SUNSPGMRSetPrecType
-        @nocvode <node> SUNSPBCGSSetPrecType
-        @nocvode <node> SUNSPTFQMRSetPrecType
-        @nocvode <node> SUNPCGSetPrecType *)
-    val set_prec_type : ('d, 'k) session -> Spils.preconditioning_type -> unit
   end (* }}} *)
 
 (** Alternate Linear Solvers.

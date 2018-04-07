@@ -55,59 +55,20 @@ type ('t, 'a) jacobian_arg =
     jac_tmp : 't
   }
 
-type bandrange = { mupper : int; mlower : int; }
-
-module DlsTypes = struct
-  type dense_jac_fn =
+module DirectTypes = struct
+  type 'm jac_fn =
     (RealArray.t triple, RealArray.t) jacobian_arg
-    -> Dls.DenseMatrix.t
+    -> 'm
     -> unit
 
   (* These fields are accessed from cvode_ml.c *)
-  type dense_jac_callback =
+  type 'm jac_callback =
     {
-      jacfn: dense_jac_fn;
-      mutable dmat : Dls.DenseMatrix.t option
+      jacfn: 'm jac_fn;
+      mutable jmat : 'm option (* Not used in Sundials >= 3.0.0 *)
     }
 
-  let no_dense_callback = {
-      jacfn = (fun _ _ -> crash "no dense callback");
-      dmat = None;
-    }
-
-  type band_jac_fn =
-    bandrange
-    -> (RealArray.t triple, RealArray.t) jacobian_arg
-    -> Dls.BandMatrix.t
-    -> unit
-
-  (* These fields are accessed from cvode_ml.c *)
-  type band_jac_callback =
-    {
-      bjacfn: band_jac_fn;
-      mutable bmat : Dls.BandMatrix.t option
-    }
-
-  let no_band_callback = {
-      bjacfn = (fun _ _ _ -> crash "no band callback");
-      bmat = None;
-    }
-end
-
-module SlsTypes = struct
-
-  type 'f sparse_jac_fn =
-    (RealArray.t triple, RealArray.t) jacobian_arg
-    -> 'f Sls_impl.t
-    -> unit
-
-  (* These fields are accessed from cvode_ml.c *)
-  type 'f sparse_jac_callback =
-    {
-      jacfn: 'f sparse_jac_fn;
-      mutable smat : 'f Sls_impl.t option
-    }
-
+  let no_callback = fun _ _ -> crash "no direct callback"
 end
 
 module SpilsCommonTypes = struct
@@ -121,31 +82,26 @@ module SpilsCommonTypes = struct
       left  : bool;
     }
 
-  type gramschmidt_type = Spils.gramschmidt_type =
-    | ModifiedGS
-    | ClassicalGS
-
-  type preconditioning_type =
-    | PrecNone
-    | PrecLeft
-    | PrecRight
-    | PrecBoth
 end
 
 module SpilsTypes' = struct
   include SpilsCommonTypes
 
   type 'a prec_solve_fn =
-    ('a, 'a) jacobian_arg
+    (unit, 'a) jacobian_arg
     -> 'a prec_solve_arg
     -> 'a
     -> unit
 
   type 'a prec_setup_fn =
-    ('a triple, 'a) jacobian_arg
+    (unit, 'a) jacobian_arg
     -> bool
     -> float
     -> bool
+
+  type 'd jac_times_setup_fn =
+    (unit, 'd) jacobian_arg
+    -> unit
 
   type 'a jac_times_vec_fn =
     ('a, 'a) jacobian_arg
@@ -270,108 +226,40 @@ module AdjointTypes' = struct
       jac_tmp : 't
     }
 
-  (* This is NOT the same as DlsTypes defined above.  This version
+  (* This is NOT the same as DirectTypes defined above.  This version
      refers to a different jacobian_arg, the one that was just
      defined.  *)
-  module DlsTypes = struct
-    type dense_jac_fn_no_sens
+  module DirectTypes = struct
+    type 'm jac_fn_no_sens
       = (RealArray.t triple, RealArray.t) jacobian_arg
-        -> Dls.DenseMatrix.t
+        -> 'm
         -> unit
 
-    type dense_jac_fn_with_sens
+    type 'm jac_fn_with_sens
       = (RealArray.t triple, RealArray.t) jacobian_arg
         -> RealArray.t array
-        -> Dls.DenseMatrix.t
+        -> 'm
         -> unit
 
-    type dense_jac_fn =
-      DenseNoSens of dense_jac_fn_no_sens
-    | DenseWithSens of dense_jac_fn_with_sens
+    type 'm jac_fn =
+      NoSens of 'm jac_fn_no_sens
+    | WithSens of 'm jac_fn_with_sens
 
     (* These fields are accessed from cvodes_ml.c *)
-    type dense_jac_callback_no_sens =
+    type 'm jac_callback_no_sens =
       {
-        jacfn: dense_jac_fn_no_sens;
-        mutable dmat : Dls.DenseMatrix.t option
+        jacfn: 'm jac_fn_no_sens;
+        mutable jmat : 'm option
       }
 
-    let no_dense_callback = {
-        jacfn = (fun _ _ -> crash "no dense callback");
-        dmat = None;
-      }
+    let no_callback = fun _ _ -> crash "no direct callback"
 
     (* These fields are accessed from cvodes_ml.c *)
-    type dense_jac_callback_with_sens =
+    type 'm jac_callback_with_sens =
       {
-        jacfn_sens : dense_jac_fn_with_sens;
-        mutable dmat_sens : Dls.DenseMatrix.t option
+        jacfn_sens : 'm jac_fn_with_sens;
+        mutable jmat_sens : 'm option
       }
-
-    type band_jac_fn_no_sens
-      = bandrange
-        -> (RealArray.t triple, RealArray.t) jacobian_arg
-        -> Dls.BandMatrix.t
-        -> unit
-
-    type band_jac_fn_with_sens
-      = bandrange
-        -> (RealArray.t triple, RealArray.t) jacobian_arg
-        -> RealArray.t array
-        -> Dls.BandMatrix.t
-        -> unit
-
-    type band_jac_fn =
-      BandNoSens of band_jac_fn_no_sens
-    | BandWithSens of band_jac_fn_with_sens
-
-    (* These fields are accessed from cvodes_ml.c *)
-    type band_jac_callback_no_sens =
-      {
-        bjacfn: band_jac_fn_no_sens;
-        mutable bmat : Dls.BandMatrix.t option
-      }
-
-    let no_band_callback = {
-        bjacfn = (fun _ _ _ -> crash "no band callback");
-        bmat = None;
-      }
-
-    (* These fields are accessed from cvodes_ml.c *)
-    type band_jac_callback_with_sens =
-      {
-        bjacfn_sens: band_jac_fn_with_sens;
-        mutable bmat_sens : Dls.BandMatrix.t option
-      }
-  end
-
-  module SlsTypes = struct
-
-    type 'f sparse_jac_fn_no_sens =
-      (RealArray.t triple, RealArray.t) jacobian_arg
-      -> 'f Sls_impl.t
-      -> unit
-
-    type 'f sparse_jac_fn_with_sens =
-      (RealArray.t triple, RealArray.t) jacobian_arg
-      -> RealArray.t array
-      -> 'f Sls_impl.t
-      -> unit
-
-    (* These fields are accessed from cvodes_ml.c *)
-    type 'f sparse_jac_callback_no_sens =
-      {
-        jacfn: 'f sparse_jac_fn_no_sens;
-        mutable smat : 'f Sls_impl.t option
-      }
-
-    (* These fields are accessed from cvodes_ml.c *)
-    type 'f sparse_jac_callback_with_sens =
-      {
-        jacfn_sens: 'f sparse_jac_fn_with_sens;
-        mutable smat_sens : 'f Sls_impl.t option
-      }
-
   end
 
   (* Ditto. *)
@@ -476,6 +364,16 @@ type ('a, 'kind) session = {
   mutable sensext      : ('a, 'kind) sensext (* Used by Cvodes *)
 }
 
+(* Note: When compatibility with Sundials < 3.0.0 is no longer required,
+         this type can be greatly simplified since we would no longer
+         need to distinguish between different "direct" linear solvers.
+
+   Note: The first field must always hold the callback closure
+         (it is accessed as Field(cb, 0) from cvode_ml.c.
+         The second argument holds a reference to the Jacobian matrix,
+         whose underlying data is used within the solver (Sundials >= 3.0.0),
+         to prevent its garbage collection.
+*)
 and ('a, 'kind) linsolv_callbacks =
   | NoCallbacks
 
@@ -483,28 +381,53 @@ and ('a, 'kind) linsolv_callbacks =
   | DiagNoCallbacks
 
   (* Dls *)
-  | DlsDenseCallback of DlsTypes.dense_jac_callback
-  | DlsBandCallback  of DlsTypes.band_jac_callback
+  | DlsDenseCallback
+      of Matrix.Dense.t DirectTypes.jac_callback * Matrix.Dense.t
+  | DlsBandCallback
+      of Matrix.Band.t  DirectTypes.jac_callback * Matrix.Band.t
 
-  | BDlsDenseCallback of AdjointTypes'.DlsTypes.dense_jac_callback_no_sens
-  | BDlsDenseCallbackSens of AdjointTypes'.DlsTypes.dense_jac_callback_with_sens
-  | BDlsBandCallback  of AdjointTypes'.DlsTypes.band_jac_callback_no_sens
-  | BDlsBandCallbackSens  of AdjointTypes'.DlsTypes.band_jac_callback_with_sens
+  | BDlsDenseCallback
+      of Matrix.Dense.t AdjointTypes'.DirectTypes.jac_callback_no_sens
+         * Matrix.Dense.t
+  | BDlsDenseCallbackSens
+      of Matrix.Dense.t AdjointTypes'.DirectTypes.jac_callback_with_sens
+         * Matrix.Dense.t
+  | BDlsBandCallback
+      of Matrix.Band.t AdjointTypes'.DirectTypes.jac_callback_no_sens
+         * Matrix.Band.t
+  | BDlsBandCallbackSens
+      of Matrix.Band.t AdjointTypes'.DirectTypes.jac_callback_with_sens
+         * Matrix.Band.t
 
   (* Sls *)
-  | SlsKluCallback of unit SlsTypes.sparse_jac_callback
-  | BSlsKluCallback of unit AdjointTypes'.SlsTypes.sparse_jac_callback_no_sens
+  | SlsKluCallback
+      : ('s Matrix.Sparse.t) DirectTypes.jac_callback * 's Matrix.Sparse.t
+        -> ('a, 'kind) linsolv_callbacks
+  | BSlsKluCallback
+      : ('s Matrix.Sparse.t) AdjointTypes'.DirectTypes.jac_callback_no_sens
+        * 's Matrix.Sparse.t
+        -> ('a, 'kind) linsolv_callbacks
   | BSlsKluCallbackSens
-      of unit AdjointTypes'.SlsTypes.sparse_jac_callback_with_sens
+      : ('s Matrix.Sparse.t) AdjointTypes'.DirectTypes.jac_callback_with_sens
+        * 's Matrix.Sparse.t
+        -> ('a, 'kind) linsolv_callbacks
 
-  | SlsSuperlumtCallback of unit SlsTypes.sparse_jac_callback
+  | SlsSuperlumtCallback
+      : ('s Matrix.Sparse.t) DirectTypes.jac_callback
+        * 's Matrix.Sparse.t
+        -> ('a, 'kind) linsolv_callbacks
   | BSlsSuperlumtCallback
-      of unit AdjointTypes'.SlsTypes.sparse_jac_callback_no_sens
+      : ('s Matrix.Sparse.t) AdjointTypes'.DirectTypes.jac_callback_no_sens
+        * 's Matrix.Sparse.t
+        -> ('a, 'kind) linsolv_callbacks
   | BSlsSuperlumtCallbackSens
-      of unit AdjointTypes'.SlsTypes.sparse_jac_callback_with_sens
+      : ('s Matrix.Sparse.t) AdjointTypes'.DirectTypes.jac_callback_with_sens
+        * 's Matrix.Sparse.t
+        -> ('a, 'kind) linsolv_callbacks
 
   (* Spils *)
   | SpilsCallback of 'a SpilsTypes'.jac_times_vec_fn option
+                     * 'a SpilsTypes'.jac_times_setup_fn option
   | BSpilsCallback
       of 'a AdjointTypes'.SpilsTypes'.jac_times_vec_fn_no_sens option
   | BSpilsCallbackSens
@@ -605,23 +528,13 @@ let ls_check_diag session =
   if Sundials_config.safe && session.ls_callbacks <> DiagNoCallbacks then
     raise Sundials.InvalidLinearSolver
 
-let ls_check_dls session =
+let ls_check_direct session =
   if Sundials_config.safe then
     match session.ls_callbacks with
     | DlsDenseCallback _ | DlsBandCallback _
     | BDlsDenseCallback _ | BDlsDenseCallbackSens _
-    | BDlsBandCallback _ | BDlsBandCallbackSens _ -> ()
-    | _ -> raise Sundials.InvalidLinearSolver
-
-let ls_check_klu session =
-  if Sundials_config.safe then
-    match session.ls_callbacks with
-    | SlsKluCallback _ | BSlsKluCallback _ | BSlsKluCallbackSens _ -> ()
-    | _ -> raise Sundials.InvalidLinearSolver
-
-let ls_check_superlumt session =
-  if Sundials_config.safe then
-    match session.ls_callbacks with
+    | BDlsBandCallback _ | BDlsBandCallbackSens _
+    | SlsKluCallback _ | BSlsKluCallback _ | BSlsKluCallbackSens _
     | SlsSuperlumtCallback _ | BSlsSuperlumtCallback _
     | BSlsSuperlumtCallbackSens _ -> ()
     | _ -> raise Sundials.InvalidLinearSolver
@@ -651,7 +564,7 @@ type 'kind serial_session = (Nvector_serial.data, 'kind) session
 
 type ('data, 'kind) linear_solver =
   ('data, 'kind) session
-  -> ('data, 'kind) nvector
+  -> ('data, 'kind) Nvector.t
   -> unit
 
 type 'k serial_linear_solver = (Nvector_serial.data, 'k) linear_solver
@@ -661,13 +574,12 @@ module SpilsTypes = struct
   include SpilsTypes'
 
   type ('a, 'k) set_preconditioner =
-    ('a, 'k) session -> ('a, 'k) nvector -> unit
+    ('a, 'k) session
+    -> ('a, 'k) Nvector.t
+    -> unit
 
   type ('a, 'k) preconditioner =
-    | InternalPrecNone of ('a, 'k) set_preconditioner
-    | InternalPrecLeft of ('a, 'k) set_preconditioner
-    | InternalPrecRight of ('a, 'k) set_preconditioner
-    | InternalPrecBoth of ('a, 'k) set_preconditioner
+    Lsolver_impl.Iterative.preconditioning_type * ('a, 'k) set_preconditioner
 
   type 'k serial_preconditioner = (Nvector_serial.data, 'k) preconditioner
                                   constraint 'k = [>Nvector_serial.kind]

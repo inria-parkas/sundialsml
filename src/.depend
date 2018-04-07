@@ -24,15 +24,15 @@ arkode/arkode_impl.cmx : sundials/sundials_config.cmx sundials/sundials.cmx \
     lsolvers/spils.cmx lsolvers/sls_impl.cmx lsolvers/sls.cmx \
     nvectors/nvector_serial.cmx nvectors/nvector.cmx lsolvers/dls.cmx
 cvode/cvode.cmo : sundials/sundials_config.cmo sundials/sundials.cmi \
-    lsolvers/spils.cmi lsolvers/sls_impl.cmo lsolvers/sls.cmi \
-    nvectors/nvector.cmi lsolvers/dls.cmi cvode/cvode_impl.cmo \
-    cvode/cvode.cmi
+    lsolvers/spils.cmi nvectors/nvector_serial.cmi nvectors/nvector.cmi \
+    lsolvers/matrix.cmi lsolvers/lsolver_impl.cmo lsolvers/lsolver.cmi \
+    cvode/cvode_impl.cmo cvode/cvode.cmi
 cvode/cvode.cmx : sundials/sundials_config.cmx sundials/sundials.cmx \
-    lsolvers/spils.cmx lsolvers/sls_impl.cmx lsolvers/sls.cmx \
-    nvectors/nvector.cmx lsolvers/dls.cmx cvode/cvode_impl.cmx \
-    cvode/cvode.cmi
-cvode/cvode.cmi : sundials/sundials.cmi lsolvers/spils.cmi \
-    nvectors/nvector_serial.cmi nvectors/nvector.cmi lsolvers/lsolver.cmi \
+    lsolvers/spils.cmx nvectors/nvector_serial.cmx nvectors/nvector.cmx \
+    lsolvers/matrix.cmx lsolvers/lsolver_impl.cmx lsolvers/lsolver.cmx \
+    cvode/cvode_impl.cmx cvode/cvode.cmi
+cvode/cvode.cmi : sundials/sundials.cmi nvectors/nvector_serial.cmi \
+    nvectors/nvector.cmi lsolvers/matrix.cmi lsolvers/lsolver.cmi \
     cvode/cvode_impl.cmo
 cvode/cvode_bbd.cmo : sundials/sundials.cmi nvectors/nvector_parallel.cmi \
     nvectors/nvector.cmi cvode/cvode_impl.cmo cvode/cvode.cmi \
@@ -43,11 +43,11 @@ cvode/cvode_bbd.cmx : sundials/sundials.cmx nvectors/nvector_parallel.cmx \
 cvode/cvode_bbd.cmi : nvectors/nvector_parallel.cmi cvode/cvode_impl.cmo \
     cvode/cvode.cmi
 cvode/cvode_impl.cmo : sundials/sundials_config.cmo sundials/sundials.cmi \
-    lsolvers/spils.cmi lsolvers/sls_impl.cmo nvectors/nvector_serial.cmi \
-    nvectors/nvector.cmi lsolvers/dls.cmi
+    nvectors/nvector_serial.cmi nvectors/nvector.cmi lsolvers/matrix.cmi \
+    lsolvers/lsolver_impl.cmo
 cvode/cvode_impl.cmx : sundials/sundials_config.cmx sundials/sundials.cmx \
-    lsolvers/spils.cmx lsolvers/sls_impl.cmx nvectors/nvector_serial.cmx \
-    nvectors/nvector.cmx lsolvers/dls.cmx
+    nvectors/nvector_serial.cmx nvectors/nvector.cmx lsolvers/matrix.cmx \
+    lsolvers/lsolver_impl.cmx
 cvodes/cvodes.cmo : sundials/sundials_config.cmo sundials/sundials.cmi \
     lsolvers/spils.cmi lsolvers/sls_impl.cmo lsolvers/sls.cmi \
     nvectors/nvector.cmi lsolvers/dls.cmi cvode/cvode_impl.cmo \
@@ -147,8 +147,8 @@ lsolvers/lsolver.cmx : sundials/sundials_config.cmx sundials/sundials.cmx \
     lsolvers/lsolver_impl.cmx lsolvers/lsolver.cmi
 lsolvers/lsolver.cmi : lsolvers/spils.cmi nvectors/nvector_serial.cmi \
     nvectors/nvector.cmi lsolvers/matrix.cmi lsolvers/lsolver_impl.cmo
-lsolvers/lsolver_impl.cmo : lsolvers/spils.cmi
-lsolvers/lsolver_impl.cmx : lsolvers/spils.cmx
+lsolvers/lsolver_impl.cmo : lsolvers/spils.cmi lsolvers/matrix.cmi
+lsolvers/lsolver_impl.cmx : lsolvers/spils.cmx lsolvers/matrix.cmx
 lsolvers/matrix.cmo : sundials/sundials_config.cmo sundials/sundials.cmi \
     nvectors/nvector_serial.cmi nvectors/nvector.cmi lsolvers/matrix.cmi
 lsolvers/matrix.cmx : sundials/sundials_config.cmx sundials/sundials.cmx \
