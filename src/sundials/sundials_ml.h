@@ -133,12 +133,7 @@ void sundials_ml_register_exns (enum sundials_exn_set_index index, value exns);
 
 /* For constant exceptions only.  Exceptions with arguments should be
  * raised by extracting the tag with REGISTERED_EXN_TAG.  */
-#if OCAML_VERSION < 40200
-#define REGISTERED_EXN(MODULE, name) REGISTERED_EXN_TAG(MODULE, name)
-#else
 #define REGISTERED_EXN(MODULE, name) REGISTERED_EXN_OBJ(MODULE, name)
-#endif
-
 
 /* This enum must list exceptions in the same order as the call to
  * c_init_module in sundials.ml.  */

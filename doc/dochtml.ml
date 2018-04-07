@@ -36,17 +36,11 @@ type custom_type =
     Simple of (string -> string)
   | Full of (Buffer.t -> Odoc_info.text -> unit)
 
-#if OCAML_3X == 1
-class dochtml =
-  object(self)
-    inherit Odoc_html.html as super
-#else
 module Generator (G : Odoc_html.Html_generator) =
 struct
   class html =
   object(self)
     inherit G.html as super
-#endif
 
     val rex = Str.regexp "<\\([^#>]*\\)\\(#[^)]*\\)?> \\(.*\\)"
 
@@ -245,13 +239,9 @@ struct
                           custom_functions
 
   end
-
-#if OCAML_3X == 0
 end
 
 let _  = Odoc_html.charset := "utf-8"
-
-#endif
 
 let option_cvode_doc_root =
   ("-cvode-doc-root", Arg.String (fun d -> cvode_doc_root := d), 
@@ -275,19 +265,6 @@ let option_mathjax_url =
   ("-mathjax", Arg.String (fun d -> mathjax_url := d), 
    "<url>  specify the root url for MathJax.")
 
-#if OCAML_3X
-let _ =
-  let dochtml = new dochtml in
-  Odoc_args.add_option option_cvode_doc_root;
-  Odoc_args.add_option option_cvodes_doc_root;
-  Odoc_args.add_option option_arkode_doc_root;
-  Odoc_args.add_option option_ida_doc_root;
-  Odoc_args.add_option option_idas_doc_root;
-  Odoc_args.add_option option_kinsol_doc_root;
-  Odoc_args.add_option option_mathjax_url;
-  Odoc_args.set_doc_generator
-    (Some (dochtml :> Odoc_args.doc_generator))
-#else
 let _ =
   Odoc_args.add_option option_cvode_doc_root;
   Odoc_args.add_option option_cvodes_doc_root;
@@ -297,5 +274,4 @@ let _ =
   Odoc_args.add_option option_kinsol_doc_root;
   Odoc_args.add_option option_mathjax_url;
   Odoc_args.extend_html_generator (module Generator : Odoc_gen.Html_functor)
-#endif
 

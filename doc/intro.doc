@@ -200,7 +200,7 @@ appropriate [init] or [reinit] functions to configure sessions.
 {2:install Installation}
 
 The dependencies of Sundials/ML are
-- {{:http://caml.inria.fr/ocaml/}OCaml} {b 3.12.1 or greater},
+- {{:http://caml.inria.fr/ocaml/}OCaml} {b 4.02.3 or greater},
 - {{:http://computation.llnl.gov/casc/sundials/}Sundials} {b {var version}}
   (compiles with 2.5.0 onwards with less features),
 - {e Optionally}:

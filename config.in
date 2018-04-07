@@ -96,7 +96,6 @@ OCAML_IDA_LIBLINK    = $(filter-out $(OCAML_ALL_LIBLINK), $(IDA_LDFLAGS))
 OCAML_IDAS_LIBLINK   = $(filter-out $(OCAML_ALL_LIBLINK), $(IDAS_LDFLAGS))
 OCAML_KINSOL_LIBLINK = $(filter-out $(OCAML_ALL_LIBLINK), $(KINSOL_LDFLAGS))
 OCAML_MPI_LIBLINK = -lsundials_nvecparallel
-OCAML_3X = @ocaml_3x@
 
 OCAML ?= @OCAMLBIN@ocaml
 

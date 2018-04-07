@@ -8,7 +8,7 @@ doc: html/index.html
 	cp ../misc/sundials-2.6.2-superlumt.patch html/
 	cp ../misc/superlu_mt_2.4.patch html/
 
-DOCHTML_PP=$(CPP) $(ML_CPPFLAGS) -DOCAML_3X=$(OCAML_3X)
+DOCHTML_PP=$(CPP) $(ML_CPPFLAGS)
 DOCHTML_PLUGIN_PP=$(DOCHTML_PP)						\
                   -DCVODE_DOC_ROOT=\"$(CVODE_DOC_ROOT_DEFAULT)\"	\
                   -DCVODES_DOC_ROOT=\"$(CVODES_DOC_ROOT_DEFAULT)\"	\
