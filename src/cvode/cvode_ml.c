@@ -35,18 +35,20 @@
 #include <cvodes/cvodes.h>
 
 /* linear solvers */
+#if SUNDIALS_LIB_VERSION >= 300
+#include <cvodes/cvodes_direct.h>
+#include <cvodes/cvodes_spils.h>
+#else
 #include <cvodes/cvodes_dense.h>
 #include <cvodes/cvodes_band.h>
-#include <cvodes/cvodes_diag.h>
 #include <cvodes/cvodes_spgmr.h>
 #include <cvodes/cvodes_spbcgs.h>
 #include <cvodes/cvodes_sptfqmr.h>
+#endif
+
+#include <cvodes/cvodes_diag.h>
 #include <cvodes/cvodes_bandpre.h>
 #include <cvodes/cvodes_impl.h>
-
-#if SUNDIALS_LIB_VERSION >= 300
-#include <cvodes/cvodes_direct.h>
-#endif
 
 #ifdef SUNDIALS_ML_LAPACK
 #include <cvodes/cvodes_lapack.h>
@@ -58,18 +60,19 @@
 #include <cvode/cvode.h>
 
 /* linear solvers */
+#if SUNDIALS_LIB_VERSION >= 300
+#include <cvode/cvode_direct.h>
+#include <cvode/cvode_spils.h>
+#else
 #include <cvode/cvode_dense.h>
 #include <cvode/cvode_band.h>
-#include <cvode/cvode_diag.h>
 #include <cvode/cvode_spgmr.h>
 #include <cvode/cvode_spbcgs.h>
 #include <cvode/cvode_sptfqmr.h>
+#endif
+#include <cvode/cvode_diag.h>
 #include <cvode/cvode_bandpre.h>
 #include <cvode/cvode_impl.h>
-
-#if SUNDIALS_LIB_VERSION >= 300
-#include <cvode/cvode_direct.h>
-#endif
 
 #ifdef SUNDIALS_ML_LAPACK
 #include <cvode/cvode_lapack.h>
@@ -77,6 +80,7 @@
 
 #endif
 
+#include "../lsolvers/matrix_ml.h"
 #include "../lsolvers/lsolver_ml.h"
 #include "../lsolvers/dls_ml.h"
 #include "../lsolvers/spils_ml.h"
@@ -180,8 +184,8 @@ static int rhsfn(realtype t, N_Vector y, N_Vector ydot, void *user_data)
     args[2] = NVEC_BACKLINK(ydot);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn(Field(session, RECORD_CVODE_SESSION_RHSFN),
-				 args[0], args[1], args[2]);
+    value r = caml_callbackN_exn(Field(session, RECORD_CVODE_SESSION_RHSFN),
+				 3, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -204,8 +208,8 @@ static int roots(realtype t, N_Vector y, realtype *gout, void *user_data)
     args[2] = caml_ba_alloc (BIGARRAY_FLOAT, 1, gout, &nroots);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn (Field(session, RECORD_CVODE_SESSION_ROOTSFN),
-				  args[0], args[1], args[2]);
+    value r = caml_callbackN_exn (Field(session, RECORD_CVODE_SESSION_ROOTSFN),
+				  3, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, UNRECOVERABLE));
 }
@@ -372,10 +376,14 @@ static int precsetupfn(realtype t,
 		       booleantype jok,
 		       booleantype *jcurPtr,
 		       realtype gamma,
-		       void *user_data,
+		       void *user_data
+#if SUNDIALS_LIB_VERSION < 300
+		       ,
 		       N_Vector tmp1,
 		       N_Vector tmp2,
-		       N_Vector tmp3)
+		       N_Vector tmp3
+#endif
+		      )
 {
     CAMLparam0();
     CAMLlocal2(session, cb);
@@ -383,8 +391,7 @@ static int precsetupfn(realtype t,
 
     WEAK_DEREF (session, *(value*)user_data);
 
-    args[0] = cvode_make_jac_arg(t, y, fy,
-				 cvode_make_triple_tmp(tmp1, tmp2, tmp3));
+    args[0] = cvode_make_jac_arg(t, y, fy, Val_unit);
     args[1] = Val_bool(jok);
     args[2] = caml_copy_double(gamma);
 
@@ -394,7 +401,7 @@ static int precsetupfn(realtype t,
     cb = Some_val (cb);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn(cb, args[0], args[1], args[2]);
+    value r = caml_callbackN_exn(cb, 3, args);
 
     /* Update jcurPtr; leave it unchanged if an error occurred.  */
     if (!Is_exception_result (r)) {
@@ -436,14 +443,18 @@ static int precsolvefn(
 	realtype gamma,
 	realtype delta,
 	int lr,
-	void *user_data,
-	N_Vector tmp)
+	void *user_data
+#if SUNDIALS_LIB_VERSION < 300
+	,
+	N_Vector tmp
+#endif
+	)
 {
     CAMLparam0();
     CAMLlocal2(session, cb);
     CAMLlocalN(args, 3);
 
-    args[0] = cvode_make_jac_arg(t, y, fy, NVEC_BACKLINK(tmp));
+    args[0] = cvode_make_jac_arg(t, y, fy, Val_unit);
     args[1] = make_spils_solve_arg(rvec, gamma, delta, lr);
     args[2] = NVEC_BACKLINK(z);
 
@@ -453,7 +464,7 @@ static int precsolvefn(
     cb = Field (cb, RECORD_CVODE_SPILS_PRECFNS_PREC_SOLVE_FN);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn(cb, args[0], args[1], args[2]);
+    value r = caml_callbackN_exn(cb, 3, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -480,7 +491,7 @@ static int jactimesfn(N_Vector v,
     cb = Some_val (cb);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn(cb, args[0], args[1], args[2]);
+    value r = caml_callbackN_exn(cb, 3, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -620,7 +631,9 @@ CAMLprim value c_cvode_set_alternate (value vcvode_mem, value vhas_init,
 
     cvode_mem->cv_linit  = Bool_val(vhas_init)  ? linit : NULL;
     cvode_mem->cv_lsetup  = Bool_val(vhas_setup) ? lsetup : NULL;
+#if SUNDIALS_LIB_VERSION < 300
     cvode_mem->cv_setupNonNull = Bool_val(vhas_setup);
+#endif
     cvode_mem->cv_lsolve = lsolve;
     cvode_mem->cv_lmem   = NULL;
 
@@ -722,9 +735,9 @@ CAMLprim value c_cvode_dls_lapack_band (value vcvode_mem_neqs, value vmupper,
 }
 
 CAMLprim value c_cvode_dls_set_linear_solver (value vcvode_mem, value vlsolv,
-					      value vjmat, value vset_jac)
+					      value vjmat, value vhasjac)
 {
-    CAMLparam4(vcvode_mem, vlsolv, vmat, vhasjac);
+    CAMLparam4(vcvode_mem, vlsolv, vjmat, vhasjac);
 #if SUNDIALS_LIB_VERSION >= 300
     void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
     SUNLinearSolver lsolv = LSOLVER(vlsolv);
@@ -735,7 +748,7 @@ CAMLprim value c_cvode_dls_set_linear_solver (value vcvode_mem, value vlsolv,
     CHECK_FLAG ("CVodeSetIterType", flag);
     flag = CVDlsSetLinearSolver(cvode_mem, lsolv, jmat);
     CHECK_FLAG ("CVDlsSetLinearSolver", flag);
-    if (Bool_val (vset_jac)) {
+    if (Bool_val (vhasjac)) {
 	flag = CVDlsSetJacFn(cvode_mem, jacfn);
 	CHECK_FLAG("CVDlsSetJacFn", flag);
     }

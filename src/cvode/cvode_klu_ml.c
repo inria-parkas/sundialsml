@@ -42,15 +42,21 @@ CAMLprim value c_cvode_klu_get_num_jac_evals(value vcvode_mem)
 /* CVODES (with sensitivity) */
 
 #include <cvodes/cvodes.h>
+
+#if SUNDIALS_LIB_VERSION < 300
 #include <cvodes/cvodes_sparse.h>
 #include <cvodes/cvodes_klu.h>
+#endif
 
 #else
 /* CVODE (without sensitivity) */
 
 #include <cvode/cvode.h>
+
+#if SUNDIALS_LIB_VERSION < 300
 #include <cvode/cvode_sparse.h>
 #include <cvode/cvode_klu.h>
+#endif
 
 #endif
 
@@ -149,10 +155,10 @@ CAMLprim value c_cvode_klu_reinit (value vcvode_mem, value vn, value vnnz)
 CAMLprim value c_cvode_klu_get_num_jac_evals(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
+    long int r = 0;
 #if SUNDIALS_LIB_VERSION < 300
     void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
 
-    long int r;
     int flag = CVSlsGetNumJacEvals(cvode_mem, &r);
     CHECK_FLAG("CVSlsGetNumJacEvals", flag);
 

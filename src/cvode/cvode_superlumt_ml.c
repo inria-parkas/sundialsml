@@ -39,15 +39,21 @@ CAMLprim value c_cvode_superlumt_get_num_jac_evals(value vcvode_mem)
 /* CVODES (with sensitivity) */
 
 #include <cvodes/cvodes.h>
+
+#if SUNDIALS_LIB_VERSION < 300
 #include <cvodes/cvodes_sparse.h>
 #include <cvodes/cvodes_superlumt.h>
+#endif
 
 #else
 /* CVODE (without sensitivity) */
 
 #include <cvode/cvode.h>
+
+#if SUNDIALS_LIB_VERSION < 300
 #include <cvode/cvode_sparse.h>
 #include <cvode/cvode_superlumt.h>
+#endif
 
 #endif
 
