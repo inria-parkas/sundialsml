@@ -367,15 +367,14 @@ module Iterative :
     (** Create a Cvode-specific linear solver from a generic iterative
         linear solver.
 
-        NB: the [jac_times_setup] argument is not supported in
+        NB: a [jac_times_setup_fn] is not supported in
             {!Sundials.sundials_version} < 3.0.0.
 
         @nocvode <node> CVDlsSetLinearSolver
         @nocvode <node> CVDlsSetJacFn *)
     val make :
       ('d, 'k, 'f) Lsolver.Iterative.t
-      -> ?jac_times_setup:'d jac_times_setup_fn
-      -> ?jac_times_vec:'d jac_times_vec_fn
+      -> ?jac_times_vec:'d jac_times_setup_fn option * 'd jac_times_vec_fn
       -> ('d, 'k) preconditioner
       -> ('d, 'k) linear_solver
 

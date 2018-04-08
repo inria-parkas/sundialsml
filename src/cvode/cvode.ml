@@ -377,7 +377,10 @@ module Iterative =
 
     let make Lsolver_impl.Iterative.({ rawptr; solver;
                                        compat = ({ maxl; gs_type } as compat) })
-          ?jac_times_setup ?jac_times_vec (prec_type, set_prec) session nv =
+          ?jac_times_vec (prec_type, set_prec) session nv =
+      let jac_times_setup, jac_times_vec =
+        match jac_times_vec with None -> None, None
+                               | Some (ojts, jtv) -> ojts, Some jtv in
       if in_compat_mode then begin
         if jac_times_setup <> None then
           raise Sundials.NotImplementedBySundialsVersion;
