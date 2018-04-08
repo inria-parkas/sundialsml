@@ -125,16 +125,16 @@ module Direct :
         matrix. In the call [jac arg jm], [arg] is a {!jacobian_arg} with
         three work vectors and the computed Jacobian must be stored in [jm].
 
-        The callback should load the [(i,j)]th entry of [jac] with
+        The callback should load the [(i,j)]th entry of [jm] with
         {% $\partial y_i/\partial y_j$%}, i.e., the partial derivative of the
         [i]th equation with respect to the [j]th variable, evaluated at the
         values of [t] and [y] obtained from [arg]. Only nonzero elements need
-        be loaded into [jac].
+        be loaded into [jm].
 
         Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
         Any other exception is treated as an unrecoverable error.
 
-        {warning Neither the elements of [arg] nor the matrix [jac] should
+        {warning Neither the elements of [arg] nor the matrix [jm] should
                  be accessed after the function has returned.}
 
         @nocvode <node> CVDlsSetJacFn *)
@@ -144,7 +144,7 @@ module Direct :
     (** Create a Cvode-specific linear solver from a generic dense linear
         solver, a Jacobian approximation function, and a Jacobian matrix
         for the solver's internal use. The Jacobian approximation function
-        is optional for direct and banded solvers (if not given an internal
+        is optional for dense and banded solvers (if not given an internal
         difference quotient approximation is used), but must be provided for
         other solvers (or {Invalid_argument} is raised).
 
