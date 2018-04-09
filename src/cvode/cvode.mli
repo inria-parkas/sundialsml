@@ -257,7 +257,6 @@ module Iterative :
         {warning The elements of [arg] should not be accessed after the
                  function has returned.}
 
-        @nocvode <node> CVSpilsSetJacTimes
         @nocvode <node> CVSpilsJacTimesSetupFn *)
     type 'd jac_times_setup_fn = (unit, 'd) jacobian_arg -> unit
 
@@ -273,7 +272,6 @@ module Iterative :
         {warning Neither the elements of [arg] nor [v] or [jv] should be
                  accessed after the function has returned.}
 
-        @nocvode <node> CVSpilsSetJacTimes
         @nocvode <node> CVSpilsJacTimesVecFn *)
     type 'd jac_times_vec_fn =
       ('d, 'd) jacobian_arg
@@ -370,8 +368,8 @@ module Iterative :
         NB: a [jac_times_setup_fn] is not supported in
             {!Sundials.sundials_version} < 3.0.0.
 
-        @nocvode <node> CVDlsSetLinearSolver
-        @nocvode <node> CVDlsSetJacFn *)
+        @nocvode <node> CVSpilsSetLinearSolver
+        @nocvode <node> CVSpilsSetJacTimes *)
     val make :
       ('d, 'k, 'f) Lsolver.Iterative.t
       -> ?jac_times_vec:'d jac_times_setup_fn option * 'd jac_times_vec_fn

@@ -60,12 +60,6 @@ CAMLprim value c_cvode_klu_get_num_jac_evals(value vcvode_mem)
 
 #endif
 
-enum cvode_klu_ordering_tag {
-  VARIANT_CVODE_KLU_AMD     = 0,
-  VARIANT_CVODE_KLU_COLAMD  = 1,
-  VARIANT_CVODE_KLU_NATURAL = 2,
-};
-
 #if SUNDIALS_LIB_VERSION < 300
 static int jacfn(
 	realtype t,
@@ -107,7 +101,8 @@ CAMLprim value c_cvode_klu_init (value vcvode_mem, value vformat,
     int flag;
 
 #if SUNDIALS_LIB_VERSION >= 270
-    flag = CVKLU (cvode_mem, Int_val(vneqs), Int_val(vnnz), Int_val(vformat));
+    flag = CVKLU (cvode_mem, Int_val(vneqs), Int_val(vnnz),
+		  MAT_FROM_SFORMAT(vformat));
 #else
     flag = CVKLU (cvode_mem, Int_val(vneqs), Int_val(vnnz));
 #endif
