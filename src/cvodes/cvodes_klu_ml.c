@@ -138,12 +138,14 @@ CAMLprim value c_cvodes_klub_init (value vparent_which, value vformat,
 				   value vneqs, value vnnz, value vusesens)
 {
     CAMLparam5(vparent_which, vformat, vneqs, vnnz, vusesens);
+#if SUNDIALS_LIB_VERSION < 300
     void *mem = CVODE_MEM_FROM_ML (Field(vparent_which, 0));
     int which = Int_val(Field(vparent_which, 1));
     int flag;
 
 #if SUNDIALS_LIB_VERSION >= 270
-    flag = CVKLUB (mem, which, Int_val(vneqs), Int_val(vnnz), Int_val(vformat));
+    flag = CVKLUB (mem, which, Int_val(vneqs), Int_val(vnnz),
+		   MAT_FROM_SFORMAT(vformat));
 #else
     flag = CVKLUB (mem, which, Int_val(vneqs), Int_val(vnnz));
 #endif
@@ -156,6 +158,9 @@ CAMLprim value c_cvodes_klub_init (value vparent_which, value vformat,
 	CHECK_FLAG("CVSlsSetSparseJacFnB", flag);
     }
 
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 

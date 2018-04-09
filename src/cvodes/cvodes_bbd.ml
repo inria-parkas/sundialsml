@@ -52,16 +52,16 @@ let init_preconditioner dqrely bandwidths precfns bs parent which nv =
   (tosession bs).ls_precfns <- BBBDPrecFns (bbd_precfns precfns)
 
 let prec_left ?(dqrely=0.0) bandwidths ?comm local_fn =
-  AdjointTypes.SpilsTypes.InternalPrecLeft
-    (init_preconditioner dqrely bandwidths { local_fn; comm_fn = comm })
+  Lsolver_impl.Iterative.(PrecLeft,
+    init_preconditioner dqrely bandwidths { local_fn; comm_fn = comm })
 
 let prec_right ?(dqrely=0.0) bandwidths ?comm local_fn =
-  AdjointTypes.SpilsTypes.InternalPrecRight
-    (init_preconditioner dqrely bandwidths { local_fn; comm_fn = comm })
+  Lsolver_impl.Iterative.(PrecRight,
+    init_preconditioner dqrely bandwidths { local_fn; comm_fn = comm })
 
 let prec_both ?(dqrely=0.0) bandwidths ?comm local_fn =
-  AdjointTypes.SpilsTypes.InternalPrecBoth
-    (init_preconditioner dqrely bandwidths { local_fn; comm_fn = comm })
+  Lsolver_impl.Iterative.(PrecBoth,
+    init_preconditioner dqrely bandwidths { local_fn; comm_fn = comm })
 
 external c_bbd_prec_reinitb
     : parallel_session -> int -> int -> int -> float -> unit

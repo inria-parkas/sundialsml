@@ -134,6 +134,7 @@ CAMLprim value c_cvodes_superlumtb_init (value vparent_which,
 					 value vnthreads, value vusesens)
 {
     CAMLparam5(vparent_which, vneqs, vnnz, vnthreads, vusesens);
+#if SUNDIALS_LIB_VERSION < 300
     void *mem = CVODE_MEM_FROM_ML (Field(vparent_which, 0));
     int which = Int_val(Field(vparent_which, 1));
     int flag;
@@ -149,6 +150,9 @@ CAMLprim value c_cvodes_superlumtb_init (value vparent_which,
 	CHECK_FLAG("CVSlsSetSparseJacFnB", flag);
     }
 
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 

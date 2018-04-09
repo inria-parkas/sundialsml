@@ -258,7 +258,7 @@ module AdjointTypes' = struct
     type 'm jac_callback_with_sens =
       {
         jacfn_sens : 'm jac_fn_with_sens;
-        mutable jmat_sens : 'm option
+        mutable jmat : 'm option
       }
   end
 
@@ -267,13 +267,13 @@ module AdjointTypes' = struct
     include SpilsCommonTypes
 
     type 'a prec_solve_fn =
-      ('a, 'a) jacobian_arg
+      (unit, 'a) jacobian_arg
       -> 'a prec_solve_arg
       -> 'a
       -> unit
 
     type 'a prec_setup_fn =
-      ('a triple, 'a) jacobian_arg
+      (unit, 'a) jacobian_arg
       -> bool
       -> float
       -> bool
@@ -284,6 +284,8 @@ module AdjointTypes' = struct
         prec_setup_fn : 'a prec_setup_fn option;
       }
 
+    type 'd jac_times_setup_fn_no_sens = (unit, 'd) jacobian_arg -> unit
+
     type 'a jac_times_vec_fn_no_sens =
       ('a, 'a) jacobian_arg
       -> 'a (* v *)
@@ -293,14 +295,14 @@ module AdjointTypes' = struct
     (* versions with forward sensitivities *)
 
     type 'd prec_solve_fn_with_sens =
-      ('d, 'd) jacobian_arg
+      (unit, 'd) jacobian_arg
       -> 'd prec_solve_arg
       -> 'd array
       -> 'd
       -> unit
 
     type 'd prec_setup_fn_with_sens =
-      ('d triple, 'd) jacobian_arg
+      (unit, 'd) jacobian_arg
       -> 'd array
       -> bool
       -> float
@@ -311,6 +313,9 @@ module AdjointTypes' = struct
         prec_solve_fn_sens : 'a prec_solve_fn_with_sens;
         prec_setup_fn_sens : 'a prec_setup_fn_with_sens option;
       }
+
+    type 'd jac_times_setup_fn_with_sens =
+      (unit, 'd) jacobian_arg -> 'd array -> unit
 
     type 'd jac_times_vec_fn_with_sens =
       ('d, 'd) jacobian_arg
@@ -430,8 +435,10 @@ and ('a, 'kind) linsolv_callbacks =
                      * 'a SpilsTypes'.jac_times_setup_fn option
   | BSpilsCallback
       of 'a AdjointTypes'.SpilsTypes'.jac_times_vec_fn_no_sens option
+         * 'a AdjointTypes'.SpilsTypes'.jac_times_setup_fn_no_sens option
   | BSpilsCallbackSens
       of 'a AdjointTypes'.SpilsTypes'.jac_times_vec_fn_with_sens option
+         * 'a AdjointTypes'.SpilsTypes'.jac_times_setup_fn_with_sens option
 
   (* Alternate *)
   | AlternateCallback of ('a, 'kind) alternate_linsolv
@@ -637,10 +644,7 @@ module AdjointTypes = struct
       ('a, 'k) bsession -> ('a, 'k) session -> int -> ('a, 'k) nvector -> unit
 
     type ('a, 'k) preconditioner =
-      | InternalPrecNone of ('a, 'k) set_preconditioner
-      | InternalPrecLeft of ('a, 'k) set_preconditioner
-      | InternalPrecRight of ('a, 'k) set_preconditioner
-      | InternalPrecBoth of ('a, 'k) set_preconditioner
+      Lsolver_impl.Iterative.preconditioning_type * ('a, 'k) set_preconditioner
 
     type 'k serial_preconditioner = (Nvector_serial.data, 'k) preconditioner
                                     constraint 'k = [>Nvector_serial.kind]
