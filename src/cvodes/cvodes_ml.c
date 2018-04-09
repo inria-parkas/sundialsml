@@ -128,7 +128,7 @@ static int quadrhsfn(realtype t, N_Vector y, N_Vector yQdot, void *user_data)
     cb = CVODES_QUADRHSFN_FROM_EXT (cb);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn (cb, args[0], args[1], args[2]);
+    value r = caml_callbackN_exn (cb, 3, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -390,7 +390,7 @@ static int bprecsolvefn(
     cb = Field (cb, RECORD_CVODES_BSPILS_PRECFNS_PREC_SOLVE_FN);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn (cb, args[0], args[1], args[2]);
+    value r = caml_callbackN_exn (cb, 3, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -475,7 +475,7 @@ static int bprecsetupfn(
     cb = Some_val (cb);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn (cb, args[0], args[1], args[2]);
+    value r = caml_callbackN_exn (cb, 3, args);
 
     /* Update jcurPtr; leave it unchanged if an error occurred.  */
     if (!Is_exception_result (r)) {
@@ -591,7 +591,7 @@ static int bjactimesfn(
     cb = Some_val (cb);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn (cb, args[0], args[1], args[2]);
+    value r = caml_callbackN_exn (cb, 3, args);
 
     /* NB: jac_times_vec doesn't accept RecoverableFailure. */
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
@@ -673,6 +673,79 @@ static int bjactimesfn_withsens(
 }
 #endif
 
+#if SUNDIALS_LIB_VERSION >= 300
+
+static int bjacfn_nosens(
+    long int neqb,
+    realtype t,
+    N_Vector y,
+    N_Vector yb,
+    N_Vector fyb,
+    SUNMatrix jacb,
+    void *user_data,
+    N_Vector tmp1b,
+    N_Vector tmp2b,
+    N_Vector tmp3b)
+{
+    CAMLparam0();
+    CAMLlocalN(args, 2);
+    CAMLlocal2(session, cb);
+
+    WEAK_DEREF (session, *(value*)user_data);
+    cb = CVODE_LS_CALLBACKS_FROM_ML(session);
+    cb = Field (cb, 0);
+
+    args[0] = cvodes_make_jac_arg(t, y, yb, fyb,
+		cvode_make_triple_tmp(tmp1b, tmp2b, tmp3b));
+    args[1] = MAT_BACKLINK(jacb);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (Field(cb, 0), 2, args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
+}
+
+static int bjacfn_withsens(
+    long int neqb,
+    realtype t,
+    N_Vector y,
+    N_Vector *ys,
+    N_Vector yb,
+    N_Vector fyb,
+    SUNMatrix jacb,
+    void *user_data,
+    N_Vector tmp1b,
+    N_Vector tmp2b,
+    N_Vector tmp3b)
+{
+    CAMLparam0();
+    CAMLlocalN(args, 3);
+    CAMLlocal3(session, bsensext, cb);
+    int ns;
+
+    WEAK_DEREF (session, *(value*)user_data);
+    bsensext = CVODE_SENSEXT_FROM_ML(session);
+
+    cb = CVODE_LS_CALLBACKS_FROM_ML(session);
+    cb = Field (cb, 0);
+
+    args[0] = cvodes_make_jac_arg(t, y, yb, fyb,
+		cvode_make_triple_tmp(tmp1b, tmp2b, tmp3b));
+
+    ns = Int_val(Field(bsensext, RECORD_CVODES_BWD_SESSION_NUMSENSITIVITIES));
+    args[1] = CVODES_BSENSARRAY_FROM_EXT(bsensext);
+    cvodes_wrap_to_nvector_table(ns, args[1], ys);
+
+    args[2] = MAT_BACKLINK(jacb);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (Field(cb, 0), 3, args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
+}
+
+#else
+
 static int bjacfn_nosens(
     long int neqb,
     realtype t,
@@ -695,7 +768,7 @@ static int bjacfn_nosens(
 
     dmat = Field(cb, 1);
     if (dmat == Val_none) {
-	Store_some(dmat, c_dls_dense_wrap(jacb, 0));
+	Store_some(dmat, c_matrix_dense_wrap(jacb, 0));
 	Store_field(cb, 1, dmat);
     }
 
@@ -704,7 +777,7 @@ static int bjacfn_nosens(
     args[1] = Some_val(dmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback2_exn (Field(cb, 0), args[0], args[1]);
+    value r = caml_callbackN_exn (Field(cb, 0), 2, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -736,7 +809,7 @@ static int bjacfn_withsens(
 
     dmat = Field(cb, 1);
     if (dmat == Val_none) {
-	Store_some(dmat, c_dls_dense_wrap(jacb, 0));
+	Store_some(dmat, c_matrix_dense_wrap(jacb, 0));
 	Store_field(cb, 1, dmat);
     }
 
@@ -750,7 +823,7 @@ static int bjacfn_withsens(
     args[2] = Some_val(dmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn (Field(cb, 0), args[0], args[1], args[2]);
+    value r = caml_callbackN_exn (Field(cb, 0), 3, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -781,7 +854,7 @@ static int bbandjacfn_nosens(
 
     bmat = Field(cb, 1);
     if (bmat == Val_none) {
-	Store_some(bmat, c_dls_band_wrap(jacb, 0));
+	Store_some(bmat, c_matrix_band_wrap(jacb, 0));
 	Store_field(cb, 1, bmat);
     }
 
@@ -825,7 +898,7 @@ static int bbandjacfn_withsens(
 
     bmat = Field(cb, 1);
     if (bmat == Val_none) {
-	Store_some(bmat, c_dls_band_wrap(jacb, 0));
+	Store_some(bmat, c_matrix_band_wrap(jacb, 0));
 	Store_field(cb, 1, bmat);
     }
 
@@ -843,6 +916,8 @@ static int bbandjacfn_withsens(
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
+#endif
+
 #endif
 
 /* quadrature interface */

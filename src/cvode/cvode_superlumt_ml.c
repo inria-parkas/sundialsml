@@ -57,13 +57,6 @@ CAMLprim value c_cvode_superlumt_get_num_jac_evals(value vcvode_mem)
 
 #endif
 
-enum cvode_superlumt_ordering_tag {
-  VARIANT_CVODE_SUPERLUMT_NATURAL    = 0,
-  VARIANT_CVODE_SUPERLUMT_MINDEGPROD = 1,
-  VARIANT_CVODE_SUPERLUMT_MINDEGSUM  = 2,
-  VARIANT_CVODE_SUPERLUMT_COLAMD     = 3,
-};
-
 #if SUNDIALS_LIB_VERSION < 300
 static int jacfn(
 	realtype t,

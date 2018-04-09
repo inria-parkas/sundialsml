@@ -111,12 +111,12 @@ module Direct = struct (* {{{ *)
     = "c_cvode_dls_lapack_dense"
 
   (* Sundials < 3.0.0 *)
-  external c_dls_band : ('k serial_session * int) -> int -> int -> bool -> unit
+  external c_dls_band : 'k serial_session -> int -> int -> int -> bool -> unit
     = "c_cvode_dls_band"
 
   (* Sundials < 3.0.0 *)
   external c_dls_lapack_band
-    : ('k serial_session * int) -> int -> int -> bool -> unit
+    : 'k serial_session -> int -> int -> int -> bool -> unit
     = "c_cvode_dls_lapack_band"
 
   (* Sundials < 3.0.0 *)
@@ -180,10 +180,10 @@ module Direct = struct (* {{{ *)
 
     | Lsolver_impl.Direct.Band ->
         let Matrix.Band.({ n; mu; ml }) = Matrix.(Band.dims (unwrap mat)) in
-        c_dls_band (session, n) mu ml hasjac
+        c_dls_band session n mu ml hasjac
     | Lsolver_impl.Direct.LapackBand ->
         let Matrix.Band.({ n; mu; ml }) = Matrix.(Band.dims (unwrap mat)) in
-        c_dls_lapack_band (session, n) mu ml hasjac
+        c_dls_lapack_band session n mu ml hasjac
 
     | Lsolver_impl.Direct.Klu sinfo ->
         if not Sundials_config.klu_enabled
@@ -366,7 +366,7 @@ module Iterative = struct (* {{{ *)
     session.ls_precfns <- PrecFns { prec_solve_fn = solve;
                                     prec_setup_fn = setup }
 
-  let prec_none = Lsolver_impl.Iterative.(PrecLeft,
+  let prec_none = Lsolver_impl.Iterative.(PrecNone,
                     fun session nv -> session.ls_precfns <- NoPrecFns)
 
   let prec_left ?setup solve  = Lsolver_impl.Iterative.(PrecLeft,

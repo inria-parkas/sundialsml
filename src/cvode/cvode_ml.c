@@ -82,9 +82,6 @@
 
 #include "../lsolvers/matrix_ml.h"
 #include "../lsolvers/lsolver_ml.h"
-#include "../lsolvers/dls_ml.h"
-#include "../lsolvers/spils_ml.h"
-#include "../sundials/sundials_ml.h"
 #include "cvode_ml.h"
 #include "../nvectors/nvector_ml.h"
 
@@ -265,7 +262,7 @@ value cvode_make_triple_tmp(N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
 static int jacfn(
 	realtype t,
 	N_Vector y,
-	N_Vector fy,	     
+	N_Vector fy,
 	SUNMatrix Jac,
 	void *user_data,
 	N_Vector tmp1,
@@ -274,7 +271,7 @@ static int jacfn(
 {
     CAMLparam0();
     CAMLlocalN (args, 2);
-    CAMLlocal3(session, cb, dmat);
+    CAMLlocal2(session, cb);
 
     WEAK_DEREF (session, *(value*)user_data);
 
@@ -337,7 +334,7 @@ static int bandjacfn(
 	N_Vector y,
 	N_Vector fy,
 	DlsMat Jac,
-	void *user_data, 	 
+	void *user_data,
 	N_Vector tmp1,
 	N_Vector tmp2,
 	N_Vector tmp3)
@@ -496,6 +493,7 @@ static int jactimesfn(N_Vector v,
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
+#if SUNDIALS_LIB_VERSION >= 300
 static int jacsetupfn(realtype t,
 		      N_Vector y,
 		      N_Vector fy,
@@ -516,6 +514,7 @@ static int jacsetupfn(realtype t,
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
+#endif
 
 static int linit(CVodeMem cv_mem)
 {
@@ -686,14 +685,14 @@ CAMLprim value c_cvode_dls_lapack_dense (value vcvode_mem, value vneqs,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_dls_band (value vcvode_mem_neqs,
+CAMLprim value c_cvode_dls_band (value vcvode_mem, value vneqs,
 				 value vmupper, value vmlower,
 				 value vset_jac)
 {
-    CAMLparam4(vcvode_mem_neqs, vmupper, vmlower, vset_jac);
+    CAMLparam5(vcvode_mem, vneqs, vmupper, vmlower, vset_jac);
 #if SUNDIALS_LIB_VERSION < 300
-    void *cvode_mem = CVODE_MEM_FROM_ML (Field(vcvode_mem_neqs, 0));
-    long neqs = Long_val (Field(vcvode_mem_neqs, 1));
+    void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
+    long neqs = Long_val (vneqs);
     int flag;
 
     flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
@@ -710,13 +709,14 @@ CAMLprim value c_cvode_dls_band (value vcvode_mem_neqs,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_dls_lapack_band (value vcvode_mem_neqs, value vmupper,
-					value vmlower, value vset_jac)
+CAMLprim value c_cvode_dls_lapack_band (value vcvode_mem, value vneqs,
+					value vmupper, value vmlower,
+					value vset_jac)
 {
-    CAMLparam4(vcvode_mem_neqs, vmupper, vmlower, vset_jac);
+    CAMLparam5(vcvode_mem, vneqs, vmupper, vmlower, vset_jac);
 #if SUNDIALS_LIB_VERSION < 300 && defined SUNDIALS_ML_LAPACK
-    void *cvode_mem = CVODE_MEM_FROM_ML (Field(vcvode_mem_neqs, 0));
-    long neqs = Long_val(Field(vcvode_mem_neqs, 1));
+    void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
+    long neqs = Long_val(vneqs);
     int flag;
 
     flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
