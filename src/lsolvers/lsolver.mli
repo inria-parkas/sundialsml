@@ -252,9 +252,13 @@ module Iterative : sig (* {{{ *)
     | PrecBoth    (** {% $(P_L^{-1}AP_R^{-1})P_Rx = P_L^{-1}b$ %} *)
 
   (** Change the preconditioning direction without modifying callback
-      functions. Raises {Invalid_argument} if the current preconditioner
+      functions.
+
+      Raises {IllegalPrecType} if the current preconditioner
       is {{!preconditioning_type}PrecNone} and the given argument is not
-      (since no callback functions are specified in this case.
+      (since no callback functions are specified in this case. May raise
+      {IllegalPrecType} if the given type is not allowed by the underlying
+      solver.
 
       @nocvode <node> SUNPCGSetPrecType
       @nocvode <node> SUNSPBCGSSetPrecType
@@ -301,6 +305,9 @@ module Iterative : sig (* {{{ *)
   (** Raised when LU factorization encounters a singular matrix.
       {cconst SUNLS_LUFACT_FAIL} *)
   exception LUfactFailure
+
+  (** Raised by {!set_prec_type} if the given type is not allowed. *)
+  exception IllegalPrecType
 
 end (* }}} *)
 

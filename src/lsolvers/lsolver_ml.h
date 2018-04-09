@@ -72,6 +72,7 @@ enum lsolver_exn_index {
     LSOLVER_EXN_Iterative_ConvFailure,
     LSOLVER_EXN_Iterative_QRfactFailure,
     LSOLVER_EXN_Iterative_LUfactFailure,
+    LSOLVER_EXN_Iterative_IllegalPrecType,
     LSOLVER_EXN_SET_SIZE
 };
 

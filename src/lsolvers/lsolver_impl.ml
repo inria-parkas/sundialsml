@@ -126,6 +126,7 @@ module Iterative = struct
     rawptr : cptr;
     solver : solver;
     compat : info;
+    mutable check_prec_type  : preconditioning_type -> bool;
   }
 
   external c_set_prec_type : cptr -> solver -> preconditioning_type -> unit

@@ -309,7 +309,7 @@ CAMLprim void ml_lsolver_set_prec_type(value vcptr, value vsolver,
     }
 
     if ((old_pretype = PREC_NONE) && (pretype <> PREC_NONE))
-	caml_invalid_argument("cannot change prec_type from PREC_NONE");
+	LSOLVER_EXN(IllegalPrecType);
 
     // ignore returned values
     switch (Int_val(vsolver)) {

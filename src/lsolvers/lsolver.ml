@@ -154,6 +154,7 @@ module Iterative = struct
   exception ConvFailure
   exception QRfactFailure
   exception LUfactFailure
+  exception IllegalPrecType
 
   external c_set_maxl : cptr -> solver -> int -> unit
     = "ml_lsolver_set_maxl"
@@ -176,7 +177,8 @@ module Iterative = struct
     if in_compat_mode then raise Sundials.NotImplementedBySundialsVersion
     else c_set_max_restarts rawptr solver max_restarts
 
-  let set_prec_type { rawptr; solver; compat } prec_type =
+  let set_prec_type { rawptr; solver; compat; check_prec_type } prec_type =
+    if not (check_prec_type prec_type) then raise IllegalPrecType;
     if in_compat_mode then compat.set_prec_type prec_type
     else c_set_prec_type rawptr solver prec_type
 
@@ -199,7 +201,8 @@ module Iterative = struct
     in
     { rawptr = cptr;
       solver = Spbcgs;
-      compat = compat }
+      compat = compat;
+      check_prec_type = fun _ -> true; }
 
   external c_spfgmr : int -> ('d, 'k) Nvector.t -> cptr
     = "ml_lsolver_spfgmr"
@@ -227,7 +230,8 @@ module Iterative = struct
     in
     { rawptr = cptr;
       solver = Spfgmr;
-      compat = compat }
+      compat = compat;
+      check_prec_type = fun _ -> true; }
 
   external c_spgmr : int -> ('d, 'k) Nvector.t -> cptr
     = "ml_lsolver_spgmr"
@@ -256,7 +260,8 @@ module Iterative = struct
     in
     { rawptr = cptr;
       solver = Spgmr;
-      compat = compat }
+      compat = compat;
+      check_prec_type = fun _ -> true; }
 
   external c_sptfqmr : int -> ('d, 'k) Nvector.t -> cptr
     = "ml_lsolver_sptfqmr"
@@ -273,7 +278,8 @@ module Iterative = struct
     in
     { rawptr = cptr;
       solver = Sptfqmr;
-      compat = compat }
+      compat = compat;
+      check_prec_type = fun _ -> true; }
 
   external c_pcg : int -> ('d, 'k) Nvector.t -> cptr
     = "ml_lsolver_pcg"
@@ -289,7 +295,8 @@ module Iterative = struct
     in
     { rawptr = cptr;
       solver = Pcg;
-      compat = compat }
+      compat = compat;
+      check_prec_type = fun _ -> true; }
 end
 
 (* Let C code know about some of the values in this module.  *)
@@ -311,5 +318,6 @@ let _ =
       Iterative.ConvFailure;
       Iterative.QRfactFailure;
       Iterative.LUfactFailure;
+      Iterative.IllegalPrecType;
     |]
 
