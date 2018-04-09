@@ -39,25 +39,25 @@ CAMLprim value c_ida_superlumt_get_num_jac_evals(value vida_mem)
 /* IDAS (with sensitivity) */
 
 #include <idas/idas.h>
+
+#if SUNDIALS_LIB_VERSION < 300
 #include <idas/idas_sparse.h>
 #include <idas/idas_superlumt.h>
+#endif
 
 #else
 /* IDA (without sensitivity) */
 
 #include <ida/ida.h>
+
+#if SUNDIALS_LIB_VERSION < 300
 #include <ida/ida_sparse.h>
 #include <ida/ida_superlumt.h>
+#endif
 
 #endif
 
-enum ida_superlumt_ordering_tag {
-  VARIANT_IDA_SUPERLUMT_NATURAL    = 0,
-  VARIANT_IDA_SUPERLUMT_MINDEGPROD = 1,
-  VARIANT_IDA_SUPERLUMT_MINDEGSUM  = 2,
-  VARIANT_IDA_SUPERLUMT_COLAMD     = 3,
-};
-
+#if SUNDIALS_LIB_VERSION < 300
 static int jacfn (realtype t, realtype coef,
 		  N_Vector y, N_Vector yp, N_Vector res,
 		  SlsMat jac, void *user_data,
@@ -94,11 +94,13 @@ static int jacfn (realtype t, realtype coef,
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
+#endif
 
 CAMLprim value c_ida_superlumt_init (value vida_mem, value vneqs,
 				     value vnnz, value vnthreads)
 {
     CAMLparam4(vida_mem, vneqs, vnnz, vnthreads);
+#if SUNDIALS_LIB_VERSION < 300
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
     int flag;
 
@@ -107,30 +109,38 @@ CAMLprim value c_ida_superlumt_init (value vida_mem, value vneqs,
     CHECK_FLAG ("IDASuperLUMT", flag);
     flag = IDASlsSetSparseJacFn(ida_mem, jacfn);
     CHECK_FLAG("IDASlsSetSparseJacFn", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_ida_superlumt_set_ordering (value vida_mem, value vorder)
 {
     CAMLparam2(vida_mem, vorder);
+#if SUNDIALS_LIB_VERSION < 300
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
 
     int flag = IDASuperLUMTSetOrdering (ida_mem, Int_val(vorder));
     CHECK_FLAG ("IDASuperLUMTSetOrdering", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_ida_superlumt_get_num_jac_evals(value vida_mem)
 {
     CAMLparam1(vida_mem);
+#if SUNDIALS_LIB_VERSION < 300
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
 
     long int r;
     int flag = IDASlsGetNumJacEvals(ida_mem, &r);
     CHECK_FLAG("IDASlsGetNumJacEvals", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn(Val_long(r));
 }
 

@@ -96,673 +96,410 @@ type ('t, 'd) jacobian_arg = ('t, 'd) Ida_impl.jacobian_arg =
     jac_tmp  : 't            (** Workspace data. *)
   }
 
-(** The range of nonzero entries in a band matrix.  *)
-type bandrange = Ida_impl.bandrange =
-  { mupper : int; (** The upper half-bandwidth.  *)
-    mlower : int; (** The lower half-bandwidth.  *) }
-
-(** Direct Linear Solvers operating on dense and banded matrices.
+(** Direct Linear Solvers operating on dense, banded and sparse matrices.
 
     @ida <node5#sss:optin_dls> Direct linear solvers optional input functions
     @ida <node5#sss:optout_dls> Direct linear solvers optional output functions *)
-module Dls :
-  sig (* {{{ *)
-
-    (** Callback functions that compute dense approximations to a Jacobian
-        matrix. In the call [dense_jac_fn arg jac], [arg] is a {!jacobian_arg}
-        with three work vectors and the computed Jacobian must be stored
-        in [jac].
-
-        The callback should load the [(i,j)]th entry of [jac] with
-        {% $\frac{\partial F_i}{\partial y_j} + c_j\frac{\partial F_i}{\partial\dot{y}_j}$%},
-        i.e., the partial derivative of the [i]th equation with respect to
-        the [j]th variable, evaluated at the values of [t], [y], and [y']
-        obtained from [arg]. Only nonzero elements need be loaded into [jac].
-
-        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
-        Any other exception is treated as an unrecoverable error.
+module Direct : sig (* {{{ *)
 
-        {warning Neither the elements of [arg] nor the matrix [jac] should
-                 be accessed after the function has returned.}
+  (** Callback functions that compute dense approximations to a Jacobian
+      matrix. In the call [jac arg jm], [arg] is a {!jacobian_arg}
+      with three work vectors and the computed Jacobian must be stored
+      in [jm].
 
-        @ida <node5#ss:djacFn> IDADlsDenseJacFn *)
-    type dense_jac_fn = (RealArray.t triple, RealArray.t) jacobian_arg
-                      -> Dls.DenseMatrix.t -> unit
+      The callback should load the [(i,j)]th entry of [jm] with
+      {% $\frac{\partial F_i}{\partial y_j} + c_j\frac{\partial F_i}{\partial\dot{y}_j}$%},
+      i.e., the partial derivative of the [i]th equation with respect to
+      the [j]th variable, evaluated at the values of [t], [y], and [y']
+      obtained from [arg]. Only nonzero elements need be loaded into [jm].
 
-    (** A direct linear solver on dense matrices. The optional argument
-        specifies a callback function for computing an approximation to the
-        Jacobian matrix. If this argument is omitted, then a default
-        implementation based on difference quotients is used.
+      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Any other exception is treated as an unrecoverable error.
 
-        @ida <node5#sss:lin_solv_init> IDADense
-        @ida <node5#sss:optin_dls> IDADlsSetDenseJacFn
-        @ida <node5#ss:djacFn> IDADlsDenseJacFn *)
-    val dense : ?jac:dense_jac_fn -> unit -> 'k serial_linear_solver
+      {warning Neither the elements of [arg] nor the matrix [jm] should
+               be accessed after the function has returned.}
 
-    (** A direct linear solver on dense matrices using LAPACK. See {!dense}.
-        Only available if {!Sundials.lapack_enabled}.
+      @ida <node5#ss:djacFn> IDADlsDenseJacFn *)
+  type 'm jac_fn = (RealArray.t triple, RealArray.t) jacobian_arg -> 'm -> unit
 
-        @raise Sundials.NotImplementedBySundialsVersion Solver not available.
-        @ida <node5#sss:lin_solv_init> IDALapackDense
-        @ida <node5#sss:optin_dls> IDADlsSetDenseJacFn
-        @ida <node5#ss:djacFn> IDADlsDenseJacFn *)
-    val lapack_dense : ?jac:dense_jac_fn -> unit -> 'k serial_linear_solver
+  (** Create an Ida-specific linear solver from a generic dense linear
+      solver, a Jacobian approximation function, and a Jacobian matrix
+      for the solver's internal use. The Jacobian approximation function
+      is optional for dense and banded solvers (if not given an internal
+      difference quotient approximation is used), but must be provided for
+      other solvers (or {Invalid_argument} is raised).
 
-    (** Callback functions that compute banded approximations to
-        a Jacobian matrix. In the call [band_jac_fn {mupper; mlower} arg jac],
-        - [mupper] is the upper half-bandwidth of the Jacobian,
-        - [mlower] is the lower half-bandwidth of the Jacobian,
-        - [arg] is a {!jacobian_arg} with three work vectors, and,
-        - [jac] is storage for the computed Jacobian.
+      @nocvode <node> IDADlsSetLinearSolver
+      @nocvode <node> IDADlsSetJacFn *)
+  val make :
+    ('m, 'kind) Lsolver.Direct.serial_t ->
+    ?jac:'m jac_fn ->
+    ('k, 'm, Nvector_serial.data, 'kind) Matrix.t ->
+    'kind serial_linear_solver
 
-        The callback should load the [(i,j)]th entry of [jac] with
-        {% $\frac{\partial F_i}{\partial y_j} + c_j\frac{\partial F_i}{\partial\dot{y}_j}$%},
-        i.e., the partial derivative of the [i]th equation with respect to
-        the [j]th variable, evaluated at the values of [t] and [y] obtained
-        from [arg]. Only nonzero elements need be loaded into [jac].
+  (** {3:stats Solver statistics} *)
 
-        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
-        Any other exception is treated as an unrecoverable error.
+  (** Returns the sizes of the real and integer workspaces used by a direct
+      linear solver.
 
-        {warning Neither the elements of [arg] nor the matrix [jac] should
-                 be accessed after the function has returned.}
+      @ida <node5#sss:optout_dls> IDADlsGetWorkSpace
+      @return ([real_size], [integer_size]) *)
+  val get_work_space : 'k serial_session -> int * int
 
-        @ida <node5#ss:bjacFn> IDADlsBandJacFn *)
-    type band_jac_fn = bandrange
-                        -> (RealArray.t triple, RealArray.t) jacobian_arg
-                        -> Dls.BandMatrix.t -> unit
 
-    (** A direct linear solver on banded matrices. The optional argument
-        specifies a callback function for computing an approximation to the
-        Jacobian matrix. If this argument is omitted, then a default
-        implementation based on difference quotients is used. The other
-        argument gives the width of the bandrange.
+  (** Returns the number of calls made by a direct linear solver to the
+      Jacobian approximation function.
 
-        @ida <node5#sss:lin_solv_init> IDABand
-        @ida <node5#sss:optin_dls> IDADlsSetBandJacFn
-        @ida <node5#ss:bjacFn> IDADlsBandJacFn *)
-    val band : ?jac:band_jac_fn -> bandrange -> 'k serial_linear_solver
+      @ida <node5#sss:optout_dls> IDADlsGetNumJacEvals *)
+  val get_num_jac_evals : 'k serial_session -> int
 
-    (** A direct linear solver on banded matrices using LAPACK. See {!band}.
-        Only available if {!Sundials.lapack_enabled}.
+  (** Returns the number of calls to the residual callback due to
+      the finite difference Jacobian approximation.
 
-        @raise Sundials.NotImplementedBySundialsVersion Solver not available.
-        @ida <node5#sss:lin_solv_init> IDALapackBand
-        @ida <node5#sss:optin_dls> IDADlsSetBandJacFn
-        @ida <node5#ss:bjacFn> IDADlsBandJacFn *)
-    val lapack_band : ?jac:band_jac_fn -> bandrange -> 'k serial_linear_solver
+      @ida <node5#sss:optout_dls> IDADlsGetNumResEvals *)
+  val get_num_res_evals : 'k serial_session -> int
 
-    (** {3:stats Solver statistics} *)
+end (* }}} *)
 
-    (** Returns the sizes of the real and integer workspaces used by a direct
-        linear solver.
-
-        @ida <node5#sss:optout_dls> IDADlsGetWorkSpace
-        @return ([real_size], [integer_size]) *)
-    val get_work_space : 'k serial_session -> int * int
-
-
-    (** Returns the number of calls made by a direct linear solver to the
-        Jacobian approximation function.
-
-        @ida <node5#sss:optout_dls> IDADlsGetNumJacEvals *)
-    val get_num_jac_evals : 'k serial_session -> int
-
-    (** Returns the number of calls to the residual callback due to
-        the finite difference Jacobian approximation.
-
-        @ida <node5#sss:optout_dls> IDADlsGetNumResEvals *)
-    val get_num_res_evals : 'k serial_session -> int
-
-    (** {3:lowlevel Low-level solver manipulation}
-
-        The {!init} and {!reinit} functions are the preferred way to set or
-        change a Jacobian function. These low-level functions are provided for
-        experts who want to avoid resetting internal counters and other
-        associated side-effects. *)
-
-    (** Change the dense Jacobian function.
-
-        @ida <node5#sss:optin_dls> IDADlsSetDenseJacFn *)
-    val set_dense_jac_fn : 'k serial_session -> dense_jac_fn -> unit
-
-    (** Remove a dense Jacobian function and use the default
-        implementation.
-
-        @ida <node5#sss:optin_dls> IDADlsSetDenseJacFn *)
-    val clear_dense_jac_fn : 'k serial_session -> unit
-
-    (** Change the band Jacobian function.
-
-        @ida <node5#sss:optin_dls> IDADlsSetBandJacFn *)
-    val set_band_jac_fn : 'k serial_session -> band_jac_fn -> unit
-
-    (** Remove a banded Jacobian function and use the default
-        implementation.
-
-        @ida <node5#sss:optin_dls> IDADlsSetBandJacFn *)
-    val clear_band_jac_fn : 'k serial_session -> unit
-  end (* }}} *)
-
-(** Sparse Linear Solvers.
-
-    @noida <node> The SLS modules *)
-module Sls :
-  sig
-
-    (** Callback functions that compute sparse approximations to a Jacobian
-        matrix. In the call [sparse_jac_fn arg jac], [arg] is a
-        {!Ida.jacobian_arg} with three work vectors and the computed Jacobian
-        must be stored in [jac].
-
-        The callback should load the [(i,j)]th entry of [jac] with
-        {% $\frac{\partial F_i}{\partial y_j} + c_j\frac{\partial F_i}{\partial\dot{y}_j}$%},
-        i.e., the partial derivative of the [i]th equation with respect to
-        the [j]th variable, evaluated at the values of [t], [y], and [y']
-        obtained from [arg]. Only nonzero elements need be loaded into [jac].
-
-        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
-        Any other exception is treated as an unrecoverable error.
-
-        {warning Neither the elements of [arg] nor the matrix [jac] should
-                 be accessed after the function has returned.}
-
-        @noida <node5#ss:sjacFn> IDASlsSparseJacFn *)
-    type 'f sparse_jac_fn =
-      (Sundials.RealArray.t triple, Sundials.RealArray.t) jacobian_arg
-      -> 'f Sls.SparseMatrix.t -> unit
-
-    (** KLU sparse-direct linear solver module (requires KLU).
-
-        @noida <node5#sss:idaklu> The KLU Solver *)
-    module Klu : sig (* {{{ *)
-
-      (** A direct linear solver on compressed-sparse-column matrices.
-          In the call, [klu jfn nnz], [jfn] is a callback function that
-          computes an approximation to the Jacobian matrix and [nnz] is
-          the maximum number of nonzero entries in that matrix.
-
-          @raise Sundials.NotImplementedBySundialsVersion Solver not available.
-          @noida <node5#sss:lin_solv_init> IDAKLU
-          @noida <node5#sss:optin_sls> IDASlsSetSparseJacFn
-          @noida <node5#ss:sjacFn> IDASlsSparseJacFn *)
-      val solver_csc : Sls.SparseMatrix.csc sparse_jac_fn
-                       -> int
-                       -> 'k serial_linear_solver
-
-      (** A direct linear solver on compressed-sparse-row matrices.
-          In the call, [klu jfn nnz], [jfn] is a callback function that
-          computes an approximation to the Jacobian matrix and [nnz] is
-          the maximum number of nonzero entries in that matrix.
-
-          @since 2.7.0
-          @raise Sundials.NotImplementedBySundialsVersion Solver not available.
-          @noida <node5#sss:lin_solv_init> IDAKLU
-          @noida <node5#sss:optin_sls> IDASlsSetSparseJacFn
-          @noida <node5#ss:sjacFn> IDASlsSparseJacFn *)
-      val solver_csr : Sls.SparseMatrix.csr sparse_jac_fn
-                       -> int
-                       -> 'k serial_linear_solver
-
-      (** The ordering algorithm used for reducing fill. *)
-      type ordering =
-           Amd      (** Approximate minimum degree permutation. *)
-         | ColAmd   (** Column approximate minimum degree permutation. *)
-         | Natural  (** Natural ordering. *)
-
-      (** Sets the ordering algorithm used to minimize fill-in.
-
-          @noida <node5#ss:sls_optin> IDAKLUSetOrdering *)
-      val set_ordering : 'k serial_session -> ordering -> unit
-
-      (** Reinitializes the Jacobian matrix memory and flags.
-          In the call, [reinit s n nnz realloc], [n] is the number of system
-          state variables, and [nnz] is the number of non-zeroes in the Jacobian
-          matrix. New symbolic and numeric factorizations will be completed at
-          the next solver step. If [realloc] is true, the Jacobian matrix will
-          be reallocated based on [nnz].
-
-          @noida <node5#ss:sls_optin> IDAKLUReInit *)
-      val reinit : 'k serial_session -> int -> int -> bool -> unit
-
-      (** Returns the number of calls made by a sparse linear solver to the
-          Jacobian approximation function.
-
-          @noida <node5#sss:optout_sls> IDASlsGetNumJacEvals *)
-      val get_num_jac_evals : 'k serial_session -> int
-
-    end (* }}} *)
-
-    (** SuperLU_MT sparse-direct linear solver module (requires SuperLU_MT).
-
-        @noida <node5#sss:idasuperlumt> The SUPERLUMT Solver *)
-    module Superlumt : sig (* {{{ *)
-
-      (** A direct linear solver on compresed-sparse-column matrices.
-          In the call, [superlumt jfn nnz nthreads], [jfn] is a callback
-          function that computes an approximation to the Jacobian matrix,
-          [nnz] is the maximum number of nonzero entries in that matrix,
-          and [nthreads] is the number of threads to use when
-          factorizing/solving.
-
-          @raise Sundials.NotImplementedBySundialsVersion Solver not available.
-          @noida <node5#sss:lin_solv_init> IDASuperLUMT
-          @noida <node5#sss:optin_sls> IDASlsSetSparseJacFn
-          @noida <node5#ss:sjacFn> IDASlsSparseJacFn *)
-      val solver_csc : Sls.SparseMatrix.csc sparse_jac_fn
-                       -> nnz:int
-                       -> nthreads:int
-                       -> 'k serial_linear_solver
-
-      (** The ordering algorithm used for reducing fill. *)
-      type ordering =
-           Natural       (** Natural ordering. *)
-         | MinDegreeProd (** Minimal degree ordering on $J^T J$. *)
-         | MinDegreeSum  (** Minimal degree ordering on $J^T + J$. *)
-         | ColAmd        (** Column approximate minimum degree permutation. *)
-
-      (** Sets the ordering algorithm used to minimize fill-in.
-
-          @noida <node5#ss:sls_optin> IDASuperLUMTSetOrdering *)
-      val set_ordering : 'k serial_session -> ordering -> unit
-
-      (** Returns the number of calls made by a sparse linear solver to the
-          Jacobian approximation function.
-
-          @noida <node5#sss:optout_sls> IDASlsGetNumJacEvals *)
-      val get_num_jac_evals : 'k serial_session -> int
-
-    end (* }}} *)
-  end
-
-(** Scaled Preconditioned Iterative Linear Solvers.
+(** Iterative Linear Solvers.
 
     @ida <node5#sss:optin_spils> Iterative linear solvers optional input functions.
     @ida <node5#sss:optout_spils> Iterative linear solvers optional output functions. *)
-module Spils :
-  sig (* {{{ *)
-    (** {3:precond Preconditioners} *)
+module Iterative : sig (* {{{ *)
+  (** {3:precond Preconditioners} *)
 
-    (** Callback functions that solve a linear system involving a
-        preconditioner matrix.
-        In the call [prec_solve_fn jac r z delta],
-        [jac] is a {!jacobian_arg} with one work vector,
-        [r] is the right-hand side vector,
-        [z] is computed to solve {% $Pz = r$%},
-        and [delta] is the input tolerance.
-        $P$ is a preconditioner matrix, which approximates, however crudely,
-        the Jacobian matrix
-        {% $\frac{\partial F}{\partial y} + \mathtt{arg.jac\_coef}\frac{\partial F}{\partial\dot{y}}$%}.
-        If the solution is found via an iterative method, it must satisfy
-        {% $\sqrt{\sum_i (\mathit{Res}_i \cdot \mathit{ewt}_i)^2}
-              < \mathtt{delta}$%},
-        where {% $\mathit{Res} = r - Pz$%} and {% $\mathit{ewt}$%} comes from
-        {!get_err_weights}.
+  (** Callback functions that solve a linear system involving a
+      preconditioner matrix.
+      In the call [prec_solve_fn jac r z delta],
+      [jac] is a {!jacobian_arg} with no work vectors,
+      [r] is the right-hand side vector,
+      [z] is computed to solve {% $Pz = r$%},
+      and [delta] is the input tolerance.
+      $P$ is a preconditioner matrix, which approximates, however crudely,
+      the Jacobian matrix
+      {% $\frac{\partial F}{\partial y} + \mathtt{arg.jac\_coef}\frac{\partial F}{\partial\dot{y}}$%}.
+      If the solution is found via an iterative method, it must satisfy
+      {% $\sqrt{\sum_i (\mathit{Res}_i \cdot \mathit{ewt}_i)^2}
+            < \mathtt{delta}$%},
+      where {% $\mathit{Res} = r - Pz$%} and {% $\mathit{ewt}$%} comes from
+      {!get_err_weights}.
 
-        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
-        Any other exception is treated as an unrecoverable error.
+      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Any other exception is treated as an unrecoverable error.
 
-        {warning The elements of [jac], [r], and [z] should not
-                 be accessed after the function has returned.}
+      {warning The elements of [jac], [r], and [z] should not
+               be accessed after the function has returned.}
 
-        @ida <node5#ss:psolveFn> IDASpilsPrecSolveFn *)
-    type 'd prec_solve_fn =
-      ('d, 'd) jacobian_arg
-      -> 'd
-      -> 'd
-      -> float
-      -> unit
+      @ida <node5#ss:psolveFn> IDASpilsPrecSolveFn *)
+  type 'd prec_solve_fn =
+    (unit, 'd) jacobian_arg
+    -> 'd
+    -> 'd
+    -> float
+    -> unit
 
-    (** Callback functions that preprocess or evaluate Jacobian-related data
-        need by {!prec_solve_fn}. The sole argument is a {!jacobian_arg} with
-        three work vectors.
+  (** Callback functions that preprocess or evaluate Jacobian-related data
+      need by {!prec_solve_fn}. The sole argument is a {!jacobian_arg} with
+      no work vectors.
 
-        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
-        Any other exception is treated as an unrecoverable error.
+      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Any other exception is treated as an unrecoverable error.
 
-        {warning The elements of the argument should not be accessed after the
-                 function has returned.}
+      {warning The elements of the argument should not be accessed after the
+               function has returned.}
 
-        @ida <node5#ss:precondFn> IDASpilsPrecSetupFn *)
-    type 'd prec_setup_fn = ('d triple, 'd) jacobian_arg -> unit
+      @ida <node5#ss:precondFn> IDASpilsPrecSetupFn *)
+  type 'd prec_setup_fn = (unit, 'd) jacobian_arg -> unit
 
-    (** Callback functions that compute the Jacobian times a vector. In the
-        call [jac_times_vec_fn arg v jv], [arg] is a {!jacobian_arg} with two
-        work vectors, [v] is the vector multiplying the Jacobian, and [jv] is
-        the vector in which to store the
-        result—{% $\mathtt{jv} = J\mathtt{v}$%}.
-      
-        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
-        Any other exception is treated as an unrecoverable error.
+  (** Callback functions that preprocess or evaluate Jacobian-related data
+      needed by the jac_times_vec_fn. In the call [jac_times_setup_fn arg],
+      [arg] is a {!jacobian_arg} with no work vectors.
+    
+      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Any other exception is treated as an unrecoverable error.
 
-        {warning Neither the elements of [arg] nor [v] or [jv] should be
-                 accessed after the function has returned.}
+      {warning The elements of [arg] should not be accessed after the
+               function has returned.}
 
-        @ida <node5#ss:jtimesFn> IDASpilsJacTimesVecFn *)
-    type 'd jac_times_vec_fn =
-      ('d double, 'd) jacobian_arg
-      -> 'd
-      -> 'd
-      -> unit
+      @nocvode <node> IDASpilsJacTimesSetupFn *)
+  type 'd jac_times_setup_fn = (unit, 'd) jacobian_arg -> unit
 
-    (** Specifies a preconditioner and its callback functions.
-        The following functions and those in {!Ida_bbd} construct
-        preconditioners.
+  (** Callback functions that compute the Jacobian times a vector. In the
+      call [jac_times_vec_fn arg v jv], [arg] is a {!jacobian_arg} with two
+      work vectors, [v] is the vector multiplying the Jacobian, and [jv] is
+      the vector in which to store the
+      result—{% $\mathtt{jv} = J\mathtt{v}$%}.
+    
+      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Any other exception is treated as an unrecoverable error.
 
-        The {!prec_solve_fn} is mandatory. The {!prec_setup_fn} can be
-        omitted if not needed.
+      {warning Neither the elements of [arg] nor [v] or [jv] should be
+               accessed after the function has returned.}
 
-        @ida <node5#sss:optin_spils> IDASpilsSetPreconditioner
-        @ida <node5#ss:psolveFn> IDASpilsPrecSolveFn
-        @ida <node5#ss:precondFn> IDASpilsPrecSetupFn *)
-    type ('d, 'k) preconditioner = ('d, 'k) Ida_impl.SpilsTypes.preconditioner
+      @ida <node5#ss:jtimesFn> IDASpilsJacTimesVecFn *)
+  type 'd jac_times_vec_fn =
+    ('d double, 'd) jacobian_arg
+    -> 'd
+    -> 'd
+    -> unit
 
-    (** No preconditioning.  *)
-    val prec_none : ('d, 'k) preconditioner
+  (** Specifies a preconditioner and its callback functions.
+      The following functions and those in {!Ida_bbd} construct
+      preconditioners.
 
-    (** Left preconditioning. {% $Pz = r$%}, where $P$ approximates, perhaps
-        crudely,
-        {% $J = \frac{\partial F}{\partial y} + c_j\frac{\partial F}{\partial\dot{y}}$%}. *)
-    val prec_left :
-      ?setup:'d prec_setup_fn
-      -> 'd prec_solve_fn
-      -> ('d, 'k) preconditioner
+      The {!prec_solve_fn} is mandatory. The {!prec_setup_fn} can be
+      omitted if not needed.
 
-    (** {3:lsolvers Solvers} *)
+      @ida <node5#sss:optin_spils> IDASpilsSetPreconditioner
+      @ida <node5#ss:psolveFn> IDASpilsPrecSolveFn
+      @ida <node5#ss:precondFn> IDASpilsPrecSetupFn *)
+  type ('d, 'k) preconditioner = ('d, 'k) Ida_impl.SpilsTypes.preconditioner
 
-    (** Krylov iterative solver using the scaled preconditioned generalized
-        minimum residual (GMRES) method.
-        In the call [spgmr ~maxl:maxl ~max_restarts:maxr ~jac_times_vec:jtv prec],
-        - [maxl] is the maximum dimension of the Krylov subspace
-                 (defaults to 5),
-        - [maxr] is the maximum number of restarts (defaults to 5),
-        - [jtv] computes an approximation to the product between the Jacobian
-                matrix and a vector, and
-        - [prec] is a {!preconditioner}.
+  (** No preconditioning.  *)
+  val prec_none : ('d, 'k) preconditioner
 
-        If the {!jac_times_vec_fn} is omitted, a default implementation based on
-        difference quotients is used.
+  (** Left preconditioning. {% $Pz = r$%}, where $P$ approximates, perhaps
+      crudely,
+      {% $J = \frac{\partial F}{\partial y} + c_j\frac{\partial F}{\partial\dot{y}}$%}. *)
+  val prec_left :
+    ?setup:'d prec_setup_fn
+    -> 'd prec_solve_fn
+    -> ('d, 'k) preconditioner
 
-        @ida <node5#sss:lin_solv_init> IDASpgmr
-        @ida <node5#sss:optin_spils> IDASpilsSetPreconditioner
-        @ida <node5#sss:optin_spils> IDASpilsSetMaxl
-        @ida <node5#sss:optin_spils> IDASpilsSetJacTimesVecFn
-        @ida <node5#ss:jtimesFn> IDASpilsJacTimesVecFn
-        @ida <node5#sss:optin_spils> IDASpilsSetMaxRestarts *)
-    val spgmr :
-      ?maxl:int
-      -> ?max_restarts:int
-      -> ?jac_times_vec:'d jac_times_vec_fn
-      -> ('d, 'k) preconditioner
-      -> ('d, 'k) linear_solver
+  (** {3:lsolvers Solvers} *)
 
-    (** Krylov iterative solver using the scaled preconditioned biconjugate
-        stabilized (Bi-CGStab) method.
-        In the call [spbcg ~maxl:maxl ~jac_times_vec:jtv prec],
-        - [maxl] is the maximum dimension of the Krylov subspace
-                 (defaults to 5),
-        - [jtv] computes an approximation to the product between the Jacobian
-                matrix and a vector, and
-        - [prec] is a {!preconditioner}.
+  (** Create an Ida-specific linear solver from a generic iterative
+      linear solver.
 
-        If the {!jac_times_vec_fn} is omitted, a default implementation based on
-        difference quotients is used.
+      NB: a [jac_times_setup_fn] is not supported in
+          {!Sundials.sundials_version} < 3.0.0.
 
-        @ida <node5#sss:lin_solv_init> IDASpbcg
-        @ida <node5#sss:optin_spils> IDASpilsSetPreconditioner
-        @ida <node5#sss:optin_spils> IDASpilsSetJacTimesVecFn
-        @ida <node5#ss:jtimesFn> IDASpilsJacTimesVecFn
-        @ida <node5#sss:optin_spils> IDASpilsSetMaxl *)
-    val spbcg :
-      ?maxl:int
-      -> ?jac_times_vec:'d jac_times_vec_fn
-      -> ('d, 'k) preconditioner
-      -> ('d, 'k) linear_solver
+      @nocvode <node> IDASpilsSetLinearSolver
+      @nocvode <node> IDASpilsSetJacTimes *)
+  val make :
+    ('d, 'k, 'f) Lsolver.Iterative.t
+    -> ?jac_times_vec:'d jac_times_setup_fn option * 'd jac_times_vec_fn
+    -> ('d, 'k) preconditioner
+    -> ('d, 'k) linear_solver
 
-    (** Krylov iterative with the scaled preconditioned transpose-free
-        quasi-minimal residual (SPTFQMR) method.
-        In the call [sptfqmr ~maxl:maxl ~jac_times_vec:jtv prec],
-        - [maxl] is the maximum dimension of the Krylov subspace
-                 (defaults to 5),
-        - [jtv] computes an approximation to the product between the Jacobian
-                matrix and a vector, and
-        - [prec] is a {!preconditioner}.
+  (** {3:set Solver parameters} *)
 
-        If the {!jac_times_vec_fn} is omitted, a default implementation based on
-        difference quotients is used.
+  (** Sets the factor by which the Krylov linear solver's convergence test
+      constant is reduced from the Newton iteration test constant.
+      This factor must be >= 0; passing 0 specifies the default (0.05).
 
-        @ida <node5#sss:lin_solv_init> IDASptfqmr
-        @ida <node5#sss:optin_spils> IDASpilsSetPreconditioner
-        @ida <node5#sss:optin_spils> IDASpilsSetJacTimesVecFn
-        @ida <node5#ss:jtimesFn> IDASpilsJacTimesVecFn
-        @ida <node5#sss:optin_spils> IDASpilsSetMaxl *)
-    val sptfqmr :
-      ?maxl:int
-      -> ?jac_times_vec:'d jac_times_vec_fn
-      -> ('d, 'k) preconditioner
-      -> ('d, 'k) linear_solver
+      @ida <node5#sss:optin_spils> IDASpilsSetEpsLin *)
+  val set_eps_lin : ('d, 'k) session -> float -> unit
 
-    (** {3:set Solver parameters} *)
+  (** {3:stats Solver statistics} *)
 
-    (** Sets the Gram-Schmidt orthogonalization to be used with the
-        Spgmr {!linear_solver}.
+  (** Returns the sizes of the real and integer workspaces used by the spils
+      linear solver.
 
-        @ida <node5#sss:optin_spils> IDASpilsSetGSType *)
-    val set_gs_type : ('d, 'k) session -> Spils.gramschmidt_type -> unit
+      @ida <node5#sss:optout_spils> IDASpilsGetWorkSpace
+      @return ([real_size], [integer_size]) *)
+  val get_work_space       : ('d, 'k) session -> int * int
 
-    (** Sets the factor by which the Krylov linear solver's convergence test
-        constant is reduced from the Newton iteration test constant.
-        This factor must be >= 0; passing 0 specifies the default (0.05).
+  (** Returns the cumulative number of linear iterations.
 
-        @ida <node5#sss:optin_spils> IDASpilsSetEpsLin *)
-    val set_eps_lin : ('d, 'k) session -> float -> unit
+      @ida <node5#sss:optout_spils> IDASpilsGetNumLinIters *)
+  val get_num_lin_iters    : ('d, 'k) session -> int
 
-    (** Resets the maximum Krylov subspace dimension for the Bi-CGStab and
-        TFQMR methods. A value <= 0 specifies the default (5.0).
+  (** Returns the cumulative number of linear convergence failures.
 
-        @ida <node5#sss:optin_spils> IDASpilsSetMaxl *)
-    val set_maxl : ('d, 'k) session -> int -> unit
+      @ida <node5#sss:optout_spils> IDASpilsGetNumConvFails *)
+  val get_num_conv_fails   : ('d, 'k) session -> int
 
-    (** {3:stats Solver statistics} *)
+  (** Returns the number of calls to the setup function.
 
-    (** Returns the sizes of the real and integer workspaces used by the spils
-        linear solver.
+      @ida <node5#sss:optout_spils> IDASpilsGetNumPrecEvals *)
+  val get_num_prec_evals   : ('d, 'k) session -> int
 
-        @ida <node5#sss:optout_spils> IDASpilsGetWorkSpace
-        @return ([real_size], [integer_size]) *)
-    val get_work_space       : ('d, 'k) session -> int * int
+  (** Returns the cumulative number of calls to the preconditioner solve
+      function.
 
-    (** Returns the cumulative number of linear iterations.
+      @ida <node5#sss:optout_spils> IDASpilsGetNumPrecSolves *)
+  val get_num_prec_solves  : ('d, 'k) session -> int
 
-        @ida <node5#sss:optout_spils> IDASpilsGetNumLinIters *)
-    val get_num_lin_iters    : ('d, 'k) session -> int
+  (** Returns the cumulative number of calls to the Jacobian-vector
+      setup function.
 
-    (** Returns the cumulative number of linear convergence failures.
+      @since 3.0.0
+      @noida <node> IDASpilsGetNumJTSetupEvals *)
+  val get_num_jtsetup_evals : ('d, 'k) session -> int
 
-        @ida <node5#sss:optout_spils> IDASpilsGetNumConvFails *)
-    val get_num_conv_fails   : ('d, 'k) session -> int
+  (** Returns the cumulative number of calls to the Jacobian-vector
+      function.
 
-    (** Returns the number of calls to the setup function.
+      @ida <node5#sss:optout_spils> IDASpilsGetNumJtimesEvals *)
+  val get_num_jtimes_evals : ('d, 'k) session -> int
 
-        @ida <node5#sss:optout_spils> IDASpilsGetNumPrecEvals *)
-    val get_num_prec_evals   : ('d, 'k) session -> int
+  (** Returns the number of calls to the residual callback for
+      finite difference Jacobian-vector product approximation. This counter is
+      only updated if the default difference quotient function is used.
 
-    (** Returns the cumulative number of calls to the preconditioner solve
-        function.
+      @ida <node5#sss:optout_spils> IDASpilsGetNumResEvals *)
+  val get_num_res_evals    : ('d, 'k) session -> int
 
-        @ida <node5#sss:optout_spils> IDASpilsGetNumPrecSolves *)
-    val get_num_prec_solves  : ('d, 'k) session -> int
+  (** {3:lowlevel Low-level solver manipulation}
 
-    (** Returns the cumulative number of calls to the Jacobian-vector
-        function.
+      The {!init} and {!reinit} functions are the preferred way to set or
+      change preconditioner functions. These low-level functions are provided
+      for experts who want to avoid resetting internal counters and other
+      associated side-effects. *)
 
-        @ida <node5#sss:optout_spils> IDASpilsGetNumJtimesEvals *)
-    val get_num_jtimes_evals : ('d, 'k) session -> int
+  (** Change the preconditioner functions.
 
-    (** Returns the number of calls to the residual callback for
-        finite difference Jacobian-vector product approximation. This counter is
-        only updated if the default difference quotient function is used.
+      @ida <node5#sss:optin_spils> IDASpilsSetPreconditioner
+      @ida <node5#ss:psolveFn> IDASpilsPrecSolveFn
+      @ida <node5#ss:precondFn> IDASpilsPrecSetupFn *)
+   val set_preconditioner :
+     ('d,'k) session
+     -> ?setup:'d prec_setup_fn
+     -> 'd prec_solve_fn
+     -> unit
 
-        @ida <node5#sss:optout_spils> IDASpilsGetNumResEvals *)
-    val get_num_res_evals    : ('d, 'k) session -> int
+  (** Change the Jacobian-times-vector function.
 
-    (** {3:lowlevel Low-level solver manipulation}
+      NB: the [jac_times_setup] argument is not supported in
+          {!Sundials.sundials_version} < 3.0.0.
 
-        The {!init} and {!reinit} functions are the preferred way to set or
-        change preconditioner functions. These low-level functions are provided
-        for experts who want to avoid resetting internal counters and other
-        associated side-effects. *)
+      @ida <node5#sss:optin_spils> IDASpilsSetJacTimes
+      @ida <node5#ss:jtimesFn> IDASpilsJacTimesVecFn *)
+  val set_jac_times :
+    ('d,'k) session
+    -> ?jac_times_setup:'d jac_times_setup_fn
+    -> 'd jac_times_vec_fn
+    -> unit
 
-    (** Change the preconditioner functions.
+  (** Remove a Jacobian-times-vector function and use the default
+      implementation.
 
-        @ida <node5#sss:optin_spils> IDASpilsSetPreconditioner
-        @ida <node5#ss:psolveFn> IDASpilsPrecSolveFn
-        @ida <node5#ss:precondFn> IDASpilsPrecSetupFn *)
-     val set_preconditioner :
-       ('d,'k) session
-       -> ?setup:'d prec_setup_fn
-       -> 'd prec_solve_fn
-       -> unit
-
-    (** Change the Jacobian-times-vector function.
-
-        @ida <node5#sss:optin_spils> IDASpilsSetJacTimesVecFn
-        @ida <node5#ss:jtimesFn> IDASpilsJacTimesVecFn *)
-    val set_jac_times_vec_fn :
-      ('d,'k) session
-      -> 'd jac_times_vec_fn
-      -> unit
-
-    (** Remove a Jacobian-times-vector function and use the default
-        implementation.
-
-        @ida <node5#sss:optin_spils> IDASpilsSetJacTimesVecFn
-        @ida <node5#ss:jtimesFn> IDASpilsJacTimesVecFn *)
-    val clear_jac_times_vec_fn : ('d, 'k) session -> unit
-  end (* }}} *)
+      @ida <node5#sss:optin_spils> IDASpilsSetJacTimes
+      @ida <node5#ss:jtimesFn> IDASpilsJacTimesVecFn *)
+  val clear_jac_times : ('d, 'k) session -> unit
+end (* }}} *)
 
 (** Alternate Linear Solvers.
 
     @ida <node8#s:new_linsolv> Providing Alternate Linear Solver Modules *)
-module Alternate :
-  sig (* {{{ *)
+module Alternate : sig (* {{{ *)
 
-    (** Functions that initialize linear solver data, like counters and
-        statistics.
+  (** Functions that initialize linear solver data, like counters and
+      statistics.
 
-        Raising any exception in this function (including
-        {!Sundials.RecoverableFailure}) is treated as an unrecoverable error.
+      Raising any exception in this function (including
+      {!Sundials.RecoverableFailure}) is treated as an unrecoverable error.
 
-        @ida <node8#SECTION00810000000000000000> linit *)
-    type ('data, 'kind) linit = ('data, 'kind) session -> unit
+      @ida <node8#SECTION00810000000000000000> linit *)
+  type ('data, 'kind) linit = ('data, 'kind) session -> unit
 
-    (** Functions that prepare the linear solver for subsequent calls to
-        {{!callbacks}lsolve}. The call [lsetup s y y' res tmp] has as
-        arguments
+  (** Functions that prepare the linear solver for subsequent calls to
+      {{!callbacks}lsolve}. The call [lsetup s y y' res tmp] has as
+      arguments
 
-        - [s], the solver session,
-        - [y],  the predicted $y$ vector for the current internal step,
-        - [y'], the predicted {% $\dot{y}$%} vector for the current internal
-                step,
-        - [res], the value of the residual function at [y] and [y'], i.e.
-                 {% $F(t_n, y_{\text{pred}}, \dot{y}_{\text{pred}})$%}, and,
-        - [tmp], temporary variables for use by the routine.
+      - [s], the solver session,
+      - [y],  the predicted $y$ vector for the current internal step,
+      - [y'], the predicted {% $\dot{y}$%} vector for the current internal
+              step,
+      - [res], the value of the residual function at [y] and [y'], i.e.
+               {% $F(t_n, y_{\text{pred}}, \dot{y}_{\text{pred}})$%}, and,
+      - [tmp], temporary variables for use by the routine.
 
-        This function may raise a {!Sundials.RecoverableFailure} exception to
-        indicate that a recoverable error has occurred. Any other exception is
-        treated as an unrecoverable error.
+      This function may raise a {!Sundials.RecoverableFailure} exception to
+      indicate that a recoverable error has occurred. Any other exception is
+      treated as an unrecoverable error.
 
-        {warning The vectors in {!lsetup_args} should not be
-                 accessed after the function returns.}
+      {warning The vectors in {!lsetup_args} should not be
+               accessed after the function returns.}
 
-        @ida <node8#SECTION00820000000000000000> lsetup *)
-    type ('data, 'kind) lsetup =
-      ('data, 'kind) session
-      -> 'data lsetup_args
-      -> unit
+      @ida <node8#SECTION00820000000000000000> lsetup *)
+  type ('data, 'kind) lsetup =
+    ('data, 'kind) session
+    -> 'data lsetup_args
+    -> unit
 
-    (** Arguments to {!lsetup}.  *)
-    and 'data lsetup_args =
-      {
-        lsetup_y : 'data;
-        (** The predicted $y$ vector for the current step. *)
+  (** Arguments to {!lsetup}.  *)
+  and 'data lsetup_args =
+    {
+      lsetup_y : 'data;
+      (** The predicted $y$ vector for the current step. *)
 
-        lsetup_y' : 'data;
-        (** The predicted {% $\dot{y}$%} vector for the current step. *)
+      lsetup_y' : 'data;
+      (** The predicted {% $\dot{y}$%} vector for the current step. *)
 
-        lsetup_res : 'data;
-        (** The value of the residual function at [y] and [y'], i.e.,
-            {% $F(t_n, y_{\text{pred}}, \dot{y}_{\text{pred}})$%}. *)
+      lsetup_res : 'data;
+      (** The value of the residual function at [y] and [y'], i.e.,
+          {% $F(t_n, y_{\text{pred}}, \dot{y}_{\text{pred}})$%}. *)
 
-        lsetup_tmp : 'data triple;
-        (** Temporary storage vectors. *)
-      }
+      lsetup_tmp : 'data triple;
+      (** Temporary storage vectors. *)
+    }
 
-    (** Functions that solve the linear equation $Mx = b$.
-        $M$ is a preconditioning matrix chosen by the user, and $b$ is the
-        right-hand side vector calculated within the function.
-        $M$ should approximate {% $J = \frac{\partial F}{\partial y} + c_j\frac{\partial F}{\partial \dot{y}}$%},
-        and $c_j$ is available through {!get_cj}.
-        The call [lsolve s b weight ycur y'cur rescur] has as arguments:
+  (** Functions that solve the linear equation $Mx = b$.
+      $M$ is a preconditioning matrix chosen by the user, and $b$ is the
+      right-hand side vector calculated within the function.
+      $M$ should approximate {% $J = \frac{\partial F}{\partial y} + c_j\frac{\partial F}{\partial \dot{y}}$%},
+      and $c_j$ is available through {!get_cj}.
+      The call [lsolve s b weight ycur y'cur rescur] has as arguments:
 
-        - [s], the solver session,
-        - [args], the current approximation to the solution, and,
-        - [b], for returning the calculated solution,
+      - [s], the solver session,
+      - [args], the current approximation to the solution, and,
+      - [b], for returning the calculated solution,
 
-        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
-        Any other exception is treated as an unrecoverable error.
+      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Any other exception is treated as an unrecoverable error.
 
-        @ida <node8#SECTION00830000000000000000> lsolve
-        @ida <node3#e:DAE_Jacobian> IVP solution (Eq. 2.5) *)
-    type ('data, 'kind) lsolve =
-      ('data, 'kind) session
-      -> 'data lsolve_args
-      -> 'data
-      -> unit
+      @ida <node8#SECTION00830000000000000000> lsolve
+      @ida <node3#e:DAE_Jacobian> IVP solution (Eq. 2.5) *)
+  type ('data, 'kind) lsolve =
+    ('data, 'kind) session
+    -> 'data lsolve_args
+    -> 'data
+    -> unit
 
-    (** Arguments to {!lsolve}. *)
-    and 'data lsolve_args =
-      {
-        lsolve_ewt : 'data;
-        (** The error weights. *)
+  (** Arguments to {!lsolve}. *)
+  and 'data lsolve_args =
+    {
+      lsolve_ewt : 'data;
+      (** The error weights. *)
 
-        lsolve_y : 'data;
-        (** The solver's current approximation to $y(t_n)$. *)
+      lsolve_y : 'data;
+      (** The solver's current approximation to $y(t_n)$. *)
 
-        lsolve_y' : 'data;
-        (** The solver's current approximation to $y'(t_n)$. *)
+      lsolve_y' : 'data;
+      (** The solver's current approximation to $y'(t_n)$. *)
 
-        lsolve_res : 'data;
-        (** The current residual value. *)
-      }
+      lsolve_res : 'data;
+      (** The current residual value. *)
+    }
 
-    (** The callbacks needed to implement an alternate linear solver. *)
-    type ('data, 'kind) callbacks =
-      {
-        linit  : ('data, 'kind) linit option;
-        lsetup : ('data, 'kind) lsetup option;
-        lsolve : ('data, 'kind) lsolve
-      }
+  (** The callbacks needed to implement an alternate linear solver. *)
+  type ('data, 'kind) callbacks =
+    {
+      linit  : ('data, 'kind) linit option;
+      lsetup : ('data, 'kind) lsetup option;
+      lsolve : ('data, 'kind) lsolve
+    }
 
-    (** Creates a linear solver from a function returning a set of
-        callbacks. The creation function is passed a session and a vector.
-        The latter indicates the problem size and can, for example, be
-        cloned. *)
-    val make :
-          (('data, 'kind) session
-            -> ('data, 'kind) Nvector.t
-            -> ('data, 'kind) Nvector.t
-            -> ('data, 'kind) callbacks)
-          -> ('data, 'kind) linear_solver
+  (** Creates a linear solver from a function returning a set of
+      callbacks. The creation function is passed a session and a vector.
+      The latter indicates the problem size and can, for example, be
+      cloned. *)
+  val make :
+        (('data, 'kind) session
+          -> ('data, 'kind) Nvector.t
+          -> ('data, 'kind) callbacks)
+        -> ('data, 'kind) linear_solver
 
-    (** {3:internals Solver internals} *)
+  (** {3:internals Solver internals} *)
 
-    (** Returns the current [cj] value. *)
-    val get_cj : ('data, 'kind) session -> float
+  (** Returns the current [cj] value. *)
+  val get_cj : ('data, 'kind) session -> float
 
-    (** Returns the current [cjratio] value. *)
-    val get_cjratio : ('data, 'kind) session -> float
-  end (* }}} *)
+  (** Returns the current [cjratio] value. *)
+  val get_cjratio : ('data, 'kind) session -> float
+end (* }}} *)
 
 (** {2:tols Tolerances} *)
 

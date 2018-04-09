@@ -28,8 +28,7 @@ CAMLprim value c_ida_klu_init (value vida_mem, value vformat,
 CAMLprim value c_ida_klu_set_ordering (value vida_mem, value vordering)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 
-CAMLprim value c_ida_klu_reinit (value vida_mem, value vn, value vnnz,
-				   value vrealloc)
+CAMLprim value c_ida_klu_reinit (value vida_mem, value vn, value vnnz)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 
 CAMLprim value c_ida_klu_get_num_jac_evals(value vida_mem)
@@ -43,24 +42,25 @@ CAMLprim value c_ida_klu_get_num_jac_evals(value vida_mem)
 /* IDAS (with sensitivity) */
 
 #include <idas/idas.h>
+
+#if SUNDIALS_LIB_VERSION < 300
 #include <idas/idas_sparse.h>
 #include <idas/idas_klu.h>
+#endif
 
 #else
 /* IDA (without sensitivity) */
 
 #include <ida/ida.h>
+
+#if SUNDIALS_LIB_VERSION < 300
 #include <ida/ida_sparse.h>
 #include <ida/ida_klu.h>
+#endif
 
 #endif
 
-enum ida_klu_ordering_tag {
-  VARIANT_IDA_KLU_AMD     = 0,
-  VARIANT_IDA_KLU_COLAMD  = 1,
-  VARIANT_IDA_KLU_NATURAL = 2,
-};
-
+#if SUNDIALS_LIB_VERSION < 300
 static int jacfn (realtype t, realtype coef,
 		  N_Vector y, N_Vector yp, N_Vector res,
 		  SlsMat jac, void *user_data,
@@ -97,64 +97,70 @@ static int jacfn (realtype t, realtype coef,
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
+#endif
 
 CAMLprim value c_ida_klu_init (value vida_mem, value vformat,
 			       value vneqs, value vnnz)
 {
     CAMLparam4(vida_mem, vformat, vneqs, vnnz);
+#if SUNDIALS_LIB_VERSION < 300
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
     int flag;
 
 #if SUNDIALS_LIB_VERSION >= 270
-    flag = IDAKLU (ida_mem, Int_val(vneqs), Int_val(vnnz), Int_val(vformat));
+    flag = IDAKLU (ida_mem, Int_val(vneqs), Int_val(vnnz),
+		   MAT_FROM_SFORMAT(vformat));
 #else
     flag = IDAKLU (ida_mem, Int_val(vneqs), Int_val(vnnz));
 #endif
     CHECK_FLAG ("IDAKLU", flag);
     flag = IDASlsSetSparseJacFn(ida_mem, jacfn);
     CHECK_FLAG("IDASlsSetSparseJacFn", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_ida_klu_set_ordering (value vida_mem, value vordering)
 {
     CAMLparam2(vida_mem, vordering);
+#if SUNDIALS_LIB_VERSION < 300
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
 
     int flag = IDAKLUSetOrdering (ida_mem, Int_val(vordering));
     CHECK_FLAG ("IDAKLUSetOrdering", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_klu_reinit (value vida_mem, value vn, value vnnz,
-				   value vrealloc)
+CAMLprim value c_ida_klu_reinit (value vida_mem, value vn, value vnnz)
 {
-    CAMLparam4(vida_mem, vn, vnnz, vrealloc);
+    CAMLparam3(vida_mem, vn, vnnz);
+#if SUNDIALS_LIB_VERSION < 300
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
 
-    int reinit_type;
-    if (Bool_val(vrealloc)) {
-	reinit_type = 1;
-    } else {
-	reinit_type = 2;
-    }
-
-    int flag = IDAKLUReInit (ida_mem, Int_val(vn), Int_val(vnnz), reinit_type);
+    int flag = IDAKLUReInit (ida_mem, Int_val(vn), Int_val(vnnz),
+			     (nnz > 0) ? 1 : 2);
     CHECK_FLAG ("IDAKLUReInit", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_ida_klu_get_num_jac_evals(value vida_mem)
 {
     CAMLparam1(vida_mem);
-
-    long int r;
+    long int r = 0;
+#if SUNDIALS_LIB_VERSION < 300
     int flag = IDASlsGetNumJacEvals(IDA_MEM_FROM_ML(vida_mem), &r);
     CHECK_FLAG("IDASlsGetNumJacEvals", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn(Val_long(r));
 }
 

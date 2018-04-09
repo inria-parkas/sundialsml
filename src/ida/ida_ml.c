@@ -25,12 +25,19 @@
 /* IDAS (with sensitivity) */
 
 #include <idas/idas.h>
+#include <idas/idas_impl.h>
+
+/* linear solvers */
+#if SUNDIALS_LIB_VERSION >= 300
+#include <idas/idas_direct.h>
+#include <idas/idas_spils.h>
+#else
 #include <idas/idas_dense.h>
 #include <idas/idas_band.h>
 #include <idas/idas_spgmr.h>
 #include <idas/idas_sptfqmr.h>
 #include <idas/idas_spbcgs.h>
-#include <idas/idas_impl.h>
+#endif
 
 #ifdef SUNDIALS_ML_LAPACK
 #include <idas/idas_lapack.h>
@@ -39,12 +46,19 @@
 #else  /* IDA (without sensitivity) */
 
 #include <ida/ida.h>
+#include <ida/ida_impl.h>
+
+/* linear solvers */
+#if SUNDIALS_LIB_VERSION >= 300
+#include <ida/ida_direct.h>
+#include <ida/ida_spils.h>
+#else
 #include <ida/ida_dense.h>
 #include <ida/ida_band.h>
 #include <ida/ida_spgmr.h>
 #include <ida/ida_sptfqmr.h>
 #include <ida/ida_spbcgs.h>
-#include <ida/ida_impl.h>
+#endif
 
 #ifdef SUNDIALS_ML_LAPACK
 #include <ida/ida_lapack.h>
@@ -59,7 +73,8 @@
 
 #include "ida_ml.h"
 #include "../nvectors/nvector_ml.h"
-#include "../lsolvers/dls_ml.h"
+#include "../lsolvers/matrix_ml.h"
+#include "../lsolvers/lsolver_ml.h"
 
 
 CAMLprim value c_ida_init_module (value exns)
@@ -202,11 +217,52 @@ value ida_make_double_tmp(N_Vector tmp1, N_Vector tmp2)
     CAMLreturn(r);
 }
 
+#if SUNDIALS_LIB_VERSION >= 300
+
+static int jacfn (realtype t,
+		  realtype coef,
+		  N_Vector y,
+		  N_Vector yp,
+		  N_Vector res,
+		  SUNMatrix jac,
+		  void *user_data,
+		  N_Vector tmp1,
+		  N_Vector tmp2,
+		  N_Vector tmp3)
+{
+    CAMLparam0 ();
+    CAMLlocalN (args, 2);
+    CAMLlocal2(session, cb);
+
+    WEAK_DEREF (session, *(value*)user_data);
+
+    cb = IDA_LS_CALLBACKS_FROM_ML(session);
+    cb = Field (cb, 0);
+
+    args[0] = ida_make_jac_arg (t, coef, y, yp, res,
+				ida_make_triple_tmp (tmp1, tmp2, tmp3));
+    args[1] = MAT_BACKLINK(jac);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (Field(cb, 0), 2, args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
+}
+
+#else
+
 /* Dense and band Jacobians only work with serial NVectors.  */
-static int jacfn (long int neq, realtype t, realtype coef,
-		  N_Vector y, N_Vector yp, N_Vector res,
-		  DlsMat jac, void *user_data,
-		  N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
+static int jacfn (long int neq,
+		  realtype t,
+		  realtype coef,
+		  N_Vector y,
+		  N_Vector yp,
+		  N_Vector res,
+		  DlsMat jac,
+		  void *user_data,
+		  N_Vector tmp1,
+		  N_Vector tmp2,
+		  N_Vector tmp3)
 {
     CAMLparam0 ();
     CAMLlocalN (args, 2);
@@ -219,7 +275,7 @@ static int jacfn (long int neq, realtype t, realtype coef,
 
     dmat = Field(cb, 1);
     if (dmat == Val_none) {
-	Store_some(dmat, c_dls_dense_wrap(jac, 0));
+	Store_some(dmat, c_matrix_dense_wrap(jac, 0));
 	Store_field(cb, 1, dmat);
     }
 
@@ -228,15 +284,24 @@ static int jacfn (long int neq, realtype t, realtype coef,
     args[1] = Some_val(dmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback2_exn (Field(cb, 0), args[0], args[1]);
+    value r = caml_callbackN_exn (Field(cb, 0), 2, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
-static int bandjacfn (long int neq, long int mupper, long int mlower,
-		      realtype t, realtype coef, N_Vector y, N_Vector yp,
-		      N_Vector res, DlsMat jac, void *user_data,
-		      N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
+static int bandjacfn (long int neq,
+		      long int mupper,
+		      long int mlower,
+		      realtype t,
+		      realtype coef,
+		      N_Vector y,
+		      N_Vector yp,
+		      N_Vector res,
+		      DlsMat jac,
+		      void *user_data,
+		      N_Vector tmp1,
+		      N_Vector tmp2,
+		      N_Vector tmp3)
 {
     CAMLparam0 ();
     CAMLlocalN (args, 3);
@@ -248,7 +313,7 @@ static int bandjacfn (long int neq, long int mupper, long int mlower,
 
     bmat = Field(cb, 1);
     if (bmat == Val_none) {
-	Store_some(bmat, c_dls_band_wrap(jac, 0));
+	Store_some(bmat, c_matrix_band_wrap(jac, 0));
 	Store_field(cb, 1, bmat);
     }
 
@@ -260,10 +325,12 @@ static int bandjacfn (long int neq, long int mupper, long int mlower,
     args[2] = Some_val(bmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn (Field(cb, 0), args[0], args[1], args[2]);
+    value r = caml_callbackN_exn (Field(cb, 0), 3, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
+
+#endif
 
 static int rootsfn (realtype t, N_Vector y, N_Vector yp,
 		    realtype *gout, void *user_data)
@@ -314,10 +381,14 @@ static int precsetupfn(realtype t,
 		       N_Vector yp,
 		       N_Vector res,
 		       realtype cj,
-		       void *user_data,
+		       void *user_data
+#if SUNDIALS_LIB_VERSION < 300
+		       ,
 		       N_Vector tmp1,
 		       N_Vector tmp2,
-		       N_Vector tmp3)
+		       N_Vector tmp3
+#endif
+		       )
 {
     CAMLparam0();
     CAMLlocal3(session, cb, arg);
@@ -328,8 +399,7 @@ static int precsetupfn(realtype t,
     cb = Field (cb, RECORD_IDA_SPILS_PRECFNS_PREC_SETUP_FN);
     cb = Field (cb, 0);
 
-    arg = ida_make_jac_arg(t, cj, y, yp, res,
-			   ida_make_triple_tmp(tmp1, tmp2, tmp3));
+    arg = ida_make_jac_arg(t, cj, y, yp, res, Val_unit);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback_exn (cb, arg);
@@ -346,14 +416,18 @@ static int precsolvefn(
 	N_Vector z,
 	realtype cj,
 	realtype delta,
-	void *user_data,
-	N_Vector tmp)
+	void *user_data
+#if SUNDIALS_LIB_VERSION < 300
+	,
+	N_Vector tmp
+#endif
+	)
 {
     CAMLparam0();
     CAMLlocalN(args, 4);
     CAMLlocal2(session, cb);
 
-    args[0] = ida_make_jac_arg(t, cj, y, yp, res, NVEC_BACKLINK (tmp));
+    args[0] = ida_make_jac_arg(t, cj, y, yp, res, Val_unit);
     args[1] = NVEC_BACKLINK (rvec);
     args[2] = NVEC_BACKLINK (z);
     args[3] = caml_copy_double (delta);
@@ -395,10 +469,35 @@ static int jactimesfn(
     cb = Some_val (cb);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn (cb, args[0], args[1], args[2]);
+    value r = caml_callbackN_exn (cb, 3, args);
 
     CAMLreturnT (int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }
+
+#if SUNDIALS_LIB_VERSION >= 300
+static int jacsetupfn(realtype t,
+		      N_Vector y,
+		      N_Vector yp,
+		      N_Vector res,
+		      realtype cj,
+		      void *user_data)
+{
+    CAMLparam0();
+    CAMLlocal3(session, cb, arg);
+
+    arg = ida_make_jac_arg(t, cj, y, yp, res, Val_unit);
+
+    WEAK_DEREF (session, *(value*)user_data);
+    cb = IDA_LS_CALLBACKS_FROM_ML(session);
+    cb = Field (cb, 1);
+    cb = Some_val (cb);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback_exn(cb, arg);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
+}
+#endif
 
 static int linit(IDAMem ida_mem)
 {
@@ -481,7 +580,9 @@ CAMLprim value c_ida_set_alternate (value vida_mem, value vhas_init,
 
     ida_mem->ida_linit   = Bool_val(vhas_init)  ? linit : NULL;
     ida_mem->ida_lsetup  = Bool_val(vhas_setup) ? lsetup : NULL;
+#if SUNDIALS_LIB_VERSION < 300
     ida_mem->ida_setupNonNull = Bool_val(vhas_setup);
+#endif
     ida_mem->ida_lsolve = lsolve;
     ida_mem->ida_lmem   = NULL;
 
@@ -506,6 +607,7 @@ CAMLprim value c_ida_get_cjratio (value vida_mem)
 CAMLprim value c_ida_dls_dense (value vida_mem, value vneqs, value vset_jac)
 {
     CAMLparam3(vida_mem, vneqs, vset_jac);
+#if SUNDIALS_LIB_VERSION < 300
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
     long neqs = Long_val (vneqs);
     int flag;
@@ -513,25 +615,7 @@ CAMLprim value c_ida_dls_dense (value vida_mem, value vneqs, value vset_jac)
     flag = IDADense (ida_mem, neqs);
     CHECK_FLAG ("IDADense", flag);
     if (Bool_val (vset_jac)) {
-	flag = IDADlsSetDenseJacFn(IDA_MEM_FROM_ML(vida_mem), jacfn);
-	CHECK_FLAG("IDADlsSetDenseJacFn", flag);
-    }
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value c_ida_dls_lapack_dense (value vida_mem, value vneqs,
-				       value vset_jac)
-{
-    CAMLparam3 (vida_mem, vneqs, vset_jac);
-#ifdef SUNDIALS_ML_LAPACK
-    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
-    long neqs = Long_val (vneqs);
-    int flag;
-
-    flag = IDALapackDense (ida_mem, neqs);
-    CHECK_FLAG ("IDALapackDense", flag);
-    if (Bool_val (vset_jac)) {
-	flag = IDADlsSetDenseJacFn (IDA_MEM_FROM_ML (vida_mem), jacfn);
+	flag = IDADlsSetDenseJacFn(ida_mem, jacfn);
 	CHECK_FLAG("IDADlsSetDenseJacFn", flag);
     }
 #else
@@ -540,19 +624,24 @@ CAMLprim value c_ida_dls_lapack_dense (value vida_mem, value vneqs,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_dls_set_dense_jac_fn(value vdata)
+CAMLprim value c_ida_dls_lapack_dense (value vida_mem, value vneqs,
+				       value vset_jac)
 {
-    CAMLparam1(vdata);
-    int flag = IDADlsSetDenseJacFn(IDA_MEM_FROM_ML(vdata), jacfn);
-    CHECK_FLAG("IDADlsSetDenseJacFn", flag);
-    CAMLreturn (Val_unit);
-}
+    CAMLparam3 (vida_mem, vneqs, vset_jac);
+#if SUNDIALS_LIB_VERSION < 300 && defined SUNDIALS_ML_LAPACK
+    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
+    long neqs = Long_val (vneqs);
+    int flag;
 
-CAMLprim value c_ida_dls_clear_dense_jac_fn(value vdata)
-{
-    CAMLparam1(vdata);
-    int flag = IDADlsSetDenseJacFn(IDA_MEM_FROM_ML(vdata), NULL);
-    CHECK_FLAG("IDADlsSetDenseJacFn", flag);
+    flag = IDALapackDense (ida_mem, neqs);
+    CHECK_FLAG ("IDALapackDense", flag);
+    if (Bool_val (vset_jac)) {
+	flag = IDADlsSetDenseJacFn (ida_mem, jacfn);
+	CHECK_FLAG("IDADlsSetDenseJacFn", flag);
+    }
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -560,6 +649,7 @@ CAMLprim value c_ida_dls_band (value vida_mem, value vneqs,
 			       value mupper, value mlower, value vset_jac)
 {
     CAMLparam5(vida_mem, vneqs, mupper, mlower, vset_jac);
+#if SUNDIALS_LIB_VERSION < 300
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
     long neqs = Long_val (vneqs);
     int flag;
@@ -567,9 +657,12 @@ CAMLprim value c_ida_dls_band (value vida_mem, value vneqs,
     flag = IDABand (ida_mem, neqs, Long_val (mupper), Long_val (mlower));
     CHECK_FLAG ("IDABand", flag);
     if (Bool_val (vset_jac)) {
-	flag = IDADlsSetBandJacFn(IDA_MEM_FROM_ML(vida_mem), bandjacfn);
+	flag = IDADlsSetBandJacFn(ida_mem, bandjacfn);
 	CHECK_FLAG("IDADlsSetBandJacFn", flag);
     }
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -578,7 +671,7 @@ CAMLprim value c_ida_dls_lapack_band (value vida_mem, value vneqs,
 				      value vset_jac)
 {
     CAMLparam5(vida_mem, vneqs, mupper, mlower, vset_jac);
-#ifdef SUNDIALS_ML_LAPACK
+#if SUNDIALS_LIB_VERSION < 300 && defined SUNDIALS_ML_LAPACK
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
     long neqs = Long_val (vneqs);
     int flag;
@@ -586,7 +679,7 @@ CAMLprim value c_ida_dls_lapack_band (value vida_mem, value vneqs,
     flag = IDALapackBand (ida_mem, neqs, Long_val (mupper), Long_val (mlower));
     CHECK_FLAG ("IDALapackBand", flag);
     if (Bool_val (vset_jac)) {
-	flag = IDADlsSetBandJacFn(IDA_MEM_FROM_ML(vida_mem), bandjacfn);
+	flag = IDADlsSetBandJacFn(ida_mem, bandjacfn);
 	CHECK_FLAG("IDADlsSetBandJacFn", flag);
     }
 #else
@@ -595,19 +688,41 @@ CAMLprim value c_ida_dls_lapack_band (value vida_mem, value vneqs,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_dls_set_band_jac_fn(value vdata)
+CAMLprim value c_ida_dls_set_linear_solver (value vida_mem, value vlsolv,
+					    value vjmat, value vhasjac)
 {
-    CAMLparam1(vdata);
-    int flag = IDADlsSetBandJacFn(IDA_MEM_FROM_ML(vdata), bandjacfn);
-    CHECK_FLAG("IDADlsSetBandJacFn", flag);
+    CAMLparam4(vida_mem, vlsolv, vjmat, vhasjac);
+#if SUNDIALS_LIB_VERSION >= 300
+    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
+    SUNLinearSolver lsolv = LSOLVER(vlsolv);
+    SUNMatrix jmat = MAT_VAL(vjmat);
+    int flag;
+
+    flag = IDADlsSetLinearSolver(ida_mem, lsolv, jmat);
+    CHECK_FLAG ("IDADlsSetLinearSolver", flag);
+    if (Bool_val (vhasjac)) {
+	flag = IDADlsSetJacFn(ida_mem, jacfn);
+	CHECK_FLAG("IDADlsSetJacFn", flag);
+    }
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_dls_clear_band_jac_fn(value vdata)
+CAMLprim value c_ida_spils_set_linear_solver (value vida_mem, value vlsolv)
 {
-    CAMLparam1(vdata);
-    int flag = IDADlsSetBandJacFn(IDA_MEM_FROM_ML(vdata), NULL);
-    CHECK_FLAG("IDADlsSetBandJacFn", flag);
+    CAMLparam2(vida_mem, vlsolv);
+#if SUNDIALS_LIB_VERSION >= 300
+    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
+    SUNLinearSolver lsolv = LSOLVER(vlsolv);
+    int flag;
+
+    flag = IDASpilsSetLinearSolver(ida_mem, lsolv);
+    CHECK_FLAG ("IDASpilsSetLinearSolver", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -622,24 +737,36 @@ CAMLprim value c_ida_spils_set_preconditioner (value vsession,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_spils_set_jac_times_vec_fn(value vdata, value vset_jac)
+CAMLprim value c_ida_spils_set_jac_times(value vdata, value vhas_setup,
+						      value vhas_times)
 {
-    CAMLparam2(vdata, vset_jac);
-    IDASpilsJacTimesVecFn jac = Bool_val (vset_jac) ? jactimesfn : NULL;
+    CAMLparam3(vdata, vhas_setup, vhas_times);
+#if SUNDIALS_LIB_VERSION >= 300
+    IDASpilsJacTimesSetupFn setup = Bool_val (vhas_setup) ? jacsetupfn : NULL;
+    IDASpilsJacTimesVecFn   times = Bool_val (vhas_times) ? jactimesfn : NULL;
+
+    int flag = IDASpilsSetJacTimes(IDA_MEM_FROM_ML(vdata), setup, times);
+    CHECK_FLAG("IDASpilsSetJacTimes", flag);
+#else
+    IDASpilsJacTimesVecFn jac = Bool_val (vhas_times) ? jactimesfn : NULL;
     int flag = IDASpilsSetJacTimesVecFn(IDA_MEM_FROM_ML(vdata), jac);
     CHECK_FLAG("IDASpilsSetJacTimesVecFn", flag);
+#endif
     CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_ida_spils_spgmr (value vida_mem, value vmaxl)
 {
     CAMLparam2 (vida_mem, vmaxl);
+#if SUNDIALS_LIB_VERSION < 300
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
     int flag;
 
     flag = IDASpgmr (ida_mem, Int_val (vmaxl));
     CHECK_FLAG ("IDASpgmr", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -647,36 +774,45 @@ CAMLprim value c_ida_spils_spgmr (value vida_mem, value vmaxl)
 CAMLprim value c_ida_spils_set_max_restarts (value vida_mem, value vmaxr)
 {
     CAMLparam2 (vida_mem, vmaxr);
+#if SUNDIALS_LIB_VERSION < 300
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
     int flag;
 
     flag = IDASpilsSetMaxRestarts (ida_mem, Int_val (vmaxr));
     CHECK_FLAG ("IDASpilsSetMaxRestarts", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_ida_spils_spbcg (value vida_mem, value vmaxl)
 {
     CAMLparam2 (vida_mem, vmaxl);
+#if SUNDIALS_LIB_VERSION < 300
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
     int flag;
 
     flag = IDASpbcg (ida_mem, Int_val (vmaxl));
     CHECK_FLAG ("IDASpbcg", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_ida_spils_sptfqmr (value vida_mem, value vmaxl)
 {
     CAMLparam2 (vida_mem, vmaxl);
+#if SUNDIALS_LIB_VERSION < 300
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
     int flag;
 
     flag = IDASptfqmr (ida_mem, Int_val (vmaxl));
     CHECK_FLAG ("IDASptfqmr", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -1520,11 +1656,13 @@ CAMLprim value c_ida_set_suppress_alg (value vida_mem, value vb)
 CAMLprim value c_ida_spils_set_gs_type(value vida_mem, value vgstype)
 {
     CAMLparam2(vida_mem, vgstype);
-
+#if SUNDIALS_LIB_VERSION < 300
     int flag = IDASpilsSetGSType(IDA_MEM_FROM_ML(vida_mem),
 				 spils_gs_type(vgstype));
     CHECK_FLAG("IDASpilsSetGSType", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -1542,10 +1680,12 @@ CAMLprim value c_ida_spils_set_eps_lin(value vida_mem, value eplifac)
 CAMLprim value c_ida_spils_set_maxl(value vida_mem, value maxl)
 {
     CAMLparam2(vida_mem, maxl);
-
+#if SUNDIALS_LIB_VERSION < 300
     int flag = IDASpilsSetMaxl(IDA_MEM_FROM_ML(vida_mem), Int_val(maxl));
     CHECK_FLAG("IDASpilsSetMaxl", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -1719,6 +1859,24 @@ CAMLprim value c_ida_spils_get_num_prec_solves(value vida_mem)
     int flag = IDASpilsGetNumPrecSolves(IDA_MEM_FROM_ML(vida_mem), &r);
     CHECK_FLAG("IDASpilsGetNumPrecSolves", flag);
 
+    CAMLreturn(Val_long(r));
+}
+
+#if SUNDIALS_LIB_VERSION <= 301
+SUNDIALS_EXPORT int IDASpilsGetNumJTSetupEvals(void *ida_mem,
+					       long int *njtsetups);
+#endif
+
+CAMLprim value c_ida_spils_get_num_jtsetup_evals(value vida_mem)
+{
+    CAMLparam1(vida_mem);
+    long int r;
+#if SUNDIALS_LIB_VERSION >= 300
+    int flag = IDASpilsGetNumJTSetupEvals(IDA_MEM_FROM_ML(vida_mem), &r);
+    CHECK_FLAG("IDASpilsGetNumJTSetupEvals", flag);
+#else
+    r = 0;
+#endif
     CAMLreturn(Val_long(r));
 }
 
