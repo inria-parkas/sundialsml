@@ -91,93 +91,91 @@ type ('t, 'd) jacobian_arg = ('t, 'd) Cvode_impl.jacobian_arg =
   }
 
 (** Diagonal approximation of Jacobians by difference quotients. *)
-module Diag :
-  sig (* {{{ *)
-    (** A linear solver based on Jacobian approximation by difference
-        quotients.
+module Diag : sig (* {{{ *)
+  (** A linear solver based on Jacobian approximation by difference
+      quotients.
 
-        @cvode <node5#sss:lin_solv_init> CVDiag *)
-    val solver : ('data, 'kind) linear_solver
+      @cvode <node5#sss:lin_solv_init> CVDiag *)
+  val solver : ('data, 'kind) linear_solver
 
-    (** Returns the sizes of the real and integer workspaces used by the
-        Diagonal linear solver.
+  (** Returns the sizes of the real and integer workspaces used by the
+      Diagonal linear solver.
 
-        @cvode <node5#sss:optout_diag> CVDiagGetWorkSpace
-        @return ([real_size], [integer_size]) *)
-    val get_work_space : ('d, 'k) session -> int * int
+      @cvode <node5#sss:optout_diag> CVDiagGetWorkSpace
+      @return ([real_size], [integer_size]) *)
+  val get_work_space : ('d, 'k) session -> int * int
 
-    (** Returns the number of calls made to the right-hand side
-        function due to finite difference Jacobian approximation in the
-        Diagonal linear solver.
+  (** Returns the number of calls made to the right-hand side
+      function due to finite difference Jacobian approximation in the
+      Diagonal linear solver.
 
-        @cvode <node5#sss:optout_diag> CVDiagGetNumRhsEvals *)
-    val get_num_rhs_evals : ('d, 'k) session -> int
-  end (* }}} *)
+      @cvode <node5#sss:optout_diag> CVDiagGetNumRhsEvals *)
+  val get_num_rhs_evals : ('d, 'k) session -> int
+end (* }}} *)
 
 (** Direct Linear Solvers operating on dense, banded, and sparse matrices.
 
     @cvode <node5#sss:optin_dls> Direct linear solvers optional input functions
     @cvode <node5#sss:optout_dls> Direct linear solvers optional output functions *)
-module Direct :
-  sig (* {{{ *)
+module Direct : sig (* {{{ *)
 
-    (** Callback functions that compute approximations to a Jacobian
-        matrix. In the call [jac arg jm], [arg] is a {!jacobian_arg} with
-        three work vectors and the computed Jacobian must be stored in [jm].
+  (** Callback functions that compute approximations to a Jacobian
+      matrix. In the call [jac arg jm], [arg] is a {!jacobian_arg} with
+      three work vectors and the computed Jacobian must be stored in [jm].
 
-        The callback should load the [(i,j)]th entry of [jm] with
-        {% $\partial y_i/\partial y_j$%}, i.e., the partial derivative of the
-        [i]th equation with respect to the [j]th variable, evaluated at the
-        values of [t] and [y] obtained from [arg]. Only nonzero elements need
-        be loaded into [jm].
+      The callback should load the [(i,j)]th entry of [jm] with
+      {% $\partial y_i/\partial y_j$%}, i.e., the partial derivative of the
+      [i]th equation with respect to the [j]th variable, evaluated at the
+      values of [t] and [y] obtained from [arg]. Only nonzero elements need
+      be loaded into [jm].
 
-        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
-        Any other exception is treated as an unrecoverable error.
+      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Any other exception is treated as an unrecoverable error.
 
-        {warning Neither the elements of [arg] nor the matrix [jm] should
-                 be accessed after the function has returned.}
+      {warning Neither the elements of [arg] nor the matrix [jm] should
+               be accessed after the function has returned.}
 
-        @nocvode <node> CVDlsSetJacFn *)
-    type 'm jac_fn =
-      (RealArray.t triple, RealArray.t) jacobian_arg -> 'm -> unit
+      @nocvode <node> CVDlsSetJacFn *)
+  type 'm jac_fn =
+    (RealArray.t triple, RealArray.t) jacobian_arg -> 'm -> unit
 
-    (** Create a Cvode-specific linear solver from a generic dense linear
-        solver, a Jacobian approximation function, and a Jacobian matrix
-        for the solver's internal use. The Jacobian approximation function
-        is optional for dense and banded solvers (if not given an internal
-        difference quotient approximation is used), but must be provided for
-        other solvers (or {Invalid_argument} is raised).
+  (** Create a Cvode-specific linear solver from a generic dense linear
+      solver, a Jacobian approximation function, and a Jacobian matrix
+      for the solver's internal use. The Jacobian approximation function
+      is optional for dense and banded solvers (if not given an internal
+      difference quotient approximation is used), but must be provided for
+      other solvers (or {Invalid_argument} is raised).
 
-        @nocvode <node> CVDlsSetLinearSolver
-        @nocvode <node> CVDlsSetJacFn *)
-    val make :
-      ('m, 'kind) Lsolver.Direct.serial_t ->
-      ?jac:'m jac_fn ->
-      ('k, 'm, Nvector_serial.data, 'kind) Matrix.t ->
-      'kind serial_linear_solver
+      @nocvode <node> CVDlsSetLinearSolver
+      @nocvode <node> CVDlsSetJacFn *)
+  val make :
+    ('m, 'kind) Lsolver.Direct.serial_t ->
+    ?jac:'m jac_fn ->
+    ('k, 'm, Nvector_serial.data, 'kind) Matrix.t ->
+    'kind serial_linear_solver
 
-    (** {3:stats Solver statistics} *)
+  (** {3:stats Solver statistics} *)
 
-    (** Returns the sizes of the real and integer workspaces used by a direct
-        linear solver.
+  (** Returns the sizes of the real and integer workspaces used by a direct
+      linear solver.
 
-        @cvode <node5#sss:optout_dls> CVDlsGetWorkSpace
-        @return ([real_size], [integer_size]) *)
-    val get_work_space : 'kind serial_session -> int * int
+      @cvode <node5#sss:optout_dls> CVDlsGetWorkSpace
+      @return ([real_size], [integer_size]) *)
+  val get_work_space : 'kind serial_session -> int * int
 
-    (** Returns the number of calls made by a direct linear solver to the
-        Jacobian approximation function.
+  (** Returns the number of calls made by a direct linear solver to the
+      Jacobian approximation function.
 
-        @cvode <node5#sss:optout_dls> CVDlsGetNumJacEvals *)
-    val get_num_jac_evals : 'kind serial_session -> int
+      @cvode <node5#sss:optout_dls> CVDlsGetNumJacEvals *)
+  val get_num_jac_evals : 'kind serial_session -> int
 
-    (** Returns the number of calls to the right-hand side callback due to
-        the finite difference Jacobian approximation.
+  (** Returns the number of calls to the right-hand side callback due to
+      the finite difference Jacobian approximation.
 
-        @cvode <node5#sss:optout_dls> CVDlsGetNumRhsEvals *)
-    val get_num_rhs_evals : 'kind serial_session -> int
+      @cvode <node5#sss:optout_dls> CVDlsGetNumRhsEvals *)
+  val get_num_rhs_evals : 'kind serial_session -> int
 
-  end (* }}} *)
+end (* }}} *)
 
 (** Iterative Linear Solvers.
 
@@ -185,438 +183,436 @@ module Direct :
     @cvode <node5#sss:optout_spils> Iterative linear solvers optional output functions.
     @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
     @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
-module Iterative :
-  sig (* {{{ *)
-    (** {3:precond Preconditioners} *)
+module Iterative : sig (* {{{ *)
+  (** {3:precond Preconditioners} *)
 
-    (** Arguments passed to the preconditioner solver function.
+  (** Arguments passed to the preconditioner solver function.
 
-        @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn *)
-    type 'd prec_solve_arg =
-      {
-        rhs   : 'd;         (** Right-hand side vector of the linear system. *)
-        gamma : float;      (** Scalar $\gamma$ in the Newton
-                                matrix given by $M = I - \gamma J$. *)
-        delta : float;      (** Input tolerance for iterative methods. *)
-        left  : bool;       (** [true] for left preconditioning and
-                                [false] for right preconditioning. *)
-      }
+      @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn *)
+  type 'd prec_solve_arg =
+    {
+      rhs   : 'd;         (** Right-hand side vector of the linear system. *)
+      gamma : float;      (** Scalar $\gamma$ in the Newton
+                              matrix given by $M = I - \gamma J$. *)
+      delta : float;      (** Input tolerance for iterative methods. *)
+      left  : bool;       (** [true] for left preconditioning and
+                              [false] for right preconditioning. *)
+    }
 
-    (** Callback functions that solve a linear system involving a
-        preconditioner matrix. In the call [prec_solve_fn jac arg z],
-        [jac] is a {!jacobian_arg} with no work vectors, [arg] is
-        a {!prec_solve_arg} that specifies the linear system, and [z] is
-        computed to solve {% $P\mathtt{z} = \mathtt{arg.rhs}$%}.
-        $P$ is a preconditioner matrix, which approximates, however crudely,
-        the Newton matrix {% $M = I - \gamma J$%} where
-        {% $J = \frac{\partial f}{\partial y}$%}.
+  (** Callback functions that solve a linear system involving a
+      preconditioner matrix. In the call [prec_solve_fn jac arg z],
+      [jac] is a {!jacobian_arg} with no work vectors, [arg] is
+      a {!prec_solve_arg} that specifies the linear system, and [z] is
+      computed to solve {% $P\mathtt{z} = \mathtt{arg.rhs}$%}.
+      $P$ is a preconditioner matrix, which approximates, however crudely,
+      the Newton matrix {% $M = I - \gamma J$%} where
+      {% $J = \frac{\partial f}{\partial y}$%}.
 
-        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
-        Any other exception is treated as an unrecoverable error.
+      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Any other exception is treated as an unrecoverable error.
 
-        {warning The elements of [jac], [arg], and [z] should not
-                 be accessed after the function has returned.}
+      {warning The elements of [jac], [arg], and [z] should not
+               be accessed after the function has returned.}
 
-        @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn *)
-    type 'd prec_solve_fn =
-      (unit, 'd) jacobian_arg
-      -> 'd prec_solve_arg
-      -> 'd
-      -> unit
+      @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn *)
+  type 'd prec_solve_fn =
+    (unit, 'd) jacobian_arg
+    -> 'd prec_solve_arg
+    -> 'd
+    -> unit
 
-    (** Callback functions that preprocess or evaluate Jacobian-related data
-        needed by {!prec_solve_fn}. In the call [prec_setup_fn jac jok gamma],
-        [jac] is a {!jacobian_arg} with no work vectors, [jok] indicates
-        whether any saved Jacobian-related data can be reused with the current
-        value of [gamma], and [gamma] is the scalar $\gamma$ in the Newton
-        matrix {% $M = I - \gamma J$%} where $J$ is the Jacobian matrix.
-        A function should return [true] if Jacobian-related data was updated
-        and [false] if saved data was reused.
+  (** Callback functions that preprocess or evaluate Jacobian-related data
+      needed by {!prec_solve_fn}. In the call [prec_setup_fn jac jok gamma],
+      [jac] is a {!jacobian_arg} with no work vectors, [jok] indicates
+      whether any saved Jacobian-related data can be reused with the current
+      value of [gamma], and [gamma] is the scalar $\gamma$ in the Newton
+      matrix {% $M = I - \gamma J$%} where $J$ is the Jacobian matrix.
+      A function should return [true] if Jacobian-related data was updated
+      and [false] if saved data was reused.
 
-        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
-        Any other exception is treated as an unrecoverable error.
+      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Any other exception is treated as an unrecoverable error.
 
-        {warning The elements of [jac] should not be accessed after the
-                 function has returned.}
+      {warning The elements of [jac] should not be accessed after the
+               function has returned.}
 
-        @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
-        @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
-    type 'd prec_setup_fn =
-      (unit, 'd) jacobian_arg
-      -> bool
-      -> float
-      -> bool
+      @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
+      @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
+  type 'd prec_setup_fn =
+    (unit, 'd) jacobian_arg
+    -> bool
+    -> float
+    -> bool
 
-    (** Callback functions that preprocess or evaluate Jacobian-related data
-        needed by the jac_times_vec_fn. In the call [jac_times_setup_fn arg],
-        [arg] is a {!jacobian_arg} with no work vectors.
-      
-        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
-        Any other exception is treated as an unrecoverable error.
+  (** Callback functions that preprocess or evaluate Jacobian-related data
+      needed by the jac_times_vec_fn. In the call [jac_times_setup_fn arg],
+      [arg] is a {!jacobian_arg} with no work vectors.
+    
+      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Any other exception is treated as an unrecoverable error.
 
-        {warning The elements of [arg] should not be accessed after the
-                 function has returned.}
+      {warning The elements of [arg] should not be accessed after the
+               function has returned.}
 
-        @nocvode <node> CVSpilsJacTimesSetupFn *)
-    type 'd jac_times_setup_fn = (unit, 'd) jacobian_arg -> unit
+      @nocvode <node> CVSpilsJacTimesSetupFn *)
+  type 'd jac_times_setup_fn = (unit, 'd) jacobian_arg -> unit
 
-    (** Callback functions that compute the Jacobian times a vector. In the
-        call [jac_times_vec_fn arg v jv], [arg] is a {!jacobian_arg} with one
-        work vector, [v] is the vector multiplying the Jacobian, and [jv] is
-        the vector in which to store the
-        result—{% $\mathtt{jv} = J\mathtt{v}$%}.
-      
-        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
-        Any other exception is treated as an unrecoverable error.
+  (** Callback functions that compute the Jacobian times a vector. In the
+      call [jac_times_vec_fn arg v jv], [arg] is a {!jacobian_arg} with one
+      work vector, [v] is the vector multiplying the Jacobian, and [jv] is
+      the vector in which to store the
+      result—{% $\mathtt{jv} = J\mathtt{v}$%}.
+    
+      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Any other exception is treated as an unrecoverable error.
 
-        {warning Neither the elements of [arg] nor [v] or [jv] should be
-                 accessed after the function has returned.}
+      {warning Neither the elements of [arg] nor [v] or [jv] should be
+               accessed after the function has returned.}
 
-        @nocvode <node> CVSpilsJacTimesVecFn *)
-    type 'd jac_times_vec_fn =
-      ('d, 'd) jacobian_arg
-      -> 'd (* v *)
-      -> 'd (* Jv *)
-      -> unit
+      @nocvode <node> CVSpilsJacTimesVecFn *)
+  type 'd jac_times_vec_fn =
+    ('d, 'd) jacobian_arg
+    -> 'd (* v *)
+    -> 'd (* Jv *)
+    -> unit
 
-    (** Specifies a preconditioner, including the type of preconditioning
-        (none, left, right, or both) and callback functions.
-        The following functions and those in {!Banded} and {!Cvode_bbd}
-        construct preconditioners.
+  (** Specifies a preconditioner, including the type of preconditioning
+      (none, left, right, or both) and callback functions.
+      The following functions and those in {!Banded} and {!Cvode_bbd}
+      construct preconditioners.
 
-        The {!prec_solve_fn} is mandatory. The {!prec_setup_fn} can be
-        omitted if not needed.
+      The {!prec_solve_fn} is mandatory. The {!prec_setup_fn} can be
+      omitted if not needed.
 
-        @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
-        @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn
-        @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn *)
-    type ('d,'k) preconditioner = ('d,'k) Cvode_impl.SpilsTypes.preconditioner
+      @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
+      @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn
+      @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn *)
+  type ('d,'k) preconditioner = ('d,'k) Cvode_impl.SpilsTypes.preconditioner
 
-    (** No preconditioning.  *)
-    val prec_none : ('d, 'k) preconditioner
+  (** No preconditioning.  *)
+  val prec_none : ('d, 'k) preconditioner
 
-    (** Left preconditioning. {% $(P^{-1}A)x = P^{-1}b$ %}. *)
-    val prec_left :
-      ?setup:'d prec_setup_fn
-      -> 'd prec_solve_fn
-      -> ('d, 'k) preconditioner
+  (** Left preconditioning. {% $(P^{-1}A)x = P^{-1}b$ %}. *)
+  val prec_left :
+    ?setup:'d prec_setup_fn
+    -> 'd prec_solve_fn
+    -> ('d, 'k) preconditioner
 
-    (** Right preconditioning. {% $(AP^{-1})Px = b$ %}. *)
-    val prec_right :
-      ?setup:'d prec_setup_fn
-      -> 'd prec_solve_fn
-      -> ('d, 'k) preconditioner
+  (** Right preconditioning. {% $(AP^{-1})Px = b$ %}. *)
+  val prec_right :
+    ?setup:'d prec_setup_fn
+    -> 'd prec_solve_fn
+    -> ('d, 'k) preconditioner
 
-    (** Left and right preconditioning.
-        {% $(P_L^{-1}AP_R^{-1})P_Rx = P_L^{-1}b$ %} *)
-    val prec_both :
-      ?setup:'d prec_setup_fn
-      -> 'd prec_solve_fn
-      -> ('d, 'k) preconditioner
+  (** Left and right preconditioning.
+      {% $(P_L^{-1}AP_R^{-1})P_Rx = P_L^{-1}b$ %} *)
+  val prec_both :
+    ?setup:'d prec_setup_fn
+    -> 'd prec_solve_fn
+    -> ('d, 'k) preconditioner
 
-    (** Banded preconditioners.  *)
-    module Banded : sig (* {{{ *)
+  (** Banded preconditioners.  *)
+  module Banded : sig (* {{{ *)
 
-      (** The range of nonzero entries in a band matrix. *)
-      type bandrange =
-        { mupper : int; (** The upper half-bandwidth. *)
-          mlower : int; (** The lower half-bandwidth. *) }
+    (** The range of nonzero entries in a band matrix. *)
+    type bandrange =
+      { mupper : int; (** The upper half-bandwidth. *)
+        mlower : int; (** The lower half-bandwidth. *) }
 
-      (** A band matrix {!preconditioner} based on difference quotients.
-          The call [prec_left br] instantiates a left preconditioner which
-          generates a banded approximation to the Jacobian with [br.mlower]
-          sub-diagonals and [br.mupper] super-diagonals.
+    (** A band matrix {!preconditioner} based on difference quotients.
+        The call [prec_left br] instantiates a left preconditioner which
+        generates a banded approximation to the Jacobian with [br.mlower]
+        sub-diagonals and [br.mupper] super-diagonals.
 
-          @cvode <node5#sss:cvbandpre> CVBandPrecInit *)
-      val prec_left : bandrange -> (Nvector_serial.data,
-                                    [>Nvector_serial.kind]) preconditioner
+        @cvode <node5#sss:cvbandpre> CVBandPrecInit *)
+    val prec_left : bandrange -> (Nvector_serial.data,
+                                  [>Nvector_serial.kind]) preconditioner
 
-      (** Like {!prec_left} but preconditions from the right.
+    (** Like {!prec_left} but preconditions from the right.
 
-          @cvode <node5#sss:cvbandpre> CVBandPrecInit *)
-      val prec_right : bandrange -> (Nvector_serial.data,
-                                     [>Nvector_serial.kind]) preconditioner
+        @cvode <node5#sss:cvbandpre> CVBandPrecInit *)
+    val prec_right : bandrange -> (Nvector_serial.data,
+                                   [>Nvector_serial.kind]) preconditioner
 
-      (** Like {!prec_left} but preconditions from both sides.
+    (** Like {!prec_left} but preconditions from both sides.
 
-          @cvode <node5#sss:cvbandpre> CVBandPrecInit *)
-      val prec_both : bandrange -> (Nvector_serial.data,
-                                    [>Nvector_serial.kind]) preconditioner
+        @cvode <node5#sss:cvbandpre> CVBandPrecInit *)
+    val prec_both : bandrange -> (Nvector_serial.data,
+                                  [>Nvector_serial.kind]) preconditioner
 
-      (** {4:stats Banded statistics} *)
+    (** {4:stats Banded statistics} *)
 
-      (** Returns the sizes of the real and integer workspaces used by the
-          banded preconditioner module.
+    (** Returns the sizes of the real and integer workspaces used by the
+        banded preconditioner module.
 
-          @cvode <node5#sss:cvbandpre> CVBandPrecGetWorkSpace
-          @return ([real_size], [integer_size]) *)
-      val get_work_space : 'kind serial_session -> int * int
-
-      (** Returns the number of calls to the right-hand side callback for the
-          difference banded Jacobian approximation. This counter is only updated
-          if the default difference quotient function is used.
-
-          @cvode <node5#sss:cvbandpre> CVBandPrecGetNumRhsEvals *)
-      val get_num_rhs_evals : 'kind serial_session -> int
-    end (* }}} *)
-
-    (** {3:lsolvers Solvers} *)
-
-    (** Create a Cvode-specific linear solver from a generic iterative
-        linear solver.
-
-        NB: a [jac_times_setup_fn] is not supported in
-            {!Sundials.sundials_version} < 3.0.0.
-
-        @nocvode <node> CVSpilsSetLinearSolver
-        @nocvode <node> CVSpilsSetJacTimes *)
-    val make :
-      ('d, 'k, 'f) Lsolver.Iterative.t
-      -> ?jac_times_vec:'d jac_times_setup_fn option * 'd jac_times_vec_fn
-      -> ('d, 'k) preconditioner
-      -> ('d, 'k) linear_solver
-
-    (** {3:set Solver parameters} *)
-
-    (** Sets the factor by which the Krylov linear solver's convergence test
-        constant is reduced from the Newton iteration test constant.
-        This factor must be >= 0; passing 0 specifies the default (0.05).
-
-        @cvode <node5#sss:optin_spils> CVSpilsSetEpsLin *)
-    val set_eps_lin : ('d, 'k) session -> float -> unit
-
-    (** {3:stats Solver statistics} *)
-
-    (** Returns the sizes of the real and integer workspaces used by the spils
-        linear solver.
-
-        @cvode <node5#sss:optout_spils> CVSpilsGetWorkSpace
+        @cvode <node5#sss:cvbandpre> CVBandPrecGetWorkSpace
         @return ([real_size], [integer_size]) *)
-    val get_work_space       : ('d, 'k) session -> int * int
+    val get_work_space : 'kind serial_session -> int * int
 
-    (** Returns the cumulative number of linear iterations.
+    (** Returns the number of calls to the right-hand side callback for the
+        difference banded Jacobian approximation. This counter is only updated
+        if the default difference quotient function is used.
 
-        @cvode <node5#sss:optout_spils> CVSpilsGetNumLinIters *)
-    val get_num_lin_iters    : ('d, 'k) session -> int
-
-    (** Returns the cumulative number of linear convergence failures.
-
-        @cvode <node5#sss:optout_spils> CVSpilsGetNumConvFails *)
-    val get_num_conv_fails   : ('d, 'k) session -> int
-
-    (** Returns the cumulative number of calls to the setup function with
-        [jok=false].
-
-        @cvode <node5#sss:optout_spils> CVSpilsGetNumPrecEvals *)
-    val get_num_prec_evals   : ('d, 'k) session -> int
-
-    (** Returns the cumulative number of calls to the preconditioner solve
-        function.
-
-        @cvode <node5#sss:optout_spils> CVSpilsGetNumPrecSolves *)
-    val get_num_prec_solves  : ('d, 'k) session -> int
-
-    (** Returns the cumulative number of calls to the Jacobian-vector
-        setup function.
-
-        @since 3.0.0
-        @nocvode <node> CVSpilsGetNumJTSetupEvals *)
-    val get_num_jtsetup_evals : ('d, 'k) session -> int
-
-    (** Returns the cumulative number of calls to the Jacobian-vector
-        function.
-
-        @cvode <node5#sss:optout_spils> CVSpilsGetNumJtimesEvals *)
-    val get_num_jtimes_evals : ('d, 'k) session -> int
-
-    (** Returns the number of calls to the right-hand side callback for
-        finite difference Jacobian-vector product approximation. This counter is
-        only updated if the default difference quotient function is used.
-
-        @cvode <node5#sss:optout_spils> CVSpilsGetNumRhsEvals *)
-    val get_num_rhs_evals    : ('d, 'k) session -> int
-
-    (** {3:lowlevel Low-level solver manipulation}
-
-        The {!init} and {!reinit} functions are the preferred way to set or
-        change preconditioner functions. These low-level functions are provided
-        for experts who want to avoid resetting internal counters and other
-        associated side-effects. *)
-
-    (** Change the preconditioner functions.
-
-        @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
-        @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
-        @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
-    val set_preconditioner :
-      ('d, 'k) session
-      -> ?setup:'d prec_setup_fn
-      -> 'd prec_solve_fn
-      -> unit
-
-    (** Change the Jacobian-times-vector function.
-
-        NB: the [jac_times_setup] argument is not supported in
-            {!Sundials.sundials_version} < 3.0.0.
-
-        @nocvode <node> CVSpilsSetJacTimes
-        @nocvode <node> CVSpilsJacTimesSetupFn
-        @nocvode <node> CVSpilsJacTimesVecFn *)
-    val set_jac_times :
-      ('d, 'k) session
-      -> ?jac_times_setup:'d jac_times_setup_fn
-      -> 'd jac_times_vec_fn
-      -> unit
-
-    (** Remove a Jacobian-times-vector function and use the default
-        implementation.
-
-        @nocvode <node> CVSpilsSetJacTimes
-        @nocvode <node> CVSpilsJacTimesSetupFn
-        @nocvode <node> CVSpilsJacTimesVecFn *)
-    val clear_jac_times : ('d, 'k) session -> unit
-
+        @cvode <node5#sss:cvbandpre> CVBandPrecGetNumRhsEvals *)
+    val get_num_rhs_evals : 'kind serial_session -> int
   end (* }}} *)
+
+  (** {3:lsolvers Solvers} *)
+
+  (** Create a Cvode-specific linear solver from a generic iterative
+      linear solver.
+
+      NB: a [jac_times_setup_fn] is not supported in
+          {!Sundials.sundials_version} < 3.0.0.
+
+      @nocvode <node> CVSpilsSetLinearSolver
+      @nocvode <node> CVSpilsSetJacTimes *)
+  val make :
+    ('d, 'k, 'f) Lsolver.Iterative.t
+    -> ?jac_times_vec:'d jac_times_setup_fn option * 'd jac_times_vec_fn
+    -> ('d, 'k) preconditioner
+    -> ('d, 'k) linear_solver
+
+  (** {3:set Solver parameters} *)
+
+  (** Sets the factor by which the Krylov linear solver's convergence test
+      constant is reduced from the Newton iteration test constant.
+      This factor must be >= 0; passing 0 specifies the default (0.05).
+
+      @cvode <node5#sss:optin_spils> CVSpilsSetEpsLin *)
+  val set_eps_lin : ('d, 'k) session -> float -> unit
+
+  (** {3:stats Solver statistics} *)
+
+  (** Returns the sizes of the real and integer workspaces used by the spils
+      linear solver.
+
+      @cvode <node5#sss:optout_spils> CVSpilsGetWorkSpace
+      @return ([real_size], [integer_size]) *)
+  val get_work_space       : ('d, 'k) session -> int * int
+
+  (** Returns the cumulative number of linear iterations.
+
+      @cvode <node5#sss:optout_spils> CVSpilsGetNumLinIters *)
+  val get_num_lin_iters    : ('d, 'k) session -> int
+
+  (** Returns the cumulative number of linear convergence failures.
+
+      @cvode <node5#sss:optout_spils> CVSpilsGetNumConvFails *)
+  val get_num_conv_fails   : ('d, 'k) session -> int
+
+  (** Returns the cumulative number of calls to the setup function with
+      [jok=false].
+
+      @cvode <node5#sss:optout_spils> CVSpilsGetNumPrecEvals *)
+  val get_num_prec_evals   : ('d, 'k) session -> int
+
+  (** Returns the cumulative number of calls to the preconditioner solve
+      function.
+
+      @cvode <node5#sss:optout_spils> CVSpilsGetNumPrecSolves *)
+  val get_num_prec_solves  : ('d, 'k) session -> int
+
+  (** Returns the cumulative number of calls to the Jacobian-vector
+      setup function.
+
+      @since 3.0.0
+      @nocvode <node> CVSpilsGetNumJTSetupEvals *)
+  val get_num_jtsetup_evals : ('d, 'k) session -> int
+
+  (** Returns the cumulative number of calls to the Jacobian-vector
+      function.
+
+      @cvode <node5#sss:optout_spils> CVSpilsGetNumJtimesEvals *)
+  val get_num_jtimes_evals : ('d, 'k) session -> int
+
+  (** Returns the number of calls to the right-hand side callback for
+      finite difference Jacobian-vector product approximation. This counter is
+      only updated if the default difference quotient function is used.
+
+      @cvode <node5#sss:optout_spils> CVSpilsGetNumRhsEvals *)
+  val get_num_rhs_evals    : ('d, 'k) session -> int
+
+  (** {3:lowlevel Low-level solver manipulation}
+
+      The {!init} and {!reinit} functions are the preferred way to set or
+      change preconditioner functions. These low-level functions are provided
+      for experts who want to avoid resetting internal counters and other
+      associated side-effects. *)
+
+  (** Change the preconditioner functions.
+
+      @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
+      @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
+      @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
+  val set_preconditioner :
+    ('d, 'k) session
+    -> ?setup:'d prec_setup_fn
+    -> 'd prec_solve_fn
+    -> unit
+
+  (** Change the Jacobian-times-vector function.
+
+      NB: the [jac_times_setup] argument is not supported in
+          {!Sundials.sundials_version} < 3.0.0.
+
+      @nocvode <node> CVSpilsSetJacTimes
+      @nocvode <node> CVSpilsJacTimesSetupFn
+      @nocvode <node> CVSpilsJacTimesVecFn *)
+  val set_jac_times :
+    ('d, 'k) session
+    -> ?jac_times_setup:'d jac_times_setup_fn
+    -> 'd jac_times_vec_fn
+    -> unit
+
+  (** Remove a Jacobian-times-vector function and use the default
+      implementation.
+
+      @nocvode <node> CVSpilsSetJacTimes
+      @nocvode <node> CVSpilsJacTimesSetupFn
+      @nocvode <node> CVSpilsJacTimesVecFn *)
+  val clear_jac_times : ('d, 'k) session -> unit
+
+end (* }}} *)
 
 (** Alternate Linear Solvers.
 
     @cvode <node8#s:new_linsolv> Providing Alternate Linear Solver Modules *)
-module Alternate :
-  sig (* {{{ *)
-    (** Indicates problems during the solution of nonlinear equations at a
-        step. Helps decide whether to update the Jacobian data kept by a
-        linear solver. *)
-    type conv_fail =
-      | NoFailures
-          (** Either the first call for a step or the local error test
-              failed on the previous attempt at this setup but the Newton
-              iteration converged. *)
+module Alternate : sig (* {{{ *)
+  (** Indicates problems during the solution of nonlinear equations at a
+      step. Helps decide whether to update the Jacobian data kept by a
+      linear solver. *)
+  type conv_fail =
+    | NoFailures
+        (** Either the first call for a step or the local error test
+            failed on the previous attempt at this setup but the Newton
+            iteration converged. *)
 
-      | FailBadJ
-          (** The setup routine indicates that its Jacobian related data is not
-              current and either the previous Newton corrector iteration did not
-              converge, or, during the previous Newton corrector iteration, the
-              linear solver's {{!callbacks}lsolve} routine failed in a
-              recoverable manner. *)
+    | FailBadJ
+        (** The setup routine indicates that its Jacobian related data is not
+            current and either the previous Newton corrector iteration did not
+            converge, or, during the previous Newton corrector iteration, the
+            linear solver's {{!callbacks}lsolve} routine failed in a
+            recoverable manner. *)
 
-      | FailOther
-          (** The previous Newton iteration failed to converge even
-              though the linear solver was using current
-              Jacobian-related data. *)
+    | FailOther
+        (** The previous Newton iteration failed to converge even
+            though the linear solver was using current
+            Jacobian-related data. *)
 
-    (** Functions that initialize linear solver data, like counters and
-        statistics.
+  (** Functions that initialize linear solver data, like counters and
+      statistics.
 
-        Raising any exception in this function (including
-        {!Sundials.RecoverableFailure}) is treated as an unrecoverable error.
+      Raising any exception in this function (including
+      {!Sundials.RecoverableFailure}) is treated as an unrecoverable error.
 
-        @cvode <node8#SECTION00810000000000000000> linit *)
-    type ('data, 'kind) linit = ('data, 'kind) session -> unit
+      @cvode <node8#SECTION00810000000000000000> linit *)
+  type ('data, 'kind) linit = ('data, 'kind) session -> unit
 
-    (** Functions that prepare the linear solver for subsequent calls
-        to {{!callbacks}lsolve}.  This function must return [true]
-        only if the Jacobian-related data is current after the call.
+  (** Functions that prepare the linear solver for subsequent calls
+      to {{!callbacks}lsolve}.  This function must return [true]
+      only if the Jacobian-related data is current after the call.
 
-        This function may raise a {!Sundials.RecoverableFailure} exception to
-        indicate that a recoverable error has occurred. Any other exception is
-        treated as an unrecoverable error.
+      This function may raise a {!Sundials.RecoverableFailure} exception to
+      indicate that a recoverable error has occurred. Any other exception is
+      treated as an unrecoverable error.
 
-        {warning The vectors [ypred], [fpred], and those in [tmp] should not be
-                 accessed after the function returns.}
+      {warning The vectors [ypred], [fpred], and those in [tmp] should not be
+               accessed after the function returns.}
 
-        @cvode <node8#SECTION00820000000000000000> lsetup *)
-    type ('data, 'kind) lsetup =
-      ('data, 'kind) session
-      -> 'data lsetup_args
-      -> bool
+      @cvode <node8#SECTION00820000000000000000> lsetup *)
+  type ('data, 'kind) lsetup =
+    ('data, 'kind) session
+    -> 'data lsetup_args
+    -> bool
 
-    (** Arguments to {!lsetup}. *)
-    and 'data lsetup_args =
-      {
-        lsetup_conv_fail : conv_fail;
-        (** Indicates that a problem occurred during the solution of
-            the nonlinear equation at the current time step. *)
+  (** Arguments to {!lsetup}. *)
+  and 'data lsetup_args =
+    {
+      lsetup_conv_fail : conv_fail;
+      (** Indicates that a problem occurred during the solution of
+          the nonlinear equation at the current time step. *)
 
-        lsetup_y : 'data;
-        (** The predicted $y$ vector for the current internal step. *)
+      lsetup_y : 'data;
+      (** The predicted $y$ vector for the current internal step. *)
 
-        lsetup_rhs : 'data;
-        (** The value of the right-hand side at the predicted $y$ vector. *)
+      lsetup_rhs : 'data;
+      (** The value of the right-hand side at the predicted $y$ vector. *)
 
-        lsetup_tmp : 'data triple;
-        (** Temporary variables for use by the routine. *)
-      }
-
-    (** Functions that solve the linear equation $Mx = b$.
-        $M$ is a preconditioning matrix chosen by the user, and $b$ is the
-        right-hand side vector calculated within the function.
-        $M$ should approximate $I - \gamma J$ where
-        {% $J = (\frac{\partial f}{\partial y})(t_n, y_{\text{cur}})$%},
-        and $\gamma$ is available through {!get_gammas}.
-        The call [lsolve s args b] has as arguments:
-
-        - [s], the solver session,
-        - [args], summarizing current approximations to the solution, and
-        - [b], for returning the calculated solution.
-
-        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
-        Any other exception is treated as an unrecoverable error.
-
-        {warning The vectors in {!lsolve_args} should not be accessed
-                 after the function returns.}
-
-        @cvode <node8#SECTION00830000000000000000> lsolve
-        @cvode <node3#e:Newtonmat> IVP solution (Eq. 2.5) *)
-    type ('data, 'kind) lsolve =
-      ('data, 'kind) session
-      -> 'data lsolve_args
-      -> 'data
-      -> unit
-
-    (** Arguments to {!lsolve}. *)
-    and 'data lsolve_args =
-      {
-        lsolve_ewt : 'data;
-        (** The error weights. *)
-
-        lsolve_y : 'data;
-        (** The solver's current approximation to $y(t_n)$. *)
-
-        lsolve_rhs : 'data;
-        (** A vector containing {% $f(t_n, y_{\text{cur}})$%}. *)
-      }
-
-    (** The callbacks needed to implement an alternate linear solver. *)
-    type ('data, 'kind) callbacks =
-      {
-        linit  : ('data, 'kind) linit option;
-        lsetup : ('data, 'kind) lsetup option;
-        lsolve : ('data, 'kind) lsolve;
-      }
-
-    (** Creates a linear solver from a function returning a set of
-        callbacks. The creation function is passed a session and a vector.
-        The latter indicates the problem size and can, for example, be
-        cloned. *)
-    val make :
-          (('data, 'kind) session
-            -> ('data, 'kind) Nvector.t
-            -> ('data, 'kind) callbacks)
-          -> ('data, 'kind) linear_solver
-
-    (** {3:internals Solver internals} *)
-
-    (** Internal values used in Newton iteration.
-
-        @cvode <node3#ss:ivp_sol> IVP Solution *)
-    type gammas = {
-      gamma : float;    (** The current $\gamma$ value. *)
-      gammap : float;   (** The value of $\gamma$ at the last setup call. *)
+      lsetup_tmp : 'data triple;
+      (** Temporary variables for use by the routine. *)
     }
 
-    (** Returns the current and previous gamma values. *)
-    val get_gammas : ('data, 'kind) session -> gammas
-  end (* }}} *)
+  (** Functions that solve the linear equation $Mx = b$.
+      $M$ is a preconditioning matrix chosen by the user, and $b$ is the
+      right-hand side vector calculated within the function.
+      $M$ should approximate $I - \gamma J$ where
+      {% $J = (\frac{\partial f}{\partial y})(t_n, y_{\text{cur}})$%},
+      and $\gamma$ is available through {!get_gammas}.
+      The call [lsolve s args b] has as arguments:
+
+      - [s], the solver session,
+      - [args], summarizing current approximations to the solution, and
+      - [b], for returning the calculated solution.
+
+      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Any other exception is treated as an unrecoverable error.
+
+      {warning The vectors in {!lsolve_args} should not be accessed
+               after the function returns.}
+
+      @cvode <node8#SECTION00830000000000000000> lsolve
+      @cvode <node3#e:Newtonmat> IVP solution (Eq. 2.5) *)
+  type ('data, 'kind) lsolve =
+    ('data, 'kind) session
+    -> 'data lsolve_args
+    -> 'data
+    -> unit
+
+  (** Arguments to {!lsolve}. *)
+  and 'data lsolve_args =
+    {
+      lsolve_ewt : 'data;
+      (** The error weights. *)
+
+      lsolve_y : 'data;
+      (** The solver's current approximation to $y(t_n)$. *)
+
+      lsolve_rhs : 'data;
+      (** A vector containing {% $f(t_n, y_{\text{cur}})$%}. *)
+    }
+
+  (** The callbacks needed to implement an alternate linear solver. *)
+  type ('data, 'kind) callbacks =
+    {
+      linit  : ('data, 'kind) linit option;
+      lsetup : ('data, 'kind) lsetup option;
+      lsolve : ('data, 'kind) lsolve;
+    }
+
+  (** Creates a linear solver from a function returning a set of
+      callbacks. The creation function is passed a session and a vector.
+      The latter indicates the problem size and can, for example, be
+      cloned. *)
+  val make :
+        (('data, 'kind) session
+          -> ('data, 'kind) Nvector.t
+          -> ('data, 'kind) callbacks)
+        -> ('data, 'kind) linear_solver
+
+  (** {3:internals Solver internals} *)
+
+  (** Internal values used in Newton iteration.
+
+      @cvode <node3#ss:ivp_sol> IVP Solution *)
+  type gammas = {
+    gamma : float;    (** The current $\gamma$ value. *)
+    gammap : float;   (** The value of $\gamma$ at the last setup call. *)
+  }
+
+  (** Returns the current and previous gamma values. *)
+  val get_gammas : ('data, 'kind) session -> gammas
+end (* }}} *)
 
 (** {2:tols Tolerances} *)
 
