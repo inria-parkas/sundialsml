@@ -25,24 +25,27 @@
 #include <caml/bigarray.h>
 
 /* linear solvers */
-#include <idas/idas_dense.h>
 #include <idas/idas_direct.h>
+#include <idas/idas_spils.h>
+
+#if SUNDIALS_LIB_VERSION < 300
+#include <idas/idas_dense.h>
 #include <idas/idas_band.h>
 #include <idas/idas_spgmr.h>
 #include <idas/idas_spbcgs.h>
 #include <idas/idas_sptfqmr.h>
-#include <idas/idas_spils.h>
+#endif
 
 #ifdef SUNDIALS_ML_LAPACK
 #include <idas/idas_lapack.h>
 #endif
 
-#include "../lsolvers/spils_ml.h"
 #include "../ida/ida_ml.h"
 #include "idas_ml.h"
 #include "../sundials/sundials_ml.h"
 #include "../nvectors/nvector_ml.h"
-#include "../lsolvers/dls_ml.h"
+#include "../lsolvers/lsolver_ml.h"
+#include "../lsolvers/matrix_ml.h"
 
 #define MAX_ERRMSG_LEN 256
 
@@ -415,18 +418,26 @@ static int bresfn_sens(realtype t, N_Vector y, N_Vector yp,
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
-static int bprecsetupfn(
-    realtype t,
-    N_Vector yy, N_Vector yp,
-    N_Vector yB, N_Vector ypB, N_Vector resvalB,
-    realtype cjB, void *user_data,
-    N_Vector tmp1B, N_Vector tmp2B, N_Vector tmp3B)
+static int bprecsetupfn(realtype t,
+			N_Vector yy,
+			N_Vector yp,
+			N_Vector yB,
+			N_Vector ypB,
+			N_Vector resvalB,
+			realtype cjB,
+			void *user_data
+#if SUNDIALS_LIB_VERSION < 300
+			,
+			N_Vector tmp1B,
+			N_Vector tmp2B,
+			N_Vector tmp3B
+#endif
+			)
 {
     CAMLparam0();
     CAMLlocal3(session, cb, arg);
 
-    arg = idas_make_jac_arg(t, yy, yp, yB, ypB, resvalB, cjB,
-			    ida_make_triple_tmp(tmp1B, tmp2B, tmp3B));
+    arg = idas_make_jac_arg(t, yy, yp, yB, ypB, resvalB, cjB, Val_unit);
 
     WEAK_DEREF (session, *(value*)user_data);
     cb = IDA_LS_PRECFNS_FROM_ML (session);
@@ -441,13 +452,23 @@ static int bprecsetupfn(
 }
 
 #if SUNDIALS_LIB_VERSION >= 260
-static int bprecsetupfn_sens(
-    realtype t,
-    N_Vector yy, N_Vector yp,
-    N_Vector *yyS, N_Vector *ypS,
-    N_Vector yB, N_Vector ypB, N_Vector resvalB,
-    realtype cjB, void *user_data,
-    N_Vector tmp1B, N_Vector tmp2B, N_Vector tmp3B)
+static int bprecsetupfn_sens(realtype t,
+			     N_Vector yy,
+			     N_Vector yp,
+			     N_Vector *yyS,
+			     N_Vector *ypS,
+			     N_Vector yB,
+			     N_Vector ypB,
+			     N_Vector resvalB,
+			     realtype cjB,
+			     void *user_data
+#if SUNDIALS_LIB_VERSION < 300
+			     ,
+			     N_Vector tmp1B,
+			     N_Vector tmp2B,
+			     N_Vector tmp3B
+#endif
+			     )
 {
     CAMLparam0();
     CAMLlocal3(session, cb, bsensext);
@@ -458,8 +479,7 @@ static int bprecsetupfn_sens(
     bsensext = IDA_SENSEXT_FROM_ML(session);
     ns = Int_val(Field(bsensext, RECORD_IDAS_BWD_SESSION_NUMSENSITIVITIES));
 
-    args[0] = idas_make_jac_arg(t, yy, yp, yB, ypB, resvalB, cjB,
-			        ida_make_triple_tmp(tmp1B, tmp2B, tmp3B));
+    args[0] = idas_make_jac_arg(t, yy, yp, yB, ypB, resvalB, cjB, Val_unit);
     args[1] = IDAS_BSENSARRAY1_FROM_EXT (bsensext);
     args[2] = IDAS_BSENSARRAY2_FROM_EXT (bsensext);
     idas_wrap_to_nvector_table (ns, args[1], yyS);
@@ -471,26 +491,34 @@ static int bprecsetupfn_sens(
     cb = Some_val (cb);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn (cb, args[0], args[1], args[2]);
+    value r = caml_callbackN_exn (cb, 3, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 #endif
 
-static int bprecsolvefn(
-    realtype t,
-    N_Vector yy, N_Vector yp,
-    N_Vector yB, N_Vector ypB, N_Vector resvalB,
-    N_Vector rvecB, N_Vector zvecB,
-    realtype cjB, realtype deltaB,
-    void *user_data, N_Vector tmpB)
+static int bprecsolvefn(realtype t,
+		        N_Vector yy,
+			N_Vector yp,
+			N_Vector yB,
+			N_Vector ypB,
+			N_Vector resvalB,
+			N_Vector rvecB,
+			N_Vector zvecB,
+			realtype cjB,
+			realtype deltaB,
+			void *user_data
+#if SUNDIALS_LIB_VERSION < 300
+			,
+			N_Vector tmpB
+#endif
+			)
 {
     CAMLparam0();
     CAMLlocalN(args, 4);
     CAMLlocal2(session, cb);
 
-    args[0] = idas_make_jac_arg(t, yy, yp, yB, ypB, resvalB, cjB,
-			        NVEC_BACKLINK(tmpB));
+    args[0] = idas_make_jac_arg(t, yy, yp, yB, ypB, resvalB, cjB, Val_unit);
     args[1] = NVEC_BACKLINK (rvecB);
     args[2] = NVEC_BACKLINK (zvecB);
     args[3] = caml_copy_double (deltaB);
@@ -507,14 +535,24 @@ static int bprecsolvefn(
 }
 
 #if SUNDIALS_LIB_VERSION >= 260
-static int bprecsolvefn_sens(
-    realtype t,
-    N_Vector yy, N_Vector yp,
-    N_Vector *yyS, N_Vector *ypS,
-    N_Vector yB, N_Vector ypB, N_Vector resvalB,
-    N_Vector rvecB, N_Vector zvecB,
-    realtype cjB, realtype deltaB,
-    void *user_data, N_Vector tmpB)
+static int bprecsolvefn_sens(realtype t,
+			     N_Vector yy,
+			     N_Vector yp,
+			     N_Vector *yyS,
+			     N_Vector *ypS,
+			     N_Vector yB,
+			     N_Vector ypB,
+			     N_Vector resvalB,
+			     N_Vector rvecB,
+			     N_Vector zvecB,
+			     realtype cjB,
+			     realtype deltaB,
+			     void *user_data
+#if SUNDIALS_LIB_VERSION < 300
+			     ,
+			     N_Vector tmpB
+#endif
+			     )
 {
     CAMLparam0();
     CAMLlocalN(args, 6);
@@ -524,8 +562,7 @@ static int bprecsolvefn_sens(
     WEAK_DEREF (session, *(value*)user_data);
     bsensext = IDA_SENSEXT_FROM_ML(session);
 
-    args[0] = idas_make_jac_arg(t, yy, yp, yB, ypB, resvalB, cjB,
-			        NVEC_BACKLINK(tmpB));
+    args[0] = idas_make_jac_arg(t, yy, yp, yB, ypB, resvalB, cjB, Val_unit);
 
     ns = Int_val(Field(bsensext, RECORD_IDAS_BWD_SESSION_NUMSENSITIVITIES));
     args[1] = IDAS_BSENSARRAY1_FROM_EXT (bsensext);
@@ -548,13 +585,82 @@ static int bprecsolvefn_sens(
 }
 #endif
 
-static int bjactimesfn(
-    realtype t,
-    N_Vector yy, N_Vector yp,
-    N_Vector yyB, N_Vector ypB, N_Vector resvalB,
-    N_Vector vB, N_Vector JvB,
-    realtype cjB, void *user_data,
-    N_Vector tmp1B, N_Vector tmp2B)
+#if SUNDIALS_LIB_VERSION >= 300
+static int bjacsetupfn(realtype t,
+		       N_Vector yy,
+		       N_Vector yp,
+		       N_Vector yyB,
+		       N_Vector ypB,
+		       N_Vector resvalB,
+		       realtype cjB,
+		       void *user_data)
+{
+    CAMLparam0();
+    CAMLlocal3(session, cb, arg);
+
+    arg = idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB, Val_unit);
+
+    WEAK_DEREF (session, *(value*)user_data);
+    cb = IDA_LS_CALLBACKS_FROM_ML (session);
+    cb = Field (cb, 0);
+    cb = Some_val (cb);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback_exn (cb, arg);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
+}
+
+static int bjacsetupfn_sens(realtype t,
+			    N_Vector yy,
+			    N_Vector yp,
+			    N_Vector *yyS,
+			    N_Vector *ypS,
+			    N_Vector yyB,
+			    N_Vector ypB,
+			    N_Vector resvalB,
+			    realtype cjB,
+			    void *user_data)
+{
+    CAMLparam0();
+    CAMLlocalN(args, 3);
+    CAMLlocal3(session, bsensext, cb);
+    int ns;
+
+    WEAK_DEREF (session, *(value*)user_data);
+    bsensext = IDA_SENSEXT_FROM_ML(session);
+
+    args[0] = idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB, Val_unit);
+
+    ns = Int_val(Field(bsensext, RECORD_IDAS_BWD_SESSION_NUMSENSITIVITIES));
+    args[1] = IDAS_BSENSARRAY1_FROM_EXT (bsensext);
+    args[2] = IDAS_BSENSARRAY2_FROM_EXT (bsensext);
+    idas_wrap_to_nvector_table (ns, args[1], yyS);
+    idas_wrap_to_nvector_table (ns, args[2], ypS);
+
+    cb = IDA_LS_CALLBACKS_FROM_ML (session);
+    cb = Field (cb, 0);
+    cb = Some_val (cb);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (cb, 3, args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
+}
+#endif
+
+static int bjactimesfn(realtype t,
+		       N_Vector yy,
+		       N_Vector yp,
+		       N_Vector yyB,
+		       N_Vector ypB,
+		       N_Vector resvalB,
+		       N_Vector vB,
+		       N_Vector JvB,
+		       realtype cjB,
+		       void *user_data,
+		       N_Vector tmp1B,
+		       N_Vector tmp2B)
 {
     CAMLparam0();
     CAMLlocalN(args, 3);
@@ -571,20 +677,26 @@ static int bjactimesfn(
     cb = Some_val (cb);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn (cb, args[0], args[1], args[2]);
+    value r = caml_callbackN_exn (cb, 3, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }
 
 #if SUNDIALS_LIB_VERSION >= 260
-static int bjactimesfn_sens(
-    realtype t,
-    N_Vector yy, N_Vector yp,
-    N_Vector *yyS, N_Vector *ypS,
-    N_Vector yyB, N_Vector ypB, N_Vector resvalB,
-    N_Vector vB, N_Vector JvB,
-    realtype cjB, void *user_data,
-    N_Vector tmp1B, N_Vector tmp2B)
+static int bjactimesfn_sens(realtype t,
+			    N_Vector yy,
+			    N_Vector yp,
+			    N_Vector *yyS,
+			    N_Vector *ypS,
+			    N_Vector yyB,
+			    N_Vector ypB,
+			    N_Vector resvalB,
+			    N_Vector vB,
+			    N_Vector JvB,
+			    realtype cjB,
+			    void *user_data,
+			    N_Vector tmp1B,
+			    N_Vector tmp2B)
 {
     CAMLparam0();
     CAMLlocalN(args, 5);
@@ -617,12 +729,96 @@ static int bjactimesfn_sens(
 }
 #endif
 
-static int bjacfn_nosens(long int NeqB, realtype t,
-			 realtype cjB, N_Vector yy, N_Vector yp,
-			 N_Vector yyB, N_Vector ypB,
+#if SUNDIALS_LIB_VERSION >= 300
+
+static int bjacfn_nosens(realtype t,
+			 realtype cjB,
+			 N_Vector yy,
+			 N_Vector yp,
+			 N_Vector yyB,
+			 N_Vector ypB,
 			 N_Vector resvalB,
-			 DlsMat JacB, void *user_data,
-			 N_Vector tmp1B, N_Vector tmp2B, N_Vector tmp3B)
+			 SUNMatrix JacB,
+			 void *user_data,
+			 N_Vector tmp1B,
+			 N_Vector tmp2B,
+			 N_Vector tmp3B)
+{
+    CAMLparam0();
+    CAMLlocalN(args, 2);
+    CAMLlocal2(session, cb);
+
+    WEAK_DEREF (session, *(value*)user_data);
+    cb = IDA_LS_CALLBACKS_FROM_ML(session);
+    cb = Field (cb, 0);
+
+    args[0] = idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
+			        ida_make_triple_tmp (tmp1B, tmp2B, tmp3B));
+    args[1] = MAT_BACKLINK(JacB);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (Field(cb, 0), 2, args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
+}
+
+static int bjacfn_withsens(realtype t,
+			   realtype cjB,
+			   N_Vector yy,
+			   N_Vector yp,
+			   N_Vector *yS,
+			   N_Vector *ypS,
+			   N_Vector yyB,
+			   N_Vector ypB,
+			   N_Vector resvalB,
+			   SUNMatrix JacB,
+			   void *user_data,
+			   N_Vector tmp1B,
+			   N_Vector tmp2B,
+			   N_Vector tmp3B)
+{
+    CAMLparam0();
+    CAMLlocalN(args, 4);
+    CAMLlocal3(session, bsensext, cb);
+    int ns;
+
+    WEAK_DEREF (session, *(value*)user_data);
+    bsensext = IDA_SENSEXT_FROM_ML(session);
+
+    cb = IDA_LS_CALLBACKS_FROM_ML(session);
+    cb = Field (cb, 0);
+
+    args[0] = idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
+			        ida_make_triple_tmp (tmp1B, tmp2B, tmp3B));
+
+    ns = Int_val(Field(bsensext, RECORD_IDAS_BWD_SESSION_NUMSENSITIVITIES));
+    args[1] = IDAS_BSENSARRAY1_FROM_EXT (bsensext);
+    args[2] = IDAS_BSENSARRAY2_FROM_EXT (bsensext);
+    idas_wrap_to_nvector_table (ns, args[1], yS);
+    idas_wrap_to_nvector_table (ns, args[2], ypS);
+
+    args[3] = MAT_BACKLINK(JacB);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (Field(cb, 0), 4, args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
+}
+
+#else
+static int bjacfn_nosens(long int NeqB,
+			 realtype t,
+			 realtype cjB,
+			 N_Vector yy,
+			 N_Vector yp,
+			 N_Vector yyB,
+			 N_Vector ypB,
+			 N_Vector resvalB,
+			 DlsMat JacB,
+			 void *user_data,
+			 N_Vector tmp1B,
+			 N_Vector tmp2B,
+			 N_Vector tmp3B)
 {
     CAMLparam0();
     CAMLlocalN(args, 2);
@@ -634,7 +830,7 @@ static int bjacfn_nosens(long int NeqB, realtype t,
 
     dmat = Field(cb, 1);
     if (dmat == Val_none) {
-	Store_some(dmat, c_dls_dense_wrap(JacB, 0));
+	Store_some(dmat, c_matrix_dense_wrap(JacB, 0));
 	Store_field(cb, 1, dmat);
     }
 
@@ -643,19 +839,27 @@ static int bjacfn_nosens(long int NeqB, realtype t,
     args[1] = Some_val(dmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback2_exn (Field(cb, 0), args[0], args[1]);
+    value r = caml_callbackN_exn (Field(cb, 0), 2, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
 #if SUNDIALS_LIB_VERSION >= 260
-static int bjacfn_withsens(long int NeqB, realtype t,
-			   realtype cjB, N_Vector yy, N_Vector yp,
-			   N_Vector *yS, N_Vector *ypS,
-			   N_Vector yyB, N_Vector ypB,
+static int bjacfn_withsens(long int NeqB,
+			   realtype t,
+			   realtype cjB,
+			   N_Vector yy,
+			   N_Vector yp,
+			   N_Vector *yS,
+			   N_Vector *ypS,
+			   N_Vector yyB,
+			   N_Vector ypB,
 			   N_Vector resvalB,
-			   DlsMat JacB, void *user_data,
-			   N_Vector tmp1B, N_Vector tmp2B, N_Vector tmp3B)
+			   DlsMat JacB,
+			   void *user_data,
+			   N_Vector tmp1B,
+			   N_Vector tmp2B,
+			   N_Vector tmp3B)
 {
     CAMLparam0();
     CAMLlocalN(args, 4);
@@ -670,7 +874,7 @@ static int bjacfn_withsens(long int NeqB, realtype t,
 
     dmat = Field(cb, 1);
     if (dmat == Val_none) {
-	Store_some(dmat, c_dls_dense_wrap(JacB, 0));
+	Store_some(dmat, c_matrix_dense_wrap(JacB, 0));
 	Store_field(cb, 1, dmat);
     }
 
@@ -692,13 +896,21 @@ static int bjacfn_withsens(long int NeqB, realtype t,
 }
 #endif
 
-static int bbandjacfn_nosens(long int NeqB, long int mupperb, long int mlowerb,
-			     realtype t, realtype cjB,
-			     N_Vector yy, N_Vector yp,
-			     N_Vector yyB, N_Vector ypB,
-			     N_Vector resvalB, DlsMat JacB,
+static int bbandjacfn_nosens(long int NeqB,
+			     long int mupperb,
+			     long int mlowerb,
+			     realtype t,
+			     realtype cjB,
+			     N_Vector yy,
+			     N_Vector yp,
+			     N_Vector yyB,
+			     N_Vector ypB,
+			     N_Vector resvalB,
+			     DlsMat JacB,
 			     void *user_data,
-			     N_Vector tmp1B, N_Vector tmp2B, N_Vector tmp3B)
+			     N_Vector tmp1B,
+			     N_Vector tmp2B,
+			     N_Vector tmp3B)
 {
     CAMLparam0();
     CAMLlocalN(args, 3);
@@ -710,7 +922,7 @@ static int bbandjacfn_nosens(long int NeqB, long int mupperb, long int mlowerb,
 
     bmat = Field(cb, 1);
     if (bmat == Val_none) {
-	Store_some(bmat, c_dls_band_wrap(JacB, 0));
+	Store_some(bmat, c_matrix_band_wrap(JacB, 0));
 	Store_field(cb, 1, bmat);
     }
 
@@ -722,21 +934,29 @@ static int bbandjacfn_nosens(long int NeqB, long int mupperb, long int mlowerb,
     args[2] = Some_val(bmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn (Field(cb, 0), args[0], args[1], args[2]);
+    value r = caml_callbackN_exn (Field(cb, 0), 3, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
 #if SUNDIALS_LIB_VERSION >= 260
 static int bbandjacfn_withsens(long int NeqB,
-			       long int mupperb, long int mlowerb,
-			       realtype t, realtype cjB,
-			       N_Vector yy, N_Vector yp,
-			       N_Vector *yS, N_Vector *ypS,
-			       N_Vector yyB, N_Vector ypB,
-			       N_Vector resvalB, DlsMat JacB,
+			       long int mupperb,
+			       long int mlowerb,
+			       realtype t,
+			       realtype cjB,
+			       N_Vector yy,
+			       N_Vector yp,
+			       N_Vector *yS,
+			       N_Vector *ypS,
+			       N_Vector yyB,
+			       N_Vector ypB,
+			       N_Vector resvalB,
+			       DlsMat JacB,
 			       void *user_data,
-			       N_Vector tmp1B, N_Vector tmp2B, N_Vector tmp3B)
+			       N_Vector tmp1B,
+			       N_Vector tmp2B,
+			       N_Vector tmp3B)
 {
     CAMLparam0();
     CAMLlocalN(args, 5);
@@ -751,7 +971,7 @@ static int bbandjacfn_withsens(long int NeqB,
 
     bmat = Field(cb, 1);
     if (bmat == Val_none) {
-	Store_some(bmat, c_dls_band_wrap(JacB, 0));
+	Store_some(bmat, c_matrix_band_wrap(JacB, 0));
 	Store_field(cb, 1, bmat);
     }
 
@@ -775,6 +995,8 @@ static int bbandjacfn_withsens(long int NeqB,
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
+#endif
+
 #endif
 
 static int bquadrhsfn(realtype t, N_Vector y, N_Vector yp,
@@ -1666,39 +1888,33 @@ CAMLprim value c_idas_adj_spils_spgmr (value vparent, value vwhich,
 				       value vmaxl)
 {
     CAMLparam3 (vparent, vwhich, vmaxl);
+#if SUNDIALS_LIB_VERSION < 300
     void *ida_mem = IDA_MEM_FROM_ML (vparent);
     int which = Int_val(vwhich);
     int flag;
 
     flag = IDASpgmrB (ida_mem, which, Int_val (vmaxl));
     SCHECK_FLAG ("IDASpgmrB", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
-/* For SPGMR only. */
-CAMLprim value c_idas_adj_spils_set_max_restarts (value vida_mem, value vwhich,
-						  value vmaxr)
-{
-    CAMLparam3 (vida_mem, vwhich, vmaxr);
-    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
-    int flag;
-
-    flag = IDASpilsSetMaxRestartsB (ida_mem, Int_val (vwhich), Int_val (vmaxr));
-    CHECK_FLAG ("IDASpilsSetMaxRestartsB", flag);
-
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value c_idas_adj_spils_spbcg (value vparent, value vwhich,
-				       value vmaxl)
+CAMLprim value c_idas_adj_spils_spbcgs (value vparent, value vwhich,
+				        value vmaxl)
 {
     CAMLparam3 (vparent, vwhich, vmaxl);
+#if SUNDIALS_LIB_VERSION < 300
     void *ida_mem = IDA_MEM_FROM_ML (vparent);
     int which = Int_val(vwhich);
     int flag;
 
     flag = IDASpbcgB (ida_mem, which, Int_val (vmaxl));
     SCHECK_FLAG ("IDASpbcgB", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -1706,12 +1922,16 @@ CAMLprim value c_idas_adj_spils_sptfqmr (value vparent, value vwhich,
 					 value vmaxl)
 {
     CAMLparam3 (vparent, vwhich, vmaxl);
+#if SUNDIALS_LIB_VERSION < 300
     void *ida_mem = IDA_MEM_FROM_ML (vparent);
     int which = Int_val(vwhich);
     int flag;
 
     flag = IDASptfqmrB (ida_mem, which, Int_val (vmaxl));
     SCHECK_FLAG ("IDASptfqmrB", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -1787,11 +2007,13 @@ CAMLprim value c_idas_adj_spils_set_gs_type(value vparent, value vwhich,
 					    value vgstype)
 {
     CAMLparam3(vparent, vwhich, vgstype);
-
+#if SUNDIALS_LIB_VERSION < 300
     int flag = IDASpilsSetGSTypeB(IDA_MEM_FROM_ML(vparent), Int_val(vwhich),
 				 spils_gs_type(vgstype));
     SCHECK_FLAG("IDASpilsSetGSTypeB", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -1812,11 +2034,13 @@ CAMLprim value c_idas_adj_spils_set_maxl(value vparent, value vwhich,
 					 value maxl)
 {
     CAMLparam3(vparent, vwhich, maxl);
-
+#if SUNDIALS_LIB_VERSION < 300
     int flag = IDASpilsSetMaxlB(IDA_MEM_FROM_ML(vparent), Int_val(vwhich),
 			       Int_val(maxl));
     SCHECK_FLAG("IDASpilsSetMaxlB", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -1936,29 +2160,44 @@ CAMLprim value c_idas_adj_spils_set_preconditioner(value vparent,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_idas_adj_spils_set_jac_times_vec_fn(value vparent,
-						     value vwhich,
-						     value vset_jac,
-						     value vusesens)
+CAMLprim value c_idas_adj_spils_set_jac_times(value vparent,
+					      value vwhich,
+					      value vhas_setup,
+					      value vhas_times,
+					      value vusesens)
 {
-    CAMLparam4(vparent, vwhich, vset_jac, vusesens);
+    CAMLparam5(vparent, vwhich, vhas_setup, vhas_times, vusesens);
     void *mem = IDA_MEM_FROM_ML(vparent);
     int which = Int_val(vwhich);
     int flag;
 
+#if SUNDIALS_LIB_VERSION >= 300
+    if (Bool_val(vusesens)) {
+	flag = IDASpilsSetJacTimesBS(mem, which,
+			Bool_val(vhas_setup) ? bjacsetupfn_sens : NULL,
+			Bool_val(vhas_times) ? bjactimesfn_sens : NULL);
+	SCHECK_FLAG ("IDASpilsSetJacTimesBS", flag);
+    } else {
+	flag = IDASpilsSetJacTimesB(mem, which,
+			Bool_val(vhas_setup) ? bjacsetupfn : NULL,
+			Bool_val(vhas_times) ? bjactimesfn : NULL);
+	SCHECK_FLAG ("IDASpilsSetJacTimesB", flag);
+    }
+#else
     if (Bool_val(vusesens)) {
 #if SUNDIALS_LIB_VERSION >= 260
 	flag = IDASpilsSetJacTimesVecFnBS(mem, which,
-			Bool_val (vset_jac) ? bjactimesfn_sens : NULL);
+			Bool_val (vhas_times) ? bjactimesfn_sens : NULL);
 	SCHECK_FLAG ("IDASpilsSetJacTimesVecFnBS", flag);
 #else
 	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     } else {
 	flag = IDASpilsSetJacTimesVecFnB(mem, which,
-			Bool_val (vset_jac) ? bjactimesfn : NULL);
+			Bool_val (vhas_times) ? bjactimesfn : NULL);
 	SCHECK_FLAG ("IDASpilsSetJacTimesVecFnB", flag);
     }
+#endif
 
     CAMLreturn (Val_unit);
 }
@@ -1968,6 +2207,7 @@ CAMLprim value c_idas_adj_dls_dense(value vparent, value vwhich,
 				    value vnb, value vset_jac, value vusesens)
 {
     CAMLparam4(vparent, vwhich, vset_jac, vusesens);
+#if SUNDIALS_LIB_VERSION < 300
     void *ida_mem = IDA_MEM_FROM_ML (vparent);
     long nbeqs = Long_val(vnb);
     int which = Int_val(vwhich);
@@ -1988,6 +2228,9 @@ CAMLprim value c_idas_adj_dls_dense(value vparent, value vwhich,
 	    SCHECK_FLAG("IDADlsSetDenseJacFnB", flag);
 	}
     }
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -1996,7 +2239,7 @@ CAMLprim value c_idas_adj_dls_lapack_dense(value vparent, value vwhich,
 					   value vusesens)
 {
     CAMLparam4(vparent, vwhich, vset_jac, vusesens);
-#if defined(SUNDIALS_ML_LAPACK) && (SUNDIALS_LIB_VERSION >= 262)
+#if defined(SUNDIALS_ML_LAPACK) && (SUNDIALS_LIB_VERSION >= 262) && (SUNDIALS_LIB_VERSION < 300)
     void *ida_mem = IDA_MEM_FROM_ML (vparent);
     long nbeqs = Long_val(vnb);
     int which = Int_val(vwhich);
@@ -2006,12 +2249,8 @@ CAMLprim value c_idas_adj_dls_lapack_dense(value vparent, value vwhich,
     SCHECK_FLAG ("IDALapackDenseB", flag);
     if (Bool_val (vset_jac)) {
 	if (Bool_val(vusesens)) {
-#if SUNDIALS_LIB_VERSION >= 260
 	    flag = IDADlsSetDenseJacFnBS(ida_mem, which, bjacfn_withsens);
 	    SCHECK_FLAG("IDADlsSetDenseJacFnBS", flag);
-#else
-	    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
 	} else {
 	    flag = IDADlsSetDenseJacFnB(ida_mem, which, bjacfn_nosens);
 	    SCHECK_FLAG("IDADlsSetDenseJacFnB", flag);
@@ -2023,52 +2262,19 @@ CAMLprim value c_idas_adj_dls_lapack_dense(value vparent, value vwhich,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_idas_adj_dls_set_dense_jac_fn(value vparent, value vwhich,
-					       value vusesens)
-{
-    CAMLparam3(vparent, vwhich, vusesens);
-    int flag;
-
-    if (Bool_val(vusesens)) {
-#if SUNDIALS_LIB_VERSION >= 260
-	flag = IDADlsSetDenseJacFnBS(IDA_MEM_FROM_ML(vparent), Int_val(vwhich),
-				     bjacfn_withsens);
-	SCHECK_FLAG("IDADlsSetDenseJacFnBS", flag);
-#else
-	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-    } else {
-	flag = IDADlsSetDenseJacFnB(IDA_MEM_FROM_ML(vparent), Int_val(vwhich),
-				    bjacfn_nosens);
-	SCHECK_FLAG("IDADlsSetDenseJacFnB", flag);
-    }
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value c_idas_adj_dls_clear_dense_jac_fn(value vparent, value vwhich)
-{
-    CAMLparam2(vparent, vwhich);
-    int flag = IDADlsSetDenseJacFnB(IDA_MEM_FROM_ML(vparent), Int_val(vwhich),
-				   NULL);
-    SCHECK_FLAG("IDADlsSetDenseJacFnB", flag);
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value c_idas_adj_dls_band (value vparent_which, value vnb,
-				    value vbandrange,
+CAMLprim value c_idas_adj_dls_band (value vparent_which, value vsizes,
 				    value vset_jac, value vusesens)
 {
-    CAMLparam5(vparent_which, vnb, vbandrange, vset_jac, vusesens);
+    CAMLparam4(vparent_which, vsizes, vset_jac, vusesens);
+#if SUNDIALS_LIB_VERSION < 300
     void *ida_mem = IDA_MEM_FROM_ML (Field(vparent_which, 0));
-    long nbeqs = Long_val(vnb);
+    long nbeqs = Long_val(Field(vsizes, 0));
     int which = Int_val(Field(vparent_which, 1));
     int flag;
 
     flag = IDABandB (ida_mem, which, nbeqs,
-		     Long_val (Field(vbandrange,
-				     RECORD_IDAS_ADJ_BANDRANGE_MUPPER)),
-		     Long_val (Field(vbandrange,
-				     RECORD_IDAS_ADJ_BANDRANGE_MLOWER)));
+		     Long_val (Field(vsizes, 1)),
+		     Long_val (Field(vsizes, 2));
     SCHECK_FLAG ("IDABandB", flag);
     if (Bool_val (vset_jac)) {
 	if (Bool_val(vusesens)) {
@@ -2083,35 +2289,31 @@ CAMLprim value c_idas_adj_dls_band (value vparent_which, value vnb,
 	    SCHECK_FLAG("IDADlsSetBandJacFnB", flag);
 	}
     }
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_idas_adj_dls_lapack_band (value vparent_which, value vnb,
-					   value vbandrange,
+CAMLprim value c_idas_adj_dls_lapack_band (value vparent_which, value vsizes,
 					   value vset_jac, value vusesens)
 {
-    CAMLparam5(vparent_which, vnb, vbandrange, vset_jac, vusesens);
-#if defined(SUNDIALS_ML_LAPACK) && (SUNDIALS_LIB_VERSION >= 262)
+    CAMLparam4(vparent_which, vsizes, vset_jac, vusesens);
+#if defined(SUNDIALS_ML_LAPACK) && (SUNDIALS_LIB_VERSION >= 262) && (SUNDIALS_LIB_VERSION < 300)
     void *ida_mem = IDA_MEM_FROM_ML (Field(vparent_which, 0));
-    long nbeqs = Long_val(vnb);
+    long nbeqs = Long_val(Field(vsizes, 0));
     int which = Int_val(Field(vparent_which, 1));
     int flag;
 
     flag = IDALapackBandB(ida_mem, which, nbeqs,
-			  Long_val (Field(vbandrange,
-					  RECORD_IDAS_ADJ_BANDRANGE_MUPPER)),
-			  Long_val (Field(vbandrange,
-					  RECORD_IDAS_ADJ_BANDRANGE_MLOWER)));
+			  Long_val (Field(vsizes, 1)),
+			  Long_val (Field(vsizes, 2)));
     SCHECK_FLAG ("IDALapackBandB", flag);
 
     if (Bool_val (vset_jac)) {
 	if (Bool_val(vusesens)) {
-#if SUNDIALS_LIB_VERSION >= 260
 	    flag = IDADlsSetBandJacFnBS(ida_mem, which, bbandjacfn_withsens);
 	    SCHECK_FLAG("IDADlsSetBandJacFnBS", flag);
-#else
-	    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
 	} else {
 	    flag = IDADlsSetBandJacFnB(ida_mem, which, bbandjacfn_nosens);
 	    SCHECK_FLAG("IDADlsSetBandJacFnB", flag);
@@ -2123,34 +2325,51 @@ CAMLprim value c_idas_adj_dls_lapack_band (value vparent_which, value vnb,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_idas_adj_dls_set_band_jac_fn(value vparent, value vwhich,
-					      value vusesens)
+CAMLprim value c_idas_adj_dls_set_linear_solver (value vparent_which,
+						 value vlsolv, value vjmat,
+						 value vhasjac, value vusesens)
 {
-    CAMLparam3(vparent, vwhich, vusesens);
+    CAMLparam5(vparent_which, vlsolv, vjmat, vhasjac, vusesens);
+#if SUNDIALS_LIB_VERSION >= 300
+    void *ida_mem = IDA_MEM_FROM_ML (Field(vparent_which, 0));
+    int which = Int_val(Field(vparent_which, 1));
+    SUNLinearSolver lsolv = LSOLVER(vlsolv);
+    SUNMatrix jmat = MAT_VAL(vjmat);
     int flag;
 
-    if (Bool_val(vusesens)) {
-#if SUNDIALS_LIB_VERSION >= 260
-	flag = IDADlsSetBandJacFnBS(IDA_MEM_FROM_ML(vparent), Int_val(vwhich),
-				    bbandjacfn_withsens);
-	SCHECK_FLAG("IDADlsSetBandJacFnBS", flag);
-#else
-	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-    } else {
-	flag = IDADlsSetBandJacFnB(IDA_MEM_FROM_ML(vparent), Int_val(vwhich),
-				   bbandjacfn_nosens);
-	SCHECK_FLAG("IDADlsSetBandJacFnB", flag);
+    flag = IDADlsSetLinearSolverB(ida_mem, which, lsolv, jmat);
+    CHECK_FLAG ("IDADlsSetLinearSolverB", flag);
+
+    if (Bool_val (vhasjac)) {
+	if (Bool_val (vusesens)) {
+	    flag = IDADlsSetJacFnBS(ida_mem, which, bjacfn_withsens);
+	    SCHECK_FLAG("IDADlsSetJacFnBS", flag);
+	} else {
+	    flag = IDADlsSetJacFnB(ida_mem, which, bjacfn_nosens);
+	    SCHECK_FLAG("IDADlsSetJacFnB", flag);
+	}
     }
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_idas_adj_dls_clear_band_jac_fn(value vparent, value vwhich)
+CAMLprim value c_idas_adj_spils_set_linear_solver (value vparent, value vwhich,
+						   value vlsolv)
 {
-    CAMLparam2(vparent, vwhich);
-    int flag = IDADlsSetBandJacFnB(IDA_MEM_FROM_ML(vparent), Int_val(vwhich),
-				  NULL);
-    SCHECK_FLAG("IDADlsSetBandJacFnB", flag);
+    CAMLparam3(vparent, vwhich, vlsolv);
+#if SUNDIALS_LIB_VERSION >= 300
+    void *ida_mem = IDA_MEM_FROM_ML (vparent);
+    int which = Int_val(vwhich);
+    SUNLinearSolver lsolv = LSOLVER(vlsolv);
+    int flag;
+
+    flag = IDASpilsSetLinearSolverB(ida_mem, which, lsolv);
+    CHECK_FLAG ("IDASpilsSetLinearSolverB", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 

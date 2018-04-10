@@ -29,12 +29,16 @@ CAMLprim value c_idas_superlumtb_init (value vparent_which,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #include "../ida/ida_ml.h"
 #include "idas_ml.h"
-#include "../lsolvers/sls_ml.h"
+#include "../lsolvers/matrix_ml.h"
 
 #include <idas/idas.h>
+
+#if SUNDIALS_LIB_VERSION < 300
 #include <idas/idas_sparse.h>
 #include <idas/idas_superlumt.h>
+#endif
 
+#if SUNDIALS_LIB_VERSION < 300
 static int jacfn_nosens( /* IDASlsSparseJacFnB */
 	realtype t,
 	realtype cjB,
@@ -63,9 +67,9 @@ static int jacfn_nosens( /* IDASlsSparseJacFnB */
     smat = Field(cb, 1);
     if (smat == Val_none) {
 #if SUNDIALS_LIB_VERSION >= 270
-	Store_some(smat, c_sls_sparse_wrap(jacB, 0, Val_int(jacB->sparsetype)));
+	Store_some(smat, c_matrix_sparse_wrap(jacB, 0, Val_int(jacB->sparsetype)));
 #else
-	Store_some(smat, c_sls_sparse_wrap(jacB, 0, Val_int(0)));
+	Store_some(smat, c_matrix_sparse_wrap(jacB, 0, Val_int(0)));
 #endif
 	Store_field(cb, 1, smat);
 
@@ -119,9 +123,9 @@ static int jacfn_withsens( /* IDASlsSparseJacFnB */
     smat = Field(cb, 1);
     if (smat == Val_none) {
 #if SUNDIALS_LIB_VERSION >= 270
-	Store_some(smat, c_sls_sparse_wrap(jacB, 0, Val_int(jacB->sparsetype)));
+	Store_some(smat, c_matrix_sparse_wrap(jacB, 0, Val_int(jacB->sparsetype)));
 #else
-	Store_some(smat, c_sls_sparse_wrap(jacB, 0, Val_int(0)));
+	Store_some(smat, c_matrix_sparse_wrap(jacB, 0, Val_int(0)));
 #endif
 	Store_field(cb, 1, smat);
 
@@ -136,12 +140,14 @@ static int jacfn_withsens( /* IDASlsSparseJacFnB */
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
+#endif
 
 CAMLprim value c_idas_superlumtb_init (value vparent_which,
 				       value vneqs, value vnnz,
 				       value vnthreads, value vusesens)
 {
     CAMLparam5(vparent_which, vneqs, vnnz, vnthreads, vusesens);
+#if SUNDIALS_LIB_VERSION < 300
     void *ida_mem = IDA_MEM_FROM_ML (Field(vparent_which, 0));
     int which = Int_val(Field(vparent_which, 1));
     int flag;
@@ -156,7 +162,9 @@ CAMLprim value c_idas_superlumtb_init (value vparent_which,
 	flag = IDASlsSetSparseJacFnB (ida_mem, which, jacfn_nosens);
 	CHECK_FLAG("IDASlsSetSparseJacFnB", flag);
     }
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
