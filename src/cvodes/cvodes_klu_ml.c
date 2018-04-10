@@ -28,12 +28,16 @@ CAMLprim value c_cvodes_klub_init (value vparent_which, value vformat,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #include "../cvode/cvode_ml.h"
 #include "cvodes_ml.h"
-#include "../lsolvers/sls_ml.h"
+#include "../lsolvers/matrix_ml.h"
 
 #include <cvodes/cvodes.h>
+
+#if SUNDIALS_LIB_VERSION < 300
 #include <cvodes/cvodes_sparse.h>
 #include <cvodes/cvodes_klu.h>
+#endif
 
+#if SUNDIALS_LIB_VERSION < 300
 static int jacfn_nosens( /* CVSlsSparseJacFnB */
     realtype t,
     N_Vector y,
@@ -59,9 +63,9 @@ static int jacfn_nosens( /* CVSlsSparseJacFnB */
     smat = Field(cb, 1);
     if (smat == Val_none) {
 #if SUNDIALS_LIB_VERSION >= 270
-	Store_some(smat, c_sls_sparse_wrap(jacb, 0, Val_int(jacb->sparsetype)));
+	Store_some(smat, c_matrix_sparse_wrap(jacb, 0, Val_int(jacb->sparsetype)));
 #else
-	Store_some(smat, c_sls_sparse_wrap(jacb, 0, Val_int(0)));
+	Store_some(smat, c_matrix_sparse_wrap(jacb, 0, Val_int(0)));
 #endif
 	Store_field(cb, 1, smat);
 
@@ -110,9 +114,9 @@ static int jacfn_withsens( /* CVSlsSparseJacFnBS */
     smat = Field(cb, 1);
     if (smat == Val_none) {
 #if SUNDIALS_LIB_VERSION >= 270
-	Store_some(smat, c_sls_sparse_wrap(jacb, 0, Val_int(jacb->sparsetype)));
+	Store_some(smat, c_matrix_sparse_wrap(jacb, 0, Val_int(jacb->sparsetype)));
 #else
-	Store_some(smat, c_sls_sparse_wrap(jacb, 0, Val_int(0)));
+	Store_some(smat, c_matrix_sparse_wrap(jacb, 0, Val_int(0)));
 #endif
 	Store_field(cb, 1, smat);
 
@@ -127,7 +131,7 @@ static int jacfn_withsens( /* CVSlsSparseJacFnBS */
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
-
+#endif
 
 #if SUNDIALS_LIB_VERSION < 262
 // Work around a bug in Sundials 2.6.0 and 2.6.1

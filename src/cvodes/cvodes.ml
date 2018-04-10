@@ -956,6 +956,7 @@ module Adjoint = struct (* {{{ *)
           -> Lsolver_impl.Iterative.gramschmidt_type -> unit
         = "c_cvodes_adj_spils_set_gs_type"
 
+    (* Sundials < 3.0.0 *)
     external c_set_maxl : ('a, 'k) session -> int -> int -> unit
         = "c_cvodes_adj_spils_set_maxl"
 
@@ -1041,7 +1042,7 @@ module Adjoint = struct (* {{{ *)
              c_spgmr parent which maxl prec_type;
              (match gs_type with None -> () | Some t ->
                  c_set_gs_type parent which t);
-             compat.set_gs_type <- (fun t -> old_set_gs_type bs t);
+             compat.set_gs_type <- old_set_gs_type bs;
              compat.set_prec_type <- old_set_prec_type bs
          | Spbcgs ->
              c_spbcgs parent which maxl prec_type;

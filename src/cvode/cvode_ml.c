@@ -35,10 +35,12 @@
 #include <cvodes/cvodes.h>
 
 /* linear solvers */
-#if SUNDIALS_LIB_VERSION >= 300
 #include <cvodes/cvodes_direct.h>
 #include <cvodes/cvodes_spils.h>
-#else
+#include <cvodes/cvodes_diag.h>
+#include <cvodes/cvodes_bandpre.h>
+
+#if SUNDIALS_LIB_VERSION < 300
 #include <cvodes/cvodes_dense.h>
 #include <cvodes/cvodes_band.h>
 #include <cvodes/cvodes_spgmr.h>
@@ -46,8 +48,6 @@
 #include <cvodes/cvodes_sptfqmr.h>
 #endif
 
-#include <cvodes/cvodes_diag.h>
-#include <cvodes/cvodes_bandpre.h>
 #include <cvodes/cvodes_impl.h>
 
 #ifdef SUNDIALS_ML_LAPACK
@@ -60,18 +60,18 @@
 #include <cvode/cvode.h>
 
 /* linear solvers */
-#if SUNDIALS_LIB_VERSION >= 300
 #include <cvode/cvode_direct.h>
 #include <cvode/cvode_spils.h>
-#else
+#include <cvode/cvode_diag.h>
+#include <cvode/cvode_bandpre.h>
+
+#if SUNDIALS_LIB_VERSION < 300
 #include <cvode/cvode_dense.h>
 #include <cvode/cvode_band.h>
 #include <cvode/cvode_spgmr.h>
 #include <cvode/cvode_spbcgs.h>
 #include <cvode/cvode_sptfqmr.h>
 #endif
-#include <cvode/cvode_diag.h>
-#include <cvode/cvode_bandpre.h>
 #include <cvode/cvode_impl.h>
 
 #ifdef SUNDIALS_ML_LAPACK

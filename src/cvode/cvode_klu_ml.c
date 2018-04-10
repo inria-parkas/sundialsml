@@ -36,7 +36,7 @@ CAMLprim value c_cvode_klu_get_num_jac_evals(value vcvode_mem)
 #else
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #include "cvode_ml.h"
-#include "../lsolvers/sls_ml.h"
+#include "../lsolvers/matrix_ml.h"
 
 #ifdef SUNDIALSML_WITHSENS
 /* CVODES (with sensitivity) */
