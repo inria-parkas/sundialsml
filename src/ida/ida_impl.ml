@@ -226,7 +226,7 @@ module AdjointTypes' = struct
     type 'm jac_callback_with_sens =
       {
         jacfn_sens: 'm jac_fn_with_sens;
-        mutable dmat_sens : 'm option
+        mutable jmat : 'm option
       }
 
   end
@@ -595,7 +595,6 @@ module AdjointTypes = struct
   type ('data, 'kind) linear_solver =
     ('data, 'kind) bsession
     -> ('data, 'kind) Nvector.t (* y *)
-    -> ('data, 'kind) Nvector.t (* y' *)
     -> unit
   type 'kind serial_linear_solver = (Nvector_serial.data, 'kind) linear_solver
                                     constraint 'kind = [>Nvector_serial.kind]
@@ -604,13 +603,15 @@ module AdjointTypes = struct
     include SpilsTypes'
 
     type ('a, 'k) set_preconditioner =
-      ('a, 'k) bsession -> ('a, 'k) session -> int ->
-      ('a, 'k) Nvector.t -> ('a, 'k) Nvector.t -> unit
+      ('a, 'k) bsession
+      -> ('a, 'k) session
+      -> int
+      -> ('a, 'k) Nvector.t
+      -> unit
 
     (* IDA(S) supports only left preconditioning.  *)
     type ('a, 'k) preconditioner =
-      | InternalPrecNone of ('a, 'k) set_preconditioner
-      | InternalPrecLeft of ('a, 'k) set_preconditioner
+      Lsolver_impl.Iterative.preconditioning_type * ('a, 'k) set_preconditioner
 
     type 'k serial_preconditioner = (Nvector_serial.data, 'k) preconditioner
                                     constraint 'k = [>Nvector_serial.kind]

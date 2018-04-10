@@ -33,7 +33,7 @@ CAMLprim value c_ida_superlumt_get_num_jac_evals(value vida_mem)
 #else
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #include "ida_ml.h"
-#include "../lsolvers/sls_ml.h"
+#include "../lsolvers/matrix_ml.h"
 
 #ifdef SUNDIALSML_WITHSENS
 /* IDAS (with sensitivity) */
@@ -77,9 +77,9 @@ static int jacfn (realtype t, realtype coef,
 
     if (smat == Val_none) {
 #if SUNDIALS_LIB_VERSION >= 270
-	Store_some(smat, c_sls_sparse_wrap(jac, 0, Val_int(jac->sparsetype)));
+	Store_some(smat, c_matrix_sparse_wrap(jac, 0, Val_int(jac->sparsetype)));
 #else
-	Store_some(smat, c_sls_sparse_wrap(jac, 0, Val_int(0)));
+	Store_some(smat, c_matrix_sparse_wrap(jac, 0, Val_int(0)));
 #endif
 	Store_field(cb, 1, smat);
 

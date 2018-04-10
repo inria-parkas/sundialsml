@@ -770,22 +770,6 @@ CAMLprim value c_ida_spils_spgmr (value vida_mem, value vmaxl)
     CAMLreturn (Val_unit);
 }
 
-/* For SPGMR only.  */
-CAMLprim value c_ida_spils_set_max_restarts (value vida_mem, value vmaxr)
-{
-    CAMLparam2 (vida_mem, vmaxr);
-#if SUNDIALS_LIB_VERSION < 300
-    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
-    int flag;
-
-    flag = IDASpilsSetMaxRestarts (ida_mem, Int_val (vmaxr));
-    CHECK_FLAG ("IDASpilsSetMaxRestarts", flag);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-    CAMLreturn (Val_unit);
-}
-
 CAMLprim value c_ida_spils_spbcg (value vida_mem, value vmaxl)
 {
     CAMLparam2 (vida_mem, vmaxl);
