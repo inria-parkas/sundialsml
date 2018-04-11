@@ -36,7 +36,7 @@
 #include <idas/idas_sptfqmr.h>
 #endif
 
-#ifdef SUNDIALS_ML_LAPACK
+#if SUNDIALS_LIB_VERSION < 300 && defined SUNDIALS_ML_LAPACK
 #include <idas/idas_lapack.h>
 #endif
 

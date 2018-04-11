@@ -39,7 +39,7 @@
 #include <idas/idas_spbcgs.h>
 #endif
 
-#ifdef SUNDIALS_ML_LAPACK
+#if SUNDIALS_LIB_VERSION < 300 && defined SUNDIALS_ML_LAPACK
 #include <idas/idas_lapack.h>
 #endif
 
@@ -60,7 +60,7 @@
 #include <ida/ida_spbcgs.h>
 #endif
 
-#ifdef SUNDIALS_ML_LAPACK
+#if SUNDIALS_LIB_VERSION < 300 && defined SUNDIALS_ML_LAPACK
 #include <ida/ida_lapack.h>
 #endif
 

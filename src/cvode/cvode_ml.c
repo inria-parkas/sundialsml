@@ -50,7 +50,7 @@
 
 #include <cvodes/cvodes_impl.h>
 
-#ifdef SUNDIALS_ML_LAPACK
+#if SUNDIALS_LIB_VERSION < 300 && defined SUNDIALS_ML_LAPACK
 #include <cvodes/cvodes_lapack.h>
 #endif
 
@@ -74,7 +74,7 @@
 #endif
 #include <cvode/cvode_impl.h>
 
-#ifdef SUNDIALS_ML_LAPACK
+#if SUNDIALS_LIB_VERSION < 300 && defined SUNDIALS_ML_LAPACK
 #include <cvode/cvode_lapack.h>
 #endif
 
