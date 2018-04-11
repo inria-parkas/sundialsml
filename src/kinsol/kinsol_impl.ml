@@ -27,8 +27,7 @@ external crash : string -> unit = "sundials_crash"
 
 type ('a, 'k) nvector = ('a, 'k) Nvector.t
 
-type 'a single_tmp = 'a
-type 'a double_tmp = 'a * 'a
+type 'a double = 'a * 'a
 
 type ('t, 'a) jacobian_arg =
   {
@@ -41,69 +40,31 @@ type real_array = Sundials.RealArray.t
 
 type bandrange = { mupper : int; mlower : int; }
 
-module DlsTypes = struct
-  type dense_jac_fn =
-    (real_array double_tmp, real_array) jacobian_arg
-    -> Dls.DenseMatrix.t -> unit
+module DirectTypes = struct
+  type 'm jac_fn =
+    (real_array double, real_array) jacobian_arg -> 'm -> unit
 
   (* These fields are accessed from kinsol_ml.c *)
-  type dense_jac_callback =
+  type 'm jac_callback =
     {
-      jacfn: dense_jac_fn;
-      mutable dmat : Dls.DenseMatrix.t option
+      jacfn : 'm jac_fn;
+      mutable jmat : 'm option
     }
 
-  let no_dense_callback = {
-      jacfn = (fun _ _ -> crash "no dense callback");
-      dmat = None;
-    }
-
-  type band_jac_fn =
-    bandrange
-    -> (real_array double_tmp, real_array) jacobian_arg
-    -> Dls.BandMatrix.t
-    -> unit
-
-  (* These fields are accessed from kinsol_ml.c *)
-  type band_jac_callback =
-    {
-      bjacfn: band_jac_fn;
-      mutable bmat : Dls.BandMatrix.t option
-    }
-
-  let no_band_callback = {
-      bjacfn = (fun _ _ _ -> crash "no band callback");
-      bmat = None;
-    }
-end
-
-module SlsTypes = struct
-
-  type 'f sparse_jac_fn =
-    (real_array double_tmp, real_array) jacobian_arg
-    -> 'f Sls_impl.t
-    -> unit
-
-  (* These fields are accessed from kinsol_ml.c *)
-  type 'f sparse_jac_callback =
-    {
-      jacfn: 'f sparse_jac_fn;
-      mutable smat : 'f Sls_impl.t option
-    }
-
+  let no_callback = fun _ _ -> crash "no direct callback"
 end
 
 module SpilsTypes' = struct
   type 'a solve_arg = { uscale : 'a; fscale : 'a; }
 
   type 'a prec_solve_fn =
-    ('a single_tmp, 'a) jacobian_arg
+    (unit, 'a) jacobian_arg
     -> 'a solve_arg
     -> 'a
     -> unit
 
   type 'a prec_setup_fn =
-    ('a double_tmp, 'a) jacobian_arg
+    (unit, 'a) jacobian_arg
     -> 'a solve_arg
     -> unit
 
@@ -111,7 +72,7 @@ module SpilsTypes' = struct
 
   type 'a precfns =
     {
-      prec_solve_fn : 'a prec_solve_fn option;
+      prec_solve_fn : 'a prec_solve_fn;
       prec_setup_fn : 'a prec_setup_fn option;
     }
 end
@@ -168,11 +129,18 @@ type ('a, 'k) session = {
 and ('a, 'kind) linsolv_callbacks =
   | NoCallbacks
 
-  | DlsDenseCallback of DlsTypes.dense_jac_callback
-  | DlsBandCallback  of DlsTypes.band_jac_callback
+  | DlsDenseCallback
+      of Matrix.Dense.t DirectTypes.jac_callback * Matrix.Dense.t
+  | DlsBandCallback
+      of Matrix.Band.t  DirectTypes.jac_callback * Matrix.Band.t
 
-  | SlsKluCallback of unit SlsTypes.sparse_jac_callback
-  | SlsSuperlumtCallback of unit SlsTypes.sparse_jac_callback
+  | SlsKluCallback
+      : ('s Matrix.Sparse.t) DirectTypes.jac_callback * 's Matrix.Sparse.t
+        -> ('a, 'kind) linsolv_callbacks
+  | SlsSuperlumtCallback
+      : ('s Matrix.Sparse.t) DirectTypes.jac_callback
+        * 's Matrix.Sparse.t
+        -> ('a, 'kind) linsolv_callbacks
 
   | SpilsCallback of 'a SpilsTypes'.jac_times_vec_fn option
 
@@ -199,21 +167,11 @@ and ('data, 'kind) lsolve' =
 
 (* Linear solver check functions *)
 
-let ls_check_dls session =
+let ls_check_direct session =
   if Sundials_config.safe then
     match session.ls_callbacks with
-    | DlsDenseCallback _ | DlsBandCallback _ -> ()
-    | _ -> raise Sundials.InvalidLinearSolver
-
-let ls_check_klu session =
-  if Sundials_config.safe then
-    match session.ls_callbacks with
-    | SlsKluCallback _ -> ()
-    | _ -> raise Sundials.InvalidLinearSolver
-
-let ls_check_superlumt session =
-  if Sundials_config.safe then
-    match session.ls_callbacks with
+    | DlsDenseCallback _ | DlsBandCallback _
+    | SlsKluCallback _
     | SlsSuperlumtCallback _ -> ()
     | _ -> raise Sundials.InvalidLinearSolver
 
@@ -242,11 +200,12 @@ module SpilsTypes = struct
   include SpilsTypes'
 
   type ('a, 'k) set_preconditioner =
-    ('a, 'k) session -> ('a, 'k) nvector -> unit
+    ('a, 'k) session
+    -> ('a, 'k) nvector
+    -> unit
   
   type ('a, 'k) preconditioner =
-    | InternalPrecNone of ('a, 'k) set_preconditioner
-    | InternalPrecRight of ('a, 'k) set_preconditioner
+    Lsolver_impl.Iterative.preconditioning_type * ('a, 'k) set_preconditioner
 
 end
 

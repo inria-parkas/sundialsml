@@ -33,19 +33,16 @@ CAMLprim value c_kinsol_superlumt_get_num_jac_evals(value vkin_mem)
 #else
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #include "kinsol_ml.h"
-#include "../lsolvers/sls_ml.h"
+#include "../lsolvers/lsolver_ml.h"
 
 #include <kinsol/kinsol.h>
+
+#if SUNDIALS_LIB_VERSION < 300
 #include <kinsol/kinsol_sparse.h>
 #include <kinsol/kinsol_superlumt.h>
+#endif
 
-enum kinsol_superlumt_ordering_tag {
-  VARIANT_KINSOL_SUPERLUMT_NATURAL    = 0,
-  VARIANT_KINSOL_SUPERLUMT_MINDEGPROD = 1,
-  VARIANT_KINSOL_SUPERLUMT_MINDEGSUM  = 2,
-  VARIANT_KINSOL_SUPERLUMT_COLAMD     = 3,
-};
-
+#if SUNDIALS_LIB_VERSION < 300
 static int jacfn(
 	N_Vector u,
 	N_Vector fu,	     
@@ -83,11 +80,13 @@ static int jacfn(
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, UNRECOVERABLE));
 }
+#endif
 
 CAMLprim value c_kinsol_superlumt_init (value vkin_mem, value vneqs,
 				        value vnnz, value vnthreads)
 {
     CAMLparam4(vkin_mem, vneqs, vnnz, vnthreads);
+#if SUNDIALS_LIB_VERSION < 300
     void *kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
     int flag;
 
@@ -96,30 +95,38 @@ CAMLprim value c_kinsol_superlumt_init (value vkin_mem, value vneqs,
     CHECK_FLAG ("KINSuperLUMT", flag);
     flag = KINSlsSetSparseJacFn(kin_mem, jacfn);
     CHECK_FLAG("KINSlsSetSparseJacFn", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_kinsol_superlumt_set_ordering (value vkin_mem, value vorder)
 {
     CAMLparam2(vkin_mem, vorder);
+#if SUNDIALS_LIB_VERSION < 300
     void *kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
 
     int flag = KINSuperLUMTSetOrdering (kin_mem, Int_val(vorder));
     CHECK_FLAG ("KINSuperLUMTSetOrdering", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_kinsol_superlumt_get_num_jac_evals(value vkin_mem)
 {
     CAMLparam1(vkin_mem);
+#if SUNDIALS_LIB_VERSION < 300
     void *kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
 
     long int r;
     int flag = KINSlsGetNumJacEvals(kin_mem, &r);
     CHECK_FLAG("KINSlsGetNumJacEvals", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn(Val_long(r));
 }
 

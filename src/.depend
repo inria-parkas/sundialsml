@@ -1,14 +1,14 @@
 arkode/arkode.cmo : sundials/sundials_config.cmo sundials/sundials.cmi \
-    lsolvers/spils.cmi lsolvers/sls_impl.cmo lsolvers/sls.cmi \
-    nvectors/nvector.cmi lsolvers/dls.cmi arkode/arkode_impl.cmo \
+    nvectors/nvector_serial.cmi nvectors/nvector.cmi lsolvers/matrix.cmi \
+    lsolvers/lsolver_impl.cmo lsolvers/lsolver.cmi arkode/arkode_impl.cmo \
     arkode/arkode.cmi
 arkode/arkode.cmx : sundials/sundials_config.cmx sundials/sundials.cmx \
-    lsolvers/spils.cmx lsolvers/sls_impl.cmx lsolvers/sls.cmx \
-    nvectors/nvector.cmx lsolvers/dls.cmx arkode/arkode_impl.cmx \
+    nvectors/nvector_serial.cmx nvectors/nvector.cmx lsolvers/matrix.cmx \
+    lsolvers/lsolver_impl.cmx lsolvers/lsolver.cmx arkode/arkode_impl.cmx \
     arkode/arkode.cmi
-arkode/arkode.cmi : sundials/sundials.cmi lsolvers/spils.cmi \
-    lsolvers/sls.cmi nvectors/nvector_serial.cmi nvectors/nvector.cmi \
-    lsolvers/dls.cmi arkode/arkode_impl.cmo
+arkode/arkode.cmi : sundials/sundials.cmi nvectors/nvector_serial.cmi \
+    nvectors/nvector.cmi lsolvers/matrix.cmi lsolvers/lsolver.cmi \
+    arkode/arkode_impl.cmo
 arkode/arkode_bbd.cmo : sundials/sundials.cmi nvectors/nvector_parallel.cmi \
     nvectors/nvector.cmi arkode/arkode_impl.cmo arkode/arkode.cmi \
     arkode/arkode_bbd.cmi
@@ -18,11 +18,11 @@ arkode/arkode_bbd.cmx : sundials/sundials.cmx nvectors/nvector_parallel.cmx \
 arkode/arkode_bbd.cmi : nvectors/nvector_parallel.cmi arkode/arkode_impl.cmo \
     arkode/arkode.cmi
 arkode/arkode_impl.cmo : sundials/sundials_config.cmo sundials/sundials.cmi \
-    lsolvers/spils.cmi lsolvers/sls_impl.cmo lsolvers/sls.cmi \
-    nvectors/nvector_serial.cmi nvectors/nvector.cmi lsolvers/dls.cmi
+    nvectors/nvector_serial.cmi nvectors/nvector.cmi lsolvers/matrix.cmi \
+    lsolvers/lsolver_impl.cmo
 arkode/arkode_impl.cmx : sundials/sundials_config.cmx sundials/sundials.cmx \
-    lsolvers/spils.cmx lsolvers/sls_impl.cmx lsolvers/sls.cmx \
-    nvectors/nvector_serial.cmx nvectors/nvector.cmx lsolvers/dls.cmx
+    nvectors/nvector_serial.cmx nvectors/nvector.cmx lsolvers/matrix.cmx \
+    lsolvers/lsolver_impl.cmx
 cvode/cvode.cmo : sundials/sundials_config.cmo sundials/sundials.cmi \
     lsolvers/spils.cmi nvectors/nvector_serial.cmi nvectors/nvector.cmi \
     lsolvers/matrix.cmi lsolvers/lsolver_impl.cmo lsolvers/lsolver.cmi \
@@ -90,16 +90,16 @@ ida/ida_impl.cmx : sundials/sundials_config.cmx sundials/sundials.cmx \
     nvectors/nvector_serial.cmx nvectors/nvector.cmx lsolvers/matrix.cmx \
     lsolvers/lsolver_impl.cmx
 idas/idas.cmo : sundials/sundials_config.cmo sundials/sundials.cmi \
-    lsolvers/spils.cmi lsolvers/sls_impl.cmo lsolvers/sls.cmi \
-    nvectors/nvector.cmi ida/ida_impl.cmo ida/ida.cmi lsolvers/dls.cmi \
-    idas/idas.cmi
+    nvectors/nvector_serial.cmi nvectors/nvector.cmi lsolvers/matrix.cmi \
+    lsolvers/lsolver_impl.cmo lsolvers/lsolver.cmi ida/ida_impl.cmo \
+    ida/ida.cmi idas/idas.cmi
 idas/idas.cmx : sundials/sundials_config.cmx sundials/sundials.cmx \
-    lsolvers/spils.cmx lsolvers/sls_impl.cmx lsolvers/sls.cmx \
-    nvectors/nvector.cmx ida/ida_impl.cmx ida/ida.cmx lsolvers/dls.cmx \
-    idas/idas.cmi
-idas/idas.cmi : sundials/sundials.cmi lsolvers/spils.cmi lsolvers/sls.cmi \
-    nvectors/nvector_serial.cmi nvectors/nvector.cmi ida/ida_impl.cmo \
-    ida/ida.cmi lsolvers/dls.cmi
+    nvectors/nvector_serial.cmx nvectors/nvector.cmx lsolvers/matrix.cmx \
+    lsolvers/lsolver_impl.cmx lsolvers/lsolver.cmx ida/ida_impl.cmx \
+    ida/ida.cmx idas/idas.cmi
+idas/idas.cmi : sundials/sundials.cmi nvectors/nvector_serial.cmi \
+    nvectors/nvector.cmi lsolvers/matrix.cmi lsolvers/lsolver.cmi \
+    ida/ida_impl.cmo ida/ida.cmi
 idas/idas_bbd.cmo : sundials/sundials.cmi nvectors/nvector_parallel.cmi \
     nvectors/nvector.cmi idas/idas.cmi ida/ida_impl.cmo ida/ida_bbd.cmi \
     idas/idas_bbd.cmi
@@ -109,16 +109,16 @@ idas/idas_bbd.cmx : sundials/sundials.cmx nvectors/nvector_parallel.cmx \
 idas/idas_bbd.cmi : nvectors/nvector_parallel.cmi idas/idas.cmi \
     ida/ida_bbd.cmi
 kinsol/kinsol.cmo : sundials/sundials_config.cmo sundials/sundials.cmi \
-    lsolvers/sls_impl.cmo lsolvers/sls.cmi nvectors/nvector_serial.cmi \
-    nvectors/nvector.cmi kinsol/kinsol_impl.cmo lsolvers/dls.cmi \
+    nvectors/nvector_serial.cmi nvectors/nvector.cmi lsolvers/matrix.cmi \
+    lsolvers/lsolver_impl.cmo lsolvers/lsolver.cmi kinsol/kinsol_impl.cmo \
     kinsol/kinsol.cmi
 kinsol/kinsol.cmx : sundials/sundials_config.cmx sundials/sundials.cmx \
-    lsolvers/sls_impl.cmx lsolvers/sls.cmx nvectors/nvector_serial.cmx \
-    nvectors/nvector.cmx kinsol/kinsol_impl.cmx lsolvers/dls.cmx \
+    nvectors/nvector_serial.cmx nvectors/nvector.cmx lsolvers/matrix.cmx \
+    lsolvers/lsolver_impl.cmx lsolvers/lsolver.cmx kinsol/kinsol_impl.cmx \
     kinsol/kinsol.cmi
-kinsol/kinsol.cmi : sundials/sundials.cmi lsolvers/sls.cmi \
-    nvectors/nvector_serial.cmi nvectors/nvector.cmi kinsol/kinsol_impl.cmo \
-    lsolvers/dls.cmi
+kinsol/kinsol.cmi : sundials/sundials.cmi nvectors/nvector_serial.cmi \
+    nvectors/nvector.cmi lsolvers/matrix.cmi lsolvers/lsolver.cmi \
+    kinsol/kinsol_impl.cmo
 kinsol/kinsol_bbd.cmo : sundials/sundials.cmi nvectors/nvector_parallel.cmi \
     nvectors/nvector.cmi kinsol/kinsol_impl.cmo kinsol/kinsol.cmi \
     kinsol/kinsol_bbd.cmi
@@ -127,11 +127,11 @@ kinsol/kinsol_bbd.cmx : sundials/sundials.cmx nvectors/nvector_parallel.cmx \
     kinsol/kinsol_bbd.cmi
 kinsol/kinsol_bbd.cmi : nvectors/nvector_parallel.cmi kinsol/kinsol.cmi
 kinsol/kinsol_impl.cmo : sundials/sundials_config.cmo sundials/sundials.cmi \
-    lsolvers/sls_impl.cmo nvectors/nvector_serial.cmi nvectors/nvector.cmi \
-    lsolvers/dls.cmi
+    nvectors/nvector_serial.cmi nvectors/nvector.cmi lsolvers/matrix.cmi \
+    lsolvers/lsolver_impl.cmo
 kinsol/kinsol_impl.cmx : sundials/sundials_config.cmx sundials/sundials.cmx \
-    lsolvers/sls_impl.cmx nvectors/nvector_serial.cmx nvectors/nvector.cmx \
-    lsolvers/dls.cmx
+    nvectors/nvector_serial.cmx nvectors/nvector.cmx lsolvers/matrix.cmx \
+    lsolvers/lsolver_impl.cmx
 lsolvers/dls.cmo : sundials/sundials_config.cmo sundials/sundials.cmi \
     lsolvers/dls_impl.cmo lsolvers/dls.cmi
 lsolvers/dls.cmx : sundials/sundials_config.cmx sundials/sundials.cmx \

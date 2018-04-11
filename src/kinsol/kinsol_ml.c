@@ -25,6 +25,11 @@
 #include <caml/bigarray.h>
 
 /* linear solvers */
+#include <kinsol/kinsol_direct.h>
+#include <kinsol/kinsol_spils.h>
+#include <kinsol/kinsol_impl.h>
+
+#if SUNDIALS_LIB_VERSION < 300
 #include <kinsol/kinsol_dense.h>
 #include <kinsol/kinsol_band.h>
 #include <kinsol/kinsol_spgmr.h>
@@ -33,15 +38,14 @@
 #endif
 #include <kinsol/kinsol_spbcgs.h>
 #include <kinsol/kinsol_sptfqmr.h>
-#include <kinsol/kinsol_spils.h>
-#include <kinsol/kinsol_impl.h>
+#endif
 
-#ifdef SUNDIALS_ML_LAPACK
+#if SUNDIALS_LIB_VERSION < 300 && defined SUNDIALS_ML_LAPACK
 #include <kinsol/kinsol_lapack.h>
 #endif
 
-#include "../lsolvers/dls_ml.h"
-#include "../lsolvers/spils_ml.h"
+#include "../lsolvers/lsolver_ml.h"
+#include "../lsolvers/matrix_ml.h"
 #include "kinsol_ml.h"
 
 #include <stdio.h>
@@ -239,6 +243,33 @@ value kinsol_make_double_tmp(N_Vector tmp1, N_Vector tmp2)
     CAMLreturn(r);
 }
 
+#if SUNDIALS_LIB_VERSION >= 300
+static int jacfn(
+	N_Vector u,
+	N_Vector fu,	     
+	SUNMatrix Jac,
+	void *user_data,
+	N_Vector tmp1,
+	N_Vector tmp2)
+{
+    CAMLparam0();
+    CAMLlocalN (args, 2);
+    CAMLlocal2(session, cb);
+
+    WEAK_DEREF (session, *(value*)user_data);
+    cb = KINSOL_LS_CALLBACKS_FROM_ML(session);
+    cb = Field (cb, 0);
+
+    args[0] = kinsol_make_jac_arg(u, fu, kinsol_make_double_tmp(tmp1, tmp2));
+    args[1] = MAT_BACKLINK(Jac);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (Field(cb, 0), 2, args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION(session, r, UNRECOVERABLE));
+}
+
+#else
 /* Dense and band Jacobians only work with serial NVectors.  */
 static int jacfn(
 	long int n,
@@ -259,7 +290,7 @@ static int jacfn(
 
     dmat = Field(cb, 1);
     if (dmat == Val_none) {
-	Store_some(dmat, c_dls_dense_wrap(Jac, 0));
+	Store_some(dmat, c_matrix_dense_wrap(Jac, 0));
 	Store_field(cb, 1, dmat);
     }
 
@@ -267,7 +298,7 @@ static int jacfn(
     args[1] = Some_val(dmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback2_exn (Field(cb, 0), args[0], args[1]);
+    value r = caml_callbackN_exn (Field(cb, 0), 2, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, UNRECOVERABLE));
 }
@@ -293,7 +324,7 @@ static int bandjacfn(
 
     bmat = Field(cb, 1);
     if (bmat == Val_none) {
-	Store_some(bmat, c_dls_band_wrap(Jac, 0));
+	Store_some(bmat, c_matrix_band_wrap(Jac, 0));
 	Store_field(cb, 1, bmat);
     }
 
@@ -304,25 +335,30 @@ static int bandjacfn(
     args[2] = Some_val(bmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn (Field(cb, 0), args[0], args[1], args[2]);
+    value r = caml_callbackN_exn (Field(cb, 0), 3, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, UNRECOVERABLE));
 }
+#endif
 
 static int precsetupfn(
     N_Vector uu,
     N_Vector uscale,
     N_Vector fu,
     N_Vector fscale,
-    void *user_data,
+    void *user_data
+#if SUNDIALS_LIB_VERSION < 300
+    ,
     N_Vector tmp1,
-    N_Vector tmp2)
+    N_Vector tmp2
+#endif
+    )
 {
     CAMLparam0();
     CAMLlocal2(session, cb);
     CAMLlocalN(args, 2);
 
-    args[0] = kinsol_make_jac_arg(uu, fu, kinsol_make_double_tmp(tmp1, tmp2));
+    args[0] = kinsol_make_jac_arg(uu, fu, Val_unit);
     args[1] = make_prec_solve_arg(uscale, fscale);
 
     WEAK_DEREF (session, *(value*)user_data);
@@ -332,7 +368,7 @@ static int precsetupfn(
     cb = Some_val (cb);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback2_exn(cb, args[0], args[1]);
+    value r = caml_callbackN_exn(cb, 2, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -343,14 +379,18 @@ static int precsolvefn(
 	N_Vector fu,
 	N_Vector fscale,
 	N_Vector vv,
-	void *user_data,
-	N_Vector tmp)
+	void *user_data
+#if SUNDIALS_LIB_VERSION < 300
+	,
+	N_Vector tmp
+#endif
+	)
 {
     CAMLparam0();
     CAMLlocal2(session, cb);
     CAMLlocalN(args, 3);
 
-    args[0] = kinsol_make_jac_arg(uu, fu, NVEC_BACKLINK(tmp));
+    args[0] = kinsol_make_jac_arg(uu, fu, Val_unit);
     args[1] = make_prec_solve_arg(uscale, fscale);
     args[2] = NVEC_BACKLINK(vv);
 
@@ -358,10 +398,9 @@ static int precsolvefn(
     cb = KINSOL_LS_PRECFNS_FROM_ML (session);
     cb = Field (cb, 0);
     cb = Field (cb, RECORD_KINSOL_SPILS_PRECFNS_PREC_SOLVE_FN);
-    cb = Some_val (cb);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn(cb, args[0], args[1], args[2]);
+    value r = caml_callbackN_exn(cb, 3, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -454,7 +493,7 @@ static int lsolve(KINMem kin_mem, N_Vector x, N_Vector b, realtype *res_norm)
     cb = Field (cb, RECORD_KINSOL_ALTERNATE_CALLBACKS_LSOLVE);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn (cb, args[0], args[1], args[2]);
+    value r = caml_callbackN_exn (cb, 3, args);
     if (!Is_exception_result (r)) {
 	value rf = Field(r, 0);
 	if (rf != Val_none) *res_norm = Double_val(Field(rf, 0));
@@ -479,7 +518,9 @@ CAMLprim value c_kinsol_set_alternate (value vkin_mem, value vhas_init,
 
     kin_mem->kin_linit  = Bool_val(vhas_init)  ? linit : NULL;
     kin_mem->kin_lsetup = Bool_val(vhas_setup) ? lsetup : NULL;
+#if SUNDIALS_LIB_VERSION < 300
     kin_mem->kin_setupNonNull = Bool_val(vhas_setup);
+#endif
     kin_mem->kin_lsolve = lsolve;
     kin_mem->kin_lmem   = NULL;
 
@@ -540,6 +581,7 @@ CAMLprim value c_kinsol_set_sfdotjp (value vkin_mem, value vsfdotjp)
 CAMLprim value c_kinsol_dls_dense (value vkin_mem, value vset_jac)
 {
     CAMLparam2(vkin_mem, vset_jac);
+#if SUNDIALS_LIB_VERSION < 300
     void *kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
     long neqs = KINSOL_NEQS_FROM_ML (vkin_mem);
     int flag;
@@ -550,13 +592,16 @@ CAMLprim value c_kinsol_dls_dense (value vkin_mem, value vset_jac)
 	flag = KINDlsSetDenseJacFn(KINSOL_MEM_FROM_ML(vkin_mem), jacfn);
 	CHECK_FLAG("KINDlsSetDenseJacFn", flag);
     }
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_kinsol_dls_lapack_dense (value vkin_mem, value vset_jac)
 {
     CAMLparam2 (vkin_mem, vset_jac);
-#ifdef SUNDIALS_ML_LAPACK
+#if SUNDIALS_LIB_VERSION < 300 && defined SUNDIALS_ML_LAPACK
     void *kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
     long neqs = KINSOL_NEQS_FROM_ML (vkin_mem);
     int flag;
@@ -573,28 +618,13 @@ CAMLprim value c_kinsol_dls_lapack_dense (value vkin_mem, value vset_jac)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_dls_set_dense_jac_fn(value vdata)
-{
-    CAMLparam1(vdata);
-    int flag = KINDlsSetDenseJacFn(KINSOL_MEM_FROM_ML(vdata), jacfn);
-    CHECK_FLAG("KINDlsSetDenseJacFn", flag);
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value c_kinsol_dls_clear_dense_jac_fn(value vdata)
-{
-    CAMLparam1(vdata);
-    int flag = KINDlsSetDenseJacFn(KINSOL_MEM_FROM_ML(vdata), NULL);
-    CHECK_FLAG("KINDlsSetDenseJacFn", flag);
-    CAMLreturn (Val_unit);
-}
-
 CAMLprim value c_kinsol_dls_band (value vkin_mem,
 				  value vmupper,
 				  value vmlower,
 				  value vset_jac)
 {
     CAMLparam4(vkin_mem, vmupper, vmlower, vset_jac);
+#if SUNDIALS_LIB_VERSION < 300
     void *kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
     long neqs = KINSOL_NEQS_FROM_ML (vkin_mem);
     int flag;
@@ -605,6 +635,9 @@ CAMLprim value c_kinsol_dls_band (value vkin_mem,
 	flag = KINDlsSetBandJacFn(KINSOL_MEM_FROM_ML(vkin_mem), bandjacfn);
 	CHECK_FLAG("KINDlsSetBandJacFn", flag);
     }
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -612,7 +645,7 @@ CAMLprim value c_kinsol_dls_lapack_band (value vkin_mem, value vmupper,
 					 value vmlower, value vset_jac)
 {
     CAMLparam4(vkin_mem, vmupper, vmlower, vset_jac);
-#ifdef SUNDIALS_ML_LAPACK
+#if SUNDIALS_LIB_VERSION < 300 && defined SUNDIALS_ML_LAPACK
     void *kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
     long neqs = KINSOL_NEQS_FROM_ML (vkin_mem);
     int flag;
@@ -630,33 +663,53 @@ CAMLprim value c_kinsol_dls_lapack_band (value vkin_mem, value vmupper,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_dls_set_band_jac_fn(value vdata)
+CAMLprim value c_kinsol_dls_set_linear_solver (value vkin_mem, value vlsolv,
+					       value vjmat, value vhasjac)
 {
-    CAMLparam1(vdata);
-    int flag = KINDlsSetBandJacFn(KINSOL_MEM_FROM_ML(vdata), bandjacfn);
-    CHECK_FLAG("KINDlsSetBandJacFn", flag);
+    CAMLparam4(vkin_mem, vlsolv, vjmat, vhasjac);
+#if SUNDIALS_LIB_VERSION >= 300
+    void *kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
+    SUNLinearSolver lsolv = LSOLVER(vlsolv);
+    SUNMatrix jmat = MAT_VAL(vjmat);
+    int flag;
+
+    flag = KINDlsSetLinearSolver(kin_mem, lsolv, jmat);
+    CHECK_FLAG ("KINDlsSetLinearSolver", flag);
+    if (Bool_val (vhasjac)) {
+	flag = KINDlsSetJacFn(kin_mem, jacfn);
+	CHECK_FLAG("KINDlsSetJacFn", flag);
+    }
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_dls_clear_band_jac_fn(value vdata)
+CAMLprim value c_kinsol_spils_set_linear_solver (value vkin_mem, value vlsolv)
 {
-    CAMLparam1(vdata);
-    int flag = KINDlsSetBandJacFn(KINSOL_MEM_FROM_ML(vdata), NULL);
-    CHECK_FLAG("KINDlsSetBandJacFn", flag);
+    CAMLparam2(vkin_mem, vlsolv);
+#if SUNDIALS_LIB_VERSION >= 300
+    void *kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
+    SUNLinearSolver lsolv = LSOLVER(vlsolv);
+    int flag;
+
+    flag = KINSpilsSetLinearSolver(kin_mem, lsolv);
+    CHECK_FLAG ("KINSpilsSetLinearSolver", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_kinsol_spils_set_preconditioner (value vsession,
-						  value vset_precsolve,
 						  value vset_precsetup)
 {
-    CAMLparam3 (vsession, vset_precsolve, vset_precsetup);
+    CAMLparam2 (vsession, vset_precsetup);
     int flag;
     void *mem = KINSOL_MEM_FROM_ML (vsession);
-    KINSpilsPrecSolveFn solve = Bool_val (vset_precsolve) ? precsolvefn : NULL;
     KINSpilsPrecSetupFn setup = Bool_val (vset_precsetup) ? precsetupfn : NULL;
 
-    flag = KINSpilsSetPreconditioner (mem, setup, solve);
+    flag = KINSpilsSetPreconditioner (mem, setup, precsolvefn);
     CHECK_FLAG ("KINSpilsSetPreconditioner", flag);
 
     CAMLreturn (Val_unit);
@@ -742,7 +795,7 @@ CAMLprim value c_kinsol_init(value weakref, value vtemp,
     if (flag != KIN_SUCCESS) {
 	/* As of SUNDIALS 2.5.0, KINInit frees kin_mem upon failure,
 	 * but only if the failure is due to allocation of vectors.
-	 * IDAInit and CVodeInit never frees the mem pointer.
+	 * IDAInit and KINInit never frees the mem pointer.
 	 * Confusing :( */
 	if (flag != KIN_MEM_FAIL) KINFree (&kin_mem);
 	CHECK_FLAG("KINInit", flag);
@@ -913,65 +966,60 @@ CAMLprim value c_kinsol_session_finalize(value vdata)
 CAMLprim value c_kinsol_spils_spgmr(value vkin_mem, value vmaxl)
 {
     CAMLparam2(vkin_mem, vmaxl);
+#if SUNDIALS_LIB_VERSION < 300
     void *kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
     int flag;
 
     flag = KINSpgmr (kin_mem, Int_val (vmaxl));
     CHECK_FLAG ("KINSpgmr", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
-#if SUNDIALS_LIB_VERSION >= 260
 CAMLprim value c_kinsol_spils_spfgmr(value vkin_mem, value vmaxl)
 {
     CAMLparam2(vkin_mem, vmaxl);
+#if 260 <= SUNDIALS_LIB_VERSION && SUNDIALS_LIB_VERSION < 300
     void *kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
     int flag;
 
     flag = KINSpfgmr (kin_mem, Int_val (vmaxl));
     CHECK_FLAG ("KINSpfgmr", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
-#else
-CAMLprim value c_kinsol_spils_spfgmr(value vkin_mem, value vmaxl)
-{
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-}
-#endif
 
-CAMLprim value c_kinsol_spils_spbcg(value vkin_mem, value vmaxl)
+CAMLprim value c_kinsol_spils_spbcgs(value vkin_mem, value vmaxl)
 {
     CAMLparam2(vkin_mem, vmaxl);
+#if SUNDIALS_LIB_VERSION < 300
     void *kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
     int flag;
 
     flag = KINSpbcg (kin_mem, Int_val (vmaxl));
     CHECK_FLAG ("KINSpbcg", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_kinsol_spils_sptfqmr(value vkin_mem, value vmaxl)
 {
     CAMLparam2(vkin_mem, vmaxl);
+#if SUNDIALS_LIB_VERSION < 300
     void *kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
     int flag;
 
     flag = KINSptfqmr (kin_mem, Int_val (vmaxl));
     CHECK_FLAG ("KINSptfqmr", flag);
-
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value c_kinsol_spils_set_max_restarts(value vkin_mem, value vmaxrs)
-{
-    CAMLparam2(vkin_mem, vmaxrs);
-
-    int flag = KINSpilsSetMaxRestarts(KINSOL_MEM_FROM_ML(vkin_mem), Int_val(vmaxrs));
-    CHECK_FLAG("KINSetMaxRestarts", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -1143,22 +1191,18 @@ CAMLprim value c_kinsol_set_num_max_iters(value vkin_mem, value vmxiter)
     CAMLreturn (Val_unit);
 }
 
-#if SUNDIALS_LIB_VERSION >= 260
 CAMLprim value c_kinsol_set_maa(value vkin_mem, value vmaa)
 {
     CAMLparam2(vkin_mem, vmaa);
+#if SUNDIALS_LIB_VERSION >= 260
 
     int flag = KINSetMAA(KINSOL_MEM_FROM_ML(vkin_mem), Long_val(vmaa));
     CHECK_FLAG("KINSetMAA", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
-#else
-CAMLprim value c_kinsol_set_maa(value vkin_mem, value vmaa)
-{
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-}
-#endif
 
 CAMLprim value c_kinsol_set_no_init_setup(value vkin_mem, value vnoinitsetup)
 {

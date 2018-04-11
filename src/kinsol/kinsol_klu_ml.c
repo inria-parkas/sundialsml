@@ -28,8 +28,7 @@ CAMLprim value c_kinsol_klu_init (value vkin_mem, value vformat,
 CAMLprim value c_kinsol_klu_set_ordering (value vkin_mem, value vordering)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 
-CAMLprim value c_kinsol_klu_reinit (value vkin_mem, value vn, value vnnz,
-				   value vrealloc)
+CAMLprim value c_kinsol_klu_reinit (value vkin_mem, value vn, value vnnz)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 
 CAMLprim value c_kinsol_klu_get_num_jac_evals(value vkin_mem)
@@ -37,11 +36,14 @@ CAMLprim value c_kinsol_klu_get_num_jac_evals(value vkin_mem)
 #else
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #include "kinsol_ml.h"
-#include "../lsolvers/sls_ml.h"
+#include "../lsolvers/lsolver_ml.h"
 
 #include <kinsol/kinsol.h>
+
+#if SUNDIALS_LIB_VERSION < 300
 #include <kinsol/kinsol_sparse.h>
 #include <kinsol/kinsol_klu.h>
+#endif
 
 enum kinsol_klu_ordering_tag {
   VARIANT_CVODE_KLU_AMD     = 0,
@@ -49,6 +51,7 @@ enum kinsol_klu_ordering_tag {
   VARIANT_CVODE_KLU_NATURAL = 2,
 };
 
+#if SUNDIALS_LIB_VERSION < 300
 static int jacfn(
 	N_Vector u,
 	N_Vector fu,	     
@@ -69,9 +72,9 @@ static int jacfn(
     smat = Field(cb, 1);
     if (smat == Val_none) {
 #if SUNDIALS_LIB_VERSION >= 270
-	Store_some(smat, c_sls_sparse_wrap(Jac, 0, Val_int(Jac->sparsetype)));
+	Store_some(smat, c_matrix_sparse_wrap(Jac, 0, Val_int(Jac->sparsetype)));
 #else
-	Store_some(smat, c_sls_sparse_wrap(Jac, 0, Val_int(0)));
+	Store_some(smat, c_matrix_sparse_wrap(Jac, 0, Val_int(0)));
 #endif
 	Store_field(cb, 1, smat);
 
@@ -86,65 +89,72 @@ static int jacfn(
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, UNRECOVERABLE));
 }
+#endif
 
 CAMLprim value c_kinsol_klu_init (value vkin_mem, value vformat,
 				  value vneqs, value vnnz)
 {
     CAMLparam4(vkin_mem, vformat, vneqs, vnnz);
+#if SUNDIALS_LIB_VERSION < 300
     void *kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
     int flag;
 
 #if SUNDIALS_LIB_VERSION >= 270
-    flag = KINKLU (kin_mem, Int_val(vneqs), Int_val(vnnz), Int_val(vformat));
+    flag = KINKLU (kin_mem, Int_val(vneqs), Int_val(vnnz),
+		   MAT_FROM_SFORMAT(vformat));
 #else
     flag = KINKLU (kin_mem, Int_val(vneqs), Int_val(vnnz));
 #endif
     CHECK_FLAG ("KINKLU", flag);
     flag = KINSlsSetSparseJacFn(kin_mem, jacfn);
     CHECK_FLAG("KINSlsSetSparseJacFn", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_kinsol_klu_set_ordering (value vkin_mem, value vordering)
 {
     CAMLparam2(vkin_mem, vordering);
+#if SUNDIALS_LIB_VERSION < 300
     void *kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
 
     int flag = KINKLUSetOrdering (kin_mem, Int_val(vordering));
     CHECK_FLAG ("KINKLUSetOrdering", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_klu_reinit (value vkin_mem, value vn, value vnnz,
-				   value vrealloc)
+CAMLprim value c_kinsol_klu_reinit (value vkin_mem, value vn, value vnnz)
 {
-    CAMLparam4(vkin_mem, vn, vnnz, vrealloc);
+    CAMLparam3(vkin_mem, vn, vnnz);
+#if SUNDIALS_LIB_VERSION < 300
     void *kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
+    int nnz = Int_val(vnnz);
 
-    int reinit_type;
-    if (Bool_val(vrealloc)) {
-	reinit_type = 1;
-    } else {
-	reinit_type = 2;
-    }
-
-    int flag = KINKLUReInit (kin_mem, Int_val(vn), Int_val(vnnz), reinit_type);
+    int flag = KINKLUReInit (kin_mem, Int_val(vn), nnz, (nnz > 0) ? 1 : 2);
     CHECK_FLAG ("KINKLUReInit", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_kinsol_klu_get_num_jac_evals(value vkin_mem)
 {
     CAMLparam1(vkin_mem);
+    long int r = 0;
+#if SUNDIALS_LIB_VERSION < 300
     void *kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
 
-    long int r;
     int flag = KINSlsGetNumJacEvals(kin_mem, &r);
     CHECK_FLAG("KINSlsGetNumJacEvals", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn(Val_long(r));
 }
 
