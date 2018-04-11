@@ -244,38 +244,6 @@ module Iterative : sig (* {{{ *)
     -> float
     -> bool
 
-  (** Callback functions that preprocess or evaluate Jacobian-related data
-      needed by the jac_times_vec_fn. In the call [jac_times_setup_fn arg],
-      [arg] is a {!jacobian_arg} with no work vectors.
-    
-      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
-      Any other exception is treated as an unrecoverable error.
-
-      {warning The elements of [arg] should not be accessed after the
-               function has returned.}
-
-      @nocvode <node> CVSpilsJacTimesSetupFn *)
-  type 'd jac_times_setup_fn = (unit, 'd) jacobian_arg -> unit
-
-  (** Callback functions that compute the Jacobian times a vector. In the
-      call [jac_times_vec_fn arg v jv], [arg] is a {!jacobian_arg} with one
-      work vector, [v] is the vector multiplying the Jacobian, and [jv] is
-      the vector in which to store the
-      result—{% $\mathtt{jv} = J\mathtt{v}$%}.
-    
-      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
-      Any other exception is treated as an unrecoverable error.
-
-      {warning Neither the elements of [arg] nor [v] or [jv] should be
-               accessed after the function has returned.}
-
-      @nocvode <node> CVSpilsJacTimesVecFn *)
-  type 'd jac_times_vec_fn =
-    ('d, 'd) jacobian_arg
-    -> 'd (* v *)
-    -> 'd (* Jv *)
-    -> unit
-
   (** Specifies a preconditioner, including the type of preconditioning
       (none, left, right, or both) and callback functions.
       The following functions and those in {!Banded} and {!Cvode_bbd}
@@ -358,6 +326,39 @@ module Iterative : sig (* {{{ *)
   end (* }}} *)
 
   (** {3:lsolvers Solvers} *)
+
+  (** Callback functions that preprocess or evaluate Jacobian-related data
+      needed by the jac_times_vec_fn. In the call [jac_times_setup_fn arg],
+      [arg] is a {!jacobian_arg} with no work vectors.
+    
+      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Any other exception is treated as an unrecoverable error.
+
+      {warning The elements of [arg] should not be accessed after the
+               function has returned.}
+
+      @nocvode <node> CVSpilsJacTimesSetupFn *)
+  type 'd jac_times_setup_fn = (unit, 'd) jacobian_arg -> unit
+
+  (** Callback functions that compute the Jacobian times a vector. In the
+      call [jac_times_vec_fn arg v jv], [arg] is a {!jacobian_arg} with one
+      work vector, [v] is the vector multiplying the Jacobian, and [jv] is
+      the vector in which to store the
+      result—{% $\mathtt{jv} = J\mathtt{v}$%}.
+    
+      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Any other exception is treated as an unrecoverable error.
+
+      {warning Neither the elements of [arg] nor [v] or [jv] should be
+               accessed after the function has returned.}
+
+      @nocvode <node> CVSpilsJacTimesVecFn *)
+  type 'd jac_times_vec_fn =
+    ('d, 'd) jacobian_arg
+    -> 'd (* v *)
+    -> 'd (* Jv *)
+    -> unit
+
 
   (** Create a Cvode-specific linear solver from a generic iterative
       linear solver.

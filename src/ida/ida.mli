@@ -211,6 +211,31 @@ module Iterative : sig (* {{{ *)
       @ida <node5#ss:precondFn> IDASpilsPrecSetupFn *)
   type 'd prec_setup_fn = (unit, 'd) jacobian_arg -> unit
 
+  (** Specifies a preconditioner and its callback functions.
+      The following functions and those in {!Ida_bbd} construct
+      preconditioners.
+
+      The {!prec_solve_fn} is mandatory. The {!prec_setup_fn} can be
+      omitted if not needed.
+
+      @ida <node5#sss:optin_spils> IDASpilsSetPreconditioner
+      @ida <node5#ss:psolveFn> IDASpilsPrecSolveFn
+      @ida <node5#ss:precondFn> IDASpilsPrecSetupFn *)
+  type ('d, 'k) preconditioner = ('d, 'k) Ida_impl.SpilsTypes.preconditioner
+
+  (** No preconditioning.  *)
+  val prec_none : ('d, 'k) preconditioner
+
+  (** Left preconditioning. {% $Pz = r$%}, where $P$ approximates, perhaps
+      crudely,
+      {% $J = \frac{\partial F}{\partial y} + c_j\frac{\partial F}{\partial\dot{y}}$%}. *)
+  val prec_left :
+    ?setup:'d prec_setup_fn
+    -> 'd prec_solve_fn
+    -> ('d, 'k) preconditioner
+
+  (** {3:lsolvers Solvers} *)
+
   (** Callback functions that preprocess or evaluate Jacobian-related data
       needed by the jac_times_vec_fn. In the call [jac_times_setup_fn arg],
       [arg] is a {!jacobian_arg} with no work vectors.
@@ -242,31 +267,6 @@ module Iterative : sig (* {{{ *)
     -> 'd
     -> 'd
     -> unit
-
-  (** Specifies a preconditioner and its callback functions.
-      The following functions and those in {!Ida_bbd} construct
-      preconditioners.
-
-      The {!prec_solve_fn} is mandatory. The {!prec_setup_fn} can be
-      omitted if not needed.
-
-      @ida <node5#sss:optin_spils> IDASpilsSetPreconditioner
-      @ida <node5#ss:psolveFn> IDASpilsPrecSolveFn
-      @ida <node5#ss:precondFn> IDASpilsPrecSetupFn *)
-  type ('d, 'k) preconditioner = ('d, 'k) Ida_impl.SpilsTypes.preconditioner
-
-  (** No preconditioning.  *)
-  val prec_none : ('d, 'k) preconditioner
-
-  (** Left preconditioning. {% $Pz = r$%}, where $P$ approximates, perhaps
-      crudely,
-      {% $J = \frac{\partial F}{\partial y} + c_j\frac{\partial F}{\partial\dot{y}}$%}. *)
-  val prec_left :
-    ?setup:'d prec_setup_fn
-    -> 'd prec_solve_fn
-    -> ('d, 'k) preconditioner
-
-  (** {3:lsolvers Solvers} *)
 
   (** Create an Ida-specific linear solver from a generic iterative
       linear solver.
