@@ -47,110 +47,21 @@ type ('t, 'a) jacobian_arg =
     jac_tmp : 't
   }
 
-type bandrange = { mupper : int; mlower : int; }
-
-module DlsTypes = struct
-  type dense_jac_fn =
+module DirectTypes = struct
+  type 'm jac_fn =
     (RealArray.t triple, RealArray.t) jacobian_arg
-    -> Dls.DenseMatrix.t
+    -> 'm
     -> unit
 
   (* These fields are accessed from arkode_ml.c *)
-  type dense_jac_callback =
+  type 'm jac_callback =
     {
-      jacfn: dense_jac_fn;
-      mutable dmat : Dls.DenseMatrix.t option
+      jacfn: 'm jac_fn;
+      mutable jmat : 'm option (* Not used in Sundials >= 3.0.0 *)
     }
 
-  let no_dense_callback = {
-      jacfn = (fun _ _ -> crash "no dense callback");
-      dmat = None;
-    }
+  let no_callback = fun _ _ -> crash "no direct callback"
 
-  type band_jac_fn =
-    bandrange
-    -> (RealArray.t triple, RealArray.t) jacobian_arg
-    -> Dls.BandMatrix.t
-    -> unit
-
-  (* These fields are accessed from arkode_ml.c *)
-  type band_jac_callback =
-    {
-      bjacfn: band_jac_fn;
-      mutable bmat : Dls.BandMatrix.t option
-    }
-
-  let no_band_callback = {
-      bjacfn = (fun _ _ _ -> crash "no band callback");
-      bmat = None;
-    }
-
-  module MassTypes = struct
-    type dense_fn =
-      float
-      -> RealArray.t triple
-      -> Dls.DenseMatrix.t
-      -> unit
-
-    (* These fields are accessed from arkode_ml.c *)
-    type dense_callback =
-      {
-        massfn: dense_fn;
-        mutable dmat : Dls.DenseMatrix.t option
-      }
-
-    let no_dense_callback = {
-        massfn = (fun _ _ _ -> crash "no dense mass callback");
-        dmat = None;
-      }
-
-    type band_fn =
-      bandrange
-      -> float
-      -> RealArray.t triple
-      -> Dls.BandMatrix.t
-      -> unit
-
-    (* These fields are accessed from arkode_ml.c *)
-    type band_callback =
-      {
-        bmassfn: band_fn;
-        mutable bmat : Dls.BandMatrix.t option
-      }
-
-    let no_band_callback = {
-        bmassfn = (fun _ _ _ _ -> crash "no band mass callback");
-        bmat = None;
-      }
-  end
-end
-
-module SlsTypes = struct
-
-  type 'f sparse_jac_fn =
-    (RealArray.t triple, RealArray.t) jacobian_arg
-    -> 'f Sls.SparseMatrix.t
-    -> unit
-
-  (* These fields are accessed from arkode_ml.c *)
-  type 'f sparse_jac_callback =
-    {
-      jacfn: 'f sparse_jac_fn;
-      mutable smat : 'f Sls_impl.t option
-    }
-
-  type 'f sparse_mass_fn =
-    float
-    -> RealArray.t triple
-    -> 'f Sls.SparseMatrix.t
-    -> unit
-
-  (* These fields are accessed from arkode_ml.c *)
-  type 'f sparse_mass_callback =
-    {
-      massfn: 'f sparse_mass_fn;
-      mutable smmat : 'f Sls_impl.t option
-    }
 end
 
 module SpilsCommonTypes = struct
@@ -164,31 +75,26 @@ module SpilsCommonTypes = struct
       left  : bool;
     }
 
-  type gramschmidt_type = Spils.gramschmidt_type =
-    | ModifiedGS
-    | ClassicalGS
-
-  type preconditioning_type =
-    | PrecNone
-    | PrecLeft
-    | PrecRight
-    | PrecBoth
 end
 
 module SpilsTypes' = struct
   include SpilsCommonTypes
 
   type 'a prec_solve_fn =
-    ('a, 'a) jacobian_arg
+    (unit, 'a) jacobian_arg
     -> 'a prec_solve_arg
     -> 'a
     -> unit
 
   type 'a prec_setup_fn =
-    ('a triple, 'a) jacobian_arg
+    (unit, 'a) jacobian_arg
     -> bool
     -> float
     -> bool
+
+  type 'd jac_times_setup_fn =
+    (unit, 'd) jacobian_arg
+    -> unit
 
   type 'a jac_times_vec_fn =
     ('a, 'a) jacobian_arg
@@ -202,13 +108,34 @@ module SpilsTypes' = struct
       prec_setup_fn : 'a prec_setup_fn option;
     }
 
-  module MassTypes' = struct
+end
+
+module MassTypes' = struct
+
+  module Direct' = struct
+    type 'm mass_fn =
+      float
+      -> RealArray.t triple
+      -> 'm
+      -> unit
+
+    (* These fields are accessed from arkode_ml.c *)
+    type 'm mass_callback =
+      {
+        massfn: 'm mass_fn;
+        mutable mmat : 'm option (* Not used in Sundials >= 3.0.0 *)
+      }
+
+    let no_mass_callback = fun _ _ -> crash "no mass callback"
+  end
+
+  module Iterative' = struct
+
     type 'd prec_solve_arg =
       {
         rhs   : 'd;
         delta : float;
         left  : bool;
-        tmp   : 'd;
       }
 
     type 'd prec_solve_fn =
@@ -217,12 +144,11 @@ module SpilsTypes' = struct
       -> 'd
       -> unit
 
-    type 'd prec_setup_fn =
-         float
-      -> 'd triple
-      -> unit
+    type 'd prec_setup_fn = float -> unit
 
-    type 'd times_vec_fn =
+    type mass_times_setup_fn = float -> unit
+
+    type 'd mass_times_vec_fn =
          float
       -> 'd
       -> 'd
@@ -333,19 +259,36 @@ and ('data, 'kind) linear_solver =
   -> ('data, 'kind) nvector
   -> unit
 
+(* Note: When compatibility with Sundials < 3.0.0 is no longer required,
+         this type can be greatly simplified since we would no longer
+         need to distinguish between different "direct" linear solvers.
+
+   Note: The first field must always hold the callback closure
+         (it is accessed as Field(cb, 0) from arkode_ml.c.
+         The second argument holds a reference to the Jacobian matrix,
+         whose underlying data is used within the solver (Sundials >= 3.0.0),
+         to prevent its garbage collection.
+*)
 and ('a, 'kind) linsolv_callbacks =
   | NoCallbacks
 
   (* Dls *)
-  | DlsDenseCallback of DlsTypes.dense_jac_callback
-  | DlsBandCallback  of DlsTypes.band_jac_callback
+  | DlsDenseCallback
+      of Matrix.Dense.t DirectTypes.jac_callback * Matrix.Dense.t
+  | DlsBandCallback
+      of Matrix.Band.t  DirectTypes.jac_callback * Matrix.Band.t
 
   (* Sls *)
-  | SlsKluCallback of unit SlsTypes.sparse_jac_callback
-  | SlsSuperlumtCallback of unit SlsTypes.sparse_jac_callback
+  | SlsKluCallback
+      : ('s Matrix.Sparse.t) DirectTypes.jac_callback * 's Matrix.Sparse.t
+        -> ('a, 'kind) linsolv_callbacks
+  | SlsSuperlumtCallback
+      : ('s Matrix.Sparse.t) DirectTypes.jac_callback * 's Matrix.Sparse.t
+        -> ('a, 'kind) linsolv_callbacks
 
   (* Spils *)
   | SpilsCallback of 'a SpilsTypes'.jac_times_vec_fn option
+                     * 'a SpilsTypes'.jac_times_setup_fn option
 
   (* Alternate *)
   | AlternateCallback of ('a, 'kind) alternate_linsolv
@@ -371,7 +314,6 @@ and 'data alternate_lsetup_args =
   }
 and 'data alternate_lsolve_args =
   {
-    lsolve_ewt : 'data;
     lsolve_y : 'data;
     lsolve_rhs : 'data;
   }
@@ -386,28 +328,43 @@ and ('data, 'kind) lsolve' =
   -> 'data
   -> unit
 
+(* Note: When compatibility with Sundials < 3.0.0 is no longer required,
+         this type can be greatly simplified since we would no longer
+         need to distinguish between different "direct" linear solvers.
+
+   Note: The first field must always hold the callback closure
+         (it is accessed as Field(cb, 0) from arkode_ml.c.
+         The second argument holds a reference to the Jacobian matrix,
+         whose underlying data is used within the solver (Sundials >= 3.0.0),
+         to prevent its garbage collection.
+*)
 and ('a, 'kind) mass_callbacks =
   | NoMassCallbacks
 
   (* Dls *)
-  | DlsDenseMassCallback of DlsTypes.MassTypes.dense_callback
-  | DlsBandMassCallback  of DlsTypes.MassTypes.band_callback
+  | DlsDenseMassCallback
+      of Matrix.Dense.t MassTypes'.Direct'.mass_callback * Matrix.Dense.t
+  | DlsBandMassCallback
+      of Matrix.Band.t  MassTypes'.Direct'.mass_callback * Matrix.Band.t
 
   (* Sls *)
-  | SlsKluMassCallback of unit SlsTypes.sparse_mass_callback
-  | SlsSuperlumtMassCallback of unit SlsTypes.sparse_mass_callback
+  | SlsKluMassCallback
+      : ('s Matrix.Sparse.t) MassTypes'.Direct'.mass_callback * 's Matrix.Sparse.t
+        -> ('a, 'kind) mass_callbacks
+  | SlsSuperlumtMassCallback
+      : ('s Matrix.Sparse.t) MassTypes'.Direct'.mass_callback * 's Matrix.Sparse.t
+        -> ('a, 'kind) mass_callbacks
 
   (* Spils *)
-  | SpilsMassCallback of 'a SpilsTypes'.MassTypes'.times_vec_fn
+  | SpilsMassCallback of 'a MassTypes'.Iterative'.mass_times_vec_fn
+                       * MassTypes'.Iterative'.mass_times_setup_fn option
 
   (* Alternate *)
   | AlternateMassCallback of ('a, 'kind) alternate_mass
 
 and 'a mass_precfns =
   | NoMassPrecFns
-  | MassPrecFns of 'a SpilsTypes'.MassTypes'.precfns
-  | BandedMassPrecFns
-  | BBDMassPrecFns of 'a ArkodeBbdParamTypes.precfns
+  | MassPrecFns of 'a MassTypes'.Iterative'.precfns
 
 and ('data, 'kind) alternate_mass =
   {
@@ -423,27 +380,15 @@ and ('data, 'kind) msetup' =
 and ('data, 'kind) msolve' =
   ('data, 'kind) session
   -> 'data
-  -> 'data
   -> unit
 
 (* Linear solver check functions *)
 
-let ls_check_dls session =
+let ls_check_direct session =
   if Sundials_config.safe then
     match session.ls_callbacks with
-    | DlsDenseCallback _ | DlsBandCallback _ -> ()
-    | _ -> raise Sundials.InvalidLinearSolver
-
-let ls_check_klu session =
-  if Sundials_config.safe then
-    match session.ls_callbacks with
-    | SlsKluCallback _ -> ()
-    | _ -> raise Sundials.InvalidLinearSolver
-
-let ls_check_superlumt session =
-  if Sundials_config.safe then
-    match session.ls_callbacks with
-    | SlsSuperlumtCallback _ -> ()
+    | DlsDenseCallback _ | DlsBandCallback _
+    | SlsKluCallback _ | SlsSuperlumtCallback _ -> ()
     | _ -> raise Sundials.InvalidLinearSolver
 
 let ls_check_spils session =
@@ -466,34 +411,17 @@ let ls_check_spils_bbd session =
 
 (* Mass solver check functions *)
 
-let mass_check_dls session =
+let mass_check_direct session =
   if Sundials_config.safe then
     match session.mass_callbacks with
-    | DlsDenseMassCallback _ | DlsBandMassCallback _ -> ()
-    | _ -> raise Sundials.InvalidLinearSolver
-
-let mass_check_klu session =
-  if Sundials_config.safe then
-    match session.mass_callbacks with
-    | SlsKluMassCallback _ -> ()
-    | _ -> raise Sundials.InvalidLinearSolver
-
-let mass_check_superlumt session =
-  if Sundials_config.safe then
-    match session.mass_callbacks with
-    | SlsSuperlumtMassCallback _ -> ()
+    | DlsDenseMassCallback _ | DlsBandMassCallback _
+    | SlsKluMassCallback _ | SlsSuperlumtMassCallback _ -> ()
     | _ -> raise Sundials.InvalidLinearSolver
 
 let mass_check_spils session =
   if Sundials_config.safe then
     match session.mass_callbacks with
     | SpilsMassCallback _ -> ()
-    | _ -> raise Sundials.InvalidLinearSolver
-
-let mass_check_spils_band session =
-  if Sundials_config.safe then
-    match session.mass_precfns with
-    | BandedMassPrecFns -> ()
     | _ -> raise Sundials.InvalidLinearSolver
 
 (* Types that depend on session *)
@@ -504,14 +432,6 @@ type 'k serial_session = (Nvector_serial.data, 'k) session
 type 'k serial_linear_solver = (Nvector_serial.data, 'k) linear_solver
                                constraint 'k = [>Nvector_serial.kind]
 
-type ('data, 'kind) mass_solver =
-  ('data, 'kind) session
-  -> ('data, 'kind) nvector
-  -> unit
-
-type 'k serial_mass_solver = (Nvector_serial.data, 'k) mass_solver
-                             constraint 'k = [>Nvector_serial.kind]
-
 module SpilsTypes = struct
   include SpilsTypes'
 
@@ -519,29 +439,11 @@ module SpilsTypes = struct
     ('a, 'k) session -> ('a, 'k) nvector -> unit
 
   type ('a, 'k) preconditioner =
-    | InternalPrecNone  of ('a, 'k) set_preconditioner
-    | InternalPrecLeft  of ('a, 'k) set_preconditioner
-    | InternalPrecRight of ('a, 'k) set_preconditioner
-    | InternalPrecBoth  of ('a, 'k) set_preconditioner
+    Lsolver_impl.Iterative.preconditioning_type * ('a, 'k) set_preconditioner
 
   type 'k serial_preconditioner = (Nvector_serial.data, 'k) preconditioner
                                   constraint 'k = [>Nvector_serial.kind]
 
-  module MassTypes = struct
-    include SpilsTypes'.MassTypes'
-
-    type ('a, 'k) set_preconditioner =
-      ('a, 'k) session -> ('a, 'k) nvector -> unit
-
-    type ('a, 'k) preconditioner =
-      | InternalPrecNone  of ('a, 'k) set_preconditioner
-      | InternalPrecLeft  of ('a, 'k) set_preconditioner
-      | InternalPrecRight of ('a, 'k) set_preconditioner
-      | InternalPrecBoth  of ('a, 'k) set_preconditioner
-
-    type 'k serial_preconditioner = (Nvector_serial.data, 'k) preconditioner
-                                    constraint 'k = [>Nvector_serial.kind]
-  end
 end
 
 module AlternateTypes = struct
@@ -562,12 +464,38 @@ module AlternateTypes = struct
     lsetup_tmp : 'data triple;
   }
   and 'data lsolve_args = 'data alternate_lsolve_args = {
-    lsolve_ewt : 'data;
     lsolve_y : 'data;
     lsolve_rhs : 'data;
   }
+end
 
-  module MassTypes = struct
+module MassTypes = struct
+  type ('data, 'kind) solver =
+    ('data, 'kind) session
+    -> ('data, 'kind) nvector
+    -> unit
+
+  type 'k serial_solver = (Nvector_serial.data, 'k) solver
+                          constraint 'k = [>Nvector_serial.kind]
+
+  module Direct' = struct
+    include MassTypes'.Direct'
+  end
+
+  module Iterative' = struct
+    include MassTypes'.Iterative'
+
+    type ('a, 'k) set_preconditioner =
+      ('a, 'k) session -> ('a, 'k) nvector -> unit
+
+    type ('a, 'k) preconditioner =
+      Lsolver_impl.Iterative.preconditioning_type * ('a, 'k) set_preconditioner
+
+    type 'k serial_preconditioner = (Nvector_serial.data, 'k) preconditioner
+                                    constraint 'k = [>Nvector_serial.kind]
+  end
+
+  module Alternate' = struct
     type ('data, 'kind) callbacks = ('data, 'kind) alternate_mass =
       {
         minit  : ('data, 'kind) minit option;

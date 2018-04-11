@@ -25,6 +25,12 @@
 #include <arkode/arkode.h>
 
 /* linear solvers */
+#include <arkode/arkode_direct.h>
+#include <arkode/arkode_spils.h>
+#include <arkode/arkode_bandpre.h>
+#include <arkode/arkode_impl.h>
+
+#if SUNDIALS_LIB_VERSION < 300
 #include <arkode/arkode_dense.h>
 #include <arkode/arkode_band.h>
 #include <arkode/arkode_spgmr.h>
@@ -32,15 +38,14 @@
 #include <arkode/arkode_spbcgs.h>
 #include <arkode/arkode_sptfqmr.h>
 #include <arkode/arkode_pcg.h>
-#include <arkode/arkode_bandpre.h>
-#include <arkode/arkode_impl.h>
+#endif
 
-#ifdef SUNDIALS_ML_LAPACK
+#if SUNDIALS_LIB_VERSION < 300 && defined SUNDIALS_ML_LAPACK
 #include <arkode/arkode_lapack.h>
 #endif
 
-#include "../lsolvers/dls_ml.h"
-#include "../lsolvers/spils_ml.h"
+#include "../lsolvers/matrix_ml.h"
+#include "../lsolvers/lsolver_ml.h"
 #include "../sundials/sundials_ml.h"
 #include "arkode_ml.h"
 #include "../nvectors/nvector_ml.h"
@@ -139,8 +144,8 @@ static int irhsfn(realtype t, N_Vector y, N_Vector ydot, void *user_data)
     args[2] = NVEC_BACKLINK(ydot);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn(Field(session, RECORD_ARKODE_SESSION_IRHSFN),
-				 args[0], args[1], args[2]);
+    value r = caml_callbackN_exn(Field(session, RECORD_ARKODE_SESSION_IRHSFN),
+				 3, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -158,8 +163,8 @@ static int erhsfn(realtype t, N_Vector y, N_Vector ydot, void *user_data)
     args[2] = NVEC_BACKLINK(ydot);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn(Field(session, RECORD_ARKODE_SESSION_ERHSFN),
-				 args[0], args[1], args[2]);
+    value r = caml_callbackN_exn(Field(session, RECORD_ARKODE_SESSION_ERHSFN),
+				 3, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -182,8 +187,8 @@ static int roots(realtype t, N_Vector y, realtype *gout, void *user_data)
     args[2] = caml_ba_alloc (BIGARRAY_FLOAT, 1, gout, &nroots);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn (Field(session, RECORD_ARKODE_SESSION_ROOTSFN),
-				  args[0], args[1], args[2]);
+    value r = caml_callbackN_exn (Field(session, RECORD_ARKODE_SESSION_ROOTSFN),
+				  3, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, UNRECOVERABLE));
 }
@@ -258,8 +263,8 @@ static int adaptfn(N_Vector y, realtype t,
     Store_field(args[2],RECORD_ARKODE_ADAPTIVITY_ARGS_P,  Val_int(p));
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn (Field(session, RECORD_ARKODE_SESSION_ADAPTFN),
-				  args[0], args[1], args[2]);
+    value r = caml_callbackN_exn (Field(session, RECORD_ARKODE_SESSION_ADAPTFN),
+				  3, args);
 
     /* Update hnew; leave it unchanged if an error occurred.  */
     if (!Is_exception_result (r)) {
@@ -282,8 +287,8 @@ static int stabfn(N_Vector y, realtype t, realtype *hstab, void *user_data)
     args[1] = NVEC_BACKLINK (y);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback2_exn (Field(session, RECORD_ARKODE_SESSION_STABFN),
-				  args[0], args[1]);
+    value r = caml_callbackN_exn (Field(session, RECORD_ARKODE_SESSION_STABFN),
+				  2, args);
 
     /* Update hstab; leave it unchanged if an error occurred.  */
     if (!Is_exception_result (r)) {
@@ -306,8 +311,8 @@ static int resizefn(N_Vector y, N_Vector ytemplate, void *user_data)
     args[1] = NVEC_BACKLINK (ytemplate);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback2_exn(Field(session, RECORD_ARKODE_SESSION_RESIZEFN),
-				 args[0], args[1]);
+    value r = caml_callbackN_exn(Field(session, RECORD_ARKODE_SESSION_RESIZEFN),
+				 2, args);
 
     CAMLreturnT(int, Is_exception_result(r));
 }
@@ -326,8 +331,8 @@ static int poststepfn(realtype t, N_Vector y, void *user_data)
     args[1] = NVEC_BACKLINK (y);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback2_exn(Field(session, RECORD_ARKODE_SESSION_POSTSTEPFN),
-				 args[0], args[1]);
+    value r = caml_callbackN_exn(Field(session, RECORD_ARKODE_SESSION_POSTSTEPFN),
+				 2, args);
 
     CAMLreturnT(int, Is_exception_result(r));
 }
@@ -359,6 +364,38 @@ value arkode_make_triple_tmp(N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
     CAMLreturn(r);
 }
 
+#if SUNDIALS_LIB_VERSION >= 300
+
+static int jacfn(realtype t,
+		 N_Vector y,
+		 N_Vector fy,	     
+		 SUNMatrix Jac,
+		 void *user_data,
+		 N_Vector tmp1,
+		 N_Vector tmp2,
+		 N_Vector tmp3)
+{
+    CAMLparam0();
+    CAMLlocalN (args, 2);
+    CAMLlocal2(session, cb);
+
+    WEAK_DEREF (session, *(value*)user_data);
+
+    cb = ARKODE_LS_CALLBACKS_FROM_ML(session);
+    cb = Field (cb, 0);
+
+    args[0] = arkode_make_jac_arg (t, y, fy,
+				  arkode_make_triple_tmp (tmp1, tmp2, tmp3));
+    args[1] = MAT_BACKLINK(Jac);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (Field(cb, 0), 2, args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
+}
+
+#else // SUNDIALS_LIB_VERSION < 300
+
 /* Dense and band Jacobians only work with serial NVectors.  */
 static int jacfn(long int n,
 		 realtype t,
@@ -380,7 +417,7 @@ static int jacfn(long int n,
     cb = Field (cb, 0);
     dmat = Field(cb, 1);
     if (dmat == Val_none) {
-	Store_some(dmat, c_dls_dense_wrap(Jac, 0));
+	Store_some(dmat, c_matrix_dense_wrap(Jac, 0));
 	Store_field(cb, 1, dmat);
     }
 
@@ -389,7 +426,7 @@ static int jacfn(long int n,
     args[1] = Some_val(dmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback2_exn (Field(cb, 0), args[0], args[1]);
+    value r = caml_callbackN_exn (Field(cb, 0), 2, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -416,7 +453,7 @@ static int bandjacfn(long int N,
 
     bmat = Field(cb, 1);
     if (bmat == Val_none) {
-	Store_some(bmat, c_dls_band_wrap(Jac, 0));
+	Store_some(bmat, c_matrix_band_wrap(Jac, 0));
 	Store_field(cb, 1, bmat);
     }
 
@@ -428,10 +465,12 @@ static int bandjacfn(long int N,
     args[2] = Some_val(bmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn (Field(cb, 0), args[0], args[1], args[2]);
+    value r = caml_callbackN_exn (Field(cb, 0), 3, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
+
+#endif
 
 static int precsetupfn(realtype t,
 		       N_Vector y,
@@ -439,10 +478,14 @@ static int precsetupfn(realtype t,
 		       booleantype jok,
 		       booleantype *jcurPtr,
 		       realtype gamma,
-		       void *user_data,
+		       void *user_data
+#if SUNDIALS_LIB_VERSION < 300
+		       ,
 		       N_Vector tmp1,
 		       N_Vector tmp2,
-		       N_Vector tmp3)
+		       N_Vector tmp3
+#endif
+		       )
 {
     CAMLparam0();
     CAMLlocal2(session, cb);
@@ -450,8 +493,7 @@ static int precsetupfn(realtype t,
 
     WEAK_DEREF (session, *(value*)user_data);
 
-    args[0] = arkode_make_jac_arg(t, y, fy,
-				 arkode_make_triple_tmp(tmp1, tmp2, tmp3));
+    args[0] = arkode_make_jac_arg(t, y, fy, Val_unit);
     args[1] = Val_bool(jok);
     args[2] = caml_copy_double(gamma);
 
@@ -461,7 +503,7 @@ static int precsetupfn(realtype t,
     cb = Some_val (cb);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn(cb, args[0], args[1], args[2]);
+    value r = caml_callbackN_exn(cb, 3, args);
 
     /* Update jcurPtr; leave it unchanged if an error occurred.  */
     if (!Is_exception_result (r)) {
@@ -500,14 +542,18 @@ static int precsolvefn(realtype t,
 		       realtype gamma,
 		       realtype delta,
 		       int lr,
-		       void *user_data,
-		       N_Vector tmp)
+		       void *user_data
+#if SUNDIALS_LIB_VERSION < 300
+		       ,
+		       N_Vector tmp
+#endif
+		       )
 {
     CAMLparam0();
     CAMLlocal2(session, cb);
     CAMLlocalN(args, 3);
 
-    args[0] = arkode_make_jac_arg(t, y, fy, NVEC_BACKLINK(tmp));
+    args[0] = arkode_make_jac_arg(t, y, fy, Val_unit);
     args[1] = make_spils_solve_arg(rvec, gamma, delta, lr);
     args[2] = NVEC_BACKLINK(z);
 
@@ -517,7 +563,7 @@ static int precsolvefn(realtype t,
     cb = Field (cb, RECORD_ARKODE_SPILS_PRECFNS_PREC_SOLVE_FN);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn(cb, args[0], args[1], args[2]);
+    value r = caml_callbackN_exn(cb, 3, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -544,10 +590,33 @@ static int jactimesfn(N_Vector v,
     cb = Some_val (cb);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn(cb, args[0], args[1], args[2]);
+    value r = caml_callbackN_exn(cb, 3, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
+
+#if SUNDIALS_LIB_VERSION >= 300
+static int jacsetupfn(realtype t,
+		      N_Vector y,
+		      N_Vector fy,
+		      void *user_data)
+{
+    CAMLparam0();
+    CAMLlocal3(session, cb, arg);
+
+    arg = arkode_make_jac_arg(t, y, fy, Val_unit);
+
+    WEAK_DEREF (session, *(value*)user_data);
+    cb = ARKODE_LS_CALLBACKS_FROM_ML(session);
+    cb = Field (cb, 1);
+    cb = Some_val (cb);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback_exn(cb, arg);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
+}
+#endif
 
 static int linit(ARKodeMem ark_mem)
 {
@@ -617,8 +686,13 @@ static int lsetup(ARKodeMem ark_mem, int convfail,
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
+
+#if SUNDIALS_LIB_VERSION >= 300
+static int lsolve(ARKodeMem ark_mem, N_Vector b, N_Vector ycur, N_Vector fcur)
+#else
 static int lsolve(ARKodeMem ark_mem, N_Vector b, N_Vector weight, N_Vector ycur,
 		  N_Vector fcur)
+#endif
 {
     CAMLparam0();
     CAMLlocal3(args, session, cb);
@@ -628,8 +702,6 @@ static int lsolve(ARKodeMem ark_mem, N_Vector b, N_Vector weight, N_Vector ycur,
 		 NVEC_BACKLINK (ycur));
     Store_field (args, RECORD_ARKODE_ALTERNATE_LSOLVE_ARGS_RHS,
 		 NVEC_BACKLINK (fcur));
-    Store_field (args, RECORD_ARKODE_ALTERNATE_LSOLVE_ARGS_EWT,
-		 NVEC_BACKLINK (weight));
 
     WEAK_DEREF (session, *(value*)ark_mem->ark_user_data);
 
@@ -656,14 +728,16 @@ CAMLprim value c_arkode_get_gamma(value varkode_mem)
 }
 
 CAMLprim value c_arkode_set_alternate (value varkode_mem, value vhas_init,
-				      value vhas_setup)
+				       value vhas_setup)
 {
     CAMLparam3(varkode_mem, vhas_init, vhas_setup);
     ARKodeMem arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
 
     arkode_mem->ark_linit  = Bool_val(vhas_init)  ? linit : NULL;
     arkode_mem->ark_lsetup  = Bool_val(vhas_setup) ? lsetup : NULL;
+#if SUNDIALS_LIB_VERSION < 300
     arkode_mem->ark_setupNonNull = Bool_val(vhas_setup);
+#endif
     arkode_mem->ark_lsolve = lsolve;
     arkode_mem->ark_lmem   = NULL;
     arkode_mem->ark_msolve_type = 3; // custom
@@ -676,6 +750,7 @@ CAMLprim value c_arkode_dls_dense (value varkode_mem,
 				   value vneqs, value vset_jac)
 {
     CAMLparam3(varkode_mem, vneqs, vset_jac);
+#if SUNDIALS_LIB_VERSION < 300
     void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
     long neqs = Long_val(vneqs);
     int flag;
@@ -686,14 +761,17 @@ CAMLprim value c_arkode_dls_dense (value varkode_mem,
 	flag = ARKDlsSetDenseJacFn(ARKODE_MEM_FROM_ML(varkode_mem), jacfn);
 	CHECK_FLAG("ARKDlsSetDenseJacFn", flag);
     }
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_arkode_dls_lapack_dense (value varkode_mem, value vneqs,
-					 value vset_jac)
+					  value vset_jac)
 {
     CAMLparam3 (varkode_mem, vneqs, vset_jac);
-#ifdef SUNDIALS_ML_LAPACK
+#if SUNDIALS_LIB_VERSION < 300 && defined SUNDIALS_ML_LAPACK
     void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
     long neqs = Long_val (vneqs);
     int flag;
@@ -710,29 +788,14 @@ CAMLprim value c_arkode_dls_lapack_dense (value varkode_mem, value vneqs,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_dls_set_dense_jac_fn(value vdata)
+CAMLprim value c_arkode_dls_band (value varkode_mem, value vneqs,
+				  value vmupper, value vmlower,
+				  value vset_jac)
 {
-    CAMLparam1(vdata);
-    int flag = ARKDlsSetDenseJacFn(ARKODE_MEM_FROM_ML(vdata), jacfn);
-    CHECK_FLAG("ARKDlsSetDenseJacFn", flag);
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value c_arkode_dls_clear_dense_jac_fn(value vdata)
-{
-    CAMLparam1(vdata);
-    int flag = ARKDlsSetDenseJacFn(ARKODE_MEM_FROM_ML(vdata), NULL);
-    CHECK_FLAG("ARKDlsSetDenseJacFn", flag);
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value c_arkode_dls_band (value varkode_mem_neqs,
-				 value vmupper, value vmlower,
-				 value vset_jac)
-{
-    CAMLparam4(varkode_mem_neqs, vmupper, vmlower, vset_jac);
-    void *arkode_mem = ARKODE_MEM_FROM_ML (Field(varkode_mem_neqs, 0));
-    long neqs = Long_val (Field(varkode_mem_neqs, 1));
+    CAMLparam5(varkode_mem, vneqs, vmupper, vmlower, vset_jac);
+#if SUNDIALS_LIB_VERSION < 300
+    void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem_neqs);
+    long neqs = Long_val (vneqs);
     int flag;
 
     flag = ARKBand (arkode_mem, neqs, Long_val (vmupper), Long_val (vmlower));
@@ -741,20 +804,24 @@ CAMLprim value c_arkode_dls_band (value varkode_mem_neqs,
 	flag = ARKDlsSetBandJacFn(arkode_mem, bandjacfn);
 	CHECK_FLAG("ARKDlsSetBandJacFn", flag);
     }
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_dls_lapack_band (value varkode_mem_neqs, value vmupper,
-					value vmlower, value vset_jac)
+CAMLprim value c_arkode_dls_lapack_band (value varkode_mem, value vneqs,
+					 value vmupper, value vmlower,
+					 value vset_jac)
 {
-    CAMLparam4(varkode_mem_neqs, vmupper, vmlower, vset_jac);
-#ifdef SUNDIALS_ML_LAPACK
-    void *arkode_mem = ARKODE_MEM_FROM_ML (Field(varkode_mem_neqs, 0));
-    long neqs = Long_val(Field(varkode_mem_neqs, 1));
+    CAMLparam5(varkode_mem, vneqs, vmupper, vmlower, vset_jac);
+#if SUNDIALS_LIB_VERSION < 300 && defined SUNDIALS_ML_LAPACK
+    void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
+    long neqs = Long_val(vneqs);
     int flag;
 
     flag = ARKLapackBand (arkode_mem, neqs,
-			 Long_val (vmupper), Long_val (vmlower));
+			  Long_val (vmupper), Long_val (vmlower));
     CHECK_FLAG ("ARKLapackBand", flag);
     if (Bool_val (vset_jac)) {
 	flag = ARKDlsSetBandJacFn(arkode_mem, bandjacfn);
@@ -766,19 +833,42 @@ CAMLprim value c_arkode_dls_lapack_band (value varkode_mem_neqs, value vmupper,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_dls_set_band_jac_fn(value vdata)
+CAMLprim value c_arkode_dls_set_linear_solver (value varkode_mem, value vlsolv,
+					       value vjmat, value vhasjac)
 {
-    CAMLparam1(vdata);
-    int flag = ARKDlsSetBandJacFn(ARKODE_MEM_FROM_ML(vdata), bandjacfn);
-    CHECK_FLAG("ARKDlsSetBandJacFn", flag);
+    CAMLparam4(varkode_mem, vlsolv, vjmat, vhasjac);
+#if SUNDIALS_LIB_VERSION >= 300
+    void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
+    SUNLinearSolver lsolv = LSOLVER(vlsolv);
+    SUNMatrix jmat = MAT_VAL(vjmat);
+    int flag;
+
+    flag = ARKDlsSetLinearSolver(arkode_mem, lsolv, jmat);
+    CHECK_FLAG ("ARKDlsSetLinearSolver", flag);
+    if (Bool_val (vhasjac)) {
+	flag = ARKDlsSetJacFn(arkode_mem, jacfn);
+	CHECK_FLAG("ARKDlsSetJacFn", flag);
+    }
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_dls_clear_band_jac_fn(value vdata)
+CAMLprim value c_arkode_spils_set_linear_solver (value varkode_mem,
+						 value vlsolv)
 {
-    CAMLparam1(vdata);
-    int flag = ARKDlsSetBandJacFn(ARKODE_MEM_FROM_ML(vdata), NULL);
-    CHECK_FLAG("ARKDlsSetBandJacFn", flag);
+    CAMLparam2(varkode_mem, vlsolv);
+#if SUNDIALS_LIB_VERSION >= 300
+    void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
+    SUNLinearSolver lsolv = LSOLVER(vlsolv);
+    int flag;
+
+    flag = ARKSpilsSetLinearSolver(arkode_mem, lsolv);
+    CHECK_FLAG ("ARKSpilsSetLinearSolver", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -806,12 +896,21 @@ CAMLprim value c_arkode_spils_set_banded_preconditioner (value vsession,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_spils_set_jac_times_vec_fn(value vdata, value vset_jac)
+CAMLprim value c_arkode_spils_set_jac_times(value vdata, value vhas_setup,
+							 value vhas_times)
 {
-    CAMLparam2(vdata, vset_jac);
-    ARKSpilsJacTimesVecFn jac = Bool_val (vset_jac) ? jactimesfn : NULL;
+    CAMLparam3(vdata, vhas_setup, vhas_times);
+#if SUNDIALS_LIB_VERSION >= 300
+    ARKSpilsJacTimesSetupFn setup = Bool_val (vhas_setup) ? jacsetupfn : NULL;
+    ARKSpilsJacTimesVecFn   times = Bool_val (vhas_times) ? jactimesfn : NULL;
+
+    int flag = ARKSpilsSetJacTimes(ARKODE_MEM_FROM_ML(vdata), setup, times);
+    CHECK_FLAG("ARKSpilsSetJacTimes", flag);
+#else
+    ARKSpilsJacTimesVecFn jac = Bool_val (vhas_times) ? jactimesfn : NULL;
     int flag = ARKSpilsSetJacTimesVecFn(ARKODE_MEM_FROM_ML(vdata), jac);
     CHECK_FLAG("ARKSpilsSetJacTimesVecFn", flag);
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -826,6 +925,36 @@ CAMLprim value c_arkode_wf_tolerances (value vdata)
 }
 
 /* Mass matrix routines. */
+
+#if SUNDIALS_LIB_VERSION >= 300
+
+static int massfn(realtype t,
+		  SUNMatrix M,
+		  void *user_data,
+		  N_Vector tmp1,
+		  N_Vector tmp2,
+		  N_Vector tmp3)
+{
+    CAMLparam0();
+    CAMLlocalN (args, 3);
+    CAMLlocal2(session, cb);
+
+    WEAK_DEREF (session, *(value*)user_data);
+
+    cb = ARKODE_MASS_CALLBACKS_FROM_ML(session);
+    cb = Field (cb, 0);
+
+    args[0] = caml_copy_double(t);
+    args[1] = arkode_make_triple_tmp (tmp1, tmp2, tmp3);
+    args[2] = MAT_BACKLINK(M);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (Field(cb, 0), 3, args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
+}
+
+#else // SUNDIALS_LIB_VERSION < 300
 
 static int massfn(long int n,
 		  realtype t,
@@ -845,7 +974,7 @@ static int massfn(long int n,
     cb = Field (cb, 0);
     dmat = Field(cb, 1);
     if (dmat == Val_none) {
-	Store_some(dmat, c_dls_dense_wrap(M, 0));
+	Store_some(dmat, c_matrix_dense_wrap(M, 0));
 	Store_field(cb, 1, dmat);
     }
 
@@ -854,7 +983,7 @@ static int massfn(long int n,
     args[2] = Some_val(dmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn (Field(cb, 0), args[0], args[1], args[2]);
+    value r = caml_callbackN_exn (Field(cb, 0), 3, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -879,7 +1008,7 @@ static int bandmassfn(long int N,
 
     bmat = Field(cb, 1);
     if (bmat == Val_none) {
-	Store_some(bmat, c_dls_band_wrap(M, 0));
+	Store_some(bmat, c_matrix_band_wrap(M, 0));
 	Store_field(cb, 1, bmat);
     }
 
@@ -896,6 +1025,8 @@ static int bandmassfn(long int N,
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
+#endif
+
 static int masstimesfn(N_Vector v,
 		       N_Vector Mv,
 		       realtype t,
@@ -910,29 +1041,48 @@ static int masstimesfn(N_Vector v,
     args[2] = NVEC_BACKLINK(Mv);
 
     WEAK_DEREF (session, *(value*)user_data);
-    cb = ARKODE_LS_CALLBACKS_FROM_ML(session);
+    cb = ARKODE_MASS_CALLBACKS_FROM_ML(session);
     cb = Field (cb, 0);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn(cb, args[0], args[1], args[2]);
+    value r = caml_callbackN_exn(cb, 3, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
-static int massprecsetupfn(realtype t,
-			   void *user_data,
-			   N_Vector tmp1,
-			   N_Vector tmp2,
-			   N_Vector tmp3)
+#if SUNDIALS_LIB_VERSION >= 300
+static int masssetupfn(realtype t,
+		       void *user_data)
 {
     CAMLparam0();
     CAMLlocal2(session, cb);
-    CAMLlocalN(args, 2);
 
     WEAK_DEREF (session, *(value*)user_data);
+    cb = ARKODE_MASS_CALLBACKS_FROM_ML(session);
+    cb = Field (cb, 1);
+    cb = Some_val (cb);
 
-    args[0] = caml_copy_double(t);
-    args[1] = arkode_make_triple_tmp(tmp1, tmp2, tmp3);
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback_exn(cb, caml_copy_double(t));
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
+}
+#endif
+
+static int massprecsetupfn(realtype t,
+			   void *user_data
+#if SUNDIALS_LIB_VERSION < 300
+			   ,
+			   N_Vector tmp1,
+			   N_Vector tmp2,
+			   N_Vector tmp3
+#endif
+			   )
+{
+    CAMLparam0();
+    CAMLlocal2(session, cb);
+
+    WEAK_DEREF (session, *(value*)user_data);
 
     cb = ARKODE_MASS_PRECFNS_FROM_ML (session);
     cb = Field (cb, 0);
@@ -940,7 +1090,7 @@ static int massprecsetupfn(realtype t,
     cb = Some_val (cb);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback2_exn(cb, args[0], args[1]);
+    value r = caml_callback_exn(cb, caml_copy_double(t));
 
     /* Update jcurPtr; leave it unchanged if an error occurred.  */
     if (!Is_exception_result (r)) {
@@ -953,8 +1103,7 @@ static int massprecsetupfn(realtype t,
 
 static value make_spils_mass_solve_arg(N_Vector r,
 				       realtype delta,
-				       int lr,
-				       N_Vector tmp)
+				       int lr)
 {
     CAMLparam0();
     CAMLlocal1(v);
@@ -964,7 +1113,6 @@ static value make_spils_mass_solve_arg(N_Vector r,
     Store_field(v, RECORD_ARKODE_SPILS_MASS_SOLVE_ARG_DELTA,
                 caml_copy_double(delta));
     Store_field(v, RECORD_ARKODE_SPILS_MASS_SOLVE_ARG_LEFT, Val_bool (lr == 1));
-    Store_field(v, RECORD_ARKODE_SPILS_MASS_SOLVE_ARG_TMP, NVEC_BACKLINK(tmp));
 
     CAMLreturn(v);
 }
@@ -974,15 +1122,19 @@ static int massprecsolvefn(realtype t,
 			   N_Vector z,
 			   realtype delta,
 			   int lr,
-			   void *user_data,
-			   N_Vector tmp)
+			   void *user_data
+#if SUNDIALS_LIB_VERSION < 300
+			   ,
+			   N_Vector tmp
+#endif
+			   )
 {
     CAMLparam0();
     CAMLlocal2(session, cb);
     CAMLlocalN(args, 3);
 
     args[0] = caml_copy_double(t);
-    args[1] = make_spils_mass_solve_arg(rvec, delta, lr, tmp);
+    args[1] = make_spils_mass_solve_arg(rvec, delta, lr);
     args[2] = NVEC_BACKLINK(z);
 
     WEAK_DEREF (session, *(value*)user_data);
@@ -991,7 +1143,7 @@ static int massprecsolvefn(realtype t,
     cb = Field (cb, RECORD_ARKODE_SPILS_MASS_PRECFNS_PREC_SOLVE_FN);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn(cb, args[0], args[1], args[2]);
+    value r = caml_callbackN_exn(cb, 3, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -1034,7 +1186,11 @@ static int msetup(ARKodeMem ark_mem,
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
+#if SUNDIALS_LIB_VERSION >= 300
+static int msolve(ARKodeMem ark_mem, N_Vector b)
+#else
 static int msolve(ARKodeMem ark_mem, N_Vector b, N_Vector weight)
+#endif
 {
     CAMLparam0();
     CAMLlocal2(session, cb);
@@ -1046,8 +1202,7 @@ static int msolve(ARKodeMem ark_mem, N_Vector b, N_Vector weight)
     cb = Field (cb, RECORD_ARKODE_ALTERNATE_MASS_CALLBACKS_MSOLVE);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn (cb, session, NVEC_BACKLINK (b),
-					       NVEC_BACKLINK (weight));
+    value r = caml_callback2_exn (cb, session, NVEC_BACKLINK (b));
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }
@@ -1060,7 +1215,9 @@ CAMLprim value c_arkode_set_mass_alternate (value varkode_mem, value vhas_init,
 
     arkode_mem->ark_minit  = Bool_val(vhas_init)  ? minit : NULL;
     arkode_mem->ark_msetup  = Bool_val(vhas_setup) ? msetup : NULL;
+#if SUNDIALS_LIB_VERSION < 300
     arkode_mem->ark_MassSetupNonNull = Bool_val(vhas_setup);
+#endif
     arkode_mem->ark_msolve = msolve;
     arkode_mem->ark_mass_mem  = NULL;
     arkode_mem->ark_msolve_type = 4; // custom
@@ -1072,19 +1229,23 @@ CAMLprim value c_arkode_set_mass_alternate (value varkode_mem, value vhas_init,
 CAMLprim value c_arkode_dls_mass_dense (value varkode_mem, value vneqs)
 {
     CAMLparam2(varkode_mem, vneqs);
+#if SUNDIALS_LIB_VERSION < 300
     void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
     long neqs = Long_val(vneqs);
     int flag;
 
     flag = ARKMassDense (arkode_mem, neqs, massfn);
     CHECK_FLAG ("ARKMassDense", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_arkode_dls_mass_lapack_dense (value varkode_mem, value vneqs)
 {
     CAMLparam2 (varkode_mem, vneqs);
-#ifdef SUNDIALS_ML_LAPACK
+#if SUNDIALS_LIB_VERSION < 300 && defined SUNDIALS_ML_LAPACK
     void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
     long neqs = Long_val (vneqs);
     int flag;
@@ -1097,12 +1258,13 @@ CAMLprim value c_arkode_dls_mass_lapack_dense (value varkode_mem, value vneqs)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_dls_mass_band (value varkode_mem_neqs,
+CAMLprim value c_arkode_dls_mass_band (value varkode_mem, value vneqs,
 				       value vmupper, value vmlower)
 {
-    CAMLparam3(varkode_mem_neqs, vmupper, vmlower);
-    void *arkode_mem = ARKODE_MEM_FROM_ML (Field(varkode_mem_neqs, 0));
-    long neqs = Long_val (Field(varkode_mem_neqs, 1));
+    CAMLparam4(varkode_mem, vneqs, vmupper, vmlower);
+#if SUNDIALS_LIB_VERSION < 300
+    void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
+    long neqs = Long_val (vneqs);
     int flag;
 
     flag = ARKMassBand (arkode_mem, neqs,
@@ -1110,16 +1272,19 @@ CAMLprim value c_arkode_dls_mass_band (value varkode_mem_neqs,
 				    Long_val (vmlower),
 				    bandmassfn);
     CHECK_FLAG ("ARKMassBand", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_dls_mass_lapack_band (value varkode_mem_neqs,
+CAMLprim value c_arkode_dls_mass_lapack_band (value varkode_mem, value vneqs,
 					      value vmupper, value vmlower)
 {
-    CAMLparam3(varkode_mem_neqs, vmupper, vmlower);
-#ifdef SUNDIALS_ML_LAPACK
-    void *arkode_mem = ARKODE_MEM_FROM_ML (Field(varkode_mem_neqs, 0));
-    long neqs = Long_val(Field(varkode_mem_neqs, 1));
+    CAMLparam4(varkode_mem, vneqs, vmupper, vmlower);
+#if SUNDIALS_LIB_VERSION < 300 && defined SUNDIALS_ML_LAPACK
+    void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
+    long neqs = Long_val(vneqs);
     int flag;
 
     flag = ARKMassLapackBand (arkode_mem, neqs,
@@ -1128,7 +1293,53 @@ CAMLprim value c_arkode_dls_mass_lapack_band (value varkode_mem_neqs,
 					  bandmassfn);
     CHECK_FLAG ("ARKMassLapackBand", flag);
 #else
-    caml_failwith("Lapack solvers are not available.");
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value c_arkode_dls_set_mass_linear_solver (value varkode_mem,
+				    value vlsolv, value vjmat, value vtime_dep)
+{
+    CAMLparam4(varkode_mem, vlsolv, vjmat, vtime_dep);
+#if SUNDIALS_LIB_VERSION >= 300
+    void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
+    SUNLinearSolver lsolv = LSOLVER(vlsolv);
+    SUNMatrix jmat = MAT_VAL(vjmat);
+    int flag;
+
+    flag = ARKDlsSetMassLinearSolver(arkode_mem, lsolv, jmat,
+				     Bool_val(vtime_dep));
+    CHECK_FLAG ("ARKDlsSetMassLinearSolver", flag);
+    flag = ARKDlsSetMassFn(arkode_mem, massfn);
+    CHECK_FLAG("ARKDlsSetMassFn", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value c_arkode_spils_set_mass_linear_solver (value varkode_mem,
+						      value vlsolv,
+						      value vhassetup,
+						      value vtime_dep)
+{
+    CAMLparam4(varkode_mem, vlsolv, vhassetup, vtime_dep);
+#if SUNDIALS_LIB_VERSION >= 300
+    void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
+    SUNLinearSolver lsolv = LSOLVER(vlsolv);
+    int flag;
+
+    flag = ARKSpilsSetMassLinearSolver(arkode_mem, lsolv, Bool_val(vtime_dep));
+    CHECK_FLAG ("ARKSpilsSetMassLinearSolver", flag);
+    flag = ARKSpilsSetMassTimes(
+		    arkode_mem,
+		    Bool_val(vhassetup) ? masssetupfn : NULL,
+		    masstimesfn,
+		    (void *)Field(arkode_mem, RECORD_ARKODE_SESSION_BACKREF));
+    CHECK_FLAG ("ARKSpilsSetMassTimes", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn (Val_unit);
 }
@@ -1142,6 +1353,25 @@ CAMLprim value c_arkode_spils_set_mass_preconditioner (value vsession,
 	= Bool_val (vset_precsetup) ? massprecsetupfn : NULL;
     int flag = ARKSpilsSetMassPreconditioner (mem, setup, massprecsolvefn);
     CHECK_FLAG ("ARKSpilsSetMassPreconditioner", flag);
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value c_arkode_spils_set_mass_times(value varkode_mem,
+					     value vhassetup)
+{
+    CAMLparam2(varkode_mem, vhassetup);
+#if SUNDIALS_LIB_VERSION >= 300
+    void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
+    int flag;
+    flag = ARKSpilsSetMassTimes(
+		    arkode_mem,
+		    Bool_val(vhassetup) ? masssetupfn : NULL,
+		    masstimesfn,
+		    (void *)Field(arkode_mem, RECORD_ARKODE_SESSION_BACKREF));
+    CHECK_FLAG ("ARKSpilsSetMassTimes", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -1584,11 +1814,13 @@ CAMLprim value c_arkode_set_root_direction(value vdata, value rootdirs)
 CAMLprim value c_arkode_spils_set_prec_type(value varkode_mem, value vptype)
 {
     CAMLparam2(varkode_mem, vptype);
-
+#if SUNDIALS_LIB_VERSION < 300
     int flag = ARKSpilsSetPrecType(ARKODE_MEM_FROM_ML(varkode_mem),
 				  spils_precond_type(vptype));
     CHECK_FLAG("ARKSpilsSetPrecType", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -1596,11 +1828,13 @@ CAMLprim value c_arkode_spils_set_mass_prec_type(value varkode_mem,
 						 value vptype)
 {
     CAMLparam2(varkode_mem, vptype);
-
+#if SUNDIALS_LIB_VERSION < 300
     int flag = ARKSpilsSetMassPrecType(ARKODE_MEM_FROM_ML(varkode_mem),
 				       spils_precond_type(vptype));
     CHECK_FLAG("ARKSpilsSetMassPrecType", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -2506,22 +2740,26 @@ CAMLprim value c_arkode_set_small_num_efails(value varkode_mem, value varg)
 CAMLprim value c_arkode_spils_set_gs_type(value varkode_mem, value vgstype)
 {
     CAMLparam2(varkode_mem, vgstype);
-
+#if SUNDIALS_LIB_VERSION < 300
     int flag = ARKSpilsSetGSType(ARKODE_MEM_FROM_ML(varkode_mem),
 				spils_gs_type(vgstype));
     CHECK_FLAG("ARKSpilsSetGSType", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_arkode_spils_set_mass_gs_type(value varkode_mem, value vgstype)
 {
     CAMLparam2(varkode_mem, vgstype);
-
+#if SUNDIALS_LIB_VERSION < 300
     int flag = ARKSpilsSetMassGSType(ARKODE_MEM_FROM_ML(varkode_mem),
 				     spils_gs_type(vgstype));
     CHECK_FLAG("ARKSpilsSetMassGSType", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -2550,21 +2788,25 @@ CAMLprim value c_arkode_spils_set_mass_eps_lin(value varkode_mem, value eplifac)
 CAMLprim value c_arkode_spils_set_maxl(value varkode_mem, value maxl)
 {
     CAMLparam2(varkode_mem, maxl);
-
+#if SUNDIALS_LIB_VERSION < 300
     int flag = ARKSpilsSetMaxl(ARKODE_MEM_FROM_ML(varkode_mem), Int_val(maxl));
     CHECK_FLAG("ARKSpilsSetMaxl", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_arkode_spils_set_mass_maxl(value varkode_mem, value maxl)
 {
     CAMLparam2(varkode_mem, maxl);
-
+#if SUNDIALS_LIB_VERSION < 300
     int flag = ARKSpilsSetMassMaxl(ARKODE_MEM_FROM_ML(varkode_mem),
 				   Int_val(maxl));
     CHECK_FLAG("ARKSpilsSetMassMaxl", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -2681,13 +2923,48 @@ CAMLprim value c_arkode_dls_get_num_jac_evals(value varkode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_arkode_dls_get_num_mass_evals(value varkode_mem)
+CAMLprim value c_arkode_dls_get_num_mass_setups(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
     long int r;
+#if SUNDIALS_LIB_VERSION >= 300
+    int flag = ARKDlsGetNumMassSetups(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("ARKDlsGetNumMassSolves", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(Val_long(r));
+}
+
+CAMLprim value c_arkode_dls_get_num_mass_solves(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+
+    long int r;
+#if SUNDIALS_LIB_VERSION >= 300
+    int flag = ARKDlsGetNumMassSolves(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("ARKDlsGetNumMassSolves", flag);
+#else
     int flag = ARKDlsGetNumMassEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
     CHECK_FLAG("ARKDlsGetNumMassEvals", flag);
+#endif
+
+    CAMLreturn(Val_long(r));
+}
+
+CAMLprim value c_arkode_dls_get_num_mass_mult(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+
+    long int r;
+#if SUNDIALS_LIB_VERSION >= 300
+    int flag = ARKDlsGetNumMassMult(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("ARKDlsGetNumMassMult", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
 
     CAMLreturn(Val_long(r));
 }
@@ -2740,24 +3017,31 @@ CAMLprim value c_arkode_spils_spgmr (value varkode_mem,
 				     value vmaxl, value vtype)
 {
     CAMLparam3 (varkode_mem, vmaxl, vtype);
+#if SUNDIALS_LIB_VERSION < 300
     void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
     int flag;
 
     flag = ARKSpgmr (arkode_mem, spils_precond_type (vtype), Int_val (vmaxl));
     CHECK_FLAG ("ARKSpgmr", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_spils_spbcg (value varkode_mem,
-				     value vmaxl, value vtype)
+CAMLprim value c_arkode_spils_spbcgs (value varkode_mem,
+				      value vmaxl, value vtype)
 {
     CAMLparam3 (varkode_mem, vmaxl, vtype);
+#if SUNDIALS_LIB_VERSION < 300
     void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
     int flag;
 
     flag = ARKSpbcg (arkode_mem, spils_precond_type (vtype), Int_val (vmaxl));
     CHECK_FLAG ("ARKSpbcg", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -2765,12 +3049,15 @@ CAMLprim value c_arkode_spils_sptfqmr (value varkode_mem, value vmaxl,
 				      value vtype)
 {
     CAMLparam3 (varkode_mem, vmaxl, vtype);
+#if SUNDIALS_LIB_VERSION < 300
     void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
     int flag;
 
     flag = ARKSptfqmr (arkode_mem, spils_precond_type (vtype), Int_val (vmaxl));
     CHECK_FLAG ("ARKSptfqmr", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -2778,22 +3065,30 @@ CAMLprim value c_arkode_spils_spfgmr (value varkode_mem, value vmaxl,
 				      value vtype)
 {
     CAMLparam3 (varkode_mem, vmaxl, vtype);
+#if SUNDIALS_LIB_VERSION < 300
     void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
     int flag;
 
     flag = ARKSpfgmr (arkode_mem, spils_precond_type (vtype), Int_val (vmaxl));
     CHECK_FLAG ("ARKSpfgmr", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_arkode_spils_pcg (value varkode_mem, value vmaxl, value vtype)
 {
     CAMLparam3 (varkode_mem, vmaxl, vtype);
+#if SUNDIALS_LIB_VERSION < 300
     void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
     int flag;
 
     flag = ARKPcg (arkode_mem, spils_precond_type (vtype), Int_val (vmaxl));
     CHECK_FLAG ("ARKPcg", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -2816,6 +3111,23 @@ CAMLprim value c_arkode_spils_get_num_conv_fails(value varkode_mem)
     int flag = ARKSpilsGetNumConvFails(ARKODE_MEM_FROM_ML(varkode_mem), &r);
     CHECK_FLAG("ARKSpilsGetNumConvFails", flag);
 
+    CAMLreturn(Val_long(r));
+}
+
+#if SUNDIALS_LIB_VERSION <= 300 && SUNDIALS_LIB_VERSION <= 301
+int ARKSpilsGetNumMTSetups(void *arkode_mem, long int *nmtsetups);
+#endif
+
+CAMLprim value c_arkode_spils_get_num_mtsetup_evals(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int r;
+#if SUNDIALS_LIB_VERSION >= 300
+    int flag = ARKSpilsGetNumMTSetups(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("ARKSpilsGetNumMTSetups", flag);
+#else
+    r = 0;
+#endif
     CAMLreturn(Val_long(r));
 }
 
@@ -2877,6 +3189,19 @@ CAMLprim value c_arkode_spils_get_num_prec_solves(value varkode_mem)
     CAMLreturn(Val_long(r));
 }
 
+CAMLprim value c_arkode_spils_get_num_jtsetup_evals(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int r;
+#if SUNDIALS_LIB_VERSION >= 300
+    int flag = ARKSpilsGetNumJTSetupEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("ARKSpilsGetNumJTSetupEvals", flag);
+#else
+    r = 0;
+#endif
+    CAMLreturn(Val_long(r));
+}
+
 CAMLprim value c_arkode_spils_get_num_jtimes_evals(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
@@ -2905,6 +3230,7 @@ CAMLprim value c_arkode_spils_mass_spgmr (value varkode_mem,
 					  value vmaxl, value vtype)
 {
     CAMLparam3 (varkode_mem, vmaxl, vtype);
+#if SUNDIALS_LIB_VERSION < 300
     ARKodeMem arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
     int flag;
 
@@ -2913,13 +3239,17 @@ CAMLprim value c_arkode_spils_mass_spgmr (value varkode_mem,
 				     masstimesfn,
 				     arkode_mem->ark_user_data);
     CHECK_FLAG ("ARKMassSpgmr", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_spils_mass_spbcg (value varkode_mem,
-					  value vmaxl, value vtype)
+CAMLprim value c_arkode_spils_mass_spbcgs (value varkode_mem,
+					   value vmaxl, value vtype)
 {
     CAMLparam3 (varkode_mem, vmaxl, vtype);
+#if SUNDIALS_LIB_VERSION < 300
     ARKodeMem arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
     int flag;
 
@@ -2928,7 +3258,9 @@ CAMLprim value c_arkode_spils_mass_spbcg (value varkode_mem,
 				     masstimesfn,
 				     arkode_mem->ark_user_data);
     CHECK_FLAG ("ARKMassSpbcg", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -2936,6 +3268,7 @@ CAMLprim value c_arkode_spils_mass_sptfqmr (value varkode_mem,
 					    value vmaxl, value vtype)
 {
     CAMLparam3 (varkode_mem, vmaxl, vtype);
+#if SUNDIALS_LIB_VERSION < 300
     ARKodeMem arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
     int flag;
 
@@ -2944,7 +3277,9 @@ CAMLprim value c_arkode_spils_mass_sptfqmr (value varkode_mem,
 				       masstimesfn,
 				       arkode_mem->ark_user_data);
     CHECK_FLAG ("ARKMassSptfqmr", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -2952,6 +3287,7 @@ CAMLprim value c_arkode_spils_mass_spfgmr (value varkode_mem,
 					   value vmaxl, value vtype)
 {
     CAMLparam3 (varkode_mem, vmaxl, vtype);
+#if SUNDIALS_LIB_VERSION < 300
     ARKodeMem arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
     int flag;
 
@@ -2960,6 +3296,9 @@ CAMLprim value c_arkode_spils_mass_spfgmr (value varkode_mem,
 				      masstimesfn,
 				      arkode_mem->ark_user_data);
     CHECK_FLAG ("ARKMassSpfgmr", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -2967,6 +3306,7 @@ CAMLprim value c_arkode_spils_mass_pcg (value varkode_mem,
 					value vmaxl, value vtype)
 {
     CAMLparam3 (varkode_mem, vmaxl, vtype);
+#if SUNDIALS_LIB_VERSION < 300
     ARKodeMem arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
     int flag;
 
@@ -2975,6 +3315,9 @@ CAMLprim value c_arkode_spils_mass_pcg (value varkode_mem,
 				   masstimesfn,
 				   arkode_mem->ark_user_data);
     CHECK_FLAG ("ARKMassPcg", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 

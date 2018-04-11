@@ -67,6 +67,9 @@ type comm_fn = float -> Nvector_parallel.data -> unit
     [?dqrely], which specifies the relative increment in components of
     [y], and {!bandwidths}.
 
+    NB: Band-Block-Diagonal preconditioners may not be used for problems
+    involving a non-identity mass matrix.
+
     @noarkode <node5#sss:arkbbdpre> ARKBBDPrecInit *)
 val prec_left : ?dqrely:float
                 -> bandwidths

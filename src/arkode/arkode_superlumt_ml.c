@@ -45,19 +45,16 @@ CAMLprim value c_arkode_superlumt_get_num_mass_evals(value varkode_mem)
 #else
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #include "arkode_ml.h"
-#include "../lsolvers/sls_ml.h"
+#include "../lsolvers/matrix_ml.h"
 
 #include <arkode/arkode.h>
+
+#if SUNDIALS_LIB_VERSION < 300
 #include <arkode/arkode_sparse.h>
 #include <arkode/arkode_superlumt.h>
+#endif
 
-enum arkode_superlumt_ordering_tag {
-  VARIANT_ARKODE_SUPERLUMT_NATURAL    = 0,
-  VARIANT_ARKODE_SUPERLUMT_MINDEGPROD = 1,
-  VARIANT_ARKODE_SUPERLUMT_MINDEGSUM  = 2,
-  VARIANT_ARKODE_SUPERLUMT_COLAMD     = 3,
-};
-
+#if SUNDIALS_LIB_VERSION < 300
 static int jacfn(realtype t,
 		 N_Vector y,
 		 N_Vector fy,	     
@@ -80,9 +77,9 @@ static int jacfn(realtype t,
     smat = Field(cb, 1);
     if (smat == Val_none) {
 #if SUNDIALS_LIB_VERSION >= 270
-	Store_some(smat, c_sls_sparse_wrap(Jac, 0, Val_int(Jac->sparsetype)));
+	Store_some(smat, c_matrix_sparse_wrap(Jac, 0, Val_int(Jac->sparsetype)));
 #else
-	Store_some(smat, c_sls_sparse_wrap(Jac, 0, Val_int(0)));
+	Store_some(smat, c_matrix_sparse_wrap(Jac, 0, Val_int(0)));
 #endif
 	Store_field(cb, 1, smat);
 	args[1] = Some_val(smat);
@@ -96,11 +93,13 @@ static int jacfn(realtype t,
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
+#endif
 
 CAMLprim value c_arkode_superlumt_init (value varkode_mem, value vneqs,
 					value vnnz, value vnthreads)
 {
     CAMLparam4(varkode_mem, vneqs, vnnz, vnthreads);
+#if SUNDIALS_LIB_VERSION < 300
     void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
     int flag;
 
@@ -111,7 +110,9 @@ CAMLprim value c_arkode_superlumt_init (value varkode_mem, value vneqs,
     CHECK_FLAG ("ARKSuperLUMT", flag);
     flag = ARKSlsSetSparseJacFn(arkode_mem, jacfn);
     CHECK_FLAG("ARKSlsSetSparseJacFn", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -119,28 +120,35 @@ CAMLprim value c_arkode_superlumt_set_ordering (value varkode_mem,
 						value vordering)
 {
     CAMLparam2(varkode_mem, vordering);
+#if SUNDIALS_LIB_VERSION < 300
     void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
 
     int flag = ARKSuperLUMTSetOrdering (arkode_mem, Int_val(vordering));
     CHECK_FLAG ("ARKSuperLUMTSetOrdering", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_arkode_superlumt_get_num_jac_evals(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
+#if SUNDIALS_LIB_VERSION < 300
     void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
 
     long int r;
     int flag = ARKSlsGetNumJacEvals(arkode_mem, &r);
     CHECK_FLAG("ARKSlsGetNumJacEvals", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn(Val_long(r));
 }
 
-/* Mass matrix rouintes */
+/* Mass matrix routines */
 
+#if SUNDIALS_LIB_VERSION < 300
 static int massfn(realtype t,
 		  SlsMat M,
 		  void *user_data,
@@ -161,9 +169,9 @@ static int massfn(realtype t,
     smat = Field(cb, 1);
     if (smat == Val_none) {
 #if SUNDIALS_LIB_VERSION >= 270
-	Store_some(smat, c_sls_sparse_wrap(M, 0, Val_int(M->sparsetype)));
+	Store_some(smat, c_matrix_sparse_wrap(M, 0, Val_int(M->sparsetype)));
 #else
-	Store_some(smat, c_sls_sparse_wrap(M, 0, Val_int(0)));
+	Store_some(smat, c_matrix_sparse_wrap(M, 0, Val_int(0)));
 #endif
 	Store_field(cb, 1, smat);
 	args[2] = Some_val(smat);
@@ -177,11 +185,13 @@ static int massfn(realtype t,
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
+#endif
 
 CAMLprim value c_arkode_mass_superlumt_init (value varkode_mem, value vneqs,
 					     value vnnz, value vnthreads)
 {
     CAMLparam4(varkode_mem, vneqs, vnnz, vnthreads);
+#if SUNDIALS_LIB_VERSION < 300
     void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
     int flag;
 
@@ -191,7 +201,9 @@ CAMLprim value c_arkode_mass_superlumt_init (value varkode_mem, value vneqs,
 			     Int_val(vnnz),
 			     massfn);
     CHECK_FLAG ("ARKMassSuperLUMT", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -199,23 +211,29 @@ CAMLprim value c_arkode_mass_superlumt_set_ordering (value varkode_mem,
 					             value vordering)
 {
     CAMLparam2(varkode_mem, vordering);
+#if SUNDIALS_LIB_VERSION < 300
     void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
 
     int flag = ARKMassSuperLUMTSetOrdering (arkode_mem, Int_val(vordering));
     CHECK_FLAG ("ARKMassSuperLUMTSetOrdering", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_arkode_superlumt_get_num_mass_evals(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
+#if SUNDIALS_LIB_VERSION < 300
     void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
 
     long int r;
     int flag = ARKSlsGetNumMassEvals(arkode_mem, &r);
     CHECK_FLAG("ARKSlsGetNumMassEvals", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn(Val_long(r));
 }
 

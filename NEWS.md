@@ -9,6 +9,8 @@ Notes:
 * Potential incompatibility: changes to some label names:
   comm_fn -> comm
   iter_type -> iter
+* The ARKODE mass-solver interface is now untangled from the Jacobian 
+  interface.
 
 Sundials/ML 2.7.0p0 (December 2016)
 ------------------------------------

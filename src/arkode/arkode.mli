@@ -74,15 +74,6 @@ type ('data, 'kind) linear_solver = ('data, 'kind) Arkode_impl.linear_solver
 type 'kind serial_linear_solver = (Nvector_serial.data, 'kind) linear_solver
                                   constraint 'kind = [>Nvector_serial.kind]
 
-(** Mass matrix solvers used by Arkode.
-
-    @noarkode <node> Mass matrix solver specification functions *)
-type ('data, 'kind) mass_solver = ('data, 'kind) Arkode_impl.mass_solver
-
-(** Alias for mass matrix solvers that are restricted to serial nvectors. *)
-type 'kind serial_mass_solver = (Nvector_serial.data, 'kind) mass_solver
-                                constraint 'kind = [>Nvector_serial.kind]
-
 (** Workspaces with three temporary vectors. *)
 type 'd triple = 'd * 'd * 'd
 
@@ -101,1284 +92,869 @@ type ('t, 'd) jacobian_arg = ('t, 'd) Arkode_impl.jacobian_arg =
     jac_tmp : 't            (** Workspace data. *)
   }
 
-(** The range of nonzero entries in a band matrix. *)
-type bandrange = Arkode_impl.bandrange =
-  { mupper : int; (** The upper half-bandwidth. *)
-    mlower : int; (** The lower half-bandwidth. *) }
-
-(** Direct Linear Solvers operating on dense and banded matrices.
+(** Direct Linear Solvers operating on dense, banded, and sparse matrices.
 
     @noarkode <node> Linear solver specification functions
     @noarkode <node> Dense/band direct linear solvers optional input functions
     @noarkode <node> Dense/band direct linear solvers optional output functions
 *)
-module Dls :
-  sig (* {{{ *)
-
-    (** Callback functions that compute dense approximations to a Jacobian
-        matrix. In the call [dense_jac_fn arg jac], [arg] is a {!jacobian_arg}
-        with three work vectors and the computed Jacobian must be stored
-        in [jac].
-
-        The callback should load the [(i,j)]th entry of [jac] with
-        {% $\partial (f_I)_i/\partial y_j$%}, i.e., the partial derivative of
-        the [i]th implicit equation with respect to the [j]th variable,
-        evaluated at the values of [t] and [y] obtained from [arg]. Only
-        nonzero elements need be loaded into [jac].
-
-        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
-        Any other exception is treated as an unrecoverable error.
-
-        {warning Neither the elements of [arg] nor the matrix [jac] should
-                 be accessed after the function has returned.}
-
-        @noarkode <node> ARKDlsDenseJacFn *)
-    type dense_jac_fn = (RealArray.t triple, RealArray.t) jacobian_arg
-                      -> Dls.DenseMatrix.t -> unit
-
-    (** A direct linear solver on dense matrices. The optional argument
-        specifies a callback function for computing an approximation to the
-        Jacobian matrix. If this argument is omitted, then a default
-        implementation based on difference quotients is used.
-
-        @noarkode <node> ARKDense
-        @noarkode <node> ARKDlsSetDenseJacFn
-        @noarkode <node> ARKDlsDenseJacFn *)
-    val dense : ?jac:dense_jac_fn -> unit -> 'k serial_linear_solver
-
-    (** A direct linear solver on dense matrices using LAPACK. See {!dense}.
-        Only available if {!Sundials.lapack_enabled}.
-
-        @raise Sundials.NotImplementedBySundialsVersion Solver not available.
-        @noarkode <node> ARKLapackDense
-        @noarkode <node> ARKDlsSetDenseJacFn
-        @noarkode <node> ARKDlsDenseJacFn *)
-    val lapack_dense : ?jac:dense_jac_fn -> unit -> 'k serial_linear_solver
-
-    (** Callback functions that compute banded approximations to
-        a Jacobian matrix. In the call [band_jac_fn {mupper; mlower} arg jac],
-        - [mupper] is the upper half-bandwidth of the Jacobian,
-        - [mlower] is the lower half-bandwidth of the Jacobian,
-        - [arg] is a {!jacobian_arg} with three work vectors, and,
-        - [jac] is storage for the computed Jacobian.
-
-        The callback should load the [(i,j)]th entry of [jac] with
-        {% $\partial (f_I)_i/\partial y_j$%}, i.e., the partial derivative of
-        the [i]th implicit equation with respect to the [j]th variable,
-        evaluated at the values of [t] and [y] obtained from [arg]. Only
-        nonzero elements need be loaded into [jac].
-
-        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
-        Any other exception is treated as an unrecoverable error.
-
-        {warning Neither the elements of [arg] nor the matrix [jac] should
-                 be accessed after the function has returned.}
-
-        @noarkode <node> ARKDlsBandJacFn *)
-    type band_jac_fn = bandrange
-                        -> (RealArray.t triple, RealArray.t) jacobian_arg
-                        -> Dls.BandMatrix.t -> unit
-
-    (** A direct linear solver on banded matrices. The optional argument
-        specifies a callback function for computing an approximation to the
-        Jacobian matrix. If this argument is omitted, then a default
-        implementation based on difference quotients is used. The other
-        argument gives the width of the bandrange.
-
-        @noarkode <node> ARKBand
-        @noarkode <node> ARKDlsSetBandJacFn
-        @noarkode <node> ARKDlsBandJacFn *)
-    val band : ?jac:band_jac_fn -> bandrange -> 'k serial_linear_solver
-
-    (** A direct linear solver on banded matrices using LAPACK. See {!band}.
-        Only available if {!Sundials.lapack_enabled}.
-
-        @raise Sundials.NotImplementedBySundialsVersion Solver not available.
-        @noarkode <node> ARKLapackBand
-        @noarkode <node> ARKDlsSetBandJacFn
-        @noarkode <node> ARKDlsBandJacFn *)
-    val lapack_band : ?jac:band_jac_fn -> bandrange -> 'k serial_linear_solver
-
-    (** {3:dlsmass Mass matrix solvers} *)
-    module Mass :
-      sig (* {{{ *)
-
-        (** Callback functions that compute dense approximations to a mass
-            matrix. In the call [dense_fn t work m],
-            - [t] is the independent variable,
-            - [work] is workspace data, and
-            - [m] is the output dense mass matrix.
+module Direct : sig (* {{{ *)
 
-            The callback should load the [N] by [N] dense matrix [m] with an
-            approximation to the mass matrix {% $M(t)$%}. Only nonzero elements
-            need be loaded into [m].
+  (** Callback functions that compute dense approximations to a Jacobian
+      matrix. In the call [jac arg jm], [arg] is a {!jacobian_arg}
+      with three work vectors and the computed Jacobian must be stored in [jm].
 
-            Raising {!Sundials.RecoverableFailure} indicates a recoverable
-            error. Any other exception is treated as an unrecoverable error.
+      The callback should load the [(i,j)]th entry of [jm] with
+      {% $\partial (f_I)_i/\partial y_j$%}, i.e., the partial derivative of
+      the [i]th implicit equation with respect to the [j]th variable,
+      evaluated at the values of [t] and [y] obtained from [arg]. Only
+      nonzero elements need be loaded into [jm].
 
-            {warning Neither the elements of [work] nor the matrix [m]
-                     should be accessed after the function has returned.}
+      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Any other exception is treated as an unrecoverable error.
 
-            @noarkode <node> ARKDlsDenseMassFn *)
-        type dense_fn = float -> RealArray.t triple -> Dls.DenseMatrix.t -> unit
+      {warning Neither the elements of [arg] nor the matrix [jm] should
+               be accessed after the function has returned.}
 
-        (** A direct linear solver for mass matrix linear systems.
+      @noarkode <node> ARKDlsJacFn *)
+  type 'm jac_fn = (RealArray.t triple, RealArray.t) jacobian_arg
+                   -> 'm -> unit
 
-            @noarkode <node> ARKMassDense
-            @noarkode <node> ARKDlsDenseMassFn *)
-        val dense : dense_fn -> 'k serial_mass_solver
+  (** Create an Arkode-specific linear solver from a generic dense linear
+      solver, a Jacobian approximation function, and a Jacobian matrix
+      for the solver's internal use. The Jacobian approximation function
+      is optional for dense and banded solvers (if not given an internal
+      difference quotient approximation is used), but must be provided for
+      other solvers (or {Invalid_argument} is raised).
 
-        (** A direct linear solver for mass matrix linear systems using LAPACK.
-            Only available if {!Sundials.lapack_enabled}.
+      @nocvode <node> ARKDlsSetLinearSolver
+      @nocvode <node> ARKDlsSetJacFn *)
+  val make :
+    ('m, 'kind) Lsolver.Direct.serial_t ->
+    ?jac:'m jac_fn ->
+    ('k, 'm, Nvector_serial.data, 'kind) Matrix.t ->
+    'kind serial_linear_solver
 
-            @noarkode <node> ARKMassLapackDense
-            @noarkode <node> ARKDlsDenseMassFn *)
-        val lapack_dense : dense_fn -> 'k serial_mass_solver
+  (** {3:stats Solver statistics} *)
 
-        (** Callback functions that compute banded approximations to a mass
-            matrix. In the call [band_fn {mupper; mlower} t work m],
-            - [mupper] is the upper half-bandwidth of the mass matrix,
-            - [mlower] is the lower half-bandwidth of the mass matrix,
-            - [t] is the independent variable,
-            - [work] is workspace data, and
-            - [m] is the output banded mass matrix.
+  (** Returns the sizes of the real and integer workspaces used by a direct
+      linear solver.
 
-            The callback should load the band matrix [m] with an approximation
-            to the mass matrix {% $M(t)$%}. Only nonzero elements need be
-            loaded into [m].
+      @noarkode <node> ARKDlsGetWorkSpace
+      @return ([real_size], [integer_size]) *)
+  val get_work_space : 'k serial_session -> int * int
 
-            Raising {!Sundials.RecoverableFailure} indicates a recoverable
-            error. Any other exception is treated as an unrecoverable error.
+  (** Returns the number of calls made by a direct linear solver to the
+      Jacobian approximation function.
 
-            {warning Neither the elements of [work] nor the matrix [m]
-                     should be accessed after the function has returned.}
+      @noarkode <node> ARKDlsGetNumJacEvals *)
+  val get_num_jac_evals : 'k serial_session -> int
 
-            @noarkode <node> ARKDlsBandMassFn *)
-        type band_fn = bandrange -> float -> RealArray.t triple
-                          -> Dls.BandMatrix.t -> unit
+  (** Returns the number of calls to the right-hand side callback due to
+      the finite difference Jacobian approximation.
 
-        (** A direct linear solver for mass matrix linear systems on banded
-            matrices.
+      @noarkode <node> ARKDlsGetNumRhsEvals *)
+  val get_num_rhs_evals : 'k serial_session -> int
 
-            @noarkode <node> ARKMassBand
-            @noarkode <node> ARKDlsBandMassFn *)
-        val band : band_fn -> bandrange -> 'k serial_mass_solver
+end (* }}} *)
 
-        (** A direct linear solver for mass matrix linear systems on banded
-            matrices using LAPACK. Only available if {!Sundials.lapack_enabled}.
-
-            @noarkode <node> ARKMassLapackBand
-            @noarkode <node> ARKDlsBandMassFn *)
-        val lapack_band : band_fn -> bandrange -> 'k serial_mass_solver
-
-        (** {3:stats Solver statistics} *)
-
-        (** Returns the sizes of the real and integer workspaces used by a
-            direct linear mass matrix solver.
-
-            @noarkode <node> ARKDlsGetMassWorkSpace
-            @return ([real_size], [integer_size]) *)
-        val get_work_space : 'k serial_session -> int * int
-
-        (** Returns the number of calls made by a direct linear solver to the
-            mass matrix construction routine.
-
-            @noarkode <node> ARKDlsGetNumMassEvals *)
-        val get_num_evals : 'k serial_session -> int
-
-        (** {3:lowlevel Low-level solver manipulation}
-
-            The {!init} and {!reinit} functions are the preferred way to set or
-            change a mass matrix function. These low-level functions are
-            provided for experts who want to avoid resetting internal counters
-            and other associated side-effects. *)
-
-        (** Change the dense mass matrix function.
-       
-            @noarkode <node> ARKDlsSetDenseMassFn *)
-        val set_dense_fn : 'k serial_session -> dense_fn -> unit
-
-        (** Change the band mass matrix function.
-
-            @noarkode <node> ARKDlsSetBandMassFn *)
-        val set_band_fn : 'k serial_session -> band_fn -> unit
-      end (* }}} *)
-
-    (** {3:stats Solver statistics} *)
-
-    (** Returns the sizes of the real and integer workspaces used by a direct
-        linear solver.
-
-        @noarkode <node> ARKDlsGetWorkSpace
-        @return ([real_size], [integer_size]) *)
-    val get_work_space : 'k serial_session -> int * int
-
-    (** Returns the number of calls made by a direct linear solver to the
-        Jacobian approximation function.
-
-        @noarkode <node> ARKDlsGetNumJacEvals *)
-    val get_num_jac_evals : 'k serial_session -> int
-
-    (** Returns the number of calls to the right-hand side callback due to
-        the finite difference Jacobian approximation.
-
-        @noarkode <node> ARKDlsGetNumRhsEvals *)
-    val get_num_rhs_evals : 'k serial_session -> int
-
-    (** {3:lowlevel Low-level solver manipulation}
-
-        The {!init} and {!reinit} functions are the preferred way to set or
-        change a Jacobian function. These low-level functions are provided for
-        experts who want to avoid resetting internal counters and other
-        associated side-effects. *)
-
-    (** Change the dense Jacobian function.
-   
-        @noarkode <node> ARKDlsSetDenseJacFn *)
-    val set_dense_jac_fn : 'k serial_session -> dense_jac_fn -> unit
-
-    (** Remove a dense Jacobian function and use the default
-        implementation.
-
-        @noarkode <node> ARKDlsSetDenseJacFn *)
-    val clear_dense_jac_fn : 'k serial_session -> unit
-
-    (** Change the band Jacobian function.
-
-        @noarkode <node> ARKDlsSetBandJacFn *)
-    val set_band_jac_fn : 'k serial_session -> band_jac_fn -> unit
-
-    (** Remove a banded Jacobian function and use the default
-        implementation.
-
-        @noarkode <node> ARKDlsSetBandJacFn *)
-    val clear_band_jac_fn : 'k serial_session -> unit
-  end (* }}} *)
-
-(** Sparse Linear Solvers.
-
-    @noarkode <node> The SLS modules *)
-module Sls :
-  sig (* {{{ *)
-
-    (** Callback functions that compute sparse approximations to a Jacobian
-        matrix. In the call [sparse_jac_fn arg jac], [arg] is a
-        {!Arkode.jacobian_arg} with three work vectors and the computed
-        Jacobian must be stored in [jac].
-
-        The callback should load the [(i,j)]th entry of [jac] with
-        {% $\partial f_i/\partial y_j$%}, i.e., the partial derivative of the
-        [i]th equation with respect to the [j]th variable, evaluated at the
-        values of [t] and [y] obtained from [arg]. Only nonzero elements need
-        be loaded into [jac].
-
-        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
-        Any other exception is treated as an unrecoverable error.
-
-        {warning Neither the elements of [arg] nor the matrix [jac] should
-                 be accessed after the function has returned.}
-
-        @noarkode <node5#ss:sjacFn> ARKSlsSparseJacFn *)
-    type 'f sparse_jac_fn =
-      (Sundials.RealArray.t triple, Sundials.RealArray.t)
-                            jacobian_arg -> 'f Sls.SparseMatrix.t -> unit
-
-    (** Callback functions that compute sparse approximations to the mass
-        matrix. In the call [sparse_fn t tmp m],
-        - [t] is the independent variable,
-        - [tmp] is workspace data, and
-        - [m] is the output sparse mass matrix.
-
-        The callback should load the compressed-sparse-column matrix [m] with
-        an approximation to the mass matrix {% $M(t)$%}.
-
-        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
-        Any other exception is treated as an unrecoverable error.
-
-        {warning Neither the elements of [tmp] nor the matrix [m] should
-                 be accessed after the function has returned.}
-
-        @noarkode <node5#ss:sjacFn> ARKSlsSparseMassFn *)
-    type 'f sparse_mass_fn = float
-                          -> Sundials.RealArray.t triple
-                          -> 'f Sls.SparseMatrix.t
-                          -> unit
-
-    (** KLU sparse-direct linear solver module (requires KLU).
-
-        @noarkode <node> The KLU Solver *)
-    module Klu : sig (* {{{ *)
-
-      (** A direct linear solver on compressed-sparse-column matrices.
-          In the call, [klu jfn nnz], [jfn] is a callback function that
-          computes an approximation to the Jacobian matrix and [nnz] is
-          the maximum number of nonzero entries in that matrix.
-
-          @raise Sundials.NotImplementedBySundialsVersion Solver not available.
-          @noarkode <node5#sss:lin_solv_init> ARKKLU
-          @noarkode <node5#sss:optin_sls> ARKSlsSetSparseJacFn
-          @noarkode <node5#ss:sjacFn> ARKSlsSparseJacFn *)
-      val solver_csc : Sls.SparseMatrix.csc sparse_jac_fn
-                       -> int -> 'k serial_linear_solver
-
-      (** A direct linear solver on compressed-sparse-row matrices.
-          In the call, [klu jfn nnz], [jfn] is a callback function that
-          computes an approximation to the Jacobian matrix and [nnz] is
-          the maximum number of nonzero entries in that matrix.
-
-          @since 2.7.0
-          @raise Sundials.NotImplementedBySundialsVersion Solver not available.
-          @noarkode <node5#sss:lin_solv_init> ARKKLU
-          @noarkode <node5#sss:optin_sls> ARKSlsSetSparseJacFn
-          @noarkode <node5#ss:sjacFn> ARKSlsSparseJacFn *)
-      val solver_csr : Sls.SparseMatrix.csr sparse_jac_fn
-                       -> int -> 'k serial_linear_solver
-
-      (** The ordering algorithm used for reducing fill. *)
-      type ordering =
-           Amd      (** Approximate minimum degree permutation. *)
-         | ColAmd   (** Column approximate minimum degree permutation. *)
-         | Natural  (** Natural ordering. *)
-
-      (** Sets the ordering algorithm used to minimize fill-in.
-
-          @noarkode <node5#ss:sls_optin> ARKKLUSetOrdering *)
-      val set_ordering : 'k serial_session -> ordering -> unit
-
-      (** Reinitializes the Jacobian matrix memory and flags.
-          In the call, [reinit s n nnz realloc], [n] is the number of system
-          state variables, and [nnz] is the number of non-zeroes in the
-          Jacobian matrix. New symbolic and numeric factorizations will be
-          completed at the next solver step. If [realloc] is true, the
-          Jacobian matrix will be reallocated based on [nnz].
-
-          @noarkode <node5#ss:sls_optin> ARKKLUReInit *)
-      val reinit : 'k serial_session -> int -> int -> bool -> unit
-
-      (** Returns the number of calls made by a sparse linear solver to the
-          Jacobian approximation function.
-
-          @noarkode <node5#sss:optout_sls> ARKSlsGetNumJacEvals *)
-      val get_num_jac_evals : 'k serial_session -> int
-
-      module Mass : sig
-        (** A direct linear solver on compressed-sparse-column matrices.
-            In the call, [klu mfn nnz], [mfn] is a callback function that
-            computes an approximation to the mass matrix and [nnz] is the
-            maximum number of nonzero entries in that matrix.
-
-            @raise Sundials.NotImplementedBySundialsVersion Solver not available.
-            @noarkode <node5#sss:lin_solv_init> ARKMassKLU
-            @noarkode <node5#sss:optin_sls> ARKSlsSetSparseMassFn
-            @noarkode <node5#ss:smassFn> ARKSlsSparseMassFn *)
-        val solver_csc : Sls.SparseMatrix.csc sparse_mass_fn
-                         -> int -> 'k serial_mass_solver
-
-        (** A direct linear solver on compressed-sparse-row matrices.
-            In the call, [klu mfn nnz], [mfn] is a callback function that
-            computes an approximation to the mass matrix and [nnz] is the
-            maximum number of nonzero entries in that matrix.
-
-            @since 2.7.0
-            @raise Sundials.NotImplementedBySundialsVersion Solver not available.
-            @noarkode <node5#sss:lin_solv_init> ARKMassKLU
-            @noarkode <node5#sss:optin_sls> ARKSlsSetSparseMassFn
-            @noarkode <node5#ss:smassFn> ARKSlsSparseMassFn *)
-        val solver_csr : Sls.SparseMatrix.csr sparse_mass_fn
-                         -> int -> 'k serial_mass_solver
-
-        (** Sets the ordering algorithm used to minimize fill-in.
-
-            @noarkode <node5#ss:sls_optin> ARKMassKLUSetOrdering *)
-        val set_ordering : 'k serial_session -> ordering -> unit
-
-        (** Reinitializes the mass matrix memory and flags.
-            In the call, [reinit s n nnz realloc], [n] is the number of system state
-            variables, and [nnz] is the number of non-zeroes in the mass matrix.
-            New symbolic and numeric factorizations will be completed at the next
-            solver step. If [realloc] is true, the mass matrix will be
-            reallocated based on [nnz].
-
-            @noarkode <node5#ss:sls_optin> ARKMassKLUReInit *)
-        val reinit : 'k serial_session -> int -> int -> bool -> unit
-
-        (** Returns the number of calls made by a sparse linear solver to the
-            mass matrix approximation function.
-
-            @noarkode <node5#sss:optout_sls> ARKSlsGetNumMassEvals *)
-        val get_num_evals : 'k serial_session -> int
-      end
-    end (* }}} *)
-
-    (** SuperLU_MT sparse-direct linear solver module (requires SuperLU_MT).
-
-        @noarkode <node> The SuperLU_MT solver *)
-    module Superlumt : sig (* {{{ *)
-
-      (** A direct linear solver on compressed-sparse-column matrices.
-          In the call, [superlumt jfn ~nnz ~nthreads], [jfn] is a callback
-          function that computes an approximation to the Jacobian matrix,
-          [nnz] is the maximum number of nonzero entries in that matrix,
-          and [nthreads] is the number of threads to use when
-          factorizing/solving.
-
-          @raise Sundials.NotImplementedBySundialsVersion Solver not available.
-          @noarkode <node5#sss:lin_solv_init> ARKSuperLUMT
-          @noarkode <node5#sss:optin_sls> ARKSlsSetSparseJacFn
-          @noarkode <node5#ss:sjacFn> ARKSlsSparseJacFn *)
-      val solver_csc : Sls.SparseMatrix.csc sparse_jac_fn
-                       -> nnz:int
-                       -> nthreads:int
-                       -> 'k serial_linear_solver
-
-      (** The ordering algorithm used for reducing fill. *)
-      type ordering =
-           Natural       (** Natural ordering. *)
-         | MinDegreeProd (** Minimal degree ordering on $J^T J$. *)
-         | MinDegreeSum  (** Minimal degree ordering on $J^T + J$. *)
-         | ColAmd        (** Column approximate minimum degree permutation. *)
-
-      (** Sets the ordering algorithm used to minimize fill-in.
-
-          @noarkode <node5#ss:sls_optin> ARKSuperLUMTSetOrdering *)
-      val set_ordering : 'k serial_session -> ordering -> unit
-
-      (** Returns the number of calls made by a sparse linear solver to the
-          Jacobian approximation function.
-
-          @noarkode <node5#sss:optout_sls> ARKSlsGetNumJacEvals *)
-      val get_num_jac_evals : 'k serial_session -> int
-
-      module Mass : sig (* {{{ *)
-
-        (** A direct linear solver on compressed-sparse-column matrices.
-            In the call, [superlumt mfn ~nnz ~nthreads], [mfn] is a callback
-            function that computes an approximation to the mass matrix,
-            [nnz] is the maximum number of nonzero entries in that matrix,
-            and [nthreads] is the number of threads to use when
-            factorizing/solving.
-
-            @raise Sundials.NotImplementedBySundialsVersion Solver not available.
-            @noarkode <node5#sss:lin_solv_init> ARKMassSuperLUMT
-            @noarkode <node5#ss:smassFn> ARKSlsSparseMassFn *)
-        val solver_csc : Sls.SparseMatrix.csc sparse_mass_fn
-                         -> nnz:int
-                         -> nthreads:int
-                         -> 'k serial_mass_solver
-
-        (** Sets the ordering algorithm used to minimize fill-in.
-
-            @noarkode <node5#ss:sls_optin> ARKMassSuperLUMTSetOrdering *)
-        val set_ordering : 'k serial_session -> ordering -> unit
-
-        (** Returns the number of calls made by a sparse linear solver to the
-            mass matrix approximation function.
-
-            @noarkode <node5#sss:optout_sls> ARKSlsGetNumMassEvals *)
-        val get_num_evals : 'k serial_session -> int
-      end (* }}} *)
-    end (* }}} *)
-  end (* }}} *)
-
-(** Scaled Preconditioned Iterative Linear Solvers.
+(** Iterative Linear Solvers.
 
     @noarkode <node> Linear solver specification functions
     @noarkode <node> Iterative linear solvers optional input functions.
     @noarkode <node> Iterative linear solvers optional output functions. *)
-module Spils :
-  sig (* {{{ *)
+module Iterative : sig (* {{{ *)
+  (** {3:precond Preconditioners} *)
+
+  (** Arguments passed to the preconditioner solver function.
+
+      @noarkode <node> ARKSpilsPrecSolveFn *)
+  type 'd prec_solve_arg =
+    {
+      rhs   : 'd;         (** Right-hand side vector of the linear system. *)
+      gamma : float;      (** Scalar $\gamma$ in the Newton
+                              matrix given by $A = M - \gamma J$. *)
+      delta : float;      (** Input tolerance for iterative methods. *)
+      left  : bool;       (** [true] for left preconditioning and
+                              [false] for right preconditioning. *)
+    }
+
+  (** Callback functions that solve a linear system involving a
+      preconditioner matrix. In the call [prec_solve_fn jac arg z],
+      [jac] is a {!jacobian_arg} with one work vector, [arg] is
+      a {!prec_solve_arg} that specifies the linear system, and [z] is
+      computed to solve {% $P\mathtt{z} = \mathtt{arg.rhs}$%}.
+      $P$ is a preconditioner matrix, which approximates, however crudely,
+      the Newton matrix {% $A = M - \gamma J$%} where
+      {% $J = \frac{\partial f_I}{\partial y}$%}.
+
+      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Any other exception is treated as an unrecoverable error.
+
+      {warning The elements of [jac], [arg], and [z] should not
+               be accessed after the function has returned.}
+
+      @noarkode <node> ARKSpilsPrecSolveFn *)
+  type 'd prec_solve_fn =
+    (unit, 'd) jacobian_arg
+    -> 'd prec_solve_arg
+    -> 'd
+    -> unit
+
+  (** Callback functions that preprocess or evaluate Jacobian-related data
+      needed by {!prec_solve_fn}. In the call [prec_setup_fn jac jok gamma],
+      [jac] is a {!jacobian_arg} with three work vectors, [jok] indicates
+      whether any saved Jacobian-related data can be reused with the current
+      value of [gamma], and [gamma] is the scalar $\gamma$ in the Newton
+      matrix {% $A = M - \gamma J$%} where $J$ is the Jacobian matrix.
+      A function should return [true] if Jacobian-related data was updated
+      and [false] if saved data was reused.
+
+      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Any other exception is treated as an unrecoverable error.
+
+      {warning The elements of [jac] should not be accessed after the
+               function has returned.}
+
+      @noarkode <node> ARKSpilsSetPreconditioner
+      @noarkode <node> ARKSpilsPrecSetupFn *)
+  type 'd prec_setup_fn =
+    (unit, 'd) jacobian_arg
+    -> bool
+    -> float
+    -> bool
+
+  (** Specifies a preconditioner, including the type of preconditioning
+      (none, left, right, or both) and callback functions.
+      The following functions and those in {!Banded} and {!Arkode_bbd}
+      construct preconditioners.
+
+      The {!prec_solve_fn} is usually mandatory. The {!prec_setup_fn} can be
+      omitted if not needed.
+
+      @noarkode <node> ARKSpilsSetPreconditioner
+      @noarkode <node> ARKSpilsPrecSetupFn
+      @noarkode <node> ARKSpilsPrecSolveFn *)
+  type ('d,'k) preconditioner = ('d,'k) Arkode_impl.SpilsTypes.preconditioner
+
+  (** No preconditioning.  *)
+  val prec_none : ('d, 'k) preconditioner
+
+  (** Left preconditioning. {% $(P^{-1}A)x = P^{-1}b$ %}. *)
+  val prec_left :
+    ?setup:'d prec_setup_fn
+    -> 'd prec_solve_fn
+    -> ('d, 'k) preconditioner
+
+  (** Right preconditioning. {% $(AP^{-1})Px = b$ %}. *)
+  val prec_right :
+    ?setup:'d prec_setup_fn
+    -> 'd prec_solve_fn
+    -> ('d, 'k) preconditioner
+
+  (** Left and right preconditioning.
+      {% $(P_L^{-1}AP_R^{-1})P_Rx = P_L^{-1}b$ %} *)
+  val prec_both :
+    ?setup:'d prec_setup_fn
+    -> 'd prec_solve_fn
+    -> ('d, 'k) preconditioner
+
+  (** Banded preconditioners.  *)
+  module Banded : sig (* {{{ *)
+
+    (** The range of nonzero entries in a band matrix. *)
+    type bandrange =
+      { mupper : int; (** The upper half-bandwidth. *)
+        mlower : int; (** The lower half-bandwidth. *) }
+
+    (** A band matrix {!preconditioner} based on difference quotients.
+        The call [prec_left br] instantiates a left preconditioner which
+        generates a banded approximation to the Jacobian with [br.mlower]
+        sub-diagonals and [br.mupper] super-diagonals.
+
+        NB: Banded preconditioners may not be used for problems involving
+        a non-identity mass matrix.
+
+        @noarkode <node> ARKBandPrecInit *)
+    val prec_left : bandrange -> (Nvector_serial.data,
+                                  [>Nvector_serial.kind]) preconditioner
+
+    (** Like {!prec_left} but preconditions from the right.
+
+        @noarkode <node> ARKBandPrecInit *)
+    val prec_right :
+         bandrange -> (Nvector_serial.data,
+                       [>Nvector_serial.kind]) preconditioner
+
+    (** Like {!prec_left} but preconditions from both sides.
+
+        @noarkode <node> ARKBandPrecInit *)
+    val prec_both :
+         bandrange -> (Nvector_serial.data,
+                       [>Nvector_serial.kind]) preconditioner
+
+    (** {4:stats Banded statistics} *)
+
+    (** Returns the sizes of the real and integer workspaces used by the
+        banded preconditioner module.
+
+        @noarkode <node> ARKBandPrecGetWorkSpace
+        @return ([real_size], [integer_size]) *)
+    val get_work_space : 'k serial_session -> int * int
+
+    (** Returns the number of calls to the right-hand side callback for the
+        difference banded Jacobian approximation. This counter is only updated
+        if the default difference quotient function is used.
+
+        @noarkode <node> ARKBandPrecGetNumRhsEvals *)
+    val get_num_rhs_evals : 'k serial_session -> int
+  end (* }}} *)
+
+  (** {3:lsolvers Solvers} *)
+
+  (** Callback functions that preprocess or evaluate Jacobian-related data
+      needed by the jac_times_vec_fn. In the call [jac_times_setup_fn arg],
+      [arg] is a {!jacobian_arg} with no work vectors.
+    
+      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Any other exception is treated as an unrecoverable error.
+
+      {warning The elements of [arg] should not be accessed after the
+               function has returned.}
+
+      @nocvode <node> ARKSpilsJacTimesSetupFn *)
+  type 'd jac_times_setup_fn =
+    (unit, 'd) jacobian_arg
+    -> unit
+
+  (** Callback functions that compute the Jacobian times a vector. In the
+      call [jac_times_vec_fn arg v jv], [arg] is a {!jacobian_arg} with one
+      work vector, [v] is the vector multiplying the Jacobian, and [jv] is
+      the vector in which to store the
+      result—{% $\mathtt{jv} = J\mathtt{v}$%}.
+    
+      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Any other exception is treated as an unrecoverable error.
+
+      {warning Neither the elements of [arg] nor [v] or [jv] should be
+               accessed after the function has returned.}
+
+      @noarkode <node> ARKSpilsJacTimesVecFn *)
+  type 'd jac_times_vec_fn =
+    ('d, 'd) jacobian_arg
+    -> 'd (* v *)
+    -> 'd (* Jv *)
+    -> unit
+
+    (** Create an Arkode-specific linear solver from a generic iterative
+        linear solver.
+
+        NB: a [jac_times_setup_fn] is not supported in
+            {!Sundials.sundials_version} < 3.0.0.
+
+        @nocvode <node> ARKSpilsSetLinearSolver
+        @nocvode <node> ARKSpilsSetJacTimes *)
+    val make :
+      ('d, 'k, 'f) Lsolver.Iterative.t
+      -> ?jac_times_vec:'d jac_times_setup_fn option * 'd jac_times_vec_fn
+      -> ('d, 'k) preconditioner
+      -> ('d, 'k) linear_solver
+
+  (** {3:set Solver parameters} *)
+
+  (** Sets the factor by which the Krylov linear solver's convergence test
+      constant is reduced from the Newton iteration test constant.
+      This factor must be >= 0; passing 0 specifies the default (0.05).
+
+      @noarkode <node> ARKSpilsSetEpsLin *)
+  val set_eps_lin : ('d, 'k) session -> float -> unit
+
+  (** {3:stats Solver statistics} *)
+
+  (** Returns the sizes of the real and integer workspaces used by the spils
+      linear solver.
+
+      @noarkode <node> ARKSpilsGetWorkSpace
+      @return ([real_size], [integer_size]) *)
+  val get_work_space       : ('d, 'k) session -> int * int
+
+  (** Returns the cumulative number of linear iterations.
+
+      @noarkode <node> ARKSpilsGetNumLinIters *)
+  val get_num_lin_iters    : ('d, 'k) session -> int
+
+  (** Returns the cumulative number of linear convergence failures.
+
+      @noarkode <node> ARKSpilsGetNumConvFails *)
+  val get_num_conv_fails   : ('d, 'k) session -> int
+
+  (** Returns the cumulative number of calls to the setup function with
+      [jok=false].
+
+      @noarkode <node> ARKSpilsGetNumPrecEvals *)
+  val get_num_prec_evals   : ('d, 'k) session -> int
+
+  (** Returns the cumulative number of calls to the preconditioner solve
+      function.
+
+      @noarkode <node> ARKSpilsGetNumPrecSolves *)
+  val get_num_prec_solves  : ('d, 'k) session -> int
+
+  (** Returns the cumulative number of calls to the Jacobian-vector
+      setup function.
+
+      @since 3.0.0
+      @nocvode <node> ARKSpilsGetNumJTSetupEvals *)
+  val get_num_jtsetup_evals : ('d, 'k) session -> int
+
+  (** Returns the cumulative number of calls to the Jacobian-vector
+      function.
+
+      @noarkode <node> ARKSpilsGetNumJtimesEvals *)
+  val get_num_jtimes_evals : ('d, 'k) session -> int
+
+  (** Returns the number of calls to the right-hand side callback for
+      finite difference Jacobian-vector product approximation. This counter is
+      only updated if the default difference quotient function is used.
+
+      @noarkode <node> ARKSpilsGetNumRhsEvals *)
+  val get_num_rhs_evals    : ('d, 'k) session -> int
+
+  (** {3:lowlevel Low-level solver manipulation}
+
+      The {!init} and {!reinit} functions are the preferred way to set or
+      change preconditioner functions. These low-level functions are provided
+      for experts who want to avoid resetting internal counters and other
+      associated side-effects. *)
+
+  (** Change the preconditioner functions.
+
+      @noarkode <node> ARKSpilsSetPreconditioner
+      @noarkode <node> ARKSpilsPrecSolveFn
+      @noarkode <node> ARKSpilsPrecSetupFn *)
+  val set_preconditioner :
+    ('d, 'k) session
+    -> ?setup:'d prec_setup_fn
+    -> 'd prec_solve_fn
+    -> unit
+
+  (** Change the Jacobian-times-vector function.
+
+      @noarkode <node> ARKSpilsSetJacTimesVecFn
+      @noarkode <node> ARKSpilsJacTimesVecFn *)
+  val set_jac_times :
+    ('d, 'k) session
+    -> ?jac_times_setup:'d jac_times_setup_fn
+    -> 'd jac_times_vec_fn
+    -> unit
+
+  (** Remove a Jacobian-times-vector function and use the default
+      implementation.
+
+      @noarkode <node> ARKSpilsSetJacTimesVecFn
+      @noarkode <node> ARKSpilsJacTimesVecFn *)
+  val clear_jac_times : ('d, 'k) session -> unit
+
+end (* }}} *)
+
+(** Alternate Linear Solvers.
+
+    @noarkode <node> Providing Alternate Linear Solver Modules *)
+module Alternate : sig (* {{{ *)
+
+  (** Indicates problems during the solution of nonlinear equations at a
+      step. Helps decide whether to update the Jacobian data kept by a
+      linear solver. *)
+  type conv_fail =
+    | NoFailures
+        (** Either the first call for a step or the local error test
+            failed on the previous attempt at this setup but the Newton
+            iteration converged. {cconst ARK_NO_FAILURES} *)
+
+    | FailBadJ
+        (** The setup routine indicates that its Jacobian related data is not
+            current and either the previous Newton corrector iteration did not
+            converge, or, during the previous Newton corrector iteration, the
+            linear solver's {{!callbacks}lsolve} routine failed in a
+            recoverable manner. {cconst ARK_FAIL_BAD_J} *)
+
+    | FailOther
+        (** The previous Newton iteration failed to converge even
+            though the linear solver was using current
+            Jacobian-related data. {cconst ARK_FAIL_OTHER} *)
+
+  (** Functions that initialize linear solver data, like counters and
+      statistics.
+
+      Raising any exception in this function (including
+      {!Sundials.RecoverableFailure}) is treated as an unrecoverable error.
+
+      @noarkode <node> linit *)
+  type ('data, 'kind) linit = ('data, 'kind) session -> unit
+
+  (** Functions that prepare the linear solver for subsequent calls
+      to {{!callbacks}lsolve}.  This function must return [true]
+      only if the Jacobian-related data is current after the call.
+
+      This function may raise a {!Sundials.RecoverableFailure} exception to
+      indicate that a recoverable error has occurred. Any other exception is
+      treated as an unrecoverable error.
+
+      {warning The vectors [ypred], [fpred], and those in [tmp] should not be
+               accessed after the function returns.}
+
+      @noarkode <node> lsetup *)
+  type ('data, 'kind) lsetup =
+    ('data, 'kind) session
+    -> 'data lsetup_args
+    -> bool
+
+  (** Arguments to {!lsetup}. *)
+  and 'data lsetup_args =
+    {
+      lsetup_conv_fail : conv_fail;
+      (** Indicates that a problem occurred during the solution of
+          the nonlinear equation at the current time step. *)
+
+      lsetup_y : 'data;
+      (** The predicted $y$ vector for the current internal step. *)
+
+      lsetup_rhs : 'data;
+      (** The value of the implicit right-hand side at the predicted $y$
+          vector. *)
+
+      lsetup_tmp : 'data triple;
+      (** Temporary variables for use by the routine. *)
+    }
+
+  (** Functions that solve the linear equation $Ax = b$.
+      $A$ is arises in the Newton iteration and gives some approximation to
+      the Newton matrix {% $M-\gamma J$%} where
+      {% $J = \frac{\partial}{\partial y}f_I(t_n, y_{\text{cur}})$%},
+      $\gamma$ is available through {!get_gammas}.
+      The call [lsolve s args b] has as arguments:
+      - [s], the solver session,
+      - [args], summarizing current approximations to the solution, and
+      - [b], the right-hand side vector, also used for returning the result.
+
+      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Any other exception is treated as an unrecoverable error.
+
+      {warning The vectors in {!lsolve_args} should not be accessed
+               after the function returns.}
+
+      @noarkode <node> lsolve *)
+  type ('data, 'kind) lsolve =
+    ('data, 'kind) session
+    -> 'data lsolve_args
+    -> 'data
+    -> unit
+
+  (** Arguments to {!lsolve}. *)
+  and 'data lsolve_args =
+    {
+      lsolve_y : 'data;
+      (** The solver's current approximation to $y(t_n)$. *)
+
+      lsolve_rhs : 'data;
+      (** A vector containing {% $f_I(t_n, y_{\text{cur}})$%}. *)
+    }
+
+  (** The callbacks needed to implement an alternate linear solver. *)
+  type ('data, 'kind) callbacks =
+    {
+      linit  : ('data, 'kind) linit option;
+      lsetup : ('data, 'kind) lsetup option;
+      lsolve : ('data, 'kind) lsolve;
+    }
+
+  (** Creates a linear solver from a function returning a set of
+      callbacks. The creation function is passed a session and a vector.
+      The latter indicates the problem size and can, for example, be
+      cloned. *)
+  val make :
+        (('data, 'kind) session
+          -> ('data, 'kind) Nvector.t
+          -> ('data, 'kind) callbacks)
+        -> ('data, 'kind) linear_solver
+
+  (** {3:internals Solver internals} *)
+
+  (** Internal values used in Newton iteration. *)
+  type gammas = {
+    gamma : float;    (** The current $\gamma$ value. *)
+    gammap : float;   (** The value of $\gamma$ at the last setup call. *)
+  }
+
+  (** Returns the current and previous gamma values. *)
+  val get_gammas : ('data, 'kind) session -> gammas
+end (* }}} *)
+
+(** Mass Matrix Solvers
+
+    @noarkode <node> Mass matrix solver *)
+module Mass : sig (* {{{ *)
+
+  (** Mass matrix solvers used by Arkode.
+
+      @noarkode <node> Mass matrix solver specification functions *)
+  type ('data, 'kind) solver = ('data, 'kind) Arkode_impl.MassTypes.solver
+
+  (** Alias for mass matrix solvers that are restricted to serial nvectors. *)
+  type 'kind serial_solver = (Nvector_serial.data, 'kind) solver
+                             constraint 'kind = [>Nvector_serial.kind]
+
+  (** {3:dlsmass Direct mass matrix solvers} *)
+  module Direct : sig (* {{{ *)
+
+    (** Functions that compute a mass matrix (or an approximation of one).
+        In the call [mass t work m],
+        - [t] is the independent variable,
+        - [work] is workspace data, and
+        - [m] is the output dense mass matrix.
+
+        The callback should load the [N] by [N] matrix [m] with an
+        approximation to the mass matrix {% $M(t)$%}. Only nonzero elements
+        need be loaded into [m].
+
+        Raising {!Sundials.RecoverableFailure} indicates a recoverable
+        error. Any other exception is treated as an unrecoverable error.
+
+        {warning Neither the elements of [work] nor the matrix [m]
+                 should be accessed after the function has returned.}
+
+        @noarkode <node> ARKDlsMassFn *)
+    type 'm mass_fn = float -> RealArray.t triple -> 'm -> unit
+
+    (** Create an Arkode-specific mass linear solver from a generic dense
+        linear solver, a mass-matrix constructor function, and a mass matrix
+        for the solver's internal use. The boolean argument indicates whether
+        the mass matrix depends on the independent variable [t], if not it is
+        only computed and factored once.
+
+        NB: The boolean argument is ignored in
+        {!Sundials.sundials_version} < 3.0.0.
+
+        @nocvode <node> ARKDlsSetMassLinearSolver
+        @nocvode <node> ARKDlsSetMassFn *)
+    val make :
+      ('m, 'kind) Lsolver.Direct.serial_t
+      -> 'm mass_fn
+      -> bool
+      -> ('k, 'm, Nvector_serial.data, 'kind) Matrix.t
+      -> 'kind serial_solver
+
+    (** {3:stats Solver statistics} *)
+
+    (** Returns the sizes of the real and integer workspaces used by a
+        direct linear mass matrix solver.
+
+        @noarkode <node> ARKDlsGetMassWorkSpace
+        @return ([real_size], [integer_size]) *)
+    val get_work_space : 'k serial_session -> int * int
+
+    (** Returns the number of calls made to the mass matrix solver setup
+        routine.
+
+        NB: This function is not supported by
+        {!Sundials.sundials_version} < 3.0.0.
+
+        @noarkode <node> ARKDlsGetNumMassSetups *)
+    val get_num_setups : 'k serial_session -> int
+
+    (** Returns the number of calls made to the mass matrix solver solve
+        routine.
+
+        @noarkode <node> ARKDlsGetNumMassSolves *)
+    val get_num_solves : 'k serial_session -> int
+
+    (** Returns the number of calls made to the mass matrix-times-vector
+        routine.
+
+        NB: This function is not supported by
+        {!Sundials.sundials_version} < 3.0.0.
+
+        @noarkode <node> ARKDlsGetNumMassMult *)
+    val get_num_mult : 'k serial_session -> int
+
+  end (* }}} *)
+
+  (** {3:spilsmass Iterative mass matrix solvers} *)
+  module Iterative : sig (* {{{ *)
     (** {3:precond Preconditioners} *)
 
-    (** Arguments passed to the preconditioner solver function.
+    (** Arguments passed to the mass matrix preconditioner solver function.
 
-        @noarkode <node> ARKSpilsPrecSolveFn *)
+        @noarkode <node> ARKSpilsMassPrecSolveFn *)
     type 'd prec_solve_arg =
       {
-        rhs   : 'd;         (** Right-hand side vector of the linear system. *)
-        gamma : float;      (** Scalar $\gamma$ in the Newton
-                                matrix given by $A = M - \gamma J$. *)
-        delta : float;      (** Input tolerance for iterative methods. *)
-        left  : bool;       (** [true] for left preconditioning and
-                                [false] for right preconditioning. *)
+        rhs   : 'd;      (** Right-hand side vector of the linear system. *)
+        delta : float;   (** Input tolerance for iterative methods. *)
+        left  : bool;    (** [true] for left preconditioning and
+                             [false] for right preconditioning. *)
       }
 
-    (** Callback functions that solve a linear system involving a
-        preconditioner matrix. In the call [prec_solve_fn jac arg z],
-        [jac] is a {!jacobian_arg} with one work vector, [arg] is
-        a {!prec_solve_arg} that specifies the linear system, and [z] is
-        computed to solve {% $P\mathtt{z} = \mathtt{arg.rhs}$%}.
-        $P$ is a preconditioner matrix, which approximates, however crudely,
-        the Newton matrix {% $A = M - \gamma J$%} where
-        {% $J = \frac{\partial f_I}{\partial y}$%}.
+    (** Callback functions that solve a linear mass matrix system involving
+        a preconditioner matrix. In the call [prec_solve_fn t arg z], [t]
+        is the independent variable, [arg] is a {!prec_solve_arg} that
+        specifies the linear system, and [z] is computed to solve
+        {% $P\mathtt{z} = \mathtt{arg.rhs}$%}. {% $P$%} is a left or right
+        preconditioning matrix, if preconditioning is done on both sides,
+        the product of the two preconditioner matrices should approximate
+        {% $M$%}.
 
-        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
-        Any other exception is treated as an unrecoverable error.
+        Raising {!Sundials.RecoverableFailure} indicates a recoverable
+        error. Any other exception is treated as an unrecoverable error.
 
-        {warning The elements of [jac], [arg], and [z] should not
+        {warning The elements of [arg] and [z] should not
                  be accessed after the function has returned.}
 
-        @noarkode <node> ARKSpilsPrecSolveFn *)
+        @noarkode <node> ARKSpilsMassPrecSolveFn *)
     type 'd prec_solve_fn =
-      ('d, 'd) jacobian_arg
+         float
       -> 'd prec_solve_arg
       -> 'd
       -> unit
 
-    (** Callback functions that preprocess or evaluate Jacobian-related data
-        needed by {!prec_solve_fn}. In the call [prec_setup_fn jac jok gamma],
-        [jac] is a {!jacobian_arg} with three work vectors, [jok] indicates
-        whether any saved Jacobian-related data can be reused with the current
-        value of [gamma], and [gamma] is the scalar $\gamma$ in the Newton
-        matrix {% $A = M - \gamma J$%} where $J$ is the Jacobian matrix.
-        A function should return [true] if Jacobian-related data was updated
-        and [false] if saved data was reused.
+    (** Callback functions that preprocess or evaluate mass matrix-related
+        data needed by {!prec_solve_fn}. The argument gives the independent
+        variable [t].
+        
+        Raising {!Sundials.RecoverableFailure} indicates a recoverable
+        error. Any other exception is treated as an unrecoverable error.
 
-        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
-        Any other exception is treated as an unrecoverable error.
-
-        {warning The elements of [jac] should not be accessed after the
-                 function has returned.}
-
-        @noarkode <node> ARKSpilsSetPreconditioner
-        @noarkode <node> ARKSpilsPrecSetupFn *)
+        @noarkode <node> ARKSpilsMassPrecSetupFn *)
     type 'd prec_setup_fn =
-      ('d triple, 'd) jacobian_arg
-      -> bool
-      -> float
-      -> bool
-
-    (** Callback functions that compute the Jacobian times a vector. In the
-        call [jac_times_vec_fn arg v jv], [arg] is a {!jacobian_arg} with one
-        work vector, [v] is the vector multiplying the Jacobian, and [jv] is
-        the vector in which to store the
-        result—{% $\mathtt{jv} = J\mathtt{v}$%}.
-      
-        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
-        Any other exception is treated as an unrecoverable error.
-
-        {warning Neither the elements of [arg] nor [v] or [jv] should be
-                 accessed after the function has returned.}
-
-        @noarkode <node> ARKSpilsSetJacTimesVecFn
-        @noarkode <node> ARKSpilsJacTimesVecFn *)
-    type 'd jac_times_vec_fn =
-      ('d, 'd) jacobian_arg
-      -> 'd (* v *)
-      -> 'd (* Jv *)
+         float
       -> unit
 
     (** Specifies a preconditioner, including the type of preconditioning
         (none, left, right, or both) and callback functions.
-        The following functions and those in {!Banded} and {!Arkode_bbd}
-        construct preconditioners.
+        The following functions construct preconditioners.
 
-        The {!prec_solve_fn} is usually mandatory. The {!prec_setup_fn} can be
-        omitted if not needed.
-
-        @noarkode <node> ARKSpilsSetPreconditioner
-        @noarkode <node> ARKSpilsPrecSetupFn
-        @noarkode <node> ARKSpilsPrecSolveFn *)
-    type ('d,'k) preconditioner = ('d,'k) Arkode_impl.SpilsTypes.preconditioner
+        @noarkode <node> ARKSpilsSetMassPreconditioner
+        @noarkode <node> ARKSpilsMassPrecSetupFn
+        @noarkode <node> ARKSpilsMassPrecSolveFn *)
+    type ('d, 'k) preconditioner =
+      ('d, 'k) Arkode_impl.MassTypes.Iterative'.preconditioner
 
     (** No preconditioning.  *)
     val prec_none : ('d, 'k) preconditioner
 
-    (** Left preconditioning. {% $(P^{-1}A)x = P^{-1}b$ %}. *)
+    (** Left preconditioning. {% $(P^{-1}M)x = P^{-1}b$ %}. *)
     val prec_left :
       ?setup:'d prec_setup_fn
       -> 'd prec_solve_fn
       -> ('d, 'k) preconditioner
 
-    (** Right preconditioning. {% $(AP^{-1})Px = b$ %}. *)
+    (** Right preconditioning. {% $(MP^{-1})Px = b$ %}. *)
     val prec_right :
       ?setup:'d prec_setup_fn
       -> 'd prec_solve_fn
       -> ('d, 'k) preconditioner
 
     (** Left and right preconditioning.
-        {% $(P_L^{-1}AP_R^{-1})P_Rx = P_L^{-1}b$ %} *)
+        {% $(P_L^{-1}MP_R^{-1})P_Rx = P_L^{-1}b$ %} *)
     val prec_both :
       ?setup:'d prec_setup_fn
       -> 'd prec_solve_fn
       -> ('d, 'k) preconditioner
 
-    (** Banded preconditioners.  *)
-    module Banded : sig (* {{{ *)
-
-      (** A band matrix {!preconditioner} based on difference quotients.
-          The call [prec_left br] instantiates a left preconditioner which
-          generates a banded approximation to the Jacobian with [br.mlower]
-          sub-diagonals and [br.mupper] super-diagonals.
-
-          @noarkode <node> ARKBandPrecInit *)
-      val prec_left : bandrange -> (Nvector_serial.data,
-                                    [>Nvector_serial.kind]) preconditioner
-
-      (** Like {!prec_left} but preconditions from the right.
-
-          @noarkode <node> ARKBandPrecInit *)
-      val prec_right :
-           bandrange -> (Nvector_serial.data,
-                         [>Nvector_serial.kind]) preconditioner
-
-      (** Like {!prec_left} but preconditions from both sides.
-
-          @noarkode <node> ARKBandPrecInit *)
-      val prec_both :
-           bandrange -> (Nvector_serial.data,
-                         [>Nvector_serial.kind]) preconditioner
-
-      (** {4:stats Banded statistics} *)
-
-      (** Returns the sizes of the real and integer workspaces used by the
-          banded preconditioner module.
-
-          @noarkode <node> ARKBandPrecGetWorkSpace
-          @return ([real_size], [integer_size]) *)
-      val get_work_space : 'k serial_session -> int * int
-
-      (** Returns the number of calls to the right-hand side callback for the
-          difference banded Jacobian approximation. This counter is only updated
-          if the default difference quotient function is used.
-
-          @noarkode <node> ARKBandPrecGetNumRhsEvals *)
-      val get_num_rhs_evals : 'k serial_session -> int
-    end (* }}} *)
-
-    (** {3:spilsmass Mass matrix solvers} *)
-    module Mass :
-      sig (* {{{ *)
-        (** {3:precond Preconditioners} *)
-
-        (** Arguments passed to the mass matrix preconditioner solver function.
-
-            @noarkode <node> ARKSpilsMassPrecSolveFn *)
-        type 'd prec_solve_arg =
-          {
-            rhs   : 'd;      (** Right-hand side vector of the linear system. *)
-            delta : float;   (** Input tolerance for iterative methods. *)
-            left  : bool;    (** [true] for left preconditioning and
-                                 [false] for right preconditioning. *)
-            tmp   : 'd;      (** Workspace data. *)
-          }
-
-        (** Callback functions that solve a linear mass matrix system involving
-            a preconditioner matrix. In the call [prec_solve_fn t arg z], [t]
-            is the independent variable, [arg] is a {!prec_solve_arg} that
-            specifies the linear system, and [z] is computed to solve
-            {% $P\mathtt{z} = \mathtt{arg.rhs}$%}. {% $P$%} is a left or right
-            preconditioning matrix, if preconditioning is done on both sides,
-            the product of the two preconditioner matrices should approximate
-            {% $M$%}.
-
-            Raising {!Sundials.RecoverableFailure} indicates a recoverable
-            error. Any other exception is treated as an unrecoverable error.
-
-            {warning The elements of [arg] and [z] should not
-                     be accessed after the function has returned.}
-
-            @noarkode <node> ARKSpilsMassPrecSolveFn *)
-        type 'd prec_solve_fn =
-             float
-          -> 'd prec_solve_arg
-          -> 'd
-          -> unit
-
-        (** Callback functions that preprocess or evaluate mass matrix-related
-            data needed by {!prec_solve_fn}. In the call
-            [prec_setup_fn t tmp], [t] is the independent variable, and [tmp]
-            is workspace data.
-
-            Raising {!Sundials.RecoverableFailure} indicates a recoverable
-            error. Any other exception is treated as an unrecoverable error.
-
-            {warning The elements of [tmp] should not be accessed after
-                     the function has returned.}
-
-            @noarkode <node> ARKSpilsMassPrecSetupFn *)
-        type 'd prec_setup_fn =
-             float
-          -> 'd triple
-          -> unit
-
-        (** Callback functions that compute the mass matrix times a vector. In
-            the call [times_vec_fn t v mv],
-            - [t] is the independent variable,
-            - [v] is the vector to multiply, and
-            - [mv] is the computed output
-                   vector—{% $\mathtt{mv} = M\mathtt{v}$%}.
-            
-            Raising {!Sundials.RecoverableFailure} indicates a recoverable
-            error. Any other exception is treated as an unrecoverable error.
-
-            {warning Neither the elements of [v] nor [mv] should be
-                     accessed after the function has returned.}
-
-            @noarkode <node> ARKSpilsMassTimesVecFn *)
-        type 'd times_vec_fn =
-             float (* t *)
-          -> 'd    (* v *)
-          -> 'd    (* Mv *)
-          -> unit
-
-        (** Specifies a preconditioner, including the type of preconditioning
-            (none, left, right, or both) and callback functions.
-            The following functions construct preconditioners.
-
-            The {!prec_solve_fn} and {!times_vec_fn} are mandatory. The
-            {!prec_setup_fn} can be omitted if not needed.
-
-            @noarkode <node> ARKSpilsSetMassPreconditioner
-            @noarkode <node> ARKSpilsSetMassTimesVecFn
-            @noarkode <node> ARKSpilsMassPrecSetupFn
-            @noarkode <node> ARKSpilsMassPrecSolveFn
-            @noarkode <node> ARKSpilsMassTimesVecFn *)
-        type ('d, 'k) preconditioner =
-          ('d, 'k) Arkode_impl.SpilsTypes.MassTypes.preconditioner
-
-        (** No preconditioning.  *)
-        val prec_none : ('d, 'k) preconditioner
-
-        (** Left preconditioning. {% $(P^{-1}M)x = P^{-1}b$ %}. *)
-        val prec_left :
-          ?setup:'d prec_setup_fn
-          -> 'd prec_solve_fn
-          -> ('d, 'k) preconditioner
-
-        (** Right preconditioning. {% $(MP^{-1})Px = b$ %}. *)
-        val prec_right :
-          ?setup:'d prec_setup_fn
-          -> 'd prec_solve_fn
-          -> ('d, 'k) preconditioner
-
-        (** Left and right preconditioning.
-            {% $(P_L^{-1}MP_R^{-1})P_Rx = P_L^{-1}b$ %} *)
-        val prec_both :
-          ?setup:'d prec_setup_fn
-          -> 'd prec_solve_fn
-          -> ('d, 'k) preconditioner
-
-        (** {3:lsolvers Solvers} *)
-
-        (** Krylov iterative solver using the scaled preconditioned generalized
-            minimum residual (GMRES) method.
-            In the call [spgmr ~maxl:maxl mtv prec],
-            - [maxl] is the maximum dimension of the Krylov subspace
-                     (defaults to 5),
-            - [mtv] is the mass-matrix-vector product function, and
-            - [prec] is a {!preconditioner},
-
-            @noarkode <node> ARKMassSpgmr
-            @noarkode <node> ARKSpilsSetMassPreconditioner *)
-        val spgmr :
-          ?maxl:int
-          -> 'd times_vec_fn
-          -> ('d, 'k) preconditioner
-          -> ('d, 'k) linear_solver
-
-        (** Krylov iterative solver using the scaled preconditioned biconjugate
-            stabilized (Bi-CGStab) method.
-            In the call [spbcg ~maxl:maxl mtv prec],
-            - [maxl] is the maximum dimension of the Krylov subspace
-                     (defaults to 5),
-            - [mtv] is the mass-matrix-vector product function, and
-            - [prec] is a {!preconditioner},
-
-            @noarkode <node> ARKMassSpbcg
-            @noarkode <node> ARKSpilsSetMassPreconditioner *)
-        val spbcg :
-          ?maxl:int
-          -> 'd times_vec_fn
-          -> ('d, 'k) preconditioner
-          -> ('d, 'k) linear_solver
-
-        (** Krylov iterative with the scaled preconditioned transpose-free
-            quasi-minimal residual (SPTFQMR) method.
-            In the call [sptfqmr ~maxl:maxl mtv prec],
-            - [maxl] is the maximum dimension of the Krylov subspace
-                     (defaults to 5),
-            - [mtv] is the mass-matrix-vector product function, and
-            - [prec] is a {!preconditioner},
-
-            @noarkode <node> ARKMassSptfqmr
-            @noarkode <node> ARKSpilsSetMassPreconditioner *)
-        val sptfqmr :
-          ?maxl:int
-          -> 'd times_vec_fn
-          -> ('d, 'k) preconditioner
-          -> ('d, 'k) linear_solver
-
-        (** Krylov iterative solver using the scaled preconditioned flexible
-            generalized minimum residual (GMRES) method.
-            In the call [spfgmr ~maxl:maxl mtv prec],
-            - [maxl] is the maximum dimension of the Krylov subspace
-                     (defaults to 5),
-            - [mtv] is the mass-matrix-vector product function, and
-            - [prec] is a {!preconditioner},
-
-            @noarkode <node> ARKMassSpfgmr
-            @noarkode <node> ARKSpilsSetMassPreconditioner *)
-        val spfgmr :
-          ?maxl:int
-          -> 'd times_vec_fn
-          -> ('d, 'k) preconditioner
-          -> ('d, 'k) linear_solver
-
-        (** Krylov iterative solver using the preconditioned conjugate gradient
-            (PCG) method.
-            In the call [pcg ~maxl:maxl mtv prec],
-            - [maxl] is the maximum dimension of the Krylov subspace
-                     (defaults to 5),
-            - [mtv] is the mass-matrix-vector product function, and
-            - [prec] is a {!preconditioner},
-
-            @noarkode <node> ARKMassPcg
-            @noarkode <node> ARKSpilsSetMassPreconditioner *)
-        val pcg :
-          ?maxl:int
-          -> 'd times_vec_fn
-          -> ('d, 'k) preconditioner
-          -> ('d, 'k) linear_solver
-
-        (** {3:set Solver parameters} *)
-
-        (** Sets the Gram-Schmidt orthogonalization to be used with the
-            Spgmr or Spfgmr {!linear_solver}.
-
-            @noarkode <node> ARKSpilsSetMassGSType *)
-        val set_gs_type : ('d, 'k) session -> Spils.gramschmidt_type -> unit
-
-        (** Sets the factor by which the Krylov linear solver's convergence
-            test constant is reduced from the Newton iteration test constant.
-            This factor must be >= 0; passing 0 specifies the default (0.05).
-
-            @noarkode <node> ARKSpilsSetMassEpsLin *)
-        val set_eps_lin : ('d, 'k) session -> float -> unit
-
-        (** Resets the maximum Krylov subspace dimension for the Bi-CGStab,
-            TFQMR, or PCG methods. A value <= 0 specifies the default (5.0).
-
-            @noarkode <node> ARKSpilsSetMassMaxl *)
-        val set_maxl : ('d, 'k) session -> int -> unit
-
-        (** {3:stats Solver statistics} *)
-
-        (** Returns the sizes of the real and integer workspaces used by the
-            spils linear solver.
-
-            @noarkode <node> ARKSpilsGetMassWorkSpace
-            @return ([real_size], [integer_size]) *)
-        val get_work_space       : ('d, 'k) session -> int * int
-
-        (** Returns the cumulative number of linear iterations.
-
-            @noarkode <node> ARKSpilsGetNumMassIters *)
-        val get_num_lin_iters    : ('d, 'k) session -> int
-
-        (** Returns the cumulative number of linear convergence failures.
-
-            @noarkode <node> ARKSpilsGetNumMassConvFails *)
-        val get_num_conv_fails   : ('d, 'k) session -> int
-
-        (** Returns the cumulative number of calls to the mass-matrix-vector
-            product function ({!times_vec_fn}).
-
-            @noarkode <node> ARKSpilsGetNumMtimesEvals
-            @since Sundials 2.6.3 *)
-        val get_num_mtimes_evals : ('d, 'k) session -> int
-
-        (** Returns the cumulative number of calls to the setup function with
-            [jok=false].
-
-            @noarkode <node> ARKSpilsGetNumMassPrecEvals *)
-        val get_num_prec_evals   : ('d, 'k) session -> int
-
-        (** Returns the cumulative number of calls to the preconditioner solve
-            function.
-
-            @noarkode <node> ARKSpilsGetNumMassPrecSolves *)
-        val get_num_prec_solves  : ('d, 'k) session -> int
-
-        (** {3:lowlevel Low-level solver manipulation}
-
-            The {!init} and {!reinit} functions are the preferred way to set or
-            change preconditioner functions. These low-level functions are
-            provided for experts who want to avoid resetting internal counters
-            and other associated side-effects. *)
-
-        (** Change the preconditioner functions.
-
-            @noarkode <node> ARKSpilsSetMassPreconditioner
-            @noarkode <node> ARKSpilsMassPrecSolveFn
-            @noarkode <node> ARKSpilsMassPrecSetupFn *)
-        val set_preconditioner :
-          ('d, 'k) session
-          -> ?setup:'d prec_setup_fn
-          -> 'd prec_solve_fn
-          -> unit
-
-        (** Change the mass matrix-times-vector function.
-
-            @noarkode <node> ARKSpilsSetMassTimesVecFn
-            @noarkode <node> ARKSpilsMassTimesVecFn *)
-        val set_times_vec_fn :
-          ('d, 'k) session
-          -> 'd times_vec_fn
-          -> unit
-
-        (** Change the preconditioning direction without modifying
-            callback functions. If the preconditioning type is changed from
-            {{!Spils.preconditioning_type}Spils.PrecNone}
-            then {!set_preconditioner} must be called to install the necessary
-            callbacks.
-
-            @noarkode <node> ARKSpilsSetMassPrecType *)
-        val set_prec_type
-          : ('d, 'k) session -> Spils.preconditioning_type -> unit
-      end (* }}} *)
-
     (** {3:lsolvers Solvers} *)
 
-    (** Krylov iterative solver using the scaled preconditioned generalized
-        minimum residual (GMRES) method.
-        In the call [spgmr ~maxl:maxl ~jac_times_vec:jtv prec],
-        - [maxl] is the maximum dimension of the Krylov subspace
-                 (defaults to 5),
-        - [jtv] computes an approximation to the product between the Jacobian
-                matrix and a vector, and
-        - [prec] is a {!preconditioner}.
+    (** Callback functions that preprocess or evaluate Jacobian-related data
+        needed by the mass_times_vec_fn. The argument gives the independent
+        variable [t].
+        
+        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+        Any other exception is treated as an unrecoverable error.
 
-        If the {!jac_times_vec_fn} is omitted, a
-        default implementation based on difference quotients is used.
+        @nocvode <node> ARKSpilsMassTimesSetupFn *)
+    type mass_times_setup_fn = float -> unit
 
-        @noarkode <node> ARKSpgmr
-        @noarkode <node> ARKSpilsSetPreconditioner
-        @noarkode <node> ARKSpilsSetMaxl
-        @noarkode <node> ARKSpilsSetJacTimesVecFn
-        @noarkode <node> ARKSpilsJacTimesVecFn *)
-    val spgmr :
-      ?maxl:int
-      -> ?jac_times_vec:'d jac_times_vec_fn
+    (** Callback functions that compute the mass matrix times a vector. In
+        the call [mass_times_vec_fn t v mv],
+        - [t] is the independent variable,
+        - [v] is the vector to multiply, and
+        - [mv] is the computed output
+               vector—{% $\mathtt{mv} = M\mathtt{v}$%}.
+        
+        Raising {!Sundials.RecoverableFailure} indicates a recoverable
+        error. Any other exception is treated as an unrecoverable error.
+
+        {warning Neither the elements of [v] nor [mv] should be
+                 accessed after the function has returned.}
+
+        @noarkode <node> ARKSpilsMassTimesVecFn *)
+    type 'd mass_times_vec_fn =
+         float (* t *)
+      -> 'd    (* v *)
+      -> 'd    (* Mv *)
+      -> unit
+
+    (** Create an Arkode-specific mass linear solver from a generic iterative
+        linear solver. The boolean argument indicates whether the mass matrix
+        depends on the independent variable [t], if not it is only computed
+        and factored once.
+
+        NB: a [mass_times_setup_fn] is not supported in
+        {!Sundials.sundials_version} < 3.0.0.
+
+        NB: The boolean argument is ignored in
+        {!Sundials.sundials_version} < 3.0.0.
+
+        @nocvode <node> ARKSpilsSetMassLinearSolver
+        @nocvode <node> ARKSpilsSetMassTimes *)
+    val make :
+      ('d, 'k, 'f) Lsolver.Iterative.t
+      -> ?mass_times_setup:mass_times_setup_fn
+      -> 'd mass_times_vec_fn
+      -> bool
       -> ('d, 'k) preconditioner
-      -> ('d, 'k) linear_solver
-
-    (** Krylov iterative solver using the scaled preconditioned biconjugate
-        stabilized (Bi-CGStab) method.
-        In the call [spbcg ~maxl:maxl ~jac_times_vec:jtv prec],
-        - [maxl] is the maximum dimension of the Krylov subspace
-                 (defaults to 5),
-        - [jtv] computes an approximation to the product between the Jacobian
-                matrix and a vector, and
-        - [prec] is a {!preconditioner}.
-
-        If the {!jac_times_vec_fn} is omitted, a
-        default implementation based on difference quotients is used.
-
-        @noarkode <node> ARKSpbcg
-        @noarkode <node> ARKSpilsSetPreconditioner
-        @noarkode <node> ARKSpilsSetMaxl
-        @noarkode <node> ARKSpilsSetJacTimesVecFn
-        @noarkode <node> ARKSpilsJacTimesVecFn *)
-    val spbcg :
-      ?maxl:int
-      -> ?jac_times_vec:'d jac_times_vec_fn
-      -> ('d, 'k) preconditioner
-      -> ('d, 'k) linear_solver
-
-    (** Krylov iterative with the scaled preconditioned transpose-free
-        quasi-minimal residual (SPTFQMR) method.
-        In the call [sptfqmr ~maxl:maxl ~jac_times_vec:jtv prec],
-        - [maxl] is the maximum dimension of the Krylov subspace
-                 (defaults to 5),
-        - [jtv] computes an approximation to the product between the Jacobian
-                matrix and a vector, and
-        - [prec] is a {!preconditioner}.
-
-        If the {!jac_times_vec_fn} is omitted, a
-        default implementation based on difference quotients is used.
-
-        @noarkode <node> ARKSptfqmr
-        @noarkode <node> ARKSpilsSetPreconditioner
-        @noarkode <node> ARKSpilsSetMaxl
-        @noarkode <node> ARKSpilsSetJacTimesVecFn
-        @noarkode <node> ARKSpilsJacTimesVecFn *)
-    val sptfqmr :
-      ?maxl:int
-      -> ?jac_times_vec:'d jac_times_vec_fn
-      -> ('d, 'k) preconditioner
-      -> ('d, 'k) linear_solver
-
-    (** Krylov iterative solver using the scaled preconditioned flexible
-        generalized minimum residual (GMRES) method.
-        In the call [spfgmr ~maxl:maxl ~jac_times_vec:jtv prec],
-        - [maxl] is the maximum dimension of the Krylov subspace
-                 (defaults to 5),
-        - [jtv] computes an approximation to the product between the Jacobian
-                matrix and a vector, and
-        - [prec] is a {!preconditioner}.
-
-        If the {!jac_times_vec_fn} is omitted, a
-        default implementation based on difference quotients is used.
-
-        @noarkode <node> ARKSpfgmr
-        @noarkode <node> ARKSpilsSetPreconditioner
-        @noarkode <node> ARKSpilsSetMaxl
-        @noarkode <node> ARKSpilsSetJacTimesVecFn
-        @noarkode <node> ARKSpilsJacTimesVecFn *)
-    val spfgmr :
-      ?maxl:int
-      -> ?jac_times_vec:'d jac_times_vec_fn
-      -> ('d, 'k) preconditioner
-      -> ('d, 'k) linear_solver
-
-    (** Krylov iterative solver using the preconditioned conjugate gradient
-        (PCG) method.
-        In the call [pcg ~maxl:maxl ~jac_times_vec:jtv prec],
-        - [maxl] is the maximum dimension of the Krylov subspace
-                 (defaults to 5),
-        - [jtv] computes an approximation to the product between the Jacobian
-                matrix and a vector, and
-        - [prec] is a {!preconditioner}.
-
-        If the {!jac_times_vec_fn} is omitted, a
-        default implementation based on difference quotients is used.
-
-        @noarkode <node> ARKPcg
-        @noarkode <node> ARKSpilsSetPreconditioner
-        @noarkode <node> ARKSpilsSetMaxl
-        @noarkode <node> ARKSpilsSetJacTimesVecFn
-        @noarkode <node> ARKSpilsJacTimesVecFn *)
-    val pcg :
-      ?maxl:int
-      -> ?jac_times_vec:'d jac_times_vec_fn
-      -> ('d, 'k) preconditioner
-      -> ('d, 'k) linear_solver
+      -> ('d, 'k) solver
 
     (** {3:set Solver parameters} *)
 
-    (** Sets the Gram-Schmidt orthogonalization to be used with the
-        Spgmr or Spfgmr {!linear_solver}.
-
-        @noarkode <node> ARKSpilsSetGSType *)
-    val set_gs_type : ('d, 'k) session -> Spils.gramschmidt_type -> unit
-
-    (** Sets the factor by which the Krylov linear solver's convergence test
-        constant is reduced from the Newton iteration test constant.
+    (** Sets the factor by which the Krylov linear solver's convergence
+        test constant is reduced from the Newton iteration test constant.
         This factor must be >= 0; passing 0 specifies the default (0.05).
 
-        @noarkode <node> ARKSpilsSetEpsLin *)
+        @noarkode <node> ARKSpilsSetMassEpsLin *)
     val set_eps_lin : ('d, 'k) session -> float -> unit
-
-    (** Resets the maximum Krylov subspace dimension for the Bi-CGStab,
-        TFQMR, or PCG methods. A value <= 0 specifies the default (5.0).
-
-        @noarkode <node> ARKSpilsSetMaxl *)
-    val set_maxl : ('d, 'k) session -> int -> unit
 
     (** {3:stats Solver statistics} *)
 
-    (** Returns the sizes of the real and integer workspaces used by the spils
-        linear solver.
+    (** Returns the sizes of the real and integer workspaces used by the
+        spils linear solver.
 
-        @noarkode <node> ARKSpilsGetWorkSpace
+        @noarkode <node> ARKSpilsGetMassWorkSpace
         @return ([real_size], [integer_size]) *)
     val get_work_space       : ('d, 'k) session -> int * int
 
     (** Returns the cumulative number of linear iterations.
 
-        @noarkode <node> ARKSpilsGetNumLinIters *)
+        @noarkode <node> ARKSpilsGetNumMassIters *)
     val get_num_lin_iters    : ('d, 'k) session -> int
 
     (** Returns the cumulative number of linear convergence failures.
 
-        @noarkode <node> ARKSpilsGetNumConvFails *)
+        @noarkode <node> ARKSpilsGetNumMassConvFails *)
     val get_num_conv_fails   : ('d, 'k) session -> int
+
+    (** Returns the cumulative number of calls to the mass-matrix-vector
+        setup function.
+
+        @since 3.0.0
+        @nocvode <node> ARKSpilsGetNumMTSetupEvals *)
+    val get_num_mtsetup_evals : ('d, 'k) session -> int
+
+    (** Returns the cumulative number of calls to the mass-matrix-vector
+        product function ({!times_vec_fn}).
+
+        @noarkode <node> ARKSpilsGetNumMtimesEvals
+        @since Sundials 2.6.3 *)
+    val get_num_mtimes_evals : ('d, 'k) session -> int
 
     (** Returns the cumulative number of calls to the setup function with
         [jok=false].
 
-        @noarkode <node> ARKSpilsGetNumPrecEvals *)
+        @noarkode <node> ARKSpilsGetNumMassPrecEvals *)
     val get_num_prec_evals   : ('d, 'k) session -> int
 
     (** Returns the cumulative number of calls to the preconditioner solve
         function.
 
-        @noarkode <node> ARKSpilsGetNumPrecSolves *)
+        @noarkode <node> ARKSpilsGetNumMassPrecSolves *)
     val get_num_prec_solves  : ('d, 'k) session -> int
-
-    (** Returns the cumulative number of calls to the Jacobian-vector
-        function.
-
-        @noarkode <node> ARKSpilsGetNumJtimesEvals *)
-    val get_num_jtimes_evals : ('d, 'k) session -> int
-
-    (** Returns the number of calls to the right-hand side callback for
-        finite difference Jacobian-vector product approximation. This counter is
-        only updated if the default difference quotient function is used.
-
-        @noarkode <node> ARKSpilsGetNumRhsEvals *)
-    val get_num_rhs_evals    : ('d, 'k) session -> int
 
     (** {3:lowlevel Low-level solver manipulation}
 
         The {!init} and {!reinit} functions are the preferred way to set or
-        change preconditioner functions. These low-level functions are provided
-        for experts who want to avoid resetting internal counters and other
-        associated side-effects. *)
+        change preconditioner functions. These low-level functions are
+        provided for experts who want to avoid resetting internal counters
+        and other associated side-effects. *)
 
     (** Change the preconditioner functions.
 
-        @noarkode <node> ARKSpilsSetPreconditioner
-        @noarkode <node> ARKSpilsPrecSolveFn
-        @noarkode <node> ARKSpilsPrecSetupFn *)
+        @noarkode <node> ARKSpilsSetMassPreconditioner
+        @noarkode <node> ARKSpilsMassPrecSolveFn
+        @noarkode <node> ARKSpilsMassPrecSetupFn *)
     val set_preconditioner :
       ('d, 'k) session
       -> ?setup:'d prec_setup_fn
       -> 'd prec_solve_fn
       -> unit
 
-    (** Change the Jacobian-times-vector function.
+    (** Change the mass matrix-times-vector function.
 
-        @noarkode <node> ARKSpilsSetJacTimesVecFn
-        @noarkode <node> ARKSpilsJacTimesVecFn *)
-    val set_jac_times_vec_fn :
+        @noarkode <node> ARKSpilsSetMassTimes
+        @noarkode <node> ARKSpilsMassTimesVecFn *)
+    val set_times :
       ('d, 'k) session
-      -> 'd jac_times_vec_fn
+      -> ?mass_times_setup:mass_times_setup_fn
+      -> 'd mass_times_vec_fn
       -> unit
 
-    (** Remove a Jacobian-times-vector function and use the default
-        implementation.
-
-        @noarkode <node> ARKSpilsSetJacTimesVecFn
-        @noarkode <node> ARKSpilsJacTimesVecFn *)
-    val clear_jac_times_vec_fn : ('d, 'k) session -> unit
-
-    (** Change the preconditioning direction without modifying
-        callback functions. If the preconditioning type is changed from
-        {{!Spils.preconditioning_type}Spils.PrecNone}
-        then {!set_preconditioner} must be called to install the necessary
-        callbacks.
-
-        @noarkode <node> ARKSpilsSetPrecType *)
-    val set_prec_type : ('d, 'k) session -> Spils.preconditioning_type -> unit
   end (* }}} *)
 
-(** Alternate Linear Solvers.
+  (** {3:altmass Alternate mass matrix solvers} *)
+  module Alternate : sig (* {{{ *)
 
-    @noarkode <node> Providing Alternate Linear Solver Modules *)
-module Alternate :
-  sig (* {{{ *)
-
-    (** Indicates problems during the solution of nonlinear equations at a
-        step. Helps decide whether to update the Jacobian data kept by a
-        linear solver. *)
-    type conv_fail =
-      | NoFailures
-          (** Either the first call for a step or the local error test
-              failed on the previous attempt at this setup but the Newton
-              iteration converged. {cconst ARK_NO_FAILURES} *)
-
-      | FailBadJ
-          (** The setup routine indicates that its Jacobian related data is not
-              current and either the previous Newton corrector iteration did not
-              converge, or, during the previous Newton corrector iteration, the
-              linear solver's {{!callbacks}lsolve} routine failed in a
-              recoverable manner. {cconst ARK_FAIL_BAD_J} *)
-
-      | FailOther
-          (** The previous Newton iteration failed to converge even
-              though the linear solver was using current
-              Jacobian-related data. {cconst ARK_FAIL_OTHER} *)
-
-    (** Functions that initialize linear solver data, like counters and
+    (** Functions that initialize mass matrix solver data, like counters and
         statistics.
 
         Raising any exception in this function (including
-        {!Sundials.RecoverableFailure}) is treated as an unrecoverable error.
+        {!Sundials.RecoverableFailure}) is treated as an unrecoverable
+        error.
 
-        @noarkode <node> linit *)
-    type ('data, 'kind) linit = ('data, 'kind) session -> unit
+        @noarkode <node> minit *)
+    type ('data, 'kind) minit = ('data, 'kind) session -> unit
 
-    (** Functions that prepare the linear solver for subsequent calls
-        to {{!callbacks}lsolve}.  This function must return [true]
-        only if the Jacobian-related data is current after the call.
+    (** Functions that prepare the mass matrix solver for subsequent calls
+        to {{!callbacks}lsolve}.
 
-        This function may raise a {!Sundials.RecoverableFailure} exception to
-        indicate that a recoverable error has occurred. Any other exception is
-        treated as an unrecoverable error.
+        This function may raise a {!Sundials.RecoverableFailure} exception
+        to indicate that a recoverable error has occurred. Any other
+        exception is treated as an unrecoverable error.
 
-        {warning The vectors [ypred], [fpred], and those in [tmp] should not be
-                 accessed after the function returns.}
+        {warning The vectors [ypred], [fpred], and those in [tmp] should
+                 not be accessed after the function returns.}
 
-        @noarkode <node> lsetup *)
-    type ('data, 'kind) lsetup =
+        @noarkode <node> msetup *)
+    type ('data, 'kind) msetup =
       ('data, 'kind) session
-      -> 'data lsetup_args
-      -> bool
-
-    (** Arguments to {!lsetup}. *)
-    and 'data lsetup_args =
-      {
-        lsetup_conv_fail : conv_fail;
-        (** Indicates that a problem occurred during the solution of
-            the nonlinear equation at the current time step. *)
-
-        lsetup_y : 'data;
-        (** The predicted $y$ vector for the current internal step. *)
-
-        lsetup_rhs : 'data;
-        (** The value of the implicit right-hand side at the predicted $y$
-            vector. *)
-
-        lsetup_tmp : 'data triple;
-        (** Temporary variables for use by the routine. *)
-      }
-
-    (** Functions that solve the linear equation $Ax = b$.
-        $A$ is arises in the Newton iteration and gives some approximation to
-        the Newton matrix {% $M-\gamma J$%} where
-        {% $J = \frac{\partial}{\partial y}f_I(t_n, y_{\text{cur}})$%},
-        $\gamma$ is available through {!get_gammas}.
-        The call [lsolve s args b] has as arguments:
-        - [s], the solver session,
-        - [args], summarizing current approximations to the solution, and
-        - [b], the right-hand side vector, also used for returning the result.
-
-        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
-        Any other exception is treated as an unrecoverable error.
-
-        {warning The vectors in {!lsolve_args} should not be accessed
-                 after the function returns.}
-
-        @noarkode <node> lsolve *)
-    type ('data, 'kind) lsolve =
-      ('data, 'kind) session
-      -> 'data lsolve_args
-      -> 'data
+      -> 'data triple
       -> unit
 
-    (** Arguments to {!lsolve}. *)
-    and 'data lsolve_args =
-      {
-        lsolve_ewt : 'data;
-        (** The error weights. *)
+    (** Functions that solve the linear equation $Mx = b$. $M$ is the system
+        mass matrix. The call [lsolve s b weight] has as arguments:
+        - [s], the solver session,
+        - [b], the right-hand side vector, also used for returning the
+               result, and
+        - [weight], a vector containing the error weights.
 
-        lsolve_y : 'data;
-        (** The solver's current approximation to $y(t_n)$. *)
+        Raising {!Sundials.RecoverableFailure} indicates a recoverable
+        error. Any other exception is treated as an unrecoverable error.
 
-        lsolve_rhs : 'data;
-        (** A vector containing {% $f_I(t_n, y_{\text{cur}})$%}. *)
-      }
+        {warning The vectors [b] and [weight] should not be accessed after
+                 the function returns.}
+
+        @noarkode <node> msolve
+        @noarkode <node> Mass matrix solver *)
+    type ('data, 'kind) msolve =
+      ('data, 'kind) session
+      -> 'data (* b *)
+      -> unit
 
     (** The callbacks needed to implement an alternate linear solver. *)
     type ('data, 'kind) callbacks =
       {
-        linit  : ('data, 'kind) linit option;
-        lsetup : ('data, 'kind) lsetup option;
-        lsolve : ('data, 'kind) lsolve;
+        minit  : ('data, 'kind) minit option;
+        msetup : ('data, 'kind) msetup option;
+        msolve : ('data, 'kind) msolve;
       }
 
-    (** Creates a linear solver from a function returning a set of
+    (** Creates a mass matrix solver from a function returning a set of
         callbacks. The creation function is passed a session and a vector.
         The latter indicates the problem size and can, for example, be
         cloned. *)
@@ -1386,89 +962,10 @@ module Alternate :
           (('data, 'kind) session
             -> ('data, 'kind) Nvector.t
             -> ('data, 'kind) callbacks)
-          -> ('data, 'kind) linear_solver
-
-    (** {3:altmass Mass matrix solvers} *)
-    module Mass :
-      sig (* {{{ *)
-
-        (** Functions that initialize mass matrix solver data, like counters and
-            statistics.
-
-            Raising any exception in this function (including
-            {!Sundials.RecoverableFailure}) is treated as an unrecoverable
-            error.
-
-            @noarkode <node> minit *)
-        type ('data, 'kind) minit = ('data, 'kind) session -> unit
-
-        (** Functions that prepare the mass matrix solver for subsequent calls
-            to {{!callbacks}lsolve}.
-
-            This function may raise a {!Sundials.RecoverableFailure} exception
-            to indicate that a recoverable error has occurred. Any other
-            exception is treated as an unrecoverable error.
-
-            {warning The vectors [ypred], [fpred], and those in [tmp] should
-                     not be accessed after the function returns.}
-
-            @noarkode <node> msetup *)
-        type ('data, 'kind) msetup =
-          ('data, 'kind) session
-          -> 'data triple
-          -> unit
-
-        (** Functions that solve the linear equation $Mx = b$. $M$ is the system
-            mass matrix. The call [lsolve s b weight] has as arguments:
-            - [s], the solver session,
-            - [b], the right-hand side vector, also used for returning the
-                   result, and
-            - [weight], a vector containing the error weights.
-
-            Raising {!Sundials.RecoverableFailure} indicates a recoverable
-            error. Any other exception is treated as an unrecoverable error.
-
-            {warning The vectors [b] and [weight] should not be accessed after
-                     the function returns.}
-
-            @noarkode <node> msolve
-            @noarkode <node> Mass matrix solver *)
-        type ('data, 'kind) msolve =
-          ('data, 'kind) session
-          -> 'data (* b *)
-          -> 'data (* weight *)
-          -> unit
-
-        (** The callbacks needed to implement an alternate linear solver. *)
-        type ('data, 'kind) callbacks =
-          {
-            minit  : ('data, 'kind) minit option;
-            msetup : ('data, 'kind) msetup option;
-            msolve : ('data, 'kind) msolve;
-          }
-
-        (** Creates a mass matrix solver from a function returning a set of
-            callbacks. The creation function is passed a session and a vector.
-            The latter indicates the problem size and can, for example, be
-            cloned. *)
-        val make :
-              (('data, 'kind) session
-                -> ('data, 'kind) Nvector.t
-                -> ('data, 'kind) callbacks)
-              -> ('data, 'kind) linear_solver
-      end (* }}} *)
-
-    (** {3:internals Solver internals} *)
-
-    (** Internal values used in Newton iteration. *)
-    type gammas = {
-      gamma : float;    (** The current $\gamma$ value. *)
-      gammap : float;   (** The value of $\gamma$ at the last setup call. *)
-    }
-
-    (** Returns the current and previous gamma values. *)
-    val get_gammas : ('data, 'kind) session -> gammas
+          -> ('data, 'kind) solver
   end (* }}} *)
+
+end (* }}} *)
 
 (** {2:tols Tolerances} *)
 
@@ -1614,7 +1111,7 @@ val init :
     -> ('data, 'kind) tolerance
     -> ?restol:(('data, 'kind) res_tolerance)
     -> ?order:int
-    -> ?mass:('data, 'kind) mass_solver
+    -> ?mass:('data, 'kind) Mass.solver
     -> ?roots:(int * 'data rootsfn)
     -> float
     -> ('data, 'kind) Nvector.t
