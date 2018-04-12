@@ -172,7 +172,7 @@ CAMLprim value c_densematrix_getrf(value va, value vp)
     if (ARRAY1_LEN(vp) < a->N)
 	caml_invalid_argument("pivot array too small.");
 #endif
-    int r = DenseGETRF(a, LONG_ARRAY(vp));
+    int r = DenseGETRF(a, INDEX_ARRAY(vp));
 
     if (r != 0)
 	caml_raise_with_arg(DLS_EXN_TAG(ZeroDiagonalElement), Val_int(r));
@@ -193,7 +193,7 @@ CAMLprim value c_densematrix_getrs(value va, value vp, value vb)
     if (ARRAY1_LEN(vb) < a->N)
 	caml_invalid_argument("solution vector too small.");
 #endif
-    DenseGETRS(a, LONG_ARRAY(vp), REAL_ARRAY(vb));
+    DenseGETRS(a, INDEX_ARRAY(vp), REAL_ARRAY(vb));
     CAMLreturn (Val_unit);
 }
 
@@ -364,7 +364,7 @@ CAMLprim value c_arraydensematrix_getrf(value va, value vp)
 	caml_invalid_argument("pivot array too small.");
 #endif
 
-    int r = denseGETRF(ARRAY2_ACOLS(va), m, n, LONG_ARRAY(vp));
+    int r = denseGETRF(ARRAY2_ACOLS(va), m, n, INDEX_ARRAY(vp));
 
     if (r != 0) {
 	caml_raise_with_arg(DLS_EXN_TAG(ZeroDiagonalElement),
@@ -390,7 +390,7 @@ CAMLprim value c_arraydensematrix_getrs(value va, value vp, value vb)
 	caml_invalid_argument("pivot array too small.");
 #endif
 
-    denseGETRS(ARRAY2_ACOLS(va), m, LONG_ARRAY(vp), REAL_ARRAY(vb));
+    denseGETRS(ARRAY2_ACOLS(va), m, INDEX_ARRAY(vp), REAL_ARRAY(vb));
     CAMLreturn (Val_unit);
 }
 
@@ -413,7 +413,7 @@ CAMLprim value c_arraydensematrix_getrs_off(value va, value vp,
 	caml_invalid_argument("p is too small.");
 #endif
 
-    denseGETRS(ARRAY2_ACOLS(va), m, LONG_ARRAY(vp), REAL_ARRAY(vb) + boff);
+    denseGETRS(ARRAY2_ACOLS(va), m, INDEX_ARRAY(vp), REAL_ARRAY(vb) + boff);
     CAMLreturn (Val_unit);
 }
 
@@ -613,14 +613,14 @@ CAMLprim value c_bandmatrix_scale(value vc, value va)
 CAMLprim value c_bandmatrix_gbtrf(value va, value vp)
 {
     CAMLparam2(va, vp);
-    BandGBTRF(DLSMAT(va), LONG_ARRAY(vp));
+    BandGBTRF(DLSMAT(va), INDEX_ARRAY(vp));
     CAMLreturn (Val_unit);
 }
 
 CAMLprim value c_bandmatrix_gbtrs(value va, value vp, value vb)
 {
     CAMLparam3(va, vp, vb);
-    BandGBTRS(DLSMAT(va), LONG_ARRAY(vp), REAL_ARRAY(vb));
+    BandGBTRS(DLSMAT(va), INDEX_ARRAY(vp), REAL_ARRAY(vb));
     CAMLreturn (Val_unit);
 }
 
@@ -791,7 +791,7 @@ CAMLprim value c_arraybandmatrix_gbtrf(value va, value vsizes, value vp)
 	caml_invalid_argument("p is too small.");
 #endif
 
-    bandGBTRF(ARRAY2_ACOLS(va), m, mu, ml, smu, LONG_ARRAY(vp));
+    bandGBTRF(ARRAY2_ACOLS(va), m, mu, ml, smu, INDEX_ARRAY(vp));
     CAMLreturn (Val_unit);
 }
 
@@ -816,7 +816,7 @@ CAMLprim value c_arraybandmatrix_gbtrs(value va, value vsizes, value vp, value v
 	caml_invalid_argument("b is too small.");
 #endif
 
-    bandGBTRS(ARRAY2_ACOLS(va), m, smu, ml, LONG_ARRAY(vp), REAL_ARRAY(vb));
+    bandGBTRS(ARRAY2_ACOLS(va), m, smu, ml, INDEX_ARRAY(vp), REAL_ARRAY(vb));
     CAMLreturn (Val_unit);
 }
 
