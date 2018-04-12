@@ -594,8 +594,8 @@ CAMLprim value c_ida_adj_set_alternate (value vparent, value vwhich,
 					value vhas_init, value vhas_setup)
 {
     CAMLparam4(vparent, vwhich, vhas_init, vhas_setup);
-    void *ida_mem = IdaGetAdjIDABmem(IDA_MEM_FROM_ML (vparent),
-				     Int_val(vwhich));
+    IDAMem ida_mem = IDAGetAdjIDABmem(IDA_MEM_FROM_ML (vparent),
+				      Int_val(vwhich));
 
     ida_mem->ida_linit  = Bool_val(vhas_init)  ? linit : NULL;
     ida_mem->ida_lsetup  = Bool_val(vhas_setup) ? lsetup : NULL;
