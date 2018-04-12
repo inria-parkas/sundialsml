@@ -1224,6 +1224,56 @@ module Adjoint = struct (* {{{ *)
       Ida.Iterative.get_num_res_evals (tosession bs)
   end (* }}} *)
 
+  module Alternate = struct (* {{{ *)
+
+    type ('data, 'kind) linit = ('data, 'kind) bsession -> unit
+
+    type ('data, 'kind) lsetup =
+      ('data, 'kind) bsession
+      -> 'data Ida.Alternate.lsetup_args
+      -> unit
+
+    type ('data, 'kind) lsolve =
+      ('data, 'kind) bsession
+      -> 'data Ida.Alternate.lsolve_args
+      -> 'data
+      -> unit
+
+    type ('data, 'kind) callbacks =
+      {
+        linit  : ('data, 'kind) linit option;
+        lsetup : ('data, 'kind) lsetup option;
+        lsolve : ('data, 'kind) lsolve;
+      }
+
+    let wrapo fo =
+      match fo with
+      | None -> None
+      | Some f -> Some (fun s -> f (Bsession s))
+
+    let wrap_callbacks { linit; lsetup; lsolve } =
+      Ida.Alternate.({
+          linit  = wrapo linit;
+          lsetup = wrapo lsetup;
+          lsolve = (fun s -> lsolve (Bsession s));
+        })
+
+    external c_set_alternate
+      : ('data, 'kind) session -> int -> bool -> bool -> unit
+      = "c_ida_adj_set_alternate"
+
+    let get_cj bs = Ida.Alternate.get_cj (tosession bs)
+    let get_cjratio bs = Ida.Alternate.get_cjratio (tosession bs)
+
+    let make f bs nv =
+      let { linit; lsetup; lsolve } as cb = f bs nv in
+      let s = tosession bs in
+      let parent, which = parent_and_which bs in
+      c_set_alternate parent which (linit <> None) (lsetup <> None);
+      s.ls_precfns <- NoPrecFns;
+      s.ls_callbacks <- AlternateCallback (wrap_callbacks cb)
+
+  end (* }}} *)
   external c_bsession_finalize : ('a, 'k) session -> unit
       = "c_idas_adj_bsession_finalize"
 

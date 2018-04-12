@@ -317,5 +317,4 @@ enum cvode_exn_index {
 #define CVODE_EXN(name)     REGISTERED_EXN(CVODE, name)
 #define CVODE_EXN_TAG(name) REGISTERED_EXN_TAG(CVODE, name)
 
-
 #endif

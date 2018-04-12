@@ -1391,7 +1391,93 @@ module Adjoint : sig (* {{{ *)
     val clear_jac_times : ('d, 'k) bsession -> unit
   end (* }}} *)
 
-  (* TODO: Add alternate linear solvers? *)
+  (** Alternate Linear Solvers.
+
+      @noidas <node8#s:new_linsolv> Providing Alternate Linear Solver Modules *)
+  module Alternate : sig (* {{{ *)
+
+    (** Functions that initialize linear solver data, like counters and
+        statistics.
+
+        Raising any exception in this function (including
+        {!Sundials.RecoverableFailure}) is treated as an unrecoverable error.
+
+        @idas <node8#SECTION00810000000000000000> linit *)
+    type ('data, 'kind) linit = ('data, 'kind) bsession -> unit
+
+  (** Functions that prepare the linear solver for subsequent calls to
+      {{!callbacks}lsolve}. The call [lsetup s y y' res tmp] has as
+      arguments
+
+      - [s], the solver session,
+      - [y],  the predicted $y$ vector for the current internal step,
+      - [y'], the predicted {% $\dot{y}$%} vector for the current internal
+              step,
+      - [res], the value of the residual function at [y] and [y'], i.e.
+               {% $F(t_n, y_{\text{pred}}, \dot{y}_{\text{pred}})$%}, and,
+      - [tmp], temporary variables for use by the routine.
+
+      This function may raise a {!Sundials.RecoverableFailure} exception to
+      indicate that a recoverable error has occurred. Any other exception is
+      treated as an unrecoverable error.
+
+      {warning The vectors in {!lsetup_args} should not be
+               accessed after the function returns.}
+
+      @idas <node8#SECTION00820000000000000000> lsetup *)
+    type ('data, 'kind) lsetup =
+      ('data, 'kind) bsession
+      -> 'data Ida.Alternate.lsetup_args
+      -> unit
+
+    (** Functions that solve the linear equation $Mx = b$.
+        $M$ is a preconditioning matrix chosen by the user, and $b$ is the
+        right-hand side vector calculated within the function.
+        $M$ should approximate {% $J = \frac{\partial F}{\partial y} + c_j\frac{\partial F}{\partial \dot{y}}$%},
+        and $c_j$ is available through {!get_cj}.
+        The call [lsolve s b weight ycur y'cur rescur] has as arguments:
+
+        - [s], the solver session,
+        - [args], the current approximation to the solution, and,
+        - [b], for returning the calculated solution,
+
+        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+        Any other exception is treated as an unrecoverable error.
+
+        @idas <node8#SECTION00830000000000000000> lsolve
+        @idas <node3#e:DAE_Jacobian> IVP solution (Eq. 2.5) *)
+    type ('data, 'kind) lsolve =
+      ('data, 'kind) bsession
+      -> 'data Ida.Alternate.lsolve_args
+      -> 'data
+      -> unit
+
+    (** The callbacks needed to implement an alternate linear solver. *)
+    type ('data, 'kind) callbacks =
+      {
+        linit  : ('data, 'kind) linit option;
+        lsetup : ('data, 'kind) lsetup option;
+        lsolve : ('data, 'kind) lsolve;
+      }
+
+    (** Creates a linear solver from a function returning a set of
+        callbacks. The creation function is passed a session and a vector.
+        The latter indicates the problem size and can, for example, be
+        cloned. *)
+    val make :
+          (('data, 'kind) bsession
+            -> ('data, 'kind) Nvector.t
+            -> ('data, 'kind) callbacks)
+          -> ('data, 'kind) linear_solver
+
+    (** {3:internals Solver internals} *)
+
+    (** Returns the current [cj] value. *)
+    val get_cj : ('data, 'kind) bsession -> float
+
+    (** Returns the current [cjratio] value. *)
+    val get_cjratio : ('data, 'kind) bsession -> float
+  end (* }}} *)
 
   (** {2:bsolve Backward solutions} *)
 

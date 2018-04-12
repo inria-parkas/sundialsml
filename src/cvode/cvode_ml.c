@@ -639,6 +639,26 @@ CAMLprim value c_cvode_set_alternate (value vcvode_mem, value vhas_init,
     CAMLreturn (Val_unit);
 }
 
+#ifdef SUNDIALSML_WITHSENS
+CAMLprim value c_cvode_adj_set_alternate (value vparent, value vwhich,
+					  value vhas_init, value vhas_setup)
+{
+    CAMLparam4(vparent, vwhich, vhas_init, vhas_setup);
+    void *cvode_mem = CVodeGetAdjCVodeBmem(CVODE_MEM_FROM_ML (vparent),
+					   Int_val(vwhich));
+
+    cvode_mem->cv_linit  = Bool_val(vhas_init)  ? linit : NULL;
+    cvode_mem->cv_lsetup  = Bool_val(vhas_setup) ? lsetup : NULL;
+#if SUNDIALS_LIB_VERSION < 300
+    cvode_mem->cv_setupNonNull = Bool_val(vhas_setup);
+#endif
+    cvode_mem->cv_lsolve = lsolve;
+    cvode_mem->cv_lmem   = NULL;
+
+    CAMLreturn (Val_unit);
+}
+#endif
+
 /* Dense and Band can only be used with serial NVectors.  */
 CAMLprim value c_cvode_dls_dense (value vcvode_mem, value vneqs, value vset_jac)
 {

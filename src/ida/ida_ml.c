@@ -589,6 +589,26 @@ CAMLprim value c_ida_set_alternate (value vida_mem, value vhas_init,
     CAMLreturn (Val_unit);
 }
 
+#ifdef SUNDIALSML_WITHSENS
+CAMLprim value c_ida_adj_set_alternate (value vparent, value vwhich,
+					value vhas_init, value vhas_setup)
+{
+    CAMLparam4(vparent, vwhich, vhas_init, vhas_setup);
+    void *ida_mem = IdaGetAdjIDABmem(IDA_MEM_FROM_ML (vparent),
+				     Int_val(vwhich));
+
+    ida_mem->ida_linit  = Bool_val(vhas_init)  ? linit : NULL;
+    ida_mem->ida_lsetup  = Bool_val(vhas_setup) ? lsetup : NULL;
+#if SUNDIALS_LIB_VERSION < 300
+    ida_mem->ida_setupNonNull = Bool_val(vhas_setup);
+#endif
+    ida_mem->ida_lsolve = lsolve;
+    ida_mem->ida_lmem   = NULL;
+
+    CAMLreturn (Val_unit);
+}
+#endif
+
 CAMLprim value c_ida_get_cj (value vida_mem)
 {
     CAMLparam1 (vida_mem);

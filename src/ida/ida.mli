@@ -420,7 +420,7 @@ module Alternate : sig (* {{{ *)
     -> unit
 
   (** Arguments to {!lsetup}.  *)
-  and 'data lsetup_args =
+  and 'data lsetup_args = 'data Ida_impl.alternate_lsetup_args =
     {
       lsetup_y : 'data;
       (** The predicted $y$ vector for the current step. *)
@@ -459,7 +459,7 @@ module Alternate : sig (* {{{ *)
     -> unit
 
   (** Arguments to {!lsolve}. *)
-  and 'data lsolve_args =
+  and 'data lsolve_args = 'data Ida_impl.alternate_lsolve_args =
     {
       lsolve_ewt : 'data;
       (** The error weights. *)
@@ -475,7 +475,7 @@ module Alternate : sig (* {{{ *)
     }
 
   (** The callbacks needed to implement an alternate linear solver. *)
-  type ('data, 'kind) callbacks =
+  type ('data, 'kind) callbacks = ('data, 'kind) Ida_impl.alternate_linsolv =
     {
       linit  : ('data, 'kind) linit option;
       lsetup : ('data, 'kind) lsetup option;

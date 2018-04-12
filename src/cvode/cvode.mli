@@ -483,7 +483,7 @@ module Alternate : sig (* {{{ *)
   (** Indicates problems during the solution of nonlinear equations at a
       step. Helps decide whether to update the Jacobian data kept by a
       linear solver. *)
-  type conv_fail =
+  type conv_fail = Cvode_impl.AlternateTypes.conv_fail =
     | NoFailures
         (** Either the first call for a step or the local error test
             failed on the previous attempt at this setup but the Newton
@@ -528,7 +528,7 @@ module Alternate : sig (* {{{ *)
     -> bool
 
   (** Arguments to {!lsetup}. *)
-  and 'data lsetup_args =
+  and 'data lsetup_args = 'data Cvode_impl.alternate_lsetup_args =
     {
       lsetup_conv_fail : conv_fail;
       (** Indicates that a problem occurred during the solution of
@@ -571,7 +571,7 @@ module Alternate : sig (* {{{ *)
     -> unit
 
   (** Arguments to {!lsolve}. *)
-  and 'data lsolve_args =
+  and 'data lsolve_args = 'data Cvode_impl.alternate_lsolve_args =
     {
       lsolve_ewt : 'data;
       (** The error weights. *)
@@ -584,7 +584,7 @@ module Alternate : sig (* {{{ *)
     }
 
   (** The callbacks needed to implement an alternate linear solver. *)
-  type ('data, 'kind) callbacks =
+  type ('data, 'kind) callbacks = ('data, 'kind) Cvode_impl.alternate_linsolv =
     {
       linit  : ('data, 'kind) linit option;
       lsetup : ('data, 'kind) lsetup option;
