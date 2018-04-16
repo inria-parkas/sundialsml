@@ -2345,12 +2345,15 @@ CAMLprim value c_arkode_get_num_lin_solv_setups(value varkode_mem)
 CAMLprim value c_arkode_get_num_mass_solves(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
-
-    int flag;
     long int v;
 
+#if SUNDIALS_LIB_VERSION > 301
+    int flag;
     flag = ARKodeGetNumMassSolves(ARKODE_MEM_FROM_ML(varkode_mem), &v);
     CHECK_FLAG("ARKodeGetNumMassSolves", flag);
+#else
+    v = 0;
+#endif
 
     CAMLreturn(Val_long(v));
 }

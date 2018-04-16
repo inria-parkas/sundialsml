@@ -1371,6 +1371,13 @@ CAMLprim value c_cvodes_adj_spils_set_banded_preconditioner(value vparent,
     CAMLreturn (Val_unit);
 }
 
+#if 300 <= SUNDIALS_LIB_VERSION && SUNDIALS_LIB_VERSION <= 301
+/* Work around a bug in Sundials */
+int CVSpilsSetJacTimesSetupFnBS(void *cvode_mem, int which,
+                                CVSpilsJacTimesSetupFnBS jtsetupBS,
+                                CVSpilsJacTimesVecFnBS jtimesBS);
+#endif
+
 CAMLprim value c_cvodes_adj_spils_set_jac_times(value vparent,
 						value vwhich,
 						value vhas_setup,
@@ -1384,10 +1391,18 @@ CAMLprim value c_cvodes_adj_spils_set_jac_times(value vparent,
 
 #if SUNDIALS_LIB_VERSION >= 300
     if (Bool_val(vusesens)) {
+#if SUNDIALS_LIB_VERSION > 301
 	flag = CVSpilsSetJacTimesBS(mem, which,
 			Bool_val(vhas_setup) ? bjacsetupfn_withsens : NULL,
 			Bool_val(vhas_times) ? bjactimesfn_withsens : NULL);
 	SCHECK_FLAG ("CVSpilsSetJacTimesBS", flag);
+#else
+	/* Work around a bug in Sundials */
+	flag = CVSpilsSetJacTimesSetupFnBS(mem, which,
+			Bool_val(vhas_setup) ? bjacsetupfn_withsens : NULL,
+			Bool_val(vhas_times) ? bjactimesfn_withsens : NULL);
+	SCHECK_FLAG ("CVSpilsSetJacTimesSetupFnBS", flag);
+#endif
     } else {
 	flag = CVSpilsSetJacTimesB(mem, which,
 			Bool_val(vhas_setup) ? bjacsetupfn : NULL,
