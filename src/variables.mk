@@ -23,6 +23,7 @@ include ../config
 # Common to CVODE, IDA, KINSOL, and ARKODE.
 COBJ_COMMON = sundials/sundials_ml$(XO)	\
 	      lsolvers/matrix_ml$(XO)	\
+	      lsolvers/lsolver_ml$(XO)	\
 	      lsolvers/dls_ml$(XO)	\
 	      $(SLS_ML_XO)		\
 	      nvectors/nvector_ml$(XO)	\
@@ -38,9 +39,9 @@ MLOBJ_MAIN =	sundials/sundials_config.cmo	\
 		lsolvers/sls_impl.cmo		\
 		$(SLS_CMO)			\
 		lsolvers/spils.cmo		\
-		lsolvers/lsolver.cmo		\
-		lsolvers/lsolver_impl.cmo	\
 		lsolvers/matrix.cmo		\
+		lsolvers/lsolver_impl.cmo	\
+		lsolvers/lsolver.cmo		\
 		nvectors/nvector_custom.cmo	\
 		nvectors/nvector_array.cmo	\
 		nvectors/nvector_serial.cmo	\
