@@ -13,6 +13,16 @@
 
 (** Generic linear solvers.
 
+    A set of functions for instantiating linear solvers from two families:
+    {!module:Direct} and {!module:Iterative}. Any instance may be associated
+    with at most one solver session.
+
+    The generic operations defined herein apply to the linear solver types
+    {!Direct.t} and {!Iterative.t}. Solver-specific configuration and status
+    operations are defined in the different solver modules and applied to
+    session types, for example, {!Cvode.Direct.get_work_space} and
+    {!Arkode.Iterative.set_eps_lin}.
+
     @version VERSION()
     @author Timothy Bourke (Inria/ENS)
     @author Jun Inoue (Inria/ENS)
@@ -20,9 +30,6 @@
 
     @nocvode <node> Description of the SUNLinearSolver module
     @since 3.0.0 *)
-
-(* TODO: Write up notes on how the linear solvers work and explain the
-   important differences before and after Sundials 3.0.0. *)
 
 (** Direct Linear Solvers. *)
 module Direct : sig (* {{{ *)

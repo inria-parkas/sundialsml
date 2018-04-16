@@ -170,7 +170,7 @@ module Direct = struct (* {{{ *)
 
   external c_make_custom
     : int -> ('m, 'nd, 'nk) Custom.ops -> Custom.has_ops -> ('m, 'nd, 'nk) cptr
-    = "ml_lsolver_make_custom" (* TODO: implement *)
+    = "ml_lsolver_make_custom"
 
   type ('m, 'nd, 'nk, 't) t = {
     rawptr : ('m, 'nd, 'nk) cptr;
