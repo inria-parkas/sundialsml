@@ -116,7 +116,7 @@ CAMLprim value c_sundials_realarray2_wrap(value vba)
     int nc = ba->dim[0];
     int nr = ba->dim[1];
 
-    vtable = caml_alloc_final(nc, NULL, nc, nc * 20);
+    vtable = caml_alloc_final(nc, NULL, 1, 20);
     realtype **table = (realtype **)Data_custom_val(vtable);
 
     int j;
@@ -204,7 +204,7 @@ CAMLprim value c_sundials_stderr(value vunit)
     CAMLparam1(vunit);
     CAMLlocal1(vr);
 
-    vr = caml_alloc_final(1, NULL, 1, 1);
+    vr = caml_alloc_final(1, NULL, 0, 1);
     ML_CFILE(vr) = stderr;
 
     CAMLreturn (vr);
@@ -215,7 +215,7 @@ CAMLprim value c_sundials_stdout(value vunit)
     CAMLparam1(vunit);
     CAMLlocal1(vr);
 
-    vr = caml_alloc_final(1, NULL, 1, 1);
+    vr = caml_alloc_final(1, NULL, 0, 1);
     ML_CFILE(vr) = stdout;
 
     CAMLreturn (vr);
