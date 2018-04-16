@@ -107,7 +107,11 @@ type infoh = Sundials.error_details -> unit
 (* Session: here comes the big blob.  These mutually recursive types
    cannot be handed out separately to modules without menial
    repetition, so we'll just have them all here, at the top of the
-   Types module.  *)
+   Types module.
+
+   The ls_solver field only exists to ensure that the linear solver is not
+   garbage collected while still being used by a session.
+*)
 
 type ('a, 'k) session = {
   kinsol    : kin_mem;
@@ -122,6 +126,7 @@ type ('a, 'k) session = {
   mutable errh       : errh;
   mutable infoh      : infoh;
 
+  mutable ls_solver    : Lsolver_impl.solver;
   mutable ls_callbacks : ('a, 'k) linsolv_callbacks;
   mutable ls_precfns : 'a linsolv_precfns;
 }
@@ -141,6 +146,10 @@ and ('a, 'kind) linsolv_callbacks =
       : ('s Matrix.Sparse.t) DirectTypes.jac_callback
         * 's Matrix.Sparse.t
         -> ('a, 'kind) linsolv_callbacks
+
+  (* Custom *)
+  | DirectCustomCallback :
+      'm DirectTypes.jac_callback * 'm -> ('a, 'kind) linsolv_callbacks
 
   | SpilsCallback of 'a SpilsTypes'.jac_times_vec_fn option
 
@@ -203,7 +212,7 @@ module SpilsTypes = struct
     ('a, 'k) session
     -> ('a, 'k) nvector
     -> unit
-  
+
   type ('a, 'k) preconditioner =
     Lsolver_impl.Iterative.preconditioning_type * ('a, 'k) set_preconditioner
 

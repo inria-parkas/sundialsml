@@ -52,6 +52,31 @@ enum lsolver_gramschmidt_type_tag {
     VARIANT_LSOLVER_GRAMSCHMIDT_TYPE_CLASSICALGS,
 };
 
+// values must match Lsolver_impl.Custom.ops type
+enum lsolver_ops_index {
+    RECORD_LSOLVER_OPS_INIT = 0,
+    RECORD_LSOLVER_OPS_SETUP,
+    RECORD_LSOLVER_OPS_SOLVE,
+    RECORD_LSOLVER_OPS_SET_ATIMES,
+    RECORD_LSOLVER_OPS_SET_PRECONDITIONER,
+    RECORD_LSOLVER_OPS_SET_SCALING_VECTORS,
+    RECORD_LSOLVER_OPS_GET_NUM_ITERS,
+    RECORD_LSOLVER_OPS_GET_RES_NORM,
+    RECORD_LSOLVER_OPS_GET_RES_ID,
+    RECORD_LSOLVER_OPS_GET_WORK_SPACE,
+};
+
+// values must match Lsolver_impl.Custom.has_ops type
+enum lsolver_hasops_index {
+    RECORD_LSOLVER_HASOPS_SET_ATIMES = 0,
+    RECORD_LSOLVER_HASOPS_SET_PRECONDITIONER,
+    RECORD_LSOLVER_HASOPS_SET_SCALING_VECTORS,
+    RECORD_LSOLVER_HASOPS_GET_NUM_ITERS,
+    RECORD_LSOLVER_HASOPS_GET_RES_NORM,
+    RECORD_LSOLVER_HASOPS_GET_RES_ID,
+    RECORD_LSOLVER_HASOPS_GET_WORK_SPACE,
+};
+
 enum lsolver_preconditioning_type_tag {
   VARIANT_LSOLVER_PRECONDITIONING_TYPE_PREC_TYPE_NONE  = 0,
   VARIANT_LSOLVER_PRECONDITIONING_TYPE_PREC_TYPE_LEFT,
@@ -64,17 +89,22 @@ enum lsolver_preconditioning_type_tag {
 enum lsolver_exn_index {
     LSOLVER_EXN_UnrecoverableFailure = 0,
     LSOLVER_EXN_MatrixNotSquare,
-    LSOLVER_EXN_Iterative_PSetFailure,
-    LSOLVER_EXN_Iterative_PSolveFailure,
-    LSOLVER_EXN_Iterative_GSFailure,
-    LSOLVER_EXN_Iterative_QRSolFailure,
-    LSOLVER_EXN_Iterative_ResReduced,
-    LSOLVER_EXN_Iterative_ConvFailure,
-    LSOLVER_EXN_Iterative_QRfactFailure,
-    LSOLVER_EXN_Iterative_LUfactFailure,
-    LSOLVER_EXN_Iterative_IllegalPrecType,
+    LSOLVER_EXN_InvalidArgument,
+    LSOLVER_EXN_ATimesFailure,
+    LSOLVER_EXN_PSetFailure,
+    LSOLVER_EXN_PSolveFailure,
+    LSOLVER_EXN_GSFailure,
+    LSOLVER_EXN_QRSolFailure,
+    LSOLVER_EXN_ResReduced,
+    LSOLVER_EXN_ConvFailure,
+    LSOLVER_EXN_QRfactFailure,
+    LSOLVER_EXN_LUfactFailure,
+    LSOLVER_EXN_PackageFailure,
+    LSOLVER_EXN_IllegalPrecType,
+    LSOLVER_EXN_InternalFailure,
     LSOLVER_EXN_SET_SIZE
 };
+
 
 #define LSOLVER_EXN(name)     REGISTERED_EXN(LSOLVER, name)
 #define LSOLVER_EXN_TAG(name) REGISTERED_EXN_TAG(LSOLVER, name)

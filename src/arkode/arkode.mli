@@ -77,8 +77,8 @@ type 'kind serial_linear_solver = (Nvector_serial.data, 'kind) linear_solver
 (** Workspaces with three temporary vectors. *)
 type 'd triple = 'd * 'd * 'd
 
-(** Arguments common to Jacobian callback functions.    
- 
+(** Arguments common to Jacobian callback functions.
+
     @noarkode <node> ARKDlsDenseJacFn
     @noarkode <node> ARKDlsBandJacFn
     @noarkode <node> ARKSpilsJacTimesVecFn
@@ -130,7 +130,7 @@ module Direct : sig (* {{{ *)
       @nocvode <node> ARKDlsSetLinearSolver
       @nocvode <node> ARKDlsSetJacFn *)
   val make :
-    ('m, 'kind) Lsolver.Direct.serial_t ->
+    ('m, 'kind, 't) Lsolver.Direct.serial_t ->
     ?jac:'m jac_fn ->
     ('k, 'm, Nvector_serial.data, 'kind) Matrix.t ->
     'kind serial_linear_solver
@@ -315,7 +315,7 @@ module Iterative : sig (* {{{ *)
   (** Callback functions that preprocess or evaluate Jacobian-related data
       needed by the jac_times_vec_fn. In the call [jac_times_setup_fn arg],
       [arg] is a {!jacobian_arg} with no work vectors.
-    
+
       Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
       Any other exception is treated as an unrecoverable error.
 
@@ -332,7 +332,7 @@ module Iterative : sig (* {{{ *)
       work vector, [v] is the vector multiplying the Jacobian, and [jv] is
       the vector in which to store the
       result—{% $\mathtt{jv} = J\mathtt{v}$%}.
-    
+
       Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
       Any other exception is treated as an unrecoverable error.
 
@@ -638,7 +638,7 @@ module Mass : sig (* {{{ *)
         @nocvode <node> ARKDlsSetMassLinearSolver
         @nocvode <node> ARKDlsSetMassFn *)
     val make :
-      ('m, 'kind) Lsolver.Direct.serial_t
+      ('m, 'kind, 't) Lsolver.Direct.serial_t
       -> 'm mass_fn
       -> bool
       -> ('k, 'm, Nvector_serial.data, 'kind) Matrix.t
@@ -719,7 +719,7 @@ module Mass : sig (* {{{ *)
     (** Callback functions that preprocess or evaluate mass matrix-related
         data needed by {!prec_solve_fn}. The argument gives the independent
         variable [t].
-        
+
         Raising {!Sundials.RecoverableFailure} indicates a recoverable
         error. Any other exception is treated as an unrecoverable error.
 
@@ -765,7 +765,7 @@ module Mass : sig (* {{{ *)
     (** Callback functions that preprocess or evaluate Jacobian-related data
         needed by the mass_times_vec_fn. The argument gives the independent
         variable [t].
-        
+
         Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
         Any other exception is treated as an unrecoverable error.
 
@@ -778,7 +778,7 @@ module Mass : sig (* {{{ *)
         - [v] is the vector to multiply, and
         - [mv] is the computed output
                vector—{% $\mathtt{mv} = M\mathtt{v}$%}.
-        
+
         Raising {!Sundials.RecoverableFailure} indicates a recoverable
         error. Any other exception is treated as an unrecoverable error.
 
@@ -1083,7 +1083,7 @@ val no_roots : (int * 'd rootsfn)
                 of equations.
 
     The allowed values for [ord] are:
-    - for explicit methods: {% $2 \le \mathtt{ord} \le 6$%}, 
+    - for explicit methods: {% $2 \le \mathtt{ord} \le 6$%},
     - for implicit methods: {% $2 \le \mathtt{ord} \le 5$%}, and
     - for imex methods: {% $3 \le \mathtt{ord} \le 5$%}.
 
@@ -1140,7 +1140,7 @@ type solver_result =
     @noarkode <node> ARKode (ARK_NORMAL)
     @raise IllInput Missing or illegal solver inputs.
     @raise TooClose The initial and final times are too close to each other and not initial step size was specified.
-    
+
     @raise TooMuchWork The requested time could not be reached in [mxstep] internal steps.
     @raise TooMuchAccuracy The requested accuracy could not be satisfied.
     @raise ErrFailure Too many error test failures within a step or at the minimum step size.
@@ -1190,7 +1190,7 @@ val get_dky : ('d, 'k) session -> ('d, 'k) Nvector.t -> float -> int -> unit
     have any effect; the [iter] and [linear] fields are ignored.
 
     The allowed values for [order] are:
-    - for explicit methods: {% $2 \le \mathtt{order} \le 6$%}, 
+    - for explicit methods: {% $2 \le \mathtt{order} \le 6$%},
     - for implicit methods: {% $2 \le \mathtt{order} \le 5$%}, and
     - for imex methods: {% $3 \le \mathtt{order} \le 5$%}.
 
@@ -1208,7 +1208,7 @@ val reinit :
 
 (** Called to resize a vector to match the dimensions of another. The call
     [resizefn y ytemplate] must resize [y] to match the size of [ytemplate].
- 
+
     {warning [y] and [ytemplate] should not be accessed after the function
              has returned.}
 
@@ -1288,7 +1288,7 @@ val set_dense_order : ('d, 'k) session -> int -> unit
 val set_diagnostics : ('d, 'k) session -> Sundials.Logfile.t -> unit
 
 (** Do not write step adaptivity or solver diagnostics of a file.
- 
+
     @noarkode <node> ARKodeSetDiagnostics *)
 val clear_diagnostics : ('d, 'k) session -> unit
 
@@ -1417,7 +1417,7 @@ type rk_timescoefs = {
 
     In versions of Sundials prior to 2.7.0, the [e] parameter is ignored; only
     the [i] parameter is used.
- 
+
     If the [i.bembed] or the [e.bembed] field is [None] then the solver will
     run in fixed step mode and the step size must be set, or have been set,
     using either {!set_fixed_step} or {!set_init_step}. This feature is not
@@ -1447,7 +1447,7 @@ val set_ark_tables
     using either {!set_fixed_step} or {!set_init_step}. This feature is not
     available for Sundials versions prior to 2.7.0
     (the {!Sundials.NotImplementedBySundialsVersion} exception is raised).
- 
+
     @raise IllInput If $f_E$ is not already specified.
     @noarkode <node> ARKodeSetERKTable
     @noarkode <node> ARKodeSetExplicit *)
@@ -1467,7 +1467,7 @@ val set_erk_table
     using either {!set_fixed_step} or {!set_init_step}. This feature is not
     available for Sundials versions prior to 2.7.0
     (the {!Sundials.NotImplementedBySundialsVersion} exception is raised).
- 
+
     @raise IllInput If $f_I$ is not already specified.
     @noarkode <node> ARKodeSetIRKTable
     @noarkode <node> ARKodeSetImplicit *)
@@ -1591,7 +1591,7 @@ type adaptivity_params = {
   }
 
 (** Asymptotic error control algorithms.
- 
+
     @noarkode <node> Asymptotic error control *)
 type 'd adaptivity_method =
   | PIDcontroller of adaptivity_params
@@ -1607,7 +1607,7 @@ type 'd adaptivity_method =
   | ImExGustafsson of adaptivity_params
         (** An ImEx version of the two preceding controllers. *)
   | AdaptivityFn of 'd adaptivity_fn (** A custom time-step adaptivity function. *)
- 
+
 (** Specifies the method and associated parameters used for time step
     adaptivity.
 
@@ -1617,7 +1617,7 @@ val set_adaptivity_method : ('d, 'k) session -> 'd adaptivity_method -> unit
 
 (** Specifies the fraction of the estimated explicitly stable step to use. Any
     non-positive argument resets to the default value (0.5).
- 
+
     @noarkode <node> ARKodeSetCFLFraction *)
 val set_cfl_fraction : ('d, 'k) session -> float -> unit
 
@@ -1729,7 +1729,8 @@ val set_linear : ('d, 'k) session -> bool -> unit
     @noarkode <node> ARKodeSetNonlinear *)
 val set_nonlinear : ('d, 'k) session -> unit
 
-(** 
+(** Method choices for predicting implicit solutions.
+
     @noarkode <node> Implicit predictors *)
 type predictor_method =
   | TrivialPredictor        (** Piece-wise constant interpolant
@@ -2018,7 +2019,7 @@ val get_num_g_evals : ('d, 'k) session -> int
     of the error weight vector becomes zero during time stepping, or the
     linear solver initialization function failed, or a root was found both at
     [t] and very near [t].
- 
+
  @noarkode <node> ARK_ILL_INPUT *)
 exception IllInput
 
@@ -2035,7 +2036,7 @@ exception TooClose
 exception TooMuchWork
 
 (** The requested accuracy could not be satisfied.
- 
+
     @noarkode <node> ARK_TOO_MUCH_ACC *)
 exception TooMuchAccuracy
 
@@ -2043,16 +2044,16 @@ exception TooMuchAccuracy
     See {!set_max_err_test_fails} and {!set_min_step}.
 
     @noarkode <node> ARK_ERR_FAILURE *)
-exception ErrFailure                
+exception ErrFailure
 
 (** Too many convergence test failures within a step or at the minimum step
     size. See {!set_max_conv_fails} and {!set_min_step}.
- 
+
     @noarkode <node> ARK_CONV_FAILURE *)
 exception ConvergenceFailure
 
 (** Linear solver initialization failed.
- 
+
     @noarkode <node> ARK_LINIT_FAIL *)
 exception LinearInitFailure
 
@@ -2067,7 +2068,7 @@ exception LinearSetupFailure
 exception LinearSolveFailure
 
 (** Mass matrix solver initialization failed.
- 
+
     @noarkode <node> ARK_MASSINIT_FAIL *)
 exception MassInitFailure
 
@@ -2087,7 +2088,7 @@ exception MassSolveFailure
 exception MassMultFailure
 
 (** The right-hand side function failed in an unrecoverable manner.
-  
+
     @noarkode <node> ARK_RHSFUNC_FAIL *)
 exception RhsFuncFailure
 
@@ -2105,17 +2106,17 @@ exception RepeatedRhsFuncFailure
 (** The right-hand side function had a recoverable error, but no recovery was
     possible. This error can only occur after an error test failure at order
     one.
-  
+
     @noarkode <node> ARK_UNREC_RHSFUNC_ERR *)
 exception UnrecoverableRhsFuncFailure
 
 (** The rootfinding function failed.
-  
+
     @noarkode <node> ARK_RTFUNC_FAIL *)
-exception RootFuncFailure           
+exception RootFuncFailure
 
 (** The postprocess step function failed.
-  
+
     @noarkode <node> ARK_POSTPROCESS_FAIL *)
 exception PostprocStepFailure
 
@@ -2125,7 +2126,7 @@ exception PostprocStepFailure
 exception BadK
 
 (** Raised by {!get_dky} for invalid time values.
- 
+
     @noarkode <node> ARKodeGetDky (ARK_BAD_T) *)
 exception BadT
 

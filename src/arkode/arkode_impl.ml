@@ -217,7 +217,11 @@ type 'd postprocess_step_fn = float -> 'd -> unit
 (* Session: here comes the big blob.  These mutually recursive types
    cannot be handed out separately to modules without menial
    repetition, so we'll just have them all here, at the top of the
-   Types module.  *)
+   Types module.
+
+   The ls_solver and mass_solver fields only exist to ensure that the linear
+   solver is not garbage collected while still being used by a session.
+*)
 
 type ('a, 'kind) session = {
   arkode     : arkode_mem;
@@ -243,8 +247,11 @@ type ('a, 'kind) session = {
   mutable poststepfn   : 'a postprocess_step_fn;
 
   mutable linsolver      : ('a, 'kind) linear_solver option;
+  mutable ls_solver      : Lsolver_impl.solver;
   mutable ls_callbacks   : ('a, 'kind) linsolv_callbacks;
   mutable ls_precfns     : 'a linsolv_precfns;
+
+  mutable mass_solver    : Lsolver_impl.solver;
   mutable mass_callbacks : ('a, 'kind) mass_callbacks;
   mutable mass_precfns   : 'a mass_precfns;
 }
@@ -285,6 +292,10 @@ and ('a, 'kind) linsolv_callbacks =
   | SlsSuperlumtCallback
       : ('s Matrix.Sparse.t) DirectTypes.jac_callback * 's Matrix.Sparse.t
         -> ('a, 'kind) linsolv_callbacks
+
+  (* Custom *)
+  | DirectCustomCallback :
+      'm DirectTypes.jac_callback * 'm -> ('a, 'kind) linsolv_callbacks
 
   (* Spils *)
   | SpilsCallback of 'a SpilsTypes'.jac_times_vec_fn option
@@ -354,6 +365,10 @@ and ('a, 'kind) mass_callbacks =
   | SlsSuperlumtMassCallback
       : ('s Matrix.Sparse.t) MassTypes'.Direct'.mass_callback * 's Matrix.Sparse.t
         -> ('a, 'kind) mass_callbacks
+
+  (* Custom *)
+  | DirectCustomMassCallback :
+      'm MassTypes'.Direct'.mass_callback * 'm -> ('a, 'kind) mass_callbacks
 
   (* Spils *)
   | SpilsMassCallback of 'a MassTypes'.Iterative'.mass_times_vec_fn

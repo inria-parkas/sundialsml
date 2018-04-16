@@ -18,7 +18,9 @@
    be opaque outside of Sundials/ML, we simply do not install the
    lsolver_impl.cmi file. *)
 
-module Klu = struct
+module Klu = struct (* {{{ *)
+
+  type tag = [`Klu]
 
   (* Must correspond with lsolver_ml.h:lsolver_klu_ordering_tag *)
   type ordering =
@@ -38,9 +40,12 @@ module Klu = struct
     reinit       = (fun _ _ -> ());
     set_ordering = (fun _ -> ());
   }
-end
 
-module Superlumt = struct
+end (* }}} *)
+
+module Superlumt = struct (* {{{ *)
+
+  type tag = [`Superlumt]
 
   (* Must correspond with lsolver_ml.h:lsolver_superlumt_ordering_tag *)
   type ordering =
@@ -60,27 +65,121 @@ module Superlumt = struct
     set_ordering = (fun _ -> ());
     num_threads  = num_threads;
   }
-end
 
-module Direct = struct
+end (* }}} *)
 
-  type _ solver =
-    | Dense       : Matrix.Dense.t solver
-    | LapackDense : Matrix.Dense.t solver
-    | Band        : Matrix.Band.t  solver
-    | LapackBand  : Matrix.Band.t  solver
-    | Klu         : Klu.info       -> 's Matrix.Sparse.t solver
-    | Superlumt   : Superlumt.info -> 's Matrix.Sparse.t solver
+module Custom = struct (* {{{ *)
 
-  type cptr
+  type 'lsolver tag = [`Custom of 'lsolver]
 
-  type ('m, 'nd, 'nk) t = {
-    rawptr : cptr;
-    solver : 'm solver;
+  type ('data, 'kind) atimes_with_data
+
+  external call_atimes
+    : ('data, 'kind) atimes_with_data
+      -> ('data, 'kind) Nvector.t
+      -> ('data, 'kind) Nvector.t
+      -> unit
+    = "ml_lsolver_call_atimes"
+
+  type ('data, 'kind) precond_with_data
+
+  external call_psetup : ('data, 'kind) precond_with_data -> unit
+    = "ml_lsolver_call_psetup"
+
+  external call_psolve
+    : ('data, 'kind) precond_with_data
+      -> ('data, 'kind) Nvector.t
+      -> ('data, 'kind) Nvector.t
+      -> float
+      -> bool
+      -> unit
+    = "ml_lsolver_call_psolve"
+
+  (* The fields and their order must match lsolver_ml.h:lsolver_ops_index *)
+  type ('matrix, 'data, 'kind) ops = {
+    init : unit -> unit;
+
+    setup : 'matrix -> unit;
+
+    solve :
+      'matrix
+      -> ('data, 'kind) Nvector.t
+      -> ('data, 'kind) Nvector.t
+      -> float
+      -> unit;
+
+    set_atimes : ('data, 'kind) atimes_with_data -> unit;
+
+    set_preconditioner :
+      ('data, 'kind) precond_with_data -> bool -> bool -> unit;
+
+    set_scaling_vectors :
+      ('data, 'kind) Nvector.t option
+      -> ('data, 'kind) Nvector.t option
+      -> unit;
+
+    get_num_iters : unit -> int;
+
+    get_res_norm : unit -> float;
+
+    get_res_id : unit -> ('data, 'kind) Nvector.t;
+
+    get_work_space : unit -> int * int
   }
-end
 
-module Iterative = struct
+  (* The fields and their order must match lsolver_ml.h:lsolver_hasops_index *)
+  type has_ops = {
+    has_set_atimes          : bool;
+    has_set_preconditioner  : bool;
+    has_set_scaling_vectors : bool;
+    has_get_num_iters       : bool;
+    has_get_res_norm        : bool;
+    has_get_res_id          : bool;
+    has_get_work_space      : bool;
+  }
+
+end (* }}} *)
+
+module Direct = struct (* {{{ *)
+
+  type tag = [`Basic]
+
+  type ('m, 'nd, 'nk, 't) solver =
+    | Dense       : (Matrix.Dense.t, 'nd, 'nk, tag) solver
+    | LapackDense : (Matrix.Dense.t, 'nd, 'nk, tag) solver
+    | Band        : (Matrix.Band.t,  'nd, 'nk, tag) solver
+    | LapackBand  : (Matrix.Band.t,  'nd, 'nk, tag) solver
+    | Klu         : Klu.info
+                    -> ('s Matrix.Sparse.t, 'nd, 'nk, [>Klu.tag]) solver
+    | Superlumt   : Superlumt.info
+                    -> ('s Matrix.Sparse.t, 'nd, 'nk, [>Superlumt.tag]) solver
+    | Custom      : 'lsolver * ('m, 'nd, 'nk) Custom.ops
+                     -> ('m, 'nd, 'nk, 'lsolver Custom.tag) solver
+
+  type ('m, 'nd, 'nk) cptr
+
+  let only_ops = Custom.({
+      has_set_atimes          = false;
+      has_set_preconditioner  = false;
+      has_set_scaling_vectors = false;
+      has_get_num_iters       = false;
+      has_get_res_norm        = false;
+      has_get_res_id          = false;
+      has_get_work_space      = false;
+    })
+
+  external c_make_custom
+    : int -> ('m, 'nd, 'nk) Custom.ops -> Custom.has_ops -> ('m, 'nd, 'nk) cptr
+    = "ml_lsolver_make_custom" (* TODO: implement *)
+
+  type ('m, 'nd, 'nk, 't) t = {
+    rawptr : ('m, 'nd, 'nk) cptr;
+    solver : ('m, 'nd, 'nk, 't) solver;
+  }
+
+end (* }}} *)
+
+module Iterative = struct (* {{{ *)
 
   (* Must correspond with lsolver_ml.h:lsolver_gramschmidt_type_tag *)
   type gramschmidt_type = Spils.gramschmidt_type =
@@ -113,24 +212,39 @@ module Iterative = struct
   }
 
   (* Must correspond with lsolver_ml.h:lsolver_iterative_solver_tag *)
-  type solver =
-    | Spbcgs
-    | Spfgmr
-    | Spgmr
-    | Sptfqmr
-    | Pcg
+  type ('nd, 'nk, 'lsolver) solver =
+    | Spbcgs  : ('nd, 'nk, [`Spbcgs]) solver
+    | Spfgmr  : ('nd, 'nk, [`Spfgmr]) solver
+    | Spgmr   : ('nd, 'nk, [`Spgmr])  solver
+    | Sptfqmr : ('nd, 'nk, [`Sptfqmr]) solver
+    | Pcg     : ('nd, 'nk, [`Pcg])    solver
+    | Custom  : 'lsolver * (unit, 'nd, 'nk) Custom.ops
+                -> ('nd, 'nk, 'lsolver Custom.tag) solver
 
-  type cptr
+  type ('nd, 'nk) cptr
 
-  type ('nd, 'nk, 'f) t = {
-    rawptr : cptr;
-    solver : solver;
+  external c_make_custom
+    : int -> (unit, 'nd, 'nk) Custom.ops -> Custom.has_ops -> ('nd, 'nk) cptr
+    = "ml_lsolver_make_custom"
+
+  type ('nd, 'nk, 't) t = {
+    rawptr : ('nd, 'nk) cptr;
+    solver : ('nd, 'nk, 't) solver;
     compat : info;
     mutable check_prec_type  : preconditioning_type -> bool;
   }
 
-  external c_set_prec_type : cptr -> solver -> preconditioning_type -> unit
+  external c_set_prec_type
+    : ('nd, 'nk) cptr -> ('nd, 'nk, 't) solver -> preconditioning_type -> unit
     = "ml_lsolvers_set_prec_type"
 
-end
+end (* }}} *)
+
+(* Used by the solver implementations to 'hold' a linear solver so that it
+   is not garbage collected while still required (i.e., while a pointer is
+   still held in an underlying C data structure. *)
+type solver =
+  | NoSolver
+  | DirectSolver : ('m, 'nd, 'nk, 't) Direct.t -> solver
+  | IterativeSolver : ('nd, 'nk, 't) Iterative.t -> solver
 

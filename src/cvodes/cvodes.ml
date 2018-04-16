@@ -654,28 +654,28 @@ module Adjoint = struct (* {{{ *)
 
   let set_max_num_steps bs mxstepsb =
     let parent, which = parent_and_which bs in
-    c_set_max_num_steps parent which mxstepsb 
+    c_set_max_num_steps parent which mxstepsb
 
   external c_set_init_step : ('a, 'k) session -> int -> float -> unit
       = "c_cvodes_adj_set_init_step"
 
   let set_init_step bs hinb =
     let parent, which = parent_and_which bs in
-    c_set_init_step parent which hinb 
+    c_set_init_step parent which hinb
 
   external c_set_min_step : ('a, 'k) session -> int -> float -> unit
       = "c_cvodes_adj_set_min_step"
 
   let set_min_step bs hminb =
     let parent, which = parent_and_which bs in
-    c_set_min_step parent which hminb 
+    c_set_min_step parent which hminb
 
   external c_set_max_step : ('a, 'k) session -> int -> float -> unit
       = "c_cvodes_adj_set_max_step"
 
   let set_max_step bs hmaxb =
     let parent, which = parent_and_which bs in
-    c_set_max_step parent which hmaxb 
+    c_set_max_step parent which hmaxb
 
   external c_set_stab_lim_det : ('a, 'k) session -> int -> bool -> unit
       = "c_cvodes_adj_set_stab_lim_det"
@@ -774,8 +774,8 @@ module Adjoint = struct (* {{{ *)
       | _ -> ()
 
     (* Sundials < 3.0.0 *)
-    let make_compat (type s) hasjac usesens
-        (solver : s Lsolver_impl.Direct.solver)
+    let make_compat (type s tag) hasjac usesens
+        (solver : (s, 'nd, 'nk, tag) Lsolver_impl.Direct.solver)
         (mat : ('k, s, 'nd, 'nk) Matrix.t) bs =
       let parent, which = parent_and_which bs in
       match solver with
@@ -824,76 +824,100 @@ module Adjoint = struct (* {{{ *)
           (match sinfo.ordering with None -> ()
                                    | Some o -> c_superlumt_set_ordering session o)
 
-    let set_ls_callbacks (type m)
-          ?(jac : m jac_fn option) (solver : m Lsolver_impl.Direct.solver)
-          (mat : m) session =
+    | Lsolver_impl.Direct.Custom _ ->
+        assert false
+
+    let set_ls_callbacks (type m tag)
+          ?(jac : m jac_fn option)
+          (solver : (m, 'nd, 'nk, tag) Lsolver_impl.Direct.solver)
+          (mat : ('mk, m, 'nd, 'nk) Matrix.t) session =
       let none = (None : m option) in
+      let uw = Matrix.unwrap in
+      let open Lsolver_impl.Direct in
       begin match solver with
-      | Lsolver_impl.Direct.Dense ->
+      | Dense ->
           session.ls_callbacks <- (match jac with
             | None ->
-                BDlsDenseCallback ({ jacfn = no_callback; jmat = none }, mat)
+                BDlsDenseCallback ({ jacfn = no_callback; jmat = none }, uw mat)
             | Some (NoSens f) ->
-                BDlsDenseCallback ({ jacfn = f; jmat = none }, mat)
+                BDlsDenseCallback ({ jacfn = f; jmat = none }, uw mat)
             | Some (WithSens f) ->
-                BDlsDenseCallbackSens ({ jacfn_sens = f; jmat = none }, mat))
-      | Lsolver_impl.Direct.LapackDense ->
+                BDlsDenseCallbackSens ({ jacfn_sens = f; jmat = none }, uw mat))
+      | LapackDense ->
           session.ls_callbacks <- (match jac with
             | None ->
-                BDlsDenseCallback ({ jacfn = no_callback; jmat = none }, mat)
+                BDlsDenseCallback ({ jacfn = no_callback; jmat = none }, uw mat)
             | Some (NoSens f) ->
-                BDlsDenseCallback ({ jacfn = f; jmat = none }, mat)
+                BDlsDenseCallback ({ jacfn = f; jmat = none }, uw mat)
             | Some (WithSens f) ->
-                BDlsDenseCallbackSens ({ jacfn_sens = f; jmat = none }, mat))
-      | Lsolver_impl.Direct.Band ->
+                BDlsDenseCallbackSens ({ jacfn_sens = f; jmat = none }, uw mat))
+      | Band ->
           session.ls_callbacks <- (match jac with
             | None ->
-                BDlsBandCallback ({ jacfn = no_callback; jmat = none }, mat)
+                BDlsBandCallback ({ jacfn = no_callback; jmat = none }, uw mat)
             | Some (NoSens f) ->
-                BDlsBandCallback ({ jacfn = f; jmat = none }, mat)
+                BDlsBandCallback ({ jacfn = f; jmat = none }, uw mat)
             | Some (WithSens f) ->
-                BDlsBandCallbackSens ({ jacfn_sens = f; jmat = none }, mat))
-      | Lsolver_impl.Direct.LapackBand ->
+                BDlsBandCallbackSens ({ jacfn_sens = f; jmat = none }, uw mat))
+      | LapackBand ->
           session.ls_callbacks <- (match jac with
             | None ->
-                BDlsBandCallback ({ jacfn = no_callback; jmat = none }, mat)
+                BDlsBandCallback ({ jacfn = no_callback; jmat = none }, uw mat)
             | Some (NoSens f) ->
-                BDlsBandCallback ({ jacfn = f; jmat = none }, mat)
+                BDlsBandCallback ({ jacfn = f; jmat = none }, uw mat)
             | Some (WithSens f) ->
-                BDlsBandCallbackSens ({ jacfn_sens = f; jmat = none }, mat))
-      | Lsolver_impl.Direct.Klu _ ->
+                BDlsBandCallbackSens ({ jacfn_sens = f; jmat = none }, uw mat))
+      | Klu _ ->
           session.ls_callbacks <- (match jac with
             | None -> invalid_arg "Klu requires Jacobian function";
             | Some (NoSens f) ->
-                BSlsKluCallback ({ jacfn = f; jmat = none }, mat)
+                BSlsKluCallback ({ jacfn = f; jmat = none }, uw mat)
             | Some (WithSens f) ->
-                BSlsKluCallbackSens ({ jacfn_sens = f; jmat = none }, mat))
-      | Lsolver_impl.Direct.Superlumt _ ->
+                BSlsKluCallbackSens ({ jacfn_sens = f; jmat = none }, uw mat))
+      | Superlumt _ ->
           session.ls_callbacks <- (match jac with
             | None -> invalid_arg "Superlumt requires Jacobian function";
             | Some (NoSens f) ->
-                BSlsSuperlumtCallback ({ jacfn = f; jmat = none }, mat)
+                BSlsSuperlumtCallback ({ jacfn = f; jmat = none }, uw mat)
             | Some (WithSens f) ->
                 BSlsSuperlumtCallbackSens
-                  ({ jacfn_sens = f; jmat = none }, mat))
+                  ({ jacfn_sens = f; jmat = none }, uw mat))
+      | Custom _ ->
+          session.ls_callbacks <- (match jac with
+            | None ->
+                (match Matrix.get_id mat with
+                 | Matrix.Dense | Matrix.Band -> ()
+                 | _ -> invalid_arg "A Jacobian function is required");
+                BDirectCustomCallback ({ jacfn = no_callback; jmat = none },
+                                       uw mat)
+            | Some (NoSens f) ->
+                BDirectCustomCallback ({ jacfn = f; jmat = none }, uw mat)
+            | Some (WithSens f) ->
+                BDirectCustomCallbackSens
+                  ({ jacfn_sens = f; jmat = none }, uw mat))
       end;
       session.ls_precfns <- NoPrecFns
 
     (* Sundials >= 3.0.0 *)
     external c_dls_set_linear_solver
-      : 'k serial_session * int -> Lsolver_impl.Direct.cptr
-          -> ('mk, 'm, Nvector_serial.data, 'k) Matrix.t -> bool -> bool -> unit
+      : 'k serial_session * int
+        -> ('m, Nvector_serial.data, 'k) Lsolver_impl.Direct.cptr
+        -> ('mk, 'm, Nvector_serial.data, 'k) Matrix.t
+        -> bool
+        -> bool
+        -> unit
       = "c_cvodes_adj_dls_set_linear_solver"
 
-    let make Lsolver_impl.Direct.({ rawptr; solver }) ?jac mat bs nv =
+    let make Lsolver_impl.Direct.({ rawptr; solver } as ls) ?jac mat bs nv =
       let session = tosession bs in
       let parent, which = parent_and_which bs in
       let use_sens = match jac with Some (WithSens _) -> true | _ -> false in
-      set_ls_callbacks ?jac solver (Matrix.unwrap mat) session;
+      set_ls_callbacks ?jac solver mat session;
       if in_compat_mode then make_compat (jac <> None) use_sens solver mat bs
       else c_dls_set_linear_solver (parent, which) rawptr mat
-                                   (jac <> None) use_sens
-  
+                                                    (jac <> None) use_sens;
+      session.ls_solver <- Lsolver_impl.DirectSolver ls
+
     (* Sundials < 3.0.0 *)
     let invalidate_callback s =
       if in_compat_mode then
@@ -1023,11 +1047,12 @@ module Adjoint = struct (* {{{ *)
                     * 'd jac_times_vec_fn_with_sens
 
     external c_spils_set_linear_solver
-      : ('a, 'k) session -> int -> Lsolver_impl.Iterative.cptr -> unit
+    : ('a, 'k) session -> int -> ('a, 'k) Lsolver_impl.Iterative.cptr -> unit
       = "c_cvodes_adj_spils_set_linear_solver"
 
-    let make Lsolver_impl.Iterative.({ rawptr; solver;
-                                       compat = ({ maxl; gs_type } as compat) })
+    let make (type s)
+          Lsolver_impl.Iterative.({ rawptr; solver;
+                                 compat = ({ maxl; gs_type } as compat) } as ls)
           ?jac_times_vec (prec_type, set_prec) bs nv =
       let session = tosession bs in
       let parent, which = parent_and_which bs in
@@ -1037,7 +1062,7 @@ module Adjoint = struct (* {{{ *)
             raise Sundials.NotImplementedBySundialsVersion;
         | _ -> ();
         let open Lsolver_impl.Iterative in
-        (match solver with
+        (match (solver : ('nd, 'nk, s) solver) with
          | Spgmr ->
              c_spgmr parent which maxl prec_type;
              (match gs_type with None -> () | Some t ->
@@ -1053,6 +1078,7 @@ module Adjoint = struct (* {{{ *)
              compat.set_maxl <- old_set_maxl bs;
              compat.set_prec_type <- old_set_prec_type bs
          | _ -> raise Sundials.NotImplementedBySundialsVersion);
+        session.ls_solver <- Lsolver_impl.IterativeSolver ls;
         set_prec bs parent which nv;
         (match jac_times_vec with
          | Some (NoSens (ojs, jt)) ->
@@ -1065,6 +1091,7 @@ module Adjoint = struct (* {{{ *)
              session.ls_callbacks <- BSpilsCallbackSens (None, None))
       end else
         c_spils_set_linear_solver parent which rawptr;
+        session.ls_solver <- Lsolver_impl.IterativeSolver ls;
         Lsolver_impl.Iterative.(c_set_prec_type rawptr solver prec_type);
         set_prec bs parent which nv;
         let has_setup, has_times, use_sens =
@@ -1279,6 +1306,7 @@ module Adjoint = struct (* {{{ *)
             rootsfn      = dummy_rootsfn;
             errh         = dummy_errh;
             errw         = dummy_errw;
+            ls_solver    = Lsolver_impl.NoSolver;
             ls_callbacks = NoCallbacks;
             ls_precfns   = NoPrecFns;
 

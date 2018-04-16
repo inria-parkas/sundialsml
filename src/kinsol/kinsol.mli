@@ -115,7 +115,7 @@ module Direct : sig (* {{{ *)
       @nocvode <node> CVDlsSetLinearSolver
       @nocvode <node> CVDlsSetJacFn *)
   val make :
-    ('m, 'kind) Lsolver.Direct.serial_t ->
+    ('m, 'kind, 't) Lsolver.Direct.serial_t ->
     ?jac:'m jac_fn ->
     ('k, 'm, Nvector_serial.data, 'kind) Matrix.t ->
     'kind serial_linear_solver

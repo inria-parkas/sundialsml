@@ -166,7 +166,8 @@ module Direct = struct (* {{{ *)
     | _ -> ()
 
   (* Sundials < 3.0.0 *)
-  let make_compat (type s) hasjac (solver : s Lsolver_impl.Direct.solver)
+  let make_compat (type s tag) hasjac
+        (solver : (s, 'nd, 'nk, tag) Lsolver_impl.Direct.solver)
         (mat : ('k, s, 'nd, 'nk) Matrix.t) session =
     match solver with
     | Lsolver_impl.Direct.Dense ->
@@ -212,38 +213,55 @@ module Direct = struct (* {{{ *)
         (match sinfo.ordering with None -> ()
                                  | Some o -> c_superlumt_set_ordering session o)
 
-  let set_ls_callbacks (type m)
-        ?jac (solver : m Lsolver_impl.Direct.solver) (mat : m) session =
+    | Lsolver_impl.Direct.Custom _ ->
+        assert false
+
+  let check_dqjac jac mat = let open Matrix in
+    match get_id mat with
+    | Dense | Band -> ()
+    | _ -> if jac = None then invalid_arg "A Jacobian function is required"
+
+  let set_ls_callbacks (type m tag)
+        ?jac (solver : (m, 'nd, 'nk, tag) Lsolver_impl.Direct.solver)
+        (mat : ('mk, m, 'nd, 'nk) Matrix.t) session =
     let cb = { jacfn = (match jac with None -> no_callback | Some f -> f);
                jmat  = (None : m option) } in
+    let open Lsolver_impl.Direct in
     begin match solver with
-    | Lsolver_impl.Direct.Dense ->
-        session.ls_callbacks <- DlsDenseCallback (cb, mat)
-    | Lsolver_impl.Direct.LapackDense ->
-        session.ls_callbacks <- DlsDenseCallback (cb, mat)
-    | Lsolver_impl.Direct.Band ->
-        session.ls_callbacks <- DlsBandCallback (cb, mat)
-    | Lsolver_impl.Direct.LapackBand ->
-        session.ls_callbacks <- DlsBandCallback (cb, mat)
-    | Lsolver_impl.Direct.Klu _ ->
+    | Dense ->
+        session.ls_callbacks <- DlsDenseCallback (cb, Matrix.unwrap mat)
+    | LapackDense ->
+        session.ls_callbacks <- DlsDenseCallback (cb, Matrix.unwrap mat)
+    | Band ->
+        session.ls_callbacks <- DlsBandCallback (cb, Matrix.unwrap mat)
+    | LapackBand ->
+        session.ls_callbacks <- DlsBandCallback (cb, Matrix.unwrap mat)
+    | Klu _ ->
         if jac = None then invalid_arg "Klu requires Jacobian function";
-        session.ls_callbacks <- SlsKluCallback (cb, mat)
-    | Lsolver_impl.Direct.Superlumt _ ->
+        session.ls_callbacks <- SlsKluCallback (cb, Matrix.unwrap mat)
+    | Superlumt _ ->
         if jac = None then invalid_arg "Superlumt requires Jacobian function";
-        session.ls_callbacks <- SlsSuperlumtCallback (cb, mat)
+        session.ls_callbacks <- SlsSuperlumtCallback (cb, Matrix.unwrap mat)
+    | Custom _ ->
+        check_dqjac jac mat;
+        session.ls_callbacks <- DirectCustomCallback (cb, Matrix.unwrap mat)
     end;
     session.ls_precfns <- NoPrecFns
 
   (* Sundials >= 3.0.0 *)
   external c_dls_set_linear_solver
-    : 'k serial_session -> Lsolver_impl.Direct.cptr
-        -> ('mk, 'm, Nvector_serial.data, 'k) Matrix.t -> bool -> unit
+    : 'k serial_session
+      -> ('m, Nvector_serial.data, 'k) Lsolver_impl.Direct.cptr
+      -> ('mk, 'm, Nvector_serial.data, 'k) Matrix.t
+      -> bool
+      -> unit
     = "c_cvode_dls_set_linear_solver"
 
-  let make Lsolver_impl.Direct.({ rawptr; solver }) ?jac mat session nv =
-    set_ls_callbacks ?jac solver (Matrix.unwrap mat) session;
+  let make Lsolver_impl.Direct.({ rawptr; solver } as ls) ?jac mat session nv =
+    set_ls_callbacks ?jac solver mat session;
     if in_compat_mode then make_compat (jac <> None) solver mat session
-    else c_dls_set_linear_solver session rawptr mat (jac <> None)
+    else c_dls_set_linear_solver session rawptr mat (jac <> None);
+    session.ls_solver <- Lsolver_impl.DirectSolver ls
 
   (* Sundials < 3.0.0 *)
   let invalidate_callback session =
@@ -358,7 +376,7 @@ module Iterative = struct (* {{{ *)
     = "c_cvode_spils_set_preconditioner"
 
   external c_spils_set_linear_solver
-    : ('a, 'k) session -> Lsolver_impl.Iterative.cptr -> unit
+    : ('a, 'k) session -> ('a, 'k) Lsolver_impl.Iterative.cptr -> unit
     = "c_cvode_spils_set_linear_solver"
 
   let init_preconditioner solve setup session nv =
@@ -378,8 +396,9 @@ module Iterative = struct (* {{{ *)
   let prec_both ?setup solve  = Lsolver_impl.Iterative.(PrecBoth,
                                             init_preconditioner solve setup)
 
-  let make Lsolver_impl.Iterative.({ rawptr; solver;
-                                     compat = ({ maxl; gs_type } as compat) })
+  let make (type s)
+        Lsolver_impl.Iterative.({ rawptr; solver;
+                                 compat = ({ maxl; gs_type } as compat) } as ls)
         ?jac_times_vec (prec_type, set_prec) session nv =
     let jac_times_setup, jac_times_vec =
       match jac_times_vec with None -> None, None
@@ -388,7 +407,7 @@ module Iterative = struct (* {{{ *)
       if jac_times_setup <> None then
         raise Sundials.NotImplementedBySundialsVersion;
       let open Lsolver_impl.Iterative in
-      (match solver with
+      (match (solver : ('nd, 'nk, s) solver) with
        | Spgmr ->
            c_spgmr session maxl prec_type;
            (match gs_type with None -> () | Some t -> c_set_gs_type session t);
@@ -403,11 +422,13 @@ module Iterative = struct (* {{{ *)
            compat.set_maxl <- old_set_maxl session;
            compat.set_prec_type <- old_set_prec_type session
        | _ -> raise Sundials.NotImplementedBySundialsVersion);
+      session.ls_solver <- Lsolver_impl.IterativeSolver ls;
       set_prec session nv;
       session.ls_callbacks <- SpilsCallback (jac_times_vec, None);
       if jac_times_vec <> None then c_set_jac_times session true false
     end else
       c_spils_set_linear_solver session rawptr;
+      session.ls_solver <- Lsolver_impl.IterativeSolver ls;
       Lsolver_impl.Iterative.(c_set_prec_type rawptr solver prec_type);
       set_prec session nv;
       session.ls_callbacks <- SpilsCallback (jac_times_vec, jac_times_setup);
@@ -663,6 +684,7 @@ let init lmm iter tol f ?(roots=no_roots) t0 y0 =
           errh         = dummy_errh;
           errw         = dummy_errw;
 
+          ls_solver    = Lsolver_impl.NoSolver;
           ls_callbacks = NoCallbacks;
           ls_precfns   = NoPrecFns;
 

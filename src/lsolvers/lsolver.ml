@@ -18,14 +18,29 @@ let in_compat_mode =
 
 exception UnrecoverableFailure of bool
 exception MatrixNotSquare
+exception ATimesFailure of bool
+exception PSetFailure of bool
+exception PSolveFailure of bool
+exception GSFailure
+exception QRSolFailure
+exception ResReduced
+exception ConvFailure
+exception QRfactFailure
+exception LUfactFailure
+exception PackageFailure of bool
+exception IllegalPrecType
+exception InternalFailure of (string * int)
 
-module Direct = struct
+module Direct = struct (* {{{ *)
   include Lsolver_impl.Direct
 
-  type ('m, 'nk) serial_t
-    = ('m, Nvector_serial.data, [>Nvector_serial.kind] as 'nk) t
+  type ('m, 'nk, 'tag) serial_t
+    = ('m, Nvector_serial.data, [>Nvector_serial.kind] as 'nk, 'tag) t
 
-  external c_dense : 'k Nvector_serial.any -> 'k Matrix.dense -> cptr
+  external c_dense
+    : 'k Nvector_serial.any
+      -> 'k Matrix.dense
+      -> (Matrix.Dense.t, Nvector_serial.data, 'k) cptr
     = "ml_lsolver_dense"
 
   let dense nvec mat = {
@@ -33,7 +48,10 @@ module Direct = struct
       solver = Dense;
     }
 
-  external c_lapack_dense : 'k Nvector_serial.any -> 'k Matrix.dense -> cptr
+  external c_lapack_dense
+    : 'k Nvector_serial.any
+      -> 'k Matrix.dense
+      -> (Matrix.Dense.t, Nvector_serial.data, 'k) cptr
     = "ml_lsolver_lapack_dense"
 
   let lapack_dense nvec mat =
@@ -44,7 +62,10 @@ module Direct = struct
       solver = LapackDense;
     }
 
-  external c_band : 'k Nvector_serial.any -> 'k Matrix.band -> cptr
+  external c_band
+    : 'k Nvector_serial.any
+      -> 'k Matrix.band
+      -> (Matrix.Band.t, Nvector_serial.data, 'k) cptr
     = "ml_lsolver_band"
 
   let band nvec mat = {
@@ -52,7 +73,10 @@ module Direct = struct
       solver = Band;
     }
 
-  external c_lapack_band : 'k Nvector_serial.any -> 'k Matrix.band -> cptr
+  external c_lapack_band
+    : 'k Nvector_serial.any
+      -> 'k Matrix.band
+      -> (Matrix.Band.t, Nvector_serial.data, 'k) cptr
     = "ml_lsolver_lapack_band"
 
   let lapack_band nvec mat =
@@ -63,10 +87,13 @@ module Direct = struct
       solver = LapackBand;
     }
 
-  module Klu = struct
+  module Klu = struct (* {{{ *)
     include Lsolver_impl.Klu
 
-    external c_klu : 'k Nvector_serial.any -> ('s, 'k) Matrix.sparse -> cptr
+    external c_klu
+      : 'k Nvector_serial.any
+        -> ('s, 'k) Matrix.sparse
+        -> ('s Matrix.Sparse.t, Nvector_serial.data, 'k) cptr
       = "ml_lsolver_klu"
 
     let make ?ordering nvec mat =
@@ -82,7 +109,10 @@ module Direct = struct
       { rawptr = cptr;
         solver = Klu info; }
 
-    external c_reinit : cptr -> ('s, 'k) Matrix.sparse -> unit
+    external c_reinit
+      : ('s Matrix.Sparse.t, Nvector_serial.data, 'k) cptr
+        -> ('s, 'k) Matrix.sparse
+        -> unit
       = "ml_lsolver_klu_reinit"
 
     let reinit { rawptr = cptr; solver } mat ?nnz () =
@@ -99,7 +129,10 @@ module Direct = struct
         c_reinit cptr mat
       end
 
-    external c_set_ordering : cptr -> ordering -> unit
+    external c_set_ordering
+      : ('s Matrix.Sparse.t, Nvector_serial.data, 'k) cptr
+        -> ordering
+        -> unit
       = "ml_lsolver_klu_set_ordering"
 
     let set_ordering { rawptr = cptr; solver } ordering =
@@ -108,13 +141,17 @@ module Direct = struct
         | Klu { set_ordering = f } -> f ordering
         | _ -> assert false
       else c_set_ordering cptr ordering
-  end
 
-  module Superlumt = struct
+  end (* }}} *)
+
+  module Superlumt = struct (* {{{ *)
     include Lsolver_impl.Superlumt
 
     external c_superlumt
-      : 'k Nvector_serial.any -> ('s, 'k) Matrix.sparse -> int -> cptr
+      : 'k Nvector_serial.any
+        -> ('s, 'k) Matrix.sparse
+        -> int
+        -> ('s Matrix.Sparse.t, Nvector_serial.data, 'k) cptr
       = "ml_lsolver_superlumt"
 
     let make ?ordering ~nthreads nvec mat =
@@ -130,7 +167,10 @@ module Direct = struct
       { rawptr = cptr;
         solver = Superlumt info; }
 
-    external c_set_ordering : cptr -> ordering -> unit
+    external c_set_ordering
+      : ('s Matrix.Sparse.t, Nvector_serial.data, 'k) cptr
+        -> ordering
+        -> unit
       = "ml_lsolver_superlumt_set_ordering"
 
     let set_ordering { rawptr = cptr; solver } ordering =
@@ -139,30 +179,83 @@ module Direct = struct
         | Superlumt { set_ordering = f } -> f ordering
         | _ -> assert false
       else c_set_ordering cptr ordering
-  end
-end
 
-module Iterative = struct
+  end (* }}} *)
+
+  module Custom = struct (* {{{ *)
+
+    type 'lsolver tag = 'lsolver Lsolver_impl.Custom.tag
+
+    type ('matrix, 'data, 'kind, 'lsolver) ops = {
+      init : 'lsolver -> unit;
+
+      setup : 'lsolver -> 'matrix -> unit;
+
+      solve : 'lsolver
+              -> 'matrix
+              -> ('data, 'kind) Nvector.t
+              -> ('data, 'kind) Nvector.t
+              -> unit;
+
+      get_work_space : ('lsolver -> int * int) option;
+    }
+
+    let make { init = fi; setup = fs0; solve = fs; get_work_space = fgws} ldata
+      =
+      match Sundials.sundials_version with
+      | 2,_,_ -> raise Sundials.NotImplementedBySundialsVersion;
+      | _ -> ();
+      let ops = Lsolver_impl.Custom.({
+              init = (fun () -> fi ldata);
+              setup = fs0 ldata;
+              solve = (fun a x b tol -> fs ldata a x b);
+              set_atimes = (fun _ ->
+                  failwith "internal error: Direct.Custom.set_atimes");
+              set_preconditioner = (fun _ _ ->
+                  failwith "internal error: Direct.Custom.set_preconditioner");
+              set_scaling_vectors = (fun _ _ ->
+                  failwith "internal error: Direct.Custom.set_scaling_vectors");
+              get_num_iters = (fun _ ->
+                  failwith "internal error: Direct.Custom.get_num_iters");
+              get_res_norm = (fun _ ->
+                  failwith "internal error: Direct.Custom.get_res_norm");
+              get_res_id = (fun _ ->
+                  failwith "internal error: Direct.Custom.get_res_id");
+              get_work_space = (fun _ ->
+                  failwith "internal error: Direct.Custom.get_work_space");
+            })
+      in Lsolver_impl.Direct.({
+          rawptr = Lsolver_impl.Direct.(c_make_custom 0 ops only_ops);
+          solver = Custom (ldata, ops)
+        })
+
+    let unwrap Lsolver_impl.Direct.({ solver = Custom (ldata, _) }) = ldata
+
+  end (* }}} *)
+end (* }}} *)
+
+module Iterative = struct (* {{{ *)
   include Lsolver_impl.Iterative
 
-  exception ATimesFailure of bool
-  exception PSetFailure of bool
-  exception PSolveFailure of bool
-  exception GSFailure
-  exception QRSolFailure
-  exception ResReduced
-  exception ConvFailure
-  exception QRfactFailure
-  exception LUfactFailure
-  exception IllegalPrecType
-
-  external c_set_maxl : cptr -> solver -> int -> unit
+  external c_set_maxl
+    : ('nd, 'nk) cptr
+      -> ('nd, 'nk, [< `Spbcgs|`Sptfqmr|`Pcg]) solver
+      -> int
+      -> unit
     = "ml_lsolver_set_maxl"
 
-  external c_set_gs_type : cptr -> solver -> gramschmidt_type -> unit
+  external c_set_gs_type
+    : ('nd, 'nk) cptr
+      -> ('nd, 'nk, [< `Spfgmr|`Spgmr]) solver
+      -> gramschmidt_type
+      -> unit
     = "ml_lsolver_set_gs_type"
 
-  external c_set_max_restarts : cptr -> solver -> int -> unit
+  external c_set_max_restarts
+    : ('nd, 'nk) cptr
+      -> ('nd, 'nk, [< `Spfgmr|`Spgmr]) solver
+      -> int
+      -> unit
     = "ml_lsolver_set_max_restarts"
 
   let set_maxl { rawptr; solver; compat } maxl =
@@ -186,7 +279,7 @@ module Iterative = struct
     | Some x -> x
     | None -> 0
 
-  external c_spbcgs : int -> ('d, 'k) Nvector.t -> cptr
+  external c_spbcgs : int -> ('d, 'k) Nvector.t -> ('nd, 'nk) cptr
     = "ml_lsolver_spbcgs"
 
   let spbcgs ?maxl nvec =
@@ -204,7 +297,7 @@ module Iterative = struct
       compat = compat;
       check_prec_type = fun _ -> true; }
 
-  external c_spfgmr : int -> ('d, 'k) Nvector.t -> cptr
+  external c_spfgmr : int -> ('d, 'k) Nvector.t -> ('nd, 'nk) cptr
     = "ml_lsolver_spfgmr"
 
   let spfgmr ?maxl ?max_restarts ?gs_type nvec =
@@ -233,7 +326,7 @@ module Iterative = struct
       compat = compat;
       check_prec_type = fun _ -> true; }
 
-  external c_spgmr : int -> ('d, 'k) Nvector.t -> cptr
+  external c_spgmr : int -> ('d, 'k) Nvector.t -> ('nd, 'nk) cptr
     = "ml_lsolver_spgmr"
 
   let spgmr ?maxl ?max_restarts ?gs_type nvec =
@@ -263,7 +356,7 @@ module Iterative = struct
       compat = compat;
       check_prec_type = fun _ -> true; }
 
-  external c_sptfqmr : int -> ('d, 'k) Nvector.t -> cptr
+  external c_sptfqmr : int -> ('d, 'k) Nvector.t -> ('nd, 'nk) cptr
     = "ml_lsolver_sptfqmr"
 
   let sptfqmr ?maxl nvec =
@@ -281,7 +374,7 @@ module Iterative = struct
       compat = compat;
       check_prec_type = fun _ -> true; }
 
-  external c_pcg : int -> ('d, 'k) Nvector.t -> cptr
+  external c_pcg : int -> ('d, 'k) Nvector.t -> ('nd, 'nk) cptr
     = "ml_lsolver_pcg"
 
   let pcg ?maxl nvec =
@@ -297,7 +390,138 @@ module Iterative = struct
       solver = Pcg;
       compat = compat;
       check_prec_type = fun _ -> true; }
-end
+
+  module Custom = struct (* {{{ *)
+
+    type 'lsolver tag = [`Custom of 'lsolver]
+
+    type ('data, 'kind) atimesfn =
+         ('data, 'kind) Nvector.t
+      -> ('data, 'kind) Nvector.t
+      -> unit
+
+    type psetupfn = unit -> unit
+
+    type ('data, 'kind) psolvefn =
+         ('data, 'kind) Nvector.t
+      -> ('data, 'kind) Nvector.t
+      -> float
+      -> bool
+      -> unit
+ 
+    type ('data, 'kind, 'lsolver) ops = {
+
+      init : 'lsolver -> unit;
+
+      setup : 'lsolver -> unit;
+
+      solve : 'lsolver
+              -> ('data, 'kind) Nvector.t
+              -> ('data, 'kind) Nvector.t
+              -> float
+              -> unit;
+
+      set_atimes
+        : ('lsolver -> ('data, 'kind) atimesfn -> unit) option;
+
+      set_preconditioner
+        : ('lsolver 
+           -> psetupfn option
+           -> ('data, 'kind) psolvefn option
+           -> unit) option;
+
+      set_scaling_vectors
+        : ('lsolver
+           -> ('data, 'kind) Nvector.t option
+           -> ('data, 'kind) Nvector.t option
+           -> unit) option;
+
+      get_num_iters : ('lsolver -> int) option;
+
+      get_res_norm : ('lsolver -> float) option;
+
+      get_res_id : ('lsolver -> ('data, 'kind) Nvector.t) option;
+
+      get_work_space : ('lsolver -> int * int) option;
+    }
+
+    let wrap_set_atimes fseto ldata =
+      match fseto with
+      | None ->
+          fun _  -> failwith ("internal error: Iterative.Custom.set_atimes")
+      | Some fset ->
+          let fset' = fset ldata in
+          fun fd -> fset' (Lsolver_impl.Custom.call_atimes fd)
+
+    let wrap_set_preconditioner fseto ldata =
+      match fseto with
+      | None -> fun _  ->
+          failwith ("internal error: Iterative.Custom.set_preconditioner")
+      | Some fset ->
+          let fset' = fset ldata in
+          fun fd has_setup has_solve -> fset'
+            (if has_setup
+             then Some (fun () -> Lsolver_impl.Custom.call_psetup fd) else None)
+            (if has_solve
+             then Some (Lsolver_impl.Custom.call_psolve fd) else None)
+
+    let mapo s fo x =
+      match fo with
+      | None -> (fun _ -> failwith ("internal error: Iterative.Custom." ^ s))
+      | Some f -> f x
+
+    let mapu s fo x =
+      match fo with
+      | None -> (fun _ -> failwith ("internal error: Iterative.Custom." ^ s))
+      | Some f -> fun () -> f x
+
+    let make { init = finit;
+               setup = fsetup;
+               solve = fsolve;
+               set_atimes = fset_atimes;
+               set_preconditioner = fset_preconditioner;
+               set_scaling_vectors = fset_scaling_vectors;
+               get_num_iters = fget_num_iters;
+               get_res_norm = fget_res_norm;
+               get_res_id = fget_res_id;
+               get_work_space = fget_work_space } ldata =
+      match Sundials.sundials_version with
+      | 2,_,_ -> raise Sundials.NotImplementedBySundialsVersion;
+      | _ -> ();
+      let ops = Lsolver_impl.Custom.({
+              init = (fun () -> finit ldata);
+              setup = (fun () -> fsetup ldata);
+              solve = (fun () -> fsolve ldata);
+              set_atimes = wrap_set_atimes fset_atimes ldata;
+              set_preconditioner =
+                wrap_set_preconditioner fset_preconditioner ldata;
+              set_scaling_vectors =
+                mapo "set_scaling_vectors" fset_scaling_vectors ldata;
+              get_num_iters = mapu "get_num_iters" fget_num_iters ldata;
+              get_res_norm = mapu "get_res_norm" fget_res_norm ldata;
+              get_res_id = mapu "get_res_id" fget_res_id ldata;
+              get_work_space = mapu "get_work_space" fget_work_space ldata;
+            }) in
+      let only_ops = Lsolver_impl.Custom.({
+        has_set_atimes          = fset_atimes <> None;
+        has_set_preconditioner  = fset_preconditioner <> None;
+        has_set_scaling_vectors = fset_scaling_vectors <> None;
+        has_get_num_iters       = fget_num_iters <> None;
+        has_get_res_norm        = fget_res_norm <> None;
+        has_get_res_id          = fget_res_id <> None;
+        has_get_work_space      = fget_work_space <> None;
+      })
+      in Lsolver_impl.Iterative.({
+          rawptr = c_make_custom 1 ops only_ops;
+          solver = Custom (ldata, ops);
+          compat = info;
+          check_prec_type = fun _ -> true;
+        })
+
+    let unwrap Lsolver_impl.Iterative.({ solver = Custom (ldata, _) }) = ldata
+
+  end (* }}} *)
+end (* }}} *)
 
 (* Let C code know about some of the values in this module.  *)
 external c_init_module : exn array -> unit =
@@ -309,15 +533,18 @@ let _ =
        lsolver_exn_index.  *)
     [|UnrecoverableFailure false;
       MatrixNotSquare;
-      Iterative.ATimesFailure false;
-      Iterative.PSetFailure false;
-      Iterative.PSolveFailure false;
-      Iterative.GSFailure;
-      Iterative.QRSolFailure;
-      Iterative.ResReduced;
-      Iterative.ConvFailure;
-      Iterative.QRfactFailure;
-      Iterative.LUfactFailure;
-      Iterative.IllegalPrecType;
+      Invalid_argument ""; (* Standard OCaml exception *)
+      ATimesFailure false;
+      PSetFailure false;
+      PSolveFailure false;
+      GSFailure;
+      QRSolFailure;
+      ResReduced;
+      ConvFailure;
+      QRfactFailure;
+      LUfactFailure;
+      PackageFailure false;
+      IllegalPrecType;
+      InternalFailure ("", 0);
     |]
 

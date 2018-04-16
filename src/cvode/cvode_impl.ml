@@ -348,7 +348,11 @@ type 'a error_weight_fun = 'a -> 'a -> unit
 (* Session: here comes the big blob.  These mutually recursive types
    cannot be handed out separately to modules without menial
    repetition, so we'll just have them all here, at the top of the
-   Types module.  *)
+   Types module.
+
+   The ls_solver field only exists to ensure that the linear solver is not
+   garbage collected while still being used by a session.
+*)
 
 type ('a, 'kind) session = {
   cvode      : cvode_mem;
@@ -363,6 +367,7 @@ type ('a, 'kind) session = {
   mutable errh         : error_handler;
   mutable errw         : 'a error_weight_fun;
 
+  mutable ls_solver    : Lsolver_impl.solver;
   mutable ls_callbacks : ('a, 'kind) linsolv_callbacks;
   mutable ls_precfns   : 'a linsolv_precfns;
 
@@ -429,6 +434,16 @@ and ('a, 'kind) linsolv_callbacks =
       : ('s Matrix.Sparse.t) AdjointTypes'.DirectTypes.jac_callback_with_sens
         * 's Matrix.Sparse.t
         -> ('a, 'kind) linsolv_callbacks
+
+  (* Custom *)
+  | DirectCustomCallback :
+      'm DirectTypes.jac_callback * 'm -> ('a, 'kind) linsolv_callbacks
+  | BDirectCustomCallback :
+      'm AdjointTypes'.DirectTypes.jac_callback_no_sens * 'm
+      -> ('a, 'kind) linsolv_callbacks
+  | BDirectCustomCallbackSens :
+      'm AdjointTypes'.DirectTypes.jac_callback_with_sens * 'm
+      -> ('a, 'kind) linsolv_callbacks
 
   (* Spils *)
   | SpilsCallback of 'a SpilsTypes'.jac_times_vec_fn option

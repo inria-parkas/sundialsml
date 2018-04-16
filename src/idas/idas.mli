@@ -45,7 +45,7 @@ open Sundials
 type ('data, 'kind) session = ('data, 'kind) Ida.session
 
 (** Integration of pure quadrature equations.
- 
+
     Adds a vector $y_Q$ of $N_Q$ quadrature variables defined by
     {% $\frac{\mathrm{d} y_Q}{\mathrm{d}t} = f_Q(t, y, \dot{y}, p)$%}. These
     are treated more efficiently since they are excluded from the nonlinear
@@ -188,7 +188,7 @@ module Quadrature : sig (* {{{ *)
 end (* }}} *)
 
 (** (Forward) Sensitivity analysis of DAEs with respect to their parameters.
- 
+
     Formalizes the dependency of a set of DAEs on $N_p$ parameters $p$ and
     calculates the sensitivities $s$ and their derivatives {% $\dot{s}$%}
     of the solutions $y$ and {% $\dot{y}$%} relative to a subset of
@@ -993,7 +993,7 @@ module Adjoint : sig (* {{{ *)
         @nocvode <node> IDADlsSetJacFnB
         @nocvode <node> IDADlsSetJacFnBS *)
     val make :
-      ('m, 'kind) Lsolver.Direct.serial_t ->
+      ('m, 'kind, 't) Lsolver.Direct.serial_t ->
       ?jac:'m jac_fn ->
       ('k, 'm, Nvector_serial.data, 'kind) Matrix.t ->
       'kind serial_linear_solver
