@@ -18,6 +18,8 @@
    be opaque outside of Sundials/ML, we simply do not install the
    lsolver_impl.cmi file. *)
 
+exception SolverInUse
+
 module Klu = struct (* {{{ *)
 
   type tag = [`Klu]
@@ -175,7 +177,12 @@ module Direct = struct (* {{{ *)
   type ('m, 'nd, 'nk, 't) t = {
     rawptr : ('m, 'nd, 'nk) cptr;
     solver : ('m, 'nd, 'nk, 't) solver;
+    mutable attached : bool;
   }
+
+  let attach ({ attached } as s) =
+    if attached then raise SolverInUse;
+    s.attached <- true
 
 end (* }}} *)
 
@@ -231,8 +238,13 @@ module Iterative = struct (* {{{ *)
     rawptr : ('nd, 'nk) cptr;
     solver : ('nd, 'nk, 't) solver;
     compat : info;
-    mutable check_prec_type  : preconditioning_type -> bool;
+    mutable check_prec_type : preconditioning_type -> bool;
+    mutable attached : bool;
   }
+
+  let attach ({ attached } as s) =
+    if attached then raise SolverInUse;
+    s.attached <- true
 
   external c_set_prec_type
     : ('nd, 'nk) cptr -> ('nd, 'nk, 't) solver -> preconditioning_type -> unit

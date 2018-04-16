@@ -250,6 +250,7 @@ module Direct = struct (* {{{ *)
     set_ls_callbacks ?jac solver mat session;
     if in_compat_mode then make_compat (jac <> None) solver mat session
     else c_dls_set_linear_solver session rawptr mat (jac <> None);
+    Lsolver_impl.Direct.attach ls;
     session.ls_solver <- Lsolver_impl.DirectSolver ls
 
   (* Sundials < 3.0.0 *)
@@ -405,6 +406,7 @@ module Iterative = struct (* {{{ *)
       if jac_times_vec <> None then c_set_jac_times session true false
     end else
       c_spils_set_linear_solver session rawptr;
+      Lsolver_impl.Iterative.attach lsolver;
       session.ls_solver <- Lsolver_impl.IterativeSolver lsolver;
       Lsolver_impl.Iterative.(c_set_prec_type rawptr solver prec_type);
       set_prec session nv;

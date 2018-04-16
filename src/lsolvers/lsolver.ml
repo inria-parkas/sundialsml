@@ -16,6 +16,7 @@ let in_compat_mode =
   | 2,_,_ -> true
   | _ -> false
 
+exception SolverInUse = Lsolver_impl.SolverInUse
 exception UnrecoverableFailure of bool
 exception MatrixNotSquare
 exception ATimesFailure of bool
@@ -46,6 +47,7 @@ module Direct = struct (* {{{ *)
   let dense nvec mat = {
       rawptr = c_dense nvec mat;
       solver = Dense;
+      attached = false;
     }
 
   external c_lapack_dense
@@ -60,6 +62,7 @@ module Direct = struct (* {{{ *)
     {
       rawptr = c_lapack_dense nvec mat;
       solver = LapackDense;
+      attached = false;
     }
 
   external c_band
@@ -71,6 +74,7 @@ module Direct = struct (* {{{ *)
   let band nvec mat = {
       rawptr = c_band nvec mat;
       solver = Band;
+      attached = false;
     }
 
   external c_lapack_band
@@ -85,6 +89,7 @@ module Direct = struct (* {{{ *)
     {
       rawptr = c_lapack_band nvec mat;
       solver = LapackBand;
+      attached = false;
     }
 
   module Klu = struct (* {{{ *)
@@ -107,7 +112,8 @@ module Direct = struct (* {{{ *)
         else info
       in
       { rawptr = cptr;
-        solver = Klu info; }
+        solver = Klu info;
+        attached = false; }
 
     external c_reinit
       : ('s Matrix.Sparse.t, Nvector_serial.data, 'k) cptr
@@ -165,7 +171,8 @@ module Direct = struct (* {{{ *)
         else info nthreads
       in
       { rawptr = cptr;
-        solver = Superlumt info; }
+        solver = Superlumt info;
+        attached = false; }
 
     external c_set_ordering
       : ('s Matrix.Sparse.t, Nvector_serial.data, 'k) cptr
@@ -226,7 +233,8 @@ module Direct = struct (* {{{ *)
             })
       in Lsolver_impl.Direct.({
           rawptr = Lsolver_impl.Direct.(c_make_custom 0 ops only_ops);
-          solver = Custom (ldata, ops)
+          solver = Custom (ldata, ops);
+          attached = false;
         })
 
     let unwrap Lsolver_impl.Direct.({ solver = Custom (ldata, _) }) = ldata
@@ -295,7 +303,9 @@ module Iterative = struct (* {{{ *)
     { rawptr = cptr;
       solver = Spbcgs;
       compat = compat;
-      check_prec_type = fun _ -> true; }
+      check_prec_type = (fun _ -> true);
+      attached = false;
+    }
 
   external c_spfgmr : int -> ('d, 'k) Nvector.t -> ('nd, 'nk) cptr
     = "ml_lsolver_spfgmr"
@@ -324,7 +334,9 @@ module Iterative = struct (* {{{ *)
     { rawptr = cptr;
       solver = Spfgmr;
       compat = compat;
-      check_prec_type = fun _ -> true; }
+      check_prec_type = (fun _ -> true);
+      attached = false;
+    }
 
   external c_spgmr : int -> ('d, 'k) Nvector.t -> ('nd, 'nk) cptr
     = "ml_lsolver_spgmr"
@@ -354,7 +366,9 @@ module Iterative = struct (* {{{ *)
     { rawptr = cptr;
       solver = Spgmr;
       compat = compat;
-      check_prec_type = fun _ -> true; }
+      check_prec_type = (fun _ -> true);
+      attached = false;
+    }
 
   external c_sptfqmr : int -> ('d, 'k) Nvector.t -> ('nd, 'nk) cptr
     = "ml_lsolver_sptfqmr"
@@ -372,7 +386,9 @@ module Iterative = struct (* {{{ *)
     { rawptr = cptr;
       solver = Sptfqmr;
       compat = compat;
-      check_prec_type = fun _ -> true; }
+      check_prec_type = (fun _ -> true);
+      attached = false;
+    }
 
   external c_pcg : int -> ('d, 'k) Nvector.t -> ('nd, 'nk) cptr
     = "ml_lsolver_pcg"
@@ -389,7 +405,9 @@ module Iterative = struct (* {{{ *)
     { rawptr = cptr;
       solver = Pcg;
       compat = compat;
-      check_prec_type = fun _ -> true; }
+      check_prec_type = (fun _ -> true);
+      attached = false;
+    }
 
   module Custom = struct (* {{{ *)
 
@@ -515,7 +533,8 @@ module Iterative = struct (* {{{ *)
           rawptr = c_make_custom 1 ops only_ops;
           solver = Custom (ldata, ops);
           compat = info;
-          check_prec_type = fun _ -> true;
+          check_prec_type = (fun _ -> true);
+          attached = false;
         })
 
     let unwrap Lsolver_impl.Iterative.({ solver = Custom (ldata, _) }) = ldata

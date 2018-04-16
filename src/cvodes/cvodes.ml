@@ -916,6 +916,7 @@ module Adjoint = struct (* {{{ *)
       if in_compat_mode then make_compat (jac <> None) use_sens solver mat bs
       else c_dls_set_linear_solver (parent, which) rawptr mat
                                                     (jac <> None) use_sens;
+      Lsolver_impl.Direct.attach ls;
       session.ls_solver <- Lsolver_impl.DirectSolver ls
 
     (* Sundials < 3.0.0 *)
@@ -1091,6 +1092,7 @@ module Adjoint = struct (* {{{ *)
              session.ls_callbacks <- BSpilsCallbackSens (None, None))
       end else
         c_spils_set_linear_solver parent which rawptr;
+        Lsolver_impl.Iterative.attach ls;
         session.ls_solver <- Lsolver_impl.IterativeSolver ls;
         Lsolver_impl.Iterative.(c_set_prec_type rawptr solver prec_type);
         set_prec bs parent which nv;
