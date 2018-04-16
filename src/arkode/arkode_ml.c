@@ -1390,7 +1390,7 @@ CAMLprim value c_arkode_init(value weakref, value hasfi, value hasfe,
     if (arkode_mem == NULL)
 	caml_failwith("ARKodeCreate returned NULL");
 
-    varkode_mem = caml_alloc_final(1, NULL, sizeof(void *), sizeof(void *) * 5);
+    varkode_mem = caml_alloc_final(1, NULL, 1, 5);
     ARKODE_MEM(varkode_mem) = arkode_mem;
 
     N_Vector nv_y0 = NVEC_VAL(y0);

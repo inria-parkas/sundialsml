@@ -865,7 +865,7 @@ CAMLprim value c_ida_init (value weakref, value vt0, value vy, value vyp)
     if (ida_mem == NULL)
 	caml_failwith ("IDACreate failed");
 
-    vida_mem = caml_alloc_final(1, NULL, sizeof(void *), sizeof(void *) * 5);
+    vida_mem = caml_alloc_final(1, NULL, 1, 5);
     IDA_MEM(vida_mem) = ida_mem;
 
     y = NVEC_VAL (vy);

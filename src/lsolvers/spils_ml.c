@@ -207,14 +207,12 @@ CAMLprim value c_spils_spgmr_make(value vl_max, value vvec_tmpl)
     CAMLlocal1(vs);
     SpgmrMem s;
     N_Vector vec_tmpl;
-    mlsize_t approx_size = sizeof(SpgmrMemRec)
-	+ (Int_val(vl_max) + 3) * NVECTOR_APPROXSIZE(vvec_tmpl);
 
     vec_tmpl = NVEC_VAL(vvec_tmpl);
     s = SpgmrMalloc(Int_val(vl_max), vec_tmpl);
 
     if (s == NULL) caml_raise_out_of_memory();
-    vs = caml_alloc_final(1, &spgmr_finalize, approx_size, approx_size * 20);
+    vs = caml_alloc_final(1, &spgmr_finalize, 1, 20);
     SPGMR_SESSION(vs) = s;
 
     CAMLreturn(vs);
@@ -331,14 +329,12 @@ CAMLprim value c_spils_spfgmr_make(value vl_max, value vvec_tmpl)
     CAMLlocal1(vs);
     SpfgmrMem s;
     N_Vector vec_tmpl;
-    mlsize_t approx_size = sizeof(SpfgmrMemRec)
-	+ (Int_val(vl_max) + 3) * NVECTOR_APPROXSIZE(vvec_tmpl);
 
     vec_tmpl = NVEC_VAL(vvec_tmpl);
     s = SpfgmrMalloc(Int_val(vl_max), vec_tmpl);
 
     if (s == NULL) caml_raise_out_of_memory();
-    vs = caml_alloc_final(1, &spfgmr_finalize, approx_size, approx_size * 20);
+    vs = caml_alloc_final(1, &spfgmr_finalize, 1, 20);
     SPFGMR_SESSION(vs) = s;
 
     CAMLreturn(vs);
@@ -467,14 +463,12 @@ CAMLprim value c_spils_spbcg_make(value vl_max, value vvec_tmpl)
     CAMLlocal1(vs);
     SpbcgMem s;
     N_Vector vec_tmpl;
-    mlsize_t approx_size = sizeof(SpbcgMemRec)
-	+ (Int_val(vl_max) + 3) * NVECTOR_APPROXSIZE(vvec_tmpl);
 
     vec_tmpl = NVEC_VAL(vvec_tmpl);
     s = SpbcgMalloc(Int_val(vl_max), vec_tmpl);
 
     if (s == NULL) caml_raise_out_of_memory();
-    vs = caml_alloc_final(1, &spbcg_finalize, approx_size, approx_size * 20);
+    vs = caml_alloc_final(1, &spbcg_finalize, 1, 20);
     SPBCG_SESSION(vs) = s;
 
     CAMLreturn(vs);
@@ -578,14 +572,12 @@ CAMLprim value c_spils_sptfqmr_make(value vl_max, value vvec_tmpl)
     CAMLlocal1(vs);
     SptfqmrMem s;
     N_Vector vec_tmpl;
-    mlsize_t approx_size = sizeof(SptfqmrMemRec)
-	+ (Int_val(vl_max) + 3) * NVECTOR_APPROXSIZE(vvec_tmpl);
 
     vec_tmpl = NVEC_VAL(vvec_tmpl);
     s = SptfqmrMalloc(Int_val(vl_max), vec_tmpl);
 
     if (s == NULL) caml_raise_out_of_memory();
-    vs = caml_alloc_final(1, &sptfqmr_finalize, approx_size, approx_size * 20);
+    vs = caml_alloc_final(1, &sptfqmr_finalize, 1, 20);
     SPTFQMR_SESSION(vs) = s;
 
     CAMLreturn(vs);
@@ -691,14 +683,12 @@ CAMLprim value c_spils_pcg_make(value vl_max, value vvec_tmpl)
     CAMLlocal1(vs);
     PcgMem s;
     N_Vector vec_tmpl;
-    mlsize_t approx_size = sizeof(PcgMemRec)
-	+ (Int_val(vl_max) + 3) * NVECTOR_APPROXSIZE(vvec_tmpl);
 
     vec_tmpl = NVEC_VAL(vvec_tmpl);
     s = PcgMalloc(Int_val(vl_max), vec_tmpl);
 
     if (s == NULL) caml_raise_out_of_memory();
-    vs = caml_alloc_final(1, &pcg_finalize, approx_size, approx_size * 20);
+    vs = caml_alloc_final(1, &pcg_finalize, 1, 20);
     PCG_SESSION(vs) = s;
 
     CAMLreturn(vs);

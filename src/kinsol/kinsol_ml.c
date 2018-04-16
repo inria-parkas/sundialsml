@@ -775,7 +775,7 @@ CAMLprim value c_kinsol_init(value weakref, value vtemp,
     if (kin_mem == NULL)
 	caml_failwith("KINCreate returned NULL");
 
-    vkin_mem = caml_alloc_final(1, NULL, sizeof(void *), sizeof(void *) * 5);
+    vkin_mem = caml_alloc_final(1, NULL, 1, 5);
     KINSOL_MEM(vkin_mem) = kin_mem;
 
     if (vomaxiters != Val_none) {

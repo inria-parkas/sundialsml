@@ -1731,7 +1731,7 @@ CAMLprim value c_cvodes_adj_init_backward(value vparent, value weakref,
 	}
     }
 
-    vcvode_mem = caml_alloc_final(1, NULL, sizeof(void *), sizeof(void *) * 15);
+    vcvode_mem = caml_alloc_final(1, NULL, 1, 15);
     CVODE_MEM(vcvode_mem) = CVodeGetAdjCVodeBmem(parent, which);
 
     value *backref = c_sundials_malloc_value(weakref);

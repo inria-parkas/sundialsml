@@ -64,7 +64,7 @@ CAMLprim value alloc_caml_nvec(N_Vector nv, void (*finalizer)(value))
     CAMLparam0();
     CAMLlocal1(r);
 
-    r = caml_alloc_final(1, finalizer, nvec_rough_size, nvec_rough_size * 30);
+    r = caml_alloc_final(1, finalizer, 1, 30);
     NVEC_CVAL(r) = nv;
 
     CAMLreturn(r);

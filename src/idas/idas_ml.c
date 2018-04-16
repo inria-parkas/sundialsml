@@ -2405,7 +2405,7 @@ CAMLprim value c_idas_adj_init_backward(value vparent, value weakref,
 	}
     }
 
-    vida_mem = caml_alloc_final(1, NULL, sizeof(void *), sizeof(void *) * 15);
+    vida_mem = caml_alloc_final(1, NULL, 1, 15);
     IDA_MEM(vida_mem) = IDAGetAdjIDABmem(parent, which);
 
     value *backref = c_sundials_malloc_value(weakref);

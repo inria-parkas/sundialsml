@@ -885,7 +885,7 @@ CAMLprim value c_cvode_init(value weakref, value lmm, value iter, value initial,
     if (cvode_mem == NULL)
 	caml_failwith("CVodeCreate returned NULL");
 
-    vcvode_mem = caml_alloc_final(1, NULL, sizeof(void *), sizeof(void *) * 5);
+    vcvode_mem = caml_alloc_final(1, NULL, 1, 5);
     CVODE_MEM(vcvode_mem) = cvode_mem;
 
     N_Vector initial_nv = NVEC_VAL(initial);
