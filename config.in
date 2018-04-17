@@ -22,7 +22,7 @@ MATHJAX_URL_DEFAULT     = @mathjax@
 
 CC = @cc@
 CPP= @cpp@
-CFLAGS += @cflags@
+CFLAGS += @cflags@ @klu_inc_path@ @superlumt_inc_path@
 LDFLAGS += @ldflags@
 CPPFLAGS += @cppflags@
 C_SUPPRESS_WARNINGS = @c_suppress_warnings@

@@ -32,7 +32,9 @@ do
             SUNDIALS_DIR=
             SUNDIALS_LIBRARY_DIR=
             SUNDIALS_INCLUDE_DIR=
+	    SUPERLUNT_INCLUDE_DIR=
             SUPERLUMT_LIBRARY_DIR=
+	    KLU_INCLUDE_DIR=
             KLU_LIBRARY_DIR=
             LAPACKLIB=
             SUNDIALS_EXAMPLES_DIR=
@@ -123,7 +125,9 @@ do
 	                        (default: \$SUNDIALS_DIR/lib)
 	  SUNDIALS_INCLUDE_DIR	Path to Sundials header files (for compiling)
 	                        (default: \$SUNDIALS_DIR/include)
+	  SUPERLUMT_INCLUDE_DIR Path to SuperLU_MT header files
 	  SUPERLUMT_LIBRARY_DIR	Path to SuperLU_MT libraries
+	  KLU_INCLUDE_DIR	Path to KLU (SuiteSparse) header files
 	  KLU_LIBRARY_DIR	Path to KLU (SuiteSparse) libraries
 	  LAPACKLIB		Command for linking with Lapack (default: -llapack)
 	                        (sometimes also: -lSimTKlapack)
@@ -157,8 +161,12 @@ END_HELP_TEXT
 	SUNDIALS_INCLUDE_DIR="${value}";;
     SUPERLUMT_LIBRARY_DIR)
 	SUPERLUMT_LIBRARY_DIR="${value}";;
+    SUPERLUMT_INCLUDE_DIR)
+	SUPERLUMT_INCLUDE_DIR="${value}";;
     KLU_LIBRARY_DIR)
 	KLU_LIBRARY_DIR="${value}";;
+    KLU_INCLUDE_DIR)
+	KLU_INCLUDE_DIR="${value}";;
     CFLAGS_OPENMP)
         CFLAGS_OPENMP="${value}";;
     LAPACKLIB)
@@ -221,9 +229,17 @@ if [ x"${SUNDIALS_DIR}" != x ]; then
 	Isundials_inc_path="-I${sundials_inc_path}"
     fi
 fi
+if [ x"${SUPERLUMT_INCLUDE_DIR}" != x ]; then
+    superlumt_inc_path="${SUPERLUMT_INCLUDE_DIR%/}"
+    Isuperlumt_inc_path="-I${superlumt_inc_path}"
+fi
 if [ x"${SUPERLUMT_LIBRARY_DIR}" != x ]; then
     superlumt_lib_path="${SUPERLUMT_LIBRARY_DIR%/}"
     Lsuperlumt_lib_path="-L${superlumt_lib_path}"
+fi
+if [ x"${KLU_INCLUDE_DIR}" != x ]; then
+    klu_inc_path="${KLU_INCLUDE_DIR%/}"
+    Iklu_inc_path="-I${klu_inc_path}"
 fi
 if [ x"${KLU_LIBRARY_DIR}" != x ]; then
     klu_lib_path="${KLU_LIBRARY_DIR%/}"
@@ -1165,7 +1181,9 @@ cat ${LOG}
 	 s#@sundials_lib_path@#${Lsundials_lib_path} ${Lmpi_lib_path}#;
 	 s#@sundials_inc_path@#${Isundials_inc_path}#;
 	 s#@superlumt_lib_path@#${Lsuperlumt_lib_path}#;
+	 s#@superlumt_inc_path@#${Isuperlumt_inc_path}#;
 	 s#@klu_lib_path@#${Lklu_lib_path}#;
+	 s#@klu_inc_path@#${Iklu_inc_path}#;
 	 s#@arkode_enabled@#${arkode_enabled}#;
 	 s#@link_sundials_arkode@#${Lsundials_arkode}#;
 	 s#@arkode_mlobj_main@#${arkode_mlobj_main}#;
